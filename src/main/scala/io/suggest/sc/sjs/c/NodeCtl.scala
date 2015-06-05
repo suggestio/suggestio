@@ -90,6 +90,7 @@ object NodeCtl extends CtlT {
       }(JSExecutionContext.queue)
 
       LayoutView.setWndClass(l.layoutDiv)
+      HeaderCtl.initLayout()
     }
   }
 

@@ -62,18 +62,18 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
 
   /** Сброс карточек сетки. */
   def reFindAds(): Future[MFindAds] = {
-    val containerDivOpt = MGridDom.containerDiv
-    val fut = askMoreAds()
-      .andThen { case Success(resp) =>
-        newAdsReceived(resp, isAdd = false, containerDivOpt = containerDivOpt)
-      }(JSExecutionContext.queue)
-    // Запустить поиск в рамках категории.
+    // Сброс выдачи. Должен идти перед запросом к серверу.
     MGrid.state.nothingLoaded()
+    val fut = askMoreAds()
+    val containerDivOpt = MGridDom.containerDiv
     // Подготовить view'ы к поступлению новых карточек
     for (containerDiv <- containerDivOpt) {
       GridView.clear(containerDiv)
     }
-    fut
+    // Отрендерить карточки, когда придёт ответ.
+    fut.andThen { case Success(resp) =>
+      newAdsReceived(resp, isAdd = false, containerDivOpt = containerDivOpt)
+    }(JSExecutionContext.queue)
   }
 
   /**
@@ -309,7 +309,6 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
   def onBlockClick(b: MBlockInfo, e: Event): Unit = {
     error("TODO onBlockClick " + b)
     // TODO При клике нужно или открывать новую выдачу или раскрывать focused-фунционал.
-    ???
   }
 
   /**

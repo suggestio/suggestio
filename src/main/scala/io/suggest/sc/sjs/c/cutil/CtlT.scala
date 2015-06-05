@@ -8,6 +8,4 @@ package io.suggest.sc.sjs.c.cutil
  * Description: Абстрактный контроллер задается здесь.
  */
 trait CtlT {
-
-
 }

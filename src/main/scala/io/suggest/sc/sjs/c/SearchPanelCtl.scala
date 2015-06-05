@@ -1,23 +1,18 @@
 package io.suggest.sc.sjs.c
 
-import io.suggest.sc.ScConstants
+import io.suggest.sc.ScConstants.Search.Cats
 import io.suggest.sc.sjs.c.cutil.{GridOffsetSetter, CtlT}
 import io.suggest.sc.sjs.m.mgrid.{MGridDom, MGridState, MGrid}
-import io.suggest.sc.sjs.m.msc.fsm.{MCatState, MScFsm}
-import io.suggest.sc.sjs.m.msc.MHeaderDom
+import io.suggest.sc.sjs.m.mhdr.MHeaderDom
+import io.suggest.sc.sjs.m.msc.fsm.{MCatMeta, MScFsm}
 import io.suggest.sc.sjs.m.msearch.{MCatsTab, MSearchDom}
-import io.suggest.sc.sjs.m.msrv.ads.find.{MFindAdsReqEmpty, MFindAdsReqDflt, MFindAds}
-import io.suggest.sc.sjs.v.grid.GridView
 import io.suggest.sc.sjs.v.layout.HeaderView
 import io.suggest.sc.sjs.v.search.SearchPanelView
+import io.suggest.sc.sjs.v.vutil.VUtil
 import io.suggest.sjs.common.util.SjsLogger
 import io.suggest.sjs.common.view.safe.SafeEl
-import org.scalajs.dom.Event
+import org.scalajs.dom.{Element, Node, Event}
 import org.scalajs.dom.raw.{HTMLElement, HTMLDivElement}
-import scala.concurrent.Future
-import scala.scalajs.concurrent.JSExecutionContext
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
-import scala.util.Success
 
 /**
  * Suggest.io
@@ -31,21 +26,9 @@ object SearchPanelCtl extends CtlT with SjsLogger with GridOffsetSetter {
   def initNodeLayout(): Unit = {
     SearchPanelView.adjust()
 
-    // Инициализация кнопки показа панели.
-    for (btn <- MSearchDom.showPanelBtn) {
-      SearchPanelView.initShowPanelBtn( SafeEl(btn) )
-    }
-
     // Инициализация search-панели: реакция на кнопку закрытия/открытия, поиск при наборе, табы и т.д.
     for (input <- MSearchDom.ftsInput) {
       SearchPanelView.initFtsField( SafeEl(input) )
-    }
-
-    // Инициализация кнопок сокрытия панели
-    SearchPanelView.initHidePanelBtn {
-      (MSearchDom.hidePanelBtn ++ MHeaderDom.showIndexBtn)
-        .iterator
-        .map(SafeEl.apply)
     }
 
     // Инициализация кнопок переключения табов поиска.
@@ -62,11 +45,12 @@ object SearchPanelCtl extends CtlT with SjsLogger with GridOffsetSetter {
     }
   }
 
-  /** Реакция на клик по кнопке открытия поисковой панели. */
-  def onShowPanelBtnClick(e: Event): Unit = {
-    // TODO Здесь был вызов adjust(), но есть сомнения, что он необходим.
+
+  /** Экшен для отображения панели на экране. */
+  def showPanel(): Unit = {
+    // TODO В оригинале (coffee) здесь был вызов adjust()
     val rootDivOpt = MSearchDom.rootDiv
-    for (rootDiv <- rootDivOpt if !MSearchDom.isPanelDisplayed(rootDiv)) {
+    for (rootDiv <- rootDivOpt) {
       // Скрыть кнопки хидера главного экрана
       for (headerDiv <- MHeaderDom.rootDiv) {
         HeaderView.showBackToIndexBtns( SafeEl(headerDiv) )
@@ -77,18 +61,19 @@ object SearchPanelCtl extends CtlT with SjsLogger with GridOffsetSetter {
   }
 
 
-  /** Реакция на клик по какой-либо кнопке сокрытия поисковой панели. */
-  def onHidePanelBtnClick(e: Event): Unit = {
+  def hidePanel(): Unit = {
+    // TODO Перепилить на MScFsm
     val rootDivOpt = MSearchDom.rootDiv
-    for (rootDiv <- rootDivOpt if MSearchDom.isPanelDisplayed(rootDiv)) {
+    for (rootDiv <- rootDivOpt) {
       // Скрыть на хидере главного экрана кнопки сокрытия панели
       for (headerDiv <- MHeaderDom.rootDiv) {
         HeaderView.hideBackToIndexBtns( SafeEl(headerDiv) )
       }
       SearchPanelView.hidePanel(rootDiv)
-      maybeRebuildGrid(rootDivOpt, isHiddenOpt = Some(true))
+      SearchPanelCtl.maybeRebuildGrid(rootDivOpt, isHiddenOpt = Some(true))
     }
   }
+
 
   /** Если ширина экрана позволяет, то выставить сетке новый rightOffset и отребилдить. */
   def maybeRebuildGrid(rootDivOpt   : Option[HTMLDivElement]  = MSearchDom.rootDiv,
@@ -146,31 +131,26 @@ object SearchPanelCtl extends CtlT with SjsLogger with GridOffsetSetter {
   }
 
   /**
-   * Реакция на клик по ссылке категории. Надо отобразить карточки для категории, убрать панель.
-   * @param catId id категории.
+   * Реакция на клик по ссылке категории. Надо собрать метаданные категории и .
    * @param e Исходное событие.
    */
-  def onCatLinkClick(catId: String, e: Event): Unit = {
-    MScFsm.transformState { curState =>
-      curState.copy(
-        cat = Some(MCatState(catId, "TODO")),
-        searchPanelOpened = false
-      )
-    }
-    MScFsm.applyStateChanges()
-
-    val mgs = MGrid.state
-    val madsFut = GridCtl.askMoreAds(mgs)
-    for ( spRootDiv <- MSearchDom.rootDiv) {
-      SearchPanelView.hidePanel(spRootDiv)
-    }
-    val gridContainerDivOpt = MGridDom.containerDiv
-    for (gridContainerDiv <- gridContainerDivOpt) {
-      GridView.clear(gridContainerDiv)
-    }
-    // Когда придут запрошенные карточки, залить из в сетку.
-    for (madsResp <- madsFut) {
-      GridCtl.newAdsReceived(madsResp, isAdd = false, withAnim = true, containerDivOpt = gridContainerDivOpt)
+  def onCatLinkClick(e: Event): Unit = {
+    // Найти основной div ссылки категории: он помечен классом js-cat-link.
+    val clickedNode = e.target.asInstanceOf[Node] // Node максимум, т.к. клик может быть по узлам svg.
+    if (clickedNode != null) {
+      val safeClickedEl = SafeEl(clickedNode)
+      for (catElSafe <- VUtil.hasCssClass(safeClickedEl, Cats.ONE_CAT_LINK_CSS_CLASS)) {
+        // TODO Выпилить тут каст к Element. Надо получать значение аттрибута как-то через safeEl.
+        val catEl = catElSafe._underlying.asInstanceOf[Element]
+        for (catState <- MCatMeta.fromEl(catEl)) {
+          MScFsm.transformState() { curState =>
+            curState.copy(
+              cat = Some(catState),
+              searchPanelOpened = false
+            )
+          }
+        }
+      }
     }
   }
 

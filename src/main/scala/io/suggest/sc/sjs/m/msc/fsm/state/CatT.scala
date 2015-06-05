@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.m.msc.fsm.state
 
 import io.suggest.sc.sjs.c.GridCtl
-import io.suggest.sc.sjs.m.msc.fsm.{IScState, MCatState}
+import io.suggest.sc.sjs.m.msc.fsm.{MCatMeta, IScState}
 
 /**
  * Suggest.io
@@ -15,7 +15,7 @@ trait CatT extends IScState {
   override type T <: CatT
 
   /** Состояние текущей категории, если есть. */
-  def cat       : Option[MCatState]
+  def cat       : Option[MCatMeta]
 
   def applyCatChanges(oldState: CatT): Unit = {
     val _cat = cat

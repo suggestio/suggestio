@@ -11,12 +11,9 @@ import io.suggest.sc.sjs.m.msc.fsm.state._
  *
  * Модель строиться на аддонах, реализующих [[IScState]], каждый аддон добавляет какое-то поле в модель.
  */
-trait MScStateT extends RcvrAdnIdT with CatT {
+trait MScStateT extends RcvrAdnIdT with CatT with SearchPanelOpened {
 
   override type T = MScStateT
-
-  /** Открыта ли панель поиска (правая)? */
-  def searchPanelOpened: Boolean
 
 }
 
@@ -24,6 +21,7 @@ trait MScStateT extends RcvrAdnIdT with CatT {
 /** Интерфейс для сборки stackable-аддонов модели. */
 trait IScState {
 
+  /** Сборка типа результирующего состояния с участием аддонов. */
   type T <: IScState
 
    /**
@@ -38,10 +36,8 @@ trait IScState {
 /** Дефолтовая реализация [[MScStateT]]. */
 case class MScState(
   override val rcvrAdnId          : Option[String]      = None,
-  override val cat                : Option[MCatState]   = None,
+  override val cat                : Option[MCatMeta]    = None,
   override val searchPanelOpened  : Boolean             = false
 )
   extends MScStateT
 
-
-case class MCatState(catId: String, catClass: String)

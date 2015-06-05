@@ -8,8 +8,7 @@ import io.suggest.sc.sjs.v.vutil.VUtil
 import io.suggest.sjs.common.util.TouchUtil
 import io.suggest.sjs.common.view.safe.SafeEl
 import io.suggest.sc.ScConstants.Search._
-import io.suggest.sjs.common.view.safe.css.SafeCssEl
-import org.scalajs.dom.{Node, Element, Event}
+import org.scalajs.dom.Event
 import org.scalajs.dom.raw.{HTMLDivElement, HTMLInputElement}
 
 /**
@@ -27,30 +26,6 @@ object SearchPanelView {
     val height = MAgent.availableScreen.height - offset
     for (mtab <- MSearchDom.mtabs) {
       VUtil.setHeightRootWrapCont(height, mtab.contentDiv, mtab.rootDiv ++ mtab.wrapperDiv)
-    }
-  }
-
-  /** Инициализация кнопки отображения панели поиска. */
-  def initShowPanelBtn(btnSafe: SafeEl[HTMLDivElement]): Unit = {
-    btnSafe.addEventListener(TouchUtil.clickEvtName) { e: Event =>
-      if ( !MTouchLock() ) {
-        SearchPanelCtl.onShowPanelBtnClick(e)
-      }
-    }
-  }
-
-  /** Инициализация кнопки сокрытия панели поиска.
-    * @param btnsSafe Все кнопки сокрытия, на которые надо повесить listener.
-    */
-  def initHidePanelBtn(btnsSafe: TraversableOnce[SafeEl[HTMLDivElement]]): Unit = {
-    // Шарим инстанс листенера между субъектами, чтобы сэкномить капельку RAM.
-    val listener = { e: Event =>
-      if ( !MTouchLock() ) {
-        SearchPanelCtl.onHidePanelBtnClick(e)
-      }
-    }
-    for (btnSafe <- btnsSafe) {
-      btnSafe.addEventListener(TouchUtil.clickEvtName)(listener)
     }
   }
 
@@ -82,17 +57,7 @@ object SearchPanelView {
   def initCatsList(contentDiv: SafeEl[HTMLDivElement]): Unit = {
     contentDiv.addEventListener(TouchUtil.clickEvtName) { e: Event =>
       if ( !MTouchLock() ) {
-        // Найти основной div ссылки категории: он помечен классом js-cat-link.
-        val clickedNode = e.target.asInstanceOf[Node]
-        if (clickedNode != null) {
-          for (catElSafe <- VUtil.hasCssClass(SafeCssEl(clickedNode), Cats.ONE_CAT_LINK_CSS_CLASS)) {
-            // TODO Выпилить тут каст к Element.
-            val catEl = catElSafe._underlying.asInstanceOf[Element]
-            for (catId <- VUtil.getAttribute(catEl, Cats.ATTR_CAT_ID)) {
-              SearchPanelCtl.onCatLinkClick(catId, e)
-            }
-          }
-        }
+        SearchPanelCtl.onCatLinkClick(e)
       }
     }
   }
@@ -100,6 +65,11 @@ object SearchPanelView {
   /** Отобразить на экране панель поиска, которая, скорее всего, скрыта. */
   def showPanel(rootDiv: HTMLDivElement): Unit = {
     rootDiv.style.display = "block"
+  }
+  def showPanel(): Unit = {
+    for (spRootDiv <- MSearchDom.rootDiv) {
+      showPanel(spRootDiv)
+    }
   }
 
   /** Скрыть панель поиска. */

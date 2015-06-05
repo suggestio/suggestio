@@ -60,7 +60,7 @@ class MGridState {
     blocksLoaded += newBlocksCount
   }
 
-  /** Контроллер приказывает сбросить состояние выдачи, касающееся загруженных карточек. */
+  /** Контроллер приказывает сбросить состояние плитки, касающееся загруженных и отображаемых карточек. */
   def nothingLoaded(): Unit ={
     blocks = ListBuffer()
     blocksLoaded = 0

@@ -4,9 +4,6 @@ import io.suggest.sc.sjs.m.SafeWnd
 import io.suggest.sjs.common.util.SjsLogger
 import org.scalajs.dom.PopStateEvent
 
-import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
-
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -17,10 +14,11 @@ import scala.scalajs.js.annotation.JSName
  */
 object MScFsm extends SjsLogger {
 
-  /** Хранилище модели. */
+  /** Хранилище модели в immutable-класса для возможности быстро делать snapshot'ы и потокобезопасности в будущем. */
   private var _storage: Storage = Storage()
 
-  /** При перемотке истории необходимо оставить запас для возврата вперёд по истории. */
+  /** При перемотке истории необходимо оставить запас для возврата вперёд по истории.
+    * Snapshot -- это zero-copy снимок _storage. */
   private var _snapshot: Option[Storage] = None
 
   /** Забыть ранее сделаный snapshot. */
@@ -40,7 +38,7 @@ object MScFsm extends SjsLogger {
   /** Подписка модели на события истории. Вызывается при запуске приложения. */
   def subscribeEvents(): Unit = {
     SafeWnd.addEventListener("popstate") { e: PopStateEvent =>
-      val index = e.state.asInstanceOf[HStatePtr].index
+      val index = e.state.asInstanceOf[MStatePtr].i
       go(index)
     }
   }
@@ -59,26 +57,47 @@ object MScFsm extends SjsLogger {
     forgetSnapshot()
   }
 
-  /**
-   * Обновить текущее с помощью фунцкии, породив новое состояние и добавив в его в стек состояний.
-   * @param f Функция обновления состояния.
-   * @return Результат f(state).
-   */
-  def transformState(f: MScState => MScState): MScState = {
-    val newState = f(state)
-    pushState(newState)
+  /** Общий код transform-методов вынесен сюда. */
+  private def _transformStateWith(withApply: Boolean, f: MScState => MScState)(saveF: MScState => Unit): MScState = {
+    val prevState = state
+    val newState = f(prevState)
+    saveF(newState)
+    if (withApply)
+      applyStateChanges(newState, prevState = prevState)
     newState
   }
 
-  def go(i: Int): Unit = {
+  /**
+   * Создать новое состояние на базе текущего с помощью фунцкии,
+   * породив новое состояние и добавив в его в стек состояний.
+   * @param f Функция обновления состояния.
+   * @return Результат f(state).
+   */
+  def transformState(withApply: Boolean = true)(f: MScState => MScState): MScState = {
+    _transformStateWith(withApply, f)(pushState)
+  }
+
+  /**
+   * Трансформировать текущего состояния с безвозвратной заменой оного.
+   * @param f Функция трансформации.
+   * @return Трансформированное состояние.
+   */
+  def transformStateReplace(withApply: Boolean = true)(f: MScState => MScState): MScState = {
+    _transformStateWith(withApply, f)(replaceState)
+  }
+
+  def go(i: Int, withApply: Boolean = true): Unit = {
     val storage = snapshotOrStorage
     val i1 = storage.index - i
     if (i1 >= 0) {
       ensureSnapshot()
+      val prevState = state
       _storage = _storage.copy(
         states = storage.states.drop(i1),
         index  = i
       )
+      if (withApply)
+        applyStateChanges(state, prevState = prevState)
     } else {
       warn("State#" + i + " not found")
     }
@@ -103,7 +122,7 @@ object MScFsm extends SjsLogger {
     )
     for (hapi <- SafeWnd.history) {
       // TODO Брать заголовок откуда-то.
-      hapi.pushState(HStatePtr(_storage.index), "Suggest.io")
+      hapi.pushState(MStatePtr(_storage.index), "Suggest.io")
     }
     forgetSnapshot()
   }
@@ -142,19 +161,7 @@ object MScFsm extends SjsLogger {
   ) {
     override def toString: String = "StSt(" + index + ")"
   }
-  
-  /** Модель сохраняемой в History API информации: порядковый номер в _states с конца. */
-  sealed trait HStatePtr extends js.Object {
-    @JSName("i")
-    var index: Int = js.native
-  }
-  object HStatePtr {
-    def apply(index: Int): HStatePtr = {
-      val d = js.Dictionary[js.Any](
-        "i" -> index
-      )
-      d.asInstanceOf[HStatePtr]
-    }
-  }
 
 }
+
+

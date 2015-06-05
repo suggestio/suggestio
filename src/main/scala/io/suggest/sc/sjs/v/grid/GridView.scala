@@ -95,11 +95,6 @@ object GridView {
   def clear(containerDiv: HTMLDivElement): Unit = {
     VUtil.removeAllChildren(containerDiv)
   }
-  def clear(): Unit = {
-    for (containerDiv <- MGridDom.containerDiv) {
-      clear(containerDiv)
-    }
-  }
 
   /**
    * Внести поправку в указанную абсолютную координату с помощью строковых данных по имеющейся относительной.
