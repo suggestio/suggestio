@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.m.msc.fsm.state
 
-import io.suggest.sc.sjs.c.GridCtl
+import io.suggest.sc.sjs.c.{HeaderCtl, GridCtl}
 import io.suggest.sc.sjs.m.msc.fsm.{MCatMeta, IScState}
 
 /**
@@ -19,10 +19,12 @@ trait CatT extends IScState {
 
   def applyCatChanges(oldState: CatT): Unit = {
     val _cat = cat
-    if (_cat != oldState.cat) {
+    val _oldCat = oldState.cat
+    if (_cat != _oldCat) {
       // Изменилась категория. Нужно обновить плитку.
-      // TODO Выставить или убрать cat class из header.
       GridCtl.reFindAds()
+      // Выставить или убрать cat class из header.
+      HeaderCtl.changeGlobalCat(_cat, prevCatMeta = _oldCat)
     }
   }
 

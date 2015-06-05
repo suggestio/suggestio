@@ -61,6 +61,7 @@ object SearchPanelCtl extends CtlT with SjsLogger with GridOffsetSetter {
   }
 
 
+  /** Экшен сокрытия панели. */
   def hidePanel(): Unit = {
     // TODO Перепилить на MScFsm
     val rootDivOpt = MSearchDom.rootDiv

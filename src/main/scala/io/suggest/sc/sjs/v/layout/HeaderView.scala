@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.v.layout
 
 import io.suggest.sc.sjs.c.HeaderCtl
+import io.suggest.sc.sjs.m.msc.fsm.MCatMeta
 import io.suggest.sc.sjs.m.mv.MTouchLock
 import io.suggest.sjs.common.util.TouchUtil
 import io.suggest.sjs.common.view.safe.SafeEl
@@ -51,5 +52,26 @@ object HeaderView {
     }
   }
 
+  /** Привести класс категории к классу режима глобальной категории заголовока. */
+  def catClass2hdrClass(catClass: String) = "__" + catClass
+  
+  /** Выставить новую глобальную категорию или удалить. */
+  def updateGlobalCat(rootDiv: SafeEl[HTMLDivElement], catMeta: Option[MCatMeta], prevCatMeta: Option[MCatMeta]): Unit = {
+    // Если была категория, а её не стало, то нужно спилить данные глобальной категории.
+    for (pcm <- prevCatMeta) {
+      rootDiv.removeClass( catClass2hdrClass(pcm.catClass) )
+    }
+    if (catMeta.isEmpty) {
+      // Новое категорирование отключено. Отключить режим глобальной категории.
+      rootDiv.removeClass(GLOBAL_CAT_CSS_CLASS)
+    } else {
+      val ncm = catMeta.get
+      // Выставить класс для новой категории. Включить режим глобальное категории если необходимо.
+      var classes = List( catClass2hdrClass(ncm.catClass) )
+      if (prevCatMeta.isEmpty)
+        classes ::= GLOBAL_CAT_CSS_CLASS
+      rootDiv.addClasses( classes : _* )
+    }
+  }
 
 }

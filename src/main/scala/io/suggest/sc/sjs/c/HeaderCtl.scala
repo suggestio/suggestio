@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.c
 
 import io.suggest.sc.sjs.c.cutil.CtlT
 import io.suggest.sc.sjs.m.mhdr.MHeaderDom
-import io.suggest.sc.sjs.m.msc.fsm.MScFsm
+import io.suggest.sc.sjs.m.msc.fsm.{MCatMeta, MScFsm}
 import io.suggest.sc.sjs.v.layout.HeaderView
 import io.suggest.sjs.common.view.safe.SafeEl
 import org.scalajs.dom.Event
@@ -51,6 +51,17 @@ object HeaderCtl extends CtlT {
     }
   }
 
+  /**
+   * Экшен замены глобальной категории.
+   * @param catMeta Новое состояние категории.
+   * @param prevCatMeta Старое состояние категории.
+   */
+  def changeGlobalCat(catMeta: Option[MCatMeta], prevCatMeta: Option[MCatMeta]): Unit = {
+    for (headerDiv <- MHeaderDom.rootDiv) {
+      val safeEl = SafeEl(headerDiv)
+      HeaderView.updateGlobalCat(safeEl, catMeta, prevCatMeta = prevCatMeta)
+    }
+  }
 
 
 }

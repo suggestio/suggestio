@@ -20,6 +20,7 @@ trait GridOffsetSetter {
 
   /** Заготовка калькулятора для левой или правой колонки. */
   protected trait GridOffsetCalc {
+
     def mgs = MGrid.state
 
     /** Если [[MGridState]] указывает на необходимость нулевого оффсета, то её следует послушать. */
