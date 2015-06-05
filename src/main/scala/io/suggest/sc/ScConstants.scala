@@ -73,6 +73,9 @@ object ScConstants {
     /** Название css-класса для отображения кнопки возврата на index выдачи. Появляется при открытой search-панели. */
     def INDEX_ICON_CSS_CLASS = "__w-index-icon"
 
+    /** Название css-класса для режима глобальной категории. */
+    def GLOBAL_CAT_CSS_CLASS = "__w-global-cat"
+
     /** Кнопка возвращения на плитку, отображается слева наверху в ряде случаев. */
     def SHOW_INDEX_BTN_ID = "smIndexButton"
 
