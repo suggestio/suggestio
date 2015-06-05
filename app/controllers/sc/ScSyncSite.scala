@@ -174,7 +174,7 @@ with ScNodesList with ScSiteBase {
     /** Логика отработки списка узлов (панели навигации). */
     lazy val nodesListLogic = new FindNodesLogic {
       override implicit def _request = that._request
-      override val _nsArgs = SimpleNodesSearchArgs(
+      override val _nsArgs = MScNodeSearchArgs(
         currAdnId = _scState.adnId,
         geoMode = _scState.geo
       )

@@ -1,6 +1,7 @@
 package util.showcase
 
 import models.im.DevScreen
+import models.msc.MScNodeSearchArgs
 import models.{GeoSearchInfo, AdSearch}
 import util.PlayMacroLogsImpl
 import util.acl.AbstractRequestWithPwOpt
@@ -291,7 +292,7 @@ case class ScSiteStat(
  * @param request HTTP-Реквест.
  */
 case class ScNodeListingStat(
-  args: SimpleNodesSearchArgs,
+  args: MScNodeSearchArgs,
   gsiFut: Future[Option[GeoSearchInfo]]
 )(
   implicit val request: AbstractRequestWithPwOpt[_]

@@ -3,7 +3,7 @@ package controllers.sc
 import java.util.NoSuchElementException
 import _root_.util.jsa.{Js, SmRcvResp}
 import models.jsm.NodeListResp
-import models.msc.{NodeListRenderArgsWrapper, NodeListRenderArgs, ScJsState}
+import models.msc._
 import play.twirl.api.Html
 import util.PlayMacroLogsI
 import _root_.util.showcase._
@@ -32,7 +32,7 @@ trait ScNodesList extends ScController with PlayMacroLogsI {
 
 
   /** Поиск узлов в рекламной выдаче. */
-  def findNodes(args: SimpleNodesSearchArgs) = MaybeAuth.async { implicit request =>
+  def findNodes(args: MScNodeSearchArgs) = MaybeAuth.async { implicit request =>
     // Для возможной защиты криптографических функций, использующий random, округяем и загрубляем timestamp.
     val tstamp = System.currentTimeMillis() / 50L
 
@@ -86,7 +86,7 @@ trait ScNodesList extends ScController with PlayMacroLogsI {
   /** Гибкая логика обработки запроса сбора списка узлов. */
   trait FindNodesLogic {
 
-    def _nsArgs: SimpleNodesSearchArgs
+    def _nsArgs: MScNodeSearchArgs
     implicit def _request: AbstractRequestWithPwOpt[_]
 
     lazy val gsiOptFut = _nsArgs.geoMode.geoSearchInfoOpt

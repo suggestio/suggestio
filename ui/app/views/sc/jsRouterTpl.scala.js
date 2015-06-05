@@ -10,7 +10,8 @@
 @play.api.routing.JavaScriptReverseRouter(JS_ROUTER_NAME)(
   routes.javascript.MarketShowcase.geoShowcase,
   routes.javascript.MarketShowcase.showcase,
-  routes.javascript.MarketShowcase.findAds
+  routes.javascript.MarketShowcase.findAds,
+  routes.javascript.MarketShowcase.findNodes
 );
 
 @* Когда скрипт загрузился и выполнился, будет вызвана функция инициализации с указанным именем, если задана. *@

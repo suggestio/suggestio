@@ -633,7 +633,7 @@ sm =
       node_query_param = if typeof cs != 'undefined' && cs.mart_id then '&a.cai=' + cs.mart_id else ''
       nodesw = '&a.nodesw=true'
 
-      url = '/market/nodes/search?' + this.request_query_param() + node_query_param + nodesw
+      url = '/market/nodes/search?a.v=1&' + this.request_query_param() + node_query_param + nodesw
       sm.request.perform url
 
     load_nodes : () ->

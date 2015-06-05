@@ -130,7 +130,7 @@ GET  /market/ad/one/img                 @controllers.MarketShowcase.onlyOneAdAsI
 GET  /sc/router.js                      @controllers.MarketShowcase.scJsRouter
 
 ## Поиск по узлам
-GET  /market/nodes/search               @controllers.MarketShowcase.findNodes(a: SimpleNodesSearchArgs)
+GET  /market/nodes/search               @controllers.MarketShowcase.findNodes(a: msc.MScNodeSearchArgs)
 ## Прямой доступ к синхронной выдаче
 GET  /market/geo/syncsite               @controllers.MarketShowcase.syncGeoSite(a: msc.ScJsState ?= msc.ScJsState.empty, x: msc.SiteQsArgs ?= msc.SiteQsArgs.empty)
 
