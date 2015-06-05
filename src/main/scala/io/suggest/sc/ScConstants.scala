@@ -160,7 +160,6 @@ object ScConstants {
 
   }
 
-
   /** Константы для рендера приветствия узла. */
   object Welcome {
 
