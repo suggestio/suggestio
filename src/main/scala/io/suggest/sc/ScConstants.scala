@@ -231,6 +231,9 @@ object ScConstants {
 
       /** Название аттрибута, которое содержит id категории. */
       def ATTR_CAT_ID = "data-cat-id"
+
+      /** css-класс категории. Для выставления в header. */
+      def ATTR_CAT_CLASS = "data-cat-class"
     }
 
     /** Сюда сгруппированы id, относящиеся к списку магазинов. */
