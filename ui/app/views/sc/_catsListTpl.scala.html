@@ -18,7 +18,7 @@
         }
       }
       <span class="categories-list_single-cat categorie @if(isDisabled) {__disabled} else {@ONE_CAT_LINK_CSS_CLASS}"
-	    data-cat-class="@mmcat.cssClass"
+	    @ATTR_CAT_CLASS="@mmcat.cssClass"
 	    @if(!isDisabled) {data-cat-id="@mmcat.id"}>
 
         <div class="categorie_icon __@mmcat.cssClass">
