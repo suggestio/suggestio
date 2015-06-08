@@ -168,8 +168,42 @@ object ScConstants {
 
     /** id кнопки скрытия панели. */
     def HIDE_PANEL_BTN_ID = "smGeoScreenCloseButton"
-    
+
+    // GN_ = geo nodes list; GNL_ = GN_ layer
+
+    /** В списке узлов строчка сокрытия-отображения слоя обозначается этим css-классом. */
+    def GNL_CAPTION_CSS_CLASS     = "js-gnlayer"
+    def GNL_CAPTION_DIV_ID_PREFIX = "geoLayer"
+
+    def GNL_ACTIVE_CSS_CLASS      = "__active"
+
+    /** Для связывания caption'а слоя и его содержимого используются динамические id. */
+    def GNL_ATTR_LAYER_ID_INDEX   = "data-index"
+
+    /** Класс для тела (подсписка) одного слоя узлов. */
+    def GNL_BODY_CSS_CLASS        = "geo-nodes-list_layer"
+
+    def GN_CONTAINER_ID           = "geoNodesListContainer"
+
+    /** Префикс id контейнера списка узлов одного слоя. */
+    def GNL_BODY_DIV_ID_PREFIX    = "geoLayerNodes"
+
+    /** Класс контейнера для одного узла в списке узлов. */
+    def GN_NODE_CSS_CLASS         = "js-geo-node"
+
+    /** Название аттрибута с id узла в контенере узла в списке узлов. */
+    def GN_ATTR_NODE_ID           = "data-id"
+
+    /** Название аттрибута контейнера, содержащий общее кол-во слоёв. */
+    def GN_ATTR_LAYERS_COUNT      = "data-layers-count"
+
+    /** css-класс, указывающий на скрытость указанного слоя. */
+    def GNL_BODY_HIDDEN_CSS_CLASS = "__hidden"
+
+    def GNL_BODY_WRAPPER_SUFFIX   = "Wrapper"
+    def GNL_BODY_CONTENT_SUFFIX   = "Content"
   }
+
 
   /** Константы для рендера приветствия узла. */
   object Welcome {
