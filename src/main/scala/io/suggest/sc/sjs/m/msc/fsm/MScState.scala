@@ -11,7 +11,7 @@ import io.suggest.sc.sjs.m.msc.fsm.state._
  *
  * Модель строиться на аддонах, реализующих [[IScState]], каждый аддон добавляет какое-то поле в модель.
  */
-trait MScStateT extends RcvrAdnIdT with CatT with SearchPanelOpened with NavPanelOpened {
+trait MScStateT extends RcvrAdnIdT with CatT with SearchPanelOpened with NavPanelOpened with CurrGnl {
 
   override type T = MScStateT
 
@@ -38,7 +38,8 @@ case class MScState(
   override val rcvrAdnId          : Option[String]      = None,
   override val cat                : Option[MCatMeta]    = None,
   override val searchPanelOpened  : Boolean             = false,
-  override val navPanelOpened     : Boolean             = false
+  override val navPanelOpened     : Boolean             = false,
+  override val currGnlIndex       : Option[Int]         = None
 )
   extends MScStateT
 

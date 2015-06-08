@@ -3,9 +3,7 @@ package io.suggest.sc.sjs.v.search
 import io.suggest.sc.sjs.c.SearchPanelCtl
 import io.suggest.sc.sjs.m.magent.MAgent
 import io.suggest.sc.sjs.m.msearch.MSearchDom
-import io.suggest.sc.sjs.m.mv.MTouchLock
-import io.suggest.sc.sjs.v.vutil.{SetStyleDisplay, VUtil}
-import io.suggest.sjs.common.util.TouchUtil
+import io.suggest.sc.sjs.v.vutil.{OnClick, SetStyleDisplay, VUtil}
 import io.suggest.sjs.common.view.safe.SafeEl
 import io.suggest.sc.ScConstants.Search._
 import org.scalajs.dom.Event
@@ -18,7 +16,7 @@ import org.scalajs.dom.raw.{HTMLDivElement, HTMLInputElement}
  * Description: Вьюшка для панели поиска.
  * В coffee-выдаче компонент жил внутри sm.navigation_layer.
  */
-object SearchPanelView extends SetStyleDisplay {
+object SearchPanelView extends SetStyleDisplay with OnClick {
 
   /** Как уточнить разметку панели. */
   def adjust(): Unit = {
@@ -31,10 +29,8 @@ object SearchPanelView extends SetStyleDisplay {
 
   /** Инициализировать кнопку таба. */
   def initTabBtn(tabId: String, btnDiv: SafeEl[HTMLDivElement]): Unit = {
-    btnDiv.addEventListener(TouchUtil.clickEvtName) { e: Event =>
-      if ( !MTouchLock() ) {
-        SearchPanelCtl.onTabBtnClick(tabId, e)
-      }
+    onClick(btnDiv) { e: Event =>
+      SearchPanelCtl.onTabBtnClick(tabId, e)
     }
   }
 
@@ -55,10 +51,8 @@ object SearchPanelView extends SetStyleDisplay {
   /** Инициализация списка категорий. При клике по активной категории должен активироваться поиск в категории.
     * Испольуется делегирование событий внешнему div'у. */
   def initCatsList(contentDiv: SafeEl[HTMLDivElement]): Unit = {
-    contentDiv.addEventListener(TouchUtil.clickEvtName) { e: Event =>
-      if ( !MTouchLock() ) {
-        SearchPanelCtl.onCatLinkClick(e)
-      }
+    onClick(contentDiv) { e: Event =>
+      SearchPanelCtl.onCatLinkClick(e)
     }
   }
 

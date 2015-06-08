@@ -2,6 +2,8 @@ package io.suggest.sc.sjs.m.msc.fsm
 
 import io.suggest.sc.ScConstants.Search.Cats
 import io.suggest.sc.sjs.v.vutil.VUtil
+import io.suggest.sjs.common.view.safe.SafeEl
+import io.suggest.sjs.common.view.safe.attr.SafeAttrElT
 import org.scalajs.dom.Element
 
 /**
@@ -18,10 +20,10 @@ object MCatMeta {
    * @param catEl HTML-element, содержащий данные категории в оговоренном формате.
    * @return Опциональный результат.
    */
-  def fromEl(catEl: Element): Option[MCatMeta] = {
+  def fromEl(catEl: SafeAttrElT): Option[MCatMeta] = {
     for {
-      catId     <- VUtil.getAttribute(catEl, Cats.ATTR_CAT_ID)
-      catClass  <- VUtil.getAttribute(catEl, Cats.ATTR_CAT_CLASS)
+      catId     <- catEl.getAttribute(Cats.ATTR_CAT_ID)
+      catClass  <- catEl.getAttribute(Cats.ATTR_CAT_CLASS)
     } yield {
       MCatMeta(catId = catId, catClass = catClass)
     }

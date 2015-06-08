@@ -1,9 +1,13 @@
 package io.suggest.sc.sjs.v.nav
 
+import io.suggest.sc.sjs.c.NavPanelCtl
 import io.suggest.sc.sjs.m.magent.{IMScreen, MAgent}
 import io.suggest.sc.sjs.m.mnav.{MNavState, MNavDom, MNav}
-import io.suggest.sc.sjs.v.vutil.{SetStyleDisplay, VUtil}
-import org.scalajs.dom.raw.HTMLDivElement
+import io.suggest.sc.sjs.v.vutil.{OnClick, SetStyleDisplay, VUtil}
+import io.suggest.sc.ScConstants.NavPane._
+import io.suggest.sjs.common.view.safe.css.SafeCssElT
+import io.suggest.sjs.common.view.safe.evtg.SafeEventTargetT
+import org.scalajs.dom.raw.{Event, HTMLDivElement}
 
 /**
  * Suggest.io
@@ -11,7 +15,7 @@ import org.scalajs.dom.raw.HTMLDivElement
  * Created: 22.05.15 15:46
  * Description: Представление панели навигации по сети suggest.io и её узлам, геолокации, и т.д.
  */
-object NavPaneView extends SetStyleDisplay {
+object NavPaneView extends SetStyleDisplay with OnClick {
 
   /** Выставить высоту списка узлов согласно экрану. */
   def adjustNodeList(nodeListDivOpt: Option[HTMLDivElement] = MNavDom.nodeListDiv,
@@ -40,6 +44,37 @@ object NavPaneView extends SetStyleDisplay {
   /** Скрыть панель навигации. */
   def hidePanel(rootDiv: HTMLDivElement): Unit = {
     displayNone(rootDiv)
+  }
+
+  /**
+   * Раняя инициализация списка узлов. На момент вызова этого метода, список узлов ещё отсутствует,
+   * поэтому "earlyInit".
+   * @param contentDiv Контейнер, где будет отрендерен будущий список узлов.
+   */
+  def earlyInitNodeList(contentDiv: SafeEventTargetT): Unit = {
+    // Делегировать контейнеру обработчик кликов списка.
+    onClick(contentDiv) { e: Event =>
+      NavPanelCtl.onNodeListClick(e)
+    }
+  }
+
+  def isGnlHidden(bodyDiv: SafeCssElT): Boolean = {
+    bodyDiv.containsClass(GNL_BODY_HIDDEN_CSS_CLASS)
+  }
+
+  def hideGnlBody(bodyDiv: SafeCssElT): Unit = {
+    bodyDiv.addClasses(GNL_BODY_HIDDEN_CSS_CLASS)
+  }
+
+  def showGnlBody(bodyDiv: SafeCssElT): Unit = {
+    bodyDiv.removeClass(GNL_BODY_HIDDEN_CSS_CLASS)
+  }
+
+  def activateGnlCaption(captionDiv: SafeCssElT): Unit = {
+    captionDiv.addClasses(GNL_ACTIVE_CSS_CLASS)
+  }
+  def deactivateGnlCaption(captionDiv: SafeCssElT): Unit = {
+    captionDiv.removeClass(GNL_ACTIVE_CSS_CLASS)
   }
 
 }

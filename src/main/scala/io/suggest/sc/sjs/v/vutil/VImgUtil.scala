@@ -14,8 +14,11 @@ import org.scalajs.dom.raw.HTMLImageElement
 /** View-утиль для взаимодейтсвия с тегами картинок. */
 object VImgUtil {
 
+  // TODO Задействовать safeEl.
+
   /** Прочитать значение из аттрибута data-width. */
   def readDataWidth(el: Element) = VUtil.getIntAttribute(el, "data-width")
+
   /** Прочитать значение из аттрибута data-height. */
   def readDataHeight(el: Element) = VUtil.getIntAttribute(el, "data-height")
 

@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.v.vutil
 
 import io.suggest.sc.ScConstants
 import io.suggest.sjs.common.model.browser.{MBrowser, IBrowser}
-import io.suggest.sjs.common.view.safe.SafeEl
+import io.suggest.sjs.common.view.safe.{SafeElT, SafeEl}
 import io.suggest.sjs.common.view.safe.css.{SafeCssElT, SafeCssEl}
 import org.scalajs.dom
 import org.scalajs.dom.{Node, Element}
@@ -64,27 +64,6 @@ object VUtil {
   }
 
   /**
-   * Извлечь целое число из строки, если оно там есть.
-   * @param s Строка, содержащая число, "100px" например.
-   * @param radix Основание системы счисления.
-   * @see [[https://github.com/scala-js/scala-js/blob/master/javalanglib/src/main/scala/java/lang/Integer.scala#L65 По мотивам Integer.parseInt()]]
-   * @return Целое, если найдено.
-   */
-  def extractInt(s: String, radix: Int = 10): Option[Int] = {
-    Option(s)
-      .filter { !_.isEmpty }
-      .flatMap { s1 =>
-        val res = js.Dynamic.global.parseInt(s1, radix)
-          .asInstanceOf[scala.Double]
-        if (res.isNaN || res > Integer.MAX_VALUE || res < Integer.MIN_VALUE) {
-          None
-        } else {
-          Some(res.toInt)
-        }
-      }
-  }
-
-  /**
    * Определить, если ли у тега или его родителей указанный css-класс.
    * @param el Исходный тег, от которого пляшем.
    * @param className название искомого css-класса.
@@ -92,7 +71,7 @@ object VUtil {
    *         None, если указанный класс не найден у тега и его родителей.
    */
   @tailrec
-  def hasCssClass(el: SafeCssElT, className: String): Option[SafeCssElT] = {
+  def hasCssClass(el: SafeElT, className: String): Option[SafeElT] = {
     if (el.containsClass(className)) {
       Some(el)
     } else {
@@ -100,7 +79,7 @@ object VUtil {
       if (parentEl == null) {
         None
       } else {
-        val parentSafeEl = SafeCssEl( parentEl )
+        val parentSafeEl = SafeEl( parentEl )
         hasCssClass(parentSafeEl, className)
       }
     }

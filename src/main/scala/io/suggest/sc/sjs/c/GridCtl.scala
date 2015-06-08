@@ -11,7 +11,7 @@ import io.suggest.sc.sjs.v.res.CommonRes
 import io.suggest.sc.sjs.v.vutil.VUtil
 import io.suggest.sjs.common.model.browser.MBrowser
 import io.suggest.sjs.common.model.dom.DomListIterator
-import io.suggest.sjs.common.util.{TouchUtil, SjsLogWrapper, SjsLogger}
+import io.suggest.sjs.common.util.{SjsLogWrapper, SjsLogger}
 import io.suggest.sjs.common.view.safe.SafeEl
 import org.scalajs.dom.{Element, Event}
 import org.scalajs.dom.raw.HTMLDivElement
@@ -145,20 +145,7 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
         updateContainerHeight(containerDiv)
 
         // Повесить события на блоки
-        initNewBlocks(newBlocks)
-      }
-    }
-  }
-
-  /**
-   * Инициализировать новые блоки: повесить события.
-   * @param blocks Новые блоки.
-   */
-  def initNewBlocks(blocks: Seq[MBlockInfo]): Unit = {
-    for (b <- blocks) {
-      val safe = SafeEl( b.block )
-      safe.addEventListener(TouchUtil.clickEvtName) { (e: Event) =>
-        onBlockClick(b, e)
+        GridView.initNewBlocks(newBlocks)
       }
     }
   }
@@ -253,10 +240,11 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
     DomListIterator(from.children)
       .foldLeft(List.empty[MBlockInfo]) { (acc, e) =>
         // Пытаемся извлечь из каждого div'а необходимые аттрибуты.
+        val safeEl = SafeEl(e)
         val mbiOpt = for {
-          id <- VUtil.getAttribute(e, "id")
-          w  <- VUtil.getIntAttribute(e, Block.BLK_WIDTH_ATTR)
-          h  <- VUtil.getIntAttribute(e, Block.BLK_HEIGHT_ATTR)
+          id <- safeEl.getAttribute("id")
+          w  <- safeEl.getIntAttributeStrict(Block.BLK_WIDTH_ATTR)
+          h  <- safeEl.getIntAttributeStrict(Block.BLK_HEIGHT_ATTR)
         } yield {
           MBlockInfo(id = id, width = w, height = h, block = e.asInstanceOf[HTMLDivElement])
         }

@@ -1,9 +1,12 @@
 package io.suggest.sc.sjs.v.grid
 
-import io.suggest.sc.sjs.m.mgrid.{MGridDom, ICwCm}
+import io.suggest.sc.sjs.c.GridCtl
+import io.suggest.sc.sjs.m.mgrid.{MBlockInfo, ICwCm}
 import io.suggest.sc.sjs.m.msrv.ads.find.MFoundAdJson
-import io.suggest.sc.sjs.v.vutil.{SetStyleDisplay, VUtil}
-import io.suggest.sjs.common.model.dom.DomListIterator
+import io.suggest.sc.sjs.v.vutil.{OnClick, SetStyleDisplay, VUtil}
+import io.suggest.sjs.common.util.DataUtil
+import io.suggest.sjs.common.view.safe.SafeEl
+import org.scalajs.dom.Event
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -13,7 +16,7 @@ import org.scalajs.dom.raw.HTMLDivElement
  * Description: view плитки рекламный карточек. Он получает команды от контроллеров или других view'ов,
  * поддерживая тем самым состояние отображаемой плитки карточек.
  */
-object GridView extends SetStyleDisplay {
+object GridView extends SetStyleDisplay with OnClick {
 
   /**
    * Выставить новый размер контейнера сетки.
@@ -103,8 +106,22 @@ object GridView extends SetStyleDisplay {
    * @return Новая относительная координата на основе abs и возможного значения из src.
    */
   private def _fixRelCoord(src: String, abs: Int): Int = {
-    VUtil.extractInt(src)
+    DataUtil.extractInt(src)
       .fold(abs)(abs - _)
+  }
+
+
+  /**
+   * Инициализировать новые блоки: повесить события.
+   * @param blocks Новые блоки.
+   */
+  def initNewBlocks(blocks: TraversableOnce[MBlockInfo]): Unit = {
+    for (b <- blocks) {
+      val safe = SafeEl( b.block )
+      onClick(safe) { e: Event =>
+        GridCtl.onBlockClick(b, e)
+      }
+    }
   }
 
 }

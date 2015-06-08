@@ -17,6 +17,16 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
  */
 object NodeCtl extends CtlT {
 
+  /** Костыли для переключения узлов. Нужно вызывать после заливки нового
+    * состояния с новым rcvrAdnId в fsm при переключении из левых контроллеров. */
+  def nodeSwitched(adnId: String): Unit = {
+    // Меняем только id узла. Остальное будет сброшено на экране автоматом,
+    // а в самом состоянии - через replaceState (ниже).
+    MScFsm.replaceState {
+      MScState(rcvrAdnId = Some(adnId))
+    }
+  }
+
   /**
    * Полная процедура переключения на другой узел.
    *
@@ -41,11 +51,13 @@ object NodeCtl extends CtlT {
       minx <- inxFut
     } yield {
       // Сохранить новое состояние выдачи.
-      MScFsm.pushState(
-        MScState(
-          rcvrAdnId = minx.adnIdOpt
+      if (isFirstRun) {
+        MScFsm.pushState(
+          MScState(
+            rcvrAdnId = minx.adnIdOpt
+          )
         )
-      )
+      }
 
       // Сразу запускаем запрос к серверу за рекламными карточками.
       // Таким образом, под прикрытием welcome-карточки мы отфетчим и отрендерим плитку в фоне.
@@ -78,10 +90,11 @@ object NodeCtl extends CtlT {
 
       if (isFirstRun) {
         DocumentView.initDocEvents()
-        wcHideFut onComplete { case _ =>
-          // Очищать фон нужно только первый раз. При последующей смене узла это не требуется уже.
-          LayoutView.eraseBg(l.rootDiv)
-        }
+      }
+
+      // Очищаем подложку фона выдачи.
+      wcHideFut onComplete { case _ =>
+        LayoutView.eraseBg(l.rootDiv)
       }
 
       // В порядке очереди запустить инициализацию панели поиска.

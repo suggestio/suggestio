@@ -22,4 +22,8 @@ trait SetStyleDisplay {
     setDisplay(el, "none")
   }
 
+  protected def isDisplayedBlock(el: HTMLElement): Boolean = {
+    el.style.display == "block"
+  }
+
 }

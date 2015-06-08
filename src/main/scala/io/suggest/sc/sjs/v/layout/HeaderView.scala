@@ -2,9 +2,7 @@ package io.suggest.sc.sjs.v.layout
 
 import io.suggest.sc.sjs.c.HeaderCtl
 import io.suggest.sc.sjs.m.msc.fsm.MCatMeta
-import io.suggest.sc.sjs.m.mv.MTouchLock
-import io.suggest.sc.sjs.v.vutil.SetStyleDisplay
-import io.suggest.sjs.common.util.TouchUtil
+import io.suggest.sc.sjs.v.vutil.{OnClick, SetStyleDisplay}
 import io.suggest.sjs.common.view.safe.SafeEl
 import io.suggest.sjs.common.view.safe.css.SafeCssElT
 import io.suggest.sjs.common.view.safe.evtg.SafeEventTargetT
@@ -12,15 +10,13 @@ import org.scalajs.dom.Event
 import org.scalajs.dom.raw.HTMLDivElement
 import io.suggest.sc.ScConstants.Header._
 
-import scala.scalajs.js
-
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 03.06.15 9:48
  * Description: Представление строки заголовка выдачи.
  */
-object HeaderView extends SetStyleDisplay {
+object HeaderView extends SetStyleDisplay with OnClick {
 
   /**
    * Как этот view должен реагировать на открытие панели поиска?
@@ -39,10 +35,8 @@ object HeaderView extends SetStyleDisplay {
 
   /** Инициализация кнопки отображения панели поиска. */
   def initShowSearchPanelBtn(btnSafe: SafeEventTargetT): Unit = {
-    btnSafe.addEventListener(TouchUtil.clickEvtName) { e: Event =>
-      if ( !MTouchLock() ) {
-        HeaderCtl.showSearchPanelBtnClick(e)
-      }
+    onClick(btnSafe) { e: Event =>
+      HeaderCtl.showSearchPanelBtnClick(e)
     }
   }
 
@@ -52,13 +46,11 @@ object HeaderView extends SetStyleDisplay {
    */
   def initHideSearchPanelBtn(btnsSafe: TraversableOnce[SafeEventTargetT]): Unit = {
     // Один инстанс листенера расшарен между всеми инициализируемыми кнопками.
-    val listener: js.Function1[Event, _] = { e: Event =>
-      if ( !MTouchLock() ) {
-        HeaderCtl.hideSearchPanelBtnClick(e)
-      }
+    val listener1 = _getClickListener { e: Event =>
+      HeaderCtl.hideSearchPanelBtnClick(e)
     }
     for (btnSafe <- btnsSafe) {
-      btnSafe.addEventListener(TouchUtil.clickEvtName)(listener)
+      _onClickRaw(btnSafe)(listener1)
     }
   }
 
@@ -87,19 +79,15 @@ object HeaderView extends SetStyleDisplay {
 
   /** Инициализация кнопки показа панели навигации (слева). */
   def initShowNavBtn(btnSafe: SafeEventTargetT): Unit = {
-    btnSafe.addEventListener(TouchUtil.clickEvtName) { e: Event =>
-      if (!MTouchLock()) {
-        HeaderCtl.showNavPanelBtnClick(e)
-      }
+    onClick(btnSafe) { e: Event =>
+      HeaderCtl.showNavPanelBtnClick(e)
     }
   }
 
   /** Инициализация событий кнопки сокрытия панели навигации. */
   def initHideNavPanelBtn(btnSafe: SafeEventTargetT): Unit = {
-    btnSafe.addEventListener(TouchUtil.clickEvtName) { e: Event =>
-      if (!MTouchLock()) {
-        HeaderCtl.hideNavPanelBtnClick(e)
-      }
+    onClick(btnSafe) { e: Event =>
+      HeaderCtl.hideNavPanelBtnClick(e)
     }
   }
 

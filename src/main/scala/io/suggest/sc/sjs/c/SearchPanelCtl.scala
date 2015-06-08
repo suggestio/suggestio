@@ -137,16 +137,15 @@ object SearchPanelCtl extends CtlT with SjsLogger with GridOffsetSetter {
     val clickedNode = e.target.asInstanceOf[Node] // Node максимум, т.к. клик может быть по узлам svg.
     if (clickedNode != null) {
       val safeClickedEl = SafeEl(clickedNode)
-      for (catElSafe <- VUtil.hasCssClass(safeClickedEl, Cats.ONE_CAT_LINK_CSS_CLASS)) {
-        // TODO Выпилить тут каст к Element. Надо получать значение аттрибута как-то через safeEl.
-        val catEl = catElSafe._underlying.asInstanceOf[Element]
-        for (catState <- MCatMeta.fromEl(catEl)) {
-          MScFsm.transformState() { curState =>
-            curState.copy(
-              cat = Some(catState),
-              searchPanelOpened = false
-            )
-          }
+      for {
+        catElSafe <- VUtil.hasCssClass(safeClickedEl, Cats.ONE_CAT_LINK_CSS_CLASS)
+        catState  <- MCatMeta.fromEl(catElSafe)
+      } {
+        MScFsm.transformState() { curState =>
+          curState.copy(
+            cat = Some(catState),
+            searchPanelOpened = false
+          )
         }
       }
     }
