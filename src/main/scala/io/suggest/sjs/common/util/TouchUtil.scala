@@ -25,7 +25,17 @@ object TouchUtil {
     }
   }
 
+  /** Название события для выявления клика на touch-девайсах. */
+  def EVT_NAME_TOUCH_CLICK = "touchend"
+
+  /** Название события клика на традиционных девайсах. */
+  def EVT_NAME_CLICK       = "click"
+
   /** Название события клика для текущего девайса. */
-  def clickEvtName = if (isTouchDevice) "touchend" else "click"
+  def clickEvtName = if (isTouchDevice) {
+    EVT_NAME_TOUCH_CLICK
+  } else {
+    EVT_NAME_CLICK
+  }
 
 }

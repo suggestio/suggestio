@@ -2,8 +2,8 @@ package io.suggest.sjs.common.view.safe.css
 
 import java.util.regex.Pattern
 
-import io.suggest.sjs.common.view.safe.ISafe
-import org.scalajs.dom.{Node, Element}
+import io.suggest.sjs.common.view.safe.attr.SafeAttrUtilT
+import org.scalajs.dom.Node
 import org.scalajs.dom.raw.{NamedNodeMap, DOMTokenList}
 
 import scala.scalajs.js
@@ -16,7 +16,7 @@ import scala.scalajs.js.UndefOr
  * Description: Враппер для безопасного доступа к управлению css-классами тега.
  */
 
-trait SafeCssElT extends ISafe {
+trait SafeCssElT extends SafeAttrUtilT {
 
   override type T <: Node
 
@@ -33,96 +33,40 @@ trait SafeCssElT extends ISafe {
   }
 
   /** Вспомогательная подсистема для отработки разных вариантов.  */
-  protected trait Helper[T] {
+  protected trait Helper[T] extends super.Helper[T] {
+
+    override def attrName = "class"
 
     /** Есть classList. */
     def withClassList(classList: DOMTokenList): T
-
-    /** Нету classList, но возможно есть значение аттрибута. */
-    def withAttrValue(classAttr: Option[String]): T
-
-    /** Не найдено способа получения значения аттрибута. */
-    def notFound: T = throw new NoSuchElementException("css n/a")
 
     // Для возможности дополнения логики в setter helper'е используются эти методы.
     protected def _usingCll(cll: DOMTokenList): T = {
       withClassList(cll)
     }
     
-    protected def _usingElGetAttrValue(attrValue: Option[String]): T = {
-      withAttrValue(attrValue)
-    }
-
-    protected def _usingNodeAttrsGetValue(attrValue: Option[String]): T = {
-      withAttrValue(attrValue)
-    }
-    
-    def execute(): T = {
+    override def execute(): T = {
       val el1 = SafeCssElStub(_underlying)
       val cllOrUndef = el1.classList
 
       if (cllOrUndef.isDefined) {
         // Std-compilant browser
         _usingCll(cllOrUndef.get)
-
       } else {
-        val maybeGetAttrF = el1.getAttribute
-        val attrName = "class"
-        if (maybeGetAttrF.nonEmpty) {
-          // В обход через аттрибуты тега.
-          val attrValue = Option( maybeGetAttrF.get.apply(attrName) )
-          _usingElGetAttrValue(attrValue)
-
-        } else {
-          val maybeAttrs = el1.attributes
-          if (maybeAttrs.nonEmpty) {
-            val attrValue = Option( maybeAttrs.get.getNamedItem(attrName) )
-              .flatMap(attr => Option(attr.value))
-            _usingNodeAttrsGetValue(attrValue)
-
-          } else {
-            notFound
-          }
-        }
+        super.execute()
       }
     }
   }
 
   /** Расширенный Helper с поддержкой безопасного выставления class-аттрибута. */
-  protected trait SetterHelper[T] extends Helper[T] {
+  protected trait SetterHelper[T] extends Helper[T] with super.SetterHelper[T] {
     // Режимы нужны для передачи результатов логики execute в setAttribute().
-    protected def MODE_UNKNOWN      = 0
-    protected def MODE_CLL          = 1
-    protected def MODE_EL_GET_ATTR  = 2
-    protected def MODE_NODE_ATTRS   = 3
-
-    protected var _mode: Int = MODE_UNKNOWN
+    protected def MODE_CLL          = 3
 
     // Для возможности дополнения логики в setter helper'е используются эти методы.
     override protected def _usingCll(cll: DOMTokenList): T = {
       _mode = MODE_CLL
       super._usingCll(cll)
-    }
-
-    override protected def _usingElGetAttrValue(attrValue: Option[String]): T = {
-      _mode = MODE_EL_GET_ATTR
-      super._usingElGetAttrValue(attrValue)
-    }
-
-    override protected def _usingNodeAttrsGetValue(attrValue: Option[String]): T = {
-      _mode = MODE_NODE_ATTRS
-      super._usingNodeAttrsGetValue(attrValue)
-    }
-
-    /** Безопасно выставить аттрибут class для текущего тега/узла, когда classList недоступен. */
-    def setAttribute(v: String): Unit = {
-      if (_mode == MODE_EL_GET_ATTR) {
-        _underlying.asInstanceOf[Element].setAttribute("class", v)
-      } else if (_mode == MODE_NODE_ATTRS) {
-        _underlying.attributes.getNamedItem("class").value = v
-      } else {
-        notFound
-      }
     }
   }
 
@@ -142,7 +86,6 @@ trait SafeCssElT extends ISafe {
         _containsClassViaAttr(name, classAttr)
       }
       override def notFound = false
-
     }
     h.execute()
   }
@@ -207,7 +150,7 @@ case class SafeCssEl(_underlying: Node) extends SafeCssElT {
 
 
 /** Интерфейс для необязательно доступного свойства Element.classList. */
-trait SafeCssElStub extends js.Object {
+sealed trait SafeCssElStub extends js.Object {
   var classList: UndefOr[DOMTokenList] = js.native
 
   def getAttribute: UndefOr[js.Function1[String, String]] = js.native
