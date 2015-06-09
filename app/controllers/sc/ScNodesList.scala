@@ -76,7 +76,8 @@ trait ScNodesListBase extends ScController with PlayMacroLogsI {
         gnls4Render <- _gnls4RenderFut
       } yield {
         new NodeListRenderArgs {
-          override def nodeLayers: Seq[GeoNodesLayer] = gnls4Render
+          override def apiVsn       = _nsArgs.apiVsn
+          override def nodeLayers   = gnls4Render
           override def currNode: Option[MAdnNode] = Some(nextNodeGdr.node)
         }
       }

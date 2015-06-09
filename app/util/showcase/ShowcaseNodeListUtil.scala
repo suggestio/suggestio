@@ -153,10 +153,10 @@ object ShowcaseNodeListUtil {
 
   def getTownLayerOfNode(node: MAdnNode)(implicit lang: Messages): Future[GeoNodesLayer] = {
     getTownOfNode(node)
-      .map(town2layer)
+      .map { town2layer(_) }
   }
 
-  def town2layer(townNode: MAdnNode) = {
+  def town2layer(townNode: MAdnNode, expanded: Boolean = false) = {
     GeoNodesLayer( Seq(townNode), NodeGeoLevels.NGL_TOWN )
   }
 
@@ -173,16 +173,18 @@ object ShowcaseNodeListUtil {
   }
 
   /** Обернуть список городов в гео-слой. */
-  def townsToLayer(townNodes: Seq[MAdnNode])(implicit lang: Messages): GeoNodesLayer = {
+  def townsToLayer(townNodes: Seq[MAdnNode], expanded: Boolean)(implicit lang: Messages): GeoNodesLayer = {
     if (townNodes.isEmpty) {
-      GeoNodesLayer(Seq.empty, NodeGeoLevels.NGL_TOWN)
-    } else if (townNodes.tail.isEmpty) {
-      town2layer(townNodes.head)
+      GeoNodesLayer(Seq.empty, NodeGeoLevels.NGL_TOWN, expanded = expanded)
+    } else if (townNodes.size == 1) {
+      town2layer(townNodes.head, expanded)
     } else {
       GeoNodesLayer(
-        nodes = townNodes,
-        ngl = NodeGeoLevels.NGL_TOWN,
-        nameOpt = Some( Messages(NodeGeoLevels.NGL_TOWN.l10nPluralShort)) )
+        nodes     = townNodes,
+        ngl       = NodeGeoLevels.NGL_TOWN,
+        nameOpt   = Some( Messages(NodeGeoLevels.NGL_TOWN.l10nPluralShort)),
+        expanded  = expanded
+      )
     }
   }
 
@@ -229,7 +231,8 @@ object ShowcaseNodeListUtil {
     MAdnNode.dynSearch(sargs)
   }
 
-  def getDistrictsLayerForTown(townNode: MAdnNode, gravity: Option[GeoPoint])(implicit lang: Messages): Future[GeoNodesLayer] = {
+  def getDistrictsLayerForTown(townNode: MAdnNode, gravity: Option[GeoPoint], expanded: Boolean = false)
+                              (implicit lang: Messages): Future[GeoNodesLayer] = {
     val townNodeId = townNode.id.get
     getDistrictsForTown(townNodeId, gravity)
       .map { districtNodes =>
@@ -240,9 +243,10 @@ object ShowcaseNodeListUtil {
           .flatMap(AdnShownTypes.maybeWithName)
           .fold(NodeGeoLevels.NGL_TOWN_DISTRICT.l10nPluralShort)(_.pluralNoTown)
         GeoNodesLayer(
-          nodes = districtNodes,
-          ngl = NodeGeoLevels.NGL_TOWN_DISTRICT,
-          nameOpt = Some( Messages(nameL10n) )
+          nodes   = districtNodes,
+          ngl     = NodeGeoLevels.NGL_TOWN_DISTRICT,
+          nameOpt = Some( Messages(nameL10n) ),
+          expanded = expanded
         )
       }
   }
@@ -269,7 +273,7 @@ object ShowcaseNodeListUtil {
    * @param districtAdnId id узла района.
    * @return Фьючерс со списком слоёв с узлами.
    */
-  def getBuildingsLayersOfDistrict(districtAdnId: String, gravity: Option[GeoPoint])
+  def getBuildingsLayersOfDistrict(districtAdnId: String, gravity: Option[GeoPoint], expanded: Boolean = false)
                                   (implicit lang: Messages): Future[List[GeoNodesLayer]] = {
     getBuildingsOfDistrict(districtAdnId, gravity)
       .map { nodes =>
@@ -278,7 +282,7 @@ object ShowcaseNodeListUtil {
           .map { case (sti, layNodes) =>
             val ast: AdnShownType = sti
             val lsSorted = layNodes.sortBy(_.meta.nameShort)
-            GeoNodesLayer(lsSorted, NodeGeoLevels.NGL_BUILDING, Some(Messages(ast.pluralNoTown)))
+            GeoNodesLayer(lsSorted, NodeGeoLevels.NGL_BUILDING, Some(Messages(ast.pluralNoTown)), expanded = expanded)
           }
           .toList
           .sortBy(_.nameOpt.getOrElse(""))
@@ -309,10 +313,10 @@ object ShowcaseNodeListUtil {
       // Это -- город.
       case NodeGeoLevels.NGL_TOWN =>
         val districtsLayerFut = getDistrictsLayerForTown(currNode, gravity0)
-        // 2014.sep.25: Нужно выдавать другие города в целях отладки. Это должно быть отлючаемо.
+        // 2014.sep.25: Нужна возможность выдавать другие города. Это должно быть отлючаемо.
         val townsLayerFut: Future[GeoNodesLayer] = if (SHOW_ALL_TOWNS) {
           allTowns(gravity1) map { townNodes =>
-            townsToLayer(townNodes)
+            townsToLayer(townNodes, expanded = true)
           }
         } else {
           Future successful town2layer(currNode)
@@ -333,14 +337,14 @@ object ShowcaseNodeListUtil {
           townFut flatMap { townNode =>
             currNode.geo.directParentIds.headOption match {
               case Some(dparent) =>
-                getDistrictsLayerForTown(townNode, gravity0)
+                getDistrictsLayerForTown(townNode, gravity0, expanded = true)
                   .map(Some.apply)
               case None =>
                 Future successful None
             }
           }
         }
-        val townLayerFut = townFut.map { town2layer }
+        val townLayerFut = townFut.map { town2layer(_) }
         for {
           townLayer           <- townLayerFut
           districtsLayerOpt   <- districtsOptFut
@@ -361,10 +365,10 @@ object ShowcaseNodeListUtil {
         val districtsLayerFut = townFut flatMap { townNode =>
           getDistrictsLayerForTown(townNode, gravity1)
         }
-        val townLayerFut = townFut.map(town2layer)
+        val townLayerFut = townFut.map { town2layer(_) }
         val buildingsLayersFut = {
           currNode.geo.directParentIds.headOption match {
-            case Some(currDistrictId) => getBuildingsLayersOfDistrict(currDistrictId, gravity1)
+            case Some(currDistrictId) => getBuildingsLayersOfDistrict(currDistrictId, gravity1, expanded = true)
             case None                 => Future successful Nil
           }
         }

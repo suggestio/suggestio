@@ -25,6 +25,9 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImp
 
     /** Сервер сам сочиняет id блоков при рендере? */
     def serverSideBlockIds: Boolean
+
+    /** В v1 была чрезвычайно эффективная адресация div'ов узлов в node list. */
+    def geoNodeIdAsClass: Boolean = false
   }
 
   override type T = Val
@@ -35,6 +38,7 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImp
     override def renderActionUrls  = true
     /** Coffee-версия сама придумывает id по-порядку и управляет ими. */
     override def serverSideBlockIds = false
+    override def geoNodeIdAsClass   = true
   }
 
   /** Выдача, переписанная на scala.js. Исходная версия. */

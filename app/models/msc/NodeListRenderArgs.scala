@@ -10,8 +10,9 @@ import models.{GeoNodesLayer, MAdnNode}
  */
 
 trait NodeListRenderArgs extends SyncRenderInfoDflt {
-  def nodeLayers: Seq[GeoNodesLayer]
-  def currNode: Option[MAdnNode]
+  def nodeLayers  : Seq[GeoNodesLayer]
+  def currNode    : Option[MAdnNode]
+  def apiVsn      : MScApiVsn
 }
 
 /** Враппер для [[NodeListRenderArgs]].  */
@@ -19,7 +20,8 @@ trait NodeListRenderArgsWrapper extends NodeListRenderArgs {
   def _nlraUnderlying: NodeListRenderArgs
 
   override def nodeLayers = _nlraUnderlying.nodeLayers
-  override def currNode = _nlraUnderlying.currNode
+  override def currNode   = _nlraUnderlying.currNode
+  override def apiVsn     = _nlraUnderlying.apiVsn
 
   override def jsStateOpt: Option[ScJsState] = _nlraUnderlying.jsStateOpt
   override def syncRender = _nlraUnderlying.syncRender

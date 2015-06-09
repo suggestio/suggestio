@@ -26,7 +26,7 @@
 }
 
 
-<div class="geo-nodes-list" id="geoNodesListContainer" data-layers-count="@nodeLayers.iterator.length"
+<div class="geo-nodes-list" id="geoNodesListContainer" data-layers-count="@nodeLayers.size"
      xmlns="http://www.w3.org/1999/html">
 
   @nodeLayers.iterator.zipWithIndex.map { case (nl, i) =>
@@ -53,7 +53,10 @@
           @_scrollableContainerTpl( (if(showExpanded) "" else "__hidden ") + "geo-nodes-list_rows", "geoLayerNodes" + i ) {
             @nl.nodes.iterator.zipWithIndex.map { case (mnode, si) =>
               @nodeSyncUrl(mnode) {
-                <div class="geo-nodes-list_row @if( si+1 == nl.nodes.length ){__no-border} @if(si%2 == 0){__odd}else{__even} js-geo-node gn-@mnode.id" data-id="@mnode.id">
+                <div class="geo-nodes-list_row @if( si+1 == nl.nodes.length ){__no-border}
+                            @if(si%2 == 0){__odd}else{__even} js-geo-node
+                            @if(args.apiVsn.geoNodeIdAsClass) {gn-@mnode.id"} else {" id="gn-@mnode.id"}
+                     data-id="@mnode.id">
                   @mnode.meta.nameShort
                 </div>
               }
@@ -76,6 +79,7 @@
   } @* nodeLayers *@
 
 </div>
+
 
 @* TODO Нужно вынести футер отсюда в _navTpl. scrollable-список мешает, нужно пересчитать высоту. *@
 @_leftFooterTpl()
