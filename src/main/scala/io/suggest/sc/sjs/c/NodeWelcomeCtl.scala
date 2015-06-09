@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.c
 
-import io.suggest.sc.sjs.c.cutil.CtlT
+import io.suggest.sc.sjs.c.cutil.{KbdListenerIdT, CtlT}
 import io.suggest.sc.sjs.m.mdom.listen.MListeners
 import io.suggest.sc.sjs.m.mwc.{WcHidePromise_t, SafeRootDiv_t, MWelcomeState, MWcDom}
 import io.suggest.sc.sjs.v.welcome.NodeWelcomeView
@@ -18,9 +18,7 @@ import scala.concurrent.{Future, Promise}
  * Created: 25.05.15 13:17
  * Description: Контроллер для реакций на происходящее с карточкой приветствия узла.
  */
-object NodeWelcomeCtl extends CtlT {
-
-  private def KEY_LISTENER_ID = getClass.getSimpleName
+object NodeWelcomeCtl extends CtlT with KbdListenerIdT {
 
   /** Сработал таймер таймаута отображения приветствия. */
   def displayTimeout(safeEl: SafeRootDiv_t, p: WcHidePromise_t): Unit = {
@@ -47,7 +45,7 @@ object NodeWelcomeCtl extends CtlT {
     // Родительский элемент может быть null, если элемент уже удален.
     if (parent != null) {
       NodeWelcomeView.removeWelcome(rootDiv, parent)
-      MListeners.removeKeyUpListener(KEY_LISTENER_ID)
+      removeKeyUpListener()
     }
   }
 
@@ -92,7 +90,7 @@ object NodeWelcomeCtl extends CtlT {
         val safeEl: SafeRootDiv_t = SafeEl(rootEl)
 
         // Подписываемся на события клавиатуры
-        MListeners.addKeyUpListener(KEY_LISTENER_ID) { e =>
+        MListeners.addKeyUpListener(KBD_LISTENER_ID) { e =>
           if ( isHideOnKey(e.keyCode) ) {
             clicked(e, safeEl, p)
           }

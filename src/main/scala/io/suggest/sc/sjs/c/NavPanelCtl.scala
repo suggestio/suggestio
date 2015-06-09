@@ -1,8 +1,7 @@
 package io.suggest.sc.sjs.c
 
-import io.suggest.sc.sjs.c.cutil.{GridOffsetSetter, CtlT}
+import io.suggest.sc.sjs.c.cutil.{OnEscKeyUpT, GridOffsetSetter, CtlT}
 import io.suggest.sc.sjs.m.magent.MAgent
-import io.suggest.sc.sjs.m.mdom.listen.MListeners
 import io.suggest.sc.sjs.m.mgrid.{MGrid, MGridState}
 import io.suggest.sc.sjs.m.mnav.MNavDom
 import io.suggest.sc.sjs.m.msc.fsm.MScFsm
@@ -12,7 +11,6 @@ import io.suggest.sc.sjs.v.vutil.VUtil
 import io.suggest.sjs.common.model.dom.DomListIterator
 import io.suggest.sjs.common.view.safe.{SafeElT, SafeEl}
 import io.suggest.sc.ScConstants.NavPane._
-import org.scalajs.dom.ext.KeyCode
 import org.scalajs.dom.{KeyboardEvent, Node, Event}
 import org.scalajs.dom.raw.{HTMLElement, HTMLDivElement}
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
@@ -23,9 +21,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
  * Created: 28.05.15 11:31
  * Description: Контроллер панели навигации: инициализация панели, реакция на события и т.д.
  */
-object NavPanelCtl extends CtlT with GridOffsetSetter {
-
-  private def KEY_LISTENER_ID = getClass.getSimpleName
+object NavPanelCtl extends CtlT with GridOffsetSetter with OnEscKeyUpT {
 
   /** Инициализация панели навигации, контроллера и всего остального. */
   def initNav(): Unit = {
@@ -58,17 +54,14 @@ object NavPanelCtl extends CtlT with GridOffsetSetter {
     for(rootDiv <- rootDivOpt) {
       NavPaneView.showPanel(rootDiv)
       // Добавить контроллер в обработчики клавиатуры
-      MListeners.addKeyUpListener(KEY_LISTENER_ID)(onKeyUp)
+      addKeyUpListener()
     }
     maybeRebuildGrid(rootDivOpt, isHiddenOpt = Some(false))
   }
 
-  /** Экшен реакции на клавиатуру, когда панель открыта. */
-  def onKeyUp(e: KeyboardEvent): Unit = {
-    val kc = e.keyCode
-    if (kc == KeyCode.escape) {
-      HeaderCtl.hideNavPanelBtnClick(e)
-    }
+  /** Нажата клавиша ESC. */
+  override protected def onFilteredKeyUp(e: KeyboardEvent): Unit = {
+    HeaderCtl.hideNavPanelBtnClick(e)
   }
 
   /** Если ширина экрана позволяет, то выставить сетке новый rightOffset и отребилдить. */
@@ -97,7 +90,7 @@ object NavPanelCtl extends CtlT with GridOffsetSetter {
       NavPaneView.hidePanel(rootDiv)
     }
     maybeRebuildGrid(rootDivOpt, isHiddenOpt = Some(true))
-    MListeners.removeKeyUpListener(KEY_LISTENER_ID)
+    removeKeyUpListener()
   }
 
   /** Найти и починить раскрытые сервером геослои. */
