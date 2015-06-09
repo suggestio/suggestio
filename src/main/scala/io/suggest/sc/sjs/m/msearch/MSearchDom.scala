@@ -14,7 +14,7 @@ trait MSearchDomT extends GetDivById {
 
   def rootDiv         = getDivById(ROOT_DIV_ID)
 
-  def ftsInput        = getElementById[HTMLInputElement](FTS_FIELD_ID)
+  def ftsInput        = getElementById[HTMLInputElement](Fts.INPUT_ID)
 
   def tabBtnsDiv      = getDivById(TAB_BTNS_DIV_ID)
 

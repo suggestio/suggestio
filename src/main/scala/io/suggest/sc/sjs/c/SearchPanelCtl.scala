@@ -26,11 +26,6 @@ object SearchPanelCtl extends CtlT with SjsLogger with GridOffsetSetter with OnE
   def initNodeLayout(): Unit = {
     SearchPanelView.adjust()
 
-    // Инициализация search-панели: реакция на кнопку закрытия/открытия, поиск при наборе, табы и т.д.
-    for (input <- MSearchDom.ftsInput) {
-      SearchPanelView.initFtsField( SafeEl(input) )
-    }
-
     // Инициализация кнопок переключения табов поиска.
     for {
       mtab    <- MSearchDom.mtabs
@@ -43,6 +38,8 @@ object SearchPanelCtl extends CtlT with SjsLogger with GridOffsetSetter with OnE
     for (catListDiv <- MCatsTab.contentDiv) {
       SearchPanelView.initCatsList( SafeEl(catListDiv) )
     }
+
+    FtsSearchCtl.initNodeLayout()
   }
 
 
@@ -69,7 +66,6 @@ object SearchPanelCtl extends CtlT with SjsLogger with GridOffsetSetter with OnE
 
   /** Экшен сокрытия панели. */
   def hidePanel(): Unit = {
-    // TODO Перепилить на MScFsm
     val rootDivOpt = MSearchDom.rootDiv
     for (rootDiv <- rootDivOpt) {
       // Скрыть на хидере главного экрана кнопки сокрытия панели
@@ -122,18 +118,6 @@ object SearchPanelCtl extends CtlT with SjsLogger with GridOffsetSetter with OnE
         SearchPanelView.hideTab(rootDiv, btnDiv = btnDivSafe)
       }
     }
-  }
-
-  def onFtsFieldFocus(e: Event): Unit = {
-    error("TODO") // TODO
-  }
-
-  def onFtsFieldKeyUp(e: Event): Unit = {
-    error("TODO") // TODO
-  }
-
-  def onFtsFieldBlur(e: Event): Unit = {
-    error("TODO") // TODO
   }
 
   /**

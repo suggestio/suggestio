@@ -4,6 +4,7 @@ import io.suggest.sc.ScConstants.Block
 import io.suggest.sc.sjs.c.cutil.{GridOffsetSetter, CtlT}
 import io.suggest.sc.sjs.m.magent.MAgent
 import io.suggest.sc.sjs.m.mgrid._
+import io.suggest.sc.sjs.m.msc.fsm.MScStateT
 import io.suggest.sc.sjs.m.msrv.ads.find.{MFindAdsReqEmpty, MFindAdsReqDflt, MFindAds}
 import io.suggest.sc.sjs.util.grid.builder.V1Builder
 import io.suggest.sc.sjs.v.grid.{LoaderView, GridView}
@@ -42,9 +43,10 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
     MGrid.state.updateWith(sz)
   }
 
-  def askMoreAds(mgs: MGridState = MGrid.state): Future[MFindAds] = {
+  def askMoreAds(): Future[MFindAds] = {
     val args = new MFindAdsReqEmpty with MFindAdsReqDflt {
-      override def _mgs = mgs
+      override val _mgs = super._mgs
+      override val _fsmState = super._fsmState
     }
     MFindAds.findAds(args)
   }

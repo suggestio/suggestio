@@ -7,7 +7,7 @@ import io.suggest.sc.sjs.v.vutil.{OnClick, SetStyleDisplay, VUtil}
 import io.suggest.sjs.common.view.safe.SafeEl
 import io.suggest.sc.ScConstants.Search._
 import org.scalajs.dom.Event
-import org.scalajs.dom.raw.{HTMLDivElement, HTMLInputElement}
+import org.scalajs.dom.raw.HTMLDivElement
 
 /**
  * Suggest.io
@@ -31,20 +31,6 @@ object SearchPanelView extends SetStyleDisplay with OnClick {
   def initTabBtn(tabId: String, btnDiv: SafeEl[HTMLDivElement]): Unit = {
     onClick(btnDiv) { e: Event =>
       SearchPanelCtl.onTabBtnClick(tabId, e)
-    }
-  }
-
-  /** Инициализация поля полнотекстового поиска. */
-  def initFtsField(fieldSafe: SafeEl[HTMLInputElement]): Unit = {
-    // Навешиваем события
-    fieldSafe.addEventListener("keyup") { (e: Event) =>
-      SearchPanelCtl.onFtsFieldKeyUp(e)
-    }
-    fieldSafe.addEventListener("focus") { (e: Event) =>
-      SearchPanelCtl.onFtsFieldFocus(e)
-    }
-    fieldSafe.addEventListener("blur") { (e: Event) =>
-      SearchPanelCtl.onFtsFieldBlur(e)
     }
   }
 
