@@ -21,7 +21,7 @@ trait CurrGnl extends IScState {
     val _oldGnlIndex = oldState.currGnlIndex
     if (_currGnlIndex != _oldGnlIndex) {
       _oldGnlIndex  foreach NavPanelCtl.hideGnl
-      _currGnlIndex foreach { NavPanelCtl.showGnl(_) }
+      _currGnlIndex foreach NavPanelCtl.showGnl
     }
   }
 

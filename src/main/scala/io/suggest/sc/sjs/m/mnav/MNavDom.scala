@@ -2,7 +2,6 @@ package io.suggest.sc.sjs.m.mnav
 
 import io.suggest.sc.ScConstants.NavPane._
 import io.suggest.sc.sjs.m.mdom.GetDivById
-import io.suggest.sjs.common.view.safe.attr.SafeAttrElT
 import org.scalajs.dom.raw.{NodeList, HTMLDivElement}
 
 /**

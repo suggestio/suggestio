@@ -92,13 +92,24 @@ object NavPanelCtl extends CtlT with GridOffsetSetter {
       .map { node =>
         SafeEl( node.asInstanceOf[HTMLDivElement] )
       }
-      .filter { !NavPaneView.isGnlHidden(_) }
+      .filter { safeGnlBody =>
+        val res = !NavPaneView.isGnlHidden(safeGnlBody)
+        println(res)
+        res
+      }
       .flatMap { safeGnlBody =>
-        safeGnlBody.getIntAttributeStrict(GNL_ATTR_LAYER_ID_INDEX)
+        val res = safeGnlBody.getIntAttributeStrict(GNL_ATTR_LAYER_ID_INDEX)
           .map { _ -> safeGnlBody }
+        println(res)
+        res
       }
       .foreach { case (layerIndex, safeGnlBody) =>
-        showGnl(layerIndex, Some(safeGnlBody))
+        MScFsm.transformStateReplace(withApply = false) {
+          _.copy(
+            currGnlIndex = Some(layerIndex)
+          )
+        }
+        fixHeightForGnlExpanded(layerIndex, safeGnlBody)
       }
   }
 
@@ -140,10 +151,9 @@ object NavPanelCtl extends CtlT with GridOffsetSetter {
 
 
   /** Общий код showGnl() и hideGnl() вынесен сюда. */
-  protected def _withGnl(layerIndex: Int, maybeGnlBody: Option[SafeEl[HTMLDivElement]] = None)
-                        (f: (SafeEl[HTMLDivElement], SafeEl[HTMLDivElement]) => Unit): Unit = {
+  protected def _withGnl(layerIndex: Int)(f: (SafeEl[HTMLDivElement], SafeEl[HTMLDivElement]) => Unit): Unit = {
     for {
-      safeCaptionDiv  <- maybeGnlBody orElse MNavDom.gnlCaptionDiv(layerIndex).map(SafeEl.apply)
+      safeCaptionDiv  <- MNavDom.gnlCaptionDiv(layerIndex).map(SafeEl.apply)
       gnlBody         <- MNavDom.gnlBody(layerIndex)
     } {
       val safeGnlBody = SafeEl( gnlBody )
@@ -157,8 +167,8 @@ object NavPanelCtl extends CtlT with GridOffsetSetter {
   }
 
   /** Развернуть гео-слой для отображения. */
-  def showGnl(layerIndex: Int, maybeGnlBody: Option[SafeEl[HTMLDivElement]] = None): Unit = {
-    _withGnl(layerIndex, maybeGnlBody) { (safeCaptionDiv, safeGnlBody) =>
+  def showGnl(layerIndex: Int): Unit = {
+    _withGnl(layerIndex) { (safeCaptionDiv, safeGnlBody) =>
       NavPaneView.showGnlBody(safeGnlBody)
       NavPaneView.activateGnlCaption(safeCaptionDiv)
       // При каждом разворачивании слоя проверяем его высоту.
