@@ -181,7 +181,7 @@ object ScConstants {
     def GNL_ATTR_LAYER_ID_INDEX   = "data-index"
 
     /** Класс для тела (подсписка) одного слоя узлов. */
-    def GNL_BODY_CSS_CLASS        = "geo-nodes-list_layer"
+    def GNL_BODY_CSS_CLASS        = "geo-nodes-list_rows"
 
     def GN_CONTAINER_ID           = "geoNodesListContainer"
 
