@@ -1,6 +1,9 @@
-@(className: String, id: String, style: Option[String] = None)(data: Html)(implicit ctx: Context)
+@(className: String, id: String, attrs: (String, String) *)(data: Html)(implicit ctx: Context)
 
-<div id="@id" class="sm-flex @if( ctx.isIpad || ctx.isIphone ) {sm-overflow-scrolling} @className" @if(style) {style="@style"} >
+<div id="@id"
+     class="sm-flex @if( ctx.isIpad || ctx.isIphone ) {sm-overflow-scrolling} @className"
+     @attrs.iterator.map { case (k, v) => @k="@v" }
+     >
   <div id="@{id}Wrapper" class="sm-flex sm-overflow-scrolling">
     <div id="@{id}Content" class="@{className}_content">
       @data

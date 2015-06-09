@@ -32,7 +32,7 @@
     </div>
   </div>
 
-  @_scrollableContainerTpl( "sm-geo-nodes", "smGeoNodes", style = Some(_bgcolor( args.bgColor, true ).toString + "height: 83%;") ) {
+  @_scrollableContainerTpl( "sm-geo-nodes", id = "smGeoNodes", "style" -> (_bgcolor( args.bgColor, true ).toString + "height: 83%;")) {
     @args.inlineNodesList
   }
   

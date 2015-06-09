@@ -6,6 +6,7 @@
 @import args._
 @import AdnShownTypes._
 @import views.html.sc.stuff._
+@import io.suggest.sc.ScConstants.NavPane._
 
 @* Функция оборачивая верстки ноды в ссылку с версткой этой ноды, если используется синхронный режим работы. *@
 @nodeSyncUrl(mnode: MAdnNode)(content: Html) = {
@@ -38,7 +39,7 @@
         @jsStateOpt.map { jsState =>
           <a href="@syncUrl( jsState.copy(navNglsMap = jsState.navNglsMap + (nl.ngl -> !showExpanded)) )">
         }
-        <div class="geo-nodes-list_layer js-gnlayer @if(showExpanded) {__active}" data-index="@i" id="geoLayer@i">
+        <div class="geo-nodes-list_layer js-gnlayer @if(showExpanded) {__active}" @GNL_ATTR_LAYER_ID_INDEX="@i" id="geoLayer@i">
           <div class="geo-nodes-list_layer-inner"><span class="geo-nodes-list_layer-icon">@svg._geoLayerArrowTpl()</span><span class="geo-nodes-list_layer-icon-right">@svg._geoLayerArrowRightTpl()</span>
             @nl.nameOpt
             <span class="geo-nodes-list_layer-counter">@nl.nodes.length</span>
@@ -50,7 +51,11 @@
 
         @* Рендер содержимого гео-слоя (узлы): *@
         @if(!jsStateOpt || showExpanded) {
-          @_scrollableContainerTpl( (if(showExpanded) "" else "__hidden ") + "geo-nodes-list_rows", "geoLayerNodes" + i ) {
+          @_scrollableContainerTpl(
+            className = (if(showExpanded) "" else GNL_BODY_HIDDEN_CSS_CLASS) + " " + GNL_BODY_CSS_CLASS,
+            id = GNL_BODY_DIV_ID_PREFIX + i,
+            GNL_ATTR_LAYER_ID_INDEX -> i.toString
+          ) {
             @nl.nodes.iterator.zipWithIndex.map { case (mnode, si) =>
               @nodeSyncUrl(mnode) {
                 <div class="geo-nodes-list_row @if( si+1 == nl.nodes.length ){__no-border}

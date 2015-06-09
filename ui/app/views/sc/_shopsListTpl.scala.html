@@ -3,7 +3,7 @@
 @import util.TplDataFormatUtil._
 @import views.html.sc.stuff._
 
-@_scrollableContainerTpl( "sm-shops", "smShops", style = Some(_bgcolor( args.bgColor, false ).toString + "display: block;") ){
+@_scrollableContainerTpl( "sm-shops", "smShops", "style" -> (_bgcolor( args.bgColor, false ).toString + "display: block;") ){
 <div class="shops-list">
 
   @args.shopsLetterGrouped.map { case ((letter, mshops), i) =>
