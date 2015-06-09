@@ -27,7 +27,7 @@
 }
 
 
-<div class="geo-nodes-list" id="geoNodesListContainer" data-layers-count="@nodeLayers.size"
+<div class="geo-nodes-list" id="@GN_CONTAINER_ID" @GN_ATTR_LAYERS_COUNT="@nodeLayers.size"
      xmlns="http://www.w3.org/1999/html">
 
   @nodeLayers.iterator.zipWithIndex.map { case (nl, i) =>
@@ -39,7 +39,8 @@
         @jsStateOpt.map { jsState =>
           <a href="@syncUrl( jsState.copy(navNglsMap = jsState.navNglsMap + (nl.ngl -> !showExpanded)) )">
         }
-        <div class="geo-nodes-list_layer js-gnlayer @if(showExpanded) {__active}" @GNL_ATTR_LAYER_ID_INDEX="@i" id="geoLayer@i">
+        <div class="geo-nodes-list_layer @GNL_CAPTION_CSS_CLASS @if(showExpanded) {@GNL_ACTIVE_CSS_CLASS}"
+             @GNL_ATTR_LAYER_ID_INDEX="@i" id="@GNL_CAPTION_DIV_ID_PREFIX@i">
           <div class="geo-nodes-list_layer-inner"><span class="geo-nodes-list_layer-icon">@svg._geoLayerArrowTpl()</span><span class="geo-nodes-list_layer-icon-right">@svg._geoLayerArrowRightTpl()</span>
             @nl.nameOpt
             <span class="geo-nodes-list_layer-counter">@nl.nodes.length</span>
@@ -59,9 +60,9 @@
             @nl.nodes.iterator.zipWithIndex.map { case (mnode, si) =>
               @nodeSyncUrl(mnode) {
                 <div class="geo-nodes-list_row @if( si+1 == nl.nodes.length ){__no-border}
-                            @if(si%2 == 0){__odd}else{__even} js-geo-node
+                            @if(si%2 == 0){__odd}else{__even} @GN_NODE_CSS_CLASS
                             @if(args.apiVsn.geoNodeIdAsClass) {gn-@mnode.id"} else {" id="gn-@mnode.id"}
-                     data-id="@mnode.id">
+                     @GN_ATTR_NODE_ID="@mnode.id">
                   @mnode.meta.nameShort
                 </div>
               }
@@ -75,7 +76,7 @@
       @nl.nodes.iterator.zipWithIndex.map { case (mnode, si) =>
         @nodeSyncUrl(mnode) {
           <div class="geo-nodes-list_layer js-gnlayer @if( i==0 ){ __bo-border }">
-            <div class="geo-nodes-list_layer-inner js-geo-node" data-id="@mnode.id">@mnode.meta.nameShort</div>
+            <div class="geo-nodes-list_layer-inner @GN_NODE_CSS_CLASS" @GN_ATTR_NODE_ID="@mnode.id">@mnode.meta.nameShort</div>
           </div>
         }
       }
