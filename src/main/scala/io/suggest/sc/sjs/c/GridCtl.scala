@@ -84,14 +84,13 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
                      containerDivOpt: => Option[HTMLDivElement] = MGridDom.containerDiv): Unit = {
     val mads = resp.mads
     val loaderDivOpt = MGridDom.loaderDiv
-    val safeLoaderDivOpt = loaderDivOpt.map { SafeEl.apply }
     val mgs = MGrid.state
 
     if (mads.isEmpty) {
       mgs.fullyLoaded = true
 
       // Скрыть loader-индикатор, он больше не нужен ведь.
-      for(loaderDiv <- safeLoaderDivOpt) {
+      for(loaderDiv <- loaderDivOpt) {
         LoaderView.hide(loaderDiv)
       }
 
@@ -115,12 +114,12 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
       val madsSize = mads.size
 
       // Показать либо скрыть индикатор подгрузки выдачи.
-      for (loaderDiv <- safeLoaderDivOpt) {
+      for (loaderDiv <- loaderDivOpt) {
         if (madsSize < mgs.adsPerLoad) {
-          LoaderView.show(loaderDiv)
-        } else {
           LoaderView.hide(loaderDiv)
           mgs.fullyLoaded = true
+        } else {
+          LoaderView.show( SafeEl(loaderDiv) )
         }
       }
 

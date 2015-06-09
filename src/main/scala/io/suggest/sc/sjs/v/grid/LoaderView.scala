@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.v.grid
 
 import io.suggest.sc.ScConstants
 import io.suggest.sjs.common.view.safe.css.SafeCssElT
-import org.scalajs.dom.raw.HTMLDivElement
+import org.scalajs.dom.Node
 
 /**
  * Suggest.io
@@ -12,14 +12,12 @@ import org.scalajs.dom.raw.HTMLDivElement
  */
 object LoaderView {
 
-  type T = SafeCssElT { type T = HTMLDivElement }
-
-  def show(loaderDiv: T): Unit = {
+  def show(loaderDiv: SafeCssElT): Unit = {
     loaderDiv.removeClass( ScConstants.HIDDEN_CSS_CLASS )
   }
 
-  def hide(loaderDiv: T): Unit = {
-    loaderDiv.addClasses( ScConstants.HIDDEN_CSS_CLASS )
+  def hide(loaderDiv: Node): Unit = {
+    loaderDiv.parentNode.removeChild(loaderDiv)
   }
 
 }

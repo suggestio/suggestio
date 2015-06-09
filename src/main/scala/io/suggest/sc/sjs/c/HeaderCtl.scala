@@ -18,22 +18,21 @@ object HeaderCtl extends CtlT with SjsLogger {
 
   /** Инициализация кнопок и прочего в строке заголовка. */
   def initLayout(): Unit = {
-    // Инициализация кнопки показа панели.
+    // Инициализация кнопки показа/скрытия поисковой панели (справа).
     for (btn <- MHeaderDom.showSearchPanelBtn) {
       HeaderView.initShowSearchPanelBtn( SafeEl(btn) )
     }
-
-    // Инициализация кнопок сокрытия панели: левая и правая кнопки сейчас работают одинаково.
-    HeaderView.initHideSearchPanelBtn {
-      (MHeaderDom.hideSearchPanelBtn ++ MHeaderDom.showIndexBtn)
-        .iterator
-        .map( SafeEl.apply )
+    for (btn <- MHeaderDom.hideSearchPanelBtn) {
+      HeaderView.initHideSearchPanelBtn( SafeEl(btn) )
+    }
+    for (btn <- MHeaderDom.showIndexBtn) {
+      HeaderView.initShowIndexBtn( SafeEl(btn) )
     }
 
+    // Инициализация кнопок управления навигационной панелью (слева).
     for (btn <- MHeaderDom.showNavPanelBtn) {
       HeaderView.initShowNavBtn( SafeEl(btn) )
     }
-
     for (btn <- MHeaderDom.hideNavPanelBtn) {
       HeaderView.initHideNavPanelBtn( SafeEl(btn) )
     }
@@ -56,6 +55,15 @@ object HeaderCtl extends CtlT with SjsLogger {
     MScFsm.transformState() {
       _.copy(
         searchPanelOpened = false
+      )
+    }
+  }
+
+  def showIndexBtnClick(e: Event): Unit = {
+    MScFsm.transformState() {
+      _.copy(
+        searchPanelOpened = false,
+        cat = None
       )
     }
   }

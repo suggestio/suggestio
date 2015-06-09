@@ -42,15 +42,17 @@ object HeaderView extends SetStyleDisplay with OnClick {
 
   /**
    * Инициализация списка кнопок сокрытия панели поиска.
-   * @param btnsSafe Кнопки сокрытия, на которую вешаем listener.
+   * @param btnSafe Кнопка сокрытия панели.
    */
-  def initHideSearchPanelBtn(btnsSafe: TraversableOnce[SafeEventTargetT]): Unit = {
-    // Один инстанс листенера расшарен между всеми инициализируемыми кнопками.
-    val listener1 = _getClickListener { e: Event =>
+  def initHideSearchPanelBtn(btnSafe: SafeEventTargetT): Unit = {
+    onClick(btnSafe) { e: Event =>
       HeaderCtl.hideSearchPanelBtnClick(e)
     }
-    for (btnSafe <- btnsSafe) {
-      _onClickRaw(btnSafe)(listener1)
+  }
+  
+  def initShowIndexBtn(btnSafe: SafeEventTargetT): Unit = {
+    onClick(btnSafe) { e: Event =>
+      HeaderCtl.showIndexBtnClick(e)
     }
   }
 
