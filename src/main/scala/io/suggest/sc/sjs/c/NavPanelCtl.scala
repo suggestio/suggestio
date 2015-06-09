@@ -4,10 +4,11 @@ import io.suggest.sc.sjs.c.cutil.{GridOffsetSetter, CtlT}
 import io.suggest.sc.sjs.m.magent.MAgent
 import io.suggest.sc.sjs.m.mgrid.{MGrid, MGridState}
 import io.suggest.sc.sjs.m.mnav.MNavDom
-import io.suggest.sc.sjs.m.msc.fsm.{MScState, MScFsm}
+import io.suggest.sc.sjs.m.msc.fsm.MScFsm
 import io.suggest.sc.sjs.m.msrv.nodes.find.{MFindNodesArgsDflt, MFindNodesArgsEmpty, MFindNodes}
 import io.suggest.sc.sjs.v.nav.NavPaneView
 import io.suggest.sc.sjs.v.vutil.VUtil
+import io.suggest.sjs.common.model.dom.DomListIterator
 import io.suggest.sjs.common.view.safe.{SafeElT, SafeEl}
 import io.suggest.sc.ScConstants.NavPane._
 import org.scalajs.dom.{Node, Event}
@@ -43,6 +44,8 @@ object NavPanelCtl extends CtlT with GridOffsetSetter {
       fut onSuccess { case resp =>
         // Отрендерить ответ в div
         NavPaneView.setNodeListHtml(contentDiv, resp.nodeListHtml)
+        // Найти уже раскрытый слой, выставить ему высоту, записать данные о нём в состояние.
+        findAndFixGnlExpanded(contentDiv)
       }
     }
 
@@ -80,6 +83,23 @@ object NavPanelCtl extends CtlT with GridOffsetSetter {
       NavPaneView.hidePanel(rootDiv)
     }
     maybeRebuildGrid(rootDivOpt, isHiddenOpt = Some(true))
+  }
+
+  /** Найти и починить раскрытые сервером геослои. */
+  def findAndFixGnlExpanded(contentDiv: HTMLDivElement): Unit = {
+    val nl = MNavDom.allGnlBodies(contentDiv)
+    DomListIterator(nl)
+      .map { node =>
+        SafeEl( node.asInstanceOf[HTMLDivElement] )
+      }
+      .filter { !NavPaneView.isGnlHidden(_) }
+      .flatMap { safeGnlBody =>
+        safeGnlBody.getIntAttributeStrict(GNL_ATTR_LAYER_ID_INDEX)
+          .map { _ -> safeGnlBody }
+      }
+      .foreach { case (layerIndex, safeGnlBody) =>
+        showGnl(layerIndex, Some(safeGnlBody))
+      }
   }
 
 
@@ -120,44 +140,48 @@ object NavPanelCtl extends CtlT with GridOffsetSetter {
 
 
   /** Общий код showGnl() и hideGnl() вынесен сюда. */
-  protected def _withGnl(layerIndex: Int)(f: (SafeEl[HTMLDivElement], SafeEl[HTMLDivElement]) => Unit): Unit = {
+  protected def _withGnl(layerIndex: Int, maybeGnlBody: Option[SafeEl[HTMLDivElement]] = None)
+                        (f: (SafeEl[HTMLDivElement], SafeEl[HTMLDivElement]) => Unit): Unit = {
     for {
-      captionDiv      <- MNavDom.gnlCaptionDiv(layerIndex)
+      safeCaptionDiv  <- maybeGnlBody orElse MNavDom.gnlCaptionDiv(layerIndex).map(SafeEl.apply)
       gnlBody         <- MNavDom.gnlBody(layerIndex)
     } {
-      val safeCaptionDiv = SafeEl( captionDiv )
       val safeGnlBody = SafeEl( gnlBody )
       f(safeCaptionDiv, safeGnlBody)
     }
   }
 
-  protected def isHeightNotSet(wrapperDiv: HTMLDivElement): Boolean = {
+  private def isHeightNotSet(wrapperDiv: HTMLDivElement): Boolean = {
     val h = wrapperDiv.style.height
     h == null || h.isEmpty
   }
 
   /** Развернуть гео-слой для отображения. */
-  def showGnl(layerIndex: Int): Unit = {
-    _withGnl(layerIndex) { (safeCaptionDiv, safeGnlBody) =>
+  def showGnl(layerIndex: Int, maybeGnlBody: Option[SafeEl[HTMLDivElement]] = None): Unit = {
+    _withGnl(layerIndex, maybeGnlBody) { (safeCaptionDiv, safeGnlBody) =>
       NavPaneView.showGnlBody(safeGnlBody)
       NavPaneView.activateGnlCaption(safeCaptionDiv)
+      // При каждом разворачивании слоя проверяем его высоту.
+      fixHeightForGnlExpanded(layerIndex, safeGnlBody)
+    }
+  }
 
-      // Подогнать высоту контейнера узлов слоя под экран
-      for {
-        // Второй раз пересчет всего не требуется, если высота у враппера уже была выставлена.
-        wrapperDiv      <- MNavDom.gnlWrapper(layerIndex) if isHeightNotSet(wrapperDiv)
-        contentDiv      <- MNavDom.gnlContent(layerIndex)
-        gnContainerDiv  <- MNavDom.gnContainerDiv
-        gnlsCount       <- SafeEl(gnContainerDiv).getIntAttributeStrict(GN_ATTR_LAYERS_COUNT)
-      } {
-        val domH = safeGnlBody._underlying.offsetHeight.toInt
-        val maxH = MAgent.availableScreen.height - MNavDom.SCREEN_OFFSET - (gnlsCount + 1) * MNavDom.GNL_DOM_HEIGHT
-        val targetH = Math.min(maxH, domH)
-        var containers = List(wrapperDiv)
-        if (domH > maxH)
-          containers ::= safeGnlBody._underlying
-        VUtil.setHeightRootWrapCont(targetH, Some(contentDiv), containers)
-      }
+  /** Подогнать высоту контейнера узлов слоя под экран. */
+  def fixHeightForGnlExpanded(layerIndex: Int, safeGnlBody: SafeElT { type T = HTMLDivElement }): Unit = {
+    for {
+      // Второй раз пересчет не требуется,если высота у враппера уже была выставлена и TODO Opt если не было поворота экрана/ресайза (код закомменчен)
+      wrapperDiv      <- MNavDom.gnlWrapper(layerIndex)// if isHeightNotSet(wrapperDiv)
+      contentDiv      <- MNavDom.gnlContent(layerIndex)
+      gnContainerDiv  <- MNavDom.gnContainerDiv
+      gnlsCount       <- SafeEl(gnContainerDiv).getIntAttributeStrict(GN_ATTR_LAYERS_COUNT)
+    } {
+      val domH = safeGnlBody._underlying.offsetHeight.toInt
+      val maxH = MAgent.availableScreen.height - MNavDom.SCREEN_OFFSET - (gnlsCount + 1) * MNavDom.GNL_DOM_HEIGHT
+      val targetH = Math.min(maxH, domH)
+      var containers = List(wrapperDiv)
+      if (domH > maxH)
+        containers ::= safeGnlBody._underlying
+      VUtil.setHeightRootWrapCont(targetH, Some(contentDiv), containers)
     }
   }
 

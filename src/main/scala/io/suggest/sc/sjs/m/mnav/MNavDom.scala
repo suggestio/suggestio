@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.m.mnav
 import io.suggest.sc.ScConstants.NavPane._
 import io.suggest.sc.sjs.m.mdom.GetDivById
 import io.suggest.sjs.common.view.safe.attr.SafeAttrElT
-import org.scalajs.dom.raw.HTMLDivElement
+import org.scalajs.dom.raw.{NodeList, HTMLDivElement}
 
 /**
  * Suggest.io
@@ -13,8 +13,8 @@ import org.scalajs.dom.raw.HTMLDivElement
  */
 trait MNavDomT extends GetDivById {
 
-  def SCREEN_OFFSET = 129
-  def GNL_DOM_HEIGHT = 44
+  def SCREEN_OFFSET     = 129
+  def GNL_DOM_HEIGHT    = 44
 
   def rootDiv           = getDivById(ROOT_ID)
 
@@ -41,6 +41,10 @@ trait MNavDomT extends GetDivById {
 
   def gnlCaptionId(index: Int)    = GNL_CAPTION_DIV_ID_PREFIX + index
   def gnlCaptionDiv(index: Int)   = getDivById( gnlCaptionId(index) )
+
+  def allGnlBodies(contentDiv: HTMLDivElement): NodeList = {
+    contentDiv.getElementsByClassName(GNL_BODY_CSS_CLASS)
+  }
 
 }
 
