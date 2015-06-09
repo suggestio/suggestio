@@ -18,6 +18,8 @@ object ScConstants {
   /** window.NAME - название функции function(), которая будет вызвана  */
   final val JS_ROUTER_ASYNC_INIT_FNAME = JS_ROUTER_NAME + "AsyncInit"
 
+  def DIV_WRAPPER_SUFFIX   = "Wrapper"
+  def DIV_CONTENT_SUFFIX   = "Content"
 
   /** Client/server констатны выдачи для моделей ScReqArgs. */
   object ReqArgs {
@@ -122,9 +124,9 @@ object ScConstants {
     /** Вся структура сетки внутри этого div. */
     def ROOT_DIV_ID       = "smGridAds"
 
-    def WRAPPER_DIV_ID    = "smGridAdsWrapper"
+    def WRAPPER_DIV_ID    = ROOT_DIV_ID + DIV_WRAPPER_SUFFIX
 
-    def CONTENT_DIV_ID    = "smGridAdsContent"
+    def CONTENT_DIV_ID    = ROOT_DIV_ID + DIV_CONTENT_SUFFIX
 
     /** Анимированная крутилка внизу списка рекламных карточек, когда ожидается подгрузка ещё карточек. */
     def LOADER_DIV_ID     = "smGridAdsLoader"
@@ -155,10 +157,10 @@ object ScConstants {
     def NODE_LIST_ID  = "smGeoNodes"
 
     /** content wrapper div id */
-    def WRAPPER_ID    = "smGeoNodesWrapper"
+    def WRAPPER_ID    = NODE_LIST_ID + DIV_WRAPPER_SUFFIX
 
     /** content div id. */
-    def CONTENT_ID    = "smGeoNodesContent"
+    def CONTENT_ID    = NODE_LIST_ID + DIV_CONTENT_SUFFIX
 
     /** id кнопки ручного запуска геолокации. */
     def FIND_ME_BTN_ID = "smGeoLocationButton"
@@ -200,8 +202,6 @@ object ScConstants {
     /** css-класс, указывающий на скрытость указанного слоя. */
     def GNL_BODY_HIDDEN_CSS_CLASS = "__hidden"
 
-    def GNL_BODY_WRAPPER_SUFFIX   = "Wrapper"
-    def GNL_BODY_CONTENT_SUFFIX   = "Content"
   }
 
 
@@ -264,8 +264,8 @@ object ScConstants {
     sealed trait ITab {
       def ROOT_DIV_ID: String
       def TAB_BTN_ID     = ROOT_DIV_ID + "Tab"
-      def WRAPPER_DIV_ID = ROOT_DIV_ID + "Wrapper"
-      def CONTENT_DIV_ID = ROOT_DIV_ID + "Content"
+      def WRAPPER_DIV_ID = ROOT_DIV_ID + DIV_WRAPPER_SUFFIX
+      def CONTENT_DIV_ID = ROOT_DIV_ID + DIV_CONTENT_SUFFIX
     }
 
     /** Сюда сгруппированы id, относящиеся к категориям. */
