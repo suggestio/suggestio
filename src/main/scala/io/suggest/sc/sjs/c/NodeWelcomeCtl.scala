@@ -4,11 +4,11 @@ import io.suggest.sc.sjs.c.cutil.CtlT
 import io.suggest.sc.sjs.m.mdom.listen.MListeners
 import io.suggest.sc.sjs.m.mwc.{WcHidePromise_t, SafeRootDiv_t, MWelcomeState, MWcDom}
 import io.suggest.sc.sjs.v.welcome.NodeWelcomeView
-import io.suggest.sjs.common.model.kbd.KeyCodes
 import io.suggest.sjs.common.view.safe.SafeEl
 import org.scalajs.dom
+import org.scalajs.dom.ext.KeyCode
 import org.scalajs.dom.raw.HTMLDivElement
-import org.scalajs.dom.{Node, Element, Event}
+import org.scalajs.dom.{Node, Event}
 
 import scala.concurrent.{Future, Promise}
 
@@ -70,7 +70,7 @@ object NodeWelcomeCtl extends CtlT {
 
 
   private def isHideOnKey(keyCode: Int): Boolean = {
-    keyCode == KeyCodes.ESC || keyCode == KeyCodes.ENTER || keyCode == KeyCodes.SPACE
+    keyCode == KeyCode.escape || keyCode == KeyCode.enter || keyCode == KeyCode.space
   }
 
   /**

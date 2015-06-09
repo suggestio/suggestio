@@ -2,6 +2,7 @@ package io.suggest.sc.sjs.c
 
 import io.suggest.sc.ScConstants.Search.Cats
 import io.suggest.sc.sjs.c.cutil.{GridOffsetSetter, CtlT}
+import io.suggest.sc.sjs.m.mdom.listen.MListeners
 import io.suggest.sc.sjs.m.mgrid.{MGridDom, MGridState, MGrid}
 import io.suggest.sc.sjs.m.mhdr.MHeaderDom
 import io.suggest.sc.sjs.m.msc.fsm.{MCatMeta, MScFsm}
@@ -11,7 +12,8 @@ import io.suggest.sc.sjs.v.search.SearchPanelView
 import io.suggest.sc.sjs.v.vutil.VUtil
 import io.suggest.sjs.common.util.SjsLogger
 import io.suggest.sjs.common.view.safe.SafeEl
-import org.scalajs.dom.{Element, Node, Event}
+import org.scalajs.dom.ext.KeyCode
+import org.scalajs.dom.{KeyboardEvent, Element, Node, Event}
 import org.scalajs.dom.raw.{HTMLElement, HTMLDivElement}
 
 /**
@@ -21,6 +23,8 @@ import org.scalajs.dom.raw.{HTMLElement, HTMLDivElement}
  * Description: Контроллер реакции на события поисковой (правой) панели.
  */
 object SearchPanelCtl extends CtlT with SjsLogger with GridOffsetSetter {
+
+  private def KEYBOARD_LISTENER_ID = getClass.getSimpleName
 
   /** Инициализация после загрузки выдачи узла. */
   def initNodeLayout(): Unit = {
@@ -57,9 +61,17 @@ object SearchPanelCtl extends CtlT with SjsLogger with GridOffsetSetter {
       }
       SearchPanelView.showPanel(rootDiv)
       maybeRebuildGrid(rootDivOpt, isHiddenOpt = Some(false))
+      // Слушать клавиатуру, когда панель открыта
+      MListeners.addKeyUpListener(KEYBOARD_LISTENER_ID)(onKeyUp)
     }
   }
 
+  /** Экшен реакции на действия с клавиатуры. */
+  def onKeyUp(e: KeyboardEvent): Unit = {
+    if (e.keyCode == KeyCode.escape) {
+      HeaderCtl.hideSearchPanelBtnClick(e)
+    }
+  }
 
   /** Экшен сокрытия панели. */
   def hidePanel(): Unit = {
@@ -73,6 +85,8 @@ object SearchPanelCtl extends CtlT with SjsLogger with GridOffsetSetter {
       SearchPanelView.hidePanel(rootDiv)
       SearchPanelCtl.maybeRebuildGrid(rootDivOpt, isHiddenOpt = Some(true))
     }
+    // Клавиатура больше не нужна.
+    MListeners.removeKeyUpListener(KEYBOARD_LISTENER_ID)
   }
 
 

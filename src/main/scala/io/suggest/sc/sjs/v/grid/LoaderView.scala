@@ -2,7 +2,6 @@ package io.suggest.sc.sjs.v.grid
 
 import io.suggest.sc.ScConstants
 import io.suggest.sjs.common.view.safe.css.SafeCssElT
-import org.scalajs.dom.Node
 
 /**
  * Suggest.io
@@ -12,12 +11,20 @@ import org.scalajs.dom.Node
  */
 object LoaderView {
 
+  /**
+   * Отобразить крутилку лоадера.
+   * @param loaderDiv div лоадера.
+   */
   def show(loaderDiv: SafeCssElT): Unit = {
     loaderDiv.removeClass( ScConstants.HIDDEN_CSS_CLASS )
   }
 
-  def hide(loaderDiv: Node): Unit = {
-    loaderDiv.parentNode.removeChild(loaderDiv)
+  /**
+   * Скрыть крутилку лоадера. Не удаляем, т.к. при поиске лоадер придется вернуть.
+   * @param loaderDiv div лоадера.
+   */
+  def hide(loaderDiv: SafeCssElT): Unit = {
+    loaderDiv.addClasses( ScConstants.HIDDEN_CSS_CLASS )
   }
 
 }
