@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.m.mnav
 
-import io.suggest.sc.ScConstants.NavPane._
+import io.suggest.sc.ScConstants._, NavPane._
 import io.suggest.sc.sjs.m.mdom.GetDivById
 import org.scalajs.dom.raw.{NodeList, HTMLDivElement}
 
@@ -31,11 +31,11 @@ trait MNavDomT extends GetDivById {
   def gnlBody(index: Int)         = getDivById( gnlBodyId(index) )
 
   // wrapper внутри body
-  def gnlWrapperId(index: Int)    = gnlBodyId(index) + GNL_BODY_WRAPPER_SUFFIX
+  def gnlWrapperId(index: Int)    = gnlBodyId(index) + DIV_WRAPPER_SUFFIX
   def gnlWrapper(index: Int)      = getDivById( gnlWrapperId(index) )
 
   // content внутри wrapper
-  def gnlContentId(index: Int)    = gnlBodyId(index) + GNL_BODY_CONTENT_SUFFIX
+  def gnlContentId(index: Int)    = gnlBodyId(index) + DIV_CONTENT_SUFFIX
   def gnlContent(index: Int)      = getDivById( gnlContentId(index) )
 
   def gnlCaptionId(index: Int)    = GNL_CAPTION_DIV_ID_PREFIX + index
