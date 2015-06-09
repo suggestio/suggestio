@@ -1,15 +1,12 @@
 package io.suggest.sc.sjs.v.vutil
 
-import io.suggest.sc.ScConstants
 import io.suggest.sjs.common.model.browser.{MBrowser, IBrowser}
 import io.suggest.sjs.common.view.safe.{SafeElT, SafeEl}
-import io.suggest.sjs.common.view.safe.css.{SafeCssElT, SafeCssEl}
 import org.scalajs.dom
 import org.scalajs.dom.{Node, Element}
 import org.scalajs.dom.raw.{HTMLDivElement, HTMLElement}
 
 import scala.annotation.tailrec
-import scala.scalajs.js
 
 /**
  * Suggest.io
@@ -31,16 +28,16 @@ object VUtil {
                             wrappers: TraversableOnce[HTMLElement] = Nil,
                             mbrowser: IBrowser = MBrowser.BROWSER ): Unit = {
     val heightPx = height.toString + "px"
-    // Нужно ли провоцировать скроллбар в цепочке контейнеров? Да, если браузер работает так.
-    val needXScroll = mbrowser.needOverwriteInnerScroll
     // Отрабатываем враппер-контейнеры.
     for (wrapper <- wrappers) {
-      if (!needXScroll)
-        SafeEl(wrapper).removeClass(ScConstants.OVERFLOW_VSCROLL_CSS_CLASS)
+      //if (!needXScroll)
+      //  SafeEl(wrapper).removeClass(ScConstants.OVERFLOW_VSCROLL_CSS_CLASS)
       wrapper.style.height = heightPx
     }
     // Отрабатываем основной контейнер.
     for (cDiv <- content) {
+      // Нужно ли провоцировать скроллбар в цепочке контейнеров? Да, если браузер работает так.
+      val needXScroll = mbrowser.needOverwriteInnerScroll
       val h1 = if (needXScroll)  height + 1  else  height
       cDiv.style.minHeight = h1.toString + "px"
     }

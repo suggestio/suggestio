@@ -93,15 +93,11 @@ object NavPanelCtl extends CtlT with GridOffsetSetter {
         SafeEl( node.asInstanceOf[HTMLDivElement] )
       }
       .filter { safeGnlBody =>
-        val res = !NavPaneView.isGnlHidden(safeGnlBody)
-        println(res)
-        res
+        !NavPaneView.isGnlHidden(safeGnlBody)
       }
       .flatMap { safeGnlBody =>
-        val res = safeGnlBody.getIntAttributeStrict(GNL_ATTR_LAYER_ID_INDEX)
+        safeGnlBody.getIntAttributeStrict(GNL_ATTR_LAYER_ID_INDEX)
           .map { _ -> safeGnlBody }
-        println(res)
-        res
       }
       .foreach { case (layerIndex, safeGnlBody) =>
         MScFsm.transformStateReplace(withApply = false) {
@@ -153,9 +149,10 @@ object NavPanelCtl extends CtlT with GridOffsetSetter {
   /** Общий код showGnl() и hideGnl() вынесен сюда. */
   protected def _withGnl(layerIndex: Int)(f: (SafeEl[HTMLDivElement], SafeEl[HTMLDivElement]) => Unit): Unit = {
     for {
-      safeCaptionDiv  <- MNavDom.gnlCaptionDiv(layerIndex).map(SafeEl.apply)
+      captionDiv      <- MNavDom.gnlCaptionDiv(layerIndex)
       gnlBody         <- MNavDom.gnlBody(layerIndex)
     } {
+      val safeCaptionDiv = SafeEl( captionDiv )
       val safeGnlBody = SafeEl( gnlBody )
       f(safeCaptionDiv, safeGnlBody)
     }
