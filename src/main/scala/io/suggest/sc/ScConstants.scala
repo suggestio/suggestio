@@ -21,6 +21,10 @@ object ScConstants {
   def DIV_WRAPPER_SUFFIX   = "Wrapper"
   def DIV_CONTENT_SUFFIX   = "Content"
 
+  /** Название класса активности.
+    * Есть несколько css-классов с одинаковыми именами, но в разных scope'ах. */
+  private def ACTIVE_CLASS = "__active"
+
   /** Client/server констатны выдачи для моделей ScReqArgs. */
   object ReqArgs {
 
@@ -177,7 +181,7 @@ object ScConstants {
     def GNL_CAPTION_CSS_CLASS     = "js-gnlayer"
     def GNL_CAPTION_DIV_ID_PREFIX = "geoLayer"
 
-    def GNL_ACTIVE_CSS_CLASS      = "__active"
+    def GNL_ACTIVE_CSS_CLASS      = ACTIVE_CLASS
 
     /** Для связывания caption'а слоя и его содержимого используются динамические id. */
     def GNL_ATTR_LAYER_ID_INDEX   = "data-index"
@@ -248,8 +252,18 @@ object ScConstants {
     /** id корневого div'а панели, содержит все нижеперечисленные элементы. */
     def ROOT_DIV_ID = "smCategoriesScreen"
 
-    /** id инпута для полнотекстового поиска. */
-    def FTS_FIELD_ID = "smSearchField"
+    /** Константы полнотекстового поиска. */
+    object Fts {
+
+      /** id инпута для полнотекстового поиска. */
+      def INPUT_ID = "smSearchField"
+
+      /** Название css-класса для активного поискового поля. */
+      def ACTIVE_INPUT_CLASS = ACTIVE_CLASS
+
+    }
+
+    // Табы
 
     /** Список id табов в порядке их отображения на экране. */
     def TAB_IDS = List(Cats.TAB_BTN_ID, Nodes.TAB_BTN_ID)
@@ -260,10 +274,13 @@ object ScConstants {
     /** Класс неактивной кнопки таба. */
     def TAB_BTN_INACTIVE_CSS_CLASS = "__inactive"
 
+    /** Суффикс для id div'а кнопки таба. */
+    def TAB_BTN_ID_SUFFIX = "Tab"
+
     /** Интерфейс для id'шников таба. Используется в sc-sjs для полиморфного доступа к DOM-моделям табов с целью дедубликации кода. */
     sealed trait ITab {
       def ROOT_DIV_ID: String
-      def TAB_BTN_ID     = ROOT_DIV_ID + "Tab"
+      def TAB_BTN_ID     = ROOT_DIV_ID + TAB_BTN_ID_SUFFIX
       def WRAPPER_DIV_ID = ROOT_DIV_ID + DIV_WRAPPER_SUFFIX
       def CONTENT_DIV_ID = ROOT_DIV_ID + DIV_CONTENT_SUFFIX
     }
