@@ -21,4 +21,8 @@ object AdSearchConstants {
   def SCREEN_INFO_FN     = "screen"
   def API_VSN_FN         = "v"
 
+  /** Название поля для focused-ads api.
+    * Содержит флаг, сообщающий о необходимости особого рендера первой карточки. */
+  def WITH_HEAD_AD_FN    = "h"
+
 }
