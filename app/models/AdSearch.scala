@@ -180,16 +180,21 @@ trait AdSearch extends AdsSearchArgsDflt { that =>
 
 }
 
-/** Враппер для AdSearch-контейнера, своим существованием имитирует case class copy(). */
-trait AdSearchWrapper extends AdSearch with AdsSearchArgsWrapper {
-  override type WT = AdSearch
+/** Враппер для [[AdSearch]] с абстрактным типом. Пригоден для дальнейшего расширения в иных моделях. */
+trait AdSearchWrapper_ extends AdSearch with AdsSearchArgsWrapper {
+  override type WT <: AdSearch
 
-  /** Значение, которое скрывает этот враппер. */
-  override def _dsArgsUnderlying: AdSearch
-
+  override def apiVsn         = _dsArgsUnderlying.apiVsn
   override def maxResultsOpt  = _dsArgsUnderlying.maxResultsOpt
   override def offsetOpt      = _dsArgsUnderlying.offsetOpt
   override def geo            = _dsArgsUnderlying.geo
   override def screen         = _dsArgsUnderlying.screen
+  override def forceFirstIds  = _dsArgsUnderlying.forceFirstIds
+
+}
+
+/** Враппер для AdSearch-контейнера, своим существованием имитирует case class copy(). */
+trait AdSearchWrapper extends AdSearchWrapper_ {
+  override type WT = AdSearch
 }
 

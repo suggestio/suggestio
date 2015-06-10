@@ -2152,7 +2152,7 @@ sm =
     sm.focused_ads.curl = url
 
     sm.focused_ads.requested_ad_id = ad_id
-    sm.request.perform url
+    sm.request.perform url + '&h=' + true
 
   ## Загрузить все офферы для магазина
   load_for_cat_id : ( cat_id, cat_class ) ->

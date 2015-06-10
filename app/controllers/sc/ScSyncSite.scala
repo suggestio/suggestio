@@ -25,7 +25,7 @@ trait ScSyncSite extends SioController with PlayMacroLogsI
 
 
 /** Аддон для контроллера, добавляет поддержку синхронного гео-сайта выдачи. */
-trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAdsTileBase with ScFocusedAds
+trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAdsTileBase with ScFocusedAdsBase
 with ScNodesListBase with ScSiteBase {
 
   /**
@@ -139,10 +139,11 @@ with ScNodesListBase with ScSiteBase {
         renderBlockHtml(madsCountInt = madsCountInt, brArgs = brArgs, index = index, producer = producer)
       }
 
-      override def _withHeadAd: Boolean = true
-      override val _adSearch = _scState.focusedAdSearch(
-        _maxResultsOpt = Some(1)
-      )
+      override val _adSearch = {
+        _scState.focusedAdSearch(
+          _maxResultsOpt = Some(1)
+        )
+      }
       override def focAdsHtmlArgsFut: Future[FocusedAdsTplArgs] = {
         // Нужно добавить в список аргументов данные по syncUrl.
         super.focAdsHtmlArgsFut map { args0 =>

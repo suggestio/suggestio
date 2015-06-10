@@ -176,13 +176,16 @@ case class ScJsState(
   }
 
   /** Экземпляр AdSearch для поиска в текущей рекламной карточки. */
-  def focusedAdSearch(_maxResultsOpt: Option[Int]): AdSearch = new AdSearch {
-    override def forceFirstIds  = that.fadOpenedIdOpt.toList
-    override def maxResultsOpt  = _maxResultsOpt
-    override def generationOpt  = that.generationOpt
-    override def receiverIds    = that.adnId.toList
-    override def offsetOpt      = that.fadsOffsetOpt
-    override def producerIds    = that.fadsProdIdOpt.toList
+  def focusedAdSearch(_maxResultsOpt: Option[Int]): FocusedAdsSearchArgs = {
+    new FocusedAdsSearchArgs {
+      override def forceFirstIds  = that.fadOpenedIdOpt.toList
+      override def maxResultsOpt  = _maxResultsOpt
+      override def generationOpt  = that.generationOpt
+      override def receiverIds    = that.adnId.toList
+      override def offsetOpt      = that.fadsOffsetOpt
+      override def producerIds    = that.fadsProdIdOpt.toList
+      override def withHeadAd     = true
+    }
   }
 
   def isSearchScrOpened : Boolean = searchScrOpenedOpt

@@ -122,7 +122,7 @@ GET  /market/node_icon/:adnId           @controllers.MarketShowcase.nodeIconJs(a
 GET  /market/node_data/:adnId           @controllers.MarketShowcase.nodeData(adnId)
 
 GET  /market/ads                        @controllers.MarketShowcase.findAds(a: AdSearch)
-GET  /market/fads                       @controllers.MarketShowcase.focusedAds(a: AdSearch, h: Boolean ?= true)
+GET  /market/fads                       @controllers.MarketShowcase.focusedAds(a: msc.FocusedAdsSearchArgs)
 ## Рендер ровно одной карточки.
 GET  /market/ad/one/html                @controllers.MarketShowcase.onlyOneAd(o: blk.OneAdQsArgs)
 GET  /market/ad/one/img                 @controllers.MarketShowcase.onlyOneAdAsImage(o: blk.OneAdQsArgs)

@@ -30,7 +30,7 @@ trait Action extends SmJsonResp{
 }
 
 trait Blocks extends SmJsonResp {
-  def blocks: Seq[JsString]
+  def blocks: Seq[JsValue]
   override def toJsonAcc: FieldsJsonAcc = {
     val acc0 = super.toJsonAcc
     val _blocks = blocks
@@ -70,7 +70,7 @@ trait FocusedAdsResp extends Action with HtmlOpt with Blocks
  * @param htmlOpt Нулевой отображаемый блок должен быть уже отрендерен сюда.
  * @param blocks Отрендеренные блоки за экраном.
  */
-case class ProducerAdsResp(htmlOpt: Option[JsString], blocks: Seq[JsString]) extends FocusedAdsResp {
+case class ProducerAdsResp(htmlOpt: Option[JsString], blocks: Seq[JsValue]) extends FocusedAdsResp {
   override def action = "producerAds"
 }
 
