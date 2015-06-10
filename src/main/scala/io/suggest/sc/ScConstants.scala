@@ -255,6 +255,12 @@ object ScConstants {
     /** Константы полнотекстового поиска. */
     object Fts {
 
+      /** id контейнера всего fts-механизма. */
+      def BAR_ID   = "smSearchBar"
+
+      /** id контейнера для оформления input'а. */
+      def INPUT_CONTAINER_ID = "smSearch"
+
       /** id инпута для полнотекстового поиска. */
       def INPUT_ID = "smSearchField"
 
