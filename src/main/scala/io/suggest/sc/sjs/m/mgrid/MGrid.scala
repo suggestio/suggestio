@@ -21,7 +21,7 @@ object MGrid {
 
   /** Произвести сброс state. */
   def resetState(): Unit = {
-    state = new MGridState
+    state = new MGridState()
   }
 
   def margin(colCnt1: Int): Int = {

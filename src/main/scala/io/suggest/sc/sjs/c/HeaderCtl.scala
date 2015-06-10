@@ -63,7 +63,8 @@ object HeaderCtl extends CtlT with SjsLogger {
     MScFsm.transformState() {
       _.copy(
         searchPanelOpened = false,
-        cat = None
+        cat       = None,
+        ftsSearch = None
       )
     }
   }

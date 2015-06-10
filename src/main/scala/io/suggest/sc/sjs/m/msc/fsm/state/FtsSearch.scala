@@ -2,7 +2,6 @@ package io.suggest.sc.sjs.m.msc.fsm.state
 
 import io.suggest.sc.sjs.c.FtsSearchCtl
 import io.suggest.sc.sjs.m.msc.fsm.IScState
-import io.suggest.sc.sjs.m.msearch.MFtsSearchCtx
 
 /**
  * Suggest.io
@@ -15,11 +14,15 @@ trait FtsSearch extends IScState {
   override type T <: FtsSearch
 
   /** Поле для полнотекстового поиска. */
-  def ftsSearch: Option[MFtsSearchCtx]
+  def ftsSearch: Option[String]
 
   /** Накатить изменения состояния полнотекстового поиска. */
   def applyFtsSearchChanges(oldState: FtsSearch): Unit = {
-    FtsSearchCtl.maybeFtsStateChanged(oldState.ftsSearch, newState = ftsSearch)
+    val oldOpt = oldState.ftsSearch
+    val newOpt = ftsSearch
+    if (oldOpt.isDefined || newOpt.isDefined) {
+      FtsSearchCtl.maybeFtsStateChanged(oldOpt, newState = newOpt)
+    }
   }
 
 

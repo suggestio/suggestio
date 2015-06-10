@@ -77,6 +77,8 @@ object SearchPanelCtl extends CtlT with SjsLogger with GridOffsetSetter with OnE
     }
     // Клавиатура больше не нужна.
     removeKeyUpListener()
+    // Отключить fts-поиск, если был включен.
+    FtsSearchCtl.resetFts()
   }
 
 

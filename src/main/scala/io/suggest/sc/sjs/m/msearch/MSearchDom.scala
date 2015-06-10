@@ -16,6 +16,8 @@ trait MSearchDomT extends GetDivById {
 
   def ftsInput        = getElementById[HTMLInputElement](Fts.INPUT_ID)
 
+  def ftsInputContainerDiv = getDivById(Fts.INPUT_CONTAINER_ID)
+
   def tabBtnsDiv      = getDivById(TAB_BTNS_DIV_ID)
 
   /** Вернуть все имеющиеся модели табов. */

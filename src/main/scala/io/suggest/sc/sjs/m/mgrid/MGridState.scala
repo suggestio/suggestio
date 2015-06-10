@@ -11,41 +11,42 @@ import scala.collection.mutable.ListBuffer
  * Created: 22.05.15 14:13
  * Description: Переменные состояния сетки выдачи.
  */
-class MGridState {
+// TODO mutable-состояние унаследовано от предыдущей архитектуры. Надо бы исправить этот дефект.
+case class MGridState(
 
   /** Максимальная ширина одной ячейки. */
-  var maxCellWidth      : Int     = TileConstants.CELL_WIDTH_140_CSSPX
+  var maxCellWidth      : Int     = TileConstants.CELL_WIDTH_140_CSSPX,
 
   /** Левый сдвиг в кол-ве ячеек. */
-  var leftOffset        : Int     = 0
+  var leftOffset        : Int     = 0,
 
   /** Правый сдвиг в кол-ве ячеек. */
-  var rightOffset       : Int     = 0
+  var rightOffset       : Int     = 0,
 
   /** Кол-во колонок на экране. */
-  var columnsCount      : Int     = 2
+  var columnsCount      : Int     = 2,
 
   /** true, когда больше карточек у сервера нет для текущей выдачи. */
-  var fullyLoaded       : Boolean = false
+  var fullyLoaded       : Boolean = false,
 
   /** Кол-во карточек для следующей пакетной загрузки. */
-  var adsPerLoad        : Int     = 30
+  var adsPerLoad        : Int     = 30,
 
   /** Кол-во загруженных карточек. */
-  var blocksLoaded      : Int     = 0
+  var blocksLoaded      : Int     = 0,
 
   /** Запрошена подгрузка ещё карточек? */
-  var isLoadingMore     : Boolean = false
+  var isLoadingMore     : Boolean = false,
 
   /** Размер контейнера, если рассчитан. */
-  var contSz            : Option[ICwCm] = None
+  var contSz            : Option[ICwCm] = None,
 
   /** Инфа по колонкам. Нужен O(1) доступ по индексу. Длина равна или не более кол-ва колонок. */
-  var colsInfo          : Array[MColumnState] = Array.empty
+  var colsInfo          : Array[MColumnState] = Array.empty,
 
   /** Инфа по текущим блокам. */
   var blocks            : ListBuffer[MBlockInfo] = ListBuffer.empty
-
+) {
   /** Контроллер требует закинуть новые блоки в эту модель состояния. */
   def appendNewBlocks(newBlocks: Seq[MBlockInfo]): Unit = {
     appendNewBlocks(newBlocks, newBlocks.size)
@@ -61,11 +62,12 @@ class MGridState {
   }
 
   /** Контроллер приказывает сбросить состояние плитки, касающееся загруженных и отображаемых карточек. */
-  def nothingLoaded(): Unit ={
+  def nothingLoaded(): MGridState = {
     blocks = ListBuffer()
     blocksLoaded = 0
     isLoadingMore = false
     fullyLoaded = false
+    this
   }
 
   /**

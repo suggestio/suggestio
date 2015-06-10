@@ -4,7 +4,7 @@ import io.suggest.sc.ScConstants.Search.Fts
 import io.suggest.sc.sjs.c.FtsSearchCtl
 import io.suggest.sjs.common.view.safe.css.SafeCssElT
 import io.suggest.sjs.common.view.safe.evtg.SafeEventTargetT
-import org.scalajs.dom.Event
+import org.scalajs.dom.{Event, KeyboardEvent}
 import org.scalajs.dom.raw.HTMLInputElement
 
 /**
@@ -19,7 +19,7 @@ object FtsFieldView {
   /** Инициализация поля полнотекстового поиска. */
   def initLayout(fieldSafe: SafeEventTargetT): Unit = {
     // Навешиваем события
-    fieldSafe.addEventListener("keyup") { (e: Event) =>
+    fieldSafe.addEventListener("keyup") { (e: KeyboardEvent) =>
       FtsSearchCtl.onFieldKeyUp(e)
     }
     fieldSafe.addEventListener("focus") { (e: Event) =>
@@ -32,12 +32,12 @@ object FtsFieldView {
 
 
 
-  def activateField(fieldSafe: SafeCssElT): Unit = {
-    fieldSafe.removeClass( Fts.ACTIVE_INPUT_CLASS )
+  def activateField(contSafe: SafeCssElT): Unit = {
+    contSafe.addClasses( Fts.ACTIVE_INPUT_CLASS )
   }
 
-  def deactivateField(fieldSafe: SafeCssElT): Unit = {
-    fieldSafe.addClasses( Fts.ACTIVE_INPUT_CLASS )
+  def deactivateField(contSafe: SafeCssElT): Unit = {
+    contSafe.removeClass( Fts.ACTIVE_INPUT_CLASS )
   }
 
   /** Выставить текст в поисковое поле. */

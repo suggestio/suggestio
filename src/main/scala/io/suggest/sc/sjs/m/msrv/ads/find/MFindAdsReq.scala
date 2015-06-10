@@ -109,13 +109,15 @@ trait MFindAdsReqDflt extends MFindAdsReq {
   override def screenInfo: Option[IMScreen] = Some(MAgent.availableScreen)
   override def limit : Option[Int]          = Some(_mgs.adsPerLoad)
   override def offset: Option[Int]          = Some(_mgs.blocksLoaded)
-  override def ftsQuery: Option[String]     = _fsmState.ftsSearch.flatMap(_.q)
+  override def ftsQuery: Option[String]     = _fsmState.ftsSearch
 
   override def levelId: Option[String] = {
     import ScConstants.ShowLevels._
     val st = MScFsm.state
     if (st.cat.nonEmpty) {
       Some(ID_CATS)
+    } else if (st.ftsSearch.nonEmpty) {
+      None
     } else {
       Some(ID_START_PAGE)
     }

@@ -1,7 +1,6 @@
 package io.suggest.sc.sjs.m.msc.fsm
 
 import io.suggest.sc.sjs.m.msc.fsm.state._
-import io.suggest.sc.sjs.m.msearch.MFtsSearchCtx
 
 /**
  * Suggest.io
@@ -41,7 +40,7 @@ case class MScState(
   override val searchPanelOpened  : Boolean                 = false,
   override val navPanelOpened     : Boolean                 = false,
   override val currGnlIndex       : Option[Int]             = None,
-  override val ftsSearch          : Option[MFtsSearchCtx]   = None
+  override val ftsSearch          : Option[String]          = None
 )
   extends MScStateT
 

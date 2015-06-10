@@ -2,7 +2,6 @@ package io.suggest.sc.sjs.m.msc.fsm.state
 
 import io.suggest.sc.sjs.c.SearchPanelCtl
 import io.suggest.sc.sjs.m.msc.fsm.IScState
-import io.suggest.sc.sjs.v.search.SearchPanelView
 
 /**
  * Suggest.io

@@ -1,11 +1,10 @@
 package io.suggest.sc.sjs.c
 
-import io.suggest.sc.sjs.m.msc.fsm.MScFsm
-import io.suggest.sc.sjs.m.msearch.{MFtsSearchCtx, MSearchDom}
+import io.suggest.sc.sjs.c.cutil.FtsFsm
+import io.suggest.sc.sjs.m.msearch.MSearchDom
 import io.suggest.sc.sjs.v.search.FtsFieldView
 import io.suggest.sjs.common.util.SjsLogger
 import io.suggest.sjs.common.view.safe.SafeEl
-import org.scalajs.dom.Event
 
 /**
  * Suggest.io
@@ -13,7 +12,7 @@ import org.scalajs.dom.Event
  * Created: 09.06.15 18:11
  * Description: Контроллер для поля полнотекстового поиска.
  */
-object FtsSearchCtl extends SjsLogger {
+object FtsSearchCtl extends FtsFsm with SjsLogger {
 
   /** Инициализация подсистемы после перерисовки layout'а. */
   def initNodeLayout(): Unit = {
@@ -23,25 +22,6 @@ object FtsSearchCtl extends SjsLogger {
     }
   }
 
-  /** Фокус попал в поле поиска. */
-  def onFieldFocus(e: Event): Unit = {
-    val st0 = MScFsm.state
-    if (st0.ftsSearch.isEmpty) {
-      // Юзер намеревается начать поиск
-      MScFsm.pushState(st0.copy(
-        ftsSearch = Some(MFtsSearchCtx())
-      ))
-      MScFsm.applyStateChanges()
-    }
-  }
-
-  def onFieldKeyUp(e: Event): Unit = {
-    error("TODO") // TODO
-  }
-
-  def onFieldBlur(e: Event): Unit = {
-    error("TODO") // TODO
-  }
 
   /**
    * Возможно, произошло изменение состояния fts. Здесь происходит анализ произошедших изменений
@@ -49,34 +29,44 @@ object FtsSearchCtl extends SjsLogger {
    * @param oldState Старое состояние.
    * @param newState Новое состояние.
    */
-  def maybeFtsStateChanged(oldState: Option[MFtsSearchCtx], newState: Option[MFtsSearchCtx]): Unit = {
+  def maybeFtsStateChanged(oldState: Option[String], newState: Option[String]): Unit = {
     val oldEmpty = oldState.isEmpty
     val currEmpty = newState.isEmpty
     val inputOpt = MSearchDom.ftsInput
+    val inputContOpt = MSearchDom.ftsInputContainerDiv
 
     for (input <- inputOpt) {
-      val safeInput = SafeEl( input )
+      val inputContSafeOpt = inputContOpt.map( SafeEl.apply )
 
       if (!oldEmpty && currEmpty) {
         // Сброс полнотекстового поиска. Сбросить сетку, сбросить поле поиска.
-        GridCtl.reFindAds()
-        FtsFieldView.setFtsFieldText(input, "")
-        FtsFieldView.deactivateField(safeInput)
-        // TODO Удалить возможное сообщение об ошибке в запросе.
+        resetFts(inputOpt)
 
       } else if (!currEmpty) {
         // Полнотексовый поиск стал/остался активен. Нужно накатить изменения состояния.
         val curr = newState.get
 
         // Визуально активировать поле, если не было активно.
-        if (oldEmpty) {
-          FtsFieldView.activateField(safeInput)
+        if (oldEmpty || oldState.get.length <= 0) {
+          for (inputCont <- inputContSafeOpt) {
+            FtsFieldView.activateField( inputCont )
+          }
         }
 
-        // TODO Отрабатываем поле q, содержащее текстовый запрос.
-        //if (oldEmpty && curr.q.length > 0) {
-          // Имело место резкое изменение текста, то надо выставить его в поле.
-        ???
+        // Отрабатываем поле q, содержащее текстовый запрос.
+        val newQLen = curr.length
+
+        // Если имело место резкое изменение состояния, то выставить текст из состояния в поле.
+        // Такое возможно при импорте состояния из истории/URL.
+        if (oldEmpty && newQLen > 1) {
+          FtsFieldView.setFtsFieldText(input, curr)
+        }
+
+        // Если новое состояние содержит подходящий текст, отличающийся от предшествующего варианта, нужно активировать поиск.
+        if (newQLen > 1 && !oldState.contains(curr)) {
+          startFindReq()
+        }
+        // TODO При нулевой длине запроса нужно запрашивать исходную выдачу
       }
     }
   }

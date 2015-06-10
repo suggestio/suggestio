@@ -4,7 +4,6 @@ import io.suggest.sc.ScConstants.Block
 import io.suggest.sc.sjs.c.cutil.{GridOffsetSetter, CtlT}
 import io.suggest.sc.sjs.m.magent.MAgent
 import io.suggest.sc.sjs.m.mgrid._
-import io.suggest.sc.sjs.m.msc.fsm.MScStateT
 import io.suggest.sc.sjs.m.msrv.ads.find.{MFindAdsReqEmpty, MFindAdsReqDflt, MFindAds}
 import io.suggest.sc.sjs.util.grid.builder.V1Builder
 import io.suggest.sc.sjs.v.grid.{LoaderView, GridView}
@@ -19,7 +18,7 @@ import org.scalajs.dom.raw.HTMLDivElement
 import scala.scalajs.concurrent.JSExecutionContext
 import JSExecutionContext.Implicits.runNow
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 
 /**
@@ -43,12 +42,16 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
     MGrid.state.updateWith(sz)
   }
 
-  def askMoreAds(): Future[MFindAds] = {
+  def askMoreAds(mgs: MGridState = MGrid.state): Future[MFindAds] = {
     val args = new MFindAdsReqEmpty with MFindAdsReqDflt {
-      override val _mgs = super._mgs
+      override def _mgs = mgs
       override val _fsmState = super._fsmState
     }
     MFindAds.findAds(args)
+  }
+  def askNewAds(): (MGridState, Future[MFindAds]) = {
+    val mgs1 = MGrid.state.copy().nothingLoaded()
+    mgs1 -> askMoreAds(mgs1)
   }
 
   /** Юзер скроллит выдачу любого узла. */
@@ -62,11 +65,7 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
     }
   }
 
-  /** Сброс карточек сетки. */
-  def reFindAds(): Future[MFindAds] = {
-    // Сброс выдачи. Должен идти перед запросом к серверу.
-    MGrid.state.nothingLoaded()
-    val fut = askMoreAds()
+  def askNewAdsCallback(mgs1: MGridState, fut: Future[MFindAds])(implicit ec: ExecutionContext): Future[MFindAds] = {
     val containerDivOpt = MGridDom.containerDiv
     // Подготовить view'ы к поступлению новых карточек
     for (containerDiv <- containerDivOpt) {
@@ -74,8 +73,16 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
     }
     // Отрендерить карточки, когда придёт ответ.
     fut.andThen { case Success(resp) =>
+      MGrid.state = mgs1
       newAdsReceived(resp, isAdd = false, containerDivOpt = containerDivOpt)
-    }(JSExecutionContext.queue)
+    }(ec)
+  }
+
+  /** Сброс карточек сетки. */
+  def reFindAds(): Future[MFindAds] = {
+    // Сброс выдачи. Должен идти перед запросом к серверу.
+    val (mgs1, fut) = askNewAds()
+    askNewAdsCallback(mgs1, fut)(JSExecutionContext.queue)
   }
 
   /**
