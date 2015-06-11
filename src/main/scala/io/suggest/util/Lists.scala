@@ -2,6 +2,8 @@ package io.suggest.util
 
 import collection.mutable
 import scala.annotation.tailrec
+import scala.collection.generic.CanBuildFrom
+import scala.language.higherKinds
 
 /**
  * Suggest.io
@@ -266,6 +268,31 @@ object Lists {
       case _ =>
         head ++ tail
     }
+  }
+
+
+  /**
+   * map + foldLeft с поддержкой CanBuildFrom.
+   * @param src Исходная коллекция.
+   * @param acc0 Исходный аккамулятор.
+   * @param f Функция маппинга и сверстки.
+   * @tparam A Тип исходного элемента.
+   * @tparam Coll Тип коллекции. Исходной и финальной.
+   * @tparam B Тип отмаппленного элемента.
+   * @tparam Acc Тип аккамулятора.
+   * @return Кортеж из аккамулятора и отмаппленной коллекции.
+   */
+  def mapFoldLeft[A, Coll[X] <: TraversableOnce[X], B, Acc]
+                 (src: Coll[A], acc0: Acc)
+                 (f: (Acc, A) => (Acc, B))
+                 (implicit cbf: CanBuildFrom[Coll[A], B, Coll[B]]): (Acc, Coll[B]) = {
+    val seqb = cbf.apply()
+    val acc1 = src.foldLeft(acc0) { (_acc0, _el) =>
+      val (_acc1, b) = f(_acc0, _el)
+      seqb += b
+      _acc1
+    }
+    (acc1, seqb.result())
   }
 
 }

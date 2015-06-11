@@ -45,10 +45,12 @@ object SioFutureUtil extends Logs {
    * @tparam Acc Тип аккамулятора.
    * @return Конечных аккамулятор.
    */
-  def foldLeftSequental[A, Acc](in: Seq[A], acc0: Acc, ignoreErrors: Boolean = false)(f: (Acc, A) => Future[Acc])(implicit executor:ExecutionContext): Future[Acc] = {
+  def foldLeftSequental[A, Acc](in: Seq[A], acc0: Acc, ignoreErrors: Boolean = false)
+                               (f: (Acc, A) => Future[Acc])
+                               (implicit executor: ExecutionContext): Future[Acc] = {
     val p = Promise[Acc]()
-    lazy val hash = in.hashCode() * f.hashCode() + acc0.hashCode()
-    def foldLeftStep(acc:Acc, inRest:Seq[A]) {
+    lazy val logPrefix = System.currentTimeMillis()
+    def foldLeftStep(acc: Acc, inRest: Seq[A]) {
       if (inRest.isEmpty) {
         // Закончить обход. Вернуть результат
         p success acc
@@ -68,7 +70,7 @@ object SioFutureUtil extends Logs {
           case Failure(ex) =>
             if (ignoreErrors) {
               // Включено подавление ошибок.
-              warnError(hash, h, ex)
+              warnError(logPrefix, h, ex)
               foldLeftStep(acc, t)
             } else {
               // Ошибка - остановка.
@@ -80,7 +82,6 @@ object SioFutureUtil extends Logs {
     foldLeftStep(acc0, in)
     p.future
   }
-
 
   private val timer = new java.util.Timer()
 
@@ -101,8 +102,8 @@ object SioFutureUtil extends Logs {
   }
 
 
-  private def warnError(hash:Int, h:Any, ex:Throwable) {
-    warn("foldLeftSequentally()#%s: Suppressed exception in/before future for element %s" format (hash, h), ex)
+  private def warnError(hash: Long, h:Any, ex:Throwable) {
+    warn(s"foldLeftSequentally()#$hash: Suppressed exception in/before future for element $h", ex)
   }
 
 
