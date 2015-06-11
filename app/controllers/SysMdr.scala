@@ -2,6 +2,7 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.ym.model.ad.FreeAdvStatus
+import models.mdr._
 import org.elasticsearch.index.engine.VersionConflictEngineException
 import play.api.i18n.MessagesApi
 import play.twirl.api.Html
@@ -106,10 +107,15 @@ class SysMdr @Inject() (
       val producerFut = MAdnNodeCache.getById(mad.producerId)
         .map { _.get }
       for {
-        brArgs   <- brArgsFut
-        producer <- producerFut
+        _brArgs   <- brArgsFut
+        _producer <- producerFut
       } yield {
-        freeAdvMdrTpl(brArgs, producer, banForm)(ctx)
+        val args = FreeAdvMdrRArgs(
+          brArgs    = _brArgs,
+          producer  = _producer,
+          banFormM  = banForm
+        )
+        freeAdvMdrTpl(args)(ctx)
       }
     }
   }

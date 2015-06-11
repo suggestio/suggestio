@@ -21,7 +21,7 @@ trait SmJsonResp {
 }
 
 
-trait Action extends SmJsonResp{
+trait Action extends SmJsonResp {
   def action: String
 
   override def toJsonAcc: FieldsJsonAcc = {

@@ -584,7 +584,7 @@ class MarketAdv @Inject() (
       val brArgsFut = ShowcaseUtil.focusedBrArgsFor(request.mad)(ctx)
       val wndFullArgsFut = brArgsFut map { brArgs =>
         WndFullArgs(
-          adProducer  = request.producer,
+          producer    = request.producer,
           brArgs      = brArgs,
           goBackTo    = r
         )
@@ -793,7 +793,7 @@ class MarketAdv @Inject() (
           val brArgsFut = ShowcaseUtil.focusedBrArgsFor(mad)(ctx)
           val wndArgsFut = brArgsFut map { brArgs =>
             WndFullArgs(
-              adProducer  = adProducerOpt.get,
+              producer    = adProducerOpt.get,
               brArgs      = brArgs,
               goBackTo    = r
             )

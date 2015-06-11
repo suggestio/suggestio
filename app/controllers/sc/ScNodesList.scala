@@ -121,8 +121,7 @@ trait ScNodesList extends ScNodesListBase {
     val logic = FindNodesLogicV(tstamp, args)
     // заворачиваем в json результаты работы логики.
     val resultFut = logic.resultCachedFut
-
-    LOGGER.trace( s"findNodes($args): [$tstamp] remote = ${request.remoteAddress}; path=${request.uri}" )
+    //LOGGER.trace( s"findNodes($args): [$tstamp] remote = ${request.remoteAddress}; path=${request.uri}" )
 
     // Одновременно собираем статистику по текущему запросу:
     ScNodeListingStat(args, logic.gsiOptFut)

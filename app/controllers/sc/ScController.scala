@@ -21,22 +21,6 @@ import scala.concurrent.Future
  */
 trait ScController extends SioController {
 
-  /** Параллельный маппинг scala-коллекции. Отмаппленных в результатах явно восстанавливается исходный порядок.
-    * @param vs Исходная коллекция.
-    * @param r функция-маппер.
-    * @return Фьючерс с отмапленной коллекцией в исходном порядке.
-    */
-  protected def parTraverseOrdered[T, V](vs: Seq[V], startIndex: Int = 0)(r: (V, Int) => Future[T]): Future[Seq[T]] = {
-    val vs1 = vs.zipWithIndex
-    Future.traverse(vs1) { case (mad, index) =>
-      r(mad, startIndex + index)
-        .map { index -> _ }
-    } map {
-      _.sortBy(_._1)
-        .map(_._2)
-    }
-  }
-
   /**
    * Вспомогательный метод для генерации ссылки на css блоков из списка данных об этих блоках.
    * Она работает с данными от разных logic'ов, наследующих [[AdCssRenderArgs]].
@@ -139,7 +123,7 @@ trait ScController extends SioController {
     }
 
     /** Отрендерить js для добавления стилей блоков в документ выдачи. */
-    def jsAppendAdsCss: Future[JsAction] = {
+    def jsAppendAdsCssFut: Future[JsAction] = {
       jsAdsCssFut map { jsAdsCss =>
         val html = List(Txt("<style>"), jsAdsCss, Txt("</style>"))
         val data = JsString( new Txt(html) )

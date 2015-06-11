@@ -1,6 +1,6 @@
 package models.msc
 
-import models._
+import models.blk
 
 /**
  * Suggest.io
@@ -9,21 +9,20 @@ import models._
  * Description: Параметры для вызова showcase-шаблона focusedAdsTpl.
  */
 
-trait FocusedAdsTplArgs extends SyncRenderInfo {
-  def producer    : MAdnNode
-  def bgColor     : String
-  def fgColor     : String
-  def hBtnArgs    : IhBtnArgs
-  def brArgs      : blk.RenderArgs
-  def adsCount    : Int
-  def startIndex  : Int
+
+/** Аргументы для рендера focused-карточки с полным обрамлением. */
+trait FocusedAdsTplArgs extends SyncRenderInfo with IAdBodyTplArgs {
+  def bgColor           : String
+  def fgColor           : String
+  def hBtnArgs          : IhBtnArgs
+  override def brArgs   : blk.RenderArgs
 }
 
 /** Враппер для [[FocusedAdsTplArgs]]. */
 trait FocusedAdsTplArgsWrapper extends FocusedAdsTplArgs {
   def _focArgsUnderlying: FocusedAdsTplArgs
 
-  override def startIndex     = _focArgsUnderlying.startIndex
+  override def index          = _focArgsUnderlying.index
   override def producer       = _focArgsUnderlying.producer
   override def brArgs         = _focArgsUnderlying.brArgs
   override def bgColor        = _focArgsUnderlying.bgColor

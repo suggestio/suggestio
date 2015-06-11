@@ -177,7 +177,7 @@ trait ScAdsTileBase extends ScController with PlayMacroLogsI {
       val devScreenOpt = ctx.deviceScreenOpt
       _madsGroupedFut flatMap { mads1 =>
         val _szMult = szMult
-        parTraverseOrdered(mads1) { (mad, index) =>
+        Future.traverse(mads1) { mad =>
           BgImg.maybeMakeBgImgWith(mad, Makers.Block, _szMult, devScreenOpt)
             .flatMap { bgImgOpt =>
               val brArgs1 = _brArgsFor(mad, bgImgOpt)
@@ -276,7 +276,7 @@ trait ScAdsTile extends ScAdsTileBase {
         SmRcvResp(resp)
       }
       // ссылку на css блоков надо составить и передать клиенту отдельно от тела основного ответа прямо в <head>.
-      val cssAppendFut = jsAppendAdsCss
+      val cssAppendFut = jsAppendAdsCssFut
       // 2014.nov.25: Из-за добавления масштабирования блоков плитки нужно подкручивать на ходу значения в cbca_grid.
       val setCellSizeJsa = SetCellSize( cellSizeCssPx )
       val setCellPaddingJsa = SetCellPadding( cellPaddingCssPx )

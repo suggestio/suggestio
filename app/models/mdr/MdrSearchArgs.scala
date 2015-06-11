@@ -1,8 +1,9 @@
-package models
+package models.mdr
 
 import io.suggest.ym.model.ad.MdrSearchArgsI
-import play.api.Play.{current, configuration}
+import play.api.Play.{configuration, current}
 import play.api.mvc.QueryStringBindable
+import util.qsb.QsbKey1T
 import util.qsb.QsbUtil._
 
 /**
@@ -16,24 +17,25 @@ object MdrSearchArgs {
   /** Сколько карточек на одну страницу модерации. */
   val FREE_ADVS_PAGE_SZ: Int = configuration.getInt("mdr.freeAdvs.page.size") getOrElse 10
 
-  val PRODUCER_ID_SUF = ".producerId"
-  val PAGE_ID_SUF     = ".page"
-  val FREE_ADV_IS_ALLOWED_SUF = ".fa.ia"
+  def PRODUCER_ID_FN          = "producerId"
+  def PAGE_ID_FN              = "page"
+  def FREE_ADV_IS_ALLOWED_FN  = "fa.ia"
 
   implicit def queryStringBinder(implicit strOptBinder: QueryStringBindable[Option[String]],
                                  intBinder: QueryStringBindable[Int],
                                  boolOptBinder: QueryStringBindable[Option[Boolean]]) = {
-    new QueryStringBindable[MdrSearchArgs] {
+    new QueryStringBindable[MdrSearchArgs] with QsbKey1T {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MdrSearchArgs]] = {
+        val k1 = key1F(key)
         for {
-          maybeProducerIdOpt    <- strOptBinder.bind(key + PRODUCER_ID_SUF, params)
-          maybePage             <- intBinder.bind(key + PAGE_ID_SUF, params)
-          maybeFreeAdvIsAllowed <- boolOptBinder.bind(key + FREE_ADV_IS_ALLOWED_SUF, params)
+          maybeProducerIdOpt    <- strOptBinder.bind  (k1(PRODUCER_ID_FN),          params)
+          maybePage             <- intBinder.bind     (k1(PAGE_ID_FN),              params)
+          maybeFreeAdvIsAllowed <- boolOptBinder.bind (k1(FREE_ADV_IS_ALLOWED_FN),  params)
         } yield {
           Right(
             MdrSearchArgs(
-              page = maybePage.fold({_ => 0}, identity),
-              producerId = maybeProducerIdOpt,
+              page        = maybePage.fold({_ => 0}, identity),
+              producerId  = maybeProducerIdOpt,
               freeAdvIsAllowed = maybeFreeAdvIsAllowed
             )
           )
@@ -41,10 +43,11 @@ object MdrSearchArgs {
       }
 
       override def unbind(key: String, value: MdrSearchArgs): String = {
-        List(
-          strOptBinder.unbind(key + PRODUCER_ID_SUF, value.producerId),
-          intBinder.unbind(key + PAGE_ID_SUF, value.page),
-          boolOptBinder.unbind(key + FREE_ADV_IS_ALLOWED_SUF, value.freeAdvIsAllowed)
+        val k1 = key1F(key)
+        Iterator(
+          strOptBinder.unbind (k1(PRODUCER_ID_FN),          value.producerId),
+          intBinder.unbind    (k1(PAGE_ID_FN),              value.page),
+          boolOptBinder.unbind(k1(FREE_ADV_IS_ALLOWED_FN),  value.freeAdvIsAllowed)
         )
           .filter { qv => !qv.isEmpty && !qv.endsWith("=") }
           .mkString("&")
@@ -55,13 +58,13 @@ object MdrSearchArgs {
 }
 
 
-import MdrSearchArgs._
+import models.mdr.MdrSearchArgs._
 
 
 case class MdrSearchArgs(
-  page: Int = 0,
-  producerId: Option[String] = None,
-  freeAdvIsAllowed: Option[Boolean] = None
+  page              : Int             = 0,
+  producerId        : Option[String]  = None,
+  freeAdvIsAllowed  : Option[Boolean] = None
 ) extends MdrSearchArgsI {
 
   def maxResults = FREE_ADVS_PAGE_SZ

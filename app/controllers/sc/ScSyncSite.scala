@@ -135,8 +135,8 @@ with ScNodesListBase with ScSiteBase {
       override lazy val ctx = that.ctx
 
       /** Рендер заэкранного блока. В случае Html можно просто вызвать renderBlockHtml(). */
-      override def renderOuterBlock(madsCountInt: Int, brArgs: blk.RenderArgs, index: Int, producer: MAdnNode): Future[OBT] = {
-        renderBlockHtml(madsCountInt = madsCountInt, brArgs = brArgs, index = index, producer = producer)
+      override def renderOuterBlock(args: AdBodyTplArgs): Future[OBT] = {
+        renderBlockHtml(args)
       }
 
       override val _adSearch = {

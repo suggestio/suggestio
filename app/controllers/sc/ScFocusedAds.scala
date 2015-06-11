@@ -2,6 +2,7 @@ package controllers.sc
 
 import _root_.util.jsa.{JsAppendById, JsAction, SmRcvResp, Js}
 import io.suggest.util.Lists
+import models.blk.IRenderArgs
 import models.jsm.ProducerAdsResp
 import models.msc._
 import play.api.mvc.Result
@@ -155,41 +156,49 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
 
     lazy val ctx = implicitly[Context]
 
+    /** Параллельный рендер последовательности блоков. */
     def blocksHtmlsFut: Future[Seq[OBT]] = {
       // Форсируем распараллеливание асинхронных операций.
       val _mads4blkRenderFut = mads4blkRenderFut
       val _producersMapFut = mads2ProducersFut
-      for {
-        madsCountInt   <- madsCountIntFut
-        mads4blkRender <- _mads4blkRenderFut
-        producersMap   <- _producersMapFut
-        rendered       <- renderBlocks(madsCountInt, mads4blkRender, producersMap)
-      } yield {
-        rendered
+
+      madsCountIntFut flatMap { madsCountInt =>
+        _mads4blkRenderFut flatMap { mads4blkRender =>
+          _producersMapFut flatMap { producersMap =>
+
+            val (_, futs) = Lists.mapFoldLeft(mads4blkRender, acc0 = _adSearch.offset) {
+              (index, brArgs) =>
+                val index1 = index + 1
+                val args = AdBodyTplArgs(
+                  brArgs    = brArgs,
+                  producer  = producersMap(brArgs.mad.producerId),
+                  index     = index1,
+                  adsCount  = madsCountInt
+                )
+                val renderFut = renderOuterBlock(args)
+                index1 -> renderFut
+            }
+            Future.sequence(futs)
+
+          }
+        }
       }
     }
 
-    def renderBlocks(madsCountInt: Int, mads4blkRender: Seq[blk.RenderArgs], producersMap: Map[String, MAdnNode]): Future[Seq[OBT]] = {
-      parTraverseOrdered(mads4blkRender, startIndex = _adSearch.offset) {
-        (madAndArgs, index) =>
-          renderOuterBlock(
-            madsCountInt  = madsCountInt,
-            brArgs        = madAndArgs,
-            index         = index,
-            // TODO Нужно parTraverseOrdered() реализовать как flatMap (а не map), и тут можно добавить обработку отсутсвующего продьюсера.
-            producer      = producersMap(madAndArgs.mad.producerId)
-          )
-      }
-    }
-
-    def renderBlockHtml(madsCountInt: Int, brArgs: blk.RenderArgs, index: Int, producer: MAdnNode): Future[Html] = {
+    /**
+     * Отправить в очередь на исполнение рендер одного блока, заданного контейнером аргументов.
+     * Метод должен вызываться в реализации логики из кода реализации метода renderOuterBlock().
+     * @param args Аргументы рендера блока.
+     * @return Фьючерс с html-рендером одного блока.
+     */
+    def renderBlockHtml(args: IAdBodyTplArgs): Future[Html] = {
       Future {
-        _focusedAdTpl(brArgs, index + 1, producer, adsCount = madsCountInt)(ctx)
+        _focusedAdTpl(args)(ctx)
       }
     }
 
     /** Рендер заэкранного блока. В случае Html можно просто вызвать renderBlockHtml(). */
-    def renderOuterBlock(madsCountInt: Int, brArgs: blk.RenderArgs, index: Int, producer: MAdnNode): Future[OBT]
+    def renderOuterBlock(args: AdBodyTplArgs): Future[OBT]
 
     /** Что же будет рендерится в качестве текущей просматриваемой карточки? */
     lazy val focAdOptFut: Future[Option[blk.RenderArgs]] = {
@@ -241,7 +250,7 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
           override def hBtnArgs   = _hBtnArgs
           override def brArgs     = _brArgs
           override def adsCount   = madsCountInt
-          override def startIndex = _adSearch.offset
+          override def index = _adSearch.offset
           override def jsStateOpt = _scStateOpt
         }
       }
@@ -373,8 +382,8 @@ trait ScFocusedAds extends ScFocusedAdsBase {
 
     override type OBT = JsString
 
-    override def renderOuterBlock(madsCountInt: Int, brArgs: blk.RenderArgs, index: Int, producer: MAdnNode): Future[OBT] = {
-      renderBlockHtml(madsCountInt = madsCountInt, brArgs = brArgs, index = index, producer = producer)
+    override def renderOuterBlock(args: AdBodyTplArgs): Future[OBT] = {
+      renderBlockHtml(args)
         .map { html => JsString(html) }
     }
 
@@ -405,10 +414,10 @@ trait ScFocusedAds extends ScFocusedAdsBase {
     /** Итоговый результат выполнения запроса собирается тут. */
     override def resultFut: Future[Result] = {
       // Запуск сборки css-инжекции в <head> клиента:
-      val cssInjectFut = jsAppendAdsCss
+      val _jsAppendAdsCssFut = jsAppendAdsCssFut
       for {
         prodAdsResp <- producerAdsRespFut
-        cssInject   <- cssInjectFut
+        cssInject   <- _jsAppendAdsCssFut
       } yield {
         cacheControlShort {
           Ok( Js(10000, cssInject, SmRcvResp(prodAdsResp)) )

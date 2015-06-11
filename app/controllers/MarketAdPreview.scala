@@ -2,6 +2,7 @@ package controllers
 
 import models.blk.SzMult_t
 import models.im.make.Makers
+import models.msc.AdBodyTplArgs
 import play.twirl.api.Html
 import util.PlayMacroLogsI
 import models._
@@ -118,7 +119,7 @@ trait MarketAdPreview extends SioController with PlayMacroLogsI {
     // Поддержка wideBg:
     val bgOptFut = BgImg.maybeMakeBgImg(mad, szMult, ctx.deviceScreenOpt)
     bgOptFut map { bgImgOpt =>
-      val args = blk.RenderArgs(
+      val _brArgs = blk.RenderArgs(
         mad           = mad,
         withEdit      = false,
         bgImg         = bgImgOpt,
@@ -126,7 +127,8 @@ trait MarketAdPreview extends SioController with PlayMacroLogsI {
         szMult        = szMult,
         cssClasses = Seq("__popup")
       )
-      _adFullTpl(args, producer = request.adnNode)(ctx)
+      val args = AdBodyTplArgs(_brArgs, request.adnNode, 1, 1)
+      _adFullTpl(args)(ctx)
     }
   }
 
