@@ -166,7 +166,7 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
         _mads4blkRenderFut flatMap { mads4blkRender =>
           _producersMapFut flatMap { producersMap =>
 
-            val (_, futs) = Lists.mapFoldLeft(mads4blkRender, acc0 = (_adSearch.offset, blockHtmlRenderAcc0)) {
+            val (_, futs) = Lists.mapFoldLeft(mads4blkRender, acc0 = (firstAdIndex, blockHtmlRenderAcc0)) {
               case ((index, brAcc0), brArgs) =>
                 // Сразу инкрементим счетчик, т.к. если отсчитывать от offset, то будет ноль при первом вызове.
                 val index1 = index + 1
@@ -237,6 +237,8 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
       MAdnNodeCache.maybeGetByIdCached(prodIdOpt)
     }
 
+    def firstAdIndex = _adSearch.offset + 1
+
     /** Сборка контейнера аргументов для вызова шаблона _focusedAdsTpl(). */
     def focAdsHtmlArgsFut: Future[FocusedAdsTplArgs] = {
       val _producerFut = focAdProducerOptFut.map(_.get)
@@ -257,7 +259,7 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
           override def hBtnArgs   = _hBtnArgs
           override def brArgs     = _brArgs
           override def adsCount   = madsCountInt
-          override def index      = _adSearch.offset
+          override def index      = firstAdIndex
           override def jsStateOpt = _scStateOpt
         }
       }
