@@ -128,7 +128,7 @@ with ScNodesListBase with ScSiteBase {
     }
 
     /** Логика поддержки отображения focused ads, т.е. просматриваемой карточки. */
-    def focusedLogic = new FocusedAdsLogic {
+    def focusedLogic = new FocusedAdsLogic with NoBrAcc {
       override type OBT = Html
       override implicit def _request = that._request
       override def _scStateOpt = Some(_scState)

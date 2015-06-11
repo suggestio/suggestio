@@ -25,7 +25,7 @@ trait ScIndexAdOpen extends ScFocusedAds with ScIndexNodeCommon {
 
   /** Тело экшена возврата медиа-кнопок расширено поддержкой переключения на index-выдачу узла-продьюсера
     * рекламной карточки, которая заинтересовала юзера. */
-  override protected def _focusedAds(logic: FocusedAdsLogicV)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+  override protected def _focusedAds(logic: FocusedAdsLogicHttp)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
     // 2015.may.8: При выборе чужой карточки нужно делать переход в выдачу чуждого узла с возможностью возврата.
     logic.firstAdsFut flatMap { firstAds =>
       val stepToProdAdnIdOpt = firstAds
@@ -51,7 +51,7 @@ trait ScIndexAdOpen extends ScFocusedAds with ScIndexNodeCommon {
    * @param request Исходный реквест.
    * @return Фьючерс с http-результатом.
    */
-  private def _goToProducerIndex(adnId: String, focLogic: FocusedAdsLogicV)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+  private def _goToProducerIndex(adnId: String, focLogic: FocusedAdsLogicHttp)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
     // Извлекаем MAdnNode втупую. exception будет перехвачен в recoverWith.
     val mnodeFut = MAdnNodeCache.getById(adnId)
         .map { _.get }

@@ -15,4 +15,6 @@ package object msc {
 
   type MScTarget          = MScTargets.T
 
+  type MFocRenderMode = MFocRenderModes.T
+
 }

@@ -184,7 +184,10 @@ case class ScJsState(
       override def receiverIds    = that.adnId.toList
       override def offsetOpt      = that.fadsOffsetOpt
       override def producerIds    = that.fadsProdIdOpt.toList
+      // При синхронном рендере единственная карточка автоматом является целевой
       override def withHeadAd     = true
+      // При синхронном рендере нет никаких цепочкек focused-карточек
+      override def fadsLastProducerId = None
     }
   }
 

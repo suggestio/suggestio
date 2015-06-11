@@ -2,7 +2,6 @@ package controllers.sc
 
 import _root_.util.jsa.{JsAppendById, JsAction, SmRcvResp, Js}
 import io.suggest.util.Lists
-import models.blk.IRenderArgs
 import models.jsm.ProducerAdsResp
 import models.msc._
 import play.api.mvc.Result
@@ -124,25 +123,20 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
     }
 
     lazy val mads2andBrArgsFut: Future[Seq[blk.RenderArgs]] = {
-      mads2Fut flatMap { mads =>
-        val _ctx = ctx
-        val _addCssClasses = addCssClasses
-        Future.traverse(mads.zipWithIndex) { case (mad, i) =>
+      val _mads2Fut = mads2Fut
+      val _ctx = ctx
+      val _withCssClasses = withCssClasses
+      _mads2Fut flatMap { mads =>
+        Future.traverse(mads) { mad =>
           ShowcaseUtil.focusedBrArgsFor(mad)(_ctx)
             .map { brArgs =>
-              val brArgs1 = brArgs.copy(
+              brArgs.copy(
                 inlineStyles    = false,
-                cssClasses      = _addCssClasses,
-                // 2015.mar.06: FIXME Это значение сейчас перезаписывается таким же через showcase.js.
+                cssClasses      = _withCssClasses,
+                // 2015.mar.06: FIXME Это значение сейчас перезаписывается таким же через showcase.js. // TODO Они должны быть в стилях, а не тут.
                 blockStyle      = brArgs.wideBg.map(_ => "position: absolute; top: 50px; left: 50%;")
               )
-              brArgs1 -> i
             }
-        } map { resUnsorted =>
-          // Восстановить исходный порядок:
-          resUnsorted
-            .sortBy(_._2)
-            .map(_._1)
         }
       }
     }
@@ -156,6 +150,12 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
 
     lazy val ctx = implicitly[Context]
 
+    /** Тип аккамулятора при рендере блоков через renderOuterBlock(). */
+    type BrAcc_t
+
+    /** Начальный аккамулятор для первого вызова renderOuterBlock(). */
+    def blockHtmlRenderAcc0: BrAcc_t
+
     /** Параллельный рендер последовательности блоков. */
     def blocksHtmlsFut: Future[Seq[OBT]] = {
       // Форсируем распараллеливание асинхронных операций.
@@ -166,8 +166,9 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
         _mads4blkRenderFut flatMap { mads4blkRender =>
           _producersMapFut flatMap { producersMap =>
 
-            val (_, futs) = Lists.mapFoldLeft(mads4blkRender, acc0 = _adSearch.offset) {
-              (index, brArgs) =>
+            val (_, futs) = Lists.mapFoldLeft(mads4blkRender, acc0 = (_adSearch.offset, blockHtmlRenderAcc0)) {
+              case ((index, brAcc0), brArgs) =>
+                // Сразу инкрементим счетчик, т.к. если отсчитывать от offset, то будет ноль при первом вызове.
                 val index1 = index + 1
                 val args = AdBodyTplArgs(
                   brArgs    = brArgs,
@@ -175,8 +176,8 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
                   index     = index1,
                   adsCount  = madsCountInt
                 )
-                val renderFut = renderOuterBlock(args)
-                index1 -> renderFut
+                val (renderFut, brAcc1) = renderOuterBlockAcc(args, brAcc0)
+                (index1, brAcc1) -> renderFut
             }
             Future.sequence(futs)
 
@@ -197,8 +198,14 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
       }
     }
 
-    /** Рендер заэкранного блока. В случае Html можно просто вызвать renderBlockHtml(). */
-    def renderOuterBlock(args: AdBodyTplArgs): Future[OBT]
+    /**
+     * Рендер одного блока. В случае Html можно просто вызвать renderBlockHtml().
+     * 11.jun.2015: Добавлена поддержка синхронного аккамулятора для передачи данных между вызовами этого метода.
+     * @param args Контейнер с данными для запуска рендера.
+     * @param brAcc0 Аккамулятор.
+     * @return Фьючерс рендера и новый аккамулятор.
+     */
+    def renderOuterBlockAcc(args: AdBodyTplArgs, brAcc0: BrAcc_t): (Future[OBT], BrAcc_t)
 
     /** Что же будет рендерится в качестве текущей просматриваемой карточки? */
     lazy val focAdOptFut: Future[Option[blk.RenderArgs]] = {
@@ -250,7 +257,7 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
           override def hBtnArgs   = _hBtnArgs
           override def brArgs     = _brArgs
           override def adsCount   = madsCountInt
-          override def index = _adSearch.offset
+          override def index      = _adSearch.offset
           override def jsStateOpt = _scStateOpt
         }
       }
@@ -273,7 +280,7 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
     }
 
     /** Дописывать эти css-классы в стили и в рендер. */
-    def addCssClasses = Seq("focused")
+    def withCssClasses = Seq("focused")
 
     /** Параметры для рендера обрамляющего css блоков (css не полей, а блоков в целом). */
     override def adsCssRenderArgsFut: Future[immutable.Seq[blk.IRenderArgs]] = {
@@ -313,6 +320,22 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
     }
   }
 
+  /** Если поддержка аккамулятора при вызовах renderOutBlock() не требуется, то этот трейт отключит её. */
+  trait NoBrAcc extends FocusedAdsLogic {
+
+    override type BrAcc_t = None.type
+
+    /** Начальный аккамулятор для первого вызова renderOuterBlock(). */
+    override def blockHtmlRenderAcc0: BrAcc_t = None
+
+    /** Рендер заэкранного блока. В случае Html можно просто вызвать renderBlockHtml(). */
+    override def renderOuterBlockAcc(args: AdBodyTplArgs, brAcc0: BrAcc_t): (Future[OBT], BrAcc_t) = {
+      (renderOuterBlock(args), brAcc0)
+    }
+
+    def renderOuterBlock(args: AdBodyTplArgs): Future[OBT]
+  }
+
 }
 
 
@@ -335,7 +358,7 @@ trait ScFocusedAds extends ScFocusedAdsBase {
    * @param request Экземпляр реквеста.
    * @return Фьючерс с результатом.
    */
-  protected def _focusedAds(logic: FocusedAdsLogicV)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+  protected def _focusedAds(logic: FocusedAdsLogicHttp)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
     _showFocusedAds(logic)
   }
 
@@ -345,7 +368,7 @@ trait ScFocusedAds extends ScFocusedAdsBase {
    * @param request Исходный запрос.
    * @return Фьючерс с http-результатом.
    */
-  protected def _showFocusedAds(logic: FocusedAdsLogicV)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+  protected def _showFocusedAds(logic: FocusedAdsLogicHttp)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
     // Запускаем сборку ответа:
     val resultFut = logic.resultFut
 
@@ -363,14 +386,10 @@ trait ScFocusedAds extends ScFocusedAdsBase {
 
 
   /** Перезаписываемый сборкщик логик для версий. */
-  def getLogicFor(adSearch: FocusedAdsSearchArgs)(implicit request: AbstractRequestWithPwOpt[_]): FocusedAdsLogicV = {
+  def getLogicFor(adSearch: FocusedAdsSearchArgs)(implicit request: AbstractRequestWithPwOpt[_]): FocusedAdsLogicHttp = {
     val vsn = adSearch.apiVsn
     if (vsn == MScApiVsns.Coffee) {
-      new FocusedAdsLogicV1 {
-        override def _adSearch    = adSearch
-        override def _scStateOpt: Option[ScJsState] = None
-        override implicit def _request = request
-      }
+      new FocusedAdsLogicHttpV1(adSearch)
     } else {
       throw new UnsupportedOperationException("Unsupported api vsn: " + vsn)
     }
@@ -378,18 +397,40 @@ trait ScFocusedAds extends ScFocusedAdsBase {
 
 
   /** Расширение базовой focused-ads-логики для написания HTTP-экшенов. */
-  protected trait FocusedAdsLogicV extends FocusedAdsLogic {
+  protected trait FocusedAdsLogicHttp extends FocusedAdsLogic {
 
+    /** Синхронного состояния выдачи тут обычно нет. */
+    override def _scStateOpt: Option[ScJsState] = None
+
+    /** Сборка HTTP-ответа. */
+    def resultFut: Future[Result]
+  }
+
+
+  /**
+   * Внутренняя реализация Focused-логики для v1 API.
+   * Это API имело архитектурные особенности: первая карточка рендерилась с обрамлением и отдельном поле,
+   * а остальные рендерились в основном поле. Такой подход вызывал неисправимые проблемы при нескольких
+   * продьюсерах в пачке карточек.
+   */
+  protected class FocusedAdsLogicHttpV1(val _adSearch: FocusedAdsSearchArgs)
+                                       (implicit val _request: AbstractRequestWithPwOpt[_])
+    extends FocusedAdsLogicHttp
+    with NoBrAcc
+  {
+    /** Тип отрендеренного блока в APIv1 -- это json-строка, содержащая HTML блока без заглавия и прочего. */
     override type OBT = JsString
 
+    /** Рендерим в html, минифицируем, заворачиваем в js-строку. */
     override def renderOuterBlock(args: AdBodyTplArgs): Future[OBT] = {
       renderBlockHtml(args)
-        .map { html => JsString(html) }
+        .map(html2jsStr)
     }
 
+    /** Отдельно отфокусированную карточку тоже нужно минифицировать и завернуть в JsString. */
     def focAdHtmlJsStrOptFut: Future[Option[JsString]] = {
       focAdHtmlOptFut
-        .map(_.map(JsString(_)))
+        .map(_.map(html2jsStr))
     }
 
     def producerAdsRespFut: Future[ProducerAdsResp] = {
@@ -401,15 +442,6 @@ trait ScFocusedAds extends ScFocusedAdsBase {
         ProducerAdsResp(focAdHtmlOpt, outerBlocksRendered)
       }
     }
-
-    /** Сборка HTTP-ответа. */
-    def resultFut: Future[Result]
-  }
-
-
-  /** Внутренний для экшенов этого модуля трейт FocusedAdsLogic.
-    * Использует JsString для формирования результата. */
-  protected trait FocusedAdsLogicV1 extends FocusedAdsLogicV {
 
     /** Итоговый результат выполнения запроса собирается тут. */
     override def resultFut: Future[Result] = {

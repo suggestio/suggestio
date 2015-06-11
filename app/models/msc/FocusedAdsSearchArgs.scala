@@ -2,7 +2,7 @@ package models.msc
 
 import models.{AdSearchWrapper, AdSearchWrapper_, AdSearch}
 import play.api.mvc.QueryStringBindable
-import io.suggest.ad.search.AdSearchConstants.WITH_HEAD_AD_FN
+import io.suggest.ad.search.AdSearchConstants._
 
 /**
  * Suggest.io
@@ -16,21 +16,25 @@ object FocusedAdsSearchArgs {
   /** Маппер экземпляров модели для url query string. */
   implicit def qsb(implicit
                    adSearchB  : QueryStringBindable[AdSearch],
-                   boolB      : QueryStringBindable[Boolean]
+                   boolB      : QueryStringBindable[Boolean],
+                   strOptB    : QueryStringBindable[Option[String]]
                   ): QueryStringBindable[FocusedAdsSearchArgs] = {
     new QueryStringBindable[FocusedAdsSearchArgs] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, FocusedAdsSearchArgs]] = {
         for {
-          maybeAdSearch   <- adSearchB.bind(key, params)
-          maybeWithHeadAd <- boolB.bind(WITH_HEAD_AD_FN, params)
+          maybeAdSearch       <- adSearchB.bind(key, params)
+          maybeWithHeadAd     <- boolB.bind(WITH_HEAD_AD_FN, params)
+          maybeFadsLastProdId <- strOptB.bind(FADS_LAST_PROD_ID_FN, params)
         } yield {
           for {
-            _adSearch     <- maybeAdSearch.right
-            _withHeadAd   <- maybeWithHeadAd.right
+            _adSearch         <- maybeAdSearch.right
+            _withHeadAd       <- maybeWithHeadAd.right
+            _fadsLastProdId   <- maybeFadsLastProdId.right
           } yield {
             new FocusedAdsSearchArgs with AdSearchWrapper {
-              override def _dsArgsUnderlying = _adSearch
-              override def withHeadAd = _withHeadAd
+              override def _dsArgsUnderlying  = _adSearch
+              override def withHeadAd         = _withHeadAd
+              override def fadsLastProducerId = _fadsLastProdId
             }
           }
         }
@@ -50,12 +54,21 @@ object FocusedAdsSearchArgs {
 trait FocusedAdsSearchArgs extends AdSearch {
 
   /**
+   * v1
    * Поле наличия или отсутствия head-ad рендера в json-ответе.
    * @return true: означает, что нужна начальная страница с html.
    *         false: возвращать только json-массив с отрендеренными блоками,
    *         без html-страницы с первой карточкой.
    */
   def withHeadAd: Boolean
+
+  /**
+   * v2
+   * Поле последнего id продьюсера из предыдущей цепочки focused ads.
+   * Пришло на смену флагу withHeadAd, которого стало не хватать.
+   * @return Some(producerId) или None, если предыдущего запроса не было (когда offset = 0).
+   */
+  def fadsLastProducerId: Option[String]
 
 }
 
@@ -66,5 +79,6 @@ trait FocusedAdsSearchArgsWrapper extends FocusedAdsSearchArgs with AdSearchWrap
   override type WT = FocusedAdsSearchArgs
 
   override def withHeadAd = _dsArgsUnderlying.withHeadAd
+  override def fadsLastProducerId = _dsArgsUnderlying.fadsLastProducerId
 
 }
