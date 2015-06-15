@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.m.msrv.index
 
+import io.suggest.sc.sjs.m.msrv.MSrvUtil
 import io.suggest.sc.sjs.util.router.srv.routes
 import io.suggest.sjs.common.xhr.Xhr
 
@@ -34,18 +35,9 @@ object MNodeIndex {
       case None =>
         router.geoIndex(reqArgs)
     }
-    Xhr.successWithStatus(200) {
-      Xhr.send(
-        method  = route.method,
-        url     = route.url,
-        accept  = Some(Xhr.MIME_JSON)
-      )
-
-    } map { xhr =>
-      // Как бы десериализация ответа.
-      val json = JSON.parse( xhr.responseText )
-        .asInstanceOf[MNodeIndexJson]
-      new MNodeIndex(json)
+    MSrvUtil.reqJson(route) map { json =>
+      val json1 = json.asInstanceOf[MNodeIndexJson]
+      new MNodeIndex(json1)
     }
   }
 

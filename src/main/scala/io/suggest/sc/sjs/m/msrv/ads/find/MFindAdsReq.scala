@@ -32,10 +32,13 @@ trait MFindAdsReq {
   def geo         : Option[IMGeoMode]
   def screenInfo  : Option[IMScreen]
 
+  /** Версия API. Она по идее не меняется. */
+  def apiVsn      : Int = MSrv.apiVsn
+
   /** Собрать итоговый json для передачи в router. */
   def toJson: Dictionary[Any] = {
     val d = Dictionary[Any](
-      API_VSN_FN -> MSrv.apiVsn
+      API_VSN_FN -> apiVsn
     )
 
     if (producerId.nonEmpty)

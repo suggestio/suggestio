@@ -48,4 +48,7 @@ trait ScCtl extends js.Object {
   /** Роута для запроса списка узлов. */
   def findNodes(args: Dictionary[Any]): Route = js.native
 
+  /** Роута для поиска focused-карточек. */
+  def focusedAds(args: Dictionary[Any]): Route = js.native
+
 }
