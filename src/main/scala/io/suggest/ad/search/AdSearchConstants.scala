@@ -19,6 +19,7 @@ object AdSearchConstants {
   def GENERATION_FN      = "gen"
   def GEO_MODE_FN        = "geo"
   def SCREEN_INFO_FN     = "screen"
+  def LAST_PROD_ID_FN    = "lpi"
   def API_VSN_FN         = "v"
 
   /**

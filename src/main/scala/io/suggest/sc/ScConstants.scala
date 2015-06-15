@@ -72,6 +72,9 @@ object ScConstants {
 
     /** Имя поля с временем генерации ответа. */
     def TIMESTAMP_FN      = "timestamp"
+
+    /** Открытые карточки по API v2. */
+    def FOCUSED_ADS_FN    = "fads"
   }
 
 
