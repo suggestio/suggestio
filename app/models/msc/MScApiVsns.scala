@@ -33,7 +33,7 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImp
   override type T = Val
 
   /** Выдача, написанная одним файлом на coffee-script. Со временем будет удалена. */
-  val Coffee  : T = new Val(1) {
+  val Coffee: T = new Val(1) {
     override def forceScCloseable = true
     override def renderActionUrls  = true
     /** Coffee-версия сама придумывает id по-порядку и управляет ими. */
@@ -42,7 +42,7 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImp
   }
 
   /** Выдача, переписанная на scala.js. Исходная версия. */
-  val Sjs1    : T = new Val(2) {
+  val Sjs1: T = new Val(2) {
     /** Рендерить утиль для "закрытия" выдачи нужно только при реальной необходимости. */
     override def forceScCloseable = false
 

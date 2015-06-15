@@ -176,7 +176,7 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
                   index     = index1,
                   adsCount  = madsCountInt
                 )
-                val (renderFut, brAcc1) = renderOuterBlockAcc(args, brAcc0)
+                val (renderFut, brAcc1) = renderOneBlockAcc(args, brAcc0)
                 (index1, brAcc1) -> renderFut
             }
             Future.sequence(futs)
@@ -205,7 +205,7 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
      * @param brAcc0 Аккамулятор.
      * @return Фьючерс рендера и новый аккамулятор.
      */
-    def renderOuterBlockAcc(args: AdBodyTplArgs, brAcc0: BrAcc_t): (Future[OBT], BrAcc_t)
+    def renderOneBlockAcc(args: AdBodyTplArgs, brAcc0: BrAcc_t): (Future[OBT], BrAcc_t)
 
     /** Что же будет рендерится в качестве текущей просматриваемой карточки? */
     lazy val focAdOptFut: Future[Option[blk.RenderArgs]] = {
@@ -225,13 +225,6 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
       }
     }
 
-    /** Узнать продьюсера отображаемой рекламной карточки. */
-    def focMadProducerOptFut: Future[Option[MAdnNode]] = {
-      focAdOptFut flatMap { madAndArgsOpt =>
-        madProducerOptFut(madAndArgsOpt.map(_.mad))
-      }
-    }
-
     def madProducerOptFut(madOpt: Option[MAd]): Future[Option[MAdnNode]] = {
       val prodIdOpt = madOpt.map(_.producerId)
       MAdnNodeCache.maybeGetByIdCached(prodIdOpt)
@@ -239,8 +232,21 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
 
     def firstAdIndex = _adSearch.offset + 1
 
+    /** Сборка аргументов для рендера focused-карточки, т.е. раскрытого блока + оформление продьюсера. */
+    protected def focAdsRenderArgsFor(abtArgs: IAdBodyTplArgs): IFocusedAdsTplArgs = {
+      val producer = abtArgs.producer
+      val _fgColor = producer.meta.fgColor getOrElse ShowcaseUtil.SITE_FGCOLOR_DFLT
+      FocusedAdsTplArgs2(
+        abtArgs,
+        bgColor    = producer.meta.color  getOrElse  ShowcaseUtil.SITE_BGCOLOR_DFLT,
+        fgColor    = _fgColor,
+        hBtnArgs   = HBtnArgs(fgColor = _fgColor),
+        jsStateOpt = _scStateOpt
+      )
+    }
+
     /** Сборка контейнера аргументов для вызова шаблона _focusedAdsTpl(). */
-    def focAdsHtmlArgsFut: Future[FocusedAdsTplArgs] = {
+    def focAdsHtmlArgsFut: Future[IFocusedAdsTplArgs] = {
       val _producerFut = focAdProducerOptFut.map(_.get)
       val _brArgsFut = focAdOptFut.map(_.get)
       val _madsCountIntFut = madsCountIntFut
@@ -249,19 +255,8 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
         _brArgs       <- _brArgsFut
         madsCountInt  <- _madsCountIntFut
       } yield {
-        val _bgColor = _producer.meta.color   getOrElse ShowcaseUtil.SITE_BGCOLOR_DFLT
-        val _fgColor = _producer.meta.fgColor getOrElse ShowcaseUtil.SITE_FGCOLOR_DFLT
-        val _hBtnArgs = HBtnArgs(fgColor = _fgColor)
-        new FocusedAdsTplArgs {
-          override def producer   = _producer
-          override def bgColor    = _bgColor
-          override def fgColor    = _fgColor
-          override def hBtnArgs   = _hBtnArgs
-          override def brArgs     = _brArgs
-          override def adsCount   = madsCountInt
-          override def index      = firstAdIndex
-          override def jsStateOpt = _scStateOpt
-        }
+        val abtArgs = AdBodyTplArgs(_brArgs, _producer, adsCount = madsCountInt, index = firstAdIndex)
+        focAdsRenderArgsFor(abtArgs)
       }
     }
 
@@ -291,12 +286,26 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
       }
     }
 
+    /** Вызов заглавного рендера карточки. */
+    def renderFocused(args: IFocusedAdsTplArgs): Html = {
+      _focusedAdsTpl(args)(ctx)
+    }
+    /** Вызов renderFocused() асинхронно, внутри Future{}. Полезно для параллельного рендера блоков. */
+    def renderFocusedFut(args: IFocusedAdsTplArgs): Future[Html] = {
+      Future {
+        renderFocused(args)
+      }
+    }
+
+    // TODO Заглавная карточка специфична только для API v1, но используется в SyncSite для рендера единственной (текущей) карточки.
+    // Нужно перевести SyncSite на использование API v2 или на базовый трейт;  v1 будет постепенно выпилено.
+
     /** Отрендеренное отображение раскрытой карточки вместе с обрамлениями и остальным.
       * Т.е. пригодно для вставки в соотв. div indexTpl. Функция игнорирует значение _withHeadAd.
       * @return Если нет карточек, то будет NoSuchElementException. Иначе фьючерс с HTML-рендером. */
     def focAdHtmlFut: Future[Html] = {
       focAdsHtmlArgsFut map { args =>
-        _focusedAdsTpl(args)(ctx)
+        renderFocused(args)
       }
     }
 
@@ -331,7 +340,7 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
     override def blockHtmlRenderAcc0: BrAcc_t = None
 
     /** Рендер заэкранного блока. В случае Html можно просто вызвать renderBlockHtml(). */
-    override def renderOuterBlockAcc(args: AdBodyTplArgs, brAcc0: BrAcc_t): (Future[OBT], BrAcc_t) = {
+    override def renderOneBlockAcc(args: AdBodyTplArgs, brAcc0: BrAcc_t): (Future[OBT], BrAcc_t) = {
       (renderOuterBlock(args), brAcc0)
     }
 

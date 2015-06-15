@@ -2,6 +2,7 @@ package models.jsm
 
 import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.ym.model.MAdnNode
+import models.msc.FocRenderResult
 import play.api.libs.json._
 import play.api.mvc.Call
 import io.suggest.sc.ScConstants.Resp._
@@ -63,15 +64,34 @@ trait HtmlOpt extends SmJsonResp {
   }
 }
 
-trait FocusedAdsResp extends Action with HtmlOpt with Blocks
-
 /**
  * Навигация в карточках продьюсера. Тут логика focused ads.
  * @param htmlOpt Нулевой отображаемый блок должен быть уже отрендерен сюда.
  * @param blocks Отрендеренные блоки за экраном.
  */
-case class ProducerAdsResp(htmlOpt: Option[JsString], blocks: Seq[JsValue]) extends FocusedAdsResp {
+case class ProducerAdsResp(htmlOpt: Option[JsString], blocks: Seq[JsValue]) extends Action with Blocks with HtmlOpt {
   override def action = "producerAds"
+}
+
+
+/** Список focused-карточек по API v2. */
+trait FocusedAdsT extends SmJsonResp {
+  /** focused-карточки. */
+  def ads: Seq[FocRenderResult]
+
+  override def toJsonAcc: FieldsJsonAcc = {
+    var acc = super.toJsonAcc
+    val _ads = ads
+    if (_ads.nonEmpty) {
+      acc ::= FOCUSED_ADS_FN -> Json.toJson(_ads)
+    }
+    acc
+  }
+}
+
+/** Focused APIv2 контейнер ответа, для рендера в JSON. */
+case class FocusedAdsResp2(ads: Seq[FocRenderResult]) extends Action with FocusedAdsT {
+  override def action = "focused"
 }
 
 

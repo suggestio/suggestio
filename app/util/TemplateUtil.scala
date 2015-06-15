@@ -283,9 +283,11 @@ trait TplFormatUtilT {
   }
 
   implicit def html2jsStr(html: Html): JsString = {
-    JsString(
-      HtmlCompressUtil.compressForJson(html)
-    )
+    JsString( html2str4json(html) )
+  }
+
+  def html2str4json(html: Html): String = {
+    HtmlCompressUtil.compressForJson(html)
   }
 
   implicit def txt2str(txt: Txt): String = txt.body.trim

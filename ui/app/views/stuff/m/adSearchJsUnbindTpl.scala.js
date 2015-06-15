@@ -1,4 +1,4 @@
-@(delim: String)
+@(delim: String, after: Option[JavaScript] = None)
 
 @* Код функции для qsb.javascriptUnbind() для AdSearch. *@
 
@@ -17,6 +17,7 @@
     add("@GENERATION_FN");
     add("@GEO_MODE_FN");
     add("@SCREEN_INFO_FN");
-    add("@API_VSN_FN");
+    @after
+    add("@API_VSN_FN", true);
   }
 }

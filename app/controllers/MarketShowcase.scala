@@ -25,7 +25,7 @@ class MarketShowcase @Inject() (
   with ScIndexNode
   with ScSyncSiteGeo
   with ScAdsTile
-  with ScFocusedAds
+  with ScFocusedAdsV2
   with ScNodesList
   with ScBlockCss
   with ScOnlyOneAd

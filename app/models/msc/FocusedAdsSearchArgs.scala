@@ -3,6 +3,8 @@ package models.msc
 import models.{AdSearchWrapper, AdSearchWrapper_, AdSearch}
 import play.api.mvc.QueryStringBindable
 import io.suggest.ad.search.AdSearchConstants._
+import util.qsb.QsbKey1T
+import views.js.sc.m._
 
 /**
  * Suggest.io
@@ -19,7 +21,7 @@ object FocusedAdsSearchArgs {
                    boolB      : QueryStringBindable[Boolean],
                    strOptB    : QueryStringBindable[Option[String]]
                   ): QueryStringBindable[FocusedAdsSearchArgs] = {
-    new QueryStringBindable[FocusedAdsSearchArgs] {
+    new QueryStringBindable[FocusedAdsSearchArgs] with QsbKey1T {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, FocusedAdsSearchArgs]] = {
         for {
           maybeAdSearch       <- adSearchB.bind(key, params)
@@ -43,6 +45,11 @@ object FocusedAdsSearchArgs {
       override def unbind(key: String, value: FocusedAdsSearchArgs): String = {
         boolB.unbind(WITH_HEAD_AD_FN, value.withHeadAd) +
           "&" + adSearchB.unbind(key, value)
+      }
+
+      /** Js-код поддержки интеграции модели с jsrouter. */
+      override def javascriptUnbind: String = {
+        scFocusedAdSearchJsUnbindTpl(KEY_DELIM).body
       }
     }
   }

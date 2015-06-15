@@ -1,8 +1,12 @@
 package controllers.sc
 
-import models.msc.{FocRenderResult, MScApiVsns, AdBodyTplArgs, FocusedAdsSearchArgs}
+import models.jsm.FocusedAdsResp2
+import models.msc._
 import play.api.mvc.Result
+import play.twirl.api.Html
 import util.acl.AbstractRequestWithPwOpt
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.Play.{current, configuration}
 
 import scala.concurrent.Future
 
@@ -26,6 +30,14 @@ import scala.concurrent.Future
  */
 trait ScFocusedAdsV2 extends ScFocusedAds {
 
+  /**
+   * Активен ли разнородный рендер последовательных карточек с одинаковым producer_id?
+   * @return false и все карточки в списке будут отрендерены как заглавные (с обрамлением продьюсера).
+   *         true: Рендер заглавных/обычных карточек в наборе будет идти как-то так: AaaaBbCcc.
+   */
+  val OPTIMIZE_SAME_PRODUCER_ADS: Boolean = configuration.getBoolean("sc.focused.sameproducer.optimized") getOrElse true
+
+
   /** Реализация v2-логики. */
   protected class FocusedLogicHttpV2(val _adSearch: FocusedAdsSearchArgs)
                                     (implicit val _request: AbstractRequestWithPwOpt[_])
@@ -44,20 +56,48 @@ trait ScFocusedAdsV2 extends ScFocusedAds {
       _adSearch.fadsLastProducerId
     }
 
-    override def renderOuterBlockAcc(args: AdBodyTplArgs, brAcc0: BrAcc_t): (Future[OBT], BrAcc_t) = {
-      // TODO В вышеуказанном комменте написано, что должен делать этот метод на основе id продьюсера
-      ???
+
+    /** Запуск фонового рендера одного блока. */
+    override def renderOneBlockAcc(args: AdBodyTplArgs, prevProdIdOpt: BrAcc_t): (Future[OBT], BrAcc_t) = {
+      val renderMinified = OPTIMIZE_SAME_PRODUCER_ADS && (prevProdIdOpt contains args.brArgs.mad.producerId)
+      val htmlFut: Future[Html] = {
+        if (renderMinified) {
+          // Карточка от того же продьюсера, что и предыдущая. Рендерим без лишнего обрамления.
+          renderBlockHtml(args)
+        } else {
+          // Эту карточку надо рендерить как заглавную
+          val fargs = focAdsRenderArgsFor(args)
+          renderFocusedFut(fargs)
+        }
+      }
+      // Минифицировать html, завернуть в ответ.
+      val resFut = htmlFut map { html =>
+        import MFocRenderModes._
+        val forRenderMode = if (renderMinified) Normal else Full
+        FocRenderResult(html2str4json(html), forRenderMode)
+      }
+      // Сформировать новый акк и вернуть всё наверх.
+      val acc1 = args.producer.id
+      (resFut, acc1)
     }
 
+
+    /** Сборка HTTP-ответа APIv2. */
     override def resultFut: Future[Result] = {
-      ???
+      for {
+        blockHtmls  <- blocksHtmlsFut
+      } yield {
+        val resp = FocusedAdsResp2(blockHtmls)
+        Ok(resp.toJson)
+      }
     }
 
   }
 
 
-  // Добавить поддержку v2-логики в getLogic:
-  override def getLogicFor(adSearch: FocusedAdsSearchArgs)(implicit request: AbstractRequestWithPwOpt[_]): FocusedAdsLogicHttp = {
+  // Добавить поддержку v2-логики в getLogic()
+  override def getLogicFor(adSearch: FocusedAdsSearchArgs)
+                          (implicit request: AbstractRequestWithPwOpt[_]): FocusedAdsLogicHttp = {
     if (adSearch.apiVsn == MScApiVsns.Sjs1) {
       new FocusedLogicHttpV2(adSearch)
     } else {

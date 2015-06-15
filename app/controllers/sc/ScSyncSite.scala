@@ -144,11 +144,11 @@ with ScNodesListBase with ScSiteBase {
           _maxResultsOpt = Some(1)
         )
       }
-      override def focAdsHtmlArgsFut: Future[FocusedAdsTplArgs] = {
+      override def focAdsHtmlArgsFut: Future[IFocusedAdsTplArgs] = {
         // Нужно добавить в список аргументов данные по syncUrl.
         super.focAdsHtmlArgsFut map { args0 =>
-          new FocusedAdsTplArgsWrapper {
-            override def _focArgsUnderlying: FocusedAdsTplArgs = args0
+          new IFocusedAdsTplArgsWrapper {
+            override def _focArgsUnderlying: IFocusedAdsTplArgs = args0
             override def syncUrl(jsState: ScJsState) = _urlGenF(jsState)
           }
         }
