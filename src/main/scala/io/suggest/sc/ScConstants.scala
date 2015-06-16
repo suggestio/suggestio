@@ -75,6 +75,9 @@ object ScConstants {
 
     /** Открытые карточки по API v2. */
     def FOCUSED_ADS_FN    = "fads"
+
+    /** Имя поля с общим кол-вом чего-то во всей выборке. */
+    def TOTAL_COUNT_FN       = "tc"
   }
 
 
@@ -329,6 +332,15 @@ object ScConstants {
 
     /** Отображать эту рекламу внутри каталога продьюсера. */
     def ID_PRODUCER = "m"
+  }
+
+
+  /** Константы для подвыдачи focused ads. */
+  object Focused {
+
+    /** id корневого контейнера. */
+    def ROOT_ID = "smFocusedAds"
+
   }
 
 }
