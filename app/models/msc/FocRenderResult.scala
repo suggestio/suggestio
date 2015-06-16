@@ -17,7 +17,8 @@ object FocRenderResult {
     * val, потому что вызывается очень часто как в целом, так и в рамках каждого focused-запроса выдачи. */
   implicit val writes: Writes[FocRenderResult] = (
     (__ \ HTML_FN).write[String] and
-    (__ \ MODE_FN).write[MFocRenderMode]
+    (__ \ MODE_FN).write[MFocRenderMode] and
+    (__ \ INDEX_FN).write[Int]
   )(unlift(unapply))
 
 }
@@ -30,12 +31,15 @@ trait IFocRenderResult {
   /** Использованный режим рендера. */
   def mode: MFocRenderMode
 
+  /** Человеческий порядковый номер карточки в выборке.  */
+  def index: Int
 }
 
 
 /** Дефолтовая реализация экземпляров модели [[IFocRenderResult]]. */
 case class FocRenderResult(
-  html: String,
-  mode: MFocRenderMode
+  html  : String,
+  mode  : MFocRenderMode,
+  index : Int
 )
   extends IFocRenderResult

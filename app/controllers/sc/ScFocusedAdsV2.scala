@@ -35,7 +35,7 @@ trait ScFocusedAdsV2 extends ScFocusedAds {
    * @return false и все карточки в списке будут отрендерены как заглавные (с обрамлением продьюсера).
    *         true: Рендер заглавных/обычных карточек в наборе будет идти как-то так: AaaaBbCcc.
    */
-  val OPTIMIZE_SAME_PRODUCER_ADS: Boolean = configuration.getBoolean("sc.focused.sameproducer.optimized") getOrElse true
+  val OPTIMIZE_SAME_PRODUCER_ADS: Boolean = configuration.getBoolean("sc.focused.sameproducer.optimized") getOrElse false
 
 
   /** Реализация v2-логики. */
@@ -74,7 +74,7 @@ trait ScFocusedAdsV2 extends ScFocusedAds {
       val resFut = htmlFut map { html =>
         import MFocRenderModes._
         val forRenderMode = if (renderMinified) Normal else Full
-        FocRenderResult(html2str4json(html), forRenderMode)
+        FocRenderResult(html2str4json(html), forRenderMode, args.index)
       }
       // Сформировать новый акк и вернуть всё наверх.
       val acc1 = args.producer.id
@@ -84,10 +84,12 @@ trait ScFocusedAdsV2 extends ScFocusedAds {
 
     /** Сборка HTTP-ответа APIv2. */
     override def resultFut: Future[Result] = {
+      val _blockHtmlsFut = blocksHtmlsFut
       for {
-        blockHtmls  <- blocksHtmlsFut
+        madsCount   <- madsCountIntFut
+        blockHtmls  <- _blockHtmlsFut
       } yield {
-        val resp = FocusedAdsResp2(blockHtmls)
+        val resp = FocusedAdsResp2(blockHtmls, madsCount)
         Ok(resp.toJson)
       }
     }

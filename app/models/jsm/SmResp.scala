@@ -89,8 +89,19 @@ trait FocusedAdsT extends SmJsonResp {
   }
 }
 
+
+/** Аддон для поля общего кол-ва чего-то (карточек например) во всей выборке. */
+trait TotalCountT extends SmJsonResp {
+  /** Поле с ОБЩИМ кол-вом рекламных карточек во всей выборке. */
+  def totalCount: Int
+
+  override def toJsonAcc: FieldsJsonAcc = {
+    TOTAL_COUNT_FN -> Json.toJson(totalCount) :: super.toJsonAcc
+  }
+}
+
 /** Focused APIv2 контейнер ответа, для рендера в JSON. */
-case class FocusedAdsResp2(ads: Seq[FocRenderResult]) extends Action with FocusedAdsT {
+case class FocusedAdsResp2(ads: Seq[FocRenderResult], totalCount: Int) extends Action with FocusedAdsT with TotalCountT {
   override def action = "focused"
 }
 
