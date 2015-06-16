@@ -11,6 +11,13 @@ import io.suggest.sjs.common.util.SjsLogger
  */
 object FocusedCtl extends CtlT with SjsLogger {
 
-  ???
+  /**
+   * Реакция на изменение состояния текущего offset'а в focused-выдаче.
+   * @param oldOff Старый offset. None значит, что focused-выдача не была активна.
+   * @param newOff Новый offset. None значит, что focused выдача отключена.
+   */
+  def handleFocOffChanged(oldOff: Option[Int], newOff: Option[Int]): Unit = {
+    ???
+  }
 
 }

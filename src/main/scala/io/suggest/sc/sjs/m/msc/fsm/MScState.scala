@@ -6,12 +6,14 @@ import io.suggest.sc.sjs.m.msc.fsm.state._
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 27.05.15 17:36
- * Description: Одно состояние выдачи в целом. На стороне сервера есть модель MScJsState,
+ * Description: Декларативное состояние выдачи в целом. На стороне сервера есть модель MScJsState,
  * для сериализации/десериализации данных этого состояния.
  *
- * Модель строиться на аддонах, реализующих [[IScState]], каждый аддон добавляет какое-то поле в модель.
+ * Модель строиться на аддонах, реализующих [[IScState]], каждый аддон добавляет какое-то поле (поля) в модель.
+ * Здесь только высокоуровневые данные по состоянию. Всякие внутренние состояния конткретных fsm выдачи здесь НЕ живту.
  */
-trait MScStateT extends RcvrAdnIdT with CatT with SearchPanelOpened with NavPanelOpened with CurrGnl with FtsSearch {
+trait MScStateT extends RcvrAdnIdT with CatT with SearchPanelOpened with NavPanelOpened with CurrGnl with FtsSearch
+with FocusedT {
 
   override type T = MScStateT
 
@@ -40,7 +42,8 @@ case class MScState(
   override val searchPanelOpened  : Boolean                 = false,
   override val navPanelOpened     : Boolean                 = false,
   override val currGnlIndex       : Option[Int]             = None,
-  override val ftsSearch          : Option[String]          = None
+  override val ftsSearch          : Option[String]          = None,
+  override val focOffset          : Option[Int]             = None
 )
   extends MScStateT
 

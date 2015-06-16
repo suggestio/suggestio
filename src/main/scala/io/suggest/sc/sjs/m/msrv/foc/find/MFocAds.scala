@@ -4,6 +4,8 @@ import io.suggest.sc.sjs.m.msrv.MSrvUtil
 import io.suggest.sc.sjs.util.router.srv.routes
 
 import scala.concurrent.{Future, ExecutionContext}
+import scala.scalajs.js.{WrappedArray, Dictionary, Any, Array}
+import io.suggest.sc.ScConstants.Resp._
 
 /**
  * Suggest.io
@@ -21,21 +23,49 @@ object MFocAds {
   def find(args: MFocAdSearch)(implicit ec: ExecutionContext): Future[MFocAds] = {
     val route = routes.controllers.MarketShowcase.focusedAds(args.toJson)
     MSrvUtil.reqJson(route) map { json =>
-      new MFocAds( MRespJson(json) )
+      new MFocAds( json.asInstanceOf[Dictionary[Any]] )
     }
   }
 
 }
 
 
-/** Реализация модели ответов на запросы к focused-api. */
-class MFocAds(json: MRespJson) {
+/** Интерфейс экземпляра модели (распарсенного ответа сервера). */
+trait IMFocAds {
+  /** Итератор распарсенных focused-карточек в рамках запрошенной порции. */
+  def focusedAdsIter: Iterator[MFocAd]
 
-  lazy val focusedAds: Seq[MFocAd] = {
-    json.fads
-      .iterator
-      .map { MFocAd(_) }
-      .toSeq
+  /** Кол-во карточек в текущем наборе. */
+  def fadsCount: Int
+
+  /** Общее кол-во карточек во всей запрошенной выборке. */
+  def totalCount: Int
+}
+
+
+/** Реализация модели ответов на запросы к focused-api. */
+class MFocAds(json: Dictionary[Any]) extends IMFocAds {
+
+  lazy val focusedAdsRaw: WrappedArray[Dictionary[Any]] = {
+    val arrRaw = json(FOCUSED_ADS_FN)
+    if (arrRaw != null) {
+      arrRaw.asInstanceOf[Array[Dictionary[Any]]]
+    } else {
+      WrappedArray.empty
+    }
+  }
+  
+  override def focusedAdsIter: Iterator[MFocAd] = {
+    focusedAdsRaw
+      .iterator 
+      .map { MFocAd.apply }
+  }
+
+  override def fadsCount: Int = focusedAdsRaw.size
+
+  override def totalCount: Int = {
+    json(TOTAL_COUNT_FN)
+      .asInstanceOf[Int]
   }
 
 }

@@ -12,6 +12,12 @@ import org.scalajs.dom.raw.{HTMLDivElement, HTMLImageElement}
  */
 trait GetElById {
 
+  protected def getElementByIdOrNull[T <: Element](id: String): T = {
+    dom.document
+      .getElementById(id)
+      .asInstanceOf[T]
+  }
+
   /**
    * Быстро и кратко записывать получение элементов из DOM по id.
    * @param id id элемента.
@@ -19,17 +25,15 @@ trait GetElById {
    * @return Опционально-найденный элемент DOM.
    */
   protected def getElementById[T <: Element](id: String): Option[T] = {
-    val elOrNull = dom.document
-      .getElementById(id)
-      .asInstanceOf[T]
-    Option(elOrNull)
+    Option( getElementByIdOrNull[T](id) )
   }
 
 }
 
 /** Аддон для краткого поиска div'ов по id. */
 trait GetDivById extends GetElById {
-  protected def getDivById(id: String) = getElementById[HTMLDivElement](id)
+  protected def getDivById(id: String)        = getElementById[HTMLDivElement](id)
+  protected def getDivByIdOrNull(id: String)  = getElementByIdOrNull[HTMLDivElement](id)
 }
 
 
