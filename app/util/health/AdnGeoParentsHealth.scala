@@ -9,7 +9,7 @@ import org.joda.time.{DateTimeZone, DateTime}
 import play.api.Application
 import play.api.i18n.Messages
 import util.mail.IMailerWrapper
-import util.{PlayLazyMacroLogsImpl, TplFormatUtilT, CronTasksProvider}
+import util.{PlayMacroLogsImpl, TplFormatUtilT, CronTasksProvider}
 import util.showcase.ShowcaseNodeListUtil
 import play.api.Play.{current, configuration}
 import scala.concurrent.duration._
@@ -24,7 +24,7 @@ import scala.util.Success
  * Created: 18.06.15 17:18
  * Description: Поиск проблем в сети узлов.
  */
-object AdnGeoParentsHealth extends CronTasksProvider with PlayLazyMacroLogsImpl with TplFormatUtilT {
+object AdnGeoParentsHealth extends CronTasksProvider with PlayMacroLogsImpl with TplFormatUtilT {
 
   import LOGGER._
 
@@ -37,8 +37,7 @@ object AdnGeoParentsHealth extends CronTasksProvider with PlayLazyMacroLogsImpl 
   override def cronTasks(app: Application): TraversableOnce[ICronTask] = {
     var acc: List[ICronTask] = Nil
 
-    if (GEO_PARENTS_AUTO) {
-      trace("GeoParent self-testing enabled")
+    val logVerb = if (GEO_PARENTS_AUTO) {
       val tz = DateTimeZone.forID("Europe/Moscow")
       val h24 = 24
       val t = CronTask(
@@ -48,7 +47,12 @@ object AdnGeoParentsHealth extends CronTasksProvider with PlayLazyMacroLogsImpl 
         displayName = "testAllGeoParents()"
       )(testAllPerdiodic())
       acc ::= t
+      "enabled"
+
+    } else {
+      "disabled"
     }
+    info("GeoParent self-testing is " + logVerb + " on this node.")
 
     acc
   }

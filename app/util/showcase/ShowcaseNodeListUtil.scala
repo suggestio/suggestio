@@ -133,6 +133,11 @@ object ShowcaseNodeListUtil extends PlayMacroLogsImpl {
       }
   }
 
+  /** Краткая реализация для поиска узлов по id и отображаемому типу. */
+  private case class NodeSearchByIdShownType(
+    override val withIds: Seq[String],
+    override val shownTypeIds: Seq[String]
+  ) extends NodeDetectArgsT
 
   /**
    * Найти узел города для узла.
@@ -145,12 +150,21 @@ object ShowcaseNodeListUtil extends PlayMacroLogsImpl {
     if (ast == AdnShownTypes.TOWN) {
       Future successful node
     } else {
-      val sargs = new NodeDetectArgsT {
-        override val withIds = node.geo.allParentIds.toSeq
-        override val shownTypeIds = Seq(AdnShownTypes.TOWN.name)
-      }
-      MAdnNode.dynSearch(sargs)
-        .map(_.head)
+      val allParentIds = node.geo.allParentIds.toSeq
+      MAdnNode.dynSearch(
+        NodeSearchByIdShownType(allParentIds, shownTypeIds = Seq(AdnShownTypes.TOWN.name))
+      ) .map(_.head)
+        // 2015.jun.18 Была выявлена проблема в head, когда город отствует. Пытаемся найти район, а из него город уже.
+        .recoverWith { case ex: NoSuchElementException if ast.isBuilding =>
+          error("getTownOfNode() geo-inconsistent linked node: id=" + node.id, ex)
+          val districtTypeNames = AdnShownTypes.districts.iterator.map(_.name).toSeq
+          val sargs2 = NodeSearchByIdShownType(allParentIds, shownTypeIds = districtTypeNames)
+          MAdnNode.dynSearch(sargs2)
+            .map { _.head }
+            .flatMap { districtNode =>
+              getTownOfNode(districtNode)
+            }
+        }
     }
   }
 
