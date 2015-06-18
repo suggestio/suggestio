@@ -35,4 +35,7 @@ object AdSearchConstants {
    */
   def FADS_LAST_PROD_ID_FN    = "y"
 
+  /** Имя поля, содержащее id карточки, которая должна быть обязательно в focused-ответе. */
+  def ONLY_WITH_AD_ID_FN      = "j"
+
 }
