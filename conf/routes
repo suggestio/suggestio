@@ -327,6 +327,10 @@ GET  /sys/person/show/:personId          @controllers.SysPerson.showPerson(perso
 GET  /sys/person/epws                    @controllers.SysPerson.allEpws(offset: Int ?= 0)
 GET  /sys/person/extids                  @controllers.SysPerson.allExtIdents(offset: Int ?= 0)
 
+## sys/debug
+GET  /sys/debug                          @controllers.SysDebug.index
+POST /sys/debug/geo/parent/execute       @controllers.SysDebug.testNodesAllGeoParents
+
 ## Cross-Origin resource sharing: preflight request:
 OPTIONS /*path                           @controllers.Application.corsPreflight(path)
 

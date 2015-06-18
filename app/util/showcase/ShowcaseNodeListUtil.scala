@@ -5,6 +5,7 @@ import io.suggest.ym.model.NodeGeoLevels
 import play.api.i18n.Messages
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.Play.{current, configuration}
+import util.PlayMacroLogsImpl
 import util.SiowebEsUtil.client
 import models._
 import AdnShownTypes.adnInfo2val
@@ -18,7 +19,9 @@ import scala.concurrent.Future
  * Description:
  */
 
-object ShowcaseNodeListUtil {
+object ShowcaseNodeListUtil extends PlayMacroLogsImpl {
+
+  import LOGGER._
 
   /** Показывать все города в выдаче или только текущий? */
   val SHOW_ALL_TOWNS: Boolean = configuration.getBoolean("showcase.nodes.towns.show.all") getOrElse false
@@ -297,11 +300,12 @@ object ShowcaseNodeListUtil {
    * @param currNodeLayer Уровень, на котором находится текущий узел.
    * @return Фьючерс со слоями в порядке рендера (город внизу).
    */
-  def collectLayers(geoMode: GeoMode, currNode: MAdnNode, currNodeLayer: NodeGeoLevel)
+  def collectLayers(geoMode: Option[GeoMode], currNode: MAdnNode, currNodeLayer: NodeGeoLevel)
                    (implicit lang: Messages): Future[Seq[GeoNodesLayer]] = {
     // Задаём опорные геоточки для гео-сортировки и гео-поиска.
-    val (gravity0, gravity1) = if (DISTANCE_SORT) {
-      val g0 = geoMode.exactGeodata
+    val (gravity0, gravity1) = if (DISTANCE_SORT && geoMode.isDefined) {
+      val gm = geoMode.get
+      val g0 = gm.exactGeodata
       val g1 = g0.orElse(currNode.geo.point)
       g0 -> g1
     } else {

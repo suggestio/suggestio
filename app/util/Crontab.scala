@@ -9,6 +9,7 @@ import util.geo.IpGeoBaseImport
 import models.ICronTask
 import play.api.Application
 import util.billing.{MmpDailyBilling, Billing}
+import util.health.AdnGeoParentsHealth
 
 /**
  * Suggest.io
@@ -25,9 +26,9 @@ object Crontab extends PlayLazyMacroLogsImpl {
   import LOGGER._
 
   /** Список классов, которые являются поставщиками периодических задач при старте. */
-  def TASK_PROVIDERS: List[CronTasksProvider] = {
-    List(Billing, MmpDailyBilling, IpGeoBaseImport, MLocalImg)
-  }
+  def TASK_PROVIDERS = List[CronTasksProvider](
+    Billing, MmpDailyBilling, IpGeoBaseImport, MLocalImg, AdnGeoParentsHealth
+  )
 
   def sched: Scheduler = {
     try

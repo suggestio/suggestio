@@ -80,8 +80,8 @@ object CdnUtil extends PlayMacroLogsImpl {
       } else {
         val protoLc = ctx.myProto.toLowerCase
         chooseHostForProto(protoLc)
-          .filter { _ => !DISABLED_ON_HOSTS.contains(ctx.myHost) }
-          .filter { cdnHost => !(cdnHost equalsIgnoreCase ctx.myHost) }
+          .filter { _ => !DISABLED_ON_HOSTS.contains(reqHost) }
+          .filter { cdnHost => !(cdnHost equalsIgnoreCase reqHost) }
           .map { host  =>  protoLc + "://" + host }
       }
       urlPrefixOpt match {

@@ -1,7 +1,7 @@
 package util.cdn
 
 import play.api.mvc.{Filter, Result, RequestHeader}
-import util.PlayLazyMacroLogsImpl
+import util.PlayMacroLogsImpl
 import play.api.Play.{current, configuration}
 
 import scala.concurrent.Future
@@ -13,45 +13,40 @@ import scala.collection.JavaConversions._
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 17.10.14 14:55
  * Description: Дамп forwarded-хидеров для отладки интеграции с CDN.
+ * 2015.jun.18: Параметр конфига xff.dump.headers.enabled удалён. Теперь проверяется
+ * активность trace-логгинга в данном модуле.
  */
 
-object DumpXffHeaders {
-
-  val IS_ENABLED = configuration.getBoolean("xff.dump.headers.enabled") getOrElse false
+class DumpXffHeaders extends Filter with PlayMacroLogsImpl {
 
   /** Какие заголовки дампить? Если фильтр отключён, то эта настройка всё равно прочитается. */
   lazy val DUMP_HEADER_NAMES: Seq[String] = {
     configuration.getStringList("xff.dump.headers.names")
       .map(_.toSeq)
-      .getOrElse { Seq(X_FORWARDED_FOR, "X-Client-Ip", "X-Real-Ip", X_FORWARDED_PROTO, X_FORWARDED_HOST) }
+      .getOrElse { Seq(HOST, X_FORWARDED_FOR, "X-Client-Ip", "X-Real-Ip", X_FORWARDED_PROTO, X_FORWARDED_HOST) }
   }
 
-}
-
-class DumpXffHeaders extends Filter with PlayLazyMacroLogsImpl {
-
+  /** Применить фильтр для обработки одного запроса. */
   override def apply(f: (RequestHeader) => Future[Result])(rh: RequestHeader): Future[Result] = {
-    import DumpXffHeaders._
     val resultFut = f(rh)
     // Параллельно начинаем дампить хидеры в лог.
-    if (IS_ENABLED) {
-      val fwdHdrsIter = rh.headers
+    LOGGER.trace {
+      val sb = new StringBuilder("Fwd headers for ")
+        .append(rh.method)
+        .append(' ')
+        .append(rh.uri)
+        .append(" <- ")
+        .append(rh.remoteAddress)
+        .append(" secure=").append(rh.secure).append(":\n")
+
+      rh.headers
         .toMap
         .iterator
         .filter {
           case (k, vs)  =>
             vs.nonEmpty && DUMP_HEADER_NAMES.exists { _ equalsIgnoreCase k }
         }
-      if (fwdHdrsIter.nonEmpty) {
-        val sb = new StringBuilder("Fwd headers for ")
-          .append(rh.method)
-          .append(' ')
-          .append(rh.uri)
-          .append(" <- ")
-          .append(rh.remoteAddress)
-          .append("secure=").append(rh.secure)
-          .append(":\n")
-        fwdHdrsIter.foreach { case (k, vs) =>
+        .foreach { case (k, vs) =>
           sb.append(' ')
             .append(k)
             .append(": ")
@@ -61,9 +56,8 @@ class DumpXffHeaders extends Filter with PlayLazyMacroLogsImpl {
           sb.setLength(sb.length - 2)
           sb.append('\n')
         }
-        sb.setLength(sb.length - 1)
-        LOGGER.trace(sb.toString())
-      }
+      sb.setLength(sb.length - 1)
+        .toString
     }
     // Вернуть исходный результат.
     resultFut

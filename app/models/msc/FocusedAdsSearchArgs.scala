@@ -24,19 +24,22 @@ object FocusedAdsSearchArgs {
     new QueryStringBindable[FocusedAdsSearchArgs] with QsbKey1T {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, FocusedAdsSearchArgs]] = {
         for {
-          maybeAdSearch       <- adSearchB.bind(key, params)
-          maybeWithHeadAd     <- boolB.bind(WITH_HEAD_AD_FN, params)
-          maybeFadsLastProdId <- strOptB.bind(FADS_LAST_PROD_ID_FN, params)
+          maybeAdSearch       <- adSearchB.bind (key,                   params)
+          maybeWithHeadAd     <- boolB.bind     (WITH_HEAD_AD_FN,       params)
+          maybeFadsLastProdId <- strOptB.bind   (FADS_LAST_PROD_ID_FN,  params)
+          maybeOnlyWithAd     <- strOptB.bind   (ONLY_WITH_AD_ID_FN,    params)
         } yield {
           for {
             _adSearch         <- maybeAdSearch.right
             _withHeadAd       <- maybeWithHeadAd.right
             _fadsLastProdId   <- maybeFadsLastProdId.right
+            _onlyWithAdId     <- maybeOnlyWithAd.right
           } yield {
             new FocusedAdsSearchArgs with AdSearchWrapper {
               override def _dsArgsUnderlying  = _adSearch
               override def withHeadAd         = _withHeadAd
               override def fadsLastProducerId = _fadsLastProdId
+              override def onlyWithAdId       = _onlyWithAdId
             }
           }
         }
@@ -67,15 +70,28 @@ trait FocusedAdsSearchArgs extends AdSearch {
    *         false: возвращать только json-массив с отрендеренными блоками,
    *         без html-страницы с первой карточкой.
    */
-  def withHeadAd: Boolean
+  def withHeadAd: Boolean = false
 
   /**
    * v2
    * Поле последнего id продьюсера из предыдущей цепочки focused ads.
    * Пришло на смену флагу withHeadAd, которого стало не хватать.
+   *
+   * Пока собирались запилить, архитектура focused-выдачи изменилась, необходимость этой опции упала,
+   * и client-side реализация была отложена.
    * @return Some(producerId) или None, если предыдущего запроса не было (когда offset = 0).
    */
-  def fadsLastProducerId: Option[String]
+  def fadsLastProducerId: Option[String] = None
+
+  /**
+   * v2
+   * Контроллер должен убедиться, что карточка с указанным id присутствует в ответе.
+   * Это необходимо на случай рассинхронизации offset на клиенте и на сервере.
+   * Такое возможно, если какая-то новая карточка опубликовалась, или скрылась.
+   * @return None, если дополнительно допиливать результат не требуется.
+   *         Some(madId), если необходимо проконтроллировать наличие указанной карточки в результате.
+   */
+  def onlyWithAdId: Option[String] = None
 
 }
 
@@ -85,7 +101,8 @@ trait FocusedAdsSearchArgsWrapper extends FocusedAdsSearchArgs with AdSearchWrap
 
   override type WT = FocusedAdsSearchArgs
 
-  override def withHeadAd = _dsArgsUnderlying.withHeadAd
+  override def withHeadAd         = _dsArgsUnderlying.withHeadAd
   override def fadsLastProducerId = _dsArgsUnderlying.fadsLastProducerId
+  override def onlyWithAdId       = _dsArgsUnderlying.onlyWithAdId
 
 }

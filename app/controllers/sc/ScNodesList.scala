@@ -49,7 +49,7 @@ trait ScNodesListBase extends ScController with PlayMacroLogsI {
     /** Сырые навигационные слои узлов. */
     def nglsFut: Future[Seq[GeoNodesLayer]] = {
       nextNodeWithLayerFut.flatMap { nextNodeGdr =>
-        ShowcaseNodeListUtil.collectLayers(_nsArgs.geoMode, nextNodeGdr.node, nextNodeGdr.ngl)
+        ShowcaseNodeListUtil.collectLayers(Some(_nsArgs.geoMode), nextNodeGdr.node, nextNodeGdr.ngl)
       }
     }
 
