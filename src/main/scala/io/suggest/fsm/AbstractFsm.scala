@@ -32,18 +32,13 @@ trait AbstractFsm {
   /** Выставление указанного ресивера в качестве обработчика событий. */
   protected def _installReceiver(newReceiver: Receive): Unit
 
-  /** Ресивер, добавляемый к конец reveive() для всех состояний, чтобы выводить в логи сообщения,
-    * которые не были отработаны актором. */
-  protected def unexpectedReceiver: Receive
-
   protected def combineReceivers(rcvrs: TraversableOnce[Receive]): Receive
 
   /** Интерфейс одного состояния. */
   protected trait FsmState {
     def name = getClass.getSimpleName
     def receiverPart: Receive
-    def superReceiver = allStatesReceiver
-    def receiver: Receive = combineReceivers(Seq(receiverPart, superReceiver, unexpectedReceiver))
+    def receiver: Receive = combineReceivers(Seq(receiverPart, allStatesReceiver))
     override def toString: String = name
 
     /** Действия, которые вызываются, когда это состояние выставлено в актор. */

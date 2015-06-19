@@ -154,6 +154,8 @@ object ScConstants {
     /** Название аттрибута с высотой блока. */
     def BLK_HEIGHT_ATTR   = "data-height"
 
+    /** Имя аттрибута с порядковым номером в плитке от нуля. */
+    def BLK_INDEX_ATTR    = "data-index"
   }
 
 
