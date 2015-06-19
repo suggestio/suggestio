@@ -55,8 +55,6 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
 
   override protected var _state: FsmState = new DummyState
 
-  /** Ресивер для всех состояний. */
-  override def allStatesReceiver: Receive = PartialFunction.empty
   override def receive = allStatesReceiver
 
 

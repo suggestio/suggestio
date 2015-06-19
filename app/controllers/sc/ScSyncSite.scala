@@ -109,6 +109,7 @@ with ScNodesListBase with ScSiteBase {
 
       } else {
         // Нет надобности печатать плитку. Просто генерим заглушку логики рендера плитки:
+        val _noMadsFut = Future successful List.empty[MAd]
         new TileAdsLogic {
           override type T = RenderedAdBlock
           override implicit def _request = that._request
@@ -120,8 +121,8 @@ with ScNodesListBase with ScSiteBase {
             Future failed new UnsupportedOperationException("Dummy tile ads logic impl.")
           }
           override lazy val madsRenderedFut: Future[Seq[T]] = Future successful Nil
-          override lazy val madsGroupedFut: Future[Seq[MAd]] = Future successful Nil
-          override lazy val madsFut: Future[Seq[MAd]] = Future successful Nil
+          override def madsGroupedFut: Future[Seq[MAd]] = _noMadsFut
+          override lazy val madsFut: Future[Seq[MAd]] = _noMadsFut
           override def adsCssExternalFut: Future[Seq[AdCssArgs]] = Future successful Nil
         }
       }

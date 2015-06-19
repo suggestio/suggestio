@@ -73,9 +73,6 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
 
   import LOGGER._
 
-  /** Общий ресивер для всех состояний. */
-  override def allStatesReceiver: Receive = PartialFunction.empty
-
   override protected var _state: FsmState = new DummyState
 
   override def receive: Receive = allStatesReceiver

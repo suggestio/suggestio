@@ -88,8 +88,6 @@ case class ExtServiceActor(args: IExtAdvServiceActorArgs)
 
   override protected var _state: FsmState = new DummyState
 
-  /** Ресивер для всех состояний. */
-  override def allStatesReceiver: Receive = PartialFunction.empty
   override def receive = allStatesReceiver
 
   override def preStart(): Unit = {

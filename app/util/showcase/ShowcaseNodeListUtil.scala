@@ -157,7 +157,7 @@ object ShowcaseNodeListUtil extends PlayMacroLogsImpl {
         // 2015.jun.18 Была выявлена проблема в head, когда город отствует. Пытаемся найти район, а из него город уже.
         .recoverWith { case ex: NoSuchElementException if ast.isBuilding =>
           error("getTownOfNode() geo-inconsistent linked node: id=" + node.id, ex)
-          val districtTypeNames = AdnShownTypes.districts.iterator.map(_.name).toSeq
+          val districtTypeNames = AdnShownTypes.districtNames
           val sargs2 = NodeSearchByIdShownType(allParentIds, shownTypeIds = districtTypeNames)
           MAdnNode.dynSearch(sargs2)
             .map { _.head }

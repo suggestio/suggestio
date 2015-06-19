@@ -30,21 +30,7 @@ object AdnShownTypes extends Enumeration {
     def showWithTown: Boolean = true
   }
 
-  /** Это район города. */
-  sealed trait TownDistrictT extends ValT {
-    override def isTownDistrict = true
-    override def ngls = nglsDistrict
-  }
-  private class TownDistrictVal(name: String) extends Val(name: String) with TownDistrictT
-  
-  /** Это здание. */
-  sealed trait BuildingT extends ValT {
-    override def isBuilding = true
-    override def ngls = nglsBuilding
-  }
-  private class BuildingVal(name: String) extends Val(name) with BuildingT
-  
-  
+
   /**
    * Интанс этой модели.
    * @param name Название (обычно - однобуквенное).
@@ -53,14 +39,25 @@ object AdnShownTypes extends Enumeration {
     extends super.Val(name)
     with ValT
 
+
+  /** Это район города. */
+  sealed trait TownDistrictT extends ValT {
+    override def isTownDistrict = true
+    override def ngls = List(NodeGeoLevels.NGL_TOWN_DISTRICT)
+  }
+  private class TownDistrictVal(name: String) extends Val(name: String) with TownDistrictT
+  
+  /** Это здание. */
+  sealed trait BuildingT extends ValT {
+    override def isBuilding = true
+    override def ngls = List(NodeGeoLevels.NGL_BUILDING)
+  }
+  private class BuildingVal(name: String) extends Val(name) with BuildingT
+  
+
   type AdnShownType = Val
 
-  /** Расшаренные между экземплярами коллекции слоёв лежат тут для экономии RAM. */
-  private val nglsBuilding = List(NodeGeoLevels.NGL_BUILDING)
-  private val nglsDistrict = List(NodeGeoLevels.NGL_TOWN_DISTRICT)
-  private val nglsTown     = List(NodeGeoLevels.NGL_TOWN)
 
-  
   // Штатные (исторические) типы узлов
   val MART: AdnShownType              = new BuildingVal( AdNetMemberTypes.MART.name )
   val SHOP: AdnShownType              = new BuildingVal( AdNetMemberTypes.SHOP.name )
@@ -86,7 +83,7 @@ object AdnShownTypes extends Enumeration {
 
   /** Город. */
   val TOWN: AdnShownType = new Val("d") {
-    override def ngls = nglsTown
+    override def ngls = List(NodeGeoLevels.NGL_TOWN)
     override def showWithTown = false
     override def isTown = true
   }
@@ -124,5 +121,8 @@ object AdnShownTypes extends Enumeration {
 
   /** Все типы районов. */
   def districts = Set(TOWN_DISTRICT, CITY_DISTRICT)
+
+  /** Часто используется при сборке списков узлов. */
   val districtNames = districts.iterator.map(_.name).toSeq
+
 }

@@ -29,8 +29,10 @@ trait FsmActor extends Actor with PlayMacroLogsI with AbstractFsm {
   }
 
   /** Ресивер, добавляемый к конец reveive() для всех состояний, чтобы выводить в логи сообщения,
-    * которые не были отработаны актором. */
-  override protected val unexpectedReceiver: Receive = {
+    * которые не были отработаны актором.
+    * Любое состояние включает в себя этото ресивер, т.е. минимум один экземпляр всегда есть в памяти.
+    * Чтобы было максимум один экземпляр, тут используется val. */
+  override protected val allStatesReceiver: Receive = {
     case other =>
       LOGGER.warn(s"${_state.name} Unexpected message dropped [${other.getClass.getName}]:\n  $other")
   }

@@ -92,7 +92,6 @@ case class ExtAdvWsActor(out: ActorRef, eactx: IExtWsActorArgs)
   /** Подписка на WsDispatcher требует указания wsId. */
   override def wsId: String = eactx.qs.wsId
 
-  override def allStatesReceiver: Receive = PartialFunction.empty
   override def receive: Actor.Receive = allStatesReceiver
 
   /** Текущее состояние FSM хранится здесь. */
@@ -242,7 +241,7 @@ case class ExtAdvWsActor(out: ActorRef, eactx: IExtWsActorArgs)
             // Используем send() вместо forward(), чтобы скрыть out от подчинённых акторов.
             sel ! ans
           } else {
-            unexpectedReceiver(ans)
+            allStatesReceiver(ans)
           }
         } catch {
           case ex: Exception =>

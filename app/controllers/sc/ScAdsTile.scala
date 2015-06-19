@@ -48,14 +48,15 @@ trait ScAdsTileBase extends ScController with PlayMacroLogsI {
 
     def szMult = tileArgs.szMult
 
-    private def _brArgsFor(mad: MAd, bgImg: Option[IMakeResult]): blk.RenderArgs = {
+    private def _brArgsFor(mad: MAd, bgImg: Option[IMakeResult], indexOpt: Option[Int] = None): blk.RenderArgs = {
       blk.RenderArgs(
         mad           = mad,
         withEdit      = false,
         bgImg         = bgImg,
         szMult        = szMult,
         inlineStyles  = false,
-        apiVsn        = _adSearch.apiVsn
+        apiVsn        = _adSearch.apiVsn,
+        indexOpt      = indexOpt
       )
     }
     
@@ -125,11 +126,14 @@ trait ScAdsTileBase extends ScController with PlayMacroLogsI {
       }
     }
 
-    lazy val madsFut: Future[Seq[MAd]] = adSearch2Fut flatMap { adSearch2 =>
-      MAd.dynSearch(adSearch2)
+    lazy val madsFut: Future[Seq[MAd]] = {
+      adSearch2Fut flatMap { adSearch2 =>
+        MAd.dynSearch(adSearch2)
+      }
     }
 
-    lazy val madsBrArgsFut: Future[Seq[blk.RenderArgs]] = {
+    /** Сборка аргументов рендера для пакетного рендера css-стилей. */
+    lazy val madsBrArgs4CssFut: Future[Seq[blk.RenderArgs]] = {
       madsFut flatMap { mads =>
         val _szMult = szMult
         val devScreenOpt = ctx.deviceScreenOpt
@@ -153,14 +157,14 @@ trait ScAdsTileBase extends ScController with PlayMacroLogsI {
 
     /** Параметры для рендера обрамляющего css блоков (css не полей, а блоков в целом). */
     override def adsCssRenderArgsFut: Future[immutable.Seq[IRenderArgs]] = {
-      madsBrArgsFut map { brArgss =>
+      madsBrArgs4CssFut map { brArgss =>
         brArgss
           .toStream
       }
     }
 
     override def adsCssFieldRenderArgsFut: Future[immutable.Seq[FieldCssRenderArgsT]] = {
-      madsBrArgsFut map { brArgss =>
+      madsBrArgs4CssFut map { brArgss =>
         brArgss
           .iterator
           .flatMap { brArgs =>  mad2craIter(brArgs, Nil) }
@@ -169,20 +173,34 @@ trait ScAdsTileBase extends ScController with PlayMacroLogsI {
     }
 
 
-    lazy val madsGroupedFut = madsFut.map { groupNarrowAds }
+    def madsGroupedFut = madsFut.map { groupNarrowAds }
 
     /** Очень параллельный рендер в HTML всех необходимых карточек. */
     lazy val madsRenderedFut: Future[Seq[T]] = {
+      // Запускаем асинхронные операции
       val _madsGroupedFut = madsGroupedFut
+        .map { _.zipWithIndex }
+      // Для доступа к offset для вычисления index (порядкового номера карточки).
+      val offsetFut = adSearch2Fut
+        .map { _.offset }
+
+      // Получаем синхронные данные
       val devScreenOpt = ctx.deviceScreenOpt
-      _madsGroupedFut flatMap { mads1 =>
-        val _szMult = szMult
-        Future.traverse(mads1) { mad =>
-          BgImg.maybeMakeBgImgWith(mad, Makers.Block, _szMult, devScreenOpt)
-            .flatMap { bgImgOpt =>
-              val brArgs1 = _brArgsFor(mad, bgImgOpt)
+      val _szMult = szMult
+
+      // Продолжаем асинхронную обработку
+      _madsGroupedFut flatMap { madsIndexed =>
+        offsetFut flatMap { offset =>
+
+          Future.traverse(madsIndexed) { case (mad, relIndex) =>
+            val bgImgOptFut = BgImg.maybeMakeBgImgWith(mad, Makers.Block, _szMult, devScreenOpt)
+            bgImgOptFut.flatMap { bgImgOpt =>
+              val indexOpt = Some(offset + relIndex)
+              val brArgs1 = _brArgsFor(mad, bgImgOpt, indexOpt)
               renderMadAsync(brArgs1)
             }
+          }
+
         }
       }
     }

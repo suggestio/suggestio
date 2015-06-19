@@ -28,6 +28,8 @@ trait IRenderArgs {
   def blockStyle      : Option[String]
   /** Версия API выдачи. */
   def apiVsn          : MScApiVsn = MScApiVsns.unknownVsn
+  /** Порядковый номер. Заполняется только для плитки выдачи. */
+  def indexOpt        : Option[Int]
 
   /**
    * compat!
@@ -50,6 +52,11 @@ sealed trait IRenderArgsWrapper0 extends IRenderArgs {
   override def blockStyle   = brArgs.blockStyle
   override def bgImg        = brArgs.bgImg
   override def inlineStyles = brArgs.inlineStyles
+
+  override def cssClasses   = brArgs.cssClasses
+  override def wideBg       = brArgs.wideBg
+  override def indexOpt     = brArgs.indexOpt
+  override def apiVsn       = brArgs.apiVsn
 }
 
 
@@ -62,6 +69,7 @@ case class RenderArgs(
   override val inlineStyles   : Boolean                 = true,
   override val cssClasses     : Seq[String]             = Nil,
   override val blockStyle     : Option[String]          = None,
+  override val indexOpt       : Option[Int]             = None,
   override val apiVsn         : MScApiVsn               = MScApiVsns.unknownVsn
 )
   extends IRenderArgs
@@ -74,6 +82,8 @@ trait FieldCssRenderArgsT extends IRenderArgs {
   def bf            : BlockAOValueFieldT
   def fieldCssClass : String
   def xy            : ICoords2D
+
+  override def indexOpt: Option[Int] = None
 }
 
 /**
@@ -90,7 +100,7 @@ case class FieldCssRenderArgs2(
   offerN      : Int,
   yoff        : Int,
   fid         : String,
-  cssClasses  : Seq[String] = Nil
+  override val cssClasses: Seq[String] = Nil
 ) extends FieldCssRenderArgsT with IRenderArgsWrapper0 {
 
   override def xy: ICoords2D = Coords2D(38, 70*( offerN + 1) + yoff)
