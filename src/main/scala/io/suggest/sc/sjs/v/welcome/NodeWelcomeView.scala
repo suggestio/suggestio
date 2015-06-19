@@ -3,12 +3,12 @@ package io.suggest.sc.sjs.v.welcome
 import io.suggest.adv.ext.model.im.{ISize2di, Size2di}
 import io.suggest.sc.sjs.c.NodeWelcomeCtl
 import io.suggest.sc.sjs.m.magent.MAgent
-import io.suggest.sc.sjs.m.mdom.{GetImgById, GetDivById}
 import io.suggest.sc.sjs.m.mwc.MWelcomeState
 import io.suggest.sc.sjs.v.vutil.VImgUtil
+import io.suggest.sc.sjs.vm.util.domget.{GetImgById, GetDivById}
 import io.suggest.sjs.common.view.safe.css.SafeCssElT
 import org.scalajs.dom
-import org.scalajs.dom.{Node, Element}
+import org.scalajs.dom.Node
 import org.scalajs.dom.raw.HTMLImageElement
 import io.suggest.sc.sjs.m.mwc.MWcDom._
 import io.suggest.sc.ScConstants.Welcome.Anim._

@@ -1,7 +1,7 @@
-package io.suggest.sc.sjs.vm.foc.fsm.msg
+package io.suggest.sc.sjs.m.mfoc
 
+import io.suggest.sc.sjs.m.mfsm.IFsmMsg
 import io.suggest.sc.sjs.m.msrv.foc.find.IMFocAds
-import io.suggest.sc.sjs.vm.fsm.IFsmMsg
 
 // Команды для управления focused-выдачей.
 

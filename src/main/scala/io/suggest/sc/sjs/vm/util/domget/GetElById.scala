@@ -1,4 +1,4 @@
-package io.suggest.sc.sjs.m.mdom
+package io.suggest.sc.sjs.vm.util.domget
 
 import org.scalajs.dom
 import org.scalajs.dom.Element

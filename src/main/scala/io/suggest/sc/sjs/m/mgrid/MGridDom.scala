@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.m.mgrid
 
-import io.suggest.sc.sjs.m.mdom.GetDivById
 import io.suggest.sc.ScConstants.Grid._
+import io.suggest.sc.sjs.vm.util.domget.GetDivById
 
 /**
  * Suggest.io

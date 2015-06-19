@@ -1,9 +1,8 @@
-package io.suggest.sc.sjs.vm.foc.fsm
+package io.suggest.sc.sjs.c
 
-import io.suggest.sc.sjs.m.mfoc.FocVmStateData
+import io.suggest.sc.sjs.c.cutil.ScFsmStub
+import io.suggest.sc.sjs.m.mfoc.{GoTo, FadsReceived, Close, FocVmStateData}
 import io.suggest.sc.sjs.vm.foc.FocAdVm
-import io.suggest.sc.sjs.vm.foc.fsm.msg._
-import io.suggest.sc.sjs.vm.fsm.ScFsmStub
 
 /**
  * Suggest.io
@@ -11,7 +10,10 @@ import io.suggest.sc.sjs.vm.fsm.ScFsmStub
  * Created: 18.06.15 11:19
  * Description: FSM-код для сборки конечного автомата, обслуживающего focused-подсистему.
  */
-trait FocFsm extends ScFsmStub {
+
+// TODO Тут stub только. Логика не написана.
+
+trait FocusedFsm extends ScFsmStub {
 
   /** Внутреннее состояние focused-выдачи. Или null, когда focused-выдача неактивна. */
   private var _data: FocVmStateData = null

@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.m.mwc
 
-import io.suggest.sc.sjs.m.mdom.{GetImgById, GetDivById}
 import io.suggest.sc.ScConstants.Welcome._
+import io.suggest.sc.sjs.vm.util.domget.{GetImgById, GetDivById}
 
 /**
  * Suggest.io

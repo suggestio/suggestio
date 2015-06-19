@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.m.msearch
 
 import io.suggest.sc.ScConstants.Search.{ITab, Cats, Nodes}
-import io.suggest.sc.sjs.m.mdom.GetDivById
+import io.suggest.sc.sjs.vm.util.domget.GetDivById
 
 /**
  * Suggest.io

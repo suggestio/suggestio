@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.m.mdom
 
 import io.suggest.sc.ScConstants.Rsc._
+import io.suggest.sc.sjs.vm.util.domget.GetDivById
 
 /**
  * Suggest.io

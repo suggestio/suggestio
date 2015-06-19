@@ -1,8 +1,8 @@
 package io.suggest.sc.sjs.vm.foc
 
-import io.suggest.sc.sjs.m.mdom.GetDivById
 import io.suggest.sc.sjs.v.vutil.{SetStyleDisplay, VUtil}
 import io.suggest.sc.sjs.vm.util.cont.{ShowHide, ContainerT}
+import io.suggest.sc.sjs.vm.util.domget.GetDivById
 import org.scalajs.dom
 import org.scalajs.dom.raw.HTMLDivElement
 import io.suggest.sc.ScConstants.Focused.ROOT_ID
