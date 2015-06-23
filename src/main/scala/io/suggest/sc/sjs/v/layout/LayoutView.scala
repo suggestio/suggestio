@@ -1,11 +1,11 @@
 package io.suggest.sc.sjs.v.layout
 
 import io.suggest.sc.ScConstants.Layout._
-import io.suggest.sc.sjs.m.SafeDoc
 import io.suggest.sc.sjs.m.magent.MAgent
 import io.suggest.sc.sjs.m.msc.{MLayoutDom, MRedrawLayoutResult}
 import io.suggest.sc.sjs.v.res.{CommonRes, FocusedRes}
 import io.suggest.sc.sjs.v.vutil.{SetStyleDisplay, VUtil}
+import io.suggest.sc.sjs.vm.SafeDoc
 import org.scalajs.dom
 import org.scalajs.dom.raw.{HTMLElement, HTMLDivElement}
 

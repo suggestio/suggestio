@@ -2,6 +2,7 @@ package io.suggest.sc.sjs.m.msc.fsm
 
 import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.m.mgeo.{MGeoModeLoc, MGeoModeIp, IMGeoMode, MGeoLoc}
+import io.suggest.sc.sjs.m.mgrid.MGridState
 
 /**
  * Suggest.io
@@ -13,7 +14,8 @@ import io.suggest.sc.sjs.m.mgeo.{MGeoModeLoc, MGeoModeIp, IMGeoMode, MGeoLoc}
  */
 case class MStData(
   screen    : Option[IMScreen]  = None,
-  geoLoc    : Option[MGeoLoc]   = None
+  geoLoc    : Option[MGeoLoc]   = None,
+  gridState : MGridState        = new MGridState()
 ) {
   
  def currGeoMode: IMGeoMode = {

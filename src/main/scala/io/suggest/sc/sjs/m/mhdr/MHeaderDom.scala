@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.m.mhdr
 
 import io.suggest.sc.ScConstants.Header._
 import io.suggest.sc.ScConstants.{Search, NavPane}
-import io.suggest.sc.sjs.vm.util.domget.GetDivById
+import io.suggest.sc.sjs.vm.util.domvm.get.GetDivById
 
 /**
  * Suggest.io

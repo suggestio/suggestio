@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.m.msearch
 
 import io.suggest.sc.ScConstants.Search._
-import io.suggest.sc.sjs.vm.util.domget.GetDivById
+import io.suggest.sc.sjs.vm.util.domvm.get.GetDivById
 import org.scalajs.dom.raw.{HTMLDivElement, HTMLInputElement}
 
 /**

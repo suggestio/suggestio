@@ -5,7 +5,7 @@ import io.suggest.sc.sjs.c.NodeWelcomeCtl
 import io.suggest.sc.sjs.m.magent.MAgent
 import io.suggest.sc.sjs.m.mwc.MWelcomeState
 import io.suggest.sc.sjs.v.vutil.VImgUtil
-import io.suggest.sc.sjs.vm.util.domget.{GetImgById, GetDivById}
+import io.suggest.sc.sjs.vm.util.domvm.get.{GetImgById, GetDivById}
 import io.suggest.sjs.common.view.safe.css.SafeCssElT
 import org.scalajs.dom
 import org.scalajs.dom.Node

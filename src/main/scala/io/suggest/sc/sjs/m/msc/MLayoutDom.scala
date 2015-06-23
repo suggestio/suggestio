@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.m.msc
 
 import io.suggest.sc.ScConstants.Layout._
-import io.suggest.sc.sjs.vm.util.domget.GetDivById
+import io.suggest.sc.sjs.vm.util.domvm.get.GetDivById
 
 /**
  * Suggest.io

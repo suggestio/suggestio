@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.v.global
 
 import io.suggest.sc.sjs.c.DocumentCtl
-import io.suggest.sc.sjs.m.SafeDoc
+import io.suggest.sc.sjs.vm.SafeDoc
 import org.scalajs.dom.TouchEvent
 import org.scalajs.dom.raw.KeyboardEvent
 

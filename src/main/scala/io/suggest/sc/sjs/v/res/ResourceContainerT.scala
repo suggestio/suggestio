@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.v.res
 
-import io.suggest.sc.sjs.m.SafeDoc
+import io.suggest.sc.sjs.vm.SafeDoc
 import org.scalajs.dom
 import org.scalajs.dom.raw.HTMLDivElement
 import org.scalajs.dom.Document

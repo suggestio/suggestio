@@ -1,9 +1,12 @@
 package io.suggest.sc.sjs.c
 
 import io.suggest.sc.sjs.c.cutil.ScFsmStub
-import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
+import io.suggest.sc.sjs.m.mgrid.{MGridState, MGrid}
+import io.suggest.sc.sjs.m.msrv.ads.find.{MFindAdsReqDflt, MFindAdsReqEmpty, MFindAds}
 import io.suggest.sc.sjs.m.msrv.index.{MScIndexArgs, MNodeIndex}
-import io.suggest.sc.sjs.v.layout.LayoutView
+import io.suggest.sc.sjs.v.res.{FocusedRes, CommonRes}
+import io.suggest.sc.sjs.vm.{SafeBody, SafeWnd}
+import io.suggest.sc.sjs.vm.layout.LayRootVm
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
@@ -21,7 +24,6 @@ trait ScIndexFsm extends ScFsmStub {
   /** Реализация состояния активации и  */
   protected trait GetIndexStateT extends FsmState {
 
-
     /** id узла, на который переключаемся, или None.
       * @return None когда сервер должен определить новый узел. */
     def adnIdOpt: Option[String]
@@ -30,6 +32,7 @@ trait ScIndexFsm extends ScFsmStub {
     /** После активации state нужно запросить index с сервера и ожидать получения. */
     override def afterBecome(): Unit = {
       super.afterBecome()
+
       val sd = _stateData
       val inxArgs = MScIndexArgs(
         adnIdOpt  = adnIdOpt,
@@ -64,17 +67,35 @@ trait ScIndexFsm extends ScFsmStub {
 
     /** Успешный запрос index'а. */
     protected def _onSuccess(v: MNodeIndex): Unit = {
+
       // Сразу запускаем запрос к серверу за рекламными карточками.
       // Таким образом, под прикрытием welcome-карточки мы отфетчим и отрендерим плитку в фоне.
-      val findAdsFut = GridCtl.askMoreAds()
+      val args = new MFindAdsReqEmpty with MFindAdsReqDflt {
+        override def _mgs = _stateData.gridState
+        override val _fsmState = super._fsmState
+      }
+      val findAdsFut = MFindAds.findAds(args)
 
       // TODO Выставить новый заголовок окна
 
       // Стереть старый layout, создать новый. Кешируем
-      val l = LayoutView.redrawLayout()
+      for (oldLayRoot <- LayRootVm.find() ) {
+        oldLayRoot.remove()
+      }
+      CommonRes.recreate()
+      FocusedRes.recreate()
 
-      // Модифицировать текущее отображение под узел, отобразить welcome-карточку, если есть.
-      LayoutView.showIndex(v.html, layoutDiv = l.layoutDiv, rootDiv = l.rootDiv)
+      val layout = LayRootVm.createNew()
+
+      // Выставить верстку index в новый layout.
+      for (layContent <- layout.content) {
+        layContent.setIndexHtml(v.html)
+      }
+      layout.insertIntoDom()
+      SafeWnd.scrollTop()
+
+      val body = SafeBody
+      body.overflowHidden()
 
       // Инициализация welcomeAd.
       val wcHideFut = NodeWelcomeCtl.handleWelcome()
@@ -91,7 +112,8 @@ trait ScIndexFsm extends ScFsmStub {
 
       // Очищаем подложку фона выдачи.
       wcHideFut onComplete { case _ =>
-        LayoutView.eraseBg(l.rootDiv)
+        layout.eraseBg()
+        body.eraseBg()
       }
 
       // В порядке очереди запустить инициализацию панели поиска.
@@ -99,7 +121,13 @@ trait ScIndexFsm extends ScFsmStub {
         SearchPanelCtl.initNodeLayout()
       }(queue)
 
-      LayoutView.setWndClass(l.layoutDiv)
+      for {
+        scr         <- _stateData.screen
+        layContent  <- layout.content
+      } {
+        layContent.setWndClass(scr)
+      }
+
       HeaderCtl.initLayout()
 
       become( _onSuccessNextState(findAdsFut) )

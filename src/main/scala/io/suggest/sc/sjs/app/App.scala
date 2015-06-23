@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.app
 
-import io.suggest.sc.sjs.c.NodeCtl
+import io.suggest.sc.sjs.c.{ScFsm, NodeCtl}
 import io.suggest.sc.sjs.m.magent.vsz.ViewportSz
 import io.suggest.sc.sjs.m.magent.{MAgent, MScreen}
 import io.suggest.sc.sjs.m.msc.fsm.MScFsm
@@ -21,25 +21,14 @@ object App extends JSApp with SjsLogger {
 
   @JSExport
   override def main(): Unit = {
-    // Собрать исходное состояние системы
-    val srvRouterFut = SrvRouter.getRouter
 
     val scrSz = ViewportSz.getViewportSize.get
     MAgent.availableScreen = MScreen(scrSz)
 
-    // Когда состояние готово, нужно передать управление в контроллеры.
-    val fut = for {
-      _ <- srvRouterFut
-    } yield {
-      NodeCtl.switchToNode(None, isFirstRun = true)
-    }
+    ScFsm.firstStart()
 
     // Инициализация некоторых моделей
-    MScFsm.subscribeEvents()
-
-    fut onFailure { case ex: Throwable =>
-      error("Init failed", ex)
-    }
+    //MScFsm.subscribeEvents()
   }
 
 }

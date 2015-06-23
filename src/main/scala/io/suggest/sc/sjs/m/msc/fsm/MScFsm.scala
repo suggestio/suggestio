@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.m.msc.fsm
 
-import io.suggest.sc.sjs.m.SafeWnd
+import io.suggest.sc.sjs.vm.SafeWnd
 import io.suggest.sjs.common.util.SjsLogger
 import org.scalajs.dom.PopStateEvent
 

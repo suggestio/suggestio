@@ -6,7 +6,6 @@ import io.suggest.sc.sjs.m.magent.vsz.ViewportSz
 import io.suggest.sc.sjs.util.router.srv.SrvRouter
 import io.suggest.sc.sjs.v.global.DocumentView
 import io.suggest.sjs.common.util.ISjsLogger
-import org.scalajs.dom
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 import scala.concurrent.Future
@@ -20,13 +19,8 @@ import scala.util.{Failure, Success}
  */
 trait EarlyFsm extends ScFsmStub with ISjsLogger {
 
-  protected def firstStart() {
-    become(new FirstInitState)
-  }
-
-
   /** Начальное состояние выдачи. Здесь начинается работа [[ScFsm]]. */
-  protected class InitState extends FsmEmptyReceiverState {
+  protected trait InitStateT extends FsmEmptyReceiverState {
     protected def _earlyInit(): SD = {
       // Инициализировать синхронные модели, без которых нельзя продолжать инициализацию.
       _stateData.copy(
@@ -43,14 +37,16 @@ trait EarlyFsm extends ScFsmStub with ISjsLogger {
       // Прочая асинхронная инициализация: дождаться её.
       val sd0 = _earlyInit()
 
-      become( new AwaitJsRouterState(jsRouterFut), sd0 )
+      become( _jsRouterState(jsRouterFut), sd0 )
     }
+
+    def _jsRouterState(jsRouterFut: Future[_]): FsmState
   }
 
 
   /** Состояние самой первой инициализации. Тут помимо обычной инициализации, ещё происходит
     * out-of-FSM инициализация, т.е. инициалиция каких-то связанных глобальных вещей (document, window, etc). */
-  protected class FirstInitState extends InitState {
+  protected trait FirstInitStateT extends InitStateT {
     override protected def _earlyInit(): SD = {
       val sd0 = super._earlyInit()
       // TODO Подписаться на различные глобальные события, если ещё не подписаны.
@@ -86,24 +82,5 @@ trait EarlyFsm extends ScFsmStub with ISjsLogger {
     /** Инициализация роутера не удалась. */
     def failed(ex: Throwable): Unit
   }
-
-
-  /** Состояние начальной инициализации роутера. */
-  protected class AwaitJsRouterState(val jsRouterFut: Future[_]) extends AwaitJsRouterStateT {
-
-    override def finished(): Unit = {
-      // TODO Надо переключиться на следующей состояние.
-      ???
-    }
-
-    override def failed(ex: Throwable): Unit = {
-      error("JsRouter init failed. Retrying...", ex)
-      dom.window.setTimeout(
-        { () => become(new InitState) },
-        250
-      )
-    }
-  }
-
 
 }
