@@ -23,12 +23,11 @@ trait AbstractFsm {
    * @param nextState Новое состояние.
    */
   protected def become(nextState: FsmState): Unit = {
-    _state.beforeUnbecome()
     _state = nextState
     _installReceiver(_state.receiver)
     _state.afterBecome()
   }
-  
+
   /** Выставление указанного ресивера в качестве обработчика событий. */
   protected def _installReceiver(newReceiver: Receive): Unit
 
@@ -43,11 +42,26 @@ trait AbstractFsm {
 
     /** Действия, которые вызываются, когда это состояние выставлено в актор. */
     def afterBecome() {}
-
-    /** Действия, которые вызываются, перед тем как это состояние слетает из актора. */
-    def beforeUnbecome() {}
   }
 
+}
+
+
+/** FSM обычно имеет некоторые данные состояния, хранимые в одном immutable-контрейнере.
+  * Тут расширение API [[AbstractFsm]] для данной задачи. */
+trait StateData extends AbstractFsm {
+
+  /** Тип контейнера stateData. */
+  type SD
+
+  /** Геттер и сеттер для stateData. */
+  protected var _stateData: SD
+
+  /** become() в выставлением новой stateData перед применением следующего состояния. */
+  protected def become(nextState: FsmState, sd2: SD): Unit = {
+    _stateData = sd2
+    become(nextState)
+  }
 }
 
 

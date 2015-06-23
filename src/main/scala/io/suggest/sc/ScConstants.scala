@@ -28,10 +28,10 @@ object ScConstants {
   /** Client/server констатны выдачи для моделей ScReqArgs. */
   object ReqArgs {
 
-    final val GEO               = "geo"
-    final val SCREEN            = "screen"
-    final val WITH_WELCOME      = "wc"
-    final val VSN               = "v"
+    def GEO               = "geo"
+    def SCREEN            = "screen"
+    def WITH_WELCOME      = "wc"
+    def VSN               = "v"
 
   }
 
@@ -106,12 +106,12 @@ object ScConstants {
   object Layout {
 
     /** id корневого div выдачи. */
-    val ROOT_ID = "sioMartRoot"
+    def ROOT_ID = "sioMartRoot"
 
     /** имя css-класса корневого элемента. */
-    val ROOT_CSS_CLASS = "sm-showcase"
+    def ROOT_CSS_CLASS = "sm-showcase"
 
-    val LAYOUT_ID = "sioMartLayout"
+    def LAYOUT_ID = "sioMartLayout"
 
   }
 
