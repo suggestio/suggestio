@@ -9,6 +9,7 @@ import io.suggest.sc.sjs.vm.util.domvm.get.GetDivById
  * Created: 28.05.15 11:53
  * Description:
  */
+@deprecated("Use vm.layout.* models instead", "23.jun.2015")
 object MLayoutDom extends GetDivById {
 
   def rootDiv() = getDivById(ROOT_ID)

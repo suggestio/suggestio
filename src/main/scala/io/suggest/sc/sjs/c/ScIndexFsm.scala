@@ -1,7 +1,6 @@
 package io.suggest.sc.sjs.c
 
 import io.suggest.sc.sjs.c.cutil.ScFsmStub
-import io.suggest.sc.sjs.m.mgrid.{MGridState, MGrid}
 import io.suggest.sc.sjs.m.msrv.ads.find.{MFindAdsReqDflt, MFindAdsReqEmpty, MFindAds}
 import io.suggest.sc.sjs.m.msrv.index.{MScIndexArgs, MNodeIndex}
 import io.suggest.sc.sjs.v.res.{FocusedRes, CommonRes}

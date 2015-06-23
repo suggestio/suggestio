@@ -15,7 +15,7 @@ import org.scalajs.dom.raw.{HTMLElement, HTMLDivElement}
  * Created: 22.05.15 11:09
  * Description: Управление представлением корневых элементов выдачи.
  */
-@deprecated("FSM-MVM", "23.jun.2015")
+@deprecated("Use vm.layout.* models instead", "23.jun.2015")
 object LayoutView extends SetStyleDisplay {
 
   /** Перерисовать layout выдачи. */

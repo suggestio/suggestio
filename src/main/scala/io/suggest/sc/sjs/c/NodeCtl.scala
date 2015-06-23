@@ -15,7 +15,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
  * Created: 20.05.15 12:13
  * Description: Контроллер для узлов. Начинался с переключения узлов.
  */
-@deprecated("FSM-MVM", "23.jun.2015")
+@deprecated("FSM-MVM, contact via ScIndexFsm addon instead", "23.jun.2015")
 object NodeCtl extends CtlT {
 
   /** Костыли для переключения узлов. Нужно вызывать после заливки нового
