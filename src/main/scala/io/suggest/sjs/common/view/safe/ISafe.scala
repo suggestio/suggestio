@@ -1,5 +1,7 @@
 package io.suggest.sjs.common.view.safe
 
+import io.suggest.primo.TypeT
+
 import scala.scalajs.js
 
 /**
@@ -8,9 +10,9 @@ import scala.scalajs.js
  * Created: 25.05.15 14:23
  * Description: Заготовка для разработки совместимых safe-врапперов.
  */
-trait ISafe {
+trait ISafe extends TypeT {
 
-  type T <: js.Object
+  override type T <: js.Object
 
   /** wrapped-элемент, для которого реализуется безопасный доступ. */
   def _underlying: T

@@ -3,6 +3,7 @@ package io.suggest.sjs.common.view.safe
 import io.suggest.sjs.common.view.safe.attr.SafeAttrElT
 import io.suggest.sjs.common.view.safe.css.SafeCssElT
 import io.suggest.sjs.common.view.safe.evtg.SafeEventTargetT
+import io.suggest.sjs.common.view.safe.rm.SelfRemoveT
 import org.scalajs.dom.Node
 
 /**
@@ -15,6 +16,7 @@ trait SafeElT
   extends SafeEventTargetT
   with SafeCssElT
   with SafeAttrElT
+  with SelfRemoveT
 
 
 /** Дефолтовая реализация [[SafeElT]]. */
