@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.c
 
 import io.suggest.sc.sjs.c.cutil.ScFsmStub
-import io.suggest.sc.sjs.m.magent.{MScreen, MAgent}
+import io.suggest.sc.sjs.m.magent.MScreen
 import io.suggest.sc.sjs.m.magent.vsz.ViewportSz
 import io.suggest.sc.sjs.util.router.srv.SrvRouter
 import io.suggest.sc.sjs.v.global.DocumentView
@@ -25,20 +25,13 @@ trait EarlyFsm extends ScFsmStub with ISjsLogger {
   }
 
 
-  /** Инициализация кеша с размерами экрана. */
-  protected def initScrSz(): Unit = {
-    val scrSz = ViewportSz.getViewportSize.get
-    MAgent.availableScreen = MScreen(scrSz)
-  }
-
-
   /** Начальное состояние выдачи. Здесь начинается работа [[ScFsm]]. */
-  protected class InitState extends FsmState {
-    protected def _initFinished(): Future[_] = {
+  protected class InitState extends FsmEmptyReceiverState {
+    protected def _earlyInit(): SD = {
       // Инициализировать синхронные модели, без которых нельзя продолжать инициализацию.
-      initScrSz()
-
-      Future successful None
+      _stateData.copy(
+        screen = ViewportSz.getViewportSize.map( MScreen.apply )
+      )
     }
 
     // Надо проинициализировать FSM и выставить следующее рабочее состояние.
@@ -48,23 +41,9 @@ trait EarlyFsm extends ScFsmStub with ISjsLogger {
       val jsRouterFut = SrvRouter.getRouter
 
       // Прочая асинхронная инициализация: дождаться её.
-      _initFinished() onComplete { case res =>
-        val e = res match {
-          case s: Success[_] =>
-            jsRouterFut
-          case failure =>
-            failure
-        }
-        _sendEventSync(e)
-      }
-    }
+      val sd0 = _earlyInit()
 
-    override def receiverPart: PartialFunction[Any, Unit] = {
-      // Инициализацию можно считать законченной.
-      case jsRouterFut: Future[_] =>
-        become( new AwaitJsRouterState(jsRouterFut) )
-      case Failure(ex) =>
-        error("early init failed", ex)
+      become( new AwaitJsRouterState(jsRouterFut), sd0 )
     }
   }
 
@@ -72,11 +51,11 @@ trait EarlyFsm extends ScFsmStub with ISjsLogger {
   /** Состояние самой первой инициализации. Тут помимо обычной инициализации, ещё происходит
     * out-of-FSM инициализация, т.е. инициалиция каких-то связанных глобальных вещей (document, window, etc). */
   protected class FirstInitState extends InitState {
-    override protected def _initFinished(): Future[_] = {
-      val fut = super._initFinished()
+    override protected def _earlyInit(): SD = {
+      val sd0 = super._earlyInit()
       // TODO Подписаться на различные глобальные события, если ещё не подписаны.
       DocumentView.initDocEvents()
-      fut
+      sd0
     }
   }
 

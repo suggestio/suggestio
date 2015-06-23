@@ -1,7 +1,8 @@
 package io.suggest.sc.sjs.c.cutil
 
-import io.suggest.fsm.{AbstractFsm, AbstractFsmUtil}
+import io.suggest.fsm.{StateData, AbstractFsm, AbstractFsmUtil}
 import io.suggest.sc.sjs.m.mfsm.IFsmMsg
+import io.suggest.sc.sjs.m.msc.fsm.MStData
 import io.suggest.sjs.common.util.ISjsLogger
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
@@ -13,7 +14,7 @@ import scala.concurrent.Future
  * Created: 18.06.15 11:28
  * Description: Заготовка для сборки FSM-частей подсистем.
  */
-trait ScFsmStub extends AbstractFsm with ISjsLogger {
+trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger {
 
   override type Receive = PartialFunction[Any, Unit]
 
@@ -25,6 +26,10 @@ trait ScFsmStub extends AbstractFsm with ISjsLogger {
   protected trait FsmEmptyReceiverState extends FsmState {
     override def receiverPart: Receive = PartialFunction.empty
   }
+
+
+  override type SD = MStData
+  override protected var _stateData: SD = MStData()
 
   /**
    * Статический API-метод для отправки события в FSM:

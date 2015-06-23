@@ -1,13 +1,12 @@
 package io.suggest.sc.sjs.m.msrv.index
 
+import io.suggest.sc.sjs.m.magent.MAgent
+import io.suggest.sc.sjs.m.mgeo.{MGeoModeLoc, IMGeoMode, MGeoModeIp, MCurrLoc}
 import io.suggest.sc.sjs.m.msrv.MSrvUtil
 import io.suggest.sc.sjs.util.router.srv.routes
-import io.suggest.sjs.common.xhr.Xhr
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.scalajs.js
-import scala.scalajs.js.{JSON, UndefOr}
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.{Dictionary, WrappedDictionary, Any}
 import io.suggest.sc.ScConstants.Resp._
 
 /**
@@ -25,54 +24,59 @@ object MNodeIndex {
    * @param adnIdOpt id узла.
    * @return Фьючерс с результатами исполнения запроса.
    */
+  @deprecated("Use getIndex(args) instead", "22.jun.2015")
   def getIndex(adnIdOpt: Option[String])(implicit ec: ExecutionContext): Future[MNodeIndex] = {
-    val reqArgs = MScReqArgsJson()
-    // Собрать и отправить запрос за данными index.
+    val reqArgs = MScIndexArgs(
+      adnIdOpt  = adnIdOpt,
+      geoMode   = Some( MCurrLoc.currLoc.fold[IMGeoMode](MGeoModeIp)(MGeoModeLoc.apply) ),
+      screen    = Some( MAgent.availableScreen )
+    )
+    getIndex(reqArgs)
+  }
+
+  /**
+   * Запустить index-запрос согласно переданным аргументам.
+   * @param args Аргументы поиска index.
+   * @return Фьючерс с MNodeIndex внутри.
+   */
+  def getIndex(args: IScIndexArgs)(implicit ec: ExecutionContext): Future[MNodeIndex] = {
+    val argsJson = args.toJson
+    // Собрать и отправить запрос за данными index.  TODO Унифицировать экшены запросов.
     val router = routes.controllers.MarketShowcase
-    val route = adnIdOpt match {
+    val route = args.adnIdOpt match {
       case Some(adnId) =>
-        router.nodeIndex(adnId, reqArgs)
+        router.nodeIndex(adnId, argsJson)
       case None =>
-        router.geoIndex(reqArgs)
+        router.geoIndex(argsJson)
     }
-    MSrvUtil.reqJson(route) map { json =>
-      val json1 = json.asInstanceOf[MNodeIndexJson]
-      new MNodeIndex(json1)
+    // Запустить асинхронный запрос и распарсить результат.
+    for {
+      raw <- MSrvUtil.reqJson(route)
+    } yield {
+      val d = raw.asInstanceOf[Dictionary[Any]]
+      new MNodeIndex(d)
     }
   }
 
 }
 
 
-/** API доступа к JSON-ответу сервера. */
-sealed trait MNodeIndexJson extends js.Object {
+/** Враппер над сырым JSON для повышения удобства доступа к сырому JSON-ответу сервера. */
+sealed class MNodeIndex(json: WrappedDictionary[Any]) {
 
-  /** id экшена идентифицирует и формат ответа. Тут он по идее всегда одинаковый. */
-  @JSName(ACTION_FN)
-  val action: String = js.native
+  /** index-верстка выдачи. */
+  def html  = json(HTML_FN).asInstanceOf[String]
 
-  /** Поле html содержит верстку для отображения. */
-  @JSName(HTML_FN)
-  val html: String = js.native
+  /** Прочитать значение флага геовыдачи. */
+  def isGeo = json(IS_GEO_FN).asInstanceOf[Boolean]
 
-  /** Использовал ли сервер геолокацию для формирования ответа? */
-  @JSName(IS_GEO_FN)
-  val is_geo: Boolean = js.native
+  /** id узла, если известен. */
+  lazy val adnIdOpt = json.get(ADN_ID_FN).map(_.toString)
 
-  /** id узла, к которому относится ответ сервера. */
-  @JSName(ADN_ID_FN)
-  val curr_adn_id: UndefOr[String] = js.native
-
-}
-
-
-/** Враппер над [[MNodeIndexJson]] для повышения удобства доступа к сырому JSON-ответу сервера. */
-sealed class MNodeIndex(json: MNodeIndexJson) {
-  def html  = json.html
-  def isGeo = json.is_geo
-  lazy val adnIdOpt = json.curr_adn_id.toOption
+  /** Нужен только для toString() */
+  private def action = json(ACTION_FN).toString
 
   override def toString: String = {
-    json.action + "(isGeo=" + isGeo + ",nodeId=" + adnIdOpt + ",html=" + html.length + "b)"
+    action + "(isGeo=" + isGeo + ",nodeId=" + adnIdOpt + ",html=" + html.length + "b)"
   }
 }

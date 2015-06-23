@@ -8,7 +8,7 @@ import io.suggest.sjs.common.util.SjsLogger
  * Created: 16.06.15 12:07
  * Description: FSM-контроллер для всей выдачи. Собирается из кусков, которые закрывают ту или иную область.
  */
-object ScFsm extends EarlyFsm with FocusedFsm with SjsLogger {
+object ScFsm extends EarlyFsm with ScIndexFsm with FocusedFsm with SjsLogger {
 
   /** Контейнер с внутренним FSM-состоянием focused-выдачи. */
   override protected var _state: FsmState = new DummyState
