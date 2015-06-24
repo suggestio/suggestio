@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.c
 
+import io.suggest.sc.sjs.m.msc.fsm.MStData
 import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
 import io.suggest.sjs.common.util.SjsLogger
 import org.scalajs.dom
@@ -12,10 +13,11 @@ import scala.concurrent.Future
  * Created: 16.06.15 12:07
  * Description: FSM-контроллер для всей выдачи. Собирается из кусков, которые закрывают ту или иную область.
  */
-object ScFsm extends EarlyFsm with ScIndexFsm with SjsLogger {
+object ScFsm extends SjsLogger with EarlyFsm with ScIndexFsm with GridFsm {
 
-  /** Контейнер с внутренним FSM-состоянием focused-выдачи. */
+  // Инициализируем базовые внутренние переменные.
   override protected var _state: FsmState = new DummyState
+  override protected var _stateData: SD = MStData()
 
   /** Текущий обработчик входящих событий. */
   private var _receiver: Receive = _
@@ -83,7 +85,7 @@ object ScFsm extends EarlyFsm with ScIndexFsm with SjsLogger {
   protected class ScIndexState(val adnIdOpt: Option[String]) extends GetIndexStateT {
 
     /** Когда обработка index завершена, надо переключиться на следующее состояние. */
-    override protected def _onSuccessNextState(findAdsFut: Future[MFindAds]): FsmState = {
+    override protected def _onSuccessNextState(findAdsFut: Future[MFindAds], wcHideFut: Future[_], sd1: SD): FsmState = {
       error("TODO _onSuccessFsmState(): adnId=" + adnIdOpt + " " + findAdsFut)
       ???
     }

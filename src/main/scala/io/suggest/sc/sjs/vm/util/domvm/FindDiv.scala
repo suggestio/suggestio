@@ -2,6 +2,7 @@ package io.suggest.sc.sjs.vm.util.domvm
 
 import io.suggest.primo.TypeT
 import io.suggest.sc.sjs.vm.util.domvm.get.GetDivById
+import org.scalajs.dom.Node
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -10,9 +11,21 @@ import org.scalajs.dom.raw.HTMLDivElement
  * Created: 23.06.15 14:59
  * Description: Метод поиска в DOM элемента и заворачивания в ViewModel.
  */
-trait FindDiv extends GetDivById with DomId with TypeT {
+trait IApplyEl extends TypeT {
+  type Dom_t <: Node
 
-  def apply(div: HTMLDivElement): T
+  def apply(div: Dom_t): T
+}
+
+
+trait IFindEl extends TypeT {
+
+  def find(): Option[T]
+}
+
+trait FindDiv extends IFindEl with GetDivById with DomId with IApplyEl {
+
+  override type Dom_t = HTMLDivElement
 
   def find(): Option[T] = {
     getDivById(DOM_ID)

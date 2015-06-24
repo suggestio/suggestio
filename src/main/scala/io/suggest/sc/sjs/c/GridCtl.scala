@@ -36,13 +36,13 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
   def resetContainerSz(containerDiv: HTMLDivElement,
                        loaderDivOpt: Option[HTMLDivElement] = MGridDom.loaderDiv): Unit = {
     // Вычислить размер.
-    val sz = MGrid.getContainerSz()
+    val sz = MGrid.getGridContainerSz(MAgent.availableScreen)
     // Обновить модель сетки новыми данными, и view-контейнеры.
     GridView.setContainerSz(sz, containerDiv, loaderDivOpt)
-    MGrid.state.updateWith(sz)
+    MGrid.gridState.updateWithMut(sz)
   }
 
-  def askMoreAds(mgs: MGridState = MGrid.state): Future[MFindAds] = {
+  def askMoreAds(mgs: MGridState = MGrid.gridState): Future[MFindAds] = {
     val args = new MFindAdsReqEmpty with MFindAdsReqDflt {
       override def _mgs = mgs
       override val _fsmState = super._fsmState
@@ -50,13 +50,13 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
     MFindAds.findAds(args)
   }
   def askNewAds(): (MGridState, Future[MFindAds]) = {
-    val mgs1 = MGrid.state.copy().nothingLoaded()
+    val mgs1 = MGrid.gridState.copy().nothingLoadedMut()
     mgs1 -> askMoreAds(mgs1)
   }
 
   /** Юзер скроллит выдачу любого узла. */
   def onScroll(): Unit = {
-    val mgs = MGrid.state
+    val mgs = MGrid.gridState
     if (!mgs.fullyLoaded && !mgs.isLoadingMore) {
       askMoreAds() andThen {
         case Success(resp) =>
@@ -73,7 +73,7 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
     }
     // Отрендерить карточки, когда придёт ответ.
     fut.andThen { case Success(resp) =>
-      MGrid.state = mgs1
+      MGrid.gridState = mgs1
       newAdsReceived(resp, isAdd = false, containerDivOpt = containerDivOpt)
     }(ec)
   }
@@ -93,7 +93,7 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
                      containerDivOpt: => Option[HTMLDivElement] = MGridDom.containerDiv): Unit = {
     val mads = resp.mads
     val loaderDivOpt = MGridDom.loaderDiv
-    val mgs = MGrid.state
+    val mgs = MGrid.gridState
     val safeLoaderDivOpt = loaderDivOpt.map { SafeEl.apply }
 
     if (mads.isEmpty) {
@@ -108,11 +108,11 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
       // Если получены новые параметры сетки, то выставить их в состояние сетки
       for {
         params2   <- resp.params
-        newParams <- MGrid.params.importIfChangedFrom(params2)
+        newParams <- MGrid.gridParams.withChangesFrom(params2)
       } {
         // TODO Нужно спиливать карточки, очищая сетку, если в ней уже есть какие-то карточки, отрендеренные
         // на предыдущих параметрах.
-        MGrid.params = newParams
+        MGrid.gridParams = newParams
       }
 
       // Закачать в выдачу новый css.
@@ -145,7 +145,7 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
 
         // Проанализировать залитые в DOM блоки, сохранить метаданные в модель блоков.
         val newBlocks = analyzeNewBlocks(frag)
-        mgs.appendNewBlocks(newBlocks, madsSize)
+        mgs.appendNewBlocksMut(newBlocks, madsSize)
 
         // Расположить все новые карточки на экране.
         build(isAdd, mgs, newBlocks, withAnim)
@@ -160,10 +160,11 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
   }
 
   /** Сохранить вычисленное новое значение для параметра adsPerLoad в состояние grid. */
+  @deprecated("FSM-MVM: Logic moved to ScIndexFsm.GetIndexStateT._initStateData()", "24.jun.2015")
   def resetAdsPerLoad(): Unit = {
     val scr = MAgent.availableScreen
-    val v = MGridState.getAdsPerLoad(scr.width)
-    MGrid.state.adsPerLoad = v
+    val v = MGridState.getAdsPerLoad(scr)
+    MGrid.gridState.adsPerLoad = v
   }
 
 
@@ -190,7 +191,7 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
           val contentHeight    = contentDiv.offsetHeight
           // Пнуть контроллер, чтобы подгрузил ещё карточек, когда пора.
           val scrollPxToGo = contentHeight - scr.height - wrappedScrollTop
-          if (scrollPxToGo < MGrid.params.loadModeScrollDeltaPx) {
+          if (scrollPxToGo < MGrid.gridParams.loadModeScrollDeltaPx) {
             onScroll()
           }
         }
@@ -217,7 +218,7 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
    *  В оригинале это была функция sm.rebuild_grid(). */
   def resetGridOffsets(): Unit = {
     // Вызвать калькулятор размеров при ребилде. Результаты записать в соотв. модели.
-    val _mgs = MGrid.state
+    val _mgs = MGrid.gridState
     val _canNonZeroOff = _mgs.canNonZeroOffset
     lazy val _widthAdd = getWidthAdd(_mgs)
 
@@ -283,7 +284,7 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
    * @param addedBlocks Список добавленных блоков. В оригинале этого аргумента не было.
    * @param withAnim С анимацией? Можно её отключить принудительно. [true]
    */
-  def build(isAdd: Boolean, mgs: MGridState = MGrid.state, addedBlocks: List[MBlockInfo] = Nil,
+  def build(isAdd: Boolean, mgs: MGridState = MGrid.gridState, addedBlocks: List[MBlockInfo] = Nil,
             withAnim: Boolean = true): Unit = {
     val cssPrefixes  = MBrowser.BROWSER.CssPrefixing.transforms3d
 
@@ -324,9 +325,9 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
    * @param mgp Закешированные параметры сетки, если есть.
    */
   def updateContainerHeight(containerDiv: HTMLDivElement,
-                            colsInfo: Array[MColumnState] = MGrid.state.colsInfo,
-                            paddedCellSize: Int = MGrid.params.paddedCellSize,
-                            mgp: MGridParams = MGrid.params
+                            colsInfo: Array[MColumnState] = MGrid.gridState.colsInfo,
+                            paddedCellSize: Int = MGrid.gridParams.paddedCellSize,
+                            mgp: MGridParams = MGrid.gridParams
                            ): Unit = {
     if (colsInfo.length > 0) {
       val maxCellH = colsInfo.iterator

@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.m.mgrid
 
+import io.suggest.adv.ext.model.im.ISize2di
 import io.suggest.sc.sjs.m.magent.MAgent
 import io.suggest.sc.tile.TileConstants
 
@@ -47,27 +48,39 @@ case class MGridState(
   /** Инфа по текущим блокам. */
   var blocks            : ListBuffer[MBlockInfo] = ListBuffer.empty
 ) {
-  /** Контроллер требует закинуть новые блоки в эту модель состояния. */
-  def appendNewBlocks(newBlocks: Seq[MBlockInfo]): Unit = {
-    appendNewBlocks(newBlocks, newBlocks.size)
-  }
-
   /** Контроллер требует закинуть новые блоки в эту модель состояния, указывая точное кол-во блоков.
     * @param newBlocks Последовательность новых блоков.
     * @param newBlocksCount Длина коллекции newBlocks.
     */
-  def appendNewBlocks(newBlocks: TraversableOnce[MBlockInfo], newBlocksCount: Int): Unit = {
+  @deprecated("FSM-MVM: Use for stateful FSM use immutable withNewBlocks() instead.")
+  def appendNewBlocksMut(newBlocks: TraversableOnce[MBlockInfo], newBlocksCount: Int): Unit = {
     blocks.appendAll(newBlocks)
     blocksLoaded += newBlocksCount
   }
+  def withNewBlocks(newBlocks: TraversableOnce[MBlockInfo], newBlocksCount: Int): MGridState = {
+    // TODO mutable-коллекция здесь
+    blocks.appendAll(newBlocks)
+    copy(
+      blocksLoaded = blocksLoaded + newBlocksCount
+    )
+  }
 
   /** Контроллер приказывает сбросить состояние плитки, касающееся загруженных и отображаемых карточек. */
-  def nothingLoaded(): MGridState = {
-    blocks = ListBuffer()
+  @deprecated("FSM-MVM: Use immutable nothingLoaded() instead.")
+  def nothingLoadedMut(): MGridState = {
+    blocks = ListBuffer.empty
     blocksLoaded = 0
     isLoadingMore = false
     fullyLoaded = false
     this
+  }
+  def nothingLoaded(): MGridState = {
+    copy(
+      blocks        = ListBuffer.empty,
+      blocksLoaded  = 0,
+      isLoadingMore = false,
+      fullyLoaded   = false
+    )
   }
 
   /**
@@ -85,10 +98,20 @@ case class MGridState(
   }
 
   /** Загрузить кое-какие изменения в состояния. */
-  def updateWith(cw: IColsWidth with ICwCm): Unit = {
+  @deprecated("FSM-MVM: Use for stateful FSM use immutable withContParams() instead.")
+  def updateWithMut(cw: IColsWidth with ICwCm): Unit = {
     maxCellWidth = cw.maxCellWidth
     columnsCount = cw.columnsCnt
     contSz       = Some(cw)
+  }
+
+  /** Загрузить кое-какие изменения в состояния. */
+  def withContParams(cw: IColsWidth with ICwCm): MGridState = {
+    copy(
+      maxCellWidth = cw.maxCellWidth,
+      columnsCount = cw.columnsCnt,
+      contSz       = Some(cw)
+    )
   }
 
   /**
@@ -105,7 +128,8 @@ case class MGridState(
 object MGridState {
 
   /** Предложить кол-во загружаемых за раз карточек с сервера. */
-  def getAdsPerLoad(ww: Int = MAgent.availableScreen.width): Int = {
+  def getAdsPerLoad(screen: ISize2di): Int = {
+    val ww = screen.width
     if (ww <= 660)
       5
     else if (ww <= 800)

@@ -25,7 +25,7 @@ trait IScIndexArgs {
   def screen  : Option[IMScreen]
 
   /** Версия SC Index API. */
-  def apiVsn = MSrv.apiVsn
+  def apiVsn = MSrv.API_VSN
 
   /** id узла. */   // TODO На момент написания жил вне JSON-API. Нужно унифицировать два экшена к index-странице.
   def adnIdOpt: Option[String]

@@ -3,8 +3,9 @@ package io.suggest.sc.sjs.vm.layout
 import io.suggest.sc.ScConstants.Layout
 import io.suggest.sc.sjs.v.vutil.SetStyleDisplay
 import io.suggest.sc.sjs.vm.SafeDoc
-import io.suggest.sc.sjs.vm.util.domvm.FindDiv
+import io.suggest.sc.sjs.vm.util.domvm._
 import io.suggest.sc.sjs.vm.util.domvm.create.CreateDiv
+import io.suggest.sc.sjs.vm.util.domvm.get.ChildElOrFind
 import io.suggest.sjs.common.model.dom.DomListIterator
 import io.suggest.sjs.common.view.safe.SafeElT
 import org.scalajs.dom.raw.{HTMLElement, HTMLDivElement}
@@ -19,7 +20,7 @@ import org.scalajs.dom.raw.{HTMLElement, HTMLDivElement}
 object LayRootVm extends FindDiv with CreateLayRootDiv {
 
   override type T = LayRootVm
-  override protected def DOM_ID = Layout.ROOT_ID
+  override def DOM_ID = Layout.ROOT_ID
 
 
   /** Создать новый элемент в памяти (вне DOM). Созданный layout можно сохранить через вызов .insertIntoDom() */
@@ -42,33 +43,24 @@ sealed trait CreateLayRootDiv extends CreateDiv {
   }
 }
 
+
 /** Логика функционирования экземпляра вынесена сюда для возможности разных реализация динамической модели. */
-trait LayRootVmT extends SafeElT {
+trait LayRootVmT extends SafeElT with ChildElOrFind with EraseBg {
 
   override type T = HTMLDivElement
 
+  // Поиск единственного субтега: content.
+  override type SubTagVm_t = LayContentVm.T
+  override protected type SubTagEl_t = LayContentVm.Dom_t
+  override protected def _subtagCompanion = LayContentVm
+
   /** Найти content-div (sioMartLayout). */
-  def content: Option[LayContentVm] = {
-    DomListIterator( _underlying.children )
-      .find { _.id == Layout.LAYOUT_ID }
-      .map { node => LayContentVm( node.asInstanceOf[HTMLDivElement] ) }
-      .orElse { LayContentVm.find() }
-  }
+  def content = _findSubtag()
 
   /** Затолкать в DOM этот model view. Используется при ручном создании layout'а. */
   def insertIntoDom(): Unit = {
     SafeDoc.body
       .appendChild( _underlying )
-  }
-
-  /** Из-за прозрачностей нужно очистить фон до блеска после приветствия. */
-  def eraseBg(): Unit = {
-    _erase( SafeDoc.body )
-    _erase(_underlying)
-  }
-
-  private def _erase(el: HTMLElement): Unit = {
-    el.style.backgroundColor = "#ffffff"
   }
 
 }

@@ -9,6 +9,7 @@ import io.suggest.sjs.common.view.safe.css.SafeCssElT
  * Created: 29.05.15 9:50
  * Description: Управлением loader'ом сетки карточек.
  */
+@deprecated("FSM-MVM, use vm.grid.GLoader instead.", "24.jun.2015")
 object LoaderView {
 
   /**

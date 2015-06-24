@@ -1,8 +1,6 @@
 package io.suggest.sc.sjs.m.mgrid
 
 import io.suggest.adv.ext.model.im.ISize2di
-import io.suggest.sc.sjs.m.magent.MAgent
-import io.suggest.sc.tile.ColumnsCountT
 
 /**
  * Suggest.io
@@ -10,63 +8,52 @@ import io.suggest.sc.tile.ColumnsCountT
  * Created: 21.05.15 17:45
  * Description: Модель состояния cbca_grid.
  */
-object MGrid {
+object MGrid extends MGridUtil {
 
-  /** Параметры, выставляются всей пачкой. */
-  var params: MGridParams = MGridParams()
+  var gridParams: MGridParams = MGridParams()
 
-  /** Текущее состояние сетки. Состоит из переменных и обновляется контроллерами. */
-  var state: MGridState = _
-
+  var gridState: MGridState = _
 
   /** Произвести сброс state. */
   def resetState(): Unit = {
-    state = new MGridState()
+    gridState = new MGridState()
   }
 
-  def margin(colCnt1: Int): Int = {
-    val p = params
-    val cs = p.cellSize
-    (colCnt1 - 1) * (cs + p.cellPadding) + cs
-  }
+}
 
 
-  /**
-   * Посчитать кол-во колонок сетки с помощью калькулятора колонок.
-   * @return Кол-во колонок сетки на экране.
-   */
-  def countColumns(screen: ISize2di = MAgent.availableScreen): Int = {
-    val calc = new ColumnsCountT {
-      override def CELL_WIDTH_CSSPX   = params.cellSize
-      override def TILE_PADDING_CSSPX = params.cellPadding
-    }
-    calc.getTileColsCountScr(screen)
-  }
+/** Утиль для анализа данных в grid-моделях. */
+trait MGridUtil {
 
+  /** Параметры сетки, выставляются всей пачкой. */
+  def gridParams: MGridParams
 
+  /** Текущее состояние сетки. Состоит из переменных и обновляется контроллерами. */
+  def gridState: MGridState
 
   /**
    * Рассчет новых параметров контейнера.
    * Это pure-function, она не меняет состояние системы, а только считает.
+   * @param screen Данные по текущему экрану.
    * @return Экземпляр с результатами рассчетов.
    */
-  def getContainerSz(): MGetContStateResult = {
-    val colCount = countColumns()
+  def getGridContainerSz(screen: ISize2di): MGetContStateResult = {
+    val colCount = gridParams.countColumns(screen)
 
-    var cw = margin(colCount)
+    var cw = gridParams.margin(colCount)
     var cm = 0
     var _margin = 0
 
-    val leftOff = state.leftOffset
+    val leftOff = gridState.leftOffset
     if (leftOff > 0) {
-      _margin = MGrid.margin( leftOff )
+      _margin = gridParams.margin( leftOff )
       cw = cw - _margin
       cm = _margin
     }
 
-    val rightOff = state.rightOffset
+    val rightOff = gridState.rightOffset
     if (rightOff > 0) {
-      _margin = MGrid.margin( rightOff )
+      _margin = gridParams.margin( rightOff )
       cw = cw - _margin
       cm = -_margin
     }
@@ -79,6 +66,4 @@ object MGrid {
     )
   }
 
-
 }
-

@@ -67,7 +67,7 @@ object NavPanelCtl extends CtlT with GridOffsetSetter with OnEscKeyUpT {
   /** Если ширина экрана позволяет, то выставить сетке новый rightOffset и отребилдить. */
   def maybeRebuildGrid(rootDivOpt   : Option[HTMLDivElement]  = MNavDom.rootDiv,
                        isHiddenOpt  : Option[Boolean]         = None,
-                       _mgs         : MGridState              = MGrid.state): Unit = {
+                       _mgs         : MGridState              = MGrid.gridState): Unit = {
     // на мобиле выдачу не надо перекорчевывать, она остается под панелью. На экранах по-шире выдача "сдвигается".
     if (_mgs.isDesktopView) {
       // Облегченный offset-калькулятор, которому ничего толком искать не надо (всё уже найдено)

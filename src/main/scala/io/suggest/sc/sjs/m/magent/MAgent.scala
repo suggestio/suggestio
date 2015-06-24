@@ -10,6 +10,7 @@ package io.suggest.sc.sjs.m.magent
 object MAgent {
 
   /** Размер и другие параметры экрана, доступные для рендера интерфейса. */
+  @deprecated("FSM-MVM: Use MStData.screen instead.", "24.jun.2015")
   var availableScreen: MScreen = _
 
 

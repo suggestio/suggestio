@@ -33,7 +33,7 @@ trait MFindAdsReq {
   def screenInfo  : Option[IMScreen]
 
   /** Версия API. Она по идее не меняется. */
-  def apiVsn      : Int = MSrv.apiVsn
+  def apiVsn      : Int = MSrv.API_VSN
 
   /** Собрать итоговый json для передачи в router. */
   def toJson: Dictionary[Any] = {
@@ -104,7 +104,7 @@ trait MFindAdsReqWrapper extends MFindAdsReq {
 
 /** Дефолтовая реализация, обычно она используется. */
 trait MFindAdsReqDflt extends MFindAdsReq {
-  def _mgs: MGridState = MGrid.state
+  def _mgs: MGridState = MGrid.gridState
   def _fsmState: MScStateT = MScFsm.state
 
   override def receiverId: Option[String]   = _fsmState.rcvrAdnId

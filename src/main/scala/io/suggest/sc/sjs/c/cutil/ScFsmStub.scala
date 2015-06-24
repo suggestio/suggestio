@@ -29,7 +29,6 @@ trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger {
 
 
   override type SD = MStData
-  override protected var _stateData: SD = MStData()
 
   /**
    * Статический API-метод для отправки события в FSM:

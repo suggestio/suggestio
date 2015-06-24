@@ -76,5 +76,5 @@ trait MFindNodesArgsEmpty extends MFindNodesArgs {
 /** Трейт с дефолтовыми значениями, которые извлекаются из моделей состояния выдачи. */
 trait MFindNodesArgsDflt extends MFindNodesArgs {
   override def currAdnId  : Option[String] = MScFsm.state.rcvrAdnId
-  override def apiVsn     : Int = MSrv.apiVsn
+  override def apiVsn     : Int = MSrv.API_VSN
 }

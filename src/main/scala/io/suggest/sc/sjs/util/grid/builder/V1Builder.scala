@@ -26,7 +26,7 @@ trait V1Builder extends ISjsLogger {
   /** Исходный список обрабатываемых блоков.  */
   def _addedBlocks: List[MBlockInfo]
 
-  val _gparams: MGridParams = MGrid.params
+  val _gparams: MGridParams = MGrid.gridParams
 
 
   // TODO Вынести этот велосипед внутри функции в отдельный класс, собирающий сетку.

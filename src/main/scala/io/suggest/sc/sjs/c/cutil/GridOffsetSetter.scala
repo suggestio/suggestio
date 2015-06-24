@@ -14,17 +14,17 @@ import org.scalajs.dom.raw.HTMLElement
 
 trait GridOffsetSetter {
 
-  protected def getWidthAdd(mgs: MGridState = MGrid.state, wndWidth: Int = MAgent.availableScreen.width): Int = {
+  protected def getWidthAdd(mgs: MGridState = MGrid.gridState, wndWidth: Int = MAgent.availableScreen.width): Int = {
     (wndWidth - mgs.contSz.get.cw) / 2
   }
 
   /** Заготовка калькулятора для левой или правой колонки. */
   protected trait GridOffsetCalc {
 
-    def mgs = MGrid.state
+    def mgs = MGrid.gridState
 
     /** Если [[MGridState]] указывает на необходимость нулевого оффсета, то её следует послушать. */
-    def canNonZeroOffset: Boolean = MGrid.state.canNonZeroOffset
+    def canNonZeroOffset: Boolean = MGrid.gridState.canNonZeroOffset
 
     /** div-элемент текущей панели, с которым работаем. */
     def elOpt: Option[HTMLElement]

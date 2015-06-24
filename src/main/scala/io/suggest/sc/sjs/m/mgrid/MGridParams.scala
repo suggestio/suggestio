@@ -1,5 +1,7 @@
 package io.suggest.sc.sjs.m.mgrid
 
+import io.suggest.adv.ext.model.im.ISize2di
+import io.suggest.sc.tile.ColumnsCountT
 import io.suggest.sc.tile.TileConstants._
 
 import scala.scalajs.js
@@ -29,7 +31,7 @@ case class MGridParams(
    * @return Some() и обновленные параметры grid.
    *         None, если старые параметры не изменились.
    */
-  def importIfChangedFrom(from: MGridParamsJsonWrapper): Option[MGridParams] = {
+  def withChangesFrom(from: MGridParamsJsonWrapper): Option[MGridParams] = {
     if (from.cellPadding != cellSize || from.cellSize != cellPadding) {
       val res = copy(
         cellSize    = from.cellSize,
@@ -42,6 +44,24 @@ case class MGridParams(
   }
 
   def paddedCellSize = cellSize + cellPadding
+
+
+  def margin(colCnt1: Int): Int = {
+    val cs = cellSize
+    (colCnt1 - 1) * (cs + cellPadding) + cs
+  }
+
+  /**
+   * Посчитать кол-во колонок сетки с помощью калькулятора колонок.
+   * @return Кол-во колонок сетки на экране.
+   */
+  def countColumns(screen: ISize2di): Int = {
+    val calc = new ColumnsCountT {
+      override def CELL_WIDTH_CSSPX   = cellSize
+      override def TILE_PADDING_CSSPX = cellPadding
+    }
+    calc.getTileColsCountScr(screen)
+  }
 
 }
 

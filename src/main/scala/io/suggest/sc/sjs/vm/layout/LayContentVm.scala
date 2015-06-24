@@ -16,7 +16,7 @@ import org.scalajs.dom.raw.HTMLDivElement
 object LayContentVm extends FindDiv with CreateDiv with CreateVm {
 
   override type T = LayContentVm
-  override protected def DOM_ID = Layout.LAYOUT_ID
+  override def DOM_ID = Layout.LAYOUT_ID
 
 }
 

@@ -14,9 +14,10 @@ object MSrv {
    * Понятие "поколения" выдачи было введено для организации псевдослучайной сортировки результатов
    * поисковых запросов на стороне сервера с возможностью постраничного вывода.
    */
-  var generation  : Long = (js.Math.random() * 1000000000).toLong
+  @deprecated("FSM-MVM: use ScFsm._stateData.generation instead.", "24.jun.2015")
+  var generation: Long = (js.Math.random() * 1000000000).toLong
 
   /** Версия API backend-сервера. Записывается в запросы к sio-серверу, везде где это возможно. */
-  def apiVsn: Int = 2
+  def API_VSN: Int = 2
 
 }

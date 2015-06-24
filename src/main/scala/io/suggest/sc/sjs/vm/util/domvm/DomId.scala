@@ -9,6 +9,6 @@ package io.suggest.sc.sjs.vm.util.domvm
 trait DomId {
 
   /** id элемента в рамках DOM. */
-  protected def DOM_ID: String
+  def DOM_ID: String
 
 }
