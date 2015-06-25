@@ -15,56 +15,28 @@ import scala.annotation.tailrec
  *
  * @see [[http://prolll.com/pr/backpack/ Demo некоторых алгоритмов 2D-упаковки на js]]
  */
-trait V1Builder extends ISjsLogger {
+trait V1Builder extends ISjsLogger with MutableState {
 
-  /** true - Элементы добавляются в существующую сетку, false -- новая сетка с нуля. */
-  def _isAdd: Boolean
+  /** Тип обрабатываемых блоков. */
+  type BI <: IBlockInfo
 
-  /** Доступ к состоянию выдачи. */
-  def _mgs: MGridState //= MGrid.state
+  /** Контейнер со всеми данными сетки. */
+  def grid: IGridData
+  override def _builderState = grid.builderState
 
-  /** Исходный список обрабатываемых блоков.  */
-  def _addedBlocks: List[MBlockInfo]
-
-  val _gparams: MGridParams = MGrid.gridParams
-
-
-  // TODO Вынести этот велосипед внутри функции в отдельный класс, собирающий сетку.
-  // Setting left & top
-  def leftPtrBase = 0
-  private var leftPtr = leftPtrBase
-  //var topPtr = 0
+  def _addedBlocks: List[BI]
 
   // Аккамулятор блоков для обработки. По мере обработки блоков, использованные блоки выбрасываются из него.
-  private var blocksAcc: List[MBlockInfo] = {
-    if (!_isAdd && _addedBlocks.isEmpty) {
-      _mgs.blocks.toList
-    } else {
-      _addedBlocks
-    }
-  }
+  // Поэтому нужна immutable-коллекция с быстрым .tail(): List или Stream.
+  private var blocksAcc: List[BI] = _addedBlocks
 
-  // Определяем ширину окна
-  //val wndWidth = MAgent.availableScreen.width
-
-  // Ставим указатели строки и колонки
-  private var cLine = 0
-  private var currColumn = 0
-
-  /** Карта высот колонок сетки. */
-  val colsInfo: Array[MColumnState] = {
-    val stateColsInfo = _mgs.colsInfo
-    if (_isAdd && stateColsInfo.length > 0) {
-      // Добавление блоков в уже рассчитанную сетку.
-      stateColsInfo
-    } else {
-      // Новая сетка.
-      _mgs.newColsInfo()
-    }
-  }
-
+  // Кешируем тут разные динамические константы перед запуском цикла.
   /** Кол-во колонок. */
-  val colsCount = _mgs.columnsCount
+  private val colsCount = grid.state.columnsCount
+  private val cpadding = grid.params.cellPadding
+  private val paddedCellSize = grid.params.paddedCellSize
+  private val topOffset = grid.params.topOffset
+
 
   /** Детектирование текущей максимальной ширины в сетке в текущей строке. */
   def _getMaxBlockWidth(): Int = {
@@ -80,15 +52,12 @@ trait V1Builder extends ISjsLogger {
     __detect(currColumn)
   }
 
-  // Кешируем тут разные динамические константы перед запуском цикла.
-  private val cpadding = _gparams.cellPadding
-  val paddedCellSize = _gparams.paddedCellSize
 
   // Посчитать размер в ячейках на основе пиксельного размера.
   protected def getWCellSize(sz: Int) = (sz + cpadding) / paddedCellSize
 
   /** Рекурсивная функция тела _extractBlock(), которое обходит список в поисках результата. */
-  protected final def _extractBlock2(bMaxW: Int, rest: List[MBlockInfo]): Option[(MBlockInfo, List[MBlockInfo])] = {
+  protected final def _extractBlock2(bMaxW: Int, rest: List[BI]): Option[(BI, List[BI])] = {
     if (bMaxW <= 0 || rest.isEmpty) {
       None
     } else {
@@ -107,7 +76,7 @@ trait V1Builder extends ISjsLogger {
   }
 
   /** Найти и извлечь блок подходящей ширины, обновив аккамулятор блоков. */
-  protected def _extractBlock(bMaxW: Int, rest: List[MBlockInfo] = blocksAcc): Option[MBlockInfo] = {
+  protected def _extractBlock(bMaxW: Int, rest: List[BI] = blocksAcc): Option[BI] = {
     _extractBlock2(bMaxW, rest) map {
       case (b, rest2) =>
         blocksAcc = rest2
@@ -122,7 +91,7 @@ trait V1Builder extends ISjsLogger {
    * @param topPx Координата Y.
    * @param b Блок.
    */
-  protected def moveBlock(leftPx: Int, topPx: Int, b: MBlockInfo): Unit
+  protected def moveBlock(leftPx: Int, topPx: Int, b: BI): Unit
 
   /**
    * step() не может подобрать подходящий блок в текущей строке и хочет просто шагнуть в следующую ячейку,
@@ -138,8 +107,9 @@ trait V1Builder extends ISjsLogger {
   protected def beforeStepNextLine(): Unit = {
     currColumn = 0
     cLine += 1
-    leftPtr = leftPtrBase
+    leftPtr = MGridBuilderState.leftPtrDflt
   }
+
 
   // В оригинале был for-цикл с ограничением на 1000 итераций.
   @tailrec final def step(i: Int): Unit = {
@@ -172,7 +142,7 @@ trait V1Builder extends ISjsLogger {
 
         moveBlock(
           leftPx  = leftPtr,
-          topPx   = cLine * paddedCellSize + _gparams.topOffset,
+          topPx   = cLine * paddedCellSize  +  topOffset,
           b       = b
         )
 
@@ -194,13 +164,15 @@ trait V1Builder extends ISjsLogger {
     }
   }
 
-  /** Запуск цикла перестроения сетки */
-  def execute(): Unit = {
+  /** Запуск цикла перестроения сетки.
+    * @return Новое состояние билдера, которое нужно сохранить. */
+  def execute(): MGridBuilderState = {
     step(0)
+    exportState
   }
 
   override def toString: String = {
-    "v1b(" + _isAdd + ",[" + blocksAcc.length + "])"
+    "v1b([" + blocksAcc.length + "])"
   }
 
 }

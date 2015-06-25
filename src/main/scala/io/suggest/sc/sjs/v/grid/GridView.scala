@@ -112,7 +112,7 @@ object GridView extends SetStyleDisplay with OnClick {
    */
   def initNewBlocks(blocks: TraversableOnce[MBlockInfo]): Unit = {
     for (b <- blocks) {
-      val safe = SafeEl( b.block )
+      val safe = SafeEl( b.div )
       onClick(safe) { e: Event =>
         GridCtl.onBlockClick(b, e)
       }

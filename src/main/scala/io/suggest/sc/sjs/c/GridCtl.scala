@@ -2,14 +2,14 @@ package io.suggest.sc.sjs.c
 
 import io.suggest.sc.ScConstants.Block
 import io.suggest.sc.sjs.c.cutil.{GridOffsetSetter, CtlT}
-import io.suggest.sc.sjs.m.magent.MAgent
+import io.suggest.sc.sjs.m.magent.{IMScreen, MAgent}
 import io.suggest.sc.sjs.m.mgrid._
 import io.suggest.sc.sjs.m.msrv.ads.find.{MFindAdsReqEmpty, MFindAdsReqDflt, MFindAds}
 import io.suggest.sc.sjs.util.grid.builder.V1Builder
 import io.suggest.sc.sjs.v.grid.{LoaderView, GridView}
 import io.suggest.sc.sjs.v.res.CommonRes
 import io.suggest.sc.sjs.v.vutil.VUtil
-import io.suggest.sjs.common.model.browser.MBrowser
+import io.suggest.sjs.common.model.browser.{IBrowser, MBrowser}
 import io.suggest.sjs.common.model.dom.DomListIterator
 import io.suggest.sjs.common.util.{SjsLogWrapper, SjsLogger}
 import io.suggest.sjs.common.view.safe.SafeEl
@@ -34,9 +34,10 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
    * Обычно этот метод вызывается в ходе добавления карточек в плитку.
    */
   def resetContainerSz(containerDiv: HTMLDivElement,
-                       loaderDivOpt: Option[HTMLDivElement] = MGridDom.loaderDiv): Unit = {
+                       loaderDivOpt: Option[HTMLDivElement] = MGridDom.loaderDiv,
+                       screen: IMScreen = MAgent.availableScreen): Unit = {
     // Вычислить размер.
-    val sz = MGrid.getGridContainerSz(MAgent.availableScreen)
+    val sz = MGrid.getGridContainerSz(screen)
     // Обновить модель сетки новыми данными, и view-контейнеры.
     GridView.setContainerSz(sz, containerDiv, loaderDivOpt)
     MGrid.gridState.updateWithMut(sz)
@@ -134,14 +135,16 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
       }
 
       // Вызываем пересчет ширин боковых панелей в выдаче без перестройки исходной плитки.
-      resetGridOffsets()
+      val scr = MAgent.availableScreen
+
+      resetGridOffsets(mgs, scr)
 
       for (containerDiv <- containerDivOpt) {
         // Залить все карточки в DOM, создав суб-контейнер frag.
         val frag = GridView.appendNewMads(containerDiv, mads)
 
         // Далее логика cbca_grid.init(). Допилить сетку под новые карточки:
-        resetContainerSz(containerDiv, loaderDivOpt)
+        resetContainerSz(containerDiv, loaderDivOpt, scr)
 
         // Проанализировать залитые в DOM блоки, сохранить метаданные в модель блоков.
         val newBlocks = analyzeNewBlocks(frag)
@@ -169,10 +172,9 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
 
 
   /** Запрошена инициализация сетки после сброса всего layout. Такое происходит после переключения узла. */
-  def initNewLayout(wcHideFut: Future[_]): Unit = {
+  def initNewLayout(wcHideFut: Future[_], scr: IMScreen, mgp: MGridParams): Unit = {
     // shared-константы между кусками метода инициализации
     val wrapperDivOpt = MGridDom.wrapperDiv
-    val scr = MAgent.availableScreen
 
     // 1. Отложенная инициализация: вешать события по мере необходимости.
     wcHideFut.onComplete { case _ =>
@@ -191,7 +193,7 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
           val contentHeight    = contentDiv.offsetHeight
           // Пнуть контроллер, чтобы подгрузил ещё карточек, когда пора.
           val scrollPxToGo = contentHeight - scr.height - wrappedScrollTop
-          if (scrollPxToGo < MGrid.gridParams.loadModeScrollDeltaPx) {
+          if (scrollPxToGo < mgp.loadModeScrollDeltaPx) {
             onScroll()
           }
         }
@@ -216,15 +218,16 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
 
   /** Перевыставить ширины боковых панелей в выдаче и боковые оффсеты в состоянии выдачи.
    *  В оригинале это была функция sm.rebuild_grid(). */
-  def resetGridOffsets(): Unit = {
+  // TODO Вынести это куда-нить после выноса калькуляторов в соответствующие ModelView'ы.
+  def resetGridOffsets(_mgs: MGridState, _screen: IMScreen): Unit = {
     // Вызвать калькулятор размеров при ребилде. Результаты записать в соотв. модели.
-    val _mgs = MGrid.gridState
     val _canNonZeroOff = _mgs.canNonZeroOffset
-    lazy val _widthAdd = getWidthAdd(_mgs)
+    lazy val _widthAdd = getWidthAdd(_mgs, _screen)
 
     // Запиливаем левую панель, т.е. панель навигации.
     val navPanelSetter = new NavPanelCtl.GridOffsetCalc {
       override def mgs      = _mgs
+      override def screen   = _screen
       override def widthAdd = _widthAdd
       override def canNonZeroOffset = _canNonZeroOff
     }
@@ -233,6 +236,7 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
     // Запиливаем правую панель, т.е. панель поиска.
     val searchPanSetter = new SearchPanelCtl.GridOffsetCalc {
       override def mgs      = _mgs
+      override def screen   = _screen
       override def widthAdd = _widthAdd
       override def canNonZeroOffset = _canNonZeroOff
     }
@@ -243,11 +247,12 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
   /**
    * Извлечь данные о новых блоках (отрендеренных) без сайд-эффектов.
    * В оригинале было: cbca_grid.load_blocks() с попутной заливкой в модель.
-   * @param from Элемент-контейнер внутри DOM с новыми блоками.
+   * @param parent Элемент-контейнер с анализируемыми блоками.
    * @return Ленивый список инфы о новых блоках в прямом порядке.
    */
-  def analyzeNewBlocks(from: Element): List[MBlockInfo] = {
-    DomListIterator(from.children)
+  @deprecated("Use GContainerFragment.blocksIterator() + map GBlock().getBlockInfo() + Iterator.toList instead", "25.jun.2015")
+  def analyzeNewBlocks(parent: Element): List[MBlockInfo] = {
+    DomListIterator(parent.children)
       .foldLeft(List.empty[MBlockInfo]) { (acc, e) =>
         // Пытаемся извлечь из каждого div'а необходимые аттрибуты.
         val safeEl = SafeEl(e)
@@ -256,7 +261,7 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
           w  <- safeEl.getIntAttributeStrict(Block.BLK_WIDTH_ATTR)
           h  <- safeEl.getIntAttributeStrict(Block.BLK_HEIGHT_ATTR)
         } yield {
-          MBlockInfo(id = id, width = w, height = h, block = e.asInstanceOf[HTMLDivElement])
+          MBlockInfo(id = id, width = w, height = h, div = e.asInstanceOf[HTMLDivElement])
         }
         if (mbiOpt.nonEmpty) {
           val mbi = mbiOpt.get
@@ -285,21 +290,22 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
    * @param withAnim С анимацией? Можно её отключить принудительно. [true]
    */
   def build(isAdd: Boolean, mgs: MGridState = MGrid.gridState, addedBlocks: List[MBlockInfo] = Nil,
-            withAnim: Boolean = true): Unit = {
-    val cssPrefixes  = MBrowser.BROWSER.CssPrefixing.transforms3d
+            withAnim: Boolean = true, browser: IBrowser = MBrowser.BROWSER): Unit = {
+    val cssPrefixes  = browser.CssPrefixing.transforms3d
 
     // Собрать билдер сетки и заставить его исполнять код.
+    val _grid = MGridData(MGrid.gridParams, mgs)
     val builder = new V1Builder with SjsLogWrapper {
-      override def _LOGGER = that
-      override def _isAdd = isAdd
+      override type BI = IBlockInfo
       override def _addedBlocks = addedBlocks
-      override def _mgs = mgs
+      override def _LOGGER = that
+      override def grid = _grid
 
-      override def moveBlock(leftPx: Int, topPx: Int, b: MBlockInfo): Unit = {
+      override def moveBlock(leftPx: Int, topPx: Int, b: BI): Unit = {
         GridView.moveBlock(
           leftPx      = leftPx,
           topPx       = topPx,
-          el          = b.block,
+          el          = b.div,
           cssPrefixes = cssPrefixes,
           withAnim    = withAnim
         )
@@ -321,19 +327,20 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
    * Пересчитать высоту контейнера карточек.
    * @param colsInfo Закешированная инфа по колонкам сетки, если есть.
    * @param containerDiv Закешированный контейнер сетки, если есть.
-   * @param paddedCellSize Закешированный расчет стороны ячейки, если есть.
    * @param mgp Закешированные параметры сетки, если есть.
    */
+  @deprecated("FSM-MVM: Use GContainer.resetHeightUsing() instead.", "25.jun.2015")
   def updateContainerHeight(containerDiv: HTMLDivElement,
                             colsInfo: Array[MColumnState] = MGrid.gridState.colsInfo,
-                            paddedCellSize: Int = MGrid.gridParams.paddedCellSize,
                             mgp: MGridParams = MGrid.gridParams
                            ): Unit = {
     if (colsInfo.length > 0) {
+      // maxCellH: Рассчет вынесен в IGridBuilderState.maxCellHeight
       val maxCellH = colsInfo.iterator
         .map { _.heightUsed }
         .max
-      val maxPxH = mgp.topOffset  +  paddedCellSize * maxCellH  +  mgp.bottomOffset
+      // С измененями вынесено в GContainerT.resetHeightUsing()
+      val maxPxH = mgp.topOffset  +  mgp.paddedCellSize * maxCellH  +  mgp.bottomOffset
       GridView.setContainerHeight(maxPxH, containerDiv)
 
     } else {

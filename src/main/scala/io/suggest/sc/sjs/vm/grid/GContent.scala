@@ -15,16 +15,16 @@ import org.scalajs.dom.raw.HTMLDivElement
  * Description: Модель grid content div.
  * Этот div содержит основной контент grid'а в виде div'ов.
  */
-object GridContentVm extends FindDiv {
+object GContent extends FindDiv {
 
-  override type T = GridContentVm
+  override type T = GContent
   override def DOM_ID: String = Grid.CONTENT_DIV_ID
 
 }
 
 
 /** Логика фунцкионирования экземпляра модели вынесена сюда. */
-trait GridContentVmT extends SafeElT with ChildElOrFindInner with CssSzImplicits {
+trait GContentT extends SafeElT with ChildElOrFindInner with CssSzImplicits {
 
   override type T = HTMLDivElement
 
@@ -69,8 +69,8 @@ trait GridContentVmT extends SafeElT with ChildElOrFindInner with CssSzImplicits
  * Экземпляр модели grid content div.
  * @param _underlying DOM-элемент, соответствующий экземпляру.
  */
-case class GridContentVm(override val _underlying: HTMLDivElement)
-  extends GridContentVmT {
+case class GContent(override val _underlying: HTMLDivElement)
+  extends GContentT {
 
   override lazy val loader = super.loader
   override lazy val container = super.container

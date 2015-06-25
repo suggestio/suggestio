@@ -1,10 +1,12 @@
 package io.suggest.sc.sjs.vm.grid
 
 import io.suggest.sc.ScConstants.Grid
+import io.suggest.sc.sjs.m.mgrid.{IGridData, MGridParams}
 import io.suggest.sc.sjs.m.msrv.ads.find.MFoundAdJson
 import io.suggest.sc.sjs.v.vutil.VUtil
 import io.suggest.sc.sjs.vm.util.CssSzImplicits
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
+import io.suggest.sjs.common.model.dom.DomListIterator
 import io.suggest.sjs.common.view.safe.ISafe
 import org.scalajs.dom.raw.HTMLDivElement
 
@@ -36,17 +38,35 @@ trait GContainerT extends ISafe with CssSzImplicits {
    * Сеттер высоты контейнера.
    * @param h Высота в пикселях.
    */
-  def heightPx_=(h: Int): this.type = {
-    _underlying.style.height = h.px
+  def setHeightPx(h: Int): this.type = {
+    setHeight(h.px)
+  }
+
+  /**
+   * Посчитать высоту контейнера на основе данных сетки и выставить её.
+   * @param grid Источних данных сетки.
+   */
+  def resetHeightUsing(grid: IGridData): Unit = {
+    val maxColHeightPx = grid.builderState.maxColHeight
+    // TODO В оригинале maxColHeightPx почему-то перемножалось с paddedCellSize и не глючило ничего.
+    // В новой выдаче это приводит к очевидному звиздецу по высоте, но в оригинале нет проблем.
+    // Оригинал смотрать в showcase2.coffee по слову real_h.
+    //val maxPxH = topOffset  +  paddedCellSize * maxCellH  +  bottomOffset
+    val mgp = grid.params
+    val totalHeightPx = mgp.topOffset  +  maxColHeightPx  +  mgp.bottomOffset
+    setHeightPx(totalHeightPx)
+  }
+  def setHeight(cssHeight: String): this.type = {
+    _underlying.style.height = cssHeight
     this
   }
 
   /**
-   * Залить переданные карточки в контейнер отображения.
+   * Залить переданные сервером карточки в контейнер отображения.
    * @param mads Рекламные карточки.
    * @return Контейнер с этой пачкой карточек.
    */
-  def appendNewMads(mads: TraversableOnce[MFoundAdJson]): HTMLDivElement = {
+  def appendNewMads(mads: TraversableOnce[MFoundAdJson]): GContainerFragment = {
     // Склеить все отрендеренные карточки в одну html-строку. И распарсить пачкой.
     // Надо парсить и добавлять всей пачкой из-за особенностей браузеров по параллельной загрузке ассетов:
     // https://bugzilla.mozilla.org/show_bug.cgi?id=893113 -- Firefox: innerHTML может блокироваться на загрузку картинки.
@@ -54,12 +74,11 @@ trait GContainerT extends ISafe with CssSzImplicits {
     val blocksHtmlSingle: String = {
       mads.toIterator
         .map(_.html)
-        .reduceLeft { _ + _  }
+        .mkString
     }
-    val frag = VUtil.newDiv()
-    frag.innerHTML = blocksHtmlSingle
+    val frag = GContainerFragment(blocksHtmlSingle)
     // Заливаем распарсенные карточки на страницу.
-    _underlying.appendChild(frag)
+    _underlying.appendChild( frag._underlying )
     frag
   }
 
@@ -67,6 +86,12 @@ trait GContainerT extends ISafe with CssSzImplicits {
   /** Полностью очистить сетку от карточек. */
   def clear(): Unit = {
     VUtil.removeAllChildren(_underlying)
+  }
+
+
+  def fragmentsIterator: Iterator[GContainerFragment] = {
+    DomListIterator( _underlying.children )
+      .map { el => GContainerFragment( el.asInstanceOf[HTMLDivElement] ) }
   }
 
 }

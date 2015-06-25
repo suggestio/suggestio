@@ -24,9 +24,9 @@ object GridWrapperVm extends FindDiv {
 trait GridWrapperVmT extends SafeElT with ChildElOrFind {
   override type T = HTMLDivElement
 
-  override type SubTagVm_t = GridContentVm.T
-  override protected type SubTagEl_t = GridContentVm.Dom_t
-  override protected def _subtagCompanion = GridContentVm
+  override type SubTagVm_t = GContent.T
+  override protected type SubTagEl_t = GContent.Dom_t
+  override protected def _subtagCompanion = GContent
 
   /** Доступ к grid content div. */
   def content = _findSubtag()

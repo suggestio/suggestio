@@ -2,7 +2,8 @@ package io.suggest.sc.sjs.m.msc.fsm
 
 import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.m.mgeo._
-import io.suggest.sc.sjs.m.mgrid.{MGridUtil, MGridParams, MGridState}
+import io.suggest.sc.sjs.m.mgrid.MGridData
+import io.suggest.sjs.common.model.browser.{IBrowser, MBrowser}
 
 import scala.scalajs.js
 
@@ -14,9 +15,8 @@ import scala.scalajs.js
  */
 object MStData {
 
-  def gridParamsDflt = MGridParams()
-  def gridStateDflt  = MGridState()
-  def generationDflt = (js.Math.random() * 1000000000).toLong
+  private def generationDflt = (js.Math.random() * 1000000000).toLong
+  private def browserDflt    = MBrowser.detectBrowser
 
 }
 
@@ -25,19 +25,15 @@ object MStData {
  * Экземпляр immutable-контейнера для передачи данных Sc FSM между состояниями.
  * @param screen Данные по экрану, если известны.
  * @param geoLoc Текущие данные по геолокации.
- * @param gridParams Параметры сетки выдачи.
- *                   Изменяюстя редко, но при измении содержимое gridState становится противоречивым.
- * @param gridState Состояние плитки карточек. Появилось на основе MGrid.state.
  * @param generation Поколение выдачи для сортировки. Появилось из MSrv.generation.
  * @param adnIdOpt id текущего узла, если есть.
  */
 case class MStData(
   screen                    : Option[IMScreen]  = None,
   override val geoLoc       : Option[MGeoLoc]   = None,
-  override val gridParams   : MGridParams       = MStData.gridParamsDflt,
-  override val gridState    : MGridState        = MStData.gridStateDflt,
+  grid                      : MGridData         = MGridData(),
   generation                : Long              = MStData.generationDflt,
-  adnIdOpt                  : Option[String]    = None
+  adnIdOpt                  : Option[String]    = None,
+  browser                   : IBrowser          = MStData.browserDflt
 )
-  extends MGridUtil
-  with MGeoLocUtil
+  extends MGeoLocUtil

@@ -33,8 +33,10 @@ trait ScIndexFsm extends ScFsmStub with FindAdsFsmUtil {
       sd.screen.fold(sd) { screen =>
         val adsPerLoad = MGridState.getAdsPerLoad( screen )
         sd.copy(
-          gridState = sd.gridState.copy(
-            adsPerLoad = adsPerLoad
+          grid = sd.grid.copy(
+            state = sd.grid.state.copy(
+              adsPerLoad = adsPerLoad
+            )
           )
         )
       }
@@ -114,13 +116,8 @@ trait ScIndexFsm extends ScFsmStub with FindAdsFsmUtil {
       // Инициализация welcomeAd.
       val wcHideFut = NodeWelcomeCtl.handleWelcome()
 
-      GridCtl.initNewLayout(wcHideFut)
-      // Когда grid-контейнер инициализирован, можно рендерить полученные карточки.
-      findAdsFut onSuccess { case resp =>
-        // Анимацию размещения блоков можно отключить, если welcome-карточка закрывает собой всё это.
-        val noWelcome = wcHideFut.isCompleted
-        GridCtl.newAdsReceived(resp, isAdd = false, withAnim = noWelcome)
-      }
+      // TODO Раскидать логику этой инициализации по vm'кам.
+      GridCtl.initNewLayout(wcHideFut, sd1.screen.get, sd1.grid.params)
 
       NavPanelCtl.initNav()
 

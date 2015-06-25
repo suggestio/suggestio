@@ -84,10 +84,9 @@ object ScFsm extends SjsLogger with EarlyFsm with ScIndexFsm with GridFsm {
   /** Реализация состояния-получения-обработки индексной страницы. */
   protected class ScIndexState(val adnIdOpt: Option[String]) extends GetIndexStateT {
 
-    /** Когда обработка index завершена, надо переключиться на следующее состояние. */
+    /** Когда обработка index завершена, надо переключиться на состояние обработки начальной порции карточек. */
     override protected def _onSuccessNextState(findAdsFut: Future[MFindAds], wcHideFut: Future[_], sd1: SD): FsmState = {
-      error("TODO _onSuccessFsmState(): adnId=" + adnIdOpt + " " + findAdsFut)
-      ???
+      new AppendAdsToGridDuringWelcomeState(findAdsFut, wcHideFut)
     }
 
     /** Запрос за index'ом не удался. */
@@ -95,6 +94,20 @@ object ScFsm extends SjsLogger with EarlyFsm with ScIndexFsm with GridFsm {
       error("Failed to ask index, retrying", ex)
       _retry(250)(new ScIndexState(adnIdOpt))
     }
+  }
+
+
+  /** Реализация состояния начальной загрузки карточек в выдачу. */
+  protected class AppendAdsToGridDuringWelcomeState(
+    override val findAdsFut: Future[MFindAds],
+    override val wcHideFut: Future[_]
+  ) extends AppendAdsToGridDuringWelcomeStateT {
+    
+    /** Переключение на какое состояние, когда нет больше карточек на сервере? */
+    override protected def noMoreMadsState: FsmState = ???
+
+    /** Что делать при ошибке получения карточек. */
+    override protected def _findAdsFailed(ex: Throwable): Unit = ???
   }
 
 }

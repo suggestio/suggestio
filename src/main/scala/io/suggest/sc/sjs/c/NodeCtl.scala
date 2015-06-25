@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.c
 
 import io.suggest.sc.sjs.c.cutil.CtlT
+import io.suggest.sc.sjs.m.magent.MAgent
 import io.suggest.sc.sjs.m.mgrid.MGrid
 import io.suggest.sc.sjs.m.msc.fsm.{MScState, MScFsm}
 import io.suggest.sc.sjs.m.msrv.index.MNodeIndex
@@ -75,7 +76,7 @@ object NodeCtl extends CtlT {
       // Инициализация welcomeAd.
       val wcHideFut = NodeWelcomeCtl.handleWelcome()
 
-      GridCtl.initNewLayout(wcHideFut)
+      GridCtl.initNewLayout(wcHideFut, MAgent.availableScreen, MGrid.gridParams)
       // Когда grid-контейнер инициализирован, можно рендерить полученные карточки.
       findAdsFut onSuccess { case resp =>
         // Анимацию размещения блоков можно отключить, если welcome-карточка закрывает собой всё это.

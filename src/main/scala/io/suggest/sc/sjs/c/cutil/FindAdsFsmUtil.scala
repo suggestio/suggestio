@@ -1,6 +1,5 @@
 package io.suggest.sc.sjs.c.cutil
 
-import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.m.msrv.ads.find.{MFindAds, MFindAdsReqDflt, MFindAdsReqEmpty}
 
 import scala.concurrent.ExecutionContext
@@ -12,10 +11,11 @@ trait FindAdsFsmUtil extends ScFsmStub {
 
   /** Дефолтовая реализация аргументов поиска. */
   protected class FindAdsArgs(sd: SD) extends MFindAdsReqEmpty with MFindAdsReqDflt {
-    override def _mgs = sd.gridState
+    override def _mgs = sd.grid.state
     override val _fsmState = super._fsmState
-    override def screenInfo: Option[IMScreen] = sd.screen
+    override def screenInfo = sd.screen
     override def generation: Option[Long] = Some(sd.generation)
+    override def receiverId = sd.adnIdOpt
   }
 
   /** Запуск поиска карточек. */

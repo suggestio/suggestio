@@ -1,7 +1,6 @@
 package io.suggest.sc.sjs.m.mgrid
 
 import io.suggest.adv.ext.model.im.ISize2di
-import io.suggest.sc.sjs.m.magent.MAgent
 import io.suggest.sc.tile.TileConstants
 
 import scala.collection.mutable.ListBuffer
@@ -46,22 +45,23 @@ case class MGridState(
   var colsInfo          : Array[MColumnState] = Array.empty,
 
   /** Инфа по текущим блокам. */
-  var blocks            : ListBuffer[MBlockInfo] = ListBuffer.empty
+  // TODO После спиливания архитектуры v1 можно/нужно заменить IBlockInfo на GBlock. Внутри всё равно теперь GBlock.
+  var blocks            : ListBuffer[IBlockInfo] = ListBuffer.empty
 ) {
   /** Контроллер требует закинуть новые блоки в эту модель состояния, указывая точное кол-во блоков.
     * @param newBlocks Последовательность новых блоков.
     * @param newBlocksCount Длина коллекции newBlocks.
     */
   @deprecated("FSM-MVM: Use for stateful FSM use immutable withNewBlocks() instead.")
-  def appendNewBlocksMut(newBlocks: TraversableOnce[MBlockInfo], newBlocksCount: Int): Unit = {
+  def appendNewBlocksMut(newBlocks: TraversableOnce[IBlockInfo], newBlocksCount: Int): Unit = {
     blocks.appendAll(newBlocks)
     blocksLoaded += newBlocksCount
   }
-  def withNewBlocks(newBlocks: TraversableOnce[MBlockInfo], newBlocksCount: Int): MGridState = {
+  def withNewBlocks(newBlocks: TraversableOnce[IBlockInfo]): MGridState = {
     // TODO mutable-коллекция здесь
     blocks.appendAll(newBlocks)
     copy(
-      blocksLoaded = blocksLoaded + newBlocksCount
+      blocksLoaded = blocks.size    // O(1)
     )
   }
 
