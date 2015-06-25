@@ -4,20 +4,22 @@
    Она может отсутствовать, иметь фон цвета или фон картинки. *@
 
 @import util.cdn.CdnUtil
+@import views.html.sc.stuff._
+@import io.suggest.sc.ScConstants.Welcome._
 
-@args.welcomeOpt.fold {
-  @* Нету карточки приветствия. *@
-  <div id="smWelcomeAd" class="sm-welcome-ad" style="background: #@args.bgColor;">
-      <span class="sm-welcome-ad_helper"></span>
-      <img height="30" class="sm-welcome-div_img" src="@args.logoImgUrl"/>
-  </div>
+<div id="@ROOT_ID" class="sm-welcome-ad"
+     @if(!args.welcomeOpt) {style="background: #@args.bgColor;"} >
 
-} { wargs =>
+  @args.welcomeOpt.fold {
 
-  @* Есть приветствие. *@
-  <div id="smWelcomeAd" class="sm-welcome-ad">
+    @* Нету карточки приветствия. *@
+    <span class="sm-welcome-ad_helper"></span>
+    <img height="30" class="sm-welcome-div_img" src="@args.logoImgUrl"/>
 
-    @* Рендерим фон приветствия: цвет узла или картинка. *@
+  } { wargs =>
+
+    @* Есть приветствие.
+       Рендерим фон приветствия: цвет узла или картинка. *@
     @wargs.bg match {
       case Left(color) => {
         @* Доступен только цвет фона. *@
@@ -30,7 +32,7 @@
 
       case Right(imgInfo) => {
         @* Доступно фоновое изображение. *@
-        <img id="smWelcomeAdBgImage" style="background-color: #@args.bgColor;" class="sm-welcome-ad_bg-img"
+        <img id="@BG_IMG_ID" style="background-color: #@args.bgColor;" class="sm-welcome-ad_bg-img"
              data-width="@imgInfo.meta.map(_.width)"
              data-height="@imgInfo.meta.map(_.height)"
              src="@imgInfo.call"/>
@@ -40,7 +42,7 @@
     @* Рендерим покрывающую картинку (svg/png) *@
     @wargs.fgImage.map { fgImage =>
       <span class="sm-welcome-ad_helper"></span>
-      <img id="smWelcomeAdfgImage" class="sm-welcome-ad_fg-img"
+      <img id="@FG_IMG_ID" class="sm-welcome-ad_fg-img"
            data-width="@fgImage.meta.map(_.width)"
            data-height="@fgImage.meta.map(_.height)"
            src="@CdnUtil.dynImg(fgImage.filename)"/>
@@ -48,14 +50,12 @@
 
     @* Рендерим покрывающую картинку (svg/png) *@
     @wargs.fgText.map { fgText =>
-      <div id="smWelcomeAdfgText" style="width: 100%; z-index: 100000000000; position: absolute; top: 50%;">
-        <span class="sm-producer-header_txt-logo" style="color: #@args.fgColor; border-color: #@args.fgColor;">
+      <div id="@FG_INFO_DIV_ID" style="width: 100%; z-index: 100000000000; position: absolute; top: 50%;">
+        @_nodeNameTpl(args.fgColor) {
           @fgText
-          <span class="sm-producer-header_txt-logo-dot __left" style="background: #@args.fgColor;"></span>
-          <span class="sm-producer-header_txt-logo-dot __right" style="background: #@args.fgColor;"></span>
-        </span>
+        }
       </div>
     }
 
-  </div>
-}
+  } @* fold *@
+</div>

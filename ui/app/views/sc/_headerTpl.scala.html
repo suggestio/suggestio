@@ -2,6 +2,7 @@
 
 @* Верстка полосы заголовка со всеми необходимыми кнопками управления выдачей. *@
 
+@import io.suggest.sc.ScConstants.Header._
 @import views.html.sc.stuff._
 @import msc._
 
@@ -19,11 +20,11 @@
 }
 
 @* Хидер главного экрана *@
-<div id="smRootProducerHeader"
+<div id="@ROOT_DIV_ID"
      class="sm-producer-header abs" style="@_bgcolor( args.bgColor )"
      data-gl-go-back="@args.geoListGoBack.exists(identity)">
 
-  <span id="smRootProducerHeaderButtons">
+  <span id="@BTNS_DIV_ID">
 
     @* кнопка выхода (крест) слева наверху. *@
     @if(args.withScClose) {
@@ -68,11 +69,9 @@
   </span>
 
   @toggleNavScrAnchor() { jsStateOpt =>
-    <span class="sm-producer-header_txt-logo" style="color: #@args.fgColor; border-color: #@args.fgColor;">
+    @_nodeNameTpl(args.fgColor) {
       @args.name
-      <span class="sm-producer-header_txt-logo-dot __left" style="background: #@args.fgColor;"></span>
-      <span class="sm-producer-header_txt-logo-dot __right" style="background: #@args.fgColor;"></span>
-    </span>
+    }
   }
 
   <div class="sm-producer-header_icon">
