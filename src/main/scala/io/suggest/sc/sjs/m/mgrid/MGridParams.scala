@@ -13,6 +13,14 @@ import scala.scalajs.js
  * Description: Модель настроек построения сетки. Здесь константы, которые должны выставлятьяс все одновременно.
  */
 
+object MGridParams {
+
+  // Этот параметр используется при инициализации при вешаньи события, поэтому он неизменяемый.
+  def LOAD_MORE_SCROLL_DELTA_PX = 100
+
+}
+
+
 // TODO Нужно десериализацию из json прикрутить, т.к. сервер будет выставлять эти значения по своему желанию.
 
 case class MGridParams(
@@ -21,9 +29,6 @@ case class MGridParams(
   topOffset     : Int = 70,
   bottomOffset  : Int = 20
 ) {
-
-  // Этот параметр лежал в MGridAds, а не тут.
-  def loadModeScrollDeltaPx = 100
 
   /**
    * Добавить данные из json, присланного сервером.

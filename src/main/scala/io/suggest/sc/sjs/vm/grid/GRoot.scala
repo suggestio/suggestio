@@ -1,5 +1,7 @@
 package io.suggest.sc.sjs.vm.grid
 
+import io.suggest.sc.sjs.m.msc.fsm.IStData
+import io.suggest.sc.sjs.v.vutil.VUtil
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.sjs.vm.util.domvm.get.ChildElOrFind
 import io.suggest.sjs.common.view.safe.SafeElT
@@ -15,36 +17,60 @@ import io.suggest.sc.ScConstants.Grid
  * Цепочка из root-wrapper-content используется для решения возможных проблем со скроллингом и
  * скроллбаром в некоторых браузерах.
  */
-object GridRootVm extends FindDiv {
+object GRoot extends FindDiv {
 
   override def DOM_ID = Grid.ROOT_DIV_ID
-  override type T = GridRootVm
+  override type T = GRoot
 
 }
 
 
 /** Логика и интерфейс экземпляра модели. */
-trait GridRootVmT extends SafeElT with ChildElOrFind {
+trait GRootT extends SafeElT with ChildElOrFind {
 
   override type T = HTMLDivElement
 
-  override type SubTagVm_t = GridWrapperVm.T
-  override protected type SubTagEl_t = GridWrapperVm.Dom_t
-  override protected def _subtagCompanion = GridWrapperVm
+  override type SubTagVm_t = GWrapper.T
+  override protected type SubTagEl_t = GWrapper.Dom_t
+  override protected def _subtagCompanion = GWrapper
 
   def wrapper = _findSubtag()
+
+  /** Раняя инициализация, которая должна проходить однократно.
+    * Используется после создания нового layout'а. */
+  def initLayout(stData: IStData): Unit = {
+    for (screen <- stData.screen) {
+      val height = screen.height
+
+      val containerOpt = wrapper
+        .flatMap(_.content)
+        .flatMap(_.container)
+        .map(_._underlying)
+
+      val wrappersIter = (this :: wrapper.toList)
+        .iterator
+        .map { _._underlying }
+
+      VUtil.setHeightRootWrapCont(height, containerOpt, wrappersIter)
+
+      // Запустить инициализацию внутри wrapper'а.
+      for (gwrapper <- wrapper) {
+        gwrapper.initLayout(stData)
+      }
+    }
+  }
 
 }
 
 
 /**
- * Экземпляр модели; дефолтовая реализация [[GridRootVmT]].
+ * Экземпляр модели; дефолтовая реализация [[GRootT]].
  * @param _underlying Соответствующий этой модели DOM div.
  */
-case class GridRootVm(
+case class GRoot(
   override val _underlying: HTMLDivElement
 )
-  extends GridRootVmT {
+  extends GRootT {
 
   override lazy val wrapper = super.wrapper
 

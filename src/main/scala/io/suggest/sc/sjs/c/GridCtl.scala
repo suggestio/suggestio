@@ -33,6 +33,7 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
    * Посчитать и сохранить новые размеры сетки для текущих параметров оной.
    * Обычно этот метод вызывается в ходе добавления карточек в плитку.
    */
+  @deprecated("FSM-MVM: Logic inlined into GridFsm", "25.jun.2015")
   def resetContainerSz(containerDiv: HTMLDivElement,
                        loaderDivOpt: Option[HTMLDivElement] = MGridDom.loaderDiv,
                        screen: IMScreen = MAgent.availableScreen): Unit = {
@@ -172,6 +173,7 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
 
 
   /** Запрошена инициализация сетки после сброса всего layout. Такое происходит после переключения узла. */
+  @deprecated("FSM-MVM: Use GRoot.initLayout() instead", "25.jun.2015")
   def initNewLayout(wcHideFut: Future[_], scr: IMScreen, mgp: MGridParams): Unit = {
     // shared-константы между кусками метода инициализации
     val wrapperDivOpt = MGridDom.wrapperDiv
@@ -193,7 +195,7 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
           val contentHeight    = contentDiv.offsetHeight
           // Пнуть контроллер, чтобы подгрузил ещё карточек, когда пора.
           val scrollPxToGo = contentHeight - scr.height - wrappedScrollTop
-          if (scrollPxToGo < mgp.loadModeScrollDeltaPx) {
+          if (scrollPxToGo < MGridParams.LOAD_MORE_SCROLL_DELTA_PX) {
             onScroll()
           }
         }
@@ -202,7 +204,7 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
 
     val rootDivOpt = MGridDom.rootDiv
 
-    // 2. Выставить высоту контейнера.
+    // 2. Выставить высоту контейнера.   // FSM-MVM: вынесено в GRoot.initLayout().
     for {
       rootDiv       <- rootDivOpt
       wrapperDiv    <- wrapperDivOpt

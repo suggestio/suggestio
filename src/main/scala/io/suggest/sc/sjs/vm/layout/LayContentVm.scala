@@ -2,6 +2,7 @@ package io.suggest.sc.sjs.vm.layout
 
 import io.suggest.sc.ScConstants.Layout
 import io.suggest.sc.sjs.m.magent.IMScreen
+import io.suggest.sc.sjs.vm.grid.GRoot
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.sjs.vm.util.domvm.create.{CreateDiv, CreateVm}
 import io.suggest.sjs.common.view.safe.SafeElT
@@ -32,12 +33,13 @@ trait LayContentVmT extends SafeElT {
   }
   def setWndClass(w: Int): Unit = {
     val cssClassOrNull: String = {
+      val prefix = "sm-w-"
       if (w <= 660) {
-        "sm-w-400"
+        prefix + "400"
       } else if (w <= 800) {
-        "sm-w-800"
+        prefix + "800"
       } else if (w <= 980) {
-        "sm-w-980"
+        prefix + "980"
       } else {
         null
       }
@@ -51,9 +53,17 @@ trait LayContentVmT extends SafeElT {
     _underlying.innerHTML = html
   }
 
+  /** Доступ к корневому div'у плитки, который является дочерним DOM-узлом этой модели. */
+  def grid = GRoot.find()
+
 }
 
 
 case class LayContentVm(
   override val _underlying: HTMLDivElement
-) extends LayContentVmT
+) extends LayContentVmT {
+
+  override lazy val grid = super.grid
+
+}
+

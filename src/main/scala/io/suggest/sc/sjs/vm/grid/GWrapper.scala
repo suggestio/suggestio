@@ -1,9 +1,13 @@
 package io.suggest.sc.sjs.vm.grid
 
 import io.suggest.sc.ScConstants.Grid
+import io.suggest.sc.sjs.c.ScFsm
+import io.suggest.sc.sjs.m.mgrid.{MGridParams, VScroll}
+import io.suggest.sc.sjs.m.msc.fsm.IStData
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.sjs.vm.util.domvm.get.ChildElOrFind
 import io.suggest.sjs.common.view.safe.SafeElT
+import org.scalajs.dom.Event
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -12,16 +16,16 @@ import org.scalajs.dom.raw.HTMLDivElement
  * Created: 24.06.15 15:17
  * Description: Модель div-враппера grid'а.
  */
-object GridWrapperVm extends FindDiv {
+object GWrapper extends FindDiv {
 
-  override type T = GridWrapperVm
+  override type T = GWrapper
   override def DOM_ID = Grid.WRAPPER_DIV_ID
 
 }
 
 
 /** Логика экземпляра модели. */
-trait GridWrapperVmT extends SafeElT with ChildElOrFind {
+trait GWrapperT extends SafeElT with ChildElOrFind {
   override type T = HTMLDivElement
 
   override type SubTagVm_t = GContent.T
@@ -31,6 +35,23 @@ trait GridWrapperVmT extends SafeElT with ChildElOrFind {
   /** Доступ к grid content div. */
   def content = _findSubtag()
 
+  /** Раняя инициализация враппера. */
+  def initLayout(stData: IStData): Unit = {
+    // Повесить событие
+    for (c <- content; scr <- stData.screen) {
+      // Передаем найденные элементы внутрь функции, т.к. при пересоздании layout событие будет повешено повторно.
+      addEventListener("scroll") { (e: Event) =>
+        val wrappedScrollTop = _underlying.scrollTop
+        val contentHeight    = c._underlying.offsetHeight
+        // Пнуть контроллер, чтобы подгрузил ещё карточек, когда пора.
+        val scrollPxToGo = contentHeight - scr.height - wrappedScrollTop
+        if (scrollPxToGo < MGridParams.LOAD_MORE_SCROLL_DELTA_PX) {
+          ScFsm ! VScroll(e)
+        }
+      }
+    }
+  }
+
 }
 
 
@@ -38,8 +59,8 @@ trait GridWrapperVmT extends SafeElT with ChildElOrFind {
  * Реализация экземпляра модели враппера.
  * @param _underlying Соответствующий модели DOM-элемент.
  */
-case class GridWrapperVm(override val _underlying: HTMLDivElement)
-  extends GridWrapperVmT {
+case class GWrapper(override val _underlying: HTMLDivElement)
+  extends GWrapperT {
 
   override lazy val content = super.content
 

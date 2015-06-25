@@ -21,6 +21,18 @@ object MStData {
 }
 
 
+/** Интерфейс модели. */
+trait IStData extends MGeoLocUtil {
+
+  def screen      : Option[IMScreen]
+  def grid        : MGridData
+  def generation  : Long
+  def adnIdOpt    : Option[String]
+  def browser     : IBrowser
+
+}
+
+
 /**
  * Экземпляр immutable-контейнера для передачи данных Sc FSM между состояниями.
  * @param screen Данные по экрану, если известны.
@@ -29,11 +41,11 @@ object MStData {
  * @param adnIdOpt id текущего узла, если есть.
  */
 case class MStData(
-  screen                    : Option[IMScreen]  = None,
+  override val screen       : Option[IMScreen]  = None,
   override val geoLoc       : Option[MGeoLoc]   = None,
-  grid                      : MGridData         = MGridData(),
-  generation                : Long              = MStData.generationDflt,
-  adnIdOpt                  : Option[String]    = None,
-  browser                   : IBrowser          = MStData.browserDflt
+  override val grid         : MGridData         = MGridData(),
+  override val generation   : Long              = MStData.generationDflt,
+  override val adnIdOpt     : Option[String]    = None,
+  override val browser      : IBrowser          = MStData.browserDflt
 )
-  extends MGeoLocUtil
+  extends IStData

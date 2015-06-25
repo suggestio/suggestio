@@ -114,11 +114,17 @@ trait ScIndexFsm extends ScFsmStub with FindAdsFsmUtil {
       body.overflowHidden()
 
       // Инициализация welcomeAd.
+      // TODO Раскидать логику этой инициализации по welcome vm'кам.
       val wcHideFut = NodeWelcomeCtl.handleWelcome()
 
-      // TODO Раскидать логику этой инициализации по vm'кам.
+      // Инициализация верстки grid'а:
+      for(layContent <- layout.content;  groot <- layContent.grid) {
+        groot.initLayout(sd1)
+      }
+
       GridCtl.initNewLayout(wcHideFut, sd1.screen.get, sd1.grid.params)
 
+      // TODO Раскидать логику этой инициализации по nav vm'кам.
       NavPanelCtl.initNav()
 
       // Очищаем подложку фона выдачи.
@@ -129,6 +135,7 @@ trait ScIndexFsm extends ScFsmStub with FindAdsFsmUtil {
 
       // В порядке очереди запустить инициализацию панели поиска.
       wcHideFut.onComplete { case _ =>
+        // TODO Раскидать логику этой инициализации по search vm'кам.
         SearchPanelCtl.initNodeLayout()
       }(queue)
 
@@ -139,6 +146,7 @@ trait ScIndexFsm extends ScFsmStub with FindAdsFsmUtil {
         layContent.setWndClass(scr)
       }
 
+      // TODO Раскидать логику этой инициализации по header vm'кам.
       HeaderCtl.initLayout()
 
       // Переключаемся на следующее состояния (плитка), в трейте это состояние абстрактно.
