@@ -18,7 +18,15 @@ import io.suggest.sjs.common.view.safe.nav.SafeNavigator
 object MBrowser {
 
   /** Задетекченный браузер. */
-  val BROWSER: IBrowser = {
+  @deprecated("Use MStData.browser instead")
+  lazy val BROWSER: IBrowser = {
+    val uaOpt = SafeNavigator().userAgent
+    new MBrowserDetector()
+      .detectBrowser(uaOpt)
+      .getOrElse { new UnknownBrowser }
+  }
+
+  def detectBrowser: IBrowser = {
     val uaOpt = SafeNavigator().userAgent
     new MBrowserDetector()
       .detectBrowser(uaOpt)
@@ -26,6 +34,7 @@ object MBrowser {
   }
 
 }
+
 
 /** Реализация детектора браузера. Аддоны в обратном порядке применения. */
 class MBrowserDetector
