@@ -19,6 +19,8 @@ trait FindAdsFsmUtil extends ScFsmStub {
   }
 
   /** Запуск поиска карточек. */
-  protected def _findAds(sd: SD = _stateData)(implicit ec: ExecutionContext) = MFindAds.findAds(new FindAdsArgs(sd))
+  protected def _findAds(sd: SD = _stateData)(implicit ec: ExecutionContext) = {
+    MFindAds.findAds(new FindAdsArgs(sd))
+  }
 
 }

@@ -52,6 +52,7 @@ trait GridFsm extends ScFsmStub {
     protected def _findAdsReady(mfa: MFindAds): Unit
   }
 
+
   /** Закинуть в выдачу полученные карточки. */
   protected trait AppendAdsToGridStateT extends AdsWaitStateBaseT {
 
