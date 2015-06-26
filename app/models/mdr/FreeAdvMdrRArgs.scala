@@ -17,6 +17,7 @@ trait IFreeAdvMdrRArgs extends IAdBodyTplArgs {
 
   override def index    = 0
   override def adsCount = 0
+  override def is3rdParty = false
 }
 
 

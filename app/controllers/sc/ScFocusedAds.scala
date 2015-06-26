@@ -54,6 +54,10 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
       MAd.dynSearch(adSearch2)
     }
 
+    def is3rdPartyProducer(producerId: String): Boolean = {
+      !(_adSearch.receiverIds contains producerId)
+    }
+
     /** В countAds() можно отправлять и обычный adSearch: forceFirstIds там игнорируется. */
     def madsCountFut: Future[Long] = {
       MAd.dynCount(_adSearch)
@@ -170,11 +174,13 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
               case ((index, brAcc0), brArgs) =>
                 // Сразу инкрементим счетчик, т.к. если отсчитывать от offset, то будет ноль при первом вызове.
                 val index1 = index + 1
+                val producerId = brArgs.mad.producerId
                 val args = AdBodyTplArgs(
                   brArgs    = brArgs,
-                  producer  = producersMap(brArgs.mad.producerId),
+                  producer  = producersMap(producerId),
                   index     = index1,
-                  adsCount  = madsCountInt
+                  adsCount  = madsCountInt,
+                  is3rdParty = is3rdPartyProducer(producerId)
                 )
                 val (renderFut, brAcc1) = renderOneBlockAcc(args, brAcc0)
                 (index1, brAcc1) -> renderFut
@@ -247,7 +253,7 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
           fgColor     = _fgColor,
           hBtnArgs    = HBtnArgs(fgColor = _fgColor),
           logoImgOpt  = _logoImgOpt,
-          is3rdParty  = !_adSearch.receiverIds.contains( abtArgs.brArgs.mad.producerId ),
+          is3rdParty  = is3rdPartyProducer(abtArgs.brArgs.mad.producerId),
           jsStateOpt  = _scStateOpt
         )
       }
@@ -264,7 +270,12 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
         _brArgs       <- _brArgsFut
         madsCountInt  <- _madsCountIntFut
       } yield {
-        AdBodyTplArgs(_brArgs, _producer, adsCount = madsCountInt, index = firstAdIndex)
+        AdBodyTplArgs(
+          _brArgs, _producer,
+          adsCount    = madsCountInt,
+          index       = firstAdIndex,
+          is3rdParty  = is3rdPartyProducer(_producer.id.get)
+        )
       }
       // Запустить сборку аргументов рендера.
       abtArgsFut flatMap { abtArgs =>

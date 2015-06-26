@@ -16,8 +16,8 @@ trait IWndFullArgs extends IAdBodyTplArgs with IBrArgs {
   def goBackTo    : Option[String]
 
   override def index = 1
-
   override def adsCount = 1
+  override def is3rdParty = false
 }
 
 

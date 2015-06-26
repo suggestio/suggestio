@@ -4,6 +4,8 @@
 
 @import views.html.sc.stuff._
 @import args._
+@import msc._
+@import io.suggest.sc.ScConstants.Logo
 
 @_adTpl(brArgs)
 
@@ -30,6 +32,12 @@
 @brArgs.mad.richDescrOpt.map { rd =>
   <div class="focused-ad_descr" style="background-color: #@rd.bgColor;">
     @Html(rd.text)
+
+    @if(args.is3rdParty) {
+      <br/><br/>
+      <a href="@routes.MarketShowcase.geoSite( ScJsState(adnId = args.producer.id) )"
+         class="@Logo.HDR_LOGO_DIV_CLASS">Смотреть далее...</a>
+    }
   </div>
 }
 

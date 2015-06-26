@@ -11,8 +11,6 @@ import models.im.MImg
 trait IFocusedAdsTplArgs extends SyncRenderInfo with IAdBodyTplArgs with IColors with ILogoRenderArgs
 with IHBtnRenderArgs {
   override def title = producer.meta.nameShort
-  /** Является ли данная рекламная карточка размещенной сторонним продьюсером? */
-  def is3rdParty: Boolean
 }
 
 // (Тут до web21:0af93c09f23a включительно был код дефолтовой реализации модели, но реализация оказалась невостребована.)
@@ -39,7 +37,6 @@ trait IFocusedAdsTplArgsWrapper extends IFocusedAdsTplArgs with IAdBodyTplArgsWr
 with ILogoImgOptWrapper with IHbtnArgsFieldWrapper {
   override def _underlying: IFocusedAdsTplArgs
 
-  override def is3rdParty     = _underlying.is3rdParty
   override def jsStateOpt     = _underlying.jsStateOpt
   override def syncUrl(jsState: ScJsState) = _underlying.syncUrl(jsState)
   override def syncRender     = _underlying.syncRender

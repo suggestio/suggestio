@@ -127,7 +127,7 @@ trait MarketAdPreview extends SioController with PlayMacroLogsI {
         szMult        = szMult,
         cssClasses    = Seq("__popup")
       )
-      val args = AdBodyTplArgs(_brArgs, request.adnNode, 1, 1)
+      val args = AdBodyTplArgs(_brArgs, request.adnNode, 1, 1, is3rdParty = false)
       _adFullTpl(args)(ctx)
     }
   }

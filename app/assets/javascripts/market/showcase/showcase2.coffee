@@ -1065,9 +1065,10 @@ sm =
           return false
         cs = sm.states.cur_state()
         sm.states.requested_geo_id = cs.mart_id
-        ## Тут логика обработки geo-list-go-back, т.е. возврата на предыдущий узел через кнопку геолокации.
-        ###
         geogoBack = document.getElementById('smRootProducerHeader').getAttribute 'data-gl-go-back'
+
+        ## Тут ЗАКОММЕНЧЕННАЯ логика обработки geo-list-go-back, т.е. возврата на предыдущий узел через кнопку геолокации.
+        ###
         console.log sm.geo.location_node
         console.log geogoBack
 
@@ -1966,6 +1967,7 @@ sm =
             console.log('clicked focused inn')
             node_id = sm.states.cur_state().fads.producer_id
             event.stopPropagation()
+            event.preventDefault()    ## Отрабатываем a href с адресом. На случай открытия в новой вкладке.
             sm.states.add_state {mart_id : node_id}
           else
             direction = sm.utils.ge('smFocusedAdsArrowLabel').getAttribute 'data-direction'

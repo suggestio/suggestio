@@ -20,6 +20,8 @@ trait IAdBodyTplArgs extends IProducer {
   /** Порядковый номер карточки в текущей выборке. */
   def index     : Int
 
+  /** Является ли данная рекламная карточка размещенной сторонним продьюсером? */
+  def is3rdParty: Boolean
 }
 
 
@@ -28,7 +30,8 @@ case class AdBodyTplArgs(
   override val brArgs    : blk.IRenderArgs,
   override val producer  : MAdnNode,
   override val adsCount  : Int,
-  override val index     : Int
+  override val index     : Int,
+  override val is3rdParty: Boolean
 )
   extends IAdBodyTplArgs
 
@@ -39,4 +42,5 @@ trait IAdBodyTplArgsWrapper extends IAdBodyTplArgs with IProducerWrapper {
   override def brArgs   = _underlying.brArgs
   override def index    = _underlying.index
   override def adsCount = _underlying.adsCount
+  override def is3rdParty = _underlying.is3rdParty
 }
