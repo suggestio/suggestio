@@ -7,7 +7,7 @@ import com.websudos.phantom.Implicits._
 import org.joda.time.DateTime
 
 import scala.concurrent.Future
-import io.suggest.util.SioFutureUtil.guavaFuture2scalaFuture
+import io.suggest.util.SioFutureUtil.guavaFuture2scalaFuture    // НЕ УДАЛЯТЬ!!!
 import MUserImg2.qOpt2q
 
 /**
