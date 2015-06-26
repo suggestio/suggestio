@@ -22,14 +22,14 @@
     </a>
   }
 
-  @defining( args.producer.adn.isReceiver ) { isRcvr =>
-    @hdr._logoTpl(args, clickable = isRcvr)
+  @* Логотип продьюсера. По нему можно кликать только если своя карточка либо карточка чужого *ресивера*. *@
+  @hdr._logoTpl(args, clickable = !args.is3rdParty || args.producer.adn.isReceiver)
 
-    @* Кнопка с 4-мя квадратиками для перехода в выдачу продьюсера. *@
-    @if(isRcvr) {
-      @hdr._tileBtnTpl(args)
-    }
+  @* Кнопка с 4-мя квадратиками для перехода в выдачу продьюсера, если он является также ресивером. *@
+  @if(args.is3rdParty && args.producer.adn.isReceiver) {
+    @hdr._tileBtnTpl(args)
   }
+
 }
 
 

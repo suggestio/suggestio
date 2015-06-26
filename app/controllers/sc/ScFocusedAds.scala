@@ -247,6 +247,7 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
           fgColor     = _fgColor,
           hBtnArgs    = HBtnArgs(fgColor = _fgColor),
           logoImgOpt  = _logoImgOpt,
+          is3rdParty  = !_adSearch.receiverIds.contains( abtArgs.brArgs.mad.producerId ),
           jsStateOpt  = _scStateOpt
         )
       }
