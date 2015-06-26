@@ -6,7 +6,7 @@
 @import io.suggest.sc.ScConstants.Logo._
 @import views.html.sc.stuff._
 
-<div class="@HDR_LOGO_DIV_CLASS">
+<span class="@HDR_LOGO_DIV_CLASS">
   @args.logoImgOpt.fold {
     @* Нет картинки, рендерим текстовый логотип на основе названия. *@
     @_nodeNameTpl(args.fgColor) {
@@ -17,4 +17,4 @@
     @* Логотип-картинка. *@
     <img class="sm-producer-header_logo" height="@HEIGHT_CSSPX" src="@CdnUtil.dynImg(logoImg)"/>
   }
-</div>
+</span>

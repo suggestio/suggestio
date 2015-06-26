@@ -723,7 +723,7 @@ sm =
     this.write_log('error', message)
 
   write_log : ( fun, message ) ->
-    return false
+    #return false
     console[fun](message)
 
   utils :
@@ -1058,8 +1058,8 @@ sm =
         sm.states.transform_state { geo_screen : { is_opened : false } }
         return false
 
-      ## Логотип-кнока
-      if ( sm.events.target_lookup( event.target, 'className', 'sm-producer-header_txt-logo' ) != null ) || ( sm.events.target_lookup( event.target, 'id', 'smGeoScreenButton' ) != null )
+      ## Кнопка узлов либо логотип-кнопка
+      if !sm.focused_ads.is_active && (( sm.events.target_lookup( event.target, 'id', 'smGeoScreenButton' ) != null ) || ( sm.events.target_lookup( event.target, 'className', 'js-hdr-logo' ) != null ))
         ## Данная функция работает, только если выдача работает в гео-режиме
         if window.with_geo == false
           return false
@@ -1700,7 +1700,9 @@ sm =
           ad_c_el.style.visibility = 'visible';
 
         if ad_index >= 2
-          sm.utils.ge('focusedAd' + ( ad_index - 2 ) ).style.visibility = 'hidden';
+          val el = sm.utils.ge('focusedAd' + ( ad_index - 2 ) )
+          if (el != null)
+            el.style.visibility = 'hidden';
 
       if direction == '-'
         if ad_index >= 1
@@ -1960,13 +1962,18 @@ sm =
           sm.focused_ads.cursor.move event.clientX, event.clientY
 
         sm.utils.add_single_listener sm.focused_ads._container, 'click', ( event ) ->
-
-          direction = sm.utils.ge('smFocusedAdsArrowLabel').getAttribute 'data-direction'
-
-          if direction == "right"
-            sm.focused_ads.next_ad()
-          if direction == "left"
-            sm.focused_ads.prev_ad()
+          ## 2015.jun.26: При focused-выдаче логотип-кнопка и кнопка поиска (плитка) работают как переход на выдачу нового продьюсера.
+          if (sm.events.target_lookup(event.target, 'className', 'js-hdr-logo') != null  ||  sm.events.target_lookup(event.target, 'id', 'smNavigationLayerButton'))
+            console.log('clicked focused inn')
+            node_id = sm.states.cur_state().fads.producer_id
+            event.stopPropagation()
+            sm.states.add_state {mart_id : node_id}
+          else
+            direction = sm.utils.ge('smFocusedAdsArrowLabel').getAttribute 'data-direction'
+            if direction == "right"
+              sm.focused_ads.next_ad()
+            else if direction == "left"
+              sm.focused_ads.prev_ad()
 
       move : ( x, y ) ->
         cursor_dom = sm.utils.ge 'smFocusedAdsArrowLabel'

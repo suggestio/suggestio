@@ -238,50 +238,55 @@ case class MImg(rowKey: UUID, dynImgOps: Seq[ImOp]) extends MAnyImgT with PlayLa
           MImgInfoMeta(height = heightStr.toInt, width = widthStr.toInt)
         }
       }
+      .filter(_.isDefined)
     val localInst = toLocalInstance
     lazy val logPrefix = "getImageWh(" + fileName + "): "
     val fut = if (localInst.isExists) {
       // Есть локальная картинка. Попробовать заодно потанцевать вокруг неё.
       val localFut = localInst.getImageWH
-      mimg2Fut
-        .filter(_.isDefined)
-        .recoverWith {
-          case ex: Exception =>
-            if (!ex.isInstanceOf[NoSuchElementException])
-              warn(logPrefix + "Unable to read img info from PERMANENT models", ex)
-            localFut
-        }
+      mimg2Fut.recoverWith {
+        case ex: Exception =>
+          if (!ex.isInstanceOf[NoSuchElementException])
+            warn(logPrefix + "Unable to read img info from PERMANENT models", ex)
+          localFut
+      }
 
     } else {
-      // Сразу запускаем выкачивание локальной картинки. Если не понадобиться, то скорее всего понадобиться
+      // Сразу запускаем выкачивание локальной картинки. Если не понадобится сейчас, то скорее всего понадобится
       // чуть позже -- на раздаче самой картинки, а не её метаданных.
       val toLocalImgFut = toLocalImg
-      mimg2Fut
-        .filter { _.isDefined }
-        .recoverWith { case ex: Throwable =>
-          // Запустить детектирование размеров.
-          val metaOptFut = toLocalImgFut.flatMap { localImgOpt =>
-            localImgOpt.fold {
-              warn(logPrefix + "local img was NOT read. cannot collect img meta.")
-              Future successful Option.empty[MImgInfoMeta]
-            } { _.getImageWH }
-          }
-          if (!ex.isInstanceOf[NoSuchElementException])
-            debug(logPrefix + "No wh in DB, and nothing locally stored. Recollection img meta")
-          // Сохранить метаданные в хранилище.
-          metaOptFut onSuccess { case Some(localMeta) =>
-            val md = ImgFormUtil.imgMeta2md(localMeta)
-            val q = MUserImg2.qOpt2q(qOpt)
-            MUserImgMeta2(md, q, rowKey)
-              .save
-              .onFailure { case ex =>
-                warn(logPrefix + "Failed to save image wh to PERMANENT", ex)
-              }
-          }
-          // Вернуть фьючерс с метаданными, не дожидаясь сохранения оных.
-          metaOptFut
+      mimg2Fut.recoverWith { case ex: Throwable =>
+        // Запустить детектирование размеров.
+        val whOptFut = toLocalImgFut.flatMap { localImgOpt =>
+          localImgOpt.fold {
+            warn(logPrefix + "local img was NOT read. cannot collect img meta.")
+            Future successful Option.empty[MImgInfoMeta]
+          } { _.getImageWH }
         }
+        if (!ex.isInstanceOf[NoSuchElementException])
+          debug(logPrefix + "No wh in DB, and nothing locally stored. Recollection img meta")
+        // Сохранить полученные метаданные в хранилище.
+        // Если есть уже сохраненная карта метаданных, то дополнить их данными WH, а не перезатереть.
+        for (localWhOpt <- whOptFut;  localImgOpt <- toLocalImgFut) {
+          for (localWh <- localWhOpt;  localImg <- localImgOpt) {
+            for (rawImgMeta <- localImg.rawImgMeta) {
+              val md0 = rawImgMeta.fold( Map.empty[String, String] )( _.md )
+              val mdWh = ImgFormUtil.imgMeta2md(localWh)
+              val md = if (md0.nonEmpty) md0 ++ mdWh else mdWh
+              val q = MUserImg2.qOpt2q( qOpt )
+              MUserImgMeta2(md, q, rowKey)
+                .save
+                .onFailure { case ex: Throwable =>
+                  warn(logPrefix + "Failed to save image wh to PERMANENT", ex)
+                }
+            }
+          }
+        }
+        // Вернуть фьючерс с метаданными, не дожидаясь сохранения оных.
+        whOptFut
+      }
     }
+    // Любое исключение тут можно подавить:
     fut.recover {
       case ex: Exception =>
         warn(logPrefix + "Unable to read img info meta from all models", ex)
