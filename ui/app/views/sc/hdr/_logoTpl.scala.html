@@ -1,4 +1,4 @@
-@(args: msc.ILogoRenderArgs)(implicit ctx: Context)
+@(args: msc.ILogoRenderArgs, clickable: Boolean)(implicit ctx: Context)
 
 @* Рендер логотипа узла в заголовке. *@
 
@@ -6,15 +6,20 @@
 @import io.suggest.sc.ScConstants.Logo._
 @import views.html.sc.stuff._
 
-<span class="@HDR_LOGO_DIV_CLASS">
+@if(clickable) {
+  <span class="@HDR_LOGO_DIV_CLASS">
+}
+
   @args.logoImgOpt.fold {
     @* Нет картинки, рендерим текстовый логотип на основе названия. *@
     @_nodeNameTpl(args.fgColor) {
       @args.title
     }
-
   } { logoImg =>
     @* Логотип-картинка. *@
     <img class="sm-producer-header_logo" height="@HEIGHT_CSSPX" src="@CdnUtil.dynImg(logoImg)"/>
   }
+
+@if(clickable) {
 </span>
+}

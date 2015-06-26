@@ -57,20 +57,12 @@
     }
 
     @* Кнопка с 4-мя квадратиками доступа к поисковой панели справа. По дефолту они всегда отображаются, но скрыты в остальных случаях. *@
-    @if(!args.syncRender || !args.jsStateOpt.exists(_.isAnyPanelOpened)) {
-      @args.jsStateOpt.map { jsState =>
-        <a href="@args.syncUrl( jsState.copy(searchScrOpenedOpt = Some(true), navScrOpenedOpt = None, tilesCatIdOpt = None, fadsProdIdOpt = None) )">
-      }
-      @ScHdrBtns.SearchPanelOpen( args.hBtnArgs )
-      @if(args.jsStateOpt) {
-       </a>
-      }
-    }
+    @hdr._tileBtnTpl(args)
 
   </span>
 
   @toggleNavScrAnchor() { jsStateOpt =>
-    @hdr._logoTpl(args)
+    @hdr._logoTpl(args, clickable = true)
   }
 
   <div class="sm-producer-header_icon">

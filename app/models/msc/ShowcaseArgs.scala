@@ -13,8 +13,13 @@ import play.twirl.api.Html
  * 2014.nov.11: "Showcase" и "SMShowcase" в названиях классов сокращены до "Sc"
  */
 
-trait SyncRenderInfo {
+trait ISyncRenderInfo {
   def jsStateOpt: Option[ScJsState]
+  def syncRender: Boolean
+  def syncUrl(jsState: ScJsState): String
+}
+
+trait SyncRenderInfo extends ISyncRenderInfo {
   def syncRender: Boolean = jsStateOpt.isDefined
   def syncUrl(jsState: ScJsState): String = routes.MarketShowcase.syncGeoSite(jsState).url
 }

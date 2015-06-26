@@ -22,7 +22,14 @@
     </a>
   }
 
-  @hdr._logoTpl(args)
+  @defining( args.producer.adn.isReceiver ) { isRcvr =>
+    @hdr._logoTpl(args, clickable = isRcvr)
+
+    @* Кнопка с 4-мя квадратиками для перехода в выдачу продьюсера. *@
+    @if(isRcvr) {
+      @hdr._tileBtnTpl(args)
+    }
+  }
 }
 
 

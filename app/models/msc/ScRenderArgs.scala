@@ -64,7 +64,7 @@ import models.msc.ScRenderArgs._
 
 
 /** Аргументы для рендера market/showcase/indexTpl. */
-trait ScRenderArgs extends ScReqArgs with IColors with ILogoRenderArgs {
+trait ScRenderArgs extends ScReqArgs with IColors with ILogoRenderArgs with IHBtnRenderArgs {
   /** Категории для отображения. */
   def mmcats        : Seq[MMartCategory]
   /** Статистика по категориям. */

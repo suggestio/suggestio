@@ -1065,13 +1065,12 @@ sm =
           return false
         cs = sm.states.cur_state()
         sm.states.requested_geo_id = cs.mart_id
-        geogoBack = document.getElementById('smRootProducerHeader').getAttribute 'data-gl-go-back'
-
-        #console.log sm.geo.location_node
-        #console.log geogoBack
-
-        # TODO очень странный кусок кода
+        ## Тут логика обработки geo-list-go-back, т.е. возврата на предыдущий узел через кнопку геолокации.
         ###
+        geogoBack = document.getElementById('smRootProducerHeader').getAttribute 'data-gl-go-back'
+        console.log sm.geo.location_node
+        console.log geogoBack
+
         if geogoBack == "false"
           sm.states.gb_mart_id = cs.mart_id
         else
