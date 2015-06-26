@@ -86,6 +86,7 @@ trait EMLogoImgMut extends EMLogoImg {
 trait LogoImgExistsDsa extends DynSearchArgs {
 
   /** Фильтровать по наличию/отсутсвию логотипа. */
+  // TODO hasLogo вроде бы не используется. Можно удалить вместе с mvel-кодом.
   def hasLogo: Option[Boolean]
 
   /** Собрать экземпляр ES QueryBuilder на основе имеющихся в экземпляре данных.
