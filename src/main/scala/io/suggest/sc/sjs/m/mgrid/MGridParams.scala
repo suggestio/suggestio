@@ -21,8 +21,6 @@ object MGridParams {
 }
 
 
-// TODO Нужно десериализацию из json прикрутить, т.к. сервер будет выставлять эти значения по своему желанию.
-
 case class MGridParams(
   cellSize      : Int = CELL_WIDTH_140_CSSPX,
   cellPadding   : Int = PADDING_CSSPX,
@@ -31,9 +29,9 @@ case class MGridParams(
 ) {
 
   /**
-   * Добавить данные из json, присланного сервером.
+   * Накатить данные из распарсенного JSON, присланного сервером.
    * @param from Исходник.
-   * @return Some() и обновленные параметры grid.
+   * @return Some() и новый экземпляр с обновленными параметрами grid.
    *         None, если старые параметры не изменились.
    */
   def withChangesFrom(from: MGridParamsJsonWrapper): Option[MGridParams] = {

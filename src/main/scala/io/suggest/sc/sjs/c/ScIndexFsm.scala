@@ -122,8 +122,6 @@ trait ScIndexFsm extends ScFsmStub with FindAdsFsmUtil {
         groot.initLayout(sd1)
       }
 
-      GridCtl.initNewLayout(wcHideFut, sd1.screen.get, sd1.grid.params)
-
       // TODO Раскидать логику этой инициализации по nav vm'кам.
       NavPanelCtl.initNav()
 
