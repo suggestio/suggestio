@@ -120,7 +120,7 @@ trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCom
           override def fgColor   = SITE_FGCOLOR_GEO
           override val hBtnArgs  = super.hBtnArgs
           override def topLeftBtn = _topLeftBtn
-          override def name      = SITE_NAME_GEO
+          override def title     = SITE_NAME_GEO
           override def mmcats    = _mmcats
           override def catsStats = _catsStats
           override lazy val spsr = new AdSearch {
@@ -128,6 +128,7 @@ trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCom
             override def geo = GeoIp
           }
           override def onCloseHref = ONCLOSE_HREF_DFLT
+          override def shopsLetterGrouped = Nil   // TODO stub. Надо или producer-less выдачу выпилить, или список реализовать.
         }
       }
     }

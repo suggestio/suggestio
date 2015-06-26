@@ -3,7 +3,9 @@ package controllers.sc
 import _root_.util.jsa.{SmRcvResp, Js}
 import _root_.util.PlayMacroLogsI
 import models.Context
+import models.im.MImg
 import models.jsm.ScIndexResp
+import models.msc.ScRenderArgs.ProdsLetterGrouped_t
 import models.msc._
 import util.img.WelcomeUtil
 import util.showcase._
@@ -167,45 +169,56 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
         .orElse(adnNode.geo.directParentIds.headOption)
         .orElse(adnNode.id)
     }
-    
+
+    /** Для рендера списка магазинов требуется сгруппированный по первой букве список узлов. */
+    def prodsLetterGroupedFut = prodsFut.map { shops =>
+      ScRenderArgs.groupProdsByLetter(shops)
+    }
+
+    /** Получение графического логотипа узла, если возможно. */
+    def logoImgOptFut: Future[Option[MImg]] = {
+      adnNodeFut.flatMap {
+        ShowcaseUtil.getLogoImgOpt
+      }
+    }
 
     /** Приготовить аргументы рендера выдачи. */
     override def renderArgsFut: Future[ScRenderArgs] = {
-      val _prodsFut = prodsFut
       val _onCloseHrefFut = onCloseHrefFut
       val _geoListGoBackFut = geoListGoBackFut
       val _spsrFut = spsrFut
       val _getCatsResult = getCatsResult
-      val _searchInAdnIdFut = adnNodeFut.map(getAdnIdForSearchIn)
+      val _prodsLetGrpFut = prodsLetterGroupedFut
+      val _adnNodeFut     = adnNodeFut
+      val _logoImgOptFut  = logoImgOptFut
       for {
         waOpt           <- welcomeAdOptFut
-        prods           <- _prodsFut
         GetCatsSyncResult(_catsStats, _mmCats) <- _getCatsResult
-        adnNode         <- adnNodeFut
+        adnNode         <- _adnNodeFut
         _spsr           <- _spsrFut
         _onCloseHref    <- _onCloseHrefFut
         _geoListGoBack  <- _geoListGoBackFut
-        _searchInAdnId  <- _searchInAdnIdFut
+        _prodsLetGrp    <- _prodsLetGrpFut
+        _logoImgOpt     <- _logoImgOptFut
       } yield {
         import ShowcaseUtil._
         val _bgColor = adnNode.meta.color getOrElse SITE_BGCOLOR_DFLT
         val _fgColor = adnNode.meta.fgColor getOrElse SITE_FGCOLOR_DFLT
         new ScRenderArgs with ScReqArgsWrapper {
           override def reqArgsUnderlying = _reqArgs
-          override def searchInAdnId  = _searchInAdnId
           override def bgColor        = _bgColor
           override def fgColor        = _fgColor
           override val hBtnArgs       = super.hBtnArgs
           override def topLeftBtn     = _topLeftBtn
-          override def name           = adnNode.meta.name
+          override def title          = adnNode.meta.name
           override def mmcats         = _mmCats
           override def catsStats      = _catsStats
           override def spsr           = _spsr
           override def onCloseHref    = _onCloseHref
-          override def logoImgOpt     = adnNode.logoImgOpt
-          override def shops          = prods
+          override def logoImgOpt     = _logoImgOpt
           override def geoListGoBack  = _geoListGoBack
           override def welcomeOpt     = waOpt
+          override def shopsLetterGrouped = _prodsLetGrp
         }
       }
     }

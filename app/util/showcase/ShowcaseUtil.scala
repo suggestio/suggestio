@@ -333,13 +333,8 @@ object ShowcaseUtil extends ColumnsCountT {
   }
 
 
-  /** Обычные цвета выдачи, нужны в 99% случаев. */
-  val SC_COLORS_GEO: IScSiteColors = {
-    new IScSiteColors {
-      override def fgColor = SITE_BGCOLOR_GEO
-      override def bgColor = SITE_FGCOLOR_GEO
-    }
-  }
+  /** Обычные цвета выдачи, не нужны в 99% случаев. */
+  def SC_COLORS_GEO = ScSiteColors(bgColor = SITE_BGCOLOR_GEO, fgColor = SITE_FGCOLOR_GEO)
 
   def siteScColors(nodeOpt: Option[MAdnNode]): IScSiteColors = {
     nodeOpt match {
@@ -351,6 +346,19 @@ object ShowcaseUtil extends ColumnsCountT {
       case None =>
         SC_COLORS_GEO
     }
+  }
+
+
+  /**
+   * Подготовка логотипа выдачи для узла.
+   * @param mnode Узел ADN.
+   * @return Фьючерс с картинкой, если логотип задан.
+   */
+  def getLogoImgOpt(mnode: MAdnNode): Future[Option[MImg]] = {
+    val imgOpt = mnode.logoImgOpt.map { logoInfo =>
+      MImg(logoInfo)
+    }
+    Future successful imgOpt
   }
 
 }

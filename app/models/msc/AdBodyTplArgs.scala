@@ -9,13 +9,10 @@ import models.{blk, MAdnNode}
  * Description: Контейнер аргументов, необходимых для рендера карточек выдачи.
  */
 
-trait IAdBodyTplArgs {
+trait IAdBodyTplArgs extends IProducer {
 
   /** Аргументы рендера блока. */
   def brArgs    : blk.IRenderArgs
-
-  /** Экземпляр продьюсера карточки. */
-  def producer  : MAdnNode
 
   /** Общее кол-во карточек в текущей выборке. */
   def adsCount  : Int
@@ -36,11 +33,10 @@ case class AdBodyTplArgs(
   extends IAdBodyTplArgs
 
 
-trait IAdBodyTplArgsWrapper extends IAdBodyTplArgs {
-  def _underlying: IAdBodyTplArgs
+trait IAdBodyTplArgsWrapper extends IAdBodyTplArgs with IProducerWrapper {
+  override def _underlying: IAdBodyTplArgs
 
   override def brArgs   = _underlying.brArgs
-  override def producer = _underlying.producer
   override def index    = _underlying.index
   override def adsCount = _underlying.adsCount
 }

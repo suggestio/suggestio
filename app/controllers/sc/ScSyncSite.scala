@@ -149,7 +149,7 @@ with ScNodesListBase with ScSiteBase {
         // Нужно добавить в список аргументов данные по syncUrl.
         super.focAdsHtmlArgsFut map { args0 =>
           new IFocusedAdsTplArgsWrapper {
-            override def _focArgsUnderlying: IFocusedAdsTplArgs = args0
+            override def _underlying: IFocusedAdsTplArgs = args0
             override def syncUrl(jsState: ScJsState) = _urlGenF(jsState)
           }
         }

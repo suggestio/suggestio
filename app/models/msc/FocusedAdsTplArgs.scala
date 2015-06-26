@@ -1,7 +1,5 @@
 package models.msc
 
-import models.{MAdnNode, blk}
-
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -11,26 +9,11 @@ import models.{MAdnNode, blk}
 
 
 /** Аргументы для рендера focused-карточки с полным обрамлением. */
-trait IFocusedAdsTplArgs extends SyncRenderInfo with IAdBodyTplArgs {
-  def bgColor           : String
-  def fgColor           : String
+trait IFocusedAdsTplArgs extends SyncRenderInfo with IAdBodyTplArgs with IColors {
   def hBtnArgs          : IhBtnArgs
 }
 
-
-/** Дефолтовая реализация [[IFocusedAdsTplArgs]]. */
-case class FocusedAdsTplArgs(
-  override val producer : MAdnNode,
-  override val bgColor  : String,
-  override val fgColor  : String,
-  override val hBtnArgs : IhBtnArgs,
-  override val brArgs   : blk.RenderArgs,
-  override val adsCount : Int,
-  override val index    : Int,
-  override val jsStateOpt: Option[ScJsState] = None
-)
-  extends IFocusedAdsTplArgs
-
+// (Тут до web21:0af93c09f23a включительно был код дефолтовой реализации модели, но реализация оказалась невостребована.)
 
 /** Реализация модели [[IFocusedAdsTplArgs]] с передачей части аргументов в контейнере [[IAdBodyTplArgs]]. */
 case class FocusedAdsTplArgs2(
@@ -48,17 +31,11 @@ case class FocusedAdsTplArgs2(
 
 
 /** Враппер для [[IFocusedAdsTplArgs]]. */
-trait IFocusedAdsTplArgsWrapper extends IFocusedAdsTplArgs {
-  def _focArgsUnderlying: IFocusedAdsTplArgs
+trait IFocusedAdsTplArgsWrapper extends IFocusedAdsTplArgs with IAdBodyTplArgsWrapper with IColorsWrapper {
+  override def _underlying: IFocusedAdsTplArgs
 
-  override def index          = _focArgsUnderlying.index
-  override def producer       = _focArgsUnderlying.producer
-  override def brArgs         = _focArgsUnderlying.brArgs
-  override def bgColor        = _focArgsUnderlying.bgColor
-  override def fgColor        = _focArgsUnderlying.fgColor
-  override def hBtnArgs       = _focArgsUnderlying.hBtnArgs
-  override def adsCount       = _focArgsUnderlying.adsCount
-  override def jsStateOpt     = _focArgsUnderlying.jsStateOpt
-  override def syncUrl(jsState: ScJsState) = _focArgsUnderlying.syncUrl(jsState)
-  override def syncRender     = _focArgsUnderlying.syncRender
+  override def hBtnArgs       = _underlying.hBtnArgs
+  override def jsStateOpt     = _underlying.jsStateOpt
+  override def syncUrl(jsState: ScJsState) = _underlying.syncUrl(jsState)
+  override def syncRender     = _underlying.syncRender
 }

@@ -6,6 +6,7 @@
 @import util.cdn.CdnUtil
 @import views.html.sc.stuff._
 @import io.suggest.sc.ScConstants.Welcome._
+@import io.suggest.sc.ScConstants.LOGO_HEIGHT_CSSPX
 
 <div id="@ROOT_ID" class="sm-welcome-ad"
      @if(!args.welcomeOpt) {style="background: #@args.bgColor;"} >
@@ -14,7 +15,9 @@
 
     @* Нету карточки приветствия. *@
     <span class="sm-welcome-ad_helper"></span>
-    <img height="30" class="sm-welcome-div_img" src="@args.logoImgUrl"/>
+    <img height="@LOGO_HEIGHT_CSSPX" class="sm-welcome-div_img"
+         src="@args.logoImgOpt.fold(CdnUtil.asset("images/market/showcase-logo.png"))(CdnUtil.dynImg)"
+         />
 
   } { wargs =>
 
@@ -32,9 +35,12 @@
 
       case Right(imgInfo) => {
         @* Доступно фоновое изображение. *@
-        <img id="@BG_IMG_ID" style="background-color: #@args.bgColor;" class="sm-welcome-ad_bg-img"
-             data-width="@imgInfo.meta.map(_.width)"
-             data-height="@imgInfo.meta.map(_.height)"
+        <img id="@BG_IMG_ID"
+             style="background-color: #@args.bgColor;" class="sm-welcome-ad_bg-img"
+             @imgInfo.meta.map { meta =>
+               data-width="@meta.width"
+               data-height="@meta.height"
+             }
              src="@imgInfo.call"/>
       }
     }
