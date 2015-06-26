@@ -66,8 +66,8 @@ trait ScFocusedAdsV2 extends ScFocusedAds {
           renderBlockHtml(args)
         } else {
           // Эту карточку надо рендерить как заглавную
-          val fargs = focAdsRenderArgsFor(args)
-          renderFocusedFut(fargs)
+          focAdsRenderArgsFor(args)
+            .flatMap { renderFocusedFut }
         }
       }
       // Минифицировать html, завернуть в ответ.

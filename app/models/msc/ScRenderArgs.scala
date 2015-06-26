@@ -10,8 +10,6 @@ import models.im.MImg
  * Description: Модель параметров рендера шаблона sc/indexTpl.
  */
 
-
-/** Статическая утиль для аргументов рендера showcase-шаблонов. */
 object ScRenderArgs {
 
   type ProdsLetterGrouped_t = Seq[(Char, Seq[MAdnNode])]
@@ -38,9 +36,13 @@ object ScRenderArgs {
     sb.append(c).toString()
   }
 
-  def groupProdsByLetter(shops: Map[String, MAdnNode]): ProdsLetterGrouped_t = {
-    shops
-      .values
+  /**
+   * Группировка узлов по первой букве.
+   * @param prods Список узлов.
+   * @return Список сгруппированных узлов.
+   */
+  def groupNodesByNameLetter(prods: Seq[MAdnNode]): ProdsLetterGrouped_t = {
+    prods
       // Сгруппировать по первой букве или цифре.
       .groupBy { node =>
         val firstChar = firstWordChar(node.meta.nameShort)
@@ -48,7 +50,7 @@ object ScRenderArgs {
       }
       // Отсортировать ноды по названиям в рамках группы.
       .mapValues { nodes =>
-        nodes.toSeq.sortBy(_.meta.nameShort.toLowerCase)
+        nodes.sortBy(_.meta.nameShort.toLowerCase)
       }
       .toSeq
       // Отсортировать по первой букве группы, но русские -- сверху.
@@ -62,9 +64,7 @@ import models.msc.ScRenderArgs._
 
 
 /** Аргументы для рендера market/showcase/indexTpl. */
-trait ScRenderArgs extends ScReqArgs with IColors {
-  /** Отображаемое название. */
-  def title         : String
+trait ScRenderArgs extends ScReqArgs with IColors with ILogoRenderArgs {
   /** Категории для отображения. */
   def mmcats        : Seq[MMartCategory]
   /** Статистика по категориям. */

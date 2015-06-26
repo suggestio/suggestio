@@ -4,7 +4,6 @@ package models
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 29.09.14 15:50
- * Description:
  */
 package object im {
 

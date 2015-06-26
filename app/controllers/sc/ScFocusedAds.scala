@@ -233,16 +233,23 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
     def firstAdIndex = _adSearch.offset + 1
 
     /** Сборка аргументов для рендера focused-карточки, т.е. раскрытого блока + оформление продьюсера. */
-    protected def focAdsRenderArgsFor(abtArgs: IAdBodyTplArgs): IFocusedAdsTplArgs = {
+    protected def focAdsRenderArgsFor(abtArgs: IAdBodyTplArgs): Future[IFocusedAdsTplArgs] = {
       val producer = abtArgs.producer
+      val logoImgOptFut = ShowcaseUtil.getLogoImgOpt(producer, _adSearch.screen)
+
       val _fgColor = producer.meta.fgColor getOrElse ShowcaseUtil.SITE_FGCOLOR_DFLT
-      FocusedAdsTplArgs2(
-        abtArgs,
-        bgColor    = producer.meta.color  getOrElse  ShowcaseUtil.SITE_BGCOLOR_DFLT,
-        fgColor    = _fgColor,
-        hBtnArgs   = HBtnArgs(fgColor = _fgColor),
-        jsStateOpt = _scStateOpt
-      )
+      val _bgColor = producer.meta.color  getOrElse  ShowcaseUtil.SITE_BGCOLOR_DFLT
+
+      for (_logoImgOpt <- logoImgOptFut) yield {
+        FocusedAdsTplArgs2(
+          abtArgs,
+          bgColor     = _bgColor,
+          fgColor     = _fgColor,
+          hBtnArgs    = HBtnArgs(fgColor = _fgColor),
+          logoImgOpt  = _logoImgOpt,
+          jsStateOpt  = _scStateOpt
+        )
+      }
     }
 
     /** Сборка контейнера аргументов для вызова шаблона _focusedAdsTpl(). */
@@ -250,12 +257,16 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
       val _producerFut = focAdProducerOptFut.map(_.get)
       val _brArgsFut = focAdOptFut.map(_.get)
       val _madsCountIntFut = madsCountIntFut
-      for {
+      // Склеиваем фьючерсы в набор аргументов вызова focAdsRenderArgsFor().
+      val abtArgsFut = for {
         _producer     <- _producerFut
         _brArgs       <- _brArgsFut
         madsCountInt  <- _madsCountIntFut
       } yield {
-        val abtArgs = AdBodyTplArgs(_brArgs, _producer, adsCount = madsCountInt, index = firstAdIndex)
+        AdBodyTplArgs(_brArgs, _producer, adsCount = madsCountInt, index = firstAdIndex)
+      }
+      // Запустить сборку аргументов рендера.
+      abtArgsFut flatMap { abtArgs =>
         focAdsRenderArgsFor(abtArgs)
       }
     }

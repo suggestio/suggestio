@@ -20,9 +20,10 @@
 }
 
 @* Хидер главного экрана *@
-<div id="@ROOT_DIV_ID"
-     class="sm-producer-header abs" style="@_bgcolor( args.bgColor )"
-     data-gl-go-back="@args.geoListGoBack.exists(identity)">
+@hdr._divTpl( Some(ROOT_DIV_ID) ) {
+  style="@_bgcolor( args.bgColor )"
+  data-gl-go-back="@args.geoListGoBack.exists(identity)"
+} {
 
   <span id="@BTNS_DIV_ID">
 
@@ -69,14 +70,11 @@
   </span>
 
   @toggleNavScrAnchor() { jsStateOpt =>
-    @_nodeNameTpl(args.fgColor) {
-      @args.title
-    }
+    @hdr._logoTpl(args)
   }
 
   <div class="sm-producer-header_icon">
     @svg._catHeaderIcon( args.fgColor )
   </div>
 
-</div>
-
+}

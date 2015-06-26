@@ -286,9 +286,13 @@ object ImgFormUtil extends PlayMacroLogsImpl {
 
 
   def identifyInfo2md(info: Info): Map[String, String] = {
+    val meta = MImgInfoMeta(width = info.getImageWidth, height = info.getImageHeight)
+    imgMeta2md(meta)
+  }
+  def imgMeta2md(sz: ISize2di): Map[String, String] = {
     Map(
-      IMETA_WIDTH  -> info.getImageWidth.toString,
-      IMETA_HEIGHT -> info.getImageHeight.toString
+      IMETA_WIDTH  -> sz.width.toString,
+      IMETA_HEIGHT -> sz.height.toString
     )
   }
 

@@ -5,14 +5,12 @@ import _root_.util.PlayMacroLogsI
 import models.Context
 import models.im.MImg
 import models.jsm.ScIndexResp
-import models.msc.ScRenderArgs.ProdsLetterGrouped_t
 import models.msc._
 import util.img.WelcomeUtil
 import util.showcase._
 import util.stat._
 import util.acl._
 import util.SiowebEsUtil.client
-import controllers.routes
 import views.html.sc._
 import play.api.libs.json._
 import models._
@@ -53,7 +51,7 @@ trait ScIndexCommon extends ScController with PlayMacroLogsI {
     def renderArgsFut: Future[ScRenderArgs]
     def isGeo: Boolean
     def currAdnIdFut: Future[Option[String]]
-    def _reqArgs: ScReqArgs = ScReqArgs.empty
+    def _reqArgs: ScReqArgs // = ScReqArgs.empty
     implicit def _request: AbstractRequestWithPwOpt[_]
     lazy val ctx: Context = implicitly[Context]
 
@@ -171,14 +169,14 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
     }
 
     /** Для рендера списка магазинов требуется сгруппированный по первой букве список узлов. */
-    def prodsLetterGroupedFut = prodsFut.map { shops =>
-      ScRenderArgs.groupProdsByLetter(shops)
+    def prodsLetterGroupedFut = prodsSeqFut.map {
+      ScRenderArgs.groupNodesByNameLetter
     }
 
     /** Получение графического логотипа узла, если возможно. */
     def logoImgOptFut: Future[Option[MImg]] = {
-      adnNodeFut.flatMap {
-        ShowcaseUtil.getLogoImgOpt
+      adnNodeFut.flatMap { mnode =>
+        ShowcaseUtil.getLogoImgOpt(mnode, _reqArgs.screen)
       }
     }
 

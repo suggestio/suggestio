@@ -1,6 +1,7 @@
 package controllers.sc
 
 import models.MAdnNodeCache
+import models.msc.ScReqArgs
 import play.api.mvc.Result
 import util.acl.AbstractRequestWithPwOpt
 import play.api.Play.{current, configuration}
@@ -60,6 +61,7 @@ trait ScIndexAdOpen extends ScFocusedAds with ScIndexNodeCommon {
       override def adnNodeFut         = mnodeFut
       override def isGeo              = false
       override implicit def _request  = request
+      override def _reqArgs           = ScReqArgs.empty   // TODO Stub. ScIndexAdOpen скорее всего будет выкинут, поэтому реализовывать это не требуется.
     }
     idxLogic.result
       // Should never happen.

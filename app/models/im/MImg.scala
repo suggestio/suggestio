@@ -8,11 +8,11 @@ import io.suggest.model.{MUserImgMeta2, MUserImg2}
 import io.suggest.util.UuidUtil
 import models.{ImgCrop, ImgMetaI, MImgInfoMeta, MImgInfoT}
 import org.joda.time.DateTime
-import play.api.cache.Cache
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.QueryStringBindable
 import util.qsb.QsbSigner
 import util.secure.SecretGetter
+import util.xplay.CacheUtil
 import util.{PlayMacroLogsI, PlayLazyMacroLogsImpl}
 import play.api.Play.{current, configuration, isProd}
 import util.img.{ImgFileNameParsers, ImgFormUtil}
@@ -217,7 +217,7 @@ case class MImg(rowKey: UUID, dynImgOps: Seq[ImOp]) extends MAnyImgT with PlayLa
 
   /** Закешированный результат чтения метаданных из постоянного хранилища. */
   lazy val permMetaCached: Future[Option[MUserImgMeta2]] = {
-    Cache.getOrElse(fileName + ".giwh", expiration = ORIG_META_CACHE_SECONDS) {
+    CacheUtil.getOrElse(fileName + ".giwh", ORIG_META_CACHE_SECONDS) {
       MUserImgMeta2.getById(rowKey, qOpt)
     }
   }
@@ -239,23 +239,53 @@ case class MImg(rowKey: UUID, dynImgOps: Seq[ImOp]) extends MAnyImgT with PlayLa
         }
       }
     val localInst = toLocalInstance
-    if (localInst.isExists) {
+    lazy val logPrefix = "getImageWh(" + fileName + "): "
+    val fut = if (localInst.isExists) {
+      // Есть локальная картинка. Попробовать заодно потанцевать вокруг неё.
       val localFut = localInst.getImageWH
       mimg2Fut
         .filter(_.isDefined)
         .recoverWith {
           case ex: Exception =>
             if (!ex.isInstanceOf[NoSuchElementException])
-              warn("getImageWH(): Unable to read img info from PERMANENT models: " + fileName, ex)
+              warn(logPrefix + "Unable to read img info from PERMANENT models", ex)
             localFut
         }
-        .recover {
-          case ex: Exception =>
-            warn("getImageWH(): Unable to read img info meta from all models: " + fileName, ex)
-            None
-        }
+
     } else {
+      // Сразу запускаем выкачивание локальной картинки. Если не понадобиться, то скорее всего понадобиться
+      // чуть позже -- на раздаче самой картинки, а не её метаданных.
+      val toLocalImgFut = toLocalImg
       mimg2Fut
+        .filter { _.isDefined }
+        .recoverWith { case ex: Throwable =>
+          // Запустить детектирование размеров.
+          val metaOptFut = toLocalImgFut.flatMap { localImgOpt =>
+            localImgOpt.fold {
+              warn(logPrefix + "local img was NOT read. cannot collect img meta.")
+              Future successful Option.empty[MImgInfoMeta]
+            } { _.getImageWH }
+          }
+          if (!ex.isInstanceOf[NoSuchElementException])
+            debug(logPrefix + "No wh in DB, and nothing locally stored. Recollection img meta")
+          // Сохранить метаданные в хранилище.
+          metaOptFut onSuccess { case Some(localMeta) =>
+            val md = ImgFormUtil.imgMeta2md(localMeta)
+            val q = MUserImg2.qOpt2q(qOpt)
+            MUserImgMeta2(md, q, rowKey)
+              .save
+              .onFailure { case ex =>
+                warn(logPrefix + "Failed to save image wh to PERMANENT", ex)
+              }
+          }
+          // Вернуть фьючерс с метаданными, не дожидаясь сохранения оных.
+          metaOptFut
+        }
+    }
+    fut.recover {
+      case ex: Exception =>
+        warn(logPrefix + "Unable to read img info meta from all models", ex)
+        None
     }
   }
 

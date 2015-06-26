@@ -6,7 +6,7 @@
 @import util.cdn.CdnUtil
 @import views.html.sc.stuff._
 @import io.suggest.sc.ScConstants.Welcome._
-@import io.suggest.sc.ScConstants.LOGO_HEIGHT_CSSPX
+@import io.suggest.sc.ScConstants.Logo
 
 <div id="@ROOT_ID" class="sm-welcome-ad"
      @if(!args.welcomeOpt) {style="background: #@args.bgColor;"} >
@@ -15,8 +15,8 @@
 
     @* Нету карточки приветствия. *@
     <span class="sm-welcome-ad_helper"></span>
-    <img height="@LOGO_HEIGHT_CSSPX" class="sm-welcome-div_img"
-         src="@args.logoImgOpt.fold(CdnUtil.asset("images/market/showcase-logo.png"))(CdnUtil.dynImg)"
+    <img height="@Logo.HEIGHT_CSSPX" class="sm-welcome-div_img"
+         src="@args.logoImgOpt.fold( CdnUtil.asset("images/market/showcase-logo.png") )( CdnUtil.dynImg )"
          />
 
   } { wargs =>

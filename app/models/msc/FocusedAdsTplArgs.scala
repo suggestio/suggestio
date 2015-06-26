@@ -1,16 +1,16 @@
 package models.msc
 
+import models.im.MImg
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 10.04.15 15:28
- * Description: Параметры для вызова showcase-шаблона focusedAdsTpl.
+ * Description: Аргумента для вызова рендера шаблона sc._focusedAdsTpl.
  */
-
-
-/** Аргументы для рендера focused-карточки с полным обрамлением. */
-trait IFocusedAdsTplArgs extends SyncRenderInfo with IAdBodyTplArgs with IColors {
-  def hBtnArgs          : IhBtnArgs
+trait IFocusedAdsTplArgs extends SyncRenderInfo with IAdBodyTplArgs with IColors with ILogoRenderArgs {
+  def hBtnArgs: IhBtnArgs
+  override def title = producer.meta.nameShort
 }
 
 // (Тут до web21:0af93c09f23a включительно был код дефолтовой реализации модели, но реализация оказалась невостребована.)
@@ -21,17 +21,19 @@ case class FocusedAdsTplArgs2(
   override val bgColor        : String,
   override val fgColor        : String,
   override val hBtnArgs       : IhBtnArgs,
+  override val logoImgOpt     : Option[MImg],
   override val jsStateOpt     : Option[ScJsState] = None
 )
-  extends IFocusedAdsTplArgs with IAdBodyTplArgsWrapper {
+  extends IFocusedAdsTplArgs with IAdBodyTplArgsWrapper
+{
 
   override def _underlying = adBodyTplArgs
-
 }
 
 
 /** Враппер для [[IFocusedAdsTplArgs]]. */
-trait IFocusedAdsTplArgsWrapper extends IFocusedAdsTplArgs with IAdBodyTplArgsWrapper with IColorsWrapper {
+trait IFocusedAdsTplArgsWrapper extends IFocusedAdsTplArgs with IAdBodyTplArgsWrapper with IColorsWrapper
+with ILogoImgOptWrapper {
   override def _underlying: IFocusedAdsTplArgs
 
   override def hBtnArgs       = _underlying.hBtnArgs

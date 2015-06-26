@@ -3,15 +3,17 @@
 @* Рендер под-выдачи для просмотра развёрных карточек.
    Появляется поверх при клике по какой-то карточке в общей плитке. *@
 
+@import hdr._
 @import util.cdn.CdnUtil
 @import msc._
 @import views.html.sc.stuff._
-@import io.suggest.sc.ScConstants.LOGO_HEIGHT_CSSPX
+@import io.suggest.sc.ScConstants.Logo
 @import io.suggest.sc.ScConstants.Focused._
 
 @* Список карточек указанного продюссера *@
-<div class="sm-producer-header abs" style="@_bgcolor( args.bgColor )">
-
+@hdr._divTpl() {
+  style="@_bgcolor( args.bgColor )"
+} {
   @args.jsStateOpt.map { jsState =>
     <a href="@args.syncUrl( jsState.copy(fadOpenedIdOpt = None, fadsOffsetOpt = None) )">
   }
@@ -20,12 +22,8 @@
     </a>
   }
 
-  @args.producer.logoImgOpt.map { logoImg =>
-    @* TODO Нужно ссылку на логотип генерить исходя из экрана клиента, а не с потолка. *@
-    <img class="sm-producer-header_logo" height="@LOGO_HEIGHT_CSSPX" src="@CdnUtil.dynImg(logoImg.filename)"/>
-  }
-
-</div>
+  @hdr._logoTpl(args)
+}
 
 
 <div class="sm-focused-ads_arrow-label fad-arrow-label" id="@ARROW_ID" style="background-color: #@args.bgColor;">

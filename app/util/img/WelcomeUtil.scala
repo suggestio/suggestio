@@ -3,6 +3,7 @@ package util.img
 import models.im._
 import models.madn.EditConstants
 import models.msc.WelcomeRenderArgsT
+import util.PlayMacroLogsImpl
 import util.cdn.CdnUtil
 import util.showcase.ShowcaseUtil
 import scala.concurrent.Future
@@ -18,7 +19,9 @@ import play.api.Play.{current, configuration}
  * Created: 03.07.14 10:54
  * Description: Утиль для картинки/карточки приветствия.
  */
-object WelcomeUtil {
+object WelcomeUtil extends PlayMacroLogsImpl {
+
+  import LOGGER._
 
   /** Прокидывать ссылку bgImg через dynImg(), а не напрямую. */
   val BG_VIA_DYN_IMG: Boolean = configuration.getBoolean("showcase.welcome.bg.dynamic.enabled") getOrElse true
@@ -121,7 +124,9 @@ object WelcomeUtil {
         oiik.original.getImageWH map {
           case Some(meta) =>
             Right(bgCallForScreen(oiik, screen, meta))
-          case _ => colorBg(adnNode)
+          case _ =>
+            trace(s"getWelcomeRenderArgs(${adnNode.idOrNull}): no welcome bg WH for " + bgImgFilename)
+            colorBg(adnNode)
         }
       }
     for {
