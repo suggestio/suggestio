@@ -37,8 +37,15 @@ object ScConstants {
 
   }
 
-  /** Высота логотипа узла в css-пикселях. */
-  def LOGO_HEIGHT_CSSPX = 30
+  object Logo {
+
+    /** Высота логотипа узла в css-пикселях. */
+    def HEIGHT_CSSPX = 30
+
+    /** Имя виртуального css-класса для логотипов в заголовоках. */
+    def HDR_LOGO_DIV_CLASS = "js-hdr-logo"
+  }
+
 
   /** Имя css-класса, полностью скрывающего элемент. */
   def HIDDEN_CSS_CLASS  = "hidden"
