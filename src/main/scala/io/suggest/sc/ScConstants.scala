@@ -20,6 +20,8 @@ object ScConstants {
 
   def DIV_WRAPPER_SUFFIX   = "Wrapper"
   def DIV_CONTENT_SUFFIX   = "Content"
+  def DIV_CONTAINER_SUFFIX = "Container"
+  def DIV_LOADER_SUFFIX    = "Loader"
 
   /** Название класса активности.
     * Есть несколько css-классов с одинаковыми именами, но в разных scope'ах. */
@@ -34,6 +36,9 @@ object ScConstants {
     def VSN               = "v"
 
   }
+
+  /** Высота логотипа узла в css-пикселях. */
+  def LOGO_HEIGHT_CSSPX = 30
 
   /** Имя css-класса, полностью скрывающего элемент. */
   def HIDDEN_CSS_CLASS  = "hidden"
@@ -139,10 +144,10 @@ object ScConstants {
     def CONTENT_DIV_ID    = ROOT_DIV_ID + DIV_CONTENT_SUFFIX
 
     /** Анимированная крутилка внизу списка рекламных карточек, когда ожидается подгрузка ещё карточек. */
-    def LOADER_DIV_ID     = "smGridAdsLoader"
+    def LOADER_DIV_ID     = ROOT_DIV_ID + DIV_LOADER_SUFFIX
 
     /** Блоки карточек рендерятся сюда. */
-    def CONTAINER_DIV_ID  = "smGridAdsContainer"
+    def CONTAINER_DIV_ID  = ROOT_DIV_ID + DIV_CONTAINER_SUFFIX
 
   }
 
@@ -342,6 +347,12 @@ object ScConstants {
 
     /** id корневого контейнера. */
     def ROOT_ID = "smFocusedAds"
+
+    /** id focused-контейнера карточек. */
+    def CONTAINER_ID = ROOT_ID + DIV_CONTAINER_SUFFIX
+
+    /** id div со стрелкой, отображаемой под курсором мышки. */
+    def ARROW_ID = ROOT_ID + "ArrowLabel"
 
   }
 
