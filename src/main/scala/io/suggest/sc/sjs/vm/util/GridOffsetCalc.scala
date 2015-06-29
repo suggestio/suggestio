@@ -1,8 +1,7 @@
 package io.suggest.sc.sjs.vm.util
 
 import io.suggest.adv.ext.model.im.{ISize2di, IWidth}
-import io.suggest.sc.sjs.m.magent.MAgent
-import io.suggest.sc.sjs.m.mgrid.MGridState
+import io.suggest.sc.sjs.m.mgrid.IGridState
 import org.scalajs.dom.raw.HTMLElement
 
 /**
@@ -17,20 +16,22 @@ import org.scalajs.dom.raw.HTMLElement
 trait GridOffsetCalc {
 
   /** Для дедубликации рассчетов дополнительной ширины формула вынесена сюда. */
-  protected def getWidthAdd(mgs: MGridState, wndWidth: IWidth): Int = {
+  protected def getWidthAdd(mgs: IGridState, wndWidth: IWidth): Int = {
     (wndWidth.width - mgs.contSz.get.cw) / 2
   }
 
   /** Заготовка калькулятора для левой или правой колонки. */
   protected trait GridOffsetterT {
 
+    type MGS_t <: IGridState
+
     /** Состояние сетки, передаётся из состояния FSM. */
-    def mgs: MGridState
+    def mgs: MGS_t
 
     /** Данные по экрану устройства. */
     def screen: ISize2di
 
-    /** Если [[MGridState]] указывает на необходимость нулевого оффсета, то её следует послушать. */
+    /** Если mgs указывает на необходимость нулевого оффсета, то её следует послушать. */
     def canNonZeroOffset: Boolean = mgs.canNonZeroOffset
 
     /** div-элемент текущей панели, с которым работаем. */
@@ -48,7 +49,7 @@ trait GridOffsetCalc {
     }
 
     /** Сохранить новый cell offset в состояние. */
-    def setOffset(newOff: Int): MGridState
+    def setOffset(newOff: Int): MGS_t
 
     def setWidth(el: HTMLElement): Unit = {
       el.style.width = (minWidth + widthAdd) + "px"
@@ -59,9 +60,9 @@ trait GridOffsetCalc {
 
     /**
      * Запустить логику подсчета и расставления параметров на исполнение.
-     * @return Пропатченный вариант MGridState.
+     * @return Пропатченный вариант IGridState.
      */
-    def apply(): MGridState = {
+    def apply(): MGS_t = {
       val res = canNonZeroOffset && {
         val _elOpt = elOpt
         _elOpt.nonEmpty && {

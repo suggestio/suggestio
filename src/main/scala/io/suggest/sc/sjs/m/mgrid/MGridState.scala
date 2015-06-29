@@ -11,8 +11,71 @@ import scala.collection.mutable.ListBuffer
  * Created: 22.05.15 14:13
  * Description: Переменные состояния сетки выдачи.
  */
-// TODO mutable-состояние унаследовано от предыдущей архитектуры. Надо бы исправить этот дефект.
+trait IGridState {
+
+  /** Максимальная ширина одной ячейки. */
+  def maxCellWidth      : Int
+
+  /** Левый сдвиг в кол-ве ячеек. */
+  def leftOffset        : Int
+
+  /** Правый сдвиг в кол-ве ячеек. */
+  def rightOffset       : Int
+
+  /** Кол-во колонок на экране. */
+  def columnsCount      : Int
+
+  /** true, когда больше карточек у сервера нет для текущей выдачи. */
+  def fullyLoaded       : Boolean
+
+  /** Кол-во карточек для следующей пакетной загрузки. */
+  def adsPerLoad        : Int
+
+  /** Кол-во загруженных карточек. */
+  def blocksLoaded      : Int
+
+  /** Запрошена подгрузка ещё карточек? */
+  def isLoadingMore     : Boolean
+
+  /** Размер контейнера, если рассчитан. */
+  def contSz            : Option[ICwCm]
+
+  /** Инфа по колонкам. Нужен O(1) доступ по индексу. Длина равна или не более кол-ва колонок. */
+  def colsInfo          : Array[MColumnState]
+
+  def withNewBlocks(newBlocks: TraversableOnce[IBlockInfo]): IGridState
+  def nothingLoaded(): IGridState
+
+  /**
+   * Сгенерить новое состояние колонок без сайд-эффектов.
+   * @return
+   */
+  def newColsInfo(): Array[MColumnState] = {
+    Array.fill(columnsCount)( MColumnState() )
+  }
+
+  /**
+   * Когда колонок мало, то значит экран узкий, и надо отображать панели поверх выдачи, не двигая выдачу.
+   * @return false, если выдача узкая под мобильник.
+   *         true, если при раскрытии боковой панели для выдачи ещё останется место.
+   */
+  def isDesktopView = columnsCount > 2
+
+  /** При рассчете left/right offset'ов калькулятором учитывается мнение выдачи. */
+  def canNonZeroOffset: Boolean = {
+    // TODO Нужно понять толком, какой смысл несет выражение в скобках...
+    //cbca_grid.columns > 2 || ( cbca_grid.left_offset != 0 || cbca_grid.right_offset != 0 )
+    isDesktopView || leftOffset != 0 || rightOffset != 0
+  }
+
+  def withContParams(cw: IColsWidth with ICwCm): IGridState
+
+}
+
+
+/** Дефолтовая реализация модели [[IGridState]]. */
 case class MGridState(
+  // TODO mutable-состояние унаследовано от предыдущей архитектуры. Надо бы исправить этот дефект.
 
   /** Максимальная ширина одной ячейки. */
   var maxCellWidth      : Int     = TileConstants.CELL_WIDTH_140_CSSPX,
@@ -47,7 +110,8 @@ case class MGridState(
   /** Инфа по текущим блокам. */
   // TODO После спиливания архитектуры v1 можно/нужно заменить IBlockInfo на GBlock. Внутри всё равно теперь GBlock.
   var blocks            : ListBuffer[IBlockInfo] = ListBuffer.empty
-) {
+) extends IGridState {
+
   /** Контроллер требует закинуть новые блоки в эту модель состояния, указывая точное кол-во блоков.
     * @param newBlocks Последовательность новых блоков.
     * @param newBlocksCount Длина коллекции newBlocks.
@@ -57,7 +121,7 @@ case class MGridState(
     blocks.appendAll(newBlocks)
     blocksLoaded += newBlocksCount
   }
-  def withNewBlocks(newBlocks: TraversableOnce[IBlockInfo]): MGridState = {
+  override def withNewBlocks(newBlocks: TraversableOnce[IBlockInfo]): MGridState = {
     // TODO mutable-коллекция здесь
     blocks.appendAll(newBlocks)
     copy(
@@ -74,27 +138,13 @@ case class MGridState(
     fullyLoaded = false
     this
   }
-  def nothingLoaded(): MGridState = {
+  override def nothingLoaded(): MGridState = {
     copy(
       blocks        = ListBuffer.empty,
       blocksLoaded  = 0,
       isLoadingMore = false,
       fullyLoaded   = false
     )
-  }
-
-  /**
-   * Когда колонок мало, то значит экран узкий, и надо отображать панели поверх выдачи, не двигая выдачу.
-   * @return false, если выдача узкая под мобильник.
-   *         true, если при раскрытии боковой панели для выдачи ещё останется место.
-   */
-  def isDesktopView = columnsCount > 2
-
-  /** При рассчете left/right offset'ов калькулятором учитывается мнение выдачи. */
-  def canNonZeroOffset: Boolean = {
-    // TODO Нужно понять толком, какой смысл несет выражение в скобках...
-    //cbca_grid.columns > 2 || ( cbca_grid.left_offset != 0 || cbca_grid.right_offset != 0 )
-    isDesktopView || leftOffset != 0 || rightOffset != 0
   }
 
   /** Загрузить кое-какие изменения в состояния. */
@@ -106,7 +156,7 @@ case class MGridState(
   }
 
   /** Загрузить кое-какие изменения в состояния. */
-  def withContParams(cw: IColsWidth with ICwCm): MGridState = {
+  override def withContParams(cw: IColsWidth with ICwCm): MGridState = {
     copy(
       maxCellWidth = cw.maxCellWidth,
       columnsCount = cw.columnsCnt,
@@ -114,13 +164,6 @@ case class MGridState(
     )
   }
 
-  /**
-   * Сгенерить новое состояние колонок без сайд-эффектов.
-   * @return
-   */
-  def newColsInfo(): Array[MColumnState] = {
-    Array.fill(columnsCount)( MColumnState() )
-  }
 
 }
 

@@ -91,6 +91,7 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
    * От сервера получена новая пачка карточек для выдачи.
    * @param resp ответ сервера.
    */
+  @deprecated("FSM-MVM: Use GridFsm.AppendAdsToGridStateT._findAdsReady instead", "29.jun.2015")
   def newAdsReceived(resp: MFindAds, isAdd: Boolean, withAnim: Boolean = true,
                      containerDivOpt: => Option[HTMLDivElement] = MGridDom.containerDiv): Unit = {
     val mads = resp.mads
@@ -291,6 +292,7 @@ object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
    * @param addedBlocks Список добавленных блоков. В оригинале этого аргумента не было.
    * @param withAnim С анимацией? Можно её отключить принудительно. [true]
    */
+  @deprecated("FSM-MVM: Use GridFsm.GridBuilder2 instead", "29.jun.2015")
   def build(isAdd: Boolean, mgs: MGridState = MGrid.gridState, addedBlocks: List[MBlockInfo] = Nil,
             withAnim: Boolean = true, browser: IBrowser = MBrowser.BROWSER): Unit = {
     val cssPrefixes  = browser.CssPrefixing.transforms3d

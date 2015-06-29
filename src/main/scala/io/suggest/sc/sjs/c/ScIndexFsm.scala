@@ -118,7 +118,7 @@ trait ScIndexFsm extends ScFsmStub with FindAdsFsmUtil {
       val wcHideFut = NodeWelcomeCtl.handleWelcome()
 
       // Инициализация верстки grid'а:
-      for(layContent <- layout.content;  groot <- layContent.grid) {
+      for (layContent <- layout.content;  groot <- layContent.grid) {
         groot.initLayout(sd1)
       }
 
@@ -137,10 +137,7 @@ trait ScIndexFsm extends ScFsmStub with FindAdsFsmUtil {
         SearchPanelCtl.initNodeLayout()
       }(queue)
 
-      for {
-        scr         <- _stateData.screen
-        layContent  <- layout.content
-      } {
+      for (scr <- _stateData.screen;  layContent <- layout.content) {
         layContent.setWndClass(scr)
       }
 
