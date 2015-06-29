@@ -1753,6 +1753,16 @@ sm =
 
       this.show_ad_by_index prev_index, '-'
 
+    is_node_click : ( event ) ->
+      res = sm.events.target_lookup(event.target, 'className', 'js-hdr-logo') != null  ||  sm.events.target_lookup(event.target, 'id', 'smNavigationLayerButton')
+      return res
+
+    switchToNodeClick : ( event ) ->
+      node_id = sm.states.cur_state().fads.producer_id
+      event.stopPropagation()
+      event.preventDefault()    ## Отрабатываем a href с адресом. На случай открытия в новой вкладке.
+      sm.states.add_state {mart_id : node_id}
+
     ####################
     ## Обработка событий
     ####################
@@ -1799,22 +1809,25 @@ sm =
 
     touchend_event : ( event ) ->
 
-      sm.utils.addClass this.ads_container_dom, '__animated'
-
-      delete sm.focused_ads.tstart_x
-      delete sm.focused_ads.tstart_y
-
-      if this.x_delta_direction > 0
-        cb = () ->
-          sm.focused_ads.next_ad()
+      if ( !sm.events.is_touch_locked && sm.focused_ads.is_node_click(event) )
+        sm.focused_ads.switchToNodeClick(event)
       else
-        cb = () ->
-          sm.focused_ads.prev_ad()
+        sm.utils.addClass this.ads_container_dom, '__animated'
 
-      if this.scroll_or_move == 'move'
-        setTimeout cb, 1
+        delete sm.focused_ads.tstart_x
+        delete sm.focused_ads.tstart_y
 
-      delete sm.focused_ads.scroll_or_move
+        if this.x_delta_direction > 0
+          cb = () ->
+            sm.focused_ads.next_ad()
+        else
+          cb = () ->
+            sm.focused_ads.prev_ad()
+
+        if this.scroll_or_move == 'move'
+          setTimeout cb, 1
+
+        delete sm.focused_ads.scroll_or_move
 
     touchcancel_event : ( event ) ->
 
@@ -1953,6 +1966,7 @@ sm =
 
     cursor :
       offset : -20
+
       init : () ->
         if sm.utils.is_touch_device()
           return false
@@ -1961,14 +1975,11 @@ sm =
         sm.utils.add_single_listener sm.focused_ads.ads_container_dom, 'mousemove', ( event ) ->
           sm.focused_ads.cursor.move event.clientX, event.clientY
 
-        sm.utils.add_single_listener sm.focused_ads._container, 'click', ( event ) ->
+        etg = sm.focused_ads._container
+        sm.utils.add_single_listener etg, 'click', ( event ) ->
           ## 2015.jun.26: При focused-выдаче логотип-кнопка и кнопка поиска (плитка) работают как переход на выдачу нового продьюсера.
-          if (sm.events.target_lookup(event.target, 'className', 'js-hdr-logo') != null  ||  sm.events.target_lookup(event.target, 'id', 'smNavigationLayerButton'))
-            console.log('clicked focused inn')
-            node_id = sm.states.cur_state().fads.producer_id
-            event.stopPropagation()
-            event.preventDefault()    ## Отрабатываем a href с адресом. На случай открытия в новой вкладке.
-            sm.states.add_state {mart_id : node_id}
+          if ( sm.focused_ads.is_node_click(event) )
+            sm.focused_ads.switchToNodeClick(event)
           else
             direction = sm.utils.ge('smFocusedAdsArrowLabel').getAttribute 'data-direction'
             if direction == "right"
