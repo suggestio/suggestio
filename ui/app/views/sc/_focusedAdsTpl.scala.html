@@ -27,7 +27,9 @@
 
   @* Кнопка с 4-мя квадратиками для перехода в выдачу стороннего продьюсера, если он является также ресивером. *@
   @if(args.is3rdParty && args.producer.adn.isReceiver) {
-    @hdr._tileBtnTpl(args)
+    @args.producer.id.map { producerId =>
+      @hdr._prodIndexBtnTpl(producerId, args)
+    }
   }
 
 }

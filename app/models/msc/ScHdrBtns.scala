@@ -66,6 +66,10 @@ object ScHdrBtns extends Enumeration with EnumValue2Val {
     override def svgTpl = _backArrowLeft
     override def align  = MHands.Left
   }
+  
+  protected sealed trait TileBtn extends SvgTplVal {
+    override def svgTpl = _indexAdsButtonTpl
+  }
 
   override type T = Val
 
@@ -111,7 +115,7 @@ object ScHdrBtns extends Enumeration with EnumValue2Val {
   }
 
   /** Кнопка отображения основной выдачи карточек. Обычно скрыта другой кнопкой. */
-  val ShowIndex: T = new Val("g") with SvgTplVal {
+  val ShowIndex: T = new Val("g") with TileBtn {
     override def svgTpl = _indexAdsButtonTpl
     override def align  = MHands.Left
     override def domId  = Header.SHOW_INDEX_BTN_ID
@@ -130,6 +134,12 @@ object ScHdrBtns extends Enumeration with EnumValue2Val {
   val CloseFocused: T = new Val("i") with BackLeftSvgVal {
     override def domId  = "closeFocusedAdsButton"
     override def divCss = "sm-producer-header_exit-button" :: super.divCss
+  }
+
+  /** Кнопка перехода на выдачу продьюсера. */
+  val GoToNodeTile: T = new Val("j") with TileBtn {
+    override def domId = Header.GO_TO_PRODUCER_INDEX_BTN_ID
+    override def align = MHands.Right
   }
 
 }

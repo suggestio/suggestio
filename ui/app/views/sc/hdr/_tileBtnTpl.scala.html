@@ -1,10 +1,9 @@
 @(args: msc.IHBtnRenderArgs)(implicit ctx: Context)
 
-@* Тут верстка кнопки с четырьмя квадратиками. *@
+@* Тут верстка кнопки с четырьмя квадратиками, используемая для доступа к поисковой панели. *@
 
 @import msc._
 
-@* Кнопка с 4-мя квадратиками доступа к поисковой панели справа. По дефолту они всегда отображаются, но скрыты в остальных случаях. *@
 @if(!args.syncRender || !args.jsStateOpt.exists(_.isAnyPanelOpened)) {
   @args.jsStateOpt.map { jsState =>
     <a href="@args.syncUrl( jsState.copy(searchScrOpenedOpt = Some(true), navScrOpenedOpt = None, tilesCatIdOpt = None, fadsProdIdOpt = None) )">

@@ -1754,7 +1754,7 @@ sm =
       this.show_ad_by_index prev_index, '-'
 
     is_node_click : ( event ) ->
-      res = sm.events.target_lookup(event.target, 'className', 'js-hdr-logo') != null  ||  sm.events.target_lookup(event.target, 'id', 'smNavigationLayerButton')
+      res = sm.events.target_lookup(event.target, 'className', 'js-hdr-logo') != null  ||  sm.events.target_lookup(event.target, 'id', 'smProducerIndexBtn')
       return res
 
     switchToNodeClick : ( event ) ->
@@ -2166,7 +2166,7 @@ sm =
 
     gen_id = sm.grid_ads.gen_id
 
-    url = "/market/fads?a.shopId=#{shop_id}&a.gen=#{gen_id}&a.size=#{sm.config.producer_ads_per_load}#{a_rcvr}&a.firstAdId=#{ad_id}&#{sm.geo.request_query_param()}&#{sm.request_context.screen_param()}"
+    url = "/market/fads?a.v=1&a.shopId=#{shop_id}&a.gen=#{gen_id}&a.size=#{sm.config.producer_ads_per_load}#{a_rcvr}&a.firstAdId=#{ad_id}&#{sm.geo.request_query_param()}&#{sm.request_context.screen_param()}"
 
     sm.focused_ads.curl = url
 
@@ -2186,7 +2186,7 @@ sm =
     sm.utils.ge('smRootProducerHeader').className = 'sm-producer-header abs __w-global-cat ' + '__' + cat_class
 
     a_rcvr = if sm.config.mart_id == '' then '' else '&a.rcvr=' + cs.mart_id
-    url = '/market/ads?a.catId=' + cat_id + a_rcvr + '&a.v=1&a.level=h&' + sm.geo.request_query_param() + '&' + sm.request_context.screen_param()
+    url = '/market/ads?a.v=1&a.level=h&a.catId=' + cat_id + a_rcvr + '&' + sm.geo.request_query_param() + '&' + sm.request_context.screen_param()
 
     sm.request.perform url
 
