@@ -28,20 +28,24 @@ object GContainerFragment {
 }
 
 
+/** Логика экземпляров модели здесь. */
 trait GContainerFragmentT extends SafeElT {
 
   override type T = HTMLDivElement
 
+  /** Итератор блоков, содержащихся в данном контейнере. */
   def blocksIterator: Iterator[GBlock] = {
     DomListIterator( _underlying.children )
       .flatMap { GBlock.fromNode }
   }
 
+  /** Список блоков, содержащихся в этом фрагменте. */
   def blocks = blocksIterator.toList
 
 }
 
 
+/** Дефолтовая реализация экземпяра модели [[GContainerFragmentT]]. */
 case class GContainerFragment(override val _underlying: HTMLDivElement)
   extends GContainerFragmentT {
 
