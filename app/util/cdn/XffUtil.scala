@@ -30,7 +30,8 @@ class DumpXffHeaders extends Filter with PlayMacroLogsImpl {
   override def apply(f: (RequestHeader) => Future[Result])(rh: RequestHeader): Future[Result] = {
     val resultFut = f(rh)
     // Параллельно начинаем дампить хидеры в лог.
-    LOGGER.trace {
+    // TODO Логика была закропана внутрь trace { ... }, но это почему-то не работало (выдавались "()" в логах)
+    if (LOGGER.underlying.isTraceEnabled) {
       val sb = new StringBuilder("Fwd headers for ")
         .append(rh.method)
         .append(' ')
@@ -57,8 +58,10 @@ class DumpXffHeaders extends Filter with PlayMacroLogsImpl {
           sb.append('\n')
         }
       sb.setLength(sb.length - 1)
-        .toString
+
+      LOGGER.trace( sb.toString() )
     }
+
     // Вернуть исходный результат.
     resultFut
   }

@@ -3,6 +3,7 @@ package controllers
 import com.google.inject.Inject
 import io.suggest.model.geo.{GeoShapeQuerable, Distance, CircleGs}
 import io.suggest.ym.model.common.AdnNodeGeodata
+import models.msys.OsmUrlParseResult
 import org.elasticsearch.common.unit.DistanceUnit
 import play.api.data._, Forms._
 import play.api.i18n.MessagesApi
@@ -13,8 +14,7 @@ import util.FormUtil._
 import util.SiowebEsUtil.client
 import util.acl._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.geo.osm.OsmElemTypes.OsmElemType
-import util.geo.osm.{OsmClientStatusCodeInvalidException, OsmClient, OsmParsers}
+import util.geo.osm.{OsmClientStatusCodeInvalidException, OsmClient}
 import views.html.sys1.market.adn.geo._
 import models._
 import scala.concurrent.Future
@@ -38,10 +38,10 @@ class SysAdnGeo @Inject() (
 
   private def glevelKM = "glevel" -> nodeGeoLevelM
 
-  private def osmUrlOptM: Mapping[Option[UrlParseResult]] = {
+  private def osmUrlOptM: Mapping[Option[OsmUrlParseResult]] = {
     urlStrOptM
-      .transform[Option[UrlParseResult]] (
-        { _.flatMap(UrlParseResult.fromUrl) },
+      .transform[Option[OsmUrlParseResult]] (
+        { _.flatMap(OsmUrlParseResult.fromUrl) },
         { _.map(_.url) }
       )
   }
@@ -51,7 +51,7 @@ class SysAdnGeo @Inject() (
     glevelKM,
     "url"     -> osmUrlOptM
       .verifying("error.url.unsupported", _.isDefined)
-      .transform[UrlParseResult](_.get, Some.apply)
+      .transform[OsmUrlParseResult](_.get, Some.apply)
   ))
 
   private def editOsmNodeFormM = Form(tuple(
@@ -85,7 +85,7 @@ class SysAdnGeo @Inject() (
   /** Страница с созданием геофигуры на базе произвольного osm-объекта. */
   def createForNodeOsm(adnId: String) = IsSuperuserAdnNodeGet(adnId).apply { implicit request =>
     val form = guessGeoLevel
-      .fold(createOsmNodeFormM) { ngl => createOsmNodeFormM.fill((ngl, UrlParseResult("", null, -1))) }
+      .fold(createOsmNodeFormM) { ngl => createOsmNodeFormM.fill((ngl, OsmUrlParseResult("", null, -1))) }
     Ok(createAdnGeoOsmTpl(form, request.adnNode))
   }
 
@@ -118,7 +118,7 @@ class SysAdnGeo @Inject() (
   }
 
   /** Повесить recover на фьючерс фетч-парсинга osm.xml чтобы вернуть админу на экран нормальную ошибку. */
-  private def recoverOsm(fut: Future[Result], glevel: NodeGeoLevel, urlPrOpt: Option[UrlParseResult]): Future[Result] = {
+  private def recoverOsm(fut: Future[Result], glevel: NodeGeoLevel, urlPrOpt: Option[OsmUrlParseResult]): Future[Result] = {
     fut recover { case ex: Exception =>
       val rest = urlPrOpt.fold("-") { urlPr =>
         urlPr.osmType.xmlUrl(urlPr.id)
@@ -154,7 +154,7 @@ class SysAdnGeo @Inject() (
     val nodeFut = MAdnNodeCache.getById(adnGeo.adnId)
     val form = {
       val urlPrOpt = adnGeo.url
-        .flatMap { UrlParseResult.fromUrl }
+        .flatMap { OsmUrlParseResult.fromUrl }
       editOsmNodeFormM.fill( (adnGeo.glevel, urlPrOpt) )
     }
     nodeFut map { nodeOpt =>
@@ -455,21 +455,4 @@ class SysAdnGeo @Inject() (
     )
   }
 
-
-  object UrlParseResult {
-    def fromUrl(url: String): Option[UrlParseResult] = {
-      val parser = new OsmParsers
-      val pr = parser.parse(parser.osmBrowserUrl2TypeIdP, url)
-      if (pr.successful) {
-        Some(UrlParseResult(
-          url = url,
-          osmType = pr.get._1,
-          id = pr.get._2
-        ))
-      } else {
-        None
-      }
-    }
-  }
-  case class UrlParseResult(url: String, osmType: OsmElemType, id: Long)
 }

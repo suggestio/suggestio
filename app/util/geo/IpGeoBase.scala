@@ -199,6 +199,8 @@ object IpGeoBaseImport extends PlayMacroLogsImpl with CronTasksProvider {
         bc
       case bcpc: ConnectionHandle =>
         getPgConnection(bcpc.getInternalConnection)
+      case hc: com.zaxxer.hikari.proxy.ConnectionProxy =>
+        hc.unwrap(classOf[BaseConnection])
     }
   }
 
