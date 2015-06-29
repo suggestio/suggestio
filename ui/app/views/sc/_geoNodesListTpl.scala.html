@@ -34,7 +34,7 @@
 
     @* Если true, то рендерить селектор "районы", "города" и т.д. *@
     @if(nl.nameOpt.isDefined) {
-      @defining( jsStateOpt.fold(nl.expanded)(_.nglExpanded(nl)) ) { showExpanded =>
+      @defining( jsStateOpt.fold(args.apiVsn.nodeListLayersServerSideExpand && nl.expanded)(_.nglExpanded(nl)) ) { showExpanded =>
         @* Есть заголовок геослоя. Рендерим его: *@
         @jsStateOpt.map { jsState =>
           <a href="@syncUrl( jsState.copy(navNglsMap = jsState.navNglsMap + (nl.ngl -> !showExpanded)) )">

@@ -28,6 +28,9 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImp
 
     /** В v1 была чрезвычайно эффективная адресация div'ов узлов в node list. */
     def geoNodeIdAsClass: Boolean = false
+
+    /** Сервер ли отвечает за развернутость текущего слоя в списке узлов? */
+    def nodeListLayersServerSideExpand: Boolean
   }
 
   override type T = Val
@@ -39,6 +42,7 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImp
     /** Coffee-версия сама придумывает id по-порядку и управляет ими. */
     override def serverSideBlockIds = false
     override def geoNodeIdAsClass   = true
+    override def nodeListLayersServerSideExpand = false
   }
 
   /** Выдача, переписанная на scala.js. Исходная версия. */
@@ -51,6 +55,8 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImp
 
     /** sc-sjs опирается на id блоков, сформированных сервером на основе id карточек. */
     override def serverSideBlockIds = true
+    /** sc-sjs слушается сервера на тему списка узлов. */
+    override def nodeListLayersServerSideExpand: Boolean = true
   }
 
 

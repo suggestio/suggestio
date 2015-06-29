@@ -288,9 +288,10 @@ object ShowcaseNodeListUtil extends PlayMacroLogsImpl {
   /**
    * Получение нод и сборка слоёв для зданий района.
    * @param districtAdnId id узла района.
+   * @param expandOnNode Если слой содержит узел с указанным id, то развернуть выставить expanded = true.
    * @return Фьючерс со списком слоёв с узлами.
    */
-  def getBuildingsLayersOfDistrict(districtAdnId: String, gravity: Option[GeoPoint], expanded: Boolean = false)
+  def getBuildingsLayersOfDistrict(districtAdnId: String, gravity: Option[GeoPoint], expandOnNode: Option[String] = None)
                                   (implicit lang: Messages): Future[List[GeoNodesLayer]] = {
     getBuildingsOfDistrict(districtAdnId, gravity)
       .map { nodes =>
@@ -299,6 +300,12 @@ object ShowcaseNodeListUtil extends PlayMacroLogsImpl {
           .map { case (sti, layNodes) =>
             val ast: AdnShownType = sti
             val lsSorted = layNodes.sortBy(_.meta.nameShort)
+            val expanded = expandOnNode.isDefined && {
+              val currAdnId = expandOnNode.get
+              layNodes.iterator
+                .flatMap(_.id)
+                .contains(currAdnId)
+            }
             GeoNodesLayer(lsSorted, NodeGeoLevels.NGL_BUILDING, Some(Messages(ast.pluralNoTown)), expanded = expanded)
           }
           .toList
@@ -386,7 +393,7 @@ object ShowcaseNodeListUtil extends PlayMacroLogsImpl {
         val townLayerFut = townFut.map { town2layer(_) }
         val buildingsLayersFut = {
           currNode.geo.directParentIds.headOption match {
-            case Some(currDistrictId) => getBuildingsLayersOfDistrict(currDistrictId, gravity1, expanded = true)
+            case Some(currDistrictId) => getBuildingsLayersOfDistrict(currDistrictId, gravity1, expandOnNode = currNode.id)
             case None                 => Future successful Nil
           }
         }

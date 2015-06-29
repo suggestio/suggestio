@@ -2521,13 +2521,13 @@ sm =
         sm.geo.close_screen()
 
       ## 2. Карточки по категориям
-      if typeof state.cat_id != 'undefined' && sm.global_cat_id != state.cat_id
+      if typeof state.cat_id != 'undefined' && cs.cat_id != state.cat_id
         sm.load_for_cat_id state.cat_id, state.cat_class
-        sm.global_cat_id = state.cat_id
 
       if typeof state.cat_id == 'undefined' && typeof cs.cat_id != 'undefined'
-        sm.utils.removeClass sm.utils.ge('smRootProducerHeader'), '__w-global-cat'
-        sm.utils.removeClass sm.utils.ge('smRootProducerHeader'), '__w-index-icon'
+        rph = sm.utils.ge('smRootProducerHeader')
+        sm.utils.removeClass rph, '__w-global-cat'
+        sm.utils.removeClass rph, '__w-index-icon'
         sm.grid_ads.load_index_ads()
 
       ## 3. Экран с категориями
