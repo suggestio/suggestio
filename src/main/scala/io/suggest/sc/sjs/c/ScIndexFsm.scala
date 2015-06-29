@@ -145,7 +145,8 @@ trait ScIndexFsm extends ScFsmStub with FindAdsFsmUtil {
       HeaderCtl.initLayout()
 
       // Переключаемся на следующее состояния (плитка), в трейте это состояние абстрактно.
-      become( _onSuccessNextState(findAdsFut, wcHideFut, sd1), sd1 )
+      val nextState = _onSuccessNextState(findAdsFut, wcHideFut, sd1)
+      become( nextState, sd1 )
     }
 
 
