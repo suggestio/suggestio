@@ -145,13 +145,12 @@ trait GridFsm extends ScFsmStub {
         // Расширить контейнер карточек до этой высоты.
         gcontainer.resetHeightUsing(grid3)
 
-        ???   // TODO Портировать код, который ниже. Осталось только вешанье событий на блоки карточек.
+        // Инициализировать новые блоки вешаньем обработчиков событий.
+        frag.blocks.foreach { gblock =>
+          gblock.initLayout()
+        }
 
-        /*
-        // Повесить события на блоки
-        GridView.initNewBlocks(newBlocks)
-        */
-
+        // Вернуть результат, перещелкнуть автомат на следующее состояние: ожидание сигналов от юзера.
         val sd2 = sd0.copy(
           grid = grid3
         )

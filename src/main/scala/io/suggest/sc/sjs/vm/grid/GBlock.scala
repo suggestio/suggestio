@@ -1,12 +1,13 @@
 package io.suggest.sc.sjs.vm.grid
 
 import io.suggest.sc.ScConstants.Block
-import io.suggest.sc.sjs.m.mgrid.IBlockInfo
-import io.suggest.sc.sjs.v.vutil.SetStyleDisplay
+import io.suggest.sc.sjs.c.ScFsm
+import io.suggest.sc.sjs.m.mgrid.{GridBlockClick, IBlockInfo}
+import io.suggest.sc.sjs.v.vutil.{OnClickSelfT, SetStyleDisplay}
 import io.suggest.sc.sjs.vm.util.CssSzImplicits
 import io.suggest.sjs.common.util.{SjsLogger, DataUtil}
 import io.suggest.sjs.common.view.safe.SafeElT
-import org.scalajs.dom.Node
+import org.scalajs.dom.{Event, Node}
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -45,7 +46,7 @@ object GBlock extends SjsLogger {
 import GBlock._
 
 
-trait GBlockT extends SafeElT with SetStyleDisplay with CssSzImplicits with IBlockInfo {
+trait GBlockT extends SafeElT with SetStyleDisplay with CssSzImplicits with IBlockInfo with OnClickSelfT {
 
   override type T = HTMLDivElement
 
@@ -83,12 +84,14 @@ trait GBlockT extends SafeElT with SetStyleDisplay with CssSzImplicits with IBlo
 
   override def div = _underlying
 
+  /** Повесить листенеры для событий DOM. */
+  def initLayout(): Unit = {
+    onClick { e: Event =>
+      ScFsm ! GridBlockClick(e)
+    }
+  }
+
 }
 
 /** Дефолтовая реализация экземпляра модели [[GBlockT]]. */
-case class GBlock(override val _underlying: HTMLDivElement) extends GBlockT {
-
-
-
-}
-
+case class GBlock(override val _underlying: HTMLDivElement) extends GBlockT
