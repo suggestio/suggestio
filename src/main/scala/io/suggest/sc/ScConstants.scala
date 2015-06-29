@@ -111,6 +111,9 @@ object ScConstants {
     /** Контейнер базовых кнопок заголовка. */
     def BTNS_DIV_ID = "smRootProducerHeaderButtons"
 
+    /** id кнопки перехода на индекс продьюсера. */
+    def GO_TO_PRODUCER_INDEX_BTN_ID = "smProducerIndexBtn"
+
   }
 
 
