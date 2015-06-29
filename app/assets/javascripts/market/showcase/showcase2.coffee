@@ -2186,7 +2186,7 @@ sm =
     sm.utils.ge('smRootProducerHeader').className = 'sm-producer-header abs __w-global-cat ' + '__' + cat_class
 
     a_rcvr = if sm.config.mart_id == '' then '' else '&a.rcvr=' + cs.mart_id
-    url = '/market/ads?a.catId=' + cat_id + a_rcvr  + '&' + sm.geo.request_query_param() + '&' + sm.request_context.screen_param()
+    url = '/market/ads?a.catId=' + cat_id + a_rcvr + '&a.v=1&a.level=h&' + sm.geo.request_query_param() + '&' + sm.request_context.screen_param()
 
     sm.request.perform url
 
