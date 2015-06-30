@@ -182,10 +182,11 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
     ip2rangeCity(ra).map { resultOpt =>
       resultOpt.map { result =>
         new GeoSearchInfo {
-          override def geoPoint = result.city.geoPoint
+          private def ipGeoPoint = result.city.geoPoint
+          override def geoPoint = ipGeoPoint
           override def geoDistanceQuery = {
             GeoDistanceQuery(
-              center = result.city.geoPoint,
+              center = ipGeoPoint,
               distanceMin = None,
               distanceMax = DISTANCE_DFLT
             )

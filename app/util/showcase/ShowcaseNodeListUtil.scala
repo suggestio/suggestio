@@ -48,7 +48,11 @@ object ShowcaseNodeListUtil extends PlayMacroLogsImpl {
       gsiOptFut.map { gsiOpt =>
         new NodeDetectArgsT {
           override def geoDistance = gsiOpt.map { gsi => GeoShapeQueryData(gsi.geoDistanceQuery, lvl) }
-          override def withGeoDistanceSort = geoMode.exactGeodata  // TODO Сделать обязательным м.б.?
+          override def withGeoDistanceSort = {
+            // 2015.jun.30 Стараемся всегда искать с учетом всех возможных опорных геоточек.
+            geoMode.exactGeodata
+              .orElse { gsiOpt.map(_.geoPoint) }
+          }
           override def maxResults = 1
         }
       } flatMap { sargs =>

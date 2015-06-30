@@ -1,16 +1,12 @@
 package models.msc
 
-import io.suggest.model.geo.GeoShapeQueryData
 import models._
 import play.api.Play.{configuration, current}
 import play.api.mvc.QueryStringBindable
-import util.acl.SioRequestHeader
 import util.qsb.QsbKey1T
 import util.qsb.QsbUtil._
 import io.suggest.sc.NodeSearchConstants._
 import views.js.sc.m._
-
-import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -27,29 +23,7 @@ case class MScNodeSearchArgs(
   isNodeSwitch    : Boolean         = false,
   withNeighbors   : Boolean         = false,
   apiVsn          : MScApiVsn       = MScApiVsns.unknownVsn
-) { snsa =>
-
-  private def maxResultsDflt = snsa.maxResults getOrElse MScNodeSearchArgs.MAX_RESULTS_DFLT
-
-  def toSearchArgs(glevelOpt: Option[NodeGeoLevel], maxResults2: Int = maxResultsDflt)
-                  (implicit request: SioRequestHeader, ec: ExecutionContext): Future[AdnNodesSearchArgsT] = {
-    geoMode.geoSearchInfoOpt.map { gsiOpt =>
-      new AdnNodesSearchArgs {
-        override def qOpt         = snsa.qStr
-        override def geoDistance  = gsiOpt
-          .flatMap { gsi => glevelOpt.map(_ -> gsi) }
-          .map { case (glevel, gsi) => GeoShapeQueryData(gsi.geoDistanceQuery, glevel) }
-        override def withGeoDistanceSort = gsiOpt.map { _.geoPoint }
-        override def maxResults     = maxResults2
-        override def offset         = snsa.offset.getOrElse(0)
-        override def withAdnRights  = Seq(AdnRights.RECEIVER)
-        override def withNameSort   = true
-        override def qOptField      = AdnMMetadata.NAME_ESFN
-      }
-    }
-  }
-  
-}
+)
 
 
 object MScNodeSearchArgs {
