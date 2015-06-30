@@ -34,7 +34,8 @@ object ScConstants {
     def SCREEN            = "screen"
     def WITH_WELCOME      = "wc"
     def VSN               = "v"
-
+    /** id предыдущего узла выдачи, т.е. как бы id узла-referrer'а. */
+    def PREV_ADN_ID_FN    = "pr"
   }
 
   object Logo {
@@ -114,6 +115,8 @@ object ScConstants {
     /** id кнопки перехода на индекс продьюсера. */
     def GO_TO_PRODUCER_INDEX_BTN_ID = "smProducerIndexBtn"
 
+    /** id кнопки перехода на предыдущий узел.*/
+    def PREV_NODE_BTN_ID   = "smNodePrevious"
   }
 
 
