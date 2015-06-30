@@ -1,12 +1,15 @@
 package util.async
 
+import java.sql.Connection
+
 import akka.ConfigurationException
 import play.api.Play.current
+import play.api.db.DB
 import play.api.libs.concurrent.Akka
 import play.api.libs.concurrent.Execution.Implicits
 import util.PlayLazyMacroLogsImpl
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{Future, ExecutionContext}
 
 /**
  * Suggest.io
@@ -61,6 +64,13 @@ object AsyncUtil extends PlayLazyMacroLogsImpl {
 
   /** thread-pool из для внешних cpu-тяжелых операций. */
   implicit val singleThreadCpuContext = mkEc("async.ec.cpusingle", EcParInfo(1.0F, 2))
+
+  /** Комбо из Future.apply() и DB.withConnection. */
+  def jdbcAsync[T](f: Connection => T): Future[T] = {
+    Future {
+      DB.withConnection(f)
+    }(jdbcExecutionContext)
+  }
 
 }
 

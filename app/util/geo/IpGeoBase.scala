@@ -191,16 +191,16 @@ object IpGeoBaseImport extends PlayMacroLogsImpl with CronTasksProvider {
   }
 
   /** Отковырять pg connection из play connection. Play использует враппер над jdbc connection'ом. */
-  private def getPgConnection(implicit c: Connection): BaseConnection = {
+  @tailrec private def getPgConnection(implicit c: Connection): BaseConnection = {
     // На play-2.4: The default JDBC connection pool is now provided by HikariCP, instead of BoneCP.
     // https://playframework.com/documentation/2.4.x/Migration24
     c match {
+      case hc: com.zaxxer.hikari.proxy.ConnectionProxy =>
+        hc.unwrap(classOf[BaseConnection])
       case bc: BaseConnection =>
         bc
       case bcpc: ConnectionHandle =>
         getPgConnection(bcpc.getInternalConnection)
-      case hc: com.zaxxer.hikari.proxy.ConnectionProxy =>
-        hc.unwrap(classOf[BaseConnection])
     }
   }
 

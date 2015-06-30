@@ -3,9 +3,7 @@ package util.adv
 import java.sql.Connection
 
 import models.{MBillMmpDaily, MAdvReq, MAdvI, MAdvStatic}
-import play.api.Play.current
-import play.api.db.DB
-import util.async.AsyncUtil
+import util.async.AsyncUtil.jdbcAsync
 
 import scala.concurrent.Future
 
@@ -20,13 +18,6 @@ import scala.concurrent.Future
 object CtlGeoAdvUtil {
 
   def LIMIT_DFLT = -1
-
-  /** Комбо из Future.apply() и DB.withConnection. */
-  def jdbcAsync[T](f: Connection => T): Future[T] = {
-    Future {
-      DB.withConnection(f)
-    }(AsyncUtil.jdbcExecutionContext)
-  }
 
   /**
    * Абстрактный поиск в абстрактной adv-модели.

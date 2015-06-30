@@ -6,15 +6,14 @@ import io.suggest.model.geo
 import io.suggest.model.geo.{GeoDistanceQuery, Distance}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import org.elasticsearch.common.unit.DistanceUnit
-import play.api.cache.Cache
-import play.api.db.DB
 import play.api.http.HeaderNames
 import play.api.mvc.QueryStringBindable
 import play.api.Play.{current, configuration}
 import util.acl.SioRequestHeader
 import util.async.AsyncUtil
+import util.xplay.CacheUtil
 import util.{PlayLazyMacroLogsImpl, PlayMacroLogsImpl}
-import scala.concurrent.{Promise, Future}
+import scala.concurrent.Future
 import scala.util.parsing.combinator.JavaTokenParsers
 
 /**
@@ -231,39 +230,34 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
     }
   }
 
+  /** Асинхронный поиск какого-то ip в базе ip-адресов.
+    * @param ip строка ip-адреса. */
   def ip2rangeCity(ip: String): Future[Option[Ip2RangeResult]] = {
     // Операция поиска ip в SQL-базе ресурсоёмкая, поэтому кешируем результат.
-    type T = Option[Ip2RangeResult]
-    val p = Promise[T]()
-    val ck = ip + ".gipq"
-    val fut = p.future
-    Cache.getAs[Future[T]](ck) match {
-      // Как обычно, инфы в кеше нет.
-      case None =>
-        Cache.set(ck, fut, CACHE_TTL_SECONDS)
-        val ipgbResFut = Future {
-          DB.withConnection { implicit c =>
-            IpGeoBaseRange.findForIp(InetAddress getByName ip)
-              .headOption
-              .flatMap { ipRange =>
-                ipRange.cityOpt map { city =>
-                  Ip2RangeResult(city, ipRange)
-                }
-              }
-          } // DB
-        }(AsyncUtil.jdbcExecutionContext)
-        p completeWith ipgbResFut
-
-      // Уже есть необходимая инфа в кеше.
-      case Some(fut1) =>
-        p completeWith fut1
+    CacheUtil.getOrElse(ip + ".gipq", CACHE_TTL_SECONDS) {
+      val ipAddr = InetAddress getByName ip
+      AsyncUtil.jdbcAsync { implicit c =>
+        IpGeoBaseRange.findForIp(ipAddr)
+      } map {
+        _.headOption
+      } flatMap {
+        case Some(range) =>
+          AsyncUtil.jdbcAsync { implicit c =>
+            range.cityOpt
+          } map { cityOpt =>
+            cityOpt.map { city =>
+              Ip2RangeResult(city, range)
+            }
+          }
+        case None =>
+          Future successful None
+      }
     }
-    fut
   }
 
   override def exactGeodata: Option[geo.GeoPoint] = None
 
-  override val nodeDetectLevels = Seq(NodeGeoLevels.NGL_TOWN)
+  override def nodeDetectLevels = Seq(NodeGeoLevels.NGL_TOWN)
 }
 
 
@@ -277,10 +271,6 @@ object GeoLocation {
 
   val DISTANCE_DFLT = Distance(ES_DISTANCE_DFLT)
 
-  private val NGLS_b2t = {
-    import NodeGeoLevels._
-    List(NGL_BUILDING, NGL_TOWN_DISTRICT, NGL_TOWN)
-  }
 }
 
 
@@ -322,13 +312,17 @@ final case class GeoLocation(geoPoint: GeoPoint, accuracyMeters: Option[Double] 
 
   /** Список уровней для детектирования в порядке употребления. Тут они выстраиваются с учётом точности. */
   override lazy val nodeDetectLevels: Seq[NodeGeoLevel] = {
-    val v0 = GeoLocation.NGLS_b2t
-    accuracyMeters.fold(v0) { am =>
-      val amInt = am.toInt
-      v0.filter { ngl =>
-        ngl.accuracyMetersMax.isEmpty || ngl.accuracyMetersMax.exists(amInt <= _)
+    // Порядок ngl-значений должен быть такой: здание, район, город. Ну т.е. все уровни масшт
+    val s0 = NodeGeoLevels.valuesNgl
+      .iterator
+    accuracyMeters
+      .fold( s0 ) { am =>
+        val amInt = am.toInt
+        s0.filter { ngl =>
+          ngl.accuracyMetersMax.isEmpty || ngl.accuracyMetersMax.exists(amInt <= _)
+        }
       }
-    }
+      .toSeq
   }
 
   override def asGeoLocation: Option[GeoLocation] = Some(this)
