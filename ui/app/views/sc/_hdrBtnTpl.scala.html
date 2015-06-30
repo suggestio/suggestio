@@ -8,6 +8,9 @@
             __@(btn.align.name)-aligned
             @if(btn.abs){abs}
             @if(args.hidden){hidden}"
+            @args.xattrs.map { case (name, value) =>
+              @name="@value"
+            }
      id="@btn.domId">
   @btn.renderSvg(args.fgColor)
 </div>

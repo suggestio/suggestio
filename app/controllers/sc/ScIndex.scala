@@ -62,7 +62,9 @@ trait ScIndexCommon extends ScController with PlayMacroLogsI {
     def respHtmlJsFut = respHtmlFut.map(JsString(_))
 
     /** Кнопка навигации, которая будет отрендерена в левом верхнем углу indexTpl. */
-    def _topLeftBtn: ScHdrBtn = ScHdrBtns.NavPanelOpen
+    def topLeftBtnFut: Future[ScHdrBtn] = {
+      Future successful ScHdrBtns.NavPanelOpen
+    }
 
     def respArgsFut: Future[ScIndexResp] = {
       val _currAdnIdOptFut = currAdnIdFut
@@ -143,6 +145,17 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
         .toMap
     }
 
+    /** Если узел с географией не связан, и есть "предыдущий" узел, то надо отрендерить кнопку "назад". */
+    override def topLeftBtnFut: Future[ScHdrBtn] = {
+      adnNodeFut flatMap { mnode =>
+        if (_reqArgs.prevAdnId.nonEmpty && mnode.geo.directParentIds.isEmpty) {
+          Future successful ScHdrBtns.Back2UpperNode
+        } else {
+          super.topLeftBtnFut
+        }
+      }
+    }
+
     /** Получение данных по категориям: статистика и сами категории. */
     def getCatsResult: Future[GetCatsSyncResult] = {
       currAdnIdFut.flatMap { adnIdOpt =>
@@ -189,6 +202,7 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
       val _prodsLetGrpFut = prodsLetterGroupedFut
       val _adnNodeFut     = adnNodeFut
       val _logoImgOptFut  = logoImgOptFut
+      val _topLeftBtnFut  = topLeftBtnFut
       for {
         waOpt           <- welcomeAdOptFut
         GetCatsSyncResult(_catsStats, _mmCats) <- _getCatsResult
@@ -198,6 +212,7 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
         _geoListGoBack  <- _geoListGoBackFut
         _prodsLetGrp    <- _prodsLetGrpFut
         _logoImgOpt     <- _logoImgOptFut
+        _topLeftBtn     <- _topLeftBtnFut
       } yield {
         import ShowcaseUtil._
         val _bgColor = adnNode.meta.color getOrElse SITE_BGCOLOR_DFLT

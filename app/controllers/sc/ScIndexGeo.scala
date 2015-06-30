@@ -110,9 +110,10 @@ trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCom
     override def currAdnIdFut = Future successful None
 
     override def renderArgsFut: Future[ScRenderArgs] = {
-      val gcr = getCats(None)
+      val gcrFut = getCats(None).future
       for {
-        GetCatsSyncResult(_catsStats, _mmcats) <- gcr.future
+        _topLeftBtn <- topLeftBtnFut
+        GetCatsSyncResult(_catsStats, _mmcats) <- gcrFut
       } yield {
         new ScRenderArgs with ScReqArgsWrapper {
           override def reqArgsUnderlying = _reqArgs

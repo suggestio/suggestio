@@ -23,20 +23,23 @@ object ScReqArgs {
                    geoOptB    : QueryStringBindable[Option[GeoMode]],
                    intOptB    : QueryStringBindable[Option[Int]],
                    devScrB    : QueryStringBindable[Option[DevScreen]],
+                   strOptB    : QueryStringBindable[Option[String]],
                    apiVsnB    : QueryStringBindable[MScApiVsn]
                   ): QueryStringBindable[ScReqArgs] = {
     new QueryStringBindable[ScReqArgs] with QsbKey1T {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, ScReqArgs]] = {
         val f = key1F(key)
         for {
-          maybeGeoOpt             <- geoOptB.bind(f(GEO),           params)
-          maybeDevScreen          <- devScrB.bind(f(SCREEN),        params)
-          maybeWithWelcomeAd      <- intOptB.bind(f(WITH_WELCOME),  params)
-          maybeApiVsn             <- apiVsnB.bind(f(VSN),           params)
+          maybeGeoOpt             <- geoOptB.bind(f(GEO),             params)
+          maybeDevScreen          <- devScrB.bind(f(SCREEN),          params)
+          maybeWithWelcomeAd      <- intOptB.bind(f(WITH_WELCOME),    params)
+          maybePrevAdnId          <- strOptB.bind(f(PREV_ADN_ID_FN),  params)
+          maybeApiVsn             <- apiVsnB.bind(f(VSN),             params)
         } yield {
           for {
-            _apiVsn <- maybeApiVsn.right
-            _geoOpt <- maybeGeoOpt.right
+            _apiVsn     <- maybeApiVsn.right
+            _geoOpt     <- maybeGeoOpt.right
+            _prevAdnId  <- maybePrevAdnId.right
           } yield {
             val _withWelcomeAd: Boolean = {
               maybeWithWelcomeAd.fold(
@@ -53,8 +56,9 @@ object ScReqArgs {
               override def geo = _geo
               // Игнорим неверные размеры, ибо некритично.
               override lazy val screen: Option[DevScreen] = maybeDevScreen
-              override def withWelcomeAd = _withWelcomeAd
-              override def apiVsn = _apiVsn
+              override def withWelcomeAd  = _withWelcomeAd
+              override def apiVsn         = _apiVsn
+              override def prevAdnId      = _prevAdnId
             }
           }
         }
@@ -63,10 +67,11 @@ object ScReqArgs {
       override def unbind(key: String, value: ScReqArgs): String = {
         val f = key1F(key)
         Iterator(
-          geoOptB.unbind(f(GEO),          Some(value.geo)),
-          devScrB.unbind(f(SCREEN),       value.screen),
-          intOptB.unbind(f(WITH_WELCOME), if (value.withWelcomeAd) None else Some(0)),
-          apiVsnB.unbind(f(VSN),          value.apiVsn)
+          geoOptB.unbind(f(GEO),              Some(value.geo)),
+          devScrB.unbind(f(SCREEN),           value.screen),
+          intOptB.unbind(f(WITH_WELCOME),     if (value.withWelcomeAd) None else Some(0)),
+          strOptB.unbind(f(PREV_ADN_ID_FN),   value.prevAdnId),
+          apiVsnB.unbind(f(VSN),              value.apiVsn)
         )
           .filter { us => !us.isEmpty }
           .mkString("&")
@@ -87,6 +92,7 @@ trait ScReqArgs extends SyncRenderInfo {
   def geo                 : GeoMode
   def screen              : Option[DevScreen]
   def withWelcomeAd       : Boolean
+  def prevAdnId           : Option[String]
   def apiVsn              : MScApiVsn
   /** Заинлайненные отрендеренные элементы плитки. Передаются при внутренних рендерах, вне HTTP-запросов и прочего. */
   def inlineTiles         : Seq[RenderedAdBlock]
@@ -104,6 +110,7 @@ trait ScReqArgsDflt extends ScReqArgs with SyncRenderInfoDflt {
   override def geo                  : GeoMode = GeoNone
   override def screen               : Option[DevScreen] = None
   override def withWelcomeAd        : Boolean = true
+  override def prevAdnId            : Option[String] = None
   override def apiVsn               : MScApiVsn = MScApiVsns.unknownVsn
   override def inlineTiles          : Seq[RenderedAdBlock] = Nil
   override def focusedContent       : Option[Html] = None
@@ -121,6 +128,7 @@ trait ScReqArgsWrapper extends ScReqArgs {
   override def inlineNodesList      = reqArgsUnderlying.inlineNodesList
   override def adnNodeCurrentGeo    = reqArgsUnderlying.adnNodeCurrentGeo
   override def withWelcomeAd        = reqArgsUnderlying.withWelcomeAd
+  override def prevAdnId            = reqArgsUnderlying.prevAdnId
   override def apiVsn               = reqArgsUnderlying.apiVsn
 
   override def jsStateOpt           = reqArgsUnderlying.jsStateOpt

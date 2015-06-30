@@ -1065,10 +1065,10 @@ sm =
           return false
         cs = sm.states.cur_state()
         sm.states.requested_geo_id = cs.mart_id
-        geogoBack = document.getElementById('smRootProducerHeader').getAttribute 'data-gl-go-back'
 
         ## Тут ЗАКОММЕНЧЕННАЯ логика обработки geo-list-go-back, т.е. возврата на предыдущий узел через кнопку геолокации.
         ###
+        geogoBack = document.getElementById('smRootProducerHeader').getAttribute 'data-gl-go-back'
         console.log sm.geo.location_node
         console.log geogoBack
 
@@ -1080,7 +1080,7 @@ sm =
         ###
         sm.states.gb_mart_id = cs.mart_id
 
-        if typeof sm.geo.location_node == 'undefined' || ( typeof sm.geo.location_node == 'object' && cs.mart_id == sm.geo.location_node._id ) || geogoBack == "false"
+        if typeof sm.geo.location_node == 'undefined' || ( typeof sm.geo.location_node == 'object' && cs.mart_id == sm.geo.location_node._id ) #|| geogoBack == "false"
           sm.states.transform_state { geo_screen : { is_opened : true } }
         else
           sm.states.add_state
@@ -2500,7 +2500,7 @@ sm =
       ## 1. проверить, соответствует ли текущий mart_id в состояниях
       if typeof cs == 'undefined' || cs.mart_id == undefined || cs.mart_id != state.mart_id
         sm.log 'process_state : switch nodes'
-        sm.load_mart state
+        sm.load_mart( state, cs )
         this.requested_state = state
       else
         this.process_state_2 state
@@ -2567,16 +2567,23 @@ sm =
   ######################################
   ## Загрузить индексную страницу для ТЦ
   ######################################
-  load_mart : ( state ) ->
+  load_mart : ( state, prevState ) ->
     ## ? здесь ли это должно быть?
     this.define_per_load_values()
 
-    index_action = if typeof state.mart_id != 'undefined' then "/market/index/#{state.mart_id}?#{sm.request_context.screen_param()}&#{sm.geo.request_query_param()}" else "/market/geo/index?#{sm.request_context.screen_param()}&#{sm.geo.request_query_param()}"
+    url = "/market/"
+    if (typeof state.mart_id != 'undefined')
+      url = url + "index/" + state.mart_id
+    else
+      url = url + "geo/index"
+    url = url + "?" + sm.request_context.screen_param() + "&" + sm.geo.request_query_param()
 
+    if (typeof prevState != "undefined" && typeof prevState.mart_id == "string")
+      url = url + "&pr=" + prevState.mart_id
 
-    sm.log 'about to call index_action : ' + index_action
+    sm.log 'about to call index_action : ' + url
 
-    this.request.perform index_action
+    this.request.perform url
 
   define_per_load_values : () ->
 

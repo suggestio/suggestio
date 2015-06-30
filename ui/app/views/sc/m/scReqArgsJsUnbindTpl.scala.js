@@ -11,6 +11,7 @@
     add("@GEO");
     add("@SCREEN");
     add("@WITH_WELCOME");
+    add("@PREV_ADN_ID_FN");
     add("@VSN", true);
   }
 }

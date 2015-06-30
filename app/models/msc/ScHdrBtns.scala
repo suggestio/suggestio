@@ -84,7 +84,7 @@ object ScHdrBtns extends Enumeration with EnumValue2Val {
 
   /** 2015.may.8: Кнопка "назад" для перехода узел верхнего уровня. */
   val Back2UpperNode: T = new Val("b") with BackLeftSvgVal {
-    override def domId  = "smNodePrevious"
+    override def domId  = Header.PREV_NODE_BTN_ID
   }
 
   /** Прозрачная кнопка для сворачивания панели категорий. */
