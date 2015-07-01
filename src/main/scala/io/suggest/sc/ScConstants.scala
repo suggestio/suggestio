@@ -117,6 +117,9 @@ object ScConstants {
 
     /** id кнопки перехода на предыдущий узел.*/
     def PREV_NODE_BTN_ID   = "smNodePrevious"
+
+    /** Название data-аттрибута с id узла. */
+    def ATTR_ADN_ID    = "data-adn-id"
   }
 
 
