@@ -6,7 +6,9 @@ import io.suggest.model.geo.{GeoShapeIndexed, CircleGs, GeoShapeQueryData, GeoPo
 import io.suggest.util.SioEsUtil._
 import io.suggest.ym.model.MAdnNodeGeo
 import org.elasticsearch.action.search.SearchRequestBuilder
+import org.elasticsearch.common.lucene.search.function.CombineFunction
 import org.elasticsearch.common.unit.DistanceUnit
+import org.elasticsearch.index.query.functionscore.{ScoreFunctionBuilders, ScoreFunctionBuilder, FunctionScoreQueryBuilder}
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders, QueryBuilder}
 import org.elasticsearch.search.sort.{SortBuilders, SortOrder}
 import play.api.libs.json._
@@ -185,17 +187,18 @@ trait DirectGeoParentsDsa extends DynSearchArgs {
 
   /** Сборка EsQuery сверху вниз. */
   override def toEsQueryOpt: Option[QueryBuilder] = {
+    val wdgp = withDirectGeoParents
     super.toEsQueryOpt.map[QueryBuilder] { qb =>
       // Отрабатываем прямых гео-родителей
-      if (withDirectGeoParents.nonEmpty) {
-        val filter = FilterBuilders.termsFilter(GEO_DIRECT_PARENT_NODES_ESFN, withDirectGeoParents : _*)
+      if (wdgp.nonEmpty) {
+        val filter = FilterBuilders.termsFilter(GEO_DIRECT_PARENT_NODES_ESFN, wdgp : _*)
         QueryBuilders.filteredQuery(qb, filter)
       } else {
         qb
       }
     }.orElse[QueryBuilder] {
-      if (withDirectGeoParents.nonEmpty) {
-        val qb = QueryBuilders.termsQuery(GEO_DIRECT_PARENT_NODES_ESFN, withDirectGeoParents: _*)
+      if (wdgp.nonEmpty) {
+        val qb = QueryBuilders.termsQuery(GEO_DIRECT_PARENT_NODES_ESFN, wdgp: _*)
         Some(qb)
       } else {
         None
@@ -233,17 +236,18 @@ trait GeoParentsDsa extends DynSearchArgs {
 
   /** Сборка EsQuery сверху вниз. */
   override def toEsQueryOpt: Option[QueryBuilder] = {
+    val wgp = withGeoParents
     super.toEsQueryOpt.map[QueryBuilder] { qb =>
       // Отрабатываем поиск по любым гео-родителям
-      if (withGeoParents.nonEmpty) {
-        val filter = FilterBuilders.termsFilter(GEO_ALL_PARENT_NODES_ESFN, withGeoParents : _*)
+      if (wgp.nonEmpty) {
+        val filter = FilterBuilders.termsFilter(GEO_ALL_PARENT_NODES_ESFN, wgp : _*)
         QueryBuilders.filteredQuery(qb, filter)
       } else {
         qb
       }
     }.orElse[QueryBuilder] {
-      if (withGeoParents.nonEmpty) {
-        val qb = QueryBuilders.termsQuery(GEO_ALL_PARENT_NODES_ESFN, withGeoParents : _*)
+      if (wgp.nonEmpty) {
+        val qb = QueryBuilders.termsQuery(GEO_ALL_PARENT_NODES_ESFN, wgp : _*)
         Some(qb)
       } else {
         None
@@ -347,12 +351,13 @@ trait GeoIntersectsWithPreIndexedDsa extends DynSearchArgs {
 
   /** Сборка EsQuery сверху вниз. */
   override def toEsQueryOpt: Option[QueryBuilder] = {
+    val iwpi = intersectsWithPreIndexed
     super.toEsQueryOpt.map[QueryBuilder] { qb =>
       // Отрабатываем поиск пересечения с другими узлами (с другими индексированными шейпами).
-      if (intersectsWithPreIndexed.isEmpty) {
+      if (iwpi.isEmpty) {
         qb
       } else {
-        val filters = intersectsWithPreIndexed
+        val filters = iwpi
           .map { _.toGeoShapeFilter }
         val filter = if (filters.size == 1) {
           filters.head
@@ -362,13 +367,13 @@ trait GeoIntersectsWithPreIndexedDsa extends DynSearchArgs {
         QueryBuilders.filteredQuery(qb, filter)
       }
     }.orElse[QueryBuilder] {
-      if (intersectsWithPreIndexed.isEmpty) {
+      if (iwpi.isEmpty) {
         None
-      } else if (intersectsWithPreIndexed.size == 1) {
-        val qb = intersectsWithPreIndexed.head.toGeoShapeQuery
+      } else if (iwpi.size == 1) {
+        val qb = iwpi.head.toGeoShapeQuery
         Some(qb)
       } else {
-        val qb = intersectsWithPreIndexed.foldLeft( QueryBuilders.boolQuery().minimumNumberShouldMatch(1) ) {
+        val qb = iwpi.foldLeft( QueryBuilders.boolQuery().minimumNumberShouldMatch(1) ) {
           (acc, gsi)  =>  acc.should( gsi.toGeoShapeQuery )
         }
         Some(qb)
@@ -404,17 +409,14 @@ trait GeoDistanceSortDsa extends DynSearchArgs {
   /** + сортировка результатов по расстоянию до указанной точки. */
   def withGeoDistanceSort: Option[GeoPoint]
 
-  override def prepareSearchRequest(srb: SearchRequestBuilder): SearchRequestBuilder = {
-    val srb1 = super.prepareSearchRequest(srb)
-    // Добавить сортировку по дистанции до указанной точки, если необходимо.
-    withGeoDistanceSort.foreach { geoPoint =>
-      val sb = SortBuilders.geoDistanceSort(GEO_POINT_ESFN)
-        .point(geoPoint.lat, geoPoint.lon)
-        .order(SortOrder.ASC)   // ASC - ближайшие сверху, далёкие внизу.
-        .unit(DistanceUnit.KILOMETERS)
-      srb1.addSort(sb)
+  override def toEsQuery: QueryBuilder = {
+    val qb0 = super.toEsQuery
+    withGeoDistanceSort.fold(qb0) { geoPoint =>
+      val func = ScoreFunctionBuilders.gaussDecayFunction(GEO_POINT_ESFN, geoPoint.toQsStr, "1km")
+        .setOffset("0km")
+      QueryBuilders.functionScoreQuery(qb0, func)
+        .boostMode(CombineFunction.REPLACE)
     }
-    srb1
   }
 
   /** Базовый размер StringBuilder'а. */

@@ -123,6 +123,8 @@ case class GeoPoint(lat: Double, lon: Double) extends IGeoPoint {
     ))
   }
 
+  def toGeoJsonStr = toPlayGeoJson.toString()
+
   /** elasticseearch-представление. */
   def toEsStr: String = toQsStr
   def toPlayJsonEsStr = JsString(toEsStr)
