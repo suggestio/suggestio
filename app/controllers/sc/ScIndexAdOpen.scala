@@ -1,7 +1,8 @@
 package controllers.sc
 
-import models.MAdnNodeCache
-import models.msc.ScReqArgs
+import models.{GeoMode, MAdnNodeCache}
+import models.im.DevScreen
+import models.msc.{RenderedAdBlock, MScApiVsn, ScReqArgsDflt, ScReqArgs}
 import play.api.mvc.Result
 import util.acl.AbstractRequestWithPwOpt
 import play.api.Play.{current, configuration}
@@ -21,7 +22,7 @@ trait ScIndexAdOpen extends ScFocusedAds with ScIndexNodeCommon {
 
   /** Активирован ли автопереход в выдачу узла-продьюсера размещенной на данном узле рекламной карточки? */
   // TODO Выпилить начисто, когда будет запилена нормальная поддержка функции тут и на клиенте.
-  private val STEP_INTO_FOREIGN_SC_ENABLED = configuration.getBoolean("sc.focus.step.into.foreign.sc.enabled") getOrElse false
+  private val STEP_INTO_FOREIGN_SC_ENABLED = configuration.getBoolean("sc.focus.step.into.foreign.sc.enabled") getOrElse true
 
 
   /** Тело экшена возврата медиа-кнопок расширено поддержкой переключения на index-выдачу узла-продьюсера
@@ -61,7 +62,15 @@ trait ScIndexAdOpen extends ScFocusedAds with ScIndexNodeCommon {
       override def adnNodeFut         = mnodeFut
       override def isGeo              = false
       override implicit def _request  = request
-      override def _reqArgs           = ScReqArgs.empty   // TODO Stub. ScIndexAdOpen скорее всего будет выкинут, поэтому реализовывать это не требуется.
+      override def _reqArgs: ScReqArgs = new ScReqArgsDflt {
+        private val s = focLogic._adSearch
+        override def prevAdnId: Option[String]  = s.receiverIds.headOption
+        override def screen: Option[DevScreen]  = s.screen
+        override def apiVsn: MScApiVsn          = s.apiVsn
+        override def withWelcomeAd              = true
+        override def geo                        = s.geo
+      }
+
     }
     idxLogic.result
       // Should never happen.

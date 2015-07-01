@@ -16,6 +16,12 @@ trait IHBtnArgsField {
 }
 
 
+/** По факту, даже в шаблонах требуется готовый case class, а не голый интерфейс [[IhBtnArgs]]. */
+trait IHBtnArgsFieldImpl extends IHBtnArgsField {
+  override def hBtnArgs: HBtnArgs
+}
+
+
 /** Враппер для реализаций модели [[IHBtnArgsField]]. */
 trait IHbtnArgsFieldWrapper extends IHBtnArgsField with IUnderlying {
   override def _underlying: IHBtnArgsField

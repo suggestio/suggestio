@@ -1091,6 +1091,17 @@ sm =
 
         return false
 
+      nodeBackBtn = sm.events.target_lookup(event.target, 'id', 'smNodePrevious')
+      if (nodeBackBtn != null)
+        nodeId = nodeBackBtn.getAttribute('data-adn-id')
+        if (nodeId != null)
+          sm.states.add_state
+            mart_id : nodeId
+            with_welcome_ad : false
+          cs = sm.states.cur_state()
+          sm.load_mart(cs)
+          return false
+
       ## Юзер нажал на ноду в списке
       geo_node_target = sm.events.target_lookup( event.target, 'className', 'js-geo-node' )
       if geo_node_target != null
@@ -1352,7 +1363,7 @@ sm =
 
       url = url.replace '&a.geo=ip', ''
       sm.grid_ads.gen_id = Math.floor((Math.random() * sm.grid_ads.multiplier) + (Math.random() * 100000) )
-      sm.grid_ads.gen_id
+      #sm.grid_ads.gen_id ## вроде оно не нужно
       sm.grid_ads.c_url = url + '&a.gen=' + sm.grid_ads.gen_id + '&' + sm.geo.request_query_param() + '&' + sm.request_context.screen_param()
 
       sm.request.perform sm.grid_ads.c_url + '&a.size=' + sm.config.ads_per_load
@@ -1484,7 +1495,7 @@ sm =
     showcase_index : ( data ) ->
 
       sm.log 'showcase_index()'
-
+      sm.focused_ads.unlock()
       ## Нарисовать разметку
       sm.draw_layout()
 
@@ -1515,7 +1526,9 @@ sm =
 
       if window.with_geo == true
         sm.utils.ge('smExitButton').style.display = 'none'
-        sm.utils.ge('smGeoScreenButton').style.display = 'block'
+        geoBtn = sm.utils.ge('smGeoScreenButton')
+        if (geoBtn != null)
+          geoBtn.style.display = 'block'
 
       if sm.welcome_ad.init() == false
         grid_init_timeout = 1
@@ -1942,6 +1955,9 @@ sm =
       _blocks_receiver_dom.innerHTML = this.loader_dom
       this.ads_container_dom.appendChild _blocks_receiver_dom
 
+    unlock: () ->
+      delete sm.focused_ads.active_ad_index
+      delete sm.shop_load_locked
 
     ## Закрыть
     close : () ->
@@ -1960,9 +1976,7 @@ sm =
         sm.resources.focused.clear()
 
       setTimeout cb, 200
-
-      delete sm.focused_ads.active_ad_index
-      delete sm.shop_load_locked
+      this.unlock()
 
     cursor :
       offset : -20
@@ -2579,7 +2593,7 @@ sm =
     url = url + "?" + sm.request_context.screen_param() + "&" + sm.geo.request_query_param()
 
     if (typeof prevState != "undefined" && typeof prevState.mart_id == "string")
-      url = url + "&pr=" + prevState.mart_id
+      url = url + "&a.pr=" + prevState.mart_id
 
     sm.log 'about to call index_action : ' + url
 

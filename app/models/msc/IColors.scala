@@ -38,3 +38,6 @@ trait IColors extends IBgColor with IFgColor
 trait IColorsWrapper extends IColors with IBgColorWrapper with IFgColorWrapper {
   override def _underlying: IColors
 }
+
+/** Дефолтовая реализация модели [[IColors]]. */
+case class Colors(bgColor: String, fgColor: String) extends IColors

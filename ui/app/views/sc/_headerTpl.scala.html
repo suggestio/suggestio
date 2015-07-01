@@ -8,15 +8,7 @@
 
 @* Завернуть указанную верстку в ссылку переключения состояния окошка/панени навигации (слева). *@
 @toggleNavScrAnchor()(content: Option[msc.ScJsState] => Html) = {
-  @defining( args.jsStateOpt.filter(!_.isNavScrOpened) ) { jsStateOpt =>
-    @jsStateOpt.map { jsState =>
-      <a href="@args.syncUrl(jsState.toggleNavScreen)">
-    }
-    @content(jsStateOpt)
-    @if(jsStateOpt) {
-      </a>
-    }
-  }
+  @hdr._toggleNavScreenSyncWrapTpl(args)(content)
 }
 
 @* Хидер главного экрана *@
@@ -34,15 +26,7 @@
 
     @* Кнопка доступа к панели навигации по узлам сети. При синхронном рендере её нужно скрывать, если панель уже на экране. *@
     @if(!args.syncRender || !args.jsStateOpt.exists(_.isSomethingOpened)) {
-      @defining( args.topLeftBtn ) { tlb =>
-        @if(tlb == ScHdrBtns.NavPanelOpen) {
-          @toggleNavScrAnchor() { jsStateOpt =>
-            @tlb( args.hBtnArgs.copy( hidden = args.syncRender && jsStateOpt ) )
-          }
-        } else {
-          @tlb(args.hBtnArgs)
-        }
-      }
+      @args.topLeftBtnHtml
     }
 
     @* Два прямоугольника слева. Вроде бы закрывают панель поиска справа. Нужно срезать её при синхронном рендере, если правая панель закрыта. *@

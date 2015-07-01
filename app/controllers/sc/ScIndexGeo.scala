@@ -106,27 +106,37 @@ trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCom
   /** Хелпер для рендера голой выдачи (вне ноды). Вероятно, этот код никогда не вызывается. */
   trait ScIndexGeoHelper extends ScIndexHelperBase {
     override def isGeo = true
+    override lazy val hBtnArgsFut = super.hBtnArgsFut
+
+    /** Контейнер палитры выдачи. */
+    override def colorsFut: Future[IColors] = {
+      Future successful Colors(SITE_BGCOLOR_GEO, fgColor = SITE_FGCOLOR_GEO)
+    }
 
     override def currAdnIdFut = Future successful None
 
     override def renderArgsFut: Future[ScRenderArgs] = {
-      val gcrFut = getCats(None).future
+      val _gcrFut = getCats(None).future
+      val _colorsFut = colorsFut
+      val _topLeftBtnHtmlFut = topLeftBtnHtmlFut
+      val _hBtnArgsFut = hBtnArgsFut
       for {
-        _topLeftBtn <- topLeftBtnFut
-        GetCatsSyncResult(_catsStats, _mmcats) <- gcrFut
+        GetCatsSyncResult(_catsStats, _mmcats) <- _gcrFut
+        _colors         <- _colorsFut
+        _topLeftBtnHtml <- _topLeftBtnHtmlFut
+        _hBtnArgs       <- _hBtnArgsFut
       } yield {
-        new ScRenderArgs with ScReqArgsWrapper {
+        new ScRenderArgs with ScReqArgsWrapper with IColorsWrapper {
+          override def _underlying    = _colors
           override def reqArgsUnderlying = _reqArgs
-          override def bgColor   = SITE_BGCOLOR_GEO
-          override def fgColor   = SITE_FGCOLOR_GEO
-          override val hBtnArgs  = super.hBtnArgs
-          override def topLeftBtn = _topLeftBtn
-          override def title     = SITE_NAME_GEO
-          override def mmcats    = _mmcats
-          override def catsStats = _catsStats
+          override def hBtnArgs       = _hBtnArgs
+          override def topLeftBtnHtml = _topLeftBtnHtml
+          override def title          = SITE_NAME_GEO
+          override def mmcats         = _mmcats
+          override def catsStats      = _catsStats
           override lazy val spsr = new AdSearch {
             override def levels = List(AdShowLevels.LVL_START_PAGE)
-            override def geo = GeoIp
+            override def geo    = GeoIp
           }
           override def onCloseHref = ONCLOSE_HREF_DFLT
           override def shopsLetterGrouped = Nil   // TODO stub. Надо или producer-less выдачу выпилить, или список реализовать.

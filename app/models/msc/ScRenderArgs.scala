@@ -2,6 +2,7 @@ package models.msc
 
 import models._
 import models.im.MImg
+import play.twirl.api.Html
 
 /**
  * Suggest.io
@@ -64,7 +65,7 @@ import models.msc.ScRenderArgs._
 
 
 /** Аргументы для рендера market/showcase/indexTpl. */
-trait ScRenderArgs extends ScReqArgs with IColors with ILogoRenderArgs with IHBtnRenderArgs {
+trait ScRenderArgs extends ScReqArgs with IColors with ILogoRenderArgs with IHBtnRenderArgs with IHBtnArgsFieldImpl {
   /** Категории для отображения. */
   def mmcats        : Seq[MMartCategory]
   /** Статистика по категориям. */
@@ -80,10 +81,10 @@ trait ScRenderArgs extends ScReqArgs with IColors with ILogoRenderArgs with IHBt
   def welcomeOpt    : Option[WelcomeRenderArgsT] = None
 
   /** Дефолтовые параметры для рендера кнопок на панели. Тут нужен case-класс. */
-  def hBtnArgs: HBtnArgs = HBtnArgs(fgColor = fgColor)
+  def hBtnArgs: HBtnArgs
 
   /** Какую кнопку навигации надо рендерить для в левом верхнем углу indexTpl? */
-  def topLeftBtn: ScHdrBtn
+  def topLeftBtnHtml: Html
 
   /** Назначение выдачи. */
   def target: MScTarget = MScTargets.Primary

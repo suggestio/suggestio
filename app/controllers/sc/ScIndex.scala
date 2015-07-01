@@ -6,6 +6,7 @@ import models.Context
 import models.im.MImg
 import models.jsm.ScIndexResp
 import models.msc._
+import play.twirl.api.Html
 import util.img.WelcomeUtil
 import util.showcase._
 import util.stat._
@@ -61,9 +62,24 @@ trait ScIndexCommon extends ScController with PlayMacroLogsI {
     }
     def respHtmlJsFut = respHtmlFut.map(JsString(_))
 
+    /** Контейнер палитры выдачи. */
+    def colorsFut: Future[IColors]
+
+    def hBtnArgsFut: Future[HBtnArgs] = {
+      colorsFut map { colors =>
+        HBtnArgs(fgColor = colors.fgColor)
+      }
+    }
+
     /** Кнопка навигации, которая будет отрендерена в левом верхнем углу indexTpl. */
-    def topLeftBtnFut: Future[ScHdrBtn] = {
-      Future successful ScHdrBtns.NavPanelOpen
+    def topLeftBtnHtmlFut: Future[Html] = {
+      hBtnArgsFut map { _hBtnArgs =>
+        val rargs = new ScReqArgsWrapper with IHBtnArgsFieldImpl {
+          override def reqArgsUnderlying = _reqArgs
+          override def hBtnArgs = _hBtnArgs
+        }
+        hdr._navPanelBtnTpl(rargs)
+      }
     }
 
     def respArgsFut: Future[ScIndexResp] = {
@@ -145,14 +161,33 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
         .toMap
     }
 
+    override lazy val hBtnArgsFut = super.hBtnArgsFut
+
     /** Если узел с географией не связан, и есть "предыдущий" узел, то надо отрендерить кнопку "назад". */
-    override def topLeftBtnFut: Future[ScHdrBtn] = {
-      adnNodeFut flatMap { mnode =>
-        if (_reqArgs.prevAdnId.nonEmpty && mnode.geo.directParentIds.isEmpty) {
-          Future successful ScHdrBtns.Back2UpperNode
-        } else {
-          super.topLeftBtnFut
+    override def topLeftBtnHtmlFut: Future[Html] = {
+      // Сразу запускаем сборку аргументов hbtn-рендера. Не здесь, так в super-классе понадобятся точно.
+      val _hBtnArgsFut = hBtnArgsFut
+      // В методе логика немного разветвляется и асинхронна внутри. false-ветвь реализована через Future.failed.
+      val fut0 = if (_reqArgs.prevAdnId.nonEmpty) {
+        Future successful None
+      } else {
+        Future failed new NoSuchElementException()
+      }
+      fut0.flatMap { _ =>
+        adnNodeFut
+      } filter { mnode =>
+        // Продолжать только если текущий узел не связан с географией.
+        mnode.geo.directParentIds.isEmpty
+      } flatMap { mnode =>
+        // Надо рендерить кнопку возврата, а не дефолтовую.
+        _hBtnArgsFut map { hBtnArgs0 =>
+          val hBtnArgs2 = hBtnArgs0.copy(adnId = _reqArgs.prevAdnId)
+          ScHdrBtns.Back2UpperNode(hBtnArgs2)
         }
+      } recoverWith { case ex: Throwable =>
+        if (!ex.isInstanceOf[NoSuchElementException])
+          LOGGER.error("topLeftBtnHtmlFut(): Workarounding unexpected expection", ex)
+        super.topLeftBtnHtmlFut
       }
     }
 
@@ -193,16 +228,29 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
       }
     }
 
+
+    /** Контейнер палитры выдачи. */
+    override def colorsFut: Future[IColors] = {
+      adnNodeFut map { adnNode =>
+        import ShowcaseUtil._
+        val _bgColor = adnNode.meta.color getOrElse SITE_BGCOLOR_DFLT
+        val _fgColor = adnNode.meta.fgColor getOrElse SITE_FGCOLOR_DFLT
+        Colors(bgColor = _bgColor, fgColor = _fgColor)
+      }
+    }
+
     /** Приготовить аргументы рендера выдачи. */
     override def renderArgsFut: Future[ScRenderArgs] = {
-      val _onCloseHrefFut = onCloseHrefFut
-      val _geoListGoBackFut = geoListGoBackFut
-      val _spsrFut = spsrFut
-      val _getCatsResult = getCatsResult
-      val _prodsLetGrpFut = prodsLetterGroupedFut
-      val _adnNodeFut     = adnNodeFut
-      val _logoImgOptFut  = logoImgOptFut
-      val _topLeftBtnFut  = topLeftBtnFut
+      val _onCloseHrefFut     = onCloseHrefFut
+      val _geoListGoBackFut   = geoListGoBackFut
+      val _spsrFut            = spsrFut
+      val _getCatsResult      = getCatsResult
+      val _prodsLetGrpFut     = prodsLetterGroupedFut
+      val _adnNodeFut         = adnNodeFut
+      val _logoImgOptFut      = logoImgOptFut
+      val _colorsFut          = colorsFut
+      val _hBtnArgsFut        = hBtnArgsFut
+      val _topLeftBtnHtmlFut  = topLeftBtnHtmlFut
       for {
         waOpt           <- welcomeAdOptFut
         GetCatsSyncResult(_catsStats, _mmCats) <- _getCatsResult
@@ -212,17 +260,15 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
         _geoListGoBack  <- _geoListGoBackFut
         _prodsLetGrp    <- _prodsLetGrpFut
         _logoImgOpt     <- _logoImgOptFut
-        _topLeftBtn     <- _topLeftBtnFut
+        _colors         <- _colorsFut
+        _hBtnArgs       <- _hBtnArgsFut
+        _topLeftBtnHtml <- _topLeftBtnHtmlFut
       } yield {
-        import ShowcaseUtil._
-        val _bgColor = adnNode.meta.color getOrElse SITE_BGCOLOR_DFLT
-        val _fgColor = adnNode.meta.fgColor getOrElse SITE_FGCOLOR_DFLT
-        new ScRenderArgs with ScReqArgsWrapper {
+        new ScRenderArgs with ScReqArgsWrapper with IColorsWrapper {
           override def reqArgsUnderlying = _reqArgs
-          override def bgColor        = _bgColor
-          override def fgColor        = _fgColor
-          override val hBtnArgs       = super.hBtnArgs
-          override def topLeftBtn     = _topLeftBtn
+          override def _underlying    = _colors
+          override def hBtnArgs       = _hBtnArgs
+          override def topLeftBtnHtml = _topLeftBtnHtml
           override def title          = adnNode.meta.name
           override def mmcats         = _mmCats
           override def catsStats      = _catsStats

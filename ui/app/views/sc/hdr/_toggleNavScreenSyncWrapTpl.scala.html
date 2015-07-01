@@ -1,0 +1,14 @@
+@(args: msc.ISyncRenderInfo)(content: Option[msc.ScJsState] => Html)(implicit ctx: Context)
+
+@* Обертка для sync-верстки для кнопок управления панелью со списком узлов.
+   Завернуть указанную в content верстку в sync-ссылку переключения состояния окошка/панени навигации (слева). *@
+
+@defining( args.jsStateOpt.filter(!_.isNavScrOpened) ) { jsStateOpt =>
+  @jsStateOpt.map { jsState =>
+    <a href="@args.syncUrl(jsState.toggleNavScreen)">
+  }
+  @content(jsStateOpt)
+  @if(jsStateOpt) {
+    </a>
+  }
+}

@@ -8,14 +8,15 @@ package models.msc
  */
 trait IhBtnArgs extends IFgColor {
   def hidden: Boolean
-  def xattrs: Seq[(String, String)]
+  /** Какой-то id узла, относящегося к кнопке. */
+  def adnId : Option[String]
 }
 
 
 /** Дефолтовая реализация [[IhBtnArgs]]. */
 case class HBtnArgs(
-  override val fgColor: String,
-  override val hidden: Boolean = false,
-  override val xattrs: Seq[(String, String)] = Nil
+  override val fgColor  : String,
+  override val hidden   : Boolean = false,
+  override val adnId    : Option[String] = None
 )
   extends IhBtnArgs
