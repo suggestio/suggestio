@@ -1535,7 +1535,7 @@ sm =
       if sm.welcome_ad.init() == false
         grid_init_timeout = 1
       else
-        grid_init_timeout = sm.welcome_ad.hide_timeout - 100
+        grid_init_timeout = sm.welcome_ad.hide_timeout / 2
 
       grid_init_cb = () ->
         document.body.style.backgroundColor = '#ffffff'
@@ -2205,7 +2205,7 @@ sm =
   ## картинка приветствия торгового центра
   ########################################
   welcome_ad :
-    hide_timeout : 1700
+    hide_timeout : 1000
     fadeout_transition_time : 700
 
     fit : ( image_dom, is_divided ) ->
