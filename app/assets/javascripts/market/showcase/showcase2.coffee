@@ -1496,6 +1496,21 @@ sm =
 
       sm.log 'showcase_index()'
       sm.focused_ads.unlock()
+
+      cs = sm.states.cur_state()
+      # Костыль для резкого переключения с focused-карточки на выдачи
+      if (typeof cs.fads != 'undefined' && cs.fads.is_opened == true)
+        sm.states.add_state
+          cat_id : undefined
+          cat_class : undefined
+          with_welcome_ad : true
+          fads:
+            is_opened : false
+          mart_id : data.curr_adn_id
+      else if data.curr_adn_id != null && typeof cs.mart_id == 'undefined'
+        sm.states.update_state
+          mart_id : data.curr_adn_id
+
       ## Нарисовать разметку
       sm.draw_layout()
 
@@ -1509,11 +1524,6 @@ sm =
       container = sm.utils.ge 'sioMartLayout'
       container.innerHTML = data.html
       sm.utils.ge_tag('body')[0].style.overflow = 'hidden'
-
-      cs = sm.states.cur_state()
-      if data.curr_adn_id != null && typeof cs.mart_id == 'undefined'
-        sm.states.update_state
-          mart_id : data.curr_adn_id
 
       sm.grid_ads.adjust_dom()
       sm.geo.adjust()
@@ -1539,11 +1549,9 @@ sm =
         document.body.style.backgroundColor = '#ffffff'
         sm.utils.ge('sioMartRoot').style.backgroundColor = "#ffffff"
 
-        sm_wifi_info_dom = sm.utils.ge('smWifiInfo')
-        if sm_wifi_info_dom != null
-          sm.utils.ge('smWifiInfo').style.display = 'block'
-
-        sm.init_navigation()
+        if (typeof sm.init_done == 'undefined')
+          sm.init_navigation()
+          sm.init_done = true
         # TODO исправить костыль
         if typeof cs.cat_id == 'undefined'
           sm.grid_ads.load_index_ads()
@@ -1984,7 +1992,6 @@ sm =
       init : () ->
         if sm.utils.is_touch_device()
           return false
-        cursor_dom = sm.utils.ge 'smFocusedAdsArrowLabel'
 
         sm.utils.add_single_listener sm.focused_ads.ads_container_dom, 'mousemove', ( event ) ->
           sm.focused_ads.cursor.move event.clientX, event.clientY
@@ -2139,14 +2146,12 @@ sm =
       sm.utils.removeClass sm.utils.ge('smRootProducerHeader'), '__w-index-icon'
 
       if all_except_search == true
-        sm.utils.addClass sm.utils.ge('smCategoriesScreen'), '__search-mode'
+        sm.utils.addClass cs, '__search-mode'
       else
-        sm.utils.removeClass sm.utils.ge('smCategoriesScreen'), '__search-mode'
+        sm.utils.removeClass cs, '__search-mode'
         this.reset_tabs()
 
-        sm_cat_screen_dom = sm.utils.ge('smCategoriesScreen')
-        if sm_cat_screen_dom != null
-          sm_cat_screen_dom.style.display = 'none'
+        cs.style.display = 'none'
         sm.utils.ge('smRootProducerHeaderButtons').style.display = 'block'
   
   ###############################

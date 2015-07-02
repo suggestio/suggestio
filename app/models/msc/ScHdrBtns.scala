@@ -62,9 +62,8 @@ object ScHdrBtns extends Enumeration with EnumValue2Val {
   }
 
   /** Есть несколько внешне одинаковых кнопок "назад". */
-  protected sealed trait BackLeftSvgVal extends SvgTplVal {
+  protected sealed trait BackLeftSvgVal extends SvgTplVal with LeftBtnT {
     override def svgTpl = _backArrowLeft
-    override def align  = MHands.Left
   }
   
   protected sealed trait TileBtn extends SvgTplVal {
@@ -73,17 +72,23 @@ object ScHdrBtns extends Enumeration with EnumValue2Val {
 
   override type T = Val
 
-  /** Кнопка отображения геосписка узлов для переключения между ними. */
-  val NavPanelOpen: T = new Val("a") with SvgTplVal {
-    override def svgTpl = _geoFillTpl
-    override def divCss = "sm-producer-header_geo-button" :: super.divCss
+  protected sealed trait LeftBtnT extends ValT {
     override def align  = MHands.Left
+  }
+
+  protected sealed trait TopLeftMainBtnT extends LeftBtnT {
+    override def divCss = "sm-producer-header_geo-button" :: super.divCss
+  }
+
+  /** Кнопка отображения геосписка узлов для переключения между ними. */
+  val NavPanelOpen: T = new Val("a") with SvgTplVal with TopLeftMainBtnT {
+    override def svgTpl = _geoFillTpl
     override def domId: String = "smGeoScreenButton"
   }
 
 
   /** 2015.may.8: Кнопка "назад" для перехода узел верхнего уровня. */
-  val Back2UpperNode: T = new Val("b") with BackLeftSvgVal {
+  val Back2UpperNode: T = new Val("b") with BackLeftSvgVal with TopLeftMainBtnT {
     override def domId  = Header.PREV_NODE_BTN_ID
   }
 
