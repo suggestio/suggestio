@@ -25,7 +25,7 @@ object ScJsState {
   val GEO_SCR_OPENED_FN       = "n.open"
   val FADS_CURRENT_AD_ID_FN   = "f.cur.id"
   val FADS_OFFSET_FN          = "f.off"
-  val GENERATION_FN           = "gen_id"
+  val GENERATION_FN           = "a.gen"
   val SEARCH_TAB_FN           = "s.tab"
   val PRODUCER_ADN_ID_FN      = "f.pr.id"
   val TILES_CAT_ID_FN         = "t.cat"

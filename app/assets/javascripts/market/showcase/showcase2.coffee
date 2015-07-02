@@ -1356,15 +1356,8 @@ sm =
 
       sm.grid_ads.loaded = 0
 
-      if typeof sm.grid_ads.multiplier == 'undefined'
-        sm.grid_ads.multiplier = 100000000000
-      else
-        sm.grid_ads.multiplier = sm.grid_ads.multiplier / 10
-
       url = url.replace '&a.geo=ip', ''
-      sm.grid_ads.gen_id = Math.floor((Math.random() * sm.grid_ads.multiplier) + (Math.random() * 100000) )
-      #sm.grid_ads.gen_id ## вроде оно не нужно
-      sm.grid_ads.c_url = url + '&a.gen=' + sm.grid_ads.gen_id + '&' + sm.geo.request_query_param() + '&' + sm.request_context.screen_param()
+      sm.grid_ads.c_url = url + '&a.gen=' + sm.gen + '&' + sm.geo.request_query_param() + '&' + sm.request_context.screen_param()
 
       sm.request.perform sm.grid_ads.c_url + '&a.size=' + sm.config.ads_per_load
 
@@ -2183,9 +2176,7 @@ sm =
     cs = sm.states.cur_state()
     if cs.mart_id then a_rcvr = '&a.rcvr=' + cs.mart_id else a_rcvr = ""
 
-    gen_id = sm.grid_ads.gen_id
-
-    url = "/market/fads?a.v=1&a.shopId=#{shop_id}&a.gen=#{gen_id}&a.size=#{sm.config.producer_ads_per_load}#{a_rcvr}&#{sm.geo.request_query_param()}&#{sm.request_context.screen_param()}"
+    url = "/market/fads?a.v=1&a.shopId=#{shop_id}&a.gen=#{sm.gen}&a.size=#{sm.config.producer_ads_per_load}#{a_rcvr}&#{sm.geo.request_query_param()}&#{sm.request_context.screen_param()}"
     if (typeof ad_id == "string")
       url = url + "&a.firstAdId=" + ad_id
 
@@ -2363,7 +2354,6 @@ sm =
       if typeof ns.geo_screen == 'undefined' then ns.geo_screen = this.ds.geo_screen
       if typeof ns.fads == 'undefined' then ns.fads = this.ds.fads
       if typeof ns.search_request == 'undefined' then ns.search_request = this.ds.search_request
-      if typeof sm.gen_id == 'undefined' then ns.gen_id = 6
 
       ns.window_width = cbca_grid.ww
 
@@ -2414,13 +2404,15 @@ sm =
 
     get_state_by_url : () ->
       url_params = @.get_url_params()
-      state = null
-      sm.grid_ads.gen_id = url_params["gen_id"]
+      state = {}
+
+      maybeGen = parseInt( url_params["a.gen"] )
+      if maybeGen == maybeGen   # !isNaN()
+        sm.gen = maybeGen
 
       if url_params["f.cur.id"]
         state =
           mart_id : url_params["m.id"]
-          gen_id : sm.grid_ads.gen_id
           fads :
             is_opened : true
             ad_id : url_params["f.cur.id"]
@@ -2429,14 +2421,12 @@ sm =
       else if url_params["s.open"]
         state =
           mart_id : url_params["m.id"]
-          gen_id : sm.grid_ads.gen_id
           cat_screen :
             is_opened : true
 
       else if url_params["n.open"]
         state =
           mart_id : url_params["m.id"]
-          gen_id : sm.grid_ads.gen_id
           geo_screen :
             is_opened : true
 
@@ -2445,16 +2435,10 @@ sm =
           mart_id : url_params["m.id"]
           cat_id : url_params["t.cat"]
           cat_class : url_params["t.cat_class"]
-          gen_id : sm.grid_ads.gen_id
 
       else if url_params["m.id"]
         state =
           mart_id : url_params["m.id"]
-          gen_id : sm.grid_ads.gen_id
-
-      else
-        state =
-          gen_id : sm.grid_ads.gen_id
 
       return state
 
@@ -2483,8 +2467,7 @@ sm =
       if state.mart_id
         get_params.push "m.id=#{state.mart_id}"
 
-      if sm.grid_ads.gen_id
-        get_params.push "gen_id=#{sm.grid_ads.gen_id}"
+      get_params.push "a.gen=#{sm.gen}"
 
       if get_params.length
         path += "#!?#{get_params.join("&")}"
@@ -2623,6 +2606,7 @@ sm =
   ## Инициализация Sio.Market
   ###########################
   init : () ->
+    this.gen = Math.floor(Math.random() * 10000000)
     sm.config.host = window.siomart_host
     this.utils.set_vendor_prefix()
     this.history.init()
