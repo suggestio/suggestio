@@ -28,6 +28,11 @@ object AdnShownTypes extends Enumeration {
 
     def ngls: List[NodeGeoLevel]
     def showWithTown: Boolean = true
+
+    /** Является ли данный тип географически-верхним?
+      * Изначально была иерархия: город-район-здание.
+      * Значит города верхние, остальные -- нет. */
+    def isTopLevel: Boolean = false
   }
 
 
@@ -81,11 +86,12 @@ object AdnShownTypes extends Enumeration {
     override def pluralNoTown   = "Districts"
   }
 
-  /** Город. */
+  /** Город, населенный пункт. */
   val TOWN: AdnShownType = new Val("d") {
     override def ngls = List(NodeGeoLevels.NGL_TOWN)
     override def showWithTown = false
     override def isTown = true
+    override def isTopLevel = true
   }
 
   /** Спортивные объекты: фитнес, стадионы и т.д. */

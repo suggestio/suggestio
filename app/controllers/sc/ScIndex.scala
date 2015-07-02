@@ -177,7 +177,12 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
         adnNodeFut
       } filter { mnode =>
         // Продолжать только если текущий узел не связан с географией.
-        mnode.geo.directParentIds.isEmpty
+        mnode.geo.directParentIds.isEmpty && {
+          // Если в город (верхний узел) перешли из левого подузла, то у города НЕ должна отображаться кнопка "назад",
+          // несмотря на отсутствие гео-родителей.
+          !AdnShownTypes.maybeWithName(mnode.adn.shownTypeId)
+            .exists(_.isTopLevel)
+        }
       } flatMap { mnode =>
         // Надо рендерить кнопку возврата, а не дефолтовую.
         _hBtnArgsFut map { hBtnArgs0 =>
