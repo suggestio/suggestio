@@ -1235,7 +1235,6 @@ sm =
 
   search :
     found_count : 0
-    request_delay : 600
     is_active : false
     perform : ( request ) ->
 
@@ -1259,7 +1258,7 @@ sm =
       search_cb = () ->
         sm.search.perform request.toLowerCase()
 
-      sm.search.search_timer = setTimeout search_cb, sm.search.request_delay
+      sm.search.search_timer = setTimeout search_cb, 600
 
     onfocus : () ->
       this.is_active = true
