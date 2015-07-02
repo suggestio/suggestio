@@ -28,19 +28,37 @@ trait ScIndexAdOpen extends ScFocusedAds with ScIndexNodeCommon {
   /** Тело экшена возврата медиа-кнопок расширено поддержкой переключения на index-выдачу узла-продьюсера
     * рекламной карточки, которая заинтересовала юзера. */
   override protected def _focusedAds(logic: FocusedAdsLogicHttp)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
-    // 2015.may.8: При выборе чужой карточки нужно делать переход в выдачу чуждого узла с возможностью возврата.
-    logic.firstAdsFut flatMap { firstAds =>
-      val stepToProdAdnIdOpt = firstAds
+    // 2015.jun.2: При выборе продьюсера в списке магазинов надо делать переход в выдачу магазина.
+    val fut0 = if (STEP_INTO_FOREIGN_SC_ENABLED)
+      Future successful None
+    else
+      Future failed new NoSuchElementException()
+    fut0.map { _ =>
+      logic._adSearch
+        .producerIds
         .headOption
-        .filter { _ => STEP_INTO_FOREIGN_SC_ENABLED }
-        .map { _.producerId }
-        .filter { !logic._adSearch.receiverIds.contains(_) }
-      stepToProdAdnIdOpt match {
-        case Some(prodId) =>
-          _goToProducerIndex(prodId, logic)
-        case None =>
-          super._focusedAds(logic)
-      }
+    }.flatMap {
+      case None =>
+        // Если нет id продьюсера в исходном запросе, то попробовать поискать в запрошенной first-id карточке
+        logic.firstAdsFut map { firstAds =>
+          firstAds
+            .headOption
+            .filter { _ => STEP_INTO_FOREIGN_SC_ENABLED }
+            .map { _.producerId }
+        }
+      case some =>
+        Future successful some
+    }.filter { prodIdOpt =>
+      // Для переброски на index допускаются только сторонние продьюсеры
+      prodIdOpt.exists( logic.is3rdPartyProducer )
+    }.flatMap { prodIdOpt =>
+      // Для этого продьюсера нужно выполнить переброску в index.
+      _goToProducerIndex(prodIdOpt.get, logic)
+    }.recoverWith { case ex: Throwable =>
+      // Продьюсер неизвестен, не подходит под критерии или переброска отключена.
+      if (!ex.isInstanceOf[NoSuchElementException])
+        LOGGER.error("_focusedAds(): Suppressing unexpected exception for " + logic._request.uri, ex)
+      super._focusedAds(logic)
     }
   }
 

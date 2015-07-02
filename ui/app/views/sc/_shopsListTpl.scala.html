@@ -3,28 +3,33 @@
 @import util.TplDataFormatUtil._
 @import views.html.sc.stuff._
 
-@_scrollableContainerTpl( "sm-shops", "smShops", "style" -> (_bgcolor( args.bgColor, false ).toString + "display: block;") ){
+@* Верстка нечетных css-классов. *@
+@_mayOdd(i: Int) = {
+  @if(i%2 == 0){__odd}
+}
+
+@_scrollableContainerTpl( "sm-shops", "smShops", "style" -> (_bgcolor( args.bgColor, false ).toString + "display: block;") ) {
 <div class="shops-list">
 
   @args.shopsLetterGrouped.iterator.zipWithIndex.map { case ((letter, mshops), i) =>
-
-    <div class="shops-list_row @*if(i%2 == 0){__odd}*@" style="@_bgcolor( args.bgColor ); opacity: 0.8; color: #@args.fgColor;">
-      <div class="shops-list_letter" style="border-color: #@args.fgColor;">@letter</div>
-    </div>
-
-    @* Рендер списка магазинов или иных рекламодателей. *@
-    @mshops.zipWithIndex.map { case (mshop, si) =>
-      @args.jsStateOpt.map { jsState =>
-        <a href="@args.syncUrl( jsState.copy(fadsProdIdOpt = mshop.id) )">
-      }
-      <div class="shops-list_row @if((si)%2 == 0){__odd} js-shop-link" data-producer-id="@mshop.id">
-        @mshop.meta.name
+    @defining( _mayOdd(i) ) { mayOdd =>
+      <div class="shops-list_row @mayOdd" style="opacity: 0.8; color: #@args.fgColor;">
+        <div class="shops-list_letter" style="border-color: #@args.fgColor;">@letter</div>
       </div>
-      @if( args.jsStateOpt ) {
-        </a>
+
+      @* Рендер списка магазинов или иных рекламодателей. *@
+      @mshops.map { mshop =>
+        @args.jsStateOpt.map { jsState =>
+          <a href="@args.syncUrl( jsState.copy(fadsProdIdOpt = mshop.id) )">
+        }
+        <div class="shops-list_row @mayOdd js-shop-link" data-producer-id="@mshop.id">
+          @mshop.meta.name
+        </div>
+        @if( args.jsStateOpt ) {
+          </a>
+        }
       }
     }
-
   }
 
 

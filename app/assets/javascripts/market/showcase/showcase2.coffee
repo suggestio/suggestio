@@ -2185,7 +2185,9 @@ sm =
 
     gen_id = sm.grid_ads.gen_id
 
-    url = "/market/fads?a.v=1&a.shopId=#{shop_id}&a.gen=#{gen_id}&a.size=#{sm.config.producer_ads_per_load}#{a_rcvr}&a.firstAdId=#{ad_id}&#{sm.geo.request_query_param()}&#{sm.request_context.screen_param()}"
+    url = "/market/fads?a.v=1&a.shopId=#{shop_id}&a.gen=#{gen_id}&a.size=#{sm.config.producer_ads_per_load}#{a_rcvr}&#{sm.geo.request_query_param()}&#{sm.request_context.screen_param()}"
+    if (typeof ad_id == "string")
+      url = url + "&a.firstAdId=" + ad_id
 
     sm.focused_ads.curl = url
 
