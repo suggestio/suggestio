@@ -517,7 +517,9 @@ sm =
       else
         sm.geo.active_layer = null
 
-    get_current_position : () ->
+    get_current_position : (timeout) ->
+      if (typeof timeout != 'number')
+        timeout = 5500
       if this.location_requested == true
         return false
 
@@ -536,7 +538,7 @@ sm =
             if !sm.geo.callback_active
               console.log "no geo callback"
               sm.geo.position_callback_fallback()
-          5500
+          timeout
         )
 
         # делаем одновременно и точный, и неточный запрос геолокации
@@ -1050,7 +1052,11 @@ sm =
 
         sm.geo.location_requested = false
         sm.geo.location_node = undefined
-        setTimeout sm.geo.get_current_position, 200
+        setTimeout(
+          () ->
+            sm.geo.get_current_position(30000)
+          10
+        )
         return false
 
       ## Кнопка закрытия экрана geo
