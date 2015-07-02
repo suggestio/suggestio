@@ -1492,7 +1492,7 @@ sm =
 
       cs = sm.states.cur_state()
       # Костыль для резкого переключения с focused-карточки на выдачи
-      if (typeof cs.fads != 'undefined' && cs.fads.is_opened == true)
+      if (typeof cs.fads != 'undefined' && cs.fads.is_opened == true && data.curr_adn_id != cs.mart_id)
         sm.states.add_state
           cat_id : undefined
           cat_class : undefined
@@ -2613,14 +2613,17 @@ sm =
 
     sm_id = window.siomart_id || undefined
 
-    sm.warn 'initial mart_id : ' + sm_id
-    if window.with_geo == true
-      ## Если еще не запрашивали координаты у юзера
-      if sm.geo.location_requested == false
-        sm.geo.get_current_position()
+    state = sm.states.get_state_by_url()
+    if typeof state == 'object' && typeof state.mart_id == 'string'
+      sm.states.add_state state
     else
-      sm.states.add_state
-        mart_id : sm_id
+      if window.with_geo != true
+        sm.states.add_state
+          mart_id : sm_id
+      else
+        ## Если еще не запрашивали координаты у юзера
+        if sm.geo.location_requested == false
+          sm.geo.get_current_position()
 
 
 window.sm = window.siomart = sm
