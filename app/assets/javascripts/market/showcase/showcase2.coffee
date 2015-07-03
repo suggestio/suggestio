@@ -421,7 +421,6 @@ sm =
     index_action : window.siomart_index
     sm_layout_class : 'sm-showcase'
     ontouchmove_offer_change_delta : 80
-    welcome_ad_hide_timeout : 2000
     ads_per_load : 30
     producer_ads_per_load : 2
     sio_hostnames : ["suggest.io", "localhost", "192.168.199.*"]
@@ -2226,7 +2225,7 @@ sm =
   ## картинка приветствия торгового центра
   ########################################
   welcome_ad :
-    hide_timeout : 1000
+    hide_timeout : 1200
     fadeout_transition_time : 700
 
     fit : ( image_dom, is_divided ) ->
