@@ -1064,8 +1064,8 @@ sm =
         sm.states.transform_state { geo_screen : { is_opened : false } }
         return false
 
-      ## Кнопка узлов либо логотип-кнопка
-      if !sm.focused_ads.is_active && (( sm.events.target_lookup( event.target, 'id', 'smGeoScreenButton' ) != null ) || ( sm.events.target_lookup( event.target, 'className', 'js-hdr-logo' ) != null ))
+      ## Кнопка списка узлов
+      if !sm.focused_ads.is_active && ( sm.events.target_lookup( event.target, 'id', 'smGeoScreenButton' ) != null )
         ## Данная функция работает, только если выдача работает в гео-режиме
         if window.with_geo == false
           return false
@@ -1097,6 +1097,15 @@ sm =
 
         return false
 
+      ## Поддержка клика по не-focused логотипу. Нужно перекидывать на плитку выдачи текущего узла.
+      if !sm.focused_ads.is_active && ( sm.events.target_lookup( event.target, 'className', 'js-hdr-logo' ) != null )
+        cs = sm.states.cur_state()
+        ## TODO Opt НЕ добавлять событие, если его добавление не имеет смысла.
+        if (typeof cs == "object" && typeof cs.mart_id == "string")
+          sm.states.add_state
+            mart_id: cs.mart_id
+            prevAdnId: cs.prevAdnId
+
       nodeBackBtn = sm.events.target_lookup(event.target, 'id', 'smNodePrevious')
       if (nodeBackBtn != null)
         nodeId = nodeBackBtn.getAttribute('data-adn-id')
@@ -1116,8 +1125,10 @@ sm =
           return false
 
         node_id = geo_node_target.getAttribute 'data-id'
-
-        sm.states.add_state {mart_id : node_id}
+        cs = sm.states.cur_state()
+        sm.states.add_state
+          mart_id : node_id
+          prevAdnId : cs.mart_id
 
         return false
 
@@ -1497,17 +1508,20 @@ sm =
 
       cs = sm.states.cur_state()
       # Костыль для резкого переключения с focused-карточки на выдачи
-      if (typeof cs.fads != 'undefined' && cs.fads.is_opened == true && data.curr_adn_id != cs.mart_id)
-        sm.states.add_state
-          cat_id : undefined
-          cat_class : undefined
-          with_welcome_ad : true
-          fads:
-            is_opened : false
-          mart_id : data.curr_adn_id
-      else if data.curr_adn_id != null && typeof cs.mart_id == 'undefined'
-        sm.states.update_state
-          mart_id : data.curr_adn_id
+      if (data.curr_adn_id != cs.mart_id)
+        if (typeof cs.fads != 'undefined' && cs.fads.is_opened == true)
+          sm.states.add_state
+            cat_id : undefined
+            cat_class : undefined
+            with_welcome_ad : true
+            fads:
+              is_opened : false
+            mart_id : data.curr_adn_id
+            prevAdnId: cs.mart_id
+        else if data.curr_adn_id != null && typeof cs.mart_id == 'undefined'
+          sm.states.update_state
+            mart_id : data.curr_adn_id
+            prevAdnId: cs.mart_id
 
       ## Нарисовать разметку
       sm.draw_layout()
@@ -1776,10 +1790,13 @@ sm =
       return res
 
     switchToNodeClick : ( event ) ->
-      node_id = sm.states.cur_state().fads.producer_id
+      cs = sm.states.cur_state()
+      node_id = cs.fads.producer_id
       event.stopPropagation()
       event.preventDefault()    ## Отрабатываем a href с адресом. На случай открытия в новой вкладке.
-      sm.states.add_state {mart_id : node_id}
+      sm.states.add_state
+        mart_id : node_id
+        prevAdnId : cs.mart_id
 
     ####################
     ## Обработка событий
@@ -1826,7 +1843,6 @@ sm =
       this.last_x = ex
 
     touchend_event : ( event ) ->
-
       if ( !sm.events.is_touch_locked && sm.focused_ads.is_node_click(event) )
         sm.focused_ads.switchToNodeClick(event)
       else
@@ -2326,6 +2342,7 @@ sm =
     ds :
       url : '/'
       mart_id : undefined
+      prevAdnId: undefined
       window_width : undefined
       with_welcome_ad : true
       cat_id : undefined
@@ -2370,6 +2387,7 @@ sm =
       if typeof sup.with_welcome_ad != 'undefined' then cs.with_welcome_ad = sup.with_welcome_ad
       if typeof sup.window_width != 'undefined' then cs.window_width = sup.window_width
       if typeof sup.geo_screen != 'undefined' then cs.geo_screen = sup.geo_screen
+      if typeof sup.prevAdnId != 'undefined' then cs.prevAdnId = sup.prevAdnId
       this.list[this.list.length-1] = cs
 
     # добавляет новое состояние
@@ -2407,15 +2425,16 @@ sm =
 
     get_state_by_url : () ->
       url_params = @.get_url_params()
-      state = {}
+      state = null
 
       maybeGen = parseInt( url_params["a.gen"] )
-      if maybeGen == maybeGen   # !isNaN()
+      if maybeGen == maybeGen   # !isNaN() не работает почему-то.
         sm.gen = maybeGen
 
+      adnId = url_params["m.id"]
       if url_params["f.cur.id"]
         state =
-          mart_id : url_params["m.id"]
+          mart_id : adnId
           fads :
             is_opened : true
             ad_id : url_params["f.cur.id"]
@@ -2423,25 +2442,32 @@ sm =
 
       else if url_params["s.open"]
         state =
-          mart_id : url_params["m.id"]
+          mart_id : adnId
           cat_screen :
             is_opened : true
 
       else if url_params["n.open"]
         state =
-          mart_id : url_params["m.id"]
+          mart_id : adnId
           geo_screen :
             is_opened : true
 
       else if url_params["t.cat"]
         state =
-          mart_id : url_params["m.id"]
+          mart_id : adnId
           cat_id : url_params["t.cat"]
           cat_class : url_params["t.cat_class"]
 
       else if url_params["m.id"]
         state =
-          mart_id : url_params["m.id"]
+          mart_id : adnId
+
+      else
+        state = {}
+
+      maybePrevAdnId = url_params["pr"]
+      if (typeof maybePrevAdnId == "string" && maybePrevAdnId.length > 10)
+        state.prevAdnId = maybePrevAdnId
 
       return state
 
@@ -2469,6 +2495,9 @@ sm =
 
       if state.mart_id
         get_params.push "m.id=#{state.mart_id}"
+
+      if state.prevAdnId
+        get_params.push("pr=" + state.prevAdnId)
 
       get_params.push "a.gen=#{sm.gen}"
 
@@ -2507,7 +2536,7 @@ sm =
       ## 1. проверить, соответствует ли текущий mart_id в состояниях
       if typeof cs == 'undefined' || cs.mart_id == undefined || cs.mart_id != state.mart_id
         sm.log 'process_state : switch nodes'
-        sm.load_mart( state, cs )
+        sm.load_mart( state )
         this.requested_state = state
       else
         this.process_state_2 state
@@ -2574,7 +2603,7 @@ sm =
   ######################################
   ## Загрузить индексную страницу для ТЦ
   ######################################
-  load_mart : ( state, prevState ) ->
+  load_mart : ( state ) ->
     ## ? здесь ли это должно быть?
     this.define_per_load_values()
 
@@ -2585,8 +2614,8 @@ sm =
       url = url + "geo/index"
     url = url + "?" + sm.request_context.screen_param() + "&" + sm.geo.request_query_param()
 
-    if (typeof prevState == "object" && typeof prevState.mart_id == "string")
-      url = url + "&a.pr=" + prevState.mart_id
+    if (typeof state.prevAdnId == "string")
+      url = url + "&a.pr=" + state.prevAdnId
 
     sm.log 'about to call index_action : ' + url
 
