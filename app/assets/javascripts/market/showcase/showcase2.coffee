@@ -1665,10 +1665,9 @@ sm =
           layer_id = layer_id.replace 'Content', ''
 
           sm.geo.open_layer layer_id
-
-      if typeof sm.geo.geo_position_obj == 'undefined' && sm.geo.location_requested == false
-        sm.geo.get_current_position()
-        return false
+      #if typeof sm.geo.geo_position_obj == 'undefined' && sm.geo.location_requested == false
+      #  sm.geo.get_current_position()
+      #  return false
 
   ############################################
   ## Объект для работы с карточками продьюсера
@@ -2324,7 +2323,6 @@ sm =
     list : []
     requested_state : undefined
     cur_state_index : -1
-    prev_state : undefined
     ds :
       url : '/'
       mart_id : undefined
@@ -2587,7 +2585,7 @@ sm =
       url = url + "geo/index"
     url = url + "?" + sm.request_context.screen_param() + "&" + sm.geo.request_query_param()
 
-    if (typeof prevState != "undefined" && typeof prevState.mart_id == "string")
+    if (typeof prevState == "object" && typeof prevState.mart_id == "string")
       url = url + "&a.pr=" + prevState.mart_id
 
     sm.log 'about to call index_action : ' + url
