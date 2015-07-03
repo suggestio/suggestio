@@ -2622,17 +2622,19 @@ sm =
     this.request.perform url
 
   define_per_load_values : () ->
-
     cbca_grid.set_window_size()
-
-    if cbca_grid.ww <= 980
-      sm.config.ads_per_load = 20
-
-    if cbca_grid.ww <= 800
-      sm.config.ads_per_load = 10
-
-    if cbca_grid.ww <= 660
-      sm.config.ads_per_load = 5
+    apl = 0
+    ## TODO Нужна нормальная математическая формула вместо этого быдлокода со средним геометрическим размером окна.
+    sn = Math.sqrt(cbca_grid.ww * cbca_grid.wh)
+    if sn <= 660
+      apl = 5
+    else if sn <= 800
+      apl = 10
+    else if sn <= 980
+      apl = 20
+    else
+      apl = 30
+    sm.config.ads_per_load = apl
 
   ###########################
   ## Инициализация Sio.Market
