@@ -7,5 +7,6 @@ data/
 .history
 project/project
 project/target
+*.swp
 
 russianmorphology/
