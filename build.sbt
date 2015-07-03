@@ -2,7 +2,7 @@ organization := "io.suggest"
 
 name := "sc-sjs"
 
-scalaVersion := "2.11.6"
+scalaVersion := "2.11.7"
 
 version := "0.0.0-SNAPSHOT"
 
