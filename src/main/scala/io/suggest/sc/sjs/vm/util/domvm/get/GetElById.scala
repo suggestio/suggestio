@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.vm.util.domvm.get
 
 import org.scalajs.dom
 import org.scalajs.dom.Element
-import org.scalajs.dom.raw.{HTMLDivElement, HTMLImageElement}
+import org.scalajs.dom.raw.{HTMLSpanElement, HTMLDivElement, HTMLImageElement}
 
 /**
  * Suggest.io
@@ -36,6 +36,11 @@ trait GetDivById extends GetElById {
   protected def getDivByIdOrNull(id: String)  = getElementByIdOrNull[HTMLDivElement](id)
 }
 
+
+trait GetSpanById extends GetElById {
+  protected def getSpanById(id: String)        = getElementById[HTMLSpanElement](id)
+  protected def getSpanByIdOrNull(id: String)  = getElementByIdOrNull[HTMLSpanElement](id)
+}
 
 /** Аддон для краткого поисква img-тегов по id. */
 trait GetImgById extends GetElById {

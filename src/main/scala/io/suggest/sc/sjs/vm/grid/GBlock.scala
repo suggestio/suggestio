@@ -4,7 +4,7 @@ import io.suggest.sc.ScConstants.Block
 import io.suggest.sc.sjs.c.ScFsm
 import io.suggest.sc.sjs.m.mgrid.{GridBlockClick, IBlockInfo}
 import io.suggest.sc.sjs.v.vutil.{OnClickSelfT, SetStyleDisplay}
-import io.suggest.sc.sjs.vm.util.CssSzImplicits
+import io.suggest.sc.sjs.vm.util.{IInitLayout, CssSzImplicits}
 import io.suggest.sjs.common.util.{SjsLogger, DataUtil}
 import io.suggest.sjs.common.view.safe.SafeElT
 import org.scalajs.dom.{Event, Node}
@@ -46,7 +46,7 @@ object GBlock extends SjsLogger {
 import GBlock._
 
 
-trait GBlockT extends SafeElT with SetStyleDisplay with CssSzImplicits with IBlockInfo with OnClickSelfT {
+trait GBlockT extends SafeElT with SetStyleDisplay with CssSzImplicits with IBlockInfo with OnClickSelfT with IInitLayout {
 
   override type T = HTMLDivElement
 
@@ -62,8 +62,9 @@ trait GBlockT extends SafeElT with SetStyleDisplay with CssSzImplicits with IBlo
    * @param topPx y-координата.
    */
   def moveBlock(leftPx: Int, topPx: Int): Unit = {
-    _underlying.style.top  = topPx.px
-    _underlying.style.left = leftPx.px
+    val s = _underlying.style
+    s.top  = topPx.px
+    s.left = leftPx.px
     displayBlock(_underlying)
   }
 
@@ -73,19 +74,20 @@ trait GBlockT extends SafeElT with SetStyleDisplay with CssSzImplicits with IBlo
     // Браузер умеет 3d-трансформации.
     val suf = "transform"
     // translate3d(+x, +y) работает с относительными координатами. Надо поправлять их с учетом ВОЗМОЖНЫХ значений style.top и style.left.
-    val leftPx1 = fixRelCoord(_underlying.style.left, leftPx)
-    val topPx1  = fixRelCoord(_underlying.style.top,  topPx)
+    val s = _underlying.style
+    val leftPx1 = fixRelCoord(s.left, leftPx)
+    val topPx1  = fixRelCoord(s.top,  topPx)
     val value = "translate3d(" + leftPx1.px + "," + topPx1.px + ",0)"
     for (cssPrefix <- cssPrefixes) {
       val prop = if (!cssPrefix.isEmpty) cssPrefix + suf else suf
-      _underlying.style.setProperty(prop, value)
+      s.setProperty(prop, value)
     }
   }
 
   override def div = _underlying
 
   /** Повесить листенеры для событий DOM. */
-  def initLayout(): Unit = {
+  override def initLayout(): Unit = {
     onClick { e: Event =>
       ScFsm ! GridBlockClick(e)
     }

@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.m.mfsm
 
-import org.scalajs.dom.KeyboardEvent
+import org.scalajs.dom.{Event, KeyboardEvent}
 
 /**
   * Suggest.io
@@ -15,3 +15,11 @@ trait IFsmMsg
 case class KbdKeyUp(e: KeyboardEvent) extends IFsmMsg
 
 
+/** Интерфейс для компаньонов классов-сообщений, завящанных на event'ы. */
+trait IFsmMsgCompanion[T] {
+  def apply(e: T): IFsmMsg
+}
+
+/** Интерфейс для сообщений-контейнеров Event'ов. */
+trait IFsmEventMsgCompanion
+  extends IFsmMsgCompanion[Event]

@@ -29,9 +29,10 @@ trait GContainerT extends ISafe with CssSzImplicits {
 
   /** Внутреннее межмодельное API для согласования параметров отображения div'ов. */
   protected[grid] def _setContainerSz(widthCss: String, cm: Int): Unit = {
-    _underlying.style.width    = widthCss
-    _underlying.style.left     = (cm/2).px
-    _underlying.style.opacity  = "1"
+    val s = _underlying.style
+    s.width    = widthCss
+    s.left     = (cm/2).px
+    s.opacity  = "1"
   }
 
   /**
@@ -56,6 +57,8 @@ trait GContainerT extends ISafe with CssSzImplicits {
     val totalHeightPx = mgp.topOffset  +  maxColHeightPx  +  mgp.bottomOffset
     setHeightPx(totalHeightPx)
   }
+
+  /** Выставить css-значение высоты для текущего контейнера. */
   def setHeight(cssHeight: String): this.type = {
     _underlying.style.height = cssHeight
     this
@@ -69,7 +72,7 @@ trait GContainerT extends ISafe with CssSzImplicits {
   def appendNewMads(mads: TraversableOnce[MFoundAdJson]): GContainerFragment = {
     // Склеить все отрендеренные карточки в одну html-строку. И распарсить пачкой.
     // Надо парсить и добавлять всей пачкой из-за особенностей браузеров по параллельной загрузке ассетов:
-    // https://bugzilla.mozilla.org/show_bug.cgi?id=893113 -- Firefox: innerHTML может блокироваться на загрузку картинки.
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=893113 -- Firefox: innerHTML= может блокироваться на загрузку картинки.
     // Там в комментах есть данные по стандартам и причинам синхронной загрузки.
     val blocksHtmlSingle: String = {
       mads.toIterator
@@ -98,4 +101,6 @@ trait GContainerT extends ISafe with CssSzImplicits {
 
 
 /** Дефолтовая реализация экземпляра модели на базе [[GContainerT]]. */
-case class GContainer(override val _underlying: HTMLDivElement) extends GContainerT
+case class GContainer(
+  override val _underlying: HTMLDivElement
+) extends GContainerT

@@ -17,6 +17,7 @@ import org.scalajs.dom.Event
 object HeaderCtl extends CtlT with SjsLogger {
 
   /** Инициализация кнопок и прочего в строке заголовка. */
+  @deprecated("Use HRoot.initLayout() instead", "2015.aug.4")
   def initLayout(): Unit = {
     // Инициализация кнопки показа/скрытия поисковой панели (справа).
     for (btn <- MHeaderDom.showSearchPanelBtn) {

@@ -23,17 +23,20 @@ object HeaderView extends SetStyleDisplay with OnClick {
    * Он должен изменять набор отображаемых кнопок.
    * @param headerDiv корневой div строки заголовка.
    */
+  @deprecated("Use HRoot.showBackToIndexBtns() instead.", "2015.aug.4")
   def showBackToIndexBtns(headerDiv: SafeCssElT): Unit = {
     headerDiv.addClasses(INDEX_ICON_CSS_CLASS)
   }
 
   /** Отключить отображение back to index. */
+  @deprecated("Use HRoot.hideBackToIndexBtns() instead.", "2015.aug.4")
   def hideBackToIndexBtns(headerDiv: SafeCssElT): Unit = {
     headerDiv.removeClass(INDEX_ICON_CSS_CLASS)
   }
 
 
   /** Инициализация кнопки отображения панели поиска. */
+  @deprecated("Use HShowSearchBtn.initLayout() instead", "2015.aug.4")
   def initShowSearchPanelBtn(btnSafe: SafeEventTargetT): Unit = {
     onClick(btnSafe) { e: Event =>
       HeaderCtl.showSearchPanelBtnClick(e)
@@ -44,12 +47,14 @@ object HeaderView extends SetStyleDisplay with OnClick {
    * Инициализация списка кнопок сокрытия панели поиска.
    * @param btnSafe Кнопка сокрытия панели.
    */
+  @deprecated("Use HHideSearchBtn.initLayout() instead.", "2015.aug.4")
   def initHideSearchPanelBtn(btnSafe: SafeEventTargetT): Unit = {
     onClick(btnSafe) { e: Event =>
       HeaderCtl.hideSearchPanelBtnClick(e)
     }
   }
-  
+
+  @deprecated("Use HShowIndexBtn.initLayout() instead.", "2015.aug.4")
   def initShowIndexBtn(btnSafe: SafeEventTargetT): Unit = {
     onClick(btnSafe) { e: Event =>
       HeaderCtl.showIndexBtnClick(e)
@@ -80,6 +85,7 @@ object HeaderView extends SetStyleDisplay with OnClick {
 
 
   /** Инициализация кнопки показа панели навигации (слева). */
+  @deprecated("Use HShowNavBtn.initLayout() instead.", "2015.aug.4")
   def initShowNavBtn(btnSafe: SafeEventTargetT): Unit = {
     onClick(btnSafe) { e: Event =>
       HeaderCtl.showNavPanelBtnClick(e)
@@ -87,6 +93,7 @@ object HeaderView extends SetStyleDisplay with OnClick {
   }
 
   /** Инициализация событий кнопки сокрытия панели навигации. */
+  @deprecated("Use HHideNavBtn.initLayout() instead.", "2015.aug.4")
   def initHideNavPanelBtn(btnSafe: SafeEventTargetT): Unit = {
     onClick(btnSafe) { e: Event =>
       HeaderCtl.hideNavPanelBtnClick(e)
@@ -94,11 +101,13 @@ object HeaderView extends SetStyleDisplay with OnClick {
   }
 
   /** Скрыть все базовые кнопки строки заголовка. */
+  @deprecated("Use HBtns.hide() instead.", "2015.aug.4")
   def hideBtns(btnsDiv: HTMLDivElement): Unit = {
     displayNone(btnsDiv)
   }
 
   /** Показать базовые кнопки строки заголовка. */
+  @deprecated("Use HBtns.show() instead.", "2015.aug.4")
   def showBtns(btnsDiv: HTMLDivElement): Unit = {
     displayBlock(btnsDiv)
   }

@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.c
 
+import io.suggest.sc.sjs.m.mhdr.{ShowNavClick, ShowSearchClick}
 import io.suggest.sc.sjs.m.msc.fsm.MStData
 import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
 import io.suggest.sjs.common.util.SjsLogger
@@ -30,11 +31,22 @@ object ScFsm extends SjsLogger with EarlyFsm with ScIndexFsm with GridFsm {
 
   /** Ресивер для всех состояний. */
   override protected val allStatesReceiver: Receive = {
-    // TODO Обрабатывать popstate-события (HTML5 History API).
-    // TODO Отрабатывать window resize event: пробрасывать в каждое состояние, добавив соотв.API в FsmState.
+    // Сигнал нажатия на кнопку открытия панели поиска.
+    case ShowSearchClick(event) =>
+      // TODO Показать панель, выставить соотв.флаг в состояние выдачи, перестроить карточки.
+      ???
+
+    // Сигнал нажатия на кнопку отображения панели навигации.
+    case ShowNavClick(event) =>
+      // TODO Показать панель навигации, обновить данные состояния выдачи, перестроить карточки.
+      ???
+
+    // Неожиданные сообщения надо логгировать.
     case other =>
       // Пока только логгируем пришедшее событие. Потом и логгирование надо будет отрубить.
-      log("Drop event: " + other)
+      log("[" + _state + "] Dropped event: " + other)
+    // TODO Обрабатывать popstate-события (HTML5 History API).
+    // TODO Отрабатывать window resize event: пробрасывать в каждое состояние, добавив соотв.API в FsmState.
   }
 
   // Обработать событие синхронно.
@@ -67,11 +79,15 @@ object ScFsm extends SjsLogger with EarlyFsm with ScIndexFsm with GridFsm {
   /** Реализация состояния самой первой инициализации. */
   protected class FirstInitState extends InitState with FirstInitStateT
 
+
   /** Состояние начальной инициализации роутера. */
-  protected class AwaitJsRouterState(val jsRouterFut: Future[_]) extends AwaitJsRouterStateT {
+  protected class AwaitJsRouterState(
+    override val jsRouterFut: Future[_]
+  ) extends AwaitJsRouterStateT {
+
     /** При завершении инициализации js-роутера надо начать инициализацию index'а выдачи. */
     override def finished(): Unit = {
-      become( new ScIndexState(None) )
+      become( new GetIndexState(None) )
     }
 
     override def failed(ex: Throwable): Unit = {
@@ -82,7 +98,9 @@ object ScFsm extends SjsLogger with EarlyFsm with ScIndexFsm with GridFsm {
 
 
   /** Реализация состояния-получения-обработки индексной страницы. */
-  protected class ScIndexState(val adnIdOpt: Option[String]) extends GetIndexStateT {
+  protected class GetIndexState(
+    override val adnIdOpt: Option[String]
+  ) extends GetIndexStateT {
 
     /** Когда обработка index завершена, надо переключиться на состояние обработки начальной порции карточек. */
     override protected def _onSuccessNextState(findAdsFut: Future[MFindAds], wcHideFut: Future[_], sd1: SD): FsmState = {
@@ -92,7 +110,7 @@ object ScFsm extends SjsLogger with EarlyFsm with ScIndexFsm with GridFsm {
     /** Запрос за index'ом не удался. */
     override protected def _onFailure(ex: Throwable): Unit = {
       error("Failed to ask index, retrying", ex)
-      _retry(250)(new ScIndexState(adnIdOpt))
+      _retry(250)(new GetIndexState(adnIdOpt))
     }
   }
 
@@ -104,7 +122,7 @@ object ScFsm extends SjsLogger with EarlyFsm with ScIndexFsm with GridFsm {
   ) extends AppendAdsToGridDuringWelcomeStateT {
     
     /** Переключение на какое состояние, когда нет больше карточек на сервере? */
-    override protected def noMoreMadsState: FsmState = ???
+    override protected def adsLoadedState: FsmState = ???
 
     /** Что делать при ошибке получения карточек. */
     override protected def _findAdsFailed(ex: Throwable): Unit = ???

@@ -141,8 +141,10 @@ trait ScIndexFsm extends ScFsmStub with FindAdsFsmUtil {
         layContent.setWndClass(scr)
       }
 
-      // TODO Раскидать логику этой инициализации по header vm'кам.
-      HeaderCtl.initLayout()
+      // Инициализация кнопок заголовка. Раньше было тут HeaderCtl.initLayout().
+      for (lc <- layout.content; hdr <- lc.header) {
+        hdr.initLayout()
+      }
 
       // Переключаемся на следующее состояния (плитка), в трейте это состояние абстрактно.
       val nextState = _onSuccessNextState(findAdsFut, wcHideFut, sd1)

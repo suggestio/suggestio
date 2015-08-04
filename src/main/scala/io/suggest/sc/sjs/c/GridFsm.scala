@@ -58,28 +58,27 @@ trait GridFsm extends ScFsmStub {
 
     protected def withAnim: Boolean
 
-    protected def noMoreMadsState: FsmState
-
+    protected def adsLoadedState: FsmState
+    
     override protected def _findAdsReady(mfa: MFindAds): Unit = {
       val gcontent = GContent.find().get
       // Далее заинлайнен перепиленный вызов GridCtl.newAdsReceived(mfa, isAdd = isAdd, withAnim)
       val sd0  = _stateData
       val mgs0 = sd0.grid.state
 
-      if (mfa.mads.isEmpty) {
+      val sdFinal = if (mfa.mads.isEmpty) {
         for (l <- gcontent.loader) {
           l.hide()
         }
 
         // Скрыть loader-индикатор, он больше не нужен ведь.
-        val sd1 = sd0.copy(
+        sd0.copy(
           grid = sd0.grid.copy(
             state = mgs0.copy(
               fullyLoaded = true
             )
           )
         )
-        become(noMoreMadsState, sd1)
 
       } else {
 
@@ -151,12 +150,13 @@ trait GridFsm extends ScFsmStub {
         }
 
         // Вернуть результат, перещелкнуть автомат на следующее состояние: ожидание сигналов от юзера.
-        val sd2 = sd0.copy(
+        sd0.copy(
           grid = grid3
         )
-        become(???, sd2)
       }
 
+      // Переключиться на следующее состояние.
+      become(adsLoadedState, sdFinal)
     }
 
     /** Частичная реализация grid builder под нужды FSM-MVM-архитектуры. */
