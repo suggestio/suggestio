@@ -23,6 +23,7 @@ libraryDependencies ++= {
  val bcVsn = "1.52"
  Seq(
   jdbc exclude("com.h2database", "h2"),
+  // Anorm has been moved to an external module. See https://playframework.com/documentation/2.4.x/Migration24
   "com.typesafe.play" %% "anorm" % "2.4.0",
   cache,
   json,
