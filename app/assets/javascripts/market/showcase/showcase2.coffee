@@ -470,9 +470,9 @@ sm =
       sm.geo.geo_position_obj = gp_obj
       sm.geo.load_nodes_and_reload_with_mart_id()
 
-    position_callback_fallback : () ->
+    position_callback_fallback : (error) ->
 
-      console.log "geo fallback"
+      console.log("geo fallback: " + error)
 
       if sm.geo.callback_active then return false
 
@@ -544,15 +544,35 @@ sm =
         geo_options_accurate =
           enableHighAccuracy: true
           timeout : 60000
-          maximumAge : 100
+          maximumAge : 100000
+        navigator.geolocation.getCurrentPosition(
+          (res) ->
+            console.log("accur geo result: " + JSON.stringify(res))
+            sm.geo.position_callback(res)
+          ,
+          (error) ->
+            console.log("accur geo error: " + JSON.stringify(error))
+            sm.geo.position_callback_fallback(error)
+          ,
+          geo_options_accurate
+        )
 
         geo_options_inaccurate =
           enableHighAccuracy: false
           timeout : 5000
-          maximumAge : 100
+          maximumAge : 100000
+        navigator.geolocation.getCurrentPosition(
+          (res) ->
+            console.log "inaccur geo callback: " + JSON.stringify(res)
+            sm.geo.position_callback(res)
+          ,
+          (error) ->
+            console.log "inaccur geo error: " + JSON.stringify(error)
+            sm.geo.position_callback_fallback(error)
+          ,
+          geo_options_inaccurate
+        )
 
-        navigator.geolocation.getCurrentPosition sm.geo.position_callback, sm.geo.position_callback_fallback, geo_options_accurate
-        navigator.geolocation.getCurrentPosition sm.geo.position_callback, sm.geo.position_callback_fallback, geo_options_inaccurate
       else
         sm.geo.position_callback_fallback()
 
@@ -724,8 +744,8 @@ sm =
     this.write_log('error', message)
 
   write_log : ( fun, message ) ->
-    #return false
-    console[fun](message)
+    return false
+    #console[fun](message)
 
   utils :
     elts_cache : {}

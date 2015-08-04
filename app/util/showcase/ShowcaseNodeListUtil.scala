@@ -47,7 +47,9 @@ object ShowcaseNodeListUtil extends PlayMacroLogsImpl {
     Future.traverse(detectLevels) { case (lvl, prio) =>
       gsiOptFut.map { gsiOpt =>
         new NodeDetectArgsT {
-          override def geoDistance = gsiOpt.map { gsi => GeoShapeQueryData(gsi.geoDistanceQuery, lvl) }
+          override def geoDistance = gsiOpt.map { gsi =>
+            GeoShapeQueryData(gsi.geoDistanceQuery, lvl)
+          }
           override def withGeoDistanceSort = {
             // 2015.jun.30 Стараемся всегда искать с учетом всех возможных опорных геоточек.
             geoMode.exactGeodata
@@ -65,7 +67,10 @@ object ShowcaseNodeListUtil extends PlayMacroLogsImpl {
         .filter(_._2.nonEmpty)
       if (filtered.nonEmpty) {
         val (lvl, node, _) = filtered
-          .map { case (_lvl, _nodes, _prio) => (_lvl, _nodes.head, _prio) }
+          .map {
+            case (_lvl, _nodes, _prio) =>
+              (_lvl, _nodes.head, _prio)
+          }
           .minBy(_._3)
         Some((lvl, node))
       } else {
