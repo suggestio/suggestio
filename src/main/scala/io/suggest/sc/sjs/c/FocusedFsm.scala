@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.c
 
-import io.suggest.sc.sjs.c.cutil.ScFsmStub
-import io.suggest.sc.sjs.m.mfoc.{GoTo, FadsReceived, Close, FocVmStateData}
+import io.suggest.sc.sjs.c.scfsm.ScFsmStub
+import io.suggest.sc.sjs.m.mfoc.{Close, FadsReceived, FocVmStateData, GoTo}
 import io.suggest.sc.sjs.vm.foc.FocAdVm
 
 /**
@@ -12,6 +12,7 @@ import io.suggest.sc.sjs.vm.foc.FocAdVm
  */
 
 // TODO Тут stub только. Логика не написана.
+// Нужно реализовать состояния в подпакете scfsm, а этот файл удалить/переместить.
 
 trait FocusedFsm extends ScFsmStub {
 

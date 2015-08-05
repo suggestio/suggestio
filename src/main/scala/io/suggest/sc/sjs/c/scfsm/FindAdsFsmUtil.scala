@@ -1,4 +1,4 @@
-package io.suggest.sc.sjs.c.cutil
+package io.suggest.sc.sjs.c.scfsm
 
 import io.suggest.sc.sjs.m.msrv.ads.find.{MFindAds, MFindAdsReqDflt, MFindAdsReqEmpty}
 

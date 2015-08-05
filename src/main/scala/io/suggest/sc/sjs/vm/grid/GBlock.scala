@@ -3,10 +3,11 @@ package io.suggest.sc.sjs.vm.grid
 import io.suggest.sc.ScConstants.Block
 import io.suggest.sc.sjs.c.ScFsm
 import io.suggest.sc.sjs.m.mgrid.{GridBlockClick, IBlockInfo}
-import io.suggest.sc.sjs.v.vutil.{OnClickSelfT, SetStyleDisplay}
+import io.suggest.sc.sjs.v.vutil.OnClickSelfT
 import io.suggest.sc.sjs.vm.util.{IInitLayout, CssSzImplicits}
 import io.suggest.sjs.common.util.{SjsLogger, DataUtil}
 import io.suggest.sjs.common.view.safe.SafeElT
+import io.suggest.sjs.common.view.safe.display.SetDisplayEl
 import org.scalajs.dom.{Event, Node}
 import org.scalajs.dom.raw.HTMLDivElement
 
@@ -46,7 +47,7 @@ object GBlock extends SjsLogger {
 import GBlock._
 
 
-trait GBlockT extends SafeElT with SetStyleDisplay with CssSzImplicits with IBlockInfo with OnClickSelfT with IInitLayout {
+trait GBlockT extends SafeElT with SetDisplayEl with CssSzImplicits with IBlockInfo with OnClickSelfT with IInitLayout {
 
   override type T = HTMLDivElement
 
@@ -65,12 +66,12 @@ trait GBlockT extends SafeElT with SetStyleDisplay with CssSzImplicits with IBlo
     val s = _underlying.style
     s.top  = topPx.px
     s.left = leftPx.px
-    displayBlock(_underlying)
+    displayBlock()
   }
 
   /** Анимированно переместить блок в указанную позицию. */
   def moveBlockAnimated(leftPx: Int, topPx: Int, cssPrefixes: List[String]): Unit = {
-    displayBlock(_underlying)
+    displayBlock()
     // Браузер умеет 3d-трансформации.
     val suf = "transform"
     // translate3d(+x, +y) работает с относительными координатами. Надо поправлять их с учетом ВОЗМОЖНЫХ значений style.top и style.left.

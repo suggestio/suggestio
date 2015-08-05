@@ -12,6 +12,7 @@ import org.scalajs.dom.raw.{HTMLDivElement, HTMLInputElement}
  */
 trait MSearchDomT extends GetDivById {
 
+  @deprecated("Use SRoot.find() instead.", "2015.aug.5")
   def rootDiv         = getDivById(ROOT_DIV_ID)
 
   def ftsInput        = getElementById[HTMLInputElement](Fts.INPUT_ID)

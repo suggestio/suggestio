@@ -1,14 +1,14 @@
-package io.suggest.sc.sjs.c
+package io.suggest.sc.sjs.c.scfsm
 
-import io.suggest.sc.sjs.c.cutil.ScFsmStub
+import io.suggest.sc.sjs.c.ScFsm
 import io.suggest.sc.sjs.m.magent.MScreen
 import io.suggest.sc.sjs.m.magent.vsz.ViewportSz
 import io.suggest.sc.sjs.util.router.srv.SrvRouter
 import io.suggest.sc.sjs.v.global.DocumentView
 import io.suggest.sjs.common.util.ISjsLogger
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 import scala.concurrent.Future
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 import scala.util.{Failure, Success}
 
 /**
@@ -17,7 +17,7 @@ import scala.util.{Failure, Success}
  * Created: 19.06.15 17:25
  * Description: Поддержка инициализации выдачи.
  */
-trait EarlyFsm extends ScFsmStub with ISjsLogger {
+trait Init extends ScFsmStub with ISjsLogger {
 
   /** Начальное состояние выдачи. Здесь начинается работа [[ScFsm]]. */
   protected trait InitStateT extends FsmEmptyReceiverState {

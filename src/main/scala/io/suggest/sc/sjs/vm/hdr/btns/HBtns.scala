@@ -1,9 +1,8 @@
 package io.suggest.sc.sjs.vm.hdr.btns
 
-import io.suggest.sc.sjs.v.vutil.SetStyleDisplay
 import io.suggest.sc.sjs.vm.util.domvm.FindSpan
 import io.suggest.sc.ScConstants.Header.BTNS_DIV_ID
-import io.suggest.sjs.common.view.safe.ISafe
+import io.suggest.sjs.common.view.safe.display.SetDisplayEl
 import org.scalajs.dom.raw.HTMLSpanElement
 
 /**
@@ -23,19 +22,19 @@ object HBtns extends FindSpan {
 }
 
 
-trait HBtnsT extends ISafe with SetStyleDisplay {
+trait HBtnsT extends SetDisplayEl {
 
   override type T = HTMLSpanElement
 
 
   /** Скрыть все базовые кнопки строки заголовка. */
   def hide(): Unit = {
-    displayNone(_underlying)
+    displayNone()
   }
 
   /** Показать базовые кнопки строки заголовка. */
   def show(): Unit = {
-    displayBlock(_underlying)
+    displayBlock()
   }
 
 }

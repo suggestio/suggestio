@@ -19,6 +19,7 @@ import org.scalajs.dom.raw.HTMLDivElement
 object SearchPanelView extends SetStyleDisplay with OnClick {
 
   /** Как уточнить разметку панели. */
+  @deprecated("Use SRoot.adjust() instead.", "2015.aug.5")
   def adjust(): Unit = {
     val offset: Int = if (MSearchDom.tabBtnsDiv.isEmpty) 100 else 150
     val height = MAgent.availableScreen.height - offset

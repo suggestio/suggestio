@@ -1,6 +1,5 @@
 package io.suggest.sc.sjs.c
 
-import io.suggest.sc.sjs.c.cutil.CtlT
 import io.suggest.sc.sjs.m.magent.MAgent
 import io.suggest.sc.sjs.m.mgrid.MGrid
 import io.suggest.sc.sjs.m.msc.fsm.{MScState, MScFsm}
@@ -17,7 +16,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
  * Description: Контроллер для узлов. Начинался с переключения узлов.
  */
 @deprecated("FSM-MVM, see ScIndexFsm addon instead", "23.jun.2015")
-object NodeCtl extends CtlT {
+object NodeCtl {
 
   /** Костыли для переключения узлов. Нужно вызывать после заливки нового
     * состояния с новым rcvrAdnId в fsm при переключении из левых контроллеров. */

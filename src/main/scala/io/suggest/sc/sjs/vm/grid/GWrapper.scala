@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.vm.grid
 
 import io.suggest.sc.ScConstants.Grid
 import io.suggest.sc.sjs.c.ScFsm
-import io.suggest.sc.sjs.m.mgrid.{MGridParams, VScroll}
+import io.suggest.sc.sjs.m.mgrid.{MGridParams, GridScroll}
 import io.suggest.sc.sjs.m.msc.fsm.IStData
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.sjs.vm.util.domvm.get.ChildElOrFind
@@ -46,7 +46,7 @@ trait GWrapperT extends SafeElT with ChildElOrFind {
         // Пнуть контроллер, чтобы подгрузил ещё карточек, когда пора.
         val scrollPxToGo = contentHeight - scr.height - wrappedScrollTop
         if (scrollPxToGo < MGridParams.LOAD_MORE_SCROLL_DELTA_PX) {
-          ScFsm ! VScroll(e)
+          ScFsm ! GridScroll(e)
         }
       }
     }

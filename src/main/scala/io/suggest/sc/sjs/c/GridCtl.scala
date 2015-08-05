@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.c
 
 import io.suggest.sc.ScConstants.Block
-import io.suggest.sc.sjs.c.cutil.{GridOffsetSetter, CtlT}
+import io.suggest.sc.sjs.c.cutil.GridOffsetSetter
 import io.suggest.sc.sjs.m.magent.{IMScreen, MAgent}
 import io.suggest.sc.sjs.m.mgrid._
 import io.suggest.sc.sjs.m.msrv.ads.find.{MFindAdsReqEmpty, MFindAdsReqDflt, MFindAds}
@@ -27,7 +27,7 @@ import scala.util.Success
  * Created: 22.05.15 14:22
  * Description: Контроллер сетки.
  */
-object GridCtl extends CtlT with SjsLogger with GridOffsetSetter { that =>
+object GridCtl extends SjsLogger with GridOffsetSetter { that =>
 
   /**
    * Посчитать и сохранить новые размеры сетки для текущих параметров оной.

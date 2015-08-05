@@ -8,6 +8,7 @@ import org.scalajs.dom.raw.HTMLElement
  * Created: 05.06.15 18:42
  * Description: Краткое выставление style.display
  */
+@deprecated("Use SetDisplayEl instead.", "2015.aug.5")
 trait SetStyleDisplay {
 
   protected def setDisplay(el: HTMLElement, v: String): Unit = {

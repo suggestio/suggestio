@@ -1,6 +1,5 @@
 package io.suggest.sc.sjs.c
 
-import io.suggest.sc.sjs.c.cutil.CtlT
 import io.suggest.sc.sjs.m.mhdr.MHeaderDom
 import io.suggest.sc.sjs.m.msc.fsm.{MCatMeta, MScFsm}
 import io.suggest.sc.sjs.v.layout.HeaderView
@@ -14,7 +13,7 @@ import org.scalajs.dom.Event
  * Created: 05.06.15 10:52
  * Description: Контроллер строки заголовка.
  */
-object HeaderCtl extends CtlT with SjsLogger {
+object HeaderCtl extends SjsLogger {
 
   /** Инициализация кнопок и прочего в строке заголовка. */
   @deprecated("Use HRoot.initLayout() instead", "2015.aug.4")

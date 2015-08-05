@@ -4,8 +4,8 @@ import io.suggest.sc.sjs.m.msc.fsm.IStData
 import io.suggest.sc.sjs.v.vutil.VUtil
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.sjs.vm.util.domvm.get.ChildElOrFind
-import io.suggest.sjs.common.view.safe.SafeElT
-import org.scalajs.dom.raw.HTMLDivElement
+import io.suggest.sjs.common.view.safe.{ISafe, SafeElT}
+import org.scalajs.dom.raw.{HTMLElement, HTMLDivElement}
 import io.suggest.sc.ScConstants.Grid
 
 /**
@@ -42,14 +42,17 @@ trait GRootT extends SafeElT with ChildElOrFind {
     for (screen <- stData.screen) {
       val height = screen.height
 
+      // Кешируем анонимную фунцкию экстракции underlying-тегов между несколькими вызовами.
+      val underF = ISafe.extractorF[HTMLElement]
+
       val containerOpt = wrapper
         .flatMap(_.content)
         .flatMap(_.container)
-        .map(_._underlying)
+        .map(underF)
 
       val wrappersIter = (this :: wrapper.toList)
         .iterator
-        .map { _._underlying }
+        .map(underF)
 
       VUtil.setHeightRootWrapCont(height, containerOpt, wrappersIter)
 

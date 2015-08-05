@@ -1,12 +1,12 @@
-package io.suggest.sc.sjs.c
+package io.suggest.sc.sjs.c.scfsm
 
-import io.suggest.sc.sjs.c.cutil.{FindAdsFsmUtil, ScFsmStub}
+import io.suggest.sc.sjs.c.{NavPanelCtl, NodeWelcomeCtl, SearchPanelCtl}
 import io.suggest.sc.sjs.m.mgrid.MGridState
 import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
-import io.suggest.sc.sjs.m.msrv.index.{MScIndexArgs, MNodeIndex}
-import io.suggest.sc.sjs.v.res.{FocusedRes, CommonRes}
-import io.suggest.sc.sjs.vm.{SafeBody, SafeWnd}
+import io.suggest.sc.sjs.m.msrv.index.{MNodeIndex, MScIndexArgs}
+import io.suggest.sc.sjs.v.res.{CommonRes, FocusedRes}
 import io.suggest.sc.sjs.vm.layout.LayRootVm
+import io.suggest.sc.sjs.vm.{SafeBody, SafeWnd}
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
@@ -19,7 +19,7 @@ import scala.util.{Failure, Success}
  * Created: 22.06.15 14:19
  * Description: Аддон центрального FSM, добавляющий состояния для получения и загрузки index'а выдачи.
  */
-trait ScIndexFsm extends ScFsmStub with FindAdsFsmUtil {
+trait GetIndex extends ScFsmStub with FindAdsFsmUtil {
 
   /** Реализация состояния активации и  */
   protected trait GetIndexStateT extends FsmState {

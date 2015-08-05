@@ -1,0 +1,41 @@
+package io.suggest.sc.sjs.vm.search.tabs.htag
+
+import io.suggest.sc.sjs.vm.search.tabs.{TabRoot, TabCompanion}
+import org.scalajs.dom.raw.HTMLDivElement
+import io.suggest.sc.ScConstants.Search.Nodes.ROOT_DIV_ID
+
+/**
+ * Suggest.io
+ * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+ * Created: 05.08.15 13:41
+ * Description: VM корневого контейнера тела вкладки с поисковыми хеш-тегами.
+ */
+object ShtRoot extends TabCompanion {
+
+  override type T = ShtRoot
+
+  override def DOM_ID = ROOT_DIV_ID
+
+}
+
+
+trait ShtRootT extends TabRoot {
+
+  override type T = HTMLDivElement
+
+  override type SubTagVm_t = ShtWrapper.T
+  override protected type SubTagEl_t = ShtWrapper.Dom_t
+  override protected def _subtagCompanion = ShtWrapper
+
+}
+
+
+case class ShtRoot(
+  override val _underlying: HTMLDivElement
+)
+  extends ShtRootT
+{
+
+  override lazy val wrapper = super.wrapper
+
+}

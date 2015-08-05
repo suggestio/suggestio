@@ -1,12 +1,13 @@
-package io.suggest.sc.sjs.c.cutil
+package io.suggest.sc.sjs.c.scfsm
 
-import io.suggest.fsm.{StateData, AbstractFsm, AbstractFsmUtil}
-import io.suggest.sc.sjs.m.mfsm.IFsmMsg
+import io.suggest.fsm.{AbstractFsm, AbstractFsmUtil, StateData}
+import io.suggest.sc.sjs.m.mfsm.{KbdKeyUp, IFsmMsg}
 import io.suggest.sc.sjs.m.msc.fsm.MStData
 import io.suggest.sjs.common.util.ISjsLogger
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import org.scalajs.dom.KeyboardEvent
 
 import scala.concurrent.Future
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 /**
  * Suggest.io
@@ -22,11 +23,32 @@ trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger {
     AbstractFsmUtil.combinePfs(rcvrs)
   }
 
+
   /** Если состояние не требует ресивера, то можно использовать этот трейт. */
   protected trait FsmEmptyReceiverState extends FsmState {
     override def receiverPart: Receive = PartialFunction.empty
   }
 
+
+  /** Добавление слушателя событий отпускания кнопок клавиатуры в состояние. */
+  protected trait KbdKeyUpFsmState extends FsmState {
+    /** Поддержка событий */
+    protected def _onKbdKeyUp(event: KeyboardEvent): Unit
+
+    override def receiverPart: PartialFunction[Any, Unit] = {
+      case KbdKeyUp(event) =>
+        _onKbdKeyUp(event)
+    }
+  }
+
+
+  /** Ресивер для всех состояний. */
+  override protected def allStatesReceiver: Receive = {
+    // Неожиданные сообщения надо логгировать.
+    case other =>
+      // Пока только логгируем пришедшее событие. Потом и логгирование надо будет отрубить.
+      log("[" + _state + "] Dropped event: " + other)
+  }
 
   override type SD = MStData
 

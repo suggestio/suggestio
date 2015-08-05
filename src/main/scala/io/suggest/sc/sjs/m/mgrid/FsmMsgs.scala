@@ -14,4 +14,4 @@ import org.scalajs.dom.Event
 case class GridBlockClick(e: Event) extends IFsmMsg
 
 /** Событие вертикального скроллинга страницы с плиткой. */
-case class VScroll(e: Event) extends IFsmMsg
+case class GridScroll(e: Event) extends IFsmMsg

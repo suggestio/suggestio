@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.c
 
-import io.suggest.sc.sjs.m.mhdr.{ShowNavClick, ShowSearchClick}
+import io.suggest.sc.sjs.c.scfsm.{Init, GetIndex, GridAppend}
 import io.suggest.sc.sjs.m.msc.fsm.MStData
 import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
 import io.suggest.sjs.common.util.SjsLogger
@@ -14,10 +14,12 @@ import scala.concurrent.Future
  * Created: 16.06.15 12:07
  * Description: FSM-контроллер для всей выдачи. Собирается из кусков, которые закрывают ту или иную область.
  */
-object ScFsm extends SjsLogger with EarlyFsm with ScIndexFsm with GridFsm {
+object ScFsm extends SjsLogger with Init with GetIndex with GridAppend {
 
   // Инициализируем базовые внутренние переменные.
   override protected var _state: FsmState = new DummyState
+
+  /** Контейнер данных состояния. */
   override protected var _stateData: SD = MStData()
 
   /** Текущий обработчик входящих событий. */
@@ -30,24 +32,7 @@ object ScFsm extends SjsLogger with EarlyFsm with ScIndexFsm with GridFsm {
 
 
   /** Ресивер для всех состояний. */
-  override protected val allStatesReceiver: Receive = {
-    // Сигнал нажатия на кнопку открытия панели поиска.
-    case ShowSearchClick(event) =>
-      // TODO Показать панель, выставить соотв.флаг в состояние выдачи, перестроить карточки.
-      ???
-
-    // Сигнал нажатия на кнопку отображения панели навигации.
-    case ShowNavClick(event) =>
-      // TODO Показать панель навигации, обновить данные состояния выдачи, перестроить карточки.
-      ???
-
-    // Неожиданные сообщения надо логгировать.
-    case other =>
-      // Пока только логгируем пришедшее событие. Потом и логгирование надо будет отрубить.
-      log("[" + _state + "] Dropped event: " + other)
-    // TODO Обрабатывать popstate-события (HTML5 History API).
-    // TODO Отрабатывать window resize event: пробрасывать в каждое состояние, добавив соотв.API в FsmState.
-  }
+  override protected val allStatesReceiver = super.allStatesReceiver
 
   // Обработать событие синхронно.
   override protected def _sendEventSync(e: Any): Unit = {

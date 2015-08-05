@@ -1,9 +1,7 @@
 package io.suggest.sc.sjs.vm.util.cont
 
 import io.suggest.sc.sjs.m.mdom.content.IHtmlContent
-import io.suggest.sc.sjs.v.vutil.SetStyleDisplay
 import io.suggest.sjs.common.view.safe.ISafe
-import org.scalajs.dom.raw.HTMLElement
 import org.scalajs.dom.{Element, Node}
 
 /**
@@ -50,21 +48,4 @@ trait ContainerT extends IContainer {
     contentNode foreach _underlying.removeChild
   }
 
-}
-
-
-/** Поддержка сокрытия/отображения контейнера. */
-trait ShowHide extends ISafe with SetStyleDisplay {
-
-  override type T <: HTMLElement
-
-  /** Отобразить на экран контейнер. */
-  def show(): Unit = {
-    displayBlock(_underlying)
-  }
-
-  /** Скрыть контейнер. */
-  def hide(): Unit = {
-    displayNone(_underlying)
-  }
 }

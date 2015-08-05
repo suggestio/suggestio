@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.c
 
-import io.suggest.sc.sjs.c.cutil.{OnEscKeyUpT, GridOffsetSetter, CtlT}
+import io.suggest.sc.sjs.c.cutil.{OnEscKeyUpT, GridOffsetSetter}
 import io.suggest.sc.sjs.m.magent.MAgent
 import io.suggest.sc.sjs.m.mgrid.{MGrid, MGridState}
 import io.suggest.sc.sjs.m.mnav.MNavDom
@@ -21,7 +21,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
  * Created: 28.05.15 11:31
  * Description: Контроллер панели навигации: инициализация панели, реакция на события и т.д.
  */
-object NavPanelCtl extends CtlT with GridOffsetSetter with OnEscKeyUpT {
+object NavPanelCtl extends GridOffsetSetter with OnEscKeyUpT {
 
   /** Инициализация панели навигации, контроллера и всего остального. */
   def initNav(): Unit = {

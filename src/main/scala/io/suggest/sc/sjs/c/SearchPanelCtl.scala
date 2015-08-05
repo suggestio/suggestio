@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.c
 
 import io.suggest.sc.ScConstants.Search.Cats
-import io.suggest.sc.sjs.c.cutil.{OnEscKeyUpT, GridOffsetSetter, CtlT}
+import io.suggest.sc.sjs.c.cutil.{OnEscKeyUpT, GridOffsetSetter}
 import io.suggest.sc.sjs.m.mgrid.{MGridState, MGrid}
 import io.suggest.sc.sjs.m.mhdr.MHeaderDom
 import io.suggest.sc.sjs.m.msc.fsm.{MCatMeta, MScFsm}
@@ -20,7 +20,7 @@ import org.scalajs.dom.raw.{HTMLElement, HTMLDivElement}
  * Created: 25.05.15 18:24
  * Description: Контроллер реакции на события поисковой (правой) панели.
  */
-object SearchPanelCtl extends CtlT with SjsLogger with GridOffsetSetter with OnEscKeyUpT {
+object SearchPanelCtl extends SjsLogger with GridOffsetSetter with OnEscKeyUpT {
 
   /** Инициализация после загрузки выдачи узла. */
   def initNodeLayout(): Unit = {
@@ -83,9 +83,9 @@ object SearchPanelCtl extends CtlT with SjsLogger with GridOffsetSetter with OnE
 
 
   /** Если ширина экрана позволяет, то выставить сетке новый rightOffset и отребилдить. */
-  def maybeRebuildGrid(rootDivOpt   : Option[HTMLDivElement]  = MSearchDom.rootDiv,
-                       isHiddenOpt  : Option[Boolean]         = None,
-                       _mgs         : MGridState              = MGrid.gridState): Unit = {
+  private def maybeRebuildGrid(rootDivOpt   : Option[HTMLDivElement]  = MSearchDom.rootDiv,
+                               isHiddenOpt  : Option[Boolean]         = None,
+                               _mgs         : MGridState              = MGrid.gridState): Unit = {
     // на мобиле выдачу не надо перекорчевывать, она остается под панелью. На экранах по-шире выдача "сдвигается".
     if (_mgs.isDesktopView) {
       // Облегченный offset-калькулятор, которому ничего толком искать не надо (всё уже найдено)

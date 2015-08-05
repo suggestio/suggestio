@@ -1,9 +1,8 @@
 package io.suggest.sc.sjs.vm.foc
 
-import io.suggest.sc.sjs.v.vutil.{SetStyleDisplay, VUtil}
-import io.suggest.sc.sjs.vm.util.cont.{ShowHide, ContainerT}
+import io.suggest.sc.sjs.v.vutil.VUtil
+import io.suggest.sc.sjs.vm.util.cont.ContainerT
 import io.suggest.sc.sjs.vm.util.domvm.get.GetDivById
-import org.scalajs.dom
 import org.scalajs.dom.raw.HTMLDivElement
 import io.suggest.sc.ScConstants.Focused.ROOT_ID
 
@@ -32,7 +31,6 @@ import FocRootContainerVm._
 
 case class FocRootContainerVm(_underlying: HTMLDivElement)
   extends ContainerT
-  with ShowHide
 {
 
   override type T = HTMLDivElement
