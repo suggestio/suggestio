@@ -22,5 +22,10 @@ trait SetDisplayEl extends ISafe {
 
   /** Отобразить текущий DOM-элемент блочно. */
   protected def displayBlock() = setDisplay("block")
+
+  protected def isHidden: Boolean = {
+    val d = _underlying.style.display
+    d != null && !d.isEmpty && d != "none"
+  }
   
 }
