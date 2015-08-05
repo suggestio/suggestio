@@ -1,7 +1,10 @@
 package io.suggest.sc.sjs.vm.util
 
-import io.suggest.adv.ext.model.im.{ISize2di, IWidth}
-import io.suggest.sc.sjs.m.mgrid.IGridState
+import io.suggest.adv.ext.model.im.ISize2di
+import io.suggest.sc.sjs.m.mgrid.MGridState
+import io.suggest.sc.sjs.m.msc.fsm.IStData
+import io.suggest.sjs.common.view.safe.css.Width
+import io.suggest.sjs.common.view.safe.display.SetDisplayEl
 import org.scalajs.dom.raw.HTMLElement
 
 /**
@@ -13,20 +16,23 @@ import org.scalajs.dom.raw.HTMLElement
  *
  * Трейт подмешивается в ModelView'ы панелей и дореализовывается в рамках специфики конкретной панели.
  */
-trait GridOffsetCalc {
+trait GridOffsetCalc extends SetDisplayEl with Width {
 
-  /** Для дедубликации рассчетов дополнительной ширины формула вынесена сюда. */
-  protected def getWidthAdd(mgs: IGridState, wndWidth: IWidth): Int = {
-    (wndWidth.width - mgs.contSz.get.cw) / 2
-  }
+  override type T <: HTMLElement
 
   /** Заготовка калькулятора для левой или правой колонки. */
   protected trait GridOffsetterT {
 
-    type MGS_t <: IGridState
+    /** Текущие данные состояние FSM. */
+    def sd0: IStData
+
+    /** Для дедубликации рассчетов дополнительной ширины формула вынесена сюда. */
+    def _getWidthAdd: Int = {
+      (screen.width - mgs.contSz.get.cw) / 2
+    }
 
     /** Состояние сетки, передаётся из состояния FSM. */
-    def mgs: MGS_t
+    protected def mgs = sd0.grid.state
 
     /** Данные по экрану устройства. */
     def screen: ISize2di
@@ -34,26 +40,11 @@ trait GridOffsetCalc {
     /** Если mgs указывает на необходимость нулевого оффсета, то её следует послушать. */
     def canNonZeroOffset: Boolean = mgs.canNonZeroOffset
 
-    /** div-элемент текущей панели, с которым работаем. */
-    def elOpt: Option[HTMLElement]
-
     /** Константа минимальной ширины колонки. */
     def minWidth: Int
 
-    /** Константа widthAdd, посчитанная через getWidthAdd(). */
-    def widthAdd: Int = getWidthAdd(mgs, screen)
-
-    def isElHidden(el: HTMLElement): Boolean = {
-      val disp = el.style.display
-      disp.isEmpty || disp == "none"
-    }
-
-    /** Сохранить новый cell offset в состояние. */
-    def setOffset(newOff: Int): MGS_t
-
-    def setWidth(el: HTMLElement): Unit = {
-      el.style.width = (minWidth + widthAdd) + "px"
-    }
+    /** Сохранить новый cell offset в состояние. Метод должен выставлять rightOffset или leftOffset в mgs. */
+    def setOffset(newOff: Int): MGridState
 
     /** Размер сдвига в ячейках сетки. */
     def cellOffset = 2
@@ -62,15 +53,11 @@ trait GridOffsetCalc {
      * Запустить логику подсчета и расставления параметров на исполнение.
      * @return Пропатченный вариант IGridState.
      */
-    def apply(): MGS_t = {
+    def apply(): MGridState = {
       val res = canNonZeroOffset && {
-        val _elOpt = elOpt
-        _elOpt.nonEmpty && {
-          val el = _elOpt.get
-          !isElHidden(el) && {
-            setWidth(el)
-            true
-          }
+        !isHidden && {
+          setWidthPx(_getWidthAdd + minWidth)
+          true
         }
       }
       val cellOff = if (res) cellOffset else 0

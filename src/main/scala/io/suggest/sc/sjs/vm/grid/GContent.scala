@@ -2,10 +2,10 @@ package io.suggest.sc.sjs.vm.grid
 
 import io.suggest.sc.ScConstants.Grid
 import io.suggest.sc.sjs.m.mgrid.ICwCm
-import io.suggest.sc.sjs.vm.util.CssSzImplicits
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.sjs.vm.util.domvm.get.ChildElOrFindInner
 import io.suggest.sjs.common.view.safe.SafeElT
+import io.suggest.sjs.common.view.vutil.CssSzImplicits
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**

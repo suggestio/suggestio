@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.c
 
-import io.suggest.sc.sjs.c.scfsm.{Init, GetIndex, GridAppend}
+import io.suggest.sc.sjs.c.scfsm._
+import io.suggest.sc.sjs.m.mgrid.{GridBlockClick, GridScroll}
 import io.suggest.sc.sjs.m.msc.fsm.MStData
 import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
 import io.suggest.sjs.common.util.SjsLogger
@@ -14,7 +15,7 @@ import scala.concurrent.Future
  * Created: 16.06.15 12:07
  * Description: FSM-контроллер для всей выдачи. Собирается из кусков, которые закрывают ту или иную область.
  */
-object ScFsm extends SjsLogger with Init with GetIndex with GridAppend {
+object ScFsm extends SjsLogger with Init with GetIndex with GridAppend with OnPlainGrid {
 
   // Инициализируем базовые внутренние переменные.
   override protected var _state: FsmState = new DummyState
@@ -107,10 +108,26 @@ object ScFsm extends SjsLogger with Init with GetIndex with GridAppend {
   ) extends AppendAdsToGridDuringWelcomeStateT {
     
     /** Переключение на какое состояние, когда нет больше карточек на сервере? */
-    override protected def adsLoadedState: FsmState = ???
+    override protected def adsLoadedState: FsmState = {
+      new OnPlainGridState
+    }
 
     /** Что делать при ошибке получения карточек. */
     override protected def _findAdsFailed(ex: Throwable): Unit = ???
+  }
+
+
+  /** Реализация состояния, где карточки уже загружены. */
+  protected class OnPlainGridState extends OnPlainGridStateT {
+    override protected def _nextStateSearchPanelOpened(sd1: MStData): FsmState = {
+      ???   // TODO Переключиться на состояние, где карточки и панель поиска открыта.
+    }
+
+    /** Обработка кликов по карточкам в сетке. */
+    override protected def handleGridBlockClick(gbc: GridBlockClick): Unit = ???
+
+    /** Реакция на вертикальный скроллинг. */
+    override protected def handleVScroll(vs: GridScroll): Unit = ???
   }
 
 }

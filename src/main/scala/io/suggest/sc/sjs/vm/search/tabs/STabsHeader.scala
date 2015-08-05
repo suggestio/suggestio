@@ -27,13 +27,16 @@ trait STabHeaderT extends SafeElT with IInitLayout {
 
   override type T = HTMLDivElement
 
+  /** Кнопка таба с хеш-тегами. */
   def htagsBtn = ShtTabBtn.find()
 
+  /** Все кнопки табов. */
   def btns: List[TabBtn] = htagsBtn.toList
 
-  /** Повесить события на кнопки табов. */
+  /** Инициализировать панель с кнопками поисковых табов. */
   override def initLayout(): Unit = {
-    ???
+    // Вызвать инициализацию в каждой кнопке:
+    btns foreach IInitLayout.f
   }
 
 }

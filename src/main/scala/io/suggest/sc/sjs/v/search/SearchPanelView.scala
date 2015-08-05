@@ -29,6 +29,7 @@ object SearchPanelView extends SetStyleDisplay with OnClick {
   }
 
   /** Инициализировать кнопку таба. */
+  @deprecated("Use TabBtn.initLayout() instead", "2015.aug.5")
   def initTabBtn(tabId: String, btnDiv: SafeEl[HTMLDivElement]): Unit = {
     onClick(btnDiv) { e: Event =>
       SearchPanelCtl.onTabBtnClick(tabId, e)

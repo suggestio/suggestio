@@ -12,7 +12,7 @@ import org.scalajs.dom.raw.HTMLElement
  * Description: Система рассчета и выставления offset-размеров сетки. Вызывается из контроллера.
  * Извлечен из rebuild_grid, предыдущего поколения выдачи.
  */
-// TODO Перепилить этот трейт под интеграцию с ModelView'ами.
+@deprecated("Use vm.util.GridOffsetCalc instead", "2015.aug.5")
 trait GridOffsetSetter {
 
   /** Для дедубликации рассчетов дополнительной ширины формула вынесена сюда. */

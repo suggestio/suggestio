@@ -4,10 +4,11 @@ import io.suggest.sc.ScConstants.Block
 import io.suggest.sc.sjs.c.ScFsm
 import io.suggest.sc.sjs.m.mgrid.{GridBlockClick, IBlockInfo}
 import io.suggest.sc.sjs.v.vutil.OnClickSelfT
-import io.suggest.sc.sjs.vm.util.{IInitLayout, CssSzImplicits}
+import io.suggest.sc.sjs.vm.util.IInitLayout
 import io.suggest.sjs.common.util.{SjsLogger, DataUtil}
 import io.suggest.sjs.common.view.safe.SafeElT
 import io.suggest.sjs.common.view.safe.display.SetDisplayEl
+import io.suggest.sjs.common.view.vutil.CssSzImplicits
 import org.scalajs.dom.{Event, Node}
 import org.scalajs.dom.raw.HTMLDivElement
 
