@@ -1,7 +1,8 @@
 package io.suggest.sc.sjs.vm.search.tabs.htag
 
+import io.suggest.sc.sjs.m.msearch.HtagsTabBtnClick
+import io.suggest.sc.sjs.vm.search.tabs.TabBtn
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
-import io.suggest.sjs.common.view.safe.ISafe
 import org.scalajs.dom.raw.HTMLDivElement
 import io.suggest.sc.ScConstants.Search.Nodes.TAB_BTN_ID
 
@@ -21,9 +22,11 @@ object ShtTabBtn extends FindDiv {
 
 
 /** Логика экземпляра vm вынесена в этот трейт. */
-trait ShtTabBtnT extends ISafe {
+trait ShtTabBtnT extends TabBtn {
 
   override type T = HTMLDivElement
+
+  override protected[this] def _msgModel = HtagsTabBtnClick
 
 }
 

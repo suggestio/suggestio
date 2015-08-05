@@ -40,13 +40,11 @@ trait SRootT extends SafeElT with SetDisplayEl {
   def initLayout(screen: IMScreen): Unit = {
     // Подогнать содержимое панели под экран
     adjust(screen)
-    // Повесить события реакции на клики по кнопкам табов
-    for {
-      tabHdr  <- tabsHdr
-      //btn     <- tabHdr
-    } {
-      ???
+    // Инициализировать панель с кнопками табов.
+    for (tabHdr  <- tabsHdr) {
+      tabHdr.initLayout()
     }
+    ???
   }
 
   /** Доступ к div'у заголовка табов. */

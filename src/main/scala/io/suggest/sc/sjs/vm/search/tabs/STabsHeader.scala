@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.vm.search.tabs
 
 import io.suggest.sc.sjs.vm.search.tabs.htag.ShtTabBtn
+import io.suggest.sc.sjs.vm.util.IInitLayout
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.ScConstants.Search.TAB_BTNS_DIV_ID
 import io.suggest.sjs.common.view.safe.SafeElT
@@ -21,18 +22,25 @@ object STabsHeader extends FindDiv {
 }
 
 
-trait STabBtnsT extends SafeElT {
+/** Логика экземпляра vm'ки живёт в этом трейте. */
+trait STabHeaderT extends SafeElT with IInitLayout {
 
   override type T = HTMLDivElement
 
   def htagsBtn = ShtTabBtn.find()
 
-  def btns = List(htagsBtn)
+  def btns: List[TabBtn] = htagsBtn.toList
+
+  /** Повесить события на кнопки табов. */
+  override def initLayout(): Unit = {
+    ???
+  }
 
 }
 
 
+/** Дефолтовая реализация vm'ки заголовка. */
 case class STabsHeader(
   override val _underlying: HTMLDivElement
 )
-  extends STabBtnsT
+  extends STabHeaderT

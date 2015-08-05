@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.vm.search.tabs
 
+import io.suggest.sc.sjs.vm.util.InitOnClickToFsmT
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.sjs.vm.util.domvm.get.ChildElOrFind
 import io.suggest.sjs.common.view.safe.ISafe
@@ -44,6 +45,13 @@ trait TabWrapper extends ChildElOrFind {
 
 
 trait TabContent extends ISafe {
+
+  override type T <: HTMLDivElement
+
+}
+
+
+trait TabBtn extends InitOnClickToFsmT {
 
   override type T <: HTMLDivElement
 
