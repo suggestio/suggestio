@@ -23,6 +23,7 @@ import org.scalajs.dom.raw.{HTMLElement, HTMLDivElement}
 object SearchPanelCtl extends SjsLogger with GridOffsetSetter with OnEscKeyUpT {
 
   /** Инициализация после загрузки выдачи узла. */
+  @deprecated("Use SRoot.initLayout() instead.", "2015.aug.6")
   def initNodeLayout(): Unit = {
     SearchPanelView.adjust()
 
@@ -44,6 +45,7 @@ object SearchPanelCtl extends SjsLogger with GridOffsetSetter with OnEscKeyUpT {
 
 
   /** Экшен для отображения панели на экране. */
+  @deprecated("Use OnPlainGridState._showSearchClick() instead", "2015.aug.6")
   def showPanel(): Unit = {
     // TODO В оригинале (coffee) здесь был вызов adjust()
     val rootDivOpt = MSearchDom.rootDiv
@@ -65,6 +67,7 @@ object SearchPanelCtl extends SjsLogger with GridOffsetSetter with OnEscKeyUpT {
   }
 
   /** Экшен сокрытия панели. */
+  @deprecated("See OnGridWithSearchStateT._hideSearchClick() instead", "2015.aug.6")
   def hidePanel(): Unit = {
     val rootDivOpt = MSearchDom.rootDiv
     for (rootDiv <- rootDivOpt) {
@@ -147,6 +150,7 @@ object SearchPanelCtl extends SjsLogger with GridOffsetSetter with OnEscKeyUpT {
 
 
   /** Трейт для сборки считалок-обновлялок grid offsets для search-панели. */
+  @deprecated("Use SRoot.GridOffsetter instead", "2015.aug.6")
   trait GridOffsetCalc extends super.GridOffsetCalc {
     override def elOpt    = MSearchDom.rootDiv
     override def minWidth = 300

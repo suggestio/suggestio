@@ -14,10 +14,14 @@ trait OnGrid extends ScFsmStub {
   protected trait OnGridStateT extends FsmState {
 
     /** Обработка кликов по карточкам в сетке. */
-    protected def handleGridBlockClick(gbc: GridBlockClick): Unit
+    protected def handleGridBlockClick(gbc: GridBlockClick): Unit = {
+      ???
+    }
 
     /** Реакция на вертикальный скроллинг. */
-    protected def handleVScroll(vs: GridScroll): Unit
+    protected def handleVScroll(vs: GridScroll): Unit = {
+      ???
+    }
 
 
     /** Обработка событий сетки карточек. */

@@ -17,7 +17,6 @@ trait OnPlainGrid extends OnGrid {
 
      /** Реакция на запрос отображения поисковой панели. */
      protected def _showSearchClick(event: Event): Unit = {
-       // Выставить флаг в состояние выдачи
        val sd0 = _stateData
        for (sroot <- SRoot.find(); screen <- sd0.screen) {
          // Показать панель

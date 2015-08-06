@@ -18,8 +18,8 @@ import io.suggest.sjs.common.util.SjsLogger
  */
 trait GridBuild {
 
-  /** Использовать ли анимацию для перемещения блоков? */
-  protected def withAnim: Boolean
+  /** Использовать ли анимацию для перемещения блоков? Обычно да, но не всегда. */
+  protected def withAnim: Boolean = true
 
   /** Частичная реализация grid builder под нужды FSM-MVM-архитектуры. */
   protected trait GridBuilderT extends V1Builder with SjsLogger {

@@ -14,7 +14,7 @@ import org.scalajs.dom.raw.HTMLElement
  * Description: Система рассчета и выставления offset-размеров сетки для ModelView'ов выдвижных боковых панелей.
  * Извлечен из rebuild_grid, предыдущего поколения выдачи.
  *
- * Трейт подмешивается в ModelView'ы панелей и дореализовывается в рамках специфики конкретной панели.
+ * Трейт подмешивается в ModelView'ы панелей и вызывается из ScFsm для вычисления новых параметров плитки.
  */
 trait GridOffsetCalc extends SetDisplayEl with Width {
 
