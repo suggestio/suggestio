@@ -20,6 +20,14 @@ trait GridOffsetCalc extends SetDisplayEl with Width {
 
   override type T <: HTMLElement
 
+  /** Константа минимальной ширины колонки. */
+  protected def gridOffsetMinWidthPx: Int
+
+  /** Сохранить новый вычисленный cell offset в состояние сетки.
+    * Метод должен выставлять rightOffset или leftOffset в mgs, производя новый экземпляр данных
+    * состояния сетки. */
+  def saveNewOffsetIntoGridState(mgs0: MGridState, newOff: Int): MGridState
+
   /** Заготовка калькулятора для левой или правой колонки. */
   protected trait GridOffsetterT {
 
@@ -35,16 +43,10 @@ trait GridOffsetCalc extends SetDisplayEl with Width {
     protected def mgs = sd0.grid.state
 
     /** Данные по экрану устройства. */
-    def screen: ISize2di
+    def screen: ISize2di = sd0.screen.get     // TODO Ошибки тут быть не должно, но выглядит это как-то некрасиво.
 
     /** Если mgs указывает на необходимость нулевого оффсета, то её следует послушать. */
     def canNonZeroOffset: Boolean = mgs.canNonZeroOffset
-
-    /** Константа минимальной ширины колонки. */
-    def minWidth: Int
-
-    /** Сохранить новый cell offset в состояние. Метод должен выставлять rightOffset или leftOffset в mgs. */
-    def setOffset(newOff: Int): MGridState
 
     /** Размер сдвига в ячейках сетки. */
     def cellOffset = 2
@@ -53,17 +55,27 @@ trait GridOffsetCalc extends SetDisplayEl with Width {
      * Запустить логику подсчета и расставления параметров на исполнение.
      * @return Пропатченный вариант IGridState.
      */
-    def apply(): MGridState = {
+    def execute(): MGridState = {
       val res = canNonZeroOffset && {
         !isHidden && {
-          setWidthPx(_getWidthAdd + minWidth)
+          setWidthPx(_getWidthAdd + gridOffsetMinWidthPx)
           true
         }
       }
       val cellOff = if (res) cellOffset else 0
-      setOffset(cellOff)
+      saveNewOffsetIntoGridState(mgs, cellOff)
     }
 
+  }
+
+  // TODO Подумать в сторону value-class реализации.
+
+  /** Дефолтовая реализация калькулятора сетки в рамках текущей vm'ки. */
+  class GridOffsetter(override val sd0: IStData)
+    extends GridOffsetterT
+
+  def GridOffsetter(sd0: IStData): GridOffsetter = {
+    new GridOffsetter(sd0)
   }
 
 }

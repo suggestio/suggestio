@@ -119,6 +119,9 @@ object ScFsm extends SjsLogger with Init with GetIndex with GridAppend with OnPl
 
   /** Реализация состояния, где карточки уже загружены. */
   protected class OnPlainGridState extends OnPlainGridStateT {
+
+    override protected def withAnim = true
+
     override protected def _nextStateSearchPanelOpened(sd1: MStData): FsmState = {
       ???   // TODO Переключиться на состояние, где карточки и панель поиска открыта.
     }

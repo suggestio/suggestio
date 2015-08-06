@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.m.mgrid
 
 import io.suggest.adv.ext.model.im.ISize2di
+import io.suggest.sc.sjs.vm.grid.GBlock
 import io.suggest.sc.tile.TileConstants
 
 import scala.collection.mutable.ListBuffer
@@ -111,6 +112,11 @@ case class MGridState(
   // TODO После спиливания архитектуры v1 можно/нужно заменить IBlockInfo на GBlock. Внутри всё равно теперь GBlock.
   var blocks            : ListBuffer[IBlockInfo] = ListBuffer.empty
 ) extends IGridState {
+
+  def getBlocks: List[GBlock] = {
+    // TODO Спилить тут asInstanceOf, когда IBlockInfo будет окончательно спилен из этой модели.
+    blocks.toList.asInstanceOf[List[GBlock]]
+  }
 
   /** Контроллер требует закинуть новые блоки в эту модель состояния, указывая точное кол-во блоков.
     * @param newBlocks Последовательность новых блоков.

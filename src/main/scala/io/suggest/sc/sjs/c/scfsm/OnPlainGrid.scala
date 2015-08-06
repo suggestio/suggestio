@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.c.scfsm
 
 import io.suggest.sc.sjs.m.mhdr.{ShowNavClick, ShowSearchClick}
+import io.suggest.sc.sjs.vm.grid.GContent
 import io.suggest.sc.sjs.vm.hdr.HRoot
 import io.suggest.sc.sjs.vm.search.SRoot
 import org.scalajs.dom.Event
@@ -12,25 +13,23 @@ trait OnPlainGrid extends OnGrid {
     * Состояние, когда на на экране уже отрендерена плитка карточек или её часть,
     * в заголовке доступны все основные кнопки.
     */
-   protected trait OnPlainGridStateT extends OnGridStateT {
+   protected trait OnPlainGridStateT extends OnGridStateT with PanelGridRebuilder {
 
      /** Реакция на запрос отображения поисковой панели. */
      protected def _showSearchClick(event: Event): Unit = {
-       for (sroot <- SRoot.find()) {
+       // Выставить флаг в состояние выдачи
+       val sd0 = _stateData
+       for (sroot <- SRoot.find(); screen <- sd0.screen) {
          // Показать панель
          sroot.show()
          // Сменить набор кнопок в заголовке.
          for (header <- HRoot.find()) {
            header.showBackToIndexBtns()
          }
-         // Выставить флаг в состояние выдачи
-         val sd0 = _stateData
-         val sd1 = sd0.copy(
-           search = sd0.search.copy(
-             opened = true
-           )
-         )
-         // TODO Отребилдить сетку с карточками.
+
+         // Отребилдить плитку карточек, создав новое состояние выдачи.
+         val sd1 = _rebuildGridOnPanelChange(sd0, screen, sroot)
+
          // Сменить состояние на то, где открыта панель поиска.
          become(_nextStateSearchPanelOpened(sd1), sd1)
        }

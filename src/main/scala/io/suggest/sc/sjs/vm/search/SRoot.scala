@@ -1,10 +1,11 @@
 package io.suggest.sc.sjs.vm.search
 
 import io.suggest.sc.sjs.m.magent.IMScreen
+import io.suggest.sc.sjs.m.mgrid.MGridState
 import io.suggest.sc.sjs.m.msc.fsm.IStData
 import io.suggest.sc.sjs.vm.search.tabs.{TabCompanion, STabsHeader}
 import io.suggest.sc.sjs.vm.search.tabs.htag.ShtRoot
-import io.suggest.sc.sjs.vm.util.IInitLayout
+import io.suggest.sc.sjs.vm.util.{GridOffsetCalc, IInitLayout}
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.ScConstants.Search.ROOT_DIV_ID
 import io.suggest.sjs.common.view.safe.SafeElT
@@ -27,7 +28,7 @@ object SRoot extends FindDiv {
 
 
 /** Логика экземпляра модели панели поиска живёт в этом трейте. */
-trait SRootT extends SafeElT with SetDisplayEl {
+trait SRootT extends SafeElT with SetDisplayEl with GridOffsetCalc {
 
   override type T = HTMLDivElement
 
@@ -82,6 +83,15 @@ trait SRootT extends SafeElT with SetDisplayEl {
     for (mtab <- tabs) {
       mtab.adjust(tabHeight)
     }
+  }
+
+
+  // Поддержка GridOffsetter.
+  override protected def gridOffsetMinWidthPx: Int = 300
+  override def saveNewOffsetIntoGridState(mgs0: MGridState, newOff: Int): MGridState = {
+    mgs0.copy(
+      rightOffset = newOff
+    )
   }
 
 }

@@ -98,4 +98,5 @@ trait GBlockT extends SafeElT with SetDisplayEl with CssSzImplicits with IBlockI
 }
 
 /** Дефолтовая реализация экземпляра модели [[GBlockT]]. */
-case class GBlock(override val _underlying: HTMLDivElement) extends GBlockT
+case class GBlock(override val _underlying: HTMLDivElement)
+  extends GBlockT

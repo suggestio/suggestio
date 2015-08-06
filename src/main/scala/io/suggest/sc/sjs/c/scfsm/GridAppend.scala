@@ -2,11 +2,8 @@ package io.suggest.sc.sjs.c.scfsm
 
 import io.suggest.sc.sjs.c.GridCtl
 import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
-import io.suggest.sc.sjs.util.grid.builder.V1Builder
 import io.suggest.sc.sjs.v.res.CommonRes
-import io.suggest.sc.sjs.vm.grid.{GBlock, GContent}
-import io.suggest.sjs.common.model.browser.IBrowser
-import io.suggest.sjs.common.util.SjsLogger
+import io.suggest.sc.sjs.vm.grid.GContent
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
@@ -53,9 +50,7 @@ trait GridAppend extends ScFsmStub {
 
 
   /** Закинуть в выдачу полученные карточки. */
-  protected trait AppendAdsToGridStateT extends AdsWaitStateBaseT {
-
-    protected def withAnim: Boolean
+  protected trait AppendAdsToGridStateT extends AdsWaitStateBaseT with GridBuild {
 
     protected def adsLoadedState: FsmState
     
@@ -120,20 +115,15 @@ trait GridAppend extends ScFsmStub {
         val csz = sd0.grid.getGridContainerSz(screen)
         gcontent.setContainerSz(csz)
         val _mgs2 = mgs1.withContParams(csz)
-
-        // Проанализировать залитые в DOM блоки, сохранить метаданные в модель блоков.
-        _mgs2.withNewBlocks( frag.blocks )
+          // Проанализировать залитые в DOM блоки, сохранить метаданные в модель блоков.
+          .withNewBlocks( frag.blocks )
 
         val grid2 = sd0.grid.copy(
           params = gridParams2,
           state  = _mgs2
         )
         // Расположить все новые карточки на экране.
-        val gbuilder = new GridBuilder2 {
-          override def browser = sd0.browser
-          override def grid = grid2
-          override def _addedBlocks = frag.blocks
-        }
+        val gbuilder = GridBuilder(grid2, sd0.browser, frag.blocks)
 
         val gbState2 = gbuilder.execute()
         val grid3 = grid2.copy(
@@ -156,34 +146,6 @@ trait GridAppend extends ScFsmStub {
 
       // Переключиться на следующее состояние.
       become(adsLoadedState, sdFinal)
-    }
-
-    /** Частичная реализация grid builder под нужды FSM-MVM-архитектуры. */
-    protected trait GridBuilder2 extends V1Builder with SjsLogger {
-      override type BI = GBlock
-      def browser: IBrowser
-
-      // Собираем функцию перемещения блока. При отключенной анимации не будет лишней сборки ненужного
-      // списка css-префиксов и проверки значения withAnim.
-      val _moveBlockF: (Int, Int, BI) => Unit = {
-        if (withAnim) {
-          // Включена анимация. Собрать необходимые css-префиксы. {} нужно для защиты от склеивания с последующей строкой.
-          val animCssPrefixes = { browser.CssPrefixing.transforms3d }
-          {(leftPx: Int, topPx: Int, b: BI) =>
-            b.moveBlockAnimated(leftPx, topPx, animCssPrefixes)
-          }
-
-        } else {
-          // Анимация отключена.
-          {(leftPx: Int, topPx: Int, b: BI) =>
-            b.moveBlock(leftPx, topPx)
-          }
-        }
-      }
-
-      override protected def moveBlock(leftPx: Int, topPx: Int, b: BI): Unit = {
-        _moveBlockF(leftPx, topPx, b)
-      }
     }
 
   }
