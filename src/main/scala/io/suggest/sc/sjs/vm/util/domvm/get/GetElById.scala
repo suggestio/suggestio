@@ -37,11 +37,6 @@ trait GetDivById extends GetElById {
 }
 
 
-trait GetSpanById extends GetElById {
-  protected def getSpanById(id: String)        = getElementById[HTMLSpanElement](id)
-  protected def getSpanByIdOrNull(id: String)  = getElementByIdOrNull[HTMLSpanElement](id)
-}
-
 /** Аддон для краткого поисква img-тегов по id. */
 trait GetImgById extends GetElById {
   protected def getImgById(id: String) = getElementById[HTMLImageElement](id)

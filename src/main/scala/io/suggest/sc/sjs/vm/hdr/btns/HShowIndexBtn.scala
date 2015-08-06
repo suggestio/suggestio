@@ -26,7 +26,7 @@ trait HShowIndexBtnT extends InitOnClickToFsmT {
 
   override type T = HTMLDivElement
 
-  override protected[this] def _msgModel = ShowIndexClick
+  override protected[this] def _clickMsgModel = ShowIndexClick
 
 }
 

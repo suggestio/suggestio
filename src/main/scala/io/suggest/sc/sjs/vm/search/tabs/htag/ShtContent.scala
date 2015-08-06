@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.vm.search.tabs.htag
 
-import io.suggest.sc.sjs.vm.search.tabs.TabContent
+import io.suggest.sc.sjs.vm.search.tabs.{TabContentCompanion, TabContent}
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.ScConstants.Search.Nodes.CONTENT_DIV_ID
 import org.scalajs.dom.raw.HTMLDivElement
@@ -11,7 +11,7 @@ import org.scalajs.dom.raw.HTMLDivElement
  * Created: 05.08.15 14:25
  * Description: VM div'а контейнера контента вкладки выбора хеш-тегов
  */
-object ShtContent extends FindDiv {
+object ShtContent extends TabContentCompanion {
 
   override type T = ShtContent
 
@@ -20,11 +20,7 @@ object ShtContent extends FindDiv {
 }
 
 
-trait ShtContentT extends TabContent {
-
-  override type T = HTMLDivElement
-
-}
+trait ShtContentT extends TabContent
 
 
 case class ShtContent(

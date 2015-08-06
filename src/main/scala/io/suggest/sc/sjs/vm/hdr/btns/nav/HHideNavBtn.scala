@@ -26,7 +26,7 @@ trait HHideNavBtnT extends InitOnClickToFsmT {
 
   override type T = HTMLDivElement
 
-  override protected[this] def _msgModel = HideNavClick
+  override protected[this] def _clickMsgModel = HideNavClick
 
 }
 

@@ -26,7 +26,7 @@ trait HShowSearchBtnT extends InitOnClickToFsmT {
 
   override type T = HTMLDivElement
 
-  override protected[this] def _msgModel = ShowSearchClick
+  override protected[this] def _clickMsgModel = ShowSearchClick
 
 }
 

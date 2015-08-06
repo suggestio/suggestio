@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.vm.hdr.btns
 
-import io.suggest.sc.sjs.vm.util.domvm.FindSpan
+import io.suggest.sc.sjs.vm.util.domvm.FindElT
 import io.suggest.sc.ScConstants.Header.BTNS_DIV_ID
 import io.suggest.sjs.common.view.safe.display.SetDisplayEl
 import org.scalajs.dom.raw.HTMLSpanElement
@@ -13,12 +13,10 @@ import org.scalajs.dom.raw.HTMLSpanElement
  * Так получилось, что кнопка сокрытия навигации живёт отдельно от кнопок заголовка.
  * И кнопки заголовка бывает необходимо резко скрывать.
  */
-object HBtns extends FindSpan {
-
+object HBtns extends FindElT {
+  override type Dom_t = HTMLSpanElement
   override type T = HBtns
-
   override def DOM_ID = BTNS_DIV_ID
-
 }
 
 

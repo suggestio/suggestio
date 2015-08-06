@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.vm.search.tabs
 
+import io.suggest.sc.sjs.vm.search.tabs.geo.SGeoTabBtn
 import io.suggest.sc.sjs.vm.search.tabs.htag.ShtTabBtn
 import io.suggest.sc.sjs.vm.util.IInitLayout
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
@@ -27,11 +28,22 @@ trait STabHeaderT extends SafeElT with IInitLayout {
 
   override type T = HTMLDivElement
 
+  /** Кнопка таба с геопоиском. */
+  def geoBtn = SGeoTabBtn.find()
+
   /** Кнопка таба с хеш-тегами. */
   def htagsBtn = ShtTabBtn.find()
 
   /** Все кнопки табов. */
-  def btns: List[TabBtn] = htagsBtn.toList
+  def btns: Seq[TabBtn] = {
+    // Тут какой-то оптимальный велосипед получился. Может запилить вариант по-красивше?
+    val lb = List.newBuilder[TabBtn]
+    if (geoBtn.isDefined)
+      lb += geoBtn.get
+    if (htagsBtn.isDefined)
+      lb += htagsBtn.get
+    lb.result()
+  }
 
   /** Инициализировать панель с кнопками поисковых табов. */
   override def initLayout(): Unit = {

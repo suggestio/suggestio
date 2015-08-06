@@ -2,6 +2,7 @@ package io.suggest.sc.sjs.c
 
 import io.suggest.sc.sjs.c.scfsm._
 import io.suggest.sc.sjs.m.msc.fsm.MStData
+import io.suggest.sc.sjs.m.msearch.MTabs
 import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
 import io.suggest.sjs.common.util.SjsLogger
 import org.scalajs.dom
@@ -14,7 +15,8 @@ import scala.concurrent.Future
  * Created: 16.06.15 12:07
  * Description: FSM-контроллер для всей выдачи. Собирается из кусков, которые закрывают ту или иную область.
  */
-object ScFsm extends SjsLogger with Init with GetIndex with GridAppend with OnPlainGrid with OnGridWithSearch {
+object ScFsm extends SjsLogger with Init with GetIndex with GridAppend with OnPlainGrid with OnGridSearchGeo
+with OnGridSearchHashTags {
 
   // Инициализируем базовые внутренние переменные.
   override protected var _state: FsmState = new DummyState
@@ -114,13 +116,29 @@ object ScFsm extends SjsLogger with Init with GetIndex with GridAppend with OnPl
 
   /** Реализация состояния, где карточки уже загружены. */
   protected class OnPlainGridState extends OnPlainGridStateT {
-    override protected def _nextStateSearchPanelOpened(sd1: MStData) = new OnGridWithSearchState
+    override protected def _nextStateSearchPanelOpened(sd1: MStData): FsmState = {
+      sd1.search.currTab match {
+        case MTabs.Geo      => new OnGridSearchGeoState
+        case MTabs.HashTags => new OnGridSearchHashTagsState
+      }
+    }
   }
 
 
-  /** Состояние, где и сетка есть, и поисковая панель отрыта. */
-  protected class OnGridWithSearchState extends OnGridWithSearchStateT {
+  // Состояния с search-панелью.
+  /** Общий код для реакции на закрытие search-панели. */
+  protected[this] trait _SearchClose extends OnGridSearchStateT {
     override protected def _nextStateSearchPanelClosed(sd1: MStData) = new OnPlainGridState
   }
 
+  /** Состояние, где и сетка есть, и поисковая панель отрыта на вкладке географии. */
+  protected class OnGridSearchGeoState extends OnGridSearchGeoStateT with _SearchClose {
+    override protected def _tabSwitchedFsmState(sd2: MStData) = new OnGridSearchHashTagsState
+  }
+
+  /** Состояние, где открыта вкладка хеш-тегов на панели поиска. */
+  protected class OnGridSearchHashTagsState extends OnGridSearchHashTagsStateT with _SearchClose {
+    override protected def _tabSwitchedFsmState(sd2: MStData) = new OnGridSearchGeoState
+  }
+  
 }

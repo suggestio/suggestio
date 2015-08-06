@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.vm.search
 import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.m.mgrid.MGridState
 import io.suggest.sc.sjs.m.msc.fsm.IStData
-import io.suggest.sc.sjs.vm.search.tabs.{TabCompanion, STabsHeader}
+import io.suggest.sc.sjs.vm.search.tabs.{TabRootCompanion, STabsHeader}
 import io.suggest.sc.sjs.vm.search.tabs.htag.ShtRoot
 import io.suggest.sc.sjs.vm.util.{GridOffsetCalc, IInitLayout}
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
@@ -47,19 +47,24 @@ trait SRootT extends SafeElT with SetDisplayEl with GridOffsetCalc {
     tabsHdr foreach f
     // Инициализировать тела табов
     tabs foreach f
+    // Инициализировать поле текстового поиска.
+    input foreach f
   }
 
   /** Доступ к div'у заголовка табов. */
   def tabsHdr = STabsHeader.find()
 
   /** Модели табов. */
-  def tabsVms = List[TabCompanion](ShtRoot)
+  def tabsVms = List[TabRootCompanion](ShtRoot)
 
   /** Итератор для табов с ленивым поиском. */
   def tabsIter = tabsVms.iterator.flatMap { _.find() }
 
   /** Все табы в виде immutable-коллекции. */
   def tabs = tabsIter.toSeq
+
+  /** Доступ к vm поля полнотекстового поиска. */
+  def input = SInput.find()
 
   /** Отобразить панель. */
   def show(): Unit = {

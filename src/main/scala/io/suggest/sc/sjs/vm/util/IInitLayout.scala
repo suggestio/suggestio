@@ -21,3 +21,7 @@ trait IInitLayout {
   def initLayout(): Unit
 
 }
+
+trait IInitLayoutDummy extends IInitLayout {
+  override def initLayout(): Unit = {}
+}

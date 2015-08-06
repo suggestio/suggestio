@@ -1,8 +1,7 @@
 package io.suggest.sc.sjs.vm.search.tabs.htag
 
-import io.suggest.sc.sjs.m.msearch.HtagsTabBtnClick
-import io.suggest.sc.sjs.vm.search.tabs.TabBtn
-import io.suggest.sc.sjs.vm.util.domvm.FindDiv
+import io.suggest.sc.sjs.m.msearch.STabBtnHtagsClick
+import io.suggest.sc.sjs.vm.search.tabs.{TabBtnCompanion, TabBtn}
 import org.scalajs.dom.raw.HTMLDivElement
 import io.suggest.sc.ScConstants.Search.Nodes.TAB_BTN_ID
 
@@ -12,7 +11,7 @@ import io.suggest.sc.ScConstants.Search.Nodes.TAB_BTN_ID
  * Created: 05.08.15 14:07
  * Description: Кнопка таба хештегов на панели поиска.
  */
-object ShtTabBtn extends FindDiv {
+object ShtTabBtn extends TabBtnCompanion {
 
   override type T = ShtTabBtn
 
@@ -23,11 +22,7 @@ object ShtTabBtn extends FindDiv {
 
 /** Логика экземпляра vm вынесена в этот трейт. */
 trait ShtTabBtnT extends TabBtn {
-
-  override type T = HTMLDivElement
-
-  override protected[this] def _msgModel = HtagsTabBtnClick
-
+  override protected[this] def _clickMsgModel = STabBtnHtagsClick
 }
 
 

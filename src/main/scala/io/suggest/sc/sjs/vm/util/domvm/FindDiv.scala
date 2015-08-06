@@ -1,9 +1,9 @@
 package io.suggest.sc.sjs.vm.util.domvm
 
 import io.suggest.primo.TypeT
-import io.suggest.sc.sjs.vm.util.domvm.get.{GetSpanById, GetDivById}
-import org.scalajs.dom.Node
-import org.scalajs.dom.raw.{HTMLSpanElement, HTMLDivElement}
+import io.suggest.sc.sjs.vm.util.domvm.get.{GetElById, GetDivById}
+import org.scalajs.dom.{Element, Node}
+import org.scalajs.dom.raw.HTMLDivElement
 
 /**
  * Suggest.io
@@ -23,24 +23,25 @@ trait IFindEl extends TypeT {
   def find(): Option[T]
 }
 
-trait FindDiv extends IFindEl with GetDivById with DomId with IApplyEl {
 
-  override type Dom_t = HTMLDivElement
+trait FindElT
+  extends IFindEl
+  with DomId
+  with IApplyEl
+  with GetElById
+{
 
-  def find(): Option[T] = {
-    getDivById(DOM_ID)
+  override type Dom_t <: Element
+
+  override def find(): Option[T] = {
+    getElementById[Dom_t](DOM_ID)
       .map { apply }
   }
 
 }
 
 
-trait FindSpan extends IFindEl with GetSpanById with DomId with IApplyEl {
-
-  override type Dom_t = HTMLSpanElement
-
-  override def find(): Option[T] = {
-    getSpanById(DOM_ID)
-      .map { apply }
-  }
+/** Частоиспользуемый код для vm-компаньонов, обслуживающих div'ы. */
+trait FindDiv extends FindElT with GetDivById {
+  override type Dom_t = HTMLDivElement
 }

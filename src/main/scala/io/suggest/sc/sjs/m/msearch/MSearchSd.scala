@@ -6,7 +6,9 @@ package io.suggest.sc.sjs.m.msearch
  * Created: 05.08.15 9:46
  * Description: Контейнер данных состояния (SD, state data) поискова.
  * @param opened Открыта ли поисковая панель?
+ * @param currTab Текущая вкладка в панели поиска.
  */
 case class MSearchSd(
-  opened: Boolean = false
+  opened  : Boolean = false,
+  currTab : MTab    = MTabs.values.head
 )

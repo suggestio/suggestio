@@ -6,6 +6,7 @@ import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
 import io.suggest.sc.sjs.m.msrv.index.{MNodeIndex, MScIndexArgs}
 import io.suggest.sc.sjs.v.res.{CommonRes, FocusedRes}
 import io.suggest.sc.sjs.vm.layout.LayRootVm
+import io.suggest.sc.sjs.vm.search.SRoot
 import io.suggest.sc.sjs.vm.{SafeBody, SafeWnd}
 
 import scala.concurrent.Future
@@ -133,8 +134,9 @@ trait GetIndex extends ScFsmStub with FindAdsFsmUtil {
 
       // В порядке очереди запустить инициализацию панели поиска.
       wcHideFut.onComplete { case _ =>
-        // TODO Раскидать логику этой инициализации по search vm'кам.
-        SearchPanelCtl.initNodeLayout()
+        for (sroot <- SRoot.find()) {
+          sroot.initLayout(sd1)
+        }
       }(queue)
 
       for (scr <- _stateData.screen;  layContent <- layout.content) {
