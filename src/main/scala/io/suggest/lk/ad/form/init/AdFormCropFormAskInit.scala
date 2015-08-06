@@ -32,7 +32,7 @@ trait AdFormCropFormAskInit extends CropFormAskInit {
   /** Нужно заимплементить этот метод, чтобы он слушал необходимые события формы и дергал _imgCropClick(). */
   override protected def initCropFormAskListener(): Unit = {
     jQuery("#" + BG_IMG_CONTROLS_CONTAINER_ID + " ." + CropConstants.CROP_IMAGE_BTN_CLASS)
-      .on(TouchUtil.clickEvtName, {
+      .on(TouchUtil.clickEvtNamesJq, {
         (that: HTMLElement, e: JQueryEventObject) =>
           _imgCropClick(that, e)
       }: ThisFunction)

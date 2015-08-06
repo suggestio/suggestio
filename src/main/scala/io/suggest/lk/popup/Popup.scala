@@ -197,7 +197,7 @@ object Popup extends SjsLogger {
         wnd.scrollTop(0)
     }
 
-    val clickEvent = TouchUtil.clickEvtName
+    val clickEvent = TouchUtil.clickEvtNamesJq
 
     // Скрывать попап при нажатии кнопки закрытия попапа.
     cont.on(clickEvent, "." + CLOSE_CSS_CLASS, { e: JQueryEventObject =>
