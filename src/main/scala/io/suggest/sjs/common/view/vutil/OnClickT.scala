@@ -32,8 +32,9 @@ trait OnClickT {
 
   /** Комбинация из onClick и _getClickListener. */
   protected def _onClickRaw[T <: Event](el: SafeEventTargetT)(listener: js.Function1[T, _]): Unit = {
-    val evtName = TouchUtil.clickEvtName
-    el.addEventListener(evtName)(listener)
+    for (evtName <- TouchUtil.clickEvtNames) {
+      el.addEventListener(evtName)(listener)
+    }
   }
 
   /**

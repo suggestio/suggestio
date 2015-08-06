@@ -32,10 +32,21 @@ object TouchUtil {
   def EVT_NAME_CLICK       = "click"
 
   /** Название события клика для текущего девайса. */
-  def clickEvtName = if (isTouchDevice) {
-    EVT_NAME_TOUCH_CLICK
-  } else {
-    EVT_NAME_CLICK
+  def clickEvtNames: List[String] = {
+    if (isTouchDevice) {
+      List(EVT_NAME_TOUCH_CLICK, EVT_NAME_CLICK)
+    } else {
+      List(EVT_NAME_CLICK)
+    }
+  }
+
+
+  /**
+   * @see [[http://www.bennadel.com/blog/2386-small-mistake-when-simultaneously-binding-multiple-events-with-jquery.htm]]
+   * @return Список событий для jquery в виде строки event-селектора.
+   */
+  def clickEvtNamesJq: String = {
+    clickEvtNames.mkString(" ")
   }
 
 }
