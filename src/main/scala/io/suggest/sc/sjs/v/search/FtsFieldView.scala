@@ -14,9 +14,11 @@ import org.scalajs.dom.raw.HTMLInputElement
  * Description: Поле полнотекстового поиска довольно нетривиально внутри и будет расти.
  * Тут -- управление представлением этого поля и окружающих элементов.
  */
+@deprecated("Use SInput and SInputContainer instead.", "2015.aug.7")
 object FtsFieldView {
   
   /** Инициализация поля полнотекстового поиска. */
+  @deprecated("Use SInput.initLayout() instead", "2015.aug.6")
   def initLayout(fieldSafe: SafeEventTargetT): Unit = {
     // Навешиваем события
     fieldSafe.addEventListener("keyup") { (e: KeyboardEvent) =>
@@ -31,16 +33,18 @@ object FtsFieldView {
   }
 
 
-
+  @deprecated("Use SInputContainer.activate() instead.", "2015.aug.7")
   def activateField(contSafe: SafeCssElT): Unit = {
     contSafe.addClasses( Fts.ACTIVE_INPUT_CLASS )
   }
 
+  @deprecated("Use SInputContainer.deactivate() instead.", "2015.aug.7")
   def deactivateField(contSafe: SafeCssElT): Unit = {
     contSafe.removeClass( Fts.ACTIVE_INPUT_CLASS )
   }
 
   /** Выставить текст в поисковое поле. */
+  @deprecated("Use SInput.setText() instead", "2015.aug.7")
   def setFtsFieldText(field: HTMLInputElement, t: String): Unit = {
     field.value = t
   }

@@ -3,6 +3,7 @@ package io.suggest.sc.sjs.vm.search
 import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.m.mgrid.MGridState
 import io.suggest.sc.sjs.m.msc.fsm.IStData
+import io.suggest.sc.sjs.vm.search.fts.SInput
 import io.suggest.sc.sjs.vm.search.tabs.{TabRootCompanion, STabsHeader}
 import io.suggest.sc.sjs.vm.search.tabs.htag.ShtRoot
 import io.suggest.sc.sjs.vm.util.{GridOffsetCalc, IInitLayout}

@@ -1,11 +1,11 @@
-package io.suggest.sc.sjs.vm.search
+package io.suggest.sc.sjs.vm.search.fts
 
-import io.suggest.sc.sjs.m.msearch.{FtsFieldBlur, FtsFieldFocus, FtsFieldChanged}
-import io.suggest.sc.sjs.vm.util.{InitOnEventToFsmUtilT, IInitLayout}
+import io.suggest.sc.ScConstants.Search.Fts.INPUT_ID
+import io.suggest.sc.sjs.m.msearch.{FtsFieldBlur, FtsFieldChanged, FtsFieldFocus}
 import io.suggest.sc.sjs.vm.util.domvm.FindElT
+import io.suggest.sc.sjs.vm.util.{IInitLayout, InitOnEventToFsmUtilT}
 import io.suggest.sjs.common.view.safe.SafeElT
 import org.scalajs.dom.raw.HTMLInputElement
-import io.suggest.sc.ScConstants.Search.Fts.INPUT_ID
 
 /**
  * Suggest.io
@@ -31,6 +31,11 @@ trait SInputT extends SafeElT with IInitLayout with InitOnEventToFsmUtilT {
     _addToFsmEventListener("focus", FtsFieldFocus)
     _addToFsmEventListener("blur",  FtsFieldBlur)
   }
+
+  def setText(s: String): Unit = {
+    _underlying.value = s
+  }
+
 }
 
 
