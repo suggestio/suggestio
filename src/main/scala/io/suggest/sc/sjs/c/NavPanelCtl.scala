@@ -24,6 +24,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 object NavPanelCtl extends GridOffsetSetter with OnEscKeyUpT {
 
   /** Инициализация панели навигации, контроллера и всего остального. */
+  @deprecated("Use NRoot/NlRoot.initLayout() instead", "2015.aug.7")
   def initNav(): Unit = {
     NavPaneView.adjustNodeList()
   }
@@ -94,6 +95,7 @@ object NavPanelCtl extends GridOffsetSetter with OnEscKeyUpT {
   }
 
   /** Найти и починить раскрытые сервером геослои. */
+  @deprecated("NlContainer.findFirstExpanded()", "2015.aug.7")
   def findAndFixGnlExpanded(contentDiv: HTMLDivElement): Unit = {
     val nl = MNavDom.allGnlBodies(contentDiv)
     DomListIterator(nl)

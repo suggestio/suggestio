@@ -30,7 +30,14 @@ trait OnGridSearch extends OnGrid {
         }
 
         // Отребилдить плитку карточек, создав новое состояние выдачи.
-        val sd1 = _rebuildGridOnPanelChange(sd0, screen, sroot)
+        val grid2 = _rebuildGridOnPanelChange(sd0, screen, sroot)
+
+        val sd1 = sd0.copy(
+          grid = grid2,
+          search = sd0.search.copy(
+            opened = false
+          )
+        )
 
         // Сменить состояние на то, где открыта панель поиска.
         become(_nextStateSearchPanelClosed(sd1), sd1)

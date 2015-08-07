@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.vm.search
 import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.m.mgrid.MGridState
 import io.suggest.sc.sjs.m.msc.fsm.IStData
-import io.suggest.sc.sjs.vm.search.fts.SInput
+import io.suggest.sc.sjs.vm.search.fts.{SInputContainer, SInput}
 import io.suggest.sc.sjs.vm.search.tabs.{TabRootCompanion, STabsHeader}
 import io.suggest.sc.sjs.vm.search.tabs.htag.ShtRoot
 import io.suggest.sc.sjs.vm.util.{GridOffsetCalc, IInitLayout}
@@ -22,7 +22,6 @@ import org.scalajs.dom.raw.HTMLDivElement
 object SRoot extends FindDiv {
 
   override type T = SRoot
-
   override def DOM_ID: String = ROOT_DIV_ID
 
 }
@@ -66,6 +65,9 @@ trait SRootT extends SafeElT with SetDisplayEl with GridOffsetCalc {
 
   /** Доступ к vm поля полнотекстового поиска. */
   def input = SInput.find()
+
+  /** Контейнер input'а fts-поля. */
+  def inputContainer = SInputContainer.find()
 
   /** Отобразить панель. */
   def show(): Unit = {

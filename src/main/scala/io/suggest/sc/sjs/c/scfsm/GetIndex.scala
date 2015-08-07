@@ -6,6 +6,7 @@ import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
 import io.suggest.sc.sjs.m.msrv.index.{MNodeIndex, MScIndexArgs}
 import io.suggest.sc.sjs.v.res.{CommonRes, FocusedRes}
 import io.suggest.sc.sjs.vm.layout.LayRootVm
+import io.suggest.sc.sjs.vm.nav.nodelist.NlRoot
 import io.suggest.sc.sjs.vm.search.SRoot
 import io.suggest.sc.sjs.vm.{SafeBody, SafeWnd}
 
@@ -123,8 +124,10 @@ trait GetIndex extends ScFsmStub with FindAdsFsmUtil {
         groot.initLayout(sd1)
       }
 
-      // TODO Раскидать логику этой инициализации по nav vm'кам.
-      NavPanelCtl.initNav()
+      // Инициализация панели навигации.
+      for (nlRoot <- NlRoot.find()) {
+        nlRoot.initLayout(sd1)
+      }
 
       // Очищаем подложку фона выдачи.
       wcHideFut onComplete { case _ =>

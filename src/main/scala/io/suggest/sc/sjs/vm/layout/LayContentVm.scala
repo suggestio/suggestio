@@ -4,6 +4,8 @@ import io.suggest.sc.ScConstants.Layout
 import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.vm.grid.GRoot
 import io.suggest.sc.sjs.vm.hdr.HRoot
+import io.suggest.sc.sjs.vm.nav.NRoot
+import io.suggest.sc.sjs.vm.search.SRoot
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.sjs.vm.util.domvm.create.{CreateDiv, CreateVm}
 import io.suggest.sjs.common.view.safe.SafeElT
@@ -56,9 +58,12 @@ trait LayContentVmT extends SafeElT {
 
   /** Доступ к корневому div'у плитки, который является дочерним DOM-узлом этой модели. */
   def grid = GRoot.find()
-
   /** Доступ к корню заголовка выдачи. */
   def header = HRoot.find()
+  /** Старая панель навигации. */
+  def navPanel = NRoot.find()
+  /** Панель поиска. */
+  def searchPanel = SRoot.find()
 
 }
 
@@ -67,7 +72,9 @@ case class LayContentVm(
   override val _underlying: HTMLDivElement
 ) extends LayContentVmT {
 
-  override lazy val grid = super.grid
-  override lazy val header = super.header
+  override lazy val grid        = super.grid
+  override lazy val header      = super.header
+  override lazy val searchPanel = super.searchPanel
+  override lazy val navPanel    = super.navPanel
 }
 

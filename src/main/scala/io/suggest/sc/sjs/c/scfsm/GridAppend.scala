@@ -60,6 +60,21 @@ trait GridAppend extends ScFsmStub {
       val sd0  = _stateData
       val mgs0 = sd0.grid.state
 
+      // Вызываем пересчет ширин боковых панелей в выдаче без перестройки исходной плитки.
+      val screen = sd0.screen.get
+
+      // Если получены новые параметры сетки, то выставить их в состояние сетки
+      val gridParams0 = sd0.grid.params
+      val gridParams2 = mfa.params
+        .flatMap(gridParams0.withChangesFrom)
+        .getOrElse(gridParams0)
+
+      val grid1 = sd0.grid.copy(
+        params = gridParams2
+      )
+      val csz = grid1.getGridContainerSz(screen)
+      gcontent.setContainerSz(csz)
+
       val sdFinal = if (mfa.mads.isEmpty) {
         for (l <- gcontent.loader) {
           l.hide()
@@ -67,7 +82,7 @@ trait GridAppend extends ScFsmStub {
 
         // Скрыть loader-индикатор, он больше не нужен ведь.
         sd0.copy(
-          grid = sd0.grid.copy(
+          grid = grid1.copy(
             state = mgs0.copy(
               fullyLoaded = true
             )
@@ -75,12 +90,6 @@ trait GridAppend extends ScFsmStub {
         )
 
       } else {
-
-        // Если получены новые параметры сетки, то выставить их в состояние сетки
-        val gridParams0 = sd0.grid.params
-        val gridParams2 = mfa.params
-          .flatMap(gridParams0.withChangesFrom)
-          .getOrElse(gridParams0)
 
         // Закачать в выдачу новый css.
         for (css <- mfa.css) {
@@ -101,10 +110,6 @@ trait GridAppend extends ScFsmStub {
           }
         }
 
-        // Вызываем пересчет ширин боковых панелей в выдаче без перестройки исходной плитки.
-        val screen = sd0.screen.get
-        GridCtl.resetGridOffsets(mgs1, screen)    // TODO Нужно без GridCtl здесь обойтись.
-
 
         // Окучиваем контейнер карточек новыми карточками.
         val gcontainer = gcontent.container.get
@@ -112,14 +117,11 @@ trait GridAppend extends ScFsmStub {
         val frag = gcontainer.appendNewMads(mfa.mads)
 
         // Далее логика cbca_grid.init(). Допилить сетку под новые карточки: визуально и на уровне состояния сетки.
-        val csz = sd0.grid.getGridContainerSz(screen)
-        gcontent.setContainerSz(csz)
         val _mgs2 = mgs1.withContParams(csz)
           // Проанализировать залитые в DOM блоки, сохранить метаданные в модель блоков.
           .withNewBlocks( frag.blocks )
 
-        val grid2 = sd0.grid.copy(
-          params = gridParams2,
+        val grid2 = grid1.copy(
           state  = _mgs2
         )
         // Расположить все новые карточки на экране.

@@ -4,6 +4,7 @@ import io.suggest.sc.sjs.vm.util.domvm.{IApplyEl, DomId, IFindEl}
 import io.suggest.sjs.common.model.dom.DomListIterator
 import io.suggest.sjs.common.view.safe.ISafe
 import org.scalajs.dom.Element
+import org.scalajs.dom.raw.HTMLElement
 
 /**
  * Suggest.io
@@ -74,4 +75,24 @@ trait ChildElOrFindInner extends _ChildSubTagSafe { that =>
     override def _findSubtag() = super._findSubtag()
   }
 
+}
+
+
+/** Root-элемент, имеющий поле wrapper. */
+trait RootChildWrapper extends ChildElOrFind {
+  override type T <: HTMLElement
+  override type SubTagVm_t <: WrapperChildContent
+  def wrapper = _findSubtag()
+}
+
+/** Wrapper-элемент, имеющий поле content. */
+trait WrapperChildContent extends ChildElOrFind {
+  override type T <: HTMLElement
+  override type SubTagVm_t <: ContentElT
+  def content = _findSubtag()
+}
+
+/** Content-элемент. */
+trait ContentElT extends ISafe {
+  override type T <: HTMLElement
 }

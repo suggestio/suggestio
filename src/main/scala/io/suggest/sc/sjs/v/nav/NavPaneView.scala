@@ -18,6 +18,7 @@ import org.scalajs.dom.raw.{Event, HTMLDivElement}
 object NavPaneView extends SetStyleDisplay with OnClick {
 
   /** Выставить высоту списка узлов согласно экрану. */
+  @deprecated("NlRoot.initLayout()", "2015.aug.7")
   def adjustNodeList(nodeListDivOpt: Option[HTMLDivElement] = MNavDom.nodeListDiv,
                      wrapperDivOpt: Option[HTMLDivElement]  = MNavDom.wrapperDiv,
                      contentDivOpt: Option[HTMLDivElement]  = MNavDom.contentDiv,
@@ -31,17 +32,20 @@ object NavPaneView extends SetStyleDisplay with OnClick {
 
 
   /** Установить новый список узлов в content div. */
+  @deprecated("NlContent.setContent()", "2015.aug.7")
   def setNodeListHtml(contentDiv: HTMLDivElement, html: String): Unit = {
     contentDiv.innerHTML = html
     // TODO Повесить listener'ы событий на новый список узлов.
   }
 
   /** Произвести отображение панели на экран. */
+  @deprecated("NRoot.show()", "2015.aug.7")
   def showPanel(rootDiv: HTMLDivElement): Unit = {
     displayBlock(rootDiv)
   }
 
   /** Скрыть панель навигации. */
+  @deprecated("NRoot.hide()", "2015.aug.7")
   def hidePanel(rootDiv: HTMLDivElement): Unit = {
     displayNone(rootDiv)
   }

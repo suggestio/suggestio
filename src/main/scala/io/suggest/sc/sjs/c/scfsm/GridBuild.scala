@@ -89,7 +89,7 @@ trait GridBuild {
 trait PanelGridRebuilder extends GridBuild {
 
   /** Акт ребилда плитки карточек, когда изменилось состояние какой-то панели. */
-  protected def _rebuildGridOnPanelChange(sd0: MStData, screen: IMScreen, calc: GridOffsetCalc): MStData = {
+  protected def _rebuildGridOnPanelChange(sd0: MStData, screen: IMScreen, calc: GridOffsetCalc): MGridData = {
     if (sd0.grid.state.isDesktopView) {
       // Внести поправки в состояние плитки.
       val mgs2 = calc.GridOffsetter(sd0).execute()
@@ -108,18 +108,13 @@ trait PanelGridRebuilder extends GridBuild {
       val gBuilder = GridRebuilder(gData3, sd0.browser)
       val gbState2 = gBuilder.execute()
       // Собрать новые данные состояния FSM
-      sd0.copy(
-        search = sd0.search.copy(
-          opened = true
-        ),
-        grid = gData3.copy(
-          builderStateOpt = Some(gbState2)
-        )
+      gData3.copy(
+        builderStateOpt = Some(gbState2)
       )
 
     } else {
       // Сетку не надо ребилдить на узких экранах.
-      sd0
+      sd0.grid
     }
   }
 

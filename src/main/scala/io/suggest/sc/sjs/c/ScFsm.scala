@@ -122,6 +122,8 @@ with OnGridSearchHashTags {
         case MTabs.HashTags => new OnGridSearchHashTagsState
       }
     }
+
+    override protected def _nextStateNavPanelOpened(sd1: MStData): FsmState = ???
   }
 
 
@@ -140,5 +142,6 @@ with OnGridSearchHashTags {
   protected class OnGridSearchHashTagsState extends OnGridSearchHashTagsStateT with _SearchClose {
     override protected def _tabSwitchedFsmState(sd2: MStData) = new OnGridSearchGeoState
   }
-  
+
+
 }
