@@ -28,3 +28,26 @@ trait SetDisplayEl extends ISafe {
   }
   
 }
+
+
+/** public-api для примитивного сокрытия/отображения элементов */
+trait IShowHide {
+  /** Отобразить тело текущего таба. */
+  def show(): Unit
+  /** Скрыть тело текущего таба. */
+  def hide(): Unit
+}
+
+
+/** Реализация API сокрытия/отображения на основе display=block|none. */
+trait ShowHideDisplayEl extends SetDisplayEl with IShowHide {
+
+  override def show(): Unit = {
+    displayBlock()
+  }
+
+  override def hide(): Unit = {
+    displayNone()
+  }
+
+}
