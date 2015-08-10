@@ -20,4 +20,7 @@ object AdFormConstants {
   /** id поля, в котором задается длина. */
   def HEIGHT_INPUT_ID               = "afHeight"
 
+  /** id поля, в котором лежит URL веб-сокета. */
+  def WS_ID_INPUT_ID                = "wsId"
+
 }
