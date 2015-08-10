@@ -12,10 +12,14 @@ import org.scalajs.dom.raw.HTMLElement
  * Created: 24.06.15 15:24
  * Description: Утиль для упрощенного поиска дочерних элементов текущего тега.
  */
-trait SubTagFind {
 
+trait ISubTag {
   /** Тип экземпляра VM-модели субтега. */
   type SubTagVm_t
+}
+
+
+trait SubTagFind extends ISubTag {
 
   protected def _subtagCompanion: IFindEl { type T = SubTagVm_t }
 
