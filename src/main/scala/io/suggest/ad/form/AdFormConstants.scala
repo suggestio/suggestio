@@ -23,4 +23,20 @@ object AdFormConstants {
   /** id поля, в котором лежит URL веб-сокета. */
   def WS_ID_INPUT_ID                = "wsId"
 
+  /** Название поля, содержащего тип ws-сообщения. */
+  def WS_MSG_TYPE_FN                = "type"
+
+  /** Название поля с данными ws-сообщения. */
+  def WS_MSG_DATA_FN                = "data"
+
+  def TYPE_COLOR_PALETTE            = "colorPalette"
+
+  /** css-класс для js-отработки цвета. */
+  def CSS_JS_PALETTE_COLOR          = "js-color-block"
+
+  /** id контейнера отрендеренной палитры. */
+  def COLORS_DIV_ID                 = TYPE_COLOR_PALETTE
+
+  def AD_BG_COLOR_ID                = "adBgColor"
+
 }
