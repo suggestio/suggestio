@@ -8,6 +8,12 @@
 @import AdOfferTypes._
 @import util.blocks._
 @import util.FC.checkboxFc
+@import io.suggest.ad.form.AdFormConstants._
+
+@* Контейнер для палитры цветов, предлагаемых сервером. *@
+@_colorPalHtml = {
+  <div id="@COLORS_DIV_ID" class="color-block_lst"></div>
+}
 
 @* Определяем текущий тип оффера (тип формы). Используем данные формы и аргумент offerType как fallback. *@
 @form(CSRF(call), 'id -> "promoOfferForm") {
@@ -71,17 +77,23 @@
   } {
 
     <table class="input-w __size-L tinymce" id="adFormDescriptionTable">
+      <tr>
+        @* Селектор цвета фона ad description. *@
+        @_selectColorTpl(
+          af("ad.descr.bgColor"),
+          label     = messages("Bg.color"),
+          htmlAfter = Some(_colorPalHtml)
+        )
 
-      @_selectColorTpl(af("ad.descr.bgColor"), label = messages("Bg.color"))
-
-      <td class="input-w_tinymce-editor">
-        @defining( "ad.descr.text" ) { name =>
-          <textarea class="js-tinymce" id="ad_descr_text" name="@name">
-            @af(name).value
-          </textarea>
-        }
-      </td>
-
+        @* Поля для ввода содержимого description *@
+        <td class="input-w_tinymce-editor">
+          @defining( "ad.descr.text" ) { name =>
+            <textarea class="js-tinymce" id="ad_descr_text" name="@name">
+              @af(name).value
+            </textarea>
+          }
+        </td>
+      </tr>
     </table>
 
   }

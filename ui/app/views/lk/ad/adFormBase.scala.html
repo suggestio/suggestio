@@ -39,7 +39,8 @@
   @* jsRoutes для всей формы здесь. *@
   @helper.javascriptRouter("jsRoutes")(
     routes.javascript.Img.imgCropForm,
-    routes.javascript.MarketAd.newTextField
+    routes.javascript.MarketAd.newTextField,
+    routes.javascript.MarketAd.ws
   )
 
   <script src="@routes.Assets.versioned("javascripts/lib/tinymce/js/tinymce/tinymce.min.js")"></script>
@@ -48,26 +49,6 @@
   <input type="hidden" id="@WS_ID_INPUT_ID" value="@ctx.ctxIdStr" />
 
   <script>
-    var ws = new WebSocket("@ctx.wsUrlPrefix@routes.MarketAd.ws(ctx.ctxIdStr)");
-
-    ws.onmessage = function (evt) {
-      var received_msg = evt.data;
-      $(".js-color-block").remove();
-      received_msg = $.parseJSON(received_msg);
-      var colors = received_msg["data"];
-
-      $("#adBgColor").val(colors[0]);
-
-      $dom = $("#adFormDescriptionTable td:first");
-      html = "<div class='color-block_lst'>";
-      for(index in colors) {
-        color = colors[index];
-        html += "<div class='color-block js-color-block' data-color='"+color+"' style='background-color: #"+color+";'></div>"
-      }
-      html += "</div>";
-      $dom.append(html);
-    };
-
     tinymce.init({
       selector: 'textarea.js-tinymce',
       width: 660,

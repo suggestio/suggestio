@@ -3,7 +3,7 @@
 @import ctx._
 @import io.suggest.img.ImgConstants._
 @import io.suggest.js.UploadConstants._
-@import io.suggest.ad.form.AdFormConstants.BG_IMG_CONTAINER_ID
+@import io.suggest.ad.form.AdFormConstants.{BG_IMG_CONTAINER_ID, AD_BG_COLOR_ID}
 @import views.html.stuff._
 @import lk.ad._
 @import io.suggest.img.crop.CropConstants
@@ -52,7 +52,7 @@
       @defining( af("ad.bgColor").value.getOrElse("DAD9D9") ) { color =>
         <a class="btn __size-L __minor js-custom-color" style='background-color: #@color;'>
           @* Фоновый цвет картинки. Это первый цвет из палитры, приходящей по WebSocket. *@
-          <input id="adBgColor" type="hidden" name="ad.bgColor" value='@color' />
+          <input id="@AD_BG_COLOR_ID" type="hidden" name="ad.bgColor" value='@color' />
           @messages("Choose.color")
         </a>
       }
