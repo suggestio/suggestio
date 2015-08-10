@@ -1,6 +1,7 @@
 package io.suggest.xadv.ext.js.runner.m
 
 import io.suggest.adv.ext.model.ctx.MExtTargetT
+import io.suggest.sjs.common.model.IToJsonDict
 
 import scala.scalajs.js.{WrappedDictionary, Dictionary, Any}
 

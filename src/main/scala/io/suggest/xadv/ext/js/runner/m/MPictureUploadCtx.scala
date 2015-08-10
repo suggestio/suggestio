@@ -1,6 +1,7 @@
 package io.suggest.xadv.ext.js.runner.m
 
 import io.suggest.adv.ext.model.ctx.MPicUploadModesLightT
+import io.suggest.sjs.common.model.{IToJsonDict, FromStringT}
 
 import scala.scalajs.js
 import scala.scalajs.js.{WrappedDictionary, Dynamic}

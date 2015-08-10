@@ -3,6 +3,7 @@ package io.suggest.xadv.ext.js.runner.m
 import io.suggest.adv.ext.model.MCommandTypesLightT
 import io.suggest.adv.ext.model.JsCommand._
 import io.suggest.adv.ext.model.JsCommandTypes._
+import io.suggest.sjs.common.model.FromStringT
 import scala.scalajs.js.{WrappedDictionary, Dictionary, Any}
 
 /**

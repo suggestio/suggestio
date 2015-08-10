@@ -1,6 +1,6 @@
 package io.suggest.xadv.ext.js.vk.m
 
-import io.suggest.xadv.ext.js.runner.m.{IToJsonDict, FromJsonT}
+import io.suggest.sjs.common.model.{IToJsonDict, FromJsonT}
 
 import scala.scalajs.js
 import scala.scalajs.js.WrappedDictionary

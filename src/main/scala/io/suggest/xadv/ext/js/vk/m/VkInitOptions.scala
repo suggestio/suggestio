@@ -1,6 +1,6 @@
 package io.suggest.xadv.ext.js.vk.m
 
-import io.suggest.xadv.ext.js.runner.m.IToJsonDict
+import io.suggest.sjs.common.model.IToJsonDict
 
 import scala.scalajs.js
 import scala.language.implicitConversions

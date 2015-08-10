@@ -1,6 +1,7 @@
 package io.suggest.xadv.ext.js.runner.m
 
 import io.suggest.adv.ext.model.ctx.MStorageKvCtx._
+import io.suggest.sjs.common.model.{IToJsonDict, FromJsonT}
 import scala.scalajs.js.{WrappedDictionary, Any, Dictionary}
 
 /**

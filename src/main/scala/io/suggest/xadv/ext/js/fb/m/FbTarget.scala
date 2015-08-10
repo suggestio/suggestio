@@ -2,7 +2,8 @@ package io.suggest.xadv.ext.js.fb.m
 
 import java.net.URI
 
-import io.suggest.xadv.ext.js.runner.m.{IMExtTargetWrapper, IMExtTarget, FromJsonT, IToJsonDict}
+import io.suggest.sjs.common.model.{IToJsonDict, FromJsonT}
+import io.suggest.xadv.ext.js.runner.m.{IMExtTargetWrapper, IMExtTarget}
 
 import scala.scalajs.js.{WrappedDictionary, Any, Dictionary}
 

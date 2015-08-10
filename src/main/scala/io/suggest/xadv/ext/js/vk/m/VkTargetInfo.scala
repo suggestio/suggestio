@@ -1,7 +1,7 @@
 package io.suggest.xadv.ext.js.vk.m
 
 import io.suggest.model.LightEnumeration
-import io.suggest.xadv.ext.js.runner.m.{FromJsonT, IToJsonDict}
+import io.suggest.sjs.common.model.{IToJsonDict, FromJsonT}
 
 import scala.scalajs.js.{Any, Dictionary}
 

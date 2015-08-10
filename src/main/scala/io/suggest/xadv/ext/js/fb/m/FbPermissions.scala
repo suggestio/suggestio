@@ -1,7 +1,7 @@
 package io.suggest.xadv.ext.js.fb.m
 
 import io.suggest.model.LightEnumeration
-import io.suggest.xadv.ext.js.runner.m.{MaybeFromJsonT, IToJson}
+import io.suggest.sjs.common.model.{IToJson, MaybeFromJsonT}
 
 import scala.scalajs.js.JSConverters._
 import scala.scalajs.js.{Array, Any}

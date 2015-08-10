@@ -1,8 +1,8 @@
 package io.suggest.xadv.ext.js.fb.c.hi
 
+import io.suggest.sjs.common.model.{ToJsonDictDummy, IToJsonDict, FromJsonT}
 import io.suggest.xadv.ext.js.fb.c.low.FbLow
 import io.suggest.xadv.ext.js.fb.m._
-import io.suggest.xadv.ext.js.runner.m.{ToJsonDictDummy, FromJsonT, IToJsonDict}
 import io.suggest.xadv.ext.js.runner.m.ex.{ApiException, LoginApiException}
 
 import scala.concurrent.{ExecutionContext, Promise, Future}

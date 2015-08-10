@@ -1,6 +1,6 @@
 package io.suggest.xadv.ext.js.fb.m
 
-import io.suggest.xadv.ext.js.runner.m.FromJsonT
+import io.suggest.sjs.common.model.FromJsonT
 import org.scalajs.dom
 
 import scala.scalajs.js.{WrappedDictionary, Dictionary, Any}

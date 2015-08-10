@@ -1,6 +1,6 @@
 package io.suggest.xadv.ext.js.vk.c.hi
 
-import io.suggest.xadv.ext.js.runner.m.{IToJsonDict, FromJsonT}
+import io.suggest.sjs.common.model.{IToJsonDict, FromJsonT}
 import io.suggest.xadv.ext.js.runner.m.ex.{ApiException, LoginApiException}
 import io.suggest.xadv.ext.js.vk.c.low._
 import io.suggest.xadv.ext.js.vk.m._

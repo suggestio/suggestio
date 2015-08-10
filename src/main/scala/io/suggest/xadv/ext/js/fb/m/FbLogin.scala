@@ -1,6 +1,6 @@
 package io.suggest.xadv.ext.js.fb.m
 
-import io.suggest.xadv.ext.js.runner.m.{FromJsonT, IToJsonDict}
+import io.suggest.sjs.common.model.IToJsonDict
 
 import scala.scalajs.js
 import scala.scalajs.js.{WrappedDictionary, Any, Dictionary}

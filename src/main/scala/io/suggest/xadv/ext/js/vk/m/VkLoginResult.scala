@@ -1,6 +1,6 @@
 package io.suggest.xadv.ext.js.vk.m
 
-import io.suggest.xadv.ext.js.runner.m.{FromJsonT, IToJsonDict}
+import io.suggest.sjs.common.model.{IToJsonDict, FromJsonT}
 import io.suggest.xadv.ext.js.vk.c.low.JSON
 
 import scala.scalajs.js

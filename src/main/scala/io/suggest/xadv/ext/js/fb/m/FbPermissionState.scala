@@ -1,6 +1,6 @@
 package io.suggest.xadv.ext.js.fb.m
 
-import io.suggest.xadv.ext.js.runner.m.MaybeFromJsonT
+import io.suggest.sjs.common.model.MaybeFromJsonT
 
 import scala.scalajs.js.{Dictionary, WrappedDictionary, Any}
 
