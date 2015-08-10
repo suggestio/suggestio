@@ -1,7 +1,7 @@
 package io.suggest.sjs.common.view
 
 import org.scalajs.dom
-import org.scalajs.dom.Document
+import org.scalajs.dom.{WebSocket, Document}
 import org.scalajs.dom.raw.{HTMLBodyElement, HTMLHeadElement, HTMLElement}
 import org.scalajs.jquery._
 
@@ -27,6 +27,13 @@ object CommonPage {
   def onClose(f: () => _): Unit = {
     jQuery(dom.window)
       .on("beforeunload", f: js.Function0[_])
+  }
+
+
+  def wsCloseOnPageClose(ws: WebSocket): Unit = {
+    onClose { () =>
+      ws.close()
+    }
   }
 
 }
