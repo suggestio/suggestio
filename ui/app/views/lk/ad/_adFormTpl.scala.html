@@ -9,13 +9,6 @@
 @import util.blocks._
 @import util.FC.checkboxFc
 
-
-@helper.javascriptRouter("jsRoutes")(
-  routes.javascript.Img.imgCropForm,
-  routes.javascript.MarketCategory.directSubcatsOf,
-  routes.javascript.MarketAd.newTextField
-)
-
 @* Определяем текущий тип оффера (тип формы). Используем данные формы и аргумент offerType как fallback. *@
 @form(CSRF(call), 'id -> "promoOfferForm") {
 

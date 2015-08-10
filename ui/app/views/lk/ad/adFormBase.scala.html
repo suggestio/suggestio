@@ -2,8 +2,9 @@
 
 @* Страница с внешней версткой для формы _adFormTpl. *@
 
-@import ctx.messages
+@import ctx.{messages, request}
 @import helper._
+@import io.suggest.ad.form.AdFormConstants._
 
 @headAfter = {
   <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/lib/colorpicker/css/colorpicker.css")'/>
@@ -35,8 +36,16 @@
     </article>
   </div>
 
+  @* jsRoutes для всей формы здесь. *@
+  @helper.javascriptRouter("jsRoutes")(
+    routes.javascript.Img.imgCropForm,
+    routes.javascript.MarketAd.newTextField
+  )
+
   <script src="@routes.Assets.versioned("javascripts/lib/tinymce/js/tinymce/tinymce.min.js")"></script>
   <script src="@routes.Assets.versioned("javascripts/lib/colorpicker/js/colorpicker.js")"></script>
+
+  <input type="hidden" id="@WS_ID_INPUT_ID" value="@ctx.ctxIdStr" />
 
   <script>
     var ws = new WebSocket("@ctx.wsUrlPrefix@routes.MarketAd.ws(ctx.ctxIdStr)");
@@ -83,4 +92,5 @@
       }
     });
   </script>
+
 }

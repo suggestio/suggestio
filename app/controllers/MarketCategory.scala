@@ -155,18 +155,6 @@ class MarketCategory @Inject() (
       }
     }
   }
-  
-  /**
-   * Найти прямые подкатегории по отношению к указанной.
-   * @param catId id родительской категории.
-   * @return json массив.
-   */
-  def directSubcatsOf(catId: String) = Action.async { implicit request =>
-    MMartCategory.findDirectSubcatsOf(catId).map { subcats =>
-      Ok(renderCatsJson(subcats))
-    }
-  }
-
 
   /** Установить набор пользовательских категорий в указанный узел рекламной сети (обычно ТЦ). */
   def installMartCategories(adnId: String) = IsSuperuser.async { implicit request =>

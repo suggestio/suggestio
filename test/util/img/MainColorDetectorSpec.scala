@@ -39,6 +39,11 @@ class HistogramParsersSpec extends PlaySpec {
 
       parseLine("    1: (  0, 64,193,  0) #0040C100 srgba(0,64,193,0)",   HistogramEntry(1, "0040C1", RGB(0, 64, 193)) )
     }
+
+    // 2015.aug.10: На картинки с белым фоном и небольшим логотипом в центре возникла проблема.
+    "parse code description like gray(255)" in {
+      parseLine("    212300: (255,255,255) #FFFFFF gray(255)",            HistogramEntry(212300, "FFFFFF", RGB(255,255,255)))
+    }
   }
 
 

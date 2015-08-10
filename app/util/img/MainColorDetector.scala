@@ -268,39 +268,36 @@ object HistogramParsers extends JavaTokenParsers {
   def BYTE_NUMBER_P = """(2[0-4]\d|25[0-5]|1?\d{1,2})""".r ^^ { _.toInt }
 
   def COMMA_SP_SEP: Parser[_] = """,\s*""".r
-
-  def RGB_TUPLE_P = {
+  
+  protected def RGB_P: Parser[RGB] = {
     val np = BYTE_NUMBER_P
     val comma = COMMA_SP_SEP
     val npc = np <~ comma
-    // 2014.oct.30: При парсинге PNG может вылетать RGBA-кортеж, который содержит прозрачность (обычно, нулевую) Мы её дропаем.
-    val p = "(" ~> npc ~ npc ~ np <~ opt(comma ~> np) <~ ")"
+    val p = npc ~ npc ~ np <~ opt(comma ~> np)
     p ^^ {
-      case r ~ g ~ b  =>  RGB(red = r, green = g, blue = b)
+      case r ~ g ~ b  =>
+        RGB(red = r, green = g, blue = b)
     }
   }
+
+  // 2014.oct.30: При парсинге PNG может вылетать RGBA-кортеж, который содержит прозрачность (обычно, нулевую) Мы её дропаем.
+  def RGB_TUPLE_P = "(" ~> RGB_P <~ ")"
 
   def HEX_COLOR_P: Parser[String] = {
     "#" ~> "(?i)[0-9A-F]{6}".r <~ opt("[0-9A-F]{2}".r)
   }
 
   /** Запись цвета в srgb. Следует помнить, что для RGB(0,0,0) im возвращает строку "black". */
-  def SRGB_REC_P = {
-    val comma = COMMA_SP_SEP
-    val np = BYTE_NUMBER_P
-    val npc = np <~ comma
-    val p = "s?rgba?\\(".r ~> npc ~ npc ~ np <~ opt(comma ~> np) <~ ")"
-    p ^^ {
-      case r ~ g ~ b  =>  RGB(red = r, green = g, blue = b)
-    }
-  }
+  def SRGB_REC_P = "s?rgba?\\(".r ~> RGB_P <~ ")"
 
-  def COLOR_NAME_P: Parser[String] = "(?i)[_a-z ]+".r
+  /** "gray", "gray(255)", "white", etc. */
+  def COLOR_NAME_P: Parser[String] = "(?i)[_a-z ]+[(0-9)]*".r
 
   def LINE_PARSER = {
     val p = (FREQ_P <~ ":") ~ RGB_TUPLE_P ~ HEX_COLOR_P <~ (SRGB_REC_P | COLOR_NAME_P)
     p ^^ {
-      case freq ~ rgb ~ hexColor =>  HistogramEntry(freq, hexColor, rgb = rgb)
+      case freq ~ rgb ~ hexColor =>
+        HistogramEntry(freq, hexColor, rgb = rgb)
     }
   }
 

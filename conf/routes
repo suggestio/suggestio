@@ -87,10 +87,6 @@ GET  /lk/bill/pricing/wnd/:adnId        @controllers.MarketLkBilling._renderNode
 
 POST  /error/occured/in/showcase        @controllers.RemoteError.handleShowcaseError
 
-## Категории: client JSON API. Используется для динамических форм заполнения карточек и в выдаче
-## 2014.12.10: Больше не используется. Категории теперь набором галочек.
-GET  /m/lk/c/usr/c/:catId/dc            @controllers.MarketCategory.directSubcatsOf(catId)
-
 ## Обращение в тех.поддерку зареганного клиента sio-market.
 GET  /m/lk/support/:adnId               @controllers.MarketLkSupport.supportFormNode(adnId, r: Option[String] ?= None)
 POST /m/lk/support/:adnId               @controllers.MarketLkSupport.supportFormNodeSubmit(adnId, r: Option[String] ?= None)
