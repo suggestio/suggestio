@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.vm.nav.nodelist
 
 import io.suggest.sc.sjs.vm.nav.nodelist.glay.GlayRoot
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
-import io.suggest.sc.ScConstants.NavPane.{GN_CONTAINER_ID, GNL_BODY_CSS_CLASS}
+import io.suggest.sc.ScConstants.NavPane.{GN_CONTAINER_ID, GNL_BODY_CSS_CLASS, GN_ATTR_LAYERS_COUNT}
 import io.suggest.sjs.common.model.dom.DomListIterator
 import io.suggest.sjs.common.view.safe.SafeElT
 import org.scalajs.dom.NodeList
@@ -48,6 +48,11 @@ trait NlContainerT extends SafeElT {
       .headOption
   }
 
+  /** Прочитать кол-во гео-слоёв из соотв.аттрибута. */
+  def layersCount: Int = {
+    getIntAttributeStrict(GN_ATTR_LAYERS_COUNT).get
+  }
+
 }
 
 
@@ -57,4 +62,5 @@ case class NlContainer(
   extends NlContainerT
 {
   override lazy val allGnlTags = super.allGnlTags
+  override lazy val layersCount = super.layersCount
 }

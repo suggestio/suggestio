@@ -10,7 +10,7 @@ import org.scalajs.dom.raw.HTMLDivElement
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 10.08.15 11:57
- * Description: Утиль для сборки Glay-vm'ок.
+ * Description: Утиль для сборки vm'ок, относящихся к подспискам узлов списка навигационной панели.
  */
 trait GlayDivStaticT extends FindElIndexedIdT {
 
@@ -28,9 +28,10 @@ trait GlayDivStaticSuffixedT extends GlayDivStaticT {
   override def getDomId(arg: Int): String = {
     super.getDomId(arg) + _DOM_ID_SUFFIX
   }
-
 }
 
+
+/** Трейт для сборки классов vm'ок, имеющих быстрый доступ к нижележащим элементам. */
 trait GlayT extends SafeElT with ISubTag {
 
   override type T = HTMLDivElement

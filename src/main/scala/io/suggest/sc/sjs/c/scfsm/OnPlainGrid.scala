@@ -49,37 +49,7 @@ trait OnPlainGrid extends OnGrid {
 
 
      protected def _showNavClick(event: Event): Unit = {
-       // TODO Запустить получение списка узлов с сервера, если список ещё не получен.
-       for (nlContent <- NlContent.find() if nlContent.isEmpty) {
-         // Запустить запрос к серверу на тему поиска узлов
-         val searchNodesArgs = new MFindNodesArgsEmpty with MFindNodesArgsDflt {}
-         val fut = MFindNodes.findNodes(searchNodesArgs)
-         fut onSuccess { case resp =>
-           nlContent.setContent( resp.nodeListHtml )
-           // TODO Для развернутого элемента исправить высоту.
-           for (nlCont <- nlContent.container; exp1 <- nlCont.findFirstExpanded) {
-             ???
-           }
-         }
-       }
 
-       val sd0 = _stateData
-       for (nroot <- NRoot.find(); screen <- sd0.screen) {
-         // Визуально отобразить панель
-         nroot.show()
-         // Скрыть кнопку показа панели.
-         for (showBtn <- HShowNavBtn.find()) {
-           showBtn.hide()
-         }
-         val grid2 = _rebuildGridOnPanelChange(sd0, screen, nroot)
-
-         val sd1 = sd0.copy(
-           grid = grid2
-         )
-         // TODO Обновить данные состояния выдачи.
-
-         become(_nextStateNavPanelOpened(sd1), sd1)
-       }
      }
 
      protected def _nextStateNavPanelOpened(sd1: SD): FsmState

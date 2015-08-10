@@ -20,9 +20,7 @@ trait GlayWrapperT extends GlayT {
   override type SubTagVm_t = GlayContent
   override protected def _subtagCompanion = GlayContent
 
-  def content: Option[GlayContent] = {
-    _findSubtag()
-  }
+  def content = _findSubtag()
 }
 
 
