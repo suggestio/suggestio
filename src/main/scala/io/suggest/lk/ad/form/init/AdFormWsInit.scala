@@ -1,8 +1,18 @@
 package io.suggest.lk.ad.form.init
 
+import io.suggest.lk.ad.form.model.MColorPalette
+import io.suggest.lk.router.jsRoutes
 import io.suggest.sjs.common.controller.IInit
-import io.suggest.ad.form.AdFormConstants.WS_ID_INPUT_ID
+import io.suggest.ad.form.AdFormConstants._
+import io.suggest.sjs.common.util.ISjsLogger
+import io.suggest.sjs.common.view.CommonPage
+import org.scalajs.dom
+import org.scalajs.dom.MessageEvent
+import org.scalajs.dom.raw.{HTMLDivElement, WebSocket}
 import org.scalajs.jquery.jQuery
+
+import scala.scalajs.js
+import scala.scalajs.js.JSON
 
 /**
  * Suggest.io
@@ -10,7 +20,7 @@ import org.scalajs.jquery.jQuery
  * Created: 10.08.15 17:16
  * Description: Инициализация websocket для связи с сервером по простому каналу.
  */
-trait AdFormWsInit extends IInit {
+trait AdFormWsInit extends IInit with ISjsLogger {
 
   /** Запуск инициализации текущего модуля. */
   abstract override def init(): Unit = {
@@ -22,10 +32,11 @@ trait AdFormWsInit extends IInit {
   /** Инициализация websocket. */
   private def _initWs(): Unit = {
     // Аккуратно извлечь wsId для генерации ws-ссылки. Если есть.
-    val jq = jQuery(WS_ID_INPUT_ID)
+    val jq = jQuery("#" + WS_ID_INPUT_ID)
     Option( jq )
       .flatMap { jqSel => Option( jqSel.`val`() ) }
-      .map { _.toString.trim }
+      .filter { !js.isUndefined(_) }
+      .map { _.asInstanceOf[String].trim }
       .filter { !_.isEmpty }
       .foreach { wsId =>
         _initWsForId(wsId)
@@ -35,7 +46,63 @@ trait AdFormWsInit extends IInit {
 
   /** Непосредственная инициализация ws. */
   private def _initWsForId(wsId: String): Unit = {
-    ???   // TODO JS валяется в adFormBaseTpl.
+    val route = jsRoutes.controllers.MarketAd.ws(wsId)
+    val ws = new WebSocket(route.webSocketURL())
+    // Закрывать ws при закрытии вкладки.
+    CommonPage.wsCloseOnPageClose(ws)
+
+    // Обрабатывать сообщения от сервера.
+    ws.onmessage = { msg: MessageEvent =>
+      val payload = JSON.parse( msg.data.asInstanceOf[String] )
+      MColorPalette.maybeFromJson(payload)
+        .foreach { _applyColorPalette }
+    }
+  }
+
+  /** Применить полученную палитру к текущей веб-странице. */
+  private def _applyColorPalette(pal: MColorPalette): Unit = {
+    // TODO JS валяется в adFormBaseTpl.
+    val palDivJq = jQuery("#" + COLORS_DIV_ID)
+    palDivJq
+      .children()
+      .remove()
+
+    // Выставить основной цвет фон.
+    if (pal.colors.nonEmpty) {
+      jQuery("#" + AD_BG_COLOR_ID)
+        .`val`( pal.colors.head )
+
+      val d = dom.document
+
+      // Создаём контейнер, куда будут закидываться создаваемые теги.
+      val container = d.createElement("div")
+        .asInstanceOf[HTMLDivElement]
+
+      // Отрендерить палитру.
+      pal.colors
+        .iterator
+        .zipWithIndex
+        .foreach { case (color, i) =>
+          val el = d.createElement("div")
+            .asInstanceOf[HTMLDivElement]
+          el.setAttribute("class",      "color-block " + CSS_JS_PALETTE_COLOR)
+          el.setAttribute("data-color", color)
+          el.setAttribute("style",      "background-color: #" + color + ";")
+          container.appendChild(el)
+        }
+      palDivJq.append(container)
+    }
+
+    /*
+      $dom = $("#adFormDescriptionTable td:first");
+      html = "<div class='color-block_lst'>";
+      for(index in colors) {
+        color = colors[index];
+        html += "<div class='color-block js-color-block' data-color='"+color+"' style='background-color: #"+color+";'></div>"
+      }
+      html += "</div>";
+      $dom.append(html);
+     */
   }
 
 }

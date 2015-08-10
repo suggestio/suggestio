@@ -42,6 +42,7 @@ class AdFormInit
   with JsRemoveImgInitT
   with InitInputFileUploadOnChange with AjaxFileUpload with ImgUploadRenderOverlay
   with AdFormCropFormAskInit
+  with AdFormWsInit
 {
   /** Контейнеры, которые будут отработаны. */
   override protected def _imgInputContainers: TraversableOnce[JQuery] = {

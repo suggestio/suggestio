@@ -1,7 +1,7 @@
 package io.suggest.lk.bill.txn
 
+import io.suggest.lk.router.jsRoutes
 import org.scalajs.dom
-import router.routes
 import io.suggest.bill.TxnsListConstants._
 import io.suggest.sjs.common.controller.{IInit, InitRouter}
 import io.suggest.sjs.common.util.SjsLogger
@@ -57,7 +57,7 @@ sealed class TxnList extends IInit with SjsLogger {
         .toInt
       val nextPage = currPage + 1
       // Узнаем ссылку для ajax-запроса.
-      val route = routes.controllers.MarketLkBilling.txnsList(adnId, nextPage, inline = true)
+      val route = jsRoutes.controllers.MarketLkBilling.txnsList(adnId, nextPage, inline = true)
 
       // Собрать и запустить ajax-запрос:
       val ajaxSettingsJson = Dictionary[Any](

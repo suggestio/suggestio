@@ -11,23 +11,6 @@ import scala.scalajs.js.annotation.JSName
  * Created: 15.05.15 12:26
  * Description: js-router для обращения к серверу за новыми данными транзакций.
  */
-@JSName("jsRoutes")
-object routes extends js.Object {
-
-  def controllers: TxnControllers = js.native
-
-}
-
-
-/** Контроллеры js-роутера bill-txn-страницы. */
-class TxnControllers extends js.Object {
-
-  def MarketLkBilling: TxnLkBillingCtl = js.native
-
-}
-
-
-/** Экшены контороллера [[TxnControllers]]. */
 class TxnLkBillingCtl extends js.Object {
 
   def txnsList(adnId: String, page: Int, inline: Boolean): Route = js.native
