@@ -1,9 +1,9 @@
 package io.suggest.sc.sjs.m.msrv.ads.find
 
 import io.suggest.sc.ScConstants
-import io.suggest.sc.sjs.m.magent.{MAgent, IMScreen}
+import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.m.mgeo.IMGeoMode
-import io.suggest.sc.sjs.m.mgrid.{MGrid, MGridState}
+import io.suggest.sc.sjs.m.mgrid.MGridState
 import io.suggest.sc.sjs.m.msc.fsm.{MScStateT, MScFsm}
 import io.suggest.sc.sjs.m.msrv.MSrv
 
@@ -104,12 +104,10 @@ trait MFindAdsReqWrapper extends MFindAdsReq {
 
 /** Дефолтовая реализация, обычно она используется. */
 trait MFindAdsReqDflt extends MFindAdsReq {
-  def _mgs: MGridState = MGrid.gridState
+  def _mgs: MGridState
   def _fsmState: MScStateT = MScFsm.state
 
   override def receiverId: Option[String]   = _fsmState.rcvrAdnId
-  override def generation: Option[Long]     = Some(MSrv.generation)
-  override def screenInfo: Option[IMScreen] = Some(MAgent.availableScreen)
   override def limit : Option[Int]          = Some(_mgs.adsPerLoad)
   override def offset: Option[Int]          = Some(_mgs.blocksLoaded)
   override def ftsQuery: Option[String]     = _fsmState.ftsSearch

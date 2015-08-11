@@ -21,7 +21,7 @@ object GlayCaption extends FindElIndexedIdT with FindVmForCss  {
 }
 
 
-trait GlayCaptionT extends SafeElT with LayerIndex {
+trait GlayCaptionT extends SafeElT with LayerIndex with GlayContainerT {
 
   override type T = HTMLDivElement
 

@@ -5,7 +5,7 @@ import io.suggest.sc.sjs.m.mnav.NodeListClick
 import io.suggest.sc.sjs.m.msrv.nodes.find.{MFindNodesResp, MFindNodesArgsEmpty, MFindNodesArgsDflt, MFindNodes}
 import io.suggest.sc.sjs.vm.hdr.btns.nav.HShowNavBtn
 import io.suggest.sc.sjs.vm.nav.NRoot
-import io.suggest.sc.sjs.vm.nav.nodelist.glay.{GlayRoot, GlayCaption, GlayNode}
+import io.suggest.sc.sjs.vm.nav.nodelist.glay.{GlayCaption, GlayNode}
 import io.suggest.sc.sjs.vm.nav.nodelist.NlContent
 import io.suggest.sjs.common.util.ISjsLogger
 import io.suggest.sjs.common.view.safe.SafeEl
@@ -194,7 +194,13 @@ trait OnGridNav extends ScFsmStub with ISjsLogger {
               }
               // Отобразить кликнутый слой.
               layCaption.activate()
-              layCaption.body.foreach { _.show() }
+              for {
+                body    <- layCaption.body
+                screen  <- sd0.screen
+              } {
+                body.show()
+                body.fixHeightExpanded(screen, layCaption.container.layersCount)
+              }
               indexClickedOpt
             }
             val sd1 = sd0.copy(

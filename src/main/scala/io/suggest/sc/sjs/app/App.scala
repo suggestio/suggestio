@@ -1,10 +1,8 @@
 package io.suggest.sc.sjs.app
 
-import io.suggest.sc.sjs.c.{ScFsm, NodeCtl}
+import io.suggest.sc.sjs.c.ScFsm
 import io.suggest.sc.sjs.m.magent.vsz.ViewportSz
 import io.suggest.sc.sjs.m.magent.{MAgent, MScreen}
-import io.suggest.sc.sjs.m.msc.fsm.MScFsm
-import io.suggest.sc.sjs.util.router.srv.SrvRouter
 import io.suggest.sjs.common.util.SjsLogger
 
 import scala.scalajs.js.JSApp

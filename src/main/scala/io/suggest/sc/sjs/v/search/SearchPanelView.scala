@@ -16,6 +16,7 @@ import org.scalajs.dom.raw.HTMLDivElement
  * Description: Вьюшка для панели поиска.
  * В coffee-выдаче компонент жил внутри sm.navigation_layer.
  */
+@deprecated("See vm.search package", "2015.aug.5")
 object SearchPanelView extends SetStyleDisplay with OnClick {
 
   /** Как уточнить разметку панели. */

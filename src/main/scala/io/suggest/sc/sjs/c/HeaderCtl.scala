@@ -13,6 +13,7 @@ import org.scalajs.dom.Event
  * Created: 05.06.15 10:52
  * Description: Контроллер строки заголовка.
  */
+@deprecated("FSM-MVM: OnGrid, OnGridPlain, etc", "2015.aug.11")
 object HeaderCtl extends SjsLogger {
 
   /** Инициализация кнопок и прочего в строке заголовка. */

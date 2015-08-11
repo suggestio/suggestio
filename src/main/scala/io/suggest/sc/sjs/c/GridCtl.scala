@@ -27,6 +27,7 @@ import scala.util.Success
  * Created: 22.05.15 14:22
  * Description: Контроллер сетки.
  */
+@deprecated("FSM-MVM: OnGrid, OnGridPlain", "2015.aug.11")
 object GridCtl extends SjsLogger with GridOffsetSetter { that =>
 
   /**
@@ -221,6 +222,7 @@ object GridCtl extends SjsLogger with GridOffsetSetter { that =>
 
   /** Перевыставить ширины боковых панелей в выдаче и боковые оффсеты в состоянии выдачи.
    *  В оригинале это была функция sm.rebuild_grid(). */
+  @deprecated("See ", "2015.aug.1")
   // TODO Вынести это куда-нить после выноса калькуляторов в соответствующие ModelView'ы.
   def resetGridOffsets(_mgs: MGridState, _screen: IMScreen): Unit = {
     // Вызвать калькулятор размеров при ребилде. Результаты записать в соотв. модели.

@@ -16,6 +16,7 @@ import io.suggest.sc.ScConstants.Header._
  * Created: 03.06.15 9:48
  * Description: Представление строки заголовка выдачи.
  */
+@deprecated("vm.hdr package", "2015.aug")
 object HeaderView extends SetStyleDisplay with OnClick {
 
   /**

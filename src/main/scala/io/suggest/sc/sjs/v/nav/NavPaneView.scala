@@ -16,6 +16,7 @@ import org.scalajs.dom.raw.{Event, HTMLDivElement}
  * Created: 22.05.15 15:46
  * Description: Представление панели навигации по сети suggest.io и её узлам, геолокации, и т.д.
  */
+@deprecated("See vm.nav content instead", "2015.aug.11")
 object NavPaneView extends SetStyleDisplay with OnClick {
 
   /** Выставить высоту списка узлов согласно экрану. */

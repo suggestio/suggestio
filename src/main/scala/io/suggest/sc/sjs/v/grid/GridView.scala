@@ -16,6 +16,7 @@ import io.suggest.sc.sjs.vm.grid.GBlock.fixRelCoord
  * Description: view плитки рекламный карточек. Он получает команды от контроллеров или других view'ов,
  * поддерживая тем самым состояние отображаемой плитки карточек.
  */
+@deprecated("See vm.grid package", "2015.aug.1")
 object GridView extends SetStyleDisplay with OnClick {
 
   /**

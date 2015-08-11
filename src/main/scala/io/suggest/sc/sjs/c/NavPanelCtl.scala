@@ -21,6 +21,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
  * Created: 28.05.15 11:31
  * Description: Контроллер панели навигации: инициализация панели, реакция на события и т.д.
  */
+@deprecated("OnGridNav FSM-MVM", "2015.aug.11")
 object NavPanelCtl extends GridOffsetSetter with OnEscKeyUpT {
 
   /** Инициализация панели навигации, контроллера и всего остального. */
@@ -122,6 +123,7 @@ object NavPanelCtl extends GridOffsetSetter with OnEscKeyUpT {
 
 
   /** Клик внутри списка узлов. Это может быть как клик на узле, так и раскрывающемся подразделе списка узлов. */
+  @deprecated("OnGridNavReadyStateT._navNodeListClick()", "2015.aug.11")
   def onNodeListClick(e: Event): Unit = {
     val clickedNode = e.target.asInstanceOf[Node] // Node максимум, т.к. клик может быть по узлам svg
     if (clickedNode != null) {
@@ -158,6 +160,7 @@ object NavPanelCtl extends GridOffsetSetter with OnEscKeyUpT {
 
 
   /** Общий код showGnl() и hideGnl() вынесен сюда. */
+  @deprecated("FSM-MVM implicitly provide this everywhere.", "2015.aug.11")
   protected def _withGnl(layerIndex: Int)(f: (SafeEl[HTMLDivElement], SafeEl[HTMLDivElement]) => Unit): Unit = {
     for {
       captionDiv      <- MNavDom.gnlCaptionDiv(layerIndex)
@@ -169,12 +172,8 @@ object NavPanelCtl extends GridOffsetSetter with OnEscKeyUpT {
     }
   }
 
-  private def isHeightNotSet(wrapperDiv: HTMLDivElement): Boolean = {
-    val h = wrapperDiv.style.height
-    h == null || h.isEmpty
-  }
-
   /** Развернуть гео-слой для отображения. */
+  @deprecated("See OnGridNavReadyStateT._navNodeListClick()", "2015.aug.11")
   def showGnl(layerIndex: Int): Unit = {
     _withGnl(layerIndex) { (safeCaptionDiv, safeGnlBody) =>
       NavPaneView.showGnlBody(safeGnlBody)
@@ -185,6 +184,7 @@ object NavPanelCtl extends GridOffsetSetter with OnEscKeyUpT {
   }
 
   /** Подогнать высоту контейнера узлов слоя под экран. */
+  @deprecated("GlayRoot.fixHeightExpanded()", "2015.aug.11")
   def fixHeightForGnlExpanded(layerIndex: Int, safeGnlBody: SafeElT { type T = HTMLDivElement }): Unit = {
     for {
       // Второй раз пересчет не требуется,если высота у враппера уже была выставлена и TODO Opt если не было поворота экрана/ресайза (код закомменчен)
@@ -204,6 +204,7 @@ object NavPanelCtl extends GridOffsetSetter with OnEscKeyUpT {
   }
 
   /** Свернуть геослой из отображения. */
+  @deprecated("See OnGridNavReadyStateT._navNodeListClick()", "2015.aug.11")
   def hideGnl(layerIndex: Int): Unit = {
     _withGnl(layerIndex) { (safeCaptionDiv, safeGnlBody) =>
       NavPaneView.hideGnlBody(safeGnlBody)
@@ -213,6 +214,7 @@ object NavPanelCtl extends GridOffsetSetter with OnEscKeyUpT {
 
 
   /** Трейт для быстрой сборки считалки-обновлялки grid offsets. */
+  @deprecated("vm.util.GridOffsetCalc", "2015.aug.11")
   trait GridOffsetCalc extends super.GridOffsetCalc {
     override def elOpt    = MNavDom.rootDiv
     override def minWidth = 280

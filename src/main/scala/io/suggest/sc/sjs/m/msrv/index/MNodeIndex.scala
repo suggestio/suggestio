@@ -25,6 +25,7 @@ object MNodeIndex {
    * @return Фьючерс с результатами исполнения запроса.
    */
   @deprecated("Use getIndex(args) instead", "22.jun.2015")
+  // TODO После выпиливания v1 архитектуры УДАЛИТЬ!
   def getIndex(adnIdOpt: Option[String])(implicit ec: ExecutionContext): Future[MNodeIndex] = {
     val reqArgs = MScIndexArgs(
       adnIdOpt  = adnIdOpt,

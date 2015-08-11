@@ -20,6 +20,7 @@ import org.scalajs.dom.raw.{HTMLElement, HTMLDivElement}
  * Created: 25.05.15 18:24
  * Description: Контроллер реакции на события поисковой (правой) панели.
  */
+@deprecated("FSM-MVM: OnGridSearch", "2015.aug.11")
 object SearchPanelCtl extends SjsLogger with GridOffsetSetter with OnEscKeyUpT {
 
   /** Инициализация после загрузки выдачи узла. */

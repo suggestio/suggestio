@@ -18,7 +18,7 @@ object GlayRoot extends GlayDivStaticT {
 }
 
 
-trait GlayRootT extends GlayT with LayerIndex {
+trait GlayRootT extends GlayT with LayerIndex with GlayContainerT {
 
   override type T = HTMLDivElement
 
