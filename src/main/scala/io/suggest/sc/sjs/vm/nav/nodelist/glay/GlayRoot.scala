@@ -1,9 +1,8 @@
 package io.suggest.sc.sjs.vm.nav.nodelist.glay
 
-import io.suggest.sc.ScConstants.NavPane.{GNL_ATTR_LAYER_ID_INDEX, SCREEN_OFFSET, GNL_DOM_HEIGHT}
+import io.suggest.sc.ScConstants.NavPane.{SCREEN_OFFSET, GNL_DOM_HEIGHT, GNL_BODY_HIDDEN_CSS_CLASS}
 import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.v.vutil.VUtil
-import io.suggest.sjs.common.view.safe.display.SetDisplayEl
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -19,17 +18,26 @@ object GlayRoot extends GlayDivStaticT {
 }
 
 
-trait GlayRootT extends GlayT with SetDisplayEl {
+trait GlayRootT extends GlayT with LayerIndex {
 
   override type T = HTMLDivElement
 
   override protected def _subtagCompanion = GlayWrapper
   override type SubTagVm_t = GlayWrapper
 
-  def layerIndex = getIntAttributeStrict(GNL_ATTR_LAYER_ID_INDEX).get
-  def id = _underlying.id
+  /** Скрыто ли тело текущего геослоя? */
+  def isHidden: Boolean = {
+    containsClass(GNL_BODY_HIDDEN_CSS_CLASS)
+  }
 
-  override def isHidden = super.isHidden    // protected -> public
+  /** Скрыть тело текущего гео-слоя. */
+  def hide(): Unit = {
+    addClasses(GNL_BODY_HIDDEN_CSS_CLASS)
+  }
+  /** Отобразить на экран тело текущего гео-слоя. */
+  def show(): Unit = {
+    removeClass(GNL_BODY_HIDDEN_CSS_CLASS)
+  }
 
   def wrapper = _findSubtag()
   // TODO Нужно заимплентить метод fixHeightForGnlExpanded.
@@ -52,6 +60,12 @@ trait GlayRootT extends GlayT with SetDisplayEl {
       if (domH > maxH)
         containers ::= _underlying
       VUtil.setHeightRootWrapCont(targetH, Some(_content._underlying), containers)
+    }
+  }
+
+  def caption(): Option[GlayCaption] = {
+    for (node <- Option( _underlying.previousSibling )) yield {
+      GlayCaption( node.asInstanceOf[HTMLDivElement] )
     }
   }
 

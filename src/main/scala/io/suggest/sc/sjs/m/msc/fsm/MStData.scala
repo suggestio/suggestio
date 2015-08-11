@@ -3,6 +3,7 @@ package io.suggest.sc.sjs.m.msc.fsm
 import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.m.mgeo._
 import io.suggest.sc.sjs.m.mgrid.MGridData
+import io.suggest.sc.sjs.m.mnav.MNavState
 import io.suggest.sc.sjs.m.msearch.MSearchSd
 import io.suggest.sjs.common.model.browser.{IBrowser, MBrowser}
 
@@ -46,6 +47,8 @@ trait IStData extends MGeoLocUtil {
   /** Контейнер данных состояния поиска и поисковой панели. */
   def search      : MSearchSd
 
+  /** Контейнер данных состояния панели навигации и навигации в целом. */
+  def nav         : MNavState
 }
 
 
@@ -57,6 +60,24 @@ case class MStData(
   override val generation   : Long              = MStData.generationDflt,
   override val adnIdOpt     : Option[String]    = None,
   override val browser      : IBrowser          = MStData.browserDflt,
-  override val search       : MSearchSd         = MSearchSd()
+  override val search       : MSearchSd         = MSearchSd(),
+  override val nav          : MNavState         = MNavState()
 )
   extends IStData
+{
+
+  /**
+   * При переключении узла надо резко менять и чистить состояние. Тут логика этого обновления.
+   * @param adnIdOpt2 Новый id текущего узла-ресивера.
+   * @return Новый экземпляр состояния.
+   */
+  def withNodeSwitch(adnIdOpt2: Option[String]): MStData = {
+    copy(
+      adnIdOpt  = adnIdOpt2,
+      nav       = MNavState(),
+      search    = MSearchSd(),
+      grid      = MGridData()
+    )
+  }
+
+}

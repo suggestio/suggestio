@@ -1,6 +1,5 @@
 package io.suggest.sc.sjs.vm.nav.nodelist
 
-import io.suggest.sc.sjs.vm.util.IInitLayout
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.ScConstants.NavPane.WRAPPER_ID
 import io.suggest.sc.sjs.vm.util.domvm.get.WrapperChildContent
@@ -18,17 +17,13 @@ object NlWrapper extends FindDiv {
 }
 
 
-trait NlWrapperT extends WrapperChildContent with IInitLayout {
+trait NlWrapperT extends WrapperChildContent {
   override type T = HTMLDivElement
 
   override protected type SubTagEl_t      = NlContent.Dom_t
   override type SubTagVm_t                = NlContent.T
   override protected def _subtagCompanion = NlContent
 
-  override def initLayout(): Unit = {
-    // Тут инициализировать ничего не надо, пробросить инициализацию в content.
-    content.foreach( IInitLayout.f )
-  }
 }
 
 

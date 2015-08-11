@@ -10,8 +10,10 @@ import org.scalajs.dom.Event
  * Description: Набор переменных состояния панели навигации.
  */
 case class MNavState(
-  screenOffset: Int = 129
+  panelOpened     : Boolean       = false,
+  currGlayIndex   : Option[Int]   = None
 )
+
 
 
 /** Событие клика внутри списка узлов. */

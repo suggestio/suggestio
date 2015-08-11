@@ -1,9 +1,10 @@
 package io.suggest.sc.sjs.vm.nav.nodelist.glay
 
-import io.suggest.sc.ScConstants.NavPane.GNL_BODY_DIV_ID_PREFIX
+import io.suggest.sc.ScConstants.NavPane.{GNL_BODY_DIV_ID_PREFIX, GNL_ATTR_LAYER_ID_INDEX}
 import io.suggest.sc.sjs.vm.util.domvm.{IApplyEl, FindElIndexedIdT}
 import io.suggest.sc.sjs.vm.util.domvm.get.ISubTag
 import io.suggest.sjs.common.view.safe.SafeElT
+import io.suggest.sjs.common.view.safe.attr.SafeAttrElT
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -44,4 +45,11 @@ trait GlayT extends SafeElT with ISubTag {
     opt.map { _subtagCompanion.apply }
   }
 
+}
+
+
+/** API для чтения значения из аттрибута data-index="1". */
+trait LayerIndex extends SafeAttrElT {
+  def layerIndexOpt = getIntAttributeStrict(GNL_ATTR_LAYER_ID_INDEX)
+  def layerIndex    = layerIndexOpt.get
 }

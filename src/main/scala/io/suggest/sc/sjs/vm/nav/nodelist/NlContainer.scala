@@ -1,5 +1,8 @@
 package io.suggest.sc.sjs.vm.nav.nodelist
 
+import io.suggest.sc.sjs.m.mnav.NodeListClick
+import io.suggest.sc.sjs.vm.util.InitOnClickToFsmT
+import io.suggest.sc.sjs.v.vutil.OnClickSelfT
 import io.suggest.sc.sjs.vm.nav.nodelist.glay.GlayRoot
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.ScConstants.NavPane.{GN_CONTAINER_ID, GNL_BODY_CSS_CLASS, GN_ATTR_LAYERS_COUNT}
@@ -21,7 +24,7 @@ object NlContainer extends FindDiv {
 }
 
 
-trait NlContainerT extends SafeElT {
+trait NlContainerT extends SafeElT with InitOnClickToFsmT with OnClickSelfT {
 
   override type T = HTMLDivElement
 
@@ -53,6 +56,7 @@ trait NlContainerT extends SafeElT {
     getIntAttributeStrict(GN_ATTR_LAYERS_COUNT).get
   }
 
+  override protected[this] def _clickMsgModel = NodeListClick
 }
 
 

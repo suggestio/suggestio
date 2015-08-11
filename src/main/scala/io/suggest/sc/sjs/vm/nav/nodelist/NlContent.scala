@@ -1,7 +1,5 @@
 package io.suggest.sc.sjs.vm.nav.nodelist
 
-import io.suggest.sc.sjs.m.mnav.NodeListClick
-import io.suggest.sc.sjs.vm.util.InitOnClickToFsmT
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.ScConstants.NavPane.CONTENT_ID
 import io.suggest.sc.sjs.vm.util.domvm.get.ContentElT
@@ -19,11 +17,9 @@ object NlContent extends FindDiv {
 }
 
 
-trait NlContentT extends ContentElT with InitOnClickToFsmT {
+trait NlContentT extends ContentElT {
 
   override type T = HTMLDivElement
-
-  override protected[this] def _clickMsgModel = NodeListClick
 
   /** Динамический контейнер, появляется после заливки его через setContent(). */
   def container = NlContainer.find()

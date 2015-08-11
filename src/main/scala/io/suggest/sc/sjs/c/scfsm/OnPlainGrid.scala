@@ -37,7 +37,10 @@ trait OnPlainGrid extends OnGrid {
            search = sd0.search.copy(
              opened = true
            ),
-           grid = grid2
+           grid = grid2,
+           nav  = sd0.nav.copy(
+             panelOpened = true
+           )
          )
 
          // Сменить состояние на то, где открыта панель поиска.
@@ -48,9 +51,7 @@ trait OnPlainGrid extends OnGrid {
      protected def _nextStateSearchPanelOpened(sd1: SD): FsmState
 
 
-     protected def _showNavClick(event: Event): Unit = {
-
-     }
+     protected def _showNavClick(event: Event): Unit
 
      protected def _nextStateNavPanelOpened(sd1: SD): FsmState
 

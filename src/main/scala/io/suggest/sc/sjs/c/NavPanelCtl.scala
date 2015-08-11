@@ -31,6 +31,7 @@ object NavPanelCtl extends GridOffsetSetter with OnEscKeyUpT {
 
 
   /** Экшен показа панели на экран. */
+  @deprecated("OnGridNavLoadListStateT.afterBecome()", "2015.aug.10")
   def showPanel(): Unit = {
     // Нужно запросить список узлов, если он ещё не получен (smGeoNodesContent пустой).
     for (contentDiv <- MNavDom.contentDiv if contentDiv.firstChild == null) {

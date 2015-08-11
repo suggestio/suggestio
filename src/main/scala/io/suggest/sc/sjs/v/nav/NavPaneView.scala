@@ -1,8 +1,9 @@
 package io.suggest.sc.sjs.v.nav
 
+import io.suggest.sc.ScConstants
 import io.suggest.sc.sjs.c.NavPanelCtl
 import io.suggest.sc.sjs.m.magent.{IMScreen, MAgent}
-import io.suggest.sc.sjs.m.mnav.{MNavState, MNavDom, MNav}
+import io.suggest.sc.sjs.m.mnav.MNavDom
 import io.suggest.sc.sjs.v.vutil.{OnClick, SetStyleDisplay, VUtil}
 import io.suggest.sc.ScConstants.NavPane._
 import io.suggest.sjs.common.view.safe.css.SafeCssElT
@@ -22,10 +23,9 @@ object NavPaneView extends SetStyleDisplay with OnClick {
   def adjustNodeList(nodeListDivOpt: Option[HTMLDivElement] = MNavDom.nodeListDiv,
                      wrapperDivOpt: Option[HTMLDivElement]  = MNavDom.wrapperDiv,
                      contentDivOpt: Option[HTMLDivElement]  = MNavDom.contentDiv,
-                     availScreen: IMScreen = MAgent.availableScreen,
-                     mNavState: MNavState  = MNav.state): Unit = {
+                     availScreen: IMScreen = MAgent.availableScreen): Unit = {
 
-    val height = availScreen.height - mNavState.screenOffset
+    val height = availScreen.height - ScConstants.NavPane.SCREEN_OFFSET   // mNavState.screenOffset
     val wrappers = nodeListDivOpt ++ wrapperDivOpt
     VUtil.setHeightRootWrapCont(height, contentDivOpt, wrappers)
   }
@@ -55,6 +55,7 @@ object NavPaneView extends SetStyleDisplay with OnClick {
    * поэтому "earlyInit".
    * @param contentDiv Контейнер, где будет отрендерен будущий список узлов.
    */
+  @deprecated("Use NlContainer.initLayout()", "2015.aug.11")
   def earlyInitNodeList(contentDiv: SafeEventTargetT): Unit = {
     // Делегировать контейнеру обработчик кликов списка.
     onClick(contentDiv) { e: Event =>
@@ -62,21 +63,26 @@ object NavPaneView extends SetStyleDisplay with OnClick {
     }
   }
 
+  @deprecated("GlayRoot.isHidden()", "2015.aug.10")
   def isGnlHidden(bodyDiv: SafeCssElT): Boolean = {
     bodyDiv.containsClass(GNL_BODY_HIDDEN_CSS_CLASS)
   }
 
+  @deprecated("GlayRoot.hide()", "2015.aug.11")
   def hideGnlBody(bodyDiv: SafeCssElT): Unit = {
     bodyDiv.addClasses(GNL_BODY_HIDDEN_CSS_CLASS)
   }
 
+  @deprecated("GlayRoot.show()", "2015.aug.11")
   def showGnlBody(bodyDiv: SafeCssElT): Unit = {
     bodyDiv.removeClass(GNL_BODY_HIDDEN_CSS_CLASS)
   }
 
+  @deprecated("GlayCaption.activate()", "2015.aug.11")
   def activateGnlCaption(captionDiv: SafeCssElT): Unit = {
     captionDiv.addClasses(GNL_ACTIVE_CSS_CLASS)
   }
+  @deprecated("GlayCaption.deactivate()", "2015.aug.11")
   def deactivateGnlCaption(captionDiv: SafeCssElT): Unit = {
     captionDiv.removeClass(GNL_ACTIVE_CSS_CLASS)
   }

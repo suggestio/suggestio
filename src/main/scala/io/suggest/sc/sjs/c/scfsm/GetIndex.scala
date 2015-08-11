@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.c.scfsm
 
-import io.suggest.sc.sjs.c.{NavPanelCtl, NodeWelcomeCtl, SearchPanelCtl}
+import io.suggest.sc.sjs.c.NodeWelcomeCtl
 import io.suggest.sc.sjs.m.mgrid.MGridState
 import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
 import io.suggest.sc.sjs.m.msrv.index.{MNodeIndex, MScIndexArgs}
@@ -26,10 +26,6 @@ trait GetIndex extends ScFsmStub with FindAdsFsmUtil {
   /** Реализация состояния активации и  */
   protected trait GetIndexStateT extends FsmState {
 
-    /** id узла, на который переключаемся, или None.
-      * @return None когда сервер должен определить новый узел. */
-    def adnIdOpt: Option[String]
-
     /** Дожидаясь ответа сервера, инициализировать кое-какие переменные, необходимые на следующем шаге. */
     protected def _initStateData(sd: SD): SD = {
       sd.screen.fold(sd) { screen =>
@@ -51,7 +47,7 @@ trait GetIndex extends ScFsmStub with FindAdsFsmUtil {
       val sd = _stateData
 
       val inxArgs = MScIndexArgs(
-        adnIdOpt  = adnIdOpt,
+        adnIdOpt  = sd.adnIdOpt,
         geoMode   = Some( sd.currGeoMode ),
         screen    = sd.screen
       )
@@ -71,11 +67,11 @@ trait GetIndex extends ScFsmStub with FindAdsFsmUtil {
 
 
     /** Кусок ресивера для текущего состояния. */
-    override def receiverPart: PartialFunction[Any, Unit] = {
+    override def receiverPart: Receive = {
       case IndexOk(v) =>
         _onSuccess(v)
       case Failure(ex) =>
-        error("Failed to get node index: " + adnIdOpt, ex)
+        error("Failed to get node index: " + _stateData.adnIdOpt, ex)
         _onFailure(ex)
     }
 

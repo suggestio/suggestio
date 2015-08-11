@@ -33,8 +33,6 @@ trait NlRootT extends SetHeight3 {
       val height = screen.height - NlRoot.NL_TOP_OFFSET
       _setHeight3(height)
     }
-    // Пробросить инициализацию далее по цепочке.
-    wrapper.foreach(IInitLayout.f)
   }
 
 }

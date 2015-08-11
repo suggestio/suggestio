@@ -6,6 +6,7 @@ import io.suggest.sc.sjs.m.msearch.MTabs
 import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
 import io.suggest.sjs.common.util.SjsLogger
 import org.scalajs.dom
+import org.scalajs.dom.Event
 
 import scala.concurrent.Future
 
@@ -16,7 +17,7 @@ import scala.concurrent.Future
  * Description: FSM-контроллер для всей выдачи. Собирается из кусков, которые закрывают ту или иную область.
  */
 object ScFsm extends SjsLogger with Init with GetIndex with GridAppend with OnPlainGrid with OnGridSearchGeo
-with OnGridSearchHashTags {
+with OnGridSearchHashTags with OnGridNav {
 
   // Инициализируем базовые внутренние переменные.
   override protected var _state: FsmState = new DummyState
@@ -74,7 +75,7 @@ with OnGridSearchHashTags {
 
     /** При завершении инициализации js-роутера надо начать инициализацию index'а выдачи. */
     override def finished(): Unit = {
-      become( new GetIndexState(None) )
+      become( new GetIndexState )
     }
 
     override def failed(ex: Throwable): Unit = {
@@ -85,9 +86,7 @@ with OnGridSearchHashTags {
 
 
   /** Реализация состояния-получения-обработки индексной страницы. */
-  protected class GetIndexState(
-    override val adnIdOpt: Option[String]
-  ) extends GetIndexStateT {
+  protected class GetIndexState extends GetIndexStateT {
 
     /** Когда обработка index завершена, надо переключиться на состояние обработки начальной порции карточек. */
     override protected def _onSuccessNextState(findAdsFut: Future[MFindAds], wcHideFut: Future[_], sd1: SD): FsmState = {
@@ -97,7 +96,7 @@ with OnGridSearchHashTags {
     /** Запрос за index'ом не удался. */
     override protected def _onFailure(ex: Throwable): Unit = {
       error("Failed to ask index, retrying", ex)
-      _retry(250)(new GetIndexState(adnIdOpt))
+      _retry(250)(new GetIndexState)
     }
   }
 
@@ -124,6 +123,10 @@ with OnGridSearchHashTags {
     }
 
     override protected def _nextStateNavPanelOpened(sd1: MStData): FsmState = ???
+
+    override protected def _showNavClick(event: Event): Unit = {
+      become(new OnGridNavLoadListState)
+    }
   }
 
 
@@ -143,5 +146,18 @@ with OnGridSearchHashTags {
     override protected def _tabSwitchedFsmState(sd2: MStData) = new OnGridSearchGeoState
   }
 
+
+  // Состояния с nav-панелью.
+  /** Вспомогательный трейт для сборки  */
+  protected trait _OnGridNav extends super._OnGridNav {
+    override protected def _onHideNavState(sd1: MStData) = new OnPlainGridState
+  }
+  /** Состояние отображения панели навигации с текущей подгрузкой списка карточек. */
+  protected class OnGridNavLoadListState extends OnGridNavLoadListStateT with _OnGridNav {
+    override protected def _navPanelReadyState = new OnGridNavReadyState
+  }
+  protected class OnGridNavReadyState extends OnGridNavReadyStateT with _OnGridNav {
+    override protected def _onNodeSwitchState(sd1: MStData) = new GetIndexState
+  }
 
 }
