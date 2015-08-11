@@ -22,6 +22,8 @@ trait OnGridSearch extends OnGrid with ISjsLogger {
 
     protected def _nowOnTab: MTab
 
+    // TODO Нужно скрывать панель при нажатии клавиши ESC. Возможно, ещё и отключать текущий поиск.
+
     /** Метод содержит логику обработки клика по кнопке сокрытия поисковой панели. */
     protected def _hideSearchClick(evt: Event): Unit = {
       val sd0 = _stateData
