@@ -25,7 +25,12 @@ trait AdFormWsInit extends IInit with ISjsLogger {
   /** Запуск инициализации текущего модуля. */
   abstract override def init(): Unit = {
     super.init()
-    _initWs()
+    try {
+      _initWs()
+    } catch {
+      case ex: Throwable =>
+        error("E6754", ex)
+    }
   }
 
 
@@ -47,7 +52,9 @@ trait AdFormWsInit extends IInit with ISjsLogger {
   /** Непосредственная инициализация ws. */
   private def _initWsForId(wsId: String): Unit = {
     val route = jsRoutes.controllers.MarketAd.ws(wsId)
-    val ws = new WebSocket(route.webSocketURL())
+    val wsUrl = route.webSocketURL()
+    log("wsUrl = " + wsUrl)
+    val ws = new WebSocket(wsUrl)
     // Закрывать ws при закрытии вкладки.
     CommonPage.wsCloseOnPageClose(ws)
 
@@ -61,7 +68,6 @@ trait AdFormWsInit extends IInit with ISjsLogger {
 
   /** Применить полученную палитру к текущей веб-странице. */
   private def _applyColorPalette(pal: MColorPalette): Unit = {
-    // TODO JS валяется в adFormBaseTpl.
     val palDivJq = jQuery("#" + COLORS_DIV_ID)
     palDivJq
       .children()
@@ -69,9 +75,6 @@ trait AdFormWsInit extends IInit with ISjsLogger {
 
     // Выставить основной цвет фон.
     if (pal.colors.nonEmpty) {
-      jQuery("#" + AD_BG_COLOR_ID)
-        .`val`( pal.colors.head )
-
       val d = dom.document
 
       // Создаём контейнер, куда будут закидываться создаваемые теги.
@@ -92,17 +95,6 @@ trait AdFormWsInit extends IInit with ISjsLogger {
         }
       palDivJq.append(container)
     }
-
-    /*
-      $dom = $("#adFormDescriptionTable td:first");
-      html = "<div class='color-block_lst'>";
-      for(index in colors) {
-        color = colors[index];
-        html += "<div class='color-block js-color-block' data-color='"+color+"' style='background-color: #"+color+";'></div>"
-      }
-      html += "</div>";
-      $dom.append(html);
-     */
   }
 
 }
