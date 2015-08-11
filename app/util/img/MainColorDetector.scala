@@ -29,9 +29,6 @@ object MainColorDetector extends PlayMacroLogsImpl {
   /** Дефолтовое значение размера промежуточной палитры цветовой гистограммы. */
   val PALETTE_MAX_COLORS_DFLT = configuration.getInt("mcd.palette.colors.max.dflt") getOrElse 8
 
-  /** Сколько времени хранить в кеше результаты определения цвета для картинки. */
-  val DETECTED_COLOR_RESULT_CACHE_TTL_SECONDS = configuration.getInt("mcd.detect.cache.ttl.seconds") getOrElse 600
-
 
   /**
    * Отрендерить гистограмму по указанной картинке в указанный файл.

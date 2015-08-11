@@ -21,6 +21,7 @@ import org.joda.time.{ReadableInstant, DateTime}
 import play.api.Play, Play.{current, configuration}
 import util.acl._
 import util.img._
+import util.xplay.CacheUtil
 import scala.concurrent.duration._
 import net.sf.jmimemagic.{MagicMatch, Magic}
 import scala.concurrent.Future
@@ -231,14 +232,27 @@ trait TempImgSupport extends SioController with PlayMacroLogsI with NotifyWs wit
 
   val TEMP_IMG_PREVIEW_SIDE_SIZE_PX = configuration.getInt(s"img.$MY_CONF_NAME.temp.preview.side.px") getOrElse 620
 
+  /** Настройка кеширования для  */
+  protected def CACHE_COLOR_HISTOGRAM_SEC = 10
+
 
   /**
    * Запуск в фоне определения палитры и отправки уведомления по веб-сокету.
    * @param im Картинка для обработки.
    * @param wsId id для уведомления.
    */
-  def _detectPalletteWs(im: MImg, wsId: String) = {
-    MainColorDetector.detectPaletteFor(im, maxColors = MAIN_COLORS_PALETTE_SIZE) andThen {
+  def _detectPalletteWs(im: MImg, wsId: String): Future[Histogram] = {
+    // Кеширование ресурсоемких результатов работы MCD.
+    val f = { () =>
+      MainColorDetector.detectPaletteFor(im, maxColors = MAIN_COLORS_PALETTE_SIZE)
+    }
+    val cacheSec = CACHE_COLOR_HISTOGRAM_SEC
+    val fut = if (cacheSec > 0) {
+      CacheUtil.getOrElse("mcd." + im.rowKeyStr + ".hist", expirationSec = cacheSec)(f())
+    } else {
+      f()
+    }
+    fut andThen {
       case Success(result) =>
         val res2 = if (MAIN_COLORS_PALETTE_SHRINK_SIZE < MAIN_COLORS_PALETTE_SIZE) {
           result.copy(
