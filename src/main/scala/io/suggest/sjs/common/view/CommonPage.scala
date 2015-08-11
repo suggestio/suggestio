@@ -36,4 +36,11 @@ object CommonPage {
     }
   }
 
+  /** Используется ли зашифрованное соединение для текущей страницы?
+    * @see [[http://stackoverflow.com/q/414809]]
+    */
+  def isSecure: Boolean = {
+    dom.document.location.protocol == "https:"
+  }
+
 }
