@@ -52,9 +52,7 @@ trait AdFormWsInit extends IInit with ISjsLogger {
   /** Непосредственная инициализация ws. */
   private def _initWsForId(wsId: String): Unit = {
     val route = jsRoutes.controllers.MarketAd.ws(wsId)
-    val wsUrl = route.webSocketURL()
-      .replace("ws:", "wss:")
-    log("wsUrl = " + wsUrl)
+    val wsUrl = route.webSocketURL( CommonPage.isSecure )
     val ws = new WebSocket(wsUrl)
     // Закрывать ws при закрытии вкладки.
     CommonPage.wsCloseOnPageClose(ws)
