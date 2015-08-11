@@ -18,9 +18,16 @@ class Route extends js.Object {
   /** relative URL запроса. */
   def url: String = js.native
 
-  /** Абсолютный URL запроса по мнению сервера. */
+  /** Абсолютный URL запроса по мнению сервера.
+    * @param secure true -- использовать https вместо http. [false]
+    * @return Строку абсолютной ссылки на текущий ресурс.
+    */
   def absoluteURL(secure: Boolean = js.native): String = js.native
 
-  /** Абсолютный websocket URL по мнению сервера. */
+  /**
+   * Абсолютный websocket URL по мнению сервера.
+   * @param secure true -- использовать wss вместо ws. [false]
+   * @return Строку абсолютной ссылки на вебсокет текущего ресурса.
+   */
   def webSocketURL(secure: Boolean = js.native): String = js.native
 }
