@@ -235,6 +235,9 @@ object ScConstants {
     /** css-класс, указывающий на скрытость указанного слоя. */
     def GNL_BODY_HIDDEN_CSS_CLASS = "__hidden"
 
+    /** Префикс для id для div'ов узлов в списке узлов. */
+    def GNL_NODE_ID_PREFIX        = "gn-"
+
     def SCREEN_OFFSET     = 129
     def GNL_DOM_HEIGHT    = 44
   }
