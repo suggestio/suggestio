@@ -9,6 +9,7 @@ import io.suggest.sc.sjs.m.msc.fsm.IScState
  * Created: 16.06.15 11:44
  * Description: Поддержка состояния для focused-выдачи.
  */
+@deprecated("FSM-MVM", "2015.aug.11")
 trait FocusedT extends IScState {
 
   override type T <: FocusedT

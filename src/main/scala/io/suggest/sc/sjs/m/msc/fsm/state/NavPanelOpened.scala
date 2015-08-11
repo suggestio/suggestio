@@ -9,6 +9,7 @@ import io.suggest.sc.sjs.m.msc.fsm.IScState
  * Created: 05.06.15 14:26
  * Description: Поддержка флага открытости панели навигации.
  */
+@deprecated("FSM-MVM", "2015.aug.11")
 trait NavPanelOpened extends IScState {
 
   override type T <: NavPanelOpened

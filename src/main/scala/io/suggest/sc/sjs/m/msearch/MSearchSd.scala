@@ -7,8 +7,10 @@ package io.suggest.sc.sjs.m.msearch
  * Description: Контейнер данных состояния (SD, state data) поискова.
  * @param opened Открыта ли поисковая панель?
  * @param currTab Текущая вкладка в панели поиска.
+ * @param ftsSearch Состояние текстового поиска.
  */
 case class MSearchSd(
-  opened  : Boolean = false,
-  currTab : MTab    = MTabs.values.head
+  opened        : Boolean               = false,
+  currTab       : MTab                  = MTabs.values.head,
+  ftsSearch     : Option[MFtsFsmState]  = None
 )

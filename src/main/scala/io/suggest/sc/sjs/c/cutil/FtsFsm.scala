@@ -10,6 +10,7 @@ import org.scalajs.dom
 import org.scalajs.dom.raw.{HTMLDivElement, HTMLInputElement}
 import org.scalajs.dom.{KeyboardEvent, Event}
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+import io.suggest.sc.ScConstants.Search.Fts.START_TIMEOUT_MS
 
 /**
  * Suggest.io
@@ -17,6 +18,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
  * Created: 10.06.15 10:34
  * Description: FSM для создания и обработки запросов полнотекстового поиска.
  */
+@deprecated("See OnGridSearch & subtraits", "2015.aug.11")
 trait FtsFsm extends ISjsLogger {
 
   /** Экземпляр состояния этого FSM. */
@@ -26,9 +28,6 @@ trait FtsFsm extends ISjsLogger {
   private def normalizeQ(q: String): String = {
     q.trim
   }
-
-  /** Через сколько миллисекунд после окончания ввода запускать запрос. */
-  protected def START_TIMEOUT_MS = 600
 
   /** Узнать input из события, если возможно. */
   private def getInput(e: Event): Option[HTMLInputElement] = {

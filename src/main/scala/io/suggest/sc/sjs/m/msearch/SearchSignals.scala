@@ -38,9 +38,9 @@ object STabBtnGeoClick
 
 
 /** Сигнал о наборе в полнотекстового поиска. */
-case class FtsFieldChanged(event: KeyboardEvent)
+case class FtsFieldKeyUp(event: KeyboardEvent)
   extends IFsmMsg
-object FtsFieldChanged
+object FtsFieldKeyUp
   extends IFsmMsgCompanion[KeyboardEvent]
 
 
@@ -56,3 +56,8 @@ case class FtsFieldBlur(event: FocusEvent)
   extends IFsmMsg
 object FtsFieldBlur
   extends IFsmMsgCompanion[FocusEvent]
+
+
+/** Событие срабатываья таймера запуска поискового запроса. */
+case class FtsStartRequestTimeout(generation: Long)
+  extends IFsmMsg

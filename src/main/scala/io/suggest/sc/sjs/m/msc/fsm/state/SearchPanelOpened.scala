@@ -9,6 +9,7 @@ import io.suggest.sc.sjs.m.msc.fsm.IScState
  * Created: 05.06.15 9:48
  * Description: Аддон для добавления поддержки поля searchPanelOpened в состояние выдачи.
  */
+@deprecated("FSM-MVM", "2015.aug.11")
 trait SearchPanelOpened extends IScState {
 
   override type T <: SearchPanelOpened

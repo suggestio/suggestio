@@ -9,6 +9,7 @@ import io.suggest.sc.sjs.m.msc.fsm.IScState
  * Created: 04.06.15 18:44
  * Description: Аддон для модели MScState для поддержки поля rcvrAdnId и управления им.
  */
+@deprecated("FSM-MVM", "2015.aug.11")
 trait RcvrAdnIdT extends IScState {
 
   override type T <: RcvrAdnIdT

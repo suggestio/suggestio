@@ -1,10 +1,14 @@
 package io.suggest.sc.sjs.c.scfsm
 
 import io.suggest.sc.sjs.m.mhdr.{ShowIndexClick, HideSearchClick}
-import io.suggest.sc.sjs.m.msearch.{MTabs, MTab, ITabClickSignal}
+import io.suggest.sc.sjs.m.msearch._
 import io.suggest.sc.sjs.vm.hdr.HRoot
 import io.suggest.sc.sjs.vm.search.SRoot
-import org.scalajs.dom.Event
+import io.suggest.sc.sjs.vm.search.fts.{SInputContainer, SInput}
+import io.suggest.sjs.common.util.ISjsLogger
+import org.scalajs.dom
+import org.scalajs.dom.{FocusEvent, KeyboardEvent, Event}
+import io.suggest.sc.ScConstants.Search.Fts.START_TIMEOUT_MS
 
 /**
  * Suggest.io
@@ -12,7 +16,7 @@ import org.scalajs.dom.Event
  * Created: 06.08.15 13:52
  * Description: FSM-Аддон для добавления поддержки состояния выдачи, когда доступна плитка и открыта панель поиска.
  */
-trait OnGridSearch extends OnGrid {
+trait OnGridSearch extends OnGrid with ISjsLogger {
 
   protected trait OnGridSearchStateT extends OnGridStateT with PanelGridRebuilder {
 
@@ -83,20 +87,113 @@ trait OnGridSearch extends OnGrid {
     /** На какое состояние надо переключаться при смене поисковой вкладки? */
     protected def _tabSwitchedFsmState(sd2: SD): FsmState
 
-    override def receiverPart: PartialFunction[Any, Unit] = super.receiverPart orElse {
+    override def receiverPart: Receive = super.receiverPart orElse {
       // Клик по кнопке сокрытия поисковой панели (справа).
       case HideSearchClick(evt) =>
         _hideSearchClick(evt)
-
       // Клик по кнопке отображения index (слева).
       case ShowIndexClick(evt) =>
         _hideSearchClick(evt)
-
       // Получение сигналов кликов по кнопкам вкладок.
       case tabBtnClick: ITabClickSignal =>
         _tabBtnClick(tabBtnClick)
+      // Получение сигналов от поля полнотекстового поиска.
+      case FtsFieldFocus(event) =>
+        _ftsFieldFocus(event)
+      case FtsFieldBlur(event) =>
+        _ftsFieldBlur(event)
+      case FtsFieldKeyUp(event) =>
+        _ftsKeyUp(event)
+      case FtsStartRequestTimeout(generation2) if _stateData.search.ftsSearch.exists(_.generation == generation2) =>
+        _ftsLetsStartRequest()
     }
 
+    /** Сигнал появления фокуса в поле полнотекстового поиска. */
+    protected def _ftsFieldFocus(event: FocusEvent): Unit = {
+      val sd0 = _stateData
+      if (sd0.search.ftsSearch.isEmpty) {
+        // первый переход на поле. Нужно активировать его визуально.
+        for (inputCont <- SInputContainer.find()) {
+          inputCont.activate()
+        }
+        // Обновить состояние FSM.
+        _stateData = __initSdFts(sd0)
+      }
+    }
+
+    /** Сигнал набора символов в поле полнотекстового поиска. */
+    protected def _ftsKeyUp(event: KeyboardEvent): Unit = {
+      // Надо создать таймер отправки запроса. Но сначала готовим самое начальное состояние.
+      val sd0: SD = {
+        val sd00 = _stateData
+        sd00.search.ftsSearch.fold {
+          warn("W8923")
+          __initSdFts(sd00)
+        } { _ =>
+          sd00
+        }
+      }
+      for {
+        state0 <- sd0.search.ftsSearch
+        sinput <- SInput.findUsingEvent(event)
+      } {
+        val q2 = sinput.getNormalized
+        // Если изменился текст запроса...
+        if (state0.q != q2) {
+          // то надо запустить таймера запуска поискового запроса, отменив предыдущий таймер.
+          for (timerId <- state0.reqTimerId) {
+            dom.clearTimeout(timerId)
+          }
+          val gen2 = MFtsFsmState.getGeneration
+          val newTimerId = dom.setTimeout(
+            { () => _sendEvent( FtsStartRequestTimeout(gen2)) },
+            START_TIMEOUT_MS
+          )
+
+          // Залить результаты работы в состояние FSM.
+          val state2 = state0.copy(
+            q           = q2,
+            reqTimerId  = Some(newTimerId),
+            generation  = gen2
+          )
+
+          _stateData = sd0.copy(
+            search = sd0.search.copy(
+              ftsSearch = Some(state2)
+            )
+          )
+        }
+      }
+    }
+
+    /** Запуск поискового запроса в рамках текущего состояния. */
+    protected def _ftsLetsStartRequest(): Unit
+
+    /** Заливка начального состояния в переданную _stateData. */
+    protected def __initSdFts(sd0: SD): SD = {
+      sd0.copy(
+        search = sd0.search.copy(
+          ftsSearch = Some(MFtsFsmState())
+        )
+      )
+    }
+
+    /** Сигнал потери фокуса в поле полнотекстового поиска. */
+    protected def _ftsFieldBlur(event: FocusEvent): Unit = {
+      // Если текста в поле нет, то деактивировать поле и сбросить поиск.
+      for {
+        sinput    <- SInput.findUsingEvent(event) if sinput.getNormalized.isEmpty
+        inputCont <- sinput.container
+      } {
+        inputCont.deactivate()
+        val sd0 = _stateData
+        _stateData = sd0.copy(
+          search = sd0.search.copy(
+            ftsSearch = None
+          )
+        )
+      }
+    }
   }
 
 }
@@ -107,14 +204,10 @@ trait OnGridSearchGeo extends OnGridSearch {
   /** Заготовка состояния нахождения на вкладке панели поиска. */
   protected trait OnGridSearchGeoStateT extends OnGridSearchStateT {
     override protected def _nowOnTab = MTabs.Geo
-  }
-}
 
-
-
-/** Аддон для сборки состояния нахождения юзера на раскрытой панели поиска со вкладкой хеш-тегов. */
-trait OnGridSearchHashTags extends OnGridSearch {
-  protected trait OnGridSearchHashTagsStateT extends OnGridSearchStateT {
-    override protected def _nowOnTab = MTabs.HashTags
+    override protected def _ftsLetsStartRequest(): Unit = {
+      // TODO Искать "места" по названиям и другим вещам.
+      warn("NYI " + getClass.getSimpleName)
+    }
   }
 }

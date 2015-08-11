@@ -9,6 +9,7 @@ import io.suggest.sc.sjs.m.msc.fsm.IScState
  * Created: 09.06.15 17:37
  * Description: Состояние полнотекстового поиска. Оно устроено сложно: None | Some(ctx)
  */
+@deprecated("FSM-MVM", "2015.aug.11")
 trait FtsSearch extends IScState {
 
   override type T <: FtsSearch

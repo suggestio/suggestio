@@ -12,6 +12,7 @@ import io.suggest.sc.sjs.m.msc.fsm.state._
  * Модель строиться на аддонах, реализующих [[IScState]], каждый аддон добавляет какое-то поле (поля) в модель.
  * Здесь только высокоуровневые данные по состоянию. Всякие внутренние состояния конткретных fsm выдачи здесь НЕ живту.
  */
+@deprecated("FSM-MVM", "2015.aug.11")
 trait MScStateT extends RcvrAdnIdT with CatT with SearchPanelOpened with NavPanelOpened with CurrGnl with FtsSearch
 with FocusedT {
 
@@ -21,6 +22,7 @@ with FocusedT {
 
 
 /** Интерфейс для сборки stackable-аддонов модели. */
+@deprecated("FSM-MVM", "2015.aug.11")
 trait IScState {
 
   /** Сборка типа результирующего состояния с участием аддонов. */
@@ -36,6 +38,7 @@ trait IScState {
 }
 
 /** Дефолтовая реализация [[MScStateT]]. */
+@deprecated("FSM-MVM", "2015.aug.11")
 case class MScState(
   override val rcvrAdnId          : Option[String]          = None,
   override val cat                : Option[MCatMeta]        = None,

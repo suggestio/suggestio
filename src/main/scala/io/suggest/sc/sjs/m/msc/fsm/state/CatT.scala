@@ -10,6 +10,7 @@ import io.suggest.sc.sjs.m.msc.fsm.{MCatMeta, IScState}
  * Description: Аддон для модели MScState для добавления поддержки поля cat с опциональными
  * данными по текущей категории.
  */
+@deprecated("FSM-MVM", "2015.aug.11")
 trait CatT extends IScState {
 
   override type T <: CatT

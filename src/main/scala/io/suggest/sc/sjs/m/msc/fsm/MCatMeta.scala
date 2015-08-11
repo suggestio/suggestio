@@ -1,10 +1,7 @@
 package io.suggest.sc.sjs.m.msc.fsm
 
 import io.suggest.sc.ScConstants.Search.Cats
-import io.suggest.sc.sjs.v.vutil.VUtil
-import io.suggest.sjs.common.view.safe.SafeEl
 import io.suggest.sjs.common.view.safe.attr.SafeAttrElT
-import org.scalajs.dom.Element
 
 /**
  * Suggest.io
@@ -12,7 +9,7 @@ import org.scalajs.dom.Element
  * Created: 05.06.15 10:37
  * Description: Модель метаданных по категории.
  */
-
+@deprecated("FSM-MVM: no more categories, only hashtags.", "2015.aug.11")
 object MCatMeta {
 
   /**
@@ -37,4 +34,5 @@ object MCatMeta {
  * @param catId id категории.
  * @param catClass css-класс категории или подсказка оного.
  */
+@deprecated("FSM-MVM: no more categories, only hashtags.", "2015.aug.11")
 case class MCatMeta(catId: String, catClass: String)

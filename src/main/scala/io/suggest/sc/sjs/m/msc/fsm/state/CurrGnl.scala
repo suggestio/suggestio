@@ -9,6 +9,7 @@ import io.suggest.sc.sjs.m.msc.fsm.IScState
  * Created: 08.06.15 16:27
  * Description: Аддон для переключения текущего слоя в списке геоузлов.
  */
+@deprecated("FSM-MVM", "2015.aug.11")
 trait CurrGnl extends IScState {
 
   override type T <: CurrGnl
