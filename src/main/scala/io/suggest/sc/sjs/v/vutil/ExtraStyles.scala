@@ -18,9 +18,9 @@ trait ExtraStylesStub extends js.Object {
 }
 
 
-object ExtraStyles {
+trait ExtraStyles {
   
-  implicit def style2xstyle(style: CSSStyleDeclaration): ExtraStylesStub = {
+  implicit protected def style2xstyle(style: CSSStyleDeclaration): ExtraStylesStub = {
     style.asInstanceOf[ExtraStylesStub]
   }
 

@@ -5,7 +5,6 @@ import io.suggest.sc.sjs.m.mwc.{WcHidePromise_t, SafeRootDiv_t, MWelcomeState, M
 import io.suggest.sc.sjs.v.welcome.NodeWelcomeView
 import io.suggest.sjs.common.view.safe.SafeEl
 import org.scalajs.dom
-import org.scalajs.dom.ext.KeyCode
 import org.scalajs.dom.raw.HTMLDivElement
 import org.scalajs.dom.{Node, Event}
 
@@ -66,10 +65,6 @@ object NodeWelcomeCtl extends KbdListenerIdT {
     p success None
   }
 
-
-  private def isHideOnKey(keyCode: Int): Boolean = {
-    keyCode == KeyCode.escape || keyCode == KeyCode.enter || keyCode == KeyCode.space
-  }
 
   /**
    * Welcome-карточка ВОЗМОЖНО уже присутствует в DOM. Если присутствует, то значит отображена.

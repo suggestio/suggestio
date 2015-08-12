@@ -78,7 +78,7 @@ trait MFindAdsReqEmpty extends MFindAdsReq {
   override def receiverId  : Option[String]    = None
   override def firstAdId   : Option[String]    = None
   override def generation  : Option[Long]      = None
-  override def geo   : Option[IMGeoMode] = None
+  override def geo         : Option[IMGeoMode] = None
   override def screenInfo  : Option[IMScreen]  = None
 }
 
@@ -87,16 +87,16 @@ trait MFindAdsReqWrapper extends MFindAdsReq {
   def _underlying: MFindAdsReq
 
   override def producerId   = _underlying.producerId
-  override def limit        = _underlying.limit
-  override def firstAdId    = _underlying.firstAdId
-  override def screenInfo   = _underlying.screenInfo
   override def catId        = _underlying.catId
   override def levelId      = _underlying.levelId
-  override def receiverId   = _underlying.receiverId
-  override def offset       = _underlying.offset
-  override def geo    = _underlying.geo
   override def ftsQuery     = _underlying.ftsQuery
+  override def limit        = _underlying.limit
+  override def offset       = _underlying.offset
+  override def receiverId   = _underlying.receiverId
+  override def firstAdId    = _underlying.firstAdId
   override def generation   = _underlying.generation
+  override def geo          = _underlying.geo
+  override def screenInfo   = _underlying.screenInfo
 }
 
 

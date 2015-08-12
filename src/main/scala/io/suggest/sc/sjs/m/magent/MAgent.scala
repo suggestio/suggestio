@@ -7,6 +7,7 @@ package io.suggest.sc.sjs.m.magent
  * Description: Статическая модель для описания данных приложения user-agent'а, в частности браузера
  * или мобильного приложения, в котором исполняется выдача.
  */
+@deprecated("FSM-MVM: Use MStData.screen instead.", "24.jun.2015")
 object MAgent {
 
   /** Размер и другие параметры экрана, доступные для рендера интерфейса. */

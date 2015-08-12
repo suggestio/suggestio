@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.m.msc.fsm
 
 import io.suggest.sc.sjs.m.magent.IMScreen
+import io.suggest.sc.sjs.m.mfoc.MFocSd
 import io.suggest.sc.sjs.m.mgeo._
 import io.suggest.sc.sjs.m.mgrid.MGridData
 import io.suggest.sc.sjs.m.mnav.MNavState
@@ -49,19 +50,25 @@ trait IStData extends MGeoLocUtil {
 
   /** Контейнер данных состояния панели навигации и навигации в целом. */
   def nav         : MNavState
+
+  /** Контейнер для данных focused-выдачи.
+    * None значит, что focused-выдача отключена. */
+  def focused     : Option[MFocSd]
+
 }
 
 
 /** Реализация immutable-контейнера для передачи данных Sc FSM между состояниями. */
 case class MStData(
-  override val screen       : Option[IMScreen]  = None,
-  override val geoLoc       : Option[MGeoLoc]   = None,
-  override val grid         : MGridData         = MGridData(),
-  override val generation   : Long              = MStData.generationDflt,
-  override val adnIdOpt     : Option[String]    = None,
-  override val browser      : IBrowser          = MStData.browserDflt,
-  override val search       : MSearchSd         = MSearchSd(),
-  override val nav          : MNavState         = MNavState()
+  override val screen       : Option[IMScreen]      = None,
+  override val geoLoc       : Option[MGeoLoc]       = None,
+  override val grid         : MGridData             = MGridData(),
+  override val generation   : Long                  = MStData.generationDflt,
+  override val adnIdOpt     : Option[String]        = None,
+  override val browser      : IBrowser              = MStData.browserDflt,
+  override val search       : MSearchSd             = MSearchSd(),
+  override val nav          : MNavState             = MNavState(),
+  override val focused      : Option[MFocSd]        = None
 )
   extends IStData
 {
@@ -76,7 +83,8 @@ case class MStData(
       adnIdOpt  = adnIdOpt2,
       nav       = MNavState(),
       search    = MSearchSd(),
-      grid      = MGridData()
+      grid      = MGridData(),
+      focused   = None
     )
   }
 

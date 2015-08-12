@@ -13,20 +13,20 @@ import io.suggest.sc.sjs.vm.util.cont.ContainerT
  * Это описывается внутренним состоянием, и при изменениям сразу синхронизируется в DOM.
  */
 
-object FocAdVm {
+object FocAd {
 
   /**
    * Сборка нового экземпляра на основе полученного от сервера экземпляра MFocAd.
    * @param mfocAd Полученная от сервера карточка.
-   * @return Экземпляр [[FocAdVm]].
+   * @return Экземпляр [[FocAd]].
    */
-  def apply(mfocAd: IMFocAd): FocAdVm = {
+  def apply(mfocAd: IMFocAd): FocAd = {
     apply(mfocAd.html)
   }
-  def apply(html: String): FocAdVm = {
+  def apply(html: String): FocAd = {
     apply(StrHtmlContent(html))
   }
-  def apply(html: IHtmlContent): FocAdVm = {
+  def apply(html: IHtmlContent): FocAd = {
     apply(Left(html))
   }
 
@@ -38,7 +38,7 @@ object FocAdVm {
   *               Left: скрыто и есть верстка вне DOM.
   *               Right - отображено в указанном контейнере.
   */
-case class FocAdVm(
+case class FocAd(
   private var shown: Either[IHtmlContent, ContainerT]
 ) {
 
