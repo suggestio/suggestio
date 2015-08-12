@@ -48,6 +48,8 @@ case class OAuth1TargetActor(args: IOAuth1AdvTargetActorArgs)
 {
   import LOGGER._
 
+  override type State_t = FsmState
+
   override protected var _state: FsmState = new DummyState
 
   override def receive: Receive = allStatesReceiver

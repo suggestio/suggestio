@@ -86,7 +86,9 @@ case class ExtServiceActor(args: IExtAdvServiceActorArgs)
 
   import LOGGER._
 
-  override protected var _state: FsmState = new DummyState
+  override type State_t = FsmState
+
+  override protected var _state: State_t = new DummyState
 
   override def receive = allStatesReceiver
 

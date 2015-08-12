@@ -43,6 +43,8 @@ case class ExtAdvWsActor(out: ActorRef, eactx: IExtWsActorArgs)
 
   import LOGGER._
 
+  override type State_t = FsmState
+
   /** Флаг, обозначающий, что на клиент отправлена ask-команда, и он занимается обработкой оной.
     * Если флаг true, то значит js-система занимается какими-то действиями, скорее всего юзеру какое-то окно
     * отображено. */

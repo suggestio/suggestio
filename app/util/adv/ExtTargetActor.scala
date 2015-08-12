@@ -51,6 +51,8 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
   with S2sMpUploadRender
 {
 
+  override type State_t = FsmState
+
   import LOGGER._
 
   override protected var _state: FsmState = new DummyState
@@ -160,7 +162,7 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
 
           // JS'у недостаточно данных в контексте для создания публикации.
           case AnswerStatuses.FillContext =>
-            if (fillCtxTry >= ExtTargetActor.MAX_FILL_CTX_TRIES) {
+            if (fillCtxTry >= MAX_FILL_CTX_TRIES) {
               error("Too many fill ctx tries. Stopping. Last answer was:\n  " + ans)
               _renderError(ans)
               harakiri()

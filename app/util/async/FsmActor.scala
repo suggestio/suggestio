@@ -1,4 +1,5 @@
 package util.async
+
 import _root_.util.PlayMacroLogsI
 import akka.actor.Actor
 import io.suggest.fsm.{AbstractFsmUtil, AbstractFsm}
@@ -17,7 +18,7 @@ trait FsmActor extends Actor with PlayMacroLogsI with AbstractFsm {
    * Переключение на новое состояние. Старое состояние будет отброшено.
    * @param nextState Новое состояние.
    */
-  override protected def become(nextState: FsmState): Unit = {
+  override protected def become(nextState: State_t): Unit = {
     LOGGER.trace(s"become(): fsm mode switch ${_state} -> $nextState")
     super.become(nextState)
   }

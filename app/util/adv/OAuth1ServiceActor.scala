@@ -70,8 +70,9 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
   with SvcActorJsRenderUtil
   with CompatWsClient    // TODO
 {
-
   import LOGGER._
+
+  override type State_t = FsmState
 
   override protected var _state: FsmState = new DummyState
 
