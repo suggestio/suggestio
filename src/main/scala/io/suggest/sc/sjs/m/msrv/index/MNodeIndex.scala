@@ -1,7 +1,5 @@
 package io.suggest.sc.sjs.m.msrv.index
 
-import io.suggest.sc.sjs.m.magent.MAgent
-import io.suggest.sc.sjs.m.mgeo.{MGeoModeLoc, IMGeoMode, MGeoModeIp, MCurrLoc}
 import io.suggest.sc.sjs.m.msrv.MSrvUtil
 import io.suggest.sc.sjs.util.router.srv.routes
 
@@ -18,22 +16,6 @@ import io.suggest.sc.ScConstants.Resp._
  * - Использование http или ws канала для запроса.
  */
 object MNodeIndex {
-
-  /**
-   * Запустить получение index-страницы.
-   * @param adnIdOpt id узла.
-   * @return Фьючерс с результатами исполнения запроса.
-   */
-  @deprecated("Use getIndex(args) instead", "22.jun.2015")
-  // TODO После выпиливания v1 архитектуры УДАЛИТЬ!
-  def getIndex(adnIdOpt: Option[String])(implicit ec: ExecutionContext): Future[MNodeIndex] = {
-    val reqArgs = MScIndexArgs(
-      adnIdOpt  = adnIdOpt,
-      geoMode   = Some( MCurrLoc.currLoc.fold[IMGeoMode](MGeoModeIp)(MGeoModeLoc.apply) ),
-      screen    = Some( MAgent.availableScreen )
-    )
-    getIndex(reqArgs)
-  }
 
   /**
    * Запустить index-запрос согласно переданным аргументам.

@@ -44,7 +44,7 @@ trait IGridState {
   /** Инфа по колонкам. Нужен O(1) доступ по индексу. Длина равна или не более кол-ва колонок. */
   def colsInfo          : Array[MColumnState]
 
-  def withNewBlocks(newBlocks: TraversableOnce[IBlockInfo]): IGridState
+  def withNewBlocks(newBlocks: TraversableOnce[GBlock]): IGridState
   def nothingLoaded(): IGridState
 
   /**
@@ -76,58 +76,45 @@ trait IGridState {
 
 /** Дефолтовая реализация модели [[IGridState]]. */
 case class MGridState(
-  // TODO mutable-состояние унаследовано от предыдущей архитектуры. Надо бы исправить этот дефект.
-
   /** Максимальная ширина одной ячейки. */
-  var maxCellWidth      : Int     = TileConstants.CELL_WIDTH_140_CSSPX,
+  maxCellWidth      : Int     = TileConstants.CELL_WIDTH_140_CSSPX,
 
   /** Левый сдвиг в кол-ве ячеек. */
-  var leftOffset        : Int     = 0,
+  leftOffset        : Int     = 0,
 
   /** Правый сдвиг в кол-ве ячеек. */
-  var rightOffset       : Int     = 0,
+  rightOffset       : Int     = 0,
 
   /** Кол-во колонок на экране. */
-  var columnsCount      : Int     = 2,
+  columnsCount      : Int     = 2,
 
   /** true, когда больше карточек у сервера нет для текущей выдачи. */
-  var fullyLoaded       : Boolean = false,
+  fullyLoaded       : Boolean = false,
 
   /** Кол-во карточек для следующей пакетной загрузки. */
-  var adsPerLoad        : Int     = 30,
+  adsPerLoad        : Int     = 30,
 
   /** Кол-во загруженных карточек. */
-  var blocksLoaded      : Int     = 0,
+  blocksLoaded      : Int     = 0,
 
   /** Запрошена подгрузка ещё карточек? */
-  var isLoadingMore     : Boolean = false,
+  isLoadingMore     : Boolean = false,
 
   /** Размер контейнера, если рассчитан. */
-  var contSz            : Option[ICwCm] = None,
+  contSz            : Option[ICwCm] = None,
 
   /** Инфа по колонкам. Нужен O(1) доступ по индексу. Длина равна или не более кол-ва колонок. */
-  var colsInfo          : Array[MColumnState] = Array.empty,
+  colsInfo          : Array[MColumnState] = Array.empty,
 
   /** Инфа по текущим блокам. */
-  // TODO После спиливания архитектуры v1 можно/нужно заменить IBlockInfo на GBlock. Внутри всё равно теперь GBlock.
-  var blocks            : ListBuffer[IBlockInfo] = ListBuffer.empty
+  blocks            : ListBuffer[GBlock] = ListBuffer.empty
 ) extends IGridState {
 
   def getBlocks: List[GBlock] = {
-    // TODO Спилить тут asInstanceOf, когда IBlockInfo будет окончательно спилен из этой модели.
-    blocks.toList.asInstanceOf[List[GBlock]]
+    blocks.toList
   }
 
-  /** Контроллер требует закинуть новые блоки в эту модель состояния, указывая точное кол-во блоков.
-    * @param newBlocks Последовательность новых блоков.
-    * @param newBlocksCount Длина коллекции newBlocks.
-    */
-  @deprecated("FSM-MVM: Use for stateful FSM use immutable withNewBlocks() instead.")
-  def appendNewBlocksMut(newBlocks: TraversableOnce[IBlockInfo], newBlocksCount: Int): Unit = {
-    blocks.appendAll(newBlocks)
-    blocksLoaded += newBlocksCount
-  }
-  override def withNewBlocks(newBlocks: TraversableOnce[IBlockInfo]): MGridState = {
+  override def withNewBlocks(newBlocks: TraversableOnce[GBlock]): MGridState = {
     // TODO mutable-коллекция здесь
     blocks.appendAll(newBlocks)
     copy(
@@ -135,15 +122,6 @@ case class MGridState(
     )
   }
 
-  /** Контроллер приказывает сбросить состояние плитки, касающееся загруженных и отображаемых карточек. */
-  @deprecated("FSM-MVM: Use immutable nothingLoaded() instead.")
-  def nothingLoadedMut(): MGridState = {
-    blocks = ListBuffer.empty
-    blocksLoaded = 0
-    isLoadingMore = false
-    fullyLoaded = false
-    this
-  }
   override def nothingLoaded(): MGridState = {
     copy(
       blocks        = ListBuffer.empty,
@@ -151,14 +129,6 @@ case class MGridState(
       isLoadingMore = false,
       fullyLoaded   = false
     )
-  }
-
-  /** Загрузить кое-какие изменения в состояния. */
-  @deprecated("FSM-MVM: Use for stateful FSM use immutable withContParams() instead.")
-  def updateWithMut(cw: IColsWidth with ICwCm): Unit = {
-    maxCellWidth = cw.maxCellWidth
-    columnsCount = cw.columnsCnt
-    contSz       = Some(cw)
   }
 
   /** Загрузить кое-какие изменения в состояния. */

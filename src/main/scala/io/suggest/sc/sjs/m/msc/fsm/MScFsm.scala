@@ -12,10 +12,10 @@ import org.scalajs.dom.PopStateEvent
  * Для трансформации состояний используются case class .copy(),
  * для применения данных состояния -- выполнение действий, связанных с изменившимися полями.
  */
-object MScFsm extends SjsLogger {
+trait MScFsm extends SjsLogger {
 
   /** Тип хранимых состояний. */
-  type T = MScState
+  type T
 
   /** Хранилище модели в immutable-класса для возможности быстро делать snapshot'ы и потокобезопасности в будущем. */
   private var _storage: Storage = Storage()
@@ -152,10 +152,8 @@ object MScFsm extends SjsLogger {
     }
   }
   /** Перевести выдачу в новое состояние, проанализировав изменения между новым и текущим состоянием. */
-  def applyStateChanges(state: T, prevState: T): Unit = {
-    //state.applyChangesSince(prevState)
-    ???
-  }
+  def applyStateChanges(state: T, prevState: T): Unit
+    // = { state.applyChangesSince(prevState) }
 
 
   /** Внутренее хранилище модели. */

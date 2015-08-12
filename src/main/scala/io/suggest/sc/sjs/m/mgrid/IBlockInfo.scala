@@ -19,18 +19,3 @@ trait IBlockInfo {
   def div     : HTMLDivElement
 
 }
-
-
-@deprecated("Use GBlock or IBlockInfo instead", "25.jun.2015")
-case class MBlockInfo(
-  id      : String,
-  width   : Int,
-  height  : Int,
-  div     : HTMLDivElement
-) extends IBlockInfo {
-
-  override def toString: String = {
-    "B#" + id + "(" + width + "x" + height + ")"
-  }
-
-}

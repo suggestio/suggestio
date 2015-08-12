@@ -2,7 +2,6 @@ package io.suggest.sc.sjs.m.msrv.nodes.find
 
 import io.suggest.sc.NodeSearchConstants._
 import io.suggest.sc.sjs.m.mgeo.IMGeoMode
-import io.suggest.sc.sjs.m.msc.fsm.MScFsm
 import io.suggest.sc.sjs.m.msrv.MSrv
 
 import scala.scalajs.js.{Dictionary, Any}

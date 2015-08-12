@@ -1,6 +1,5 @@
 package io.suggest.sc.sjs.c.cutil
 
-import io.suggest.sc.sjs.m.mdom.listen.MListeners
 import org.scalajs.dom.KeyboardEvent
 import org.scalajs.dom.ext.KeyCode
 
@@ -10,15 +9,17 @@ import org.scalajs.dom.ext.KeyCode
  * Created: 09.06.15 15:43
  * Description: Аддоны для контроллеров для упрощенного добавления фунцкий слушанья клавиатурных событий.
  */
+@deprecated("FSM-MVM: Use ScFsmStub.FsmState._onKbdKeyUp()", "2015.aug.12")
 trait KbdListenerIdT {
   protected def KBD_LISTENER_ID = getClass.getSimpleName
 
   /** Отключить слушалку клавиатуру в текущем контроллере. */
   protected def removeKeyUpListener(): Unit = {
-    MListeners.removeKeyUpListener(KBD_LISTENER_ID)
   }
 }
 
+
+@deprecated("FSM-MVM: Use ScFsmStub.FsmState._onKbdKeyUp()", "2015.aug.12")
 trait OnKeyUpT extends KbdListenerIdT {
 
   /** Экшен реакции на действия с клавиатуры. */
@@ -26,12 +27,12 @@ trait OnKeyUpT extends KbdListenerIdT {
 
   /** Подключить слушалку клавиатуры в текущем контроллере. */
   protected def addKeyUpListener(): Unit = {
-    MListeners.addKeyUpListener(KBD_LISTENER_ID)(onKeyUp)
   }
 }
 
 
 /** Полуреализация [[OnKeyUpT]] для подключения одного действия для одного набора клавиш. */
+@deprecated("FSM-MVM: Use ScFsmStub.FsmState._onKbdKeyUp()", "2015.aug.12")
 trait OnFilteredKeyUpT extends OnKeyUpT {
 
   /** @return true, если клавиша будет передана в onFilteredKeyUp().
@@ -52,6 +53,7 @@ trait OnFilteredKeyUpT extends OnKeyUpT {
 
 
 /** Частоиспользуемая обработка только клавиши клавиатуры ESC. */
+@deprecated("FSM-MVM: Use ScFsmStub.FsmState._onKbdKeyUp()", "2015.aug.12")
 trait OnEscKeyUpT extends OnFilteredKeyUpT {
   /** Нажата клавиша ESC. */
   override protected def isKeyCodeHandled(keyCode: Int): Boolean = {

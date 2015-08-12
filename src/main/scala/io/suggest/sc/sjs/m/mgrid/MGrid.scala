@@ -8,23 +8,6 @@ import io.suggest.adv.ext.model.im.ISize2di
  * Created: 21.05.15 17:45
  * Description: Модель состояния cbca_grid.
  */
-@deprecated("FSM-MVM: Use ScFsm._stateData instead", "25.jun.2015")
-object MGrid extends MGridUtil {
-
-  var gridParams: MGridParams = MGridParams()
-
-  var gridState: MGridState = _
-
-  /** Произвести сброс state. */
-  def resetState(): Unit = {
-    gridState = new MGridState()
-  }
-
-  // Заглушка для компилятора, чтобы не ругался на abstract members.
-  override def grid: IGridData = MGridData(gridParams, gridState)
-
-}
-
 
 /** Интерфейс для контейнера данных сетки. */
 trait IGridData extends MGridUtil {

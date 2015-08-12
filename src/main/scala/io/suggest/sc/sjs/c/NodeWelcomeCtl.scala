@@ -1,7 +1,6 @@
 package io.suggest.sc.sjs.c
 
 import io.suggest.sc.sjs.c.cutil.KbdListenerIdT
-import io.suggest.sc.sjs.m.mdom.listen.MListeners
 import io.suggest.sc.sjs.m.mwc.{WcHidePromise_t, SafeRootDiv_t, MWelcomeState, MWcDom}
 import io.suggest.sc.sjs.v.welcome.NodeWelcomeView
 import io.suggest.sjs.common.view.safe.SafeEl
@@ -18,6 +17,7 @@ import scala.concurrent.{Future, Promise}
  * Created: 25.05.15 13:17
  * Description: Контроллер для реакций на происходящее с карточкой приветствия узла.
  */
+// TODO Переписать на FSM-MVM архитектуру.
 object NodeWelcomeCtl extends KbdListenerIdT {
 
   /** Сработал таймер таймаута отображения приветствия. */
@@ -90,11 +90,11 @@ object NodeWelcomeCtl extends KbdListenerIdT {
         val safeEl: SafeRootDiv_t = SafeEl(rootEl)
 
         // Подписываемся на события клавиатуры
-        MListeners.addKeyUpListener(KBD_LISTENER_ID) { e =>
+        /*MListeners.addKeyUpListener(KBD_LISTENER_ID) { e =>
           if ( isHideOnKey(e.keyCode) ) {
             clicked(e, safeEl, p)
           }
-        }
+        }*/
 
         NodeWelcomeView.willHideAnimated(safeEl)
 

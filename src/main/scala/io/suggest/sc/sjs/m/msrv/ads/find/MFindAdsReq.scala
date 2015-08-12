@@ -1,10 +1,8 @@
 package io.suggest.sc.sjs.m.msrv.ads.find
 
-import io.suggest.sc.ScConstants
 import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.m.mgeo.IMGeoMode
 import io.suggest.sc.sjs.m.mgrid.MGridState
-import io.suggest.sc.sjs.m.msc.fsm.{MScStateT, MScFsm}
 import io.suggest.sc.sjs.m.msrv.MSrv
 
 import scala.scalajs.js.{Any, Dictionary}

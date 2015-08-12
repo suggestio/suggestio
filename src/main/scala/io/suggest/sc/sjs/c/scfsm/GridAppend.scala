@@ -1,6 +1,5 @@
 package io.suggest.sc.sjs.c.scfsm
 
-import io.suggest.sc.sjs.c.GridCtl
 import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
 import io.suggest.sc.sjs.v.res.CommonRes
 import io.suggest.sc.sjs.vm.grid.GContent
