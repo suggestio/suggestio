@@ -7,6 +7,7 @@ import io.suggest.sc.sjs.vm.search.SRoot
 import io.suggest.sc.sjs.vm.search.fts.{SInputContainer, SInput}
 import io.suggest.sjs.common.util.ISjsLogger
 import org.scalajs.dom
+import org.scalajs.dom.ext.KeyCode
 import org.scalajs.dom.{FocusEvent, KeyboardEvent, Event}
 import io.suggest.sc.ScConstants.Search.Fts.START_TIMEOUT_MS
 
@@ -25,7 +26,7 @@ trait OnGridSearch extends OnGrid with ISjsLogger {
     // TODO Нужно скрывать панель при нажатии клавиши ESC. Возможно, ещё и отключать текущий поиск.
 
     /** Метод содержит логику обработки клика по кнопке сокрытия поисковой панели. */
-    protected def _hideSearchClick(evt: Event): Unit = {
+    protected def _hideSearch(): Unit = {
       val sd0 = _stateData
       for (sroot <- SRoot.find(); screen <- sd0.screen) {
         // Показать панель
@@ -53,6 +54,14 @@ trait OnGridSearch extends OnGrid with ISjsLogger {
     /** Состояние FSM, на которое надо переключиться при после сокрытия панели. */
     protected def _nextStateSearchPanelClosed(sd1: SD): FsmState
 
+
+    override protected def _onKbdKeyUp(event: KeyboardEvent): Unit = {
+      super._onKbdKeyUp(event)
+      // по ESC надо закрывать вкладку
+      if (event.keyCode == KeyCode.escape) {
+        _hideSearch()
+      }
+    }
 
     /** Обработка кликов по кнопкам поисковых вкладок. */
     protected def _tabBtnClick(signal: ITabClickSignal): Unit = {
@@ -89,13 +98,13 @@ trait OnGridSearch extends OnGrid with ISjsLogger {
     /** На какое состояние надо переключаться при смене поисковой вкладки? */
     protected def _tabSwitchedFsmState(sd2: SD): FsmState
 
-    override def receiverPart: Receive = super.receiverPart orElse {
+    private def _receiverPart: Receive = {
       // Клик по кнопке сокрытия поисковой панели (справа).
       case HideSearchClick(evt) =>
-        _hideSearchClick(evt)
+        _hideSearch()
       // Клик по кнопке отображения index (слева).
       case ShowIndexClick(evt) =>
-        _hideSearchClick(evt)
+        _hideSearch()
       // Получение сигналов кликов по кнопкам вкладок.
       case tabBtnClick: ITabClickSignal =>
         _tabBtnClick(tabBtnClick)
@@ -108,6 +117,10 @@ trait OnGridSearch extends OnGrid with ISjsLogger {
         _ftsKeyUp(event)
       case FtsStartRequestTimeout(generation2) if _stateData.search.ftsSearch.exists(_.generation == generation2) =>
         _ftsLetsStartRequest()
+    }
+
+    override def receiverPart: Receive = {
+      _receiverPart orElse super.receiverPart
     }
 
     /** Сигнал появления фокуса в поле полнотекстового поиска. */

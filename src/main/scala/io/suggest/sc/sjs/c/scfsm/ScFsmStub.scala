@@ -19,27 +19,30 @@ trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger {
 
   override type Receive = PartialFunction[Any, Unit]
 
+  override type State_t = FsmState
+
   override protected def combineReceivers(rcvrs: TraversableOnce[Receive]): Receive = {
     AbstractFsmUtil.combinePfs(rcvrs)
+  }
+
+
+
+  /** Добавление слушателя событий отпускания кнопок клавиатуры в состояние. */
+  protected trait FsmState extends super.FsmState {
+    /** Переопределяемый метод для обработки событий клавиатуры.
+      * По дефолту -- игнорировать все события клавиатуры. */
+    protected def _onKbdKeyUp(event: KeyboardEvent): Unit = {}
+
+    def receiverPart: Receive = {
+      case KbdKeyUp(event) =>
+        _onKbdKeyUp(event)
+    }
   }
 
   /** Если состояние не требует ресивера, то можно использовать этот трейт. */
   protected trait FsmEmptyReceiverState extends FsmState {
     override def receiverPart: Receive = PartialFunction.empty
   }
-
-
-  /** Добавление слушателя событий отпускания кнопок клавиатуры в состояние. */
-  /*
-  protected trait KbdKeyUpFsmState extends FsmState {
-    protected def _onKbdKeyUp(event: KeyboardEvent): Unit
-
-    abstract override def receiverPart: Receive = super.receiverPart orElse {
-      case KbdKeyUp(event) =>
-        _onKbdKeyUp(event)
-    }
-  }
-  */
 
 
   /** Ресивер для всех состояний. */

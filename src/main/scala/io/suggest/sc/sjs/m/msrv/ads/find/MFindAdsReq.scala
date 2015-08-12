@@ -105,28 +105,9 @@ trait MFindAdsReqWrapper extends MFindAdsReq {
 /** Дефолтовая реализация, обычно она используется. */
 trait MFindAdsReqDflt extends MFindAdsReq {
   def _mgs: MGridState
-  def _fsmState: MScStateT = MScFsm.state
 
-  override def receiverId: Option[String]   = _fsmState.rcvrAdnId
   override def limit : Option[Int]          = Some(_mgs.adsPerLoad)
   override def offset: Option[Int]          = Some(_mgs.blocksLoaded)
-  override def ftsQuery: Option[String]     = _fsmState.ftsSearch
-
-  override def levelId: Option[String] = {
-    import ScConstants.ShowLevels._
-    val st = MScFsm.state
-    if (st.cat.nonEmpty) {
-      Some(ID_CATS)
-    } else if (st.ftsSearch.nonEmpty) {
-      None
-    } else {
-      Some(ID_START_PAGE)
-    }
-  }
-
-  override def catId: Option[String] = {
-    MScFsm.state.cat.map(_.catId)
-  }
 
 }
 

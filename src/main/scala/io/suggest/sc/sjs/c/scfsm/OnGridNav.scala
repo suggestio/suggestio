@@ -23,9 +23,14 @@ import scala.util.{Failure, Success}
 trait OnGridNav extends ScFsmStub with ISjsLogger {
 
   protected trait _OnGridNav extends FsmState with PanelGridRebuilder {
-    override def receiverPart: Receive = {
+
+    private def _receiverPart: Receive = {
       case HideNavClick(event) =>
         _hideNav()
+    }
+
+    override def receiverPart: Receive = {
+      _receiverPart orElse super.receiverPart
     }
 
     protected def _hideNav(): Unit = {
@@ -64,7 +69,9 @@ trait OnGridNav extends ScFsmStub with ISjsLogger {
       val nlContentOpt = NlContent.find()
       for (nlContent <- nlContentOpt if nlContent.isEmpty) {
         // Запустить запрос к серверу на тему поиска узлов
-        val searchNodesArgs = new MFindNodesArgsEmpty with MFindNodesArgsDflt {}
+        val searchNodesArgs = new MFindNodesArgsEmpty with MFindNodesArgsDflt {
+          override def currAdnId = sd0.adnIdOpt
+        }
         val fut = MFindNodes.findNodes(searchNodesArgs)
         // Когда запрос выполниться, надо залить данные в DOM
         fut onComplete { case res =>
@@ -103,8 +110,7 @@ trait OnGridNav extends ScFsmStub with ISjsLogger {
 
     protected def _navPanelReadyState: FsmState
 
-    // TODO Opt Оптимальнее будет super.receiverPart приклеивать справа, а не слева.
-    override def receiverPart: Receive = super.receiverPart orElse {
+    private def _receiverPart: Receive = {
       // Положительный ответ от сервера со списком узлов.
       case resp: MFindNodesResp =>
         val sd0 = _stateData
@@ -140,14 +146,23 @@ trait OnGridNav extends ScFsmStub with ISjsLogger {
         become(_navPanelReadyState)
     }
 
+    override def receiverPart: Receive = {
+      _receiverPart orElse super.receiverPart
+    }
+
   }
 
 
   /** Трейт состояния готовности к работе панели вместе со списком карточек. */
   protected trait OnGridNavReadyStateT extends _OnGridNav {
-    override def receiverPart: Receive = super.receiverPart orElse {
+
+    private def _receiverPart: Receive = {
       case NodeListClick(event) =>
         _navNodeListClick(event)
+    }
+
+    override def receiverPart: Receive = {
+      _receiverPart orElse super.receiverPart
     }
 
     protected def _onNodeSwitchState(sd1: SD): FsmState

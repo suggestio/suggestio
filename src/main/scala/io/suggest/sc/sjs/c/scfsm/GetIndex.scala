@@ -65,14 +65,15 @@ trait GetIndex extends ScFsmStub with FindAdsFsmUtil {
       }
     }
 
-
-    /** Кусок ресивера для текущего состояния. */
-    override def receiverPart: Receive = {
+    private def _receiverPart: Receive = {
       case IndexOk(v) =>
         _onSuccess(v)
       case Failure(ex) =>
         error("Failed to get node index: " + _stateData.adnIdOpt, ex)
         _onFailure(ex)
+    }
+    override def receiverPart: Receive = {
+      _receiverPart orElse super.receiverPart
     }
 
 

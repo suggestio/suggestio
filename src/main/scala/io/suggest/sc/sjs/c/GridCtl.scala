@@ -1,9 +1,11 @@
 package io.suggest.sc.sjs.c
 
+import io.suggest.sc.ScConstants
 import io.suggest.sc.ScConstants.Block
 import io.suggest.sc.sjs.c.cutil.GridOffsetSetter
 import io.suggest.sc.sjs.m.magent.{IMScreen, MAgent}
 import io.suggest.sc.sjs.m.mgrid._
+import io.suggest.sc.sjs.m.msc.fsm.{MScFsm, MScStateT}
 import io.suggest.sc.sjs.m.msrv.ads.find.{MFindAdsReqEmpty, MFindAdsReqDflt, MFindAds}
 import io.suggest.sc.sjs.util.grid.builder.V1Builder
 import io.suggest.sc.sjs.v.grid.{LoaderView, GridView}
@@ -46,9 +48,26 @@ object GridCtl extends SjsLogger with GridOffsetSetter { that =>
   }
 
   def askMoreAds(mgs: MGridState = MGrid.gridState): Future[MFindAds] = {
+    val _fsmState = MScFsm.state
     val args = new MFindAdsReqEmpty with MFindAdsReqDflt {
       override def _mgs = mgs
-      override val _fsmState = super._fsmState
+      override def receiverId = _fsmState.rcvrAdnId
+      override def ftsQuery   = _fsmState.ftsSearch
+      override def catId: Option[String] = {
+        _fsmState.cat.map(_.catId)
+      }
+      override def levelId: Option[String] = {
+        import ScConstants.ShowLevels._
+        val st = _fsmState
+        if (st.cat.nonEmpty) {
+          Some(ID_CATS)
+        } else if (st.ftsSearch.nonEmpty) {
+          None
+        } else {
+          Some(ID_START_PAGE)
+        }
+      }
+
     }
     MFindAds.findAds(args)
   }

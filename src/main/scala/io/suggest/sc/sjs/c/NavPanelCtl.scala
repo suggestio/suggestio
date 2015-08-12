@@ -37,7 +37,9 @@ object NavPanelCtl extends GridOffsetSetter with OnEscKeyUpT {
     // Нужно запросить список узлов, если он ещё не получен (smGeoNodesContent пустой).
     for (contentDiv <- MNavDom.contentDiv if contentDiv.firstChild == null) {
       // Запустить запрос к серверу на тему поиска узлов
-      val searchNodesArgs = new MFindNodesArgsEmpty with MFindNodesArgsDflt {}
+      val searchNodesArgs = new MFindNodesArgsEmpty with MFindNodesArgsDflt {
+        override def currAdnId = MScFsm.state.rcvrAdnId
+      }
       val fut = MFindNodes.findNodes(searchNodesArgs)
 
       // Повесить обработчик событий на contentDiv.

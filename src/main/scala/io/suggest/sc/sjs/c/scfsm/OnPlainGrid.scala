@@ -55,8 +55,7 @@ trait OnPlainGrid extends OnGrid {
 
      protected def _nextStateNavPanelOpened(sd1: SD): FsmState
 
-
-     override def receiverPart: PartialFunction[Any, Unit] = super.receiverPart orElse {
+     private def _receiverPart: Receive = {
        // Сигнал нажатия на кнопку открытия панели поиска.
        case ShowSearchClick(event) =>
          _showSearchClick(event)
@@ -64,6 +63,10 @@ trait OnPlainGrid extends OnGrid {
        // Сигнал нажатия на кнопку отображения панели навигации.
        case ShowNavClick(event) =>
          _showNavClick(event)
+     }
+
+     override def receiverPart: Receive = {
+       _receiverPart orElse super.receiverPart
      }
    }
 

@@ -14,6 +14,9 @@ import org.scalajs.dom.PopStateEvent
  */
 object MScFsm extends SjsLogger {
 
+  /** Тип хранимых состояний. */
+  type T = MScState
+
   /** Хранилище модели в immutable-класса для возможности быстро делать snapshot'ы и потокобезопасности в будущем. */
   private var _storage: Storage = Storage()
 
@@ -50,7 +53,7 @@ object MScFsm extends SjsLogger {
   def popStateOpt = _storage.states.tail.headOption
 
   /** Заменить текущее состояние новым. */
-  def replaceState(newState: MScState): Unit = {
+  def replaceState(newState: T): Unit = {
     _storage = _storage.copy(
       states = newState :: _storage.states.tail
     )
@@ -58,7 +61,7 @@ object MScFsm extends SjsLogger {
   }
 
   /** Общий код transform-методов вынесен сюда. */
-  private def _transformStateWith(withApply: Boolean, f: MScState => MScState)(saveF: MScState => Unit): MScState = {
+  private def _transformStateWith(withApply: Boolean, f: T => T)(saveF: T => Unit): T = {
     val prevState = state
     val newState = f(prevState)
     saveF(newState)
@@ -73,7 +76,7 @@ object MScFsm extends SjsLogger {
    * @param f Функция обновления состояния.
    * @return Результат f(state).
    */
-  def transformState(withApply: Boolean = true)(f: MScState => MScState): MScState = {
+  def transformState(withApply: Boolean = true)(f: T => T): T = {
     _transformStateWith(withApply, f)(pushState)
   }
 
@@ -82,7 +85,7 @@ object MScFsm extends SjsLogger {
    * @param f Функция трансформации.
    * @return Трансформированное состояние.
    */
-  def transformStateReplace(withApply: Boolean = true)(f: MScState => MScState): MScState = {
+  def transformStateReplace(withApply: Boolean = true)(f: T => T): T = {
     _transformStateWith(withApply, f)(replaceState)
   }
 
@@ -104,7 +107,7 @@ object MScFsm extends SjsLogger {
   }
 
   /** Найти состояние с указанным порядковым номером. */
-  def get(i: Int): Option[MScState] = {
+  def get(i: Int): Option[T] = {
     val storage = snapshotOrStorage
     val i1 = storage.index - i
     if (i1 < 0) {
@@ -115,7 +118,7 @@ object MScFsm extends SjsLogger {
   }
 
   /** Добавить новое состояние в стек. */
-  def pushState(newState: MScState): Unit = {
+  def pushState(newState: T): Unit = {
     _storage = _storage.copy(
       states = newState :: _storage.states,
       index  = _storage.index + 1
@@ -149,14 +152,15 @@ object MScFsm extends SjsLogger {
     }
   }
   /** Перевести выдачу в новое состояние, проанализировав изменения между новым и текущим состоянием. */
-  def applyStateChanges(state: MScState, prevState: MScState): Unit = {
-    state.applyChangesSince(prevState)
+  def applyStateChanges(state: T, prevState: T): Unit = {
+    //state.applyChangesSince(prevState)
+    ???
   }
 
 
   /** Внутренее хранилище модели. */
   private case class Storage(
-    states : List[MScState] = List( MScState() ),
+    states : List[T] = Nil,   // TODO Тут было начальное состояние: вместо Nil был List(State)
     index  : Int = 0
   ) {
     override def toString: String = "StSt(" + index + ")"
