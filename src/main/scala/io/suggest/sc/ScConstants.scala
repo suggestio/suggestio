@@ -377,6 +377,9 @@ object ScConstants {
     /** id div со стрелкой, отображаемой под курсором мышки. */
     def ARROW_ID = ROOT_ID + "ArrowLabel"
 
+    /** Время css-анимации одного слайдинга. */
+    def SLIDE_ANIMATE_MS = 200
+
   }
 
 }
