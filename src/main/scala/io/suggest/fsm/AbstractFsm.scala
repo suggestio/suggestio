@@ -11,9 +11,13 @@ trait AbstractFsm {
 
   /** Тип обработчика приходящих событий. */
   type Receive
+
+  /** Тип состояния. Переопределяется для возможности расширения API FsmState
+    * в реализации или на пути к ней (в промежуточных трейтах). */
+  type State_t <: FsmState
   
   /** Текущее состояние. */
-  protected var _state: FsmState
+  protected var _state: State_t
 
   /** Ресивер для всех состояний. */
   protected def allStatesReceiver: Receive
@@ -22,7 +26,7 @@ trait AbstractFsm {
    * Переключение на новое состояние. Старое состояние будет отброшено.
    * @param nextState Новое состояние.
    */
-  protected def become(nextState: FsmState): Unit = {
+  protected def become(nextState: State_t): Unit = {
     _state = nextState
     _installReceiver(_state.receiver)
     _state.afterBecome()
@@ -58,7 +62,7 @@ trait StateData extends AbstractFsm {
   protected var _stateData: SD
 
   /** become() в выставлением новой stateData перед применением следующего состояния. */
-  protected def become(nextState: FsmState, sd2: SD): Unit = {
+  protected def become(nextState: State_t, sd2: SD): Unit = {
     _stateData = sd2
     become(nextState)
   }
