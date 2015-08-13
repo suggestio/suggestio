@@ -15,6 +15,12 @@ import org.scalajs.dom.Event
  */
 trait SendEventToFsmUtil {
 
+  /**
+   * Сборка фунцкии для отправки DOM-события в ScFsm, заворачивая его в соотв.контейнер.
+   * @param model Компаньон модели контейнера.
+   * @tparam EventT Тип заворачиваемого события.
+   * @return Функция, пригодная для повешивания в качестве листенера.
+   */
   protected def _sendEventF[EventT <: Event](model: IFsmMsgCompanion[EventT]) = {
     {e: EventT =>
       ScFsm ! model(e)
@@ -22,6 +28,7 @@ trait SendEventToFsmUtil {
   }
 
 }
+
 
 // TODO Надо наверное спилить этот трейт во имя более универсального варианта.
 trait InitOnClickToFsmT extends IInitLayout with OnClickSelfT with SafeEventTargetT with SendEventToFsmUtil {

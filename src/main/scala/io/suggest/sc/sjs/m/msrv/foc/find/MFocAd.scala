@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.m.msrv.foc.find
 
-import io.suggest.sc.focus.FocusedRenderNames._
+import io.suggest.sc.focus.FocAdProto._
 import scala.scalajs.js.{Dictionary, Any}
 
 /**
@@ -12,28 +12,36 @@ import scala.scalajs.js.{Dictionary, Any}
 
 case class MFocAd(json: Dictionary[Any]) extends IMFocAd {
 
-  override def html: String = json(HTML_FN).toString
-
-  override val mode: MFocRenderMode = {
-    val modeId = json(MODE_FN).toString
-    MFocRenderModes.withName(modeId)
+  /** Вспомогательная функция для быстрого чтения примитивных типов данных из полей raw JSON. */
+  private def _get[T](key: String): T = {
+    json(key).asInstanceOf[T]
   }
 
-  override def index: Int = {
-    json(INDEX_FN).asInstanceOf[Int]
-  }
+  override def madId        = _get[String](MAD_ID_FN)
+  override def bodyHtml     = _get[String](BODY_HTML_FN)
+  override def controlsHtml = _get[String](CONTROLS_HTML_FN)
+  override def producerId   = _get[String](PRODUCER_ID_FN)
+  override def index        = _get[Int](INDEX_FN)
+
 }
 
 /** Интерфейс экземпляров модели. */
 trait IMFocAd {
 
-  /** Отрендеренная карточка. */
-  def html: String
+  /** id рекламной карточки. */
+  def madId: String
 
-  /** Режим рендера сервером. */
-  def mode: MFocRenderMode
+  /** Отрендеренная рекламная карточка. */
+  def bodyHtml: String
+
+  /** Внешние элементы рекламной карточки. */
+  def controlsHtml: String
+
+  /** id продьюсера рекламной карточки. */
+  def producerId: String
 
   /** Человеческий порядковый номер. */
   def index: Int
+
 }
 

@@ -17,12 +17,8 @@ object FocAd {
 
   /**
    * Сборка нового экземпляра на основе полученного от сервера экземпляра MFocAd.
-   * @param mfocAd Полученная от сервера карточка.
    * @return Экземпляр [[FocAd]].
    */
-  def apply(mfocAd: IMFocAd): FocAd = {
-    apply(mfocAd.html)
-  }
   def apply(html: String): FocAd = {
     apply(StrHtmlContent(html))
   }

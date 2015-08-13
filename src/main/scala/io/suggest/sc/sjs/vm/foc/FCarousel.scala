@@ -1,12 +1,12 @@
 package io.suggest.sc.sjs.vm.foc
 
-import io.suggest.sc.sjs.v.vutil.{ExtraStyles, VUtil}
+import io.suggest.sc.sjs.v.vutil.{VUtil, ExtraStyles}
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sjs.common.model.dom.DomListIterator
 import io.suggest.sjs.common.view.safe.SafeElT
 import io.suggest.sjs.common.view.safe.css.{StyleLeft, Width}
 import io.suggest.sjs.common.view.vutil.CssSzImplicits
-import io.suggest.sc.ScConstants.Focused.ANIMATED_CSS_CLASS
+import io.suggest.sc.ScConstants.Focused._
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -19,19 +19,8 @@ import org.scalajs.dom.raw.HTMLDivElement
  * Так же есть небольшой слайдинг на произвольное состояние (для touch-слайдинга).
  */
 object FCarousel extends FindDiv {
-
-  override def DOM_ID: String = "smFocCar"
-  override type T = FCarousel
-
-  /**
-   * Пересоздать карусель БЕЗ привязки к DOM.
-   * @return Экземпляр новосозданной карусели.
-   */
-  def apply(): FCarousel = {
-    val el = VUtil.newDiv()
-    FCarousel(el)
-  }
-
+  override def DOM_ID = CONTAINER_ID
+  override type T     = FCarousel
 }
 
 
@@ -39,6 +28,14 @@ object FCarousel extends FindDiv {
 trait FCarouselT extends SafeElT with CssSzImplicits with Width with ExtraStyles with StyleLeft {
 
   override type T = HTMLDivElement
+
+  def isEmpty: Boolean = {
+    _underlying.firstChild == null
+  }
+
+  def clean(): Unit = {
+    VUtil.removeAllChildren(_underlying)
+  }
 
   /** Выставить новую ширину карусели. */
   override def setWidthPx(widthPx: Int) = super.setWidthPx(widthPx)

@@ -111,10 +111,15 @@ with OnGridSearchHashTags with OnGridNav with foc.StartingForAd {
 
     override protected def _findAdsFailed(ex: Throwable): Unit = ???
   }
-
+  
+  
+  /** Трейт для поддержки переключения на состояния, исходящие из OnGridStateT  */
+  protected trait _FocusOnGridT extends OnGridStateT {
+    override protected def _startFocusOnAdState = new FocStartingForAd
+  }
 
   /** Реализация состояния, где карточки уже загружены. */
-  class OnPlainGridState extends OnPlainGridStateT {
+  class OnPlainGridState extends OnPlainGridStateT with _FocusOnGridT {
     override protected def _nextStateSearchPanelOpened(sd1: MStData): FsmState = {
       sd1.search.currTab match {
         case MTabs.Geo      => new OnGridSearchGeoState
@@ -135,12 +140,12 @@ with OnGridSearchHashTags with OnGridNav with foc.StartingForAd {
   }
 
   /** Состояние, где и сетка есть, и поисковая панель отрыта на вкладке географии. */
-  class OnGridSearchGeoState extends OnGridSearchGeoStateT with _SearchClose {
+  class OnGridSearchGeoState extends OnGridSearchGeoStateT with _SearchClose with _FocusOnGridT {
     override protected def _tabSwitchedFsmState(sd2: MStData) = new OnGridSearchHashTagsState
   }
 
   /** Состояние, где открыта вкладка хеш-тегов на панели поиска. */
-  class OnGridSearchHashTagsState extends OnGridSearchHashTagsStateT with _SearchClose {
+  class OnGridSearchHashTagsState extends OnGridSearchHashTagsStateT with _SearchClose with _FocusOnGridT {
     override protected def _tabSwitchedFsmState(sd2: MStData) = new OnGridSearchGeoState
   }
 

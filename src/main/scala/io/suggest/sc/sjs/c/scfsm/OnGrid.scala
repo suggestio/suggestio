@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.c.scfsm
 
+import io.suggest.sc.sjs.m.mfoc.MFocSd
 import io.suggest.sc.sjs.m.mgrid.{IGridBlockClick, GridBlockClick, GridScroll}
 
 /**
@@ -15,9 +16,20 @@ trait OnGrid extends ScFsmStub {
 
     /** Обработка кликов по карточкам в сетке. */
     protected def handleGridBlockClick(gbc: IGridBlockClick): Unit = {
-      // Узнать id и номер окликнутого блока.
-      println("tg = " + gbc.currentTarget.id)
+      // Узнать id и номер окликнутого блока, и закинуть их в состояние.
+      val gblock = gbc.gblock
+      val sd0 = _stateData
+      val sd1 = sd0.copy(
+        focused = Some(MFocSd(
+          currIndex = gblock.index,
+          firstAdId = gblock.madId
+        ))
+      )
+      become(_startFocusOnAdState, sd1)
     }
+
+    protected def _startFocusOnAdState: FsmState
+
 
     /** Реакция на вертикальный скроллинг. */
     protected def handleVScroll(vs: GridScroll): Unit = {

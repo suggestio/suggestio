@@ -1,6 +1,5 @@
 package io.suggest.sc.sjs.vm.foc
 
-import io.suggest.sc.sjs.v.vutil.VUtil
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sjs.common.view.safe.SafeElT
 import org.scalajs.dom.raw.HTMLDivElement
@@ -21,17 +20,19 @@ object FRoot extends FindDiv {
 }
 
 
-
 trait FRootT extends SafeElT {
+
   override type T = HTMLDivElement
 
-  def replaceCarousel(car: FCarouselT): Unit = {
-    VUtil.removeAllChildren(_underlying)
-    _underlying.appendChild( car._underlying )
-  }
+  def controls = FControls.find()
+  def carousel = FCarousel.find()
+
 }
 
 
 case class FRoot(_underlying: HTMLDivElement)
   extends FRootT
-
+{
+  override lazy val controls = super.controls
+  override lazy val carousel = super.carousel
+}

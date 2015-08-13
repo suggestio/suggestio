@@ -57,7 +57,7 @@ trait GBlockT extends SafeElT with SetDisplayEl with CssSzImplicits with IBlockI
   /** Высота карточки в css-пикселях. */
   override def height       = getIntAttributeStrict(BLK_HEIGHT_ATTR).get
   /** ES id карточки. */
-  def madId                 = getAttribute(MAD_ID_ATTR).get
+  def madId                 = getAttribute(MAD_ID_ATTR)
   /** Порядковый номер карточки. */
   def index                 = getIntAttributeStrict(BLK_INDEX_ATTR).get
 
@@ -98,11 +98,4 @@ trait GBlockT extends SafeElT with SetDisplayEl with CssSzImplicits with IBlockI
 
 
 /** Дефолтовая реализация экземпляра модели [[GBlockT]]. */
-case class GBlock(override val _underlying: HTMLDivElement) extends GBlockT {
-
-  override lazy val width   = super.width
-  override lazy val height  = super.height
-  override lazy val madId   = super.madId
-  override lazy val index   = super.index
-
-}
+case class GBlock(override val _underlying: HTMLDivElement) extends GBlockT

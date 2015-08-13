@@ -1,9 +1,9 @@
 package io.suggest.sc.sjs.c.scfsm.foc
 
 import io.suggest.sc.sjs.c.scfsm.{FindAdsFsmUtil, ScFsmStub}
-import io.suggest.sc.sjs.m.mfoc.{SlideDone, FadsReceived}
+import io.suggest.sc.sjs.m.mfoc.SlideDone
 import io.suggest.sc.sjs.m.msrv.foc.find.{MFocAds, MFocAdSearchEmpty}
-import io.suggest.sc.sjs.vm.foc.{FCarCell, FRoot, FCarousel, FocAd}
+import io.suggest.sc.sjs.vm.foc.{FCarCell, FCarousel}
 import org.scalajs.dom
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.util.{Failure, Success}
@@ -29,35 +29,35 @@ trait StartingForAd extends ScFsmStub with FindAdsFsmUtil {
     override def afterBecome(): Unit = {
       super.afterBecome()
       val sd0 = _stateData
-      for (screen <- sd0.screen;  fState0 <- sd0.focused;  fRoot <- FRoot.find() ) {
+      for (screen <- sd0.screen;  fState0 <- sd0.focused;  car <- FCarousel.find() ) {
         // Собрать и запустить fads-реквест на основе запроса к карточкам плитки.
-        val startOffset = Math.max(0, fState0.currIndex - 1)
         // Флаг: запрашивать ли карточку, предшествующую запрошенной. Да, если запрошена ненулевая карточка.
-        val withPrevAd = startOffset > 0
+        val currIndex = fState0.currIndex
+        val withPrevAd = currIndex > 0
         val args = new MFocAdSearchEmpty with FindAdsArgsT {
           override def _sd = sd0
-          override def firstAdId = fState0.firstAdId
+          //override def firstAdId = fState0.firstAdId
           // Выставляем под нужды focused-выдачи значения limit/offset.
-          override def offset = Some( startOffset )
+          override def offset = Some( if (withPrevAd) currIndex - 1 else currIndex )
           override def limit = Some( if (withPrevAd) 3 else 2 )
           //override def levelId = Some(ShowLevels.ID_PRODUCER)  // TODO Тут должно быть что-то, не?.
         }
         val fadsFut = MFocAds.find(args)
 
-        // Подготовить focused-карусель к работе.
-        val car = FCarousel()
+        // Готовим карусель к работе.
+        if (!car.isEmpty)
+          car.clean()
         // Ширина ячейки в карусели эквивалентна пиксельной ширине экрана.
         val cellWidthPx = screen.width
         // Начальная ширина карусели задаётся исходя из текущих ячеек. +1 -- Скорее всего будет как минимум одна карточка после текущей.
-        car.setWidthPx( cellWidthPx * (fState0.currIndex + 1) )
+        car.setWidthPx( cellWidthPx * (currIndex + 1) )
         // Начальный сдвиг карусели выставляем без анимации. -1 т.к. первая карточка должна выезжать из-за экрана.
-        val carLeftPx = -cellWidthPx * (fState0.currIndex - 1)
+        val carLeftPx = -cellWidthPx * (currIndex - 1)
+        car.disableTransition()
         car.animateToX( carLeftPx )
-        // Подключить собранную карусель к работе
-        fRoot.replaceCarousel( car )
         // Пустая карусель, но к работе вроде готова.
         car.enableTransition()
-        // TODO Карусель пустая. Не будет ли обратного эффекта от такой оптимизации?
+        // TODO Карусель пустая, а will-change выставляется. Не будет ли негативного эффекта от такой странной оптимизации?
         car.willAnimate()
 
         // Обновить состояние FSM.
@@ -91,7 +91,7 @@ trait StartingForAd extends ScFsmStub with FindAdsFsmUtil {
         val firstAd = fads(firstAdFadsIndex)
         val cell1 = FCarCell()
         cell1.setWidthPx( cellWidth )
-        cell1.setContent( firstAd.html )
+        cell1.setContent( firstAd.bodyHtml )
         // Повесить запрошенную карточку на шаг правее нужного индекса, чтобы можно было прослайдить на неё.
         cell1.setLeftPx( fState.currIndex * cellWidth )
 
@@ -125,28 +125,6 @@ trait StartingForAd extends ScFsmStub with FindAdsFsmUtil {
       _receiverPart orElse super.receiverPart
     }
 
-  }
-
-
-  /** Состояние, когда запрошены у сервера карточки. */
-  protected class WaitForFadsState(nextIndex: Int) extends FsmState {
-    override def receiverPart: Receive = {
-      case FadsReceived(fads) =>
-        val fadsIter2 = fads.focusedAdsIter.map { fad =>
-          fad.index -> FocAd(fad)
-        }
-        /*
-          fads.map { fad  =>  fad.index -> FocAd(fad) }
-        val sd0 = _data
-        val stateData1 = sd0.copy(
-          ads           = sd0.ads ++ fadsIter2,
-          loadedCount   = sd0.loadedCount + fads.fadsCount,
-          totalCount    = Some(fads.totalCount)
-        )
-        */
-        // TODO Переключиться на следующее состояние.
-        ???
-    }
   }
 
 }
