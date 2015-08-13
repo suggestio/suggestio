@@ -7,9 +7,9 @@
 @* Тут постоянная часть верстки блоков карточек в выдаче. *@
 <div class="sm-block sio-mart__single-offer sm-block-tpl@bc.id @if(mad.id){sm-block@mad.id} @args.cssClasses"
      @if(mad.id) {
-       data-mad-id="@mad.id"
+       @MAD_ID_ATTR="@mad.id"
        @if(args.apiVsn.serverSideBlockIds) {
-         id="@(mad.id).block"
+         id="@(mad.id):blk"
          @args.indexOpt.map { index => @BLK_INDEX_ATTR="@index" }
        }
      }

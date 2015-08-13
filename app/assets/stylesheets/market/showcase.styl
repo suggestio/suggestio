@@ -137,7 +137,9 @@ code
 
 .sm-block
   position: absolute
+  transition: -webkit-transform 0.2s linear
   -webkit-transition: -webkit-transform 0.2s linear
+  -moz-transition: -webkit-transform 0.2s linear
 
   &.__rel
     position: relative
@@ -151,13 +153,19 @@ code
 /*
 ------------------------------------*/
 .fs-animated-start
+  transform: translate3d(100%,0,0)
+  -moz-transform: translate3d(100%,0,0)
   -webkit-transform: translate3d(100%,0,0)
 
 .fs-animated-end
+  transform: translate3d(0,0,0)
+  -moz-transform: translate3d(0,0,0)
   -webkit-transform: translate3d(0,0,0)
 
 .transition-animated
+  transition: all 0.2s linear
   -webkit-transition: all 0.2s linear
+  -moz-transition: all 0.2s linear
 
 /* Кнопки
 ------------------------------------*/
@@ -776,6 +784,8 @@ code
     height: 100%
     &.__animated
       -webkit-transition: all 0.2s linear
+      -moz-transition: all 0.2s linear
+      transition: all 0.2s linear
 
 .sm-focused-ads-loader
   width             600px
