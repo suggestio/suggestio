@@ -373,7 +373,10 @@ object ScConstants {
     /** id корневого контейнера. */
     def ROOT_ID = "smFocusedAds"
 
-    /** id focused-контейнера карточек. */
+    /** Контейнер заголовка, стрелочек и прочего хлама, который сопутствует карточкам. */
+    def CONTROLS_ID = ROOT_ID + "Controls"
+
+    /** id focused-контейнера-карусели карточек. */
     def CONTAINER_ID = ROOT_ID + DIV_CONTAINER_SUFFIX
 
     /** id div со стрелкой, отображаемой под курсором мышки. */
