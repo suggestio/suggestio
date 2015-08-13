@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.c.scfsm.foc
 
 import io.suggest.sc.sjs.c.scfsm.{FindAdsFsmUtil, ScFsmStub}
-import io.suggest.sc.sjs.m.mfoc.{Close, FadsReceived, GoTo}
+import io.suggest.sc.sjs.m.mfoc.{SlideDone, FadsReceived}
 import io.suggest.sc.sjs.m.msrv.foc.find.{MFocAds, MFocAdSearchEmpty}
 import io.suggest.sc.sjs.vm.foc.{FCarCell, FRoot, FCarousel, FocAd}
 import org.scalajs.dom
@@ -40,6 +40,7 @@ trait StartingForAd extends ScFsmStub with FindAdsFsmUtil {
           // Выставляем под нужды focused-выдачи значения limit/offset.
           override def offset = Some( startOffset )
           override def limit = Some( if (withPrevAd) 3 else 2 )
+          //override def levelId = Some(ShowLevels.ID_PRODUCER)  // TODO Тут должно быть что-то, не?.
         }
         val fadsFut = MFocAds.find(args)
 
@@ -47,20 +48,22 @@ trait StartingForAd extends ScFsmStub with FindAdsFsmUtil {
         val car = FCarousel()
         // Ширина ячейки в карусели эквивалентна пиксельной ширине экрана.
         val cellWidthPx = screen.width
-        // Начальная ширина карусели задаётся исходя из текущих ячеек.
-        car.setWidthPx( cellWidthPx * fState0.currIndex )
+        // Начальная ширина карусели задаётся исходя из текущих ячеек. +1 -- Скорее всего будет как минимум одна карточка после текущей.
+        car.setWidthPx( cellWidthPx * (fState0.currIndex + 1) )
         // Начальный сдвиг карусели выставляем без анимации. -1 т.к. первая карточка должна выезжать из-за экрана.
         val carLeftPx = -cellWidthPx * (fState0.currIndex - 1)
-        car.setLeftPx( carLeftPx )
+        car.animateToX( carLeftPx )
         // Подключить собранную карусель к работе
         fRoot.replaceCarousel( car )
+        // Пустая карусель, но к работе вроде готова.
+        car.enableTransition()
         // TODO Карусель пустая. Не будет ли обратного эффекта от такой оптимизации?
-        car.willAnimate(true)
+        car.willAnimate()
 
         // Обновить состояние FSM.
         _stateData = sd0.copy(
           focused = Some(fState0.copy(
-            carLeftPx = carLeftPx
+            ???
           ))
         )
 
@@ -90,19 +93,19 @@ trait StartingForAd extends ScFsmStub with FindAdsFsmUtil {
         cell1.setWidthPx( cellWidth )
         cell1.setContent( firstAd.html )
         // Повесить запрошенную карточку на шаг правее нужного индекса, чтобы можно было прослайдить на неё.
-        cell1.setLeftPx( (fState.currIndex + 1) * cellWidth )
+        cell1.setLeftPx( fState.currIndex * cellWidth )
 
         // Прилинковываем запрошенную карточку справа и запускаем анимацию.
         car.pushCellRight(cell1)
-        car.animateToX( fState.currIndex * cellWidth + fState.carLeftPx )
+        car.animateToX( fState.currIndex * cellWidth )
 
         // TODO После анимации надо прилинковать к карусели оставшиеся карточки: prev и next, если они есть.
         val afterAnimateF = { () =>
-          ???
+          _sendEvent(SlideDone)
         }
         dom.setTimeout(afterAnimateF, SLIDE_ANIMATE_MS + 50)
 
-        // TODO Обновить состояние FSM
+        // TODO Обновить состояние FSM: сохранить туда оставшиеся карточки для прицепляния.
         ???
       }
     }
@@ -121,6 +124,7 @@ trait StartingForAd extends ScFsmStub with FindAdsFsmUtil {
     override def receiverPart: Receive = {
       _receiverPart orElse super.receiverPart
     }
+
   }
 
 

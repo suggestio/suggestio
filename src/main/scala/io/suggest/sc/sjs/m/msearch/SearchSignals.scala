@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.m.msearch
 
-import io.suggest.sc.sjs.m.mfsm.{IFsmMsgCompanion, IFsmEventMsgCompanion, IFsmMsg}
+import io.suggest.sc.sjs.m.mfsm.{CurrentTargetBackup, IFsmMsgCompanion, IFsmEventMsgCompanion, IFsmMsg}
+import org.scalajs.dom.raw.HTMLInputElement
 import org.scalajs.dom.{FocusEvent, KeyboardEvent, Event}
 
 /**
@@ -38,8 +39,11 @@ object STabBtnGeoClick
 
 
 /** Сигнал о наборе в полнотекстового поиска. */
-case class FtsFieldKeyUp(event: KeyboardEvent)
-  extends IFsmMsg
+trait IFtsFieldKeyUp extends CurrentTargetBackup {
+  override type CurrentTarget_t = HTMLInputElement
+}
+case class FtsFieldKeyUp(override val event: KeyboardEvent)
+  extends IFtsFieldKeyUp with IFsmMsg
 object FtsFieldKeyUp
   extends IFsmMsgCompanion[KeyboardEvent]
 
@@ -52,8 +56,11 @@ object FtsFieldFocus
 
 
 /** Сигнал о потере фокуса в input'е полнотекстового поиска. */
-case class FtsFieldBlur(event: FocusEvent)
-  extends IFsmMsg
+trait IFtsFieldBlur extends CurrentTargetBackup {
+  override type CurrentTarget_t = HTMLInputElement
+}
+case class FtsFieldBlur(override val event: FocusEvent)
+  extends IFtsFieldBlur with IFsmMsg
 object FtsFieldBlur
   extends IFsmMsgCompanion[FocusEvent]
 

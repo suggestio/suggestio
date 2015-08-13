@@ -8,7 +8,8 @@ import io.suggest.sc.sjs.vm.search.fts.{SInputContainer, SInput}
 import io.suggest.sjs.common.util.ISjsLogger
 import org.scalajs.dom
 import org.scalajs.dom.ext.KeyCode
-import org.scalajs.dom.{FocusEvent, KeyboardEvent, Event}
+import org.scalajs.dom.raw.HTMLInputElement
+import org.scalajs.dom.{FocusEvent, KeyboardEvent}
 import io.suggest.sc.ScConstants.Search.Fts.START_TIMEOUT_MS
 
 /**
@@ -111,10 +112,10 @@ trait OnGridSearch extends OnGrid with ISjsLogger {
       // Получение сигналов от поля полнотекстового поиска.
       case FtsFieldFocus(event) =>
         _ftsFieldFocus(event)
-      case FtsFieldBlur(event) =>
-        _ftsFieldBlur(event)
-      case FtsFieldKeyUp(event) =>
-        _ftsKeyUp(event)
+      case ffb: FtsFieldBlur =>
+        _ftsFieldBlur(ffb)
+      case ffku: FtsFieldKeyUp =>
+        _ftsKeyUp(ffku)
       case FtsStartRequestTimeout(generation2) if _stateData.search.ftsSearch.exists(_.generation == generation2) =>
         _ftsLetsStartRequest()
     }
@@ -137,7 +138,7 @@ trait OnGridSearch extends OnGrid with ISjsLogger {
     }
 
     /** Сигнал набора символов в поле полнотекстового поиска. */
-    protected def _ftsKeyUp(event: KeyboardEvent): Unit = {
+    protected def _ftsKeyUp(ffku: IFtsFieldKeyUp): Unit = {
       // Надо создать таймер отправки запроса. Но сначала готовим самое начальное состояние.
       val sd0: SD = {
         val sd00 = _stateData
@@ -150,7 +151,7 @@ trait OnGridSearch extends OnGrid with ISjsLogger {
       }
       for {
         state0 <- sd0.search.ftsSearch
-        sinput <- SInput.findUsingEvent(event)
+        sinput <- SInput.findUsing(ffku)
       } {
         val q2 = sinput.getNormalized
         // Если изменился текст запроса...
@@ -194,10 +195,10 @@ trait OnGridSearch extends OnGrid with ISjsLogger {
     }
 
     /** Сигнал потери фокуса в поле полнотекстового поиска. */
-    protected def _ftsFieldBlur(event: FocusEvent): Unit = {
+    protected def _ftsFieldBlur(ffb: IFtsFieldBlur): Unit = {
       // Если текста в поле нет, то деактивировать поле и сбросить поиск.
       for {
-        sinput    <- SInput.findUsingEvent(event) if sinput.getNormalized.isEmpty
+        sinput    <- SInput.findUsing(ffb) if sinput.getNormalized.isEmpty
         inputCont <- sinput.container
       } {
         inputCont.deactivate()

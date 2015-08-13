@@ -1,14 +1,9 @@
 package io.suggest.sc.sjs.c.scfsm
 
 import io.suggest.sc.sjs.m.mhdr.{ShowNavClick, ShowSearchClick}
-import io.suggest.sc.sjs.m.msrv.nodes.find.{MFindNodesArgsEmpty, MFindNodes, MFindNodesArgsDflt}
 import io.suggest.sc.sjs.vm.hdr.HRoot
-import io.suggest.sc.sjs.vm.hdr.btns.nav.HShowNavBtn
-import io.suggest.sc.sjs.vm.nav.NRoot
-import io.suggest.sc.sjs.vm.nav.nodelist.NlContent
 import io.suggest.sc.sjs.vm.search.SRoot
 import org.scalajs.dom.Event
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 /** Аддон для поддержки состояния "голая плитка" без открытых панелей, карточек и прочего. */
 trait OnPlainGrid extends OnGrid {
@@ -52,8 +47,6 @@ trait OnPlainGrid extends OnGrid {
 
 
      protected def _showNavClick(event: Event): Unit
-
-     protected def _nextStateNavPanelOpened(sd1: SD): FsmState
 
      private def _receiverPart: Receive = {
        // Сигнал нажатия на кнопку открытия панели поиска.

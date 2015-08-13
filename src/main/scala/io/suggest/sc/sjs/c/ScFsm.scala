@@ -17,7 +17,7 @@ import scala.concurrent.Future
  * Description: FSM-контроллер для всей выдачи. Собирается из кусков, которые закрывают ту или иную область.
  */
 object ScFsm extends SjsLogger with Init with GetIndex with GridAppend with OnPlainGrid with OnGridSearchGeo
-with OnGridSearchHashTags with OnGridNav {
+with OnGridSearchHashTags with OnGridNav with foc.StartingForAd {
 
   // Инициализируем базовые внутренние переменные.
   override protected var _state: FsmState = new DummyState
@@ -59,17 +59,17 @@ with OnGridSearchHashTags with OnGridNav {
   // --------------------------------------------------------------------------------
 
   /** Реализация состояния типовой инициализации. */
-  protected class InitState extends InitStateT {
+  class InitState extends InitStateT {
     override def _jsRouterState(jsRouterFut: Future[_]): FsmState = {
       new AwaitJsRouterState(jsRouterFut)
     }
   }
   /** Реализация состояния самой первой инициализации. */
-  protected class FirstInitState extends InitState with FirstInitStateT
+  class FirstInitState extends InitState with FirstInitStateT
 
 
   /** Состояние начальной инициализации роутера. */
-  protected class AwaitJsRouterState(
+  class AwaitJsRouterState(
     override val jsRouterFut: Future[_]
   ) extends AwaitJsRouterStateT {
 
@@ -86,7 +86,7 @@ with OnGridSearchHashTags with OnGridNav {
 
 
   /** Реализация состояния-получения-обработки индексной страницы. */
-  protected class GetIndexState extends GetIndexStateT {
+  class GetIndexState extends GetIndexStateT {
 
     /** Когда обработка index завершена, надо переключиться на состояние обработки начальной порции карточек. */
     override protected def _onSuccessNextState(findAdsFut: Future[MFindAds], wcHideFut: Future[_], sd1: SD): FsmState = {
@@ -102,7 +102,7 @@ with OnGridSearchHashTags with OnGridNav {
 
 
   /** Реализация состояния начальной загрузки карточек в выдачу. */
-  protected class AppendAdsToGridDuringWelcomeState(
+  class AppendAdsToGridDuringWelcomeState(
     override val findAdsFut: Future[MFindAds],
     override val wcHideFut: Future[_]
   ) extends AppendAdsToGridDuringWelcomeStateT {
@@ -114,15 +114,13 @@ with OnGridSearchHashTags with OnGridNav {
 
 
   /** Реализация состояния, где карточки уже загружены. */
-  protected class OnPlainGridState extends OnPlainGridStateT {
+  class OnPlainGridState extends OnPlainGridStateT {
     override protected def _nextStateSearchPanelOpened(sd1: MStData): FsmState = {
       sd1.search.currTab match {
         case MTabs.Geo      => new OnGridSearchGeoState
         case MTabs.HashTags => new OnGridSearchHashTagsState
       }
     }
-
-    override protected def _nextStateNavPanelOpened(sd1: MStData): FsmState = ???
 
     override protected def _showNavClick(event: Event): Unit = {
       become(new OnGridNavLoadListState)
@@ -137,12 +135,12 @@ with OnGridSearchHashTags with OnGridNav {
   }
 
   /** Состояние, где и сетка есть, и поисковая панель отрыта на вкладке географии. */
-  protected class OnGridSearchGeoState extends OnGridSearchGeoStateT with _SearchClose {
+  class OnGridSearchGeoState extends OnGridSearchGeoStateT with _SearchClose {
     override protected def _tabSwitchedFsmState(sd2: MStData) = new OnGridSearchHashTagsState
   }
 
   /** Состояние, где открыта вкладка хеш-тегов на панели поиска. */
-  protected class OnGridSearchHashTagsState extends OnGridSearchHashTagsStateT with _SearchClose {
+  class OnGridSearchHashTagsState extends OnGridSearchHashTagsStateT with _SearchClose {
     override protected def _tabSwitchedFsmState(sd2: MStData) = new OnGridSearchGeoState
   }
 
@@ -153,11 +151,16 @@ with OnGridSearchHashTags with OnGridNav {
     override protected def _onHideNavState(sd1: MStData) = new OnPlainGridState
   }
   /** Состояние отображения панели навигации с текущей подгрузкой списка карточек. */
-  protected class OnGridNavLoadListState extends OnGridNavLoadListStateT with _OnGridNav {
+  class OnGridNavLoadListState extends OnGridNavLoadListStateT with _OnGridNav {
     override protected def _navPanelReadyState = new OnGridNavReadyState
   }
-  protected class OnGridNavReadyState extends OnGridNavReadyStateT with _OnGridNav {
+  class OnGridNavReadyState extends OnGridNavReadyStateT with _OnGridNav {
     override protected def _onNodeSwitchState(sd1: MStData) = new GetIndexState
+  }
+
+
+  // Состояния focused-выдачи.
+  class FocStartingForAd extends StartingForAdStateT {
   }
 
 }

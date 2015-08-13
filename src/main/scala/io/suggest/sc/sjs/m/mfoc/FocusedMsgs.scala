@@ -19,3 +19,6 @@ case class GoTo(index: Int) extends IFsmMsg
 
 /** Событие получения ответа от сервера с порцией focused-карточек. */
 case class FadsReceived(fads: IMFocAds) extends IFsmMsg
+
+/** Внутренний сигнал о завершении slide-анимации. */
+case object SlideDone extends IFsmMsg

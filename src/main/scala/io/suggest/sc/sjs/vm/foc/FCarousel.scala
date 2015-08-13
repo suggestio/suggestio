@@ -1,12 +1,12 @@
 package io.suggest.sc.sjs.vm.foc
 
-import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.v.vutil.{ExtraStyles, VUtil}
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sjs.common.model.dom.DomListIterator
 import io.suggest.sjs.common.view.safe.SafeElT
 import io.suggest.sjs.common.view.safe.css.{StyleLeft, Width}
 import io.suggest.sjs.common.view.vutil.CssSzImplicits
+import io.suggest.sc.ScConstants.Focused.ANIMATED_CSS_CLASS
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -56,9 +56,27 @@ trait FCarouselT extends SafeElT with CssSzImplicits with Width with ExtraStyles
   /** Мгновенное неанимированное репозиционирование на указанный сдвиг в пикселях. */
   override def setLeftPx(leftPx: Int) = super.setLeftPx(leftPx)
 
-  /** Активация will-change при подготовке к анимации. */
-  def willAnimate(enabled: Boolean): Unit = {
-    _underlying.style.willChange = if (enabled) "translate3d" else ""
+  /** Активация плавности анимации. */
+  def enableTransition(): Unit = {
+    addClasses(ANIMATED_CSS_CLASS)
+  }
+
+  /** Деактивация плавности анимации. */
+  def disableTransition(): Unit = {
+    removeClass(ANIMATED_CSS_CLASS)
+  }
+
+  /** Активация will-change при подготовке к CSS3 анимации. */
+  def willAnimate(): Unit = {
+    _willChange("translate3d")
+  }
+  /** Деактивация подготовки к CSS3-анимации. */
+  def wontAnimate(): Unit = {
+    _willChange("")
+  }
+
+  private def _willChange(wc: String): Unit = {
+    _underlying.style.willChange = wc
   }
 
   /** Анимированный слайдинг на указанную X-координату. */

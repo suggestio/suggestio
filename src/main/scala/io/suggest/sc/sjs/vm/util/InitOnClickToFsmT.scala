@@ -13,27 +13,35 @@ import org.scalajs.dom.Event
  * Description: Аддон для поддержки навешивания onClick-листенера при инициализации.
  * Подмешивается к экземплярам кнопок.
  */
+trait SendEventToFsmUtil {
+
+  protected def _sendEventF[EventT <: Event](model: IFsmMsgCompanion[EventT]) = {
+    {e: EventT =>
+      ScFsm ! model(e)
+    }
+  }
+
+}
+
 // TODO Надо наверное спилить этот трейт во имя более универсального варианта.
-trait InitOnClickToFsmT extends IInitLayout with OnClickSelfT with SafeEventTargetT {
+trait InitOnClickToFsmT extends IInitLayout with OnClickSelfT with SafeEventTargetT with SendEventToFsmUtil {
 
   /** Статический компаньон модели для сборки сообщений. */
   protected[this] def _clickMsgModel: IFsmEventMsgCompanion
 
   /** Инициализация текущей и подчиненных ViewModel'ей. */
   override def initLayout(): Unit = {
-    onClick { e: Event =>
-      ScFsm ! _clickMsgModel(e)
-    }
+    val f = _sendEventF[Event](_clickMsgModel)
+    onClick(f)
   }
 }
 
 
 /** Быстрая вешалка listener'ов DOM-событий на элемент. Подмешивается к vm-классам. */
-trait InitOnEventToFsmUtilT extends SafeEventTargetT {
+trait InitOnEventToFsmUtilT extends SafeEventTargetT with SendEventToFsmUtil {
   protected def _addToFsmEventListener[EventT <: Event](eventType: String, model: IFsmMsgCompanion[EventT]): Unit = {
-    addEventListener(eventType) { e: EventT =>
-      ScFsm ! model.apply(e)
-    }
+    val f = _sendEventF[EventT](model)
+    addEventListener(eventType)(f)
   }
 }
 

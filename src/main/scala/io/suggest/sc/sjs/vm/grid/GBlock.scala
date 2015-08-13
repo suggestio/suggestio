@@ -1,15 +1,13 @@
 package io.suggest.sc.sjs.vm.grid
 
-import io.suggest.sc.ScConstants.Block
-import io.suggest.sc.sjs.c.ScFsm
+import io.suggest.sc.ScConstants.Block._
 import io.suggest.sc.sjs.m.mgrid.{GridBlockClick, IBlockInfo}
-import io.suggest.sc.sjs.v.vutil.OnClickSelfT
-import io.suggest.sc.sjs.vm.util.IInitLayout
+import io.suggest.sc.sjs.vm.util.InitOnClickToFsmT
 import io.suggest.sjs.common.util.{SjsLogger, DataUtil}
 import io.suggest.sjs.common.view.safe.SafeElT
 import io.suggest.sjs.common.view.safe.display.SetDisplayEl
 import io.suggest.sjs.common.view.vutil.CssSzImplicits
-import org.scalajs.dom.{Event, Node}
+import org.scalajs.dom.Node
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -48,15 +46,20 @@ object GBlock extends SjsLogger {
 import GBlock._
 
 
-trait GBlockT extends SafeElT with SetDisplayEl with CssSzImplicits with IBlockInfo with OnClickSelfT with IInitLayout {
+trait GBlockT extends SafeElT with SetDisplayEl with CssSzImplicits with IBlockInfo with InitOnClickToFsmT {
 
   override type T = HTMLDivElement
 
   // Быстрый доступ к кое-каким аттрибутам.
-  override def id      = _underlying.id
-  override def width   = getIntAttributeStrict(Block.BLK_WIDTH_ATTR).get
-  override def height  = getIntAttributeStrict(Block.BLK_HEIGHT_ATTR).get
-
+  override def id           = _underlying.id
+  /** Ширина карточки в css-пикселях. */
+  override def width        = getIntAttributeStrict(BLK_WIDTH_ATTR).get
+  /** Высота карточки в css-пикселях. */
+  override def height       = getIntAttributeStrict(BLK_HEIGHT_ATTR).get
+  /** ES id карточки. */
+  def madId                 = getAttribute(MAD_ID_ATTR).get
+  /** Порядковый номер карточки. */
+  def index                 = getIntAttributeStrict(BLK_INDEX_ATTR).get
 
   /**
    * Двинуть блок на экране в указанные координаты без анимации.
@@ -88,15 +91,18 @@ trait GBlockT extends SafeElT with SetDisplayEl with CssSzImplicits with IBlockI
 
   override def div = _underlying
 
-  /** Повесить листенеры для событий DOM. */
-  override def initLayout(): Unit = {
-    onClick { e: Event =>
-      ScFsm ! GridBlockClick(e)
-    }
-  }
+  /** Статический компаньон модели для сборки сообщений. */
+  override protected[this] def _clickMsgModel = GridBlockClick
 
 }
 
+
 /** Дефолтовая реализация экземпляра модели [[GBlockT]]. */
-case class GBlock(override val _underlying: HTMLDivElement)
-  extends GBlockT
+case class GBlock(override val _underlying: HTMLDivElement) extends GBlockT {
+
+  override lazy val width   = super.width
+  override lazy val height  = super.height
+  override lazy val madId   = super.madId
+  override lazy val index   = super.index
+
+}

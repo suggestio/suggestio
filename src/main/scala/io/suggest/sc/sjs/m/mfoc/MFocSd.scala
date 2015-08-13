@@ -26,11 +26,6 @@ trait IFocSd {
   /** Текущая блоковая длина карусели. */
   def carLen : Int
 
-  /** Сдвиг div'а карусели по X в px.
-    * Используется как поправка при дальнейшей анимации по X.
-    * Выставляется при открытии начальной карточки с непервым порядковым номером. */
-  def carLeftPx: Int
-
 }
 
 
@@ -41,7 +36,6 @@ trait IFocSd {
 case class MFocSd(
   override val currIndex   : Int,
   override val firstAdId   : Option[String],
-  override val carLeftPx   : Int                 = 0,
   override val ads         : Map[Int, FocAd]     = Map.empty,
   override val loadedCount : Int                 = 0,
   override val totalCount  : Option[Int]         = None,

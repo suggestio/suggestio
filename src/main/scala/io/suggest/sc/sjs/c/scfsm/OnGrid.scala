@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.c.scfsm
 
-import io.suggest.sc.sjs.m.mgrid.{GridBlockClick, GridScroll}
+import io.suggest.sc.sjs.m.mgrid.{IGridBlockClick, GridBlockClick, GridScroll}
 
 /**
  * Suggest.io
@@ -14,8 +14,9 @@ trait OnGrid extends ScFsmStub {
   protected trait OnGridStateT extends FsmState {
 
     /** Обработка кликов по карточкам в сетке. */
-    protected def handleGridBlockClick(gbc: GridBlockClick): Unit = {
-      ???
+    protected def handleGridBlockClick(gbc: IGridBlockClick): Unit = {
+      // Узнать id и номер окликнутого блока.
+      println("tg = " + gbc.currentTarget.id)
     }
 
     /** Реакция на вертикальный скроллинг. */
@@ -26,7 +27,7 @@ trait OnGrid extends ScFsmStub {
     private def _receiverPart: Receive = {
       // Клик по одной из карточек в сетке оных.
       case gbc: GridBlockClick =>
-        handleGridBlockClick(gbc)
+        handleGridBlockClick( gbc )
 
       // Вертикальный скроллинг в плитке.
       case vs: GridScroll =>

@@ -1,7 +1,8 @@
 package io.suggest.sc.sjs.vm.util
 
+import io.suggest.sc.sjs.m.mfsm.CurrentTargetBackup
 import io.suggest.sc.sjs.vm.util.domvm.{IFindEl, IApplyEl}
-import org.scalajs.dom.Event
+import org.scalajs.dom.EventTarget
 
 /**
  * Suggest.io
@@ -13,11 +14,14 @@ import org.scalajs.dom.Event
 trait FindViaAttachedEventT extends IApplyEl {
 
   /** Найти экземпляр модели с использованием события, произошедшего в listener, повешенном тут же. */
-  def findUsingEvent(event: Event): Option[T] = {
-    Option( event.currentTarget )
-      // TODO Фильтровать по типу тега Dom_t надо бы...
-      .orElse { Option(event.target) }
+  def findUsingTargets(targets: EventTarget*): Option[T] = {
+    targets
+      .find { _ != null }
       .map { el => apply( el.asInstanceOf[Dom_t] ) }
+  }
+  
+  def findUsing(e: CurrentTargetBackup): Option[T] = {
+    findUsingTargets(e.currentTarget, e.event.target)
   }
 
 }
@@ -26,8 +30,8 @@ trait FindViaAttachedEventT extends IApplyEl {
 /** Поиск экземпляра модели со статическим id с использованием доступного события. */
 trait FindUsingAttachedEventT extends FindViaAttachedEventT with IFindEl {
 
-  override def findUsingEvent(event: Event): Option[T] = {
-    super.findUsingEvent(event)
+  override def findUsingTargets(targets: EventTarget*): Option[T] = {
+    super.findUsingTargets(targets : _*)
       .orElse { find() }
   }
 
