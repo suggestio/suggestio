@@ -10,7 +10,7 @@ import util.showcase._
 import util.SiowebEsUtil.client
 import util.PlayMacroLogsI
 import util.acl._
-import views.html.sc._
+import views.html.sc.foc._
 import play.api.libs.json._
 import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -200,7 +200,7 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
      */
     def renderBlockHtml(args: IAdBodyTplArgs): Future[Html] = {
       Future {
-        _focusedAdTpl(args)(ctx)
+        _adTpl(args)(ctx)
       }
     }
 
@@ -259,7 +259,7 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
       }
     }
 
-    /** Сборка контейнера аргументов для вызова шаблона _focusedAdsTpl(). */
+    /** Сборка контейнера аргументов для вызова шаблона _fullTpl(). */
     def focAdsHtmlArgsFut: Future[IFocusedAdsTplArgs] = {
       val _producerFut = focAdProducerOptFut.map(_.get)
       val _brArgsFut = focAdOptFut.map(_.get)
@@ -311,7 +311,7 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
 
     /** Вызов заглавного рендера карточки. */
     def renderFocused(args: IFocusedAdsTplArgs): Html = {
-      _focusedAdsTpl(args)(ctx)
+      _fullTpl(args)(ctx)
     }
     /** Вызов renderFocused() асинхронно, внутри Future{}. Полезно для параллельного рендера блоков. */
     def renderFocusedFut(args: IFocusedAdsTplArgs): Future[Html] = {

@@ -1,0 +1,30 @@
+@(args: msc.ScRenderArgs)(implicit ctx: Context)
+
+@*
+* Верстка базовых div'ов focused-выдачи, рендерятся в sc.indexTpl.
+*
+* API v2: Базовые div'ы для focused ads.
+* controls содержит место для заголовка, стрелочек и прочего.
+* container -- это div-карусель для слайдинга карточек.
+*@
+
+@import io.suggest.sc.ScConstants.Focused._
+
+<div id="@ROOT_ID" class="sm-focused-ads" @if(args.focusedContent) {style="display: block;"}>
+
+  @if( args.focusedContent ) {
+    @* Для кравлеров. Выдача для них в рамках своего API живут. *@
+    @args.focusedContent
+
+  } else {
+
+    @if( args.apiVsn.withEarlyFocAdsRootContainers ) {
+      <div id="@CONTROLS_ID">
+      </div>
+
+      <div id="@CONTAINER_ID" class="sm-focused-ads_container __animated">
+      </div>
+    }
+  }
+
+</div>

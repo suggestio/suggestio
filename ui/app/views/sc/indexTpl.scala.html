@@ -11,9 +11,7 @@
 }
 
 @* Основной контейнер, шапка + карточки *@
-<div class="sm-focused-ads" id="smFocusedAds" @if(args.focusedContent) {style="display: block;"}>
-  @args.focusedContent
-</div>
+@foc._outerTpl(args)
 
 @* Полоса заголовка. *@
 @_headerTpl(args)

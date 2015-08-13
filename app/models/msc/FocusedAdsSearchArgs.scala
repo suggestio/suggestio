@@ -18,14 +18,14 @@ object FocusedAdsSearchArgs {
   /** Маппер экземпляров модели для url query string. */
   implicit def qsb(implicit
                    adSearchB  : QueryStringBindable[AdSearch],
-                   boolB      : QueryStringBindable[Boolean],
+                   boolOptB   : QueryStringBindable[Option[Boolean]],
                    strOptB    : QueryStringBindable[Option[String]]
                   ): QueryStringBindable[FocusedAdsSearchArgs] = {
     new QueryStringBindable[FocusedAdsSearchArgs] with QsbKey1T {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, FocusedAdsSearchArgs]] = {
         for {
           maybeAdSearch       <- adSearchB.bind (key,                   params)
-          maybeWithHeadAd     <- boolB.bind     (WITH_HEAD_AD_FN,       params)
+          maybeWithHeadAd     <- boolOptB.bind  (WITH_HEAD_AD_FN,       params)
           maybeFadsLastProdId <- strOptB.bind   (FADS_LAST_PROD_ID_FN,  params)
           maybeOnlyWithAd     <- strOptB.bind   (ONLY_WITH_AD_ID_FN,    params)
         } yield {
@@ -37,7 +37,7 @@ object FocusedAdsSearchArgs {
           } yield {
             new FocusedAdsSearchArgs with AdSearchWrapper {
               override def _dsArgsUnderlying  = _adSearch
-              override def withHeadAd         = _withHeadAd
+              override def withHeadAd         = _withHeadAd contains true
               override def fadsLastProducerId = _fadsLastProdId
               override def onlyWithAdId       = _onlyWithAdId
             }
@@ -46,7 +46,7 @@ object FocusedAdsSearchArgs {
       }
 
       override def unbind(key: String, value: FocusedAdsSearchArgs): String = {
-        boolB.unbind(WITH_HEAD_AD_FN, value.withHeadAd) +
+        boolOptB.unbind(WITH_HEAD_AD_FN, Some(value.withHeadAd)) +
           "&" + adSearchB.unbind(key, value)
       }
 

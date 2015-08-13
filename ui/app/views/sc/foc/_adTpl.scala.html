@@ -1,6 +1,9 @@
 @(args: msc.IAdBodyTplArgs)(implicit ctx: Context)
 
+@* Шаблон тела focused-карточки. *@
+
 @import views.html.sc.stuff._
+@import views.html.sc._
 @import args._
 
 @defining( brArgs.mad.richDescrOpt.map(_.bgColor).getOrElse("f9f9f9") ) { rfBgColor =>

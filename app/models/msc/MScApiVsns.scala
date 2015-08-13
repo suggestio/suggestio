@@ -31,6 +31,9 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImp
 
     /** Сервер ли отвечает за развернутость текущего слоя в списке узлов? */
     def nodeListLayersServerSideExpand: Boolean
+
+    /** Нужно ли при начальном рендере рендерить также базовое содержимое smFocusedAds (пустая карусель и проч.) */
+    def withEarlyFocAdsRootContainers: Boolean
   }
 
   override type T = Val
@@ -43,20 +46,21 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImp
     override def serverSideBlockIds = false
     override def geoNodeIdAsClass   = true
     override def nodeListLayersServerSideExpand = false
+    override def withEarlyFocAdsRootContainers = false
   }
 
   /** Выдача, переписанная на scala.js. Исходная версия. */
   val Sjs1: T = new Val(2) {
     /** Рендерить утиль для "закрытия" выдачи нужно только при реальной необходимости. */
     override def forceScCloseable = false
-
     /** sc-sjs использует jsRoutes для сборки ссылок. Полуготовые ссылки ей не нужны. */
     override def renderActionUrls = false
-
     /** sc-sjs опирается на id блоков, сформированных сервером на основе id карточек. */
     override def serverSideBlockIds = true
     /** sc-sjs слушается сервера на тему списка узлов. */
-    override def nodeListLayersServerSideExpand: Boolean = true
+    override def nodeListLayersServerSideExpand = true
+    /** sc-sjs требует ранние контейнеры для focused ads и прочее. */
+    override def withEarlyFocAdsRootContainers = true
   }
 
 

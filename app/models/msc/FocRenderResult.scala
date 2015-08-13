@@ -2,7 +2,7 @@ package models.msc
 
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import io.suggest.sc.focus.FocusedRenderNames._
+import io.suggest.sc.focus.FocAdProto._
 
 /**
  * Suggest.io
@@ -16,30 +16,43 @@ object FocRenderResult {
   /** Сериализатор экземпляров модели в JSON.
     * val, потому что вызывается очень часто как в целом, так и в рамках каждого focused-запроса выдачи. */
   implicit val writes: Writes[FocRenderResult] = (
-    (__ \ HTML_FN).write[String] and
-    (__ \ MODE_FN).write[MFocRenderMode] and
+    (__ \ MAD_ID_FN).write[String] and
+    (__ \ BODY_HTML_FN).write[String] and
+    (__ \ CONTROLS_HTML_FN).write[String] and
+    (__ \ PRODUCER_ID_FN).write[String] and
     (__ \ INDEX_FN).write[Int]
   )(unlift(unapply))
 
 }
 
+
+/** Интерфейс класса модели. Скорее всего бесполезен. */
 trait IFocRenderResult {
 
-  /** Отрендеренный и минифицированный html, готовый к заворачиванию в JsString. */
-  def html: String
+  /** id рекламной карточки. */
+  def madId: String
 
-  /** Использованный режим рендера. */
-  def mode: MFocRenderMode
+  /** Отрендеренный контент рекламной карточки. */
+  def body: String
+
+  /** Отрендеренная верстка заголовка, стрелочек и прочего. */
+  def controls: String
+
+  /** id продьсера карточки. */
+  def producerId: String
 
   /** Человеческий порядковый номер карточки в выборке.  */
   def index: Int
+
 }
 
 
 /** Дефолтовая реализация экземпляров модели [[IFocRenderResult]]. */
 case class FocRenderResult(
-  html  : String,
-  mode  : MFocRenderMode,
-  index : Int
+  madId       : String,
+  body        : String,
+  controls    : String,
+  producerId  : String,
+  index       : Int
 )
   extends IFocRenderResult

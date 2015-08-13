@@ -1,14 +1,10 @@
 @(args: msc.IFocusedAdsTplArgs)(implicit ctx: Context)
 
-@* Рендер под-выдачи для просмотра развёрных карточек.
-   Появляется поверх при клике по какой-то карточке в общей плитке. *@
+@* Заголовок focused-выдачи. *@
 
-@import hdr._
-@import util.cdn.CdnUtil
-@import msc._
 @import views.html.sc.stuff._
-@import io.suggest.sc.ScConstants.Logo
-@import io.suggest.sc.ScConstants.Focused._
+@import views.html.sc.hdr
+@import msc._
 
 @* Список карточек указанного продюссера *@
 @hdr._divTpl() {
@@ -33,20 +29,3 @@
   }
 
 }
-
-
-<div class="sm-focused-ads_arrow-label fad-arrow-label" id="@ARROW_ID" style="background-color: #@args.bgColor;">
-  <div class="fad-arrow-label_left-arrow">@svg._backArrowLeft(args.fgColor)</div>
-  <div class="fad-arrow-label_right-arrow">@svg._backArrowRight(args.fgColor)</div>
-</div>
-
-
-@* Контейнер с прокручивающимися офферами *@
-<div class="sm-focused-ads_container __animated" id="@CONTAINER_ID" data-x-offset="0" data-ads-count="@args.adsCount">
-  <span id="ads0">
-    @_focusedAdTpl(args)
-  </span>
-  @if(!args.syncRender) {
-    @_focusedAdLoaderTpl(args.bgColor)
-  }
-</div>
