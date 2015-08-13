@@ -177,6 +177,8 @@ object ScConstants {
 
     /** Имя аттрибута с порядковым номером в плитке от нуля. */
     def BLK_INDEX_ATTR    = "data-index"
+    /** Имя аттрибута с id текущей рекламной карточки. */
+    def MAD_ID_ATTR       = "data-mad-id"
   }
 
 
@@ -379,6 +381,9 @@ object ScConstants {
 
     /** Время css-анимации одного слайдинга. */
     def SLIDE_ANIMATE_MS = 200
+
+    /** Класс для анимируемых элементов. */
+    def ANIMATED_CSS_CLASS = "__animated"
 
   }
 
