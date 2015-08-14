@@ -41,15 +41,15 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
     // TODO Не искать вообще карточки, если firstIds.len >= adSearch.size
     // TODO Выставлять offset для поиска с учётом firstIds?
     lazy val mads1Fut: Future[Seq[MAd]] = {
-      if (_adSearch.maxResults > _adSearch.forceFirstIds.size) {
+      if (_adSearch.maxResults > _adSearch.firstIds.size) {
         // Костыль, т.к. сортировка forceFirstIds на стороне ES-сервера всё ещё не пашет:
-        val adSearch2 = if (_adSearch.forceFirstIds.isEmpty) {
+        val adSearch2 = if (_adSearch.firstIds.isEmpty) {
           _adSearch
         } else {
           new AdSearchWrapper {
             override def _dsArgsUnderlying  = _adSearch
-            override def forceFirstIds      = Nil
-            override def withoutIds         = _adSearch.forceFirstIds
+            override def firstIds           = Nil
+            override def withoutIds         = _adSearch.firstIds
           }
         }
         MAd.dynSearch(adSearch2)
@@ -93,8 +93,8 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
 
     /** Первые карточки, если запрошены. */
     lazy val firstAdsFut: Future[Seq[MAd]] = {
-      if (_adSearch.forceFirstIds.nonEmpty && _adSearch.offset <= 0) {
-        val ids = _adSearch.forceFirstIds
+      if (_adSearch.firstIds.nonEmpty) {
+        val ids = _adSearch.firstIds
         val fut = MAd.multiGet(ids)
         fut onSuccess { case mads =>
           logMissingFirstIds(mads, ids)

@@ -178,7 +178,7 @@ case class ScJsState(
   /** Экземпляр AdSearch для поиска в текущей рекламной карточки. */
   def focusedAdSearch(_maxResultsOpt: Option[Int]): FocusedAdsSearchArgs = {
     new FocusedAdsSearchArgs {
-      override def forceFirstIds  = that.fadOpenedIdOpt.toList
+      override def firstIds  = that.fadOpenedIdOpt.toList
       override def maxResultsOpt  = _maxResultsOpt
       override def generationOpt  = that.generationOpt
       override def receiverIds    = that.adnId.toList

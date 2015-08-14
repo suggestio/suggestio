@@ -58,7 +58,7 @@ trait ScIndexAdOpen extends ScFocusedAds with ScIndexNodeCommon {
         .flatMap { producer => _goToProducerIndex(producer, logic) }
       // Как выяснилось, бывают карточки-сироты (продьюсер удален, карточка -- нет). Нужно сообщать об этой ошибке.
       fut onFailure { case ex =>
-        val msg = s"Producer node does not exist: adnId=$prodIdOpt for adIds=${logic._adSearch.forceFirstIds}"
+        val msg = s"Producer node does not exist: adnId=$prodIdOpt for adIds=${logic._adSearch.firstIds}"
         if (ex.isInstanceOf[NoSuchElementException])
           LOGGER.error(msg)
         else

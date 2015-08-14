@@ -169,7 +169,7 @@ object NodesUtil extends PlayMacroLogsImpl {
         val madIds2 = (0 until Math.min(count, count))
           .iterator
           .map { _ =>  madIds( rnd.nextInt(count) ) }
-        MAd.multiGet(madIds2)
+        MAd.multiGetRev(madIds2)
       }
       // Обновить карточки
       .flatMap { mads0 =>

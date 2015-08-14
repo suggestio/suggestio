@@ -84,7 +84,7 @@ trait ScStatUtilT extends PlayMacroLogsImpl {
 
   def withHeadAd: Boolean = false
 
-  def forceFirstMadIds: Seq[String] = adSearchOpt.fold(Seq.empty[String])(_.forceFirstIds)
+  def forceFirstMadIds: Seq[String] = adSearchOpt.fold(Seq.empty[String])(_.firstIds)
 
   def clickedAdIds = {
     if (withHeadAd && forceFirstMadIds.nonEmpty) {

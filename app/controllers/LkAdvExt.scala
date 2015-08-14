@@ -180,12 +180,12 @@ class LkAdvExt @Inject() (
     // Если купон валиден, то сразу запускаем в фоне чтение данных по целям размещения...
     val targetsFut: Future[ActorTargets_t] = fut0.flatMap { _ =>
       val ids = qsArgs.targets.iterator.map(_.targetId)
-      val targetsFut = MExtTarget.multiGet(ids)
+      val _targetsFut = MExtTarget.multiGetRev(ids)
       val targetsMap = qsArgs.targets
         .iterator
         .map { info => info.targetId -> info }
         .toMap
-      targetsFut map { targets =>
+      _targetsFut map { targets =>
         targets.iterator
           .flatMap { target =>
             target.id

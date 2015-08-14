@@ -3,11 +3,12 @@
 @* Рендер тела страница открытой рекламной карточки вместе с дескрипшеном. *@
 
 @import views.html.sc.stuff._
+@import views.html.sc.svg
 @import args._
 @import msc._
 @import io.suggest.sc.ScConstants.Logo
 
-@_adTpl(brArgs)
+@views.html.sc._adTpl(brArgs)
 
 @defining( producer.meta.fgColor.getOrElse("ffffff") ) { pFgColor =>
 

@@ -166,7 +166,7 @@ class SysCalendar @Inject() (
       }
     }
     val calUsersAdnIds = calMbcs.map(_.adnId)
-    val calUsersFut = MAdnNode.multiGet(calUsersAdnIds)
+    val calUsersFut = MAdnNode.multiGetRev(calUsersAdnIds)
     calUsersFut map { calUsers =>
       editCalFormTpl(request.mcal, cf, calUsers)
     }

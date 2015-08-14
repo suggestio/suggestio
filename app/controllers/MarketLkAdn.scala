@@ -216,7 +216,7 @@ class MarketLkAdn @Inject() (
             val adIds = db.withConnection { implicit c =>
               MAdv.findActualAdIdsBetweenNodes(MAdvModes.busyModes, adnId, rcvrId = povAdnNode.id.get)
             }
-            MAd.multiGet(adIds)
+            MAd.multiGetRev(adIds)
 
           // pov-узел напрочь отсутствует. Нечего отображать.
           case None =>

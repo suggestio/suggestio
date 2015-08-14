@@ -129,7 +129,7 @@ object MadAiUtil extends PlayMacroLogsImpl {
     // Запустить в фоне получение шаблонной карточки
     val tplMadFut = MAd.getById(madAi.tplAdId)
       .map(_.get)
-    val targetAdsFut = MAd.multiGet(madAi.targetAdIds)
+    val targetAdsFut = MAd.multiGetRev(madAi.targetAdIds)
       .filter { mads => mads.size == madAi.targetAdIds.size}
 
     // Отрендерить шаблонную карточку с помощью цепочки рендереров.

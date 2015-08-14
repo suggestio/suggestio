@@ -717,7 +717,7 @@ class MarketAdv @Inject() (
         .map(_.adId)
         .distinct
       // В фоне запрашиваем рекламные карточки, которые нужно модерачить.
-      MAd.multiGet(adIds)
+      MAd.multiGetRev(adIds)
     }
     // Строим карту adId -> MAdvReq
     val advsReqMapFut = advsReqFut map { advsReq =>

@@ -14,7 +14,8 @@ import scala.concurrent.Future
 import play.api.mvc.Request
 import controllers.ad.MarketAdFormUtil
 import util.blocks.{BgImg, BlockMapperResult}
-import views.html.sc._
+import views.html.sc._adNormalTpl
+import views.html.sc.foc._adFullTpl
 
 /**
  * Suggest.io

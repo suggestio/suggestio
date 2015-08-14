@@ -74,14 +74,15 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag] extends SNStaticSubscribe
             accCached -> (id :: notCached)
         }
     }
-    val resultFut = companion.multiGet(nonCachedIds, acc0 = cached)
+    val resultFut = companion.multiGetRev(nonCachedIds, acc0 = cached)
     // Асинхронно отправить в кеш всё, чего там ещё не было.
     if (nonCachedIds.nonEmpty) {
       resultFut onSuccess { case results =>
         val ncisSet = nonCachedIds.toSet
         results.foreach { result =>
-          if (ncisSet contains result.idOrNull) {
-            val ck = cacheKey(result.idOrNull)
+          val id = result.idOrNull
+          if (ncisSet contains id) {
+            val ck = cacheKey(id)
             Cache.set(ck, result, EXPIRE_SEC)
           }
         }

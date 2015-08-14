@@ -1751,13 +1751,15 @@ sm =
           ad_c_el.style.visibility = 'visible';
 
         if ad_index >= 2
-          val el = sm.utils.ge('focusedAd' + ( ad_index - 2 ) )
+          el = sm.utils.ge('focusedAd' + ( ad_index - 2 ) )
           if (el != null)
             el.style.visibility = 'hidden';
 
       if direction == '-'
         if ad_index >= 1
-          sm.utils.ge('focusedAd' + ( ad_index - 1 ) ).style.visibility = 'visible';
+          foc = sm.utils.ge('focusedAd' + ( ad_index - 1 ) )
+          if foc != null
+            foc.style.visibility = 'visible';
 
         fel = sm.utils.ge('focusedAd' + ( ad_index + 2 ) )
         if fel != null
@@ -1953,14 +1955,15 @@ sm =
         # если карточка растягивается на ширину устройства
         if _block_wideBg == "true"
           #console.log _b.getAttribute("class")
-          _b.parentNode.parentNode.parentNode.style.overflow = "hidden"
-          _b.parentNode.parentNode.parentNode.style.position = "relative"
+          fadContent = _b.parentNode.parentNode.parentNode
+          fadContent.style.overflow = "hidden"
+          fadContent.style.position = "relative"
           _b.style.position = "absolute"
           _b.style.top = "50px"
           _b.style.left = "50%"
           _b.style.transform = "translate3d(-50%,0,0)"
           _b.style.webkitTransform = "translate3d(-50%,0,0)"
-          bg = sm.utils.ge_class(_b.parentNode.parentNode.parentNode, "bg")
+          bg = sm.utils.ge_class(fadContent, "bg")
           if bg.length > 0
             bg = bg[0]
             #bg.style.width = "100%"

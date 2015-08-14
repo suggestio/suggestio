@@ -30,7 +30,7 @@ trait ScBlockCss extends SioController with PlayMacroLogsI {
    */
   def serveBlockCss(args: Seq[AdCssArgs]) = Action.async { implicit request =>
     // TODO Надо переписать это дело через асинхронные enumerator'ы
-    val madsFut = MAd.multiGet( args.iterator.map(_.adId) )
+    val madsFut = MAd.multiGetRev( args.iterator.map(_.adId) )
     val argsMap = args.iterator
       .map(arg => arg.adId -> arg)
       .toMap

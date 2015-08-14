@@ -5,7 +5,7 @@ import models.msc.{MScApiVsns, MScApiVsn}
 import play.api.mvc.QueryStringBindable
 import play.api.Play.{current, configuration}
 import io.suggest.ym.model.ad.{AdsSearchArgsWrapper, AdsSearchArgsDflt}
-import util.qsb.QsbKey1T
+import util.qsb.{CommaDelimitedStringSeq, QsbKey1T}
 import util.qsb.QsbUtil._
 import io.suggest.ad.search.AdSearchConstants._
 import views.js.stuff.m.adSearchJsUnbindTpl
@@ -18,7 +18,7 @@ import scala.language.implicitConversions
  * Description: Модель представления поискового запроса.
  */
 
-object AdSearch {
+object AdSearch extends CommaDelimitedStringSeq {
 
   /** Максимальное число результатов в ответе на запрос (макс. результатов на странице). */
   val MAX_RESULTS_PER_RESPONSE = configuration.getInt("market.search.ad.results.max") getOrElse 50
@@ -43,34 +43,35 @@ object AdSearch {
 
   /** QSB для экземпляра сабжа. Неявно дергается из routes. */
   implicit def qsb(implicit
-                   strOptBinder : QueryStringBindable[Option[String]],
+                   strOptB      : QueryStringBindable[Option[String]],
                    intOptB      : QueryStringBindable[Option[Int]],
                    longOptB     : QueryStringBindable[Option[Long]],
                    geoModeB     : QueryStringBindable[GeoMode],
                    devScreenB   : QueryStringBindable[Option[DevScreen]],
                    apiVsnB      : QueryStringBindable[MScApiVsn]
                   ): QueryStringBindable[AdSearch] = {
+    val strSeqB = cdssQsb
     new QueryStringBindable[AdSearch] with QsbKey1T {
-
       def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, AdSearch]] = {
         val f = key1F(key)
         for {
           maybeApiVsn    <- apiVsnB.bind      (f(API_VSN_FN),        params)
-          maybeProdIdOpt <- strOptBinder.bind (f(PRODUCER_ID_FN),    params)
-          maybeCatIdOpt  <- strOptBinder.bind (f(CAT_ID_FN),         params)
-          maybeLevelOpt  <- strOptBinder.bind (f(LEVEL_ID_FN),       params)
-          maybeQOpt      <- strOptBinder.bind (f(FTS_QUERY_FN),      params)
+          maybeProdIdOpt <- strOptB.bind      (f(PRODUCER_ID_FN),    params)
+          maybeCatIdOpt  <- strOptB.bind      (f(CAT_ID_FN),         params)
+          maybeLevelOpt  <- strOptB.bind      (f(LEVEL_ID_FN),       params)
+          maybeQOpt      <- strOptB.bind      (f(FTS_QUERY_FN),      params)
           maybeSizeOpt   <- intOptB.bind      (f(RESULTS_LIMIT_FN),  params)
           maybeOffsetOpt <- intOptB.bind      (f(RESULTS_OFFSET_FN), params)
-          maybeRcvrIdOpt <- strOptBinder.bind (f(RECEIVER_ID_FN),    params)
-          maybeFirstId   <- strOptBinder.bind (f(FIRST_AD_ID_FN),    params)
+          maybeRcvrIdOpt <- strOptB.bind      (f(RECEIVER_ID_FN),    params)
+          maybeFirstIds  <- strSeqB.bind      (f(FIRST_AD_ID_FN),    params)
           maybeGen       <- longOptB.bind     (f(GENERATION_FN),     params)
           maybeGeo       <- geoModeB.bind     (f(GEO_MODE_FN),       params)
           maybeDevScreen <- devScreenB.bind   (f(SCREEN_INFO_FN),    params)
 
         } yield {
           for {
-            _apiVsn <- maybeApiVsn.right
+            _apiVsn     <- maybeApiVsn.right
+            _firstIds   <- maybeFirstIds.right
           } yield {
             new AdSearch {
               override def apiVsn         = _apiVsn
@@ -89,7 +90,7 @@ object AdSearch {
                   Math.max(0, Math.min(offset, MAX_OFFSET))
                 }
               }
-              override def forceFirstIds  = maybeFirstId
+              override def firstIds       = _firstIds
               override def generationOpt  = maybeGen
               override def geo            = maybeGeo
               override def screen         = maybeDevScreen
@@ -102,16 +103,16 @@ object AdSearch {
         val f = key1F(key)
         Iterator(
           apiVsnB.unbind      (f(API_VSN_FN),        value.apiVsn),
-          strOptBinder.unbind (f(RECEIVER_ID_FN),    value.receiverIds.headOption),  // TODO Разбиндивать на весь список receivers сразу надо
-          strOptBinder.unbind (f(PRODUCER_ID_FN),    value.producerIds.headOption),  // TODO Разбиндивать на весь список producers сразу надо.
-          strOptBinder.unbind (f(CAT_ID_FN),         value.catIds.headOption),       // TODO Разбиндивать на весь список catIds надо бы
-          strOptBinder.unbind (f(LEVEL_ID_FN),       value.levels.headOption.map(_.toString)),
-          strOptBinder.unbind (f(FTS_QUERY_FN),      value.qOpt),
+          strOptB.unbind      (f(RECEIVER_ID_FN),    value.receiverIds.headOption),  // TODO Разбиндивать на весь список receivers сразу надо
+          strOptB.unbind      (f(PRODUCER_ID_FN),    value.producerIds.headOption),  // TODO Разбиндивать на весь список producers сразу надо.
+          strOptB.unbind      (f(CAT_ID_FN),         value.catIds.headOption),       // TODO Разбиндивать на весь список catIds надо бы
+          strOptB.unbind      (f(LEVEL_ID_FN),       value.levels.headOption.map(_.toString)),
+          strOptB.unbind      (f(FTS_QUERY_FN),      value.qOpt),
           intOptB.unbind      (f(RESULTS_LIMIT_FN),  value.maxResultsOpt),
           intOptB.unbind      (f(RESULTS_OFFSET_FN), value.offsetOpt),
-          strOptBinder.unbind (f(FIRST_AD_ID_FN),    value.forceFirstIds.headOption),
+          strSeqB.unbind      (f(FIRST_AD_ID_FN),    value.firstIds),
           longOptB.unbind     (f(GENERATION_FN),     value.generationOpt),
-          strOptBinder.unbind (f(GEO_MODE_FN),       value.geo.toQsStringOpt),
+          strOptB.unbind      (f(GEO_MODE_FN),       value.geo.toQsStringOpt),
           devScreenB.unbind   (f(SCREEN_INFO_FN),    value.screen)
         )
           .filter(!_.isEmpty)
@@ -147,7 +148,7 @@ trait AdSearch extends AdsSearchArgsDflt { that =>
 
   /** Принудительно должен быть эти карточки первыми в списке.
     * На уровне ES это дело не прижилось, поэтому тут параметр, который отрабатывается в контроллере. */
-  def forceFirstIds : Seq[String] = Seq.empty
+  def firstIds      : Seq[String] = Nil
 
   /** Абсолютный сдвиг в результатах (постраничный вывод). */
   override def offset: Int = {
@@ -189,7 +190,7 @@ trait AdSearchWrapper_ extends AdSearch with AdsSearchArgsWrapper {
   override def offsetOpt      = _dsArgsUnderlying.offsetOpt
   override def geo            = _dsArgsUnderlying.geo
   override def screen         = _dsArgsUnderlying.screen
-  override def forceFirstIds  = _dsArgsUnderlying.forceFirstIds
+  override def firstIds  = _dsArgsUnderlying.firstIds
 
 }
 

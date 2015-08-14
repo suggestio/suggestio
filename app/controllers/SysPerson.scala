@@ -140,7 +140,7 @@ class SysPerson @Inject() (
     // Рендерим список узлов:
     val companiesFut = nodesFut
       .map { _.flatMap(_.companyId).toSet }
-      .flatMap { MCompany.multiGet(_) }
+      .flatMap { MCompany.multiGetRev(_) }
       .map { _.iterator.flatMap { v => v.id.map { id => id -> v } }.toMap }
     val nodesHtmlFut = for {
       mnodes    <- nodesFut

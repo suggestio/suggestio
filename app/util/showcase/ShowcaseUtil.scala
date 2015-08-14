@@ -126,7 +126,7 @@ object ShowcaseUtil extends ColumnsCountT {
     } else {
       // Отключено отображение скрытых категорий. Исходя из статистики, прочитать из модели только необходимые карточки.
       catsStatsFut flatMap { catsStats =>
-        MMartCategory.multiGet(catsStats.keysIterator)
+        MMartCategory.multiGetRev(catsStats.keysIterator)
           .map { _.sortBy(MMartCategory.sortByMmcat) }
       }
     }

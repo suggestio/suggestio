@@ -326,7 +326,7 @@ class SysMarketBilling @Inject() (
       _lastPays -> _contracts
     }
     val adnIds = contracts.map(_.adnId).distinct
-    val adnsFut = MAdnNode.multiGet(adnIds)
+    val adnsFut = MAdnNode.multiGetRev(adnIds)
       .map { adnNodes =>
         adnNodes.map {
           adnNode => adnNode.id.get -> adnNode
