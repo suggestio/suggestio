@@ -1191,9 +1191,11 @@ trait EsModelStaticT extends EsModelCommonStaticT {
   /**
    * Прочитать из базы все перечисленные id разом.
    * @param ids id документов этой модели. Можно передавать как коллекцию, так и свеженький итератор оной.
+   * @param acc0 Начальный аккамулятор.
    * @return Список результатов в неопределённом порядке.
    */
-  def multiGet(ids: TraversableOnce[String], acc0: List[T] = Nil)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
+  def multiGetRev(ids: TraversableOnce[String], acc0: List[T] = Nil)
+                 (implicit ec: ExecutionContext, client: Client): Future[List[T]] = {
     if (ids.isEmpty) {
       Future successful acc0
     } else {
@@ -1203,8 +1205,17 @@ trait EsModelStaticT extends EsModelCommonStaticT {
         id  =>  req.add(ES_INDEX_NAME, ES_TYPE_NAME, id)
       }
       req.execute()
-        .map { mgetResp2list(_, acc0) }
+        .map { resp =>
+          mgetResp2list(resp, acc0)
+        }
     }
+  }
+
+  /** Надстройка над multiGetRev(), но при этом возвращает элементы в исходном порядке (как в es response). */
+  def multiGet(ids: TraversableOnce[String])(implicit ec: ExecutionContext, client: Client): Future[List[T]] = {
+    multiGetRev(ids)
+      // В инете не нагуглить гарантий того, что порядок результатов будет соблюдаться согласно ids.
+      .map { _.reverse }
   }
 
 
@@ -1217,7 +1228,7 @@ trait EsModelStaticT extends EsModelCommonStaticT {
    */
   def multiGetMap(ids: TraversableOnce[String], acc0: List[T] = Nil)
                  (implicit ec: ExecutionContext, client: Client): Future[Map[String, T]] = {
-    multiGet(ids, acc0)
+    multiGetRev(ids, acc0)
       // Конвертим список результатов в карту, где ключ -- это id. Если id нет, то выкидываем.
       .map { resultsToMap }
   }
