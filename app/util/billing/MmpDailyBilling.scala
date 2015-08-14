@@ -150,9 +150,14 @@ object MmpDailyBilling extends PlayMacroLogsImpl with CronTasksProvider {
     val amountTotal: Float = advTerms.showLevels.foldLeft(0F) { (amountAcc, ssl) =>
       import AdShowLevels._
       val incr = ssl.sl match {
-        case LVL_CATS         => rcvrPricing.onRcvrCat * amountN
-        case LVL_START_PAGE   => rcvrPricing.onStartPage * amountN
-        case LVL_PRODUCER     => amountN
+        case LVL_CATS =>
+          rcvrPricing.onRcvrCat * amountN
+        case LVL_START_PAGE =>
+          rcvrPricing.onStartPage * amountN
+        case LVL_PRODUCER =>
+          // 2015.aug.14: Решено, что не надо накидывать за каталог. Но выпливать из формы некогда, поэтому тут пока костыль.
+          // showLevels set точно содержит LVL_PRODUCER. Если содержит ещё какие-то уровни, то LVL_PRODUCER НЕ тарифицировать.
+          if (advTerms.showLevels.size > 1)  0F  else  amountN
       }
       val amountAcc1 = amountAcc + incr
       trace(s"$logPrefix +${ssl.sl} (sink=${ssl.adnSink.longName}): +x$incr: $amountAcc => $amountAcc1")
@@ -170,14 +175,14 @@ object MmpDailyBilling extends PlayMacroLogsImpl with CronTasksProvider {
    * @return Площадь карточки.
    */
   def getAdModulesCount(mad: EMBlockMetaI): Int = {
-    lazy val logPrefix = s"getAdModulesCount(${mad.id.getOrElse("?")}): "
-    val block: BlockConf = BlocksConf applyOrDefault mad.blockMeta.blockId
     // Мультипликатор по ширине
     val wmul = BlockWidths(mad.blockMeta.width).relSz
     // Мультипликатор по высоте
     val hmul = BlockHeights(mad.blockMeta.height).relSz
     val blockModulesCount: Int = wmul * hmul
-    trace(s"${logPrefix}blockModulesCount = $wmul * $hmul = $blockModulesCount ;; blockId = ${mad.blockMeta.blockId}")
+    trace(
+      s"getAdModulesCount(${mad.id.getOrElse("?")}): blockModulesCount = $wmul * $hmul = $blockModulesCount ;; blockId = ${mad.blockMeta.blockId}"
+    )
     blockModulesCount
   }
 
