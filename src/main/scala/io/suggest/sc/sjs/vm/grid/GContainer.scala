@@ -92,10 +92,14 @@ trait GContainerT extends ContentElT with CssSzImplicits {
     VUtil.removeAllChildren(_underlying)
   }
 
-
   def fragmentsIterator: Iterator[GContainerFragment] = {
     DomListIterator( _underlying.children )
       .map { el => GContainerFragment( el.asInstanceOf[HTMLDivElement] ) }
+  }
+
+  def blocksIterator: Iterator[GBlock] = {
+    fragmentsIterator
+      .flatMap( _.blocksIterator )
   }
 
 }

@@ -16,13 +16,12 @@ trait OnGrid extends ScFsmStub {
 
     /** Обработка кликов по карточкам в сетке. */
     protected def handleGridBlockClick(gbc: IGridBlockClick): Unit = {
-      // Узнать id и номер окликнутого блока, и закинуть их в состояние.
       val gblock = gbc.gblock
       val sd0 = _stateData
+      // Минимально инициализируем focused-состояние и переключаем логику на focused.
       val sd1 = sd0.copy(
         focused = Some(MFocSd(
-          currIndex = gblock.index,
-          firstAdId = gblock.madId
+          gblock = Some(gblock)
         ))
       )
       become(_startFocusOnAdState, sd1)

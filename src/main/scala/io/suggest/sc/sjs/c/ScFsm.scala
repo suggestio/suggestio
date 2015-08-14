@@ -4,6 +4,7 @@ import io.suggest.sc.sjs.c.scfsm._
 import io.suggest.sc.sjs.m.msc.fsm.MStData
 import io.suggest.sc.sjs.m.msearch.MTabs
 import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
+import io.suggest.sc.sjs.vm.grid.GBlock
 import io.suggest.sjs.common.util.SjsLogger
 import org.scalajs.dom
 import org.scalajs.dom.Event

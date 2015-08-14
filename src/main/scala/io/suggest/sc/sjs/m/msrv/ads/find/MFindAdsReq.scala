@@ -7,6 +7,7 @@ import io.suggest.sc.sjs.m.msrv.MSrv
 
 import scala.scalajs.js.{Any, Dictionary}
 import io.suggest.ad.search.AdSearchConstants._
+import scala.scalajs.js.JSConverters._
 
 /**
  * Suggest.io
@@ -25,7 +26,7 @@ trait MFindAdsReq {
   def limit       : Option[Int]
   def offset      : Option[Int]
   def receiverId  : Option[String]
-  def firstAdId   : Option[String]
+  def firstAdIds  : Seq[String]
   def generation  : Option[Long]
   def geo         : Option[IMGeoMode]
   def screenInfo  : Option[IMScreen]
@@ -53,8 +54,8 @@ trait MFindAdsReq {
       d.update(RESULTS_OFFSET_FN, offset.get)
     if (receiverId.nonEmpty)
       d.update(RECEIVER_ID_FN, receiverId.get)
-    if (firstAdId.nonEmpty)
-      d.update(FIRST_AD_ID_FN, firstAdId.get)
+    if (firstAdIds.nonEmpty)
+      d.update(FIRST_AD_ID_FN, firstAdIds.toJSArray)
     if (generation.nonEmpty)
       d.update(GENERATION_FN, generation.get)
     if (geo.nonEmpty)
@@ -76,7 +77,7 @@ trait MFindAdsReqEmpty extends MFindAdsReq {
   override def limit       : Option[Int]       = None
   override def offset      : Option[Int]       = None
   override def receiverId  : Option[String]    = None
-  override def firstAdId   : Option[String]    = None
+  override def firstAdIds  : Seq[String]       = Nil
   override def generation  : Option[Long]      = None
   override def geo         : Option[IMGeoMode] = None
   override def screenInfo  : Option[IMScreen]  = None
@@ -93,7 +94,7 @@ trait MFindAdsReqWrapper extends MFindAdsReq {
   override def limit        = _underlying.limit
   override def offset       = _underlying.offset
   override def receiverId   = _underlying.receiverId
-  override def firstAdId    = _underlying.firstAdId
+  override def firstAdIds   = _underlying.firstAdIds
   override def generation   = _underlying.generation
   override def geo          = _underlying.geo
   override def screenInfo   = _underlying.screenInfo

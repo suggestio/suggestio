@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.vm.foc
 
 import io.suggest.sc.sjs.v.vutil.{VUtil, ExtraStyles}
+import io.suggest.sc.sjs.vm.foc.fad.{FAdRootT, FAdRoot}
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sjs.common.model.dom.DomListIterator
 import io.suggest.sjs.common.view.safe.SafeElT
@@ -41,12 +42,12 @@ trait FCarouselT extends SafeElT with CssSzImplicits with Width with ExtraStyles
   override def setWidthPx(widthPx: Int) = super.setWidthPx(widthPx)
 
   /** Прицепить ячейку справа. */
-  def pushCellRight(cell: FCarCellT): Unit = {
+  def pushCellRight(cell: FAdRootT): Unit = {
     _underlying.appendChild(cell._underlying)
   }
 
   /** Прицепить ячейку слева. */
-  def pushCellLeft(cell: FCarCellT): Unit = {
+  def pushCellLeft(cell: FAdRootT): Unit = {
     _underlying.insertBefore(cell._underlying, _underlying.firstChild)
   }
 
@@ -82,9 +83,9 @@ trait FCarouselT extends SafeElT with CssSzImplicits with Width with ExtraStyles
   }
 
   /** Итератор уже имеющихся ячеек карусели. */
-  def cellsIter: Iterator[FCarCell] = {
+  def cellsIter: Iterator[FAdRoot] = {
     DomListIterator( _underlying.children )
-      .map { v => FCarCell( v.asInstanceOf[HTMLDivElement] ) }
+      .map { v => FAdRoot( v.asInstanceOf[HTMLDivElement] ) }
   }
 
 }

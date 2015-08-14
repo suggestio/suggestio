@@ -59,8 +59,13 @@ trait FindDiv extends FindElT with GetDivById {
 
 
 /** Поиск элемента по динамическому id. */
-trait FindElIndexedIdT extends IndexedDomId with IApplyEl with GetElById with FindApplyUtil {
+trait FindElDynIdT extends DynDomId with IApplyEl with GetElById with FindApplyUtil {
   def find(arg: DomIdArg_t): Option[T] = {
     _find( getDomId(arg) )
   }
 }
+
+/** Поиск элемента по int suffixed id.  */
+trait FindElIndexedIdT extends FindElDynIdT with IndexedDomId
+/** Поиск элемента по string prefixed id. */
+trait FindElPrefixedIdT extends FindElDynIdT with PrefixedDomId

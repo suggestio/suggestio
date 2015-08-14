@@ -4,7 +4,7 @@ import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.m.mgrid.{MGridData, IGridData}
 import io.suggest.sc.sjs.m.msc.fsm.{MStData, IStData}
 import io.suggest.sc.sjs.util.grid.builder.V1Builder
-import io.suggest.sc.sjs.vm.grid.{GContent, GBlock}
+import io.suggest.sc.sjs.vm.grid.{GContainer, GContent, GBlock}
 import io.suggest.sc.sjs.vm.util.GridOffsetCalc
 import io.suggest.sjs.common.model.browser.IBrowser
 import io.suggest.sjs.common.util.SjsLogger
@@ -71,12 +71,14 @@ trait GridBuild {
     def apply(grid0: MGridData, browser: IBrowser): GridBuilder = {
       val grid = grid0.copy(
         state = grid0.state.copy(
-          colsInfo = grid0.state.newColsInfo(),
           blocksLoaded = 0
         ),
         builderStateOpt = None
       )
-      val _addedBlocks = grid0.state.getBlocks
+      val _addedBlocks = GContainer.find()
+        .iterator
+        .flatMap { _.blocksIterator }
+        .toList
       GridBuilder(grid, browser, _addedBlocks)
     }
   }

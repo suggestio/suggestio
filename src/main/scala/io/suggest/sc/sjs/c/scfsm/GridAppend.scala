@@ -121,7 +121,6 @@ trait GridAppend extends ScFsmStub {
 
         // Далее логика cbca_grid.init(). Допилить сетку под новые карточки: визуально и на уровне состояния сетки.
         val _mgs2 = mgs1.withContParams(csz)
-          // Проанализировать залитые в DOM блоки, сохранить метаданные в модель блоков.
           .withNewBlocks( frag.blocks )
 
         val grid2 = grid1.copy(

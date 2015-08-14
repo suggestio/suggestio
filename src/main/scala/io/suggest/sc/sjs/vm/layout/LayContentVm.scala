@@ -9,6 +9,7 @@ import io.suggest.sc.sjs.vm.search.SRoot
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.sjs.vm.util.domvm.create.{CreateDiv, CreateVm}
 import io.suggest.sjs.common.view.safe.SafeElT
+import io.suggest.sjs.common.view.safe.display.InnerHtml
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -26,7 +27,7 @@ object LayContentVm extends FindDiv with CreateDiv with CreateVm {
 
 
 /** Абстрактная реализация модели. */
-trait LayContentVmT extends SafeElT {
+trait LayContentVmT extends SafeElT with InnerHtml {
 
   override type T = HTMLDivElement
 
@@ -50,10 +51,6 @@ trait LayContentVmT extends SafeElT {
     if (cssClassOrNull != null) {
       _underlying.className = cssClassOrNull
     }
-  }
-
-  def setIndexHtml(html: String): Unit = {
-    _underlying.innerHTML = html
   }
 
   /** Доступ к корневому div'у плитки, который является дочерним DOM-узлом этой модели. */

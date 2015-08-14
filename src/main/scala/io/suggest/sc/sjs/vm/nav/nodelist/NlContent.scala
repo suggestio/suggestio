@@ -3,6 +3,7 @@ package io.suggest.sc.sjs.vm.nav.nodelist
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.ScConstants.NavPane.CONTENT_ID
 import io.suggest.sc.sjs.vm.util.domvm.get.ContentElT
+import io.suggest.sjs.common.view.safe.display.InnerHtml
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -17,17 +18,12 @@ object NlContent extends FindDiv {
 }
 
 
-trait NlContentT extends ContentElT {
+trait NlContentT extends ContentElT with InnerHtml {
 
   override type T = HTMLDivElement
 
   /** Динамический контейнер, появляется после заливки его через setContent(). */
   def container = NlContainer.find()
-
-  /** Залить верстку списка узлов в контейнер списка. */
-  def setContent(innerHtml: String): Unit = {
-    _underlying.innerHTML = innerHtml
-  }
 
   /** Пустой ли контейнер списка узлов? */
   def isEmpty: Boolean = {

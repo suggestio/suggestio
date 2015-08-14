@@ -3,7 +3,9 @@ package io.suggest.sc.sjs.vm.grid
 import io.suggest.sc.ScConstants.Block._
 import io.suggest.sc.sjs.m.mgrid.{GridBlockClick, IBlockInfo}
 import io.suggest.sc.sjs.vm.util.InitOnClickToFsmT
-import io.suggest.sjs.common.util.{SjsLogger, DataUtil}
+import io.suggest.sc.sjs.vm.util.domvm.{IApplyEl, FindElPrefixedIdT}
+import io.suggest.sc.sjs.vm.util.domvm.walk.{PrevNextSiblingCousinUtilT, PrevNextSiblingsVmT}
+import io.suggest.sjs.common.util.DataUtil
 import io.suggest.sjs.common.view.safe.SafeElT
 import io.suggest.sjs.common.view.safe.display.SetDisplayEl
 import io.suggest.sjs.common.view.vutil.CssSzImplicits
@@ -16,7 +18,11 @@ import org.scalajs.dom.raw.HTMLDivElement
  * Created: 24.06.15 18:13
  * Description: Модель для блока плитки.
  */
-object GBlock extends SjsLogger {
+object GBlock extends FindElPrefixedIdT with IApplyEl {
+
+  override def DOM_ID = ID_SUFFIX
+  override type Dom_t = HTMLDivElement
+  override type T = GBlock
 
   /**
    * Внести поправку в указанную абсолютную координату с помощью строковых данных по имеющейся относительной.
@@ -46,9 +52,10 @@ object GBlock extends SjsLogger {
 import GBlock._
 
 
-trait GBlockT extends SafeElT with SetDisplayEl with CssSzImplicits with IBlockInfo with InitOnClickToFsmT {
+trait GBlockT extends SafeElT with SetDisplayEl with CssSzImplicits with IBlockInfo with InitOnClickToFsmT with PrevNextSiblingsVmT {
 
   override type T = HTMLDivElement
+  override type Self_t <: GBlockT
 
   // Быстрый доступ к кое-каким аттрибутам.
   override def id           = _underlying.id
@@ -94,8 +101,33 @@ trait GBlockT extends SafeElT with SetDisplayEl with CssSzImplicits with IBlockI
   /** Статический компаньон модели для сборки сообщений. */
   override protected[this] def _clickMsgModel = GridBlockClick
 
+  def parentFragment: Option[GContainerFragment] = {
+    Option( _underlying.parentElement.asInstanceOf[GContainerFragment.Dom_t] )
+      .map { GContainerFragment.apply }
+  }
+
 }
 
 
 /** Дефолтовая реализация экземпляра модели [[GBlockT]]. */
-case class GBlock(override val _underlying: HTMLDivElement) extends GBlockT
+case class GBlock(override val _underlying: HTMLDivElement)
+  extends GBlockT with PrevNextSiblingCousinUtilT {
+
+  override type Self_t = GBlock
+  override type Parent_t = GContainerFragment
+  override protected def _parent = parentFragment
+  override protected def _companion = GBlock
+
+  /** Предыдущий блок. Расширенная версия previous() с переходом между fragment'ами. */
+  override def previous: Option[Self_t] = {
+    super.previous orElse {
+      __prevNextCousinHelper(_.previous)(_.lastBlock)
+    }
+  }
+  /** Следующий блок. Расширенная версия next() с переходом между fragment'ами. */
+  override def next: Option[GBlock] = {
+    super.next orElse {
+      __prevNextCousinHelper(_.next)(_.firstBlock)
+    }
+  }
+}

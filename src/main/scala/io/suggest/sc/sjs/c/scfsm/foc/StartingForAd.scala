@@ -1,9 +1,11 @@
 package io.suggest.sc.sjs.c.scfsm.foc
 
-import io.suggest.sc.sjs.c.scfsm.{FindAdsFsmUtil, ScFsmStub}
-import io.suggest.sc.sjs.m.mfoc.SlideDone
+import io.suggest.sc.sjs.c.scfsm.{FindNearAdIds, FindAdsFsmUtil, ScFsmStub}
+import io.suggest.sc.sjs.m.mfoc.{MFocSd, SlideDone}
 import io.suggest.sc.sjs.m.msrv.foc.find.{MFocAds, MFocAdSearchEmpty}
-import io.suggest.sc.sjs.vm.foc.{FRoot, FCarCell, FCarousel}
+import io.suggest.sc.sjs.vm.foc.fad.FAdRoot
+import io.suggest.sc.sjs.vm.foc.{FRoot, FCarousel}
+import io.suggest.sc.sjs.vm.grid.GBlock
 import org.scalajs.dom
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.util.{Failure, Success}
@@ -24,23 +26,35 @@ trait StartingForAd extends ScFsmStub with FindAdsFsmUtil {
 
   /** Трейт для состояния, когда focused-выдача отсутствует, скрыта вообще и ожидает активации.
     * При появлении top-level ScFsm это событие исчезнет, и будет обрабатываться где-то в вышестоящем обработчике. */
-  protected trait StartingForAdStateT extends FsmState {
+  protected trait StartingForAdStateT extends FsmState with FindNearAdIds {
+    
+    protected def _getCurrIndex(fState: MFocSd): Int = {
+      fState.gblock
+        .map { _.index }
+        .orElse { fState.currIndex }
+        .getOrElse(0)   // TODO Когда придёт время для восстановления состояния FSM из URL, надо будет сделать тут логику по-лучше.
+    }
 
     override def afterBecome(): Unit = {
       super.afterBecome()
       val sd0 = _stateData
-      for (screen <- sd0.screen;  fState0 <- sd0.focused;  car <- FCarousel.find() ) {
+      for (screen <- sd0.screen;  fState0 <- sd0.focused;  car <- FCarousel.find()) {
+        val gblockOpt   = fState0.gblock
+        val currIndex   = _getCurrIndex(fState0)
         // Собрать и запустить fads-реквест на основе запроса к карточкам плитки.
         // Флаг: запрашивать ли карточку, предшествующую запрошенной. Да, если запрошена ненулевая карточка.
-        val currIndex = fState0.currIndex
-        val withPrevAd = currIndex > 0
+        val withPrevAd  = currIndex > 0
+        val currMadIdOpt = fState0.currAdId
+          .orElse { gblockOpt.flatMap(_.madId) }
+        val firstMadIds = _nearAdIdsIter( gblockOpt orElse currMadIdOpt.flatMap(GBlock.find) )
+            .toSeq
         // TODO Надо запрашивать просто по id'шникам необходимые карточки, типа multiget.
         val args = new MFocAdSearchEmpty with FindAdsArgsT {
-          override def _sd = sd0
-          //override def firstAdId = fState0.firstAdId
+          override def _sd        = sd0
+          override def firstAdIds = firstMadIds
           // Выставляем под нужды focused-выдачи значения limit/offset.
-          override def offset = Some( if (withPrevAd) currIndex - 1 else currIndex )
-          override def limit = Some( if (withPrevAd) 3 else 2 )
+          override def offset     = Some( if (withPrevAd) currIndex - 1 else currIndex )
+          override def limit      = Some( if (withPrevAd) 3 else 2 )
           //override def levelId = Some(ShowLevels.ID_PRODUCER)  // TODO Тут должно быть что-то, не?.
         }
         val fadsFut = MFocAds.find(args)
@@ -78,21 +92,21 @@ trait StartingForAd extends ScFsmStub with FindAdsFsmUtil {
       // Залить в карусель полученные карточки.
       val sd0 = _stateData
       for (fState <- sd0.focused;  screen <- sd0.screen;  fRoot <- FRoot.find();  car <- fRoot.carousel) {
+        val currIndex   = _getCurrIndex(fState)
         // Сначала обрабатываем запрошенную карточку:
         val cellWidth = screen.width
         // Индекс запрошенной карточки в массиве fads: она или первая крайняя, или вторая при наличии предыдущей.
-        val firstAdFadsIndex = if (fState.currIndex > 0) 1 else 0
+        val firstAdFadsIndex = if (currIndex > 0) 1 else 0
         val firstAd = fads(firstAdFadsIndex)
-        val cell1 = FCarCell()
+        val cell1 = FAdRoot( firstAd.bodyHtml )
         cell1.setWidthPx( cellWidth )
-        cell1.setContent( firstAd.bodyHtml )
         // Повесить запрошенную карточку на шаг правее нужного индекса, чтобы можно было прослайдить на неё.
-        cell1.setLeftPx( fState.currIndex * cellWidth )
+        cell1.setLeftPx( currIndex * cellWidth )
 
         // Прилинковываем запрошенную карточку справа и запускаем анимацию.
         car.pushCellRight(cell1)
         fRoot.show()
-        car.animateToX( fState.currIndex * cellWidth )
+        car.animateToX( -currIndex * cellWidth )
 
         // TODO После анимации надо прилинковать к карусели оставшиеся карточки: prev и next, если они есть.
         val afterAnimateF = { () =>

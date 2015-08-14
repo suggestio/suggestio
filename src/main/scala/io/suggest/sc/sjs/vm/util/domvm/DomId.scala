@@ -36,3 +36,23 @@ trait IndexedDomId extends DynDomId with DomId {
     DOM_ID + arg
   }
 }
+
+
+/** Расширенная версия [[IndexedDomId]], дополнительно суффиксующая сгенеренные dom id строкой-константой. */
+trait IndexedSuffixedDomId extends IndexedDomId {
+  /** Константа-суффикс, приписывается к каждому id. */
+  protected def DOM_ID_SUFFIX: String
+
+  override def getDomId(arg: Int): String = {
+    super.getDomId(arg) + DOM_ID_SUFFIX
+  }
+}
+
+
+/** DOM_ID, запрефиксованный строкой. */
+trait PrefixedDomId extends DynDomId with DomId {
+  override type DomIdArg_t = String
+  override def getDomId(arg: DomIdArg_t): String = {
+    arg + DOM_ID
+  }
+}

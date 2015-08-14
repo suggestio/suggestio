@@ -41,9 +41,6 @@ trait IGridState {
   /** Размер контейнера, если рассчитан. */
   def contSz            : Option[ICwCm]
 
-  /** Инфа по колонкам. Нужен O(1) доступ по индексу. Длина равна или не более кол-ва колонок. */
-  def colsInfo          : Array[MColumnState]
-
   def withNewBlocks(newBlocks: TraversableOnce[GBlock]): IGridState
   def nothingLoaded(): IGridState
 
@@ -101,30 +98,18 @@ case class MGridState(
   isLoadingMore     : Boolean = false,
 
   /** Размер контейнера, если рассчитан. */
-  contSz            : Option[ICwCm] = None,
+  contSz            : Option[ICwCm] = None
 
-  /** Инфа по колонкам. Нужен O(1) доступ по индексу. Длина равна или не более кол-ва колонок. */
-  colsInfo          : Array[MColumnState] = Array.empty,
-
-  /** Инфа по текущим блокам. */
-  blocks            : ListBuffer[GBlock] = ListBuffer.empty
 ) extends IGridState {
 
-  def getBlocks: List[GBlock] = {
-    blocks.toList
-  }
-
   override def withNewBlocks(newBlocks: TraversableOnce[GBlock]): MGridState = {
-    // TODO mutable-коллекция здесь
-    blocks.appendAll(newBlocks)
     copy(
-      blocksLoaded = blocks.size    // O(1)
+      blocksLoaded = blocksLoaded + newBlocks.size
     )
   }
 
   override def nothingLoaded(): MGridState = {
     copy(
-      blocks        = ListBuffer.empty,
       blocksLoaded  = 0,
       isLoadingMore = false,
       fullyLoaded   = false

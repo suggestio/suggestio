@@ -104,7 +104,7 @@ trait GetIndex extends ScFsmStub with FindAdsFsmUtil {
 
       // Выставить верстку index в новый layout.
       for (layContent <- layout.content) {
-        layContent.setIndexHtml(v.html)
+        layContent.setContent(v.html)
       }
       layout.insertIntoDom()
       SafeWnd.scrollTop()

@@ -1,15 +1,19 @@
 package io.suggest.sc.sjs.m.mfoc
 
 import io.suggest.sc.sjs.vm.foc.FocAd
+import io.suggest.sc.sjs.vm.grid.GBlock
 
 /** Интерфейс контейнера данных по focused-выдаче. */
 trait IFocSd {
 
   /** Данные по текущей позиции в focused-выдаче. */
-  def currIndex   : Int
+  def currIndex   : Option[Int]
 
   /** id первой карточки, используются только при инициализации focused-выдачи. */
-  def firstAdId   : Option[String]
+  def currAdId   : Option[String]
+
+  /** grid block, относящийся к текущей карточке. */
+  def gblock     : Option[GBlock]
 
   /** Аккамулятор уже загруженных с сервера focused-карточек. */
   def ads         : Map[Int, FocAd]
@@ -34,11 +38,12 @@ trait IFocSd {
  * Контейнер собирается ещё до открытия focused-выдачи для передачи начальных данных.
  */
 case class MFocSd(
-  override val currIndex   : Int,
-  override val firstAdId   : Option[String],
-  override val ads         : Map[Int, FocAd]     = Map.empty,
-  override val loadedCount : Int                 = 0,
-  override val totalCount  : Option[Int]         = None,
-  override val carLen      : Int                 = 0
+  override val currIndex   : Option[Int]          = None,
+  override val currAdId    : Option[String]       = None,
+  override val gblock      : Option[GBlock]       = None,
+  override val ads         : Map[Int, FocAd]      = Map.empty,
+  override val loadedCount : Int                  = 0,
+  override val totalCount  : Option[Int]          = None,
+  override val carLen      : Int                  = 0
 )
   extends IFocSd
