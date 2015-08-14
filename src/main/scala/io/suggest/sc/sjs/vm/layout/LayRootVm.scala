@@ -1,14 +1,12 @@
 package io.suggest.sc.sjs.vm.layout
 
 import io.suggest.sc.ScConstants.Layout
-import io.suggest.sc.sjs.v.vutil.SetStyleDisplay
 import io.suggest.sc.sjs.vm.SafeDoc
 import io.suggest.sc.sjs.vm.util.domvm._
 import io.suggest.sc.sjs.vm.util.domvm.create.CreateDiv
 import io.suggest.sc.sjs.vm.util.domvm.get.ChildElOrFind
-import io.suggest.sjs.common.model.dom.DomListIterator
 import io.suggest.sjs.common.view.safe.SafeElT
-import org.scalajs.dom.raw.{HTMLElement, HTMLDivElement}
+import org.scalajs.dom.raw.HTMLDivElement
 
 /**
  * Suggest.io

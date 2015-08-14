@@ -2,6 +2,7 @@ package io.suggest.sc.sjs.vm.foc
 
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sjs.common.view.safe.SafeElT
+import io.suggest.sjs.common.view.safe.display.SetDisplayEl
 import org.scalajs.dom.raw.HTMLDivElement
 import io.suggest.sc.ScConstants.Focused.ROOT_ID
 
@@ -20,12 +21,20 @@ object FRoot extends FindDiv {
 }
 
 
-trait FRootT extends SafeElT {
+trait FRootT extends SafeElT with SetDisplayEl {
 
   override type T = HTMLDivElement
 
   def controls = FControls.find()
   def carousel = FCarousel.find()
+
+  def show(): Unit = {
+    displayBlock()
+  }
+
+  def hide(): Unit = {
+    displayNone()
+  }
 
 }
 

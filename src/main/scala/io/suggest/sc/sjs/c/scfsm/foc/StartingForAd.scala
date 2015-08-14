@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.c.scfsm.foc
 import io.suggest.sc.sjs.c.scfsm.{FindAdsFsmUtil, ScFsmStub}
 import io.suggest.sc.sjs.m.mfoc.SlideDone
 import io.suggest.sc.sjs.m.msrv.foc.find.{MFocAds, MFocAdSearchEmpty}
-import io.suggest.sc.sjs.vm.foc.{FCarCell, FCarousel}
+import io.suggest.sc.sjs.vm.foc.{FRoot, FCarCell, FCarousel}
 import org.scalajs.dom
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.util.{Failure, Success}
@@ -34,6 +34,7 @@ trait StartingForAd extends ScFsmStub with FindAdsFsmUtil {
         // Флаг: запрашивать ли карточку, предшествующую запрошенной. Да, если запрошена ненулевая карточка.
         val currIndex = fState0.currIndex
         val withPrevAd = currIndex > 0
+        // TODO Надо запрашивать просто по id'шникам необходимые карточки, типа multiget.
         val args = new MFocAdSearchEmpty with FindAdsArgsT {
           override def _sd = sd0
           //override def firstAdId = fState0.firstAdId
@@ -60,13 +61,6 @@ trait StartingForAd extends ScFsmStub with FindAdsFsmUtil {
         // TODO Карусель пустая, а will-change выставляется. Не будет ли негативного эффекта от такой странной оптимизации?
         car.willAnimate()
 
-        // Обновить состояние FSM.
-        _stateData = sd0.copy(
-          focused = Some(fState0.copy(
-            ???
-          ))
-        )
-
         // повесить листенер для ожидания ответа сервера.
         fadsFut onComplete { case res =>
           val event = res match {
@@ -83,7 +77,7 @@ trait StartingForAd extends ScFsmStub with FindAdsFsmUtil {
       val fads = mfa.focusedAdsIter.toSeq
       // Залить в карусель полученные карточки.
       val sd0 = _stateData
-      for (fState <- sd0.focused;  screen <- sd0.screen;  car <- FCarousel.find()) {
+      for (fState <- sd0.focused;  screen <- sd0.screen;  fRoot <- FRoot.find();  car <- fRoot.carousel) {
         // Сначала обрабатываем запрошенную карточку:
         val cellWidth = screen.width
         // Индекс запрошенной карточки в массиве fads: она или первая крайняя, или вторая при наличии предыдущей.
@@ -97,6 +91,7 @@ trait StartingForAd extends ScFsmStub with FindAdsFsmUtil {
 
         // Прилинковываем запрошенную карточку справа и запускаем анимацию.
         car.pushCellRight(cell1)
+        fRoot.show()
         car.animateToX( fState.currIndex * cellWidth )
 
         // TODO После анимации надо прилинковать к карусели оставшиеся карточки: prev и next, если они есть.
