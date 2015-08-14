@@ -179,6 +179,9 @@ object ScConstants {
     def BLK_INDEX_ATTR    = "data-index"
     /** Имя аттрибута с id текущей рекламной карточки. */
     def MAD_ID_ATTR       = "data-mad-id"
+
+    /** id grid-блока формируется как-то так: "$madId$ID_SUFFIX". */
+    def ID_SUFFIX         = ":blk"
   }
 
 
@@ -387,6 +390,12 @@ object ScConstants {
 
     /** Класс для анимируемых элементов. */
     def ANIMATED_CSS_CLASS = "__animated"
+
+
+    object FAd {
+      /** Префикс для DOM ID'шников контейнеров focused-карточки. */
+      def ID_PREFIX = "focusedAd"
+    }
 
   }
 
