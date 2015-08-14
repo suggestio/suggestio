@@ -34,6 +34,9 @@ object CdnUtil extends PlayMacroLogsImpl {
       .toMap
   }
 
+  /** Раздавать ли шрифты через CDN? Дергается из шаблонов. Если Cors отключен, то этот параметр тоже отключается. */
+  val FONTS_ENABLED: Boolean = configuration.getBoolean("cdn.fonts.enabled").exists(_ && CorsUtil.IS_ENABLED)
+
   /** Отключено использование CDN на хостах: */
   val DISABLED_ON_HOSTS: Set[String] = {
     configuration.getStringList("cdn.disabled.on.hosts")
@@ -94,7 +97,7 @@ object CdnUtil extends PlayMacroLogsImpl {
   }
 
   /** Вызов на asset через CDN. */
-  def asset(file: String)(implicit ctx: Context) = {
+  def asset(file: String)(implicit ctx: Context): Call = {
     forCall( routes.Assets.versioned(file) )
   }
 
