@@ -138,17 +138,24 @@ object QuickAdvPeriods extends Enumeration {
   /**
    * Класс элемента этого enum'а.
    * @param isoPeriod Строка iso-периода. Заодно является названием элемента. Заглавные буквы и цифры.
-   * @param prio Приоритет при фильтрации.
    */
-  protected case class Val(isoPeriod: String, prio: Int) extends super.Val(isoPeriod) {
+  protected abstract class Val(val isoPeriod: String) extends super.Val(isoPeriod) {
+    /** Приоритет при фильтрации. */
+    def prio: Int
     def toPeriod = new Period(isoPeriod)
   }
 
   type QuickAdvPeriod = Val
 
-  val P3D: QuickAdvPeriod = Val("P3D", 100)
-  val P1W: QuickAdvPeriod = Val("P1W", 200)
-  val P1M: QuickAdvPeriod = Val("P1M", 300)
+  val P3D: QuickAdvPeriod = new Val("P3D") {
+    override def prio = 100
+  }
+  val P1W: QuickAdvPeriod = new Val("P1W") {
+    override def prio = 200
+  }
+  val P1M: QuickAdvPeriod = new Val("P1M") {
+    override def prio = 300
+  }
 
   implicit def value2val(x: Value): QuickAdvPeriod = x.asInstanceOf[QuickAdvPeriod]
 

@@ -132,7 +132,7 @@ class MarketAdv @Inject() (
       // В зависимости от имеющихся значений полей выбираем реальный период.
       { case (Some(qap), _) =>
           val now = LocalDate.now()
-          now -> now.plus(qap.toPeriod)
+          now -> now.plus( qap.toPeriod.minusDays(1) )
         case (_, dpo) =>
           dpo.get
       },
