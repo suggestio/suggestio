@@ -1,12 +1,12 @@
 package io.suggest.sc.sjs.vm.foc
 
+import io.suggest.common.css.CssSzImplicits
 import io.suggest.sc.sjs.v.vutil.{VUtil, ExtraStyles}
 import io.suggest.sc.sjs.vm.foc.fad.{FAdRootT, FAdRoot}
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sjs.common.model.dom.DomListIterator
 import io.suggest.sjs.common.view.safe.SafeElT
 import io.suggest.sjs.common.view.safe.css.{StyleLeft, Width}
-import io.suggest.sjs.common.view.vutil.CssSzImplicits
 import io.suggest.sc.ScConstants.Focused._
 import org.scalajs.dom.raw.HTMLDivElement
 

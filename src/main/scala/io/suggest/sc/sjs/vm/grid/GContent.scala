@@ -1,11 +1,11 @@
 package io.suggest.sc.sjs.vm.grid
 
+import io.suggest.common.css.CssSzImplicits
 import io.suggest.sc.ScConstants.Grid
 import io.suggest.sc.sjs.m.mgrid.ICwCm
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.sjs.vm.util.domvm.get.{ContentElT, ChildElOrFindInner}
 import io.suggest.sjs.common.view.safe.SafeElT
-import io.suggest.sjs.common.view.vutil.CssSzImplicits
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**

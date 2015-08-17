@@ -4,7 +4,7 @@ import io.suggest.sc.sjs.c.NodeWelcomeCtl
 import io.suggest.sc.sjs.m.mgrid.MGridState
 import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
 import io.suggest.sc.sjs.m.msrv.index.{MNodeIndex, MScIndexArgs}
-import io.suggest.sc.sjs.v.res.{CommonRes, FocusedRes}
+import io.suggest.sc.sjs.vm.res.CommonRes
 import io.suggest.sc.sjs.vm.layout.LayRootVm
 import io.suggest.sc.sjs.vm.nav.nodelist.NlRoot
 import io.suggest.sc.sjs.vm.search.SRoot
@@ -97,8 +97,6 @@ trait GetIndex extends ScFsmStub with FindAdsFsmUtil {
       for (oldLayRoot <- LayRootVm.find() ) {
         oldLayRoot.remove()
       }
-      CommonRes.recreate()
-      FocusedRes.recreate()
 
       val layout = LayRootVm.createNew()
 
@@ -109,6 +107,9 @@ trait GetIndex extends ScFsmStub with FindAdsFsmUtil {
       layout.insertIntoDom()
       SafeWnd.scrollTop()
 
+      // Контейнер ресурсов должен быть создан
+      CommonRes.ensureCreated()
+      
       val body = SafeBody
       body.overflowHidden()
 

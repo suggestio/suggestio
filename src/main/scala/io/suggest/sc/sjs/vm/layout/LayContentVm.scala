@@ -10,6 +10,7 @@ import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.sjs.vm.util.domvm.create.{CreateDiv, CreateVm}
 import io.suggest.sjs.common.view.safe.SafeElT
 import io.suggest.sjs.common.view.safe.display.InnerHtml
+import org.scalajs.dom.Node
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -61,6 +62,18 @@ trait LayContentVmT extends SafeElT with InnerHtml {
   def navPanel = NRoot.find()
   /** Панель поиска. */
   def searchPanel = SRoot.find()
+
+
+  def insertFirst(node: Node): Unit = {
+    _underlying.insertBefore(node, _underlying.firstChild)
+  }
+
+  def insertAfterFirst(node: Node): Unit = {
+    val secondChild = Option(_underlying.firstChild)
+      .flatMap(t => Option(t.nextSibling))
+      .orNull
+    _underlying.insertBefore(node, secondChild)
+  }
 
 }
 

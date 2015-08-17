@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.vm.grid
 
+import io.suggest.common.css.CssSzImplicits
 import io.suggest.sc.ScConstants.Block._
 import io.suggest.sc.sjs.m.mgrid.{GridBlockClick, IBlockInfo}
 import io.suggest.sc.sjs.vm.util.InitOnClickToFsmT
@@ -8,7 +9,6 @@ import io.suggest.sc.sjs.vm.util.domvm.walk.{PrevNextSiblingCousinUtilT, PrevNex
 import io.suggest.sjs.common.util.DataUtil
 import io.suggest.sjs.common.view.safe.SafeElT
 import io.suggest.sjs.common.view.safe.display.SetDisplayEl
-import io.suggest.sjs.common.view.vutil.CssSzImplicits
 import org.scalajs.dom.Node
 import org.scalajs.dom.raw.HTMLDivElement
 

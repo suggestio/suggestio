@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.vm.grid
 
+import io.suggest.common.css.CssSzImplicits
 import io.suggest.sc.ScConstants.Grid
 import io.suggest.sc.sjs.m.mgrid.{IGridData, MGridParams}
 import io.suggest.sc.sjs.m.msrv.ads.find.MFoundAdJson
@@ -8,7 +9,6 @@ import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.sjs.vm.util.domvm.get.ContentElT
 import io.suggest.sjs.common.model.dom.DomListIterator
 import io.suggest.sjs.common.view.safe.ISafe
-import io.suggest.sjs.common.view.vutil.CssSzImplicits
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**

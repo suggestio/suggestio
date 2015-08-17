@@ -41,6 +41,9 @@ trait IMFocAds {
   /** Общее кол-во карточек во всей запрошенной выборке. */
   def totalCount: Int
 
+  /** inline-стили для focused-карточек. */
+  def styles: Option[String]
+
 }
 
 
@@ -55,7 +58,12 @@ class MFocAds(json: Dictionary[Any]) extends IMFocAds {
       WrappedArray.empty
     }
   }
-  
+
+  override def styles: Option[String] = {
+    json.get(STYLES_FN)
+      .asInstanceOf[Option[String]]
+  }
+
   override def focusedAdsIter: Iterator[MFocAd] = {
     focusedAdsRaw
       .iterator 

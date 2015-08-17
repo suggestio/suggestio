@@ -3,6 +3,7 @@ package io.suggest.sc.sjs.c.scfsm.foc
 import io.suggest.sc.sjs.c.scfsm.{FindNearAdIds, FindAdsFsmUtil, ScFsmStub}
 import io.suggest.sc.sjs.m.mfoc.{MFocSd, SlideDone}
 import io.suggest.sc.sjs.m.msrv.foc.find.{MFocAds, MFocAdSearchEmpty}
+import io.suggest.sc.sjs.vm.res.FocusedRes
 import io.suggest.sc.sjs.vm.foc.fad.FAdRoot
 import io.suggest.sc.sjs.vm.foc.{FRoot, FCarousel}
 import io.suggest.sc.sjs.vm.grid.GBlock
@@ -75,6 +76,9 @@ trait StartingForAd extends ScFsmStub with FindAdsFsmUtil {
         // TODO Карусель пустая, а will-change выставляется. Не будет ли негативного эффекта от такой странной оптимизации?
         car.willAnimate()
 
+        // Подготовить контейнер для стилей.
+        FocusedRes.ensureCreated()
+
         // повесить листенер для ожидания ответа сервера.
         fadsFut onComplete { case res =>
           val event = res match {
@@ -88,6 +92,10 @@ trait StartingForAd extends ScFsmStub with FindAdsFsmUtil {
 
     /** Реакция на полученный ответ сервера. */
     protected def _focAdsReceived(mfa: MFocAds): Unit = {
+      // Заливаем стили в дерево, если они есть.
+      for (styles <- mfa.styles; res <- FocusedRes.find()) {
+        res.appendCss(styles)
+      }
       val fads = mfa.focusedAdsIter.toSeq
       // Залить в карусель полученные карточки.
       val sd0 = _stateData

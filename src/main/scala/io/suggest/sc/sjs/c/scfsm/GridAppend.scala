@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.c.scfsm
 
 import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
-import io.suggest.sc.sjs.v.res.CommonRes
+import io.suggest.sc.sjs.vm.res.CommonRes
 import io.suggest.sc.sjs.vm.grid.GContent
 
 import scala.concurrent.Future
@@ -95,8 +95,8 @@ trait GridAppend extends ScFsmStub {
       } else {
 
         // Закачать в выдачу новый css.
-        for (css <- mfa.css) {
-          CommonRes.appendCss(css)
+        for (css <- mfa.css; res <- CommonRes.find()) {
+          res.appendCss(css)
         }
 
         // Посчитать и сохранить кол-во загруженных карточек плитки.
