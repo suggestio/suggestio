@@ -27,6 +27,9 @@ object ScConstants {
     * Есть несколько css-классов с одинаковыми именами, но в разных scope'ах. */
   private def ACTIVE_CLASS = "__active"
 
+  /** Имя css-класс с will-change для подготовки к translate3d. */
+  def CLASS_WILL_TRANSLATE3D = "will-translate3d"
+
   /** Client/server констатны выдачи для моделей ScReqArgs. */
   object ReqArgs {
 
@@ -182,8 +185,9 @@ object ScConstants {
     /** Имя аттрибута с id текущей рекламной карточки. */
     def MAD_ID_ATTR       = "data-mad-id"
 
+    def ID_DELIM          = ":"
     /** id grid-блока формируется как-то так: "$madId$ID_SUFFIX". */
-    def ID_SUFFIX         = ":blk"
+    def ID_SUFFIX         = "blk"
   }
 
 
@@ -393,10 +397,22 @@ object ScConstants {
     /** Класс для анимируемых элементов. */
     def ANIMATED_CSS_CLASS = "__animated"
 
+    /** Активация анимации внутри focused FRoot. */
+    def ROOT_TRANSITION_CLASS = "transition-animated"
+
+    /** css-класс анимации для исчезнования за экран. */
+    def ROOT_DISAPPEAR_CLASS  = "fs-animated-start"
+
+    /** css-класс анимации появления на экран. */
+    def ROOT_APPEAR_CLASS     = "fs-animated-end"
+
 
     object FAd {
       /** Префикс для DOM ID'шников контейнеров focused-карточки. */
       def ID_PREFIX = "focusedAd"
+
+      /** Суффикс id sm-block div для focused-карточек. */
+      def BLOCK_ID_SUFFIX = "fblk"
     }
 
   }
