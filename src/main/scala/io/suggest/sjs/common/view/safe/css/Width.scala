@@ -1,7 +1,7 @@
 package io.suggest.sjs.common.view.safe.css
 
+import io.suggest.common.css.CssSzImplicits
 import io.suggest.sjs.common.view.safe.ISafe
-import io.suggest.sjs.common.view.vutil.CssSzImplicits
 import org.scalajs.dom.raw.HTMLElement
 
 /**
