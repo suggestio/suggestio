@@ -15,7 +15,7 @@ trait IMaker {
    * @param args Контейнер с данными для вызова.
    * @return Фьючерс с экземпляром MakeResult.
    */
-  def icompile(args: IMakeArgs)(implicit ec: ExecutionContext): Future[IMakeResult]
+  def icompile(args: IMakeArgs)(implicit ec: ExecutionContext): Future[MakeResult]
 
 }
 

@@ -4,7 +4,7 @@ import java.util.NoSuchElementException
 
 import _root_.util.blocks.BgImg
 import _root_.util.jsa.{JsAppendById, JsAction, SmRcvResp, Js}
-import models.im.make.{IMakeResult, Makers}
+import models.im.make.{MakeResult, Makers}
 import models.msc.{MGridParams, MFindAdsResp, MFoundAd, MScApiVsns}
 import play.api.mvc.Result
 import util.jsa.cbca.grid._
@@ -48,7 +48,7 @@ trait ScAdsTileBase extends ScController with PlayMacroLogsI {
 
     def szMult = tileArgs.szMult
 
-    private def _brArgsFor(mad: MAd, bgImg: Option[IMakeResult], indexOpt: Option[Int] = None): blk.RenderArgs = {
+    private def _brArgsFor(mad: MAd, bgImg: Option[MakeResult], indexOpt: Option[Int] = None): blk.RenderArgs = {
       blk.RenderArgs(
         mad           = mad,
         withEdit      = false,

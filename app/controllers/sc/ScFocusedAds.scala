@@ -1,6 +1,7 @@
 package controllers.sc
 
 import _root_.util.jsa.{JsAppendById, JsAction, SmRcvResp, Js}
+import io.suggest.common.css.FocusedTopLeft
 import io.suggest.util.Lists
 import models.jsm.ProducerAdsResp
 import models.msc._
@@ -144,7 +145,7 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
                 inlineStyles    = false,
                 cssClasses      = _withCssClasses,
                 // 2015.mar.06: FIXME Это значение сейчас перезаписывается таким же через showcase.js. // TODO Они должны быть в стилях, а не тут.
-                blockStyle      = brArgs.wideBg.map(_ => "position: absolute; top: 50px; left: 50%;")
+                topLeft         = brArgs.wideBg.map(_ => FocusedTopLeft)
               )
             }
         }

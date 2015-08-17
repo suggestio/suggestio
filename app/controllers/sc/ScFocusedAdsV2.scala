@@ -64,11 +64,13 @@ trait ScFocusedAdsV2 extends ScFocusedAds {
     /** Сборка HTTP-ответа APIv2. */
     override def resultFut: Future[Result] = {
       val _blockHtmlsFut = blocksHtmlsFut
+      val _stylesFut = jsAdsCssFut
       for {
         madsCount   <- madsCountIntFut
         blockHtmls  <- _blockHtmlsFut
+        _styles     <- _stylesFut
       } yield {
-        val resp = FocusedAdsResp2(blockHtmls, madsCount)
+        val resp = FocusedAdsResp2(blockHtmls, madsCount, _styles)
         Ok(resp.toJson)
       }
     }

@@ -3,7 +3,7 @@ package util.blocks
 import io.suggest.ym.model.common.{Imgs, MImgInfoT}
 import models.blk.SzMult_t
 import models.im.{MImg, DevScreen}
-import models.im.make.{Makers, MakeArgs, IMakeResult, IMaker}
+import models.im.make._
 import util.PlayLazyMacroLogsImpl
 import scala.concurrent.{ExecutionContext, Future}
 import util.blocks.BlocksUtil.BlockImgMap
@@ -38,9 +38,9 @@ object BgImg extends PlayLazyMacroLogsImpl {
    * @return Фьючерс с результатом подготовки изображения.
    */
   def maybeMakeBgImgWith(mad: MAdT, maker: IMaker, szMult: SzMult_t, devScreenOpt: Option[DevScreen])
-                    (implicit ec: ExecutionContext): Future[Option[IMakeResult]] = {
+                    (implicit ec: ExecutionContext): Future[Option[MakeResult]] = {
     BgImg.getBgImg(mad).fold {
-      Future successful Option.empty[IMakeResult]
+      Future successful Option.empty[MakeResult]
     } { bgImg =>
       val iArgs = MakeArgs(MImg(bgImg), mad.blockMeta, szMult = szMult, devScreenOpt)
       maker.icompile(iArgs)
@@ -49,7 +49,7 @@ object BgImg extends PlayLazyMacroLogsImpl {
   }
 
   def maybeMakeBgImg(mad: MAdT, szMult: SzMult_t, devScreenOpt: Option[DevScreen])
-                    (implicit ec: ExecutionContext): Future[Option[IMakeResult]] = {
+                    (implicit ec: ExecutionContext): Future[Option[MakeResult]] = {
     val maker = if (mad.blockMeta.wide)
       Makers.ScWide
     else

@@ -14,6 +14,7 @@
   @if(!(mad.imgs contains BG_IMG_FN)) {
     @mad.colors.get(IMG_BG_COLOR_FN.name).map { bgColor =>background-color: #@bgColor;}
   }
+  @args.topLeft.filter(!_.inlineStyle).map { tl =>@_focTopLeftCss(tl) }
 }
 }
 

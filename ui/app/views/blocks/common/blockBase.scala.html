@@ -3,6 +3,7 @@
 @import models.blk.szMulted
 @import args.mad
 @import io.suggest.sc.ScConstants.Block._
+@import views.txt.blocks.common._
 
 @* Тут постоянная часть верстки блоков карточек в выдаче. *@
 <div class="sm-block sio-mart__single-offer sm-block-tpl@bc.id @if(mad.id){sm-block@mad.id} @args.cssClasses"
@@ -16,8 +17,6 @@
      @BLK_WIDTH_ATTR="@szMulted(mad.blockMeta.width, args.szMult)"
      @BLK_HEIGHT_ATTR="@szMulted(mad.blockMeta.height, args.szMult)"
      data-wide-bg="@args.wideBg.isDefined"
-     @args.blockStyle.map { bst =>style="@bst"}> @* Можно в теории заюзать что-то типа .orElse(args.wideBg.map(_ => "position: absolute; top: 50px; left: 50%;")) *@
+     @args.topLeft.filter(_.inlineStyle).map { tl =>style="@_focTopLeftCss(tl)"}>
   @content
 </div>
-
-

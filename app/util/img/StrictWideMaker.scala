@@ -3,7 +3,7 @@ package util.img
 import models.ImgCrop
 import io.suggest.ym.model.common.MImgInfoMeta
 import models.blk._
-import models.im.make.{MakeResult, IMakeResult, IMakeArgs, IMaker}
+import models.im.make.{MakeResult, IMakeArgs, IMaker}
 import models.im._
 import util.PlayLazyMacroLogsImpl
 
@@ -28,7 +28,7 @@ import scala.concurrent.{Future, ExecutionContext}
 object StrictWideMaker extends IMaker with PlayLazyMacroLogsImpl {
 
   /** Синхронная компиляция аргументов в картинку. */
-  def icompileSync(args: IMakeArgs): IMakeResult = {
+  def icompileSync(args: IMakeArgs): MakeResult = {
     // Параметры экрана обязательны при вызове этого maker'а.
     val devScreen: DevScreen = {
       val dso = args.devScreenOpt
@@ -80,7 +80,7 @@ object StrictWideMaker extends IMaker with PlayLazyMacroLogsImpl {
    * @param args Контейнер с аргументами вызова.
    * @return Фьючерс с экземпляром [[models.im.make.IMakeResult]].
    */
-  override def icompile(args: IMakeArgs)(implicit ec: ExecutionContext): Future[IMakeResult] = {
+  override def icompile(args: IMakeArgs)(implicit ec: ExecutionContext): Future[MakeResult] = {
     // TODO Возможно, следует использовать Future.successful()? Вычисление в целом легковесное.
     Future {
       icompileSync(args)

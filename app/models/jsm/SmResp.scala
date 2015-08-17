@@ -100,8 +100,19 @@ trait TotalCountT extends SmJsonResp {
   }
 }
 
+trait StylesOpt extends SmJsonResp {
+  def styles: String
+
+  override def toJsonAcc: FieldsJsonAcc = {
+    STYLES_FN -> JsString(styles)  ::  super.toJsonAcc
+  }
+}
+
 /** Focused APIv2 контейнер ответа, для рендера в JSON. */
-case class FocusedAdsResp2(ads: Seq[FocRenderResult], totalCount: Int) extends Action with FocusedAdsT with TotalCountT {
+case class FocusedAdsResp2(override val ads: Seq[FocRenderResult],
+                           override val totalCount: Int,
+                           override val styles: String)
+extends Action with FocusedAdsT with TotalCountT with StylesOpt {
   override def action = "focused"
 }
 

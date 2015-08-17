@@ -4,7 +4,7 @@ import models.blk.{SzMult_t, szMulted}
 import models.im._
 import scala.annotation.tailrec
 import models._
-import models.im.make.{MakeResult, IMakeResult, IMakeArgs, IMaker}
+import models.im.make.{MakeResult, IMakeArgs, IMaker}
 
 import scala.concurrent.{Future, ExecutionContext}
 
@@ -75,7 +75,7 @@ object BlkImgMaker extends IMaker {
   }
 
   /** Этот движок внутри работает синхронно. Его синхронный код вынесен сюда. */
-  private def icompileSync(args: IMakeArgs): IMakeResult = {
+  private def icompileSync(args: IMakeArgs): MakeResult = {
     import args._
     val devScreen = devScreenOpt getOrElse {
       DevScreen(
@@ -120,7 +120,7 @@ object BlkImgMaker extends IMaker {
    * @param args Контейнер с данными для вызова.
    * @return Фьючерс с экземпляром MakeResult.
    */
-  override def icompile(args: IMakeArgs)(implicit ec: ExecutionContext): Future[IMakeResult] = {
+  override def icompile(args: IMakeArgs)(implicit ec: ExecutionContext): Future[MakeResult] = {
     // Раз системе надо асинхронно, значит делаем асинхронно в принудительном порядке:
     Future {
       icompileSync(args)

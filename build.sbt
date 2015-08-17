@@ -297,3 +297,6 @@ includeFilter in filter := {
 }
 
 
+// Docker args. Ports: http, ssl, TODO set stable ports in elasticsearch.yml
+dockerExposedPorts := Seq(9000, 9443, 9200, 9201, 9300, 9301)
+

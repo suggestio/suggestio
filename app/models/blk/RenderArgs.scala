@@ -1,7 +1,8 @@
 package models.blk
 
+import io.suggest.common.css.ITopLeft
 import models._
-import models.im.make.IMakeResult
+import models.im.make.{MakeResult, IMakeResult}
 import models.msc.{MScApiVsns, MScApiVsn}
 
 /**
@@ -25,18 +26,20 @@ trait IRenderArgs {
   /** Дополнительные css-классы, которые относятся к рендеру. */
   def cssClasses      : Seq[String]
   /** Стили для div .sm-block. */
-  def blockStyle      : Option[String]
+  def topLeft         : Option[ITopLeft]
   /** Версия API выдачи. */
   def apiVsn          : MScApiVsn = MScApiVsns.unknownVsn
   /** Порядковый номер. Заполняется только для плитки выдачи. */
   def indexOpt        : Option[Int]
 
   /**
-   * compat! Код этого метода -- просто wrapper над bgImg.
+   * compat, потому и final.
+   * Код этого метода -- теперь wrapper над bgImg, раньше же тут был ориджинал контент (WideCtx или что-то подобное).
+   *
    * Рендерим бэкграунд на широкую. Если у карточки разрешен просмотр на широкую, то фон будет отрендерен
    * вне блока, широким, а тело блока сдвинуто согласно кропу.
    */
-  def wideBg: Option[IMakeResult] = {
+  final lazy val wideBg: Option[IMakeResult] = {
     bgImg.filter(_.isWide)
   }
 
@@ -49,12 +52,11 @@ sealed trait IRenderArgsWrapper0 extends IRenderArgs {
   override def mad          = brArgs.mad
   override def withEdit     = brArgs.withEdit
   override def szMult       = brArgs.szMult
-  override def blockStyle   = brArgs.blockStyle
+  override def topLeft      = brArgs.topLeft
   override def bgImg        = brArgs.bgImg
   override def inlineStyles = brArgs.inlineStyles
 
   override def cssClasses   = brArgs.cssClasses
-  override def wideBg       = brArgs.wideBg
   override def indexOpt     = brArgs.indexOpt
   override def apiVsn       = brArgs.apiVsn
 }
@@ -64,11 +66,11 @@ sealed trait IRenderArgsWrapper0 extends IRenderArgs {
 case class RenderArgs(
   override val mad            : MAd,
   override val szMult         : SzMult_t,
-  override val bgImg          : Option[IMakeResult],
+  override val bgImg          : Option[MakeResult],
   override val withEdit       : Boolean                 = false,
   override val inlineStyles   : Boolean                 = true,
   override val cssClasses     : Seq[String]             = Nil,
-  override val blockStyle     : Option[String]          = None,
+  override val topLeft        : Option[ITopLeft]        = None,
   override val indexOpt       : Option[Int]             = None,
   override val apiVsn         : MScApiVsn               = MScApiVsns.unknownVsn
 )

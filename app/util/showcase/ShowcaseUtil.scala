@@ -8,7 +8,7 @@ import io.suggest.ym.model.common.{BlockMeta, AdShowLevels, IEMBlockMeta}
 import models._
 import models.blk.{BlockHeights, SzMult_t, BlockWidth, BlockWidths}
 import models.im._
-import models.im.make.{IMakeResult, MakeArgs, Makers}
+import models.im.make.{MakeResult, MakeArgs, Makers}
 import models.msc.{IScSiteColors, ScSiteColors, TileArgs}
 import play.api.Play.{current, configuration}
 import util.blocks.BgImg
@@ -190,7 +190,7 @@ object ShowcaseUtil extends ColumnsCountT {
    * @param szMult Требуемый мультипликатор размера картинки.
    * @return None если нет фоновой картинки. Иначе Some() с данными рендера фоновой wide-картинки.
    */
-  def focWideBgImgArgs(mad: MAd, szMult: SzMult_t)(implicit ctx: Context): Future[Option[IMakeResult]] = {
+  def focWideBgImgArgs(mad: MAd, szMult: SzMult_t)(implicit ctx: Context): Future[Option[MakeResult]] = {
     BgImg.getBgImg(mad) match {
       case Some(bgImgInfo) =>
         val mimg = MImg(bgImgInfo)

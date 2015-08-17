@@ -5,7 +5,7 @@ import java.io.File
 import controllers.routes
 import io.suggest.ym.model.common.MImgInfoMeta
 import models.blk.szMulted
-import models.im.make.{IMakeResult, Makers, MakeArgs}
+import models.im.make.{MakeResult, Makers, MakeArgs}
 import models.{MAd, MAdT}
 import models.blk.OneAdQsArgs
 import util.blocks.BgImg
@@ -40,7 +40,7 @@ object AdRenderUtil {
    * @return Future None, если у карточки нет фоновой картинки.
    *         Future Some() если есть картинка. Широкий фон или нет -- зависит от args.
    */
-  def getBgImgOpt(mad: MAd, args: OneAdQsArgs): Future[Option[IMakeResult]] = {
+  def getBgImgOpt(mad: MAd, args: OneAdQsArgs): Future[Option[MakeResult]] = {
     // Генерация данных по фоновой картинке карточки.
     BgImg.getBgImg(mad) match {
       // Фоновая картинка у карточки задана.
@@ -66,7 +66,7 @@ object AdRenderUtil {
           .map { Some.apply }
       // Нет фоновой картинки
       case None =>
-        Future successful Option.empty[IMakeResult]
+        Future successful Option.empty[MakeResult]
     }
   }
 
