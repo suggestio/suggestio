@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.vm.nav.nodelist
 
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.ScConstants.NavPane.WRAPPER_ID
-import io.suggest.sc.sjs.vm.util.domvm.get.WrapperChildContent
+import io.suggest.sc.sjs.vm.util.domvm.get.{SubTagFind, WrapperChildContent}
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -17,12 +17,13 @@ object NlWrapper extends FindDiv {
 }
 
 
-trait NlWrapperT extends WrapperChildContent {
+trait NlWrapperT extends SubTagFind with WrapperChildContent {
   override type T = HTMLDivElement
 
-  override protected type SubTagEl_t      = NlContent.Dom_t
-  override type SubTagVm_t                = NlContent.T
-  override protected def _subtagCompanion = NlContent
+  override protected type SubtagCompanion_t = NlContent.type
+  override protected type SubTagEl_t        = NlContent.Dom_t
+  override type SubTagVm_t                  = NlContent.T
+  override protected def _subtagCompanion   = NlContent
 
 }
 

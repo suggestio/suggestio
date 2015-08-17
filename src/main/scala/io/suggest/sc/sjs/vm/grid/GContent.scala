@@ -4,7 +4,7 @@ import io.suggest.common.css.CssSzImplicits
 import io.suggest.sc.ScConstants.Grid
 import io.suggest.sc.sjs.m.mgrid.ICwCm
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
-import io.suggest.sc.sjs.vm.util.domvm.get.{ContentElT, ChildElOrFindInner}
+import io.suggest.sc.sjs.vm.util.domvm.get.{SubTagFind, ContentElT, ChildElOrFindInner}
 import io.suggest.sjs.common.view.safe.SafeElT
 import org.scalajs.dom.raw.HTMLDivElement
 
@@ -30,7 +30,8 @@ trait GContentT extends SafeElT with ChildElOrFindInner with CssSzImplicits with
 
   /** Доступ к ViewModel'и loader'а плитки. */
   def loader: Option[GLoader] = {
-    val t = new ChildFinderT {
+    val t = new SubTagFind with ChildFinderT {
+      override protected type SubtagCompanion_t = GLoader.type
       override type SubTagVm_t = GLoader.T
       override protected type SubTagEl_t = GLoader.Dom_t
       override protected def _subtagCompanion = GLoader
@@ -40,7 +41,8 @@ trait GContentT extends SafeElT with ChildElOrFindInner with CssSzImplicits with
 
   /** Доступ к модели контейнера карточек. */
   def container: Option[GContainer] = {
-    val t = new ChildFinderT {
+    val t = new SubTagFind with ChildFinderT {
+      override protected type SubtagCompanion_t = GContainer.type
       override type SubTagVm_t = GContainer.T
       override protected type SubTagEl_t = GContainer.Dom_t
       override protected def _subtagCompanion = GContainer

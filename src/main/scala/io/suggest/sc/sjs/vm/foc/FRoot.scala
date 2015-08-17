@@ -4,7 +4,8 @@ import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sjs.common.view.safe.SafeElT
 import io.suggest.sjs.common.view.safe.display.SetDisplayEl
 import org.scalajs.dom.raw.HTMLDivElement
-import io.suggest.sc.ScConstants.Focused.ROOT_ID
+import io.suggest.sc.ScConstants.CLASS_WILL_TRANSLATE3D
+import io.suggest.sc.ScConstants.Focused.{ROOT_ID, ROOT_APPEAR_CLASS, ROOT_DISAPPEAR_CLASS, ROOT_TRANSITION_CLASS}
 
 /**
  * Suggest.io
@@ -34,6 +35,35 @@ trait FRootT extends SafeElT with SetDisplayEl {
 
   def hide(): Unit = {
     displayNone()
+  }
+
+  /** Включение анимации. */
+  def enableTransition(): Unit = {
+    addClasses(ROOT_TRANSITION_CLASS)
+  }
+
+  /** Отключение анимации. */
+  def disableTransition(): Unit = {
+    removeClass(ROOT_TRANSITION_CLASS)
+  }
+
+  /** Сокрытие с анимацией или без оной. */
+  def disappear(): Unit = {
+    addClasses(ROOT_DISAPPEAR_CLASS)
+  }
+
+  /** Частоиспользуемое комбо из enableTransition() и disappear(), но работает быстрее. */
+  def appearTransition(): Unit = {
+    addClasses(ROOT_APPEAR_CLASS)
+  }
+
+  /** Подготовка к translate3d-анимации. */
+  def willAnimate(): Unit = {
+    addClasses(CLASS_WILL_TRANSLATE3D)
+  }
+
+  def wontAnimate(): Unit = {
+    removeClass(CLASS_WILL_TRANSLATE3D)
   }
 
 }

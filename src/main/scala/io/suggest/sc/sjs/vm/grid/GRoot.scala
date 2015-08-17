@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.vm.grid
 
 import io.suggest.sc.sjs.m.msc.fsm.IStData
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
-import io.suggest.sc.sjs.vm.util.domvm.get.{ContentElT, ChildElOrFind}
+import io.suggest.sc.sjs.vm.util.domvm.get.{SubTagFind, ContentElT}
 import io.suggest.sc.sjs.vm.util.height3.SetHeight3Raw
 import io.suggest.sjs.common.view.safe.SafeElT
 import org.scalajs.dom.raw.HTMLDivElement
@@ -26,14 +26,16 @@ object GRoot extends FindDiv {
 
 
 /** Логика и интерфейс экземпляра модели. */
-trait GRootT extends SafeElT with ChildElOrFind with SetHeight3Raw {
+trait GRootT extends SafeElT with SubTagFind with SetHeight3Raw {
 
   override type T = HTMLDivElement
 
-  override type SubTagVm_t = GWrapper.T
-  override protected type SubTagEl_t = GWrapper.Dom_t
-  override protected def _subtagCompanion = GWrapper
-  override protected type ContentVm_t = GContent
+
+  override protected type SubtagCompanion_t = GWrapper.type
+  override type SubTagVm_t                  = GWrapper.T
+  override protected type SubTagEl_t        = GWrapper.Dom_t
+  override protected def _subtagCompanion   = GWrapper
+  override protected type ContentVm_t       = GContent
 
   override protected[this] def __getContentDiv(content: Option[ContentVm_t]): Option[ContentElT] = {
     content.flatMap(_.container)

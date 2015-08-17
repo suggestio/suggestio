@@ -20,7 +20,7 @@ import org.scalajs.dom.raw.HTMLDivElement
  */
 object GBlock extends FindElPrefixedIdT with IApplyEl {
 
-  override def DOM_ID = ID_SUFFIX
+  override def DOM_ID = ID_DELIM + ID_SUFFIX
   override type Dom_t = HTMLDivElement
   override type T = GBlock
 

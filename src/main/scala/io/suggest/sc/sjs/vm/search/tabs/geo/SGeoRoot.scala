@@ -2,6 +2,7 @@ package io.suggest.sc.sjs.vm.search.tabs.geo
 
 import io.suggest.sc.sjs.vm.search.tabs.{TabRoot, TabRootCompanion}
 import io.suggest.sc.ScConstants.Search.Cats.ROOT_DIV_ID
+import io.suggest.sc.sjs.vm.util.domvm.get.SubTagFind
 import org.scalajs.dom
 import org.scalajs.dom.raw.HTMLDivElement
 
@@ -17,8 +18,9 @@ object SGeoRoot extends TabRootCompanion {
 }
 
 
-trait SGeoRootT extends TabRoot {
+trait SGeoRootT extends SubTagFind with TabRoot {
 
+  override protected type SubtagCompanion_t = SGeoWrapper.type
   override type SubTagVm_t                  = SGeoWrapper.T
   override protected def _subtagCompanion   = SGeoWrapper
   override protected type SubTagEl_t        = SGeoWrapper.Dom_t

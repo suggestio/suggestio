@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.vm.search.tabs.geo
 
 import io.suggest.sc.sjs.vm.search.tabs.{TabWrapper, TabWrapperCompanion}
+import io.suggest.sc.sjs.vm.util.domvm.get.SubTagFind
 import org.scalajs.dom.raw.HTMLDivElement
 import io.suggest.sc.ScConstants.Search.Cats.WRAPPER_DIV_ID
 
@@ -16,7 +17,9 @@ object SGeoWrapper extends TabWrapperCompanion {
 }
 
 
-trait SGeoWrapperT extends TabWrapper {
+trait SGeoWrapperT extends SubTagFind with TabWrapper {
+
+  override protected type SubtagCompanion_t = SGeoContent.type
   override type SubTagVm_t                = SGeoContent.T
   override protected def _subtagCompanion = SGeoContent
   override protected type SubTagEl_t      = SGeoContent.Dom_t

@@ -3,6 +3,7 @@ package io.suggest.sc.sjs.vm.foc
 import io.suggest.common.css.CssSzImplicits
 import io.suggest.sc.sjs.v.vutil.{VUtil, ExtraStyles}
 import io.suggest.sc.sjs.vm.foc.fad.{FAdRootT, FAdRoot}
+import io.suggest.sc.sjs.vm.util.ClearT
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sjs.common.model.dom.DomListIterator
 import io.suggest.sjs.common.view.safe.SafeElT
@@ -26,16 +27,12 @@ object FCarousel extends FindDiv {
 
 
 /** Логика работы карусели живёт в этом трейте. */
-trait FCarouselT extends SafeElT with CssSzImplicits with Width with ExtraStyles with StyleLeft {
+trait FCarouselT extends SafeElT with CssSzImplicits with Width with ExtraStyles with StyleLeft with ClearT {
 
   override type T = HTMLDivElement
 
   def isEmpty: Boolean = {
     _underlying.firstChild == null
-  }
-
-  def clean(): Unit = {
-    VUtil.removeAllChildren(_underlying)
   }
 
   /** Выставить новую ширину карусели. */

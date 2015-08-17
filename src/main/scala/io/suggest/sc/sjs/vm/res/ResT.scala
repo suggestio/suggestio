@@ -2,11 +2,11 @@ package io.suggest.sc.sjs.vm.res
 
 import io.suggest.sc.sjs.v.vutil.VUtil
 import io.suggest.sc.sjs.vm.layout.LayContentVm
+import io.suggest.sc.sjs.vm.util.ClearT
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sjs.common.view.safe.SafeElT
 import org.scalajs.dom
 import org.scalajs.dom.raw.HTMLDivElement
-import org.scalajs.dom.Document
 
 /**
  * Suggest.io
@@ -39,13 +39,9 @@ trait ResStaticT extends FindDiv {
 }
 
 
-trait ResT extends SafeElT {
+trait ResT extends SafeElT with ClearT {
 
   override type T = HTMLDivElement
-
-  def clear(d: Document = dom.document): Unit = {
-    VUtil.removeAllChildren(_underlying)
-  }
 
   /** Добавить css-ресурс в контейнер. */
   def appendCss(css: String): Unit = {

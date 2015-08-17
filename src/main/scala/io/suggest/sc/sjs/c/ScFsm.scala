@@ -166,7 +166,9 @@ with OnGridSearchHashTags with OnGridNav with foc.StartingForAd {
 
 
   // Состояния focused-выдачи.
+  /** Состояние сразу после клика по карточке в плитке. Отрабатывается запрос, происходит подготовка focused-выдачи. */
   class FocStartingForAd extends StartingForAdStateT {
+    override protected def _focOnAppearState: FsmState = ???
   }
 
 }

@@ -5,7 +5,7 @@ import io.suggest.sc.sjs.c.ScFsm
 import io.suggest.sc.sjs.m.mgrid.{MGridParams, GridScroll}
 import io.suggest.sc.sjs.m.msc.fsm.IStData
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
-import io.suggest.sc.sjs.vm.util.domvm.get.{WrapperChildContent, ChildElOrFind}
+import io.suggest.sc.sjs.vm.util.domvm.get.{SubTagFind, WrapperChildContent}
 import io.suggest.sjs.common.view.safe.SafeElT
 import org.scalajs.dom.Event
 import org.scalajs.dom.raw.HTMLDivElement
@@ -25,12 +25,13 @@ object GWrapper extends FindDiv {
 
 
 /** Логика экземпляра модели. */
-trait GWrapperT extends SafeElT with WrapperChildContent {
+trait GWrapperT extends SafeElT with SubTagFind with WrapperChildContent {
   override type T = HTMLDivElement
 
-  override type SubTagVm_t = GContent.T
-  override protected type SubTagEl_t = GContent.Dom_t
-  override protected def _subtagCompanion = GContent
+  override protected type SubtagCompanion_t = GContent.type
+  override type SubTagVm_t                  = GContent.T
+  override protected type SubTagEl_t        = GContent.Dom_t
+  override protected def _subtagCompanion   = GContent
 
   /** Раняя инициализация враппера. */
   def initLayout(stData: IStData): Unit = {

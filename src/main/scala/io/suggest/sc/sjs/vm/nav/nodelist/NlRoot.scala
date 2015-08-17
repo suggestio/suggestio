@@ -4,6 +4,7 @@ import io.suggest.sc.sjs.m.msc.fsm.IStData
 import io.suggest.sc.sjs.vm.util.IInitLayout
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.ScConstants.NavPane.NODE_LIST_ID
+import io.suggest.sc.sjs.vm.util.domvm.get.SubTagFind
 import io.suggest.sc.sjs.vm.util.height3.SetHeight3
 import org.scalajs.dom.raw.HTMLDivElement
 
@@ -21,9 +22,11 @@ object NlRoot extends FindDiv {
 }
 
 
-trait NlRootT extends SetHeight3 {
+trait NlRootT extends SubTagFind with SetHeight3 {
+
   override type T = HTMLDivElement
 
+  override protected type SubtagCompanion_t = NlWrapper.type
   override protected type SubTagEl_t      = NlWrapper.Dom_t
   override type SubTagVm_t                = NlWrapper.T
   override protected def _subtagCompanion = NlWrapper

@@ -1,7 +1,9 @@
 package io.suggest.sc.sjs.vm.foc.fad
 
+import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.v.vutil.VUtil
 import io.suggest.sc.sjs.vm.util.domvm.FindElIndexedIdT
+import io.suggest.sc.sjs.vm.util.height3.SetHeight3Raw
 import io.suggest.sjs.common.view.safe.SafeElT
 import io.suggest.sjs.common.view.safe.css.{StyleLeft, Width}
 import io.suggest.sjs.common.view.safe.display.StylePosition
@@ -33,14 +35,23 @@ object FAdRoot extends FindElIndexedIdT with FAdStatic {
 }
 
 
-trait FAdRootT extends SafeElT with Width with StyleLeft with StylePosition {
+trait FAdRootT extends SafeElT with Width with StyleLeft with StylePosition with _FAdFindSubtag with SetHeight3Raw {
 
   override type T = HTMLDivElement
 
   // protected -> public
-  override def setWidthPx(widthPx: Int) = super.setWidthPx(widthPx)
   override def setLeftPx(leftPx: Int) = super.setLeftPx(leftPx)
 
+  def initLayout(screen: IMScreen): Unit = {
+    setWidthPx( screen.width )
+    _setHeight3( screen.height )
+  }
+
+  override type SubTagVm_t = FAdWrapper
+  override protected type ContentVm_t = FAdContent
+  override protected type SubTagEl_t = FAdWrapper.Dom_t
+  override protected def _subtagCompanion = FAdWrapper
+  override protected type SubtagCompanion_t = FAdWrapper.type
 }
 
 
@@ -48,3 +59,6 @@ case class FAdRoot(
   override val _underlying: HTMLDivElement
 )
   extends FAdRootT
+{
+  override lazy val wrapper = super.wrapper
+}

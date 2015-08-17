@@ -4,7 +4,7 @@ import io.suggest.sc.ScConstants.Layout
 import io.suggest.sc.sjs.vm.SafeDoc
 import io.suggest.sc.sjs.vm.util.domvm._
 import io.suggest.sc.sjs.vm.util.domvm.create.CreateDiv
-import io.suggest.sc.sjs.vm.util.domvm.get.ChildElOrFind
+import io.suggest.sc.sjs.vm.util.domvm.get.{SubTagFind, ChildElOrFind}
 import io.suggest.sjs.common.view.safe.SafeElT
 import org.scalajs.dom.raw.HTMLDivElement
 
@@ -43,14 +43,15 @@ sealed trait CreateLayRootDiv extends CreateDiv {
 
 
 /** Логика функционирования экземпляра вынесена сюда для возможности разных реализация динамической модели. */
-trait LayRootVmT extends SafeElT with ChildElOrFind with EraseBg {
+trait LayRootVmT extends SafeElT with SubTagFind with ChildElOrFind with EraseBg {
 
   override type T = HTMLDivElement
 
   // Поиск единственного субтега: content.
-  override type SubTagVm_t = LayContentVm.T
-  override protected type SubTagEl_t = LayContentVm.Dom_t
-  override protected def _subtagCompanion = LayContentVm
+  override protected type SubtagCompanion_t = LayContentVm.type
+  override type SubTagVm_t                  = LayContentVm.T
+  override protected type SubTagEl_t        = LayContentVm.Dom_t
+  override protected def _subtagCompanion   = LayContentVm
 
   /** Найти content-div (sioMartLayout). */
   def content = _findSubtag()

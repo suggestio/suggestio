@@ -1,6 +1,5 @@
 package io.suggest.sc.sjs.m.mfoc
 
-import io.suggest.sc.sjs.vm.foc.FocAd
 import io.suggest.sc.sjs.vm.grid.GBlock
 
 /** Интерфейс контейнера данных по focused-выдаче. */
@@ -15,8 +14,7 @@ trait IFocSd {
   /** grid block, относящийся к текущей карточке. */
   def gblock     : Option[GBlock]
 
-  /** Аккамулятор уже загруженных с сервера focused-карточек. */
-  def ads         : Map[Int, FocAd]
+  // TODO Добавить сюда аккамуляторы для уже полученных prev и next cells, т.е. уже распарсенных focused-карточек готовых к добавлению.
 
   /** Кол-во уже загруженных карточек. */
   def loadedCount : Int
@@ -41,7 +39,6 @@ case class MFocSd(
   override val currIndex   : Option[Int]          = None,
   override val currAdId    : Option[String]       = None,
   override val gblock      : Option[GBlock]       = None,
-  override val ads         : Map[Int, FocAd]      = Map.empty,
   override val loadedCount : Int                  = 0,
   override val totalCount  : Option[Int]          = None,
   override val carLen      : Int                  = 0

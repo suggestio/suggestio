@@ -14,11 +14,5 @@ case object Prev extends IFsmMsg
 /** Команда закрытия focused-выдачи. */
 case object Close extends IFsmMsg
 
-/** Команда перехода на указанную карточку. */
-case class GoTo(index: Int) extends IFsmMsg
-
-/** Событие получения ответа от сервера с порцией focused-карточек. */
-case class FadsReceived(fads: IMFocAds) extends IFsmMsg
-
-/** Внутренний сигнал о завершении slide-анимации. */
-case object SlideDone extends IFsmMsg
+/** Внутренний сигнал о завершении появления на экране focused-выдачи. */
+case object FocRootAppeared extends IFsmMsg

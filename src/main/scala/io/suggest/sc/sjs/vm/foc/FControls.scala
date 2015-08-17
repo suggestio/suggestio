@@ -1,8 +1,10 @@
 package io.suggest.sc.sjs.vm.foc
 
+import io.suggest.sc.sjs.vm.util.ClearT
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.ScConstants.Focused.CONTROLS_ID
 import io.suggest.sjs.common.view.safe.SafeElT
+import io.suggest.sjs.common.view.safe.display.InnerHtml
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -17,7 +19,7 @@ object FControls extends FindDiv {
 }
 
 
-trait FControlsT extends SafeElT {
+trait FControlsT extends SafeElT with InnerHtml with ClearT {
   override type T = HTMLDivElement
 }
 

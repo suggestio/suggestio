@@ -3,6 +3,7 @@ package io.suggest.sc.sjs.vm.search.tabs.htag
 import io.suggest.sc.ScConstants.Search.Nodes.WRAPPER_DIV_ID
 import io.suggest.sc.sjs.vm.search.tabs.{TabWrapperCompanion, TabWrapper}
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
+import io.suggest.sc.sjs.vm.util.domvm.get.SubTagFind
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -19,8 +20,9 @@ object ShtWrapper extends TabWrapperCompanion {
 }
 
 
-trait ShtWrapperT extends TabWrapper {
+trait ShtWrapperT extends SubTagFind with TabWrapper {
 
+  override protected type SubtagCompanion_t = ShtContent.type
   override type SubTagVm_t = ShtContent.T
   override protected type SubTagEl_t = ShtContent.Dom_t
   override protected def _subtagCompanion = ShtContent

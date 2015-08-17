@@ -109,7 +109,7 @@ trait GetIndex extends ScFsmStub with FindAdsFsmUtil {
 
       // Контейнер ресурсов должен быть создан
       CommonRes.ensureCreated()
-      
+
       val body = SafeBody
       body.overflowHidden()
 

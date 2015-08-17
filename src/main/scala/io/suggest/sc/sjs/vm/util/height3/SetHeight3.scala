@@ -24,7 +24,7 @@ trait SetHeight3Raw extends RootChildWrapper {
   }
 
   protected def _setHeight3(height: Int): Unit = {
-    // Кешируем анонимную фунцкию экстракции underlying-тегов между несколькими вызовами.
+    // Кешируем анонимную функцию экстракции underlying-тегов между несколькими вызовами.
     val undF = ISafe.extractorF[HTMLElement]
 
     val wrapperOpt = wrapper

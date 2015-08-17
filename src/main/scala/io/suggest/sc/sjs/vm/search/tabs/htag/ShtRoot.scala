@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.vm.search.tabs.htag
 
 import io.suggest.sc.sjs.vm.search.tabs.{TabRoot, TabRootCompanion}
+import io.suggest.sc.sjs.vm.util.domvm.get.SubTagFind
 import org.scalajs.dom
 import org.scalajs.dom.raw.HTMLDivElement
 import io.suggest.sc.ScConstants.Search.Nodes.ROOT_DIV_ID
@@ -20,11 +21,12 @@ object ShtRoot extends TabRootCompanion {
 }
 
 
-trait ShtRootT extends TabRoot {
+trait ShtRootT extends SubTagFind with TabRoot {
 
-  override type SubTagVm_t                = ShtWrapper.T
-  override protected type SubTagEl_t      = ShtWrapper.Dom_t
-  override protected def _subtagCompanion = ShtWrapper
+  override protected type SubtagCompanion_t = ShtWrapper.type
+  override type SubTagVm_t                  = ShtWrapper.T
+  override protected type SubTagEl_t        = ShtWrapper.Dom_t
+  override protected def _subtagCompanion   = ShtWrapper
 
   override def initLayout(): Unit = {
     // TODO Повесить события на элементы таба, подравнять верстку и т.д.
