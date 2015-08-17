@@ -90,7 +90,9 @@ object ScConstants {
     def FOCUSED_ADS_FN    = "fads"
 
     /** Имя поля с общим кол-вом чего-то во всей выборке. */
-    def TOTAL_COUNT_FN       = "tc"
+    def TOTAL_COUNT_FN    = "tc"
+
+    def STYLES_FN         = "st"
   }
 
 
