@@ -100,7 +100,8 @@ trait ScController extends SioController {
             offerN  = offer.n,
             yoff    = yoff,
             fid     = fid,
-            cssClasses = cssClasses
+            cssClasses = cssClasses,
+            isFocused  = brArgs.isFocused
           )
         }
       }

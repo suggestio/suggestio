@@ -3,20 +3,22 @@
 @import models.blk.szMulted
 @import args.mad
 @import io.suggest.sc.ScConstants.Block._
+@import io.suggest.sc.ScConstants.Focused.FAd
 @import views.txt.blocks.common._
 
-@* Тут постоянная часть верстки блоков карточек в выдаче. *@
-<div class="sm-block sio-mart__single-offer sm-block-tpl@bc.id @if(mad.id){sm-block@mad.id} @args.cssClasses"
+@* Тут постоянная часть верстки блоков карточек в выдаче.
+   __rel класс - центровка div'а по центру.  *@
+<div class="sm-block sio-mart__single-offer sm-block-tpl@bc.id @if(mad.id){sm-block@mad.id} @if(args.isFocused){__rel} @args.cssClasses"
      @if(mad.id) {
        @MAD_ID_ATTR="@mad.id"
        @if(args.apiVsn.serverSideBlockIds) {
-         id="@mad.id@ID_SUFFIX"
+         id="@mad.id@ID_DELIM@(if (args.isFocused) FAd.BLOCK_ID_SUFFIX else ID_SUFFIX)"
          @args.indexOpt.map { index => @BLK_INDEX_ATTR="@index" }
        }
      }
      @BLK_WIDTH_ATTR="@szMulted(mad.blockMeta.width, args.szMult)"
      @BLK_HEIGHT_ATTR="@szMulted(mad.blockMeta.height, args.szMult)"
      data-wide-bg="@args.wideBg.isDefined"
-     @args.topLeft.filter(_.inlineStyle).map { tl =>style="@_focTopLeftCss(tl)"}>
+     @args.topLeft.filter(_.inlineStyle).map { tl =>style="@_focTopLeftCss(tl, args.wideBg)"}>
   @content
 </div>

@@ -126,7 +126,8 @@ trait MarketAdPreview extends SioController with PlayMacroLogsI {
         bgImg         = bgImgOpt,
         inlineStyles  = true,
         szMult        = szMult,
-        cssClasses    = Seq("__popup")
+        cssClasses    = Seq("__popup"),
+        isFocused     = true
       )
       val args = AdBodyTplArgs(_brArgs, request.adnNode, 1, 1, is3rdParty = false)
       _adFullTpl(args)(ctx)
@@ -143,7 +144,8 @@ trait MarketAdPreview extends SioController with PlayMacroLogsI {
         withEdit      = true,
         szMult        = szMult,
         inlineStyles  = true,
-        bgImg         = bgOpt
+        bgImg         = bgOpt,
+        isFocused     = false
       )
       _adNormalTpl(args)(ctx)
     }

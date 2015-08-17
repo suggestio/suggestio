@@ -7,7 +7,7 @@
 
 @* Может быть включено отображение в wide-bg. Тогда нужно отрендерить широкий bg здесь. *@
 @args.wideBg.map { wideBg =>
-  <img src="@CdnUtil.forCall(wideBg.dynImgCall)" class="bg" alt=""
+  <img src="@CdnUtil.forCall(wideBg.dynImgCall)" class="bg __id-@{args.mad.id}" alt=""
     @args.mad.colors.get(IMG_BG_COLOR_FN.toString).map { ibgCol =>style="background-color:#@ibgCol;"}
     height="@wideBg.szCss.height" data-height="@wideBg.szCss.height" @* width пока не доступен, его придумывает imagemagic на лету. *@
   />

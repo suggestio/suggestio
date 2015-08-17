@@ -34,9 +34,10 @@ trait ScFocusedAdsV2 extends ScFocusedAds {
                                     (implicit val _request: AbstractRequestWithPwOpt[_])
     extends FocusedAdsLogicHttp with NoBrAcc {
 
+    override def apiVsn = MScApiVsns.Sjs1
+
     // При рендере генерятся контейнеры render-результатов, который затем конвертируются в json.
     override type OBT = FocRenderResult
-
 
     override def renderOuterBlock(args: AdBodyTplArgs): Future[OBT] = {
       val fullArgsFut = focAdsRenderArgsFor(args)

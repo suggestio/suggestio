@@ -133,6 +133,9 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
       }
     }
 
+    /** Версия API системы. Прокидывается в аргументы, которые передаются в шаблоны. */
+    def apiVsn: MScApiVsn
+
     lazy val mads2andBrArgsFut: Future[Seq[blk.RenderArgs]] = {
       val _mads2Fut = mads2Fut
       val _ctx = ctx
@@ -145,7 +148,8 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
                 inlineStyles    = false,
                 cssClasses      = _withCssClasses,
                 // 2015.mar.06: FIXME Это значение сейчас перезаписывается таким же через showcase.js. // TODO Они должны быть в стилях, а не тут.
-                topLeft         = brArgs.wideBg.map(_ => FocusedTopLeft)
+                topLeft         = brArgs.wideBg.map(_ => FocusedTopLeft),
+                apiVsn          = apiVsn
               )
             }
         }
@@ -243,7 +247,7 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
       MAdnNodeCache.maybeGetByIdCached(prodIdOpt)
     }
 
-    def firstAdIndex = _adSearch.offset + 1
+    def firstAdIndex = _adSearch.offset
 
     /** Сборка аргументов для рендера focused-карточки, т.е. раскрытого блока + оформление продьюсера. */
     protected def focAdsRenderArgsFor(abtArgs: IAdBodyTplArgs): Future[IFocusedAdsTplArgs] = {
@@ -462,11 +466,15 @@ trait ScFocusedAds extends ScFocusedAdsBase {
     /** Тип отрендеренного блока в APIv1 -- это json-строка, содержащая HTML блока без заглавия и прочего. */
     override type OBT = JsString
 
+    override def firstAdIndex = super.firstAdIndex + 1
+
     /** Рендерим в html, минифицируем, заворачиваем в js-строку. */
     override def renderOuterBlock(args: AdBodyTplArgs): Future[OBT] = {
       renderBlockHtml(args)
         .map(html2jsStr)
     }
+
+    override def apiVsn = MScApiVsns.Coffee
 
     /** Отдельно отфокусированную карточку тоже нужно минифицировать и завернуть в JsString. */
     def focAdHtmlJsStrOptFut: Future[Option[JsString]] = {

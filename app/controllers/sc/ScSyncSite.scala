@@ -133,6 +133,7 @@ with ScNodesListBase with ScSiteBase {
       override type OBT = Html
       override implicit def _request = that._request
       override def _scStateOpt = Some(_scState)
+      override def apiVsn = MScApiVsns.Coffee   // TODO Версия скопирована, возможно можно/нужно взять версию 2 тут.
       override lazy val ctx = that.ctx
 
       /** Рендер заэкранного блока. В случае Html можно просто вызвать renderBlockHtml(). */
@@ -309,11 +310,6 @@ with ScNodesListBase with ScSiteBase {
       }
     }
 
-    /** Сбор всех пост-скриптумов для тега head. */
-    def headAfterFut: Future[Traversable[Html]] = {
-      adsCssExtFut
-    }
-
     /** Реализация [[SiteLogic]] для нужд [[ScSyncSite]]. */
     protected class SyncSiteLogic extends SiteLogic {
       // Линкуем исходные данные логики с полями outer-класса.
@@ -321,6 +317,14 @@ with ScNodesListBase with ScSiteBase {
       override def _siteArgs          = that._siteArgs
       override implicit def _request  = that._request
       override def nodeOptFut         = that.adnNodeReqFut
+
+      // TODO Этот код метода был написан спустя много времени после остальной реализации. Нужно протестить всё.
+      override def headAfterFut: Future[Traversable[Html]] = {
+        val supFut = super.headAfterFut
+        for (headAfter <- that.adsCssExtFut;  headAfter0 <- supFut) yield {
+          headAfter ++ headAfter0
+        }
+      }
 
       /** Скрипт выдачи не нужен вообще. */
       override def scriptHtmlFut: Future[Html] = {

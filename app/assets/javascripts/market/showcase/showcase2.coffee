@@ -1953,17 +1953,18 @@ sm =
         _block_wideBg = _b.getAttribute("data-wide-bg")
 
         # если карточка растягивается на ширину устройства
+        ## 2015.aug.17: Эти все константы вынесены в html-шаблоны. Тут оставлены на всякий случай.
         if _block_wideBg == "true"
           #console.log _b.getAttribute("class")
-          fadContent = _b.parentNode.parentNode.parentNode
-          fadContent.style.overflow = "hidden"
-          fadContent.style.position = "relative"
+          fadContainer = _b.parentNode.parentNode.parentNode
+          fadContainer.style.overflow = "hidden"
+          fadContainer.style.position = "relative"
           _b.style.position = "absolute"
           _b.style.top = "50px"
           _b.style.left = "50%"
           _b.style.transform = "translate3d(-50%,0,0)"
           _b.style.webkitTransform = "translate3d(-50%,0,0)"
-          bg = sm.utils.ge_class(fadContent, "bg")
+          bg = sm.utils.ge_class(fadContainer, "bg")
           if bg.length > 0
             bg = bg[0]
             #bg.style.width = "100%"
@@ -1978,9 +1979,12 @@ sm =
         #console.log cbca_grid.ww
         #console.log cbca_grid.wh
 
+        ## focusedAd#
         _b.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.style.width = cbca_grid.ww + 'px'
         _b.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.style.height = cbca_grid.wh + 'px'
+        ## focusedAd#wrapper
         _b.parentNode.parentNode.parentNode.parentNode.parentNode.style.height = cbca_grid.wh + 'px'
+        ## focusedAd#content
         _b.parentNode.parentNode.parentNode.parentNode.style.height = cbca_grid.wh + 1 + 'px'
 
       this.ads_container_dom.style.width = this.sm_blocks.length * cbca_grid.ww + 'px'

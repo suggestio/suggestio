@@ -56,7 +56,8 @@ trait ScAdsTileBase extends ScController with PlayMacroLogsI {
         szMult        = szMult,
         inlineStyles  = false,
         apiVsn        = _adSearch.apiVsn,
-        indexOpt      = indexOpt
+        indexOpt      = indexOpt,
+        isFocused     = false
       )
     }
     

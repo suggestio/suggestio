@@ -172,12 +172,13 @@ object ShowcaseUtil extends ColumnsCountT {
       case None       => TILES_SZ_MULTS.last
     }
     // Нужно получить данные для рендера широкой карточки.
-    focWideBgImgArgs(mad, szMult) map { bgImgOpt =>
+    for (bgImgOpt <- focWideBgImgArgs(mad, szMult)) yield {
       blk.RenderArgs(
         mad       = mad,
         withEdit  = false,
         szMult    = szMult,
-        bgImg     = bgImgOpt
+        bgImg     = bgImgOpt,
+        isFocused = true
       )
     }
   }

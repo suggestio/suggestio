@@ -31,6 +31,8 @@ trait IRenderArgs {
   def apiVsn          : MScApiVsn = MScApiVsns.unknownVsn
   /** Порядковый номер. Заполняется только для плитки выдачи. */
   def indexOpt        : Option[Int]
+  /** Рендер для разглядывания блока, а не в плитке. */
+  def isFocused       : Boolean
 
   /**
    * compat, потому и final.
@@ -67,6 +69,7 @@ case class RenderArgs(
   override val mad            : MAd,
   override val szMult         : SzMult_t,
   override val bgImg          : Option[MakeResult],
+  override val isFocused      : Boolean                 = false,
   override val withEdit       : Boolean                 = false,
   override val inlineStyles   : Boolean                 = true,
   override val cssClasses     : Seq[String]             = Nil,
@@ -102,7 +105,9 @@ case class FieldCssRenderArgs2(
   offerN      : Int,
   yoff        : Int,
   fid         : String,
+  override val isFocused : Boolean     = false,
   override val cssClasses: Seq[String] = Nil
+
 ) extends FieldCssRenderArgsT with IRenderArgsWrapper0 {
 
   override def xy: ICoords2D = Coords2D(38, 70*( offerN + 1) + yoff)

@@ -42,12 +42,13 @@ object LkAdUtil {
       case None =>
         Future successful None
     }
-    bgImgOptFut.map { bgImgOpt =>
+    for (bgImgOpt <- bgImgOptFut) yield {
       blk.RenderArgs(
         mad       = mad,
         withEdit  = false,
         szMult    = szMult,
-        bgImg     = bgImgOpt
+        bgImg     = bgImgOpt,
+        isFocused = false
       )
     }
   }
