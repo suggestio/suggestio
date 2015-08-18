@@ -20,6 +20,7 @@ object FocRenderResult {
     (__ \ BODY_HTML_FN).write[String] and
     (__ \ CONTROLS_HTML_FN).write[String] and
     (__ \ PRODUCER_ID_FN).write[String] and
+    (__ \ HUMAN_INDEX_FN).write[Int] and
     (__ \ INDEX_FN).write[Int]
   )(unlift(unapply))
 
@@ -30,29 +31,33 @@ object FocRenderResult {
 trait IFocRenderResult {
 
   /** id рекламной карточки. */
-  def madId: String
+  def madId       : String
 
   /** Отрендеренный контент рекламной карточки. */
-  def body: String
+  def body        : String
 
   /** Отрендеренная верстка заголовка, стрелочек и прочего. */
-  def controls: String
+  def controls    : String
 
   /** id продьсера карточки. */
-  def producerId: String
+  def producerId  : String
 
   /** Человеческий порядковый номер карточки в выборке.  */
-  def index: Int
+  def humanIndex  : Int
+
+  /** Технический порядковый номер. */
+  def index       : Int
 
 }
 
 
 /** Дефолтовая реализация экземпляров модели [[IFocRenderResult]]. */
 case class FocRenderResult(
-  madId       : String,
-  body        : String,
-  controls    : String,
-  producerId  : String,
-  index       : Int
+  override val madId       : String,
+  override val body        : String,
+  override val controls    : String,
+  override val producerId  : String,
+  override val humanIndex  : Int,
+  override val index       : Int
 )
   extends IFocRenderResult

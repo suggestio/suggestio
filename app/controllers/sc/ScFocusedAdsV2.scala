@@ -57,7 +57,8 @@ trait ScFocusedAdsV2 extends ScFocusedAds {
           body        = body,
           controls    = controls,
           producerId  = args.brArgs.mad.producerId,
-          index       = args.index
+          humanIndex  = args.index,
+          index       = args.index - 1
         )
       }
     }
