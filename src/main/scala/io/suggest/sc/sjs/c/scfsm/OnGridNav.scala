@@ -154,7 +154,7 @@ trait OnGridNav extends ScFsmStub with ISjsLogger {
 
 
   /** Трейт состояния готовности к работе панели вместе со списком карточек. */
-  protected trait OnGridNavReadyStateT extends _OnGridNav {
+  protected trait OnGridNavReadyStateT extends _OnGridNav with INodeSwitchState {
 
     private def _receiverPart: Receive = {
       case NodeListClick(event) =>
@@ -164,8 +164,6 @@ trait OnGridNav extends ScFsmStub with ISjsLogger {
     override def receiverPart: Receive = {
       _receiverPart orElse super.receiverPart
     }
-
-    protected def _onNodeSwitchState(sd1: SD): FsmState
 
     protected def _navNodeListClick(event: Event): Unit = {
       val clickedNode = event.target.asInstanceOf[Node] // Node максимум, т.к. клик может быть по узлам svg
@@ -185,7 +183,7 @@ trait OnGridNav extends ScFsmStub with ISjsLogger {
           } else {
             // Сменить текущий узел на выбранный пользователем.
             val sd1 = sd0.withNodeSwitch( glayNode.adnIdOpt )
-            become(_onNodeSwitchState(sd1), sd1)
+            become(_onNodeSwitchState, sd1)
           }
 
         } else {

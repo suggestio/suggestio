@@ -2,6 +2,7 @@ package io.suggest.sc.sjs.vm.layout
 
 import io.suggest.sc.ScConstants.Layout
 import io.suggest.sc.sjs.m.magent.IMScreen
+import io.suggest.sc.sjs.vm.foc.FRoot
 import io.suggest.sc.sjs.vm.grid.GRoot
 import io.suggest.sc.sjs.vm.hdr.HRoot
 import io.suggest.sc.sjs.vm.nav.NRoot
@@ -9,7 +10,7 @@ import io.suggest.sc.sjs.vm.search.SRoot
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.sjs.vm.util.domvm.create.{CreateDiv, CreateVm}
 import io.suggest.sjs.common.view.safe.SafeElT
-import io.suggest.sjs.common.view.safe.display.InnerHtml
+import io.suggest.sjs.common.view.safe.display.SetInnerHtml
 import org.scalajs.dom.Node
 import org.scalajs.dom.raw.HTMLDivElement
 
@@ -28,7 +29,7 @@ object LayContentVm extends FindDiv with CreateDiv with CreateVm {
 
 
 /** Абстрактная реализация модели. */
-trait LayContentVmT extends SafeElT with InnerHtml {
+trait LayContentVmT extends SafeElT with SetInnerHtml {
 
   override type T = HTMLDivElement
 
@@ -62,7 +63,8 @@ trait LayContentVmT extends SafeElT with InnerHtml {
   def navPanel = NRoot.find()
   /** Панель поиска. */
   def searchPanel = SRoot.find()
-
+  /** Focused root div. */
+  def focused = FRoot.find()
 
   def insertFirst(node: Node): Unit = {
     _underlying.insertBefore(node, _underlying.firstChild)
@@ -86,5 +88,6 @@ case class LayContentVm(
   override lazy val header      = super.header
   override lazy val searchPanel = super.searchPanel
   override lazy val navPanel    = super.navPanel
+  override lazy val focused     = super.focused
 }
 

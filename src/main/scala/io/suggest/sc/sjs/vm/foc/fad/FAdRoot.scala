@@ -6,7 +6,7 @@ import io.suggest.sc.sjs.vm.util.domvm.FindElIndexedIdT
 import io.suggest.sc.sjs.vm.util.height3.SetHeight3Raw
 import io.suggest.sjs.common.view.safe.SafeElT
 import io.suggest.sjs.common.view.safe.css.{StyleLeft, Width}
-import io.suggest.sjs.common.view.safe.display.StylePosition
+import io.suggest.sjs.common.view.safe.display.{OuterHtml, GetInnerHtml, StylePosition}
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -35,7 +35,8 @@ object FAdRoot extends FindElIndexedIdT with FAdStatic {
 }
 
 
-trait FAdRootT extends SafeElT with Width with StyleLeft with StylePosition with _FAdFindSubtag with SetHeight3Raw {
+trait FAdRootT extends SafeElT with Width with StyleLeft with StylePosition with _FAdFindSubtag with SetHeight3Raw
+with GetInnerHtml with OuterHtml {
 
   override type T = HTMLDivElement
 
@@ -52,6 +53,7 @@ trait FAdRootT extends SafeElT with Width with StyleLeft with StylePosition with
   override protected type SubTagEl_t = FAdWrapper.Dom_t
   override protected def _subtagCompanion = FAdWrapper
   override protected type SubtagCompanion_t = FAdWrapper.type
+
 }
 
 

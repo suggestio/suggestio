@@ -87,4 +87,10 @@ trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger {
   /** Очень служебное состояние системы, используется когда очень надо. */
   protected[this] class DummyState extends FsmEmptyReceiverState
 
+
+  /** Интерфейс для метода, дающего состояние переключения на новый узел.
+    * Используется для возможности подмешивания реализации в несколько состояний. */
+  protected trait INodeSwitchState {
+    protected def _onNodeSwitchState: FsmState
+  }
 }

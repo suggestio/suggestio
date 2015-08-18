@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.vm.nav.nodelist
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.ScConstants.NavPane.CONTENT_ID
 import io.suggest.sc.sjs.vm.util.domvm.get.ContentElT
-import io.suggest.sjs.common.view.safe.display.InnerHtml
+import io.suggest.sjs.common.view.safe.display.SetInnerHtml
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -18,7 +18,7 @@ object NlContent extends FindDiv {
 }
 
 
-trait NlContentT extends ContentElT with InnerHtml {
+trait NlContentT extends ContentElT with SetInnerHtml {
 
   override type T = HTMLDivElement
 

@@ -1,11 +1,11 @@
 package io.suggest.sc.sjs.c.scfsm.foc
 
 import io.suggest.sc.sjs.c.scfsm.{FindNearAdIds, FindAdsFsmUtil, ScFsmStub}
-import io.suggest.sc.sjs.m.mfoc.{MFocSd, FocRootAppeared}
-import io.suggest.sc.sjs.m.msrv.foc.find.{MFocAds, MFocAdSearchEmpty}
+import io.suggest.sc.sjs.m.mfoc.{FAdShown, MFocSd, FocRootAppeared}
+import io.suggest.sc.sjs.m.msrv.foc.find.{MFocAd, MFocAds, MFocAdSearchEmpty}
 import io.suggest.sc.sjs.vm.res.FocusedRes
 import io.suggest.sc.sjs.vm.foc.fad.FAdRoot
-import io.suggest.sc.sjs.vm.foc.{FControls, FRoot}
+import io.suggest.sc.sjs.vm.foc.{FCarousel, FControls, FRoot}
 import io.suggest.sc.sjs.vm.grid.GBlock
 import org.scalajs.dom
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -49,20 +49,20 @@ trait StartingForAd extends ScFsmStub with FindAdsFsmUtil {
           .orElse { gblockOpt.flatMap(_.madId) }
         val firstMadIds = _nearAdIdsIter( gblockOpt orElse currMadIdOpt.flatMap(GBlock.find) )
             .toSeq
-        // TODO Надо запрашивать просто по id'шникам необходимые карточки, типа multiget.
+        // Поиск идёт с упором на multiGet по id карточек.
         val args = new MFocAdSearchEmpty with FindAdsArgsT {
           override def _sd        = sd0
           override def firstAdIds = firstMadIds
           // Выставляем под нужды focused-выдачи значения limit/offset.
           override def offset     = Some( if (withPrevAd) currIndex - 1 else currIndex )
           override def limit      = Some( if (withPrevAd) 3 else 2 )
-          //override def levelId = Some(ShowLevels.ID_PRODUCER)  // TODO Тут должно быть что-то, не?.
+          // level не выставляем, т.к. focused-выдача дублирует grid-выдачу в отображенном виде.
         }
         val fadsFut = MFocAds.find(args)
 
         // Скрыть за экран корневой focused-контейнер, подготовиться к появлению на экране.
         fRoot.disableTransition()
-        fRoot.disappear()
+        fRoot.initialDisappear()
 
         // Готовим карусель к работе.
         if (!car.isEmpty)
@@ -75,10 +75,6 @@ trait StartingForAd extends ScFsmStub with FindAdsFsmUtil {
         val carLeftPx = -cellWidthPx * currIndex
         car.disableTransition()
         car.animateToX( carLeftPx )
-        // Пустая карусель, но к работе вроде готова.
-        car.enableTransition()
-        // TODO Карусель пустая, а will-change выставляется. Не будет ли негативного эффекта от такой странной оптимизации?
-        car.willAnimate()
 
         // Подготовить контейнер для стилей.
         FocusedRes.ensureCreated()
@@ -114,52 +110,60 @@ trait StartingForAd extends ScFsmStub with FindAdsFsmUtil {
         car       <- fRoot.carousel
       } {
         val currIndex   = _getCurrIndex(fState)
-        // Сначала обрабатываем запрошенную карточку:
+        // Раскидать полученные карточки по аккамуляторам и карусели. Для ускорения закидываем в карусель только необходимую карточку.
+        val (prevs2, firstAdOpt, nexts2) = {
+          fads.foldLeft((fState.prevs, Option.empty[MFocAd], fState.nexts)) {
+            case ((_prevs, _firstOpt, _nexts), _e) =>
+              val i = _e.index
+              if (i < currIndex)
+                (_e +: _prevs, _firstOpt, _nexts)
+              else if (i == currIndex)
+                (_prevs, Some(_e), _nexts)
+              else
+                (_prevs, _firstOpt, _nexts.enqueue(_e))
+          }
+        }
+
         val cellWidth = screen.width
+
+        // Сначала обрабатываем запрошенную карточку:
         // Индекс запрошенной карточки в массиве fads: она или первая крайняя, или вторая при наличии предыдущей.
-        val firstAdFadsIndex = if (currIndex > 0) 1 else 0
-        val firstAd = fads(firstAdFadsIndex)
-        val cell1 = FAdRoot( firstAd.bodyHtml )
-        cell1.initLayout( screen )
+        val firstAd = firstAdOpt.get      // TODO Отработать сценарий отсутствия запрошенной карточки.
+        val fadRoot = FAdRoot( firstAd.bodyHtml )
+        fadRoot.initLayout( screen )
         // Повесить запрошенную карточку на шаг правее нужного индекса, чтобы можно было прослайдить на неё.
-        cell1.setLeftPx( currIndex * cellWidth )
+        fadRoot.setLeftPx( currIndex * cellWidth )
 
         // Прилинковываем запрошенную карточку справа и запускаем анимацию.
-        car.pushCellRight(cell1)
+        car.pushCellRight(fadRoot)
+        car.animateToX( -currIndex * cellWidth )
 
         // Начата обработка тяжелого тела focused-карточки. Залить текущий заголовок focused-выдачи.
         for (fControls <- fRoot.controls) {
           fControls.setContent( firstAd.controlsHtml )
-        }
 
-        fRoot.willAnimate()
-        fRoot.show()
-        fRoot.enableTransition()
+          fRoot.willAnimate()
+          fRoot.show()
+          fRoot.enableTransition()
 
-        val asyncF = { () =>
-          fRoot.appearTransition()
-          dom.setTimeout(
-            {() => _sendEvent(FocRootAppeared) },
-            SLIDE_ANIMATE_MS
+          val sd1: SD = sd0.copy(
+            focused = Some( fState.copy(
+              totalCount  = Some(mfa.totalCount),
+              loadedCount = fState.loadedCount + mfa.fadsCount,
+              nexts       = nexts2,
+              carState    = List( FAdShown(fadRoot, Right(fControls), firstAd) ),
+              prevs       = prevs2,
+              currIndex   = Some(currIndex)
+            ))
           )
+          become(_focOnAppearState, sd1)
         }
-        dom.setTimeout(asyncF, 20)
-        car.animateToX( -currIndex * cellWidth )
 
-        val sd1: SD = sd0.copy(
-          focused = Some(fState.copy(
-            totalCount  = Some(mfa.totalCount),
-            loadedCount = fState.loadedCount + mfa.fadsCount
-            // TODO Обновить состояние FSM: сохранить туда оставшиеся карточки для прицепляния.
-          ))
-        )
-        become(_focOnAppearState, sd1)
       }
     }
 
     /** Состояние текущей анимации появления на экране. */
     protected def _focOnAppearState: FsmState
-
 
     protected def _focAdsRequestFailed(ex: Throwable): Unit = {
       ???
@@ -181,16 +185,23 @@ trait StartingForAd extends ScFsmStub with FindAdsFsmUtil {
 
 
 
-  /** Трейт состояния во время анимированного появления на экране focused-выдачи. */
+  /** Трейт состояния во время анимированного появления на экране focused-выдачи.
+    * Таким образом, это состояние живёт только около 200мс. */
   protected trait OnAppearStateT extends FsmState {
+
     override def afterBecome(): Unit = {
       super.afterBecome()
-      for (fRoot <- FRoot.find()) {
-        fRoot.appearTransition()
-      }
       dom.setTimeout(
-        {() => _sendEvent(FocRootAppeared) },
-        SLIDE_ANIMATE_MS
+        {() =>
+          for (fRoot <- FRoot.find()) {
+            fRoot.appearTransition()
+          }
+          dom.setTimeout(
+            {() => _sendEvent(FocRootAppeared) },
+            SLIDE_ANIMATE_MS
+          )
+        },
+        20
       )
     }
 
@@ -203,14 +214,15 @@ trait StartingForAd extends ScFsmStub with FindAdsFsmUtil {
 
     /** Логика реакции на окончание анимации. */
     protected def _appeared(): Unit = {
-      // TODO Приаттачить оставшиеся карточки в карусель (prev, next) из состояния. Почистить состояние от них.
-      ???
-      become(_focReadyState, ???)
+      for (car <- FCarousel.find()) {
+        car.enableTransition()
+        car.willAnimate()
+      }
+      become(_focReadyState)
     }
 
     /** Следующее состояние, т.е. когда анимация завершена уже. */
     protected def _focReadyState: FsmState
   }
-
 
 }

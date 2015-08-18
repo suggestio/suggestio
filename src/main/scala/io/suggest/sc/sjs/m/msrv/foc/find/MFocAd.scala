@@ -9,8 +9,7 @@ import scala.scalajs.js.{Dictionary, Any}
  * Created: 15.06.15 17:36
  * Description: Wrap-модель одной focused-карточки вместе с метаданными.
  */
-
-case class MFocAd(json: Dictionary[Any]) extends IMFocAd {
+case class MFocAd(json: Dictionary[Any]) extends IFocAd {
 
   /** Вспомогательная функция для быстрого чтения примитивных типов данных из полей raw JSON. */
   private def _get[T](key: String): T = {
@@ -23,13 +22,29 @@ case class MFocAd(json: Dictionary[Any]) extends IMFocAd {
   override def producerId   = _get[String](PRODUCER_ID_FN)
   override def index        = _get[Int](INDEX_FN)
 
+  /** Порядковый номер, отображаемый юзеру. */
+  def humanIndex            = _get[Int](HUMAN_INDEX_FN)
+
 }
 
-/** Интерфейс экземпляров модели. */
-trait IMFocAd {
+
+/** Интерфейс метаданных экземпляра focused-карточки. */
+trait IFocAdMeta {
 
   /** id рекламной карточки. */
   def madId: String
+
+  /** id продьюсера рекламной карточки. */
+  def producerId: String
+
+  /** Порядковый номер. */
+  def index: Int
+
+}
+
+
+/** Интерфейс экземпляров модели. */
+trait IFocAd extends IFocAdMeta {
 
   /** Отрендеренная рекламная карточка. */
   def bodyHtml: String
@@ -37,11 +52,29 @@ trait IMFocAd {
   /** Внешние элементы рекламной карточки. */
   def controlsHtml: String
 
-  /** id продьюсера рекламной карточки. */
-  def producerId: String
-
-  /** Человеческий порядковый номер. */
-  def index: Int
+  /** Копирование данных модели [[IFocAd]] в экземпляр [[MFocAdImpl]]. */
+  def mFocAdImpl: MFocAdImpl = {
+    MFocAdImpl(
+      madId         = madId,
+      bodyHtml      = bodyHtml,
+      controlsHtml  = controlsHtml,
+      producerId    = producerId,
+      index         = index
+    )
+  }
 
 }
 
+
+/** Дефолтовая реализация [[IFocAd]] без лишних данных. */
+case class MFocAdImpl(
+  override val madId        : String,
+  override val bodyHtml     : String,
+  override val controlsHtml : String,
+  override val producerId   : String,
+  override val index        : Int
+)
+  extends IFocAd
+{
+  override def mFocAdImpl = this
+}

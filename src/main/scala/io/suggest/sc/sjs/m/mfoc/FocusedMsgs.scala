@@ -11,8 +11,14 @@ case object Next extends IFsmMsg
 /** Команда перехода к предыдущей карточке (влево). */
 case object Prev extends IFsmMsg
 
-/** Команда закрытия focused-выдачи. */
-case object Close extends IFsmMsg
+/** Сигнал клика по кнопке скрытия focused-выдачи. */
+case object CloseBtnClick extends IFsmMsg
+
+/** Внутренний сигнал о завершении сокрытия focused-выдачи. */
+case object FocRootDisappeared extends IFsmMsg
+
+/** Сигнал по логотипу продьюсера focused-выдачи. */
+case object ProducerLogoClick extends IFsmMsg
 
 /** Внутренний сигнал о завершении появления на экране focused-выдачи. */
 case object FocRootAppeared extends IFsmMsg

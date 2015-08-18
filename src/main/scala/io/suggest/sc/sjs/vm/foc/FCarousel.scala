@@ -1,9 +1,9 @@
 package io.suggest.sc.sjs.vm.foc
 
 import io.suggest.common.css.CssSzImplicits
-import io.suggest.sc.sjs.v.vutil.{VUtil, ExtraStyles}
+import io.suggest.sc.sjs.v.vutil.ExtraStyles
 import io.suggest.sc.sjs.vm.foc.fad.{FAdRootT, FAdRoot}
-import io.suggest.sc.sjs.vm.util.ClearT
+import io.suggest.sc.sjs.vm.util.{WillTranslate3d, IInitLayout, ClearT}
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sjs.common.model.dom.DomListIterator
 import io.suggest.sjs.common.view.safe.SafeElT
@@ -27,7 +27,8 @@ object FCarousel extends FindDiv {
 
 
 /** Логика работы карусели живёт в этом трейте. */
-trait FCarouselT extends SafeElT with CssSzImplicits with Width with ExtraStyles with StyleLeft with ClearT {
+trait FCarouselT extends SafeElT with CssSzImplicits with Width with ExtraStyles with StyleLeft with ClearT
+with IInitLayout with WillTranslate3d {
 
   override type T = HTMLDivElement
 
@@ -61,19 +62,6 @@ trait FCarouselT extends SafeElT with CssSzImplicits with Width with ExtraStyles
     removeClass(ANIMATED_CSS_CLASS)
   }
 
-  /** Активация will-change при подготовке к CSS3 анимации. */
-  def willAnimate(): Unit = {
-    _willChange("translate3d")
-  }
-  /** Деактивация подготовки к CSS3-анимации. */
-  def wontAnimate(): Unit = {
-    _willChange("")
-  }
-
-  private def _willChange(wc: String): Unit = {
-    _underlying.style.willChange = wc
-  }
-
   /** Анимированный слайдинг на указанную X-координату. */
   def animateToX(xPx: Int): Unit = {
     _underlying.style.transform = "translate3d(" + xPx.px + ",0px,0px)"
@@ -85,6 +73,9 @@ trait FCarouselT extends SafeElT with CssSzImplicits with Width with ExtraStyles
       .map { v => FAdRoot( v.asInstanceOf[HTMLDivElement] ) }
   }
 
+  override def initLayout(): Unit = {
+    // TODO Повесить mouse-move, mouse-click и touch-события.
+  }
 }
 
 

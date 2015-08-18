@@ -1,10 +1,10 @@
 package io.suggest.sc.sjs.vm.foc
 
+import io.suggest.sc.sjs.vm.util.{ClearT, WillTranslate3d, IInitLayout}
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sjs.common.view.safe.SafeElT
-import io.suggest.sjs.common.view.safe.display.SetDisplayEl
+import io.suggest.sjs.common.view.safe.display.{ShowHideDisplayEl, SetDisplayEl}
 import org.scalajs.dom.raw.HTMLDivElement
-import io.suggest.sc.ScConstants.CLASS_WILL_TRANSLATE3D
 import io.suggest.sc.ScConstants.Focused.{ROOT_ID, ROOT_APPEAR_CLASS, ROOT_DISAPPEAR_CLASS, ROOT_TRANSITION_CLASS}
 
 /**
@@ -22,20 +22,12 @@ object FRoot extends FindDiv {
 }
 
 
-trait FRootT extends SafeElT with SetDisplayEl {
+trait FRootT extends SafeElT with SetDisplayEl with IInitLayout with WillTranslate3d with ShowHideDisplayEl with ClearT {
 
   override type T = HTMLDivElement
 
   def controls = FControls.find()
   def carousel = FCarousel.find()
-
-  def show(): Unit = {
-    displayBlock()
-  }
-
-  def hide(): Unit = {
-    displayNone()
-  }
 
   /** Включение анимации. */
   def enableTransition(): Unit = {
@@ -48,24 +40,31 @@ trait FRootT extends SafeElT with SetDisplayEl {
   }
 
   /** Сокрытие с анимацией или без оной. */
-  def disappear(): Unit = {
+  def initialDisappear(): Unit = {
     addClasses(ROOT_DISAPPEAR_CLASS)
   }
 
-  /** Частоиспользуемое комбо из enableTransition() и disappear(), но работает быстрее. */
+  /** Анимация основного отображения на экран. */
   def appearTransition(): Unit = {
     addClasses(ROOT_APPEAR_CLASS)
   }
 
-  /** Подготовка к translate3d-анимации. */
-  def willAnimate(): Unit = {
-    addClasses(CLASS_WILL_TRANSLATE3D)
+  /** Анимация сокрытия focused-выдачи за экран. */
+  def disappearTransition(): Unit = {
+    removeClass(ROOT_APPEAR_CLASS)
   }
 
-  def wontAnimate(): Unit = {
-    removeClass(CLASS_WILL_TRANSLATE3D)
+  override def initLayout(): Unit = {
+    val f = IInitLayout.f
+    controls foreach f
+    carousel foreach f
   }
 
+  override def clear(): Unit = {
+    val f = ClearT.f
+    controls foreach f
+    carousel foreach f
+  }
 }
 
 

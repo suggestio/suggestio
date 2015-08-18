@@ -18,7 +18,7 @@ import scala.concurrent.Future
  * Description: FSM-контроллер для всей выдачи. Собирается из кусков, которые закрывают ту или иную область.
  */
 object ScFsm extends SjsLogger with Init with GetIndex with GridAppend with OnPlainGrid with OnGridSearchGeo
-with OnGridSearchHashTags with OnGridNav with foc.StartingForAd {
+with OnGridSearchHashTags with OnGridNav with foc.StartingForAd with foc.OnFocus with foc.Closing {
 
   // Инициализируем базовые внутренние переменные.
   override protected var _state: FsmState = new DummyState
@@ -160,15 +160,25 @@ with OnGridSearchHashTags with OnGridNav with foc.StartingForAd {
   class OnGridNavLoadListState extends OnGridNavLoadListStateT with _OnGridNav {
     override protected def _navPanelReadyState = new OnGridNavReadyState
   }
-  class OnGridNavReadyState extends OnGridNavReadyStateT with _OnGridNav {
-    override protected def _onNodeSwitchState(sd1: MStData) = new GetIndexState
+  protected trait _NodeSwitchState extends INodeSwitchState {
+    override protected def _onNodeSwitchState = new GetIndexState
   }
+  class OnGridNavReadyState extends OnGridNavReadyStateT with _OnGridNav with _NodeSwitchState
 
 
   // Состояния focused-выдачи.
   /** Состояние сразу после клика по карточке в плитке. Отрабатывается запрос, происходит подготовка focused-выдачи. */
   class FocStartingForAd extends StartingForAdStateT {
-    override protected def _focOnAppearState: FsmState = ???
+    override protected def _focOnAppearState = new FocAppearingState
+  }
+  class FocAppearingState extends OnAppearStateT {
+    override protected def _focReadyState = new FocOnFocusState
+  }
+  class FocOnFocusState extends OnFocusState with _NodeSwitchState {
+    override protected def _closingState = new FocClosingState
+  }
+  class FocClosingState extends FocClosingStateT {
+    override protected def _afterDisappearState = new OnPlainGridState
   }
 
 }

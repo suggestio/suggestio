@@ -138,6 +138,9 @@ trait GetIndex extends ScFsmStub with FindAdsFsmUtil {
         for (sroot <- SRoot.find()) {
           sroot.initLayout(sd1)
         }
+        for (layContent <- layout.content; froot <- layContent.focused) {
+          froot.initLayout()
+        }
       }(queue)
 
       for (scr <- _stateData.screen;  layContent <- layout.content) {

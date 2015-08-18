@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.vm.foc
 
 import io.suggest.sc.sjs.m.mdom.content.{NodesHtmlContent, StrHtmlContent, IHtmlContent}
-import io.suggest.sc.sjs.m.msrv.foc.find.IMFocAd
+import io.suggest.sc.sjs.m.msrv.foc.find.IFocAd
 import io.suggest.sc.sjs.vm.util.cont.ContainerT
 
 /**

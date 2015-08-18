@@ -10,6 +10,13 @@ import org.scalajs.dom.Node
  * Created: 17.08.15 13:39
  * Description: Поддержка безопасной очистки тела элемента.
  */
+object ClearT {
+
+  def f = { x: ClearT => x.clear() }
+
+}
+
+
 trait ClearT extends ISafe {
 
   override type T <: Node
