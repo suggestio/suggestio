@@ -9,12 +9,22 @@ import org.scalajs.dom.Element
  * Created: 14.08.15 18:23
  * Description: Быстрый доступ к частоиспользуемым вещам, связанным с innerHtml.
  */
-trait InnerHtml extends ISafe {
+
+trait SetInnerHtml extends ISafe {
 
   override type T <: Element
 
   def setContent(html: String): Unit = {
     _underlying.innerHTML = html
   }
+}
 
+
+trait GetInnerHtml extends ISafe {
+  
+  override type T <: Element
+  
+  def innerHtml: String = {
+    _underlying.innerHTML
+  }
 }
