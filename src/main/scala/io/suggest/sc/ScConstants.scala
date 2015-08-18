@@ -406,6 +406,9 @@ object ScConstants {
     /** css-класс анимации появления на экран. */
     def ROOT_APPEAR_CLASS     = "fs-animated-end"
 
+    /** Имя css-класса кнопки закрытия focused-выдачи. */
+    def CLOSE_BTN_CLASS       = "sm-producer-header_exit-button"
+
 
     object FAd {
       /** Префикс для DOM ID'шников контейнеров focused-карточки. */

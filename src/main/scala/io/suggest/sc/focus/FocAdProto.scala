@@ -22,6 +22,9 @@ object FocAdProto {
   def PRODUCER_ID_FN    = "d"
 
   /** Имя поля с человеческим порядковым номером. */
-  def INDEX_FN          = "e"
+  def HUMAN_INDEX_FN    = "e"
+
+  /** Имя поля с техническим индексом (отсчитывается от 0). */
+  def INDEX_FN          = "f"
 
 }
