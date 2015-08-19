@@ -1,5 +1,7 @@
 package io.suggest.sc
 
+import io.suggest.common.MHandsBaseT
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -390,6 +392,15 @@ object ScConstants {
 
     /** id div со стрелкой, отображаемой под курсором мышки. */
     def ARROW_ID = ROOT_ID + "ArrowLabel"
+
+    def arrowClass(handName: String): String = {
+      "__" + handName + "-arrow"
+    }
+
+    /** Свиг в пикселях по X и Y относительно курсора мыши. */
+    def ARROW_OFFSET_PX = 20
+
+    def ARROW_CLASS_LEFT = "left"
 
     /** Время css-анимации одного слайдинга. */
     def SLIDE_ANIMATE_MS = 200
