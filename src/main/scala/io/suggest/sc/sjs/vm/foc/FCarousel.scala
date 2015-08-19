@@ -1,14 +1,17 @@
 package io.suggest.sc.sjs.vm.foc
 
 import io.suggest.common.css.CssSzImplicits
+import io.suggest.sc.sjs.m.magent.IMScreen
+import io.suggest.sc.sjs.m.mfoc.{MouseMove, MouseClick}
 import io.suggest.sc.sjs.v.vutil.ExtraStyles
 import io.suggest.sc.sjs.vm.foc.fad.{FAdRootT, FAdRoot}
-import io.suggest.sc.sjs.vm.util.{WillTranslate3d, IInitLayout, ClearT}
+import io.suggest.sc.sjs.vm.util._
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sjs.common.model.dom.DomListIterator
 import io.suggest.sjs.common.view.safe.SafeElT
 import io.suggest.sjs.common.view.safe.css.{StyleLeft, Width}
 import io.suggest.sc.ScConstants.Focused._
+import io.suggest.sjs.common.view.vutil.OnMouseClickT
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -28,7 +31,7 @@ object FCarousel extends FindDiv {
 
 /** Логика работы карусели живёт в этом трейте. */
 trait FCarouselT extends SafeElT with CssSzImplicits with Width with ExtraStyles with StyleLeft with ClearT
-with IInitLayout with WillTranslate3d {
+with IInitLayout with WillTranslate3d with OnMouseClickT with InitOnEventToFsmUtilT {
 
   override type T = HTMLDivElement
 
@@ -36,8 +39,9 @@ with IInitLayout with WillTranslate3d {
     _underlying.firstChild == null
   }
 
-  /** Выставить новую ширину карусели. */
-  override def setWidthPx(widthPx: Int) = super.setWidthPx(widthPx)
+  def setCellWidth(lastIndex: Int, screen: IMScreen): Unit = {
+    setWidthPx( (lastIndex + 1) * screen.width )
+  }
 
   /** Прицепить ячейку справа. */
   def pushCellRight(cell: FAdRootT): Unit = {
@@ -67,6 +71,10 @@ with IInitLayout with WillTranslate3d {
     _underlying.style.transform = "translate3d(" + xPx.px + ",0px,0px)"
   }
 
+  def animateToCell(index: Int, screen: IMScreen): Unit = {
+    animateToX( -index * screen.width )
+  }
+
   /** Итератор уже имеющихся ячеек карусели. */
   def cellsIter: Iterator[FAdRoot] = {
     DomListIterator( _underlying.children )
@@ -74,7 +82,9 @@ with IInitLayout with WillTranslate3d {
   }
 
   override def initLayout(): Unit = {
-    // TODO Повесить mouse-move, mouse-click и touch-события.
+    onClick( _sendEventF(MouseClick) )
+    _addToFsmEventListener("mousemove", MouseMove)
+    // TODO Повесить mouse-move, и touch-события.
   }
 }
 

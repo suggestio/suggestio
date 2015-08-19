@@ -2,8 +2,9 @@ package io.suggest.sc.sjs.vm.util
 
 import io.suggest.sc.sjs.c.ScFsm
 import io.suggest.sc.sjs.m.mfsm.{IFsmMsgCompanion, IFsmEventMsgCompanion}
-import io.suggest.sc.sjs.v.vutil.OnClickSelfT
+import io.suggest.sc.sjs.m.mv.MTouchLock
 import io.suggest.sjs.common.view.safe.evtg.SafeEventTargetT
+import io.suggest.sjs.common.view.vutil.OnClickT
 import org.scalajs.dom.Event
 
 /**
@@ -30,14 +31,20 @@ trait SendEventToFsmUtil {
 }
 
 
+/** Реализация common OnClickT в рамках sc. */
+trait OnClick extends OnClickT {
+  override protected def isTouchLocked = MTouchLock()
+}
+
+
 // TODO Надо наверное спилить этот трейт во имя более универсального варианта.
-trait InitOnClickToFsmT extends IInitLayout with OnClickSelfT with SafeEventTargetT with SendEventToFsmUtil {
+trait InitOnClickToFsmT extends IInitLayout with OnClick with SafeEventTargetT with SendEventToFsmUtil {
 
   /** Статический компаньон модели для сборки сообщений. */
   protected[this] def _clickMsgModel: IFsmEventMsgCompanion
 
   /** Инициализация текущей и подчиненных ViewModel'ей. */
-  override def initLayout(): Unit = {
+  def initLayout(): Unit = {
     val f = _sendEventF[Event](_clickMsgModel)
     onClick(f)
   }
@@ -46,8 +53,8 @@ trait InitOnClickToFsmT extends IInitLayout with OnClickSelfT with SafeEventTarg
 
 /** Быстрая вешалка listener'ов DOM-событий на элемент. Подмешивается к vm-классам. */
 trait InitOnEventToFsmUtilT extends SafeEventTargetT with SendEventToFsmUtil {
-  protected def _addToFsmEventListener[EventT <: Event](eventType: String, model: IFsmMsgCompanion[EventT]): Unit = {
-    val f = _sendEventF[EventT](model)
+  protected def _addToFsmEventListener[Event_t <: Event](eventType: String, model: IFsmMsgCompanion[Event_t]): Unit = {
+    val f = _sendEventF[Event_t](model)
     addEventListener(eventType)(f)
   }
 }

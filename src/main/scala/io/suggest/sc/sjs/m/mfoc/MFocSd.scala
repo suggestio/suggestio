@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.m.mfoc
 
 import io.suggest.sc.sjs.vm.grid.GBlock
+import io.suggest.sjs.common.model.MHand
 
 import scala.collection.immutable.Queue
 
@@ -16,8 +17,6 @@ trait IFocSd {
 
   /** grid block, относящийся к текущей карточке. */
   def gblock     : Option[GBlock]
-
-  // TODO Добавить сюда аккамуляторы для уже полученных prev и next cells, т.е. уже распарсенных focused-карточек готовых к добавлению.
 
   /** Кол-во уже загруженных карточек. */
   def loadedCount : Int
@@ -35,6 +34,28 @@ trait IFocSd {
   /** Очередь для предшествующих карточек в текущей focused-выдаче. */
   def prevs: FAdQueue
 
+  /** Текущее выставленное направление стрелки, которая рядом с курсором мыши бегает по экрану.
+    * Название поля -- сокращение от "arrow direction". */
+  def arrDir: Option[MHand]
+
+
+  def shownFadWithIndex(index: Int): Option[FAdShown] = {
+    carState.find(_.index == index)
+  }
+
+  /** Приведение указанного direction к соответствующему аккамулятору. */
+  def dir2Fadq(dir: MHand): FAdQueue = {
+    if (dir.isLeft)
+      prevs
+    else
+      nexts
+  }
+
+  /** Приведение текущего direction к соответствующему аккамулятору. */
+  def currDirFadq: Option[FAdQueue] = {
+    arrDir.map { dir2Fadq }
+  }
+
 }
 
 
@@ -50,6 +71,7 @@ case class MFocSd(
   override val totalCount   : Option[Int]           = None,
   override val nexts        : FAdQueue              = Queue.empty,
   override val carState     : CarState              = Nil,
-  override val prevs        : FAdQueue              = Queue.empty
+  override val prevs        : FAdQueue              = Queue.empty,
+  override val arrDir       : Option[MHand]         = None
 )
   extends IFocSd

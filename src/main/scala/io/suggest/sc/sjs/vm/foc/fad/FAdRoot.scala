@@ -28,7 +28,7 @@ object FAdRoot extends FindElIndexedIdT with FAdStatic {
     div.innerHTML = html
     val rootDiv = div.firstChild.asInstanceOf[Dom_t]
     val res = apply(rootDiv)
-    res.positionRelative()
+    res.positionAbsolute()
     res
   }
 

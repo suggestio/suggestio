@@ -2,8 +2,8 @@ package io.suggest.sc.sjs.vm.foc
 
 import io.suggest.sc.sjs.c.ScFsm
 import io.suggest.sc.sjs.m.mfoc.{ProducerLogoClick, CloseBtnClick}
-import io.suggest.sc.sjs.v.vutil.{VUtil, OnClickSelfT}
-import io.suggest.sc.sjs.vm.util.{IInitLayout, ClearT}
+import io.suggest.sc.sjs.v.vutil.VUtil
+import io.suggest.sc.sjs.vm.util.{OnClick, IInitLayout, ClearT}
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.ScConstants.Focused.{CONTROLS_ID, CLOSE_BTN_CLASS}
 import io.suggest.sc.ScConstants.Logo.HDR_LOGO_DIV_CLASS
@@ -25,7 +25,7 @@ object FControls extends FindDiv {
 
 
 /** Логика focused controls вынесена сюда. */
-trait FControlsT extends SafeElT with SetInnerHtml with ClearT with IInitLayout with OnClickSelfT with GetInnerHtml {
+trait FControlsT extends SafeElT with SetInnerHtml with ClearT with IInitLayout with OnClick with GetInnerHtml {
 
   override type T = HTMLDivElement
 

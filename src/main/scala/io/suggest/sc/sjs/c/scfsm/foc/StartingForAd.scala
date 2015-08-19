@@ -68,13 +68,11 @@ trait StartingForAd extends ScFsmStub with FindAdsFsmUtil {
         if (!car.isEmpty)
           car.clear()
         // Ширина ячейки в карусели эквивалентна пиксельной ширине экрана.
-        val cellWidthPx = screen.width
         // Начальная ширина карусели задаётся исходя из текущих ячеек. +1 -- Скорее всего будет как минимум одна карточка после текущей.
-        car.setWidthPx( cellWidthPx * (currIndex + 1) )
+        car.setCellWidth(currIndex, screen)
         // Начальный сдвиг карусели выставляем без анимации. Весь focused будет выезжать из-за экрана.
-        val carLeftPx = -cellWidthPx * currIndex
         car.disableTransition()
-        car.animateToX( carLeftPx )
+        car.animateToCell(currIndex, screen)
 
         // Подготовить контейнер для стилей.
         FocusedRes.ensureCreated()
@@ -136,7 +134,7 @@ trait StartingForAd extends ScFsmStub with FindAdsFsmUtil {
 
         // Прилинковываем запрошенную карточку справа и запускаем анимацию.
         car.pushCellRight(fadRoot)
-        car.animateToX( -currIndex * cellWidth )
+        car.animateToCell(currIndex, screen)
 
         // Начата обработка тяжелого тела focused-карточки. Залить текущий заголовок focused-выдачи.
         for (fControls <- fRoot.controls) {

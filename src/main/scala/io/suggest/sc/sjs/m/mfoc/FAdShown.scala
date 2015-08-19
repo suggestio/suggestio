@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.m.mfoc
 
-import io.suggest.sc.sjs.m.msrv.foc.find.{IFocAdMeta, IFocAd}
+import io.suggest.sc.sjs.m.msrv.foc.find.{MFocAdImpl, IFocAdMeta, IFocAd}
 import io.suggest.sc.sjs.vm.foc.FControls
 import io.suggest.sc.sjs.vm.foc.fad.FAdRoot
 
@@ -47,6 +47,12 @@ case class FAdShown(
 
   override def controlsHtml: String = {
     controlsHtmlOpt.fold[String](identity, _.innerHtml)
+  }
+
+  /** Изъятие из отображения в карусели текущей карточки. */
+  def unshow(): MFocAdImpl = {
+    fadRoot.remove()
+    mFocAdImpl
   }
 
 }

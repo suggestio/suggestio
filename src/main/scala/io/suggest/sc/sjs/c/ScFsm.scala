@@ -18,7 +18,7 @@ import scala.concurrent.Future
  * Description: FSM-контроллер для всей выдачи. Собирается из кусков, которые закрывают ту или иную область.
  */
 object ScFsm extends SjsLogger with Init with GetIndex with GridAppend with OnPlainGrid with OnGridSearchGeo
-with OnGridSearchHashTags with OnGridNav with foc.StartingForAd with foc.OnFocus with foc.Closing {
+with OnGridSearchHashTags with OnGridNav with foc.StartingForAd with foc.OnFocus with foc.Closing with foc.SimpleShift {
 
   // Инициализируем базовые внутренние переменные.
   override protected var _state: FsmState = new DummyState
@@ -174,11 +174,21 @@ with OnGridSearchHashTags with OnGridNav with foc.StartingForAd with foc.OnFocus
   class FocAppearingState extends OnAppearStateT {
     override protected def _focReadyState = new FocOnFocusState
   }
-  class FocOnFocusState extends OnFocusStateT with _NodeSwitchState {
+  protected trait OnFocusStateBaseT extends super.OnFocusStateBaseT {
+    override protected def _shiftRightState = new FocShiftRightState
+    override protected def _shiftLeftState  = new FocShiftLeftState
+  }
+  class FocOnFocusState extends OnFocusStateT with _NodeSwitchState with OnFocusStateBaseT {
     override protected def _closingState = new FocClosingState
   }
   class FocClosingState extends FocClosingStateT {
     override protected def _afterDisappearState = new OnPlainGridState
   }
+  // Переключение focused-карточек в выдаче.
+  protected trait SimpleShiftStateT extends super.SimpleShiftStateT {
+    override protected def _shiftDoneState = new FocOnFocusState
+  }
+  class FocShiftRightState extends ShiftRightStateT with SimpleShiftStateT
+  class FocShiftLeftState  extends ShiftLeftStateT with SimpleShiftStateT
 
 }
