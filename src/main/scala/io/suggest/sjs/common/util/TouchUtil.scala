@@ -31,12 +31,14 @@ object TouchUtil {
   /** Название события клика на традиционных девайсах. */
   def EVT_NAME_CLICK       = "click"
 
+  def EVT_NAMES_MOUSE_CLICK  = List(EVT_NAME_CLICK)
+
   /** Название события клика для текущего девайса. */
   def clickEvtNames: List[String] = {
     if (isTouchDevice) {
       List(EVT_NAME_TOUCH_CLICK, EVT_NAME_CLICK)
     } else {
-      List(EVT_NAME_CLICK)
+      EVT_NAMES_MOUSE_CLICK
     }
   }
 

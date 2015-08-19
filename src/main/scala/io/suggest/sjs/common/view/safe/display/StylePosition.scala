@@ -17,8 +17,8 @@ trait StylePosition extends ISafe {
     _underlying.style.position = mode
   }
   
-  def positionRelative(): Unit = {
-    setPosition("relative")
+  def positionAbsolute(): Unit = {
+    setPosition("absolute")
   }
 
 }

@@ -12,30 +12,15 @@ import scala.scalajs.js
  * Created: 08.06.15 10:11
  * Description: Аддон для view'ов для упрощенного вешанья click-listener'ов на safe-элементы.
  */
-trait OnClickT {
+trait OnClickT extends OnMouseClickT {
+
+  override protected def _clickEvtNames: TraversableOnce[String] = {
+    TouchUtil.clickEvtNames
+  }
 
   /** Активна ли блокировка touch-событий?
     * Если да, то touchend события НЕ будут рассматриваться как клики. */
   protected def isTouchLocked: Boolean
-
-  /**
-   * Сборка обработчика click-событий
-   * @param el элемент.
-   * @param f Обработчик события
-   * @tparam T Тип события.
-   */
-  protected def onClick[T <: Event](el: SafeEventTargetT)(f: T => _): Unit = {
-    _onClickRaw(el)( _getClickListener(f) )
-  }
-
-  // api разбито на части в целях оптимизации в реализациях. Т.е. когда использовать один инстанс листенера неск.раз.
-
-  /** Комбинация из onClick и _getClickListener. */
-  protected def _onClickRaw[T <: Event](el: SafeEventTargetT)(listener: js.Function1[T, _]): Unit = {
-    for (evtName <- TouchUtil.clickEvtNames) {
-      el.addEventListener(evtName)(listener)
-    }
-  }
 
   /**
    * Собрать функция-листенер click-событий.
@@ -43,7 +28,7 @@ trait OnClickT {
    * @tparam T Тип события.
    * @return js.Function.
    */
-  protected def _getClickListener[T <: Event](f: T => _): js.Function1[T, _] = {
+  override protected def _getClickListener[T <: Event](f: T => _): js.Function1[T, _] = {
     if (TouchUtil.isTouchDevice) {
       // На touch-девайсе нужно распознавать клики среди touch-событий
       { e: T =>
@@ -54,8 +39,45 @@ trait OnClickT {
 
     } else {
       // На обычном девайсе фильтрация кликов не требуется
-      f
+      super._getClickListener[T](f)
     }
   }
 
+}
+
+
+/** Вешанье событий на только мышиные клики. */
+trait OnMouseClickT extends SafeEventTargetT {
+  
+  protected def _clickEvtNames: TraversableOnce[String] = {
+    TouchUtil.EVT_NAMES_MOUSE_CLICK
+  }
+  
+  /**
+   * Сборка обработчика click-событий
+   * @param f Обработчик события
+   * @tparam T Тип события.
+   */
+  protected def onClick[T <: Event](f: T => _): Unit = {
+    _onClickRaw( _getClickListener(f) )
+  }
+  
+  /** Комбинация из onClick и _getClickListener. */
+  protected def _onClickRaw[T <: Event](listener: js.Function1[T, _]): Unit = {
+    for (evtName <- TouchUtil.clickEvtNames) {
+      addEventListener(evtName)(listener)
+    }
+  }
+ 
+  /**
+   * Собрать функция-листенер click-событий.
+   * @param f Ядро листенера.
+   * @tparam T Тип события.
+   * @return js.Function.
+   */
+  protected def _getClickListener[T <: Event](f: T => _): js.Function1[T, _] = {
+    // На обычном девайсе фильтрация кликов не требуется
+    f
+  }
+  
 }
