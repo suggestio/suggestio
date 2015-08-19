@@ -1,5 +1,6 @@
 package models
 
+import io.suggest.common.MHandsBaseT
 import io.suggest.model.EnumMaybeWithName
 
 /**
@@ -9,24 +10,16 @@ import io.suggest.model.EnumMaybeWithName
  * Description: Модель лева и права. Используется там где нужны эти два значения.
  * Называется модель моделью рук, но к самим рукам она отношения не имеет.
  */
-object MHands extends Enumeration with EnumMaybeWithName {
+object MHands extends Enumeration with EnumMaybeWithName with MHandsBaseT {
 
   /** Экземпляр модели. */
-  protected abstract sealed class Val(val strId: String) extends super.Val(strId) {
-    def name: String
-    override def toString() = strId
-  }
+  protected abstract sealed class Val(override val strId: String)
+    extends super.Val(strId)
+    with super.ValT
 
   override type T = Val
 
-  /** Лево. */
-  val Left: T = new Val("l") {
-    override def name = "left"
-  }
-
-  /** Право. */
-  val Right: T = new Val("r") {
-    override def name = "right"
-  }
+  override val Left: T = new Val(LEFT_ID) with LeftT
+  override val Right: T = new Val(RIGHT_ID) with RightT
 
 }
