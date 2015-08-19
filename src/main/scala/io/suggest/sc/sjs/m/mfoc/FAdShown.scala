@@ -13,6 +13,9 @@ import io.suggest.sc.sjs.vm.foc.fad.FAdRoot
  */
 object FAdShown {
 
+  def apply(fadRoot: FAdRoot, meta: IFocAd): FAdShown = {
+    apply(fadRoot, Left(meta.controlsHtml), meta)
+  }
   def apply(fadRoot: FAdRoot, controlsHtmlOpt : Either[String, FControls], meta: IFocAdMeta): FAdShown = {
     apply(fadRoot, controlsHtmlOpt, producerId = meta.producerId, madId = meta.madId, index = meta.index)
   }

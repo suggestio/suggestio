@@ -174,7 +174,7 @@ with OnGridSearchHashTags with OnGridNav with foc.StartingForAd with foc.OnFocus
   class FocAppearingState extends OnAppearStateT {
     override protected def _focReadyState = new FocOnFocusState
   }
-  class FocOnFocusState extends OnFocusState with _NodeSwitchState {
+  class FocOnFocusState extends OnFocusStateT with _NodeSwitchState {
     override protected def _closingState = new FocClosingState
   }
   class FocClosingState extends FocClosingStateT {

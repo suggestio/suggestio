@@ -1,6 +1,5 @@
 package io.suggest.sc.sjs.m.mfoc
 
-import io.suggest.sc.sjs.m.msrv.foc.find.IFocAd
 import io.suggest.sc.sjs.vm.grid.GBlock
 
 import scala.collection.immutable.Queue
@@ -28,13 +27,13 @@ trait IFocSd {
   def totalCount  : Option[Int]
 
   /** Очередь для последующих карточек в текущей focused-выдачи. */
-  def nexts: Queue[IFocAd]
+  def nexts: FAdQueue
 
   /** Карточки, уже залитые в карусель. */
-  def carState: List[FAdShown]
+  def carState: CarState
 
   /** Очередь для предшествующих карточек в текущей focused-выдаче. */
-  def prevs: Queue[IFocAd]
+  def prevs: FAdQueue
 
 }
 
@@ -49,8 +48,8 @@ case class MFocSd(
   override val gblock       : Option[GBlock]        = None,
   override val loadedCount  : Int                   = 0,
   override val totalCount   : Option[Int]           = None,
-  override val nexts        : Queue[IFocAd]         = Queue.empty,
-  override val carState     : List[FAdShown]        = Nil,
-  override val prevs        : Queue[IFocAd]         = Queue.empty
+  override val nexts        : FAdQueue              = Queue.empty,
+  override val carState     : CarState              = Nil,
+  override val prevs        : FAdQueue              = Queue.empty
 )
   extends IFocSd

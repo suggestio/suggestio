@@ -131,7 +131,7 @@ trait StartingForAd extends ScFsmStub with FindAdsFsmUtil {
         val firstAd = firstAdOpt.get      // TODO Отработать сценарий отсутствия запрошенной карточки.
         val fadRoot = FAdRoot( firstAd.bodyHtml )
         fadRoot.initLayout( screen )
-        // Повесить запрошенную карточку на шаг правее нужного индекса, чтобы можно было прослайдить на неё.
+        // Повесить запрошенную карточку на месте текущего индекса.
         fadRoot.setLeftPx( currIndex * cellWidth )
 
         // Прилинковываем запрошенную карточку справа и запускаем анимацию.
