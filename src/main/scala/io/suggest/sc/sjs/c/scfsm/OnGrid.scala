@@ -35,7 +35,7 @@ trait OnGrid extends ScFsmStub {
       ???
     }
 
-    private def _receiverPart: Receive = {
+    override def receiverPart: Receive = {
       // Клик по одной из карточек в сетке оных.
       case gbc: GridBlockClick =>
         handleGridBlockClick( gbc )
@@ -43,11 +43,6 @@ trait OnGrid extends ScFsmStub {
       // Вертикальный скроллинг в плитке.
       case vs: GridScroll =>
         handleVScroll(vs)
-    }
-
-    /** Обработка событий сетки карточек. */
-    override def receiverPart: Receive = {
-      _receiverPart orElse super.receiverPart
     }
 
   }

@@ -149,7 +149,7 @@ trait StartingForAd extends ScFsmStub with FindAdsFsmUtil {
               totalCount  = Some(mfa.totalCount),
               loadedCount = fState.loadedCount + mfa.fadsCount,
               nexts       = nexts2,
-              carState    = List( FAdShown(fadRoot, Right(fControls), firstAd) ),
+              carState    = List( FAdShown(fadRoot, firstAd) ),
               prevs       = prevs2,
               currIndex   = Some(currIndex)
             ))
@@ -167,16 +167,11 @@ trait StartingForAd extends ScFsmStub with FindAdsFsmUtil {
       ???
     }
 
-
-    private def _receiverPart: Receive = {
+    override def receiverPart: Receive = {
       case mfa: MFocAds =>
         _focAdsReceived(mfa)
       case Failure(ex) =>
         _focAdsRequestFailed(ex)
-    }
-
-    override def receiverPart: Receive = {
-      _receiverPart orElse super.receiverPart
     }
 
   }
@@ -203,12 +198,10 @@ trait StartingForAd extends ScFsmStub with FindAdsFsmUtil {
       )
     }
 
-    private def _receiverPart: Receive = {
+    override def receiverPart: Receive = {
       case FocRootAppeared =>
         _appeared()
     }
-
-    override def receiverPart: Receive = _receiverPart orElse super.receiverPart
 
     /** Логика реакции на окончание анимации. */
     protected def _appeared(): Unit = {

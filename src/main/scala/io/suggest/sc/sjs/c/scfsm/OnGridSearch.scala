@@ -56,7 +56,7 @@ trait OnGridSearch extends OnGrid with ISjsLogger {
     protected def _nextStateSearchPanelClosed(sd1: SD): FsmState
 
 
-    override protected def _onKbdKeyUp(event: KeyboardEvent): Unit = {
+    override def _onKbdKeyUp(event: KeyboardEvent): Unit = {
       super._onKbdKeyUp(event)
       // по ESC надо закрывать вкладку
       if (event.keyCode == KeyCode.escape) {

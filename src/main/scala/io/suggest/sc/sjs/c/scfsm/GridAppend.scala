@@ -33,15 +33,11 @@ trait GridAppend extends ScFsmStub {
       }
     }
 
-    private def _receiverPart: Receive = {
+    override def receiverPart: Receive = {
       case mfa: MFindAds =>
         _findAdsReady(mfa)
       case Failure(ex) =>
         _findAdsFailed(ex)
-    }
-
-    override def receiverPart: Receive = {
-      _receiverPart orElse super.receiverPart
     }
 
     /** Что делать при ошибке получения карточек. */

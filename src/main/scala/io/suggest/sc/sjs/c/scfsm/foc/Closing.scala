@@ -34,12 +34,10 @@ trait Closing extends ScFsmStub {
       }
     }
 
-    private def _receiverPart: Receive = {
+    override def receiverPart: Receive = {
       case FocRootDisappeared =>
         _disappeared()
     }
-
-    override def receiverPart: Receive = _receiverPart orElse super.receiverPart
 
     /** Логика реакции на наступления сокрытости focused-выдачи. */
     protected def _disappeared(): Unit = {

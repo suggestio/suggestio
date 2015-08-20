@@ -48,18 +48,13 @@ trait OnPlainGrid extends OnGrid {
 
      protected def _showNavClick(event: Event): Unit
 
-     private def _receiverPart: Receive = {
+     override def receiverPart: Receive = {
        // Сигнал нажатия на кнопку открытия панели поиска.
        case ShowSearchClick(event) =>
          _showSearchClick(event)
-
        // Сигнал нажатия на кнопку отображения панели навигации.
        case ShowNavClick(event) =>
          _showNavClick(event)
-     }
-
-     override def receiverPart: Receive = {
-       _receiverPart orElse super.receiverPart
      }
    }
 

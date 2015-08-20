@@ -24,13 +24,9 @@ trait OnGridNav extends ScFsmStub with ISjsLogger {
 
   protected trait _OnGridNav extends FsmState with PanelGridRebuilder {
 
-    private def _receiverPart: Receive = {
+    override def receiverPart: Receive = {
       case HideNavClick(event) =>
         _hideNav()
-    }
-
-    override def receiverPart: Receive = {
-      _receiverPart orElse super.receiverPart
     }
 
     protected def _hideNav(): Unit = {
@@ -110,44 +106,50 @@ trait OnGridNav extends ScFsmStub with ISjsLogger {
 
     protected def _navPanelReadyState: FsmState
 
-    private def _receiverPart: Receive = {
-      // Положительный ответ от сервера со списком узлов.
-      case resp: MFindNodesResp =>
-        val sd0 = _stateData
-        // Какой-то for-велосипед тут получился в ходе рефакторинга говнокода.
-        val sd1Opt = for {
-          nlContent   <- NlContent.find()
-          nlContainer <- {
-            nlContent.setContent(resp.nodeListHtml)
-            nlContent.container
-          }
-          exp1        <- {
-            nlContainer.initLayout()
-            nlContainer.findFirstExpanded
-          }
-          screen      <- _stateData.screen
-          layerIndex  <- {
-            exp1.fixHeightExpanded(screen, nlContainer.layersCount)
-            exp1.layerIndexOpt
-          }
-        } yield {
+    /** Реакция на положительный ответ от сервера со списком узлов. */
+    protected def _findNodesResp(resp: MFindNodesResp): Unit = {
+      val sd0 = _stateData
+      // Какой-то for-велосипед тут получился в ходе рефакторинга говнокода.
+      val sd1Opt = for {
+        nlContent   <- NlContent.find()
+        nlContainer <- {
+          nlContent.setContent(resp.nodeListHtml)
+          nlContent.container
+        }
+        exp1        <- {
+          nlContainer.initLayout()
+          nlContainer.findFirstExpanded
+        }
+        screen      <- _stateData.screen
+        layerIndex  <- {
+          exp1.fixHeightExpanded(screen, nlContainer.layersCount)
+          exp1.layerIndexOpt
+        }
+      } yield {
           sd0.copy(
             nav = sd0.nav.copy(
               currGlayIndex = Some(layerIndex)    // TODO Opt тут пересоздается ранее раскрытый Option.
             )
           )
         }
-        become(_navPanelReadyState, sd1Opt getOrElse sd0)
+      become(_navPanelReadyState, sd1Opt getOrElse sd0)
+    }
 
-      // Ошибка ответа с сервера. Надо перещелкнуть на новое состояние
-      case Failure(ex) =>
-        // В логах отмечаемся и на следующее состояние переключаемся.
-        error("E41", ex)
-        become(_navPanelReadyState)
+    /** Реакция на проблемы при получении списка узлов.
+      * Надо перещелкнуть на новое состояние */
+    protected def _findNodesFailed(ex: Throwable): Unit = {
+      // В логах отмечаемся и на следующее состояние переключаемся.
+      error("E41", ex)
+      become(_navPanelReadyState)
     }
 
     override def receiverPart: Receive = {
-      _receiverPart orElse super.receiverPart
+      // Положительный ответ от сервера со списком узлов.
+      case resp: MFindNodesResp =>
+        _findNodesResp(resp)
+      // Ошибка ответа с сервера.
+      case Failure(ex) =>
+        _findNodesFailed(ex)
     }
 
   }
@@ -156,13 +158,9 @@ trait OnGridNav extends ScFsmStub with ISjsLogger {
   /** Трейт состояния готовности к работе панели вместе со списком карточек. */
   protected trait OnGridNavReadyStateT extends _OnGridNav with INodeSwitchState {
 
-    private def _receiverPart: Receive = {
+    override def receiverPart: Receive = {
       case NodeListClick(event) =>
         _navNodeListClick(event)
-    }
-
-    override def receiverPart: Receive = {
-      _receiverPart orElse super.receiverPart
     }
 
     protected def _navNodeListClick(event: Event): Unit = {

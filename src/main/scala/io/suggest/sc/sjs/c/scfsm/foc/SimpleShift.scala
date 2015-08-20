@@ -41,34 +41,15 @@ trait SimpleShift extends ScFsmStub {
           // Есть индекс следующей карточки. Запустить анимацию карусели в нужном направлении.
           car.animateToCell(nextIndex, screen)
 
-          // Залить новый заголовок в выдачу и состояние.
+          // Залить новый заголовок в выдачу и состояние, если продьюсер новой карточки отличается от текущего.
           for {
-            fadShown  <- fState.shownFadWithIndex(nextIndex)
+            nextFad <- fState.shownFadWithIndex(nextIndex)
+            if !(fState.shownFadWithIndex(currIndex) exists {
+              _.producerId == nextFad.producerId
+            })
             fControls <- FControls.find()
-          } yield {
-            val oldHtml = fControls.innerHtml
-            // Если producer тот же, то заголовок трогать не надо.
-            val needUpdateControls = !fState.shownFadWithIndex(currIndex)
-              .exists(_.producerId == fadShown.producerId)
-            fState.carState.map { fadShown1 =>
-              val i = fadShown.index
-              val ch1 = if (i == currIndex) {
-                Left(oldHtml)
-              } else if (i == nextIndex) {
-                if (needUpdateControls)
-                  fControls.setContent( fadShown.controlsHtml )
-                Right(fControls)
-              } else {
-                null
-              }
-              if (ch1 != null) {
-                fadShown1.copy(
-                  controlsHtmlOpt = ch1
-                )
-              } else {
-                fadShown1
-              }
-            }
+          } {
+            fControls.setContent(nextFad.controlsHtml)
           }
 
           dom.setTimeout(
@@ -85,12 +66,10 @@ trait SimpleShift extends ScFsmStub {
       }
     }
 
-    private def _receiverPart: Receive = {
+    override def receiverPart: Receive = {
       case ShiftAnimationFinished =>
         _animationFinished()
     }
-
-    override def receiverPart: Receive = _receiverPart orElse super.receiverPart
 
     protected def _shiftDoneState: FsmState
 

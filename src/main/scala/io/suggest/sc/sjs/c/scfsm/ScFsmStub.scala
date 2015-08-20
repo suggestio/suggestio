@@ -31,12 +31,9 @@ trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger {
   protected trait FsmState extends super.FsmState {
     /** Переопределяемый метод для обработки событий клавиатуры.
       * По дефолту -- игнорировать все события клавиатуры. */
-    protected def _onKbdKeyUp(event: KeyboardEvent): Unit = {}
+    def _onKbdKeyUp(event: KeyboardEvent): Unit = {}
 
-    def receiverPart: Receive = {
-      case KbdKeyUp(event) =>
-        _onKbdKeyUp(event)
-    }
+    def receiverPart: Receive
   }
 
   /** Если состояние не требует ресивера, то можно использовать этот трейт. */
@@ -47,6 +44,8 @@ trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger {
 
   /** Ресивер для всех состояний. */
   override protected def allStatesReceiver: Receive = {
+    case KbdKeyUp(event) =>
+      _state._onKbdKeyUp(event)
     // Неожиданные сообщения надо логгировать.
     case other =>
       // Пока только логгируем пришедшее событие. Потом и логгирование надо будет отрубить.

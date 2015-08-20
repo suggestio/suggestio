@@ -15,14 +15,15 @@ import org.scalajs.dom.ext.KeyCode
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 17.08.15 18:44
  * Description: Аддон для сборки состояний нахождения "в фокусе", т.е. на УЖЕ открытой focused-карточки.
+ * Base -- трейт с вещами, расшаренными между трейтами конкретных состояний.
  */
-trait OnFocus extends ScFsmStub {
+trait OnFocusBase extends ScFsmStub {
 
   /** Заготовка для состояний, связанных с нахождением на карточке.
     * Тут реакция на события воздействия пользователя на focused-выдачу. */
   protected trait OnFocusStateBaseT extends FsmState with INodeSwitchState {
 
-    private def _receiverPart: Receive = {
+    override def receiverPart: Receive = {
       case MouseMove(event) =>
         _mouseMove(event)
       case CloseBtnClick =>
@@ -34,9 +35,7 @@ trait OnFocus extends ScFsmStub {
       // TODO Реакция на touch-события
     }
 
-    override def receiverPart: Receive = _receiverPart orElse super.receiverPart
-
-    override protected def _onKbdKeyUp(event: KeyboardEvent): Unit = {
+    override def _onKbdKeyUp(event: KeyboardEvent): Unit = {
       super._onKbdKeyUp(event)
       val c = event.keyCode
       // ESC должен закрывать выдачу.
@@ -161,6 +160,11 @@ trait OnFocus extends ScFsmStub {
 
   }
 
+}
+
+
+/** Аддон для [[io.suggest.sc.sjs.c.ScFsm]] с трейт-реализацией состояния спокойного нахождения в focused-выдаче. */
+trait OnFocus extends OnFocusBase {
 
   /** Состояние нахождения в фокусе одной карточки.
     * Помимо обработки сигналов это состояние готовит соседние карточки к отображению. */
@@ -238,7 +242,7 @@ trait OnFocus extends ScFsmStub {
         val nextMissingInCar = __isMissingInCar(nextIndex, carState2Rev)
 
         // Если не хватает next-карточки в карусели, то попытаться найти её в nexts.
-        if (nextMissingInCar && fState.nexts.isEmpty) {
+        if (nextMissingInCar && nexts2.isEmpty) {
           // Нужен next-элемент, которого нет. Надо перейти на состяние опережающей подгрузки next-карточек.
           val sd1 = __makeSd(prevs2, carState2Rev.reverse, nexts2)
           become(_rightPreLoadState, sd1)
@@ -248,7 +252,7 @@ trait OnFocus extends ScFsmStub {
           car.setCellWidth(nextIndex, screen)
 
           // Если требуется перенести next-карточку в карусель, то сделать это.
-          val (nexts3, carState3Rev) = __maybeFadInject(nextMissingInCar, fState.nexts, carState2Rev, nextIndex)(car.pushCellRight)
+          val (nexts3, carState3Rev) = __maybeFadInject(nextMissingInCar, nexts2, carState2Rev, nextIndex)(car.pushCellRight)
 
           // === next-карточка отработана ===
           // Теперь надо отработать prev-карточку аналогично.
@@ -256,16 +260,16 @@ trait OnFocus extends ScFsmStub {
           val carState3 = carState3Rev.reverse
 
           val prevMissingInCar = __isMissingInCar(prevIndex, carState3)
-          if (prevMissingInCar && fState.prevs.isEmpty) {
+          if (prevMissingInCar && prevs2.isEmpty) {
             // Нужен prev-элемент, которого нет. Надо перейти на состояние опережающей подгрузки prev-карточек.
             val sd1 = __makeSd(prevs2, carState3, nexts3)
             become(_leftPreLoadState, sd1)
           } else {
             // Если требуется перенести prev-карточку в карусель, то сделать это.
-            val (prevs4, carState4) = __maybeFadInject(prevMissingInCar, fState.prevs, carState3, prevIndex)(car.pushCellLeft)
+            val (prevs4, carState4) = __maybeFadInject(prevMissingInCar, prevs2, carState3, prevIndex)(car.pushCellLeft)
 
             // prev-карточка отработана. Тут больше ничего делать не надо. Залить новые данные в состояние.
-            _stateData = __makeSd(prevs4, carState4, prevs4)
+            _stateData = __makeSd(prevs4, carState4, nexts3)
           } // prevMissingInCar else
 
         }   // nextMissingInCar else
@@ -275,6 +279,7 @@ trait OnFocus extends ScFsmStub {
 
     /** Состояние OnFocus с подгрузкой предшествующих карточек (слева). */
     protected def _leftPreLoadState: FsmState = ???
+
     /** Состояние OnFocus с подгрузкой последующих карточек (справа). */
     protected def _rightPreLoadState: FsmState = ???
 
