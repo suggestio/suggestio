@@ -22,12 +22,13 @@ object OuterHtml extends SjsLogger {
 
   /** Константа-флаг, обозначающая умение (true) или беспомощьность(false) браузера делать outerHTML. */
   val HAS_OUTER_HTML: Boolean = {
-    val el = dom.document.createElement("div")
+    val el = dom.document
+      .createElement("div")
     val stub = OuterHtmlStub( el )
-    val res = stub.outerHTML.isEmpty
-    if (!res)
+    val hasOuter = !js.isUndefined( stub.outerHTML )
+    if (!hasOuter)
       warn( WarnMsgs.NO_OUTER_HTML_SUPPORT )
-    res
+    hasOuter
   }
 
 }
