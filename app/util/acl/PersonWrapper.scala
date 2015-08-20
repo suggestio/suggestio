@@ -44,7 +44,9 @@ object PersonWrapper extends PlayMacroLogsImpl {
 
   /** Статическая функция проверки на принадлежность к админам вынесена сюда.
     * Используется обычно напрямую, т.к. у нас нет возможности добавить её напрямую в PwOpt_t. */
-  def isSuperuser(pwOpt: PwOpt_t): Boolean = pwOpt.exists(_.isSuperuser)
+  def isSuperuser(pwOpt: PwOpt_t): Boolean = {
+    pwOpt.exists(_.isSuperuser)
+  }
 
 
   /** Асинхронно найти имя для пользователя в кеше или в хранилище модели.

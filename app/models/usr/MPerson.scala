@@ -1,7 +1,5 @@
 package models.usr
 
-
-import com.fasterxml.jackson.annotation.JsonIgnore
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.EsModel._
 import io.suggest.model._
@@ -50,7 +48,9 @@ object MPerson extends EsModelStaticT with PlayMacroLogsImpl {
    * @param personId Реальный id юзера.
    * @return true, если это админ. Иначе false.
    */
-  def isSuperuserId(personId: String) = SU_IDS contains personId
+  def isSuperuserId(personId: String): Boolean = {
+    SU_IDS.contains(personId)
+  }
 
 
   override def generateMappingStaticFields: List[Field] = List(
@@ -127,8 +127,9 @@ final case class MPerson(
 trait MPersonLinks {
   def personId: String
 
-  @JsonIgnore
-  def isSuperuser = MPerson isSuperuserId personId
+  def isSuperuser: Boolean = {
+    MPerson.isSuperuserId(personId)
+  }
 }
 
 
