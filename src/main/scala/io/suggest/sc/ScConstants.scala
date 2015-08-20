@@ -420,6 +420,9 @@ object ScConstants {
     /** Имя css-класса кнопки закрытия focused-выдачи. */
     def CLOSE_BTN_CLASS       = "sm-producer-header_exit-button"
 
+    /** Кол-во focused-карточек для опережающего preload'а за раз. */
+    def SIDE_PRELOAD_MAX      = 2
+
 
     object FAd {
       /** Префикс для DOM ID'шников контейнеров focused-карточки. */
