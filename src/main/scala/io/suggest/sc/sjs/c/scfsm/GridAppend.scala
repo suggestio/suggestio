@@ -14,7 +14,7 @@ import scala.util.{Failure, Success}
  * Created: 19.06.15 16:16
  * Description: Конечный автомат для поддержки загрузки карточек в плитку выдачи.
  */
-trait GridAppend extends ScFsmStub {
+trait GridAppend extends ScFsmStub with FindAdsFsmUtil {
 
   /** Состояние ожидания результатов инициализация index'а узла. Паралельно идут две фоновые операции:
     * получение карточек и отображение welcome-экрана. */
@@ -27,10 +27,7 @@ trait GridAppend extends ScFsmStub {
     override def afterBecome(): Unit = {
       super.afterBecome()
       // Повесить ожидание события.
-      findAdsFut onComplete {
-        case Success(resp) => _sendEvent(resp)
-        case failure       => _sendEvent(failure)
-      }
+      _sendFutResBack(findAdsFut)
     }
 
     override def receiverPart: Receive = {

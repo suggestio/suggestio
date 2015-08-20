@@ -10,6 +10,7 @@ import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.sjs.vm.util.domvm.get.ContentElT
 import io.suggest.sjs.common.model.dom.DomListIterator
 import io.suggest.sjs.common.view.safe.ISafe
+import io.suggest.sjs.common.view.safe.css.Height
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -25,7 +26,7 @@ object GContainer extends FindDiv {
 
 
 /** Логика модели вынесена в отдельный трейт. */
-trait GContainerT extends ContentElT with CssSzImplicits with ClearT {
+trait GContainerT extends ContentElT with CssSzImplicits with ClearT with Height {
 
   override type T = HTMLDivElement
 
@@ -38,32 +39,19 @@ trait GContainerT extends ContentElT with CssSzImplicits with ClearT {
   }
 
   /**
-   * Сеттер высоты контейнера.
-   * @param h Высота в пикселях.
-   */
-  def setHeightPx(h: Int): this.type = {
-    setHeight(h.px)
-  }
-
-  /**
    * Посчитать высоту контейнера на основе данных сетки и выставить её.
    * @param grid Источних данных сетки.
    */
   def resetHeightUsing(grid: IGridData): Unit = {
-    val maxColHeightPx = grid.builderState.maxColHeight
+    val maxColHeight = grid.builderState.maxColHeight
     // TODO В оригинале maxColHeightPx почему-то перемножалось с paddedCellSize и не глючило ничего.
     // В новой выдаче это приводит к очевидному звиздецу по высоте, но в оригинале нет проблем.
     // Оригинал смотрать в showcase2.coffee по слову real_h.
     //val maxPxH = topOffset  +  paddedCellSize * maxCellH  +  bottomOffset
     val mgp = grid.params
+    val maxColHeightPx = maxColHeight * mgp.paddedCellSize - mgp.cellPadding
     val totalHeightPx = mgp.topOffset  +  maxColHeightPx  +  mgp.bottomOffset
     setHeightPx(totalHeightPx)
-  }
-
-  /** Выставить css-значение высоты для текущего контейнера. */
-  def setHeight(cssHeight: String): this.type = {
-    _underlying.style.height = cssHeight
-    this
   }
 
   /**

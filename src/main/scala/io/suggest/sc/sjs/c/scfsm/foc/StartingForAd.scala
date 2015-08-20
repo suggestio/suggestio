@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.c.scfsm.foc
 
-import io.suggest.sc.sjs.c.scfsm.{FindNearAdIds, FindAdsFsmUtil, ScFsmStub}
+import io.suggest.sc.sjs.c.scfsm.{FindAdsFsmUtil, FindNearAdIds, FindAdsUtil, ScFsmStub}
 import io.suggest.sc.sjs.m.mfoc.{FAdShown, MFocSd, FocRootAppeared}
 import io.suggest.sc.sjs.m.msrv.foc.find.{MFocAd, MFocAds, MFocAdSearchEmpty}
 import io.suggest.sc.sjs.vm.res.FocusedRes
@@ -9,7 +9,7 @@ import io.suggest.sc.sjs.vm.foc.{FCarousel, FControls, FRoot}
 import io.suggest.sc.sjs.vm.grid.GBlock
 import org.scalajs.dom
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import scala.util.{Failure, Success}
+import scala.util.Failure
 import io.suggest.sc.ScConstants.Focused.SLIDE_ANIMATE_MS
 
 /**
@@ -23,7 +23,7 @@ import io.suggest.sc.ScConstants.Focused.SLIDE_ANIMATE_MS
 // TODO Тут stub только. Логика не написана.
 // Нужно реализовать состояния в подпакете scfsm, а этот файл удалить/переместить.
 
-trait StartingForAd extends ScFsmStub with FindAdsFsmUtil {
+trait StartingForAd extends MouseMoving with FindAdsUtil with FindAdsFsmUtil {
 
   /** Трейт для состояния, когда focused-выдача отсутствует, скрыта вообще и ожидает активации.
     * При появлении top-level ScFsm это событие исчезнет, и будет обрабатываться где-то в вышестоящем обработчике. */
@@ -82,13 +82,7 @@ trait StartingForAd extends ScFsmStub with FindAdsFsmUtil {
         }
 
         // повесить листенер для ожидания ответа сервера.
-        fadsFut onComplete { case res =>
-          val event = res match {
-            case Success(mfa) => mfa
-            case failure      => failure
-          }
-          _sendEvent(event)
-        }
+        _sendFutResBack(fadsFut)
       }
     }
 
@@ -98,7 +92,6 @@ trait StartingForAd extends ScFsmStub with FindAdsFsmUtil {
       for (styles <- mfa.styles; res <- FocusedRes.find()) {
         res.appendCss(styles)
       }
-      val fads = mfa.focusedAdsIter.toSeq
       // Залить в карусель полученные карточки.
       val sd0 = _stateData
       for {
@@ -110,7 +103,7 @@ trait StartingForAd extends ScFsmStub with FindAdsFsmUtil {
         val currIndex   = _getCurrIndex(fState)
         // Раскидать полученные карточки по аккамуляторам и карусели. Для ускорения закидываем в карусель только необходимую карточку.
         val (prevs2, firstAdOpt, nexts2) = {
-          fads.foldLeft((fState.prevs, Option.empty[MFocAd], fState.nexts)) {
+          mfa.focusedAdsIter.foldLeft((fState.prevs, Option.empty[MFocAd], fState.nexts)) {
             case ((_prevs, _firstOpt, _nexts), _e) =>
               val i = _e.index
               if (i < currIndex)
@@ -163,8 +156,15 @@ trait StartingForAd extends ScFsmStub with FindAdsFsmUtil {
     /** Состояние текущей анимации появления на экране. */
     protected def _focOnAppearState: FsmState
 
+    /** Состояние возврата на сетку. Нештатная работа этого состояния. */
+    protected def _backToGridState: FsmState
+
     protected def _focAdsRequestFailed(ex: Throwable): Unit = {
-      ???
+      // Если не удалось сделать начальный реквест, то надо сбросить состояние и вернутся в состояние плитки.
+      val sd1 = _stateData.copy(
+        focused = None
+      )
+      become(_backToGridState, sd1)
     }
 
     override def receiverPart: Receive = {
@@ -180,7 +180,7 @@ trait StartingForAd extends ScFsmStub with FindAdsFsmUtil {
 
   /** Трейт состояния во время анимированного появления на экране focused-выдачи.
     * Таким образом, это состояние живёт только около 200мс. */
-  protected trait OnAppearStateT extends FsmState {
+  protected trait OnAppearStateT extends FocMouseMovingStateT {
 
     override def afterBecome(): Unit = {
       super.afterBecome()
@@ -198,7 +198,7 @@ trait StartingForAd extends ScFsmStub with FindAdsFsmUtil {
       )
     }
 
-    override def receiverPart: Receive = {
+    override def receiverPart: Receive = super.receiverPart orElse {
       case FocRootAppeared =>
         _appeared()
     }

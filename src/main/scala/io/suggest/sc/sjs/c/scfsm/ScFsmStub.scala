@@ -64,16 +64,24 @@ trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger {
     _sendEvent(e)
   }
 
-  /** Внутренняя отправка сообщения.
+  /** Внутренняя асинхронная отправка сообщения.
     * Оно может быть любого типа для самоуведомления состояний. */
   protected[this] def _sendEvent(e: Any): Unit = {
     Future {
+      _sendEventSyncSafe(e)
+    }
+  }
+
+  /** Внутренняя синхронная отправка сообщения. */
+  protected[this] def _sendEventSyncSafe(e: Any): Unit = {
+    try {
       _sendEventSync(e)
-    } onFailure { case ex =>
+    } catch { case ex: Throwable =>
       _sendEventFailed(e, ex)
     }
   }
 
+  /** Реализация синхронной логики отправки сообщения. */
   protected[this] def _sendEventSync(e: Any): Unit
 
 

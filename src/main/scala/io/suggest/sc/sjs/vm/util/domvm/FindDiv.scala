@@ -67,5 +67,13 @@ trait FindElDynIdT extends DynDomId with IApplyEl with GetElById with FindApplyU
 
 /** Поиск элемента по int suffixed id.  */
 trait FindElIndexedIdT extends FindElDynIdT with IndexedDomId
+
+trait FindElIndexedIdOffT extends FindElIndexedIdT {
+  def _DOM_ID_OFFSET: Int
+  override def getDomId(arg: Int): String = {
+    super.getDomId(arg + _DOM_ID_OFFSET)
+  }
+}
+
 /** Поиск элемента по string prefixed id. */
 trait FindElPrefixedIdT extends FindElDynIdT with PrefixedDomId

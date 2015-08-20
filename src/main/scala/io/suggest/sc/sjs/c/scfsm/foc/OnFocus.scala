@@ -1,10 +1,8 @@
 package io.suggest.sc.sjs.c.scfsm.foc
 
-import io.suggest.sc.sjs.c.scfsm.ScFsmStub
-import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.m.mfoc._
 import io.suggest.sc.sjs.vm.foc.{FCarousel, FRoot}
-import io.suggest.sc.sjs.vm.foc.fad.{FArrow, FAdRoot}
+import io.suggest.sc.sjs.vm.foc.fad.{FAdWrapper, FArrow, FAdRoot}
 import io.suggest.sjs.common.model.{MHand, MHands}
 import org.scalajs.dom
 import org.scalajs.dom.{MouseEvent, KeyboardEvent}
@@ -17,15 +15,13 @@ import org.scalajs.dom.ext.KeyCode
  * Description: Аддон для сборки состояний нахождения "в фокусе", т.е. на УЖЕ открытой focused-карточки.
  * Base -- трейт с вещами, расшаренными между трейтами конкретных состояний.
  */
-trait OnFocusBase extends ScFsmStub {
+trait OnFocusBase extends MouseMoving {
 
   /** Заготовка для состояний, связанных с нахождением на карточке.
     * Тут реакция на события воздействия пользователя на focused-выдачу. */
-  protected trait OnFocusStateBaseT extends FsmState with INodeSwitchState {
+  protected trait OnFocusStateBaseT extends FocMouseMovingStateT with INodeSwitchState {
 
-    override def receiverPart: Receive = {
-      case MouseMove(event) =>
-        _mouseMove(event)
+    override def receiverPart: Receive = super.receiverPart orElse {
       case CloseBtnClick =>
         _closeFocused()
       case ProducerLogoClick =>
@@ -46,19 +42,43 @@ trait OnFocusBase extends ScFsmStub {
         _kbdShifting( MHands.Right, _shiftRightState )
       else if (c == KeyCode.left)
         _kbdShifting( MHands.Left, _shiftLeftState )
+      // TODO Скроллинг должен быть непрерывным. Сейчас он срабатывает только при отжатии клавиатурных кнопок скролла.
+      else if (c == KeyCode.down)
+        _kbdScroll(60)
+      else if (c == KeyCode.up)
+        _kbdScroll(-60)
+      else if (c == KeyCode.pageDown)
+        _kbdScroll( screenH )
+      else if (c == KeyCode.pageUp)
+        _kbdScroll( -screenH )
+    }
+
+    private def screenH: Int = _stateData.screen.fold(480)(_.height)
+
+    protected def _kbdScroll(delta: Int): Unit = {
+      // Найти враппер текущей карточки и проскроллить его немного вниз.
+      for {
+        fState    <- _stateData.focused
+        currIndex <- fState.currIndex
+        fWrap     <- FAdWrapper.find(currIndex)
+      } {
+        fWrap.vScrollByPx(delta)
+      }
     }
 
     /** Реакция на переключение focused-карточек стрелками клавиатуры.
       * @param dir направление переключения.
       */
     protected def _kbdShifting(dir: MHand, nextState: FsmState): Unit = {
-      val sd0 = _stateData
-      val sd1 = sd0.copy(
-        focused = sd0.focused.map(_.copy(
-          arrDir = Some(dir)
-        ))
-      )
-      become(nextState, sd1)
+      if (_filterSimpleShiftSignal(dir)) {
+        val sd0 = _stateData
+        val sd1 = sd0.copy(
+          focused = sd0.focused.map(_.copy(
+            arrDir = Some(dir)
+          ))
+        )
+        become(nextState, sd1)
+      }
     }
 
     /** Реакция на клик по кнопке закрытия или иному выходу из focused-выдачи. */
@@ -101,6 +121,13 @@ trait OnFocusBase extends ScFsmStub {
       }
     }
 
+    /** Можно игнорить шифтинг карточек в указанном направлении с помощью этого флага.
+      * TODO Это костыль. По хорошему надо шифтить на следующую карточку и отображать там loader, а потом это сразу перезаписывать.
+      */
+    protected def _filterSimpleShiftSignal(mhand: MHand): Boolean = {
+      true
+    }
+
     /** Реакция на кликанье мышки по focused-выдаче. Надо понять, слева или справа был клик, затем
       * запустить листание в нужную сторону. */
     protected def _mouseClicked(event: MouseEvent): Unit = {
@@ -110,46 +137,14 @@ trait OnFocusBase extends ScFsmStub {
         for (fArr <- FArrow.find()) {
           _maybeUpdateArrDir(mhand, fArr, fState, sd0)
         }
-        val nextState = if (mhand.isLeft) _shiftLeftState else _shiftRightState
-        become(nextState)
-      }
-    }
-
-    /** Находится ли курсор мыши в левой части экрана? */
-    protected def _isMouseRight(event: MouseEvent, screen: IMScreen): Boolean = {
-      event.clientX > screen.width / 2
-    }
-
-    protected def _mouse2hand(event: MouseEvent, screen: IMScreen): MHand = {
-      if (_isMouseRight(event, screen))
-        MHands.Right
-      else
-        MHands.Left
-    }
-
-    protected def _maybeUpdateArrDir(mhand: MHand, fArr: FArrow, fState: MFocSd, sd0: SD = _stateData): Unit = {
-      if (!(fState.arrDir contains mhand)) {
-        fArr.setDirection(mhand)
-        // Сохранить новый direction в состояние.
-        _stateData = sd0.copy(
-          focused = Some(fState.copy(
-            arrDir = Some(mhand)
-          ))
-        )
-      }
-    }
-
-    /** Логика обработки сигнала о движении мышки. */
-    protected def _mouseMove(event: MouseEvent): Unit = {
-      val sd0 = _stateData
-      for (screen <- sd0.screen; fState <- sd0.focused; fArr <- FArrow.find()) {
-        // Обновить направление стрелки и состояние FSM, если требуется.
-        val mhand = _mouse2hand(event, screen)
-        _maybeUpdateArrDir(mhand, fArr, fState, sd0)
-
-        // Обновить координаты стрелочки.
-        fArr.updateX(event.clientX.toInt)
-        fArr.updateY(event.clientY.toInt)
+        if (_filterSimpleShiftSignal(mhand)) {
+          val nextState = if (mhand.isLeft) {
+            _shiftLeftState
+          } else {
+            _shiftRightState
+          }
+          become(nextState)
+        }
       }
     }
 
@@ -278,10 +273,10 @@ trait OnFocus extends OnFocusBase {
     }       // afterBecome()
 
     /** Состояние OnFocus с подгрузкой предшествующих карточек (слева). */
-    protected def _leftPreLoadState: FsmState = ???
+    protected def _leftPreLoadState: FsmState
 
     /** Состояние OnFocus с подгрузкой последующих карточек (справа). */
-    protected def _rightPreLoadState: FsmState = ???
+    protected def _rightPreLoadState: FsmState
 
   }         // trait state FSM
 

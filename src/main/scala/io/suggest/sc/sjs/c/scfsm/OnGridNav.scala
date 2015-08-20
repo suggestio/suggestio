@@ -3,16 +3,18 @@ package io.suggest.sc.sjs.c.scfsm
 import io.suggest.sc.sjs.m.mhdr.HideNavClick
 import io.suggest.sc.sjs.m.mnav.NodeListClick
 import io.suggest.sc.sjs.m.msrv.nodes.find.{MFindNodesResp, MFindNodesArgsEmpty, MFindNodesArgsDflt, MFindNodes}
+import io.suggest.sc.sjs.vm.hdr.btns.HBtns
 import io.suggest.sc.sjs.vm.hdr.btns.nav.HShowNavBtn
 import io.suggest.sc.sjs.vm.nav.NRoot
 import io.suggest.sc.sjs.vm.nav.nodelist.glay.{GlayCaption, GlayNode}
 import io.suggest.sc.sjs.vm.nav.nodelist.NlContent
 import io.suggest.sjs.common.util.ISjsLogger
 import io.suggest.sjs.common.view.safe.SafeEl
-import org.scalajs.dom.{Node, Event}
+import org.scalajs.dom.ext.KeyCode
+import org.scalajs.dom.{KeyboardEvent, Node, Event}
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
-import scala.util.{Failure, Success}
+import scala.util.Failure
 
 /**
  * Suggest.io
@@ -20,12 +22,22 @@ import scala.util.{Failure, Success}
  * Created: 10.08.15 15:54
  * Description: Аддон для состояний сетки с открытой панелью.
  */
-trait OnGridNav extends ScFsmStub with ISjsLogger {
+trait OnGridNav extends OnGrid with ISjsLogger with FindAdsFsmUtil {
 
-  protected trait _OnGridNav extends FsmState with PanelGridRebuilder {
+  protected trait _OnGridNav extends OnGridStateT with PanelGridRebuilder {
+
+    private def _receiverPart: Receive = {
+      case HideNavClick(event) =>
+        _hideNav()
+    }
 
     override def receiverPart: Receive = {
-      case HideNavClick(event) =>
+      _receiverPart orElse super.receiverPart
+    }
+
+    override def _onKbdKeyUp(event: KeyboardEvent): Unit = {
+      super._onKbdKeyUp(event)
+      if (event.keyCode == KeyCode.escape)
         _hideNav()
     }
 
@@ -39,6 +51,10 @@ trait OnGridNav extends ScFsmStub with ISjsLogger {
           showBtn.show()
         }
         val grid2 = _rebuildGridOnPanelChange(sd0, screen, nroot)
+
+        for (hbtns <- HBtns.find()) {
+          hbtns.show()
+        }
 
         val sd1 = sd0.copy(
           grid = grid2,
@@ -70,13 +86,7 @@ trait OnGridNav extends ScFsmStub with ISjsLogger {
         }
         val fut = MFindNodes.findNodes(searchNodesArgs)
         // Когда запрос выполниться, надо залить данные в DOM
-        fut onComplete { case res =>
-          val event = res match {
-            case Success(resp)  => resp
-            case failure        => failure
-          }
-          _sendEvent(event)
-        }
+        _sendFutResBack(fut)
       }
 
       for (nroot <- NRoot.find(); screen <- sd0.screen) {
@@ -88,13 +98,20 @@ trait OnGridNav extends ScFsmStub with ISjsLogger {
         }
         val grid2 = _rebuildGridOnPanelChange(sd0, screen, nroot)
 
-        val sd1 = sd0.copy(
-          grid = grid2
+        val sd2 = sd0.copy(
+          grid = grid2,
+          nav = sd0.nav.copy(
+            panelOpened = true
+          )
         )
 
         // TODO Обновить данные состояния выдачи.
 
-        _stateData = sd1
+        _stateData = sd2
+      }
+
+      for (hbtns <- HBtns.find()) {
+        hbtns.hide()
       }
 
       // Список узлов на панели уже загружен, нужно сразу перещелкнуть на следующее состояние.
@@ -143,7 +160,7 @@ trait OnGridNav extends ScFsmStub with ISjsLogger {
       become(_navPanelReadyState)
     }
 
-    override def receiverPart: Receive = {
+    override def receiverPart: Receive = super.receiverPart orElse {
       // Положительный ответ от сервера со списком узлов.
       case resp: MFindNodesResp =>
         _findNodesResp(resp)
@@ -158,9 +175,13 @@ trait OnGridNav extends ScFsmStub with ISjsLogger {
   /** Трейт состояния готовности к работе панели вместе со списком карточек. */
   protected trait OnGridNavReadyStateT extends _OnGridNav with INodeSwitchState {
 
-    override def receiverPart: Receive = {
+    private def _receiverPart: Receive = {
       case NodeListClick(event) =>
         _navNodeListClick(event)
+    }
+
+    override def receiverPart: Receive = {
+      _receiverPart orElse super.receiverPart
     }
 
     protected def _navNodeListClick(event: Event): Unit = {

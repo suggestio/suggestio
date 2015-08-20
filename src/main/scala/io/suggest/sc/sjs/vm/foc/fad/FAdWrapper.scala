@@ -11,9 +11,11 @@ import io.suggest.sc.ScConstants.DIV_WRAPPER_SUFFIX
  * Created: 14.08.15 18:15
  * Description: Враппер-div focused-карточки.
  */
-object FAdWrapper extends FindElIndexedIdT with IndexedSuffixedDomId with FAdStatic {
+object FAdWrapper extends FindElIndexedIdT with IndexedSuffixedDomId with FAdStatic with FindElIndexedIdOffT {
   override protected def DOM_ID_SUFFIX = DIV_WRAPPER_SUFFIX
   override type T = FAdWrapper
+
+  override def _DOM_ID_OFFSET: Int = 1
 }
 
 

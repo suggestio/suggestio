@@ -1,6 +1,5 @@
 package io.suggest.sc.sjs.c.scfsm.foc
 
-import io.suggest.sc.sjs.c.scfsm.ScFsmStub
 import io.suggest.sc.sjs.m.mfoc.IFocSd
 import io.suggest.sc.sjs.m.mfsm.IFsmMsg
 import io.suggest.sc.sjs.vm.foc.{FControls, FCarousel}
@@ -14,10 +13,10 @@ import org.scalajs.dom
  * Description: Аддон для ScFsm с трейтами для сборки состояний автоперехода между карточками.
  * Эта логика не подходит для touch-переключений -- там совсем другая логика работы.
  */
-trait SimpleShift extends ScFsmStub {
+trait SimpleShift extends MouseMoving {
 
   /** Трейт для сборки состояния автоматического перехода на следующую/предыдущую карточку. */
-  protected trait SimpleShiftStateT extends FsmState {
+  protected trait SimpleShiftStateT extends FocMouseMovingStateT {
 
     /** Сообщение о завершении анимации переключения карточки. */
     protected case object ShiftAnimationFinished extends IFsmMsg
@@ -66,7 +65,7 @@ trait SimpleShift extends ScFsmStub {
       }
     }
 
-    override def receiverPart: Receive = {
+    override def receiverPart: Receive = super.receiverPart orElse {
       case ShiftAnimationFinished =>
         _animationFinished()
     }
@@ -91,7 +90,9 @@ trait SimpleShift extends ScFsmStub {
   protected trait ShiftRightStateT extends SimpleShiftStateT {
     override protected def _nextIndex(currIndex: Int, fState: IFocSd): Int = {
       val nextIndex0 = currIndex + 1
-      fState.totalCount.fold(nextIndex0)( Math.min(_, nextIndex0) )
+      fState.totalCount.fold(nextIndex0) { tc =>
+        Math.min(tc - 1, nextIndex0)
+      }
     }
   }
 

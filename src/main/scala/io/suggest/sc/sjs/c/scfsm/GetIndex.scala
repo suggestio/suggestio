@@ -21,7 +21,7 @@ import scala.util.{Failure, Success}
  * Created: 22.06.15 14:19
  * Description: Аддон центрального FSM, добавляющий состояния для получения и загрузки index'а выдачи.
  */
-trait GetIndex extends ScFsmStub with FindAdsFsmUtil {
+trait GetIndex extends ScFsmStub with FindAdsUtil with FindAdsFsmUtil {
 
   /** Реализация состояния активации и  */
   protected trait GetIndexStateT extends FsmState {
@@ -55,27 +55,16 @@ trait GetIndex extends ScFsmStub with FindAdsFsmUtil {
 
       // Дожидаясь ответа сервера, инициализировать кое-какие переменные, необходимые на следующем шаге.
       _stateData = _initStateData(sd)
-
-      inxFut onComplete { case res =>
-        val evt = res match {
-          case Success(v) => IndexOk(v)
-          case failure    => failure
-        }
-        _sendEventSync(evt)
-      }
+      _sendFutResBack(inxFut)
     }
 
     override def receiverPart: Receive = {
-      case IndexOk(v) =>
-        _onSuccess(v)
+      case mni: MNodeIndex =>
+        _onSuccess(mni)
       case Failure(ex) =>
         error("Failed to get node index: " + _stateData.adnIdOpt, ex)
         _onFailure(ex)
     }
-
-
-    /** Контейнер для передачи в receiver корректного результата index-запроса. */
-    protected case class IndexOk(v: MNodeIndex)
 
 
     /** Успешный запрос index'а. */

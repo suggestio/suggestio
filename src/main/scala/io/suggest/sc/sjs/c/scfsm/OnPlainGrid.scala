@@ -32,10 +32,7 @@ trait OnPlainGrid extends OnGrid {
            search = sd0.search.copy(
              opened = true
            ),
-           grid = grid2,
-           nav  = sd0.nav.copy(
-             panelOpened = true
-           )
+           grid = grid2
          )
 
          // Сменить состояние на то, где открыта панель поиска.
@@ -48,13 +45,17 @@ trait OnPlainGrid extends OnGrid {
 
      protected def _showNavClick(event: Event): Unit
 
-     override def receiverPart: Receive = {
+     private def _receiverPart: Receive = {
        // Сигнал нажатия на кнопку открытия панели поиска.
        case ShowSearchClick(event) =>
          _showSearchClick(event)
        // Сигнал нажатия на кнопку отображения панели навигации.
        case ShowNavClick(event) =>
          _showNavClick(event)
+     }
+
+     override def receiverPart: Receive = {
+       _receiverPart orElse super.receiverPart
      }
    }
 

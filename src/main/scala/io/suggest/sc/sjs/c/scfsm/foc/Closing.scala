@@ -1,9 +1,9 @@
 package io.suggest.sc.sjs.c.scfsm.foc
 
-import io.suggest.sc.sjs.c.scfsm.ScFsmStub
 import io.suggest.sc.sjs.m.mfoc.FocRootDisappeared
 import io.suggest.sc.sjs.vm.foc.FRoot
 import io.suggest.sc.ScConstants.Focused.SLIDE_ANIMATE_MS
+import io.suggest.sc.sjs.vm.res.FocusedRes
 import org.scalajs.dom
 
 /**
@@ -12,10 +12,10 @@ import org.scalajs.dom
  * Created: 18.08.15 16:04
  * Description: Аддон с кодом для сборки состояния закрытия focused-выдачи.
  */
-trait Closing extends ScFsmStub {
+trait Closing extends MouseMoving {
 
   /** Трейт состояния закрытия focused-выдачи. */
-  protected trait FocClosingStateT extends FsmState {
+  protected trait FocClosingStateT extends FocMouseMovingStateT {
 
     override def afterBecome(): Unit = {
       super.afterBecome()
@@ -34,7 +34,7 @@ trait Closing extends ScFsmStub {
       }
     }
 
-    override def receiverPart: Receive = {
+    override def receiverPart: Receive = super.receiverPart orElse {
       case FocRootDisappeared =>
         _disappeared()
     }
@@ -47,6 +47,9 @@ trait Closing extends ScFsmStub {
           for (froot <- FRoot.find()) {
             froot.wontAnimate()
             froot.clear()
+            for (res <- FocusedRes.find()) {
+              res.clear()
+            }
           }
         },
         10

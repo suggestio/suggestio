@@ -40,9 +40,13 @@ trait IGridBuilderState {
 
   /** Вычислить максимальную высоту колонки в карте колонок. */
   def maxColHeight: Int = {
-    colsInfo.iterator
-      .map { _.heightUsed }
-      .max
+    if (colsInfo.length > 0) {
+      colsInfo.iterator
+        .map { _.heightUsed }
+        .max
+    } else {
+      0
+    }
   }
 
 }

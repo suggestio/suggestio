@@ -110,6 +110,10 @@ trait WrapperChildContent extends ChildElOrFind {
   override type T <: HTMLElement
   override type SubTagVm_t <: ContentElT
   def content = _findSubtag()
+
+  def vScrollByPx(delta: Int): Unit = {
+    _underlying.scrollTop += delta
+  }
 }
 
 /** Content-элемент. */
