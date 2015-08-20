@@ -4,6 +4,7 @@ import io.suggest.sc.sjs.m.mfoc._
 import io.suggest.sc.sjs.vm.foc.{FCarousel, FRoot}
 import io.suggest.sc.sjs.vm.foc.fad.{FAdWrapper, FArrow, FAdRoot}
 import io.suggest.sjs.common.model.{MHand, MHands}
+import io.suggest.sc.ScConstants.Focused.FAd.KBD_SCROLL_STEP_PX
 import org.scalajs.dom
 import org.scalajs.dom.{MouseEvent, KeyboardEvent}
 import org.scalajs.dom.ext.KeyCode
@@ -44,9 +45,9 @@ trait OnFocusBase extends MouseMoving {
         _kbdShifting( MHands.Left, _shiftLeftState )
       // TODO Скроллинг должен быть непрерывным. Сейчас он срабатывает только при отжатии клавиатурных кнопок скролла.
       else if (c == KeyCode.down)
-        _kbdScroll(60)
+        _kbdScroll( KBD_SCROLL_STEP_PX )
       else if (c == KeyCode.up)
-        _kbdScroll(-60)
+        _kbdScroll( -KBD_SCROLL_STEP_PX )
       else if (c == KeyCode.pageDown)
         _kbdScroll( screenH )
       else if (c == KeyCode.pageUp)
@@ -278,6 +279,6 @@ trait OnFocus extends OnFocusBase {
     /** Состояние OnFocus с подгрузкой последующих карточек (справа). */
     protected def _rightPreLoadState: FsmState
 
-  }         // trait state FSM
+  }         // FSM state trait
 
 }

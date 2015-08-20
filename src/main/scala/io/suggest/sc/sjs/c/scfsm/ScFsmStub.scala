@@ -1,10 +1,11 @@
 package io.suggest.sc.sjs.c.scfsm
 
 import io.suggest.fsm.{AbstractFsm, AbstractFsmUtil, StateData}
+import io.suggest.sc.sjs.m.mfsm.touch.{TouchCancel, TouchEnd, TouchStart, TouchMove}
 import io.suggest.sc.sjs.m.mfsm.{KbdKeyUp, IFsmMsg}
 import io.suggest.sc.sjs.m.msc.fsm.MStData
 import io.suggest.sjs.common.util.ISjsLogger
-import org.scalajs.dom.KeyboardEvent
+import org.scalajs.dom.{TouchEvent, KeyboardEvent}
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -33,6 +34,11 @@ trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger {
       * По дефолту -- игнорировать все события клавиатуры. */
     def _onKbdKeyUp(event: KeyboardEvent): Unit = {}
 
+    def onTouchStart(event: TouchEvent): Unit = {}
+    def onTouchMove(event: TouchEvent): Unit = {}
+    def onTouchEnd(event: TouchEvent): Unit = {}
+    def onTouchCancel(event: TouchEvent): Unit = {}
+
     def receiverPart: Receive
   }
 
@@ -44,6 +50,16 @@ trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger {
 
   /** Ресивер для всех состояний. */
   override protected def allStatesReceiver: Receive = {
+    // Реакция на touch-события. Они обычно самые частые.
+    case TouchMove(event) =>
+      _state.onTouchMove(event)
+    case TouchStart(event) =>
+      _state.onTouchStart(event)
+    case TouchEnd(event) =>
+      _state.onTouchEnd(event)
+    case TouchCancel(event) =>
+      _state.onTouchCancel(event)
+    // Реакция на события клавиатуры.
     case KbdKeyUp(event) =>
       _state._onKbdKeyUp(event)
     // Неожиданные сообщения надо логгировать.
