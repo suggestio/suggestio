@@ -430,6 +430,9 @@ object ScConstants {
 
       /** Суффикс id sm-block div для focused-карточек. */
       def BLOCK_ID_SUFFIX = "fblk"
+
+      /** При скроллинге стрелками клавиатуры какой должен быть шаг скроллинга в пикселях? */
+      def KBD_SCROLL_STEP_PX = 60
     }
 
   }
