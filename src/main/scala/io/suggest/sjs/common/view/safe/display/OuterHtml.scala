@@ -1,5 +1,6 @@
 package io.suggest.sjs.common.view.safe.display
 
+import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.util.SjsLogger
 import io.suggest.sjs.common.view.safe.ISafe
 import org.scalajs.dom
@@ -21,10 +22,11 @@ object OuterHtml extends SjsLogger {
 
   /** Константа-флаг, обозначающая умение (true) или беспомощьность(false) браузера делать outerHTML. */
   val HAS_OUTER_HTML: Boolean = {
-    val stub = OuterHtmlStub( dom.document.documentElement )
+    val el = dom.document.createElement("div")
+    val stub = OuterHtmlStub( el )
     val res = stub.outerHTML.isEmpty
     if (!res)
-      warn("W8930")
+      warn( WarnMsgs.NO_OUTER_HTML_SUPPORT )
     res
   }
 
@@ -55,7 +57,7 @@ trait OuterHtml extends ISafe {
 
 /** undefined-доступ к свойству outerHTML. */
 sealed trait OuterHtmlStub extends js.Object {
-  def outerHTML: UndefOr[_] = js.native
+  var outerHTML: UndefOr[String] = js.native
 }
 object OuterHtmlStub {
   def apply(e: Element): OuterHtmlStub = {
