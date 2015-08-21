@@ -1,5 +1,6 @@
 package io.suggest.sjs.common.view.safe.attr
 
+import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.util.DataUtil
 import io.suggest.sjs.common.view.safe.ISafe
 import org.scalajs.dom.{Element, Node, NamedNodeMap}
@@ -66,7 +67,7 @@ trait SafeAttrUtilT extends ISafe {
 
   /** Расширенный Helper с поддержкой безопасного выставления class-аттрибута. */
   protected trait SetterHelper[T] extends Helper[T] {
-    
+
     // Режимы нужны для передачи результатов логики execute в setAttribute().
     protected def MODE_UNKNOWN      = 0
     protected def MODE_EL_GET_ATTR  = 1
@@ -87,9 +88,9 @@ trait SafeAttrUtilT extends ISafe {
     /** Безопасно выставить аттрибут class для текущего тега/узла, когда classList недоступен. */
     def setAttribute(v: String): Unit = {
       if (_mode == MODE_EL_GET_ATTR) {
-        _underlying.asInstanceOf[Element].setAttribute("class", v)
+        _underlying.asInstanceOf[Element].setAttribute(attrName, v)
       } else if (_mode == MODE_NODE_ATTRS) {
-        _underlying.attributes.getNamedItem("class").value = v
+        _underlying.attributes.getNamedItem(attrName).value = v
       } else {
         notFound
       }
@@ -151,10 +152,20 @@ trait SafeAttrElT extends SafeAttrUtilT {
         setAttribute(value)
       }
       override def notFoundExceptionMsg: String = {
-        "setAttr " + super.notFoundExceptionMsg
+        ErrorMsgs.SET_ATTR_NOT_FOUND + super.notFoundExceptionMsg
       }
     }
     h.execute()
+  }
+
+
+  /**
+   * Удаление аттрибута текущего тега.
+   * @param name Название аттрибута.
+   */
+  def removeAttribute(name: String): Unit = {
+    // TODO Opt Наверное надо как-то по-лучше это сделать. Ведь есть всякие .removeAttribute() и прочее.
+    setAttribute(name, "")
   }
 
 }

@@ -10,4 +10,6 @@ object ErrorMsgs {
 
   def FOC_PRELOAD_REQUEST_FAILED = "E720"
 
+  def SET_ATTR_NOT_FOUND         = "E56"
+
 }
