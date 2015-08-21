@@ -18,7 +18,7 @@ import scala.concurrent.Future
  */
 object ScFsm extends SjsLogger with Init with GetIndex with GridAppend with OnPlainGrid with OnGridSearchGeo
 with OnGridSearchHashTags with OnGridNav with foc.StartingForAd with foc.OnFocus with foc.Closing with foc.SimpleShift
-with foc.PreLoading {
+with foc.PreLoading with foc.OnTouch with foc.OnTouchPreload {
 
   // Инициализируем базовые внутренние переменные.
   override protected var _state: FsmState = new DummyState
@@ -178,15 +178,18 @@ with foc.PreLoading {
   class FocAppearingState extends OnAppearStateT {
     override protected def _focReadyState = new FocOnFocusState
   }
-  protected trait OnFocusStateBaseT extends super.OnFocusStateBaseT with _NodeSwitchState {
+  protected trait ISimpleShift extends super.ISimpleShift {
     override protected def _shiftRightState = new FocShiftRightState
     override protected def _shiftLeftState  = new FocShiftLeftState
+  }
+  protected trait OnFocusStateBaseT extends super.OnFocusStateBaseT with _NodeSwitchState with ISimpleShift {
     override protected def _closingState    = new FocClosingState
   }
   /** Состояние нахождения на какой-то focused-карточке в выдаче. */
   class FocOnFocusState extends OnFocusStateT with OnFocusStateBaseT {
     override protected def _leftPreLoadState  = new FocPreLoadLeftState
     override protected def _rightPreLoadState = new FocPreLoadRightState
+    override protected def _onTouchStartState = new FocTouchStartState
   }
   /** Состояние закрытия focused-выдачи с возвратом в плитку. */
   class FocClosingState extends FocClosingStateT {
@@ -212,11 +215,41 @@ with foc.PreLoading {
 
   /** Общий код реализаций focused-preload-состояний. */
   protected trait FocPreLoadingStateT extends super.FocPreLoadingStateT with OnFocusStateBaseT {
-    override protected def _onFocusState = new FocOnFocusState
+    override protected def _preloadDoneState = new FocOnFocusState
   }
   /** Состояние нахождения на крайней правой карточке среди уже подгруженных,
     * но НЕ крайней среди имеющихся в focused-выборке. */
-  class FocPreLoadRightState extends FocPreLoadingStateT with FocRightPreLoadingStateT
-  class FocPreLoadLeftState  extends FocPreLoadingStateT with FocLeftPreLoadingStateT
+  class FocPreLoadRightState extends FocPreLoadingStateT with FocRightPreLoadingStateT {
+    override protected def _onTouchStartState = new FocTouchShiftPreloadRightState
+  }
+  class FocPreLoadLeftState  extends FocPreLoadingStateT with FocLeftPreLoadingStateT {
+    override protected def _onTouchStartState = new FocTouchShiftPreloadLeftState
+  }
+
+  // Поддержка touch-состояний в focused-выдаче.
+  protected trait FocTouchCancelledT extends super.FocTouchCancelledT {
+    override protected def _touchCancelledState = new FocOnFocusState
+  }
+  class FocTouchStartState extends FocTouchCancelledT with FocOnTouchStartStateT {
+    override protected def _touchShiftState   = new FocTouchShiftState
+    override protected def _touchVScrollState = new FocTouchStartState
+  }
+  class FocTouchScrollState extends FocTouchCancelledT with FocOnTouchScrollStateT
+  class FocTouchShiftState  extends FocOnTouchShiftStateT with ISimpleShift with FocTouchCancelledT
+
+  // Поддержка preload с внезапно начавшимся touch
+  protected trait FocPreLoadingReceiveStateT extends super.FocPreLoadingReceiveStateT {
+    override protected def _preloadDoneState = new FocTouchShiftState
+  }
+  class FocTouchShiftPreloadLeftState
+    extends OnTouchShiftPreloadLeftStateT
+    with ISimpleShift
+    with FocTouchCancelledT
+    with FocPreLoadingReceiveStateT
+  class FocTouchShiftPreloadRightState
+    extends OnTouchShiftPreloadRightStateT
+    with ISimpleShift
+    with FocTouchCancelledT
+    with FocPreLoadingReceiveStateT
 
 }

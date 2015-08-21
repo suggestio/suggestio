@@ -10,7 +10,9 @@ import io.suggest.sc.sjs.v.vutil.ExtraStyles
 import io.suggest.sc.sjs.vm.foc.fad.{FAdRootT, FAdRoot}
 import io.suggest.sc.sjs.vm.util._
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
+import io.suggest.sjs.common.model.browser.IBrowser
 import io.suggest.sjs.common.model.dom.DomListIterator
+import io.suggest.sjs.common.util.TouchUtil
 import io.suggest.sjs.common.view.safe.SafeElT
 import io.suggest.sjs.common.view.safe.css.{StyleLeft, Width}
 import io.suggest.sc.ScConstants.Focused._
@@ -28,9 +30,24 @@ import org.scalajs.dom.raw.HTMLDivElement
  * Так же есть небольшой слайдинг на произвольное состояние (для touch-слайдинга).
  */
 object FCarousel extends FindDiv {
+
   override def DOM_ID = CONTAINER_ID
   override type T     = FCarousel
+
+  /**
+   * Рассчет сдвига по Х (left) для full-screen отображения только указанной карточки.
+   * @param index 0, 1, 2, ...
+   * @param screen Экран.
+   * @return Координата в пикселях. Её можно в transform:translate* и в left подставлять.
+   */
+  def indexToLeftPx(index: Int, screen: IMScreen): Int = {
+    -index * screen.width
+  }
+
 }
+
+
+import FCarousel.indexToLeftPx
 
 
 /** Логика работы карусели живёт в этом трейте. */
@@ -77,12 +94,18 @@ with IInitLayout with WillTranslate3d with OnMouseClickT with InitOnEventToFsmUt
   }
 
   /** Анимированный слайдинг на указанную X-координату. */
-  def animateToX(xPx: Int): Unit = {
-    _underlying.style.transform = "translate3d(" + xPx.px + ",0px,0px)"
+  def animateToX(xPx: Int, browser: IBrowser): Unit = {
+    val value = "translate3d(" + xPx.px + ",0px,0px)"
+    val style = _underlying.style
+    for (prefix <- browser.CssPrefixing.transforms3d) {
+      val name = prefix + "transform"
+      style.setProperty(name, value)
+    }
   }
 
-  def animateToCell(index: Int, screen: IMScreen): Unit = {
-    animateToX( -index * screen.width )
+  def animateToCell(index: Int, screen: IMScreen, browser: IBrowser): Unit = {
+    val x = indexToLeftPx(index, screen)
+    animateToX(x, browser)
   }
 
   /** Итератор уже имеющихся ячеек карусели. */
@@ -92,14 +115,17 @@ with IInitLayout with WillTranslate3d with OnMouseClickT with InitOnEventToFsmUt
   }
 
   override def initLayout(): Unit = {
-    // Вешаем mouse-события.
-    onClick( _sendEventF(MouseClick) )
-    addEventListener("mousemove")( ScFsm.onMouseMove(_: MouseEvent) )
+    // Вешаем mouse-события, если это не-TOUCH девайс. Иначе тыканье на touch-девайсе в focused-выдаче будет превращаться в клики.
+    if (!TouchUtil.IS_TOUCH_DEVICE) {
+      onClick(_sendEventF(MouseClick))
+      addEventListener("mousemove")(ScFsm.onMouseMove(_: MouseEvent))
+    }
     // Вешаем touch события.
     _addToFsmEventListener("touchstart",  TouchStart)
     _addToFsmEventListener("touchend",    TouchEnd)
     _addToFsmEventListener("touchcancel", TouchCancel)
-    addEventListener("touchmove") ( ScFsm.onTouchMove(_: TouchEvent) )
+    addEventListener("touchmove")(ScFsm.onTouchMove(_: TouchEvent))
+
   }
 }
 

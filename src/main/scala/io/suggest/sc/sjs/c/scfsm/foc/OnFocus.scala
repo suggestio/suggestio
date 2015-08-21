@@ -2,10 +2,13 @@ package io.suggest.sc.sjs.c.scfsm.foc
 
 import io.suggest.sc.sjs.m.mfoc._
 import io.suggest.sc.sjs.m.mfsm.touch.TouchStart
+import io.suggest.sc.sjs.m.mv.MTouchLock
 import io.suggest.sc.sjs.vm.foc.{FCarousel, FRoot}
 import io.suggest.sc.sjs.vm.foc.fad.{FAdWrapper, FArrow, FAdRoot}
+import io.suggest.sjs.common.geom.Coord2dD
 import io.suggest.sjs.common.model.{MHand, MHands}
 import io.suggest.sc.ScConstants.Focused.FAd.KBD_SCROLL_STEP_PX
+import io.suggest.sjs.common.util.TouchUtil
 import org.scalajs.dom
 import org.scalajs.dom.{TouchEvent, MouseEvent, KeyboardEvent}
 import org.scalajs.dom.ext.KeyCode
@@ -19,11 +22,19 @@ import org.scalajs.dom.ext.KeyCode
  */
 trait OnFocusBase extends MouseMoving {
 
+  protected trait ISimpleShift {
+    /** Состояние переключения на следующую карточку. */
+    protected def _shiftRightState: FsmState
+    /** Состояние переключения на предыдущую карточку. */
+    protected def _shiftLeftState : FsmState
+  }
+
+
   /** Заготовка для состояний, связанных с нахождением на карточке.
     * Тут реакция на события воздействия пользователя на focused-выдачу. */
-  protected trait OnFocusStateBaseT extends FocMouseMovingStateT with INodeSwitchState {
+  protected trait OnFocusStateBaseT extends FsmEmptyReceiverState with FocMouseMovingStateT with INodeSwitchState with ISimpleShift {
 
-    override def receiverPart: Receive = {
+    override def receiverPart: Receive = super.receiverPart orElse {
       case TouchStart(event) =>
         _onTouchStart(event)
       case CloseBtnClick =>
@@ -32,15 +43,24 @@ trait OnFocusBase extends MouseMoving {
         _goToProducer()
       case MouseClick(evt) =>
         _mouseClicked(evt)
-      // TODO Реакция на touch-события
     }
 
-    /** Реакция на начало свайпа. */
+    /** С началом свайпа надо инициализировать touch-параметры и перейти в свайп-состояние. */
     protected def _onTouchStart(event: TouchEvent): Unit = {
-      // TODO нужно переключить состояние на какое-то touch-состояние.
-      //event.touches.apply(0)
-      ???
+      val sd0 = _stateData
+      val touch = event.touches(0)
+      val sd1 = sd0.copy(
+        focused = sd0.focused.map( _.copy(
+          touch = Some(MFocTouchSd(
+            start = Coord2dD( touch ),
+            lastX = touch.pageX
+          ))
+        ))
+      )
+      become(_onTouchStartState, sd1)
     }
+    protected def _onTouchStartState: FsmState
+
 
     override def _onKbdKeyUp(event: KeyboardEvent): Unit = {
       super._onKbdKeyUp(event)
@@ -143,6 +163,7 @@ trait OnFocusBase extends MouseMoving {
       * запустить листание в нужную сторону. */
     protected def _mouseClicked(event: MouseEvent): Unit = {
       val sd0 = _stateData
+      println( "touch: lock=" + MTouchLock() + " isTouchDev=" + TouchUtil.IS_TOUCH_DEVICE )
       for (screen <- sd0.screen;  fState <- sd0.focused) {
         val mhand = _mouse2hand(event, screen)
         for (fArr <- FArrow.find()) {
@@ -158,11 +179,6 @@ trait OnFocusBase extends MouseMoving {
         }
       }
     }
-
-    /** Состояние переключения на следующую карточку. */
-    protected def _shiftRightState: FsmState
-    /** Состояние переключения на предыдущую карточку. */
-    protected def _shiftLeftState : FsmState
 
   }
 
@@ -282,6 +298,7 @@ trait OnFocus extends OnFocusBase {
 
       }     // for()
     }       // afterBecome()
+
 
     /** Состояние OnFocus с подгрузкой предшествующих карточек (слева). */
     protected def _leftPreLoadState: FsmState

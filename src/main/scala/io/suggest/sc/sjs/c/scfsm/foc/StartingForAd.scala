@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.c.scfsm.foc
 
-import io.suggest.sc.sjs.c.scfsm.{FindAdsFsmUtil, FindNearAdIds, FindAdsUtil, ScFsmStub}
+import io.suggest.sc.sjs.c.scfsm.{FindAdsFsmUtil, FindNearAdIds, FindAdsUtil}
 import io.suggest.sc.sjs.m.mfoc.{FAdShown, MFocSd, FocRootAppeared}
 import io.suggest.sc.sjs.m.msrv.foc.find.{MFocAd, MFocAds, MFocAdSearchEmpty}
 import io.suggest.sc.sjs.vm.res.FocusedRes
@@ -39,7 +39,12 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with FindAdsFsmUtil {
     override def afterBecome(): Unit = {
       super.afterBecome()
       val sd0 = _stateData
-      for (screen <- sd0.screen;  fState0 <- sd0.focused;  fRoot <- FRoot.find();  car <- fRoot.carousel) {
+      for {
+        screen  <- sd0.screen
+        fState0 <- sd0.focused
+        fRoot   <- FRoot.find()
+        car     <- fRoot.carousel
+      } {
         val gblockOpt   = fState0.gblock
         val currIndex   = _getCurrIndex(fState0)
         // Собрать и запустить fads-реквест на основе запроса к карточкам плитки.
@@ -72,7 +77,7 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with FindAdsFsmUtil {
         car.setCellWidth(currIndex, screen)
         // Начальный сдвиг карусели выставляем без анимации. Весь focused будет выезжать из-за экрана.
         car.disableTransition()
-        car.animateToCell(currIndex, screen)
+        car.animateToCell(currIndex, screen, sd0.browser)
 
         // Подготовить контейнер для стилей.
         FocusedRes.ensureCreated()
@@ -127,7 +132,7 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with FindAdsFsmUtil {
 
         // Прилинковываем запрошенную карточку справа и запускаем анимацию.
         car.pushCellRight(fadRoot)
-        car.animateToCell(currIndex, screen)
+        car.animateToCell(currIndex, screen, sd0.browser)
 
         // Начата обработка тяжелого тела focused-карточки. Залить текущий заголовок focused-выдачи.
         for (fControls <- fRoot.controls) {

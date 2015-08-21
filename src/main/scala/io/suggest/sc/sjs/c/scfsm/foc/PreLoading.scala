@@ -26,7 +26,9 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
  */
 trait PreLoading extends OnFocusBase with FindAdsFsmUtil {
 
-  protected trait FocPreLoadingStateT extends OnFocusStateBaseT with FindAdsUtil {
+
+  /** Абстрактная логика инициализации состояний обычного preload-а без touch. */
+  protected trait FocPreLoadingStateT extends OnFocusStateBaseT with FocPreLoadingReceiveStateT with FindAdsUtil {
 
     override def afterBecome(): Unit = {
       super.afterBecome()
@@ -84,6 +86,18 @@ trait PreLoading extends OnFocusBase with FindAdsFsmUtil {
       }   // for fState...
     }     // afterBecome
 
+
+    protected def _fixAdIdsAccOrder(acc: List[String]): List[String]
+    protected def _nextGBlock(gblock: GBlock): Option[GBlock]
+    protected def _getLimit(fState: MFocSd, currIndex: Int): Int
+    protected def _getOffset(currIndex: Int, limit: Int): Int
+
+  }
+  
+  
+  /** Логика получения и обработки ответа прелоада. */
+  protected trait FocPreLoadingReceiveStateT extends FsmEmptyReceiverState {
+
     private def _receiverPart: Receive = {
       case mfa: MFocAds =>
         _adsReceived(mfa)
@@ -94,15 +108,6 @@ trait PreLoading extends OnFocusBase with FindAdsFsmUtil {
     override def receiverPart: Receive = {
       _receiverPart orElse super.receiverPart
     }
-
-    protected def _fixAdIdsAccOrder(acc: List[String]): List[String]
-    protected def _nextGBlock(gblock: GBlock): Option[GBlock]
-    protected def _getQueue(fState: MFocSd): FAdQueue
-    protected def _enqueueFad(q: FAdQueue, fad: MFocAd): FAdQueue
-    
-    protected def _setAdsReceived(q2: FAdQueue, fState: MFocSd): MFocSd
-    protected def _getLimit(fState: MFocSd, currIndex: Int): Int
-    protected def _getOffset(currIndex: Int, limit: Int): Int
 
     /** Реакция на получение ответа сервера на поисковый запрос. */
     protected def _adsReceived(mfa: MFocAds): Unit = {
@@ -120,24 +125,47 @@ trait PreLoading extends OnFocusBase with FindAdsFsmUtil {
             _setAdsReceived(q2, fState)
           }
       )
-      become(_onFocusState, sd1)
+      become(_preloadDoneState, sd1)
     }
 
     /** Реакция на ошибку в поисковом запросе focused-карточек. */
     protected def _adsRequestFailed(ex: Throwable): Unit = {
       error(ErrorMsgs.FOC_PRELOAD_REQUEST_FAILED, ex)
       // Надо вернутся на предыдущее состояние.
-      become(_onFocusState)
+      become(_preloadDoneState)
     }
 
-    protected def _onFocusState: FsmState
+    protected def _preloadDoneState: FsmState
+
+    protected def _enqueueFad(q: FAdQueue, fad: MFocAd): FAdQueue
+    protected def _getQueue(fState: MFocSd): FAdQueue
+    protected def _setAdsReceived(q2: FAdQueue, fState: MFocSd): MFocSd
 
   }
 
 
+  /** Реализация ресевера результат запроса FocPreLoadingReceiveStateT для подгрузки справа. */
+  protected trait ForRightPreLoadingReceiveStateT extends FocPreLoadingReceiveStateT {
+
+    override protected def _getQueue(fState: MFocSd): FAdQueue = {
+      fState.nexts
+    }
+
+    override protected def _enqueueFad(q: FAdQueue, fad: MFocAd): FAdQueue = {
+      q.enqueue(fad)
+    }
+
+    override protected def _setAdsReceived(q2: FAdQueue, fState: MFocSd): MFocSd = {
+      fState.copy(
+        nexts = q2
+      )
+    }
+
+  }
+
   /** Трейт для сборки состояний опережающей подгрузки focused-карточек
     * во время нахождения юзера в выдаче с обработкой всех сигналов UI. */
-  protected trait FocRightPreLoadingStateT extends FocPreLoadingStateT {
+  protected trait FocRightPreLoadingStateT extends FocPreLoadingStateT with ForRightPreLoadingReceiveStateT {
 
     override protected def _filterSimpleShiftSignal(mhand: MHand): Boolean = {
       !mhand.isRight
@@ -151,13 +179,6 @@ trait PreLoading extends OnFocusBase with FindAdsFsmUtil {
       gblock.next
     }
 
-    override protected def _getQueue(fState: MFocSd): FAdQueue = {
-      fState.nexts
-    }
-
-    override protected def _enqueueFad(q: FAdQueue, fad: MFocAd): FAdQueue = {
-      q.enqueue(fad)
-    }
 
     override protected def _getOffset(currIndex: Int, limit: Int): Int = {
       currIndex + 1
@@ -171,9 +192,23 @@ trait PreLoading extends OnFocusBase with FindAdsFsmUtil {
       }
     }
 
+  }
+
+
+  /** Реализация обработки полученного от сервера ответа с preload-карточками. */
+  protected trait ForLeftPreLoadingReceiveStateT extends FocPreLoadingReceiveStateT {
+
+    override protected def _getQueue(fState: MFocSd): FAdQueue = {
+      fState.prevs
+    }
+
+    override protected def _enqueueFad(q: FAdQueue, fad: MFocAd): FAdQueue = {
+      fad +: q
+    }
+
     override protected def _setAdsReceived(q2: FAdQueue, fState: MFocSd): MFocSd = {
       fState.copy(
-        nexts = q2
+        prevs = q2
       )
     }
 
@@ -181,7 +216,7 @@ trait PreLoading extends OnFocusBase with FindAdsFsmUtil {
 
 
   /** Трейт для реализации состояния предзагрузки карточек слева от текущей. */
-  protected trait FocLeftPreLoadingStateT extends FocPreLoadingStateT {
+  protected trait FocLeftPreLoadingStateT extends FocPreLoadingStateT with ForLeftPreLoadingReceiveStateT {
 
     override protected def _filterSimpleShiftSignal(mhand: MHand): Boolean = {
       !mhand.isLeft
@@ -195,14 +230,6 @@ trait PreLoading extends OnFocusBase with FindAdsFsmUtil {
       gblock.previous
     }
 
-    override protected def _getQueue(fState: MFocSd): FAdQueue = {
-      fState.prevs
-    }
-
-    override protected def _enqueueFad(q: FAdQueue, fad: MFocAd): FAdQueue = {
-      fad +: q
-    }
-
     override protected def _getOffset(currIndex: Int, limit: Int): Int = {
       currIndex - limit
     }
@@ -212,11 +239,6 @@ trait PreLoading extends OnFocusBase with FindAdsFsmUtil {
       Math.min(SIDE_PRELOAD_MAX, sideMax)
     }
 
-    override protected def _setAdsReceived(q2: FAdQueue, fState: MFocSd): MFocSd = {
-      fState.copy(
-        prevs = q2
-      )
-    }
   }
 
 }

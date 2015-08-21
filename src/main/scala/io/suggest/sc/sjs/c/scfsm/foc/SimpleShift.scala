@@ -38,7 +38,7 @@ trait SimpleShift extends MouseMoving {
           become(_shiftDoneState)
         } else {
           // Есть индекс следующей карточки. Запустить анимацию карусели в нужном направлении.
-          car.animateToCell(nextIndex, screen)
+          car.animateToCell(nextIndex, screen, sd0.browser)
 
           // Залить новый заголовок в выдачу и состояние, если продьюсер новой карточки отличается от текущего.
           for {

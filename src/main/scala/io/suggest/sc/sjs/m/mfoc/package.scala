@@ -16,6 +16,4 @@ package object mfoc {
 
   type CarState         = List[FAdShown]
 
-  type MFocTouchMode    = MFocTouchModes.T
-
 }

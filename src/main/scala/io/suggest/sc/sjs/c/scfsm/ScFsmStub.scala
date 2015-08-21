@@ -1,12 +1,11 @@
 package io.suggest.sc.sjs.c.scfsm
 
 import io.suggest.fsm.{AbstractFsm, AbstractFsmUtil, StateData}
-import io.suggest.sc.sjs.m.mfsm.touch.{TouchCancel, TouchEnd, TouchStart}
 import io.suggest.sc.sjs.m.mfsm.{KbdKeyUp, IFsmMsg}
 import io.suggest.sc.sjs.m.msc.fsm.MStData
 import io.suggest.sjs.common.controller.fsm.{DirectDomEventHandlerDummy, DirectDomEventHandlerFsm}
 import io.suggest.sjs.common.util.ISjsLogger
-import org.scalajs.dom.{TouchEvent, KeyboardEvent}
+import org.scalajs.dom.KeyboardEvent
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -37,7 +36,13 @@ trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger with DirectDo
     def receiverPart: Receive
   }
 
-  /** Если состояние не требует ресивера, то можно использовать этот трейт. */
+  /**
+   * Если состояние не требует ресивера, то можно использовать этот трейт.
+   *
+   * Также трейт используется для случаев, когда нужно смешать трейты двух вообще разных состояний,
+   * т.е. вместо голого имплемента receiverPart, каждое состояние оверрайдит неабстрактный receiverPart,
+   * затем все состояния смешиваются без проблем.
+   */
   protected trait FsmEmptyReceiverState extends FsmState {
     override def receiverPart: Receive = PartialFunction.empty
   }

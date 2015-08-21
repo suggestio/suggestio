@@ -12,7 +12,7 @@ import org.scalajs.dom.TouchEvent
  * TouchMove отсутствует -- это direct-сигнал. См. [[io.suggest.sjs.common.controller.fsm.DirectDomEventHandlerFsm]].
  */
 
-/** Трейт классов touch-сигналов. */
+/** Трейт всех классов touch-сигналов. */
 trait ITouchEvent extends IFsmMsg {
   def event: TouchEvent
 }
@@ -25,11 +25,14 @@ case class TouchStart(event: TouchEvent) extends ITouchEvent
 object TouchStart extends ITouchEventCompanion
 
 
+/** Трейт, объединяющий разные сигналы завершения касания. */
+trait ITouchFinish extends ITouchEvent
+
 /** Сигнал о завершении касания экрана. */
-case class TouchEnd(event: TouchEvent) extends ITouchEvent
+case class TouchEnd(event: TouchEvent) extends ITouchFinish
 object TouchEnd extends ITouchEventCompanion
 
 
 /** Сигнал о прерывании и отмене касания. */
-case class TouchCancel(event: TouchEvent) extends ITouchEvent
+case class TouchCancel(event: TouchEvent) extends ITouchFinish
 object TouchCancel extends ITouchEventCompanion
