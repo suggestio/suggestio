@@ -1,7 +1,9 @@
 package io.suggest.sjs.common.util
 
 import org.scalajs.dom
-import scala.scalajs.js.Object
+import org.scalajs.dom.Window
+import scala.scalajs.js
+import scala.scalajs.js.{UndefOr, Object}
 
 /**
  * Suggest.io
@@ -11,9 +13,8 @@ import scala.scalajs.js.Object
  */
 object TouchUtil {
 
-  /** Управляется ли текущий браузер тач-скрином? */
-  lazy val isTouchDevice: Boolean = {
-    Object.hasProperty(dom.window, "ontouchstart") && {
+  def isTouchDevice: Boolean = {
+    TouchElementStub(dom.window).ontouchstart.isDefined && {
       // Для файрфокса есть проблема: если юзер хоть раз включал responsive mode в firefox dev tools, то у него будет
       // светиться ontouchstart из-за внезапной активации dom.w3c_touch_events.enabled = 1
       val ua = dom.navigator.userAgent
@@ -25,6 +26,9 @@ object TouchUtil {
     }
   }
 
+  /** Управляется ли текущий браузер тач-скрином? */
+  lazy val IS_TOUCH_DEVICE = isTouchDevice
+
   /** Название события для выявления клика на touch-девайсах. */
   def EVT_NAME_TOUCH_CLICK = "touchend"
 
@@ -35,7 +39,7 @@ object TouchUtil {
 
   /** Название события клика для текущего девайса. */
   def clickEvtNames: List[String] = {
-    if (isTouchDevice) {
+    if (IS_TOUCH_DEVICE) {
       List(EVT_NAME_TOUCH_CLICK, EVT_NAME_CLICK)
     } else {
       EVT_NAMES_MOUSE_CLICK
@@ -51,4 +55,14 @@ object TouchUtil {
     clickEvtNames.mkString(" ")
   }
 
+}
+
+
+object TouchElementStub {
+  def apply(w: Window): TouchElementStub = {
+    w.asInstanceOf[TouchElementStub]
+  }
+}
+sealed trait TouchElementStub extends js.Object {
+  var ontouchstart: UndefOr[_] = js.native
 }

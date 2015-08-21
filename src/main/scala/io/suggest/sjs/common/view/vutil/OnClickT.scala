@@ -29,7 +29,7 @@ trait OnClickT extends OnMouseClickT {
    * @return js.Function.
    */
   override protected def _getClickListener[T <: Event](f: T => _): js.Function1[T, _] = {
-    if (TouchUtil.isTouchDevice) {
+    if (TouchUtil.IS_TOUCH_DEVICE) {
       // На touch-девайсе нужно распознавать клики среди touch-событий
       { e: T =>
         if (!isTouchLocked) {
@@ -64,7 +64,7 @@ trait OnMouseClickT extends SafeEventTargetT {
   
   /** Комбинация из onClick и _getClickListener. */
   protected def _onClickRaw[T <: Event](listener: js.Function1[T, _]): Unit = {
-    for (evtName <- TouchUtil.clickEvtNames) {
+    for (evtName <- _clickEvtNames) {
       addEventListener(evtName)(listener)
     }
   }
