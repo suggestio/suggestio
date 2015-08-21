@@ -8,6 +8,8 @@ import org.scalajs.dom.TouchEvent
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 20.08.15 19:00
  * Description: Утиль для сборки touch-сигналов и сами touch-сигналы.
+ *
+ * TouchMove отсутствует -- это direct-сигнал. См. [[io.suggest.sjs.common.controller.fsm.DirectDomEventHandlerFsm]].
  */
 
 /** Трейт классов touch-сигналов. */
@@ -21,11 +23,6 @@ trait ITouchEventCompanion extends IFsmMsgCompanion[TouchEvent]
 /** Сигнал о начале касания. */
 case class TouchStart(event: TouchEvent) extends ITouchEvent
 object TouchStart extends ITouchEventCompanion
-
-
-/** Сигнал о движении пальцев по экрану. */
-case class TouchMove(event: TouchEvent) extends ITouchEvent
-object TouchMove extends ITouchEventCompanion
 
 
 /** Сигнал о завершении касания экрана. */

@@ -44,7 +44,7 @@ trait GWrapperT extends SafeElT with SubTagFind with WrapperChildContent {
         // Пнуть контроллер, чтобы подгрузил ещё карточек, когда пора.
         val scrollPxToGo = contentHeight - scr.height - wrappedScrollTop
         if (scrollPxToGo < MGridParams.LOAD_MORE_SCROLL_DELTA_PX) {
-          ScFsm ! GridScroll(e)
+          ScFsm !! GridScroll(e)
         }
       }
     }

@@ -198,7 +198,7 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with FindAdsFsmUtil {
       )
     }
 
-    override def receiverPart: Receive = super.receiverPart orElse {
+    override def receiverPart: Receive = {
       case FocRootAppeared =>
         _appeared()
     }

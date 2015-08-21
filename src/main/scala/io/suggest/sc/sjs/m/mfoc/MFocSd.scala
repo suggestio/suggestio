@@ -38,6 +38,9 @@ trait IFocSd {
     * Название поля -- сокращение от "arrow direction". */
   def arrDir: Option[MHand]
 
+  /** Опциональные данные состояния touch-навигации внутри focused-выдачи. */
+  def touch: Option[MFocTouchSd]
+
 
   def shownFadWithIndex(index: Int): Option[FAdShown] = {
     carState.find(_.index == index)
@@ -72,6 +75,7 @@ case class MFocSd(
   override val nexts        : FAdQueue              = Queue.empty,
   override val carState     : CarState              = Nil,
   override val prevs        : FAdQueue              = Queue.empty,
-  override val arrDir       : Option[MHand]         = None
+  override val arrDir       : Option[MHand]         = None,
+  override val touch        : Option[MFocTouchSd]   = None
 )
   extends IFocSd

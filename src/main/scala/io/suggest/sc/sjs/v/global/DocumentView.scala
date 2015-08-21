@@ -32,7 +32,7 @@ object DocumentView {
 
     // Реакция на нажатия кнопок клавиатуры.
     ds.addEventListener("keyup") { event: KeyboardEvent =>
-      ScFsm ! KbdKeyUp(event)
+      ScFsm !! KbdKeyUp(event)
     }
 
     //val clickEvtName = TouchUtil.clickEvtName

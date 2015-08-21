@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.c.scfsm.foc
 
 import io.suggest.sc.sjs.c.scfsm.ScFsmStub
 import io.suggest.sc.sjs.m.magent.IMScreen
-import io.suggest.sc.sjs.m.mfoc.{MouseMove, MFocSd}
+import io.suggest.sc.sjs.m.mfoc.MFocSd
 import io.suggest.sc.sjs.vm.foc.fad.FArrow
 import io.suggest.sjs.common.model.{MHands, MHand}
 import org.scalajs.dom.MouseEvent
@@ -20,7 +20,8 @@ trait MouseMoving extends ScFsmStub {
   protected trait FocMouseMovingStateT extends FsmState {
 
     /** Логика обработки сигнала о движении мышки. */
-    protected def _mouseMove(event: MouseEvent): Unit = {
+    override def onMouseMove(event: MouseEvent): Unit = {
+      super.onMouseMove(event)
       val sd0 = _stateData
       for (screen <- sd0.screen;  fState <- sd0.focused;  fArr <- FArrow.find()) {
         // Обновить направление стрелки и состояние FSM, если требуется.
@@ -55,16 +56,6 @@ trait MouseMoving extends ScFsmStub {
           ))
         )
       }
-    }
-
-    /** При override лучше новые события приписывать снизу, т.е.
-      * {{{
-      *   override ... = super.receiverPart orElse { ... }
-      * }}}
-      */
-    override def receiverPart: Receive = {
-      case MouseMove(event) =>
-        _mouseMove(event)
     }
 
   }

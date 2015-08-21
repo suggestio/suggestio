@@ -21,6 +21,4 @@ case object FocRootAppeared extends IFsmMsg
 case class MouseClick(event: MouseEvent) extends IFsmMsg
 object MouseClick extends IFsmMsgCompanion[MouseEvent]
 
-/** Движение курсора мышки. */
-case class MouseMove(event: MouseEvent) extends IFsmMsg
-object MouseMove extends IFsmMsgCompanion[MouseEvent]
+// MouseMove обрабатывается через DirectDomEventHandler.

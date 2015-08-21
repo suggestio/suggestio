@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.vm.foc
 
+import io.suggest.primo.IReset
 import io.suggest.sc.sjs.c.ScFsm
 import io.suggest.sc.sjs.m.mfoc.{ProducerLogoClick, CloseBtnClick}
 import io.suggest.sc.sjs.v.vutil.VUtil
@@ -25,7 +26,8 @@ object FControls extends FindDiv {
 
 
 /** Логика focused controls вынесена сюда. */
-trait FControlsT extends SafeElT with SetInnerHtml with ClearT with IInitLayout with OnClick with GetInnerHtml {
+trait FControlsT extends SafeElT with SetInnerHtml with ClearT with IInitLayout with OnClick with GetInnerHtml
+with IReset {
 
   override type T = HTMLDivElement
 
@@ -43,9 +45,13 @@ trait FControlsT extends SafeElT with SetInnerHtml with ClearT with IInitLayout 
         }
         // TODO Клик по кнопке перехода на плитку продьюсера.
       for (msg <- msgOpt) {
-        ScFsm ! msg
+        ScFsm !! msg
       }
     }
+  }
+
+  override def reset(): Unit = {
+    clear()
   }
 
 }

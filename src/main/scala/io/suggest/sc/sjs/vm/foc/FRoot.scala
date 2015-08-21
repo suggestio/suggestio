@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.vm.foc
 
+import io.suggest.primo.IReset
 import io.suggest.sc.sjs.vm.util.{ClearT, WillTranslate3d, IInitLayout}
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sjs.common.view.safe.SafeElT
@@ -22,12 +23,14 @@ object FRoot extends FindDiv {
 }
 
 
-trait FRootT extends SafeElT with SetDisplayEl with IInitLayout with WillTranslate3d with ShowHideDisplayEl with ClearT {
+trait FRootT extends SafeElT with SetDisplayEl with IInitLayout with WillTranslate3d with ShowHideDisplayEl
+with ClearT with IReset {
 
   override type T = HTMLDivElement
 
   def controls = FControls.find()
   def carousel = FCarousel.find()
+
 
   /** Включение анимации. */
   def enableTransition(): Unit = {
@@ -39,10 +42,16 @@ trait FRootT extends SafeElT with SetDisplayEl with IInitLayout with WillTransla
     removeClass(ROOT_TRANSITION_CLASS)
   }
 
+
   /** Сокрытие с анимацией или без оной. */
   def initialDisappear(): Unit = {
     addClasses(ROOT_DISAPPEAR_CLASS)
   }
+
+  def removeInitialDisappear(): Unit = {
+    removeClass(ROOT_DISAPPEAR_CLASS)
+  }
+
 
   /** Анимация основного отображения на экран. */
   def appearTransition(): Unit = {
@@ -54,6 +63,7 @@ trait FRootT extends SafeElT with SetDisplayEl with IInitLayout with WillTransla
     removeClass(ROOT_APPEAR_CLASS)
   }
 
+
   override def initLayout(): Unit = {
     val f = IInitLayout.f
     controls foreach f
@@ -64,6 +74,21 @@ trait FRootT extends SafeElT with SetDisplayEl with IInitLayout with WillTransla
     val f = ClearT.f
     controls foreach f
     carousel foreach f
+  }
+
+  /** Сброс состояния корневого элемента на исходную. */
+  override def reset(): Unit = {
+    // Сброс и чистка текущего div'а.
+    hide()
+    wontAnimate()
+    clear()
+    disableTransition()
+    disappearTransition()
+    removeInitialDisappear()
+    // Сброс подчиненных элементов.
+    val rf = IReset.f
+    carousel.foreach(rf)
+    controls.foreach(rf)
   }
 }
 

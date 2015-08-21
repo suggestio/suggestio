@@ -1,9 +1,11 @@
 package io.suggest.sc.sjs.c.scfsm.foc
 
+import io.suggest.primo.IReset
 import io.suggest.sc.sjs.m.mfoc.FocRootDisappeared
 import io.suggest.sc.sjs.vm.foc.FRoot
 import io.suggest.sc.ScConstants.Focused.SLIDE_ANIMATE_MS
 import io.suggest.sc.sjs.vm.res.FocusedRes
+import io.suggest.sc.sjs.vm.util.ClearT
 import org.scalajs.dom
 
 /**
@@ -34,7 +36,7 @@ trait Closing extends MouseMoving {
       }
     }
 
-    override def receiverPart: Receive = super.receiverPart orElse {
+    override def receiverPart: Receive = {
       case FocRootDisappeared =>
         _disappeared()
     }
@@ -44,13 +46,8 @@ trait Closing extends MouseMoving {
       // В фоне надо очистить focused-верстку от мусора и освежить базовый каркас focused-выдачи.
       dom.setTimeout(
         {() =>
-          for (froot <- FRoot.find()) {
-            froot.wontAnimate()
-            froot.clear()
-            for (res <- FocusedRes.find()) {
-              res.clear()
-            }
-          }
+          FRoot.find() foreach IReset.f
+          FocusedRes.find() foreach ClearT.f
         },
         10
       )

@@ -12,6 +12,8 @@ trait OnTouch extends ScFsmStub {
 
   /** Трейт реализации состояния touch-навигации. */
   protected trait FocOnTouchStateT extends FsmState {
+
+
   }
 
 }

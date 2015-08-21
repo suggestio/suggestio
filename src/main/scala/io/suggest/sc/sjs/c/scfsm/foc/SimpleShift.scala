@@ -65,7 +65,7 @@ trait SimpleShift extends MouseMoving {
       }
     }
 
-    override def receiverPart: Receive = super.receiverPart orElse {
+    override def receiverPart: Receive = {
       case ShiftAnimationFinished =>
         _animationFinished()
     }

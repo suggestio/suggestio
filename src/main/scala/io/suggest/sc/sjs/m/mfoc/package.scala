@@ -12,8 +12,10 @@ import scala.collection.immutable.Queue
  */
 package object mfoc {
 
-  type FAdQueue = Queue[IFocAd]
+  type FAdQueue         = Queue[IFocAd]
 
-  type CarState = List[FAdShown]
+  type CarState         = List[FAdShown]
+
+  type MFocTouchMode    = MFocTouchModes.T
 
 }

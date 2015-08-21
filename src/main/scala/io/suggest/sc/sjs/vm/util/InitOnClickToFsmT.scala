@@ -24,7 +24,7 @@ trait SendEventToFsmUtil {
    */
   protected def _sendEventF[EventT <: Event](model: IFsmMsgCompanion[EventT]) = {
     {e: EventT =>
-      ScFsm ! model(e)
+      ScFsm !! model(e)
     }
   }
 
@@ -58,4 +58,3 @@ trait InitOnEventToFsmUtilT extends SafeEventTargetT with SendEventToFsmUtil {
     addEventListener(eventType)(f)
   }
 }
-

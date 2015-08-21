@@ -1,12 +1,13 @@
 package io.suggest.sc.sjs.c.scfsm.foc
 
 import io.suggest.sc.sjs.m.mfoc._
+import io.suggest.sc.sjs.m.mfsm.touch.TouchStart
 import io.suggest.sc.sjs.vm.foc.{FCarousel, FRoot}
 import io.suggest.sc.sjs.vm.foc.fad.{FAdWrapper, FArrow, FAdRoot}
 import io.suggest.sjs.common.model.{MHand, MHands}
 import io.suggest.sc.ScConstants.Focused.FAd.KBD_SCROLL_STEP_PX
 import org.scalajs.dom
-import org.scalajs.dom.{MouseEvent, KeyboardEvent}
+import org.scalajs.dom.{TouchEvent, MouseEvent, KeyboardEvent}
 import org.scalajs.dom.ext.KeyCode
 
 /**
@@ -22,7 +23,9 @@ trait OnFocusBase extends MouseMoving {
     * Тут реакция на события воздействия пользователя на focused-выдачу. */
   protected trait OnFocusStateBaseT extends FocMouseMovingStateT with INodeSwitchState {
 
-    override def receiverPart: Receive = super.receiverPart orElse {
+    override def receiverPart: Receive = {
+      case TouchStart(event) =>
+        _onTouchStart(event)
       case CloseBtnClick =>
         _closeFocused()
       case ProducerLogoClick =>
@@ -30,6 +33,13 @@ trait OnFocusBase extends MouseMoving {
       case MouseClick(evt) =>
         _mouseClicked(evt)
       // TODO Реакция на touch-события
+    }
+
+    /** Реакция на начало свайпа. */
+    protected def _onTouchStart(event: TouchEvent): Unit = {
+      // TODO нужно переключить состояние на какое-то touch-состояние.
+      //event.touches.apply(0)
+      ???
     }
 
     override def _onKbdKeyUp(event: KeyboardEvent): Unit = {

@@ -1,9 +1,10 @@
 package io.suggest.sc.sjs.c.scfsm
 
 import io.suggest.fsm.{AbstractFsm, AbstractFsmUtil, StateData}
-import io.suggest.sc.sjs.m.mfsm.touch.{TouchCancel, TouchEnd, TouchStart, TouchMove}
+import io.suggest.sc.sjs.m.mfsm.touch.{TouchCancel, TouchEnd, TouchStart}
 import io.suggest.sc.sjs.m.mfsm.{KbdKeyUp, IFsmMsg}
 import io.suggest.sc.sjs.m.msc.fsm.MStData
+import io.suggest.sjs.common.controller.fsm.{DirectDomEventHandlerDummy, DirectDomEventHandlerFsm}
 import io.suggest.sjs.common.util.ISjsLogger
 import org.scalajs.dom.{TouchEvent, KeyboardEvent}
 
@@ -16,7 +17,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
  * Created: 18.06.15 11:28
  * Description: Заготовка для сборки FSM-частей подсистем.
  */
-trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger {
+trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger with DirectDomEventHandlerFsm {
 
   override type Receive = PartialFunction[Any, Unit]
 
@@ -29,16 +30,10 @@ trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger {
 
 
   /** Добавление слушателя событий отпускания кнопок клавиатуры в состояние. */
-  protected trait FsmState extends super.FsmState {
+  protected trait FsmState extends super.FsmState with DirectDomEventHandlerDummy {
     /** Переопределяемый метод для обработки событий клавиатуры.
       * По дефолту -- игнорировать все события клавиатуры. */
     def _onKbdKeyUp(event: KeyboardEvent): Unit = {}
-
-    def onTouchStart(event: TouchEvent): Unit = {}
-    def onTouchMove(event: TouchEvent): Unit = {}
-    def onTouchEnd(event: TouchEvent): Unit = {}
-    def onTouchCancel(event: TouchEvent): Unit = {}
-
     def receiverPart: Receive
   }
 
@@ -50,15 +45,6 @@ trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger {
 
   /** Ресивер для всех состояний. */
   override protected def allStatesReceiver: Receive = {
-    // Реакция на touch-события. Они обычно самые частые.
-    case TouchMove(event) =>
-      _state.onTouchMove(event)
-    case TouchStart(event) =>
-      _state.onTouchStart(event)
-    case TouchEnd(event) =>
-      _state.onTouchEnd(event)
-    case TouchCancel(event) =>
-      _state.onTouchCancel(event)
     // Реакция на события клавиатуры.
     case KbdKeyUp(event) =>
       _state._onKbdKeyUp(event)
@@ -71,13 +57,18 @@ trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger {
   override type SD = MStData
 
   /**
-   * Статический API-метод для отправки события в FSM:
-   *   ScFsm ! event
-   * Метод обязан возвращать выполнение вызывающему как можно скорее и без всяких exceptions.
+   * Статический СИНХРОННЫЙ метод API для отправки события в FSM:
+   *   ScFsm !! event
+   * "!!" вместо "!", т.к. метод блокирующий.
+   * Блокирующий, потому что
+   * 1. Снижение издержек вызова.
+   * 2. Все клиенты этого метода -- по сути короткие асинхронные листенеры. Нет ни одной причины
+   * быстро возвращать им поток выполнения и это не потребовалось ни разу.
+   * 3. Есть необходимость в поддержании порядка получаемых сообщений совместно с синхронным DirectDomEventHandlerFsm.
    * @param e Событие.
    */
-  final def !(e: IFsmMsg): Unit = {
-    _sendEvent(e)
+  final def !!(e: IFsmMsg): Unit = {
+    _sendEventSync(e)
   }
 
   /** Внутренняя асинхронная отправка сообщения.
@@ -116,4 +107,5 @@ trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger {
   protected trait INodeSwitchState {
     protected def _onNodeSwitchState: FsmState
   }
+
 }
