@@ -1,8 +1,11 @@
 package models.msc
 
 import io.suggest.model.EnumMaybeWithId
+import models.Context
 import play.api.mvc.QueryStringBindable
+import play.twirl.api.{Template2, Html}
 import util.PlayMacroLogsImpl
+import views.html.sc.script._
 
 /**
  * Suggest.io
@@ -34,6 +37,9 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImp
 
     /** Нужно ли при начальном рендере рендерить также базовое содержимое smFocusedAds (пустая карусель и проч.) */
     def withEarlyFocAdsRootContainers: Boolean
+
+    /** Шаблон для рендера скрипта выдачи. */
+    def scriptTpl: Template2[IScScriptRenderArgs, Context, Html]
   }
 
   override type T = Val
@@ -47,6 +53,8 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImp
     override def geoNodeIdAsClass   = true
     override def nodeListLayersServerSideExpand = false
     override def withEarlyFocAdsRootContainers = false
+    /** У v1 часть скрипта заинлайнена в шаблоне. */
+    override def scriptTpl = _scriptV1Tpl
   }
 
   /** Выдача, переписанная на scala.js. Исходная версия. */
@@ -61,6 +69,8 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImp
     override def nodeListLayersServerSideExpand = true
     /** sc-sjs требует ранние контейнеры для focused ads и прочее. */
     override def withEarlyFocAdsRootContainers = true
+    /** У v2-выдачи несколько скриптов. */
+    override def scriptTpl = _scriptV2Tpl
   }
 
 

@@ -1,9 +1,7 @@
 package models.msc
 
 import models._
-import play.api.mvc.Call
 import play.twirl.api.Html
-import util.showcase.ShowcaseUtil
 
 /**
  * Suggest.io

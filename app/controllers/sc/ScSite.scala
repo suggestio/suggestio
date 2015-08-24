@@ -123,13 +123,7 @@ trait ScSiteBase extends SioController with PlayMacroLogsI {
     def _indexCall: Call
 
     /** Какой шаблон скрипта надо рендерить для переданной в _siteArgs версии API? */
-    def _scriptTplForApiVsn: Template2[IScScriptRenderArgs, Context, Html] = {
-      import views.html.sc.script._
-      _siteArgs.apiVsn match {
-        case MScApiVsns.Coffee => _scriptV1Tpl
-        case MScApiVsns.Sjs1   => _scriptV2Tpl
-      }
-    }
+    def _scriptTplForApiVsn = _siteArgs.apiVsn.scriptTpl
 
     def scriptRenderArgsFut: Future[IScScriptRenderArgs] = {
       val res = ScScriptRenderArgs(
