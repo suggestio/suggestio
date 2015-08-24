@@ -12,4 +12,6 @@ object ErrorMsgs {
 
   def SET_ATTR_NOT_FOUND         = "E56"
 
+  def BSS_GEO_LOC_FAILED         = "E42"
+
 }
