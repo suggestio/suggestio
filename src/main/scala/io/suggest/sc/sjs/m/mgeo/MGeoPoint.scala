@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.m.mgeo
 
 import io.suggest.geo.IGeoPoint
+import org.scalajs.dom.Coordinates
 
 /**
  * Suggest.io
@@ -9,8 +10,19 @@ import io.suggest.geo.IGeoPoint
  * Description: Реализация модели географической точки.
  */
 
+object MGeoPoint {
+
+  def apply(domCoords: Coordinates): MGeoPoint = {
+    apply(
+      lat = domCoords.latitude,
+      lon = domCoords.longitude
+    )
+  }
+
+}
+
 case class MGeoPoint(
-  lat: Double,
-  lon: Double
+  override val lat: Double,
+  override val lon: Double
 )
   extends IGeoPoint

@@ -55,6 +55,9 @@ trait IStData extends MGeoLocUtil {
     * None значит, что focused-выдача отключена. */
   def focused     : Option[MFocSd]
 
+  /** Контейнер с данными геолокации. Пришел на смену MGeoLocUtil. */
+  def geo         : MGeoLocSd
+
 }
 
 
@@ -68,7 +71,8 @@ case class MStData(
   override val browser      : IBrowser              = MStData.browserDflt,
   override val search       : MSearchSd             = MSearchSd(),
   override val nav          : MNavState             = MNavState(),
-  override val focused      : Option[MFocSd]        = None
+  override val focused      : Option[MFocSd]        = None,
+  override val geo          : MGeoLocSd             = MGeoLocSd()
 )
   extends IStData
 {

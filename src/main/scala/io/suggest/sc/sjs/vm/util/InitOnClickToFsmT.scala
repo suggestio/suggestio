@@ -22,7 +22,7 @@ trait SendEventToFsmUtil {
    * @tparam EventT Тип заворачиваемого события.
    * @return Функция, пригодная для повешивания в качестве листенера.
    */
-  protected def _sendEventF[EventT <: Event](model: IFsmMsgCompanion[EventT]) = {
+  protected def _sendEventF[EventT](model: IFsmMsgCompanion[EventT]) = {
     {e: EventT =>
       ScFsm !! model(e)
     }

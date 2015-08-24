@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.m.mfsm
 
-import org.scalajs.dom.{Event, KeyboardEvent, EventTarget}
+import org.scalajs.dom.{Event, EventTarget}
 
 /**
   * Suggest.io
@@ -11,14 +11,11 @@ import org.scalajs.dom.{Event, KeyboardEvent, EventTarget}
 trait IFsmMsg
 
 
-/** Событие отжатия клавиши на клавиатуре. */
-case class KbdKeyUp(e: KeyboardEvent) extends IFsmMsg
-
-
 /** Интерфейс для компаньонов классов-сообщений, завящанных на event'ы. */
 trait IFsmMsgCompanion[T] {
   def apply(e: T): IFsmMsg
 }
+
 
 /** Интерфейс для сообщений-контейнеров Event'ов. */
 trait IFsmEventMsgCompanion
@@ -28,7 +25,10 @@ trait IFsmEventMsgCompanion
 /** Из-за асинхронной природы ScFsm, поле currentTarget может потеряться в ходе
   * асинхронной обработки сигнала после bubbling'а. */
 trait CurrentTargetBackup {
+
+  /** Доступ к экземпляру события. */
   def event: Event
+
   type CurrentTarget_t <: EventTarget
 
   /** Цель, на которую повешен event-listener. */
@@ -42,4 +42,5 @@ trait CurrentTargetBackup {
 
   /** @return None || Some(EventTarget+) */
   def currentTargetOpt = Option(currentTarget)
+
 }

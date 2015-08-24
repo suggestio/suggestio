@@ -1,10 +1,14 @@
 package io.suggest.sc.sjs.c.scfsm
 
 import io.suggest.fsm.{AbstractFsm, AbstractFsmUtil, StateData}
-import io.suggest.sc.sjs.m.mfsm.{KbdKeyUp, IFsmMsg}
+import io.suggest.sc.sjs.m.mfsm.{IFsmMsgCompanion, IFsmMsg}
+import io.suggest.sc.sjs.m.mfsm.signals.KbdKeyUp
+import io.suggest.sc.sjs.m.mgeo.{IGeoErrorSignal, IGeoLocSignal}
 import io.suggest.sc.sjs.m.msc.fsm.MStData
 import io.suggest.sjs.common.controller.fsm.{DirectDomEventHandlerDummy, DirectDomEventHandlerFsm}
+import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.util.ISjsLogger
+import org.scalajs.dom
 import org.scalajs.dom.KeyboardEvent
 
 import scala.concurrent.Future
@@ -34,6 +38,14 @@ trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger with DirectDo
       * По дефолту -- игнорировать все события клавиатуры. */
     def _onKbdKeyUp(event: KeyboardEvent): Unit = {}
     def receiverPart: Receive
+
+    /** Реакция на получение данных геолокации. */
+    def _geoLocReceived(gs: IGeoLocSignal): Unit = {}
+    /** Реакция на получение ошибки получения геолокация. */
+    def _geoLocErrorReceived(ge: IGeoErrorSignal): Unit = {
+      val e = ge.error
+      warn(ErrorMsgs.BSS_GEO_LOC_FAILED + " [" + e.code + "] " + e.message)
+    }
   }
 
   /**
@@ -53,6 +65,11 @@ trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger with DirectDo
     // Реакция на события клавиатуры.
     case KbdKeyUp(event) =>
       _state._onKbdKeyUp(event)
+    // Данные по геолокации от браузера могут приходить когда угодно.
+    case gs: IGeoLocSignal =>
+      _state._geoLocReceived(gs)
+    case ge: IGeoErrorSignal =>
+      _state._geoLocErrorReceived(ge)
     // Неожиданные сообщения надо логгировать.
     case other =>
       // Пока только логгируем пришедшее событие. Потом и логгирование надо будет отрубить.
@@ -113,4 +130,37 @@ trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger with DirectDo
     protected def _onNodeSwitchState: FsmState
   }
 
+  protected def _retry(afterMs: Long)(f: => FsmState): Unit = {
+    dom.window.setTimeout(
+      { () => become(f) },
+      afterMs
+    )
+  }
+
+
+  /** Генератор анонимных фунций-коллбеков, использующий wrapper-модель, заданную модель-компаньоном.
+    * Завёрнутый результат отправляется в ScFsm.
+    * @param model Компаньон модели, в которую надо заворачивать исходные данные функции.
+    */
+  protected def _signalCallbackF[T](model: IFsmMsgCompanion[T]): (T => _) = {
+    {arg: T =>
+      _sendEvent( model(arg) )
+    }
+  }
+
+  /** Генератор анонимных фунций-коллбеков, пробрасывающих полученные данные как события в ScFsm. */
+  protected def _plainCallbackF[T]: (T => _) = {
+    {arg: T =>
+      _sendEvent(arg)
+    }
+  }
+
+  /**
+   * Переключение на новое состояние. Старое состояние будет отброшено.
+   * @param nextState Новое состояние.
+   */
+  override protected def become(nextState: FsmState): Unit = {
+    log(_state.name + " -> " + nextState.name)
+    super.become(nextState)
+  }
 }
