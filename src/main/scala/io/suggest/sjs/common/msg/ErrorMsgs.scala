@@ -8,10 +8,16 @@ package io.suggest.sjs.common.msg
  */
 object ErrorMsgs {
 
-  def FOC_PRELOAD_REQUEST_FAILED = "E720"
+  private def E(i: Int): String = "E" + i
 
-  def SET_ATTR_NOT_FOUND         = "E56"
+  def FOC_PRELOAD_REQUEST_FAILED = E(1)
 
-  def BSS_GEO_LOC_FAILED         = "E42"
+  def SET_ATTR_NOT_FOUND         = E(2)
+
+  def BSS_GEO_LOC_FAILED         = E(3)
+
+  def GET_NODE_INDEX_FAILED      = E(4)
+
+  def FIND_ADS_REQ_FAILED        = E(5)
 
 }
