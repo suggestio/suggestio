@@ -13,4 +13,12 @@ import org.scalajs.dom.Position
 case class MGeoLocSd(
   bssWid        : Option[Int] = None,
   lastBssPos    : Option[Position] = None
-)
+) {
+
+
+  def currGeoMode: IMGeoMode = {
+    lastBssPos
+      .fold[IMGeoMode] (MGeoModeIp) (pos => MGeoModeLoc(MGeoLoc(pos)))
+  }
+
+}

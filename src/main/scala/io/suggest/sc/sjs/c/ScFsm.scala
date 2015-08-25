@@ -6,7 +6,6 @@ import io.suggest.sc.sjs.c.scfsm.node.Index
 import io.suggest.sc.sjs.m.msc.fsm.{IStData, MStData}
 import io.suggest.sc.sjs.m.msearch.MTabs
 import io.suggest.sjs.common.util.SjsLogger
-import org.scalajs.dom.Event
 
 /**
  * Suggest.io
@@ -82,6 +81,7 @@ with foc.SimpleShift with foc.PreLoading with foc.OnTouch with foc.OnTouchPreloa
   /*--------------------------------------------------------------------------------
    * Фаза состояний инициализации выдачи конкретного узла (node index).
    *--------------------------------------------------------------------------------*/
+  // TODO может перекинуть классы-реализации внутрь node.States + добавить метод для выхода из фазы на OnPlainGrid?
 
   /** Реализация состояния-получения-обработки индексной страницы. */
   class NodeInit_GetIndex_WaitIndex_State extends NodeInit_GetIndex_WaitIndex_StateT {

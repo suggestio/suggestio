@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.c.scfsm
 
 import io.suggest.sc.ScConstants.ShowLevels._
+import io.suggest.sc.sjs.m.mgeo.IMGeoMode
 import io.suggest.sc.sjs.m.msc.fsm.MStData
 import io.suggest.sc.sjs.m.msrv.ads.find.{MFindAds, MFindAdsReqDflt, MFindAdsReqEmpty}
 import io.suggest.sc.sjs.vm.grid.GBlock
@@ -18,6 +19,7 @@ trait FindAdsUtil {
     override def generation: Option[Long] = Some(_sd.generation)
     override def receiverId               = _sd.adnIdOpt
     override def levelId: Option[String]  = Some(ID_START_PAGE)
+    override def geo: Option[IMGeoMode]   = Some( _sd.geo.currGeoMode )
   }
 
   /** Дефолтовая реализация аргументов поиска. */

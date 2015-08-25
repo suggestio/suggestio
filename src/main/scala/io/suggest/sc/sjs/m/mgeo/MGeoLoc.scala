@@ -1,5 +1,7 @@
 package io.suggest.sc.sjs.m.mgeo
 
+import org.scalajs.dom.Position
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -18,3 +20,15 @@ case class MGeoLoc(
   accuracyM   : Double,
   timestamp   : Long
 )
+
+object MGeoLoc {
+
+  def apply(pos: Position): MGeoLoc = {
+    MGeoLoc(
+      point     = MGeoPoint(pos.coords),
+      accuracyM = pos.coords.accuracy,
+      timestamp = pos.timestamp.toLong
+    )
+  }
+
+}

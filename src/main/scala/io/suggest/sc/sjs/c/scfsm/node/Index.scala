@@ -34,7 +34,7 @@ trait Index extends ScFsmStub with FindAdsUtil {
 
       val inxArgs = MScIndexArgs(
         adnIdOpt  = sd0.adnIdOpt,
-        geoMode   = Some( sd0.currGeoMode ),
+        geoMode   = Some( sd0.geo.currGeoMode ),
         screen    = sd0.screen
       )
       val inxFut = MNodeIndex.getIndex(inxArgs)

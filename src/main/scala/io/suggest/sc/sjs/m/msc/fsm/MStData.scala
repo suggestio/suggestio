@@ -28,7 +28,7 @@ object MStData {
 
 
 /** Интерфейс контейнера данный полного состояния выдачи. */
-trait IStData extends MGeoLocUtil {
+trait IStData {
 
   /** Данные по окну, если есть. */
   def screen      : Option[IMScreen]
@@ -64,7 +64,6 @@ trait IStData extends MGeoLocUtil {
 /** Реализация immutable-контейнера для передачи данных Sc FSM между состояниями. */
 case class MStData(
   override val screen       : Option[IMScreen]      = None,
-  override val geoLoc       : Option[MGeoLoc]       = None,
   override val grid         : MGridData             = MGridData(),
   override val generation   : Long                  = MStData.generationDflt,
   override val adnIdOpt     : Option[String]        = None,
