@@ -1,7 +1,5 @@
 package io.suggest.sc
 
-import io.suggest.common.MHandsBaseT
-
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -31,6 +29,11 @@ object ScConstants {
 
   /** Имя css-класс с will-change для подготовки к translate3d. */
   def CLASS_WILL_TRANSLATE3D = "will-translate3d"
+
+  /** Название аттрибута с длиной. */
+  def WIDTH_ATTR    = "data-width"
+  /** Название аттрибута с высотой. */
+  def HEIGHT_ATTR   = "data-height"
 
   /** Client/server констатны выдачи для моделей ScReqArgs. */
   object ReqArgs {
@@ -176,11 +179,6 @@ object ScConstants {
 
   /** Константы для отрендеренных карточек. */
   object Block {
-
-    /** Название аттрибута с длиной блока. */
-    def BLK_WIDTH_ATTR    = "data-width"
-    /** Название аттрибута с высотой блока. */
-    def BLK_HEIGHT_ATTR   = "data-height"
 
     /** Имя аттрибута с порядковым номером в плитке от нуля. */
     def BLK_INDEX_ATTR    = "data-index"
