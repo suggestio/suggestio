@@ -13,6 +13,7 @@ import org.scalajs.dom.KeyboardEvent
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import scala.util.Success
 
 /**
  * Suggest.io
@@ -163,4 +164,17 @@ trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger with DirectDo
     log(_state.name + " -> " + nextState.name)
     super.become(nextState)
   }
+
+  /** Подписать фьючерс на отправку результата в ScFsm. */
+  protected def _sendFutResBack[T](fut: Future[T]): Unit = {
+    fut onComplete { case tryRes =>
+      val msg = tryRes match {
+        case Success(res) => res
+        case failure      => failure
+      }
+      // Вешать асинхронную отправку сюда смысла нет, только паразитные setTimeout() в коде появяться.
+      _sendEventSyncSafe(msg)
+    }
+  }
+
 }

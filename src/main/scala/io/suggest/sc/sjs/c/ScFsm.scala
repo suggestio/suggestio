@@ -48,9 +48,11 @@ with foc.PreLoading with foc.OnTouch with foc.OnTouchPreload {
   }
 
 
-  // --------------------------------------------------------------------------------
-  // Реализации состояний FSM. Внутреняя логика состояний раскидана по аддонам.
-  // --------------------------------------------------------------------------------
+  // Далее идёт реализации FSM-состояний. Внутреняя логика состояний раскидана по аддонам.
+
+  /*--------------------------------------------------------------------------------
+   * Состояния ранней инициализации выдачи.
+   *--------------------------------------------------------------------------------*/
 
   protected trait NormalInitStateT extends super.NormalInitStateT {
     override protected def _geoAskState = new Init_JsRouterWait_GeoAskWait_State
@@ -79,6 +81,10 @@ with foc.PreLoading with foc.OnTouch with foc.OnTouchPreload {
   }
 
 
+  /*--------------------------------------------------------------------------------
+   * Состояния инициализации выдачи узла (node index).
+   *--------------------------------------------------------------------------------*/
+
   /** Реализация состояния-получения-обработки индексной страницы. */
   class GetIndexState extends GetIndexStateT {
 
@@ -88,12 +94,11 @@ with foc.PreLoading with foc.OnTouch with foc.OnTouchPreload {
     }
 
     /** Запрос за index'ом не удался. */
-    override def _onFailure(ex: Throwable): Unit = {
+    override def _getNodeIndexFailed(ex: Throwable): Unit = {
       error("Failed to ask index, retrying", ex)
       _retry(250)(new GetIndexState)
     }
   }
-
 
   /** Реализация состояния начальной загрузки карточек в выдачу. */
   class AppendAdsToGridDuringWelcomeState(
@@ -106,7 +111,10 @@ with foc.PreLoading with foc.OnTouch with foc.OnTouchPreload {
     override def _findAdsFailed(ex: Throwable): Unit = ???
   }
   
-  
+
+  /*--------------------------------------------------------------------------------
+   * Состояния работы с сеткой карточек (grid).
+   *--------------------------------------------------------------------------------*/
   /** Трейт для поддержки переключения на состояния, исходящие из OnGridStateT  */
   protected trait OnGridStateT extends super.OnGridStateT {
     override def _startFocusOnAdState = new FocStartingForAd
@@ -130,27 +138,31 @@ with foc.PreLoading with foc.OnTouch with foc.OnTouchPreload {
   }
 
 
-  // Состояния с search-панелью.
+  /*--------------------------------------------------------------------------------
+   * Состояния нахождения в сетке и на поисковой панели одновременно (grid + search).
+   *--------------------------------------------------------------------------------*/
   /** Общий код для реакции на закрытие search-панели. */
   protected[this] trait _SearchClose extends OnGridSearchStateT {
-    override def _nextStateSearchPanelClosed(sd1: MStData) = new OnPlainGridState
+    override def _nextStateSearchPanelClosed = new OnPlainGridState
   }
 
   /** Состояние, где и сетка есть, и поисковая панель отрыта на вкладке географии. */
   class OnGridSearchGeoState extends OnGridSearchGeoStateT with _SearchClose with OnGridStateT {
-    override def _tabSwitchedFsmState(sd2: MStData) = new OnGridSearchHashTagsState
+    override def _tabSwitchedFsmState = new OnGridSearchHashTagsState
   }
 
   /** Состояние, где открыта вкладка хеш-тегов на панели поиска. */
   class OnGridSearchHashTagsState extends OnGridSearchHashTagsStateT with _SearchClose with OnGridStateT {
-    override def _tabSwitchedFsmState(sd2: MStData) = new OnGridSearchGeoState
+    override def _tabSwitchedFsmState = new OnGridSearchGeoState
   }
 
 
-  // Состояния с nav-панелью.
+  /*--------------------------------------------------------------------------------
+   * Состояния нахождения в сетке и на панели навигации одновременно.
+   *--------------------------------------------------------------------------------*/
   /** Вспомогательный трейт для сборки  */
   protected trait _OnGridNav extends super._OnGridNav {
-    override def _onHideNavState(sd1: MStData) = new OnPlainGridState
+    override def _onHideNavState = new OnPlainGridState
   }
   /** Состояние отображения панели навигации с текущей подгрузкой списка карточек. */
   class OnGridNavLoadListState extends OnGridNavLoadListStateT with _OnGridNav with OnGridStateT {
@@ -162,7 +174,9 @@ with foc.PreLoading with foc.OnTouch with foc.OnTouchPreload {
   class OnGridNavReadyState extends OnGridNavReadyStateT with _OnGridNav with _NodeSwitchState with OnGridStateT
 
 
-  // Состояния focused-выдачи.
+  /*--------------------------------------------------------------------------------
+   * Состояния focused-выдачи.
+   *--------------------------------------------------------------------------------*/
   /** Состояние сразу после клика по карточке в плитке. Отрабатывается запрос, происходит подготовка focused-выдачи. */
   class FocStartingForAd extends StartingForAdStateT {
     override def _focOnAppearState = new FocAppearingState

@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.vm.grid
 
 import io.suggest.common.css.CssSzImplicits
+import io.suggest.sc.ScConstants._
 import io.suggest.sc.ScConstants.Block._
 import io.suggest.sc.sjs.m.mgrid.{GridBlockClick, IBlockInfo}
 import io.suggest.sc.sjs.vm.util.InitOnClickToFsmT
@@ -60,9 +61,9 @@ trait GBlockT extends SafeElT with SetDisplayEl with CssSzImplicits with IBlockI
   // Быстрый доступ к кое-каким аттрибутам.
   override def id           = _underlying.id
   /** Ширина карточки в css-пикселях. */
-  override def width        = getIntAttributeStrict(BLK_WIDTH_ATTR).get
+  override def width        = getIntAttributeStrict(WIDTH_ATTR).get
   /** Высота карточки в css-пикселях. */
-  override def height       = getIntAttributeStrict(BLK_HEIGHT_ATTR).get
+  override def height       = getIntAttributeStrict(HEIGHT_ATTR).get
   /** ES id карточки. */
   def madId                 = getAttribute(MAD_ID_ATTR)
   /** Порядковый номер карточки. */

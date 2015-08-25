@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.c.scfsm.foc
 
-import io.suggest.sc.sjs.c.scfsm.{FindAdsFsmUtil, FindNearAdIds, FindAdsUtil}
+import io.suggest.sc.sjs.c.scfsm.{FindNearAdIds, FindAdsUtil}
 import io.suggest.sc.sjs.m.mfoc.{FAdShown, MFocSd, FocRootAppeared}
 import io.suggest.sc.sjs.m.msrv.foc.find.{MFocAd, MFocAds, MFocAdSearchEmpty}
 import io.suggest.sc.sjs.vm.res.FocusedRes
@@ -23,7 +23,7 @@ import io.suggest.sc.ScConstants.Focused.SLIDE_ANIMATE_MS
 // TODO Тут stub только. Логика не написана.
 // Нужно реализовать состояния в подпакете scfsm, а этот файл удалить/переместить.
 
-trait StartingForAd extends MouseMoving with FindAdsUtil with FindAdsFsmUtil {
+trait StartingForAd extends MouseMoving with FindAdsUtil {
 
   /** Трейт для состояния, когда focused-выдача отсутствует, скрыта вообще и ожидает активации.
     * При появлении top-level ScFsm это событие исчезнет, и будет обрабатываться где-то в вышестоящем обработчике. */

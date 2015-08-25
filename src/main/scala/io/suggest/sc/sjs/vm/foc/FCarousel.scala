@@ -52,7 +52,7 @@ import FCarousel.indexToLeftPx
 
 /** Логика работы карусели живёт в этом трейте. */
 trait FCarouselT extends SafeElT with CssSzImplicits with Width with ExtraStyles with StyleLeft with ClearT
-with IInitLayout with WillTranslate3d with OnMouseClickT with InitOnEventToFsmUtilT with IReset {
+with IInitLayout with WillTranslate3d with OnMouseClickT with OnEventToFsmUtilT with IReset {
 
   override type T = HTMLDivElement
 

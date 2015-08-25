@@ -20,6 +20,7 @@ import io.suggest.sc.ScConstants.Welcome.Anim._
  * Description: Представление управления приветствием узла выдачи.
  * welcome карточка удаляется из DOM, после того как скрыта.
  */
+@deprecated("Use vm.wc.* VMs instead", "2015.aug.25")
 object NodeWelcomeView extends GetDivById with GetImgById {
 
   /**

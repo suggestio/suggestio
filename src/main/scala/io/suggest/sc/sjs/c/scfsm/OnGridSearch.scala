@@ -48,12 +48,12 @@ trait OnGridSearch extends OnGrid with ISjsLogger {
         )
 
         // Сменить состояние на то, где открыта панель поиска.
-        become(_nextStateSearchPanelClosed(sd1), sd1)
+        become(_nextStateSearchPanelClosed, sd1)
       }
     }
 
     /** Состояние FSM, на которое надо переключиться при после сокрытия панели. */
-    protected def _nextStateSearchPanelClosed(sd1: SD): FsmState
+    protected def _nextStateSearchPanelClosed: FsmState
 
 
     override def _onKbdKeyUp(event: KeyboardEvent): Unit = {
@@ -92,12 +92,12 @@ trait OnGridSearch extends OnGrid with ISjsLogger {
             currTab = nextTab
           )
         )
-        become(_tabSwitchedFsmState(sd2), sd2)
+        become(_tabSwitchedFsmState, sd2)
       }
     }
 
     /** На какое состояние надо переключаться при смене поисковой вкладки? */
-    protected def _tabSwitchedFsmState(sd2: SD): FsmState
+    protected def _tabSwitchedFsmState: FsmState
 
     private def _receiverPart: Receive = {
       // Клик по кнопке сокрытия поисковой панели (справа).

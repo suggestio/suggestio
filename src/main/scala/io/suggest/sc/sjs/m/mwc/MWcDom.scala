@@ -9,6 +9,7 @@ import io.suggest.sc.sjs.vm.util.domvm.get.{GetImgById, GetDivById}
  * Created: 26.05.15 10:26
  * Description: Доступ к DOM-элементам карточки приветствия.
  */
+@deprecated("Use vm.wc.* VMs instead", "2015.aug.25")
 object MWcDom extends GetDivById with GetImgById {
 
   /** Найти div-контейнер карточки приветствия. */

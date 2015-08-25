@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.c.scfsm.foc
 
 import io.suggest.sc.ScConstants.Focused.SIDE_PRELOAD_MAX
-import io.suggest.sc.sjs.c.scfsm.{FindAdsFsmUtil, FindAdsUtil}
+import io.suggest.sc.sjs.c.scfsm.FindAdsUtil
 import io.suggest.sc.sjs.m.mfoc.{FAdQueue, MFocSd}
 import io.suggest.sc.sjs.m.msrv.foc.find.{MFocAd, MFocAds, MFocAdSearchEmpty}
 import io.suggest.sc.sjs.vm.grid.GBlock
@@ -24,7 +24,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
  * Так же считается, что текущая карточка -- крайняя, дальше уже незагруженные карточки.
  * Если юзер запросил листание на карточку во время её preload'а, то надо перекинуть его на Loader.
  */
-trait PreLoading extends OnFocusBase with FindAdsFsmUtil {
+trait PreLoading extends OnFocusBase {
 
 
   /** Абстрактная логика инициализации состояний обычного preload-а без touch. */

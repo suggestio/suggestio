@@ -5,8 +5,7 @@ import io.suggest.sc.sjs.vm.res.CommonRes
 import io.suggest.sc.sjs.vm.grid.GContent
 
 import scala.concurrent.Future
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
-import scala.util.{Failure, Success}
+import scala.util.Failure
 
 /**
  * Suggest.io
@@ -14,7 +13,7 @@ import scala.util.{Failure, Success}
  * Created: 19.06.15 16:16
  * Description: Конечный автомат для поддержки загрузки карточек в плитку выдачи.
  */
-trait GridAppend extends ScFsmStub with FindAdsFsmUtil {
+trait GridAppend extends ScFsmStub {
 
   /** Состояние ожидания результатов инициализация index'а узла. Паралельно идут две фоновые операции:
     * получение карточек и отображение welcome-экрана. */

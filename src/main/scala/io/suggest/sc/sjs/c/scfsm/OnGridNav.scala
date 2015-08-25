@@ -22,7 +22,7 @@ import scala.util.Failure
  * Created: 10.08.15 15:54
  * Description: Аддон для состояний сетки с открытой панелью.
  */
-trait OnGridNav extends OnGrid with ISjsLogger with FindAdsFsmUtil {
+trait OnGridNav extends OnGrid with ISjsLogger {
 
   protected trait _OnGridNav extends OnGridStateT with PanelGridRebuilder {
 
@@ -63,12 +63,12 @@ trait OnGridNav extends OnGrid with ISjsLogger with FindAdsFsmUtil {
           )
         )
 
-        become(_onHideNavState(sd1), sd1)
+        become(_onHideNavState, sd1)
       }
     }
 
     /** Состояние с закрытой nav-панелью. */
-    protected def _onHideNavState(sd1: SD): FsmState
+    protected def _onHideNavState: FsmState
   }
 
 

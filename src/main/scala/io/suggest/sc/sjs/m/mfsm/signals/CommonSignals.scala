@@ -23,3 +23,7 @@ case class JsRouterFailed(ex: Throwable)
 object JsRouterFailed
   extends IFsmMsgCompanion[Throwable]
 
+
+/** Сигнал о необходимости сокрытия приветствия с экрана по таймеру. */
+case object WelcomeDisplayTimeout
+  extends IFsmMsg

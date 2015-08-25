@@ -33,6 +33,7 @@ trait SendEventToFsmUtil {
 
 /** Реализация common OnClickT в рамках sc. */
 trait OnClick extends OnClickT {
+
   override protected def isTouchLocked = MTouchLock()
 }
 
@@ -52,7 +53,7 @@ trait InitOnClickToFsmT extends IInitLayout with OnClick with SafeEventTargetT w
 
 
 /** Быстрая вешалка listener'ов DOM-событий на элемент. Подмешивается к vm-классам. */
-trait InitOnEventToFsmUtilT extends SafeEventTargetT with SendEventToFsmUtil {
+trait OnEventToFsmUtilT extends SafeEventTargetT with SendEventToFsmUtil {
   protected def _addToFsmEventListener[Event_t <: Event](eventType: String, model: IFsmMsgCompanion[Event_t]): Unit = {
     val f = _sendEventF[Event_t](model)
     addEventListener(eventType)(f)

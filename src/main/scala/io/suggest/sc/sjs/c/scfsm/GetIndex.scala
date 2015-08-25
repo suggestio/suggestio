@@ -1,27 +1,27 @@
 package io.suggest.sc.sjs.c.scfsm
 
 import io.suggest.sc.sjs.c.NodeWelcomeCtl
+import io.suggest.sc.sjs.m.mfsm.signals.WelcomeDisplayTimeout
 import io.suggest.sc.sjs.m.mgrid.MGridState
 import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
 import io.suggest.sc.sjs.m.msrv.index.{MNodeIndex, MScIndexArgs}
 import io.suggest.sc.sjs.vm.res.CommonRes
 import io.suggest.sc.sjs.vm.layout.LayRootVm
 import io.suggest.sc.sjs.vm.nav.nodelist.NlRoot
-import io.suggest.sc.sjs.vm.search.SRoot
 import io.suggest.sc.sjs.vm.{SafeBody, SafeWnd}
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 import scala.scalajs.concurrent.JSExecutionContext.queue
-import scala.util.{Failure, Success}
+import scala.util.Failure
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 22.06.15 14:19
- * Description: Аддон центрального FSM, добавляющий состояния для получения и загрузки index'а выдачи.
+ * Description: Аддон центрального FSM, добавляющий трейты для сборки состояний инициализации выдачи узла.
  */
-trait GetIndex extends ScFsmStub with FindAdsUtil with FindAdsFsmUtil {
+trait GetIndex extends ScFsmStub with FindAdsUtil {
 
   /** Реализация состояния активации и  */
   protected trait GetIndexStateT extends FsmState {
@@ -44,31 +44,31 @@ trait GetIndex extends ScFsmStub with FindAdsUtil with FindAdsFsmUtil {
     override def afterBecome(): Unit = {
       super.afterBecome()
 
-      val sd = _stateData
+      val sd0 = _stateData
 
       val inxArgs = MScIndexArgs(
-        adnIdOpt  = sd.adnIdOpt,
-        geoMode   = Some( sd.currGeoMode ),
-        screen    = sd.screen
+        adnIdOpt  = sd0.adnIdOpt,
+        geoMode   = Some( sd0.currGeoMode ),
+        screen    = sd0.screen
       )
       val inxFut = MNodeIndex.getIndex(inxArgs)
 
       // Дожидаясь ответа сервера, инициализировать кое-какие переменные, необходимые на следующем шаге.
-      _stateData = _initStateData(sd)
+      _stateData = _initStateData(sd0)
       _sendFutResBack(inxFut)
     }
 
     override def receiverPart: Receive = {
       case mni: MNodeIndex =>
-        _onSuccess(mni)
+        _nodeIndexReceived(mni)
       case Failure(ex) =>
         error("Failed to get node index: " + _stateData.adnIdOpt, ex)
-        _onFailure(ex)
+        _getNodeIndexFailed(ex)
     }
 
 
-    /** Успешный запрос index'а. */
-    protected def _onSuccess(v: MNodeIndex): Unit = {
+    /** Реакция на успешный результат запроса node index. */
+    protected def _nodeIndexReceived(v: MNodeIndex): Unit = {
       // Заливаем в данные состояния полученные метаданные по текущему узлу.
       val sd1 = _stateData.copy(
         adnIdOpt = v.adnIdOpt
@@ -121,11 +121,13 @@ trait GetIndex extends ScFsmStub with FindAdsUtil with FindAdsFsmUtil {
 
       // В порядке очереди запустить инициализацию панели поиска.
       wcHideFut.onComplete { case _ =>
-        for (sroot <- SRoot.find()) {
-          sroot.initLayout(sd1)
-        }
-        for (layContent <- layout.content; froot <- layContent.focused) {
-          froot.initLayout()
+        for (layContent <- layout.content) {
+          for (sroot <- layContent.searchPanel) {
+            sroot.initLayout(sd1)
+          }
+          for (froot <- layContent.focused) {
+            froot.initLayout()
+          }
         }
       }(queue)
 
@@ -148,7 +150,22 @@ trait GetIndex extends ScFsmStub with FindAdsUtil with FindAdsFsmUtil {
     protected def _onSuccessNextState(findAdsFut: Future[MFindAds], wcHideFut: Future[_], sd: SD): FsmState
 
     /** Запрос за index'ом не удался. */
-    protected def _onFailure(ex: Throwable): Unit
+    protected def _getNodeIndexFailed(ex: Throwable): Unit
+  }
+
+
+  /** Трейт для сборки состояний нахождения на welcome-карточке. */
+  trait OnWelcomeStateT extends FsmEmptyReceiverState {
+
+    override def receiverPart: Receive = super.receiverPart orElse {
+      // Приём сигнала от таймера о необходимости начать сокрытие карточки приветствия.
+      case WelcomeDisplayTimeout =>
+        _letsHideWelcome()
+    }
+
+    def _letsHideWelcome(): Unit = {
+      ???
+    }
   }
 
 }

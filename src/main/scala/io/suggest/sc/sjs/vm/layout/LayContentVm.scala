@@ -9,6 +9,7 @@ import io.suggest.sc.sjs.vm.nav.NRoot
 import io.suggest.sc.sjs.vm.search.SRoot
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.sjs.vm.util.domvm.create.{CreateDiv, CreateVm}
+import io.suggest.sc.sjs.vm.wc.WcRoot
 import io.suggest.sjs.common.view.safe.SafeElT
 import io.suggest.sjs.common.view.safe.display.SetInnerHtml
 import org.scalajs.dom.Node
@@ -65,6 +66,8 @@ trait LayContentVmT extends SafeElT with SetInnerHtml {
   def searchPanel = SRoot.find()
   /** Focused root div. */
   def focused = FRoot.find()
+  /** Доступ к welcome div'у. Кешировать его нельзя, т.к. короткоживущий. */
+  final def welcome = WcRoot.find()
 
   def insertFirst(node: Node): Unit = {
     _underlying.insertBefore(node, _underlying.firstChild)
