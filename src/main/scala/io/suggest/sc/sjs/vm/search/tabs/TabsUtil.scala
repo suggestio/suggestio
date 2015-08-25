@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.vm.search.tabs
 import io.suggest.sc.sjs.vm.util.height3.SetHeight3
 import io.suggest.sc.sjs.vm.util.{IInitLayout, InitOnClickToFsmT}
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
-import io.suggest.sc.sjs.vm.util.domvm.get.{SubTagFind, ContentElT, WrapperChildContent}
+import io.suggest.sc.sjs.vm.util.domvm.get.{ContentElT, WrapperChildContent}
 import io.suggest.sjs.common.view.safe.SafeElT
 import io.suggest.sjs.common.view.safe.display.ShowHideDisplayEl
 import org.scalajs.dom.raw.HTMLDivElement

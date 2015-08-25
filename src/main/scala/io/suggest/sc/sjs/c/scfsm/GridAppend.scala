@@ -3,8 +3,9 @@ package io.suggest.sc.sjs.c.scfsm
 import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
 import io.suggest.sc.sjs.vm.res.CommonRes
 import io.suggest.sc.sjs.vm.grid.GContent
+import io.suggest.sjs.common.msg.ErrorMsgs
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
-import scala.concurrent.Future
 import scala.util.Failure
 
 /**
@@ -13,23 +14,23 @@ import scala.util.Failure
  * Created: 19.06.15 16:16
  * Description: Конечный автомат для поддержки загрузки карточек в плитку выдачи.
  */
-trait GridAppend extends ScFsmStub {
+trait GridAppend extends ScFsmStub with FindAdsUtil {
+
+  /** Аддон для состояний для запуска запроса grid ads. */
+  trait GetGridAdsStateT extends FsmState {
+    override def afterBecome(): Unit = {
+      super.afterBecome()
+      val fut = _findAds(_stateData)
+      _sendFutResBack(fut)
+    }
+  }
+
 
   /** Состояние ожидания результатов инициализация index'а узла. Паралельно идут две фоновые операции:
     * получение карточек и отображение welcome-экрана. */
-  protected trait AdsWaitStateBaseT extends FsmState {
+  protected trait GridAdsWaitStateBaseT extends FsmEmptyReceiverState {
 
-    /** Фьючерс с искомыми карточками. */
-    protected def findAdsFut: Future[MFindAds]
-
-    /** Необходимо подписаться на события futures'ов. */
-    override def afterBecome(): Unit = {
-      super.afterBecome()
-      // Повесить ожидание события.
-      _sendFutResBack(findAdsFut)
-    }
-
-    override def receiverPart: Receive = {
+    override def receiverPart: Receive = super.receiverPart orElse {
       case mfa: MFindAds =>
         _findAdsReady(mfa)
       case Failure(ex) =>
@@ -45,9 +46,9 @@ trait GridAppend extends ScFsmStub {
 
 
   /** Закинуть в выдачу полученные карточки. */
-  protected trait AppendAdsToGridStateT extends AdsWaitStateBaseT with GridBuild {
+  protected trait GridAdsWaitLoadStateT extends GridAdsWaitStateBaseT with GridBuild {
 
-    protected def adsLoadedState: FsmState
+    protected def _adsLoadedState: FsmState
     
     override protected def _findAdsReady(mfa: MFindAds): Unit = {
       val gcontent = GContent.find().get
@@ -141,19 +142,17 @@ trait GridAppend extends ScFsmStub {
       }
 
       // Переключиться на следующее состояние.
-      become(adsLoadedState, sdFinal)
+      become(_adsLoadedState, sdFinal)
     }
 
-  }
 
+    protected def _findAdsFailed(ex: Throwable): Unit = {
+      error(ErrorMsgs.FIND_ADS_REQ_FAILED, ex)
+      become(_findAdsFailedState)
+    }
 
-  /** Состояние добавки карточек одновременно с отображением welcome. */
-  protected trait AppendAdsToGridDuringWelcomeStateT extends AppendAdsToGridStateT {
-    /** Future, который исполняется когда начинается скрытие welcome. */
-    protected def wcHideFut: Future[_]
+    protected def _findAdsFailedState: FsmState
 
-    /** Анимация нужна только если welcome-карточка уже теряет непрозрачность или же скрыта. */
-    override protected def withAnim = wcHideFut.isCompleted
   }
 
 }

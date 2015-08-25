@@ -39,13 +39,14 @@ trait OnClick extends OnClickT {
 
 
 // TODO Надо наверное спилить этот трейт во имя более универсального варианта.
-trait InitOnClickToFsmT extends IInitLayout with OnClick with SafeEventTargetT with SendEventToFsmUtil {
+trait InitOnClickToFsmT extends IInitLayoutDummy with OnClick with SafeEventTargetT with SendEventToFsmUtil {
 
   /** Статический компаньон модели для сборки сообщений. */
   protected[this] def _clickMsgModel: IFsmEventMsgCompanion
 
   /** Инициализация текущей и подчиненных ViewModel'ей. */
-  def initLayout(): Unit = {
+  override def initLayout(): Unit = {
+    super.initLayout()
     val f = _sendEventF[Event](_clickMsgModel)
     onClick(f)
   }

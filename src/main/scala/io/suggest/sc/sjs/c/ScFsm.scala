@@ -2,13 +2,11 @@ package io.suggest.sc.sjs.c
 
 import io.suggest.sc.sjs.c.scfsm._
 import io.suggest.sc.sjs.c.scfsm.init.Init
+import io.suggest.sc.sjs.c.scfsm.node.Index
 import io.suggest.sc.sjs.m.msc.fsm.{IStData, MStData}
 import io.suggest.sc.sjs.m.msearch.MTabs
-import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
 import io.suggest.sjs.common.util.SjsLogger
 import org.scalajs.dom.Event
-
-import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -16,9 +14,9 @@ import scala.concurrent.Future
  * Created: 16.06.15 12:07
  * Description: FSM-контроллер для всей выдачи. Собирается из кусков, которые закрывают ту или иную область.
  */
-object ScFsm extends SjsLogger with Init with GetIndex with GridAppend with OnPlainGrid with OnGridSearchGeo
-with OnGridSearchHashTags with OnGridNav with foc.StartingForAd with foc.OnFocus with foc.Closing with foc.SimpleShift
-with foc.PreLoading with foc.OnTouch with foc.OnTouchPreload {
+object ScFsm extends SjsLogger with Init with Index with GridAppend with OnPlainGrid with OnGridSearchGeo
+with node.States with OnGridSearchHashTags with OnGridNav with foc.StartingForAd with foc.OnFocus with foc.Closing
+with foc.SimpleShift with foc.PreLoading with foc.OnTouch with foc.OnTouchPreload {
 
   // Инициализируем базовые внутренние переменные.
   override protected var _state: FsmState = new DummyState
@@ -72,48 +70,66 @@ with foc.PreLoading with foc.OnTouch with foc.OnTouchPreload {
   }
   /** Инициализация геолокации, когда инициализация jsRouter'а уже выполнена. */
   class Init_GeoWait_State extends Init_GeoWait_StateT {
-    override protected def _geoFinishedState = new GetIndexState
+    override protected def _geoFinishedState = new NodeInit_GetIndex_WaitIndex_State
   }
   /** Маловероятное состояние, когда инициализация геолокации прошла быстрее, чем инициализация jsRouter'а. */
   class Init_JsRouterWaitState extends JsRouterInitReceiveT {
-    override def _jsRouterReadyState = new GetIndexState
+    override def _jsRouterReadyState = new NodeInit_GetIndex_WaitIndex_State
     override protected def _reInitState = new NormalInitState
   }
 
 
   /*--------------------------------------------------------------------------------
-   * Состояния инициализации выдачи узла (node index).
+   * Фаза состояний инициализации выдачи конкретного узла (node index).
    *--------------------------------------------------------------------------------*/
 
   /** Реализация состояния-получения-обработки индексной страницы. */
-  class GetIndexState extends GetIndexStateT {
-
-    /** Когда обработка index завершена, надо переключиться на состояние обработки начальной порции карточек. */
-    override def _onSuccessNextState(findAdsFut: Future[MFindAds], wcHideFut: Future[_], sd1: SD): FsmState = {
-      new AppendAdsToGridDuringWelcomeState(findAdsFut, wcHideFut)
-    }
-
-    /** Запрос за index'ом не удался. */
-    override def _getNodeIndexFailed(ex: Throwable): Unit = {
-      error("Failed to ask index, retrying", ex)
-      _retry(250)(new GetIndexState)
-    }
+  class NodeInit_GetIndex_WaitIndex_State extends NodeInit_GetIndex_WaitIndex_StateT {
+    override protected def _welcomeAndWaitGridAdsState  = new NodeInit_WelcomeShowing_GridAdsWait_State
+    override protected def _onNodeIndexFailedState      = this
+    override protected def _waitGridAdsState            = new NodeInit_GridAdsWait_State
+  }
+  class NodeInit_WelcomeShowing_GridAdsWait_State extends NodeInit_WelcomeShowing_GridAdsWait_StateT {
+    override protected def _welcomeFinishedState        = new NodeInit_GridAdsWait_State
+    override protected def _adsLoadedState              = new NodeInit_WelcomeShowing_State
+    override protected def _findAdsFailedState          = new NodeInit_WelcomeShowing_GridAdsFailed_State
+    override protected def _welcomeHidingState          = new NodeInit_WelcomeHiding_State
+  }
+  class NodeInit_WelcomeShowing_State extends NodeInit_WelcomeShowing_StateT {
+    override protected def _welcomeFinishedState        = new NodeInit_GridAdsWait_State
+    override protected def _welcomeHidingState          = new NodeInit_WelcomeHiding_State
+  }
+  class NodeInit_WelcomeHiding_GridAdsWait_State extends NodeInit_WelcomeHiding_GridAdsWait_StateT {
+    override protected def _welcomeFinishedState        = new NodeInit_GridAdsWait_State
+    override protected def _findAdsFailedState          = new NodeInit_WelcomeHiding_GridAdsFailed_State
+    override protected def _adsLoadedState              = new NodeInit_WelcomeHiding_State
+  }
+  class NodeInit_GridAdsWait_State extends NodeInit_GridAdsWait_StateT {
+    override protected def _adsLoadedState              = new OnPlainGridState
+    override protected def _findAdsFailedState          = new NodeInit_GridAdsFailed_State
+  }
+  class NodeInit_WelcomeHiding_State extends NodeInit_WelcomeHiding_StateT {
+    override protected def _welcomeFinishedState        = new OnPlainGridState
+  }
+  class NodeInit_WelcomeShowing_GridAdsFailed_State extends NodeInit_WelcomeShowing_GridAdsFailed_StateT {
+    override protected def _welcomeFinishedState        = new NodeInit_GridAdsWait_State
+    override protected def _welcomeHidingState          = new NodeInit_WelcomeHiding_GridAdsWait_State
+    override protected def _findAdsFailedState          = this
+    override protected def _adsLoadedState              = new NodeInit_WelcomeShowing_State
+  }
+  class NodeInit_WelcomeHiding_GridAdsFailed_State extends NodeInit_WelcomeHiding_GridAdsFailed_StateT {
+    override protected def _welcomeFinishedState        = new NodeInit_GridAdsWait_State
+    override protected def _findAdsFailedState          = this
+    override protected def _adsLoadedState              = new NodeInit_WelcomeHiding_State
+  }
+  class NodeInit_GridAdsFailed_State extends NodeInit_GridAdsFailed_StateT {
+    override protected def _adsLoadedState              = new OnPlainGridState
+    override protected def _findAdsFailedState          = this
   }
 
-  /** Реализация состояния начальной загрузки карточек в выдачу. */
-  class AppendAdsToGridDuringWelcomeState(
-    override val findAdsFut: Future[MFindAds],
-    override val wcHideFut: Future[_]
-  ) extends AppendAdsToGridDuringWelcomeStateT {
-    
-    override def adsLoadedState = new OnPlainGridState
-
-    override def _findAdsFailed(ex: Throwable): Unit = ???
-  }
-  
 
   /*--------------------------------------------------------------------------------
-   * Состояния работы с сеткой карточек (grid).
+   * Фаза состояний работы с сеткой карточек (grid).
    *--------------------------------------------------------------------------------*/
   /** Трейт для поддержки переключения на состояния, исходящие из OnGridStateT  */
   protected trait OnGridStateT extends super.OnGridStateT {
@@ -169,7 +185,7 @@ with foc.PreLoading with foc.OnTouch with foc.OnTouchPreload {
     override def _navPanelReadyState = new OnGridNavReadyState
   }
   protected trait _NodeSwitchState extends INodeSwitchState {
-    override def _onNodeSwitchState = new GetIndexState
+    override def _onNodeSwitchState = new NodeInit_GetIndex_WaitIndex_State
   }
   class OnGridNavReadyState extends OnGridNavReadyStateT with _OnGridNav with _NodeSwitchState with OnGridStateT
 

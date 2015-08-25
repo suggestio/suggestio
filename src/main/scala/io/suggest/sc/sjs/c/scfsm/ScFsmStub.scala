@@ -11,8 +11,8 @@ import io.suggest.sjs.common.util.ISjsLogger
 import org.scalajs.dom
 import org.scalajs.dom.KeyboardEvent
 
-import scala.concurrent.Future
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import scala.concurrent.{ExecutionContext, Future}
+import scala.scalajs.concurrent.JSExecutionContext.queue
 import scala.util.Success
 
 /**
@@ -99,7 +99,7 @@ trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger with DirectDo
   protected[this] def _sendEvent(e: Any): Unit = {
     Future {
       _sendEventSyncSafe(e)
-    }
+    }(queue)
   }
 
   /** Внутренняя синхронная отправка сообщения. */
@@ -166,8 +166,8 @@ trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger with DirectDo
   }
 
   /** Подписать фьючерс на отправку результата в ScFsm. */
-  protected def _sendFutResBack[T](fut: Future[T]): Unit = {
-    fut onComplete { case tryRes =>
+  protected def _sendFutResBack[T](fut: Future[T])(implicit ec: ExecutionContext): Unit = {
+    fut.onComplete { case tryRes =>
       val msg = tryRes match {
         case Success(res) => res
         case failure      => failure

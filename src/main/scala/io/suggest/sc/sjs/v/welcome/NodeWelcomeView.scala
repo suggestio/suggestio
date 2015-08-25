@@ -3,7 +3,6 @@ package io.suggest.sc.sjs.v.welcome
 import io.suggest.adv.ext.model.im.{ISize2di, Size2di}
 import io.suggest.sc.sjs.c.NodeWelcomeCtl
 import io.suggest.sc.sjs.m.magent.MAgent
-import io.suggest.sc.sjs.m.mwc.MWelcomeState
 import io.suggest.sc.sjs.v.vutil.VImgUtil
 import io.suggest.sc.sjs.vm.util.domvm.get.{GetImgById, GetDivById}
 import io.suggest.sjs.common.view.safe.css.SafeCssElT
@@ -12,6 +11,7 @@ import org.scalajs.dom.Node
 import org.scalajs.dom.raw.HTMLImageElement
 import io.suggest.sc.sjs.m.mwc.MWcDom._
 import io.suggest.sc.ScConstants.Welcome.Anim._
+import io.suggest.sc.ScConstants.Welcome._
 
 /**
  * Suggest.io
@@ -97,7 +97,7 @@ object NodeWelcomeView extends GetDivById with GetImgById {
     el.addClasses(TRANS_02_CSS_CLASS, FADEOUT_CSS_CLASS)
     dom.setTimeout(
       {() => NodeWelcomeCtl.hidingFinished(el._underlying) },
-      MWelcomeState.FADEOUT_TRANSITION_MS
+      FADEOUT_TRANSITION_MS
     )
   }
 

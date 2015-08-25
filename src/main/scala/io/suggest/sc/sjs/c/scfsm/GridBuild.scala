@@ -19,7 +19,7 @@ import io.suggest.sjs.common.util.SjsLogger
 trait GridBuild {
 
   /** Использовать ли анимацию для перемещения блоков? Обычно да, но не всегда. */
-  protected def withAnim: Boolean = true
+  protected def _gridAppendAnimated: Boolean = true
 
   /** Частичная реализация grid builder под нужды FSM-MVM-архитектуры. */
   protected trait GridBuilderT extends V1Builder with SjsLogger {
@@ -29,7 +29,7 @@ trait GridBuild {
     // Собираем функцию перемещения блока. При отключенной анимации не будет лишней сборки ненужного
     // списка css-префиксов и проверки значения withAnim.
     val _moveBlockF: (Int, Int, BI) => Unit = {
-      if (withAnim) {
+      if (_gridAppendAnimated) {
         // Включена анимация. Собрать необходимые css-префиксы. {} нужно для защиты от склеивания с последующей строкой.
         val animCssPrefixes = { browser.CssPrefixing.transforms3d }
         {(leftPx: Int, topPx: Int, b: BI) =>

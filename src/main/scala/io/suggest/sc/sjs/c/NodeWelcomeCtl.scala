@@ -1,7 +1,8 @@
 package io.suggest.sc.sjs.c
 
+import io.suggest.sc.ScConstants.Welcome
 import io.suggest.sc.sjs.c.cutil.KbdListenerIdT
-import io.suggest.sc.sjs.m.mwc.{WcHidePromise_t, SafeRootDiv_t, MWelcomeState, MWcDom}
+import io.suggest.sc.sjs.m.mwc.{WcHidePromise_t, SafeRootDiv_t, MWcDom}
 import io.suggest.sc.sjs.v.welcome.NodeWelcomeView
 import io.suggest.sjs.common.view.safe.SafeEl
 import org.scalajs.dom
@@ -16,7 +17,7 @@ import scala.concurrent.{Future, Promise}
  * Created: 25.05.15 13:17
  * Description: Контроллер для реакций на происходящее с карточкой приветствия узла.
  */
-// TODO Переписать на FSM-MVM архитектуру.
+@deprecated("See scfsm.node.Welcome and States addons", "2015.aug.25")
 object NodeWelcomeCtl extends KbdListenerIdT {
 
   /** Сработал таймер таймаута отображения приветствия. */
@@ -96,7 +97,7 @@ object NodeWelcomeCtl extends KbdListenerIdT {
         // Запустить скрытие карточки по таймауту.
         dom.setTimeout(
           { () => displayTimeout(safeEl, p) },
-          MWelcomeState.HIDE_TIMEOUT_MS
+          Welcome.HIDE_TIMEOUT_MS
         )
 
         // Вешаем события ускоренного ухода с приветствия.

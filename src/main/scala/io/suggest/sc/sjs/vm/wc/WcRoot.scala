@@ -1,7 +1,8 @@
 package io.suggest.sc.sjs.vm.wc
 
 import io.suggest.sc.sjs.m.magent.IMScreen
-import io.suggest.sc.sjs.vm.util.WillAnimateT
+import io.suggest.sc.sjs.m.mwc.WcClick
+import io.suggest.sc.sjs.vm.util.{InitOnClickToFsmT, WillAnimateT}
 import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.ScConstants.Welcome.ROOT_ID
 import io.suggest.sc.ScConstants.Welcome.Anim._
@@ -21,7 +22,7 @@ object WcRoot extends FindDiv {
 
 
 /** Логика div'а карточки приветствия тут. */
-trait WcRootT extends SafeElT with WillAnimateT {
+trait WcRootT extends SafeElT with WillAnimateT with InitOnClickToFsmT {
 
   override type T = HTMLDivElement
 
@@ -54,7 +55,13 @@ trait WcRootT extends SafeElT with WillAnimateT {
         _fgInfo.adjust(newSz)
       }
     }
+    // Повесить click listener на всю карточку.
+    initLayout()
   }
+
+  // TODO Надо бы ограничить возможность вызова initLayout() напрямую (без screen-аргумента).
+
+  override protected[this] def _clickMsgModel = WcClick
 
 }
 
