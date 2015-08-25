@@ -37,6 +37,7 @@ trait Welcome extends ScFsmStub {
 
     /** Необходимо запустить плавное сокрытие welcome-карточки. */
     protected def _letsHideWelcome(): Unit = {
+      // TODO Отменять таймер
       val wcRootOpt = WcRoot.find()
       for (wcRoot <- wcRootOpt) {
         wcRoot.fadeOut()
@@ -62,6 +63,7 @@ trait Welcome extends ScFsmStub {
     }
 
     protected def _letsFinishWelcome(): Unit = {
+      // TODO Отменять таймер
       for (wcRoot <- WcRoot.find()) {
         wcRoot.remove()
       }

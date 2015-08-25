@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.v.vutil
 import io.suggest.sjs.common.model.browser.{MBrowser, IBrowser}
 import io.suggest.sjs.common.view.safe.{SafeElT, SafeEl}
 import org.scalajs.dom
-import org.scalajs.dom.{Node, Element}
+import org.scalajs.dom.Node
 import org.scalajs.dom.raw.{HTMLDivElement, HTMLElement}
 
 import scala.annotation.tailrec
@@ -43,16 +43,6 @@ object VUtil {
     }
   }
 
-
-  def getAttribute(node: Element, name: String): Option[String] = {
-    Option( node.getAttribute(name) )
-      .filter(!_.isEmpty)
-  }
-
-  def getIntAttribute(node: Element, name: String): Option[Int] = {
-    getAttribute(node, name)
-      .map { _.toInt }
-  }
 
   /** Создать новый div-тег и вернуть его. */
   def newDiv(): HTMLDivElement = {

@@ -43,7 +43,12 @@ trait OnPlainGrid extends OnGrid {
      protected def _nextStateSearchPanelOpened(sd1: SD): FsmState
 
 
-     protected def _showNavClick(event: Event): Unit
+     protected def _showNavClick(event: Event): Unit = {
+       become(_navLoadListState)
+     }
+
+     /** Состояние начала и ожидания загрузки списка узлов, если требуется. */
+     protected def _navLoadListState: FsmState
 
      private def _receiverPart: Receive = {
        // Сигнал нажатия на кнопку открытия панели поиска.

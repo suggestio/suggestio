@@ -1,13 +1,10 @@
 package io.suggest.sc.sjs.app
 
 import io.suggest.sc.sjs.c.ScFsm
-import io.suggest.sc.sjs.m.magent.vsz.ViewportSz
-import io.suggest.sc.sjs.m.magent.{MAgent, MScreen}
 import io.suggest.sjs.common.util.SjsLogger
 
 import scala.scalajs.js.JSApp
 import scala.scalajs.js.annotation.JSExport
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 /**
  * Suggest.io
@@ -19,14 +16,7 @@ object App extends JSApp with SjsLogger {
 
   @JSExport
   override def main(): Unit = {
-
-    val scrSz = ViewportSz.getViewportSize.get
-    MAgent.availableScreen = MScreen(scrSz)
-
     ScFsm.firstStart()
-
-    // Инициализация некоторых моделей
-    //MScFsm.subscribeEvents()
   }
 
 }

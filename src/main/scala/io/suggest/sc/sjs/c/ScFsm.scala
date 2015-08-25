@@ -147,10 +147,7 @@ with foc.SimpleShift with foc.PreLoading with foc.OnTouch with foc.OnTouchPreloa
   /** Реализация состояния, где карточки уже загружены. */
   class OnPlainGridState extends OnPlainGridStateT with OnGridStateT {
     override def _nextStateSearchPanelOpened(sd1: MStData) = _searchTab2state(sd1)
-
-    override def _showNavClick(event: Event): Unit = {
-      become(new OnGridNavLoadListState)
-    }
+    override protected def _navLoadListState = new OnGridNavLoadListState
   }
 
 

@@ -35,9 +35,3 @@ trait GetDivById extends GetElById {
   protected def getDivById(id: String)        = getElementById[HTMLDivElement](id)
   protected def getDivByIdOrNull(id: String)  = getElementByIdOrNull[HTMLDivElement](id)
 }
-
-
-/** Аддон для краткого поисква img-тегов по id. */
-trait GetImgById extends GetElById {
-  protected def getImgById(id: String) = getElementById[HTMLImageElement](id)
-}
