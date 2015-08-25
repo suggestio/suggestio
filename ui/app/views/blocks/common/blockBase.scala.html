@@ -2,6 +2,7 @@
 
 @import models.blk.szMulted
 @import args.mad
+@import io.suggest.sc.ScConstants._
 @import io.suggest.sc.ScConstants.Block._
 @import io.suggest.sc.ScConstants.Focused.FAd
 @import views.txt.blocks.common._
@@ -16,8 +17,8 @@
          @args.indexOpt.map { index => @BLK_INDEX_ATTR="@index" }
        }
      }
-     @BLK_WIDTH_ATTR="@szMulted(mad.blockMeta.width, args.szMult)"
-     @BLK_HEIGHT_ATTR="@szMulted(mad.blockMeta.height, args.szMult)"
+     @WIDTH_ATTR="@szMulted(mad.blockMeta.width, args.szMult)"
+     @HEIGHT_ATTR="@szMulted(mad.blockMeta.height, args.szMult)"
      data-wide-bg="@args.wideBg.isDefined"
      @args.topLeft.filter(_.inlineStyle).map { tl =>style="@_focTopLeftCss(tl, args.wideBg)"}>
   @content

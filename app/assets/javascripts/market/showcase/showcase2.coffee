@@ -1790,10 +1790,8 @@ sm =
         return false
 
       next_index = this.active_ad_index + 1
-
-      if next_index == this.sm_blocks.length
-        next_index = next_index-1
-      this.show_ad_by_index next_index, '+'
+      if next_index < this.ads_count
+        this.show_ad_by_index next_index, '+'
 
     prev_ad : () ->
 
@@ -1801,10 +1799,8 @@ sm =
         return false
 
       prev_index = this.active_ad_index - 1
-      if prev_index < 0
-        prev_index = 0
-
-      this.show_ad_by_index prev_index, '-'
+      if prev_index >= 0
+        this.show_ad_by_index prev_index, '-'
 
     is_node_click : ( event ) ->
       res = sm.events.target_lookup(event.target, 'className', 'js-hdr-logo') != null  ||  sm.events.target_lookup(event.target, 'id', 'smProducerIndexBtn')
@@ -2073,7 +2069,7 @@ sm =
       sm.utils.re('focusedAdLoader')
 
       ## общее число карточек у продьюсера
-      this.ads_count = this.ads_container_dom.getAttribute 'data-ads-count'
+      this.ads_count = parseInt( this.ads_container_dom.getAttribute 'data-ads-count' )
       this.ads_rendered = this.ads.length + 1
 
       html = ''

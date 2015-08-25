@@ -7,6 +7,7 @@
 @import views.html.sc.stuff._
 @import io.suggest.sc.ScConstants.Welcome._
 @import io.suggest.sc.ScConstants.Logo
+@import io.suggest.sc.ScConstants._
 
 <div id="@ROOT_ID" class="sm-welcome-ad"
      @if(!args.welcomeOpt) {style="background: #@args.bgColor;"} >
@@ -38,8 +39,8 @@
         <img id="@BG_IMG_ID"
              style="background-color: #@args.bgColor;" class="sm-welcome-ad_bg-img"
              @imgInfo.meta.map { meta =>
-               data-width="@meta.width"
-               data-height="@meta.height"
+               @WIDTH_ATTR="@meta.width"
+               @HEIGHT_ATTR="@meta.height"
              }
              src="@imgInfo.call"/>
       }
@@ -56,7 +57,7 @@
 
     @* Рендерим покрывающую картинку (svg/png) *@
     @wargs.fgText.map { fgText =>
-      <div id="@FG_INFO_DIV_ID" style="width: 100%; z-index: 100000000000; position: absolute; top: 50%;">
+      <div id="@FG_INFO_DIV_ID" class="sm-welcome-ad_fg-text">
         @_nodeNameTpl(args.fgColor) {
           @fgText
         }
