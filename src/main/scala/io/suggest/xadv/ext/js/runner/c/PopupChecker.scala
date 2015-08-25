@@ -42,7 +42,7 @@ object PopupChecker {
    * @param evt Событие сообщения.
    */
   protected def sioPopupOpened(evt: dom.MessageEvent): Unit = {
-    dom.console.log("DOM msg received: [", evt.data, "] from", evt.source)
+    dom.console.log("DOM msg received: [", evt.data.toString, "] from", evt.source.toString)
     if (evt.data == ("reloaded" : js.Any)) {
       // TODO Нужно реагировать на разблокировку попапов: рестартовать текущий процесс БЕЗ перезагрузки страницы.
       dom.document.location.reload()
