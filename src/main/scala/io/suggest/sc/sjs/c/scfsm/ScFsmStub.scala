@@ -47,6 +47,10 @@ trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger with DirectDo
       val e = ge.error
       warn(ErrorMsgs.BSS_GEO_LOC_FAILED + " [" + e.code + "] " + e.message)
     }
+
+    // Собрать и закешировать ресивер в ожидании прихода событий.
+    override lazy val receiver: Receive = super.receiver
+    Future( receiver )(queue)
   }
 
   /**

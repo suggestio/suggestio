@@ -10,13 +10,14 @@ package io.suggest.sc.sjs.m.mv
 object MTouchLock {
 
   /** Инфа по текущему состоянию touch-скроллинга. */
-  var isTouchLocked: Boolean = false
+  private var isTouchLocked: Boolean = false
 
   /** Прочитать значение состояния блокировки. */
   def apply() = isTouchLocked
 
   /** Выставить значение touch-блокировки. */
   def apply(v: Boolean): Unit = {
+    println("isTouchLocked := " + v)
     isTouchLocked = v
   }
 
