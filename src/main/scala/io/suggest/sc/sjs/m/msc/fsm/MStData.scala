@@ -7,6 +7,7 @@ import io.suggest.sc.sjs.m.mgrid.MGridData
 import io.suggest.sc.sjs.m.mnav.MNavState
 import io.suggest.sc.sjs.m.msearch.MSearchSd
 import io.suggest.sjs.common.model.browser.{IBrowser, MBrowser}
+import org.scalajs.dom
 
 import scala.scalajs.js
 
@@ -58,6 +59,17 @@ trait IStData {
   /** Контейнер с данными геолокации. Пришел на смену MGeoLocUtil. */
   def geo         : MGeoLocSd
 
+  /** id таймера, который готовиться к срабатыванию в фоне. */
+  def timerId     : Option[Int]
+
+
+  /** Попробовать отменить сохраненный в состоянии таймер, если он есть. */
+  def maybeCancelTimer(): Unit = {
+    for (_timerId <- timerId) {
+      dom.clearTimeout( _timerId )
+    }
+  }
+
 }
 
 
@@ -71,7 +83,8 @@ case class MStData(
   override val search       : MSearchSd             = MSearchSd(),
   override val nav          : MNavState             = MNavState(),
   override val focused      : Option[MFocSd]        = None,
-  override val geo          : MGeoLocSd             = MGeoLocSd()
+  override val geo          : MGeoLocSd             = MGeoLocSd(),
+  override val timerId      : Option[Int]           = None
 )
   extends IStData
 {

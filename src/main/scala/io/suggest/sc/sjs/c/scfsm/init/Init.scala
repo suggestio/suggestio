@@ -4,6 +4,7 @@ import io.suggest.sc.sjs.c.scfsm.geo.GeoInit
 import io.suggest.sc.sjs.m.magent.MScreen
 import io.suggest.sc.sjs.m.magent.vsz.ViewportSz
 import io.suggest.sc.sjs.v.global.DocumentView
+import io.suggest.sjs.common.msg.WarnMsgs
 
 /**
  * Suggest.io
@@ -35,8 +36,11 @@ trait Init extends JsRouterInit with GeoInit {
     override def afterBecome(): Unit = {
       super.afterBecome()
       // Инициализировать состояние.
+      val vszOpt = ViewportSz.getViewportSize
+      if (vszOpt.isEmpty)
+        warn( WarnMsgs.NO_SCREEN_VSZ_DETECTED )
       val sd1 = _stateData.copy(
-        screen = ViewportSz.getViewportSize.map( MScreen.apply )
+        screen = vszOpt.map( MScreen.apply )
       )
       // TODO Десериализовывать состояние из URL и выбирать состояние.
       val nextState = _geoAskState

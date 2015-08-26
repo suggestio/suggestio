@@ -42,6 +42,7 @@ trait Index extends ScFsmStub with FindAdsUtil {
       // Дожидаясь ответа сервера, инициализировать кое-какие переменные, необходимые на следующем шаге.
       for (screen <- sd0.screen) {
         val adsPerLoad = MGridState.getAdsPerLoad( screen )
+        println("aPL = " + adsPerLoad)
         val sd1 = sd0.copy(
           grid = sd0.grid.copy(
             state = sd0.grid.state.copy(
@@ -158,7 +159,10 @@ trait Index extends ScFsmStub with FindAdsUtil {
           _waitGridAdsState
         }
       }
-      become( nextState, sd1 )
+      val sd2 = sd1.copy(
+        timerId = wcHideTimerOpt
+      )
+      become( nextState, sd2 )
     }
 
 

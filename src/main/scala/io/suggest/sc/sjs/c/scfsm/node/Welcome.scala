@@ -14,6 +14,13 @@ import org.scalajs.dom
  */
 trait Welcome extends ScFsmStub {
 
+  /** Дедублицированный код опциональной отмены таймера, сохраненного в состоянии,
+    * в зависимости от полученного сигнала. */
+  private def _maybeCancelWcTimer(signal: IWcStepSignal): Unit = {
+    if (signal.isUser)
+      _stateData.maybeCancelTimer()
+  }
+
   /** Интерфейс с методом, возвращающим выходное состояние (выход из welcome-фазы). */
   trait IWelcomeFinished {
     /** Состояние, когда welcome-карточка сокрыта и стёрта из DOM. */
@@ -31,15 +38,15 @@ trait Welcome extends ScFsmStub {
 
     override def receiverPart: Receive = super.receiverPart orElse {
       // Приём сигнала от таймера о необходимости начать сокрытие карточки приветствия. Либо юзер тыкает по welcome-карточке.
-      case _: IWcStepSignal =>
+      case signal: IWcStepSignal =>
+        _maybeCancelWcTimer(signal)
         _letsHideWelcome()
     }
 
     /** Необходимо запустить плавное сокрытие welcome-карточки. */
     protected def _letsHideWelcome(): Unit = {
-      // TODO Отменять таймер
       val wcRootOpt = WcRoot.find()
-      for (wcRoot <- wcRootOpt) {
+      val hideTimerIdOpt = for (wcRoot <- wcRootOpt) yield {
         wcRoot.fadeOut()
         dom.setTimeout(
           { () => _sendEventSyncSafe(WcTimeout) },
@@ -47,7 +54,10 @@ trait Welcome extends ScFsmStub {
         )
       }
       val nextState = wcRootOpt.fold[FsmState] (_welcomeFinishedState) (_ => _welcomeHidingState)
-      become(nextState)
+      val sd2 = _stateData.copy(
+        timerId = hideTimerIdOpt
+      )
+      become(nextState, sd2)
     }
 
   }
@@ -58,16 +68,19 @@ trait Welcome extends ScFsmStub {
 
     override def receiverPart: Receive = super.receiverPart orElse {
       // Сработал таймер окончания анимированного сокрытия welcome. Или юзер тыкнул по welcome-карточке.
-      case _: IWcStepSignal =>
+      case signal: IWcStepSignal =>
+        _maybeCancelWcTimer(signal)
         _letsFinishWelcome()
     }
 
     protected def _letsFinishWelcome(): Unit = {
-      // TODO Отменять таймер
       for (wcRoot <- WcRoot.find()) {
         wcRoot.remove()
       }
-      become(_welcomeFinishedState)
+      val sd2 = _stateData.copy(
+        timerId = None
+      )
+      become(_welcomeFinishedState, sd2)
     }
 
   }
