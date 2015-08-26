@@ -3,6 +3,7 @@ package io.suggest.sjs.common.view.vutil
 import io.suggest.sjs.common.util.TouchUtil
 import io.suggest.sjs.common.view.safe.evtg.SafeEventTargetT
 import org.scalajs.dom.Event
+import org.scalajs.dom.raw.HTMLElement
 
 import scala.scalajs.js
 
@@ -33,7 +34,7 @@ trait OnClickT extends OnMouseClickT {
       // На touch-девайсе нужно распознавать клики среди touch-событий
       { e: T =>
         val itl = isTouchLocked
-        println("evt: " + e + ", tg = " + e.currentTarget + " , isTouchLocked = " + itl)
+        println("evt: " + e + ", tg = " + e.currentTarget + "#" + e.currentTarget.asInstanceOf[HTMLElement].id + " , isTouchLocked = " + itl)
         if (!isTouchLocked) {
           f(e)
         }

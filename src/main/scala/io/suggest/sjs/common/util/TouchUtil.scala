@@ -27,11 +27,7 @@ object TouchUtil {
   }
 
   /** Управляется ли текущий браузер тач-скрином? */
-  lazy val IS_TOUCH_DEVICE: Boolean = {
-    val res = isTouchDevice
-    println("isTouchDev = " + res)
-    res
-  }
+  lazy val IS_TOUCH_DEVICE: Boolean = isTouchDevice
 
   /** Название события для выявления клика на touch-девайсах. */
   def EVT_NAME_TOUCH_CLICK = "touchend"
@@ -44,7 +40,7 @@ object TouchUtil {
   /** Название события клика для текущего девайса. */
   def clickEvtNames: List[String] = {
     if (IS_TOUCH_DEVICE) {
-      List(EVT_NAME_TOUCH_CLICK, EVT_NAME_CLICK)
+      List(EVT_NAME_TOUCH_CLICK)
     } else {
       EVT_NAMES_MOUSE_CLICK
     }
