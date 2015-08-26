@@ -6,6 +6,7 @@ import models.msc.FocRenderResult
 import play.api.libs.json._
 import play.api.mvc.Call
 import io.suggest.sc.ScConstants.Resp._
+import io.suggest.sc.ScConstants.Focused.FOC_ANSWER_ACTION
 
 /**
  * Suggest.io
@@ -113,7 +114,7 @@ case class FocusedAdsResp2(override val ads: Seq[FocRenderResult],
                            override val totalCount: Int,
                            override val styles: String)
 extends Action with FocusedAdsT with TotalCountT with StylesOpt {
-  override def action = "focused"
+  override def action = FOC_ANSWER_ACTION
 }
 
 
@@ -141,7 +142,7 @@ trait CurrAdnId extends SmJsonResp {
  */
 case class ScIndexResp(html: JsString, isGeo: Boolean, currAdnId: Option[String])
 extends Action with HtmlOpt with IsGeo with CurrAdnId {
-  override def action = "showcaseIndex"
+  override def action = INDEX_RESP_ACTION
   override def htmlOpt: Option[JsString] = Some(html)
 }
 

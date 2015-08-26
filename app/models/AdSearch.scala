@@ -67,6 +67,7 @@ object AdSearch extends CommaDelimitedStringSeq {
           maybeGen       <- longOptB.bind     (f(GENERATION_FN),     params)
           maybeGeo       <- geoModeB.bind     (f(GEO_MODE_FN),       params)
           maybeDevScreen <- devScreenB.bind   (f(SCREEN_INFO_FN),    params)
+          maybeInxOpAdId <- strOptB.bind      (f(OPEN_INDEX_AD_ID_FN), params)
 
         } yield {
           for {
@@ -94,6 +95,7 @@ object AdSearch extends CommaDelimitedStringSeq {
               override def generationOpt  = maybeGen
               override def geo            = maybeGeo
               override def screen         = maybeDevScreen
+              override def openIndexAdId  = maybeInxOpAdId
             }
           }
         }
@@ -113,7 +115,8 @@ object AdSearch extends CommaDelimitedStringSeq {
           strSeqB.unbind      (f(FIRST_AD_ID_FN),    value.firstIds),
           longOptB.unbind     (f(GENERATION_FN),     value.generationOpt),
           strOptB.unbind      (f(GEO_MODE_FN),       value.geo.toQsStringOpt),
-          devScreenB.unbind   (f(SCREEN_INFO_FN),    value.screen)
+          devScreenB.unbind   (f(SCREEN_INFO_FN),    value.screen),
+          strOptB.unbind      (f(OPEN_INDEX_AD_ID_FN), value.openIndexAdId)
         )
           .filter(!_.isEmpty)
           .mkString("&")
@@ -146,9 +149,16 @@ trait AdSearch extends AdsSearchArgsDflt { that =>
   /** Данные по экрану, присланные клиентом. */
   def screen        : Option[DevScreen] = None
 
-  /** Принудительно должен быть эти карточки первыми в списке.
-    * На уровне ES это дело не прижилось, поэтому тут параметр, который отрабатывается в контроллере. */
+  /**
+   * Принудительно должен быть эти карточки первыми в списке.
+   * На уровне ES это дело не прижилось, поэтому тут параметр, который отрабатывается в контроллере.
+   * Следует помнить, что sc v1 и v2 имеют различный смысл этого аргумента.
+   */
   def firstIds      : Seq[String] = Nil
+
+  /** id карточки, для которой допускается вернуть index её продьюсера. */
+  def openIndexAdId : Option[String] = None
+
 
   /** Абсолютный сдвиг в результатах (постраничный вывод). */
   override def offset: Int = {
@@ -176,7 +186,11 @@ trait AdSearch extends AdsSearchArgsDflt { that =>
   /** Инкрементить offset на указанное кол-во элементов. */
   def plusOffset(count: Int = maxResults): AdSearch = new AdSearchWrapper {
     override def _dsArgsUnderlying = that
-    override def offsetOpt: Option[Int] = Some( super.offsetOpt.fold(count)(_ + count) )
+    override def offsetOpt: Option[Int] = {
+      super.offsetOpt
+        .map(_ + count)
+        .orElse( Some(count) )
+    }
   }
 
 }
@@ -190,7 +204,8 @@ trait AdSearchWrapper_ extends AdSearch with AdsSearchArgsWrapper {
   override def offsetOpt      = _dsArgsUnderlying.offsetOpt
   override def geo            = _dsArgsUnderlying.geo
   override def screen         = _dsArgsUnderlying.screen
-  override def firstIds  = _dsArgsUnderlying.firstIds
+  override def firstIds       = _dsArgsUnderlying.firstIds
+  override def openIndexAdId  = _dsArgsUnderlying.openIndexAdId
 
 }
 

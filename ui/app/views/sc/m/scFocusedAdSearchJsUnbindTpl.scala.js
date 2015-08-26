@@ -7,6 +7,7 @@
 
 @after = {
   add("@LAST_PROD_ID_FN");
+  add("@OPEN_INDEX_AD_ID_FN");
 }
 
 @adSearchJsUnbindTpl(delim, Some(after))

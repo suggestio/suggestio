@@ -2224,10 +2224,17 @@ sm =
 
     url = "/market/fads?a.v=1&a.shopId=#{shop_id}&a.gen=#{sm.gen}&a.size=#{sm.config.producer_ads_per_load}#{a_rcvr}&#{sm.geo.request_query_param()}&#{sm.request_context.screen_param()}"
 
-    if (typeof ad_id == "string")
+    withAdId = (typeof ad_id == "string")
+
+    if (withAdId)
       url = url + "&a.firstAdId=" + ad_id
 
     sm.focused_ads.curl = url
+
+    ## 2015.aug.26 firstAdId больше не занимается перескоком на выдачу продьюсера.
+    if (withAdId)
+      url = url + "&a.n=" + ad_id
+
     sm.focused_ads.requested_ad_id = ad_id
     sm.request.perform url + '&h=' + true
 

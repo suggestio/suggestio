@@ -1,11 +1,11 @@
 package controllers.sc
 
+import io.suggest.ym.model.MAd
 import models.{MAdnNode, MAdnNodeCache}
 import models.im.DevScreen
 import models.msc.{MScApiVsn, ScReqArgsDflt, ScReqArgs}
 import play.api.mvc.Result
 import util.acl.AbstractRequestWithPwOpt
-import play.api.Play.{current, configuration}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 
@@ -20,54 +20,43 @@ import scala.concurrent.Future
  */
 trait ScIndexAdOpen extends ScFocusedAds with ScIndexNodeCommon {
 
-  /** Активирован ли автопереход в выдачу узла-продьюсера размещенной на данном узле рекламной карточки? */
-  // TODO Выпилить начисто, когда будет запилена нормальная поддержка функции тут и на клиенте.
-  private val STEP_INTO_FOREIGN_SC_ENABLED = configuration.getBoolean("sc.focus.step.into.foreign.sc.enabled") getOrElse true
-
-
   /** Тело экшена возврата медиа-кнопок расширено поддержкой переключения на index-выдачу узла-продьюсера
     * рекламной карточки, которая заинтересовала юзера. */
-  override protected def _focusedAds(logic: FocusedAdsLogicHttp)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
-    // 2015.jun.2: При выборе продьюсера в списке магазинов надо делать переход в выдачу магазина.
-    val fut0 = if (STEP_INTO_FOREIGN_SC_ENABLED)
-      Future successful None
-    else
-      Future failed new NoSuchElementException()
-    fut0.map { _ =>
-      logic._adSearch
-        .producerIds
-        .headOption
-    }.flatMap {
-      case None =>
-        // Если нет id продьюсера в исходном запросе, то попробовать поискать в запрошенной first-id карточке
-        logic.firstAdsFut map { firstAds =>
-          firstAds
-            .headOption
-            .filter { _ => STEP_INTO_FOREIGN_SC_ENABLED }
-            .map { _.producerId }
-        }
-      case some =>
-        Future successful some
-    }.filter { prodIdOpt =>
-      // Для переброски на index допускаются только сторонние продьюсеры
-      prodIdOpt.exists( logic.is3rdPartyProducer )
-    }.flatMap { prodIdOpt =>
-      // Для этого продьюсера нужно выполнить переброску в index.
-      val fut = MAdnNodeCache.maybeGetByIdCached(prodIdOpt)
-        .map { _.get }
-        .flatMap { producer => _goToProducerIndex(producer, logic) }
-      // Как выяснилось, бывают карточки-сироты (продьюсер удален, карточка -- нет). Нужно сообщать об этой ошибке.
-      fut onFailure { case ex =>
-        val msg = s"Producer node does not exist: adnId=$prodIdOpt for adIds=${logic._adSearch.firstIds}"
-        if (ex.isInstanceOf[NoSuchElementException])
-          LOGGER.error(msg)
-        else
-          LOGGER.error(msg, ex)
+  override protected def _focusedAds(logic: FocusedAdsLogicHttp)
+                                    (implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+    val resFut = for {
+      // .get приведут к NSEE, это нормально.
+      producerId <- {
+        MAd.maybeGetById( logic._adSearch.openIndexAdId )
+          .map(_.get.producerId)
       }
-      fut
-    }.recoverWith { case ex: Throwable =>
+
+      if logic.is3rdPartyProducer( producerId )
+
+      producer <- {
+        val fut = MAdnNodeCache.getById(producerId)
+          .map(_.get)
+        // Как выяснилось, бывают карточки-сироты (продьюсер удален, карточка -- нет). Нужно сообщать об этой ошибке.
+        fut onFailure { case ex =>
+          val msg = s"Producer node does not exist: adnId=$producerId for adIds=${logic._adSearch.firstIds}"
+          if (ex.isInstanceOf[NoSuchElementException])
+            LOGGER.error(msg)
+          else
+            LOGGER.error(msg, ex)
+        }
+        fut
+      }
+
+      result <- _goToProducerIndex(producer, logic)
+
+    } yield {
+      result
+    }
+
+    // Отрабатываем все возможные ошибки через вызов к super-методу.
+    resFut recoverWith { case ex: Throwable =>
       // Продьюсер неизвестен, не подходит под критерии или переброска отключена.
-      if (!ex.isInstanceOf[NoSuchElementException])
+      if ( !ex.isInstanceOf[NoSuchElementException] )
         LOGGER.error("_focusedAds(): Suppressing unexpected exception for " + logic._request.uri, ex)
       super._focusedAds(logic)
     }
@@ -82,7 +71,8 @@ trait ScIndexAdOpen extends ScFocusedAds with ScIndexNodeCommon {
    * @param request Исходный реквест.
    * @return Фьючерс с http-результатом.
    */
-  private def _goToProducerIndex(producer: MAdnNode, focLogic: FocusedAdsLogicHttp)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+  private def _goToProducerIndex(producer: MAdnNode, focLogic: FocusedAdsLogicHttp)
+                                (implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
     // Извлекаем MAdnNode втупую. exception будет перехвачен в recoverWith.
     val idxLogic = new ScIndexNodeSimpleHelper {
       override def geoListGoBackFut   = Future successful Some(true)
@@ -97,8 +87,8 @@ trait ScIndexAdOpen extends ScFocusedAds with ScIndexNodeCommon {
         override def withWelcomeAd              = true
         override def geo                        = s.geo
       }
-
     }
+    // Логика обработки запроса собрана, запустить исполнение запроса.
     idxLogic.result
   }
 
