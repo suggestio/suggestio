@@ -20,4 +20,12 @@ object ErrorMsgs {
 
   def FIND_ADS_REQ_FAILED        = E(5)
 
+  def SC_FSM_EVENT_FAILED        = E(6)
+
+  def FOC_FIRST_REQ_FAILED       = E(7)
+
+  def FOC_ANSWER_ACTION_MISSING  = E(8)
+
+  def FOC_ANSWER_ACTION_INVALID  = E(9)
+
 }
