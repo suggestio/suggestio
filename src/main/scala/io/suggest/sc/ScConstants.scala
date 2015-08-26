@@ -66,19 +66,19 @@ object ScConstants {
   object Resp {
 
     /** Название поля, содержащего id экшена, по которому сгенерирован ответ. */
-    final val ACTION_FN  = "action"
+    def ACTION_FN  = "action"
 
     /** Название поля ответа, содержащего строку с html версткой. */
-    final val HTML_FN    = "html"
+    def HTML_FN    = "html"
 
     /** Название поля, которое содержит флаг того, была ли использована геолокация для генерации результата? */
-    final val IS_GEO_FN  = "is_geo"
+    def IS_GEO_FN  = "is_geo"
 
     /** Название поля с id узла, к которому относится ответ. */
-    final val ADN_ID_FN  = "curr_adn_id"
+    def ADN_ID_FN  = "curr_adn_id"
 
     /** Название поля, содержащее массив отрендеренных карточек плитки. */
-    final val BLOCKS_FN  = "blocks"
+    def BLOCKS_FN  = "blocks"
 
     def MADS_FN          = "mads"
 
@@ -101,6 +101,8 @@ object ScConstants {
     def TOTAL_COUNT_FN    = "tc"
 
     def STYLES_FN         = "st"
+
+    def INDEX_RESP_ACTION = "showcaseIndex"
   }
 
 
@@ -385,6 +387,8 @@ object ScConstants {
 
   /** Константы для подвыдачи focused ads. */
   object Focused {
+
+    def FOC_ANSWER_ACTION  = "focused"
 
     /** id корневого контейнера. */
     def ROOT_ID = "smFocusedAds"
