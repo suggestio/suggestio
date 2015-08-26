@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.m.msc.fsm
 import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.m.mfoc.MFocSd
 import io.suggest.sc.sjs.m.mgeo._
-import io.suggest.sc.sjs.m.mgrid.MGridData
+import io.suggest.sc.sjs.m.mgrid.{MGridState, MGridData}
 import io.suggest.sc.sjs.m.mnav.MNavState
 import io.suggest.sc.sjs.m.msearch.MSearchSd
 import io.suggest.sjs.common.model.browser.{IBrowser, MBrowser}
@@ -99,7 +99,11 @@ case class MStData(
       adnIdOpt  = adnIdOpt2,
       nav       = MNavState(),
       search    = MSearchSd(),
-      grid      = MGridData(),
+      grid      = MGridData(
+        state = MGridState(
+          adsPerLoad = grid.state.adsPerLoad
+        )
+      ),
       focused   = None
     )
   }

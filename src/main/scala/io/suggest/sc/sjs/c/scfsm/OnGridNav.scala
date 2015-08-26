@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.c.scfsm
 
+import io.suggest.sc.sjs.c.scfsm.grid.{PanelGridRebuilder, OnGrid}
 import io.suggest.sc.sjs.m.mhdr.HideNavClick
 import io.suggest.sc.sjs.m.mnav.NodeListClick
 import io.suggest.sc.sjs.m.msrv.nodes.find.{MFindNodesResp, MFindNodesArgsEmpty, MFindNodesArgsDflt, MFindNodes}

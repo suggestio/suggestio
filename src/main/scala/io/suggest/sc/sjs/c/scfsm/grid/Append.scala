@@ -1,11 +1,12 @@
-package io.suggest.sc.sjs.c.scfsm
+package io.suggest.sc.sjs.c.scfsm.grid
 
+import io.suggest.sc.sjs.c.scfsm.{FindAdsUtil, ScFsmStub}
 import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
-import io.suggest.sc.sjs.vm.res.CommonRes
 import io.suggest.sc.sjs.vm.grid.GContent
+import io.suggest.sc.sjs.vm.res.CommonRes
 import io.suggest.sjs.common.msg.ErrorMsgs
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 import scala.util.Failure
 
 /**
@@ -14,7 +15,7 @@ import scala.util.Failure
  * Created: 19.06.15 16:16
  * Description: Конечный автомат для поддержки загрузки карточек в плитку выдачи.
  */
-trait GridAppend extends ScFsmStub with FindAdsUtil {
+trait Append extends ScFsmStub with FindAdsUtil {
 
   /** Аддон для состояний для запуска запроса grid ads. */
   trait GetGridAdsStateT extends FsmState {

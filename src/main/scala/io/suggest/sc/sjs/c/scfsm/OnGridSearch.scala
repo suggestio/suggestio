@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.c.scfsm
 
+import io.suggest.sc.sjs.c.scfsm.grid.{PanelGridRebuilder, OnGrid}
 import io.suggest.sc.sjs.m.mhdr.{ShowIndexClick, HideSearchClick}
 import io.suggest.sc.sjs.m.msearch._
 import io.suggest.sc.sjs.vm.hdr.HRoot

@@ -1,10 +1,10 @@
-package io.suggest.sc.sjs.c.scfsm
+package io.suggest.sc.sjs.c.scfsm.grid
 
 import io.suggest.sc.sjs.m.magent.IMScreen
-import io.suggest.sc.sjs.m.mgrid.{MGridData, IGridData}
-import io.suggest.sc.sjs.m.msc.fsm.{MStData, IStData}
+import io.suggest.sc.sjs.m.mgrid.{IGridData, MGridData}
+import io.suggest.sc.sjs.m.msc.fsm.{IStData, MStData}
 import io.suggest.sc.sjs.util.grid.builder.V1Builder
-import io.suggest.sc.sjs.vm.grid.{GContainer, GContent, GBlock}
+import io.suggest.sc.sjs.vm.grid.{GBlock, GContainer, GContent}
 import io.suggest.sc.sjs.vm.util.GridOffsetCalc
 import io.suggest.sjs.common.model.browser.IBrowser
 import io.suggest.sjs.common.util.SjsLogger

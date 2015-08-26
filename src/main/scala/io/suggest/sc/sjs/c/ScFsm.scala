@@ -2,7 +2,6 @@ package io.suggest.sc.sjs.c
 
 import io.suggest.sc.sjs.c.scfsm._
 import io.suggest.sc.sjs.c.scfsm.init.Init
-import io.suggest.sc.sjs.c.scfsm.node.Index
 import io.suggest.sc.sjs.m.msc.fsm.{IStData, MStData}
 import io.suggest.sc.sjs.m.msearch.MTabs
 import io.suggest.sjs.common.util.SjsLogger
@@ -13,9 +12,11 @@ import io.suggest.sjs.common.util.SjsLogger
  * Created: 16.06.15 12:07
  * Description: FSM-контроллер для всей выдачи. Собирается из кусков, которые закрывают ту или иную область.
  */
-object ScFsm extends SjsLogger with Init with Index with GridAppend with OnPlainGrid with OnGridSearchGeo
-with node.States with OnGridSearchHashTags with OnGridNav with foc.StartingForAd with foc.OnFocus with foc.Closing
-with foc.SimpleShift with foc.PreLoading with foc.OnTouch with foc.OnTouchPreload {
+object ScFsm extends SjsLogger with Init with node.States
+with grid.Append with grid.Plain with grid.LoadMore
+with OnGridSearchGeo with OnGridSearchHashTags with OnGridNav
+with foc.StartingForAd with foc.OnFocus with foc.Closing with foc.SimpleShift with foc.PreLoading with foc.OnTouch with foc.OnTouchPreload
+{
 
   // Инициализируем базовые внутренние переменные.
   override protected var _state: FsmState = new DummyState
@@ -134,9 +135,12 @@ with foc.SimpleShift with foc.PreLoading with foc.OnTouch with foc.OnTouchPreloa
   /*--------------------------------------------------------------------------------
    * Фаза состояний работы с сеткой карточек (grid).
    *--------------------------------------------------------------------------------*/
-  /** Трейт для поддержки переключения на состояния, исходящие из OnGridStateT  */
-  protected trait OnGridStateT extends super.OnGridStateT {
+  protected trait GridBlockClickStateT extends super.GridBlockClickStateT {
     override def _startFocusOnAdState = new FocStartingForAd
+  }
+  /** Трейт для поддержки переключения на состояния, исходящие из OnGridStateT  */
+  protected trait OnGridStateT extends super.OnGridStateT with GridBlockClickStateT {
+    override def _loadModeState = new GridLoadModeState
   }
 
   /** Превратить search-таб в соответствующее состояние. */
@@ -153,6 +157,10 @@ with foc.SimpleShift with foc.PreLoading with foc.OnTouch with foc.OnTouchPreloa
     override protected def _navLoadListState = new OnGridNavLoadListState
   }
 
+  class GridLoadModeState extends OnGridLoadingMoreStateT with GridBlockClickStateT {
+    override protected def _adsLoadedState = new OnPlainGridState
+    override protected def _findAdsFailedState = new OnPlainGridState
+  }
 
   /*--------------------------------------------------------------------------------
    * Состояния нахождения в сетке и на поисковой панели одновременно (grid + search).
