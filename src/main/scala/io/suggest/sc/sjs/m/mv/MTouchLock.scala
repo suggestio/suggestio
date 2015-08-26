@@ -17,7 +17,6 @@ object MTouchLock {
 
   /** Выставить значение touch-блокировки. */
   def apply(v: Boolean): Unit = {
-    println("isTouchLocked := " + v)
     isTouchLocked = v
   }
 

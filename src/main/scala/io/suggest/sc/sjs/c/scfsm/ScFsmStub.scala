@@ -47,10 +47,6 @@ trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger with DirectDo
       val e = ge.error
       warn(ErrorMsgs.BSS_GEO_LOC_FAILED + " [" + e.code + "] " + e.message)
     }
-
-    // Собрать и закешировать ресивер в ожидании прихода событий.
-    override lazy val receiver: Receive = super.receiver
-    Future( receiver )(queue)
   }
 
   /**
@@ -160,14 +156,11 @@ trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger with DirectDo
     }
   }
 
-  /**
-   * Переключение на новое состояние. Старое состояние будет отброшено.
-   * @param nextState Новое состояние.
-   */
-  override protected def become(nextState: FsmState): Unit = {
+  // Раскомментить для логгирования переключения состояний.
+  /*override protected def become(nextState: FsmState): Unit = {
     log(_state.name + " -> " + nextState.name)
     super.become(nextState)
-  }
+  }*/
 
   /** Подписать фьючерс на отправку результата в ScFsm. */
   protected def _sendFutResBack[T](fut: Future[T])(implicit ec: ExecutionContext): Unit = {
