@@ -27,7 +27,11 @@ object TouchUtil {
   }
 
   /** Управляется ли текущий браузер тач-скрином? */
-  lazy val IS_TOUCH_DEVICE = isTouchDevice
+  lazy val IS_TOUCH_DEVICE: Boolean = {
+    val res = isTouchDevice
+    println("isTouchDev = " + res)
+    res
+  }
 
   /** Название события для выявления клика на touch-девайсах. */
   def EVT_NAME_TOUCH_CLICK = "touchend"
@@ -65,4 +69,5 @@ object TouchElementStub {
 }
 sealed trait TouchElementStub extends js.Object {
   var ontouchstart: UndefOr[_] = js.native
+
 }
