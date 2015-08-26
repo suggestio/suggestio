@@ -41,7 +41,12 @@ trait AbstractFsm {
   protected trait FsmState {
     def name = getClass.getSimpleName
     def receiverPart: Receive
-    def receiver: Receive = combineReceivers(Seq(receiverPart, allStatesReceiver))
+    /** Сборка общего ресивера из ресивера состояния и allStatesReceiver.
+      * Вызывается однократно во время become.
+      * Поэтому переопределение через val/lazyval не даст тут никакого прироста. */
+    final def receiver: Receive = {
+      combineReceivers( Seq(receiverPart, allStatesReceiver) )
+    }
     override def toString: String = name
 
     /** Действия, которые вызываются, когда это состояние выставлено в актор. */
