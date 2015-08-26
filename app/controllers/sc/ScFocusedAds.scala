@@ -92,9 +92,16 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
       }
     }
 
+    /** 2015.aug.26: sc v1 и v2 имеют разные смыслы (смысловые scope'ы) параметра firstAdsIds.
+      * В случае v1 нельзя фетчить first ads при последующих запросах, но он всегда участвует.
+      * В v2 firstAdIds относится к каждому конкретному запросу. */
+    protected def fetchFirstAds: Boolean = {
+      _adSearch.firstIds.nonEmpty
+    }
+
     /** Первые карточки, если запрошены. */
     lazy val firstAdsFut: Future[Seq[MAd]] = {
-      if (_adSearch.firstIds.nonEmpty) {
+      if (fetchFirstAds) {
         val ids = _adSearch.firstIds
         val fut = MAd.multiGet(ids)
         fut onSuccess { case mads =>
@@ -475,6 +482,13 @@ trait ScFocusedAds extends ScFocusedAdsBase {
     }
 
     override def apiVsn = MScApiVsns.Coffee
+
+    /** 2015.aug.26: sc v1 и v2 имеют разные смыслы (смысловые scope'ы) параметра firstAdsIds.
+      * В случае v1 нельзя фетчить first ads при последующих запросах (offset > 0),
+      * но он всегда участвует в запросах. */
+    override protected def fetchFirstAds: Boolean = {
+      super.fetchFirstAds && _adSearch.offset <= 0
+    }
 
     /** Отдельно отфокусированную карточку тоже нужно минифицировать и завернуть в JsString. */
     def focAdHtmlJsStrOptFut: Future[Option[JsString]] = {

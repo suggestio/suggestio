@@ -1790,8 +1790,10 @@ sm =
         return false
 
       next_index = this.active_ad_index + 1
-      if next_index < this.ads_count
-        this.show_ad_by_index next_index, '+'
+      if next_index >= this.ads_count
+        next_index = this.ads_count - 1
+
+      this.show_ad_by_index next_index, '+'
 
     prev_ad : () ->
 
@@ -1799,8 +1801,10 @@ sm =
         return false
 
       prev_index = this.active_ad_index - 1
-      if prev_index >= 0
-        this.show_ad_by_index prev_index, '-'
+      if prev_index < 0
+        prev_index = 0
+
+      this.show_ad_by_index prev_index, '-'
 
     is_node_click : ( event ) ->
       res = sm.events.target_lookup(event.target, 'className', 'js-hdr-logo') != null  ||  sm.events.target_lookup(event.target, 'id', 'smProducerIndexBtn')
@@ -2219,11 +2223,11 @@ sm =
     if cs.mart_id then a_rcvr = '&a.rcvr=' + cs.mart_id else a_rcvr = ""
 
     url = "/market/fads?a.v=1&a.shopId=#{shop_id}&a.gen=#{sm.gen}&a.size=#{sm.config.producer_ads_per_load}#{a_rcvr}&#{sm.geo.request_query_param()}&#{sm.request_context.screen_param()}"
+
     if (typeof ad_id == "string")
       url = url + "&a.firstAdId=" + ad_id
 
     sm.focused_ads.curl = url
-
     sm.focused_ads.requested_ad_id = ad_id
     sm.request.perform url + '&h=' + true
 
