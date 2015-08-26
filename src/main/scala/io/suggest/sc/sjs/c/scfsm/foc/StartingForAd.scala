@@ -1,12 +1,15 @@
 package io.suggest.sc.sjs.c.scfsm.foc
 
+import io.suggest.sc.sjs.c.scfsm.node.Index
 import io.suggest.sc.sjs.c.scfsm.{FindNearAdIds, FindAdsUtil}
 import io.suggest.sc.sjs.m.mfoc.{FAdShown, MFocSd, FocRootAppeared}
 import io.suggest.sc.sjs.m.msrv.foc.find.{MFocAd, MFocAds, MFocAdSearchEmpty}
+import io.suggest.sc.sjs.m.msrv.index.MNodeIndex
 import io.suggest.sc.sjs.vm.res.FocusedRes
 import io.suggest.sc.sjs.vm.foc.fad.FAdRoot
 import io.suggest.sc.sjs.vm.foc.{FCarousel, FControls, FRoot}
 import io.suggest.sc.sjs.vm.grid.GBlock
+import io.suggest.sjs.common.msg.ErrorMsgs
 import org.scalajs.dom
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.util.Failure
@@ -23,11 +26,11 @@ import io.suggest.sc.ScConstants.Focused.SLIDE_ANIMATE_MS
 // TODO Тут stub только. Логика не написана.
 // Нужно реализовать состояния в подпакете scfsm, а этот файл удалить/переместить.
 
-trait StartingForAd extends MouseMoving with FindAdsUtil {
+trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
 
   /** Трейт для состояния, когда focused-выдача отсутствует, скрыта вообще и ожидает активации.
     * При появлении top-level ScFsm это событие исчезнет, и будет обрабатываться где-то в вышестоящем обработчике. */
-  protected trait StartingForAdStateT extends FsmState with FindNearAdIds {
+  protected trait StartingForAdStateT extends FsmState with FindNearAdIds with ProcessIndexReceivedUtil {
     
     protected def _getCurrIndex(fState: MFocSd): Int = {
       fState.gblock
@@ -61,9 +64,10 @@ trait StartingForAd extends MouseMoving with FindAdsUtil {
           // Выставляем под нужды focused-выдачи значения limit/offset.
           override def offset     = Some( if (withPrevAd) currIndex - 1 else currIndex )
           override def limit      = Some( if (withPrevAd) 3 else 2 )
-          // level не выставляем, т.к. focused-выдача дублирует grid-выдачу в отображенном виде.
+          // Для первой открываемой карточки допускается переход на index-выдачу узла вместо открытия focused-выдачи.
+          override def openIndexAdId = currMadIdOpt
         }
-        val fadsFut = MFocAds.find(args)
+        val fadsFut = MFocAds.findOrIndex(args)
 
         // Скрыть за экран корневой focused-контейнер, подготовиться к появлению на экране.
         fRoot.disableTransition()
@@ -166,17 +170,31 @@ trait StartingForAd extends MouseMoving with FindAdsUtil {
 
     protected def _focAdsRequestFailed(ex: Throwable): Unit = {
       // Если не удалось сделать начальный реквест, то надо сбросить состояние и вернутся в состояние плитки.
-      val sd1 = _stateData.copy(
+      error(ErrorMsgs.FOC_FIRST_REQ_FAILED, ex)
+      _backToGrid()
+    }
+
+    protected def _backToGrid(): Unit = {
+       val sd1 = _stateData.copy(
         focused = None
       )
       become(_backToGridState, sd1)
     }
 
     override def receiverPart: Receive = {
-      case mfa: MFocAds =>
+      case Right(mfa: MFocAds) =>
         _focAdsReceived(mfa)
+      case Left(mni: MNodeIndex) =>
+        _stateData = _stateData.withNodeSwitch( mni.adnIdOpt )
+        _nodeIndexReceived(mni)
       case Failure(ex) =>
         _focAdsRequestFailed(ex)
+    }
+
+    /** При ошибке надо возвращаться назад в сетку. */
+    override def processFailure(ex: Throwable): Unit = {
+      super.processFailure(ex)
+      _backToGrid()
     }
 
   }

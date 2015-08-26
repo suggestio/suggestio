@@ -13,15 +13,15 @@ import scala.scalajs.js.{Any, Dictionary}
  */
 trait MFocAdSearch extends MFindAdsReq {
 
-  /** id продьюсера последней карточки из предыдущей последовательности. */
-  def lastProducerId: Option[String]
+  /** id рекламной карточки для активации автопереброса на выдачу продьюсера этой карточки. */
+  def openIndexAdId: Option[String]
 
   override def toJson: Dictionary[Any] = {
     val acc = super.toJson
 
-    val _ppi = lastProducerId
-    if (_ppi.nonEmpty)
-      acc.update(LAST_PROD_ID_FN, _ppi.get)
+    val _openIndexAdId = openIndexAdId
+    if (_openIndexAdId.nonEmpty)
+      acc.update(OPEN_INDEX_AD_ID_FN, _openIndexAdId.get)
 
     acc
   }
@@ -31,8 +31,14 @@ trait MFocAdSearch extends MFindAdsReq {
 /** Дефолтовая реализация модели с пустыми значениями полей. */
 trait MFocAdSearchEmpty extends MFindAdsReqEmpty with MFocAdSearch {
 
-  override def lastProducerId: Option[String] = None
+  override def openIndexAdId: Option[String] = None
+}
 
+
+/** Параметры поиска с запретом на открытие карточек. */
+trait MFocAdSearchNoOpenIndex extends MFocAdSearch {
+  // При любом раскладе сервер не должен возвращать index-ответ.
+  override final def openIndexAdId: Option[String] = None
 }
 
 
@@ -41,5 +47,5 @@ trait MFocAdSearchWrapper extends MFindAdsReqWrapper with MFocAdSearch {
 
   override def _underlying: MFocAdSearch
 
-  override def lastProducerId = _underlying.lastProducerId
+  override def openIndexAdId = _underlying.openIndexAdId
 }

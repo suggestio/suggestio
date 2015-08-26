@@ -37,7 +37,7 @@ object MNodeIndex {
       raw <- MSrvUtil.reqJson(route)
     } yield {
       val d = raw.asInstanceOf[Dictionary[Any]]
-      new MNodeIndex(d)
+      MNodeIndex(d)
     }
   }
 
@@ -45,7 +45,7 @@ object MNodeIndex {
 
 
 /** Враппер над сырым JSON для повышения удобства доступа к сырому JSON-ответу сервера. */
-sealed class MNodeIndex(json: WrappedDictionary[Any]) {
+case class MNodeIndex(json: WrappedDictionary[Any]) {
 
   /** index-верстка выдачи. */
   def html  = json(HTML_FN).asInstanceOf[String]
@@ -56,10 +56,4 @@ sealed class MNodeIndex(json: WrappedDictionary[Any]) {
   /** id узла, если известен. */
   lazy val adnIdOpt = json.get(ADN_ID_FN).map(_.toString)
 
-  /** Нужен только для toString() */
-  private def action = json(ACTION_FN).toString
-
-  override def toString: String = {
-    action + "(isGeo=" + isGeo + ",nodeId=" + adnIdOpt + ",html=" + html.length + "b)"
-  }
 }

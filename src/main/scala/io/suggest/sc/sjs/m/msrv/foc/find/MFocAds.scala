@@ -1,11 +1,14 @@
 package io.suggest.sc.sjs.m.msrv.foc.find
 
-import io.suggest.sc.sjs.m.msrv.MSrvUtil
+import io.suggest.sc.sjs.m.msrv.index.MNodeIndex
+import io.suggest.sc.sjs.m.msrv.{MSrvAnswer, MSrvUtil}
 import io.suggest.sc.sjs.util.router.srv.routes
+import io.suggest.sjs.common.msg.ErrorMsgs
 
 import scala.concurrent.{Future, ExecutionContext}
-import scala.scalajs.js.{WrappedArray, Dictionary, Any, Array}
+import scala.scalajs.js._
 import io.suggest.sc.ScConstants.Resp._
+import io.suggest.sc.ScConstants.Focused.FOC_ANSWER_ACTION
 
 /**
  * Suggest.io
@@ -20,10 +23,35 @@ object MFocAds {
    * @param args Аргументы.
    * @return Фьючерс с распарсенным ответом.
    */
-  def find(args: MFocAdSearch)(implicit ec: ExecutionContext): Future[MFocAds] = {
+  protected def _findJson(args: MFocAdSearch)(implicit ec: ExecutionContext): Future[WrappedDictionary[Any]] = {
     val route = routes.controllers.MarketShowcase.focusedAds(args.toJson)
-    MSrvUtil.reqJson(route) map { json =>
-      new MFocAds( json.asInstanceOf[Dictionary[Any]] )
+    MSrvUtil.reqJson(route).map { json0 =>
+      json0.asInstanceOf[Dictionary[Any]]
+    }
+  }
+
+  /** Поиск focused-карточек "в лоб".
+    * args.openIndexAdId должен быть None. */
+  def find(args: MFocAdSearchNoOpenIndex)(implicit ec: ExecutionContext): Future[MFocAds] = {
+    _findJson(args)
+      .map { MFocAds.apply }
+  }
+
+  /** Поиск карточек или index-страницы узла-продьюсера.
+    * args.openIndexAdId должен быть заполнен соответствующим образом. */
+  def findOrIndex(args: MFocAdSearch)(implicit ec: ExecutionContext): Future[Either[MNodeIndex, MFocAds]] = {
+    for (jsonDict <- _findJson(args)) yield {
+      MSrvAnswer(jsonDict).actionOpt match {
+        case None =>
+          throw new NoSuchElementException( ErrorMsgs.FOC_ANSWER_ACTION_MISSING )
+        case Some(action) =>
+          if (action == FOC_ANSWER_ACTION)
+            Right( MFocAds(jsonDict) )
+          else if (action == INDEX_RESP_ACTION)
+            Left( MNodeIndex(jsonDict) )
+          else
+            throw new IllegalArgumentException( ErrorMsgs.FOC_ANSWER_ACTION_INVALID )
+      }
     }
   }
 
@@ -32,6 +60,7 @@ object MFocAds {
 
 /** Интерфейс экземпляра модели (распарсенного ответа сервера). */
 trait IMFocAds {
+
   /** Итератор распарсенных focused-карточек в рамках запрошенной порции. */
   def focusedAdsIter: Iterator[MFocAd]
 
@@ -48,14 +77,15 @@ trait IMFocAds {
 
 
 /** Реализация модели ответов на запросы к focused-api. */
-class MFocAds(json: Dictionary[Any]) extends IMFocAds {
+case class MFocAds(json: WrappedDictionary[Any]) extends IMFocAds {
 
   lazy val focusedAdsRaw: WrappedArray[Dictionary[Any]] = {
-    val arrRaw = json(FOCUSED_ADS_FN)
-    if (arrRaw != null) {
-      arrRaw.asInstanceOf[Array[Dictionary[Any]]]
-    } else {
-      WrappedArray.empty
+    // Сервер обычно НЕ присылает пустое поле fads, поэтому нужно вручную отрабатывать его отсутствие.
+    json.get(FOCUSED_ADS_FN) match {
+      case None =>
+        WrappedArray.empty[Dictionary[Any]]
+      case Some(arrRaw) =>
+        arrRaw.asInstanceOf[ Array[Dictionary[Any]] ]
     }
   }
 

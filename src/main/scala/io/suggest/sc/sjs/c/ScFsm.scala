@@ -83,11 +83,14 @@ with foc.SimpleShift with foc.PreLoading with foc.OnTouch with foc.OnTouchPreloa
    *--------------------------------------------------------------------------------*/
   // TODO может перекинуть классы-реализации внутрь node.States + добавить метод для выхода из фазы на OnPlainGrid?
 
-  /** Реализация состояния-получения-обработки индексной страницы. */
-  class NodeInit_GetIndex_WaitIndex_State extends NodeInit_GetIndex_WaitIndex_StateT {
+  protected trait ProcessIndexReceivedUtil extends super.ProcessIndexReceivedUtil {
     override protected def _welcomeAndWaitGridAdsState  = new NodeInit_WelcomeShowing_GridAdsWait_State
-    override protected def _onNodeIndexFailedState      = this
     override protected def _waitGridAdsState            = new NodeInit_GridAdsWait_State
+  }
+
+  /** Реализация состояния-получения-обработки индексной страницы. */
+  class NodeInit_GetIndex_WaitIndex_State extends NodeInit_GetIndex_WaitIndex_StateT with ProcessIndexReceivedUtil {
+    override protected def _onNodeIndexFailedState      = this
   }
   class NodeInit_WelcomeShowing_GridAdsWait_State extends NodeInit_WelcomeShowing_GridAdsWait_StateT {
     override protected def _welcomeFinishedState        = new NodeInit_GridAdsWait_State
@@ -191,7 +194,7 @@ with foc.SimpleShift with foc.PreLoading with foc.OnTouch with foc.OnTouchPreloa
    * Состояния focused-выдачи.
    *--------------------------------------------------------------------------------*/
   /** Состояние сразу после клика по карточке в плитке. Отрабатывается запрос, происходит подготовка focused-выдачи. */
-  class FocStartingForAd extends StartingForAdStateT {
+  class FocStartingForAd extends StartingForAdStateT with ProcessIndexReceivedUtil {
     override def _focOnAppearState = new FocAppearingState
     override def _backToGridState  = new OnPlainGridState
   }

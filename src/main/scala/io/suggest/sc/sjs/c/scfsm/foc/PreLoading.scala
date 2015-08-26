@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.c.scfsm.foc
 import io.suggest.sc.ScConstants.Focused.SIDE_PRELOAD_MAX
 import io.suggest.sc.sjs.c.scfsm.FindAdsUtil
 import io.suggest.sc.sjs.m.mfoc.{FAdQueue, MFocSd}
-import io.suggest.sc.sjs.m.msrv.foc.find.{MFocAd, MFocAds, MFocAdSearchEmpty}
+import io.suggest.sc.sjs.m.msrv.foc.find.{MFocAdSearchNoOpenIndex, MFocAd, MFocAds, MFocAdSearchEmpty}
 import io.suggest.sc.sjs.vm.grid.GBlock
 import io.suggest.sc.sjs.vm.res.FocusedRes
 import io.suggest.sjs.common.model.MHand
@@ -72,7 +72,7 @@ trait PreLoading extends OnFocusBase {
 
         val _offset = _getOffset(currIndex, resultsLimit)
 
-        val reqArgs = new MFocAdSearchEmpty with FindAdsArgsT {
+        val reqArgs = new MFocAdSearchEmpty with FindAdsArgsT with MFocAdSearchNoOpenIndex {
           override def _sd        = sd0
           override def firstAdIds = _firstAdIds
           // Выставляем под нужды focused-выдачи значения limit/offset.

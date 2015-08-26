@@ -57,24 +57,23 @@ trait Index extends ScFsmStub with FindAdsUtil {
   }
 
 
-  /** Ожидание получения index с сервера. */
-  trait WaitIndexStateT extends FsmEmptyReceiverState {
-
-    override def receiverPart: Receive = super.receiverPart orElse {
-      case mni: MNodeIndex =>
-        _nodeIndexReceived(mni)
-      case Failure(ex) =>
-        error("Failed to get node index: " + _stateData.adnIdOpt, ex)
-        _getNodeIndexFailed(ex)
-    }
-
+  /** Статическая утиль для состояний, обрабатывающих получаемые от сервера node index. */
+  trait ProcessIndexReceivedUtil extends FsmState {
 
     /** Реакция на успешный результат запроса node index. */
     protected def _nodeIndexReceived(v: MNodeIndex): Unit = {
       // Заливаем в данные состояния полученные метаданные по текущему узлу.
-      val sd1 = _stateData.copy(
-        adnIdOpt = v.adnIdOpt
-      )
+      // TODO Это нужно только на первом шаге по факту (geo). Потом adnId обычно известен наперёд.
+      val sd1: SD = {
+        val sd0 = _stateData
+        if (sd0.adnIdOpt != v.adnIdOpt) {
+          sd0.copy(
+            adnIdOpt = v.adnIdOpt
+          )
+        } else {
+          sd0
+        }
+      }
 
       // Начинаем запрос карточек как можно скорее, чтобы распараллелить деятельность.
       val findAdsFut = _findAds(sd1)
@@ -169,6 +168,21 @@ trait Index extends ScFsmStub with FindAdsUtil {
 
     /** Welcome-карточка отсутствует. На какое состояние переходить для просто ожидания grid-ads от сервера. */
     protected def _waitGridAdsState: FsmState
+
+  }
+
+
+  /** Ожидание получения index с сервера. */
+  trait WaitIndexStateT extends FsmEmptyReceiverState with ProcessIndexReceivedUtil {
+
+    override def receiverPart: Receive = super.receiverPart orElse {
+      case mni: MNodeIndex =>
+        _nodeIndexReceived(mni)
+      case Failure(ex) =>
+        error("Failed to get node index: " + _stateData.adnIdOpt, ex)
+        _getNodeIndexFailed(ex)
+    }
+
 
     /** Запрос за index'ом не удался. */
     protected def _getNodeIndexFailed(ex: Throwable): Unit = {

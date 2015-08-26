@@ -47,6 +47,11 @@ trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger with DirectDo
       val e = ge.error
       warn(ErrorMsgs.BSS_GEO_LOC_FAILED + " [" + e.code + "] " + e.message)
     }
+    /** Реакция на проблемы при обработке входящего сообщения. */
+    def processEventFailed(e: Any, ex: Throwable): Unit = {
+      processFailure(ex)
+    }
+    def processFailure(ex: Throwable): Unit = {}
   }
 
   /**
@@ -117,7 +122,8 @@ trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger with DirectDo
 
   /** Отправка или обработка не удалась. */
   protected[this] def _sendEventFailed(e: Any, ex: Throwable): Unit = {
-    error("!(" + e + ")", ex)
+    error("[" + _state.name + "] " + ErrorMsgs.SC_FSM_EVENT_FAILED +": " + e, ex)
+    _state.processEventFailed(e, ex)
   }
 
 
@@ -156,11 +162,11 @@ trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger with DirectDo
     }
   }
 
-  // Раскомментить для логгирования переключения состояний.
-  /*override protected def become(nextState: FsmState): Unit = {
+  // Раскомментить override become() для логгирования переключения состояний:
+  override protected def become(nextState: FsmState): Unit = {
     log(_state.name + " -> " + nextState.name)
     super.become(nextState)
-  }*/
+  }
 
   /** Подписать фьючерс на отправку результата в ScFsm. */
   protected def _sendFutResBack[T](fut: Future[T])(implicit ec: ExecutionContext): Unit = {
