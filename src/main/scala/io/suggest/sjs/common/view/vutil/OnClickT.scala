@@ -34,8 +34,8 @@ trait OnClickT extends OnMouseClickT {
       // На touch-девайсе нужно распознавать клики среди touch-событий
       { e: T =>
         val itl = isTouchLocked
-        println("evt: " + e + ", tg = " + e.currentTarget + "#" + e.currentTarget.asInstanceOf[HTMLElement].id + " , isTouchLocked = " + itl)
-        if (!isTouchLocked) {
+        //println("evt: " + e + ", tg = " + e.currentTarget + "#" + e.currentTarget.asInstanceOf[HTMLElement].id + " , isTouchLocked = " + itl)
+        if (!itl) {
           f(e)
         }
       }

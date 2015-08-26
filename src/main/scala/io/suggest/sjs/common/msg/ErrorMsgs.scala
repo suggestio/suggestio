@@ -4,11 +4,11 @@ package io.suggest.sjs.common.msg
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 20.08.15 14:33
- * Description:
+ * Description: Закодированные сообщения об ошибках.
  */
-object ErrorMsgs {
+object ErrorMsgs extends MsgsStaticT {
 
-  private def E(i: Int): String = "E" + i
+  override protected def _PREFIX = "E"
 
   def FOC_PRELOAD_REQUEST_FAILED = E(1)
 
