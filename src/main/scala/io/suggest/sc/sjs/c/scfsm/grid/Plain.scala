@@ -1,11 +1,9 @@
 package io.suggest.sc.sjs.c.scfsm.grid
 
 import io.suggest.sc.sjs.m.mhdr.{PrevNodeBtnClick, ShowNavClick, ShowSearchClick}
-import io.suggest.sc.sjs.v.vutil.VUtil
 import io.suggest.sc.sjs.vm.hdr.HRoot
 import io.suggest.sc.sjs.vm.hdr.btns.HNodePrev
 import io.suggest.sc.sjs.vm.search.SRoot
-import io.suggest.sjs.common.view.safe.SafeEl
 import org.scalajs.dom.Event
 
 /** Аддон для поддержки состояния "голая плитка" без открытых панелей, карточек и прочего. */
@@ -74,9 +72,13 @@ trait Plain extends OnGrid {
       * Надо извлечь id узла из кнопки и выполнить переход в выдачу указанного узла. */
     protected def _goToPrevNodeClick(event: Event): Unit = {
       Option( event.currentTarget )
-        // TODO Нужно обезапаситься от неожиданного элемента в currentTarget.
-        .map { el => HNodePrev( el.asInstanceOf[HNodePrev.Dom_t] ) }
-        .orElse { HNodePrev.find() }
+        // TODO Нужно обезопаситься от неожиданного элемента в currentTarget.
+        .map { el =>
+          HNodePrev( el.asInstanceOf[HNodePrev.Dom_t] )
+        }
+        .orElse {
+          HNodePrev.find()
+        }
         .foreach { btn =>
           val sd1 = _stateData.withNodeSwitch( btn.adnId )
           become(_onNodeSwitchState, sd1)

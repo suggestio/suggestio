@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.c.scfsm.geo
 import io.suggest.sc.sjs.c.scfsm.ScFsmStub
 import io.suggest.sc.sjs.m.mfsm.IFsmMsgCompanion
 import io.suggest.sc.sjs.m.mgeo._
-import org.scalajs.dom
+import io.suggest.sc.sjs.vm.SafeWnd
 import org.scalajs.dom.{PositionError, Position, PositionOptions}
 
 import scala.scalajs.js.{Dictionary, Any}
@@ -16,8 +16,14 @@ import scala.scalajs.js.{Dictionary, Any}
  */
 trait GeoInit extends ScFsmStub {
 
+  trait IGeoFailed {
+    /** Состояние при получении ошибки геолокации. */
+    protected def _geoFailedState: FsmState
+  }
+
+
   /** FsmState-аддно для запуска запроса геолокации у юзера во время инициализации состояния. */
-  protected trait GeoAskStartT extends FsmState {
+  protected trait GeoAskStartT extends FsmState with IGeoFailed {
 
     /** Использовать ли GPS? */
     def isHighAccuracy: Boolean
@@ -29,26 +35,37 @@ trait GeoInit extends ScFsmStub {
 
     override def afterBecome(): Unit = {
       super.afterBecome()
-      val wid = _watchPosition()
-      val sd0 = _stateData
-      _stateData = sd0.copy(
-        geo = _saveGeoWid(wid, sd0.geo)
-      )
+      _watchPosition() match {
+        case Some(wid) =>
+          val sd0 = _stateData
+          _stateData = sd0.copy(
+            geo = _saveGeoWid(wid, sd0.geo)
+          )
+        case None =>
+          become(_geoFailedState)
+      }
+
     }
 
     /**
      * Создать ватчер позишенов.
-     * @return id созданного ватчера.
+     * @return Some(id созданного ватчера).
+     *         None, если watchPosition() не поддерживается.
      */
-    protected def _watchPosition(): Int = {
-      val opts = Dictionary[Any]()
-        .asInstanceOf[PositionOptions]
-      opts.enableHighAccuracy = isHighAccuracy
-      dom.window.navigator.geolocation.watchPosition(
-        _signalCallbackF( geoLocCompanion ),
-        _signalCallbackF( geoErrCompanion ),
-        opts
-      )
+    protected def _watchPosition(): Option[Int] = {
+      for {
+        nav <- SafeWnd.navigator
+        gl  <- nav.geolocation
+      } yield {
+        val opts = Dictionary[Any]()
+          .asInstanceOf[PositionOptions]
+        opts.enableHighAccuracy = isHighAccuracy
+        gl.watchPosition(
+          _signalCallbackF( geoLocCompanion ),
+          _signalCallbackF( geoErrCompanion ),
+          opts
+        )
+      }
     }
 
     /** Сохранение нового watchId в данные состояния геолокации. */
@@ -71,7 +88,7 @@ trait GeoInit extends ScFsmStub {
 
 
   /** Аддон для состояний, реагирующих на получение данных геолокации. */
-  protected trait GeoWaitStateT extends FsmState {
+  protected trait GeoWaitStateT extends FsmState with IGeoFailed {
 
     // TODO Первая геолокация часто совсем не точная (accuracy > километра). Бывает нужно подождать данных по-точнее.
 
@@ -95,8 +112,6 @@ trait GeoInit extends ScFsmStub {
 
     /** Следующее состояние при получении успешной геолокации. */
     protected def _geoReadyState: FsmState
-    /** Состояние при получении ошибки геолокации. */
-    protected def _geoFailedState: FsmState
 
   }
 
