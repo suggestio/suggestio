@@ -20,10 +20,21 @@ object ScConstants {
   /** Имя css-класс с will-change для подготовки к translate3d. */
   def CLASS_WILL_TRANSLATE3D = "will-translate3d"
 
+  def CUSTOM_ATTR_PREFIX = "data-"
+
   /** Название аттрибута с длиной. */
-  def WIDTH_ATTR    = "data-width"
+  def WIDTH_ATTR    = CUSTOM_ATTR_PREFIX + "width"
   /** Название аттрибута с высотой. */
-  def HEIGHT_ATTR   = "data-height"
+  def HEIGHT_ATTR   = CUSTOM_ATTR_PREFIX + "height"
+
+
+  /** Константы для ранней инициализации. */
+  object Init {
+
+    /** id div'а, который может быть использован для пропуска геолокации. */
+    def IGNORE_GEO_MASK_ID = "smGeoSkipMask"
+
+  }
 
   /** Client/server констатны выдачи для моделей ScReqArgs. */
   object ReqArgs {
