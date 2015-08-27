@@ -22,6 +22,8 @@ trait ScSiteArgs extends SyncRenderInfoDflt {
   def headAfter     : Traversable[Html] = Nil
   /** В зависимости от версии API надо рендерить разные скрипты. */
   def scriptHtml    : Html
+  /** Версия API выдачи. */
+  def apiVsn        : MScApiVsn
 
   // Имитируем поведение параметра, чтобы в будущем не рисовать костыли в коде шаблонов.
   def adnId   = nodeOpt.flatMap(_.id)
@@ -55,4 +57,5 @@ trait ScSiteArgsWrapper extends ScSiteArgs {
   override def syncRender   = _scSiteArgs.syncRender
 
   override def scriptHtml   = _scSiteArgs.scriptHtml
+  override def apiVsn       = _scSiteArgs.apiVsn
 }

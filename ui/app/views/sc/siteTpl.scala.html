@@ -6,7 +6,9 @@
 @import util.cdn.CdnUtil
 @import models.msc.ScJsState.{qsbStandalone => scJsQsb}
 
-<!DOCTYPE html>
+@if(args.apiVsn.withScSiteDoctype) {
+  <!DOCTYPE html>
+}
 <html>
 <head>
   <title>

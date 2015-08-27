@@ -90,6 +90,7 @@ trait ScSiteBase extends SioController with PlayMacroLogsI {
             super.headAfter ++ _headAfter
           }
           override def scriptHtml = _scriptHtml
+          override def apiVsn = _siteArgs.apiVsn
         }
       }
     }
