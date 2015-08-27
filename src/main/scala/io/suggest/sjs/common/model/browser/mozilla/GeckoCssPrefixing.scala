@@ -11,7 +11,7 @@ import io.suggest.sjs.common.model.browser.{IBrowser, IVendorPrefixer}
 trait GeckoCssPrefixing extends IVendorPrefixer with IBrowser {
 
   /** Доступ к механизму префиксинга css-свойств. */
-  override def CssPrefixing = this
+  override def Prefixing = this
 
 
   /**
@@ -25,7 +25,7 @@ trait GeckoCssPrefixing extends IVendorPrefixer with IBrowser {
 
     } else if (v >= 4 || (v == 3 && vsnMinor >= 5)) {
       // firefox >= 3.5 has prefixed support of css-transforsm 2d
-      FirefoxBrowser.MOZ_PREFIXING
+      FirefoxBrowser.CSS_PREFIXING
 
     } else {
       // Firefox < 3.5 doesn't support any css 2d animations.
@@ -46,11 +46,22 @@ trait GeckoCssPrefixing extends IVendorPrefixer with IBrowser {
 
     } else if (v >= 10) {
       // Firefox >= 10.0 has prefixed support of 3d transforms.
-      FirefoxBrowser.MOZ_PREFIXING
+      FirefoxBrowser.CSS_PREFIXING
 
     } else {
       NO_SUPPORT
     }
   }
 
+
+  override def visibilityChange: List[String] = {
+    val vj = vsnMajor
+    if (vj >= 18) {
+      super.visibilityChange
+    } else if (vj >= 10) {
+      FirefoxBrowser.EVENT_PREFIXING
+    } else {
+      NO_SUPPORT
+    }
+  }
 }

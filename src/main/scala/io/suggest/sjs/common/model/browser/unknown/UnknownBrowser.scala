@@ -1,10 +1,11 @@
 package io.suggest.sjs.common.model.browser.unknown
 
-import io.suggest.sjs.common.model.browser.{IVendorPrefixer, IBrowser}
+import io.suggest.sjs.common.model.browser.{EnginePrefix, IVendorPrefixer, IBrowser}
 import io.suggest.sjs.common.view.safe.wnd.SafeWindow
 import org.scalajs.dom
 
-import scala.scalajs.js.{Dictionary, Any}
+import scala.scalajs.js
+import scala.scalajs.js.{WrappedDictionary, Dictionary, Any}
 
 /**
  * Suggest.io
@@ -16,7 +17,7 @@ class UnknownBrowser extends IBrowser with IVendorPrefixer {
 
   override def name: String = "unknown"
 
-  override def CssPrefixing = this
+  override def Prefixing = this
 
   override def vsnMajor: Int = 0
   override def vsnMinor: Int = 0
@@ -26,7 +27,7 @@ class UnknownBrowser extends IBrowser with IVendorPrefixer {
     val p0 = SafeWindow()
       .getComputedStyle( dom.document.documentElement )
       .flatMap { css =>
-        val re = "^(-(webkit|moz|ms|o)-)".r
+        val re = ("^(-(" + EnginePrefix.ALL_PREFIXES.mkString("|") + ")-)").r
         css.asInstanceOf[Dictionary[Any]]
           .iterator
           .map { _._1 }
@@ -50,6 +51,27 @@ class UnknownBrowser extends IBrowser with IVendorPrefixer {
   // Префиксуем всё по-простому.
   override def transforms2d = CSS_PREFIX
   override def transforms3d = CSS_PREFIX
+
+
+  /**
+   * Поддержка события document visibilitychange характеризуется этими префиксами.
+   * @see [[https://developer.mozilla.org/en-US/docs/Web/Guide/User_experience/Using_the_Page_Visibility_API]]
+   */
+  override lazy val visibilityChange: List[String] = {
+    val dd: WrappedDictionary[Any] = dom.document.asInstanceOf[Dictionary[Any]]
+    val root = "hidden"
+    if (dd.contains(root)) {
+      super.visibilityChange
+    } else {
+      val root2 = root.tail
+      EnginePrefix.ALL_PREFIXES
+        .filter { maybePrefix =>
+          val name = maybePrefix + "H" + root2        // "mozHidden", "webkitHidden", etc...
+          dd.contains(name)
+        }
+        .toList
+    }
+  }
 
   override def toString = name
 }

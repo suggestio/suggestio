@@ -39,4 +39,8 @@ trait IVendorPrefixer {
   /** Дергать, когда поддержка недоступна. */
   protected final def NO_SUPPORT: List[String] = Nil
 
+
+  /** Поддержка события document visibilitychange характеризуется этими префиксами. */
+  def visibilityChange: List[String] = VendorPrefix.STANDARD_PREFIXES
+
 }

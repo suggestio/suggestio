@@ -14,7 +14,7 @@ trait IBrowser extends IBrowserVsn {
   def name: String
 
   /** Доступ к механизму префиксинга css-свойств. */
-  def CssPrefixing: IVendorPrefixer
+  def Prefixing: IVendorPrefixer
 
   override def toString: String = {
     name + "-" + vsnMajor + "." + vsnMinor

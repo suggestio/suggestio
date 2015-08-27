@@ -10,7 +10,7 @@ import io.suggest.sjs.common.model.browser.{IBrowser, IVendorPrefixer}
  */
 trait MsieDesktopCssPrefixing extends IVendorPrefixer with IBrowser {
 
-  override def CssPrefixing = this
+  override def Prefixing = this
 
   override def transforms2d: List[String] = {
     val v = vsnMajor
@@ -18,7 +18,7 @@ trait MsieDesktopCssPrefixing extends IVendorPrefixer with IBrowser {
       super.transforms2d
 
     } else if (v >= 9) {
-      MsieDesktopPrefixing.MS_PREFIXING
+      MsieDesktopPrefixing.CSS_PREFIXING
 
     } else {
       NO_SUPPORT
@@ -33,4 +33,11 @@ trait MsieDesktopCssPrefixing extends IVendorPrefixer with IBrowser {
     }
   }
 
+  override def visibilityChange: List[String] = {
+    if (vsnMajor >= 10) {
+      super.visibilityChange
+    } else {
+      NO_SUPPORT
+    }
+  }
 }

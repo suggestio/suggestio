@@ -11,7 +11,7 @@ import io.suggest.sjs.common.model.browser.{IBrowser, IVendorPrefixer}
  */
 trait ChromeCssPrefixing extends IVendorPrefixer with IBrowser {
 
-  override def CssPrefixing: IVendorPrefixer = this
+  override def Prefixing: IVendorPrefixer = this
 
 
   override def transforms2d: List[String] = {
@@ -20,7 +20,7 @@ trait ChromeCssPrefixing extends IVendorPrefixer with IBrowser {
 
     } else {
       // По всей видимости, prefixed-поддержка была с самых древних версий хрома.
-      WebKitPrefixing.PREFIXING
+      WebKitPrefixing.CSS_PREFIXING
     }
   }
 
@@ -31,11 +31,23 @@ trait ChromeCssPrefixing extends IVendorPrefixer with IBrowser {
       super.transforms3d
 
     } else if (vj >= 12) {
-      WebKitPrefixing.PREFIXING
+      WebKitPrefixing.CSS_PREFIXING
 
     } else {
       NO_SUPPORT
     }
   }
 
+  override def visibilityChange: List[String] = {
+    val vj = vsnMajor
+    if (vj >= 33) {
+      super.visibilityChange
+
+    } else if (vj >= 13) {
+      WebKitPrefixing.EVENT_PREFIXING
+
+    } else {
+      NO_SUPPORT
+    }
+  }
 }

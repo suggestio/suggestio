@@ -11,7 +11,7 @@ import io.suggest.sjs.common.model.browser.{IBrowser, IVendorPrefixer}
  */
 trait SafariCssPrefixing extends IVendorPrefixer with IBrowser {
 
-  override def CssPrefixing = this
+  override def Prefixing = this
 
   def isMobile: Boolean
 
@@ -20,7 +20,7 @@ trait SafariCssPrefixing extends IVendorPrefixer with IBrowser {
   override def transforms2d: List[String] = {
     val vj = vsnMajor
     if (vj > 3 || (vj == 3 && ((isMobile && vsnMinor >= 2) || (!isMobile && vsnMinor >= 1))) ) {
-      WebKitPrefixing.PREFIXING
+      WebKitPrefixing.CSS_PREFIXING
     } else {
       NO_SUPPORT
     }
@@ -29,10 +29,20 @@ trait SafariCssPrefixing extends IVendorPrefixer with IBrowser {
   override def transforms3d: List[String] = {
     val v = vsnMajor
     if ( v >= 4 || (isMobile && (v > 3 || (v == 3 && vsnMinor >= 2))) ) {
-      WebKitPrefixing.PREFIXING
+      WebKitPrefixing.CSS_PREFIXING
     } else {
       NO_SUPPORT
     }
   }
 
+  /** Поддержка события document visibilitychange характеризуется этими префиксами. */
+  override def visibilityChange: List[String] = {
+    val _isMobile = isMobile
+    val vj = vsnMajor
+    if ((_isMobile && vj >= 7) || (!_isMobile && vj >= 6 && vsnMinor >= 1)) {
+      super.visibilityChange
+    } else {
+      NO_SUPPORT
+    }
+  }
 }

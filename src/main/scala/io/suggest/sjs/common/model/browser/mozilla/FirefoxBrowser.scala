@@ -1,6 +1,6 @@
 package io.suggest.sjs.common.model.browser.mozilla
 
-import io.suggest.sjs.common.model.browser.{IBrowserVsn, IBrowser}
+import io.suggest.sjs.common.model.browser.{EnginePrefix, IBrowserVsn, IBrowser}
 
 /**
  * Suggest.io
@@ -8,10 +8,9 @@ import io.suggest.sjs.common.model.browser.{IBrowserVsn, IBrowser}
  * Created: 01.06.15 11:07
  * Description: Файрфокс.
  */
-object FirefoxBrowser {
+object FirefoxBrowser extends EnginePrefix {
 
-  /** Список префиксов для mozilla gecko. */
-  lazy val MOZ_PREFIXING = List("-moz-")
+  override def PREFIX = "moz"
 
   def apply(vsn: IBrowserVsn): FirefoxBrowser = {
     FirefoxBrowser(vsn.vsnMajor, vsnMinor = vsn.vsnMinor)
