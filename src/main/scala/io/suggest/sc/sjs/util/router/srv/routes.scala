@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.util.router.srv
 
-import io.suggest.sc.ScConstants.JS_ROUTER_NAME
+import io.suggest.sc.ScConstants.JsRouter.NAME
 import io.suggest.sjs.common.model.Route
 
 import scala.scalajs.js
@@ -15,7 +15,7 @@ import scala.scalajs.js.annotation.JSName
  * Description: Доступ к роутеру запросов к серверу suggest.io.
  */
 
-@JSName(JS_ROUTER_NAME)
+@JSName(NAME)
 object routes extends js.Object {
   def controllers: Ctls = js.native
 }

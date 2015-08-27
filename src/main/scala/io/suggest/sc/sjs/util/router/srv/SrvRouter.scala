@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.util.router.srv
 
-import io.suggest.sjs.common.view.safe.doc.SafeDocument
+import io.suggest.sc.sjs.vm.SafeBody
+import io.suggest.sc.sjs.vm.layout.JsRouterTag
 import org.scalajs.dom
 
 import scala.concurrent.{Promise, Future}
@@ -17,9 +18,6 @@ import scala.scalajs.js.UndefOr
  */
 object SrvRouter {
 
-  /** Путь из web21/conf/routes к ресурсу js-роутера контроллера выдачи. */
-  private def ROUTER_URI = "/sc/router.js"
-
   /**
    * Получить роутер: со страницы или запросить с сервера асинхронно, если на странице отсутствует.
    * @return Фьючерс с роутером.
@@ -27,7 +25,9 @@ object SrvRouter {
   def getRouter: Future[routes.type] = {
     val wnd = dom.window : WindowWithRouterSafe
     val routerUndef = UndefOr.undefOr2ops( wnd.jsRoutes )
+
     if (routerUndef.nonEmpty) {
+      // Роутер уже на странице и готов к работе. Такое возможно, если скрипт роутера был загружен до начала исполнения этого модуля.
       Future successful routerUndef.get
 
     } else {
@@ -35,19 +35,13 @@ object SrvRouter {
       val p = Promise[routes.type]()
       // Возможно, код уже запрашивается с сервера, и тогда routes AsyncInit функция будет уже выставлена.
       val asyncInitOpt = UndefOr.undefOr2ops( wnd.sioScJsRoutesAsyncInit )
+
+      /** Функция для исполнения фьючерса. */
       def pSuccessF(): Unit = {
         p success wnd.jsRoutes.get
       }
-      val fun: js.Function0[_] = if (asyncInitOpt.isEmpty) {
-        // Надо собрать и асинхронно запустить запрос к серверу с помощью script-тега, добавленного в конец head:
-        val scriptEl = dom.document.createElement("script")
-        scriptEl.setAttribute("async", true.toString)
-        scriptEl.setAttribute("type", "text/javascript")
-        scriptEl.setAttribute("src", ROUTER_URI)
-        SafeDocument()
-          .head
-          .appendChild(scriptEl)
 
+      val fun: js.Function0[_] = if (asyncInitOpt.isEmpty) {
         // Вернуть callback для скрипта роутера в текущем потоке:
         {() =>
           pSuccessF()
@@ -63,8 +57,16 @@ object SrvRouter {
           prevFun()
         }
       }
+
       // TODO Выставить таймаут ожидания ответа сервера и другие детекторы ошибок?
       wnd.sioScJsRoutesAsyncInit = fun
+
+      // Если нет тега jsRouter'а и callback'а тоже, то добавить тег на страницу.
+      if (JsRouterTag.find().isEmpty) {
+        // Надо собрать и асинхронно запустить запрос к серверу за jsRouter'ом с помощью script-тега:
+        val tag = JsRouterTag()
+        SafeBody.append(tag)
+      }
 
       p.future
     }

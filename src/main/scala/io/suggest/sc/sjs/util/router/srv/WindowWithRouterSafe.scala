@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.util.router.srv
 
-import io.suggest.sc.ScConstants.{JS_ROUTER_NAME, JS_ROUTER_ASYNC_INIT_FNAME}
+import io.suggest.sc.ScConstants.JsRouter._
 import org.scalajs.dom.Window
 
 import scala.scalajs.js
@@ -20,7 +20,7 @@ trait WindowWithRouterSafe extends Window {
    * Доступ к необязательному объекту-коду jsRoutes через window.
    * @return Роутер или undefined.
    */
-  @JSName(JS_ROUTER_NAME)
+  @JSName(NAME)
   def jsRoutes: UndefOr[routes.type] = js.native
 
   /**
@@ -29,7 +29,7 @@ trait WindowWithRouterSafe extends Window {
    * Функция может быть перевыставлена несколько раз в случае активной долбежки роутера, это нормально.
    * @return function() или undefined.
    */
-  @JSName(JS_ROUTER_ASYNC_INIT_FNAME)
+  @JSName(ASYNC_INIT_FNAME)
   var sioScJsRoutesAsyncInit: UndefOr[js.Function0[_]] = js.native
 
 }
