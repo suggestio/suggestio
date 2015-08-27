@@ -33,5 +33,4 @@ object SafeBody extends SafeElT with OvfHiddenT with EraseBg {
   def append(vm: ISafe { type T <: Node } ): Unit = {
     _underlying.appendChild( vm._underlying )
   }
-
 }

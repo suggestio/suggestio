@@ -34,7 +34,7 @@ trait NlRootT extends SubTagFind with SetHeight3 {
   def initLayout(sd: IStData): Unit = {
     for (screen <- sd.screen) {
       val height = screen.height - NlRoot.NL_TOP_OFFSET
-      _setHeight3(height)
+      _setHeight3(height, sd.browser)
     }
   }
 

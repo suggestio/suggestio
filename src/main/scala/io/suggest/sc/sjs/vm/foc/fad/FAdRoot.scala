@@ -4,6 +4,7 @@ import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.v.vutil.VUtil
 import io.suggest.sc.sjs.vm.util.domvm.FindElIndexedIdT
 import io.suggest.sc.sjs.vm.util.height3.SetHeight3Raw
+import io.suggest.sjs.common.model.browser.IBrowser
 import io.suggest.sjs.common.view.safe.SafeElT
 import io.suggest.sjs.common.view.safe.css.{StyleLeft, Width}
 import io.suggest.sjs.common.view.safe.display.{OuterHtml, GetInnerHtml, StylePosition}
@@ -43,9 +44,9 @@ with GetInnerHtml with OuterHtml {
   // protected -> public
   override def setLeftPx(leftPx: Int) = super.setLeftPx(leftPx)
 
-  def initLayout(screen: IMScreen): Unit = {
+  def initLayout(screen: IMScreen, browser: IBrowser): Unit = {
     setWidthPx( screen.width )
-    _setHeight3( screen.height )
+    _setHeight3( screen.height, browser )
   }
 
   override type SubTagVm_t = FAdWrapper

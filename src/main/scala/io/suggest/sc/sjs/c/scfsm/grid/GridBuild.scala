@@ -31,7 +31,7 @@ trait GridBuild {
     val _moveBlockF: (Int, Int, BI) => Unit = {
       if (_gridAppendAnimated) {
         // Включена анимация. Собрать необходимые css-префиксы. {} нужно для защиты от склеивания с последующей строкой.
-        val animCssPrefixes = { browser.CssPrefixing.transforms3d }
+        val animCssPrefixes = { browser.Prefixing.transforms3d }
         {(leftPx: Int, topPx: Int, b: BI) =>
           b.moveBlockAnimated(leftPx, topPx, animCssPrefixes)
         }

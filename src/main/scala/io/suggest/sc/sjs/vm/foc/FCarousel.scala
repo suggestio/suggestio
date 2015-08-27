@@ -97,7 +97,7 @@ with IInitLayout with WillTranslate3d with OnMouseClickT with OnEventToFsmUtilT 
   def animateToX(xPx: Int, browser: IBrowser): Unit = {
     val value = "translate3d(" + xPx.px + ",0px,0px)"
     val style = _underlying.style
-    for (prefix <- browser.CssPrefixing.transforms3d) {
+    for (prefix <- browser.Prefixing.transforms3d) {
       val name = prefix + "transform"
       style.setProperty(name, value)
     }

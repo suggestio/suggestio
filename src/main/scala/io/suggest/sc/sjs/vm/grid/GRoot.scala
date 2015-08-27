@@ -43,14 +43,14 @@ trait GRootT extends SafeElT with SubTagFind with SetHeight3Raw {
 
   /** Раняя инициализация, которая должна проходить однократно.
     * Используется после создания нового layout'а. */
-  def initLayout(stData: IStData): Unit = {
-    for (screen <- stData.screen) {
+  def initLayout(sd: IStData): Unit = {
+    for (screen <- sd.screen) {
       val height = screen.height
-      _setHeight3(height)
+      _setHeight3(height, sd.browser)
 
       // Запустить инициализацию внутри wrapper'а.
       for (gwrapper <- wrapper) {
-        gwrapper.initLayout(stData)
+        gwrapper.initLayout(sd)
       }
     }
   }

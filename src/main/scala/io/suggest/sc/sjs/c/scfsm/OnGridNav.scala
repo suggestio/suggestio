@@ -140,7 +140,7 @@ trait OnGridNav extends OnGrid with ISjsLogger {
         }
         screen      <- _stateData.screen
         layerIndex  <- {
-          exp1.fixHeightExpanded(screen, nlContainer.layersCount)
+          exp1.fixHeightExpanded(screen, nlContainer.layersCount, sd0.browser)
           exp1.layerIndexOpt
         }
       } yield {
@@ -232,7 +232,7 @@ trait OnGridNav extends OnGrid with ISjsLogger {
                 screen  <- sd0.screen
               } {
                 body.show()
-                body.fixHeightExpanded(screen, layCaption.container.layersCount)
+                body.fixHeightExpanded(screen, layCaption.container.layersCount, sd0.browser)
               }
               indexClickedOpt
             }

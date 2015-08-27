@@ -3,6 +3,7 @@ package io.suggest.sc.sjs.vm.nav.nodelist.glay
 import io.suggest.sc.ScConstants.NavPane.{SCREEN_OFFSET, GNL_DOM_HEIGHT, GNL_BODY_HIDDEN_CSS_CLASS}
 import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.v.vutil.VUtil
+import io.suggest.sjs.common.model.browser.IBrowser
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -48,7 +49,7 @@ trait GlayRootT extends GlayT with LayerIndex with GlayContainerT {
    * @param screen экран.
    * @param layersCount кол-во слоёв.
    */
-  def fixHeightExpanded(screen: IMScreen, layersCount: Int): Unit = {
+  def fixHeightExpanded(screen: IMScreen, layersCount: Int, browser: IBrowser): Unit = {
     for {
       _wrapper <- wrapper
       _content <- _wrapper.content
@@ -59,7 +60,7 @@ trait GlayRootT extends GlayT with LayerIndex with GlayContainerT {
       var containers = List(_wrapper._underlying)
       if (domH > maxH)
         containers ::= _underlying
-      VUtil.setHeightRootWrapCont(targetH, Some(_content._underlying), containers)
+      VUtil.setHeightRootWrapCont(targetH, Some(_content._underlying), containers, browser)
     }
   }
 

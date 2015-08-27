@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.v.vutil
 
-import io.suggest.sjs.common.model.browser.{MBrowser, IBrowser}
+import io.suggest.common.css.CssSzImplicits
+import io.suggest.sjs.common.model.browser.IBrowser
 import io.suggest.sjs.common.view.safe.{SafeElT, SafeEl}
 import org.scalajs.dom
 import org.scalajs.dom.Node
@@ -14,7 +15,7 @@ import scala.annotation.tailrec
  * Created: 22.05.15 15:56
  * Description: Утиль для ускорения сборки view'ов.
  */
-object VUtil {
+object VUtil extends CssSzImplicits {
 
   /**
    * Выставить указанную высоту на цепочках контейнеров с учетом возможных костылей для скроллинга.
@@ -26,8 +27,8 @@ object VUtil {
   def setHeightRootWrapCont(height: Int,
                             content: Option[HTMLElement],
                             wrappers: TraversableOnce[HTMLElement] = Nil,
-                            mbrowser: IBrowser = MBrowser.BROWSER ): Unit = {
-    val heightPx = height.toString + "px"
+                            mbrowser: IBrowser): Unit = {
+    val heightPx = height.px
     // Отрабатываем враппер-контейнеры.
     for (wrapper <- wrappers) {
       //if (!needXScroll)
@@ -39,7 +40,7 @@ object VUtil {
       // Нужно ли провоцировать скроллбар в цепочке контейнеров? Да, если браузер работает так.
       val needXScroll = mbrowser.needOverwriteInnerScroll
       val h1 = if (needXScroll)  height + 1  else  height
-      cDiv.style.minHeight = h1.toString + "px"
+      cDiv.style.minHeight = h1.px
     }
   }
 

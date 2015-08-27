@@ -130,7 +130,7 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
         // Индекс запрошенной карточки в массиве fads: она или первая крайняя, или вторая при наличии предыдущей.
         val firstAd = firstAdOpt.get      // TODO Отработать сценарий отсутствия запрошенной карточки.
         val fadRoot = FAdRoot( firstAd.bodyHtml )
-        fadRoot.initLayout( screen )
+        fadRoot.initLayout( screen, sd0.browser )
         // Повесить запрошенную карточку на месте текущего индекса.
         fadRoot.setLeftPx( currIndex * cellWidth )
 

@@ -61,7 +61,7 @@ object SrvRouter {
       // TODO Выставить таймаут ожидания ответа сервера и другие детекторы ошибок?
       wnd.sioScJsRoutesAsyncInit = fun
 
-      // Если нет тега jsRouter'а и callback'а тоже, то добавить тег на страницу.
+      // Если нет тега jsRouter'а, то добавить тег на страницу.
       if (JsRouterTag.find().isEmpty) {
         // Надо собрать и асинхронно запустить запрос к серверу за jsRouter'ом с помощью script-тега:
         val tag = JsRouterTag()

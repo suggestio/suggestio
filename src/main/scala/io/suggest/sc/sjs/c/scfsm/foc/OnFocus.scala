@@ -220,7 +220,7 @@ trait OnFocus extends OnFocusBase {
             val (_nextFad, _nexts3) = q0.dequeue
             // Приаттачить карточку в DOM.
             val fadRoot = FAdRoot( _nextFad.bodyHtml )
-            fadRoot.initLayout( screen )
+            fadRoot.initLayout( screen, sd0.browser )
             fadRoot.setLeftPx( index * screen.width )
             pushCellF(fadRoot)
             //car.pushCellRight( fadRoot )
