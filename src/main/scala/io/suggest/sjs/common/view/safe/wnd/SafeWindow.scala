@@ -6,7 +6,9 @@ import io.suggest.sjs.common.view.safe.wnd.cs.SafeGetComputedStyleT
 import io.suggest.sjs.common.view.safe.wnd.dpr.SafeWndDpr
 import io.suggest.sjs.common.view.safe.wnd.hist.SafeHistoryApiT
 import org.scalajs.dom
-import org.scalajs.dom.Window
+import org.scalajs.dom.{Navigator, Window}
+
+import scala.scalajs.js
 
 /**
  * Suggest.io
@@ -23,6 +25,16 @@ trait SafeWindowT
   with ScrollTop
 {
   override type T <: Window
+
+  def stub = WindowStub(_underlying)
+
+  /** Безопасный доступ к навигатору. */
+  def navigator: Option[SafeWndNavigator] = {
+    stub.navigator
+      .toOption
+      .map { SafeWndNavigator.apply }
+  }
+
 }
 
 
@@ -32,3 +44,11 @@ case class SafeWindow(_underlying: Window = dom.window) extends SafeWindowT {
 }
 
 
+object WindowStub {
+  def apply(wnd: Window): WindowStub = {
+    wnd.asInstanceOf[WindowStub]
+  }
+}
+sealed trait WindowStub extends js.Object {
+  def navigator: js.UndefOr[Navigator] = js.native
+}
