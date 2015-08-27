@@ -152,7 +152,7 @@ with foc.StartingForAd with foc.OnFocus with foc.Closing with foc.SimpleShift wi
   }
 
   /** Реализация состояния, где карточки уже загружены. */
-  class OnPlainGridState extends OnPlainGridStateT with OnGridStateT {
+  class OnPlainGridState extends OnPlainGridStateT with OnGridStateT with _NodeSwitchState {
     override def _nextStateSearchPanelOpened(sd1: MStData) = _searchTab2state(sd1)
     override protected def _navLoadListState = new OnGridNavLoadListState
   }

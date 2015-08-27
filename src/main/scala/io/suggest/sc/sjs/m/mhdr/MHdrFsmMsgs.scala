@@ -10,26 +10,31 @@ import org.scalajs.dom.Event
  * Description: Различные сообщения в основной FSM от vm'ок заголовка.
  */
 
-/** Сообщение о клике по кнопке открытия панели поиска. */
+/** Сигнал о клике по кнопке открытия панели поиска. */
 case class ShowSearchClick(e: Event) extends IFsmMsg
 object ShowSearchClick extends IFsmEventMsgCompanion
 
 
-/** Сообщение о клике по кнопке сокрытия панели поиска. */
+/** Сигнал о клике по кнопке сокрытия панели поиска. */
 case class HideSearchClick(e: Event) extends IFsmMsg
 object HideSearchClick extends IFsmEventMsgCompanion
 
 
-/** Сообщение о клике по кнопке отображения index'а текущей выдачи. */
+/** Сигнал о клике по кнопке отображения index'а текущей выдачи. */
 case class ShowIndexClick(e: Event) extends IFsmMsg
 object ShowIndexClick extends IFsmEventMsgCompanion
 
 
-/** Сообщение о клике по кнопке открытия nav-панели. */
+/** Сигнал о клике по кнопке открытия nav-панели. */
 case class ShowNavClick(e: Event) extends IFsmMsg
 object ShowNavClick extends IFsmEventMsgCompanion
 
 
-/** Сообщение о клике по кнопке сокрытия панели навигации. */
+/** Сигнал о клике по кнопке сокрытия панели навигации. */
 case class HideNavClick(e: Event) extends IFsmMsg
 object HideNavClick extends IFsmEventMsgCompanion
+
+
+/** Сигнал о клике по кнопке возврата на предыдущий узел. */
+case class PrevNodeBtnClick(e: Event) extends IFsmMsg
+object PrevNodeBtnClick extends IFsmEventMsgCompanion
