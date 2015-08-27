@@ -8,16 +8,6 @@ package io.suggest.sc
  */
 object ScConstants {
 
-  /**
-   * Имя js-роутера на странице. val потому что:
-   * - в sjs используется в аннотации.
-   * - в web21 будет постоянно использоваться с внедрением sjs-выдачи.
-   */
-  final val JS_ROUTER_NAME = "sioScJsRoutes"
-
-  /** window.NAME - название функции function(), которая будет вызвана  */
-  final val JS_ROUTER_ASYNC_INIT_FNAME = JS_ROUTER_NAME + "AsyncInit"
-
   def DIV_WRAPPER_SUFFIX   = "Wrapper"
   def DIV_CONTENT_SUFFIX   = "Content"
   def DIV_CONTAINER_SUFFIX = "Container"
@@ -443,6 +433,27 @@ object ScConstants {
       /** При скроллинге стрелками клавиатуры какой должен быть шаг скроллинга в пикселях? */
       def KBD_SCROLL_STEP_PX = 60
     }
+
+  }
+
+  /** Константы для jsRouter'а выдачи. */
+  object JsRouter {
+
+    /**
+     * Имя js-роутера на странице. val потому что:
+     * - в sjs используется в аннотации.
+     * - в web21 будет постоянно использоваться с внедрением sjs-выдачи.
+     */
+    final val NAME = "sioScJsRoutes"
+
+    /** window.NAME - название функции function(), которая будет вызвана  */
+    final val ASYNC_INIT_FNAME = NAME + "AsyncInit"
+
+    /** id script-тега js-роутера. HTML5 разрешает script.id. */
+    def DOM_ID = "scJsRouterCont"
+
+    /** relative-ссылка на скрипт js-роутера. */
+    def URI = "/sc/router.js"
 
   }
 
