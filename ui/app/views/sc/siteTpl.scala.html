@@ -5,6 +5,7 @@
 @import _root_.views.html.stuff._
 @import util.cdn.CdnUtil
 @import models.msc.ScJsState.{qsbStandalone => scJsQsb}
+@import io.suggest.sc.ScConstants.Init.IGNORE_GEO_MASK_ID
 
 @if(args.apiVsn.withScSiteDoctype) {
   <!DOCTYPE html>
@@ -53,7 +54,11 @@
 
   @if(!args.syncRender) {
     @args.scriptHtml
+
+    @* Невидимая кнопка на весь экран, чтобы юзер мог педалировать ход геолокации (пропускать геолокацию). *@
+    @*<div id="@IGNORE_GEO_MASK_ID" class="fs-transparent-mask"></div>*@
   }
+
   @* TODO В else нужно выводить нескрываемую плашку, что следует включить js в браузере, иначе всё будет хреново
           выглядеть и работать. Но не для кравлеров. *@
 
