@@ -1,5 +1,6 @@
 package models.blk
 
+import io.suggest.model.EnumValue2Val
 import io.suggest.model.EsModel.FieldsJsonAcc
 import play.api.libs.json.{JsString, JsObject, JsArray}
 
@@ -10,7 +11,7 @@ import play.api.libs.json.{JsString, JsObject, JsArray}
  * Description: Модель шрифтов. До её появления шрифты были захардкожены прямо в шаблонах.
  * initial = 0 -- это проверка испрользуется в adFormBase на "первость" элемента модели.
  */
-object Fonts extends Enumeration(0) {
+object Fonts extends Enumeration(0) with EnumValue2Val {
 
   /**
    * Класс-экземпляр модели.
@@ -34,27 +35,29 @@ object Fonts extends Enumeration(0) {
 
 
   /** Тип экземпляра модели. */
-  type Font = Val
+  override type T = Val
 
-  val FavLightCondCReg    : Font = Val("favoritlightcondcregular", "Favorit Light Cond C Regular")
-  val FavCondCBold        : Font = Val("favoritcondc-bold-webfont", "Favorit Cond C Bold")
-  val HeliosThin          : Font = Val("heliosthin", "Helios Thin")
-  val HeliosCondLight     : Font = Val("helioscondlight-webfont", "Helios Cond Light")
-  val PfDinTextCompProMed : Font = Val("PFDinTextCompPro-Medium", "PF Din Text Comp Pro Medium")
-  val FuturFutC           : Font = Val("futurfutc-webfont", "Futur Fut C")
-  val PharmadinCondLight  : Font = Val("PharmadinCondensedLight", "Pharmadin Condensed Light")
-  val NewspaperSans       : Font = Val("newspsan-webfont", "Newspaper Sans")
-  val RexBold             : Font = Val("rex_bold-webfont", "Rex Bold")
-  val Preforama           : Font = Val("perforama-webfont", "Perforama")
-  val BlocExtCond         : Font = Val("blocextconc-webfont", "BlocExt Cond")
-  val BodonConc           : Font = Val("bodonconc-webfont", "Bodon Conc")
-  val Higherup            : Font = Val("aa_higherup-webfont", "Higherup")
-  val Georgia             : Font = Val("Georgia", "Georgia")
-  val Confic              : Font = Val("confic-webfont", "Confic")
+  val FavLightCondCReg    : T = Val("favoritlightcondcregular",     "Favorit Light Cond C Regular")
+  val FavCondCBold        : T = Val("favoritcondc-bold-webfont",    "Favorit Cond C Bold")
+  val HeliosThin          : T = Val("heliosthin",                   "Helios Thin")
+  val HeliosCondLight     : T = Val("helioscondlight-webfont",      "Helios Cond Light")
+  val PfDinTextCompProMed : T = Val("PFDinTextCompPro-Medium",      "PF Din Text Comp Pro Medium")
+  val FuturFutC           : T = Val("futurfutc-webfont",            "Futur Fut C")
+  val PharmadinCondLight  : T = Val("PharmadinCondensedLight",      "Pharmadin Condensed Light")
+  val NewspaperSans       : T = Val("newspsan-webfont",             "Newspaper Sans")
+  val RexBold             : T = Val("rex_bold-webfont",             "Rex Bold")
+  val Preforama           : T = Val("perforama-webfont",            "Perforama")
+  val BlocExtCond         : T = Val("blocextconc-webfont",          "BlocExt Cond")
+  val BodonConc           : T = Val("bodonconc-webfont",            "Bodon Conc")
+  val Higherup            : T = Val("aa_higherup-webfont",          "Higherup")
+  val Georgia             : T = Val("Georgia",                      "Georgia")
+  val Confic              : T = Val("confic-webfont",               "Confic")
 
+  val GazTransport        : T = Val("gaz-transport",                "GAZ Transport")
+  //val Meloranic           : T = Val("meloraic",                     "Meloranic")
+  //val OctinTeamHeavy      : T = Val("octin-team-heavy",             "Octin Team Heavy")
+  // TODO Не пашет русский язык. + Добавить остальные шрифты из fonts.styl.
 
-  /** Приведение Enumeration.Value к экземпляру модели Font. */
-  implicit def value2val(x: Value): Font = x.asInstanceOf[Font]
 
   /** Для рендера json-конфига tinyMCE лучше использовать этот метод. */
   def valuesJsonTinyMce: JsArray = {

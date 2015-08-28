@@ -1,4 +1,4 @@
-font-face( name )
+xfontface( name )
   @font-face
     font-family: name
     src: url('/vassets/fonts/market/' + name + '.eot')
@@ -8,27 +8,50 @@ font-face( name )
     font-weight: normal
     font-style: normal
 
-font-face( 'favoritlightcondcregular' )
-font-face( 'favoritcondcregular' )
-font-face( 'heliosthin' )
-font-face( 'futurfutc-webfont' )
-font-face( 'PFDinTextCompPro-Medium' )
-font-face( 'futurfutc-webfont' )
-font-face( 'helioscond-webfont' )
-font-face( 'helioscondlight-webfont' )
-font-face( 'favoritcondc-bold-webfont' )
-font-face( 'PharmadinCondensedLight' )
-font-face( 'confic-webfont' )
-font-face( 'newspsan-webfont' )
-font-face( 'rex_bold-webfont' )
-font-face( 'perforama-webfont' )
-font-face( 'blocextconc-webfont' )
-font-face( 'bodonconc-webfont' )
-font-face( 'confic-webfont' )
-font-face( 'PT_Sans-Narrow' )
-font-face( 'aa_higherup-webfont' )
-font-face( 'opensans-light' )
-font-face( 'opensans-bold' )
+xfontface( 'favoritlightcondcregular' )
+xfontface( 'favoritcondcregular' )
+xfontface( 'heliosthin' )
+xfontface( 'futurfutc-webfont' )
+xfontface( 'PFDinTextCompPro-Medium' )
+xfontface( 'futurfutc-webfont' )
+xfontface( 'helioscond-webfont' )
+xfontface( 'helioscondlight-webfont' )
+xfontface( 'favoritcondc-bold-webfont' )
+xfontface( 'PharmadinCondensedLight' )
+xfontface( 'confic-webfont' )
+xfontface( 'newspsan-webfont' )
+xfontface( 'rex_bold-webfont' )
+xfontface( 'perforama-webfont' )
+xfontface( 'blocextconc-webfont' )
+xfontface( 'bodonconc-webfont' )
+xfontface( 'confic-webfont' )
+xfontface( 'PT_Sans-Narrow' )
+xfontface( 'aa_higherup-webfont' )
+xfontface( 'opensans-bold' )
+xfontface( 'opensans-light' )
+
+
+xfontface2( name )
+  @font-face
+    font-family: name
+    src: url('/vassets/fonts/' + name + '/' + name + '.eot')
+    src: url('/vassets/fonts/' + name + '/' + name + '.eot?#iefix') format('embedded-opentype'),
+         url('/vassets/fonts/' + name + '/' + name + '.woff2') format('woff2'),
+         url('/vassets/fonts/' + name + '/' + name + '.woff') format('woff'),
+         url('/vassets/fonts/' + name + '/' + name + '.ttf') format('truetype')
+    font-weight: normal
+    font-style: normal
+
+xfontface2( 'gaz-transport' )
+
+/*
+xfontface2( 'meloraic' )
+xfontface2( 'octin-team-heavy' )
+xfontface2( 'pfdin-comppro-medium' )
+xfontface2( 'posterboard' )
+xfontface2( 'ptsans-narrow' )
+*/
+
 
 .ft-XS
   ft(12px)

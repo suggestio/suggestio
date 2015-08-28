@@ -130,21 +130,6 @@ libraryDependencies ++= {
 //play.Play.projectSettings
 
 
-// Добавляем задачу сжатия всех сгенеренных js/css файлов.
-lazy val gzipAssets = taskKey[Unit]("Gzip all js/css assets.")
-
-gzipAssets := {
-  val dir = resourceManaged.value
-  println("Compressing js/ccs in directory: " + dir)
-  ((dir ** "*.js") +++ (dir ** "*.css")).get.foreach { file =>
-    val gzTarget = new File(file.getAbsolutePath + ".gz")
-    IO.gzip(file, gzTarget)
-    println("Compressed " + file.getName + " " + file.length / 1000F + " k => " + gzTarget.getName + " " + gzTarget.length / 1000F + " k")
-    gzTarget
-  }
-}
-
-
 // После импорта настроек, typesafe-репа не кешируется. Это надо бы исправить.
 resolvers ~= {
   rs => rs filter {_.name != "Typesafe Releases Repository" }
@@ -299,4 +284,8 @@ includeFilter in filter := {
 
 // Docker args. Ports: http, ssl, TODO set stable ports in elasticsearch.yml
 dockerExposedPorts := Seq(9000, 9443, 9200, 9201, 9300, 9301)
+
+
+// Есть ассеты, которые нет смысла сжимать. Правда, они в /public, но на всякий случай сделаем.
+excludeFilter in gzip := "*.woff" || "*.woff2"
 
