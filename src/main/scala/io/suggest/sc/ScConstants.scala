@@ -189,7 +189,7 @@ object ScConstants {
     def MAD_ID_ATTR       = "data-mad-id"
 
     def ID_DELIM          = ":"
-    /** id grid-блока формируется как-то так: "$madId$ID_SUFFIX". */
+    /** id grid-блока формируется как-то так: "...madId..." + ID_SUFFIX. */
     def ID_SUFFIX         = "blk"
   }
 
