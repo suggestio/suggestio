@@ -1,11 +1,13 @@
 package io.suggest.sc.sjs.m.msrv.index
 
-import io.suggest.sc.sjs.m.msrv.MSrvUtil
+import io.suggest.sc.sjs.m.msrv.{Timestamped, TimestampedCompanion, MSrvUtil}
 import io.suggest.sc.sjs.util.router.srv.routes
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.scalajs.js.{Dictionary, WrappedDictionary, Any}
 import io.suggest.sc.ScConstants.Resp._
+
+import scala.util.Try
 
 /**
  * Suggest.io
@@ -54,6 +56,31 @@ case class MNodeIndex(json: WrappedDictionary[Any]) {
   def isGeo = json(IS_GEO_FN).asInstanceOf[Boolean]
 
   /** id узла, если известен. */
-  lazy val adnIdOpt = json.get(ADN_ID_FN).map(_.toString)
+  def adnIdOpt: Option[String] = {
+    json.get(ADN_ID_FN)
+      .asInstanceOf[Option[String]]
+  }
+
+  /** Достаточна ли геолокация по мнению сервера? Мнение возвращает geoShowcase(). */
+  def geoAccurEnought: Option[Boolean] = {
+    json.get(GEO_ACCURACY_ENOUGHT_FN)
+      .asInstanceOf[Option[Boolean]]
+  }
+
+  def title: Option[String] = {
+    json.get(TITLE_FN)
+      .asInstanceOf[Option[String]]
+  }
 
 }
+
+
+
+/** Контейнер для [[MNodeIndex]] для возврата в комплекте с timestamp начала запроса. */
+case class MNodeIndexTimestamped(
+  override val result: Try[MNodeIndex],
+  override val timestamp: Long
+)
+  extends Timestamped[MNodeIndex]
+object MNodeIndexTimestamped extends TimestampedCompanion[MNodeIndex]
+

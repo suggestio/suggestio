@@ -5,6 +5,7 @@ import io.suggest.sc.sjs.m.mfsm.{IFsmMsgCompanion, IFsmMsg}
 import io.suggest.sc.sjs.m.mfsm.signals.KbdKeyUp
 import io.suggest.sc.sjs.m.mgeo.{IGeoErrorSignal, IGeoLocSignal}
 import io.suggest.sc.sjs.m.msc.fsm.MStData
+import io.suggest.sc.sjs.m.msrv.TimestampedCompanion
 import io.suggest.sjs.common.controller.fsm.{DirectDomEventHandlerDummy, DirectDomEventHandlerFsm}
 import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.util.ISjsLogger
@@ -170,7 +171,7 @@ trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger with DirectDo
 
   /** Подписать фьючерс на отправку результата в ScFsm. */
   protected def _sendFutResBack[T](fut: Future[T])(implicit ec: ExecutionContext): Unit = {
-    fut.onComplete { case tryRes =>
+    fut.onComplete { tryRes =>
       val msg = tryRes match {
         case Success(res) => res
         case failure      => failure
@@ -178,6 +179,18 @@ trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger with DirectDo
       // Вешать асинхронную отправку сюда смысла нет, только паразитные setTimeout() в коде появяться.
       _sendEventSyncSafe(msg)
     }
+  }
+
+  /** Подписать фьючерс на отсылку ответа вместе с таймштампом вешанья события.
+    * Полезно для определения порядка параллельных одинаковых запросов. */
+  protected def _sendFutResBackTimestamped[T](fut: Future[T], model: TimestampedCompanion[T],
+                                              timestamp: Long = System.currentTimeMillis())
+                                             (implicit ec: ExecutionContext): Long = {
+    fut.onComplete { tryRes =>
+      val msg = model(tryRes, timestamp)
+      _sendEventSyncSafe(msg)
+    }
+    timestamp
   }
 
 }

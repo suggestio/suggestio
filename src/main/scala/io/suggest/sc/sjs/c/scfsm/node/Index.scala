@@ -12,8 +12,9 @@ import io.suggest.sc.sjs.vm.{SafeBody, SafeWnd}
 import io.suggest.sjs.common.msg.ErrorMsgs
 import org.scalajs.dom
 
+import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
-import scala.util.Failure
+import scala.util.{Success, Try, Failure}
 
 /**
  * Suggest.io
@@ -23,21 +24,30 @@ import scala.util.Failure
  */
 trait Index extends ScFsmStub with FindAdsUtil {
 
+  /** Утиль для запуска запроса sc index с сервера. */
+  trait GetIndexUtil {
+
+    /** Запустить запрос получения индекса с сервера на основе переданного состояния. */
+    protected def _getIndex(sd0: SD = _stateData): Future[MNodeIndex] = {
+      val inxArgs = MScIndexArgs(
+        adnIdOpt  = sd0.adnIdOpt,
+        geoMode   = Some( sd0.geo.currGeoMode ),
+        screen    = sd0.screen
+      )
+      MNodeIndex.getIndex(inxArgs)
+    }
+
+  }
+
   /** Реализация состояния активации и  */
-  protected trait GetIndexStateT extends FsmState {
+  protected trait GetIndexStateT extends FsmState with GetIndexUtil {
 
     /** Аддон для запуска запроса index с сервера. */
     override def afterBecome(): Unit = {
       super.afterBecome()
 
       val sd0 = _stateData
-
-      val inxArgs = MScIndexArgs(
-        adnIdOpt  = sd0.adnIdOpt,
-        geoMode   = Some( sd0.geo.currGeoMode ),
-        screen    = sd0.screen
-      )
-      val inxFut = MNodeIndex.getIndex(inxArgs)
+      val inxFut = _getIndex(sd0)
 
       // Дожидаясь ответа сервера, инициализировать кое-какие переменные, необходимые на следующем шаге.
       for (screen <- sd0.screen) {
@@ -57,11 +67,27 @@ trait Index extends ScFsmStub with FindAdsUtil {
   }
 
 
+  /** Общий интерфейс для метода-реакции на получение node-индекса. */
+  trait INodeIndexReceived {
+    protected def _nodeIndexReceived(v: MNodeIndex): Unit
+  }
+  trait IGetNodeIndexFailed {
+    protected def _getNodeIndexFailed(ex: Throwable): Unit
+  }
+  trait HandleNodeIndex extends INodeIndexReceived with IGetNodeIndexFailed {
+    def _handleNodeIndexResult(tryRes: Try[MNodeIndex]): Unit = {
+      tryRes match {
+        case Success(mni) => _nodeIndexReceived(mni)
+        case Failure(ex)  => _getNodeIndexFailed(ex)
+      }
+    }
+  }
+
   /** Статическая утиль для состояний, обрабатывающих получаемые от сервера node index. */
-  trait ProcessIndexReceivedUtil extends FsmState {
+  trait ProcessIndexReceivedUtil extends FsmState with INodeIndexReceived {
 
     /** Реакция на успешный результат запроса node index. */
-    protected def _nodeIndexReceived(v: MNodeIndex): Unit = {
+    override protected def _nodeIndexReceived(v: MNodeIndex): Unit = {
       // Заливаем в данные состояния полученные метаданные по текущему узлу.
       // TODO Это нужно только на первом шаге по факту (geo). Потом adnId обычно известен наперёд.
       val sd1: SD = {
@@ -175,8 +201,8 @@ trait Index extends ScFsmStub with FindAdsUtil {
   }
 
 
-  /** Ожидание получения index с сервера. */
-  trait WaitIndexStateT extends FsmEmptyReceiverState with ProcessIndexReceivedUtil {
+  /** Поддержка реакции на получение MNodeIndex без конкретной логики обработки. */
+  trait WaitIndexStateBaseT extends FsmEmptyReceiverState with INodeIndexReceived with IGetNodeIndexFailed {
 
     override def receiverPart: Receive = super.receiverPart orElse {
       case mni: MNodeIndex =>
@@ -186,9 +212,13 @@ trait Index extends ScFsmStub with FindAdsUtil {
         _getNodeIndexFailed(ex)
     }
 
+  }
 
-    /** Запрос за index'ом не удался. */
-    protected def _getNodeIndexFailed(ex: Throwable): Unit = {
+
+  /** Трейт для состояния ожидания получения index с сервера. */
+  trait WaitIndexStateT extends WaitIndexStateBaseT with ProcessIndexReceivedUtil {
+
+    override protected def _getNodeIndexFailed(ex: Throwable): Unit = {
       error(ErrorMsgs.GET_NODE_INDEX_FAILED, ex)
       _retry(50)( _onNodeIndexFailedState )
     }
