@@ -14,4 +14,6 @@ object WarnMsgs extends MsgsStaticT {
 
   def NO_SCREEN_VSZ_DETECTED    = E(2)
 
+  def INDEX_RESP_TOO_OLD        = E(3)
+
 }
