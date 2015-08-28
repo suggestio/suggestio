@@ -54,9 +54,13 @@ object Fonts extends Enumeration(0) with EnumValue2Val {
   val Confic              : T = Val("confic-webfont",               "Confic")
 
   val GazTransport        : T = Val("gaz-transport",                "GAZ Transport")
-  //val Meloranic           : T = Val("meloraic",                     "Meloranic")
-  //val OctinTeamHeavy      : T = Val("octin-team-heavy",             "Octin Team Heavy")
-  // TODO Не пашет русский язык. + Добавить остальные шрифты из fonts.styl.
+  val Meloranic           : T = Val("meloriac",                     "Meloriac")
+  val OctinTeamHeavy      : T = Val("octin-team-heavy",             "Octin Team Heavy")
+  val Posterboard         : T = Val("posterboard",                  "Posterboard")
+  val PtSansNarrow        : T = Val("pt-sans-narrow",               "PT Sans Narrow")
+  val OpenSansLight       : T = Val("opensans-light",               "OpenSans Light Regular")
+
+  // TODO Добавить остальные шрифты из public/SIO/Fonts/. Портировать старые шрифты из fonts.styl.
 
 
   /** Для рендера json-конфига tinyMCE лучше использовать этот метод. */

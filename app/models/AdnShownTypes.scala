@@ -29,6 +29,9 @@ object AdnShownTypes extends Enumeration {
     def ngls: List[NodeGeoLevel]
     def showWithTown: Boolean = true
 
+    /** Имеет ли смысл пытаться искать гео-дочерние узлы у узла данного уровня. */
+    def mayHaveGeoChildren: Boolean = true
+
     /** Является ли данный тип географически-верхним?
       * Изначально была иерархия: город-район-здание.
       * Значит города верхние, остальные -- нет. */
@@ -56,6 +59,7 @@ object AdnShownTypes extends Enumeration {
   sealed trait BuildingT extends ValT {
     override def isBuilding = true
     override def ngls = List(NodeGeoLevels.NGL_BUILDING)
+    override def mayHaveGeoChildren = false
   }
   private class BuildingVal(name: String) extends Val(name) with BuildingT
   

@@ -11,16 +11,21 @@ import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Future
 import play.api.mvc._
+import util.SiowebEsUtil.client
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 10.11.14 18:47
  * Description: Поддержка гео-выдачи в showcase-контроллере.
+ *
+ * TODO Из-за "гибкости" тут код стал слишком переусложнённый, нужно упросить.
+ * Причина этого отчасти в том, что index-логика тут является подчиненной. В аддоне присутствует
+ * ещё одна логика, которая возвращает index-логику в качестве результата своей работы и использует её части.
  */
 
 /** Аддон для контроллера, добавляющий экшены от гео-indexTpl, которые представляют выдачу вне явно-заданного узла. */
-trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCommon { that =>
+trait ScIndexGeo extends ScIndexConstants with ScIndexNodeCommon { that =>
 
   /**
    * indexTpl для выдачи, отвязанной от конкретного узла.
@@ -30,29 +35,9 @@ trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCom
    */
   def geoShowcase(args: ScReqArgs) = MaybeAuth.async { implicit request =>
     // Собираем хелпер, который займётся выстраиванием результата работы.
-    case class LogicResult(result: Result, nodeOpt: Option[MAdnNode], helper: ScIndexHelperBase)
-    val logic = new GeoIndexLogic {
-      type T = LogicResult
+    val logic = new GeoScIndexLogic {
       override def _reqArgs = args
       override implicit def _request = request
-      // gsiOptFut в любом случае понадобится, поэтому делаем его val'ом.
-      override val gsiOptFut = super.gsiOptFut
-
-      /** Нет ноды. */
-      override def nodeNotDetected(): Future[T] = {
-        nodeNotDetectedHelperFut().flatMap { _helper =>
-          _helper.result
-            .map { result => LogicResult(result, None, _helper) }
-        }
-      }
-
-      /** Нода найдена с помощью геолокации. */
-      override def nodeFound(gdr: GeoDetectResult): Future[T] = {
-        nodeFoundHelperFut(gdr).flatMap { _helper =>
-          _helper.result
-            .map { result => LogicResult(result, Some(gdr.node), _helper) }
-        }
-      }
     }
     // Запускаем хелпер на генерацию асинхронного результата:
     val resultFut = logic()
@@ -78,8 +63,156 @@ trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCom
     }
   }
 
+  // TODO Можно объеденить GeoIndexLogicBase и GeoIndexLogic.
+
+  /**
+   * Совсем абстрактная логика работы из экшена geoShowCase() тут.
+   * Абстрагирован от типа результата. Используется для сборки helper'ов, генерирующих конкретные результаты.
+   * Запуск логики поиска подходящего узла и выбора выдачи осуществляется через apply().
+   */
+  trait GeoIndexLogicBase { that2 =>
+    /** Тип возвращаемого значения в методах этого хелпера. */
+    type T
+
+    // Типы возвращаемых хелперов в соотв.методах.
+    type NndHelper_t <: ScIndexHelperBase
+    type NfHelper_t <: ScIndexNodeHelper
+
+    def _reqArgs: ScReqArgs
+    implicit def _request: AbstractRequestWithPwOpt[_]
+
+    def gsiOptFut = _reqArgs.geo.geoSearchInfoOpt
+
+    def _gdrFut = ShowcaseNodeListUtil.detectCurrentNode(_reqArgs.geo, gsiOptFut)
+    lazy val gdrFut = _gdrFut
+
+    /** Запуск логики на исполнение. */
+    def apply(): Future[T] = {
+      lazy val logPrefix = s"GeoIndexLogic(${System.currentTimeMillis}): "
+      LOGGER.trace(logPrefix + "Starting, args = " + _reqArgs)
+      if (_reqArgs.geo.isWithGeo) {
+        gdrFut flatMap { gdr =>
+          nodeFound(gdr)
+        } recoverWith {
+          case ex: NoSuchElementException =>
+            // Нету узлов, подходящих под запрос.
+            LOGGER.debug(logPrefix + "No nodes found nearby " + _reqArgs.geo)
+            nodeNotDetected()
+        }
+      } else {
+        nodeNotDetected()
+      }
+    }
+
+    def nodeNotDetectedHelperFut(): Future[NndHelper_t]
+
+    /** Нет ноды. */
+    def nodeNotDetected(): Future[T]
+
+    def nodeFoundHelperFut(gdr: GeoDetectResult): Future[NfHelper_t]
+
+    /** Нода найдена с помощью геолокации. */
+    def nodeFound(gdr: GeoDetectResult): Future[T]
 
 
+    /** Реализация основной index-логики. */
+    trait ScIndexHelperAddon extends ScIndexHelperBase {
+      override implicit def _request = that2._request
+      override def _reqArgs = that2._reqArgs
+
+      /** Предлагаемый заголовок окна выдачи, если возможно. */
+      override def titleOptFut: Future[Option[String]] = {
+        gdrFut
+          .map { gdr =>
+            _node2titleOpt( gdr.node )
+          }
+          .recover { case _ => None }
+      }
+
+      /** Фьючерс с определением достаточности имеющиейся геолокации для наилучшего определения узла. */
+      override def geoAcurrEnoughtFut: Future[Option[Boolean]] = {
+        // Считаем геолокацию достаточно
+        val fut = for {
+          gdr <- gdrFut
+          // Не делать подсчет geo-child-узлов, если узел на уровне, где не может быть child узлов.
+          if !gdr.ngl.isLowest
+          geoChilderCount <- {
+            val gparents = gdr.node.id.toSeq
+            val searchArgs = new AdnNodesSearchArgs {
+              override def withDirectGeoParents = gparents
+              override def maxResults = 5
+              // TODO Фильтровать по наличию geoshape'ов
+            }
+            MAdnNode.dynCount(searchArgs)
+          }
+        } yield {
+          geoChilderCount > 0L
+        }
+        fut recover {
+          case ex: NoSuchElementException =>
+            true
+          case ex: Throwable =>
+            LOGGER.error("geoAccurEnoughtFut(): for node " + gdrFut, ex)
+            false
+        } map {
+          Some.apply
+        }
+      }
+    }
+
+  }
+  /** Гибкий абстрактный хелпер для сборки методов, занимающихся раздачей indexTpl с учётом геолокации. */
+  trait GeoIndexLogic extends GeoIndexLogicBase {
+
+    override type NndHelper_t = ScIndexGeoHelper
+    override type NfHelper_t = ScIndexNodeGeoHelper
+
+    def nodeNotDetectedHelperFut(): Future[NndHelper_t] = {
+      val res = new ScIndexGeoHelper with ScIndexHelperAddon
+      Future successful res
+    }
+
+    def nodeFoundHelperFut(gdr: GeoDetectResult): Future[NfHelper_t] = {
+      val helper = new ScIndexNodeGeoHelper with ScIndexHelperAddon {
+        override val gdrFut = Future successful gdr
+      }
+      Future successful helper
+    }
+
+  }
+
+
+  /** Реализация GeoIndexLogic для нужд http-экшена geoShowcase(). */
+  trait GeoScIndexLogic extends GeoIndexLogic {
+
+    /** Внутренний класс для возврата результата.
+      * Вынести в models нельзя, потому аргументом является внутренний хелпер контроллера. */
+    case class LogicResult(result: Result, nodeOpt: Option[MAdnNode], helper: ScIndexHelperBase)
+
+    type T = LogicResult
+    // gsiOptFut в любом случае понадобится, поэтому делаем его val'ом.
+    override val gsiOptFut = super.gsiOptFut
+
+    /** Нет ноды. */
+    override def nodeNotDetected(): Future[T] = {
+      nodeNotDetectedHelperFut().flatMap { _helper =>
+        _helper.result
+          .map { result => LogicResult(result, None, _helper) }
+      }
+    }
+
+    /** Нода найдена с помощью геолокации. */
+    override def nodeFound(gdr: GeoDetectResult): Future[T] = {
+      nodeFoundHelperFut(gdr).flatMap { _helper =>
+        _helper.result
+          .map { result => LogicResult(result, Some(gdr.node), _helper) }
+      }
+    }
+  }
+
+
+  /** Реализация GeoIndexLogic для нужд ScSyncSite.
+    * Рендер результата идёт в Html. */
   trait HtmlGeoIndexLogic extends GeoIndexLogic {
     override type T = Html
 
@@ -157,82 +290,6 @@ trait ScIndexGeo extends ScIndexCommon with ScIndexConstants with ScIndexNodeCom
     }
 
     override def isGeo: Boolean = true
-  }
-
-
-  /**
-   * Совсем абстрактная логика работы из экшена geoShowCase() тут.
-   * Абстрагирован от типа результата. Используется для сборки helper'ов, генерирующих конкретные результаты.
-   * Запуск логики поиска подходящего узла и выбора выдачи осуществляется через apply().
-   */
-  trait GeoIndexLogicBase { that2 =>
-    /** Тип возвращаемого значения в методах этого хелпера. */
-    type T
-
-    // Типы возвращаемых хелперов в соотв.методах.
-    type NndHelper_t <: ScIndexHelperBase
-    type NfHelper_t <: ScIndexNodeHelper
-
-    def _reqArgs: ScReqArgs
-    implicit def _request: AbstractRequestWithPwOpt[_]
-
-    def gsiOptFut = _reqArgs.geo.geoSearchInfoOpt
-
-    def gdrFut = ShowcaseNodeListUtil.detectCurrentNode(_reqArgs.geo, gsiOptFut)
-
-    /** Запуск логики, которая раньше лежала в geoShowcase()-экшене. */
-    def apply(): Future[T] = {
-      lazy val logPrefix = s"GeoIndexLogic(${System.currentTimeMillis}): "
-      LOGGER.trace(logPrefix + "Starting, args = " + _reqArgs)
-      if (_reqArgs.geo.isWithGeo) {
-        gdrFut flatMap { gdr =>
-          nodeFound(gdr)
-        } recoverWith {
-          case ex: NoSuchElementException =>
-            // Нету узлов, подходящих под запрос.
-            LOGGER.debug(logPrefix + "No nodes found nearby " + _reqArgs.geo)
-            nodeNotDetected()
-        }
-      } else {
-        nodeNotDetected()
-      }
-    }
-
-    def nodeNotDetectedHelperFut(): Future[NndHelper_t]
-
-    /** Нет ноды. */
-    def nodeNotDetected(): Future[T]
-
-    def nodeFoundHelperFut(gdr: GeoDetectResult): Future[NfHelper_t]
-
-    /** Нода найдена с помощью геолокации. */
-    def nodeFound(gdr: GeoDetectResult): Future[T]
-
-    trait ScIndexHelperAddon extends ScIndexHelperBase {
-      override implicit def _request = that2._request
-      override def _reqArgs = that2._reqArgs
-    }
-  }
-
-
-  /** Гибкий абстрактный хелпер для сборки методов, занимающихся раздачей indexTpl с учётом геолокации. */
-  trait GeoIndexLogic extends GeoIndexLogicBase {
-
-    override type NndHelper_t = ScIndexGeoHelper
-    override type NfHelper_t = ScIndexNodeGeoHelper
-
-    def nodeNotDetectedHelperFut(): Future[NndHelper_t] = {
-      val res = new ScIndexGeoHelper with ScIndexHelperAddon
-      Future successful res
-    }
-
-    def nodeFoundHelperFut(gdr: GeoDetectResult): Future[NfHelper_t] = {
-      val helper = new ScIndexNodeGeoHelper with ScIndexHelperAddon {
-        override val gdrFut = Future successful gdr
-      }
-      Future successful helper
-    }
-
   }
 
 }

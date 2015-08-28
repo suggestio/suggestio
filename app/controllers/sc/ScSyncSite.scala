@@ -257,7 +257,7 @@ with ScNodesListBase with ScSiteBase {
           override implicit def _request = that._request
 
           /** Определение текущего узла выдачи. Текущий узел может быть задан через параметр ресивера. */
-          override def gdrFut: Future[GeoDetectResult] = {
+          override def _gdrFut: Future[GeoDetectResult] = {
             adnNodeReqFut.flatMap {
               case Some(node) =>
                 // Нужно привести найденный узел к GeoDetectResult:
@@ -273,7 +273,7 @@ with ScNodesListBase with ScSiteBase {
               case ex: Exception =>
                 if (!ex.isInstanceOf[NoSuchElementException])
                   LOGGER.error("Unable to make node search. nodeIdOpt = " + _scState.adnId, ex)
-                super.gdrFut
+                super._gdrFut
             }
           }
 

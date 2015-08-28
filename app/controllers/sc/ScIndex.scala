@@ -53,17 +53,34 @@ trait ScIndexCommon extends ScController with PlayMacroLogsI {
     def isGeo: Boolean
     def currAdnIdFut: Future[Option[String]]
     def _reqArgs: ScReqArgs // = ScReqArgs.empty
+
+    /** Фьючерс с определением достаточности имеющиейся геолокации для наилучшего определения узла. */
+    def geoAcurrEnoughtFut: Future[Option[Boolean]]
+
+    /** Предлагаемый заголовок окна выдачи, если возможно. */
+    def titleOptFut: Future[Option[String]]
+
+    /** Сборка значения для titleFut на основе имеющегося узла. */
+    protected def _node2titleOpt(mnode: MAdnNode): Option[String] = {
+      val m = mnode.meta
+      val title0 = m.name
+      val title2 = m.town.fold(title0)(townName => title0 + " (" + townName + ")")
+      Some(title2)
+    }
+
     implicit def _request: AbstractRequestWithPwOpt[_]
+
+    /** Контейнер палитры выдачи. */
+    def colorsFut: Future[IColors]
+
     lazy val ctx: Context = implicitly[Context]
 
-    def respHtmlFut = {
+    def respHtmlFut: Future[Html] = {
       renderArgsFut
         .map { indexTpl(_)(ctx) }
     }
     def respHtmlJsFut = respHtmlFut.map(JsString(_))
 
-    /** Контейнер палитры выдачи. */
-    def colorsFut: Future[IColors]
 
     def hBtnArgsFut: Future[HBtnArgs] = {
       colorsFut map { colors =>
@@ -85,10 +102,18 @@ trait ScIndexCommon extends ScController with PlayMacroLogsI {
     def respArgsFut: Future[ScIndexResp] = {
       val _currAdnIdOptFut = currAdnIdFut
       for {
-        html          <- respHtmlJsFut
-        currAdnIdOpt  <- _currAdnIdOptFut
+        html              <- respHtmlJsFut
+        currAdnIdOpt      <- _currAdnIdOptFut
+        geoAccurEnought   <- geoAcurrEnoughtFut
+        titleOpt          <- titleOptFut
       } yield {
-        ScIndexResp(html, isGeo, currAdnIdOpt)
+        ScIndexResp(
+          html            = html,
+          isGeo           = isGeo,
+          currAdnId       = currAdnIdOpt,
+          geoAccurEnought = geoAccurEnought,
+          titleOpt        = titleOpt
+        )
       }
     }
 
@@ -139,7 +164,17 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
     def geoListGoBackFut  : Future[Option[Boolean]]
     override lazy val currAdnIdFut: Future[Option[String]] = adnNodeFut.map(_.id)
 
-    // Нужно собрать продьюсеров рекламы. Собираем статистику по текущим размещениям, затем грабим ноды.
+    /** В рамках showcase(adnId) геолокация не требуется, узел и так известен. */
+    override def geoAcurrEnoughtFut: Future[Option[Boolean]] = {
+      Future successful None
+    }
+
+    /** Есть узел -- есть заголовок. */
+    override def titleOptFut: Future[Option[String]] = {
+      adnNodeFut
+        .map { _node2titleOpt }
+    }
+
     /** Найти все id узлов-продьюсеров, как-то относящихся к текущей ноде как к ресиверу. */
     def prodsStatsFut = adnNodeFut.flatMap { adnNode =>
       MAd.findProducerIdsForReceiver(adnNode.id.get)

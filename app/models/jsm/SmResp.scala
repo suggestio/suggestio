@@ -125,6 +125,33 @@ trait IsGeo extends SmJsonResp {
   }
 }
 
+
+/** Аддон для поддержки возвращаемого заголовка. */
+trait TitleOpt extends SmJsonResp {
+  def titleOpt: Option[String]
+  override def toJsonAcc: FieldsJsonAcc = {
+    val acc0 = super.toJsonAcc
+    val _titleOpt = titleOpt
+    if (_titleOpt.isDefined)
+      TITLE_FN -> JsString(_titleOpt.get) :: acc0
+    else
+      acc0
+  }
+}
+
+/** Аддон для флага оценки сервера достаточности геолокации. */
+trait GeoAccurEnought extends SmJsonResp {
+  def geoAccurEnought: Option[Boolean]
+  override def toJsonAcc: FieldsJsonAcc = {
+    val acc0 = super.toJsonAcc
+    val _gaeOpt = geoAccurEnought
+    if (_gaeOpt.isDefined)
+      GEO_ACCURACY_ENOUGHT_FN -> JsBoolean(_gaeOpt.get)  ::  acc0
+    else
+      acc0
+  }
+}
+
 trait CurrAdnId extends SmJsonResp {
   def currAdnId: Option[String]
 
@@ -140,8 +167,14 @@ trait CurrAdnId extends SmJsonResp {
  * @param isGeo значение флага isGeo.
  * @param currAdnId Текущий id узла, к которому относится отображаемая выдача.
  */
-case class ScIndexResp(html: JsString, isGeo: Boolean, currAdnId: Option[String])
-extends Action with HtmlOpt with IsGeo with CurrAdnId {
+case class ScIndexResp(
+  html                            : JsString,
+  override val isGeo              : Boolean,
+  override val currAdnId          : Option[String],
+  override val geoAccurEnought    : Option[Boolean],
+  override val titleOpt           : Option[String]
+)
+extends Action with HtmlOpt with IsGeo with CurrAdnId with GeoAccurEnought with TitleOpt {
   override def action = INDEX_RESP_ACTION
   override def htmlOpt: Option[JsString] = Some(html)
 }

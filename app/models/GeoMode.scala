@@ -313,7 +313,7 @@ final case class GeoLocation(geoPoint: GeoPoint, accuracyMeters: Option[Double] 
 
   /** Список уровней для детектирования в порядке употребления. Тут они выстраиваются с учётом точности. */
   override lazy val nodeDetectLevels: Seq[NodeGeoLevel] = {
-    // Порядок ngl-значений должен быть такой: здание, район, город. Ну т.е. все уровни масшт
+    // Порядок ngl-значений должен быть такой: здание, район, город.
     val s0 = NodeGeoLevels.valuesNgl
       .iterator
     accuracyMeters
