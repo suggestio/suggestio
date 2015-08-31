@@ -16,13 +16,13 @@
  */
 package securesocial.core.services
 import play.api.Play.current
-import play.api.libs.ws.{ WS, WSRequestHolder }
+import play.api.libs.ws.{WSRequest, WS}
 
 /**
  * A mockable interface for the http client
  */
 trait HttpService {
-  def url(url: String): WSRequestHolder
+  def url(url: String): WSRequest
 }
 
 object HttpService {
@@ -31,6 +31,6 @@ object HttpService {
    * A default implementation for HttpService based on the Play WS client.
    */
   class Default extends HttpService {
-    def url(url: String): WSRequestHolder = WS.url(url)
+    def url(url: String): WSRequest = WS.url(url)
   }
 }
