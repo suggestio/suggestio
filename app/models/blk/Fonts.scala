@@ -82,8 +82,9 @@ object Fonts extends Enumeration(0) with EnumMaybeWithMultiNameMap with EnumValu
   val Preforama           : T = new Val("perforama-webfont") {
     override def descr  = "Perforama"
   }
-  val BlocExtCond         : T = new Val("blocextconc-webfont") {
+  val BlocExtCond         : T = new Val("bloc-ext-con-c") {
     override def descr  = "BlocExt Cond"
+    override def _names = "blocextconc-webfont" :: super._names
   }
   val BodonConc           : T = new Val("bodonconc-webfont") {
     override def descr  = "Bodon Conc"
