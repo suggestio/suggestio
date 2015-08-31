@@ -20,7 +20,8 @@ case class MGeoLocSd(
   lastInx       : Option[MNodeIndex]  = None
 ) {
 
-
+  /** Определить и вернуть значение GeoMode для передачи на сервер.
+    * Полученное значение используется для сборки запросов к серверу, связанных с геолокацией. */
   def currGeoMode: IMGeoMode = {
     lastBssPos
       .fold[IMGeoMode] (MGeoModeIp) (pos => MGeoModeLoc(MGeoLoc(pos)))

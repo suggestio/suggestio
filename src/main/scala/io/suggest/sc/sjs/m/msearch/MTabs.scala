@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.m.msearch
 
-import io.suggest.model.LightEnumeration
+import io.suggest.common.menum.LightEnumeration
 import io.suggest.sc.sjs.vm.search.tabs.geo.{SGeoTabBtn, SGeoRoot}
 import io.suggest.sc.sjs.vm.search.tabs.htag.{ShtTabBtn, ShtRoot}
 import io.suggest.sc.sjs.vm.search.tabs.{TabBtnCompanion, TabRootCompanion}
