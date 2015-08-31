@@ -53,49 +53,64 @@ object Fonts extends Enumeration(0) with EnumMaybeWithMultiNameMap with EnumValu
   val FavLightCondCReg    : T = new Val("favoritlightcondcregular") {
     override def descr = "Favorit Light Cond C Regular"
   }
+
   val FavCondCBold        : T = new Val("favoritcondc-bold-webfont") {
     override def descr  = "Favorit Cond C Bold"
   }
+
   val HeliosThin          : T = new Val("helios-thin") {
     override def descr  = "Helios Thin"
     override def _names = "heliosthin" :: super._names
   }
+
   val HeliosCondLight     : T = new Val("helioscondlight-webfont") {
     override def descr  = "Helios Cond Light"
   }
+
   val PfDinTextCompProMed : T = new Val("PFDinTextCompPro-Medium") {
     override def descr  = "PF Din Text Comp Pro Medium"
   }
+
   val FuturFutC           : T = new Val("futura-futuris-c") {
     override def descr  = "Futur Fut C"
     override def _names = "futurfutc-webfont" :: super._names
   }
+
   val PharmadinCondLight  : T = new Val("PharmadinCondensedLight") {
     override def descr  = "Pharmadin Condensed Light"
   }
+
   val NewspaperSans       : T = new Val("newspsan-webfont") {
     override def descr  = "Newspaper Sans"
   }
+
   val RexBold             : T = new Val("rex_bold-webfont") {
     override def descr  = "Rex Bold"
   }
+
   val Preforama           : T = new Val("perforama-webfont") {
     override def descr  = "Perforama"
   }
+
   val BlocExtCond         : T = new Val("bloc-ext-con-c") {
     override def descr  = "BlocExt Cond"
     override def _names = "blocextconc-webfont" :: super._names
   }
-  val BodonConc           : T = new Val("bodonconc-webfont") {
+
+  val BodonConc           : T = new Val("bodon-con-c") {
     override def descr  = "Bodon Conc"
+    override def _names = "bodonconc-webfont" :: super._names
   }
+
   val Higherup            : T = new Val("aa-higherup") {
     override def descr  = "Higherup"
     override def _names = "aa_higherup-webfont" :: super._names
   }
+
   val Georgia             : T = new Val("Georgia") {
     override def descr  = "Georgia"
   }
+
   val Confic              : T = new Val("confic-webfont") {
     override def descr  = "Confic"
   }
@@ -103,19 +118,24 @@ object Fonts extends Enumeration(0) with EnumMaybeWithMultiNameMap with EnumValu
   val GazTransport        : T = new Val("gaz-transport") {
     override def descr  = "GAZ Transport"
   }
+
   val Meloranic           : T = new Val("meloriac") {
     override def descr  = "Meloriac"
   }
+
   val OctinTeamHeavy      : T = new Val("octin-team-heavy") {
     override def descr  = "Octin Team Heavy"
   }
+
   val Posterboard         : T = new Val("posterboard") {
     override def descr  = "Posterboard"
   }
+
   val PtSansNarrow        : T = new Val("pt-sans-narrow") {
     override def descr  = "PT Sans Narrow"
     override def _names = "PT_Sans-Narrow" :: super._names
   }
+
   val OpenSansLight       : T = new Val("opensans-light") {
     override def descr  = "OpenSans Light Regular"
   }
