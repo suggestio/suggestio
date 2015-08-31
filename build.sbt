@@ -30,7 +30,6 @@ libraryDependencies ++= {
   val bcVsn         = "1.52"
   val phantomVersion = "1.2.7"
   Seq(
-    "io.suggest" %% "model-enum-util" % "0.0.0-SNAPSHOT",
     "io.suggest" %% "common" % "0.0.0-SNAPSHOT",
     "org.slf4j" % "slf4j-api" % slf4jVsn,
     "org.slf4j" % "slf4j-log4j12" % slf4jVsn,
