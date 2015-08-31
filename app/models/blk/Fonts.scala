@@ -66,8 +66,9 @@ object Fonts extends Enumeration(0) with EnumMaybeWithMultiNameMap with EnumValu
   val PfDinTextCompProMed : T = new Val("PFDinTextCompPro-Medium") {
     override def descr  = "PF Din Text Comp Pro Medium"
   }
-  val FuturFutC           : T = new Val("futurfutc-webfont") {
+  val FuturFutC           : T = new Val("futura-futuris-c") {
     override def descr  = "Futur Fut C"
+    override def _names = "futurfutc-webfont" :: super._names
   }
   val PharmadinCondLight  : T = new Val("PharmadinCondensedLight") {
     override def descr  = "Pharmadin Condensed Light"
