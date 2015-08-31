@@ -88,8 +88,9 @@ object Fonts extends Enumeration(0) with EnumMaybeWithMultiNameMap with EnumValu
   val BodonConc           : T = new Val("bodonconc-webfont") {
     override def descr  = "Bodon Conc"
   }
-  val Higherup            : T = new Val("aa_higherup-webfont") {
+  val Higherup            : T = new Val("aa-higherup") {
     override def descr  = "Higherup"
+    override def _names = "aa_higherup-webfont" :: super._names
   }
   val Georgia             : T = new Val("Georgia") {
     override def descr  = "Georgia"
