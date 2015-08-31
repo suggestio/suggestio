@@ -25,21 +25,14 @@ object SiobixBuild extends Build {
     dependencies = Seq(util, cascadingEs2)
   )*/
 
-  /** Cross-buildable утиль для упрощенной сборки Enumeration-моделей. */
-  lazy val modelEnumUtil = {
-    val name = "model-enum-util"
-    Project(
-      id = name,
-      base = file(name)
-    )
-  }
+  //}
 
-  lazy val modelEnumUtilPlay = {
-    val name = "model-enum-util-play"
+  lazy val commonPlay = {
+    val name = "common-play"
     Project(
       id    = name,
       base  = file(name),
-      dependencies = Seq(modelEnumUtil)
+      dependencies = Seq(common)
     )
   }
 
@@ -48,8 +41,7 @@ object SiobixBuild extends Build {
     val name = "common"
     Project(
       id = name,
-      base = file(name),
-      dependencies = Seq(modelEnumUtil)
+      base = file(name)
     )
   }
 
@@ -59,9 +51,9 @@ object SiobixBuild extends Build {
     Project(id = name, base = file(name))
       .dependsOn(common)
       .enablePlugins(ScalaJSPlugin, ScalaJSPlay)
-      // Чтобы не инклюдчить сорцы modelEnumUtil в каждом под-проекте, используем его прямо здесь.
+      // Хз нужен ли этот инклюд сорцов прямо здесь.
       .settings(
-        Seq(modelEnumUtil, common).map(p => unmanagedSourceDirectories in Compile <++= unmanagedSourceDirectories in (p, Compile)) : _*
+        Seq(common).map(p => unmanagedSourceDirectories in Compile <++= unmanagedSourceDirectories in (p, Compile)) : _*
       )
   }
 
@@ -91,7 +83,7 @@ object SiobixBuild extends Build {
 
   /** Утиль, была когда-то расшарена между siobix и sioweb. Постепенно стала просто свалкой. */
   lazy val util = project
-    .dependsOn(modelEnumUtil, common)
+    .dependsOn(common)
 
   /** Внутренний форк securesocial. */
   lazy val securesocial = project
@@ -99,7 +91,7 @@ object SiobixBuild extends Build {
 
   /** веб-интерфейс suggest.io v2. */
   lazy val web21 = project
-    .dependsOn(common, util, securesocial, modelEnumUtilPlay)
+    .dependsOn(common, util, securesocial, commonPlay)
     .settings(
       scalaJSProjects := Seq(lkSjs, commonSjs, scSjs),
       pipelineStages += scalaJSProd
@@ -113,7 +105,7 @@ object SiobixBuild extends Build {
       .settings(
         scalaVersion := "2.11.6"
       )
-      .aggregate(modelEnumUtil, modelEnumUtilPlay, common, lkAdvExtSjs, lkSjs, util, securesocial, scSjs, web21)
+      .aggregate(commonPlay, common, lkAdvExtSjs, lkSjs, util, securesocial, scSjs, web21)
   }
 
 }

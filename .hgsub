@@ -1,8 +1,7 @@
 web21			= web21
 util			= util
 securesocial		= securesocial
-model-enum-util-play	= model-enum-util-play
-model-enum-util		= model-enum-util
+common-play		= common-play
 lk-sjs			= lk-sjs
 lk-adv-ext-sjs		= lk-adv-ext-sjs
 common-sjs		= common-sjs
