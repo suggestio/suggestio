@@ -88,7 +88,7 @@ object Fonts extends Enumeration(0) with EnumMaybeWithMultiNameMap with EnumValu
     override def descr  = "Rex Bold"
   }
 
-  val Preforama           : T = new Val("perforama-webfont") {
+  val Perforama           : T = new Val("perforama-webfont") {
     override def descr  = "Perforama"
   }
 
@@ -111,8 +111,9 @@ object Fonts extends Enumeration(0) with EnumMaybeWithMultiNameMap with EnumValu
     override def descr  = "Georgia"
   }
 
-  val Confic              : T = new Val("confic-webfont") {
+  val Confic              : T = new Val("confic") {
     override def descr  = "Confic"
+    override def _names = "confic-webfont" :: super._names
   }
 
   val GazTransport        : T = new Val("gaz-transport") {
