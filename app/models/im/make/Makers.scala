@@ -1,6 +1,6 @@
 package models.im.make
 
-import io.suggest.model.EnumMaybeWithName
+import io.suggest.common.menum.EnumMaybeWithName
 import util.FormUtil.StrEnumFormMappings
 import util.blocks.BlkImgMaker
 import util.img.StrictWideMaker

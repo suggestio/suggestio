@@ -1,6 +1,6 @@
 package models.ai
 
-import io.suggest.model.EnumMaybeWithName
+import io.suggest.common.menum.EnumMaybeWithName
 import util.ai.mad.render.{MadAiRenderedT, ScalaStiRenderer}
 
 /**

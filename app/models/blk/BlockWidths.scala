@@ -1,6 +1,6 @@
 package models.blk
 
-import io.suggest.model.{EnumMaybeWithId, EnumValue2Val}
+import io.suggest.common.menum.{EnumMaybeWithId, EnumValue2Val}
 import io.suggest.sc.tile.TileConstants
 import util.FormUtil.IdEnumFormMappings
 

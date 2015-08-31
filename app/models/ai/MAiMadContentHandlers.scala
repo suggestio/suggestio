@@ -1,5 +1,6 @@
 package models.ai
 
+import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.model._
 import org.xml.sax.helpers.DefaultHandler
 import util.ai.AiContentHandler

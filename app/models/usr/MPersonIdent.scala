@@ -1,6 +1,7 @@
 package models.usr
 
 import com.lambdaworks.crypto.SCryptUtil
+import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.model.EsModel._
 import io.suggest.model._
 import io.suggest.util.SioEsUtil._

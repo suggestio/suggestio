@@ -2,7 +2,7 @@ package models.adv.js
 
 import io.suggest.adv.ext.model.{JsCommand, MAnswerStatusesT}
 import JsCommand._
-import io.suggest.model.EnumJsonReadsT
+import io.suggest.common.menum.play.EnumJsonReadsT
 import models.adv.js.ctx.MJsCtx
 import play.api.libs.json._
 import play.api.libs.functional.syntax._

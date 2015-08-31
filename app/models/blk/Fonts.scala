@@ -1,6 +1,6 @@
 package models.blk
 
-import io.suggest.model.EnumValue2Val
+import io.suggest.common.menum.{EnumMaybeWithName, EnumValue2Val}
 import io.suggest.model.EsModel.FieldsJsonAcc
 import play.api.libs.json.{JsString, JsObject, JsArray}
 
@@ -11,7 +11,7 @@ import play.api.libs.json.{JsString, JsObject, JsArray}
  * Description: Модель шрифтов. До её появления шрифты были захардкожены прямо в шаблонах.
  * initial = 0 -- это проверка испрользуется в adFormBase на "первость" элемента модели.
  */
-object Fonts extends Enumeration(0) with EnumValue2Val {
+object Fonts extends Enumeration(0) with EnumValue2Val with EnumMaybeWithName {
 
   /**
    * Класс-экземпляр модели.

@@ -1,6 +1,6 @@
 package models.blk
 
-import io.suggest.model.EnumMaybeWithId
+import io.suggest.common.menum.EnumMaybeWithId
 import util.FormUtil.IdEnumFormMappings
 
 /**

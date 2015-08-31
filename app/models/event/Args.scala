@@ -1,7 +1,8 @@
 package models.event
 
+import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.event.SioNotifier.{Classifier, Event}
-import io.suggest.model.{EsModel, EnumMaybeWithName}
+import io.suggest.model.EsModel
 import models.adv.MExtTarget
 import models._
 import models.mext.MExtService

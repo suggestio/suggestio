@@ -1,7 +1,7 @@
 package controllers.ad
 
 import models._
-import models.blk.{FontSizes, AdColorFns, FontSize}
+import models.blk._
 import util.FormUtil._
 import play.api.data._, Forms._
 import util.blocks.BlockMapperResult
@@ -50,7 +50,7 @@ object MarketAdFormUtil {
   def fontFamilyOptM: Mapping[Option[String]] = {
     optional(
       text(maxLength = 32)
-        .verifying("error.font.unknown", {s => blk.Fonts.values.exists(_.fileName == s)} )
+        .verifying("error.font.unknown", {s => Fonts.values.exists(_.fileName == s)} )
     )
   }
 

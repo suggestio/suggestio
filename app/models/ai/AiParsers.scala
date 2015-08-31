@@ -1,8 +1,7 @@
 package models.ai
 
 import java.io.InputStream
-
-import io.suggest.model.EnumMaybeWithName
+import io.suggest.common.menum.EnumMaybeWithName
 import org.apache.tika.parser.html.{IdentityHtmlMapper, HtmlMapper}
 import org.apache.tika.parser.{ParseContext, AutoDetectParser}
 import org.xml.sax.InputSource

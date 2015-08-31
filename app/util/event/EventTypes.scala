@@ -1,6 +1,6 @@
 package util.event
 
-import io.suggest.model.EnumMaybeWithName
+import io.suggest.common.menum.EnumMaybeWithName
 import models.Context
 import models.event._
 import play.twirl.api.{Template2, Html}

@@ -1,9 +1,7 @@
 package models.im
 
-import io.suggest.model.{EnumMaybeWithName, EnumValue2Val}
-import play.api.data.Mapping
+import io.suggest.common.menum.{EnumMaybeWithName, EnumValue2Val}
 import play.api.mvc.QueryStringBindable
-import util.FormUtil
 import util.FormUtil.StrEnumFormMappings
 import scala.language.implicitConversions
 

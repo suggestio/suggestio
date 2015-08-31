@@ -1,6 +1,6 @@
 package util
 
-import io.suggest.model.{EnumMaybeWithId, EnumValue2Val, EnumMaybeWithName}
+import io.suggest.common.menum.{EnumMaybeWithId, EnumMaybeWithName, EnumValue2Val}
 import io.suggest.model.geo.{CircleGs, Distance, GeoPoint}
 import io.suggest.ym.model.NodeGeoLevels
 import io.suggest.ym.model.common.AdnMemberShowLevels.LvlMap_t

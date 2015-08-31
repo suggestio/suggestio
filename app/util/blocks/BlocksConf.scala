@@ -1,6 +1,6 @@
 package util.blocks
 
-import io.suggest.model.EnumValue2Val
+import io.suggest.common.menum.EnumValue2Val
 import models.blk.{BlockHeights, BlockWidths}
 import play.api.data._
 import BlocksUtil._

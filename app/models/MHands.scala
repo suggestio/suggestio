@@ -1,7 +1,7 @@
 package models
 
 import io.suggest.common.MHandsBaseT
-import io.suggest.model.EnumMaybeWithName
+import io.suggest.common.menum.EnumMaybeWithName
 
 /**
  * Suggest.io

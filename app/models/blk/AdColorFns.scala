@@ -1,6 +1,6 @@
 package models.blk
 
-import io.suggest.model.{EnumMaybeWithName, EnumValue2Val}
+import io.suggest.common.menum.{EnumMaybeWithName, EnumValue2Val}
 
 /**
  * Suggest.io

@@ -1,7 +1,7 @@
 package models.msc
 
 import controllers.routes
-import io.suggest.model.EnumMaybeWithName
+import io.suggest.common.menum.EnumMaybeWithName
 import models.blk.OneAdQsArgs
 import play.api.mvc.{PathBindable, QueryStringBindable, Call}
 import scala.language.implicitConversions

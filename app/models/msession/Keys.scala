@@ -1,6 +1,6 @@
 package models.msession
 
-import io.suggest.model.EnumMaybeWithName
+import io.suggest.common.menum.EnumMaybeWithName
 import securesocial.core.SecureSocial
 
 /**

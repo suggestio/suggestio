@@ -1,7 +1,7 @@
 package models.adv
 
 import controllers.routes
-import io.suggest.model.EnumMaybeWithName
+import io.suggest.common.menum.EnumMaybeWithName
 import models.msc.ScJsState
 import models.Context
 import play.api.data.Mapping

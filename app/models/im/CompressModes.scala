@@ -1,6 +1,6 @@
 package models.im
 
-import io.suggest.model.EnumValue2Val
+import io.suggest.common.menum.EnumValue2Val
 import util.FormUtil.StrEnumFormMappings
 
 /**
