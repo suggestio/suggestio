@@ -1,6 +1,6 @@
 package models.blk
 
-import io.suggest.common.menum.{EnumMaybeWithName, EnumValue2Val}
+import io.suggest.common.menum.{EnumValue2Val, EnumMaybeWithMultiNameMap}
 import io.suggest.model.EsModel.FieldsJsonAcc
 import play.api.libs.json.{JsString, JsObject, JsArray}
 
@@ -11,14 +11,10 @@ import play.api.libs.json.{JsString, JsObject, JsArray}
  * Description: Модель шрифтов. До её появления шрифты были захардкожены прямо в шаблонах.
  * initial = 0 -- это проверка испрользуется в adFormBase на "первость" элемента модели.
  */
-object Fonts extends Enumeration(0) with EnumValue2Val with EnumMaybeWithName {
+object Fonts extends Enumeration(0) with EnumMaybeWithMultiNameMap with EnumValue2Val {
 
-  /**
-   * Класс-экземпляр модели.
-   * @param fileName base filename шрифта.
-   * @param descr Читабельное описание.
-   */
-  sealed protected case class Val(fileName: String, descr: String) extends super.Val(fileName) {
+  /** Трейт экземпляра модели. */
+  sealed protected[this] trait ValT extends super.ValT {
     /**
      * tinymce принимает данные по шрифту в style_formats в таком формате.
      * @param tail Дополнительные json-поля.
@@ -31,34 +27,95 @@ object Fonts extends Enumeration(0) with EnumValue2Val with EnumMaybeWithName {
       ))
       JsObject(title :: styles :: tail)
     }
+
+    /** Название CSS font-family. */
+    def fileName: String
+    /** Отображаемое название шрифта. */
+    def descr: String
+    /** Имена прошлые и текущие. */
+    override def _names = List(fileName)
   }
+
+  /**
+   * Класс-экземпляр модели.
+   * @param fileName base filename шрифта.
+   */
+  abstract sealed protected[this] class Val(override val fileName: String)
+    extends super.Val(fileName)
+    with ValT
 
 
   /** Тип экземпляра модели. */
   override type T = Val
 
-  val FavLightCondCReg    : T = Val("favoritlightcondcregular",     "Favorit Light Cond C Regular")
-  val FavCondCBold        : T = Val("favoritcondc-bold-webfont",    "Favorit Cond C Bold")
-  val HeliosThin          : T = Val("heliosthin",                   "Helios Thin")
-  val HeliosCondLight     : T = Val("helioscondlight-webfont",      "Helios Cond Light")
-  val PfDinTextCompProMed : T = Val("PFDinTextCompPro-Medium",      "PF Din Text Comp Pro Medium")
-  val FuturFutC           : T = Val("futurfutc-webfont",            "Futur Fut C")
-  val PharmadinCondLight  : T = Val("PharmadinCondensedLight",      "Pharmadin Condensed Light")
-  val NewspaperSans       : T = Val("newspsan-webfont",             "Newspaper Sans")
-  val RexBold             : T = Val("rex_bold-webfont",             "Rex Bold")
-  val Preforama           : T = Val("perforama-webfont",            "Perforama")
-  val BlocExtCond         : T = Val("blocextconc-webfont",          "BlocExt Cond")
-  val BodonConc           : T = Val("bodonconc-webfont",            "Bodon Conc")
-  val Higherup            : T = Val("aa_higherup-webfont",          "Higherup")
-  val Georgia             : T = Val("Georgia",                      "Georgia")
-  val Confic              : T = Val("confic-webfont",               "Confic")
 
-  val GazTransport        : T = Val("gaz-transport",                "GAZ Transport")
-  val Meloranic           : T = Val("meloriac",                     "Meloriac")
-  val OctinTeamHeavy      : T = Val("octin-team-heavy",             "Octin Team Heavy")
-  val Posterboard         : T = Val("posterboard",                  "Posterboard")
-  val PtSansNarrow        : T = Val("pt-sans-narrow",               "PT Sans Narrow")
-  val OpenSansLight       : T = Val("opensans-light",               "OpenSans Light Regular")
+  // Экземпляры шрифтов
+  val FavLightCondCReg    : T = new Val("favoritlightcondcregular") {
+    override def descr = "Favorit Light Cond C Regular"
+  }
+  val FavCondCBold        : T = new Val("favoritcondc-bold-webfont") {
+    override def descr  = "Favorit Cond C Bold"
+  }
+  val HeliosThin          : T = new Val("helios-thin") {
+    override def descr  = "Helios Thin"
+    override def _names = "heliosthin" :: super._names
+  }
+  val HeliosCondLight     : T = new Val("helioscondlight-webfont") {
+    override def descr  = "Helios Cond Light"
+  }
+  val PfDinTextCompProMed : T = new Val("PFDinTextCompPro-Medium") {
+    override def descr  = "PF Din Text Comp Pro Medium"
+  }
+  val FuturFutC           : T = new Val("futurfutc-webfont") {
+    override def descr  = "Futur Fut C"
+  }
+  val PharmadinCondLight  : T = new Val("PharmadinCondensedLight") {
+    override def descr  = "Pharmadin Condensed Light"
+  }
+  val NewspaperSans       : T = new Val("newspsan-webfont") {
+    override def descr  = "Newspaper Sans"
+  }
+  val RexBold             : T = new Val("rex_bold-webfont") {
+    override def descr  = "Rex Bold"
+  }
+  val Preforama           : T = new Val("perforama-webfont") {
+    override def descr  = "Perforama"
+  }
+  val BlocExtCond         : T = new Val("blocextconc-webfont") {
+    override def descr  = "BlocExt Cond"
+  }
+  val BodonConc           : T = new Val("bodonconc-webfont") {
+    override def descr  = "Bodon Conc"
+  }
+  val Higherup            : T = new Val("aa_higherup-webfont") {
+    override def descr  = "Higherup"
+  }
+  val Georgia             : T = new Val("Georgia") {
+    override def descr  = "Georgia"
+  }
+  val Confic              : T = new Val("confic-webfont") {
+    override def descr  = "Confic"
+  }
+
+  val GazTransport        : T = new Val("gaz-transport") {
+    override def descr  = "GAZ Transport"
+  }
+  val Meloranic           : T = new Val("meloriac") {
+    override def descr  = "Meloriac"
+  }
+  val OctinTeamHeavy      : T = new Val("octin-team-heavy") {
+    override def descr  = "Octin Team Heavy"
+  }
+  val Posterboard         : T = new Val("posterboard") {
+    override def descr  = "Posterboard"
+  }
+  val PtSansNarrow        : T = new Val("pt-sans-narrow") {
+    override def descr  = "PT Sans Narrow"
+    override def _names = "PT_Sans-Narrow" :: super._names
+  }
+  val OpenSansLight       : T = new Val("opensans-light") {
+    override def descr  = "OpenSans Light Regular"
+  }
 
   // TODO Добавить остальные шрифты из public/SIO/Fonts/. Портировать старые шрифты из fonts.styl.
 
@@ -74,5 +131,8 @@ object Fonts extends Enumeration(0) with EnumValue2Val with EnumMaybeWithName {
       .toSeq
     JsArray(jsons)
   }
+
+
+  override protected val _nameMapVal = _nameMap
 
 }

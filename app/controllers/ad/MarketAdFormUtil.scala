@@ -46,12 +46,25 @@ object MarketAdFormUtil {
       .transform[FontSize](_.get, Some.apply)
   }
 
+
+  private def _fontFamilyOptM: Mapping[Option[Font]] = {
+    text(maxLength = 32)
+      .transform [Option[Font]] (
+        Fonts.maybeWithName,
+        _.fold("")(_.fileName)
+      )
+  }
+
   /** Маппер для значения font.family. */
-  def fontFamilyOptM: Mapping[Option[String]] = {
-    optional(
-      text(maxLength = 32)
-        .verifying("error.font.unknown", {s => Fonts.values.exists(_.fileName == s)} )
-    )
+  def fontFamilyOptM: Mapping[Option[Font]] = {
+    optional( _fontFamilyOptM )
+      .transform[Option[Font]](_.flatten, Some.apply )
+  }
+
+  def fontFamily: Mapping[Font] = {
+    _fontFamilyOptM
+      .verifying("error.font.unknown", _.nonEmpty)
+      .transform(_.get, Some.apply)
   }
 
 
@@ -96,7 +109,7 @@ object MarketAdFormUtil {
         color  = color,
         size   = Some(fsz.size),
         align  = align,
-        family = family
+        family = family.map(_.fileName)
       )
     }
     {aoff =>
@@ -104,7 +117,8 @@ object MarketAdFormUtil {
         .flatMap { FontSizes.maybeWithSize }
         .getOrElse { FontSizes.min }
       import aoff._
-      Some((color, fsz, align, family))
+      val fontOpt = family flatMap { Fonts.maybeWithName }
+      Some((color, fsz, align, fontOpt))
     }
   }
 
