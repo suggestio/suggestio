@@ -70,8 +70,9 @@ object Fonts extends Enumeration(0) with EnumMaybeWithMultiNameMap with EnumValu
     override def _names = "helioscondlight-webfont" :: super._names
   }
 
-  val PfDinTextCompProMed : T = new Val("PFDinTextCompPro-Medium") {
+  val PfDinTextCompProMed : T = new Val("pf-din-comp-pro-medium") {
     override def descr  = "PF Din Text Comp Pro Medium"
+    override def _names = "PFDinTextCompPro-Medium" :: super._names
   }
 
   val FuturFutC           : T = new Val("futura-futuris-c") {
