@@ -54,8 +54,9 @@ object Fonts extends Enumeration(0) with EnumMaybeWithMultiNameMap with EnumValu
     override def descr = "Favorit Light Cond C Regular"
   }
 
-  val FavCondCBold        : T = new Val("favoritcondc-bold-webfont") {
+  val FavCondCBold        : T = new Val("favorit-cond-c-bold") {
     override def descr  = "Favorit Cond C Bold"
+    override def _names = "favoritcondc-bold-webfont" :: super._names
   }
 
   val HeliosThin          : T = new Val("helios-thin") {
