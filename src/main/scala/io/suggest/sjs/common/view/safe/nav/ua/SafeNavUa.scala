@@ -25,6 +25,7 @@ trait SafeNavUa extends ISafe {
 }
 
 
+@js.native
 sealed trait SafeNavUaStub extends js.Object {
   val userAgent: UndefOr[String] = js.native
 }

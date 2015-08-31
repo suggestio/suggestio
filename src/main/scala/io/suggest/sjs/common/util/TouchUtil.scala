@@ -63,7 +63,7 @@ object TouchElementStub {
     w.asInstanceOf[TouchElementStub]
   }
 }
+@js.native
 sealed trait TouchElementStub extends js.Object {
   var ontouchstart: UndefOr[_] = js.native
-
 }

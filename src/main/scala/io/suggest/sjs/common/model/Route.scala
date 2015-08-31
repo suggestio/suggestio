@@ -9,7 +9,8 @@ import scala.scalajs.js
  * Description: Интерфейс одной роуты. Возвращается любым экшеном js-роутера.
  */
 
-class Route extends js.Object {
+@js.native
+sealed trait Route extends js.Object {
   // def ajax() -- нельзя, т.к. deprecated и будет удалена, и зависит от jQuery.
 
   /** Используемый HTTP-метод. GET, POST и т.д. */

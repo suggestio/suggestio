@@ -9,6 +9,7 @@ import scala.scalajs.js.annotation.JSName
  * js-роуты генерятся силами play для генерации ссылок на клиенте.
  */
 @JSName("jsRoutes")
+@js.native
 object routes extends js.Object {
 
   /** Все экспортированные контроллеры. */

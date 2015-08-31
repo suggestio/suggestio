@@ -76,6 +76,7 @@ case class SafeHistoryObj(override val _underlying: History) extends SafeHistory
 
 
 /** Интересующий интерфейс для доступа к history. */
+@js.native
 sealed trait HistoryObjStub extends js.Object {
 
   /** Безопасный доступ к dom.window.history.pushState() */

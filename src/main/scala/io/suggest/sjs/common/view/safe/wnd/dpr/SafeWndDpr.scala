@@ -30,6 +30,7 @@ trait SafeWndDpr extends ISafe {
 
 
 /** Интерфейс для аккуратного доступа к возможному значению window.devicePixelRatio. */
+@js.native
 sealed class WindowDrpStub extends js.Object {
 
   /** @return undefined | 1.0123123 */

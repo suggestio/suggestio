@@ -26,6 +26,7 @@ trait SafeHistoryApiT extends ISafe {
 
 }
 
+@js.native
 sealed trait WndHistoryStub extends js.Object {
   def history: UndefOr[History] = js.native
 }

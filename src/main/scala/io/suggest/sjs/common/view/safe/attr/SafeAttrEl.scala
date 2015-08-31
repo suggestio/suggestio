@@ -172,6 +172,7 @@ trait SafeAttrElT extends SafeAttrUtilT {
 
 
 /** Интерфейс для необязательно доступного свойства Element.classList. */
+@js.native
 sealed trait SafeAttrElStub extends js.Object {
 
   /** Стандартный getAttribute() для чтения из тегов. */

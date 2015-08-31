@@ -57,6 +57,7 @@ trait OuterHtml extends ISafe {
 
 
 /** undefined-доступ к свойству outerHTML. */
+@js.native
 sealed trait OuterHtmlStub extends js.Object {
   var outerHTML: UndefOr[String] = js.native
 }

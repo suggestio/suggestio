@@ -78,6 +78,7 @@ case class SafeEventTarget(override val _underlying: EventTarget)
 
 
 /** Безопасный интерфейс для доступа к DOM-элементу в области вешанья событий. */
+@js.native
 sealed trait SafeEventTargetStub extends js.Object {
   def addEventListener: UndefOr[_] = js.native
   def attachEvent: UndefOr[_] = js.native
@@ -90,6 +91,7 @@ object SafeEventTargetStub {
 
 
 /** IE-костыли для навешивания событий. */
+@js.native
 sealed trait AttachEventStub extends js.Object {
   def attachEvent[T <: Event](eventType: String, listener: js.Function1[T,_]): Unit = js.native
 }

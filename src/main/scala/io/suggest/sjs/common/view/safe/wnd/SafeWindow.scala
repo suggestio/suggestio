@@ -49,6 +49,7 @@ object WindowStub {
     wnd.asInstanceOf[WindowStub]
   }
 }
+@js.native
 sealed trait WindowStub extends js.Object {
   def navigator: js.UndefOr[Navigator] = js.native
 }

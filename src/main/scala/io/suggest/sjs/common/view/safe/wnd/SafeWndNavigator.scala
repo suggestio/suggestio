@@ -32,6 +32,7 @@ object NavStub {
   }
 }
 
+@js.native
 sealed trait NavStub extends js.Object {
   def geolocation: js.UndefOr[Geolocation] = js.native
 }

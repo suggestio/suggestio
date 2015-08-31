@@ -150,6 +150,7 @@ case class SafeCssEl(_underlying: Node) extends SafeCssElT {
 
 
 /** Интерфейс для необязательно доступного свойства Element.classList. */
+@js.native
 sealed trait SafeCssElStub extends js.Object {
   var classList: UndefOr[DOMTokenList] = js.native
 

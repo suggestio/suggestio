@@ -31,6 +31,7 @@ trait SafeGetComputedStyleT extends ISafe {
 
 
 /** Интерфейс для window для аккуратного доступа к getComputedStyle(). */
+@js.native
 sealed trait SafeGetComputedStyleStub extends js.Object {
   val getComputedStyle: UndefOr[_] = js.native
 }

@@ -12,6 +12,7 @@ import scala.scalajs.js.UndefOr
  * Created: 01.06.15 13:39
  * Description: Интерфейс для доступа к DOM-функциям opera.
  */
+@js.native
 sealed trait WindowOperaStub extends js.Object {
 
   def opera: UndefOr[DomOperaPrestoStub] = js.native
@@ -19,6 +20,7 @@ sealed trait WindowOperaStub extends js.Object {
 }
 
 /** Интерфейс объекта window.opera. */
+@js.native
 sealed trait DomOperaPrestoStub extends js.Object {
 
   /** @return "12.16" */

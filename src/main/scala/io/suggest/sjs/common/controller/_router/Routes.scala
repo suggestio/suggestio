@@ -16,6 +16,7 @@ import scala.scalajs.js
  */
 
 /** Интерфейс routes.controllers с доступом к static-контроллеру. */
+@js.native
 class Controllers extends js.Object {
 
   /** Роуты для static-контроллера. */
@@ -28,13 +29,15 @@ class Controllers extends js.Object {
 
 
 /** Интерфейс контроллера Static. */
-class StaticController extends js.Object {
+@js.native
+sealed trait StaticController extends js.Object {
   def popupCheckContent(): Route = js.native
 }
 
 
-/** ImgController с поддержкой  */
-class ImgController extends js.Object {
+/** Интерфйес роутера ImgController'а. */
+@js.native
+sealed trait ImgController extends js.Object {
 
   /** Форма-окошко для кропа. */
   def imgCropForm(imgId: String, width: Int, height: Int): Route = js.native

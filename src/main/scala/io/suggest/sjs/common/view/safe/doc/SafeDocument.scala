@@ -45,6 +45,7 @@ trait SafeDocumentT extends SafeEventTargetT {
 
 
 /** Представление API document'а с точки зрения потенциальной опасности некоторых полей. */
+@js.native
 trait SafeDocumentApi extends js.Object {
   def body: UndefOr[HTMLBodyElement] = js.native
   def head: UndefOr[HTMLHeadElement] = js.native
