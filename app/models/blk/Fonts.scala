@@ -83,8 +83,9 @@ object Fonts extends Enumeration(0) with EnumMaybeWithMultiNameMap with EnumValu
     override def descr  = "Pharmadin Condensed Light"
   }
 
-  val NewspaperSans       : T = new Val("newspsan-webfont") {
+  val NewspaperSans       : T = new Val("news-paper-sans-regular") {
     override def descr  = "Newspaper Sans"
+    override def _names = "newspsan-webfont" :: super._names
   }
 
   val RexBold             : T = new Val("rex_bold-webfont") {
