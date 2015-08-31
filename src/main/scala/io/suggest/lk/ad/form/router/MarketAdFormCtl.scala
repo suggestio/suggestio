@@ -10,7 +10,8 @@ import scala.scalajs.js
  * Created: 10.08.15 17:49
  * Description: Роутер для формы создания/редактирования карточки.
  */
-class MarketAdFormCtl extends js.Object {
+@js.native
+sealed trait MarketAdFormCtl extends js.Object {
 
   /** Вебсокет редактора для связи с сервером. */
   def ws(wsId: String): Route = js.native

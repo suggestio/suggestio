@@ -9,6 +9,7 @@ import scala.scalajs.js.annotation.JSName
  * Created: 07.05.15 15:42
  * Description: Доступ к старому API, реализованном в mx_cof.js максом.
  */
+@js.native
 @JSName("market")
 object Market extends js.Object {
 
@@ -21,7 +22,8 @@ object Market extends js.Object {
 }
 
 
-trait MarketImg extends js.Object {
+@js.native
+sealed trait MarketImg extends js.Object {
 
   /** Модуль кропа. */
   def crop: MarketImgCrop = js.native
@@ -29,13 +31,15 @@ trait MarketImg extends js.Object {
 }
 
 
-trait MarketImgCrop extends js.Object {
+@js.native
+sealed trait MarketImgCrop extends js.Object {
   /** Инициализация кроппера для указанного input name. */
   def init(imgName: String): Unit = js.native
 }
 
 
-trait MarketAdForm extends js.Object {
+@js.native
+sealed trait MarketAdForm extends js.Object {
 
   /** Обновить превьюшку рекламной карточки. */
   def queue_block_preview_request(reqDelay: Int = ???, isWithAuthCrop: Boolean = ???): Unit = js.native

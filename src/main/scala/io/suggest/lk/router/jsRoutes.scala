@@ -12,6 +12,7 @@ import scala.scalajs.js.annotation.JSName
  * Created: 10.08.15 17:43
  * Description: Глобальный интерфейс для js-роутеров, зарегистрированных под именем "jsRoutes".
  */
+@js.native
 @JSName("jsRoutes")
 object jsRoutes extends js.Object {
 
@@ -20,7 +21,8 @@ object jsRoutes extends js.Object {
 }
 
 
-class Controllers extends js.Object {
+@js.native
+sealed trait Controllers extends js.Object {
 
   def MarketLkBilling: TxnLkBillingCtl = js.native
 
