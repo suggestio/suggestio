@@ -80,8 +80,9 @@ object Fonts extends Enumeration(0) with EnumMaybeWithMultiNameMap with EnumValu
     override def _names = "futurfutc-webfont" :: super._names
   }
 
-  val PharmadinCondLight  : T = new Val("PharmadinCondensedLight") {
+  val PharmadinCondLight  : T = new Val("pharmadin-condensed-light") {
     override def descr  = "Pharmadin Condensed Light"
+    override def _names = "PharmadinCondensedLight" :: super._names
   }
 
   val NewspaperSans       : T = new Val("news-paper-sans-regular") {
