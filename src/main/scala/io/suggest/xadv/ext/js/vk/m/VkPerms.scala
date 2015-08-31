@@ -1,6 +1,6 @@
 package io.suggest.xadv.ext.js.vk.m
 
-import io.suggest.model.LightEnumeration
+import io.suggest.common.menum.LightEnumeration
 
 /**
  * Suggest.io
