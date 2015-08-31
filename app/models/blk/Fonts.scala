@@ -65,8 +65,9 @@ object Fonts extends Enumeration(0) with EnumMaybeWithMultiNameMap with EnumValu
     override def _names = "heliosthin" :: super._names
   }
 
-  val HeliosCondLight     : T = new Val("helioscondlight-webfont") {
+  val HeliosCondLight     : T = new Val("helios-cond-light") {
     override def descr  = "Helios Cond Light"
+    override def _names = "helioscondlight-webfont" :: super._names
   }
 
   val PfDinTextCompProMed : T = new Val("PFDinTextCompPro-Medium") {
