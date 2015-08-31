@@ -1,6 +1,6 @@
 package io.suggest.adv.ext.model.im
 
-import io.suggest.model.{EnumMaybeWithName, LightEnumeration, ILightEnumeration}
+import io.suggest.common.menum.{LightEnumeration, ILightEnumeration, EnumMaybeWithName}
 
 /**
  * Suggest.io

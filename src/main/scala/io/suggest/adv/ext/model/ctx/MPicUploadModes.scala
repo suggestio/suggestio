@@ -1,6 +1,6 @@
 package io.suggest.adv.ext.model.ctx
 
-import io.suggest.model.{LightEnumeration, ILightEnumeration}
+import io.suggest.common.menum.{LightEnumeration, ILightEnumeration}
 
 /**
  * Suggest.io
