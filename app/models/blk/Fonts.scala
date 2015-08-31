@@ -90,8 +90,9 @@ object Fonts extends Enumeration(0) with EnumMaybeWithMultiNameMap with EnumValu
     override def _names = "newspsan-webfont" :: super._names
   }
 
-  val RexBold             : T = new Val("rex_bold-webfont") {
+  val RexBold             : T = new Val("rex-bold") {
     override def descr  = "Rex Bold"
+    override def _names = "rex_bold-webfont" :: super._names
   }
 
   val Perforama           : T = new Val("perforama") {
