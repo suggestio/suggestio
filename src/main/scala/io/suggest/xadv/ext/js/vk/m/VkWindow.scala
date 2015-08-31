@@ -12,6 +12,7 @@ import scala.scalajs.js
  * Description: vkontakte для асинхронной инициализации использует поле window.vkAsyncInit.
  * @see [[https://vk.com/pages?oid=-17680044&p=Open_API]] см.Asynchronized Initialization
  */
+@js.native
 class VkWindow extends Window {
 
   var vkAsyncInit: js.Function0[_] = js.native

@@ -11,6 +11,7 @@ import scala.scalajs.js
  * Description: Дополнительные поля dom window для нужд facebook.
  */
 
+@js.native
 class FbWindow extends Window {
   var fbAsyncInit: js.Function0[_] = js.native
 }

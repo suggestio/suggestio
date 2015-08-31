@@ -10,6 +10,7 @@ import scala.scalajs.js.annotation.JSName
  * Description: Описание глобального интерфейса
  */
 
+@js.native
 @JSName("FB")
 object FbLow extends js.Object {
 
