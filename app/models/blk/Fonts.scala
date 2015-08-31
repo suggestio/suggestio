@@ -50,8 +50,9 @@ object Fonts extends Enumeration(0) with EnumMaybeWithMultiNameMap with EnumValu
 
 
   // Экземпляры шрифтов
-  val FavLightCondCReg    : T = new Val("favoritlightcondcregular") {
-    override def descr = "Favorit Light Cond C Regular"
+  val FavLightCondCReg    : T = new Val("favorit-light-cond-c-regular") {
+    override def descr  = "Favorit Light Cond C Regular"
+    override def _names = "favoritlightcondcregular" :: super._names
   }
 
   val FavCondCBold        : T = new Val("favorit-cond-c-bold") {
