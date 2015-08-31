@@ -11,7 +11,8 @@ import scala.scalajs.js.UndefOr
  * Created: 18.05.15 18:23
  * Description: Определение размера viewport через document.body.
  */
-trait BodyElSzEl extends js.Object {
+@js.native
+sealed trait BodyElSzEl extends js.Object {
 
   def body: UndefOr[ClientElementWhSafe] = js.native
 

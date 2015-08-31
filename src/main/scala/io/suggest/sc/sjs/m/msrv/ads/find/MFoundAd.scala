@@ -9,6 +9,7 @@ import scala.scalajs.js
  * Description: Модель для взаимодействия с одной карточкой, возвращенной сервером на запрос findAds v2.
  */
 
+@js.native
 final class MFoundAdJson extends js.Object {
   val html: String = js.native
 }

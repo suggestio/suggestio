@@ -12,6 +12,7 @@ import scala.scalajs.js.UndefOr
  * Description: Поддержка безопасного доступа к полям window.innerWidth и .innerHeight.
  * Стандартное API будет скорее всего будет генерить UndefinedBehaviour при доступе к inner*() полям из под ie<=8.
  */
+@js.native
 trait StdWndInnerSzEl extends js.Object {
 
   /** Ширина внутренней области окна браузера. */

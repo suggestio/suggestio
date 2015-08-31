@@ -12,6 +12,7 @@ import scala.scalajs.js.UndefOr
  * Description: JSON Stub для доступа к полям JSON-ответа на запрос к findAds v2.
  */
 
+@js.native
 final class MFindAdsRespJson extends js.Object {
 
   /** Отрендеренный карточки плитки (блоки) в необходимом порядке.

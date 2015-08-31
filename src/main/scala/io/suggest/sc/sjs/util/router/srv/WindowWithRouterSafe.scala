@@ -14,6 +14,7 @@ import scala.language.implicitConversions
  * Created: 19.05.15 16:31
  * Description: Расширение DOM Window API для доступа к play js routes, т.е. к роутеру, которого может и не быть.
  */
+@js.native
 trait WindowWithRouterSafe extends Window {
 
   /**

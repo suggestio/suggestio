@@ -15,6 +15,7 @@ import scala.scalajs.js.annotation.JSName
  * Description: Доступ к роутеру запросов к серверу suggest.io.
  */
 
+@js.native
 @JSName(NAME)
 object routes extends js.Object {
   def controllers: Ctls = js.native
@@ -22,13 +23,15 @@ object routes extends js.Object {
 
 
 /** Контроллеры роутера. */
-trait Ctls extends js.Object {
+@js.native
+sealed trait Ctls extends js.Object {
   def MarketShowcase: ScCtl = js.native
 }
 
 
 /** Контроллер выдачи, а точнее его экшены. */
-trait ScCtl extends js.Object {
+@js.native
+sealed trait ScCtl extends js.Object {
 
   /**
    * index выдачи при известном id узла.

@@ -11,6 +11,7 @@ import scala.scalajs.js.UndefOr
  */
 
 /** API доступ к wh DOM-элемента  */
+@js.native
 trait ClientElementWhSafe extends js.Object {
   def clientWidth : UndefOr[Int] = js.native
   def clientHeight: UndefOr[Int] = js.native

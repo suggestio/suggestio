@@ -9,6 +9,7 @@ import scala.scalajs.js
  * Description: Модель сохраняемой в History API информации: порядковый номер в _states с конца.
  */
 
+@js.native
 sealed trait MStatePtr extends js.Object {
 
   /** Номер состояния в стеке состояний модели MScFsm. */

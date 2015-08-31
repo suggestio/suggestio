@@ -11,6 +11,7 @@ import scala.language.implicitConversions
  * Created: 25.05.15 13:35
  * Description: Поддержка не очень стандартных свойств типа will-change и других.
  */
+@js.native
 trait ExtraStylesStub extends js.Object {
 
   var willChange: String = js.native

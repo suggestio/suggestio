@@ -11,6 +11,7 @@ import scala.scalajs.js.UndefOr
  * Created: 18.05.15 18:10
  * Description: Безопасное чтение размеров viewport из documentElement.
  */
+@js.native
 trait DocElSzEl extends js.Object {
 
   def documentElement: UndefOr[ClientElementWhSafe] = js.native

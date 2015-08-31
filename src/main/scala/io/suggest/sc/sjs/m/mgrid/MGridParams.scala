@@ -70,6 +70,7 @@ case class MGridParams(
 
 
 /** А это типа то, что сервер присылает. На самом деле там JSON (словарь). */
+@js.native
 sealed class MGridParamsJsonRaw extends js.Object
 
 

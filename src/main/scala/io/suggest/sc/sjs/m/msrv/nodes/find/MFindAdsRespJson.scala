@@ -8,6 +8,7 @@ import scala.scalajs.js
  * Created: 05.06.15 16:24
  * Description: Интерфейс для доступа к полям сырого JSON-ответа сервера.
  */
+@js.native
 sealed trait MFindAdsRespJson extends js.Object {
 
   /** HTML-верстка списка узлов. */
