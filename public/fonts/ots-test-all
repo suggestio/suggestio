@@ -1,1 +1,1 @@
-find | grep ttf | xargs -I{} ./ots-test {}
+find $1 | grep ttf | xargs -I{} ./ots-test {}

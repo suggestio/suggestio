@@ -2,14 +2,14 @@
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" >
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1">
 <metadata>
-Created by FontForge 20150318 at Fri Aug 28 11:26:14 2015
+Created by FontForge 20150318 at Tue Sep  1 11:04:32 2015
  By uniteet7
 Copyright (c) 2007 Typodermic Fonts. All rights reserved.
 </metadata>
 <defs>
-<font id="Meloriac" horiz-adv-x="791" >
+<font id="meloriac" horiz-adv-x="791" >
   <font-face 
-    font-family="Meloriac"
+    font-family="meloriac"
     font-weight="400"
     font-stretch="normal"
     units-per-em="1000"
@@ -27,7 +27,7 @@ Copyright (c) 2007 Typodermic Fonts. All rights reserved.
 d="M48 801h636v-801h-636v801zM563 117v571h-390v-571h390z" />
     <glyph glyph-name=".notdef" horiz-adv-x="726" 
 d="M48 801h636v-801h-636v801zM563 117v571h-390v-571h390z" />
-    <glyph glyph-name=".null" horiz-adv-x="280" 
+    <glyph glyph-name=".null" horiz-adv-x="0" 
  />
     <glyph glyph-name="nonmarkingreturn" horiz-adv-x="173" 
  />
@@ -270,7 +270,7 @@ d="M11 759h242v-451q0 -35 24.5 -58t58.5 -23q35 0 59.5 23t24.5 58v451h241v-451q0 
     <glyph glyph-name="ucircumflex" horiz-adv-x="672" 
 d="M11 759h242v-451q0 -35 24.5 -58t58.5 -23q35 0 59.5 23t24.5 58v451h241v-451q0 -68 -25.5 -127t-69.5 -102.5t-103.5 -69t-126.5 -25.5q-68 0 -127 25.5t-103 69t-69.5 102.5t-25.5 127v451zM165 806l-55 45l183 153h86l182 -153l-54 -45l-172 60z" />
     <glyph glyph-name="dagger" unicode="&#xa0;" horiz-adv-x="597" 
-d="M11 745l184 -60l-43 125h302l-43 -125l175 60v-238l-175 60l43 -583h-302l43 583l-184 -60v238z" />
+ />
     <glyph glyph-name="degree" unicode="&#xa1;" horiz-adv-x="440" 
 d="M219 731q-51 0 -72.5 -24.5t-21.5 -62.5q0 -37 22 -63.5t72 -26.5t72.5 26.5t22.5 63.5q0 38 -22 62.5t-73 24.5zM219 831q57 0 96.5 -15t65 -40.5t37 -60t11.5 -73.5t-11.5 -73.5t-37 -60.5t-65 -41t-96.5 -15q-56 0 -95.5 15t-64.5 41t-36.5 60.5t-11.5 73.5t11.5 73.5
 t36.5 60t64.5 40.5t95.5 15z" />
@@ -780,6 +780,8 @@ d="M825 0h-299l-30 121h-185l-29 -121h-282l243 759h339zM354 320h99l-49 187zM607 8
     <glyph glyph-name="ocircumflex" unicode="&#x2122;" 
 d="M0 379q0 82 31 154t85 126t126 85t154 31t154 -31t125.5 -85t84.5 -126t31 -154q0 -81 -31 -153t-84.5 -126t-125.5 -85t-154 -31t-154 31t-126 85t-85 126t-31 153zM247 379q0 -31 11.5 -58t32 -47t47.5 -31.5t58 -11.5t58 11.5t47 31.5t31.5 47t11.5 58t-11.5 58
 t-31.5 47.5t-47 32t-58 11.5t-58 -11.5t-47.5 -32t-32 -47.5t-11.5 -58zM225 806l-55 45l183 153h86l182 -153l-54 -45l-172 60z" />
+    <glyph glyph-name="NULL" horiz-adv-x="280" 
+ />
     <glyph glyph-name="uni0017" horiz-adv-x="271" 
  />
     <glyph glyph-name="currency" horiz-adv-x="631" 
@@ -3864,25 +3866,24 @@ d="M440 866l-122 -60l-54 45l132 153h86l133 -153l-55 -45zM77 1009l178 -139l-51 -6
     <hkern u1="&#xbe;" u2="&#x2e;" k="64" />
     <hkern u1="&#xbe;" u2="&#x2c;" k="64" />
     <hkern u1="&#xbf;" g2="yacute" k="127" />
+    <hkern u1="&#xbf;" g2="Yacute" k="127" />
+    <hkern u1="&#xbf;" u2="&#x20ac;" k="85" />
     <hkern u1="&#xbf;" u2="&#x2039;" k="85" />
     <hkern u1="&#xbf;" u2="&#x2030;" k="85" />
     <hkern u1="&#xbf;" u2="&#x2021;" k="85" />
     <hkern u1="&#xbf;" u2="&#x2c6;" k="85" />
     <hkern u1="&#xbf;" u2="&#x160;" k="85" />
     <hkern u1="&#xbf;" u2="&#x152;" k="85" />
+    <hkern u1="&#xbf;" u2="&#xe7;" k="85" />
+    <hkern u1="&#xbf;" u2="&#xe5;" k="85" />
     <hkern u1="&#xbf;" u2="&#xe3;" k="64" />
     <hkern u1="&#xbf;" u2="&#xe2;" k="64" />
     <hkern u1="&#xbf;" u2="&#xd9;" k="127" />
     <hkern u1="&#xbf;" u2="&#xd8;" k="127" />
-    <hkern u1="&#xbf;" u2="&#xc9;" k="64" />
-    <hkern u1="&#xbf;" u2="&#xbe;" k="85" />
-    <hkern u1="&#xbf;" u2="X" k="115" />
-    <hkern u1="&#xbf;" g2="Yacute" k="127" />
-    <hkern u1="&#xbf;" u2="&#x20ac;" k="85" />
-    <hkern u1="&#xbf;" u2="&#xe7;" k="85" />
-    <hkern u1="&#xbf;" u2="&#xe5;" k="85" />
     <hkern u1="&#xbf;" u2="&#xcc;" k="85" />
     <hkern u1="&#xbf;" u2="&#xcb;" k="85" />
+    <hkern u1="&#xbf;" u2="&#xc9;" k="64" />
+    <hkern u1="&#xbf;" u2="&#xbe;" k="85" />
     <hkern u1="&#xbf;" u2="&#xae;" k="85" />
     <hkern u1="&#xbf;" u2="&#x81;" k="85" />
     <hkern u1="&#xbf;" u2="z" k="10" />
@@ -3894,6 +3895,7 @@ d="M440 866l-122 -60l-54 45l132 153h86l133 -153l-55 -45zM77 1009l178 -139l-51 -6
     <hkern u1="&#xbf;" u2="a" k="85" />
     <hkern u1="&#xbf;" u2="Z" k="10" />
     <hkern u1="&#xbf;" u2="Y" k="127" />
+    <hkern u1="&#xbf;" u2="X" k="115" />
     <hkern u1="&#xbf;" u2="W" k="57" />
     <hkern u1="&#xbf;" u2="V" k="86" />
     <hkern u1="&#xbf;" u2="T" k="16" />
