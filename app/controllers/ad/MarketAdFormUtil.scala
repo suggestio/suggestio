@@ -70,7 +70,7 @@ object MarketAdFormUtil {
 
   /** Маппер для описания, прилагаемого к рекламной карточке. */
   def richDescrOptM: Mapping[Option[RichDescr]] = {
-    val rdTextM = text(maxLength = 8192)
+    val rdTextM = text(maxLength = 20000)
       .transform(strFmtTrimF, strIdentityF)
     val m = mapping(
       "bgColor" -> colorM,

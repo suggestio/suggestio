@@ -146,7 +146,7 @@ trait ScIndexGeo extends ScIndexConstants with ScIndexNodeCommon { that =>
             MAdnNode.dynCount(searchArgs)
           }
         } yield {
-          geoChilderCount > 0L
+          geoChilderCount <= 0L
         }
         fut recover {
           case ex: NoSuchElementException =>
