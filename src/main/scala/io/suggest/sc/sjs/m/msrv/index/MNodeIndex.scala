@@ -72,6 +72,15 @@ case class MNodeIndex(json: WrappedDictionary[Any]) {
       .asInstanceOf[Option[String]]
   }
 
+  /** toString() генерит слишком много ненужных букв по дефолту. Скрываем html-поле при рендере словаря. */
+  override def toString: String = {
+    val jsonMin = json.iterator
+      .map { case (k, v) =>
+        k + " -> " + (if (k == HTML_FN) "..." else v)
+      }
+      .mkString(", ")
+    getClass.getSimpleName + "(" + jsonMin + ")"
+  }
 }
 
 

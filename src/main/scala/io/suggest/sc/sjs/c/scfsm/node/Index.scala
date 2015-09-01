@@ -69,9 +69,11 @@ trait Index extends ScFsmStub with FindAdsUtil {
 
   /** Общий интерфейс для метода-реакции на получение node-индекса. */
   trait INodeIndexReceived {
+    /** Реакция на получение node index. */
     protected def _nodeIndexReceived(v: MNodeIndex): Unit
   }
   trait IGetNodeIndexFailed {
+    /** Реакция на ошибку выполнения запроса к node index. */
     protected def _getNodeIndexFailed(ex: Throwable): Unit
   }
   trait HandleNodeIndex extends INodeIndexReceived with IGetNodeIndexFailed {

@@ -38,3 +38,9 @@ case class BssGeoErrorSignal(override val error: PositionError)
   with BssAccuracy
 object BssGeoErrorSignal
   extends IFsmMsgCompanion[PositionError]
+
+
+
+/** Сигнал от таймера геолокации. */
+case object GeoTimeout
+  extends IGeoSignal

@@ -165,7 +165,7 @@ trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger with DirectDo
 
   // Раскомментить override become() для логгирования переключения состояний:
   override protected def become(nextState: FsmState): Unit = {
-    log(_state.name + " -> " + nextState.name)
+    log(_state + " -> " + nextState)
     super.become(nextState)
   }
 

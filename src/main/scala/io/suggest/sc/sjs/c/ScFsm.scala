@@ -1,7 +1,6 @@
 package io.suggest.sc.sjs.c
 
 import io.suggest.sc.sjs.c.scfsm._
-import io.suggest.sc.sjs.c.scfsm.init.Init
 import io.suggest.sc.sjs.m.msc.fsm.{IStData, MStData}
 import io.suggest.sc.sjs.m.msearch.MTabs
 import io.suggest.sjs.common.util.SjsLogger
@@ -12,7 +11,7 @@ import io.suggest.sjs.common.util.SjsLogger
  * Created: 16.06.15 12:07
  * Description: FSM-контроллер для всей выдачи. Собирается из кусков, которые закрывают ту или иную область.
  */
-object ScFsm extends SjsLogger with Init with node.States
+object ScFsm extends SjsLogger with init.Phase with node.States
 with grid.Append with grid.Plain with grid.LoadMore
 with OnGridSearchGeo with OnGridSearchHashTags with OnGridNav
 with foc.StartingForAd with foc.OnFocus with foc.Closing with foc.SimpleShift with foc.PreLoading with foc.OnTouch with foc.OnTouchPreload
@@ -42,7 +41,7 @@ with foc.StartingForAd with foc.OnFocus with foc.Closing with foc.SimpleShift wi
   }
 
   def firstStart(): Unit = {
-    become(new FirstInitState)
+    become( _initPhaseEnter1st )
   }
 
 
@@ -52,30 +51,11 @@ with foc.StartingForAd with foc.OnFocus with foc.Closing with foc.SimpleShift wi
    * Состояния ранней инициализации выдачи.
    *--------------------------------------------------------------------------------*/
 
-  protected trait NormalInitStateT extends super.NormalInitStateT {
-    override protected def _geoAskState = new Init_JsRouterWait_GeoAskWait_State
+  override protected def _initPhaseExit_OnWelcomeGridWait_State = {
+    new NodeInit_WelcomeShowing_GridAdsWait_State
   }
-
-  /** Реализация состояния самой первой инициализации. */
-  class FirstInitState extends FirstInitStateT with NormalInitStateT
-  /** Реализация состояния типовой инициализации. */
-  class NormalInitState extends NormalInitStateT
-
-  // init-геолокация и инициализация jsRouter'а.
-  /** Две параллельные инициализации запущены: jsrouter и геолокация. */
-  class Init_JsRouterWait_GeoAskWait_State extends Init_JsRouterWait_GeoAskWait_StateT {
-    override def _jsRouterReadyState = new Init_GeoWait_State
-    override protected def _reInitState = new NormalInitState
-    override protected def _geoFinishedState = new Init_JsRouterWaitState
-  }
-  /** Инициализация геолокации, когда инициализация jsRouter'а уже выполнена. */
-  class Init_GeoWait_State extends Init_GeoWait_StateT {
-    override protected def _geoFinishedState = new NodeInit_GetIndex_WaitIndex_State
-  }
-  /** Маловероятное состояние, когда инициализация геолокации прошла быстрее, чем инициализация jsRouter'а. */
-  class Init_JsRouterWaitState extends JsRouterInitReceiveT {
-    override def _jsRouterReadyState = new NodeInit_GetIndex_WaitIndex_State
-    override protected def _reInitState = new NormalInitState
+  override protected def _initPhaseExit_OnGridWait_State = {
+    new NodeInit_GridAdsWait_State
   }
 
 

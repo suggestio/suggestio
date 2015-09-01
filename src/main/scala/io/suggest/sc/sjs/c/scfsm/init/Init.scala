@@ -18,7 +18,7 @@ trait Init extends JsRouterInit with GeoInit {
   /** Трейт для сборки состояния самой первой инициализации.
     * Тут происходит normal-init, но дополнительно может быть строго одноразовая логика.
     * Состояние случается только один раз и синхронно. */
-  protected trait FirstInitStateT extends JsRouterInitStartStateT with NormalInitStateT {
+  protected trait FirstInitStateT extends FsmState {
     override def afterBecome(): Unit = {
       super.afterBecome()
       // TODO Это нужно вообще или нет?
@@ -30,7 +30,7 @@ trait Init extends JsRouterInit with GeoInit {
   /** Трейт синхронной инициализации выдачи и ScFsm.
     * От First-init отличается тем, что логика тут только повторяемая.
     * Эта инициализация может вызываться более одного раза для в случае подавления ошибок. */
-  protected trait NormalInitStateT extends FsmEmptyReceiverState {
+  protected trait NormalInitStateT extends FsmState {
 
     /** Действия, которые вызываются, когда это состояние выставлено в актор. */
     override def afterBecome(): Unit = {
@@ -52,28 +52,5 @@ trait Init extends JsRouterInit with GeoInit {
       * Такое происходит, когда нет данных состояния в URL. */
     protected def _geoAskState: FsmState
   }
-
-
-  /** Частичная реализация GeoWaitStateT для нужд инициализации. */
-  protected trait InitGeoWaitStateT extends GeoWaitStateT {
-    protected def _geoFinishedState: FsmState
-
-    override protected def _geoFailedState = _geoFinishedState
-    override protected def _geoReadyState  = _geoFinishedState
-  }
-
-
-  /** Трейт для сборки состояния ожидания завершения инициализации js-роутера
-    * и запроса (запуск + ожидании) геолокации одновременно. */
-  protected trait Init_JsRouterWait_GeoAskWait_StateT
-    extends JsRouterInitReceiveT
-    with BssGeoAskStartT
-    with InitGeoWaitStateT
-
-
-  /** Трейт шага инициализации, когда jsRouter уже готов, а геолокация пока висит. */
-  protected trait Init_GeoWait_StateT
-    extends FsmEmptyReceiverState
-    with InitGeoWaitStateT
 
 }
