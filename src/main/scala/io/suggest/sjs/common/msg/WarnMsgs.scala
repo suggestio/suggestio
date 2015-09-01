@@ -16,4 +16,6 @@ object WarnMsgs extends MsgsStaticT {
 
   def INDEX_RESP_TOO_OLD        = E(3)
 
+  def WATCH_POSITION_EMPTY      = E(4)
+
 }
