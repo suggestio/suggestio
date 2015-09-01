@@ -25,11 +25,14 @@ trait AbstractFsm {
   /**
    * Переключение на новое состояние. Старое состояние будет отброшено.
    * @param nextState Новое состояние.
+   *                  null значит, что всё останется на текущем состоянии.
    */
   protected def become(nextState: State_t): Unit = {
-    _state = nextState
-    _installReceiver(_state.receiver)
-    _state.afterBecome()
+    if (nextState != null) {
+      _state = nextState
+      _installReceiver(_state.receiver)
+      _state.afterBecome()
+    }
   }
 
   /** Выставление указанного ресивера в качестве обработчика событий. */
