@@ -98,12 +98,6 @@ package object models {
   val  MImgInfoMeta         = ym.model.common.MImgInfoMeta
   type MImgInfoMeta         = ym.model.common.MImgInfoMeta
 
-  val  MInx                 = io.suggest.model.inx2.MInx
-  type MInxT                = io.suggest.model.inx2.MInxT
-
-  val  MMartInx             = io.suggest.model.inx2.MMartInx
-  type MMartInx             = io.suggest.model.inx2.MMartInx
-
   val  MAdStat              = ym.model.stat.MAdStat
   type MAdStat              = ym.model.stat.MAdStat
   type AdFreqs_t            = MAdStat.AdFreqs_t

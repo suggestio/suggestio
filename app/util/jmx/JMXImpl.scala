@@ -2,7 +2,6 @@ package util.jmx
 
 import io.suggest.ym.model._
 import io.suggest.model._
-import io.suggest.model.inx2._
 import io.suggest.ym.model.stat._
 import models.adv.MExtTargetJmx
 import models.ai.MAiMadJmx
@@ -32,7 +31,6 @@ object JMXImpl extends PlayLazyMacroLogsImpl {
   private val JMX_MODELS = List[JMXBase](
     // compat
     // elasticsearch
-    new MMartInxJmx,
     new MAdStatJmx,
     new MWelcomeAdJmx,
     new MAdJmx,

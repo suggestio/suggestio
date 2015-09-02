@@ -99,7 +99,7 @@ object Global extends WithFilters(new HtmlCompressFilter, new DumpXffHeaders, Se
     futMappings recoverWith {
       case ex: MapperException if !tried21 =>
         info("Trying to update main index to v2.1 settings...")
-        SioEsUtil.updateIndexTo2_1(EsModel.DFLT_INDEX) flatMap { _ =>
+        SioEsUtil.updateIndex2_1To2_2(EsModel.DFLT_INDEX) flatMap { _ =>
           initializeEsModels(tried21 = true)
         }
     }
