@@ -55,15 +55,15 @@ object Fonts extends Enumeration(0) with EnumMaybeWithMultiNameMap with EnumValu
     override def descr  = "Higherup"
     override def _names = "aa_higherup-webfont" :: super._names
   }
-  
-  val BodonConc           : T = new Val("bodon-con-c") {
-    override def descr  = "Bodon Conc"
-    override def _names = "bodonconc-webfont" :: super._names
-  }
-  
+
   val BlocExtCond         : T = new Val("bloc-ext-con-c") {
     override def descr  = "BlocExt Cond"
     override def _names = "blocextconc-webfont" :: super._names
+  }
+
+  val BodonConc           : T = new Val("bodon-con-c") {
+    override def descr  = "Bodon Conc"
+    override def _names = "bodonconc-webfont" :: super._names
   }
 
   val Confic              : T = new Val("confic") {
