@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.vm.hdr
 
 import io.suggest.sc.ScConstants.Header._
-import io.suggest.sc.sjs.vm.hdr.btns.{HNodePrev, HBtns, HShowIndexBtn}
+import io.suggest.sc.sjs.vm.hdr.btns.{HNodeLogo, HNodePrev, HBtns, HShowIndexBtn}
 import io.suggest.sc.sjs.vm.hdr.btns.nav._
 import io.suggest.sc.sjs.vm.hdr.btns.search._
 import io.suggest.sc.sjs.vm.util.IInitLayout
@@ -51,6 +51,9 @@ trait HRootT extends SafeElT with IInitLayout {
   /** Контейнер с основными кнопками заголовка. */
   def btnsContainer = HBtns.find()
 
+  /** Контейнер логотипа. */
+  def logo = HNodeLogo.find()
+
 
   /** Реакция view'а на открытие панели поиска: изменить набор отображаемых кнопок. */
   def showBackToIndexBtns(): Unit = {
@@ -67,6 +70,7 @@ trait HRootT extends SafeElT with IInitLayout {
     // Используем одну и ту же функцию инициализации для всех кнопок.
     val f = IInitLayout.f
     prevNodeBtn.foreach(f)
+    logo.foreach(f)
     // Инициализация кнопок, относящихся к панели поиска.
     showSearchBtn.foreach(f)
     hideSearchBtn.foreach(f)

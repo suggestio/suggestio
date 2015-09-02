@@ -38,3 +38,9 @@ object HideNavClick extends IFsmEventMsgCompanion
 /** Сигнал о клике по кнопке возврата на предыдущий узел. */
 case class PrevNodeBtnClick(e: Event) extends IFsmMsg
 object PrevNodeBtnClick extends IFsmEventMsgCompanion
+
+
+/** Клик по логотипу узла в заголовке.
+  * Не относится к focused-выдаче. */
+case class LogoClick(e: Event) extends IFsmMsg
+object LogoClick extends IFsmEventMsgCompanion

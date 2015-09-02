@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.c.scfsm
 
 import io.suggest.sc.sjs.c.scfsm.grid.{PanelGridRebuilder, OnGrid}
-import io.suggest.sc.sjs.m.mhdr.HideNavClick
+import io.suggest.sc.sjs.m.mhdr.{LogoClick, HideNavClick}
 import io.suggest.sc.sjs.m.mnav.NodeListClick
 import io.suggest.sc.sjs.m.msrv.nodes.find.{MFindNodesResp, MFindNodesArgsEmpty, MFindNodesArgsDflt, MFindNodes}
 import io.suggest.sc.sjs.vm.hdr.btns.HBtns
@@ -29,6 +29,8 @@ trait OnGridNav extends OnGrid with ISjsLogger {
 
     private def _receiverPart: Receive = {
       case HideNavClick(event) =>
+        _hideNav()
+      case _: LogoClick =>
         _hideNav()
     }
 

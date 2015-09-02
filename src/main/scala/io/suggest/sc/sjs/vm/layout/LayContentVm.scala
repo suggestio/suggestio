@@ -68,6 +68,8 @@ trait LayContentVmT extends SafeElT with SetInnerHtml {
   def focused = FRoot.find()
   /** Доступ к welcome div'у. Кешировать его нельзя, т.к. короткоживущий. */
   final def welcome = WcRoot.find()
+  /** Доступ к fullscreen loader'у. */
+  def fsLoader = FsLoader.find()
 
   def insertFirst(node: Node): Unit = {
     _underlying.insertBefore(node, _underlying.firstChild)
@@ -92,5 +94,6 @@ case class LayContentVm(
   override lazy val searchPanel = super.searchPanel
   override lazy val navPanel    = super.navPanel
   override lazy val focused     = super.focused
+  override lazy val fsLoader    = super.fsLoader
 }
 

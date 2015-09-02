@@ -181,9 +181,12 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
     }
 
     protected def _backToGrid(): Unit = {
-       val sd1 = _stateData.copy(
+      val sd1 = _stateData.copy(
         focused = None
       )
+      for (fsl <- FsLoader.find()) {
+        fsl.hide()
+      }
       become(_backToGridState, sd1)
     }
 

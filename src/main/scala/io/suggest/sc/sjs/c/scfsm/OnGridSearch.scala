@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.c.scfsm
 
 import io.suggest.sc.sjs.c.scfsm.grid.{PanelGridRebuilder, OnGrid}
-import io.suggest.sc.sjs.m.mhdr.{ShowIndexClick, HideSearchClick}
+import io.suggest.sc.sjs.m.mhdr.{LogoClick, ShowIndexClick, HideSearchClick}
 import io.suggest.sc.sjs.m.msearch._
 import io.suggest.sc.sjs.vm.hdr.HRoot
 import io.suggest.sc.sjs.vm.search.SRoot
@@ -110,6 +110,8 @@ trait OnGridSearch extends OnGrid with ISjsLogger {
       // Получение сигналов кликов по кнопкам вкладок.
       case tabBtnClick: ITabClickSignal =>
         _tabBtnClick(tabBtnClick)
+      case logoClick: LogoClick =>
+        _hideSearch()
       // Получение сигналов от поля полнотекстового поиска.
       case FtsFieldFocus(event) =>
         _ftsFieldFocus(event)
