@@ -164,7 +164,11 @@ object ScConstants {
     /** имя css-класса корневого элемента. */
     def ROOT_CSS_CLASS = "sm-showcase"
 
+    /** id div'а выдачи. */
     def LAYOUT_ID = "sioMartLayout"
+
+    /** div id для fullscreen loader. */
+    def FS_LOADER_ID = "fsLoaded"
 
   }
 
