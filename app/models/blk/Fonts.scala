@@ -49,74 +49,21 @@ object Fonts extends Enumeration(0) with EnumMaybeWithMultiNameMap with EnumValu
   override type T = Val
 
 
-  // Экземпляры шрифтов
-  val FavLightCondCReg    : T = new Val("favorit-light-cond-c-regular") {
-    override def descr  = "Favorit Light Cond C Regular"
-    override def _names = "favoritlightcondcregular" :: super._names
+  // Экземпляры шрифтов в АЛФАВИТНОМ ПОРЯДКЕ
+  
+  val AaHigherup          : T = new Val("aa-higherup") {
+    override def descr  = "Higherup"
+    override def _names = "aa_higherup-webfont" :: super._names
   }
-
-  val FavCondCBold        : T = new Val("favorit-cond-c-bold") {
-    override def descr  = "Favorit Cond C Bold"
-    override def _names = "favoritcondc-bold-webfont" :: super._names
-  }
-
-  val HeliosThin          : T = new Val("helios-thin") {
-    override def descr  = "Helios Thin"
-    override def _names = "heliosthin" :: super._names
-  }
-
-  val HeliosCondLight     : T = new Val("helios-cond-light") {
-    override def descr  = "Helios Cond Light"
-    override def _names = "helioscondlight-webfont" :: super._names
-  }
-
-  val PfDinTextCompProMed : T = new Val("pf-din-comp-pro-medium") {
-    override def descr  = "PF Din Text Comp Pro Medium"
-    override def _names = "PFDinTextCompPro-Medium" :: super._names
-  }
-
-  val FuturFutC           : T = new Val("futura-futuris-c") {
-    override def descr  = "Futur Fut C"
-    override def _names = "futurfutc-webfont" :: super._names
-  }
-
-  val PharmadinCondLight  : T = new Val("pharmadin-condensed-light") {
-    override def descr  = "Pharmadin Condensed Light"
-    override def _names = "PharmadinCondensedLight" :: super._names
-  }
-
-  val NewspaperSans       : T = new Val("news-paper-sans-regular") {
-    override def descr  = "Newspaper Sans"
-    override def _names = "newspsan-webfont" :: super._names
-  }
-
-  val RexBold             : T = new Val("rex-bold") {
-    override def descr  = "Rex Bold"
-    override def _names = "rex_bold-webfont" :: super._names
-  }
-
-  val Perforama           : T = new Val("perforama") {
-    override def descr  = "Perforama"
-    override def _names = "perforama-webfont" :: super._names
-  }
-
-  val BlocExtCond         : T = new Val("bloc-ext-con-c") {
-    override def descr  = "BlocExt Cond"
-    override def _names = "blocextconc-webfont" :: super._names
-  }
-
+  
   val BodonConc           : T = new Val("bodon-con-c") {
     override def descr  = "Bodon Conc"
     override def _names = "bodonconc-webfont" :: super._names
   }
-
-  val Higherup            : T = new Val("aa-higherup") {
-    override def descr  = "Higherup"
-    override def _names = "aa_higherup-webfont" :: super._names
-  }
-
-  val Georgia             : T = new Val("Georgia") {
-    override def descr  = "Georgia"
+  
+  val BlocExtCond         : T = new Val("bloc-ext-con-c") {
+    override def descr  = "BlocExt Cond"
+    override def _names = "blocextconc-webfont" :: super._names
   }
 
   val Confic              : T = new Val("confic") {
@@ -124,16 +71,73 @@ object Fonts extends Enumeration(0) with EnumMaybeWithMultiNameMap with EnumValu
     override def _names = "confic-webfont" :: super._names
   }
 
+  val FavCondCBold        : T = new Val("favorit-cond-c-bold") {
+    override def descr  = "Favorit Cond C Bold"
+    override def _names = "favoritcondc-bold-webfont" :: super._names
+  }
+  
+  val FavLightCondCReg    : T = new Val("favorit-light-cond-c-regular") {
+    override def descr  = "Favorit Light Cond C Regular"
+    override def _names = "favoritlightcondcregular" :: super._names
+  }
+
+  val FuturaFuturisC      : T = new Val("futura-futuris-c") {
+    override def descr  = "Futur Fut C"
+    override def _names = "futurfutc-webfont" :: super._names
+  }
+
   val GazTransport        : T = new Val("gaz-transport") {
     override def descr  = "GAZ Transport"
+  }
+
+  val Georgia             : T = new Val("Georgia") {
+    override def descr  = fileName
+  }
+
+  val HeliosCondLight     : T = new Val("helios-cond-light") {
+    override def descr  = "Helios Cond Light"
+    override def _names = "helioscondlight-webfont" :: super._names
+  }
+
+  val HeliosThin          : T = new Val("helios-thin") {
+    override def descr  = "Helios Thin"
+    override def _names = "heliosthin" :: super._names
+  }
+
+  val NewspaperSans       : T = new Val("news-paper-sans-regular") {
+    override def descr  = "Newspaper Sans"
+    override def _names = "newspsan-webfont" :: super._names
   }
 
   val Meloranic           : T = new Val("meloriac") {
     override def descr  = "Meloriac"
   }
 
+  val OpenSansLight       : T = new Val("opensans-light") {
+    override def descr  = "OpenSans Light Regular"
+  }
+
+  val OpenSansRegular      : T = new Val("opensans-regular") {
+    override def descr: String = "OpenSans Regular"
+  }
+
   val OctinTeamHeavy      : T = new Val("octin-team-heavy") {
     override def descr  = "Octin Team Heavy"
+  }
+
+  val Perforama           : T = new Val("perforama") {
+    override def descr  = "Perforama"
+    override def _names = "perforama-webfont" :: super._names
+  }
+
+  val PfDinTextCompProMed : T = new Val("pf-din-comp-pro-medium") {
+    override def descr  = "PF Din Text Comp Pro Medium"
+    override def _names = "PFDinTextCompPro-Medium" :: super._names
+  }
+
+  val PharmadinCondLight  : T = new Val("pharmadin-condensed-light") {
+    override def descr  = "Pharmadin Condensed Light"
+    override def _names = "PharmadinCondensedLight" :: super._names
   }
 
   val Posterboard         : T = new Val("posterboard") {
@@ -145,11 +149,13 @@ object Fonts extends Enumeration(0) with EnumMaybeWithMultiNameMap with EnumValu
     override def _names = "PT_Sans-Narrow" :: super._names
   }
 
-  val OpenSansLight       : T = new Val("opensans-light") {
-    override def descr  = "OpenSans Light Regular"
+  val RexBold             : T = new Val("rex-bold") {
+    override def descr  = "Rex Bold"
+    override def _names = "rex_bold-webfont" :: super._names
   }
 
-  // TODO Добавить остальные шрифты из public/SIO/Fonts/. Портировать старые шрифты из fonts.styl.
+
+  // Конец перечисления шрифтов в АЛФАВИТНОМ ПОРЯДКЕ.
 
 
   /** Для рендера json-конфига tinyMCE лучше использовать этот метод. */
