@@ -27,7 +27,7 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-web" % "1.2.0")
 
 //addSbtPlugin("net.ground5hark.sbt" % "sbt-css-compress" % "0.1.3")
 
-addSbtPlugin("org.neolin.sbt" % "sbt-simple-url-update" % "1.0.0")
+addSbtPlugin("org.neolin.sbt" % "sbt-simple-url-update" % "1.0.0.2-SNAPSHOT")
 
 
 // Use the Play sbt plugin for Play projects
