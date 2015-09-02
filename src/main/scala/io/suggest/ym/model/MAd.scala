@@ -59,7 +59,11 @@ object MAd
 
   override def generateMappingStaticFields: List[Field] = List(
     FieldSource(enabled = true),
-    FieldAll(enabled = true, index_analyzer = SioConstants.EDGE_NGRAM_AN_1, search_analyzer = DFLT_AN)
+    FieldAll(
+      enabled = true,
+      index_analyzer  = SioConstants.EDGE_NGRAM_AN_1,
+      search_analyzer = SioConstants.DFLT_AN
+    )
   )
 
 

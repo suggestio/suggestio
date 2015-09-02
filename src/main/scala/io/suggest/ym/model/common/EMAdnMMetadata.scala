@@ -169,11 +169,9 @@ object AdnMMetadata {
   def generateMappingProps: List[DocField] = List(
     FieldString(NAME_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
     // 2014.oct.01: Разделение поля на analyzed и not_analyzed. Последнее нужно для сортировки.
-    new FieldString(NAME_SHORT_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true) with MultiFieldT {
-      override def fields = Seq(
-        FieldString(NOT_TOKENIZED_SUBFIELD_SUF, index = FieldIndexingVariants.not_analyzed, include_in_all = true)
-      )
-    },
+    FieldString(NAME_SHORT_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true, fields = Seq(
+      FieldString(NOT_TOKENIZED_SUBFIELD_SUF, index = FieldIndexingVariants.not_analyzed, include_in_all = true)
+    )),
     fieldString(DESCRIPTION_ESFN, iia = true),
     FieldDate(DATE_CREATED_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
     // legal

@@ -19,8 +19,8 @@ import io.suggest.util.JacksonWrapper
 object EMDisableReason {
   val DISABLE_REASON_ESFN = "dsblReason"
 
-  val ADN_ID_ESFN = "adnId"
-  val REASON_ESFN = "reason"
+  def ADN_ID_ESFN = "adnId"
+  def REASON_ESFN = "reason"
 }
 
 import EMDisableReason._
@@ -63,7 +63,7 @@ trait EMDisableReasonI extends EsModelPlayJsonT {
 trait EMDisableReason extends EMDisableReasonI {
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     val acc0 = super.writeJsonFields(acc)
-    if (!disableReason.isEmpty) {
+    if (disableReason.nonEmpty) {
       val v = JsArray(disableReason.map(_.toPlayJson))
       DISABLE_REASON_ESFN -> v  ::  acc0
     } else {

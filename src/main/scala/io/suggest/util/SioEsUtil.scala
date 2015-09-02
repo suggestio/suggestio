@@ -1,5 +1,6 @@
 package io.suggest.util
 
+import org.elasticsearch.action.admin.indices.settings.put.UpdateSettingsResponse
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.settings.{Settings, ImmutableSettings}
 import org.elasticsearch.common.transport.TransportAddress
@@ -36,22 +37,22 @@ object SioEsUtil extends MacroLogsImpl {
   // _FN - Filter Name. _AN - Analyzer Name, _TN - Tokenizer Name
 
   // Имена стеммеров
-  val STEM_EN_FN    = "fStemEN"
-  val STEM_RU_FN    = "fStemRU"
+  def STEM_EN_FN    = "fStemEN"
+  def STEM_RU_FN    = "fStemRU"
 
   // Имена stopwords-фильтров.
-  val STOP_EN_FN    = "fStopEN"
-  val STOP_RU_FN    = "fStopRU"
+  def STOP_EN_FN    = "fStopEN"
+  def STOP_RU_FN    = "fStopRU"
 
-  val EDGE_NGRAM_FN_2 = "fEdgeNgram2"
-  val EDGE_NGRAM_FN_1 = "fEdgeNgram1"
-  val LOWERCASE_FN  = "fLowercase"
-  val STD_FN        = "fStd"
-  val WORD_DELIM_FN = "fWordDelim"
+  def EDGE_NGRAM_FN_2 = "fEdgeNgram2"
+  def EDGE_NGRAM_FN_1 = "fEdgeNgram1"
+  def LOWERCASE_FN  = "fLowercase"
+  def STD_FN        = "fStd"
+  def WORD_DELIM_FN = "fWordDelim"
+  def LENGTH40_FN   = "fLen40"
 
-  val STD_TN        = "tStd"
-  val DFLT_AN       = "default"
-  val DEEP_NGRAM_TN = "deepNgramTn"
+  def STD_TN        = "tStd"
+  def DEEP_NGRAM_TN = "deepNgramTn"
 
   /**
    * Создать параллельно пачку одинаковых индексов.
@@ -60,7 +61,8 @@ object SioEsUtil extends MacroLogsImpl {
    * @param replicasPerIndex Репликация
    * @return Список результатов (список isAcknowledged()).
    */
-  def createIndices(indices:Seq[String], shardsPerIndex:Int = 1, replicasPerIndex:Int = 1)(implicit c:Client, executor:ExecutionContext) : Future[Seq[Boolean]] = {
+  def createIndices(indices: Seq[String], shardsPerIndex: Int = 1, replicasPerIndex: Int = 1)
+                   (implicit client: Client, ec:ExecutionContext): Future[Seq[Boolean]] = {
     Future.traverse(indices) {
       createIndex(_, shardsPerIndex, replicasPerIndex)
     }
@@ -73,8 +75,10 @@ object SioEsUtil extends MacroLogsImpl {
    * @param replicas кол-во реплик. По дефолту = 1
    * @return true, если индекс принят.
    */
-  def createIndex(indexName:String, shards:Int = 1, replicas:Int=1)(implicit c:Client, executor:ExecutionContext): Future[Boolean] = {
-    c.admin().indices()
+  def createIndex(indexName: String, shards: Int = 1, replicas: Int = 1)
+                 (implicit client: Client, ec: ExecutionContext): Future[Boolean] = {
+    client.admin()
+      .indices()
       .prepareCreate(indexName)
       .setSettings(getNewIndexSettings(shards=shards, replicas=replicas))
       .execute()
@@ -89,8 +93,10 @@ object SioEsUtil extends MacroLogsImpl {
    * @param mapping маппинг.
    * @return true, если маппинг принят кластером.
    */
-  def putMapping(indexName:String, typeName:String, mapping:XContentBuilder)(implicit client:Client, executor:ExecutionContext) : Future[Boolean] = {
-    client.admin().indices()
+  def putMapping(indexName: String, typeName: String, mapping: XContentBuilder)
+                (implicit client: Client, ec: ExecutionContext): Future[Boolean] = {
+    client.admin()
+      .indices()
       .preparePutMapping(indexName)
       .setType(typeName)
       .setSource(mapping)
@@ -103,8 +109,9 @@ object SioEsUtil extends MacroLogsImpl {
    * @param indexNames список индексов
    * @return true, если все перечисленные индексы существуют.
    */
-  def isIndexExist(indexNames: String *)(implicit client:Client, executor:ExecutionContext) : Future[Boolean] = {
-    client.admin().indices()
+  def isIndexExist(indexNames: String *)(implicit client: Client, ec: ExecutionContext): Future[Boolean] = {
+    client.admin()
+      .indices()
       .prepareExists(indexNames: _*)
       .execute()
       .map(_.isExists)
@@ -116,9 +123,10 @@ object SioEsUtil extends MacroLogsImpl {
    * @return true, если индексы с такими именами существуют.
    */
   @deprecated("Please use non-blocking isIndexExist()", "2013.07.05")
-  def isIndexExistSync(indexNames:String *)(implicit c:Client) : Boolean = {
-    c.admin().indices()
-      .exists(new IndicesExistsRequest(indexNames : _*))
+  def isIndexExistSync(indexNames: String*)(implicit client: Client) : Boolean = {
+    client.admin()
+      .indices()
+      .exists( new IndicesExistsRequest(indexNames : _*) )
       .actionGet()
       .isExists
   }
@@ -128,10 +136,11 @@ object SioEsUtil extends MacroLogsImpl {
    * Закрыть индекс указанный
    * @param indexName имя индекса.
    */
-  def closeIndex(indexName: String)(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
+  def closeIndex(indexName: String)(implicit client: Client, ec: ExecutionContext): Future[Boolean] = {
     lazy val logPrefix = s"closeIndex($indexName): "
     trace(logPrefix + "Starting close index ...")
-    client.admin().indices()
+    client.admin()
+      .indices()
       .prepareClose(indexName)
       .execute()
       .map { _.isAcknowledged }
@@ -142,7 +151,7 @@ object SioEsUtil extends MacroLogsImpl {
    * @param indexName Имя открываемого индекса.
    * @return true, если всё нормально
    */
-  def openIndex(indexName:String)(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
+  def openIndex(indexName: String)(implicit client: Client, ec: ExecutionContext): Future[Boolean] = {
     lazy val logPrefix = s"openIndex($indexName): "
     trace(logPrefix + "Sending open request...")
     client.admin().indices()
@@ -153,13 +162,14 @@ object SioEsUtil extends MacroLogsImpl {
 
 
   // Кол-во попыток поиска свободного имени для будущего индекса.
-  val FREE_INDEX_NAME_MAX_FIND_ATTEMPTS = 8
+  def FREE_INDEX_NAME_MAX_FIND_ATTEMPTS = 8
 
   /**
    * Совсем асинхронно найти свободное имя индекса (не занятое другими индексами).
    * @return Фьючерс строки названия индекса.
    */
-  def findFreeVirtualIndex(shardCount: Int, maxAttempts: Int = FREE_INDEX_NAME_MAX_FIND_ATTEMPTS)(implicit client:Client, executor:ExecutionContext) : Future[MVirtualIndex] = {
+  def findFreeVirtualIndex(shardCount: Int, maxAttempts: Int = FREE_INDEX_NAME_MAX_FIND_ATTEMPTS)
+                          (implicit client: Client, ec: ExecutionContext) : Future[MVirtualIndex] = {
     lazy val logPrefix = "findFreeIndexName(shardCount=%s, maxAttempts=%s): " format (shardCount, maxAttempts)
     trace(logPrefix + "Starting...")
     val p = Promise[MVirtualIndex]()
@@ -199,7 +209,8 @@ object SioEsUtil extends MacroLogsImpl {
    * @param maxAttempts Число попыток поиска свободного имени индекса. просто передается в getFreeIndexName.
    * @return Фьчерс с именами созданных индексов-шард.
    */
-  def createRandomVirtualIndex(shardCount:Int, replicasCount:Int, maxAttempts: Int = FREE_INDEX_NAME_MAX_FIND_ATTEMPTS)(implicit client:Client, executor:ExecutionContext): Future[MVirtualIndex] = {
+  def createRandomVirtualIndex(shardCount: Int, replicasCount: Int, maxAttempts: Int = FREE_INDEX_NAME_MAX_FIND_ATTEMPTS)
+                              (implicit client: Client, ec: ExecutionContext): Future[MVirtualIndex] = {
     lazy val logPrefix = "createRandomIndex(shardCount=%s, maxAttempts=%s): " format (shardCount, maxAttempts)
     trace(logPrefix + "starting")
     findFreeVirtualIndex(shardCount, maxAttempts)
@@ -221,8 +232,8 @@ object SioEsUtil extends MacroLogsImpl {
       .classLoader(classOf[Settings].getClassLoader)
       .put("cluster.name", clusterName)
     clusterName match {
-      case Some(clusterName) =>
-        settingsBuilder.put("cluster.name", clusterName)
+      case Some(_clusterName) =>
+        settingsBuilder.put("cluster.name", _clusterName)
       case None =>
         settingsBuilder.put("client.transport.ignore_cluster_name", true)
     }
@@ -244,9 +255,10 @@ object SioEsUtil extends MacroLogsImpl {
 
 
   /**
-   * Билдер настроек для индекса. Тут генерится в представление в виде дерева scala-классов и сразу конвертится в XContent.
+   * Билдер настроек для индекса.
+   * Тут генерится в представление в виде дерева scala-классов и сразу конвертится в XContent.
    */
-  def getNewIndexSettings(shards: Int, replicas : Int = 1) = {
+  def getNewIndexSettings(shards: Int, replicas: Int = 1) = {
     val filters0 = List(STD_FN, WORD_DELIM_FN, LOWERCASE_FN)
     // Начать генерацию в псевдокоде, затем сразу перегнать в XContentBuilder
     jsonGenerator { implicit b =>
@@ -267,31 +279,81 @@ object SioEsUtil extends MacroLogsImpl {
         ),
 
         analyzers = Seq(
-          AnalyzerCustom(
+          CustomAnalyzer(
             id = MINIMAL_AN,
             tokenizer = STD_TN,
             filters = filters0
           ),
-          AnalyzerCustom(
+          CustomAnalyzer(
             id = EDGE_NGRAM_AN_2,
             tokenizer = STD_TN,
             filters = filters0 ++ List(EDGE_NGRAM_FN_2)
           ),
-          AnalyzerCustom(
+          CustomAnalyzer(
             id = FTS_RU_AN,
             tokenizer = STD_TN,
             filters = filters0 ++ List(STOP_EN_FN, STOP_RU_FN, STEM_RU_FN, STEM_EN_FN)
           )
         ),
 
-        tokenizers = Seq(new TokenizerStandard(STD_TN))
+        tokenizers = Seq(
+          TokenizerStandard(STD_TN)
+        )
       )
     }
   }
 
+
+  // Сеттинги для suggest.io / isuggest.ru и их обновления.
+  // v2.1 Поддержка deep-ngram analyzer'а.
+
+  /** Сборка спеки токенизера для DEEP_NGRAM_ANALYZER'а. */
+  def _DEEP_NGRAM_TOKENIZER: Tokenizer = {
+    NGramTokenizer(
+      id          = DEEP_NGRAM_TN,
+      minGram     = 1,
+      maxGram     = 10,
+      tokenChars  = Seq(TokenCharTypes.digit, TokenCharTypes.letter)
+    )
+  }
+
+  /** Сборка спеки анализатора DEEP_NGRAM. */
+  def _DEEP_NGRAM_ANALYZER: Analyzer = {
+    CustomAnalyzer(
+      id        = DEEP_NGRAM_AN,
+      tokenizer = DEEP_NGRAM_TN,
+      filters   = Nil
+    )
+  }
+
+  // v2.2 Поддержка keyword analyzer для тегов.
+  /** Дефолтовый keyword-токенизер. */
+  def _KEYWORD_TOKENIZER: Tokenizer = {
+    KeyWordTokenizer(
+      id = KEYWORD_TN
+    )
+  }
+  
+  /** Спека для Length token filter, макс длина = 32. */
+  def _LENGTH40_TOKEN_FILTER: Filter = {
+    FilterLength(
+      id  = LENGTH40_FN,
+      max = 40
+    )
+  }
+  
+  /** Спека для анализатора тегов. */
+  def _TAG_ANALYZER: Analyzer = {
+    CustomAnalyzer(
+      id        = TAG_AN,
+      tokenizer = KEYWORD_TN,
+      filters   = Seq(LOWERCASE_FN, LENGTH40_FN)
+    )
+  }
+
   /**
-   * Сборка индекса по архитектуре второго поколения: без edgeNgram, который жрёт как не в себя.
-   * Используется единственный анализатор.
+   * Сборка индекса по архитектуре второго поколения: без повсеместного edgeNgram, который жрёт как не в себя.
+   * v2.1 добавляет кое-какой ngram analyzer для очень узконаправленных нужд.
    * @param shards Кол-во шард.
    * @param replicas Кол-во реплик.
    * @return XCB с сеттингами.
@@ -304,6 +366,7 @@ object SioEsUtil extends MacroLogsImpl {
         cache_field_type = "soft",
 
         filters = Seq(
+          // v2.0
           FilterStandard(STD_FN),
           FilterLowercase(LOWERCASE_FN),
           FilterStopwords(STOP_EN_FN, "english"),
@@ -312,102 +375,138 @@ object SioEsUtil extends MacroLogsImpl {
           FilterStemmer(STEM_RU_FN, "russian"),
           FilterStemmer(STEM_EN_FN, "english"),
           FilterEdgeNgram(EDGE_NGRAM_FN_1, minGram = 1, maxGram = 10, side = "front"),
-          FilterEdgeNgram(EDGE_NGRAM_FN_2, minGram = 2, maxGram = 10, side = "front")
+          FilterEdgeNgram(EDGE_NGRAM_FN_2, minGram = 2, maxGram = 10, side = "front"),
+          // v2.2
+          _LENGTH40_TOKEN_FILTER
         ),
+
         tokenizers = Seq(
-          new TokenizerStandard(STD_TN),
-          new NGramTokenizer(DEEP_NGRAM_TN, minGram = 1, maxGram = 10, tokenChars = Seq(TokenCharTypes.digit, TokenCharTypes.letter))
+          // v2.0
+          TokenizerStandard(STD_TN),
+          // v2.1
+          _DEEP_NGRAM_TOKENIZER,
+          // v2.2
+          _KEYWORD_TOKENIZER
         ),
+
         analyzers = {
           val chFilters = Seq("html_strip")
           val filters0 = List(STD_FN, WORD_DELIM_FN, LOWERCASE_FN)
           val filters1 = filters0 ++ List(STOP_EN_FN, STOP_RU_FN, STEM_RU_FN, STEM_EN_FN)
           Seq(
-            AnalyzerCustom(
+            // v2.0
+            CustomAnalyzer(
               id = DFLT_AN,
               charFilters = chFilters,
               tokenizer = STD_TN,
               filters = filters1
             ),
-            AnalyzerCustom(
+            CustomAnalyzer(
               id = EDGE_NGRAM_AN_1,
               charFilters = chFilters,
               tokenizer = STD_TN,
               filters = filters1 ++ List(EDGE_NGRAM_FN_1)
             ),
-            AnalyzerCustom(
+            CustomAnalyzer(
               id = EDGE_NGRAM_AN_2,
               charFilters = chFilters,
               tokenizer = STD_TN,
               filters = filters1 ++ List(EDGE_NGRAM_FN_2)
             ),
-            AnalyzerCustom(
+            CustomAnalyzer(
               id = MINIMAL_AN,
               tokenizer = STD_TN,
               filters = filters0
             ),
-            AnalyzerCustom(
-              id = DEEP_NGRAM_AN,
-              tokenizer = DEEP_NGRAM_TN,
-              filters = Nil
-            )
+            // v2.1
+            _DEEP_NGRAM_ANALYZER,
+            // v2.2
+            _TAG_ANALYZER
           )
         }
       )
     }
   }
 
-  /** 2014.aug.25: Добавить недостающий анализатор для разборки флагов sink show levels. */
-  def getIndexSettingsV2_1 = {
+  /** 2015.sep.02: Добавить поддержку анализа тегов. */
+  def getIndexSettingsV2_2 = {
     jsonGenerator { implicit b =>
       IndexSettings(
         tokenizers = Seq(
-          new NGramTokenizer(DEEP_NGRAM_TN, minGram = 1, maxGram = 10, tokenChars = Seq(TokenCharTypes.digit, TokenCharTypes.letter))
+          _KEYWORD_TOKENIZER
+        ),
+        filters = Seq(
+          _LENGTH40_TOKEN_FILTER
         ),
         analyzers = Seq(
-          AnalyzerCustom(
-            id = DEEP_NGRAM_AN,
-            tokenizer = DEEP_NGRAM_TN,
-            filters = Nil
-          )
+          _TAG_ANALYZER
         )
       )
     }
   }
 
   /** Запустить добавление новых настроек в индекс. Для этого индекс надо закрыть. */
-  def updateIndexTo2_1(indexName: String)(implicit ec: ExecutionContext, client: Client): Future[_] = {
-    closeIndex(indexName)
-      .flatMap { _ =>
-        client.admin().indices()
-          .prepareUpdateSettings(indexName)
-          .setSettings(getIndexSettingsV2_1.string())
-          .execute()
-      } flatMap { _ =>
+  def updateIndex2_1To2_2(indexName: String)(implicit ec: ExecutionContext, client: Client) = {
+    updateIndex(indexName)( getIndexSettingsV2_2.string() )
+  }
+
+  /**
+   * Обновление сеттингов индекса.
+   * @param indexName Название обновляемого индекса.
+   * @param settings Генератор обновленных сеттингов.
+   * @return Фьючерс.
+   */
+  def updateIndex(indexName: String)(settings: => String)
+                 (implicit ec: ExecutionContext, client: Client): Future[UpdateSettingsResponse] = {
+    // Закрываем индекс...
+    val closeFut = closeIndex(indexName)
+    // Заливаем изменения сеттингов.
+    val updateFut = closeFut.flatMap { _ =>
+      client.admin()
+        .indices()
+        .prepareUpdateSettings(indexName)
+        .setSettings( settings )
+        .execute()
+    }
+    // Переоткрыть индекс, когда всё будет сделано.
+    val reOpenFut = updateFut
+      // Подавляем все возможные ошибки.
+      .recoverWith { case ex =>
+        null
+      }
+      .flatMap { updateResp =>
         openIndex(indexName)
       }
+    // Сформировать результат фьючерса, дождавшись переоткрытия индекса.
+    for {
+      _     <- reOpenFut
+      resp  <- updateFut
+      if resp.isAcknowledged
+    } yield {
+      resp
+    }
   }
 
 
   /** Генератор мульти-полей title и contentText для маппинга страниц. Helper для getPageMapping(). */
-  private def multiFieldFtsNgram(name:String, boostFts:Float, boostNGram:Float) = {
-    new OldFieldMultiField(name, fields = Seq(
-      FieldString(
-        id = name,
-        include_in_all = true,
-        index = FieldIndexingVariants.no,
-        boost = Some(boostFts)
-      ),
-      FieldString(
-        id = "gram",
-        index = FieldIndexingVariants.analyzed,
-        index_analyzer = EDGE_NGRAM_AN_2,
-        search_analyzer = MINIMAL_AN,
-        term_vector = TermVectorVariants.with_positions_offsets,
-        boost = Some(boostNGram),
-        include_in_all = false
+  private def multiFieldFtsNgram(name: String, boostFts: Float, boostNGram: Float) = {
+    FieldString(
+      id = name,
+      include_in_all  = true,
+      index           = FieldIndexingVariants.no,
+      boost           = Some(boostFts),
+      fields = Seq(
+        FieldString(
+          id              = SUBFIELD_ENGRAM,
+          index           = FieldIndexingVariants.analyzed,
+          index_analyzer  = EDGE_NGRAM_AN_2,
+          search_analyzer = MINIMAL_AN,
+          term_vector     = TermVectorVariants.with_positions_offsets,
+          boost           = Some(boostNGram),
+          include_in_all  = false
+        )
       )
-    ))
+    )
   }
 
 
@@ -415,9 +514,9 @@ object SioEsUtil extends MacroLogsImpl {
    * Маппинг для страниц, подлежащих индексированию.
    * @return
    */
-  def getPageMapping(typeName:String, compressSource:Boolean=true) = {
+  def getPageMapping(typeName: String, compressSource: Boolean = true) = {
     jsonGenerator { implicit b =>
-      new IndexMapping(
+      IndexMapping(
         typ = typeName,
 
         staticFields = Seq(
@@ -504,7 +603,7 @@ object DocFieldTypes extends Enumeration {
 // Далее идут классы JSON-DSL-генераторы для упрощения написания всяких вещей.
 
 trait Renderable {
-  def builder(implicit b:XContentBuilder) : XContentBuilder
+  def builder(implicit b: XContentBuilder) : XContentBuilder
 }
 
 // Классы-записи
@@ -594,7 +693,7 @@ trait TypedJsonObject extends JsonObject {
 
 // Анализаторы ---------------------------------------------------------------------------------------------------------
 trait Analyzer extends TypedJsonObject
-case class AnalyzerCustom(
+case class CustomAnalyzer(
   id : String,
   charFilters: Seq[String] = Nil,
   tokenizer: String,
@@ -662,6 +761,26 @@ case class NGramTokenizer(
   }
 }
 
+
+/**
+ * Keyword tokenizer, т.е. отсутствие токенизации как таковой.
+ * @see [[https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-keyword-tokenizer.html]]
+ */
+case class KeyWordTokenizer(
+  id          : String,
+  bufferSize  : Int = -1
+) extends Tokenizer {
+
+  override def typ = "keyword"
+
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
+    super.fieldsBuilder
+    if (bufferSize > 0) {
+      b.field("buffer_size", bufferSize)
+    }
+  }
+}
+
 // END токенизаторы ----------------------------------------------------------------------------------------------------
 
 
@@ -718,8 +837,19 @@ case class FilterStemmer(
 }
 
 /** Фильтр lowercase. */
-case class FilterLowercase(id : String) extends Filter{
+case class FilterLowercase(id: String) extends Filter {
   override def typ = "lowercase"
+}
+
+/** Token-фильтр length для высеивания токенов с символьной длиной в заданном интервале длин. */
+case class FilterLength(id: String,  min: Int = 0,  max: Int = Int.MaxValue) extends Filter {
+  override def typ = "length"
+
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
+    super.fieldsBuilder
+    b.field("min", min)
+    b.field("max", max)
+  }
 }
 
 /** Фильтр standard. */
@@ -869,9 +999,10 @@ case class FieldString(
   index_analyzer : String = null,
   search_analyzer : String = null,
   ignore_above : Option[Boolean] = None,
-  position_offset_gap : Option[Int] = None
+  position_offset_gap : Option[Int] = None,
+  override val fields: Traversable[DocField] = Nil
 
-) extends DocFieldIndexable with TextField {
+) extends DocFieldIndexable with TextField with MultiFieldT {
 
   override def fieldType = DocFieldTypes.string
 
@@ -917,8 +1048,9 @@ case class FieldNumber(
   boost : Option[Float] = None,
   null_value : String = null,
   precision_step : Option[Int] = None,
-  ignore_malformed : Option[Boolean] = None
-) extends FieldApprox
+  ignore_malformed : Option[Boolean] = None,
+  fields: Traversable[DocField] = Nil
+) extends FieldApprox with MultiFieldT
 
 
 /** Поле с датой. */
@@ -1065,7 +1197,7 @@ case class FieldRouting(
 
 
 /** Трейт для сборки multi-поля. В новом синтаксисе ElasticSearch, это должно примешиваться
-  * к конкретной реализации поля: new StringField(...) with MultiFieldT {...}. */
+  * к конкретной реализации поля: new FieldString(...) with MultiFieldT {...}. */
 trait MultiFieldT extends JsonObject {
   def fields: TraversableOnce[JsonObject]
 
@@ -1079,11 +1211,6 @@ trait MultiFieldT extends JsonObject {
   }
 }
 
-
-/** Мультиполе multi_field. */
-case class OldFieldMultiField(id: String, fields: Seq[JsonObject]) extends DocField with MultiFieldT {
-  override def fieldType = DocFieldTypes.multi_field
-}
 
 trait FieldWithProperties extends Field {
   def properties: Seq[DocField]

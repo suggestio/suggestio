@@ -1,8 +1,6 @@
 package io.suggest.util
 
 import org.elasticsearch.index.mapper.internal._
-import cascading.tuple.Fields
-import scala.concurrent.duration._
 
 /**
  * Suggest.io
@@ -14,15 +12,15 @@ import scala.concurrent.duration._
 object SioConstants {
 
   // Имена полей, используемых в sio-маппингах
-  val FIELD_URL           = "url"
-  val FIELD_LANGUAGE      = "lang"
-  val FIELD_TITLE         = "title"
-  val FIELD_CONTENT_TEXT  = "contentText"
-  val FIELD_IMAGE_ID      = "imageId"
-  val FIELD_DATE_KILOSEC  = "dateKs"
-  val FIELD_DATE          = "date"
-  val FIELD_PAGE_TAGS     = "pageTags"
-  val FIELD_DKEY          = "dkey"
+  def FIELD_URL           = "url"
+  def FIELD_LANGUAGE      = "lang"
+  def FIELD_TITLE         = "title"
+  def FIELD_CONTENT_TEXT  = "contentText"
+  def FIELD_IMAGE_ID      = "imageId"
+  def FIELD_DATE_KILOSEC  = "dateKs"
+  def FIELD_DATE          = "date"
+  def FIELD_PAGE_TAGS     = "pageTags"
+  def FIELD_DKEY          = "dkey"
 
   // Имена системных полей, все в одном месте.
   def FIELD_ALL           = AllFieldMapper.NAME
@@ -36,39 +34,39 @@ object SioConstants {
   def FIELD_VERSION       = VersionFieldMapper.NAME
   def FIELD_PARENT        = ParentFieldMapper.NAME
 
-  val CURRENCY_CODE_DFLT  = "RUB"
+  def CURRENCY_CODE_DFLT  = "RUB"
 
   // Названия анализаторов. А зачем они тут, если относятся только к SioEsUtil?
   /** Минимальный анализатор, без излишеств. */
-  val MINIMAL_AN    = "aMinimal"
+  def MINIMAL_AN    = "aMinimal"
 
   /** Делает n-граммы с первой буквы. */
-  val EDGE_NGRAM_AN_1 = "aEdgeNgram1"
+  def EDGE_NGRAM_AN_1 = "aEdgeNgram1"
 
   /** Делает n-граммы со второй буквы. */
-  val EDGE_NGRAM_AN_2 = "aEdgeNgram2"
+  def EDGE_NGRAM_AN_2 = "aEdgeNgram2"
 
   /** Дробит тексты и слова для обычной индексации. */
-  val FTS_RU_AN       = "aFtsRu"
+  def FTS_RU_AN       = "aFtsRu"
 
   /** deep ngram: дробить на ngram'мы по максимуму. Полезно для списка комбинируемых флагов. */
-  val DEEP_NGRAM_AN   = "deepNgram"
+  def DEEP_NGRAM_AN   = "deepNgram"
+
+  /** keyword tokenizer */
+  def KEYWORD_TN      = "kw"
+
+  /** analyzer для тегов узлов ADN. */
+  def TAG_AN          = "tag"
+
+  /** id дефолтового анализатора. */
+  def DFLT_AN         = "default"
 
 
   //v1: Суффиксы multi-полей
-  val SUBFIELD_ENGRAM     = "gram"
-  val SUBFIELD_FTS        = "fts"
+  def SUBFIELD_ENGRAM     = "gram"
+  def SUBFIELD_FTS        = "fts"
 
   //v1: Дата храниться в виде инстанта. Нужно убирать лишние нули.
-  val DATE_INSTANT_ZEROES = 1000000
-
-  // Имя директории в папке домена, в которой сохраняются картинки, нагенеренные кравлером.
-  val THUMBS_SUBDIR       = "thumbs"
-
-  // Конфиги всякие лежат в субдиректориях с таким названием
-  val CONF_SUBDIR         = "conf"
-
-  // Время жизни рядов qi, создаваемых в базе на веб-морде.
-  val DOMAIN_QI_TTL_SECONDS: Int = MyConfig.CONFIG.getInt("domain.qi.ttl.seconds") getOrElse 5.hours.toSeconds.toInt
+  def DATE_INSTANT_ZEROES = 1000000
 
 }
