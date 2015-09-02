@@ -64,6 +64,9 @@ object ScConstants {
 
     /** Имя виртуального css-класса для логотипов в заголовоках. */
     def HDR_LOGO_DIV_CLASS = "js-hdr-logo"
+
+    /** id контейнера логотипа. Рендерится не всегда. */
+    def LOGO_CONT_ID       = "smHdrNodeLogo"
   }
 
 
