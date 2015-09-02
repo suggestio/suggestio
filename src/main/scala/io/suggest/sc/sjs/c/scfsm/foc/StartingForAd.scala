@@ -5,6 +5,7 @@ import io.suggest.sc.sjs.c.scfsm.{FindNearAdIds, FindAdsUtil}
 import io.suggest.sc.sjs.m.mfoc.{FAdShown, MFocSd, FocRootAppeared}
 import io.suggest.sc.sjs.m.msrv.foc.find.{MFocAd, MFocAds, MFocAdSearchEmpty}
 import io.suggest.sc.sjs.m.msrv.index.MNodeIndex
+import io.suggest.sc.sjs.vm.layout.FsLoader
 import io.suggest.sc.sjs.vm.res.FocusedRes
 import io.suggest.sc.sjs.vm.foc.fad.FAdRoot
 import io.suggest.sc.sjs.vm.foc.{FCarousel, FControls, FRoot}
@@ -68,6 +69,11 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
           override def openIndexAdId = currMadIdOpt
         }
         val fadsFut = MFocAds.findOrIndex(args)
+
+        // Запрос запущен, пора бы отобразить loader
+        for (fsl <- FsLoader.find()) {
+          fsl.show()
+        }
 
         // Скрыть за экран корневой focused-контейнер, подготовиться к появлению на экране.
         fRoot.disableTransition()
@@ -231,6 +237,9 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
       for (car <- FCarousel.find()) {
         car.enableTransition()
         car.willAnimate()
+      }
+      for (fsl <- FsLoader.find()) {
+        fsl.hide()
       }
       become(_focReadyState)
     }
