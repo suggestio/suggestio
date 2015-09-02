@@ -66,21 +66,21 @@ trait OnFocusBase extends MouseMoving {
       super._onKbdKeyUp(event)
       val c = event.keyCode
       // ESC должен закрывать выдачу.
-      if (c == KeyCode.escape)
+      if (c == KeyCode.Escape)
         _closeFocused()
       // Клавиатурные стрелки влево-вправо должны переключать карточки в соотв. направлениях.
-      else if (c == KeyCode.right)
+      else if (c == KeyCode.Right)
         _kbdShifting( MHands.Right, _shiftRightState )
-      else if (c == KeyCode.left)
+      else if (c == KeyCode.Left)
         _kbdShifting( MHands.Left, _shiftLeftState )
       // TODO Скроллинг должен быть непрерывным. Сейчас он срабатывает только при отжатии клавиатурных кнопок скролла.
-      else if (c == KeyCode.down)
+      else if (c == KeyCode.Down)
         _kbdScroll( KBD_SCROLL_STEP_PX )
-      else if (c == KeyCode.up)
+      else if (c == KeyCode.Up)
         _kbdScroll( -KBD_SCROLL_STEP_PX )
-      else if (c == KeyCode.pageDown)
+      else if (c == KeyCode.PageDown)
         _kbdScroll( screenH )
-      else if (c == KeyCode.pageUp)
+      else if (c == KeyCode.PageUp)
         _kbdScroll( -screenH )
     }
 

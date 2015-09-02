@@ -6,10 +6,10 @@ import io.suggest.sc.sjs.m.msearch._
 import io.suggest.sc.sjs.vm.hdr.HRoot
 import io.suggest.sc.sjs.vm.search.SRoot
 import io.suggest.sc.sjs.vm.search.fts.{SInputContainer, SInput}
+import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.util.ISjsLogger
 import org.scalajs.dom
 import org.scalajs.dom.ext.KeyCode
-import org.scalajs.dom.raw.HTMLInputElement
 import org.scalajs.dom.{FocusEvent, KeyboardEvent}
 import io.suggest.sc.ScConstants.Search.Fts.START_TIMEOUT_MS
 
@@ -60,7 +60,7 @@ trait OnGridSearch extends OnGrid with ISjsLogger {
     override def _onKbdKeyUp(event: KeyboardEvent): Unit = {
       super._onKbdKeyUp(event)
       // по ESC надо закрывать вкладку
-      if (event.keyCode == KeyCode.escape) {
+      if (event.keyCode == KeyCode.Escape) {
         _hideSearch()
       }
     }
@@ -146,7 +146,7 @@ trait OnGridSearch extends OnGrid with ISjsLogger {
       val sd0: SD = {
         val sd00 = _stateData
         sd00.search.ftsSearch.fold {
-          warn("W8923")
+          warn( WarnMsgs.FTS_SD_MISSING )
           __initSdFts(sd00)
         } { _ =>
           sd00
@@ -226,7 +226,7 @@ trait OnGridSearchGeo extends OnGridSearch {
 
     override protected def _ftsLetsStartRequest(): Unit = {
       // TODO Искать "места" по названиям и другим вещам.
-      warn("NYI " + getClass.getSimpleName)
+      warn( WarnMsgs.NOT_YET_IMPLEMENTED + " " + getClass.getSimpleName )
     }
   }
 }

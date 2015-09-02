@@ -40,7 +40,7 @@ trait OnGridNav extends OnGrid with ISjsLogger {
 
     override def _onKbdKeyUp(event: KeyboardEvent): Unit = {
       super._onKbdKeyUp(event)
-      if (event.keyCode == KeyCode.escape)
+      if (event.keyCode == KeyCode.Escape)
         _hideNav()
     }
 
