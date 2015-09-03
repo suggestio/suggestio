@@ -39,4 +39,23 @@ object AdFormConstants {
 
   def AD_BG_COLOR_ID                = "adBgColor"
 
+
+  /** Контейнер констант для редактора тегов. */
+  object Tags {
+
+    /** id контейнера уже созданных тегов. */
+    def EXIST_TAGS_CONT_ID          = "tagsExistCont"
+
+    /** id контейнера с инпутами для добавления нового тега. */
+    def ADD_FORM_ID                 = "tagsAddForm"
+
+    /** id инпута для ввода имени нового тега. */
+    def ADD_NAME_INPUT_ID           = "tagAddNameInput"
+
+    /** id кнопки добавления нового тега. */
+    def ADD_BTN_ID                  = "tagAddBtn"
+
+  }
+
+
 }
