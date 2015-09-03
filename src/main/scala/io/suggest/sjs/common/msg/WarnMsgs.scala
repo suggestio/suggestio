@@ -22,4 +22,6 @@ object WarnMsgs extends MsgsStaticT {
 
   def FTS_SD_MISSING            = E(5)
 
+  def BACK_TO_UNDEFINED_NODE    = E(6)
+
 }
