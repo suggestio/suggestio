@@ -79,8 +79,11 @@ object Global extends WithFilters(new HtmlCompressFilter, new DumpXffHeaders, Se
   }
 
 
-  /** Проинициализировать все ES-модели и основной индекс. */
-  def initializeEsModels(tried21: Boolean = false)(implicit client: Client): Future[_] = {
+  /**
+   * Проинициализировать все ES-модели и основной индекс.
+   * @param triedIndexUpdate Флаг того, была ли уже попытка обновления индекса на последнюю версию.
+   */
+  def initializeEsModels(triedIndexUpdate: Boolean = false)(implicit client: Client): Future[_] = {
     val esModels = SiowebEsModel.ES_MODELS
     val futInx = EsModel.ensureEsModelsIndices(esModels)
     val logPrefix = "initializeEsModels(): "
@@ -95,12 +98,12 @@ object Global extends WithFilters(new HtmlCompressFilter, new DumpXffHeaders, Se
       case Success(_)  => info(logPrefix + "Finishied successfully.")
       case Failure(ex) => error(logPrefix + "Failure", ex)
     }
-    // TODO 2014.aug.25: Снести этот код потом, когда мастер будет обновлён.
+    // Это код обновления на следующую версию. Его можно держать и после обновления.
     futMappings recoverWith {
-      case ex: MapperException if !tried21 =>
+      case ex: MapperException if !triedIndexUpdate =>
         info("Trying to update main index to v2.1 settings...")
         SioEsUtil.updateIndex2_1To2_2(EsModel.DFLT_INDEX) flatMap { _ =>
-          initializeEsModels(tried21 = true)
+          initializeEsModels(triedIndexUpdate = true)
         }
     }
     futMappings
