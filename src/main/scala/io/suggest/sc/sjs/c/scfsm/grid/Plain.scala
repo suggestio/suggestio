@@ -3,7 +3,9 @@ package io.suggest.sc.sjs.c.scfsm.grid
 import io.suggest.sc.sjs.m.mhdr.{PrevNodeBtnClick, ShowNavClick, ShowSearchClick}
 import io.suggest.sc.sjs.vm.hdr.HRoot
 import io.suggest.sc.sjs.vm.hdr.btns.HNodePrev
+import io.suggest.sc.sjs.vm.layout.FsLoader
 import io.suggest.sc.sjs.vm.search.SRoot
+import io.suggest.sjs.common.msg.WarnMsgs
 import org.scalajs.dom.Event
 
 /** Аддон для поддержки состояния "голая плитка" без открытых панелей, карточек и прочего. */
@@ -71,7 +73,11 @@ trait Plain extends OnGrid {
     /** Реакция на клик по кнопке возврата на предыдущий узел.
       * Надо извлечь id узла из кнопки и выполнить переход в выдачу указанного узла. */
     protected def _goToPrevNodeClick(event: Event): Unit = {
-      Option( event.currentTarget )
+      val fslOpt = FsLoader.find()
+      for (fsl <- fslOpt) {
+        fsl.show()
+      }
+      val btnOpt = Option( event.currentTarget )
         // TODO Нужно обезопаситься от неожиданного элемента в currentTarget.
         .map { el =>
           HNodePrev( el.asInstanceOf[HNodePrev.Dom_t] )
@@ -79,10 +85,16 @@ trait Plain extends OnGrid {
         .orElse {
           HNodePrev.find()
         }
-        .foreach { btn =>
+      btnOpt match {
+        case Some(btn) =>
           val sd1 = _stateData.withNodeSwitch( btn.adnId )
           become(_onNodeSwitchState, sd1)
-        }
+        case None =>
+          for (fsl <- fslOpt) {
+            fsl.hide()
+          }
+          warn(WarnMsgs.BACK_TO_UNDEFINED_NODE)
+      }
     }
 
   }
