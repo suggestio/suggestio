@@ -456,7 +456,7 @@ object SioEsUtil extends MacroLogsImpl {
    * @param settings Генератор обновленных сеттингов.
    * @return Фьючерс.
    */
-  def updateIndex(indexName: String)(settings: => String)
+  def updateIndex(indexName: String)(settings: String)
                  (implicit ec: ExecutionContext, client: Client): Future[UpdateSettingsResponse] = {
     // Закрываем индекс...
     val closeFut = closeIndex(indexName)
@@ -472,6 +472,7 @@ object SioEsUtil extends MacroLogsImpl {
     val reOpenFut = updateFut
       // Подавляем все возможные ошибки.
       .recoverWith { case ex =>
+        error("Failed to update index [" + indexName + "] with settings:\n" + settings, ex)
         null
       }
       .flatMap { updateResp =>
@@ -1197,8 +1198,8 @@ case class FieldRouting(
 
 
 /** Трейт для сборки multi-поля. В новом синтаксисе ElasticSearch, это должно примешиваться
-  * к конкретной реализации поля: new FieldString(...) with MultiFieldT {...}. */
-trait MultiFieldT extends JsonObject {
+  * к полям, в FieldString например. */
+sealed trait MultiFieldT extends JsonObject {
   def fields: TraversableOnce[JsonObject]
 
   override def fieldsBuilder(implicit b: XContentBuilder): Unit = {

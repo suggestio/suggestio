@@ -1,12 +1,14 @@
 package io.suggest.ym.model.ad
 
+import io.suggest.ym.model.tag.search.{WithAllTagsWrapper, WithAllTagsDflt, WithAllTags}
+
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import io.suggest.ym.model.common._
 
 /** Интерфейс для передачи параметров поиска объявлений в индексе/типе. */
 trait AdsSearchArgsT extends DynSearchArgs with TextQueryDsa with ReceiversDsa with ProducerIdsDsa with UserCatIdDsa
-with GenerationSortDsa with WithoutIdsDsa with ReceiversDsaOnlyPublishedByDefault {
+with GenerationSortDsa with WithoutIdsDsa with ReceiversDsaOnlyPublishedByDefault with WithAllTags {
 
   override def generationSortingEnabled = qOpt.isEmpty
 
@@ -15,14 +17,14 @@ with GenerationSortDsa with WithoutIdsDsa with ReceiversDsaOnlyPublishedByDefaul
 
 /** Дефолтовые значения аргументов поиска рекламных карточек. */
 trait AdsSearchArgsDflt extends AdsSearchArgsT with DynSearchArgsDflt with TextQueryDsaDflt with ReceiversDsaDflt
-with ProducerIdsDsaDflt with UserCatIdDsaDflt with GenerationSortDsaDflt with WithoutIdsDsaDflt
+with ProducerIdsDsaDflt with UserCatIdDsaDflt with GenerationSortDsaDflt with WithoutIdsDsaDflt with WithAllTagsDflt
 
 
 
 /** Враппер для аргументов поиска рекламных карточек. */
 trait AdsSearchArgsWrapper extends AdsSearchArgsT with DynSearchArgsWrapper with TextQueryDsaWrapper
 with ReceiversDsaWrapper with ProducerIdsDsaWrapper with UserCatIdDsaWrapper with GenerationSortDsaWrapper
-with WithoutIdsDsaWrapper {
+with WithoutIdsDsaWrapper with WithAllTagsWrapper {
   override type WT <: AdsSearchArgsT
 }
 

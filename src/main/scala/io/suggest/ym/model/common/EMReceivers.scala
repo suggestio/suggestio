@@ -28,7 +28,7 @@ import org.elasticsearch.search.aggregations.bucket.terms.Terms
  * Т.е. ресиверы ("приёмники") - это адресаты рекламных карточек.
  */
 
-object EMReceivers {
+object EMReceivers extends PrefixedFn {
 
   type Receivers_t = Map[String, AdReceiverInfo]
 
@@ -38,12 +38,10 @@ object EMReceivers {
   /** Поле, содержащее уровни отображения карточки на всех синках. */
   val SLS_ESFN         = "sls"
 
+  override protected def _PARENT_FN = RECEIVERS_ESFN
 
-  // Полные имена полей (используются при составлении поисковых запросов).
-  private def fullFN(fn: String) = RECEIVERS_ESFN + "." + fn
-
-  def RCVRS_RECEIVER_ID_ESFN  = fullFN(RECEIVER_ID_ESFN)
-  def RCVRS_SLS_ESFN          = fullFN(SLS_ESFN)
+  def RCVRS_RECEIVER_ID_ESFN  = _fullFn(RECEIVER_ID_ESFN)
+  def RCVRS_SLS_ESFN          = _fullFn(SLS_ESFN)
 
 
   /** Собрать аггрегатор для сбора receivers.receiverId. */
@@ -387,10 +385,10 @@ trait ReceiversDsa extends DynSearchArgs {
 
 }
 trait ReceiversDsaDflt extends ReceiversDsa {
-  override def receiverIds    : Seq[String] = Seq.empty
-  override def levels         : Seq[SlNameTokenStr] = Seq.empty
-  override def anyReceiverId  : Option[Boolean] = None
-  override def anyLevel       : Option[Boolean] = None
+  override def receiverIds    : Seq[String]           = Nil
+  override def levels         : Seq[SlNameTokenStr]   = Nil
+  override def anyReceiverId  : Option[Boolean]       = None
+  override def anyLevel       : Option[Boolean]       = None
 }
 trait ReceiversDsaWrapper extends ReceiversDsa with DynSearchArgsWrapper {
   override type WT <: ReceiversDsa
