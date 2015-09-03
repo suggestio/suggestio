@@ -11,7 +11,7 @@ import org.apache.commons.lang3.StringEscapeUtils
 import org.elasticsearch.common.unit.DistanceUnit
 import play.api.data.Forms._
 import java.net.{MalformedURLException, URL}
-import io.suggest.util.{UuidUtil, JacksonWrapper, DateParseUtil, UrlUtil}
+import io.suggest.util.{UuidUtil, DateParseUtil, UrlUtil}
 import gnu.inet.encoding.IDNA
 import HtmlSanitizer._
 import play.api.data.Mapping
@@ -21,12 +21,7 @@ import org.joda.time.format.ISOPeriodFormat
 import models._
 import org.postgresql.util.PGInterval
 import java.sql.SQLException
-import java.io._
-import java.util.zip.{GZIPInputStream, GZIPOutputStream}
-import org.apache.commons.codec.binary.{Base64InputStream, Base64OutputStream}
 import play.api.i18n.Lang
-import play.api.Play.current
-import scala.collection.GenTraversableOnce
 import java.util.Currency
 
 /**

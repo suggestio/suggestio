@@ -17,17 +17,14 @@
     @af.globalError
   *@
 
-  @lk.lkBlockNewDesign( cssClass = "__ad-editor" ) {
-    @messages("Choose.category")
-  } {
+  @_edLkBlkTpl( messages("Choose.category") ) {
     @_adFormCatSelectorsTpl(mmcats, af)
   }
 
+  @_tagsTpl(af)
 
   @* Для блока : превьюшка + редактор *@
-  @lk.lkBlockNewDesign( cssClass = "__ad-editor" ) {
-    @messages("Ad.layout")
-  } {
+  @_edLkBlkTpl( messages("Ad.layout") ) {
 
     @* Форма редактирования блока *@
     <div class="lk-ad-block-edit-form">
@@ -67,21 +64,19 @@
 
 
   @* HTML-редактор для ввода текстового описания. *@
-  @lk.lkBlockNewDesign( cssClass="__ad-editor" ) {
-    @messages("Description")
-  } {
+  @_edLkBlkTpl( messages("Description") ) {
 
     <table class="input-w __size-L tinymce" id="adFormDescriptionTable">
       <tr>
-	<td>
-	  @* Селектор цвета фона ad description. *@
-	  @_selectColorTpl(
-	    af("ad.descr.bgColor"),
-	    label     = messages("Bg.color")
-	  )
-	  @* Контейнер для палитры цветов, предлагаемых сервером через ws. *@
-	  <div id="@COLORS_DIV_ID" class="color-block_lst"></div>
-	</td>
+        <td>
+          @* Селектор цвета фона ad description. *@
+          @_selectColorTpl(
+            af("ad.descr.bgColor"),
+            label     = messages("Bg.color")
+          )
+          @* Контейнер для палитры цветов, предлагаемых сервером через ws. *@
+          <div id="@COLORS_DIV_ID" class="color-block_lst"></div>
+        </td>
 
         @* Поля для ввода содержимого description *@
         <td class="input-w_tinymce-editor">
@@ -99,7 +94,6 @@
   @* Режим формы (тип рекламного оффера). Должен переключаться при переключении вкладки.
      TODO Режимы были упраздены, по факту остался только один редактор. Нужно аккуратно выпилить это отовсюду. *@
   <input id="ad-mode" type="hidden" name="ad.offer.mode" value="@AdOfferTypes.BLOCK"/>
-
 
 }
 

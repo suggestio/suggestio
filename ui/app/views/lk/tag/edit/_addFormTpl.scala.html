@@ -1,0 +1,13 @@
+@()(implicit ctx: Context)
+
+@import io.suggest.ad.form.AdFormConstants.Tags._
+@import helper._
+@import ctx.messages
+
+@* js-only форма с поддержкой создания нового тега: input для ввода текста и кнопка добавления.
+   Форма не умеет самбиттиться, её полностью обслуживает js. *@
+
+<div id="@ADD_FORM_ID">
+  <input type="text" id="@ADD_NAME_INPUT_ID" value="" />
+  <input type="submit" id="@ADD_BTN_ID" value="@messages("Create")" />
+</div>

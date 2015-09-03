@@ -1,0 +1,23 @@
+@(fm: Form[_], fprefix: Option[String])(implicit ctx: Context)
+
+@* Редактируемый div одного тега.
+   fm -- маппинг какой-от формы, содержащей маппинги теги.
+   fprefix -- префикс имён полей в маппинге. *@
+
+@import ctx.messages
+
+@defining( fprefix.fold("")(_ + ".")) { fprefix1 =>
+@defining( fm(fprefix1 + "id")) { idField =>
+
+  <div class="tag-editable">
+    <input type="hidden" name="@idField.name" value="@idField.value" />
+
+    @fm(fprefix1 + "raw").value
+
+    <span class="js-tag-delete" title="@messages("Delete")">
+      [x]
+    </span>
+  </div>
+
+}
+}

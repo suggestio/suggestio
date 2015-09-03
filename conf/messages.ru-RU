@@ -622,3 +622,6 @@ Image=Изображение
 Background=Фон
 Foreground=Передний план
 
+Tags=Теги
+e.tag.len.min=Слишком короткий тег.
+e.tag.len.max=Слишком длинный тег.

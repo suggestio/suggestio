@@ -158,7 +158,7 @@ object MarketAdFormUtil {
     { Coords2D.apply }
     { Coords2D.unapply }
   }
-  val coords2DOptM: Mapping[Option[Coords2D]] = optional(coords2DM)
+  def coords2DOptM: Mapping[Option[Coords2D]] = optional(coords2DM)
 
 
   /** Маппим строковое поле с настройками шрифта. */
@@ -230,11 +230,65 @@ object MarketAdFormUtil {
     }
   }
 
+  /** Максимальная символьная длина одного тега. */
+  def TAG_LEN_MAX = 40
+  /** Минимальная символьная длина одного тега. */
+  def TAG_LEN_MIN = 1
+
+  /** Маппинг для одного тега. */
+  def tagM: Mapping[MNodeTag] = {
+    val minLen = TAG_LEN_MIN
+    val maxLen = TAG_LEN_MAX
+    val _net = nonEmptyText(minLength = minLen,  maxLength = maxLen*2)
+
+    val tNameM = _net
+      // Срезать знаки препинания, все \s+ заменить на одиночные пробелы.
+      .transform[String](
+        {s =>
+          stripHtml(s)
+            .replaceAll("(?U)([^\\w\\s]|_)", " ")
+            // Убрать двойные пробелы, табуляции и т.д.
+            .replaceAll("\\s+", " ")
+            .trim()
+          // Регистр сохраняем исходный. Это нужно для FTS-токенизации в случае склееных слов.
+        },
+        strIdentityF
+      )
+      .verifying("e.tag.len.max", _.length <= maxLen)
+      .verifying("e.tag.len.min", _.length >= minLen)
+
+    val tIdM = tNameM
+      .transform[String](_.toLowerCase, strIdentityF)
+
+    mapping(
+      "id"  -> tIdM,
+      "raw" -> tNameM
+    )
+    { MNodeTag.apply }
+    { MNodeTag.unapply }
+  }
+
+  /** Маппинг для множественных значений поля тегов. */
+  def tagsMapM: Mapping[TagsMap_t] = {
+    list(tagM)
+      .transform [TagsMap_t] (
+        {tags =>
+          tags.iterator
+            .map { t => t.id -> t }
+            .toMap
+        },
+        {tagsMap =>
+          tagsMap.valuesIterator.toList
+            .sortBy(_.id)
+        }
+      )
+  }
+
 
   /** apply-функция для формы добавления/редактировать рекламной карточки.
     * Вынесена за пределы генератора ad-маппингов во избежание многократного создания в памяти экземпляров функции. */
   def adFormApply(userCatId: Set[String], bmr: BlockMapperResult, pattern: Option[String],
-                  richDescrOpt: Option[RichDescr], bgColor: String): AdFormMResult = {
+                  richDescrOpt: Option[RichDescr], bgColor: String, tags: TagsMap_t): AdFormMResult = {
     val colors: Map[String, String] = {
       // Чтобы немного сэкономить ресурсов на добавлении цветов, используем склеивание итераторов и генерацию финальной мапы.
       var ci = bmr.bd.colors.iterator
@@ -250,24 +304,26 @@ object MarketAdFormUtil {
       colors      = colors,
       imgs        = null,
       userCatId   = userCatId,
-      richDescrOpt = richDescrOpt
+      richDescrOpt = richDescrOpt,
+      tags        = tags
     )
     mad -> bmr.bim
   }
 
   /** Функция разборки для маппинга формы добавления/редактирования рекламной карточки. */
-  def adFormUnapply(applied: AdFormMResult): Option[(Set[String], BlockMapperResult, Option[String], Option[RichDescr], String)] = {
+  def adFormUnapply(applied: AdFormMResult): Option[(Set[String], BlockMapperResult, Option[String], Option[RichDescr], String, TagsMap_t)] = {
     val mad = applied._1
     val bmr = BlockMapperResult(mad, applied._2)
     val pattern = mad.colors.get(AdColorFns.WIDE_IMG_PATTERN_COLOR_FN.name)
     import AdColorFns._
     val bgColor = mad.colors.getOrElse(IMG_BG_COLOR_FN.name, IMG_BG_COLOR_FN.default)
-    Some( (mad.userCatId, bmr, pattern, mad.richDescrOpt, bgColor) )
+    Some( (mad.userCatId, bmr, pattern, mad.richDescrOpt, bgColor, mad.tags) )
   }
 
-  val AD_K      = "ad"
-  val CAT_ID_K  = "catId"
-  val OFFER_K   = "offer"
+  def AD_K      = "ad"
+  def CAT_ID_K  = "catId"
+  def OFFER_K   = "offer"
+  def TAGS_K    = "tags"
 
   /**
    * Сборщик форм произвольного назначения для парсинга реквестов с данными рекламной карточки.
@@ -282,7 +338,8 @@ object MarketAdFormUtil {
         OFFER_K     -> blockM,
         "pattern"   -> coveringPatternM,
         "descr"     -> richDescrOptM,
-        "bgColor"   -> colorM
+        "bgColor"   -> colorM,
+        TAGS_K      -> tagsMapM
       )(adFormApply)(adFormUnapply)
     )
   }

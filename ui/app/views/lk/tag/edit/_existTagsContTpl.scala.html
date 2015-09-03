@@ -1,0 +1,9 @@
+@(attrs: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@* Контейнер со списком уже существующих тегов. *@
+
+@import io.suggest.ad.form.AdFormConstants.Tags._
+
+<div id="@EXIST_TAGS_CONT_ID" @attrs>
+  @content
+</div>

@@ -609,3 +609,6 @@ Please.close.this.wnd.if.not.closed.auto=Please, close this window, if it not cl
 e.sz.mult.too.low=Size multiplifier is too low.
 e.sz.mult.too.high=Size multiplifier is too high.
 
+Tags=Tags
+e.tag.len.min=Tag too short.
+e.tag.len.max=Tag too long.

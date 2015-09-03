@@ -1,0 +1,24 @@
+@(af: AdFormM)(implicit ctx: Context)
+
+@* Блок для управления тегами. *@
+
+@import ctx.messages
+@import lk.tag.edit._
+@import controllers.ad.MarketAdFormUtil.{AD_K, TAGS_K}
+
+@_edLkBlkTpl( messages("Tags") ) {
+
+  @* js-форма добавления тегов. *@
+  @_addFormTpl()
+
+  @* Отображение имеющихся тегов. *@
+  @_existTagsContTpl() {
+
+    @defining( af(s"$AD_K.$TAGS_K") ) { tsField =>
+      @tsField.indexes.map { inx =>
+        @_oneTagTpl( af, Some(s"${tsField.name}[$inx]") )
+      }
+    }
+  }
+
+}
