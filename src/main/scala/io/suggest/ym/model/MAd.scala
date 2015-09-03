@@ -3,7 +3,7 @@ package io.suggest.ym.model
 import io.suggest.model._
 import com.fasterxml.jackson.annotation.JsonIgnore
 import io.suggest.util.SioEsUtil._
-import io.suggest.ym.model.tag.{EMTagsMut, MNodeTag, EMTagsStaticMut}
+import io.suggest.ym.model.tag.{TagsMap_t, EMTagsMut, MNodeTag, EMTagsStaticMut}
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import io.suggest.event._
@@ -98,27 +98,10 @@ object MAd
    * @param producerId id продьюсера.
    * @return Список MAd.
    */
-  override def findForProducerRt(producerId: String, maxResults: Int = MAX_RESULTS_DFLT)(implicit ec: ExecutionContext, client: Client): Future[List[MAd]] = {
+  override def findForProducerRt(producerId: String, maxResults: Int = MAX_RESULTS_DFLT)
+                                (implicit ec: ExecutionContext, client: Client): Future[List[MAd]] = {
     super.findForProducerRt(producerId, maxResults)
       .map { sortByDateCreated }
-  }
-
-
-  /**
-   * Собрать в кучу всех ресиверов у объяв, которые созданы указанным продьюсером
-   * @param producerId id продьюсера.
-   * @param maxResults Макс. кол-во результатов на выходе аггрегатора.
-   * @return Карта rcvrId -> docCount.
-   */
-  def findReceiverIdsForProducer(producerId: String, maxResults: Int = 0)(implicit ec: ExecutionContext, client: Client): Future[Map[String, Long]] = {
-    prepareSearch
-      .setQuery( EMProducerId.producerIdQuery(producerId) )
-      .addAggregation( EMReceivers.receiverIdsAgg )
-      .setSize(maxResults)
-      .execute()
-      .map { searchResp =>
-        EMReceivers.extractReceiverIdsAgg( searchResp.getAggregations )
-      }
   }
 
   /**
@@ -127,7 +110,8 @@ object MAd
    * @param maxResults макс.кол-во возвращаемых результатов.
    * @return Карта (rcvrId -> docCount), длина не превышает maxResults.
    */
-  def findProducerIdsForReceiver(rcvrId: String, maxResults: Int = 0)(implicit ec: ExecutionContext, client: Client): Future[Map[String, Long]] = {
+  def findProducerIdsForReceiver(rcvrId: String, maxResults: Int = 0)
+                                (implicit ec: ExecutionContext, client: Client): Future[Map[String, Long]] = {
     prepareSearch
       .setQuery( EMReceivers.receiverIdQuery(rcvrId) )
       .addAggregation(EMProducerId.producerIdAgg)
@@ -140,7 +124,8 @@ object MAd
 
   /** Сохранить все значения ресиверов со всех переданных карточек в хранилище модели.
     * Другие поля не будут обновляться. Для ускорения и некоторого подобия транзакционности делаем всё через bulk. */
-  override def updateAllReceivers(mads: Seq[T])(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+  override def updateAllReceivers(mads: Seq[T])
+                                 (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
     val resultFut = super.updateAllReceivers(mads)
     // В добавок к выполненным действиям нужно породить уведомление о сохранении:
     resultFut onSuccess { case _ =>
@@ -170,7 +155,7 @@ final case class MAd(
   var dateEdited    : Option[DateTime]    = None,
   var moderation    : ModerationInfo      = ModerationInfo.EMPTY,
   var alienRsc      : Boolean             = false,
-  var tags          : Map[String, MNodeTag] = Map.empty,
+  var tags          : TagsMap_t           = Map.empty,
   var versionOpt    : Option[Long]        = None
 )
   extends EsModelEmpty

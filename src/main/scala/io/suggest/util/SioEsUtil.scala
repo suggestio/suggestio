@@ -49,7 +49,6 @@ object SioEsUtil extends MacroLogsImpl {
   def LOWERCASE_FN  = "fLowercase"
   def STD_FN        = "fStd"
   def WORD_DELIM_FN = "fWordDelim"
-  def LENGTH40_FN   = "fLen40"
 
   def STD_TN        = "tStd"
   def DEEP_NGRAM_TN = "deepNgramTn"
@@ -333,21 +332,13 @@ object SioEsUtil extends MacroLogsImpl {
       id = KEYWORD_TN
     )
   }
-  
-  /** Спека для Length token filter, макс длина = 32. */
-  def _LENGTH40_TOKEN_FILTER: Filter = {
-    FilterLength(
-      id  = LENGTH40_FN,
-      max = 40
-    )
-  }
-  
+ 
   /** Спека для анализатора тегов. */
-  def _TAG_ANALYZER: Analyzer = {
+  def _KW_LC_ANALYZER: Analyzer = {
     CustomAnalyzer(
-      id        = TAG_AN,
+      id        = KW_LC_AN,
       tokenizer = KEYWORD_TN,
-      filters   = Seq(LOWERCASE_FN, LENGTH40_FN)
+      filters   = Seq(LOWERCASE_FN)
     )
   }
 
@@ -375,9 +366,7 @@ object SioEsUtil extends MacroLogsImpl {
           FilterStemmer(STEM_RU_FN, "russian"),
           FilterStemmer(STEM_EN_FN, "english"),
           FilterEdgeNgram(EDGE_NGRAM_FN_1, minGram = 1, maxGram = 10, side = "front"),
-          FilterEdgeNgram(EDGE_NGRAM_FN_2, minGram = 2, maxGram = 10, side = "front"),
-          // v2.2
-          _LENGTH40_TOKEN_FILTER
+          FilterEdgeNgram(EDGE_NGRAM_FN_2, minGram = 2, maxGram = 10, side = "front")
         ),
 
         tokenizers = Seq(
@@ -421,7 +410,7 @@ object SioEsUtil extends MacroLogsImpl {
             // v2.1
             _DEEP_NGRAM_ANALYZER,
             // v2.2
-            _TAG_ANALYZER
+            _KW_LC_ANALYZER
           )
         }
       )
@@ -435,11 +424,8 @@ object SioEsUtil extends MacroLogsImpl {
         tokenizers = Seq(
           _KEYWORD_TOKENIZER
         ),
-        filters = Seq(
-          _LENGTH40_TOKEN_FILTER
-        ),
         analyzers = Seq(
-          _TAG_ANALYZER
+          _KW_LC_ANALYZER
         )
       )
     }

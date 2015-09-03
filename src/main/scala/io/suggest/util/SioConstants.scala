@@ -55,8 +55,8 @@ object SioConstants {
   /** keyword tokenizer */
   def KEYWORD_TN      = "kw"
 
-  /** analyzer для тегов узлов ADN. */
-  def TAG_AN          = "tag"
+  /** KeyWord LowerCase ANalyzer. Для целостной индексации тегов узлов ADN. */
+  def KW_LC_AN        = "tag"
 
   /** id дефолтового анализатора. */
   def DFLT_AN         = "default"

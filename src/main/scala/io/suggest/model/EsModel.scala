@@ -81,7 +81,8 @@ object EsModel extends MacroLogsImpl {
   implicit def listCmpOrdering[T <: Comparable[T]] = new ListCmpOrdering[T]
 
   /** Отправить маппинги всех моделей в ES. */
-  def putAllMappings(models: Seq[EsModelCommonStaticT] = ES_MODELS, ignoreExists: Boolean = false)(implicit ec: ExecutionContext, client: Client): Future[Boolean] = {
+  def putAllMappings(models: Seq[EsModelCommonStaticT] = ES_MODELS, ignoreExists: Boolean = false)
+                    (implicit ec: ExecutionContext, client: Client): Future[Boolean] = {
     Future.traverse(models) { esModelStatic =>
       val logPrefix = esModelStatic.getClass.getSimpleName + ".putMapping(): "
       val imeFut = if (ignoreExists) {
@@ -291,7 +292,8 @@ object EsModel extends MacroLogsImpl {
    * @return Фьючерс для синхронизации работы. Если true, то новый индекс был создан.
    *         Если индекс уже существует, то false.
    */
-  def ensureIndex(indexName: String, shards: Int = 5, replicas: Int = 1)(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
+  def ensureIndex(indexName: String, shards: Int = 5, replicas: Int = 1)
+                 (implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
     val adm = client.admin().indices()
     adm.prepareExists(indexName).execute().flatMap { existsResp =>
       if (existsResp.isExists) {
@@ -307,7 +309,8 @@ object EsModel extends MacroLogsImpl {
   }
 
   /** Пройтись по всем ES_MODELS и проверить, что всех ихние индексы существуют. */
-  def ensureEsModelsIndices(models: Seq[EsModelCommonStaticT] = ES_MODELS)(implicit ec:ExecutionContext, client: Client): Future[_] = {
+  def ensureEsModelsIndices(models: Seq[EsModelCommonStaticT] = ES_MODELS)
+                           (implicit ec:ExecutionContext, client: Client): Future[_] = {
     val indices = models.map { esModel =>
       esModel.ES_INDEX_NAME -> (esModel.SHARDS_COUNT, esModel.REPLICAS_COUNT)
     }.toMap
@@ -346,7 +349,8 @@ object EsModel extends MacroLogsImpl {
    * @param typeName Название типа.
    * @return Фьючерс с опциональными метаданными маппинга.
    */
-  def getIndexTypeMeta(indexName: String, typeName: String)(implicit ec: ExecutionContext, client: Client): Future[Option[MappingMetaData]] = {
+  def getIndexTypeMeta(indexName: String, typeName: String)
+                      (implicit ec: ExecutionContext, client: Client): Future[Option[MappingMetaData]] = {
     getIndexMeta(indexName) map { imdOpt =>
       imdOpt.flatMap { imd =>
         Option(imd.mapping(typeName))
@@ -360,13 +364,15 @@ object EsModel extends MacroLogsImpl {
    * @param typeName Имя типа.
    * @return Да/нет.
    */
-  def isMappingExists(indexName: String, typeName: String)(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
+  def isMappingExists(indexName: String, typeName: String)
+                     (implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
     getIndexTypeMeta(indexName, typeName = typeName)
       .map { _.isDefined }
   }
 
   /** Прочитать текст маппинга из хранилища. */
-  def getCurrentMapping(indexName: String, typeName: String)(implicit ec: ExecutionContext, client: Client): Future[Option[String]] = {
+  def getCurrentMapping(indexName: String, typeName: String)
+                       (implicit ec: ExecutionContext, client: Client): Future[Option[String]] = {
     getIndexTypeMeta(indexName, typeName = typeName) map {
       _.map { _.source().string() }
     }
@@ -388,7 +394,8 @@ object EsModel extends MacroLogsImpl {
    * @return Фьчерс с результирующим аккамулятором-множеством.
    * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/client/java-api/current/search.html#scrolling]]
    */
-  def searchScrollResp2ids(searchResp: SearchResponse, maxAccLen: Int, firstReq: Boolean, currAccLen: Int = 0, acc0: List[String] = Nil, keepAliveMs: Long = 60000L)
+  def searchScrollResp2ids(searchResp: SearchResponse, maxAccLen: Int, firstReq: Boolean, currAccLen: Int = 0,
+                           acc0: List[String] = Nil, keepAliveMs: Long = 60000L)
                           (implicit ec: ExecutionContext, client: Client): Future[List[String]] = {
     val hits = searchResp.getHits.getHits
     if (!firstReq && hits.length == 0) {
@@ -493,7 +500,8 @@ object EsModel extends MacroLogsImpl {
 
 
   /** Общий код моделей, которые занимаются resave'ом. */
-  def resaveBase(getFut: Future[Option[EsModelCommonT]])(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Option[String]] = {
+  def resaveBase(getFut: Future[Option[EsModelCommonT]])
+                (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Option[String]] = {
     getFut flatMap {
       case Some(e) =>
         e.save map { Some.apply }
@@ -808,7 +816,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping {
    * Сервисная функция для получения списка всех id.
    * @return Список всех id в неопределённом порядке.
    */
-  def getAllIds(maxResults: Int, maxPerStep: Int = MAX_RESULTS_DFLT)(implicit ec: ExecutionContext, client: Client): Future[List[String]] = {
+  def getAllIds(maxResults: Int, maxPerStep: Int = MAX_RESULTS_DFLT)
+               (implicit ec: ExecutionContext, client: Client): Future[List[String]] = {
     prepareSearch
       .setSearchType(SearchType.SCAN)
       .setScroll(SCROLL_KEEPALIVE_DFLT)
@@ -893,7 +902,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping {
   /** Для ряда задач бывает необходимо задействовать multiGet вместо обычного поиска, который не успевает за refresh.
     * Этот метод позволяет сконвертить поисковые результаты в результаты multiget.
     * @return Результат - что-то неопределённом порядке. */
-  def searchResp2RtMultiget(searchResp: SearchResponse, acc0: List[T] = Nil)(implicit ex: ExecutionContext, client: Client): Future[List[T]] = {
+  def searchResp2RtMultiget(searchResp: SearchResponse, acc0: List[T] = Nil)
+                           (implicit ex: ExecutionContext, client: Client): Future[List[T]] = {
     val searchHits = searchResp.getHits.getHits
     if (searchHits.length == 0) {
       Future successful acc0
@@ -925,7 +935,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping {
 
 
   /** С помощью query найти результаты, но сами результаты прочитать с помощью realtime multi-get. */
-  def findQueryRt(query: QueryBuilder, maxResults: Int = 100, acc0: List[T] = Nil)(implicit ec: ExecutionContext, client: Client): Future[List[T]] = {
+  def findQueryRt(query: QueryBuilder, maxResults: Int = 100, acc0: List[T] = Nil)
+                 (implicit ec: ExecutionContext, client: Client): Future[List[T]] = {
     prepareSearch
       .setQuery(query)
       .setFetchSource(false)
@@ -936,7 +947,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping {
   }
 
   /** Генератор реквеста для генерации запроса для getAll(). */
-  def getAllReq(maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT, withVsn: Boolean = false)(implicit client: Client) = {
+  def getAllReq(maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT, withVsn: Boolean = false)
+               (implicit client: Client): SearchRequestBuilder = {
     prepareSearch
       .setQuery(QueryBuilders.matchAllQuery())
       .setSize(maxResults)
@@ -951,7 +963,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping {
    * @param withVsn Возвращать ли версии?
    * @return Список магазинов в порядке их создания.
    */
-  def getAll(maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT, withVsn: Boolean = false)(implicit ec:ExecutionContext, client: Client): Future[Seq[T]] = {
+  def getAll(maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT, withVsn: Boolean = false)
+            (implicit ec:ExecutionContext, client: Client): Future[Seq[T]] = {
     runSearch(
       getAllReq(
         maxResults = maxResults,
@@ -976,7 +989,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping {
    * Пересохранение всех данных модели. По сути getAll + all.map(_.save). Нужно при ломании схемы.
    * @return
    */
-  def resaveMany(maxResults: Int = MAX_RESULTS_DFLT)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Seq[String]] = {
+  def resaveMany(maxResults: Int = MAX_RESULTS_DFLT)
+                (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Seq[String]] = {
     getAll(maxResults, withVsn = true).flatMap { results =>
       Future.traverse(results) { el =>
         tryUpdate(el)(identity)
@@ -1052,7 +1066,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping {
         val logPrefix = s"copyContent(${searchResp.getScrollId.hashCode / 1000L}): "
         foldSearchScroll(searchResp, CopyContentResult(0L, 0L), keepAliveMs = keepAliveMs) {
           (acc0, hits) =>
-            LOGGER.trace(s"${logPrefix}${hits.getHits.length} hits read from source")
+            LOGGER.trace(s"$logPrefix${hits.getHits.length} hits read from source")
             // Нужно запустить bulk request, который зальёт все хиты в toClient
             val iter = hits.iterator().toIterator
             if (iter.nonEmpty) {
@@ -1095,7 +1109,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping {
    * @param updateF Функция для апдейта.
    * @return Тоже самое, что и save().
    */
-  def tryUpdate(inst0: T, retry: Int = 0)(updateF: T => T)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
+  def tryUpdate(inst0: T, retry: Int = 0)(updateF: T => T)
+               (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
     updateF(inst0)
       .save
       .recoverWith {
@@ -1523,7 +1538,8 @@ trait EsModelT extends EsModelCommonT {
   /** Узнать routing key для текущего экземпляра. */
   def getRoutingKey = companion.getRoutingKey(idOrNull)
 
-  override def companionDelete(_id: String, ignoreResources: Boolean)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
+  override def companionDelete(_id: String, ignoreResources: Boolean)
+                              (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
     companion.deleteById(_id, ignoreResources)
   }
 
@@ -1547,7 +1563,8 @@ trait EsChildModelT extends EsModelCommonT {
     super.indexRequestBuilder.setParent(parentId)
   }
 
-  override def companionDelete(_id: String, ignoreResources: Boolean)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
+  override def companionDelete(_id: String, ignoreResources: Boolean)
+                              (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
     companion.delete(_id, parentId, ignoreResources)
   }
 

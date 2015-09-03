@@ -51,11 +51,9 @@ trait EMTagsStaticMut extends EMTagsStatic with EsModelStaticMutAkvT {
         import scala.collection.JavaConversions._
         acc.tags = values
           .iterator()
-          .map { rawMap =>
-            val m = rawMap.asInstanceOf[ ju.Map[String, String] ]
-            val tagId = m.get(MNodeTag.ID_FN)
-            val tag = MNodeTag(id = tagId)
-            tagId -> tag
+          .map { raw =>
+            val tag = MNodeTag.fromJackson( raw )
+            tag.id -> tag
           }
           .toMap
     }
@@ -64,13 +62,16 @@ trait EMTagsStaticMut extends EMTagsStatic with EsModelStaticMutAkvT {
 }
 
 
+/** Интерфейс для доступа к полю. */
+trait ITags {
+  /** Текущая карта тегов. */
+  def tags: TagsMap_t
+}
+
 /** Аддон для произвольных реализация моделей. */
-trait EMTags extends EsModelPlayJsonT {
+trait EMTags extends EsModelPlayJsonT with ITags {
 
   override type T <: EMTags
-
-  /** Текущая карта тегов. */
-  def tags: Map[String, MNodeTag]
 
   abstract override def writeJsonFields(acc0: FieldsJsonAcc): FieldsJsonAcc = {
     val acc1 = super.writeJsonFields(acc0)
@@ -86,5 +87,5 @@ trait EMTags extends EsModelPlayJsonT {
 trait EMTagsMut extends EMTags {
   override type T <: EMTagsMut
 
-  var tags: Map[String, MNodeTag]
+  var tags: TagsMap_t
 }
