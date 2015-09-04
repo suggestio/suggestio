@@ -1,8 +1,7 @@
 package models.adv.js
 
-import io.suggest.adv.ext.model.{JsCommand, MAnswerStatusesT}
+import io.suggest.adv.ext.model.JsCommand
 import JsCommand._
-import io.suggest.common.menum.play.EnumJsonReadsT
 import models.adv.js.ctx.MJsCtx
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -57,8 +56,3 @@ trait IAnswer {
 /** Экземпляр одного распарсенного ответа в рамках сервиса. */
 case class Answer(replyTo: Option[String], ctx2: MJsCtx)
   extends IAnswer
-
-
-/** Статусы ответов js серверу. */
-object AnswerStatuses extends MAnswerStatusesT with EnumJsonReadsT
-

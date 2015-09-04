@@ -1,5 +1,7 @@
 package models.adv
 
+import models.mws.AnswerStatuses
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
