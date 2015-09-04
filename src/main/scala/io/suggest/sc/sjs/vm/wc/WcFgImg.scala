@@ -1,11 +1,10 @@
 package io.suggest.sc.sjs.vm.wc
 
 import io.suggest.adv.ext.model.im.Size2di
-import io.suggest.sc.sjs.vm.util.domvm.FindElT
-import io.suggest.sc.sjs.vm.util.domvm.get.GetDivById
 import io.suggest.sc.ScConstants.Welcome.FG_IMG_ID
-import io.suggest.sjs.common.view.safe.SafeElT
-import io.suggest.sjs.common.view.safe.css.DataWh
+import io.suggest.sjs.common.vm.VmT
+import io.suggest.sjs.common.vm.attr.DataWh
+import io.suggest.sjs.common.vm.find.FindElT
 import org.scalajs.dom.raw.HTMLImageElement
 
 /**
@@ -14,14 +13,14 @@ import org.scalajs.dom.raw.HTMLImageElement
  * Created: 25.08.15 12:05
  * Description: VM'ка для взаимодействия с картинкой переднего плана карточки приветствия.
  */
-object WcFgImg extends FindElT with GetDivById {
+object WcFgImg extends FindElT {
   override def DOM_ID = FG_IMG_ID
   override type Dom_t = HTMLImageElement
   override type T = WcFgImg
 }
 
 
-trait WcFgImgT extends SafeElT with WcImgUtil with DataWh {
+trait WcFgImgT extends VmT with WcImgUtil with DataWh {
 
   override type T = HTMLImageElement
 

@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.vm.search.tabs.geo
 
 import io.suggest.sc.sjs.vm.search.tabs.{TabRoot, TabRootCompanion}
 import io.suggest.sc.ScConstants.Search.Cats.ROOT_DIV_ID
-import io.suggest.sc.sjs.vm.util.domvm.get.SubTagFind
+import io.suggest.sjs.common.vm.child.SubTagFind
 import org.scalajs.dom
 import org.scalajs.dom.raw.HTMLDivElement
 

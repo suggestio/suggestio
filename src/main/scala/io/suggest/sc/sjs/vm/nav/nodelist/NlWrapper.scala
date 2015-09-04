@@ -1,8 +1,8 @@
 package io.suggest.sc.sjs.vm.nav.nodelist
 
-import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.ScConstants.NavPane.WRAPPER_ID
-import io.suggest.sc.sjs.vm.util.domvm.get.{SubTagFind, WrapperChildContent}
+import io.suggest.sjs.common.vm.child.{WrapperChildContent, SubTagFind}
+import io.suggest.sjs.common.vm.find.FindDiv
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**

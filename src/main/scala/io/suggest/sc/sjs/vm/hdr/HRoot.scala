@@ -4,9 +4,9 @@ import io.suggest.sc.ScConstants.Header._
 import io.suggest.sc.sjs.vm.hdr.btns.{HNodeLogo, HNodePrev, HBtns, HShowIndexBtn}
 import io.suggest.sc.sjs.vm.hdr.btns.nav._
 import io.suggest.sc.sjs.vm.hdr.btns.search._
-import io.suggest.sc.sjs.vm.util.IInitLayout
-import io.suggest.sc.sjs.vm.util.domvm.FindDiv
-import io.suggest.sjs.common.view.safe.SafeElT
+import io.suggest.sjs.common.vm.VmT
+import io.suggest.sjs.common.vm.find.FindDiv
+import io.suggest.sjs.common.vm.util.IInitLayout
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -25,7 +25,7 @@ object HRoot extends FindDiv {
 
 
 /** Трейт экземпляра модели. */
-trait HRootT extends SafeElT with IInitLayout {
+trait HRootT extends VmT with IInitLayout {
 
   override type T = HTMLDivElement
 

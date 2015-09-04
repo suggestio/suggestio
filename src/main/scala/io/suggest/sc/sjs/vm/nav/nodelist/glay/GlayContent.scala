@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.vm.nav.nodelist.glay
 
-import io.suggest.sjs.common.view.safe.SafeElT
+import io.suggest.sjs.common.vm.VmT
 import org.scalajs.dom.raw.HTMLDivElement
 import io.suggest.sc.ScConstants.DIV_CONTENT_SUFFIX
 
@@ -16,7 +16,7 @@ object GlayContent extends GlayDivStaticSuffixedT {
 }
 
 
-trait GlayContentT extends SafeElT {
+trait GlayContentT extends VmT {
   override type T = HTMLDivElement
 }
 

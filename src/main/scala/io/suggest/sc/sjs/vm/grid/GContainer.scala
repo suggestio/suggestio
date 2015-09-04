@@ -2,15 +2,13 @@ package io.suggest.sc.sjs.vm.grid
 
 import io.suggest.common.css.CssSzImplicits
 import io.suggest.sc.ScConstants.Grid
-import io.suggest.sc.sjs.m.mgrid.{IGridData, MGridParams}
+import io.suggest.sc.sjs.m.mgrid.IGridData
 import io.suggest.sc.sjs.m.msrv.ads.find.MFoundAdJson
-import io.suggest.sc.sjs.v.vutil.VUtil
-import io.suggest.sc.sjs.vm.util.ClearT
-import io.suggest.sc.sjs.vm.util.domvm.FindDiv
-import io.suggest.sc.sjs.vm.util.domvm.get.ContentElT
 import io.suggest.sjs.common.model.dom.DomListIterator
-import io.suggest.sjs.common.view.safe.ISafe
-import io.suggest.sjs.common.view.safe.css.Height
+import io.suggest.sjs.common.vm.content.ClearT
+import io.suggest.sjs.common.vm.child.ContentElT
+import io.suggest.sjs.common.vm.find.FindDiv
+import io.suggest.sjs.common.vm.style.StyleHeight
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -26,7 +24,7 @@ object GContainer extends FindDiv {
 
 
 /** Логика модели вынесена в отдельный трейт. */
-trait GContainerT extends ContentElT with CssSzImplicits with ClearT with Height {
+trait GContainerT extends ContentElT with CssSzImplicits with ClearT with StyleHeight {
 
   override type T = HTMLDivElement
 

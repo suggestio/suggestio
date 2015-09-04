@@ -1,9 +1,10 @@
 package io.suggest.sc.sjs.vm.foc.fad
 
 import io.suggest.sc.ScConstants.DIV_CONTENT_SUFFIX
-import io.suggest.sc.sjs.vm.util.domvm.get.ContentElT
-import io.suggest.sc.sjs.vm.util.domvm.{FindElIndexedIdT, IndexedSuffixedDomId}
-import io.suggest.sjs.common.view.safe.SafeElT
+import io.suggest.sjs.common.vm.VmT
+import io.suggest.sjs.common.vm.child.ContentElT
+import io.suggest.sjs.common.vm.find.FindElIndexedIdT
+import io.suggest.sjs.common.vm.util.IndexedSuffixedDomId
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -18,7 +19,7 @@ object FAdContent extends FindElIndexedIdT with IndexedSuffixedDomId with FAdSta
 }
 
 
-trait FAdContentT extends SafeElT with ContentElT {
+trait FAdContentT extends VmT with ContentElT {
   override type T = HTMLDivElement
 }
 

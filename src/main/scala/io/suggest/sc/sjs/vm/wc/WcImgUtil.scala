@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.vm.wc
 
 import io.suggest.adv.ext.model.im.ISize2di
-import io.suggest.sjs.common.view.safe.css.{Height, Width}
+import io.suggest.sjs.common.vm.style.{StyleWidth, StyleHeight}
 import org.scalajs.dom.raw.HTMLImageElement
 
 /**
@@ -10,7 +10,7 @@ import org.scalajs.dom.raw.HTMLImageElement
  * Created: 25.08.15 13:30
  * Description: Общая утиль для картинок welcome-карточек.
  */
-trait WcImgUtil extends Width with Height {
+trait WcImgUtil extends StyleWidth with StyleHeight {
 
   override type T <: HTMLImageElement
 

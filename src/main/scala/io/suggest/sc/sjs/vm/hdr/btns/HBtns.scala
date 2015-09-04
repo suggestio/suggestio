@@ -1,8 +1,8 @@
 package io.suggest.sc.sjs.vm.hdr.btns
 
-import io.suggest.sc.sjs.vm.util.domvm.FindElT
 import io.suggest.sc.ScConstants.Header.BTNS_DIV_ID
-import io.suggest.sjs.common.view.safe.display.ShowHideDisplayEl
+import io.suggest.sjs.common.vm.find.FindElT
+import io.suggest.sjs.common.vm.style.ShowHideDisplayT
 import org.scalajs.dom.raw.HTMLSpanElement
 
 /**
@@ -20,7 +20,7 @@ object HBtns extends FindElT {
 }
 
 
-trait HBtnsT extends ShowHideDisplayEl {
+trait HBtnsT extends ShowHideDisplayT {
 
   override type T = HTMLSpanElement
 

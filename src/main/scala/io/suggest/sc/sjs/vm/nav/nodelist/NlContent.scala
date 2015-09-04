@@ -1,9 +1,9 @@
 package io.suggest.sc.sjs.vm.nav.nodelist
 
-import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.ScConstants.NavPane.CONTENT_ID
-import io.suggest.sc.sjs.vm.util.domvm.get.ContentElT
-import io.suggest.sjs.common.view.safe.display.SetInnerHtml
+import io.suggest.sjs.common.vm.content.SetInnerHtml
+import io.suggest.sjs.common.vm.child.ContentElT
+import io.suggest.sjs.common.vm.find.FindDiv
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**

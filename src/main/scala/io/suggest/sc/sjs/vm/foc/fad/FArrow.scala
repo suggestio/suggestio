@@ -1,10 +1,10 @@
 package io.suggest.sc.sjs.vm.foc.fad
 
-import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.ScConstants.Focused.{ARROW_ID, arrowClass, ARROW_OFFSET_PX}
 import io.suggest.sjs.common.model.MHand
-import io.suggest.sjs.common.view.safe.SafeElT
-import io.suggest.sjs.common.view.safe.css.{StyleTop, StyleLeft}
+import io.suggest.sjs.common.vm.VmT
+import io.suggest.sjs.common.vm.find.FindDiv
+import io.suggest.sjs.common.vm.style.{StyleTop, StyleLeft}
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -29,7 +29,7 @@ import FArrow.dirCssClass
 
 
 /** Трейт для классов-реализаций модели. */
-trait FArrowT extends SafeElT with StyleLeft with StyleTop {
+trait FArrowT extends VmT with StyleLeft with StyleTop {
 
   override type T = HTMLDivElement
 

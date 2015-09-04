@@ -5,7 +5,7 @@ import io.suggest.sc.sjs.m.mfoc.FocRootDisappeared
 import io.suggest.sc.sjs.vm.foc.FRoot
 import io.suggest.sc.ScConstants.Focused.SLIDE_ANIMATE_MS
 import io.suggest.sc.sjs.vm.res.FocusedRes
-import io.suggest.sc.sjs.vm.util.ClearT
+import io.suggest.sjs.common.vm.content.ClearT
 import org.scalajs.dom
 
 /**

@@ -1,9 +1,9 @@
 package io.suggest.sc.sjs.vm.layout
 
-import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.ScConstants.Layout.FS_LOADER_ID
-import io.suggest.sjs.common.view.safe.SafeElT
-import io.suggest.sjs.common.view.safe.display.ShowHideDisplayEl
+import io.suggest.sjs.common.vm.VmT
+import io.suggest.sjs.common.vm.find.FindDiv
+import io.suggest.sjs.common.vm.style.ShowHideDisplayT
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -18,7 +18,7 @@ object FsLoader extends FindDiv {
 }
 
 
-trait FsLoaderT extends SafeElT with ShowHideDisplayEl {
+trait FsLoaderT extends VmT with ShowHideDisplayT {
   override type T = HTMLDivElement
 }
 

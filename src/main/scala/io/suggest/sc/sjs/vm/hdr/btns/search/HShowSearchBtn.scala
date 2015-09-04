@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.vm.hdr.btns.search
 import io.suggest.sc.ScConstants.Search.SHOW_PANEL_BTN_ID
 import io.suggest.sc.sjs.m.mhdr.ShowSearchClick
 import io.suggest.sc.sjs.vm.util.InitOnClickToFsmT
-import io.suggest.sc.sjs.vm.util.domvm.FindDiv
+import io.suggest.sjs.common.vm.find.FindDiv
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**

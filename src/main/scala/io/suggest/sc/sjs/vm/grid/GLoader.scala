@@ -2,8 +2,8 @@ package io.suggest.sc.sjs.vm.grid
 
 import io.suggest.sc.ScConstants.HIDDEN_CSS_CLASS
 import io.suggest.sc.ScConstants.Grid
-import io.suggest.sc.sjs.vm.util.domvm.FindDiv
-import io.suggest.sjs.common.view.safe.SafeElT
+import io.suggest.sjs.common.vm.VmT
+import io.suggest.sjs.common.vm.find.FindDiv
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -22,7 +22,7 @@ object GLoader extends FindDiv {
 
 
 /** Логика работы safe-элемента вынесена сюда. */
-trait GLoaderT extends SafeElT {
+trait GLoaderT extends VmT {
 
   override type T = HTMLDivElement
 

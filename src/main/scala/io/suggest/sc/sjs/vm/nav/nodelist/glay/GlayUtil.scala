@@ -2,10 +2,10 @@ package io.suggest.sc.sjs.vm.nav.nodelist.glay
 
 import io.suggest.sc.ScConstants.NavPane.{GNL_BODY_DIV_ID_PREFIX, GNL_ATTR_LAYER_ID_INDEX}
 import io.suggest.sc.sjs.vm.nav.nodelist.NlContainer
-import io.suggest.sc.sjs.vm.util.domvm.{IApplyEl, FindElIndexedIdT}
-import io.suggest.sc.sjs.vm.util.domvm.get.ISubTag
-import io.suggest.sjs.common.view.safe.{ISafe, SafeElT}
-import io.suggest.sjs.common.view.safe.attr.SafeAttrElT
+import io.suggest.sjs.common.vm.child.ISubTag
+import io.suggest.sjs.common.vm.find.{FindElIndexedIdT, IApplyEl}
+import io.suggest.sjs.common.vm.{IVm, VmT}
+import io.suggest.sjs.common.vm.attr.AttrVmT
 import org.scalajs.dom.Node
 import org.scalajs.dom.raw.HTMLDivElement
 
@@ -35,7 +35,7 @@ trait GlayDivStaticSuffixedT extends GlayDivStaticT {
 
 
 /** Трейт для сборки классов vm'ок, имеющих быстрый доступ к нижележащим элементам. */
-trait GlayT extends SafeElT with ISubTag {
+trait GlayT extends VmT with ISubTag {
 
   override type T = HTMLDivElement
 
@@ -51,13 +51,13 @@ trait GlayT extends SafeElT with ISubTag {
 
 
 /** API для чтения значения из аттрибута data-index="1". */
-trait LayerIndex extends SafeAttrElT {
+trait LayerIndex extends AttrVmT {
   def layerIndexOpt = getIntAttributeStrict(GNL_ATTR_LAYER_ID_INDEX)
   def layerIndex    = layerIndexOpt.get
 }
 
 
-trait GlayContainerT extends ISafe {
+trait GlayContainerT extends IVm {
 
   override type T <: Node
 

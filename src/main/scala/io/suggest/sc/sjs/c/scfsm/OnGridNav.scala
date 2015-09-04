@@ -10,7 +10,7 @@ import io.suggest.sc.sjs.vm.nav.NRoot
 import io.suggest.sc.sjs.vm.nav.nodelist.glay.{GlayCaption, GlayNode}
 import io.suggest.sc.sjs.vm.nav.nodelist.NlContent
 import io.suggest.sjs.common.util.ISjsLogger
-import io.suggest.sjs.common.view.safe.SafeEl
+import io.suggest.sjs.common.vm.Vm
 import org.scalajs.dom.ext.KeyCode
 import org.scalajs.dom.{KeyboardEvent, Node, Event}
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
@@ -192,7 +192,7 @@ trait OnGridNav extends OnGrid with ISjsLogger {
       if (clickedNode != null) {
         val sd0 = _stateData
         // Тестируем на принадлежность к заголовку слоя
-        val safeClickedNode = SafeEl( clickedNode )
+        val safeClickedNode = Vm( clickedNode )
         val adnNodeOpt = GlayNode.findUpToNode(safeClickedNode)
 
         if (adnNodeOpt.isDefined) {

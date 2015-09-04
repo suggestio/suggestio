@@ -127,7 +127,7 @@ trait Index extends ScFsmStub with FindAdsUtil {
       CommonRes.ensureCreated()
 
       val body = SafeBody
-      body.overflowHidden()
+      body.setOverflowHidden()
 
       // Инициализация верстки welcome-карточки, если есть:
       val wcHideTimerOpt = for {

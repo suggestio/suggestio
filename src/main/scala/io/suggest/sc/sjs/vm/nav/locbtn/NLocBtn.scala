@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.vm.nav.locbtn
 
-import io.suggest.sc.sjs.vm.util.domvm.FindDiv
-import io.suggest.sjs.common.view.safe.SafeElT
+import io.suggest.sjs.common.vm.VmT
+import io.suggest.sjs.common.vm.find.FindDiv
 import org.scalajs.dom.raw.HTMLDivElement
 import io.suggest.sc.ScConstants.NavPane.FIND_ME_BTN_ID
 
@@ -17,7 +17,7 @@ object NLocBtn extends FindDiv {
 }
 
 
-trait NLocBtnT extends SafeElT {
+trait NLocBtnT extends VmT {
   override type T = HTMLDivElement
 }
 

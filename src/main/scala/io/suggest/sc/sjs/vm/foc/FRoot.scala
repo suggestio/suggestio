@@ -1,10 +1,12 @@
 package io.suggest.sc.sjs.vm.foc
 
 import io.suggest.primo.IReset
-import io.suggest.sc.sjs.vm.util.{ClearT, WillTranslate3d, IInitLayout}
-import io.suggest.sc.sjs.vm.util.domvm.FindDiv
-import io.suggest.sjs.common.view.safe.SafeElT
-import io.suggest.sjs.common.view.safe.display.{ShowHideDisplayEl, SetDisplayEl}
+import io.suggest.sjs.common.vm.VmT
+import io.suggest.sjs.common.vm.content.ClearT
+import io.suggest.sjs.common.vm.find.FindDiv
+import io.suggest.sjs.common.vm.style.ShowHideDisplayT
+import io.suggest.sjs.common.vm.util.IInitLayout
+import io.suggest.sjs.common.vm.will.WillTranslate3d
 import org.scalajs.dom.raw.HTMLDivElement
 import io.suggest.sc.ScConstants.Focused.{ROOT_ID, ROOT_APPEAR_CLASS, ROOT_DISAPPEAR_CLASS, ROOT_TRANSITION_CLASS}
 
@@ -23,7 +25,7 @@ object FRoot extends FindDiv {
 }
 
 
-trait FRootT extends SafeElT with SetDisplayEl with IInitLayout with WillTranslate3d with ShowHideDisplayEl
+trait FRootT extends VmT with IInitLayout with WillTranslate3d with ShowHideDisplayT
 with ClearT with IReset {
 
   override type T = HTMLDivElement

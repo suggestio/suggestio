@@ -3,10 +3,10 @@ package io.suggest.sc.sjs.vm.nav.nodelist
 import io.suggest.sc.sjs.m.mnav.NodeListClick
 import io.suggest.sc.sjs.vm.util.InitOnClickToFsmT
 import io.suggest.sc.sjs.vm.nav.nodelist.glay.GlayRoot
-import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.ScConstants.NavPane.{GN_CONTAINER_ID, GNL_BODY_CSS_CLASS, GN_ATTR_LAYERS_COUNT}
 import io.suggest.sjs.common.model.dom.DomListIterator
-import io.suggest.sjs.common.view.safe.SafeElT
+import io.suggest.sjs.common.vm.VmT
+import io.suggest.sjs.common.vm.find.FindDiv
 import org.scalajs.dom.NodeList
 import org.scalajs.dom.raw.HTMLDivElement
 
@@ -23,7 +23,7 @@ object NlContainer extends FindDiv {
 }
 
 
-trait NlContainerT extends SafeElT with InitOnClickToFsmT {
+trait NlContainerT extends VmT with InitOnClickToFsmT {
 
   override type T = HTMLDivElement
 

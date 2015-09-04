@@ -6,12 +6,13 @@ import io.suggest.sc.sjs.m.msc.fsm.IStData
 import io.suggest.sc.sjs.vm.search.fts.{SInputContainer, SInput}
 import io.suggest.sc.sjs.vm.search.tabs.{TabRootCompanion, STabsHeader}
 import io.suggest.sc.sjs.vm.search.tabs.htag.ShtRoot
-import io.suggest.sc.sjs.vm.util.{GridOffsetCalc, IInitLayout}
-import io.suggest.sc.sjs.vm.util.domvm.FindDiv
+import io.suggest.sc.sjs.vm.util.GridOffsetCalc
 import io.suggest.sc.ScConstants.Search.ROOT_DIV_ID
 import io.suggest.sjs.common.model.browser.IBrowser
-import io.suggest.sjs.common.view.safe.SafeElT
-import io.suggest.sjs.common.view.safe.display.SetDisplayEl
+import io.suggest.sjs.common.vm.VmT
+import io.suggest.sjs.common.vm.find.FindDiv
+import io.suggest.sjs.common.vm.style.StyleDisplayT
+import io.suggest.sjs.common.vm.util.IInitLayout
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -29,7 +30,7 @@ object SRoot extends FindDiv {
 
 
 /** Логика экземпляра модели панели поиска живёт в этом трейте. */
-trait SRootT extends SafeElT with SetDisplayEl with GridOffsetCalc {
+trait SRootT extends VmT with StyleDisplayT with GridOffsetCalc {
 
   override type T = HTMLDivElement
 

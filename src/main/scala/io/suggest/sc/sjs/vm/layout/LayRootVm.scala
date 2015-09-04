@@ -2,10 +2,11 @@ package io.suggest.sc.sjs.vm.layout
 
 import io.suggest.sc.ScConstants.Layout
 import io.suggest.sc.sjs.vm.SafeDoc
-import io.suggest.sc.sjs.vm.util.domvm._
-import io.suggest.sc.sjs.vm.util.domvm.create.CreateDiv
-import io.suggest.sc.sjs.vm.util.domvm.get.{SubTagFind, ChildElOrFind}
-import io.suggest.sjs.common.view.safe.SafeElT
+import io.suggest.sc.sjs.vm.util.EraseBg
+import io.suggest.sjs.common.vm.child.{SubTagFind, ChildElOrFind}
+import io.suggest.sjs.common.vm.create.CreateDivWithId
+import io.suggest.sjs.common.vm.VmT
+import io.suggest.sjs.common.vm.find.FindDiv
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -33,7 +34,7 @@ object LayRootVm extends FindDiv with CreateLayRootDiv {
   }
 }
 
-sealed trait CreateLayRootDiv extends CreateDiv {
+sealed trait CreateLayRootDiv extends CreateDivWithId {
   abstract override protected def createNewEl(): HTMLDivElement = {
     val el = super.createNewEl()
     el.setAttribute("class", Layout.ROOT_CSS_CLASS)
@@ -43,7 +44,7 @@ sealed trait CreateLayRootDiv extends CreateDiv {
 
 
 /** Логика функционирования экземпляра вынесена сюда для возможности разных реализация динамической модели. */
-trait LayRootVmT extends SafeElT with SubTagFind with ChildElOrFind with EraseBg {
+trait LayRootVmT extends VmT with SubTagFind with ChildElOrFind with EraseBg {
 
   override type T = HTMLDivElement
 

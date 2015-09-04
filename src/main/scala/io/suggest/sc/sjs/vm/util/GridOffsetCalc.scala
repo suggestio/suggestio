@@ -3,8 +3,7 @@ package io.suggest.sc.sjs.vm.util
 import io.suggest.adv.ext.model.im.ISize2di
 import io.suggest.sc.sjs.m.mgrid.MGridState
 import io.suggest.sc.sjs.m.msc.fsm.IStData
-import io.suggest.sjs.common.view.safe.css.Width
-import io.suggest.sjs.common.view.safe.display.SetDisplayEl
+import io.suggest.sjs.common.vm.style.{StyleWidth, StyleDisplayT}
 import org.scalajs.dom.raw.HTMLElement
 
 /**
@@ -16,7 +15,7 @@ import org.scalajs.dom.raw.HTMLElement
  *
  * Трейт подмешивается в ModelView'ы панелей и вызывается из ScFsm для вычисления новых параметров плитки.
  */
-trait GridOffsetCalc extends SetDisplayEl with Width {
+trait GridOffsetCalc extends StyleDisplayT with StyleWidth {
 
   override type T <: HTMLElement
 

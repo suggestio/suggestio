@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.vm.util
 
-import io.suggest.sc.sjs.m.mfsm.CurrentTargetBackup
-import io.suggest.sc.sjs.vm.util.domvm.{IFindEl, IApplyEl}
+import io.suggest.sjs.common.model.CurrentTargetBackup
+import io.suggest.sjs.common.vm.find.{IFindEl, IApplyEl}
 import org.scalajs.dom.EventTarget
 
 /**

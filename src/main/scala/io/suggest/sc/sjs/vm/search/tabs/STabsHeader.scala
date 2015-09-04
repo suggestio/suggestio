@@ -2,10 +2,10 @@ package io.suggest.sc.sjs.vm.search.tabs
 
 import io.suggest.sc.sjs.vm.search.tabs.geo.SGeoTabBtn
 import io.suggest.sc.sjs.vm.search.tabs.htag.ShtTabBtn
-import io.suggest.sc.sjs.vm.util.IInitLayout
-import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.ScConstants.Search.TAB_BTNS_DIV_ID
-import io.suggest.sjs.common.view.safe.SafeElT
+import io.suggest.sjs.common.vm.VmT
+import io.suggest.sjs.common.vm.find.FindDiv
+import io.suggest.sjs.common.vm.util.IInitLayout
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -24,7 +24,7 @@ object STabsHeader extends FindDiv {
 
 
 /** Логика экземпляра vm'ки живёт в этом трейте. */
-trait STabHeaderT extends SafeElT with IInitLayout {
+trait STabHeaderT extends VmT with IInitLayout {
 
   override type T = HTMLDivElement
 

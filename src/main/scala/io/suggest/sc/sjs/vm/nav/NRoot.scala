@@ -2,9 +2,9 @@ package io.suggest.sc.sjs.vm.nav
 
 import io.suggest.sc.sjs.m.mgrid.MGridState
 import io.suggest.sc.sjs.vm.util.GridOffsetCalc
-import io.suggest.sc.sjs.vm.util.domvm.FindDiv
-import io.suggest.sjs.common.view.safe.SafeElT
-import io.suggest.sjs.common.view.safe.display.ShowHideDisplayEl
+import io.suggest.sjs.common.vm.VmT
+import io.suggest.sjs.common.vm.find.FindDiv
+import io.suggest.sjs.common.vm.style.ShowHideDisplayT
 import org.scalajs.dom.raw.HTMLDivElement
 import io.suggest.sc.ScConstants.NavPane.ROOT_ID
 
@@ -20,7 +20,7 @@ object NRoot extends FindDiv {
 }
 
 
-trait NRootT extends SafeElT with ShowHideDisplayEl with GridOffsetCalc {
+trait NRootT extends VmT with ShowHideDisplayT with GridOffsetCalc {
 
   override type T = HTMLDivElement
 

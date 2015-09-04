@@ -1,10 +1,9 @@
 package io.suggest.sc.sjs.vm.layout
 
-import io.suggest.sc.sjs.vm.util.domvm.FindElT
-import io.suggest.sc.sjs.vm.util.domvm.get.GetDivById
 import io.suggest.sc.ScConstants.JsRouter.{DOM_ID => ID, URI}
-import io.suggest.sjs.common.view.safe.SafeElT
-import io.suggest.sjs.common.view.safe.doc.SafeDocument
+import io.suggest.sjs.common.vm.doc.DocumentVm
+import io.suggest.sjs.common.vm.VmT
+import io.suggest.sjs.common.vm.find.FindElT
 import org.scalajs.dom
 import org.scalajs.dom.raw.HTMLScriptElement
 
@@ -14,7 +13,7 @@ import org.scalajs.dom.raw.HTMLScriptElement
  * Created: 27.08.15 12:06
  * Description: vm'ка для доступа к тегу js router'а.
  */
-object JsRouterTag extends FindElT with GetDivById {
+object JsRouterTag extends FindElT {
 
   override def DOM_ID = ID
   override type Dom_t = HTMLScriptElement
@@ -31,7 +30,7 @@ object JsRouterTag extends FindElT with GetDivById {
 }
 
 
-trait JsRouterTagT extends SafeElT {
+trait JsRouterTagT extends VmT {
 
   override type T = HTMLScriptElement
 
@@ -45,7 +44,7 @@ trait JsRouterTagT extends SafeElT {
 
   /** Добавить тег в конец body. */
   def appendToBody(): Unit = {
-    SafeDocument()
+    DocumentVm()
       .body
       .appendChild(_underlying)
   }

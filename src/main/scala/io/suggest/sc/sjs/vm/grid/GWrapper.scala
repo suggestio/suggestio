@@ -4,9 +4,9 @@ import io.suggest.sc.ScConstants.Grid
 import io.suggest.sc.sjs.c.ScFsm
 import io.suggest.sc.sjs.m.mgrid.{MGridParams, GridScroll}
 import io.suggest.sc.sjs.m.msc.fsm.IStData
-import io.suggest.sc.sjs.vm.util.domvm.FindDiv
-import io.suggest.sc.sjs.vm.util.domvm.get.{SubTagFind, WrapperChildContent}
-import io.suggest.sjs.common.view.safe.SafeElT
+import io.suggest.sjs.common.vm.VmT
+import io.suggest.sjs.common.vm.child.{WrapperChildContent, SubTagFind}
+import io.suggest.sjs.common.vm.find.FindDiv
 import org.scalajs.dom.Event
 import org.scalajs.dom.raw.HTMLDivElement
 
@@ -25,7 +25,7 @@ object GWrapper extends FindDiv {
 
 
 /** Логика экземпляра модели. */
-trait GWrapperT extends SafeElT with SubTagFind with WrapperChildContent {
+trait GWrapperT extends VmT with SubTagFind with WrapperChildContent {
   override type T = HTMLDivElement
 
   override protected type SubtagCompanion_t = GContent.type

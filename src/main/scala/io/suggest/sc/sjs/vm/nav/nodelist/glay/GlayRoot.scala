@@ -2,8 +2,8 @@ package io.suggest.sc.sjs.vm.nav.nodelist.glay
 
 import io.suggest.sc.ScConstants.NavPane.{SCREEN_OFFSET, GNL_DOM_HEIGHT, GNL_BODY_HIDDEN_CSS_CLASS}
 import io.suggest.sc.sjs.m.magent.IMScreen
-import io.suggest.sc.sjs.v.vutil.VUtil
 import io.suggest.sjs.common.model.browser.IBrowser
+import io.suggest.sjs.common.view.VUtil
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**

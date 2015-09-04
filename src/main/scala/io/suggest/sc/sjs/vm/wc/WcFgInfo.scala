@@ -3,8 +3,8 @@ package io.suggest.sc.sjs.vm.wc
 import io.suggest.adv.ext.model.im.ISize2di
 import io.suggest.common.css.CssSzImplicits
 import io.suggest.sc.ScConstants.Welcome.FG_INFO_DIV_ID
-import io.suggest.sc.sjs.vm.util.domvm.FindDiv
-import io.suggest.sjs.common.view.safe.SafeElT
+import io.suggest.sjs.common.vm.VmT
+import io.suggest.sjs.common.vm.find.FindDiv
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -19,7 +19,7 @@ object WcFgInfo extends FindDiv {
 }
 
 
-trait WcFgInfoT extends SafeElT with CssSzImplicits {
+trait WcFgInfoT extends VmT with CssSzImplicits {
 
   override type T = HTMLDivElement
 

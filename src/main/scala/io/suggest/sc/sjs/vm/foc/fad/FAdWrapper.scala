@@ -1,7 +1,9 @@
 package io.suggest.sc.sjs.vm.foc.fad
 
-import io.suggest.sc.sjs.vm.util.domvm.get.WrapperChildContent
 import io.suggest.sc.sjs.vm.util.domvm._
+import io.suggest.sjs.common.vm.child.WrapperChildContent
+import io.suggest.sjs.common.vm.find.{FindElIndexedIdOffT, FindElIndexedIdT}
+import io.suggest.sjs.common.vm.util.IndexedSuffixedDomId
 import org.scalajs.dom.raw.HTMLDivElement
 import io.suggest.sc.ScConstants.DIV_WRAPPER_SUFFIX
 

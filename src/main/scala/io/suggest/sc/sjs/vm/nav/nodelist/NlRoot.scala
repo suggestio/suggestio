@@ -1,11 +1,11 @@
 package io.suggest.sc.sjs.vm.nav.nodelist
 
 import io.suggest.sc.sjs.m.msc.fsm.IStData
-import io.suggest.sc.sjs.vm.util.IInitLayout
-import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.ScConstants.NavPane.NODE_LIST_ID
-import io.suggest.sc.sjs.vm.util.domvm.get.SubTagFind
-import io.suggest.sc.sjs.vm.util.height3.SetHeight3
+import io.suggest.sjs.common.vm.height3.SetHeight3
+import io.suggest.sjs.common.vm.child.SubTagFind
+import io.suggest.sjs.common.vm.find.FindDiv
+import io.suggest.sjs.common.vm.util.IInitLayout
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**

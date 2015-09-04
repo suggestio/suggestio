@@ -1,10 +1,10 @@
 package io.suggest.sc.sjs.vm
 
-import io.suggest.sc.sjs.vm.util.domvm.EraseBg
-import io.suggest.sjs.common.view.safe.{ISafe, SafeElT}
-import io.suggest.sjs.common.view.safe.doc.SafeDocument
-import io.suggest.sjs.common.view.safe.overflow.OvfHiddenT
-import io.suggest.sjs.common.view.safe.wnd.SafeWindow
+import io.suggest.sc.sjs.vm.util.EraseBg
+import io.suggest.sjs.common.vm.{IVm, VmT}
+import io.suggest.sjs.common.vm.doc.DocumentVm
+import io.suggest.sjs.common.vm.overflow.OverflowT
+import io.suggest.sjs.common.vm.wnd.WindowVm
 import org.scalajs.dom.Node
 import org.scalajs.dom.raw.HTMLBodyElement
 
@@ -17,20 +17,20 @@ import org.scalajs.dom.raw.HTMLBodyElement
 
 // TODO Нужно капитально отрефакторить все эти vm'ки.
 object SafeDoc
-  extends SafeDocument()
+  extends DocumentVm()
 
 
 object SafeWnd
-  extends SafeWindow()
+  extends WindowVm()
 
 
-object SafeBody extends SafeElT with OvfHiddenT with EraseBg {
+object SafeBody extends VmT with OverflowT with EraseBg {
 
   override type T = HTMLBodyElement
 
   override def _underlying = SafeDoc.body
 
-  def append(vm: ISafe { type T <: Node } ): Unit = {
+  def append(vm: IVm { type T <: Node } ): Unit = {
     _underlying.appendChild( vm._underlying )
   }
 }

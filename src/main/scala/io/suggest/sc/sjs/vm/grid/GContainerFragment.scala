@@ -1,10 +1,11 @@
 package io.suggest.sc.sjs.vm.grid
 
-import io.suggest.sc.sjs.v.vutil.VUtil
-import io.suggest.sc.sjs.vm.util.domvm.IApplyEl
-import io.suggest.sc.sjs.vm.util.domvm.walk.PrevNextSiblingsVmT
+import io.suggest.sjs.common.vm.content.SetInnerHtml
+import io.suggest.sjs.common.vm.create.{CreateDiv, CreateVm}
+import io.suggest.sjs.common.vm.find.IApplyEl
+import io.suggest.sjs.common.vm.walk.PrevNextSiblingsVmT
 import io.suggest.sjs.common.model.dom.DomListIterator
-import io.suggest.sjs.common.view.safe.SafeElT
+import io.suggest.sjs.common.vm.VmT
 import org.scalajs.dom.Node
 import org.scalajs.dom.raw.HTMLDivElement
 
@@ -15,7 +16,7 @@ import org.scalajs.dom.raw.HTMLDivElement
  * Description: Карточки в DOM заливаются пакетно. Тут модель одного такого пакета, который является div'ом.
  */
 
-object GContainerFragment extends IApplyEl {
+object GContainerFragment extends IApplyEl with CreateDiv with CreateVm {
 
   override type Dom_t = HTMLDivElement
   override type T = GContainerFragment
@@ -26,16 +27,16 @@ object GContainerFragment extends IApplyEl {
    * @return Фрагмент, не привязанный к DOM.
    */
   def apply(innerHtml: String): GContainerFragment = {
-    val div = VUtil.newDiv()
-    div.innerHTML = innerHtml
-    GContainerFragment(div)
+    val vm = createNew()
+    vm.setContent( innerHtml )
+    vm
   }
 
 }
 
 
 /** Логика экземпляров модели здесь. */
-trait GContainerFragmentT extends SafeElT with PrevNextSiblingsVmT {
+trait GContainerFragmentT extends VmT with PrevNextSiblingsVmT with SetInnerHtml {
 
   override type T = HTMLDivElement
   override type Self_t <: GContainerFragmentT

@@ -1,8 +1,7 @@
 package io.suggest.sc.sjs.vm.nav.nodelist.glay
 
-import io.suggest.sc.sjs.vm.util.FindVmForCss
-import io.suggest.sc.sjs.vm.util.domvm.FindElIndexedIdT
-import io.suggest.sjs.common.view.safe.SafeElT
+import io.suggest.sjs.common.vm.VmT
+import io.suggest.sjs.common.vm.find.{FindFromChildByClass, FindElIndexedIdT}
 import org.scalajs.dom.raw.HTMLDivElement
 import io.suggest.sc.ScConstants.NavPane.{GNL_NODE_ID_PREFIX, GN_NODE_CSS_CLASS, GN_ATTR_NODE_ID}
 
@@ -12,7 +11,7 @@ import io.suggest.sc.ScConstants.NavPane.{GNL_NODE_ID_PREFIX, GN_NODE_CSS_CLASS,
  * Created: 11.08.15 14:13
  * Description: vm'ка для div узла в списке узлов панели навигации.
  */
-object GlayNode extends FindElIndexedIdT with FindVmForCss {
+object GlayNode extends FindElIndexedIdT with FindFromChildByClass {
 
   override type Dom_t = HTMLDivElement
   override type T     = GlayNode
@@ -23,7 +22,7 @@ object GlayNode extends FindElIndexedIdT with FindVmForCss {
 }
 
 
-trait GlayNodeT extends SafeElT {
+trait GlayNodeT extends VmT {
 
   override type T = HTMLDivElement
 

@@ -1,8 +1,8 @@
 package io.suggest.sc.sjs.vm.search.tabs.htag
 
 import io.suggest.sc.sjs.vm.search.tabs.{TabContentCompanion, TabContent}
-import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sc.ScConstants.Search.Nodes.CONTENT_DIV_ID
+import io.suggest.sjs.common.vm.find.FindDiv
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**

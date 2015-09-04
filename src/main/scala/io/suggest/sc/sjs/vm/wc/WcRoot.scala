@@ -2,11 +2,12 @@ package io.suggest.sc.sjs.vm.wc
 
 import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.m.mwc.WcClick
-import io.suggest.sc.sjs.vm.util.{InitOnClickToFsmT, WillAnimateT}
-import io.suggest.sc.sjs.vm.util.domvm.FindDiv
+import io.suggest.sc.sjs.vm.util.InitOnClickToFsmT
 import io.suggest.sc.ScConstants.Welcome.ROOT_ID
 import io.suggest.sc.ScConstants.Welcome.Anim._
-import io.suggest.sjs.common.view.safe.SafeElT
+import io.suggest.sjs.common.vm.VmT
+import io.suggest.sjs.common.vm.find.FindDiv
+import io.suggest.sjs.common.vm.will.WillAnimateT
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -22,7 +23,7 @@ object WcRoot extends FindDiv {
 
 
 /** Логика div'а карточки приветствия тут. */
-trait WcRootT extends SafeElT with WillAnimateT with InitOnClickToFsmT {
+trait WcRootT extends VmT with WillAnimateT with InitOnClickToFsmT {
 
   override type T = HTMLDivElement
 

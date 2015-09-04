@@ -1,12 +1,13 @@
 package io.suggest.sc.sjs.vm.search.tabs
 
-import io.suggest.sc.sjs.vm.util.height3.SetHeight3
-import io.suggest.sc.sjs.vm.util.{IInitLayout, InitOnClickToFsmT}
-import io.suggest.sc.sjs.vm.util.domvm.FindDiv
-import io.suggest.sc.sjs.vm.util.domvm.get.{ContentElT, WrapperChildContent}
+import io.suggest.sjs.common.vm.height3.SetHeight3
+import io.suggest.sc.sjs.vm.util.InitOnClickToFsmT
 import io.suggest.sjs.common.model.browser.IBrowser
-import io.suggest.sjs.common.view.safe.SafeElT
-import io.suggest.sjs.common.view.safe.display.ShowHideDisplayEl
+import io.suggest.sjs.common.vm.VmT
+import io.suggest.sjs.common.vm.child.{ContentElT, WrapperChildContent}
+import io.suggest.sjs.common.vm.find.FindDiv
+import io.suggest.sjs.common.vm.style.ShowHideDisplayT
+import io.suggest.sjs.common.vm.util.IInitLayout
 import org.scalajs.dom.raw.HTMLDivElement
 import io.suggest.sc.ScConstants.Search.TAB_BTN_INACTIVE_CSS_CLASS
 
@@ -26,7 +27,7 @@ trait TabRootCompanion extends FindDiv {
 
 
 /** Трейт экземпляра модели div'а корневого таба поисковой вкладки. */
-trait TabRoot extends SetHeight3 with IInitLayout with ShowHideDisplayEl {
+trait TabRoot extends SetHeight3 with IInitLayout with ShowHideDisplayT {
 
   override type T = HTMLDivElement
   //override protected type SubtagCompanion_t <: TabWrapperCompanion
@@ -69,7 +70,7 @@ trait TabBtnCompanion extends FindDiv {
 }
 
 /** Трейт для vm'ки тела таба. */
-trait TabBtn extends InitOnClickToFsmT with SafeElT {
+trait TabBtn extends InitOnClickToFsmT with VmT {
 
   override type T = HTMLDivElement
 

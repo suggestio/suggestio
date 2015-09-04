@@ -1,7 +1,8 @@
 package io.suggest.sc.sjs.m.mgrid
 
-import io.suggest.sc.sjs.m.mfsm.{CurrentTargetBackup, IFsmEventMsgCompanion, IFsmMsg}
+import io.suggest.sc.sjs.m.mfsm.{IFsmEventMsgCompanion, IFsmMsg}
 import io.suggest.sc.sjs.vm.grid.GBlock
+import io.suggest.sjs.common.model.CurrentTargetBackup
 import org.scalajs.dom.Event
 import org.scalajs.dom.raw.HTMLDivElement
 

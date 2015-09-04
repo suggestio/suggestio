@@ -1,9 +1,9 @@
 package io.suggest.sc.sjs.vm.foc.fad
 
-import io.suggest.sc.sjs.vm.util.domvm.{FindElPrefixedIdT, IApplyEl}
-import io.suggest.sjs.common.view.safe.SafeElT
+import io.suggest.sjs.common.vm.VmT
 import io.suggest.sc.ScConstants.Block.ID_DELIM
 import io.suggest.sc.ScConstants.Focused.FAd.BLOCK_ID_SUFFIX
+import io.suggest.sjs.common.vm.find.{FindElPrefixedIdT, IApplyEl}
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -22,7 +22,7 @@ object FAdBlock extends FindElPrefixedIdT with IApplyEl {
 }
 
 
-trait FAdBlockT extends SafeElT {
+trait FAdBlockT extends VmT {
   override type T = HTMLDivElement
 }
 

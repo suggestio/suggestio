@@ -7,11 +7,11 @@ import io.suggest.sc.sjs.vm.grid.GRoot
 import io.suggest.sc.sjs.vm.hdr.HRoot
 import io.suggest.sc.sjs.vm.nav.NRoot
 import io.suggest.sc.sjs.vm.search.SRoot
-import io.suggest.sc.sjs.vm.util.domvm.FindDiv
-import io.suggest.sc.sjs.vm.util.domvm.create.{CreateDiv, CreateVm}
+import io.suggest.sjs.common.vm.content.SetInnerHtml
+import io.suggest.sjs.common.vm.create.{CreateDivWithId, CreateVm}
 import io.suggest.sc.sjs.vm.wc.WcRoot
-import io.suggest.sjs.common.view.safe.SafeElT
-import io.suggest.sjs.common.view.safe.display.SetInnerHtml
+import io.suggest.sjs.common.vm.VmT
+import io.suggest.sjs.common.vm.find.FindDiv
 import org.scalajs.dom.Node
 import org.scalajs.dom.raw.HTMLDivElement
 
@@ -21,7 +21,7 @@ import org.scalajs.dom.raw.HTMLDivElement
  * Created: 23.06.15 9:58
  * Description: Модель доступа к div sioMartLayout.
  */
-object LayContentVm extends FindDiv with CreateDiv with CreateVm {
+object LayContentVm extends FindDiv with CreateDivWithId with CreateVm {
 
   override type T = LayContentVm
   override def DOM_ID = Layout.LAYOUT_ID
@@ -30,7 +30,7 @@ object LayContentVm extends FindDiv with CreateDiv with CreateVm {
 
 
 /** Абстрактная реализация модели. */
-trait LayContentVmT extends SafeElT with SetInnerHtml {
+trait LayContentVmT extends VmT with SetInnerHtml {
 
   override type T = HTMLDivElement
 

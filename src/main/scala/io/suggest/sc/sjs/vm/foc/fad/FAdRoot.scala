@@ -1,13 +1,12 @@
 package io.suggest.sc.sjs.vm.foc.fad
 
 import io.suggest.sc.sjs.m.magent.IMScreen
-import io.suggest.sc.sjs.v.vutil.VUtil
-import io.suggest.sc.sjs.vm.util.domvm.FindElIndexedIdT
-import io.suggest.sc.sjs.vm.util.height3.SetHeight3Raw
+import io.suggest.sjs.common.vm.height3.SetHeight3Raw
 import io.suggest.sjs.common.model.browser.IBrowser
-import io.suggest.sjs.common.view.safe.SafeElT
-import io.suggest.sjs.common.view.safe.css.{StyleLeft, Width}
-import io.suggest.sjs.common.view.safe.display.{OuterHtml, GetInnerHtml, StylePosition}
+import io.suggest.sjs.common.vm.content.{ApplyFromOuterHtml, GetInnerHtml, OuterHtml}
+import io.suggest.sjs.common.vm.VmT
+import io.suggest.sjs.common.vm.find.FindElIndexedIdT
+import io.suggest.sjs.common.vm.style.{StyleWidth, StyleLeft, StylePosition}
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -19,24 +18,21 @@ import org.scalajs.dom.raw.HTMLDivElement
  * Создаётся как контейнер, позиционируется, заполняется контентом, прицепляется к focused-карусели.
  */
 
-object FAdRoot extends FindElIndexedIdT with FAdStatic {
+object FAdRoot extends FindElIndexedIdT with FAdStatic with ApplyFromOuterHtml {
+
   override type T = FAdRoot
 
   /** Сборка focused root-vm из сырого HTML. */
-  def apply(html: String): FAdRoot = {
-    // Парсим через innerHTML вне DOM
-    val div = VUtil.newDiv()
-    div.innerHTML = html
-    val rootDiv = div.firstChild.asInstanceOf[Dom_t]
-    val res = apply(rootDiv)
-    res.positionAbsolute()
-    res
+  override def apply(outerHtml: String): FAdRoot = {
+    val vm = super.apply(outerHtml)
+    vm.positionAbsolute()
+    vm
   }
 
 }
 
 
-trait FAdRootT extends SafeElT with Width with StyleLeft with StylePosition with _FAdFindSubtag with SetHeight3Raw
+trait FAdRootT extends VmT with StyleWidth with StyleLeft with StylePosition with _FAdFindSubtag with SetHeight3Raw
 with GetInnerHtml with OuterHtml {
 
   override type T = HTMLDivElement

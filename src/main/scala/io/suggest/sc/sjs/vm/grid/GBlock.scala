@@ -5,11 +5,11 @@ import io.suggest.sc.ScConstants._
 import io.suggest.sc.ScConstants.Block._
 import io.suggest.sc.sjs.m.mgrid.{GridBlockClick, IBlockInfo}
 import io.suggest.sc.sjs.vm.util.InitOnClickToFsmT
-import io.suggest.sc.sjs.vm.util.domvm.{IApplyEl, FindElPrefixedIdT}
-import io.suggest.sc.sjs.vm.util.domvm.walk.{PrevNextSiblingCousinUtilT, PrevNextSiblingsVmT}
+import io.suggest.sjs.common.vm.find.{FindElPrefixedIdT, IApplyEl}
+import io.suggest.sjs.common.vm.style.StyleDisplayT
+import io.suggest.sjs.common.vm.walk.{PrevNextSiblingCousinUtilT, PrevNextSiblingsVmT}
 import io.suggest.sjs.common.util.DataUtil
-import io.suggest.sjs.common.view.safe.SafeElT
-import io.suggest.sjs.common.view.safe.display.SetDisplayEl
+import io.suggest.sjs.common.vm.VmT
 import org.scalajs.dom.Node
 import org.scalajs.dom.raw.HTMLDivElement
 
@@ -53,7 +53,7 @@ object GBlock extends FindElPrefixedIdT with IApplyEl {
 import GBlock._
 
 
-trait GBlockT extends SafeElT with SetDisplayEl with CssSzImplicits with IBlockInfo with InitOnClickToFsmT with PrevNextSiblingsVmT {
+trait GBlockT extends VmT with StyleDisplayT with CssSzImplicits with IBlockInfo with InitOnClickToFsmT with PrevNextSiblingsVmT {
 
   override type T = HTMLDivElement
   override type Self_t <: GBlockT

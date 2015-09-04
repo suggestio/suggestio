@@ -1,10 +1,11 @@
 package io.suggest.sc.sjs.vm.res
 
-import io.suggest.sc.sjs.v.vutil.VUtil
 import io.suggest.sc.sjs.vm.layout.LayContentVm
-import io.suggest.sc.sjs.vm.util.ClearT
-import io.suggest.sc.sjs.vm.util.domvm.FindDiv
-import io.suggest.sjs.common.view.safe.SafeElT
+import io.suggest.sjs.common.view.VUtil
+import io.suggest.sjs.common.vm.VmT
+import io.suggest.sjs.common.vm.content.ClearT
+import io.suggest.sjs.common.vm.create.{CreateVm, CreateDivWithId}
+import io.suggest.sjs.common.vm.find.FindDiv
 import org.scalajs.dom
 import org.scalajs.dom.raw.HTMLDivElement
 
@@ -19,27 +20,26 @@ import org.scalajs.dom.raw.HTMLDivElement
  * С точки зрения DOM, контейнеры -- это просто теги в начале body.
  */
 
-trait ResStaticT extends FindDiv {
+trait ResStaticT extends FindDiv with CreateDivWithId with CreateVm {
 
   override type T <: ResT
 
   protected def _insertDiv(lay: LayContentVm, div: HTMLDivElement): Unit
-  
+
   def ensureCreated(): T = {
     find() getOrElse {
-      val div = VUtil.newDiv()
-      div.id = DOM_ID
+      val vm = createNew()
       val lay = LayContentVm.find()
         .get
-      _insertDiv(lay, div)
-      apply(div)
+      _insertDiv(lay, vm._underlying)
+      vm
     }
   }
 
 }
 
 
-trait ResT extends SafeElT with ClearT {
+trait ResT extends VmT with ClearT {
 
   override type T = HTMLDivElement
 

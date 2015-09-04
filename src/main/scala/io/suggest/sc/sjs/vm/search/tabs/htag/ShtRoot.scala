@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.vm.search.tabs.htag
 
 import io.suggest.sc.sjs.vm.search.tabs.{TabRoot, TabRootCompanion}
-import io.suggest.sc.sjs.vm.util.domvm.get.SubTagFind
+import io.suggest.sjs.common.vm.child.SubTagFind
 import org.scalajs.dom
 import org.scalajs.dom.raw.HTMLDivElement
 import io.suggest.sc.ScConstants.Search.Nodes.ROOT_DIV_ID

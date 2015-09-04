@@ -1,10 +1,10 @@
 package io.suggest.sc.sjs.vm.grid
 
 import io.suggest.sc.sjs.m.msc.fsm.IStData
-import io.suggest.sc.sjs.vm.util.domvm.FindDiv
-import io.suggest.sc.sjs.vm.util.domvm.get.{SubTagFind, ContentElT}
-import io.suggest.sc.sjs.vm.util.height3.SetHeight3Raw
-import io.suggest.sjs.common.view.safe.SafeElT
+import io.suggest.sjs.common.vm.height3.SetHeight3Raw
+import io.suggest.sjs.common.vm.VmT
+import io.suggest.sjs.common.vm.child.{ContentElT, SubTagFind}
+import io.suggest.sjs.common.vm.find.FindDiv
 import org.scalajs.dom.raw.HTMLDivElement
 import io.suggest.sc.ScConstants.Grid
 
@@ -26,7 +26,7 @@ object GRoot extends FindDiv {
 
 
 /** Логика и интерфейс экземпляра модели. */
-trait GRootT extends SafeElT with SubTagFind with SetHeight3Raw {
+trait GRootT extends VmT with SubTagFind with SetHeight3Raw {
 
   override type T = HTMLDivElement
 

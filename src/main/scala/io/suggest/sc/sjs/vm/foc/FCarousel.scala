@@ -6,17 +6,19 @@ import io.suggest.sc.sjs.c.ScFsm
 import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.m.mfoc.MouseClick
 import io.suggest.sc.sjs.m.mfsm.touch.{TouchCancel, TouchEnd, TouchStart}
-import io.suggest.sc.sjs.v.vutil.ExtraStyles
 import io.suggest.sc.sjs.vm.foc.fad.{FAdRootT, FAdRoot}
 import io.suggest.sc.sjs.vm.util._
-import io.suggest.sc.sjs.vm.util.domvm.FindDiv
 import io.suggest.sjs.common.model.browser.IBrowser
 import io.suggest.sjs.common.model.dom.DomListIterator
 import io.suggest.sjs.common.util.TouchUtil
-import io.suggest.sjs.common.view.safe.SafeElT
-import io.suggest.sjs.common.view.safe.css.{StyleLeft, Width}
 import io.suggest.sc.ScConstants.Focused._
-import io.suggest.sjs.common.view.vutil.OnMouseClickT
+import io.suggest.sjs.common.vm.VmT
+import io.suggest.sjs.common.vm.content.ClearT
+import io.suggest.sjs.common.vm.evtg.OnMouseClickT
+import io.suggest.sjs.common.vm.find.FindDiv
+import io.suggest.sjs.common.vm.style.{StyleWidth, StyleLeft}
+import io.suggest.sjs.common.vm.util.IInitLayout
+import io.suggest.sjs.common.vm.will.WillTranslate3d
 import org.scalajs.dom.{TouchEvent, MouseEvent}
 import org.scalajs.dom.raw.HTMLDivElement
 
@@ -51,7 +53,7 @@ import FCarousel.indexToLeftPx
 
 
 /** Логика работы карусели живёт в этом трейте. */
-trait FCarouselT extends SafeElT with CssSzImplicits with Width with ExtraStyles with StyleLeft with ClearT
+trait FCarouselT extends VmT with CssSzImplicits with StyleWidth with StyleLeft with ClearT
 with IInitLayout with WillTranslate3d with OnMouseClickT with OnEventToFsmUtilT with IReset {
 
   override type T = HTMLDivElement

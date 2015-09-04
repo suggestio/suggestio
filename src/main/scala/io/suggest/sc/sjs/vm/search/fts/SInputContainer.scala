@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.vm.search.fts
 
-import io.suggest.sc.sjs.vm.util.domvm.FindDiv
-import io.suggest.sjs.common.view.safe.SafeElT
+import io.suggest.sjs.common.vm.VmT
+import io.suggest.sjs.common.vm.find.FindDiv
 import org.scalajs.dom.raw.HTMLDivElement
 import io.suggest.sc.ScConstants.Search.Fts.{ACTIVE_INPUT_CLASS, INPUT_CONTAINER_ID}
 
@@ -18,7 +18,7 @@ object SInputContainer extends FindDiv {
 
 
 /** Трейт с логикой работы экземпляра vm'ки контейнера input-поля текстового поиска. */
-trait SInputContainerT extends SafeElT {
+trait SInputContainerT extends VmT {
 
   override type T = HTMLDivElement
 
