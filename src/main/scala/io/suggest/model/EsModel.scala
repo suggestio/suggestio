@@ -2,6 +2,7 @@ package io.suggest.model
 
 import java.util.concurrent.atomic.AtomicInteger
 
+import io.suggest.primo.TypeT
 import org.elasticsearch.action.bulk.{BulkResponse, BulkRequest, BulkProcessor}
 import org.elasticsearch.action.update.UpdateRequestBuilder
 import org.elasticsearch.cluster.metadata.{MappingMetaData, IndexMetaData}
@@ -320,11 +321,6 @@ object EsModel extends MacroLogsImpl {
     }
   }
 
-  /** Сконвертить выхлоп getVersion() в Option[Long]. */
-  def rawVersion2versionOpt(version: Long): Option[Long] = {
-    if (version < 0L)  None  else  Some(version)
-  }
-
   /**
    * Узнать метаданные индекса.
    * @param indexName Название индекса.
@@ -575,9 +571,9 @@ trait EsModelStaticMapping extends EsModelStaticMappingGenerators with MacroLogs
 
 
 /** Общий код для обычный и child-моделей. Был вынесен из-за разделения в логике работы обычный и child-моделей. */
-trait EsModelCommonStaticT extends EsModelStaticMapping {
+trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
 
-  type T <: EsModelCommonT
+  override type T <: EsModelCommonT
 
   // Кое-какие константы, которые можно переопределить в рамках конкретных моделей.
   def MAX_RESULTS_DFLT = EsModel.MAX_RESULTS_DFLT
@@ -869,6 +865,16 @@ trait EsModelCommonStaticT extends EsModelStaticMapping {
    */
   def deserializeOne(id: Option[String], m: collection.Map[String, AnyRef], version: Option[Long]): T
 
+  /** Десериализация по новому API: документ передается напрямую, а данные извлекаются через статический typeclass.
+    * @param doc Документ, т.е. GetResponse или SearchHit или же ещё что-то...
+    * @param ev Неявный typeclass, обеспечивающий унифицированный интерфейс к doc.
+    * @tparam D Класс переданного документа.
+    * @return Экземпляр модели.
+    */
+  def deserializeOne2[D](doc: D)(implicit ev: IEsDoc[D]): T = {
+    deserializeOne(ev.id(doc), ev.bodyAsScalaMap(doc), ev.version(doc))
+  }
+
 
   /** Внутренний метод для укорачивания кода парсеров ES SearchResponse. */
   def searchRespMap[A](searchResp: SearchResponse)(f: SearchHit => A): Seq[A] = {
@@ -884,7 +890,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping {
   }
 
   def deserializeSearchHit(hit: SearchHit): T = {
-    deserializeOne(Option(hit.getId), hit.getSource, rawVersion2versionOpt(hit.getVersion))
+    deserializeOne2(hit)
   }
 
   /** Список результатов в список id. */
@@ -927,8 +933,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping {
       if (mgetItem.isFailed || !mgetItem.getResponse.isExists) {
         acc
       } else {
-        val resp = mgetItem.getResponse
-        deserializeOne(Option(mgetItem.getId), resp.getSourceAsMap, rawVersion2versionOpt(resp.getVersion)) :: acc
+        deserializeOne2(mgetItem.getResponse) :: acc
       }
     }
   }
@@ -977,7 +982,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping {
 
   def deserializeGetRespFull(getResp: GetResponse): Option[T] = {
     if (getResp.isExists) {
-      val result = deserializeOne(Option(getResp.getId), getResp.getSourceAsMap, rawVersion2versionOpt(getResp.getVersion))
+      val result = deserializeOne2(getResp)
       Some(result)
     } else {
       None
@@ -1438,9 +1443,9 @@ trait EraseResources {
 
 
 /** Общий код динамических частей модели, независимо от child-модели или обычной. */
-trait EsModelCommonT extends OptStrId with EraseResources {
+trait EsModelCommonT extends OptStrId with EraseResources with TypeT {
 
-  type T <: EsModelCommonT
+  override type T <: EsModelCommonT
 
   /** Модели, желающие версионизации, должны перезаписать это поле. */
   def versionOpt: Option[Long]
@@ -1901,23 +1906,27 @@ trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
     info("putAll(): " + all)
     try {
       val raws = JacksonWrapper.deserialize[List[Map[String, AnyRef]]](all)
-      val ids = Future.traverse(raws) { tmap =>
+      val idsFut = Future.traverse(raws) { tmap =>
         val idOpt = tmap.get(FIELD_ID).map(_.toString.trim)
         val sourceStr = JacksonWrapper.serialize(tmap get FIELD_SOURCE)
         val b = sourceStr.getBytes
         val dataMap = SourceLookup.sourceAsMap(b, 0, b.length)
         _saveOne(idOpt, dataMap)
       }
-      (("Total saved: " + ids.size) :: "----" :: ids)
-        .mkString("\n")
+      val resFut = idsFut.map { ids =>
+        (("Total saved: " + ids.size) :: "----" :: ids)
+          .mkString("\n")
+      }
+      awaitString(resFut)
     } catch {
       case ex: Throwable =>
-        _formatEx(s"putAll(${all.size}): ", all, ex)
+        _formatEx(s"putAll(${all.length}): ", all, ex)
     }
   }
 
   /** Общий код парсинга и добавления элементов в хранилище вынесен сюда. */
   private def _saveOne(idOpt: Option[String], dataMap: ju.Map[String, AnyRef], versionOpt: Option[Long] = None): Future[String] = {
+    // TODO Придумать что-то, использующее deserializeOne2()
     companion
       .deserializeOne(idOpt, dataMap, version = None)
       .save
@@ -1960,3 +1969,17 @@ trait EsModelEmpty extends EsModelPlayJsonT {
   }
 }
 
+
+/** Аддон для воплощения immutable-десериализации на базе play.json и тайпклассов.
+  * Эта десериализация идёт на смену изначальной горбатой mutable-десериализации через [[EsModelStaticMutAkvT]]. */
+trait CurriedPlayJsonEsDocDeserializer extends EsModelCommonStaticT {
+
+  protected def esDocReads: Reads[(Option[String], Option[Long]) => T]
+
+  override def deserializeOne2[D](doc: D)(implicit ev: IEsDoc[D]): T = {
+    Json.parse(ev.bodyAsString(doc))
+      .validate(esDocReads)
+      .get
+      .apply(ev.id(doc), ev.version(doc))
+  }
+}
