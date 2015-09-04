@@ -1,10 +1,9 @@
 package io.suggest.sjs.common.model.browser.unknown
 
 import io.suggest.sjs.common.model.browser.{EnginePrefix, IVendorPrefixer, IBrowser}
-import io.suggest.sjs.common.view.safe.wnd.SafeWindow
+import io.suggest.sjs.common.vm.wnd.WindowVm
 import org.scalajs.dom
 
-import scala.scalajs.js
 import scala.scalajs.js.{WrappedDictionary, Dictionary, Any}
 
 /**
@@ -24,7 +23,7 @@ class UnknownBrowser extends IBrowser with IVendorPrefixer {
 
   /** Вычислить css-префиксы на основе getComputedStyle(). */
   val CSS_PREFIX: List[String] = {
-    val p0 = SafeWindow()
+    val p0 = WindowVm()
       .getComputedStyle( dom.document.documentElement )
       .flatMap { css =>
         val re = ("^(-(" + EnginePrefix.ALL_PREFIXES.mkString("|") + ")-)").r

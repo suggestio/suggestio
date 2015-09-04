@@ -7,7 +7,7 @@ import io.suggest.sjs.common.model.browser.opera.desktop.next.OperaNextDetector
 import io.suggest.sjs.common.model.browser.unknown.UnknownBrowser
 import io.suggest.sjs.common.model.browser.webkit.chrome.ChromeDetector
 import io.suggest.sjs.common.model.browser.webkit.safari.SafariDetector
-import io.suggest.sjs.common.view.safe.nav.SafeNavigator
+import io.suggest.sjs.common.vm.wnd.WindowVm
 
 /**
  * Suggest.io
@@ -18,9 +18,11 @@ import io.suggest.sjs.common.view.safe.nav.SafeNavigator
 object MBrowser {
 
   def detectBrowser: IBrowser = {
-    val uaOpt = SafeNavigator().userAgent
-    new MBrowserDetector()
-      .detectBrowser(uaOpt)
+    WindowVm().navigator
+      .flatMap { navVm =>
+        new MBrowserDetector()
+          .detectBrowser( navVm.userAgent )
+      }
       .getOrElse { new UnknownBrowser }
   }
 
