@@ -1,5 +1,6 @@
 package io.suggest.xadv.ext.js.fb.c
 
+import io.suggest.sjs.common.model.wsproto.MAnswerStatuses
 import io.suggest.xadv.ext.js.fb.c.hi.Fb
 import io.suggest.xadv.ext.js.fb.m._
 import io.suggest.xadv.ext.js.runner.c.IActionContext

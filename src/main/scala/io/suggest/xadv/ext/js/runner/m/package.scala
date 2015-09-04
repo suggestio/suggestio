@@ -1,5 +1,7 @@
 package io.suggest.xadv.ext.js.runner
 
+import io.suggest.sjs.common.model.wsproto.MAnswerStatuses
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>

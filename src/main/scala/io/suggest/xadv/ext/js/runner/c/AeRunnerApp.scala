@@ -1,10 +1,11 @@
 package io.suggest.xadv.ext.js.runner.c
 
 import io.suggest.sjs.common.controller.InitRouter
+import io.suggest.sjs.common.model.wsproto.MAnswerStatuses
 import io.suggest.sjs.common.view.CommonPage
 import io.suggest.xadv.ext.js.fb.c.FbAdapter
 import io.suggest.xadv.ext.js.runner.m.ex.CustomException
-import io.suggest.xadv.ext.js.runner.m.{IAdapter, MAnswerStatuses, MJsCtx}
+import io.suggest.xadv.ext.js.runner.m.{IAdapter, MJsCtx}
 import io.suggest.xadv.ext.js.runner.v.Page
 import io.suggest.xadv.ext.js.vk.c.VkAdapter
 

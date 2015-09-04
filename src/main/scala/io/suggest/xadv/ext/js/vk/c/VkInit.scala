@@ -1,8 +1,9 @@
 package io.suggest.xadv.ext.js.vk.c
 
+import io.suggest.sjs.common.model.wsproto.MAnswerStatuses
 import io.suggest.xadv.ext.js.runner.c.IActionContext
 import io.suggest.xadv.ext.js.runner.c.adp.LazyPermsInit
-import io.suggest.xadv.ext.js.runner.m.{MAnswerStatuses, MJsCtxT, IMExtTarget}
+import io.suggest.xadv.ext.js.runner.m.{MJsCtxT, IMExtTarget}
 import io.suggest.xadv.ext.js.vk.c.hi.Vk
 import io.suggest.xadv.ext.js.vk.m._
 import org.scalajs.dom

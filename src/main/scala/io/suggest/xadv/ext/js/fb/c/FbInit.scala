@@ -1,10 +1,11 @@
 package io.suggest.xadv.ext.js.fb.c
 
+import io.suggest.sjs.common.model.wsproto.MAnswerStatuses
 import io.suggest.xadv.ext.js.fb.c.hi.Fb
 import io.suggest.xadv.ext.js.fb.m._
 import io.suggest.xadv.ext.js.runner.c.IActionContext
 import io.suggest.xadv.ext.js.runner.c.adp.LazyPermsInit
-import io.suggest.xadv.ext.js.runner.m.{MAnswerStatuses, IMExtTarget}
+import io.suggest.xadv.ext.js.runner.m.IMExtTarget
 
 import scala.concurrent.Future
 

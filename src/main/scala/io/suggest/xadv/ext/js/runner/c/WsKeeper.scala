@@ -1,7 +1,9 @@
 package io.suggest.xadv.ext.js.runner.c
 
+import io.suggest.sjs.common.model.wsproto.MAnswerStatuses
 import io.suggest.sjs.common.view.CommonPage
 import io.suggest.xadv.ext.js.runner.m._
+import io.suggest.xadv.ext.js.runner.vm.WsUrl
 import org.scalajs.dom
 import org.scalajs.dom.{MessageEvent, WebSocket, console}
 import scala.concurrent.Future
@@ -23,10 +25,8 @@ trait WsKeeper {
 
   /** Запуск вебсокета. */
   protected[this] def startWs(adapters: List[IAdapter]): Unit = {
-    val wsEl = dom.document.getElementById("socialApiConnection")
-    val attr = "value"
-    val wsUrl = wsEl.getAttribute(attr)
-    val ws = new WebSocket(wsUrl)
+    val wsUrlVm = WsUrl.find().get
+    val ws = new WebSocket( wsUrlVm.wsUrl )
     val appState = MAppState(
       ws        = ws,
       adapters  = adapters
@@ -38,7 +38,7 @@ trait WsKeeper {
     // TODO Закрывать сокет через обращение к appState, чтобы избежать возможных проблем в будущем с заменой экземпляров ws в состоянии.
     CommonPage.wsCloseOnPageClose(ws)
     // Ссылка больше не нужна. Удалить её из верстки, в т.ч. в целях безопасности.
-    wsEl.removeAttribute(attr)
+    wsUrlVm.remove()
   }
 
   /**

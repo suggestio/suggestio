@@ -2,6 +2,7 @@ package io.suggest.xadv.ext.js.runner.m
 
 import io.suggest.adv.ext.model.ctx.MAskActionLightBaseT
 import io.suggest.adv.ext.model.ctx.MAskActions._
+import io.suggest.sjs.common.model.wsproto.MAnswerStatuses
 import io.suggest.xadv.ext.js.runner.c.{Runner, IActionContext}
 import org.scalajs.dom
 
@@ -28,6 +29,7 @@ object MAskActions extends MAskActionLightBaseT {
     def adapterRequired: Boolean = true
   }
 
+  /** Частичная реализация ValT для экшенов, НЕ требующих использования адаптера внешнего сервиса. */
   sealed protected trait AdHocAction extends ValT {
     override def adapterRequired = false
     def processAction(actx: IActionContext): Future[MJsCtxT]

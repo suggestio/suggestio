@@ -2,6 +2,7 @@ package io.suggest.xadv.ext.js.vk.c
 
 import java.net.URI
 
+import io.suggest.sjs.common.model.wsproto.MAnswerStatuses
 import io.suggest.xadv.ext.js.runner.c.IActionContext
 import io.suggest.xadv.ext.js.runner.c.adp.AsyncInitAdp
 import io.suggest.xadv.ext.js.runner.m.ex._
