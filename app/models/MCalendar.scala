@@ -3,7 +3,8 @@ package models
 import io.suggest.model._
 import util.PlayMacroLogsImpl
 import io.suggest.model.EsModel.FieldsJsonAcc
-import play.api.libs.json.JsString
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 import scala.collection.Map
 import scala.concurrent.ExecutionContext
 import io.suggest.event.SioNotifierStaticClientI
@@ -15,7 +16,7 @@ import org.elasticsearch.client.Client
  * Created: 30.05.14 18:36
  * Description: Модель для хранения календарей в текстовых форматах.
  */
-object MCalendar extends EsModelStaticT with PlayMacroLogsImpl {
+object MCalendar extends EsModelStaticT with PlayMacroLogsImpl with CurriedPlayJsonEsDocDeserializer {
   import io.suggest.util.SioEsUtil._
   import LOGGER._
 
@@ -26,6 +27,7 @@ object MCalendar extends EsModelStaticT with PlayMacroLogsImpl {
   val NAME_ESFN = "name"
   val DATA_ESFN = "data"
 
+  // TODO Можно удалить, десериализация v2 тут заимплеменчена.
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
     MCalendar(
       id = id,
@@ -33,6 +35,13 @@ object MCalendar extends EsModelStaticT with PlayMacroLogsImpl {
       data = EsModel.stringParser( m(DATA_ESFN) ),
       versionOpt = version
     )
+  }
+
+  override def esDocReads: Reads[(Option[String], Option[Long]) => T] = (
+    (__ \ NAME_ESFN).read[String] and
+    (__ \ DATA_ESFN).read[String]
+  ) {
+    (name, data) => apply(name, data, _, _)
   }
 
   override def generateMappingStaticFields: List[Field] = List(

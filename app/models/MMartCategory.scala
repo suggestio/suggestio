@@ -211,7 +211,7 @@ object MMartCategory extends EsModelStaticT with PlayMacroLogsImpl {
       .execute()
       .flatMap { getResp =>
         if (getResp.isExists) {
-          val mmc = deserializeOne(Option(getResp.getId), getResp.getSourceAsMap, rawVersion2versionOpt(getResp.getVersion))
+          val mmc = deserializeOne2(getResp)
           val acc1 = f(acc0, mmc)
           mmc.parentId match {
             case Some(parentId) => foldUpChain(parentId, acc1)(f)

@@ -70,7 +70,7 @@ object MPersonIdent extends PlayMacroLogsImpl {
             .find(_.companion.ES_TYPE_NAME == hit.getType)
             .map {
              _.companion
-              .deserializeOne(Option(hit.getId), hit.getSource, rawVersion2versionOpt(hit.getVersion))
+              .deserializeOne2(hit)
             }
           result1Opt match {
             case Some(result1) =>
@@ -125,15 +125,12 @@ object MPersonIdent extends PlayMacroLogsImpl {
       .execute()
       .map { searchResp =>
         searchResp.getHits.getHits.flatMap { hit =>
-          val idOpt = Option(hit.getId)
-          val src = hit.getSource
-          val vsnOpt = rawVersion2versionOpt(hit.getVersion)
           hit.getType match {
             case EmailPwIdent.ES_TYPE_NAME =>
-              val email = EmailPwIdent.deserializeOne(idOpt, src, vsnOpt).email
+              val email = EmailPwIdent.deserializeOne2(hit).email
               Seq(email)
             case MExtIdent.ES_TYPE_NAME =>
-              MExtIdent.deserializeOne(idOpt, src, vsnOpt).email
+              MExtIdent.deserializeOne2(hit).email
           }
         }
       }
