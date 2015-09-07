@@ -8,8 +8,10 @@ import io.suggest.util.StringUtil
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.QueryBuilders
 import play.api.Play.current
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 import play.api.mvc.QueryStringBindable
-import util.PlayMacroLogsImpl
+import _root_.util.PlayMacroLogsImpl
 
 import scala.collection.Map
 import scala.concurrent.{ExecutionContext, Future}
@@ -24,7 +26,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 /** Статическая часть модели [[EmailActivation]].
   * Модель нужна для хранения ключей для проверки/активации почтовых ящиков. */
-object EmailActivation extends EsModelStaticIdentT with PlayMacroLogsImpl {
+object EmailActivation extends EsModelStaticIdentT with PlayMacroLogsImpl with EsmV2Deserializer {
 
   override type T = EmailActivation
 
@@ -37,6 +39,7 @@ object EmailActivation extends EsModelStaticIdentT with PlayMacroLogsImpl {
   val TTL_DFLT = current.configuration.getString("ident.email.act.ttl.period") getOrElse "2d"
 
 
+  @deprecated("Delete id, replaced by deserializeOne2()", "2015.sep.07")
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
     EmailActivation(
       id = id,
@@ -44,6 +47,19 @@ object EmailActivation extends EsModelStaticIdentT with PlayMacroLogsImpl {
       email = stringParser(m(PERSON_ID_ESFN))
     )
   }
+
+  // Кешируем промежуточный недособранный неизменяемый Reads-десериализатор.
+  private val _reads0 = {
+    (__ \ KEY_ESFN).read[String] and
+    (__ \ PERSON_ID_ESFN).read[String]
+  }
+  override protected def esDocReads(meta: IEsDocMeta): Reads[EmailActivation] = {
+    _reads0 {
+      (key, personId) =>
+        apply(email = personId, key = key, id = meta.id)
+    }
+  }
+
 
   /** Сгенерить новый рандомный ключ активации.
     * @return Строка из символов [a-zA-Z0-9].

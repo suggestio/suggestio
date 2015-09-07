@@ -165,7 +165,7 @@ package object models {
   type LkAdvRightLink       = LkAdvRightLinks.LkAdvRightLink
 
   val  NodeGeoLevels        = ym.model.NodeGeoLevels
-  type NodeGeoLevel         = NodeGeoLevels.NodeGeoLevel
+  type NodeGeoLevel         = ym.model.NodeGeoLevel
 
   val  MAdnNodeGeo          = ym.model.MAdnNodeGeo
   type MAdnNodeGeo          = ym.model.MAdnNodeGeo

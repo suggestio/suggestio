@@ -1,7 +1,7 @@
 package util.geo.osm
 
 import functional.WithInputStream
-import io.suggest.model.geo.GsTypes.GsType
+import io.suggest.model.geo.GsType
 import io.suggest.model.geo.{GsTypes, LineStringGs, GeoPoint}
 import org.scalatestplus.play._
 import play.api.GlobalSettings
@@ -46,7 +46,7 @@ class OsmUtilSpec extends PlaySpec with OneAppPerSuite with WithInputStream {
       gs.toPlayJson()  // Не должно быть экзепшена
       if (ri.allMemberIds.nonEmpty) {
         // Пройтись по всему списку member'ов
-        for(i <- 0 until rel.members.size) {
+        for(i <- rel.members.indices) {
           rel.members(i).obj.id  mustBe  ri.allMemberIds(i)
         }
       }
