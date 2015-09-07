@@ -1,4 +1,4 @@
-package io.suggest.sjs.common.controller.fsm
+package io.suggest.sjs.common.fsm
 
 import io.suggest.fsm.AbstractFsm
 import org.scalajs.dom.{MouseEvent, TouchEvent}

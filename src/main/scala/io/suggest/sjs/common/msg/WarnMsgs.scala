@@ -24,4 +24,6 @@ object WarnMsgs extends MsgsStaticT {
 
   def BACK_TO_UNDEFINED_NODE    = E(6)
 
+  def FSM_SIGNAL_UNEXPECTED     = E(7)
+
 }
