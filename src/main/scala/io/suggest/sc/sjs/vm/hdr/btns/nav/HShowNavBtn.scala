@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.vm.hdr.btns.nav
 
 import io.suggest.sc.ScConstants.NavPane.SHOW_PANEL_BTN_ID
 import io.suggest.sc.sjs.m.mhdr.ShowNavClick
-import io.suggest.sc.sjs.vm.util.InitOnClickToFsmT
+import io.suggest.sc.sjs.vm.util.InitOnClickToScFsmT
 import io.suggest.sjs.common.vm.find.FindDiv
 import io.suggest.sjs.common.vm.style.ShowHideDisplayT
 import org.scalajs.dom.raw.HTMLDivElement
@@ -23,7 +23,7 @@ object HShowNavBtn extends FindDiv {
 
 
 /** Трейт с логикой экземпляра ViewModel'и кнопки отображения панели навигации. */
-trait HShowNavBtnT extends InitOnClickToFsmT with ShowHideDisplayT {
+trait HShowNavBtnT extends InitOnClickToScFsmT with ShowHideDisplayT {
 
   override type T = HTMLDivElement
   override protected[this] def _clickMsgModel = ShowNavClick

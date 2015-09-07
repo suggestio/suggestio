@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.vm.hdr.btns
 
 import io.suggest.sc.sjs.m.mhdr.LogoClick
-import io.suggest.sc.sjs.vm.util.InitOnClickToFsmT
+import io.suggest.sc.sjs.vm.util.InitOnClickToScFsmT
 import io.suggest.sc.ScConstants.Logo.LOGO_CONT_ID
 import io.suggest.sjs.common.vm.VmT
 import io.suggest.sjs.common.vm.find.FindElT
@@ -20,7 +20,7 @@ object HNodeLogo extends FindElT {
 }
 
 
-trait HNodeLogoT extends VmT with InitOnClickToFsmT {
+trait HNodeLogoT extends VmT with InitOnClickToScFsmT {
 
   override type T = HTMLSpanElement
 

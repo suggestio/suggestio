@@ -1,20 +1,12 @@
 package io.suggest.sc.sjs.c.scfsm
 
-import io.suggest.fsm.{AbstractFsm, AbstractFsmUtil, StateData}
-import io.suggest.sc.sjs.m.mfsm.{IFsmMsgCompanion, IFsmMsg}
+import io.suggest.fsm.StateData
 import io.suggest.sc.sjs.m.mfsm.signals.KbdKeyUp
 import io.suggest.sc.sjs.m.mgeo.{IGeoErrorSignal, IGeoLocSignal}
 import io.suggest.sc.sjs.m.msc.fsm.MStData
-import io.suggest.sc.sjs.m.msrv.TimestampedCompanion
-import io.suggest.sjs.common.controller.fsm.{DirectDomEventHandlerDummy, DirectDomEventHandlerFsm}
+import io.suggest.sjs.common.fsm._
 import io.suggest.sjs.common.msg.ErrorMsgs
-import io.suggest.sjs.common.util.ISjsLogger
-import org.scalajs.dom
 import org.scalajs.dom.KeyboardEvent
-
-import scala.concurrent.{ExecutionContext, Future}
-import scala.scalajs.concurrent.JSExecutionContext.queue
-import scala.util.Success
 
 /**
  * Suggest.io
@@ -22,24 +14,17 @@ import scala.util.Success
  * Created: 18.06.15 11:28
  * Description: Заготовка для сборки FSM-частей подсистем.
  */
-trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger with DirectDomEventHandlerFsm {
-
-  override type Receive = PartialFunction[Any, Unit]
+trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm {
 
   override type State_t = FsmState
 
-  override protected def combineReceivers(rcvrs: TraversableOnce[Receive]): Receive = {
-    AbstractFsmUtil.combinePfs(rcvrs)
-  }
-
-
+  override type SD = MStData
 
   /** Добавление слушателя событий отпускания кнопок клавиатуры в состояние. */
   protected trait FsmState extends super.FsmState with DirectDomEventHandlerDummy {
     /** Переопределяемый метод для обработки событий клавиатуры.
       * По дефолту -- игнорировать все события клавиатуры. */
     def _onKbdKeyUp(event: KeyboardEvent): Unit = {}
-    def receiverPart: Receive
 
     /** Реакция на получение данных геолокации. */
     def _geoLocReceived(gs: IGeoLocSignal): Unit = {}
@@ -48,11 +33,6 @@ trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger with DirectDo
       val e = ge.error
       warn(ErrorMsgs.BSS_GEO_LOC_FAILED + " [" + e.code + "] " + e.message)
     }
-    /** Реакция на проблемы при обработке входящего сообщения. */
-    def processEventFailed(e: Any, ex: Throwable): Unit = {
-      processFailure(ex)
-    }
-    def processFailure(ex: Throwable): Unit = {}
   }
 
   /**
@@ -66,9 +46,7 @@ trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger with DirectDo
     override def receiverPart: Receive = PartialFunction.empty
   }
 
-
-  /** Ресивер для всех состояний. */
-  override protected def allStatesReceiver: Receive = {
+  protected def _allStatesReceiver: Receive = {
     // Реакция на события клавиатуры.
     case KbdKeyUp(event) =>
       _state._onKbdKeyUp(event)
@@ -77,54 +55,11 @@ trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger with DirectDo
       _state._geoLocReceived(gs)
     case ge: IGeoErrorSignal =>
       _state._geoLocErrorReceived(ge)
-    // Неожиданные сообщения надо логгировать.
-    case other =>
-      // Пока только логгируем пришедшее событие. Потом и логгирование надо будет отрубить.
-      log("[" + _state + "] Dropped event: " + other)
   }
 
-  override type SD = MStData
-
-  /**
-   * Статический СИНХРОННЫЙ метод API для отправки события в FSM:
-   *   ScFsm !! event
-   * "!!" вместо "!", т.к. метод блокирующий.
-   * Блокирующий, потому что
-   * 1. Снижение издержек вызова.
-   * 2. Все клиенты этого метода -- по сути короткие асинхронные листенеры. Нет ни одной причины
-   * быстро возвращать им поток выполнения и это не потребовалось ни разу.
-   * 3. Есть необходимость в поддержании порядка получаемых сообщений совместно с синхронным DirectDomEventHandlerFsm.
-   * @param e Событие.
-   */
-  final def !!(e: IFsmMsg): Unit = {
-    _sendEventSync(e)
-  }
-
-  /** Внутренняя асинхронная отправка сообщения.
-    * Оно может быть любого типа для самоуведомления состояний. */
-  protected[this] def _sendEvent(e: Any): Unit = {
-    Future {
-      _sendEventSyncSafe(e)
-    }(queue)
-  }
-
-  /** Внутренняя синхронная отправка сообщения. */
-  protected[this] def _sendEventSyncSafe(e: Any): Unit = {
-    try {
-      _sendEventSync(e)
-    } catch { case ex: Throwable =>
-      _sendEventFailed(e, ex)
-    }
-  }
-
-  /** Реализация синхронной логики отправки сообщения. */
-  protected[this] def _sendEventSync(e: Any): Unit
-
-
-  /** Отправка или обработка не удалась. */
-  protected[this] def _sendEventFailed(e: Any, ex: Throwable): Unit = {
-    error("[" + _state.name + "] " + ErrorMsgs.SC_FSM_EVENT_FAILED +": " + e, ex)
-    _state.processEventFailed(e, ex)
+  /** Ресивер для всех состояний. */
+  override protected def allStatesReceiver: Receive = {
+    _allStatesReceiver orElse super.allStatesReceiver
   }
 
 
@@ -138,59 +73,10 @@ trait ScFsmStub extends AbstractFsm with StateData with ISjsLogger with DirectDo
     protected def _onNodeSwitchState: FsmState
   }
 
-  protected def _retry(afterMs: Long)(f: => FsmState): Unit = {
-    dom.window.setTimeout(
-      { () => become(f) },
-      afterMs
-    )
-  }
-
-
-  /** Генератор анонимных фунций-коллбеков, использующий wrapper-модель, заданную модель-компаньоном.
-    * Завёрнутый результат отправляется в ScFsm.
-    * @param model Компаньон модели, в которую надо заворачивать исходные данные функции.
-    */
-  protected def _signalCallbackF[T](model: IFsmMsgCompanion[T]): (T => _) = {
-    {arg: T =>
-      _sendEvent( model(arg) )
-    }
-  }
-
-  /** Генератор анонимных фунций-коллбеков, пробрасывающих полученные данные как события в ScFsm. */
-  protected def _plainCallbackF[T]: (T => _) = {
-    {arg: T =>
-      _sendEvent(arg)
-    }
-  }
-
   // Раскомментить override become() для логгирования переключения состояний:
   override protected def become(nextState: FsmState): Unit = {
     log(_state + " -> " + nextState)
     super.become(nextState)
-  }
-
-  /** Подписать фьючерс на отправку результата в ScFsm. */
-  protected def _sendFutResBack[T](fut: Future[T])(implicit ec: ExecutionContext): Unit = {
-    fut.onComplete { tryRes =>
-      val msg = tryRes match {
-        case Success(res) => res
-        case failure      => failure
-      }
-      // Вешать асинхронную отправку сюда смысла нет, только паразитные setTimeout() в коде появяться.
-      _sendEventSyncSafe(msg)
-    }
-  }
-
-  /** Подписать фьючерс на отсылку ответа вместе с таймштампом вешанья события.
-    * Полезно для определения порядка параллельных одинаковых запросов. */
-  protected def _sendFutResBackTimestamped[T](fut: Future[T], model: TimestampedCompanion[T],
-                                              timestamp: Long = System.currentTimeMillis())
-                                             (implicit ec: ExecutionContext): Long = {
-    fut.onComplete { tryRes =>
-      val msg = model(tryRes, timestamp)
-      _sendEventSyncSafe(msg)
-    }
-    timestamp
   }
 
 }

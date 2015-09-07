@@ -34,9 +34,6 @@ object DocumentView {
     ds.addEventListener("keyup") { event: KeyboardEvent =>
       ScFsm !! KbdKeyUp(event)
     }
-
-    //val clickEvtName = TouchUtil.clickEvtName
-    // TODO document click?
   }
 
 }

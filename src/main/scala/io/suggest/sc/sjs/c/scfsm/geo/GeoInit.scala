@@ -1,9 +1,9 @@
 package io.suggest.sc.sjs.c.scfsm.geo
 
 import io.suggest.sc.sjs.c.scfsm.ScFsmStub
-import io.suggest.sc.sjs.m.mfsm.IFsmMsgCompanion
 import io.suggest.sc.sjs.m.mgeo._
 import io.suggest.sc.sjs.vm.SafeWnd
+import io.suggest.sjs.common.fsm.IFsmMsgCompanion
 import io.suggest.sjs.common.msg.WarnMsgs
 import org.scalajs.dom.{PositionError, Position, PositionOptions}
 

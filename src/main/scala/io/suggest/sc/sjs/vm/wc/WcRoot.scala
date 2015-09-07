@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.vm.wc
 
 import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.m.mwc.WcClick
-import io.suggest.sc.sjs.vm.util.InitOnClickToFsmT
+import io.suggest.sc.sjs.vm.util.InitOnClickToScFsmT
 import io.suggest.sc.ScConstants.Welcome.ROOT_ID
 import io.suggest.sc.ScConstants.Welcome.Anim._
 import io.suggest.sjs.common.vm.VmT
@@ -23,7 +23,7 @@ object WcRoot extends FindDiv {
 
 
 /** Логика div'а карточки приветствия тут. */
-trait WcRootT extends VmT with WillAnimateT with InitOnClickToFsmT {
+trait WcRootT extends VmT with WillAnimateT with InitOnClickToScFsmT {
 
   override type T = HTMLDivElement
 

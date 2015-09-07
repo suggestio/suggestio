@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.vm.hdr.btns.search
 
 import io.suggest.sc.ScConstants.Search.SHOW_PANEL_BTN_ID
 import io.suggest.sc.sjs.m.mhdr.ShowSearchClick
-import io.suggest.sc.sjs.vm.util.InitOnClickToFsmT
+import io.suggest.sc.sjs.vm.util.InitOnClickToScFsmT
 import io.suggest.sjs.common.vm.find.FindDiv
 import org.scalajs.dom.raw.HTMLDivElement
 
@@ -22,7 +22,7 @@ object HShowSearchBtn extends FindDiv {
 
 
 /** Трейт с логикой экземпляра vm кнопки открытия поисковой панели. */
-trait HShowSearchBtnT extends InitOnClickToFsmT {
+trait HShowSearchBtnT extends InitOnClickToScFsmT {
 
   override type T = HTMLDivElement
 

@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.m.mfsm.signals
 
-import io.suggest.sc.sjs.m.mfsm.{IFsmMsgCompanion, IFsmMsg}
+import io.suggest.sjs.common.fsm.{IFsmMsgCompanion, IFsmMsg}
 import org.scalajs.dom._
 
 

@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.m.mgeo
 
-import io.suggest.sc.sjs.m.mfsm.{IFsmMsgCompanion, IFsmMsg}
+import io.suggest.sjs.common.fsm.{IFsmMsgCompanion, IFsmMsg}
 import io.suggest.sjs.common.geo.{BssAccuracy, IHighAccuracy}
 import org.scalajs.dom.{PositionError, Position}
 

@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.vm.nav.nodelist
 
 import io.suggest.sc.sjs.m.mnav.NodeListClick
-import io.suggest.sc.sjs.vm.util.InitOnClickToFsmT
+import io.suggest.sc.sjs.vm.util.InitOnClickToScFsmT
 import io.suggest.sc.sjs.vm.nav.nodelist.glay.GlayRoot
 import io.suggest.sc.ScConstants.NavPane.{GN_CONTAINER_ID, GNL_BODY_CSS_CLASS, GN_ATTR_LAYERS_COUNT}
 import io.suggest.sjs.common.model.dom.DomListIterator
@@ -23,7 +23,7 @@ object NlContainer extends FindDiv {
 }
 
 
-trait NlContainerT extends VmT with InitOnClickToFsmT {
+trait NlContainerT extends VmT with InitOnClickToScFsmT {
 
   override type T = HTMLDivElement
 

@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.vm.search.fts
 
 import io.suggest.sc.ScConstants.Search.Fts.INPUT_ID
 import io.suggest.sc.sjs.m.msearch.{FtsFieldBlur, FtsFieldKeyUp, FtsFieldFocus}
-import io.suggest.sc.sjs.vm.util.{FindUsingAttachedEventT, OnEventToFsmUtilT}
+import io.suggest.sc.sjs.vm.util.{FindUsingAttachedEventT, OnEventToScFsmUtilT}
 import io.suggest.sjs.common.vm.VmT
 import io.suggest.sjs.common.vm.find.FindElT
 import io.suggest.sjs.common.vm.util.IInitLayout
@@ -24,7 +24,7 @@ object SInput extends FindElT with FindUsingAttachedEventT {
 
 
 /** Логика экземпляра модели поискового input'а в этом трейте. */
-trait SInputT extends VmT with IInitLayout with OnEventToFsmUtilT {
+trait SInputT extends VmT with IInitLayout with OnEventToScFsmUtilT {
   override type T = HTMLInputElement
 
   override def initLayout(): Unit = {

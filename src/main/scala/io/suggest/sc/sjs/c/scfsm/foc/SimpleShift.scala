@@ -1,9 +1,9 @@
 package io.suggest.sc.sjs.c.scfsm.foc
 
 import io.suggest.sc.sjs.m.mfoc.IFocSd
-import io.suggest.sc.sjs.m.mfsm.IFsmMsg
 import io.suggest.sc.sjs.vm.foc.{FControls, FCarousel}
 import io.suggest.sc.ScConstants.Focused.SLIDE_ANIMATE_MS
+import io.suggest.sjs.common.fsm.IFsmMsg
 import org.scalajs.dom
 
 /**

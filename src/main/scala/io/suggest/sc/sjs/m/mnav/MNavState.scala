@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.m.mnav
 
-import io.suggest.sc.sjs.m.mfsm.{IFsmMsg, IFsmEventMsgCompanion}
+import io.suggest.sjs.common.fsm.{IFsmEventMsgCompanion, IFsmMsg}
 import org.scalajs.dom.Event
 
 /**

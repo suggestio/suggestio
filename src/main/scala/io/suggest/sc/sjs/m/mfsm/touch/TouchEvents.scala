@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.m.mfsm.touch
 
-import io.suggest.sc.sjs.m.mfsm.{IFsmMsgCompanion, IFsmMsg}
+import io.suggest.sjs.common.fsm.{IFsmMsgCompanion, IFsmMsg}
 import org.scalajs.dom.TouchEvent
 
 /**

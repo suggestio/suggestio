@@ -1,6 +1,5 @@
 package io.suggest.sc.sjs.vm.foc.fad
 
-import io.suggest.sc.sjs.vm.util.domvm._
 import io.suggest.sjs.common.vm.child.WrapperChildContent
 import io.suggest.sjs.common.vm.find.{FindElIndexedIdOffT, FindElIndexedIdT}
 import io.suggest.sjs.common.vm.util.IndexedSuffixedDomId

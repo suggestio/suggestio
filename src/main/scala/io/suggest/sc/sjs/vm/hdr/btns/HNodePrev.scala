@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.vm.hdr.btns
 
 import io.suggest.sc.ScConstants.Header.{PREV_NODE_BTN_ID, ATTR_ADN_ID}
 import io.suggest.sc.sjs.m.mhdr.PrevNodeBtnClick
-import io.suggest.sc.sjs.vm.util.InitOnClickToFsmT
+import io.suggest.sc.sjs.vm.util.InitOnClickToScFsmT
 import io.suggest.sjs.common.vm.VmT
 import io.suggest.sjs.common.vm.find.FindDiv
 import org.scalajs.dom.raw.HTMLDivElement
@@ -22,7 +22,7 @@ object HNodePrev extends FindDiv {
 }
 
 
-trait HNodePrevT extends VmT with InitOnClickToFsmT {
+trait HNodePrevT extends VmT with InitOnClickToScFsmT {
 
   override protected[this] def _clickMsgModel = PrevNodeBtnClick
 

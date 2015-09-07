@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.vm.hdr.btns.search
 
 import io.suggest.sc.ScConstants.Search.HIDE_PANEL_BTN_ID
 import io.suggest.sc.sjs.m.mhdr.HideSearchClick
-import io.suggest.sc.sjs.vm.util.InitOnClickToFsmT
+import io.suggest.sc.sjs.vm.util.InitOnClickToScFsmT
 import io.suggest.sjs.common.vm.find.FindDiv
 import org.scalajs.dom.raw.HTMLDivElement
 
@@ -22,7 +22,7 @@ object HHideSearchBtn extends FindDiv {
 
 
 /** Логика div'а кнопки сокрытия вынесена сюда. */
-trait HHideSearchBtnT extends InitOnClickToFsmT {
+trait HHideSearchBtnT extends InitOnClickToScFsmT {
 
   override type T = HTMLDivElement
 

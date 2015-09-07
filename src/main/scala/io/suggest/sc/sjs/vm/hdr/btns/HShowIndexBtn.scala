@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.vm.hdr.btns
 
 import io.suggest.sc.ScConstants.Header.SHOW_INDEX_BTN_ID
 import io.suggest.sc.sjs.m.mhdr.ShowIndexClick
-import io.suggest.sc.sjs.vm.util.InitOnClickToFsmT
+import io.suggest.sc.sjs.vm.util.InitOnClickToScFsmT
 import io.suggest.sjs.common.vm.find.FindDiv
 import org.scalajs.dom.raw.HTMLDivElement
 
@@ -22,7 +22,7 @@ object HShowIndexBtn extends FindDiv {
 
 
 /** Трейт с логикой ViewModel'и кнопки отображения index'а выдачи. */
-trait HShowIndexBtnT extends InitOnClickToFsmT {
+trait HShowIndexBtnT extends InitOnClickToScFsmT {
 
   override type T = HTMLDivElement
 

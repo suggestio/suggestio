@@ -23,22 +23,9 @@ with foc.StartingForAd with foc.OnFocus with foc.Closing with foc.SimpleShift wi
   /** Контейнер данных состояния. */
   override protected var _stateData: SD = MStData()
 
-  /** Текущий обработчик входящих событий. */
-  private var _receiver: Receive = _
-
-  /** Выставление указанного ресивера в качестве обработчика событий. */
-  override protected def _installReceiver(newReceiver: Receive): Unit = {
-    _receiver = newReceiver
-  }
-
 
   /** Ресивер для всех состояний. */
   override protected val allStatesReceiver = super.allStatesReceiver
-
-  // Обработать событие синхронно.
-  override protected def _sendEventSync(e: Any): Unit = {
-    _receiver(e)
-  }
 
   def firstStart(): Unit = {
     become( _initPhaseEnter1st )

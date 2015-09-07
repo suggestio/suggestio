@@ -1,7 +1,8 @@
 package io.suggest.sc.sjs.m.msrv.index
 
-import io.suggest.sc.sjs.m.msrv.{Timestamped, TimestampedCompanion, MSrvUtil}
+import io.suggest.sc.sjs.m.msrv.MSrvUtil
 import io.suggest.sc.sjs.util.router.srv.routes
+import io.suggest.sjs.common.model.{TimestampedCompanion, Timestamped}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.scalajs.js.{Dictionary, WrappedDictionary, Any}

@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.vm.search.tabs
 
 import io.suggest.sjs.common.vm.height3.SetHeight3
-import io.suggest.sc.sjs.vm.util.InitOnClickToFsmT
+import io.suggest.sc.sjs.vm.util.InitOnClickToScFsmT
 import io.suggest.sjs.common.model.browser.IBrowser
 import io.suggest.sjs.common.vm.VmT
 import io.suggest.sjs.common.vm.child.{ContentElT, WrapperChildContent}
@@ -70,7 +70,7 @@ trait TabBtnCompanion extends FindDiv {
 }
 
 /** Трейт для vm'ки тела таба. */
-trait TabBtn extends InitOnClickToFsmT with VmT {
+trait TabBtn extends InitOnClickToScFsmT with VmT {
 
   override type T = HTMLDivElement
 

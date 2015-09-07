@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.m.msearch
 
-import io.suggest.sc.sjs.m.mfsm.{IFsmMsgCompanion, IFsmEventMsgCompanion, IFsmMsg}
+import io.suggest.sjs.common.fsm.{IFsmEventMsgCompanion, IFsmMsgCompanion, IFsmMsg}
 import io.suggest.sjs.common.model.CurrentTargetBackup
 import org.scalajs.dom.raw.HTMLInputElement
 import org.scalajs.dom.{FocusEvent, KeyboardEvent, Event}

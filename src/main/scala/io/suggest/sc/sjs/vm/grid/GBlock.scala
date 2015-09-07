@@ -4,7 +4,7 @@ import io.suggest.common.css.CssSzImplicits
 import io.suggest.sc.ScConstants._
 import io.suggest.sc.ScConstants.Block._
 import io.suggest.sc.sjs.m.mgrid.{GridBlockClick, IBlockInfo}
-import io.suggest.sc.sjs.vm.util.InitOnClickToFsmT
+import io.suggest.sc.sjs.vm.util.InitOnClickToScFsmT
 import io.suggest.sjs.common.vm.find.{FindElPrefixedIdT, IApplyEl}
 import io.suggest.sjs.common.vm.style.StyleDisplayT
 import io.suggest.sjs.common.vm.walk.{PrevNextSiblingCousinUtilT, PrevNextSiblingsVmT}
@@ -53,7 +53,7 @@ object GBlock extends FindElPrefixedIdT with IApplyEl {
 import GBlock._
 
 
-trait GBlockT extends VmT with StyleDisplayT with CssSzImplicits with IBlockInfo with InitOnClickToFsmT with PrevNextSiblingsVmT {
+trait GBlockT extends VmT with StyleDisplayT with CssSzImplicits with IBlockInfo with InitOnClickToScFsmT with PrevNextSiblingsVmT {
 
   override type T = HTMLDivElement
   override type Self_t <: GBlockT
