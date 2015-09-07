@@ -1988,24 +1988,31 @@ trait EsModelEmpty extends EsModelPlayJsonT {
 
 /** Аддон для воплощения immutable-десериализации на базе play.json и тайпклассов.
   * Эта десериализация идёт на смену изначальной горбатой mutable-десериализации через [[EsModelStaticMutAkvT]]. */
-trait CurriedPlayJsonEsDocDeserializer extends EsModelCommonStaticT {
+trait EsmV2Deserializer extends EsModelCommonStaticT {
 
-  /** Тип возвращаемого значения из Reads-десериализатора. */
-  protected type Reads_t = (Option[String], Option[Long]) => T
-
-  /** play-json-маппер, возвращающий функцию, собирающий итоговый элемент.
-    * curried-фунцкия должна получить на вход опциональные id и выверенную version,
-    * и возвращать экземпляр модели. */
-  protected def esDocReads: Reads[Reads_t]
+  /**
+   * Вернуть JSON Reads для десериализации тела документа с переданными метаданными.
+   * @param meta Метаданные ES-документа, необходимые для сборки моделей.
+   * @return Инстанс Reads[T]
+   */
+  protected def esDocReads(meta: IEsDocMeta): Reads[T]
 
   override def deserializeOne2[D](doc: D)(implicit ev: IEsDoc[D]): T = {
+    // Готовим метаданные документа для вызова сборки десериализатора.
+    val meta = new IEsDocMeta {
+      override def version  = ev.version(doc)
+      override def id       = ev.id(doc)
+    }
+    // Получаем десериализатор.
+    val reader = esDocReads(meta)
     // TODO Opt Нужно задействовать byte-доступ к телу ответа вместо string.
     //      Это должно ускорить работу, сократив лишний memcpy при создании строки.
-    val parseResult = Json.parse( ev.bodyAsString(doc) )
-      .validate(esDocReads)
-    parseResult
-      .get
-      .apply(ev.id(doc), ev.version(doc))
+    val parseResult = {
+      Json.parse( ev.bodyAsString(doc) )
+        .validate(reader)
+    }
+    // Надо бы предусмотреть возможность ошибки десериализации...
+    parseResult.get
   }
 
   implicit protected[this] def jodaDateTimeReads = EsModel.Implicits.jodaDateTimeReads
