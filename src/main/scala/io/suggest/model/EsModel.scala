@@ -1991,7 +1991,7 @@ trait EsModelEmpty extends EsModelPlayJsonT {
 trait CurriedPlayJsonEsDocDeserializer extends EsModelCommonStaticT {
 
   /** Тип возвращаемого значения из Reads-десериализатора. */
-  type Reads_t = (Option[String], Option[Long]) => T
+  protected type Reads_t = (Option[String], Option[Long]) => T
 
   /** play-json-маппер, возвращающий функцию, собирающий итоговый элемент.
     * curried-фунцкия должна получить на вход опциональные id и выверенную version,
@@ -2008,6 +2008,6 @@ trait CurriedPlayJsonEsDocDeserializer extends EsModelCommonStaticT {
       .apply(ev.id(doc), ev.version(doc))
   }
 
-  implicit def jodaDateTimeReads = EsModel.Implicits.jodaDateTimeReads
+  implicit protected[this] def jodaDateTimeReads = EsModel.Implicits.jodaDateTimeReads
 
 }
