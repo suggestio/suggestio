@@ -11,9 +11,7 @@ import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.model._
 import io.suggest.model.geo.{GeoShapeIndexed, CircleGs, GeoShape, GeoShapeQuerable}
 import io.suggest.util.MacroLogsImpl
-import io.suggest.util.MyConfig.CONFIG
 import io.suggest.util.SioEsUtil._
-import io.suggest.ym.model.NodeGeoLevels.NodeGeoLevel
 import org.elasticsearch.action.search.SearchResponse
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.geo.ShapeRelation
@@ -396,121 +394,6 @@ final case class MAdnNodeGeo(
 
   /** Сконвертить интанс в экземпляр указателя, пригодного для гео-поиска pre-indexed shape. */
   def toIndexedPtr = MAdnNodeGeoIndexed(id.get, glevel)
-}
-
-
-/** Гео-уровни, т.е. отражают используемые поля и влияют на их индексацию. */
-object NodeGeoLevels extends Enumeration(1) {
-
-  protected[this] sealed abstract class Val(val esfn: String) extends super.Val(esfn) {
-    def precision: String
-
-    // Для упрощения геморроя делаем локализацию прямо тут, хотя сами коды лежат на стороне sioweb21/conf/messages.*
-    def l10nSingular = "ngl." + esfn
-    def l10nSingularShort = l10nSingular
-
-    def l10nPlural = "ngls." + esfn
-    def l10nPluralShort = l10nPlural
-
-    /** Это самый нижний слой с самым мелким масштабом? */
-    def isLowest: Boolean = false
-
-    /** Это самый верхний слой с самым крупным масштабом? */
-    def isHighest: Boolean = false
-
-    /** Это крайний слой? */
-    def isOutermost = isLowest || isHighest
-
-    /** Рекурсивный метод для пошагового накопления уровней и аккамулятор.
-      * @param currLevel текущий (начальный) уровень.
-      * @param acc Аккамулятор.
-      * @param nextLevelF Функция перехода на следующий уровень с текущего.
-      * @return Аккамулятор накопленных уровней.
-      */
-    private def collectLevels(currLevel: NodeGeoLevel = this, acc: List[NodeGeoLevel] = Nil)
-                             (nextLevelF: NodeGeoLevel => Option[NodeGeoLevel]): List[NodeGeoLevel] = {
-      val nextOpt = nextLevelF(currLevel)
-      if (nextOpt.isDefined) {
-        val _next = nextOpt.get
-        collectLevels(_next, _next :: acc)(nextLevelF)
-      } else {
-        acc
-      }
-    }
-
-    def lower: Option[NodeGeoLevel]
-    def lowerOfThis: NodeGeoLevel = lower getOrElse this
-    def allLowerLevels: List[NodeGeoLevel] = collectLevels()(_.lower)
-
-    def upper: Option[NodeGeoLevel]
-    def upperOrThis: NodeGeoLevel = upper getOrElse this
-    def allUpperLevels: List[NodeGeoLevel] = collectLevels()(_.upper)
-
-    /** Предлагаемый масштаб osm-карты при отображении объекта на ней в полный рост.
-      * Это НЕ МЕТРЫ, а порядковый номер по какой-то ихней шкале масштабов. */
-    def osmMapScale: Int
-
-    /** Точность в метрах, в рамках которой имеет смысл детектить что-либо на этом уровне. */
-    def accuracyMetersMax: Option[Int] = CONFIG.getInt(s"geo.node.level.$esfn.accuracy.max.meters")
-  }
-
-  type NodeGeoLevel = Val
-
-  // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  // !!! Двигаемся от мелкому к крупному. На этом принципе построены зависмые модели, например web21/GeoMode. !!!
-  // !!!            Нарушение порядка приведет к трудноотлавливаемым логическим ошибкам.                      !!!
-  // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-  val NGL_BUILDING: NodeGeoLevel = new Val("bu") {
-    override def isLowest = true
-    override def lower: Option[NodeGeoLevel] = None
-    override def upper: Option[NodeGeoLevel] = Some(NGL_TOWN_DISTRICT)
-    override def precision = "50m"
-    override def osmMapScale = 16
-    override val accuracyMetersMax: Option[Int] = super.accuracyMetersMax orElse { Some(400) }
-  }
-
-  val NGL_TOWN_DISTRICT: NodeGeoLevel = new Val("td") {
-    override def lower: Option[NodeGeoLevel] = Some(NGL_BUILDING)
-    override def upper: Option[NodeGeoLevel] = Some(NGL_TOWN)
-    override def precision = "800m"
-    override def osmMapScale = 12
-
-    /** У "Районов города" есть короткое название - "Районы" */
-    override val l10nSingularShort = "District"
-    override val l10nPluralShort = l10nSingularShort + "s"
-    override val accuracyMetersMax: Option[Int] = super.accuracyMetersMax orElse { Some(3000) }
-  }
-
-  val NGL_TOWN: NodeGeoLevel = new Val("to") {
-    override def lower: Option[NodeGeoLevel] = Some(NGL_TOWN_DISTRICT)
-    override def upper: Option[NodeGeoLevel] = None
-    override def precision = "5km"
-    override def isHighest = true
-    override def osmMapScale = 10
-    override def accuracyMetersMax: Option[Int] = None
-  }
-
-  def default = NGL_BUILDING
-
-  implicit def value2val(x: Value): NodeGeoLevel = x.asInstanceOf[NodeGeoLevel]
-
-  def maybeWithName(x: String): Option[NodeGeoLevel] = {
-    values.find(_.esfn == x)
-      .asInstanceOf[Option[NodeGeoLevel]]
-  }
-
-  def maybeWithId(id: Int): Option[NodeGeoLevel] = {
-    try {
-      Some(NodeGeoLevels(id))
-    } catch {
-      case ex: NoSuchElementException => None
-    }
-  }
-
-  /** Вывести множество значений этого enum'а, но выставив текущий тип значения вместо Value. */
-  def valuesNgl: Set[NodeGeoLevel] = values.toSet.asInstanceOf[Set[NodeGeoLevel]]
-
 }
 
 

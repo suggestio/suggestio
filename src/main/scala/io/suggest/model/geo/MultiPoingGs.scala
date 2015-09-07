@@ -2,7 +2,6 @@ package io.suggest.model.geo
 
 import GeoShape.COORDS_ESFN
 import io.suggest.model.EsModel.FieldsJsonAcc
-import io.suggest.model.geo.GsTypes.GsType
 import org.elasticsearch.common.geo.builders.{MultiPointBuilder, PointCollection, ShapeBuilder}
 import java.{util => ju}
 
@@ -71,8 +70,7 @@ trait MultiPointShape extends GeoShapeQuerable {
 
   protected def shapeBuilder: Shape_t
 
-  /** Используемый тип фигуры. */
-  override def shapeType: GsType = ???
+  override def shapeType: GsType = GsTypes.multipoint
 
   override def firstPoint = coords.head
 }

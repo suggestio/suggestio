@@ -18,4 +18,6 @@ package object model {
   val  AdNetMemberTypes   = common.AdNetMemberTypes
   type AdNetMemberType    = AdNetMemberTypes.AdNetMemberType
 
+  type NodeGeoLevel       = NodeGeoLevels.T
+
 }

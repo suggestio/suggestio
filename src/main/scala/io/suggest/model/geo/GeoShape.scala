@@ -1,5 +1,6 @@
 package io.suggest.model.geo
 
+import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.model.EsModel
 import io.suggest.model.EsModel.FieldsJsonAcc
 import org.elasticsearch.common.geo.builders.ShapeBuilder
@@ -33,6 +34,9 @@ object GeoShape {
           case GsTypes.multilinestring    => MultiLineStringGs.deserialize(jmap)
           case GsTypes.multipolygon       => MultiPolygonGs.deserialize(jmap)
           case GsTypes.geometrycollection => GeometryCollectionGs.deserialize(jmap)
+          case other =>
+            println("Unsupported geo shape type: " + other)
+            None
         }
   }
 
@@ -46,7 +50,7 @@ import GeoShape._
 trait GeoShape {
 
   /** Используемый тип фигуры. */
-  def shapeType: GsTypes.GsType
+  def shapeType: GsType
 
   /** Отрендерить json для сохранения внутри _source. */
   def toPlayJson(geoJsonCompatible: Boolean = false): JsObject = {
@@ -79,34 +83,25 @@ trait GeoShapeQuerable extends GeoShape {
 
 
 /** Типы плоских фигур, допустимых для отправки в ES для geo-поиска/geo-фильтрации. */
-object GsTypes extends Enumeration {
+object GsTypes extends Enumeration with EnumMaybeWithName {
 
-  protected case class Val(esName: String, geoJsonName: Option[String]) extends super.Val(esName) {
+  protected[this] sealed case class Val(esName: String, geoJsonName: Option[String])
+    extends super.Val(esName)
+  {
     def isGeoJsonCompatible: Boolean = geoJsonName.isDefined
   }
 
-  type GsType = Val
+  override type T = Val
 
-  val point               = Val("point", Some("Point"))
-  val linestring          = Val("linestring", Some("LineString"))
-  val polygon             = Val("polygon", Some("Polygon"))
-  val multipoint          = Val("multipoint", Some("MultiPoint"))
-  val multilinestring     = Val("multilinestring", Some("MultiLineString"))
-  val multipolygon        = Val("multipolygon", Some("MultiPolygon"))
-  val geometrycollection  = Val("geometrycollection", Some("GeometryCollection"))
-  val envelope            = Val("envelope", None)
-  val circle              = Val("circle", None)
-
-  implicit def value2val(x: Value): GsType = x.asInstanceOf[GsType]
-
-  def maybeWithName(n: String): Option[GsType] = {
-    values
-      .find { v =>
-        val _v: GsType = v
-        _v.esName == n || _v.geoJsonName.exists(_ == n)
-      }
-      .asInstanceOf[Option[GsType]]
-  }
+  val point               : T = Val("point", Some("Point"))
+  val linestring          : T = Val("linestring", Some("LineString"))
+  val polygon             : T = Val("polygon", Some("Polygon"))
+  val multipoint          : T = Val("multipoint", Some("MultiPoint"))
+  val multilinestring     : T = Val("multilinestring", Some("MultiLineString"))
+  val multipolygon        : T = Val("multipolygon", Some("MultiPolygon"))
+  val geometrycollection  : T = Val("geometrycollection", Some("GeometryCollection"))
+  val envelope            : T = Val("envelope", None)
+  val circle              : T = Val("circle", None)
 
 }
 

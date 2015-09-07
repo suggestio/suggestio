@@ -1,6 +1,6 @@
 package io.suggest.model.geo
 
-import io.suggest.ym.model.NodeGeoLevels.NodeGeoLevel
+import io.suggest.ym.model.NodeGeoLevel
 import org.elasticsearch.common.geo.ShapeRelation
 import org.elasticsearch.common.unit.DistanceUnit
 import DistanceUnit.{Distance => EsDistance}
