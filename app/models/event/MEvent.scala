@@ -29,7 +29,7 @@ import scala.concurrent.ExecutionContext
  * сообщения прочитаны (а таких большинство, и искать по этому значение не требуется).
  */
 object MEvent extends EsModelStaticT with PlayMacroLogsImpl with EsDynSearchStatic[IEventsSearchArgs]
-with CurriedPlayJsonEsDocDeserializer {
+with EsmV2Deserializer {
 
   override type T = MEvent
   override val ES_TYPE_NAME = "ntf"
@@ -104,7 +104,8 @@ with CurriedPlayJsonEsDocDeserializer {
       argsInfo.getClassifier
   }
 
-  override val esDocReads: Reads[Reads_t] = (
+  /** Кешируем почти-собранный инстанс десериализатора экземпляров модели. */
+  private val _reads0 = {
     (__ \ EVT_TYPE_ESFN).read[MEventType] and
     (__ \ OWNER_ID_ESFN).read[String] and
     (__ \ ARGS_ESFN).readNullable[ArgsInfo]
@@ -115,11 +116,14 @@ with CurriedPlayJsonEsDocDeserializer {
       .map(_ getOrElse isCloseableDflt) and
     (__ \ IS_UNSEEN_ESFN).readNullable[Boolean]
       .map(_ getOrElse true)
-  ) {
-    (etype, ownerId, argsInfo, dateCreated, isCloseable, isUnseen) =>
-      {(idOpt, vsnOpt) =>
-        apply(etype, ownerId, argsInfo, dateCreated, isCloseable, isUnseen, id = idOpt, versionOpt = vsnOpt)
-      }
+  }
+
+  /** Вернуть JSON reads для десериализации тела документа с имеющимися метаданными. */
+  override protected def esDocReads(meta: IEsDocMeta): Reads[MEvent] = {
+    _reads0 {
+      (etype, ownerId, argsInfo, dateCreated, isCloseable, isUnseen) =>
+        apply(etype, ownerId, argsInfo, dateCreated, isCloseable, isUnseen, id = meta.id, versionOpt = meta.version)
+    }
   }
 
 }

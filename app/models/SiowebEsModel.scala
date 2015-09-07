@@ -31,7 +31,7 @@ object SiowebEsModel extends PlayMacroLogsDyn {
     EsModel.ES_MODELS ++ Seq[EsModelCommonStaticT](
       MPerson, EmailPwIdent, EmailActivation, MExtIdent, MMartCategory, MInviteRequest, MCalendar,
       MRemoteError, MGallery, MAiMad,
-      adv.MExtAdv, adv.MExtTarget,
+      adv.MExtTarget,
       event.MEvent, sec.MAsymKey
     )
   }

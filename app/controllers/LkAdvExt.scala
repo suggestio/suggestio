@@ -95,18 +95,11 @@ class LkAdvExt @Inject() (
       )
       MExtTarget.dynSearch(args)
     }
-    val currentAdvsFut = MExtAdv.findForAd(adId)
-      .map { advs =>
-        advs.iterator
-          .map { a =>  a.extTargetId -> a }
-          .toMap
-      }
     for {
       targets       <- targetsFut
-      currentAdvs   <- currentAdvsFut
     } yield {
       implicit val jsInitTgs = Seq(MTargets.LkAdvExtForm)
-      forAdTpl(request.mad, request.producer, targets, currentAdvs, form)
+      forAdTpl(request.mad, request.producer, targets, form)
     }
   }
 

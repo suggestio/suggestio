@@ -24,7 +24,7 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 
 // Статическая часть модели.
-object MPerson extends EsModelStaticT with PlayMacroLogsImpl with CurriedPlayJsonEsDocDeserializer {
+object MPerson extends EsModelStaticT with PlayMacroLogsImpl with EsmV2Deserializer {
 
   import LOGGER._
 
@@ -99,12 +99,10 @@ object MPerson extends EsModelStaticT with PlayMacroLogsImpl with CurriedPlayJso
     }
   }
 
-  override def esDocReads: Reads[Reads_t] = {
+  override protected def esDocReads(meta: IEsDocMeta): Reads[T] = {
     (__ \ LANG_ESFN).read[String]
       .map { lang =>
-        {(idOpt, vsnOpt) =>
-          MPerson(lang = lang, id = idOpt)
-        }
+        MPerson(lang = lang, id = meta.id)
       }
   }
 

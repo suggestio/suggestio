@@ -28,7 +28,7 @@ import scala.concurrent.ExecutionContext
  */
 
 object MExtTarget extends EsModelStaticT with PlayMacroLogsImpl with EsDynSearchStatic[IExtTargetSearchArgs]
-with CurriedPlayJsonEsDocDeserializer {
+with EsmV2Deserializer {
 
   override type T = MExtTarget
 
@@ -78,19 +78,22 @@ with CurriedPlayJsonEsDocDeserializer {
     )
   }
 
-  /** JSON deserializer. */
-  override val esDocReads: Reads[Reads_t] = (
+  /** Кешируем почти собранный десериализатор. */
+  private val _reads0 = {
     (__ \ URL_ESFN).read[String] and
     (__ \ SERVICE_ID_ESFN).read[MExtService] and
     (__ \ ADN_ID_ESFN).read[String] and
     (__ \ NAME_ESFN).readNullable[String] and
     (__ \ DATE_CREATED_ESFN).readNullable[DateTime]
       .map { _ getOrElse DateTime.now }
-  ) {
-    (url, service, adnId, name, dataCreated) =>
-      {(idOpt, vsnOpt) =>
-        MExtTarget(url, service, adnId, name, dataCreated, vsnOpt, idOpt)
-      }
+  }
+
+  /** JSON deserializer. */
+  override protected def esDocReads(meta: IEsDocMeta): Reads[T] = {
+    _reads0 {
+      (url, service, adnId, name, dataCreated) =>
+        MExtTarget(url, service, adnId, name, dataCreated, meta.version, meta.id)
+    }
   }
 
 }

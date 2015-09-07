@@ -18,7 +18,7 @@ import scala.collection.Map
  * Любая возможная защита секретного ключа происходит на стороне контроллера.
  * Потом эту модель можно аккуратненько расширить пользовательской поддержкой.
  */
-object MAsymKey extends EsModelStaticT with PlayMacroLogsImpl with CurriedPlayJsonEsDocDeserializer {
+object MAsymKey extends EsModelStaticT with PlayMacroLogsImpl with EsmV2Deserializer {
 
   override type T = MAsymKey
 
@@ -58,15 +58,18 @@ object MAsymKey extends EsModelStaticT with PlayMacroLogsImpl with CurriedPlayJs
     )
   }
 
-  /** play-json-маппер, возвращающий функцию, собирающий итоговый элемент.
-    * curried-фунцкия должна получить на вход опциональные id и выверенную version,
-    * и возвращать экземпляр модели. */
-  override protected def esDocReads: Reads[Reads_t] = (
+  // Кешируем недособранный десериализатор экземпляров модели.
+  private val _reads0 = {
     (__ \ PUB_KEY_FN).read[String] and
     (__ \ SEC_KEY_FN).readNullable[String]
-  ) {
-    (pubKey, secKeyOpt) =>
-      apply(pubKey, secKeyOpt, _, _)
+  }
+
+  /** Вернуть JSON reads для десериализации тела документа с имеющимися метаданными. */
+  override protected def esDocReads(meta: IEsDocMeta): Reads[T] = {
+    _reads0 {
+      (pubKey, secKeyOpt) =>
+        apply(pubKey, secKeyOpt, meta.id, meta.version)
+    }
   }
 
 }

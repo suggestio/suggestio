@@ -17,7 +17,7 @@ import io.suggest.util.SioEsUtil._
  * Created: 30.05.14 18:36
  * Description: Модель для хранения календарей в текстовых форматах.
  */
-object MCalendar extends EsModelStaticT with PlayMacroLogsImpl with CurriedPlayJsonEsDocDeserializer {
+object MCalendar extends EsModelStaticT with PlayMacroLogsImpl with EsmV2Deserializer {
 
   override type T = MCalendar
 
@@ -46,11 +46,17 @@ object MCalendar extends EsModelStaticT with PlayMacroLogsImpl with CurriedPlayJ
     )
   }
 
-  override def esDocReads: Reads[Reads_t] = (
+  // Кеш для частично-собранного десериализатора.
+  private val _reads0 = {
     (__ \ NAME_ESFN).read[String] and
     (__ \ DATA_ESFN).read[String]
-  ) {
-    (name, data) => apply(name, data, _, _)
+  }
+
+  override protected def esDocReads(meta: IEsDocMeta): Reads[T] = {
+    _reads0 {
+      (name, data) =>
+        apply(name, data, meta.id, meta.version)
+    }
   }
 
 }

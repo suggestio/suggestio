@@ -21,7 +21,7 @@ import scala.concurrent.ExecutionContext
  * Created: 14.10.14 18:55
  * Description: Модель для хранения ошибок на клиентах. Информация имеет TTL, настраив
  */
-object MRemoteError extends EsModelStaticT with PlayMacroLogsImpl with CurriedPlayJsonEsDocDeserializer {
+object MRemoteError extends EsModelStaticT with PlayMacroLogsImpl with EsmV2Deserializer {
 
   override type T = MRemoteError
 
@@ -113,23 +113,27 @@ object MRemoteError extends EsModelStaticT with PlayMacroLogsImpl with CurriedPl
     )
   }
 
-  override def esDocReads: Reads[Reads_t] = (
+  // Инстанс почти-готового к работе JSON-десериализатора. Пока не нужен, поэтому тут lazy val вместо val.
+  private lazy val _reads0 = {
     (__ \ ERROR_TYPE_FN).read[MRemoteErrorType] and
     (__ \ MESSAGE_FN).read[String] and
     (__ \ CLIENT_ADDR_FN).read[String] and
     (__ \ UA_FN).readNullable[String] and
-    (__ \ TIMESTAMP_FN).read[DateTime] and
+    (__ \ TIMESTAMP_FN).readNullable[DateTime]
+      .map { _ getOrElse DateTime.now } and
     (__ \ URL_FN).readNullable[String] and
     (__ \ CLIENT_IP_GEO_FN).readNullable[GeoPoint] and
     (__ \ CLIENT_TOWN_FN).readNullable[String] and
     (__ \ COUNTRY_FN).readNullable[String] and
     (__ \ IS_LOCAL_CLIENT_FN).readNullable[Boolean] and
     (__ \ STATE_FN).readNullable[String]
-  ) {
-    (errTyp, msg, clAddr, ua, tstamp, url, clIpGeo, clTown, country, isLocalCl, state) =>
-      {(id, vsn) =>
-        apply(errTyp, msg, clAddr, ua, tstamp, url, clIpGeo, clTown, country = country, isLocalCl, state, id)
-      }
+  }
+
+  override protected def esDocReads(meta: IEsDocMeta): Reads[MRemoteError] = {
+    _reads0 {
+      (errTyp, msg, clAddr, ua, tstamp, url, clIpGeo, clTown, country, isLocalCl, state) =>
+        apply(errTyp, msg, clAddr, ua, tstamp, url, clIpGeo, clTown, country = country, isLocalCl, state, meta.id)
+    }
   }
 
 }
