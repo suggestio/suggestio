@@ -7,6 +7,7 @@ import io.suggest.model.EsModel.doubleParser
 import io.suggest.util.{JacksonWrapper, MacroLogsImpl}
 import org.elasticsearch.common.geo.{GeoHashUtils, GeoPoint => EsGeoPoint}
 import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 import scala.collection.JavaConversions._
 
@@ -16,6 +17,8 @@ import scala.collection.JavaConversions._
  * Created: 08.08.14 10:40
  * Description: Представление географической точки в рамках проекта s.io.
  * Сделано наподобии org.elasticsearch.common.geo.Geopoint с поправкой на полную неизменяемость и другие фичи.
+ *
+ * @see [[https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html]]
  */
 
 object GeoPoint extends MacroLogsImpl {
@@ -45,8 +48,12 @@ object GeoPoint extends MacroLogsImpl {
     fromLatLonComma(latLon, commaInx)
   }
 
+  def ES_LAT_FN = "lat"
+  def ES_LON_FN = "lon"
+
 
   /** Десериализатор гео-точки из представления ES, распарсенного через Jackson. */
+  // TODO Надо задействовать play-json десериализаторы, они более православны, чем этот велосипед.
   val deserializeOpt: PartialFunction[Any, Option[GeoPoint]] = {
     // Массив GeoJson в формате [LON, lat]: [12.53245, -44.43553] -- http://geojson.org/
     case l: jl.Iterable[_] =>
@@ -77,8 +84,8 @@ object GeoPoint extends MacroLogsImpl {
       }
     // {"lat": 12.123, "lon": -41.542}
     case jm: ju.Map[_,_] =>
-      Option(jm get "lat") flatMap { latRaw =>
-        Option(jm get "lon") flatMap { lonRaw =>
+      Option(jm get ES_LAT_FN) flatMap { latRaw =>
+        Option(jm get ES_LON_FN) flatMap { lonRaw =>
           try {
             val lat = doubleParser(latRaw)
             val lon = doubleParser(lonRaw)
@@ -100,6 +107,36 @@ object GeoPoint extends MacroLogsImpl {
     val lon = jl.Double.parseDouble(latLon.substring(commaIndex + 1).trim)
     GeoPoint(lat = lat, lon = lon)
   }
+
+  /** Десериализация из js-массива вида [-13.22,45.34]. */
+  val readsGeoArray: Reads[GeoPoint] = {
+    __.read[Seq[Double]]
+      .filter { _.size == 2 }
+      .map {
+        case Seq(lon, lat) =>
+          apply(lat = lat,  lon = lon)
+      }
+  }
+
+  /** Десериализация из строки вида "45.34,-13.22". */
+  val readsString: Reads[GeoPoint] = {
+    __.read[String]
+      .map { apply }
+  }
+
+  /** Десериализация из JSON-представления в виде объекта:
+    * {lat: 45.34, lon: -13.22}. */
+  val readJson: Reads[GeoPoint] = (
+    (__ \ ES_LAT_FN).read[Double] and
+    (__ \ ES_LON_FN).read[Double]
+  )(apply(_, _))
+
+  implicit val reads: Reads[GeoPoint] = {
+    readJson
+      .orElse( readsGeoArray )
+      .orElse( readsString )
+  }
+
 }
 
 

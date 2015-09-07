@@ -10,6 +10,7 @@ import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.index.engine.VersionConflictEngineException
 import org.elasticsearch.search.{SearchHit, SearchHits}
 import org.elasticsearch.search.lookup.SourceLookup
+import play.api.libs.json.Reads.IsoDateReads
 import scala.concurrent.{ExecutionContext, Future}
 import io.suggest.util._
 import SioEsUtil._
@@ -265,6 +266,19 @@ object EsModel extends MacroLogsImpl {
     case d: DateTime         => d
     case ri: ReadableInstant => new DateTime(ri)
   }
+
+
+  /** Неявные парсеры собраны тут и импортируются при необходимости. */
+  object Implicits {
+
+    /** Стандартный joda DateTime парсер в play разработан через одно место, поэтому тут собираем свой. */
+    implicit val jodaDateTimeReads: Reads[DateTime] = {
+      IsoDateReads
+        .map { new DateTime(_) }
+    }
+
+  }
+
 
   /** Парсер json-массивов. */
   val iteratorParser: PartialFunction[Any, Iterator[Any]] = {
@@ -872,6 +886,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
     * @return Экземпляр модели.
     */
   def deserializeOne2[D](doc: D)(implicit ev: IEsDoc[D]): T = {
+    // Здесь код для совместимости. Когда новая архитектура будет заимплеменчена во всех моделях, этот код нужно удалить,
+    // (метод станет abstract), а deserializeOne() удалить вместе с реализациями.
     deserializeOne(ev.id(doc), ev.bodyAsScalaMap(doc), ev.version(doc))
   }
 
@@ -1756,7 +1772,7 @@ trait EsModelCommonJMXBase extends JMXBase with EsModelJMXMBeanCommonI with Macr
   /** Ругнутся в логи и вернуть строку для возврата клиенту. */
   protected def _formatEx(logPrefix: String, data: String, ex: Throwable): String = {
     error(s"${logPrefix}Failed to make JMX Action:\n$data", ex)
-    ex.getClass.getName + ": " + ex.getMessage + "\n\n" + ex.getStackTraceString
+    ex.getClass.getName + ": " + ex.getMessage + "\n\n" + ex.getStackTrace.mkString("\n")
   }
 
   override def resaveMany(maxResults: Int): String = {
@@ -1974,12 +1990,24 @@ trait EsModelEmpty extends EsModelPlayJsonT {
   * Эта десериализация идёт на смену изначальной горбатой mutable-десериализации через [[EsModelStaticMutAkvT]]. */
 trait CurriedPlayJsonEsDocDeserializer extends EsModelCommonStaticT {
 
-  protected def esDocReads: Reads[(Option[String], Option[Long]) => T]
+  /** Тип возвращаемого значения из Reads-десериализатора. */
+  type Reads_t = (Option[String], Option[Long]) => T
+
+  /** play-json-маппер, возвращающий функцию, собирающий итоговый элемент.
+    * curried-фунцкия должна получить на вход опциональные id и выверенную version,
+    * и возвращать экземпляр модели. */
+  protected def esDocReads: Reads[Reads_t]
 
   override def deserializeOne2[D](doc: D)(implicit ev: IEsDoc[D]): T = {
-    Json.parse(ev.bodyAsString(doc))
+    // TODO Opt Нужно задействовать byte-доступ к телу ответа вместо string.
+    //      Это должно ускорить работу, сократив лишний memcpy при создании строки.
+    val parseResult = Json.parse( ev.bodyAsString(doc) )
       .validate(esDocReads)
+    parseResult
       .get
       .apply(ev.id(doc), ev.version(doc))
   }
+
+  implicit def jodaDateTimeReads = EsModel.Implicits.jodaDateTimeReads
+
 }
