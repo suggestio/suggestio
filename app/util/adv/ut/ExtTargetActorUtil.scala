@@ -4,9 +4,8 @@ import models.adv.IExtAdvTargetActorArgs
 import models.adv.ext.act.ExtTargetActorEnv
 import models.adv.js.JsCmd
 import models.adv.js.ctx.JsErrorInfo
-import models.event.{ErrorInfo, MEventTmp, RenderArgs}
+import models.event._
 import play.api.libs.json.JsString
-import util.event._
 import util.jsa.{InnerHtmlById, JsAppendById}
 import util.adv.ExtUtil.RUNNER_EVENTS_DIV_ID
 
@@ -17,10 +16,10 @@ trait ExtTargetActorUtil extends ISendCommand with ReplyTo with ExtTargetActorEn
 
   import args.ctx
 
-  def evtRenderArgs(etype: EventType, errors: ErrorInfo*): RenderArgs = {
+  def evtRenderArgs(etype: MEventType, errors: ErrorInfo*): RenderArgs = {
     evtRenderArgs(etype, withContainer = false, errors : _*)
   }
-  def evtRenderArgs(etype: EventType, withContainer: Boolean, errors: ErrorInfo*): RenderArgs = {
+  def evtRenderArgs(etype: MEventType, withContainer: Boolean, errors: ErrorInfo*): RenderArgs = {
     RenderArgs(
       mevent = MEventTmp(
         etype   = etype,
@@ -43,7 +42,7 @@ trait ExtTargetActorUtil extends ISendCommand with ReplyTo with ExtTargetActorEn
   }
 
   def renderInProcess(): Unit = {
-    val etype = EventTypes.AdvExtTgInProcess
+    val etype = MEventTypes.AdvExtTgInProcess
     val rargs = evtRenderArgs(etype, withContainer = true)
     val html = etype.render(rargs)
     val htmlStr = JsString(html.body) // TODO Вызывать для рендера туже бадягу, что и контроллер вызывает.
@@ -55,7 +54,7 @@ trait ExtTargetActorUtil extends ISendCommand with ReplyTo with ExtTargetActorEn
 
   /** Рендер на экран уведомления об успехе, стерев предыдущую инфу по target'у. */
   def renderSuccess(): Unit = {
-    val rargs = evtRenderArgs( EventTypes.AdvExtTgSuccess )
+    val rargs = evtRenderArgs( MEventTypes.AdvExtTgSuccess )
     renderEventReplace(rargs)
   }
 
@@ -71,7 +70,7 @@ trait ExtTargetActorUtil extends ISendCommand with ReplyTo with ExtTargetActorEn
       case None =>
         ErrorInfo(msg = msg)
     }
-    val rargs = evtRenderArgs(EventTypes.AdvExtTgError, err)
+    val rargs = evtRenderArgs(MEventTypes.AdvExtTgError, err)
     renderEventReplace(rargs)
   }
 

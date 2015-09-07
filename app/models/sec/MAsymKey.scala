@@ -1,10 +1,11 @@
 package models.sec
 
-import io.suggest.model.EsModel.FieldsJsonAcc
-import io.suggest.model.{EsModel, EsModelT, EsModelPlayJsonT, EsModelStaticT}
-import io.suggest.util.SioEsUtil._
-import play.api.libs.json.JsString
 import util.PlayMacroLogsImpl
+import io.suggest.model.EsModel.FieldsJsonAcc
+import io.suggest.model._
+import io.suggest.util.SioEsUtil._
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 import scala.collection.Map
 
@@ -17,7 +18,7 @@ import scala.collection.Map
  * Любая возможная защита секретного ключа происходит на стороне контроллера.
  * Потом эту модель можно аккуратненько расширить пользовательской поддержкой.
  */
-object MAsymKey extends EsModelStaticT with PlayMacroLogsImpl {
+object MAsymKey extends EsModelStaticT with PlayMacroLogsImpl with CurriedPlayJsonEsDocDeserializer {
 
   override type T = MAsymKey
 
@@ -47,6 +48,7 @@ object MAsymKey extends EsModelStaticT with PlayMacroLogsImpl {
    * @param m Карта, распарсенное json-тело документа.
    * @return Экземпляр модели.
    */
+  @deprecated("Delete it", "2015.sep.07")
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
     MAsymKey(
       id          = id,
@@ -55,6 +57,18 @@ object MAsymKey extends EsModelStaticT with PlayMacroLogsImpl {
       secKey      = m.get(SEC_KEY_FN).map(EsModel.stringParser)
     )
   }
+
+  /** play-json-маппер, возвращающий функцию, собирающий итоговый элемент.
+    * curried-фунцкия должна получить на вход опциональные id и выверенную version,
+    * и возвращать экземпляр модели. */
+  override protected def esDocReads: Reads[Reads_t] = (
+    (__ \ PUB_KEY_FN).read[String] and
+    (__ \ SEC_KEY_FN).readNullable[String]
+  ) {
+    (pubKey, secKeyOpt) =>
+      apply(pubKey, secKeyOpt, _, _)
+  }
+
 }
 
 

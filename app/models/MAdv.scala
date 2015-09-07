@@ -6,9 +6,9 @@ import io.suggest.event.{AdDeletedEvent, SNStaticSubscriber}
 import io.suggest.event.SioNotifier.Event
 import io.suggest.event.subscriber.SnClassSubscriber
 import models.adv.AdvSavedEvent
+import models.event.{MEventType, MEventTypes}
 import org.joda.time.{Period, LocalDate, DateTime}
 import play.api.db.DB
-import util.event.{EventTypes, EventType}
 import util.{SqlModelSave, PlayLazyMacroLogsImpl}
 import util.anorm.{AnormPgInterval, AnormPgArray, AnormJodaTime}
 import AnormJodaTime._
@@ -204,7 +204,7 @@ object MAdvModes extends Enumeration {
     def strId: String
 
     /** Тип события, сопутствующего этому экземпляру. */
-    def eventType: EventType
+    def eventType: MEventType
 
     /**
      * Владелец порождаемого события. Это receiver для req, и producer для ok и refused.
@@ -233,19 +233,19 @@ object MAdvModes extends Enumeration {
 
   /** Заапрувленное размещение. */
   val OK = new Val("o") with EvtOwnerIsProd {
-    override def eventType = EventTypes.AdvOutcomingOk
+    override def eventType = MEventTypes.AdvOutcomingOk
   }
 
   /** Запрос размещения. */
   val REQ = new Val("r") {
-    override def eventType = EventTypes.AdvReqIncoming
+    override def eventType = MEventTypes.AdvReqIncoming
     override def eventOwner(adv: MAdvI) = adv.rcvrAdnId
     override def eventSource(adv: MAdvI) = adv.prodAdnId
   }
 
   /** Отклонённое размение. */
   val REFUSED = new Val("e") with EvtOwnerIsProd {
-    override def eventType = EventTypes.AdvOutcomingRefused
+    override def eventType = MEventTypes.AdvOutcomingRefused
   }
 
   def busyModes: Set[MAdvMode] = Set(OK, REQ)

@@ -4,10 +4,9 @@ import java.io.File
 
 import models.MAd
 import models.blk.OneAdQsArgs
-import models.event.ErrorInfo
+import models.event.{MEventTypes, ErrorInfo}
 import util.PlayMacroLogsI
 import util.async.FsmActor
-import util.event.EventTypes
 import util.img.AdRenderUtil
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
@@ -68,7 +67,7 @@ trait RenderAd2ImgRender extends RenderAd2Img with ExtTargetActorUtil {
         msg  = "error.sio.internal",
         info = Some(s"[$replyTo] ${ex.getMessage}")
       )
-      val rargs = evtRenderArgs(EventTypes.AdvExtTgError, err)
+      val rargs = evtRenderArgs(MEventTypes.AdvExtTgError, err)
       renderEventReplace(rargs)
     }
   }

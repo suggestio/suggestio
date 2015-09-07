@@ -1,13 +1,12 @@
 package util.adv.ut
 
 import models.adv.ext.act.ExtActorEnv
-import models.event.ErrorInfo
+import models.event.{MEventTypes, ErrorInfo}
 import models.mext.{IMpUploadArgs, UploadRefusedException}
 import play.api.libs.ws.WSResponse
 import util.adv.IWsClient
 import util.async.FsmActor
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.event.EventTypes
 
 import scala.concurrent.Future
 import scala.util.{Try, Failure, Success}
@@ -95,7 +94,7 @@ trait S2sMpUploadRender extends S2sMpUpload with ExtTargetActorUtil {
         args = Seq(getDomain),
         info = Some(errMsg)
       )
-      val rargs = evtRenderArgs(EventTypes.AdvExtTgError, err)
+      val rargs = evtRenderArgs(MEventTypes.AdvExtTgError, err)
       renderEventReplace(rargs)
       // Записать в инфу логи проблемы.
       _logRefused(refused)
@@ -124,7 +123,7 @@ trait S2sMpUploadRender extends S2sMpUpload with ExtTargetActorUtil {
         args = Seq(getDomain),
         info = Some(s"[$replyTo] ${ex.getMessage}")
       )
-      val rargs = evtRenderArgs(EventTypes.AdvExtTgError, err)
+      val rargs = evtRenderArgs(MEventTypes.AdvExtTgError, err)
       renderEventReplace(rargs)
     }
 

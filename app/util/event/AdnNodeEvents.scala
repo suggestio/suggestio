@@ -6,7 +6,7 @@ import io.suggest.event.SioNotifier.{Event, Subscriber, Classifier}
 import io.suggest.event.subscriber.SnClassSubscriber
 import models.{MAdvMode, MAdvI, MAdvModes}
 import models.adv.AdvSavedEvent
-import models.event.{ArgsInfo, MEvent}
+import models.event.{MEventType, MEventTypes, ArgsInfo, MEvent}
 import util.PlayMacroLogsImpl
 import play.api.Play.{current, configuration}
 import util.event.SiowebNotifier.Implicts.sn
@@ -46,13 +46,13 @@ object AdnNodeEvents extends SNStaticSubscriber with SnClassSubscriber with Play
   }
 
   /** Добавляем приветствие "вы можете добавлять новые магазины"... */
-  def addEvtAddNewShops(adnId: String) = addEvt(adnId, EventTypes.YouCanCreateNewShop)
+  def addEvtAddNewShops(adnId: String) = addEvt(adnId, MEventTypes.YouCanCreateNewShop)
 
   /** Добавляем узлу событие, что можно попользоваться карточками. */
-  def addEvtUseCardMgr(adnId: String) = addEvt(adnId, EventTypes.StartYourWorkUsingCardMgr)
+  def addEvtUseCardMgr(adnId: String) = addEvt(adnId, MEventTypes.StartYourWorkUsingCardMgr)
 
   /** Создать и сохранить event указанного типа для указанного узла. */
-  private def addEvt(adnId: String, etype: EventType): Future[String] = {
+  private def addEvt(adnId: String, etype: MEventType): Future[String] = {
     val evt = MEvent(
       etype       = etype,
       ownerId     = adnId,

@@ -1,7 +1,8 @@
 package controllers
 
 import com.google.inject.Inject
-import models.{RemoteErrorTypes, GeoIp, MRemoteError}
+import models.merr.{MRemoteErrorTypes, MRemoteError}
+import models.GeoIp
 import play.api.data._, Forms._
 import play.api.i18n.MessagesApi
 import util.PlayMacroLogsImpl
@@ -46,7 +47,7 @@ class RemoteError @Inject() (
       )
       {(msg, urlOpt, state) =>
         MRemoteError(
-          errorType   = RemoteErrorTypes.Showcase,
+          errorType   = MRemoteErrorTypes.Showcase,
           msg         = msg,
           url         = urlOpt,
           state       = state,

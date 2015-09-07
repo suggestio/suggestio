@@ -247,15 +247,32 @@ trait MPIWithEmail {
 
 /** Типы поддерживаемых алгоритмов идентификаций. В базу пока не сохраняются. */
 object IdTypes extends Enumeration with EnumMaybeWithName {
-  protected case class Val(companion: EsModelStaticIdentT, isIdent: Boolean) extends super.Val
+
+  /** Абстрактный экземпляр модели. */
+  protected[this] sealed abstract class Val extends super.Val {
+    def companion: EsModelStaticIdentT
+    def isIdent: Boolean
+  }
 
   override type T = Val
-  val EMAIL_PW    : T = Val(EmailPwIdent, isIdent = true)
-  val EMAIL_ACT   : T = Val(EmailActivation, isIdent = false)
-  val EXT_ID      : T  = Val(MExtIdent, isIdent = true)
 
-  def onlyIdents = {
-    values.foldLeft [List[Val]] (Nil) {
+  val EMAIL_PW: T = new Val{
+    override def companion  = EmailPwIdent
+    override def isIdent    = true
+  }
+
+  val EMAIL_ACT: T = new Val{
+    override def companion  = EmailActivation
+    override def isIdent    = false
+  }
+
+  val EXT_ID: T = new Val {
+    override def companion  = MExtIdent
+    override def isIdent    = true
+  }
+
+  def onlyIdents: List[T] = {
+    values.foldLeft (List.empty[T]) {
       (acc, e) =>
         if (e.isIdent)
           e :: acc

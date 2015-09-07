@@ -3,7 +3,7 @@ package util.event
 import io.suggest.model.{EsModelStaticT, EsModelT}
 import io.suggest.ym.model.MAdnNodeGeo
 import models.event.search.MEventsSearchArgs
-import models.event.{MEvent, IEvent, ArgsInfo, MEventTmp}
+import models.event._
 import models._
 import org.joda.time.DateTime
 import play.api.db.DB
@@ -37,7 +37,7 @@ object LkEventsUtil extends PlayMacroLogsDyn {
     MAdnNodeGeo.countByNode(adnId).map {
       // Нет гео-шейпов у этого ресивера. Нужно отрендерить сообщение об этой проблеме. TODO Отсеивать просто-точки из подсчёта?
       case 0 =>
-        val etype = EventTypes.NodeGeoWelcome
+        val etype = MEventTypes.NodeGeoWelcome
         // Дата создания события формируется на основе даты создания узла.
         // Нужно также, чтобы это событие не было первым в списке событий, связанных с созданием узла.
         val dt = adnNode.meta.dateCreated.plusSeconds(10)

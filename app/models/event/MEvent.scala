@@ -10,11 +10,10 @@ import io.suggest.ym.model.common.EsDynSearchStatic
 import org.elasticsearch.action.index.IndexRequestBuilder
 import org.elasticsearch.client.Client
 import org.joda.time.DateTime
-import play.api.libs.json.{Json, JsBoolean, JsString}
 import play.api.Play.{current, configuration}
-import util.PlayMacroLogsImpl
-import util.event.EventTypes
-import EventTypes.EventType
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
+import _root_.util.PlayMacroLogsImpl
 import scala.concurrent.duration._
 
 import scala.collection.Map
@@ -29,7 +28,8 @@ import scala.concurrent.ExecutionContext
  * 2015.feb.12: Поле isUnseen работает по значениям: true или missing. Это позволяет разгружать индекс поля, когда
  * сообщения прочитаны (а таких большинство, и искать по этому значение не требуется).
  */
-object MEvent extends EsModelStaticT with PlayMacroLogsImpl with EsDynSearchStatic[IEventsSearchArgs] {
+object MEvent extends EsModelStaticT with PlayMacroLogsImpl with EsDynSearchStatic[IEventsSearchArgs]
+with CurriedPlayJsonEsDocDeserializer {
 
   override type T = MEvent
   override val ES_TYPE_NAME = "ntf"
@@ -48,27 +48,6 @@ object MEvent extends EsModelStaticT with PlayMacroLogsImpl with EsDynSearchStat
   def dateCreatedDflt = DateTime.now()
   def argsDflt        = EmptyArgsInfo
 
-  override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
-    MEvent(
-      etype       = m.get(EVT_TYPE_ESFN)
-        .map(stringParser)
-        .flatMap(EventTypes.maybeWithName)
-        .get,
-      ownerId     = m.get(OWNER_ID_ESFN)
-        .map(stringParser)
-        .get,
-      argsInfo    = m.get(ARGS_ESFN)
-        .fold [ArgsInfo] (EmptyArgsInfo) (ArgsInfo.fromJacksonJson),
-      dateCreated = m.get(DATE_CREATED_ESFN)
-        .fold(DateTime.now)(EsModel.dateTimeParser),
-      isCloseable = m.get(IS_CLOSEABLE_ESFN)
-        .fold(isCloseableDflt)(EsModel.booleanParser),
-      isUnseen    = m.get(IS_UNSEEN_ESFN)
-        .fold(false)(EsModel.booleanParser),
-      id          = id,
-      versionOpt  = version
-    )
-  }
 
   override def generateMappingStaticFields: List[Field] = {
     List(
@@ -88,6 +67,29 @@ object MEvent extends EsModelStaticT with PlayMacroLogsImpl with EsDynSearchStat
     )
   }
 
+  @deprecated("Delete it, v2 is ready here", "2015.sep.07")
+  override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
+    MEvent(
+      etype       = m.get(EVT_TYPE_ESFN)
+        .map(stringParser)
+        .flatMap(MEventTypes.maybeWithName)
+        .get,
+      ownerId     = m.get(OWNER_ID_ESFN)
+        .map(stringParser)
+        .get,
+      argsInfo    = m.get(ARGS_ESFN)
+        .fold [ArgsInfo] (EmptyArgsInfo) (ArgsInfo.fromJacksonJson),
+      dateCreated = m.get(DATE_CREATED_ESFN)
+        .fold(DateTime.now)(EsModel.dateTimeParser),
+      isCloseable = m.get(IS_CLOSEABLE_ESFN)
+        .fold(isCloseableDflt)(EsModel.booleanParser),
+      isUnseen    = m.get(IS_UNSEEN_ESFN)
+        .fold(false)(EsModel.booleanParser),
+      id          = id,
+      versionOpt  = version
+    )
+  }
+
   /**
    * Сборка event classifier для простоты взаимодействия с SioNotifier.
    * @param etype Тип события, если нужен.
@@ -95,8 +97,29 @@ object MEvent extends EsModelStaticT with PlayMacroLogsImpl with EsDynSearchStat
    * @param argsInfo Экземпляр [[ArgsInfo]], если есть.
    * @return Classifier.
    */
-  def getClassifier(etype: Option[EventType], ownerId: Option[String], argsInfo: ArgsInfo = EmptyArgsInfo): Classifier = {
-    Some(classOf[T].getSimpleName) :: etype :: ownerId :: argsInfo.getClassifier
+  def getClassifier(etype: Option[MEventType], ownerId: Option[String], argsInfo: ArgsInfo = EmptyArgsInfo): Classifier = {
+    Some(classOf[T].getSimpleName) ::
+      etype ::
+      ownerId ::
+      argsInfo.getClassifier
+  }
+
+  override val esDocReads: Reads[Reads_t] = (
+    (__ \ EVT_TYPE_ESFN).read[MEventType] and
+    (__ \ OWNER_ID_ESFN).read[String] and
+    (__ \ ARGS_ESFN).readNullable[ArgsInfo]
+      .map(_ getOrElse EmptyArgsInfo) and
+    (__ \ DATE_CREATED_ESFN).readNullable[DateTime]
+      .map(_ getOrElse DateTime.now) and
+    (__ \ IS_CLOSEABLE_ESFN).readNullable[Boolean]
+      .map(_ getOrElse isCloseableDflt) and
+    (__ \ IS_UNSEEN_ESFN).readNullable[Boolean]
+      .map(_ getOrElse true)
+  ) {
+    (etype, ownerId, argsInfo, dateCreated, isCloseable, isUnseen) =>
+      {(idOpt, vsnOpt) =>
+        apply(etype, ownerId, argsInfo, dateCreated, isCloseable, isUnseen, id = idOpt, versionOpt = vsnOpt)
+      }
   }
 
 }
@@ -107,7 +130,7 @@ import MEvent._
 
 /** Класс-экземпляр одной нотификации. */
 case class MEvent(
-  etype         : EventType,
+  etype         : MEventType,
   ownerId       : String,
   argsInfo      : ArgsInfo        = MEvent.argsDflt,
   dateCreated   : DateTime        = MEvent.dateCreatedDflt,
@@ -159,7 +182,7 @@ final class MEventJmx(implicit val ec: ExecutionContext, val client: Client, val
 /** Минимальный интерфейс абстрактного события.
   * Используется для рендера шаблонов, аргументы которых абстрагированы от конкретной реализации. */
 trait IEvent extends OptStrId with Event {
-  def etype         : EventType
+  def etype         : MEventType
   def ownerId       : String
   def argsInfo      : ArgsInfo
   def dateCreated   : DateTime
@@ -185,7 +208,7 @@ trait IMEvent extends IEvent {
  * @param isUnseen Юзер в первый раз видит событие? [конечно true].
  */
 case class MEventTmp(
-  etype       : EventType,
+  etype       : MEventType,
   ownerId     : String,
   argsInfo    : ArgsInfo        = EmptyArgsInfo,
   dateCreated : DateTime        = DateTime.now(),

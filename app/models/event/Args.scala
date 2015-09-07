@@ -25,18 +25,20 @@ import java.{util => ju}
 
 
 object ArgNames extends Enumeration with EnumMaybeWithName {
-  protected class Val(val strId: String) extends super.Val(strId)
 
-  type ArgName = Val
-  override type T = ArgName
+  /** Класс элементов этой модели. */
+  protected[this] sealed class Val(val strId: String)
+    extends super.Val(strId)
 
-  val AdnId           = new Val("a")
-  val AdvExtTarget    = new Val("b")
-  val AdId            = new Val("c")
-  val AdvOkId         = new Val("d")
-  val AdvReqId        = new Val("e")
-  val AdvRefuseId     = new Val("f")
-  //val PersonId      = new Val("")
+  override type T = Val
+
+  val AdnId          : T = new Val("a")
+  val AdvExtTarget   : T = new Val("b")
+  val AdId           : T = new Val("c")
+  val AdvOkId        : T = new Val("d")
+  val AdvReqId       : T = new Val("e")
+  val AdvRefuseId    : T = new Val("f")
+  //val PersonId     : T = new Val("")
 
 }
 
@@ -93,7 +95,7 @@ object ArgsInfo {
 
   import ArgNames._
 
-  implicit def reads: Reads[ArgsInfo] = (
+  implicit val reads: Reads[ArgsInfo] = (
     (__ \ AdnId.strId).readNullable[String] and
     (__ \ AdvExtTarget.strId).read[Seq[String]] and
     (__ \ AdId.strId).readNullable[String] and

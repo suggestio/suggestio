@@ -2,14 +2,13 @@ package util.adv
 
 import _root_.util.PlayMacroLogsImpl
 import _root_.util.async.FsmActor
-import _root_.util.event.EventTypes
 import _root_.util.jsa.JsAppendById
 import _root_.util.ws.SubscribeToWsDispatcher
 import akka.actor.{SupervisorStrategy, Actor, ActorRef, Props}
 import models.adv._
 import models.adv.js.ctx.MJsCtx
 import models.adv.js._
-import models.event.{RenderArgs, MEventTmp}
+import models.event.{MEventTypes, RenderArgs, MEventTmp}
 import models.mws.AnswerStatuses
 import play.api.libs.json._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -155,7 +154,7 @@ case class ExtAdvWsActor(out: ActorRef, eactx: IExtWsActorArgs)
             // отрендерить юзеру сообщение о проблеме.
             // TODO Пока поддерживается только отображение проблемы с блокировкой попапов. Нужно определять ошибку, и рендерить необходимый шаблон.
             val mevent = MEventTmp(
-              etype       = EventTypes.BrowserBlockPopupsError,
+              etype       = MEventTypes.BrowserBlockPopupsError,
               ownerId     = eactx.request.producerId,
               isCloseable = false,
               isUnseen    = true

@@ -1,14 +1,16 @@
-package models
+package models.merr
 
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.model._
 import io.suggest.util.SioEsUtil._
+import models._
 import org.elasticsearch.client.Client
 import org.joda.time.DateTime
-import play.api.libs.json.{JsBoolean, JsString}
+import play.api.Play.{configuration, current}
 import util.PlayMacroLogsImpl
-import play.api.Play.{current, configuration}
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 import scala.collection.Map
 import scala.concurrent.ExecutionContext
@@ -19,7 +21,7 @@ import scala.concurrent.ExecutionContext
  * Created: 14.10.14 18:55
  * Description: Модель для хранения ошибок на клиентах. Информация имеет TTL, настраив
  */
-object MRemoteError extends EsModelStaticT with PlayMacroLogsImpl {
+object MRemoteError extends EsModelStaticT with PlayMacroLogsImpl with CurriedPlayJsonEsDocDeserializer {
 
   override type T = MRemoteError
 
@@ -27,19 +29,19 @@ object MRemoteError extends EsModelStaticT with PlayMacroLogsImpl {
   override val ES_TYPE_NAME = "rerr"
 
   // Имена полей. По возможности должны совпадать с названиями в MAdStat.
-  val ERROR_TYPE_ESFN           = "errType"
+  def ERROR_TYPE_FN             = "errType"
 
-  val MSG_ESFN                  = "msg"
-  val URL_ESFN                  = "url"
-  val TIMESTAMP_ESFN            = "timestamp"
-  val CLIENT_ADDR_ESFN          = "clientAddr"
-  val UA_ESFN                   = "ua"
+  def MESSAGE_FN                = "msg"
+  def URL_FN                    = "url"
+  def TIMESTAMP_FN              = "timestamp"
+  def CLIENT_ADDR_FN            = "clientAddr"
+  def UA_FN                     = "ua"
 
-  val CLIENT_IP_GEO_EFSN        = "clIpGeo"
-  val CLIENT_TOWN_ESFN          = "clIpTown"
-  val COUNTRY_ESFN              = "country"
-  val IS_LOCAL_CLIENT_ESFN      = "isLocalCl"
-  val STATE_ESFN                = "state"
+  def CLIENT_IP_GEO_FN          = "clIpGeo"
+  def CLIENT_TOWN_FN            = "clIpTown"
+  def COUNTRY_FN                = "country"
+  def IS_LOCAL_CLIENT_FN        = "isLocalCl"
+  def STATE_FN                  = "state"
 
   /** Время хранения данных в модели. */
   val TTL_DAYS = configuration.getInt("model.remote.error.store.ttl.days") getOrElse 30
@@ -59,18 +61,18 @@ object MRemoteError extends EsModelStaticT with PlayMacroLogsImpl {
    */
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldString(ERROR_TYPE_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
-      FieldString(MSG_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
-      FieldString(URL_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
-      FieldDate(TIMESTAMP_ESFN, index = null, include_in_all = true),
-      FieldString(CLIENT_ADDR_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
-      FieldString(UA_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
-      FieldGeoPoint(CLIENT_IP_GEO_EFSN, geohash = true, geohashPrecision = "5", geohashPrefix = true,
+      FieldString(ERROR_TYPE_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
+      FieldString(MESSAGE_FN, index = FieldIndexingVariants.analyzed, include_in_all = true),
+      FieldString(URL_FN, index = FieldIndexingVariants.analyzed, include_in_all = true),
+      FieldDate(TIMESTAMP_FN, index = null, include_in_all = true),
+      FieldString(CLIENT_ADDR_FN, index = FieldIndexingVariants.analyzed, include_in_all = true),
+      FieldString(UA_FN, index = FieldIndexingVariants.analyzed, include_in_all = true),
+      FieldGeoPoint(CLIENT_IP_GEO_FN, geohash = true, geohashPrecision = "5", geohashPrefix = true,
         fieldData = GeoPointFieldData(format = GeoPointFieldDataFormats.compressed, precision = "5km")),
-      FieldString(CLIENT_TOWN_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
-      FieldString(COUNTRY_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
-      FieldBoolean(IS_LOCAL_CLIENT_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-      FieldString(STATE_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true)
+      FieldString(CLIENT_TOWN_FN, index = FieldIndexingVariants.analyzed, include_in_all = true),
+      FieldString(COUNTRY_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
+      FieldBoolean(IS_LOCAL_CLIENT_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+      FieldString(STATE_FN, index = FieldIndexingVariants.analyzed, include_in_all = true)
     )
   }
 
@@ -80,40 +82,60 @@ object MRemoteError extends EsModelStaticT with PlayMacroLogsImpl {
    * @param m Карта, распарсенное json-тело документа.
    * @return Экземпляр модели.
    */
+  @deprecated("Delete it", "2015.sep.7")
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
-    import EsModel.{stringParser, dateTimeParser, booleanParser}
+    import EsModel.{booleanParser, dateTimeParser, stringParser}
     def parseStr(fn: String) = m.get(fn).fold("")(stringParser)
     MRemoteError(
-      errorType   = m.get(ERROR_TYPE_ESFN)
+      errorType   = m.get(ERROR_TYPE_FN)
         .map(stringParser)
-        .flatMap(RemoteErrorTypes.maybeWithName)
-        .getOrElse(RemoteErrorTypes.values.head),
-      msg         = parseStr(MSG_ESFN),
-      clientAddr  = parseStr(CLIENT_ADDR_ESFN),
-      ua          = m.get(UA_ESFN)
+        .flatMap(MRemoteErrorTypes.maybeWithName)
+        .getOrElse(MRemoteErrorTypes.values.head),
+      msg         = parseStr(MESSAGE_FN),
+      clientAddr  = parseStr(CLIENT_ADDR_FN),
+      ua          = m.get(UA_FN)
         .map(stringParser),
-      url         = m.get(URL_ESFN)
+      url         = m.get(URL_FN)
         .map(stringParser),
-      timestamp   = m.get(TIMESTAMP_ESFN)
+      timestamp   = m.get(TIMESTAMP_FN)
         .fold(DateTime.now)(dateTimeParser),
-      clIpGeo     = m.get(CLIENT_IP_GEO_EFSN)
+      clIpGeo     = m.get(CLIENT_IP_GEO_FN)
         .flatMap(GeoPoint.deserializeOpt),
-      clTown      = m.get(CLIENT_TOWN_ESFN)
+      clTown      = m.get(CLIENT_TOWN_FN)
         .map(stringParser),
-      country     = m.get(COUNTRY_ESFN)
+      country     = m.get(COUNTRY_FN)
         .map(stringParser),
-      isLocalCl   = m.get(IS_LOCAL_CLIENT_ESFN)
+      isLocalCl   = m.get(IS_LOCAL_CLIENT_FN)
         .map(booleanParser),
-      state       = m.get(STATE_ESFN)
+      state       = m.get(STATE_FN)
         .map(stringParser),
       id          = id
     )
   }
 
+  override def esDocReads: Reads[Reads_t] = (
+    (__ \ ERROR_TYPE_FN).read[MRemoteErrorType] and
+    (__ \ MESSAGE_FN).read[String] and
+    (__ \ CLIENT_ADDR_FN).read[String] and
+    (__ \ UA_FN).readNullable[String] and
+    (__ \ TIMESTAMP_FN).read[DateTime] and
+    (__ \ URL_FN).readNullable[String] and
+    (__ \ CLIENT_IP_GEO_FN).readNullable[GeoPoint] and
+    (__ \ CLIENT_TOWN_FN).readNullable[String] and
+    (__ \ COUNTRY_FN).readNullable[String] and
+    (__ \ IS_LOCAL_CLIENT_FN).readNullable[Boolean] and
+    (__ \ STATE_FN).readNullable[String]
+  ) {
+    (errTyp, msg, clAddr, ua, tstamp, url, clIpGeo, clTown, country, isLocalCl, state) =>
+      {(id, vsn) =>
+        apply(errTyp, msg, clAddr, ua, tstamp, url, clIpGeo, clTown, country = country, isLocalCl, state, id)
+      }
+  }
+
 }
 
 
-import MRemoteError._
+import models.merr.MRemoteError._
 
 
 /**
@@ -129,7 +151,7 @@ import MRemoteError._
  * @param id id документа.
  */
 case class MRemoteError(
-  errorType   : RemoteErrorType,
+  errorType   : MRemoteErrorType,
   msg         : String,
   clientAddr  : String,
   ua          : Option[String]    = None,
@@ -149,25 +171,25 @@ case class MRemoteError(
 
   override def writeJsonFields(acc0: FieldsJsonAcc): FieldsJsonAcc = {
     var acc: FieldsJsonAcc =
-      ERROR_TYPE_ESFN   -> JsString(errorType.toString) ::
-      MSG_ESFN          -> JsString(msg) ::
-      TIMESTAMP_ESFN    -> EsModel.date2JsStr(timestamp) ::
-      CLIENT_ADDR_ESFN  -> JsString(clientAddr) ::
+      ERROR_TYPE_FN   -> JsString(errorType.toString) ::
+      MESSAGE_FN          -> JsString(msg) ::
+      TIMESTAMP_FN    -> EsModel.date2JsStr(timestamp) ::
+      CLIENT_ADDR_FN  -> JsString(clientAddr) ::
       acc0
     if (ua.isDefined)
-      acc ::= UA_ESFN -> JsString(ua.get)
+      acc ::= UA_FN -> JsString(ua.get)
     if (url.isDefined)
-      acc ::= URL_ESFN -> JsString(url.get)
+      acc ::= URL_FN -> JsString(url.get)
     if (clIpGeo.isDefined)
-      acc ::= CLIENT_IP_GEO_EFSN -> clIpGeo.get.toPlayGeoJson
+      acc ::= CLIENT_IP_GEO_FN -> clIpGeo.get.toPlayGeoJson
     if (clTown.isDefined)
-      acc ::= CLIENT_TOWN_ESFN -> JsString(clTown.get)
+      acc ::= CLIENT_TOWN_FN -> JsString(clTown.get)
     if (country.isDefined)
-      acc ::= COUNTRY_ESFN -> JsString(country.get)
+      acc ::= COUNTRY_FN -> JsString(country.get)
     if (isLocalCl.isDefined)
-      acc ::= IS_LOCAL_CLIENT_ESFN -> JsBoolean(isLocalCl.get)
+      acc ::= IS_LOCAL_CLIENT_FN -> JsBoolean(isLocalCl.get)
     if (state.isDefined)
-      acc ::= STATE_ESFN -> JsString(state.get)
+      acc ::= STATE_FN -> JsString(state.get)
     acc
   }
 
@@ -175,16 +197,6 @@ case class MRemoteError(
   override def versionOpt: Option[Long] = None
 }
 
-
-/** Типы присылаемых ошибок. */
-object RemoteErrorTypes extends Enumeration {
-  type RemoteErrorType = Value
-  val Showcase = Value : RemoteErrorType
-
-  def maybeWithName(x: String): Option[RemoteErrorType] = {
-    values.find(_.toString == x)
-  }
-}
 
 
 // JMX-утиль

@@ -1,5 +1,6 @@
 package models.usr
 
+import util.PlayMacroLogsImpl
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.EsModel._
 import io.suggest.model._
@@ -7,8 +8,7 @@ import io.suggest.util.SioEsUtil._
 import org.elasticsearch.client.Client
 import play.api.Play.current
 import play.api.cache.Cache
-import play.api.libs.json.JsString
-import util.PlayMacroLogsImpl
+import play.api.libs.json._
 
 import scala.collection.Map
 import scala.concurrent.{ExecutionContext, Future}
@@ -24,7 +24,7 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 
 // Статическая часть модели.
-object MPerson extends EsModelStaticT with PlayMacroLogsImpl {
+object MPerson extends EsModelStaticT with PlayMacroLogsImpl with CurriedPlayJsonEsDocDeserializer {
 
   import LOGGER._
 
@@ -32,8 +32,7 @@ object MPerson extends EsModelStaticT with PlayMacroLogsImpl {
 
   override val ES_TYPE_NAME = "person"
 
-  val LANG_ESFN   = "lang"
-  val IDENTS_ESFN = "idents"
+  def LANG_ESFN   = "lang"
 
   /** PersonId суперпользователей sio. */
   private var SU_IDS: Set[String] = Set.empty
@@ -62,6 +61,7 @@ object MPerson extends EsModelStaticT with PlayMacroLogsImpl {
     FieldString(LANG_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = false)
   )
 
+  @deprecated("Use deserializeOne2() instead", "2015.sep.05")
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
     MPerson(
       id = id,
@@ -71,13 +71,15 @@ object MPerson extends EsModelStaticT with PlayMacroLogsImpl {
 
   /** Асинхронно найти подходящее имя юзера в хранилищах и подмоделях. */
   def findUsername(personId: String)(implicit ec: ExecutionContext, client: Client): Future[Option[String]] = {
-    MPersonIdent.findAllEmails(personId).map(_.headOption)
+    MPersonIdent.findAllEmails(personId)
+      .map(_.headOption)
   }
 
   /** Ключ в кеше для юзернейма. */
   private def personCacheKey(personId: String) = personId + ".pu"
 
-  val USERNAME_CACHE_EXPIRATION_SEC: Int = current.configuration.getInt("mperson.username.cache.seconds") getOrElse 600
+  /** Сколько секунд кешировать найденный юзернейм в кеше play? */
+  val USERNAME_CACHE_EXPIRATION_SEC: Int = current.configuration.getInt("mperson.username.cache.seconds") getOrElse 100
 
   /** Асинхронно найти подходящее имя для юзера используя кеш. */
   def findUsernameCached(personId: String)(implicit ec: ExecutionContext, client: Client): Future[Option[String]] = {
@@ -95,6 +97,15 @@ object MPerson extends EsModelStaticT with PlayMacroLogsImpl {
         }
         resultFut
     }
+  }
+
+  override def esDocReads: Reads[Reads_t] = {
+    (__ \ LANG_ESFN).read[String]
+      .map { lang =>
+        {(idOpt, vsnOpt) =>
+          MPerson(lang = lang, id = idOpt)
+        }
+      }
   }
 
 }

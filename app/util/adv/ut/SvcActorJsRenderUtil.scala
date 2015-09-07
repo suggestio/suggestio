@@ -2,10 +2,9 @@ package util.adv.ut
 
 import models.adv.{JsExtTarget, MExtTargetInfoFull, IExtAdvServiceActorArgs}
 import models.adv.js.JsCmd
-import models.event.{MEventTmp, RenderArgs, IErrorInfo}
+import models.event.{MEventTypes, MEventTmp, RenderArgs, IErrorInfo}
 import play.api.libs.json.JsString
 import util.adv.ExtUtil
-import util.event.EventTypes
 import util.jsa.JsAppendById
 
 /**
@@ -22,7 +21,7 @@ trait SvcActorJsRenderUtil extends ISendCommand {
   /** Вызов рендера в браузер сообщения о проблеме инициализации текущего сервиса. */
   def serviceInitFailedRender(errors: Seq[IErrorInfo]): Unit = {
     val mevent = MEventTmp(
-      etype       = EventTypes.AdvServiceError,
+      etype       = MEventTypes.AdvServiceError,
       ownerId     = args.request.producerId,
       isCloseable = false,
       isUnseen    = true

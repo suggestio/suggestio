@@ -6,6 +6,7 @@ import io.suggest.ym.model.stat._
 import models.adv.MExtTargetJmx
 import models.ai.MAiMadJmx
 import models.event.MEventJmx
+import models.merr.MRemoteErrorJmx
 import models.usr.{MExtIdentJmx, MPersonJmx, EmailActivationJmx, EmailPwIdentJmx}
 import util.SiowebEsUtil.client
 import util.adv.AdvUtilJmx
