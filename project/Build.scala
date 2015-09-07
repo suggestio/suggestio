@@ -83,7 +83,7 @@ object SiobixBuild extends Build {
 
   /** Утиль, была когда-то расшарена между siobix и sioweb. Постепенно стала просто свалкой. */
   lazy val util = project
-    .dependsOn(common)
+    .dependsOn(common, commonPlay)
 
   /** Внутренний форк securesocial. */
   lazy val securesocial = project
@@ -91,7 +91,7 @@ object SiobixBuild extends Build {
 
   /** веб-интерфейс suggest.io v2. */
   lazy val web21 = project
-    .dependsOn(common, util, securesocial, commonPlay)
+    .dependsOn(common, util, securesocial)
     .settings(
       scalaJSProjects := Seq(lkSjs, commonSjs, scSjs),
       pipelineStages += scalaJSProd
