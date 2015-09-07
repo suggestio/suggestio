@@ -1,6 +1,7 @@
 package models.event
 
 import io.suggest.common.menum.EnumMaybeWithName
+import io.suggest.common.menum.play.EnumJsonReadsT
 import models.Context
 import play.api.libs.json._
 import play.twirl.api.{Html, Template2}
@@ -12,10 +13,10 @@ import views.html.lk.event._
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 21.01.15 10:22
  * Description: Здесь лежит движок всех нотификаций, ориентированный на представление (рендер).
- * Смесь некоторой логики контроллера, утили и немного модели по типу [[util.blocks.BlocksConf]].
+ * Смесь некоторой логики контроллера, утили и немного модели по типу BlocksConf.
  * Дергает разные шаблоны для рендера разных типов уведомлений, сгребая необходимые данные из других моделей.
  */
-object MEventTypes extends Enumeration with EnumMaybeWithName {
+object MEventTypes extends Enumeration with EnumMaybeWithName with EnumJsonReadsT {
 
   protected abstract class Val(val strId: String) extends super.Val(strId) {
 
@@ -89,9 +90,8 @@ object MEventTypes extends Enumeration with EnumMaybeWithName {
 
 
   /** Десериализация из JSON. */
-  implicit val reads: Reads[T] = {
-    __.read[String]
-      .map { withName }
+  override implicit val reads: Reads[T] = {
+    super.reads
   }
 
 }

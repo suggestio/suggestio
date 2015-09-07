@@ -13,7 +13,6 @@
 
   @* Отображение имеющихся тегов. *@
   @_existTagsContTpl() {
-
     @defining( af(s"$AD_K.$TAGS_K") ) { tsField =>
       @tsField.indexes.map { inx =>
         @_oneTagTpl( af, Some(s"${tsField.name}[$inx]") )

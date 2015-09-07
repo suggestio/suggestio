@@ -154,14 +154,13 @@ object ArgsInfo {
  */
 case class ArgsInfo(
   adnIdOpt        : Option[String]  = None,
-  advExtTgIds   : Seq[String]     = Nil,
+  advExtTgIds     : Seq[String]     = Nil,
   adIdOpt         : Option[String]  = None,
   advOkIdOpt      : Option[Int]     = None,
   advReqIdOpt     : Option[Int]     = None,
   advRefuseIdOpt  : Option[Int]     = None
-) extends IArgsInfo with EmptyProduct {
-
-}
+) extends IArgsInfo
+  with EmptyProduct
 
 
 /** Общий инстанс для пустой инфы по аргументам. Нанооптимизация. */

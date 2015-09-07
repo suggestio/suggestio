@@ -4,7 +4,6 @@ import io.suggest.adv.ext.model.ctx.MExtTargetT
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.model._
-import io.suggest.util.JacksonWrapper
 import io.suggest.util.SioEsUtil._
 import io.suggest.ym.model.common.EsDynSearchStatic
 import models.adv.search.etg.IExtTargetSearchArgs
@@ -18,8 +17,6 @@ import io.suggest.model.EsModel.stringParser
 
 import scala.collection.Map
 
-import java.{util => ju}
-
 import scala.concurrent.ExecutionContext
 
 /**
@@ -30,7 +27,8 @@ import scala.concurrent.ExecutionContext
  * Он содержит целевую ссылку, id обнаруженного сервиса, дату добавление и прочее.
  */
 
-object MExtTarget extends EsModelStaticT with PlayMacroLogsImpl with EsDynSearchStatic[IExtTargetSearchArgs] {
+object MExtTarget extends EsModelStaticT with PlayMacroLogsImpl with EsDynSearchStatic[IExtTargetSearchArgs]
+with CurriedPlayJsonEsDocDeserializer {
 
   override type T = MExtTarget
 
@@ -44,9 +42,6 @@ object MExtTarget extends EsModelStaticT with PlayMacroLogsImpl with EsDynSearch
   val NAME_ESFN         = "name"
   /** Имя поля с id узла, к которому привязан данный интанс. */
   val ADN_ID_ESFN       = "adnId"
-  /** В поле с этим именем хранятся контекстные данные, заданные js'ом. */
-  val CTX_DATA_ESFN     = "stored"
-
   /** Поле даты создания. Было добавлено только 2014.mar.05, из-за необходимости сортировки. */
   val DATE_CREATED_ESFN = "dc"
 
@@ -64,17 +59,11 @@ object MExtTarget extends EsModelStaticT with PlayMacroLogsImpl with EsDynSearch
       FieldString(SERVICE_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
       FieldString(NAME_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
       FieldString(ADN_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-      FieldObject(CTX_DATA_ESFN, enabled = false, properties = Nil),
       FieldDate(DATE_CREATED_ESFN, index = null, include_in_all = false)
     )
   }
 
-  /**
-   * Десериализация одного элементам модели.
-   * @param id id документа.
-   * @param m Карта, распарсенное json-тело документа.
-   * @return Экземпляр модели.
-   */
+  @deprecated("Delete it, replaced by deserializeOne2().", "2015.sep.07")
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
     MExtTarget(
       id          = id,
@@ -85,19 +74,23 @@ object MExtTarget extends EsModelStaticT with PlayMacroLogsImpl with EsDynSearch
       name        = m.get(NAME_ESFN)
         .map(stringParser),
       dateCreated = m.get(DATE_CREATED_ESFN)
-        .fold(DateTime.now)(EsModel.dateTimeParser),
-      ctxData     = m.get(CTX_DATA_ESFN).flatMap {
-        case jm: ju.Map[_, _] =>
-          if (jm.isEmpty) {
-            None
-          } else {
-            val rawJson = JacksonWrapper.serialize(jm)
-            val jso = Json.parse(rawJson).asInstanceOf[JsObject]
-            Some(jso)
-          }
-        case _ => None
-      }
+        .fold(DateTime.now)(EsModel.dateTimeParser)
     )
+  }
+
+  /** JSON deserializer. */
+  override val esDocReads: Reads[Reads_t] = (
+    (__ \ URL_ESFN).read[String] and
+    (__ \ SERVICE_ID_ESFN).read[MExtService] and
+    (__ \ ADN_ID_ESFN).read[String] and
+    (__ \ NAME_ESFN).readNullable[String] and
+    (__ \ DATE_CREATED_ESFN).readNullable[DateTime]
+      .map { _ getOrElse DateTime.now }
+  ) {
+    (url, service, adnId, name, dataCreated) =>
+      {(idOpt, vsnOpt) =>
+        MExtTarget(url, service, adnId, name, dataCreated, vsnOpt, idOpt)
+      }
   }
 
 }
@@ -112,7 +105,6 @@ case class MExtTarget(
   adnId         : String,
   name          : Option[String]    = None,
   dateCreated   : DateTime          = DateTime.now,
-  ctxData       : Option[JsObject]  = None,
   versionOpt    : Option[Long]      = None,
   id            : Option[String]    = None
 ) extends EsModelT with EsModelPlayJsonT with IExtTarget {

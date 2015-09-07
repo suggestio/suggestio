@@ -1,7 +1,7 @@
 package models.merr
 
 import io.suggest.common.menum.EnumMaybeWithName
-import play.api.libs.json._
+import io.suggest.common.menum.play.EnumJsonReadsT
 
 /**
  * Suggest.io
@@ -9,17 +9,12 @@ import play.api.libs.json._
  * Created: 07.09.15 11:48
  * Description: Типы присылаемых ошибок.
  */
-object MRemoteErrorTypes extends Enumeration with EnumMaybeWithName {
+object MRemoteErrorTypes extends Enumeration with EnumMaybeWithName with EnumJsonReadsT {
 
   override type T = Value
 
   /** Ошибка возникла в выдаче. */
   val Showcase = Value : T
-
-  implicit def reads: Reads[T] = {
-    __.read[String]
-      .map { withName }
-  }
 
 }
 

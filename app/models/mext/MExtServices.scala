@@ -3,6 +3,7 @@ package models.mext
 import _root_.util.PlayLazyMacroLogsImpl
 import io.suggest.adv.ext.model.MServices._
 import io.suggest.adv.ext.model._
+import io.suggest.common.menum.play.EnumJsonReadsT
 import models.adv.MExtTarget
 import models.mext.fb.FacebookService
 import models.mext.tw.TwitterService
@@ -18,7 +19,7 @@ import play.api.libs.json._
  * Description: Мегамодель сервисов для внешнего размещения рекламных карточек.
  */
 
-object MExtServices extends MServicesT with PlayLazyMacroLogsImpl {
+object MExtServices extends MServicesT with PlayLazyMacroLogsImpl with EnumJsonReadsT {
 
   override type T = Val
 
@@ -63,13 +64,6 @@ object MExtServices extends MServicesT with PlayLazyMacroLogsImpl {
       .map(value2val)
   }
 
-
-  /** Десериализация из JSON. Всё можно прочитать по имени. */
-  implicit def reads: Reads[T] = {
-    (__ \ NAME_FN)
-      .read[String]
-      .map { withName }
-  }
 
   /** Сериализация в JSON. */
   implicit def writes: Writes[T] = (
