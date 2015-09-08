@@ -9,8 +9,8 @@
 @import io.suggest.captcha.CaptchaConstants._
 
 
-@defining( CSRF(routes.Ident.emailRegSubmit()) ) { submitCall =>
-@form(submitCall, 'id -> "indexRegForm") {
+@defining( routes.Ident.emailRegSubmit() ) { submitCall =>
+@form(CSRF(submitCall), 'id -> "indexRegForm") {
 
   @rf.globalError.map { ge =>
     <p class="@ERROR_MSG_CLASS">@messages("Error"): @messages(ge.message)</p>

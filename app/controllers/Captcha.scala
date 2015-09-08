@@ -120,7 +120,8 @@ trait CaptchaValidator extends PlayMacroLogsI {
     val maybeCookieOk = form.data.get(CAPTCHA_ID_FN) flatMap { captchaId =>
       form.data.get(CAPTCHA_TYPED_FN) flatMap { captchaTyped =>
         val _cookieName = cookieName(captchaId)
-        request.cookies.get(_cookieName)
+        val cookieRaw = request.cookies.get(_cookieName)
+        val cookie = cookieRaw
           .filter { cookie =>
             try {
               val ctext = decryptPrintable(cookie.value, ivMaterial = ivMaterial(captchaId))
@@ -137,7 +138,10 @@ trait CaptchaValidator extends PlayMacroLogsI {
                 LOGGER.warn(s"checkCaptcha($CAPTCHA_ID_FN, $CAPTCHA_TYPED_FN): Failed", ex)
                 false
             }
-        }
+          }
+          if (cookie.isEmpty)
+            LOGGER.debug(s"checkCaptcha(): Captcha cookie '${_cookieName}' is missing or invalid: " + cookieRaw)
+          cookie
       }
     }
     maybeCookieOk.fold {
