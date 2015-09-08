@@ -4,7 +4,7 @@ import io.suggest.model.EsModel.FieldsJsonAcc
 import org.elasticsearch.common.geo.builders.ShapeBuilder
 import java.{util => ju}
 import GeoShape._
-import play.api.libs.json.JsValue
+import play.api.libs.json._
 
 /**
  * Suggest.io
@@ -19,6 +19,13 @@ object PointGs {
     Option(jmap.get(COORDS_ESFN))
       .flatMap { GeoPoint.deserializeOpt }
       .map { PointGs.apply }
+  }
+
+  /** play-json deserializer. */
+  implicit def reads: Reads[PointGs] = {
+    (__ \ COORDS_ESFN)
+      .read[GeoPoint]
+      .map { apply }
   }
 
 }

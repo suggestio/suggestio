@@ -1998,7 +1998,7 @@ trait EsmV2Deserializer extends EsModelCommonStaticT {
   protected def esDocReads(meta: IEsDocMeta): Reads[T]
 
   override def deserializeOne2[D](doc: D)(implicit ev: IEsDoc[D]): T = {
-    // Готовим метаданные документа для вызова сборки десериализатора.
+    // Готовим метаданные документа для вызова сборки и исполнения Reads-десериализатора.
     val meta = new IEsDocMeta {
       override def version  = ev.version(doc)
       override def id       = ev.id(doc)

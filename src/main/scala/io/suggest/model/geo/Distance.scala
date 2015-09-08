@@ -5,17 +5,15 @@ import org.elasticsearch.common.geo.ShapeRelation
 import org.elasticsearch.common.unit.DistanceUnit
 import DistanceUnit.{Distance => EsDistance}
 import org.elasticsearch.index.query.{QueryBuilder, FilterBuilder, FilterBuilders, QueryBuilders}
+import play.api.libs.json._
 
 object Distance {
 
   val parseDistance: PartialFunction[Any, Distance] = {
     case s: String =>
-      val esDistance = EsDistance.parseDistance(s)
-      Distance(esDistance)
-
+      apply(s)
     case esDistance: EsDistance =>
-      Distance(esDistance)
-
+      apply(esDistance)
     case dist: Distance =>
       dist
   }
@@ -23,6 +21,17 @@ object Distance {
   def apply(esDistance: EsDistance): Distance = {
     Distance(esDistance.value, esDistance.unit)
   }
+
+  def apply(raw: String): Distance = {
+    val esDistance = EsDistance.parseDistance(raw)
+    Distance(esDistance)
+  }
+
+  implicit def reads: Reads[Distance] = {
+    __.read[String]
+      .map { apply }
+  }
+
 }
 
 

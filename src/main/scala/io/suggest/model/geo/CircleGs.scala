@@ -3,6 +3,7 @@ package io.suggest.model.geo
 import io.suggest.model.EsModel.FieldsJsonAcc
 import org.elasticsearch.common.geo.builders.ShapeBuilder
 import play.api.libs.json._
+import play.api.libs.functional.syntax._
 import java.{util => ju}
 import GeoShape.COORDS_ESFN
 
@@ -23,6 +24,11 @@ object CircleGs {
       }
     }
   }
+
+  implicit def reads: Reads[CircleGs] = (
+    (__ \ COORDS_ESFN).read[GeoPoint] and
+    (__ \ RADIUS_ESFN).read[Distance]
+  )(apply _)
 
 }
 
