@@ -3,7 +3,7 @@ package util.adv
 import java.io.File
 
 import akka.actor.Props
-import io.suggest.adv.ext.model.im.INamedSize2di
+import io.suggest.common.geom.d2.INamedSize2di
 import models.adv.ext.act._
 import models.adv.js._
 import models.adv._

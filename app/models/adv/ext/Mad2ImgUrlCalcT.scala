@@ -1,6 +1,6 @@
 package models.adv.ext
 
-import io.suggest.adv.ext.model.im.INamedSize2di
+import io.suggest.common.geom.d2.INamedSize2di
 import models.MAd
 import models.blk.OneAdQsArgs
 import models.mext.MExtService

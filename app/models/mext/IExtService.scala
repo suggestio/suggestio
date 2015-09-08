@@ -3,7 +3,7 @@ package models.mext
 import java.net.URL
 
 import _root_.util.adv.IServiceActorCompanion
-import io.suggest.adv.ext.model.im.INamedSize2di
+import io.suggest.common.geom.d2.INamedSize2di
 import io.suggest.util.UrlUtil
 import models.adv.MExtTarget
 import models.blk.{OneAdWideQsArgs, SzMult_t, szMulted}

@@ -1,6 +1,6 @@
 package models.mext.tw.card
 
-import models.ISize2di
+import io.suggest.common.geom.d2.ISize2di
 
 /**
  * Suggest.io

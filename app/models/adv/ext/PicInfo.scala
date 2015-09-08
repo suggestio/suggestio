@@ -1,6 +1,6 @@
 package models.adv.ext
 
-import io.suggest.adv.ext.model.im.INamedSize2di
+import io.suggest.common.geom.d2.INamedSize2di
 import models.MImgSizeT
 import models.blk.{SzMult_t, OneAdWideQsArgs}
 

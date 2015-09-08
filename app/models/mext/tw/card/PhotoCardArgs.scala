@@ -1,6 +1,7 @@
 package models.mext.tw.card
 
-import models.{ISize2di, Context}
+import io.suggest.common.geom.d2.ISize2di
+import models.Context
 import play.twirl.api.Html
 
 /**

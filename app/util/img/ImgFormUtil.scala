@@ -2,6 +2,7 @@ package util.img
 
 import java.util.UUID
 
+import io.suggest.common.geom.d2.ISize2di
 import io.suggest.util.UuidUtil
 import models.im.{MAnyImgT, MImg}
 import org.im4java.core.Info

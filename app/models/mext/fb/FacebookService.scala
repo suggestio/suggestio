@@ -1,7 +1,7 @@
 package models.mext.fb
 
 import _root_.util.adv.ExtServiceActor
-import io.suggest.adv.ext.model.im.INamedSize2di
+import io.suggest.common.geom.d2.INamedSize2di
 import models.blk.SzMult_t
 import models.im.OutImgFmts
 import models.MAd

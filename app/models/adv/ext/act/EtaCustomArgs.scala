@@ -1,7 +1,7 @@
 package models.adv.ext.act
 
 import controllers.routes
-import io.suggest.adv.ext.model.im.INamedSize2di
+import io.suggest.common.geom.d2.INamedSize2di
 import models.adv.ext.Mad2ImgUrlCalcT
 import models.Context
 import models.adv.js.ctx.MPictureCtx

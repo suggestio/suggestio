@@ -2,7 +2,8 @@ package models.mext.vk
 
 import java.net.URL
 
-import io.suggest.adv.ext.model.im.{INamedSize2di, VkWallImgSizesScalaEnumT}
+import io.suggest.adv.ext.model.im.VkWallImgSizesScalaEnumT
+import io.suggest.common.geom.d2.INamedSize2di
 import models.im.{OutImgFmts, OutImgFmt}
 import models.mext.{ILoginProvider, IMpUploadSupport, IExtService}
 import util.PlayMacroLogsImpl

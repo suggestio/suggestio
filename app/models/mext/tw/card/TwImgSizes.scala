@@ -1,6 +1,6 @@
 package models.mext.tw.card
 
-import io.suggest.adv.ext.model.im.INamedSize2di
+import io.suggest.common.geom.d2.INamedSize2di
 import io.suggest.common.menum.EnumMaybeWithName
 
 /**
