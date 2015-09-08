@@ -1,16 +1,18 @@
 package models.usr
 
 import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.model.{EsModelJMXBase, EsModelJMXMBeanI}
+import io.suggest.model.{IEsDocMeta, EsmV2Deserializer, EsModelJMXBase, EsModelJMXMBeanI}
 import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.util.SioEsUtil._
 import models.mext.ILoginProvider
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders}
-import play.api.libs.json.JsString
 import securesocial.core.IProfileDflt
-import util.PlayMacroLogsImpl
+import _root_.util.PlayMacroLogsImpl
 import io.suggest.model.EsModel.stringParser
+
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 import scala.collection.Map
 import scala.concurrent.{Future, ExecutionContext}
@@ -22,7 +24,7 @@ import scala.concurrent.{Future, ExecutionContext}
  * Description: ExternalIdent - это ident-модель для хранения данных логина из соц.сетей или от иных провайдеров
  * идентификации пользователей.
  */
-object MExtIdent extends MPersonIdentSubmodelStatic with PlayMacroLogsImpl {
+object MExtIdent extends MPersonIdentSubmodelStatic with PlayMacroLogsImpl with EsmV2Deserializer {
 
   val PERSON_ID_ESFN    = "personId"
   val USER_ID_ESFN      = "key"
@@ -38,6 +40,7 @@ object MExtIdent extends MPersonIdentSubmodelStatic with PlayMacroLogsImpl {
     super.generateMappingProps
   }
 
+  @deprecated("Delete it, deserializeOne2() is ready here", "2015.sep.08")
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
     MExtIdent(
       versionOpt  = version,
@@ -66,6 +69,20 @@ object MExtIdent extends MPersonIdentSubmodelStatic with PlayMacroLogsImpl {
   def getByUserIdProv(prov: ILoginProvider, userId: String)(implicit client: Client, ec: ExecutionContext): Future[Option[T]] = {
     val id = genId(prov, userId)
     getById(id)
+  }
+
+  /** Кешируем почти готовый immutable json mapper тут. */
+  private val _reads0 = {
+    (__ \ PERSON_ID_ESFN).read[String] and
+    (__ \ PROVIDER_ID_ESFN).read[ILoginProvider] and
+    (__ \ USER_ID_ESFN).read[String] and
+    (__ \ EMAIL_ESFN).readNullable[String]
+  }
+  override protected def esDocReads(meta: IEsDocMeta): Reads[T] = {
+    _reads0 {
+      (personId, provider, userId, email) =>
+        apply(personId, provider, userId, email, meta.version)
+    }
   }
 
 }

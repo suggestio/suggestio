@@ -3,9 +3,10 @@ package models.usr
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.EsModel._
 import io.suggest.model._
-import models._
 import org.elasticsearch.client.Client
 import util.PlayMacroLogsImpl
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 import scala.collection.Map
 import scala.concurrent.ExecutionContext
@@ -17,12 +18,13 @@ import scala.concurrent.ExecutionContext
  */
 
 /** Статическая под-модель для хранения юзеров, живущих вне mozilla persona. */
-object EmailPwIdent extends MPersonIdentSubmodelStatic with PlayMacroLogsImpl {
+object EmailPwIdent extends MPersonIdentSubmodelStatic with PlayMacroLogsImpl with EsmV2Deserializer {
 
   override type T = EmailPwIdent
 
   override val ES_TYPE_NAME: String = "mpiEmailPw"
 
+  @deprecated("Delete it, deserializeOne2() is ready here.", "2015.sep.08")
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
     EmailPwIdent(
       email       = stringParser( m(KEY_ESFN) ),
@@ -50,6 +52,19 @@ object EmailPwIdent extends MPersonIdentSubmodelStatic with PlayMacroLogsImpl {
       pwHash = MPersonIdent.mkHash(password),
       isVerified = isVerified
     )
+  }
+
+  /** JSON-десериализатор модели. */
+  private val _reads0 = (
+    (__ \ KEY_ESFN).read[String] and
+    (__ \ PERSON_ID_ESFN).read[String] and
+    (__ \ VALUE_ESFN).read[String] and
+    (__ \ IS_VERIFIED_ESFN).readNullable[Boolean]
+      .map { _ getOrElse IS_VERIFIED_DFLT }
+  )(apply _)
+
+  override protected def esDocReads(meta: IEsDocMeta): Reads[EmailPwIdent] = {
+    _reads0
   }
 
 }

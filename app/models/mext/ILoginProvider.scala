@@ -1,5 +1,6 @@
 package models.mext
 
+import play.api.libs.json._
 import play.api.mvc.PathBindable
 import securesocial.core.AuthenticationMethod
 import securesocial.core.providers.ProviderCompanion
@@ -39,6 +40,15 @@ object ILoginProvider {
         strB.unbind(key, value.ssProvName)
       }
     }
+  }
+
+  /** JSON deserializer. */
+  implicit val reads: Reads[ILoginProvider] = {
+    __.read[String]
+      // TODO заменить это на какой-нибудь flatMap().
+      .map { maybeWithName }
+      .filter { _.nonEmpty }
+      .map { _.get }
   }
 
 }

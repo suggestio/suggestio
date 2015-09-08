@@ -3,7 +3,7 @@ package models.im
 import io.suggest.event.SioNotifierStaticClientI
 import org.elasticsearch.action.search.SearchRequestBuilder
 import org.elasticsearch.client.Client
-import org.elasticsearch.search.sort.{SortOrder, FieldSortBuilder, SortBuilder}
+import org.elasticsearch.search.sort.SortOrder
 import util.PlayMacroLogsImpl
 import com.fasterxml.jackson.annotation.JsonIgnore
 import io.suggest.model.EsModel.FieldsJsonAcc
