@@ -2,6 +2,7 @@ package io.suggest.lk.tags.edit.vm.add
 
 import io.suggest.common.tags.edit.TagsEditConstants.ADD_FORM_ID
 import io.suggest.sjs.common.vm.IVm
+import io.suggest.sjs.common.vm.content.{ReplaceWith, ApplyFromOuterHtml}
 import io.suggest.sjs.common.vm.find.FindDiv
 import io.suggest.sjs.common.vm.util.{IInitLayoutDummy, IInitLayout}
 import org.scalajs.dom.raw.HTMLDivElement
@@ -12,13 +13,13 @@ import org.scalajs.dom.raw.HTMLDivElement
  * Created: 08.09.15 12:26
  * Description: Контейнер элементов формы добавления тега.
  */
-object Container extends FindDiv {
+object Container extends FindDiv with ApplyFromOuterHtml {
   override type T     = Container
   override def DOM_ID = ADD_FORM_ID
 }
 
 
-trait ContainerT extends IVm with IInitLayoutDummy {
+trait ContainerT extends IVm with IInitLayoutDummy with ReplaceWith {
 
   override type T = HTMLDivElement
 
