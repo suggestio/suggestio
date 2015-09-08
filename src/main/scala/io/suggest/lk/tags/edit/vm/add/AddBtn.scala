@@ -1,9 +1,9 @@
 package io.suggest.lk.tags.edit.vm.add
 
-import io.suggest.common.tags.edit.TagsEditConstants._
-import io.suggest.sjs.common.vm.IVm
+import io.suggest.common.tags.edit.TagsEditConstants.ADD_BTN_ID
+import io.suggest.lk.tags.edit.m.signals.AddBtnClick
+import io.suggest.lk.tags.edit.vm.util.InitOnClickToTagsEditFsmT
 import io.suggest.sjs.common.vm.find.FindElT
-import io.suggest.sjs.common.vm.util.IInitLayoutDummy
 import org.scalajs.dom.raw.HTMLInputElement
 
 /**
@@ -19,15 +19,13 @@ object AddBtn extends FindElT {
 }
 
 
-/** Логика экземпляров vm'ки живёт здесь. */
-trait AddBtnT extends IVm with IInitLayoutDummy {
+/** Логика экземпляров vm'ки описана здесь. */
+trait AddBtnT extends InitOnClickToTagsEditFsmT {
 
   override type T = HTMLInputElement
 
-  override def initLayout(): Unit = {
-    super.initLayout()
-    ???
-  }
+  override protected[this] def _clickMsgModel = AddBtnClick
+
 }
 
 

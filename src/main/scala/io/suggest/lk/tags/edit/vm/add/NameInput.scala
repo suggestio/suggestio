@@ -1,0 +1,45 @@
+package io.suggest.lk.tags.edit.vm.add
+
+import io.suggest.common.tags.edit.TagsEditConstants.ADD_NAME_INPUT_ID
+import io.suggest.lk.tags.edit.m.signals._
+import io.suggest.lk.tags.edit.vm.util.OnEventToTagsEditFsmUtilT
+import io.suggest.sjs.common.vm.IVm
+import io.suggest.sjs.common.vm.find.FindElT
+import io.suggest.sjs.common.vm.util.IInitLayoutDummy
+import org.scalajs.dom.raw.HTMLInputElement
+
+/**
+ * Suggest.io
+ * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+ * Created: 08.09.15 11:54
+ * Description: VM'ка для работы с полем ввода имени тега.
+ * Далее происходит поиск и добавление тега.
+ */
+object NameInput extends FindElT {
+  override type Dom_t = HTMLInputElement
+  override type T     = NameInput
+  override def DOM_ID = ADD_NAME_INPUT_ID
+}
+
+
+trait NameInputT extends IVm with IInitLayoutDummy with OnEventToTagsEditFsmUtilT {
+
+  override type T = HTMLInputElement
+
+  override def initLayout(): Unit = {
+    super.initLayout()
+    // Вешаем проброску событий ввода и фокуса в FSM.
+    _addToFsmEventListener("focus", NameInputFocus)
+    _addToFsmEventListener("blur",  NameInputBlur)
+    _addToFsmEventListener("input", NameInputEvent)
+  }
+
+  def value = _underlying.value
+
+}
+
+
+case class NameInput(
+  override val _underlying: HTMLInputElement
+)
+  extends NameInputT
