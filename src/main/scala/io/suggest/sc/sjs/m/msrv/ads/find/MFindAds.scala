@@ -1,8 +1,8 @@
 package io.suggest.sc.sjs.m.msrv.ads.find
 
 import io.suggest.sc.sjs.m.mgrid.MGridParamsJsonWrapper
-import io.suggest.sc.sjs.m.msrv.MSrvUtil
 import io.suggest.sc.sjs.util.router.srv.routes
+import io.suggest.sjs.common.xhr.Xhr
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.scalajs.js.UndefOr
@@ -22,7 +22,7 @@ object MFindAds {
    */
   def findAds(adSearch: MFindAdsReq)(implicit ec: ExecutionContext): Future[MFindAds] = {
     val route = routes.controllers.MarketShowcase.findAds( adSearch.toJson )
-    MSrvUtil.reqJson(route) map { json =>
+    Xhr.getJson(route) map { json =>
       val json1 = json.asInstanceOf[MFindAdsRespJson]
       MFindAds(json1)
     }

@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.m.msrv.nodes.find
 
-import io.suggest.sc.sjs.m.msrv.MSrvUtil
 import io.suggest.sc.sjs.util.router.srv.routes
+import io.suggest.sjs.common.xhr.Xhr
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -20,7 +20,7 @@ object MFindNodes {
    */
   def findNodes(args: MFindNodesArgs)(implicit ec: ExecutionContext): Future[MFindNodesResp] = {
     val route = routes.controllers.MarketShowcase.findNodes( args.toJson )
-    MSrvUtil.reqJson(route) map { json1 =>
+    Xhr.getJson(route) map { json1 =>
       val json2 = MFindAdsRespJson(json1)
       MFindNodesResp(json2)
     }

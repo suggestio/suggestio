@@ -1,9 +1,10 @@
 package io.suggest.sc.sjs.m.msrv.foc.find
 
 import io.suggest.sc.sjs.m.msrv.index.MNodeIndex
-import io.suggest.sc.sjs.m.msrv.{MSrvAnswer, MSrvUtil}
+import io.suggest.sc.sjs.m.msrv.MSrvAnswer
 import io.suggest.sc.sjs.util.router.srv.routes
 import io.suggest.sjs.common.msg.ErrorMsgs
+import io.suggest.sjs.common.xhr.Xhr
 
 import scala.concurrent.{Future, ExecutionContext}
 import scala.scalajs.js._
@@ -25,7 +26,7 @@ object MFocAds {
    */
   protected def _findJson(args: MFocAdSearch)(implicit ec: ExecutionContext): Future[WrappedDictionary[Any]] = {
     val route = routes.controllers.MarketShowcase.focusedAds(args.toJson)
-    MSrvUtil.reqJson(route).map { json0 =>
+    Xhr.getJson(route).map { json0 =>
       json0.asInstanceOf[Dictionary[Any]]
     }
   }
