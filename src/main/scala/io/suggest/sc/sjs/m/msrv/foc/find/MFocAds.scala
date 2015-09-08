@@ -33,8 +33,14 @@ object MFocAds {
   /** Поиск focused-карточек "в лоб".
     * args.openIndexAdId должен быть None. */
   def find(args: MFocAdSearchNoOpenIndex)(implicit ec: ExecutionContext): Future[MFocAds] = {
-    _findJson(args)
-      .map { MFocAds.apply }
+    if (args.openIndexAdId.nonEmpty) {
+      Future failed {
+        new IllegalArgumentException( ErrorMsgs.OPEN_AD_ID_MUST_BE_NONE + " " + args.openIndexAdId)
+      }
+    } else {
+      _findJson(args)
+        .map { apply }
+    }
   }
 
   /** Поиск карточек или index-страницы узла-продьюсера.
@@ -50,7 +56,7 @@ object MFocAds {
           else if (action == INDEX_RESP_ACTION)
             Left( MNodeIndex(jsonDict) )
           else
-            throw new IllegalArgumentException( ErrorMsgs.FOC_ANSWER_ACTION_INVALID )
+            throw new IllegalArgumentException( ErrorMsgs.FOC_ANSWER_ACTION_INVALID + " " + action )
       }
     }
   }
