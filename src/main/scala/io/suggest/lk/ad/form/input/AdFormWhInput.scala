@@ -1,7 +1,7 @@
 package io.suggest.lk.ad.form.input
 
-import io.suggest.adv.ext.model.im.ISize2di
 import io.suggest.ad.form.AdFormConstants._
+import io.suggest.common.geom.d2.ISize2di
 import org.scalajs.jquery.jQuery
 
 /**
