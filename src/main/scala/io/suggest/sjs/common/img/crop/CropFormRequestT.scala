@@ -1,6 +1,6 @@
 package io.suggest.sjs.common.img.crop
 
-import io.suggest.adv.ext.model.im.ISize2di
+import io.suggest.common.geom.d2.ISize2di
 import io.suggest.img.crop.CropConstants
 import io.suggest.popup.PopupConstants
 import io.suggest.sjs.common.controller.routes

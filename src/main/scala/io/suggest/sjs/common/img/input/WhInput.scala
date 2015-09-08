@@ -1,6 +1,6 @@
 package io.suggest.sjs.common.img.input
 
-import io.suggest.adv.ext.model.im.ISize2di
+import io.suggest.common.geom.d2.ISize2di
 import org.scalajs.jquery.JQuery
 
 /**

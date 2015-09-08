@@ -1,6 +1,6 @@
 package io.suggest.sjs.common.vm.attr
 
-import io.suggest.adv.ext.model.im.Size2di
+import io.suggest.common.geom.d2.Size2di
 import io.suggest.sc.ScConstants.{HEIGHT_ATTR, WIDTH_ATTR}
 
 /**
