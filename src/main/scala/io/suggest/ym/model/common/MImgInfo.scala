@@ -1,7 +1,7 @@
 package io.suggest.ym.model.common
 
 import com.fasterxml.jackson.annotation.{JsonIgnore, JsonIgnoreProperties}
-import io.suggest.adv.ext.model.im.ISize2di
+import io.suggest.common.geom.d2.ISize2di
 import io.suggest.model.EsModel
 import play.api.libs.json._
 import io.suggest.model.EsModel.FieldsJsonAcc
