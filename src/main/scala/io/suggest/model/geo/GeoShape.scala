@@ -103,5 +103,14 @@ object GsTypes extends Enumeration with EnumMaybeWithName {
   val envelope            : T = Val("envelope", None)
   val circle              : T = Val("circle", None)
 
+  override def maybeWithName(n: String): Option[T] = {
+    values
+      .find { v =>
+        val _v = value2val(v)
+        _v.esName == n || _v.geoJsonName.contains(n)
+      }
+      .asInstanceOf[Option[T]]
+  }
+
 }
 

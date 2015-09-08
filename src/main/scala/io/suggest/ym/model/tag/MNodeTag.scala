@@ -49,7 +49,6 @@ object MNodeTag extends PrefixedFn {
     )
   }
 
-
   import io.suggest.util.SioEsUtil._
 
   /** Сборка ES-маппинга для nested-object тегов. Тут перечисляются поля каждого nested-object. */
