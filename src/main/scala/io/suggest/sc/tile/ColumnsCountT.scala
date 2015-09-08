@@ -1,6 +1,6 @@
 package io.suggest.sc.tile
 
-import io.suggest.adv.ext.model.im.ISize2di
+import io.suggest.common.geom.d2.ISize2di
 
 /**
  * Suggest.io
