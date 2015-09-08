@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.m.magent
 
-import io.suggest.adv.ext.model.im.ISize2di
+import io.suggest.common.geom.d2.ISize2di
 import io.suggest.sc.sjs.vm.SafeWnd
 import io.suggest.sjs.common.vm.wnd.WindowVm
 import org.scalajs.dom

@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.vm.wc
 
-import io.suggest.adv.ext.model.im.ISize2di
+import io.suggest.common.geom.d2.ISize2di
 import io.suggest.sjs.common.vm.style.{StyleWidth, StyleHeight}
 import org.scalajs.dom.raw.HTMLImageElement
 

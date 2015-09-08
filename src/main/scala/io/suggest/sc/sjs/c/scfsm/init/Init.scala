@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.c.scfsm.init
 
 import io.suggest.sc.sjs.c.scfsm.geo.GeoInit
 import io.suggest.sc.sjs.m.magent.MScreen
-import io.suggest.sc.sjs.m.magent.vsz.ViewportSz
+import io.suggest.sjs.common.vsz.ViewportSz
 import io.suggest.sc.sjs.v.global.DocumentView
 import io.suggest.sjs.common.msg.WarnMsgs
 

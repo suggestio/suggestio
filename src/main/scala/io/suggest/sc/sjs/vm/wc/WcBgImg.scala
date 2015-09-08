@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.vm.wc
 
-import io.suggest.adv.ext.model.im.Size2di
+import io.suggest.common.geom.d2.Size2di
 import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.ScConstants.Welcome.BG_IMG_ID
 import io.suggest.sjs.common.vm.VmT
