@@ -7,6 +7,7 @@ import play.api.data._
 import util.PlayMacroLogsI
 import util.acl.IsAuth
 import views.html.lk.tag.edit._
+import MarketAdFormUtil._
 
 /**
  * Suggest.io
@@ -16,10 +17,10 @@ import views.html.lk.tag.edit._
  */
 object NodeTagsEdit {
 
-  /** Маппинг формы  */
+  /** Маппинг формы добавления одного тега. */
   def tagAddFormM: Form[MNodeTag] = {
     val k = TagsEditConstants.ADD_NAME_INPUT_ID
-    val m = MarketAdFormUtil.tagNameAsTagM
+    val m = tagNameAsTagM
     Form(k -> m)
   }
 
@@ -31,18 +32,21 @@ import NodeTagsEdit._
 
 trait NodeTagsEdit extends SioController with PlayMacroLogsI {
   
-  /** Добавление тега в редакторе тегов. */
-  def tagEditorAddTag = IsAuth { implicit request =>
-    implicit val ctx = getContext2
-    tagAddFormM.bindFromRequest().fold(
+  /**
+   * Добавление тега в редакторе тегов.
+   * @param index Порядковый номер тега.
+   */
+  def tagEditorAddTag(index: Int) = IsAuth { implicit request =>
+    val formBinded = tagAddFormM.bindFromRequest()
+    formBinded.fold(
       {formWithErrors =>
         LOGGER.debug(s"tagEditorAddTag(): Form bind failed:\n ${formatFormErrors(formWithErrors)}")
-        //val formRendered = _addFormTpl(formWithErrors, )
-        //NotAcceptable(  )
-        ???
+        val formRendered = _addFormTpl(formWithErrors)
+        NotAcceptable( formRendered )
       },
       {mtag =>
-        ???
+        val name = s"$AD_K.$TAGS_K[$index]"
+        Ok( _oneTagTpl(formBinded, fprefix = Some(name)) )
       }
     )
   }
