@@ -28,4 +28,6 @@ object ErrorMsgs extends MsgsStaticT {
 
   def FOC_ANSWER_ACTION_INVALID  = E(9)
 
+  def OPEN_AD_ID_MUST_BE_NONE    = E(10)
+
 }

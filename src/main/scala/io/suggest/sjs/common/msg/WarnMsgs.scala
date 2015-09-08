@@ -26,4 +26,6 @@ object WarnMsgs extends MsgsStaticT {
 
   def FSM_SIGNAL_UNEXPECTED     = E(7)
 
+  def INPUT_UNFOCUSED_EVENT     = E(8)
+
 }
