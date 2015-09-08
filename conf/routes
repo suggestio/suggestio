@@ -66,17 +66,18 @@ POST /lk/xadv/ext/oauth1/ret/:adnId     @controllers.LkAdvExt.oauth1PopupReturnP
 
 
 ## ЛК: Рекламные карточки
-POST /m/lk/ad/:adId/delete              @controllers.MarketAd.deleteSubmit(adId)
-GET  /m/lk/adn/:adnId/ad/new            @controllers.MarketAd.createAd(adnId)
-POST /m/lk/adn/:adnId/ad/new            @controllers.MarketAd.createAdSubmit(adnId)
-POST /m/lk/ap/:adnId/preview            @controllers.MarketAd.adFormPreviewSubmit(adnId, isFull: Boolean)
-POST /m/lk/ai/:blockId/:fn              @controllers.MarketAd.prepareBlockImg(blockId: Int, fn: String, wsId: Option[String])
-POST /m/lk/sa/:adId/update/show         @controllers.MarketAd.updateShowLevelSubmit(adId)
-GET  /m/lk/ad/:adId/edit                @controllers.MarketAd.editAd(adId)
-POST /m/lk/ad/:adId/edit                @controllers.MarketAd.editAdSubmit(adId)
-GET  /m/lk/ad/:adId/delete              @controllers.MarketAd.deleteWnd(adId)
+POST /lk/ad/:adId/delete                @controllers.MarketAd.deleteSubmit(adId)
+GET  /lk/adn/:adnId/ad/new              @controllers.MarketAd.createAd(adnId)
+POST /lk/adn/:adnId/ad/new              @controllers.MarketAd.createAdSubmit(adnId)
+POST /lk/ap/:adnId/preview              @controllers.MarketAd.adFormPreviewSubmit(adnId, isFull: Boolean)
+POST /lk/ai/:blockId/:fn                @controllers.MarketAd.prepareBlockImg(blockId: Int, fn: String, wsId: Option[String])
+POST /lk/sa/:adId/update/show           @controllers.MarketAd.updateShowLevelSubmit(adId)
+GET  /lk/ad/:adId/edit                  @controllers.MarketAd.editAd(adId)
+POST /lk/ad/:adId/edit                  @controllers.MarketAd.editAdSubmit(adId)
+GET  /lk/ad/:adId/delete                @controllers.MarketAd.deleteWnd(adId)
 GET  /ws/lk/ad/:wsId                    @controllers.MarketAd.ws(wsId: String)
-GET  /m/lk/ad/new/field/text/:offerN    @controllers.MarketAd.newTextField(offerN: Int, h: Int, w: Int)
+GET  /lk/ad/new/field/text/:offerN      @controllers.MarketAd.newTextField(offerN: Int, h: Int, w: Int)
+POST /lk/node/tag/add                   @controllers.MarketAd.tagEditorAddTag
 # lk.billing
 GET  /lk/bill/adn/:adnId                @controllers.MarketLkBilling.showAdnNodeBilling(adnId)
 GET  /lk/bill/txns/adn/:adnId           @controllers.MarketLkBilling.txnsList(adnId, page: Int ?= 0, inline: Boolean ?= false)

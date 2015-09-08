@@ -38,7 +38,9 @@ object UmapUtil {
       .flatMap { _ => Option(esMap get "_storage") }
       .flatMap {
         case jmap: ju.Map[_, _] =>
-          Option(jmap get "id").map(intParser).flatMap(NodeGeoLevels.maybeWithId)
+          Option(jmap get "id")
+            .map(intParser)
+            .flatMap(NodeGeoLevels.maybeWithId)
       }
       .flatMap { ngl =>
         // Парсим объекты карты (фичи)

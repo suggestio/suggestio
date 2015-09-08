@@ -23,7 +23,7 @@ import scala.concurrent.Future
 import play.api.mvc.{WebSocket, Request}
 import play.api.Play.{current, configuration}
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
-import controllers.ad.MarketAdFormUtil
+import controllers.ad.{NodeTagsEdit, MarketAdFormUtil}
 import MarketAdFormUtil._
 import io.suggest.ym.model.common.Texts4Search
 
@@ -38,6 +38,7 @@ class MarketAd @Inject() (
   override val actorSystem: ActorSystem
 )
   extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtectCtl with MarketAdPreview
+  with ad.NodeTagsEdit
 {
 
   import LOGGER._

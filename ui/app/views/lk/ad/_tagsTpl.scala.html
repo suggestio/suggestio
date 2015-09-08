@@ -5,11 +5,12 @@
 @import ctx.messages
 @import lk.tag.edit._
 @import controllers.ad.MarketAdFormUtil.{AD_K, TAGS_K}
+@import helper._
 
 @_edLkBlkTpl( messages("Tags") ) {
 
   @* js-форма добавления тегов. *@
-  @_addFormTpl()
+  @_addFormTpl(af)
 
   @* Отображение имеющихся тегов. *@
   @_existTagsContTpl() {

@@ -235,13 +235,10 @@ object MarketAdFormUtil {
   /** Минимальная символьная длина одного тега. */
   def TAG_LEN_MIN = 1
 
-  /** Маппинг для одного тега. */
-  def tagM: Mapping[MNodeTag] = {
+  def tagNameM: Mapping[String] = {
     val minLen = TAG_LEN_MIN
     val maxLen = TAG_LEN_MAX
-    val _net = nonEmptyText(minLength = minLen,  maxLength = maxLen*2)
-
-    val tNameM = _net
+    nonEmptyText(minLength = minLen,  maxLength = maxLen*2)
       // Срезать знаки препинания, все \s+ заменить на одиночные пробелы.
       .transform[String](
         {s =>
@@ -256,29 +253,33 @@ object MarketAdFormUtil {
       )
       .verifying("e.tag.len.max", _.length <= maxLen)
       .verifying("e.tag.len.min", _.length >= minLen)
+  }
 
-    val tIdM = tNameM
-      .transform[String](_.toLowerCase, strIdentityF)
-
-    mapping(
-      "id"  -> tIdM,
-      "raw" -> tNameM
+  /** Маппинг экземпляра тег исходя из имени тега. */
+  def tagNameAsTagM: Mapping[MNodeTag] = {
+    tagNameM.transform [MNodeTag] (
+      {tname =>
+        MNodeTag(
+          id  = tname.toLowerCase,
+          raw = tname
+        )
+      },
+      { _.raw }
     )
-    { MNodeTag.apply }
-    { MNodeTag.unapply }
   }
 
   /** Маппинг для множественных значений поля тегов. */
   def tagsMapM: Mapping[TagsMap_t] = {
-    list(tagM)
+    list(tagNameAsTagM)
       .transform [TagsMap_t] (
         {tags =>
           tags.iterator
             .map { t => t.id -> t }
             .toMap
         },
-        {tagsMap =>
-          tagsMap.valuesIterator.toList
+        {tmap =>
+          tmap.valuesIterator
+            .toList
             .sortBy(_.id)
         }
       )

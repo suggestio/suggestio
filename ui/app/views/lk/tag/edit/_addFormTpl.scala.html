@@ -1,13 +1,19 @@
-@()(implicit ctx: Context)
+@(fm: Form[_], fPrefix: Option[String] = None)(implicit ctx: Context)
 
 @import io.suggest.common.tags.edit.TagsEditConstants._
 @import helper._
-@import ctx.messages
+@import ctx.{messages, request}
 
 @* js-only форма с поддержкой создания нового тега: input для ввода текста и кнопка добавления.
    Форма не умеет самбиттиться, её полностью обслуживает js. *@
 
-<div id="@ADD_FORM_ID">
-  <input type="text" id="@ADD_NAME_INPUT_ID" value="" />
-  <input type="submit" id="@ADD_BTN_ID" value="@messages("Create")" />
+<div id="@ADD_FORM_ID" data-action="@CSRF( routes.MarketAd.tagEditorAddTag() )">
+
+  @inputText(
+    fm( fPrefix.fold("")(_ + ".") + ADD_NAME_INPUT_ID),
+    'id -> ADD_NAME_INPUT_ID
+  )
+
+  <input type="submit" id="@ADD_BTN_ID" value="@messages("Add")..." disabled/>
+
 </div>
