@@ -48,7 +48,7 @@ class HistogramParsersSpec extends PlaySpec {
 
 
   /** Пример выхлопа гистограммы IM. */
-  private val hist1 = {
+  private def hist1 = {
     """
       |     21689: ( 42, 45, 12) #2A2D0C yellow
       |      5487: ( 54, 42, 18) #362A12 srgb(54,42,18)
@@ -73,6 +73,20 @@ class HistogramParsersSpec extends PlaySpec {
       pr.get mustBe hist1parsed
     }
   }
+
+
+  // TODO PNG или иной формат с прозрачным цветом.
+  /*private def HIST2 = {
+    """
+      |    102691: (250,210, 14,  0) #FAD20E00 srgba(250,210,14,0.000366217)
+      |       430: (255,211,  0, 47) #FFD3002F srgba(255,211,0,0.185946)
+      |    280189: (255,211,  0,255) #FFD300FF srgba(255,211,0,0.999893)
+      |       271: (255,211,  0,193) #FFD300C1 srgba(255,211,0,0.758495)
+    """.stripMargin
+  }
+  private def HIST2_PARSED = List(
+    HistogramEntry(102691, "")
+  )*/
 
 
   "parseFromFile()" must {

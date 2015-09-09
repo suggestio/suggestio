@@ -64,6 +64,11 @@ object MExtServices extends MServicesT with PlayLazyMacroLogsImpl with EnumJsonR
       .map(value2val)
   }
 
+  /** Десериализация из JSON. Всё можно прочитать по имени. */
+  override implicit def reads: Reads[T] = {
+    (__ \ NAME_FN)
+      .read(super.reads)
+  }
 
   /** Сериализация в JSON. */
   implicit def writes: Writes[T] = (

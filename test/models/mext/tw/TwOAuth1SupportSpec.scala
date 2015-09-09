@@ -1,5 +1,6 @@
 package models.mext.tw
 
+import functional.OneAppPerSuiteNoGlobalStart
 import org.scalatestplus.play._
 
 /**
@@ -8,7 +9,7 @@ import org.scalatestplus.play._
  * Created: 16.04.15 15:47
  * Description: Тесты для oauth1-поддержки твиттера.
  */
-class TwOAuth1SupportSpec extends PlaySpec {
+class TwOAuth1SupportSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
 
   import OAuth1Support._
 

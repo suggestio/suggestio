@@ -1,8 +1,7 @@
 package models
 
+import functional.OneAppPerSuiteNoGlobalStart
 import org.scalatestplus.play._
-import play.api.GlobalSettings
-import play.api.test.FakeApplication
 
 /**
  * Suggest.io
@@ -10,22 +9,11 @@ import play.api.test.FakeApplication
  * Created: 05.09.14 10:56
  * Description: тесты для geo mode
  */
-class GeoModeSpec extends PlaySpec with OneAppPerSuite {
-
-/** Штатный Global производит долгую инициализацию, которая нам не нужен.
-    * Нужен только доступ к конфигу. Ускоряем запуск: */
-  override implicit lazy val app = FakeApplication(
-    withGlobal = Some(new GlobalSettings() {
-      override def onStart(app: play.api.Application) {
-        super.onStart(app)
-        println("Started dummy fake application, without Global.onStart() initialization.")
-      }
-    })
-  )
+class GeoModeSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
 
   // lazy, т.к. GeoPoint() дергает package, который дёргает другие модели, которые дёргают config.
   // И тогда вылетает ExceptionInInitializerError: There is no started application.
-  private lazy val gp0 = GeoPoint(59.926185700000005, 30.2333629)
+  private val gp0 = GeoPoint(59.926185700000005, 30.2333629)
   private def gp1 = GeoPoint(59.92626006720579, 30.233811233220834)
 
 
