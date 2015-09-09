@@ -11,6 +11,17 @@ object TagsEditConstants {
   /** id контейнера уже созданных тегов. */
   def EXIST_TAGS_CONT_ID          = "tagsExistCont"
 
+  /**
+   * Имя поля, в котором js собирает и сабмиттит множество имён текущих тегов.
+   * {{{
+   *   exist[1]=asdfasdf&exist[2]=asdasd
+   * }}}
+   */
+  def EXIST_TAGS_FN               = "exist"
+
+  /** Название поля с названием нового добавляемого тега. */
+  def NEW_TAG_FN                  = "new"
+
   /** id контейнера с инпутами для добавления нового тега. */
   def ADD_FORM_ID                 = "tagsAddForm"
 
