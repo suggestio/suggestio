@@ -31,7 +31,7 @@ addSbtPlugin("org.neolin.sbt" % "sbt-simple-url-update" % "1.0.0.2-SNAPSHOT")
 
 
 // Use the Play sbt plugin for Play projects
-addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.4.2")
+addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.4.3")
 
 //addSbtPlugin("com.typesafe.sbt" % "sbt-webdriver" % "1.0.0")
 
