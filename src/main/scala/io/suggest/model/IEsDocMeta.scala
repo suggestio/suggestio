@@ -15,3 +15,11 @@ trait IEsDocMeta {
   def version: Option[Long]
 
 }
+
+
+/** Дефолтовая реализация [[IEsDocMeta]]. */
+case class EsDocMeta(
+  override val id       : Option[String] = None,
+  override val version  : Option[Long] = None
+)
+  extends IEsDocMeta

@@ -1,5 +1,6 @@
 package io.suggest.model
 
+import io.suggest.util.JacksonWrapper
 import org.elasticsearch.action.get.GetResponse
 import org.elasticsearch.search.SearchHit
 
@@ -52,11 +53,34 @@ object IEsDoc {
     }
   }
 
+  /** Mock-адаптер для тестирования сериализации-десериализации моделей на базе play.json.
+    * На вход он получает просто экземпляры классов моделей. */
+  implicit def mockPlayDocRespEv = new IEsDoc[EsModelPlayJsonT] {
+    override def id(v: EsModelPlayJsonT): Option[String] = {
+      v.id
+    }
+    override def version(v: EsModelPlayJsonT): Option[Long] = {
+      v.versionOpt
+    }
+    override def rawVersion(v: EsModelPlayJsonT): Long = {
+      v.versionOpt.getOrElse(-1)
+    }
+    override def bodyAsScalaMap(v: EsModelPlayJsonT): collection.Map[String, AnyRef] = {
+      JacksonWrapper.convert[collection.Map[String, AnyRef]]( v.toJson )
+    }
+    override def bodyAsString(v: EsModelPlayJsonT): String = {
+      v.toJson
+    }
+    override def idOrNull(v: EsModelPlayJsonT): String = {
+      v.idOrNull
+    }
+  }
+
 }
 
 
 /** Интерфейс typeclass'ов. */
-trait IEsDoc[T] {
+trait IEsDoc[-T] {
 
   def rawVersion(v: T): Long
   
