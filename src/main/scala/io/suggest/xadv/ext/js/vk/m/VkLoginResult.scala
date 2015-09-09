@@ -1,6 +1,7 @@
 package io.suggest.xadv.ext.js.vk.m
 
 import io.suggest.sjs.common.model.{IToJsonDict, FromJsonT}
+import io.suggest.sjs.common.util.SjsLogger
 import io.suggest.xadv.ext.js.vk.c.low.JSON
 
 import scala.scalajs.js
@@ -30,7 +31,7 @@ import scala.scalajs.js.WrappedDictionary
  *    nickname: ""
  */
 
-object VkLoginResult extends FromJsonT {
+object VkLoginResult extends FromJsonT with SjsLogger {
 
   override type T = VkLoginResult
 
@@ -44,7 +45,7 @@ object VkLoginResult extends FromJsonT {
    */
   def maybeFromResp(raw: JSON): Option[T] = {
     val d = raw : WrappedDictionary[js.Any]
-    d.get("session")
+    val res = d.get("session")
       .filter(v => v != null && !js.isUndefined(v))
       .map { sessionRaw =>
         // Юзер залогинен на сервисе.
@@ -59,6 +60,9 @@ object VkLoginResult extends FromJsonT {
           name = getName(userDic)
         )
       }
+    if (res.isEmpty)
+      warn("Invalid/empty answer from VK.Auth: " + d)
+    res
   }
   
   override def fromJson(raw: js.Any): T = {
