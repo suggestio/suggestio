@@ -15,8 +15,8 @@ import scala.concurrent.{Future, ExecutionContext}
  */
 object MTagAdd {
 
-  def add(index: Int, body: FormData)(implicit ec: ExecutionContext): Future[Either[String, String]] = {
-    val route = jsRoutes.controllers.MarketAd.tagEditorAddTag(index)
+  def add(body: FormData)(implicit ec: ExecutionContext): Future[IAddResult] = {
+    val route = jsRoutes.controllers.MarketAd.tagEditorAddTag()
     val respFut = Xhr.send(
       method  = route.method,
       url     = route.url,
@@ -25,11 +25,11 @@ object MTagAdd {
     )
     respFut map { xhr =>
       if (xhr.status == 200)
-        Right( xhr.responseText )
+        UpdateExisting( xhr.responseText )
       else if (xhr.status == 416)
-        Left( xhr.responseText )
+        AddFormError( xhr.responseText )
       else
-        throw new RuntimeException( ErrorMsgs.XHR_UNEXPECTED_RESP )
+        UnexpectedResponse( xhr )
     }
   }
 
