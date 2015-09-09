@@ -1999,10 +1999,7 @@ trait EsmV2Deserializer extends EsModelCommonStaticT {
 
   override def deserializeOne2[D](doc: D)(implicit ev: IEsDoc[D]): T = {
     // Готовим метаданные документа для вызова сборки и исполнения Reads-десериализатора.
-    val meta = new IEsDocMeta {
-      override def version  = ev.version(doc)
-      override def id       = ev.id(doc)
-    }
+    val meta = EsDocMeta(doc)
     // Получаем десериализатор.
     val reader = esDocReads(meta)
     // TODO Opt Нужно задействовать byte-доступ к телу ответа вместо string.

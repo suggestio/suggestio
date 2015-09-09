@@ -18,8 +18,7 @@ trait IEsDocMeta {
 
 
 /** Дефолтовая реализация [[IEsDocMeta]]. */
-case class EsDocMeta(
-  override val id       : Option[String] = None,
-  override val version  : Option[Long] = None
-)
-  extends IEsDocMeta
+case class EsDocMeta[D](doc: D)(implicit ev: IEsDoc[D]) extends IEsDocMeta {
+  override def version  = ev.version(doc)
+  override def id       = ev.id(doc)
+}
