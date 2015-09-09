@@ -50,7 +50,10 @@ class FbAdapter extends AsyncInitAdp {
       link        = Some( mctx0.target.get.onClickUrl ),
       name        = mad.content.title,
       descr       = mad.content.descr,
-      accessToken = tgInfo.accessToken
+      accessToken = tgInfo.accessToken,
+      privacy     = mctx0.target
+        .flatMap(_.nodeType)
+        .flatMap(_.postWithPrivacy)
     )
     Fb.mkPost(tgInfo.nodeId, args)
       .flatMap { res =>

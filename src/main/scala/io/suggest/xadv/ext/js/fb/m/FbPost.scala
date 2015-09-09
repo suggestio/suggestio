@@ -16,9 +16,9 @@ case class FbPost(
   link      : Option[String],
   name      : Option[String],
   descr     : Option[String],
+  privacy   : Option[FbPrivacy],
   accessToken: Option[String]   = None,
-  caption   : Option[String]    = Some("suggest.io"),
-  privacy   : Option[FbPrivacy] = Some(FbPrivacy())
+  caption   : Option[String]    = Some("suggest.io")
 ) extends IToJsonDict with IFbAccessTokenOpt {
 
   override def toJson: Dictionary[Any] = {

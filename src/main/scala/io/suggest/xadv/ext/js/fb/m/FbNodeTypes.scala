@@ -17,6 +17,7 @@ object FbNodeTypes extends LightEnumeration {
     def wallImgSz: FbWallImgSize = FbWallImgSizes.FbPostLink
     override def toString = mdType
     def publishPerms: Seq[FbPermission]
+    def postWithPrivacy: Option[FbPrivacy] = Some( FbPrivacy() )
   }
 
   /**
@@ -42,6 +43,7 @@ object FbNodeTypes extends LightEnumeration {
   val Page: T = new Val("page") {
     override def needPageToken = true
     override def publishPerms = Seq(FbPermissions.ManagePages, FbPermissions.PublishPages)
+    override def postWithPrivacy = None
   }
 
   /** Группа юзеров. */
