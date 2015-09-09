@@ -18,7 +18,7 @@ object FbInitOptions {
    * Используемая версия Fb api.
    * @see [[https://developers.facebook.com/docs/apps/changelog]]
    */
-  def API_VSN = "v2.3"
+  def API_VSN = "v2.4"
 
 }
 
