@@ -13,7 +13,7 @@ libraryDependencies ++= Seq(
   cache,
   ws,
   "com.typesafe.play" %% "play-mailer" % "3.0.0",
-  "com.typesafe.play" %% "filters-helpers" % "2.4.2",
+  "com.typesafe.play" %% "filters-helpers" % "2.4.3",
   "org.mindrot" % "jbcrypt" % "0.3m",
   "org.specs2" %% "specs2" % "2.3.12" % "test",
   "org.mockito" % "mockito-all" % "1.9.5" % "test"
