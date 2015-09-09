@@ -1,8 +1,7 @@
 package util.qsb
 
+import functional.OneAppPerSuiteNoGlobalStart
 import org.scalatestplus.play._
-import play.api.GlobalSettings
-import play.api.test.FakeApplication
 import play.core.parsers.FormUrlEncodedParser
 
 /**
@@ -12,18 +11,7 @@ import play.core.parsers.FormUrlEncodedParser
  * Description: Тесты для HMAC-подписывалки qs-аргументов.
  * Нужно подписывать аргументы, затем успешно проверять их подпись.
  */
-class QsbSignerSpec extends PlaySpec with OneAppPerSuite {
-
-  override implicit lazy val app: FakeApplication = {
-    FakeApplication(
-      withGlobal = Some(new GlobalSettings() {
-        override def onStart(app: play.api.Application) {
-          super.onStart(app)
-          println("Started dummy fake application, without Global.onStart() initialization.")
-        }
-      })
-    )
-  }
+class QsbSignerSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
 
   /** Функция для тестирования генерации подписанной qs и проверки подписи. */
   private def singAndCheck(unSignedQsString: String, key: String, paramsMap: Map[String, Seq[String]], signKeyName: String): Unit = {

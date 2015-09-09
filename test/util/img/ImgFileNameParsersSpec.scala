@@ -1,13 +1,11 @@
 package util.img
 
-import functional.RegexParsersTesting
+import functional.{OneAppPerSuiteNoGlobalStart, RegexParsersTesting}
 import io.suggest.img.ImgCrop
 import io.suggest.util.UuidUtil.base64ToUuid
 import models._
 import models.im._
 import org.scalatestplus.play._
-import play.api.GlobalSettings
-import play.api.test.FakeApplication
 
 /**
  * Suggest.io
@@ -15,7 +13,7 @@ import play.api.test.FakeApplication
  * Created: 28.10.14 17:34
  * Description: Тесты для парсеров сериализованных идентификаторов картинок.
  */
-class ImgFileNameParsersSpec extends PlaySpec with OneAppPerSuite with ImgFileNameParsers with RegexParsersTesting {
+class ImgFileNameParsersSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart with ImgFileNameParsers with RegexParsersTesting {
 
   /** Для тестирования парсера с удобным выводом ошибок лучше использовать сие: */
   private def parseFileName(f: CharSequence) = parseSuccess(fileNameP, f)
@@ -84,17 +82,5 @@ class ImgFileNameParsersSpec extends PlaySpec with OneAppPerSuite with ImgFileNa
     }
 
   }
-
-
-
-  /** Штатный Global производит долгую инициализацию, которая нам не нужна. Ускоряем запуск: */
-  override implicit lazy val app = FakeApplication(
-    withGlobal = Some(new GlobalSettings() {
-      override def onStart(app: play.api.Application) {
-        super.onStart(app)
-        println("Started dummy fake application, without Global.onStart() initialization.")
-      }
-    })
-  )
 
 }

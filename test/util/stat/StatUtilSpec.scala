@@ -2,9 +2,8 @@ package util.stat
 
 import java.util.UUID
 
+import functional.OneAppPerSuiteNoGlobalStart
 import org.scalatestplus.play._
-import play.api.GlobalSettings
-import play.api.test.FakeApplication
 
 /**
  * Suggest.io
@@ -12,24 +11,9 @@ import play.api.test.FakeApplication
  * Created: 21.08.14 12:04
  * Description: Тесты для [[util.stat.StatUtil]].
  */
-class StatUtilSpec extends PlaySpec with OneAppPerSuite {
+class StatUtilSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
 
   import StatUtil._
-
-
-  /** Штатный Global производит долгую инициализацию, которая нам не нужен.
-    * Нужен только доступ к конфигу. Ускоряем запуск: */
-  override implicit lazy val app = FakeApplication(
-    withGlobal = Some(new GlobalSettings() {
-      override def onStart(app: play.api.Application) {
-        super.onStart(app)
-        println("Started dummy fake application, without Global.onStart() initialization.")
-      }
-    })
-  )
-
-
-  // Тесты
 
   "StatUtil" must {
 

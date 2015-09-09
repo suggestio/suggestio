@@ -1,11 +1,9 @@
 package util.geo.osm
 
-import functional.WithInputStream
+import functional.{OneAppPerSuiteNoGlobalStart, WithInputStream}
 import io.suggest.model.geo.GsType
 import io.suggest.model.geo.{GsTypes, LineStringGs, GeoPoint}
 import org.scalatestplus.play._
-import play.api.GlobalSettings
-import play.api.test.FakeApplication
 
 /**
  * Suggest.io
@@ -13,21 +11,9 @@ import play.api.test.FakeApplication
  * Created: 03.09.14 10:21
  * Description: Тесты для osm-парсеров. Тестовые файлы лежат в test/resources/util/geo/osm
  */
-class OsmUtilSpec extends PlaySpec with OneAppPerSuite with WithInputStream {
+class OsmUtilSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart with WithInputStream {
 
   override val RES_DIR = "/util/geo/osm/"
-
-  /** Штатный Global производит долгую инициализацию, которая нам не нужен.
-    * Нужен только доступ к конфигу. Ускоряем запуск: */
-  override implicit lazy val app = FakeApplication(
-    withGlobal = Some(new GlobalSettings() {
-      override def onStart(app: play.api.Application) {
-        super.onStart(app)
-        println("Started dummy fake application, without Global.onStart() initialization.")
-      }
-    })
-  )
-
 
   case class RelResultInfo(id: Long, membersCount: Int, firstBorderMemberId: Long, lastBorderMemberId: Long,
                            gsType: GsType, allMemberIds: Seq[Long] = Nil)

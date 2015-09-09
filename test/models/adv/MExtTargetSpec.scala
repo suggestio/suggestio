@@ -1,7 +1,6 @@
 package models.adv
 
 import functional.OneAppPerSuiteNoGlobalStart
-import io.suggest.model.IEsDoc
 import models.mext.MExtServices
 import org.scalatestplus.play._
 

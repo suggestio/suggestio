@@ -2,8 +2,10 @@ package market.showcase
 
 import controllers.routes
 import functional._
+import models.msc.{MScApiVsns, SiteQsArgs, ScJsState}
 import org.scalatest.Outcome
 import org.scalatestplus.play._
+import play.api.mvc.Call
 import play.api.test.FakeApplication
 
 /**
@@ -14,7 +16,10 @@ import play.api.test.FakeApplication
  */
 trait GeoShowcaseSpecT extends PlaySpec with OneServerPerSuite with OneBrowserPerSuite {
 
-  val marketGeoSiteUrl = routes.MarketShowcase.geoSite()
+  protected def marketGeoSiteUrl: Call = {
+    val args = SiteQsArgs(apiVsn = MScApiVsns.Sjs1)
+    routes.MarketShowcase.geoSite(x = args)
+  }
 
   override implicit lazy val app: FakeApplication = {
     new FakeApplication(
@@ -48,15 +53,14 @@ trait GeoShowcaseSpecT extends PlaySpec with OneServerPerSuite with OneBrowserPe
 
 }
 
-// Тесты для реальных браузеров:
-class GeoShowcaseSpec extends GeoShowcaseSpecT with ChromeFactory
+// TODO Тесты для реальных браузеров:
+//class GeoShowcaseSpec extends GeoShowcaseSpecT with ChromeFactory
 //class GeoShowcaseSpecFF extends GeoShowcaseSpecT with FirefoxFactory // TODO Починить. Что-то астральное.
 
 // HtmlUnit-тесты:
-class GeoShowcaseSpecHuIE8 extends GeoShowcaseSpecT with HtmlUnitIE8Factory
-class GeoShowcaseSpecHuIE9 extends GeoShowcaseSpecT with HtmlUnitIE9Factory
-class GeoShowcaseSpecHuIE11 extends GeoShowcaseSpecT with HtmlUnitIE11Factory
-class GeoShowcaseSpecHuFF17 extends GeoShowcaseSpecT with HtmlUnitFF17Factory
-class GeoShowcaseSpecHuFF24 extends GeoShowcaseSpecT with HtmlUnitFF24Factory
-class GeoShowcaseSpecHuChrome extends GeoShowcaseSpecT with HtmlUnitChromeFactory
-
+//class GeoShowcaseSpecHuIE8 extends GeoShowcaseSpecT with HtmlUnitIE8Factory
+//class GeoShowcaseSpecHuIE9 extends GeoShowcaseSpecT with HtmlUnitIE9Factory
+//class GeoShowcaseSpecHuIE11 extends GeoShowcaseSpecT with HtmlUnitIE11Factory
+//class GeoShowcaseSpecHuFF17 extends GeoShowcaseSpecT with HtmlUnitFF17Factory
+//class GeoShowcaseSpecHuFF24 extends GeoShowcaseSpecT with HtmlUnitFF24Factory
+//class GeoShowcaseSpecHuChrome extends GeoShowcaseSpecT with HtmlUnitChromeFactory

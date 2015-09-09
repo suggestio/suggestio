@@ -89,8 +89,8 @@ GET  /lk/bill/pricing/wnd/:adnId        @controllers.MarketLkBilling._renderNode
 POST  /error/occured/in/showcase        @controllers.RemoteError.handleShowcaseError
 
 ## Обращение в тех.поддерку зареганного клиента sio-market.
-GET  /m/lk/support/:adnId               @controllers.MarketLkSupport.supportFormNode(adnId, r: Option[String] ?= None)
-POST /m/lk/support/:adnId               @controllers.MarketLkSupport.supportFormNodeSubmit(adnId, r: Option[String] ?= None)
+GET  /lk/support/:adnId                 @controllers.MarketLkSupport.supportFormNode(adnId, r: Option[String] ?= None)
+POST /lk/support/:adnId                 @controllers.MarketLkSupport.supportFormNodeSubmit(adnId, r: Option[String] ?= None)
 GET  /m/support                         @controllers.MarketLkSupport.supportForm(r: Option[String] ?= None)
 POST /m/support                         @controllers.MarketLkSupport.supportFormSubmit(r: Option[String] ?= None)
 POST /m/support/geo/node/:adnId         @controllers.MarketLkSupport.askGeo4NodeSubmit(adnId, r: Option[String] ?= None)
@@ -356,7 +356,7 @@ POST /id/epw/reg                        @controllers.Ident.emailRegSubmit
 GET  /id/epw/reg/return                 @controllers.Ident.emailReturn(e: usr.IEaEmailId)
 POST /id/epw/reg/return                 @controllers.Ident.emailConfirmSubmit(e: usr.IEaEmailId)
 ## ident: вход через внешнего провайдера
-GET  /id/via/:provider			        @controllers.Ident.idViaProvider(provider: mext.ILoginProvider, r: Option[String] ?= None)
+GET  /id/via/:provider			            @controllers.Ident.idViaProvider(provider: mext.ILoginProvider, r: Option[String] ?= None)
 POST /id/via/:provider                  @controllers.Ident.idViaProviderByPost(provider: mext.ILoginProvider, r: Option[String] ?= None)
 GET  /id/reg/ext/confirm                @controllers.Ident.idpConfirm
 POST /id/reg/ext/confirm                @controllers.Ident.idpConfirmSubmit

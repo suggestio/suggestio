@@ -1,12 +1,11 @@
 package util.showcase
 
+import functional.OneAppPerSuiteNoGlobalStart
 import io.suggest.ym.model.common.BlockMeta
 import models.blk.SzMult_t
 import models.im.{DevScreen, DevPixelRatios}
 import models.msc.TileArgs
 import org.scalatestplus.play._
-import play.api.GlobalSettings
-import play.api.test.FakeApplication
 import util.blocks.BlocksConf
 
 /**
@@ -15,7 +14,7 @@ import util.blocks.BlocksConf
  * Created: 25.11.14 15:16
  * Description: Тесты для утили siom-выдачи.
  */
-class ShowcaseUtilSpec extends PlaySpec with OneAppPerSuite {
+class ShowcaseUtilSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
   import ShowcaseUtil._
 
   private def pxr15 = Some(DevPixelRatios.HDPI)  // Нужно lazy или def, иначе будет exception in initializer error.
@@ -100,17 +99,5 @@ class ShowcaseUtilSpec extends PlaySpec with OneAppPerSuite {
     // TODO протестить неквадратные карточки.
 
   }
-
-
-  /** Штатный Global производит долгую инициализацию, которая нам не нужен.
-    * Нужен только доступ к конфигу. Ускоряем запуск: */
-  override implicit lazy val app = FakeApplication(
-    withGlobal = Some(new GlobalSettings() {
-      override def onStart(app: play.api.Application) {
-        super.onStart(app)
-        println("Started dummy fake application, without Global.onStart() initialization.")
-      }
-    })
-  )
 
 }

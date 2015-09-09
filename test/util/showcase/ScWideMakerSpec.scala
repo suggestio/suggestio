@@ -1,8 +1,7 @@
 package util.showcase
 
+import functional.OneAppPerSuiteNoGlobalStart
 import org.scalatestplus.play._
-import play.api.GlobalSettings
-import play.api.test.FakeApplication
 
 /**
  * Suggest.io
@@ -10,7 +9,7 @@ import play.api.test.FakeApplication
  * Created: 22.10.14 14:32
  * Description: Тесты для утили, относящейся к поддержке фоновых картинок блоков.
  */
-class ScWideMakerSpec extends PlaySpec with OneAppPerSuite {
+class ScWideMakerSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
 
   import ScWideMaker._
 
@@ -49,16 +48,5 @@ class ScWideMakerSpec extends PlaySpec with OneAppPerSuite {
       centerNearestLineSeg1D(centerCoord = 50, segLen = 100, axLen = 100)  mustBe 0
     }
   }
-
-
-  /** Штатный Global производит долгую инициализацию, которая нам не нужна. Ускоряем запуск: */
-  override implicit lazy val app = FakeApplication(
-    withGlobal = Some(new GlobalSettings() {
-      override def onStart(app: play.api.Application) {
-        super.onStart(app)
-        println("Started dummy fake application, without Global.onStart() initialization.")
-      }
-    })
-  )
 
 }
