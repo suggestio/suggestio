@@ -11,7 +11,6 @@ import play.core.parsers.Multipart
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 import util.blocks.{LkEditorWsActor, ListBlock, BgImg, BlockMapperResult}
-import util.xplay.CacheUtil
 import views.html.lk.ad._
 import models._
 import play.api.libs.concurrent.Execution.Implicits._
@@ -23,9 +22,10 @@ import scala.concurrent.Future
 import play.api.mvc.{WebSocket, Request}
 import play.api.Play.{current, configuration}
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
-import controllers.ad.{NodeTagsEdit, MarketAdFormUtil}
+import controllers.ad.MarketAdFormUtil
 import MarketAdFormUtil._
 import io.suggest.ym.model.common.Texts4Search
+import io.suggest.ad.form.AdFormConstants._
 
 /**
  * Suggest.io
@@ -77,44 +77,37 @@ class MarketAd @Inject() (
   }
 
   /** Полный ключ доступа к полю bgImg в маппинге формы. */
-  private def bgImgFullK = "ad." + OFFER_K + "." + BgImg.BG_IMG_FN
+  private def bgImgFullK = OFFER_K + "." + BgImg.BG_IMG_FN
 
 
   /** Выдать маппинг ad-формы в зависимости от типа adn-узла. */
   private def detectAdForm(adnNode: MAdnNode)(implicit request: ReqSubmit): DetectForm_t = {
-    val anmt = adnNode.adn.memberType
-    val adMode = request.body.getOrElse("ad.offer.mode", Nil)
+    // Нужно раздобыть id из реквеста
+    val nodeBlockIds = blockIdsFor(adnNode)
+    val blockId = request.body.getOrElse(OFFER_K + ".blockId", Nil)
       .headOption
-      .flatMap(AdOfferTypes.maybeWithName)
-      .getOrElse(AdOfferTypes.BLOCK)
-    adMode match {
-      case aot @ AdOfferTypes.BLOCK =>
-        // Нужно раздобыть id из реквеста
-        val nodeBlockIds = blockIdsFor(adnNode)
-        val blockId = request.body.getOrElse("ad.offer.blockId", Nil)
-          .headOption
-          // Аккуратно парсим blockId ручками
-          .flatMap { rawBlockId =>
-            try {
-              Some(rawBlockId.toInt)
-            } catch {
-              case ex: NumberFormatException =>
-                warn("detectAdForm(): Invalid block number format: " + rawBlockId)
-                None
-            }
-          }
-          // Фильтруем блокId по списку допустимых для узла.
-          .filter { blockId =>
-            val result = nodeBlockIds contains blockId
-            if (!result)
-              warn("detectAdForm(): Unknown or disallowed blockId requested: " + blockId)
-            result
-          }
-          // Если blockId был отфильтрован или отсутствовал, то берём первый допустимый id. TODO А надо это вообще?
-          .getOrElse ( nodeBlockIds.head )
-        val blockConf: BlockConf = BlocksConf(blockId)
-        Right(blockConf -> getSaveAdFormM(anmt, blockConf.strictMapping))
-    }
+      // Аккуратно парсим blockId ручками
+      .flatMap { rawBlockId =>
+        try {
+          Some(rawBlockId.toInt)
+        } catch {
+          case ex: NumberFormatException =>
+            warn("detectAdForm(): Invalid block number format: " + rawBlockId)
+            None
+        }
+      }
+      // Фильтруем блокId по списку допустимых для узла.
+      .filter { blockId =>
+        val result = nodeBlockIds contains blockId
+        if (!result)
+          warn("detectAdForm(): Unknown or disallowed blockId requested: " + blockId)
+        result
+      }
+      // Если blockId был отфильтрован или отсутствовал, то берём первый допустимый id. TODO А надо это вообще?
+      .getOrElse ( nodeBlockIds.head )
+    val blockConf: BlockConf = BlocksConf(blockId)
+    val anmt = adnNode.adn.memberType
+    Right(blockConf -> getSaveAdFormM(anmt, blockConf.strictMapping))
   }
 
 
@@ -519,7 +512,7 @@ class MarketAd @Inject() (
     )         // MAd
     val af = getAdFormM(blockM = bc.strictMapping)
       .fill((madStub, Map.empty))
-    val nameBase = s"$AD_K.$OFFER_K.$OFFER_K[$offerN].${bfText.name}"
+    val nameBase = s"$OFFER_K.$OFFER_K[$offerN].${bfText.name}"
     val render = bfText.renderEditorField(nameBase, af, bc)
     Ok(render)
   }

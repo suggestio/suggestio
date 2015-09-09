@@ -1,0 +1,17 @@
+@(af: AdFormM)(implicit ctx: Context)
+
+@* Шаблон рендера списка текущих тегов.
+   Рендерится при рендере страницы с формой и при редактировании тегов. *@
+
+@import lk.tag.edit._
+@import io.suggest.ad.form.AdFormConstants._
+
+@_existTagsContTpl() {
+
+  @defining( af(TAGS_K) ) { tsField =>
+    @tsField.indexes.map { inx =>
+      @_oneTagTpl( af(s"${tsField.name}[$inx]") )
+    }
+  }
+
+}

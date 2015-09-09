@@ -77,7 +77,7 @@ POST /lk/ad/:adId/edit                  @controllers.MarketAd.editAdSubmit(adId)
 GET  /lk/ad/:adId/delete                @controllers.MarketAd.deleteWnd(adId)
 GET  /ws/lk/ad/:wsId                    @controllers.MarketAd.ws(wsId: String)
 GET  /lk/ad/new/field/text/:offerN      @controllers.MarketAd.newTextField(offerN: Int, h: Int, w: Int)
-POST /lk/node/tag/add                   @controllers.MarketAd.tagEditorAddTag(index: Int)
+POST /lk/node/tag/add                   @controllers.MarketAd.tagEditorAddTag()
 # lk.billing
 GET  /lk/bill/adn/:adnId                @controllers.MarketLkBilling.showAdnNodeBilling(adnId)
 GET  /lk/bill/txns/adn/:adnId           @controllers.MarketLkBilling.txnsList(adnId, page: Int ?= 0, inline: Boolean ?= false)

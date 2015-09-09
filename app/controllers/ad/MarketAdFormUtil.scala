@@ -6,6 +6,7 @@ import util.FormUtil._
 import play.api.data._, Forms._
 import util.blocks.BlockMapperResult
 import io.suggest.ym.model.ad.RichDescr
+import io.suggest.ad.form.AdFormConstants._
 
 /**
  * Suggest.io
@@ -321,10 +322,6 @@ object MarketAdFormUtil {
     Some( (mad.userCatId, bmr, pattern, mad.richDescrOpt, bgColor, mad.tags) )
   }
 
-  def AD_K      = "ad"
-  def CAT_ID_K  = "catId"
-  def OFFER_K   = "offer"
-  def TAGS_K    = "tags"
 
   /**
    * Сборщик форм произвольного назначения для парсинга реквестов с данными рекламной карточки.
@@ -334,12 +331,12 @@ object MarketAdFormUtil {
    */
   def getAdFormM(catIdM: Mapping[Set[String]] = adCatIdsNonEmptyM, blockM: Mapping[BlockMapperResult]): AdFormM = {
     Form(
-      AD_K -> mapping(
+      mapping(
         CAT_ID_K    -> catIdM,
         OFFER_K     -> blockM,
-        "pattern"   -> coveringPatternM,
-        "descr"     -> richDescrOptM,
-        "bgColor"   -> colorM,
+        PATTERN_K   -> coveringPatternM,
+        DESCR_K     -> richDescrOptM,
+        BG_COLOR_K  -> colorM,
         TAGS_K      -> tagsMapM
       )(adFormApply)(adFormUnapply)
     )

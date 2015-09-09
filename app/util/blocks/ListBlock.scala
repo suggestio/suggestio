@@ -189,9 +189,10 @@ trait TitleListBlockT extends SingleListBlockT {
 
   /** Реализация добавления отображаемых полей редактора с учётом реально необходимого кол-ва полей. */
   override def withBlockFieldsRev(af: AdFormM, acc0: List[BlockFieldT], count4render0: Int): List[BlockFieldT] = {
+    import io.suggest.ad.form.AdFormConstants._
+
     // Нужно определить, сколько именно нужно рендерить полей.
-    import controllers.ad.MarketAdFormUtil.{AD_K, OFFER_K}
-    val allOfferNs = af(s"$AD_K.$OFFER_K.$OFFER_K").indexes
+    val allOfferNs = af(s"$OFFER_K.$OFFER_K").indexes
     val offersCount = if (allOfferNs.nonEmpty) {
       Math.max(OFFERS_COUNT_MIN, allOfferNs.max + 1)
     } else {

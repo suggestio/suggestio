@@ -5,12 +5,13 @@
 @import views.html.lk.forms.img._
 @import util.img.DynImgUtil
 @import io.suggest.img.ImgConstants
+@import io.suggest.ad.form.AdFormConstants._
 
 @* Оверлей для фоновой картинки карточки. *@
 
 @_jsPreviewOverlayTpl(
   btnText	    = messages("Delete"),
-  name		    = "ad.offer.bgImg",
+  name		    = OFFER_K + ".bgImg",
   imgKey	    = imgId,
   imgPreviewUrl	    = DynImgUtil.thumb256Call(imgId, fillArea = false),
   divCss	    = Seq("__size-M"),

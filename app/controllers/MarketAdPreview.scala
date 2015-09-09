@@ -41,33 +41,9 @@ trait MarketAdPreview extends SioController with PlayMacroLogsI {
 
   /** Выбрать форму в зависимости от содержимого реквеста. Если ad.offer.mode не валиден, то будет Left с формой с global error. */
   private def maybeGetAdPreviewFormM(adnNode: MAdnNode, reqBody: collection.Map[String, Seq[String]]): Either[AdFormM, (BlockConf, AdFormM)] = {
-    // TODO adModes пора выпиливать. И этот Either заодно.
-    val adModes = reqBody.getOrElse("ad.offer.mode", Nil)
-    adModes.headOption.flatMap { adModeStr =>
-      AdOfferTypes.maybeWithName(adModeStr)
-    }.fold[Either[AdFormM, (BlockConf, AdFormM)]] {
-      LOGGER.warn("detectAdForm(): valid AD mode not present in request body. AdModes found: " + adModes)
-      val form = getPreviewAdFormM( BlocksConf.DEFAULT.strictMapping )
-        .withGlobalError("ad.mode.undefined.or.invalid", adModes : _*)
-      Left(form)
-    } { case AdOfferTypes.BLOCK =>
-      val maybeBlockIdRaw = reqBody.get("ad.offer.blockId")
-      maybeBlockIdRaw
-        .getOrElse(Nil)
-        .headOption
-        .map[BlockConf] { blockIdStr => BlocksConf(blockIdStr.toInt) }
-        .filter { block => blockIdsFor(adnNode) contains block.id }
-        .fold[Either[AdFormM, (BlockConf, AdFormM)]] {
-          // Задан пустой или скрытый/неправильный block_id.
-          LOGGER.warn("detectAdForm(): valid block_id not found, raw block ids = " + maybeBlockIdRaw)
-          val form = getPreviewAdFormM( BlocksConf.DEFAULT.strictMapping )
-            .withGlobalError("ad.blockId.undefined.or.invalid")
-          Left(form)
-        } { blockConf =>
-          val result = blockConf -> getPreviewAdFormM(blockConf.strictMapping)
-          Right(result)
-        }
-    }
+    val blockConf = BlocksConf.DEFAULT
+    val result = blockConf -> getPreviewAdFormM(blockConf.strictMapping)
+    Right(result)
   }
 
   /** Сабмит формы редактирования карточки для генерации превьюшки.

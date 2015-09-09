@@ -48,10 +48,10 @@
         @* 2014.nov.26: Новая галочка "паттерн" для задания покрывающей сетки указанного цвета. *@
         <div class="edit-ad_pattern-w input-w">
           <div class="edit-ad_pattern-option">
-            @checkbox(af("ad.pattern.enabled"), '_label -> messages("Ad.edit.pattern") )
+            @checkbox(af(PATTERN_K + ".enabled"), '_label -> messages("Ad.edit.pattern") )
           </div>
           <div class="edit-ad_pattern-color">
-            @_selectColorTpl(af("ad.pattern.color"), label = messages("Ad.edit.pattern.color") )
+            @_selectColorTpl(af(PATTERN_K + ".color"), label = messages("Ad.edit.pattern.color") )
           </div>
         </div>
       </div>
@@ -71,7 +71,7 @@
         <td>
           @* Селектор цвета фона ad description. *@
           @_selectColorTpl(
-            af("ad.descr.bgColor"),
+            af(DESCR_K + ".bgColor"),
             label     = messages("Bg.color")
           )
           @* Контейнер для палитры цветов, предлагаемых сервером через ws. *@
@@ -80,7 +80,7 @@
 
         @* Поля для ввода содержимого description *@
         <td class="input-w_tinymce-editor">
-          @defining( "ad.descr.text" ) { name =>
+          @defining( DESCR_K + ".text" ) { name =>
             <textarea class="js-tinymce" id="ad_descr_text" name="@name">
               @af(name).value
             </textarea>
@@ -93,7 +93,7 @@
 
   @* Режим формы (тип рекламного оффера). Должен переключаться при переключении вкладки.
      TODO Режимы были упраздены, по факту остался только один редактор. Нужно аккуратно выпилить это отовсюду. *@
-  <input id="ad-mode" type="hidden" name="ad.offer.mode" value="@AdOfferTypes.BLOCK"/>
+  <input id="ad-mode" type="hidden" name="@(OFFER_K).mode" value="@AdOfferTypes.BLOCK"/>
 
 }
 

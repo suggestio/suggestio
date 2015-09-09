@@ -12,9 +12,9 @@ import org.scalatestplus.play._
  */
 class MExtTargetSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
 
-  "MExtTarget" must {
+  "MExtTarget JSON" must {
 
-    "serialize/deserialize using play.json" in {
+    "handle fully-filled model" in {
       val mes = MExtTarget(
         url         = "https://vk.com/null",
         service     = MExtServices.VKONTAKTE,
@@ -24,6 +24,16 @@ class MExtTargetSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
       )
 
       MExtTarget.deserializeOne2(mes) mustBe mes
+    }
+
+    "handle minimally-filled model" in {
+      val mes = MExtTarget(
+        url     = "https://facebook.com/me",
+        service = MExtServices.FACEBOOK,
+        adnId   = "asdasdjauiwdjaw1234234"
+      )
+
+      MExtTarget.deserializeOne2(mes)  mustBe  mes
     }
 
   }

@@ -8,6 +8,7 @@ import util.PlayMacroLogsI
 import util.acl.IsAuth
 import views.html.lk.tag.edit._
 import MarketAdFormUtil._
+import io.suggest.ad.form.AdFormConstants.TAGS_K
 
 /**
  * Suggest.io
@@ -19,9 +20,9 @@ object NodeTagsEdit {
 
   /** Маппинг формы добавления одного тега. */
   def tagAddFormM: Form[MNodeTag] = {
-    val k = TagsEditConstants.ADD_NAME_INPUT_ID
-    val m = tagNameAsTagM
-    Form(k -> m)
+    Form(
+      TagsEditConstants.ADD_NAME_INPUT_ID  ->  tagNameAsTagM
+    )
   }
 
 }
@@ -34,9 +35,8 @@ trait NodeTagsEdit extends SioController with PlayMacroLogsI {
   
   /**
    * Добавление тега в редакторе тегов.
-   * @param index Порядковый номер тега.
    */
-  def tagEditorAddTag(index: Int) = IsAuth { implicit request =>
+  def tagEditorAddTag = IsAuth { implicit request =>
     val formBinded = tagAddFormM.bindFromRequest()
     formBinded.fold(
       {formWithErrors =>
@@ -45,8 +45,10 @@ trait NodeTagsEdit extends SioController with PlayMacroLogsI {
         NotAcceptable( formRendered )
       },
       {mtag =>
-        val name = s"$AD_K.$TAGS_K[$index]"
-        Ok( _oneTagTpl(formBinded, fprefix = Some(name)) )
+        // TODO Рендерить весь обновлённый список тегов.
+        ???
+        val field = formBinded(TAGS_K)
+        Ok( _oneTagTpl(field) )
       }
     )
   }

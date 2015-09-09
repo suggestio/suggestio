@@ -3,7 +3,7 @@
 @import ctx._
 @import io.suggest.img.ImgConstants._
 @import io.suggest.js.UploadConstants._
-@import io.suggest.ad.form.AdFormConstants.{BG_IMG_CONTAINER_ID, AD_BG_COLOR_ID}
+@import io.suggest.ad.form.AdFormConstants._
 @import views.html.stuff._
 @import lk.ad._
 @import io.suggest.img.crop.CropConstants
@@ -16,7 +16,7 @@
     <div class="f-left" id="@BG_IMG_CONTAINER_ID">
       <div class="image __size-L f-left @JS_IMG_UPLOAD_CLASS" @if(imgIdOpt) {style="display: none;"}>
         @_fileUploadTpl(
-          fieldName     = "ad.offer.bgImg",
+          fieldName     = s"$OFFER_K.bgImg",
           call          = routes.MarketAd.prepareBlockImg(bc.id, bf.name, Some(ctx.ctxIdStr))
         )
         <a class="image_add-btn js-file-upload-btn" title="@messages("Upload.file", " ")">
@@ -49,12 +49,14 @@
 
   <div class="lk-file-field_choose-color-w">
     <div class="lk-file-field_choose-color-btn-w">
-      @defining( af("ad.bgColor").value.getOrElse("DAD9D9") ) { color =>
+      @defining( af(BG_COLOR_K) ) { bgColorField =>
+      @defining( bgColorField.value.getOrElse("DAD9D9") ) { color =>
         <a class="btn __size-L __minor js-custom-color" style='background-color: #@color;'>
           @* Фоновый цвет картинки. Это первый цвет из палитры, приходящей по WebSocket. *@
-          <input id="@AD_BG_COLOR_ID" type="hidden" name="ad.bgColor" value='@color' />
+          <input id="@AD_BG_COLOR_ID" type="hidden" name="@bgColorField.name" value='@color' />
           @messages("Choose.color")
         </a>
+      }
       }
     </div>
     <div class="lk-file-field_choose-color-btn-t">@messages("Fill.by.single.color")</div>
