@@ -26,7 +26,7 @@ object MJsCtx extends MJsCtxFieldsT {
       (__ \ TARGET_FN).readNullable[JsExtTarget] and
       (__ \ DOMAIN_FN).readNullable[Seq[String]].map(optSeqFlatmap[String]) and
       (__ \ STATUS_FN).readNullable[AnswerStatus] and
-      (__ \ SERVICE_FN).readNullable[MExtService] and
+      (__ \ SERVICE_FN).readNullable(MExtServices.readsStruct) and
       (__ \ ERROR_FN).readNullable[JsErrorInfo] and
       (__ \ CUSTOM_FN).readNullable[JsValue] and
       (__ \ SVC_TARGETS_FN).readNullable[Seq[JsExtTarget]].map(optSeqFlatmap[JsExtTarget])
@@ -41,7 +41,7 @@ object MJsCtx extends MJsCtxFieldsT {
       (__ \ TARGET_FN).writeNullable[JsExtTarget] and
       (__ \ DOMAIN_FN).writeNullable[Seq[String]].contramap(optSeqContramap[String]) and
       (__ \ STATUS_FN).writeNullable[AnswerStatus] and
-      (__ \ SERVICE_FN).writeNullable(MExtServices.writes) and
+      (__ \ SERVICE_FN).writeNullable(MExtServices.writesStruct) and
       (__ \ ERROR_FN).writeNullable[JsErrorInfo] and
       (__ \ CUSTOM_FN).writeNullable[JsValue] and
       (__ \ SVC_TARGETS_FN).writeNullable[Seq[JsExtTarget]].contramap(optSeqContramap[JsExtTarget])
