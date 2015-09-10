@@ -27,7 +27,6 @@ trait Add extends TagsEditFsmStub {
       // Запустить запрос, если требуется.
       for {
         input <- ANameInput.find()
-        if !input.value.isEmpty
         econt <- EContainer.find()
       } {
         // Собрать данные для сабмита. Можно собирать также в JSON вместо form/url-encoded.
@@ -68,29 +67,18 @@ trait Add extends TagsEditFsmStub {
         _handleRequestError(ex)
     }
 
-    /**
-     * Дедублицированная логика замены формы добавления тега на новую строку HTML.
-     * @param src Модель-источник HTML, реализующий [[IAddFormHtml]]
-     */
-    private def _replaceFormWithHtml(src: IAddFormHtml): Unit = {
-      for (aCont <- AContainer.find()) {
-        val cont2 = AContainer( src.addFormHtml )
-        aCont.replaceWith( cont2 )
-      }
-    }
-
     /** Реакция на запрос обновления текущих тегов. */
     protected def _updateExistingTags(ue: IUpdateExisting): Unit = {
       for (eCont <- EContainer.find()) {
         eCont.setContent( ue.existingHtml )
       }
-      _replaceFormWithHtml(ue)
+      AContainer.overWriteFromHtml( ue.addFormHtml )
       become(_allDoneState)
     }
 
     /** Реакция на получение ошибочной формы добавления. */
     protected def _handleAddFormError(afe: AddFormError): Unit = {
-      _replaceFormWithHtml(afe)
+      AContainer.overWriteFromHtml( afe.addFormHtml )
       become(_allDoneState)
     }
 

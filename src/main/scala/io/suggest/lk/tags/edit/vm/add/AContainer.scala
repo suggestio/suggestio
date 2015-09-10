@@ -14,8 +14,21 @@ import org.scalajs.dom.raw.HTMLDivElement
  * Description: Контейнер элементов формы добавления тега.
  */
 object AContainer extends FindDiv with ApplyFromOuterHtml {
+
   override type T     = AContainer
   override def DOM_ID = ADD_FORM_ID
+
+  /**
+   * Замена контента вместе с контейнером с помощью переданной верстки outerHTML.
+   * @param html Верстка (с сервера).
+   */
+  def overWriteFromHtml(html: String): Unit = {
+    for (aCont <- find()) {
+      val cont2 = apply( html )
+      aCont.replaceWith( cont2 )
+    }
+  }
+
 }
 
 
