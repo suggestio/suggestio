@@ -9,10 +9,16 @@
 
 <div id="@ADD_FORM_ID">
 
-  @inputText(
-    fm(NEW_TAG_FN),
-    'id     -> ADD_NAME_INPUT_ID,
-    '_label -> ""
-  )
+  @defining( fm(NEW_TAG_FN) ) { field =>
+    <div class="input @if(field.hasErrors){__error}">
+      <input type="text"
+             id="@ADD_NAME_INPUT_ID"
+             name="@field.name"
+             value="@field.value"
+             />
+
+    </div>
+
+  }
 
 </div>

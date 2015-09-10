@@ -43,7 +43,7 @@ trait NodeTagsEdit extends SioController with PlayMacroLogsI {
    */
   def tagEditorAddTag = IsAuth { implicit request =>
     val formBinded = tagAddFormM.bindFromRequest()
-    formBinded.fold(
+    val res = formBinded.fold(
       {formWithErrors =>
         LOGGER.debug("tagEditorAddTag(): Form bind failed:\n" + formatFormErrors(formWithErrors))
         val formHtml = _addFormTpl( formWithErrors )
@@ -68,6 +68,7 @@ trait NodeTagsEdit extends SioController with PlayMacroLogsI {
         Ok( Json.toJson(resp) )
       }
     )
+    res.withHeaders(CACHE_CONTROL -> "no-cache")
   }
 
 }
