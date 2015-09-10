@@ -112,9 +112,9 @@ class MarketAd @Inject() (
     import request.adnNode
     val catOwnerId = getCatOwnerId(adnNode)
     lazy val logPrefix = s"createAdSubmit($adnId): "
-    val bc = BlocksConf.DEFAULT
     val formM = getAdFormM()
     val formBinded = formM.bindFromRequest()
+    val bc = BlocksConf.DEFAULT
     formBinded.fold(
       {formWithErrors =>
         debug(logPrefix + "Bind failed: \n" + formatFormErrors(formWithErrors))
@@ -208,7 +208,6 @@ class MarketAd @Inject() (
     */
   def editAdSubmit(adId: String) = CanEditAdPost(adId).async(parse.urlFormEncoded) { implicit request =>
     import request.mad
-    val bc = BlocksConf.DEFAULT
     val formM = getAdFormM()
     val formBinded = formM.bindFromRequest()
     formBinded.fold(
@@ -218,6 +217,7 @@ class MarketAd @Inject() (
       },
       {case (mad2, bim) =>
         val t4s2Fut = newTexts4search(mad2, request.producer)
+        val bc = BlocksConf.DEFAULT
         // TODO Надо отделить удаление врЕменных и былых картинок от сохранения новых. И вызывать эти две фунции отдельно.
         // Сейчас возможна ситуация, что при поздней ошибке сохранения теряется старая картинка, а новая сохраняется вникуда.
         val saveImgsFut = bc.saveImgs(
