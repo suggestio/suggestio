@@ -45,3 +45,10 @@ object NameInputEvent
 /** Сработал таймер для начала запроса поиска тегов по имени. */
 case object StartSearchTimer
   extends ITagsEditFsmSignal
+
+
+/** Клик по кнопке удаления тега. */
+case class DeleteClick(event: Event)
+  extends ITagsEditFsmSignal
+object DeleteClick
+  extends IFsmEventMsgCompanion

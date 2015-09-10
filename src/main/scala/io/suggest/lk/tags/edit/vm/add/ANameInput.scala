@@ -15,14 +15,14 @@ import org.scalajs.dom.raw.HTMLInputElement
  * Description: VM'ка для работы с полем ввода имени тега.
  * Далее происходит поиск и добавление тега.
  */
-object NameInput extends FindElT {
+object ANameInput extends FindElT {
   override type Dom_t = HTMLInputElement
-  override type T     = NameInput
+  override type T     = ANameInput
   override def DOM_ID = ADD_NAME_INPUT_ID
 }
 
 
-trait NameInputT extends IVm with IInitLayoutDummy with OnEventToTagsEditFsmUtilT {
+trait ANameInputT extends IVm with IInitLayoutDummy with OnEventToTagsEditFsmUtilT {
 
   override type T = HTMLInputElement
 
@@ -39,7 +39,7 @@ trait NameInputT extends IVm with IInitLayoutDummy with OnEventToTagsEditFsmUtil
 }
 
 
-case class NameInput(
+case class ANameInput(
   override val _underlying: HTMLInputElement
 )
-  extends NameInputT
+  extends ANameInputT

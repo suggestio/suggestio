@@ -3,7 +3,10 @@ package io.suggest.lk.tags.edit.fsm.states
 import io.suggest.common.tags.edit.TagsEditConstants
 import io.suggest.lk.tags.edit.fsm.TagsEditFsmStub
 import io.suggest.lk.tags.edit.m.signals._
-import io.suggest.lk.tags.edit.vm.add.NameInput
+import io.suggest.lk.tags.edit.vm.add.ANameInput
+import io.suggest.lk.tags.edit.vm.exist.EDelete
+import io.suggest.sjs.common.view.VUtil
+import io.suggest.sjs.common.vm.Vm
 import org.scalajs.dom
 import org.scalajs.dom.Event
 
@@ -14,6 +17,36 @@ import org.scalajs.dom.Event
  * Description: Аддон для сборки состяний FSM, связанных с ничего не деланьем.
  */
 trait StandBy extends TagsEditFsmStub {
+
+  /** Упрощенное состояние ожидания.*/
+  protected trait SimpleStandByStateT extends FsmEmptyReceiverState {
+
+    override def receiverPart: Receive = super.receiverPart orElse {
+      // Клик по кнопке добавления тега.
+      case AddBtnClick(event) =>
+        _addBtnClicked()
+      // Клик по кнопке удаления тега.
+      case DeleteClick(event) =>
+        _tagDeleteClick(event)
+    }
+
+    /** Реакция на клик по кнопке добавления тега. */
+    protected def _addBtnClicked(): Unit = {
+      become(_addBtnClickedState)
+    }
+
+    /** Состояние, на которое надо переключаться, после клика по кнопке добавления. */
+    protected def _addBtnClickedState: FsmState
+
+    /** Реакция на клик по кнопке удаления тега. */
+    protected def _tagDeleteClick(event: Event): Unit = {
+      for (edel <- EDelete.maybeApply( event.target )) {
+        edel.tagContainer.hideAndRemove()
+      }
+    }
+
+  }
+
 
   /** Трейт состояния, когда ничего не делается. */
   protected trait StandByStateT extends FsmEmptyReceiverState {
@@ -38,7 +71,7 @@ trait StandBy extends TagsEditFsmStub {
         dom.clearTimeout(oldTimerId)
       }
 
-      val nameInput = NameInput( event.target.asInstanceOf[NameInput.Dom_t] )
+      val nameInput = ANameInput( event.target.asInstanceOf[ANameInput.Dom_t] )
 
       // Если текущий текст не пустой, то надо запустить таймер запуска поискового запроса.
       val namePart = nameInput.value

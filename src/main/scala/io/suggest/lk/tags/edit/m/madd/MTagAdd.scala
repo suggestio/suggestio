@@ -20,13 +20,14 @@ object MTagAdd {
     val respFut = Xhr.send(
       method  = route.method,
       url     = route.url,
-      headers = Seq(Xhr.HDR_ACCEPT -> Xhr.MIME_TEXT_HTML),
       body    = Some(body)
     )
     respFut map { xhr =>
-      if (xhr.status == 200)
+      val s = xhr.status
+      print("add tag xhr -> " + s + " " + xhr.statusText)
+      if (s == 200)
         UpdateExisting( xhr.responseText )
-      else if (xhr.status == 416)
+      else if (s == 406)
         AddFormError( xhr.responseText )
       else
         UnexpectedResponse( xhr )

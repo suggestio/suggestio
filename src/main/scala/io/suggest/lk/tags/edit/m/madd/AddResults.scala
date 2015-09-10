@@ -10,13 +10,14 @@ import org.scalajs.dom.XMLHttpRequest
  */
 trait IAddResult
 
-/** Возникла проблема при биндинге формы. */
-case class AddFormError(formHtml: String)
-  extends IAddResult
+trait IAddFormHtml extends IAddResult {
+  def addFormHtml: String
+}
 
-/** Тег добавлен в список существующих. Сервер вернул новый отрендеренный список тегов. */
-case class UpdateExisting(existingHtml: String)
-  extends IAddResult
+/** Возникла проблема при биндинге формы. */
+case class AddFormError(addFormHtml: String)
+  extends IAddFormHtml
+
 
 /** Какая-то другая ошибка запроса произошла. */
 case class UnexpectedResponse(xhr: XMLHttpRequest)

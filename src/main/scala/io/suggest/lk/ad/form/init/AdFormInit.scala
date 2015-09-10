@@ -3,6 +3,7 @@ package io.suggest.lk.ad.form.init
 import io.suggest.ad.form.AdFormConstants
 import io.suggest.lk.img.JsRemoveImgInitT
 import io.suggest.lk.old.Market
+import io.suggest.lk.tags.edit.TagsEditInit
 import io.suggest.lk.upload.{AjaxFileUpload, ImgUploadRenderOverlay, InitInputFileUploadOnChange}
 import io.suggest.sjs.common.controller.{IInitDummy, InitRouter}
 import io.suggest.sjs.common.util.SjsLogger
@@ -43,6 +44,7 @@ class AdFormInit
   with InitInputFileUploadOnChange with AjaxFileUpload with ImgUploadRenderOverlay
   with AdFormCropFormAskInit
   with AdFormWsInit
+  with TagsEditInit
 {
   /** Контейнеры, которые будут отработаны. */
   override protected def _imgInputContainers: TraversableOnce[JQuery] = {

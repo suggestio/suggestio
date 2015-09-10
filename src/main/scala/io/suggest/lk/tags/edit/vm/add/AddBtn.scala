@@ -3,6 +3,7 @@ package io.suggest.lk.tags.edit.vm.add
 import io.suggest.common.tags.edit.TagsEditConstants.ADD_BTN_ID
 import io.suggest.lk.tags.edit.m.signals.AddBtnClick
 import io.suggest.lk.tags.edit.vm.util.InitOnClickToTagsEditFsmT
+import io.suggest.sjs.common.vm.evtg.ClickPreventDefault
 import io.suggest.sjs.common.vm.find.FindElT
 import org.scalajs.dom.raw.HTMLInputElement
 
@@ -20,7 +21,7 @@ object AddBtn extends FindElT {
 
 
 /** Логика экземпляров vm'ки описана здесь. */
-trait AddBtnT extends InitOnClickToTagsEditFsmT {
+trait AddBtnT extends InitOnClickToTagsEditFsmT with ClickPreventDefault {
 
   override type T = HTMLInputElement
 

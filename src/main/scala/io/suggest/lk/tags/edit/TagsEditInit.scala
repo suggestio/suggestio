@@ -1,5 +1,6 @@
 package io.suggest.lk.tags.edit
 
+import io.suggest.lk.tags.edit.fsm.TagsEditFsm
 import io.suggest.sjs.common.controller.IInit
 
 /**
@@ -15,16 +16,9 @@ trait TagsEditInit extends IInit {
     _initTagsEditor()
   }
 
-  /** Запуск инициализации редактора тегов на странице. */
+  /** Запуск инициализации подсистемы редактора тегов на странице. */
   private def _initTagsEditor(): Unit = {
-    _initAddBtn()
-    ???
-  }
-
-
-  /** Инициализация кнопки добавления тега. */
-  private def _initAddBtn(): Unit = {
-
+    TagsEditFsm.start()
   }
 
 }

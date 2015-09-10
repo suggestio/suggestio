@@ -13,18 +13,18 @@ import org.scalajs.dom.raw.HTMLDivElement
  * Created: 08.09.15 12:26
  * Description: Контейнер элементов формы добавления тега.
  */
-object Container extends FindDiv with ApplyFromOuterHtml {
-  override type T     = Container
+object AContainer extends FindDiv with ApplyFromOuterHtml {
+  override type T     = AContainer
   override def DOM_ID = ADD_FORM_ID
 }
 
 
-trait ContainerT extends IVm with IInitLayoutDummy with ReplaceWith {
+trait AContainerT extends IVm with IInitLayoutDummy with ReplaceWith {
 
   override type T = HTMLDivElement
 
   /** Поиск input'а ввода имени тега. */
-  def nameInput = NameInput.find()
+  def nameInput = ANameInput.find()
 
   /** Поиск кнопки добавления тега. */
   def addBtn    = AddBtn.find()
@@ -40,7 +40,7 @@ trait ContainerT extends IVm with IInitLayoutDummy with ReplaceWith {
 }
 
 
-case class Container(
+case class AContainer(
   override val _underlying: HTMLDivElement
 )
-  extends ContainerT
+  extends AContainerT
