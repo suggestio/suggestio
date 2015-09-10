@@ -1,6 +1,7 @@
 package io.suggest.xadv.ext.js.fb.m
 
 import minitest._
+import FbNodeTypes._
 
 /**
  * Suggest.io
@@ -27,12 +28,18 @@ object FbTargetSpec extends SimpleTestSuite {
   }
 
   /** Запуск теста. */
-  private def t(path: String, id: String): Unit = {
+  private def t(path: String, id: String, nodeType: Option[FbNodeType] = null): Unit = {
     val url = path2url(path)
     assertEquals(
       fromUrl(url).map(_.nodeId),
       Some(id)
     )
+    if (nodeType != null) {
+      assertEquals(
+        fromUrl(url).flatMap(_.nodeType),
+        nodeType
+      )
+    }
   }
 
 
@@ -76,12 +83,25 @@ object FbTargetSpec extends SimpleTestSuite {
   test("Page %encoded URL: https://www.facebook.com/pages/%D0%9C%D1%8E%D0%B7%D0%B8%D0%BA%D0%BB-%D0%97%D0%BE%D0%BC%D0%B1%D0%B8-%D0%97%D0%BE%D0%BC%D0%B1%D0%B8-%D0%97%D0%BE%D0%BC%D0%B1%D0%B8/1622992914594739") {
     t(
       "https://www.facebook.com/pages/%D0%9C%D1%8E%D0%B7%D0%B8%D0%BA%D0%BB-%D0%97%D0%BE%D0%BC%D0%B1%D0%B8-%D0%97%D0%BE%D0%BC%D0%B1%D0%B8-%D0%97%D0%BE%D0%BC%D0%B1%D0%B8/1622992914594739",
-      "1622992914594739"
+      "1622992914594739",
+      Some(Page)
     )
   }
 
   test("Page %encoded URL: https://www.facebook.com/pages/Бар-Анка/1574446066106309") {
     t("https://www.facebook.com/pages/%D0%91%D0%B0%D1%80-%D0%90%D0%BD%D0%BA%D0%B0/1574446066106309", "1574446066106309")
+  }
+
+  test("Page 2015 URL scheme raw (no %-encoding): Бар-Анка") {
+    t("https://www.facebook.com/Бар-Анка-1574446066106309/timeline/", "1574446066106309", Some(Page))
+  }
+  test("Page 2015 URL scheme raw (no %-encoding): LOL") {
+    t("https://www.facebook.com/LOL-1574446066106309/timeline/", "1574446066106309", Some(Page))
+  }
+
+  test("Page 2015 URL scheme with %-encoding") {
+    t("https://www.facebook.com/%D0%91%D0%B0%D1%80-%D0%90%D0%BD%D0%BA%D0%B0-1574446066106309/timeline/",
+      "1574446066106309", Some(Page))
   }
 
 

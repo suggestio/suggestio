@@ -56,6 +56,11 @@ object FbTarget extends FromJsonT {
           .orElse { if (path matches "^/?([?#].*)?") Some("me") else None }
           .map { FbTarget(_, Some(FbNodeTypes.User)) }
       }
+      // 2015: У страниц появилась новая схема URL: /Бар-Анка-134141412421124/
+      .orElse {
+        unapplyIdRe("^/[^/?#]+-([0-9]{6,})/.*")
+          .map { FbTarget(_, Some(FbNodeTypes.Page)) }
+      }
       // Тестируем на наличие короткого имени узла в пути.
       .orElse {
         unapplyIdRe("/([^/?&]+).*")
