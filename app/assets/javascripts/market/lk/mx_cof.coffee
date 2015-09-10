@@ -817,8 +817,8 @@ PersonalCabinet =
         $field = $ ".js-ad-editor_field-title"
 
         index = $field.size()
-        height = $("input[name = 'ad.offer.height']").val()
-        width = $("input[name = 'ad.offer.width']").val()
+        height = $("input[name = 'offer.height']").val()
+        width = $("input[name = 'offer.width']").val()
 
         jsRoutes.controllers.MarketAd.newTextField(index, height, width).ajax(
           success: (data) ->
@@ -837,7 +837,7 @@ PersonalCabinet =
       .on "click", ".js-color-block", (e) ->
         e.preventDefault()
         $this = $ this
-        $colorSelect = $ "#ad_descr_bgColor"
+        $colorSelect = $ "#descr_bgColor"
         color = $this.data "color"
 
         $colorSelect.val color
@@ -1528,7 +1528,7 @@ market =
         market.ad_form.queue_block_preview_request request_delay=10
 
     set_descr_editor_bg : () ->
-      hex = '#' + $('#ad_descr_bgColor').val()
+      hex = '#' + $('#descr_bgColor').val()
       $('#ad_descr_text_ifr').contents().find('body').css 'background-color': hex
 
     init : () ->
@@ -1593,34 +1593,11 @@ market =
 
         return false
 
-      $(document).on 'change', '#ad_descr_bgColor', (e)->
+      $(document).on 'change', '#descr_bgColor', (e)->
         market.ad_form.set_descr_editor_bg()
 
       this.request_block_preview()
       this.init_block_editor()
-
-      icons_dom = $('#adFormBlocksList div')
-
-      icons_dom.bind 'click', () ->
-
-        icons_dom.removeClass 'blocks-list-icons__single-icon_active'
-        $(this).addClass 'blocks-list-icons__single-icon_active'
-
-        block_id = $(this).attr 'data-block-id'
-        block_editor_action = $('#adFormBlocksList .block-editor-action').val()
-
-        $('input[name=\'ad.offer.blockId\']').val block_id
-
-        $.ajax
-          url : block_editor_action
-          method : 'post'
-          data : $('#promoOfferForm').serialize()
-          success : ( data ) ->
-            $('#adFormBlockEditor').html data
-            market.ad_form.init_block_editor()
-            market.init_colorpickers()
-            market.ad_form.request_block_preview()
-
 
   init: () ->
 

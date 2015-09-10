@@ -325,15 +325,13 @@ object MarketAdFormUtil {
 
   /**
    * Сборщик форм произвольного назначения для парсинга реквестов с данными рекламной карточки.
-   * @param catIdM маппер для id категории.
-   * @param blockM маппер для блоков.
    * @return Маппинг формы, готовый к эксплуатации.
    */
-  def getAdFormM(catIdM: Mapping[Set[String]] = adCatIdsNonEmptyM, blockM: Mapping[BlockMapperResult]): AdFormM = {
+  def getAdFormM(): AdFormM = {
     Form(
       mapping(
-        CAT_ID_K    -> catIdM,
-        OFFER_K     -> blockM,
+        CAT_ID_K    -> adCatIdsM,
+        OFFER_K     -> BlocksConf.DEFAULT.strictMapping,
         PATTERN_K   -> coveringPatternM,
         DESCR_K     -> richDescrOptM,
         BG_COLOR_K  -> colorM,

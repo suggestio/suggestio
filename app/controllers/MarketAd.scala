@@ -10,12 +10,11 @@ import play.api.libs.json.JsValue
 import play.core.parsers.Multipart
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
-import util.blocks.{LkEditorWsActor, ListBlock, BgImg, BlockMapperResult}
+import util.blocks.{LkEditorWsActor, ListBlock, BgImg}
 import views.html.lk.ad._
 import models._
 import play.api.libs.concurrent.Execution.Implicits._
 import util.SiowebEsUtil.client
-import util.FormUtil._
 import play.api.data._, Forms._
 import util.acl._
 import scala.concurrent.Future
@@ -43,72 +42,22 @@ class MarketAd @Inject() (
 
   import LOGGER._
 
-  /** Сколько попыток сохранения карточки предпринимать при runtime-экзепшенах при сохранении?
-    * Такие проблемы возникают при конфликте версий. */
-  val SAVE_AD_RETRIES_MAX = configuration.getInt("ad.save.retries.max") getOrElse 7
-
   type ReqSubmit = Request[collection.Map[String, Seq[String]]]
   type DetectForm_t = Either[AdFormM, (BlockConf, AdFormM)]
 
-  override val BRUTEFORCE_TRY_COUNT_DIVISOR: Int = 3
-  override val BRUTEFORCE_CACHE_PREFIX: String = "aip:"
+  override val BRUTEFORCE_TRY_COUNT_DIVISOR = 3
+  override val BRUTEFORCE_CACHE_PREFIX = "aip:"
 
 
   /** Макс.длина загружаемой картинки в байтах. */
-  val IMG_UPLOAD_MAXLEN_BYTES: Int = {
+  private val IMG_UPLOAD_MAXLEN_BYTES: Int = {
     val mib = configuration.getInt("ad.img.len.max.mib") getOrElse 40
     mib * 1024 * 1024
   }
 
 
-  /**
-   * Внутренний сборщик форм создания/редактирования рекламных карточек.
-   * @param anmt Тип узла.
-   * @param blockM Маппинг блока.
-   * @return Форма, готовая к эксплуатации
-   */
-  private def getSaveAdFormM(anmt: AdNetMemberType, blockM: Mapping[BlockMapperResult]): AdFormM = {
-    import AdNetMemberTypes._
-    val catIdM = anmt match {
-      case SHOP | RESTAURANT      => adCatIdsNonEmptyM
-      case MART | RESTAURANT_SUP  => adCatIdsM
-    }
-    getAdFormM(catIdM, blockM)
-  }
-
   /** Полный ключ доступа к полю bgImg в маппинге формы. */
   private def bgImgFullK = OFFER_K + "." + BgImg.BG_IMG_FN
-
-
-  /** Выдать маппинг ad-формы в зависимости от типа adn-узла. */
-  private def detectAdForm(adnNode: MAdnNode)(implicit request: ReqSubmit): DetectForm_t = {
-    // Нужно раздобыть id из реквеста
-    val nodeBlockIds = blockIdsFor(adnNode)
-    val blockId = request.body.getOrElse(OFFER_K + ".blockId", Nil)
-      .headOption
-      // Аккуратно парсим blockId ручками
-      .flatMap { rawBlockId =>
-        try {
-          Some(rawBlockId.toInt)
-        } catch {
-          case ex: NumberFormatException =>
-            warn("detectAdForm(): Invalid block number format: " + rawBlockId)
-            None
-        }
-      }
-      // Фильтруем блокId по списку допустимых для узла.
-      .filter { blockId =>
-        val result = nodeBlockIds contains blockId
-        if (!result)
-          warn("detectAdForm(): Unknown or disallowed blockId requested: " + blockId)
-        result
-      }
-      // Если blockId был отфильтрован или отсутствовал, то берём первый допустимый id. TODO А надо это вообще?
-      .getOrElse ( nodeBlockIds.head )
-    val blockConf: BlockConf = BlocksConf(blockId)
-    val anmt = adnNode.adn.memberType
-    Right(blockConf -> getSaveAdFormM(anmt, blockConf.strictMapping))
-  }
 
 
   /**
@@ -137,7 +86,7 @@ class MarketAd @Inject() (
   def createAd(adnId: String) = IsAdnNodeAdminGet(adnId).async { implicit request =>
     import request.adnNode
     renderCreateFormWith(
-      af = getSaveAdFormM(adnNode.adn.memberType, BlocksConf.DEFAULT.strictMapping),
+      af = getAdFormM(),
       catOwnerId = getCatOwnerId(adnNode),
       adnNode = adnNode
     ).map(Ok(_))
@@ -155,50 +104,43 @@ class MarketAd @Inject() (
       .map(NotAcceptable(_))
   }
 
-  /** Сабмит формы добавления рекламной карточки товара/скидки.
-    * @param adnId id магазина.
-    */
+  /**
+   * Сабмит формы добавления рекламной карточки товара/скидки.
+   * @param adnId id магазина.
+   */
   def createAdSubmit(adnId: String) = IsAdnNodeAdminPost(adnId).async(parse.urlFormEncoded) { implicit request =>
     import request.adnNode
     val catOwnerId = getCatOwnerId(adnNode)
     lazy val logPrefix = s"createAdSubmit($adnId): "
-    detectAdForm(adnNode) match {
-      // Как маппить форму - ясно. Теперь надо это сделать.
-      case Right((bc, formM)) =>
-        val formBinded = formM.bindFromRequest()
-        formBinded.fold(
-          {formWithErrors =>
-            debug(logPrefix + "Bind failed: \n" + formatFormErrors(formWithErrors))
-            createAdFormError(formWithErrors, catOwnerId, adnNode, Some(bc))
-          },
-          {case (mad, bim) =>
-            // Асинхронно обрабатываем всякие прочие данные.
-            val saveImgsFut = bc.saveImgs(newImgs = bim, oldImgs = Map.empty, blockHeight = mad.blockMeta.height)
-            val t4s2Fut = newTexts4search(mad, request.adnNode)
-            // Когда всё готово, сохраняем саму карточку.
-            for {
-              t4s2      <- t4s2Fut
-              savedImgs <- saveImgsFut
-              adId      <- {
-                mad.copy(
-                  producerId    = adnId,
-                  imgs          = savedImgs,
-                  texts4search  = t4s2
-                ).save
-              }
-            } yield {
-              Redirect(routes.MarketLkAdn.showNodeAds(adnId, newAdId = Some(adId)))
-                .flashing("success" -> "Рекламная карточка создана.")
-            }
+    val bc = BlocksConf.DEFAULT
+    val formM = getAdFormM()
+    val formBinded = formM.bindFromRequest()
+    formBinded.fold(
+      {formWithErrors =>
+        debug(logPrefix + "Bind failed: \n" + formatFormErrors(formWithErrors))
+        createAdFormError(formWithErrors, catOwnerId, adnNode, Some(bc))
+      },
+      {case (mad, bim) =>
+        // Асинхронно обрабатываем всякие прочие данные.
+        val saveImgsFut = bc.saveImgs(newImgs = bim, oldImgs = Map.empty, blockHeight = mad.blockMeta.height)
+        val t4s2Fut = newTexts4search(mad, request.adnNode)
+        // Когда всё готово, сохраняем саму карточку.
+        for {
+          t4s2      <- t4s2Fut
+          savedImgs <- saveImgsFut
+          adId      <- {
+            mad.copy(
+              producerId    = adnId,
+              imgs          = savedImgs,
+              texts4search  = t4s2
+            ).save
           }
-        )
-
-      // Не ясно, как именно надо биндить тело реквеста на маппинг формы.
-      case Left(formWithGlobalError) =>
-        warn(logPrefix + "AD mode is undefined or invalid. Returning form back.")
-        val formWithErrors = formWithGlobalError.bindFromRequest()
-        createAdFormError(formWithErrors, catOwnerId, adnNode, withBC = None)
-    }
+        } yield {
+          Redirect(routes.MarketLkAdn.showNodeAds(adnId, newAdId = Some(adId)))
+            .flashing("success" -> "Рекламная карточка создана.")
+        }
+      }
+    )
   }
 
   /** Выдать множество допустимых id блоков в контексте узла. */
@@ -249,11 +191,12 @@ class MarketAd @Inject() (
     */
   def editAd(adId: String) = CanEditAdGet(adId).async { implicit request =>
     import request.mad
-    val blockConf = BlocksConf.applyOrDefault(mad.blockMeta.blockId)
-    val form0 = getSaveAdFormM(request.producer.adn.memberType, blockConf.strictMapping)
-    val bim = mad.imgs.mapValues { mii =>
-      MImg(mii.filename)
-    }
+    val form0 = getAdFormM()
+    val bim = mad
+      .imgs
+      .mapValues { mii =>
+        MImg(mii.filename)
+      }
     val formFilled = form0 fill ((mad, bim))
     renderEditFormWith(formFilled)
       .map { Ok(_) }
@@ -265,56 +208,51 @@ class MarketAd @Inject() (
     */
   def editAdSubmit(adId: String) = CanEditAdPost(adId).async(parse.urlFormEncoded) { implicit request =>
     import request.mad
-    detectAdForm(request.producer) match {
-      case Right((bc, formM)) =>
-        val formBinded = formM.bindFromRequest()
-        formBinded.fold(
-          {formWithErrors =>
-            debug(s"editShopAdSubmit($adId): Failed to bind form: " + formWithErrors.errors)
-            renderFailedEditFormWith(formWithErrors)
-          },
-          {case (mad2, bim) =>
-            val t4s2Fut = newTexts4search(mad2, request.producer)
-            // TODO Надо отделить удаление врЕменных и былых картинок от сохранения новых. И вызывать эти две фунции отдельно.
-            // Сейчас возможна ситуация, что при поздней ошибке сохранения теряется старая картинка, а новая сохраняется вникуда.
-            val saveImgsFut = bc.saveImgs(
-              newImgs = bim,
-              oldImgs = mad.imgs,
-              blockHeight = mad2.blockMeta.height
-            )
-            // 2014.09.22: Обновление карточки переписано на потоко-безопасный манер с как-бы immutable-полями.
-            for {
-              imgsSaved <- saveImgsFut
-              t4s2      <- t4s2Fut
-              _adId     <- MAd.tryUpdate(request.mad) { mad0 =>
-                mad0.copy(
-                  imgs          = imgsSaved,
-                  texts4search  = t4s2,
-                  disableReason = Nil,
-                  moderation    = mad0.moderation.copy(
-                    freeAdv = mad0.moderation.freeAdv
-                      .filter { _.isAllowed != true }
-                  ),
-                  colors        = mad2.colors,
-                  offers        = mad2.offers,
-                  prio          = mad2.prio,
-                  userCatId     = mad2.userCatId,
-                  blockMeta     = mad2.blockMeta,
-                  richDescrOpt  = mad2.richDescrOpt,
-                  dateEdited    = Some(DateTime.now)
-                )
-              }
-            } yield {
-              Redirect(routes.MarketLkAdn.showNodeAds(mad.producerId))
-                .flashing("success" -> "Изменения сохранены")
-            }
-          }
-        )
-
-      case Left(formWithGlobalError) =>
-        val formWithErrors = formWithGlobalError.bindFromRequest()
+    val bc = BlocksConf.DEFAULT
+    val formM = getAdFormM()
+    val formBinded = formM.bindFromRequest()
+    formBinded.fold(
+      {formWithErrors =>
+        debug(s"editShopAdSubmit($adId): Failed to bind form: " + formWithErrors.errors)
         renderFailedEditFormWith(formWithErrors)
-    }
+      },
+      {case (mad2, bim) =>
+        val t4s2Fut = newTexts4search(mad2, request.producer)
+        // TODO Надо отделить удаление врЕменных и былых картинок от сохранения новых. И вызывать эти две фунции отдельно.
+        // Сейчас возможна ситуация, что при поздней ошибке сохранения теряется старая картинка, а новая сохраняется вникуда.
+        val saveImgsFut = bc.saveImgs(
+          newImgs = bim,
+          oldImgs = mad.imgs,
+          blockHeight = mad2.blockMeta.height
+        )
+        // 2014.09.22: Обновление карточки переписано на потоко-безопасный манер с как-бы immutable-полями.
+        for {
+          imgsSaved <- saveImgsFut
+          t4s2      <- t4s2Fut
+          _adId     <- MAd.tryUpdate(request.mad) { mad0 =>
+            mad0.copy(
+              imgs          = imgsSaved,
+              texts4search  = t4s2,
+              disableReason = Nil,
+              moderation    = mad0.moderation.copy(
+                freeAdv = mad0.moderation.freeAdv
+                  .filter { _.isAllowed != true }
+              ),
+              colors        = mad2.colors,
+              offers        = mad2.offers,
+              prio          = mad2.prio,
+              userCatId     = mad2.userCatId,
+              blockMeta     = mad2.blockMeta,
+              richDescrOpt  = mad2.richDescrOpt,
+              dateEdited    = Some(DateTime.now)
+            )
+          }
+        } yield {
+          Redirect(routes.MarketLkAdn.showNodeAds(mad.producerId))
+            .flashing("success" -> "Изменения сохранены")
+        }
+      }
+    )
   }
 
   /** Рендер окошка с подтверждением удаления рекламной карточки. */
@@ -494,7 +432,6 @@ class MarketAd @Inject() (
     */
   def newTextField(offerN: Int, height: Int, width: Int) = IsAuth { implicit request =>
     val bfText = ListBlock.mkBfText(offerNopt = Some(offerN))
-    val bc = BlocksConf.Block20
     // Чтобы залить в форму необходимые данные, надо сгенерить экземпляр рекламной карточки.
     val madStub = MAd(
       producerId = "",
@@ -510,9 +447,10 @@ class MarketAd @Inject() (
         ))    // AOStringField
       ))      // AOBlock
     )         // MAd
-    val af = getAdFormM(blockM = bc.strictMapping)
+    val af = getAdFormM()
       .fill((madStub, Map.empty))
     val nameBase = s"$OFFER_K.$OFFER_K[$offerN].${bfText.name}"
+    val bc = BlocksConf.DEFAULT
     val render = bfText.renderEditorField(nameBase, af, bc)
     Ok(render)
   }

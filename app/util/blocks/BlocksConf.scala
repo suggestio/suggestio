@@ -97,7 +97,6 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl with EnumValue2Val 
       apply(n)
     } catch {
       case ex: NoSuchElementException =>
-        debug(s"BlockId is unknown: $n. Looks like, current MAd need to be resaved via editor.")
         DEFAULT
     }
   }

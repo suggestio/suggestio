@@ -7,13 +7,10 @@ import play.twirl.api.Html
 import util.PlayMacroLogsI
 import models._
 import play.api.libs.concurrent.Execution.Implicits._
-import util.FormUtil._
-import play.api.data._
 import util.acl._
 import scala.concurrent.Future
-import play.api.mvc.Request
 import controllers.ad.MarketAdFormUtil
-import util.blocks.{BgImg, BlockMapperResult}
+import util.blocks.BgImg
 import views.html.sc._adNormalTpl
 import views.html.sc.foc._adFullTpl
 
@@ -28,23 +25,7 @@ import views.html.sc.foc._adFullTpl
 
 trait MarketAdPreview extends SioController with PlayMacroLogsI {
 
-  /** Генератор preview-формы. Форма совместима с основной формой, но более толерантна к исходным данным. */
-  private def getPreviewAdFormM(blockM: Mapping[BlockMapperResult]): AdFormM = {
-    MarketAdFormUtil.getAdFormM(adCatIdsM, blockM)
-  }
-
-  private def detectAdPreviewForm(adnNode: MAdnNode)(implicit request: Request[collection.Map[String, Seq[String]]]) = {
-    maybeGetAdPreviewFormM(adnNode, request.body)
-  }
-
   protected def blockIdsFor(adnNode: MAdnNode): Set[Int]
-
-  /** Выбрать форму в зависимости от содержимого реквеста. Если ad.offer.mode не валиден, то будет Left с формой с global error. */
-  private def maybeGetAdPreviewFormM(adnNode: MAdnNode, reqBody: collection.Map[String, Seq[String]]): Either[AdFormM, (BlockConf, AdFormM)] = {
-    val blockConf = BlocksConf.DEFAULT
-    val result = blockConf -> getPreviewAdFormM(blockConf.strictMapping)
-    Right(result)
-  }
 
   /** Сабмит формы редактирования карточки для генерации превьюшки.
     * @param adnId id узла, в рамках которого происходит работа.
@@ -52,42 +33,37 @@ trait MarketAdPreview extends SioController with PlayMacroLogsI {
     * @return 200 Ok с рендером.
     *         406 Not Acceptable при ошибочной форме.
     */
-  def adFormPreviewSubmit(adnId: String, isFull: Boolean) = IsAdnNodeAdminPost(adnId).async(parse.urlFormEncoded) { implicit request =>
-    detectAdPreviewForm(request.adnNode) match {
-      case Right((bc, adFormM)) =>
-        adFormM.bindFromRequest().fold(
-          {formWithErrors =>
-            LOGGER.debug(s"adFormPreviewSubmit($adnId): form bind failed: " + formatFormErrors(formWithErrors))
-            NotAcceptable("Preview form bind failed.")
-          },
-          {case (mad0, bim) =>
-            val imgsFut: Future[Imgs_t] = Future.traverse(bim) {
-              case (k, i4s) =>
-                i4s.getImageWH map {
-                  imgMetaOpt  =>  k -> MImgInfo(i4s.fileName, meta = imgMetaOpt)
-                }
-            } map {
-              _.toMap
+  def adFormPreviewSubmit(adnId: String, isFull: Boolean) = IsAdnNodeAdminPost(adnId).async { implicit request =>
+    val adFormM = MarketAdFormUtil.getAdFormM()
+    adFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        LOGGER.debug(s"adFormPreviewSubmit($adnId): form bind failed: " + formatFormErrors(formWithErrors))
+        NotAcceptable("Preview form bind failed.")
+      },
+      {case (mad0, bim) =>
+        val imgsFut: Future[Imgs_t] = Future.traverse(bim) {
+          case (k, i4s) =>
+            i4s.getImageWH map {
+              imgMetaOpt  =>  k -> MImgInfo(i4s.fileName, meta = imgMetaOpt)
             }
-            imgsFut.flatMap { imgs =>
-              val mad = mad0.copy(
-                producerId = adnId,
-                imgs = imgs
-              )
-              val renderFut: Future[Html] = if (isFull) {
-                renderFull(mad)
-              } else {
-                renderSmall(mad)
-              }
-              renderFut
-                .map { Ok(_) }
-            }
+        } map {
+          _.toMap
+        }
+        imgsFut.flatMap { imgs =>
+          val mad = mad0.copy(
+            producerId = adnId,
+            imgs = imgs
+          )
+          val renderFut: Future[Html] = if (isFull) {
+            renderFull(mad)
+          } else {
+            renderSmall(mad)
           }
-        )
-
-      case Left(formWithGlobalError) =>
-        NotAcceptable("Form mode invalid")
-    }
+          renderFut
+            .map { Ok(_) }
+        }
+      }
+    )
   }
 
   /** Рендер полноэкранного варианта отображения. */
