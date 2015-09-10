@@ -4,6 +4,8 @@ import io.suggest.sjs.common.vm.evtg.{OnClickT, EventTargetVmT}
 import io.suggest.sjs.common.vm.util.IInitLayoutDummy
 import org.scalajs.dom.Event
 
+import scala.scalajs.js.Function1
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>

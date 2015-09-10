@@ -31,4 +31,7 @@ object ErrorMsgs extends MsgsStaticT {
   def OPEN_AD_ID_MUST_BE_NONE    = E(10)
 
   def XHR_UNEXPECTED_RESP        = E(11)
+
+  def CANT_ADD_TAG_SERVER_ERROR  = E(12)
+
 }
