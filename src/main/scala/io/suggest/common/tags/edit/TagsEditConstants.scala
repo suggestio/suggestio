@@ -9,15 +9,7 @@ package io.suggest.common.tags.edit
 object TagsEditConstants {
 
   /** id контейнера уже созданных тегов. */
-  def EXIST_TAGS_CONT_ID          = "tagsExistCont"
-
-  /**
-   * Имя поля, в котором js собирает и сабмиттит множество имён текущих тегов.
-   * {{{
-   *   exist[1]=asdfasdf&exist[2]=asdasd
-   * }}}
-   */
-  def EXIST_TAGS_FN               = "exist"
+  def EXIST_CONT_ID          = "tagsExistCont"
 
   /** Название поля с названием нового добавляемого тега. */
   def NEW_TAG_FN                  = "new"
@@ -33,5 +25,23 @@ object TagsEditConstants {
 
   /** На сколько миллисекунд откладывать запуск поискового запроса тегов. */
   def START_SEARCH_TIMER_MS       = 400
+
+  /** Класс-пометка для div'ов тегов в редакторе тегов. */
+  def ONE_EXISTING_CONT_CLASS      = "js-tag-editable"
+
+  /** Класс-пометка для элементов удаления в редакторе тегов. */
+  def DELETE_EXISTING_CLASS       = "js-tag-delete"
+
+
+  /** Константы для положительного ответа сервера по поводу добавления. */
+  object ReplyOk {
+
+    /** Имя поля с заново-отрендеренной формой. */
+    def ADD_FORM_FN     = "f"
+
+    /** Имя поля с новым отрендеренным списком тегов. */
+    def EXIST_TAGS_FN   = "e"
+
+  }
 
 }
