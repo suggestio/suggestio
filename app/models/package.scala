@@ -223,6 +223,8 @@ package object models {
   /** Тип маппинга формы рекламной карточки. */
   type AdFormM = Form[AdFormMResult]
 
+  type TagsEditForm_t       = Form[(Seq[MNodeTag], TagsMap_t)]
+
   // Теги узлов.
   val  MNodeTag             = ym.model.tag.MNodeTag
   type MNodeTag             = ym.model.tag.MNodeTag

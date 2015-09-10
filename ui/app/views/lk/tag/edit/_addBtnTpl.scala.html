@@ -1,0 +1,11 @@
+@(attrs: Html = HtmlFormat.empty)(implicit ctx: Context)
+
+@* Шаблон кнопки добавления тега. *@
+
+@import ctx.messages
+@import io.suggest.common.tags.edit.TagsEditConstants.ADD_BTN_ID
+
+<input type="submit"
+       id="@ADD_BTN_ID"
+       value="@messages("Add")..."
+       @attrs/>

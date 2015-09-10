@@ -5,13 +5,19 @@
 @import ctx.messages
 @import lk.tag.edit._
 @import helper._
+@import io.suggest.ad.form.AdFormConstants._
 
 @_edLkBlkTpl( messages("Tags") ) {
 
   @* js-форма добавления тегов. *@
   @_addFormTpl(af)
 
+  @* Кнопка добавления тега. Вне формы, т.к. форма перезаписывается после сабмитов. *@
+  @_addBtnTpl()
+
   @* Рендер сохранённых тегов. *@
-  @_tagsExistTpl(af)
+  @_existTagsContTpl() {
+    @_tagsExistTpl(af)
+  }
 
 }

@@ -244,7 +244,8 @@ class MarketAd @Inject() (
               userCatId     = mad2.userCatId,
               blockMeta     = mad2.blockMeta,
               richDescrOpt  = mad2.richDescrOpt,
-              dateEdited    = Some(DateTime.now)
+              dateEdited    = Some(DateTime.now),
+              tags          = mad2.tags
             )
           }
         } yield {

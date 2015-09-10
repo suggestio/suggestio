@@ -236,37 +236,63 @@ object MarketAdFormUtil {
   /** Минимальная символьная длина одного тега. */
   def TAG_LEN_MIN = 1
 
-  def tagNameM: Mapping[String] = {
-    val minLen = TAG_LEN_MIN
-    val maxLen = TAG_LEN_MAX
-    nonEmptyText(minLength = minLen,  maxLength = maxLen*2)
+  /** причёсывание имени тега. */
+  private def _tagNamePrepare(raw: String): String = {
+    // Регистр сохраняем исходный. Это нужно для FTS-токенизации в случае склееных слов.
+    stripHtml(raw)
+      .replaceAll("(?U)([^\\w\\s]|_)", " ")
+      // Убрать двойные пробелы, табуляции и т.д.
+      .replaceAll("\\s+", " ")
+      .trim()
+  }
+
+  private def _tagName2tag(tname: String): MNodeTag = {
+    MNodeTag(
+      id  = tname.toLowerCase,
+      raw = tname
+    )
+  }
+
+  private def _tagNamePrepareM(m0: Mapping[String]): Mapping[String] = {
+    m0.transform[String](
       // Срезать знаки препинания, все \s+ заменить на одиночные пробелы.
-      .transform[String](
-        {s =>
-          stripHtml(s)
-            .replaceAll("(?U)([^\\w\\s]|_)", " ")
-            // Убрать двойные пробелы, табуляции и т.д.
-            .replaceAll("\\s+", " ")
-            .trim()
-          // Регистр сохраняем исходный. Это нужно для FTS-токенизации в случае склееных слов.
-        },
-        strIdentityF
-      )
-      .verifying("e.tag.len.max", _.length <= maxLen)
-      .verifying("e.tag.len.min", _.length >= minLen)
+      _tagNamePrepare, strIdentityF
+    )
+    .verifying("e.tag.len.max", _.length <= TAG_LEN_MAX)
+    .verifying("e.tag.len.min", _.length >= TAG_LEN_MIN)
+  }
+
+  def tagNameM: Mapping[String] = {
+    val m0 = nonEmptyText(
+      minLength = TAG_LEN_MIN,
+      maxLength = TAG_LEN_MAX * 2
+    )
+    _tagNamePrepareM(m0)
   }
 
   /** Маппинг экземпляра тег исходя из имени тега. */
   def tagNameAsTagM: Mapping[MNodeTag] = {
-    tagNameM.transform [MNodeTag] (
-      {tname =>
-        MNodeTag(
-          id  = tname.toLowerCase,
-          raw = tname
-        )
-      },
-      { _.raw }
-    )
+    tagNameM.transform [MNodeTag] (_tagName2tag, _.raw)
+  }
+
+  /** Маппинг для строки, в которой может быть задано сразу несколько тегов. */
+  def newTagsM: Mapping[Seq[MNodeTag]] = {
+    nonEmptyText(minLength = TAG_LEN_MIN, maxLength = 256)
+      .transform[ Seq[MNodeTag] ](
+        {allRaw =>
+          val lenMin = TAG_LEN_MIN
+          val lenMax = TAG_LEN_MAX
+          allRaw.split("[,;|]")
+            .iterator
+            .map { _tagNamePrepare }
+            .filter(_.length >= lenMin)
+            .filter(_.length <= lenMax)
+            .map(_tagName2tag)
+            .toSeq
+        },
+        _.mkString(", ")
+      )
+      .verifying("error.required", _.nonEmpty)
   }
 
   /** Маппинг для множественных значений поля тегов. */
@@ -285,6 +311,8 @@ object MarketAdFormUtil {
         }
       )
   }
+
+  def tagsMapKM = TAGS_K -> tagsMapM
 
 
   /** apply-функция для формы добавления/редактировать рекламной карточки.

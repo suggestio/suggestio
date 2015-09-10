@@ -1,17 +1,21 @@
 @(field: Field)(implicit ctx: Context)
 
+@import io.suggest.common.tags.edit.TagsEditConstants._
+
 @* Редактируемый div одного тега.
    fm -- маппинг какой-от формы, содержащей маппинги теги.
    fprefix -- префикс имён полей в маппинге. *@
 
 @import ctx.messages
 
-<div class="tag-editable">
+<div class="@ONE_EXISTING_CONT_CLASS">
+
   <input type="hidden" name="@field.name" value="@field.value" />
 
   @field.value
 
-  <span class="js-tag-delete" title="@messages("Delete")">
+  <span class="@DELETE_EXISTING_CLASS" title="@messages("Delete")">
     [x]
   </span>
+
 </div>

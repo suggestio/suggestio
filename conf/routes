@@ -44,14 +44,14 @@ POST /m/lk/adn/:adnId/usr/pwchange      @controllers.MarketLkAdn.changePasswordS
 GET  /m/lk/xadv/geo/wnd/:adId           @controllers.MarketAdv.advFullWnd(adId, povAdnId: Option[String] ?= None, advId: Option[Int] ?= None, r: Option[String] ?= None)
 
 ## Размещение рекламы (adv) на узлах-получателях
-GET  /m/lk/xadv/geo/for/:adId           @controllers.MarketAdv.advForAd(adId)
-POST /m/lk/xadv/geo/for/:adId           @controllers.MarketAdv.advFormSubmit(adId)
-POST /m/lk/xadv/geo/price/for/:adId     @controllers.MarketAdv.getAdvPriceSubmit(adId)
-GET  /m/lk/xadv/geo/for/node/:adnId     @controllers.MarketAdv.showNodeAdvs(adnId)
+GET  /lk/xadv/geo/for/:adId             @controllers.MarketAdv.advForAd(adId)
+POST /lk/xadv/geo/for/:adId             @controllers.MarketAdv.advFormSubmit(adId)
+POST /lk/xadv/geo/price/for/:adId       @controllers.MarketAdv.getAdvPriceSubmit(adId)
+GET  /lk/xadv/geo/for/node/:adnId       @controllers.MarketAdv.showNodeAdvs(adnId)
 ## Размещение рекламы: обработка запросов размещения.
-POST /m/lk/xadv/geo/req/:advReqId/refuse   @controllers.MarketAdv.advReqRefuseSubmit(advReqId: Int, r: Option[String] ?= None)
-POST /m/lk/xadv/geo/req/:advReqId/accept   @controllers.MarketAdv.advReqAcceptSubmit(advReqId: Int, r: Option[String] ?= None)
-GET  /m/lk/xadv/history/:adId           @controllers.MarketAdv.advHistory(adId)
+POST /lk/xadv/geo/req/refuse/:advReqId  @controllers.MarketAdv.advReqRefuseSubmit(advReqId: Int, r: Option[String] ?= None)
+POST /lk/xadv/geo/req/accept/:advReqId  @controllers.MarketAdv.advReqAcceptSubmit(advReqId: Int, r: Option[String] ?= None)
+GET  /lk/xadv/history/:adId             @controllers.MarketAdv.advHistory(adId)
 
 ## Размещение рекламы на внешних сервисах
 GET  /lk/xadv/ext/tg/write/:adnId       @controllers.LkAdvExt.writeTarget(adnId)
@@ -66,15 +66,15 @@ POST /lk/xadv/ext/oauth1/ret/:adnId     @controllers.LkAdvExt.oauth1PopupReturnP
 
 
 ## ЛК: Рекламные карточки
-POST /lk/ad/:adId/delete                @controllers.MarketAd.deleteSubmit(adId)
-GET  /lk/adn/:adnId/ad/new              @controllers.MarketAd.createAd(adnId)
-POST /lk/adn/:adnId/ad/new              @controllers.MarketAd.createAdSubmit(adnId)
-POST /lk/ap/:adnId/preview              @controllers.MarketAd.adFormPreviewSubmit(adnId, isFull: Boolean)
-POST /lk/ai/:blockId/:fn                @controllers.MarketAd.prepareBlockImg(blockId: Int, fn: String, wsId: Option[String])
-POST /lk/sa/:adId/update/show           @controllers.MarketAd.updateShowLevelSubmit(adId)
-GET  /lk/ad/:adId/edit                  @controllers.MarketAd.editAd(adId)
-POST /lk/ad/:adId/edit                  @controllers.MarketAd.editAdSubmit(adId)
-GET  /lk/ad/:adId/delete                @controllers.MarketAd.deleteWnd(adId)
+GET  /lk/ad/new/:adnId                  @controllers.MarketAd.createAd(adnId)
+POST /lk/ad/new/:adnId                  @controllers.MarketAd.createAdSubmit(adnId)
+POST /lk/ad/preview/:adnId              @controllers.MarketAd.adFormPreviewSubmit(adnId, isFull: Boolean)
+POST /lk/ad/img/:blockId/:fn            @controllers.MarketAd.prepareBlockImg(blockId: Int, fn: String, wsId: Option[String])
+POST /lk/ad/sa/:adId                    @controllers.MarketAd.updateShowLevelSubmit(adId)
+GET  /lk/ad/edit/:adId                  @controllers.MarketAd.editAd(adId)
+POST /lk/ad/edit/:adId                  @controllers.MarketAd.editAdSubmit(adId)
+GET  /lk/ad/delete/:adId                @controllers.MarketAd.deleteWnd(adId)
+POST /lk/ad/delete/:adId                @controllers.MarketAd.deleteSubmit(adId)
 GET  /ws/lk/ad/:wsId                    @controllers.MarketAd.ws(wsId: String)
 GET  /lk/ad/new/field/text/:offerN      @controllers.MarketAd.newTextField(offerN: Int, h: Int, w: Int)
 POST /lk/node/tag/add                   @controllers.MarketAd.tagEditorAddTag()
