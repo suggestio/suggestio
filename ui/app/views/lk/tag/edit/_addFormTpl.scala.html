@@ -1,5 +1,6 @@
 @(fm: Form[_])(implicit ctx: Context)
 
+@import util.FC.divFc
 @import io.suggest.common.tags.edit.TagsEditConstants._
 @import helper._
 @import ctx.{messages, request}
@@ -9,16 +10,10 @@
 
 <div id="@ADD_FORM_ID">
 
-  @defining( fm(NEW_TAG_FN) ) { field =>
-    <div class="input @if(field.hasErrors){__error}">
-      <input type="text"
-             id="@ADD_NAME_INPUT_ID"
-             name="@field.name"
-             value="@field.value"
-             />
-
-    </div>
-
-  }
+  @inputText(
+    fm(NEW_TAG_FN),
+    '_label -> messages("Add.tags"),
+    'id     -> ADD_NAME_INPUT_ID
+  )
 
 </div>
