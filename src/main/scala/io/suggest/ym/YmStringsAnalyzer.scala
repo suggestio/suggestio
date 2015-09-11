@@ -1,6 +1,5 @@
 package io.suggest.ym
 
-import org.apache.lucene.util.Version.{LUCENE_4_9 => luceneVsn}
 import org.apache.lucene.analysis.ru.RussianAnalyzer
 import org.apache.lucene.analysis.en.EnglishAnalyzer
 import org.apache.lucene.analysis.standard._
@@ -58,7 +57,7 @@ object YmStringsAnalyzer extends JavaTokenParsers {
     val mergedStopCh = ruStop ++ enStop
     val mergedStop = mergedStopCh map { new String(_) }
     CharArraySet.unmodifiableSet(
-      StopFilter.makeStopSet(luceneVsn, mergedStop.toArray, false)
+      StopFilter.makeStopSet(mergedStop.toArray, false)
     )
   }
 
@@ -85,21 +84,19 @@ with YmStringAnalyzerT
 /** Трейт с переопределяемыми методами сборки привычного YmString-анализатора. */
 trait YmStringAnalyzerT extends Analyzer {
 
-  def _luceneVsn = luceneVsn
-
   def tokenizer(reader: Reader): Tokenizer = {
-    val tok = new StandardTokenizer(_luceneVsn, reader)
+    val tok = new StandardTokenizer(reader)
     tok.setMaxTokenLength(MAX_TOKEN_LEN)
     tok
   }
 
   def addFilters(tokenized: Tokenizer): TokenStream = {
     // Заменить букву ё на е.
-    var filtered: TokenStream = new StandardFilter(_luceneVsn, tokenized)  // https://stackoverflow.com/a/16965481
-    filtered = new ReplaceMischarsAnalyzer(_luceneVsn, filtered)
-    filtered = new LowerCaseFilter(_luceneVsn, filtered)
+    var filtered: TokenStream = new StandardFilter(tokenized)  // https://stackoverflow.com/a/16965481
+    filtered = new ReplaceMischarsAnalyzer(filtered)
+    filtered = new LowerCaseFilter(filtered)
     // Выкинуть стоп-слова.
-    filtered = new StopFilter(_luceneVsn, filtered, PARAM_TEXT_STOPWORD_SET)
+    filtered = new StopFilter(filtered, PARAM_TEXT_STOPWORD_SET)
     // Стеммеры для отбрасывания окончаний.
     filtered = new SnowballFilter(filtered, new RussianStemmer)
     filtered = new SnowballFilter(filtered, new EnglishStemmer)
@@ -152,7 +149,7 @@ trait AnalyzerUtil extends Analyzer {
   // TODO Нужен iterator-интерфейс для обхода TokenStream.
 }
 
-trait NormTokensOutAn extends Analyzer with AnalyzerUtil {
+trait NormTokensOutAn extends AnalyzerUtil {
 
   /** Собрать набор токенов из строки в виде списка. Список в обратном порядке. */
   def toNormTokensRev(src: String, acc0: List[String] = Nil): List[String] = {
@@ -171,7 +168,7 @@ trait NormTokensOutAn extends Analyzer with AnalyzerUtil {
 }
 
 /** Аналог [[NormTokensOutAn]], но работает с reader-ом, а не со строкой. */
-trait NormTokensOutAnStream extends Analyzer with AnalyzerUtil {
+trait NormTokensOutAnStream extends AnalyzerUtil {
   def normTokensReaderRev(reader: Reader, acc0: List[String] = Nil): List[String] = {
     val unfolder = new ReaderTokenStreamUnfold {
       var _acc: List[String] = acc0
@@ -190,7 +187,7 @@ trait NormTokensOutAnStream extends Analyzer with AnalyzerUtil {
 }
 
 
-trait TextNormalizerAn extends Analyzer with AnalyzerUtil {
+trait TextNormalizerAn extends AnalyzerUtil {
   /** Нормализовать имя параметра, заданного в произвольной форме. */
   def normalizeText(pn: String): StringBuilder = {
     val sb = new StringBuilder

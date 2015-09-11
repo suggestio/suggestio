@@ -34,7 +34,6 @@ import play.api.libs.json._
 import org.joda.time.format.ISODateTimeFormat
 import org.elasticsearch.action.get.{GetResponse, MultiGetResponse}
 import io.suggest.util.SioEsUtil.IndexMapping
-import io.suggest.ym.model.UsernamePw
 import java.{util => ju, lang => jl}
 import SioConstants._
 
@@ -51,7 +50,7 @@ object EsModel extends MacroLogsImpl {
 
   /** Список ES-моделей. Нужен для удобства массовых maintance-операций. Расширяется по мере роста числа ES-моделей. */
   def ES_MODELS = Seq[EsModelCommonStaticT] (
-    MCompany, MWelcomeAd, MShopPriceList, MYmCategory, MAdStat, MAdnNode, MAd, MAdnNodeGeo
+    MCompany, MWelcomeAd, MYmCategory, MAdStat, MAdnNode, MAd, MAdnNodeGeo
   )
 
 
@@ -159,14 +158,6 @@ object EsModel extends MacroLogsImpl {
 
   /** Тип аккамулятора, который используется во [[EsModelPlayJsonT]].writeJsonFields(). */
   type FieldsJsonAcc = List[(String, JsValue)]
-
-  def urlParser = stringParser
-  def authInfoParser = stringParser andThen {
-    case null => None
-    case s =>
-      val Array(username, pw) = s.split("::", 2)
-      Some(UsernamePw(username, pw))
-  }
 
   /** Отрендерить экземпляр модели в JSON, обёрнутый в некоторое подобие метаданных ES (без _index и без _type). */
   def toEsJsonDoc(e: EsModelCommonT): String = {
@@ -1609,8 +1600,9 @@ trait EsModelPlayJsonT extends EsModelCommonT with ToPlayJsonObj {
   override def toPlayJsonAcc = writeJsonFields(Nil)
   override def toPlayJsonWithId: JsObject = {
     var acc = toPlayJsonAcc
-    if (id.isDefined)
-      acc ::= "id" -> JsString(id.get)
+    val _id = id
+    if (_id.isDefined)
+      acc ::= "id" -> JsString(_id.get)
     JsObject(acc)
   }
 

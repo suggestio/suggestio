@@ -2,7 +2,6 @@ package io.suggest.an
 
 import org.apache.lucene.analysis.{TokenStream, TokenFilter}
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute
-import org.apache.lucene.util.Version
 import io.suggest.util.TextUtil
 
 /**
@@ -12,7 +11,7 @@ import io.suggest.util.TextUtil
  * Description: Бывает, что русские буквы написаны вместо английских и наоборот. Ошибки внешне не видны: 'с' вместо 'c'.
  * И тут Lucene-фильтр, который избавляет нас от этой головной боли.
  */
-class ReplaceMischarsAnalyzer(vsn:Version, stream: TokenStream) extends TokenFilter(stream) {
+class ReplaceMischarsAnalyzer(stream: TokenStream) extends TokenFilter(stream) {
   protected val termAtt = addAttribute(classOf[CharTermAttribute])
 
   def incrementToken(): Boolean = {
