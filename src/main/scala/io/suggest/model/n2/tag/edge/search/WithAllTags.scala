@@ -1,8 +1,8 @@
-package io.suggest.ym.model.tag.search
+package io.suggest.model.n2.tag.edge.search
 
-import io.suggest.ym.model.common.{DynSearchArgsWrapper, DynSearchArgs}
-import io.suggest.ym.model.tag.MNodeTag.ID_ESFN
-import org.elasticsearch.index.query.{QueryBuilders, FilterBuilders, QueryBuilder}
+import io.suggest.model.n2.tag.edge.MTagEdge.ID_ESFN
+import io.suggest.ym.model.common.{DynSearchArgs, DynSearchArgsWrapper}
+import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
 
 /**
  * Suggest.io

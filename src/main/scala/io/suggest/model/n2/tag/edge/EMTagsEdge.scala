@@ -1,10 +1,11 @@
-package io.suggest.ym.model.tag
+package io.suggest.model.n2.tag.edge
+
+import java.{util => ju}
 
 import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.model.{EsModelCommonStaticT, EsModelPlayJsonT, EsModelStaticMutAkvT}
 import io.suggest.util.SioEsUtil._
 import play.api.libs.json.Json
-import java.{util => ju}
 
 /**
  * Suggest.io
@@ -13,7 +14,7 @@ import java.{util => ju}
  * Description: Поле тегов для узлов.
  * Десериализованное поле -- это карта, а сериализуется оно в JsArray значений исходной карты.
  */
-object EMTags {
+object EMTagsEdge {
 
   /** Название поля тегов верхнего уровня. */
   val TAGS_FN = "tag"
@@ -21,29 +22,29 @@ object EMTags {
 }
 
 
-import io.suggest.ym.model.tag.EMTags._
+import io.suggest.model.n2.tag.edge.EMTagsEdge._
 
 
 /** Базовый аддон для компаньонов моделей. */
 // TODO Убрать sealed когда здесь будет уже нормальная десериализация для immutable-моделей через play.json.
-sealed trait EMTagsStatic extends EsModelCommonStaticT {
+sealed trait EMTagsEdgeStatic extends EsModelCommonStaticT {
 
-  override type T <: EMTags
+  override type T <: EMTagsEdge
 
   abstract override def generateMappingProps: List[DocField] = {
     val field = FieldNestedObject(
       id          = TAGS_FN,
       enabled     = true,
-      properties  = MNodeTag.generateMappingProps
+      properties  = MTagEdge.generateMappingProps
     )
     field :: super.generateMappingProps
   }
 
 }
 /** Аддон для компаньонов моделей с legacy-десериализацией полей. */
-trait EMTagsStaticMut extends EMTagsStatic with EsModelStaticMutAkvT {
+trait EMTagsEdgeStaticMut extends EMTagsEdgeStatic with EsModelStaticMutAkvT {
 
-  override type T <: EMTagsMut
+  override type T <: EMTagsEdgeMut
 
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
     super.applyKeyValue(acc) orElse {
@@ -52,7 +53,7 @@ trait EMTagsStaticMut extends EMTagsStatic with EsModelStaticMutAkvT {
         acc.tags = values
           .iterator()
           .map { raw =>
-            val tag = MNodeTag.fromJackson( raw )
+            val tag = MTagEdge.fromJackson( raw )
             tag.id -> tag
           }
           .toMap
@@ -69,9 +70,9 @@ trait ITags {
 }
 
 /** Аддон для произвольных реализация моделей. */
-trait EMTags extends EsModelPlayJsonT with ITags {
+trait EMTagsEdge extends EsModelPlayJsonT with ITags {
 
-  override type T <: EMTags
+  override type T <: EMTagsEdge
 
   abstract override def writeJsonFields(acc0: FieldsJsonAcc): FieldsJsonAcc = {
     val acc1 = super.writeJsonFields(acc0)
@@ -84,8 +85,8 @@ trait EMTags extends EsModelPlayJsonT with ITags {
   }
 }
 /** Аддон для mutable-моделей. */
-trait EMTagsMut extends EMTags {
-  override type T <: EMTagsMut
+trait EMTagsEdgeMut extends EMTagsEdge {
+  override type T <: EMTagsEdgeMut
 
   var tags: TagsMap_t
 }

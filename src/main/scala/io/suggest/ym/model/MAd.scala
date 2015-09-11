@@ -2,8 +2,8 @@ package io.suggest.ym.model
 
 import io.suggest.model._
 import com.fasterxml.jackson.annotation.JsonIgnore
+import io.suggest.model.n2.tag.edge.{TagsMap_t, EMTagsEdgeMut, EMTagsEdgeStaticMut}
 import io.suggest.util.SioEsUtil._
-import io.suggest.ym.model.tag.{TagsMap_t, EMTagsMut, MNodeTag, EMTagsStaticMut}
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import io.suggest.event._
@@ -42,7 +42,7 @@ object MAd
   with EMRichDescrStatic
   with EMModerationStatic
   with EMAlienRscStatic
-  with EMTagsStaticMut
+  with EMTagsEdgeStaticMut
   with EsModelStaticMutAkvIgnoreT
 {
   import LOGGER._
@@ -176,7 +176,7 @@ final case class MAd(
   with EMRichDescrMut
   with EMModerationMut
   with EMAlienRscMut
-  with EMTagsMut
+  with EMTagsEdgeMut
 {
   @JsonIgnore
   override type T = MAd

@@ -1,0 +1,69 @@
+package io.suggest.model.n2.tag.vertex
+
+import io.suggest.model._
+import io.suggest.util.SioEsUtil._
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
+import MTagFace._
+
+import scala.collection.Map
+
+/**
+ * Suggest.io
+ * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+ * Created: 10.09.15 18:22
+ * Description: Модель содержимого tagEdge, т.е. tag-свойства одной вершины N2 Graph.
+ */
+
+object MTagVertex extends IGenEsMappingProps {
+
+  /** Имя поля, хранящего "лицо" тега, т.е. то, как описывают словами этот тег пользователи интернетов. */
+  val FACES_FN = "f"
+
+  override def generateMappingProps: List[DocField] = {
+    List(
+      FieldNestedObject(FACES_FN, enabled = true, properties = ???)
+    )
+  }
+  
+  implicit val READS: Reads[MTagVertex] = {
+    (__ \ FACES_FN).readNullable[TagFacesMap]
+      .map { mapOpt =>
+        val facesMap = mapOpt getOrElse Map.empty
+        MTagVertex(facesMap)
+      }
+  }
+
+
+  implicit val WRITES: Writes[MTagVertex] = {
+    (__ \ FACES_FN).writeNullable[TagFacesMap]
+      .contramap { mtv =>
+        val f = mtv.faces
+        if (f.isEmpty)
+          None
+        else
+          Some(f)
+      }
+  }
+
+}
+
+
+trait ITagVertex {
+  /**
+   * Любой [[io.suggest.model.n2.MNode]]-узел может быть "тегом", но тег обладает многоликостью.
+   * Одни юзеры пишут "халат", другие -- "халаты".
+   * Одни юзеры пишут "розовая кофточка", другие "кофточка розовая".
+   * + могут быть и более сложные различия в написании при полной смысловой эквивалентности.
+   * @return Карта "лиц" текущего тега-вершины.
+   */
+  def faces: TagFacesMap
+
+}
+
+
+/** Субмодель одного тега в рамках вершины графа N2. */
+case class MTagVertex(
+  override val faces       : TagFacesMap   = Map.empty
+)
+  extends ITagVertex

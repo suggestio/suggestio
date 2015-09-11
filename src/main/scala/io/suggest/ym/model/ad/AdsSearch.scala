@@ -1,6 +1,6 @@
 package io.suggest.ym.model.ad
 
-import io.suggest.ym.model.tag.search.{WithAllTagsWrapper, WithAllTagsDflt, WithAllTags}
+import io.suggest.model.n2.tag.edge.search.{WithAllTagsWrapper, WithAllTagsDflt, WithAllTags}
 
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client

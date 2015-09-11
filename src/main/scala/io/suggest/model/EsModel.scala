@@ -514,8 +514,17 @@ object EsModel extends MacroLogsImpl {
 }
 
 
+trait IGenEsMappingProps {
+  def generateMappingProps: List[DocField]
+}
+
+/** Дефолтовая реализация для [[IGenEsMappingProps]]. */
+trait GenEsMappingPropsDummy extends IGenEsMappingProps {
+  override def generateMappingProps: List[DocField] = Nil
+}
+
 /** Самые базовые функции генерации маппингов. */
-trait EsModelStaticMappingGenerators {
+trait EsModelStaticMappingGenerators extends IGenEsMappingProps {
 
   def generateMappingStaticFields: List[Field]
   def generateMappingProps: List[DocField]
@@ -530,6 +539,7 @@ trait EsModelStaticMappingGenerators {
   }
 
 }
+
 
 
 import EsModel._
@@ -1452,7 +1462,20 @@ trait EraseResources {
 /** Общий код динамических частей модели, независимо от child-модели или обычной. */
 trait EsModelCommonT extends OptStrId with EraseResources with TypeT {
 
+  /** Тип T это -- this.type конечной реализации, но связать его с this.type компилятор не позволяет. */
   override type T <: EsModelCommonT
+
+  /**
+   * Тип T1 -- это алиас для типа T.
+   * Бывает нужно произвести сравнение типа с другим типом T в другом классе.
+   * {{{
+   *   def x : SomeClass { type T = T1 }
+   * }}}
+   */
+  protected[this] type T1 = T
+
+  /** Доступ к this как к реализации типа T. По задумке типа T, это должно быть безопасно. */
+  def thisT: T = this.asInstanceOf[T]
 
   /** Модели, желающие версионизации, должны перезаписать это поле. */
   def versionOpt: Option[Long]
@@ -1465,12 +1488,8 @@ trait EsModelCommonT extends OptStrId with EraseResources with TypeT {
   def toJson: String
   def toJsonPretty: String = toJson
 
-  @JsonIgnore def idOrNull = {
-    if (id.isDefined)
-      id.get
-    else
-      null
-  }
+  @JsonIgnore
+  def idOrNull: String = id.orNull
 
   /** Перед сохранением можно проверять состояние экземпляра. */
   @JsonIgnore
@@ -1527,6 +1546,24 @@ trait EsModelCommonT extends OptStrId with EraseResources with TypeT {
     req
   }
 
+}
+
+
+/** Интерфейс для доступа к play.json-сериализатору модели. */
+trait IEsDocJsonWrites extends EsModelCommonStaticT {
+  def esDocWrites: Writes[T]
+}
+
+/** Аддон для сериализации через play.json.Writes, доступного в компаньоне. */
+trait EsModelJsonWrites extends EsModelCommonT {
+
+  override def companion: IEsDocJsonWrites { type T = T1 }
+
+  override def toJson: String = {
+    companion.esDocWrites
+      .writes(thisT)
+      .toString()
+  }
 }
 
 

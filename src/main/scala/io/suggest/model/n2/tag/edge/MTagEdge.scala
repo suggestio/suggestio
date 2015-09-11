@@ -1,10 +1,11 @@
-package io.suggest.ym.model.tag
+package io.suggest.model.n2.tag.edge
+
+import java.{util => ju}
 
 import io.suggest.model.PrefixedFn
 import io.suggest.util.SioConstants
-import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import java.{util => ju}
+import play.api.libs.json._
 
 /**
  * Suggest.io
@@ -13,7 +14,7 @@ import java.{util => ju}
  * Description: Модель одного тега узла.
  */
 
-object MNodeTag extends PrefixedFn {
+object MTagEdge extends PrefixedFn {
 
   /** Название поля с нормализованным именем тега.
     * val потому что нет смысла делать def -- строка всегда в памяти из-за val READS/WRITES. */
@@ -24,28 +25,28 @@ object MNodeTag extends PrefixedFn {
   val RAW_NAME_FN   = "raw"
   def RAW_NAME_ESFN = _fullFn(RAW_NAME_FN)
 
-  override protected def _PARENT_FN = EMTags.TAGS_FN
+  override protected def _PARENT_FN = EMTagsEdge.TAGS_FN
 
 
   /** Десериализатор из JSON. */
-  implicit val READS: Reads[MNodeTag] = (
+  implicit val READS: Reads[MTagEdge] = (
     (__ \ ID_FN).read[String] and
     (__ \ RAW_NAME_FN).read[String]
   )(apply _)
 
   /** Сериализатор в JSON. */
-  implicit val WRITES: Writes[MNodeTag] = (
+  implicit val WRITES: Writes[MTagEdge] = (
     (__ \ ID_FN).write[String] and
     (__ \ RAW_NAME_FN).write[String]
   )(unlift(unapply))
 
 
   /** legacy-десериализация из выхлопов jackson'а. */
-  def fromJackson(rawMap: Any): MNodeTag = {
+  def fromJackson(rawMap: Any): MTagEdge = {
     val m = rawMap.asInstanceOf[ ju.Map[String, String] ]
-    MNodeTag(
-      id  = m.get(MNodeTag.ID_FN),
-      raw = m.get(MNodeTag.RAW_NAME_FN)
+    MTagEdge(
+      id  = m.get(MTagEdge.ID_FN),
+      raw = m.get(MTagEdge.RAW_NAME_FN)
     )
   }
 
@@ -72,7 +73,7 @@ object MNodeTag extends PrefixedFn {
 
 
 /** Интерфейс экземпляров модели. */
-trait INodeTag {
+trait ITagEdge {
   /** Почищенный от мусора тег, в нижнем регистре. */
   def id  : String
   /** Сырое значение тега, почищенное в общих чертах. */
@@ -81,8 +82,8 @@ trait INodeTag {
 
 
 /** Дефолтовая реализация модели одного тега узла. */
-case class MNodeTag(
+case class MTagEdge(
   override val id  : String,
   override val raw : String
 )
-  extends INodeTag
+  extends ITagEdge

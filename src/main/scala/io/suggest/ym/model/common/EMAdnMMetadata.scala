@@ -321,7 +321,7 @@ trait NameSortDsa extends DynSearchArgs {
     if (withNameSort) {
       val sob = SortBuilders.fieldSort(META_NAME_SHORT_NOTOK_ESFN)
         .order(SortOrder.ASC)
-        .ignoreUnmapped(true)
+        .unmappedType("string")
       srb1 addSort sob
     }
     srb1
