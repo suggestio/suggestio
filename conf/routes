@@ -26,8 +26,8 @@ GET  /market/booklet                    @controllers.Market.marketBooklet
 GET  /lk/nodes                          @controllers.MarketLkAdn.lkList(fromNode: Option[String] ?= None)
 GET  /lk/node/create                    @controllers.MarketLkAdn.createNode
 POST /lk/node/create                    @controllers.MarketLkAdn.createNodeSubmit
-GET  /lk/node/:adnId                    @controllers.MarketLkAdn.showAdnNode(adnId, povAdnId: Option[String] ?= None)
-GET  /lk/node/ads/:adnId                @controllers.MarketLkAdn.showNodeAds(adnId, mode: MNodeAdsMode ?= MNodeAdsModes.ALL_ADS, newAdId: Option[String] ?= None, povAdnId: Option[String] ?= None)
+GET  /lk/node/profile/:adnId            @controllers.MarketLkAdn.showAdnNode(adnId, povAdnId: Option[String] ?= None)
+GET  /lk/node/mads/:adnId               @controllers.MarketLkAdn.showNodeAds(adnId, mode: MNodeAdsMode ?= MNodeAdsModes.ALL_ADS, newAdId: Option[String] ?= None, povAdnId: Option[String] ?= None)
 GET  /lk/node/edit/:adnId               @controllers.MarketLkAdnEdit.editAdnNode(adnId)
 POST /lk/node/edit/:adnId               @controllers.MarketLkAdnEdit.editAdnNodeSubmit(adnId)
 POST /lk/node/img/gal/prepare           @controllers.MarketLkAdnEdit.handleGalleryImg
@@ -35,8 +35,8 @@ POST /lk/node/img/welcome               @controllers.MarketLkAdnEdit.uploadWelco
 POST /lk/node/img/logo                  @controllers.MarketLkAdnEdit.handleTempLogo
 
 ## Принятие приглашения на управления узлом.
-GET  /lk/node/eact/:adnId/:eaId          @controllers.MarketLkAdn.nodeOwnerInviteAcceptForm(adnId, eaId)
-POST /lk/node/eact/:adnId/:eaId          @controllers.MarketLkAdn.nodeOwnerInviteAcceptFormSubmit(adnId, eaId)
+GET  /lk/node/eact/:adnId/:eaId         @controllers.MarketLkAdn.nodeOwnerInviteAcceptForm(adnId, eaId)
+POST /lk/node/eact/:adnId/:eaId         @controllers.MarketLkAdn.nodeOwnerInviteAcceptFormSubmit(adnId, eaId)
 ## Редактирования профиля юзера из личного кабинета узла.
 GET  /lk/own/edit/:adnId                @controllers.MarketLkAdn.userProfileEdit(adnId, r: Option[String] ?= None)
 POST /lk/own/pwchange/:adnId            @controllers.MarketLkAdn.changePasswordSubmit(adnId, r: Option[String] ?= None)
@@ -79,8 +79,8 @@ GET  /ws/lk/mad/:wsId                   @controllers.MarketAd.ws(wsId: String)
 GET  /lk/mad/new/field/text/:offerN     @controllers.MarketAd.newTextField(offerN: Int, h: Int, w: Int)
 POST /lk/node/tag/add                   @controllers.MarketAd.tagEditorAddTag()
 # lk.billing
-GET  /lk/bill/node/:adnId               @controllers.MarketLkBilling.showAdnNodeBilling(adnId)
-GET  /lk/bill/txns/adn/:adnId           @controllers.MarketLkBilling.txnsList(adnId, page: Int ?= 0, inline: Boolean ?= false)
+GET  /lk/bill/brief/:adnId               @controllers.MarketLkBilling.showAdnNodeBilling(adnId)
+GET  /lk/bill/txns/:adnId           @controllers.MarketLkBilling.txnsList(adnId, page: Int ?= 0, inline: Boolean ?= false)
 GET  /lk/bill/pay/bank/for/:adnId       @controllers.MarketLkBilling.paymentRequsites(adnId)
 # lk.billing: рендер списка тарифных сеток MBillMmpDaily для указанного узла
 GET  /lk/bill/pricing/raw/:adnId        @controllers.MarketLkBilling._renderNodeMbmds(adnId)
