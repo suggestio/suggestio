@@ -2,14 +2,10 @@ package controllers
 
 import com.google.inject.Inject
 import models.CallBackReqCallTimes.CallBackReqCallTime
-import models.usr.EmailActivation
-import org.joda.time.DateTime
-import play.api.i18n.{MessagesApi, Messages}
-import util.billing.MmpDailyBilling
+import play.api.i18n.MessagesApi
 import util.captcha.CaptchaUtil._
-import util.img._
 import util.PlayMacroLogsImpl
-import util.acl.{MaybeAuthPost, MaybeAuthGet, AbstractRequestWithPwOpt, MaybeAuth}
+import util.acl.{MaybeAuthPost, MaybeAuthGet}
 import util.SiowebEsUtil.client
 import models._
 import util.mail.IMailerWrapper
@@ -19,7 +15,6 @@ import play.api.data._, Forms._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.Play.{current, configuration}
 import play.api.mvc.RequestHeader
-import models.madn.EditConstants.logoKM
 
 /**
  * Suggest.io
@@ -37,7 +32,7 @@ class MarketJoin @Inject() (
   import LOGGER._
 
   /** Маппинг формы запроса обратного звонка с капчей, именем, телефоном и временем прозвона. */
-  private def callbackRequestFormM = {
+  private def callbackRequestFormM: Form[MInviteRequest] = {
     Form(
       mapping(
         "name"  -> nameM,
@@ -108,11 +103,6 @@ class MarketJoin @Inject() (
   }
 
 
-
-  private def colorOptKM  = "color"   -> colorOptM
-  private def companyKM   = "company" -> companyNameM
-  private def townKM      = "town"    -> townSomeM
-
   private def unapplyCompanyName(mir: MInviteRequest): String = {
     mir.company
       .left.map(_.meta.name)
@@ -121,28 +111,7 @@ class MarketJoin @Inject() (
           .fold("") { _.left.map(_.meta.name).left.getOrElse("") }
       }
   }
-  private def unapplyTown(mir: MInviteRequest): Option[String] = {
-    mir.adnNode.flatMap {
-       _.left.map(_.meta.town)
-        .left.getOrElse(None)
-    }
-  }
 
-  private def unapplyAddress(mir: MInviteRequest): String = {
-    mir.adnNode
-      .flatMap {
-        _.left.map(_.meta.address)
-         .left.getOrElse(None)
-      }
-      .getOrElse("")
-  }
-  private def unapplySiteUrl(mir: MInviteRequest): Option[String] = {
-    mir.adnNode
-      .flatMap {
-        _.left.map(_.meta.siteUrl)
-         .left.getOrElse(None)
-      }
-  }
   private def unapplyOfficePhone(mir: MInviteRequest): String = {
     mir.company
       .left.map(_.meta.officePhones.headOption)
@@ -150,169 +119,13 @@ class MarketJoin @Inject() (
       .getOrElse("")
   }
 
-  private def unapplyEmail(mir: MInviteRequest): String = {
-    mir.emailAct.fold("") {
-       _.left.map(_.email)
-        .left.getOrElse("")
-    }
-  }
-  private def unapplyInfo(mir: MInviteRequest): Option[String] = {
-    mir.adnNode.flatMap {
-       _.left.map(_.meta.info)
-        .left.getOrElse(None)
-    }
-  }
-  private def unapplyColor(mir: MInviteRequest): Option[String] = {
-    mir.adnNode.flatMap {
-       _.left.map(_.meta.color)
-        .left.getOrElse(None)
-    }
-  }
-
-
-  /** Накатывание результатов маппинга формы на новый экземпляр MInviteRequest. */
-  private def applyForm(companyName: String, audienceDescr: Option[String] = None, humanTrafficAvg: Option[Int] = None,
-    address: String, siteUrl: Option[String], phone: String, payReqs: Option[String] = None, email1: String, town: Option[String],
-    anmt: AdNetMemberType, withMmp: Boolean, reqType: InviteReqType, info: Option[String] = None, color: Option[String]): MInviteRequest = {
-    val company = MCompany(
-      meta = MCompanyMeta(name = companyName, officePhones = List(phone))
-    )
-    val node = MAdnNode(
-      companyId = None,
-      meta = AdnMMetadata(
-        name            = companyName,
-        address         = Option(address),
-        siteUrl         = siteUrl,
-        humanTrafficAvg = humanTrafficAvg,
-        audienceDescr   = audienceDescr,
-        info            = info,
-        color           = color,
-        town            = town
-      ),
-      personIds = Set.empty,
-      adn = anmt.getAdnInfoDflt
-    )
-    val eact = EmailActivation(email1)
-    val mbc = MBillContract(
-      adnId = "",
-      contractDate = DateTime.now,
-      suffix = Option(MmpDailyBilling.CONTRACT_SUFFIX_DFLT),
-      isActive = true
-    )
-    val mbb = MBillBalance(adnId = "", amount = 0F)
-    val mmp: Option[Either[MBillMmpDaily, Int]] = if (withMmp) {
-      // TODO Использовать формулу для рассчёта значений тарифов на основе человеч.трафика
-      val mmp = MBillMmpDaily(contractId = -1)
-      Some(Left(mmp))
-    } else {
-      None
-    }
-    MInviteRequest(
-      name      = companyName + " от " + email1,
-      reqType   = reqType,
-      company   = Left(company),
-      adnNode   = Some(Left(node)),
-      contract  = Some(Left(mbc)),
-      mmp       = mmp,
-      balance   = Some(Left(mbb)),
-      emailAct  = Some(Left(eact)),
-      payReqsRaw = payReqs
-    )
-  }
-
-
-  /** Куда отправлять юзера, когда его запрос сохранён? */
-  private def mirSavedRdr(mirId: String)(implicit request: AbstractRequestWithPwOpt[_]) = {
-    Redirect(routes.MarketJoin.joinRequestSuccess())
-      .flashing("success" -> Messages("Your.IR.accepted"))
-  }
-
-  /** Отобразить страничку с писаниной о том, что всё ок. */
-  def joinRequestSuccess = MaybeAuth { implicit request =>
-    Ok(joinSuccessTpl())
-  }
-
-
-  /** Подключение в качестве рекламного агента, источника рекламы. */
-  private def advJoinFormM = {
-    Form(
-      mapping(
-        companyKM,
-        townKM,
-        "info"      -> text2048M
-          .transform[Option[String]]({str => emptyStrOptToNone(Option(str))}, strOptGetOrElseEmpty),
-        "address"   -> addressM,
-        "siteUrl"   -> urlStrOptM,
-        "phone"     -> phoneM,
-        "email"     -> email,
-        colorOptKM,
-        logoKM,
-        CAPTCHA_ID_FN    -> captchaIdM,
-        CAPTCHA_TYPED_FN -> captchaTypedM
-      )
-      {(companyName, town, info, address, siteUrl, phone, email1, color, logoOpt, _, _) =>
-        val mir = applyForm(companyName = companyName, address = address, siteUrl = siteUrl, town = town,
-          phone = phone, email1 = email1, anmt = AdNetMemberTypes.SHOP, withMmp = false,
-          reqType = InviteReqTypes.Adv, info = info, color = color)
-        (mir, logoOpt)
-      }
-      {case (mir, logoOpt) =>
-        val companyName = unapplyCompanyName(mir)
-        val town = unapplyTown(mir)
-        val info = unapplyInfo(mir)
-        val address = unapplyAddress(mir)
-        val siteUrl = unapplySiteUrl(mir)
-        val officePhone = unapplyOfficePhone(mir)
-        val email1 = unapplyEmail(mir)
-        val color = unapplyColor(mir)
-        Some((companyName, town, info, address, siteUrl, officePhone, email1, color, logoOpt, "", ""))
-      }
-    )
-  }
-
 
   /** Юзер хочется зарегаться как рекламное агентство. Отрендерить страницу с формой, похожей на форму
     * заполнения сведений по wi-fi сети. */
   def joinAdvRequest = MaybeAuthGet { implicit request =>
     cacheControlShort {
-      Ok(joinAdvTpl(advJoinFormM))
+      Ok(joinAdvTpl())
     }
-  }
-
-  /**
-   * Сабмит формы запроса присоединения к системе в качестве рекламодателя.
-   * @return Редирект или 406 NotAcceptable.
-   */
-  def joinAdvRequestSubmit = MaybeAuthPost.async { implicit request =>
-    val formBinded = checkCaptcha( advJoinFormM.bindFromRequest() )
-    formBinded.fold(
-      {formWithErrors =>
-        debug("joinAdvRequestSubmit(): Form bind failed:\n" + formatFormErrors(formWithErrors))
-        NotAcceptable(joinAdvTpl(formWithErrors))
-      },
-      {case (mir, logoOpt) =>
-        assert(mir.adnNode.exists(_.isLeft), "error.mir.adnNode.not.isLeft")
-        val savedLogoFut = ImgFormUtil.updateOrigImgFull(logoOpt.toSeq, oldImgs = Nil)
-          .flatMap { vs => ImgFormUtil.optImg2OptImgInfo(vs.headOption) }
-        savedLogoFut flatMap { savedLogoOpt =>
-          val mir2 = mir.copy(
-            adnNode = mir.adnNode.map {
-              _.left.map { adnNode0 =>
-                adnNode0.copy(
-                  logoImgOpt = savedLogoOpt
-                )
-              }
-            }
-          )
-          mir2.save.map { irId =>
-            sendEmailNewIR(irId, mir2)
-            rmCaptcha(formBinded) {
-              mirSavedRdr(irId)
-            }
-          }
-        }
-      }
-    )
   }
 
 

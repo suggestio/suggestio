@@ -133,9 +133,7 @@ GET  /market/geo/syncsite               @controllers.MarketShowcase.syncGeoSite(
 
 
 # market+join: Присоединение к sio-market.
-GET  /market/join/success               @controllers.MarketJoin.joinRequestSuccess
 GET  /market/join/xadv                  @controllers.MarketJoin.joinAdvRequest
-POST /market/join/xadv                  @controllers.MarketJoin.joinAdvRequestSubmit
 GET  /market/join/callback              @controllers.MarketJoin.callbackRequest
 POST /market/join/callback              @controllers.MarketJoin.callbackRequestSubmit
 
