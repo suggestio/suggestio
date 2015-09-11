@@ -220,12 +220,12 @@ package object models {
   /** Тип маппинга формы рекламной карточки. */
   type AdFormM = Form[AdFormMResult]
 
-  type TagsEditForm_t       = Form[(Seq[MNodeTag], TagsMap_t)]
+  type TagsEditForm_t       = Form[(Seq[MTagEdge], TagsMap_t)]
 
-  // Теги узлов.
-  val  MNodeTag             = ym.model.tag.MNodeTag
-  type MNodeTag             = ym.model.tag.MNodeTag
-  type INodeTag             = ym.model.tag.INodeTag
-  type TagsMap_t            = ym.model.tag.TagsMap_t
+  // Исходящие теги узлов.
+  val  MTagEdge             = io.suggest.model.n2.tag.edge.MTagEdge
+  type MTagEdge             = io.suggest.model.n2.tag.edge.MTagEdge
+  type ITagEdge             = io.suggest.model.n2.tag.edge.ITagEdge
+  type TagsMap_t            = io.suggest.model.n2.tag.edge.TagsMap_t
 
 }

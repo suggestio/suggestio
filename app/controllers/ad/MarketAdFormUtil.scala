@@ -246,8 +246,8 @@ object MarketAdFormUtil {
       .trim()
   }
 
-  private def _tagName2tag(tname: String): MNodeTag = {
-    MNodeTag(
+  private def _tagName2tag(tname: String): MTagEdge = {
+    MTagEdge(
       id  = tname.toLowerCase,
       raw = tname
     )
@@ -271,14 +271,14 @@ object MarketAdFormUtil {
   }
 
   /** Маппинг экземпляра тег исходя из имени тега. */
-  def tagNameAsTagM: Mapping[MNodeTag] = {
-    tagNameM.transform [MNodeTag] (_tagName2tag, _.raw)
+  def tagNameAsTagM: Mapping[MTagEdge] = {
+    tagNameM.transform [MTagEdge] (_tagName2tag, _.raw)
   }
 
   /** Маппинг для строки, в которой может быть задано сразу несколько тегов. */
-  def newTagsM: Mapping[Seq[MNodeTag]] = {
+  def newTagsM: Mapping[Seq[MTagEdge]] = {
     nonEmptyText(minLength = TAG_LEN_MIN, maxLength = 256)
-      .transform[ Seq[MNodeTag] ](
+      .transform[ Seq[MTagEdge] ](
         {allRaw =>
           val lenMin = TAG_LEN_MIN
           val lenMax = TAG_LEN_MAX
