@@ -25,9 +25,6 @@ package object models {
   val  MAdnNode             = ym.model.MAdnNode
   type MAdnNode             = ym.model.MAdnNode
 
-  type MShopPriceList       = ym.model.MShopPriceList
-  val  MShopPriceList       = ym.model.MShopPriceList
-
   type MYmCategory          = ym.model.MYmCategory
   val  MYmCategory          = ym.model.MYmCategory
 

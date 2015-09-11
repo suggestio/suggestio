@@ -50,9 +50,9 @@ class GidrometRssSax(maim: MAiCtx)
     }
 
     override def addFilters(tokenized: Tokenizer): TokenStream = {
-      var filtered: TokenStream = new StandardFilter(_luceneVsn, tokenized)  // https://stackoverflow.com/a/16965481
-      filtered = new ReplaceMischarsAnalyzer(_luceneVsn, filtered)
-      filtered = new LowerCaseFilter(_luceneVsn, filtered)
+      var filtered: TokenStream = new StandardFilter(tokenized)  // https://stackoverflow.com/a/16965481
+      filtered = new ReplaceMischarsAnalyzer(filtered)
+      filtered = new LowerCaseFilter(filtered)
       filtered = new SnowballFilter(filtered, new RussianStemmer)
       filtered
     }
