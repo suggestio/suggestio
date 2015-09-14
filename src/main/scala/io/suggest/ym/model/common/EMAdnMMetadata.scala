@@ -3,6 +3,7 @@ package io.suggest.ym.model.common
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.model.geo.{GeoShape, GeoPoint}
+import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import io.suggest.ym.model.MWelcomeAd
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse}
 import org.elasticsearch.client.Client

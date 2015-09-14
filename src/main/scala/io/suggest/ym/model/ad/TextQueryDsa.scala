@@ -1,8 +1,8 @@
 package io.suggest.ym.model.ad
 
+import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import io.suggest.util.SioConstants
 import io.suggest.util.text.TextQueryV2Util
-import io.suggest.ym.model.common.{DynSearchArgsWrapper, DynSearchArgs}
 import org.elasticsearch.index.query.QueryBuilder
 
 /**

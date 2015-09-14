@@ -15,14 +15,17 @@ import scala.collection.Map
  * Description: Модель содержимого tagEdge, т.е. tag-свойства одной вершины N2 Graph.
  */
 
-object MTagVertex extends IGenEsMappingProps {
+object MTagVertex extends IGenEsMappingProps with PrefixedFn {
+
+  override protected def _PARENT_FN = EMTagVertex.TAG_VERTEX_FN
 
   /** Имя поля, хранящего "лицо" тега, т.е. то, как описывают словами этот тег пользователи интернетов. */
   val FACES_FN = "f"
+  def FACES_ESFN = _fullFn(FACES_FN)
 
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldNestedObject(FACES_FN, enabled = true, properties = ???)
+      FieldNestedObject(FACES_FN, enabled = true, properties = MTagFace.generateMappingProps)
     )
   }
   
@@ -64,6 +67,7 @@ trait ITagVertex {
 
 /** Субмодель одного тега в рамках вершины графа N2. */
 case class MTagVertex(
+                     // TODO display name нужно для отображения человеческого названия, not_analyzed для возможности сортировки по нему.
   override val faces       : TagFacesMap   = Map.empty
 )
   extends ITagVertex

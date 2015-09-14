@@ -35,7 +35,7 @@ import io.suggest.model.n2.tag.vertex.EMTagVertex.TAG_VERTEX_FN
 
 
 /** Аддон статической стороны [[io.suggest.model.n2.MNode]]. */
-trait EMTagEdgeStaticT extends GenEsMappingPropsDummy {
+trait EMTagVertexStaticT extends GenEsMappingPropsDummy {
 
   override def generateMappingProps: List[DocField] = {
     FieldObject(TAG_VERTEX_FN, enabled = true, properties = MTagVertex.generateMappingProps) ::
@@ -43,15 +43,3 @@ trait EMTagEdgeStaticT extends GenEsMappingPropsDummy {
   }
 
 }
-
-
-/** Динамический трейт модели [[io.suggest.model.n2.MNode]]. */
-trait EMTagVertexT extends EsModelT {
-
-  override type T <: EMTagVertexT
-
-  /** Поле вершины-тега. */
-  def tagVertex: Option[MTagVertex]
-
-}
-

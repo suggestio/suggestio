@@ -1,5 +1,6 @@
 package io.suggest.ym.model.common
 
+import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import io.suggest.ym.model.common.AdNetMemberTypes.AdNetMemberType
 import io.suggest.model._
 import io.suggest.util.SioEsUtil._

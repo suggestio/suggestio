@@ -342,6 +342,15 @@ object SioEsUtil extends MacroLogsImpl {
     )
   }
 
+  /** Сборка аналайзера, готовящего текст к FTS, но не дропаются стоп-слова никакие вообще. */
+  def _FTS_NOSTOP_AN: Analyzer = {
+    CustomAnalyzer(
+      id        = FTS_NOSTOP_AN,
+      tokenizer = STD_TN,
+      filters   = Seq(STD_FN, WORD_DELIM_FN, LOWERCASE_FN, STEM_RU_FN, STEM_EN_FN)
+    )
+  }
+
   /**
    * Сборка индекса по архитектуре второго поколения: без повсеместного edgeNgram, который жрёт как не в себя.
    * v2.1 добавляет кое-какой ngram analyzer для очень узконаправленных нужд.
@@ -410,7 +419,8 @@ object SioEsUtil extends MacroLogsImpl {
             // v2.1
             _DEEP_NGRAM_ANALYZER,
             // v2.2
-            _KW_LC_ANALYZER
+            _KW_LC_ANALYZER,
+            _FTS_NOSTOP_AN
           )
         }
       )
@@ -425,7 +435,8 @@ object SioEsUtil extends MacroLogsImpl {
           _KEYWORD_TOKENIZER
         ),
         analyzers = Seq(
-          _KW_LC_ANALYZER
+          _KW_LC_ANALYZER,
+          _FTS_NOSTOP_AN
         )
       )
     }

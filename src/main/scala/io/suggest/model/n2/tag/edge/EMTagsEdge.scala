@@ -54,7 +54,7 @@ trait EMTagsEdgeStaticMut extends EMTagsEdgeStatic with EsModelStaticMutAkvT {
           .iterator()
           .map { raw =>
             val tag = MTagEdge.fromJackson( raw )
-            tag.id -> tag
+            tag.face -> tag
           }
           .toMap
     }

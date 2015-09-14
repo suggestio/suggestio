@@ -220,7 +220,7 @@ final class MAdJmx(implicit val ec: ExecutionContext, val client: Client, val sn
         .filter(!_.isEmpty)
         .flatMap(SinkShowLevels.maybeWithName)
       override def receiverIds = List(receiverId.trim).filter(!_.isEmpty)
-      override def maxResults = 100
+      override def limit = 100
     }
     MAd.dynSearch(searchArgs).map {
       _.map(_.toJsonPretty)

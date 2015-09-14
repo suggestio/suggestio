@@ -18,6 +18,6 @@ object FieldNamesL1 extends EnumValue2Val {
   override type T = Val
 
   /** Поле вершины графа с проекцией на тег. */
-  val TagVertex                   : T = new Val("vt")
+  val TagVertex                   : T = new Val("tv")
 
 }

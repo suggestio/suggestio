@@ -3,7 +3,6 @@ package io.suggest.model.n2.tag.edge
 import java.{util => ju}
 
 import io.suggest.model.PrefixedFn
-import io.suggest.util.SioConstants
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -16,37 +15,31 @@ import play.api.libs.json._
 
 object MTagEdge extends PrefixedFn {
 
-  /** Название поля с нормализованным именем тега.
-    * val потому что нет смысла делать def -- строка всегда в памяти из-за val READS/WRITES. */
-  val ID_FN         = "id"
-  def ID_ESFN       = _fullFn(ID_FN)
-
   /** Название под-поля тега c поддержкой полнотекстового поиска. */
-  val RAW_NAME_FN   = "raw"
-  def RAW_NAME_ESFN = _fullFn(RAW_NAME_FN)
+  val TAG_FACE_FN   = "raw"
+  def TAG_FACE_ESFN = _fullFn(TAG_FACE_FN)
 
   override protected def _PARENT_FN = EMTagsEdge.TAGS_FN
 
 
   /** Десериализатор из JSON. */
-  implicit val READS: Reads[MTagEdge] = (
-    (__ \ ID_FN).read[String] and
-    (__ \ RAW_NAME_FN).read[String]
-  )(apply _)
+  implicit val READS: Reads[MTagEdge] = {
+    (__ \ TAG_FACE_FN).read[String]
+      .map { apply }
+  }
 
   /** Сериализатор в JSON. */
-  implicit val WRITES: Writes[MTagEdge] = (
-    (__ \ ID_FN).write[String] and
-    (__ \ RAW_NAME_FN).write[String]
-  )(unlift(unapply))
+  implicit val WRITES: Writes[MTagEdge] = {
+    (__ \ TAG_FACE_FN).write[String]
+      .contramap(_.face)
+  }
 
 
   /** legacy-десериализация из выхлопов jackson'а. */
   def fromJackson(rawMap: Any): MTagEdge = {
     val m = rawMap.asInstanceOf[ ju.Map[String, String] ]
     MTagEdge(
-      id  = m.get(MTagEdge.ID_FN),
-      raw = m.get(MTagEdge.RAW_NAME_FN)
+      face = m.get(MTagEdge.TAG_FACE_FN)
     )
   }
 
@@ -56,17 +49,30 @@ object MTagEdge extends PrefixedFn {
   def generateMappingProps: List[DocField] = {
     List(
       FieldString(
-        id              = ID_FN,
-        index           = FieldIndexingVariants.analyzed,
-        include_in_all  = true,
-        analyzer        = SioConstants.KW_LC_AN
-      ),
-      FieldString(
-        id              = RAW_NAME_FN,
+        id              = TAG_FACE_FN,
         index           = FieldIndexingVariants.analyzed,
         include_in_all  = true
       )
     )
+  }
+
+  /** Приведение коллекции тегов к итератору будующей карты тегов. */
+  def tags2mapIterator(edges: TraversableOnce[MTagEdge]): Iterator[(String, MTagEdge)] = {
+    edges
+      .toIterator
+      .map { t => t.face -> t }
+  }
+  /** Приведение коллекции тегов к карте. */
+  def tags2map(edges: TraversableOnce[MTagEdge]): TagsMap_t = {
+    tags2mapIterator(edges)
+      .toMap
+  }
+
+  /** Приведение карты тегов к отсортированному по алфавиту списку. */
+  def map2sortedTags(tmap: TagsMap_t): List[MTagEdge] = {
+    tmap.valuesIterator
+      .toList
+      .sortBy(_.face)
   }
 
 }
@@ -74,16 +80,15 @@ object MTagEdge extends PrefixedFn {
 
 /** Интерфейс экземпляров модели. */
 trait ITagEdge {
-  /** Почищенный от мусора тег, в нижнем регистре. */
-  def id  : String
-  /** Сырое значение тега, почищенное в общих чертах. */
-  def raw : String
+
+  /** Человеко-читабельное значение тега, почищенное в общих чертах. */
+  def face : String
+
 }
 
 
 /** Дефолтовая реализация модели одного тега узла. */
 case class MTagEdge(
-  override val id  : String,
-  override val raw : String
+  override val face : String
 )
   extends ITagEdge

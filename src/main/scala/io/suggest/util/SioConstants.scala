@@ -58,6 +58,9 @@ object SioConstants {
   /** KeyWord LowerCase ANalyzer. Для целостной индексации тегов узлов ADN. */
   def KW_LC_AN        = "tag"
 
+  /** Полнотекстовый поиск по [коротким] тегам, без фильтрации стоп-слов. */
+  def FTS_NOSTOP_AN      = "ftsNoStop"
+
   /** id дефолтового анализатора. */
   def DFLT_AN         = "default"
 

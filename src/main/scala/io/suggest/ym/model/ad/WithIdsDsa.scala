@@ -1,6 +1,6 @@
 package io.suggest.ym.model.ad
 
-import io.suggest.ym.model.common.{DynSearchArgsWrapper, DynSearchArgs}
+import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders, QueryBuilder}
 
 /**

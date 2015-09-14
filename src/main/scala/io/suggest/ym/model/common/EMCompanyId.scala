@@ -1,5 +1,6 @@
 package io.suggest.ym.model.common
 
+import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import io.suggest.model.{EsModelStaticMutAkvT, EsModel, EsModelPlayJsonT}
 import EsModel.{FieldsJsonAcc, stringParser}
 import io.suggest.util.SioEsUtil._

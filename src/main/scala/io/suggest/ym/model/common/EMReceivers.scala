@@ -1,5 +1,6 @@
 package io.suggest.ym.model.common
 
+import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import io.suggest.util.{Lists, SioConstants}
 import io.suggest.util.SioEsUtil._
 import io.suggest.model._

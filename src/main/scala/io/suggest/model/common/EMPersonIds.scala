@@ -2,8 +2,8 @@ package io.suggest.model.common
 
 import io.suggest.model._
 import io.suggest.model.EsModel.{FieldsJsonAcc, asJsonStrArray}
+import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import io.suggest.util.SioEsUtil._
-import io.suggest.ym.model.common.{DynSearchArgsWrapper, DynSearchArgs}
 import scala.collection.JavaConversions._
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client

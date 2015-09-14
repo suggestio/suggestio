@@ -2,6 +2,7 @@ package io.suggest.ym.model.common
 
 import io.suggest.model.EsModel
 import io.suggest.model.common._
+import io.suggest.model.search._
 import io.suggest.ym.model.ad._
 
 /**
@@ -17,7 +18,7 @@ trait AdnNodesSearchArgsT extends TextQueryDsa with WithoutIdsDsa with CompanyId
 with AnyOfPersonIdsDsa with AdvDelegateAdnIdsDsa with DirectGeoParentsDsa with GeoParentsDsa with ShownTypeIdsDsa
 with AdnRightsDsa with AdnSinksDsa with TestNodeDsa with NodeIsEnabledDsa with GeoDistanceDsa
 with GeoIntersectsWithPreIndexedDsa with ShowInScNodeListDsa with WithIdsDsa with GeoDistanceSortDsa with LogoImgExistsDsa
-with NameSortDsa with RoutingDsa
+with NameSortDsa with RoutingDsa with Limit with Offset
 
 
 /** Реализация интерфейса AdnNodesSearchArgsT с пустыми (дефолтовыми) значениями всех полей. */
@@ -26,9 +27,9 @@ with AdnSupIdsDsaDflt with AnyOfPersonIdsDsaDflt with AdvDelegateAdnIdsDsaDflt w
 with GeoParentsDsaDflt with ShownTypeIdsDsaDflt with AdnRightsDsaDflt with AdnSinksDsaDflt with TestNodeDsaDflt
 with NodeIsEnabledDsaDflt with GeoDistanceDsaDflt with GeoIntersectsWithPreIndexedDsaDftl
 with ShowInScNodeListDsaDflt with WithIdsDsaDflt with GeoDistanceSortDsaDflt with LogoImgExistsDsaDflt
-with NameSortDsaDflt with RoutingDsaDflt
+with NameSortDsaDflt with RoutingDsaDflt with LimitDflt with OffsetDflt
 {
-  override def maxResults: Int = EsModel.MAX_RESULTS_DFLT
+  override def limit: Int = EsModel.MAX_RESULTS_DFLT
   override def offset: Int = EsModel.OFFSET_DFLT
 }
 
@@ -40,6 +41,7 @@ with DirectGeoParentsDsaWrapper with GeoParentsDsaWrapper with ShownTypeIdsDsaWr
 with AdnSinksDsaWrapper with TestNodeDsaWrapper with NodeIsEnabledDsaWrapper with GeoDistanceDsaWrapper
 with GeoIntersectsWithPreIndexedDsaWrapper with ShowInScNodeListDsaWrapper with WithIdsDsaWrapper
 with GeoDistanceSortDsaWrapper with LogoImgExistsDsaWrapper with NameSortDsaWrapper with RoutingDsaWrapper
+with LimitWrap with OffsetWrap
 {
   override type WT <: AdnNodesSearchArgsT
 }

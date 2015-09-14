@@ -1,6 +1,7 @@
 package io.suggest.ym.model.common
 
 import io.suggest.model.EsModel.FieldsJsonAcc
+import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import io.suggest.model.{EsModelStaticMutAkvT, EsModel, EsModelPlayJsonT}
 import io.suggest.model.geo.{GeoShapeIndexed, CircleGs, GeoShapeQueryData, GeoPoint}
 import io.suggest.util.SioEsUtil._

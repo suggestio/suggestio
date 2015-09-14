@@ -1,12 +1,13 @@
-package io.suggest.ym.model.common
+package io.suggest.model.search
 
 import io.suggest.model.EsModelStaticT
 import io.suggest.util.MacroLogsI
+import io.suggest.util.SioEsUtil.laFuture2sFuture
 import org.elasticsearch.action.search.SearchRequestBuilder
 import org.elasticsearch.client.Client
-import org.elasticsearch.index.query.{QueryBuilders, QueryBuilder}
-import io.suggest.util.SioEsUtil.laFuture2sFuture
-import scala.concurrent.{Future, ExecutionContext}
+import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
+
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -76,24 +77,11 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with MacroLog
 /** Базовый интерфейс для аргументов-критериев поиска. */
 trait DynSearchArgs {
 
-  /** Жесткое ограничение сверху по кол-ву результатов поиска. По идее, оно не должно влиять на выдачу никогда.
-    * Нужно для защиты от ddos при недостаточной проверке значения maxResults на верхнем уровне. */
-  def MAX_RESULTS_HARD = 100
-
-  /** Макс.кол-во результатов. */
-  def maxResults: Int
-
-  /** Абсолютный сдвиг в результатах (постраничный вывод). */
-  def offset: Int
-
   /** Собрать экземпляр ES QueryBuilder на основе имеющихся в экземпляре данных.
     * Здесь можно навешивать дополнительные фильтры, выполнять post-процессинг запроса. */
   def toEsQuery: QueryBuilder = {
     toEsQueryOpt getOrElse defaultEsQuery
   }
-
-  /** Возвращать ли _version в результатах? */
-  def returnVersion: Option[Boolean] = None
 
   /** Генератор самого дефолтового запроса, когда toEsQueryOpt не смог ничего предложить. */
   def defaultEsQuery: QueryBuilder = QueryBuilders.matchAllQuery()
@@ -108,13 +96,7 @@ trait DynSearchArgs {
    * @return SearchRequestBuilder, наполненный данными по поисковому запросу.
    */
   def prepareSearchRequest(srb: SearchRequestBuilder): SearchRequestBuilder = {
-    srb
-      .setQuery(toEsQuery)
-      .setSize(Math.min(MAX_RESULTS_HARD, Math.max(1, maxResults)))
-      .setFrom(Math.max(0, offset))
-    if (returnVersion.isDefined)
-      srb.setVersion(returnVersion.get)
-    srb
+    srb.setQuery(toEsQuery)
   }
 
   /** toString() выводит экземпляр этого класса списком. Но ей нужно знать какое-то название модуля,
@@ -154,19 +136,8 @@ trait DynSearchArgs {
 }
 
 
-/** Дефолтовые значения базовых параметров dyn-поиска. */
-trait DynSearchArgsDflt extends DynSearchArgs {
-  override def offset: Int = 0
-  override def maxResults: Int = 10
-}
-
-
-/** Враппер для контейнера аргументов dyn-поиска. */
+/** Интерфейс для врапперов search-результатов контейнера аргументов dyn-поиска. */
 trait DynSearchArgsWrapper extends DynSearchArgs {
   type WT <: DynSearchArgs
   def _dsArgsUnderlying: WT
-
-  override def maxResults = _dsArgsUnderlying.maxResults
-  override def offset     = _dsArgsUnderlying.offset
-  override def MAX_RESULTS_HARD = _dsArgsUnderlying.MAX_RESULTS_HARD
 }

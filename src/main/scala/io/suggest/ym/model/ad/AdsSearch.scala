@@ -1,6 +1,7 @@
 package io.suggest.ym.model.ad
 
-import io.suggest.model.n2.tag.edge.search.{WithAllTagsWrapper, WithAllTagsDflt, WithAllTags}
+
+import io.suggest.model.search._
 
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
@@ -8,23 +9,23 @@ import io.suggest.ym.model.common._
 
 /** Интерфейс для передачи параметров поиска объявлений в индексе/типе. */
 trait AdsSearchArgsT extends DynSearchArgs with TextQueryDsa with ReceiversDsa with ProducerIdsDsa with UserCatIdDsa
-with GenerationSortDsa with WithoutIdsDsa with ReceiversDsaOnlyPublishedByDefault with WithAllTags {
+with GenerationSortDsa with WithoutIdsDsa with ReceiversDsaOnlyPublishedByDefault with Limit with Offset {
 
   override def generationSortingEnabled = qOpt.isEmpty
-
 }
 
 
 /** Дефолтовые значения аргументов поиска рекламных карточек. */
-trait AdsSearchArgsDflt extends AdsSearchArgsT with DynSearchArgsDflt with TextQueryDsaDflt with ReceiversDsaDflt
-with ProducerIdsDsaDflt with UserCatIdDsaDflt with GenerationSortDsaDflt with WithoutIdsDsaDflt with WithAllTagsDflt
+trait AdsSearchArgsDflt extends AdsSearchArgsT with TextQueryDsaDflt with ReceiversDsaDflt
+with ProducerIdsDsaDflt with UserCatIdDsaDflt with GenerationSortDsaDflt with WithoutIdsDsaDflt
+with LimitDflt with OffsetDflt
 
 
 
 /** Враппер для аргументов поиска рекламных карточек. */
 trait AdsSearchArgsWrapper extends AdsSearchArgsT with DynSearchArgsWrapper with TextQueryDsaWrapper
 with ReceiversDsaWrapper with ProducerIdsDsaWrapper with UserCatIdDsaWrapper with GenerationSortDsaWrapper
-with WithoutIdsDsaWrapper with WithAllTagsWrapper {
+with WithoutIdsDsaWrapper with LimitWrap with OffsetWrap {
   override type WT <: AdsSearchArgsT
 }
 
