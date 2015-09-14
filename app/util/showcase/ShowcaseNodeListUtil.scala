@@ -55,7 +55,7 @@ object ShowcaseNodeListUtil extends PlayMacroLogsImpl {
             geoMode.exactGeodata
               .orElse { gsiOpt.map(_.geoPoint) }
           }
-          override def maxResults = 1
+          override def limit = 1
         }
       } flatMap { sargs =>
         searchF(sargs)
@@ -193,7 +193,7 @@ object ShowcaseNodeListUtil extends PlayMacroLogsImpl {
       override def shownTypeIds = Seq(AdnShownTypes.TOWN.name)
       override def withGeoDistanceSort = currGeoPoint
       override def withNameSort = currGeoPoint.isEmpty
-      override def maxResults = MAX_TOWNS
+      override def limit = MAX_TOWNS
     }
     MAdnNode.dynSearch(sargs)
   }
@@ -247,7 +247,7 @@ object ShowcaseNodeListUtil extends PlayMacroLogsImpl {
    */
   def getDistrictsForTown(townNodeId: String, gravity: Option[GeoPoint]): Future[Seq[MAdnNode]] = {
     val sargs = new SmNodesSearchArgsT {
-      override def maxResults = 20
+      override def limit = 20
       override def withAdnRights = Seq(AdnRights.RECEIVER)
       override def withDirectGeoParents = Seq(townNodeId)
       override def shownTypeIds = AdnShownTypes.districtNames
@@ -285,7 +285,7 @@ object ShowcaseNodeListUtil extends PlayMacroLogsImpl {
    */
   def getBuildingsOfDistrict(districtAdnId: String, gravity: Option[GeoPoint]): Future[Seq[MAdnNode]] = {
     val sargs = new SmNodesSearchArgsT {
-      override def maxResults = 30
+      override def limit = 30
       override def withAdnRights = Seq(AdnRights.RECEIVER)
       override def withDirectGeoParents = Seq(districtAdnId)
       override def withGeoDistanceSort = gravity
@@ -437,6 +437,6 @@ sealed trait SmNodesSearchArgsT extends SmNodesSearchArgsCommonT {
   * Тут -- common-аргументы, задающие это поведение при поиске узлов. */
 sealed trait NodeDetectArgsT extends SmNodesSearchArgsCommonT {
   override def withAdnRights = Seq(AdnRights.RECEIVER)
-  override def maxResults = 1
+  override def limit = 1
   override def offset = 0
 }

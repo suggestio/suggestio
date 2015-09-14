@@ -47,7 +47,7 @@ class Umap @Inject() (
     val allNodesMapFut: Future[Map[AdnShownType, Seq[MAdnNode]]] = {
       val sargs = new AdnNodesSearchArgs {
         override def withAdnRights = Seq(AdnRights.RECEIVER)
-        override def maxResults = 500
+        override def limit = 500
       }
       MAdnNode.dynSearch(sargs)
     } map { allNodes =>

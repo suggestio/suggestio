@@ -145,7 +145,7 @@ class SysMarket @Inject() (
       case Some(stiId) =>
         val sargs = new AdnNodesSearchArgs {
           override def shownTypeIds = Seq(stiId)
-          override def maxResults = 1000
+          override def limit = 1000
           override def testNode = None
         }
         MAdnNode.dynSearch(sargs)

@@ -140,7 +140,7 @@ trait ScIndexGeo extends ScIndexConstants with ScIndexNodeCommon { that =>
             val gparents = gdr.node.id.toSeq
             val searchArgs = new AdnNodesSearchArgs {
               override def withDirectGeoParents = gparents
-              override def maxResults = 5
+              override def limit = 5
               // TODO Фильтровать по наличию geoshape'ов
             }
             MAdnNode.dynCount(searchArgs)

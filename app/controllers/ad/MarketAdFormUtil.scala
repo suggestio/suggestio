@@ -248,8 +248,7 @@ object MarketAdFormUtil {
 
   private def _tagName2tag(tname: String): MTagEdge = {
     MTagEdge(
-      id  = tname.toLowerCase,
-      raw = tname
+      face = tname
     )
   }
 
@@ -272,7 +271,7 @@ object MarketAdFormUtil {
 
   /** Маппинг экземпляра тег исходя из имени тега. */
   def tagNameAsTagM: Mapping[MTagEdge] = {
-    tagNameM.transform [MTagEdge] (_tagName2tag, _.raw)
+    tagNameM.transform [MTagEdge] (_tagName2tag, _.face)
   }
 
   /** Маппинг для строки, в которой может быть задано сразу несколько тегов. */
@@ -299,16 +298,8 @@ object MarketAdFormUtil {
   def tagsMapM: Mapping[TagsMap_t] = {
     list(tagNameAsTagM)
       .transform [TagsMap_t] (
-        {tags =>
-          tags.iterator
-            .map { t => t.id -> t }
-            .toMap
-        },
-        {tmap =>
-          tmap.valuesIterator
-            .toList
-            .sortBy(_.id)
-        }
+        MTagEdge.tags2map,
+        MTagEdge.map2sortedTags
       )
   }
 

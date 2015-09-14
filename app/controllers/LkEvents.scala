@@ -55,7 +55,7 @@ class LkEvents @Inject() (
     val eventsSearch = MEventsSearchArgs(
       ownerId       = Some(adnId),
       returnVersion = Some(true),
-      maxResults    = limit,
+      limit         = limit,
       offset        = offset
     )
     val eventsFut = MEvent.dynSearch(eventsSearch)

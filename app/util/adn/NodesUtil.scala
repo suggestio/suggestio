@@ -157,7 +157,7 @@ object NodesUtil extends PlayMacroLogsImpl {
       .flatMap { prodIds =>
         val dsa0 = new AdsSearchArgsDflt {
           override def producerIds = prodIds
-          override val maxResults = Math.max(50, count * 2)
+          override val limit = Math.max(50, count * 2)
           override def offset = 0
         }
         MAd.dynSearchIds(dsa0)

@@ -1,6 +1,6 @@
 package models.event.search
 
-import io.suggest.ym.model.common.DynSearchArgs
+import io.suggest.model.search.DynSearchArgs
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders, QueryBuilder}
 import models.event.MEvent.OWNER_ID_ESFN
 

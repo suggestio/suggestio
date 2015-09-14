@@ -1,5 +1,7 @@
 package models.event.search
 
+import io.suggest.model.search.{ReturnVersion, Offset, Limit}
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -8,15 +10,22 @@ package models.event.search
  */
 
 /** Для поиска по событиям используется сий интерфейс аргументов dyn-поиска. */
-trait IEventsSearchArgs extends OwnerId with OnlyUnseen with WithDateSort
+trait IEventsSearchArgs
+  extends OwnerId
+  with OnlyUnseen
+  with WithDateSort
+  with Limit
+  with Offset
+  with ReturnVersion
 
 
 /** Дефолтовая реализация [[IEventsSearchArgs]]. */
 case class MEventsSearchArgs(
-  ownerId       : Option[String] = None,
-  onlyUnseen    : Boolean = false,
-  withDateSort  : Option[Boolean] = None,
-  override val returnVersion: Option[Boolean] = None,
-  maxResults    : Int = 10,
-  offset        : Int = 0
-) extends IEventsSearchArgs
+  override val ownerId        : Option[String]    = None,
+  override val onlyUnseen     : Boolean           = false,
+  override val withDateSort   : Option[Boolean]   = None,
+  override val returnVersion  : Option[Boolean]   = None,
+  override val limit          : Int               = 10,
+  override val offset         : Int               = 0
+)
+  extends IEventsSearchArgs

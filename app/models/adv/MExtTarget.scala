@@ -4,8 +4,8 @@ import io.suggest.adv.ext.model.ctx.MExtTargetT
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.model._
+import io.suggest.model.search.EsDynSearchStatic
 import io.suggest.util.SioEsUtil._
-import io.suggest.ym.model.common.EsDynSearchStatic
 import models.adv.search.etg.IExtTargetSearchArgs
 import models.mext.{MExtServices, MExtService}
 import org.elasticsearch.client.Client

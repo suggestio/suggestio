@@ -166,7 +166,7 @@ trait AdSearch extends AdsSearchArgsDflt { that =>
   }
 
   /** Макс.кол-во результатов. */
-  override def maxResults: Int = {
+  override def limit: Int = {
     maxResultsOpt getOrElse AdSearch.MAX_RESULTS_DFLT
   }
 
@@ -178,13 +178,13 @@ trait AdSearch extends AdsSearchArgsDflt { that =>
   }
 
   /** Вычесть указанное число элементов из offset'а, отфильтровать неположительные значения. */
-  def minusOffset(count: Int = maxResults): AdSearch = new AdSearchWrapper {
+  def minusOffset(count: Int = limit): AdSearch = new AdSearchWrapper {
     override def _dsArgsUnderlying = that
     override def offsetOpt = super.offsetOpt.map(_ - count).filter(_ > 0)
   }
 
   /** Инкрементить offset на указанное кол-во элементов. */
-  def plusOffset(count: Int = maxResults): AdSearch = new AdSearchWrapper {
+  def plusOffset(count: Int = limit): AdSearch = new AdSearchWrapper {
     override def _dsArgsUnderlying = that
     override def offsetOpt: Option[Int] = {
       super.offsetOpt

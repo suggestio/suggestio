@@ -1,6 +1,6 @@
 package models.event.search
 
-import io.suggest.ym.model.common.DynSearchArgs
+import io.suggest.model.search.DynSearchArgs
 import org.elasticsearch.action.search.SearchRequestBuilder
 import org.elasticsearch.search.sort.SortOrder
 import models.event.MEvent.DATE_CREATED_ESFN

@@ -1,12 +1,12 @@
 package models.event
 
+import io.suggest.model.search.EsDynSearchStatic
 import search.IEventsSearchArgs
 import io.suggest.event.SioNotifier.{Classifier, Event}
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.EsModel.{FieldsJsonAcc, stringParser}
 import io.suggest.model._
 import io.suggest.util.SioEsUtil._
-import io.suggest.ym.model.common.EsDynSearchStatic
 import org.elasticsearch.action.index.IndexRequestBuilder
 import org.elasticsearch.client.Client
 import org.joda.time.DateTime

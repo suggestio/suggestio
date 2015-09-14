@@ -1,7 +1,7 @@
 package models.adv.search.etg
 
 import io.suggest.model.EsModel
-import io.suggest.ym.model.common.DynSearchArgs
+import io.suggest.model.search.{Limit, Offset, DynSearchArgs}
 import models.adv.MExtTarget._
 import org.elasticsearch.action.search.SearchRequestBuilder
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
@@ -13,15 +13,21 @@ import org.elasticsearch.search.sort.SortOrder
  * Created: 05.03.15 11:50
  * Description: Поиск по модели [[models.adv.MExtTarget]] осуществляется с помощью всего этого.
  */
-trait IExtTargetSearchArgs extends AdnId with SortByDateCreated
+trait IExtTargetSearchArgs
+  extends AdnId
+  with SortByDateCreated
+  with Limit
+  with Offset
+
 
 /** Дефолтовая реализация аргументов динамического поиска. */
 case class ExtTargetSearchArgs(
-  adnId         : Option[String] = None,
-  sortByDate    : Option[SortOrder] = None,
-  maxResults    : Int = EsModel.MAX_RESULTS_DFLT,
-  offset        : Int = 0
-) extends IExtTargetSearchArgs
+  override val adnId            : Option[String] = None,
+  override val sortByDate       : Option[SortOrder] = None,
+  override val limit            : Int = EsModel.MAX_RESULTS_DFLT,
+  override val offset           : Int = 0
+)
+  extends IExtTargetSearchArgs
 
 
 /** Поиск по id рекламного узла. */

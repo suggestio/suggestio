@@ -91,7 +91,7 @@ class LkAdvExt @Inject() (
       val args = ExtTargetSearchArgs(
         adnId       = request.producer.id,
         sortByDate  = Some(SortOrder.ASC),
-        maxResults  = 100
+        limit  = 100
       )
       MExtTarget.dynSearch(args)
     }

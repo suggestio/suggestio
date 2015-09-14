@@ -67,7 +67,7 @@ object AdvTownCoverageRcvrs extends AdvExtraRcvrsCalculator with PlayMacroLogsIm
       Future.traverse(townsMap.keysIterator) { townAdnId =>
         val sargs = new AdnNodesSearchArgs {
           override def withDirectGeoParents = Seq(townAdnId)
-          override def maxResults           = 70    // Наврядли в городе больше указанного кол-ва узлов. // TODO Брать число из другого места...
+          override def limit           = 70    // Наврядли в городе больше указанного кол-ва узлов. // TODO Брать число из другого места...
           override def shownTypeIds         = districtTypeNames
           override def onlyWithSinks        = Seq(AdnSinks.SINK_GEO)
         }

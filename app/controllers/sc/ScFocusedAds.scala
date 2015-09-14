@@ -42,7 +42,7 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
     // TODO Не искать вообще карточки, если firstIds.len >= adSearch.size
     // TODO Выставлять offset для поиска с учётом firstIds?
     lazy val mads1Fut: Future[Seq[MAd]] = {
-      if (_adSearch.maxResults > _adSearch.firstIds.size) {
+      if (_adSearch.limit > _adSearch.firstIds.size) {
         // Костыль, т.к. сортировка forceFirstIds на стороне ES-сервера всё ещё не пашет:
         val adSearch2 = if (_adSearch.firstIds.isEmpty) {
           _adSearch

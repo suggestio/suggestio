@@ -1,6 +1,6 @@
 package models.event.search
 
-import io.suggest.ym.model.common.DynSearchArgs
+import io.suggest.model.search.DynSearchArgs
 import org.elasticsearch.index.query.{QueryBuilders, FilterBuilders, QueryBuilder}
 import models.event.MEvent.IS_UNSEEN_ESFN
 

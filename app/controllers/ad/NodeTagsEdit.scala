@@ -1,6 +1,7 @@
 package controllers.ad
 
 import controllers.SioController
+import io.suggest.model.n2.tag.edge.MTagEdge
 import models.mtag.MAddTagReplyOk
 import models.{TagsMap_t, TagsEditForm_t}
 import play.api.data._, Forms._
@@ -52,10 +53,7 @@ trait NodeTagsEdit extends SioController with PlayMacroLogsI {
       {case (newTags, existTags) =>
         // Залить новый тег в список существующих тегов, устранив дубликаты.
         val newExistsTags: TagsMap_t = {
-          val iter = newTags
-            .iterator
-            .map { mtag => mtag.id -> mtag }
-          existTags ++ iter
+          existTags ++ MTagEdge.tags2mapIterator(newTags)
         }
         // Собрать новый маппинг формы для рендера.
         val tf2 = formBinded fill (Nil, newExistsTags)

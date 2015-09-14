@@ -36,7 +36,11 @@ class MarketAd @Inject() (
   override val messagesApi: MessagesApi,
   override val actorSystem: ActorSystem
 )
-  extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtectCtl with MarketAdPreview
+  extends SioController
+  with PlayMacroLogsImpl
+  with TempImgSupport
+  with BruteForceProtectCtl
+  with MarketAdPreview
   with ad.NodeTagsEdit
 {
 
