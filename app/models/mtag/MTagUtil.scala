@@ -33,7 +33,7 @@ object MTagUtil extends PlayMacroLogsImpl {
                    (implicit ec: ExecutionContext, client: Client): Future[_] = {
     val resFut = Future.traverse( newTags ) { ntag =>
       val nodeSearch = new MNodeSearchDfltImpl {
-        override def tagVertexFaceNameMatch = Some(ntag.face)
+        override def tagVxFace = Some(ntag.face)
         override def limit = 1
       }
       MNode.dynCount(nodeSearch)
