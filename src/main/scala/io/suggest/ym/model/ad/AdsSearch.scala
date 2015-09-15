@@ -7,6 +7,7 @@ import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import io.suggest.ym.model.common._
 
+
 /** Интерфейс для передачи параметров поиска объявлений в индексе/типе. */
 trait AdsSearchArgsT extends DynSearchArgs with TextQueryDsa with ReceiversDsa with ProducerIdsDsa with UserCatIdDsa
 with GenerationSortDsa with WithoutIdsDsa with ReceiversDsaOnlyPublishedByDefault with Limit with Offset {
@@ -39,12 +40,22 @@ trait AdsSimpleSearchT extends EsDynSearchStatic[AdsSearchArgsT] {
    * @return Фьючерс с кол-вом совпадений.
    */
   override def dynCount(adSearch: AdsSearchArgsT)(implicit ec: ExecutionContext, client: Client): Future[Long] = {
-    // Необходимо выкинуть из запроса ненужные части.
-    val adSearch2 = new AdsSearchArgsWrapper {
-      override type WT = AdsSearchArgsT
-      override def _dsArgsUnderlying = adSearch
-      override def generationOpt = None
+
+    // Если в search-аргументах есть определённо ненужные составляющие, то надо их срезать.
+    val adSearch2: AdsSearchArgsT = {
+      if (adSearch.generationOpt.nonEmpty) {
+        // Необходимо выкинуть из запроса ненужные части.
+        new AdsSearchArgsWrapper {
+          override type WT = AdsSearchArgsT
+          override def _dsArgsUnderlying = adSearch
+          override def generationOpt = None
+        }
+      } else {
+
+        adSearch
+      }
     }
+
     super.dynCount(adSearch2)
   }
 

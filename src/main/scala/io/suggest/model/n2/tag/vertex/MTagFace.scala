@@ -1,6 +1,7 @@
 package io.suggest.model.n2.tag.vertex
 
 import io.suggest.model.{PrefixedFn, IGenEsMappingProps}
+import io.suggest.util.SioConstants
 import io.suggest.util.SioEsUtil._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -15,13 +16,25 @@ object MTagFace extends IGenEsMappingProps with PrefixedFn {
 
   override protected def _PARENT_FN = MTagVertex.FACES_ESFN
 
-  val NAME_FN    = "r"
+  /** Имя поля с именем. Индексируется для FTS-поиска. */
+  val NAME_FN    = "n"
+  /** Полное абсолютное имя name-поля. */
   def NAME_ESFN  = _fullFn(NAME_FN)
+
+  /** NAME-подполе, индексируется для ngram-поиска по первым буквам. */
+  def NAME_NGRAM_SUBFN = SioConstants.SUBFIELD_ENGRAM
+  def NAME_NGRAM_FN    = _fullFn(NAME_FN, NAME_NGRAM_SUBFN)
+  def NAME_NGRAM_ESFN  = _fullFn(NAME_NGRAM_FN)
 
   override def generateMappingProps: List[DocField] = {
     List(
       // TODO Нужно анализировать по ngram и fts_nostop. Сортировка по этому полю не требуется.
-      FieldString(NAME_FN, index = FieldIndexingVariants.analyzed, include_in_all = true)
+      FieldString(
+        id = NAME_FN,
+        index = FieldIndexingVariants.analyzed,
+        include_in_all = true,
+        analyzer = SioConstants.FTS_NOSTOP_AN
+      )
     )
   }
 

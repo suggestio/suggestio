@@ -63,7 +63,7 @@ object MAd
     FieldSource(enabled = true),
     FieldAll(
       enabled = true,
-      index_analyzer  = SioConstants.EDGE_NGRAM_AN_1,
+      index_analyzer  = SioConstants.ENGRAM_AN_1,
       search_analyzer = SioConstants.DFLT_AN
     )
   )

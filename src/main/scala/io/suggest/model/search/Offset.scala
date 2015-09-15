@@ -18,6 +18,11 @@ trait Offset extends DynSearchArgs {
     srb1.setFrom(Math.max(0, offset))
   }
 
+  override def toStringBuilder: StringBuilder = {
+    fmtColl2sb("offset", Seq(offset), super.toStringBuilder)
+  }
+  override def sbInitSize: Int = super.sbInitSize + 16
+
 }
 
 

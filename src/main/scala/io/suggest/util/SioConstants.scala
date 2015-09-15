@@ -38,31 +38,34 @@ object SioConstants {
 
   // Названия анализаторов. А зачем они тут, если относятся только к SioEsUtil?
   /** Минимальный анализатор, без излишеств. */
-  def MINIMAL_AN    = "aMinimal"
+  def MINIMAL_AN        = "aMinimal"
 
   /** Делает n-граммы с первой буквы. */
-  def EDGE_NGRAM_AN_1 = "aEdgeNgram1"
+  def ENGRAM_AN_1       = "aEdgeNgram1"
+  
+  /** Аналайзер для генерации edge-ngram с 1-й буквы, но без языковой обработки типа стемминга и  */
+  def ENGRAM1_NOSTOP_AN = ENGRAM_AN_1 + "NoStop"
 
   /** Делает n-граммы со второй буквы. */
-  def EDGE_NGRAM_AN_2 = "aEdgeNgram2"
+  def ENGRAM_AN_2       = "aEdgeNgram2"
 
   /** Дробит тексты и слова для обычной индексации. */
-  def FTS_RU_AN       = "aFtsRu"
+  def FTS_RU_AN         = "aFtsRu"
 
   /** deep ngram: дробить на ngram'мы по максимуму. Полезно для списка комбинируемых флагов. */
-  def DEEP_NGRAM_AN   = "deepNgram"
+  def DEEP_NGRAM_AN     = "deepNgram"
 
   /** keyword tokenizer */
-  def KEYWORD_TN      = "kw"
+  def KEYWORD_TN        = "kw"
 
   /** KeyWord LowerCase ANalyzer. Для целостной индексации тегов узлов ADN. */
-  def KW_LC_AN        = "tag"
+  def KW_LC_AN          = "tag"
 
   /** Полнотекстовый поиск по [коротким] тегам, без фильтрации стоп-слов. */
-  def FTS_NOSTOP_AN      = "ftsNoStop"
+  def FTS_NOSTOP_AN     = "ftsNoStop"
 
   /** id дефолтового анализатора. */
-  def DFLT_AN         = "default"
+  def DFLT_AN           = "default"
 
 
   //v1: Суффиксы multi-полей

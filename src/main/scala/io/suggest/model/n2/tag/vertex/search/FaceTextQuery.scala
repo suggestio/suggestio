@@ -10,14 +10,14 @@ import org.elasticsearch.index.query.{MatchQueryBuilder, QueryBuilders, FilterBu
  * Created: 14.09.15 14:54
  * Description: Текстовый поиск по фейсам-именам узлов-тегов.
  */
-trait TagVertexFaceTextMatch extends DynSearchArgs {
+trait FaceTextQuery extends DynSearchArgs {
 
   /** match-содержимое для матчинга по имени тега. */
-  def tagVertexFaceNameMatch: Option[String]
+  def tagVxFace: Option[String]
 
   override def toEsQueryOpt: Option[QueryBuilder] = {
     val qb0Opt = super.toEsQueryOpt
-    val tvfOpt = tagVertexFaceNameMatch
+    val tvfOpt = tagVxFace
     if (tvfOpt.isEmpty) {
       qb0Opt
 
@@ -42,17 +42,30 @@ trait TagVertexFaceTextMatch extends DynSearchArgs {
     }
   }
 
+  override def toStringBuilder: StringBuilder = {
+    fmtColl2sb("tagVxFace", tagVxFace, super.toStringBuilder)
+  }
+  override def sbInitSize: Int = {
+    val l1 = super.sbInitSize
+    val tvf = tagVxFace
+    if (tvf.nonEmpty) {
+      l1 + 20 + tvf.get.length
+    } else {
+      l1
+    }
+  }
+
 }
 
 
-/** Дефолтовая реализация [[TagVertexFaceTextMatch]]. */
-trait TagVertexFaceTextMatchDflt extends TagVertexFaceTextMatch {
-  override def tagVertexFaceNameMatch: Option[String] = None
+/** Дефолтовая реализация [[FaceTextQuery]]. */
+trait FaceTextQueryDflt extends FaceTextQuery {
+  override def tagVxFace: Option[String] = None
 }
 
 
-/** Враппер для реализаций [[TagVertexFaceTextMatch]]. */
-trait TagVertexFaceTextMatchWrap extends TagVertexFaceTextMatch with DynSearchArgsWrapper {
-  override type WT <: TagVertexFaceTextMatch
-  override def tagVertexFaceNameMatch = _dsArgsUnderlying.tagVertexFaceNameMatch
+/** Враппер для реализаций [[FaceTextQuery]]. */
+trait FaceTextQueryWrap extends FaceTextQuery with DynSearchArgsWrapper {
+  override type WT <: FaceTextQuery
+  override def tagVxFace = _dsArgsUnderlying.tagVxFace
 }

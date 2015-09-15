@@ -21,6 +21,18 @@ trait ReturnVersion extends DynSearchArgs {
     srb1
   }
 
+  override def toStringBuilder: StringBuilder = {
+    fmtColl2sb("retVsn", returnVersion, super.toStringBuilder)
+  }
+  override def sbInitSize: Int = {
+    val l0 = super.sbInitSize
+    val rv = returnVersion
+    if (rv.isDefined) {
+      l0 + 18
+    } else {
+      l0
+    }
+  }
 }
 
 

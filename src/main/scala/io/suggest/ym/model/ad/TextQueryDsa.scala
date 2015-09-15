@@ -3,7 +3,7 @@ package io.suggest.ym.model.ad
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import io.suggest.util.SioConstants
 import io.suggest.util.text.TextQueryV2Util
-import org.elasticsearch.index.query.QueryBuilder
+import org.elasticsearch.index.query.{QueryBuilders, FilterBuilders, QueryBuilder}
 
 /**
  * Suggest.io
@@ -18,16 +18,23 @@ trait TextQueryDsa extends DynSearchArgs {
 
   def qOptField: String = SioConstants.FIELD_ALL
 
-  /** Сборка EsQuery сверху вниз. */
   override def toEsQueryOpt: Option[QueryBuilder] = {
-    super.toEsQueryOpt.orElse {
-      qOpt.flatMap[QueryBuilder] { q =>
-        // Собираем запрос текстового поиска.
-        // TODO Для коротких запросов следует искать по receiverId и фильтровать по qStr (query-filter + match-query).
-        TextQueryV2Util.queryStr2QueryMarket(q, qOptField)
-          .map { _.q }
-      }
+    val ftsQueryOpt = qOpt.flatMap[QueryBuilder] { q =>
+      // Собираем запрос текстового поиска.
+      // TODO Для коротких запросов следует искать по receiverId и фильтровать по qStr (query-filter + match-query).
+      TextQueryV2Util.queryStr2QueryMarket(q, qOptField)
+        .map { _.q }
     }
+    super.toEsQueryOpt
+      .flatMap { qb0 =>
+        ftsQueryOpt map { ftsQuery =>
+          val filter = FilterBuilders.queryFilter(ftsQuery)
+          QueryBuilders.filteredQuery(qb0, filter)
+        }
+      }
+      .orElse {
+        ftsQueryOpt
+      }
   }
 
   /** Для форматирования вывода используется эта функция. Выводит в lucene формате: field:value. */

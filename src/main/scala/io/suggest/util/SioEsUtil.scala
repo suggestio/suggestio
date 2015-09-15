@@ -284,7 +284,7 @@ object SioEsUtil extends MacroLogsImpl {
             filters = filters0
           ),
           CustomAnalyzer(
-            id = EDGE_NGRAM_AN_2,
+            id = ENGRAM_AN_2,
             tokenizer = STD_TN,
             filters = filters0 ++ List(EDGE_NGRAM_FN_2)
           ),
@@ -351,6 +351,15 @@ object SioEsUtil extends MacroLogsImpl {
     )
   }
 
+  /** Сборка аналайзера, готовящего текст к индексации как по ENGRAM1, но БЕЗ фильтрации стоп-слов. */
+  def _ENGRAM_AN1_NOSTOP : Analyzer = {
+    CustomAnalyzer(
+      id        = ENGRAM1_NOSTOP_AN,
+      tokenizer = STD_FN,
+      filters   = Seq(STD_FN, WORD_DELIM_FN, LOWERCASE_FN, STEM_RU_FN, STEM_EN_FN)
+    )
+  }
+
   /**
    * Сборка индекса по архитектуре второго поколения: без повсеместного edgeNgram, который жрёт как не в себя.
    * v2.1 добавляет кое-какой ngram analyzer для очень узконаправленных нужд.
@@ -400,13 +409,13 @@ object SioEsUtil extends MacroLogsImpl {
               filters = filters1
             ),
             CustomAnalyzer(
-              id = EDGE_NGRAM_AN_1,
+              id = ENGRAM_AN_1,
               charFilters = chFilters,
               tokenizer = STD_TN,
               filters = filters1 ++ List(EDGE_NGRAM_FN_1)
             ),
             CustomAnalyzer(
-              id = EDGE_NGRAM_AN_2,
+              id = ENGRAM_AN_2,
               charFilters = chFilters,
               tokenizer = STD_TN,
               filters = filters1 ++ List(EDGE_NGRAM_FN_2)
@@ -420,7 +429,8 @@ object SioEsUtil extends MacroLogsImpl {
             _DEEP_NGRAM_ANALYZER,
             // v2.2
             _KW_LC_ANALYZER,
-            _FTS_NOSTOP_AN
+            _FTS_NOSTOP_AN,
+            _ENGRAM_AN1_NOSTOP
           )
         }
       )
@@ -436,7 +446,8 @@ object SioEsUtil extends MacroLogsImpl {
         ),
         analyzers = Seq(
           _KW_LC_ANALYZER,
-          _FTS_NOSTOP_AN
+          _FTS_NOSTOP_AN,
+          _ENGRAM_AN1_NOSTOP
         )
       )
     }
@@ -497,7 +508,7 @@ object SioEsUtil extends MacroLogsImpl {
         FieldString(
           id              = SUBFIELD_ENGRAM,
           index           = FieldIndexingVariants.analyzed,
-          index_analyzer  = EDGE_NGRAM_AN_2,
+          index_analyzer  = ENGRAM_AN_2,
           search_analyzer = MINIMAL_AN,
           term_vector     = TermVectorVariants.with_positions_offsets,
           boost           = Some(boostNGram),

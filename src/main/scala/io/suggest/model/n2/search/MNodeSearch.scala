@@ -1,6 +1,6 @@
 package io.suggest.model.n2.search
 
-import io.suggest.model.n2.tag.vertex.search._
+import io.suggest.model.n2.tag
 import io.suggest.model.search._
 
 /**
@@ -12,7 +12,7 @@ import io.suggest.model.search._
 trait MNodeSearch
   extends Limit
   with Offset
-  with TagVertexFaceTextMatch
+  with tag.vertex.search.FaceTextQuery
 
 
 /** Объединенные дефолтовые реализация поисковых критериев [[MNodeSearch]]. */
@@ -20,7 +20,7 @@ trait MNodeSearchDflt
   extends MNodeSearch
   with LimitDflt
   with OffsetDflt
-  with TagVertexFaceTextMatchDflt
+  with tag.vertex.search.FaceTextQueryDflt
 /** Дефолтовая реализация [[MNodeSearchDflt]]. Упрощает жизнь компилятору. */
 class MNodeSearchDfltImpl
   extends MNodeSearchDflt
@@ -31,7 +31,7 @@ trait MNodeSearchWrap
   extends MNodeSearch
   with LimitWrap
   with OffsetWrap
-  with TagVertexFaceTextMatchWrap
+  with tag.vertex.search.FaceTextQueryWrap
 {
   override type WT <: MNodeSearch
 }

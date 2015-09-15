@@ -23,6 +23,11 @@ trait Limit extends DynSearchArgs {
     srb1.setSize(lim)
   }
 
+  override def toStringBuilder: StringBuilder = {
+    fmtColl2sb("limit", Seq(limit), super.toStringBuilder)
+  }
+  override def sbInitSize: Int = super.sbInitSize + 16
+
 }
 
 
