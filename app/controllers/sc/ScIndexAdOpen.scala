@@ -1,6 +1,8 @@
 package controllers.sc
 
 import io.suggest.ym.model.MAd
+import io.suggest.ym.model.ad.AdsSearchArgsDfltImpl
+import io.suggest.ym.model.common.{AdShowLevels, SlNameTokenStr}
 import models.{MAdnNode, MAdnNodeCache}
 import models.im.DevScreen
 import models.msc.{MScApiVsn, ScReqArgsDflt, ScReqArgs}
@@ -34,17 +36,30 @@ trait ScIndexAdOpen extends ScFocusedAds with ScIndexNodeCommon {
       if logic.is3rdPartyProducer( producerId )
 
       producer <- {
-        val fut = MAdnNodeCache.getById(producerId)
+        // 2015.sep.16: Нельзя перепрыгивать на продьюсера, у которого не больше одной карточки на главном экране.
+        val prodAdsCountFut: Future[Long] = {
+          val args = new AdsSearchArgsDfltImpl {
+            override def receiverIds  = Seq(producerId)
+            override def levels       = Seq(AdShowLevels.LVL_START_PAGE)
+            override def limit        = 2
+          }
+          MAd.dynCount(args)
+        }
+
+        val prodFut = MAdnNodeCache.getById(producerId)
           .map(_.get)
         // Как выяснилось, бывают карточки-сироты (продьюсер удален, карточка -- нет). Нужно сообщать об этой ошибке.
-        fut onFailure { case ex =>
+        prodFut onFailure { case ex =>
           val msg = s"Producer node does not exist: adnId=$producerId for adIds=${logic._adSearch.firstIds}"
           if (ex.isInstanceOf[NoSuchElementException])
             LOGGER.error(msg)
           else
             LOGGER.error(msg, ex)
         }
-        fut
+        // Фильтруем prodFut по кол-ву карточек, размещенных у него на главном экране.
+        prodAdsCountFut
+          .filter { _ > 1 }
+          .flatMap { _ => prodFut }
       }
 
       result <- _goToProducerIndex(producer, logic)

@@ -1,7 +1,7 @@
 package util.adn
 
 import controllers.routes
-import io.suggest.ym.model.ad.AdsSearchArgsDflt
+import io.suggest.ym.model.ad.AdsSearchArgsDfltImpl
 import io.suggest.ym.model.common.{NodeConf, AdnMemberShowLevels}
 import models._
 import models.madn.NodeDfltColors
@@ -155,7 +155,7 @@ object NodesUtil extends PlayMacroLogsImpl {
       .filter { _.nonEmpty }
       // Собрать id карточек, относящиеся к заданным узлам-источникам.
       .flatMap { prodIds =>
-        val dsa0 = new AdsSearchArgsDflt {
+        val dsa0 = new AdsSearchArgsDfltImpl {
           override def producerIds = prodIds
           override val limit = Math.max(50, count * 2)
           override def offset = 0

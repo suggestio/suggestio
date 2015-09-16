@@ -123,12 +123,12 @@
   @lkBlock("Управление") {
 
     @btn(
-      href = routes.SysMarket.showAdnNodeAds(new AdSearch { override def producerIds = adnNode.id.toList }),
+      href = routes.SysMarket.showAdnNodeAds(new AdSearchImpl { override def producerIds = adnNode.id.toList }),
       paddingPx = 28
     ) { Собственные<br/>рекламные<br/>карточки }
 
     @btn(
-      href = routes.SysMarket.showAdnNodeAds(new AdSearch { override def receiverIds = adnNode.id.toList }),
+      href = routes.SysMarket.showAdnNodeAds(new AdSearchImpl { override def receiverIds = adnNode.id.toList }),
       paddingPx  = 28
     ) { Рекламные<br/>карточки<br/>в выдаче }
 

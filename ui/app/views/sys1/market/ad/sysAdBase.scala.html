@@ -9,7 +9,7 @@
   /
   @defining( nodeOpt.flatMap(_.id).orElse( madOpt.map(_.producerId) ) ) { adnIdOpt =>
     @adnIdOpt.map { adnId =>
-      <a href="@routes.SysMarket.showAdnNodeAds(new AdSearch { override def producerIds = Seq(adnId) })">
+      <a href="@routes.SysMarket.showAdnNodeAds(new AdSearchImpl { override def producerIds = Seq(adnId) })">
     }
     Карточки
     @if(adnIdOpt) {

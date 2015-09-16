@@ -4,7 +4,7 @@ import models.im.DevScreen
 import models.msc.{MScApiVsns, MScApiVsn}
 import play.api.mvc.QueryStringBindable
 import play.api.Play.{current, configuration}
-import io.suggest.ym.model.ad.{AdsSearchArgsWrapper, AdsSearchArgsDflt}
+import io.suggest.ym.model.ad.{AdsSearchArgsDfltImpl, AdsSearchArgsWrapper, AdsSearchArgsDflt}
 import util.qsb.{CommaDelimitedStringSeq, QsbKey1T}
 import util.qsb.QsbUtil._
 import io.suggest.ad.search.AdSearchConstants._
@@ -74,7 +74,7 @@ object AdSearch extends CommaDelimitedStringSeq {
             _apiVsn     <- maybeApiVsn.right
             _firstIds   <- maybeFirstIds.right
           } yield {
-            new AdSearch {
+            new AdSearchImpl {
               override def apiVsn         = _apiVsn
               override def receiverIds    = maybeRcvrIdOpt
               override def producerIds    = maybeProdIdOpt
@@ -194,6 +194,14 @@ trait AdSearch extends AdsSearchArgsDflt { that =>
   }
 
 }
+
+/** Дефолтовая реализация [[AdSearch]], очень облегчающая жизнь компилятору и кодогенератору.
+  * Анонимные реализации new [[AdSearch]]{...} дают от 14кб+ на выходе,
+  * а данный new AdSearchImpl{...} -- от 1,5кб всего лишь. */
+class AdSearchImpl
+  extends AdsSearchArgsDfltImpl
+  with AdSearch
+
 
 /** Враппер для [[AdSearch]] с абстрактным типом. Пригоден для дальнейшего расширения в иных моделях. */
 trait AdSearchWrapper_ extends AdSearch with AdsSearchArgsWrapper {
