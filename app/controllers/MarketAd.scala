@@ -4,6 +4,7 @@ import akka.actor.ActorSystem
 import com.google.inject.Inject
 import models.im.MImg
 import models.jsm.init.MTargets
+import models.mtag.MTagUtil
 import org.joda.time.DateTime
 import play.api.i18n.{MessagesApi, Lang, Messages}
 import play.api.libs.json.JsValue
@@ -25,6 +26,8 @@ import controllers.ad.MarketAdFormUtil
 import MarketAdFormUtil._
 import io.suggest.ym.model.common.Texts4Search
 import io.suggest.ad.form.AdFormConstants._
+
+import scala.util.{Failure, Success}
 
 /**
  * Suggest.io
@@ -129,7 +132,7 @@ class MarketAd @Inject() (
         val saveImgsFut = bc.saveImgs(newImgs = bim, oldImgs = Map.empty, blockHeight = mad.blockMeta.height)
         val t4s2Fut = newTexts4search(mad, request.adnNode)
         // Когда всё готово, сохраняем саму карточку.
-        for {
+        val adIdFut = for {
           t4s2      <- t4s2Fut
           savedImgs <- saveImgsFut
           adId      <- {
@@ -140,9 +143,20 @@ class MarketAd @Inject() (
             ).save
           }
         } yield {
+          adId
+        }
+        // Сборка HTTP-ответа.
+        val resFut = adIdFut map { adId =>
           Redirect(routes.MarketLkAdn.showNodeAds(adnId, newAdId = Some(adId)))
             .flashing("success" -> "Рекламная карточка создана.")
         }
+        // Сохранение новых тегов в MNode.
+        adIdFut.onSuccess { case _ =>
+          val fut = MTagUtil.handleNewTagsM(mad.tags)
+          logTagsUpdate(fut, logPrefix)
+        }
+        // Возврат HTTP-ответа.
+        resFut
       }
     )
   }
@@ -214,9 +228,10 @@ class MarketAd @Inject() (
     import request.mad
     val formM = getAdFormM()
     val formBinded = formM.bindFromRequest()
+    lazy val logPrefix = s"editShopAdSubmit($adId): "
     formBinded.fold(
       {formWithErrors =>
-        debug(s"editShopAdSubmit($adId): Failed to bind form: " + formWithErrors.errors)
+        debug(logPrefix + "Failed to bind form: " + formWithErrors.errors)
         renderFailedEditFormWith(formWithErrors)
       },
       {case (mad2, bim) =>
@@ -229,8 +244,8 @@ class MarketAd @Inject() (
           oldImgs = mad.imgs,
           blockHeight = mad2.blockMeta.height
         )
-        // 2014.09.22: Обновление карточки переписано на потоко-безопасный манер с как-бы immutable-полями.
-        for {
+        // Произвести действия по сохранению карточки.
+        val saveFut = for {
           imgsSaved <- saveImgsFut
           t4s2      <- t4s2Fut
           _adId     <- MAd.tryUpdate(request.mad) { mad0 =>
@@ -253,11 +268,30 @@ class MarketAd @Inject() (
             )
           }
         } yield {
+          // Просто надо что-нибудь вернуть...
+          _adId
+        }
+        // Запустить сборку HTTP-ответа.
+        val resFut = saveFut map { _ =>
           Redirect(routes.MarketLkAdn.showNodeAds(mad.producerId))
             .flashing("success" -> "Изменения сохранены")
         }
+        // Параллельно произвести обновление графа MNode на предмет новых тегов:
+        saveFut.onSuccess { case _ =>
+          val fut = MTagUtil.handleNewTagsI(mad2,  oldTags = mad)
+          logTagsUpdate(fut, logPrefix)
+        }
+        // Вернуть HTTP-ответ
+        resFut
       }
     )
+  }
+
+  private def logTagsUpdate(fut: Future[_], logPrefix: => String): Unit = {
+    fut.onComplete {
+      case Success(res) => trace(logPrefix + "saved tag nodes: " + res)
+      case Failure(ex)  => error(logPrefix + "failed to save tag nodes", ex)
+    }
   }
 
   /** Рендер окошка с подтверждением удаления рекламной карточки. */

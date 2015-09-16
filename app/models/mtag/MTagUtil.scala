@@ -3,11 +3,12 @@ package models.mtag
 import io.suggest.model.n2.MNode
 import io.suggest.model.n2.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.tag.MNodeTagInfo
+import io.suggest.model.n2.tag.edge.ITags
 import io.suggest.model.n2.tag.vertex.{MTagFace, MTagVertex}
-import models.MTagEdge
-import org.elasticsearch.client.Client
+import models.{TagsMap_t, MTagEdge}
 import util.PlayMacroLogsImpl
 import util.event.SiowebNotifier.Implicts.sn
+import util.SiowebEsUtil.client
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
@@ -29,8 +30,8 @@ object MTagUtil extends PlayMacroLogsImpl {
    * @param newTags Новый набор тегов.
    * @return Фьючерс.
    */
-  def handleNewTags(newTags: Iterable[MTagEdge], oldTags: Iterable[MTagEdge] = Nil)
-                   (implicit ec: ExecutionContext, client: Client): Future[_] = {
+  def handleNewTagsL(newTags: Iterable[MTagEdge], oldTags: Iterable[MTagEdge] = Nil)
+                   (implicit ec: ExecutionContext): Future[_] = {
     val resFut = Future.traverse( newTags ) { ntag =>
       val nodeSearch = new MNodeSearchDfltImpl {
         override def tagVxFace = Some(ntag.face)
@@ -66,5 +67,18 @@ object MTagUtil extends PlayMacroLogsImpl {
 
     idsFut
   }
+
+  def handleNewTagsM(newTags: TagsMap_t, oldTags: TagsMap_t = Map.empty)
+                   (implicit ec: ExecutionContext): Future[_] = {
+    handleNewTagsL(
+      newTags = MTagEdge.map2tags( newTags ),
+      oldTags = MTagEdge.map2tags( oldTags )
+    )
+  }
+
+  def handleNewTagsI(newTags: ITags, oldTags: ITags)(implicit ec: ExecutionContext): Future[_] = {
+    handleNewTagsM(newTags.tags,  oldTags = oldTags.tags)
+  }
+
 
 }
