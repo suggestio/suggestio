@@ -4,7 +4,7 @@ import io.suggest.model._
 import io.suggest.model.n2.search.MNodeSearch
 import io.suggest.model.n2.tag.{MNodeTagInfoMappingT, MNodeTagInfo}
 import io.suggest.model.search.EsDynSearchStatic
-import io.suggest.util.MacroLogsImpl
+import io.suggest.util.{SioConstants, MacroLogsImpl}
 import io.suggest.util.SioEsUtil._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -50,8 +50,12 @@ object MNode
 
   override def generateMappingStaticFields: List[Field] = {
     List(
-      FieldAll(enabled = true),
-      FieldSource(enabled = true)
+      FieldSource(enabled = true),
+      FieldAll(
+        enabled = true,
+        index_analyzer  = SioConstants.ENGRAM_AN_1,
+        search_analyzer = SioConstants.DFLT_AN
+      )
     )
   }
 

@@ -1,6 +1,7 @@
 package io.suggest.model.n2.tag.vertex
 
 import io.suggest.model.{PrefixedFn, IGenEsMappingProps}
+import io.suggest.primo.IName
 import io.suggest.util.SioConstants
 import io.suggest.util.SioEsUtil._
 import play.api.libs.json._
@@ -21,19 +22,14 @@ object MTagFace extends IGenEsMappingProps with PrefixedFn {
   /** Полное абсолютное имя name-поля. */
   def NAME_ESFN  = _fullFn(NAME_FN)
 
-  /** NAME-подполе, индексируется для ngram-поиска по первым буквам. */
-  def NAME_NGRAM_SUBFN = SioConstants.SUBFIELD_ENGRAM
-  def NAME_NGRAM_FN    = _fullFn(NAME_FN, NAME_NGRAM_SUBFN)
-  def NAME_NGRAM_ESFN  = _fullFn(NAME_NGRAM_FN)
-
   override def generateMappingProps: List[DocField] = {
     List(
-      // TODO Нужно анализировать по ngram и fts_nostop. Сортировка по этому полю не требуется.
       FieldString(
-        id = NAME_FN,
-        index = FieldIndexingVariants.analyzed,
-        include_in_all = true,
-        analyzer = SioConstants.FTS_NOSTOP_AN
+        id              = NAME_FN,
+        index           = FieldIndexingVariants.analyzed,
+        include_in_all  = true,
+        index_analyzer  = SioConstants.ENGRAM_AN_1,
+        search_analyzer = SioConstants.DFLT_AN
       )
     )
   }
@@ -49,7 +45,7 @@ object MTagFace extends IGenEsMappingProps with PrefixedFn {
   }
 
   implicit val facesMapReads: Reads[TagFacesMap] = {
-    __.read[Seq[MTagFace]]
+    __.read[Iterable[MTagFace]]
       .map { faces =>
         faces.iterator
           .map { face => face.name -> face }
@@ -58,10 +54,16 @@ object MTagFace extends IGenEsMappingProps with PrefixedFn {
   }
 
   implicit val facesMapWrites: Writes[TagFacesMap] = {
-    __.write[Seq[MTagFace]]
-      .contramap {
-        _.valuesIterator.toSeq
-      }
+    // TODO Тут костыль, избегающий contramap(), Writes[Seq[]], OWrites[]. См.ошибку в http://stackoverflow.com/a/27481370
+    // Когда будет больше одного аргумента, можно будет без этих извращений обойтись.
+    Writes[TagFacesMap] { tfmap =>
+      val writer = implicitly[ Writes[MTagFace] ]
+      val seq1 = tfmap
+        .valuesIterator
+        .map { writer.writes }
+        .toSeq
+      JsArray(seq1)
+    }
   }
 
 
@@ -74,6 +76,13 @@ object MTagFace extends IGenEsMappingProps with PrefixedFn {
 }
 
 
+/** Интерфейс tag-face модели. */
+trait ITagFace
+  extends IName
+
+
+/** Дефолтовая реализация [[ITagFace]] модели. */
 case class MTagFace(
   name: String
 )
+  extends ITagFace

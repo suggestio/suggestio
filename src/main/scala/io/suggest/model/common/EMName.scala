@@ -2,6 +2,7 @@ package io.suggest.model.common
 
 import io.suggest.model._
 import io.suggest.model.EsModel.{FieldsJsonAcc, stringParser}
+import io.suggest.primo.IName
 import io.suggest.util.SioEsUtil._
 import play.api.libs.json.JsString
 
@@ -45,9 +46,8 @@ trait EMNameStaticMut extends EsModelStaticMutAkvT with EMNameStatic {
 }
 
 
-trait EMName extends EsModelPlayJsonT {
+trait EMName extends EsModelPlayJsonT with IName {
   override type T <: EMName
-  def name: String
 
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     (NAME_ESFN, JsString(name)) :: super.writeJsonFields(acc)

@@ -10,7 +10,8 @@ import play.api.libs.json._
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 03.09.15 9:37
- * Description: Модель одного тега узла.
+ * Description: Модель одного указателя на тег из одного узла ADN и N2.
+ * По сути это нечеткое ребро графа, способное указывать на несколько тегов одновременно.
  */
 
 object MTagEdge extends PrefixedFn {
@@ -68,11 +69,20 @@ object MTagEdge extends PrefixedFn {
       .toMap
   }
 
-  /** Приведение карты тегов к отсортированному по алфавиту списку. */
-  def map2sortedTags(tmap: TagsMap_t): List[MTagEdge] = {
+  /** Приведение карты тегов к последовательности в неопределенном порядке. */
+  def map2tags(tmap: TagsMap_t): List[MTagEdge] = {
     tmap.valuesIterator
       .toList
-      .sortBy(_.face)
+  }
+
+  /** Приведение карты тегов к отсортированному по алфавиту списку. */
+  def map2sortedTags(tmap: TagsMap_t): List[MTagEdge] = {
+    if (tmap.nonEmpty) {
+      map2tags(tmap)
+        .sortBy(_.face)
+    } else {
+      Nil
+    }
   }
 
 }
@@ -81,7 +91,7 @@ object MTagEdge extends PrefixedFn {
 /** Интерфейс экземпляров модели. */
 trait ITagEdge {
 
-  /** Человеко-читабельное значение тега, почищенное в общих чертах. */
+  /** Человеко-читабельное и понимабельное название тега, почищенное в общих чертах. */
   def face : String
 
 }
