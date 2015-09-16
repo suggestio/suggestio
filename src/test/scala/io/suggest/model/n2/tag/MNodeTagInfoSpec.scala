@@ -19,7 +19,7 @@ class MNodeTagInfoSpec extends FlatSpec {
     mapped.get  shouldBe  mnti
   }
 
-  "MNodeTagInfo" should "support EMPTY JSON serialize/deserialize" in {
+  classOf[MNodeTagInfo].getSimpleName  should  "support EMPTY JSON serialize/deserialize" in {
     t( MNodeTagInfo.empty )
   }
 

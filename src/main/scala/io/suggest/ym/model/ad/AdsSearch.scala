@@ -20,7 +20,8 @@ with GenerationSortDsa with WithoutIdsDsa with ReceiversDsaOnlyPublishedByDefaul
 trait AdsSearchArgsDflt extends AdsSearchArgsT with TextQueryDsaDflt with ReceiversDsaDflt
 with ProducerIdsDsaDflt with UserCatIdDsaDflt with GenerationSortDsaDflt with WithoutIdsDsaDflt
 with LimitDflt with OffsetDflt
-
+/** Дефолтовая реализация [[AdsSearchArgsDflt]] для облегчения жизни компилятору. */
+class AdsSearchArgsDfltImpl extends AdsSearchArgsDflt
 
 
 /** Враппер для аргументов поиска рекламных карточек. */

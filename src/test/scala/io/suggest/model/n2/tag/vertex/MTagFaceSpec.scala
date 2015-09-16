@@ -14,7 +14,7 @@ class MTagFaceSpec extends FlatSpec {
   private def mtf1 = MTagFace("лестые грибы")
   private def mtf2 = MTagFace("ягоды")
 
-  "MTagSpec" should "do JSON serialization/deserialization" in {
+  classOf[MTagFace].getSimpleName should "do JSON serialization/deserialization" in {
     val mtf = mtf1
     val jsVal = Json.toJson(mtf)
     val parsed = jsVal.validate[MTagFace]

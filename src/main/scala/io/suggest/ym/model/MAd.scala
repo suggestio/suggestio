@@ -215,7 +215,7 @@ final class MAdJmx(implicit val ec: ExecutionContext, val client: Client, val sn
   def companion = MAd
 
   override def searchForReceiverAtPubLevel(receiverId: String, level: String): String = {
-    val searchArgs = new AdsSearchArgsDflt {
+    val searchArgs = new AdsSearchArgsDfltImpl {
       override def levels = List(level.trim)
         .filter(!_.isEmpty)
         .flatMap(SinkShowLevels.maybeWithName)
