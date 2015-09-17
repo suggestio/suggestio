@@ -5,7 +5,9 @@
 @import datetime._
 @import io.suggest.vlines.VLines
 
-@billingBase("Весь биллинг") {
+@hPathAfter1 = { }
+
+@billingBase("Весь биллинг", hPathAfter = Some(hPathAfter1)) {
 
   <div class="sys_t">
     Общий биллинг

@@ -8,13 +8,19 @@
 @billingBase("Массовое обновление посуточных тарифов") {
 
   <div class="__bg_lightpink">
+
+    <p>Все имеющиеся в системе посуточные тарифы будут перезаписаны указанными данными.</p>
+    <br/>
+
     @_mmpDailyFormTpl(
       mdf        = mdf,
       btnText    = messages("Overwrite.all"),
       mcals      = mcals,
       submitCall = routes.SysMarketBillingMmp.updateAllSubmit()
     )
-  </div>
 
+    <p>Эту операцию нельзя отменить.</p>
+
+  </div>
 
 }

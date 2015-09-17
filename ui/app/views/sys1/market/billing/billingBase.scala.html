@@ -2,7 +2,10 @@
 
 @* Подложка страниц с управлением биллингом. *@
 
+@import ctx.messages
+
 @hPathAfter1 = {
+  / <a href="@routes.SysMarketBilling.index()">@messages("Billing")</a>
   @mbcOpt.map { mbc =>
     / <a href="@routes.SysMarketBilling.billingFor(mbc.adnId)">@mbc.legalContractId</a>
   }

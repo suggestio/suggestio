@@ -210,6 +210,11 @@ class SysMarketBillingMmp @Inject() (
       .map { Ok(_) }
   }
 
+  /**
+   * Рендер страницы с формой массового редактирования тарифов.
+   * @param formM Маппинг формы для рендера.
+   * @return HTML страницы формы редактирования.
+    */
   private def _updateAllFormHtml(formM: Form[MBillMmpDaily])(implicit request: AbstractRequestWithPwOpt[_]): Future[Html] = {
     val mcalsFut = MCalendar.getAll()
     for {
