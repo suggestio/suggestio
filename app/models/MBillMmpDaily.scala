@@ -65,6 +65,17 @@ object MBillMmpDaily extends FindByContract with FromJson {
       .as(rowParser *)
   }
 
+  /**
+   * Обновить (reset) всю таблицу по шаблону.
+   * @param template Шаблон.
+   * @return Кол-во обновлённых рядов.
+   */
+  def updateAll(template: MBillMmpDaily)(implicit c: Connection): Int = {
+    SQL(updateSqlPreamble)
+      .on(template.dataSqlArgs : _*)
+      .executeUpdate()
+  }
+
   /** Десериализация того, что хранилось в виде JSON, например внутри [[MInviteRequest]]. */
   val fromJson: PartialFunction[Any, MBillMmpDaily] = {
     case jmap: ju.Map[_,_] =>
@@ -84,16 +95,38 @@ object MBillMmpDaily extends FindByContract with FromJson {
   }
 
   object Dflts {
+    private def c(key: String): String = {
+      "sys.mmp.daily." + key + ".dflt"
+    }
+    private def s(key: String): Option[String] = {
+      configuration.getString(c(key))
+    }
+    private def d(key: String): Option[Double] = {
+      configuration.getDouble(c(key))
+    }
     // Дефолтовые значения для формы создания нового mmp-тарификатора.
-    val CURRENCY_CODE   = configuration.getString("sys.mmp.daily.currency.code.dflt")
+    val CURRENCY_CODE   = s("currency.code")
       .fold(CurrencyCodeOpt.CURRENCY_CODE_DFLT)(_.toUpperCase)
-    val WEEKDAY         = configuration.getDouble("sys.mmp.daily.weekday.dflt").fold(1.0F)(_.toFloat)
-    val WEEKEND         = configuration.getDouble("sys.mmp.daily.weekend.dflt").fold(1.5F)(_.toFloat)
-    val PRIME           = configuration.getDouble("sys.mmp.daily.prime.dflt").fold(2.0F)(_.toFloat)
-    val ON_START_PAGE   = configuration.getDouble("sys.mmp.daily.on.startPage.dflt").fold(4.0F)(_.toFloat)
-    val ON_RCVR_CAT     = configuration.getDouble("sys.mmp.daily.on.rcvrCat.dflt").fold(2.0F)(_.toFloat)
-    val CAL_ID_WEEKEND  = configuration.getString("sys.mmp.daily.calId.weekend") getOrElse ""
-    val CAL_ID_PRIME    = configuration.getString("sys.mmp.daily.calId.prime") getOrElse CAL_ID_WEEKEND
+    val WEEKDAY         = d("weekday")
+      .fold(1.0F)(_.toFloat)
+    val WEEKEND         = d("weekend")
+      .fold(1.5F)(_.toFloat)
+    val PRIME           = d("prime")
+      .fold(2.0F)(_.toFloat)
+    val ON_START_PAGE   = d("on.startPage")
+      .fold(4.0F)(_.toFloat)
+    val ON_RCVR_CAT     = d("on.rcvrCat")
+      .fold(2.0F)(_.toFloat)
+    val CAL_ID_WEEKEND  = s("calId.weekend")
+      .getOrElse("")
+    val CAL_ID_PRIME    = s("calId.prime")
+      .getOrElse(CAL_ID_WEEKEND)
+  }
+
+  private def updateSqlPreamble: String = {
+    s"UPDATE $TABLE_NAME SET $CURRENCY_CODE_FN = {currencyCode}, $MMP_WEEKDAY_FN = {mmpWeekday}, " +
+      s"$MMP_WEEKEND_FN = {mmpWeekend}, $MMP_PRIMETIME_FN = {mmpPrimetime}, $ON_START_PAGE_FN = {onStartPage}, " +
+      s"$ON_RCVR_CAT_FN = {onRcvrCat}, $WEEKEND_CAL_ID_FN = {weekendCalId}, $PRIME_CAL_ID_FN = {primeCalId} "
   }
 
 }
@@ -120,26 +153,31 @@ final case class MBillMmpDaily(
   override type T = MBillMmpDaily
 
   override def saveInsert(implicit c: Connection): T = {
+    val args = ('contractId -> contractId : NamedParameter) :: dataSqlArgs
     SQL(s"INSERT INTO $TABLE_NAME ($CONTRACT_ID_FN, $CURRENCY_CODE_FN, $MMP_WEEKDAY_FN, $MMP_WEEKEND_FN, $MMP_PRIMETIME_FN, $ON_START_PAGE_FN, $WEEKEND_CAL_ID_FN, $PRIME_CAL_ID_FN, $ON_RCVR_CAT_FN) " +
       "VALUES ({contractId}, {currencyCode}, {mmpWeekday}, {mmpWeekend}, {mmpPrimetime}, {onStartPage}, {weekendCalId}, {primeCalId}, {onRcvrCat})")
-      .on('contractId -> contractId, 'currencyCode -> currencyCode, 'mmpWeekday -> mmpWeekday, 'mmpWeekend -> mmpWeekend,
-          'mmpPrimetime -> mmpPrimetime, 'onStartPage -> onStartPage, 'weekendCalId -> weekendCalId, 'primeCalId -> primeCalId,
-          'onRcvrCat -> onRcvrCat)
+      .on(args: _*)
       .executeInsert(rowParser single)
   }
 
+  /** Аргументы для update */
+  def dataSqlArgs = {
+    List[NamedParameter](
+      'currencyCode -> currencyCode,  'mmpWeekday   -> mmpWeekday,    'mmpWeekend   -> mmpWeekend,
+      'onRcvrCat    -> onRcvrCat,     'mmpPrimetime -> mmpPrimetime,  'onStartPage  -> onStartPage,
+      'weekendCalId -> weekendCalId,  'primeCalId   -> primeCalId
+    )
+  }
+
   override def saveUpdate(implicit c: Connection): Int = {
-    SQL(s"UPDATE $TABLE_NAME SET $CURRENCY_CODE_FN = {currencyCode}, $MMP_WEEKDAY_FN = {mmpWeekday}, " +
-      s"$MMP_WEEKEND_FN = {mmpWeekend}, $MMP_PRIMETIME_FN = {mmpPrimetime}, $ON_START_PAGE_FN = {onStartPage}, " +
-      s"$ON_RCVR_CAT_FN = {onRcvrCat}, $WEEKEND_CAL_ID_FN = {weekendCalId}, $PRIME_CAL_ID_FN = {primeCalId} " +
-      s"WHERE $ID_FN = {id}")
-      .on('id -> id.get, 'currencyCode -> currencyCode, 'mmpWeekday -> mmpWeekday, 'mmpWeekend -> mmpWeekend,
-          'onRcvrCat -> onRcvrCat, 'mmpPrimetime -> mmpPrimetime, 'onStartPage -> onStartPage,
-          'weekendCalId -> weekendCalId, 'primeCalId -> primeCalId)
+    val args = ('id -> id.get : NamedParameter) :: dataSqlArgs
+    SQL(s"$updateSqlPreamble WHERE $ID_FN = {id}")
+      .on(args : _*)
       .executeUpdate()
   }
 
   /** Сериализация модели в JSON. Например, для нужд [[MInviteRequest]]. */
+  // TODO MarketJoinRequest не прижился, а этот, если нужен, код следует переписать через play.json, а не так всырую.
   override def toPlayJsonAcc: FieldsJsonAcc = {
     List(
       CONTRACT_ID_FN    -> JsNumber(contractId),

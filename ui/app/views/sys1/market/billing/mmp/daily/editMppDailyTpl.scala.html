@@ -1,10 +1,11 @@
-@(mbmd: MBillMmpDaily, mbc: MBillContract, mdf: Form[_], nodeOpt: Option[MAdnNode], mcals: Seq[MCalendar])(implicit ctx: Context)
+@(mbmd: MBillMmpDaily, mbc: MBillContract, mdf: Form[MBillMmpDaily], nodeOpt: Option[MAdnNode], mcals: Seq[MCalendar])(implicit ctx: Context)
 
 @* Страница с формой редактирования посуточного mmp-тарификатора. *@
 @import ctx._
 @import stuff._
 
 @mmpBase("Создание посуточного mmp-тарификатора", mbc = mbc, nodeOpt = nodeOpt) {
+
   @_deleteSmthFormBtnTpl( routes.SysMarketBillingMmp.deleteMmpDailySubmit(mbmd.id.get) )
 
   <div class="sys_t">Редактирование тарифного плана #@mbmd.id.get</div>

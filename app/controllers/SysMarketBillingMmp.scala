@@ -8,6 +8,7 @@ import models._
 import util.SiowebEsUtil.client
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.db.Database
+import util.async.AsyncUtil
 import views.html.sys1.market.billing.mmp.daily._
 import play.api.data._, Forms._
 import util.FormUtil._
@@ -28,12 +29,10 @@ class SysMarketBillingMmp @Inject() (
   extends SioControllerImpl with PlayMacroLogsImpl
 {
 
-  import LOGGER._
-
-  /** Маппинг формы для daly-тарификатора. */
-  private def mmpDailyFormM = {
+  /** Маппинг для формы редактирования [[models.MBillMmpDaily]]. */
+  private def mmpDailyM: Mapping[MBillMmpDaily] = {
     val floatGreaterThan1 = floatM.verifying(_ >= 1.0F)
-    Form(mapping(
+    mapping(
       "currencyCode"  -> currencyCodeOrDfltM,
       "mmpWeekday"    -> floatM,
       "mmpWeekend"    -> floatM,
@@ -59,16 +58,23 @@ class SysMarketBillingMmp @Inject() (
     {mbmd =>
       import mbmd._
       Some((currencyCode, mmpWeekday, mmpWeekend, mmpPrimetime, onStartPage, onRcvrCat, weekendCalId, primeCalId))
-    })
+    }
   }
 
+  /** Маппинг формы для одного daily-тарификатора. */
+  private def mmpFormM = Form(mmpDailyM)
 
-  /** Рендер страницы создания нового посуточного mmp-тарификтора.
-    * @param contractId номер договора.
-    */
-  def createMmpDaily(contractId: Int) = IsSuperuserContract(contractId).async { implicit request =>
+  private def mmpStubForm: Form[MBillMmpDaily] = {
     val mmpStub = MBillMmpDaily(contractId = -1)
-    val formM = mmpDailyFormM fill mmpStub
+    mmpFormM.fill(mmpStub)
+  }
+
+  /**
+   * Рендер страницы создания нового посуточного mmp-тарификтора.
+   * @param contractId номер договора.
+   */
+  def createMmpDaily(contractId: Int) = IsSuperuserContract(contractId).async { implicit request =>
+    val formM = mmpStubForm
     _createMmpDaily(formM)
       .map(Ok(_))
   }
@@ -88,9 +94,9 @@ class SysMarketBillingMmp @Inject() (
    * @param contractId номер договора.
    */
   def createMmpDailySubmit(contractId: Int) = IsSuperuserContract(contractId).async { implicit request =>
-    mmpDailyFormM.bindFromRequest().fold(
+    mmpFormM.bindFromRequest().fold(
       {formWithErrors =>
-        debug(s"createMmpDailySubmit($contractId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
+        LOGGER.debug(s"createMmpDailySubmit($contractId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
         _createMmpDaily(formWithErrors)
           .map(NotAcceptable(_))
       },
@@ -111,7 +117,7 @@ class SysMarketBillingMmp @Inject() (
    * @param mmpdId id mmp-тарифного плана.
    */
   def editMmpDaily(mmpdId: Int) = IsSuperuser.async { implicit request =>
-    _editMmpDaily(mmpdId, mmpDailyFormM)
+    _editMmpDaily(mmpdId, mmpFormM)
       .map(Ok(_))
   }
 
@@ -124,7 +130,7 @@ class SysMarketBillingMmp @Inject() (
     }
     val (mbmd, mbc) = syncResult
     val nodeOptFut = MAdnNodeCache.getById(mbc.adnId)
-    val formBinded = mmpDailyFormM.fill(mbmd)
+    val formBinded = mmpFormM.fill(mbmd)
     for {
       nodeOpt <- nodeOptFut
       mcals   <- mcalsFut
@@ -138,45 +144,106 @@ class SysMarketBillingMmp @Inject() (
    * @param mmpdId id mmp-тарифного плана.
    */
   def editMmpDailySubmit(mmpdId: Int) = IsSuperuser.async { implicit request =>
-    mmpDailyFormM.bindFromRequest().fold(
+    mmpFormM.bindFromRequest().fold(
       {formWithErrors =>
-        debug(s"editMmpDailySubmit($mmpdId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
+        LOGGER.debug(s"editMmpDailySubmit($mmpdId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
         _editMmpDaily(mmpdId, formWithErrors)
           .map(NotAcceptable(_))
       },
       {newMbmd =>
-        val rdrToAdn = db.withTransaction { implicit c =>
-          val mbmd = MBillMmpDaily.getById(mmpdId).get
-          val mbmd1 = newMbmd.copy(id = mbmd.id, contractId = mbmd.contractId)
-          mbmd1.save
-          // Вычисляем, куда нужно редиректить юзера после сохранения.
-          val contract = MBillContract.getById(mbmd.contractId).get
-          contract.adnId
+        val rdrToAdnFut = Future {
+          db.withTransaction { implicit c =>
+            val mbmd = MBillMmpDaily.getById(mmpdId).get
+            val mbmd1 = newMbmd.copy(id = mbmd.id, contractId = mbmd.contractId)
+            mbmd1.save
+            // Вычисляем, куда нужно редиректить юзера после сохранения.
+            val contract = MBillContract.getById(mbmd.contractId).get
+            contract.adnId
+          }
+        }(AsyncUtil.jdbcExecutionContext)
+        // Рендер результата.
+        rdrToAdnFut map { rdrToAdn =>
+          Redirect(routes.SysMarketBilling.billingFor(rdrToAdn))
+            .flashing("success" -> s"Изменения в тарифном плане #$mmpdId сохранены.")
         }
-        Redirect(routes.SysMarketBilling.billingFor(rdrToAdn))
-          .flashing("success" -> s"Изменения в тарифном плане #$mmpdId сохранены.")
       }
     )
   }
 
 
   /** Сабмит удаления mmp-тарификатора. */
-  def deleteMmpDailySubmit(mmpId: Int) = IsSuperuser { implicit request =>
+  def deleteMmpDailySubmit(mmpId: Int) = IsSuperuser.async { implicit request =>
     // Нужно узнать adnId на который редиректить (из контракта) и удалить mmp-тарификатор.
-    val result = db.withConnection { implicit c =>
-      val adnIdOpt = MBillMmpDaily.getById(mmpId).flatMap(_.contract).map(_.adnId)
-      val rowsDeleted = MBillMmpDaily.deleteById(mmpId)
-      (adnIdOpt, rowsDeleted)
+    val resultFut = Future {
+      db.withConnection { implicit c =>
+        val adnIdOpt = MBillMmpDaily.getById(mmpId).flatMap(_.contract).map(_.adnId)
+        val rowsDeleted = MBillMmpDaily.deleteById(mmpId)
+        (adnIdOpt, rowsDeleted)
+      }
+    }(AsyncUtil.jdbcExecutionContext)
+
+    for {
+      (adnIdOpt, rowsDeleted) <- resultFut
+    } yield {
+      val flashInfo: (String, String) = rowsDeleted match {
+        case 1 => "success" -> s"Mmp-тарификатор #$mmpId удалён."
+        case 0 => "error"   -> s"Mmp-тарификатор #$mmpId НЕ НАЙДЕН."
+        case _ => "error"   -> s"Неизвестный результат операции для mmp#$mmpId: $rowsDeleted. Ожидалось 1 или 0."
+      }
+      val rdrCall = adnIdOpt.fold {
+        routes.SysMarket.index()
+      } {
+        routes.SysMarketBilling.billingFor
+      }
+      Redirect(rdrCall)
+        .flashing(flashInfo)
     }
-    val (adnIdOpt, rowsDeleted) = result
-    val flashInfo: (String, String) = rowsDeleted match {
-      case 1  =>  "success" -> s"Mmp-тарификатор #$mmpId удалён."
-      case 0  =>  "error"   -> s"Mmp-тарификатор #$mmpId НЕ НАЙДЕН."
-      case _  =>  "error"   -> s"Неизвестный результат операции для mmp#$mmpId: $rowsDeleted. Ожидалось 1 или 0."
+  }
+
+
+  /**
+   * Бывает, что нужно очень массово отредактировать тарифы узлов.
+   * @return Страница с формой массового редактирования mmp-тарифа.
+   */
+  def updateAllForm = IsSuperuser.async { implicit request =>
+    _updateAllFormHtml( mmpStubForm )
+      .map { Ok(_) }
+  }
+
+  private def _updateAllFormHtml(formM: Form[MBillMmpDaily])(implicit request: AbstractRequestWithPwOpt[_]): Future[Html] = {
+    val mcalsFut = MCalendar.getAll()
+    for {
+      mcals <- mcalsFut
+    } yield {
+      updateAllFormTpl(formM, mcals)
     }
-    val rdrCall = adnIdOpt.fold(routes.SysMarket.index()) { routes.SysMarketBilling.billingFor }
-    Redirect(rdrCall)
-      .flashing(flashInfo)
+  }
+
+  /**
+   * Сабмит формы массового обновления daily-тарифов.
+   * @return Редирект, либо форму с ошибкой маппинга.
+   */
+  def updateAllSubmit = IsSuperuser.async { implicit request =>
+    mmpFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        LOGGER.debug("updateAllSubmit(): Failed to bind form:\n" + formatFormErrors(formWithErrors))
+        _updateAllFormHtml(formWithErrors)
+          .map { NotAcceptable(_) }
+      },
+      {mmp2 =>
+        val countUpdatedFut = Future {
+          db.withConnection { implicit c =>
+            MBillMmpDaily.updateAll(mmp2)
+          }
+        }
+        for {
+          count <- countUpdatedFut
+        } yield {
+          Redirect( routes.SysMarketBilling.index() )
+            .flashing("success" -> s"Обновлено $count посуточных тарифов.")
+        }
+      }
+    )
   }
 
 }

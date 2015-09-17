@@ -1,0 +1,20 @@
+@(mdf: Form[MBillMmpDaily], mcals: Seq[MCalendar])(implicit ctx: Context)
+
+@* Страница с формой массового редактирования тарифов mmp-daily. *@
+
+@import ctx.messages
+@import sys1.market.billing.billingBase
+
+@billingBase("Массовое обновление посуточных тарифов") {
+
+  <div class="__bg_lightpink">
+    @_mmpDailyFormTpl(
+      mdf        = mdf,
+      btnText    = messages("Overwrite.all"),
+      mcals      = mcals,
+      submitCall = routes.SysMarketBillingMmp.updateAllSubmit()
+    )
+  </div>
+
+
+}
