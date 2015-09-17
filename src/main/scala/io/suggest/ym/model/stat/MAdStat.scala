@@ -451,7 +451,7 @@ final class MAdStatJmx(implicit val ec: ExecutionContext, val client: Client, va
     try {
       val dt = dtParse(dtStr)
       companion.deleteBefore(dt) map { dbqResp =>
-         "OK: " + dbqResp
+         "OK: HTTP " + dbqResp.status().getStatus + " count=" + dbqResp.iterator().size
       }
     } catch {
       case ex: Throwable =>
