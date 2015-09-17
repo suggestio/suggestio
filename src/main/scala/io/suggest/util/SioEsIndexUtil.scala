@@ -11,7 +11,7 @@ import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse
 import scala.util.{Failure, Success}
 import org.elasticsearch.common.settings.ImmutableSettings
 import org.elasticsearch.cluster.metadata.IndexMetaData.SETTING_NUMBER_OF_REPLICAS
-import org.elasticsearch.index.shard.service.InternalIndexShard.INDEX_REFRESH_INTERVAL
+import org.elasticsearch.index.shard.IndexShard.INDEX_REFRESH_INTERVAL
 
 /**
  * Suggest.io
@@ -37,7 +37,6 @@ object SioEsIndexUtil extends MacroLogsImpl with Serializable {
   val iterableOnlyTrue = { l: Iterable[Boolean] => l.forall(_ == true) }
 
   val IS_TOLERANT_DFLT = true
-
 
   /**
    * Удалить только указанные типы из указанного индекса. Функция последовательно удаляет маппинги
