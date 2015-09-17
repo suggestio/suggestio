@@ -228,4 +228,7 @@ package object models {
   type ITagEdge             = io.suggest.model.n2.tag.edge.ITagEdge
   type TagsMap_t            = io.suggest.model.n2.tag.edge.TagsMap_t
 
+  type MNode                = io.suggest.model.n2.MNode
+  val  MNode                = io.suggest.model.n2.MNode
+
 }
