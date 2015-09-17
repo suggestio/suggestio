@@ -21,6 +21,7 @@ trait MNodeSearchDflt
   with LimitDflt
   with OffsetDflt
   with tag.vertex.search.FaceTextQueryDflt
+
 /** Дефолтовая реализация [[MNodeSearchDflt]]. Упрощает жизнь компилятору. */
 class MNodeSearchDfltImpl
   extends MNodeSearchDflt
