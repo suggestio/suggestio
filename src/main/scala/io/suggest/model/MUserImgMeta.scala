@@ -9,6 +9,7 @@ import org.joda.time.DateTime
 import scala.concurrent.Future
 import io.suggest.util.SioFutureUtil.guavaFuture2scalaFuture    // НЕ УДАЛЯТЬ!!!
 import MUserImg2.qOpt2q
+import io.suggest.common.fut.FutureUtil.tryCatchFut
 
 /**
  * Suggest.io
@@ -63,36 +64,49 @@ object MUserImgMeta2 extends MUserImgMetaRecord with CassandraStaticModel[MUserI
   }
 
   def getById(id: UUID, q: Option[String] = None): Future[Option[MUserImgMeta2]] = {
-    select
-      .where(_.id eqs id)
-      .and(_.q eqs qOpt2q(q))
-      .one()
+    tryCatchFut {
+      select
+        .where(_.id eqs id)
+        .and(_.q eqs qOpt2q(q))
+        .one()
+    }
   }
 
   def insertMd(m: MUserImgMeta2) = {
-    insert
-      .value(_.id, m.id)
-      .value(_.q, m.q)
-      .value(_.md, m.md)
-      .value(_.timestamp, m.timestamp)
-      .future()
+    tryCatchFut {
+      insert
+        .value(_.id, m.id)
+        .value(_.q, m.q)
+        .value(_.md, m.md)
+        .value(_.timestamp, m.timestamp)
+        .future()
+    }
   }
 
   def isExists(id: UUID, q: Option[String] = None): Future[Boolean] = {
-    select(_.timestamp)
-      .where(_.id eqs id)
-      .and(_.q eqs qOpt2q(q))
-      .one()
-      .map { _.isDefined }
+    tryCatchFut {
+      select(_.timestamp)
+        .where(_.id eqs id)
+        .and(_.q eqs qOpt2q(q))
+        .one()
+        .map { _.isDefined }
+    }
   }
 
-  def deleteById(id: UUID) = delete.where(_.id eqs id).future()
+  def deleteById(id: UUID) = {
+    tryCatchFut {
+      delete.where(_.id eqs id)
+        .future()
+    }
+  }
 
   def deleteOne(id: UUID, q: Option[String] = None): Future[_] = {
-    delete
-      .where(_.id eqs id)
-      .and(_.q eqs qOpt2q(q))
-      .future()
+    tryCatchFut {
+      delete
+        .where(_.id eqs id)
+        .and(_.q eqs qOpt2q(q))
+        .future()
+    }
   }
 
   /**

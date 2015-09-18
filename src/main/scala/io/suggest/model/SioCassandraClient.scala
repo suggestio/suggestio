@@ -13,6 +13,7 @@ import org.joda.time.DateTime
 import scala.collection.JavaConversions._
 import scala.concurrent.Future
 import io.suggest.util.SioFutureUtil.guavaFuture2scalaFuture
+import io.suggest.common.fut.FutureUtil.tryCatchFut
 
 /**
  * Suggest.io
@@ -71,16 +72,27 @@ object SioCassandraClient extends MacroLogsImplLazy {
 
   /** Закрытие кластера. */
   def close(): Future[_] = {
-    val sesCloseFut = SioCassandraClient.session.closeAsync()
+    val sesCloseFut = tryCatchFut {
+      SioCassandraClient.session.closeAsync()
+    }
     val clCloseFut = sesCloseFut
-      .flatMap { _ => SioCassandraClient.cluster.closeAsync() }
+      .recover { case ex =>
+        error("close() session failed", ex)
+        null
+      }
+      .flatMap { _ =>
+        SioCassandraClient.cluster.closeAsync()
+      }
     sesCloseFut onComplete { case _ =>
       _session = null
     }
     clCloseFut onComplete { case _ =>
       _cluster = null
     }
-    clCloseFut
+    clCloseFut.recover { case ex =>
+      error("close() cluster failed", ex)
+      null
+    }
   }
 
   /** Создать пространство ключей под нужды s.io. */
