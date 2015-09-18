@@ -53,4 +53,7 @@ sealed trait ScCtl extends js.Object {
   /** Роута для поиска focused-карточек. */
   def focusedAds(args: Dictionary[Any]): Route = js.native
 
+  /** Роута поиска тегов. */
+  def tagsSearch(args: Dictionary[Any]): Route = js.native
+
 }

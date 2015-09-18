@@ -21,7 +21,7 @@ trait MFocAdSearch extends MFindAdsReq {
 
     val _openIndexAdId = openIndexAdId
     if (_openIndexAdId.nonEmpty)
-      acc.update(OPEN_INDEX_AD_ID_FN, _openIndexAdId.get)
+      acc(OPEN_INDEX_AD_ID_FN) = _openIndexAdId.get
 
     acc
   }

@@ -37,7 +37,7 @@ object MTabs extends LightEnumeration {
   }
 
   /** Таб со списком хеш-тегов и поиском по ним. */
-  val HashTags: T = new Val {
+  val Tags: T = new Val {
     override def id = "h"
     override def vmBodyCompanion = ShtRoot
     override def vmBtnCompanion  = ShtTabBtn
@@ -48,13 +48,13 @@ object MTabs extends LightEnumeration {
   override def maybeWithName(n: String): Option[T] = {
     if (n == Geo.id) {
       Some(Geo)
-    } else if (n == HashTags.id) {
-      Some(HashTags)
+    } else if (n == Tags.id) {
+      Some(Tags)
     } else {
       None
     }
   }
 
-  def values = Seq[T](Geo, HashTags)
+  def values = Seq[T](Geo, Tags)
 
 }

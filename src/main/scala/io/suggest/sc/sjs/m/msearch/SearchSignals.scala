@@ -24,7 +24,7 @@ trait ITabClickSignalCompanion
 /** Сообщение о клике по кнопке вкладки хеш-тегов. */
 case class STabBtnHtagsClick(override val event: Event)
   extends ITabClickSignal {
-  override def mtab = MTabs.HashTags
+  override def mtab = MTabs.Tags
 }
 object STabBtnHtagsClick
   extends ITabClickSignalCompanion

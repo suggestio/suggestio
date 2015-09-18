@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.c.scfsm
 import io.suggest.sc.sjs.c.scfsm.grid.{PanelGridRebuilder, OnGrid}
 import io.suggest.sc.sjs.m.mhdr.{LogoClick, HideNavClick}
 import io.suggest.sc.sjs.m.mnav.NodeListClick
-import io.suggest.sc.sjs.m.msrv.nodes.find.{MFindNodesResp, MFindNodesArgsEmpty, MFindNodesArgsDflt, MFindNodes}
+import io.suggest.sc.sjs.m.msrv.nodes.find.{MFindNodesArgsDfltImpl, MFindNodesResp, MFindNodes}
 import io.suggest.sc.sjs.vm.hdr.btns.HBtns
 import io.suggest.sc.sjs.vm.hdr.btns.nav.HShowNavBtn
 import io.suggest.sc.sjs.vm.nav.NRoot
@@ -84,7 +84,7 @@ trait OnGridNav extends OnGrid with ISjsLogger {
       val nlContentOpt = NlContent.find()
       for (nlContent <- nlContentOpt if nlContent.isEmpty) {
         // Запустить запрос к серверу на тему поиска узлов
-        val searchNodesArgs = new MFindNodesArgsEmpty with MFindNodesArgsDflt {
+        val searchNodesArgs = new MFindNodesArgsDfltImpl {
           override def currAdnId = sd0.adnIdOpt
         }
         val fut = MFindNodes.findNodes(searchNodesArgs)

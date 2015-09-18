@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.m.msrv.ads.find
 import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.m.mgeo.IMGeoMode
 import io.suggest.sc.sjs.m.mgrid.MGridState
-import io.suggest.sc.sjs.m.msrv.MSrv
+import io.suggest.sc.sjs.m.msrv.{ToJsonWithApiVsnT, MSrv}
 
 import scala.scalajs.js.{Any, Dictionary}
 import io.suggest.ad.search.AdSearchConstants._
@@ -17,7 +17,7 @@ import scala.scalajs.js.JSConverters._
  * Объект будет сериализован в URL js-роутером, который рендериться на сервере.
  */
 
-trait MFindAdsReq {
+trait MFindAdsReq extends ToJsonWithApiVsnT {
 
   def producerId  : Option[String]
   def catId       : Option[String]
@@ -31,37 +31,32 @@ trait MFindAdsReq {
   def geo         : Option[IMGeoMode]
   def screenInfo  : Option[IMScreen]
 
-  /** Версия API. Она по идее не меняется. */
-  def apiVsn      : Int = MSrv.API_VSN
-
   /** Собрать итоговый json для передачи в router. */
-  def toJson: Dictionary[Any] = {
-    val d = Dictionary[Any](
-      API_VSN_FN -> apiVsn
-    )
+  override def toJson: Dictionary[Any] = {
+    val d = super.toJson
 
     if (producerId.nonEmpty)
-      d.update(PRODUCER_ID_FN, producerId.get)
+      d(PRODUCER_ID_FN) = producerId.get
     if (catId.nonEmpty)
-      d.update(CAT_ID_FN, catId.get)
+      d(CAT_ID_FN) = catId.get
     if (levelId.nonEmpty)
-      d.update(LEVEL_ID_FN, levelId.get)
+      d(LEVEL_ID_FN) = levelId.get
     if (ftsQuery.nonEmpty)
-      d.update(FTS_QUERY_FN, ftsQuery.get)
+      d(FTS_QUERY_FN) = ftsQuery.get
     if (limit.isDefined)
-      d.update(RESULTS_LIMIT_FN, limit.get)
+      d(RESULTS_LIMIT_FN) = limit.get
     if (offset.isDefined)
-      d.update(RESULTS_OFFSET_FN, offset.get)
+      d(RESULTS_OFFSET_FN) = offset.get
     if (receiverId.nonEmpty)
-      d.update(RECEIVER_ID_FN, receiverId.get)
+      d(RECEIVER_ID_FN) = receiverId.get
     if (firstAdIds.nonEmpty)
-      d.update(FIRST_AD_ID_FN, firstAdIds.toJSArray)
+      d(FIRST_AD_ID_FN) = firstAdIds.toJSArray
     if (generation.nonEmpty)
-      d.update(GENERATION_FN, generation.get)
+      d(GENERATION_FN) = generation.get
     if (geo.nonEmpty)
-      d.update(GEO_MODE_FN, geo.get.toQsStr)
+      d(GEO_MODE_FN) = geo.get.toQsStr
     if (screenInfo.nonEmpty)
-      d.update(SCREEN_INFO_FN, screenInfo.get.toQsValue)
+      d(SCREEN_INFO_FN) = screenInfo.get.toQsValue
 
     d
   }

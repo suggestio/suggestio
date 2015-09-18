@@ -1,17 +1,17 @@
-package io.suggest.sc.sjs.c.scfsm
+package io.suggest.sc.sjs.c.scfsm.search
 
-import io.suggest.sc.sjs.c.scfsm.grid.{PanelGridRebuilder, OnGrid}
-import io.suggest.sc.sjs.m.mhdr.{LogoClick, ShowIndexClick, HideSearchClick}
+import io.suggest.sc.ScConstants.Search.Fts.START_TIMEOUT_MS
+import io.suggest.sc.sjs.c.scfsm.grid.{OnGrid, PanelGridRebuilder}
+import io.suggest.sc.sjs.m.mhdr.{HideSearchClick, LogoClick, ShowIndexClick}
 import io.suggest.sc.sjs.m.msearch._
 import io.suggest.sc.sjs.vm.hdr.HRoot
 import io.suggest.sc.sjs.vm.search.SRoot
-import io.suggest.sc.sjs.vm.search.fts.{SInputContainer, SInput}
+import io.suggest.sc.sjs.vm.search.fts.{SInput, SInputContainer}
 import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.util.ISjsLogger
 import org.scalajs.dom
 import org.scalajs.dom.ext.KeyCode
 import org.scalajs.dom.{FocusEvent, KeyboardEvent}
-import io.suggest.sc.ScConstants.Search.Fts.START_TIMEOUT_MS
 
 /**
  * Suggest.io
@@ -19,7 +19,7 @@ import io.suggest.sc.ScConstants.Search.Fts.START_TIMEOUT_MS
  * Created: 06.08.15 13:52
  * Description: FSM-Аддон для добавления поддержки состояния выдачи, когда доступна плитка и открыта панель поиска.
  */
-trait OnGridSearch extends OnGrid with ISjsLogger {
+trait Base extends OnGrid with ISjsLogger {
 
   protected trait OnGridSearchStateT extends OnGridStateT with PanelGridRebuilder {
 
@@ -219,7 +219,7 @@ trait OnGridSearch extends OnGrid with ISjsLogger {
 
 
 /** Аддон для сборки состояния нахождения юзера на раскрытой панели поиска со вкладкой географии. */
-trait OnGridSearchGeo extends OnGridSearch {
+trait OnGeo extends Base {
   /** Заготовка состояния нахождения на вкладке панели поиска. */
   protected trait OnGridSearchGeoStateT extends OnGridSearchStateT {
     override protected def _nowOnTab = MTabs.Geo
