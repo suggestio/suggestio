@@ -355,7 +355,7 @@ object SioEsUtil extends MacroLogsImpl {
   def _ENGRAM_AN1_NOSTOP : Analyzer = {
     CustomAnalyzer(
       id        = ENGRAM1_NOSTOP_AN,
-      tokenizer = STD_FN,
+      tokenizer = STD_TN,
       filters   = Seq(STD_FN, WORD_DELIM_FN, LOWERCASE_FN, STEM_RU_FN, STEM_EN_FN)
     )
   }

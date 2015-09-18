@@ -94,17 +94,17 @@ object EsModel extends MacroLogsImpl {
       }
       imeFut flatMap {
         case false =>
-          info(logPrefix + "Trying to push mapping for model...")
+          trace(logPrefix + "Trying to push mapping for model...")
           val fut = esModelStatic.putMapping(ignoreExists)
           fut onComplete {
-            case Success(true)  => debug(logPrefix + "-> OK" )
+            case Success(true)  => trace(logPrefix + "-> OK" )
             case Success(false) => warn(logPrefix  + "NOT ACK!!! Possibly out-of-sync.")
             case Failure(ex)    => error(logPrefix + "FAILed", ex)
           }
           fut
 
         case true =>
-          info(logPrefix + "Mapping already exists in index. Skipping...")
+          trace(logPrefix + "Mapping already exists in index. Skipping...")
           Future successful true
       }
     } map {
