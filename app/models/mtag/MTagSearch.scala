@@ -4,6 +4,7 @@ import io.suggest.model.n2.search.MNodeSearchDfltImpl
 import play.api.mvc.QueryStringBindable
 import util.qsb.QsbKey1T
 import io.suggest.sc.TagSearchConstants.Req._
+import views.js.tags.m.mtSearchJsUnbindTpl
 
 /**
  * Suggest.io
@@ -53,6 +54,10 @@ object MTagSearch {
         )
           .filter { !_.isEmpty }
           .mkString("&")
+      }
+
+      override def javascriptUnbind: String = {
+        mtSearchJsUnbindTpl(KEY_DELIM).body
       }
     }
   }

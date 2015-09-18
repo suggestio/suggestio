@@ -6,6 +6,7 @@ import play.api.mvc.QueryStringBindable
 import util.qsb.QsbKey1T
 import util.qsb.QsbUtil._
 import io.suggest.sc.NodeSearchConstants._
+import io.suggest.sc.ScConstants.ReqArgs.VSN
 import views.js.sc.m._
 
 /**
@@ -72,7 +73,7 @@ object MScNodeSearchArgs {
           maybeCurAdnId   <- strOptB.bind   (k1(CURR_ADN_ID_FN),    params)
           maybeNodeSwitch <- boolOptB.bind  (k1(NODE_SWITCH_FN),    params)
           maybeWithNeigh  <- boolOptB.bind  (k1(WITH_NEIGHBORS_FN), params)
-          maybeApiVsn     <- apiVsnB.bind   (k1(API_VSN_FN),        params)
+          maybeApiVsn     <- apiVsnB.bind   (k1(VSN),               params)
         } yield {
           for {
             apiVsn  <- maybeApiVsn.right
@@ -102,7 +103,8 @@ object MScNodeSearchArgs {
           intOptB.unbind  (k1(LIMIT_FN),          value.maxResults),
           strOptB.unbind  (k1(CURR_ADN_ID_FN),    value.currAdnId),
           boolOptB.unbind (k1(NODE_SWITCH_FN),    Some(value.isNodeSwitch)),
-          boolOptB.unbind (k1(WITH_NEIGHBORS_FN), Some(value.withNeighbors))
+          boolOptB.unbind (k1(WITH_NEIGHBORS_FN), Some(value.withNeighbors)),
+          apiVsnB.unbind  (k1(VSN),               value.apiVsn)
         )
           .filter { s => !s.isEmpty && !s.endsWith("=") }
           .mkString("&")

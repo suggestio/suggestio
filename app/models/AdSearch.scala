@@ -10,6 +10,7 @@ import util.qsb.QsbUtil._
 import io.suggest.ad.search.AdSearchConstants._
 import views.js.stuff.m.adSearchJsUnbindTpl
 import scala.language.implicitConversions
+import io.suggest.sc.ScConstants.ReqArgs.VSN
 
 /**
  * Suggest.io
@@ -55,7 +56,7 @@ object AdSearch extends CommaDelimitedStringSeq {
       def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, AdSearch]] = {
         val f = key1F(key)
         for {
-          maybeApiVsn    <- apiVsnB.bind      (f(API_VSN_FN),        params)
+          maybeApiVsn    <- apiVsnB.bind      (f(VSN),               params)
           maybeProdIdOpt <- strOptB.bind      (f(PRODUCER_ID_FN),    params)
           maybeCatIdOpt  <- strOptB.bind      (f(CAT_ID_FN),         params)
           maybeLevelOpt  <- strOptB.bind      (f(LEVEL_ID_FN),       params)
@@ -104,7 +105,7 @@ object AdSearch extends CommaDelimitedStringSeq {
       def unbind(key: String, value: AdSearch): String = {
         val f = key1F(key)
         Iterator(
-          apiVsnB.unbind      (f(API_VSN_FN),        value.apiVsn),
+          apiVsnB.unbind      (f(VSN),               value.apiVsn),
           strOptB.unbind      (f(RECEIVER_ID_FN),    value.receiverIds.headOption),  // TODO Разбиндивать на весь список receivers сразу надо
           strOptB.unbind      (f(PRODUCER_ID_FN),    value.producerIds.headOption),  // TODO Разбиндивать на весь список producers сразу надо.
           strOptB.unbind      (f(CAT_ID_FN),         value.catIds.headOption),       // TODO Разбиндивать на весь список catIds надо бы

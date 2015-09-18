@@ -115,18 +115,25 @@ object WelcomeUtil extends PlayMacroLogsImpl {
       .welcomeAdId
       .fold (Future successful Option.empty[MWelcomeAd]) (MWelcomeAd.getById)
     // Получить параметры (метаданные) фоновой картинки из хранилища картирок.
+    def _colorBg = colorBg(adnNode)   // дедубликация кода. Можно наверное через Future.filter такое отрабатывать.
     val bgFut = adnNode.gallery
       .headOption
       .fold[Future[Either[String, ImgUrlInfoT]]] {
-        Future successful colorBg(adnNode)
+        Future successful _colorBg
       } { bgImgFilename =>
         val oiik = MImg(bgImgFilename)
-        oiik.original.getImageWH map {
+        val fut0 = oiik.original.getImageWH
+        lazy val logPrefix = s"getWelcomeRenderArgs(${adnNode.idOrNull}): "
+        fut0.map {
           case Some(meta) =>
             Right(bgCallForScreen(oiik, screen, meta))
           case _ =>
             trace(s"getWelcomeRenderArgs(${adnNode.idOrNull}): no welcome bg WH for " + bgImgFilename)
             colorBg(adnNode)
+        }
+        .recover { case ex: Throwable =>
+          error(logPrefix + "Failed to read welcome image data", ex)
+          _colorBg
         }
       }
     for {

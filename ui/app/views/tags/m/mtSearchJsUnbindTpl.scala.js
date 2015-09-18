@@ -3,19 +3,13 @@
 @* Код функции для ScReqArgs qsb.javascriptUnbind().
    Она нужна для разбиндивания модели из JSON на стороне js. *@
 
-@import io.suggest.sc.NodeSearchConstants._
-@import io.suggest.sc.ScConstants.ReqArgs.VSN
+@import io.suggest.sc.TagSearchConstants.Req._
 @import views.js.stuff.m._
 
 @jsUnbindBase() {
   @_objQsbTpl(delim) {
-    add("@FTS_QUERY_FN");
-    add("@GEO_FN");
-    add("@OFFSET_FN");
+    add("@FACE_FTS_QUERY_FN");
     add("@LIMIT_FN");
-    add("@CURR_ADN_ID_FN");
-    add("@NODE_SWITCH_FN");
-    add("@WITH_NEIGHBORS_FN");
-    add("@VSN", true);
+    add("@OFFSET_FN", true)
   }
 }

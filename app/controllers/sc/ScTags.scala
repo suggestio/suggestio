@@ -21,7 +21,7 @@ trait ScTags extends ScController {
    * @param mts Аргументы поиска, сформированные на клиенте.
    * @return Рендер куска списка тегов, который раньше был списком узлов.
    */
-  def tagSearch(mts: MTagSearch) = MaybeAuth.async { implicit request =>
+  def tagsSearch(mts: MTagSearch) = MaybeAuth.async { implicit request =>
     val foundFut = MNode.dynSearch(mts)
     for {
       found <- foundFut
