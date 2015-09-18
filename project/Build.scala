@@ -108,4 +108,6 @@ object SiobixBuild extends Build {
       .aggregate(commonPlay, common, lkAdvExtSjs, lkSjs, util, securesocial, scSjs, web21)
   }
 
+  override lazy val settings = super.settings ++ Seq(offline := true)
+
 }
