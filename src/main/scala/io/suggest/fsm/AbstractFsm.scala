@@ -30,8 +30,9 @@ trait AbstractFsm {
   protected def become(nextState: State_t): Unit = {
     if (nextState != null) {
       _state = nextState
-      _installReceiver(_state.receiver)
+      // Опережающий вызов afterBecome() тут вроде бы нелогичен, но даёт визуальный эффект ускорения работы в scala.js-автоматах.
       _state.afterBecome()
+      _installReceiver(_state.receiver)
     }
   }
 

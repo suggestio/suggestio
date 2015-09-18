@@ -20,7 +20,6 @@ object AdSearchConstants {
   def GEO_MODE_FN        = "geo"
   def SCREEN_INFO_FN     = "screen"
   def LAST_PROD_ID_FN    = "lpi"
-  def API_VSN_FN         = "v"
 
   /** 2015.aug.26: Название опционального поля с флагом того, разрешено ли серверу возвращать
     * index answert вместо focused ads. */

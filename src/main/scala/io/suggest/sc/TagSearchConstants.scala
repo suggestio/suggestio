@@ -10,9 +10,6 @@ object TagSearchConstants {
 
   object Req {
 
-    /** Имя поля-префикса имён полей тега. */
-    def FN_PREFIX = "t"
-
     /** Поле запроса полнотекстового запроса поиска тегов по имени. */
     def FACE_FTS_QUERY_FN = "q"
 

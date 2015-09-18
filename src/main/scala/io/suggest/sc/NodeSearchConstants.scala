@@ -31,7 +31,4 @@ object NodeSearchConstants {
   /** Что-то связанное с соседними узлами... */
   def WITH_NEIGHBORS_FN       = "neigh"
 
-  /** Версия API выдачи. */
-  def API_VSN_FN              = "v"
-
 }
