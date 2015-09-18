@@ -27,11 +27,7 @@ trait ScTags extends ScController {
       found <- foundFut
     } yield {
       val resp = MTagSearchResp(
-        rendered    = if (found.nonEmpty) {
-          Some( _listElsTpl(found) )
-        } else {
-          None
-        },
+        rendered    = if (found.nonEmpty)  Some( _listElsTpl(found) )  else  None,
         foundCount  = found.size
       )
       Ok( Json.toJson(resp) )

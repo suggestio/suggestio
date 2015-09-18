@@ -219,7 +219,7 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
       val inetAddr = InetAddress.getByName(ra0)
       if (inetAddr.isAnyLocalAddress || inetAddr.isSiteLocalAddress || inetAddr.isLoopbackAddress) {
         val ra1 = REPLACE_LOCALHOST_IP_WITH
-        debug(s"getRemoteAddr(): Local ip detected: $ra0. Rewriting ip with $ra1")
+        trace(s"getRemoteAddr(): Local ip detected: $ra0. Rewriting ip with $ra1")
         ra1
       } else {
         ra0

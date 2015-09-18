@@ -63,14 +63,15 @@ object PgpUtil extends PlayMacroLogsDyn {
 
   /** Запустить инициализацию, если задано в конфиге. */
   def maybeInit()(implicit es: Client): Option[Future[_]] = {
-    if ( configuration.getBoolean("pgp.keyring.init.enabled").getOrElse(false) ) {
+    val cfk = "pgp.keyring.init.enabled"
+    if ( configuration.getBoolean(cfk).getOrElse(false) ) {
       Some(init())
     } else {
       MAsymKey.getById(LOCAL_STOR_KEY_ID)
         // TODO проверять, что пароль соответствует ключу. Нужно пытаться зашифровать какие-то простые данные.
         .filter { _.isDefined }
         .onFailure {
-          case ex: NoSuchElementException => LOGGER.warn("PGP key does not exists and creation is disabled on this node.")
+          case ex: NoSuchElementException => LOGGER.warn("PGP key does not exists and creation is disabled on this node: " + cfk)
           case ex: Throwable              => LOGGER.error("Failed to check status of server's pgp key.", ex)
         }
       None
