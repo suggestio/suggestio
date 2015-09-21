@@ -29,7 +29,7 @@ trait Opened extends Base {
       for (sinput <- SInput.find(); ftsState0 <- sd0.search.ftsSearch) {
         val args = MftArgs(
           faceFts = sinput.getTextOpt,
-          limit   = Some(10),
+          limit   = Some(20),
           offset  = Some(ftsState0.offset)
         )
         val fut = MFindTags.search(args)

@@ -29,7 +29,7 @@ trait WcBgImgT extends VmT with WcImgUtil with DataWh {
   def adjust(screen: IMScreen): Unit = {
     val iwh = getDataWh.get
     val newWh: Size2di = {
-      if (iwh.width / iwh.height < screen.width / screen.height) {
+      if (iwh.width.toDouble / iwh.height.toDouble < screen.width.toDouble / screen.height.toDouble) {
         val w = screen.width
         val h = w * iwh.height / iwh.width
         Size2di(w, height = h)

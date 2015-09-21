@@ -6,7 +6,7 @@ import io.suggest.sc.sjs.m.msearch.TagRowClick
 import io.suggest.sc.sjs.vm.util.OnClick
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.content.ClearT
-import io.suggest.sjs.common.vm.{Vm, IVm}
+import io.suggest.sjs.common.vm.Vm
 import io.suggest.sjs.common.vm.find.FindDiv
 import io.suggest.sjs.common.vm.util.IInitLayout
 import org.scalajs.dom.{Node, Event}
