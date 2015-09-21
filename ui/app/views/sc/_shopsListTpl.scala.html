@@ -2,6 +2,7 @@
 
 @import util.TplDataFormatUtil._
 @import views.html.sc.stuff._
+@import io.suggest.sc.ScConstants.Search.Nodes._
 
 @* Верстка нечетных css-классов. *@
 @_mayOdd(i: Int) = {
@@ -9,7 +10,7 @@
 }
 
 @_scrollableContainerTpl( "sm-shops", "smShops", "style" -> (_bgcolor( args.bgColor, false ).toString + "display: block;") ) {
-<div class="shops-list">
+<div id="@LIST_ID" class="shops-list">
 
   @args.shopsLetterGrouped.iterator.zipWithIndex.map { case ((letter, mshops), i) =>
     @defining( _mayOdd(i) ) { mayOdd =>
@@ -22,7 +23,7 @@
         @args.jsStateOpt.map { jsState =>
           <a href="@args.syncUrl( jsState.copy(fadsProdIdOpt = mshop.id) )">
         }
-        <div class="shops-list_row @mayOdd js-shop-link" data-producer-id="@mshop.id">
+        <div class="shops-list_row @mayOdd @ROW_DIV_CLASS" @ATTR_NODE_ID="@mshop.id">
           @mshop.meta.name
         </div>
         @if( args.jsStateOpt ) {

@@ -272,7 +272,7 @@ trait ScIndexGeo extends ScIndexConstants with ScIndexNodeCommon { that =>
             override def geo    = GeoIp
           }
           override def onCloseHref = ONCLOSE_HREF_DFLT
-          override def shopsLetterGrouped = Nil   // TODO stub. Надо или producer-less выдачу выпилить, или список реализовать.
+          override def shopsLetterGrouped = Nil
         }
       }
     }

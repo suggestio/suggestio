@@ -5,6 +5,7 @@ import _root_.util.PlayMacroLogsI
 import models.Context
 import models.im.MImg
 import models.jsm.ScIndexResp
+import models.msc.ScRenderArgs.ProdsLetterGrouped_t
 import models.msc._
 import play.twirl.api.Html
 import util.img.WelcomeUtil
@@ -257,8 +258,14 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
     }
 
     /** Для рендера списка магазинов требуется сгруппированный по первой букве список узлов. */
-    def prodsLetterGroupedFut = prodsSeqFut.map {
-      ScRenderArgs.groupNodesByNameLetter
+    def prodsLetterGroupedFut: Future[ProdsLetterGrouped_t] = {
+      if (_reqArgs.apiVsn.withStaticNodeList) {
+        prodsSeqFut.map {
+          ScRenderArgs.groupNodesByNameLetter
+        }
+      } else {
+        Future successful Nil
+      }
     }
 
     /** Получение графического логотипа узла, если возможно. */
