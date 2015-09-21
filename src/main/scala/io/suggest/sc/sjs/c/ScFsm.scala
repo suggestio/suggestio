@@ -69,7 +69,7 @@ object ScFsm
     override protected def _welcomeFinishedState        = new NodeInit_GridAdsWait_State
     override protected def _adsLoadedState              = new NodeInit_WelcomeShowing_State
     override protected def _findAdsFailedState          = new NodeInit_WelcomeShowing_GridAdsFailed_State
-    override protected def _welcomeHidingState          = new NodeInit_WelcomeHiding_State
+    override protected def _welcomeHidingState          = new NodeInit_WelcomeHiding_GridAdsWait_State
   }
   class NodeInit_WelcomeShowing_State extends NodeInit_WelcomeShowing_StateT {
     override protected def _welcomeFinishedState        = new NodeInit_GridAdsWait_State
