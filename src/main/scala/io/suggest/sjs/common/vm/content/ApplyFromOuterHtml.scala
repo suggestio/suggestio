@@ -18,8 +18,7 @@ trait ApplyFromOuterHtml extends IApplyEl {
    */
   def apply(outerHtml: String): T = {
     // Парсим через innerHTML вне DOM. Тут по сути имитируется заливка outerHTML.
-    val div = VUtil.newDiv()
-    div.innerHTML = outerHtml
+    val div = VUtil.newDiv(outerHtml)
     val rootDiv = div.firstChild.asInstanceOf[Dom_t]
     apply(rootDiv)
   }

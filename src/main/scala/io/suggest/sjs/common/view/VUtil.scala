@@ -5,7 +5,7 @@ import io.suggest.sjs.common.model.browser.IBrowser
 import io.suggest.sjs.common.vm.create.CreateDiv
 import io.suggest.sjs.common.vm.{Vm, VmT}
 import org.scalajs.dom
-import org.scalajs.dom.raw.HTMLElement
+import org.scalajs.dom.raw.{HTMLDivElement, HTMLElement}
 import org.scalajs.dom.{Element, Node}
 
 import scala.annotation.tailrec
@@ -65,6 +65,13 @@ object VUtil extends CssSzImplicits with CreateDiv {
 
   /** Создать новый div-тег и вернуть его. */
   def newDiv() = createNewEl()
+
+  /** Создать новый тег с указанным содержимым. */
+  def newDiv(innerHtml: String): HTMLDivElement = {
+    val e = newDiv()
+    e.innerHTML = innerHtml
+    e
+  }
 
   /**
    * Определить, если ли у тега или его родителей указанный css-класс.

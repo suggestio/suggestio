@@ -34,4 +34,5 @@ object ErrorMsgs extends MsgsStaticT {
 
   def CANT_ADD_TAG_SERVER_ERROR  = E(12)
 
+  def TAGS_SEARCH_REQ_FAILED     = E(13)
 }
