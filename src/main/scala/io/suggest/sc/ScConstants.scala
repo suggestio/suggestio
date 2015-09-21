@@ -391,8 +391,20 @@ object ScConstants {
 
     /** Сюда сгруппированы id, относящиеся к списку магазинов. */
     object Nodes extends ITab {
-      /** div id списка магазинов. */
+
+      /** div id контейнера тела вкладки списка тегов. */
       override def ROOT_DIV_ID = "smShops"
+
+      /** div id списка тегов. */
+      def LIST_ID = ROOT_DIV_ID + "List"
+
+      /** Название класса-метки одного ряда в списке тегов-узлов.
+        * Такой тег содержит мета-данные о теге в data-аттрибутах.
+        * SCv1 использовала одноимённый класс для раскрытия focused-выдачи. */
+      def ROW_DIV_CLASS = "js-shop-link"
+
+      /** Имя аттрибута, содержащее id узла графа N2. */
+      def ATTR_NODE_ID = "data-producer-id"
     }
 
   }
