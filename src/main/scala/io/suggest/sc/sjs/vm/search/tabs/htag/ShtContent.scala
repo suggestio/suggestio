@@ -2,7 +2,6 @@ package io.suggest.sc.sjs.vm.search.tabs.htag
 
 import io.suggest.sc.sjs.vm.search.tabs.{TabContentCompanion, TabContent}
 import io.suggest.sc.ScConstants.Search.Nodes.CONTENT_DIV_ID
-import io.suggest.sjs.common.vm.find.FindDiv
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -20,7 +19,11 @@ object ShtContent extends TabContentCompanion {
 }
 
 
-trait ShtContentT extends TabContent
+trait ShtContentT extends TabContent {
+
+  def list = StList.find()
+
+}
 
 
 case class ShtContent(

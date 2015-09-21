@@ -38,7 +38,18 @@ trait SInputT extends VmT with IInitLayout with OnEventToScFsmUtilT {
     _underlying.value = s
   }
 
-  def getText: String = _underlying.value
+  def getText: String = {
+    _underlying.value
+      .replace("^\\s", "")      // trim left
+  }
+  /** Вернуть текст запроса опционально. */
+  def getTextOpt: Option[String] = {
+    val t = getText
+    if (getText.isEmpty)
+      None
+    else
+      Some(t)
+  }
 
   def getNormalized: String = {
     getText.trim

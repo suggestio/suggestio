@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.vm.search.tabs.htag
 
 import io.suggest.sc.sjs.vm.search.tabs.{TabRoot, TabRootCompanion}
 import io.suggest.sjs.common.vm.child.SubTagFind
-import org.scalajs.dom
+import io.suggest.sjs.common.vm.util.IInitLayout
 import org.scalajs.dom.raw.HTMLDivElement
 import io.suggest.sc.ScConstants.Search.Nodes.ROOT_DIV_ID
 
@@ -29,8 +29,9 @@ trait ShtRootT extends SubTagFind with TabRoot {
   override protected def _subtagCompanion   = ShtWrapper
 
   override def initLayout(): Unit = {
-    // TODO Повесить события на элементы таба, подравнять верстку и т.д.
-    dom.console.warn("TODO ShtRoot.initLayout() not implemented.")
+    val f = IInitLayout.f
+    // Инициализация списка тегов/узлов.
+    StList.find().foreach(f)
   }
 
 }

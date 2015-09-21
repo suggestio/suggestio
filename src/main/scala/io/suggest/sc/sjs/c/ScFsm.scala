@@ -118,8 +118,8 @@ object ScFsm
   /** Превратить search-таб в соответствующее состояние. */
   protected def _searchTab2state(sd1: IStData): FsmState = {
     sd1.search.currTab match {
-      case MTabs.Geo      => new OnGridSearchGeoState
-      case MTabs.Tags => new OnGridSearchHashTagsState
+      case MTabs.Geo      => new OnSearchGeoState
+      case MTabs.Tags => new OnSearchTagsState
     }
   }
 
@@ -138,18 +138,18 @@ object ScFsm
    * Состояния нахождения в сетке и на поисковой панели одновременно (grid + search).
    *--------------------------------------------------------------------------------*/
   /** Общий код для реакции на закрытие search-панели. */
-  protected[this] trait _SearchClose extends OnGridSearchStateT {
+  protected[this] trait _SearchClose extends OnSearchStateT {
     override def _nextStateSearchPanelClosed = new OnPlainGridState
   }
 
   /** Состояние, где и сетка есть, и поисковая панель отрыта на вкладке географии. */
-  class OnGridSearchGeoState extends OnGridSearchGeoStateT with _SearchClose with OnGridStateT {
-    override def _tabSwitchedFsmState = new OnGridSearchHashTagsState
+  class OnSearchGeoState extends OnGridSearchGeoStateT with _SearchClose with OnGridStateT {
+    override def _tabSwitchedFsmState = new OnSearchTagsState
   }
 
   /** Состояние, где открыта вкладка хеш-тегов на панели поиска. */
-  class OnGridSearchHashTagsState extends OnGridSearchHashTagsStateT with _SearchClose with OnGridStateT {
-    override def _tabSwitchedFsmState = new OnGridSearchGeoState
+  class OnSearchTagsState extends OnSearchTagsStateT with _SearchClose with OnGridStateT {
+    override def _tabSwitchedFsmState = new OnSearchGeoState
   }
 
 

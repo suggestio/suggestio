@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.m.msrv.tags.find
 import io.suggest.sjs.common.model.FromJsonT
 import io.suggest.sc.TagSearchConstants.Resp._
 
-import scala.scalajs.js.{Dictionary, Any}
+import scala.scalajs.js.{WrappedDictionary, Dictionary, Any}
 
 /**
  * Suggest.io
@@ -23,14 +23,17 @@ object MftResp extends FromJsonT {
 }
 
 
-case class MftResp(d: Dictionary[Any]) {
+case class MftResp(d: WrappedDictionary[Any]) {
 
   lazy val foundCount: Int = {
-    d(FOUND_COUNT_FN).asInstanceOf[Double].toInt
+    d(FOUND_COUNT_FN)
+      .asInstanceOf[Double]
+      .toInt
   }
 
-  def render: String = {
-    d(RENDERED_FN).asInstanceOf[String]
+  def render: Option[String] = {
+    d.get(RENDERED_FN)
+      .asInstanceOf[Option[String]]
   }
 
 }

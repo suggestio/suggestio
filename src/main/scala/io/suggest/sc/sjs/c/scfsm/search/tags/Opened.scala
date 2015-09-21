@@ -1,7 +1,14 @@
 package io.suggest.sc.sjs.c.scfsm.search.tags
 
 import io.suggest.sc.sjs.c.scfsm.search.Base
-import io.suggest.sc.sjs.m.msearch.MTabs
+import io.suggest.sc.sjs.m.msearch.{TagRowClick, MTabs}
+import io.suggest.sc.sjs.m.msrv.tags.find.{MftResp, MftRespTs, MftArgs, MFindTags}
+import io.suggest.sc.sjs.vm.search.fts.SInput
+import io.suggest.sc.sjs.vm.search.tabs.htag.{StListRow, StList}
+import io.suggest.sjs.common.msg.{WarnMsgs, ErrorMsgs}
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+
+import scala.util.{Failure, Success}
 
 /**
  * Suggest.io
@@ -12,17 +19,82 @@ import io.suggest.sc.sjs.m.msearch.MTabs
 trait Opened extends Base {
 
   /** Состояния поиска по хеш-тегам. */
-  protected trait OnGridSearchHashTagsStateT extends OnGridSearchStateT {
+  protected trait OnSearchTagsStateT extends OnSearchStateT {
 
     override protected def _nowOnTab = MTabs.Tags
 
-    // TODO receiverPart(): Тут нужны сигналы выбора тега в списке и получения ответа от сервера.
-
     /** Запуск поискового запроса в рамках текущего состояния. */
     override protected def _ftsLetsStartRequest(): Unit = {
-      // TODO Собрать поисковый реквест хеш-тегов, отправить на сервер, отработать получение ответа (отрендерить список хеш-тегов).
-      ???
+      val sd0 = _stateData
+      for (sinput <- SInput.find(); ftsState0 <- sd0.search.ftsSearch) {
+        val args = MftArgs(
+          faceFts = sinput.getTextOpt,
+          limit   = Some(10),
+          offset  = Some(ftsState0.offset)
+        )
+        val fut = MFindTags.search(args)
+        val lastTstamp = _sendFutResBackTimestamped(fut, MftRespTs)
+      }
     }
+
+    /** Инициализация вкладки. */
+    override def afterBecome(): Unit = {
+      super.afterBecome()
+      // Сразу запустить поисковый запрос.
+      _ftsLetsStartRequest()
+    }
+
+    override def receiverPart: Receive = super.receiverPart orElse {
+      // Сообщение о получение ответа от сервера по поисковому запросу тегов.
+      case MftRespTs(tryResp, tstamp) =>
+        tryResp match {
+          case Success(resp) =>
+            _handleSearchRespTs(resp, tstamp)
+          case Failure(ex) =>
+            error(ErrorMsgs.TAGS_SEARCH_REQ_FAILED, ex)
+        }
+
+      // Клик по тегу в списке тегов.
+      case TagRowClick(row) =>
+        _tagRowClicked(row)
+      // TODO Нужна реакция на скроллинг вниз: подгрузка ещё тегов.
+    }
+
+    /** Реакция на получение ответа сервера по вопросу поиска тегов. */
+    protected def _handleSearchRespTs(resp: MftResp, tstamp: Long): Unit = {
+      val sd0 = _stateData
+      for {
+        ftsState0 <- sd0.search.ftsSearch
+        if ftsState0.lastRcvdTs.isEmpty || ftsState0.lastRcvdTs.exists(_ < tstamp)
+        stList    <- StList.find()
+      } {
+        // Получен ожидаемый результат поискового запроса тегов.
+        stList.clear()
+        for (render <- resp.render if resp.foundCount > 0) {
+          stList.appendElements(render)
+        }
+        // Обновить состояние новыми данными. TODO Нужно выставлять no more elements.
+        _stateData = sd0.copy(
+          search = sd0.search.copy(
+            ftsSearch = Some(ftsState0.copy(
+              offset      = ftsState0.offset + resp.foundCount,
+              lastRcvdTs  = Some(tstamp)
+            ))
+          )
+        )
+      }
+    }
+
+    /**
+     * Реакция на клик по тегу в списке тегов.
+     * @param row Ряд тега в списке.
+     */
+    protected def _tagRowClicked(row: StListRow): Unit = {
+      // TODO
+      error(WarnMsgs.NOT_YET_IMPLEMENTED)
+    }
+
   }
+
 
 }

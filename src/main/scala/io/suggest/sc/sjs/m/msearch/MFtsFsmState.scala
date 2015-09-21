@@ -17,7 +17,8 @@ object MFtsFsmState {
 case class MFtsFsmState(
   q               : String        = "",
   generation      : Long          = MFtsFsmState.getGeneration,
+  offset          : Int           = 0,
   reqTimerId      : Option[Int]   = None,
-  lastRcvdGen     : Option[Long]  = None
+  lastRcvdTs      : Option[Long]  = None
 )
 

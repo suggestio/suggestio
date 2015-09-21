@@ -21,11 +21,18 @@ import org.scalajs.dom.{FocusEvent, KeyboardEvent}
  */
 trait Base extends OnGrid with ISjsLogger {
 
-  protected trait OnGridSearchStateT extends OnGridStateT with PanelGridRebuilder {
+  protected trait OnSearchStateT extends OnGridStateT with PanelGridRebuilder {
 
     protected def _nowOnTab: MTab
 
-    // TODO Нужно скрывать панель при нажатии клавиши ESC. Возможно, ещё и отключать текущий поиск.
+    /** При запуске состояния, нужно инициализировать поля sd.search, если ещё не инициализированы. */
+    override def afterBecome(): Unit = {
+      super.afterBecome()
+      val sd0 = _stateData
+      if (sd0.search.ftsSearch.isEmpty) {
+        _stateData = __initSdFts(sd0)
+      }
+    }
 
     /** Метод содержит логику обработки клика по кнопке сокрытия поисковой панели. */
     protected def _hideSearch(): Unit = {
@@ -135,23 +142,13 @@ trait Base extends OnGrid with ISjsLogger {
         for (inputCont <- SInputContainer.find()) {
           inputCont.activate()
         }
-        // Обновить состояние FSM.
-        _stateData = __initSdFts(sd0)
       }
     }
 
     /** Сигнал набора символов в поле полнотекстового поиска. */
     protected def _ftsKeyUp(ffku: IFtsFieldKeyUp): Unit = {
       // Надо создать таймер отправки запроса. Но сначала готовим самое начальное состояние.
-      val sd0: SD = {
-        val sd00 = _stateData
-        sd00.search.ftsSearch.fold {
-          warn( WarnMsgs.FTS_SD_MISSING )
-          __initSdFts(sd00)
-        } { _ =>
-          sd00
-        }
-      }
+      val sd0 = _stateData
       for {
         state0 <- sd0.search.ftsSearch
         sinput <- SInput.findUsing(ffku)
@@ -173,7 +170,8 @@ trait Base extends OnGrid with ISjsLogger {
           val state2 = state0.copy(
             q           = q2,
             reqTimerId  = Some(newTimerId),
-            generation  = gen2
+            generation  = gen2,
+            offset      = 0
           )
 
           _stateData = sd0.copy(
@@ -221,7 +219,7 @@ trait Base extends OnGrid with ISjsLogger {
 /** Аддон для сборки состояния нахождения юзера на раскрытой панели поиска со вкладкой географии. */
 trait OnGeo extends Base {
   /** Заготовка состояния нахождения на вкладке панели поиска. */
-  protected trait OnGridSearchGeoStateT extends OnGridSearchStateT {
+  protected trait OnGridSearchGeoStateT extends OnSearchStateT {
     override protected def _nowOnTab = MTabs.Geo
 
     override protected def _ftsLetsStartRequest(): Unit = {

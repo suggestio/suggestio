@@ -38,16 +38,16 @@ with IReset {
       // Безопасно ли здесь к Node приводить тип? svg-элементы вроде безопасны в этом плане.
       val safeTarget = Vm( e.target.asInstanceOf[Node] )
       val f = VUtil.hasCssClass(safeTarget, _: String)
-      val msgOpt = f(CLOSE_BTN_CLASS)
+      f(CLOSE_BTN_CLASS)
         .map { closeBtnDiv => CloseBtnClick }
         .orElse {
           f(HDR_LOGO_DIV_CLASS)
             .map { logoDiv => ProducerLogoClick }
         }
-        // TODO Клик по кнопке перехода на плитку продьюсера.
-      for (msg <- msgOpt) {
-        ScFsm !! msg
-      }
+        // Отправить сигнал о событии в FSM, если таковой имеется.
+        .foreach { msg =>
+          ScFsm !! msg
+        }
     }
   }
 

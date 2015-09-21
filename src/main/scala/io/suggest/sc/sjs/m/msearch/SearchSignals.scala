@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.m.msearch
 
+import io.suggest.sc.sjs.vm.search.tabs.htag.StListRow
 import io.suggest.sjs.common.fsm.{IFsmEventMsgCompanion, IFsmMsgCompanion, IFsmMsg}
 import io.suggest.sjs.common.model.CurrentTargetBackup
 import org.scalajs.dom.raw.HTMLInputElement
@@ -68,4 +69,9 @@ object FtsFieldBlur
 
 /** Событие срабатываья таймера запуска поискового запроса. */
 case class FtsStartRequestTimeout(generation: Long)
+  extends IFsmMsg
+
+
+/** Сигнал клика по ряду в списке рядов. */
+case class TagRowClick(row: StListRow)
   extends IFsmMsg

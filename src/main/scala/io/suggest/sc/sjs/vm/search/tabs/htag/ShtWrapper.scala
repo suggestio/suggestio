@@ -3,7 +3,6 @@ package io.suggest.sc.sjs.vm.search.tabs.htag
 import io.suggest.sc.ScConstants.Search.Nodes.WRAPPER_DIV_ID
 import io.suggest.sc.sjs.vm.search.tabs.{TabWrapperCompanion, TabWrapper}
 import io.suggest.sjs.common.vm.child.SubTagFind
-import io.suggest.sjs.common.vm.find.FindDiv
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
