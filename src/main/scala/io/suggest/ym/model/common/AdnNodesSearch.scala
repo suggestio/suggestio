@@ -14,7 +14,7 @@ import io.suggest.ym.model.ad._
  */
 
 /** Интерфейс для описания критериев того, какие узлы надо найти. По этой спеки собирается ES-запрос. */
-trait AdnNodesSearchArgsT extends TextQueryDsa with WithoutIdsDsa with CompanyIdsDsa with AdnSupIdsDsa
+trait AdnNodesSearchArgsT extends TextQueryDsa with WithoutIdsDsa with AdnSupIdsDsa
 with AnyOfPersonIdsDsa with AdvDelegateAdnIdsDsa with DirectGeoParentsDsa with GeoParentsDsa with ShownTypeIdsDsa
 with AdnRightsDsa with AdnSinksDsa with TestNodeDsa with NodeIsEnabledDsa with GeoDistanceDsa
 with GeoIntersectsWithPreIndexedDsa with ShowInScNodeListDsa with WithIdsDsa with GeoDistanceSortDsa with LogoImgExistsDsa
@@ -22,7 +22,7 @@ with NameSortDsa with RoutingDsa with Limit with Offset
 
 
 /** Реализация интерфейса AdnNodesSearchArgsT с пустыми (дефолтовыми) значениями всех полей. */
-trait AdnNodesSearchArgs extends AdnNodesSearchArgsT with TextQueryDsaDflt with WithoutIdsDsaDflt with CompanyIdsDsaDflt
+trait AdnNodesSearchArgs extends AdnNodesSearchArgsT with TextQueryDsaDflt with WithoutIdsDsaDflt
 with AdnSupIdsDsaDflt with AnyOfPersonIdsDsaDflt with AdvDelegateAdnIdsDsaDflt with DirectGeoParentsDsaDflt
 with GeoParentsDsaDflt with ShownTypeIdsDsaDflt with AdnRightsDsaDflt with AdnSinksDsaDflt with TestNodeDsaDflt
 with NodeIsEnabledDsaDflt with GeoDistanceDsaDflt with GeoIntersectsWithPreIndexedDsaDftl
@@ -36,7 +36,7 @@ with NameSortDsaDflt with RoutingDsaDflt with LimitDflt with OffsetDflt
 
 /** Враппер над аргументами поиска узлов, переданными в underlying. */
 trait AdnNodesSearchArgsWrapper extends AdnNodesSearchArgsT with TextQueryDsaWrapper with WithoutIdsDsaWrapper
-with CompanyIdsDsaWrapper with AdnSupIdsDsaWrapper with AnyOfPersonIdsDsaWrapper with AdvDelegateAdnIdsDsaWrapper
+with AdnSupIdsDsaWrapper with AnyOfPersonIdsDsaWrapper with AdvDelegateAdnIdsDsaWrapper
 with DirectGeoParentsDsaWrapper with GeoParentsDsaWrapper with ShownTypeIdsDsaWrapper with AdnRightsDsaWrapper
 with AdnSinksDsaWrapper with TestNodeDsaWrapper with NodeIsEnabledDsaWrapper with GeoDistanceDsaWrapper
 with GeoIntersectsWithPreIndexedDsaWrapper with ShowInScNodeListDsaWrapper with WithIdsDsaWrapper

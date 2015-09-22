@@ -1,8 +1,8 @@
 package io.suggest.ym.model
 
-import io.suggest.model.common.{EMName, EMDateCreatedStatic, EMNameMut}
-import io.suggest.ym.model.common.{EMCompanyMetaMut, MCompanyMeta, EMCompanyMeta, EMCompanyMetaStatic}
-import scala.concurrent.{ExecutionContext, Future}
+import io.suggest.model.common.{EMName, EMDateCreatedStatic}
+import io.suggest.ym.model.common.{EMCompanyMetaMut, MCompanyMeta, EMCompanyMetaStatic}
+import scala.concurrent.ExecutionContext
 import org.elasticsearch.client.Client
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model._
@@ -37,23 +37,6 @@ object MCompany
     MCompany(id = id, versionOpt = version, meta = MCompanyMeta(name = ""))
   }
 
-  /**
-   * Удалить документ по id.
-   * @param id id документа.
-   * @return true, если документ найден и удалён. Если не найден, то false
-   */
-  override def deleteById(id: String, ignoreResources: Boolean = false)
-                         (implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
-    val adnsCountFut = MAdnNode.countByCompanyId(id)
-    adnsCountFut flatMap {
-      case 0L =>
-        super.deleteById(id, ignoreResources)
-
-      case adnsCount =>
-        Future failed new ForeignKeyException(s"Cannot delete company with $adnsCount marts/shops or other AdnMembers.")
-    }
-  }
-
   // compat: 2014.07.01: поля name и dateCreated были перемещены в контейнер-поле meta.
   // TODO Пересохранить все компании и удалить этот код:
   override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
@@ -66,8 +49,6 @@ object MCompany
   }
 }
 
-
-import MCompany._
 
 /**
  * Экземпляр распарсенного ряда БД.

@@ -23,7 +23,6 @@ import io.suggest.util.MacroLogsImpl
  */
 object MAdnNode
   extends EsModelStaticMutAkvEmptyT
-  with EMCompanyIdStatic
   with EMPersonIdsStatic
   with EMAdNetMemberStatic
   with EMLogoImgStatic
@@ -71,7 +70,6 @@ object MAdnNode
 
 final case class MAdnNode(
   var adn           : AdNetMemberInfo,
-  var companyId     : Option[String]    = None,
   var meta          : AdnMMetadata      = AdnMMetadata.DEFAULT,
   var personIds     : Set[String]       = Set.empty,
   var logoImgOpt    : Option[MImgInfoT] = None,   // TODO Перенести в conf.logoImg
@@ -84,7 +82,6 @@ final case class MAdnNode(
   extends EsModelEmpty
   with EsModelT
   with EMAdNetMember
-  with EMCompanyIdMut
   with EMPersonIds
   with EMLogoImgMut
   with EMAdnMMetadata
@@ -101,7 +98,7 @@ final case class MAdnNode(
   @JsonIgnore
   override def isFieldsValid: Boolean = {
     super.isFieldsValid &&
-      companyId != null && personIds != null && adn != null && meta != null &&
+      personIds != null && adn != null && meta != null &&
       meta != null && meta != null
   }
 

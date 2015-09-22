@@ -282,16 +282,12 @@ trait EMAdNetMemberStatic extends EsModelStaticMutAkvT with EsModelStaticT {
    * @return Список MShop в неопределённом порядке.
    */
   def findBySupId(supId: String, sortField: Option[String] = None, isReversed:Boolean = false, onlyEnabled: Boolean = false,
-                  companyId: Option[String] = None, maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT)
+                  maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT)
                  (implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
     var query: QueryBuilder = supIdQuery(supId)
     if (onlyEnabled) {
       val isEnabledFilter = FilterBuilders.termFilter(ADN_IS_ENABLED_ESFN, true)
       query = QueryBuilders.filteredQuery(query, isEnabledFilter)
-    }
-    if (companyId.isDefined) {
-      val ciFilter = FilterBuilders.termFilter(EMCompanyId.COMPANY_ID_ESFN, companyId)
-      query = QueryBuilders.filteredQuery(query, ciFilter)
     }
     val req = prepareSearch
       .setQuery(query)
