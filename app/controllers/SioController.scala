@@ -9,7 +9,7 @@ import org.joda.time.DateTime
 import play.api.i18n.{I18nSupport, Lang}
 import play.api.mvc._
 import util._
-import util.jsa.init.{CtlJsInitT, WithFlashingJsInit, JsInitTargetsDfltT}
+import util.jsa.init.CtlJsInitT
 import util.mail.IMailerWrapper
 import util.ws.WsDispatcherActor
 import scala.concurrent.Future

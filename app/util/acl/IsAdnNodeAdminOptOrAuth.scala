@@ -61,7 +61,10 @@ case class RequestWithNodeOpt[A](
 ) extends AbstractRequestWithPwOpt(request)
 
 
-sealed trait IsAdnNodeAdminOptOrAuthBase2 extends IsAdnNodeAdminOptOrAuthBase with ExpireSession[RequestWithNodeOpt]
+sealed trait IsAdnNodeAdminOptOrAuthBase2
+  extends IsAdnNodeAdminOptOrAuthBase
+  with ExpireSession[RequestWithNodeOpt]
 
-case class IsAdnNodeAdminOptOrAuth(adnIdOpt: Option[String])
+case class IsAdnNodeAdminOptOrAuthGet(adnIdOpt: Option[String])
   extends IsAdnNodeAdminOptOrAuthBase2
+  with CsrfGet[RequestWithNodeOpt]

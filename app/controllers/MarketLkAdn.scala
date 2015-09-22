@@ -23,7 +23,6 @@ import play.api.data.Form
 import play.api.data.Forms._
 import util.FormUtil._
 import play.api.db.Database
-import play.api.mvc.Result
 
 /**
  * Suggest.io
@@ -35,13 +34,13 @@ class MarketLkAdn @Inject() (
   override val messagesApi: MessagesApi,
   db: Database
 )
-  extends SioController with PlayMacroLogsImpl with BruteForceProtectCtl with ChangePwAction
+  extends SioController with PlayMacroLogsImpl with BruteForceProtectCtl with ChangePwAction with NodeEactAcl
 {
 
   import LOGGER._
 
   /** Список личных кабинетов юзера. */
-  def lkList(fromAdnId: Option[String]) = IsAdnNodeAdminOptOrAuth(fromAdnId).async { implicit request =>
+  def lkList(fromAdnId: Option[String]) = IsAdnNodeAdminOptOrAuthGet(fromAdnId).async { implicit request =>
     val personId = request.pwOpt.get.personId
     val mnodesFut = MAdnNode.findByPersonId(personId)
     for {
@@ -302,111 +301,64 @@ class MarketLkAdn @Inject() (
   ))
 
   /** Рендер страницы с формой подтверждения инвайта на управление ТЦ. */
-  def nodeOwnerInviteAcceptForm(adnId: String, eActId: String) = MaybeAuthGet.async { implicit request =>
-    nodeOwnerInviteAcceptCommon(adnId, eActId) {
-      (eAct, adnNode) =>
-        Ok(invite.inviteAcceptFormTpl(adnNode, eAct, nodeOwnerInviteAcceptM, withOfferText = true))
-    }
+  def nodeOwnerInviteAcceptForm(adnId: String, eActId: String) = NodeEactGet(adnId, eActId) { implicit request =>
+    Ok(invite.inviteAcceptFormTpl(request.mnode, request.eact, nodeOwnerInviteAcceptM, withOfferText = true))
   }
 
   /** Сабмит формы подтверждения инвайта на управление ТЦ. */
-  def nodeOwnerInviteAcceptFormSubmit(adnId: String, eActId: String) = MaybeAuthPost.async { implicit request =>
-    nodeOwnerInviteAcceptCommon(adnId, eActId) { (eAct, adnNode) =>
-      // Если юзер залогинен, то форму биндить не надо
-      val formBinded = nodeOwnerInviteAcceptM.bindFromRequest()
-      lazy val logPrefix = s"nodeOwnerInviteAcceptFormSubmit($adnId, act=$eActId): "
-      formBinded.fold(
-        {formWithErrors =>
-          debug(s"${logPrefix}Form bind failed: ${formatFormErrors(formWithErrors)}")
-          NotAcceptable(invite.inviteAcceptFormTpl(adnNode, eAct, formWithErrors, withOfferText = false))
+  def nodeOwnerInviteAcceptFormSubmit(adnId: String, eActId: String) = NodeEactPost(adnId, eActId).async { implicit request =>
+    import request.{eact, mnode}
+    // Если юзер залогинен, то форму биндить не надо
+    val formBinded = nodeOwnerInviteAcceptM.bindFromRequest()
+    lazy val logPrefix = s"nodeOwnerInviteAcceptFormSubmit($adnId, act=$eActId): "
+    formBinded.fold(
+      {formWithErrors =>
+        debug(s"${logPrefix}Form bind failed: ${formatFormErrors(formWithErrors)}")
+        NotAcceptable(invite.inviteAcceptFormTpl(mnode, eact, formWithErrors, withOfferText = false))
 
-        }, { case (contractAgreed, passwordOpt) =>
-          if (passwordOpt.isEmpty && !request.isAuth) {
-            debug(s"${logPrefix}Password check failed. isEmpty=${passwordOpt.isEmpty} ;; request.isAuth=${request.isAuth}")
-            val form1 = formBinded
-              .withError("password.pw1", "error.required")
-              .withError("password.pw2", "error.required")
-            NotAcceptable(invite.inviteAcceptFormTpl(adnNode, eAct, form1, withOfferText = false))
+      }, { case (contractAgreed, passwordOpt) =>
+        if (passwordOpt.isEmpty && !request.isAuth) {
+          debug(s"${logPrefix}Password check failed. isEmpty=${passwordOpt.isEmpty} ;; request.isAuth=${request.isAuth}")
+          val form1 = formBinded
+            .withError("password.pw1", "error.required")
+            .withError("password.pw2", "error.required")
+          NotAcceptable(invite.inviteAcceptFormTpl(mnode, eact, form1, withOfferText = false))
 
-          } else {
-            // Сначала удаляем запись об активации, убедившись что она не была удалена асинхронно.
-            eAct.delete.flatMap { isDeleted =>
-              val newPersonIdOptFut: Future[Option[String]] = if (!request.isAuth) {
-                MPerson(lang = request2lang.code).save flatMap { personId =>
-                  EmailPwIdent.applyWithPw(email = eAct.email, personId = personId, password = passwordOpt.get, isVerified = true)
-                    .save
-                    .map { emailPwIdentId => Some(personId) }
+        } else {
+          // Сначала удаляем запись об активации, убедившись что она не была удалена асинхронно.
+          eact.delete.flatMap { isDeleted =>
+            val newPersonIdOptFut: Future[Option[String]] = if (!request.isAuth) {
+              MPerson(lang = request2lang.code).save flatMap { personId =>
+                EmailPwIdent.applyWithPw(email = eact.email, personId = personId, password = passwordOpt.get, isVerified = true)
+                  .save
+                  .map { emailPwIdentId => Some(personId) }
+              }
+            } else {
+              Future successful None
+            }
+            // Для обновления полей MMart требуется доступ к personId. Дожидаемся сохранения юзера...
+            newPersonIdOptFut flatMap { personIdOpt =>
+              val personId = (personIdOpt orElse request.pwOpt.map(_.personId)).get
+              val nodeUpdateFut: Future[_] = if (!(mnode.personIds contains personId)) {
+                MAdnNode.tryUpdate(mnode) { adnNode0 =>
+                  adnNode0.copy(
+                    personIds = adnNode0.personIds + personId
+                  )
                 }
               } else {
-                Future successful None
+                Future successful Unit
               }
-              // Для обновления полей MMart требуется доступ к personId. Дожидаемся сохранения юзера...
-              newPersonIdOptFut flatMap { personIdOpt =>
-                val personId = (personIdOpt orElse request.pwOpt.map(_.personId)).get
-                val nodeUpdateFut: Future[_] = if (!(adnNode.personIds contains personId)) {
-                  MAdnNode.tryUpdate(adnNode) { adnNode0 =>
-                    adnNode0.copy(
-                      personIds = adnNode0.personIds + personId
-                    )
-                  }
-                } else {
-                  Future successful Unit
-                }
-                nodeUpdateFut.map { _adnId =>
-                  Billing.maybeInitializeNodeBilling(adnId)
-                  Redirect(routes.MarketLkAdn.showNodeAds(adnId))
-                    .flashing("success" -> "Регистрация завершена.")
-                    .withSession(Keys.PersonId.name -> personId)
-                }
+              nodeUpdateFut.map { _adnId =>
+                Billing.maybeInitializeNodeBilling(adnId)
+                Redirect(routes.MarketLkAdn.showNodeAds(adnId))
+                  .flashing("success" -> "Регистрация завершена.")
+                  .withSession(Keys.PersonId.name -> personId)
               }
             }
           }
         }
-      )
-    }
-  }
-
-  // TODO Переписать этот быдлокод через action builders.
-  type F = (EmailActivation, MAdnNode) => Future[Result]
-
-  private def nodeOwnerInviteAcceptCommon(adnId: String, eaId: String)(f: F)
-                                         (implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
-    bruteForceProtected {
-      EmailActivation.getById(eaId) flatMap {
-        case Some(eAct) if eAct.key == adnId =>
-          nodeOwnerInviteAcceptGo(adnId, eAct, f)
-
-        case other =>
-          // Неверный код активации или id магазина. Если None, то код скорее всего истёк. Либо кто-то брутфорсит.
-          debug(s"nodeOwnerInviteAcceptCommon($adnId, eaId=$eaId): Invalid activation code (eaId): code not found. Expired?")
-          // TODO Надо проверить, есть ли у юзера права на узел, и если есть, то значит юзер дважды засабмиттил форму, и надо его сразу отредиректить в его магазин.
-          // TODO Может и быть ситуация, что юзер всё ещё не залогинен, а второй сабмит уже тут. Нужно это тоже как-то обнаруживать. Например через временную сессионную куку из формы.
-          warn(s"TODO I need to handle already activated requests!!!")
-          NotFound(invite.inviteInvalidTpl("mart.activation.expired.or.invalid.code"))
       }
-    }
-  }
-
-  /** Код одной из ветвей nodeOwnerInvitAcceptCommon. */
-  private def nodeOwnerInviteAcceptGo(adnId: String, eAct: EmailActivation, f: F)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
-    MAdnNodeCache.getById(adnId) flatMap {
-      case Some(adnNode) =>
-        EmailPwIdent.getByEmail(eAct.email) flatMap {
-          // email, на который выслан запрос, уже зареган в системе, но текущий юзер не подходит: тут у нас анонимус или левый юзер.
-          case Some(epwIdent) if epwIdent.isVerified && !request.pwOpt.exists(_.personId == epwIdent.personId) =>
-            debug(s"eAct has email = ${epwIdent.email}. This is personId[${epwIdent.personId}], but current pwOpt = ${request.pwOpt.map(_.personId)} :: Rdr user to login...")
-            val result = IsAuth.onUnauthBase(request)
-            if (request.isAuth) result.withNewSession else result
-
-          // Юзер анонимус и такие email неизвестны системе, либо тут у нас текущий необходимый юзер.
-          case _ =>
-            f(eAct, adnNode)
-        }
-      case None =>
-        // should never occur
-        error(s"nodeOwnerInviteAcceptGo($adnId, eaId=${eAct.id.get}): ADN node not found, but act.code for node exist. This should never occur.")
-        NotFound(invite.inviteInvalidTpl("adn.node.not.found"))
-    }
+    )
   }
 
 

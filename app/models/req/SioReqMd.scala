@@ -25,6 +25,8 @@ import scala.concurrent.Future
 
 object SioReqMd {
 
+  def empty: SioReqMd = apply()
+
   /** Простая генерация srm на основе юзера. */
   def fromPwOpt(pwOpt: PwOpt_t, jsInitTargets: Seq[MTarget] = Nil): Future[SioReqMd] = {
     PersonWrapper.findUserName(pwOpt) map { usernameOpt =>
