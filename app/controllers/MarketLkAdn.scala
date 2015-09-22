@@ -302,8 +302,8 @@ class MarketLkAdn @Inject() (
   ))
 
   /** Рендер страницы с формой подтверждения инвайта на управление ТЦ. */
-  def nodeOwnerInviteAcceptForm(martId: String, eActId: String) = MaybeAuthGet.async { implicit request =>
-    nodeOwnerInviteAcceptCommon(martId, eActId) {
+  def nodeOwnerInviteAcceptForm(adnId: String, eActId: String) = MaybeAuthGet.async { implicit request =>
+    nodeOwnerInviteAcceptCommon(adnId, eActId) {
       (eAct, adnNode) =>
         Ok(invite.inviteAcceptFormTpl(adnNode, eAct, nodeOwnerInviteAcceptM, withOfferText = true))
     }
