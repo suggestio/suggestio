@@ -51,7 +51,8 @@ trait Base extends OnGrid with ISjsLogger {
         val sd1 = sd0.copy(
           grid = grid2,
           search = sd0.search.copy(
-            opened = false
+            opened    = false,
+            ftsSearch = None
           )
         )
 
