@@ -1,12 +1,12 @@
 package controllers
 
 import com.google.inject.Inject
-import io.suggest.util.MacroLogsImpl
 import models.im.MImg
 import models.msys.NodeCreateParams
 import models.usr.{MPerson, EmailActivation}
 import play.api.db.Database
 import play.twirl.api.Html
+import util.PlayMacroLogsImpl
 import util.acl._
 import models._
 import util.adn.NodesUtil
@@ -36,7 +36,7 @@ class SysMarket @Inject() (
   override val mailer: IMailerWrapper,
   db: Database
 )
-  extends SioControllerImpl with MacroLogsImpl with ShopMartCompat with SysNodeInstall with SmSendEmailInvite
+  extends SioControllerImpl with PlayMacroLogsImpl with ShopMartCompat with SysNodeInstall with SmSendEmailInvite
   with SysAdRender
 {
 
@@ -122,12 +122,10 @@ class SysMarket @Inject() (
   }
   private def createAdnNodeRender(supOptFut: Future[Option[MAdnNode]], supIdOpt: Option[String], nodeFormM: Form[MAdnNode],
                                   ncpForm: Form[NodeCreateParams]) (implicit request: AbstractRequestWithPwOpt[_]): Future[Html] = {
-    val companiesFut = MCompany.getAll(maxResults = 100)
     for {
       supOpt    <- supOptFut
-      companies <- companiesFut
     } yield {
-      createAdnNodeFormTpl(supOpt, nodeFormM, companies, ncpForm)
+      createAdnNodeFormTpl(supOpt, nodeFormM, ncpForm)
     }
   }
 
@@ -249,9 +247,8 @@ class SysMarket @Inject() (
 
   private def editAdnNodeBody(adnId: String, form: Form[MAdnNode])
                              (implicit request: AbstractRequestForAdnNode[AnyContent]): Future[Html] = {
-    MCompany.getAll(maxResults = 1000) map { companies =>
-      editAdnNodeFormTpl(request.adnNode, form, companies)
-    }
+    val res = editAdnNodeFormTpl(request.adnNode, form)
+    Future successful res
   }
 
   /** Самбит формы редактирования узла. */

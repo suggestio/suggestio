@@ -1,4 +1,4 @@
-@(adnNode: MAdnNode, af: Form[MAdnNode], companies: Seq[MCompany])(implicit ctx: Context)
+@(adnNode: MAdnNode, af: Form[MAdnNode])(implicit ctx: Context)
 
 @* Редактирования узла ADN. *@
 @import ctx._
@@ -10,7 +10,6 @@
 
   @_adnNodeFormTpl(
     af	      = af,
-    companies = companies,
     call      = routes.SysMarket.editAdnNodeSubmit(adnNode.id.get),
     btnText   = messages("Save")
   )

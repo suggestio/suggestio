@@ -1,4 +1,4 @@
-@(supOpt: Option[MAdnNode], af: Form[MAdnNode], companies: Seq[MCompany], ncpf: Form[msys.NodeCreateParams])(implicit ctx: Context)
+@(supOpt: Option[MAdnNode], af: Form[MAdnNode], ncpf: Form[msys.NodeCreateParams])(implicit ctx: Context)
 
 @* Страница с формой создания нового узла рекламной сети. *@
 @import ctx._
@@ -34,7 +34,6 @@
   @_adnNodeFormTpl(
     af	      = af,
     call      = routes.SysMarket.createAdnNodeSubmit(supOpt.flatMap(_.id)),
-    companies = companies,
     btnText   = messages("Create"),
     formAfter = Some(formAfter)
   )

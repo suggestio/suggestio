@@ -1,4 +1,4 @@
-@(mir: MInviteRequest, nodeOpt: Option[MAdnNode], company: MCompany, af: Form[MAdnNode])(implicit ctx: Context)
+@(mir: MInviteRequest, nodeOpt: Option[MAdnNode], af: Form[MAdnNode])(implicit ctx: Context)
 
 @* Рендер страницы с формой редактирования компании. *@
 @import ctx._
@@ -12,7 +12,6 @@
   @_adnNodeFormTpl(
     btnText = messages("Save"),
     af = af,
-    call = routes.SysMarketInvReq.nodeEditFormSubmit(mir.id.get),
-    companies = Seq(company)
+    call = routes.SysMarketInvReq.nodeEditFormSubmit(mir.id.get)
   )
 }

@@ -1,4 +1,4 @@
-@(af: Form[MAdnNode], call: Call, companies: Seq[MCompany], btnText: String, formAfter: Option[Html] = None)(implicit ctx: Context)
+@(af: Form[MAdnNode], call: Call, btnText: String, formAfter: Option[Html] = None)(implicit ctx: Context)
 
 @* Форма для создания/редактирования узла рекламной сети.
    При верстке шаблона следует помнить, что mcompany.id может быть None. *@
@@ -9,7 +9,6 @@
 
 @form( CSRF(call) ) {
 
-  @* ADN *@
   <table class="input-w __size-L">
     <td class="input-w_left">
       <label class="input-w_prop-name">
@@ -48,29 +47,6 @@
 
   <table class="input-w __size-L">
     @checkbox(af("adn.isEnabled"), '_label -> "Включён?", '_class -> "sys-checkbox")
-  </table>
-
-
-  @* Компания, к которой принадлежит узел. В продакшене это задаётся неявно. *@
-  <table class="input-w __size-L">
-    <td class="input-w_left">
-      <label class="input-w_prop-name">
-
-      </label>
-    </td>
-    <td>
-      @defining(af("companyId")) { ciField =>
-        @defining(ciField.value.orElse(request.getQueryString("company_id")).getOrElse("")) { currCompanyId =>
-          <select name="@ciField.name">
-            <option disabled>@messages("Company")-@messages("Owner")</option>
-            <option value=""></option>
-            @companies.map { mcompany =>
-              <option value="@mcompany.id"@if(mcompany.id contains currCompanyId) {selected}>@mcompany.meta.name</option>
-            }
-          </select>
-        }
-      }
-    </td>
   </table>
 
 

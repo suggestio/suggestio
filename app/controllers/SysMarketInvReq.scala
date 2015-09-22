@@ -100,22 +100,14 @@ class SysMarketInvReq @Inject() (
 
   private def nodeEditBody(mir: MInviteRequest)(onSuccess: Html => Result)
                           (implicit request: MirRequest[AnyContent]): Future[Result] = {
-    val mcOptFut = getCompanyOptFut(mir)
-    val adnOptFut = getNodeOptFut(mir)
-    mcOptFut flatMap {
-      case Some(mc) =>
-        adnOptFut map { adnNodeOpt =>
-          val formFilled = adnNodeOpt match {
-            case Some(adnNode) =>
-              adnNodeFormM fill adnNode
-            case None =>
-              adnNodeFormM
-          }
-          Ok(nodeEditTpl(mir, adnNodeOpt, mc, formFilled))
-        }
-
-      case None =>
-        NotFound("Company not found.")
+    getNodeOptFut(mir) map { adnNodeOpt =>
+      val formFilled = adnNodeOpt match {
+        case Some(adnNode) =>
+          adnNodeFormM fill adnNode
+        case None =>
+          adnNodeFormM
+      }
+      Ok(nodeEditTpl(mir, adnNodeOpt, formFilled))
     }
   }
 
