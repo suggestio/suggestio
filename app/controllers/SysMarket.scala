@@ -47,91 +47,6 @@ class SysMarket @Inject() (
     Ok(marketIndexTpl())
   }
 
-  /** Отрендерить sio-админу список всех компаний, зарегистрированных в системе. */
-  def companiesList = IsSuperuser.async { implicit request =>
-    MCompany.getAll().map { allCompanies =>
-      val render = company.companiesListTpl(allCompanies)
-      Ok(render)
-    }
-  }
-
-  /** Отрендерить страницу с формой добавления новой компании. */
-  def companyAddForm(c: Option[MCompany]) = IsSuperuser { implicit request =>
-    val form = c.fold(companyFormM) { mc => companyFormM fill mc }
-    Ok(company.companyAddFormTpl(form))
-  }
-
-  /** Самбит формы добавления новой компании. */
-  def companyAddFormSubmit = IsSuperuser.async { implicit request =>
-    companyFormM.bindFromRequest.fold(
-      {formWithErrors =>
-        debug(s"companyAddFormSubmit(): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
-        NotAcceptable(company.companyAddFormTpl(formWithErrors))
-      },
-      {mc =>
-        mc.save.map { companyId =>
-          Redirect(routes.SysMarket.companyShow(companyId))
-        }
-      }
-    )
-  }
-
-  /** Отобразить информацию по указанной компании.
-    * @param companyId Числовой id компании.
-    */
-  def companyShow(companyId: String) = IsSuperuserCompany(companyId).async { implicit request =>
-    MAdnNode.findByCompanyId(companyId, maxResults = 100) map { adnms =>
-      Ok(company.companyShowTpl(request.company, adnms))
-    }
-  }
-
-
-  /** Отрендерить страницу с формой редактирования компании. */
-  def companyEditForm(companyId: String, r: Option[String]) = IsSuperuserCompany(companyId).apply { implicit request =>
-    import request.{company => mc}
-    val form = companyFormM fill mc
-    Ok(company.companyEditFormTpl(mc, form, r))
-  }
-
-  /** Сабмит формы редактирования компании. */
-  def companyEditFormSubmit(companyId: String, r: Option[String]) = IsSuperuserCompany(companyId).async { implicit request =>
-    import request.{company => mc}
-    companyFormM.bindFromRequest.fold(
-      {formWithErrors =>
-        debug(s"companyEditFormSubmit($companyId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
-        NotAcceptable(company.companyEditFormTpl(mc, formWithErrors, r))
-      },
-      {mc2 =>
-        // Собираем новый инстанс компании.
-        val mc3 = updateCompany(mc, mc2)
-        mc3.save map { _companyId =>
-          RdrBackOr(r) { routes.SysMarket.companyShow(_companyId) }
-            .flashing("success" -> "Изменения сохранены.")
-        }
-      }
-    )
-  }
-
-  /** Админ приказал удалить указанную компанию. */
-  def companyDeleteSubmit(companyId: String) = IsSuperuserCompany(companyId).async { implicit request =>
-    request.company
-      .delete
-      .flatMap { isDeleted =>
-        request.company.eraseResources
-          .map { _ => isDeleted }
-      }
-      .filter(identity)
-      .map { _ =>
-        Redirect(routes.SysMarket.companiesList())
-          .flashing("success" -> "Компания удалёна.")
-      }
-      .recover {
-        case nse: NoSuchElementException =>
-          warn(s"deleteAdnNodeSubmit($companyId): Node not found. Anyway, resources re-erased.")
-          IsSuperuserCompany.companyNotFound(companyId)
-      }
-  }
-
 
   /** Страница с унифицированным списком узлов рекламной сети в алфавитном порядке с делёжкой по memberType. */
   // TODO stiIdOpt должен быть не id, а конретным экземпляром ShownTypeId.
@@ -164,7 +79,6 @@ class SysMarket @Inject() (
   def showAdnNode(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
     import request.adnNode
     val slavesFut = MAdnNode.findBySupId(adnId, maxResults = 100)
-    val companyOptFut = adnNode.getCompany
     val personNamesFut = Future.traverse(adnNode.personIds) { personId =>
       MPerson.findUsernameCached(personId)
         .map { nameOpt =>
@@ -176,10 +90,9 @@ class SysMarket @Inject() (
     }
     for {
       slaves      <- slavesFut
-      companyOpt  <- companyOptFut
       personNames <- personNamesFut
     } yield {
-      Ok(adnNodeShowTpl(adnNode, slaves, companyOpt, personNames))
+      Ok(adnNodeShowTpl(adnNode, slaves, personNames))
     }
   }
 

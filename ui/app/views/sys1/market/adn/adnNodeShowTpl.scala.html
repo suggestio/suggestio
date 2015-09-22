@@ -1,5 +1,4 @@
-@(adnNode: MAdnNode, slaves: Seq[MAdnNode], company: Option[MCompany] = None,
-  personNames: Map[String, String] = Map.empty)(implicit ctx: Context)
+@(adnNode: MAdnNode, slaves: Seq[MAdnNode], personNames: Map[String, String] = Map.empty)(implicit ctx: Context)
 
 @* Страница, отображающая информацию по торговому центру. *@
 
@@ -63,12 +62,6 @@
     @btn(routes.SysAdnGeo.forNode(adnNode.id.get), 52) { GEO }
   </div>
 
-
-  @company.map { mc =>
-    <p class="paragraph __size-M color-light-strong">
-      @messages("Company")-@messages("Owner"): <a class="blue-link" href="@routes.SysMarket.companyShow(mc.id.get)">@mc.meta.name</a>
-    </p>
-  }
 
   @lkBlock("Метаданные") {
     @_nodeMetaTpl(adnNode.meta)

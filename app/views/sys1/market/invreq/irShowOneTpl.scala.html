@@ -5,7 +5,6 @@
 @import stuff.{_yesNoTpl => yn, _deleteSmthFormBtnTpl}
 @import helper._
 @import sys1.market.adn._
-@import sys1.market.company._
 
 @btn(btnText: String, to: Call) = {
   @form(to) {
@@ -53,31 +52,6 @@
 
   @defining( mir.company.isRight ) { mcInstalled =>
   @defining( mir.adnNode.exists(_.isRight) ) { nodeInstalled =>
-
-    @* Блок компании. *@
-    <br/><br/>
-    <div>
-      @mcOpt.fold {
-        <p>Ошибка доступа к данным компании.</p>
-        TODO Нужна кнопка восстановления в шаблон.
-      } { mc =>
-        <h3>@if(mcInstalled) {@Messages("Company")} else {Шаблон компании}</h3>
-        @_companyMetaTpl(mc.meta)
-        @if(mcInstalled) {
-          Эта компания сейчас <a href="@routes.SysMarket.companyShow(mc.id.get)">существует</a> в системе.
-        }
-        <a href="@if(mcInstalled) {@routes.SysMarket.companyEditForm(mc.id.get)} else {@routes.SysMarketInvReq.companyEdit(mir.id.get)}">@Messages("Edit")</a>
-        @if(mcInstalled) {
-          @btn("Деинсталлировать компанию назад в заготовку", routes.SysMarketInvReq.companyUninstallSubmit(mir.id.get))
-        } else {
-          @if(!nodeInstalled) {
-            @btn("Установить компанию в систему", routes.SysMarketInvReq.companyInstallSubmit(mir.id.get))
-          }
-        }
-        @* TODO Нужна замена компании на существующую. *@
-      }
-    </div>
-
 
     @* Блок рекламного узла. *@
     <br/><br/>

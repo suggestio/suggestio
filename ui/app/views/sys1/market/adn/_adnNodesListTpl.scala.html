@@ -1,5 +1,4 @@
-@(adnNodes: Seq[MAdnNode], companies: Option[Map[String, MCompany]] = None,
-  withDelims: Boolean = true)(implicit ctx: Context)
+@(adnNodes: Seq[MAdnNode], withDelims: Boolean = true)(implicit ctx: Context)
 
 @* Инлайновый список узлов. *@
 @import ctx._
@@ -20,11 +19,6 @@
     @_th(sz) {
       @messages("Town")
     }
-    @if(companies.isDefined) {
-      @_th(sz) {
-        @messages("Company")
-      }
-    }
 
   } {
     @* _ntable.rows *@
@@ -44,11 +38,6 @@
           }
           @_td(sz) {
             -------------
-          }
-          @if(companies.isDefined) {
-            @_td(sz) {
-              -------------
-            }
           }
         }
       }
@@ -72,13 +61,6 @@
           }
           @_td(sz) {
             @adnNode.meta.town
-          }
-          @companies.map { _companies =>
-            @_td(sz) {
-              @adnNode.companyId.flatMap(_companies.get).map { mc =>
-                <a class="blue-link" href="@routes.SysMarket.companyShow(mc.id.get)">@mc.meta.name</a>
-              }
-            }
           }
 
         } @* _tr() *@

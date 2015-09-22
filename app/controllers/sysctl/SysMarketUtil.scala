@@ -219,7 +219,6 @@ object SysMarketUtil extends PlayMacroLogsDyn {
   /** Накатить отмаппленные изменения на существующий интанс узла, породив новый интанс.*/
   def updateAdnNode(adnNode: MAdnNode, adnNode2: MAdnNode): MAdnNode = {
     adnNode.copy(
-      companyId = adnNode2.companyId,
       personIds = adnNode2.personIds,
       meta = adnNode.meta.copy(
         name    = adnNode2.meta.name,
@@ -269,14 +268,13 @@ object SysMarketUtil extends PlayMacroLogsDyn {
   def personIdsKM = "personIds" -> personIdsM
 
   /** Генератор маппингов для формы добавления/редактирования рекламного узла. */
-  def getAdnNodeFormM(companyM: Mapping[String] = esIdM): Form[MAdnNode] = {
+  def getAdnNodeFormM(): Form[MAdnNode] = {
     Form(mapping(
-      "companyId" -> optional(companyM), adnKM, metaKM, confKM, personIdsKM
+      adnKM, metaKM, confKM, personIdsKM
     )
-    {(companyId, anmi, meta, conf, personIds) =>
+    {(anmi, meta, conf, personIds) =>
       MAdnNode(
         meta = meta,
-        companyId = companyId,
         adn = anmi,
         conf = conf,
         personIds = personIds
@@ -284,7 +282,7 @@ object SysMarketUtil extends PlayMacroLogsDyn {
     }
     {adnNode =>
       import adnNode._
-      Some((companyId, adn, meta, conf, personIds))
+      Some((adn, meta, conf, personIds))
     })
   }
   def adnNodeFormM = getAdnNodeFormM()

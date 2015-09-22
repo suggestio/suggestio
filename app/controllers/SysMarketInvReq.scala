@@ -70,95 +70,6 @@ class SysMarketInvReq @Inject() (
     }
   }
 
-  /** Страница редактирования компании, встроенной в интанс [[models.MInviteRequest]]'a. */
-  def companyEdit(mirId: String) = isCompanyLeft(mirId).apply { implicit request =>
-    import request.mir
-    val mc = mir.company.left.get
-    val formBinded = companyFormM fill mc
-    Ok(companyEditTpl(mir, mc, formBinded))
-  }
-
-  /** Сабмит формы редактирования компании. */
-  def companyEditFormSubmit(mirId: String) = isCompanyLeft(mirId).async { implicit request =>
-    import request.mir
-    val mc = mir.company.left.get
-    companyFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        debug(s"companyEditFormSubmit(mir=$mirId): Failed to bind company form:\n${formatFormErrors(formWithErrors)}")
-        NotAcceptable(companyEditTpl(mir, mc, formWithErrors))
-      },
-      {mc2 =>
-        MInviteRequest.tryUpdate(mir) { mir0 =>
-          val mc3 = updateCompany(mc, mc2)
-          mir0.copy(
-            company = Left(mc3)
-          )
-        } map { _ =>
-          rdrToIr(mirId, "Шаблон будущей компании успешно обновлён.")
-        }
-      }
-    )
-  }
-
-  /** Sio-админ затребовал установку шаблона компании в базу. Нужно сохранить компанию и обновить состояние MIR. */
-  def companyInstallSubmit(mirId: String) = isCompanyLeft(mirId).async { implicit request =>
-    import request.mir
-    val mc0 = mir.company.left.get
-    val previoslyExistedFut = mc0.id.fold [Future[Boolean]] (Future successful false) { MCompany.isExist }
-    previoslyExistedFut.flatMap { previoslyExisted =>
-      mc0.save.flatMap { savedMcId =>
-        // Компания сохранена. Пора попробовать обновить текущий MIR
-        val updateFut = MInviteRequest.tryUpdate(mir) { mir0 =>
-          mir0.copy(
-            company = Right(savedMcId)
-          )
-        }
-        if (!previoslyExisted) {
-          updateFut onFailure { case ex =>
-            warn(s"Rollbacking company install: mir=$mirId companyId=$savedMcId due to exception", ex)
-            MCompany.deleteById(savedMcId)
-          }
-        }
-        updateFut map { _ =>
-          rdrToIr(mirId, s"Создана компания '${mc0.meta.name}'")
-        }
-      }
-    }
-  }
-
-  /** Sio-админ запрашивает деинсталляцию шаблона компании назад в шаблон из базы MCompany.
-    * Нужно удалить компанию и обновить состояние MIR. */
-  def companyUninstallSubmit(mirId: String) = isCompanyRight(mirId).async { implicit request =>
-    import request.mir
-    val mcId = mir.company.right.get
-    MCompany.getById(mcId) flatMap {
-      case Some(mc) =>
-        lazy val logPrefix = s"companyUninstallSubmit($mir): "
-        mc.delete flatMap {
-          case true =>
-            debug(logPrefix + "Company uninstalled: " + mcId)
-            val updFut = MInviteRequest.tryUpdate(mir) { mir0 =>
-              mir0.copy(
-                company = Left(mc)
-              )
-            }
-            updFut onFailure { case ex =>
-              warn(s"${logPrefix}Rollbacking deletion of $mc due to exception during MIR update", ex)
-              mc.save
-            }
-            updFut map { _ =>
-              rdrToIr(mirId, "Компания деинсталлирована назад в шаблон компании.")
-            }
-
-          case false =>
-            ExpectationFailed(s"Unable to remove existsing company $mcId. MC.delete() returned false.")
-        }
-
-      case None =>
-        NotFound("Previously installed company not found, mcId=" + mcId)
-    }
-  }
-
 
   /** Удалить один MIR. */
   def deleteIR(mirId: String) = IsSuperuserMir(mirId).async { implicit request =>
@@ -179,8 +90,7 @@ class SysMarketInvReq @Inject() (
 
   /** Форма для редактирования узла, но вместо id компании может быть любой мусор. */
   private def adnNodeFormM = {
-    import play.api.data._, Forms._
-    getAdnNodeFormM(text(maxLength = 40))
+    getAdnNodeFormM()
   }
 
   /** Запрос страницы с формой редактирования заготовки узла. */
@@ -236,8 +146,6 @@ class SysMarketInvReq @Inject() (
   /** sio-админ приказывает развернуть рекламный узел. */
   def nodeInstallSubmit(mirId: String) = isNodeLeft(mirId).async { implicit request =>
     import request.mir
-    assert(mir.company.isRight, "error.company.not.installed")
-    val mcId = mir.company.right.get
     val adnNode0 = mir.adnNode.get.left.get
     // Определить, существовал ли узел. Если нет, то при ошибке обновления MIR новый созданный узел будет удалён.
     val previoslyExistedFut = adnNode0.id.fold [Future[Boolean]]
@@ -252,7 +160,6 @@ class SysMarketInvReq @Inject() (
     previoslyExistedFut flatMap { previoslyExisted =>
       waSavedIdOptFut flatMap { waSavedIdOpt =>
         val adnNode = adnNode0.copy(
-          companyId = Some(mcId),
           meta = adnNode0.meta.copy(
             welcomeAdId = waSavedIdOpt
           )

@@ -1,8 +1,7 @@
 package controllers
 
 import com.google.inject.Inject
-import io.suggest.ym.model.{MCompany, MAdnNode}
-import models.{Context, AdnNodesSearchArgs}
+import models.{Context, AdnNodesSearchArgs, MAdnNode}
 import models.usr._
 import play.api.i18n.MessagesApi
 import util.acl.{IsSuperuserPerson, IsSuperuser}
@@ -137,16 +136,10 @@ class SysPerson @Inject() (
       _extIdentsTpl(extIdents, showPersonId = false, personNames = personNames)(ctx)
     }
 
-    // Рендерим список узлов:
-    val companiesFut = nodesFut
-      .map { _.flatMap(_.companyId).toSet }
-      .flatMap { MCompany.multiGetRev(_) }
-      .map { _.iterator.flatMap { v => v.id.map { id => id -> v } }.toMap }
     val nodesHtmlFut = for {
       mnodes    <- nodesFut
-      companies <- companiesFut
     } yield {
-      _adnNodesListTpl(mnodes, Some(companies), withDelims = false)(ctx)
+      _adnNodesListTpl(mnodes, withDelims = false)(ctx)
     }
 
     // Рендерим конечный шаблон.
