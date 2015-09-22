@@ -2,6 +2,7 @@
 
 @* Страница с формой подтверждения регистрации в качестве управляющего узлом ADN.
    Новый пользователь здесь может ввести пароль. Уже залогиненный - просто подтвердить себя. *@
+
 @import helper._
 @import market.contract._
 @import ctx._
@@ -24,23 +25,24 @@
 }
 
 @lk.lkBase(
-  title = "Подтверждение регистрации",
+  title   = messages("Signup.confirmation"),
   nodeOpt = Some(adnNode)
 ) {
 
   <div class="page-title">
     <div class="page-title_cnt">
-        ПОДТВЕРЖДЕНИЕ РЕГИСТРАЦИИ
+      messages("Signup.confirmation").toUpperCase
     </div>
   </div>
 
   <div class="body_cnt">
     <div class="success-label success-label__adn-invite-accept">
       <div class="success-label__icon"></div>
-      <div class="success-label__title">Вы приглашены к участию в системе Sio.Market</div>
+      <div class="success-label__title">Вы приглашены к участию в системе iSuggest.ru</div>
     </div>
 
-    @form( routes.MarketLkAdn.nodeOwnerInviteAcceptFormSubmit(adnNode.id.get, eAct.id.get) ) {
+    @form( CSRF(routes.MarketLkAdn.nodeOwnerInviteAcceptFormSubmit(adnNode.id.get, eAct.id.get)) ) {
+
       @* Рендер текста открытой оферты. *@
       @if(withOfferText) {
         @market.contract._inviteWidgetTpl(iaf)
@@ -63,19 +65,18 @@
 
         @table_fieldset(messages("Confirm.password"), ""){
           <input type="password" name="password.pw2"/>
-
         }
-          @* TODO Нужна ссылка с формой для логина в систему, если юзер уже зареган, но ещё не залогинен. *@
-        }
-
-        <div class="ft-XS color-light-strong invite-form_description">
-          Используйте указанные e-mail и пароль в дальшейнем для авторизации в Sio.Market
-        </div>
-
-        <div class="submit-w __size-L __invite-form">
-          <input class="siom-ac-btn __color-2 __size-M __ft-XM f-left" type="submit" valu="@messages("Продолжить")" />
-        </div>
+        @* TODO Нужна ссылка с формой для логина в систему, если юзер уже зареган, но ещё не залогинен. *@
       }
+
+      <div class="ft-XS color-light-strong invite-form_description">
+        Используйте указанные e-mail и пароль в дальшейнем для авторизации в системе iSuggest.
+      </div>
+
+      <div class="submit-w __size-L __invite-form">
+        <input class="siom-ac-btn __color-2 __size-M __ft-XM f-left" type="submit" value="@messages("Continue")" />
+      </div>
+    }
 
   </div>
 
