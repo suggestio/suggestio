@@ -1,6 +1,8 @@
 package io.suggest.model.n2.node.meta
 
 import io.suggest.model.{GenEsMappingPropsDummy, PrefixedFn}
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
  * Suggest.io
@@ -21,6 +23,14 @@ object EMNodeMeta extends PrefixedFn {
   def META_NAME_ESFN              = _fullFn( MNodeMeta.NAME_ESFN )
   def META_NAME_SHORT_ESFN        = _fullFn( MNodeMeta.NAME_SHORT_ESFN )
   def META_NAME_SHORT_NOTOK_ESFN  = _fullFn( MNodeMeta.NAME_SHORT_NOTOK_ESFN )
+
+
+  /** JSON-поддержка для поля meta. */
+  val FORMAT: OFormat[MNodeMeta] = {
+    (__ \ META_ESFN)
+      .formatNullable[MNodeMeta]
+      .inmap[MNodeMeta](_ getOrElse MNodeMeta.empty, Some(_))
+  }
 
 }
 

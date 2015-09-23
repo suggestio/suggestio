@@ -2,7 +2,7 @@ package io.suggest.model.n2.tag
 
 import io.suggest.model.n2.node.MNode
 import io.suggest.model.n2.tag.vertex.{EMTagVertexStaticT, EMTagVertex, MTagVertex}
-import play.api.libs.json.{OWrites, Writes, Reads}
+import play.api.libs.json.OFormat
 import play.api.libs.functional.syntax._
 
 /**
@@ -17,22 +17,17 @@ object MNodeTagInfo {
   /** Расшаренный пустой экземпляр для дедубликации пустых инстансов контейнера в памяти. */
   val empty = MNodeTagInfo()
 
-  /** Десериализация из JSON. */
-  implicit val READS: Reads[MNodeTagInfo] = {
-    EMTagVertex.FORMAT
-      .map { vertex =>
+  implicit val FORMAT: OFormat[MNodeTagInfo] = {
+    EMTagVertex.FORMAT.inmap[MNodeTagInfo](
+      {vertex =>
         // Если все аргументы пустые, то вернуть empty вместо создания нового, неизменяемо пустого инстанса.
         if (vertex.isEmpty)
           empty
         else
           MNodeTagInfo(vertex)
-      }
-  }
-
-  /** Сериализация в JSON. */
-  implicit val WRITES: Writes[MNodeTagInfo] = {
-    (EMTagVertex.FORMAT: OWrites[Option[MTagVertex]])
-      .contramap[MNodeTagInfo](_.vertex)
+      },
+      { _.vertex }
+    )
   }
 
 }
