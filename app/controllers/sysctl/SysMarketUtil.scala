@@ -36,7 +36,7 @@ object SysMarketUtil extends PlayMacroLogsDyn {
     "color"     -> colorOptM
   )
   {(name, nameShort, descr, town, address, phone, floor, section, siteUrl, color) =>
-    AdnMMetadata(
+    MNodeMeta(
       nameOpt = Some(name),
       nameShortOpt = nameShort,
       description = descr,

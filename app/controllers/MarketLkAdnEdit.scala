@@ -69,7 +69,7 @@ class MarketLkAdnEdit @Inject() (
   private def rcvrMetaM = {
     mapping(nameKM, townKM, addressKM, colorKM, fgColorKM, siteUrlKM, phoneKM, audDescrKM, humTrafAvgKM, infoKM)
     {(name, town, address, color, fgColorOpt, siteUrlOpt, phoneOpt, audDescr, humanTrafficAvg, info) =>
-      AdnMMetadata(
+      MNodeMeta(
         nameOpt = Some(name),
         town    = town,
         address = address,
@@ -92,7 +92,7 @@ class MarketLkAdnEdit @Inject() (
   private def prodMetaM = {
     mapping(nameKM, townKM, addressKM, colorKM, fgColorKM, siteUrlKM, phoneKM, infoKM)
     {(name, town, address, color, fgColor, siteUrlOpt, phoneOpt, info) =>
-      AdnMMetadata(
+      MNodeMeta(
         nameOpt = Some(name),
         town    = town,
         address = address,
@@ -114,7 +114,7 @@ class MarketLkAdnEdit @Inject() (
   private def nodeMetaM = {
     mapping(nameKM, townKM, addressKM, colorKM, fgColorKM, siteUrlKM, phoneKM)
     {(name, town, address, color, fgColor, siteUrlOpt, phoneOpt) =>
-      AdnMMetadata(
+      MNodeMeta(
         nameOpt = Some(name),
         town    = town,
         address = address,
@@ -221,7 +221,7 @@ class MarketLkAdnEdit @Inject() (
 
   /** Накатить изменения на инстанс узла, породив новый инстанс.
     * Вынесена из editAdnNodeSubmit() для декомпозиции и для нужд for{}-синтаксиса. */
-  private def applyNodeChanges(adnNode: MAdnNode, adnMeta2: AdnMMetadata, waIdOpt: Option[String],
+  private def applyNodeChanges(adnNode: MAdnNode, adnMeta2: MNodeMeta, waIdOpt: Option[String],
                                newLogo: Option[MImgInfoT], newImgGallery: List[String]): MAdnNode = {
     adnNode.copy(
       meta = adnNode.meta.copy(
@@ -295,7 +295,7 @@ class MarketLkAdnEdit @Inject() (
 
   /** Внутренняя модель этого контроллера, отражающая результирующее значение биндинга формы редактирования узла. */
   sealed case class FormMapResult(
-    meta        : AdnMMetadata,
+    meta        : MNodeMeta,
     logoOpt     : LogoOpt_t,
     waImgOpt    : Option[MImg] = None,
     gallery     : List[MImg] = Nil

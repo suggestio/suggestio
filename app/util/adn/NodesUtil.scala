@@ -83,7 +83,7 @@ object NodesUtil extends PlayMacroLogsImpl {
       personIds = Set(personId),
       meta = {
         val dc = NodeDfltColors.getOneRandom()
-        AdnMMetadata(
+        MNodeMeta(
           nameOpt   = Some(name),
           color     = Some(dc.bgColor),
           fgColor   = Some(dc.fgColor)

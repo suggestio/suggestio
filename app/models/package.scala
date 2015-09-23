@@ -35,8 +35,8 @@ package object models {
   val  MAd                  = ym.model.MAd
   type MAd                  = ym.model.MAd
 
-  val  AdnMMetadata         = ym.model.common.AdnMMetadata
-  type AdnMMetadata         = ym.model.common.AdnMMetadata
+  val  MNodeMeta            = n2.node.meta.MNodeMeta
+  type MNodeMeta            = n2.node.meta.MNodeMeta
 
   val  AdNetMemberInfo      = ym.model.common.AdNetMemberInfo
   type AdNetMemberInfo      = ym.model.common.AdNetMemberInfo
