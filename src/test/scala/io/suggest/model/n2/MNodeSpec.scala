@@ -1,5 +1,6 @@
 package io.suggest.model.n2
 
+import io.suggest.model.n2.node.MNode
 import io.suggest.model.n2.tag.MNodeTagInfo
 import io.suggest.model.n2.tag.vertex.{MTagFace, MTagVertex}
 import org.scalatest._, Matchers._

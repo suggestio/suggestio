@@ -1,5 +1,6 @@
 package io.suggest.model.n2.tag
 
+import io.suggest.model.n2.node.MNode
 import io.suggest.model.n2.tag.vertex.{EMTagVertexStaticT, EMTagVertex, MTagVertex}
 import play.api.libs.json.{Writes, Reads}
 import play.api.libs.functional.syntax._
@@ -37,7 +38,7 @@ object MNodeTagInfo {
 }
 
 
-/** Аддон для модели [[io.suggest.model.n2.MNode]] для поддержки маппинга полей. */
+/** Аддон для модели [[MNode]] для поддержки маппинга полей. */
 trait MNodeTagInfoMappingT
   extends EMTagVertexStaticT
 

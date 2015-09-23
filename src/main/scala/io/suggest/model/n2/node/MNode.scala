@@ -1,13 +1,12 @@
-package io.suggest.model.n2
+package io.suggest.model.n2.node
 
 import io.suggest.model._
-import io.suggest.model.n2.search.MNodeSearch
-import io.suggest.model.n2.tag.{MNodeTagInfoMappingT, MNodeTagInfo}
+import io.suggest.model.n2.tag.{MNodeTagInfo, MNodeTagInfoMappingT}
 import io.suggest.model.search.EsDynSearchStatic
-import io.suggest.util.{SioConstants, MacroLogsImpl}
 import io.suggest.util.SioEsUtil._
-import play.api.libs.json._
+import io.suggest.util.{MacroLogsImpl, SioConstants}
 import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
 import scala.collection.Map
 
@@ -20,15 +19,17 @@ import scala.collection.Map
  * Архитектура "N2" с этой моделью в центре появилась в ходе принятого решения объеденить
  * ADN-узлы, карточки, теги, юзеры и прочие сущности в единую модель узлов графа.
  *
+ * В итоге получилась архитектура, похожая на модели zotonic: m_rsc + m_edge.
+ *
  * Суть модели: Узлы -- это точки-сущности графа, но они как бы полиморфны извнутри.
- * Т.е. Узлы имеют вершины (vertex), которые являются как бы свойствами, которых может и не быть.
+ * Т.е. Узлы (node) имеют вершины (vertex), которые являются как бы свойствами, которых может и не быть.
  * Т.е. например Узел _asdfa243fa23faw89fe -- это просто тег, т.о. он имеет соотв.значение в поле tag.vertex,
  * но остальные *vertex-поля пустые.
  *
- * Есть также ребра, т.е. в Узле-карточке перечислены теги, по которым карточка будет искаться.
- * Там лежат по сути внутри _id других Узлов этой модели.
+ * Есть также ребра, описанные в модели [[io.suggest.model.n2.edge.MEdge]].
+ * Они направленно связывают между собой разные узлы, перечисляемые в этой модели.
  *
- * Подмодель каждого вертекса реализуется где-то в другом файле.
+ * Подмодель каждого поля/вертекса реализуется где-то в другом файле.
  * Модель является началом реализации архитектуры N2 проекта SiO2.
  */
 object MNode

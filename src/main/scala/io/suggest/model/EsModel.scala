@@ -1,8 +1,7 @@
 package io.suggest.model
 
 import java.util.concurrent.atomic.AtomicInteger
-
-import io.suggest.model.n2.MNode
+import io.suggest.model.n2.node.MNode
 import io.suggest.primo.TypeT
 import org.elasticsearch.action.bulk.{BulkResponse, BulkRequest, BulkProcessor}
 import org.elasticsearch.action.update.UpdateRequestBuilder

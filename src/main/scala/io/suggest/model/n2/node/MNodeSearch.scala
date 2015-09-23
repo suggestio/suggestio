@@ -1,4 +1,4 @@
-package io.suggest.model.n2.search
+package io.suggest.model.n2.node
 
 import io.suggest.model.n2.tag
 import io.suggest.model.search._
@@ -7,7 +7,7 @@ import io.suggest.model.search._
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 14.09.15 15:56
- * Description: Поисковые трейты для dynSearch по [[io.suggest.model.n2.MNode]] закидываются сюда.
+ * Description: Поисковые трейты для dynSearch по [[MNode]] закидываются сюда.
  */
 trait MNodeSearch
   extends Limit
