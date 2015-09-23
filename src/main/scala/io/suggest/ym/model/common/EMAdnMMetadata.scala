@@ -2,13 +2,11 @@ package io.suggest.ym.model.common
 
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.EsModel.FieldsJsonAcc
-import io.suggest.model.geo.{GeoShape, GeoPoint}
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import io.suggest.ym.model.MWelcomeAd
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse}
 import org.elasticsearch.client.Client
-import org.elasticsearch.common.unit.TimeValue
-import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
+import org.elasticsearch.index.query.QueryBuilders
 import org.elasticsearch.search.sort.{SortBuilders, SortOrder}
 import org.joda.time.DateTime
 import io.suggest.model.{EsModel, EsModelPlayJsonT, EsModelStaticMutAkvT}
@@ -160,7 +158,7 @@ object AdnMMetadata {
   val SECTION_ESFN            = "section"
 
 
-  val empty = AdnMMetadata(name = "")
+  val empty = AdnMMetadata()
 
 
   private def fieldString(fn: String, iia: Boolean = true, index: FieldIndexingVariant = FieldIndexingVariants.no) = {
@@ -197,7 +195,7 @@ object AdnMMetadata {
     case jmap: ju.Map[_,_] =>
       import EsModel.stringParser
       AdnMMetadata(
-        name        = stringParser(jmap get NAME_ESFN),
+        nameOpt      = Option(jmap get NAME_ESFN) map stringParser,
         nameShortOpt = Option(jmap get NAME_SHORT_ESFN)
           .orElse(Option(jmap get "ns"))    // 2014.oct.01: Переименовано поле: ns -> sn из-за изменения в маппинге.
           .map(stringParser),
@@ -222,7 +220,7 @@ object AdnMMetadata {
 
 /**
  * Экземпляр контейнера метаданных узла.
- * @param name Отображаемое имя/название.
+ * @param nameOpt Отображаемое имя/название, если есть.
  * @param nameShortOpt Необязательно короткое имя узла.
  * @param description Пользовательское описание.
  * @param town Город.
@@ -237,7 +235,7 @@ object AdnMMetadata {
  */
 case class AdnMMetadata(
   // Класс обязательно immutable! Никаких var, ибо companion.DEFAULT.
-  name          : String,
+  nameOpt       : Option[String] = None,
   nameShortOpt  : Option[String] = None,
   description   : Option[String] = None,
   dateCreated   : DateTime = DateTime.now,
@@ -259,6 +257,12 @@ case class AdnMMetadata(
   welcomeAdId   : Option[String] = None   // TODO Перенести в поле MAdnNode.conf.welcomeAdId
 ) {
   import AdnMMetadata._
+
+  def name: String = {
+    nameOpt
+      .orElse(nameShortOpt)
+      .getOrElse("")
+  }
 
   /** Выдать имя, по возможности короткое. */
   def nameShort: String = {
