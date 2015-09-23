@@ -21,40 +21,6 @@ import util.mail.MailerWrapper
  */
 object SysMarketUtil extends PlayMacroLogsDyn {
 
-  /** Маппер для метаданных компании. */
-  def companyMetaM = {
-    mapping(
-      "name" -> companyNameM
-    )
-    { name => MCompanyMeta.apply(name) }
-    { meta => Some(meta.name) }
-  }
-
-
-  /** Маппинг для формы добавления/редактирования компании. */
-  def companyFormM = {
-    val m = mapping(
-      "meta" -> companyMetaM
-    )
-    { meta => MCompany(meta = meta) }
-    { mc   => Some(mc.meta) }
-    Form(m)
-  }
-
-  /** Функция для обновления компании отмаппленными данными companyFormM.
-    * @param mc Текущий (исходный) инстанс компании.
-    * @param mc2 Результат маппинга companyFormM.
-    * @return Новый инстанс, содержащий в себе былые данные, местами перезаписанные новыми.
-    */
-  def updateCompany(mc: MCompany, mc2: MCompany): MCompany = {
-    mc.copy(
-      meta = mc.meta.copy(
-        name = mc2.meta.name
-      )
-    )
-  }
-
-  
   /** Форма для маппинг метаданных произвольного узла ADN. */
   def adnNodeMetaM = mapping(
     "name"      -> nameM,
@@ -71,7 +37,7 @@ object SysMarketUtil extends PlayMacroLogsDyn {
   )
   {(name, nameShort, descr, town, address, phone, floor, section, siteUrl, color) =>
     AdnMMetadata(
-      name    = name,
+      nameOpt = Some(name),
       nameShortOpt = nameShort,
       description = descr,
       town    = town,
@@ -221,7 +187,7 @@ object SysMarketUtil extends PlayMacroLogsDyn {
     adnNode.copy(
       personIds = adnNode2.personIds,
       meta = adnNode.meta.copy(
-        name    = adnNode2.meta.name,
+        nameOpt = adnNode2.meta.nameOpt,
         nameShortOpt = adnNode2.meta.nameShortOpt,
         description = adnNode2.meta.description,
         town    = adnNode2.meta.town,

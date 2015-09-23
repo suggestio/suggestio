@@ -70,7 +70,7 @@ class MarketLkAdnEdit @Inject() (
     mapping(nameKM, townKM, addressKM, colorKM, fgColorKM, siteUrlKM, phoneKM, audDescrKM, humTrafAvgKM, infoKM)
     {(name, town, address, color, fgColorOpt, siteUrlOpt, phoneOpt, audDescr, humanTrafficAvg, info) =>
       AdnMMetadata(
-        name    = name,
+        nameOpt = Some(name),
         town    = town,
         address = address,
         color   = color,
@@ -93,7 +93,7 @@ class MarketLkAdnEdit @Inject() (
     mapping(nameKM, townKM, addressKM, colorKM, fgColorKM, siteUrlKM, phoneKM, infoKM)
     {(name, town, address, color, fgColor, siteUrlOpt, phoneOpt, info) =>
       AdnMMetadata(
-        name    = name,
+        nameOpt = Some(name),
         town    = town,
         address = address,
         color   = color,
@@ -115,7 +115,7 @@ class MarketLkAdnEdit @Inject() (
     mapping(nameKM, townKM, addressKM, colorKM, fgColorKM, siteUrlKM, phoneKM)
     {(name, town, address, color, fgColor, siteUrlOpt, phoneOpt) =>
       AdnMMetadata(
-        name    = name,
+        nameOpt = Some(name),
         town    = town,
         address = address,
         color   = color,
@@ -226,7 +226,7 @@ class MarketLkAdnEdit @Inject() (
     adnNode.copy(
       meta = adnNode.meta.copy(
         // сохраняем метаданные
-        name    = adnMeta2.name,
+        nameOpt = adnMeta2.nameOpt,
         town    = adnMeta2.town,
         address = adnMeta2.address,
         color   = adnMeta2.color,

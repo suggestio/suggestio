@@ -243,6 +243,7 @@ object FormUtil {
 
   val nameM = nonEmptyText(maxLength = 64)
     .transform(strTrimSanitizeUnescapeF, strIdentityF)
+  def nameOptM = optional(nameM)
   def companyNameM = nameM
 
 
