@@ -268,6 +268,10 @@ object EsModel extends MacroLogsImpl {
         .map { new DateTime(_) }
     }
 
+    implicit val jodaDateTimeFormat: Format[DateTime] = {
+      Format(jodaDateTimeReads, implicitly[Writes[DateTime]])
+    }
+
   }
 
 
