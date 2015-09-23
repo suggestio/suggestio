@@ -24,9 +24,13 @@ object FlashConstants {
 
   def SLIDE_DURATION_MS     = 400
 
-  /** Статус успешного уведомления. */
-  def SUCCESS_STATUS  = "success"
-  /** Статус уведомления об ошибке. */
-  def ERROR_STATUS    = "error"
+
+  /** Контейнер статусов */
+  object Statuses {
+    /** Статус успешного уведомления. */
+    def SUCCESS   = "success"
+    /** Статус уведомления об ошибке. */
+    def ERROR     = "error"
+  }
 
 }
