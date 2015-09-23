@@ -6,7 +6,7 @@ import models.im.MImg
 import models.jsm.init.MTargets
 import models.mtag.MTagUtil
 import org.joda.time.DateTime
-import play.api.i18n.{MessagesApi, Lang, Messages}
+import play.api.i18n.{MessagesApi, Messages}
 import play.api.libs.json.JsValue
 import play.core.parsers.Multipart
 import play.twirl.api.Html
@@ -148,7 +148,7 @@ class MarketAd @Inject() (
         // Сборка HTTP-ответа.
         val resFut = adIdFut map { adId =>
           Redirect(routes.MarketLkAdn.showNodeAds(adnId, newAdId = Some(adId)))
-            .flashing("success" -> "Рекламная карточка создана.")
+            .flashing(FLASH.SUCCESS -> "Ad.created")
         }
         // Сохранение новых тегов в MNode.
         adIdFut.onSuccess { case _ =>
@@ -274,7 +274,7 @@ class MarketAd @Inject() (
         // Запустить сборку HTTP-ответа.
         val resFut = saveFut map { _ =>
           Redirect(routes.MarketLkAdn.showNodeAds(mad.producerId))
-            .flashing("success" -> "Изменения сохранены")
+            .flashing(FLASH.SUCCESS -> "Changes.saved")
         }
         // Параллельно произвести обновление графа MNode на предмет новых тегов:
         saveFut.onSuccess { case _ =>
@@ -308,7 +308,7 @@ class MarketAd @Inject() (
     MAd.deleteById(adId) map { _ =>
       val routeCall = routes.MarketLkAdn.showNodeAds(request.mad.producerId)
       Redirect(routeCall)
-        .flashing("success" -> "Рекламная карточка удалена")
+        .flashing(FLASH.SUCCESS -> "Ad.deleted")
     }
   }
 

@@ -212,7 +212,7 @@ class MarketLkAdnEdit @Inject() (
           trace("New gallery = " + gallery.mkString(", "))
           // Собираем новый экземпляр узла
           Redirect(routes.MarketLkAdn.showAdnNode(adnId))
-            .flashing("success" -> "Изменения сохранены.")
+            .flashing(FLASH.SUCCESS -> "Changes.saved")
         }
       }
     )

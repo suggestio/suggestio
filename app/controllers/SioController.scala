@@ -22,6 +22,7 @@ import models._
 import play.api.mvc.Result
 import util.SiowebEsUtil.client
 import scala.language.implicitConversions
+import io.suggest.flash.FlashConstants
 
 import scala.util.{Failure, Success}
 
@@ -89,6 +90,9 @@ trait SioController extends Controller with ContextT with TplFormatUtilT with I1
   implicit protected def simpleResult2async(sr: Result): Future[Result] = {
     Future.successful(sr)
   }
+
+  /** Быстрый доступ к константам flash-статусов. */
+  def FLASH = FlashConstants.Statuses
 
   implicit def sn: SioNotifierStaticClientI = SiowebNotifier.Implicts.sn
 

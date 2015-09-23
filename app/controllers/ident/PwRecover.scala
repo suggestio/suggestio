@@ -180,7 +180,7 @@ with SetLangCookieUtil {
         // Генерить ответ как только появляется возможность.
         val resFut = IdentUtil.redirectUserSomewhere(epw2.personId) map { rdr =>
           rdr.addingToSession(Keys.PersonId.name -> epw2.personId)
-            .flashing("success" -> "New.password.saved")
+            .flashing(FLASH.SUCCESS -> "New.password.saved")
         }
         val res2Fut = setLangCookie1(resFut, epw2.personId)
         // Дожидаемся завершения всех асинхронных операций и возвращаем результат.

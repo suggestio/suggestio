@@ -8,6 +8,7 @@ import util.acl.PersonWrapper.PwOpt_t
 import util.ident.IdentUtil
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
+import io.suggest.flash.FlashConstants.{Statuses => FLASH}
 
 import scala.concurrent.Future
 
@@ -59,8 +60,9 @@ trait CanConfirmEmailPwRegBase extends ActionBuilder[EmailPwRegConfirmRequest] w
           case Some(pw) =>
             IdentUtil.redirectUserSomewhere(pw.personId)
         }
+        // TODO Отправлять на страницу, где описание проблема, а не туда, куда взбредёт.
         rdrFut map { rdr =>
-          rdr.flashing("error" -> "Активация невозможна.")    // TODO Задействовать тут Messages(), а не хардкод строки.
+          rdr.flashing(FLASH.ERROR -> "Activation.impossible")
         }
 
       // [xakep] Внезапно, кто-то пытается пропихнуть левую активацию из какого-то другого места.

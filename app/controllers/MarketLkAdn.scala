@@ -351,7 +351,7 @@ class MarketLkAdn @Inject() (
               nodeUpdateFut.map { _adnId =>
                 Billing.maybeInitializeNodeBilling(adnId)
                 Redirect(routes.MarketLkAdn.showNodeAds(adnId))
-                  .flashing("success" -> "Регистрация завершена.")
+                  .flashing(FLASH.SUCCESS -> "Signup.finished")
                   .withSession(Keys.PersonId.name -> personId)
               }
             }
@@ -409,7 +409,7 @@ class MarketLkAdn @Inject() (
       {nodeName =>
         NodesUtil.createUserNode(name = nodeName, personId = request.pwOpt.get.personId) map { adnNode =>
           Redirect( NodesUtil.userNodeCreatedRedirect(adnNode.id.get) )
-            .flashing("success" -> "Создан новый магазин. Пожалуйста, заполните необходимые поля.")
+            .flashing(FLASH.SUCCESS -> "New.shop.created.fill.info")
         }
       }
     )

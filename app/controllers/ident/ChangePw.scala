@@ -116,7 +116,7 @@ trait ChangePwAction extends SioController with PlayMacroLogsI {
 
           case ids =>
             RdrBackOrFut(r)(changePwOkRdrDflt)
-              .map { _.flashing("success" -> "Новый пароль сохранён.") }
+              .map { _.flashing(FLASH.SUCCESS -> "New.password.saved") }
         }
       }
     )

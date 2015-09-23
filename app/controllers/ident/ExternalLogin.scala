@@ -6,7 +6,6 @@ import models.msession.{CustomTtl, Keys}
 import models.{ExtRegConfirmForm_t, ExternalCall, Context}
 import models.usr._
 import play.api.data.Form
-import play.api.i18n.Messages
 import play.api.mvc._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.Play.{current, configuration}
@@ -127,7 +126,7 @@ trait ExternalLogin extends SioController with PlayMacroLogsI with SetLangCookie
       _.authenticate().flatMap {
         case denied: AuthenticationResult.AccessDenied =>
           val res = Redirect( routes.Ident.mySioStartPage() )
-            .flashing("error" -> Messages("securesocial.login.accessDenied"))
+            .flashing(FLASH.ERROR -> "securesocial.login.accessDenied")
           Future successful res
         case failed: AuthenticationResult.Failed =>
           LOGGER.error(s"$logPrefix authentication failed, reason: ${failed.error}")
@@ -207,7 +206,7 @@ trait ExternalLogin extends SioController with PlayMacroLogsI with SetLangCookie
         case e =>
           LOGGER.error("Unable to log user in. An exception was thrown", e)
           Redirect(routes.Ident.mySioStartPage())
-            .flashing("error" -> Messages("securesocial.login.errorLoggingIn"))
+            .flashing(FLASH.ERROR -> "securesocial.login.errorLoggingIn")
       }
     } getOrElse {
       Future.successful(NotFound)

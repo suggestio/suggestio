@@ -525,13 +525,13 @@ class MarketAdv @Inject() (
               // В зависимости от настроек размещения
               val successMsg: String = if (isFree) {
                 MmpDailyBilling.mkAdvsOk(request.mad, advs2)
-                "Рекламные карточки отправлены на размещение."
+                "Ads.were.adv"
               } else {
                 MmpDailyBilling.mkAdvReqs(request.mad, advs2)
-                "Запросы на размещение отправлены."
+                "Adv.reqs.sent"
               }
               Redirect(routes.MarketAdv.advForAd(adId))
-                .flashing("success" -> successMsg)
+                .flashing(FLASH.SUCCESS -> successMsg)
             } catch {
               case ex: SQLException =>
                 warn(s"advFormSumbit($adId): Failed to commit adv transaction for advs:\n " + advs2, ex)
@@ -543,7 +543,7 @@ class MarketAdv @Inject() (
             }
           } else {
             Redirect(routes.MarketAdv.advForAd(adId))
-              .flashing("success" -> "Без изменений.")
+              .flashing(FLASH.SUCCESS -> "No.changes")
           }
         }(AsyncUtil.jdbcExecutionContext)
       }
@@ -841,7 +841,7 @@ class MarketAdv @Inject() (
         }(AsyncUtil.jdbcExecutionContext)
           .map { _ =>
             RdrBackOr(r) { routes.MarketAdv.showNodeAdvs(request.rcvrNode.id.get) }
-              .flashing("success" -> "Размещение рекламы отменено.")
+              .flashing(FLASH.SUCCESS -> "Adv.req.refused")
           }
       }
     )
@@ -860,7 +860,7 @@ class MarketAdv @Inject() (
       .map { _ =>
         // Всё сохранено. Можно отредиректить юзера, чтобы он дальше продолжил одобрять рекламные карточки.
         RdrBackOr(r) { routes.MarketAdv.showNodeAdvs(request.advReq.rcvrAdnId) }
-          .flashing("success" -> "Реклама будет размещена.")
+          .flashing(FLASH.SUCCESS -> "Adv.req.accepted")
       }
   }
 

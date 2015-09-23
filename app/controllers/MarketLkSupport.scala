@@ -118,7 +118,7 @@ class MarketLkSupport @Inject() (
           // Письмо админам отправлено. Нужно куда-то перенаправить юзера.
           RdrBackOrFut(r) { IdentUtil.redirectCallUserSomewhere(personId) }
             .map { rdr =>
-              rdr.flashing("success" -> "Ваше сообщение отправлено.")
+              rdr.flashing(FLASH.SUCCESS -> "Your.msg.sent")
             }
         }
       }
@@ -164,7 +164,7 @@ class MarketLkSupport @Inject() (
           // Письмо отправлено админам. Нужно куда-то перенаправить юзера.
           RdrBackOrFut(r) { IdentUtil.redirectCallUserSomewhere(personId) }
             .map { rdr =>
-              rdr.flashing("success" -> "Ваш запрос отправлен.")
+              rdr.flashing(FLASH.SUCCESS -> "Your.req.sent")
             }
         }
       }

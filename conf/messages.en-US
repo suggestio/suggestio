@@ -63,6 +63,7 @@ Quick.search.for.offers=Quick search for offers
 Provider=Provider
 Page=Page
 Signup.confirmation=Signup confirmation
+Signup.finished=Signup finished.
 
 requisites=Payment details for withdrawal
 
@@ -396,6 +397,10 @@ Do.not.close.current.page.until.deploy.finish=Do not close current page until de
 Adv.in.ext.services=Deploy into social networks
 Adv.in.geo.node=Advertise in geolocations
 Adv.history=Advertising history
+Ads.were.adv=Promo-cards has been published.
+Adv.reqs.sent=Advertising requests have been sent.
+Adv.req.refused=Advertising request refused.
+Adv.req.accepted=Ad will be advertised.
 
 Create.ad=Create{0}promo-card
 Ad.cards=Promotional cards
@@ -420,6 +425,7 @@ Checking.your.browser=Checking your browser...
 Ad.card.edit=Editing promo-card
 Ad.card.create=Creating promo-card
 Ad.card.will.be.deleted=Promo-card will be removed.
+Ad.deleted=Promo-card removed.
 Choose.category=Choose category
 Ad.layout=Promo-card layout
 Ad.edit.pattern=Pattern
@@ -434,6 +440,7 @@ Ad.large.bg.img.info=Note that on most devices displayed cards may increase in s
 Disable.reason=Disable reason
 
 Switch.shop=Switch shop
+New.shop.created.fill.info=New shop created. Please fill some necessary fields.
 Ad.cards=Promo cards
 
 My.ad.net=My ad network
@@ -617,3 +624,12 @@ e.tag.len.max=Tag too long.
 Add.tags=Add tags
 
 Overwrite.all=Overwrite all
+
+Ad.created=Promo-card created.
+Changes.saved=Changes saved.
+No.changes=No changes.
+
+Your.msg.sent=Your message has been sent.
+Your.req.sent=Your request has been sent.
+Activation.impossible=Activation impossible.
+
