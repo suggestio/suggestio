@@ -4,7 +4,7 @@ package io.suggest.flash
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 29.04.15 17:03
- * Description:
+ * Description: Константы для flash-уведомлений.
  */
 object FlashConstants {
 
@@ -23,5 +23,10 @@ object FlashConstants {
   def SHOW_TIMEOUT_MS       = 5000
 
   def SLIDE_DURATION_MS     = 400
+
+  /** Статус успешного уведомления. */
+  def SUCCESS_STATUS  = "success"
+  /** Статус уведомления об ошибке. */
+  def ERROR_STATUS    = "error"
 
 }
