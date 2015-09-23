@@ -109,6 +109,6 @@ object SiobixBuild extends Build {
   }
 
   // Активация offline-режима резолва зависимостей.
-  //override lazy val settings = super.settings ++ Seq(offline := true)
+  override lazy val settings = super.settings ++ Seq(offline := true)
 
 }
