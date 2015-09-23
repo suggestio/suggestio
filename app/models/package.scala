@@ -1,5 +1,6 @@
 import controllers.routes
 import io.suggest.model.geo
+import io.suggest.model.n2
 import io.suggest.ym
 import io.suggest.ym.model.common
 import io.suggest.ym.model.common.EMImg
@@ -228,7 +229,7 @@ package object models {
   type ITagEdge             = io.suggest.model.n2.tag.edge.ITagEdge
   type TagsMap_t            = io.suggest.model.n2.tag.edge.TagsMap_t
 
-  type MNode                = io.suggest.model.n2.MNode
-  val  MNode                = io.suggest.model.n2.MNode
+  type MNode                = n2.node.MNode
+  val  MNode                = n2.node.MNode
 
 }
