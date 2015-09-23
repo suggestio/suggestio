@@ -1,6 +1,6 @@
 package io.suggest.model.n2.node.meta
 
-import io.suggest.model.{GenEsMappingPropsDummy, PrefixedFn}
+import io.suggest.model.{FieldNamesL1, GenEsMappingPropsDummy, PrefixedFn}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -14,7 +14,7 @@ import play.api.libs.functional.syntax._
 object EMNodeMeta extends PrefixedFn {
 
   /** Имя поля на стороне ES, куда скидываются все метаданные. */
-  val META_ESFN         = "meta"
+  val META_ESFN         = FieldNamesL1.Meta.name
 
   override protected def _PARENT_FN = META_ESFN
 
