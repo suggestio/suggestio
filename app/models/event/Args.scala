@@ -1,5 +1,6 @@
 package models.event
 
+import io.suggest.common.EmptyProduct
 import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.event.SioNotifier.{Classifier, Event}
 import io.suggest.model.EsModel
@@ -159,7 +160,8 @@ case class ArgsInfo(
   advOkIdOpt      : Option[Int]     = None,
   advReqIdOpt     : Option[Int]     = None,
   advRefuseIdOpt  : Option[Int]     = None
-) extends IArgsInfo
+)
+  extends IArgsInfo
   with EmptyProduct
 
 
@@ -197,7 +199,8 @@ case class RenderArgs(
   brArgs        : Option[blk.RenderArgs] = None,
   errors        : Seq[IErrorInfo]     = Nil
 )
-  extends IArgsInfo with EmptyProduct
+  extends IArgsInfo
+  with EmptyProduct
 {
 
   def hasErrors = errors.nonEmpty
@@ -210,19 +213,6 @@ case class RenderArgs(
   override def advReqIdOpt    = advReqOpt.flatMap(_.id)
   override def advRefuseIdOpt = advRefuseOpt.flatMap(_.id)
 
-}
-
-
-/** Вынести куда-нить... */
-trait EmptyProduct extends Product {
-  def nonEmpty: Boolean = {
-    productIterator.exists {
-      case opt: Option[_]           => opt.nonEmpty
-      case col: TraversableOnce[_]  => col.nonEmpty
-      case _                        => true
-    }
-  }
-  def isEmpty: Boolean = !nonEmpty
 }
 
 
