@@ -6,7 +6,7 @@ import io.suggest.ym.model.common.EMAdNetMember
 import models.adv.geo.{ReqInfo, AdvFormEntry, WndFullArgs}
 import org.joda.time.format.ISOPeriodFormat
 import play.api.Play.{current, configuration}
-import play.api.i18n.{MessagesApi, Messages}
+import play.api.i18n.MessagesApi
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.twirl.api.Html
 import util.SiowebEsUtil.client
@@ -313,7 +313,7 @@ class MarketAdv @Inject() (
               AdvFormCityCat(
                 shownType = ast,
                 nodes = catNodes.map(AdvFormNode.apply),
-                name = Messages(ast.pluralNoTown)(ctx.messages),
+                name = ctx.messages(ast.pluralNoTown),
                 i = i
               )
             }
@@ -337,7 +337,7 @@ class MarketAdv @Inject() (
 
     // Периоды размещения. Обычно одни и те же. Сразу считаем в текущем потоке:
     val advPeriodsAvailable = (QuickAdvPeriods.ordered.map(_.isoPeriod) ++ List(CUSTOM_PERIOD))
-      .map(ps => ps -> Messages("adv.period." + ps)(ctx.messages))
+      .map(ps => ps -> ctx.messages("adv.period." + ps))
 
     // Сборка финального контейнера аргументов для _advFormTpl().
     val advFormTplArgsFut: Future[AdvFormTplArgs] = for {

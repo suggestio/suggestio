@@ -7,7 +7,7 @@ import models.adv.ext.act.{OAuthVerifier, ActorPathQs}
 import models.adv.search.etg.ExtTargetSearchArgs
 import models.jsm.init.MTargets
 import org.elasticsearch.search.sort.SortOrder
-import play.api.i18n.{MessagesApi, Messages}
+import play.api.i18n.MessagesApi
 import play.api.libs.json.JsValue
 import play.api.mvc.WebSocket.HandlerProps
 import play.api.mvc.{Result, WebSocket}
@@ -227,7 +227,7 @@ class LkAdvExt @Inject() (
   def writeTarget(adnId: String) = IsAdnNodeAdminGet(adnId) { implicit request =>
     val ctx = implicitly[Context]
     val form0 = ExtUtil.oneRawTargetFullFormM(adnId)
-      .fill( ("", Some(Messages("New.target")(ctx.messages)), None) )
+      .fill( ("", Some(ctx.messages("New.target")), None) )
     Ok( _createTargetTpl(adnId, form0)(ctx) )
   }
 

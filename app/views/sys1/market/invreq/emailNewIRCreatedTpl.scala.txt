@@ -5,7 +5,7 @@
 
 Подан новый запрос на получение инвайта.
 
-Тип: @Messages("mir.type." + mir.reqType)
+Тип: @messages("mir.type." + mir.reqType)
 Указанная компания: @mir.name
 
 Полное содержимое запроса:

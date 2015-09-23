@@ -7,7 +7,6 @@ import models.msession.Keys
 import models.usr._
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.Messages
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.Result
 import play.twirl.api.Html
@@ -62,7 +61,7 @@ trait EmailPwReg extends SioController with PlayMacroLogsI with CaptchaValidator
     val msg = mailer.instance
     msg.setFrom("no-reply@suggest.io")
     msg.setRecipients(ea.email)
-    msg.setSubject("Suggest.io | " + Messages("reg.emailpw.email.subj")(ctx.messages))  // TODO Заголовок в messages и сюда!
+    msg.setSubject("Suggest.io | " + ctx.messages("reg.emailpw.email.subj"))
     msg.setHtml( emailRegMsgTpl(ea)(ctx) )
     msg.send()
   }

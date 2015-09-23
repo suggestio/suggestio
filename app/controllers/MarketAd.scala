@@ -318,7 +318,7 @@ class MarketAd @Inject() (
    * @param newMadData Забинденные данные формы для новой (будущей) рекламной карточки.
    * @param producer Нода-продьюсер рекламной карточки.
    */
-  private def newTexts4search(newMadData: MAd, producer: MAdnNode)(implicit lang: Lang): Future[Texts4Search] = {
+  private def newTexts4search(newMadData: MAd, producer: MAdnNode)(implicit messages: Messages): Future[Texts4Search] = {
     // Собираем названия родительских категорий:
     val catNamesFut: Future[List[String]] = if (newMadData.userCatId.nonEmpty) {
       val futs = newMadData.userCatId.foldLeft (List[Future[List[String]]]() ) { (accFut, catId) =>
@@ -326,7 +326,7 @@ class MarketAd @Inject() (
           (acc, e) =>
             if (e.includeInAll) {
               // TODO Надо бы все названия на всех языках закидывать в акк.
-              Messages(e.name) :: acc
+              messages(e.name) :: acc
             } else {
               acc
             }
@@ -472,12 +472,13 @@ class MarketAd @Inject() (
   def newTextField(offerN: Int, height: Int, width: Int) = IsAuth { implicit request =>
     val bfText = ListBlock.mkBfText(offerNopt = Some(offerN))
     // Чтобы залить в форму необходимые данные, надо сгенерить экземпляр рекламной карточки.
+    implicit val ctx = implicitly[Context]
     val madStub = MAd(
       producerId = "",
       offers = List(AOBlock(
         n = offerN,
         text1 = Some(AOStringField(
-          value = Messages("bf.text.example", offerN),
+          value = ctx.messages("bf.text.example", offerN),
           font = AOFieldFont(),
           coords = Some(Coords2D(
             x = height / 2,
@@ -490,7 +491,7 @@ class MarketAd @Inject() (
       .fill((madStub, Map.empty))
     val nameBase = s"$OFFER_K.$OFFER_K[$offerN].${bfText.name}"
     val bc = BlocksConf.DEFAULT
-    val render = bfText.renderEditorField(nameBase, af, bc)
+    val render = bfText.renderEditorField(nameBase, af, bc)(ctx)
     Ok(render)
   }
 

@@ -313,9 +313,9 @@ class Umap @Inject() (
 
 
   /** Рендер json'а, описывающего геослой. */
-  private def layerJson(ngl: NodeGeoLevel)(implicit lang: Messages): JsObject = {
+  private def layerJson(ngl: NodeGeoLevel)(implicit messages: Messages): JsObject = {
     JsObject(Seq(
-      "name"          -> JsString( Messages("ngls." + ngl.esfn)(lang) ),
+      "name"          -> JsString( messages("ngls." + ngl.esfn) ),
       "id"            -> JsNumber(ngl.id),
       "displayOnLoad" -> JsBoolean(true)
     ))

@@ -200,7 +200,7 @@ class SysMarket @Inject() (
 
   /** При создании узла есть дополнительные отключаемые возможности по инициализации.
     * Тут фунцкия, отрабатывающая это дело. */
-  private def maybeInitializeNode(ncpForm: Form[NodeCreateParams], adnId: String)(implicit lang: Messages): Future[_] = {
+  private def maybeInitializeNode(ncpForm: Form[NodeCreateParams], adnId: String)(implicit messages: Messages): Future[_] = {
     lazy val logPrefix = s"maybeInitializeNode($adnId):"
     ncpForm.value match {
       case Some(ncp) =>
@@ -220,10 +220,10 @@ class SysMarket @Inject() (
           NodesUtil.createUserNodeBilling(adnId)
         }
         val etgsFut = f(ncp.extTgsInit, s"$logPrefix Failed to create default targets") {
-          NodesUtil.createExtDfltTargets(adnId)(lang)
+          NodesUtil.createExtDfltTargets(adnId)(messages)
         }
         val madsFut = f(ncp.withDfltMads, s"$logPrefix Failed to install default mads") {
-          NodesUtil.installDfltMads(adnId)(lang)
+          NodesUtil.installDfltMads(adnId)(messages)
         }
         billFut flatMap { _ =>
           etgsFut flatMap { _ =>

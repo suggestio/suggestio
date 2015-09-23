@@ -1,6 +1,6 @@
 package controllers.sc
 
-import io.suggest.model.n2.node.MNode
+import models.MNode
 import models.mtag.{MTagSearchResp, MTagSearch}
 import play.api.libs.json.Json
 import util.acl.MaybeAuth

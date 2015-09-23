@@ -232,4 +232,13 @@ package object models {
   type MNode                = n2.node.MNode
   val  MNode                = n2.node.MNode
 
+  type MNodeType            = n2.node.MNodeType
+  val  MNodeTypes           = n2.node.MNodeTypes
+
+  type MNodeCommon          = n2.node.common.MNodeCommon
+  val  MNodeCommon          = n2.node.common.MNodeCommon
+
+  type MEdge                = n2.edge.MEdge
+  val  MEdge                = n2.edge.MEdge
+
 }

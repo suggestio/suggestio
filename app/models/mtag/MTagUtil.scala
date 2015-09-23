@@ -1,10 +1,10 @@
 package models.mtag
 
-import io.suggest.model.n2.node.{MNodeSearchDfltImpl, MNode}
+import io.suggest.model.n2.node.MNodeSearchDfltImpl
 import io.suggest.model.n2.tag.MNodeTagInfo
 import io.suggest.model.n2.tag.edge.ITags
 import io.suggest.model.n2.tag.vertex.{MTagFace, MTagVertex}
-import models.{TagsMap_t, MTagEdge}
+import models._
 import util.PlayMacroLogsImpl
 import util.event.SiowebNotifier.Implicts.sn
 import util.SiowebEsUtil.client
@@ -30,7 +30,7 @@ object MTagUtil extends PlayMacroLogsImpl {
    * @return Фьючерс.
    */
   def handleNewTagsL(newTags: Iterable[MTagEdge], oldTags: Iterable[MTagEdge] = Nil)
-                   (implicit ec: ExecutionContext): Future[_] = {
+                    (implicit ec: ExecutionContext): Future[_] = {
     val resFut = Future.traverse( newTags ) { ntag =>
       val nodeSearch = new MNodeSearchDfltImpl {
         override def tagVxFace = Some(ntag.face)
@@ -43,6 +43,10 @@ object MTagUtil extends PlayMacroLogsImpl {
           case nsee: NoSuchElementException =>
             // Запрашиваемый тег ещё не существует в графе N2.
             val mnode = MNode(
+              common = MNodeCommon(
+                ntype         = MNodeTypes.Tag,
+                isDependent   = true
+              ),
               tag = MNodeTagInfo(
                 vertex = Some(MTagVertex(
                   faces = MTagFace.faces2map( Seq(MTagFace(ntag.face)) )

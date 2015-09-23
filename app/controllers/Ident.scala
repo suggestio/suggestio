@@ -4,7 +4,7 @@ import com.google.inject.Inject
 import controllers.ident._
 import models.jsm.init.{MTargets, MTarget}
 import models.msession.Keys
-import play.api.i18n.{MessagesApi, Messages}
+import play.api.i18n.MessagesApi
 import util.acl._
 import util._
 import play.api.mvc._
@@ -62,7 +62,7 @@ class Ident @Inject() (
     implicit val jsInitTgs = Seq(MTargets.CaptchaForm, MTargets.HiddenCaptcha)
     val ctx = implicitly[Context]
     val formFut = EmailPwSubmit.emailPwLoginFormStubM
-    val title = Messages("Login.page.title")(ctx.messages)
+    val title = ctx.messages("Login.page.title")
     val rc = _regColumnTpl(EmailPwReg.emailRegFormM, captchaShown = false)(ctx)
     formFut.map { lf =>
       val lc = _loginColumnTpl(lf, r)(ctx)
