@@ -1,6 +1,7 @@
 package io.suggest.model.n2.node
 
 import io.suggest.model._
+import io.suggest.model.n2.node.common.{MNodeCommon, EMNodeCommonStatic}
 import io.suggest.model.n2.tag.{MNodeTagInfo, MNodeTagInfoMappingT}
 import io.suggest.model.search.EsDynSearchStatic
 import io.suggest.util.SioEsUtil._
@@ -37,6 +38,7 @@ object MNode
   with EsmV2Deserializer
   with MacroLogsImpl
   with MNodeTagInfoMappingT
+  with EMNodeCommonStatic
   with IEsDocJsonWrites
   with EsDynSearchStatic[MNodeSearch]
 {
@@ -60,17 +62,19 @@ object MNode
     )
   }
 
-  override protected def esDocReads(meta: IEsDocMeta): Reads[MNode] = {
+  override protected def esDocReads(meta: IEsDocMeta): Reads[MNode] = (
+    __.read[MNodeCommon] and
     __.read[MNodeTagInfo]
-      .map { mntag =>
-        MNode(mntag, meta.id, meta.version)
-      }
+  ) { (common, mntag) =>
+    MNode(common, mntag, meta.id, meta.version)
   }
 
   /** Сериализация в JSON. */
-  override val esDocWrites: Writes[MNode] = {
+  override val esDocWrites: Writes[MNode] = (
+    __.write[MNodeCommon] and
     __.write[MNodeTagInfo]
-      .contramap[MNode](_.tag)
+  ) { mnode =>
+    (mnode.common, mnode.tag)
   }
 
 }
@@ -78,6 +82,7 @@ object MNode
 
 /** Класс-реализация модели узла графа N2. */
 case class MNode(
+  common                      : MNodeCommon,
   tag                         : MNodeTagInfo    = MNodeTagInfo.empty,
   override val id             : Option[String]  = None,
   override val versionOpt     : Option[Long]    = None

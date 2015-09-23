@@ -70,7 +70,7 @@ object MAdnNode
 
 final case class MAdnNode(
   var adn           : AdNetMemberInfo,
-  var meta          : AdnMMetadata      = AdnMMetadata.DEFAULT,
+  var meta          : AdnMMetadata      = AdnMMetadata.empty,
   var personIds     : Set[String]       = Set.empty,
   var logoImgOpt    : Option[MImgInfoT] = None,   // TODO Перенести в conf.logoImg
   var conf          : NodeConf          = NodeConf.DEFAULT,

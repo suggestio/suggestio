@@ -1,6 +1,8 @@
 package io.suggest.model.n2.edge
 
 import io.suggest.model._
+import io.suggest.model.n2.edge.search.EdgeSearch
+import io.suggest.model.search.EsDynSearchStatic
 import io.suggest.util.MacroLogsImpl
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -19,7 +21,7 @@ object MEdge
   with EsmV2Deserializer
   with MacroLogsImpl
   with IEsDocJsonWrites
-  //with EsDynSearchStatic[MEdgeSearch]
+  with EsDynSearchStatic[EdgeSearch]
 {
 
   override type T = MEdge
@@ -27,9 +29,16 @@ object MEdge
   override val ES_TYPE_NAME = "e"
 
   val FROM_ID_FN      = "f"
+  private val FROM_ID_PATH = __ \ FROM_ID_FN
+
   val PREDICATE_ID_FN = "p"
+  private val PREDICATE_ID_PATH = __ \ PREDICATE_ID_FN
+
   val TO_ID_FN        = "t"
+  private val TO_ID_PATH = __ \ TO_ID_FN
+
   val ORDER_FN        = "o"
+  private val ORDER_PATH = __ \ ORDER_FN
 
 
   @deprecated("Use deserailizeOne2() instead.", "2015.sep.23")
@@ -39,23 +48,23 @@ object MEdge
 
   /** Полусобранный маппер из JSON в экземпляр модели. */
   private val _reads0 = {
-    (__ \ FROM_ID_FN).read[String] and
-    (__ \ PREDICATE_ID_FN).read[MPredicate] and
-    (__ \ TO_ID_FN).read[String] and
-    (__ \ ORDER_FN).readNullable[Int]
+    FROM_ID_PATH.read[String] and
+    PREDICATE_ID_PATH.read[MPredicate] and
+    TO_ID_PATH.read[String] and
+    ORDER_PATH.readNullable[Int]
   }
 
   override protected def esDocReads(meta: IEsDocMeta): Reads[MEdge] = {
     _reads0 { (fromId, predicate, toId, ordering) =>
-      MEdge(fromId, predicate, toId, ordering)
+      MEdge(fromId, predicate, toId, ordering, versionOpt = meta.version)
     }
   }
 
   override val esDocWrites: Writes[MEdge] = (
-    (__ \ FROM_ID_FN).write[String] and
-    (__ \ PREDICATE_ID_FN).write[MPredicate] and
-    (__ \ TO_ID_FN).write[String] and
-    (__ \ ORDER_FN).writeNullable[Int]
+    FROM_ID_PATH.write[String] and
+    PREDICATE_ID_PATH.write[MPredicate] and
+    TO_ID_PATH.write[String] and
+    ORDER_PATH.writeNullable[Int]
   ) { medge =>
     (medge.fromId, medge.predicate, medge.toId, medge.ordering)
   }

@@ -20,4 +20,7 @@ object FieldNamesL1 extends EnumValue2Val {
   /** Поле вершины графа с проекцией на тег. */
   val TagVertex                   : T = new Val("tv")
 
+  /** Поле с общими данными всех узлов N2. */
+  val Common                      : T = new Val("c")
+
 }

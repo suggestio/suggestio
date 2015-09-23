@@ -2,7 +2,7 @@ package io.suggest.model.n2.tag.vertex
 
 import io.suggest.model.n2.node
 import io.suggest.model.n2.node.MNode
-import io.suggest.model.{EsModelT, FieldNamesL1, GenEsMappingPropsDummy}
+import io.suggest.model.{FieldNamesL1, GenEsMappingPropsDummy}
 import io.suggest.util.SioEsUtil._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -20,14 +20,9 @@ object EMTagVertex {
   /** Имя поля тега. */
   def TAG_VERTEX_FN = FieldNamesL1.TagVertex.name
 
-  /** JSON-десериализатор для опционального значения tag-поля. */
-  implicit val READS: Reads[Option[MTagVertex]] = {
-    (__ \ TAG_VERTEX_FN).readNullable[MTagVertex]
-  }
-
-  /** JSON-сериализатор для опционального значения tag-поля. */
-  implicit val WRITES: OWrites[Option[MTagVertex]] = {
-    (__ \ EMTagVertex.TAG_VERTEX_FN).writeNullable[MTagVertex]
+  /** JSON-сериализатор и десериализатор для опционального значения tag-поля. */
+  implicit val FORMAT: OFormat[Option[MTagVertex]] = {
+    (__ \ TAG_VERTEX_FN).formatNullable[MTagVertex]
   }
 
 }

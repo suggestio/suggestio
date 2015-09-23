@@ -1,7 +1,7 @@
 package io.suggest.model.n2.node
 
 import io.suggest.common.menum.EnumMaybeWithName
-import io.suggest.common.menum.play.EnumJsonReadsT
+import io.suggest.common.menum.play.EnumJsonReadsValT
 
 /**
  * Suggest.io
@@ -11,8 +11,9 @@ import io.suggest.common.menum.play.EnumJsonReadsT
  * В рамках зотоника была динамическая модель m_category.
  * В рамках s.io нет нужды в такой тяжелой модели, т.к. от категорий мы уже ушли к тегам.
  */
-object MNodeTypes extends EnumMaybeWithName with EnumJsonReadsT {
+object MNodeTypes extends EnumMaybeWithName with EnumJsonReadsValT {
 
+  /** Абстрактная класс одного элемента модели. */
   protected[this] abstract sealed class Val(val strId: String)
     extends super.Val(strId)
   {

@@ -160,7 +160,7 @@ object AdnMMetadata {
   val SECTION_ESFN            = "section"
 
 
-  val DEFAULT = AdnMMetadata(name = "")
+  val empty = AdnMMetadata(name = "")
 
 
   private def fieldString(fn: String, iia: Boolean = true, index: FieldIndexingVariant = FieldIndexingVariants.no) = {

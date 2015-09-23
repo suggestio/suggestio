@@ -21,6 +21,7 @@ object MTagFace extends IGenEsMappingProps with PrefixedFn {
   val NAME_FN    = "n"
   /** Полное абсолютное имя name-поля. */
   def NAME_ESFN  = _fullFn(NAME_FN)
+  private val NAME_PATH = __ \ NAME_FN
 
   override def generateMappingProps: List[DocField] = {
     List(
@@ -35,12 +36,12 @@ object MTagFace extends IGenEsMappingProps with PrefixedFn {
   }
 
   implicit val READS: Reads[MTagFace] = {
-    (__ \ NAME_FN).read[String]
+    NAME_PATH.read[String]
       .map { MTagFace.apply }
   }
 
   implicit val WRITES: Writes[MTagFace] = {
-    (__ \ NAME_FN).write[String]
+    NAME_PATH.write[String]
       .contramap(_.name)
   }
 

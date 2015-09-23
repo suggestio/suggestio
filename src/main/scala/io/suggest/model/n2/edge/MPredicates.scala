@@ -11,7 +11,7 @@ import io.suggest.model.n2.node.{MNodeTypes, MNodeType}
  * Description: Статическая синхронная модель предикатов, т.е. "типов" ребер графа N2.
  * Создана по мотивам модели zotonic m_predicate.
  */
-object MPredicates extends EnumMaybeWithName with EnumJsonReadsT {
+object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT {
 
   /** Класс одного элемента модели. */
   protected[this] abstract sealed class Val(val strId: String)
@@ -33,16 +33,23 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsT {
 
   /** Карточка-объект произведена узлом-субъектом. */
   val AdOwnedBy: T = new Val("a") {
-
     override def fromTypes: List[MNodeType] = {
       List(MNodeTypes.AdnNode)
     }
-
     override def toTypes: List[MNodeType] = {
       List(MNodeTypes.Ad)
     }
-
   }
 
+
+  /** Юзер владеет чем-то: узлом или карточкой напрямую. */
+  val PersonOwns: T = new Val("b") {
+    override def fromTypes: List[MNodeType] = {
+      List(MNodeTypes.Person)
+    }
+    override def toTypes: List[MNodeType] = {
+      List(MNodeTypes.AdnNode, MNodeTypes.Ad)
+    }
+  }
 
 }

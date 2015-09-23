@@ -1,7 +1,7 @@
 package io.suggest.model.n2.edge.search
 
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
-import org.elasticsearch.index.query.{QueryBuilders, FilterBuilders, QueryBuilder}
+import org.elasticsearch.index.query.QueryBuilder
 import io.suggest.model.n2.edge.MEdge.FROM_ID_FN
 
 /**
@@ -13,28 +13,14 @@ import io.suggest.model.n2.edge.MEdge.FROM_ID_FN
 trait FromId extends DynSearchArgs {
 
   /** id n2-узла, ссылающегося искомыми ребрами графа на другие узлы. */
-  def fromId: Option[String]
+  def fromId: List[String]
 
   override def toEsQueryOpt: Option[QueryBuilder] = {
-    val qbOpt0 = super.toEsQueryOpt
-    fromId.fold(qbOpt0) { _fromId =>
-      qbOpt0.map[QueryBuilder] { qb0 =>
-        // Фильтрануть по полю fromId.
-        val mf = FilterBuilders.termFilter(FROM_ID_FN, _fromId)
-        QueryBuilders.filteredQuery(qb0, mf)
-      }
-      .orElse {
-        val qb = QueryBuilders.termQuery(FROM_ID_FN, _fromId)
-        Some(qb)
-      }
-    }
+    Util.strSeqToQueryOpt(FROM_ID_FN, fromId, super.toEsQueryOpt)
   }
 
   override def sbInitSize: Int = {
-    val sz0 = super.sbInitSize
-    fromId.fold(sz0) { _fromId =>
-      sz0 + 12 + _fromId.length
-    }
+    Util.sbInitSz(super.sbInitSize, 6, fromId)
   }
 
   override def toStringBuilder: StringBuilder = {
@@ -46,12 +32,12 @@ trait FromId extends DynSearchArgs {
 
 /** Дефолтовая реализация полей поискового аддона [[FromId]]. */
 trait FromIdDflt extends FromId {
-  override def fromId: Option[String] = None
+  override def fromId: List[String] = Nil
 }
 
 
 /** Враппер-реализация полей поискового аддона [[FromId]]. */
-trait FromIdWrapper extends FromId with DynSearchArgsWrapper {
+trait FromIdWrap extends FromId with DynSearchArgsWrapper {
   override type WT <: FromId
   override def fromId = _dsArgsUnderlying.fromId
 }
