@@ -1,5 +1,6 @@
 package io.suggest.model.n2.node
 
+import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model._
 import io.suggest.model.n2.node.common.{EMNodeCommon, MNodeCommon, EMNodeCommonStatic}
 import io.suggest.model.n2.node.meta.{EMNodeMeta, MNodeMeta, EMNodeMetaStatic}
@@ -100,6 +101,20 @@ object MNode
   }
 
 
+  /** Собрать инстанс юзера на основе compat-API модели MPerson.apply(). */
+  def applyPerson(lang: String, id: Option[String] = None): MNode = {
+    MNode(
+      id = id,
+      common = MNodeCommon(
+        ntype       = MNodeTypes.Person,
+        isDependent = false
+      ),
+      meta = MNodeMeta(
+        langs = List(lang)
+      )
+    )
+  }
+
 }
 
 
@@ -118,4 +133,14 @@ case class MNode(
   override type T = MNode
   override def companion = MNode
 
+}
+
+
+
+trait MNodeJmxMBean extends EsModelJMXMBeanI
+final class MNodeJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+  extends EsModelJMXBase
+  with MNodeJmxMBean
+{
+  override def companion = MNode
 }
