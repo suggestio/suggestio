@@ -1,5 +1,9 @@
 package models.usr
 
+import io.suggest.model.es.BulkRespCounted
+import io.suggest.model.n2.node.meta.MNodeMeta
+import io.suggest.model.n2.node.{MNodeTypes, MNode}
+import io.suggest.model.n2.node.common.MNodeCommon
 import util.PlayMacroLogsImpl
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.EsModel._
@@ -89,9 +93,46 @@ object MPerson extends EsModelStaticT with PlayMacroLogsImpl with EsmV2Deseriali
       }
   }
 
+  /**
+   * Экспорт содержимого этой модели в MNode.
+   * @return (счетчик результатов, BulkResponse).
+   */
+  def exportAllIntoToMNode()(implicit client: Client, ec: ExecutionContext): Future[BulkRespCounted] = {
+    val bulk = client.prepareBulk()
+    val countSuccessFut = foreach() { mperson =>
+      val mnode = applyNode(mperson)
+      bulk.add( mnode.indexRequestBuilder )
+    }
+    for {
+      total <- countSuccessFut
+      bresp <- bulk.execute()
+    } yield {
+      BulkRespCounted(total, bresp)
+    }
+  }
+
+
+  def applyNode(mperson: MPerson): MNode = {
+    applyNode(mperson.lang, mperson.id)
+  }
+  def applyNode(lang: String, id: Option[String] = None): MNode = {
+    MNode(
+      id = id,
+      common = MNodeCommon(
+        ntype       = MNodeTypes.Person,
+        isDependent = false
+      ),
+      meta = MNodeMeta(
+        langs = List(lang)
+      )
+    )
+  }
+
 }
 
+
 import models.usr.MPerson._
+
 
 /**
  * Экземпляр модели MPerson.
@@ -117,19 +158,32 @@ final case class MPerson(
 
 /** Трайт ссылок с юзера для других моделей. */
 trait MPersonLinks {
+
   def personId: String
 
   def isSuperuser: Boolean = {
     SuperUsers.isSuperuserId(personId)
   }
+
 }
 
 
-trait MPersonJmxMBean extends EsModelJMXMBeanI
+trait MPersonJmxMBean extends EsModelJMXMBeanI {
+  def exportAllIntoToMNode(): String
+}
 final class MPersonJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
   extends EsModelJMXBase
   with MPersonJmxMBean
 {
   override def companion = MPerson
+
+  override def exportAllIntoToMNode(): String = {
+    val fut = MPerson.exportAllIntoToMNode()
+      .map { res =>
+        s"Done.\nTotal counted=${res.total}\nSave took=${res.bresp.getTookInMillis}ms\n---------\nFailures: \n${res.bresp.buildFailureMessage()}"
+      }
+    awaitString(fut)
+  }
+
 }
 

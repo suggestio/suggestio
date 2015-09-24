@@ -51,7 +51,8 @@ object SuperUsers extends PlayMacroLogsImpl {
           }
 
         // Суперюзер уже существует. Просто возвращаем его id.
-        case Some(mpi) => Future successful mpi.personId
+        case Some(mpi) =>
+          Future successful mpi.personId
       }
     } andThen {
       case Success(suPersonIds) =>
