@@ -268,8 +268,16 @@ object EsModel extends MacroLogsImpl {
         .map { new DateTime(_) }
     }
 
+    implicit val jodaDateTimeWrites: Writes[DateTime] = new Writes[DateTime] {
+      def df = ISODateTimeFormat.dateTime()
+      def writes(d: DateTime): JsValue = {
+        JsString( d.toString(df) )
+      }
+    }
+
+
     implicit val jodaDateTimeFormat: Format[DateTime] = {
-      Format(jodaDateTimeReads, implicitly[Writes[DateTime]])
+      Format(jodaDateTimeReads, jodaDateTimeWrites)
     }
 
   }
@@ -2045,6 +2053,6 @@ trait EsmV2Deserializer extends EsModelCommonStaticT {
     parseResult.get
   }
 
-  implicit protected[this] def jodaDateTimeReads = EsModel.Implicits.jodaDateTimeReads
+  implicit protected[this] def jodaDateTimeFormat = EsModel.Implicits.jodaDateTimeFormat
 
 }

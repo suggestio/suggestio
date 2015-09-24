@@ -1,9 +1,11 @@
-package io.suggest.model.n2
+package io.suggest.model.n2.node
 
-import io.suggest.model.n2.node.MNode
+import io.suggest.model.n2.node.common.MNodeCommon
+import io.suggest.model.n2.node.meta.MNodeMeta
 import io.suggest.model.n2.tag.MNodeTagInfo
 import io.suggest.model.n2.tag.vertex.{MTagFace, MTagVertex}
-import org.scalatest._, Matchers._
+import org.scalatest.Matchers._
+import org.scalatest._
 
 /**
  * Suggest.io
@@ -17,13 +19,27 @@ class MNodeSpec extends FlatSpec {
     MNode.deserializeOne2(mn)  shouldBe  mn
   }
 
+  private def _mnc: MNodeCommon = {
+    MNodeCommon(
+      ntype = MNodeTypes.AdnNode,
+      isDependent = false
+    )
+  }
+
   classOf[MNode].getSimpleName should "minimally handle JSON serialize/deserialize" in {
-    t( MNode() )
+    t(MNode(
+      common = _mnc
+    ))
   }
 
   it should "handle JSON for filled MNode" in {
     t {
       MNode(
+        common = _mnc,
+        meta = MNodeMeta(
+          nameOpt = Some("the name, 121 !"),
+          description = Some("some descr!@312#!@Fsrf erfsa erfare\n\n\n\r\n 324sASf asdd")
+        ),
         tag = MNodeTagInfo(
           vertex = Some(MTagVertex(
             faces = MTagFace.faces2map(Seq(
