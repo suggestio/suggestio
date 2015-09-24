@@ -139,8 +139,14 @@ case class MNodeMeta(
   langs         : List[String]   = Nil
 ) {
 
+  /** Изначально поле name было обязательным. */
   def name: String = {
     nameOpt.getOrElse("")
+  }
+
+  /** Узнать основной язык узла. */
+  def lang: String = {
+    langs.headOption.getOrElse("ru")
   }
 
   /** Выдать имя, по возможности короткое. */

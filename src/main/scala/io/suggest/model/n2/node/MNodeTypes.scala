@@ -13,18 +13,42 @@ import io.suggest.common.menum.play.EnumJsonReadsValT
  */
 object MNodeTypes extends EnumMaybeWithName with EnumJsonReadsValT {
 
+  protected sealed trait ValT {
+    def strId: String
+
+    /** Подтипы этого типа. */
+    def subTypes: List[T]
+
+    def parent: Option[T]
+
+    def hasParent(ntype: T): Boolean
+
+    def eqOrHasParent(ntype: T): Boolean = {
+      this == ntype || hasParent(ntype)
+    }
+  }
+
   /** Абстрактная класс одного элемента модели. */
   protected[this] abstract sealed class Val(val strId: String)
     extends super.Val(strId)
+    with ValT
   {
-    /** Подтипы этого типа. */
-    def subTypes: List[T]
+
+    override def hasParent(ntype: T): Boolean = {
+      parent.exists { p =>
+        p == ntype || p.hasParent(ntype)
+      }
+    }
   }
 
   override type T = Val
 
+  protected sealed trait NoParent extends ValT {
+    override def parent: Option[T] = None
+  }
+
   /** Реализация Val без подтипов. */
-  private class ValNoSub(strId: String) extends Val(strId) {
+  private class ValNoSub(strId: String) extends Val(strId) with NoParent {
     override def subTypes: List[T] = Nil
   }
 
@@ -43,10 +67,14 @@ object MNodeTypes extends EnumMaybeWithName with EnumJsonReadsValT {
   val Tag: T      = new ValNoSub("t")
 
   /** Картинки, видео и т.д. */
-  val Media       = new Val("m") {
+  val Media       = new Val("m") with NoParent { that =>
+
+    private trait _Parent extends ValNoSub {
+      override def parent: Option[T] = Some(that)
+    }
 
     /** Загруженная картинка. */
-    val Image: T  = new ValNoSub("i")
+    val Image: T  = new ValNoSub("i") with _Parent
 
     override def subTypes = List[T](Image)
 

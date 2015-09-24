@@ -764,16 +764,16 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
    * @param resultsPerScroll По сколько документов скроллить?
    * @param keepAliveMs Время жизни scroll-курсора на стороне es.
    * @param f Функция обработки одного результата.
-   * @return
+   * @return Future синхронизации завершения обхода или ошибки.
+   *         Цифра внутри содержит кол-во пройденных результатов.
    */
   def foreach[U](resultsPerScroll: Int = SCROLL_SIZE_DFLT, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)
-                (f: T => U)(implicit ec: ExecutionContext, client: Client): Future[_] = {
+                (f: T => U)(implicit ec: ExecutionContext, client: Client): Future[Long] = {
     // Оборачиваем foldLeft(), просто фиксируя аккамулятор.
-    val acc0 = None
-    foldLeft(acc0, resultsPerScroll, keepAliveMs) {
+    foldLeft(0L, resultsPerScroll, keepAliveMs) {
       (acc, inst) =>
         f(inst)
-        acc0
+        acc + 1L
     }
   }
 

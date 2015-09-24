@@ -7,10 +7,12 @@ import io.suggest.model.n2.tag.{MNodeTagInfo, MNodeTagInfoMappingT}
 import io.suggest.model.search.EsDynSearchStatic
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.{MacroLogsImpl, SioConstants}
+import org.elasticsearch.client.Client
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
 import scala.collection.Map
+import scala.concurrent.{Future, ExecutionContext}
 
 /**
  * Suggest.io
@@ -84,6 +86,19 @@ object MNode
   ) { mnode =>
     (mnode.common, mnode.meta, mnode.tag)
   }
+
+
+  /** Враппер над getById(), осуществляющий ещё и фильтрацию по типу узла. */
+  def getByIdType(id: String, ntype: MNodeType)
+                 (implicit ec: ExecutionContext, client: Client): Future[Option[T]] = {
+    // TODO Opt фильтрация идёт client-side. Надо бы сделать server-side БЕЗ серьезных потерь производительности и реалтайма.
+    getById(id).map {
+      _.filter {
+        _.common.ntype eqOrHasParent ntype
+      }
+    }
+  }
+
 
 }
 
