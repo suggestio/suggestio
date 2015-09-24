@@ -48,7 +48,7 @@ object SuperUsers extends PlayMacroLogsImpl {
             MNode.applyPerson(lang = "ru").save.flatMap { personId =>
               val pwHash = MPersonIdent.mkHash(email)
               EmailPwIdent(email=email, personId=personId, pwHash = pwHash).save.map { mpiId =>
-                info(logPrefix1 + s"New superuser installed as $personId. mpi=$mpiId")
+                info(s"$logPrefix1 New superuser installed as $personId. mpi=$mpiId")
                 Some(personId)
               }
             }
