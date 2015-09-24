@@ -63,13 +63,11 @@ object Global extends WithFilters(new HtmlCompressFilter, new DumpXffHeaders, Se
       // Это также нужно было при миграции с MPerson на MNode, чтобы не произошло повторного создания новых
       // юзеров в MNode, при наличии уже существующих в MPerson.
       val ck = "start.ensure.superusers"
-      if (app.configuration.getBoolean(ck).getOrElse(false)) {
-        SuperUsers.resetSuperuserIds
-          .map { _ => esClient }
-      } else {
+      val createIfMissing = app.configuration.getBoolean(ck).getOrElse(false)
+      val fut = SuperUsers.resetSuperuserIds(createIfMissing)
+      if (!createIfMissing)
         debug("Does not ensuring superusers in permanent models: " + ck + " != true")
-        Future successful esClient
-      }
+      fut.map { _ => esClient }
     }
 
     // Инициализировать связку ключей, если необходимо.
