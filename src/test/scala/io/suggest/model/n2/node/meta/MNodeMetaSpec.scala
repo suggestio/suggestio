@@ -35,7 +35,8 @@ class MNodeMetaSpec extends FlatSpec {
       info          = Some("Поле info содержит какую-то информацию."),
       color         = Some("000001"),
       fgColor       = Some("FFFFFE"),
-      welcomeAdId   = Some("fajn8f9a4wfjmafoimaewrfwa")
+      welcomeAdId   = Some("fajn8f9a4wfjmafoimaewrfwa"),
+      langs         = List("ru")
     ))
   }
 

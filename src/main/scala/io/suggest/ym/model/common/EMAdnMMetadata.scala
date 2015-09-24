@@ -58,7 +58,7 @@ object EMAdnMMetadataStatic {
   /** Десериализация сериализованного экземпляра класса AdnMMetadata. */
   val deserializeMNodeMeta: PartialFunction[Any, MNodeMeta] = {
     case jmap: ju.Map[_,_] =>
-      import EsModel.stringParser
+      import EsModel.{stringParser, iteratorParser}
       MNodeMeta(
         nameOpt      = Option(jmap get NAME_ESFN) map stringParser,
         nameShortOpt = Option(jmap get NAME_SHORT_ESFN)
@@ -77,7 +77,12 @@ object EMAdnMMetadataStatic {
         info        = Option(jmap get INFO_ESFN) map stringParser,
         color       = Option(jmap get BG_COLOR_ESFN) map stringParser,
         fgColor     = Option(jmap get FG_COLOR_ESFN) map stringParser,
-        welcomeAdId = Option(jmap get WELCOME_AD_ID) map stringParser
+        welcomeAdId = Option(jmap get WELCOME_AD_ID) map stringParser,
+        langs       = Option(jmap get LANGS_ESFN)
+          .iterator
+          .flatMap(iteratorParser)
+          .map(stringParser)
+          .toList
       )
   }
 
