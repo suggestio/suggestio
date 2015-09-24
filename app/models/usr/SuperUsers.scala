@@ -1,5 +1,6 @@
 package models.usr
 
+import io.suggest.model.n2.node.MNode
 import org.elasticsearch.client.Client
 import util.PlayMacroLogsImpl
 
@@ -30,19 +31,20 @@ object SuperUsers extends PlayMacroLogsImpl {
     SU_IDS.contains(personId)
   }
 
-  /** Выставить в MPerson id'шники суперпользователей. Для этого надо убедится, что все админские MPersonIdent'ы
+  /** Выставить в MNode id'шники суперпользователей.
+    * Для этого надо убедится, что все админские MPersonIdent'ы
     * существуют. Затем, сохранить в глобальную переменную в MPerson этот списочек. */
   def resetSuperuserIds(implicit client: Client): Future[_] = {
     val logPrefix = "resetSuperuserIds(): "
     val se = MPersonIdent.SU_EMAILS
-    trace(s"${logPrefix}There are ${se.size} superuser emails: [${se.mkString(", ")}]")
+    debug(s"${logPrefix}Let's do it. There are ${se.size} superuser emails: [${se.mkString(", ")}]")
     Future.traverse(se) { email =>
       EmailPwIdent.getById(email) flatMap {
-        // Суперюзер ещё не сделан. Создать MPerson и MPI для текущего email.
+        // Суперюзер ещё не сделан, _id неизвестен. Создать person MNode и MPersonIden для текущего email.
         case None =>
           val logPrefix1 = s"$logPrefix[$email] "
           info(logPrefix1 + "Installing new sio superuser...")
-          MPerson(lang = "ru").save.flatMap { personId =>
+          MNode.applyPerson(lang = "ru").save.flatMap { personId =>
             val pwHash = MPersonIdent.mkHash(email)
             EmailPwIdent(email=email, personId=personId, pwHash = pwHash).save.map { mpiId =>
               info(logPrefix1 + s"New superuser installed as $personId. mpi=$mpiId")

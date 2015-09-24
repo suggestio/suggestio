@@ -1,5 +1,6 @@
 package models.usr
 
+import io.suggest.model.n2.node.MNode
 import models.mext.ILoginProvider
 import securesocial.core.{IProfile, PasswordInfo}
 import securesocial.core.providers.MailToken
@@ -37,7 +38,9 @@ object SsUserService extends UserService[SsUser] {
    * @param providerId - the provider id
    * @return an optional profile
    */
-  override def findByEmailAndProvider(email: String, providerId: String): Future[Option[IProfile]] = ???
+  override def findByEmailAndProvider(email: String, providerId: String): Future[Option[IProfile]] = {
+    throw new UnsupportedOperationException("Not implemented: email_pw login is in separate module")
+  }
 
   /**
    * Deletes a token
@@ -71,7 +74,7 @@ object SsUserService extends UserService[SsUser] {
   override def save(profile: IProfile, mode: SaveMode): Future[SsUser] = {
     if (mode is SaveMode.SignUp) {
       // Зарегать нового юзера
-      MPerson(lang = "ru").save.flatMap { personId =>
+      MNode.applyPerson(lang = "ru").save.flatMap { personId =>
         // Сохранить данные идентификации через соц.сеть.
         val mei = MExtIdent(
           personId  = personId,

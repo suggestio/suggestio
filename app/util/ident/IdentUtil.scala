@@ -2,7 +2,7 @@ package util.ident
 
 import controllers.routes
 import io.suggest.ym.model.MAdnNode
-import models.usr.{SuperUsers, MPerson, MExtIdent}
+import models.usr.{SuperUsers, MExtIdent}
 import play.api.mvc._
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext

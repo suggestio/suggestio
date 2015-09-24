@@ -59,8 +59,17 @@ object Global extends WithFilters(new HtmlCompressFilter, new DumpXffHeaders, Se
     val fut = esClientFut flatMap { implicit esClient =>
       initializeEsModels() map { _ => esClient }
     } flatMap { implicit esClient =>
-      SuperUsers.resetSuperuserIds
-        .map { _ => esClient }
+      // Если в конфиге явно не включена поддержка проверки суперюзеров в БД, то не делать этого.
+      // Это также нужно было при миграции с MPerson на MNode, чтобы не произошло повторного создания новых
+      // юзеров в MNode, при наличии уже существующих в MPerson.
+      val ck = "start.ensure.superusers"
+      if (app.configuration.getBoolean(ck).getOrElse(false)) {
+        SuperUsers.resetSuperuserIds
+          .map { _ => esClient }
+      } else {
+        debug("Does not ensuring superusers in permanent models: " + ck + " != true")
+        Future successful esClient
+      }
     }
 
     // Инициализировать связку ключей, если необходимо.
@@ -150,7 +159,8 @@ object Global extends WithFilters(new HtmlCompressFilter, new DumpXffHeaders, Se
         SioHttpErrorHandler.http404Fut(request)
 
       // При разработке следует выводить нормальное 404.
-      case _ => super.onHandlerNotFound(request)
+      case _ =>
+        super.onHandlerNotFound(request)
     }
   }
 

@@ -74,10 +74,8 @@ object SioReqMd {
 
 /** Интерфейс модели. */
 trait ISioReqMd {
-  /**
-   * Отображаемое имя юзера, если есть. Формируются на основе данных сессии и данных из
-   * [[models.usr.MPerson]] и [[models.usr.MPersonIdent]].
-   */
+  /** Отображаемое имя юзера, если есть. Формируются на основе данных сессии и данных из
+    * MNode и моделей [[models.usr.MPersonIdent]]. */
   def usernameOpt       : Option[String]
 
   /** Текущий денежный баланс текущего узла. */

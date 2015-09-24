@@ -1,10 +1,10 @@
-@(mperson: usr.MPerson, personName: String, contents: Seq[Html])(implicit ctx: Context)
+@(mperson: MNode, personName: String, contents: Seq[Html])(implicit ctx: Context)
 
 @* Страница с инфой по юзеру. *@
 
 @sysPersonBase(title = personName) {
 
-  <p>Дефолтовый язык: @mperson.lang</p>
+  <p>Дефолтовый язык: @mperson.meta.lang</p>
 
   @contents.map { html =>
     <div>@html</div>

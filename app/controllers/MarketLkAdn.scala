@@ -5,7 +5,7 @@ import _root_.util.async.AsyncUtil
 import com.google.inject.Inject
 import controllers.ident._
 import models.msession.Keys
-import models.usr.{MPerson, EmailActivation, EmailPwIdent}
+import models.usr.EmailPwIdent
 import play.api.i18n.MessagesApi
 import util.billing.Billing
 import _root_.util.{FormUtil, PlayMacroLogsImpl}
@@ -328,7 +328,7 @@ class MarketLkAdn @Inject() (
           // Сначала удаляем запись об активации, убедившись что она не была удалена асинхронно.
           eact.delete.flatMap { isDeleted =>
             val newPersonIdOptFut: Future[Option[String]] = if (!request.isAuth) {
-              MPerson(lang = request2lang.code).save flatMap { personId =>
+              MNode.applyPerson(lang = request2lang.code).save flatMap { personId =>
                 EmailPwIdent.applyWithPw(email = eact.email, personId = personId, password = passwordOpt.get, isVerified = true)
                   .save
                   .map { emailPwIdentId => Some(personId) }

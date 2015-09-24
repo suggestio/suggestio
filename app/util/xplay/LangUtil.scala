@@ -1,6 +1,6 @@
 package util.xplay
 
-import models.usr.MPerson
+import models.{MNode, MNodeTypes}
 import play.api.i18n.{I18nSupport, Lang}
 import play.api.mvc.Result
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -18,17 +18,17 @@ trait SetLangCookieUtil extends I18nSupport {
 
   /** Выставить lang.cookie. */
   def setLangCookie1(resFut: Future[Result], personId: String): Future[Result] = {
-    setLangCookie2(resFut, MPerson.getById(personId))
+    setLangCookie2(resFut, MNode.getByIdType(personId, MNodeTypes.Person))
   }
 
-  def setLangCookie2(resFut: Future[Result], mpersonOptFut: Future[Option[MPerson]]): Future[Result] = {
+  def setLangCookie2(resFut: Future[Result], mpersonOptFut: Future[Option[MNode]]): Future[Result] = {
     mpersonOptFut.flatMap { mpersonOpt =>
       setLangCookie3(resFut, mpersonOpt)
     }
   }
 
-  def setLangCookie3(resFut: Future[Result], mpersonOpt: Option[MPerson]): Future[Result] = {
-    val langOpt = mpersonOpt.map(_.lang)
+  def setLangCookie3(resFut: Future[Result], mpersonOpt: Option[MNode]): Future[Result] = {
+    val langOpt = mpersonOpt.map(_.meta.lang)
     setLangCookie4(resFut, langOpt)
   }
 

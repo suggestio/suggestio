@@ -1,5 +1,6 @@
 package util.jmx
 
+import io.suggest.model.n2.node.MNodeJmx
 import io.suggest.ym.model._
 import io.suggest.model._
 import io.suggest.ym.model.stat._
@@ -51,6 +52,7 @@ object JMXImpl extends PlayLazyMacroLogsImpl {
     new AdvUtilJmx,
     new MEventJmx,
     new MExtTargetJmx,
+    new MNodeJmx,
     // cassandra
     new SioCassandraClientJmx,
     new MImgThumb2Jmx,

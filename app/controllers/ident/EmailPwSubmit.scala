@@ -1,6 +1,7 @@
 package controllers.ident
 
 import controllers.SioController
+import models.{MNode, MNodeTypes}
 import models.msession.{Ttl, ShortTtl, LongTtl, Keys}
 import models.usr._
 import play.api.data._
@@ -85,7 +86,7 @@ trait EmailPwSubmit extends SioController with PlayMacroLogsI with BruteForcePro
             if (epwOpt.exists(_.checkPassword(binded.password))) {
               // Логин удался.
               val personId = epwOpt.get.personId
-              val mpersonOptFut = MPerson.getById(personId)
+              val mpersonOptFut = MNode.getByIdType(personId, MNodeTypes.Person)
               val rdrFut = RdrBackOrFut(r) { emailSubmitOkCall(personId) }
               var addToSession: List[(String, String)] = List(
                 Keys.PersonId.name -> personId

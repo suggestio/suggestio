@@ -5,7 +5,7 @@ import io.suggest.util.{JMXBase, SioEsUtil}
 import models.ai.MAiMad
 import models.im.MGallery
 import models.merr.MRemoteError
-import models.usr.{MExtIdent, MPerson, EmailActivation, EmailPwIdent}
+import models.usr.{MExtIdent, EmailActivation, EmailPwIdent}
 import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
 import util.{PlayMacroLogsDyn, PlayLazyMacroLogsImpl, SiowebEsUtil}
 import scala.concurrent.Future
@@ -29,7 +29,7 @@ object SiowebEsModel extends PlayMacroLogsDyn {
    */
   def ES_MODELS: Seq[EsModelCommonStaticT] = {
     EsModel.ES_MODELS ++ Seq[EsModelCommonStaticT](
-      MPerson, EmailPwIdent, EmailActivation, MExtIdent, MMartCategory, MInviteRequest, MCalendar,
+      EmailPwIdent, EmailActivation, MExtIdent, MMartCategory, MInviteRequest, MCalendar,
       MRemoteError, MGallery, MAiMad,
       adv.MExtTarget,
       event.MEvent, sec.MAsymKey
@@ -100,7 +100,7 @@ final class SiowebEsModelJmx extends JMXBase with SiowebEsModelJmxMBean with Pla
   override def jmxName = "io.suggest.model:type=elasticsearch,name=" + getClass.getSimpleName.replace("Jmx", "")
 
   /** Импорт может затянуться, несмотря на все ускорения. Увеличиваем таймаут до получения результата. */
-  override def futureTimeout = 5 minutes
+  override def futureTimeout = 5.minutes
 
   override def importModelFromRemote(modelStr: String, remotes: String): String = {
     val modelStr1 = modelStr.trim

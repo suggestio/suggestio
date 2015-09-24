@@ -1,8 +1,8 @@
 package controllers
 
 import com.google.inject.Inject
+import io.suggest.model.n2.node.MNode
 import models.Context
-import models.usr.MPerson
 import play.api.data.Form
 import play.api.i18n.{MessagesApi, Lang}
 import play.twirl.api.Html
@@ -81,10 +81,14 @@ class LkLang @Inject() (
             pw.personOptFut
               .map {
                 case Some(mperson0) =>
-                  mperson0.copy(lang = newLangCode)
+                  mperson0.copy(
+                    meta = mperson0.meta.copy(
+                      langs = List(newLangCode)
+                    )
+                  )
                 case None =>
                   warn("User logged in, but not found in MPerson. Creating...")
-                  MPerson(lang = newLangCode, id = Some(pw.personId))
+                  MNode.applyPerson(lang = newLangCode, id = Some(pw.personId))
               }
               .flatMap { _.save }
           case None =>

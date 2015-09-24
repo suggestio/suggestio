@@ -3,7 +3,7 @@ package controllers.ident
 import controllers.{routes, SioController}
 import models.mext.{MExtServices, ILoginProvider}
 import models.msession.{CustomTtl, Keys}
-import models.{ExtRegConfirmForm_t, ExternalCall, Context}
+import models.{MNode, MNodeTypes, ExtRegConfirmForm_t, ExternalCall, Context}
 import models.usr._
 import play.api.data.Form
 import play.api.mvc._
@@ -141,10 +141,10 @@ trait ExternalLogin extends SioController with PlayMacroLogsI with SetLangCookie
           // TODO Отрабатывать случаи, когда юзер уже залогинен под другим person_id.
           val profile = authenticated.profile
           MExtIdent.getByUserIdProv(provider, profile.userId).flatMap { maybeExisting =>
-            // Сохраняем, если требуется. В результате приходит также новосохранный MPerson.
-            val saveFut: Future[(MExtIdent, Option[MPerson])] = maybeExisting match {
+            // Сохраняем, если требуется. В результате приходит также новосохранный person MNode.
+            val saveFut: Future[(MExtIdent, Option[MNode])] = maybeExisting match {
               case None =>
-                val mperson0 = MPerson(lang = request2lang.code)
+                val mperson0 = MNode.applyPerson(lang = request2lang.code)
                 val mpersonSaveFut = mperson0.save
                 val meiFut = mpersonSaveFut.flatMap { personId =>
                   // Сохранить данные идентификации через соц.сеть.
@@ -176,8 +176,10 @@ trait ExternalLogin extends SioController with PlayMacroLogsI with SetLangCookie
             saveFut.flatMap { case (ident, newMpersonOpt) =>
               // Можно перенести внутрь match всю эту логику. Т.к. она очень предсказуема. Но это наверное ещё добавит сложности кода.
               val mpersonOptFut = newMpersonOpt match {
-                case None => MPerson.getById(ident.personId)
-                case some => Future successful some
+                case None =>
+                  MNode.getByIdType(ident.personId, MNodeTypes.Person)
+                case some =>
+                  Future successful some
               }
               val isNew = newMpersonOpt.isDefined
               val rdrFut: Future[Result] = if (isNew) {

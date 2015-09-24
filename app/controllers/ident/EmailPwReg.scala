@@ -145,7 +145,7 @@ trait EmailPwReg extends SioController with PlayMacroLogsI with CaptchaValidator
       {data =>
         // Создать юзера и его ident, удалить активацию, создать новый узел-ресивер.
         val lang = request2lang
-        MPerson(lang = lang.code).save flatMap { personId =>
+        MNode.applyPerson(lang = lang.code).save flatMap { personId =>
           // Развернуть узел для юзера
           val adnNodeFut = NodesUtil.createUserNode(name = data.adnName, personId = personId)
           // Сохранить новый epw-ident

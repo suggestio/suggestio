@@ -21,10 +21,10 @@ import scala.concurrent.{ExecutionContext, Future}
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 18.04.13 18:19
- * Description: Юзер, зареганный на сайте. Как правило, админ одного или нескольких сайтов.
- * Люди различаются по email'ам и/или по номерам телефона.
- * 01.03.2014 Вместо hbase использовать EsModel. Добавлен phone. id вместо email теперь
- * генерится силами ES.
+ * Description: Юзер, зареганный на сайте.
+ *
+ * 2015.sep.24: В связи с переездом на MNode эта модель осталась для совместимости.
+ * Она пока останется, но будет отрезана от ES, и будет содержать только кое-какие вещи, упрощающие жизнь.
  */
 
 // Статическая часть модели.
@@ -100,7 +100,7 @@ object MPerson extends EsModelStaticT with PlayMacroLogsImpl with EsmV2Deseriali
   def exportAllIntoToMNode()(implicit client: Client, ec: ExecutionContext): Future[BulkRespCounted] = {
     val bulk = client.prepareBulk()
     val countSuccessFut = foreach() { mperson =>
-      val mnode = applyNode(mperson)
+      val mnode = mperson.toNode
       bulk.add( mnode.indexRequestBuilder )
     }
     for {
@@ -109,23 +109,6 @@ object MPerson extends EsModelStaticT with PlayMacroLogsImpl with EsmV2Deseriali
     } yield {
       BulkRespCounted(total, bresp)
     }
-  }
-
-
-  def applyNode(mperson: MPerson): MNode = {
-    applyNode(mperson.lang, mperson.id)
-  }
-  def applyNode(lang: String, id: Option[String] = None): MNode = {
-    MNode(
-      id = id,
-      common = MNodeCommon(
-        ntype       = MNodeTypes.Person,
-        isDependent = false
-      ),
-      meta = MNodeMeta(
-        langs = List(lang)
-      )
-    )
   }
 
 }
@@ -139,6 +122,7 @@ import models.usr.MPerson._
  * @param lang Язык интерфейса для указанного пользователя.
  *             Формат четко неопределён, и соответствует коду выхлопа Controller.lang().
  */
+@deprecated("Use MNode instead", "2015.sep.24")
 final case class MPerson(
   lang  : String,
   id    : Option[String] = None
@@ -152,6 +136,9 @@ final case class MPerson(
   def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     LANG_ESFN -> JsString(lang) :: acc
   }
+
+  /** Сконвертить в инстанс узла N2. */
+  def toNode = MNode.applyPerson(lang, id)
 
 }
 

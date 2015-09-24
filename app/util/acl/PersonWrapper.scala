@@ -1,7 +1,9 @@
 package util.acl
 
+import io.suggest.model.n2.node.MNode
 import models.msession.{LoginTimestamp, Keys}
 import models.usr.{MPersonLinks, MPerson}
+import models.MNodeTypes
 import play.api.mvc._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.PlayMacroLogsImpl
@@ -67,5 +69,5 @@ object PersonWrapper extends PlayMacroLogsImpl {
  * @param personId id юзера
  */
 final case class PersonWrapper(personId: String) extends MPersonLinks {
-  lazy val personOptFut = MPerson getById personId
+  lazy val personOptFut = MNode.getByIdType(personId, MNodeTypes.Person)
 }

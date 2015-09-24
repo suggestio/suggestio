@@ -1,7 +1,8 @@
 package util.acl
 
+import io.suggest.model.n2.node.MNodeTypes
+import models.MNode
 import models.req.SioReqMd
-import models.usr.MPerson
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.{Results, Result, ActionBuilder, Request}
 import util.acl.PersonWrapper.PwOpt_t
@@ -13,7 +14,7 @@ import util.SiowebEsUtil.client
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 14.04.15 22:33
- * Description: Гибрид IsSuperuser и чтения произвольного юзера из [[models.usr.MPerson]] по id.
+ * Description: Гибрид IsSuperuser и чтения произвольного юзера из хранилища по id.
  */
 
 trait IsSuperuserPersonBase extends ActionBuilder[MPersonRequest] {
@@ -21,7 +22,7 @@ trait IsSuperuserPersonBase extends ActionBuilder[MPersonRequest] {
   def personId: String
 
   override def invokeBlock[A](request: Request[A], block: (MPersonRequest[A]) => Future[Result]): Future[Result] = {
-    val mpersonOptFut = MPerson.getById(personId)
+    val mpersonOptFut = MNode.getByIdType(personId, MNodeTypes.Person)
     val pwOpt = PersonWrapper.getFromRequest(request)
     if (PersonWrapper isSuperuser pwOpt) {
       val srmFut = SioReqMd.fromPwOpt(pwOpt)
@@ -56,7 +57,7 @@ case class IsSuperuserPerson(personId: String)
 
 /** Экземпляр реквеста. */
 case class MPersonRequest[A](
-  mperson   : MPerson,
+  mperson   : MNode,
   pwOpt     : PwOpt_t,
   request   : Request[A],
   sioReqMd  : SioReqMd
