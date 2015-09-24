@@ -2,7 +2,7 @@ package util.ident
 
 import controllers.routes
 import io.suggest.ym.model.MAdnNode
-import models.usr.{MPerson, MExtIdent}
+import models.usr.{SuperUsers, MPerson, MExtIdent}
 import play.api.mvc._
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -34,7 +34,7 @@ object IdentUtil {
       Option(rdrOrNull)
         // Если некуда отправлять, а юзер - админ, то отправить в /sys/.
         .orElse {
-          if (MPerson.isSuperuserId(personId)) {
+          if ( SuperUsers.isSuperuserId(personId) ) {
             Some(routes.Application.sysIndex())
           } else {
             None

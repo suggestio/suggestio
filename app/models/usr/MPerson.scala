@@ -34,23 +34,6 @@ object MPerson extends EsModelStaticT with PlayMacroLogsImpl with EsmV2Deseriali
 
   def LANG_ESFN   = "lang"
 
-  /** PersonId суперпользователей sio. */
-  private var SU_IDS: Set[String] = Set.empty
-
-  /** Выставление personId для суперпользователей. Вызывается из Global при старте. */
-  def setSuIds(suIds: Set[String]) {
-    SU_IDS = suIds
-  }
-
-  /**
-   * Принадлежит ли указанный id суперюзеру suggest.io?
-   * @param personId Реальный id юзера.
-   * @return true, если это админ. Иначе false.
-   */
-  def isSuperuserId(personId: String): Boolean = {
-    SU_IDS.contains(personId)
-  }
-
 
   override def generateMappingStaticFields: List[Field] = List(
     FieldAll(enabled = false),
@@ -137,7 +120,7 @@ trait MPersonLinks {
   def personId: String
 
   def isSuperuser: Boolean = {
-    MPerson.isSuperuserId(personId)
+    SuperUsers.isSuperuserId(personId)
   }
 }
 
