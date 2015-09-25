@@ -68,10 +68,11 @@ object AdnShownTypes extends Enumeration {
 
 
   // Штатные (исторические) типы узлов
-  val MART: AdnShownType              = new BuildingVal( AdNetMemberTypes.MART.name )
-  val SHOP: AdnShownType              = new BuildingVal( AdNetMemberTypes.SHOP.name )
-  val RESTAURANT: AdnShownType        = new BuildingVal( AdNetMemberTypes.RESTAURANT.name )
-  val RESTAURANT_SUP: AdnShownType    = new Val( AdNetMemberTypes.RESTAURANT_SUP.name ) {
+  val MART: AdnShownType              = new BuildingVal("m")
+  val SHOP: AdnShownType              = new BuildingVal("s")
+  val RESTAURANT: AdnShownType        = new BuildingVal("r")
+  @deprecated("Please remove, if unused", "2015.sep.25")
+  val RESTAURANT_SUP: AdnShownType    = new Val("R") {
     override def ngls = Nil
   }
 

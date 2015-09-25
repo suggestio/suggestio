@@ -1,6 +1,7 @@
 package controllers
 
 import com.google.inject.Inject
+import io.suggest.ym.model.common.AdnMemberShowLevels
 import models.im.MImg
 import models.msys.NodeCreateParams
 import models.usr.{MPerson, EmailActivation}
@@ -129,6 +130,7 @@ class SysMarket @Inject() (
   def createAdnNode() = IsSuperuser.async { implicit request =>
     // Генерим stub и втыкаем его в форму, чтобы меньше галочек ставить.
     val dfltFormM = adnNodeFormM.fill(
+      // TODO Может быть, использовать dflt user node из NodesUtil?
       MAdnNode(
         adn = AdNetMemberInfo(
           isUser          = false,
@@ -136,7 +138,8 @@ class SysMarket @Inject() (
           shownTypeIdOpt  = Some(AdnShownTypes.MART.name),
           testNode        = false,
           isEnabled       = true,
-          sinks           = Set(AdnSinks.SINK_GEO)
+          sinks           = Set(AdnSinks.SINK_GEO),
+          showLevelsInfo  = NodesUtil.dfltShowLevels
         )
       )
     )

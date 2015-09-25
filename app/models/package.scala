@@ -41,8 +41,6 @@ package object models {
   val  AdnRights            = ym.model.common.AdnRights
   type AdnRight             = AdnRights.AdnRight
 
-  val  AdNetMemberTypes     = ym.model.common.AdNetMemberTypes
-
   val  AdnMPubSettingsLevels = ym.model.common.AdnMemberShowLevels
   type AdnMPubSettingsLevels = ym.model.common.AdnMemberShowLevels
 
@@ -57,9 +55,6 @@ package object models {
 
   val  MWelcomeAd           = ym.model.MWelcomeAd
   type MWelcomeAd           = ym.model.MWelcomeAd
-
-  val  AdOfferTypes         = ym.model.AdOfferTypes
-  type AdOfferType          = AdOfferTypes.AdOfferType
 
   type AdOfferT             = ym.model.ad.AdOfferT
 

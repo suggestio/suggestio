@@ -61,6 +61,17 @@ object NodesUtil extends PlayMacroLogsImpl {
     routes.MarketLkAdnEdit.editAdnNode(adnId)
   }
 
+  def dfltShowLevels: AdnMemberShowLevels = {
+    AdnMemberShowLevels(
+      in  = Map(
+        AdShowLevels.LVL_START_PAGE -> 100
+      ),
+      out = Map(
+        AdShowLevels.LVL_START_PAGE -> SL_START_PAGE_LIMIT_DFLT
+      )
+    )
+  }
+
   /**
    * Создать новый инстанс узла для юзера без сохранения узла в хранилище.
    * @param name название узла.

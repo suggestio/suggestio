@@ -16,9 +16,6 @@ import io.suggest.ad.form.AdFormConstants._
  */
 object MarketAdFormUtil {
 
-  type FormDetected_t = Option[(AdOfferType, AdFormM)]
-
-
   /** Маппинг для выравнивания текста в рамках поля. */
   def textAlignOptM: Mapping[Option[TextAlign]] = {
     optional(text(maxLength = 10))
