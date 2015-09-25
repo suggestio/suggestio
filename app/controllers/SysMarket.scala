@@ -114,25 +114,16 @@ class SysMarket @Inject() (
   }
 
 
-  private def maybeSupOpt(supIdOpt: Option[String]): Future[Option[MAdnNode]] = {
-    supIdOpt match {
-      case Some(supId) => MAdnNodeCache.getById(supId)
-      case None => Future successful None
-    }
-  }
-  private def createAdnNodeRender(supOptFut: Future[Option[MAdnNode]], supIdOpt: Option[String], nodeFormM: Form[MAdnNode],
-                                  ncpForm: Form[NodeCreateParams]) (implicit request: AbstractRequestWithPwOpt[_]): Future[Html] = {
-    for {
-      supOpt    <- supOptFut
-    } yield {
-      createAdnNodeFormTpl(supOpt, nodeFormM, ncpForm)
-    }
+  private def createAdnNodeRender(nodeFormM: Form[MAdnNode], ncpForm: Form[NodeCreateParams])
+                                 (implicit request: AbstractRequestWithPwOpt[_]): Future[Html] = {
+    val html = createAdnNodeFormTpl(nodeFormM, ncpForm)
+    Future successful html
   }
 
   private def nodeCreateParamsFormM = Form(NodeCreateParams.mappingM)
 
   /** Страница с формой создания нового узла. */
-  def createAdnNode(supIdOpt: Option[String]) = IsSuperuser.async { implicit request =>
+  def createAdnNode() = IsSuperuser.async { implicit request =>
     // Генерим stub и втыкаем его в форму, чтобы меньше галочек ставить.
     val dfltFormM = adnNodeFormM.fill(
       MAdnNode(
@@ -148,51 +139,26 @@ class SysMarket @Inject() (
       )
     )
     val ncpForm = nodeCreateParamsFormM fill NodeCreateParams()
-    createAdnNodeRender(maybeSupOpt(supIdOpt), supIdOpt, dfltFormM, ncpForm)
+    createAdnNodeRender(dfltFormM, ncpForm)
       .map { Ok(_) }
   }
 
   /** Сабмит формы создания нового узла. */
-  def createAdnNodeSubmit(supIdOpt: Option[String]) = IsSuperuser.async { implicit request =>
-    val supOptFut = maybeSupOpt(supIdOpt)
+  def createAdnNodeSubmit() = IsSuperuser.async { implicit request =>
     val ncpForm = nodeCreateParamsFormM.bindFromRequest()
-    lazy val logPrefix = s"createAdnNodeSubmit(supId=$supIdOpt):"
     adnNodeFormM.bindFromRequest().fold(
       {formWithErrors =>
-        val renderFut = createAdnNodeRender(supOptFut, supIdOpt, formWithErrors, ncpForm)
-        debug(s"$logPrefix Failed to bind form: ${formatFormErrors(formWithErrors)}")
+        val renderFut = createAdnNodeRender(formWithErrors, ncpForm)
+        debug("createAdnNodeSubmit(): Failed to bind form: \n" + formatFormErrors(formWithErrors))
         renderFut map {
           NotAcceptable(_)
         }
       },
-      {adnNodeRaw =>
-        // Запиливаем sup id в будущий node.
-        val adnNode = adnNodeRaw.copy(
-          adn = adnNodeRaw.adn.copy(
-            supId = supIdOpt
-          )
-        )
-        supOptFut flatMap { supOpt =>
-          if (supIdOpt.isDefined) {
-            adnNode.handleMeAddedAsChildFor(supOpt.get)
-          }
-          val nodeSaveFut = adnNode.save
-          for {
-            adnId <- nodeSaveFut
-          } yield {
-            maybeInitializeNode(ncpForm, adnId)
-            val adnNode1 = adnNode.copy(
-              id = Some(adnId)
-            )
-            if (supIdOpt.isDefined) {
-              val sup = supOpt.get
-              if (sup.handleChildNodeAddedToMe(adnNode1)) {
-                sup.save
-              }
-            }
-            Redirect(routes.SysMarket.showAdnNode(adnId))
-              .flashing("success" -> s"Создан узел сети: $adnId")
-          }
+      {adnNode =>
+        for (adnId <- adnNode.save) yield {
+          maybeInitializeNode(ncpForm, adnId)
+          Redirect(routes.SysMarket.showAdnNode(adnId))
+            .flashing("success" -> s"Создан узел сети: $adnId")
         }
       }
     )

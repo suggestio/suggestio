@@ -1,4 +1,4 @@
-@(supOpt: Option[MAdnNode], af: Form[MAdnNode], ncpf: Form[msys.NodeCreateParams])(implicit ctx: Context)
+@(af: Form[MAdnNode], ncpf: Form[msys.NodeCreateParams])(implicit ctx: Context)
 
 @* Страница с формой создания нового узла рекламной сети. *@
 @import ctx._
@@ -23,17 +23,9 @@
 
 @adnBase("Создать новый ADN-узел") {
 
-  <div class="sys_t">
-    @supOpt.fold {
-      Будет создан узел вернего уровня.
-    } { sup =>
-      Родительский узел: <a class="blue-link" href="@routes.SysMarket.showAdnNode(sup.id.get)">@sup.meta.name / @sup.meta.town</a>
-    }
-  </div>
-
   @_adnNodeFormTpl(
     af	      = af,
-    call      = routes.SysMarket.createAdnNodeSubmit(supOpt.flatMap(_.id)),
+    call      = routes.SysMarket.createAdnNodeSubmit(),
     btnText   = messages("Create"),
     formAfter = Some(formAfter)
   )
