@@ -52,4 +52,13 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT {
     }
   }
 
+
+  /** Модерация запросов на размещение с from-узла делегирована другому указанному узлу. */
+  val AdvManageDelegatedTo: T = new Val("c") {
+    override def fromTypes: List[MNodeType] = {
+      List(MNodeTypes.AdnNode)
+    }
+    override def toTypes: List[MNodeType] = fromTypes
+  }
+
 }

@@ -12,7 +12,7 @@ import io.suggest.model.n2.edge.MEdge.TO_ID_FN
  */
 trait ToId extends DynSearchArgs {
 
-  def toId: List[String]
+  def toId: Seq[String]
 
   override def toEsQueryOpt: Option[QueryBuilder] = {
     Util.strSeqToQueryOpt(TO_ID_FN, toId, super.toEsQueryOpt)
@@ -33,7 +33,7 @@ trait ToId extends DynSearchArgs {
 
 /** Дефолтовая реализация полей аддона [[ToId]]. */
 trait ToIdDflt extends ToId {
-  override def toId: List[String] = Nil
+  override def toId: Seq[String] = Nil
 }
 
 

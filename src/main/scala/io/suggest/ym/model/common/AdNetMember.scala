@@ -32,10 +32,6 @@ object AdNetMember {
   val RIGHTS_ESFN         = "rights"
   val IS_USER_ESFN        = "isUser"
 
-  /** Option[String] поле, содержит id узла-делегата размещения рекламных карточек.
-    * К такому узлу рекламные карточки попадают на модерацию. */
-  val ADV_DELEGATE_ESFN = "advDg"
-
   /** Название поля с флагом тестового узла. */
   val TEST_NODE_ESFN = "tn"
 
@@ -53,23 +49,11 @@ object AdNetMember {
   private def fullFN(subFN: String): String = ADN_ESFN + "." + subFN
 
   // Абсолютные (плоские) имена полей. Используются при поисковых запросах.
-  def ADN_ADV_DELEGATE_ESFN   = fullFN(ADV_DELEGATE_ESFN)
   def ADN_RIGHTS_ESFN         = fullFN(RIGHTS_ESFN)
   def ADN_TEST_NODE_ESFN      = fullFN(TEST_NODE_ESFN)
   def ADN_IS_ENABLED_ESFN     = fullFN(IS_ENABLED_ESFN)
   def ADN_SINKS_ESFN          = fullFN(SINKS_ESFN)
   def ADN_SHOWN_TYPE_ID       = fullFN(SHOWN_TYPE_ID_ESFN)
-
-
-  /**
-   * Генератор es-query для поиска по id делегата размещения.
-   * @param adnId id узла-делегата.
-   * @return QueryBuilder.
-   */
-  def advDelegatesQuery(adnId: String): QueryBuilder = {
-    QueryBuilders.termQuery(ADN_ADV_DELEGATE_ESFN, adnId)
-  }
-
 
   /**
    * Собрать es query для поиска по полю adn-прав. Искомый объект обязан обладать всеми перечисленными правами.
@@ -176,7 +160,6 @@ trait EMAdNetMemberStatic extends EsModelStaticMutAkvT with EsModelStaticT {
       FieldString(RIGHTS_ESFN, index = not_analyzed, include_in_all = false),
       FieldBoolean(IS_USER_ESFN, index = not_analyzed, include_in_all = false),
       FieldString(SHOWN_TYPE_ID_ESFN, index = not_analyzed, include_in_all = false),
-      FieldString(ADV_DELEGATE_ESFN, index = not_analyzed, include_in_all = false),
       FieldBoolean(TEST_NODE_ESFN, index = not_analyzed, include_in_all = false),
       // раньше это лежало в EMAdnMPubSettings, но потом было перемещено сюда, т.к. по сути это разделение было некорректно.
       FieldBoolean(IS_ENABLED_ESFN, index = not_analyzed, include_in_all = false),
@@ -261,22 +244,6 @@ trait EMAdNetMemberStatic extends EsModelStaticMutAkvT with EsModelStaticT {
     runSearch(req)
   }
 
-
-  /**
-   * Найти id документов, которые делегировали свои полномочия размещения рекл.карточек (adv) указанным узлам.
-   * @param dgAdnId id узла-делегата.
-   * @return Список id документов в неопределённом порядке.
-   */
-  @deprecated("Use MEdge instead", "2015.sep.25")
-  def findIdsAdvDelegatedTo(dgAdnId: String, maxResults: Int = MAX_RESULTS_DFLT)(implicit ec: ExecutionContext, client: Client): Future[Seq[String]] = {
-    prepareSearch
-      .setQuery( advDelegatesQuery(dgAdnId) )
-      .setSize( maxResults )
-      .setFetchSource(false)
-      .setNoFields()
-      .execute()
-      .map { searchResp2idsList }
-  }
 }
 
 
@@ -532,54 +499,6 @@ case class AdnMemberShowLevels(
 
   // Для рендера галочек нужна модифицированная карта.
   def out4render = sls4render(out)
-}
-
-
-/** Аддон с поддержкой поиска по полю advDelegateAdnIds. */
-trait AdvDelegateAdnIdsDsa extends DynSearchArgs {
-
-  /** Искать/фильтровать по id узла, которому была делегирована фунция модерации размещения рекламных карточек. */
-  def advDelegateAdnIds: Seq[String]
-
-  override def toEsQueryOpt: Option[QueryBuilder] = {
-    super.toEsQueryOpt.map[QueryBuilder] { qb =>
-      // Отрабатываем id узлов adv-делегатов
-      if (advDelegateAdnIds.isEmpty) {
-        qb
-      } else {
-        val af = FilterBuilders.termsFilter(ADN_ADV_DELEGATE_ESFN, advDelegateAdnIds : _*)
-          .execution("or")
-        QueryBuilders.filteredQuery(qb, af)
-      }
-    }.orElse[QueryBuilder] {
-      if (advDelegateAdnIds.isEmpty) {
-        None
-      } else {
-        val aq = QueryBuilders.termsQuery(ADN_ADV_DELEGATE_ESFN, advDelegateAdnIds: _*)
-          .minimumMatch(1)
-        Some(aq)
-      }
-    }
-  }
-
-  /** Базовый размер StringBuilder'а. */
-  override def sbInitSize: Int = {
-    collStringSize(advDelegateAdnIds, super.sbInitSize)
-  }
-
-  /** Построение выхлопа метода toString(). */
-  override def toStringBuilder: StringBuilder = {
-    fmtColl2sb("advDelegateAdnIds", advDelegateAdnIds, super.toStringBuilder)
-  }
-}
-
-trait AdvDelegateAdnIdsDsaDflt extends AdvDelegateAdnIdsDsa {
-  override def advDelegateAdnIds: Seq[String] = Seq.empty
-}
-
-trait AdvDelegateAdnIdsDsaWrapper extends AdvDelegateAdnIdsDsa with DynSearchArgsWrapper {
-  override type WT <: AdvDelegateAdnIdsDsa
-  override def advDelegateAdnIds = _dsArgsUnderlying.advDelegateAdnIds
 }
 
 

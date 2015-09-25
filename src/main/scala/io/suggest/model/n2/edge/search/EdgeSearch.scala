@@ -1,5 +1,7 @@
 package io.suggest.model.n2.edge.search
 
+import io.suggest.model.search._
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -11,6 +13,8 @@ trait EdgeSearch
   with Predicate
   with ToId
   with Ordering
+  with Limit
+  with Offset
 
 
 /** Трейт дефолтовых значений полей поиска. */
@@ -20,6 +24,8 @@ trait EdgeSearchDflt
   with PredicateDflt
   with ToIdDflt
   with OrderingDflt
+  with LimitDflt
+  with OffsetDflt
 
 /** Дефолтовая реализация для облегчения жизни компилятору. */
 class EdgeSearchDfltImpl
@@ -33,6 +39,8 @@ trait EdgeSearchWrap
   with PredicateWrap
   with ToIdWrap
   with OrderingWrap
+  with LimitWrap
+  with OffsetWrap
 {
   override type WT = EdgeSearchWrap
 }
