@@ -24,7 +24,6 @@ object AdNetMemberTypes extends Enumeration {
     /** Дефолтовая ADN-конфигурация при создании узла. Заливается в поле [[io.suggest.ym.model.MAdnNode.adn]]. */
     override def getAdnInfoDflt = {
       AdNetMemberInfo(
-        memberType      = this,
         rights          = adnRights,
         showLevelsInfo  = showLevels
       )

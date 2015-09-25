@@ -1,13 +1,12 @@
 package io.suggest.ym.model.common
 
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
-import io.suggest.model.{EsModel, EsModelPlayJsonT, EsModelStaticMutAkvT}
+import io.suggest.model.{EsModelPlayJsonT, EsModelStaticMutAkvT}
 import io.suggest.model.EsModel._
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders, QueryBuilder}
 import play.api.libs.json._
-import scala.collection.JavaConversions._
-import java.{util => ju, lang => jl}
+import java.{util => ju}
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>

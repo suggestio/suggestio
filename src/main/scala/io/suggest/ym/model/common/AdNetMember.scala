@@ -1,7 +1,6 @@
 package io.suggest.ym.model.common
 
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
-import io.suggest.ym.model.common.AdNetMemberTypes.AdNetMemberType
 import io.suggest.model._
 import io.suggest.util.SioEsUtil._
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -14,9 +13,8 @@ import org.elasticsearch.common.unit.Fuzziness
 import org.elasticsearch.index.mapper.internal.AllFieldMapper
 import io.suggest.ym.model.{MAdnNode, AdShowLevel}
 import java.{util => ju, lang => jl}
-import io.suggest.event.{AdnNodeDeletedEvent, AdnNodeOnOffEvent, SioNotifierStaticClientI}
+import io.suggest.event.{AdnNodeOnOffEvent, SioNotifierStaticClientI}
 import play.api.libs.json._
-import io.suggest.event.subscriber.SnFunSubscriber
 
 /**
  * Suggest.io
@@ -35,7 +33,6 @@ object AdNetMember {
 
   // Имена полей вышеуказнного объекта
   val SUPERVISOR_ID_ESFN  = "supId"
-  val MEMBER_TYPE_ESFN    = "mType"
   val RIGHTS_ESFN         = "rights"
   val IS_USER_ESFN        = "isUser"
 
@@ -61,22 +58,12 @@ object AdNetMember {
 
   // Абсолютные (плоские) имена полей. Используются при поисковых запросах.
   def ADN_SUPERVISOR_ID_ESFN  = fullFN(SUPERVISOR_ID_ESFN)
-  def ADN_MEMBER_TYPE_ESFN    = fullFN(MEMBER_TYPE_ESFN)
   def ADN_ADV_DELEGATE_ESFN   = fullFN(ADV_DELEGATE_ESFN)
   def ADN_RIGHTS_ESFN         = fullFN(RIGHTS_ESFN)
   def ADN_TEST_NODE_ESFN      = fullFN(TEST_NODE_ESFN)
   def ADN_IS_ENABLED_ESFN     = fullFN(IS_ENABLED_ESFN)
   def ADN_SINKS_ESFN          = fullFN(SINKS_ESFN)
   def ADN_SHOWN_TYPE_ID       = fullFN(SHOWN_TYPE_ID_ESFN)
-
-
-  /** Генератор es-query для указанного member type.
-    * @param memberType Необходимый тип участников.
-    * @return QueryBuilder.
-    */
-  def adnMemberTypeQuery(memberType: AdNetMemberType) = {
-    QueryBuilders.termQuery(ADN_MEMBER_TYPE_ESFN, memberType.toString())
-  }
 
   def supIdQuery(supId: String): QueryBuilder = {
     QueryBuilders.termQuery(ADN_SUPERVISOR_ID_ESFN, supId)
@@ -190,7 +177,6 @@ trait EMAdNetMemberStatic extends EsModelStaticMutAkvT with EsModelStaticT {
       FieldString(RIGHTS_ESFN, index = not_analyzed, include_in_all = false),
       FieldBoolean(IS_USER_ESFN, index = not_analyzed, include_in_all = false),
       FieldString(SUPERVISOR_ID_ESFN, index = not_analyzed, include_in_all = false),
-      FieldString(MEMBER_TYPE_ESFN, index = not_analyzed, include_in_all = false),
       FieldString(SHOWN_TYPE_ID_ESFN, index = not_analyzed, include_in_all = false),
       FieldString(ADV_DELEGATE_ESFN, index = not_analyzed, include_in_all = false),
       FieldBoolean(TEST_NODE_ESFN, index = not_analyzed, include_in_all = false),
@@ -206,8 +192,6 @@ trait EMAdNetMemberStatic extends EsModelStaticMutAkvT with EsModelStaticT {
     case (ADN_ESFN, vm: java.util.Map[_,_]) =>
       // Билдим инстанс ANMI как будто он неизменяемый. Потом, возможно, полностью уйдём от var в полях ANMI.
       acc.adn = AdNetMemberInfo(
-        memberType = Option(vm get MEMBER_TYPE_ESFN)
-          .fold(AdNetMemberTypes.SHOP) { mtRaw => AdNetMemberTypes.withName(stringParser(mtRaw)) : AdNetMemberType },
         rights = Option(vm get RIGHTS_ESFN).fold(Set.empty[AdnRight]) {
           case l: jl.Iterable[_] =>
             l.map { rid => AdnRights.withName(rid.toString) : AdnRight }.toSet
@@ -301,19 +285,6 @@ trait EMAdNetMemberStatic extends EsModelStaticMutAkvT with EsModelStaticT {
 
 
   /**
-   * Подсчет узлов, принадлежащих указанному супервизору.
-   * @param supId id супервизора.
-   * @return Неотрицательное кол-во найденных элементов.
-   */
-  def countBySupId(supId: String)(implicit ec:ExecutionContext, client: Client): Future[Long] = {
-    prepareCount
-      .setQuery(supIdQuery(supId))
-      .execute()
-      .map { _.getCount }
-  }
-
-
-  /**
    * Статическое обновление сеттингов isEnabled и disabledReason.
    * @param adnId id изменяемого магазина
    * @param isEnabled Новое значение поля isEnabled.
@@ -339,38 +310,6 @@ trait EMAdNetMemberStatic extends EsModelStaticMutAkvT with EsModelStaticT {
     }
     fut
   }
-
-  /**
-   * Выдать по id и желаемому типу.
-   * @param id id документа.
-   * @param memberType Необходимый adn.memberType.
-   * @return Фьючерс с опшеном. Т.е. тоже самое, что и getById().
-   */
-  def getByIdType(id: String, memberType: AdNetMemberType)(implicit ec: ExecutionContext, client: Client): Future[Option[T]] = {
-    // TODO Надо какой-то более эффективный метод работы, чтобы фильтрация была на стороне ES.
-    getById(id) map {
-      _.filter(_.adn.memberType == memberType)
-    }
-  }
-
-
-  /**
-   * Найти все документы, но только указанного типа.
-   * @param memberType Искомый тип участника рекламной сети.
-   * @param maxResult Макс.число результатов.
-   * @param offset Сдвиг.
-   * @return Последовательность результатов в неопределённом порядке.
-   */
-  def findAllByType(memberType: AdNetMemberType, maxResult: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT)
-                   (implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
-    val query = adnMemberTypeQuery(memberType)
-    val req = prepareSearch
-      .setQuery(query)
-      .setSize(maxResult)
-      .setFrom(offset)
-    runSearch(req)
-  }
-
 
 
   def findByAllAdnRightsBuilder(rights: Seq[AdnRight], withoutTestNodes: Boolean)(implicit client: Client) = {
@@ -484,7 +423,6 @@ trait EMAdNetMember extends EsModelPlayJsonT with EsModelT {
 
 
 /** Инфа об участнике рекламной сети. Все параметры его участия свернуты в один объект.
-  * @param memberType Тип участника. Например, магазин.
   * @param rights Права участника сети.
   * @param isUser Узел созданный обычным юзером.
   * @param shownTypeIdOpt ID отображаемого типа участника сети. Нужно для задания кастомных типов на стороне web21.
@@ -498,7 +436,6 @@ trait EMAdNetMember extends EsModelPlayJsonT with EsModelT {
   * @param disableReason Причина отключения узла, если есть.
   */
 case class AdNetMemberInfo(
-  memberType      : AdNetMemberType,
   rights          : Set[AdnRight],
   isUser          : Boolean = false,
   shownTypeIdOpt  : Option[String] = None,
@@ -512,7 +449,7 @@ case class AdNetMemberInfo(
 ) {
 
   /** Отображаемый для юзера id типа узла. */
-  def shownTypeId: String = shownTypeIdOpt getOrElse memberType.name
+  def shownTypeId: String = shownTypeIdOpt getOrElse AdNetMemberTypes.MART.name
 
   // Быстрый доступ к каталогу adn-прав
   @JsonIgnore
@@ -537,7 +474,6 @@ case class AdNetMemberInfo(
   @JsonIgnore
   def toPlayJson: JsObject = {
     var acc0: FieldsJsonAcc = List(
-      MEMBER_TYPE_ESFN   -> JsString(memberType.toString()),
       TEST_NODE_ESFN     -> JsBoolean(testNode),
       IS_ENABLED_ESFN    -> JsBoolean(isEnabled),
       IS_USER_ESFN       -> JsBoolean(isUser)

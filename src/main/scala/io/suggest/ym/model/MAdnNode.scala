@@ -116,14 +116,6 @@ final case class MAdnNode(
     saveFut
   }
 
-  /**
-   * Текущий узел в процессе создания в дочернего узла по отношению к указанному узлу.
-   * @param parentNode Существующий родительский узел
-   * @return true, если текущая сущность изменялась.
-   */
-  def handleMeAddedAsChildFor(parentNode: MAdnNode): Boolean = {
-    adn.memberType.prepareChildForParent(parentNode, child = this)
-  }
 }
 
 
