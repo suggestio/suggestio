@@ -13,11 +13,11 @@ import play.api.libs.functional.syntax._
  */
 object MAddress extends IGenEsMappingProps {
 
-  val TOWN_ESFN               = "t"
-  val ADDRESS_ESFN            = "a"
-  val PHONE_ESFN              = "p"
-  val FLOOR_ESFN              = "f"
-  val SECTION_ESFN            = "s"
+  val TOWN_FN               = "t"
+  val ADDRESS_FN            = "a"
+  val PHONE_FN              = "p"
+  val FLOOR_FN              = "f"
+  val SECTION_FN            = "s"
 
   val empty: MAddress = {
     new MAddress() {
@@ -26,22 +26,22 @@ object MAddress extends IGenEsMappingProps {
   }
 
   implicit val FORMAT: OFormat[MAddress] = (
-    (__ \ TOWN_ESFN).formatNullable[String] and
-    (__ \ ADDRESS_ESFN).formatNullable[String] and
-    (__ \ PHONE_ESFN).formatNullable[String] and
-    (__ \ FLOOR_ESFN).formatNullable[String] and
-    (__ \ SECTION_ESFN).formatNullable[String]
+    (__ \ TOWN_FN).formatNullable[String] and
+    (__ \ ADDRESS_FN).formatNullable[String] and
+    (__ \ PHONE_FN).formatNullable[String] and
+    (__ \ FLOOR_FN).formatNullable[String] and
+    (__ \ SECTION_FN).formatNullable[String]
   )(apply, unlift(unapply))
 
 
   import io.suggest.util.SioEsUtil._
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldString(TOWN_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
-      FieldString(ADDRESS_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
-      FieldString(PHONE_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
-      FieldString(FLOOR_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
-      FieldString(SECTION_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true)
+      FieldString(TOWN_FN, index = FieldIndexingVariants.analyzed, include_in_all = true),
+      FieldString(ADDRESS_FN, index = FieldIndexingVariants.analyzed, include_in_all = true),
+      FieldString(PHONE_FN, index = FieldIndexingVariants.analyzed, include_in_all = true),
+      FieldString(FLOOR_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
+      FieldString(SECTION_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = true)
     )
   }
 

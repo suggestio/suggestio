@@ -26,7 +26,7 @@ object MNodeMeta extends IGenEsMappingProps {
   val DATE_CREATED_ESFN       = "dateCreated"
   val PHONE_ESFN              = "phone"
   val SITE_URL_ESFN           = "siteUrl"
-  val HIDDEN_DESCR_ESFN        = "description"
+  val HIDDEN_DESCR_ESFN       = "description"
   val AUDIENCE_DESCR_ESFN     = "audDescr"
   val HUMAN_TRAFFIC_AVG_ESFN  = "htAvg"
   val INFO_ESFN               = "info"

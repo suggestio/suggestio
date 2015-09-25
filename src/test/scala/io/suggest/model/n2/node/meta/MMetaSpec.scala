@@ -1,6 +1,7 @@
 package io.suggest.model.n2.node.meta
 
 import io.suggest.model.PlayJsonTestUtil
+import io.suggest.model.n2.node.meta.colors.{MColors, MColorData}
 import org.scalatest.FlatSpec
 
 /**
@@ -28,6 +29,12 @@ class MMetaSpec extends FlatSpec with PlayJsonTestUtil {
         ),
         address = MAddress(
           town = Some("Petrozavodsk")
+        ),
+        business = MBusinessInfo(
+          siteUrl = Some("https://suggest.io/")
+        ),
+        colors = MColors(
+          bg = Some( MColorData("AA33EE") )
         )
       )
     }
