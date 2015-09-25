@@ -38,7 +38,7 @@ class MNodeSpec extends FlatSpec {
         common = _mnc,
         meta = MNodeMeta(
           nameOpt = Some("the name, 121 !"),
-          description = Some("some descr!@312#!@Fsrf erfsa erfare\n\n\n\r\n 324sASf asdd")
+          hiddenDescr = Some("some hidden descr!@312#!@Fsrf erfsa erfare\n\n\n\r\n 324sASf asdd")
         ),
         tag = MNodeTagInfo(
           vertex = Some(MTagVertex(

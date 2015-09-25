@@ -64,7 +64,7 @@ object EMAdnMMetadataStatic {
         nameShortOpt = Option(jmap get NAME_SHORT_ESFN)
           .orElse(Option(jmap get "ns"))    // 2014.oct.01: Переименовано поле: ns -> sn из-за изменения в маппинге.
           .map(stringParser),
-        description = Option(jmap get DESCRIPTION_ESFN) map stringParser,
+        hiddenDescr = Option(jmap get HIDDEN_DESCR_ESFN) map stringParser,
         dateCreated = EsModel.dateTimeParser(jmap get DATE_CREATED_ESFN),
         town        = Option(jmap get TOWN_ESFN) map stringParser,
         address     = Option(jmap get ADDRESS_ESFN) map stringParser,

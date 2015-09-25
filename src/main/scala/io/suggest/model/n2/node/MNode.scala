@@ -112,8 +112,8 @@ object MNode
       ),
       meta = MNodeMeta(
         nameOpt = nameOpt,
-        langs = List(lang),
-        person = mpm
+        langs   = List(lang),
+        person  = mpm
       )
     )
   }

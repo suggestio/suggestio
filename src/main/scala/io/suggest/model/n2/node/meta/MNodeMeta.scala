@@ -26,7 +26,7 @@ object MNodeMeta extends IGenEsMappingProps {
   val DATE_CREATED_ESFN       = "dateCreated"
   val PHONE_ESFN              = "phone"
   val SITE_URL_ESFN           = "siteUrl"
-  val DESCRIPTION_ESFN        = "description"
+  val HIDDEN_DESCR_ESFN        = "description"
   val AUDIENCE_DESCR_ESFN     = "audDescr"
   val HUMAN_TRAFFIC_AVG_ESFN  = "htAvg"
   val INFO_ESFN               = "info"
@@ -52,7 +52,7 @@ object MNodeMeta extends IGenEsMappingProps {
     FieldString(NAME_SHORT_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true, fields = Seq(
       FieldString(NOT_TOKENIZED_SUBFIELD_SUF, index = FieldIndexingVariants.not_analyzed, include_in_all = true)
     )),
-    _fieldString(DESCRIPTION_ESFN, iia = true),
+    _fieldString(HIDDEN_DESCR_ESFN, iia = true),
     FieldDate(DATE_CREATED_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
     // legal
     FieldString(TOWN_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
@@ -77,7 +77,7 @@ object MNodeMeta extends IGenEsMappingProps {
   implicit val FORMAT: Format[MNodeMeta] = (
     (__ \ NAME_ESFN).formatNullable[String] and
     (__ \ NAME_SHORT_ESFN).formatNullable[String] and
-    (__ \ DESCRIPTION_ESFN).formatNullable[String] and
+    (__ \ HIDDEN_DESCR_ESFN).formatNullable[String] and
     (__ \ DATE_CREATED_ESFN).format(EsModel.Implicits.jodaDateTimeFormat) and
     (__ \ TOWN_ESFN).formatNullable[String] and
     (__ \ ADDRESS_ESFN).formatNullable[String] and
@@ -110,7 +110,7 @@ object MNodeMeta extends IGenEsMappingProps {
  * Экземпляр контейнера метаданных узла.
  * @param nameOpt Отображаемое имя/название, если есть.
  * @param nameShortOpt Необязательно короткое имя узла.
- * @param description Пользовательское описание.
+ * @param hiddenDescr Скрытое описание, задаётся и читается только в /sys/.
  * @param town Город.
  * @param address Адрес в городе.
  * @param phone Телефонный номер.
@@ -125,7 +125,7 @@ case class MNodeMeta(
   // Класс обязательно immutable! Никаких var, ибо companion.DEFAULT.
   nameOpt       : Option[String] = None,
   nameShortOpt  : Option[String] = None,
-  description   : Option[String] = None,
+  hiddenDescr   : Option[String] = None,
   dateCreated   : DateTime = DateTime.now,
   // перемещено из legal
   town          : Option[String] = None,

@@ -24,7 +24,7 @@ class MNodeMetaSpec extends FlatSpec {
     t(MNodeMeta(
       nameOpt       = Some("Сервис япредлагаю.com"),
       nameShortOpt  = Some("ЯПредлагаю"),
-      description   = Some("Сервис позволяет грабить корованы.\n\n\r\t 12 <123213123>"),
+      hiddenDescr   = Some("Все свои, всё схвачено."),
       town          = Some("Санкт-Петроград"),
       address       = Some("пр.Ленина, д.1, корп.2, кв.33"),
       phone         = Some("+7 999 666 555 44"),
@@ -32,7 +32,7 @@ class MNodeMetaSpec extends FlatSpec {
       siteUrl       = Some("http://suggest.io/"),
       audienceDescr = Some("Очень много людей сюда приходит, вообще очень ок всё."),
       humanTrafficAvg = Some(10000),
-      info          = Some("Поле info содержит какую-то информацию."),
+      info          = Some("Поле info содержит какую-то информацию о товарах и услугах."),
       color         = Some("000001"),
       fgColor       = Some("FFFFFE"),
       welcomeAdId   = Some("fajn8f9a4wfjmafoimaewrfwa"),
