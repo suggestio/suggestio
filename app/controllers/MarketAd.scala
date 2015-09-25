@@ -161,17 +161,6 @@ class MarketAd @Inject() (
     )
   }
 
-  /** Выдать множество допустимых id блоков в контексте узла. */
-  def blockIdsFor(adnNode: MAdnNode): Set[Int] = {
-    val seq1 = BlocksConf.valuesShown.map(_.id).toSet
-    val ids0 = adnNode.conf.withBlocks
-    if (ids0.isEmpty) {
-      seq1
-    } else {
-      seq1 ++ ids0
-    }
-  }
-
   /** Общий код рендера createShopAdTpl с запросом необходимых категорий. */
   private def renderCreateFormWith(af: AdFormM, catOwnerId: String, adnNode: MAdnNode, withBC: Option[BlockConf] = None)
                                   (implicit request: AbstractRequestForAdnNode[_]) = {

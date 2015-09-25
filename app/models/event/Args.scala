@@ -168,7 +168,6 @@ case class ArgsInfo(
 /** Общий инстанс для пустой инфы по аргументам. Нанооптимизация. */
 object EmptyArgsInfo extends ArgsInfo() {
   // Нанооптимизация
-  override def isEmpty = true
   override def nonEmpty = false
 }
 

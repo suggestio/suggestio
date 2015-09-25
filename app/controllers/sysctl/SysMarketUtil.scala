@@ -169,7 +169,6 @@ object SysMarketUtil extends PlayMacroLogsDyn {
       )
     mapping(
       "showInScNodeList"    -> boolean,
-      "withBlocks"          -> default [Set[Int]] (intSetM, Set.empty),
       "showcaseVoidFiller"  -> {
         optional(
           text(maxLength = 255).transform(strTrimF, strIdentityF)
@@ -211,7 +210,6 @@ object SysMarketUtil extends PlayMacroLogsDyn {
       ),
       conf = adnNode.conf.copy(
         showInScNodesList = adnNode2.conf.showInScNodesList,
-        withBlocks = adnNode2.conf.withBlocks,
         showcaseVoidFiller = adnNode2.conf.showcaseVoidFiller
       )
     )

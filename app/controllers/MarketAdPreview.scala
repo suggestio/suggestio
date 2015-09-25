@@ -25,8 +25,6 @@ import views.html.sc.foc._adFullTpl
 
 trait MarketAdPreview extends SioController with PlayMacroLogsI {
 
-  protected def blockIdsFor(adnNode: MAdnNode): Set[Int]
-
   /** Сабмит формы редактирования карточки для генерации превьюшки.
     * @param adnId id узла, в рамках которого происходит работа.
     * @param isFull true - надо полноэкранную преьюшку, false - нужен обычный размер.
