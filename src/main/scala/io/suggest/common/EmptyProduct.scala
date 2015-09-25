@@ -18,7 +18,7 @@ trait EmptyProduct extends Product {
   }
 
   /** @return true, если класс не содержит ни одного значения. */
-  def isEmpty: Boolean = !nonEmpty
+  final def isEmpty: Boolean = !nonEmpty
 
 }
 
