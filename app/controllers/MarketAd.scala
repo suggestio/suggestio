@@ -259,7 +259,6 @@ class MarketAd @Inject() (
               ),
               colors        = mad2.colors,
               offers        = mad2.offers,
-              prio          = mad2.prio,
               userCatId     = mad2.userCatId,
               blockMeta     = mad2.blockMeta,
               richDescrOpt  = mad2.richDescrOpt,
