@@ -21,17 +21,15 @@ import org.elasticsearch.client.Client
 object AdnNodeSavedEvent {
   val headSne = Some(getClass.getSimpleName)
 
-  def getClassifier(memberType: Option[AdNetMemberType] = None,
-                    adnId: Option[String] = None,
+  def getClassifier(nodeId: Option[String] = None,
                     isCreated: Option[Boolean] = None): Classifier = {
-    List(headSne, memberType, adnId, isCreated)
+    List(headSne, nodeId, isCreated)
   }
 }
 
 case class AdnNodeSavedEvent(adnId: String, adnNode: MAdnNode, isCreated: Boolean) extends SioEventT with IAdnId {
   def getClassifier: Classifier = AdnNodeSavedEvent.getClassifier(
-    memberType = Option(adnNode.adn.memberType),
-    adnId = Option(adnId),
+    nodeId = Option(adnId),
     isCreated = Some(isCreated)
   )
 
