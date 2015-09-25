@@ -5,6 +5,7 @@ import io.suggest.model.OptStrId
 import io.suggest.model.n2.edge.search.EdgeSearchDfltImpl
 import io.suggest.ym.model.common.EMAdNetMember
 import models.adv.geo.{ReqInfo, AdvFormEntry, WndFullArgs}
+import models.adv.search.FindEdgesByAdvDelegate
 import org.joda.time.format.ISOPeriodFormat
 import play.api.Play.{current, configuration}
 import play.api.i18n.MessagesApi
@@ -696,12 +697,7 @@ class MarketAdv @Inject() (
   def showNodeAdvs(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
     // Отрабатываем делегирование adv-прав текущему узлу:
     val dgAdnIdsFut: Future[Set[String]] = {
-      val edgeSearch = new EdgeSearchDfltImpl {
-        override def predicates = Seq( MPredicates.AdvManageDelegatedTo )
-        override def toId       = Seq( adnId )
-        override def limit      = 100
-      }
-      for (edges <- MEdge.dynSearch(edgeSearch)) yield {
+      for (edges <- MEdge.dynSearch( FindEdgesByAdvDelegate(adnId) )) yield {
         var iter = edges.iterator
           .map { medge => medge.fromId }
         // Дописать в начало ещё текущей узел, если он также является рекламо-получателем.
