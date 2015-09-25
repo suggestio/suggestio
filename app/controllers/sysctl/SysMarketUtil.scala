@@ -11,7 +11,6 @@ import io.suggest.ym.model.common.AdnMemberShowLevels.LvlMap_t
 import io.suggest.ym.model.common.{NodeConf, AdnMemberShowLevels}
 import util.PlayMacroLogsDyn
 import util.acl.AbstractRequestWithPwOpt
-import util.mail.MailerWrapper
 
 /**
  * Suggest.io
@@ -23,23 +22,23 @@ object SysMarketUtil extends PlayMacroLogsDyn {
 
   /** Форма для маппинг метаданных произвольного узла ADN. */
   def adnNodeMetaM = mapping(
-    "name"      -> nameM,
-    "nameShort" -> optional(text(maxLength = 25))
+    "name"          -> nameM,
+    "nameShort"     -> optional(text(maxLength = 25))
       .transform [Option[String]] (emptyStrOptToNone, identity),
-    "descr"     -> publishedTextOptM,
-    "town"      -> townOptM,
-    "address"   -> addressOptM,
-    "phone"     -> phoneOptM,
-    "floor"     -> floorOptM,
-    "section"   -> sectionOptM,
-    "siteUrl"   -> urlStrOptM,
-    "color"     -> colorOptM
+    "hiddenDescr"   -> publishedTextOptM,
+    "town"          -> townOptM,
+    "address"       -> addressOptM,
+    "phone"         -> phoneOptM,
+    "floor"         -> floorOptM,
+    "section"       -> sectionOptM,
+    "siteUrl"       -> urlStrOptM,
+    "color"         -> colorOptM
   )
   {(name, nameShort, descr, town, address, phone, floor, section, siteUrl, color) =>
     MNodeMeta(
       nameOpt = Some(name),
       nameShortOpt = nameShort,
-      description = descr,
+      hiddenDescr = descr,
       town    = town,
       address = address,
       phone   = phone,
@@ -51,7 +50,7 @@ object SysMarketUtil extends PlayMacroLogsDyn {
   }
   {meta =>
     import meta._
-    Some((name, nameShortOpt, description, town, address, phone, floor, section, siteUrl, color))
+    Some((name, nameShortOpt, hiddenDescr, town, address, phone, floor, section, siteUrl, color))
   }
 
   def adnRightsM: Mapping[Set[AdnRight]] = {
@@ -189,7 +188,7 @@ object SysMarketUtil extends PlayMacroLogsDyn {
       meta = adnNode.meta.copy(
         nameOpt = adnNode2.meta.nameOpt,
         nameShortOpt = adnNode2.meta.nameShortOpt,
-        description = adnNode2.meta.description,
+        hiddenDescr = adnNode2.meta.hiddenDescr,
         town    = adnNode2.meta.town,
         address = adnNode2.meta.address,
         phone   = adnNode2.meta.phone,
@@ -233,8 +232,8 @@ object SysMarketUtil extends PlayMacroLogsDyn {
   def confKM = "conf" -> nodeConfM
   def personIdsKM = "personIds" -> personIdsM
 
-  /** Генератор маппингов для формы добавления/редактирования рекламного узла. */
-  def getAdnNodeFormM(): Form[MAdnNode] = {
+  /** Сборка маппинга для формы добавления/редактирования рекламного узла. */
+  def adnNodeFormM: Form[MAdnNode] = {
     Form(mapping(
       adnKM, metaKM, confKM, personIdsKM
     )
@@ -251,7 +250,6 @@ object SysMarketUtil extends PlayMacroLogsDyn {
       Some((adn, meta, conf, personIds))
     })
   }
-  def adnNodeFormM = getAdnNodeFormM()
 
 
   def nodeOwnerInviteFormM = Form(

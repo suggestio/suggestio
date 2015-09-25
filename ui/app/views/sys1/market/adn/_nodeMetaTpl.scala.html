@@ -14,8 +14,8 @@
     @meta.name
   }
 
-  @meta.description.map { descr =>
-    @_ptableRowTpl( "Описание:" ) {
+  @meta.hiddenDescr.map { descr =>
+    @_ptableRowTpl( "Скрытое описание:" ) {
       @descr
     }
   }

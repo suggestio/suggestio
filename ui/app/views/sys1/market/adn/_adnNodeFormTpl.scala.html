@@ -58,7 +58,7 @@
     @inputText(af("meta.nameShort"),    '_label -> "Короткое название")
   </table>
   <table class="input-w __size-L">
-    @textarea(af("meta.descr"),    '_label -> "Описание объекта")
+      @textarea(af("meta.hiddenDescr"),  '_label -> "Скрытое описание", 'title -> "Доступно только администрации suggest.io.")
   </table>
   <table class="input-w __size-L">
     @inputText(af("meta.town"),    '_label -> "Город")

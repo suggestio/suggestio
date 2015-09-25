@@ -88,11 +88,6 @@ class SysMarketInvReq @Inject() (
   }
 
 
-  /** Форма для редактирования узла, но вместо id компании может быть любой мусор. */
-  private def adnNodeFormM = {
-    getAdnNodeFormM()
-  }
-
   /** Запрос страницы с формой редактирования заготовки узла. */
   def nodeEdit(mirId: String) = isNodeLeftOrMissing(mirId).async { implicit request =>
     nodeEditBody(request.mir)(Ok(_))
