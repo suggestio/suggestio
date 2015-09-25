@@ -36,7 +36,10 @@ class SysMarket @Inject() (
   override val mailer: IMailerWrapper,
   db: Database
 )
-  extends SioControllerImpl with PlayMacroLogsImpl with ShopMartCompat with SysNodeInstall with SmSendEmailInvite
+  extends SioControllerImpl
+  with PlayMacroLogsImpl
+  with SysNodeInstall
+  with SmSendEmailInvite
   with SysAdRender
 {
 
@@ -129,7 +132,6 @@ class SysMarket @Inject() (
       MAdnNode(
         adn = AdNetMemberInfo(
           isUser          = false,
-          memberType      = AdNetMemberTypes.MART,
           rights          = Set(AdnRights.PRODUCER, AdnRights.RECEIVER),
           shownTypeIdOpt  = Some(AdnShownTypes.MART.name),
           testNode        = false,
@@ -461,7 +463,7 @@ class SysMarket @Inject() (
       case None       => MAdnNode.getAll(maxResults = 1).map { _.headOption }
     }
     for {
-      mshopOpt <- getShopById(mad.producerId)
+      mshopOpt <- MAdnNode.getById( mad.producerId )
       mmartOpt <- mmartFut
     } yield {
       val reason = "Причина отключения ТЕСТ причина отключения 123123 ТЕСТ причина отключения."

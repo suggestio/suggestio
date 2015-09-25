@@ -70,7 +70,6 @@ object NodesUtil extends PlayMacroLogsImpl {
   def userNodeInstance(name: String, personId: String): MAdnNode = {
     MAdnNode(
       adn = AdNetMemberInfo(
-        memberType      = AdNetMemberTypes.SHOP,
         rights          = Set(AdnRights.PRODUCER, AdnRights.RECEIVER),
         isUser          = true,
         shownTypeIdOpt  = Some(AdnShownTypes.SHOP.name),

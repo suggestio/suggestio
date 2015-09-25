@@ -12,24 +12,6 @@
   <table class="input-w __size-L">
     <td class="input-w_left">
       <label class="input-w_prop-name">
-        Тип узла ADN
-      </label>
-    </td>
-    <td>
-      @defining(af("adn.memberType")) { mtField =>
-        <select name="@mtField.name">
-          <option disabled>Тип узла</option>
-          @AdNetMemberTypes.values.map { anmt =>
-            <option value="@anmt.name" @if(mtField.value contains anmt.name) {selected}>@messages("amt.of.type." + anmt.name)</option>
-          }
-        </select>
-      }
-    </td>
-  </table>
-
-  <table class="input-w __size-L">
-    <td class="input-w_left">
-      <label class="input-w_prop-name">
         Отображаемый тип узла
       </label>
     </td>

@@ -42,7 +42,6 @@ package object models {
   type AdnRight             = AdnRights.AdnRight
 
   val  AdNetMemberTypes     = ym.model.common.AdNetMemberTypes
-  type AdNetMemberType      = AdNetMemberTypes.AdNetMemberType
 
   val  AdnMPubSettingsLevels = ym.model.common.AdnMemberShowLevels
   type AdnMPubSettingsLevels = ym.model.common.AdnMemberShowLevels

@@ -108,7 +108,6 @@ object SysMarketUtil extends PlayMacroLogsDyn {
 
   /** Маппинг для adn-полей формы adn-узла. */
   def adnMemberM: Mapping[AdNetMemberInfo] = mapping(
-    "memberType"    -> adnMemberTypeM,
     "isEnabled"     -> boolean,
     "shownTypeIdOpt" -> adnShownTypeIdOptM,
     "rights"        -> adnRightsM,
@@ -119,8 +118,8 @@ object SysMarketUtil extends PlayMacroLogsDyn {
     "isUser"        -> boolean,
     "sink"          -> adnSinksM
   )
-  {(mt, isEnabled, shownTypeIdOpt, rights, sls, supId, advDgOpt, isTestNode, isUser, sinks) =>
-    mt.getAdnInfoDflt.copy(
+  {(isEnabled, shownTypeIdOpt, rights, sls, supId, advDgOpt, isTestNode, isUser, sinks) =>
+    AdNetMemberInfo(
       isEnabled = isEnabled,
       rights    = rights,
       shownTypeIdOpt = shownTypeIdOpt,
@@ -134,7 +133,7 @@ object SysMarketUtil extends PlayMacroLogsDyn {
   }
   {anmi =>
     import anmi._
-    Some((memberType, isEnabled, Some(shownTypeId), rights, showLevelsInfo, supId, advDelegate, testNode, isUser, sinks))
+    Some((isEnabled, Some(shownTypeId), rights, showLevelsInfo, supId, advDelegate, testNode, isUser, sinks))
   }
 
 
@@ -197,7 +196,6 @@ object SysMarketUtil extends PlayMacroLogsDyn {
         color   = adnNode2.meta.color
       ),
       adn = adnNode.adn.copy(
-        memberType  = adnNode2.adn.memberType,
         rights      = adnNode2.adn.rights,
         shownTypeIdOpt = adnNode2.adn.shownTypeIdOpt,
         isEnabled   = adnNode2.adn.isEnabled,

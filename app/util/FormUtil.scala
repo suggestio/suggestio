@@ -588,16 +588,6 @@ object FormUtil {
     .transform(strTrimSanitizeUnescapeF, strIdentityF)
 
 
-  /** Маппер типа adn-узла. */
-  def adnMemberTypeM: Mapping[AdNetMemberType] = nonEmptyText(maxLength = 1)
-    .transform [Option[AdNetMemberType]] (
-      { AdNetMemberTypes.maybeWithName },
-      { _.map(_.name).getOrElse("") }
-    )
-    .verifying("error.required", _.isDefined)
-    .transform [AdNetMemberType] (_.get, Some.apply)
-
-
   def adStatActionM: Mapping[ScStatAction] = {
     nonEmptyText(maxLength = 1)
       .transform[ScStatAction](ScStatActions.withName, _.toString)

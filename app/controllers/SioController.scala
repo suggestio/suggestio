@@ -215,18 +215,6 @@ trait NotifyWs extends SioController with PlayMacroLogsI with MyConfName {
 }
 
 
-
-/** compat-прослойка для контроллеров, которые заточены под ТЦ и магазины.
-  * После унификации в web21 этот контроллер наверное уже не будет нужен. */
-trait ShopMartCompat {
-  def getShopById(shopId: String) = MAdnNode.getByIdType(shopId, AdNetMemberTypes.SHOP)
-  def getShopByIdCache(shopId: String) = MAdnNodeCache.getByIdType(shopId, AdNetMemberTypes.SHOP)
-
-  def getMartById(martId: String) = MAdnNode.getByIdType(martId, AdNetMemberTypes.MART)
-  def getMartByIdCache(martId: String) = MAdnNodeCache.getByIdType(martId, AdNetMemberTypes.MART)
-}
-
-
 /** Интерфейс для mailer'а.  */
 trait IMailer {
   def mailer: IMailerWrapper

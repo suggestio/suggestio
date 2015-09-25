@@ -150,26 +150,6 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag] extends SNStaticSubscribe
 }
 
 /** EsModelCache - расширение [[EsModelCache]] с фильтрацией по adn.memberType. */
-abstract class AdnEsModelCache[T <: EMAdNetMember : ClassTag] extends EsModelCache[T] {
-
-  /**
-   * Для AdnNode и других последователей EMAdNetMember.
-   * @param id id элемента.
-   * @param memberType тип участника рекламной сети.
-   * @return Тоже самое, что и все остальные getById().
-   */
-  def getByIdType(id: String, memberType: AdNetMemberType)
-                       (implicit ec: ExecutionContext, client: Client): Future[Option[T]] = {
-    val ck = cacheKey(id)
-    Cache.getAs[T](ck) match {
-      case r @ Some(adnm) =>
-        val result = if (adnm.adn.memberType == memberType)  r  else  None
-        Future successful result
-
-      case None =>
-        getByIdAndCache(id, ck)
-          .map { _.filter(_.adn.memberType == memberType) }
-    }
-  }
-
-}
+// TODO Наверное надо спилить, ибо противоречит архитектуре N2.
+abstract class AdnEsModelCache[T <: EMAdNetMember : ClassTag]
+  extends EsModelCache[T]
