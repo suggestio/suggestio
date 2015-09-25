@@ -29,7 +29,6 @@ object AdNetMember {
   val ADN_ESFN = "adn"
 
   // Имена полей вышеуказнного объекта
-  val SUPERVISOR_ID_ESFN  = "supId"
   val RIGHTS_ESFN         = "rights"
   val IS_USER_ESFN        = "isUser"
 
@@ -199,7 +198,6 @@ trait EMAdNetMemberStatic extends EsModelStaticMutAkvT with EsModelStaticT {
         },
         isUser = Option(vm get IS_USER_ESFN).fold(false)(booleanParser),
         shownTypeIdOpt = Option(vm get SHOWN_TYPE_ID_ESFN) map stringParser,
-        advDelegate = Option(vm get ADV_DELEGATE_ESFN) map stringParser,
         testNode = Option(vm get TEST_NODE_ESFN)
           .fold(false)(booleanParser),
         showLevelsInfo = Option(vm get SHOW_LEVELS_ESFN)
@@ -269,6 +267,7 @@ trait EMAdNetMemberStatic extends EsModelStaticMutAkvT with EsModelStaticT {
    * @param dgAdnId id узла-делегата.
    * @return Список id документов в неопределённом порядке.
    */
+  @deprecated("Use MEdge instead", "2015.sep.25")
   def findIdsAdvDelegatedTo(dgAdnId: String, maxResults: Int = MAX_RESULTS_DFLT)(implicit ec: ExecutionContext, client: Client): Future[Seq[String]] = {
     prepareSearch
       .setQuery( advDelegatesQuery(dgAdnId) )
@@ -313,7 +312,6 @@ trait EMAdNetMember extends EsModelPlayJsonT with EsModelT {
   * @param isUser Узел созданный обычным юзером.
   * @param shownTypeIdOpt ID отображаемого типа участника сети. Нужно для задания кастомных типов на стороне web21.
   *                       Появилось, когда понадобилось обозначить торговый центр вокзалом/портом, не меняя его свойств.
-  * @param advDelegate Опциональный id узла, который совершает управление размещением рекламных карточек на данном узле.
   * @param testNode Отметка о тестовом характере существования этого узла.
   *                 Он не должен отображаться для обычных участников сети, а только для других тестовых узлов.
   * @param showLevelsInfo Контейнер с инфой об уровнях отображения.
@@ -324,7 +322,6 @@ case class AdNetMemberInfo(
   rights          : Set[AdnRight],
   isUser          : Boolean = false,
   shownTypeIdOpt  : Option[String] = None,
-  advDelegate     : Option[String] = None,
   testNode        : Boolean = false,
   showLevelsInfo  : AdnMemberShowLevels = AdnMemberShowLevels(),
   isEnabled       : Boolean = true,
@@ -369,8 +366,6 @@ case class AdNetMemberInfo(
     }
     if (shownTypeIdOpt.isDefined)
       acc0 ::= SHOWN_TYPE_ID_ESFN -> JsString(shownTypeIdOpt.get)
-    if (advDelegate.isDefined)
-      acc0 ::= ADV_DELEGATE_ESFN -> JsString(advDelegate.get)
     if (!showLevelsInfo.isEmpty)
       acc0 ::= SHOW_LEVELS_ESFN -> showLevelsInfo.toPlayJson
     if (disableReason.isDefined)
