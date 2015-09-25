@@ -36,6 +36,7 @@ object MNodeMeta extends IGenEsMappingProps {
   val FLOOR_ESFN              = "floor"
   val SECTION_ESFN            = "section"
   val LANGS_ESFN              = "lang"
+  val PERSON_ESFN             = "p"
 
 
   val empty = MNodeMeta()
@@ -68,7 +69,8 @@ object MNodeMeta extends IGenEsMappingProps {
     FieldString(BG_COLOR_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
     FieldString(FG_COLOR_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
     FieldString(WELCOME_AD_ID, index = FieldIndexingVariants.no, include_in_all = false),
-    FieldString(LANGS_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
+    FieldString(LANGS_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+    FieldObject(PERSON_ESFN, enabled = true, properties = MPersonMeta.generateMappingProps)
   )
 
   /** JSON сериализатор-десериализатор на базе play.json. */
@@ -93,6 +95,11 @@ object MNodeMeta extends IGenEsMappingProps {
       .inmap[List[String]](
         { _ getOrElse Nil },
         {ls => if (ls.isEmpty) None else Some(ls)}
+      ) and
+    (__ \ PERSON_ESFN).formatNullable[MPersonMeta]
+      .inmap[MPersonMeta](
+        { _ getOrElse MPersonMeta.empty },
+        { mpm => if (mpm.isEmpty) None else Some(mpm) }
       )
   )(apply, unlift(unapply))
 
@@ -136,7 +143,8 @@ case class MNodeMeta(
   color         : Option[String] = None,
   fgColor       : Option[String] = None,
   welcomeAdId   : Option[String] = None,   // TODO Перенести в поле MAdnNode.conf.welcomeAdId
-  langs         : List[String]   = Nil
+  langs         : List[String]   = Nil,
+  person        : MPersonMeta    = MPersonMeta.empty
 ) {
 
   /** Изначально поле name было обязательным. */

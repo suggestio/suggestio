@@ -3,7 +3,7 @@ package io.suggest.model.n2.node
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model._
 import io.suggest.model.n2.node.common.{EMNodeCommon, MNodeCommon, EMNodeCommonStatic}
-import io.suggest.model.n2.node.meta.{EMNodeMeta, MNodeMeta, EMNodeMetaStatic}
+import io.suggest.model.n2.node.meta.{MPersonMeta, EMNodeMeta, MNodeMeta, EMNodeMetaStatic}
 import io.suggest.model.n2.tag.{MNodeTagInfo, MNodeTagInfoMappingT}
 import io.suggest.model.search.EsDynSearchStatic
 import io.suggest.util.SioEsUtil._
@@ -102,7 +102,8 @@ object MNode
 
 
   /** Собрать инстанс юзера на основе compat-API модели MPerson.apply(). */
-  def applyPerson(lang: String, id: Option[String] = None): MNode = {
+  def applyPerson(lang: String, id: Option[String] = None, nameOpt: Option[String] = None,
+                  mpm: MPersonMeta = MPersonMeta.empty): MNode = {
     MNode(
       id = id,
       common = MNodeCommon(
@@ -110,7 +111,9 @@ object MNode
         isDependent = false
       ),
       meta = MNodeMeta(
-        langs = List(lang)
+        nameOpt = nameOpt,
+        langs = List(lang),
+        person = mpm
       )
     )
   }

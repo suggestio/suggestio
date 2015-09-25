@@ -36,7 +36,8 @@ class MNodeMetaSpec extends FlatSpec {
       color         = Some("000001"),
       fgColor       = Some("FFFFFE"),
       welcomeAdId   = Some("fajn8f9a4wfjmafoimaewrfwa"),
-      langs         = List("ru")
+      langs         = List("ru"),
+      person        = MPersonMeta(nameLast = Some("Ivanoff"))
     ))
   }
 
