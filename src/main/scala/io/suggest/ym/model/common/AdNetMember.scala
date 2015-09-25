@@ -1,5 +1,6 @@
 package io.suggest.ym.model.common
 
+import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import io.suggest.model._
 import io.suggest.util.SioEsUtil._
@@ -9,9 +10,7 @@ import EsModel._
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.{FilterBuilder, FilterBuilders, QueryBuilder, QueryBuilders}
-import org.elasticsearch.common.unit.Fuzziness
-import org.elasticsearch.index.mapper.internal.AllFieldMapper
-import io.suggest.ym.model.{MAdnNode, AdShowLevel}
+import io.suggest.ym.model.AdShowLevel
 import java.{util => ju, lang => jl}
 import io.suggest.event.{AdnNodeOnOffEvent, SioNotifierStaticClientI}
 import play.api.libs.json._
@@ -25,8 +24,6 @@ import play.api.libs.json._
  */
 
 object AdNetMember {
-
-  import AdnRights.AdnRight
 
   /** Название root-object поля, в котором хранятся данные по участию в рекламной сети. */
   val ADN_ESFN = "adn"
@@ -57,7 +54,6 @@ object AdNetMember {
   private def fullFN(subFN: String): String = ADN_ESFN + "." + subFN
 
   // Абсолютные (плоские) имена полей. Используются при поисковых запросах.
-  def ADN_SUPERVISOR_ID_ESFN  = fullFN(SUPERVISOR_ID_ESFN)
   def ADN_ADV_DELEGATE_ESFN   = fullFN(ADV_DELEGATE_ESFN)
   def ADN_RIGHTS_ESFN         = fullFN(RIGHTS_ESFN)
   def ADN_TEST_NODE_ESFN      = fullFN(TEST_NODE_ESFN)
@@ -65,9 +61,6 @@ object AdNetMember {
   def ADN_SINKS_ESFN          = fullFN(SINKS_ESFN)
   def ADN_SHOWN_TYPE_ID       = fullFN(SHOWN_TYPE_ID_ESFN)
 
-  def supIdQuery(supId: String): QueryBuilder = {
-    QueryBuilders.termQuery(ADN_SUPERVISOR_ID_ESFN, supId)
-  }
 
   /**
    * Генератор es-query для поиска по id делегата размещения.
@@ -144,20 +137,27 @@ object AdnSinks extends Enumeration {
 
 
 /** Положение участника сети и его возможности описываются флагами прав доступа. */
-object AdnRights extends Enumeration {
-  protected case class Val(name: String, longName: String) extends super.Val(name)
-  type AdnRight = Val
-  implicit def value2val(x: Value): AdnRight = x.asInstanceOf[AdnRight]
+object AdnRights extends EnumMaybeWithName {
+
+  protected[this] sealed abstract class Val(val name: String)
+    extends super.Val(name)
+  {
+    def longName: String
+  }
+
+  override type T = Val
 
   /** Продьюсер может создавать свою рекламу. */
-  val PRODUCER: AdnRight = Val("p", "producer")
+  val PRODUCER: T = new Val("p") {
+    override def longName = "producer"
+  }
 
   /** Ресивер может отображать в выдаче и просматривать в ЛК рекламу других участников, которые транслируют свою
     * рекламу ему через receivers. Ресивер также может приглашать новых участников. */
-  val RECEIVER: AdnRight = Val("r", "receiver")
+  val RECEIVER: T = new Val("r") {
+    override def longName = "receiver"
+  }
 
-  /** Супервизор может управлять рекламной сетью и модерировать рекламные карточки. */
-  val SUPERVISOR: AdnRight = Val("s", "supervisor")
 }
 
 
@@ -176,7 +176,6 @@ trait EMAdNetMemberStatic extends EsModelStaticMutAkvT with EsModelStaticT {
     FieldObject(ADN_ESFN, enabled = true, properties = Seq(
       FieldString(RIGHTS_ESFN, index = not_analyzed, include_in_all = false),
       FieldBoolean(IS_USER_ESFN, index = not_analyzed, include_in_all = false),
-      FieldString(SUPERVISOR_ID_ESFN, index = not_analyzed, include_in_all = false),
       FieldString(SHOWN_TYPE_ID_ESFN, index = not_analyzed, include_in_all = false),
       FieldString(ADV_DELEGATE_ESFN, index = not_analyzed, include_in_all = false),
       FieldBoolean(TEST_NODE_ESFN, index = not_analyzed, include_in_all = false),
@@ -194,11 +193,12 @@ trait EMAdNetMemberStatic extends EsModelStaticMutAkvT with EsModelStaticT {
       acc.adn = AdNetMemberInfo(
         rights = Option(vm get RIGHTS_ESFN).fold(Set.empty[AdnRight]) {
           case l: jl.Iterable[_] =>
-            l.map { rid => AdnRights.withName(rid.toString) : AdnRight }.toSet
+            l.iterator()
+              .flatMap { rid => AdnRights.maybeWithName(rid.toString) }
+              .toSet
         },
         isUser = Option(vm get IS_USER_ESFN).fold(false)(booleanParser),
         shownTypeIdOpt = Option(vm get SHOWN_TYPE_ID_ESFN) map stringParser,
-        supId = Option(vm get SUPERVISOR_ID_ESFN) map stringParser,
         advDelegate = Option(vm get ADV_DELEGATE_ESFN) map stringParser,
         testNode = Option(vm get TEST_NODE_ESFN)
           .fold(false)(booleanParser),
@@ -214,75 +214,6 @@ trait EMAdNetMemberStatic extends EsModelStaticMutAkvT with EsModelStaticT {
         }
       )
   }
-
-  /**
-   * Поиск по указанному запросу. Обычно используется для полнотекстового поиска, и исходный запрос генерится в
-   * соответствующем генераторе текстовых запросов на основе строки, введённой пользователем.
-   * @param searchQuery Поисковый запрос.
-   * @param supId id супервизора. Можно указать при поиске подчиненных конкретному узлу сети.
-   * @return Список результатов в порядке релевантности.
-   */
-  def searchAll(searchQuery: String, supId: Option[String] = None)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
-    var textQuery: QueryBuilder = QueryBuilders.fuzzyQuery(AllFieldMapper.NAME, searchQuery)
-      .fuzziness(Fuzziness.AUTO)
-      .prefixLength(2)
-      .maxExpansions(20)
-    if (supId.isDefined) {
-      val martIdFilter = FilterBuilders.termFilter(SUPERVISOR_ID_ESFN, supId.get)
-      textQuery = QueryBuilders.filteredQuery(textQuery, martIdFilter)
-    }
-    val req = prepareSearch
-      .setQuery(textQuery)
-    runSearch(req)
-  }
-
-  /**
-   * Прочитать поле с id супервизора для указанного элемента.
-   * @param id id узла рекламной сети.
-   * @return Some(String) если документ найден и у него есть супервизор. Иначе false.
-   */
-  def getSupIdOf(id: String)(implicit ec: ExecutionContext, client: Client): Future[Option[String]] = {
-    prepareGet(id)
-      .setFetchSource(false)
-      .setFields(ADN_SUPERVISOR_ID_ESFN)
-      .execute()
-      .map { getResp =>
-        // Если not found, то getFields() возвращает пустую карту.
-        Option(getResp.getFields.get(ADN_SUPERVISOR_ID_ESFN))
-          .flatMap { field =>
-            Option(stringParser(field.getValue))
-          }
-      }
-  }
-
-  /**
-   * Найти все магазины, относящиеся к указанному ТЦ.
-   * @param supId id непосредственного управляющего звена.
-   * @param sortField Название поля, по которому надо сортировать результаты.
-   * @param isReversed Если true, то сортировать будем в обратном порядке.
-   *                   Игнорируется, если sortField не задано.
-   * @param onlyEnabled Если true, то будет фильтр settings.supIsEnabled = true.
-   * @param companyId Можно искать только в рамках указанной компании.
-   * @return Список MShop в неопределённом порядке.
-   */
-  def findBySupId(supId: String, sortField: Option[String] = None, isReversed:Boolean = false, onlyEnabled: Boolean = false,
-                  maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT)
-                 (implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
-    var query: QueryBuilder = supIdQuery(supId)
-    if (onlyEnabled) {
-      val isEnabledFilter = FilterBuilders.termFilter(ADN_IS_ENABLED_ESFN, true)
-      query = QueryBuilders.filteredQuery(query, isEnabledFilter)
-    }
-    val req = prepareSearch
-      .setQuery(query)
-    if (sortField.isDefined)
-      req.addSort(sortField.get, isReversed2sortOrder(isReversed))
-    req
-      .setSize(maxResults)
-      .setFrom(offset)
-    runSearch(req)
-  }
-
 
   /**
    * Статическое обновление сеттингов isEnabled и disabledReason.
@@ -333,38 +264,6 @@ trait EMAdNetMemberStatic extends EsModelStaticMutAkvT with EsModelStaticT {
   }
 
 
-  def findIdsByAllAdnRightsBuilder(rights: Seq[AdnRight], withoutTestNodes: Boolean)(implicit client: Client) = {
-    findByAllAdnRightsBuilder(rights, withoutTestNodes)
-      .setFetchSource(false)
-      .setNoFields()
-  }
-
-  /**
-   * Тоже самое, что и findByAllAdnRights(), но возвращает только список id'шников.
-   * @param rights Права.
-   * @return Фьючерс со списком id в неопределённом порядке.
-   */
-  def findIdsByAllAdnRights(rights: Seq[AdnRight], withoutTestNodes: Boolean)(implicit ec: ExecutionContext, client: Client): Future[Seq[String]] = {
-    findIdsByAllAdnRightsBuilder(rights, withoutTestNodes)
-      .execute()
-      .map { searchResp2idsList }
-  }
-
-
-  // Поиски по полю adn.advDelegate
-
-  /**
-   * Найти все узлы, которые делегировали свои полномочия размещения рекл.карточек (adv) указанным узлам.
-   * @param dgAdnId id узла-делегата.
-   * @return Фьючерс со списком результатов в неопределённом порядке.
-   */
-  def findAdvDelegatedTo(dgAdnId: String, maxResults: Int = MAX_RESULTS_DFLT)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
-    val req = prepareSearch
-      .setQuery( advDelegatesQuery(dgAdnId) )
-      .setSize( maxResults )
-    runSearch(req)
-  }
-
   /**
    * Найти id документов, которые делегировали свои полномочия размещения рекл.карточек (adv) указанным узлам.
    * @param dgAdnId id узла-делегата.
@@ -406,19 +305,6 @@ trait EMAdNetMember extends EsModelPlayJsonT with EsModelT {
     companion.setIsEnabled(id.get, isEnabled, reason)
   }
 
-
-  /**
-   * Прочитать из хранилище супервизора, если он указан в соотв. поле. Считается, что супервизоры
-   * хранятся в [[io.suggest.ym.model.MAdnNode]].
-   * @return None если не указан или не найден. Иначе Some([[io.suggest.ym.model.MAdnNode]]).
-   */
-  def getSup(implicit ec: ExecutionContext, client: Client): Future[Option[MAdnNode.T]] = {
-    adn.supId match {
-      case Some(supId)  => MAdnNode.getById(supId)
-      case None         => Future successful None
-    }
-  }
-
 }
 
 
@@ -427,7 +313,6 @@ trait EMAdNetMember extends EsModelPlayJsonT with EsModelT {
   * @param isUser Узел созданный обычным юзером.
   * @param shownTypeIdOpt ID отображаемого типа участника сети. Нужно для задания кастомных типов на стороне web21.
   *                       Появилось, когда понадобилось обозначить торговый центр вокзалом/портом, не меняя его свойств.
-  * @param supId Опциональный id супер-узла.
   * @param advDelegate Опциональный id узла, который совершает управление размещением рекламных карточек на данном узле.
   * @param testNode Отметка о тестовом характере существования этого узла.
   *                 Он не должен отображаться для обычных участников сети, а только для других тестовых узлов.
@@ -439,7 +324,6 @@ case class AdNetMemberInfo(
   rights          : Set[AdnRight],
   isUser          : Boolean = false,
   shownTypeIdOpt  : Option[String] = None,
-  supId           : Option[String] = None,
   advDelegate     : Option[String] = None,
   testNode        : Boolean = false,
   showLevelsInfo  : AdnMemberShowLevels = AdnMemberShowLevels(),
@@ -457,8 +341,6 @@ case class AdNetMemberInfo(
   def isProducer: Boolean = rights contains PRODUCER
   @JsonIgnore
   def isReceiver: Boolean = rights contains RECEIVER
-  @JsonIgnore
-  def isSupervisor: Boolean = rights contains SUPERVISOR
 
 
   /** Быстрая и простая проверка на наличие wifi sink во флагах. */
@@ -487,8 +369,6 @@ case class AdNetMemberInfo(
     }
     if (shownTypeIdOpt.isDefined)
       acc0 ::= SHOWN_TYPE_ID_ESFN -> JsString(shownTypeIdOpt.get)
-    if (supId.isDefined)
-      acc0 ::= SUPERVISOR_ID_ESFN -> JsString(supId.get)
     if (advDelegate.isDefined)
       acc0 ::= ADV_DELEGATE_ESFN -> JsString(advDelegate.get)
     if (!showLevelsInfo.isEmpty)
@@ -658,56 +538,6 @@ case class AdnMemberShowLevels(
   // Для рендера галочек нужна модифицированная карта.
   def out4render = sls4render(out)
 }
-
-
-
-// Аддоны для DynSearch-поиска
-/** Аддон с поддержкой поиска по полю adn.supId . */
-trait AdnSupIdsDsa extends DynSearchArgs {
-
-  /** Искать/фильтровать по id супервизора узла. */
-  def adnSupIds: Seq[String]
-
-  override def toEsQueryOpt: Option[QueryBuilder] = {
-    super.toEsQueryOpt.map[QueryBuilder] { qb =>
-      // Отрабатываем adnSupIds:
-      if (adnSupIds.isEmpty) {
-        qb
-      } else {
-        val sf = FilterBuilders.termsFilter(ADN_SUPERVISOR_ID_ESFN, adnSupIds : _*)
-          .execution("or")
-        QueryBuilders.filteredQuery(qb, sf)
-      }
-    }.orElse[QueryBuilder] {
-      if (adnSupIds.nonEmpty) {
-        val sq = QueryBuilders.termsQuery(ADN_SUPERVISOR_ID_ESFN, adnSupIds : _*)
-          .minimumMatch(1)
-        Some(sq)
-      } else {
-        None
-      }
-    }
-  }
-
-  override def sbInitSize: Int = {
-    collStringSize(adnSupIds, super.sbInitSize)
-  }
-
-  override def toStringBuilder: StringBuilder = {
-    fmtColl2sb("adnSupIds", adnSupIds, super.toStringBuilder)
-  }
-
-}
-
-trait AdnSupIdsDsaDflt extends AdnSupIdsDsa {
-  override def adnSupIds: Seq[String] = Seq.empty
-}
-
-trait AdnSupIdsDsaWrapper extends AdnSupIdsDsa with DynSearchArgsWrapper {
-  override type WT <: AdnSupIdsDsa
-  override def adnSupIds = _dsArgsUnderlying.adnSupIds
-}
-
 
 
 /** Аддон с поддержкой поиска по полю advDelegateAdnIds. */
