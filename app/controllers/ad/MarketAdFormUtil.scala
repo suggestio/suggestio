@@ -343,7 +343,7 @@ object MarketAdFormUtil {
    * Сборщик форм произвольного назначения для парсинга реквестов с данными рекламной карточки.
    * @return Маппинг формы, готовый к эксплуатации.
    */
-  def getAdFormM(): AdFormM = {
+  def adFormM: AdFormM = {
     Form(
       mapping(
         CAT_ID_K    -> adCatIdsM,

@@ -93,7 +93,7 @@ class MarketAd @Inject() (
   def createAd(adnId: String) = IsAdnNodeAdminGet(adnId).async { implicit request =>
     import request.adnNode
     renderCreateFormWith(
-      af = getAdFormM(),
+      af = adFormM,
       catOwnerId = getCatOwnerId(adnNode),
       adnNode = adnNode
     ).map(Ok(_))
@@ -119,7 +119,7 @@ class MarketAd @Inject() (
     import request.adnNode
     val catOwnerId = getCatOwnerId(adnNode)
     lazy val logPrefix = s"createAdSubmit($adnId): "
-    val formM = getAdFormM()
+    val formM = adFormM
     val formBinded = formM.bindFromRequest()
     val bc = BlocksConf.DEFAULT
     formBinded.fold(
@@ -179,7 +179,7 @@ class MarketAd @Inject() (
   /** Акт рендера результирующей страницы в отрыве от самой страницы. */
   private def _renderPage(af: AdFormM)(f: (Seq[MMartCategory], Context) => Html)
                          (implicit request: AbstractRequestWithPwOpt[_]): Future[Html] = {
-    val cats = getMMCats()
+    val cats = mmCats
     implicit val _jsInitTargets = Seq(MTargets.AdForm)
     implicit val ctx = implicitly[Context]
     detectMainColorBg(af)(ctx)
@@ -198,7 +198,7 @@ class MarketAd @Inject() (
     */
   def editAd(adId: String) = CanEditAdGet(adId).async { implicit request =>
     import request.mad
-    val form0 = getAdFormM()
+    val form0 = adFormM
     val bim = mad
       .imgs
       .mapValues { mii =>
@@ -215,7 +215,7 @@ class MarketAd @Inject() (
     */
   def editAdSubmit(adId: String) = CanEditAdPost(adId).async(parse.urlFormEncoded) { implicit request =>
     import request.mad
-    val formM = getAdFormM()
+    val formM = adFormM
     val formBinded = formM.bindFromRequest()
     lazy val logPrefix = s"editShopAdSubmit($adId): "
     formBinded.fold(
@@ -475,7 +475,7 @@ class MarketAd @Inject() (
         ))    // AOStringField
       ))      // AOBlock
     )         // MAd
-    val af = getAdFormM()
+    val af = adFormM
       .fill((madStub, Map.empty))
     val nameBase = s"$OFFER_K.$OFFER_K[$offerN].${bfText.name}"
     val bc = BlocksConf.DEFAULT
@@ -487,7 +487,7 @@ class MarketAd @Inject() (
   // ============================== common-методы =================================
 
   /** Подготовить список категорий асинхронно. */
-  private def getMMCats(): Future[Seq[MMartCategory]] = {
+  private def mmCats: Future[Seq[MMartCategory]] = {
     // 2014.dec.10: Плоские категории как были, так и остались. Упрощаем работу с категориями по максимуму.
     val catOwnerId = MMartCategory.DEFAULT_OWNER_ID
     MMartCategory.findTopForOwner(catOwnerId)

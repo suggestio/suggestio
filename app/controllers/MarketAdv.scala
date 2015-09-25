@@ -39,7 +39,7 @@ import play.api.data._, Forms._
  */
 class MarketAdv @Inject() (
   override val messagesApi: MessagesApi,
-  db: Database
+  implicit val db: Database
 )
   extends SioControllerImpl with PlayMacroLogsImpl
 {

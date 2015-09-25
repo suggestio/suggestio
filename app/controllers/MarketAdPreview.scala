@@ -25,14 +25,15 @@ import views.html.sc.foc._adFullTpl
 
 trait MarketAdPreview extends SioController with PlayMacroLogsI {
 
-  /** Сабмит формы редактирования карточки для генерации превьюшки.
-    * @param adnId id узла, в рамках которого происходит работа.
-    * @param isFull true - надо полноэкранную преьюшку, false - нужен обычный размер.
-    * @return 200 Ok с рендером.
-    *         406 Not Acceptable при ошибочной форме.
-    */
+  /**
+   * Сабмит формы редактирования карточки для генерации превьюшки.
+   * @param adnId id узла, в рамках которого происходит работа.
+   * @param isFull true - надо полноэкранную преьюшку, false - нужен обычный размер.
+   * @return 200 Ok с рендером.
+   *         406 Not Acceptable при ошибочной форме.
+   */
   def adFormPreviewSubmit(adnId: String, isFull: Boolean) = IsAdnNodeAdminPost(adnId).async { implicit request =>
-    val adFormM = MarketAdFormUtil.getAdFormM()
+    val adFormM = MarketAdFormUtil.adFormM
     adFormM.bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug(s"adFormPreviewSubmit($adnId): form bind failed: " + formatFormErrors(formWithErrors))

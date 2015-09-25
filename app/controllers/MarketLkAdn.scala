@@ -57,103 +57,15 @@ class MarketLkAdn @Inject() (
    *                    Выверенное значение это аргумента можно получить из request.povAdnNodeOpt.
    */
   def showAdnNode(adnId: String, povAdnIdOpt: Option[String]) = {
-    AdnNodeAccessGet(adnId, povAdnIdOpt).async { implicit request =>
+    AdnNodeAccessGet(adnId, povAdnIdOpt) { implicit request =>
       import request.{adnNode, isMyNode}
 
-      // Делегированная модерация: собрать id узлов, которые делегировали adv-модерацию этому узлу
-      // Сами узлы отображать вроде бы [пока] не нужно.
-      val advDg2meIdsFut: Future[Seq[String]] = if (isMyNode) {
-        MAdnNode.findIdsAdvDelegatedTo(adnId)
-      } else {
-        Future successful Nil
-      }
-
-      val isRcvr = adnNode.adn.isReceiver
-
-      // Узнать, инфу по рекламодателям с учетом возможности делегированной к этому узлу модерации в качестве модератора.
-      val advsForMeFut: Future[(Long, Seq[MAdnNode])] = if (isMyNode) {
-        // Чтобы узнать список рекламодетелей, надо дождаться списка узлов, которые делегировали adv-работу этому узлу.
-        advDg2meIdsFut flatMap { dgAdnIds =>
-          var dgAdnIdsList = dgAdnIds.toList
-          // Дописать в начало ещё текущей узел, если он также является рекламо-получателем.
-          if (isRcvr)
-            dgAdnIdsList ::= adnId
-          // TODO Отрабатывать цепочное делегирование, когда узел делегирует дальше adv-права ещё какому-то узлу.
-          val adnIdsSet = dgAdnIdsList.toSet
-          // Собрать из sql-моделей инфу по размещениям.
-          val syncResult = db.withConnection { implicit c =>
-            // 2014.06.26: Скрывать бесплатные размещения, помеченные как isPartner.
-            val okAdnIds = MAdvOk.findAllProducersForRcvrsPartner(adnIdsSet, isPartner = false)
-            // Если adv-полномочия делегированы другому узлу, то не надо использовать ещё не принятые реквесты
-            // для формирования списка текущих рекламодателей.
-            val reqAdnIds: List[String] = if (adnNode.adn.advDelegate.isEmpty) {
-              MAdvReq.findAllProducersForRcvrs(adnIdsSet)
-            } else {
-              Nil
-            }
-            val reqsCount = MAdvReq.countForRcvrs(adnIdsSet)
-            (okAdnIds, reqAdnIds, reqsCount)
-          }
-          val (okAdnIds, reqAdnIds, reqsCount) = syncResult
-          val advAdnIds = (okAdnIds ++ reqAdnIds).distinct
-          MAdnNodeCache.multiGet(advAdnIds)
-            .map { adns =>
-              // Отсортировать рекламодателей по алфавиту.
-              val adnsSorted = adns.sortBy(_.meta.name)
-              reqsCount -> adnsSorted
-            }
-        }
-      } else {
-        Future successful (0L, Nil)
-      }
-
-      // Рендерить ли кнопку "рекламодатели"? Да, если ресивер либо есть ноды, делегировавшие сюда модерацию
-      val showAdvsBtnFut: Future[Boolean] = {
-        // Если это собственный ресивер, НЕ делегировавший adv-права другому узлу, то отображать кнопку.
-        if (isMyNode && isRcvr && adnNode.adn.advDelegate.isEmpty) {
-          Future successful true
-        } else if (isMyNode) {
-          // Возможно, это узел, которому делегировали adv-права модерации иные узлы.
-          advDg2meIdsFut map { dgAdnIds =>
-            dgAdnIds.nonEmpty
-          }
-        } else {
-          // Скрывать кнопку "рекламодатели".
-          Future successful false
-        }
-      }
-
-      // Нужно ли отображать кнопку назад? Да, если у юзера есть ещё узлы.
-      val showBackBtnFut = if (isMyNode) {
-        // TODO Надо бы кеширование тут.
-        MAdnNode.countByPersonId(request.pwOpt.get.personId)
-          .map { _ >= 2L }
-      } else {
-        Future successful true
-      }
-
-      // 2014.sep.01 Понадобилось передавать welcomeAd в шаблон лк.
-      val welcomeAdOptFut = adnNode.meta.welcomeAdId
-        .fold(Future successful Option.empty[MWelcomeAd]) { MWelcomeAd.getById }
-
       // Дождаться всех фьючерсов и отрендерить результат.
-      for {
-        (advReqsCount, advs) <- advsForMeFut
-        showAdvsBtn     <- showAdvsBtnFut
-        showBackBtn     <- showBackBtnFut
-        welcomeAdOpt    <- welcomeAdOptFut
-      } yield {
-        Ok(adnNodeShowTpl(
-          mnode         = adnNode,
-          isMyNode      = isMyNode,
-          advertisers   = advs,
-          povAdnIdOpt   = request.povAdnNodeOpt.flatMap(_.id),
-          advReqsCount  = advReqsCount,
-          showBackBtn   = showBackBtn,
-          showAdvsBtn   = showAdvsBtn,
-          welcomeAdOpt  = welcomeAdOpt
-        ))
-      }
+      Ok(adnNodeShowTpl(
+        mnode         = adnNode,
+        isMyNode      = isMyNode,
+        povAdnIdOpt   = request.povAdnNodeOpt.flatMap(_.id)
+      ))
     }
   }
 

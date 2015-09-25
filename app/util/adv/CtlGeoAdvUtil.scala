@@ -1,8 +1,11 @@
 package util.adv
 
 import java.sql.Connection
+import java.util.Currency
 
 import models.{MBillMmpDaily, MAdvReq, MAdvI, MAdvStatic}
+import play.api.db.Database
+import util.async.AsyncUtil
 import util.async.AsyncUtil.jdbcAsync
 
 import scala.concurrent.Future
@@ -27,11 +30,15 @@ object CtlGeoAdvUtil {
    * @tparam T Тип возвращаемых значений adv-модели.
    * @return Фьючерс со списком результатов.
    */
-  def advFind[T](model: MAdvStatic, limit: Int = LIMIT_DFLT)(f: (Int, Connection) => T): Future[T] = {
+  def advFind[T](model: MAdvStatic, limit: Int = LIMIT_DFLT)
+                (f: (Int, Connection) => T)
+                (implicit db: Database): Future[T] = {
     val limit1 = if (limit > 0) limit else model.LIMIT_DFLT
-    jdbcAsync { implicit c =>
-      f(limit1, c)
-    }
+    Future {
+      db.withConnection { implicit c =>
+        f(limit1, c)
+      }
+    }(AsyncUtil.jdbcExecutionContext)
   }
 
   /**
@@ -39,10 +46,12 @@ object CtlGeoAdvUtil {
    * @param adId id рекламной карточки.
    * @return Фьючерс с картой результатов.
    */
-  def collectBlockedSums(adId: String) = {
-    jdbcAsync { implicit c =>
-      MAdvReq.calculateBlockedSumForAd(adId)
-    }
+  def collectBlockedSums(adId: String)(implicit db: Database): Future[ List[(Float, Currency)] ] = {
+    Future {
+      db.withConnection { implicit c =>
+        MAdvReq.calculateBlockedSumForAd(adId)
+      }
+    }(AsyncUtil.jdbcExecutionContext)
   }
 
   /**
@@ -53,7 +62,8 @@ object CtlGeoAdvUtil {
    * @tparam T1 Тип возвращаемого значения.
    * @return Фьючерс со списком экземпляров указанной модели.
    */
-  def advFindByAdId[T1 <: MAdvI](model: MAdvStatic {type T = T1}, adId: String, limit: Int = LIMIT_DFLT): Future[List[T1]] = {
+  def advFindByAdId[T1 <: MAdvI](model: MAdvStatic {type T = T1}, adId: String, limit: Int = LIMIT_DFLT)
+                                (implicit db: Database): Future[List[T1]] = {
     advFind(model, limit) { (limit1, c) =>
       model.findByAdId(adId, limit = limit1)(c)
     }
@@ -67,17 +77,20 @@ object CtlGeoAdvUtil {
    * @tparam T1 Тип возвращаемых экземпляров модели.
    * @return Фьючерс со списком результатов.
    */
-  def advFindNonExpiredByAdId[T1 <: MAdvI](model: MAdvStatic {type T = T1}, adId: String, limit: Int = LIMIT_DFLT): Future[List[T1]] = {
+  def advFindNonExpiredByAdId[T1 <: MAdvI](model: MAdvStatic {type T = T1}, adId: String, limit: Int = LIMIT_DFLT)
+                                          (implicit db: Database): Future[List[T1]] = {
     advFind(model, limit) { (limit1, c) =>
       model.findNotExpiredByAdId(adId, limit = limit1)(c)
     }
   }
 
 
-  def findAdnIdsMmpReady(): Future[List[String]] = {
-    jdbcAsync { implicit c =>
-      MBillMmpDaily.findAllAdnIds
-    }
+  def findAdnIdsMmpReady()(implicit db: Database): Future[List[String]] = {
+    Future {
+      db.withConnection { implicit c =>
+        MBillMmpDaily.findAllAdnIds
+      }
+    }(AsyncUtil.jdbcExecutionContext)
   }
 
 }

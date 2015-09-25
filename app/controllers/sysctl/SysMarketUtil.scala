@@ -109,18 +109,16 @@ object SysMarketUtil extends PlayMacroLogsDyn {
     "shownTypeIdOpt" -> adnShownTypeIdOptM,
     "rights"        -> adnRightsM,
     "sls"           -> adnSlInfoM,
-    "advDelegate"   -> optional(esIdM),
     "testNode"      -> boolean,
     "isUser"        -> boolean,
     "sink"          -> adnSinksM
   )
-  {(isEnabled, shownTypeIdOpt, rights, sls, advDgOpt, isTestNode, isUser, sinks) =>
+  {(isEnabled, shownTypeIdOpt, rights, sls, isTestNode, isUser, sinks) =>
     AdNetMemberInfo(
       isEnabled = isEnabled,
       rights    = rights,
       shownTypeIdOpt = shownTypeIdOpt,
       showLevelsInfo = sls,
-      advDelegate = advDgOpt,
       testNode  = isTestNode,
       isUser    = isUser,
       sinks     = sinks
@@ -128,7 +126,7 @@ object SysMarketUtil extends PlayMacroLogsDyn {
   }
   {anmi =>
     import anmi._
-    Some((isEnabled, Some(shownTypeId), rights, showLevelsInfo, advDelegate, testNode, isUser, sinks))
+    Some((isEnabled, Some(shownTypeId), rights, showLevelsInfo, testNode, isUser, sinks))
   }
 
 
@@ -195,7 +193,6 @@ object SysMarketUtil extends PlayMacroLogsDyn {
         shownTypeIdOpt = adnNode2.adn.shownTypeIdOpt,
         isEnabled   = adnNode2.adn.isEnabled,
         showLevelsInfo = adnNode2.adn.showLevelsInfo,
-        advDelegate = adnNode2.adn.advDelegate,
         testNode    = adnNode2.adn.testNode,
         isUser      = adnNode2.adn.isUser,
         sinks       = adnNode2.adn.sinks

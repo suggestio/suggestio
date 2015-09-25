@@ -119,14 +119,16 @@ class SysMarketBilling @Inject() (
           val mbc = mbcRaw.copy(
             adnId = nodeId
           )
-          val saveFut = AsyncUtil.jdbcAsync { implicit c =>
-            val _mbc1 = mbc.save
-            // Сразу создать баланс, если ещё не создан.
-            if (MBillBalance.getByAdnId(mbc.adnId).isEmpty) {
-              MBillBalance(mbc.adnId, amount = 0F).save
+          val saveFut = Future {
+            db.withConnection { implicit c =>
+              val _mbc1 = mbc.save
+              // Сразу создать баланс, если ещё не создан.
+              if (MBillBalance.getByAdnId(mbc.adnId).isEmpty) {
+                MBillBalance(mbc.adnId, amount = 0F).save
+              }
+              _mbc1
             }
-            _mbc1
-          }
+          }(AsyncUtil.jdbcExecutionContext)
           for (mbc1 <- saveFut) yield {
             Redirect(routes.SysMarketBilling.billingFor(mbc1.adnId))
               .flashing("success" -> s"Создан договор #${mbc1.legalContractId}.")
@@ -157,9 +159,11 @@ class SysMarketBilling @Inject() (
           isActive     = mbc1.isActive,
           suffix       = mbc1.suffix
         )
-        val saveFut = AsyncUtil.jdbcAsync { implicit c =>
-          mbc3.save
-        }
+        val saveFut = Future {
+          db.withConnection { implicit c =>
+            mbc3.save
+          }
+        }(AsyncUtil.jdbcExecutionContext)
         for (_ <- saveFut) yield {
           Redirect(routes.SysMarketBilling.billingFor(mbc3.adnId))
             .flashing("success" -> s"Изменения сохранены: #${mbc3.legalContractId}.")
