@@ -132,33 +132,6 @@ object SysMarketUtil extends PlayMacroLogsDyn {
 
   /** Маппинг для конфига ноды. */
   def nodeConfM: Mapping[NodeConf] = {
-    val intSetM = text(maxLength = 1024)
-      .transform [Set[Int]] (
-        {raw =>
-          raw.trim
-            .split("\\s*,\\s*")
-            .foldLeft [List[Int]] (Nil) { (acc, vRaw) =>
-              val vOpt: Option[Int] = try {
-                val blockId = vRaw.toInt
-                BlocksConf.apply(blockId)   // Проверяем, есть ли блок с указанным id.
-                Some(blockId)
-              } catch {
-                case ex: NumberFormatException =>
-                  LOGGER.warn("Cannot parse block id as integer: " + vRaw)
-                  None
-                case ex: NoSuchElementException =>
-                  LOGGER.warn("Block id not found: " + vRaw)
-                  None
-              }
-              vOpt match {
-                case Some(blockId) => blockId :: acc
-                case None => acc
-              }
-            }
-            .toSet
-        },
-        { _.mkString(", ") }
-      )
     mapping(
       "showInScNodeList"    -> boolean,
       "showcaseVoidFiller"  -> {
@@ -209,7 +182,13 @@ object SysMarketUtil extends PlayMacroLogsDyn {
   def personIdsM: Mapping[Set[String]] = {
     text(maxLength = 1024)
       .transform[Set[String]](
-        {s => s.trim.split("\\s*[,;]\\s*").filter(!_.isEmpty).toSet },
+        {s =>
+          s.trim
+            .split("\\s*[,;]\\s*")
+            .iterator
+            .filter(!_.isEmpty)
+            .toSet
+        },
         { _.mkString(", ") }
       )
   }

@@ -2,6 +2,7 @@ package util.acl
 
 import java.sql.Connection
 
+import io.suggest.model.n2.edge.search.EdgeSearchDfltImpl
 import models.req.SioReqMd
 import play.api.mvc.{Results, Result, ActionBuilder, Request}
 import util.PlayMacroLogsImpl
@@ -73,7 +74,15 @@ trait AdvWndAccessBase extends ActionBuilder[AdvWndRequest] {
       // Узел, указанный в pai существует.
       case Some(dgNode) =>
         // Фоновый запуск поиска id узлов, которые делегировали своё adv-право указанному узлу (povAdnId).
-        val rcvrIdsDgFut = MAdnNode.findIdsAdvDelegatedTo(pai)
+        val rcvrIdsDgFut: Future[Seq[String]] = {
+          val edgeSearch = new EdgeSearchDfltImpl {
+            override def predicates = Seq( MPredicates.AdvManageDelegatedTo )
+            override def toId       = Seq( pai )
+            override def limit      = 100
+          }
+          MEdge.dynSearch(edgeSearch)
+            .map { _.iterator.map(_.toId).toSeq }
+        }
         // Для установки связи между карточкой, ресивером и делегатом-модератором ресивера надо выкачать список всех текущих размещений карточки.
         val syncResult = DB.withConnection { implicit c =>
           val advsOk = MAdvOk.findNotExpiredByAdId(adId)
