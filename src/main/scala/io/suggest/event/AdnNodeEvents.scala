@@ -1,12 +1,12 @@
 package io.suggest.event
 
-import io.suggest.event.SioNotifier.{Subscriber, Classifier}
-import io.suggest.ym.model.{MWelcomeAd, MAd, AdNetMemberType, MAdnNode}
+import io.suggest.event.SioNotifier.Classifier
+import io.suggest.ym.model.{MWelcomeAd, MAd, MAdnNode}
 import io.suggest.event.subscriber.SnFunSubscriber
 import io.suggest.util.MacroLogsImpl
 import io.suggest.model.EsModelStaticT
 import scala.util.{Failure, Try, Success}
-import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.ExecutionContext
 import org.elasticsearch.client.Client
 
 /**

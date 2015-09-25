@@ -12,12 +12,6 @@ package object model {
   val  AdShowLevels       = common.AdShowLevels
   type AdShowLevel        = AdShowLevels.AdShowLevel
 
-  val  AdOfferTypes       = common.AdOfferTypes
-  type AdOfferType        = AdOfferTypes.AdOfferType
-
-  val  AdNetMemberTypes   = common.AdNetMemberTypes
-  type AdNetMemberType    = AdNetMemberTypes.AdNetMemberType
-
   type NodeGeoLevel       = NodeGeoLevels.T
 
 }

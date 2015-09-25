@@ -4,8 +4,6 @@ import io.suggest.model.{EsModel, EsModelPlayJsonT, EsModelStaticMutAkvT}
 import java.util.Currency
 import java.{util => ju}
 import com.fasterxml.jackson.annotation.JsonIgnore
-import io.suggest.ym.model.AdOfferType
-import io.suggest.ym.model.common.AdOfferTypes
 import io.suggest.util.SioEsUtil._
 import scala.collection.JavaConversions._
 import io.suggest.model.EsModel.FieldsJsonAcc
@@ -156,9 +154,6 @@ object AdOffer {
 
 /** Абстрактный оффер. */
 sealed trait AdOfferT extends Serializable {
-  @JsonIgnore
-  def offerType: AdOfferType
-
   /** Порядковый номер оффера в списке офферов. Нужен для поддержания исходного порядка. */
   def n: Int
 
@@ -167,7 +162,6 @@ sealed trait AdOfferT extends Serializable {
     // Метаданные оффера содержат его порядковый номер и тип. Body содержит сами данные по офферу.
     JsObject(Seq(
       N_ESFN          -> JsNumber(n),
-      OFFER_TYPE_ESFN -> JsString(offerType.toString),
       OFFER_BODY_ESFN -> JsObject(renderPlayJsonBody)
     ))
   }
@@ -205,8 +199,6 @@ case class AOBlock(
   @deprecated("Use text1 on another offer instead", "2015.feb.11") var text2: Option[AOStringField] = None,
   var href      : Option[String] = None
 ) extends AdOfferT {
-  @JsonIgnore
-  override def offerType = AdOfferTypes.BLOCK
 
   @JsonIgnore
   override def renderPlayJsonBody: FieldsJsonAcc = {

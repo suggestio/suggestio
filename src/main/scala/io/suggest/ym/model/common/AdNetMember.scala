@@ -449,7 +449,8 @@ case class AdNetMemberInfo(
 ) {
 
   /** Отображаемый для юзера id типа узла. */
-  def shownTypeId: String = shownTypeIdOpt getOrElse AdNetMemberTypes.MART.name
+  // TODO Надо наверное вернуть AdnShownTypes в util и этот стыд убрать.
+  def shownTypeId: String = shownTypeIdOpt getOrElse "s"
 
   // Быстрый доступ к каталогу adn-прав
   @JsonIgnore
