@@ -1,6 +1,6 @@
 package models.usr
 
-import io.suggest.model.n2.node.MNode
+import models.{MPersonMeta, MNode}
 import models.mext.ILoginProvider
 import securesocial.core.{IProfile, PasswordInfo}
 import securesocial.core.providers.MailToken
@@ -74,7 +74,16 @@ object SsUserService extends UserService[SsUser] {
   override def save(profile: IProfile, mode: SaveMode): Future[SsUser] = {
     if (mode is SaveMode.SignUp) {
       // Зарегать нового юзера
-      MNode.applyPerson(lang = "ru").save.flatMap { personId =>
+      val mnode = MNode.applyPerson(
+        lang    = "ru",   // TODO Определять язык надо бы. Из сессии например, которая здесь пока недоступна.
+        nameOpt = profile.fullName,
+        mpm     = MPersonMeta(
+          nameFirst     = profile.firstName,
+          nameLast      = profile.lastName,
+          extAvaUrls  = profile.avatarUrl.toList
+        )
+      )
+      mnode.save.flatMap { personId =>
         // Сохранить данные идентификации через соц.сеть.
         val mei = MExtIdent(
           personId  = personId,

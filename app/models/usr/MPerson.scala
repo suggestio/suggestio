@@ -1,9 +1,7 @@
 package models.usr
 
 import io.suggest.model.es.BulkRespCounted
-import io.suggest.model.n2.node.meta.MNodeMeta
-import io.suggest.model.n2.node.{MNodeTypes, MNode}
-import io.suggest.model.n2.node.common.MNodeCommon
+import io.suggest.model.n2.node.MNode
 import util.PlayMacroLogsImpl
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.EsModel._
