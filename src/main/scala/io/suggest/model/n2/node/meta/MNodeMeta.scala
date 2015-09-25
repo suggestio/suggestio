@@ -120,6 +120,7 @@ object MNodeMeta extends IGenEsMappingProps {
  * @param color Цвет оформления.
  * @param fgColor Цвет элементов переднего плана. Должен контрастировать с цветом оформления.
  * @param welcomeAdId id карточки приветствия в [[io.suggest.ym.model.MWelcomeAd]].
+ * @param info Описание бизнес-стороны узла. Например, описание товаров и услуг.
  */
 case class MNodeMeta(
   // Класс обязательно immutable! Никаких var, ибо companion.DEFAULT.
@@ -145,25 +146,6 @@ case class MNodeMeta(
   welcomeAdId   : Option[String] = None,   // TODO Перенести в поле MAdnNode.conf.welcomeAdId
   langs         : List[String]   = Nil,
   person        : MPersonMeta    = MPersonMeta.empty
-) {
-
-  /** Изначально поле name было обязательным. */
-  def name: String = {
-    nameOpt.getOrElse("")
-  }
-
-  /** Узнать основной язык узла. */
-  def lang: String = {
-    langs.headOption.getOrElse("ru")
-  }
-
-  /** Выдать имя, по возможности короткое. */
-  def nameShort: String = {
-    if (nameShortOpt.isDefined)
-      nameShortOpt.get
-    else
-      name
-  }
-
-}
+)
+  extends MBasicMetaUtil
 
