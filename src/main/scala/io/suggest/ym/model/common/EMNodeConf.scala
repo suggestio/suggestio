@@ -76,7 +76,6 @@ trait EMNodeConfMut extends EMNodeConf {
 /** Статическая утиль контейнера конфига. */
 object NodeConf {
 
-  val WITH_BLOCKS_ESFN            = "wb"
   val SHOWCASE_VOID_FILLER_ESFN   = "svf"
   val SHOW_IN_SC_NODES_LIST_ESFN  = "ssnl"
 
@@ -84,7 +83,6 @@ object NodeConf {
   val DEFAULT = NodeConf()
 
   def generateMappingProps: List[DocField] = List(
-    FieldNumber(WITH_BLOCKS_ESFN, fieldType = DocFieldTypes.integer, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
     FieldString(SHOWCASE_VOID_FILLER_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
     FieldBoolean(SHOW_IN_SC_NODES_LIST_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
   )
@@ -94,10 +92,6 @@ object NodeConf {
       NodeConf(
         showInScNodesList = Option(jmap get SHOW_IN_SC_NODES_LIST_ESFN)
           .fold(true)(booleanParser),
-        withBlocks = Option(jmap get WITH_BLOCKS_ESFN).fold[Set[Int]] (Set.empty) {
-          case l: jl.Iterable[_] =>
-            l.toTraversable.map(EsModel.intParser).toSet
-        },
         showcaseVoidFiller = Option(jmap get SHOWCASE_VOID_FILLER_ESFN)
           .map(stringParser)
       )
@@ -106,14 +100,12 @@ object NodeConf {
 
 /**
  * Контейнер конфига, должен быть immutable целиком!
- * @param withBlocks Множество дополнительных id блоков, которые доступны этому узлу.
  * @param showcaseVoidFiller id или какие-то иные данные заполнятеля пустот в выдаче.
  * @param showInScNodesList Отображать ли узел в списке узлов выдачи?
  */
 case class NodeConf(
   // !! var использовать нельзя, т.к. это в целом плохо + дефолтовый конфиг сейчас шарится между инстансами узлов.
   showInScNodesList     : Boolean = true,
-  withBlocks            : Set[Int] = Set.empty,
   showcaseVoidFiller    : Option[String] = None
 ) {
   import NodeConf._
@@ -129,8 +121,6 @@ case class NodeConf(
     var acc: FieldsJsonAcc = List(
       SHOW_IN_SC_NODES_LIST_ESFN -> JsBoolean(showInScNodesList)
     )
-    if (withBlocks.nonEmpty)
-      acc ::= WITH_BLOCKS_ESFN -> JsArray( withBlocks.toSeq.map(JsNumber(_)) )
     if (showcaseVoidFiller.isDefined)
       acc ::= SHOWCASE_VOID_FILLER_ESFN -> JsString(showcaseVoidFiller.get)
     JsObject(acc)

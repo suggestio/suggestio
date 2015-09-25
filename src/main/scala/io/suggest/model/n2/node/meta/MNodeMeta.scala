@@ -1,5 +1,6 @@
 package io.suggest.model.n2.node.meta
 
+import io.suggest.model.n2.node.meta.colors.{MColorData, MColors}
 import org.joda.time.DateTime
 import io.suggest.model.{IGenEsMappingProps, EsModel}
 import io.suggest.util.SioEsUtil._, FieldIndexingVariants.FieldIndexingVariant
@@ -148,4 +149,37 @@ case class MNodeMeta(
   person        : MPersonMeta    = MPersonMeta.empty
 )
   extends MBasicMetaUtil
+{
 
+  /** Приведение к модели [[MMeta]]. */
+  def toMMeta: MMeta = {
+    MMeta(
+      basic = MBasicMeta(
+        nameOpt       = nameOpt,
+        nameShortOpt  = nameShortOpt,
+        hiddenDescr   = hiddenDescr,
+        dateCreated   = dateCreated,
+        langs         = langs
+      ),
+      address = MAddress(
+        town      = town,
+        address   = address,
+        phone     = phone,
+        floor     = floor,
+        section   = section
+      ),
+      business = MBusinessInfo(
+        siteUrl           = siteUrl,
+        audienceDescr     = audienceDescr,
+        humanTrafficAvg   = humanTrafficAvg,
+        info              = info
+      ),
+      colors = MColors(
+        bg = color.map { MColorData(_) },
+        fg = fgColor.map { MColorData(_) }
+      ),
+      person = person
+    )
+  }
+
+}
