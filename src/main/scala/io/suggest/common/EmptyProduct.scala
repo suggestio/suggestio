@@ -7,6 +7,8 @@ package io.suggest.common
  * Description: Тестирование case class'а на наполненность параметров.
  */
 trait EmptyProduct extends Product {
+
+  /** @return true, если класс содержит хотя бы одно значение. */
   def nonEmpty: Boolean = {
     productIterator.exists {
       case opt: Option[_]           => opt.nonEmpty
@@ -14,6 +16,9 @@ trait EmptyProduct extends Product {
       case _                        => true
     }
   }
+
+  /** @return true, если класс не содержит ни одного значения. */
   def isEmpty: Boolean = !nonEmpty
+
 }
 
