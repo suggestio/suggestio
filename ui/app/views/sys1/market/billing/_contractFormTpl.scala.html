@@ -3,10 +3,9 @@
 @* Шаблон формы добавления/редактирования контракта. *@
 @import helper._
 @import util.FC.tdFc
-@import ctx.messages
+@import ctx.{messages, request}
 
-@form(submitCall) {
-  <input type="hidden" name="adnId" value="@adnId"/>
+@form( CSRF(submitCall) ) {
 
   <table class="input-w __size-L">
     @inputText(
@@ -44,4 +43,5 @@
   <div class="btn-w __size-M">
     <input class="siom-ac-btn __color-1 __size-M __ft-XM f-right" type="submit" value="@btnText">
   </div>
+
 }

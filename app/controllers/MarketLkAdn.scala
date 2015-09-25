@@ -59,12 +59,6 @@ class MarketLkAdn @Inject() (
   def showAdnNode(adnId: String, povAdnIdOpt: Option[String]) = {
     AdnNodeAccessGet(adnId, povAdnIdOpt).async { implicit request =>
       import request.{adnNode, isMyNode}
-      // Супервайзинг узла приводит к рендеру ещё одного виджета
-      val slavesFut: Future[Seq[MAdnNode]] = if(isMyNode && request.adnNode.adn.isSupervisor) {
-        MAdnNode.findBySupId(adnId)
-      } else {
-        Future successful Nil
-      }
 
       // Делегированная модерация: собрать id узлов, которые делегировали adv-модерацию этому узлу
       // Сами узлы отображать вроде бы [пока] не нужно.
@@ -144,7 +138,6 @@ class MarketLkAdn @Inject() (
 
       // Дождаться всех фьючерсов и отрендерить результат.
       for {
-        slaves          <- slavesFut
         (advReqsCount, advs) <- advsForMeFut
         showAdvsBtn     <- showAdvsBtnFut
         showBackBtn     <- showBackBtnFut
@@ -152,7 +145,6 @@ class MarketLkAdn @Inject() (
       } yield {
         Ok(adnNodeShowTpl(
           mnode         = adnNode,
-          slaves        = slaves,
           isMyNode      = isMyNode,
           advertisers   = advs,
           povAdnIdOpt   = request.povAdnNodeOpt.flatMap(_.id),

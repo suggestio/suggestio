@@ -57,21 +57,18 @@ object SysMarketUtil extends PlayMacroLogsDyn {
     import AdnRights._
     mapping(
       PRODUCER.longName -> boolean,
-      RECEIVER.longName -> boolean,
-      SUPERVISOR.longName -> boolean
+      RECEIVER.longName -> boolean
     )
-    {(isProd, isRcvr, isSup) =>
+    {(isProd, isRcvr) =>
       var acc: List[AdnRight] = Nil
       if (isProd) acc ::= PRODUCER
       if (isRcvr) acc ::= RECEIVER
-      if (isSup)  acc ::= SUPERVISOR
       acc.toSet
     }
     {rights =>
       val isProd = rights contains PRODUCER
       val isRcvr = rights contains RECEIVER
-      val isSup  = rights contains SUPERVISOR
-      Some((isProd, isRcvr, isSup))
+      Some((isProd, isRcvr))
     }
   }
 
@@ -112,19 +109,17 @@ object SysMarketUtil extends PlayMacroLogsDyn {
     "shownTypeIdOpt" -> adnShownTypeIdOptM,
     "rights"        -> adnRightsM,
     "sls"           -> adnSlInfoM,
-    "supId"         -> optional(esIdM),
     "advDelegate"   -> optional(esIdM),
     "testNode"      -> boolean,
     "isUser"        -> boolean,
     "sink"          -> adnSinksM
   )
-  {(isEnabled, shownTypeIdOpt, rights, sls, supId, advDgOpt, isTestNode, isUser, sinks) =>
+  {(isEnabled, shownTypeIdOpt, rights, sls, advDgOpt, isTestNode, isUser, sinks) =>
     AdNetMemberInfo(
       isEnabled = isEnabled,
       rights    = rights,
       shownTypeIdOpt = shownTypeIdOpt,
       showLevelsInfo = sls,
-      supId     = supId,
       advDelegate = advDgOpt,
       testNode  = isTestNode,
       isUser    = isUser,
@@ -133,7 +128,7 @@ object SysMarketUtil extends PlayMacroLogsDyn {
   }
   {anmi =>
     import anmi._
-    Some((isEnabled, Some(shownTypeId), rights, showLevelsInfo, supId, advDelegate, testNode, isUser, sinks))
+    Some((isEnabled, Some(shownTypeId), rights, showLevelsInfo, advDelegate, testNode, isUser, sinks))
   }
 
 
@@ -200,7 +195,6 @@ object SysMarketUtil extends PlayMacroLogsDyn {
         shownTypeIdOpt = adnNode2.adn.shownTypeIdOpt,
         isEnabled   = adnNode2.adn.isEnabled,
         showLevelsInfo = adnNode2.adn.showLevelsInfo,
-        supId       = adnNode2.adn.supId,
         advDelegate = adnNode2.adn.advDelegate,
         testNode    = adnNode2.adn.testNode,
         isUser      = adnNode2.adn.isUser,

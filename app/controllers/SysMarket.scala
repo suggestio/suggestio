@@ -82,7 +82,6 @@ class SysMarket @Inject() (
   /** Унифицированая страница отображения узла рекламной сети. */
   def showAdnNode(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
     import request.adnNode
-    val slavesFut = MAdnNode.findBySupId(adnId, maxResults = 100)
     val personNamesFut = Future.traverse(adnNode.personIds) { personId =>
       MPerson.findUsernameCached(personId)
         .map { nameOpt =>
@@ -93,10 +92,9 @@ class SysMarket @Inject() (
       _.toMap
     }
     for {
-      slaves      <- slavesFut
       personNames <- personNamesFut
     } yield {
-      Ok(adnNodeShowTpl(adnNode, slaves, personNames))
+      Ok(adnNodeShowTpl(adnNode, personNames))
     }
   }
 
@@ -233,21 +231,11 @@ class SysMarket @Inject() (
           .map(NotAcceptable(_))
       },
       {adnNode2 =>
-        val supExistsFut: Future[Boolean] = adnNode2.adn.supId.fold
-          { Future successful true }
-          { supId => MAdnNodeCache.getById(supId).map(_.isDefined) }
-        supExistsFut flatMap {
-          case true =>
-            MAdnNode.tryUpdate(adnNode) { updateAdnNode(_, adnNode2) }
-              .map { _ =>
-                Redirect(routes.SysMarket.showAdnNode(adnId))
-                  .flashing("success" -> "Изменения сохранены")
-              }
-
-          case false =>
-            val formWithErrors = formBinded.withError("adn.supId", "error.invalid")
-            editAdnNodeBody(adnId, formWithErrors)
-              .map(NotAcceptable(_))
+        for {
+          _ <- MAdnNode.tryUpdate(adnNode) { updateAdnNode(_, adnNode2) }
+        } yield {
+          Redirect(routes.SysMarket.showAdnNode(adnId))
+            .flashing("success" -> "Изменения сохранены")
         }
       }
     )

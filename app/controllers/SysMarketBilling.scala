@@ -5,11 +5,12 @@ import models.MBillContract.LegalContractId
 import play.api.i18n.MessagesApi
 import play.api.mvc.{Result, AnyContent}
 import util.PlayMacroLogsImpl
-import util.acl.{IsSuperuserContractNode, AbstractRequestWithPwOpt, IsSuperuser}
+import util.acl._
 import models._
 import util.SiowebEsUtil.client
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.db.Database
+import util.async.AsyncUtil
 import views.html.sys1.market.billing._
 import play.api.data._, Forms._
 import util.FormUtil._
@@ -39,7 +40,6 @@ class SysMarketBilling @Inject() (
 
   /** Маппинг для формы добавления/редактирования контракта. */
   private def contractFormM = Form(mapping(
-    "adnId"         -> esIdM,
     "dateContract"  -> bDate
     ,
     "suffix"        -> optional(
@@ -55,9 +55,9 @@ class SysMarketBilling @Inject() (
       )
   )
   // apply()
-  {(adnId, dateContract, suffix, isActive, hiddenInfo) =>
+  {(dateContract, suffix, isActive, hiddenInfo) =>
     MBillContract(
-      adnId = adnId,
+      adnId = null,
       contractDate = dateContract,
       suffix = suffix,
       hiddenInfo = hiddenInfo,
@@ -67,7 +67,7 @@ class SysMarketBilling @Inject() (
   // unapply()
   {mbc =>
     import mbc._
-    Some((adnId, contractDate, suffix, isActive, hiddenInfo))
+    Some((contractDate, suffix, isActive, hiddenInfo))
   })
 
 
@@ -98,97 +98,72 @@ class SysMarketBilling @Inject() (
   }
 
   /** Форма создания нового контракта (договора). */
-  def createContractForm(adnId: String) = IsSuperuser.async { implicit request =>
-    getNodeAndSupAsync(adnId) map {
-      case Some((adnNode, supOpt)) =>
-        val mbcStub = MBillContract(
-          adnId         = adnId,
-          isActive      = true
-        )
-        val formM = contractFormM fill mbcStub
-        Ok(createContractFormTpl(adnNode, supOpt, formM))
-
-      case None => adnNodeNotFound(adnId)
-    }
+  def createContractForm(adnId: String) = IsSuperuserAdnNodeGet(adnId).async { implicit request =>
+    val mbcStub = MBillContract(
+      adnId         = adnId,
+      isActive      = true
+    )
+    val formM = contractFormM fill mbcStub
+    Ok( createContractFormTpl(request.adnNode, formM) )
   }
 
   /** Сабмит формы создания нового контакта (договора). */
-  def createContractFormSubmit = IsSuperuser.async(parse.urlFormEncoded) { implicit request =>
-    contractFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        debug("createContractFormSubmit(): Form bind failed: " + formatFormErrors(formWithErrors))
-        val adnId = request.body("adnId").head
-        getNodeAndSupAsync(adnId) map {
-          case Some((adnNode, supOpt)) =>
-            NotAcceptable(createContractFormTpl(adnNode, supOpt, formWithErrors))
-          case None =>
-            adnNodeNotFound(adnId)
-        }
-      },
-      {mbc =>
-        val mbc1 = db.withTransaction { implicit c =>
-          val _mbc1 = mbc.save
-          // Сразу создать баланс, если ещё не создан.
-          if (MBillBalance.getByAdnId(mbc.adnId).isEmpty) {
-            MBillBalance(mbc.adnId, amount = 0F).save
+  def createContractFormSubmit(nodeId: String) = {
+    IsSuperuserAdnNodePost(nodeId).async(parse.urlFormEncoded) { implicit request =>
+      contractFormM.bindFromRequest().fold(
+        {formWithErrors =>
+          debug("createContractFormSubmit(): Form bind failed: " + formatFormErrors(formWithErrors))
+          NotAcceptable(createContractFormTpl(request.adnNode, formWithErrors))
+        },
+        {mbcRaw =>
+          val mbc = mbcRaw.copy(
+            adnId = nodeId
+          )
+          val saveFut = AsyncUtil.jdbcAsync { implicit c =>
+            val _mbc1 = mbc.save
+            // Сразу создать баланс, если ещё не создан.
+            if (MBillBalance.getByAdnId(mbc.adnId).isEmpty) {
+              MBillBalance(mbc.adnId, amount = 0F).save
+            }
+            _mbc1
           }
-          _mbc1
+          for (mbc1 <- saveFut) yield {
+            Redirect(routes.SysMarketBilling.billingFor(mbc1.adnId))
+              .flashing("success" -> s"Создан договор #${mbc1.legalContractId}.")
+          }
         }
-        Redirect(routes.SysMarketBilling.billingFor(mbc1.adnId))
-          .flashing("success" -> s"Создан договор #${mbc1.legalContractId}.")
-      }
-    )
+      )
+    }
   }
 
 
   /** Запрос страницы редактирования контракта. */
-  def editContractForm(contractId: Int) = IsSuperuser.async { implicit request =>
-    val mbcOpt = db.withConnection { implicit c =>
-      MBillContract.getById(contractId)
-    }
-    mbcOpt match {
-      case Some(mbc) =>
-        val afut = getNodeAndSupAsync(mbc.adnId)
-        val formFilled = contractFormM.fill(mbc)
-        afut map {
-          case Some((adnNode, supOpt)) =>
-            Ok(editContractFormTpl(adnNode, supOpt, mbc, formFilled))
-          case None =>
-            adnNodeNotFound(mbc.adnId)
-        }
-
-      case None => NotFound("No such contract: " + contractId)
-    }
+  def editContractForm(contractId: Int) = IsSuperuserContractNodeGet(contractId) { implicit request =>
+    val formFilled = contractFormM.fill( request.contract )
+    Ok( editContractFormTpl(request.adnNode, request.contract, formFilled) )
   }
 
   /** Самбит формы редактирования договора. */
-  def editContractFormSubmit(contractId: Int) = IsSuperuser.async { implicit request =>
-    val mbc0 = db.withConnection { implicit c =>
-      MBillContract.getById(contractId).get
-    }
+  def editContractFormSubmit(contractId: Int) = IsSuperuserContractNodePost(contractId).async { implicit request =>
     contractFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug("editContractFormSubmit(): Form bind failed: " + formatFormErrors(formWithErrors))
-        val adnId = mbc0.adnId
-        getNodeAndSupAsync(adnId) map {
-          case Some((adnNode, supOpt)) =>
-            NotAcceptable(editContractFormTpl(adnNode, supOpt, mbc0, formWithErrors))
-          case None =>
-            adnNodeNotFound(adnId)
-        }
+        NotAcceptable(editContractFormTpl(request.adnNode, request.contract, formWithErrors))
       },
       {mbc1 =>
-        val mbc3 = mbc0.copy(
+        val mbc3 = request.contract.copy(
           contractDate = mbc1.contractDate,
           hiddenInfo   = mbc1.hiddenInfo,
           isActive     = mbc1.isActive,
           suffix       = mbc1.suffix
         )
-        db.withConnection { implicit c =>
+        val saveFut = AsyncUtil.jdbcAsync { implicit c =>
           mbc3.save
         }
-        Redirect(routes.SysMarketBilling.billingFor(mbc3.adnId))
-          .flashing("success" -> s"Изменения сохранены: #${mbc3.legalContractId}.")
+        for (_ <- saveFut) yield {
+          Redirect(routes.SysMarketBilling.billingFor(mbc3.adnId))
+            .flashing("success" -> s"Изменения сохранены: #${mbc3.legalContractId}.")
+        }
       }
     )
   }
@@ -345,17 +320,6 @@ class SysMarketBilling @Inject() (
   private def adnNodeNotFound(adnId: String) = {
     NotFound("Adn node " + adnId + " does not exists.")
   }
-
-  private def getNodeAndSupAsync(adnId: String): Future[Option[(MAdnNode, Option[MAdnNode])]] = {
-    MAdnNodeCache.getById(adnId) flatMap {
-      case Some(adnNode) =>
-        MAdnNodeCache.maybeGetByIdCached(adnNode.adn.supId) map { supOpt =>
-          Some(adnNode -> supOpt)
-        }
-      case None => Future successful None
-    }
-  }
-
 
 
   // Доступ к модели MSinkComission.

@@ -255,9 +255,21 @@ trait IsSuperuserContractNodeBase extends ActionBuilder[ContractNodeRequest] {
   }
 }
 
-final case class IsSuperuserContractNode(contractId: Int)
+abstract class IsSuperuserContractNodeAbstract
   extends IsSuperuserContractNodeBase
   with ExpireSession[ContractNodeRequest]
+final case class IsSuperuserContractNode(override val contractId: Int)
+  extends IsSuperuserContractNodeAbstract
+
+/** Реализация [[IsSuperuserContractNodeBase]] с выставлением CSRF-токена. */
+final case class IsSuperuserContractNodeGet(override val contractId: Int)
+  extends IsSuperuserContractNodeAbstract
+  with CsrfGet[ContractNodeRequest]
+
+/** Реализация [[IsSuperuserContractNodeBase]] с проверкой CSRF-токена. */
+final case class IsSuperuserContractNodePost(override val contractId: Int)
+  extends IsSuperuserContractNodeAbstract
+  with CsrfPost[ContractNodeRequest]
 
 
 case class CompanyRequest[A](

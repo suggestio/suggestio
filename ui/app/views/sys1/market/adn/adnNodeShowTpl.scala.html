@@ -1,4 +1,4 @@
-@(adnNode: MAdnNode, slaves: Seq[MAdnNode], personNames: Map[String, String] = Map.empty)(implicit ctx: Context)
+@(adnNode: MAdnNode, personNames: Map[String, String] = Map.empty)(implicit ctx: Context)
 
 @* Страница, отображающая информацию по торговому центру. *@
 
@@ -65,12 +65,6 @@
 
   @lkBlock("Метаданные") {
     @_nodeMetaTpl(adnNode.meta)
-  }
-
-  @if(slaves.nonEmpty) {
-    @lkBlock("Подчинённые узлы(" +slaves.size +")") {
-      @_adnNodesListTpl(slaves, withDelims = false)
-    }
   }
 
   @lkBlock("Пользователи") {
