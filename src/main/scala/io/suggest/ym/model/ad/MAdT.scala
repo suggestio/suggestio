@@ -14,7 +14,6 @@ import io.suggest.model.common._
 trait MAdT
   extends EMProducerIdI
   with EMReceiversI
-  with EMPrioOptI
   with EMUserCatIdI
   with EMDateCreatedI
   with EMAdOffersI
@@ -38,7 +37,6 @@ trait MAdWrapperT extends MAdT {
   def wrappedAd: MAdT
 
   override def userCatId = wrappedAd.userCatId
-  override def prio = wrappedAd.prio
   override def producerId = wrappedAd.producerId
   override def offers = wrappedAd.offers
   override def receivers = wrappedAd.receivers

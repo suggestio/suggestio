@@ -30,7 +30,6 @@ object MAd
   with EMImgStatic
   with EMBlockMetaStatic
   with EMReceiversStatic
-  with EMPrioOptStatic
   with EMUserCatIdStatic
   with EMDateCreatedStatic
   with EMDateEditedStatic
@@ -144,7 +143,6 @@ final case class MAd(
   var imgs          : Imgs_t              = Map.empty,
   var blockMeta     : BlockMeta           = BlockMeta.DEFAULT,
   var receivers     : Receivers_t         = Map.empty,
-  var prio          : Option[Int]         = None,
   var id            : Option[String]      = None,
   var userCatId     : Set[String]         = Set.empty,
   var texts4search  : Texts4Search        = Texts4Search.EMPTY,
@@ -166,7 +164,6 @@ final case class MAd(
   with EMImgMut
   with EMBlockMetaMut
   with EMReceiversMut
-  with EMPrioOptMut
   with EMUserCatIdMut
   with EMDateCreatedMut
   with EMDateEditedMut

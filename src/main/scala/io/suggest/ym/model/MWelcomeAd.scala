@@ -67,7 +67,6 @@ final case class MWelcomeAd(
   override def companion = MWelcomeAd
 
   override def offers = Nil
-  override def prio = None
   override def userCatId = Set.empty
   override def receivers = Map.empty
   override def blockMeta = BlockMeta.DEFAULT    // TODO Блоки вообще не относятся к карточкам приветствия. Нужно это спилить.
