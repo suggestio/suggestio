@@ -184,7 +184,7 @@ trait EMAdNetMemberStatic extends EsModelStaticMutAkvT with EsModelStaticT {
         testNode = Option(vm get TEST_NODE_ESFN)
           .fold(false)(booleanParser),
         showLevelsInfo = Option(vm get SHOW_LEVELS_ESFN)
-          .fold(AdnMemberShowLevels()) { AdnMemberShowLevels.deserialize(_) },
+          .fold(AdnMemberShowLevels.empty) { AdnMemberShowLevels.deserialize },
         isEnabled = Option(vm get IS_ENABLED_ESFN)
           .fold(true)(booleanParser),
         disableReason = Option(vm get DISABLE_REASON_ESFN) map stringParser,
@@ -381,6 +381,7 @@ case class AdNetMemberInfo(
 
 
 object AdnMemberShowLevels {
+
   type LvlMap_t = Map[AdShowLevel, Int]
 
   val IN_ESFN = "in"
@@ -402,26 +403,28 @@ object AdnMemberShowLevels {
       }.toMap
   }
 
+  def empty = AdnMemberShowLevels()
+
   /**
    * Десериализатор значения.
    * @param raw Выхлоп jackson'a.
-   * @param acc Необязательный начальный аккамулятор.
    * @return Десериализованный экземпляр класса.
    */
-  def deserialize(raw: Any, acc: AdnMemberShowLevels = AdnMemberShowLevels()): AdnMemberShowLevels = {
+  def deserialize(raw: Any): AdnMemberShowLevels = {
     raw match {
       case rawMpsl: ju.Map[_,_] =>
-        rawMpsl.foreach { case (k, v) =>
-          val lvlMap = deserializeLevelsMap(v)
-          k match {
-            case IN_ESFN  => acc.in = lvlMap
-            case OUT_ESFN => acc.out = lvlMap
-          }
+        def _s(fn: String): LvlMap_t = {
+          Option( rawMpsl.get(fn) )
+            .fold[LvlMap_t](Map.empty)(deserializeLevelsMap)
         }
+        AdnMemberShowLevels(
+          in  = _s(IN_ESFN),
+          out = _s(OUT_ESFN)
+        )
 
       case null => // Do nothing
+        empty
     }
-    acc
   }
 
 
@@ -477,8 +480,8 @@ import AdnMemberShowLevels._
  * @param out Карта уровней для исходящих публикаций.
  */
 case class AdnMemberShowLevels(
-  var in:  AdnMemberShowLevels.LvlMap_t = Map.empty,
-  var out: AdnMemberShowLevels.LvlMap_t = Map.empty
+  in:  AdnMemberShowLevels.LvlMap_t = Map.empty,
+  out: AdnMemberShowLevels.LvlMap_t = Map.empty
 ) {
 
   @JsonIgnore
