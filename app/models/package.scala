@@ -165,7 +165,7 @@ package object models {
   val  AdnNodeGeodata       = ym.model.common.AdnNodeGeodata
   type AdnNodeGeodata       = ym.model.common.AdnNodeGeodata
 
-  type AdnNodesSearchArgs   = ym.model.common.AdnNodesSearchArgs
+  type AdnNodesSearchArgs   = ym.model.common.AdnNodesSearchArgsImpl
   type AdnNodesSearchArgsT  = ym.model.common.AdnNodesSearchArgsT
 
 

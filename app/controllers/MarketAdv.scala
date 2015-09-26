@@ -696,15 +696,15 @@ class MarketAdv @Inject() (
   // TODO Вместо IsAdnAdmin надо какой-то IsAdnRcvrAdmin
   def showNodeAdvs(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
     // Отрабатываем делегирование adv-прав текущему узлу:
-    val dgAdnIdsFut: Future[Set[String]] = {
-      for (edges <- MEdge.dynSearch( FindEdgesByAdvDelegate(adnId) )) yield {
-        var iter = edges.iterator
-          .map { medge => medge.fromId }
-        // Дописать в начало ещё текущей узел, если он также является рекламо-получателем.
-        if (request.adnNode.adn.isReceiver)
-          iter ++= Iterator(adnId)
-        iter.toSet
-      }
+    val dgAdnIdsFut: Future[Set[String]] = for {
+      edges <- MEdge.dynSearch( FindEdgesByAdvDelegate(adnId) )
+    } yield {
+      var iter = edges.iterator
+        .map { _.fromId }
+      // Дописать в начало ещё текущей узел, если он также является рекламо-получателем.
+      if (request.adnNode.adn.isReceiver)
+        iter ++= Iterator(adnId)
+      iter.toSet
     }
 
     // TODO Отрабатывать цепочное делегирование, когда узел делегирует дальше adv-права ещё какому-то узлу.

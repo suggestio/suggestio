@@ -106,7 +106,7 @@ class SysMarketBillingMmp @Inject() (
           mbmd.save
         }
         Redirect(routes.SysMarketBilling.billingFor(request.contract.adnId))
-          .flashing("success" -> s"Создан посуточный тарификатор #${mbmd1.id.get} для договора ${request.contract.legalContractId}")
+          .flashing(FLASH.SUCCESS -> s"Создан посуточный тарификатор #${mbmd1.id.get} для договора ${request.contract.legalContractId}")
       }
     )
   }
@@ -164,7 +164,7 @@ class SysMarketBillingMmp @Inject() (
         // Рендер результата.
         rdrToAdnFut map { rdrToAdn =>
           Redirect(routes.SysMarketBilling.billingFor(rdrToAdn))
-            .flashing("success" -> s"Изменения в тарифном плане #$mmpdId сохранены.")
+            .flashing(FLASH.SUCCESS -> s"Изменения в тарифном плане #$mmpdId сохранены.")
         }
       }
     )
@@ -186,9 +186,9 @@ class SysMarketBillingMmp @Inject() (
       (adnIdOpt, rowsDeleted) <- resultFut
     } yield {
       val flashInfo: (String, String) = rowsDeleted match {
-        case 1 => "success" -> s"Mmp-тарификатор #$mmpId удалён."
-        case 0 => "error"   -> s"Mmp-тарификатор #$mmpId НЕ НАЙДЕН."
-        case _ => "error"   -> s"Неизвестный результат операции для mmp#$mmpId: $rowsDeleted. Ожидалось 1 или 0."
+        case 1 => FLASH.SUCCESS -> s"Mmp-тарификатор #$mmpId удалён."
+        case 0 => FLASH.ERROR   -> s"Mmp-тарификатор #$mmpId НЕ НАЙДЕН."
+        case _ => FLASH.ERROR   -> s"Неизвестный результат операции для mmp#$mmpId: $rowsDeleted. Ожидалось 1 или 0."
       }
       val rdrCall = adnIdOpt.fold {
         routes.SysMarket.index()
@@ -245,7 +245,7 @@ class SysMarketBillingMmp @Inject() (
           count <- countUpdatedFut
         } yield {
           Redirect( routes.SysMarketBilling.index() )
-            .flashing("success" -> s"Обновлено $count посуточных тарифов.")
+            .flashing(FLASH.SUCCESS -> s"Обновлено $count посуточных тарифов.")
         }
       }
     )

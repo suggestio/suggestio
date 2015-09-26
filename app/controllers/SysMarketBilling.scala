@@ -131,7 +131,7 @@ class SysMarketBilling @Inject() (
           }(AsyncUtil.jdbcExecutionContext)
           for (mbc1 <- saveFut) yield {
             Redirect(routes.SysMarketBilling.billingFor(mbc1.adnId))
-              .flashing("success" -> s"Создан договор #${mbc1.legalContractId}.")
+              .flashing(FLASH.SUCCESS -> s"Создан договор #${mbc1.legalContractId}.")
           }
         }
       )
@@ -166,7 +166,7 @@ class SysMarketBilling @Inject() (
         }(AsyncUtil.jdbcExecutionContext)
         for (_ <- saveFut) yield {
           Redirect(routes.SysMarketBilling.billingFor(mbc3.adnId))
-            .flashing("success" -> s"Изменения сохранены: #${mbc3.legalContractId}.")
+            .flashing(FLASH.SUCCESS -> "Changes.saved")
         }
       }
     )
@@ -288,9 +288,8 @@ class SysMarketBilling @Inject() (
         if (mbc.crand != lci.crand || !mbc.suffixMatches(lci.suffix))
           throw new IllegalArgumentException("invalid id")
         val result = Billing.addPayment(txn)
-        val okMsg = "Платеж успешно проведён. Баланс: " + result.newBalance.amount
-        Redirect(routes.SysMarketBilling.billingFor(mbc.adnId))
-          .flashing("success" -> okMsg)
+        Redirect( routes.SysMarketBilling.billingFor(mbc.adnId) )
+          .flashing(FLASH.SUCCESS -> ("Платеж успешно проведён. Баланс: " + result.newBalance.amount))
       }
     )
   }
@@ -381,7 +380,7 @@ class SysMarketBilling @Inject() (
         }
         // Отправить админа назад на биллинг.
         Redirect( routes.SysMarketBilling.billingFor(adnId) )
-          .flashing("success" -> s"Создан тариф для выдачи ${msc.sink.longName}")
+          .flashing(FLASH.SUCCESS -> s"Создан тариф для выдачи ${msc.sink.longName}")
       }
     )
   }
@@ -424,7 +423,7 @@ class SysMarketBilling @Inject() (
           MBillContract.getById(msc3.contractId).get.adnId
         }
         Redirect( routes.SysMarketBilling.billingFor(adnId) )
-          .flashing("success" -> "Измения сохранены.")
+          .flashing(FLASH.SUCCESS -> "Changes.saved")
       }
     )
   }
@@ -441,11 +440,11 @@ class SysMarketBilling @Inject() (
     adnIdOpt match {
       case Some(adnId) =>
         Redirect( routes.SysMarketBilling.billingFor(adnId) )
-          .flashing("success" -> "sink-тариф удалён.")
+          .flashing(FLASH.SUCCESS -> "sink-тариф удалён.")
 
       case None =>
         Redirect( routes.SysMarket.index() )
-          .flashing("error" -> "Что-то пошло не так... sink-тариф уже удалён?")
+          .flashing(FLASH.ERROR -> "Что-то пошло не так... sink-тариф уже удалён?")
     }
   }
 

@@ -5,6 +5,7 @@ import com.google.inject.Inject
 import models.im.MImg
 import models.jsm.init.MTargets
 import models.mtag.MTagUtil
+import models.usr.MUserEdgeUtil
 import org.joda.time.DateTime
 import play.api.i18n.{MessagesApi, Messages}
 import play.api.libs.json.JsValue
@@ -154,6 +155,10 @@ class MarketAd @Inject() (
         adIdFut.onSuccess { case _ =>
           val fut = MTagUtil.handleNewTagsM(mad.tags)
           logTagsUpdate(fut, logPrefix)
+        }
+        // Сохранить в MEdge инфу о юзере-создателе карточки.
+        for (adId <- adIdFut) {
+          MUserEdgeUtil.saveCreatorEdge(adId)
         }
         // Возврат HTTP-ответа.
         resFut

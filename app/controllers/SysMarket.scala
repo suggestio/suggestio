@@ -1,10 +1,9 @@
 package controllers
 
 import com.google.inject.Inject
-import io.suggest.ym.model.common.AdnMemberShowLevels
 import models.im.MImg
 import models.msys.NodeCreateParams
-import models.usr.{MPerson, EmailActivation}
+import models.usr.{MUserEdgeUtil, MPerson, EmailActivation}
 import play.api.db.Database
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
@@ -106,7 +105,7 @@ class SysMarket @Inject() (
       .filter(identity)
       .map { _ =>
         Redirect(routes.SysMarket.adnNodesList())
-          .flashing("success" -> "Узел ADN удалён.")
+          .flashing(FLASH.SUCCESS -> "Узел ADN удалён.")
       }
       .recover {
         case nse: NoSuchElementException =>
@@ -159,9 +158,13 @@ class SysMarket @Inject() (
       },
       {adnNode =>
         for (adnId <- adnNode.save) yield {
+          // Инициализировать новосозданный узел.
           maybeInitializeNode(ncpForm, adnId)
+          // Сохранить инфу о юзере-создателе узла.
+          MUserEdgeUtil.saveCreatorEdge(adnId)
+          // Отредиректить админа в созданный узел.
           Redirect(routes.SysMarket.showAdnNode(adnId))
-            .flashing("success" -> s"Создан узел сети: $adnId")
+            .flashing(FLASH.SUCCESS -> s"Создан узел сети: $adnId")
         }
       }
     )
@@ -235,7 +238,7 @@ class SysMarket @Inject() (
           _ <- MAdnNode.tryUpdate(adnNode) { updateAdnNode(_, adnNode2) }
         } yield {
           Redirect(routes.SysMarket.showAdnNode(adnId))
-            .flashing("success" -> "Изменения сохранены")
+            .flashing(FLASH.SUCCESS -> "Changes.saved")
         }
       }
     )
@@ -271,7 +274,7 @@ class SysMarket @Inject() (
           sendEmailInvite(eact2, adnNode)
           // Письмо отправлено, вернуть админа назад в магазин
           Redirect(routes.SysMarket.showAdnNode(adnId))
-            .flashing("success" -> ("Письмо с приглашением отправлено на " + email1))
+            .flashing(FLASH.SUCCESS -> ("Письмо с приглашением отправлено на " + email1))
         }
       }
     )
@@ -294,7 +297,7 @@ class SysMarket @Inject() (
     warn("Resetting MYmCategories...")
     MYmCategory.resetMapping map { _ =>
       Redirect(routes.SysMarket.showYmCats())
-        .flashing("success" -> "Все категории удалены.")
+        .flashing(FLASH.SUCCESS -> "Все категории удалены.")
     }
   }
 
@@ -304,7 +307,7 @@ class SysMarket @Inject() (
     warn("Inserting categories into MYmCategories...")
     MYmCategory.insertYmCats.map { _ =>
       Redirect(routes.SysMarket.showYmCats())
-        .flashing("succes" -> "Импорт сделан.")
+        .flashing(FLASH.SUCCESS -> "Импорт сделан.")
     }
   }
 
@@ -437,9 +440,9 @@ class SysMarket @Inject() (
     } yield {
       // Вернуть редирект с результатом работы.
       val flasher = if (isOk) {
-        "success" -> "Карточка убрана из выдачи."
+        FLASH.SUCCESS -> "Карточка убрана из выдачи."
       } else {
-        "error"   -> "Карточка не найдена."
+        FLASH.ERROR   -> "Карточка не найдена."
       }
       rdr.flashing(flasher)
     }

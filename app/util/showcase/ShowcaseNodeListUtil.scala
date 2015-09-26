@@ -146,7 +146,8 @@ object ShowcaseNodeListUtil extends PlayMacroLogsImpl {
   private case class NodeSearchByIdShownType(
     override val withIds: Seq[String],
     override val shownTypeIds: Seq[String]
-  ) extends NodeDetectArgsT
+  )
+    extends NodeDetectArgsT
 
   /**
    * Найти узел города для узла.
@@ -422,20 +423,20 @@ object ShowcaseNodeListUtil extends PlayMacroLogsImpl {
 
 
 /** общие аргументов для обоих целей. */
-sealed trait SmNodesSearchArgsCommonT extends AdnNodesSearchArgs {
+sealed class SmNodesSearchArgsCommonT extends AdnNodesSearchArgs {
   override def testNode = Some(false)
   override def isEnabled = Some(true)
 }
 
 /** В рамках списка узлов выдачи всегда НЕ нужны отключённые и тестовые узлы. */
-sealed trait SmNodesSearchArgsT extends SmNodesSearchArgsCommonT {
+sealed class SmNodesSearchArgsT extends SmNodesSearchArgsCommonT {
   override def showInScNodeList = Some(true)
 }
 
 
 /** При детектирования текущего узла происходит поиск единственного продакшен-ресивера.
   * Тут -- common-аргументы, задающие это поведение при поиске узлов. */
-sealed trait NodeDetectArgsT extends SmNodesSearchArgsCommonT {
+sealed class NodeDetectArgsT extends SmNodesSearchArgsCommonT {
   override def withAdnRights = Seq(AdnRights.RECEIVER)
   override def limit = 1
   override def offset = 0

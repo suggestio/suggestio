@@ -5,7 +5,7 @@ import _root_.util.async.AsyncUtil
 import com.google.inject.Inject
 import controllers.ident._
 import models.msession.Keys
-import models.usr.EmailPwIdent
+import models.usr.{MUserEdgeUtil, EmailPwIdent}
 import play.api.i18n.MessagesApi
 import util.billing.Billing
 import _root_.util.{FormUtil, PlayMacroLogsImpl}
@@ -311,10 +311,21 @@ class MarketLkAdn @Inject() (
         NotAcceptable(createTpl(formWithErrors))
       },
       {nodeName =>
-        NodesUtil.createUserNode(name = nodeName, personId = request.pwOpt.get.personId) map { adnNode =>
+        val nodeFut = NodesUtil.createUserNode(
+          name      = nodeName,
+          personId  = request.pwOpt.get.personId
+        )
+        // Рендер HTTP-ответа.
+        val respFut = nodeFut map { adnNode =>
           Redirect( NodesUtil.userNodeCreatedRedirect(adnNode.id.get) )
             .flashing(FLASH.SUCCESS -> "New.shop.created.fill.info")
         }
+        // Сохранить инфу о создателе в MEdge
+        for (mnode <- nodeFut) {
+          MUserEdgeUtil.saveCreatorEdge( mnode.id.get )
+        }
+        // Вернуть HTTP-ответ.
+        respFut
       }
     )
   }
