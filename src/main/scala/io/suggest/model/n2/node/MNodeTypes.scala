@@ -13,37 +13,43 @@ import io.suggest.common.menum.play.EnumJsonReadsValT
  */
 object MNodeTypes extends EnumMaybeWithName with EnumJsonReadsValT {
 
-  protected sealed trait ValT {
+  /** Трейт каждого элемента данной модели. */
+  protected sealed trait ValT { that: T =>
+    /** Уникальный строковой ключ элемента. */
     def strId: String
 
     /** Подтипы этого типа. */
     def subTypes: List[T]
 
+    /** Родительский элемент, если есть. */
     def parent: Option[T]
 
-    def hasParent(ntype: T): Boolean
+    /** Является ли текущий элемент дочерним по отношению к указанному? */
+    def hasParent(ntype: T): Boolean = {
+      parent.exists { p =>
+        p == ntype || p.hasParent(ntype)
+      }
+    }
+    /** Короткий враппер для hasParent(). */
+    def >>(ntype: T) = hasParent(ntype)
 
+    /** Является ли текущий элемент указанным или дочерним? */
     def eqOrHasParent(ntype: T): Boolean = {
       this == ntype || hasParent(ntype)
     }
+    /** Короткий враппер к eqOrHasParent(). */
+    def ==>>(ntype: T) = eqOrHasParent(ntype)
   }
 
   /** Абстрактная класс одного элемента модели. */
   protected[this] abstract sealed class Val(val strId: String)
     extends super.Val(strId)
     with ValT
-  {
 
-    override def hasParent(ntype: T): Boolean = {
-      parent.exists { p =>
-        p == ntype || p.hasParent(ntype)
-      }
-    }
-  }
 
   override type T = Val
 
-  protected sealed trait NoParent extends ValT {
+  protected sealed trait NoParent extends ValT { that: T =>
     override def parent: Option[T] = None
   }
 

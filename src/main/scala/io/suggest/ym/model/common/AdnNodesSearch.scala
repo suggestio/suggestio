@@ -34,6 +34,9 @@ with NameSortDflt with RoutingDsaDflt with LimitDflt with OffsetDflt
   override def offset: Int = EsModel.OFFSET_DFLT
 }
 
+class AdnNodesSearchArgsImpl
+  extends AdnNodesSearchArgs
+
 
 /** Враппер над аргументами поиска узлов, переданными в underlying. */
 trait AdnNodesSearchArgsWrapper extends AdnNodesSearchArgsT with TextQueryDsaWrapper with WithoutIdsDsaWrapper

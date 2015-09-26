@@ -103,7 +103,6 @@ object NodeConf {
  * @param showInScNodesList Отображать ли узел в списке узлов выдачи?
  */
 case class NodeConf(
-  // !! var использовать нельзя, т.к. это в целом плохо + дефолтовый конфиг сейчас шарится между инстансами узлов.
   showInScNodesList     : Boolean = true,
   showcaseVoidFiller    : Option[String] = None
 ) {

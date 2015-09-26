@@ -19,46 +19,78 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT {
   {
 
     /** Типы узлов, которые могут выступать субъектом данного предиката. */
-    def fromTypes  : List[MNodeType]
+    def fromTypeValid(ntype: MNodeType): Boolean
 
     /** Типы узлов, которые могут выступать объектами данного предиката. */
-    def toTypes   : List[MNodeType]
+    def toTypeValid(ntype: MNodeType): Boolean
 
   }
 
   override type T = Val
 
 
+  // Короткие врапперы для определения принадлежности типов друг к другу.
+  private def _isAdnNode(ntype: MNodeType): Boolean = {
+    ntype ==>> MNodeTypes.AdnNode
+  }
+  private def _isPerson(ntype: MNodeType): Boolean = {
+    ntype ==>> MNodeTypes.Person
+  }
+  private def _isAd(ntype: MNodeType): Boolean = {
+    ntype ==>> MNodeTypes.Ad
+  }
+
+
   // Экземпляры модели, идентификаторы идут по алфавиту: a->z, a1->z1, ...
 
   /** Карточка-объект произведена узлом-субъектом. */
   val AdOwnedBy: T = new Val("a") {
-    override def fromTypes: List[MNodeType] = {
-      List(MNodeTypes.AdnNode)
+    override def fromTypeValid(ntype: MNodeType): Boolean = {
+      _isAdnNode(ntype)
     }
-    override def toTypes: List[MNodeType] = {
-      List(MNodeTypes.Ad)
+    override def toTypeValid(ntype: MNodeType): Boolean = {
+      _isAd(ntype)
     }
   }
 
 
   /** Юзер владеет чем-то: узлом или карточкой напрямую. */
   val PersonOwns: T = new Val("b") {
-    override def fromTypes: List[MNodeType] = {
-      List(MNodeTypes.Person)
+    override def fromTypeValid(ntype: MNodeType): Boolean = {
+      _isPerson(ntype)
     }
-    override def toTypes: List[MNodeType] = {
-      List(MNodeTypes.AdnNode, MNodeTypes.Ad)
+    override def toTypeValid(ntype: MNodeType): Boolean = {
+      _isAdnNode(ntype) || _isAd(ntype)
     }
   }
 
 
-  /** Модерация запросов на размещение с from-узла делегирована другому указанному узлу. */
+  /**
+   * Модерация запросов на размещение с from-узла делегирована другому указанному узлу.
+   * from -- узел, входящие запросы на который будут обрабатываться узлом-делегатом
+   * to   -- узел-делегат, который видит у себя запросы на размещение от других узлов.
+   */
   val AdvManageDelegatedTo: T = new Val("c") {
-    override def fromTypes: List[MNodeType] = {
-      List(MNodeTypes.AdnNode)
+    override def fromTypeValid(ntype: MNodeType): Boolean = {
+      _isAdnNode(ntype)
     }
-    override def toTypes: List[MNodeType] = fromTypes
+    override def toTypeValid(ntype: MNodeType): Boolean = {
+      _isAdnNode(ntype)
+    }
+  }
+
+  /**
+   * Предикат юзера-создателя какого-то узла в системе.
+   * from -- юзер.
+   * to   -- любой узел, например карточка или магазин.
+   */
+  val CreatorOf: T = new Val("d") {
+    override def fromTypeValid(ntype: MNodeType): Boolean = {
+      _isPerson(ntype)
+    }
+    override def toTypeValid(ntype: MNodeType): Boolean = {
+      true
+    }
   }
 
 }

@@ -9,9 +9,11 @@ import io.suggest.model.search._
  * Description: Утиль для поддержки поиска по [[io.suggest.model.n2.edge.MEdge]].
  */
 trait EdgeSearch
+  // Сначала идут хорошо-индексируемые критерии.
   extends FromId
-  with Predicate
   with ToId
+  // И только потом filtered-критерии и прочий мусор.
+  with Predicate
   with Ordering
   with Limit
   with Offset
@@ -21,8 +23,8 @@ trait EdgeSearch
 trait EdgeSearchDflt
   extends EdgeSearch
   with FromIdDflt
-  with PredicateDflt
   with ToIdDflt
+  with PredicateDflt
   with OrderingDflt
   with LimitDflt
   with OffsetDflt
@@ -36,8 +38,8 @@ class EdgeSearchDfltImpl
 trait EdgeSearchWrap
   extends EdgeSearch
   with FromIdWrap
-  with PredicateWrap
   with ToIdWrap
+  with PredicateWrap
   with OrderingWrap
   with LimitWrap
   with OffsetWrap
