@@ -1,5 +1,7 @@
 package util.jmx
 
+import io.suggest.model.n2.edge.MEdgeJmx
+import io.suggest.model.n2.media.MMediaJmx
 import io.suggest.model.n2.node.MNodeJmx
 import io.suggest.ym.model._
 import io.suggest.model._
@@ -53,6 +55,8 @@ object JMXImpl extends PlayLazyMacroLogsImpl {
     new MEventJmx,
     new MExtTargetJmx,
     new MNodeJmx,
+    new MMediaJmx,
+    new MEdgeJmx,
     // cassandra
     new SioCassandraClientJmx,
     new MImgThumb2Jmx,
