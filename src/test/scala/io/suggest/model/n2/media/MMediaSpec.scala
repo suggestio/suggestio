@@ -21,6 +21,7 @@ class MMediaSpec extends FlatSpec {
       file = MFileMeta(
         mime  = "application/jpeg",
         sizeB = 234525,
+        isOriginal = true,
         sha1  = None
       ),
       id = None

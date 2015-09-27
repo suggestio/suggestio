@@ -17,6 +17,7 @@ class MFileMetaSpec extends FlatSpec with PlayJsonTestUtil {
     MFileMeta(
       mime  = "application/json",
       sizeB = 132421,
+      isOriginal = true,
       sha1  = None
     )
   }
