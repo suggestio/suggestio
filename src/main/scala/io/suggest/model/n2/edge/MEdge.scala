@@ -1,13 +1,16 @@
 package io.suggest.model.n2.edge
 
+import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model._
 import io.suggest.model.n2.edge.search.EdgeSearch
 import io.suggest.model.search.EsDynSearchStatic
 import io.suggest.util.MacroLogsImpl
+import org.elasticsearch.client.Client
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
 import scala.collection.Map
+import scala.concurrent.ExecutionContext
 
 /**
  * Suggest.io
@@ -111,4 +114,14 @@ case class MEdge(
     Some(fromId + "." + predicate.strId + "." + toId)
   }
 
+}
+
+
+// Поддержка JMX
+trait MEdgeJmxMBean extends EsModelJMXMBeanI
+final class MEdgeJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+  extends EsModelJMXBase
+  with MEdgeJmxMBean
+{
+  override def companion = MEdge
 }

@@ -67,26 +67,27 @@ object MNode
     )
   }
 
-  /** Полусобранный десериализатор экземпляров модели. */
-  private val _reads = {
-    EMNodeCommon.READS and
+  /** Почти-собранный play.json.Format. */
+  val DATA_FORMAT: OFormat[MNode] = (
+    EMNodeCommon.FORMAT and
     EMNodeMeta.FORMAT and
-    __.read[MNodeTagInfo]
-  }
-  override protected def esDocReads(dmeta: IEsDocMeta): Reads[MNode] = {
-    _reads { (common, nmeta, mntag) =>
-      MNode(common, nmeta, mntag, dmeta.id, dmeta.version)
+    __.format[MNodeTagInfo]
+  )(
+    {(common, nmeta, mntag) =>
+      MNode(common, nmeta, mntag)
+    },
+    {mnode =>
+      (mnode.common, mnode.meta, mnode.tag)
     }
+  )
+
+  override protected def esDocReads(dmeta: IEsDocMeta): Reads[MNode] = {
+    DATA_FORMAT
+      .map { _.withDocMeta(dmeta) }
   }
 
   /** Сериализация в JSON. */
-  override val esDocWrites: Writes[MNode] = (
-    EMNodeCommon.WRITES and
-    EMNodeMeta.FORMAT and
-    __.write[MNodeTagInfo]
-  ) { mnode =>
-    (mnode.common, mnode.meta, mnode.tag)
-  }
+  override def esDocWrites = DATA_FORMAT
 
 
   /** Враппер над getById(), осуществляющий ещё и фильтрацию по типу узла. */
@@ -135,6 +136,13 @@ case class MNode(
 
   override type T = MNode
   override def companion = MNode
+
+  def withDocMeta(dmeta: IEsDocMeta): T = {
+    copy(
+      id = dmeta.id,
+      versionOpt = dmeta.version
+    )
+  }
 
 }
 
