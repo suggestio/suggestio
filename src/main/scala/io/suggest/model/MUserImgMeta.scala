@@ -117,6 +117,16 @@ object MUserImgMeta2 extends MUserImgMetaRecord with CassandraStaticModel[MUserI
     }
   }
 
+  def countAllQualified(qOpt: Option[String]): Future[Long] = {
+    tryCatchFut {
+      val q = MUserImg2.qOpt2q(qOpt)
+      count
+        .where(_.q eqs q)
+        .one()
+        .map { _ getOrElse 0L }
+    }
+  }
+
   /**
    * 2014.09.30: добавлялка поля timestamp. Потом надо удалить это отсюда и из jmx.
    * @return Фьючерс для синхронизации.
@@ -134,8 +144,12 @@ trait MUserImgMeta2JmxMBean extends CassandraModelJxmMBeanI {
   def addTimestampColumn(): String
 
   def getMany(limit: Int): String
+
+  def countAllOriginals: Long
 }
+
 class MUserImgMeta2Jmx extends CassandraModelJmxMBeanImpl with MUserImgMeta2JmxMBean {
+
   override def companion = MUserImgMeta2
 
   override def addTimestampColumn(): String = {
@@ -153,6 +167,10 @@ class MUserImgMeta2Jmx extends CassandraModelJmxMBeanImpl with MUserImgMeta2JmxM
         .mkString("\n\n")
     }
     awaitString(fut)
+  }
+
+  override def countAllOriginals: Long = {
+    MUserImgMeta2.countAllQualified(None)
   }
 
 }
