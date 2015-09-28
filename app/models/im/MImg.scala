@@ -23,11 +23,11 @@ import scala.concurrent.Future
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 27.10.14 17:36
- * Description: Картинка, хранящаяся где-то в системе. Появилась вследствие объединения OrigImgIdKey и TmpImgIdKey.
+ * Description: Картинка, хранящаяся где-то в системе.
  * MPictureTmp была заменена ан im.MLocalImg, а недослой ImgIdKey заменен на MImg, использующий MLocalImg как
- * кеш-модель для моделей MUserImg2 и MUserImgMeta2.
- * Эта модель легковесна и полностью виртуальна, пришла на замену двух IIK-моделей,
- * которые не понимали dynImg-синтаксис.
+ * кеш-модель для моделей permanent-хранения (изначально -- кассандра и MUserImg2 и MUserImgMeta2).
+ *
+ * Эта модель легковесна и полностью виртуальна.
  * Все данные картинок хранятся в локальной ненадежной кеширующей модели и в постояной моделях (cassandra и др.).
  */
 

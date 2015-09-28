@@ -170,9 +170,6 @@ package object models {
 
 
   // cassandra img models
-  type MImgThumb2           = io.suggest.model.MImgThumb2
-  val  MImgThumb2           = io.suggest.model.MImgThumb2
-
   type MUserImgMeta2        = io.suggest.model.MUserImgMeta2
   val  MUserImgMeta2        = io.suggest.model.MUserImgMeta2
 

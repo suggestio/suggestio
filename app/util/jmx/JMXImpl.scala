@@ -59,7 +59,6 @@ object JMXImpl extends PlayLazyMacroLogsImpl {
     new MEdgeJmx,
     // cassandra
     new SioCassandraClientJmx,
-    new MImgThumb2Jmx,
     new MUserImgMeta2Jmx,
     new MUserImg2Jmx
   )
