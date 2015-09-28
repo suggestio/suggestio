@@ -63,6 +63,14 @@ object MUserImgMeta2 extends MUserImgMetaRecord with CassandraStaticModel[MUserI
     getById(id, q)
   }
 
+  def getMany(limit: Int): Future[Seq[MUserImgMeta2]] = {
+    tryCatchFut {
+      select
+        .limit(limit)
+        .fetch()
+    }
+  }
+
   def getById(id: UUID, q: Option[String] = None): Future[Option[MUserImgMeta2]] = {
     tryCatchFut {
       select
@@ -124,6 +132,8 @@ object MUserImgMeta2 extends MUserImgMetaRecord with CassandraStaticModel[MUserI
 // JMX
 trait MUserImgMeta2JmxMBean extends CassandraModelJxmMBeanI {
   def addTimestampColumn(): String
+
+  def getMany(limit: Int): String
 }
 class MUserImgMeta2Jmx extends CassandraModelJmxMBeanImpl with MUserImgMeta2JmxMBean {
   override def companion = MUserImgMeta2
@@ -131,6 +141,17 @@ class MUserImgMeta2Jmx extends CassandraModelJmxMBeanImpl with MUserImgMeta2JmxM
   override def addTimestampColumn(): String = {
     val fut = companion.addTimestampColumn()
       .map(_.toString)
+    awaitString(fut)
+  }
+
+  override def getMany(limit: Int): String = {
+    val fut = for {
+      res <- MUserImgMeta2.getMany(limit)
+    } yield {
+      res.iterator
+        .map { _.toString }
+        .mkString("\n\n")
+    }
     awaitString(fut)
   }
 

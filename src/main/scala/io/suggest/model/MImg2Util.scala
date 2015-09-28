@@ -33,11 +33,8 @@ object MImg2Util {
       sn publish Img2FullyDeletedEvent(rowKey)
     }
     val delMetaFut = MUserImgMeta2.deleteById(rowKey)
-    val delThumbFut = MImgThumb2.deleteById(rowKey)
     delImgFut flatMap { _ =>
-      delMetaFut flatMap { _ =>
-        delThumbFut
-      }
+      delMetaFut
     }
   }
 

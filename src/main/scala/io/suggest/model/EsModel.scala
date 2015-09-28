@@ -2,6 +2,7 @@ package io.suggest.model
 
 import java.util.concurrent.atomic.AtomicInteger
 import io.suggest.model.n2.edge.MEdge
+import io.suggest.model.n2.media.MMedia
 import io.suggest.model.n2.node.MNode
 import io.suggest.primo.TypeT
 import org.elasticsearch.action.bulk.{BulkResponse, BulkRequest, BulkProcessor}
@@ -51,7 +52,8 @@ object EsModel extends MacroLogsImpl {
 
   /** Список ES-моделей. Нужен для удобства массовых maintance-операций. Расширяется по мере роста числа ES-моделей. */
   def ES_MODELS = List[EsModelCommonStaticT] (
-    MCompany, MWelcomeAd, MYmCategory, MAdStat, MAdnNode, MAd, MAdnNodeGeo, MNode, MEdge
+    MCompany, MWelcomeAd, MYmCategory, MAdStat, MAdnNode, MAd, MAdnNodeGeo,
+    MNode, MEdge, MMedia
   )
 
 
