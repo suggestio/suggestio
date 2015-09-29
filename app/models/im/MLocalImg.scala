@@ -5,7 +5,6 @@ import java.nio.file.{Path, Files}
 import java.util.UUID
 
 import akka.actor.ActorContext
-import io.suggest.common.geom.d2.{ISize2di, ISize2diWrap}
 import io.suggest.event.SNStaticSubscriber
 import io.suggest.event.SioNotifier.Event
 import io.suggest.event.subscriber.SnClassSubscriber
@@ -144,11 +143,16 @@ trait MLocalImgT extends ImgWithTimestamp with PlayMacroLogsI with MAnyImgT {
     }(AsyncUtil.singleThreadIoContext)
   }
 
-  def writeIntoFile(imgBytes: Array[Byte]) {
+  def prepareWriteFile(): Unit = {
     if (!fsImgDir.isDirectory)
       fsImgDir.delete()
     if (!fsImgDir.exists())
       fsImgDir.mkdirs()
+  }
+
+  // TODO Этот метод больше не используется, можно его удалить после окончания перепиливания картинок на N2-архитектуру.
+  def writeIntoFile(imgBytes: Array[Byte]) {
+    prepareWriteFile()
     FileUtils.writeByteArrayToFile(file, imgBytes)
   }
 

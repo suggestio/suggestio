@@ -77,16 +77,28 @@ object DynImgUtil extends PlayMacroLogsImpl {
    *         Фьючерс с Throwable при иных ошибках.
    */
   def mkReadyImgToFile(args: MImg): Future[MLocalImg] = {
-    args
+    val fut = args
       .original
       .toLocalImg
+      .map(_.get)
       .flatMap { localImg =>
         // Есть исходная картинка в файле. Пора пережать её согласно настройкам.
         val newLocalImg = args.toLocalInstance
-        convert(localImg.get.file, newLocalImg.file, args.dynImgOps) map { _ =>
+        convert(localImg.file, newLocalImg.file, args.dynImgOps) map { _ =>
           newLocalImg
         }
       }
+    fut onFailure { case ex =>
+      val logPrefix = s"mkReadyImgToFile($args): "
+      val msg = ex match {
+        case nsee: NoSuchElementException =>
+          "Image original does not exists in storage"
+        case _ =>
+          "Unknown exception during image prefetch"
+      }
+      error(logPrefix + msg, ex)
+    }
+    fut
   }
 
 

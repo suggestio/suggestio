@@ -5,6 +5,7 @@ import java.io.{FileOutputStream, File}
 import play.api.libs.iteratee.Iteratee
 import play.api.libs.ws.{WSClient, WSResponseHeaders}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import util.xplay.IteeUtil
 
 import scala.concurrent.Future
 
@@ -55,26 +56,13 @@ trait HttpGetToFile {
       .withFollowRedirects(followRedirects)
       .getStream()
     respFut.flatMap { case (headers, body) =>
-      if (!isStatusValid(headers.status)) {
+      if ( !isStatusValid(headers.status) ) {
         Future failed statusCodeInvalidException(headers)
       } else {
         val f = File.createTempFile(tempFilePrefix, tempFileSuffix)
-        val os = new FileOutputStream(f)
-        val iteratee = Iteratee.foreach[Array[Byte]] { bytes =>
-          os.write(bytes)
-        }
-        // отправлять байты enumerator'а в iteratee, который будет их записывать в файл.
-        val resFut = (body |>>> iteratee)
-          // Надо дождаться закрытия файла перед вызовом последующего map, который его откроет для чтения.
-          .andThen {
-            case result => os.close()
-          }
+        val resFut = IteeUtil.writeIntoFile(body, f)
           // Вернуть готовый файл, когда всё закончится.
           .map { _ => headers -> f }
-        // При ошибке при обработке запроса нужно удалить созданный временный файл.
-        resFut onFailure {
-          case ex => f.delete()
-        }
         resFut
       }
     }

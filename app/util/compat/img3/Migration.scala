@@ -1,6 +1,7 @@
 package util.compat.img3
 
 import io.suggest.model.n2.edge.MPredicates
+import io.suggest.model.n2.media.storage.CassandraStorage
 import io.suggest.model.n2.media.{MPictureMeta, MFileMeta}
 import models.im.{ImgFileUtil, MImg}
 import models.mfs.FileUtil
@@ -109,6 +110,10 @@ object Migration {
                 sizeB       = sizeB,
                 isOriginal  = true,   // Копируются только оригиналы, деривативы должны быть сгенерены на ходу.
                 sha1        = Some(sha1)
+              ),
+              storage = CassandraStorage(
+                rowKey  = mimg.rowKey,
+                qOpt    = None           // Оригиналы у нас без qualifier, точнее там статический qualifier подставляется вместо None в MImg.
               ),
               picture = Some(MPictureMeta(
                 width  = imgWh.map(_.width)

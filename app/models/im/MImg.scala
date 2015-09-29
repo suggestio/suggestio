@@ -4,19 +4,21 @@ import java.io.FileNotFoundException
 import java.nio.ByteBuffer
 import java.util.UUID
 
-import io.suggest.model.img.IImgMeta
+import io.suggest.model.img.{ImgSzDated, IImgMeta}
 import io.suggest.model.{MUserImgMeta2, MUserImg2}
 import io.suggest.util.UuidUtil
 import models._
 import org.joda.time.DateTime
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.libs.iteratee.Enumerator
 import play.api.mvc.QueryStringBindable
 import util.qsb.QsbSigner
 import util.secure.SecretGetter
-import util.xplay.CacheUtil
-import util.{PlayMacroLogsI, PlayLazyMacroLogsImpl}
+import util.xplay.{IteeUtil, CacheUtil}
+import util.PlayLazyMacroLogsImpl
 import play.api.Play.{current, configuration, isProd}
 import util.img.{ImgFileNameParsers, ImgFormUtil}
+import util.event.SiowebNotifier.Implicts.sn
 
 import scala.concurrent.Future
 
@@ -168,7 +170,7 @@ object MImg extends PlayLazyMacroLogsImpl with ImgFileNameParsers { model =>
 import MImg._
 
 
-trait MImgT extends MAnyImgT with PlayLazyMacroLogsImpl {
+trait MImgT extends MAnyImgT {
 
   def rowKey: UUID
   def dynImgOps: Seq[ImOp]
@@ -213,16 +215,19 @@ trait MImgT extends MAnyImgT with PlayLazyMacroLogsImpl {
       inst.touchAsync()
       Future successful Some(inst)
     } else {
-      _localImgBytes.map { bytesOpt =>
-        bytesOpt.map { imgBytes =>
-          inst.writeIntoFile(imgBytes)
-          inst
+      val enumer = _getImgBytes2
+      inst.prepareWriteFile()
+      IteeUtil.writeIntoFile(enumer, inst.file)
+        .map { _ => Option(inst) }
+        .recover { case ex: Throwable =>
+          LOGGER.warn(s"toLocalImg: _getImgBytes2 or writeIntoFile ${inst.file} failed", ex)
+          None
         }
-      }
     }
   }
 
-  protected def _localImgBytes: Future[Option[Array[Byte]]]
+  /** Запустить чтение картинки из хранилища, получив на руки Enumerator сырых данных. */
+  protected def _getImgBytes2: Enumerator[Array[Byte]]
 
   /** Закешированный результат чтения метаданных из постоянного хранилища. */
   lazy val permMetaCached: Future[Option[IImgMeta]] = {
@@ -335,10 +340,14 @@ case class MImg(override val rowKey: UUID,
     MUserImgMeta2.getById(rowKey, qOpt)
   }
 
-  override protected def _localImgBytes: Future[Option[Array[Byte]]] = {
-    for (img2Opt <- MUserImg2.getById(rowKey, qOpt)) yield {
-      img2Opt.map(_.imgBytes)
+  override protected def _getImgBytes2: Enumerator[Array[Byte]] = {
+    val fut = MUserImg2.getById(rowKey, qOpt) flatMap {
+      case Some(img2) =>
+        Future successful Enumerator( img2.imgBytes )
+      case None =>
+        Future failed new NoSuchElementException("_getImgBytes2(): Image does not exists in storage: " + this)
     }
+    Enumerator.flatten(fut)
   }
 
   override protected def _updateMetaWith(localWh: MImgSizeT, localImg: MLocalImgT): Unit = {
@@ -409,93 +418,61 @@ case class MImg(override val rowKey: UUID,
 }
 
 
+import util.SiowebEsUtil.client
 
-/** Поле filename для класса. */
-trait ImgFilename {
-  def rowKeyStr: String
-  def hasImgOps: Boolean
-  def dynImgOpsStringSb(sb: StringBuilder): StringBuilder
+/** Реализация модели [[MImgT]] на базе MMedia, вместо прямого взаимодействия с кассандрой. */
+case class MImg2(override val rowKey: UUID,
+                 override val dynImgOps: Seq[ImOp])
+  extends MImgT
+  with PlayLazyMacroLogsImpl
+{
 
-  def fileName: String = fileNameSb().toString()
+  override type MImg_t = MImg2
+  override def thisT: MImg_t = this
+  override def toWrappedImg = this
 
-  /**
-   * Билдер filename-строки
-   * @param sb Исходный StringBuilder.
-   * @return StringBuilder.
-   */
-  def fileNameSb(sb: StringBuilder = new StringBuilder(80)): StringBuilder = {
-    sb.append(rowKeyStr)
-    if (hasImgOps) {
-      sb.append('~')
-      dynImgOpsStringSb(sb)
-    }
-    sb
-  }
-}
+  lazy val _mmediaId = MMedia.mkId(rowKeyStr, qOpt)
 
+  lazy val _mmediaOptFut = MMedia.getById(_mmediaId)
 
-/** Поле минимально-сериализованных dynImg-аргументов для класса. */
-trait DynImgOpsString {
-  def dynImgOps: Seq[ImOp]
-
-  def isOriginal: Boolean = dynImgOps.isEmpty
-
-  def dynImgOpsStringSb(sb: StringBuilder = ImOp.unbindSbDflt): StringBuilder = {
-    ImOp.unbindImOpsSb(
-      keyDotted = "",
-      value = dynImgOps,
-      withOrderInx = false,
-      sb = sb
-    )
-  }
-  def dynImgOpsString: String = {
-    dynImgOpsStringSb().toString()
-  }
-}
-
-
-/** Интерфейс, объединяющий MImg и MLocalImg. */
-trait MAnyImgT extends PlayMacroLogsI with ImgFilename with DynImgOpsString {
-
-  type MImg_t <: MImgT
-
-  /** Ключ ряда картинок, id для оригинала и всех производных. */
-  def rowKey: UUID
-
-  /** Вернуть локальный инстанс модели с файлом на диске. */
-  def toLocalImg: Future[Option[MLocalImgT]]
-
-  /** Вернуть инстанс над-модели MImg. */
-  def toWrappedImg: MImg_t
-
-  /** Получить ширину и длину картинки. */
-  def getImageWH: Future[Option[ISize2di]]
-
-  /** Инстанс для доступа к картинке без изменений. */
-  def original: MAnyImgT
-
-  def rawImgMeta: Future[Option[IImgMeta]]
-
-  /** Нащупать crop. Используется скорее как compat к прошлой форме работы с картинками. */
-  def cropOpt: Option[ImgCrop] = {
-    val iter = dynImgOps
-      .iterator
-      .flatMap {
-        case AbsCropOp(crop) => Seq(crop)
-        case _ => Nil
+  override protected lazy val _getImgMeta: Future[Option[IImgMeta]] = {
+    _mmediaOptFut map { mmediaOpt =>
+      mmediaOpt.map { mmedia =>
+        ImgSzDated(
+          sz          = mmedia.picture.get,
+          dateCreated = mmedia.file.dateCreated
+        )
       }
-    if (iter.hasNext)
-      Some(iter.next())
-    else
-      None
+    }
   }
 
-  def isCropped: Boolean = {
-    dynImgOps
-      .exists { _.isInstanceOf[ImCropOpT] }
+  override protected def _getImgBytes2: Enumerator[Array[Byte]] = {
+    val fut = _mmediaOptFut.map { mmo =>
+      mmo.get.storage.read
+    }
+    Enumerator.flatten(fut)
   }
 
-  def delete: Future[_]
+  override protected def _doSaveToPermanent(loc: MLocalImgT): Future[_] = ???
+
+  override protected def _updateMetaWith(localWh: MImgSizeT, localImg: MLocalImgT): Unit = ???
+
+  override protected def _thisToOriginal: MImg_t = {
+    copy(dynImgOps = Nil)
+  }
+
+  override def delete: Future[_] = {
+    _mmediaOptFut flatMap {
+      case Some(mm) =>
+        for {
+          _ <- mm.storage.delete
+          _ <- mm.delete
+        } yield {
+          true
+        }
+      case None =>
+        Future successful false
+    }
+  }
 
 }
-
