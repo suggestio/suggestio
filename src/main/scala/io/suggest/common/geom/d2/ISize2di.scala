@@ -45,3 +45,14 @@ trait INamedSize2di extends ISize2di {
 
   override def toString = "Sz2D(" + szAlias + ",w=" + width + ";h=" + height + ")"
 }
+
+
+/** Враппер для модели [[ISize2di]]. */
+trait ISize2diWrap extends ISize2di {
+
+  def _sz2dUnderlying: ISize2di
+
+  override def height = _sz2dUnderlying.height
+  override def width  = _sz2dUnderlying.width
+
+}
