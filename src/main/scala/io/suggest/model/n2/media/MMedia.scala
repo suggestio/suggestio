@@ -47,7 +47,12 @@ object MMedia
     (__ \ PICTURE_META_FN).formatNullable[MPictureMeta]
   )(
     {(nodeId, fileMeta, pictureMetaOpt) =>
-      apply(nodeId, fileMeta, pictureMetaOpt, id = None)
+      apply(
+        nodeId  = nodeId,
+        file    = fileMeta,
+        picture = pictureMetaOpt,
+        id      = None
+      )
     },
     {mmedia =>
       (mmedia.nodeId, mmedia.file, mmedia.picture)
@@ -58,6 +63,18 @@ object MMedia
   override protected def esDocReads(meta: IEsDocMeta): Reads[T] = {
     FORMAT_DATA
       .map { _.withDocMeta(meta) }
+  }
+
+
+  /**
+   * Сборка id'шников для экземпляров модели.
+   * @param imgNodeId id ноды картинки.
+   * @param qOpt Опциональный qualifier. Обычно None, если это файл-оригинал.
+   *             Some() если хранится дериватив.
+   * @return Строка для поля _id.
+   */
+  def mkId(imgNodeId: String, qOpt: Option[String]): String = {
+    qOpt.fold(imgNodeId)(imgNodeId + "?" + _)
   }
 
 
@@ -84,9 +101,9 @@ object MMedia
 case class MMedia(
   nodeId                    : String,
   file                      : MFileMeta,
-  picture                   : Option[MPictureMeta] = None,
   override val id           : Option[String],
-  override val versionOpt   : Option[Long]    = None
+  picture                   : Option[MPictureMeta]  = None,
+  override val versionOpt   : Option[Long]          = None
 )
   extends EsModelT
   with EsModelJsonWrites

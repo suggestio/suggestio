@@ -74,12 +74,21 @@ object MImgInfoMeta {
         MImgInfoMeta(height=height, width=width)
     }
   }
+
+  def apply(sz2d: ISize2di): MImgInfoMeta = {
+    MImgInfoMeta(
+      height = sz2d.height,
+      width  = sz2d.width
+    )
+  }
+
 }
 
 import MImgInfoMeta._
 
 /** Интерфейс для класса, который будет хранить размер картинки. */
 trait MImgSizeT extends ISize2di {
+
   def isSmallerThan(sz: MImgSizeT): Boolean = {
     height < sz.height  &&  width < sz.width
   }
@@ -97,6 +106,7 @@ trait MImgSizeT extends ISize2di {
 
   override def toString: String = s"${width}x$height"
 }
+
 
 case class MImgInfoMeta(height: Int, width: Int) extends MImgSizeT {
 

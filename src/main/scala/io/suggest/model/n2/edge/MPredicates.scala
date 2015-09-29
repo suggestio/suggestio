@@ -39,6 +39,9 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT {
   private def _isAd(ntype: MNodeType): Boolean = {
     ntype ==>> MNodeTypes.Ad
   }
+  private def _isImage(ntype: MNodeType): Boolean = {
+    ntype ==>> MNodeTypes.Media.Image
+  }
 
 
   // Экземпляры модели, идентификаторы идут по алфавиту: a->z, a1->z1, ...
@@ -54,13 +57,14 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT {
   }
 
 
-  /** Юзер владеет чем-то: узлом или карточкой напрямую. */
-  val PersonOwns: T = new Val("b") {
+  /** Кто-то или что-то владеет чем-то. */
+  val Owns: T = new Val("b") {
     override def fromTypeValid(ntype: MNodeType): Boolean = {
-      _isPerson(ntype)
+      _isPerson(ntype) || _isAdnNode(ntype)
     }
     override def toTypeValid(ntype: MNodeType): Boolean = {
-      _isAdnNode(ntype) || _isAd(ntype)
+      // Скорее всего, овладевать другой персоной в системе нельзя.
+      !_isPerson(ntype)
     }
   }
 
@@ -90,6 +94,16 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT {
     }
     override def toTypeValid(ntype: MNodeType): Boolean = {
       true
+    }
+  }
+
+  /** Указание на картинку-логотип узла-учреждения.  */
+  val Logo: T = new Val("e") {
+    override def fromTypeValid(ntype: MNodeType): Boolean = {
+      _isAdnNode(ntype)
+    }
+    override def toTypeValid(ntype: MNodeType): Boolean = {
+      _isImage(ntype)
     }
   }
 

@@ -7,6 +7,7 @@ import com.datastax.driver.core.Cluster
 import com.datastax.driver.core.utils.Bytes
 import com.websudos.phantom.query.{TruncateQuery, SelectCountQuery, CreateQuery}
 import com.websudos.phantom.Implicits._
+import io.suggest.common.geom.d2.ISize2di
 import io.suggest.util.MyConfig.CONFIG
 import io.suggest.util.{MacroLogsImplLazy, JMXBase, UuidUtil}
 import org.joda.time.DateTime
@@ -189,7 +190,6 @@ trait ImgMetaI {
   def md: Map[String, String]
   def timestampMs: Long
 }
-
 
 
 /** Реализация ImgWithTimestamp для моделей. */

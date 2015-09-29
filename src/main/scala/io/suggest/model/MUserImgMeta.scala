@@ -1,11 +1,13 @@
 package io.suggest.model
 
 import java.util.UUID
+import io.suggest.model.img.IImgMeta
 import io.suggest.util.UuidUtil
 import SioCassandraClient.session
 import com.websudos.phantom.Implicits._
 import org.joda.time.DateTime
 
+import scala.collection.immutable.StringOps
 import scala.concurrent.Future
 import io.suggest.util.SioFutureUtil.guavaFuture2scalaFuture    // НЕ УДАЛЯТЬ!!!
 import MUserImg2.qOpt2q
@@ -23,10 +25,18 @@ case class MUserImgMeta2(
   q         : String,
   id        : UUID = UUID.randomUUID(),
   timestamp : DateTime = DateTime.now()
-) extends UuidIdStr with CassandraImgMeta {
+) extends UuidIdStr with CassandraImgMeta with IImgMeta {
 
   def save = MUserImgMeta2.insertMd(this)
   def delete = MUserImgMeta2.deleteById(id)
+
+  override def dateCreated = timestamp
+  private def _szK2i(key: String): Int = {
+    val raw = md(key)
+    (raw: StringOps).toInt
+  }
+  override def height = _szK2i("w")
+  override def width  = _szK2i("h")
 
 }
 
@@ -120,9 +130,11 @@ object MUserImgMeta2 extends MUserImgMetaRecord with CassandraStaticModel[MUserI
   def countAllQualified(qOpt: Option[String]): Future[Long] = {
     tryCatchFut {
       val q = MUserImg2.qOpt2q(qOpt)
-      count
+      val qb = count
         .where(_.q eqs q)
-        .one()
+      // TODO Нужно "allow filtering" добавить в query.
+      println(getClass.getSimpleName + ": Cassandra: " + qb.queryString)
+      qb.one()
         .map { _ getOrElse 0L }
     }
   }
