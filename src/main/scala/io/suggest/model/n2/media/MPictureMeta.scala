@@ -1,5 +1,6 @@
 package io.suggest.model.n2.media
 
+import io.suggest.common.geom.d2.ISize2di
 import io.suggest.model.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -39,6 +40,7 @@ object MPictureMeta extends IGenEsMappingProps {
 
 
 case class MPictureMeta(
-  width   : Int,
-  height  : Int
+  override val width   : Int,
+  override val height  : Int
 )
+  extends ISize2di

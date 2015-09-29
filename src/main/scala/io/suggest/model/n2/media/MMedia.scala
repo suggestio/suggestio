@@ -2,6 +2,7 @@ package io.suggest.model.n2.media
 
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model._
+import io.suggest.model.n2.media.storage.IMediaStorage
 import io.suggest.util.MacroLogsImpl
 import org.elasticsearch.client.Client
 import play.api.libs.json._
@@ -34,6 +35,7 @@ object MMedia
   val NODE_ID_FN      = "ni"
   val FILE_META_FN    = "fm"
   val PICTURE_META_FN = "pm"
+  val STORAGE_FN      = "st"
 
   @deprecated("use deserializeOne2() instead", "2015.sep.27")
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
@@ -44,18 +46,20 @@ object MMedia
   val FORMAT_DATA: OFormat[T] = (
     (__ \ NODE_ID_FN).format[String] and
     (__ \ FILE_META_FN).format[MFileMeta] and
+    (__ \ STORAGE_FN).format[IMediaStorage] and
     (__ \ PICTURE_META_FN).formatNullable[MPictureMeta]
   )(
-    {(nodeId, fileMeta, pictureMetaOpt) =>
+    {(nodeId, fileMeta, storage, pictureMetaOpt) =>
       apply(
         nodeId  = nodeId,
         file    = fileMeta,
+        storage = storage,
         picture = pictureMetaOpt,
         id      = None
       )
     },
     {mmedia =>
-      (mmedia.nodeId, mmedia.file, mmedia.picture)
+      (mmedia.nodeId, mmedia.file, mmedia.storage, mmedia.picture)
     }
   )
 
@@ -91,6 +95,7 @@ object MMedia
     List(
       FieldString(NODE_ID_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
       FieldObject(FILE_META_FN, enabled = true, properties = MFileMeta.generateMappingProps),
+      FieldObject(STORAGE_FN, enabled = true, properties = IMediaStorage.generateMappingProps),
       FieldObject(PICTURE_META_FN, enabled = true, properties = MPictureMeta.generateMappingProps)
     )
   }
@@ -101,6 +106,7 @@ object MMedia
 case class MMedia(
   nodeId                    : String,
   file                      : MFileMeta,
+  storage                   : IMediaStorage,
   override val id           : Option[String],
   picture                   : Option[MPictureMeta]  = None,
   override val versionOpt   : Option[Long]          = None
