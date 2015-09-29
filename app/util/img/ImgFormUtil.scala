@@ -14,7 +14,6 @@ import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import java.lang
 import models._
-import io.suggest.ym.model.common.MImgSizeT
 
 /**
  * Suggest.io
@@ -252,7 +251,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
 
   def img2imgInfo(mimg: MImg): Future[MImgInfo] = {
     mimg.getImageWH map { wh =>
-      MImgInfo(mimg.fileName, wh)
+      MImgInfo(mimg.fileName, wh.map(MImgInfoMeta.apply))
     }
   }
   def img2SomeImgInfo(mimg: MImg): Future[Option[MImgInfo]] = {
@@ -275,7 +274,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
    * @param srcSz Исходный размер картинки.
    * @return Пофикшенный crop.
    */
-  def repairCrop(crop: ImgCrop, targetSz: MImgSizeT, srcSz: MImgSizeT): ImgCrop = {
+  def repairCrop(crop: ImgCrop, targetSz: ISize2di, srcSz: ISize2di): ImgCrop = {
     var newCrop = crop
     // Пофиксить offset'ы кропа. Кроп может по сдвигу уезжать за пределы допустимой ширины/длины.
     if (crop.offX + crop.width > srcSz.width)

@@ -5,14 +5,17 @@ import java.nio.file.{Path, Files}
 import java.util.UUID
 
 import akka.actor.ActorContext
+import io.suggest.common.geom.d2.{ISize2di, ISize2diWrap}
 import io.suggest.event.SNStaticSubscriber
 import io.suggest.event.SioNotifier.Event
 import io.suggest.event.subscriber.SnClassSubscriber
+import io.suggest.model.img.{ImgSzDated, IImgMeta}
 import io.suggest.model.{Img2FullyDeletedEvent, ImgWithTimestamp}
 import io.suggest.util.UuidUtil
 import io.suggest.ym.model.common.MImgInfoMeta
-import models.{CronTask, ICronTask, ImgMetaI}
+import models.{CronTask, ICronTask}
 import org.apache.commons.io.FileUtils
+import org.joda.time.DateTime
 import play.api.Application
 import play.api.Play.{current, configuration}
 import play.api.cache.Cache
@@ -126,6 +129,9 @@ trait MLocalImgT extends ImgWithTimestamp with PlayMacroLogsI with MAnyImgT {
   
   lazy val file = new File(fsImgDir, fsFileName)
 
+  /** Определение mime-типа из файла. */
+  lazy val mime = ImgFileUtil.getMimeOrUnknown(file)
+
   /** 
    * Принудительно в фоне обновляем file last modified time.
    * Обычно atime на хосте отключён или переключен в relatime, а этим временем пользуется чистильщик ненужных картинок.
@@ -161,12 +167,7 @@ trait MLocalImgT extends ImgWithTimestamp with PlayMacroLogsI with MAnyImgT {
 
   def identify = {
     Future {
-      val info = OrigImageUtil.identify(file)
-      val imeta = MImgInfoMeta(
-        height = info.getImageHeight,
-        width = info.getImageWidth
-      )
-      Some(imeta)
+      OrigImageUtil.identify(file)
     }(AsyncUtil.singleThreadCpuContext)
   }
 
@@ -178,11 +179,19 @@ trait MLocalImgT extends ImgWithTimestamp with PlayMacroLogsI with MAnyImgT {
 
   /** Асинхронно получить метаданные по этой картинке. */
   override lazy val getImageWH: Future[Option[MImgInfoMeta]] = {
-    identifyCached recover {
-      case ex: org.im4java.core.InfoException =>
-        LOGGER.info("getImageWH(): Unable to identity image " + fileName, ex)
-        None
-    }
+    identifyCached
+      .map { info =>
+        val imeta = MImgInfoMeta(
+          height = info.getImageHeight,
+          width  = info.getImageWidth
+        )
+        Some(imeta)
+      }
+      .recover {
+        case ex: org.im4java.core.InfoException =>
+          LOGGER.info("getImageWH(): Unable to identity image " + fileName, ex)
+          None
+      }
   }
 
   def imgMdMap: Future[Option[Map[String, String]]] = {
@@ -210,6 +219,8 @@ case class MLocalImg(
   dynImgOps   : Seq[ImOp] = Nil
 ) extends MLocalImgT with PlayLazyMacroLogsImpl {
 
+  override type MImg_t = MImgT
+
   override lazy val rowKeyStr: String = UuidUtil.uuidToBase64(rowKey)
 
   override def hasImgOps: Boolean = dynImgOps.nonEmpty
@@ -235,14 +246,11 @@ case class MLocalImg(
 
   override lazy val toWrappedImg = MImg(rowKey, dynImgOps)
 
-  override lazy val rawImgMeta: Future[Option[ImgMetaI]] = {
+  override lazy val rawImgMeta: Future[Option[IImgMeta]] = {
     if (isExists) {
-      imgMdMap.map { mdMapOpt =>
-        mdMapOpt.map { mdMap =>
-          new ImgMetaI {
-            override lazy val md = mdMap
-            override lazy val timestampMs = file.lastModified
-          }
+      getImageWH map { metaOpt =>
+        metaOpt map { meta =>
+          ImgSzDated(meta, new DateTime(file.lastModified()))
         }
       }
     } else {

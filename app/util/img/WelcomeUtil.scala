@@ -151,7 +151,7 @@ object WelcomeUtil extends PlayMacroLogsImpl {
 
 
   /** Собрать ссылку на фоновую картинку. */
-  def bgCallForScreen(oiik: MImg, screenOpt: Option[DevScreen], origMeta: MImgInfoMeta)(implicit ctx: Context): ImgUrlInfoT = {
+  def bgCallForScreen(oiik: MImg, screenOpt: Option[DevScreen], origMeta: ISize2di)(implicit ctx: Context): ImgUrlInfoT = {
     val oiik2 = oiik.original
     screenOpt
       .filter { _ => BG_VIA_DYN_IMG }
@@ -159,17 +159,17 @@ object WelcomeUtil extends PlayMacroLogsImpl {
         scr.maybeBasicScreenSize.map(_ -> scr)
       }
       .fold [ImgUrlInfoT] {
-        new ImgUrlInfoT {
-          override def call = CdnUtil.dynImg(oiik2.fileName)
-          override def meta = Some(origMeta)
-        }
+        ImgUrlInfo(
+          call = CdnUtil.dynImg(oiik2.fileName),
+          meta = Some(origMeta)
+        )
       } { case (bss, screen) =>
         val imOps = imConvertArgs(bss, screen)
         val dynArgs = oiik2.copy(dynImgOps = imOps)
-        new ImgUrlInfoT {
-          override def call = CdnUtil.dynImg(dynArgs)
-          override def meta = Some(bss)
-        }
+        ImgUrlInfo(
+          call = CdnUtil.dynImg(dynArgs),
+          meta = Some(bss)
+        )
       }
   }
 

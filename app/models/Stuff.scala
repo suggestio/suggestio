@@ -209,8 +209,10 @@ trait ImgUrlInfoT {
   def call: Call
 
   /** Метаданные для рендера тега img. */
-  def meta: Option[MImgSizeT]
+  def meta: Option[ISize2di]
 }
+case class ImgUrlInfo(call: Call, meta: Option[ISize2di])
+  extends ImgUrlInfoT
 
 
 

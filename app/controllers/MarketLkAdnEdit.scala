@@ -157,29 +157,43 @@ class MarketLkAdnEdit @Inject() (
   /** Страница с формой редактирования узла рекламной сети. Функция смотрит тип узла и рендерит ту или иную страницу. */
   def editAdnNode(adnId: String) = IsAdnNodeAdminGet(adnId).async { implicit request =>
     import request.adnNode
+
+    // Запуск асинхронной сборки данных из моделей.
     val waOptFut = getWelcomeAdOpt(adnNode)
     val nodeLogoOpt = adnNode.logoImgOpt
       .map { img => MImg(img.filename) }
     val gallerryIks = gallery2iiks( adnNode.gallery )
-    val formNotFilled = nodeFormM(adnNode.adn)
-    val formFilledFut = waOptFut map { welcomeAdOpt =>
+
+    // Сборка и наполнения маппинга формы.
+    val formM = nodeFormM(adnNode.adn)
+    val formFilledFut = for {
+      welcomeAdOpt <- waOptFut
+    } yield {
       val welcomeImgKey = welcomeAd2iik(welcomeAdOpt)
       val fmr = FormMapResult(adnNode.meta, nodeLogoOpt, welcomeImgKey, gallerryIks)
-      formNotFilled fill fmr
+      formM fill fmr
     }
-    formFilledFut flatMap { formFilled =>
-      _editAdnNode(formFilled, waOptFut)
-        .map { Ok(_) }
+
+    // Рендер и возврат http-ответа.
+    for {
+      formFilled <- formFilledFut
+      html       <- _editAdnNode(formFilled, waOptFut)
+    } yield {
+      Ok(html)
     }
   }
 
-  protected def _editAdnNode(form: Form[FormMapResult], waOptFut: Future[Option[MWelcomeAd]])
+
+  private def _editAdnNode(form: Form[FormMapResult], waOptFut: Future[Option[MWelcomeAd]])
                             (implicit request: AbstractRequestForAdnNode[_]): Future[Html] = {
     implicit val jsInitTargets = Seq(MTargets.LkNodeEditForm)
-    waOptFut map { welcomeAdOpt =>
+    for {
+      welcomeAdOpt <- waOptFut
+    } yield {
       nodeEditTpl(request.adnNode, form, welcomeAdOpt)
     }
   }
+
 
   /** Сабмит формы редактирования узла рекламной сети. Функция смотрит тип узла рекламной сети и использует
     * тот или иной хелпер. */

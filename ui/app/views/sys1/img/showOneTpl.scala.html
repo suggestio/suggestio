@@ -1,4 +1,4 @@
-@(img: im.MImg, metaOpt: Option[MUserImgMeta2])(implicit ctx: Context)
+@(img: im.MImg, metaOpt: Option[IImgMeta])(implicit ctx: Context)
 
 @* Отображение данных и ссылок навигации/управления для одной указанной картинке. *@
 
@@ -32,14 +32,14 @@
     }
 
     @metaOpt.map { meta =>
-      @_ptableRowTpl("meta.map") {
-        @meta.md.mkString(", ")
+      @_ptableRowTpl("meta.width") {
+        @meta.width
       }
-      @_ptableRowTpl("meta.q", title = Some("Column qualifier")) {
-        @meta.q
+      @_ptableRowTpl("meta.height") {
+        @meta.height
       }
-      @_ptableRowTpl("timestamp") {
-        @_prettyDate(meta.timestamp, withSpan = true)
+      @_ptableRowTpl("dateCreated") {
+        @_prettyDate(meta.dateCreated, withSpan = true)
       }
     }
 

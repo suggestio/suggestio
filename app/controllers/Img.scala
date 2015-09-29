@@ -4,6 +4,7 @@ import java.io.File
 
 import akka.actor.ActorSystem
 import com.google.inject.Inject
+import io.suggest.common.geom.d2.ISize2di
 import io.suggest.img.crop.CropConstants
 import io.suggest.popup.PopupConstants
 import models.Context
@@ -77,6 +78,7 @@ class Img @Inject() (
   }
 
 
+  // TODO Объеденить все эти serveImgFromFile, задействовать MLocalImg.mime для определения MIME.
 
   private def serveImgFromFile(file: File, cacheSeconds: Int, modelInstant: ReadableInstant): Result = {
     // Enumerator.fromFile() вроде как асинхронный, поэтому запускаем его тут как можно раньше.
@@ -111,7 +113,7 @@ class Img @Inject() (
   def imgCropForm(imgId: String, width: Int, height: Int) = IsAuth.async { implicit request =>
     val iik = MImg(imgId).original
     iik.getImageWH map { imetaOpt =>
-      val imeta: MImgInfoMeta = imetaOpt getOrElse {
+      val imeta: ISize2di = imetaOpt getOrElse {
         val stub = MImgInfoMeta(640, 480)
         warn("Failed to fetch image w/h metadata for iik " + iik + " . Returning stub metadata: " + stub)
         stub
@@ -185,7 +187,7 @@ class Img @Inject() (
         case Some(ims) =>
           args.rawImgMeta map {
             case Some(imeta) =>
-              val newModelInstant = withoutMs(imeta.timestampMs)
+              val newModelInstant = withoutMs( imeta.dateCreated.getMillis )
               isModifiedSinceCached(newModelInstant, ims)
             case None =>
               false

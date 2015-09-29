@@ -180,7 +180,7 @@ package object models {
   /** Вызов на главную страницу. */
   def MAIN_PAGE_CALL        = routes.MarketShowcase.geoSite()
 
-  type ImgMetaI             = io.suggest.model.ImgMetaI
+  type IImgMeta             = io.suggest.model.img.IImgMeta
 
   type MHand                = MHands.T
 
@@ -237,5 +237,8 @@ package object models {
 
   val  MPersonMeta          = n2.node.meta.MPersonMeta
   type MPersonMeta          = n2.node.meta.MPersonMeta
+
+  val  MMedia               = n2.media.MMedia
+  type MMedia               = n2.media.MMedia
 
 }

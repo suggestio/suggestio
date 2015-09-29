@@ -43,7 +43,7 @@ trait MarketAdPreview extends SioController with PlayMacroLogsI {
         val imgsFut: Future[Imgs_t] = Future.traverse(bim) {
           case (k, i4s) =>
             i4s.getImageWH map {
-              imgMetaOpt  =>  k -> MImgInfo(i4s.fileName, meta = imgMetaOpt)
+              imgMetaOpt  =>  k -> MImgInfo(i4s.fileName, meta = imgMetaOpt.map(MImgInfoMeta.apply))
             }
         } map {
           _.toMap

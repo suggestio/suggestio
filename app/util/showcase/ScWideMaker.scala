@@ -1,5 +1,6 @@
 package util.showcase
 
+import io.suggest.common.geom.d2.ISize2di
 import io.suggest.ym.model.common.MImgInfoMeta
 import models.blk.{SzMult_t, szMulted, szMultedF, szRounded}
 import models.im._
@@ -63,7 +64,7 @@ object ScWideMaker extends IMaker with PlayMacroLogsImpl {
   }
 
   /** Поправить исходный кроп под wide-картинку. Гравитация производного кропа совпадает с исходным кропом. */
-  def updateCrop0(crop0: ImgCrop, wideWh: MImgSizeT, origWhFut: Future[MImgSizeT])(implicit ec: ExecutionContext): Future[ImgCrop] = {
+  def updateCrop0(crop0: ImgCrop, wideWh: ISize2di, origWhFut: Future[ISize2di])(implicit ec: ExecutionContext): Future[ImgCrop] = {
     origWhFut.map { origWh =>
       // Есть ширина-длина сырца. Нужно придумать кроп с центром как можно ближе к центру исходного кропа.
       // Результат должен изнутри быть вписан в исходник по размерам.
