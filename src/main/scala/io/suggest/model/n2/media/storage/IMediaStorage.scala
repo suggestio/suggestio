@@ -19,8 +19,8 @@ object IMediaStorage extends IGenEsMappingProps {
 
   implicit val READS: Reads[IMediaStorage] = new Reads[IMediaStorage] {
     override def reads(json: JsValue): JsResult[IMediaStorage] = {
-      json.validate[CassandraStorage]
-        .orElse { json.validate[SwfsStorage] }
+      json.validate(CassandraStorage.READS)
+        .orElse { json.validate(SwfsStorage.READS) }
     }
   }
 
@@ -28,9 +28,9 @@ object IMediaStorage extends IGenEsMappingProps {
     override def writes(o: IMediaStorage): JsValue = {
       o match {
         case cs: CassandraStorage =>
-          Json.toJson(cs)
+          Json.toJson(cs)(CassandraStorage.WRITES)
         case swfs: SwfsStorage =>
-          Json.toJson(swfs)
+          Json.toJson(swfs)(SwfsStorage.WRITES)
       }
     }
   }

@@ -21,7 +21,7 @@ object SwfsStorage {
   val FILE_ID_FMT   = (__ \ MStorFns.FILE_ID.fn).format[String]
 
   implicit val READS: Reads[SwfsStorage] = (
-    STYPE_FN_FORMAT.filter { _ == MStorages.Cassandra } and
+    STYPE_FN_FORMAT.filter { _ == MStorages.SeaWeedFs } and
     VOLUME_ID_FMT and
     FILE_ID_FMT
   ) { (_, volumeId, fileId) =>

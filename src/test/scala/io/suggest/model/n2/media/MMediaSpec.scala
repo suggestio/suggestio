@@ -1,5 +1,8 @@
 package io.suggest.model.n2.media
 
+import java.util.UUID
+
+import io.suggest.model.n2.media.storage.CassandraStorage
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers._
 
@@ -24,7 +27,11 @@ class MMediaSpec extends FlatSpec {
         isOriginal = true,
         sha1  = None
       ),
-      id = None
+      id = None,
+      storage = CassandraStorage(
+        rowKey = UUID.randomUUID(),
+        qOpt   = Some("asd/asdasda94tieg-e5ge")
+      )
     )
   }
 

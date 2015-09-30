@@ -2,7 +2,7 @@ package io.suggest.model
 
 import io.suggest.primo.TypeT
 import org.scalatest.Matchers._
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json._
 
 /**
  * Suggest.io
@@ -12,9 +12,11 @@ import play.api.libs.json.{Json, OFormat}
  */
 trait PlayJsonTestUtil extends TypeT {
 
-  protected[this] def jsonTest(v: T)(implicit format: OFormat[T]): Unit = {
+  protected[this] def jsonTest(v: T)(implicit format: Format[T]): Unit = {
     val jsv = Json.toJson(v)
-    jsv.as[T] shouldBe v
+    val jsr = jsv.validate[T]
+    assert( jsr.isSuccess, (jsv, jsr) )
+    jsr.get shouldBe v
   }
 
 }
