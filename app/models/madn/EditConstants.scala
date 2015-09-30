@@ -1,8 +1,9 @@
 package models.madn
 
+import models.im.logo.LogoUtil
 import play.api.data.Mapping
 import util.img.ImgFormUtil.imgIdOptM
-import util.img.LogoUtil.LogoOpt_t
+import LogoUtil.LogoOpt_t
 
 /**
  * Suggest.io

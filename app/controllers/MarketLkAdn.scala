@@ -4,6 +4,7 @@ import _root_.util.adn.NodesUtil
 import _root_.util.async.AsyncUtil
 import com.google.inject.Inject
 import controllers.ident._
+import models.im.logo.LogoUtil
 import models.mlk.MNodeShowArgs
 import models.msession.Keys
 import models.usr.{MUserEdgeUtil, EmailPwIdent}
@@ -14,7 +15,6 @@ import util.acl._
 import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
-import util.img.LogoUtil
 import util.lk.LkAdUtil
 import scala.concurrent.Future
 import views.html.lk.adn._
@@ -61,7 +61,7 @@ class MarketLkAdn @Inject() (
   def showAdnNode(adnId: String, povAdnIdOpt: Option[String]) = {
     AdnNodeAccessGet(adnId, povAdnIdOpt).async { implicit request =>
       import request.{adnNode, isMyNode}
-      val logoOptFut = LogoUtil.getLogo(adnNode)
+      val logoOptFut = LogoUtil.getLogoOfNode(adnId)
       for {
         logoOpt <- logoOptFut
       } yield {

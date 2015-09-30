@@ -4,9 +4,10 @@ import java.util.UUID
 
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.util.UuidUtil
+import models.im.logo.LogoUtil
 import models.im.{MImgT, MAnyImgT, MImg}
 import org.im4java.core.Info
-import util.img.LogoUtil.LogoOpt_t
+import LogoUtil.LogoOpt_t
 import util.PlayMacroLogsImpl
 import io.suggest.img.{ImgCrop, SioImageUtilT}
 import play.api.Play.{current, configuration}

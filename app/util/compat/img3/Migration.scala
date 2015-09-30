@@ -184,7 +184,7 @@ object Migration extends PlayLazyMacroLogsImpl {
             _     <- logoEdgeSaveFut
             acc0  <- acc0Fut
           } yield {
-            info(s"$logPrefix ADN Node processing finished")
+            info(s"$logPrefix ADN Node processing finished for logo [$imgNodeId]")
             acc0.copy(
               nodesDone = acc0.nodesDone + 1,
               logosDone = acc0.logosDone + 1

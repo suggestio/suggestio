@@ -1,9 +1,11 @@
 package controllers.sc
 
-import _root_.util.img.LogoUtil
 import _root_.util.jsa.{JsAppendById, JsAction, SmRcvResp, Js}
 import io.suggest.common.css.FocusedTopLeft
 import io.suggest.util.Lists
+import models.im.MImgT
+import models.im.logo.LogoUtil
+import models.im.logo.LogoUtil.LogoOpt_t
 import models.jsm.ProducerAdsResp
 import models.msc._
 import play.api.mvc.Result
@@ -128,16 +130,31 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
       }
     }
 
+    lazy val prodIdsFut: Future[Seq[String]] = {
+      mads2Fut.map { mads2 =>
+        mads2.map(_.producerId)
+      }
+    }
+
+    /** Список продьюсеров, относящихся к запрошенным focused-карточкам.
+      * Порядок продьюсеров в списке неопределён. */
+    def mads2ProdsFut: Future[Seq[MAdnNode]] = {
+      prodIdsFut.flatMap { prodIds =>
+        MAdnNodeCache.multiGet(prodIds)
+      }
+    }
+
     /** Карта продьюсеров, относящихся к запрошенным focused-карточкам. */
-    lazy val mads2ProducersFut: Future[Map[String, MAdnNode]] = {
-      mads2Fut.flatMap { mads2 =>
-        val producerIds = mads2.iterator.map(_.producerId)
-        MAdnNodeCache.multiGet(producerIds)
-          .map { ns =>
-            ns.iterator
-              .map { node => node.id.get -> node }
-              .toMap
+    lazy val mads2ProdsMapFut: Future[Map[String, MAdnNode]] = {
+      for (prods <- mads2ProdsFut) yield {
+        prods
+          .iterator
+          .flatMap { mnode =>
+            mnode.id.map { _id =>
+              _id -> mnode
+            }
           }
+          .toMap
       }
     }
 
@@ -178,37 +195,55 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
 
     /** Начальный аккамулятор для первого вызова renderOuterBlock(). */
     def blockHtmlRenderAcc0: BrAcc_t
+    
+    /** Карта СЫРЫХ логотипов продьюсеров без подгонки под экран.
+      * Если в карте нет искомого продьюсера, то значит он без логотипа-картинки. */
+    def prod2logoImgMapFut: Future[Map[String, MImgT]] = {
+      prodIdsFut.flatMap( LogoUtil.getLogoOfNodes )
+    }
+    /** Карта логотипов продьюсеров, подогнанных под запрашиваемый экран. */
+    lazy val prod2logoScrImgMapFut: Future[Map[String, MImgT]] = {
+      prod2logoImgMapFut flatMap { logosMap =>
+        Future.traverse( logosMap ) { case (nodeId, logoImgRaw) =>
+          LogoUtil.getLogo4scr(logoImgRaw, _adSearch.screen)
+            .map { nodeId -> _ }
+        } map {
+          _.toMap
+        }
+      }
+    }
 
     /** Параллельный рендер последовательности блоков. */
     def blocksHtmlsFut: Future[Seq[OBT]] = {
       // Форсируем распараллеливание асинхронных операций.
-      val _mads4blkRenderFut = mads4blkRenderFut
-      val _producersMapFut = mads2ProducersFut
+      val _mads4blkRenderFut  = mads4blkRenderFut
+      val _producersMapFut    = mads2ProdsMapFut
+
+      // touch-воздействие, чтобы запустить процесс. Сама карта будет опрошена в focAdsRenderArgsFor()
+      prod2logoScrImgMapFut
 
       madsCountIntFut flatMap { madsCountInt =>
-        _mads4blkRenderFut flatMap { mads4blkRender =>
-          _producersMapFut flatMap { producersMap =>
+      _mads4blkRenderFut flatMap { mads4blkRender =>
+      _producersMapFut flatMap { producersMap =>
 
-            val (_, futs) = Lists.mapFoldLeft(mads4blkRender, acc0 = (firstAdIndex, blockHtmlRenderAcc0)) {
-              case ((index, brAcc0), brArgs) =>
-                // Сразу инкрементим счетчик, т.к. если отсчитывать от offset, то будет ноль при первом вызове.
-                val index1 = index + 1
-                val producerId = brArgs.mad.producerId
-                val args = AdBodyTplArgs(
-                  brArgs    = brArgs,
-                  producer  = producersMap(producerId),
-                  index     = index1,
-                  adsCount  = madsCountInt,
-                  is3rdParty = is3rdPartyProducer(producerId)
-                )
-                val (renderFut, brAcc1) = renderOneBlockAcc(args, brAcc0)
-                (index1, brAcc1) -> renderFut
-            }
-            Future.sequence(futs)
-
-          }
+        val (_, futs) = Lists.mapFoldLeft(mads4blkRender, acc0 = (firstAdIndex, blockHtmlRenderAcc0)) {
+          case ((index, brAcc0), brArgs) =>
+            // Сразу инкрементим счетчик, т.к. если отсчитывать от offset, то будет ноль при первом вызове.
+            val index1 = index + 1
+            val producerId = brArgs.mad.producerId
+            val args = AdBodyTplArgs(
+              brArgs    = brArgs,
+              producer  = producersMap(producerId),
+              index     = index1,
+              adsCount  = madsCountInt,
+              is3rdParty = is3rdPartyProducer(producerId)
+            )
+            val (renderFut, brAcc1) = renderOneBlockAcc(args, brAcc0)
+            (index1, brAcc1) -> renderFut
         }
-      }
+        Future.sequence(futs)
+
+      }}}
     }
 
     /**
@@ -239,7 +274,7 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
 
     /** Фьючерс продьюсера, относящегося к текущей карточке. */
     def focAdProducerOptFut: Future[Option[MAdnNode]] = {
-      val _prodsMapFut = mads2ProducersFut
+      val _prodsMapFut = mads2ProdsMapFut
       focAdOptFut flatMap {
         case Some(focMad) =>
           _prodsMapFut map { prodsMap =>
@@ -260,7 +295,14 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
     /** Сборка аргументов для рендера focused-карточки, т.е. раскрытого блока + оформление продьюсера. */
     protected def focAdsRenderArgsFor(abtArgs: IAdBodyTplArgs): Future[IFocusedAdsTplArgs] = {
       val producer = abtArgs.producer
-      val logoImgOptFut = LogoUtil.getLogo4scr(producer, _adSearch.screen)
+
+      val logoImgOptFut: Future[LogoOpt_t] = for {
+        logosMap   <- prod2logoScrImgMapFut
+      } yield {
+        abtArgs.producer
+          .id
+          .flatMap(logosMap.get)
+      }
 
       val _fgColor = producer.meta.fgColor getOrElse ShowcaseUtil.SITE_FGCOLOR_DFLT
       val _bgColor = producer.meta.color  getOrElse  ShowcaseUtil.SITE_BGCOLOR_DFLT

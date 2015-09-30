@@ -1,5 +1,7 @@
 package controllers.sc
 
+import models.im.logo.LogoUtil
+import LogoUtil.LogoOpt_t
 import _root_.util.jsa.{SmRcvResp, Js}
 import _root_.util.PlayMacroLogsI
 import models.Context
@@ -8,7 +10,7 @@ import models.jsm.ScIndexResp
 import models.msc.ScRenderArgs.ProdsLetterGrouped_t
 import models.msc._
 import play.twirl.api.Html
-import _root_.util.img.{LogoUtil, WelcomeUtil}
+import _root_.util.img.WelcomeUtil
 import util.showcase._
 import util.stat._
 import util.acl._
@@ -270,8 +272,16 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
 
     /** Получение графического логотипа узла, если возможно. */
     def logoImgOptFut: Future[Option[MImgT]] = {
-      adnNodeFut.flatMap { mnode =>
-        LogoUtil.getLogo4scr(mnode, _reqArgs.screen)
+      for {
+        currAdnIdOpt <- currAdnIdFut
+        logoOptRaw   <- currAdnIdOpt.fold [Future[LogoOpt_t]] {
+          Future successful None
+        } {
+          LogoUtil.getLogoOfNode
+        }
+        logoOptScr   <- LogoUtil.getLogoOpt4scr(logoOptRaw, _reqArgs.screen)
+      } yield {
+        logoOptScr
       }
     }
 
@@ -365,6 +375,7 @@ trait ScIndexNode extends ScIndexNodeCommon {
       }
       override def _reqArgs = args
       override def adnNodeFut = _adnNodeFut
+      override lazy val currAdnIdFut = Future successful Some(adnId)
       override def isGeo = false
       override implicit def _request = request
     }

@@ -1,0 +1,135 @@
+package models.im.logo
+
+import io.suggest.sc.ScConstants
+import io.suggest.ym.model.common.{MImgInfoMeta, MImgInfoT}
+import models.{IEdge, MEdge}
+import models.blk._
+import models.im._
+import play.api.Play._
+import util.img.ImgFormUtil
+import util.xplay.CacheUtil
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import util.SiowebEsUtil.client
+
+import scala.concurrent.Future
+
+/**
+ * Suggest.io
+ * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+ * Created: 29.10.14 18:37
+ * Description: Утиль для работы с логотипами. Исторически, она была разбросана по всему проекту.
+ */
+object LogoUtil {
+
+  type LogoOpt_t = Option[MImgT]
+
+  /** Сколько секунд кешировать результат getLogoOfNode? */
+  val GET_NODE_LOGO_CACHE_SECONDS = configuration.getInt("logo.of.node.cache.seconds") getOrElse 10
+
+  /** Приведение ребра графа к метаданным изображения логотипа. */
+  def edge2logoImg(medge: IEdge): MImgT = {
+    MImg3(medge.toId, Nil)
+  }
+
+  /**
+   * Выполнить действия по замене старого логотипа для узла на новый.
+   * @param newLogo Новый логотип или None, если теперь без логотипа.
+   * @param oldLogo Старый логотип или None, если логотипа ранее не было.
+   * @return Фьючерс с результатом.
+   */
+  def updateLogo(newLogo: LogoOpt_t, oldLogo: LogoOpt_t): Future[Option[MImgInfoT]] = {
+    val oldImgs = oldLogo
+      .map { ii => MImg(ii.fileName) }
+      .toIterable
+    ImgFormUtil.updateOrigImgFull(needImgs = newLogo.toSeq, oldImgs = oldImgs)
+      .flatMap { vs => ImgFormUtil.optImg2OptImgInfo( vs.headOption ) }
+  }
+
+  def updateLogoFor(adnNodeId: String, newLogo: LogoOpt_t): Future[_] = {
+    val edgeSearchArgs = LogoEdgesSearch( adnNodeId )
+    for {
+      medges   <- MEdge.dynSearch(edgeSearchArgs)
+      newLogos <- {
+        val oldImgs = medges
+          .iterator
+          .map { edge2logoImg }
+          .toIterable
+        ImgFormUtil.updateOrigImgFull(needImgs = newLogo.toSeq, oldImgs = oldImgs)
+      }
+    } yield {
+
+    }
+  }
+
+
+  /** Получить логотипы нескольких узлов, вернув карту имеющихся логотипов.
+    * Если какого-то запрошенного узла нет в карте, то значит он без логотипа. */
+  def getLogoOfNodes(adnNodeIds: Seq[String]): Future[Map[String, MImgT]] = {
+    val edgeSearchArgs = LogoEdgesSearch(adnNodeIds)
+    for (medges <- MEdge.dynSearch(edgeSearchArgs)) yield {
+      medges.iterator
+        .map { medge =>
+          medge.fromId -> edge2logoImg(medge)
+        }
+        .toMap
+    }
+  }
+
+  /**
+   * Доставание картинки логотипа без подгонки под свойства экрана.
+   * @param adnNodeId id узла, к которому прилинкован логотип.
+   * @return Фьючерс с результатом: None -- логотип не выставлен.
+   */
+  def getLogoOfNode(adnNodeId: String): Future[LogoOpt_t] = {
+    val edgeSearchArgs = LogoEdgesSearch( adnNodeId )
+    for (medgeOpt <- MEdge.dynSearchOne(edgeSearchArgs)) yield {
+      medgeOpt.map(edge2logoImg)
+    }
+  }
+
+  def getLogoOfNodeCached(adnNodeId: String): Future[LogoOpt_t] = {
+    CacheUtil.getOrElse(adnNodeId + ".n2lo", GET_NODE_LOGO_CACHE_SECONDS) {
+      getLogoOfNode(adnNodeId)
+    }
+  }
+
+  /**
+   * Подготовка логотипа выдачи для узла.
+   * @param logoOpt Текущей логотип узла, если есть. Результат вызова getLogo().
+   * @param screenOpt Данные по экрану клиента, если есть.
+   * @return Фьючерс с картинкой, если логотип задан.
+   */
+  def getLogoOpt4scr(logoOpt: LogoOpt_t, screenOpt: Option[DevScreen]): Future[LogoOpt_t] = {
+    logoOpt.fold [Future[LogoOpt_t]] {
+      Future successful None
+    } { logoImg =>
+      getLogoOpt4scr(logoImg, screenOpt)
+    }
+  }
+  def getLogoOpt4scr(logoImg: MImgT, screenOpt: Option[DevScreen]): Future[LogoOpt_t] = {
+    getLogo4scr(logoImg, screenOpt)
+      .map { Some.apply }
+  }
+
+  def getLogo4scr(logoImg: MImgT, screenOpt: Option[DevScreen]): Future[MImgT] = {
+    // Код метода синхронный, но, как показывает практика, лучше сразу сделать асинхрон, чтобы потом всё не перепиливать.
+    // Узнаём pixelRatio для дальнейших рассчетов.
+    val pxRatio = screenOpt.flatMap(_.pixelRatioOpt)
+      .getOrElse(DevPixelRatios.default)
+
+    // Исходя из pxRatio нужно посчитать высоту логотипа
+    val heightCssPx = ScConstants.Logo.HEIGHT_CSSPX
+    val heightPx = szMulted(heightCssPx, pxRatio.pixelRatio)
+
+    // Вернуть скомпленную картинку.
+    val logoImg2 = logoImg.withDynOps(
+      Seq(
+        AbsResizeOp(MImgInfoMeta(heightPx, width = 0)),
+        StripOp,
+        pxRatio.fgCompression.imQualityOp
+      )
+    )
+    Future successful logoImg2
+  }
+
+}

@@ -3,12 +3,13 @@ package controllers
 import akka.actor.ActorSystem
 import com.google.inject.Inject
 import io.suggest.js.UploadConstants
+import models.im.logo.LogoUtil
 import models.im.{MImgT, MImg}
 import models.jsm.init.MTargets
 import play.api.i18n.MessagesApi
 import play.core.parsers.Multipart
 import play.twirl.api.Html
-import util.img.LogoUtil.LogoOpt_t
+import LogoUtil.LogoOpt_t
 import util.img._
 import util.PlayMacroLogsImpl
 import util.acl._
@@ -160,7 +161,7 @@ class MarketLkAdnEdit @Inject() (
 
     // Запуск асинхронной сборки данных из моделей.
     val waOptFut = getWelcomeAdOpt(adnNode)
-    val nodeLogoOptFut = LogoUtil.getLogo(adnNode)
+    val nodeLogoOptFut = LogoUtil.getLogoOfNode(adnId)
     val gallerryIks = gallery2iiks( adnNode.gallery )
 
     // Сборка и наполнения маппинга формы.
@@ -208,7 +209,7 @@ class MarketLkAdnEdit @Inject() (
           .map { NotAcceptable(_) }
       },
       {fmr =>
-        val oldLogoOptFut = LogoUtil.getLogo(adnNode)
+        val oldLogoOptFut = LogoUtil.getLogoOfNode(adnId)
         // В фоне обновляем картинку карточки-приветствия.
         val savedWelcomeImgsFut = WelcomeUtil.updateWelcodeAdFut(adnNode, fmr.waImgOpt)
         trace(s"${logPrefix}newGallery[${fmr.gallery.size}] ;; newLogo = ${fmr.logoOpt.map(_.fileName)}")
