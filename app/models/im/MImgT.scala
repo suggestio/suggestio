@@ -129,6 +129,7 @@ abstract class MImgT extends MAnyImgT {
 
   override lazy val dynImgOpsString = super.dynImgOpsString
 
+  /** Существует ли картинка в хранилище? */
   def existsInPermanent: Future[Boolean]
 
   def qOpt: Option[String] = {

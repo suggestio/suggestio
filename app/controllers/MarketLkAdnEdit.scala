@@ -212,7 +212,7 @@ class MarketLkAdnEdit @Inject() (
         val savedWelcomeImgsFut = WelcomeUtil.updateWelcodeAdFut(adnNode, fmr.waImgOpt)
         trace(s"${logPrefix}newGallery[${fmr.gallery.size}] ;; newLogo = ${fmr.logoOpt.map(_.fileName)}")
         // В фоне обновляем логотип узла
-        val savedLogoFut = LogoUtil.updateLogo(fmr.logoOpt, adnNode.logoImgOpt)
+        val savedLogoFut = LogoUtil.updateLogo(fmr.logoOpt, adnNode)
         // Запускаем апдейт галереи.
         val galleryUpdFut = GalleryUtil.updateGallery(fmr.gallery, oldGallery = adnNode.gallery)
         for {

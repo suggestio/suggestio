@@ -18,7 +18,8 @@ object LogoUtil {
 
   type LogoOpt_t = Option[MImgT]
 
-  def updateLogo(newLogo: LogoOpt_t, oldLogo: Option[MImgInfoT]): Future[Option[MImgInfoT]] = {
+  def updateLogo(newLogo: LogoOpt_t, oldLogoInfo: LogoImgOptI): Future[Option[MImgInfoT]] = {
+    val oldLogo = oldLogoInfo.logoImgOpt
     val oldImgs = oldLogo
       .map { ii => MImg(ii.filename) }
       .toIterable

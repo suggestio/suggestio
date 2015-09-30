@@ -86,14 +86,23 @@ trait ScNodeInfo extends ScController {
   }
 
   /** Экшн, который выдает базовую инфу о ноде */
-  def nodeData(adnId: String) = AdnNodeMaybeAuth(adnId).apply { implicit request =>
+  def nodeData(adnId: String) = AdnNodeMaybeAuth(adnId).async { implicit request =>
     val node = request.adnNode
-    val logoSrcOpt = node.logoImgOpt map { logo_src =>
-      CdnUtil.dynImg(logo_src.filename)
+    val logoCallOptFut = LogoUtil.getLogo(node) map { logoOpt =>
+      logoOpt.map { logoImg =>
+        CdnUtil.dynImg( logoImg )
+      }
     }
-    val resp = NodeDataResp(colorOpt = node.meta.color, logoUrlOpt = logoSrcOpt)
-    cacheControlShort {
-      Ok( Js(SmRcvResp(resp)) )
+    for {
+      logoCallOpt <- logoCallOptFut
+    } yield {
+      val resp = NodeDataResp(
+        colorOpt    = node.meta.color,
+        logoUrlOpt  = logoCallOpt
+      )
+      cacheControlShort {
+        Ok( Js(SmRcvResp(resp)) )
+      }
     }
   }
 
