@@ -54,6 +54,6 @@ case class SwfsStorage(
 
   override def write(data: Enumerator[Array[Byte]])(implicit ec: ExecutionContext): Future[_] = ???
 
-  override def exists(implicit ec: ExecutionContext): Future[Boolean] = ???
+  override def isExist(implicit ec: ExecutionContext): Future[Boolean] = ???
 
 }

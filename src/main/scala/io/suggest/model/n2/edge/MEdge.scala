@@ -95,15 +95,39 @@ object MEdge
 }
 
 
+/** Трейт экземпляра ребра. */
+trait IEdge {
+
+  /** Узел-источник. */
+  def fromId      : String
+
+  /** Предикат, т.е. что-то типа категории ребра. */
+  def predicate   : MPredicate
+
+  /** Узел-адресат. */
+  def toId        : String
+
+  /** Очередность ребра. */
+  def ordering    : Option[Int]
+
+  /** Сборка id ребра. */
+  def edgeId      : String = {
+    fromId + "." + predicate.strId + "." + toId
+  }
+
+}
+
+
 /** Реализация модели ребер графа. */
 case class MEdge(
-  fromId      : String,
-  predicate   : MPredicate,
-  toId        : String,
-  ordering    : Option[Int]   = None,
-  versionOpt  : Option[Long]  = None
+  override val fromId      : String,
+  override val predicate   : MPredicate,
+  override val toId        : String,
+  override val ordering    : Option[Int]   = None,
+  override val versionOpt  : Option[Long]  = None
 )
   extends EsModelT
+  with IEdge
   with EsModelJsonWrites
 {
 
@@ -111,7 +135,7 @@ case class MEdge(
   override def companion = MEdge
 
   override def id: Option[String] = {
-    Some(fromId + "." + predicate.strId + "." + toId)
+    Some( edgeId )
   }
 
 }

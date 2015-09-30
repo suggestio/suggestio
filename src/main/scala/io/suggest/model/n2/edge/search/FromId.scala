@@ -13,7 +13,7 @@ import io.suggest.model.n2.edge.MEdge.FROM_ID_FN
 trait FromId extends DynSearchArgs {
 
   /** id n2-узла, ссылающегося искомыми ребрами графа на другие узлы. */
-  def fromId: List[String]
+  def fromId: Seq[String]
 
   override def toEsQueryOpt: Option[QueryBuilder] = {
     Util.strSeqToQueryOpt(FROM_ID_FN, fromId, super.toEsQueryOpt)
@@ -32,7 +32,7 @@ trait FromId extends DynSearchArgs {
 
 /** Дефолтовая реализация полей поискового аддона [[FromId]]. */
 trait FromIdDflt extends FromId {
-  override def fromId: List[String] = Nil
+  override def fromId: Seq[String] = Nil
 }
 
 

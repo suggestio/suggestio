@@ -31,10 +31,20 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with MacroLog
    * Поиск карточек в ТЦ по критериям.
    * @return Список рекламных карточек, подходящих под требования.
    */
-  def dynSearch(dsa: A)(implicit ec:ExecutionContext, client: Client): Future[Seq[T]] = {
+  def dynSearch(dsa: A)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
     dynSearchReqBuilder(dsa)
       .execute()
       .map { searchResp2list }
+  }
+
+  /**
+   * Разновидность dynSearch для максимум одного результата. Вместо коллекции возвращается Option[T].
+   * @param dsa Аргументы поиска.
+   * @return Фьючерс с Option[T] внутри.
+   */
+  def dynSearchOne(dsa: A)(implicit ec: ExecutionContext, client: Client): Future[Option[T]] = {
+    dynSearch(dsa)
+      .map { _.headOption }
   }
 
   /**
