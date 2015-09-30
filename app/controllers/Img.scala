@@ -243,7 +243,7 @@ trait TempImgSupport extends SioController with PlayMacroLogsI with NotifyWs wit
    * @param im Картинка для обработки.
    * @param wsId id для уведомления.
    */
-  def _detectPalletteWs(im: MImg, wsId: String): Future[Histogram] = {
+  def _detectPalletteWs(im: MImgT, wsId: String): Future[Histogram] = {
     // Кеширование ресурсоемких результатов работы MCD.
     val f = { () =>
       MainColorDetector.detectPaletteFor(im, maxColors = MAIN_COLORS_PALETTE_SIZE)

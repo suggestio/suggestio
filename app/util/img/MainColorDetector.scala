@@ -3,7 +3,7 @@ package util.img
 import java.io.{FileInputStream, InputStreamReader, File}
 import java.nio.file.Files
 import java.text.ParseException
-import models.im.{MLocalImg, ImOp, MImg, Im4jAsyncSuccessProcessListener}
+import models.im.{MLocalImg, ImOp, Im4jAsyncSuccessProcessListener}
 import org.im4java.core.{IMOperation, ConvertCmd}
 
 import play.api.Play.{current, configuration}
@@ -150,7 +150,7 @@ object MainColorDetector extends PlayMacroLogsImpl {
    * @param bgImg4s Данные по картинке.
    * @return Фьючерс с данными картинки.
    */
-  def prepareImg(bgImg4s: MImg): Future[PrepareImgResult] = {
+  def prepareImg(bgImg4s: MImgT): Future[PrepareImgResult] = {
     lazy val logPrefix = s"prepareImg(${bgImg4s.fileName}): "
     // toLocalImg не существовует обычно вообще (ибо голый orig [+ crop]). Поэтому сразу ищем оригинал, но не теряя надежды.
     val localOrigImgFut = bgImg4s
@@ -184,7 +184,7 @@ object MainColorDetector extends PlayMacroLogsImpl {
    * @param bgImg4s Исходная картинка.
    * @return Фьючерс с результатом работы.
    */
-  def detectColorFor(bgImg4s: MImg): Future[ImgBgColorUpdateAction] = {
+  def detectColorFor(bgImg4s: MImgT): Future[ImgBgColorUpdateAction] = {
     lazy val logPrefix = s"detectColorFor(${bgImg4s.fileName}): "
     prepareImg(bgImg4s) flatMap {
       case PrepareImgResult(Some(localImg), preImOps) =>
@@ -207,7 +207,7 @@ object MainColorDetector extends PlayMacroLogsImpl {
    * @param maxColors Макс.размер результирующей палитры.
    * @return Фьючерс с гистограммой, где самый частый в начале, и далее по убыванию.
    */
-  def detectPaletteFor(bgImg4s: MImg, maxColors: Int = PALETTE_MAX_COLORS_DFLT): Future[Histogram] = {
+  def detectPaletteFor(bgImg4s: MImgT, maxColors: Int = PALETTE_MAX_COLORS_DFLT): Future[Histogram] = {
     prepareImg(bgImg4s) flatMap {
       case PrepareImgResult(Some(localImg), preImOps) =>
         detectFilePaletteUnsorted(localImg.file, suppressErrors = true, preImOps = preImOps, maxColors = maxColors)

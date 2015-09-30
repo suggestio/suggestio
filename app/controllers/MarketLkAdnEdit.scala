@@ -208,11 +208,14 @@ class MarketLkAdnEdit @Inject() (
           .map { NotAcceptable(_) }
       },
       {fmr =>
+        val oldLogoOptFut = LogoUtil.getLogo(adnNode)
         // В фоне обновляем картинку карточки-приветствия.
         val savedWelcomeImgsFut = WelcomeUtil.updateWelcodeAdFut(adnNode, fmr.waImgOpt)
         trace(s"${logPrefix}newGallery[${fmr.gallery.size}] ;; newLogo = ${fmr.logoOpt.map(_.fileName)}")
         // В фоне обновляем логотип узла
-        val savedLogoFut = LogoUtil.updateLogo(fmr.logoOpt, adnNode)
+        val savedLogoFut = oldLogoOptFut flatMap { oldLogoOpt =>
+          LogoUtil.updateLogo(fmr.logoOpt, oldLogoOpt)
+        }
         // Запускаем апдейт галереи.
         val galleryUpdFut = GalleryUtil.updateGallery(fmr.gallery, oldGallery = adnNode.gallery)
         for {

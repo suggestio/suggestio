@@ -66,7 +66,7 @@ object MGallery extends EsModelStaticT with PlayMacroLogsImpl {
         .orElse(id)
         .get,
       imgs = m.get(IMGS_ESFN)
-        .fold(List.empty[MImg]) { raw =>
+        .fold(List.empty[MImgT]) { raw =>
           EsModel.iteratorParser(raw)
             .map(EsModel.stringParser)
             .map(MImg.apply)

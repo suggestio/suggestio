@@ -18,10 +18,9 @@ object LogoUtil {
 
   type LogoOpt_t = Option[MImgT]
 
-  def updateLogo(newLogo: LogoOpt_t, oldLogoInfo: LogoImgOptI): Future[Option[MImgInfoT]] = {
-    val oldLogo = oldLogoInfo.logoImgOpt
+  def updateLogo(newLogo: LogoOpt_t, oldLogo: LogoOpt_t): Future[Option[MImgInfoT]] = {
     val oldImgs = oldLogo
-      .map { ii => MImg(ii.filename) }
+      .map { ii => MImg(ii.fileName) }
       .toIterable
     ImgFormUtil.updateOrigImgFull(needImgs = newLogo.toSeq, oldImgs = oldImgs)
       .flatMap { vs => ImgFormUtil.optImg2OptImgInfo( vs.headOption ) }

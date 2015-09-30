@@ -65,7 +65,7 @@ class SysImg @Inject() (
 
   /** Рендер главной страницы sys.img-раздела админки. */
   def index(q: Option[String]) = IsSuperuser { implicit request =>
-    val imgs = Seq.empty[MImg]
+    val imgs = Seq.empty[MImgT]
     // TODO Нужно искать все картинки или по указанному в q запросу.
     Ok( indexTpl(imgs, imgFormM) )
   }
