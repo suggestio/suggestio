@@ -1,4 +1,4 @@
-@(mnode: MAdnNode, isMyNode: Boolean, povAdnIdOpt: Option[String])(implicit ctx: Context)
+@(args: mlk.INodeShowArgs)(implicit ctx: Context)
 
 @* Заглавная страница узла рекламной сети в личных кабинетах.
    Если isMyNode, то идёт рендер управляемого узла, и povAdnIdOpt игнорируется.
@@ -10,7 +10,7 @@
 @import util.img.GalleryUtil
 @import util.img.DynImgUtil
 @import io.suggest.vlines.VLines
-
+@import args._
 
 @headAfter1 = {
   <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/lib/bxslider/jquery.bxslider.css")'/>

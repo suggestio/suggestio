@@ -1,22 +1,15 @@
 package models.im
 
-import java.io.FileNotFoundException
 import java.nio.ByteBuffer
 import java.util.UUID
 
 import io.suggest.model.img.{ImgSzDated, IImgMeta}
 import io.suggest.model.{MUserImgMeta2, MUserImg2}
-import io.suggest.util.UuidUtil
 import models._
 import org.joda.time.DateTime
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.iteratee.Enumerator
-import play.api.mvc.QueryStringBindable
-import util.qsb.QsbSigner
-import util.secure.SecretGetter
-import util.xplay.{IteeUtil, CacheUtil}
 import util.PlayLazyMacroLogsImpl
-import play.api.Play.{current, configuration, isProd}
 import util.img.{ImgFileNameParsers, ImgFormUtil}
 import util.event.SiowebNotifier.Implicts.sn
 
@@ -36,95 +29,6 @@ import scala.concurrent.Future
 
 
 object MImg extends PlayLazyMacroLogsImpl with ImgFileNameParsers { model =>
-
-  import LOGGER._
-
-  val ORIG_META_CACHE_SECONDS: Int = configuration.getInt("m.img.org.meta.cache.ttl.seconds") getOrElse 60
-
-  val SIGN_SUF   = ".sig"
-  val IMG_ID_SUF = ".id"
-
-
-  /** Статический секретный ключ для подписывания запросов к dyn-картинкам. */
-  private[models] val SIGN_SECRET: String = {
-    val sg = new SecretGetter {
-      override val confKey = "dynimg.sign.key"
-      override def useRandomIfMissing = isProd
-      override def LOGGER = model.LOGGER
-    }
-    sg()
-  }
-
-  /** Использовать QSB[UUID] напрямую нельзя, т.к. он выдает не-base64-выхлопы, что вызывает конфликты. */
-  def rowKeyB(implicit strB: QueryStringBindable[String]) = {
-    new QueryStringBindable[UUID] {
-      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, UUID]] = {
-        strB.bind(key, params).map {
-          _.right.flatMap { raw =>
-            try {
-              Right( UuidUtil.base64ToUuid(raw) )
-            } catch {
-              case ex: Exception =>
-                val msg = "img id missing or invalid: "
-                warn( s"bind($key) $msg: $raw" )
-                Left(msg)
-            }
-          }
-        }
-      }
-
-      override def unbind(key: String, value: UUID): String = {
-        val uuid64 = UuidUtil.uuidToBase64(value)
-        strB.unbind(key, uuid64)
-      }
-    }
-  }
-
-  def qsbStandalone = {
-    import ImOp._
-    import QueryStringBindable._
-    qsb
-  }
-
-  /** routes-биндер для query-string. */
-  implicit def qsb(implicit strB: QueryStringBindable[String],
-                   imOpsOptB: QueryStringBindable[Option[Seq[ImOp]]] ): QueryStringBindable[MImg] = {
-    new QueryStringBindable[MImg] {
-
-      /** Создать подписывалку для qs. */
-      def getQsbSigner(key: String) = new QsbSigner(SIGN_SECRET, s"$key$SIGN_SUF")
-
-      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MImg]] = {
-        // Собираем результат
-        val keyDotted = if (!key.isEmpty) s"$key." else key
-        for {
-          // TODO Надо бы возвращать invalid signature при ошибке, а не not found.
-          params2         <- getQsbSigner(key).signedOrNone(keyDotted, params)
-          maybeImgId      <- rowKeyB.bind(key + IMG_ID_SUF, params2)
-          maybeImOpsOpt   <- imOpsOptB.bind(keyDotted, params2)
-        } yield {
-          maybeImgId.right.flatMap { imgId =>
-            maybeImOpsOpt.right.map { imOpsOpt =>
-              val imOps = imOpsOpt.getOrElse(Nil)
-              MImg(imgId, imOps)
-            }
-          }
-        }
-      }
-
-      override def unbind(key: String, value: MImg): String = {
-        val imgIdRaw = rowKeyB.unbind(key + IMG_ID_SUF, value.rowKey)
-        val imgOpsOpt = if (value.hasImgOps) Some(value.dynImgOps) else None
-        val imOpsUnbinded = imOpsOptB.unbind(s"$key.", imgOpsOpt)
-        val unsignedResult = if (imOpsUnbinded.isEmpty) {
-          imgIdRaw
-        } else {
-          imgIdRaw + "&" + imOpsUnbinded
-        }
-        getQsbSigner(key).mkSigned(key, unsignedResult)
-      }
-    }
-  }
 
   /** Парсер filename'ов, выдающий на выходе готовые экземпляры MImg. */
   def fileName2miP: Parser[MImg] = {
@@ -167,158 +71,6 @@ object MImg extends PlayLazyMacroLogsImpl with ImgFileNameParsers { model =>
 }
 
 
-import MImg._
-
-
-trait MImgT extends MAnyImgT {
-
-  def rowKey: UUID
-  def dynImgOps: Seq[ImOp]
-
-  def thisT: MImg_t
-
-  lazy val toLocalInstance = MLocalImg(rowKey, dynImgOps)
-
-  lazy val rowKeyStr = UuidUtil.uuidToBase64(rowKey)
-
-  override lazy val dynImgOpsString = super.dynImgOpsString
-
-  def qOpt: Option[String] = {
-    if (isOriginal) {
-      None
-    } else {
-      Some( dynImgOpsString )
-    }
-  }
-
-  protected def _thisToOriginal: MImg_t
-
-  /** Дать экземпляр MImg на исходный немодифицированный оригинал. */
-  lazy val original: MImg_t = {
-    if (hasImgOps) {
-      _thisToOriginal
-    } else {
-      thisT
-    }
-  }
-
-  /** Есть ли операции в dynImgOps? */
-  override def hasImgOps: Boolean = dynImgOps.nonEmpty
-
-  /** Имя файла картинки. Испрользуется как сериализованное представление данных по картинке. */
-  override lazy val fileName: String = super.fileName
-
-  /** Прочитать картинку из реального хранилища в файл, если ещё не прочитана. */
-  override lazy val toLocalImg: Future[Option[MLocalImg]] = {
-    val inst = toLocalInstance
-    if (inst.isExists) {
-      inst.touchAsync()
-      Future successful Some(inst)
-    } else {
-      val enumer = _getImgBytes2
-      inst.prepareWriteFile()
-      IteeUtil.writeIntoFile(enumer, inst.file)
-        .map { _ => Option(inst) }
-        .recover { case ex: Throwable =>
-          LOGGER.warn(s"toLocalImg: _getImgBytes2 or writeIntoFile ${inst.file} failed", ex)
-          None
-        }
-    }
-  }
-
-  /** Запустить чтение картинки из хранилища, получив на руки Enumerator сырых данных. */
-  protected def _getImgBytes2: Enumerator[Array[Byte]]
-
-  /** Закешированный результат чтения метаданных из постоянного хранилища. */
-  lazy val permMetaCached: Future[Option[IImgMeta]] = {
-    CacheUtil.getOrElse(fileName + ".giwh", ORIG_META_CACHE_SECONDS) {
-      _getImgMeta
-    }
-  }
-
-  protected def _getImgMeta: Future[Option[IImgMeta]]
-
-  /**
-   * Узнать параметры изображения, описываемого экземпляром этой модели.
-   * @return Фьючерс с пиксельным размером картинки.
-   */
-  override lazy val getImageWH: Future[Option[ISize2di]] = {
-    // Фетчим паралельно из обеих моделей. Кто первая, от той и принимаем данные.
-    val mimg2Fut = permMetaCached
-      .filter(_.isDefined)
-    val localInst = toLocalInstance
-    lazy val logPrefix = "getImageWh(" + fileName + "): "
-    val fut = if (localInst.isExists) {
-      // Есть локальная картинка. Попробовать заодно потанцевать вокруг неё.
-      val localFut = localInst.getImageWH
-      mimg2Fut.recoverWith {
-        case ex: Exception =>
-          if (!ex.isInstanceOf[NoSuchElementException])
-            LOGGER.warn(logPrefix + "Unable to read img info from PERMANENT models", ex)
-          localFut
-      }
-
-    } else {
-      // Сразу запускаем выкачивание локальной картинки. Если не понадобится сейчас, то скорее всего понадобится
-      // чуть позже -- на раздаче самой картинки, а не её метаданных.
-      val toLocalImgFut = toLocalImg
-      mimg2Fut.recoverWith { case ex: Throwable =>
-        // Запустить детектирование размеров.
-        val whOptFut = toLocalImgFut.flatMap { localImgOpt =>
-          localImgOpt.fold {
-            LOGGER.warn(logPrefix + "local img was NOT read. cannot collect img meta.")
-            Future successful Option.empty[MImgInfoMeta]
-          } { _.getImageWH }
-        }
-        if (ex.isInstanceOf[NoSuchElementException])
-          LOGGER.debug(logPrefix + "No wh in DB, and nothing locally stored. Recollection img meta")
-        // Сохранить полученные метаданные в хранилище.
-        // Если есть уже сохраненная карта метаданных, то дополнить их данными WH, а не перезатереть.
-        for (localWhOpt <- whOptFut;  localImgOpt <- toLocalImgFut) {
-          for (localWh <- localWhOpt;  localImg <- localImgOpt) {
-            _updateMetaWith(localWh, localImg)
-          }
-        }
-        // Вернуть фьючерс с метаданными, не дожидаясь сохранения оных.
-        whOptFut
-      }
-    }
-    // Любое исключение тут можно подавить:
-    fut.recover {
-      case ex: Exception =>
-        LOGGER.warn(logPrefix + "Unable to read img info meta from all models", ex)
-        None
-    }
-  }
-
-  /** Потенциально ненужная операция обновления метаданных. В новой архитектуре её быть не должно бы,
-    * т.е. метаданные обязательные изначально. */
-  protected def _updateMetaWith(localWh: MImgSizeT, localImg: MLocalImgT): Unit
-
-  /** Отправить лежащее в файле на диске в постоянное хранилище. */
-  def saveToPermanent: Future[_] = {
-    val loc = toLocalInstance
-    if (loc.isExists) {
-      _doSaveToPermanent(loc: MLocalImg)
-    } else {
-      Future failed new FileNotFoundException("Img file not exists localy - unable to save into permanent storage: " + loc.file.getAbsolutePath)
-    }
-  }
-
-  protected def _doSaveToPermanent(loc: MLocalImgT): Future[_]
-
-
-  override lazy val rawImgMeta: Future[Option[IImgMeta]] = {
-    permMetaCached
-      .filter(_.isDefined)
-      .recoverWith {
-        // Пытаемся прочитать эти метаданные из модели MLocalImg.
-        case ex: Exception  =>  toLocalInstance.rawImgMeta
-      }
-  }
-
-}
-
 
 /** Реализация модели [[MImgT]] для работы напрямую с кассандрой.
   * Это legacy-модель картинок, потом будет удалена вслед за кассандрой.
@@ -332,7 +84,10 @@ case class MImg(override val rowKey: UUID,
   override type MImg_t = MImg
   override def thisT = this
   override def toWrappedImg = this
-  override protected def _thisToOriginal = copy(dynImgOps = Nil)
+
+  override def withDynOps(dynImgOps2: Seq[ImOp]): MImg_t = {
+    copy(dynImgOps = dynImgOps2)
+  }
 
   override lazy val cropOpt = super.cropOpt
 
@@ -467,8 +222,8 @@ case class MImg2(override val rowKey: UUID,
     LOGGER.warn(s"_updateMetaWith($localWh, $localImg) ignored and not implemented")
   }
 
-  override protected def _thisToOriginal: MImg_t = {
-    copy(dynImgOps = Nil)
+  override def withDynOps(dynImgOps2: Seq[ImOp]): MImg2 = {
+    copy(dynImgOps = dynImgOps2)
   }
 
   override def delete: Future[_] = {

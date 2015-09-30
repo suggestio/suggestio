@@ -4,6 +4,7 @@ import _root_.util.adn.NodesUtil
 import _root_.util.async.AsyncUtil
 import com.google.inject.Inject
 import controllers.ident._
+import models.mlk.MNodeShowArgs
 import models.msession.Keys
 import models.usr.{MUserEdgeUtil, EmailPwIdent}
 import play.api.i18n.MessagesApi
@@ -60,12 +61,13 @@ class MarketLkAdn @Inject() (
     AdnNodeAccessGet(adnId, povAdnIdOpt) { implicit request =>
       import request.{adnNode, isMyNode}
 
-      // Дождаться всех фьючерсов и отрендерить результат.
-      Ok(adnNodeShowTpl(
+      val rargs = MNodeShowArgs(
         mnode         = adnNode,
         isMyNode      = isMyNode,
         povAdnIdOpt   = request.povAdnNodeOpt.flatMap(_.id)
-      ))
+      )
+      val html = adnNodeShowTpl( rargs )
+      Ok(html)
     }
   }
 

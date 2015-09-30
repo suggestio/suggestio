@@ -3,7 +3,7 @@ package controllers
 import java.net.{MalformedURLException, URL}
 
 import com.google.inject.Inject
-import models.im.MImg
+import models.im.{MImgT, MImg}
 import play.api.i18n.MessagesApi
 import util.{FormUtil, PlayMacroLogsImpl}
 import util.acl.IsSuperuser
@@ -28,7 +28,7 @@ class SysImg @Inject() (
   import LOGGER._
 
   /** Маппинг для поисковой формы, который пытается распарсить ссылку с img qs или просто img qs. */
-  def imgFormM: Form[MImg] = Form(
+  def imgFormM: Form[MImgT] = Form(
     "qstr" -> text(maxLength = 512)
       .transform [String] (FormUtil.strTrimSanitizeUnescapeF, FormUtil.strIdentityF)
       .verifying("error.required", !_.isEmpty)
@@ -44,14 +44,14 @@ class SysImg @Inject() (
         },
         { identity }
       )
-      .transform [Option[MImg]] (
+      .transform [Option[MImgT]] (
         {qs =>
           try {
             Some( MImg(qs) )
           } catch {
             case ex: Exception =>
               val qsMap = FormUtil.parseQsToMap(qs)
-              MImg.qsbStandalone
+              MImgT.qsbStandalone
                 .bind("i", qsMap)
                 .flatMap { e => if (e.isLeft) None else Some(e.right.get) }
           }
@@ -59,7 +59,7 @@ class SysImg @Inject() (
         { _.fold("")(_.fileName) }
       )
       .verifying("error.invalid", _.isDefined)
-      .transform [MImg] (_.get, Some.apply)
+      .transform [MImgT] (_.get, Some.apply)
   )
 
 
@@ -90,7 +90,7 @@ class SysImg @Inject() (
    * Сабмит формы поиска картинки по ссылке на неё.
    * @param im Данные по запрашиваемой картинке.
    */
-  def showOne(im: MImg) = IsSuperuser.async { implicit request =>
+  def showOne(im: MImgT) = IsSuperuser.async { implicit request =>
     val metaFut = im.permMetaCached
     // TODO Искать, где используется эта картинка.
     metaFut map { metaOpt =>
@@ -103,7 +103,7 @@ class SysImg @Inject() (
    * @param im Картинка.
    * @return Редирект.
    */
-  def deleteOneSubmit(im: MImg) = IsSuperuser.async { implicit request =>
+  def deleteOneSubmit(im: MImgT) = IsSuperuser.async { implicit request =>
     // TODO Удалять на ВСЕХ НОДАХ из кеша /picture/local/
     im.delete map { _ =>
       val (msg, rdr) = if (im.isOriginal) {
@@ -112,7 +112,7 @@ class SysImg @Inject() (
         "TODO Дериватив может остаться локально на других узлах." -> routes.SysImg.showOne(im.original)
       }
       Redirect(rdr)
-        .flashing("success" -> msg)
+        .flashing(FLASH.SUCCESS -> msg)
     }
   }
 

@@ -3,7 +3,7 @@ package controllers
 import io.suggest.ym.model.common.{BlockMeta, IBlockMeta}
 import models.Context
 import models.blk.{BlockWidths, BlockHeights, BlockMetaUtil}
-import models.im.{CompressModes, DevScreen, MImg}
+import models.im.{MImgT, CompressModes, DevScreen, MImg}
 import models.im.make.{Makers, MakeArgs, IMakeArgs, SysForm_t}
 import play.api.data.{Form, Mapping}
 import play.twirl.api.Html
@@ -26,7 +26,7 @@ object SysImgMake {
   import play.api.data.Forms._
 
   /** Маппинг для [[models.im.make.IMakeArgs]] под нужды этого контроллера. */
-  def makeArgsM(img: MImg): Mapping[IMakeArgs] = {
+  def makeArgsM(img: MImgT): Mapping[IMakeArgs] = {
     mapping(
       "blockMeta" -> BlockMetaUtil.imapping,
       "szMult"    -> FormUtil.szMultM,
@@ -38,7 +38,7 @@ object SysImgMake {
   }
 
   /** Маппинг формы, с которой работают в шаблоны и контроллеры. */
-  def makeFormM(img: MImg): SysForm_t = {
+  def makeFormM(img: MImgT): SysForm_t = {
     Form(tuple(
       "maker" -> Makers.mapping,
       "args"  -> makeArgsM(img)
@@ -59,7 +59,7 @@ trait SysImgMake extends SioController with PlayMacroLogsI {
    * @param bmDflt Необязательные дефолтовые данные полей block-meta. Заливаются в начальную форму.
    * @return 200 ok со страницей с формой описания img make-задачи.
    */
-  def makeForm(img: MImg, bmDflt: Option[IBlockMeta]) = IsSuperuserGet.async { implicit request =>
+  def makeForm(img: MImgT, bmDflt: Option[IBlockMeta]) = IsSuperuserGet.async { implicit request =>
     implicit val ctx = implicitly[Context]
     // Забиндить дефолтовые данные в форму
     val form = makeFormM(img).fill((
@@ -82,7 +82,7 @@ trait SysImgMake extends SioController with PlayMacroLogsI {
   }
 
   /** Рендер страницы с формой параметров make. */
-  private def _makeFormRender(img: MImg, form: SysForm_t)(implicit ctx: Context): Future[Html] = {
+  private def _makeFormRender(img: MImgT, form: SysForm_t)(implicit ctx: Context): Future[Html] = {
     val html = makeFormTpl(img, form)(ctx)
     Future successful html
   }
@@ -92,7 +92,7 @@ trait SysImgMake extends SioController with PlayMacroLogsI {
    * @param img Обрабатываемая картинка.
    * @return Получившаяся картинка.
    */
-  def makeFormSubmit(img: MImg) = IsSuperuserPost.async { implicit request =>
+  def makeFormSubmit(img: MImgT) = IsSuperuserPost.async { implicit request =>
     makeFormM(img).bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug(s"makeFormSubmit(${img.rowKeyStr}): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")

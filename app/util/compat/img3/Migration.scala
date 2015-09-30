@@ -23,7 +23,7 @@ object Migration {
 
   def adnLogos2edges(): Future[LogosAcc] = {
     // Обойти все узлы ADN, прочитав оттуда данные по логотипам.
-    MAdnNode.foldLeftAsync(LogosAcc(0, 0)) { (acc0Fut, madnNode) =>
+    MAdnNode.foldLeftAsync( LogosAcc(0, 0) ) { (acc0Fut, madnNode) =>
       madnNode.logoImgOpt match {
         case Some(logoImg) =>
           val mimg = MImg(logoImg).original
@@ -103,7 +103,7 @@ object Migration {
             sha1  <- sha1Fut
             imgWh <- imgWhFut
           } yield {
-            MMedia.apply(
+            MMedia(
               nodeId = imgNodeId,
               file = MFileMeta(
                 mime        = mime,

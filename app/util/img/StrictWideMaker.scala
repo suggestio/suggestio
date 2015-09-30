@@ -70,7 +70,7 @@ object StrictWideMaker extends IMaker with PlayLazyMacroLogsImpl {
     MakeResult(
       szCss       = szCss,
       szReal      = szReal,
-      dynCallArgs = args.img.copy(dynImgOps = imOps),
+      dynCallArgs = args.img.withDynOps(imOps),
       isWide      = true
     )
   }

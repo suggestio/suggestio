@@ -1,7 +1,7 @@
 package models.im.make
 
 import io.suggest.ym.model.common.MImgSizeT
-import models.im.MImg
+import models.im.MImgT
 import play.api.mvc.Call
 import util.img.DynImgUtil
 
@@ -16,7 +16,7 @@ trait IMakeResult {
   /** Данные о размере картинки в реальных экранных пикселях экрана устройства. Превышают szCss в szMult раз. */
   def szReal        : MImgSizeT
   /** Данные для сборки ссылки на картинку. */
-  def dynCallArgs   : MImg
+  def dynCallArgs   : MImgT
   /** Является ли результат make - широкоформатным рендером? */
   def isWide        : Boolean
 
@@ -30,6 +30,6 @@ trait IMakeResult {
 case class MakeResult(
   szCss         : MImgSizeT,
   szReal        : MImgSizeT,
-  dynCallArgs   : MImg,
+  dynCallArgs   : MImgT,
   isWide        : Boolean
 ) extends IMakeResult

@@ -103,7 +103,7 @@ POST /lk/events/delete/:evtId           @controllers.LkEvents.nodeEventDelete(ev
 
 GET  /img/crop/:imgId                   @controllers.Img.imgCropForm(imgId, width:Int, height: Int)
 POST /img/crop                          @controllers.Img.imgCropSubmit
-GET  /img/dyn                           @controllers.Img.dynImg(i: im.MImg)
+GET  /img/dyn                           @controllers.Img.dynImg(i: im.MImgT)
 
 
 # Витрина market'а и её экшены
@@ -290,11 +290,11 @@ POST /sys/gals/delete/:galId             @controllers.SysGallery.deleteGallerySu
 ## sys/Картинки
 GET  /sys/img                            @controllers.SysImg.index(q: Option[String] ?= None)
 POST /sys/img/search                     @controllers.SysImg.searchFormSubmit
-GET  /sys/img/show                       @controllers.SysImg.showOne(i: im.MImg)
-POST /sys/img/delete                     @controllers.SysImg.deleteOneSubmit(i: im.MImg)
+GET  /sys/img/show                       @controllers.SysImg.showOne(i: im.MImgT)
+POST /sys/img/delete                     @controllers.SysImg.deleteOneSubmit(i: im.MImgT)
 ## sys.img.make
-GET  /sys/img/make                       @controllers.SysImg.makeForm(i: im.MImg, bm: Option[blk.IBlockMeta] ?= None)
-POST /sys/img/make                       @controllers.SysImg.makeFormSubmit(i: im.MImg)
+GET  /sys/img/make                       @controllers.SysImg.makeForm(i: im.MImgT, bm: Option[blk.IBlockMeta] ?= None)
+POST /sys/img/make                       @controllers.SysImg.makeFormSubmit(i: im.MImgT)
 
 ## sys/AI
 GET  /sys/ai                             @controllers.SysAi.index

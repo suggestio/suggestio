@@ -181,7 +181,7 @@ class Img @Inject() (
    * @param args Данные по желаемой картинке.
    * @return Картинки или 304 Not modified.
    */
-  def dynImg(args: MImg) = Action.async { implicit request =>
+  def dynImg(args: MImgT) = Action.async { implicit request =>
     val notModifiedFut: Future[Boolean] = {
       request.headers.get(IF_MODIFIED_SINCE) match {
         case Some(ims) =>

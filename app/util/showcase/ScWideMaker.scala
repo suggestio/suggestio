@@ -203,7 +203,7 @@ object ScWideMaker extends IMaker with PlayMacroLogsImpl {
       MakeResult(
         szCss       = szCss,
         szReal      = wideWh,
-        dynCallArgs = img.copy(dynImgOps = imOps2),
+        dynCallArgs = img.withDynOps(imOps2),
         isWide      = true
       )
     }

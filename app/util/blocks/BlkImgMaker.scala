@@ -106,7 +106,7 @@ object BlkImgMaker extends IMaker {
     imOpsAcc ::= ImFilters.Lanczos
 
     // Генерим финальную ссыль на картинку с учетом возможного кропа или иных исходных трансформаций:
-    val dargs = img.copy(dynImgOps = img.dynImgOps ++ imOpsAcc)
+    val dargs = img.withDynOps(img.dynImgOps ++ imOpsAcc)
     MakeResult(
       szCss = args.blockMeta,
       szReal = szReal,

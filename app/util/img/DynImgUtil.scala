@@ -52,7 +52,7 @@ object DynImgUtil extends PlayMacroLogsImpl {
    * @param dargs Аргументы генерации картинки.
    * @return Экземпляр Call, пригодный к употреблению.
    */
-  def imgCall(dargs: MImg): Call = {
+  def imgCall(dargs: MImgT): Call = {
     if (PREFETCH_ENABLED) {
       Future {
         ensureImgReady(dargs, cacheResult = true)
@@ -76,7 +76,7 @@ object DynImgUtil extends PlayMacroLogsImpl {
    *         Фьючерс с NoSuchElementException, если нет исходной картинки.
    *         Фьючерс с Throwable при иных ошибках.
    */
-  def mkReadyImgToFile(args: MImg): Future[MLocalImg] = {
+  def mkReadyImgToFile(args: MImgT): Future[MLocalImg] = {
     val fut = args
       .original
       .toLocalImg
@@ -113,7 +113,7 @@ object DynImgUtil extends PlayMacroLogsImpl {
    * @return Фьючерс с экземпляром MLocalImg или экзепшеном получения картинки.
    *         Throwable, если не удалось начать обработку. Такое возможно, если какой-то баг в коде.
    */
-  def ensureImgReady(args: MImg, cacheResult: Boolean, saveToPermanent: Boolean = SAVE_DERIVATIVES_TO_PERMANENT): Future[MLocalImg] = {
+  def ensureImgReady(args: MImgT, cacheResult: Boolean, saveToPermanent: Boolean = SAVE_DERIVATIVES_TO_PERMANENT): Future[MLocalImg] = {
     // Используем StringBuilder для сборки ключа, т.к. обычно на момент вызова этого метода fileName ещё не собран.
     val resultP = Promise[MLocalImg]()
     val resultFut = resultP.future
@@ -262,11 +262,11 @@ object DynImgUtil extends PlayMacroLogsImpl {
     val img = MImg(fileName)
     thumb256Call(img, fillArea)
   }
-  def thumb256Call(img: MImg, fillArea: Boolean): Call = {
+  def thumb256Call(img: MImgT, fillArea: Boolean): Call = {
     val flags = if (fillArea) Seq(ImResizeFlags.FillArea) else Nil
     val op = AbsResizeOp(MImgInfoMeta(256, 256), flags)
-    val imgThumb = img.copy(
-      dynImgOps = img.dynImgOps ++ Seq(op)
+    val imgThumb = img.withDynOps(
+      img.dynImgOps ++ Seq(op)
     )
     imgCall(imgThumb)
   }
