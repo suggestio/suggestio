@@ -8,11 +8,13 @@ import models.im.{ImgFileUtil, MImg}
 import models.mfs.FileUtil
 import models.{MAdnNode, MEdge, MNode, MNodeCommon, MNodeTypes, MNodeMeta, MMedia}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import util.PlayLazyMacroLogsImpl
 import util.SiowebEsUtil.client
 import util.event.SiowebNotifier.Implicts.sn
 import util.img.DynImgUtil
 
 import scala.concurrent.Future
+import scala.util.{Failure, Success}
 
 /**
  * Suggest.io
@@ -20,16 +22,22 @@ import scala.concurrent.Future
  * Created: 28.09.15 17:47
  * Description: Система обновления картинок на новую архитектуру: N2, seaweedfs.
  */
-object Migration {
+object Migration extends PlayLazyMacroLogsImpl {
 
   /** Пройтись по узлам ADN, логотипы сохранить через MMedia, создать необходимые MEdge. */
   def adnLogosToN2(): Future[LogosAcc] = {
+    import LOGGER._
+
     // Обойти все узлы ADN, прочитав оттуда данные по логотипам.
     MAdnNode.foldLeftAsync( LogosAcc(0, 0) ) { (acc0Fut, madnNode) =>
+      val adnNodeId = madnNode.id.get
+      val logPrefix = s"[$adnNodeId]"
+      trace(s"$logPrefix Processing ADN node: ${madnNode.meta.name} / ${madnNode.meta.town}")
       madnNode.logoImgOpt match {
         case Some(logoImg) =>
           val mimg = MImg(logoImg).original
           val mLocImgFut = DynImgUtil.ensureImgReady(mimg, cacheResult = false)
+
 
           // Собираем необходимые данные для картинки.
           // Узнать хеш-сумму файла
@@ -54,7 +62,10 @@ object Migration {
 
           // Узнать file extension
           val fextFut = mmFut map { mmOpt =>
-            mmOpt.fold("png")(_.getExtension)
+            mmOpt.fold {
+              LOGGER.warn("Logo extension is unknown, guessing PNG")
+              "png"
+            } { _.getExtension }
           }
 
           // Заново определяем image width/height для надежности, НЕ используем logoImg.meta
@@ -63,6 +74,7 @@ object Migration {
           }
 
           val imgNodeId = mimg.rowKeyStr
+          trace(s"$logPrefix Processing logo img: $mimg")
 
           // Создать node для картинки с какими-то минимальными данными.
           val mnodeFut = for {
@@ -83,10 +95,14 @@ object Migration {
             )
           }
 
-          val mnodeSavedFut = mnodeFut.flatMap(_.save)
+          val mnodeSaveFut = mnodeFut.flatMap(_.save)
 
-          val adnNodeId = madnNode.id.get
-
+          mnodeSaveFut onComplete {
+            case Success(lid) =>
+              trace(s"$logPrefix created logo MNode as [$lid]")
+            case Failure(ex) =>
+              error(s"$logPrefix failed to save logo MNode", ex)
+          }
 
           // Создать own-эдж владения этой картинкой от узла к картинке.
           val ownEdge = MEdge(
@@ -95,6 +111,13 @@ object Migration {
             toId      = imgNodeId
           )
           val ownEdgeSaveFut = ownEdge.save
+
+          ownEdgeSaveFut onComplete {
+            case Success(oeId) =>
+              trace(s"$logPrefix saved OWN edge as [$oeId]")
+            case Failure(ex) =>
+              error(s"$logPrefix failed to save OWN edge", ex)
+          }
 
           val mediaId = MMedia.mkId(imgNodeId, None)
 
@@ -131,6 +154,13 @@ object Migration {
 
           val mmediaSaveFut = mmedia.flatMap(_.save)
 
+          mmediaSaveFut onComplete {
+            case Success(mmId) =>
+              trace(s"$logPrefix saved MMedia [$mmId]")
+            case Failure(ex) =>
+              error(s"$logPrefix failed to save MMedia", ex)
+          }
+
           // Создать logo-эдж на node картинки.
           val logoEdge = MEdge(
             fromId    = adnNodeId,
@@ -140,13 +170,21 @@ object Migration {
 
           val logoEdgeSaveFut = logoEdge.save
 
+          logoEdgeSaveFut onComplete {
+            case Success(leId) =>
+              trace(s"$logPrefix Saved logo edge as [$leId]")
+            case Failure(ex) =>
+              error(s"$logPrefix Failed to save LOGO edge", ex)
+          }
+
           for {
-            _     <- mnodeSavedFut
+            _     <- mnodeSaveFut
             _     <- ownEdgeSaveFut
             _     <- mmediaSaveFut
             _     <- logoEdgeSaveFut
             acc0  <- acc0Fut
           } yield {
+            info(s"$logPrefix ADN Node processing finished")
             acc0.copy(
               nodesDone = acc0.nodesDone + 1,
               logosDone = acc0.logosDone + 1
@@ -155,6 +193,7 @@ object Migration {
 
         // Нет логотипа у этого узла.
         case None =>
+          trace(s"$logPrefix Skipping node: no logo")
           acc0Fut.map { acc0 =>
             acc0.copy(
               nodesDone = acc0.nodesDone + 1
