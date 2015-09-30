@@ -22,14 +22,14 @@
   node          = mnode,
   rightCurrEl   = NodeRightPanelLinks.RPL_NODE,
   povAdnIdOpt   = povAdnIdOpt,
-  headAfter	= Some(headAfter1)
+  headAfter	    = Some(headAfter1)
 ) {
 
   <div class="profile_logo-bar">
     @if(mnode.meta.color.isDefined) {
-      @mnode.logoImgOpt.map { img =>
+      @args.logoImgOpt.map { img =>
         <div class="image __size-L" style="background-color: #@mnode.meta.color;">
-          <img class="image_src" src="@DynImgUtil.imgCall(img.filename)" alt="@mnode.meta.name"/>
+          <img class="image_src" src="@DynImgUtil.imgCall(img)" alt="@mnode.meta.name"/>
         </div>
       }
     }

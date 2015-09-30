@@ -12,7 +12,7 @@ import util.{FormUtil, PlayMacroLogsImpl}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.acl.{IsSuperuserGallery, PersonWrapper, IsSuperuser}
 import util.SiowebEsUtil.client
-import models.im.{MImg, MGallery}
+import models.im.{MImgT, MGallery}
 import play.api.Play.{current, configuration}
 import play.api.data.Forms._
 import views.html.sys1.galleries._
@@ -63,9 +63,9 @@ class SysGallery @Inject() (
   }
   private def galDescrKM = "descr" -> galDescrM
 
-  private def galImgsM: Mapping[List[MImg]] = {
+  private def galImgsM: Mapping[List[MImgT]] = {
     list(imgIdOptM)
-      .transform[List[MImg]]( _.flatten, _.map(Some.apply) )
+      .transform[List[MImgT]]( _.flatten, _.map(Some.apply) )
       .verifying("error.required", _.nonEmpty)
   }
   private def galImgsKM = "imgs" -> galImgsM

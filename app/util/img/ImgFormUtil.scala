@@ -4,10 +4,10 @@ import java.util.UUID
 
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.util.UuidUtil
-import models.im.{MAnyImgT, MImg}
+import models.im.{MImgT, MAnyImgT, MImg}
 import org.im4java.core.Info
 import util.img.LogoUtil.LogoOpt_t
-import util.{FormUtil, PlayMacroLogsImpl}
+import util.PlayMacroLogsImpl
 import io.suggest.img.{ImgCrop, SioImageUtilT}
 import play.api.Play.{current, configuration}
 import scala.concurrent.Future
@@ -46,9 +46,9 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   }
 
   /** маппер для поля с id картинки, который может отсутствовать. */
-  def imgIdOptM: Mapping[Option[MImg]] = {
+  def imgIdOptM: Mapping[Option[MImgT]] = {
     optional(text(maxLength = IIK_MAXLEN))
-      .transform[Option[MImg]](
+      .transform[Option[MImgT]](
         {txtOpt =>
           try {
             txtOpt
@@ -96,22 +96,13 @@ object ImgFormUtil extends PlayMacroLogsImpl {
       .verifying("crop.offset.y.invalid", {crop => isCropOffsetValid(crop.offY)} )
   }
 
-
-  private def imgCropOptM: Mapping[Option[ImgCrop]] = {
-    val txtM = text(maxLength = 16).transform(FormUtil.strTrimSanitizeLowerF, FormUtil.strIdentityF)
-    optional(txtM)
-      .transform[Option[String]] (_.filter(!_.isEmpty), identity)
-      .transform[Option[ImgCrop]] (_.flatMap(ImgCrop.maybeApply), _.map(_.toCropStr))
-  }
-
-
-  def updateOrigImgId(needImgs: Seq[MImg], oldImgIds: Iterable[String]): Future[Seq[MImg]] = {
+  def updateOrigImgId(needImgs: Seq[MImgT], oldImgIds: Iterable[String]): Future[Seq[MImgT]] = {
     updateOrigImgFull(needImgs, oldImgIds.map(MImg(_)))
   }
 
   /** Комбо из updateOrigImgFull() и уже выпиленного метода. */
   @deprecated("Use updateOrigImgFull() instead.", "2014.oct.29")
-  def updateOrigImg(needImgs: Seq[MImg], oldImgs: Iterable[MImg]): Future[Option[MImg]] = {
+  def updateOrigImg(needImgs: Seq[MImg], oldImgs: Iterable[MImgT]): Future[Option[MImgT]] = {
     updateOrigImgFull(needImgs, oldImgs)
       .map { _.headOption } // TODO Надо избегать такого веселья, удалив этот метод начисто.
   }
@@ -123,7 +114,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
    * @param oldImgs Уже сохранённые ранее картинки, если есть.
    * @return Список id новых и уже сохранённых картинок.
    */
-  def updateOrigImgFull(needImgs: Seq[MImg], oldImgs: Iterable[MImg]): Future[Seq[MImg]] = {
+  def updateOrigImgFull(needImgs: Seq[MImgT], oldImgs: Iterable[MImgT]): Future[Seq[MImgT]] = {
     // Защита от какой-либо деятельности в случае полного отсутствия входных данных.
     if (needImgs.isEmpty && oldImgs.isEmpty) {
       Future successful Nil
@@ -131,7 +122,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
       updateOrigImgFullDo(needImgs, oldImgs = oldImgs)
     }
   }
-  private def updateOrigImgFullDo(needImgs: Seq[MImg], oldImgs: Iterable[MImg]): Future[Seq[MImg]] = {
+  private def updateOrigImgFullDo(needImgs: Seq[MImgT], oldImgs: Iterable[MImgT]): Future[Seq[MImgT]] = {
     val needImgsIndexed = needImgs.zipWithIndex
 
     // Разделяем на картинки, которые уже были, и которые затребованы для отправки в хранилище:
@@ -159,7 +150,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
       fut
     }
 
-    var imgsKeepFut: Future[Seq[(MImg, Int)]] = newOldImgsMapFut.map { m =>
+    var imgsKeepFut: Future[Seq[(MImgT, Int)]] = newOldImgsMapFut.map { m =>
       m.getOrElse(true, Nil)
         // Ксакеп Вася попытается подставить id уже сохраненной где-то картинки. А потом честно запросить удаление этой картинки.
         // Нужно исключить возможность подмешивать в списки картинок левые id, используя список oldImgs:
@@ -199,7 +190,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     // TODO при изменении настроек кропа надо удалять все картинки из хранилищ кроме оригинала.
 
     // Новые загруженные картинки - копируем в постоянное хранилище:
-    val imgsSaveFut: Future[Seq[(MImg, Int)]] = newOldImgsMapFut.flatMap { m =>
+    val imgsSaveFut: Future[Seq[(MImgT, Int)]] = newOldImgsMapFut.flatMap { m =>
       // Готовим список картинок для отправки в хранилище:
       val imgs4s = m.getOrElse(false, Nil)
         .filter { v =>
@@ -249,17 +240,17 @@ object ImgFormUtil extends PlayMacroLogsImpl {
       .toSet
   }
 
-  def img2imgInfo(mimg: MImg): Future[MImgInfo] = {
+  def img2imgInfo(mimg: MImgT): Future[MImgInfo] = {
     mimg.getImageWH map { wh =>
       MImgInfo(mimg.fileName, wh.map(MImgInfoMeta.apply))
     }
   }
-  def img2SomeImgInfo(mimg: MImg): Future[Option[MImgInfo]] = {
+  def img2SomeImgInfo(mimg: MImgT): Future[Option[MImgInfo]] = {
     img2imgInfo(mimg)
       .map { Some.apply }
   }
 
-  def optImg2OptImgInfo(mimgOpt: Option[MImg]): Future[Option[MImgInfo]] = {
+  def optImg2OptImgInfo(mimgOpt: Option[MImgT]): Future[Option[MImgInfo]] = {
     mimgOpt.fold [Future[Option[MImgInfo]]]
       { Future successful None }
       { img2SomeImgInfo }

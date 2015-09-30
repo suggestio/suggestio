@@ -1,6 +1,8 @@
 package models.madn
 
+import play.api.data.Mapping
 import util.img.ImgFormUtil.imgIdOptM
+import util.img.LogoUtil.LogoOpt_t
 
 /**
  * Suggest.io
@@ -19,6 +21,8 @@ object EditConstants {
   val WELCOME_IMG_FN = "welcomeImgId"
 
 
-  def logoKM = LOGO_IMG_FN -> imgIdOptM
+  def logoKM: (String, Mapping[LogoOpt_t]) = {
+    LOGO_IMG_FN -> imgIdOptM
+  }
 
 }

@@ -1,6 +1,6 @@
 package models.msc
 
-import models.im.MImg
+import models.im.MImgT
 
 /**
  * Suggest.io
@@ -21,7 +21,7 @@ case class FocusedAdsTplArgs2(
   override val bgColor        : String,
   override val fgColor        : String,
   override val hBtnArgs       : IhBtnArgs,
-  override val logoImgOpt     : Option[MImg],
+  override val logoImgOpt     : Option[MImgT],
   override val is3rdParty     : Boolean,
   override val jsStateOpt     : Option[ScJsState] = None
 )

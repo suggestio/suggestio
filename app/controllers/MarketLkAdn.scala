@@ -14,6 +14,7 @@ import util.acl._
 import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
+import util.img.LogoUtil
 import util.lk.LkAdUtil
 import scala.concurrent.Future
 import views.html.lk.adn._
@@ -58,16 +59,22 @@ class MarketLkAdn @Inject() (
    *                    Выверенное значение это аргумента можно получить из request.povAdnNodeOpt.
    */
   def showAdnNode(adnId: String, povAdnIdOpt: Option[String]) = {
-    AdnNodeAccessGet(adnId, povAdnIdOpt) { implicit request =>
+    AdnNodeAccessGet(adnId, povAdnIdOpt).async { implicit request =>
       import request.{adnNode, isMyNode}
-
-      val rargs = MNodeShowArgs(
-        mnode         = adnNode,
-        isMyNode      = isMyNode,
-        povAdnIdOpt   = request.povAdnNodeOpt.flatMap(_.id)
-      )
-      val html = adnNodeShowTpl( rargs )
-      Ok(html)
+      val logoOptFut = LogoUtil.getLogo(adnNode)
+      for {
+        logoOpt <- logoOptFut
+      } yield {
+        val rargs = MNodeShowArgs(
+          mnode         = adnNode,
+          isMyNode      = isMyNode,
+          povAdnIdOpt   = request.povAdnNodeOpt
+            .flatMap(_.id),
+          logoImgOpt    = logoOpt
+        )
+        val html = adnNodeShowTpl( rargs )
+        Ok(html)
+      }
     }
   }
 

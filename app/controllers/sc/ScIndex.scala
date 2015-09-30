@@ -3,12 +3,12 @@ package controllers.sc
 import _root_.util.jsa.{SmRcvResp, Js}
 import _root_.util.PlayMacroLogsI
 import models.Context
-import models.im.MImg
+import models.im.MImgT
 import models.jsm.ScIndexResp
 import models.msc.ScRenderArgs.ProdsLetterGrouped_t
 import models.msc._
 import play.twirl.api.Html
-import util.img.WelcomeUtil
+import _root_.util.img.{LogoUtil, WelcomeUtil}
 import util.showcase._
 import util.stat._
 import util.acl._
@@ -269,9 +269,9 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
     }
 
     /** Получение графического логотипа узла, если возможно. */
-    def logoImgOptFut: Future[Option[MImg]] = {
+    def logoImgOptFut: Future[Option[MImgT]] = {
       adnNodeFut.flatMap { mnode =>
-        ShowcaseUtil.getLogoImgOpt(mnode, _reqArgs.screen)
+        LogoUtil.getLogo4scr(mnode, _reqArgs.screen)
       }
     }
 

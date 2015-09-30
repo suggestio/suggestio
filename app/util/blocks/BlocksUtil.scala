@@ -1,7 +1,7 @@
 package util.blocks
 
 import models.blk._
-import models.im.MImg
+import models.im.MImgT
 import play.api.data._, Forms._
 import util.FormUtil._
 import models._
@@ -21,8 +21,8 @@ import play.twirl.api.{Html, Template5}
 
 object BlocksUtil {
 
-  type BlockImgEntry = (String, MImg)
-  type BlockImgMap = Map[String, MImg]
+  type BlockImgEntry = (String, MImgT)
+  type BlockImgMap = Map[String, MImgT]
 
   def bDescriptionM = publishedTextM
 

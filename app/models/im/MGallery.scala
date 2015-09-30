@@ -101,7 +101,7 @@ import MGallery._
 
 case class MGallery(
   name            : String,
-  imgs            : List[MImg],
+  imgs            : List[MImgT],
   descr           : Option[String] = None,
   dateCreated     : DateTime = DateTime.now(),
   modifiedBy      : Option[String] = None,

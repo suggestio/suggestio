@@ -1,6 +1,8 @@
 package models.mlk
 
 import models.MAdnNode
+import models.im.MImgT
+import models.msc.ILogoImgOpt
 
 /**
  * Suggest.io
@@ -9,7 +11,7 @@ import models.MAdnNode
  * Description: Модель передачи аргументов рендера в шаблон adnNodeShowTpl.
  */
 
-trait INodeShowArgs {
+trait INodeShowArgs extends ILogoImgOpt {
   def mnode       : MAdnNode
   def isMyNode    : Boolean
   def povAdnIdOpt : Option[String]
@@ -18,6 +20,7 @@ trait INodeShowArgs {
 case class MNodeShowArgs(
   override val mnode       : MAdnNode,
   override val isMyNode    : Boolean,
-  override val povAdnIdOpt : Option[String]
+  override val povAdnIdOpt : Option[String],
+  override val logoImgOpt  : Option[MImgT]
 )
   extends INodeShowArgs

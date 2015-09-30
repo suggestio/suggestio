@@ -1,7 +1,7 @@
 package models.msc
 
 import models._
-import models.im.MImg
+import models.im.MImgT
 import play.twirl.api.Html
 
 /**
@@ -76,7 +76,7 @@ trait ScRenderArgs extends ScReqArgs with IColors with ILogoRenderArgs with IHBt
   def onCloseHref   : String
   def geoListGoBack : Option[Boolean] = None
   /** Логотип, если есть. */
-  def logoImgOpt    : Option[MImg] = None
+  def logoImgOpt    : Option[MImgT] = None
   /** Приветствие, если есть. */
   def welcomeOpt    : Option[WelcomeRenderArgsT] = None
 

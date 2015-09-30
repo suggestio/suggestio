@@ -1,7 +1,6 @@
 package util.showcase
 
 import controllers.routes
-import io.suggest.sc.ScConstants
 import io.suggest.sc.tile.ColumnsCountT
 import io.suggest.ym.model.MAd
 import io.suggest.ym.model.common.{BlockMeta, AdShowLevels, IEMBlockMeta}
@@ -17,7 +16,6 @@ import scala.annotation.tailrec
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
-import models.blk.szMulted
 
 /**
  * Suggest.io
@@ -349,37 +347,6 @@ object ShowcaseUtil extends ColumnsCountT {
       case None =>
         SC_COLORS_GEO
     }
-  }
-
-
-  /**
-   * Подготовка логотипа выдачи для узла.
-   * @param mnode Узел ADN.
-   * @param screenOpt Данные по экрану клиента, если есть.
-   * @return Фьючерс с картинкой, если логотип задан.
-   */
-  def getLogoImgOpt(mnode: MAdnNode, screenOpt: Option[DevScreen]): Future[Option[MImg]] = {
-    // Код метода синхронный, но, как показывает практика, лучше сразу сделать асинхрон, чтобы потом всё не перепиливать.
-    val imgOpt = mnode.logoImgOpt.map { logoInfo =>
-      val mimg0 = MImg(logoInfo)
-      // Узнаём pixelRatio для дальнейших рассчетов.
-      val pxRatio = screenOpt.flatMap(_.pixelRatioOpt)
-        .getOrElse(DevPixelRatios.default)
-
-      // Исходя из pxRatio нужно посчитать высоту логотипа
-      val heightCssPx = ScConstants.Logo.HEIGHT_CSSPX
-      val heightPx = szMulted(heightCssPx, pxRatio.pixelRatio)
-
-      // Вернуть скомпленную картинку.
-      mimg0.copy(
-        dynImgOps = Seq(
-          AbsResizeOp( MImgInfoMeta(heightPx, width = 0) ),
-          StripOp,
-          pxRatio.fgCompression.imQualityOp
-        )
-      )
-    }
-    Future successful imgOpt
   }
 
 }

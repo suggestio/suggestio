@@ -3,7 +3,7 @@ package controllers
 import akka.actor.ActorSystem
 import com.google.inject.Inject
 import io.suggest.js.UploadConstants
-import models.im.MImg
+import models.im.{MImgT, MImg}
 import models.jsm.init.MTargets
 import play.api.i18n.MessagesApi
 import play.core.parsers.Multipart
@@ -160,14 +160,14 @@ class MarketLkAdnEdit @Inject() (
 
     // Запуск асинхронной сборки данных из моделей.
     val waOptFut = getWelcomeAdOpt(adnNode)
-    val nodeLogoOpt = adnNode.logoImgOpt
-      .map { img => MImg(img.filename) }
+    val nodeLogoOptFut = LogoUtil.getLogo(adnNode)
     val gallerryIks = gallery2iiks( adnNode.gallery )
 
     // Сборка и наполнения маппинга формы.
     val formM = nodeFormM(adnNode.adn)
     val formFilledFut = for {
       welcomeAdOpt <- waOptFut
+      nodeLogoOpt  <- nodeLogoOptFut
     } yield {
       val welcomeImgKey = welcomeAd2iik(welcomeAdOpt)
       val fmr = FormMapResult(adnNode.meta, nodeLogoOpt, welcomeImgKey, gallerryIks)
@@ -185,7 +185,7 @@ class MarketLkAdnEdit @Inject() (
 
 
   private def _editAdnNode(form: Form[FormMapResult], waOptFut: Future[Option[MWelcomeAd]])
-                            (implicit request: AbstractRequestForAdnNode[_]): Future[Html] = {
+                          (implicit request: AbstractRequestForAdnNode[_]): Future[Html] = {
     implicit val jsInitTargets = Seq(MTargets.LkNodeEditForm)
     for {
       welcomeAdOpt <- waOptFut
@@ -311,8 +311,8 @@ class MarketLkAdnEdit @Inject() (
   sealed case class FormMapResult(
     meta        : MNodeMeta,
     logoOpt     : LogoOpt_t,
-    waImgOpt    : Option[MImg] = None,
-    gallery     : List[MImg] = Nil
+    waImgOpt    : Option[MImgT]   = None,
+    gallery     : List[MImg]      = Nil
   )
 }
 

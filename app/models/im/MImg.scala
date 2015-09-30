@@ -131,7 +131,7 @@ case class MImg(override val rowKey: UUID,
 
   /** Сохранена ли текущая картинка в постоянном хранилище?
     * Метод просто проверяет наличие любых записей с указанным ключом в cassandra-моделях. */
-  def existsInPermanent: Future[Boolean] = {
+  override def existsInPermanent: Future[Boolean] = {
     // Наличие метаданных не проверяет, т.к. там проблемы какие-то с isExists().
     MUserImg2.isExists(rowKey, qOpt)
   }
@@ -209,6 +209,8 @@ case class MImg2(override val rowKey: UUID,
       }
     }
   }
+
+  override def existsInPermanent: Future[Boolean] = ???
 
   override protected def _getImgBytes2: Enumerator[Array[Byte]] = {
     val fut = _mediaFut.map { mm =>

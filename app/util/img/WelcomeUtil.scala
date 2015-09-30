@@ -40,7 +40,7 @@ object WelcomeUtil extends PlayMacroLogsImpl {
     getWelcomeAdOpt( node.meta.welcomeAdId )
   }
 
-  def updateWaImg(waOpt: Option[MWelcomeAd], newWaImgOpt: Option[MImg]) = {
+  def updateWaImg(waOpt: Option[MWelcomeAd], newWaImgOpt: Option[MImgT]) = {
     val saveAllFut = ImgFormUtil.updateOrigImgFull(
       needImgs = newWaImgOpt.toSeq,
       oldImgs = waOpt
@@ -53,7 +53,7 @@ object WelcomeUtil extends PlayMacroLogsImpl {
 
   /** Обновление картинки и карточки приветствия. Картинка хранится в полу-рекламной карточке, поэтому надо ещё
     * обновить карточку и пересохранить её. */
-  def updateWelcodeAdFut(adnNode: MAdnNode, newWelcomeImgOpt: Option[MImg]): Future[Option[String]] = {
+  def updateWelcodeAdFut(adnNode: MAdnNode, newWelcomeImgOpt: Option[MImgT]): Future[Option[String]] = {
     getWelcomeAdOpt(adnNode) flatMap { currWelcomeAdOpt =>
       updateWaImg(currWelcomeAdOpt, newWelcomeImgOpt) flatMap {
         // Новой картинки нет. Надо удалить старую карточку (если была), и очистить соотв. welcome-поле.

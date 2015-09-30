@@ -129,6 +129,8 @@ abstract class MImgT extends MAnyImgT {
 
   override lazy val dynImgOpsString = super.dynImgOpsString
 
+  def existsInPermanent: Future[Boolean]
+
   def qOpt: Option[String] = {
     if (isOriginal) {
       None

@@ -4,13 +4,17 @@ import _root_.util.jsa.{Js, SmRcvResp}
 import controllers.SioControllerUtil
 import SioControllerUtil.PROJECT_CODE_LAST_MODIFIED
 import io.suggest.event.subscriber.SnFunSubscriber
-import io.suggest.event.{AdnNodeSavedEvent, SNStaticSubscriber}
+import io.suggest.event.AdnNodeSavedEvent
 import models.jsm.NodeDataResp
 import play.api.Play, Play.{current, configuration}
 import play.api.cache.Cache
+import play.api.mvc.Result
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.DateTimeUtil
 import util.acl.AdnNodeMaybeAuth
 import util.cdn.CdnUtil
+import util.img.LogoUtil
+import util.xplay.CacheUtil
 import views.html.lk.adn.node._installScriptTpl
 import views.txt.sc._
 
@@ -42,7 +46,7 @@ trait ScNodeInfo extends ScController {
   private def nodeIconJsCacheKey(adnId: String) = adnId + ".nodeIconJs"
 
   /** Экшн, который рендерит скрипт с иконкой. Используется кеширование на клиенте и на сервере. */
-  def nodeIconJs(adnId: String) = AdnNodeMaybeAuth(adnId).apply { implicit request =>
+  def nodeIconJs(adnId: String) = AdnNodeMaybeAuth(adnId).async { implicit request =>
     // Проверяем ETag
     val isCachedEtag = request.adnNode.versionOpt
       .flatMap { vsn =>
@@ -60,7 +64,8 @@ trait ScNodeInfo extends ScController {
       NotModified
     } else {
       val ck = nodeIconJsCacheKey(adnId)
-      Cache.getOrElse(ck, expiration = NODE_ICON_JS_CACHE_TTL_SECONDS) {
+      CacheUtil.getOrElse [Result] (ck, NODE_ICON_JS_CACHE_TTL_SECONDS) {
+        val logoFut = LogoUtil.getLogo( request.adnNode )
         var cacheHeaders: List[(String, String)] = List(
           CONTENT_TYPE  -> "text/javascript; charset=utf-8",
           LAST_MODIFIED -> DateTimeUtil.rfcDtFmt.print(PROJECT_CODE_LAST_MODIFIED),
@@ -69,11 +74,13 @@ trait ScNodeInfo extends ScController {
         if (request.adnNode.versionOpt.isDefined) {
           cacheHeaders  ::=  ETAG -> request.adnNode.versionOpt.get.toString
         }
-        // TODO Добавить минификацию скомпиленного js-кода. Это снизит нагрузку на кеш (на RAM) и на сеть.
-        // TODO Добавить поддержку gzip надо бы.
-        // TODO Кешировать отрендеренные результаты на HDD, а не в RAM.
-        Ok(nodeIconJsTpl(request.adnNode))
-          .withHeaders(cacheHeaders : _*)
+        for (logoOpt <- logoFut) yield {
+          // TODO Добавить минификацию скомпиленного js-кода. Это снизит нагрузку на кеш (на RAM) и на сеть.
+          // TODO Добавить поддержку gzip надо бы.
+          // TODO Кешировать отрендеренные результаты на HDD, а не в RAM.
+          Ok(nodeIconJsTpl(request.adnNode, logoOpt))
+            .withHeaders(cacheHeaders : _*)
+        }
       }
     }
   }

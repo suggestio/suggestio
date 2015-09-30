@@ -1,7 +1,7 @@
 package models.msc
 
 import io.suggest.primo.IUnderlying
-import models.im.MImg
+import models.im.MImgT
 
 /**
  * Suggest.io
@@ -13,7 +13,7 @@ trait ILogoImgOpt {
 
   /** Данные по картинке логотипа, пригодные для рендера в ссылку.
     * None -- без логотипа. */
-  def logoImgOpt: Option[MImg]
+  def logoImgOpt: Option[MImgT]
 }
 
 

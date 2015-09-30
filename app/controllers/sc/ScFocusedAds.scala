@@ -1,5 +1,6 @@
 package controllers.sc
 
+import _root_.util.img.LogoUtil
 import _root_.util.jsa.{JsAppendById, JsAction, SmRcvResp, Js}
 import io.suggest.common.css.FocusedTopLeft
 import io.suggest.util.Lists
@@ -259,7 +260,7 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
     /** Сборка аргументов для рендера focused-карточки, т.е. раскрытого блока + оформление продьюсера. */
     protected def focAdsRenderArgsFor(abtArgs: IAdBodyTplArgs): Future[IFocusedAdsTplArgs] = {
       val producer = abtArgs.producer
-      val logoImgOptFut = ShowcaseUtil.getLogoImgOpt(producer, _adSearch.screen)
+      val logoImgOptFut = LogoUtil.getLogo4scr(producer, _adSearch.screen)
 
       val _fgColor = producer.meta.fgColor getOrElse ShowcaseUtil.SITE_FGCOLOR_DFLT
       val _bgColor = producer.meta.color  getOrElse  ShowcaseUtil.SITE_BGCOLOR_DFLT
