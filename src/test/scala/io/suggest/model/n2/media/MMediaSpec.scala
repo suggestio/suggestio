@@ -2,7 +2,7 @@ package io.suggest.model.n2.media
 
 import java.util.UUID
 
-import io.suggest.model.n2.media.storage.CassandraStorage
+import io.suggest.model.n2.media.storage.{SwfsStorage, CassandraStorage}
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers._
 
@@ -47,7 +47,11 @@ class MMediaSpec extends FlatSpec {
           height = 480
         )),
         id = Some( "asdaffafr23?awf349025234=f3w4fewfgse98ug3jg" ),
-        versionOpt = Some(45L)
+        versionOpt = Some(45L),
+        storage = SwfsStorage(
+          volumeId = 22L,
+          fileId = "asdf4390tf34gfs?sd.sdtr4390w=124sf24f"
+        )
       )
     }
   }

@@ -73,10 +73,17 @@ case class CassandraStorage(
     }
     (data |>>> itee)
       .map { arraysRev =>
-        arraysRev
-          .reverseIterator
-          .flatten
-          .toArray
+        // Оптимизация для результатов из ровно одного куска.
+        if (arraysRev.tail.isEmpty) {
+          arraysRev.head
+
+        } else {
+          // Если кусков несколько, от восстановить исходных порядок и склеить в один массив.
+          arraysRev
+            .reverseIterator
+            .flatten
+            .toArray
+        }
 
       }.flatMap { barr =>
         val mimg2 = MUserImg2(
