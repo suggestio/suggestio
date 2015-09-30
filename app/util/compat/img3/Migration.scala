@@ -3,6 +3,7 @@ package util.compat.img3
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.media.storage.CassandraStorage
 import io.suggest.model.n2.media.{MPictureMeta, MFileMeta}
+import io.suggest.util.JMXBase
 import models.im.{ImgFileUtil, MImg}
 import models.mfs.FileUtil
 import models.{MAdnNode, MEdge, MNode, MNodeCommon, MNodeTypes, MNodeMeta, MMedia}
@@ -21,7 +22,8 @@ import scala.concurrent.Future
  */
 object Migration {
 
-  def adnLogos2edges(): Future[LogosAcc] = {
+  /** Пройтись по узлам ADN, логотипы сохранить через MMedia, создать необходимые MEdge. */
+  def adnLogosToN2(): Future[LogosAcc] = {
     // Обойти все узлы ADN, прочитав оттуда данные по логотипам.
     MAdnNode.foldLeftAsync( LogosAcc(0, 0) ) { (acc0Fut, madnNode) =>
       madnNode.logoImgOpt match {
@@ -167,5 +169,24 @@ object Migration {
     nodesDone: Int,
     logosDone: Int
   )
+
+}
+
+
+trait MigrationJmxMBean {
+  def adnLogosToN2(): String
+}
+
+class MigrationJmx extends JMXBase with MigrationJmxMBean {
+
+  override def jmxName: String = "io.suggest.compat:type=img3,name=" + Migration.getClass.getSimpleName
+
+  override def adnLogosToN2(): String = {
+    val strFut = Migration.adnLogosToN2()
+      .map { acc =>
+        s"ADN Nodes processed: ${acc.nodesDone};  logos processed: ${acc.logosDone}"
+      }
+    awaitString(strFut)
+  }
 
 }

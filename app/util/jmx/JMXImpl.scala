@@ -20,6 +20,7 @@ import io.suggest.util.JMXBase
 import models._
 import util.PlayLazyMacroLogsImpl
 import io.suggest.util.JMXHelpers._
+import util.compat._
 
 /**
  * Suggest.io
@@ -60,7 +61,9 @@ object JMXImpl extends PlayLazyMacroLogsImpl {
     // cassandra
     new SioCassandraClientJmx,
     new MUserImgMeta2Jmx,
-    new MUserImg2Jmx
+    new MUserImg2Jmx,
+    // web21 compat
+    new img3.MigrationJmx
   )
 
   private def getSrv = ManagementFactory.getPlatformMBeanServer
