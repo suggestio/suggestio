@@ -51,10 +51,23 @@ trait IMediaStorage {
   /** Тип стораджа. */
   def sType: MStorage
 
-  /** Асинхронное поточное чтение хранимого файла. */
+  /**
+   * Асинхронное поточное чтение хранимого файла.
+   * @return Енумератор данных блоба.
+   */
   def read(implicit ec: ExecutionContext): Enumerator[Array[Byte]]
 
-  /** Запустить асинхронное стирание контента в backend-хранилище. */
+  /**
+   * Запустить асинхронное стирание контента в backend-хранилище.
+   * @return Фьючерс для синхронизации.
+   */
   def delete(implicit ex: ExecutionContext): Future[_]
+
+  /**
+   * Выполнить сохранение (стриминг) блоба в хранилище.
+   * @param data Асинхронный поток данных.
+   * @return Фьючерс для синхронизации.
+   */
+  def write(data: Enumerator[Array[Byte]])(implicit ec: ExecutionContext): Future[_]
 
 }

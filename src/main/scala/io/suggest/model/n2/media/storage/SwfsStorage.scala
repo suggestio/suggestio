@@ -52,4 +52,6 @@ case class SwfsStorage(
 
   override def delete(implicit ex: ExecutionContext): Future[_] = ???
 
+  override def write(data: Enumerator[Array[Byte]])(implicit ec: ExecutionContext): Future[_] = ???
+
 }

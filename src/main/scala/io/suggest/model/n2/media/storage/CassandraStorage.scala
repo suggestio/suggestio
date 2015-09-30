@@ -1,9 +1,11 @@
 package io.suggest.model.n2.media.storage
 
+import java.nio.ByteBuffer
 import java.util.UUID
 
 import io.suggest.model.MUserImg2
-import play.api.libs.iteratee.Enumerator
+import org.joda.time.DateTime
+import play.api.libs.iteratee.{Iteratee, Enumerator}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import IMediaStorage.STYPE_FN_FORMAT
@@ -61,6 +63,30 @@ case class CassandraStorage(
 
   override def delete(implicit ex: ExecutionContext): Future[_] = {
     MUserImg2.deleteOne(rowKey, qOpt)
+  }
+
+  override def write(data: Enumerator[Array[Byte]])(implicit ec: ExecutionContext): Future[_] = {
+    // Сдампить блобики в один единый блоб.
+    val itee = Iteratee.fold [Array[Byte], List[Array[Byte]]] (Nil) {
+      (acc0, e) =>
+        e :: acc0
+    }
+    (data |>>> itee)
+      .map { arraysRev =>
+        arraysRev
+          .reverseIterator
+          .flatten
+          .toArray
+
+      }.flatMap { barr =>
+        val mimg2 = MUserImg2(
+          q         = MUserImg2.qOpt2q(qOpt),
+          img       = ByteBuffer.wrap(barr),
+          timestamp = DateTime.now(),
+          id        = rowKey
+        )
+        mimg2.save
+      }
   }
 
 }
