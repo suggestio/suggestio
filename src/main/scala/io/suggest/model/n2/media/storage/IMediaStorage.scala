@@ -70,4 +70,7 @@ trait IMediaStorage {
    */
   def write(data: Enumerator[Array[Byte]])(implicit ec: ExecutionContext): Future[_]
 
+  /** Есть ли в хранилище текущий файл? */
+  def exists(implicit ec: ExecutionContext): Future[Boolean]
+
 }

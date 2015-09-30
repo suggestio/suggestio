@@ -96,4 +96,9 @@ case class CassandraStorage(
       }
   }
 
+  /** Есть ли в хранилище текущий файл? */
+  override def exists(implicit ec: ExecutionContext): Future[Boolean] = {
+    MUserImg2.isExists(rowKey, qOpt)
+  }
+
 }
