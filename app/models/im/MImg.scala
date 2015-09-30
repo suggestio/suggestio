@@ -10,7 +10,7 @@ import org.joda.time.DateTime
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.iteratee.Enumerator
 import util.PlayLazyMacroLogsImpl
-import util.img.{ImgFileNameParsers, ImgFormUtil}
+import util.img.{ImgFileNameParsersImpl, ImgFormUtil}
 import util.event.SiowebNotifier.Implicts.sn
 
 import scala.concurrent.Future
@@ -28,14 +28,20 @@ import scala.concurrent.Future
  */
 
 
-object MImg extends PlayLazyMacroLogsImpl with ImgFileNameParsers { model =>
+object MImg extends PlayLazyMacroLogsImpl { model =>
 
-  /** Парсер filename'ов, выдающий на выходе готовые экземпляры MImg. */
-  def fileName2miP: Parser[MImg] = {
-    fileNameP ^^ {
-      case uuid ~ imOps  =>  MImg(uuid, imOps)
+  class Parsers extends ImgFileNameParsersImpl {
+
+    /** Парсер filename'ов, выдающий на выходе готовые экземпляры MImg. */
+    def fileName2miP: Parser[MImg] = {
+      fileNameP ^^ {
+        case uuid ~ imOps  =>  MImg(uuid, imOps)
+      }
     }
+
+    def fromFileName(filename: String) = parseAll(fileName2miP, filename)
   }
+
 
   /**
    * Распарсить filename, в котором сериализованы данные о картинке.
@@ -43,7 +49,9 @@ object MImg extends PlayLazyMacroLogsImpl with ImgFileNameParsers { model =>
    * @return Экземпляр MImg, содержащий все данные из filename'а.
    */
   def apply(filename: String): MImg = {
-    parseAll(fileName2miP, filename).get
+    (new Parsers)
+      .fromFileName(filename)
+      .get
   }
 
   def apply(imgInfo: MImgInfoT): MImg = {

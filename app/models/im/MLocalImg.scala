@@ -22,7 +22,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.iteratee.Enumerator
 import util._
 import util.async.AsyncUtil
-import util.img.{ImgFileNameParsers, ImgFormUtil, OrigImageUtil}
+import util.img.{ImgFileNameParsersImpl, ImgFormUtil, OrigImageUtil}
 import scala.concurrent.duration._
 import scala.collection.JavaConversions._
 
@@ -44,13 +44,24 @@ import scala.util.Success
  */
 
 object MLocalImg
-  extends ImgFileNameParsers
-  with PlayLazyMacroLogsImpl
+  extends PlayLazyMacroLogsImpl
   with DeleteOnIm2FullyDeletedEvent
   with CronTasksProviderEmpty
   with PeriodicallyDeleteEmptyDirs
   with PeriodicallyDeleteNotExistingInPermanent
 {
+
+  class Parsers extends ImgFileNameParsersImpl {
+    /** Парсер имён файлов, конвертящий успешный результат своей работы в экземпляр MLocalImg. */
+    def fileName2mliP: Parser[MLocalImg] = {
+      fileNameP ^^ {
+        case uuid ~ dynArgs =>
+          MLocalImg(uuid, dynArgs)
+      }
+    }
+
+    def fromFileName(fileName: String) = parseAll(fileName2mliP, fileName)
+  }
 
   /** Адрес img-директории, который используется для хранилища. */
   def DIR_REL = configuration.getString("m.local.img.dir.rel") getOrElse "picture/local"
@@ -73,15 +84,9 @@ object MLocalImg
    * @return Экземпляр MLocalImg или экзепшен.
    */
   def apply(filename: String): MLocalImg = {
-    parseAll(fileName2mliP, filename).get
-  }
-
-  /** Парсер имён файлов, конвертящий успешный результат своей работы в экземпляр MLocalImg. */
-  def fileName2mliP: Parser[MLocalImg] = {
-    fileNameP ^^ {
-      case uuid ~ dynArgs =>
-        MLocalImg(uuid, dynArgs)
-    }
+    (new Parsers)
+      .fromFileName(filename)
+      .get
   }
 
   /**

@@ -15,7 +15,6 @@ import scala.util.parsing.combinator.JavaTokenParsers
  * Description: Набор парсеров для нужд декодирования filename'ов и прочих нужд моделей.
  */
 
-
 trait ImgFileNameParsers extends JavaTokenParsers with ImgCropParsers {
 
   /** Парсер rowKey из filename: */
@@ -56,3 +55,5 @@ trait ImgFileNameParsers extends JavaTokenParsers with ImgCropParsers {
   def fileNameP = uuidP ~ (compatCropSuf2ImArgsP | dynImgArgsQsP  | dynImgArgsQsEmptyP)
 
 }
+
+class ImgFileNameParsersImpl extends ImgFileNameParsers

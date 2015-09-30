@@ -13,7 +13,12 @@ import org.scalatestplus.play._
  * Created: 28.10.14 17:34
  * Description: Тесты для парсеров сериализованных идентификаторов картинок.
  */
-class ImgFileNameParsersSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart with ImgFileNameParsers with RegexParsersTesting {
+class ImgFileNameParsersSpec
+  extends PlaySpec
+  with OneAppPerSuiteNoGlobalStart
+  with ImgFileNameParsers
+  with RegexParsersTesting
+{
 
   /** Для тестирования парсера с удобным выводом ошибок лучше использовать сие: */
   private def parseFileName(f: CharSequence) = parseSuccess(fileNameP, f)
