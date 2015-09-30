@@ -45,7 +45,7 @@ object IMediaStorage extends IGenEsMappingProps {
 }
 
 
-
+/** Интерфейс моделей хранилищ. */
 trait IMediaStorage {
 
   /** Тип стораджа. */
