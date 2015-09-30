@@ -19,6 +19,7 @@ import play.api.Application
 import play.api.Play.{current, configuration}
 import play.api.cache.Cache
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.libs.iteratee.Enumerator
 import util._
 import util.async.AsyncUtil
 import util.img.{ImgFileNameParsers, ImgFormUtil, OrigImageUtil}
@@ -168,6 +169,10 @@ trait MLocalImgT extends ImgWithTimestamp with PlayMacroLogsI with MAnyImgT {
   override def timestampMs: Long = file.lastModified
 
   override def imgBytes: Array[Byte] = Files.readAllBytes(file.toPath)
+
+  def imgBytesEnumerator: Enumerator[Array[Byte]] = {
+    Enumerator.fromFile(file)
+  }
 
   def identify = {
     Future {

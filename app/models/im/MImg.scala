@@ -270,7 +270,7 @@ trait MImgT extends MAnyImgT {
             Future successful Option.empty[MImgInfoMeta]
           } { _.getImageWH }
         }
-        if (!ex.isInstanceOf[NoSuchElementException])
+        if (ex.isInstanceOf[NoSuchElementException])
           LOGGER.debug(logPrefix + "No wh in DB, and nothing locally stored. Recollection img meta")
         // Сохранить полученные метаданные в хранилище.
         // Если есть уже сохраненная карта метаданных, то дополнить их данными WH, а не перезатереть.
@@ -431,12 +431,13 @@ case class MImg2(override val rowKey: UUID,
   override def thisT: MImg_t = this
   override def toWrappedImg = this
 
-  lazy val _mmediaId = MMedia.mkId(rowKeyStr, qOpt)
+  lazy val _mediaId = MMedia.mkId(rowKeyStr, qOpt)
 
-  lazy val _mmediaOptFut = MMedia.getById(_mmediaId)
+  lazy val _mediaOptFut = MMedia.getById(_mediaId)
+  lazy val _mediaFut = _mediaOptFut.map(_.get)
 
   override protected lazy val _getImgMeta: Future[Option[IImgMeta]] = {
-    _mmediaOptFut map { mmediaOpt =>
+    _mediaOptFut map { mmediaOpt =>
       mmediaOpt.map { mmedia =>
         ImgSzDated(
           sz          = mmedia.picture.get,
@@ -447,22 +448,31 @@ case class MImg2(override val rowKey: UUID,
   }
 
   override protected def _getImgBytes2: Enumerator[Array[Byte]] = {
-    val fut = _mmediaOptFut.map { mmo =>
-      mmo.get.storage.read
+    val fut = _mediaFut.map { mm =>
+      mm.storage.read
     }
     Enumerator.flatten(fut)
   }
 
-  override protected def _doSaveToPermanent(loc: MLocalImgT): Future[_] = ???
+  override protected def _doSaveToPermanent(loc: MLocalImgT): Future[_] = {
+    _mediaFut.flatMap { mm =>
+      mm.storage.write( loc.imgBytesEnumerator )
+    }
+  }
 
-  override protected def _updateMetaWith(localWh: MImgSizeT, localImg: MLocalImgT): Unit = ???
+  override protected def _updateMetaWith(localWh: MImgSizeT, localImg: MLocalImgT): Unit = {
+    // should never happen
+    // Необходимость апдейта метаданных возникает, когда обнаруживается, что нет метаднных.
+    // В случае N2 MMedia, метаданные без блоба существовать не могут, и необходимость не должна наступать.
+    LOGGER.warn(s"_updateMetaWith($localWh, $localImg) ignored and not implemented")
+  }
 
   override protected def _thisToOriginal: MImg_t = {
     copy(dynImgOps = Nil)
   }
 
   override def delete: Future[_] = {
-    _mmediaOptFut flatMap {
+    _mediaOptFut flatMap {
       case Some(mm) =>
         for {
           _ <- mm.storage.delete

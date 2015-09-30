@@ -19,9 +19,10 @@ object IteeUtil {
    * Файл будет перезаписан, либо создан, если не существует.
    * @param data Енумератор сырых данных.
    * @param f [[java.io.File]].
+   * @param deleteOnError Удалять пустой/неполный файл при ошибке? [true]
    * @return Фьючерс, обозначающий завершение записи.
    */
-  def writeIntoFile(data: Enumerator[Array[Byte]], f: File)
+  def writeIntoFile(data: Enumerator[Array[Byte]], f: File, deleteOnError: Boolean = true)
                    (implicit ec: ExecutionContext): Future[_] = {
     val os = new FileOutputStream(f)
     val iteratee = Iteratee.foreach[Array[Byte]] { bytes =>
@@ -34,8 +35,10 @@ object IteeUtil {
         os.close()
       }
     // При ошибке нужно удалить файл, т.к. он всё равно уже теперь пустой.
-    resFut onFailure {
-      case ex => f.delete()
+    if (deleteOnError) {
+      resFut onFailure {
+        case ex => f.delete()
+      }
     }
     resFut
   }
