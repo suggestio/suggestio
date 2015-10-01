@@ -36,6 +36,13 @@ object MPictureMeta extends IGenEsMappingProps {
     )
   }
 
+  def apply(sz2d: ISize2di): MPictureMeta = {
+    MPictureMeta(
+      width   = sz2d.width,
+      height  = sz2d.height
+    )
+  }
+
 }
 
 
