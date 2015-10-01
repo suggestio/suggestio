@@ -10,8 +10,8 @@
 @import io.suggest.captcha.CaptchaConstants._
 
 
-@defining( CSRF(routes.Ident.recoverPwFormSubmit()) ) { submitCall =>
-@form(submitCall, 'class -> "recover-popup__content__form") {
+@defining(routes.Ident.recoverPwFormSubmit()) { submitCall =>
+@form( CSRF(submitCall), 'class -> "recover-popup__content__form") {
 
   @defining( messages("Email.used.during.registration") ) { msg =>
     @inputText(
