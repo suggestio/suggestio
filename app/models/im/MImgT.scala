@@ -4,6 +4,7 @@ import java.io.FileNotFoundException
 import java.util.UUID
 
 import io.suggest.model.img.IImgMeta
+import io.suggest.primo.TypeT
 import io.suggest.util.UuidUtil
 import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -171,7 +172,8 @@ abstract class MImgT extends MAnyImgT {
       IteeUtil.writeIntoFile(enumer, inst.file)
         .map { _ => Option(inst) }
         .recover { case ex: Throwable =>
-          LOGGER.warn(s"toLocalImg: _getImgBytes2 or writeIntoFile ${inst.file} failed", ex)
+          if (!ex.isInstanceOf[NoSuchElementException])
+            LOGGER.warn(s"toLocalImg: _getImgBytes2 or writeIntoFile ${inst.file} failed", ex)
           None
         }
     }
@@ -270,3 +272,10 @@ abstract class MImgT extends MAnyImgT {
 
 }
 
+
+/** Интерфейс для объектов-компаньонов, умеющих собирать инстансы MImg* моделей из filename. */
+trait IMImgCompanion extends TypeT {
+  override type T <: MImgT
+  def apply(fileName: String): T
+  def apply(img: MAnyImgT, dynOps2: Option[List[ImOp]] = None): T
+}

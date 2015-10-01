@@ -5,7 +5,7 @@ import java.util.UUID
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.util.UuidUtil
 import models.im.logo.LogoOpt_t
-import models.im.{MImgT, MAnyImgT, MImg}
+import models.im._
 import org.im4java.core.Info
 import util.PlayMacroLogsImpl
 import io.suggest.img.{ImgCrop, SioImageUtilT}
@@ -45,15 +45,16 @@ object ImgFormUtil extends PlayMacroLogsImpl {
       .transform[MImg](MImg.apply, _.fileName)
   }
 
-  /** маппер для поля с id картинки, который может отсутствовать. */
-  def imgIdOptM: Mapping[Option[MImgT]] = {
-    optional(text(maxLength = IIK_MAXLEN))
-      .transform[Option[MImgT]](
+  /** Сборка маппингов для img-инпутов в форме. */
+  def mkImgIdOptM[T1 <: MImgT](applier: IMImgCompanion { type T <: T1 }): Mapping[Option[T1]] = {
+    optional( text(maxLength = IIK_MAXLEN) )
+      .transform[Option[T1]](
         {txtOpt =>
           try {
             txtOpt
               .filter(_.length >= 8)
-              .map(MImg.apply)
+              // нельзя .map(applier.apply), ибо error: method with dependent type (fileName: String)applier.T cannot be converted to function value
+              .map(applier(_))
           } catch {
             case ex: Exception =>
               debug("imgIdOptM.apply: Cannot parse img id key: " + txtOpt, ex)
@@ -64,6 +65,11 @@ object ImgFormUtil extends PlayMacroLogsImpl {
       )
   }
 
+  /** маппер для поля с id картинки, который может отсутствовать. */
+  def imgIdOptM = mkImgIdOptM[MImgT](MImg)
+
+  /** Маппер для новых картинок на базе MMedia. */
+  def img3IdOptM = mkImgIdOptM[MImgT](MImg3)
 
 
 

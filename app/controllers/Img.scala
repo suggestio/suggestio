@@ -278,7 +278,8 @@ trait TempImgSupport extends SioController with PlayMacroLogsI with NotifyWs wit
     * @return Экземпляр Result, хранящий json с данными результата.
     */
   def _handleTempImg(preserveUnknownFmt: Boolean = false, runEarlyColorDetector: Boolean = false,
-                     wsId: Option[String] = None, ovlRrr: Option[(String, Context) => Html] = None)
+                     wsId: Option[String] = None, ovlRrr: Option[(String, Context) => Html] = None,
+                     mImgCompanion: IMImgCompanion = MImg)
                     (implicit request: AbstractRequestWithPwOpt[MultipartFormData[TemporaryFile]]): Future[Result] = {
     // TODO Надо часть синхронной логики загнать в Future{}. Это нужно, чтобы скачанные данные из tmp удалялись автоматом.
     val resultFut: Future[Result] = request.body.file("picture") match {
@@ -290,7 +291,8 @@ trait TempImgSupport extends SioController with PlayMacroLogsI with NotifyWs wit
         val srcMime = srcMagicMatch.getMimeType
 
         // Отрабатываем опциональный рендеринг html-поля с оверлеем.
-        def ovlOpt(mptmp: MAnyImgT) = ovlRrr.map { hrrr =>
+        val mptmp = MLocalImg()
+        lazy val ovlOpt = ovlRrr.map { hrrr =>
           hrrr(mptmp.fileName, implicitly[Context])
         }
         // Далее, загрузка для svg и растровой графики расветвляется...
@@ -299,9 +301,8 @@ trait TempImgSupport extends SioController with PlayMacroLogsI with NotifyWs wit
           if (SvgUtil isSvgFileValid srcFile) {
             // Это svg. Надо его сжать и переместить в tmp-хранилище.
             val newSvg = HtmlCompressUtil.compressSvgFromFile(srcFile)
-            val mptmp = MLocalImg()
             FileUtils.writeStringToFile(mptmp.file, newSvg)
-            Ok( jsonTempOk(mptmp.fileName, routes.Img.dynImg(mptmp.toWrappedImg), ovlOpt(mptmp)) )
+            Ok( jsonTempOk(mptmp.fileName, routes.Img.dynImg(mptmp.toWrappedImg), ovlOpt) )
           } else {
             val reply = jsonImgError("SVG format invalid or not supported.")
             NotAcceptable(reply)
@@ -310,7 +311,6 @@ trait TempImgSupport extends SioController with PlayMacroLogsI with NotifyWs wit
         } else {
           // Это растровая картинка (jpeg, png, etc).
           try {
-            val mptmp = MLocalImg()  // MPictureTmp.getForTempFile(fileRef.file, outFmt, marker)
             // Конвертим в JPEG всякие левые форматы.
             val imgPrepareFut: Future[_] = {
               if (preserveUnknownFmt || OutImgFmts.forImageMime(srcMime).isDefined) {
@@ -327,9 +327,13 @@ trait TempImgSupport extends SioController with PlayMacroLogsI with NotifyWs wit
             }
             // Генерим уменьшенную превьюшку для отображения в форме редактирования чего-то.
             val imOps = List(_imgRszPreviewOp)
-            val im = MImg(mptmp.rowKey, imOps)
+            val im = mImgCompanion(mptmp, Some(imOps))
             val res2Fut = imgPrepareFut map { _ =>
-              Ok( jsonTempOk(mptmp.fileName, DynImgUtil.imgCall(im), ovlOpt(im)) )
+              Ok( jsonTempOk(
+                mptmp.fileName,
+                DynImgUtil.imgCall(im),
+                ovlOpt
+              ) )
             }
             // Запускаем в фоне детектор цвета картинки и отправить клиенту через WebSocket.
             if (runEarlyColorDetector) {

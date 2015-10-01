@@ -1,5 +1,6 @@
 package models.im.logo
 
+import models.MPredicates
 import io.suggest.sc.ScConstants
 import io.suggest.ym.model.common.{MImgInfoMeta, MImgInfoT}
 import models.{IEdge, MEdge}
@@ -10,6 +11,7 @@ import util.img.ImgFormUtil
 import util.xplay.CacheUtil
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
+import util.event.SiowebNotifier.Implicts.sn
 
 import scala.concurrent.Future
 
@@ -44,19 +46,30 @@ object LogoUtil {
   }
 
   // TODO Допилить этот метод, привязать его к контроллеру, разобраться с MImg.deleteAllFor(UUID), обновить маппинги форм.
-  def updateLogoFor(adnNodeId: String, newLogo: LogoOpt_t): Future[_] = {
+  def updateLogoFor(adnNodeId: String, newLogo: LogoOpt_t): Future[Seq[MImgT]] = {
     val edgeSearchArgs = LogoEdgesSearch( adnNodeId )
     for {
-      medges   <- MEdge.dynSearch(edgeSearchArgs)
+      // Найти текущие логотипы через эджи:
+      curEdges   <- MEdge.dynSearch(edgeSearchArgs)
+      // Сохранить картинки-логотипы в хранилище.
       newLogos <- {
-        val oldImgs = medges
+        val oldImgs = curEdges
           .iterator
           .map { edge2logoImg }
           .toIterable
         ImgFormUtil.updateOrigImgFull(needImgs = newLogo.toSeq, oldImgs = oldImgs)
       }
+      // Обновить эджи:
+      _ <- {
+        MEdge.updateEdgesFrom(
+          adnNodeId,
+          Seq(MPredicates.Logo, MPredicates.Owns),
+          oldToIds = curEdges.map(_.toId),
+          newToIds = newLogos.map(_.rowKeyStr)
+        )
+      }
     } yield {
-
+      newLogos
     }
   }
 

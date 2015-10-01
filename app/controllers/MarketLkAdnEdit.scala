@@ -4,9 +4,11 @@ import akka.actor.ActorSystem
 import com.google.inject.Inject
 import io.suggest.js.UploadConstants
 import models.im.logo.{LogoOpt_t, LogoUtil}
-import models.im.{MImgT, MImg}
+import models.im.{MImg3, MImgT, MImg}
 import models.jsm.init.MTargets
 import play.api.i18n.MessagesApi
+import play.api.libs.Files.TemporaryFile
+import play.api.mvc.{MultipartFormData, Result}
 import play.core.parsers.Multipart
 import play.twirl.api.Html
 import util.img._
@@ -24,7 +26,7 @@ import GalleryUtil._
 import WelcomeUtil._
 import play.api.Play.{current, configuration}
 import models.madn.EditConstants._
-import util.img.ImgFormUtil.imgIdOptM
+import util.img.ImgFormUtil.img3IdOptM
 
 import scala.concurrent.Future
 
@@ -55,7 +57,7 @@ class MarketLkAdnEdit @Inject() (
   }
 
   private def logoKM: (String, Mapping[LogoOpt_t]) = {
-    LOGO_IMG_FN -> imgIdOptM
+    LOGO_IMG_FN -> img3IdOptM
   }
 
   // У нас несколько вариантов развития событий с формами: ресивер, продьюсер или что-то иное. Нужно три маппинга.
@@ -215,14 +217,11 @@ class MarketLkAdnEdit @Inject() (
           .map { NotAcceptable(_) }
       },
       {fmr =>
-        val oldLogoOptFut = LogoUtil.getLogoOfNode(adnId)
         // В фоне обновляем картинку карточки-приветствия.
         val savedWelcomeImgsFut = WelcomeUtil.updateWelcodeAdFut(adnNode, fmr.waImgOpt)
         trace(s"${logPrefix}newGallery[${fmr.gallery.size}] ;; newLogo = ${fmr.logoOpt.map(_.fileName)}")
         // В фоне обновляем логотип узла
-        val savedLogoFut = oldLogoOptFut flatMap { oldLogoOpt =>
-          LogoUtil.updateLogo(fmr.logoOpt, oldLogoOpt)
-        }
+        val savedLogoFut = LogoUtil.updateLogoFor(adnId, fmr.logoOpt)
         // Запускаем апдейт галереи.
         val galleryUpdFut = GalleryUtil.updateGallery(fmr.gallery, oldGallery = adnNode.gallery)
         for {
@@ -230,7 +229,7 @@ class MarketLkAdnEdit @Inject() (
           waIdOpt   <- savedWelcomeImgsFut
           gallery   <- galleryUpdFut
           _         <- MAdnNode.tryUpdate(adnNode) {
-            applyNodeChanges(_, fmr.meta, waIdOpt, savedLogo, gallery)
+            applyNodeChanges(_, fmr.meta, waIdOpt, gallery)
           }
         } yield {
           trace("New gallery = " + gallery.mkString(", "))
@@ -246,7 +245,7 @@ class MarketLkAdnEdit @Inject() (
   /** Накатить изменения на инстанс узла, породив новый инстанс.
     * Вынесена из editAdnNodeSubmit() для декомпозиции и для нужд for{}-синтаксиса. */
   private def applyNodeChanges(adnNode: MAdnNode, adnMeta2: MNodeMeta, waIdOpt: Option[String],
-                               newLogo: Option[MImgInfoT], newImgGallery: List[String]): MAdnNode = {
+                               newImgGallery: List[String]): MAdnNode = {
     adnNode.copy(
       meta = adnNode.meta.copy(
         // сохраняем метаданные
@@ -264,8 +263,6 @@ class MarketLkAdnEdit @Inject() (
         // сохраняем welcome ad id
         welcomeAdId = waIdOpt
       ),
-      // сохраняем логотип
-      logoImgOpt = newLogo,
       gallery = newImgGallery
     )
   }
@@ -277,8 +274,13 @@ class MarketLkAdnEdit @Inject() (
    * Права на доступ к магазину проверяем для защиты от несанкциронированного доступа к lossless-компрессиям.
    * @return Тот же формат ответа, что и для просто temp-картинок.
    */
-  def handleTempLogo = _imgUpload { (imgId, ctx) =>
-    _logoOvlTpl(imgId)(ctx)
+  def handleTempLogo = _imgUploadBase { implicit request =>
+    _handleTempImg(
+      ovlRrr = Some { (imgId, ctx) =>
+        _logoOvlTpl(imgId)(ctx)
+      },
+      mImgCompanion = MImg3
+    )
   }
 
 
@@ -300,19 +302,27 @@ class MarketLkAdnEdit @Inject() (
     _galIndexedOvlTpl(imgId, fnIndex = index)(ctx)
   }
 
+
+  /** Обертка экшена для всех экшенов загрузки картинков. */
+  private def _imgUploadBase(f: AbstractRequestWithPwOpt[MultipartFormData[TemporaryFile]] => Future[Result]) = {
+    val bp = parse.multipartFormData(Multipart.handleFilePartAsTemporaryFile, maxLength = IMG_GALLERY_MAX_LEN_BYTES)
+    IsAuth.async(bp) { implicit request =>
+      bruteForceProtected {
+        f(request)
+      }
+    }
+  }
+
   /**
-   * Общий код загрузки всех картинок для узла.
+   * Общий код загрузки картинок для узла.
    * @param ovlRrr Функция-рендерер html оверлея картинки.
    * @return Action.
    */
   private def _imgUpload(ovlRrr: (String, Context) => Html) = {
-    val bp = parse.multipartFormData(Multipart.handleFilePartAsTemporaryFile, maxLength = IMG_GALLERY_MAX_LEN_BYTES)
-    IsAuth.async(bp) { implicit request =>
-      bruteForceProtected {
-        _handleTempImg(
-          ovlRrr = Some(ovlRrr)
-        )
-      }
+    _imgUploadBase { implicit request =>
+      _handleTempImg(
+        ovlRrr = Some(ovlRrr)
+      )
     }
   }
 
@@ -324,5 +334,6 @@ class MarketLkAdnEdit @Inject() (
     waImgOpt    : Option[MImgT]   = None,
     gallery     : List[MImg]      = Nil
   )
+
 }
 

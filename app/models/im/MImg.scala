@@ -5,6 +5,7 @@ import java.util.UUID
 
 import io.suggest.model.img.IImgMeta
 import io.suggest.model.{MUserImgMeta2, MUserImg2}
+import io.suggest.primo.TypeT
 import models._
 import org.joda.time.DateTime
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -26,7 +27,9 @@ import scala.concurrent.Future
  * Все данные картинок хранятся в локальной ненадежной кеширующей модели и в постояной моделях (cassandra и др.).
  */
 
-object MImg extends PlayLazyMacroLogsImpl { model =>
+object MImg extends PlayLazyMacroLogsImpl with IMImgCompanion { model =>
+
+  override type T = MImg
 
   /** Реализация парсеров для данной модели. */
   class Parsers extends ImgFileNameParsersImpl {
@@ -42,13 +45,12 @@ object MImg extends PlayLazyMacroLogsImpl { model =>
 
   }
 
-
   /**
    * Распарсить filename, в котором сериализованы данные о картинке.
    * @param filename filename картинки.
    * @return Экземпляр MImg, содержащий все данные из filename'а.
    */
-  def apply(filename: String): MImg = {
+  override def apply(filename: String): MImg = {
     (new Parsers)
       .fromFileName(filename)
       .get
@@ -76,8 +78,11 @@ object MImg extends PlayLazyMacroLogsImpl { model =>
     }
   }
 
-}
+  override def apply(img: MAnyImgT, dynOps2: Option[List[ImOp]] = None): MImg = {
+    apply(img.rowKey, dynOps2.getOrElse(img.dynImgOps))
+  }
 
+}
 
 
 /** Реализация модели [[MImgT]] для работы напрямую с кассандрой.

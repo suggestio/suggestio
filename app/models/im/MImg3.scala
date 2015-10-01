@@ -3,7 +3,7 @@ package models.im
 import java.util.UUID
 
 import io.suggest.model.img.{ImgSzDated, IImgMeta}
-import io.suggest.model.n2.media.storage.{CassandraStorage, IMediaStorage}
+import io.suggest.model.n2.media.storage.{SwfsStorage, CassandraStorage, IMediaStorage}
 import io.suggest.model.n2.media.{MPictureMeta, MFileMeta}
 import io.suggest.util.UuidUtil
 import models._
@@ -23,7 +23,9 @@ import util.SiowebEsUtil.client
  * Created: 30.09.15 17:27
  * Description: Реализация модели [[MImgT]] на базе MMedia, вместо прямого взаимодействия с кассандрой.
  */
-object MImg3 {
+object MImg3 extends IMImgCompanion {
+
+  override type T = MImg3
 
   /** Реализация парсеров filename'ов в данную модель. */
   class Parsers extends ImgFileNameParsersImpl {
@@ -39,10 +41,14 @@ object MImg3 {
 
   }
 
-  def apply(fileName: String): MImg3 = {
+  override def apply(fileName: String): MImg3 = {
     (new Parsers)
       .fromFileName(fileName)
       .get
+  }
+
+  override def apply(img: MAnyImgT, dynOps2: Option[List[ImOp]] = None): MImg3 = {
+    apply(img.rowKeyStr, dynOps2.getOrElse(img.dynImgOps))
   }
 
 }
@@ -76,13 +82,19 @@ abstract class MImg3T extends MImgT {
   }
 
   override def existsInPermanent: Future[Boolean] = {
-    _mediaFut
+    val isExistsFut = _mediaFut
       .flatMap { _.storage.isExist }
-      .recover { case ex: Throwable =>
-        if (!ex.isInstanceOf[NoSuchElementException])
-          LOGGER.warn("isExist() or _mediaFut failed / " + this, ex)
+    // возвращать false при ошибках.
+    val resFut = isExistsFut
+      .recover { case _ =>
         false
       }
+    // Залоггировать неожиданные экзепшены.
+    isExistsFut onFailure { case ex: Throwable =>
+      if (!ex.isInstanceOf[NoSuchElementException])
+        LOGGER.warn("isExist() or _mediaFut failed / " + this, ex)
+    }
+    resFut
   }
 
   override protected def _getImgBytes2: Enumerator[Array[Byte]] = {
@@ -101,10 +113,15 @@ abstract class MImg3T extends MImgT {
     _mediaFut.recoverWith { case ex: Throwable =>
       // Перезаписывать нечего, т.к. элемент ещё не существует в MMedia.
       val whOptFut = mli.getImageWH
-      val mimeFut = Future(mli.mime)
-      val sha1Fut = Future(FileUtil.sha1(mli.file))
+      val mimeFut = Future( mli.mime )
+      val sha1Fut = Future( FileUtil.sha1(mli.file) )
       val storFut = _newMediaStorage
+
+      if (!ex.isInstanceOf[NoSuchElementException])
+        LOGGER.warn("_doSaveToPermanent(" + loc + "): _mediaFut() returned error, this = " + this, ex)
+
       val szB = mli.file.length()
+
       for {
         whOpt <- whOptFut
         mime <- mimeFut
@@ -112,13 +129,13 @@ abstract class MImg3T extends MImgT {
         stor <- storFut
         mm <- {
           val _mm = MMedia(
-            nodeId = rowKeyStr,
-            id = Some(_mediaId),
-            file = MFileMeta(
-              mime = mime,
-              sizeB = szB,
-              isOriginal = isOriginal,
-              sha1 = Some(sha1)
+            nodeId  = rowKeyStr,
+            id      = Some(_mediaId),
+            file    = MFileMeta(
+              mime        = mime,
+              sizeB       = szB,
+              isOriginal  = isOriginal,
+              sha1        = Some(sha1)
             ),
             picture = whOpt.map(MPictureMeta.apply),
             storage = stor
@@ -139,7 +156,7 @@ abstract class MImg3T extends MImgT {
 
   override protected def _updateMetaWith(localWh: MImgSizeT, localImg: MLocalImgT): Unit = {
     // should never happen
-    // Необходимость апдейта метаданных возникает, когда обнаруживается, что нет метаднных.
+    // Необходимость апдейта метаданных возникает, когда обнаруживается, что нет метаданных.
     // В случае N2 MMedia, метаданные без блоба существовать не могут, и необходимость не должна наступать.
     LOGGER.warn(s"_updateMetaWith($localWh, $localImg) ignored and not implemented")
   }
@@ -179,12 +196,16 @@ case class MImg3(override val rowKeyStr: String,
 }
 
 
-/** Использовать кассандру для сохранения новых файлов. */
+/** Использовать кассандру для сохранения новых картинок. */
 trait I3Cassandra extends MImg3T {
-
-  override protected def _newMediaStorage: Future[IMediaStorage] = {
+  override protected def _newMediaStorage: Future[CassandraStorage] = {
     val stor = CassandraStorage(rowKey, qOpt)
     Future successful stor
   }
+}
 
+
+/** Использовать seaweedfs для сохранения новых картинок. */
+trait I3SeaWeedFs extends MImg3T {
+  override protected def _newMediaStorage = SwfsStorage.assingNew()
 }
