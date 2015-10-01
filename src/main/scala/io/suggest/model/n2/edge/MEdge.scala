@@ -2,7 +2,7 @@ package io.suggest.model.n2.edge
 
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model._
-import io.suggest.model.n2.edge.search.EdgeSearch
+import io.suggest.model.n2.edge.search.{EdgeSearchDfltImpl, EdgeSearch}
 import io.suggest.model.search.EsDynSearchStatic
 import io.suggest.util.MacroLogsImpl
 import org.elasticsearch.client.Client
@@ -10,7 +10,7 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
 import scala.collection.Map
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{Future, ExecutionContext}
 
 /**
  * Suggest.io
@@ -74,6 +74,77 @@ object MEdge
 
 
   import io.suggest.util.SioEsUtil._
+
+  /**
+   * Комплексное обновление исходящих из одного узла эджей.
+   * old-эджи, отсутствующие в new будут удалены.
+   * new-эджи, отсутствующие в old будут созданы.
+   * @param fromId1 id исходящего узла.
+   * @param predicates1 предикаты, для которых эджи ищем/создаем/удаляем.
+   * @param oldToIds старый набор toId.
+   * @param newToIds новый набор toId.
+   * @return Фьючерс.
+   */
+  def updateEdgesFrom(fromId1: String, predicates1: Seq[MPredicate], oldToIds: Seq[String], newToIds: Seq[String])
+                     (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+    if (oldToIds.isEmpty && newToIds.isEmpty) {
+      Future successful Nil
+    } else {
+
+      // Готовим множества старых и новых значений поля toId
+      val oldToIdsSet = oldToIds.toSet
+      val newToIdsSet = newToIds.toSet
+
+      // Если множества идентичны, то обновлять ничего не надо.
+      if (oldToIdsSet == newToIdsSet) {
+        Future successful Nil
+      } else {
+
+        // Ищем все существующие эджи
+        val searchArgs = new EdgeSearchDfltImpl {
+          override def fromId     = Seq(fromId1)
+          override def predicates = predicates1
+          override val toId       = oldToIds ++ newToIds
+          override def limit      = predicates.size * toId.size
+        }
+        val searchFut = dynSearch(searchArgs)
+
+        // Готовим множества для создания и удаления
+        val crToIdsSet  = newToIdsSet -- oldToIdsSet
+        val rmToIdsSet  = oldToIdsSet -- newToIdsSet
+
+        // исполнить задуманное
+        for {
+          edges     <- searchFut
+          bulkResp  <- {
+            val curEdgesMap = edges
+              .iterator
+              .map { e => (e.predicate, e.toId) -> e }
+              .toMap
+            val bulk = client.prepareBulk()
+
+            for (pred <- predicates1; toId <- crToIdsSet) {
+              if (!(curEdgesMap contains (pred, toId))) {
+                val me = MEdge(fromId = fromId1, predicate = pred, toId = toId)
+                bulk.add( me.indexRequestBuilder )
+              }
+            }
+
+            for (pred <- predicates1; toId <- rmToIdsSet; medge <- curEdgesMap.get((pred, toId))) {
+              bulk.add( medge.prepareDelete )
+            }
+
+            bulk.execute()
+          }
+        } yield {
+          if (bulkResp.hasFailures)
+            LOGGER.warn(s"updateEdgesFrom($fromId1, $predicates1, $oldToIds, $newToIds): bulk update had errors:\n ${bulkResp.buildFailureMessage()}")
+          bulkResp
+        }
+      }
+    }
+  }
+
 
   override def generateMappingStaticFields: List[Field] = {
     List(

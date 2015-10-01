@@ -36,6 +36,11 @@ object SwfsStorage {
     (ss.sType, ss.volumeId, ss.fileId)
   }
 
+  /** Получить у swfs-мастера координаты для сохранения нового файла. */
+  def assingNew(): Future[SwfsStorage] = {
+    ???
+  }
+
 }
 
 
