@@ -21,8 +21,6 @@ import scala.concurrent.Future
  */
 object LogoUtil {
 
-  type LogoOpt_t = Option[MImgT]
-
   /** Сколько секунд кешировать результат getLogoOfNode? */
   val GET_NODE_LOGO_CACHE_SECONDS = configuration.getInt("logo.of.node.cache.seconds") getOrElse 10
 
@@ -45,6 +43,7 @@ object LogoUtil {
       .flatMap { vs => ImgFormUtil.optImg2OptImgInfo( vs.headOption ) }
   }
 
+  // TODO Допилить этот метод, привязать его к контроллеру, разобраться с MImg.deleteAllFor(UUID), обновить маппинги форм.
   def updateLogoFor(adnNodeId: String, newLogo: LogoOpt_t): Future[_] = {
     val edgeSearchArgs = LogoEdgesSearch( adnNodeId )
     for {

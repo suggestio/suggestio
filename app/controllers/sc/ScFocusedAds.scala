@@ -4,8 +4,7 @@ import _root_.util.jsa.{JsAppendById, JsAction, SmRcvResp, Js}
 import io.suggest.common.css.FocusedTopLeft
 import io.suggest.util.Lists
 import models.im.MImgT
-import models.im.logo.LogoUtil
-import models.im.logo.LogoUtil.LogoOpt_t
+import models.im.logo.{LogoUtil, LogoOpt_t}
 import models.jsm.ProducerAdsResp
 import models.msc._
 import play.api.mvc.Result

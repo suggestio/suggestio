@@ -125,7 +125,7 @@ abstract class MImgT extends MAnyImgT {
 
   lazy val toLocalInstance = MLocalImg(rowKey, dynImgOps)
 
-  lazy val rowKeyStr = UuidUtil.uuidToBase64(rowKey)
+  def rowKeyStr = UuidUtil.uuidToBase64(rowKey)
 
   override lazy val dynImgOpsString = super.dynImgOpsString
 

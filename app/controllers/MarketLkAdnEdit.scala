@@ -3,13 +3,12 @@ package controllers
 import akka.actor.ActorSystem
 import com.google.inject.Inject
 import io.suggest.js.UploadConstants
-import models.im.logo.LogoUtil
+import models.im.logo.{LogoOpt_t, LogoUtil}
 import models.im.{MImgT, MImg}
 import models.jsm.init.MTargets
 import play.api.i18n.MessagesApi
 import play.core.parsers.Multipart
 import play.twirl.api.Html
-import LogoUtil.LogoOpt_t
 import util.img._
 import util.PlayMacroLogsImpl
 import util.acl._
@@ -25,6 +24,7 @@ import GalleryUtil._
 import WelcomeUtil._
 import play.api.Play.{current, configuration}
 import models.madn.EditConstants._
+import util.img.ImgFormUtil.imgIdOptM
 
 import scala.concurrent.Future
 
@@ -40,7 +40,10 @@ class MarketLkAdnEdit @Inject() (
   override val messagesApi: MessagesApi,
   override val actorSystem: ActorSystem
 )
-  extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtectCtl
+  extends SioController
+  with PlayMacroLogsImpl
+  with TempImgSupport
+  with BruteForceProtectCtl
 {
 
   import LOGGER._
@@ -51,6 +54,9 @@ class MarketLkAdnEdit @Inject() (
     mib * 1024 * 1024
   }
 
+  private def logoKM: (String, Mapping[LogoOpt_t]) = {
+    LOGO_IMG_FN -> imgIdOptM
+  }
 
   // У нас несколько вариантов развития событий с формами: ресивер, продьюсер или что-то иное. Нужно три маппинга.
   private def nameKM        = "name"    -> nameM

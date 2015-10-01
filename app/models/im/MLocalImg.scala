@@ -51,17 +51,21 @@ object MLocalImg
   with PeriodicallyDeleteNotExistingInPermanent
 {
 
+  /** Реализация парсеров для filename из данной модели. */
   class Parsers extends ImgFileNameParsersImpl {
+
+    override type T = MLocalImg
+
     /** Парсер имён файлов, конвертящий успешный результат своей работы в экземпляр MLocalImg. */
-    def fileName2mliP: Parser[MLocalImg] = {
+    override def fileName2miP: Parser[T] = {
       fileNameP ^^ {
         case uuid ~ dynArgs =>
           MLocalImg(uuid, dynArgs)
       }
     }
 
-    def fromFileName(fileName: String) = parseAll(fileName2mliP, fileName)
   }
+
 
   /** Адрес img-директории, который используется для хранилища. */
   def DIR_REL = configuration.getString("m.local.img.dir.rel") getOrElse "picture/local"

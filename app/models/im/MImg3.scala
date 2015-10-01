@@ -9,6 +9,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.iteratee.Enumerator
 import util.PlayLazyMacroLogsImpl
 import util.event.SiowebNotifier.Implicts.sn
+import util.img.ImgFileNameParsersImpl
 
 import scala.concurrent.Future
 import util.SiowebEsUtil.client
@@ -19,14 +20,39 @@ import util.SiowebEsUtil.client
  * Created: 30.09.15 17:27
  * Description: Реализация модели [[MImgT]] на базе MMedia, вместо прямого взаимодействия с кассандрой.
  */
-case class MImg3(nodeId: String,
+object MImg3 {
+
+  /** Реализация парсеров filename'ов в данную модель. */
+  class Parsers extends ImgFileNameParsersImpl {
+
+    override type T = MImg3
+
+    override def fileName2miP: Parser[T] = {
+      (uuidStrP ~ imOpsP) ^^ {
+        case nodeId ~ dynImgOps =>
+          apply(nodeId, dynImgOps)
+      }
+    }
+
+  }
+
+  def apply(fileName: String): MImg3 = {
+    (new Parsers)
+      .fromFileName(fileName)
+      .get
+  }
+
+}
+
+
+case class MImg3(override val rowKeyStr: String,
                  override val dynImgOps: Seq[ImOp])
   extends MImgT
   with PlayLazyMacroLogsImpl
 {
 
   override lazy val rowKey: UUID = {
-    UuidUtil.base64ToUuid(nodeId)
+    UuidUtil.base64ToUuid(rowKeyStr)
   }
 
   override type MImg_t = MImg3
@@ -66,6 +92,7 @@ case class MImg3(nodeId: String,
     Enumerator.flatten(fut)
   }
 
+  /** Сохранить в хранилище, при необходимости создать MMedia. */
   override protected def _doSaveToPermanent(loc: MLocalImgT): Future[_] = {
     _mediaFut.flatMap { mm =>
       mm.storage.write( loc.imgBytesEnumerator )

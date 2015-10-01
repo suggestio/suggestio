@@ -28,16 +28,18 @@ import scala.concurrent.Future
 
 object MImg extends PlayLazyMacroLogsImpl { model =>
 
+  /** Реализация парсеров для данной модели. */
   class Parsers extends ImgFileNameParsersImpl {
 
+    override type T = MImg
+
     /** Парсер filename'ов, выдающий на выходе готовые экземпляры MImg. */
-    def fileName2miP: Parser[MImg] = {
+    override def fileName2miP: Parser[MImg] = {
       fileNameP ^^ {
         case uuid ~ imOps  =>  MImg(uuid, imOps)
       }
     }
 
-    def fromFileName(filename: String) = parseAll(fileName2miP, filename)
   }
 
 
@@ -90,6 +92,8 @@ case class MImg(override val rowKey: UUID,
   override type MImg_t = MImg
   override def thisT = this
   override def toWrappedImg = this
+
+  override lazy val rowKeyStr = super.rowKeyStr
 
   override def withDynOps(dynImgOps2: Seq[ImOp]): MImg_t = {
     copy(dynImgOps = dynImgOps2)

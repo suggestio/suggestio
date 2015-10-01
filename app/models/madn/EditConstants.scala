@@ -1,10 +1,5 @@
 package models.madn
 
-import models.im.logo.LogoUtil
-import play.api.data.Mapping
-import util.img.ImgFormUtil.imgIdOptM
-import LogoUtil.LogoOpt_t
-
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -20,10 +15,5 @@ object EditConstants {
   val LOGO_IMG_FN = "logoImgId"
 
   val WELCOME_IMG_FN = "welcomeImgId"
-
-
-  def logoKM: (String, Mapping[LogoOpt_t]) = {
-    LOGO_IMG_FN -> imgIdOptM
-  }
 
 }

@@ -3,6 +3,7 @@ package util.img
 import java.util.UUID
 
 import io.suggest.img.ImgCropParsers
+import io.suggest.primo.TypeT
 import io.suggest.util.UuidUtil
 import models.im.{AbsCropOp, ImOp}
 
@@ -19,6 +20,8 @@ trait ImgFileNameParsers extends JavaTokenParsers with ImgCropParsers {
 
   /** Парсер rowKey из filename: */
   def uuidStrP: Parser[String] = "[a-zA-Z0-9_-]{21,25}".r
+
+  /** Парсер rowKey, перводящий id в uuid. */
   def uuidP: Parser[UUID] = {
     uuidStrP ^^ UuidUtil.base64ToUuid
   }
@@ -51,9 +54,24 @@ trait ImgFileNameParsers extends JavaTokenParsers with ImgCropParsers {
     ("?" | "") ^^^ Nil
   }
 
-  /** Парсер filename'а. Порядок имеет значение. compat, пока нужен, не должен конфликтовать с dynImgArgsQsP. */
-  def fileNameP = uuidP ~ (compatCropSuf2ImArgsP | dynImgArgsQsP  | dynImgArgsQsEmptyP)
+  /** Парсер строки данных трансформации картинки.
+    * Порядок имеет значение. compat, пока нужен, не должен конфликтовать с dynImgArgsQsP. */
+  def imOpsP: Parser[List[ImOp]] = {
+    compatCropSuf2ImArgsP | dynImgArgsQsP | dynImgArgsQsEmptyP
+  }
+
+  /** Парсер полного filename'а. */
+  def fileNameP = uuidP ~ imOpsP
 
 }
 
-class ImgFileNameParsersImpl extends ImgFileNameParsers
+/** Реализация [[ImgFileNameParsers]]. */
+abstract class ImgFileNameParsersImpl extends ImgFileNameParsers with TypeT {
+
+  def fileName2miP: Parser[T]
+
+  def fromFileName(filename: String): ParseResult[T] = {
+    parseAll(fileName2miP, filename)
+  }
+
+}

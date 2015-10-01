@@ -1,7 +1,6 @@
 package controllers.sc
 
-import models.im.logo.LogoUtil
-import LogoUtil.LogoOpt_t
+import models.im.logo.{LogoUtil, LogoOpt_t}
 import _root_.util.jsa.{SmRcvResp, Js}
 import _root_.util.PlayMacroLogsI
 import models.Context
