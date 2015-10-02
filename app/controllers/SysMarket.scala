@@ -3,7 +3,7 @@ package controllers
 import com.google.inject.Inject
 import models.im.MImg
 import models.msys.NodeCreateParams
-import models.usr.{MUserEdgeUtil, MPerson, EmailActivation}
+import models.usr.{MPerson, EmailActivation}
 import play.api.db.Database
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
@@ -160,8 +160,6 @@ class SysMarket @Inject() (
         for (adnId <- adnNode.save) yield {
           // Инициализировать новосозданный узел.
           maybeInitializeNode(ncpForm, adnId)
-          // Сохранить инфу о юзере-создателе узла.
-          MUserEdgeUtil.saveCreatorEdge(adnId)
           // Отредиректить админа в созданный узел.
           Redirect(routes.SysMarket.showAdnNode(adnId))
             .flashing(FLASH.SUCCESS -> s"Создан узел сети: $adnId")

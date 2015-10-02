@@ -7,7 +7,7 @@ import controllers.ident._
 import models.im.logo.LogoUtil
 import models.mlk.MNodeShowArgs
 import models.msession.Keys
-import models.usr.{MUserEdgeUtil, EmailPwIdent}
+import models.usr.EmailPwIdent
 import play.api.i18n.MessagesApi
 import util.billing.Billing
 import _root_.util.{FormUtil, PlayMacroLogsImpl}
@@ -328,10 +328,6 @@ class MarketLkAdn @Inject() (
         val respFut = nodeFut map { adnNode =>
           Redirect( NodesUtil.userNodeCreatedRedirect(adnNode.id.get) )
             .flashing(FLASH.SUCCESS -> "New.shop.created.fill.info")
-        }
-        // Сохранить инфу о создателе в MEdge
-        for (mnode <- nodeFut) {
-          MUserEdgeUtil.saveCreatorEdge( mnode.id.get )
         }
         // Вернуть HTTP-ответ.
         respFut

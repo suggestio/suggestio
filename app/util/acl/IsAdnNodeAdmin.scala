@@ -1,11 +1,10 @@
 package util.acl
 
-import io.suggest.util.MacroLogsI
 import models._
 import models.req.SioReqMd
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.xplay.SioHttpErrorHandler
-import util.{PlayMacroLogsDyn, PlayLazyMacroLogsImpl}
+import util.{PlayMacroLogsI, PlayMacroLogsDyn, PlayLazyMacroLogsImpl}
 import scala.concurrent.Future
 import util.acl.PersonWrapper.PwOpt_t
 import play.api.mvc._
@@ -88,7 +87,7 @@ object IsAdnNodeAdmin extends PlayLazyMacroLogsImpl {
 import IsAdnNodeAdmin.onUnauth
 
 /** В реквесте содержится администрируемый узел, если всё ок. */
-sealed trait IsAdnNodeAdminBase extends ActionBuilder[AbstractRequestForAdnNode] with MacroLogsI {
+sealed trait IsAdnNodeAdminBase extends ActionBuilder[AbstractRequestForAdnNode] with PlayMacroLogsI {
   def adnId: String
   override def invokeBlock[A](request: Request[A], block: (AbstractRequestForAdnNode[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)

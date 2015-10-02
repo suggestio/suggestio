@@ -133,12 +133,7 @@ object SysMarketUtil extends PlayMacroLogsDyn {
   /** Маппинг для конфига ноды. */
   def nodeConfM: Mapping[NodeConf] = {
     mapping(
-      "showInScNodeList"    -> boolean,
-      "showcaseVoidFiller"  -> {
-        optional(
-          text(maxLength = 255).transform(strTrimF, strIdentityF)
-        ).transform[Option[String]] (emptyStrOptToNone, identity)
-      }
+      "showInScNodeList"    -> boolean
     )
     { NodeConf.apply }
     { NodeConf.unapply }
@@ -171,8 +166,7 @@ object SysMarketUtil extends PlayMacroLogsDyn {
         sinks       = adnNode2.adn.sinks
       ),
       conf = adnNode.conf.copy(
-        showInScNodesList = adnNode2.conf.showInScNodesList,
-        showcaseVoidFiller = adnNode2.conf.showcaseVoidFiller
+        showInScNodesList = adnNode2.conf.showInScNodesList
       )
     )
   }

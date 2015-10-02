@@ -2,8 +2,6 @@ package util.acl
 
 import java.sql.Connection
 
-import io.suggest.model.n2.edge.search.EdgeSearchDfltImpl
-import models.adv.search.FindEdgesByAdvDelegate
 import models.req.SioReqMd
 import play.api.mvc.{Results, Result, ActionBuilder, Request}
 import util.PlayMacroLogsImpl
@@ -39,6 +37,7 @@ import AdvWndAccess._
  * которому делегировали обязанности модераторации запросов рекламных карточек.
  */
 trait AdvWndAccessBase extends ActionBuilder[AdvWndRequest] {
+
   val adId: String
   val povAdnId: Option[String]
   val needMBB: Boolean
@@ -75,12 +74,10 @@ trait AdvWndAccessBase extends ActionBuilder[AdvWndRequest] {
       // Узел, указанный в pai существует.
       case Some(dgNode) =>
         // Фоновый запуск поиска id узлов, которые делегировали своё adv-право указанному узлу (povAdnId).
-        val rcvrIdsDgFut = for {
-          edges <- MEdge.dynSearch( FindEdgesByAdvDelegate(pai) )
-        } yield {
-          edges.iterator
-            .map(_.toId)
-            .toSeq
+        // TODO N2 Нужно тут обращение к MNode.edge.out сделать, взять все эджи типа AdvDelegated и построить множество toIds.
+        val rcvrIdsDgFut: Future[Set[String]] = {
+          LOGGER.warn("findRcvrMdr(): Not implemented: adv delegation via edges")
+          Future successful Set.empty
         }
         // Для установки связи между карточкой, ресивером и делегатом-модератором ресивера надо выкачать список всех текущих размещений карточки.
         val syncResult = DB.withConnection { implicit c =>
@@ -94,7 +91,7 @@ trait AdvWndAccessBase extends ActionBuilder[AdvWndRequest] {
         val advsRcvrsSet = advs.map(_.rcvrAdnId).toSet
         rcvrIdsDgFut map { rcvrIdsDg =>
           // Множество ресиверов, для которых pov-узел занимается модераторством.
-          val resultRcvrIds = rcvrIdsDg.toSet intersect advsRcvrsSet
+          val resultRcvrIds = rcvrIdsDg intersect advsRcvrsSet
           if (resultRcvrIds.isEmpty) {
             warn(s"User[${pwOpt.map(_.personId)}] have rights on pov node[$pai], but there are no adv-connection to ad[$adId].")
             None

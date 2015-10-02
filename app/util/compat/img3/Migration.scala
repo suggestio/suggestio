@@ -1,12 +1,11 @@
 package util.compat.img3
 
-import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.media.storage.CassandraStorage
 import io.suggest.model.n2.media.{MPictureMeta, MFileMeta}
 import io.suggest.util.JMXBase
 import models.im.{ImgFileUtil, MImg}
 import models.mfs.FileUtil
-import models.{MAdnNode, MEdge, MNode, MNodeCommon, MNodeTypes, MNodeMeta, MMedia}
+import models.{MAdnNode, MNode, MNodeCommon, MNodeTypes, MNodeMeta, MMedia}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.PlayLazyMacroLogsImpl
 import util.SiowebEsUtil.client
@@ -105,12 +104,12 @@ object Migration extends PlayLazyMacroLogsImpl {
           }
 
           // Создать own-эдж владения этой картинкой от узла к картинке.
-          val ownEdge = MEdge(
+          /*val ownEdge = MEdge(
             fromId    = adnNodeId,
             predicate = MPredicates.Owns,
             toId      = imgNodeId
-          )
-          val ownEdgeSaveFut = ownEdge.save
+          )*/
+          val ownEdgeSaveFut: Future[String] = ??? ///ownEdge.save
 
           ownEdgeSaveFut onComplete {
             case Success(oeId) =>
@@ -162,13 +161,13 @@ object Migration extends PlayLazyMacroLogsImpl {
           }
 
           // Создать logo-эдж на node картинки.
-          val logoEdge = MEdge(
+          /*val logoEdge = MEdge(
             fromId    = adnNodeId,
             predicate = MPredicates.Logo,
             toId      = imgNodeId
-          )
+          )*/
 
-          val logoEdgeSaveFut = logoEdge.save
+          val logoEdgeSaveFut: Future[String] = ??? //logoEdge.save
 
           logoEdgeSaveFut onComplete {
             case Success(leId) =>

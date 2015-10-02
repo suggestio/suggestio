@@ -105,14 +105,6 @@
     @checkbox(af("adn.isUser"), '_label -> "Пользовательский узел?", '_class -> "sys-checkbox")
   </table>
 
-  <table>
-    @inputText(
-      af("conf.showcaseVoidFiller"),
-      '_label -> "Заполнение пустот выдачи",
-      'title -> "Идентификатор или текст для заполнения пустот в выдаче."
-    )
-  </table>
-
   <table class="input-w __size-L">
     @AdnSinks.ordered.map { sink =>
       @checkbox(

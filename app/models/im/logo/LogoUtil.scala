@@ -3,7 +3,7 @@ package models.im.logo
 import models.MPredicates
 import io.suggest.sc.ScConstants
 import io.suggest.ym.model.common.MImgInfoMeta
-import models.{IEdge, MEdge}
+import models.IEdge
 import models.blk._
 import models.im._
 import play.api.Play._
@@ -28,12 +28,12 @@ object LogoUtil {
 
   /** Приведение ребра графа к метаданным изображения логотипа. */
   def edge2logoImg(medge: IEdge): MImgT = {
-    MImg3(medge.toId, Nil)
+    MImg3(medge.nodeId, Nil)
   }
 
   // TODO Допилить этот метод, привязать его к контроллеру, разобраться с MImg.deleteAllFor(UUID), обновить маппинги форм.
   def updateLogoFor(adnNodeId: String, newLogo: LogoOpt_t): Future[Seq[MImgT]] = {
-    val edgeSearchArgs = LogoEdgesSearch( adnNodeId )
+    /*val edgeSearchArgs = LogoEdgesSearch( adnNodeId )
     for {
       // Найти текущие логотипы через эджи:
       curEdges   <- MEdge.dynSearch(edgeSearchArgs)
@@ -56,21 +56,23 @@ object LogoUtil {
       }
     } yield {
       newLogos
-    }
+    }*/
+    Future successful Nil
   }
 
 
   /** Получить логотипы нескольких узлов, вернув карту имеющихся логотипов.
     * Если какого-то запрошенного узла нет в карте, то значит он без логотипа. */
   def getLogoOfNodes(adnNodeIds: Seq[String]): Future[Map[String, MImgT]] = {
-    val edgeSearchArgs = LogoEdgesSearch(adnNodeIds)
+    /*val edgeSearchArgs = LogoEdgesSearch(adnNodeIds)
     for (medges <- MEdge.dynSearch(edgeSearchArgs)) yield {
       medges.iterator
         .map { medge =>
           medge.fromId -> edge2logoImg(medge)
         }
         .toMap
-    }
+    }*/
+    Future successful Map.empty
   }
 
   /**
@@ -79,10 +81,11 @@ object LogoUtil {
    * @return Фьючерс с результатом: None -- логотип не выставлен.
    */
   def getLogoOfNode(adnNodeId: String): Future[LogoOpt_t] = {
-    val edgeSearchArgs = LogoEdgesSearch( adnNodeId )
+    /*val edgeSearchArgs = LogoEdgesSearch( adnNodeId )
     for (medgeOpt <- MEdge.dynSearchOne(edgeSearchArgs)) yield {
       medgeOpt.map(edge2logoImg)
-    }
+    }*/
+    Future successful None
   }
 
   def getLogoOfNodeCached(adnNodeId: String): Future[LogoOpt_t] = {

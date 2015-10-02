@@ -2,10 +2,8 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.model.OptStrId
-import io.suggest.model.n2.edge.search.EdgeSearchDfltImpl
 import io.suggest.ym.model.common.EMAdNetMember
 import models.adv.geo.{ReqInfo, AdvFormEntry, WndFullArgs}
-import models.adv.search.FindEdgesByAdvDelegate
 import org.joda.time.format.ISOPeriodFormat
 import play.api.Play.{current, configuration}
 import play.api.i18n.MessagesApi
@@ -696,15 +694,20 @@ class MarketAdv @Inject() (
   // TODO Вместо IsAdnAdmin надо какой-то IsAdnRcvrAdmin
   def showNodeAdvs(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
     // Отрабатываем делегирование adv-прав текущему узлу:
-    val dgAdnIdsFut: Future[Set[String]] = for {
-      edges <- MEdge.dynSearch( FindEdgesByAdvDelegate(adnId) )
-    } yield {
-      var iter = edges.iterator
-        .map { _.fromId }
-      // Дописать в начало ещё текущей узел, если он также является рекламо-получателем.
-      if (request.adnNode.adn.isReceiver)
-        iter ++= Iterator(adnId)
-      iter.toSet
+    val dgAdnIdsFut: Future[Set[String]] = {
+      // TODO N2 реализовать выборку id узлов, от которых делегировано право этому узлу в модерации запросов размещения.
+      LOGGER.warn(s"showNodeAdvs($adnId): adv delegation not implemened")
+      /*for {
+        edges <- MEdge.dynSearch( FindEdgesByAdvDelegate(adnId) )
+      } yield {
+        var iter = edges.iterator
+          .map { _.fromId }
+        // Дописать в начало ещё текущей узел, если он также является рекламо-получателем.
+        if (request.adnNode.adn.isReceiver)
+          iter ++= Iterator(adnId)
+        iter.toSet
+        */
+      Future successful Set.empty
     }
 
     // TODO Отрабатывать цепочное делегирование, когда узел делегирует дальше adv-права ещё какому-то узлу.
