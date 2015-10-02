@@ -35,8 +35,8 @@ case class MUserImgMeta2(
     val raw = md(key)
     (raw: StringOps).toInt
   }
-  override def height = _szK2i("w")
-  override def width  = _szK2i("h")
+  override def height = _szK2i("h")
+  override def width  = _szK2i("w")
 
 }
 
