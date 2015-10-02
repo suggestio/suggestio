@@ -1,7 +1,7 @@
 package models.mtag
 
 import io.suggest.model.n2.node.MNodeSearchDfltImpl
-import io.suggest.model.n2.tag.MNodeTagInfo
+import io.suggest.model.n2.extra.MNodeExtras
 import io.suggest.model.n2.tag.edge.ITags
 import io.suggest.model.n2.tag.vertex.{MTagFace, MTagVertex}
 import models._
@@ -47,8 +47,8 @@ object MTagUtil extends PlayMacroLogsImpl {
                 ntype         = MNodeTypes.Tag,
                 isDependent   = true
               ),
-              tag = MNodeTagInfo(
-                vertex = Some(MTagVertex(
+              extras = MNodeExtras(
+                tag = Some(MTagVertex(
                   faces = MTagFace.faces2map( Seq(MTagFace(ntag.face)) )
                 ))
               )

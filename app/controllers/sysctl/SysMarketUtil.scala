@@ -75,7 +75,6 @@ object SysMarketUtil extends PlayMacroLogsDyn {
   def adnSlInfoM: Mapping[AdnMemberShowLevels] = {
     val slsStrOptM: Mapping[LvlMap_t] = default(slsStrM, Map.empty)
     mapping(
-      "in"  -> slsStrOptM,
       "out" -> slsStrOptM
     )
     { AdnMemberShowLevels.apply }

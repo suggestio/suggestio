@@ -30,7 +30,7 @@ package object models {
   val  MYmCategory          = ym.model.MYmCategory
 
   val  AdShowLevels         = ym.model.AdShowLevels
-  type AdShowLevel          = AdShowLevels.AdShowLevel
+  type AdShowLevel          = AdShowLevels.T
   
   val  MAd                  = ym.model.MAd
   type MAd                  = ym.model.MAd
@@ -144,7 +144,7 @@ package object models {
   type SinkShowLevel        = SinkShowLevels.SinkShowLevel
 
   val  AdnSinks             = ym.model.common.AdnSinks
-  type AdnSink              = AdnSinks.AdnSink
+  type AdnSink              = ym.model.common.AdnSink
 
   type QuickAdvPeriod       = QuickAdvPeriods.QuickAdvPeriod
   type MNodeAdsMode         = MNodeAdsModes.T

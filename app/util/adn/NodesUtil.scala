@@ -63,9 +63,6 @@ object NodesUtil extends PlayMacroLogsImpl {
 
   def dfltShowLevels: AdnMemberShowLevels = {
     AdnMemberShowLevels(
-      in  = Map(
-        AdShowLevels.LVL_START_PAGE -> 100
-      ),
       out = Map(
         AdShowLevels.LVL_START_PAGE -> SL_START_PAGE_LIMIT_DFLT
       )
