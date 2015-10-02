@@ -2,6 +2,7 @@ package io.suggest.model.n2.node
 
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model._
+import io.suggest.model.n2.edge.{EMNodeEdges, MNodeEdges}
 import io.suggest.model.n2.node.common.{EMNodeCommon, MNodeCommon, EMNodeCommonStatic}
 import io.suggest.model.n2.node.meta.{MPersonMeta, EMNodeMeta, MNodeMeta, EMNodeMetaStatic}
 import io.suggest.model.n2.tag.{MNodeTagInfo, MNodeTagInfoMappingT}
@@ -71,13 +72,14 @@ object MNode
   val DATA_FORMAT: OFormat[MNode] = (
     EMNodeCommon.FORMAT and
     EMNodeMeta.FORMAT and
-    __.format[MNodeTagInfo]
+    __.format[MNodeTagInfo] and
+    EMNodeEdges.FORMAT
   )(
-    {(common, nmeta, mntag) =>
-      MNode(common, nmeta, mntag)
+    {(common, nmeta, mntag, edges) =>
+      MNode(common, nmeta, mntag, edges)
     },
     {mnode =>
-      (mnode.common, mnode.meta, mnode.tag)
+      (mnode.common, mnode.meta, mnode.tag, mnode.edges)
     }
   )
 
@@ -127,6 +129,7 @@ case class MNode(
   common                      : MNodeCommon,
   meta                        : MNodeMeta       = MNodeMeta.empty,
   tag                         : MNodeTagInfo    = MNodeTagInfo.empty,
+  edges                       : MNodeEdges      = MNodeEdges.empty,
   override val id             : Option[String]  = None,
   override val versionOpt     : Option[Long]    = None
 )

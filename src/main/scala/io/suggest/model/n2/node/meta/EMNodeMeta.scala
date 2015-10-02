@@ -14,6 +14,7 @@ import play.api.libs.functional.syntax._
 object EMNodeMeta extends PrefixedFn {
 
   /** Имя поля на стороне ES, куда скидываются все метаданные. */
+  // TODO val Используется для match + case в EMAdnMMetadata.
   val META_ESFN         = FieldNamesL1.Meta.name
 
   override protected def _PARENT_FN = META_ESFN
