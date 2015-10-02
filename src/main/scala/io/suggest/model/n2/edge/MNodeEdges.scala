@@ -1,7 +1,7 @@
 package io.suggest.model.n2.edge
 
 import io.suggest.common.EmptyProduct
-import io.suggest.model.IGenEsMappingProps
+import io.suggest.model.{PrefixedFn, IGenEsMappingProps}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -20,9 +20,15 @@ import play.api.libs.functional.syntax._
  * эджи возвращаются внутрь моделей, из которых они исходят. Это как бы золотая середина
  * для исходной архитектуры и новой.
  */
-object MNodeEdges extends IGenEsMappingProps {
+object MNodeEdges extends IGenEsMappingProps with PrefixedFn {
 
   val OUT_FN = "out"
+  override protected def _PARENT_FN = OUT_FN
+
+  // Префиксируем поля в out-объектах.
+  def OUT_PREDICATE_FN  = _fullFn( MEdge.PREDICATE_FN )
+  def OUT_NODE_ID_FN    = _fullFn( MEdge.NODE_ID_FN )
+  def OUT_ORDER_FN      = _fullFn( MEdge.ORDER_FN )
 
   val empty: MNodeEdges = {
     new MNodeEdges() {
@@ -30,23 +36,27 @@ object MNodeEdges extends IGenEsMappingProps {
     }
   }
 
-  val EMAP_FORMAT: Format[NodeEdgesMap_t] = {
-    __.format[Iterable[MNodeEdge]]
-      .inmap [NodeEdgesMap_t] (
-        {  _.iterator
-            .map { e => e.toEmapKey -> e }
-            .toMap
-        },
-        _.values
-      )
-  }
+  val EMAP_FORMAT: Format[NodeEdgesMap_t] = Format(
+    Reads.of[Iterable[MEdge]]
+      .map[NodeEdgesMap_t] { edges =>
+        edges
+          .iterator
+          .map { e => e.toEmapKey -> e }
+          .toMap
+      },
+    Writes[NodeEdgesMap_t] { emap =>
+      Json.toJson( emap.values )
+    }
+  )
 
   implicit val FORMAT: Format[MNodeEdges] = {
     (__ \ OUT_FN).formatNullable[NodeEdgesMap_t]
+      // Приведение опциональной карты к неопциональной.
       .inmap [NodeEdgesMap_t] (
         _ getOrElse Map.empty,
         {mnes => if (mnes.isEmpty) None else Some(mnes) }
       )
+      // Вместо apply используем inmap, т.к. только одно поле тут.
       .inmap [MNodeEdges](
         MNodeEdges.apply,
         _.out
@@ -58,7 +68,7 @@ object MNodeEdges extends IGenEsMappingProps {
 
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldNestedObject(OUT_FN, enabled = true, properties = MNodeEdge.generateMappingProps)
+      FieldNestedObject(OUT_FN, enabled = true, properties = MEdge.generateMappingProps)
     )
   }
 
@@ -66,6 +76,6 @@ object MNodeEdges extends IGenEsMappingProps {
 
 
 case class MNodeEdges(
-  out   : Map[(MPredicate, String), MNodeEdge]    = Map.empty
+  out   : Map[(MPredicate, String), MEdge]    = Map.empty
 )
   extends EmptyProduct

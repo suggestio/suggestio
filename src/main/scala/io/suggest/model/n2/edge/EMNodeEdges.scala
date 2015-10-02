@@ -1,6 +1,6 @@
 package io.suggest.model.n2.edge
 
-import io.suggest.model.{FieldNamesL1, GenEsMappingPropsDummy}
+import io.suggest.model.{PrefixedFn, FieldNamesL1, GenEsMappingPropsDummy}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -10,9 +10,17 @@ import play.api.libs.functional.syntax._
  * Created: 02.10.15 11:41
  * Description: Поддержка эджей для модели MNode.
  */
-object EMNodeEdges {
+object EMNodeEdges extends PrefixedFn {
 
   def EDGES_FN = FieldNamesL1.Edges.name
+  override protected def _PARENT_FN = EDGES_FN
+
+  /** Адрес nested-объектов, хранящих данные по эджам. */
+  def EDGES_OUT_FULL_FN = _fullFn( MNodeEdges.OUT_FN )
+
+  def EDGE_OUT_PREDICATE_FULL_FN = _fullFn( MNodeEdges.OUT_PREDICATE_FN )
+  def EDGE_OUT_NODE_ID_FULL_FN   = _fullFn( MNodeEdges.OUT_NODE_ID_FN )
+  def EDGE_OUT_ORDER_FULL_FN     = _fullFn( MNodeEdges.OUT_ORDER_FN )
 
   val FORMAT: OFormat[MNodeEdges] = {
     (__ \ EDGES_FN).formatNullable[MNodeEdges]

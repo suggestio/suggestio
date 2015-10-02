@@ -14,7 +14,7 @@ import io.suggest.model.n2.edge.MEdge.ORDER_FN
 trait Ordering extends DynSearchArgs {
 
   /** Сортировать ли по полю ordering? Если да, то */
-  def ordering: Option[SortOrder]
+  def sortByOutEdgeOrder: Option[SortOrder]
 
   /**
    * Управление сортировкой незаданных значений поля ordering.
@@ -25,7 +25,7 @@ trait Ordering extends DynSearchArgs {
 
   override def prepareSearchRequest(srb: SearchRequestBuilder): SearchRequestBuilder = {
     val srb1 = super.prepareSearchRequest(srb)
-    val _ord = ordering
+    val _ord = sortByOutEdgeOrder
     if (_ord.isDefined) {
       val sob = SortBuilders.fieldSort(ORDER_FN)
         .order(_ord.get)
@@ -38,11 +38,11 @@ trait Ordering extends DynSearchArgs {
 
   override def sbInitSize: Int = {
     val sz0 = super.sbInitSize
-    sz0 + (if (ordering.isDefined) 20 else 0)
+    sz0 + (if (sortByOutEdgeOrder.isDefined) 20 else 0)
   }
 
   override def toStringBuilder: StringBuilder = {
-    val _ord = ordering.map { ord =>
+    val _ord = sortByOutEdgeOrder.map { ord =>
       val s = ord.toString
       val fix = "NULLs"
       val delim = ","
@@ -59,7 +59,7 @@ trait Ordering extends DynSearchArgs {
 
 /** Дефолтовые значения для полей управления сортировкой в [[Ordering]]. */
 trait OrderingDflt extends Ordering {
-  override def ordering: Option[SortOrder] = None
+  override def sortByOutEdgeOrder: Option[SortOrder] = None
   override def orderNullsLast: Boolean = true
 }
 
@@ -67,6 +67,6 @@ trait OrderingDflt extends Ordering {
 /** Wrap-реализация полей аддона [[Ordering]]. */
 trait OrderingWrap extends Ordering with DynSearchArgsWrapper {
   override type WT <: Ordering
-  override def ordering = _dsArgsUnderlying.ordering
+  override def sortByOutEdgeOrder = _dsArgsUnderlying.sortByOutEdgeOrder
   override def orderNullsLast = _dsArgsUnderlying.orderNullsLast
 }

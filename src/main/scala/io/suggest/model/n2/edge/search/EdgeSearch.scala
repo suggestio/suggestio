@@ -10,10 +10,8 @@ import io.suggest.model.search._
  */
 trait EdgeSearch
   // Сначала идут хорошо-индексируемые критерии.
-  extends FromId
-  with ToId
+  extends OutEdges
   // И только потом filtered-критерии и прочий мусор.
-  with Predicate
   with Ordering
   with Limit
   with Offset
@@ -22,24 +20,16 @@ trait EdgeSearch
 /** Трейт дефолтовых значений полей поиска. */
 trait EdgeSearchDflt
   extends EdgeSearch
-  with FromIdDflt
-  with ToIdDflt
-  with PredicateDflt
+  with OutEdgesDflt
   with OrderingDflt
   with LimitDflt
   with OffsetDflt
-
-/** Дефолтовая реализация для облегчения жизни компилятору. */
-class EdgeSearchDfltImpl
-  extends EdgeSearchDflt
 
 
 /** Wrap-реализция модели аргументов поиска [[io.suggest.model.n2.edge.MEdge]]. */
 trait EdgeSearchWrap
   extends EdgeSearch
-  with FromIdWrap
-  with ToIdWrap
-  with PredicateWrap
+  with OutEdgesWrap
   with OrderingWrap
   with LimitWrap
   with OffsetWrap

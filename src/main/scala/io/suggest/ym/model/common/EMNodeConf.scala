@@ -90,21 +90,17 @@ object NodeConf {
     case jmap: ju.Map[_,_] =>
       NodeConf(
         showInScNodesList = Option(jmap get SHOW_IN_SC_NODES_LIST_ESFN)
-          .fold(true)(booleanParser),
-        showcaseVoidFiller = Option(jmap get SHOWCASE_VOID_FILLER_ESFN)
-          .map(stringParser)
+          .fold(true)(booleanParser)
       )
   }
 }
 
 /**
  * Контейнер конфига, должен быть immutable целиком!
- * @param showcaseVoidFiller id или какие-то иные данные заполнятеля пустот в выдаче.
  * @param showInScNodesList Отображать ли узел в списке узлов выдачи?
  */
 case class NodeConf(
-  showInScNodesList     : Boolean = true,
-  showcaseVoidFiller    : Option[String] = None
+  showInScNodesList     : Boolean = true
 ) {
   import NodeConf._
 
@@ -116,11 +112,9 @@ case class NodeConf(
   def isEmpty = !nonEmpty
   
   def toPlayJson: JsObject = {
-    var acc: FieldsJsonAcc = List(
+    val acc: FieldsJsonAcc = List(
       SHOW_IN_SC_NODES_LIST_ESFN -> JsBoolean(showInScNodesList)
     )
-    if (showcaseVoidFiller.isDefined)
-      acc ::= SHOWCASE_VOID_FILLER_ESFN -> JsString(showcaseVoidFiller.get)
     JsObject(acc)
   }
 
