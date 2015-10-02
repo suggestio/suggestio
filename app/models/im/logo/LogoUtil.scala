@@ -2,7 +2,7 @@ package models.im.logo
 
 import models.MPredicates
 import io.suggest.sc.ScConstants
-import io.suggest.ym.model.common.{MImgInfoMeta, MImgInfoT}
+import io.suggest.ym.model.common.MImgInfoMeta
 import models.{IEdge, MEdge}
 import models.blk._
 import models.im._
@@ -29,20 +29,6 @@ object LogoUtil {
   /** Приведение ребра графа к метаданным изображения логотипа. */
   def edge2logoImg(medge: IEdge): MImgT = {
     MImg3(medge.toId, Nil)
-  }
-
-  /**
-   * Выполнить действия по замене старого логотипа для узла на новый.
-   * @param newLogo Новый логотип или None, если теперь без логотипа.
-   * @param oldLogo Старый логотип или None, если логотипа ранее не было.
-   * @return Фьючерс с результатом.
-   */
-  def updateLogo(newLogo: LogoOpt_t, oldLogo: LogoOpt_t): Future[Option[MImgInfoT]] = {
-    val oldImgs = oldLogo
-      .map { ii => MImg(ii.fileName) }
-      .toIterable
-    ImgFormUtil.updateOrigImgFull(needImgs = newLogo.toSeq, oldImgs = oldImgs)
-      .flatMap { vs => ImgFormUtil.optImg2OptImgInfo( vs.headOption ) }
   }
 
   // TODO Допилить этот метод, привязать его к контроллеру, разобраться с MImg.deleteAllFor(UUID), обновить маппинги форм.

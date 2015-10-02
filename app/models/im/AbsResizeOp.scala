@@ -1,5 +1,6 @@
 package models.im
 
+import io.suggest.common.geom.d2.ISize2di
 import io.suggest.ym.model.common.{MImgInfoMeta, MImgSizeT}
 import org.im4java.core.IMOperation
 
@@ -59,7 +60,7 @@ object AbsResizeOp extends JavaTokenParsers {
 }
 
 
-case class AbsResizeOp(sz: MImgSizeT, flags: Seq[ImResizeFlag] = Nil) extends ImOp {
+case class AbsResizeOp(sz: ISize2di, flags: Seq[ImResizeFlag] = Nil) extends ImOp {
 
   override def opCode = ImOpCodes.AbsResize
 
