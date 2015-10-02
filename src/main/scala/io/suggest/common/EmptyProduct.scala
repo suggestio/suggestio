@@ -6,10 +6,10 @@ package io.suggest.common
  * Created: 23.09.15 21:19
  * Description: Тестирование case class'а на наполненность параметров.
  */
-trait EmptyProduct extends Product {
+trait EmptyProduct extends Product with IsEmpty {
 
   /** @return true, если класс содержит хотя бы одно значение. */
-  def nonEmpty: Boolean = {
+  override def nonEmpty: Boolean = {
     productIterator.exists {
       case opt: Option[_]           => opt.nonEmpty
       case col: TraversableOnce[_]  => col.nonEmpty
@@ -18,7 +18,7 @@ trait EmptyProduct extends Product {
   }
 
   /** @return true, если класс не содержит ни одного значения. */
-  final def isEmpty: Boolean = !nonEmpty
+  override final def isEmpty = super.isEmpty
 
 }
 
