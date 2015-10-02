@@ -2,10 +2,11 @@ package io.suggest.model.n2.node
 
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model._
-import io.suggest.model.n2.edge.{EMNodeEdges, MNodeEdges}
-import io.suggest.model.n2.node.common.{EMNodeCommon, MNodeCommon, EMNodeCommonStatic}
-import io.suggest.model.n2.node.meta.{MPersonMeta, EMNodeMeta, MNodeMeta, EMNodeMetaStatic}
-import io.suggest.model.n2.tag.{MNodeTagInfo, MNodeTagInfoMappingT}
+import io.suggest.model.n2.FieldNamesL1
+import io.suggest.model.n2.edge.MNodeEdges
+import io.suggest.model.n2.node.common.MNodeCommon
+import io.suggest.model.n2.extra.{EMNodeExtras, MNodeExtras}
+import io.suggest.model.n2.node.meta.{MPersonMeta, MNodeMeta}
 import io.suggest.model.search.EsDynSearchStatic
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.{MacroLogsImpl, SioConstants}
@@ -42,15 +43,57 @@ object MNode
   extends EsModelStaticT
   with EsmV2Deserializer
   with MacroLogsImpl
-  with MNodeTagInfoMappingT
-  with EMNodeCommonStatic
-  with EMNodeMetaStatic
+  with IGenEsMappingProps
   with IEsDocJsonWrites
   with EsDynSearchStatic[MNodeSearch]
 {
 
   override type T = MNode
   override val ES_TYPE_NAME = "n2"
+
+  /** Абсолютные названия полей наследуют иерархию модели. */
+  object Fields {
+
+    object Common {
+      def COMMON_FN = FieldNamesL1.Common.name
+    }
+
+    object Meta extends PrefixedFn {
+
+      /** Имя поля на стороне ES, куда скидываются все метаданные. */
+      def META_FN         = FieldNamesL1.Meta.name
+
+      override protected def _PARENT_FN = META_FN
+
+      def META_FLOOR_ESFN             = _fullFn( MNodeMeta.FLOOR_ESFN )
+      def META_WELCOME_AD_ID_ESFN     = _fullFn( MNodeMeta.WELCOME_AD_ID )
+      def META_NAME_ESFN              = _fullFn( MNodeMeta.NAME_ESFN )
+      def META_NAME_SHORT_ESFN        = _fullFn( MNodeMeta.NAME_SHORT_ESFN )
+      def META_NAME_SHORT_NOTOK_ESFN  = _fullFn( MNodeMeta.NAME_SHORT_NOTOK_ESFN )
+
+    }
+
+    object Extras extends PrefixedFn {
+
+      def EXTRAS_FN  = FieldNamesL1.Extras.name
+      override protected def _PARENT_FN = EXTRAS_FN
+    }
+
+    object Edges extends PrefixedFn {
+
+      def EDGES_FN = FieldNamesL1.Edges.name
+      override protected def _PARENT_FN = EDGES_FN
+
+      /** Адрес nested-объектов, хранящих данные по эджам. */
+      def EDGES_OUT_FULL_FN = _fullFn( MNodeEdges.OUT_FN )
+
+      def EDGE_OUT_PREDICATE_FULL_FN = _fullFn( MNodeEdges.OUT_PREDICATE_FN )
+      def EDGE_OUT_NODE_ID_FULL_FN   = _fullFn( MNodeEdges.OUT_NODE_ID_FN )
+      def EDGE_OUT_ORDER_FULL_FN     = _fullFn( MNodeEdges.OUT_ORDER_FN )
+
+    }
+  }
+
 
   @deprecated("Delete it, use deserializeOne2() instead.", "2015.sep.11")
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): MNode = {
@@ -70,16 +113,30 @@ object MNode
 
   /** Почти-собранный play.json.Format. */
   val DATA_FORMAT: OFormat[MNode] = (
-    EMNodeCommon.FORMAT and
-    EMNodeMeta.FORMAT and
-    __.format[MNodeTagInfo] and
-    EMNodeEdges.FORMAT
+    (__ \ Fields.Common.COMMON_FN).formatNullable(MNodeCommon.FORMAT)
+      .inmap[MNodeCommon](
+        { _ getOrElse MNodeCommon(MNodeTypes.Tag, isDependent = true) },
+        { Some.apply }
+      ) and
+    (__ \ Fields.Meta.META_FN).formatNullable[MNodeMeta]
+      .inmap[MNodeMeta](
+        _ getOrElse MNodeMeta.empty,
+        Some.apply
+      ) and
+    // TODO EMNodeExtras нетривиальный READS внутри FORMAT из-за compatibility, он пока вынесен в отдельный файл.
+    // Нужно будет почистить и заинлайнить FORMAT, когда в ES значения тегов переместяться на уровень extas из L1 (после JMX MNode.resaveMany() на продакшене).
+    __.format(EMNodeExtras.COMPAT_FORMAT) and
+    (__ \ Fields.Edges.EDGES_FN).formatNullable[MNodeEdges]
+      .inmap [MNodeEdges] (
+        _ getOrElse MNodeEdges.empty,
+        { mne => if (mne.nonEmpty) Some(mne) else None }
+      )
   )(
     {(common, nmeta, mntag, edges) =>
       MNode(common, nmeta, mntag, edges)
     },
     {mnode =>
-      (mnode.common, mnode.meta, mnode.tag, mnode.edges)
+      (mnode.common, mnode.meta, mnode.extras, mnode.edges)
     }
   )
 
@@ -121,6 +178,15 @@ object MNode
     )
   }
 
+  override def generateMappingProps: List[DocField] = {
+    List(
+      FieldObject(Fields.Common.COMMON_FN, enabled = true, properties = MNodeCommon.generateMappingProps),
+      FieldObject(Fields.Meta.META_FN, enabled = true, properties = MNodeMeta.generateMappingProps),
+      FieldObject(Fields.Extras.EXTRAS_FN, enabled = true, properties = MNodeExtras.generateMappingProps),
+      FieldObject(Fields.Edges.EDGES_FN, enabled = true, properties = MNodeEdges.generateMappingProps)
+    )
+  }
+
 }
 
 
@@ -128,7 +194,7 @@ object MNode
 case class MNode(
   common                      : MNodeCommon,
   meta                        : MNodeMeta       = MNodeMeta.empty,
-  tag                         : MNodeTagInfo    = MNodeTagInfo.empty,
+  extras                      : MNodeExtras     = MNodeExtras.empty,
   edges                       : MNodeEdges      = MNodeEdges.empty,
   override val id             : Option[String]  = None,
   override val versionOpt     : Option[Long]    = None

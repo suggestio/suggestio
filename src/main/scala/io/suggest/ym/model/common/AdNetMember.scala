@@ -1,6 +1,7 @@
 package io.suggest.ym.model.common
 
 import io.suggest.common.menum.EnumMaybeWithName
+import io.suggest.common.menum.play.EnumJsonReadsValT
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import io.suggest.model._
 import io.suggest.util.SioEsUtil._
@@ -78,49 +79,43 @@ object AdNetMember {
 
 
 /** Выходы узла для отображения рекламных карточек. */
-object AdnSinks extends Enumeration {
+object AdnSinks extends EnumMaybeWithName with EnumJsonReadsValT {
+  
   protected abstract class Val(val name: String) extends super.Val(name) with SlNameTokenStr {
     def longName: String
     def sioComissionDflt: Float
   }
-  type AdnSink = Val
-  implicit def value2val(x: Value): AdnSink = x.asInstanceOf[AdnSink]
+  override type T = Val
 
-  val SINK_WIFI: AdnSink = new Val("w") {
+  val SINK_WIFI: T = new Val("w") {
     override def longName = "wifi"
     override def sioComissionDflt = 0.30F
   }
 
-  val SINK_GEO: AdnSink = new Val("g") {
+  val SINK_GEO: T = new Val("g") {
     override def longName: String = "geo"
     override def sioComissionDflt = 1.0F
   }
 
-  def ordered: Seq[AdnSink] = {
+  def ordered: Seq[T] = {
     values
-      .foldLeft( List.empty[AdnSink] ) { (acc, e) => e :: acc }
+      .foldLeft( List.empty[T] ) { (acc, e) => e :: acc }
       .sortBy(_.longName)
   }
 
   def default = SINK_WIFI
 
-  def maybeWithName(n: String): Option[AdnSink] = {
-    values
-      .find(_.name == n)
-      .asInstanceOf[Option[AdnSink]]
-  }
-
-  def maybeWithLongName(ln: String): Option[AdnSink] = {
+  def maybeWithLongName(ln: String): Option[T] = {
     values
       .find(_.longName == ln)
-      .asInstanceOf[Option[AdnSink]]
+      .asInstanceOf[Option[T]]
   }
 }
 
 
 
 /** Положение участника сети и его возможности описываются флагами прав доступа. */
-object AdnRights extends EnumMaybeWithName {
+object AdnRights extends EnumMaybeWithName with EnumJsonReadsValT {
 
   protected[this] sealed abstract class Val(val name: String)
     extends super.Val(name)
@@ -145,7 +140,6 @@ object AdnRights extends EnumMaybeWithName {
 
 
 import AdnRights._
-import AdnSinks._
 import AdNetMember._
 
 
@@ -361,21 +355,7 @@ case class AdNetMemberInfo(
 
   // Врапперы над соответсвующими фунцкиями showLevelsInfo, которые учитывают флаг isEnabled.
   def canOutAtLevel(sl: AdShowLevel) = isEnabled && showLevelsInfo.canOutAtLevel(sl)
-  def canInAtLevel(sl: AdShowLevel)  = isEnabled && showLevelsInfo.canInAtLevel(sl)
   def maxOutAtLevel(sl: AdShowLevel) = if (isEnabled) showLevelsInfo.maxOutAtLevel(sl) else 0
-  def maxInAtLevel(sl: AdShowLevel)  = if (isEnabled) showLevelsInfo.maxInAtLevel(sl) else 0
-
-  /**
-   * Выдать карту допустимых in-уровней. Если disabled, то будет пустая карта.
-   * @return Карта типа LvlMap_t.
-   */
-  @JsonIgnore
-  def maybeInShowLevels: AdnMemberShowLevels.LvlMap_t = {
-    if (isEnabled)
-      showLevelsInfo.in
-    else
-      Map.empty
-  }
 
 }
 
@@ -418,7 +398,6 @@ object AdnMemberShowLevels {
             .fold[LvlMap_t](Map.empty)(deserializeLevelsMap)
         }
         AdnMemberShowLevels(
-          in  = _s(IN_ESFN),
           out = _s(OUT_ESFN)
         )
 
@@ -476,29 +455,23 @@ import AdnMemberShowLevels._
 
 /**
  * Данные по допустимым уровням отображения для входящих и исходящих публикаций.
- * @param in Карта уровней для входящих публикаций.
  * @param out Карта уровней для исходящих публикаций.
  */
 case class AdnMemberShowLevels(
-  in:  AdnMemberShowLevels.LvlMap_t = Map.empty,
   out: AdnMemberShowLevels.LvlMap_t = Map.empty
 ) {
 
   @JsonIgnore
   def toPlayJson: JsObject = {
-    var acc = maybeRenderLevelsMapPlayJson(IN_ESFN, in, Nil)
-    acc = maybeRenderLevelsMapPlayJson(OUT_ESFN, out, acc)
+    val acc = maybeRenderLevelsMapPlayJson(OUT_ESFN, out, Nil)
     JsObject(acc)
   }
 
   @JsonIgnore
-  def isEmpty = in.isEmpty && out.isEmpty
+  def isEmpty = out.isEmpty
 
   def canOutAtLevel(lvl: AdShowLevel) = canAtLevel(lvl, out)
   def maxOutAtLevel(lvl: AdShowLevel) = maxAtLevel(lvl, out)
-
-  def canInAtLevel(lvl: AdShowLevel) = canAtLevel(lvl, in)
-  def maxInAtLevel(lvl: AdShowLevel) = maxAtLevel(lvl, in)
 
   // Для рендера галочек нужна модифицированная карта.
   def out4render = sls4render(out)

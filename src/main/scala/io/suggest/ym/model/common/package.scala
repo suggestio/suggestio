@@ -9,4 +9,6 @@ package object common {
 
   type AdnRight = AdnRights.T
 
+  type AdnSink  = AdnSinks.T
+
 }

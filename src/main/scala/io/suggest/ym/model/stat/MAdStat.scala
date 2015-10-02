@@ -6,8 +6,7 @@ import com.sun.org.glassfish.gmbal.{Description, Impact, ManagedOperation}
 import io.suggest.model._
 import io.suggest.model.EsModel._
 import io.suggest.model.geo.GeoPoint
-import io.suggest.ym.model.common.AdnSinks
-import io.suggest.ym.model.common.AdnSinks.AdnSink
+import io.suggest.ym.model.common.{AdnSink, AdnSinks}
 import org.elasticsearch.action.deletebyquery.DeleteByQueryResponse
 import org.elasticsearch.action.index.IndexRequestBuilder
 import org.elasticsearch.search.sort.SortOrder

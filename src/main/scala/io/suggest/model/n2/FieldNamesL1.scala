@@ -1,4 +1,4 @@
-package io.suggest.model
+package io.suggest.model.n2
 
 import io.suggest.common.menum.EnumValue2Val
 
@@ -18,6 +18,7 @@ object FieldNamesL1 extends EnumValue2Val {
   override type T = Val
 
   /** Поле вершины графа с проекцией на тег. */
+  @deprecated("use Extras.tag instead", "2015.oct.2")
   val TagVertex                   : T = new Val("tv")
 
   /** Поле с общими данными всех узлов N2. */
@@ -28,5 +29,8 @@ object FieldNamesL1 extends EnumValue2Val {
 
   /** Имя поля встроенных эджей. */
   val Edges                       : T = new Val("e")
+
+  /** Имя поля-контейнера специальных моделей. */
+  val Extras                      : T = new Val("x")
 
 }

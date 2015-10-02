@@ -1,8 +1,8 @@
 package io.suggest.model.n2.tag.vertex
 
-import io.suggest.model.n2.node
+import io.suggest.model.n2.{FieldNamesL1, node}
 import io.suggest.model.n2.node.MNode
-import io.suggest.model.{FieldNamesL1, GenEsMappingPropsDummy}
+import io.suggest.model.GenEsMappingPropsDummy
 import io.suggest.util.SioEsUtil._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -21,7 +21,7 @@ object EMTagVertex {
   def TAG_VERTEX_FN = FieldNamesL1.TagVertex.name
 
   /** JSON-сериализатор и десериализатор для опционального значения tag-поля. */
-  implicit val FORMAT: OFormat[Option[MTagVertex]] = {
+  val FORMAT: OFormat[Option[MTagVertex]] = {
     (__ \ TAG_VERTEX_FN).formatNullable[MTagVertex]
   }
 

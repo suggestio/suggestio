@@ -1,9 +1,9 @@
 package io.suggest.model.n2.node.meta
 
+import io.suggest.model.n2.node.MNode.Fields.Meta.META_NAME_SHORT_NOTOK_ESFN
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import org.elasticsearch.action.search.SearchRequestBuilder
 import org.elasticsearch.search.sort.{SortBuilders, SortOrder}
-import EMNodeMeta.META_NAME_SHORT_NOTOK_ESFN
 
 /**
  * Suggest.io

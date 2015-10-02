@@ -1,7 +1,7 @@
 package io.suggest.model.n2.node
 
-import org.scalatest._, Matchers._
-import play.api.libs.json.Json
+import io.suggest.model.PlayJsonTestUtil
+import org.scalatest.FlatSpec
 
 /**
  * Suggest.io
@@ -9,16 +9,13 @@ import play.api.libs.json.Json
  * Created: 24.09.15 10:02
  * Description: Тесты для модели MNodeTypes
  */
-class MNodeTypesSpec extends FlatSpec {
+class MNodeTypesSpec extends FlatSpec with PlayJsonTestUtil {
 
-  private def t(mnt: MNodeType): Unit = {
-    val jsv = Json.toJson(mnt)
-    jsv.as[MNodeType] shouldBe mnt
-  }
+  override type T = MNodeType
 
   "JSON" should "handle all values" in {
     for (v <- MNodeTypes.values) {
-      t(v)
+      jsonTest(v)
     }
   }
 

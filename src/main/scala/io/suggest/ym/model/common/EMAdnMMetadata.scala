@@ -2,6 +2,7 @@ package io.suggest.ym.model.common
 
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.EsModel.FieldsJsonAcc
+import io.suggest.model.n2.node.MNode
 import io.suggest.model.n2.node.meta.MNodeMeta
 import io.suggest.ym.model.MWelcomeAd
 import org.elasticsearch.action.search.SearchResponse
@@ -12,7 +13,6 @@ import io.suggest.util.SioEsUtil._
 import play.api.libs.json._
 import scala.collection.JavaConversions._
 import scala.concurrent.{Future, ExecutionContext}
-import io.suggest.model.n2.node.meta.EMNodeMeta._
 import java.{util => ju}
 
 /**
@@ -23,6 +23,8 @@ import java.{util => ju}
  */
 
 object EMAdnMMetadataStatic {
+
+  val META_FN = MNode.Fields.Meta.META_FN
 
   /**
    * Собрать указанные значения строковых полей в аккамулятор-множество.
@@ -97,13 +99,13 @@ trait EMAdnMMetadataStatic extends EsModelStaticMutAkvT {
   override type T <: EMAdnMMetadata
 
   abstract override def generateMappingProps: List[DocField] = {
-    val f = FieldObject(META_ESFN, enabled = true, properties = MNodeMeta.generateMappingProps)
+    val f = FieldObject(META_FN, enabled = true, properties = MNodeMeta.generateMappingProps)
     f :: super.generateMappingProps
   }
 
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
     super.applyKeyValue(acc) orElse {
-      case (META_ESFN, value) =>
+      case (META_FN, value) =>
         acc.meta = EMAdnMMetadataStatic.deserializeMNodeMeta(value)
     }
   }
@@ -113,7 +115,7 @@ trait EMAdnMMetadataStatic extends EsModelStaticMutAkvT {
     * @return Множество всех значений welcomeAdId.
     */
   def findAllWelcomeAdIds(maxResultsPerStep: Int = MAX_RESULTS_DFLT)(implicit ec: ExecutionContext, client: Client): Future[Set[String]] = {
-    val fn = META_WELCOME_AD_ID_ESFN
+    val fn = MNode.Fields.Meta.META_WELCOME_AD_ID_ESFN
     prepareScroll()
       .setQuery( QueryBuilders.matchAllQuery() )
       .setSize(maxResultsPerStep)
@@ -134,7 +136,7 @@ trait EMAdnMMetadata extends EsModelPlayJsonT {
   var meta: MNodeMeta
 
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
-    val f = META_ESFN -> Json.toJson(meta)
+    val f = META_FN -> Json.toJson(meta)
     f :: super.writeJsonFields(acc)
   }
 

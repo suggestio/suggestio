@@ -29,25 +29,18 @@ object MTagVertex extends IGenEsMappingProps with PrefixedFn {
       FieldNestedObject(FACES_FN, enabled = true, properties = MTagFace.generateMappingProps)
     )
   }
-  
-  implicit val READS: Reads[MTagVertex] = {
-    (__ \ FACES_FN).readNullable[TagFacesMap]
-      .map { mapOpt =>
-        val facesMap = mapOpt getOrElse Map.empty
-        MTagVertex(facesMap)
-      }
-  }
 
-
-  implicit val WRITES: Writes[MTagVertex] = {
-    (__ \ FACES_FN).writeNullable[TagFacesMap]
-      .contramap { mtv =>
-        val f = mtv.faces
-        if (f.isEmpty)
-          None
-        else
-          Some(f)
-      }
+  /** Поддержка JSON для экземпляров модели. */
+  implicit val FORMAT: Format[MTagVertex] = {
+    (__ \ FACES_FN).formatNullable[TagFacesMap]
+      .inmap [TagFacesMap] (
+        _ getOrElse Map.empty,
+        { tfm => if (tfm.isEmpty) None else Some(tfm) }
+      )
+      .inmap [MTagVertex] (
+        apply,
+        _.faces
+      )
   }
 
 }

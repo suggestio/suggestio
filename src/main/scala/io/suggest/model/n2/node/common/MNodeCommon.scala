@@ -12,13 +12,18 @@ import play.api.libs.json._
  */
 object MNodeCommon {
 
-  val NTYPE_FN      = "t"
-  val IS_DEPEND_FN  = "d"
+  val NTYPE_FN              = "t"
+  val IS_DEPEND_FN          = "d"
+  val IS_ENABLED_FN         = "e"
+  val DISABLE_REASON_FN     = "r"
 
   /** Сериализация и десериализация JSON. */
   implicit val FORMAT: OFormat[MNodeCommon] = (
     (__ \ NTYPE_FN).format[MNodeType] and
-    (__ \ IS_DEPEND_FN).format[Boolean]
+    (__ \ IS_DEPEND_FN).format[Boolean] and
+    (__ \ IS_ENABLED_FN).formatNullable[Boolean]
+      .inmap [Boolean] (_ getOrElse true, Some.apply) and
+    (__ \ DISABLE_REASON_FN).formatNullable[String]
   )(apply, unlift(unapply))
 
 
@@ -28,7 +33,9 @@ object MNodeCommon {
   def generateMappingProps: List[DocField] = {
     List(
       FieldString(NTYPE_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-      FieldBoolean(IS_DEPEND_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
+      FieldBoolean(IS_DEPEND_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+      FieldBoolean(IS_ENABLED_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+      FieldString(DISABLE_REASON_FN, index = FieldIndexingVariants.no, include_in_all = false)
     )
   }
 
@@ -40,8 +47,12 @@ object MNodeCommon {
  * @param ntype Тип узла.
  * @param isDependent Является ли узел зависимым?
  *                    Если true, то можно удалять узел, когда на него никто не указывает.
+ * @param isEnabled Включен ли узел? Отключение узла приводит к блокировке некоторых функций.
+ * @param disableReason Причина отключения узла, если есть.
  */
 case class MNodeCommon(
-  ntype         : MNodeType,
-  isDependent   : Boolean
+  ntype             : MNodeType,
+  isDependent       : Boolean,
+  isEnabled         : Boolean               = true,
+  disableReason     : Option[String]        = None
 )

@@ -2,7 +2,6 @@ package io.suggest.ym.model.common
 
 import io.suggest.util.MacroLogsImplLazy
 import io.suggest.ym.model.AdShowLevel
-import io.suggest.ym.model.common.AdnSinks.AdnSink
 import scala.collection.JavaConversions._
 
 /**

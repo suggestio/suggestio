@@ -1,6 +1,6 @@
 package io.suggest.model.n2.edge.search
 
-import io.suggest.model.n2.edge.EMNodeEdges
+import io.suggest.model.n2.node.MNode.Fields.Edges._
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import io.suggest.util.MacroLogsI
 import org.elasticsearch.index.query.{QueryBuilders, FilterBuilders, QueryBuilder}
@@ -31,7 +31,7 @@ trait OutEdges extends DynSearchArgs with MacroLogsI {
       for (oe <- _outEdgesIter) {
         // Поиск по id узлов, на которые указывают эджи.
         var _qOpt: Option[QueryBuilder] = if (oe.nodeIds.nonEmpty) {
-          val __q = QueryBuilders.termsQuery(EMNodeEdges.EDGE_OUT_NODE_ID_FULL_FN, oe.nodeIds: _*)
+          val __q = QueryBuilders.termsQuery(EDGE_OUT_NODE_ID_FULL_FN, oe.nodeIds: _*)
           Some(__q)
         } else {
           None
@@ -39,10 +39,10 @@ trait OutEdges extends DynSearchArgs with MacroLogsI {
         // Предикаты добавить через фильтр либо query.
         if (oe.predicates.nonEmpty) {
           _qOpt = _qOpt map { _q =>
-            val predf = FilterBuilders.termsFilter(EMNodeEdges.EDGE_OUT_PREDICATE_FULL_FN, oe.nodeIds : _*)
+            val predf = FilterBuilders.termsFilter(EDGE_OUT_PREDICATE_FULL_FN, oe.nodeIds : _*)
             QueryBuilders.filteredQuery(_q, predf)
           } orElse {
-            val _q = QueryBuilders.termsQuery( EMNodeEdges.EDGE_OUT_PREDICATE_FULL_FN, oe.nodeIds : _*)
+            val _q = QueryBuilders.termsQuery( EDGE_OUT_PREDICATE_FULL_FN, oe.nodeIds : _*)
             Some(_q)
           }
         }
@@ -54,10 +54,10 @@ trait OutEdges extends DynSearchArgs with MacroLogsI {
       }
       // Сборка основной query
       qbOpt0.map { qb0 =>
-        val nf = FilterBuilders.nestedFilter(EMNodeEdges.EDGES_OUT_FULL_FN, nq)
+        val nf = FilterBuilders.nestedFilter(EDGES_OUT_FULL_FN, nq)
         QueryBuilders.filteredQuery(qb0, nf)
       }.orElse {
-        val qb = QueryBuilders.nestedQuery(EMNodeEdges.EDGES_OUT_FULL_FN, nq)
+        val qb = QueryBuilders.nestedQuery(EDGES_OUT_FULL_FN, nq)
         Some(qb)
       }
     }
