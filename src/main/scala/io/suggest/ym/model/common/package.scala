@@ -11,4 +11,6 @@ package object common {
 
   type AdnSink  = AdnSinks.T
 
+  type SinkShowLevel = SinkShowLevels.T
+
 }

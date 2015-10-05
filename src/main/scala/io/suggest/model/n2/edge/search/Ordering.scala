@@ -3,7 +3,7 @@ package io.suggest.model.n2.edge.search
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import org.elasticsearch.action.search.SearchRequestBuilder
 import org.elasticsearch.search.sort.{SortBuilders, SortOrder}
-import io.suggest.model.n2.edge.MEdge.ORDER_FN
+import io.suggest.model.n2.edge.MEdge.Fields.ORDER_FN
 
 /**
  * Suggest.io

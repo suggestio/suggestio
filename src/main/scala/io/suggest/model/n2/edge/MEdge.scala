@@ -1,6 +1,6 @@
 package io.suggest.model.n2.edge
 
-import io.suggest.model.IGenEsMappingProps
+import io.suggest.model.{PrefixedFn, IGenEsMappingProps}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -17,15 +17,35 @@ import play.api.libs.functional.syntax._
  */
 object MEdge extends IGenEsMappingProps {
 
-  val PREDICATE_FN  = "p"
-  val NODE_ID_FN    = "i"
-  val ORDER_FN      = "o"
+  /** Контейнер имён полей. */
+  object Fields {
+
+    val PREDICATE_FN  = "p"
+    val NODE_ID_FN    = "i"
+    val ORDER_FN      = "o"
+    val INFO_FN       = "n"
+
+    object Info extends PrefixedFn {
+      override protected def _PARENT_FN = INFO_FN
+
+      def INFO_SLS_FN   = _fullFn( MEdgeInfo.SLS_FN )
+    }
+
+  }
+
+
+  import Fields._
 
   /** Поддержка JSON. */
   implicit val FORMAT: Format[MEdge] = (
     (__ \ PREDICATE_FN).format[MPredicate] and
     (__ \ NODE_ID_FN).format[String] and
-    (__ \ ORDER_FN).formatNullable[Int]
+    (__ \ ORDER_FN).formatNullable[Int] and
+    (__ \ INFO_FN).formatNullable[MEdgeInfo]
+      .inmap [MEdgeInfo] (
+        _ getOrElse MEdgeInfo.empty,
+        { mei => if (mei.isEmpty) None else Some(mei) }
+      )
   )(apply, unlift(unapply))
 
 
@@ -37,7 +57,8 @@ object MEdge extends IGenEsMappingProps {
     List(
       fsNa(PREDICATE_FN),
       fsNa(NODE_ID_FN),
-      FieldNumber(ORDER_FN, fieldType = DocFieldTypes.integer, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
+      FieldNumber(ORDER_FN, fieldType = DocFieldTypes.integer, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+      FieldObject(INFO_FN, enabled = true, properties = MEdgeInfo.generateMappingProps)
     )
   }
 
@@ -53,6 +74,8 @@ trait IEdge {
   def nodeId    : String
   /** Для поддержкания порядка эджей можно использовать это опциональное поле. */
   def order     : Option[Int]
+  /** Какие-то доп.данные текущего ребра. */
+  def info      : MEdgeInfo
 
   /** Сконвертить в инстанс ключа карты эджей. */
   def toEmapKey: NodeEdgesMapKey_t = {
@@ -66,6 +89,7 @@ trait IEdge {
 case class MEdge(
   override val predicate : MPredicate,
   override val nodeId    : String,
-  override val order     : Option[Int] = None
+  override val order     : Option[Int] = None,
+  override val info      : MEdgeInfo   = MEdgeInfo.empty
 )
   extends IEdge

@@ -660,8 +660,11 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
   def prepareScroll(keepAlive: TimeValue = SCROLL_KEEPALIVE_DFLT)(implicit client: Client): SearchRequestBuilder = {
     prepareScrollFor(prepareSearch, keepAlive)
   }
+  /** Включить скролл для указанного собираемого запроса. */
   def prepareScrollFor(srb: SearchRequestBuilder, keepAlive: TimeValue = SCROLL_KEEPALIVE_DFLT): SearchRequestBuilder = {
-    srb.setSearchType(SearchType.SCAN).setScroll(keepAlive)
+    srb
+      .setSearchType(SearchType.SCAN)
+      .setScroll(keepAlive)
   }
 
   /** Запуск поискового запроса и парсинг результатов в представление этой модели. */

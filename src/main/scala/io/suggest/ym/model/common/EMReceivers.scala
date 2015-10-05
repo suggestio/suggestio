@@ -6,7 +6,6 @@ import io.suggest.util.SioEsUtil._
 import io.suggest.model._
 import io.suggest.ym.model.AdShowLevel
 import com.fasterxml.jackson.annotation.JsonIgnore
-import io.suggest.ym.model.common.SinkShowLevels.SinkShowLevel
 import scala.collection.JavaConversions._
 import org.elasticsearch.index.query.{FilterBuilder, FilterBuilders, QueryBuilder, QueryBuilders}
 import scala.concurrent.{ExecutionContext, Future}
@@ -190,7 +189,6 @@ object AdReceiverInfo {
         receiverId = v.get(RECEIVER_ID_ESFN).toString,
         sls = Option(v get SLS_ESFN)
           .map ( SinkShowLevels.deserializeLevelsSet )
-          .orElse { Option(v get SLS_ESFN).map { SinkShowLevels.deserializeFromAdSls } }
           .getOrElse { Set.empty }
       )
   }

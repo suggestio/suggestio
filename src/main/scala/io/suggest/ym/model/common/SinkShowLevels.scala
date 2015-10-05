@@ -1,8 +1,12 @@
 package io.suggest.ym.model.common
 
+import io.suggest.common.menum.EnumMaybeWithName
+import io.suggest.common.menum.play.EnumJsonReadsValT
 import io.suggest.util.MacroLogsImplLazy
 import io.suggest.ym.model.AdShowLevel
 import scala.collection.JavaConversions._
+import AdnSinks.{SINK_GEO, SINK_WIFI}
+import AdShowLevels.{LVL_START_PAGE, LVL_CATS, LVL_PRODUCER}
 
 /**
  * Suggest.io
@@ -13,7 +17,8 @@ import scala.collection.JavaConversions._
  * поэтому можно искать как по обоим флагам, так и по любому из них.
  */
 
-object SinkShowLevels extends Enumeration with MacroLogsImplLazy {
+object SinkShowLevels extends EnumMaybeWithName with MacroLogsImplLazy with EnumJsonReadsValT {
+
   import LOGGER._
   
   protected def args2name(adnSink: AdnSink, sl: AdShowLevel): String = {
@@ -22,37 +27,47 @@ object SinkShowLevels extends Enumeration with MacroLogsImplLazy {
 
   /**
    * Одно значение enum'а.
-   * @param adnSink sink
-   * @param sl show level
    */
-  protected case class Val(adnSink: AdnSink, sl: AdShowLevel)
-    extends super.Val(args2name(adnSink, sl))
+  protected abstract class Val(val name: String)
+    extends super.Val(name)
     with SlNameTokenStr
   {
-    def name = adnSink.name + sl.name
+    /** adnSink sink */
+    def adnSink: AdnSink
+    /** show level */
+    def sl: AdShowLevel
   }
 
-  type SinkShowLevel = Val
+  override type T = Val
 
-  implicit def value2val(v: Value): SinkShowLevel = v.asInstanceOf[SinkShowLevel]
 
   // Гео-уровни отображения.
-  val GEO_START_PAGE_SL: SinkShowLevel = Val(AdnSinks.SINK_GEO, AdShowLevels.LVL_START_PAGE)
-  val GEO_CATS_SL: SinkShowLevel = Val(AdnSinks.SINK_GEO, AdShowLevels.LVL_CATS)
-  val GEO_PRODUCER_SL: SinkShowLevel = Val(AdnSinks.SINK_GEO, AdShowLevels.LVL_PRODUCER)
+  private trait _Geo extends Val {
+    override def adnSink  = SINK_GEO
+  }
+  val GEO_START_PAGE_SL   : T = new Val( args2name(SINK_GEO, LVL_START_PAGE) ) with _Geo {
+    override def sl = LVL_START_PAGE
+  }
+  val GEO_CATS_SL         : T = new Val( args2name(SINK_GEO, LVL_CATS) ) with _Geo {
+    override def sl = LVL_CATS
+  }
+  val GEO_PRODUCER_SL     : T = new Val( args2name(SINK_GEO, LVL_PRODUCER) ) with _Geo {
+    override def sl = LVL_PRODUCER
+  }
+
 
   // wifi-уровни отображения.
-  val WIFI_START_PAGE_SL: SinkShowLevel = Val(AdnSinks.SINK_WIFI, AdShowLevels.LVL_START_PAGE)
-  val WIFI_CATS_SL: SinkShowLevel = Val(AdnSinks.SINK_WIFI, AdShowLevels.LVL_CATS)
-  val WIFI_PRODUCER_SL: SinkShowLevel = Val(AdnSinks.SINK_WIFI, AdShowLevels.LVL_PRODUCER)
-
-
-  def maybeWithName(n: String): Option[SinkShowLevel] = {
-    try {
-      Some(withName(n))
-    } catch {
-      case ex: Exception => None
-    }
+  private trait _Wifi extends Val {
+    override def adnSink = SINK_WIFI
+  }
+  val WIFI_START_PAGE_SL  : T = new Val( args2name(SINK_WIFI, LVL_START_PAGE) ) with _Wifi {
+    override def sl = LVL_START_PAGE
+  }
+  val WIFI_CATS_SL        : T = new Val( args2name(SINK_WIFI, LVL_CATS) ) with _Wifi {
+    override def sl = LVL_CATS
+  }
+  val WIFI_PRODUCER_SL    : T = new Val( args2name(SINK_WIFI, LVL_PRODUCER) ) with _Wifi {
+    override def sl = LVL_PRODUCER
   }
 
 
@@ -62,12 +77,12 @@ object SinkShowLevels extends Enumeration with MacroLogsImplLazy {
    * @param sl Уровень отображения в рамках sink.
    * @return SinkShowLevel.
    */
-  def withArgs(adnSink: AdnSink, sl: AdShowLevel): SinkShowLevel = {
+  def withArgs(adnSink: AdnSink, sl: AdShowLevel): T = {
     withName(args2name(adnSink, sl))
   }
 
   /** Поиск с учетом совместимости с slsPub/slsWant, когда всё было wifi-only. */
-  def fromAdSl(sl: AdShowLevel): SinkShowLevel = {
+  def fromAdSl(sl: AdShowLevel): T = {
     withName(args2name(AdnSinks.SINK_WIFI, sl))
   }
   
@@ -80,9 +95,9 @@ object SinkShowLevels extends Enumeration with MacroLogsImplLazy {
 
 
   /** Десериализатор значений из самых примитивных типов и коллекций. */
-  val deserializeLevelsSet: PartialFunction[Any, Set[SinkShowLevel]] = {
+  val deserializeLevelsSet: PartialFunction[Any, Set[T]] = {
     case v: java.lang.Iterable[_] =>
-      v.foldLeft[List[SinkShowLevel]] (Nil) { (acc, slRaw) =>
+      v.foldLeft[List[T]] (Nil) { (acc, slRaw) =>
         maybeWithName(slRaw.toString) match {
           case Some(sl) =>
             sl :: acc
@@ -93,14 +108,8 @@ object SinkShowLevels extends Enumeration with MacroLogsImplLazy {
       }.toSet
   }
 
-  /** compat-десериализация на основе уровней slsPub. */
-  val deserializeFromAdSls: PartialFunction[Any, Set[SinkShowLevel]] = {
-    AdShowLevels.deserializeShowLevels andThen { sls =>
-      sls.map { fromAdSl }
-    }
-  }
+  def sls2strings(sls: Set[T]) = sls.map(_.name)
 
-  implicit def sls2strings(sls: Set[SinkShowLevel]) = sls.map(_.name)
 }
 
 

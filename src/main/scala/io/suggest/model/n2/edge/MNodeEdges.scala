@@ -20,16 +20,28 @@ import play.api.libs.functional.syntax._
  * эджи возвращаются внутрь моделей, из которых они исходят. Это как бы золотая середина
  * для исходной архитектуры и новой.
  */
-object MNodeEdges extends IGenEsMappingProps with PrefixedFn {
+object MNodeEdges extends IGenEsMappingProps {
 
-  val OUT_FN = "out"
-  override protected def _PARENT_FN = OUT_FN
+  object Fields {
 
-  // Префиксируем поля в out-объектах.
-  def OUT_PREDICATE_FN  = _fullFn( MEdge.PREDICATE_FN )
-  def OUT_NODE_ID_FN    = _fullFn( MEdge.NODE_ID_FN )
-  def OUT_ORDER_FN      = _fullFn( MEdge.ORDER_FN )
+    val OUT_FN = "out"
 
+    object Out extends PrefixedFn {
+      override protected def _PARENT_FN = OUT_FN
+
+      import MEdge.Fields._
+
+      // Префиксируем поля в out-объектах.
+      def OUT_PREDICATE_FN  = _fullFn( PREDICATE_FN )
+      def OUT_NODE_ID_FN    = _fullFn( NODE_ID_FN )
+      def OUT_ORDER_FN      = _fullFn( ORDER_FN )
+      def OUT_INFO_SLS_FN   = _fullFn( Info.INFO_SLS_FN )
+
+    }
+
+  }
+
+  /** Статический пустой экземпляр модели. */
   val empty: MNodeEdges = {
     new MNodeEdges() {
       override def nonEmpty = false
@@ -50,7 +62,7 @@ object MNodeEdges extends IGenEsMappingProps with PrefixedFn {
   )
 
   implicit val FORMAT: Format[MNodeEdges] = {
-    (__ \ OUT_FN).formatNullable[NodeEdgesMap_t]
+    (__ \ Fields.OUT_FN).formatNullable[NodeEdgesMap_t]
       // Приведение опциональной карты к неопциональной.
       .inmap [NodeEdgesMap_t] (
         _ getOrElse Map.empty,
@@ -68,7 +80,7 @@ object MNodeEdges extends IGenEsMappingProps with PrefixedFn {
 
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldNestedObject(OUT_FN, enabled = true, properties = MEdge.generateMappingProps)
+      FieldNestedObject(Fields.OUT_FN, enabled = true, properties = MEdge.generateMappingProps)
     )
   }
 

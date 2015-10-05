@@ -29,6 +29,7 @@ trait OutEdges extends DynSearchArgs with MacroLogsI {
         .minimumNumberShouldMatch(1)
       // Сборка nested query.
       for (oe <- _outEdgesIter) {
+
         // Поиск по id узлов, на которые указывают эджи.
         var _qOpt: Option[QueryBuilder] = if (oe.nodeIds.nonEmpty) {
           val __q = QueryBuilders.termsQuery(EDGE_OUT_NODE_ID_FULL_FN, oe.nodeIds: _*)
@@ -36,16 +37,32 @@ trait OutEdges extends DynSearchArgs with MacroLogsI {
         } else {
           None
         }
-        // Предикаты добавить через фильтр либо query.
+
+        // Предикаты рёбер добавить через фильтр либо query.
         if (oe.predicates.nonEmpty) {
+          val fn = EDGE_OUT_PREDICATE_FULL_FN
           _qOpt = _qOpt map { _q =>
-            val predf = FilterBuilders.termsFilter(EDGE_OUT_PREDICATE_FULL_FN, oe.nodeIds : _*)
+            val predf = FilterBuilders.termsFilter(fn, oe.nodeIds : _*)
             QueryBuilders.filteredQuery(_q, predf)
           } orElse {
-            val _q = QueryBuilders.termsQuery( EDGE_OUT_PREDICATE_FULL_FN, oe.nodeIds : _*)
+            val _q = QueryBuilders.termsQuery(fn, oe.nodeIds : _*)
             Some(_q)
           }
         }
+
+        // ad search receivers: добавить show levels
+        if (oe.sls.nonEmpty) {
+          val fn = EDGE_OUT_INFO_SLS_FN
+          val slsStr = oe.sls.map(_.name)
+          _qOpt = _qOpt map { _q =>
+            val slsf = FilterBuilders.termsFilter(fn, slsStr : _*)
+            QueryBuilders.filteredQuery(_q, slsf)
+          } orElse {
+            val _q = QueryBuilders.termsQuery(fn, slsStr: _*)
+            Some( _q )
+          }
+        }
+
         _qOpt.foreach { _q =>
           nq.should(_q)
         }

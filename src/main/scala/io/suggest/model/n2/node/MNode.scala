@@ -7,6 +7,7 @@ import io.suggest.model.n2.edge.MNodeEdges
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.extra.{EMNodeExtras, MNodeExtras}
 import io.suggest.model.n2.node.meta.{MPersonMeta, MNodeMeta}
+import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.model.search.EsDynSearchStatic
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.{MacroLogsImpl, SioConstants}
@@ -54,10 +55,16 @@ object MNode
   /** Абсолютные названия полей наследуют иерархию модели. */
   object Fields {
 
-    object Common {
+    /** Абсолютные имена ES-полей в .common */
+    object Common extends PrefixedFn {
       def COMMON_FN = FieldNamesL1.Common.name
+      override protected def _PARENT_FN = COMMON_FN
+
+      /** Абсолютное имя ES-поля для типа узла. */
+      def NODE_TYPE_FN = _fullFn( MNodeCommon.NODE_TYPE_FN )
     }
 
+    /** Абсолютные имена ES-полей в .meta */
     object Meta extends PrefixedFn {
 
       /** Имя поля на стороне ES, куда скидываются все метаданные. */
@@ -73,25 +80,33 @@ object MNode
 
     }
 
+    /** Абсолютные имена ES-полей в .extras */
     object Extras extends PrefixedFn {
 
       def EXTRAS_FN  = FieldNamesL1.Extras.name
       override protected def _PARENT_FN = EXTRAS_FN
+      
+      def EXTRAS_ADN_IS_TEST_FN = _fullFn( MNodeExtras.Fields.Adn.ADN_IS_TEST_FN )
+      def EXTRAS_ADN_SINKS_FN   = _fullFn( MNodeExtras.Fields.Adn.ADN_SINKS_FN )
     }
 
+    /** Абсолютные имена ES-полей в .edges */
     object Edges extends PrefixedFn {
 
       def EDGES_FN = FieldNamesL1.Edges.name
       override protected def _PARENT_FN = EDGES_FN
 
       /** Адрес nested-объектов, хранящих данные по эджам. */
-      def EDGES_OUT_FULL_FN = _fullFn( MNodeEdges.OUT_FN )
+      def EDGES_OUT_FULL_FN = _fullFn( MNodeEdges.Fields.OUT_FN )
 
-      def EDGE_OUT_PREDICATE_FULL_FN = _fullFn( MNodeEdges.OUT_PREDICATE_FN )
-      def EDGE_OUT_NODE_ID_FULL_FN   = _fullFn( MNodeEdges.OUT_NODE_ID_FN )
-      def EDGE_OUT_ORDER_FULL_FN     = _fullFn( MNodeEdges.OUT_ORDER_FN )
+      import MNodeEdges.Fields.Out._
 
+      def EDGE_OUT_PREDICATE_FULL_FN = _fullFn( OUT_PREDICATE_FN )
+      def EDGE_OUT_NODE_ID_FULL_FN   = _fullFn( OUT_NODE_ID_FN )
+      def EDGE_OUT_ORDER_FULL_FN     = _fullFn( OUT_ORDER_FN )
+      def EDGE_OUT_INFO_SLS_FN       = _fullFn( OUT_INFO_SLS_FN )
     }
+
   }
 
 
@@ -178,12 +193,16 @@ object MNode
     )
   }
 
+
+  private def _obj(fn: String, model: IGenEsMappingProps): FieldObject = {
+    FieldObject(fn, enabled = true, properties = model.generateMappingProps)
+  }
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldObject(Fields.Common.COMMON_FN, enabled = true, properties = MNodeCommon.generateMappingProps),
-      FieldObject(Fields.Meta.META_FN, enabled = true, properties = MNodeMeta.generateMappingProps),
-      FieldObject(Fields.Extras.EXTRAS_FN, enabled = true, properties = MNodeExtras.generateMappingProps),
-      FieldObject(Fields.Edges.EDGES_FN, enabled = true, properties = MNodeEdges.generateMappingProps)
+      _obj(Fields.Common.COMMON_FN,   MNodeCommon),
+      _obj(Fields.Meta.META_FN,       MNodeMeta),
+      _obj(Fields.Extras.EXTRAS_FN,   MNodeExtras),
+      _obj(Fields.Edges.EDGES_FN,     MNodeEdges)
     )
   }
 

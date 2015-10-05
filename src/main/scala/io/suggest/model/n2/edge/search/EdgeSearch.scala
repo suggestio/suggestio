@@ -34,5 +34,5 @@ trait EdgeSearchWrap
   with LimitWrap
   with OffsetWrap
 {
-  override type WT = EdgeSearchWrap
+  override type WT <: EdgeSearch
 }

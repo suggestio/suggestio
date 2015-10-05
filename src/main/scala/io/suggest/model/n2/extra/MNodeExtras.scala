@@ -1,6 +1,6 @@
 package io.suggest.model.n2.extra
 
-import io.suggest.model.IGenEsMappingProps
+import io.suggest.model.{PrefixedFn, IGenEsMappingProps}
 import io.suggest.model.n2.node.MNode
 import io.suggest.model.n2.tag.vertex.{EMTagVertex, EMTagVertexStaticT, MTagVertex}
 import play.api.libs.json._
@@ -19,8 +19,18 @@ object MNodeExtras extends IGenEsMappingProps {
   /** Расшаренный пустой экземпляр для дедубликации пустых инстансов контейнера в памяти. */
   val empty = MNodeExtras()
 
-  val TAG_FN            = "t"
-  val ADN_FN            = "a"
+  object Fields {
+
+    val TAG_FN = "t"
+    val ADN_FN = "a"
+
+    object Adn extends PrefixedFn {
+
+      override protected def _PARENT_FN = ADN_FN
+      def ADN_IS_TEST_FN = _fullFn( MAdnExtra.Fields.IS_TEST.fn )
+      def ADN_SINKS_FN   = _fullFn( MAdnExtra.Fields.SINKS.fn )
+    }
+  }
 
   // Изначально tag vertex жил прямо на верхнем уровне. TODO спилить это, когда портирование тегов будет завершено.
   val OLD_FORMAT: OFormat[MNodeExtras] = {
@@ -36,6 +46,9 @@ object MNodeExtras extends IGenEsMappingProps {
     )
   }
 
+
+  import Fields._
+
   /** Поддержка JSON для растущей модели [[MNodeExtras]]. */
   implicit val FORMAT: OFormat[MNodeExtras] = (
     (__ \ TAG_FN).formatNullable[MTagVertex] and
@@ -45,10 +58,13 @@ object MNodeExtras extends IGenEsMappingProps {
 
   import io.suggest.util.SioEsUtil._
 
+  private def _obj(fn: String, model: IGenEsMappingProps): FieldObject = {
+    FieldObject(fn, enabled = true, properties = model.generateMappingProps)
+  }
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldObject(TAG_FN, enabled = true, properties = MTagVertex.generateMappingProps),
-      FieldObject(ADN_FN, enabled = true, properties = MAdnExtra.generateMappingProps)
+      _obj(TAG_FN, MTagVertex),
+      _obj(ADN_FN, MAdnExtra)
     )
   }
 
