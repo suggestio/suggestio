@@ -53,8 +53,10 @@ class ScSitemapsXml extends SiteMapXmlCtl {
           .execute()
           .map { sr =>
             val scrollId = sr.getScrollId
-            if (sr.getHits.getHits.length == 0) {
-              client.prepareClearScroll().addScrollId(scrollId).execute()
+            if (sr.getHits.getHits.isEmpty) {
+              client.prepareClearScroll()
+                .addScrollId(scrollId)
+                .execute()
               None
             } else {
               Some(scrollId, MAd.searchResp2list(sr))

@@ -1,7 +1,7 @@
 package models.mtag
 
-import io.suggest.model.n2.node.MNodeSearchDfltImpl
 import io.suggest.model.n2.extra.MNodeExtras
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.tag.edge.ITags
 import io.suggest.model.n2.tag.vertex.{MTagFace, MTagVertex}
 import models._

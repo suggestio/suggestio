@@ -141,7 +141,7 @@ package object models {
   val  GeoPoint             = geo.GeoPoint
 
   val  SinkShowLevels       = ym.model.common.SinkShowLevels
-  type SinkShowLevel        = SinkShowLevels.SinkShowLevel
+  type SinkShowLevel        = ym.model.common.SinkShowLevel
 
   val  AdnSinks             = ym.model.common.AdnSinks
   type AdnSink              = ym.model.common.AdnSink

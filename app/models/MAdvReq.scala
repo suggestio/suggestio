@@ -97,7 +97,7 @@ sealed trait MAdvReqT extends SqlModelSave with MAdvI {
       "(ad_id, amount, currency_code, date_created, mode, show_levels, date_start, date_end, prod_contract_id, prod_adn_id, rcvr_adn_id) " +
       "VALUES ({adId}, {amount}, {currencyCode}, {dateCreated}, {mode}, {showLevels}, {dateStart}, {dateEnd}, {prodContractId}, {prodAdnId}, {rcvrAdnId})")
       .on('adId -> adId, 'amount -> amount, 'currencyCode -> currencyCode, 'dateCreated -> dateCreated,
-          'mode -> mode.toString, 'showLevels -> strings2pgArray(showLevels), 'dateStart -> dateStart,
+          'mode -> mode.toString, 'showLevels -> strings2pgArray(SinkShowLevels.sls2strings(showLevels)), 'dateStart -> dateStart,
           'dateEnd -> dateEnd, 'prodContractId -> prodContractId, 'prodAdnId -> prodAdnId, 'rcvrAdnId -> rcvrAdnId)
       .executeInsert(rowParser single)
   }

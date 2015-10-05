@@ -1,7 +1,7 @@
 package models.mtag
 
 import io.suggest.common.text.StringUtil
-import io.suggest.model.n2.node.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import play.api.mvc.QueryStringBindable
 import util.qsb.QsbKey1T
 import io.suggest.sc.TagSearchConstants.Req._

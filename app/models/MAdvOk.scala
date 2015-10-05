@@ -186,7 +186,7 @@ sealed trait MAdvOkT extends SqlModelSave with MAdvI {
       "VALUES ({adId}, {amount}, {currencyCode}, {dateCreated}, {mode}, {dateStart}, {dateEnd}, {prodAdnId}, {rcvrAdnId}," +
       " {dateStatus}, {prodTxnId}, {rcvrTxnIds}, {isOnline}, {isAuto}, {showLevels}, {isPartner})")
     .on('adId -> adId, 'amount -> amount, 'currencyCode -> currencyCode, 'dateCreated -> dateCreated,
-        'dateStart -> dateStart, 'mode -> mode.toString, 'showLevels -> strings2pgArray(showLevels),
+        'dateStart -> dateStart, 'mode -> mode.toString, 'showLevels -> strings2pgArray(SinkShowLevels.sls2strings(showLevels)),
         'dateStatus -> dateStatus, 'dateEnd -> dateEnd, 'prodAdnId -> prodAdnId, 'rcvrAdnId -> rcvrAdnId,
         'prodTxnId -> prodTxnId, 'rcvrTxnIds -> seqInt2pgArray(rcvrTxnIds), 'isOnline -> isOnline, 'isAuto -> isAuto,
         'isPartner -> isPartner)
