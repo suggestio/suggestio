@@ -233,8 +233,11 @@ package object models {
   type MPredicate           = n2.edge.MPredicate
   val  MPredicates          = n2.edge.MPredicates
 
-  val  MNodeMeta            = n2.node.meta.MNodeMeta
-  type MNodeMeta            = n2.node.meta.MNodeMeta
+  val  MNodeMeta            = common.MNodeMeta
+  type MNodeMeta            = common.MNodeMeta
+
+  val  MMeta                = n2.node.meta.MMeta
+  type MMeta                = n2.node.meta.MMeta
 
   val  MPersonMeta          = n2.node.meta.MPersonMeta
   type MPersonMeta          = n2.node.meta.MPersonMeta

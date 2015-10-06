@@ -2,10 +2,11 @@ package util.compat.img3
 
 import io.suggest.model.n2.media.storage.CassandraStorage
 import io.suggest.model.n2.media.{MPictureMeta, MFileMeta}
+import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.util.JMXBase
 import models.im.{ImgFileUtil, MImg}
 import models.mfs.FileUtil
-import models.{MAdnNode, MNode, MNodeCommon, MNodeTypes, MNodeMeta, MMedia}
+import models.{MAdnNode, MNode, MNodeCommon, MNodeTypes, MMedia}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.PlayLazyMacroLogsImpl
 import util.SiowebEsUtil.client
@@ -86,10 +87,12 @@ object Migration extends PlayLazyMacroLogsImpl {
                 ntype         = MNodeTypes.Media.Image,
                 isDependent   = true
               ),
-              meta = MNodeMeta(
-                nameOpt     = Some("logo-" + madnNode.id.getOrElse("") + "." + fext),
-                dateCreated = perm.map(_.dateCreated)
-                  .getOrElse { madnNode.meta.dateCreated }
+              meta = MMeta(
+                basic = MBasicMeta(
+                  nameOpt     = Some("logo-" + madnNode.id.getOrElse("") + "." + fext),
+                  dateCreated = perm.map(_.dateCreated)
+                    .getOrElse { madnNode.meta.dateCreated }
+                )
               )
             )
           }

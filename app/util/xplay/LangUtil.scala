@@ -28,7 +28,7 @@ trait SetLangCookieUtil extends I18nSupport {
   }
 
   def setLangCookie3(resFut: Future[Result], mpersonOpt: Option[MNode]): Future[Result] = {
-    val langOpt = mpersonOpt.map(_.meta.lang)
+    val langOpt = mpersonOpt.map(_.meta.basic.lang)
     setLangCookie4(resFut, langOpt)
   }
 

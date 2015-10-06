@@ -83,7 +83,9 @@ class LkLang @Inject() (
                 case Some(mperson0) =>
                   mperson0.copy(
                     meta = mperson0.meta.copy(
-                      langs = List(newLangCode)
+                      basic = mperson0.meta.basic.copy(
+                        langs = List(newLangCode)
+                      )
                     )
                   )
                 case None =>

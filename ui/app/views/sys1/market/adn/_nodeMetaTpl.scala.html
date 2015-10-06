@@ -1,4 +1,4 @@
-@(meta: MNodeMeta)(implicit ctx: Context)
+@(meta: MMeta)(implicit ctx: Context)
 
 @* Блок верстки, отображающий поля метаданных узла. *@
 @import ctx._
@@ -11,83 +11,77 @@
 @_ptableTpl() {
 
   @_ptableRowTpl(messages("Name") + ":") {
-    @meta.name
+    @meta.basic.name
   }
 
-  @meta.hiddenDescr.map { descr =>
+  @meta.basic.hiddenDescr.map { descr =>
     @_ptableRowTpl( "Скрытое описание:" ) {
       @descr
     }
   }
 
   @_ptableRowTpl( messages("Created")+":") {
-    @_prettyDate(meta.dateCreated, withSpan = true)
+    @_prettyDate(meta.basic.dateCreated, withSpan = true)
   }
 
-  @meta.town.map { town =>
+  @meta.address.town.map { town =>
     @_ptableRowTpl( "Город:") {
       @town
     }
   }
 
-  @meta.audienceDescr.map { audDescr =>
+  @meta.business.audienceDescr.map { audDescr =>
     @_ptableRowTpl( "Описание аудитории:") {
       @audDescr
     }
   }
 
-  @meta.humanTrafficAvg.map { htAvg =>
+  @meta.business.humanTrafficAvg.map { htAvg =>
     @_ptableRowTpl( "Человеческий трафик:") {
       @formatIntHtml(htAvg) чел. в день
     }
   }
 
-  @meta.info.map { info =>
+  @meta.business.info.map { info =>
     @_ptableRowTpl( "Информация о товарах/услугах:") {
       @info
     }
   }
 
-  @meta.address.map { address =>
+  @meta.address.address.map { address =>
     @_ptableRowTpl( messages("Address") + ":") {
       @address
     }
   }
 
-  @meta.phone.map { phone =>
+  @meta.address.phone.map { phone =>
     @_ptableRowTpl( messages("Phone") + ":") {
       @phone
     }
   }
 
-  @meta.floor.map { floor =>
+  @meta.address.floor.map { floor =>
     @_ptableRowTpl( messages("Floor") + ":") {
       @floor
     }
   }
 
-  @meta.section.map { section =>
+  @meta.address.section.map { section =>
     @_ptableRowTpl( messages("Section") + ":") {
       @section
     }
   }
 
-  @meta.siteUrl.map { siteUrl =>
+  @meta.business.siteUrl.map { siteUrl =>
     @_ptableRowTpl( "Сайт:") {
       <a class="blue-link" href="http://anonym.to/?@siteUrl" target="_blank" title="@humanizeUrl(siteUrl)">@humanizeUrlAggressive(siteUrl)</a>
     }
   }
 
-  @meta.color.map { color =>
-    @_ptableRowTpl("Цвет:") {
+  @meta.colors.bg.map { color =>
+    @_ptableRowTpl("Цвет фона:") {
       #@color
       <span style="background-color: #@color;">&nbsp;&nbsp;&nbsp;&nbsp;</span>
-    }
-  }
-
-  @meta.welcomeAdId.map { wad =>
-    @_ptableRowTpl("Приветствие:") {
-      Есть(@wad)
     }
   }
 

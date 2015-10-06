@@ -18,7 +18,7 @@ import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 import views.html.lk.adn.edit._
-import io.suggest.ym.model.MAdnNode
+import io.suggest.ym.model.{common, MAdnNode}
 import play.api.data.{Mapping, Form}
 import play.api.data.Forms._
 import util.FormUtil._
@@ -244,7 +244,7 @@ class MarketLkAdnEdit @Inject() (
 
   /** Накатить изменения на инстанс узла, породив новый инстанс.
     * Вынесена из editAdnNodeSubmit() для декомпозиции и для нужд for{}-синтаксиса. */
-  private def applyNodeChanges(adnNode: MAdnNode, adnMeta2: MNodeMeta, waIdOpt: Option[String],
+  private def applyNodeChanges(adnNode: MAdnNode, adnMeta2: common.MNodeMeta, waIdOpt: Option[String],
                                newImgGallery: List[String]): MAdnNode = {
     adnNode.copy(
       meta = adnNode.meta.copy(
@@ -329,7 +329,7 @@ class MarketLkAdnEdit @Inject() (
 
   /** Внутренняя модель этого контроллера, отражающая результирующее значение биндинга формы редактирования узла. */
   sealed case class FormMapResult(
-    meta        : MNodeMeta,
+    meta        : common.MNodeMeta,
     logoOpt     : LogoOpt_t,
     waImgOpt    : Option[MImgT]   = None,
     gallery     : List[MImg]      = Nil
