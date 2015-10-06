@@ -2,9 +2,7 @@ package io.suggest.ym.model.common
 
 import io.suggest.model.EsModel
 import io.suggest.model.common._
-import io.suggest.model.n2.node.meta.{NameSortWrap, NameSortDflt, NameSort}
 import io.suggest.model.search._
-import io.suggest.ym.model.ad._
 
 /**
  * Suggest.io
@@ -18,8 +16,8 @@ import io.suggest.ym.model.ad._
 trait AdnNodesSearchArgsT extends FtsAll with WithoutIds
 with AnyOfPersonIdsDsa with DirectGeoParentsDsa with GeoParentsDsa with ShownTypeIdsDsa
 with AdnRightsDsa with AdnSinksDsa with TestNodeDsa with NodeIsEnabledDsa with GeoDistanceDsa
-with ShowInScNodeListDsa with WithIds with GeoDistanceSortDsa with LogoImgExistsDsa
-with NameSort with RoutingDsa with Limit with Offset
+with ShowInScNodeListDsa with WithIds with GeoDistanceSortDsa
+with NameSort with Limit with Offset
 
 
 /** Реализация интерфейса AdnNodesSearchArgsT с пустыми (дефолтовыми) значениями всех полей. */
@@ -27,8 +25,8 @@ trait AdnNodesSearchArgs extends AdnNodesSearchArgsT with FtsAllDflt with Withou
 with AnyOfPersonIdsDsaDflt with DirectGeoParentsDsaDflt
 with GeoParentsDsaDflt with ShownTypeIdsDsaDflt with AdnRightsDsaDflt with AdnSinksDsaDflt with TestNodeDsaDflt
 with NodeIsEnabledDsaDflt with GeoDistanceDsaDflt
-with ShowInScNodeListDsaDflt with WithIdsDflt with GeoDistanceSortDsaDflt with LogoImgExistsDsaDflt
-with NameSortDflt with RoutingDsaDflt with LimitDflt with OffsetDflt
+with ShowInScNodeListDsaDflt with WithIdsDflt with GeoDistanceSortDsaDflt
+with NameSortDflt with LimitDflt with OffsetDflt
 {
   override def limit: Int = EsModel.MAX_RESULTS_DFLT
   override def offset: Int = EsModel.OFFSET_DFLT
@@ -44,7 +42,7 @@ with AnyOfPersonIdsDsaWrapper
 with DirectGeoParentsDsaWrapper with GeoParentsDsaWrapper with ShownTypeIdsDsaWrapper with AdnRightsDsaWrapper
 with AdnSinksDsaWrapper with TestNodeDsaWrapper with NodeIsEnabledDsaWrapper with GeoDistanceDsaWrapper
 with ShowInScNodeListDsaWrapper with WithIdsWrap
-with GeoDistanceSortDsaWrapper with LogoImgExistsDsaWrapper with NameSortWrap with RoutingDsaWrapper
+with GeoDistanceSortDsaWrapper with NameSortWrap
 with LimitWrap with OffsetWrap
 {
   override type WT <: AdnNodesSearchArgsT

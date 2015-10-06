@@ -13,11 +13,16 @@ import play.api.libs.functional.syntax._
  */
 object MAddress extends IGenEsMappingProps {
 
-  val TOWN_FN               = "t"
-  val ADDRESS_FN            = "a"
-  val PHONE_FN              = "p"
-  val FLOOR_FN              = "f"
-  val SECTION_FN            = "s"
+  object Fields {
+    val TOWN_FN         = "t"
+    val ADDRESS_FN      = "a"
+    val PHONE_FN        = "p"
+    val FLOOR_FN        = "f"
+    val SECTION_FN      = "s"
+  }
+
+
+  import Fields._
 
   val empty: MAddress = {
     new MAddress() {

@@ -1,6 +1,5 @@
-package io.suggest.ym.model.common
+package io.suggest.model.search
 
-import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import org.elasticsearch.action.search.SearchRequestBuilder
 
 /**
@@ -9,7 +8,7 @@ import org.elasticsearch.action.search.SearchRequestBuilder
  * Created: 08.12.14 13:03
  * Description: Добавление поля настройки роутинга dyn-search запроса.
  */
-trait RoutingDsa extends DynSearchArgs {
+trait Routing extends DynSearchArgs {
 
   /** Дополнительно задать ключ для роутинга. */
   def withRouting: Seq[String]
@@ -32,11 +31,11 @@ trait RoutingDsa extends DynSearchArgs {
 
 }
 
-trait RoutingDsaDflt extends RoutingDsa {
-  override def withRouting: Seq[String] = Seq.empty
+trait RoutingDflt extends Routing {
+  override def withRouting: Seq[String] = Nil
 }
 
-trait RoutingDsaWrapper extends RoutingDsa with DynSearchArgsWrapper {
-  override type WT <: RoutingDsa
+trait RoutingWrap extends Routing with DynSearchArgsWrapper {
+  override type WT <: Routing
   override def withRouting = _dsArgsUnderlying.withRouting
 }

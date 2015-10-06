@@ -116,15 +116,6 @@ object EsModel extends MacroLogsImpl {
   /** Сколько раз по дефолту повторять попытку update при конфликте версий. */
   val UPDATE_RETRIES_MAX_DFLT = MyConfig.CONFIG.getInt("es.model.update.retries.max.dflt") getOrElse 5
 
-  /** Сконвертить флаг reversed-сортировки в параметр для ES типа SortOrder. */
-  def isReversed2sortOrder(is: Boolean): SortOrder = {
-    if (is) {
-      SortOrder.DESC
-    } else {
-      SortOrder.ASC
-    }
-  }
-
   /** Имя индекса, который будет использоваться для хранения данных для большинства остальных моделей.
     * Имя должно быть коротким и лексикографически предшествовать именам остальных временных индексов. */
   val DFLT_INDEX        = "-sio"
@@ -2054,6 +2045,8 @@ trait EsmV2Deserializer extends EsModelCommonStaticT {
       Json.parse( ev.bodyAsString(doc) )
         .validate(reader)
     }
+    if (parseResult.isError)
+      LOGGER.error(s"Failed to parse JSON of $ES_TYPE_NAME/${ev.idOrNull(doc)}:\n ${ev.bodyAsString(doc)}\n $parseResult")
     // Надо бы предусмотреть возможность ошибки десериализации...
     parseResult.get
   }

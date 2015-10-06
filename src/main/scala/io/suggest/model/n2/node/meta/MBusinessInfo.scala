@@ -13,12 +13,16 @@ import play.api.libs.functional.syntax._
  */
 object MBusinessInfo extends IGenEsMappingProps {
 
-  val SITE_URL_FN             = "su"
-  val AUDIENCE_DESCR_FN       = "ad"
-  val HUMAN_TRAFFIC_AVG_FN    = "ht"
-  /** Имя поля для описания серьезного бизнеса: Business DESCRiption. */
-  val BDESCR_FN               = "bd"
+  object Fields {
+    val SITE_URL_FN             = "su"
+    val AUDIENCE_DESCR_FN       = "ad"
+    val HUMAN_TRAFFIC_AVG_FN    = "ht"
+    /** Имя поля для описания серьезного бизнеса: Business DESCRiption. */
+    val BDESCR_FN               = "bd"
+  }
 
+
+  import Fields._
 
   /** Частоиспользуемый пустой экземпляр модели [[MBusinessInfo]]. */
   val empty: MBusinessInfo = {

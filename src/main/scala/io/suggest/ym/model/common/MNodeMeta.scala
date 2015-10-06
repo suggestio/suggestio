@@ -1,11 +1,13 @@
-package io.suggest.model.n2.node.meta
+package io.suggest.ym.model.common
 
+import io.suggest.model.n2.node.meta._
 import io.suggest.model.n2.node.meta.colors.{MColorData, MColors}
+import io.suggest.model.{EsModel, IGenEsMappingProps}
+import io.suggest.util.SioEsUtil.FieldIndexingVariants.FieldIndexingVariant
+import io.suggest.util.SioEsUtil._
 import org.joda.time.DateTime
-import io.suggest.model.{IGenEsMappingProps, EsModel}
-import io.suggest.util.SioEsUtil._, FieldIndexingVariants.FieldIndexingVariant
-import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
 /**
  * Suggest.io
@@ -19,25 +21,25 @@ object MNodeMeta extends IGenEsMappingProps {
   // Название под-поля.
   val NOT_TOKENIZED_SUBFIELD_SUF = "nt"
 
-  val NAME_ESFN               = "name"
-  val NAME_SHORT_ESFN         = "sn"    // до созданию multifield было имя "ns"
-  val NAME_SHORT_NOTOK_ESFN   = NAME_SHORT_ESFN + "." + NOT_TOKENIZED_SUBFIELD_SUF
-  val TOWN_ESFN               = "town"
-  val ADDRESS_ESFN            = "address"
-  val DATE_CREATED_ESFN       = "dateCreated"
-  val PHONE_ESFN              = "phone"
-  val SITE_URL_ESFN           = "siteUrl"
-  val HIDDEN_DESCR_ESFN       = "description"
-  val AUDIENCE_DESCR_ESFN     = "audDescr"
-  val HUMAN_TRAFFIC_AVG_ESFN  = "htAvg"
-  val INFO_ESFN               = "info"
-  val BG_COLOR_ESFN           = "color"
-  val FG_COLOR_ESFN           = "fgColor"
-  val WELCOME_AD_ID           = "welcomeAdId"
-  val FLOOR_ESFN              = "floor"
-  val SECTION_ESFN            = "section"
-  val LANGS_ESFN              = "lang"
-  val PERSON_ESFN             = "p"
+  val NAME_FN               = "name"
+  val NAME_SHORT_FN         = "sn"    // до созданию multifield было имя "ns"
+  val NAME_SHORT_NOTOK_FN   = NAME_SHORT_FN + "." + NOT_TOKENIZED_SUBFIELD_SUF
+  val TOWN_FN               = "town"
+  val ADDRESS_FN            = "address"
+  val DATE_CREATED_FN       = "dateCreated"
+  val PHONE_FN              = "phone"
+  val SITE_URL_FN           = "siteUrl"
+  val HIDDEN_DESCR_FN       = "description"
+  val AUDIENCE_DESCR_FN     = "audDescr"
+  val HUMAN_TRAFFIC_AVG_FN  = "htAvg"
+  val INFO_FN               = "info"
+  val BG_COLOR_FN           = "color"
+  val FG_COLOR_FN           = "fgColor"
+  val WELCOME_AD_ID_FN         = "welcomeAdId"
+  val FLOOR_FN              = "floor"
+  val SECTION_FN            = "section"
+  val LANGS_FN              = "lang"
+  val PERSON_FN             = "p"
 
 
   val empty = MNodeMeta()
@@ -48,56 +50,56 @@ object MNodeMeta extends IGenEsMappingProps {
   }
 
   override def generateMappingProps: List[DocField] = List(
-    FieldString(NAME_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
+    FieldString(NAME_FN, index = FieldIndexingVariants.analyzed, include_in_all = true),
     // 2014.oct.01: Разделение поля на analyzed и not_analyzed. Последнее нужно для сортировки.
-    FieldString(NAME_SHORT_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true, fields = Seq(
+    FieldString(NAME_SHORT_FN, index = FieldIndexingVariants.analyzed, include_in_all = true, fields = Seq(
       FieldString(NOT_TOKENIZED_SUBFIELD_SUF, index = FieldIndexingVariants.not_analyzed, include_in_all = true)
     )),
-    _fieldString(HIDDEN_DESCR_ESFN, iia = true),
-    FieldDate(DATE_CREATED_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
+    _fieldString(HIDDEN_DESCR_FN, iia = true),
+    FieldDate(DATE_CREATED_FN, index = FieldIndexingVariants.no, include_in_all = false),
     // legal
-    FieldString(TOWN_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
-    _fieldString(ADDRESS_ESFN, iia = true),
-    _fieldString(PHONE_ESFN, iia = true),
-    FieldString(FLOOR_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),   // Внезапно, вдруг кто-то захочет найти все магазины на первом этаже.
-    _fieldString(SECTION_ESFN, iia = true),
-    _fieldString(SITE_URL_ESFN),
+    FieldString(TOWN_FN, index = FieldIndexingVariants.analyzed, include_in_all = true),
+    _fieldString(ADDRESS_FN, iia = true),
+    _fieldString(PHONE_FN, iia = true),
+    FieldString(FLOOR_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),   // Внезапно, вдруг кто-то захочет найти все магазины на первом этаже.
+    _fieldString(SECTION_FN, iia = true),
+    _fieldString(SITE_URL_FN),
     // 2014.06.30: Рекламные характеристики узла.
-    _fieldString(AUDIENCE_DESCR_ESFN),
-    FieldNumber(HUMAN_TRAFFIC_AVG_ESFN, fieldType = DocFieldTypes.integer, index = FieldIndexingVariants.analyzed, include_in_all = false),
-    FieldString(INFO_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
+    _fieldString(AUDIENCE_DESCR_FN),
+    FieldNumber(HUMAN_TRAFFIC_AVG_FN, fieldType = DocFieldTypes.integer, index = FieldIndexingVariants.analyzed, include_in_all = false),
+    FieldString(INFO_FN, index = FieldIndexingVariants.no, include_in_all = false),
     // Перемещено из visual - TODO Перенести в conf.
-    FieldString(BG_COLOR_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
-    FieldString(FG_COLOR_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
-    FieldString(WELCOME_AD_ID, index = FieldIndexingVariants.no, include_in_all = false),
-    FieldString(LANGS_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-    FieldObject(PERSON_ESFN, enabled = true, properties = MPersonMeta.generateMappingProps)
+    FieldString(BG_COLOR_FN, index = FieldIndexingVariants.no, include_in_all = false),
+    FieldString(FG_COLOR_FN, index = FieldIndexingVariants.no, include_in_all = false),
+    FieldString(WELCOME_AD_ID_FN, index = FieldIndexingVariants.no, include_in_all = false),
+    FieldString(LANGS_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+    FieldObject(PERSON_FN, enabled = true, properties = MPersonMeta.generateMappingProps)
   )
 
   /** JSON сериализатор-десериализатор на базе play.json. */
   implicit val FORMAT: Format[MNodeMeta] = (
-    (__ \ NAME_ESFN).formatNullable[String] and
-    (__ \ NAME_SHORT_ESFN).formatNullable[String] and
-    (__ \ HIDDEN_DESCR_ESFN).formatNullable[String] and
-    (__ \ DATE_CREATED_ESFN).format(EsModel.Implicits.jodaDateTimeFormat) and
-    (__ \ TOWN_ESFN).formatNullable[String] and
-    (__ \ ADDRESS_ESFN).formatNullable[String] and
-    (__ \ PHONE_ESFN).formatNullable[String] and
-    (__ \ FLOOR_ESFN).formatNullable[String] and
-    (__ \ SECTION_ESFN).formatNullable[String] and
-    (__ \ SITE_URL_ESFN).formatNullable[String] and
-    (__ \ AUDIENCE_DESCR_ESFN).formatNullable[String] and
-    (__ \ HUMAN_TRAFFIC_AVG_ESFN).formatNullable[Int] and
-    (__ \ INFO_ESFN).formatNullable[String] and
-    (__ \ BG_COLOR_ESFN).formatNullable[String] and
-    (__ \ FG_COLOR_ESFN).formatNullable[String] and
-    (__ \ WELCOME_AD_ID).formatNullable[String] and
-    (__ \ LANGS_ESFN).formatNullable[List[String]]
+    (__ \ NAME_FN).formatNullable[String] and
+    (__ \ NAME_SHORT_FN).formatNullable[String] and
+    (__ \ HIDDEN_DESCR_FN).formatNullable[String] and
+    (__ \ DATE_CREATED_FN).format(EsModel.Implicits.jodaDateTimeFormat) and
+    (__ \ TOWN_FN).formatNullable[String] and
+    (__ \ ADDRESS_FN).formatNullable[String] and
+    (__ \ PHONE_FN).formatNullable[String] and
+    (__ \ FLOOR_FN).formatNullable[String] and
+    (__ \ SECTION_FN).formatNullable[String] and
+    (__ \ SITE_URL_FN).formatNullable[String] and
+    (__ \ AUDIENCE_DESCR_FN).formatNullable[String] and
+    (__ \ HUMAN_TRAFFIC_AVG_FN).formatNullable[Int] and
+    (__ \ INFO_FN).formatNullable[String] and
+    (__ \ BG_COLOR_FN).formatNullable[String] and
+    (__ \ FG_COLOR_FN).formatNullable[String] and
+    (__ \ WELCOME_AD_ID_FN).formatNullable[String] and
+    (__ \ LANGS_FN).formatNullable[List[String]]
       .inmap[List[String]](
         { _ getOrElse Nil },
         {ls => if (ls.isEmpty) None else Some(ls)}
       ) and
-    (__ \ PERSON_ESFN).formatNullable[MPersonMeta]
+    (__ \ PERSON_FN).formatNullable[MPersonMeta]
       .inmap[MPersonMeta](
         { _ getOrElse MPersonMeta.empty },
         { mpm => if (mpm.isEmpty) None else Some(mpm) }
@@ -152,7 +154,7 @@ case class MNodeMeta(
 {
 
   /** Приведение к модели [[MMeta]]. */
-  def toMMeta: MMeta = {
+  lazy val toMMeta: MMeta = {
     MMeta(
       basic = MBasicMeta(
         nameOpt       = nameOpt,

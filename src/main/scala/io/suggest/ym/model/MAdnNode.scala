@@ -1,7 +1,6 @@
 package io.suggest.ym.model
 
 import io.suggest.model._
-import io.suggest.model.n2.node.meta.MNodeMeta
 import io.suggest.util.SioEsUtil._
 import io.suggest.model.common._
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -10,7 +9,6 @@ import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import io.suggest.event._
 import io.suggest.util.SioEsUtil.FieldAll
-import io.suggest.ym.model.common.AdNetMemberInfo
 import io.suggest.util.SioEsUtil.FieldSource
 import io.suggest.util.MacroLogsImpl
 
@@ -70,7 +68,7 @@ object MAdnNode
 
 final case class MAdnNode(
   var adn           : AdNetMemberInfo,
-  var meta          : MNodeMeta         = MNodeMeta.empty,
+  var meta          : MNodeMeta         = MNodeMeta(),
   var personIds     : Set[String]       = Set.empty,
   var logoImgOpt    : Option[MImgInfoT] = None,   // TODO Перенести в conf.logoImg
   var conf          : NodeConf          = NodeConf.DEFAULT,

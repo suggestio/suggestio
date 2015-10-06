@@ -14,7 +14,11 @@ object EMNodeExtras {
 
   /** Нормальный JSON-формат без обратной совместимости. */
   val FORMAT: Format[MNodeExtras] = {
-    (__ \ EXTRAS_FN).format( MNodeExtras.FORMAT )
+    (__ \ EXTRAS_FN).formatNullable( MNodeExtras.FORMAT )
+      .inmap [MNodeExtras] (
+        _ getOrElse MNodeExtras.empty,
+        {mne => if (mne.nonEmpty) Some(mne) else None }
+      )
   }
 
   /** Десериализация для тегов требует особого подхода, т.к. теги раньше были на первом уровне. */

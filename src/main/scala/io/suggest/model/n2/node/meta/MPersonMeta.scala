@@ -2,6 +2,7 @@ package io.suggest.model.n2.node.meta
 
 import io.suggest.common.EmptyProduct
 import io.suggest.model.IGenEsMappingProps
+import io.suggest.ym.model.common.MNodeMeta
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -13,18 +14,19 @@ import play.api.libs.functional.syntax._
  */
 object MPersonMeta extends IGenEsMappingProps {
 
-  /** Вернуть пустой экземпляр модели, используется очень часто. */
-  def empty: MPersonMeta = _Empty
-
-  /** Всегда пустой экземпляр модели. */
-  private object _Empty extends MPersonMeta {
-    override def nonEmpty = false
+  object Fields {
+    val NAME_FIRST_FN = "f"
+    val NAME_LAST_FN = "l"
+    val EXT_AVA_URL_FN = "a"
   }
 
-  val NAME_FIRST_FN   = "f"
-  val NAME_LAST_FN    = "l"
-  val EXT_AVA_URL_FN  = "a"
 
+  import Fields._
+
+  /** Вернуть пустой экземпляр модели, используется очень часто. */
+  val empty: MPersonMeta = new MPersonMeta() {
+    override def nonEmpty = false
+  }
 
   /** Поддержка JSON. */
   implicit val FORMAT: OFormat[MPersonMeta] = (

@@ -22,12 +22,6 @@ object EMLogoImg {
 
   def esMappingField = FieldObject(LOGO_IMG_ESFN, enabled = false, properties = Nil)
 
-  /** Скрипт для фильтрации по наличию значения в поле logo. */
-  def LOGO_EXIST_MVEL = {
-    val fn = EMLogoImg.LOGO_IMG_ESFN
-    s"""_source.containsKey("$fn");"""
-  }
-
 }
 
 
@@ -79,50 +73,5 @@ trait EMLogoImg extends EMLogoImgI {
 trait EMLogoImgMut extends EMLogoImg {
   override type T <: EMLogoImgMut
   var logoImgOpt: Option[MImgInfoT]
-}
-
-
-
-// DynSearch-аддоны
-trait LogoImgExistsDsa extends DynSearchArgs {
-
-  /** Фильтровать по наличию/отсутсвию логотипа. */
-  // TODO hasLogo вроде бы не используется. Можно удалить вместе с mvel-кодом.
-  def hasLogo: Option[Boolean]
-
-  /** Собрать экземпляр ES QueryBuilder на основе имеющихся в экземпляре данных.
-    * Здесь можно навешивать дополнительные фильтры, выполнять post-процессинг запроса. */
-  override def toEsQuery: QueryBuilder = {
-    var qb2 = super.toEsQuery
-    // Добавить фильтр по наличию логотипа. Т.к. поле не индексируется, то используется
-    if (hasLogo.nonEmpty) {
-      var ef: FilterBuilder = FilterBuilders.scriptFilter(LOGO_EXIST_MVEL).lang("mvel")
-      if (!hasLogo.get) {
-        ef = FilterBuilders.notFilter(ef)
-      }
-      qb2 = QueryBuilders.filteredQuery(qb2, ef)
-    }
-    qb2
-  }
-
-  /** Базовый размер StringBuilder'а. */
-  override def sbInitSize: Int = {
-    val sis = super.sbInitSize
-    if (hasLogo.isDefined)  sis + 16  else  sis
-  }
-
-  /** Построение выхлопа метода toString(). */
-  override def toStringBuilder: StringBuilder = {
-    fmtColl2sb("hasLogo", hasLogo, super.toStringBuilder)
-  }
-}
-
-trait LogoImgExistsDsaDflt extends LogoImgExistsDsa {
-  override def hasLogo: Option[Boolean] = None
-}
-
-trait LogoImgExistsDsaWrapper extends LogoImgExistsDsa with DynSearchArgsWrapper {
-  override type WT <: LogoImgExistsDsa
-  override def hasLogo = _dsArgsUnderlying.hasLogo
 }
 

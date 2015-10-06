@@ -2,13 +2,11 @@ package io.suggest.ym.model.common
 
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.EsModel.FieldsJsonAcc
-import io.suggest.model.n2.node.MNode
-import io.suggest.model.n2.node.meta.MNodeMeta
 import io.suggest.ym.model.MWelcomeAd
 import org.elasticsearch.action.search.SearchResponse
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.QueryBuilders
-import io.suggest.model.{EsModel, EsModelPlayJsonT, EsModelStaticMutAkvT}
+import io.suggest.model.{PrefixedFn, EsModel, EsModelPlayJsonT, EsModelStaticMutAkvT}
 import io.suggest.util.SioEsUtil._
 import play.api.libs.json._
 import scala.collection.JavaConversions._
@@ -22,9 +20,15 @@ import java.{util => ju}
  * Description: Метаданные узлов-участников рекламной сети: названия, адреса, даты и т.д.
  */
 
-object EMAdnMMetadataStatic {
+object EMAdnMMetadataStatic extends PrefixedFn {
 
-  val META_FN = MNode.Fields.Meta.META_FN
+  val META_FN = "meta"
+
+  /** Название родительского поля. */
+  override protected def _PARENT_FN = META_FN
+
+  def META_WELCOME_AD_ID_FN     = _fullFn( MNodeMeta.WELCOME_AD_ID_FN )
+  def META_NAME_SHORT_NOTOK_FN  = _fullFn( MNodeMeta.NAME_SHORT_NOTOK_FN )
 
   /**
    * Собрать указанные значения строковых полей в аккамулятор-множество.
@@ -62,25 +66,25 @@ object EMAdnMMetadataStatic {
     case jmap: ju.Map[_,_] =>
       import EsModel.{stringParser, iteratorParser}
       MNodeMeta(
-        nameOpt      = Option(jmap get NAME_ESFN) map stringParser,
-        nameShortOpt = Option(jmap get NAME_SHORT_ESFN)
+        nameOpt      = Option(jmap get NAME_FN) map stringParser,
+        nameShortOpt = Option(jmap get NAME_SHORT_FN)
           .orElse(Option(jmap get "ns"))    // 2014.oct.01: Переименовано поле: ns -> sn из-за изменения в маппинге.
           .map(stringParser),
-        hiddenDescr = Option(jmap get HIDDEN_DESCR_ESFN) map stringParser,
-        dateCreated = EsModel.dateTimeParser(jmap get DATE_CREATED_ESFN),
-        town        = Option(jmap get TOWN_ESFN) map stringParser,
-        address     = Option(jmap get ADDRESS_ESFN) map stringParser,
-        phone       = Option(jmap get PHONE_ESFN) map stringParser,
-        floor       = Option(jmap get FLOOR_ESFN) map stringParser,
-        section     = Option(jmap get SECTION_ESFN) map stringParser,
-        siteUrl     = Option(jmap get SITE_URL_ESFN) map stringParser,
-        audienceDescr = Option(jmap get AUDIENCE_DESCR_ESFN) map stringParser,
-        humanTrafficAvg = Option(jmap get HUMAN_TRAFFIC_AVG_ESFN) map EsModel.intParser,
-        info        = Option(jmap get INFO_ESFN) map stringParser,
-        color       = Option(jmap get BG_COLOR_ESFN) map stringParser,
-        fgColor     = Option(jmap get FG_COLOR_ESFN) map stringParser,
-        welcomeAdId = Option(jmap get WELCOME_AD_ID) map stringParser,
-        langs       = Option(jmap get LANGS_ESFN)
+        hiddenDescr = Option(jmap get HIDDEN_DESCR_FN) map stringParser,
+        dateCreated = EsModel.dateTimeParser(jmap get DATE_CREATED_FN),
+        town        = Option(jmap get TOWN_FN) map stringParser,
+        address     = Option(jmap get ADDRESS_FN) map stringParser,
+        phone       = Option(jmap get PHONE_FN) map stringParser,
+        floor       = Option(jmap get FLOOR_FN) map stringParser,
+        section     = Option(jmap get SECTION_FN) map stringParser,
+        siteUrl     = Option(jmap get SITE_URL_FN) map stringParser,
+        audienceDescr = Option(jmap get AUDIENCE_DESCR_FN) map stringParser,
+        humanTrafficAvg = Option(jmap get HUMAN_TRAFFIC_AVG_FN) map EsModel.intParser,
+        info        = Option(jmap get INFO_FN) map stringParser,
+        color       = Option(jmap get BG_COLOR_FN) map stringParser,
+        fgColor     = Option(jmap get FG_COLOR_FN) map stringParser,
+        welcomeAdId = Option(jmap get WELCOME_AD_ID_FN) map stringParser,
+        langs       = Option(jmap get LANGS_FN)
           .iterator
           .flatMap(iteratorParser)
           .map(stringParser)
@@ -115,7 +119,7 @@ trait EMAdnMMetadataStatic extends EsModelStaticMutAkvT {
     * @return Множество всех значений welcomeAdId.
     */
   def findAllWelcomeAdIds(maxResultsPerStep: Int = MAX_RESULTS_DFLT)(implicit ec: ExecutionContext, client: Client): Future[Set[String]] = {
-    val fn = MNode.Fields.Meta.META_WELCOME_AD_ID_ESFN
+    val fn = META_WELCOME_AD_ID_FN
     prepareScroll()
       .setQuery( QueryBuilders.matchAllQuery() )
       .setSize(maxResultsPerStep)

@@ -1,5 +1,6 @@
 package io.suggest.model.n2.extra
 
+import io.suggest.common.EmptyProduct
 import io.suggest.model.{PrefixedFn, IGenEsMappingProps}
 import io.suggest.model.n2.node.MNode
 import io.suggest.model.n2.tag.vertex.{EMTagVertex, EMTagVertexStaticT, MTagVertex}
@@ -17,14 +18,18 @@ import play.api.libs.json.OFormat
 object MNodeExtras extends IGenEsMappingProps {
 
   /** Расшаренный пустой экземпляр для дедубликации пустых инстансов контейнера в памяти. */
-  val empty = MNodeExtras()
+  val empty: MNodeExtras = {
+    new MNodeExtras() {
+      override def nonEmpty = false
+    }
+  }
 
   object Fields {
 
     val TAG_FN = "t"
-    val ADN_FN = "a"
 
     object Adn extends PrefixedFn {
+      val ADN_FN = "a"
       override protected def _PARENT_FN = ADN_FN
       def IS_TEST_FN          = _fullFn( MAdnExtra.Fields.IS_TEST.fn )
       def SINKS_FN            = _fullFn( MAdnExtra.Fields.SINKS.fn )
@@ -49,7 +54,8 @@ object MNodeExtras extends IGenEsMappingProps {
   }
 
 
-  import Fields._
+  import Fields.TAG_FN
+  import Fields.Adn.ADN_FN
 
   /** Поддержка JSON для растущей модели [[MNodeExtras]]. */
   implicit val FORMAT: OFormat[MNodeExtras] = (
@@ -83,3 +89,4 @@ case class MNodeExtras(
   tag: Option[MTagVertex] = None,
   adn: Option[MAdnExtra]  = None
 )
+  extends EmptyProduct

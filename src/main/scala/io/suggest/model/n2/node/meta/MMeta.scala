@@ -1,7 +1,7 @@
 package io.suggest.model.n2.node.meta
 
 import io.suggest.common.EmptyProduct
-import io.suggest.model.IGenEsMappingProps
+import io.suggest.model.{PrefixedFn, IGenEsMappingProps}
 import io.suggest.model.n2.node.meta.colors.MColors
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -17,11 +17,40 @@ import play.api.libs.functional.syntax._
 
 object MMeta extends IGenEsMappingProps {
 
-  val BASIC_FN        = "b"
-  val PERSON_FN       = "p"
-  val ADDRESS_FN      = "a"
-  val BUSINESS_FN     = "u"
-  val COLORS_FN       = "c"
+  /** Названия ES-полей модели и подмоделей. */
+  object Fields {
+
+    object Basic extends PrefixedFn {
+      val BASIC_FN            = "b"
+      override protected def _PARENT_FN = BASIC_FN
+
+      def NAME_SHORT_NOTOK_FN = _fullFn( MBasicMeta.Fields.NameShort.NAME_SHORT_NOTOK_FN )
+    }
+
+    object Person {
+      val PERSON_FN     = "p"
+    }
+
+    object Address {
+      val ADDRESS_FN    = "a"
+    }
+
+    object Business {
+      val BUSINESS_FN   = "u"
+    }
+
+    object Colors {
+      val COLORS_FN     = "c"
+    }
+
+  }
+
+
+  import Fields.Basic.BASIC_FN
+  import Fields.Person.PERSON_FN
+  import Fields.Address.ADDRESS_FN
+  import Fields.Business.BUSINESS_FN
+  import Fields.Colors.COLORS_FN
 
   /** Поддержка JSON. */
   implicit val FORMAT: OFormat[MMeta] = (
@@ -67,10 +96,10 @@ object MMeta extends IGenEsMappingProps {
   override def generateMappingProps: List[DocField] = {
     // Сформировать анализируемые поля-объекты.
     val info = List(
-      (BASIC_FN,      MBasicMeta),
-      (PERSON_FN,     MPersonMeta),
-      (ADDRESS_FN,    MAddress),
-      (BUSINESS_FN,   MBusinessInfo)
+      (BASIC_FN,        MBasicMeta),
+      (PERSON_FN,       MPersonMeta),
+      (ADDRESS_FN,      MAddress),
+      (BUSINESS_FN,     MBusinessInfo)
     )
     val acc0 = for ((fn, model) <- info) yield {
       FieldObject(fn, enabled = true, properties = model.generateMappingProps)

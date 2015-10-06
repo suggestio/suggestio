@@ -24,8 +24,8 @@ object FieldNamesL1 extends EnumValue2Val {
   /** Поле с общими данными всех узлов N2. */
   val Common                      : T = new Val("c")
 
-  /** Имя поля метаданных. Название унаследовано из MAdnNode. */
-  val Meta                        : T = new Val("meta")
+  /** Имя поля метаданных. */
+  val Meta                        : T = new Val("m")
 
   /** Имя поля встроенных эджей. */
   val Edges                       : T = new Val("e")

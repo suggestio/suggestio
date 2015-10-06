@@ -1,5 +1,6 @@
 package io.suggest.model.n2.node.meta
 
+import io.suggest.ym.model.common.MNodeMeta
 import org.scalatest._, Matchers._
 import play.api.libs.json.Json
 
@@ -17,7 +18,7 @@ class MNodeMetaSpec extends FlatSpec {
   }
 
   "JSON" should "work on empty MNodeMeta" in {
-    t(MNodeMeta.empty)
+    t(MNodeMeta())
   }
 
   it should "work on full-filled MNodeMeta" in {

@@ -1,9 +1,9 @@
-package io.suggest.model.n2.node.meta
+package io.suggest.ym.model.common
 
-import io.suggest.model.n2.node.MNode.Fields.Meta.META_NAME_SHORT_NOTOK_ESFN
-import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
+import io.suggest.model.search.{DynSearchArgs, DynSearchArgsWrapper}
 import org.elasticsearch.action.search.SearchRequestBuilder
 import org.elasticsearch.search.sort.{SortBuilders, SortOrder}
+import io.suggest.ym.model.common.EMAdnMMetadataStatic.META_NAME_SHORT_NOTOK_FN
 
 /**
  * Suggest.io
@@ -20,7 +20,7 @@ trait NameSort extends DynSearchArgs {
   override def prepareSearchRequest(srb: SearchRequestBuilder): SearchRequestBuilder = {
     val srb1 = super.prepareSearchRequest(srb)
     if (withNameSort) {
-      val sob = SortBuilders.fieldSort(META_NAME_SHORT_NOTOK_ESFN)
+      val sob = SortBuilders.fieldSort(META_NAME_SHORT_NOTOK_FN)
         .order(SortOrder.ASC)
         .unmappedType("string")
       srb1 addSort sob
