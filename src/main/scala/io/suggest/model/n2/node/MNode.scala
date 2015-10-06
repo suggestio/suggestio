@@ -68,12 +68,11 @@ object MNode
 
     /** Абсолютные имена ES-полей в .meta */
     object Meta extends PrefixedFn {
-
       /** Имя поля на стороне ES, куда скидываются все метаданные. */
       def META_FN                     = FieldNamesL1.Meta.name
-
       override protected def _PARENT_FN = META_FN
 
+      def BASIC_NAME_SHORT_NOTOK_FN   = _fullFn( MMeta.Fields.Basic.NAME_SHORT_NOTOK_FN )
     }
 
     /** Абсолютные имена ES-полей в .extras */

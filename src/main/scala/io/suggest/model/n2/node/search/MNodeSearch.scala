@@ -4,6 +4,7 @@ import io.suggest.model.n2.edge.search._
 import io.suggest.model.n2.extra.search._
 import io.suggest.model.n2.geo.search._
 import io.suggest.model.n2.node.common.search._
+import io.suggest.model.n2.node.meta.search.{NameSortWrap, NameSort, NameSortDflt}
 import io.suggest.model.n2.tag
 import io.suggest.model.search._
 import io.suggest.util.MacroLogsImplLazy
@@ -29,6 +30,7 @@ trait MNodeSearch
   with IsEnabled
   with IsDependent
   with GeoDstSort
+  with NameSort
   with Limit
   with Offset
 
@@ -54,6 +56,7 @@ trait MNodeSearchDflt
   with IsEnabledDflt
   with IsDependentDflt
   with GeoDstSortDflt
+  with NameSortDflt
   with LimitDflt
   with OffsetDflt
 
@@ -82,6 +85,7 @@ trait MNodeSearchWrap
   with IsEnabledWrap
   with IsDependentWrap
   with GeoDstSortWrap
+  with NameSortWrap
   with LimitWrap
   with OffsetWrap
 {
