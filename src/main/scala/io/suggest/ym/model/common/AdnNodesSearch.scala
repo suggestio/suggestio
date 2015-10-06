@@ -15,7 +15,7 @@ import io.suggest.ym.model.ad._
  */
 
 /** Интерфейс для описания критериев того, какие узлы надо найти. По этой спеки собирается ES-запрос. */
-trait AdnNodesSearchArgsT extends TextQueryDsa with WithoutIdsDsa
+trait AdnNodesSearchArgsT extends FtsAll with WithoutIds
 with AnyOfPersonIdsDsa with DirectGeoParentsDsa with GeoParentsDsa with ShownTypeIdsDsa
 with AdnRightsDsa with AdnSinksDsa with TestNodeDsa with NodeIsEnabledDsa with GeoDistanceDsa
 with GeoIntersectsWithPreIndexedDsa with ShowInScNodeListDsa with WithIdsDsa with GeoDistanceSortDsa with LogoImgExistsDsa
@@ -23,7 +23,7 @@ with NameSort with RoutingDsa with Limit with Offset
 
 
 /** Реализация интерфейса AdnNodesSearchArgsT с пустыми (дефолтовыми) значениями всех полей. */
-trait AdnNodesSearchArgs extends AdnNodesSearchArgsT with TextQueryDsaDflt with WithoutIdsDsaDflt
+trait AdnNodesSearchArgs extends AdnNodesSearchArgsT with FtsAllDflt with WithoutIdsDflt
 with AnyOfPersonIdsDsaDflt with DirectGeoParentsDsaDflt
 with GeoParentsDsaDflt with ShownTypeIdsDsaDflt with AdnRightsDsaDflt with AdnSinksDsaDflt with TestNodeDsaDflt
 with NodeIsEnabledDsaDflt with GeoDistanceDsaDflt with GeoIntersectsWithPreIndexedDsaDftl
@@ -39,7 +39,7 @@ class AdnNodesSearchArgsImpl
 
 
 /** Враппер над аргументами поиска узлов, переданными в underlying. */
-trait AdnNodesSearchArgsWrapper extends AdnNodesSearchArgsT with TextQueryDsaWrapper with WithoutIdsDsaWrapper
+trait AdnNodesSearchArgsWrapper extends AdnNodesSearchArgsT with FtsAllWrap with WithoutIdsWrap
 with AnyOfPersonIdsDsaWrapper
 with DirectGeoParentsDsaWrapper with GeoParentsDsaWrapper with ShownTypeIdsDsaWrapper with AdnRightsDsaWrapper
 with AdnSinksDsaWrapper with TestNodeDsaWrapper with NodeIsEnabledDsaWrapper with GeoDistanceDsaWrapper

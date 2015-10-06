@@ -1,11 +1,16 @@
-package io.suggest.ym.model.ad
+package io.suggest.model.search
 
-import io.suggest.model.search.{TextQuerySearch, DynSearchArgsWrapper, DynSearchArgs}
 import io.suggest.util.SioConstants
 import org.elasticsearch.index.query.QueryBuilder
 
-/** Аддон для сборки базовых аргументов поиска карточек. */
-trait TextQueryDsa extends DynSearchArgs {
+/**
+ * Suggest.io
+ * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+ * Created: 06.10.15 10:30
+ * Description: Аддон для сборки базовых аргументов поиска карточек.
+ */
+
+trait FtsAll extends DynSearchArgs {
 
   private def qOptField = SioConstants.FIELD_ALL
 
@@ -30,12 +35,12 @@ trait TextQueryDsa extends DynSearchArgs {
 }
 
 
-trait TextQueryDsaDflt extends TextQueryDsa {
+trait FtsAllDflt extends FtsAll {
   override def qOpt: Option[String] = None
 }
 
 
-trait TextQueryDsaWrapper extends TextQueryDsa with DynSearchArgsWrapper {
-  override type WT <: TextQueryDsa
+trait FtsAllWrap extends FtsAll with DynSearchArgsWrapper {
+  override type WT <: FtsAll
   override def qOpt = _dsArgsUnderlying.qOpt
 }

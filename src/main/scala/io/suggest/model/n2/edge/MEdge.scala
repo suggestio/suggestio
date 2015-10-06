@@ -38,7 +38,7 @@ object MEdge extends IGenEsMappingProps {
 
   /** Поддержка JSON. */
   implicit val FORMAT: Format[MEdge] = (
-    (__ \ PREDICATE_FN).format[MPredicate] and
+    (__ \ PREDICATE_FN).format(MPredicates.PARENTAL_OR_DIRECT_FORMAT) and
     (__ \ NODE_ID_FN).format[String] and
     (__ \ ORDER_FN).formatNullable[Int] and
     (__ \ INFO_FN).formatNullable[MEdgeInfo]

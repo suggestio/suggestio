@@ -140,13 +140,19 @@ trait MacroLogsI {
   def LOGGER: MacroLogger
 }
 
+trait MacroLogsDyn extends MacroLogsI {
+  override def LOGGER = getMacroLogger(getClass)
+}
+
 /** Используем scala macros логгирование, которое НЕ порождает вообще лишнего мусора и куч анонимных функций.
   * Трейт подмешивается в класс, и затем нужно сделать "import LOGGER._". Это импортнёт scala-макросы как методы. */
-trait MacroLogsImpl extends MacroLogsI {
-  @transient val LOGGER = getMacroLogger(getClass)
+trait MacroLogsImpl extends MacroLogsDyn {
+  @transient
+  override val LOGGER = super.LOGGER
 }
-trait MacroLogsImplLazy extends MacroLogsI {
-  @transient lazy val LOGGER = getMacroLogger(getClass)
+trait MacroLogsImplLazy extends MacroLogsDyn {
+  @transient
+  override lazy val LOGGER = super.LOGGER
 }
 
 

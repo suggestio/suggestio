@@ -1,6 +1,6 @@
 package io.suggest.model.n2.node
 
-import io.suggest.common.menum.EnumMaybeWithName
+import io.suggest.common.menum.{EnumTree, EnumMaybeWithName}
 import io.suggest.common.menum.play.EnumJsonReadsValT
 
 /**
@@ -11,38 +11,14 @@ import io.suggest.common.menum.play.EnumJsonReadsValT
  * В рамках зотоника была динамическая модель m_category.
  * В рамках s.io нет нужды в такой тяжелой модели, т.к. от категорий мы уже ушли к тегам.
  */
-object MNodeTypes extends EnumMaybeWithName with EnumJsonReadsValT {
+object MNodeTypes extends EnumMaybeWithName with EnumJsonReadsValT with EnumTree {
 
   /** Трейт каждого элемента данной модели. */
-  protected sealed trait ValT { that: T =>
-    /** Уникальный строковой ключ элемента. */
-    def strId: String
-
-    /** Подтипы этого типа. */
-    def subTypes: List[T]
-
-    /** Родительский элемент, если есть. */
-    def parent: Option[T]
-
-    /** Является ли текущий элемент дочерним по отношению к указанному? */
-    def hasParent(ntype: T): Boolean = {
-      parent.exists { p =>
-        p == ntype || p.hasParent(ntype)
-      }
-    }
-    /** Короткий враппер для hasParent(). */
-    def >>(ntype: T) = hasParent(ntype)
-
-    /** Является ли текущий элемент указанным или дочерним? */
-    def eqOrHasParent(ntype: T): Boolean = {
-      this == ntype || hasParent(ntype)
-    }
-    /** Короткий враппер к eqOrHasParent(). */
-    def ==>>(ntype: T) = eqOrHasParent(ntype)
+  protected sealed trait ValT extends super.ValT { that: T =>
   }
 
   /** Абстрактная класс одного элемента модели. */
-  protected[this] abstract sealed class Val(val strId: String)
+  protected[this] abstract sealed class Val(override val strId: String)
     extends super.Val(strId)
     with ValT
 
@@ -55,7 +31,7 @@ object MNodeTypes extends EnumMaybeWithName with EnumJsonReadsValT {
 
   /** Реализация Val без подтипов. */
   private class ValNoSub(strId: String) extends Val(strId) with NoParent {
-    override def subTypes: List[T] = Nil
+    override def children: List[T] = Nil
   }
 
   // Элементы дерева типов N2-узлов.
@@ -82,7 +58,7 @@ object MNodeTypes extends EnumMaybeWithName with EnumJsonReadsValT {
     /** Загруженная картинка. */
     val Image: T  = new ValNoSub("i") with _Parent
 
-    override def subTypes = List[T](Image)
+    override def children = List[T](Image)
 
   }
 

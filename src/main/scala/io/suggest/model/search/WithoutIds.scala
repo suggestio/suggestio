@@ -1,7 +1,6 @@
-package io.suggest.ym.model.ad
+package io.suggest.model.search
 
-import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
-import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders, QueryBuilder}
+import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
 
 /**
  * Suggest.io
@@ -9,7 +8,7 @@ import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders, QueryBuilde
  * Created: 05.12.14 22:34
  * Description: Поисковые аддоны для отрицательной фильтрации es-документов по id.
  */
-trait WithoutIdsDsa extends DynSearchArgs {
+trait WithoutIds extends DynSearchArgs {
 
   /** Отбрасывать документы, имеющие указанные id'шники. */
   def withoutIds: Seq[String]
@@ -39,11 +38,13 @@ trait WithoutIdsDsa extends DynSearchArgs {
   }
 }
 
-trait WithoutIdsDsaDflt extends WithoutIdsDsa {
+
+trait WithoutIdsDflt extends WithoutIds {
   override def withoutIds: Seq[String] = Seq.empty
 }
 
-trait WithoutIdsDsaWrapper extends WithoutIdsDsa with DynSearchArgsWrapper {
-  override type WT <: WithoutIdsDsa
+
+trait WithoutIdsWrap extends WithoutIds with DynSearchArgsWrapper {
+  override type WT <: WithoutIds
   override def withoutIds = _dsArgsUnderlying.withoutIds
 }

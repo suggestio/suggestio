@@ -25,7 +25,7 @@ class MNodeEdgesSpec extends FlatSpec with PlayJsonTestUtil {
         nodeId    = "afe432980faj3489ifvase"
       )
       val edge2 = MEdge(
-        predicate = MPredicates.AdvManageDelegatedTo,
+        predicate = MPredicates.AdvMdrDgTo,
         nodeId    = "f394gfkjs4e5jgis984r5g54",
         order     = Some(5)
       )

@@ -9,25 +9,25 @@ import io.suggest.ym.model.common._
 
 
 /** Интерфейс для передачи параметров поиска объявлений в индексе/типе. */
-trait AdsSearchArgsT extends DynSearchArgs with TextQueryDsa with ReceiversDsa with ProducerIdsDsa with UserCatIdDsa
-with GenerationSortDsa with WithoutIdsDsa with ReceiversDsaOnlyPublishedByDefault with Limit with Offset {
+trait AdsSearchArgsT extends DynSearchArgs with FtsAll with ReceiversDsa with ProducerIdsDsa with UserCatIdDsa
+with GenerationSortDsa with WithoutIds with ReceiversDsaOnlyPublishedByDefault with Limit with Offset {
 
   override def generationSortingEnabled = qOpt.isEmpty
 }
 
 
 /** Дефолтовые значения аргументов поиска рекламных карточек. */
-trait AdsSearchArgsDflt extends AdsSearchArgsT with TextQueryDsaDflt with ReceiversDsaDflt
-with ProducerIdsDsaDflt with UserCatIdDsaDflt with GenerationSortDsaDflt with WithoutIdsDsaDflt
+trait AdsSearchArgsDflt extends AdsSearchArgsT with FtsAllDflt with ReceiversDsaDflt
+with ProducerIdsDsaDflt with UserCatIdDsaDflt with GenerationSortDsaDflt with WithoutIdsDflt
 with LimitDflt with OffsetDflt
 /** Дефолтовая реализация [[AdsSearchArgsDflt]] для облегчения жизни компилятору. */
 class AdsSearchArgsDfltImpl extends AdsSearchArgsDflt
 
 
 /** Враппер для аргументов поиска рекламных карточек. */
-trait AdsSearchArgsWrapper extends AdsSearchArgsT with DynSearchArgsWrapper with TextQueryDsaWrapper
+trait AdsSearchArgsWrapper extends AdsSearchArgsT with DynSearchArgsWrapper with FtsAllWrap
 with ReceiversDsaWrapper with ProducerIdsDsaWrapper with UserCatIdDsaWrapper with GenerationSortDsaWrapper
-with WithoutIdsDsaWrapper with LimitWrap with OffsetWrap {
+with WithoutIdsWrap with LimitWrap with OffsetWrap {
   override type WT <: AdsSearchArgsT
 }
 
