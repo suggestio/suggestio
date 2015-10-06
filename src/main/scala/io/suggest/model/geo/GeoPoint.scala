@@ -48,8 +48,8 @@ object GeoPoint extends MacroLogsImpl {
     fromLatLonComma(latLon, commaInx)
   }
 
-  def ES_LAT_FN = "lat"
-  def ES_LON_FN = "lon"
+  val ES_LAT_FN = "lat"
+  val ES_LON_FN = "lon"
 
 
   /** Десериализатор гео-точки из представления ES, распарсенного через Jackson. */
@@ -109,7 +109,7 @@ object GeoPoint extends MacroLogsImpl {
   }
 
   /** Десериализация из js-массива вида [-13.22,45.34]. */
-  val readsGeoArray: Reads[GeoPoint] = {
+  val READS_GEO_ARRAY: Reads[GeoPoint] = {
     __.read[Seq[Double]]
       .filter { _.size == 2 }
       .map {
@@ -119,22 +119,32 @@ object GeoPoint extends MacroLogsImpl {
   }
 
   /** Десериализация из строки вида "45.34,-13.22". */
-  val readsString: Reads[GeoPoint] = {
+  val READS_STRING: Reads[GeoPoint] = {
     __.read[String]
       .map { apply }
   }
 
+  /** JSON-формат для ввода-вывода в виде JSON-объекта с полями lat и lon. */
+  val FORMAT_OBJECT: Format[GeoPoint] = (
+    (__ \ ES_LAT_FN).format[Double] and
+    (__ \ ES_LON_FN).format[Double]
+  )(apply(_, _), unlift(unapply))
+
   /** Десериализация из JSON-представления в виде объекта:
     * {lat: 45.34, lon: -13.22}. */
-  val readJson: Reads[GeoPoint] = (
-    (__ \ ES_LAT_FN).read[Double] and
-    (__ \ ES_LON_FN).read[Double]
-  )(apply(_, _))
+  def READS_OBJECT: Reads[GeoPoint] = FORMAT_OBJECT
 
-  implicit val reads: Reads[GeoPoint] = {
-    readJson
-      .orElse( readsGeoArray )
-      .orElse( readsString )
+  /** Десериализация из JSON из различных видов представления геоточки. */
+  val READS_ANY: Reads[GeoPoint] = {
+    READS_OBJECT
+      .orElse( READS_GEO_ARRAY )
+      .orElse( READS_STRING )
+  }
+
+  /** JSON-маппер для десериализации из разных форматов,
+    * но сериализации в JSON object с полями lat и lon. */
+  implicit val FORMAT_ANY: Format[GeoPoint] = {
+    Format[GeoPoint](READS_ANY, FORMAT_OBJECT)
   }
 
 }

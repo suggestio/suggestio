@@ -25,10 +25,12 @@ object MNodeExtras extends IGenEsMappingProps {
     val ADN_FN = "a"
 
     object Adn extends PrefixedFn {
-
       override protected def _PARENT_FN = ADN_FN
-      def ADN_IS_TEST_FN = _fullFn( MAdnExtra.Fields.IS_TEST.fn )
-      def ADN_SINKS_FN   = _fullFn( MAdnExtra.Fields.SINKS.fn )
+      def IS_TEST_FN          = _fullFn( MAdnExtra.Fields.IS_TEST.fn )
+      def SINKS_FN            = _fullFn( MAdnExtra.Fields.SINKS.fn )
+      def RIGHTS_FN           = _fullFn( MAdnExtra.Fields.RIGHTS.fn )
+      def SHOWN_TYPE_FN       = _fullFn( MAdnExtra.Fields.SHOWN_TYPE.fn )
+      def SHOW_IN_SC_NL_FN    = _fullFn( MAdnExtra.Fields.SHOW_IN_SC_NL.fn )
     }
   }
 

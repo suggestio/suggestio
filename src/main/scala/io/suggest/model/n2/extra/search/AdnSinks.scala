@@ -25,7 +25,7 @@ trait AdnSinks extends DynSearchArgs {
     } else {
       val _owsStr = onlyWithSinks.map(_.name)
       // Отрабатываем возможный список прав узла.
-      val fn = MNode.Fields.Extras.EXTRAS_ADN_SINKS_FN
+      val fn = MNode.Fields.Extras.ADN_SINKS_FN
       qbOpt0.map { qb =>
         val sf = FilterBuilders.termsFilter(fn, _owsStr: _*)
         QueryBuilders.filteredQuery(qb, sf)

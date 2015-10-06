@@ -1,7 +1,6 @@
-package io.suggest.ym.model.ad
+package io.suggest.model.search
 
-import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
-import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders, QueryBuilder}
+import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
 
 /**
  * Suggest.io
@@ -9,26 +8,28 @@ import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders, QueryBuilde
  * Created: 08.12.14 10:42
  * Description: Поиск/фильтрация по списку значений _id.
  */
-trait WithIdsDsa extends DynSearchArgs {
+trait WithIds extends DynSearchArgs {
 
   /** Искать только результаты, имеющие указанные _id. */
   def withIds: Seq[String]
 
   /** Сборка EsQuery сверху вниз. */
   override def toEsQueryOpt: Option[QueryBuilder] = {
-    super.toEsQueryOpt.map[QueryBuilder] { qb =>
-      if (withIds.nonEmpty) {
-        val idf = FilterBuilders.idsFilter().ids(withIds: _*)
+    val qbOpt0 = super.toEsQueryOpt
+    val _withIds = withIds
+    if (_withIds.isEmpty) {
+      qbOpt0
+
+    } else {
+      qbOpt0 map { qb =>
+        val idf = FilterBuilders.idsFilter()
+          .ids(_withIds: _*)
         QueryBuilders.filteredQuery(qb, idf)
-      } else {
-        qb
-      }
-    }.orElse[QueryBuilder] {
-      if (withIds.nonEmpty) {
-        val qb = QueryBuilders.idsQuery().ids(withIds: _*)
+
+      } orElse {
+        val qb = QueryBuilders.idsQuery()
+          .ids(_withIds: _*)
         Some(qb)
-      } else {
-        None
       }
     }
   }
@@ -46,12 +47,14 @@ trait WithIdsDsa extends DynSearchArgs {
 }
 
 
-trait WithIdsDsaDflt extends WithIdsDsa {
-  override def withIds: Seq[String] = Seq.empty
+/** Дефолтовая реализация [[WithIds]]. */
+trait WithIdsDflt extends WithIds {
+  override def withIds: Seq[String] = Nil
 }
 
 
-trait WithIdsDsaWrapper extends WithIdsDsa with DynSearchArgsWrapper {
-  override type WT <: WithIdsDsa
+/** Wrap-реализация [[WithIds]]. */
+trait WithIdsWrap extends WithIds with DynSearchArgsWrapper {
+  override type WT <: WithIds
   override def withIds = _dsArgsUnderlying.withIds
 }

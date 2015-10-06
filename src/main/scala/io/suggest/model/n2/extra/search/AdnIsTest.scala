@@ -22,7 +22,7 @@ trait AdnIsTest extends DynSearchArgs {
     if (_testNode.isEmpty) {
       qbOpt0
     } else {
-      val fn = MNode.Fields.Extras.EXTRAS_ADN_IS_TEST_FN
+      val fn = MNode.Fields.Extras.ADN_IS_TEST_FN
       qbOpt0.map { qb =>
         // Отрабатываем флаг testNode.
         _testNode.fold(qb) { tnFlag =>

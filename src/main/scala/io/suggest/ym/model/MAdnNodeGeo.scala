@@ -9,7 +9,7 @@ import io.suggest.event.subscriber.SnClassSubscriber
 import io.suggest.event.{AdnNodeDeletedEvent, SNStaticSubscriber, SioNotifierStaticClientI}
 import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.model._
-import io.suggest.model.geo.{GeoShapeIndexed, CircleGs, GeoShape, GeoShapeQuerable}
+import io.suggest.model.geo.{IGeoShapeIndexed, CircleGs, GeoShape, GeoShapeQuerable}
 import io.suggest.util.MacroLogsImpl
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.action.search.SearchResponse
@@ -408,7 +408,7 @@ final class MAdnNodeGeoJmx(implicit val ec: ExecutionContext, val client: Client
 
 
 /** Враппер для описания указателя на уже проиндексированный шейп. */
-case class MAdnNodeGeoIndexed(_id: String, glevel: NodeGeoLevel) extends GeoShapeIndexed {
+case class MAdnNodeGeoIndexed(_id: String, glevel: NodeGeoLevel) extends IGeoShapeIndexed {
   override def _index = MAdnNodeGeo.ES_INDEX_NAME
   override def _type  = MAdnNodeGeo.ES_TYPE_NAME
   override def name   = glevel.esfn

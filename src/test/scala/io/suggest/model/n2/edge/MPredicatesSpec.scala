@@ -15,6 +15,7 @@ class MPredicatesSpec extends FlatSpec with PlayJsonTestUtil {
 
   override type T = MPredicate
 
+
   "JSON" should "support all model's elements" in {
     for (e <- values) {
       jsonTest(e)
@@ -43,6 +44,7 @@ class MPredicatesSpec extends FlatSpec with PlayJsonTestUtil {
     assert(p eqOrHasParent p, p)
   }
 
+
   "parentsIterator()" should "return empty iter for GeoParent" in {
     val pi = GeoParent.parentsIterator
     assert( pi.isEmpty, pi )
@@ -53,6 +55,7 @@ class MPredicatesSpec extends FlatSpec with PlayJsonTestUtil {
     assert( pi.next == GeoParent, pi )
     assert( pi.isEmpty, pi )
   }
+
 
   "meAndParentsIterator()" should "return GeoParent.Direct followed by GeoParent" in {
     val mp = GeoParent.Direct.meAndParentsIterator.toList

@@ -57,7 +57,7 @@ case class GeoShapeQueryData(gdq: GeoDistanceQuery, glevel: NodeGeoLevel)
 
 
 /** Для описания "координат" расположения индексированного геошейпа и поиска по нему, используем сие творение. */
-trait GeoShapeIndexed {
+trait IGeoShapeIndexed {
   def _index: String
   def _type: String
   def _id: String
@@ -74,5 +74,9 @@ trait GeoShapeIndexed {
     FilterBuilders.geoShapeFilter(name, _id, _type, ShapeRelation.INTERSECTS)
       .indexedShapeIndex(_index)
       .indexedShapePath(path)
+  }
+
+  override def toString: String = {
+    classOf[IGeoShapeIndexed].getSimpleName + "(" + _index + "/" + _type + "/" + _id + "," + name + "," + path + ")"
   }
 }

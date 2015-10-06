@@ -3,15 +3,12 @@ package io.suggest.ym.model.common
 import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import io.suggest.model.{EsModelStaticMutAkvT, EsModel, EsModelPlayJsonT}
-import io.suggest.model.geo.{GeoShapeIndexed, CircleGs, GeoShapeQueryData, GeoPoint}
+import io.suggest.model.geo.{CircleGs, GeoShapeQueryData, GeoPoint}
 import io.suggest.util.SioEsUtil._
 import io.suggest.ym.model.MAdnNodeGeo
-import org.elasticsearch.action.search.SearchRequestBuilder
 import org.elasticsearch.common.lucene.search.function.CombineFunction
-import org.elasticsearch.common.unit.DistanceUnit
-import org.elasticsearch.index.query.functionscore.{ScoreFunctionBuilders, ScoreFunctionBuilder, FunctionScoreQueryBuilder}
+import org.elasticsearch.index.query.functionscore.{ScoreFunctionBuilders}
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders, QueryBuilder}
-import org.elasticsearch.search.sort.{SortBuilders, SortOrder}
 import play.api.libs.json._
 import java.{util => ju, lang => jl}
 import scala.collection.JavaConversions._
@@ -343,67 +340,6 @@ trait GeoDistanceDsaWrapper extends GeoDistanceDsa with DynSearchArgsWrapper {
 }
 
 
-
-/** DynSearch-аддон для поиска по уже проиндексированным шейпам. Этот аддон не привязан к модели EMAdnNodeGeo. */
-trait GeoIntersectsWithPreIndexedDsa extends DynSearchArgs {
-
-  /** Пересечение с шейпом другого узла. Полезно для поиска узлов, географически входящих в указанный узел. */
-  def intersectsWithPreIndexed: Seq[GeoShapeIndexed]
-
-  /** Сборка EsQuery сверху вниз. */
-  override def toEsQueryOpt: Option[QueryBuilder] = {
-    val iwpi = intersectsWithPreIndexed
-    super.toEsQueryOpt.map[QueryBuilder] { qb =>
-      // Отрабатываем поиск пересечения с другими узлами (с другими индексированными шейпами).
-      if (iwpi.isEmpty) {
-        qb
-      } else {
-        val filters = iwpi
-          .map { _.toGeoShapeFilter }
-        val filter = if (filters.size == 1) {
-          filters.head
-        } else {
-          FilterBuilders.orFilter(filters: _*)
-        }
-        QueryBuilders.filteredQuery(qb, filter)
-      }
-    }.orElse[QueryBuilder] {
-      if (iwpi.isEmpty) {
-        None
-      } else if (iwpi.size == 1) {
-        val qb = iwpi.head.toGeoShapeQuery
-        Some(qb)
-      } else {
-        val qb = iwpi.foldLeft( QueryBuilders.boolQuery().minimumNumberShouldMatch(1) ) {
-          (acc, gsi)  =>  acc.should( gsi.toGeoShapeQuery )
-        }
-        Some(qb)
-      }
-    }
-  }
-
-  /** Базовый размер StringBuilder'а. */
-  override def sbInitSize: Int = {
-    collStringSize(intersectsWithPreIndexed, super.sbInitSize, 10)
-  }
-
-  /** Построение выхлопа метода toString(). */
-  override def toStringBuilder: StringBuilder = {
-    fmtColl2sb("intersectsWithPreIndexed", intersectsWithPreIndexed, super.toStringBuilder)
-  }
-}
-
-trait GeoIntersectsWithPreIndexedDsaDftl extends GeoIntersectsWithPreIndexedDsa {
-  override def intersectsWithPreIndexed: Seq[GeoShapeIndexed] = Seq.empty
-}
-
-trait GeoIntersectsWithPreIndexedDsaWrapper extends GeoIntersectsWithPreIndexedDsa with DynSearchArgsWrapper {
-  override type WT <: GeoIntersectsWithPreIndexedDsa
-  override def intersectsWithPreIndexed = _dsArgsUnderlying.intersectsWithPreIndexed
-}
-
-
-
 /** DynSearch-Аддон для сортировки по географическом удалению от указанной точки. */
 trait GeoDistanceSortDsa extends DynSearchArgs {
 
@@ -427,7 +363,7 @@ trait GeoDistanceSortDsa extends DynSearchArgs {
 
   /** Построение выхлопа метода toString(). */
   override def toStringBuilder: StringBuilder = {
-    fmtColl2sb("withGeoDistanceSort", withGeoDistanceSort, super.toStringBuilder)
+    fmtColl2sb("geoDstSort", withGeoDistanceSort, super.toStringBuilder)
   }
 }
 

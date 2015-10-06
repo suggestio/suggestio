@@ -1,8 +1,8 @@
-package io.suggest.model.n2.node.search
+package io.suggest.model.n2.node.common.search
 
 import io.suggest.model.n2.node.{MNode, MNodeType}
-import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
-import org.elasticsearch.index.query.{QueryBuilders, FilterBuilders, QueryBuilder}
+import io.suggest.model.search.{DynSearchArgs, DynSearchArgsWrapper}
+import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
 
 /**
  * Suggest.io

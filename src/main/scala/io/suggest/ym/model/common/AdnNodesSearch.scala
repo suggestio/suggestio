@@ -18,7 +18,7 @@ import io.suggest.ym.model.ad._
 trait AdnNodesSearchArgsT extends FtsAll with WithoutIds
 with AnyOfPersonIdsDsa with DirectGeoParentsDsa with GeoParentsDsa with ShownTypeIdsDsa
 with AdnRightsDsa with AdnSinksDsa with TestNodeDsa with NodeIsEnabledDsa with GeoDistanceDsa
-with GeoIntersectsWithPreIndexedDsa with ShowInScNodeListDsa with WithIdsDsa with GeoDistanceSortDsa with LogoImgExistsDsa
+with ShowInScNodeListDsa with WithIds with GeoDistanceSortDsa with LogoImgExistsDsa
 with NameSort with RoutingDsa with Limit with Offset
 
 
@@ -26,8 +26,8 @@ with NameSort with RoutingDsa with Limit with Offset
 trait AdnNodesSearchArgs extends AdnNodesSearchArgsT with FtsAllDflt with WithoutIdsDflt
 with AnyOfPersonIdsDsaDflt with DirectGeoParentsDsaDflt
 with GeoParentsDsaDflt with ShownTypeIdsDsaDflt with AdnRightsDsaDflt with AdnSinksDsaDflt with TestNodeDsaDflt
-with NodeIsEnabledDsaDflt with GeoDistanceDsaDflt with GeoIntersectsWithPreIndexedDsaDftl
-with ShowInScNodeListDsaDflt with WithIdsDsaDflt with GeoDistanceSortDsaDflt with LogoImgExistsDsaDflt
+with NodeIsEnabledDsaDflt with GeoDistanceDsaDflt
+with ShowInScNodeListDsaDflt with WithIdsDflt with GeoDistanceSortDsaDflt with LogoImgExistsDsaDflt
 with NameSortDflt with RoutingDsaDflt with LimitDflt with OffsetDflt
 {
   override def limit: Int = EsModel.MAX_RESULTS_DFLT
@@ -43,7 +43,7 @@ trait AdnNodesSearchArgsWrapper extends AdnNodesSearchArgsT with FtsAllWrap with
 with AnyOfPersonIdsDsaWrapper
 with DirectGeoParentsDsaWrapper with GeoParentsDsaWrapper with ShownTypeIdsDsaWrapper with AdnRightsDsaWrapper
 with AdnSinksDsaWrapper with TestNodeDsaWrapper with NodeIsEnabledDsaWrapper with GeoDistanceDsaWrapper
-with GeoIntersectsWithPreIndexedDsaWrapper with ShowInScNodeListDsaWrapper with WithIdsDsaWrapper
+with ShowInScNodeListDsaWrapper with WithIdsWrap
 with GeoDistanceSortDsaWrapper with LogoImgExistsDsaWrapper with NameSortWrap with RoutingDsaWrapper
 with LimitWrap with OffsetWrap
 {

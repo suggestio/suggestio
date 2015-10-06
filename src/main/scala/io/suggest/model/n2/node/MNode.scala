@@ -4,6 +4,7 @@ import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model._
 import io.suggest.model.n2.FieldNamesL1
 import io.suggest.model.n2.edge.MNodeEdges
+import io.suggest.model.n2.geo.MNodeGeo
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.extra.{EMNodeExtras, MNodeExtras}
 import io.suggest.model.n2.node.meta.{MPersonMeta, MNodeMeta}
@@ -59,9 +60,9 @@ object MNode
     object Common extends PrefixedFn {
       def COMMON_FN = FieldNamesL1.Common.name
       override protected def _PARENT_FN = COMMON_FN
-
-      /** Абсолютное имя ES-поля для типа узла. */
-      def NODE_TYPE_FN = _fullFn( MNodeCommon.NODE_TYPE_FN )
+      def NODE_TYPE_FN      = _fullFn( MNodeCommon.NODE_TYPE_FN )
+      def IS_ENABLED_FN     = _fullFn( MNodeCommon.IS_ENABLED_FN )
+      def IS_DEPENDENT_FN   = _fullFn( MNodeCommon.IS_DEPEND_FN )
     }
 
     /** Абсолютные имена ES-полей в .meta */
@@ -86,8 +87,11 @@ object MNode
       def EXTRAS_FN  = FieldNamesL1.Extras.name
       override protected def _PARENT_FN = EXTRAS_FN
       
-      def EXTRAS_ADN_IS_TEST_FN = _fullFn( MNodeExtras.Fields.Adn.ADN_IS_TEST_FN )
-      def EXTRAS_ADN_SINKS_FN   = _fullFn( MNodeExtras.Fields.Adn.ADN_SINKS_FN )
+      def ADN_IS_TEST_FN          = _fullFn( MNodeExtras.Fields.Adn.IS_TEST_FN )
+      def ADN_SINKS_FN            = _fullFn( MNodeExtras.Fields.Adn.SINKS_FN )
+      def ADN_RIGHTS_FN           = _fullFn( MNodeExtras.Fields.Adn.RIGHTS_FN )
+      def ADN_SHOWN_TYPE_FN       = _fullFn( MNodeExtras.Fields.Adn.SHOWN_TYPE_FN )
+      def ADN_SHOW_IN_SC_NL_FN    = _fullFn( MNodeExtras.Fields.Adn.SHOW_IN_SC_NL_FN )
     }
 
     /** Абсолютные имена ES-полей в .edges */
@@ -105,6 +109,14 @@ object MNode
       def EDGE_OUT_NODE_ID_FULL_FN   = _fullFn( OUT_NODE_ID_FN )
       def EDGE_OUT_ORDER_FULL_FN     = _fullFn( OUT_ORDER_FN )
       def EDGE_OUT_INFO_SLS_FN       = _fullFn( OUT_INFO_SLS_FN )
+    }
+
+    /** Абсолютные названия географических полей.*/
+    object Geo extends PrefixedFn {
+      def GEO_FN = FieldNamesL1.Geo.name
+      override protected def _PARENT_FN = GEO_FN
+
+      def POINT_FN = _fullFn( MNodeGeo.Fields.POINT_FN )
     }
 
   }
@@ -145,13 +157,19 @@ object MNode
       .inmap [MNodeEdges] (
         _ getOrElse MNodeEdges.empty,
         { mne => if (mne.nonEmpty) Some(mne) else None }
+      ) and
+    (__ \ Fields.Geo.GEO_FN).formatNullable[MNodeGeo]
+      .inmap [MNodeGeo] (
+        _ getOrElse MNodeGeo.empty,
+        { mng => if (mng.nonEmpty) Some(mng) else None }
       )
   )(
-    {(common, nmeta, mntag, edges) =>
-      MNode(common, nmeta, mntag, edges)
+    {(common, nmeta, mntag, edges, geo) =>
+      MNode(common, nmeta, mntag, edges, geo)
     },
     {mnode =>
-      (mnode.common, mnode.meta, mnode.extras, mnode.edges)
+      import mnode._
+      (common, meta, extras, edges, geo)
     }
   )
 
@@ -202,7 +220,8 @@ object MNode
       _obj(Fields.Common.COMMON_FN,   MNodeCommon),
       _obj(Fields.Meta.META_FN,       MNodeMeta),
       _obj(Fields.Extras.EXTRAS_FN,   MNodeExtras),
-      _obj(Fields.Edges.EDGES_FN,     MNodeEdges)
+      _obj(Fields.Edges.EDGES_FN,     MNodeEdges),
+      _obj(Fields.Geo.GEO_FN,         MNodeGeo)
     )
   }
 
@@ -215,6 +234,7 @@ case class MNode(
   meta                        : MNodeMeta       = MNodeMeta.empty,
   extras                      : MNodeExtras     = MNodeExtras.empty,
   edges                       : MNodeEdges      = MNodeEdges.empty,
+  geo                         : MNodeGeo        = MNodeGeo.empty,
   override val id             : Option[String]  = None,
   override val versionOpt     : Option[Long]    = None
 )
