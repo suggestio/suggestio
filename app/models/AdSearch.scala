@@ -65,7 +65,13 @@ object AdSearch extends CommaDelimitedStringSeq {
           maybeOffsetOpt <- intOptB.bind      (f(RESULTS_OFFSET_FN), params)
           maybeRcvrIdOpt <- strOptB.bind      (f(RECEIVER_ID_FN),    params)
           maybeFirstIds  <- strSeqB.bind      (f(FIRST_AD_ID_FN),    params)
-          maybeGen       <- longOptB.bind     (f(GENERATION_FN),     params)
+          maybeGen       <- {
+            // Нужно игнорить возможный generation sort seed, если происходит полнотекстовый поиск.
+            if (maybeQOpt.right.exists(_.nonEmpty))
+              None
+            else
+              longOptB.bind(f(GENERATION_FN),     params)
+          }
           maybeGeo       <- geoModeB.bind     (f(GEO_MODE_FN),       params)
           maybeDevScreen <- devScreenB.bind   (f(SCREEN_INFO_FN),    params)
           maybeInxOpAdId <- strOptB.bind      (f(OPEN_INDEX_AD_ID_FN), params)
@@ -93,7 +99,7 @@ object AdSearch extends CommaDelimitedStringSeq {
                 }
               }
               override def firstIds       = _firstIds
-              override def generationOpt  = maybeGen
+              override def randomSortSeed = maybeGen
               override def geo            = maybeGeo
               override def screen         = maybeDevScreen
               override def openIndexAdId  = maybeInxOpAdId
@@ -114,7 +120,7 @@ object AdSearch extends CommaDelimitedStringSeq {
           intOptB.unbind      (f(RESULTS_LIMIT_FN),  value.maxResultsOpt),
           intOptB.unbind      (f(RESULTS_OFFSET_FN), value.offsetOpt),
           strSeqB.unbind      (f(FIRST_AD_ID_FN),    value.firstIds),
-          longOptB.unbind     (f(GENERATION_FN),     value.generationOpt),
+          longOptB.unbind     (f(GENERATION_FN),     value.randomSortSeed),
           strOptB.unbind      (f(GEO_MODE_FN),       value.geo.toQsStringOpt),
           devScreenB.unbind   (f(SCREEN_INFO_FN),    value.screen),
           strOptB.unbind      (f(OPEN_INDEX_AD_ID_FN), value.openIndexAdId)

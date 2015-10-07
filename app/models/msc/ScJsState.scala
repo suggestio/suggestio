@@ -164,7 +164,7 @@ case class ScJsState(
   /** Экземпляр AdSearch для поиска карточек, отображаемых в плитке. */
   def tilesAdSearch(): AdSearch = new AdSearch {
     override def receiverIds    = that.adnId.toList
-    override def generationOpt  = that.generationOpt
+    override def randomSortSeed  = that.generationOpt
     override def geo            = that.geo
     override def levels = {
       val sl = if (catIds.nonEmpty)
@@ -180,7 +180,7 @@ case class ScJsState(
     new FocusedAdsSearchArgs {
       override def firstIds  = that.fadOpenedIdOpt.toList
       override def maxResultsOpt  = _maxResultsOpt
-      override def generationOpt  = that.generationOpt
+      override def randomSortSeed  = that.generationOpt
       override def receiverIds    = that.adnId.toList
       override def offsetOpt      = that.fadsOffsetOpt
       override def producerIds    = that.fadsProdIdOpt.toList
