@@ -65,6 +65,10 @@ object SiobixBuild extends Build {
       .dependsOn(commonSjs)
   }
 
+  /** Поддержка seaweedfs */
+  lazy val swfs = project
+    .dependsOn(common, commonPlay)
+
   /** Все мелкие скрипты кроме выдачи (т.е. весь my.suggest.io + буклет и т.д) объеденены в одном большом js. */
   lazy val lkSjs = {
     val name = "lk-sjs"
@@ -105,7 +109,7 @@ object SiobixBuild extends Build {
       .settings(
         scalaVersion := "2.11.6"
       )
-      .aggregate(commonPlay, common, lkAdvExtSjs, lkSjs, util, securesocial, scSjs, web21)
+      .aggregate(commonPlay, common, lkAdvExtSjs, lkSjs, swfs, util, securesocial, scSjs, web21)
   }
 
   // Активация offline-режима резолва зависимостей.
