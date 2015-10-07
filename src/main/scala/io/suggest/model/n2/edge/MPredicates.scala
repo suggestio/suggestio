@@ -72,6 +72,12 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
     }
   }
 
+  protected sealed trait _ToImg extends ValT { that: T =>
+    override def toTypeValid(ntype: MNodeType): Boolean = {
+      _isImage(ntype)
+    }
+  }
+
 
   /** Сериализация в JSON, первый элемент -- текущий, второй и последующие -- родительские. */
   val PARENTRAL_WRITES: Writes[T] = {
@@ -148,11 +154,7 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
 
 
   /** Указание на картинку-логотип узла-учреждения.  */
-  val Logo: T = new Val("e") with _FromAdnNode {
-    override def toTypeValid(ntype: MNodeType): Boolean = {
-      _isImage(ntype)
-    }
-  }
+  val Logo: T = new Val("e") with _FromAdnNode with _ToImg
 
 
   /** Ребро указывает на родительский узел в географическом смысле.
@@ -172,8 +174,11 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
   }
 
   /** Предикат, указывающий на карточку приветствия. */
-  val NodeWelcomeAdIs = new Val("g") with _FromAdnNode {
+  val NodeWelcomeAdIs = new Val("h") with _FromAdnNode {
     override def toTypeValid(ntype: MNodeType) = _isWcAd(ntype)
   }
+
+  /** Предикат, направляемый в сторону картинки или иного объекта, являющегося предметом галлереи. */
+  val GalleryItem = new Val("i") with _FromAdnNode with _ToImg
 
 }

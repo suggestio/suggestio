@@ -44,6 +44,7 @@ libraryDependencies ++= {
     "com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % "2.5.2",
     "org.json4s" %% "json4s-native" % "3.+",
     "com.typesafe.play" %% "play-json" % playVsn,
+    "com.typesafe.play" %% "play-ws"   % playVsn,
     // ES
     "org.elasticsearch" % "elasticsearch" % esVsn,
     // Parsers

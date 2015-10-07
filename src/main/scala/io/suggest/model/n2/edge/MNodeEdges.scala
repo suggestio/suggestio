@@ -84,9 +84,12 @@ object MNodeEdges extends IGenEsMappingProps {
     )
   }
 
-  def edgesToMap1(edges: TraversableOnce[MEdge]): NodeEdgesMap_t = {
+  def edgesToMapIter(edges: TraversableOnce[MEdge]): Iterator[(NodeEdgesMapKey_t, MEdge)] = {
     edges.toIterator
       .map { edge => edge.toEmapKey -> edge }
+  }
+  def edgesToMap1(edges: TraversableOnce[MEdge]): NodeEdgesMap_t = {
+    edgesToMapIter(edges)
       .toMap
   }
   def edgesToMap(edges: MEdge*): NodeEdgesMap_t = {

@@ -2,7 +2,7 @@ package io.suggest.ym.model
 
 import io.suggest.model._
 import io.suggest.model.n2.edge.{MPredicates, MEdge, NodeEdgesMap_t, MNodeEdges}
-import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
+import io.suggest.model.n2.extra.MNodeExtras
 import io.suggest.model.n2.geo.MNodeGeo
 import io.suggest.model.n2.node.{MNodeTypes, MNode}
 import io.suggest.model.n2.node.common.MNodeCommon
@@ -141,8 +141,7 @@ final case class MAdnNode(
       geo = MNodeGeo(
         point = geo.point
       ),
-      id = id,
-      versionOpt = versionOpt
+      id = id
     )
   }
 
