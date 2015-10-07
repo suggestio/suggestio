@@ -102,7 +102,7 @@ object MAdnExtra extends IGenEsMappingProps {
   *                 Он не должен отображаться для обычных участников сети, а только для других тестовых узлов.
   * @param outSls Контейнер с инфой об уровнях отображения.
   * @param sinks Выходы выдачи: wifi, geoloc.
-  * @param showInScNodesList Можно ли узел отображать в списке узлов выдачи?
+  * @param showInScNl Можно ли узел отображать в списке узлов выдачи?
   */
 case class MAdnExtra(
   rights                : Set[AdnRight]             = Set.empty,
@@ -111,5 +111,5 @@ case class MAdnExtra(
   testNode              : Boolean                   = false,
   outSls                : Map[AdShowLevel, MSlInfo] = Map.empty,
   sinks                 : Set[AdnSink]              = Set.empty,
-  showInScNodesList     : Boolean                   = true
+  showInScNl            : Boolean                   = true
 )

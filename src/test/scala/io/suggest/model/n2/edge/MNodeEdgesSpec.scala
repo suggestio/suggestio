@@ -21,7 +21,7 @@ class MNodeEdgesSpec extends FlatSpec with PlayJsonTestUtil {
   it should "handle full-filled model" in {
     jsonTest {
       val edge1 = MEdge(
-        predicate = MPredicates.AdOwnedBy,
+        predicate = MPredicates.OwnedBy,
         nodeId    = "afe432980faj3489ifvase"
       )
       val edge2 = MEdge(

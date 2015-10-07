@@ -4,8 +4,8 @@ import io.suggest.model.n2.edge.search._
 import io.suggest.model.n2.extra.search._
 import io.suggest.model.n2.geo.search._
 import io.suggest.model.n2.node.common.search._
-import io.suggest.model.n2.node.meta.search.{NameSortWrap, NameSort, NameSortDflt}
-import io.suggest.model.n2.tag
+import io.suggest.model.n2.node.meta.search._
+import io.suggest.model.n2.tag.vertex.search._
 import io.suggest.model.search._
 import io.suggest.util.MacroLogsImplLazy
 
@@ -18,12 +18,12 @@ import io.suggest.util.MacroLogsImplLazy
 trait MNodeSearch
   extends FtsAll
   with WithIds
-  with EdgeSearch
+  with OutEdges
   with ShownTypeId
   with AdnRights
   with AdnIsTest
   with AdnSinks
-  with tag.vertex.search.FaceTextQuery
+  with FaceTextQuery
   with NodeTypes
   with WithoutIds
   with ShowInScNl
@@ -31,6 +31,7 @@ trait MNodeSearch
   with IsDependent
   with GeoDstSort
   with NameSort
+  with RandomSort
   with Limit
   with Offset
 
@@ -44,12 +45,12 @@ trait MNodeSearchDflt
   extends MNodeSearch
   with FtsAllDflt
   with WithIdsDflt
-  with EdgeSearchDflt
+  with OutEdgesDflt
   with ShownTypeIdDflt
   with AdnRightsDflt
   with AdnIsTestDflt
   with AdnSinksDflt
-  with tag.vertex.search.FaceTextQueryDflt
+  with FaceTextQueryDflt
   with NodeTypesDflt
   with WithoutIdsDflt
   with ShowInScNlDflt
@@ -57,6 +58,7 @@ trait MNodeSearchDflt
   with IsDependentDflt
   with GeoDstSortDflt
   with NameSortDflt
+  with RandomSortDflt
   with LimitDflt
   with OffsetDflt
 
@@ -73,12 +75,12 @@ trait MNodeSearchWrap
   extends MNodeSearch
   with FtsAllWrap
   with WithIdsWrap
-  with EdgeSearchWrap
+  with OutEdgesWrap
   with ShownTypeIdWrap
   with AdnRightsWrap
   with AdnIsTestWrap
   with AdnSinksWrap
-  with tag.vertex.search.FaceTextQueryWrap
+  with FaceTextQueryWrap
   with NodeTypesWrap
   with WithoutIdsWrap
   with ShowInScNlWrap
@@ -86,6 +88,7 @@ trait MNodeSearchWrap
   with IsDependentWrap
   with GeoDstSortWrap
   with NameSortWrap
+  with RandomSortWrap
   with LimitWrap
   with OffsetWrap
 {

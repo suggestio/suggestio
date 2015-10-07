@@ -84,10 +84,19 @@ object MNodeEdges extends IGenEsMappingProps {
     )
   }
 
+  def edgesToMap1(edges: TraversableOnce[MEdge]): NodeEdgesMap_t = {
+    edges.toIterator
+      .map { edge => edge.toEmapKey -> edge }
+      .toMap
+  }
+  def edgesToMap(edges: MEdge*): NodeEdgesMap_t = {
+    edgesToMap1(edges)
+  }
+
 }
 
 
 case class MNodeEdges(
-  out   : Map[(MPredicate, String), MEdge]    = Map.empty
+  out   : NodeEdgesMap_t    = Map.empty
 )
   extends EmptyProduct

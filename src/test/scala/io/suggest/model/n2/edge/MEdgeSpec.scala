@@ -16,7 +16,7 @@ class MEdgeSpec extends FlatSpec with PlayJsonTestUtil {
   "JSON" should "support minimal model" in {
     jsonTest {
       MEdge(
-        predicate = MPredicates.AdOwnedBy,
+        predicate = MPredicates.OwnedBy,
         nodeId    = "ADFa3498fj39845j324f"
       )
     }

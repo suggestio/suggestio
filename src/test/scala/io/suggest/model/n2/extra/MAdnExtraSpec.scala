@@ -31,7 +31,7 @@ class MAdnExtraSpec extends FlatSpec with PlayJsonTestUtil {
           Map(sli.sl -> sli)
         },
         sinks = Set( AdnSinks.SINK_WIFI, AdnSinks.SINK_GEO ),
-        showInScNodesList = true
+        showInScNl = true
       )
     }
   }

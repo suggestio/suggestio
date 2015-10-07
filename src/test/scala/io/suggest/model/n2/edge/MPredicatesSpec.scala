@@ -24,7 +24,7 @@ class MPredicatesSpec extends FlatSpec with PlayJsonTestUtil {
 
 
   "hasParent(p)" should "!self" in {
-    val p = AdOwnedBy
+    val p = OwnedBy
     assert( !p.hasParent(p), p )
   }
   it should "properly support GeoParent << Direct" in {

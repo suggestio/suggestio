@@ -62,4 +62,7 @@ object MNodeTypes extends EnumMaybeWithName with EnumJsonReadsValT with EnumTree
 
   }
 
+  /** Карточка приветствия. */
+  val WelcomeAd: T = new ValNoSub("w")
+
 }

@@ -1,6 +1,11 @@
 package io.suggest.ym.model
 
 import io.suggest.model._
+import io.suggest.model.n2.edge.{MPredicates, MEdge, NodeEdgesMap_t, MNodeEdges}
+import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
+import io.suggest.model.n2.geo.MNodeGeo
+import io.suggest.model.n2.node.{MNodeTypes, MNode}
+import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.util.SioEsUtil._
 import io.suggest.model.common._
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -112,6 +117,51 @@ final case class MAdnNode(
       sn publish AdnNodeSavedEvent(adnId, this, isCreated = id.isEmpty)
     }
     saveFut
+  }
+
+  /** Конвертация экземпляра этой модели в N2 MNode.
+    * Карта эджей требует заливки в неё данных по картинкам. */
+  def toMNode: MNode = {
+    MNode(
+      common = MNodeCommon(
+        ntype           = MNodeTypes.AdnNode,
+        isDependent     = false,
+        isEnabled       = adn.isEnabled,
+        disableReason   = adn.disableReason
+      ),
+      meta = meta.toMMeta,
+      extras = MNodeExtras(
+        adn = Some( adn.toMAdnExtra.copy(
+          showInScNl = conf.showInScNodesList
+        ))
+      ),
+      edges = MNodeEdges(
+        out = getBasicEdges
+      ),
+      geo = MNodeGeo(
+        point = geo.point
+      ),
+      id = id,
+      versionOpt = versionOpt
+    )
+  }
+
+  def getBasicEdges: NodeEdgesMap_t = {
+    val edges0 = {
+      meta.welcomeAdId
+        .iterator
+        .map { wcId => MEdge(MPredicates.NodeWelcomeAdIs, wcId) } ++
+      personIds.iterator
+        .map { personId => MEdge(MPredicates.OwnedBy, personId) } ++
+      geo.directParentIds
+        .iterator
+        .map { pi => MEdge(MPredicates.GeoParent.Direct, pi) } ++
+      (geo.allParentIds -- geo.directParentIds)
+        .iterator
+        .map { pi => MEdge(MPredicates.GeoParent, pi) }
+    }
+
+    MNodeEdges.edgesToMap1( edges0 )
   }
 
 }

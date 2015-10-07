@@ -2,6 +2,7 @@ package io.suggest.ym.model.common
 
 import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.common.menum.play.EnumJsonReadsValT
+import io.suggest.model.n2.extra.{MSlInfo, MAdnExtra}
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import io.suggest.model._
 import io.suggest.util.SioEsUtil._
@@ -356,6 +357,23 @@ case class AdNetMemberInfo(
   // Врапперы над соответсвующими фунцкиями showLevelsInfo, которые учитывают флаг isEnabled.
   def canOutAtLevel(sl: AdShowLevel) = isEnabled && showLevelsInfo.canOutAtLevel(sl)
   def maxOutAtLevel(sl: AdShowLevel) = if (isEnabled) showLevelsInfo.maxOutAtLevel(sl) else 0
+
+  def toMAdnExtra: MAdnExtra = {
+    MAdnExtra(
+      rights = rights,
+      isUser = isUser,
+      shownTypeIdOpt = shownTypeIdOpt,
+      testNode = testNode,
+      outSls = showLevelsInfo.out
+        .iterator
+        .map { case (sl, limit) =>
+          val sli = MSlInfo(sl, limit)
+          sl -> sli
+        }
+        .toMap,
+      sinks = sinks
+    )
+  }
 
 }
 

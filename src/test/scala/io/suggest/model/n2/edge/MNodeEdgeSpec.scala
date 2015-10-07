@@ -15,7 +15,7 @@ class MNodeEdgeSpec extends FlatSpec with PlayJsonTestUtil {
 
   val minM ={
     MEdge(
-      predicate = MPredicates.AdOwnedBy,
+      predicate = MPredicates.OwnedBy,
       nodeId    = "asf9034fi34i89fj3984u243_"
     )
   }

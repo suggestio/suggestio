@@ -57,6 +57,9 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
   private def _isImage(ntype: MNodeType): Boolean = {
     ntype ==>> MNodeTypes.Media.Image
   }
+  private def _isWcAd(ntype: MNodeType): Boolean = {
+    ntype ==>> MNodeTypes.WelcomeAd
+  }
 
   protected sealed trait _FromAdnNode extends ValT { that: T =>
     override def fromTypeValid(ntype: MNodeType): Boolean = {
@@ -114,23 +117,10 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
   // Экземпляры модели, идентификаторы идут по алфавиту: a->z, a1->z1, ...
   // ------------------------------------------------------------------------
 
-  /** Карточка-объект произведена узлом-субъектом. */
-  val AdOwnedBy: T = new Val("a") with _FromAdnNode {
-    override def toTypeValid(ntype: MNodeType): Boolean = {
-      _isAd(ntype)
-    }
-  }
-
-
-  /** Кто-то или что-то владеет чем-то. */
-  val Owns: T = new Val("b") with _FromAdnNode {
-    override def fromTypeValid(ntype: MNodeType): Boolean = {
-      _isPerson(ntype) || super.fromTypeValid(ntype)
-    }
-    override def toTypeValid(ntype: MNodeType): Boolean = {
-      // Скорее всего, овладевать другой персоной в системе нельзя.
-      !_isPerson(ntype)
-    }
+  /** Субъект имеет право владения субъектом. */
+  val OwnedBy: T = new Val("a") {
+    override def fromTypeValid(ntype: MNodeType) = !_isPerson(ntype)
+    override def toTypeValid(ntype: MNodeType)   = true
   }
 
 
@@ -179,6 +169,11 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
     override def children: List[T] = {
       Direct :: super.children
     }
+  }
+
+  /** Предикат, указывающий на карточку приветствия. */
+  val NodeWelcomeAdIs = new Val("g") with _FromAdnNode {
+    override def toTypeValid(ntype: MNodeType) = _isWcAd(ntype)
   }
 
 }
