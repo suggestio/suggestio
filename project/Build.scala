@@ -65,9 +65,15 @@ object SiobixBuild extends Build {
       .dependsOn(commonSjs)
   }
 
+  /** Трейты для поддержки простых логов. */
+  lazy val logsMacro = {
+    val name = "logs-macro"
+    Project(id = name, base = file(name))
+  }
+
   /** Поддержка seaweedfs */
   lazy val swfs = project
-    .dependsOn(common, commonPlay)
+    .dependsOn(common, commonPlay, logsMacro)
 
   /** Все мелкие скрипты кроме выдачи (т.е. весь my.suggest.io + буклет и т.д) объеденены в одном большом js. */
   lazy val lkSjs = {
@@ -87,7 +93,7 @@ object SiobixBuild extends Build {
 
   /** Утиль, была когда-то расшарена между siobix и sioweb. Постепенно стала просто свалкой. */
   lazy val util = project
-    .dependsOn(common, commonPlay)
+    .dependsOn(common, commonPlay, logsMacro)
 
   /** Внутренний форк securesocial. */
   lazy val securesocial = project

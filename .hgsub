@@ -8,3 +8,4 @@ common-sjs		= common-sjs
 common			= common
 sc-sjs			= sc-sjs
 swfs			= swfs
+logs-macro		= logs-macro
