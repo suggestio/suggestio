@@ -14,6 +14,15 @@ import play.api.libs.ws.WSClient
  * Модели живут на стороне play, поэтому в качестве клиента жестко привязан WSClient c DI.
  */
 
+object SwfsClientWs {
+
+  def isStatus2xx(status: Int): Boolean = {
+    status >= 200 && status <= 299
+  }
+
+}
+
+
 /** Интерфейс play.ws-клиента для написания трейтов частичных реализаций. */
 trait ISwfsClientWs extends ISwfsClient with MacroLogsI {
 
@@ -34,3 +43,4 @@ class SwfsClientWs @Inject() (
 )
   extends MacroLogsImpl
   with Assign
+  with Put

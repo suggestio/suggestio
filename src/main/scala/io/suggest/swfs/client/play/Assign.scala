@@ -1,6 +1,6 @@
 package io.suggest.swfs.client.play
 
-import io.suggest.swfs.client.proto.assign.{AssignRequest, AssignResponse}
+import io.suggest.swfs.client.proto.assign.{IAssignRequest, AssignResponse}
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -30,7 +30,7 @@ trait Assign extends ISwfsClientWs {
     conf.getStringSeq(MASTERS_CK).get.toList
   }
 
-  override def assign(args: AssignRequest)(implicit ec: ExecutionContext): Future[AssignResponse] = {
+  override def assign(args: IAssignRequest)(implicit ec: ExecutionContext): Future[AssignResponse] = {
     val ms = MASTERS
     assignOn(ms.head, args, ms.tail)
   }
@@ -42,7 +42,7 @@ trait Assign extends ISwfsClientWs {
    * @param restMasters Запасные мастера.
    * @return Фьючерс с распарсенным ответом сервера.
    */
-  def assignOn(master: String, args: AssignRequest, restMasters: List[String] = Nil)
+  def assignOn(master: String, args: IAssignRequest, restMasters: List[String] = Nil)
               (implicit ec: ExecutionContext): Future[AssignResponse] = {
     lazy val logPrefix = s"assignOn($master):"
     LOGGER.trace(s"$logPrefix args=$args restMasters=$restMasters")
@@ -53,7 +53,7 @@ trait Assign extends ISwfsClientWs {
       .execute(method)
       .filter { resp =>
         LOGGER.trace(s"$method $url replied HTTP ${resp.status} ${resp.statusText}\n ${resp.body}")
-        resp.status >= 200 && resp.status <= 299
+        SwfsClientWs.isStatus2xx( resp.status )
       }
       .map { resp =>
         val jsvr = resp.json.validate[AssignResponse]

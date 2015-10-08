@@ -22,13 +22,26 @@ object AssignResponse {
 }
 
 
+/** Интерфейс ответа. */
+trait IAssignResponse {
+  def count       : Int
+  def fid         : String
+  def url         : String
+  def publicUrl   : Option[String]
+
+  def fidParsed = Fid(fid)
+}
+
+
 case class AssignResponse(
   count       : Int,
   fid         : String,
   url         : String,
   publicUrl   : Option[String]
-) {
+)
+  extends IAssignResponse
+{
 
-  lazy val fidParsed = Fid(fid)
+  override lazy val fidParsed = super.fidParsed
 
 }
