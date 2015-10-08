@@ -1,5 +1,6 @@
 package io.suggest.swfs.client.play
 
+import io.suggest.itee.IteeUtil
 import io.suggest.swfs.client.proto.put.{PutResponse, IPutRequest}
 import io.suggest.util.MacroLogsDyn
 import play.api.libs.iteratee.Enumerator
@@ -12,6 +13,7 @@ import scala.concurrent.{ExecutionContext, Future}
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 08.10.15 13:01
  * Description: Аддон для поддержки отправки файла в volume.
+ * Нужно делать PUT или POST запрос, multipart, где файл в поле "file".
  */
 object Put extends MacroLogsDyn {
 
@@ -28,12 +30,14 @@ object Put extends MacroLogsDyn {
   }
 
   /** Приведение енумератора данных к валидному аргументу ws.withBody(). */
-  def data2wsBody(data: Enumerator[Array[Byte]]): WSBody = {
+  def data2wsBody(data: Enumerator[Array[Byte]])(implicit ec: ExecutionContext): Future[WSBody] = {
     if (STREAMED_BODY_SUPPORTED) {
-      StreamedBody(data)
+      val sb = StreamedBody(data)
+      Future successful sb
+
     } else {
-      // TODO InMemoryBody(), код сверстки массивов взять из CassandraStorage, переместив его в IteeUtil в common-play или ещё куда-нить.
-      ???
+      IteeUtil.dumpBlobs(data)
+        .map { InMemoryBody.apply }
     }
   }
 
@@ -42,21 +46,34 @@ object Put extends MacroLogsDyn {
 trait Put extends ISwfsClientWs {
 
   override def put(req: IPutRequest)(implicit ec: ExecutionContext): Future[PutResponse] = {
+    val wsBodyFut = Put.data2wsBody( req.data )
     lazy val logPrefix = s"put(${req.fid}):"
     val url = req.toUrl
     val method = "PUT"
-    ws.url( url )
-      .withBody( Put.data2wsBody(req.data) )
-      .execute(method)
-      .filter { resp =>
-        LOGGER.trace( s"$logPrefix $method $url => ${resp.status} ${resp.statusText}\n ${resp.body}" )
-        SwfsClientWs.isStatus2xx( resp.status )
+    for {
+      wsBody <- wsBodyFut
+
+      resp <- {
+        val fut = ws.url(url)
+          .withBody( wsBody )
+          .execute(method)
+        // В фоне залоггировать результат запроса, если трассировка активна.
+        if (LOGGER.underlying.isTraceEnabled) {
+          fut onSuccess { case resp =>
+            LOGGER.trace(s"$logPrefix $method $url => ${resp.status} ${resp.statusText}\n ${resp.body}")
+          }
+        }
+        // Вернуть фьючерс запроса.
+        fut
       }
-      .map { resp =>
-        resp.json
-          .validate[PutResponse]
-          .get
-      }
+
+      if SwfsClientWs.isStatus2xx( resp.status )
+
+    } yield {
+      resp.json
+        .validate[PutResponse]
+        .get
+    }
   }
 
 }

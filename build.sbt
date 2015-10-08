@@ -16,11 +16,11 @@ resolvers ++= Seq(
 libraryDependencies ++= {
   val playVsn       = "2.4.3"
   Seq(
-    "io.suggest"        %% "common"       % "0.0.0-SNAPSHOT",
-    "io.suggest"        %% "common-play"  % "0.0.0-SNAPSHOT",
-    "io.suggest"        %% "logs-macro"   % "0.0.0-SNAPSHOT",
-    "com.typesafe.play" %% "play-json"    % playVsn,
-    "com.typesafe.play" %% "play-ws"      % playVsn,
+    "io.suggest"        %% "util" % "2.0.1-SNAPSHOT" changing()
+      exclude("org.jruby", "jruby-complete")
+      exclude("org.slf4j", "slf4j-log4j12")
+      exclude("log4j", "log4j")
+      exclude("org.slf4j", "log4j-over-slf4j"),
     // test
     "org.scalatest"     %% "scalatest" % "2.2.+" % "test",   // Потом надо на 2.3 переключится.
     "org.scalatestplus" %% "play" % "1.4.0-SNAPSHOT" % "test"
