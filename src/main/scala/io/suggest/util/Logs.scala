@@ -127,47 +127,6 @@ class LogsImpl(className: String) extends LogsAbstract {
 }
 
 
-
-object MacroLogsImpl extends Serializable {
-  def getMacroLogger(clazz: Class[_]) = MacroLogger(LoggerFactory.getLogger(clazz))
-}
-
-import MacroLogsImpl._
-
-
-/** Интерфейс поля логгера. */
-trait MacroLogsI {
-  def LOGGER: MacroLogger
-}
-
-trait MacroLogsDyn extends MacroLogsI {
-  override def LOGGER = getMacroLogger(getClass)
-}
-
-/** Используем scala macros логгирование, которое НЕ порождает вообще лишнего мусора и куч анонимных функций.
-  * Трейт подмешивается в класс, и затем нужно сделать "import LOGGER._". Это импортнёт scala-макросы как методы. */
-trait MacroLogsImpl extends MacroLogsDyn {
-  @transient
-  override val LOGGER = super.LOGGER
-}
-trait MacroLogsImplLazy extends MacroLogsDyn {
-  @transient
-  override lazy val LOGGER = super.LOGGER
-}
-
-
-
-/** Доп-функции для [[io.suggest.util.MacroLogsImpl]], который добавляется короткие вызовы для isXXXXEnabled(). */
-trait MacroLogsUtil {
-  def LOGGER: MacroLogger
-  def isTraceEnabled = LOGGER.underlying.isTraceEnabled
-  def isDebugEnabled = LOGGER.underlying.isDebugEnabled
-  def isInfoEnabled  = LOGGER.underlying.isInfoEnabled
-  def isWarnEnabled  = LOGGER.underlying.isWarnEnabled
-  def isErrorEnabled = LOGGER.underlying.isErrorEnabled
-}
-
-
 /** Если нужно добавить MacroLogger в Cascading Operation, то можно использовать этот трейт. */
 trait CascadingMacroLoggerOp[Context] extends Operation[Context] {
   var LOGGER: MacroLogger = null

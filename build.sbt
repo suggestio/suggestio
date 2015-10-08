@@ -30,8 +30,9 @@ libraryDependencies ++= {
   val bcVsn         = "1.52"
   val phantomVersion = "1.2.7"
   Seq(
-    "io.suggest" %% "common" % "0.0.0-SNAPSHOT",
-    "io.suggest" %% "common-play" % "0.0.0-SNAPSHOT",
+    "io.suggest" %% "common"       % "0.0.0-SNAPSHOT",
+    "io.suggest" %% "common-play"  % "0.0.0-SNAPSHOT",
+    "io.suggest" %% "logs-macro"   % "0.0.0-SNAPSHOT",
     "org.slf4j" % "slf4j-api" % slf4jVsn,
     "org.slf4j" % "slf4j-log4j12" % slf4jVsn,
     "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.+",
@@ -44,7 +45,6 @@ libraryDependencies ++= {
     "com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % "2.5.2",
     "org.json4s" %% "json4s-native" % "3.+",
     "com.typesafe.play" %% "play-json" % playVsn,
-    "com.typesafe.play" %% "play-ws"   % playVsn,
     // ES
     "org.elasticsearch" % "elasticsearch" % esVsn,
     // Parsers
