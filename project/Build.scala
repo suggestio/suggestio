@@ -10,32 +10,6 @@ import PlayScalaJS.autoImport._
 
 object SiobixBuild extends Build {
 
-  /*lazy val cascadingEs2 = {
-    val ces2 ="cascading-elasticsearch2"
-    Project(
-      id    = ces2,
-      base  = file("bixo/" + ces2),
-      dependencies = Seq(util)
-    )
-  }
-
-  lazy val siobix = Project(
-    id = "siobix",
-    base = file("bixo"),
-    dependencies = Seq(util, cascadingEs2)
-  )*/
-
-  //}
-
-  lazy val commonPlay = {
-    val name = "common-play"
-    Project(
-      id    = name,
-      base  = file(name),
-      dependencies = Seq(common)
-    )
-  }
-
   /** Общий код серверной и клиентской частей подсистемы внешнего размещения. */
   lazy val common = {
     val name = "common"
@@ -73,7 +47,7 @@ object SiobixBuild extends Build {
 
   /** Поддержка seaweedfs */
   lazy val swfs = project
-    .dependsOn(common, commonPlay, logsMacro)
+    .dependsOn(util)
 
   /** Все мелкие скрипты кроме выдачи (т.е. весь my.suggest.io + буклет и т.д) объеденены в одном большом js. */
   lazy val lkSjs = {
@@ -93,7 +67,7 @@ object SiobixBuild extends Build {
 
   /** Утиль, была когда-то расшарена между siobix и sioweb. Постепенно стала просто свалкой. */
   lazy val util = project
-    .dependsOn(common, commonPlay, logsMacro)
+    .dependsOn(common, logsMacro)
 
   /** Внутренний форк securesocial. */
   lazy val securesocial = project
@@ -115,7 +89,7 @@ object SiobixBuild extends Build {
       .settings(
         scalaVersion := "2.11.6"
       )
-      .aggregate(commonPlay, common, lkAdvExtSjs, lkSjs, swfs, util, securesocial, scSjs, web21)
+      .aggregate(common, lkAdvExtSjs, lkSjs, swfs, util, securesocial, scSjs, web21)
   }
 
   // Активация offline-режима резолва зависимостей.

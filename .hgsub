@@ -1,7 +1,6 @@
 web21			= web21
 util			= util
 securesocial		= securesocial
-common-play		= common-play
 lk-sjs			= lk-sjs
 lk-adv-ext-sjs		= lk-adv-ext-sjs
 common-sjs		= common-sjs
