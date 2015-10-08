@@ -1,6 +1,6 @@
 package io.suggest.swfs.client.proto.put
 
-import play.api.libs.iteratee.Enumerator
+import java.io.File
 
 /**
  * Suggest.io
@@ -25,8 +25,16 @@ trait IPutRequest {
   /** fid, т.е. раздел и id файла. */
   def fid             : String
 
-  /** Асинхронный поток данных, которые нужно сохранить. */
-  def data            : Enumerator[Array[Byte]]
+  /** Источник данных -- файл. */
+  def file            : File
+
+  def contentType     : String
+
+  def fileName        : Option[String]
+
+  def getFileName: String = {
+    fileName getOrElse file.getName
+  }
 
   /** Сборка URL запроса. */
   def toUrl: String = {
@@ -38,9 +46,11 @@ trait IPutRequest {
 
 /** Дефолтовая реализация [[IPutRequest]]. */
 case class PutRequest(
-  override val volUrl    : String,
-  override val fid       : String,
-  override val data      : Enumerator[Array[Byte]],
-  override val proto     : String = "http"
+  override val volUrl       : String,
+  override val fid          : String,
+  override val file         : File,
+  override val contentType  : String,
+  override val fileName     : Option[String],
+  override val proto        : String = "http"
 )
   extends IPutRequest

@@ -27,7 +27,7 @@ object SwfsClientWs {
 trait ISwfsClientWs extends ISwfsClient with MacroLogsI {
 
   /** play.ws-клиента (http-клиент).  */
-  def ws    : WSClient
+  implicit def ws    : WSClient
 
   /** Конфиг play application. */
   def conf  : Configuration
@@ -38,8 +38,8 @@ trait ISwfsClientWs extends ISwfsClient with MacroLogsI {
 /** DI-реализация высокоуровневого seaweedfs-клиента. */
 @Singleton
 class SwfsClientWs @Inject() (
-  override val ws    : WSClient,
-  override val conf  : Configuration
+  override val conf         : Configuration,
+  override implicit val ws  : WSClient
 )
   extends MacroLogsImpl
   with Assign

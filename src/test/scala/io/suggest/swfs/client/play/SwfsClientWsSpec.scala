@@ -43,19 +43,21 @@ class SwfsClientWsSpec extends PlaySpec with OneAppPerSuite  {
         assert(asRes.fidParsed.fileId.length > 4, asRes.fidParsed)
 
         // PUT
-        val sample1 = "test0 test0 test0 test0 test0"
-        val sample2 = "test0 test0 test0 test0 test0"
-        val putReq = PutRequest(
+        // Подготовить (создать) тестовый файл, TODO закинуть в него тестовые данные.
+        ???
+        val f = File.createTempFile("swfs-client-test", ".txt")
+
+        /*val putReq = PutRequest(
           volUrl = asRes.url,
           fid    = asRes.fid,
-          data   = Enumerator(sample1.getBytes, sample2.getBytes)
+          file   = ???
         )
 
         whenReady(cl.put(putReq), timeout(Span(2, Seconds))) { putResp =>
           putResp.size  shouldBe  (sample1.length + sample2.length)
 
           // TODO read, delete
-        }
+        }*/
       }
     }
 
