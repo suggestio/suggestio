@@ -1,5 +1,6 @@
 package io.suggest.swfs.client.proto.assign
 
+import io.suggest.swfs.client.proto.fid.Fid
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -26,4 +27,8 @@ case class AssignResponse(
   fid         : String,
   url         : String,
   publicUrl   : Option[String]
-)
+) {
+
+  lazy val fidParsed = Fid(fid)
+
+}

@@ -1,11 +1,10 @@
 package io.suggest.swfs.client.play
 
-import com.google.inject.Inject
+import com.google.inject.{Singleton, Inject}
 import io.suggest.swfs.client.ISwfsClient
-import io.suggest.swfs.client.proto.assign.{AssignRequest, AssignResponse}
+import io.suggest.util.{MacroLogsI, MacroLogsImpl}
+import play.api.Configuration
 import play.api.libs.ws.WSClient
-
-import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -15,10 +14,23 @@ import scala.concurrent.{ExecutionContext, Future}
  * Модели живут на стороне play, поэтому в качестве клиента жестко привязан WSClient c DI.
  */
 
-class SwfsClientWs @Inject() (ws: WSClient) extends ISwfsClient {
+/** Интерфейс play.ws-клиента для написания трейтов частичных реализаций. */
+trait ISwfsClientWs extends ISwfsClient with MacroLogsI {
 
-  override def assign(args: AssignRequest)(implicit ec: ExecutionContext): Future[AssignResponse] = {
-    ???
-  }
+  /** play.ws-клиента (http-клиент).  */
+  def ws    : WSClient
+
+  /** Конфиг play application. */
+  def conf  : Configuration
 
 }
+
+
+/** DI-реализация высокоуровневого seaweedfs-клиента. */
+@Singleton
+class SwfsClientWs @Inject() (
+  override val ws    : WSClient,
+  override val conf  : Configuration
+)
+  extends MacroLogsImpl
+  with Assign

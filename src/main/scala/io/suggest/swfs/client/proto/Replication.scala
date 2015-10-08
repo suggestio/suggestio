@@ -1,5 +1,7 @@
 package io.suggest.swfs.client.proto
 
+import play.api.libs.json._
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -21,7 +23,7 @@ object Replication {
       throw new IllegalArgumentException("unknown replication format: " + src)
 
     def _parseArg(i: Int): Int = {
-      src.charAt(i).toInt
+      src.charAt(i).toString.toInt
     }
 
     Replication(
@@ -31,6 +33,28 @@ object Replication {
     )
   }
 
+
+  /** JSON-десериализация из JsString. */
+  val READS = Reads[Replication] {
+    case JsString(r) =>
+      try {
+        JsSuccess( apply(r) )
+      } catch {
+        case ex: Throwable =>
+          JsError("expected.replication.format")
+      }
+    case other =>
+      JsError( "expected.jsstring" )
+  }
+
+  /** Сериализация в JsString. */
+  val WRITES = Writes[Replication] { r =>
+    JsString( r.toString )
+  }
+
+  /** Поддержка JSON. */
+  implicit val FORMAT = Format(READS, WRITES)
+
 }
 
 
@@ -39,5 +63,9 @@ case class Replication(
   otherRack : Int = 0,
   sameRack  : Int = 0
 ) {
-  override def toString = s"$otherDc$otherRack$sameRack"
+
+  override def toString: String = {
+    s"$otherDc$otherRack$sameRack"
+  }
+
 }
