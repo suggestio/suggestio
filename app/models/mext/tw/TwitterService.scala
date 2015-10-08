@@ -6,7 +6,7 @@ import models.adv.ext.Mad2ImgUrlCalcT
 import models.im.{OutImgFmts, OutImgFmt}
 import models.mext.tw.card.{TwImgSizes, PhotoCardArgs}
 import models.{Context, IRenderable, MAd}
-import models.mext.{IMpUploadSupport, MExtServices, IExtService}
+import models.mext.{MExtServices, IExtService}
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 

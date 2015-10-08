@@ -1,7 +1,7 @@
 package models.event
 
 import io.suggest.common.menum.EnumMaybeWithName
-import io.suggest.common.menum.play.EnumJsonReadsT
+import io.suggest.model.menum.EnumJsonReadsT
 import models.Context
 import play.api.libs.json._
 import play.twirl.api.{Html, Template2}

@@ -1,8 +1,8 @@
 package util.adv.ut
 
+import io.suggest.ahc.upload.{UploadRefusedException, IMpUploadArgs}
 import models.adv.ext.act.ExtActorEnv
 import models.event.{MEventTypes, ErrorInfo}
-import models.mext.{IMpUploadArgs, UploadRefusedException}
 import play.api.libs.ws.WSResponse
 import util.adv.IWsClient
 import util.async.FsmActor

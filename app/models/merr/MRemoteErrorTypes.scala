@@ -1,7 +1,7 @@
 package models.merr
 
 import io.suggest.common.menum.EnumMaybeWithName
-import io.suggest.common.menum.play.EnumJsonReadsT
+import io.suggest.model.menum.EnumJsonReadsT
 
 /**
  * Suggest.io

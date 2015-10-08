@@ -1,9 +1,9 @@
 package models.mws
 
 import io.suggest.common.menum.EnumMaybeWithName
-import io.suggest.common.menum.play.EnumJsonReadsT
 import io.suggest.common.ws.proto.MAnswerStatusesBaseT
 import io.suggest.common.ws.proto.AnswerStatusConstants._
+import io.suggest.model.menum.EnumJsonReadsT
 
 /** Модель статусов ответов для WebSocket JSON протокола. */
 object AnswerStatuses extends Enumeration with EnumMaybeWithName with MAnswerStatusesBaseT with EnumJsonReadsT {

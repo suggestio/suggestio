@@ -3,7 +3,7 @@ package models.mext
 import _root_.util.PlayLazyMacroLogsImpl
 import io.suggest.adv.ext.model.MServices._
 import io.suggest.adv.ext.model._
-import io.suggest.common.menum.play.EnumJsonReadsT
+import io.suggest.model.menum.EnumJsonReadsT
 import models.adv.MExtTarget
 import models.mext.fb.FacebookService
 import models.mext.tw.TwitterService

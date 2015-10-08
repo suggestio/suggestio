@@ -3,6 +3,7 @@ package models.im
 import java.io.FileNotFoundException
 import java.util.UUID
 
+import io.suggest.itee.IteeUtil
 import io.suggest.model.img.IImgMeta
 import io.suggest.primo.TypeT
 import io.suggest.util.UuidUtil
@@ -13,7 +14,7 @@ import play.api.mvc.QueryStringBindable
 import play.api.Play.{current, isProd, configuration}
 import util.qsb.QsbSigner
 import util.secure.SecretGetter
-import util.xplay.{IteeUtil, CacheUtil}
+import util.xplay.CacheUtil
 import util.PlayMacroLogsImpl
 
 import scala.concurrent.Future

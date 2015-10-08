@@ -132,7 +132,7 @@ trait IExtService {
    * @return Some(), если сервис поддерживает multi-part upload.
    *         None, если сервис не поддерживает загрузку по multipart.
    */
-  def maybeMpUpload: Option[IMpUploadSupport] = None
+  def maybeMpUpload: Option[IExtMpUploadSupport] = None
 
   /**
    * Если логин через этот сервис поддерживается, то тут API.

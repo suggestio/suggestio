@@ -2,10 +2,10 @@ package util.ws
 
 import java.io.{FileOutputStream, File}
 
+import io.suggest.itee.IteeUtil
 import play.api.libs.iteratee.Iteratee
 import play.api.libs.ws.{WSClient, WSResponseHeaders}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.xplay.IteeUtil
 
 import scala.concurrent.Future
 

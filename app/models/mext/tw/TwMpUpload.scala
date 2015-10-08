@@ -1,6 +1,7 @@
 package models.mext.tw
 
 import com.ning.http.client.AsyncHttpClient
+import io.suggest.ahc.upload.{IMpUploadArgs, MpUploadSupportDflt}
 import models.mext._
 import play.api.libs.oauth.OAuthCalculator
 import play.api.libs.ws.WSResponse
@@ -11,7 +12,7 @@ import play.api.libs.ws.WSResponse
  * Created: 14.04.15 15:15
  * Description: Поддержка аплоада media для твиттера.
  */
-trait TwMpUpload extends MpUploadSupportDflt { this: TwitterService =>
+trait TwMpUpload extends MpUploadSupportDflt with IExtMpUploadSupport { this: TwitterService =>
   /**
    * Твиттер поддерживает upload по одному и тому же ресурсу.
    * @param args ignored.

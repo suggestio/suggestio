@@ -3,6 +3,7 @@ package util.adv
 import java.io.File
 
 import akka.actor.Props
+import io.suggest.ahc.upload.IMpUploadArgs
 import models.adv.ext.act.EtaCustomArgsBase
 import models.adv.js.ctx.JsErrorInfo
 import models.adv.IOAuth1AdvTargetActorArgs

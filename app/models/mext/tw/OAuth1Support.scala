@@ -1,6 +1,7 @@
 package models.mext.tw
 
 import com.ning.http.client.AsyncHttpClient
+import io.suggest.ahc.util.NingUtil
 import models.msc.SiteQsArgs
 import util.{PlayMacroLogsI, FormUtil, TplDataFormatUtil}
 import models.Context
@@ -8,7 +9,7 @@ import models.mext.{IOa1MkPostArgs, IExtPostInfo, IOAuth1Support}
 import play.api.libs.oauth._
 import play.api.libs.ws.WSClient
 import play.api.Play.{current, configuration}
-import util.ws.NingUtil.ningFut2wsScalaFut
+import NingUtil.ningFut2wsScalaFut
 
 import scala.concurrent.{ExecutionContext, Future}
 

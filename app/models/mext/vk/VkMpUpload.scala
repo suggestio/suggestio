@@ -1,5 +1,6 @@
 package models.mext.vk
 
+import io.suggest.ahc.upload.{IMpUploadArgs, MpUploadSupportDflt}
 import models.mext._
 import play.api.libs.ws.WSResponse
 
@@ -9,7 +10,7 @@ import play.api.libs.ws.WSResponse
  * Created: 14.04.15 15:12
  * Description: Поддержка аплода для вконтакта.
  */
-trait VkMpUpload extends MpUploadSupportDflt {
+trait VkMpUpload extends MpUploadSupportDflt with IExtMpUploadSupport {
   /**
    * vk используется динамические URL для подгрузки. URL должен быть задан в аргументах.
    * @param args Аргументы upload.
