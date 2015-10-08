@@ -90,31 +90,32 @@ libraryDependencies ++= {
   "org.apache.xmlgraphics" % "batik-awt-util" % "1.7" intransitive(),
   "xml-apis" % "xml-apis" % "1.4.01",
   "xml-apis" % "xml-apis-ext" % "1.3.04",
+  // Логин через соц.сети
+  "io.suggest" %% "securesocial" % "3.4.0-SNAPSHOT"
+    exclude("commons-logging", "commons-logging")
+    exclude("org.w3c.css", "sac")
+  ,
+  "commons-io" % "commons-io" % "2.4",
   // test
   // play-2.3.x: Устарел selenium
   // org.w3c.css#sac конфликтует xml-apis-ext
-  "org.fluentlenium" % "fluentlenium-festassert" % "0.10.2"
+  "org.fluentlenium" % "fluentlenium-festassert" % "0.10.2" % "test"
     exclude("commons-logging", "commons-logging")
     exclude("org.w3c.css", "sac")
   ,
-  "org.fluentlenium" % "fluentlenium-core" % "0.10.2"
+  "org.fluentlenium" % "fluentlenium-core" % "0.10.2" % "test"
     exclude("commons-logging", "commons-logging")
     exclude("org.w3c.css", "sac")
   ,
-  "org.seleniumhq.selenium" % "selenium-java" % "2.45.0"
+  "org.seleniumhq.selenium" % "selenium-java" % "2.45.0" % "test"
     exclude("commons-logging", "commons-logging")
     exclude("org.w3c.css", "sac")
   ,
-  "net.sourceforge.htmlunit" % "htmlunit-core-js" % "2.15"
+  "net.sourceforge.htmlunit" % "htmlunit-core-js" % "2.15" % "test"
     exclude("commons-logging", "commons-logging")
     exclude("org.w3c.css", "sac")
   ,
-  "net.sourceforge.htmlunit" % "htmlunit" % "2.15"
-    exclude("commons-logging", "commons-logging")
-    exclude("org.w3c.css", "sac")
-  ,
-  // Логин через соц.сети
-  "io.suggest" %% "securesocial" % "3.4.0-SNAPSHOT"
+  "net.sourceforge.htmlunit" % "htmlunit" % "2.15" % "test"
     exclude("commons-logging", "commons-logging")
     exclude("org.w3c.css", "sac")
   ,
