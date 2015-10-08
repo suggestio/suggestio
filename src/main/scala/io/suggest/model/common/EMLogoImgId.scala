@@ -1,8 +1,7 @@
 package io.suggest.model.common
 
 import io.suggest.model._
-import org.elasticsearch.common.xcontent.XContentBuilder
-import EsModel._
+import EsModel.{stringParser, FieldsJsonAcc}
 import io.suggest.util.SioEsUtil._
 import play.api.libs.json.JsString
 
@@ -12,6 +11,16 @@ import play.api.libs.json.JsString
  * Created: 02.04.14 17:16
  * Description: Аддон для Es-моделей, имеющих необязательное поле для id логотипа: магазины, тц и т.д.
  */
+
+object EMLogoImgId {
+
+  val LOGO_IMG_ID_ESFN  = "logoImgId"
+
+}
+
+
+import EMLogoImgId._
+
 
 trait EMLogoImgIdStatic extends EsModelStaticMutAkvT {
   override type T <: EMLogoImgId

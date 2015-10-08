@@ -44,6 +44,7 @@ trait IMpUploadSupport {
 
 }
 
+
 /** Дефолтовая реализация multi-part upload. */
 trait MpUploadSupportDflt extends IMpUploadSupport with MacroLogsI {
 
@@ -76,7 +77,7 @@ trait MpUploadSupportDflt extends IMpUploadSupport with MacroLogsI {
   }
 
   /** Обработать запрос, отсеивая ошибки. */
-  def processResponce(args: IMpUploadArgs, resp: WSResponse)(implicit ec: ExecutionContext): Future[WSResponse] = {
+  def processResponse(args: IMpUploadArgs, resp: WSResponse)(implicit ec: ExecutionContext): Future[WSResponse] = {
     if ( isRespOk(args, resp) ) {
       Future successful resp
     } else {
@@ -89,7 +90,7 @@ trait MpUploadSupportDflt extends IMpUploadSupport with MacroLogsI {
     try {
       val reqFut = mkRequest(args)
       reqFut flatMap { resp =>
-        processResponce(args, resp)
+        processResponse(args, resp)
       }
     } catch {
       case ex: Throwable =>
@@ -119,5 +120,6 @@ case class MpUploadArgs(
 
 
 /** Сервис отказал в аплоаде. */
-case class UploadRefusedException(msg: String, wsResp: WSResponse) extends RuntimeException(msg)
+case class UploadRefusedException(msg: String, wsResp: WSResponse)
+  extends RuntimeException(msg)
 

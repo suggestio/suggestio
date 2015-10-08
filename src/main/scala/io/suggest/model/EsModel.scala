@@ -24,7 +24,6 @@ import org.elasticsearch.client.Client
 import scala.util.{Failure, Success}
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.ym.model._
-import org.elasticsearch.search.sort.SortOrder
 import org.elasticsearch.action.index.IndexRequestBuilder
 import scala.annotation.tailrec
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -81,6 +80,8 @@ object EsModel extends MacroLogsImpl {
     }
   }
 
+
+  // TODO спилить это. Используется только в seqTreeSort.
   implicit def listCmpOrdering[T <: Comparable[T]] = new ListCmpOrdering[T]
 
   /** Отправить маппинги всех моделей в ES. */
@@ -124,20 +125,12 @@ object EsModel extends MacroLogsImpl {
 
 
   // Имена полей в разных хранилищах. НЕЛЬЗЯ менять их значения.
-  val MART_ID_ESFN      = "martId"
   val NAME_ESFN         = "name"
-  val DESCRIPTION_ESFN  = "description"
-  val SHOP_ID_ESFN      = "shopId"
-  val AUTH_INFO_ESFN    = "authInfo"
-  val URL_ESFN          = "url"
   val PARENT_ID_ESFN    = "parentId"
   val PERSON_ID_ESFN    = "personId"
   val KEY_ESFN          = "key"
   val VALUE_ESFN        = "value"
   val IS_VERIFIED_ESFN  = "isVerified"
-  val LOGO_IMG_ID_ESFN  = "logoImgId"
-  /** Настройки. Это под-объект, чьё содержимое никогда не анализируется никем. */
-  val META_ESFN         = "meta"
 
   val MAX_RESULTS_DFLT = 100
   val OFFSET_DFLT = 0
