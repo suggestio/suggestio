@@ -31,20 +31,20 @@ libraryDependencies ++= {
   val phantomVersion = "1.2.7"
   Seq(
     "io.suggest" %% "common"       % "0.0.0-SNAPSHOT",
-    "io.suggest" %% "common-play"  % "0.0.0-SNAPSHOT",
     "io.suggest" %% "logs-macro"   % "0.0.0-SNAPSHOT",
     "org.slf4j" % "slf4j-api" % slf4jVsn,
     "org.slf4j" % "slf4j-log4j12" % slf4jVsn,
     "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.+",
     "org.gnu.inet" % "libidn" % "1.15",
     "com.github.nscala-time" %% "nscala-time" % "1.+",
-    "commons-lang" % "commons-lang" % "2.+",
+    "org.apache.commons" % "commons-lang3" % "3.+",
     "org.im4java" % "im4java" % "1.+",
     // JSON
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.5.1",
     "com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % "2.5.2",
     "org.json4s" %% "json4s-native" % "3.+",
-    "com.typesafe.play" %% "play-json" % playVsn,
+    "com.typesafe.play" %% "play-json"  % playVsn,
+    "com.typesafe.play" %% "play-ws"    % playVsn,
     // ES
     "org.elasticsearch" % "elasticsearch" % esVsn,
     // Parsers

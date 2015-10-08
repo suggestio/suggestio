@@ -3,9 +3,10 @@ package io.suggest.model.n2.media.storage
 import java.nio.ByteBuffer
 import java.util.UUID
 
+import io.suggest.itee.IteeUtil
 import io.suggest.model.MUserImg2
 import org.joda.time.DateTime
-import play.api.libs.iteratee.{Iteratee, Enumerator}
+import play.api.libs.iteratee.Enumerator
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import IMediaStorage.STYPE_FN_FORMAT
@@ -23,7 +24,7 @@ object CassandraStorage {
   val QUALIFIER_FN_FORMAT = (__ \ MStorFns.QUALIFIER.fn).formatNullable[String]
   val ROW_KEY_FN_FORMAT   = (__ \ MStorFns.ROW_KEY.fn).format[UUID]
 
-  implicit val READS: Reads[CassandraStorage] = (
+  val READS: Reads[CassandraStorage] = (
     STYPE_FN_FORMAT.filter { _ == MStorages.Cassandra } and
     ROW_KEY_FN_FORMAT and
     QUALIFIER_FN_FORMAT
@@ -31,13 +32,15 @@ object CassandraStorage {
     { (_, rowKey, qOpt) => CassandraStorage(rowKey, qOpt) }
   )
 
-  implicit val WRITES: OWrites[CassandraStorage] = (
+  val WRITES: OWrites[CassandraStorage] = (
     (STYPE_FN_FORMAT : OWrites[MStorage]) and
     ROW_KEY_FN_FORMAT and
     QUALIFIER_FN_FORMAT
   ) { cs =>
     (cs.sType, cs.rowKey, cs.qOpt)
   }
+
+  implicit val FORMAT = Format(READS, WRITES)
 
 }
 
@@ -67,25 +70,8 @@ case class CassandraStorage(
 
   override def write(data: Enumerator[Array[Byte]])(implicit ec: ExecutionContext): Future[_] = {
     // Сдампить блобики в один единый блоб.
-    val itee = Iteratee.fold [Array[Byte], List[Array[Byte]]] (Nil) {
-      (acc0, e) =>
-        e :: acc0
-    }
-    (data |>>> itee)
-      .map { arraysRev =>
-        // Оптимизация для результатов из ровно одного куска.
-        if (arraysRev.tail.isEmpty) {
-          arraysRev.head
-
-        } else {
-          // Если кусков несколько, от восстановить исходных порядок и склеить в один массив.
-          arraysRev
-            .reverseIterator
-            .flatten
-            .toArray
-        }
-
-      }.flatMap { barr =>
+    IteeUtil.dumpBlobs( data )
+      .flatMap { barr =>
         val mimg2 = MUserImg2(
           q         = MUserImg2.qOpt2q(qOpt),
           img       = ByteBuffer.wrap(barr),

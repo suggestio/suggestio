@@ -1,7 +1,7 @@
 package io.suggest.ym.model
 
-import io.suggest.common.menum.play.EnumJsonReadsT
 import io.suggest.common.menum.{EnumMaybeWithId, EnumMaybeWithName}
+import io.suggest.model.menum.EnumJsonReadsT
 import io.suggest.util.MyConfig.CONFIG
 
 /**

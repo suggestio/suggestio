@@ -1,7 +1,7 @@
 package io.suggest.model.n2.node.meta.colors
 
 import io.suggest.common.menum.EnumMaybeWithName
-import io.suggest.common.menum.play.EnumJsonReadsValT
+import io.suggest.model.menum.EnumJsonReadsValT
 
 /**
  * Suggest.io

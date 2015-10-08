@@ -1,0 +1,5 @@
+Server-side only utils.
+
+See also:
+- For cross-compiled util see `common`.
+- For scala.js utils see `common-sjs`.

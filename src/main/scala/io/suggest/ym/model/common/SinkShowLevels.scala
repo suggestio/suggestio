@@ -1,7 +1,7 @@
 package io.suggest.ym.model.common
 
 import io.suggest.common.menum.EnumMaybeWithName
-import io.suggest.common.menum.play.EnumJsonReadsValT
+import io.suggest.model.menum.EnumJsonReadsValT
 import io.suggest.util.MacroLogsImplLazy
 import io.suggest.ym.model.AdShowLevel
 import scala.collection.JavaConversions._

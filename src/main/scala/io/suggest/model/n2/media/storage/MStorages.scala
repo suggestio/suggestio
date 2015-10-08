@@ -1,7 +1,7 @@
 package io.suggest.model.n2.media.storage
 
 import io.suggest.common.menum.EnumMaybeWithName
-import io.suggest.common.menum.play.EnumJsonReadsT
+import io.suggest.model.menum.EnumJsonReadsT
 
 /**
  * Suggest.io

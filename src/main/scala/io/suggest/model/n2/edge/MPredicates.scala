@@ -1,10 +1,9 @@
 package io.suggest.model.n2.edge
 
 import io.suggest.common.menum.{EnumTree, EnumMaybeWithName}
-import io.suggest.common.menum.play._
+import io.suggest.model.menum.EnumJsonReadsValT
 import io.suggest.model.n2.node.{MNodeTypes, MNodeType}
 import play.api.libs.json._
-import play.api.libs.functional.syntax._
 
 /**
  * Suggest.io

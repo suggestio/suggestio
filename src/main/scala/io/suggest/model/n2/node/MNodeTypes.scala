@@ -1,7 +1,7 @@
 package io.suggest.model.n2.node
 
 import io.suggest.common.menum.{EnumTree, EnumMaybeWithName}
-import io.suggest.common.menum.play.EnumJsonReadsValT
+import io.suggest.model.menum.EnumJsonReadsValT
 
 /**
  * Suggest.io
