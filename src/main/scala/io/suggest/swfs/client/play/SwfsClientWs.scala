@@ -44,4 +44,5 @@ class SwfsClientWs @Inject() (
   extends MacroLogsImpl
   with Assign
   with Put
+  with Get
   with Delete

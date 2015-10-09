@@ -1,6 +1,7 @@
 package io.suggest.swfs.client.play
 
 import io.suggest.swfs.client.proto.delete._
+import io.suggest.swfs.client.proto.file.FileOpUnknownResponseException
 
 import scala.concurrent.{Future, ExecutionContext}
 
@@ -12,7 +13,7 @@ import scala.concurrent.{Future, ExecutionContext}
  */
 trait Delete extends ISwfsClientWs {
 
-  override def delete(args: IDeleteRequest)(implicit ec: ExecutionContext): Future[IDeleteResponse] = {
+  override def delete(args: IDeleteRequest)(implicit ec: ExecutionContext): Future[Option[IDeleteResponse]] = {
     val url = args.toUrl
     val method = "DELETE"
     for {
@@ -20,12 +21,14 @@ trait Delete extends ISwfsClientWs {
     } yield {
       val s = wsResp.status
       if ( SwfsClientWs.isStatus2xx(s) ) {
-        wsResp.json.validate[DeleteResponse].get
-      } else if ( s == 404 ) {
-        wsResp.json.validate[FileNotFoundResponse].get
+        wsResp.json
+          .validate[DeleteResponse]
+          .asOpt
+      } else if (s == 404) {
+        None
       } else {
         LOGGER.warn(s"Unknown answer received from $method $url => ${wsResp.status} ${wsResp.statusText}:\n ${wsResp.body}")
-        UnexpectedResponse(wsResp)
+        throw FileOpUnknownResponseException(method, url, wsResp.status, Some(wsResp.body))
       }
     }
   }
