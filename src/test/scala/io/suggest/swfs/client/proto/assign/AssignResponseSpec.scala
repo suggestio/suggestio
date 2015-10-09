@@ -19,7 +19,7 @@ class AssignResponseSpec extends FlatSpec with PlayJsonTesting {
         count = 1,
         fid   = "3,01637037d6",
         url   = "127.0.0.1:8080",
-        publicUrl = Some( "localhost:8080" )
+        publicUrl = "localhost:8080"
       )
     }
   }
@@ -31,7 +31,7 @@ class AssignResponseSpec extends FlatSpec with PlayJsonTesting {
       count = 1,
       fid   = "3,01637037d6",
       url   = "127.0.0.1:8080",
-      publicUrl = Some( "localhost:8080" )
+      publicUrl = "localhost:8080"
     )
 
     val jsv = Json.parse( json )

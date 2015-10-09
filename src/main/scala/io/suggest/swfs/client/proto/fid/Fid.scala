@@ -7,10 +7,8 @@ package io.suggest.swfs.client.proto.fid
  * Description: Модель представления fid'ов, который состоит из id файла и id раздела.
  */
 
-trait IFid {
 
-  /** Номер volume. */
-  def volumeId  : Int
+trait IFid extends IVolumeId {
 
   /** id файла внутри volume. */
   def fileId    : String

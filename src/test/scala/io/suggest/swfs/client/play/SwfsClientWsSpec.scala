@@ -5,6 +5,7 @@ import java.io.File
 import io.suggest.itee.IteeUtil
 import io.suggest.swfs.client.proto.delete.DeleteRequest
 import io.suggest.swfs.client.proto.get.GetRequest
+import io.suggest.swfs.client.proto.lookup.LookupRequest
 import io.suggest.swfs.client.proto.put.PutRequest
 import org.apache.commons.io.FileUtils
 import org.scalatest.concurrent.ScalaFutures._
@@ -26,7 +27,7 @@ class SwfsClientWsSpec extends PlaySpec with OneAppPerSuite {
     new FakeApplication(
       path = new File("target/"),
       additionalConfiguration = Map(
-        Assign.MASTERS_CK     -> Seq("localhost:9333")
+        SwfsClientWs.MASTERS_CK     -> Seq("localhost:9333")
       )
     )
   }
@@ -35,117 +36,190 @@ class SwfsClientWsSpec extends PlaySpec with OneAppPerSuite {
   private lazy val cl = app.injector.instanceOf( classOf[SwfsClientWs] )
 
 
-  "SeaWeedFS client" must {
+  "SeaWeedFS client" when {
 
     val _timeout = timeout(Span(2, Seconds))
 
     // ASSIGN
     info("Assigning new fid...")
-    whenReady(cl.assign(), _timeout) { asRes =>
-      val fileUrl = "http://" + asRes.url + "/" + asRes.fid
-      info("Assigned new fid: " + fileUrl)
+    val asResp = whenReady(cl.assign(), _timeout) { asRes =>
 
-      "handle assign response" in {
-        asRes.count   shouldBe  1
-        assert(asRes.fid.length > 4, asRes.fid)
-        assert(asRes.fidParsed.volumeId >= 0, asRes.fidParsed)
-        assert(asRes.fidParsed.fileId.length > 4, asRes.fidParsed)
+      "assign response received" must {
+        "containt ONE count" in {
+          asRes.count shouldBe 1
+        }
+        "contain non-empty fid" in {
+          assert(asRes.fid.length > 4, asRes.fid)
+        }
+        "contain looking-valid (positive) volume id" in {
+          assert(asRes.fidParsed.volumeId >= 0, asRes.fidParsed)
+        }
+        "contain non-empty file id" in {
+          assert(asRes.fidParsed.fileId.length > 4, asRes.fidParsed)
+        }
       }
+      asRes
+    }
+
+    val fileUrl = "http://" + asResp.url + "/" + asResp.fid
+    info("Assigned new fid: " + fileUrl)
 
 
-      // PUT
-      // Подготовить (создать) тестовый файл, TODO закинуть в него тестовые данные.
-      val f = File.createTempFile("swfs-client-test", ".txt")
-      f.deleteOnExit()
+    // PUT
+    // Подготовить (создать) тестовый файл, TODO закинуть в него тестовые данные.
+    val f = File.createTempFile("swfs-client-test", ".txt")
+    f.deleteOnExit()
 
-      val fileData = "test test test test test test test test test"
-      FileUtils.write(f, fileData)
-      val ct = "text/plain"
+    val fileData = "test test test test test test test test test"
+    FileUtils.write(f, fileData)
+    val ct = "text/plain"
 
-      "PUT file" in {
-        val putReq = PutRequest(
-          volUrl        = asRes.url,
-          fid           = asRes.fid,
-          file          = f,
-          contentType   = ct,
-          origFileName  = None
-        )
+    "PUT new file" must {
+      val putReq = PutRequest(
+        volUrl        = asResp.url,
+        fid           = asResp.fid,
+        file          = f,
+        contentType   = ct,
+        origFileName  = None
+      )
 
-        info("PUT " + fileUrl)
-        whenReady(cl.put(putReq), _timeout) { putResp =>
-          // put resp возвращает compressed size.
+      info("PUT " + fileUrl)
+      whenReady(cl.put(putReq), _timeout) { putResp =>
+        // put resp возвращает compressed size.
+        "contain reasonable occupied storage size" in {
           putResp.occupiedSize should be <= f.length
         }
       }
+    }
 
 
-      "GET existing file" in {
-        val getReq = GetRequest(
-          volUrl = asRes.url,
-          fid    = asRes.fid
-        )
-        info("GET " + fileUrl)
-        whenReady(cl.get(getReq), _timeout) { getResp =>
+    "GET lookup for volume, related to saved file" must {
+      val lcArgs = LookupRequest(
+        volumeId = asResp.fidParsed.volumeId
+      )
+      whenReady(cl.lookup(lcArgs), _timeout) { lcResp =>
+        "have positive lookup result" in {
+          assert(lcResp.isRight, lcResp)
+        }
+        val r = lcResp.right.get
+        "contain requested volumeId" in {
+          r.volumeId  shouldBe  lcArgs.volumeId
+        }
+        "contain exactly one shard location" in {
+          r.locations.size  shouldBe  1
+        }
+        val vloc = r.locations.head
+        "contain assigned volume URL" in {
+          vloc.url  shouldBe  asResp.url
+        }
+        "contain assigned public volume URL" in {
+          vloc.publicUrl  shouldBe  asResp.publicUrl
+        }
+      }
+    }
+
+
+    "GET saved & existing file" must {
+      val getReq = GetRequest(
+        volUrl = asResp.url,
+        fid    = asResp.fid
+      )
+      info("GET " + fileUrl)
+      whenReady(cl.get(getReq), _timeout) { getResp =>
+        "contain non-empty response" in {
           assert(getResp.nonEmpty, getResp)
-          val gr = getResp.get
-          val fcontentFut = IteeUtil.dumpBlobs( gr.enumerator )
-            .map { new String(_) }
-          gr.size         shouldBe  f.length()
-          gr.contentType  shouldBe  ct
-          whenReady(fcontentFut, _timeout) { str =>
+        }
+        val gr = getResp.get
+        val fcontentFut = IteeUtil.dumpBlobs( gr.enumerator )
+          .map { new String(_) }
+        "have expected resp.body lenght" in {
+          gr.size shouldBe f.length()
+        }
+        "contain valid Content-Type" in {
+          gr.contentType shouldBe ct
+        }
+        whenReady(fcontentFut, _timeout) { str =>
+          "contain previously-stored file content" in {
             str shouldBe fileData
           }
         }
       }
+    }
 
 
-      "GET inexisting -> 404" in {
-        // GET 404
-        val getReq2 = GetRequest(
-          volUrl  = asRes.url,
-          fid     = "123" + asRes.fid
-        )
-        info("GET " + getReq2.toUrl)
-        whenReady(cl.get(getReq2), _timeout) { getResp =>
+    "GET inexisting" must {
+      // GET 404
+      val getReq2 = GetRequest(
+        volUrl  = asResp.url,
+        fid     = "123" + asResp.fid
+      )
+      info("GET " + getReq2.toUrl)
+      whenReady(cl.get(getReq2), _timeout) { getResp =>
+        "return empty response" in {
           assert(getResp.isEmpty, getResp)
         }
       }
+    }
 
 
-      val deleteReq = DeleteRequest(
-        volUrl = asRes.url,
-        fid    = asRes.fid
-      )
-      "DELETE existing -> 200 OK" in {
-        info("DELETE " + fileUrl)
-        whenReady(cl.delete(deleteReq), _timeout) { delResp =>
+    val deleteReq = DeleteRequest(
+      volUrl = asResp.url,
+      fid    = asResp.fid
+    )
+    "DELETE existing" must {
+      info("DELETE " + fileUrl)
+      whenReady(cl.delete(deleteReq), _timeout) { delResp =>
+        "have non-empty response" in {
           assert(delResp.nonEmpty, delResp)
+        }
+        "contain isExisted = true flag" in {
           val dr = delResp.get
           assert(dr.isExisted, dr)
         }
       }
+    }
 
 
-      "DELETE of already deleted -> 404/None" in {
-        info("DELETE " + fileUrl)
-        whenReady(cl.delete(deleteReq), _timeout) { del2Resp =>
+    "DELETE of already deleted" must {
+      info("DELETE " + fileUrl)
+      whenReady(cl.delete(deleteReq), _timeout) { del2Resp =>
+        "return empty response" in {
           assert(del2Resp.isEmpty, del2Resp)
         }
       }
+    }
 
 
-      // DELETE 404
-      "DELETE of never-existed file -> 404/None" in {
-        val delReq404 = deleteReq.copy(
-          fid = "1234" + deleteReq.fid
-        )
-        info("DELETE inexisting " + delReq404.toUrl)
-        whenReady(cl.delete(delReq404), _timeout) { del3Resp =>
+    "DELETE of never-existed file" must {
+      val delReq404 = deleteReq.copy(
+        fid = "1234" + deleteReq.fid
+      )
+      info("DELETE inexisting " + delReq404.toUrl)
+      whenReady(cl.delete(delReq404), _timeout) { del3Resp =>
+        "return empty response" in {
           assert(del3Resp.isEmpty, del3Resp)
         }
       }
+    }
 
-    }   // assign ready
+
+    "GET lookup inexisting volume" must {
+      val lcReq = LookupRequest(
+        volumeId = 56894590
+      )
+      whenReady(cl.lookup(lcReq), _timeout) { lcResp =>
+        "return not-found response" in {
+          assert(lcResp.isLeft, lcResp)
+        }
+        val l = lcResp.left.get
+        "contain requested volumeId" in {
+          l.volumeId  shouldBe  lcReq.volumeId
+        }
+        "contain non-empty error message field" in {
+          l.error.length should be >= 4
+        }
+      }
+    }
 
   }
 

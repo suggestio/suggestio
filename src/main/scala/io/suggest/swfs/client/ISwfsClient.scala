@@ -5,6 +5,7 @@ import io.suggest.swfs.client.play.SwfsClientWs
 import io.suggest.swfs.client.proto.assign.{IAssignResponse, IAssignRequest, AssignRequest}
 import io.suggest.swfs.client.proto.delete.{IDeleteResponse, IDeleteRequest}
 import io.suggest.swfs.client.proto.get.{IGetRequest, IGetResponse}
+import io.suggest.swfs.client.proto.lookup.{ILookupError, ILookupResponse, ILookupRequest}
 import io.suggest.swfs.client.proto.put.{IPutResponse, IPutRequest}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -52,5 +53,15 @@ trait ISwfsClient {
    *         Some() с содержимым ответа.
    */
   def get(args: IGetRequest)(implicit ec: ExecutionContext): Future[Option[IGetResponse]]
+
+
+  /**
+   * Поиск сетевого адреса volume-сервера по volume id.
+   * @param args Параметры запроса.
+   * @return Фьючерс с результатом.
+   *         Left() если ошибка какая-то.
+   *         Right() с инфой по volume.
+   */
+  def lookup(args: ILookupRequest)(implicit ec: ExecutionContext): Future[Either[ILookupError, ILookupResponse]]
 
 }

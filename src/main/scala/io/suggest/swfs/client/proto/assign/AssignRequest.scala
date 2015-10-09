@@ -1,6 +1,6 @@
 package io.suggest.swfs.client.proto.assign
 
-import io.suggest.swfs.client.proto.Replication
+import io.suggest.swfs.client.proto.{IToQs, Replication}
 
 /**
  * Suggest.io
@@ -16,13 +16,13 @@ object AssignRequest {
 }
 
 
-trait IAssignRequest {
+trait IAssignRequest extends IToQs {
 
   def dataCenter    : Option[String]
   def replication   : Option[Replication]
 
   /** Перегонка в query string. */
-  def toQs: String = {
+  override def toQs: String = {
     val sb = new StringBuilder
 
     for (dc <- dataCenter)

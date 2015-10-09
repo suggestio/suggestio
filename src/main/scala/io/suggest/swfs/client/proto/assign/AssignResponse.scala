@@ -1,6 +1,7 @@
 package io.suggest.swfs.client.proto.assign
 
 import io.suggest.swfs.client.proto.fid.Fid
+import io.suggest.swfs.client.proto.lookup.{VolumeLocation, IVolumeLocation}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -15,29 +16,27 @@ object AssignResponse {
   implicit val FORMAT: Format[AssignResponse] = (
     (__ \ "count").format[Int] and
     (__ \ "fid").format[String] and
-    (__ \ "url").format[String] and
-    (__ \ "publicUrl").formatNullable[String]
+    VolumeLocation.URL_FORMAT and
+    VolumeLocation.PUBLIC_URL_FORMAT
   )(apply, unlift(unapply))
 
 }
 
 
 /** Интерфейс ответа. */
-trait IAssignResponse {
+trait IAssignResponse extends IVolumeLocation {
   def count       : Int
   def fid         : String
-  def url         : String
-  def publicUrl   : Option[String]
 
   def fidParsed = Fid(fid)
 }
 
 
 case class AssignResponse(
-  count       : Int,
-  fid         : String,
-  url         : String,
-  publicUrl   : Option[String]
+  override val count       : Int,
+  override val fid         : String,
+  override val url         : String,
+  override val publicUrl   : String
 )
   extends IAssignResponse
 {

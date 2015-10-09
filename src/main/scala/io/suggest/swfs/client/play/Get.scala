@@ -1,7 +1,7 @@
 package io.suggest.swfs.client.play
 
 import io.suggest.swfs.client.proto.file.FileOpUnknownResponseException
-import io.suggest.swfs.client.proto.get.{GetResponse, IGetResponse, IGetRequest}
+import io.suggest.swfs.client.proto.get.{GetResponse, IGetRequest}
 
 import scala.concurrent.{Future, ExecutionContext}
 
@@ -13,7 +13,7 @@ import scala.concurrent.{Future, ExecutionContext}
  */
 trait Get extends ISwfsClientWs {
 
-  override def get(args: IGetRequest)(implicit ec: ExecutionContext): Future[Option[IGetResponse]] = {
+  override def get(args: IGetRequest)(implicit ec: ExecutionContext): Future[Option[GetResponse]] = {
     val url = args.toUrl
     for {
       (headers, enumerator)  <-  ws.url( url ).getStream()

@@ -19,8 +19,13 @@ object SwfsClientWs {
   def isStatus2xx(status: Int): Boolean = {
     status >= 200 && status <= 299
   }
+  /** Название conf-ключа со списком доступных мастер-серверов seaweedfs. */
+  def MASTERS_CK = "swfs.masters"
 
 }
+
+
+import SwfsClientWs._
 
 
 /** Интерфейс play.ws-клиента для написания трейтов частичных реализаций. */
@@ -31,6 +36,10 @@ trait ISwfsClientWs extends ISwfsClient with MacroLogsI {
 
   /** Конфиг play application. */
   def conf  : Configuration
+
+  def MASTERS: List[String]
+
+  def MASTER_PROTO = "http"
 
 }
 
@@ -46,3 +55,15 @@ class SwfsClientWs @Inject() (
   with Put
   with Get
   with Delete
+  with Lookup
+{
+
+  /**
+   * Список weed-мастеров.
+   * @return ["localhost:9300", "127.5.5.5:9301"]
+   */
+  val MASTERS: List[String] = {
+    conf.getStringSeq(MASTERS_CK).get.toList
+  }
+
+}
