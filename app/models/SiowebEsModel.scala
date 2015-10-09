@@ -32,7 +32,8 @@ object SiowebEsModel extends PlayMacroLogsDyn {
       EmailPwIdent, EmailActivation, MExtIdent, MMartCategory, MInviteRequest, MCalendar,
       MRemoteError, MGallery, MAiMad,
       adv.MExtTarget,
-      event.MEvent, sec.MAsymKey
+      event.MEvent, sec.MAsymKey,
+      MMedia
     )
   }
 
