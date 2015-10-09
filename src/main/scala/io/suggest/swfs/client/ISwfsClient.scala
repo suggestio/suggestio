@@ -3,6 +3,7 @@ package io.suggest.swfs.client
 import com.google.inject.ImplementedBy
 import io.suggest.swfs.client.play.SwfsClientWs
 import io.suggest.swfs.client.proto.assign.{IAssignResponse, IAssignRequest, AssignRequest}
+import io.suggest.swfs.client.proto.delete.{IDeleteResponse, IDeleteRequest}
 import io.suggest.swfs.client.proto.put.{IPutResponse, IPutRequest}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -31,5 +32,13 @@ trait ISwfsClient {
    * @return Фьючерс с распарсенным ответом сервера.
    */
   def put(args: IPutRequest)(implicit ec: ExecutionContext): Future[IPutResponse]
+
+
+  /**
+   * Удаление файла.
+   * @param args Данные для удаления.
+   * @return Фьючерс с результатом удаления.
+   */
+  def delete(args: IDeleteRequest)(implicit ec: ExecutionContext): Future[IDeleteResponse]
 
 }

@@ -1,7 +1,6 @@
 package io.suggest.swfs.client.proto.put
 
-import play.api.libs.json._
-import play.api.libs.functional.syntax._
+import io.suggest.swfs.client.proto.file.{IFileResponse, IFileResponseStatic}
 
 /**
  * Suggest.io
@@ -9,26 +8,18 @@ import play.api.libs.functional.syntax._
  * Created: 08.10.15 13:11
  * Description: Модель ответа сервера на запрос размещения файла.
  */
-object PutResponse {
+object PutResponse extends IFileResponseStatic {
 
-  implicit val FORMAT: Format[PutResponse] = {
-    (__ \ "size").format[Long]
-      .inmap [PutResponse] (apply, _.size)
-  }
+  override type T = PutResponse
 
 }
 
 
 /** Интерфейс результата модели. */
-trait IPutResponse {
-
-  /** Volume-сервер возвращает объем полученного файла. */
-  def size: Long
-
-}
+trait IPutResponse extends IFileResponse
 
 
 case class PutResponse(
-  override val size       : Long
+  override val occupiedSize       : Long
 )
   extends IPutResponse
