@@ -19,6 +19,10 @@ object SiobixBuild extends Build {
     )
   }
 
+  /** Утиль, была когда-то расшарена между siobix и sioweb. Постепенно стала просто свалкой. */
+  lazy val util = project
+    .dependsOn(common, logsMacro)
+
   /** Кое-какие общие вещи для js. */
   lazy val commonSjs = {
     val name = "common-sjs"
@@ -49,6 +53,10 @@ object SiobixBuild extends Build {
   lazy val swfs = project
     .dependsOn(util)
 
+  /** Поддержка моделей n2. */
+  lazy val n2 = project
+    .dependsOn(util, swfs)
+
   /** Все мелкие скрипты кроме выдачи (т.е. весь my.suggest.io + буклет и т.д) объеденены в одном большом js. */
   lazy val lkSjs = {
     val name = "lk-sjs"
@@ -65,17 +73,13 @@ object SiobixBuild extends Build {
       .dependsOn(commonSjs)
   }
 
-  /** Утиль, была когда-то расшарена между siobix и sioweb. Постепенно стала просто свалкой. */
-  lazy val util = project
-    .dependsOn(common, logsMacro)
-
   /** Внутренний форк securesocial. */
   lazy val securesocial = project
     .enablePlugins(PlayScala, SbtWeb)
 
   /** веб-интерфейс suggest.io v2. */
   lazy val web21 = project
-    .dependsOn(common, util, securesocial)
+    .dependsOn(common, util, securesocial, n2)
     .settings(
       scalaJSProjects := Seq(lkSjs, commonSjs, scSjs),
       pipelineStages += scalaJSProd
@@ -89,7 +93,7 @@ object SiobixBuild extends Build {
       .settings(
         scalaVersion := "2.11.6"
       )
-      .aggregate(common, lkAdvExtSjs, lkSjs, swfs, util, securesocial, scSjs, web21)
+      .aggregate(common, lkAdvExtSjs, lkSjs, util, swfs, n2, securesocial, scSjs, web21)
   }
 
   // Активация offline-режима резолва зависимостей.

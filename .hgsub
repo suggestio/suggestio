@@ -8,3 +8,4 @@ common			= common
 sc-sjs			= sc-sjs
 swfs			= swfs
 logs-macro		= logs-macro
+n2			= n2
