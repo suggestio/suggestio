@@ -2,6 +2,7 @@ package io.suggest.swfs.client.proto.put
 
 import java.io.File
 
+import io.suggest.fio.IWriteRequest
 import io.suggest.swfs.client.proto.file.IFileRequest
 
 /**
@@ -21,6 +22,23 @@ trait IPutRequest extends IFileRequest {
 
   def getFileName: String = {
     origFileName getOrElse file.getName
+  }
+
+}
+
+
+object PutRequest {
+
+  /** Враппер над apply(), где часть аргументов заменена на [[io.suggest.fio.IWriteRequest]]. */
+  def fromRr(volUrl: String, fid: String, rr: IWriteRequest, proto: String = IFileRequest.PROTO_DFLT): PutRequest = {
+    apply(
+      volUrl        = volUrl,
+      fid           = fid,
+      file          = rr.file,
+      contentType   = rr.contentType,
+      origFileName  = rr.origFileName,
+      proto         = proto
+    )
   }
 
 }

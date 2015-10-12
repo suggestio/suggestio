@@ -1,5 +1,6 @@
 package io.suggest.swfs.client.proto.fid
 
+import io.suggest.swfs.client.proto.VolumeId_t
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -28,7 +29,7 @@ object Fid {
   val FILE_ID_FN   = "f"
 
   implicit val FID_FORMAT: OFormat[Fid] = (
-    (__ \ VOLUME_ID_FN).format[Int] and
+    (__ \ VOLUME_ID_FN).format[VolumeId_t] and
     (__ \ FILE_ID_FN).format[String]
   )(apply, unlift(unapply))
 
@@ -46,7 +47,7 @@ object Fid {
 
 
 case class Fid(
-  override val volumeId  : Int,
+  override val volumeId  : VolumeId_t,
   override val fileId    : String
 )
   extends IFid

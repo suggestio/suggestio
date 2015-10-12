@@ -64,6 +64,18 @@ class SwfsClientWsSpec extends PlaySpec with OneAppPerSuite {
     val fileUrl = "http://" + asResp.url + "/" + asResp.fid
     info("Assigned new fid: " + fileUrl)
 
+    val getReq = GetRequest(
+      volUrl = asResp.url,
+      fid    = asResp.fid
+    )
+
+    "HEAD isExists for not-yet-existing file" must {
+      whenReady(cl.isExist(getReq), _timeout) { isExist =>
+        "return false" in {
+          assert(!isExist, getReq)
+        }
+      }
+    }
 
     // PUT
     // Подготовить (создать) тестовый файл, TODO закинуть в него тестовые данные.
@@ -88,6 +100,15 @@ class SwfsClientWsSpec extends PlaySpec with OneAppPerSuite {
         // put resp возвращает compressed size.
         "contain reasonable occupied storage size" in {
           putResp.occupiedSize should be <= f.length
+        }
+      }
+    }
+
+
+    "HEAD isExists for uploaded file" must {
+      whenReady( cl.isExist(getReq), _timeout) { isExists =>
+        "return true" in {
+          assert(isExists, getReq)
         }
       }
     }
@@ -120,20 +141,16 @@ class SwfsClientWsSpec extends PlaySpec with OneAppPerSuite {
 
 
     "GET saved & existing file" must {
-      val getReq = GetRequest(
-        volUrl = asResp.url,
-        fid    = asResp.fid
-      )
       info("GET " + fileUrl)
       whenReady(cl.get(getReq), _timeout) { getResp =>
         "contain non-empty response" in {
           assert(getResp.nonEmpty, getResp)
         }
         val gr = getResp.get
-        val fcontentFut = IteeUtil.dumpBlobs( gr.enumerator )
+        val fcontentFut = IteeUtil.dumpBlobs( gr.data )
           .map { new String(_) }
         "have expected resp.body lenght" in {
-          gr.size shouldBe f.length()
+          gr.sizeB shouldBe f.length()
         }
         "contain valid Content-Type" in {
           gr.contentType shouldBe ct
@@ -190,6 +207,15 @@ class SwfsClientWsSpec extends PlaySpec with OneAppPerSuite {
     }
 
 
+    "HEAD isExist() for deleted file" must {
+      whenReady( cl.isExist(getReq), _timeout ) { isExists =>
+        "return false again" in {
+          assert(!isExists, getReq)
+        }
+      }
+    }
+
+
     "DELETE of never-existed file" must {
       val delReq404 = deleteReq.copy(
         fid = "1234" + deleteReq.fid
@@ -217,6 +243,18 @@ class SwfsClientWsSpec extends PlaySpec with OneAppPerSuite {
         }
         "contain non-empty error message field" in {
           l.error.length should be >= 4
+        }
+      }
+    }
+
+
+    "HEAD isExist() for unknown volume id" must {
+      val isExReq = getReq.copy(
+        fid = "123123" + getReq.fid
+      )
+      whenReady( cl.isExist(isExReq), _timeout ) { isExist =>
+        "return false" in {
+          assert(!isExist, isExReq)
         }
       }
     }

@@ -1,6 +1,6 @@
 package io.suggest.swfs.client.play
 
-import com.google.inject.{Singleton, Inject}
+import com.google.inject.{ImplementedBy, Singleton, Inject}
 import io.suggest.swfs.client.ISwfsClient
 import io.suggest.util.{MacroLogsI, MacroLogsImpl}
 import play.api.Configuration
@@ -29,6 +29,7 @@ import SwfsClientWs._
 
 
 /** Интерфейс play.ws-клиента для написания трейтов частичных реализаций. */
+@ImplementedBy( classOf[SwfsClientWs] )
 trait ISwfsClientWs extends ISwfsClient with MacroLogsI {
 
   /** play.ws-клиента (http-клиент).  */
@@ -56,6 +57,7 @@ class SwfsClientWs @Inject() (
   with Get
   with Delete
   with Lookup
+  with IsExist
 {
 
   /**

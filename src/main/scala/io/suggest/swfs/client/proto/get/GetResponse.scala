@@ -1,5 +1,6 @@
 package io.suggest.swfs.client.proto.get
 
+import io.suggest.fio.IReadResponse
 import play.api.http.HeaderNames
 import play.api.libs.iteratee.Enumerator
 import play.api.libs.ws.WSResponseHeaders
@@ -10,22 +11,19 @@ import play.api.libs.ws.WSResponseHeaders
  * Created: 09.10.15 11:46
  * Description: Модель ответа на запрос чтения файла из хранилища.
  */
-trait IGetResponse {
+trait IGetResponse extends IReadResponse {
 
   /** Сырые заголовки HTTP-ответа. */
   def headers: WSResponseHeaders
 
-  /** Данные файла. */
-  def enumerator: Enumerator[Array[Byte]]
-
-  def contentType: String = {
+  override def contentType: String = {
     headers.headers
       .get( HeaderNames.CONTENT_TYPE )
       .flatMap(_.headOption)
       .getOrElse("application/octet-stream")
   }
 
-  def size: Long = {
+  override def sizeB: Long = {
     headers.headers
       .get( HeaderNames.CONTENT_LENGTH )
       .flatMap(_.headOption)
@@ -37,6 +35,6 @@ trait IGetResponse {
 
 case class GetResponse(
   override val headers      : WSResponseHeaders,
-  override val enumerator   : Enumerator[Array[Byte]]
+  override val data         : Enumerator[Array[Byte]]
 )
   extends IGetResponse

@@ -64,4 +64,11 @@ trait ISwfsClient {
    */
   def lookup(args: ILookupRequest)(implicit ec: ExecutionContext): Future[Either[ILookupError, ILookupResponse]]
 
+  /**
+   * Существует ли указанный файл в хранилище?
+   * @param args Экземпляр IGetRequest.
+   * @return Фьючерс с true/false внутри.
+   */
+  def isExist(args: IGetRequest)(implicit ec: ExecutionContext): Future[Boolean]
+
 }
