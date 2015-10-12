@@ -1,6 +1,5 @@
 package controllers
 
-import akka.actor.ActorSystem
 import com.google.inject.Inject
 import models.im.MImg
 import models.jsm.init.MTargets
@@ -37,13 +36,12 @@ import scala.util.{Failure, Success}
  */
 class MarketAd @Inject() (
   override val messagesApi      : MessagesApi,
-  override val actorSystem      : ActorSystem,
   override implicit val current : play.api.Application,
-  override val cache            : CacheApi
+  override val cache            : CacheApi,
+  tempImgSupport                : TempImgSupport
 )
   extends SioController
   with PlayMacroLogsImpl
-  with TempImgSupport
   with BruteForceProtectCtl
   with MarketAdPreview
   with ad.NodeTagsEdit
@@ -79,7 +77,7 @@ class MarketAd @Inject() (
     try {
       vOpt.foreach { v =>
         val im = MImg(v)
-        _detectPalletteWs(im, wsId = ctx.ctxIdStr)
+        tempImgSupport._detectPalletteWs(im, wsId = ctx.ctxIdStr)
       }
     } catch {
       case ex: Exception =>
@@ -504,7 +502,7 @@ class MarketAd @Inject() (
         val bc = BlocksConf.applyOrDefault(blockId)
         bc.getImgFieldForName(fn) match {
           case Some(bfi) =>
-            val resultFut = _handleTempImg(
+            val resultFut = tempImgSupport._handleTempImg(
               preserveUnknownFmt = false,
               runEarlyColorDetector = bfi.preDetectMainColor,
               wsId   = wsId,

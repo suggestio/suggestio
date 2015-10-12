@@ -37,7 +37,8 @@ class MarketLkAdn @Inject() (
   override val messagesApi  : MessagesApi,
   db                        : Database,
   override val current      : play.api.Application,
-  override val cache        : CacheApi
+  override val cache        : CacheApi,
+  logoUtil                  : LogoUtil
 )
   extends SioController with PlayMacroLogsImpl with BruteForceProtectCtl with ChangePwAction with NodeEactAcl
 {
@@ -64,7 +65,7 @@ class MarketLkAdn @Inject() (
   def showAdnNode(adnId: String, povAdnIdOpt: Option[String]) = {
     AdnNodeAccessGet(adnId, povAdnIdOpt).async { implicit request =>
       import request.{adnNode, isMyNode}
-      val logoOptFut = LogoUtil.getLogoOfNode(adnId)
+      val logoOptFut = logoUtil.getLogoOfNode(adnId)
       for {
         logoOpt <- logoOptFut
       } yield {

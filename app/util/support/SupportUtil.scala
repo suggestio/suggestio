@@ -8,7 +8,7 @@ import play.api.Play.{current, configuration}
  * Created: 16.02.15 17:01
  * Description: Утиль для фидбэков и прочей обратной связи.
  */
-object SupportUtil {
+class SupportUtil {
 
   val FEEDBACK_RCVR_EMAILS = configuration.getStringSeq("feedback.send.to.emails") getOrElse Seq("support@suggest.io")
 

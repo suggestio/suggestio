@@ -4,7 +4,7 @@ import _root_.util.jsa.{JsAppendById, JsAction, SmRcvResp, Js}
 import io.suggest.common.css.FocusedTopLeft
 import io.suggest.util.Lists
 import models.im.MImgT
-import models.im.logo.{LogoUtil, LogoOpt_t}
+import models.im.logo.LogoOpt_t
 import models.jsm.ProducerAdsResp
 import models.msc._
 import play.api.mvc.Result
@@ -198,13 +198,13 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
     /** Карта СЫРЫХ логотипов продьюсеров без подгонки под экран.
       * Если в карте нет искомого продьюсера, то значит он без логотипа-картинки. */
     def prod2logoImgMapFut: Future[Map[String, MImgT]] = {
-      prodIdsFut.flatMap( LogoUtil.getLogoOfNodes )
+      prodIdsFut.flatMap( logoUtil.getLogoOfNodes )
     }
     /** Карта логотипов продьюсеров, подогнанных под запрашиваемый экран. */
     lazy val prod2logoScrImgMapFut: Future[Map[String, MImgT]] = {
       prod2logoImgMapFut flatMap { logosMap =>
         Future.traverse( logosMap ) { case (nodeId, logoImgRaw) =>
-          LogoUtil.getLogo4scr(logoImgRaw, _adSearch.screen)
+          logoUtil.getLogo4scr(logoImgRaw, _adSearch.screen)
             .map { nodeId -> _ }
         } map {
           _.toMap

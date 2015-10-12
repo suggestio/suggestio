@@ -15,7 +15,7 @@ import io.suggest.img.ImgConstants._
  * Created: 06.04.15 18:57
  * Description: Вынос из контроллера ctl.Img.
  */
-object ImgCtlUtil extends TplFormatUtilT {
+class ImgCtlUtil extends TplFormatUtilT {
 
   /** Выдать json ошибку по поводу картинки. */
   def jsonImgError(msg: String) = JsObject(Seq(

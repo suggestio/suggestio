@@ -1,7 +1,7 @@
 package controllers
 
-import akka.actor.ActorSystem
 import com.google.inject.Inject
+import io.suggest.playx.ICurrentConf
 import play.api.data._
 import play.api.i18n.MessagesApi
 import play.api.libs.json.JsValue
@@ -27,12 +27,12 @@ import scala.concurrent.Future
  */
 class SysGallery @Inject() (
   override val messagesApi      : MessagesApi,
-  override val actorSystem      : ActorSystem,
-  override implicit val current : play.api.Application
+  override implicit val current : play.api.Application,
+  tempImgSupport                : TempImgSupport
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
-  with TempImgSupport
+  with ICurrentConf
 {
 
   import LOGGER._
@@ -135,7 +135,7 @@ class SysGallery @Inject() (
   def uploadImg(wsId: String) = {
     val bp = parse.multipartFormData(Multipart.handleFilePartAsTemporaryFile, maxLength = IMG_MAX_LEN_BYTES)
     IsSuperuser.async(bp) { implicit request =>
-      _handleTempImg(runEarlyColorDetector = true, wsId = Some(wsId))
+      tempImgSupport._handleTempImg(runEarlyColorDetector = true, wsId = Some(wsId))
     }
   }
 

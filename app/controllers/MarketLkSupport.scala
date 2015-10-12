@@ -13,7 +13,7 @@ import util.acl._
 import util.mail.IMailerWrapper
 import views.html.lk.support._
 import scala.concurrent.Future
-import util.support.SupportUtil.FEEDBACK_RCVR_EMAILS
+import util.support.SupportUtil
 import play.api.data._, Forms._
 
 /**
@@ -23,8 +23,9 @@ import play.api.data._, Forms._
  * Description: Контроллер для обратной связи с техподдержкой s.io в личном кабинете узла.
  */
 class MarketLkSupport @Inject() (
-  override val messagesApi: MessagesApi,
-  override val mailer: IMailerWrapper
+  override val messagesApi  : MessagesApi,
+  override val mailer       : IMailerWrapper,
+  supportUtil               : SupportUtil
 )
   extends SioController with PlayLazyMacroLogsImpl with IMailer
 {
@@ -107,7 +108,7 @@ class MarketLkSupport @Inject() (
         val msg = mailer.instance
         msg.setReplyTo(lsr.replyEmail)
         msg.setFrom("no-reply@suggest.io")
-        msg.setRecipients(FEEDBACK_RCVR_EMAILS : _*)
+        msg.setRecipients( supportUtil.FEEDBACK_RCVR_EMAILS : _* )
         val personId = request.pwOpt.get.personId
         userEmailsFut.map { ues =>
           val username = ues.headOption getOrElse personId
@@ -152,7 +153,7 @@ class MarketLkSupport @Inject() (
         // собираем письмо админам s.io
         val msg = mailer.instance
         msg.setSubject("sio-market: Запрос геолокации для узла " + request.adnNode.meta.name + request.adnNode.meta.town.fold("")(" / " + _))
-        msg.setRecipients(FEEDBACK_RCVR_EMAILS : _*)
+        msg.setRecipients( supportUtil.FEEDBACK_RCVR_EMAILS : _* )
         msg.setFrom("no-reply@suggest.io")
         emailsFut map { emails =>
           val emailOpt = emails.headOption

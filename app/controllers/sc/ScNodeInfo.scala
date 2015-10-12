@@ -5,7 +5,6 @@ import controllers.SioControllerUtil
 import SioControllerUtil.PROJECT_CODE_LAST_MODIFIED
 import io.suggest.event.subscriber.SnFunSubscriber
 import io.suggest.event.AdnNodeSavedEvent
-import models.im.logo.LogoUtil
 import models.jsm.NodeDataResp
 import play.api.Play, Play.{current, configuration}
 import play.api.cache.Cache
@@ -65,7 +64,7 @@ trait ScNodeInfo extends ScController {
     } else {
       val ck = nodeIconJsCacheKey(adnId)
       CacheUtil.getOrElse [Result] (ck, NODE_ICON_JS_CACHE_TTL_SECONDS) {
-        val logoFut = LogoUtil.getLogoOfNodeCached( adnId )
+        val logoFut = logoUtil.getLogoOfNodeCached( adnId )
         var cacheHeaders: List[(String, String)] = List(
           CONTENT_TYPE  -> "text/javascript; charset=utf-8",
           LAST_MODIFIED -> DateTimeUtil.rfcDtFmt.print(PROJECT_CODE_LAST_MODIFIED),
@@ -88,7 +87,7 @@ trait ScNodeInfo extends ScController {
   /** Экшн, который выдает базовую инфу о ноде */
   def nodeData(adnId: String) = AdnNodeMaybeAuth(adnId).async { implicit request =>
     val node = request.adnNode
-    val logoCallOptFut = LogoUtil.getLogoOfNodeCached(adnId) map { logoOpt =>
+    val logoCallOptFut = logoUtil.getLogoOfNodeCached(adnId) map { logoOpt =>
       logoOpt.map { logoImg =>
         CdnUtil.dynImg( logoImg )
       }

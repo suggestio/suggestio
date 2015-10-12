@@ -1,6 +1,6 @@
 package controllers.sc
 
-import models.im.logo.{LogoUtil, LogoOpt_t}
+import models.im.logo.LogoOpt_t
 import _root_.util.jsa.{SmRcvResp, Js}
 import _root_.util.PlayMacroLogsI
 import models.Context
@@ -276,9 +276,9 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
         logoOptRaw   <- currAdnIdOpt.fold [Future[LogoOpt_t]] {
           Future successful None
         } {
-          LogoUtil.getLogoOfNode
+          logoUtil.getLogoOfNode
         }
-        logoOptScr   <- LogoUtil.getLogoOpt4scr(logoOptRaw, _reqArgs.screen)
+        logoOptScr   <- logoUtil.getLogoOpt4scr(logoOptRaw, _reqArgs.screen)
       } yield {
         logoOptScr
       }

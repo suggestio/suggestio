@@ -21,7 +21,7 @@ import util.health.AdnGeoParentsHealth
  * По мотивам http://stackoverflow.com/a/13469308
  */
 
-object Crontab extends PlayLazyMacroLogsImpl {
+class Crontab extends PlayLazyMacroLogsImpl {
 
   import LOGGER._
 

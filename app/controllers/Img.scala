@@ -3,7 +3,7 @@ package controllers
 import java.io.File
 
 import akka.actor.ActorSystem
-import com.google.inject.Inject
+import com.google.inject.{Singleton, ImplementedBy, Inject}
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.img.crop.CropConstants
 import io.suggest.playx.ICurrentConf
@@ -11,7 +11,7 @@ import io.suggest.popup.PopupConstants
 import models.Context
 import play.api.cache.CacheApi
 import play.twirl.api.Html
-import util.img.ImgCtlUtil._
+import util.img.ImgCtlUtil
 import _root_.util.async.AsyncUtil
 import models.im._
 import org.apache.commons.io.FileUtils
@@ -42,17 +42,22 @@ import scala.util.{Success, Failure}
  * Description: Управление картинками, относящихся к поисковой выдаче и к разным другим вещам.
  * Изначально контроллер служил только для превьюшек картинок, и назывался "Thumb".
  */
-
+@Singleton
 class Img @Inject() (
   override val messagesApi      : MessagesApi,
   override val actorSystem      : ActorSystem,
   override implicit val current : play.api.Application,
-  override val cache            : CacheApi
+  override val cache            : CacheApi,
+  override val imgCtlUtil       : ImgCtlUtil
 )
-  extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtectCtl
+  extends SioController
+  with PlayMacroLogsImpl
+  with TempImgSupport
+  with BruteForceProtectCtl
 {
 
   import LOGGER._
+  import imgCtlUtil._
 
   /** Сколько времени можно кешировать на клиенте оригинал картинки. */
   val CACHE_ORIG_CLIENT_SECONDS = {
@@ -214,7 +219,20 @@ class Img @Inject() (
 
 
 /** Функционал для поддержки работы с логотипами. Он является общим для ad, shop и mart-контроллеров. */
-trait TempImgSupport extends SioController with PlayMacroLogsI with NotifyWs with MyConfName with I18nSupport with ICurrentConf {
+@ImplementedBy( classOf[Img] )
+trait TempImgSupport
+  extends SioController
+  with PlayMacroLogsI
+  with NotifyWs
+  with MyConfName
+  with I18nSupport
+  with ICurrentConf
+{
+
+  /** DI-инстанс [[ImgCtlUtil]], т.е. статическая утиль для img-контроллеров. */
+  val imgCtlUtil: ImgCtlUtil
+
+  import imgCtlUtil._
 
   /** Размер генерируемой палитры. */
   val MAIN_COLORS_PALETTE_SIZE: Int = configuration.getInt(s"img.$MY_CONF_NAME.palette.size") getOrElse 8

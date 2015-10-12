@@ -1,5 +1,7 @@
 package models
 
+import com.google.inject.Inject
+import io.suggest.model.n2.media.MMedia_
 import io.suggest.model.{EsModelCommonStaticT, CopyContentResult, EsModel}
 import io.suggest.util.{JMXBase, SioEsUtil}
 import models.ai.MAiMad
@@ -8,11 +10,10 @@ import models.merr.MRemoteError
 import models.usr.{MExtIdent, EmailActivation, EmailPwIdent}
 import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
 import util.{PlayMacroLogsDyn, PlayLazyMacroLogsImpl, SiowebEsUtil}
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import org.elasticsearch.client.Client
 import play.api.Play.{current, configuration}
 import scala.util.{Failure, Success}
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.duration._
 
 /**
@@ -21,7 +22,7 @@ import scala.concurrent.duration._
  * Created: 24.02.14 17:43
  * Description: Дополнительная утиль для ES-моделей.
  */
-object SiowebEsModel extends PlayMacroLogsDyn {
+class SiowebEsModel @Inject() (mMedia: MMedia_, implicit val ec: ExecutionContext) extends PlayMacroLogsDyn {
 
   /**
    * Список моделей, которые должны быть проинициалированы при старте.
@@ -33,12 +34,15 @@ object SiowebEsModel extends PlayMacroLogsDyn {
       MRemoteError, MGallery, MAiMad,
       adv.MExtTarget,
       event.MEvent, sec.MAsymKey,
-      MMedia
+      mMedia
     )
   }
 
-  if (configuration.getBoolean("es.mapping.model.conflict.check.enabled") getOrElse true)
-    EsModel.errorIfIncorrectModels(ES_MODELS)
+  /** Вернуть экзепшен, если есть какие-то проблемы при обработке ES-моделей. */
+  def maybeErrorIfIncorrectModels() {
+    if (configuration.getBoolean("es.mapping.model.conflict.check.enabled") getOrElse true)
+      EsModel.errorIfIncorrectModels(ES_MODELS)
+  }
 
   /** Отправить маппинги всех моделей в хранилище. */
   def putAllMappings(models: Seq[EsModelCommonStaticT] = ES_MODELS)(implicit client: Client): Future[Boolean] = {
@@ -94,7 +98,11 @@ trait SiowebEsModelJmxMBean {
 }
 
 /** Реализация jmx-бина, открывающая доступ к функциям [[SiowebEsModel]]. */
-final class SiowebEsModelJmx extends JMXBase with SiowebEsModelJmxMBean with PlayLazyMacroLogsImpl {
+final class SiowebEsModelJmx @Inject() (siowebEsModel: SiowebEsModel, implicit val ec: ExecutionContext)
+  extends JMXBase
+  with SiowebEsModelJmxMBean
+  with PlayLazyMacroLogsImpl
+{
 
   import LOGGER._
 
@@ -105,7 +113,7 @@ final class SiowebEsModelJmx extends JMXBase with SiowebEsModelJmxMBean with Pla
 
   override def importModelFromRemote(modelStr: String, remotes: String): String = {
     val modelStr1 = modelStr.trim
-    val model = SiowebEsModel.ES_MODELS
+    val model = siowebEsModel.ES_MODELS
       .find(_.getClass.getSimpleName equalsIgnoreCase modelStr1)
       .get
     val fut = _importModelsFromRemote(remotes, Seq(model))
@@ -116,14 +124,14 @@ final class SiowebEsModelJmx extends JMXBase with SiowebEsModelJmxMBean with Pla
   }
 
   override def importModelsFromRemote(remotes: String): String = {
-    val fut = _importModelsFromRemote(remotes, SiowebEsModel.ES_MODELS)
+    val fut = _importModelsFromRemote(remotes, siowebEsModel.ES_MODELS)
     fut onFailure { case ex =>
       error(s"importModelsFromRemote($remotes): Failed", ex)
     }
     awaitString(fut)
   }
 
-  protected def _importModelsFromRemote(remotes: String, models: Seq[EsModelCommonStaticT]) = {
+  protected def _importModelsFromRemote(remotes: String, models: Seq[EsModelCommonStaticT]): Future[String] = {
     val addrs = remotes.split("[\\s,]+")
       .toIterator
       .map { hostPortStr =>
@@ -132,7 +140,7 @@ final class SiowebEsModelJmx extends JMXBase with SiowebEsModelJmxMBean with Pla
         new InetSocketTransportAddress(host, port)
       }
       .toSeq
-    SiowebEsModel.importModelsFromRemote(addrs, models)
+    siowebEsModel.importModelsFromRemote(addrs, models)
       .map { result =>
         import result._
         s"Total=${success + failed} success=$success failed=$failed"

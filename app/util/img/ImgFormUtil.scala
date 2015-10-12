@@ -23,6 +23,10 @@ import models._
  */
 
 object ImgFormUtil extends PlayMacroLogsImpl {
+  // TODO Реализовать это через DI к play3.
+  private val mImg3 = current.injector.instanceOf( classOf[MImg3_] )
+
+
   import play.api.data.Forms._
   import play.api.data.Mapping
   import LOGGER._
@@ -69,7 +73,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   def imgIdOptM = mkImgIdOptM[MImgT](MImg)
 
   /** Маппер для новых картинок на базе MMedia. */
-  def img3IdOptM = mkImgIdOptM[MImgT](MImg3)
+  def img3IdOptM = mkImgIdOptM[MImgT](mImg3)
 
 
 

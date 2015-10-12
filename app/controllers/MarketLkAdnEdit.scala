@@ -1,10 +1,9 @@
 package controllers
 
-import akka.actor.ActorSystem
 import com.google.inject.Inject
 import io.suggest.js.UploadConstants
 import models.im.logo.{LogoOpt_t, LogoUtil}
-import models.im.{MImg3, MImgT, MImg}
+import models.im.{MImg3_, MImgT, MImg}
 import models.jsm.init.MTargets
 import play.api.cache.CacheApi
 import play.api.i18n.MessagesApi
@@ -40,13 +39,14 @@ import scala.concurrent.Future
  */
 class MarketLkAdnEdit @Inject() (
   override val messagesApi  : MessagesApi,
-  override val actorSystem  : ActorSystem,
   override val current      : play.api.Application,
-  override val cache        : CacheApi
+  override val cache        : CacheApi,
+  logoUtil                  : LogoUtil,
+  mImg3                     : MImg3_,
+  tempImgSupport            : TempImgSupport
 )
   extends SioController
   with PlayMacroLogsImpl
-  with TempImgSupport
   with BruteForceProtectCtl
 {
 
@@ -171,7 +171,7 @@ class MarketLkAdnEdit @Inject() (
 
     // Запуск асинхронной сборки данных из моделей.
     val waOptFut = getWelcomeAdOpt(adnNode)
-    val nodeLogoOptFut = LogoUtil.getLogoOfNode(adnId)
+    val nodeLogoOptFut = logoUtil.getLogoOfNode(adnId)
     val gallerryIks = gallery2iiks( adnNode.gallery )
 
     // Сборка и наполнения маппинга формы.
@@ -223,7 +223,7 @@ class MarketLkAdnEdit @Inject() (
         val savedWelcomeImgsFut = WelcomeUtil.updateWelcodeAdFut(adnNode, fmr.waImgOpt)
         trace(s"${logPrefix}newGallery[${fmr.gallery.size}] ;; newLogo = ${fmr.logoOpt.map(_.fileName)}")
         // В фоне обновляем логотип узла
-        val savedLogoFut = LogoUtil.updateLogoFor(adnId, fmr.logoOpt)
+        val savedLogoFut = logoUtil.updateLogoFor(adnId, fmr.logoOpt)
         // Запускаем апдейт галереи.
         val galleryUpdFut = GalleryUtil.updateGallery(fmr.gallery, oldGallery = adnNode.gallery)
         for {
@@ -277,11 +277,11 @@ class MarketLkAdnEdit @Inject() (
    * @return Тот же формат ответа, что и для просто temp-картинок.
    */
   def handleTempLogo = _imgUploadBase { implicit request =>
-    _handleTempImg(
+    tempImgSupport._handleTempImg(
       ovlRrr = Some { (imgId, ctx) =>
         _logoOvlTpl(imgId)(ctx)
       },
-      mImgCompanion = MImg3
+      mImgCompanion = mImg3
     )
   }
 
@@ -322,7 +322,7 @@ class MarketLkAdnEdit @Inject() (
    */
   private def _imgUpload(ovlRrr: (String, Context) => Html) = {
     _imgUploadBase { implicit request =>
-      _handleTempImg(
+      tempImgSupport._handleTempImg(
         ovlRrr = Some(ovlRrr)
       )
     }

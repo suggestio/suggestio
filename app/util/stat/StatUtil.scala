@@ -132,7 +132,7 @@ object StatUtil extends PlayMacroLogsImpl {
   
   /** Добавить stat-куку в результат запроса. */
   def resultWithStatCookie(result: Result)(implicit request: RequestHeader): Result = {
-    if (StatUtil.requestHasAnyCookie) {
+    if (requestHasAnyCookie) {
       result
     } else {
       val statUid = mkUidCookieValue()

@@ -1,21 +1,21 @@
 package util.compat.img3
 
+import com.google.inject.Inject
+import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.n2.edge.{MNodeEdges, MEdgeInfo}
 import io.suggest.model.n2.media.storage.CassandraStorage
-import io.suggest.model.n2.media.{MPictureMeta, MFileMeta}
+import io.suggest.model.n2.media.{MMedia_, MPictureMeta, MFileMeta}
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.util.JMXBase
 import models.im.{ImgFileUtil, MImg}
 import models.mfs.FileUtil
 import models._
+import org.elasticsearch.client.Client
 import org.joda.time.DateTime
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.PlayLazyMacroLogsImpl
-import util.SiowebEsUtil.client
-import util.event.SiowebNotifier.Implicts.sn
 import util.img.DynImgUtil
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 /**
@@ -24,7 +24,12 @@ import scala.util.{Failure, Success}
  * Created: 28.09.15 17:47
  * Description: Система обновления картинок на новую архитектуру: N2, seaweedfs.
  */
-object Migration extends PlayLazyMacroLogsImpl {
+class Migration @Inject() (
+  mMedia                : MMedia_,
+  implicit val ec       : ExecutionContext,
+  implicit val esClient : Client,
+  implicit val sn       : SioNotifierStaticClientI
+) extends PlayLazyMacroLogsImpl {
 
   import LOGGER._
 
@@ -182,7 +187,7 @@ object Migration extends PlayLazyMacroLogsImpl {
         error(s"$logPrefix failed to save logo MNode", ex)
     }
 
-    val mediaId = MMedia.mkId(imgNodeId, None)
+    val mediaId = mMedia.mkId(imgNodeId, None)
 
     // Сохранить в MMedia накопившуюся инфу по картинке.
     val mmedia = for {
@@ -211,7 +216,8 @@ object Migration extends PlayLazyMacroLogsImpl {
             .orElse { imetaOpt.map(_.height) }
             .get
         )),
-        id = Some( mediaId )
+        id = Some( mediaId ),
+        companion = mMedia
       )
     }
 
@@ -240,12 +246,15 @@ trait MigrationJmxMBean {
   def adnNodesToN2(): String
 }
 
-class MigrationJmx extends JMXBase with MigrationJmxMBean {
+class MigrationJmx @Inject() (migration: Migration, implicit val ec: ExecutionContext)
+  extends JMXBase
+  with MigrationJmxMBean
+{
 
-  override def jmxName: String = "io.suggest.compat:type=img3,name=" + Migration.getClass.getSimpleName
+  override def jmxName: String = "io.suggest.compat:type=img3,name=" + migration.getClass.getSimpleName
 
   override def adnNodesToN2(): String = {
-    val strFut = Migration.adnNodesToN2()
+    val strFut = migration.adnNodesToN2()
       .map { acc =>
         "Total processed\n\n" + acc.toReport
       }

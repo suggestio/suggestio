@@ -2,9 +2,10 @@ package models.im
 
 import java.util.UUID
 
+import com.google.inject.{Inject, Singleton}
 import io.suggest.model.img.{ImgSzDated, IImgMeta}
-import io.suggest.model.n2.media.storage.{SwfsStorage, CassandraStorage, IMediaStorage}
-import io.suggest.model.n2.media.{MPictureMeta, MFileMeta}
+import io.suggest.model.n2.media.storage.{SwfsStorage_, CassandraStorage, IMediaStorage}
+import io.suggest.model.n2.media.{MMedia_, MPictureMeta, MFileMeta}
 import io.suggest.util.UuidUtil
 import models._
 import models.mfs.FileUtil
@@ -22,8 +23,10 @@ import util.SiowebEsUtil.client
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 30.09.15 17:27
  * Description: Реализация модели [[MImgT]] на базе MMedia, вместо прямого взаимодействия с кассандрой.
+ * [[MImg3_]] -- DI-реализация объекта-компаньона.
  */
-object MImg3 extends IMImgCompanion {
+@Singleton
+class MImg3_ @Inject() (implicit val swfsStorage: SwfsStorage_, val mMedia: MMedia_) extends IMImgCompanion {
 
   override type T = MImg3
 
@@ -51,6 +54,11 @@ object MImg3 extends IMImgCompanion {
     apply(img.rowKeyStr, dynOps2.getOrElse(img.dynImgOps))
   }
 
+
+  def apply(rowKeyStr: String, dynImgOps: Seq[ImOp]): MImg3 = {
+    MImg3(rowKeyStr, dynImgOps, this)
+  }
+
 }
 
 
@@ -60,14 +68,18 @@ abstract class MImg3T extends MImgT {
 
   override type MImg_t <: MImg3T
 
+  /** DI-инстанс статической части модели MMedia. */
+  def companion: MImg3_
+  def mMedia = companion.mMedia
+
   override lazy val rowKey: UUID = {
     UuidUtil.base64ToUuid(rowKeyStr)
   }
 
-  lazy val _mediaId = MMedia.mkId(rowKeyStr, qOpt)
+  lazy val _mediaId = mMedia.mkId(rowKeyStr, qOpt)
 
   // Не val потому что результат может меняться с None на Some() в результате сохранения картинки.
-  def _mediaOptFut = MMedia.getById(_mediaId)
+  def _mediaOptFut = mMedia.getById(_mediaId)
   def _mediaFut = _mediaOptFut.map(_.get)
 
   override protected lazy val _getImgMeta: Future[Option[IImgMeta]] = {
@@ -138,7 +150,8 @@ abstract class MImg3T extends MImgT {
               sha1        = Some(sha1)
             ),
             picture = whOpt.map(MPictureMeta.apply),
-            storage = stor
+            storage = stor,
+            companion = mMedia
           )
           _mm.save
             .map { _mmId => _mm }
@@ -178,11 +191,14 @@ abstract class MImg3T extends MImgT {
 }
 
 
-case class MImg3(override val rowKeyStr: String,
-                 override val dynImgOps: Seq[ImOp])
+case class MImg3(
+  override val rowKeyStr            : String,
+  override val dynImgOps            : Seq[ImOp],
+  companion                         : MImg3_
+)
   extends MImg3T
   with PlayLazyMacroLogsImpl
-  with I3Cassandra
+  with I3SeaWeedFs
 {
 
   override type MImg_t = MImg3
@@ -207,5 +223,5 @@ trait I3Cassandra extends MImg3T {
 
 /** Использовать seaweedfs для сохранения новых картинок. */
 trait I3SeaWeedFs extends MImg3T {
-  override protected def _newMediaStorage = SwfsStorage.assingNew()
+  override protected def _newMediaStorage = companion.swfsStorage.assingNew()
 }

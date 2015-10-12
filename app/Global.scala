@@ -12,6 +12,7 @@ import util.secure.PgpUtil
 import util.showcase.ScStatSaver
 import util.xplay.{SioHttpErrorHandler, SecHeadersFilter}
 import scala.concurrent.{Await, Future}
+import scala.reflect.ClassTag
 import scala.util.{Failure, Success}
 import util.jmx.JMXImpl
 import util._
@@ -57,7 +58,7 @@ object Global extends WithFilters(new HtmlCompressFilter, new DumpXffHeaders, Se
       _.client()
     }
     val fut = esClientFut flatMap { implicit esClient =>
-      initializeEsModels() map { _ => esClient }
+      initializeEsModels(app) map { _ => esClient }
     } flatMap { implicit esClient =>
       // Если в конфиге явно не включена поддержка проверки суперюзеров в БД, то не делать этого.
       // Это также нужно было при миграции с MPerson на MNode, чтобы не произошло повторного создания новых
@@ -75,13 +76,13 @@ object Global extends WithFilters(new HtmlCompressFilter, new DumpXffHeaders, Se
       PgpUtil.maybeInit()(esClient)
     }
 
-    JMXImpl.registerAll()
+    jmxImpl(app).registerAll()
     // Блокируемся, чтобы не было ошибок в браузере и консоли из-за асинхронной работы с ещё не запущенной системой.
     val startTimeout: FiniteDuration = (app.configuration.getInt("start.timeout_sec") getOrElse 32).seconds
     CipherUtil.ensureBcJce()
     Await.ready(fut, startTimeout)
     synchronized {
-      cronTimers = Crontab.startTimers(app)
+      cronTimers = crontab(app).startTimers(app)
     }
     RadiusServerImpl.start(true, true)
   }
@@ -91,8 +92,10 @@ object Global extends WithFilters(new HtmlCompressFilter, new DumpXffHeaders, Se
    * Проинициализировать все ES-модели и основной индекс.
    * @param triedIndexUpdate Флаг того, была ли уже попытка обновления индекса на последнюю версию.
    */
-  def initializeEsModels(triedIndexUpdate: Boolean = false)(implicit client: Client): Future[_] = {
-    val esModels = SiowebEsModel.ES_MODELS
+  def initializeEsModels(app: Application, triedIndexUpdate: Boolean = false)(implicit client: Client): Future[_] = {
+    val _siowebEsModel = siowebEsModel(app)
+    _siowebEsModel.maybeErrorIfIncorrectModels()
+    val esModels = _siowebEsModel.ES_MODELS
     val futInx = EsModel.ensureEsModelsIndices(esModels)
     val logPrefix = "initializeEsModels(): "
     futInx onComplete {
@@ -100,7 +103,7 @@ object Global extends WithFilters(new HtmlCompressFilter, new DumpXffHeaders, Se
       case Failure(ex)     => error(logPrefix + "ensureIndex() failed", ex)
     }
     val futMappings = futInx flatMap { _ =>
-      SiowebEsModel.putAllMappings(esModels)
+      _siowebEsModel.putAllMappings(esModels)
     }
     futMappings onComplete {
       case Success(_)  => info(logPrefix + "Finishied successfully.")
@@ -111,12 +114,16 @@ object Global extends WithFilters(new HtmlCompressFilter, new DumpXffHeaders, Se
       case ex: MapperException if !triedIndexUpdate =>
         info("Trying to update main index to v2.1 settings...")
         SioEsUtil.updateIndex2_1To2_2(EsModel.DFLT_INDEX) flatMap { _ =>
-          initializeEsModels(triedIndexUpdate = true)
+          initializeEsModels(app, triedIndexUpdate = true)
         }
     }
     futMappings
   }
 
+  private def _inject[T: ClassTag](app: Application) = app.injector.instanceOf[T]
+  private def crontab(app: Application)         = _inject[Crontab](app)
+  private def jmxImpl(app: Application)         = _inject[JMXImpl](app)
+  private def siowebEsModel(app: Application)   = _inject[SiowebEsModel](app)
 
   /**
    * При остановке системы (например, при обновлении исходников), нужно выполнить все нижеперечисленные действия.
@@ -127,7 +134,7 @@ object Global extends WithFilters(new HtmlCompressFilter, new DumpXffHeaders, Se
     // Сразу в фоне запускаем отключение тяжелых клиентов к кластерных хранилищам:
     val casCloseFut = SioCassandraClient.close()
     // Была одна ошибка после проблемы в DI после onStart(). JMXImpl должен останавливаться перед elasticsearch.
-    JMXImpl.unregisterAll()
+    jmxImpl(app).unregisterAll()
     val esCloseFut = Future {
       SiowebEsUtil.stopNode()
     }
@@ -136,7 +143,7 @@ object Global extends WithFilters(new HtmlCompressFilter, new DumpXffHeaders, Se
     super.onStop(app)
     // Остановить таймеры
     synchronized {
-      Crontab.stopTimers(cronTimers)
+      crontab(app).stopTimers(cronTimers)
       cronTimers = null
     }
     // Останавливаем RADIUS-сервер.

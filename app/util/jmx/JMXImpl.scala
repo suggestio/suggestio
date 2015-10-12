@@ -1,5 +1,6 @@
 package util.jmx
 
+import com.google.inject.Inject
 import io.suggest.model.n2.media.MMediaJmx
 import io.suggest.model.n2.node.MNodeJmx
 import io.suggest.ym.model._
@@ -28,7 +29,14 @@ import util.compat._
  * Description: JMX MBean'ы нужно заливать в энтерпрайз. Тут добавка к Global, чтобы тот мог включать/выключать jmx.
  */
 
-object JMXImpl extends PlayLazyMacroLogsImpl {
+class JMXImpl @Inject() (
+  mMediaJmx         : MMediaJmx,
+  siowebEsModelJmx  : SiowebEsModelJmx,
+  migration         : img3.MigrationJmx
+)
+  extends PlayLazyMacroLogsImpl
+{
+
   import LOGGER._
 
   /** Список моделей, отправляемых в MBeanServer. private для защиты от возможных воздействий извне. */
@@ -48,20 +56,20 @@ object JMXImpl extends PlayLazyMacroLogsImpl {
     new MCalendarJmx,
     new MInviteRequestJmx,
     new MAdnNodeGeoJmx,
-    new SiowebEsModelJmx,
+    siowebEsModelJmx,
     new MRemoteErrorJmx,
     new MAiMadJmx,
     new AdvUtilJmx,
     new MEventJmx,
     new MExtTargetJmx,
     new MNodeJmx,
-    new MMediaJmx,
+    mMediaJmx,
     // cassandra
     new SioCassandraClientJmx,
     new MUserImgMeta2Jmx,
     new MUserImg2Jmx,
     // web21 compat
-    new img3.MigrationJmx
+    migration
   )
 
   private def getSrv = ManagementFactory.getPlatformMBeanServer

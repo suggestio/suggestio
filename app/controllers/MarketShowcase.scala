@@ -2,6 +2,7 @@ package controllers
 
 import com.google.inject.Inject
 import controllers.sc._
+import models.im.logo.LogoUtil
 import play.api.i18n.MessagesApi
 import util._
 
@@ -14,7 +15,8 @@ import util._
  * 2014.nov.10: Из-за активного наращивания функционала был разрезан на части, расположенные в controllers.sc.*.
  */
 class MarketShowcase @Inject() (
-  override val messagesApi: MessagesApi
+  override val messagesApi  : MessagesApi,
+  override val logoUtil     : LogoUtil
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl

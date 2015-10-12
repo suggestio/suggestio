@@ -33,7 +33,7 @@ object ScStatUtil {
   /** Локальных клиентов нет смысла долго хранить. Время их хранения тут. */
   val LOCAL_STAT_TTL = {
     val d = configuration.getInt("sc.stat.local.ttl.days").getOrElse(7)
-    d days
+    d.days
   }
 
   /** Является ли указанная строка мусорной? */

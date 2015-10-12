@@ -2,6 +2,7 @@ package controllers.sc
 
 import controllers.{routes, SioController}
 import models._
+import models.im.logo.LogoUtil
 import models.msc.ScJsState
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.JsString
@@ -20,6 +21,8 @@ import scala.concurrent.Future
  * Description: Всякая базисная утиль для сборки MarketShowcase-контроллера.
  */
 trait ScController extends SioController {
+
+  def logoUtil: LogoUtil
 
   /**
    * Вспомогательный метод для генерации ссылки на css блоков из списка данных об этих блоках.

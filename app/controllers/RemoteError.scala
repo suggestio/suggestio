@@ -24,7 +24,9 @@ class RemoteError @Inject() (
   override val current      : play.api.Application,
   override val cache        : CacheApi
 )
-  extends SioController with PlayMacroLogsImpl with BruteForceProtectCtl
+  extends SioController
+  with PlayMacroLogsImpl
+  with BruteForceProtectCtl
 {
 
   import LOGGER._
