@@ -13,7 +13,6 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.acl.{IsSuperuserGallery, PersonWrapper, IsSuperuser}
 import util.SiowebEsUtil.client
 import models.im.{MImgT, MGallery}
-import play.api.Play.{current, configuration}
 import play.api.data.Forms._
 import views.html.sys1.galleries._
 import util.img.ImgFormUtil.imgIdOptM
@@ -27,10 +26,13 @@ import scala.concurrent.Future
  * Description: Контроллер для управления галереями картинок: создание, изменение, удаление.
  */
 class SysGallery @Inject() (
-  override val messagesApi: MessagesApi,
-  override val actorSystem: ActorSystem
+  override val messagesApi      : MessagesApi,
+  override val actorSystem      : ActorSystem,
+  override implicit val current : play.api.Application
 )
-  extends SioControllerImpl with PlayMacroLogsImpl with TempImgSupport
+  extends SioControllerImpl
+  with PlayMacroLogsImpl
+  with TempImgSupport
 {
 
   import LOGGER._

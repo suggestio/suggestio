@@ -95,7 +95,7 @@ trait SendPwRecoverEmail extends SioController with IMailer {
 
 
 trait PwRecover extends SendPwRecoverEmail with PlayMacroLogsI with CaptchaValidator with BruteForceProtectCtl
-with SetLangCookieUtil {
+with SetLangCookieUtil with CanRecoverPwCtl {
 
   // TODO Сделать это шаблоном!
   protected def _outer(html: Html)(implicit ctx: Context): Html = {

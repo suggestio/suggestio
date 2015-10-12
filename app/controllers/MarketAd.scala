@@ -6,6 +6,7 @@ import models.im.MImg
 import models.jsm.init.MTargets
 import models.mtag.MTagUtil
 import org.joda.time.DateTime
+import play.api.cache.CacheApi
 import play.api.i18n.{MessagesApi, Messages}
 import play.api.libs.json.JsValue
 import play.core.parsers.Multipart
@@ -20,7 +21,6 @@ import play.api.data._, Forms._
 import util.acl._
 import scala.concurrent.Future
 import play.api.mvc.{WebSocket, Request}
-import play.api.Play.{current, configuration}
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import controllers.ad.MarketAdFormUtil
 import MarketAdFormUtil._
@@ -36,8 +36,10 @@ import scala.util.{Failure, Success}
  * Description: Контроллер для работы с рекламным фунционалом.
  */
 class MarketAd @Inject() (
-  override val messagesApi: MessagesApi,
-  override val actorSystem: ActorSystem
+  override val messagesApi      : MessagesApi,
+  override val actorSystem      : ActorSystem,
+  override implicit val current : play.api.Application,
+  override val cache            : CacheApi
 )
   extends SioController
   with PlayMacroLogsImpl
@@ -58,7 +60,7 @@ class MarketAd @Inject() (
 
   /** Макс.длина загружаемой картинки в байтах. */
   private val IMG_UPLOAD_MAXLEN_BYTES: Int = {
-    val mib = configuration.getInt("ad.img.len.max.mib") getOrElse 40
+    val mib = current.configuration.getInt("ad.img.len.max.mib") getOrElse 40
     mib * 1024 * 1024
   }
 

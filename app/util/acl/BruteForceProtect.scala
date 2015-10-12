@@ -1,13 +1,13 @@
 package util.acl
 
 import controllers.{SioController, MyConfName}
-import play.api.cache.Cache
+import io.suggest.playx.ICurrentConf
+import play.api.Application
 import play.api.mvc._
 import util._
+import util.xplay.ICacheApi
 import scala.concurrent.{Promise, Future}
-import play.api.libs.concurrent.Akka
 import scala.concurrent.duration._
-import play.api.Play.{current, configuration}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.Result
 
@@ -23,7 +23,10 @@ import play.api.mvc.Result
  *  0*333 = 0 ms (3 раза), затем 1*333 = 333 ms (3 раза), затем 2*333 = 666 ms (3 раза), и т.д.
  */
 
-trait BruteForceProtectBase extends PlayMacroLogsI with MyConfName {
+trait BruteForceProtectBase extends PlayMacroLogsI with MyConfName with ICurrentConf with ICacheApi {
+
+  /** Доступ к application через DI в реализации контроллера. */
+  protected def current: Application
 
   /** Шаг задержки. Добавляемая задержка ответа будет кратна этому лагу. */
   val BRUTEFORCE_LAG_MS = configuration.getInt(s"bfp.$MY_CONF_NAME.lag_ms") getOrElse BRUTEFORCE_ATTACK_LAG_MS_DFLT
@@ -57,7 +60,7 @@ trait BruteForceProtectBase extends PlayMacroLogsI with MyConfName {
   def bruteForceProtected(f: => Future[Result])(implicit request: SioRequestHeader): Future[Result] = {
     // Для противодействию брутфорсу добавляем асинхронную задержку выполнения проверки по методике https://stackoverflow.com/a/17284760
     val ck = BRUTEFORCE_CACHE_PREFIX + request.remoteAddress
-    val prevTryCount: Int = Cache.getAs[Int](ck) getOrElse 0
+    val prevTryCount: Int = cache.get[Int](ck) getOrElse 0
     if (prevTryCount > BRUTEFORCE_TRY_COUNT_DEADLINE) {
       // Наступил предел толерантности к атаке.
       onBruteForceDeadline(f, prevTryCount)
@@ -76,7 +79,7 @@ trait BruteForceProtectBase extends PlayMacroLogsI with MyConfName {
         }
       }
       // Закинуть в кеш инфу о попытке
-      Cache.set(ck, prevTryCount + 1, BRUTEFORCE_CACHE_TTL)
+      cache.set(ck, prevTryCount + 1, BRUTEFORCE_CACHE_TTL)
       resultFut
     }
   }
@@ -89,9 +92,11 @@ trait BruteForceProtectBase extends PlayMacroLogsI with MyConfName {
 
   def onBruteForceReplyLagged(f: => Future[Result], lagMs: Int): Future[Result] = {
     val lagPromise = Promise[Result]()
-    Akka.system.scheduler.scheduleOnce(lagMs milliseconds) {
-      lagPromise completeWith f
-    }
+    current.actorSystem
+      .scheduler
+      .scheduleOnce(lagMs.milliseconds) {
+        lagPromise completeWith f
+      }
     lagPromise.future
   }
 

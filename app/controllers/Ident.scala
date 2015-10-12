@@ -4,6 +4,7 @@ import com.google.inject.Inject
 import controllers.ident._
 import models.jsm.init.{MTargets, MTarget}
 import models.msession.Keys
+import play.api.cache.CacheApi
 import play.api.i18n.MessagesApi
 import util.acl._
 import util._
@@ -26,11 +27,19 @@ import views.html.ident.reg.email._regColumnTpl
  */
 
 class Ident @Inject() (
-  override val messagesApi: MessagesApi,
-  override val mailer: IMailerWrapper
+  override val messagesApi  : MessagesApi,
+  override val mailer       : IMailerWrapper,
+  override val current      : play.api.Application,
+  override val cache        : CacheApi
 )
-  extends SioController with PlayMacroLogsImpl with EmailPwLogin with CaptchaValidator with ChangePw with PwRecover
-  with EmailPwReg with ExternalLogin
+  extends SioController
+  with PlayMacroLogsImpl
+  with EmailPwLogin
+  with CaptchaValidator
+  with ChangePw
+  with PwRecover
+  with EmailPwReg
+  with ExternalLogin
 {
 
   import LOGGER._

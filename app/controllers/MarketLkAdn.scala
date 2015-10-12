@@ -8,6 +8,7 @@ import models.im.logo.LogoUtil
 import models.mlk.MNodeShowArgs
 import models.msession.Keys
 import models.usr.EmailPwIdent
+import play.api.cache.CacheApi
 import play.api.i18n.MessagesApi
 import util.billing.Billing
 import _root_.util.{FormUtil, PlayMacroLogsImpl}
@@ -33,8 +34,10 @@ import play.api.db.Database
  * Description: Унифицированные части личного кабинета.
  */
 class MarketLkAdn @Inject() (
-  override val messagesApi: MessagesApi,
-  db: Database
+  override val messagesApi  : MessagesApi,
+  db                        : Database,
+  override val current      : play.api.Application,
+  override val cache        : CacheApi
 )
   extends SioController with PlayMacroLogsImpl with BruteForceProtectCtl with ChangePwAction with NodeEactAcl
 {

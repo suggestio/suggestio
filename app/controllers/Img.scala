@@ -6,8 +6,10 @@ import akka.actor.ActorSystem
 import com.google.inject.Inject
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.img.crop.CropConstants
+import io.suggest.playx.ICurrentConf
 import io.suggest.popup.PopupConstants
 import models.Context
+import play.api.cache.CacheApi
 import play.twirl.api.Html
 import util.img.ImgCtlUtil._
 import _root_.util.async.AsyncUtil
@@ -19,7 +21,7 @@ import play.api.mvc._
 import _root_.util._
 import play.api.libs.concurrent.Execution.Implicits._
 import org.joda.time.{ReadableInstant, DateTime}
-import play.api.Play, Play.{current, configuration}
+import play.api.Play
 import util.acl._
 import util.img._
 import util.xplay.CacheUtil
@@ -42,28 +44,15 @@ import scala.util.{Success, Failure}
  */
 
 class Img @Inject() (
-  override val messagesApi: MessagesApi,
-  override val actorSystem: ActorSystem
+  override val messagesApi      : MessagesApi,
+  override val actorSystem      : ActorSystem,
+  override implicit val current : play.api.Application,
+  override val cache            : CacheApi
 )
   extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtectCtl
 {
 
   import LOGGER._
-
-  /** Время кеширования thumb'а на клиенте. */
-  val CACHE_THUMB_CLIENT_SECONDS = configuration.getInt("img.thumb.cache.client.seconds") getOrElse 36000
-
-  /** Сколько времени кешировать temp-картинки на клиенте. */
-  val TEMP_IMG_CACHE_SECONDS = {
-    val cacheDuration = configuration.getInt("img.temp.cache.client.minutes").map(_.minutes) getOrElse {
-      if (Play.isProd) {
-        10.minutes
-      } else {
-        30.seconds
-      }
-    }
-    cacheDuration.toSeconds.toInt
-  }
 
   /** Сколько времени можно кешировать на клиенте оригинал картинки. */
   val CACHE_ORIG_CLIENT_SECONDS = {
@@ -225,7 +214,7 @@ class Img @Inject() (
 
 
 /** Функционал для поддержки работы с логотипами. Он является общим для ad, shop и mart-контроллеров. */
-trait TempImgSupport extends SioController with PlayMacroLogsI with NotifyWs with MyConfName with I18nSupport {
+trait TempImgSupport extends SioController with PlayMacroLogsI with NotifyWs with MyConfName with I18nSupport with ICurrentConf {
 
   /** Размер генерируемой палитры. */
   val MAIN_COLORS_PALETTE_SIZE: Int = configuration.getInt(s"img.$MY_CONF_NAME.palette.size") getOrElse 8

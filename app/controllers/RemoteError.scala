@@ -3,6 +3,7 @@ package controllers
 import com.google.inject.Inject
 import models.merr.{MRemoteErrorTypes, MRemoteError}
 import models.GeoIp
+import play.api.cache.CacheApi
 import play.api.data._, Forms._
 import play.api.i18n.MessagesApi
 import util.PlayMacroLogsImpl
@@ -19,7 +20,9 @@ import util.SiowebEsUtil.client
  * Клиенты могут слать всякую хрень.
  */
 class RemoteError @Inject() (
-  override val messagesApi: MessagesApi
+  override val messagesApi  : MessagesApi,
+  override val current      : play.api.Application,
+  override val cache        : CacheApi
 )
   extends SioController with PlayMacroLogsImpl with BruteForceProtectCtl
 {

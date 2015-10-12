@@ -6,6 +6,7 @@ import io.suggest.js.UploadConstants
 import models.im.logo.{LogoOpt_t, LogoUtil}
 import models.im.{MImg3, MImgT, MImg}
 import models.jsm.init.MTargets
+import play.api.cache.CacheApi
 import play.api.i18n.MessagesApi
 import play.api.libs.Files.TemporaryFile
 import play.api.mvc.{MultipartFormData, Result}
@@ -24,7 +25,6 @@ import play.api.data.Forms._
 import util.FormUtil._
 import GalleryUtil._
 import WelcomeUtil._
-import play.api.Play.{current, configuration}
 import models.madn.EditConstants._
 import util.img.ImgFormUtil.img3IdOptM
 
@@ -39,8 +39,10 @@ import scala.concurrent.Future
  * Супервайзер ресторанной сети и ТЦ имеют одну форму и здесь обозначаются как "узлы-лидеры".
  */
 class MarketLkAdnEdit @Inject() (
-  override val messagesApi: MessagesApi,
-  override val actorSystem: ActorSystem
+  override val messagesApi  : MessagesApi,
+  override val actorSystem  : ActorSystem,
+  override val current      : play.api.Application,
+  override val cache        : CacheApi
 )
   extends SioController
   with PlayMacroLogsImpl
