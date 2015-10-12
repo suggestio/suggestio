@@ -60,10 +60,18 @@ class SwfsClientWs @Inject() (
 
   /**
    * Список weed-мастеров.
-   * @return ["localhost:9300", "127.5.5.5:9301"]
+   * @return ["localhost:9333", "127.5.5.5:9334"]
    */
   val MASTERS: List[String] = {
-    conf.getStringSeq(MASTERS_CK).get.toList
+    conf.getStringSeq(MASTERS_CK)
+      .filter(_.nonEmpty)
+      .map { _.toList }
+      .getOrElse {
+        val dflt = "localhost:9333"
+        LOGGER.warn("SeaweedFS masters are undefined/empty. Please define in config:\n  " +
+          MASTERS_CK + " = [\"" + dflt + "\"]" )
+        List(dflt)
+      }
   }
 
 }

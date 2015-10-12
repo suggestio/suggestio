@@ -1,5 +1,8 @@
 package io.suggest.swfs.client.proto.fid
 
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -20,6 +23,15 @@ trait IFid extends IVolumeId {
 
 
 object Fid {
+
+  val VOLUME_ID_FN = "v"
+  val FILE_ID_FN   = "f"
+
+  implicit val FID_FORMAT: OFormat[Fid] = (
+    (__ \ VOLUME_ID_FN).format[Int] and
+    (__ \ FILE_ID_FN).format[String]
+  )(apply, unlift(unapply))
+
 
   /** Распарсить модель из строки. */
   def apply(fid: String): Fid = {
