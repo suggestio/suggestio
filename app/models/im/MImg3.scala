@@ -3,8 +3,10 @@ package models.im
 import java.util.UUID
 
 import com.google.inject.{Inject, Singleton}
+import io.suggest.fio.WriteRequest
 import io.suggest.model.img.{ImgSzDated, IImgMeta}
-import io.suggest.model.n2.media.storage.{SwfsStorage_, CassandraStorage, IMediaStorage}
+import io.suggest.model.n2.media.storage.swfs.SwfsStorage_
+import io.suggest.model.n2.media.storage.{CassandraStorage, IMediaStorage}
 import io.suggest.model.n2.media.{MMedia_, MPictureMeta, MFileMeta}
 import io.suggest.util.UuidUtil
 import models._
@@ -110,10 +112,13 @@ abstract class MImg3T extends MImgT {
   }
 
   override protected def _getImgBytes2: Enumerator[Array[Byte]] = {
-    val fut = _mediaFut.map { mm =>
-      mm.storage.read
+    val enumFut = for {
+      mm <- _mediaFut
+      rr <- mm.storage.read
+    } yield {
+      rr.data
     }
-    Enumerator.flatten(fut)
+    Enumerator.flatten( enumFut )
   }
 
   /** Подготовить и вернуть новое медиа-хранилище для модели. */
@@ -121,18 +126,17 @@ abstract class MImg3T extends MImgT {
 
   /** Сохранить в постоянное хранилище, (пере-)создать MMedia. */
   override protected def _doSaveToPermanent(loc: MLocalImgT): Future[MMedia] = {
-    val mli = toLocalInstance
+    val mimeFut = Future( loc.mime )
     _mediaFut.recoverWith { case ex: Throwable =>
       // Перезаписывать нечего, т.к. элемент ещё не существует в MMedia.
-      val whOptFut = mli.getImageWH
-      val mimeFut = Future( mli.mime )
-      val sha1Fut = Future( FileUtil.sha1(mli.file) )
+      val whOptFut = loc.getImageWH
+      val sha1Fut = Future( FileUtil.sha1(loc.file) )
       val storFut = _newMediaStorage
 
       if (!ex.isInstanceOf[NoSuchElementException])
         LOGGER.warn("_doSaveToPermanent(" + loc + "): _mediaFut() returned error, this = " + this, ex)
 
-      val szB = mli.file.length()
+      val szB = loc.file.length()
 
       for {
         whOpt <- whOptFut
@@ -161,9 +165,20 @@ abstract class MImg3T extends MImgT {
       }
 
     }.flatMap { mm =>
-      mm.storage
-        .write( mli.imgBytesEnumerator )
-        .map { _ => mm }
+      // Осуществить сохранение файла в хранилище.
+      for {
+        mime <- mimeFut
+        _    <- {
+          val wargs = WriteRequest(
+            contentType = mime,
+            file        = loc.file
+          )
+          mm.storage
+            .write( wargs )
+        }
+      } yield {
+        mm
+      }
     }
   }
 
