@@ -1,3 +1,5 @@
+import play.sbt.PlayImport
+
 name := "util"
 
 organization := "io.suggest"
@@ -25,9 +27,7 @@ libraryDependencies ++= {
   val akkaVsn       = "2.3.12"
   val tikaVsn       = "1.7"
   val cascadingVsn  = "2.6.3"
-  val playVsn       = "2.4.3"
   val morphVsn      = "1.3-SNAPSHOT"
-  val bcVsn         = "1.52"
   val phantomVersion = "1.2.7"
   Seq(
     "io.suggest" %% "common"       % "0.0.0-SNAPSHOT",
@@ -43,8 +43,9 @@ libraryDependencies ++= {
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.5.1",
     "com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % "2.5.2",
     "org.json4s" %% "json4s-native" % "3.+",
-    "com.typesafe.play" %% "play-json"  % playVsn,
-    "com.typesafe.play" %% "play-ws"    % playVsn,
+    PlayImport.json,
+    PlayImport.ws,
+    PlayImport.cache,
     // ES
     "org.elasticsearch" % "elasticsearch" % esVsn,
     // Parsers
