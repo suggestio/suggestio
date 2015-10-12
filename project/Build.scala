@@ -1,11 +1,10 @@
-import play.PlayScala
+import play.sbt.PlayScala
 import playscalajs.{PlayScalaJS, ScalaJSPlay}
 import sbt._
 import Keys._
 import com.typesafe.sbt.web._
 import com.typesafe.sbt.web.SbtWeb.autoImport._
-import org.scalajs.sbtplugin._, ScalaJSPlugin.autoImport._
-import com.typesafe.sbt.SbtNativePackager._
+import org.scalajs.sbtplugin._
 import PlayScalaJS.autoImport._
 
 object SiobixBuild extends Build {
