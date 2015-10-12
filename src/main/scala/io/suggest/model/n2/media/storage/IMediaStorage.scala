@@ -1,7 +1,9 @@
 package io.suggest.model.n2.media.storage
 
 import com.google.inject.Inject
+import io.suggest.fio.{IReadResponse, IWriteRequest}
 import io.suggest.model.IGenEsMappingProps
+import io.suggest.model.n2.media.storage.swfs.SwfsStorage_
 import io.suggest.util.SioEsUtil.DocField
 import play.api.libs.iteratee.Enumerator
 import play.api.libs.json._
@@ -54,7 +56,7 @@ trait IMediaStorage {
    * Асинхронное поточное чтение хранимого файла.
    * @return Енумератор данных блоба.
    */
-  def read(implicit ec: ExecutionContext): Enumerator[Array[Byte]]
+  def read(implicit ec: ExecutionContext): Future[IReadResponse]
 
   /**
    * Запустить асинхронное стирание контента в backend-хранилище.
@@ -67,7 +69,7 @@ trait IMediaStorage {
    * @param data Асинхронный поток данных.
    * @return Фьючерс для синхронизации.
    */
-  def write(data: Enumerator[Array[Byte]])(implicit ec: ExecutionContext): Future[_]
+  def write(data: IWriteRequest)(implicit ec: ExecutionContext): Future[_]
 
   /** Есть ли в хранилище текущий файл? */
   def isExist(implicit ec: ExecutionContext): Future[Boolean]

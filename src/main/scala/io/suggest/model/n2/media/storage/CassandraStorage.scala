@@ -1,9 +1,10 @@
 package io.suggest.model.n2.media.storage
 
 import java.nio.ByteBuffer
+import java.nio.file.Files
 import java.util.UUID
 
-import io.suggest.itee.IteeUtil
+import io.suggest.fio.{ReadResponse, IWriteRequest}
 import io.suggest.model.MUserImg2
 import org.joda.time.DateTime
 import play.api.libs.iteratee.Enumerator
@@ -55,33 +56,35 @@ case class CassandraStorage(
 
   override def toJson = Json.toJson(this)
 
-  override def read(implicit ec: ExecutionContext): Enumerator[Array[Byte]] = {
-    val enumFut = MUserImg2.getById(rowKey, qOpt)
+  override def read(implicit ec: ExecutionContext): Future[ReadResponse] = {
+    MUserImg2.getById(rowKey, qOpt)
       .flatMap {
         case Some(v) =>
-          Future successful Enumerator(v.imgBytes)
+          val rr = ReadResponse(
+            contentType = "application/octet-stream",
+            data  = Enumerator(v.imgBytes),
+            sizeB = v.imgBytes.length
+          )
+          Future successful rr
         case None =>
           Future failed new NoSuchElementException("Key not found: " + rowKey + " q=" + qOpt)
       }
-    Enumerator.flatten(enumFut)
   }
 
   override def delete(implicit ex: ExecutionContext): Future[_] = {
     MUserImg2.deleteOne(rowKey, qOpt)
   }
 
-  override def write(data: Enumerator[Array[Byte]])(implicit ec: ExecutionContext): Future[_] = {
+  override def write(data: IWriteRequest)(implicit ec: ExecutionContext): Future[_] = {
+    val barr = Files.readAllBytes( data.file.toPath )
     // Сдампить блобики в один единый блоб.
-    IteeUtil.dumpBlobs( data )
-      .flatMap { barr =>
-        val mimg2 = MUserImg2(
-          q         = MUserImg2.qOpt2q(qOpt),
-          img       = ByteBuffer.wrap(barr),
-          timestamp = DateTime.now(),
-          id        = rowKey
-        )
-        mimg2.save
-      }
+    val mimg2 = MUserImg2(
+      q         = MUserImg2.qOpt2q(qOpt),
+      img       = ByteBuffer.wrap(barr),
+      timestamp = DateTime.now(),
+      id        = rowKey
+    )
+    mimg2.save
   }
 
   /** Есть ли в хранилище текущий файл? */

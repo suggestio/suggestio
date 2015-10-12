@@ -2,7 +2,8 @@ package io.suggest.model.n2.media
 
 import java.util.UUID
 
-import io.suggest.model.n2.media.storage.{SwfsStorage, CassandraStorage}
+import io.suggest.model.n2.media.storage.CassandraStorage
+import io.suggest.model.n2.media.storage.swfs.SwfsStorage
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers._
 

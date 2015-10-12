@@ -3,6 +3,7 @@ package io.suggest.model.n2.media.storage
 import java.util.UUID
 
 import io.suggest.model.PlayJsonTestUtil
+import io.suggest.model.n2.media.storage.swfs.SwfsStorage_
 import io.suggest.swfs.client.proto.fid.Fid
 import org.scalatest.FlatSpec
 import org.scalatestplus.play.{OneAppPerSuite, PlaySpec}
