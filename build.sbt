@@ -27,7 +27,10 @@ libraryDependencies ++= {
       exclude("log4j",     "log4j")
       exclude("org.slf4j", "log4j-over-slf4j"),
     // test
-    "org.scalatest"     %% "scalatest" % "2.2.+" % "test"
+    "org.scalatest"     %% "scalatest" % "2.2.+" % "test",
+    "org.scalatestplus" %% "play" % "1.4.0-SNAPSHOT" % "test"
+      exclude("commons-logging", "commons-logging")
+      exclude("org.w3c.css", "sac")
   )
 }
 

@@ -2,6 +2,7 @@ package io.suggest.model.n2.media.storage
 
 import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.model.menum.EnumJsonReadsT
+import play.api.libs.json.__
 
 /**
  * Suggest.io
@@ -26,5 +27,9 @@ object MStorages extends EnumMaybeWithName with EnumJsonReadsT {
   /** SeaWeedFS.
     * Хранилище на смену кассандре (oct.2015-...). */
   val SeaWeedFs: T = new Val("s")
+
+
+  /** JSON format для поля типа storage модели MMedia. */
+  val STYPE_FN_FORMAT = (__ \ MStorFns.STYPE.fn).format[T]
 
 }

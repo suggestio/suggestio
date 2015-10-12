@@ -1,9 +1,13 @@
 package io.suggest.model.n2.media.storage
 
+import com.google.inject.{Singleton, Inject}
+import io.suggest.swfs.client.ISwfsClient
+import io.suggest.swfs.client.proto.fid.Fid
+import io.suggest.swfs.client.proto.get.GetRequest
 import play.api.libs.iteratee.Enumerator
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import IMediaStorage.STYPE_FN_FORMAT
+import MStorages.STYPE_FN_FORMAT
 
 import scala.concurrent.{Future, ExecutionContext}
 
@@ -14,46 +18,56 @@ import scala.concurrent.{Future, ExecutionContext}
  * Description: Поддержка хранилища SeaWeedFS.
  * @see [[https://github.com/chrislusf/seaweedfs]]
  */
-object SwfsStorage {
+@Singleton
+class SwfsStorage_ @Inject() (implicit val client: ISwfsClient) {
 
-  val VOLUME_ID_FMT = (__ \ MStorFns.VOLUME_ID.fn).format[Long]
+  val FID_FORMAT = (__ \ MStorFns.FID.fn).format[Fid]
 
-  val FILE_ID_FMT   = (__ \ MStorFns.FILE_ID.fn).format[String]
-
-  implicit val READS: Reads[SwfsStorage] = (
+  val READS: Reads[SwfsStorage] = (
     STYPE_FN_FORMAT.filter { _ == MStorages.SeaWeedFs } and
-    VOLUME_ID_FMT and
-    FILE_ID_FMT
-  ) { (_, volumeId, fileId) =>
-    SwfsStorage(volumeId, fileId)
+    FID_FORMAT
+  ) { (_, fid) =>
+    apply(fid)
   }
 
-  implicit val WRITES: OWrites[SwfsStorage] = (
+  val WRITES: OWrites[SwfsStorage] = (
     (STYPE_FN_FORMAT: OWrites[MStorage]) and
-    VOLUME_ID_FMT and
-    FILE_ID_FMT
+    FID_FORMAT
   ) { ss =>
-    (ss.sType, ss.volumeId, ss.fileId)
+    (ss.sType, ss.fid)
+  }
+
+  implicit val FORMAT = Format(READS, WRITES)
+
+  def apply(fid: Fid): SwfsStorage = {
+    SwfsStorage(fid, this)
   }
 
   /** Получить у swfs-мастера координаты для сохранения нового файла. */
-  def assingNew(): Future[SwfsStorage] = {
-    ???
+  def assingNew()(implicit ec: ExecutionContext): Future[SwfsStorage] = {
+    for( resp <- client.assign() ) yield {
+      apply(resp.fidParsed)
+    }
   }
 
 }
 
 
-case class SwfsStorage(
-  volumeId  : Long,
-  fileId    : String
-)
+case class SwfsStorage(fid: Fid, companion: SwfsStorage_)
   extends IMediaStorage
 {
 
+  import companion._
+
   override def sType = MStorages.SeaWeedFs
 
-  override def read(implicit ec: ExecutionContext): Enumerator[Array[Byte]] = ???
+  override def toJson = Json.toJson(this)
+
+  override def read(implicit ec: ExecutionContext): Enumerator[Array[Byte]] = {
+    //val req = GetRequest()
+    //companion.client.get()
+    ???
+  }
 
   override def delete(implicit ex: ExecutionContext): Future[_] = ???
 

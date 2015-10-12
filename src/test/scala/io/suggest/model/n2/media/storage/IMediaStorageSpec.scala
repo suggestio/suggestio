@@ -3,7 +3,9 @@ package io.suggest.model.n2.media.storage
 import java.util.UUID
 
 import io.suggest.model.PlayJsonTestUtil
+import io.suggest.swfs.client.proto.fid.Fid
 import org.scalatest.FlatSpec
+import org.scalatestplus.play.{OneAppPerSuite, PlaySpec}
 
 /**
  * Suggest.io
@@ -11,26 +13,34 @@ import org.scalatest.FlatSpec
  * Created: 30.09.15 11:23
  * Description: Тесты для абстрактной модели [[IMediaStorage]].
  */
-class IMediaStorageSpec extends FlatSpec with PlayJsonTestUtil {
+class IMediaStorageSpec extends PlaySpec with OneAppPerSuite with PlayJsonTestUtil {
 
   override type T = IMediaStorage
 
-  "JSON" should "support CassandraStorage" in {
-    jsonTest {
-      CassandraStorage(
-        rowKey = UUID.randomUUID(),
-        qOpt = None
-      )
-    }
-  }
+  private lazy val swfsStorage = app.injector.instanceOf( classOf[SwfsStorage_] )
 
-  it should "support SwfsStorage" in {
-    jsonTest {
-      SwfsStorage(
-        volumeId = 4L,
-        fileId = "asdasdad920i435rkt3io54f"
-      )
+  "JSON" must {
+
+    "support CassandraStorage" in {
+      jsonTest {
+        CassandraStorage(
+          rowKey = UUID.randomUUID(),
+          qOpt = None
+        )
+      }
     }
+
+    "support SwfsStorage" in {
+      jsonTest {
+        swfsStorage(
+          Fid(
+            volumeId = 4,
+            fileId = "asdasdad920i435rkt3io54f"
+          )
+        )
+      }
+    }
+
   }
 
 }

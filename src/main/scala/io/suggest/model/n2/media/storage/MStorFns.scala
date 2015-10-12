@@ -1,6 +1,7 @@
 package io.suggest.model.n2.media.storage
 
 import io.suggest.common.menum.EnumValue2Val
+import io.suggest.swfs.client.proto.fid.Fid
 import io.suggest.util.SioEsUtil._
 
 /**
@@ -33,11 +34,13 @@ object MStorFns extends EnumValue2Val {
   }
 
   // seaweedfs
-  val VOLUME_ID   : T = new Val("v") {
-    override def esMappingProp = FieldNumber(fn, DocFieldTypes.long, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
-  }
-  val FILE_ID     : T = new Val("f") {
-    override def esMappingProp = FieldString(fn, FieldIndexingVariants.no, include_in_all = false)
+  val FID         : T = new Val("f") {
+    override def esMappingProp: DocField = {
+      FieldObject("f", enabled = true, properties = Seq(
+        FieldNumber(Fid.VOLUME_ID_FN, fieldType = DocFieldTypes.integer, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+        FieldString(Fid.FILE_ID_FN, index = FieldIndexingVariants.no, include_in_all = false)
+      ))
+    }
   }
 
 }

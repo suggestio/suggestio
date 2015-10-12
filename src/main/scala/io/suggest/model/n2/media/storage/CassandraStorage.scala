@@ -9,7 +9,7 @@ import org.joda.time.DateTime
 import play.api.libs.iteratee.Enumerator
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import IMediaStorage.STYPE_FN_FORMAT
+import MStorages.STYPE_FN_FORMAT
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -52,6 +52,8 @@ case class CassandraStorage(
   extends IMediaStorage
 {
   override def sType: MStorage = MStorages.Cassandra
+
+  override def toJson = Json.toJson(this)
 
   override def read(implicit ec: ExecutionContext): Enumerator[Array[Byte]] = {
     val enumFut = MUserImg2.getById(rowKey, qOpt)

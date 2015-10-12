@@ -1,5 +1,6 @@
 package io.suggest.model.n2.media.storage
 
+import com.google.inject.Inject
 import io.suggest.model.IGenEsMappingProps
 import io.suggest.util.SioEsUtil.DocField
 import play.api.libs.iteratee.Enumerator
@@ -13,27 +14,22 @@ import scala.concurrent.{Future, ExecutionContext}
  * Created: 29.09.15 18:53
  * Description: Данные по backend-хранилищу, задействованному в
  */
-object IMediaStorage extends IGenEsMappingProps {
+class IMediaStorage_ @Inject() (swfsStorage: SwfsStorage_) extends IGenEsMappingProps {
 
-  val STYPE_FN_FORMAT = (__ \ MStorFns.STYPE.fn).format[MStorage]
-
-  implicit val READS: Reads[IMediaStorage] = new Reads[IMediaStorage] {
+  val READS: Reads[IMediaStorage] = new Reads[IMediaStorage] {
     override def reads(json: JsValue): JsResult[IMediaStorage] = {
       json.validate(CassandraStorage.READS)
-        .orElse { json.validate(SwfsStorage.READS) }
+        .orElse { json.validate(swfsStorage.READS) }
     }
   }
 
-  implicit val WRITES: Writes[IMediaStorage] = new Writes[IMediaStorage] {
+  val WRITES: Writes[IMediaStorage] = new Writes[IMediaStorage] {
     override def writes(o: IMediaStorage): JsValue = {
-      o match {
-        case cs: CassandraStorage =>
-          Json.toJson(cs)(CassandraStorage.WRITES)
-        case swfs: SwfsStorage =>
-          Json.toJson(swfs)(SwfsStorage.WRITES)
-      }
+      o.toJson
     }
   }
+
+  implicit val FORMAT = Format(READS, WRITES)
 
   override def generateMappingProps: List[DocField] = {
     MStorFns.values
@@ -50,6 +46,9 @@ trait IMediaStorage {
 
   /** Тип стораджа. */
   def sType: MStorage
+
+  /** Сериализация инстанса в JSON. */
+  def toJson: JsValue
 
   /**
    * Асинхронное поточное чтение хранимого файла.

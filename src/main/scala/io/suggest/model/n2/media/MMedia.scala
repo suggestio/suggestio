@@ -1,8 +1,9 @@
 package io.suggest.model.n2.media
 
+import com.google.inject.{Singleton, Inject}
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model._
-import io.suggest.model.n2.media.storage.IMediaStorage
+import io.suggest.model.n2.media.storage.{IMediaStorage_, IMediaStorage}
 import io.suggest.util.MacroLogsImpl
 import org.elasticsearch.client.Client
 import play.api.libs.json._
@@ -21,12 +22,17 @@ import scala.concurrent.ExecutionContext
  * Модель создана по мотивам m_media. Имя файла вынесено в MNode.meta.name.
  * Поле _id должно формироваться клиентом и включать в себя значение поля nodeId.
  */
-object MMedia
+@Singleton
+class MMedia_ @Inject() (
+  iMediaStorage: IMediaStorage_
+)
   extends EsModelStaticT
   with EsmV2Deserializer
   with MacroLogsImpl
   with IEsDocJsonWrites
-{
+{ that =>
+
+  import iMediaStorage.FORMAT
 
   override type T = MMedia
 
@@ -50,12 +56,13 @@ object MMedia
     (__ \ PICTURE_META_FN).formatNullable[MPictureMeta]
   )(
     {(nodeId, fileMeta, storage, pictureMetaOpt) =>
-      apply(
-        nodeId  = nodeId,
-        file    = fileMeta,
-        storage = storage,
-        picture = pictureMetaOpt,
-        id      = None
+      MMedia(
+        nodeId    = nodeId,
+        file      = fileMeta,
+        storage   = storage,
+        picture   = pictureMetaOpt,
+        id        = None,
+        companion = that
       )
     },
     {mmedia =>
@@ -95,7 +102,7 @@ object MMedia
     List(
       FieldString(NODE_ID_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
       FieldObject(FILE_META_FN, enabled = true, properties = MFileMeta.generateMappingProps),
-      FieldObject(STORAGE_FN, enabled = true, properties = IMediaStorage.generateMappingProps),
+      FieldObject(STORAGE_FN, enabled = true, properties = iMediaStorage.generateMappingProps),
       FieldObject(PICTURE_META_FN, enabled = true, properties = MPictureMeta.generateMappingProps)
     )
   }
@@ -109,14 +116,14 @@ case class MMedia(
   storage                   : IMediaStorage,
   override val id           : Option[String],
   picture                   : Option[MPictureMeta]  = None,
-  override val versionOpt   : Option[Long]          = None
+  override val versionOpt   : Option[Long]          = None,
+  override val companion    : MMedia_
 )
   extends EsModelT
   with EsModelJsonWrites
 {
 
   override type T = MMedia
-  override def companion = MMedia
 
   def withDocMeta(dmeta: IEsDocMeta): T = {
     copy(id = dmeta.id, versionOpt = dmeta.version)
@@ -127,9 +134,15 @@ case class MMedia(
 
 // Поддержка JMX.
 trait MMediaJmxMBean extends EsModelJMXMBeanI
-final class MMediaJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+
+final class MMediaJmx @Inject() (
+  mMedia      : MMedia_,
+  val ec      : ExecutionContext,
+  val client  : Client,
+  val sn      : SioNotifierStaticClientI
+)
   extends EsModelJMXBase
   with MMediaJmxMBean
 {
-  override def companion = MMedia
+  override def companion = mMedia
 }
