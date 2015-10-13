@@ -1,19 +1,19 @@
 package util.adv
 
+import com.google.inject.{Singleton, Inject}
+import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.util.JMXBase
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import models._
+import org.elasticsearch.client.Client
 import org.joda.time.DateTime
-import play.api.db.DB
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.Configuration
+import play.api.db.Database
 import util.PlayMacroLogsImpl
-import util.SiowebEsUtil.client
 import util.async.AsyncUtil
 import util.billing.MmpDailyBilling
-import util.event.SiowebNotifier.Implicts.sn
-import play.api.Play.{current, configuration}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -21,7 +21,17 @@ import scala.concurrent.Future
  * Created: 11.09.14 18:19
  * Description: Утиль для работы с размещениями рекламных карточек.
  */
-object AdvUtil extends PlayMacroLogsImpl {
+@Singleton
+class AdvUtil @Inject() (
+  mmpDailyBilling         : MmpDailyBilling,
+  configuration           : Configuration,
+  db                      : Database,
+  implicit val ec         : ExecutionContext,
+  implicit val esClient   : Client,
+  implicit val sn         : SioNotifierStaticClientI
+)
+  extends PlayMacroLogsImpl
+{
 
   import LOGGER._
 
@@ -62,7 +72,7 @@ object AdvUtil extends PlayMacroLogsImpl {
       Future successful producerOpt.orNull
     }
     // Считаем непосредственных ресиверов через mmp-billing, т.е. платные размещения по времени.
-    val receiversMmp = MmpDailyBilling.calcualteReceiversMapForAd(mad.id.get)
+    val receiversMmp = mmpDailyBilling.calcualteReceiversMapForAd(mad.id.get)
 
     // Чистим саморазмещение и добавляем в карту прямых ресиверов.
     val prodResultFut: Future[Receivers_t] = priOpt.fold(Future successful receiversMmp) { pri =>
@@ -135,7 +145,7 @@ object AdvUtil extends PlayMacroLogsImpl {
     }
     // Надо убрать карточку из текущего размещения на узле, если есть: из advOk и из advReq.
     val dbUpdFut = Future {
-      DB.withTransaction { implicit c =>
+      db.withTransaction { implicit c =>
         // Резать как online, так и в очереди на публикацию.
         val sepo = SelectPolicies.UPDATE
         val advsOk = if (rcvrIdOpt.isDefined) {
@@ -160,7 +170,7 @@ object AdvUtil extends PlayMacroLogsImpl {
         advsReq.foreach { madvReq =>
           trace(s"${logPrefix}refusing advReq[${madvReq.id.get}]...")
           // TODO Нужно как-то управлять причиной выпиливания. Этот action работает через POST, поэтому можно замутить форму какую-то.
-          MmpDailyBilling.refuseAdvReq(madvReq, msg)
+          mmpDailyBilling.refuseAdvReq(madvReq, msg)
         }
       }
     }(AsyncUtil.jdbcExecutionContext)
@@ -216,14 +226,23 @@ trait AdvUtilJmxMBean {
   def depublishAdAt(adId: String, rcvrId: String): String
 }
 
+
 /** Реализация MBean'а для прямого взаимодействия с AdvUtil. */
-final class AdvUtilJmx extends AdvUtilJmxMBean with JMXBase {
+final class AdvUtilJmx @Inject() (
+  advUtil                 : AdvUtil,
+  implicit val ec         : ExecutionContext,
+  implicit val esClient   : Client,
+  implicit val sn         : SioNotifierStaticClientI
+)
+  extends AdvUtilJmxMBean
+  with JMXBase
+{
 
   override def jmxName = "util:type=adv,name=" + getClass.getSimpleName.replace("Jmx", "")
 
   override def resetAllReceivers(): String = {
     val cntFut = MAd.updateAll() { mad0 =>
-      AdvUtil.calculateReceiversFor(mad0) map { rcvrs1 =>
+      advUtil.calculateReceiversFor(mad0) map { rcvrs1 =>
         mad0.copy(
           receivers = rcvrs1
         )
@@ -240,7 +259,7 @@ final class AdvUtilJmx extends AdvUtilJmxMBean with JMXBase {
       case None =>
         Future successful s"Not found ad: $adId"
       case Some(mad) =>
-        AdvUtil.calculateReceiversFor(mad) flatMap { rcvrs1 =>
+        advUtil.calculateReceiversFor(mad) flatMap { rcvrs1 =>
           MAd.tryUpdate(mad) { mad0 =>
             mad0.copy(
               receivers = rcvrs1
@@ -254,13 +273,13 @@ final class AdvUtilJmx extends AdvUtilJmxMBean with JMXBase {
   }
 
   override def depublishAd(adId: String): String = {
-    val s = AdvUtil.removeAdRcvr(adId, rcvrIdOpt = None)
+    val s = advUtil.removeAdRcvr(adId, rcvrIdOpt = None)
       .map { isOk => "Result: " + isOk }
     awaitString(s)
   }
 
   override def depublishAdAt(adId: String, rcvrId: String): String = {
-    val s = AdvUtil.removeAdRcvr(adId, rcvrIdOpt = Some(rcvrId))
+    val s = advUtil.removeAdRcvr(adId, rcvrIdOpt = Some(rcvrId))
       .map { isOk => "Result: " + isOk }
     awaitString(s)
   }

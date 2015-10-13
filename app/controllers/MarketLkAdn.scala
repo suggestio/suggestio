@@ -40,6 +40,7 @@ class MarketLkAdn @Inject() (
   override val cache                  : CacheApi,
   override val identUtil              : IdentUtil,
   logoUtil                            : LogoUtil,
+  billing                             : Billing,
   override implicit val ec            : ExecutionContext,
   override implicit val esClient      : Client,
   override implicit val sn            : SioNotifierStaticClientI
@@ -274,7 +275,7 @@ class MarketLkAdn @Inject() (
                 Future successful Unit
               }
               nodeUpdateFut.map { _adnId =>
-                Billing.maybeInitializeNodeBilling(adnId)
+                billing.maybeInitializeNodeBilling(adnId)
                 Redirect(routes.MarketLkAdn.showNodeAds(adnId))
                   .flashing(FLASH.SUCCESS -> "Signup.finished")
                   .withSession(Keys.PersonId.name -> personId)

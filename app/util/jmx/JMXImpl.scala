@@ -32,7 +32,8 @@ import util.compat._
 class JMXImpl @Inject() (
   mMediaJmx         : MMediaJmx,
   siowebEsModelJmx  : SiowebEsModelJmx,
-  migration         : img3.MigrationJmx
+  migration         : img3.MigrationJmx,
+  advUtilJmx        : AdvUtilJmx
 )
   extends PlayLazyMacroLogsImpl
 {
@@ -59,7 +60,7 @@ class JMXImpl @Inject() (
     siowebEsModelJmx,
     new MRemoteErrorJmx,
     new MAiMadJmx,
-    new AdvUtilJmx,
+    advUtilJmx,
     new MEventJmx,
     new MExtTargetJmx,
     new MNodeJmx,

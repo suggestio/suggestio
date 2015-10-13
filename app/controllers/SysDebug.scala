@@ -1,7 +1,6 @@
 package controllers
 
 import com.google.inject.Inject
-import io.suggest.event.SioNotifierStaticClientI
 import org.elasticsearch.client.Client
 import play.api.i18n.MessagesApi
 import util.acl.IsSuperuser
@@ -18,6 +17,7 @@ import scala.concurrent.ExecutionContext
  */
 class SysDebug @Inject() (
   override val messagesApi      : MessagesApi,
+  geoParentsHealth              : AdnGeoParentsHealth,
   override implicit val ec      : ExecutionContext,
   implicit val esClient         : Client
 )
@@ -35,7 +35,7 @@ class SysDebug @Inject() (
    */
   def testNodesAllGeoParents = IsSuperuser.async { implicit request =>
     // Организуем тестирование
-    val testResultsFut = AdnGeoParentsHealth.testAll()
+    val testResultsFut = geoParentsHealth.testAll()
 
     // Запустить рендер, когда результаты тестирования будут готовы.
     testResultsFut.map { testResults =>

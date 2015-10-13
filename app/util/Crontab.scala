@@ -1,5 +1,6 @@
 package util
 
+import com.google.inject.Inject
 import models.im.MLocalImg
 import play.api.Play.current
 import akka.actor.{Scheduler, Cancellable}
@@ -21,13 +22,20 @@ import util.health.AdnGeoParentsHealth
  * По мотивам http://stackoverflow.com/a/13469308
  */
 
-class Crontab extends PlayLazyMacroLogsImpl {
+class Crontab @Inject() (
+  geoParentsHealth              : AdnGeoParentsHealth,
+  ipGeoBaseImport               : IpGeoBaseImport,
+  billing                       : Billing,
+  mmpDailyBilling               : MmpDailyBilling
+)
+  extends PlayLazyMacroLogsImpl
+{
 
   import LOGGER._
 
   /** Список классов, которые являются поставщиками периодических задач при старте. */
-  def TASK_PROVIDERS = List[CronTasksProvider](
-    Billing, MmpDailyBilling, IpGeoBaseImport, MLocalImg, AdnGeoParentsHealth
+  def TASK_PROVIDERS = List[ICronTasksProvider](
+    billing, mmpDailyBilling, ipGeoBaseImport, MLocalImg, geoParentsHealth
   )
 
   def sched: Scheduler = {
@@ -69,7 +77,7 @@ class Crontab extends PlayLazyMacroLogsImpl {
 
 
 /** Интерфейс для модулей, предоставляющих периодические задачи. */
-trait CronTasksProvider {
+trait ICronTasksProvider {
 
   /** Список задач, которые надо вызывать по таймеру. */
   def cronTasks(app: Application): TraversableOnce[ICronTask]
@@ -77,6 +85,6 @@ trait CronTasksProvider {
 
 
 /** При использование stackable trait и abstract override имеет смысл подмешивать этот трейт с дефолтовой пустой реализацией. */
-trait CronTasksProviderEmpty extends CronTasksProvider {
+trait CronTasksProviderEmpty extends ICronTasksProvider {
   override def cronTasks(app: Application): TraversableOnce[ICronTask] = Nil
 }

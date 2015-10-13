@@ -1,13 +1,13 @@
 package util.billing
 
+import com.google.inject.{Inject, Singleton}
 import models._
-import play.api.Application
-import play.api.Play.{current, configuration}
-import play.api.db.DB
+import play.api.{Configuration, Application}
+import play.api.db.Database
 import org.joda.time.{Period, DateTime}
 import util.anorm.AnormPgInterval
 import scala.concurrent.duration._
-import util.{CronTasksProvider, PlayMacroLogsImpl}
+import util.{ICronTasksProvider, PlayMacroLogsImpl}
 import AnormPgInterval._
 
 /**
@@ -16,7 +16,14 @@ import AnormPgInterval._
  * Created: 18.04.14 12:09
  * Description: Утиль для работы с биллингом, с финансовыми транзакциями.
  */
-object Billing extends PlayMacroLogsImpl with CronTasksProvider {
+@Singleton
+class Billing @Inject() (
+  db              : Database,
+  configuration   : Configuration
+)
+  extends PlayMacroLogsImpl
+  with ICronTasksProvider
+{
 
   import LOGGER._
 
@@ -49,7 +56,7 @@ object Billing extends PlayMacroLogsImpl with CronTasksProvider {
   /** Инициализировать биллинг на узле. */
   def maybeInitializeNodeBilling(adnId: String) {
     lazy val logPrefix = s"maybeInitializeNodeBilling($adnId): "
-    val newMbcOpt: Option[MBillContract] = DB.withTransaction { implicit c =>
+    val newMbcOpt: Option[MBillContract] = db.withTransaction { implicit c =>
       MBillContract.lockTableWrite
       val currentContracts = MBillContract.findForAdn(adnId)
       if (currentContracts.isEmpty) {
@@ -64,7 +71,7 @@ object Billing extends PlayMacroLogsImpl with CronTasksProvider {
     } else {
       trace(logPrefix + "Node already have at least one contract.")
     }
-    val newMbbOpt: Option[MBillBalance] = DB.withTransaction { implicit c =>
+    val newMbbOpt: Option[MBillBalance] = db.withTransaction { implicit c =>
       MBillBalance.lockTableWrite
       if (MBillBalance.getByAdnId(adnId).isEmpty) {
         val mbb = MBillBalance(adnId, amount = 0F).save
@@ -86,7 +93,7 @@ object Billing extends PlayMacroLogsImpl with CronTasksProvider {
    * @return Обновлённые и сохранённые данные по финансовой операции.
    */
   def addPayment(txn: MBillTxn): AddPaymentResult = {
-    DB.withTransaction { implicit c =>
+    db.withTransaction { implicit c =>
       val contract = MBillContract.getById(txn.contractId).get
       // SelectPolicies.UPDATE не требуется, т.к. фактический инкремент идёт на стороне базы, а не тут.
       val balance0 = MBillBalance.getByAdnId(contract.adnId) getOrElse {
@@ -109,13 +116,13 @@ object Billing extends PlayMacroLogsImpl with CronTasksProvider {
    * Если пробит overdraft, то попробовать в другой раз.
    */
   def processFeeTarificationAll() {
-    val feeTariffs = DB.withConnection { implicit c =>
+    val feeTariffs = db.withConnection { implicit c =>
       MBillTariffFee.findAllNonDebitedContractActive
     }
     // Есть на руках раскладка по тарифам. Пора пройтись по активным тарифам и попытаться выполнить списания.
     if (feeTariffs.nonEmpty) {
       debug(s"processFeeTarificationAll(): There are ${feeTariffs.size} fee-tariffs to process...")
-      val contracts = DB.withConnection { implicit c =>
+      val contracts = db.withConnection { implicit c =>
         MBillContract.findAllActive
       }
       val contractsMap = contracts
@@ -135,7 +142,7 @@ object Billing extends PlayMacroLogsImpl with CronTasksProvider {
   /** Произвести тарификацию для одного тарифа в рамках одного договора. */
   def processFeeTarification(tariff: MBillTariffFee, contract: MBillContract) {
     lazy val logPrefix = s"processFeeTarification(${tariff.id.get}, ${tariff.contractId}): "
-    val result: Either[String, FeeTarificationSuccess] = DB.withTransaction { implicit c =>
+    val result: Either[String, FeeTarificationSuccess] = db.withTransaction { implicit c =>
       val balanceOpt = MBillBalance.getByAdnId(contract.adnId, SelectPolicies.UPDATE)
         // Нельзя списывать деньги, если на счету нет денег.
         .filter { mbb =>

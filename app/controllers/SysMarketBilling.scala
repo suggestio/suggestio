@@ -26,13 +26,17 @@ import util.billing.Billing
  * Description: Контроллер управления биллинга для операторов sio-market.
  */
 class SysMarketBilling @Inject() (
-  override val messagesApi      : MessagesApi,
-  db                            : Database,
-  override implicit val ec      : ExecutionContext,
-  implicit val esClient         : Client,
-  override implicit val sn      : SioNotifierStaticClientI
+  override val messagesApi        : MessagesApi,
+  billing                         : Billing,
+  override val db                 : Database,
+  override implicit val ec        : ExecutionContext,
+  override implicit val esClient  : Client,
+  override implicit val sn        : SioNotifierStaticClientI
 )
-  extends SioControllerImpl with PlayMacroLogsImpl
+  extends SioControllerImpl
+  with PlayMacroLogsImpl
+  with IEsClient
+  with IDb
 {
 
   import LOGGER._
@@ -290,7 +294,7 @@ class SysMarketBilling @Inject() (
         }
         if (mbc.crand != lci.crand || !mbc.suffixMatches(lci.suffix))
           throw new IllegalArgumentException("invalid id")
-        val result = Billing.addPayment(txn)
+        val result = billing.addPayment(txn)
         Redirect( routes.SysMarketBilling.billingFor(mbc.adnId) )
           .flashing(FLASH.SUCCESS -> ("Платеж успешно проведён. Баланс: " + result.newBalance.amount))
       }

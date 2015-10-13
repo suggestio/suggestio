@@ -1,17 +1,17 @@
 package util.health
 
+import com.google.inject.{Singleton, Inject}
 import models.MAdnNode
 import models.usr.MPersonIdent
 import models.{CronTask, ICronTask, AdnShownTypes}
 import models.msys.NodeProblem
 import org.elasticsearch.client.Client
 import org.joda.time.{DateTimeZone, DateTime}
-import play.api.Application
-import play.api.i18n.Messages
+import play.api.{Configuration, Application}
+import play.api.i18n.{Lang, MessagesApi}
 import util.mail.IMailerWrapper
-import util.{PlayMacroLogsImpl, TplFormatUtilT, CronTasksProvider}
+import util.{PlayMacroLogsImpl, TplFormatUtilT, ICronTasksProvider}
 import util.showcase.ShowcaseNodeListUtil
-import play.api.Play.{current, configuration}
 import scala.concurrent.duration._
 import views.html.sys1.debug.geo.parent._
 
@@ -24,14 +24,24 @@ import scala.util.Success
  * Created: 18.06.15 17:18
  * Description: Поиск проблем в сети узлов.
  */
-object AdnGeoParentsHealth extends CronTasksProvider with PlayMacroLogsImpl with TplFormatUtilT {
+@Singleton
+class AdnGeoParentsHealth @Inject() (
+  configuration         : Configuration,
+  mailer                : IMailerWrapper,
+  messagesApi           : MessagesApi,
+  implicit val ec       : ExecutionContext,
+  implicit val esClient : Client
+)
+  extends ICronTasksProvider
+  with PlayMacroLogsImpl
+  with TplFormatUtilT
+{
 
   import LOGGER._
 
   /** Включено ли автоматическое тестирование узлов? */
   val GEO_PARENTS_AUTO = configuration.getBoolean("health.tests.adn.geo.parent.periodical") getOrElse false
 
-  // TODO Интегрировать с cron, чтобы раз в день шла проверка и слалось письмо при проблеме.
 
   /** Список задач, которые надо вызывать по таймеру. */
   override def cronTasks(app: Application): TraversableOnce[ICronTask] = {
@@ -63,7 +73,8 @@ object AdnGeoParentsHealth extends CronTasksProvider with PlayMacroLogsImpl with
    * Тест проверяет возможность узла на рендер внутри списка узлов.
    * @return Фьючерс со списком обнаруженных проблем.
    */
-  def testAll()(implicit ec: ExecutionContext, client: Client, msgs: Messages): Future[List[NodeProblem]] = {
+  def testAll(): Future[List[NodeProblem]] = {
+    implicit val msgs = messagesApi.preferred( Seq(Lang.defaultLang) )
     // TODO Фильтровать узлы по наличию directGeoParent. Сейчас фильтрация идёт через if внутри тела функции-предиката.
     MAdnNode.foldLeftAsync(acc0 = List.empty[NodeProblem]) { (acc0Fut, mnode) =>
       if (mnode.geo.directParentIds.isEmpty) {
@@ -95,11 +106,6 @@ object AdnGeoParentsHealth extends CronTasksProvider with PlayMacroLogsImpl with
   def testAllPerdiodic(): Unit = {
     debug("Starting periodical self-testing of adn geo.parent consistency...")
 
-    import play.api.libs.concurrent.Execution.Implicits.defaultContext
-    import util.SiowebEsUtil.client
-    import play.api.i18n.Lang.defaultLang
-    import play.api.i18n.Messages.Implicits.applicationMessages
-
     testAll().onComplete {
       case Success(nil) if nil.isEmpty =>
         debug("Test finished without problems.")
@@ -107,9 +113,7 @@ object AdnGeoParentsHealth extends CronTasksProvider with PlayMacroLogsImpl with
       // Или есть проблемы, или возникла ошибка при тесте. В обоих случаях надо уведомить.
       case tryRes =>
         warn("Selt-test problems detected: " + tryRes)
-        current.injector
-          .instanceOf[IMailerWrapper]
-          .instance
+        mailer.instance
           .setFrom("health@suggest.io")
           .setRecipients(MPersonIdent.SU_EMAILS : _*)
           .setSubject("Suggest.io: Обнаружены проблемы геосвязности узлов")

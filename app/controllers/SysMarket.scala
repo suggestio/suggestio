@@ -32,6 +32,7 @@ import sysctl.SysMarketUtil._
  * Description: Тут управление компаниями, торговыми центрами и магазинами.
  */
 class SysMarket @Inject() (
+  advUtil                       : AdvUtil,
   override val messagesApi      : MessagesApi,
   override val mailer           : IMailerWrapper,
   db                            : Database,
@@ -412,7 +413,7 @@ class SysMarket @Inject() (
 
   /** Убрать указанную рекламную карточку из выдачи указанного ресивера. */
   def removeAdRcvr(adId: String, rcvrIdOpt: Option[String], r: Option[String]) = IsSuperuser.async { implicit request =>
-    val isOkFut = AdvUtil.removeAdRcvr(adId, rcvrIdOpt = rcvrIdOpt)
+    val isOkFut = advUtil.removeAdRcvr(adId, rcvrIdOpt = rcvrIdOpt)
     lazy val logPrefix = s"removeAdRcvr(ad[$adId]${rcvrIdOpt.fold("")(", rcvr[" + _ + "]")}): "
     val madOptFut = MAd.getById(adId)
     // Радуемся в лог.
@@ -498,7 +499,7 @@ class SysMarket @Inject() (
   def analyzeAdRcvrs(adId: String) = IsSuperuserMad(adId).async { implicit request =>
     import request.mad
     val producerOptFut = MAdnNodeCache.getById(mad.producerId)
-    val newRcvrsMapFut = producerOptFut flatMap { AdvUtil.calculateReceiversFor(mad, _) }
+    val newRcvrsMapFut = producerOptFut flatMap { advUtil.calculateReceiversFor(mad, _) }
     // Достаём из кеша узлы.
     val nodesMapFut: Future[Map[String, MAdnNode]] = {
       val adnIds1 = mad.receivers.keySet
@@ -524,7 +525,7 @@ class SysMarket @Inject() (
   /** Пересчитать и сохранить ресиверы для указанной рекламной карточки. */
   def resetReceivers(adId: String, r: Option[String]) = IsSuperuserMad(adId).async { implicit request =>
     val mad0 = request.mad
-    AdvUtil.calculateReceiversFor(mad0) flatMap { newRcvrs =>
+    advUtil.calculateReceiversFor(mad0) flatMap { newRcvrs =>
       MAd.tryUpdate(mad0) { mad =>
         mad.copy(
           receivers = newRcvrs

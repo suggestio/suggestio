@@ -13,7 +13,7 @@ import play.api.Application
 import play.api.db.DB
 import play.api.libs.ws.WSClient
 import util.ws.HttpGetToFile
-import util.{CronTasksProvider, PlayMacroLogsImpl}
+import util.{ICronTasksProvider, PlayMacroLogsImpl}
 
 import scala.annotation.tailrec
 import scala.concurrent.Future
@@ -30,7 +30,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
  * Created: 11.08.14 14:03
  * Description: Утиль для поддержки БД, взятых из [[http://ipgeobase.ru/]].
  */
-object IpGeoBaseImport extends PlayMacroLogsImpl with CronTasksProvider {
+class IpGeoBaseImport extends PlayMacroLogsImpl with ICronTasksProvider {
 
   import LOGGER._
 

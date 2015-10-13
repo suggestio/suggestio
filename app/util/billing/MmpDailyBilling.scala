@@ -1,24 +1,19 @@
 package util.billing
 
+import com.google.inject.{Inject, Singleton}
 import de.jollyday.parameter.UrlManagerParameter
+import io.suggest.playx.ICurrentConf
 import io.suggest.ym.model.common.EMBlockMetaI
 import models._
 import models.adv.geo.AdvFormEntry
 import models.blk.{BlockWidths, BlockHeights}
 import org.joda.time.{Period, DateTime, LocalDate}
 import org.joda.time.DateTimeConstants._
-import play.api.Application
-import util.adv.AdvUtil
+import play.api.{Configuration, Application}
 import scala.annotation.tailrec
-import util.blocks.BlocksConf
-import util.{CronTasksProvider, PlayMacroLogsImpl}
-import play.api.db.DB
-import play.api.Play.{current, configuration}
+import util.{ICronTasksProvider, PlayMacroLogsImpl}
+import play.api.db.Database
 import io.suggest.ym.parsers.Price
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import scala.concurrent.Future
-import util.SiowebEsUtil.client
-import util.event.SiowebNotifier.Implicts.sn
 import java.sql.Connection
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import scala.concurrent.duration._
@@ -26,6 +21,7 @@ import de.jollyday.HolidayManager
 import java.net.URL
 import controllers.routes
 import scala.collection.JavaConversions._
+import scala.reflect.ClassTag
 
 /**
  * Suggest.io
@@ -33,7 +29,15 @@ import scala.collection.JavaConversions._
  * Created: 28.05.14 19:04
  * Description: Утиль для работы с биллингом, где имеют вес площади и расценки получателя рекламы.
  */
-object MmpDailyBilling extends PlayMacroLogsImpl with CronTasksProvider {
+@Singleton
+class MmpDailyBilling @Inject() (
+  override val current    : Application,
+  db                      : Database
+)
+  extends PlayMacroLogsImpl
+  with ICronTasksProvider
+  with ICurrentConf
+{
 
   import LOGGER._
 
@@ -76,6 +80,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl with CronTasksProvider {
   override def cronTasks(app: Application): TraversableOnce[ICronTask] = {
     if (CRON_BILLING_CHECK_ENABLED) {
       val every = CHECK_ADVS_OK_DURATION
+
       val applyOldReqs = CronTask(
         startDelay = 3.seconds,
         every = every,
@@ -83,6 +88,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl with CronTasksProvider {
       ) {
         autoApplyOldAdvReqs()
       }
+
       val depubExpired = CronTask(
         startDelay = 10.seconds,
         every = every,
@@ -90,18 +96,29 @@ object MmpDailyBilling extends PlayMacroLogsImpl with CronTasksProvider {
       ) {
         depublishExpiredAdvs()
       }
+
       val advOfflineAdvs = CronTask(
         startDelay = 30.seconds,
         every = every,
         displayName = "advertiseOfflineAds()"
       ) {
-        advertiseOfflineAds()
+        advertiseOfflineAdvs()
       }
       List(applyOldReqs, depubExpired, advOfflineAdvs)
 
     } else {
       Nil
     }
+  }
+
+  private def _injRun[T <: AdvsUpdate : ClassTag]: Unit = {
+    current.injector.instanceOf[T].run()
+  }
+  def advertiseOfflineAdvs(): Unit = {
+    _injRun[AdvertiseOfflineAdvs]
+  }
+  def depublishExpiredAdvs(): Unit = {
+    _injRun[DepublishExpiredAdvs]
   }
 
   /**
@@ -199,7 +216,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl with CronTasksProvider {
    * @param adves2 Требования по размещению карточки на узлах.
    */
   def getAdvPrices(mad: MAd, adves2: List[AdvFormEntry]): MAdvPricing = {
-    DB.withConnection { implicit c =>
+    db.withConnection { implicit c =>
       val someTrue = Some(true)
       val prices = adves2.foldLeft[List[Price]] (Nil) { (acc, adve) =>
         val rcvrContract = MBillContract.findForAdn(adve.adnId, isActive = someTrue)
@@ -244,7 +261,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl with CronTasksProvider {
    */
   def mkAdvReqs(mad: MAd, advs: List[AdvFormEntry]) {
     import mad.producerId
-    DB.withTransaction { implicit c =>
+    db.withTransaction { implicit c =>
       // Вешаем update lock на баланс чтобы избежать блокирования суммы, списанной в параллельном треде, и дальнейшего ухода в минус.
       val mbb0 = MBillBalance.getByAdnId(producerId, SelectPolicies.UPDATE).get
       val someTrue = Some(true)
@@ -304,7 +321,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl with CronTasksProvider {
    */
   def mkAdvsOk(mad: MAd, advs: List[AdvFormEntry]): List[MAdvOk] = {
     import mad.producerId
-    DB.withTransaction { implicit c =>
+    db.withTransaction { implicit c =>
       advs map { advEntry =>
         MAdvOk(
           adId        = mad.id.get,
@@ -338,7 +355,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl with CronTasksProvider {
     val advReqId = advReq.id.get
     lazy val logPrefix = s"acceptAdvReq($advReqId): "
     trace(s"${logPrefix}Starting. isAuto=$isAuto advReq=$advReq")
-    DB.withTransaction { implicit c =>
+    db.withTransaction { implicit c =>
       // Удалить исходный реквест размещения
       val reqsDeleted = advReq.delete
       assertAdvsReqRowsDeleted(reqsDeleted, 1, advReqId)
@@ -448,7 +465,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl with CronTasksProvider {
    */
   def refuseAdvReq(advReq: MAdvReq, reason: String): MAdvRefuse = {
     val advRefused = MAdvRefuse(advReq, reason, DateTime.now)
-    DB.withTransaction { implicit c =>
+    db.withTransaction { implicit c =>
       val rowsDeleted = advReq.delete
       assertAdvsReqRowsDeleted(rowsDeleted, 1, advReq.id.get)
       val advr = advRefused.save
@@ -463,25 +480,13 @@ object MmpDailyBilling extends PlayMacroLogsImpl with CronTasksProvider {
   /** Цикл автоматического накатывания MAdvReq в MAdvOk. Нужно найти висячие MAdvReq и заапрувить их. */
   def autoApplyOldAdvReqs() {
     val period = new Period(AUTO_ACCEPT_REQS_AFTER_HOURS, 0, 0, 0)
-    val advsReq = DB.withConnection { implicit c =>
+    val advsReq = db.withConnection { implicit c =>
       MAdvReq.findCreatedLast(period)
     }
     //val logPrefix = "autoApplyOldAdvReqs(): "
     if (advsReq.nonEmpty) {
-      // TODO Нужно оттягивать накатывание карточки до ближайшего обеда. Для этого нужно знать тайм-зону для рекламных узлов.
       advsReq.foreach(acceptAdvReq(_, isAuto = true))
     }
-  }
-
-
-  /** Выполнить поиск и размещение в выдачах рекламных карточек, время размещения которых уже пришло. */
-  def advertiseOfflineAds() {
-    AdvertiseOfflineAdvs.run()
-  }
-
-  /** Выполнить поиск и сокрытие в выдачах рекламных карточках, время размещения которых истекло. */
-  def depublishExpiredAdvs() {
-    DepublishExpiredAdvs.run()
   }
 
 
@@ -491,7 +496,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl with CronTasksProvider {
    * @return Карта ресиверов.
    */
   def calcualteReceiversMapForAd(adId: String): Receivers_t = {
-    val advsOk = DB.withConnection { implicit c =>
+    val advsOk = db.withConnection { implicit c =>
       MAdvOk.findOnlineFor(adId, isOnline = true)
     }
     advsOk
@@ -507,105 +512,4 @@ object MmpDailyBilling extends PlayMacroLogsImpl with CronTasksProvider {
 
 }
 
-
-/** Код вывода в выдачу и последующего сокрытия рекламных карточек крайне похож, поэтому он вынесен в трейт. */
-sealed trait AdvSlsUpdater extends PlayMacroLogsImpl {
-
-  import LOGGER._
-
-  lazy val logPrefix = ""
-
-  def findAdvsOk(implicit c: Connection): List[MAdvOk]
-
-  def nothingToDo() {}
-
-  def updateAdvOk(advOk: MAdvOk, now: DateTime): MAdvOk
-
-  def run() {
-    val advs = DB.withConnection { implicit c =>
-      findAdvsOk
-    }
-    if (advs.nonEmpty) {
-      trace(s"${logPrefix}Where are ${advs.size} items. ids = ${advs.map(_.id.get).mkString(", ")}")
-      val advsMap = advs.groupBy(_.adId)
-      val now = DateTime.now
-      advsMap foreach { case (adId, advsOk) =>
-        val advsOk1 = advsOk
-          .map { updateAdvOk(_, now) }
-        DB.withTransaction { implicit c =>
-          advsOk1.foreach(_.save)
-        }
-        // Запустить пересчёт уровней отображения для затронутой рекламной карточки.
-        val madUpdFut = MAd.getById(adId) flatMap {
-          case Some(mad0) =>
-            // Запускаем полный пересчет карты ресиверов.
-            AdvUtil.calculateReceiversFor(mad0) flatMap { rcvrs1 =>
-              // Новая карта ресиверов готова. Заливаем её в карточку и сохраняем последнюю.
-              MAd.tryUpdate(mad0) { mad1 =>
-                mad1.copy(
-                  receivers = rcvrs1
-                )
-              }
-            }
-
-          // Карточка внезапно не найдена. Наверное она была удалена, а инфа в базе почему-то осталась. В любом случае, нужно удалить все adv.
-          case None =>
-            val totalDeleted = DB.withConnection { implicit c =>
-              MAdv.deleteByAdId(adId)
-            }
-            warn(s"${logPrefix}Ad[$adId] not exists, but at least ${advsOk.size} related advs in processing. I've removed $totalDeleted orphan advs from all adv models!")
-            Future successful adId
-        }
-        madUpdFut onFailure { case ex =>
-          error(s"${logPrefix}Failed to update ad[$adId] rcvrs. Rollbacking advOks update txn...", ex)
-          try {
-            DB.withConnection { implicit c =>
-              advs.foreach(_.save)
-            }
-            debug(s"${logPrefix}Successfully recovered adv state back for ad[$adId]. Will retry update on next time.")
-          } catch {
-            case ex: Throwable => error(s"${logPrefix}Failed to rollback advOks update txn! Adv state inconsistent. Advs:\n  $advs", ex)
-          }
-        }
-      }
-    } else {
-      nothingToDo()
-    }
-  }
-}
-
-
-/** Обновлялка adv sls, добавляющая уровни отображаения к существующей рекламе, которая должна бы выйти в свет. */
-object AdvertiseOfflineAdvs extends AdvSlsUpdater {
-
-  override def findAdvsOk(implicit c: Connection): List[MAdvOk] = {
-    MAdvOk.findAllOfflineOnTime
-  }
-
-  override def updateAdvOk(advOk: MAdvOk, now: DateTime): MAdvOk = {
-    val dateDiff = new Period(advOk.dateStart, now)
-    advOk.copy(
-      dateStart = now,
-      dateEnd = advOk.dateEnd plus dateDiff,
-      isOnline = true
-    )
-  }
-}
-
-
-/** Обновлялка adv sls, которая снимает уровни отображения с имеющейся рекламы, которая должна уйти из выдачи
-  * по истечению срока размещения. */
-object DepublishExpiredAdvs extends AdvSlsUpdater {
-
-  override def findAdvsOk(implicit c: Connection): List[MAdvOk] = {
-    MAdvOk.findDateEndExpired()
-  }
-
-  override def updateAdvOk(advOk: MAdvOk, now: DateTime): MAdvOk = {
-    advOk.copy(
-      isOnline = false,
-      dateEnd = now
-    )
-  }
-}
 

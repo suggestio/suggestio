@@ -38,6 +38,7 @@ import play.api.data._, Forms._
  * - узелы-получатели одобряют или отсеивают входящие рекламные карточки.
  */
 class MarketAdv @Inject() (
+  mmpDailyBilling               : MmpDailyBilling,
   override val messagesApi      : MessagesApi,
   override val current          : play.api.Application,
   implicit val db               : Database,
@@ -443,7 +444,7 @@ class MarketAdv @Inject() (
           val advPricing: MAdvPricing = if (adves2.isEmpty || maybeFreeAdv) {
             zeroPricing
           } else {
-            MmpDailyBilling.getAdvPrices(request.mad, adves2)
+            mmpDailyBilling.getAdvPrices(request.mad, adves2)
           }
           Ok(_advFormPriceTpl(advPricing))
         }(AsyncUtil.jdbcExecutionContext)
@@ -530,10 +531,10 @@ class MarketAdv @Inject() (
             try {
               // В зависимости от настроек размещения
               val successMsg: String = if (isFree) {
-                MmpDailyBilling.mkAdvsOk(request.mad, advs2)
+                mmpDailyBilling.mkAdvsOk(request.mad, advs2)
                 "Ads.were.adv"
               } else {
-                MmpDailyBilling.mkAdvReqs(request.mad, advs2)
+                mmpDailyBilling.mkAdvReqs(request.mad, advs2)
                 "Adv.reqs.sent"
               }
               Redirect(routes.MarketAdv.advForAd(adId))
@@ -850,7 +851,7 @@ class MarketAdv @Inject() (
       },
       {reason =>
         Future {
-          MmpDailyBilling.refuseAdvReq(request.advReq, reason)
+          mmpDailyBilling.refuseAdvReq(request.advReq, reason)
         }(AsyncUtil.jdbcExecutionContext)
           .map { _ =>
             RdrBackOr(r) { routes.MarketAdv.showNodeAdvs(request.rcvrNode.id.get) }
@@ -868,7 +869,7 @@ class MarketAdv @Inject() (
   def advReqAcceptSubmit(advReqId: Int, r: Option[String]) = CanReceiveAdvReqPost(advReqId).async { implicit request =>
     // Надо провести платёж, запилить транзакции для prod и rcvr и т.д.
     Future {
-      MmpDailyBilling.acceptAdvReq(request.advReq, isAuto = false)
+      mmpDailyBilling.acceptAdvReq(request.advReq, isAuto = false)
     }(AsyncUtil.jdbcExecutionContext)
       .map { _ =>
         // Всё сохранено. Можно отредиректить юзера, чтобы он дальше продолжил одобрять рекламные карточки.

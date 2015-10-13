@@ -7,6 +7,7 @@ import akka.actor.ActorSystem
 import io.suggest.event.SioNotifierStaticClientI
 import org.elasticsearch.client.Client
 import org.joda.time.DateTime
+import play.api.db.Database
 import play.api.i18n.{I18nSupport, Lang}
 import play.api.mvc._
 import util._
@@ -89,6 +90,9 @@ trait IExecutionContext {
 }
 trait ISioNotifier {
   implicit def sn: SioNotifierStaticClientI = util.event.SiowebNotifier.Implicts.sn
+}
+trait IDb {
+  def db: Database
 }
 
 /** Базовый хелпер для контроллеров suggest.io. Используется почти всегда вместо обычного Controller. */

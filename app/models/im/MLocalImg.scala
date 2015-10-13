@@ -310,7 +310,7 @@ trait DeleteOnIm2FullyDeletedEvent extends SNStaticSubscriber with SnClassSubscr
 
 /** Периодически стирать пустые директории через Cron. Это статический аддон к object MLocalImg.
   * Внутри, для работы с ФС, используется java.nio. */
-trait PeriodicallyDeleteEmptyDirs extends CronTasksProvider with PlayMacroLogsI {
+trait PeriodicallyDeleteEmptyDirs extends ICronTasksProvider with PlayMacroLogsI {
 
   def DIR: File
   
@@ -387,7 +387,7 @@ trait PeriodicallyDeleteEmptyDirs extends CronTasksProvider with PlayMacroLogsI 
 
 /** Надо периодичеки удалять директории с картинками, если они долго лежат,
   * а в permanent ещё/уже нет картинок с данным id. */
-trait PeriodicallyDeleteNotExistingInPermanent extends CronTasksProvider with PlayMacroLogsI {
+trait PeriodicallyDeleteNotExistingInPermanent extends ICronTasksProvider with PlayMacroLogsI {
 
   def DIR: File
 

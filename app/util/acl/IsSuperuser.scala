@@ -380,7 +380,7 @@ trait IsSuperuserAdnGeoAbstract extends ActionBuilder[AdnGeoRequest] {
             block(req1)
           }
 
-        case None =>
+        case _ =>
           Future successful geoNotFound
       }
     } else {
