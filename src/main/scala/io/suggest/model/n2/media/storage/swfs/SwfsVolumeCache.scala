@@ -36,7 +36,12 @@ class SwfsVolumeCache @Inject() (
     .getOrElse(3600)
     .seconds
 
-  protected def _ck(volumeId: VolumeId_t): String = {
+  /**
+   * Сгенерить строку ключа кеша.
+   * @param volumeId id раздела swfs.
+   * @return Ключ кеша.
+   */
+  def _ck(volumeId: VolumeId_t): String = {
     CACHE_PREFIX + volumeId
   }
 

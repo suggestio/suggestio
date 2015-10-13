@@ -3,9 +3,7 @@ package io.suggest.model.n2.media.storage
 import java.util.UUID
 
 import io.suggest.model.PlayJsonTestUtil
-import io.suggest.model.n2.media.storage.swfs.SwfsStorage_
 import io.suggest.swfs.client.proto.fid.Fid
-import org.scalatest.FlatSpec
 import org.scalatestplus.play.{OneAppPerSuite, PlaySpec}
 
 /**
@@ -18,9 +16,12 @@ class IMediaStorageSpec extends PlaySpec with OneAppPerSuite with PlayJsonTestUt
 
   override type T = IMediaStorage
 
-  private lazy val swfsStorage = app.injector.instanceOf( classOf[SwfsStorage_] )
+  lazy val iMediaStorage = app.injector.instanceOf[IMediaStorage_]
+  def swfsStorage = iMediaStorage.swfsStorage
 
   "JSON" must {
+
+    import iMediaStorage.FORMAT
 
     "support CassandraStorage" in {
       jsonTest {

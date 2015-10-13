@@ -36,3 +36,7 @@ libraryDependencies ++= {
 
 //testOptions in Test += Tests.Argument("-oF")
 
+// В тестах используется EhCache, который отваливается между тестами.
+// http://stackoverflow.com/a/32180497
+parallelExecution in Test := false
+

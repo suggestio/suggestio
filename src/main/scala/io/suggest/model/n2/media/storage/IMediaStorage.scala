@@ -5,7 +5,6 @@ import io.suggest.fio.{IReadResponse, IWriteRequest}
 import io.suggest.model.IGenEsMappingProps
 import io.suggest.model.n2.media.storage.swfs.SwfsStorage_
 import io.suggest.util.SioEsUtil.DocField
-import play.api.libs.iteratee.Enumerator
 import play.api.libs.json._
 
 import scala.concurrent.{Future, ExecutionContext}
@@ -16,7 +15,9 @@ import scala.concurrent.{Future, ExecutionContext}
  * Created: 29.09.15 18:53
  * Description: Данные по backend-хранилищу, задействованному в
  */
-class IMediaStorage_ @Inject() (swfsStorage: SwfsStorage_) extends IGenEsMappingProps {
+class IMediaStorage_ @Inject() (
+  val swfsStorage: SwfsStorage_
+) extends IGenEsMappingProps {
 
   val READS: Reads[IMediaStorage] = new Reads[IMediaStorage] {
     override def reads(json: JsValue): JsResult[IMediaStorage] = {

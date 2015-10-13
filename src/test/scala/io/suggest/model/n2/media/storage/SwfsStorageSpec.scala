@@ -15,9 +15,11 @@ class SwfsStorageSpec extends PlaySpec with OneAppPerSuite with PlayJsonTestUtil
 
   override type T = SwfsStorage
 
-  private lazy val swfsStorage = app.injector.instanceOf( classOf[SwfsStorage_] )
+  private lazy val swfsStorage = app.injector.instanceOf[SwfsStorage_]
 
   "JSON" must {
+
+    import swfsStorage.FORMAT
 
     "support model" in {
       jsonTest {

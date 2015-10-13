@@ -24,7 +24,7 @@ import scala.concurrent.ExecutionContext
  */
 @Singleton
 class MMedia_ @Inject() (
-  iMediaStorage: IMediaStorage_
+  val iMediaStorage: IMediaStorage_
 )
   extends EsModelStaticT
   with EsmV2Deserializer
