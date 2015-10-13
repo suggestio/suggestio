@@ -171,7 +171,7 @@ object MAdnNodeGeo extends EsChildModelStaticT with MacroLogsImpl {
     QueryBuilders.geoShapeQuery(glevel.esfn, shape.toEsShapeBuilder)
   }
 
-  def geoFilter(glevel: NodeGeoLevel, shape: GeoShapeQuerable): FilterBuilder = {
+  private def geoFilter(glevel: NodeGeoLevel, shape: GeoShapeQuerable): FilterBuilder = {
     FilterBuilders.geoShapeFilter(glevel.esfn, shape.toEsShapeBuilder, ShapeRelation.INTERSECTS)
   }
 
@@ -187,7 +187,9 @@ object MAdnNodeGeo extends EsChildModelStaticT with MacroLogsImpl {
     QueryBuilders.termsQuery(GLEVEL_ESFN, glevels.map(_.esfn) : _*)
   }
 
-  private def searchResp2adnIdsList(searchResp: SearchResponse) = searchResp2fnList[String](searchResp, ADN_ID_ESFN)
+  private def searchResp2adnIdsList(searchResp: SearchResponse): Seq[String] = {
+    searchResp2fnList[String](searchResp, ADN_ID_ESFN)
+  }
 
   /**
    * Быстрый поиск узлов и быстрая десериализация результатов поиска по пересечению с указанной геолокацией.
@@ -246,7 +248,7 @@ object MAdnNodeGeo extends EsChildModelStaticT with MacroLogsImpl {
    * @param parentId id родительского узла.
    * @return Фьючерс с опциональным значением геоуровня.
    */
-  def getGeoLevelsUsed(id: String, parentId: String)(implicit ec: ExecutionContext, client: Client): Future[Option[NodeGeoLevel]] = {
+  private def getGeoLevelsUsed(id: String, parentId: String)(implicit ec: ExecutionContext, client: Client): Future[Option[NodeGeoLevel]] = {
     // Используем быстрый доступ к сохранённому glevel через stored-значение поля GLEVEL_ESFN.
     // Это позволяет избежать фетчинга и разбора жирного _source.
     prepareGet(id, parentId = parentId)
@@ -283,7 +285,7 @@ object MAdnNodeGeo extends EsChildModelStaticT with MacroLogsImpl {
       .addField(GLEVEL_ESFN)
       .execute()
       .map { searchResp =>
-        searchResp.getHits.foldLeft (List[MAdnNodeGeoIndexed]()) { (acc, hit) =>
+        searchResp.getHits.foldLeft (List.empty[MAdnNodeGeoIndexed]) { (acc, hit) =>
           val res = MAdnNodeGeoIndexed(
             _id = hit.getId,
             glevel = Option(hit.field(GLEVEL_ESFN))
@@ -337,7 +339,8 @@ object MAdnNodeGeo extends EsChildModelStaticT with MacroLogsImpl {
       .map { searchResp2list }
   }
 
-  def deleteAllRenderable(glevel: NodeGeoLevel, adnIdOpt: Option[String])(implicit ec: ExecutionContext, client: Client): Future[_] = {
+  private def deleteAllRenderable(glevel: NodeGeoLevel, adnIdOpt: Option[String])
+                                 (implicit ec: ExecutionContext, client: Client): Future[_] = {
     prepareDeleteByQuery
       .setQuery( renderableQuery(glevel, adnIdOpt) )
       .execute()
@@ -393,7 +396,7 @@ final case class MAdnNodeGeo(
   def isCircle: Boolean = shape.isInstanceOf[CircleGs]
 
   /** Сконвертить интанс в экземпляр указателя, пригодного для гео-поиска pre-indexed shape. */
-  def toIndexedPtr = MAdnNodeGeoIndexed(id.get, glevel)
+  private def toIndexedPtr = MAdnNodeGeoIndexed(id.get, glevel)
 }
 
 

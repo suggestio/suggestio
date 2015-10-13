@@ -1357,7 +1357,10 @@ trait EsChildModelStaticT extends EsModelCommonStaticT {
   def get(id: String, parentId: String)(implicit ec:ExecutionContext, client: Client): Future[Option[T]] = {
     prepareGet(id, parentId)
       .execute()
-      .map { deserializeGetRespFull }
+      .map { v =>
+        deserializeGetRespFull(v)
+          .filter { _.parentId == parentId }
+      }
   }
 
 
