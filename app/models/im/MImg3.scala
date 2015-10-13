@@ -140,10 +140,10 @@ abstract class MImg3T extends MImgT {
 
       for {
         whOpt <- whOptFut
-        mime <- mimeFut
-        sha1 <- sha1Fut
-        stor <- storFut
-        mm <- {
+        mime  <- mimeFut
+        sha1  <- sha1Fut
+        stor  <- storFut
+        mm    <- {
           val _mm = MMedia(
             nodeId  = rowKeyStr,
             id      = Some(_mediaId),

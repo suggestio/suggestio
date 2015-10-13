@@ -3,11 +3,9 @@ package util.compat.img3
 import com.google.inject.Inject
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.n2.edge.{MNodeEdges, MEdgeInfo}
-import io.suggest.model.n2.media.storage.CassandraStorage
-import io.suggest.model.n2.media.{MMedia_, MPictureMeta, MFileMeta}
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.util.JMXBase
-import models.im.{ImgFileUtil, MImg}
+import models.im.{MImg3, MImg3_, MImg}
 import models.mfs.FileUtil
 import models._
 import org.elasticsearch.client.Client
@@ -25,10 +23,10 @@ import scala.util.{Failure, Success}
  * Description: Система обновления картинок на новую архитектуру: N2, seaweedfs.
  */
 class Migration @Inject() (
-  mMedia                : MMedia_,
   implicit val ec       : ExecutionContext,
   implicit val esClient : Client,
-  implicit val sn       : SioNotifierStaticClientI
+  implicit val sn       : SioNotifierStaticClientI,
+  mImg3                 : MImg3_
 ) extends PlayLazyMacroLogsImpl {
 
   import LOGGER._
@@ -47,7 +45,7 @@ class Migration @Inject() (
       val logoEdgeOptFut = madnNode.logoImgOpt.fold {
         Future successful Option.empty[MEdge]
       } { logoImg =>
-        val mimg = MImg(logoImg).original
+        val mimg =  mImg3( MImg(logoImg) ).original
         portOneImage(mimg, adnNodeId, madnNode.meta.dateCreated, logoImg.meta)
           .map { imgNodeId =>
             Some( MEdge(MPredicates.Logo, imgNodeId) )
@@ -56,7 +54,7 @@ class Migration @Inject() (
 
       val galEdgesFut = Future.traverse( madnNode.gallery.zipWithIndex ) {
         case (galImgFileName, i) =>
-          val mimg = MImg( galImgFileName )
+          val mimg = mImg3( MImg( galImgFileName ) ).original
           portOneImage(mimg, adnNodeId, madnNode.meta.dateCreated)
             .map { imgNodeId =>
               MEdge( MPredicates.GalleryItem, imgNodeId, order = Some(i), info = MEdgeInfo(
@@ -112,7 +110,7 @@ class Migration @Inject() (
 
 
   /** Портирование одного оригинала картинки. */
-  def portOneImage(mimg: MImg, ownNodeId: String, dateCreatedDflt: DateTime, imetaOpt: Option[ISize2di] = None): Future[String] = {
+  def portOneImage(mimg: MImg3, ownNodeId: String, dateCreatedDflt: DateTime, imetaOpt: Option[ISize2di] = None): Future[String] = {
 
     lazy val logPrefix = s"portOneImage(${mimg.rowKeyStr}):"
 
@@ -120,25 +118,8 @@ class Migration @Inject() (
 
     val mLocImgFut = DynImgUtil.ensureImgReady(mimg, cacheResult = false)
 
-    // Собираем необходимые данные для картинки.
-    // Узнать хеш-сумму файла
-    val sha1Fut = for (mLocImg <- mLocImgFut) yield {
-      FileUtil.sha1(mLocImg.file)
-    }
-
     val mmFut = for (mLocImg <- mLocImgFut) yield {
       FileUtil.getMimeMatch( mLocImg.file )
-    }
-
-    // Узнать MIME файла
-    val mimeFut = for (mm <- mmFut) yield {
-      val mimeOpt = ImgFileUtil.getMime( mm.get )
-      ImgFileUtil.orUnknown(mimeOpt)
-    }
-
-    // Узнать байтовый размер файла.
-    val sizeBFut = for (mLocImg <- mLocImgFut) yield {
-      mLocImg.file.length()
     }
 
     // Узнать file extension
@@ -149,13 +130,8 @@ class Migration @Inject() (
       } { _.getExtension }
     }
 
-    // Заново определяем image width/height для надежности, НЕ используем logoImg.meta
-    val imgWhFut = mLocImgFut.flatMap {
-      _.getImageWH
-    }
-
     val imgNodeId = mimg.rowKeyStr
-    trace(s"$logPrefix Processing logo img: $mimg")
+    trace(s"$logPrefix Processing img: $mimg")
 
     // Создать node для картинки с какими-то минимальными данными.
     val mnodeFut = for {
@@ -187,52 +163,18 @@ class Migration @Inject() (
         error(s"$logPrefix failed to save logo MNode", ex)
     }
 
-    val mediaId = mMedia.mkId(imgNodeId, None)
+    val imgSaveFut = mimg.saveToPermanent
 
-    // Сохранить в MMedia накопившуюся инфу по картинке.
-    val mmedia = for {
-      mime  <- mimeFut
-      sizeB <- sizeBFut
-      sha1  <- sha1Fut
-      imgWh <- imgWhFut
-    } yield {
-      MMedia(
-        nodeId = imgNodeId,
-        file = MFileMeta(
-          mime        = mime,
-          sizeB       = sizeB,
-          isOriginal  = true,   // Копируются только оригиналы, деривативы должны быть сгенерены на ходу.
-          sha1        = Some(sha1)
-        ),
-        storage = CassandraStorage(
-          rowKey  = mimg.rowKey,
-          qOpt    = None           // Оригиналы у нас без qualifier, точнее там статический qualifier подставляется вместо None в MImg.
-        ),
-        picture = Some(MPictureMeta(
-          width  = imgWh.map(_.width)
-            .orElse { imetaOpt.map(_.width) }
-            .get,
-          height = imgWh.map(_.height)
-            .orElse { imetaOpt.map(_.height) }
-            .get
-        )),
-        id = Some( mediaId ),
-        companion = mMedia
-      )
-    }
-
-    val mmediaSaveFut = mmedia.flatMap(_.save)
-
-    mmediaSaveFut onComplete {
+    imgSaveFut onComplete {
       case Success(mmId) =>
-        trace(s"$logPrefix saved MMedia [$mmId]")
+        trace(s"$logPrefix saved permanently MImg: " + mimg)
       case Failure(ex) =>
         error(s"$logPrefix failed to save MMedia", ex)
     }
 
     for {
       _     <- mnodeSaveFut
-      _     <- mmediaSaveFut
+      _     <- imgSaveFut
     } yield {
       info(s"$logPrefix Logo done: [$imgNodeId]")
       imgNodeId
