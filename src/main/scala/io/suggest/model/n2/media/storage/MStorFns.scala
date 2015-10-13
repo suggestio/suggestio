@@ -34,9 +34,9 @@ object MStorFns extends EnumValue2Val {
   }
 
   // seaweedfs
-  val FID         : T = new Val("f") {
+  val FID         : T = new Val("i") {
     override def esMappingProp: DocField = {
-      FieldObject("f", enabled = true, properties = Seq(
+      FieldObject(fn, enabled = true, properties = Seq(
         FieldNumber(Fid.VOLUME_ID_FN, fieldType = DocFieldTypes.integer, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
         FieldString(Fid.FILE_ID_FN, index = FieldIndexingVariants.no, include_in_all = false)
       ))
