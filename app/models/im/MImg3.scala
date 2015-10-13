@@ -238,5 +238,7 @@ trait I3Cassandra extends MImg3T {
 
 /** Использовать seaweedfs для сохранения новых картинок. */
 trait I3SeaWeedFs extends MImg3T {
-  override protected def _newMediaStorage = companion.swfsStorage.assingNew()
+  override protected def _newMediaStorage = {
+    companion.swfsStorage.assingNew()
+  }
 }
