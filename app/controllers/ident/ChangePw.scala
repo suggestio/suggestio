@@ -7,7 +7,7 @@ import play.api.data.Forms._
 import util.acl._
 import util._
 import play.api.mvc._
-import util.ident.IdentUtil
+import util.ident.IIdentUtil
 import scala.concurrent.Future
 import FormUtil.{passwordM, passwordWithConfirmM}
 import views.html.ident.changePasswordTpl
@@ -52,12 +52,12 @@ trait ChangePw extends ChangePwAction {
 
 /** Контексто-зависимое тело экшена, которое реализует смену пароля у пользователя.
   * Реализации должны оборачивать логику экшена в экшен, выставляя обработчики для ошибок и успехов. */
-trait ChangePwAction extends SioController with PlayMacroLogsI with IEsClient {
+trait ChangePwAction extends SioController with PlayMacroLogsI with IEsClient with IIdentUtil {
 
   /** Если неясно куда надо редиректить юзера, то что делать? */
   def changePwOkRdrDflt(implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Call] = {
     // TODO Избавится от get, редиректя куда-нить в другое место.
-    IdentUtil.redirectCallUserSomewhere(request.pwOpt.get.personId)
+    identUtil.redirectCallUserSomewhere(request.pwOpt.get.personId)
   }
 
   /** Сабмит формы смены пароля. Нужно проверить старый пароль и затем заменить его новым. */

@@ -18,7 +18,7 @@ import util.PlayMacroLogsImpl
 import util.acl._
 import models._
 import views.html.lk.adn.edit._
-import io.suggest.ym.model.{common, MAdnNode}
+import io.suggest.ym.model.common
 import play.api.data.{Mapping, Form}
 import play.api.data.Forms._
 import util.FormUtil._

@@ -1,12 +1,12 @@
 package util.ident
 
-import controllers.routes
-import io.suggest.ym.model.MAdnNode
+import com.google.inject.{Singleton, Inject}
+import controllers.{IExecutionContext, IEsClient, routes}
+import models.MAdnNode
 import models.usr.{SuperUsers, MExtIdent}
+import org.elasticsearch.client.Client
 import play.api.mvc._
-import scala.concurrent.Future
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.SiowebEsUtil.client
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -14,7 +14,14 @@ import util.SiowebEsUtil.client
  * Created: 27.01.15 15:45
  * Description: Утиль для ident-контроллера и других вещей, связанных с идентификацией пользователей.
  */
-object IdentUtil {
+@Singleton
+class IdentUtil @Inject() (
+  override implicit val esClient  : Client,
+  override implicit val ec        : ExecutionContext
+)
+  extends IEsClient
+  with IExecutionContext
+{
 
   /** При логине юзера по email-pw мы определяем его присутствие в маркете, и редиректим в ЛК магазина или в ЛК ТЦ. */
   def getMarketRdrCallFor(personId: String): Future[Option[Call]] = {

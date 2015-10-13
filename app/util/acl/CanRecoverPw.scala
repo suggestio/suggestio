@@ -4,7 +4,7 @@ import controllers.{IEsClient, SioController}
 import models.req.SioReqMd
 import models.usr.{EmailActivation, EmailPwIdent}
 import play.api.mvc._
-import util.ident.IdentUtil
+import util.ident.IIdentUtil
 import views.html.ident.recover._
 import scala.concurrent.Future
 import util.acl.PersonWrapper.PwOpt_t
@@ -20,7 +20,7 @@ import util.acl.PersonWrapper.PwOpt_t
  * Всё сделано в виде аддона для контроллера, т.к. DI-зависимость так проще всего разрулить.
  */
 
-trait CanRecoverPwCtl extends SioController with BruteForceProtectBase with IEsClient {
+trait CanRecoverPwCtl extends SioController with BruteForceProtectBase with IEsClient with IIdentUtil {
 
   /** Трейт с базовой логикой action-builder'а CanRecoverPw. */
   trait CanRecoverPwBase extends ActionBuilder[RecoverPwRequest] {
@@ -86,7 +86,7 @@ trait CanRecoverPwCtl extends SioController with BruteForceProtectBase with IEsC
             pwOpt match {
               // Вероятно, юзер повторно перешел по ссылке из письма.
               case Some(pw) =>
-                IdentUtil.redirectUserSomewhere(pw.personId)
+                identUtil.redirectUserSomewhere(pw.personId)
               // Юзер неизвестен и ключ неизвестен. Возможно, перебор ключей какой-то?
               case None =>
                 LOGGER.warn(logPrefix + "Unknown eAct key. pwOpt = " + pwOpt)
@@ -96,14 +96,6 @@ trait CanRecoverPwCtl extends SioController with BruteForceProtectBase with IEsC
       }
     }
   }
-
-  /**
-   * Дефолтовая реализация [[CanRecoverPwBase]].
-   * @param eActId id ключа активации.
-   */
-  case class CanRecoverPw(eActId: String)
-    extends CanRecoverPwBase
-    with ExpireSession[RecoverPwRequest]
 
   /** Реализация [[CanRecoverPwBase]] с выставлением CSRF-токена. */
   case class CanRecoverPwGet(eActId: String)

@@ -16,12 +16,12 @@ import util.billing.Billing
 import _root_.util.{FormUtil, PlayMacroLogsImpl}
 import util.acl._
 import models._
+import util.ident.IdentUtil
 import util.lk.LkAdUtil
 import scala.concurrent.{ExecutionContext, Future}
 import views.html.lk.adn._
 import views.html.lk.usr._
 import views.html.lk.{lkList => lkListTpl}
-import io.suggest.ym.model.MAdnNode
 import play.api.data.Form
 import play.api.data.Forms._
 import util.FormUtil._
@@ -38,6 +38,7 @@ class MarketLkAdn @Inject() (
   db                                  : Database,
   override val current                : play.api.Application,
   override val cache                  : CacheApi,
+  override val identUtil              : IdentUtil,
   logoUtil                            : LogoUtil,
   override implicit val ec            : ExecutionContext,
   override implicit val esClient      : Client,
@@ -59,7 +60,7 @@ class MarketLkAdn @Inject() (
     for {
       mnodes      <- mnodesFut
     } yield {
-      Ok(lkListTpl(mnodes, request.mnodeOpt))
+      Ok( lkListTpl(mnodes, request.mnodeOpt) )
     }
   }
 

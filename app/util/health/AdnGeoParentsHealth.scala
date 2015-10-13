@@ -1,6 +1,6 @@
 package util.health
 
-import io.suggest.ym.model.MAdnNode
+import models.MAdnNode
 import models.usr.MPersonIdent
 import models.{CronTask, ICronTask, AdnShownTypes}
 import models.msys.NodeProblem

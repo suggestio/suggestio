@@ -60,6 +60,8 @@ trait EmailPwReg
   with SendPwRecoverEmail
   with IMailer
   with IEsClient
+  with IsAnonCtl
+  with CanConfirmEmailPwRegCtl
 {
 
   def sendEmailAct(ea: EmailActivation)(implicit ctx: Context): Unit = {

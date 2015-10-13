@@ -7,7 +7,7 @@ import models.usr.MPersonIdent
 import org.elasticsearch.client.Client
 import play.api.i18n.MessagesApi
 import play.api.mvc.Result
-import util.ident.IdentUtil
+import util.ident.{IIdentUtil, IdentUtil}
 import util.{FormUtil, PlayLazyMacroLogsImpl}
 import util.acl._
 import util.mail.IMailerWrapper
@@ -25,12 +25,16 @@ import play.api.data._, Forms._
 class MarketLkSupport @Inject() (
   override val messagesApi      : MessagesApi,
   override val mailer           : IMailerWrapper,
+  override val identUtil        : IdentUtil,
   supportUtil                   : SupportUtil,
   override implicit val ec      : ExecutionContext,
   implicit val esClient         : Client,
   override implicit val sn      : SioNotifierStaticClientI
 )
-  extends SioController with PlayLazyMacroLogsImpl with IMailer
+  extends SioController
+  with PlayLazyMacroLogsImpl
+  with IMailer
+  with IIdentUtil
 {
 
   import LOGGER._
@@ -120,7 +124,7 @@ class MarketLkSupport @Inject() (
           msg.send()
         } flatMap { _ =>
           // Письмо админам отправлено. Нужно куда-то перенаправить юзера.
-          RdrBackOrFut(r) { IdentUtil.redirectCallUserSomewhere(personId) }
+          RdrBackOrFut(r) { identUtil.redirectCallUserSomewhere(personId) }
             .map { rdr =>
               rdr.flashing(FLASH.SUCCESS -> "Your.msg.sent")
             }
@@ -166,7 +170,7 @@ class MarketLkSupport @Inject() (
           msg.send()
         } flatMap { _ =>
           // Письмо отправлено админам. Нужно куда-то перенаправить юзера.
-          RdrBackOrFut(r) { IdentUtil.redirectCallUserSomewhere(personId) }
+          RdrBackOrFut(r) { identUtil.redirectCallUserSomewhere(personId) }
             .map { rdr =>
               rdr.flashing(FLASH.SUCCESS -> "Your.req.sent")
             }

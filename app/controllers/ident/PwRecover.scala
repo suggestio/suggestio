@@ -8,7 +8,7 @@ import play.api.data._
 import play.twirl.api.Html
 import util.PlayMacroLogsI
 import util.acl._
-import util.ident.IdentUtil
+import util.ident.IIdentUtil
 import util.xplay.SetLangCookieUtil
 import views.html.helper.CSRF
 import views.html.ident.mySioStartTpl
@@ -103,6 +103,8 @@ trait PwRecover
   with BruteForceProtectCtl
   with SetLangCookieUtil
   with CanRecoverPwCtl
+  with IsAnonCtl
+  with IIdentUtil
 {
 
   // TODO Сделать это шаблоном!
@@ -186,7 +188,7 @@ trait PwRecover
           request.eAct.delete
         }
         // Генерить ответ как только появляется возможность.
-        val resFut = IdentUtil.redirectUserSomewhere(epw2.personId) map { rdr =>
+        val resFut = identUtil.redirectUserSomewhere(epw2.personId) map { rdr =>
           rdr.addingToSession(Keys.PersonId.name -> epw2.personId)
             .flashing(FLASH.SUCCESS -> "New.password.saved")
         }

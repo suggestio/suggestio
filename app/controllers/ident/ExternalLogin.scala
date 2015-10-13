@@ -18,8 +18,8 @@ import securesocial.core._
 import util.adn.NodesUtil
 import util.xplay.SetLangCookieUtil
 import util.{PlayMacroLogsDyn, FormUtil, PlayMacroLogsI}
-import util.acl.{AbstractRequestWithPwOpt, CanConfirmIdpRegPost, CanConfirmIdpRegGet, MaybeAuth}
-import util.ident.IdentUtil
+import util.acl._
+import util.ident.{IdentUtil, IIdentUtil}
 import views.html.ident.reg._
 import views.html.ident.reg.ext._
 
@@ -36,10 +36,12 @@ import scala.concurrent.duration._
 
 class ExternalLogin_ @Inject() (
   routesSvc                       : SsRoutesService,
+  override val identUtil          : IdentUtil,
   override implicit val ec        : ExecutionContext
 )
   extends PlayMacroLogsDyn
   with IExecutionContext
+  with IIdentUtil
 {
 
   /** Фильтровать присылаемый ttl. */
@@ -89,7 +91,7 @@ class ExternalLogin_ @Inject() (
       case Some(url) =>
         Future successful url
       case None =>
-        IdentUtil.redirectCallUserSomewhere(personId)
+        identUtil.redirectCallUserSomewhere(personId)
           .map(_.url)
     }
   }
@@ -111,6 +113,7 @@ trait ExternalLogin
   with SetLangCookieUtil
   with ICurrentApp
   with IEsClient
+  with CanConfirmIdpRegCtl
 {
 
   /** Доступ к DI-инстансу */

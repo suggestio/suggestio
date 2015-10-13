@@ -1,6 +1,6 @@
 package util.acl
 
-import io.suggest.ym.model.MAdnNode
+import models.MAdnNode
 import models.req.SioReqMd
 import play.api.mvc.{Results, Result, Request, ActionBuilder}
 import play.api.Play.{current, configuration}

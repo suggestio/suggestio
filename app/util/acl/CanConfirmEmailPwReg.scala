@@ -1,14 +1,12 @@
 package util.acl
 
+import controllers.{IEsClient, SioController}
 import models.req.SioReqMd
 import models.usr.{IEaEmailId, EmailActivation}
 import play.api.mvc.{Result, Request, ActionBuilder}
 import util.PlayMacroLogsDyn
 import util.acl.PersonWrapper.PwOpt_t
-import util.ident.IdentUtil
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.SiowebEsUtil.client
-import io.suggest.flash.FlashConstants.{Statuses => FLASH}
+import util.ident.IIdentUtil
 
 import scala.concurrent.Future
 
@@ -29,48 +27,64 @@ object CanConfirmEmailPwReg {
 import CanConfirmEmailPwReg._
 
 
-trait CanConfirmEmailPwRegBase extends ActionBuilder[EmailPwRegConfirmRequest] with PlayMacroLogsDyn {
+trait CanConfirmEmailPwRegCtl extends SioController with IEsClient with IIdentUtil {
 
-  /** Инфа по активации, присланная через URL qs. */
-  def eaInfo: IEaEmailId
+  /** Код проверки возможности подтверждения регистрации по email. */
+  trait CanConfirmEmailPwRegBase extends ActionBuilder[EmailPwRegConfirmRequest] with PlayMacroLogsDyn {
 
-  override def invokeBlock[A](request: Request[A], block: (EmailPwRegConfirmRequest[A]) => Future[Result]): Future[Result] = {
-    val eaFut = eaInfo.id match {
-      case Some(eaId) =>
-        EmailActivation.getById(eaId)
-      case None =>
-        Future successful None
-    }
-    val pwOpt = PersonWrapper.getFromRequest(request)
-    val srmFut = SioReqMd.fromPwOpt(pwOpt)
-    eaFut flatMap {
-      // Всё срослось.
-      case Some(ea) if ea.email == eaInfo.email && ea.key == EPW_ACT_KEY =>
-        srmFut flatMap { srm =>
-          val req1 = EmailPwRegConfirmRequest(ea, pwOpt, srm, request)
-          block(req1)
-        }
+    /** Инфа по активации, присланная через URL qs. */
+    def eaInfo: IEaEmailId
 
-      // Активация не подходит. Может юзер повторно проходит по ссылке из письма? Но это не важно, по сути.
-      case None =>
-        LOGGER.debug(s"Client requested activation for $eaInfo , but it doesn't exists. Redirecting...")
-        val rdrFut = pwOpt match {
-          case None =>
-            IsAuth.onUnauth(request)
-          case Some(pw) =>
-            IdentUtil.redirectUserSomewhere(pw.personId)
-        }
-        // TODO Отправлять на страницу, где описание проблема, а не туда, куда взбредёт.
-        rdrFut map { rdr =>
-          rdr.flashing(FLASH.ERROR -> "Activation.impossible")
-        }
+    override def invokeBlock[A](request: Request[A], block: (EmailPwRegConfirmRequest[A]) => Future[Result]): Future[Result] = {
+      val eaFut = eaInfo.id match {
+        case Some(eaId) =>
+          EmailActivation.getById(eaId)
+        case None =>
+          Future successful None
+      }
+      val pwOpt = PersonWrapper.getFromRequest(request)
+      val srmFut = SioReqMd.fromPwOpt(pwOpt)
+      eaFut flatMap {
+        // Всё срослось.
+        case Some(ea) if ea.email == eaInfo.email && ea.key == EPW_ACT_KEY =>
+          srmFut flatMap { srm =>
+            val req1 = EmailPwRegConfirmRequest(ea, pwOpt, srm, request)
+            block(req1)
+          }
 
-      // [xakep] Внезапно, кто-то пытается пропихнуть левую активацию из какого-то другого места.
-      case Some(ea) =>
-        LOGGER.warn(s"Client ip[${request.remoteAddress}] User[$pwOpt] tried to use foreign activation key:\n  eaInfo = $eaInfo\n  ea = $ea")
-        IsAuth.onUnauth(request)
+        // Активация не подходит. Может юзер повторно проходит по ссылке из письма? Но это не важно, по сути.
+        case None =>
+          LOGGER.debug(s"Client requested activation for $eaInfo , but it doesn't exists. Redirecting...")
+          val rdrFut = pwOpt match {
+            case None =>
+              IsAuth.onUnauth(request)
+            case Some(pw) =>
+              identUtil.redirectUserSomewhere(pw.personId)
+          }
+          // TODO Отправлять на страницу, где описание проблема, а не туда, куда взбредёт.
+          rdrFut map { rdr =>
+            rdr.flashing(FLASH.ERROR -> "Activation.impossible")
+          }
+
+        // [xakep] Внезапно, кто-то пытается пропихнуть левую активацию из какого-то другого места.
+        case Some(ea) =>
+          LOGGER.warn(s"Client ip[${request.remoteAddress}] User[$pwOpt] tried to use foreign activation key:\n  eaInfo = $eaInfo\n  ea = $ea")
+          IsAuth.onUnauth(request)
+      }
     }
   }
+
+
+  /** Реализация [[CanConfirmEmailPwRegBase]] c выставлением CSRF-token'а. */
+  case class CanConfirmEmailPwRegGet(eaInfo: IEaEmailId)
+    extends CanConfirmEmailPwRegBase
+    with CsrfGet[EmailPwRegConfirmRequest]
+
+  /** Реализация [[CanConfirmEmailPwRegBase]] с проверкой выставленного ранее CSRF-токена. */
+  case class CanConfirmEmailPwRegPost(eaInfo: IEaEmailId)
+    extends CanConfirmEmailPwRegBase
+    with CsrfPost[EmailPwRegConfirmRequest]
+
 }
 
 case class EmailPwRegConfirmRequest[A](
@@ -78,22 +92,5 @@ case class EmailPwRegConfirmRequest[A](
   pwOpt     : PwOpt_t,
   sioReqMd  : SioReqMd,
   request   : Request[A]
-) extends AbstractRequestWithPwOpt(request)
-
-
-/** Дефолтовая реализация [[CanConfirmEmailPwRegBase]].
-  * ExpireSession тут нет, т.к. сюда попадают незалогиненные. */
-case class CanConfirmEmailPwReg(eaInfo: IEaEmailId)
-  extends CanConfirmEmailPwRegBase
-
-
-/** Реализация [[CanConfirmEmailPwRegBase]] c выставлением CSRF-token'а. */
-case class CanConfirmEmailPwRegGet(eaInfo: IEaEmailId)
-  extends CanConfirmEmailPwRegBase
-  with CsrfGet[EmailPwRegConfirmRequest]
-
-/** Реализация [[CanConfirmEmailPwRegBase]] с проверкой выставленного ранее CSRF-токена. */
-case class CanConfirmEmailPwRegPost(eaInfo: IEaEmailId)
-  extends CanConfirmEmailPwRegBase
-  with CsrfPost[EmailPwRegConfirmRequest]
-
+)
+  extends AbstractRequestWithPwOpt(request)

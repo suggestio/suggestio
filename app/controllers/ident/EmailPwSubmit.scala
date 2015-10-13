@@ -9,7 +9,7 @@ import play.api.data.Forms._
 import util.acl._
 import util._
 import play.api.mvc._
-import util.ident.IdentUtil
+import util.ident.IIdentUtil
 import util.xplay.SetLangCookieUtil
 import views.html.ident.login.epw._
 import scala.concurrent.Future
@@ -28,6 +28,8 @@ trait EmailPwSubmit
   with BruteForceProtectCtl
   with SetLangCookieUtil
   with IEsClient
+  with IsAnonCtl
+  with IIdentUtil
 {
 
   /** Форма логина по email и паролю. */
@@ -64,7 +66,7 @@ trait EmailPwSubmit
 
 
   def emailSubmitOkCall(personId: String)(implicit request: AbstractRequestWithPwOpt[_]): Future[Call] = {
-    IdentUtil.redirectCallUserSomewhere(personId)
+    identUtil.redirectCallUserSomewhere(personId)
   }
 
   def emailSubmitError(lf: EmailPwLoginForm_t, r: Option[String])(implicit request: AbstractRequestWithPwOpt[_]): Future[Result]

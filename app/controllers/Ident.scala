@@ -34,6 +34,7 @@ class Ident @Inject() (
   override val mailer               : IMailerWrapper,
   override val current              : play.api.Application,
   override val cache                : CacheApi,
+  override val identUtil            : IdentUtil,
   override implicit val ec          : ExecutionContext,
   override implicit val esClient    : Client,
   override implicit val sn          : SioNotifierStaticClientI
@@ -62,7 +63,7 @@ class Ident @Inject() (
 
   /** Отредиректить юзера куда-нибудь. */
   def rdrUserSomewhere = IsAuth.async { implicit request =>
-    IdentUtil.redirectUserSomewhere(request.pwOpt.get.personId)
+    identUtil.redirectUserSomewhere(request.pwOpt.get.personId)
   }
 
   /**
