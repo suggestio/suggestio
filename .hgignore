@@ -8,5 +8,6 @@ data/
 project/project
 project/target
 *.swp
+logs/
 
 russianmorphology/
