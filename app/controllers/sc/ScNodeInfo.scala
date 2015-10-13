@@ -5,11 +5,11 @@ import controllers.SioControllerUtil
 import SioControllerUtil.PROJECT_CODE_LAST_MODIFIED
 import io.suggest.event.subscriber.SnFunSubscriber
 import io.suggest.event.AdnNodeSavedEvent
+import io.suggest.playx.ICurrentConf
 import models.jsm.NodeDataResp
-import play.api.Play, Play.{current, configuration}
+import play.api.Play
 import play.api.cache.Cache
 import play.api.mvc.Result
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.DateTimeUtil
 import util.acl.AdnNodeMaybeAuth
 import util.cdn.CdnUtil
@@ -23,7 +23,7 @@ import views.txt.sc._
  * Created: 07.11.14 19:56
  * Description: Доступ к данным узла. В первую очередь для осуществления работы внедряемой иконки на wifi.
  */
-trait ScNodeInfo extends ScController {
+trait ScNodeInfo extends ScController with ICurrentConf {
 
   /** Сколько времени кешировать скомпиленный скрипт nodeIconJsTpl. */
   private val NODE_ICON_JS_CACHE_TTL_SECONDS = configuration.getInt("market.node.icon.js.cache.ttl.seconds") getOrElse 30

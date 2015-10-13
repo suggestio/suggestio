@@ -2,8 +2,10 @@ package controllers
 
 import com.google.inject.Inject
 import controllers.ident._
+import io.suggest.event.SioNotifierStaticClientI
 import models.jsm.init.{MTargets, MTarget}
 import models.msession.Keys
+import org.elasticsearch.client.Client
 import play.api.cache.CacheApi
 import play.api.i18n.MessagesApi
 import util.acl._
@@ -12,10 +14,11 @@ import play.api.mvc._
 import util.ident.IdentUtil
 import util.mail.IMailerWrapper
 import views.html.ident._
-import play.api.libs.concurrent.Execution.Implicits._
 import models._
 import views.html.ident.login.epw._loginColumnTpl
 import views.html.ident.reg.email._regColumnTpl
+
+import scala.concurrent.ExecutionContext
 
 /**
  * Suggest.io
@@ -27,10 +30,13 @@ import views.html.ident.reg.email._regColumnTpl
  */
 
 class Ident @Inject() (
-  override val messagesApi  : MessagesApi,
-  override val mailer       : IMailerWrapper,
-  override val current      : play.api.Application,
-  override val cache        : CacheApi
+  override val messagesApi          : MessagesApi,
+  override val mailer               : IMailerWrapper,
+  override val current              : play.api.Application,
+  override val cache                : CacheApi,
+  override implicit val ec          : ExecutionContext,
+  override implicit val esClient    : Client,
+  override implicit val sn          : SioNotifierStaticClientI
 )
   extends SioController
   with PlayMacroLogsImpl
@@ -40,9 +46,8 @@ class Ident @Inject() (
   with PwRecover
   with EmailPwReg
   with ExternalLogin
+  with IEsClient
 {
-
-  import LOGGER._
 
   /**
    * Юзер разлогинивается. Выпилить из сессии данные о его логине.
@@ -70,7 +75,7 @@ class Ident @Inject() (
     // TODO Затолкать это в отдельный шаблон!
     implicit val jsInitTgs = Seq(MTargets.CaptchaForm, MTargets.HiddenCaptcha)
     val ctx = implicitly[Context]
-    val formFut = EmailPwSubmit.emailPwLoginFormStubM
+    val formFut = emailPwLoginFormStubM
     val title = ctx.messages("Login.page.title")
     val rc = _regColumnTpl(EmailPwReg.emailRegFormM, captchaShown = false)(ctx)
     formFut.map { lf =>

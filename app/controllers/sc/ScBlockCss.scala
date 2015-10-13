@@ -6,7 +6,6 @@ import models.{AdCssArgs, blk}
 import play.api.mvc.Action
 import play.twirl.api.Txt
 import util.PlayMacroLogsI
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 import util.blocks.BlocksConf
 import views.txt.blocks.common._

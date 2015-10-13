@@ -3,25 +3,25 @@ package controllers
 import java.nio.file.Files
 
 import com.google.inject.Inject
+import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.geo.{PointGs, GsTypes}
+import io.suggest.playx.ICurrentConf
 import org.elasticsearch.action.bulk.BulkResponse
+import org.elasticsearch.client.Client
 import play.api.libs.Files.TemporaryFile
 import play.api.mvc.{MultipartFormData, RequestHeader, Result}
 import _root_.util.geo.umap._
 import models._
 import play.api.i18n.{MessagesApi, Messages}
 import util.PlayMacroLogsImpl
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.SiowebEsUtil.client
 import _root_.util.acl._
 import views.html.umap._
 import play.api.libs.json._
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 import AdnShownTypes._
-import play.api.Play.{current, configuration}
 import AdnShownTypes.adnInfo2val
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -30,9 +30,16 @@ import scala.concurrent.Future
  * Description: Контроллер для umap-backend'ов.
  */
 class Umap @Inject() (
-  override val messagesApi: MessagesApi
+  override val messagesApi        : MessagesApi,
+  override implicit val current   : play.api.Application,
+  override implicit val ec        : ExecutionContext,
+  override implicit val esClient  : Client,
+  override implicit val sn        : SioNotifierStaticClientI
 )
-  extends SioControllerImpl with PlayMacroLogsImpl
+  extends SioControllerImpl
+  with PlayMacroLogsImpl
+  with IEsClient
+  with ICurrentConf
 {
 
   import LOGGER._
@@ -198,7 +205,7 @@ class Umap @Inject() (
       }
       val layerData = UmapUtil.deserializeFromBytes(jsonBytes).get
       // Собираем BulkRequest для сохранения данных.
-      val bulkSave = client.prepareBulk()
+      val bulkSave = esClient.prepareBulk()
       layerData.features
         .iterator
         .filter { _.geometry.shapeType == GsTypes.polygon }
@@ -245,7 +252,7 @@ class Umap @Inject() (
       // Слой распарсился и готов к сохранению. Запускаем удаление исходных данных слоя.
       allRenderableFut.flatMap { all =>
         if (all.nonEmpty) {
-          val bulkDel = client.prepareBulk()
+          val bulkDel = esClient.prepareBulk()
           all.foreach { geo =>
             bulkDel.add(geo.prepareDelete)
           }
@@ -284,7 +291,7 @@ class Umap @Inject() (
         // При любом экзепшене откатываем все данные назад.
         case ex: Throwable =>
           error("Failed to update layer " + ngl, ex)
-          val bulkReSave = client.prepareBulk()
+          val bulkReSave = esClient.prepareBulk()
           val rollbackNodesFut = nodesCentersUpdateInfoFut.map { data =>
             data.foreach {
               case (adnNode0, _)  =>  bulkReSave add adnNode0.indexRequestBuilder

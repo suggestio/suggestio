@@ -1,6 +1,6 @@
 package util.acl
 
-import controllers.{SioController, MyConfName}
+import controllers.{IExecutionContext, SioController, MyConfName}
 import io.suggest.playx.ICurrentConf
 import play.api.Application
 import play.api.mvc._
@@ -8,7 +8,6 @@ import util._
 import util.xplay.ICacheApi
 import scala.concurrent.{Promise, Future}
 import scala.concurrent.duration._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.Result
 
 /**
@@ -23,10 +22,13 @@ import play.api.mvc.Result
  *  0*333 = 0 ms (3 раза), затем 1*333 = 333 ms (3 раза), затем 2*333 = 666 ms (3 раза), и т.д.
  */
 
-trait BruteForceProtectBase extends PlayMacroLogsI with MyConfName with ICurrentConf with ICacheApi {
-
-  /** Доступ к application через DI в реализации контроллера. */
-  protected def current: Application
+trait BruteForceProtectBase
+  extends PlayMacroLogsI
+  with MyConfName
+  with ICurrentConf
+  with ICacheApi
+  with IExecutionContext
+{
 
   /** Шаг задержки. Добавляемая задержка ответа будет кратна этому лагу. */
   val BRUTEFORCE_LAG_MS = configuration.getInt(s"bfp.$MY_CONF_NAME.lag_ms") getOrElse BRUTEFORCE_ATTACK_LAG_MS_DFLT

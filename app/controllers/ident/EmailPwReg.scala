@@ -1,13 +1,12 @@
 package controllers.ident
 
-import controllers.{IMailer, CaptchaValidator, SioController}
+import controllers.{IEsClient, IMailer, CaptchaValidator, SioController}
 import models._
 import models.jsm.init.MTargets
 import models.msession.Keys
 import models.usr._
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.Result
 import play.twirl.api.Html
 import util.adn.NodesUtil
@@ -16,7 +15,6 @@ import util.{FormUtil, PlayMacroLogsI}
 import util.acl._
 import views.html.ident.reg.regSuccessTpl
 import views.html.ident.reg.email._
-import util.SiowebEsUtil.client
 
 import scala.concurrent.Future
 
@@ -55,7 +53,14 @@ object EmailPwReg {
 import EmailPwReg._
 
 
-trait EmailPwReg extends SioController with PlayMacroLogsI with CaptchaValidator with SendPwRecoverEmail with IMailer {
+trait EmailPwReg
+  extends SioController
+  with PlayMacroLogsI
+  with CaptchaValidator
+  with SendPwRecoverEmail
+  with IMailer
+  with IEsClient
+{
 
   def sendEmailAct(ea: EmailActivation)(implicit ctx: Context): Unit = {
     val msg = mailer.instance

@@ -3,14 +3,13 @@ package controllers
 import io.suggest.ym.model.common.{BlockMeta, IBlockMeta}
 import models.Context
 import models.blk.{BlockWidths, BlockHeights, BlockMetaUtil}
-import models.im.{MImgT, CompressModes, DevScreen, MImg}
+import models.im.{MImgT, CompressModes, DevScreen}
 import models.im.make.{Makers, MakeArgs, IMakeArgs, SysForm_t}
 import play.api.data.{Form, Mapping}
 import play.twirl.api.Html
 import util.blocks.BlocksConf
 import util.{FormUtil, PlayMacroLogsI}
 import util.acl.{IsSuperuserPost, IsSuperuserGet}
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import views.html.sys1.img.make._
 
 import scala.concurrent.Future

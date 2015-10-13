@@ -4,20 +4,20 @@ import _root_.util.adn.NodesUtil
 import _root_.util.async.AsyncUtil
 import com.google.inject.Inject
 import controllers.ident._
+import io.suggest.event.SioNotifierStaticClientI
 import models.im.logo.LogoUtil
 import models.mlk.MNodeShowArgs
 import models.msession.Keys
 import models.usr.EmailPwIdent
+import org.elasticsearch.client.Client
 import play.api.cache.CacheApi
 import play.api.i18n.MessagesApi
 import util.billing.Billing
 import _root_.util.{FormUtil, PlayMacroLogsImpl}
 import util.acl._
 import models._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.SiowebEsUtil.client
 import util.lk.LkAdUtil
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import views.html.lk.adn._
 import views.html.lk.usr._
 import views.html.lk.{lkList => lkListTpl}
@@ -34,13 +34,20 @@ import play.api.db.Database
  * Description: Унифицированные части личного кабинета.
  */
 class MarketLkAdn @Inject() (
-  override val messagesApi  : MessagesApi,
-  db                        : Database,
-  override val current      : play.api.Application,
-  override val cache        : CacheApi,
-  logoUtil                  : LogoUtil
+  override val messagesApi            : MessagesApi,
+  db                                  : Database,
+  override val current                : play.api.Application,
+  override val cache                  : CacheApi,
+  logoUtil                            : LogoUtil,
+  override implicit val ec            : ExecutionContext,
+  override implicit val esClient      : Client,
+  override implicit val sn            : SioNotifierStaticClientI
 )
-  extends SioController with PlayMacroLogsImpl with BruteForceProtectCtl with ChangePwAction with NodeEactAcl
+  extends SioController
+  with PlayMacroLogsImpl
+  with BruteForceProtectCtl
+  with ChangePwAction
+  with NodeEactAcl
 {
 
   import LOGGER._

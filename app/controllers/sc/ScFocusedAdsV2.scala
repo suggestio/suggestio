@@ -4,7 +4,6 @@ import models.jsm.FocusedAdsResp2
 import models.msc._
 import play.api.mvc.Result
 import util.acl.AbstractRequestWithPwOpt
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import views.html.sc.foc._
 
 import scala.concurrent.Future

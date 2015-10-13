@@ -1,6 +1,6 @@
 package util.acl
 
-import controllers.SioController
+import controllers.{IEsClient, SioController}
 import models.{MAdnNodeCache, MAdnNode}
 import models.req.SioReqMd
 import models.usr.{EmailPwIdent, EmailActivation}
@@ -8,8 +8,6 @@ import play.api.mvc.{Result, ActionBuilder, Request}
 import util.PlayMacroLogsI
 import util.acl.PersonWrapper.PwOpt_t
 import views.html.lk.adn.invite.inviteInvalidTpl
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.SiowebEsUtil.client
 
 import scala.concurrent.Future
 
@@ -20,7 +18,7 @@ import scala.concurrent.Future
  * Description: ActionBuilder'ы для доступа к инвайтам на управление узлом через email.
  * Аддон подмешивается к контроллерам, где необходима поддержка NodeEact.
  */
-trait NodeEactAcl extends SioController with PlayMacroLogsI {
+trait NodeEactAcl extends SioController with PlayMacroLogsI with IEsClient {
 
   /** Абстрактная логика ActionBuider'ов, обрабатывающих запросы активации инвайта на узел. */
   protected[this] trait NodeEactBase extends ActionBuilder[NodeEactRequest] {

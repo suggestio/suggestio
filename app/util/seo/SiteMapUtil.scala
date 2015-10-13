@@ -12,7 +12,7 @@ import util.showcase.ScSitemapsXml
  * Description:
  */
 
-object SiteMapUtil {
+class SiteMapUtil {
 
   /** Источники для наполнения sitemap.xml */
   def SITEMAP_SOURCES: Seq[SiteMapXmlCtl] = Seq(

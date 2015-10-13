@@ -2,23 +2,23 @@ package controllers
 
 import com.github.nscala_time.time.OrderingImplicits._
 import com.google.inject.Inject
+import io.suggest.event.SioNotifierStaticClientI
+import io.suggest.playx.ICurrentConf
 import models._
 import models.adv.MExtTarget
 import models.event.search.MEventsSearchArgs
 import models.event.MEvent
+import org.elasticsearch.client.Client
 import org.joda.time.DateTime
 import play.api.i18n.{MessagesApi, Messages}
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 import util.acl.{HasNodeEventAccess, IsAdnNodeAdmin}
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.event.LkEventsUtil
-import util.SiowebEsUtil.client
-import play.api.Play.{current, configuration}
 import util.lk.LkAdUtil
 import views.html.lk.event._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Success, Failure}
 
 /**
@@ -29,9 +29,16 @@ import scala.util.{Success, Failure}
  * Контроллер поддерживает отображение уведомлений, удаление оных и прочие действия.
  */
 class LkEvents @Inject() (
-  override val messagesApi: MessagesApi
+  lkEventsUtil                  : LkEventsUtil,
+  override val messagesApi      : MessagesApi,
+  override val current          : play.api.Application,
+  override implicit val ec      : ExecutionContext,
+  implicit val esClient         : Client,
+  override implicit val sn      : SioNotifierStaticClientI
 )
-  extends SioControllerImpl with PlayMacroLogsImpl
+  extends SioControllerImpl
+  with PlayMacroLogsImpl
+  with ICurrentConf
 {
 
   import LOGGER._
@@ -66,7 +73,7 @@ class LkEvents @Inject() (
     // Если начало списка, и узел -- ресивер, то нужно проверить, есть ли у него геошейпы. Если нет, то собрать ещё одно событие...
     val geoWelcomeFut: Future[Option[(Html, DateTime)]] = {
       if (offset == 0  &&  request.adnNode.adn.isReceiver) {
-        LkEventsUtil.getGeoWelcome(request.adnNode)(ctx)
+        lkEventsUtil.getGeoWelcome(request.adnNode)(ctx)
       } else {
         Future successful None
       }
@@ -75,13 +82,13 @@ class LkEvents @Inject() (
     // Нужно отрендерить каждое хранимое событие с помощью соотв.шаблона. Для этого нужно собрать аргументы для каждого события.
     val evtsRndrFut = eventsFut.flatMap { mevents =>
       // В фоне пакетно отфетчить рекламные карточки и ext-таргеты в виде карт:
-      val madsMapFut        = LkEventsUtil.readEsModel(mevents, MAd)(_.argsInfo.adIdOpt)
-      val advExtTgsMapFut   = LkEventsUtil.readEsModel(mevents, MExtTarget)(_.argsInfo.advExtTgIds)
+      val madsMapFut        = lkEventsUtil.readEsModel(mevents, MAd)(_.argsInfo.adIdOpt)
+      val advExtTgsMapFut   = lkEventsUtil.readEsModel(mevents, MExtTarget)(_.argsInfo.advExtTgIds)
 
       // Параллельно собираем карты размещений из всех adv-моделей.
-      val advsReqMapFut     = LkEventsUtil.readAdvModel(mevents, MAdvReq)(_.argsInfo.advReqIdOpt)
-      val advsOkMapFut      = LkEventsUtil.readAdvModel(mevents, MAdvOk)(_.argsInfo.advOkIdOpt)
-      val advsRefuseMapFut  = LkEventsUtil.readAdvModel(mevents, MAdvRefuse)(_.argsInfo.advRefuseIdOpt)
+      val advsReqMapFut     = lkEventsUtil.readAdvModel(mevents, MAdvReq)(_.argsInfo.advReqIdOpt)
+      val advsOkMapFut      = lkEventsUtil.readAdvModel(mevents, MAdvOk)(_.argsInfo.advOkIdOpt)
+      val advsRefuseMapFut  = lkEventsUtil.readAdvModel(mevents, MAdvRefuse)(_.argsInfo.advRefuseIdOpt)
 
       // Если передается карточка, то следует сразу передать и block RenderArgs для отображения превьюшки.
       val brArgsMapFut = madsMapFut.flatMap { madsMap =>
@@ -146,7 +153,7 @@ class LkEvents @Inject() (
     // Автоматически помечать все сообщения как прочитанные при первом заходе на страницу событий:
     if (offset == 0 && !inline) {
       evtsRndrFut.onSuccess { case _ =>
-        LkEventsUtil.markAllSeenForNode(adnId) onComplete {
+        lkEventsUtil.markAllSeenForNode(adnId) onComplete {
           case Success(count) =>
             if (count > 0)
               trace(s"nodeIndex($adnId): $count events marked as read.")

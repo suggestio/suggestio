@@ -1,6 +1,6 @@
 package controllers.ident
 
-import controllers.SioController
+import controllers.{IEsClient, SioController}
 import models.usr.{MPersonIdent, EmailPwIdent}
 import play.api.data._
 import play.api.data.Forms._
@@ -8,9 +8,7 @@ import util.acl._
 import util._
 import play.api.mvc._
 import util.ident.IdentUtil
-import play.api.libs.concurrent.Execution.Implicits._
 import scala.concurrent.Future
-import SiowebEsUtil.client
 import FormUtil.{passwordM, passwordWithConfirmM}
 import views.html.ident.changePasswordTpl
 
@@ -54,7 +52,7 @@ trait ChangePw extends ChangePwAction {
 
 /** Контексто-зависимое тело экшена, которое реализует смену пароля у пользователя.
   * Реализации должны оборачивать логику экшена в экшен, выставляя обработчики для ошибок и успехов. */
-trait ChangePwAction extends SioController with PlayMacroLogsI {
+trait ChangePwAction extends SioController with PlayMacroLogsI with IEsClient {
 
   /** Если неясно куда надо редиректить юзера, то что делать? */
   def changePwOkRdrDflt(implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Call] = {

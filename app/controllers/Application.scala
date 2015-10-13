@@ -8,12 +8,16 @@ import util.cdn.{CorsUtil2, CorsUtil}
 import play.api.i18n.MessagesApi
 import play.api.Play, Play.{current, configuration}
 import util.seo.SiteMapUtil
-import play.api.libs.concurrent.Execution.Implicits._
 import views.html.static.sitemap._
 import views.html.sys1._
+import views.txt.static.robotsTxtTpl
+
+import scala.concurrent.ExecutionContext
 
 class Application @Inject() (
-  override val messagesApi: MessagesApi
+  override val messagesApi      : MessagesApi,
+  override implicit val ec      : ExecutionContext,
+  siteMapUtil                   : SiteMapUtil
 )
   extends SioControllerImpl
 {
@@ -31,7 +35,7 @@ class Application @Inject() (
 
   /** Раздача содержимого robots.txt. */
   def robotsTxt = Action { implicit request =>
-    Ok(views.txt.static.robotsTxtTpl())
+    Ok( robotsTxtTpl() )
       .withHeaders(
         CONTENT_TYPE  -> "text/plain; charset=utf-8",
         CACHE_CONTROL -> s"public, max-age=$ROBOTS_TXT_CACHE_TTL_SECONDS"
@@ -72,7 +76,7 @@ class Application @Inject() (
    */
   def siteMapXml = MaybeAuth { implicit request =>
     implicit val ctx = getContext2
-    val enums = SiteMapUtil.SITEMAP_SOURCES.map(_.siteMapXmlEnumerator(ctx))
+    val enums = siteMapUtil.SITEMAP_SOURCES.map(_.siteMapXmlEnumerator(ctx))
     val urls = Enumerator.interleave(enums)
       .map { _urlTpl(_) }
     // Нужно добавить к сайтмапу начало и конец xml. Дорисовываем enumerator'ы:

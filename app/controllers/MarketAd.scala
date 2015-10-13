@@ -1,9 +1,11 @@
 package controllers
 
 import com.google.inject.Inject
+import io.suggest.event.SioNotifierStaticClientI
 import models.im.MImg
 import models.jsm.init.MTargets
 import models.mtag.MTagUtil
+import org.elasticsearch.client.Client
 import org.joda.time.DateTime
 import play.api.cache.CacheApi
 import play.api.i18n.{MessagesApi, Messages}
@@ -14,11 +16,9 @@ import util.PlayMacroLogsImpl
 import util.blocks.{LkEditorWsActor, ListBlock, BgImg}
 import views.html.lk.ad._
 import models._
-import play.api.libs.concurrent.Execution.Implicits._
-import util.SiowebEsUtil.client
 import play.api.data._, Forms._
 import util.acl._
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import play.api.mvc.{WebSocket, Request}
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import controllers.ad.MarketAdFormUtil
@@ -38,7 +38,10 @@ class MarketAd @Inject() (
   override val messagesApi      : MessagesApi,
   override implicit val current : play.api.Application,
   override val cache            : CacheApi,
-  tempImgSupport                : TempImgSupport
+  tempImgSupport                : TempImgSupport,
+  override implicit val ec      : ExecutionContext,
+  implicit val esClient         : Client,
+  override implicit val sn      : SioNotifierStaticClientI
 )
   extends SioController
   with PlayMacroLogsImpl

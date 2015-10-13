@@ -1,6 +1,6 @@
 package controllers.ident
 
-import controllers.SioController
+import controllers.{IEsClient, SioController}
 import models.{MNode, MNodeTypes}
 import models.msession.{Ttl, ShortTtl, LongTtl, Keys}
 import models.usr._
@@ -9,12 +9,10 @@ import play.api.data.Forms._
 import util.acl._
 import util._
 import play.api.mvc._
-import play.api.libs.concurrent.Execution.Implicits._
 import util.ident.IdentUtil
 import util.xplay.SetLangCookieUtil
 import views.html.ident.login.epw._
 import scala.concurrent.Future
-import SiowebEsUtil.client
 import util.FormUtil.passwordM
 
 /**
@@ -24,7 +22,13 @@ import util.FormUtil.passwordM
  * Description: Поддержка сабмита формы логина по email и паролю.
  */
 
-object EmailPwSubmit {
+trait EmailPwSubmit
+  extends SioController
+  with PlayMacroLogsI
+  with BruteForceProtectCtl
+  with SetLangCookieUtil
+  with IEsClient
+{
 
   /** Форма логина по email и паролю. */
   def emailPwLoginFormM: EmailPwLoginForm_t = {
@@ -58,13 +62,6 @@ object EmailPwSubmit {
     }
   }
 
-}
-
-import EmailPwSubmit._
-
-
-/** Добавить обработчик сабмита формы логина по email и паролю в контроллер. */
-trait EmailPwSubmit extends SioController with PlayMacroLogsI with BruteForceProtectCtl with SetLangCookieUtil {
 
   def emailSubmitOkCall(personId: String)(implicit request: AbstractRequestWithPwOpt[_]): Future[Call] = {
     IdentUtil.redirectCallUserSomewhere(personId)

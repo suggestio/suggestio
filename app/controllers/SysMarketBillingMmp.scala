@@ -1,12 +1,12 @@
 package controllers
 
 import com.google.inject.Inject
+import io.suggest.event.SioNotifierStaticClientI
+import org.elasticsearch.client.Client
 import play.api.i18n.MessagesApi
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 import models._
-import util.SiowebEsUtil.client
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.db.Database
 import util.async.AsyncUtil
 import views.html.sys1.market.billing.mmp.daily._
@@ -14,7 +14,7 @@ import play.api.data._, Forms._
 import util.FormUtil._
 import util.acl._
 import play.api.mvc.AnyContent
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -23,8 +23,11 @@ import scala.concurrent.Future
  * Description: sys-контроллер для работы с mmp-тарификацией, т.е. когда тарификация настраивается по рекламным модулям.
  */
 class SysMarketBillingMmp @Inject() (
-  override val messagesApi: MessagesApi,
-  db: Database
+  override val messagesApi      : MessagesApi,
+  db                            : Database,
+  override implicit val ec      : ExecutionContext,
+  implicit val esClient         : Client,
+  override implicit val sn      : SioNotifierStaticClientI
 )
   extends SioControllerImpl with PlayMacroLogsImpl
 {

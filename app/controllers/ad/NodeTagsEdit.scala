@@ -35,7 +35,10 @@ object NodeTagsEdit {
 import NodeTagsEdit._
 
 
-trait NodeTagsEdit extends SioController with PlayMacroLogsI {
+trait NodeTagsEdit
+  extends SioController
+  with PlayMacroLogsI
+{
   
   /**
    * Добавление тега в редактор тегов.

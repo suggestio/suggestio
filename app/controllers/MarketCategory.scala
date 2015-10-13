@@ -7,13 +7,9 @@ import play.api.i18n.MessagesApi
 import util.FormUtil._
 import models._
 import util.SiowebEsUtil.client
-import play.api.libs.concurrent.Execution.Implicits._
 import util.acl._
 import views.html.sys1.market.cat._
 import scala.concurrent.Future
-import play.api.mvc.Action
-import play.api.libs.json._
-import play.api.Play.{current, configuration}
 
 /**
  * Suggest.io
@@ -166,24 +162,6 @@ class MarketCategory @Inject() (
     } else {
       NotAcceptable("Mart cats installation disabled in config.")
     }
-  }
-
-
-  /** Отрендерить в JSON список категорий. */
-  private def renderCatsJson(cats: Seq[MMartCategory]): JsArray = {
-    val jsonCats = cats.map { cat =>
-      val l1 = if (cat.cssClass.isDefined) {
-        List("cssClass" -> JsString(cat.cssClass.get))
-      } else {
-        Nil
-      }
-      val l2 =
-        "name"  -> JsString(cat.name) ::
-        "id"    -> JsString(cat.id.get) ::
-        l1
-      JsObject(l2)
-    }
-    JsArray(jsonCats)
   }
 
 

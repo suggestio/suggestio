@@ -19,7 +19,6 @@ import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.Files.TemporaryFile
 import play.api.mvc._
 import _root_.util._
-import play.api.libs.concurrent.Execution.Implicits._
 import org.joda.time.{ReadableInstant, DateTime}
 import play.api.Play
 import util.acl._
@@ -27,7 +26,7 @@ import util.img._
 import util.xplay.CacheUtil
 import scala.concurrent.duration._
 import net.sf.jmimemagic.{MagicMatch, Magic}
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import views.html.img._
 import play.api.data._, Forms._
 import io.suggest.img.ConvertModes
@@ -48,6 +47,7 @@ class Img @Inject() (
   override val actorSystem      : ActorSystem,
   override implicit val current : play.api.Application,
   override val cache            : CacheApi,
+  override implicit val ec      : ExecutionContext,
   override val imgCtlUtil       : ImgCtlUtil
 )
   extends SioController

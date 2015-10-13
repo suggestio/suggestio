@@ -1,11 +1,15 @@
 package controllers
 
+import akka.actor.ActorSystem
 import com.google.inject.Inject
+import io.suggest.event.SioNotifierStaticClientI
+import io.suggest.playx.ICurrentConf
 import models._
 import models.adv._
 import models.adv.ext.act.{OAuthVerifier, ActorPathQs}
 import models.adv.search.etg.ExtTargetSearchArgs
 import models.jsm.init.MTargets
+import org.elasticsearch.client.Client
 import org.elasticsearch.search.sort.SortOrder
 import play.api.i18n.MessagesApi
 import play.api.libs.json.JsValue
@@ -14,17 +18,13 @@ import play.api.mvc.{Result, WebSocket}
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 import util.acl._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.SiowebEsUtil.client
 import util.adv.{ExtUtil, ExtAdvWsActor}
 import play.api.data._, Forms._
 import util.FormUtil._
 import views.html.lk.adv.ext._
-import play.api.Play.{current, configuration}
-import play.api.libs.concurrent.Akka.system
 import views.html.static.popups.closingPopupTpl
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -35,9 +35,17 @@ import scala.concurrent.Future
  * Логический родственник [[MarketAdv]], который занимается размещениями карточек на узлах.
  */
 class LkAdvExt @Inject() (
-  override val messagesApi: MessagesApi
+  override val messagesApi        : MessagesApi,
+  system                          : ActorSystem,
+  override implicit val ec        : ExecutionContext,
+  override implicit val esClient  : Client,
+  override implicit val sn        : SioNotifierStaticClientI,
+  override implicit val current   : play.api.Application
 )
-  extends SioControllerImpl with PlayMacroLogsImpl
+  extends SioControllerImpl
+  with PlayMacroLogsImpl
+  with CanAccessExtTargetBaseCtl
+  with ICurrentConf
 {
 
   import LOGGER._

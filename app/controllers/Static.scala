@@ -1,5 +1,15 @@
 package controllers
 
+import com.google.inject.Inject
+import play.api.Play.{isProd, current}
+import play.api.i18n.MessagesApi
+import play.api.mvc._
+import util.acl.{IsSuperuserOrDevelOr404, MaybeAuth}
+import util.xplay.SecHeadersFilter
+import views.html.static._
+
+import scala.concurrent.ExecutionContext
+
 /**
  * Authors: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  *          Alexander Pestrikov <alexander.pestrikov@cbca.ru>
@@ -8,17 +18,9 @@ package controllers
  * 2014.oct.24: Вычищение старой верстки. Ссылки на неё всплывают в поисковиках.
  */
 
-import com.google.inject.Inject
-import play.api.Play.{isProd, current}
-import play.api.i18n.MessagesApi
-import play.api.mvc._
-import util.acl.{IsSuperuserOrDevelOr404, MaybeAuth}
-import util.xplay.SecHeadersFilter
-import views.html.static._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-
 class Static @Inject() (
-  override val messagesApi: MessagesApi
+  override val messagesApi      : MessagesApi,
+  override implicit val ec      : ExecutionContext
 )
   extends SioControllerImpl
 {

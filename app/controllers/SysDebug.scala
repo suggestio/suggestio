@@ -1,12 +1,14 @@
 package controllers
 
 import com.google.inject.Inject
+import io.suggest.event.SioNotifierStaticClientI
+import org.elasticsearch.client.Client
 import play.api.i18n.MessagesApi
 import util.acl.IsSuperuser
 import util.health.AdnGeoParentsHealth
 import views.html.sys1.debug._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.SiowebEsUtil.client
+
+import scala.concurrent.ExecutionContext
 
 /**
  * Suggest.io
@@ -15,8 +17,12 @@ import util.SiowebEsUtil.client
  * Description: Sys-контроллер для отладки.
  */
 class SysDebug @Inject() (
-  override val messagesApi: MessagesApi
-) extends SioController {
+  override val messagesApi      : MessagesApi,
+  override implicit val ec      : ExecutionContext,
+  implicit val esClient         : Client
+)
+  extends SioController
+{
 
   /** Экшен для отображения индексной страницы. */
   def index = IsSuperuser { implicit request =>

@@ -2,7 +2,10 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.bill.TxnsListConstants
+import io.suggest.event.SioNotifierStaticClientI
+import io.suggest.playx.ICurrentConf
 import models.jsm.init.MTargets
+import org.elasticsearch.client.Client
 import play.api.i18n.MessagesApi
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
@@ -12,11 +15,8 @@ import util.async.AsyncUtil
 import util.xplay.SioHttpErrorHandler
 import views.html.lk.billing._
 import play.api.db.Database
-import scala.concurrent.Future
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.SiowebEsUtil.client
+import scala.concurrent.{ExecutionContext, Future}
 import play.api.mvc.Result
-import play.api.Play.{current, configuration}
 
 /**
  * Suggest.io
@@ -25,10 +25,16 @@ import play.api.Play.{current, configuration}
  * Description: Контроллер управления биллингом в личном кабинете узла рекламной сети.
  */
 class MarketLkBilling @Inject() (
-  override val messagesApi: MessagesApi,
-  db: Database
+  override val messagesApi      : MessagesApi,
+  db                            : Database,
+  override val current          : play.api.Application,
+  override implicit val ec      : ExecutionContext,
+  implicit val esClient         : Client,
+  override implicit val sn      : SioNotifierStaticClientI
 )
-  extends SioController with PlayMacroLogsImpl
+  extends SioController
+  with PlayMacroLogsImpl
+  with ICurrentConf
 {
 
   import LOGGER._

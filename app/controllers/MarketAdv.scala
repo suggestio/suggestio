@@ -1,15 +1,15 @@
 package controllers
 
 import com.google.inject.Inject
+import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.OptStrId
+import io.suggest.playx.ICurrentConf
 import io.suggest.ym.model.common.EMAdNetMember
 import models.adv.geo.{ReqInfo, AdvFormEntry, WndFullArgs}
+import org.elasticsearch.client.Client
 import org.joda.time.format.ISOPeriodFormat
-import play.api.Play.{current, configuration}
 import play.api.i18n.MessagesApi
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.twirl.api.Html
-import util.SiowebEsUtil.client
 import util.acl._
 import models._
 import org.joda.time.{Period, LocalDate}
@@ -22,7 +22,7 @@ import util.showcase.ShowcaseUtil
 import util.xplay.SioHttpErrorHandler
 import views.html.lk.adv._
 import util.PlayMacroLogsImpl
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import play.api.mvc.{Result, AnyContent}
 import java.sql.SQLException
 import util.billing.MmpDailyBilling
@@ -38,10 +38,16 @@ import play.api.data._, Forms._
  * - узелы-получатели одобряют или отсеивают входящие рекламные карточки.
  */
 class MarketAdv @Inject() (
-  override val messagesApi: MessagesApi,
-  implicit val db: Database
+  override val messagesApi      : MessagesApi,
+  override val current          : play.api.Application,
+  implicit val db               : Database,
+  override implicit val ec      : ExecutionContext,
+  implicit val esClient         : Client,
+  override implicit val sn      : SioNotifierStaticClientI
 )
-  extends SioControllerImpl with PlayMacroLogsImpl
+  extends SioControllerImpl
+  with PlayMacroLogsImpl
+  with ICurrentConf
 {
 
   import LOGGER._

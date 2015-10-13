@@ -1,10 +1,12 @@
 package controllers
 
 import com.google.inject.Inject
+import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.js.UploadConstants
 import models.im.logo.{LogoOpt_t, LogoUtil}
 import models.im.{MImg3_, MImgT, MImg}
 import models.jsm.init.MTargets
+import org.elasticsearch.client.Client
 import play.api.cache.CacheApi
 import play.api.i18n.MessagesApi
 import play.api.libs.Files.TemporaryFile
@@ -15,8 +17,6 @@ import util.img._
 import util.PlayMacroLogsImpl
 import util.acl._
 import models._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.SiowebEsUtil.client
 import views.html.lk.adn.edit._
 import io.suggest.ym.model.{common, MAdnNode}
 import play.api.data.{Mapping, Form}
@@ -27,7 +27,7 @@ import WelcomeUtil._
 import models.madn.EditConstants._
 import util.img.ImgFormUtil.img3IdOptM
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -43,7 +43,10 @@ class MarketLkAdnEdit @Inject() (
   override val cache        : CacheApi,
   logoUtil                  : LogoUtil,
   mImg3                     : MImg3_,
-  tempImgSupport            : TempImgSupport
+  tempImgSupport            : TempImgSupport,
+  override implicit val ec  : ExecutionContext,
+  implicit val esClient     : Client,
+  override implicit val sn  : SioNotifierStaticClientI
 )
   extends SioController
   with PlayMacroLogsImpl

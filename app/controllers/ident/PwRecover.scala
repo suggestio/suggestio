@@ -1,6 +1,6 @@
 package controllers.ident
 
-import controllers.{IMailer, routes, CaptchaValidator, SioController}
+import controllers._
 import models.jsm.init.MTargets
 import models.msession.Keys
 import models.usr.{MPersonIdent, EmailActivation, EmailPwIdent}
@@ -13,11 +13,9 @@ import util.xplay.SetLangCookieUtil
 import views.html.helper.CSRF
 import views.html.ident.mySioStartTpl
 import views.html.ident.recover._
-import play.api.libs.concurrent.Execution.Implicits._
 import scala.concurrent.Future
 import models._
 import play.api.i18n.Messages
-import util.SiowebEsUtil.client
 import util.FormUtil.passwordWithConfirmM
 
 /**
@@ -41,7 +39,11 @@ import PwRecover._
 
 
 /** Хелпер контроллеров, занимающийся отправкой почты для восстановления пароля. */
-trait SendPwRecoverEmail extends SioController with IMailer {
+trait SendPwRecoverEmail
+  extends SioController
+  with IMailer
+  with IEsClient
+{
 
   /**
    * Отправка письма юзеру. Это статический метод, но он сильно завязан на внутренности sio-контроллеров,
@@ -80,7 +82,7 @@ trait SendPwRecoverEmail extends SioController with IMailer {
             msg.setRecipients(email1)
             val ctx = implicitly[Context]
             msg.setSubject("Suggest.io | " + Messages("Password.recovery")(ctx.messages))
-            msg.setHtml(emailPwRecoverTpl(eact2)(ctx))
+            msg.setHtml( emailPwRecoverTpl(eact2)(ctx) )
             msg.send()
           }
         }
@@ -94,8 +96,14 @@ trait SendPwRecoverEmail extends SioController with IMailer {
 }
 
 
-trait PwRecover extends SendPwRecoverEmail with PlayMacroLogsI with CaptchaValidator with BruteForceProtectCtl
-with SetLangCookieUtil with CanRecoverPwCtl {
+trait PwRecover
+  extends SendPwRecoverEmail
+  with PlayMacroLogsI
+  with CaptchaValidator
+  with BruteForceProtectCtl
+  with SetLangCookieUtil
+  with CanRecoverPwCtl
+{
 
   // TODO Сделать это шаблоном!
   protected def _outer(html: Html)(implicit ctx: Context): Html = {

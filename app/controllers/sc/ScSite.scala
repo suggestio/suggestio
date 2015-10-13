@@ -3,17 +3,15 @@ package controllers.sc
 import controllers.{routes, SioController}
 import models.mext.MExtServices
 import models.msc._
-import play.twirl.api.{Template2, Html}
+import play.twirl.api.Html
 import util.PlayMacroLogsI
 import util.showcase._
 import util.acl._
 import util.xplay.SioHttpErrorHandler
 import views.html.sc._
 import models._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Future
 import play.api.mvc._
-import util.SiowebEsUtil.client
 
 /**
  * Suggest.io
@@ -24,7 +22,7 @@ import util.SiowebEsUtil.client
  */
 
 /** Базовый трейт с утилью для сборки конкретных реализация экшенов раздачи "сайтов" выдачи. */
-trait ScSiteBase extends SioController with PlayMacroLogsI {
+trait ScSiteBase extends ScController with PlayMacroLogsI {
 
   /** Настраиваемая логика сборки результата запроса сайта выдачи. */
   protected trait SiteLogic {

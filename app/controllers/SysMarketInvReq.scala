@@ -2,16 +2,16 @@ package controllers
 
 import com.google.inject.Inject
 import controllers.sysctl.SmSendEmailInvite
+import io.suggest.event.SioNotifierStaticClientI
 import models.usr.EmailActivation
+import org.elasticsearch.client.Client
 import play.api.i18n.MessagesApi
 import play.api.mvc.{AnyContent, Result}
 import play.twirl.api.Html
 import util.acl._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.SiowebEsUtil.client
 import models._
 import util.mail.IMailerWrapper
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import views.html.sys1.market.invreq._
 import util.PlayMacroLogsImpl
 import sysctl.SysMarketUtil._
@@ -26,8 +26,11 @@ import sysctl.SysMarketUtil._
  * обработки запроса и т.д.
  */
 class SysMarketInvReq @Inject() (
-  override val messagesApi: MessagesApi,
-  override val mailer: IMailerWrapper
+  override val messagesApi      : MessagesApi,
+  override val mailer           : IMailerWrapper,
+  override implicit val ec      : ExecutionContext,
+  implicit val esClient         : Client,
+  override implicit val sn      : SioNotifierStaticClientI
 )
   extends SioControllerImpl with PlayMacroLogsImpl with SmSendEmailInvite
 {

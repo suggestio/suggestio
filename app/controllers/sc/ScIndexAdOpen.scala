@@ -2,14 +2,12 @@ package controllers.sc
 
 import io.suggest.ym.model.MAd
 import io.suggest.ym.model.ad.AdsSearchArgsDfltImpl
-import io.suggest.ym.model.common.{AdShowLevels, SlNameTokenStr}
+import io.suggest.ym.model.common.AdShowLevels
 import models.{MAdnNode, MAdnNodeCache}
 import models.im.DevScreen
 import models.msc.{MScApiVsn, ScReqArgsDflt, ScReqArgs}
 import play.api.mvc.Result
 import util.acl.AbstractRequestWithPwOpt
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.SiowebEsUtil.client
 
 import scala.concurrent.Future
 

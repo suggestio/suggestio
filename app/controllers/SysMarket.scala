@@ -1,9 +1,11 @@
 package controllers
 
 import com.google.inject.Inject
+import io.suggest.event.SioNotifierStaticClientI
 import models.im.MImg
 import models.msys.NodeCreateParams
 import models.usr.{MPerson, EmailActivation}
+import org.elasticsearch.client.Client
 import play.api.db.Database
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
@@ -17,9 +19,7 @@ import views.html.sys1.market._
 import views.html.sys1.market.ad._
 import views.html.sys1.market.adn._
 import play.api.data._
-import play.api.libs.concurrent.Execution.Implicits._
-import util.SiowebEsUtil.client
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import play.api.mvc.{Result, Call, AnyContent}
 import play.api.i18n.{Messages, MessagesApi}
 import controllers.sysctl._
@@ -32,9 +32,14 @@ import sysctl.SysMarketUtil._
  * Description: Тут управление компаниями, торговыми центрами и магазинами.
  */
 class SysMarket @Inject() (
-  override val messagesApi: MessagesApi,
-  override val mailer: IMailerWrapper,
-  db: Database
+  override val messagesApi      : MessagesApi,
+  override val mailer           : IMailerWrapper,
+  db                            : Database,
+  override val sysAdRenderUtil  : SysAdRenderUtil,
+  override implicit val current : play.api.Application,
+  override implicit val ec      : ExecutionContext,
+  implicit val esClient         : Client,
+  override implicit val sn      : SioNotifierStaticClientI
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl

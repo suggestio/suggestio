@@ -1,13 +1,13 @@
 package controllers
 
 import com.google.inject.Inject
+import io.suggest.event.SioNotifierStaticClientI
 import models.req.SioReqMd
+import org.elasticsearch.client.Client
 import play.api.i18n.MessagesApi
 import play.twirl.api.Html
 import util.{FormUtil, PlayMacroLogsImpl}
 import util.acl._
-import util.SiowebEsUtil.client
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import models._
 import views.html.sys1.calendar._
 import play.api.data._, Forms._
@@ -18,7 +18,7 @@ import FormUtil._
 import de.jollyday.util.XMLUtil
 import play.api.mvc._
 import util.acl.PersonWrapper.PwOpt_t
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import play.api.db.Database
 import play.api.mvc.Result
 
@@ -30,8 +30,11 @@ import play.api.mvc.Result
  * @see [[http://jollyday.sourceforge.net/index.html]]
  */
 class SysCalendar @Inject() (
-  override val messagesApi: MessagesApi,
-  db: Database
+  override val messagesApi      : MessagesApi,
+  db                            : Database,
+  override implicit val ec      : ExecutionContext,
+  implicit val esClient         : Client,
+  override implicit val sn      : SioNotifierStaticClientI
 )
   extends SioControllerImpl with PlayMacroLogsImpl
 {

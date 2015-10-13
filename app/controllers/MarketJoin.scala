@@ -1,20 +1,22 @@
 package controllers
 
 import com.google.inject.Inject
+import io.suggest.event.SioNotifierStaticClientI
+import io.suggest.playx.ICurrentConf
 import models.CallBackReqCallTimes.CallBackReqCallTime
+import org.elasticsearch.client.Client
 import play.api.i18n.MessagesApi
 import util.captcha.CaptchaUtil._
 import util.PlayMacroLogsImpl
 import util.acl.{MaybeAuthPost, MaybeAuthGet}
-import util.SiowebEsUtil.client
 import models._
 import util.mail.IMailerWrapper
 import views.html.market.join._
 import util.FormUtil._
 import play.api.data._, Forms._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.Play.{current, configuration}
 import play.api.mvc.RequestHeader
+
+import scala.concurrent.ExecutionContext
 
 /**
  * Suggest.io
@@ -24,9 +26,17 @@ import play.api.mvc.RequestHeader
  */
 class MarketJoin @Inject() (
   override val messagesApi: MessagesApi,
-  override val mailer: IMailerWrapper
+  override val mailer: IMailerWrapper,
+  override val current          : play.api.Application,
+  override implicit val ec      : ExecutionContext,
+  implicit val esClient         : Client,
+  override implicit val sn      : SioNotifierStaticClientI
 )
-  extends SioController with PlayMacroLogsImpl with CaptchaValidator with IMailer
+  extends SioController
+  with PlayMacroLogsImpl
+  with CaptchaValidator
+  with IMailer
+  with ICurrentConf
 {
 
   import LOGGER._

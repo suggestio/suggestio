@@ -1,21 +1,21 @@
 package controllers
 
 import com.google.inject.Inject
+import io.suggest.event.SioNotifierStaticClientI
 import models.MBillContract.LegalContractId
+import org.elasticsearch.client.Client
 import play.api.i18n.MessagesApi
 import play.api.mvc.{Result, AnyContent}
 import util.PlayMacroLogsImpl
 import util.acl._
 import models._
-import util.SiowebEsUtil.client
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.db.Database
 import util.async.AsyncUtil
 import views.html.sys1.market.billing._
 import play.api.data._, Forms._
 import util.FormUtil._
 import org.joda.time.DateTime
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import io.suggest.ym.parsers.Price
 import util.billing.Billing
 
@@ -26,8 +26,11 @@ import util.billing.Billing
  * Description: Контроллер управления биллинга для операторов sio-market.
  */
 class SysMarketBilling @Inject() (
-  override val messagesApi: MessagesApi,
-  db: Database
+  override val messagesApi      : MessagesApi,
+  db                            : Database,
+  override implicit val ec      : ExecutionContext,
+  implicit val esClient         : Client,
+  override implicit val sn      : SioNotifierStaticClientI
 )
   extends SioControllerImpl with PlayMacroLogsImpl
 {

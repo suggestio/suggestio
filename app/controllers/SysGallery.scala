@@ -1,7 +1,9 @@
 package controllers
 
 import com.google.inject.Inject
+import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.playx.ICurrentConf
+import org.elasticsearch.client.Client
 import play.api.data._
 import play.api.i18n.MessagesApi
 import play.api.libs.json.JsValue
@@ -9,15 +11,13 @@ import play.api.mvc.WebSocket
 import play.core.parsers.Multipart
 import util.img.{ImgFormUtil, SysGalEditWsActor}
 import util.{FormUtil, PlayMacroLogsImpl}
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.acl.{IsSuperuserGallery, PersonWrapper, IsSuperuser}
-import util.SiowebEsUtil.client
 import models.im.{MImgT, MGallery}
 import play.api.data.Forms._
 import views.html.sys1.galleries._
 import util.img.ImgFormUtil.imgIdOptM
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -28,7 +28,10 @@ import scala.concurrent.Future
 class SysGallery @Inject() (
   override val messagesApi      : MessagesApi,
   override implicit val current : play.api.Application,
-  tempImgSupport                : TempImgSupport
+  tempImgSupport                : TempImgSupport,
+  override implicit val ec      : ExecutionContext,
+  implicit val esClient         : Client,
+  override implicit val sn      : SioNotifierStaticClientI
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl

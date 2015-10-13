@@ -5,6 +5,7 @@ import java.net.JarURLConnection
 
 import akka.actor.ActorSystem
 import io.suggest.event.SioNotifierStaticClientI
+import org.elasticsearch.client.Client
 import org.joda.time.DateTime
 import play.api.i18n.{I18nSupport, Lang}
 import play.api.mvc._
@@ -12,15 +13,12 @@ import util._
 import util.jsa.init.CtlJsInitT
 import util.mail.IMailerWrapper
 import util.ws.WsDispatcherActor
-import scala.concurrent.Future
-import util.event.SiowebNotifier
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 import play.api.Play.{current, configuration}
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.data.Form
 import models._
 import play.api.mvc.Result
-import util.SiowebEsUtil.client
 import scala.language.implicitConversions
 import io.suggest.flash.FlashConstants
 
@@ -83,9 +81,26 @@ object SioControllerUtil extends PlayLazyMacroLogsImpl {
 }
 
 
+trait IEsClient {
+  implicit def esClient: Client
+}
+trait IExecutionContext {
+  implicit def ec: ExecutionContext         = play.api.libs.concurrent.Execution.defaultContext
+}
+trait ISioNotifier {
+  implicit def sn: SioNotifierStaticClientI = util.event.SiowebNotifier.Implicts.sn
+}
 
 /** Базовый хелпер для контроллеров suggest.io. Используется почти всегда вместо обычного Controller. */
-trait SioController extends Controller with ContextT with TplFormatUtilT with I18nSupport with CtlJsInitT {
+trait SioController
+  extends Controller
+  with ContextT
+  with TplFormatUtilT
+  with I18nSupport
+  with CtlJsInitT
+  with IExecutionContext
+  with ISioNotifier     // TODO Спилить отсюда, не во всех контроллерах он нужен.
+{
 
   implicit protected def simpleResult2async(sr: Result): Future[Result] = {
     Future.successful(sr)
@@ -93,8 +108,6 @@ trait SioController extends Controller with ContextT with TplFormatUtilT with I1
 
   /** Быстрый доступ к константам flash-статусов. */
   def FLASH = FlashConstants.Statuses
-
-  implicit def sn: SioNotifierStaticClientI = SiowebNotifier.Implicts.sn
 
   /** Построчное красивое форматирование ошибок формы для вывода в логи/консоль. */
   def formatFormErrors(formWithErrors: Form[_]) = {

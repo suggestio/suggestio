@@ -9,8 +9,6 @@ import play.api.mvc.Result
 import play.twirl.api.{HtmlFormat, Html}
 import util.PlayMacroLogsI
 import util.acl.{MaybeAuth, AbstractRequestWithPwOpt}
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.SiowebEsUtil.client
 
 import scala.concurrent.Future
 
@@ -25,8 +23,15 @@ trait ScSyncSite extends SioController with PlayMacroLogsI
 
 
 /** Аддон для контроллера, добавляет поддержку синхронного гео-сайта выдачи. */
-trait ScSyncSiteGeo extends ScSyncSite with ScSiteGeo with ScIndexGeo with ScAdsTileBase with ScFocusedAdsBase
-with ScNodesListBase with ScSiteBase {
+trait ScSyncSiteGeo
+  extends ScSyncSite
+  with ScSiteGeo
+  with ScIndexGeo
+  with ScAdsTileBase
+  with ScFocusedAdsBase
+  with ScNodesListBase
+  with ScSiteBase
+{
 
   /**
    * Раздавалка "сайта" выдачи первой страницы. Можно переопределять, для изменения/расширения функционала.

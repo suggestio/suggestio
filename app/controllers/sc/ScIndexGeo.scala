@@ -8,10 +8,8 @@ import util.showcase._
 import util.acl._
 import ShowcaseUtil._
 import models._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Future
 import play.api.mvc._
-import util.SiowebEsUtil.client
 
 /**
  * Suggest.io

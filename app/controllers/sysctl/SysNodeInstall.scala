@@ -1,16 +1,14 @@
 package controllers.sysctl
 
-import controllers.{routes, SioController}
+import controllers.{IEsClient, routes, SioController}
+import io.suggest.playx.ICurrentApp
 import models.{MAdnNodeCache, Context}
 import play.api.data.Form
 import play.api.i18n.{Messages, Lang}
 import play.twirl.api.Html
 import util.PlayMacroLogsI
-import util.SiowebEsUtil.client
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.acl.{AbstractRequestForAdnNode, IsSuperuserAdnNodePost, IsSuperuserAdnNodeGet}
 import util.adn.NodesUtil
-import play.api.Play.current
 import views.html.sys1.market.adn.install._
 
 import scala.concurrent.Future
@@ -45,7 +43,12 @@ import SysNodeInstall._
 
 
 /** Аддон для контроллера, добавляющий экшены для сабжа. */
-trait SysNodeInstall extends SioController with PlayMacroLogsI {
+trait SysNodeInstall
+  extends SioController
+  with PlayMacroLogsI
+  with IEsClient
+  with ICurrentApp
+{
 
   /** Вернуть страницу с формой установки дефолтовых карточек на узлы. */
   def installDfltMads(adnId: String) = IsSuperuserAdnNodeGet(adnId).async { implicit request =>

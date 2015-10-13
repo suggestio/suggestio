@@ -1,30 +1,30 @@
 package controllers.ident
 
-import controllers.{routes, SioController}
+import com.google.inject.Inject
+import controllers.{IExecutionContext, IEsClient, routes, SioController}
+import io.suggest.playx.ICurrentApp
 import models.mext.{MExtServices, ILoginProvider}
 import models.msession.{CustomTtl, Keys}
 import models.{MNode, MNodeTypes, ExtRegConfirmForm_t, ExternalCall, Context}
 import models.usr._
 import play.api.data.Form
 import play.api.mvc._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.Play.{current, configuration}
 import play.twirl.api.Html
 import securesocial.controllers.ProviderControllerHelper._
 import securesocial.core.RuntimeEnvironment.Default
-import securesocial.core.services.{RoutesService, UserService}
+import securesocial.core.services.RoutesService
 import securesocial.core._
 import util.adn.NodesUtil
 import util.xplay.SetLangCookieUtil
 import util.{PlayMacroLogsDyn, FormUtil, PlayMacroLogsI}
 import util.acl.{AbstractRequestWithPwOpt, CanConfirmIdpRegPost, CanConfirmIdpRegGet, MaybeAuth}
-import util.SiowebEsUtil.client
 import util.ident.IdentUtil
 import views.html.ident.reg._
 import views.html.ident.reg.ext._
 
 import scala.collection.immutable.ListMap
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 
 /**
@@ -34,7 +34,13 @@ import scala.concurrent.duration._
  * Description: Поддержка логина через соц.сети или иные внешние сервисы.
  */
 
-object ExternalLogin extends PlayMacroLogsDyn {
+class ExternalLogin_ @Inject() (
+  routesSvc                       : SsRoutesService,
+  override implicit val ec        : ExecutionContext
+)
+  extends PlayMacroLogsDyn
+  with IExecutionContext
+{
 
   /** Фильтровать присылаемый ttl. */
   val MAX_SESSION_TTL_SECONDS = {
@@ -45,10 +51,10 @@ object ExternalLogin extends PlayMacroLogsDyn {
   }
 
   /** secure-social настраивается через этот Enviroment. */
-  implicit protected val env: RuntimeEnvironment[SsUser] = {
+  implicit val env: RuntimeEnvironment[SsUser] = {
     new Default[SsUser] {
-      override lazy val routes: RoutesService = SsRoutesService
-      override def userService: UserService[SsUser] = SsUserService
+      override lazy val routes = routesSvc
+      override def userService = SsUserService
       override lazy val providers: ListMap[String, IdentityProvider] = {
         // Аккуратная инициализация доступных провайдеров и без дубликации кода.
         val provs = MExtServices.values
@@ -83,8 +89,8 @@ object ExternalLogin extends PlayMacroLogsDyn {
       case Some(url) =>
         Future successful url
       case None =>
-      IdentUtil.redirectCallUserSomewhere(personId)
-        .map(_.url)
+        IdentUtil.redirectCallUserSomewhere(personId)
+          .map(_.url)
     }
   }
 
@@ -98,9 +104,19 @@ object ExternalLogin extends PlayMacroLogsDyn {
 
 }
 
-import ExternalLogin._
 
-trait ExternalLogin extends SioController with PlayMacroLogsI with SetLangCookieUtil {
+trait ExternalLogin
+  extends SioController
+  with PlayMacroLogsI
+  with SetLangCookieUtil
+  with ICurrentApp
+  with IEsClient
+{
+
+  /** Доступ к DI-инстансу */
+  val externalLogin: ExternalLogin_ = current.injector.instanceOf[ExternalLogin_]
+
+  import externalLogin.env
 
   /**
    * GET-запрос идентификации через внешнего провайдера.
@@ -185,7 +201,7 @@ trait ExternalLogin extends SioController with PlayMacroLogsI with SetLangCookie
               val rdrFut: Future[Result] = if (isNew) {
                 Redirect(routes.Ident.idpConfirm())
               } else {
-                val rdrUrlFut = toUrl2(request.session, ident.personId)
+                val rdrUrlFut = externalLogin.toUrl2(request.session, ident.personId)
                 rdrUrlFut map { url =>
                   Redirect(url)
                 }
@@ -194,7 +210,7 @@ trait ExternalLogin extends SioController with PlayMacroLogsI with SetLangCookie
               var addToSessionAcc: List[(String, String)] = List(Keys.PersonId.name -> ident.personId)
               addToSessionAcc = authenticated.profile.oAuth2Info
                 .flatMap { _.expiresIn }
-                .filter { _ <= MAX_SESSION_TTL_SECONDS }
+                .filter { _ <= externalLogin.MAX_SESSION_TTL_SECONDS }
                 .map { ein => CustomTtl(ein.toLong).addToSessionAcc(addToSessionAcc) }
                 .getOrElse { addToSessionAcc }
               val session1 = addToSessionAcc.foldLeft(cleanupSession(request.session))(_ + _)
@@ -221,7 +237,7 @@ trait ExternalLogin extends SioController with PlayMacroLogsI with SetLangCookie
    * @return Страницу с колонкой подтверждения реги.
    */
   def idpConfirm = CanConfirmIdpRegGet { implicit request =>
-    val form = extRegConfirmFormM
+    val form = externalLogin.extRegConfirmFormM
     Ok( _idpConfirm(form) )
   }
 
@@ -232,7 +248,7 @@ trait ExternalLogin extends SioController with PlayMacroLogsI with SetLangCookie
 
   /** Сабмит формы подтверждения регистрации через внешнего провайдера идентификации. */
   def idpConfirmSubmit = CanConfirmIdpRegPost.async { implicit request =>
-    extRegConfirmFormM.bindFromRequest().fold(
+    externalLogin.extRegConfirmFormM.bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug("idpConfirmSubmit(): Failed to bind form:\n " + formatFormErrors(formWithErrors))
         NotAcceptable( _idpConfirm(formWithErrors) )
@@ -248,7 +264,7 @@ trait ExternalLogin extends SioController with PlayMacroLogsI with SetLangCookie
 }
 
 
-object SsRoutesService extends RoutesService.Default {
+class SsRoutesService extends RoutesService.Default {
 
   override def absoluteUrl(call: Call)(implicit req: RequestHeader): String = {
     if(call.isInstanceOf[ExternalCall])
@@ -257,7 +273,8 @@ object SsRoutesService extends RoutesService.Default {
       Context.LK_URL_PREFIX + call.url
   }
 
-  override def authenticationUrl(providerId: String, redirectTo: Option[String])(implicit req: RequestHeader): String = {
+  override def authenticationUrl(providerId: String, redirectTo: Option[String])
+                                (implicit req: RequestHeader): String = {
     val prov = ILoginProvider.maybeWithName(providerId).get
     val relUrl = routes.Ident.idViaProvider(prov, redirectTo)
     absoluteUrl(relUrl)
@@ -266,4 +283,5 @@ object SsRoutesService extends RoutesService.Default {
   override def loginPageUrl(implicit req: RequestHeader): String = {
     absoluteUrl( routes.Ident.emailPwLoginForm() )
   }
+
 }

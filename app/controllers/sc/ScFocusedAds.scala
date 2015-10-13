@@ -10,13 +10,11 @@ import models.msc._
 import play.api.mvc.Result
 import play.twirl.api.Html
 import util.showcase._
-import util.SiowebEsUtil.client
 import util.PlayMacroLogsI
 import util.acl._
 import views.html.sc.foc._
 import play.api.libs.json._
 import models._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.collection.immutable
 import scala.concurrent.Future
 

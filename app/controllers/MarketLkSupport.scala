@@ -1,18 +1,18 @@
 package controllers
 
 import com.google.inject.Inject
+import io.suggest.event.SioNotifierStaticClientI
 import models._
 import models.usr.MPersonIdent
+import org.elasticsearch.client.Client
 import play.api.i18n.MessagesApi
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.Result
-import util.SiowebEsUtil.client
 import util.ident.IdentUtil
 import util.{FormUtil, PlayLazyMacroLogsImpl}
 import util.acl._
 import util.mail.IMailerWrapper
 import views.html.lk.support._
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import util.support.SupportUtil
 import play.api.data._, Forms._
 
@@ -23,9 +23,12 @@ import play.api.data._, Forms._
  * Description: Контроллер для обратной связи с техподдержкой s.io в личном кабинете узла.
  */
 class MarketLkSupport @Inject() (
-  override val messagesApi  : MessagesApi,
-  override val mailer       : IMailerWrapper,
-  supportUtil               : SupportUtil
+  override val messagesApi      : MessagesApi,
+  override val mailer           : IMailerWrapper,
+  supportUtil                   : SupportUtil,
+  override implicit val ec      : ExecutionContext,
+  implicit val esClient         : Client,
+  override implicit val sn      : SioNotifierStaticClientI
 )
   extends SioController with PlayLazyMacroLogsImpl with IMailer
 {

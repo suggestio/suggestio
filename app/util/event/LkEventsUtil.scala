@@ -1,21 +1,21 @@
 package util.event
 
+import com.google.inject.Inject
 import io.suggest.model.{EsModelStaticT, EsModelT}
+import io.suggest.playx.ICurrentApp
 import io.suggest.ym.model.MAdnNodeGeo
 import models.event.search.MEventsSearchArgs
 import models.event._
 import models._
+import org.elasticsearch.client.Client
 import org.joda.time.DateTime
+import play.api.Application
 import play.api.db.DB
 import play.twirl.api.Html
 import util.PlayMacroLogsDyn
-import util.SiowebEsUtil.client
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.async.AsyncUtil
-import play.api.Play.current
-import util.event.SiowebNotifier.Implicts.sn
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -23,7 +23,14 @@ import scala.concurrent.Future
  * Created: 27.01.15 10:25
  * Description: Утиль для контроллера LkEvents, который изрядно разжирел в первые дни разработки.
  */
-object LkEventsUtil extends PlayMacroLogsDyn {
+class LkEventsUtil @Inject() (
+  implicit val ec                 : ExecutionContext,
+  implicit val esClient           : Client,
+  override implicit val current   : Application
+)
+  extends PlayMacroLogsDyn
+  with ICurrentApp
+{
 
   /**
    * Если узел -- ресивер без геолокации, то надо отрендерить плашку на эту тему.

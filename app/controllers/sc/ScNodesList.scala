@@ -2,6 +2,7 @@ package controllers.sc
 
 import java.util.NoSuchElementException
 import _root_.util.jsa.{Js, SmRcvResp}
+import io.suggest.playx.ICurrentConf
 import models.jsm.NodeListResp
 import models.msc._
 import play.api.mvc.Result
@@ -12,9 +13,8 @@ import util.acl._
 import views.html.sc._
 import play.api.libs.json._
 import models._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Future
-import play.api.Play, Play.{current, configuration}
+import play.api.Play
 
 /**
  * Suggest.io
@@ -104,7 +104,7 @@ trait ScNodesListBase extends ScController with PlayMacroLogsI {
 
 
 /** Аддон к Showcase-контроллеру, добавляющий обработку запроса списка узлов. */
-trait ScNodesList extends ScNodesListBase {
+trait ScNodesList extends ScNodesListBase with ICurrentConf {
 
   /** Кеш ответа findNodes() на клиенте. Это существенно ускоряет навигацию. */
   protected val FIND_NODES_CACHE_SECONDS: Int = {

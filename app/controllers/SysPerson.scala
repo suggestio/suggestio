@@ -1,8 +1,10 @@
 package controllers
 
 import com.google.inject.Inject
+import io.suggest.event.SioNotifierStaticClientI
 import models.{Context, AdnNodesSearchArgs, MAdnNode}
 import models.usr._
+import org.elasticsearch.client.Client
 import play.api.i18n.MessagesApi
 import util.acl.{IsSuperuserPerson, IsSuperuser}
 import views.html.ident.reg.email.emailRegMsgTpl
@@ -10,8 +12,8 @@ import views.html.ident.recover.emailPwRecoverTpl
 import views.html.sys1.person._
 import views.html.sys1.person.parts._
 import views.html.sys1.market.adn._adnNodesListTpl
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.SiowebEsUtil.client
+
+import scala.concurrent.ExecutionContext
 
 /**
  * Suggest.io
@@ -20,9 +22,13 @@ import util.SiowebEsUtil.client
  * Description: sys-контроллер для доступа к юзерам.
  */
 class SysPerson @Inject() (
-  override val messagesApi: MessagesApi
+  override val messagesApi        : MessagesApi,
+  override implicit val ec        : ExecutionContext,
+  override implicit val esClient  : Client,
+  override implicit val sn        : SioNotifierStaticClientI
 )
   extends SioControllerImpl
+  with IEsClient
 {
 
   /** Генерация экземпляра EmailActivation с бессмысленными данными. */

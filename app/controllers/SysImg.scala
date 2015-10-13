@@ -7,9 +7,10 @@ import models.im.{MImgT, MImg}
 import play.api.i18n.MessagesApi
 import util.{FormUtil, PlayMacroLogsImpl}
 import util.acl.IsSuperuser
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import views.html.sys1.img._
 import play.api.data._, Forms._
+
+import scala.concurrent.ExecutionContext
 
 /**
  * Suggest.io
@@ -20,9 +21,12 @@ import play.api.data._, Forms._
  * изображениям.
  */
 class SysImg @Inject() (
-  override val messagesApi: MessagesApi
+  override val messagesApi      : MessagesApi,
+  override implicit val ec      : ExecutionContext
 )
-  extends SioControllerImpl with PlayMacroLogsImpl with SysImgMake
+  extends SioControllerImpl
+  with PlayMacroLogsImpl
+  with SysImgMake
 {
 
   import LOGGER._

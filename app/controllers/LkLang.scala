@@ -1,20 +1,20 @@
 package controllers
 
 import com.google.inject.Inject
+import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.n2.node.MNode
+import io.suggest.playx.ICurrentApp
 import models.Context
+import org.elasticsearch.client.Client
 import play.api.data.Form
 import play.api.i18n.{MessagesApi, Lang}
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 import util.acl.{MaybeAuthGet, MaybeAuthPost}
 import views.html.lk.lang._
-import play.api.Play.current
 import util.FormUtil.uiLangM
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.SiowebEsUtil.client
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -24,9 +24,15 @@ import scala.concurrent.Future
  * Относится к ЛК, т.к. форма переключения языков сверстана именно там.
  */
 class LkLang @Inject() (
-  override val messagesApi: MessagesApi
+  override val messagesApi      : MessagesApi,
+  override implicit val current : play.api.Application,
+  override implicit val ec      : ExecutionContext,
+  implicit val esClient         : Client,
+  override implicit val sn      : SioNotifierStaticClientI
 )
-  extends SioController with PlayMacroLogsImpl
+  extends SioController
+  with PlayMacroLogsImpl
+  with ICurrentApp
 {
 
   import LOGGER._
@@ -66,6 +72,7 @@ class LkLang @Inject() (
       rr      = r
     )(ctx)
   }
+
 
   /** Сабмит формы выбора текущего языка. Нужно выставить язык в куку и текущему юзеру в MPerson. */
   def selectLangSubmit(r: Option[String]) = MaybeAuthPost { implicit request =>

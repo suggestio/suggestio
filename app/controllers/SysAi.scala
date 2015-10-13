@@ -1,18 +1,19 @@
 package controllers
 
 import com.google.inject.Inject
+import io.suggest.event.SioNotifierStaticClientI
+import org.elasticsearch.client.Client
 import play.api.i18n.MessagesApi
 import play.api.libs.ws.WSClient
 import play.api.mvc.Result
 import util.PlayLazyMacroLogsImpl
 import util.acl.{IsSuperuserAiMad, IsSuperuser}
 import util.ai.mad.MadAiUtil
-import util.SiowebEsUtil.client
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.data._, Forms._
 import util.FormUtil._
 import models.ai._
 
+import scala.concurrent.ExecutionContext
 import scala.util.matching.Regex
 
 /**
@@ -23,10 +24,14 @@ import scala.util.matching.Regex
  * На момент создания здесь система заполнения карточек, живущая в MadAiUtil и её модель.
  */
 class SysAi @Inject() (
-  override val messagesApi: MessagesApi,
-  implicit val ws: WSClient
+  override val messagesApi        : MessagesApi,
+  override implicit val ws        : WSClient,
+  override implicit val ec        : ExecutionContext,
+  override implicit val esClient  : Client,
+  override implicit val sn        : SioNotifierStaticClientI
 )
-  extends SioControllerImpl with SysAiMadT
+  extends SioControllerImpl
+  with SysAiMadT
 {
 
   import views.html.sys1.ai._
@@ -40,7 +45,11 @@ class SysAi @Inject() (
 
 
 /** ai.mad - работа с автогенераторами рекламных карточек. */
-trait SysAiMadT extends SioController with PlayLazyMacroLogsImpl {
+trait SysAiMadT
+  extends SioController
+  with PlayLazyMacroLogsImpl
+  with IEsClient
+{
 
   import views.html.sys1.ai.mad._
   import LOGGER._

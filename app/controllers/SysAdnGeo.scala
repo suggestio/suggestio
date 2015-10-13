@@ -1,9 +1,11 @@
 package controllers
 
 import com.google.inject.Inject
+import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.geo.{GeoShapeQuerable, Distance, CircleGs}
 import io.suggest.ym.model.common.AdnNodeGeodata
 import models.msys.OsmUrlParseResult
+import org.elasticsearch.client.Client
 import org.elasticsearch.common.unit.DistanceUnit
 import play.api.data._, Forms._
 import play.api.i18n.MessagesApi
@@ -11,13 +13,11 @@ import play.api.libs.ws.WSClient
 import play.api.mvc.Result
 import util.PlayLazyMacroLogsImpl
 import util.FormUtil._
-import util.SiowebEsUtil.client
 import util.acl._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.geo.osm.{OsmClientStatusCodeInvalidException, OsmClient}
 import views.html.sys1.market.adn.geo._
 import models._
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -28,8 +28,11 @@ import scala.concurrent.Future
  * Расширение собственной геоинформации необходимо из-за [[https://github.com/elasticsearch/elasticsearch/issues/7663]].
  */
 class SysAdnGeo @Inject() (
-  override val messagesApi: MessagesApi,
-  implicit val ws: WSClient
+  override val messagesApi      : MessagesApi,
+  implicit val ws               : WSClient,
+  override implicit val ec      : ExecutionContext,
+  implicit val esClient         : Client,
+  override implicit val sn      : SioNotifierStaticClientI
 )
   extends SioControllerImpl with PlayLazyMacroLogsImpl
 {

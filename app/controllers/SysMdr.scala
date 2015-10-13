@@ -1,8 +1,10 @@
 package controllers
 
 import com.google.inject.Inject
+import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.ym.model.ad.FreeAdvStatus
 import models.mdr._
+import org.elasticsearch.client.Client
 import org.elasticsearch.index.engine.VersionConflictEngineException
 import play.api.i18n.MessagesApi
 import play.twirl.api.Html
@@ -10,13 +12,11 @@ import util.PlayMacroLogsImpl
 import util.acl.{AbstractRequestWithPwOpt, IsSuperuser}
 import util.lk.LkAdUtil
 import util.showcase.ShowcaseUtil
-import scala.concurrent.ExecutionContext.Implicits.global
-import util.SiowebEsUtil.client
 import views.html.sys1.mdr._
 import models._
 import play.api.data.Form
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -25,9 +25,14 @@ import scala.concurrent.Future
  * Description: Sys Moderation - контроллер, заправляющий s.io-модерацией рекламных карточек.
  */
 class SysMdr @Inject() (
-  override val messagesApi: MessagesApi
+  override val messagesApi          : MessagesApi,
+  override implicit val ec          : ExecutionContext,
+  override implicit val esClient    : Client,
+  override implicit val sn          : SioNotifierStaticClientI
 )
-  extends SioControllerImpl with PlayMacroLogsImpl
+  extends SioControllerImpl
+  with PlayMacroLogsImpl
+  with IEsClient
 {
 
   import LOGGER._

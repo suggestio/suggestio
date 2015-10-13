@@ -9,8 +9,6 @@ import play.twirl.api.Html
 import util.{PlayMacroLogsI, FormUtil}
 import util.acl.{RequestWithAd, IsSuperuserMadPost, IsSuperuserMadGet}
 import views.html.sys1.market.ad.one._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.SiowebEsUtil.client
 
 import scala.concurrent.Future
 
@@ -20,7 +18,7 @@ import scala.concurrent.Future
  * Created: 21.04.15 15:50
  * Description: sys-раздел для отладки рендера карточек в картинки или html.
  */
-object SysAdRender {
+class SysAdRenderUtil {
 
   import play.api.data.Forms._
 
@@ -46,11 +44,16 @@ object SysAdRender {
 }
 
 
-import SysAdRender._
-
-
 /** Аддон для sys-контроллера для добавления экшенов, связанных с рендером карточки. */
-trait SysAdRender extends SioController with PlayMacroLogsI {
+trait SysAdRender
+  extends SioController
+  with PlayMacroLogsI
+  with IEsClient
+{
+
+  val sysAdRenderUtil: SysAdRenderUtil
+
+  import sysAdRenderUtil._
 
   /**
    * Рендер страницы с формой забивания значений [[models.blk.OneAdQsArgs]].

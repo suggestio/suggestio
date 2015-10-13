@@ -1,5 +1,6 @@
 package controllers.sc
 
+import io.suggest.playx.ICurrentConf
 import models.im.logo.LogoOpt_t
 import _root_.util.jsa.{SmRcvResp, Js}
 import _root_.util.PlayMacroLogsI
@@ -13,14 +14,11 @@ import _root_.util.img.WelcomeUtil
 import util.showcase._
 import util.stat._
 import util.acl._
-import util.SiowebEsUtil.client
 import views.html.sc._
 import play.api.libs.json._
 import models._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Future
 import play.api.mvc._
-import play.api.Play, Play.{current, configuration}
 
 /**
  * Suggest.io
@@ -30,7 +28,7 @@ import play.api.Play, Play.{current, configuration}
  */
 
 /** Константы, используемые в рамках этого куска контроллера. */
-trait ScIndexConstants {
+trait ScIndexConstants extends ICurrentConf {
 
   /** Кеш ответа showcase(adnId) на клиенте. */
   val SC_INDEX_CACHE_SECONDS: Int = configuration.getInt("market.showcase.index.node.cache.client.seconds") getOrElse 20

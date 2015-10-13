@@ -4,8 +4,6 @@ import models.MNode
 import models.mtag.{MTagSearchResp, MTagSearch}
 import play.api.libs.json.Json
 import util.acl.MaybeAuth
-import util.SiowebEsUtil.client
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import views.html.sc.tags._
 
 /**

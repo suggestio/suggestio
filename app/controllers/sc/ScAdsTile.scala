@@ -4,6 +4,7 @@ import java.util.NoSuchElementException
 
 import _root_.util.blocks.BgImg
 import _root_.util.jsa.{JsAppendById, JsAction, SmRcvResp, Js}
+import io.suggest.playx.ICurrentConf
 import models.im.make.{MakeResult, Makers}
 import models.msc.{MGridParams, MFindAdsResp, MFoundAd, MScApiVsns}
 import play.api.mvc.Result
@@ -18,9 +19,6 @@ import util._
 import util.acl._
 import views.html.sc._
 import play.api.libs.json._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.Play.{current, configuration}
-import SiowebEsUtil.client
 import scala.collection.immutable
 import scala.concurrent.Future
 import models._
@@ -31,7 +29,7 @@ import models._
  * Created: 11.11.14 16:47
  * Description: Поддержка плитки в контроллере: логика подготовки к сборке ответа.
  */
-trait ScAdsTileBase extends ScController with PlayMacroLogsI {
+trait ScAdsTileBase extends ScController with PlayMacroLogsI with ICurrentConf {
 
   /** Изменябельная логика обработки запроса рекламных карточек для плитки. */
   trait TileAdsLogic extends AdCssRenderArgs {

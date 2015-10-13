@@ -1,16 +1,18 @@
 package controllers
 
 import com.google.inject.Inject
+import io.suggest.event.SioNotifierStaticClientI
 import models.merr.{MRemoteErrorTypes, MRemoteError}
 import models.GeoIp
+import org.elasticsearch.client.Client
 import play.api.cache.CacheApi
 import play.api.data._, Forms._
 import play.api.i18n.MessagesApi
 import util.PlayMacroLogsImpl
 import util.FormUtil._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.acl.{BruteForceProtectCtl, SioAction}
-import util.SiowebEsUtil.client
+
+import scala.concurrent.ExecutionContext
 
 /**
  * Suggest.io
@@ -20,13 +22,17 @@ import util.SiowebEsUtil.client
  * Клиенты могут слать всякую хрень.
  */
 class RemoteError @Inject() (
-  override val messagesApi  : MessagesApi,
-  override val current      : play.api.Application,
-  override val cache        : CacheApi
+  override val messagesApi        : MessagesApi,
+  override val current            : play.api.Application,
+  override val cache              : CacheApi,
+  override implicit val ec        : ExecutionContext,
+  override implicit val esClient  : Client,
+  override implicit val sn        : SioNotifierStaticClientI
 )
   extends SioController
   with PlayMacroLogsImpl
   with BruteForceProtectCtl
+  with IEsClient
 {
 
   import LOGGER._

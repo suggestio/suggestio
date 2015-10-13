@@ -1,10 +1,9 @@
 package controllers.sc
 
-import controllers.{routes, SioController}
+import controllers.{IEsClient, routes, SioController}
 import models._
 import models.im.logo.LogoUtil
 import models.msc.ScJsState
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.JsString
 import play.twirl.api.{Txt, Html}
 import util.cdn.CdnUtil
@@ -20,7 +19,7 @@ import scala.concurrent.Future
  * Created: 07.11.14 19:57
  * Description: Всякая базисная утиль для сборки MarketShowcase-контроллера.
  */
-trait ScController extends SioController {
+trait ScController extends SioController with IEsClient {
 
   def logoUtil: LogoUtil
 

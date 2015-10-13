@@ -6,7 +6,6 @@ import models.msc.AdBodyTplArgs
 import play.twirl.api.Html
 import util.PlayMacroLogsI
 import models._
-import play.api.libs.concurrent.Execution.Implicits._
 import util.acl._
 import scala.concurrent.Future
 import controllers.ad.MarketAdFormUtil
