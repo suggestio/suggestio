@@ -1,7 +1,7 @@
 package io.suggest.model.n2.geo.search
 
 import io.suggest.model.geo.GeoPoint
-import io.suggest.model.n2.node.MNode
+import io.suggest.model.n2.node.MNodeFields
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import org.elasticsearch.common.lucene.search.function.CombineFunction
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
@@ -22,7 +22,7 @@ trait GeoDstSort extends DynSearchArgs {
   override def toEsQuery: QueryBuilder = {
     val qb0 = super.toEsQuery
     withGeoDistanceSort.fold(qb0) { geoPoint =>
-      val fn = MNode.Fields.Geo.POINT_FN
+      val fn = MNodeFields.Geo.POINT_FN
       val func = ScoreFunctionBuilders.gaussDecayFunction(fn, geoPoint.toQsStr, "1km")
         .setOffset("0km")
       QueryBuilders.functionScoreQuery(qb0, func)

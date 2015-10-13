@@ -1,6 +1,6 @@
 package io.suggest.model.n2.extra.search
 
-import io.suggest.model.n2.node.MNode
+import io.suggest.model.n2.node.MNodeFields
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import io.suggest.ym.model.common.AdnRight
 import org.elasticsearch.index.query.{QueryBuilders, FilterBuilders, QueryBuilder}
@@ -23,7 +23,7 @@ trait AdnRights extends DynSearchArgs {
     if (_war.isEmpty) {
       qbOpt0
     } else {
-      val fn = MNode.Fields.Extras.ADN_RIGHTS_FN
+      val fn = MNodeFields.Extras.ADN_RIGHTS_FN
       val _warNames = withAdnRights.map(_.name)
       qbOpt0 map { qb =>
         val rf = FilterBuilders.termsFilter(fn, _warNames: _*)

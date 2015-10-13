@@ -1,7 +1,6 @@
 package io.suggest.model.n2.tag.vertex
 
 import io.suggest.model._
-import io.suggest.model.n2.node.MNode
 import io.suggest.util.SioEsUtil._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -48,7 +47,7 @@ object MTagVertex extends IGenEsMappingProps with PrefixedFn {
 
 trait ITagVertex {
   /**
-   * Любой [[MNode]]-узел может быть "тегом", но тег обладает многоликостью.
+   * Любой [[io.suggest.model.n2.node.MNode]]-узел может быть "тегом", но тег обладает многоликостью.
    * Одни юзеры пишут "халат", другие -- "халаты".
    * Одни юзеры пишут "розовая кофточка", другие "кофточка розовая".
    * + могут быть и более сложные различия в написании при полной смысловой эквивалентности.

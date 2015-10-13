@@ -1,6 +1,6 @@
 package io.suggest.model.n2.node.common.search
 
-import io.suggest.model.n2.node.MNode
+import io.suggest.model.n2.node.MNodeFields
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import org.elasticsearch.index.query.{QueryBuilders, FilterBuilders, QueryBuilder}
 
@@ -23,7 +23,7 @@ trait IsEnabled extends DynSearchArgs {
       qbOpt0
 
     } else {
-      val fn = MNode.Fields.Common.IS_ENABLED_FN
+      val fn = MNodeFields.Common.IS_ENABLED_FN
       val _is = _isOpt.get
       qbOpt0 map { qb =>
         val ief = FilterBuilders.termFilter(fn, _is)

@@ -1,6 +1,6 @@
 package io.suggest.model.n2.extra.search
 
-import io.suggest.model.n2.node.MNode
+import io.suggest.model.n2.node.MNodeFields
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import org.elasticsearch.index.query.{QueryBuilders, FilterBuilders, QueryBuilder}
 
@@ -23,7 +23,7 @@ trait ShownTypeId extends DynSearchArgs {
       qbOpt0
 
     } else {
-      val fn = MNode.Fields.Extras.ADN_SHOWN_TYPE_FN
+      val fn = MNodeFields.Extras.ADN_SHOWN_TYPE_FN
       qbOpt0 map { qb =>
         val stiFilter = FilterBuilders.termsFilter(fn, shownTypeIds: _*)
         QueryBuilders.filteredQuery(qb, stiFilter)

@@ -1,6 +1,6 @@
 package io.suggest.model.n2.node.common.search
 
-import io.suggest.model.n2.node.{MNode, MNodeType}
+import io.suggest.model.n2.node.{MNodeFields, MNodeType}
 import io.suggest.model.search.{DynSearchArgs, DynSearchArgsWrapper}
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
 
@@ -21,7 +21,7 @@ trait NodeTypes extends DynSearchArgs {
     if (_nodeTypes.isEmpty) {
       qbOpt0
     } else {
-      val fn = MNode.Fields.Common.NODE_TYPE_FN
+      val fn = MNodeFields.Common.NODE_TYPE_FN
       val strNodeTypes = _nodeTypes.map(_.strId)
       qbOpt0.map { qb0 =>
         val ntf = FilterBuilders.termsFilter(fn, strNodeTypes: _*)

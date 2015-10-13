@@ -11,7 +11,7 @@ import play.api.Application
 trait ICurrentApp {
 
   /** Экземпляр Application, вброшенный в класс через DI. */
-  implicit protected[this] def current: Application
+  implicit def current: Application
 
 }
 
@@ -20,6 +20,6 @@ trait ICurrentApp {
 trait ICurrentConf extends ICurrentApp {
 
   /** Доступ к play config через экземпляр Application, вброшенный через DI. */
-  protected[this] def configuration = current.configuration
+  def configuration = current.configuration
 
 }

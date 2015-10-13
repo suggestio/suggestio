@@ -1,6 +1,6 @@
 package io.suggest.model.n2.extra.search
 
-import io.suggest.model.n2.node.MNode
+import io.suggest.model.n2.node.MNodeFields
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import io.suggest.ym.model.common.AdnSink
 import org.elasticsearch.index.query.{QueryBuilders, FilterBuilders, QueryBuilder}
@@ -25,7 +25,7 @@ trait AdnSinks extends DynSearchArgs {
     } else {
       val _owsStr = onlyWithSinks.map(_.name)
       // Отрабатываем возможный список прав узла.
-      val fn = MNode.Fields.Extras.ADN_SINKS_FN
+      val fn = MNodeFields.Extras.ADN_SINKS_FN
       qbOpt0.map { qb =>
         val sf = FilterBuilders.termsFilter(fn, _owsStr: _*)
         QueryBuilders.filteredQuery(qb, sf)

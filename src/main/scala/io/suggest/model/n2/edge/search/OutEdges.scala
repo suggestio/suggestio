@@ -1,6 +1,6 @@
 package io.suggest.model.n2.edge.search
 
-import io.suggest.model.n2.node.MNode.Fields.Edges._
+import io.suggest.model.n2.node.MNodeFields.Edges._
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import io.suggest.util.MacroLogsI
 import org.elasticsearch.index.query.{QueryBuilders, FilterBuilders, QueryBuilder}

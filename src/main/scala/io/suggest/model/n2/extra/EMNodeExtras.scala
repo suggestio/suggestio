@@ -1,6 +1,6 @@
 package io.suggest.model.n2.extra
 
-import io.suggest.model.n2.node.MNode.Fields.Extras.EXTRAS_FN
+import io.suggest.model.n2.node.MNodeFields.Extras.EXTRAS_FN
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 

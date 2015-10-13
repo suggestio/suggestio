@@ -2,7 +2,6 @@ package io.suggest.model.n2.extra
 
 import io.suggest.common.EmptyProduct
 import io.suggest.model.{PrefixedFn, IGenEsMappingProps}
-import io.suggest.model.n2.node.MNode
 import io.suggest.model.n2.tag.vertex.{EMTagVertex, EMTagVertexStaticT, MTagVertex}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -79,7 +78,7 @@ object MNodeExtras extends IGenEsMappingProps {
 }
 
 
-/** Аддон для модели [[MNode]] для поддержки маппинга полей. */
+/** Аддон для модели [[io.suggest.model.n2.node.MNode]] для поддержки маппинга полей. */
 trait EMNodeExtrasStatic
   extends EMTagVertexStaticT
 

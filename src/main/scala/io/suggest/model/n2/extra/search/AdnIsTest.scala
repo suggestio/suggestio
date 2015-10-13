@@ -1,6 +1,6 @@
 package io.suggest.model.n2.extra.search
 
-import io.suggest.model.n2.node.MNode
+import io.suggest.model.n2.node.MNodeFields
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import org.elasticsearch.index.query.{QueryBuilders, FilterBuilders, FilterBuilder, QueryBuilder}
 
@@ -22,7 +22,7 @@ trait AdnIsTest extends DynSearchArgs {
     if (_testNode.isEmpty) {
       qbOpt0
     } else {
-      val fn = MNode.Fields.Extras.ADN_IS_TEST_FN
+      val fn = MNodeFields.Extras.ADN_IS_TEST_FN
       qbOpt0.map { qb =>
         // Отрабатываем флаг testNode.
         _testNode.fold(qb) { tnFlag =>

@@ -1,6 +1,6 @@
 package io.suggest.model.n2.extra.search
 
-import io.suggest.model.n2.node.MNode
+import io.suggest.model.n2.node.MNodeFields
 import io.suggest.model.search.{DynSearchArgs, DynSearchArgsWrapper}
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
 
@@ -23,7 +23,7 @@ trait ShowInScNl extends DynSearchArgs {
       qbOpt0
 
     } else {
-      val fn = MNode.Fields.Extras.ADN_SHOW_IN_SC_NL_FN
+      val fn = MNodeFields.Extras.ADN_SHOW_IN_SC_NL_FN
       val _sscNl = _sscNlOpt.get
       qbOpt0 map { qb =>
         // Отрабатываем флаг conf.showInScNodeList
