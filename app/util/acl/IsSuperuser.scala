@@ -57,9 +57,15 @@ sealed trait IsSuperuserBase2
   }
 }
 
-object IsSuperuser extends IsSuperuserBase2
-object IsSuperuserGet extends IsSuperuserBase2 with CsrfGet[AbstractRequestWithPwOpt]
-object IsSuperuserPost extends IsSuperuserBase2 with CsrfPost[AbstractRequestWithPwOpt]
+object IsSuperuser
+  extends IsSuperuserBase2
+object IsSuperuserGet
+  extends IsSuperuserBase2
+  with CsrfGet[AbstractRequestWithPwOpt]
+object IsSuperuserPost
+  extends IsSuperuserBase2
+  with CsrfPost[AbstractRequestWithPwOpt]
+
 
 trait IsSuperuserOr404Base extends IsSuperuserBase with ExpireSession[AbstractRequestWithPwOpt] {
   override def onUnauthResult(request: RequestHeader, pwOpt: PwOpt_t): Future[Result] = {

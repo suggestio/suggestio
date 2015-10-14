@@ -368,6 +368,7 @@ trait ScIndexNodeCommon
 trait ScIndexNode
   extends ScIndexNodeCommon
   with IScStatUtil
+  with AdnNodeMaybeAuth
 {
 
   /** Базовая выдача для rcvr-узла sio-market. */

@@ -11,7 +11,11 @@ import play.api.Play
  * Created: 19.05.15 17:22
  * Description: Раздача js-router'а выдачи всем страждущим.
  */
-trait ScJsRouter extends ScController with ICurrentApp {
+trait ScJsRouter
+  extends ScController
+  with ICurrentApp
+  with MaybeAuth
+{
 
   /**
    * Отрендерить js-код роутера вопрошающему.

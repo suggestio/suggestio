@@ -20,6 +20,7 @@ class Application @Inject() (
   siteMapUtil                   : SiteMapUtil
 )
   extends SioControllerImpl
+  with MaybeAuth
 {
 
   /** Время кеширования /robots.txt ответа на клиенте. */

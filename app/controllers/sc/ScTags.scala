@@ -12,7 +12,10 @@ import views.html.sc.tags._
  * Created: 16.09.15 16:37
  * Description: Аддон для экшенов, связанных с тегами, в выдаче.
  */
-trait ScTags extends ScController {
+trait ScTags
+  extends ScController
+  with MaybeAuth
+{
 
   /**
    * Поиск тегов по названиям.

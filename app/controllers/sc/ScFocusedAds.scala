@@ -439,6 +439,7 @@ trait ScFocusedAdsBase
 trait ScFocusedAds
   extends ScFocusedAdsBase
   with IScStatUtil
+  with MaybeAuth
 {
 
   /** Экшен для рендера горизонтальной выдачи карточек.

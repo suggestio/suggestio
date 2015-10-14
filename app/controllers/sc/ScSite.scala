@@ -172,6 +172,7 @@ trait ScSiteBase
 trait ScSiteGeo
   extends ScSiteBase
   with IScStatUtil
+  with MaybeAuth
 {
 
   /** Пользователь заходит в sio.market напрямую через интернет, без помощи сторонних узлов. */
@@ -242,6 +243,7 @@ trait ScSiteGeo
 trait ScSiteNode
   extends ScSiteBase
   with IScStatUtil
+  with AdnNodeMaybeAuth
 {
 
   /** Экшн, который рендерит страничку с дефолтовой выдачей узла. */

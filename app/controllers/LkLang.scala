@@ -10,7 +10,7 @@ import play.api.data.Form
 import play.api.i18n.{MessagesApi, Lang}
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
-import util.acl.{MaybeAuthGet, MaybeAuthPost}
+import util.acl.MaybeAuth
 import views.html.lk.lang._
 import util.FormUtil.uiLangM
 
@@ -33,6 +33,7 @@ class LkLang @Inject() (
   extends SioController
   with PlayMacroLogsImpl
   with ICurrentApp
+  with MaybeAuth
 {
 
   import LOGGER._

@@ -15,6 +15,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
  */
 
 trait IsAuthBase extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacroLogsImpl {
+
   import LOGGER._
 
   /** Подчинятся редиректу назад? Если false, то юзер будет куда-то отредиректен, заведомо неизвестно куда. */
@@ -37,7 +38,7 @@ trait IsAuthBase extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacroL
 
   def onUnauthBase(request: RequestHeader): Result = {
     val r = if (obeyReturnPath) Some(request.path) else None
-    Results.Redirect(routes.Ident.emailPwLoginForm(r = r))
+    Results.Redirect( routes.Ident.emailPwLoginForm(r = r) )
   }
 
   /** Что делать, когда юзер не авторизован? */
@@ -48,14 +49,21 @@ trait IsAuthBase extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacroL
 }
 
 /** Реализация IsAuth с возможностью задания значения поля obeyReturnPath. */
-case class IsAuthC(obeyReturnPath: Boolean = true) extends IsAuthBase with ExpireSession[AbstractRequestWithPwOpt]
+class IsAuthC(override val obeyReturnPath: Boolean = true)
+  extends IsAuthBase
+  with ExpireSession[AbstractRequestWithPwOpt]
 
 
 /** Проверка на залогиненность юзера без CSRF-дейстий. */
-object IsAuth extends IsAuthC()
+object IsAuth
+  extends IsAuthC()
 
 /** Проверка на залогиненность юзера с выставлением CSRF-токена. */
-object IsAuthGet  extends IsAuthC() with CsrfGet[AbstractRequestWithPwOpt]
+object IsAuthGet
+  extends IsAuthC()
+  with CsrfGet[AbstractRequestWithPwOpt]
 
 /** Проверка на залогиненность юзера с проверкой CSRF-токена, выставленного ранее. */
-object IsAuthPost extends IsAuthC() with CsrfPost[AbstractRequestWithPwOpt]
+object IsAuthPost
+  extends IsAuthC()
+  with CsrfPost[AbstractRequestWithPwOpt]

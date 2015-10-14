@@ -17,6 +17,7 @@ class Market @Inject() (
   override val messagesApi: MessagesApi
 )
   extends SioController
+  with MaybeAuth
 {
 
   /** Статическая страничка, описывающая суть sio market для владельцев WiFi. */

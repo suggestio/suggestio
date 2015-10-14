@@ -116,6 +116,7 @@ trait ScNodesList
   extends ScNodesListBase
   with ICurrentConf
   with IScStatUtil
+  with MaybeAuth
 {
 
   /** Кеш ответа findNodes() на клиенте. Это существенно ускоряет навигацию. */

@@ -16,7 +16,11 @@ import views.html.sc._adTpl
  * Created: 25.12.14 16:48
  * Description: Аддон для контроллера, который занимается раздаванием ровно одной карточки.
  */
-trait ScOnlyOneAd extends SioController with PlayMacroLogsI {
+trait ScOnlyOneAd
+  extends SioController
+  with PlayMacroLogsI
+  with GetAnyAd
+{
 
   /**
    * Отрендерить одну указанную карточку как веб-страницу.

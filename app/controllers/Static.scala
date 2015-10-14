@@ -1,7 +1,7 @@
 package controllers
 
 import com.google.inject.Inject
-import play.api.Play.{isProd, current}
+import play.api.Play.isProd
 import play.api.i18n.MessagesApi
 import play.api.mvc._
 import util.acl.{IsSuperuserOrDevelOr404, MaybeAuth}
@@ -19,10 +19,12 @@ import scala.concurrent.ExecutionContext
  */
 
 class Static @Inject() (
+  implicit val current          : play.api.Application,
   override val messagesApi      : MessagesApi,
   override implicit val ec      : ExecutionContext
 )
   extends SioControllerImpl
+  with MaybeAuth
 {
 
   private def booklet = routes.Market.marketBooklet().url

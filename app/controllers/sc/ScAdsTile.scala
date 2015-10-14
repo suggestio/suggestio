@@ -227,6 +227,7 @@ trait ScAdsTileBase
 trait ScAdsTile
   extends ScAdsTileBase
   with IScStatUtil
+  with MaybeAuth
 {
 
   /** Начальный размер буффера сборки ответа на запрос findAds(). */

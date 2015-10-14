@@ -116,6 +116,7 @@ trait ExternalLogin
   with IEsClient
   with CanConfirmIdpRegCtl
   with INodesUtil
+  with MaybeAuth
 {
 
   /** Доступ к DI-инстансу */

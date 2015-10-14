@@ -31,6 +31,7 @@ trait ScSyncSiteGeo
   with ScFocusedAdsBase
   with ScNodesListBase
   with ScSiteBase
+  with MaybeAuth
 {
 
   /**

@@ -28,6 +28,7 @@ trait ScIndexGeo
   with IScStatUtil
   with IScNlUtil
   with IScUtil
+  with MaybeAuth
 { that =>
 
   /**

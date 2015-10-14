@@ -8,7 +8,7 @@ import org.elasticsearch.client.Client
 import play.api.i18n.MessagesApi
 import util.captcha.CaptchaUtil._
 import util.PlayMacroLogsImpl
-import util.acl.{MaybeAuthPost, MaybeAuthGet}
+import util.acl.MaybeAuth
 import models._
 import util.mail.IMailerWrapper
 import views.html.market.join._
@@ -37,6 +37,7 @@ class MarketJoin @Inject() (
   with CaptchaValidator
   with IMailer
   with ICurrentConf
+  with MaybeAuth
 {
 
   import LOGGER._

@@ -23,7 +23,11 @@ import views.txt.sc._
  * Created: 07.11.14 19:56
  * Description: Доступ к данным узла. В первую очередь для осуществления работы внедряемой иконки на wifi.
  */
-trait ScNodeInfo extends ScController with ICurrentConf {
+trait ScNodeInfo
+  extends ScController
+  with ICurrentConf
+  with AdnNodeMaybeAuth
+{
 
   /** Сколько времени кешировать скомпиленный скрипт nodeIconJsTpl. */
   private val NODE_ICON_JS_CACHE_TTL_SECONDS = configuration.getInt("market.node.icon.js.cache.ttl.seconds") getOrElse 30

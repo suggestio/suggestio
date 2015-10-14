@@ -44,6 +44,7 @@ trait SendPwRecoverEmail
   extends SioController
   with IMailer
   with IEsClient
+  with MaybeAuth
 {
 
   /**
