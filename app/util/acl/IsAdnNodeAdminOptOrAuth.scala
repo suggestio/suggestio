@@ -1,12 +1,11 @@
 package util.acl
 
+import io.suggest.di.{IExecutionContext, IEsClient}
 import models.req.SioReqMd
 import models.{MAdnNodeCache, MAdnNode}
 import play.api.mvc.{Result, Request, ActionBuilder}
 import util.PlayMacroLogsDyn
 import util.acl.PersonWrapper.PwOpt_t
-import util.SiowebEsUtil.client
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 import scala.concurrent.Future
 
@@ -19,36 +18,49 @@ import scala.concurrent.Future
  * Появилось для lkList, где по дизайну было наличие текущей ноды, но для шаблона это было необязательно.
  */
 
-trait IsAdnNodeAdminOptOrAuthBase extends ActionBuilder[RequestWithNodeOpt] with PlayMacroLogsDyn {
+trait IsAdnNodeAdminOptOrAuth extends IEsClient with IExecutionContext {
 
-  /** id узла, если есть. */
-  def adnIdOpt: Option[String]
+  /** Абстрактная логика работы action-builder'ов, занимающихся вышеописанной проверкой. */
+  trait IsAdnNodeAdminOptOrAuthBase extends ActionBuilder[RequestWithNodeOpt] with PlayMacroLogsDyn {
 
-  override def invokeBlock[A](request: Request[A], block: (RequestWithNodeOpt[A]) => Future[Result]): Future[Result] = {
-    val pwOpt = PersonWrapper.getFromRequest(request)
-    pwOpt match {
-      case Some(pw) =>
-        MAdnNodeCache.maybeGetByIdCached(adnIdOpt).flatMap { mnodeOpt =>
-          val mnodeOpt1 = mnodeOpt.filter { mnode =>
-            IsAdnNodeAdmin.isAdnNodeAdminCheck(mnode, pwOpt)
-          }
-          val srmFut: Future[SioReqMd] = mnodeOpt1 match {
-            case Some(mnode) =>
-              SioReqMd.fromPwOptAdn(pwOpt, mnode.id.get)
-            case other =>
-              LOGGER.trace(s"Node[$adnIdOpt] missing or not accessable by user[${pw.personId}]")
-              SioReqMd.fromPwOpt(pwOpt)
-          }
-          srmFut flatMap { srm =>
-            val req1 = RequestWithNodeOpt(mnodeOpt1, srm, pwOpt, request)
-            block(req1)
-          }
-        }
+    /** id узла, если есть. */
+    def adnIdOpt: Option[String]
 
-      case None =>
-        IsAuth.onUnauth(request)
+    override def invokeBlock[A](request: Request[A], block: (RequestWithNodeOpt[A]) => Future[Result]): Future[Result] = {
+      val pwOpt = PersonWrapper.getFromRequest(request)
+      pwOpt match {
+        case Some(pw) =>
+          MAdnNodeCache.maybeGetByIdCached(adnIdOpt).flatMap { mnodeOpt =>
+            val mnodeOpt1 = mnodeOpt.filter { mnode =>
+              IsAdnNodeAdmin.isAdnNodeAdminCheck(mnode, pwOpt)
+            }
+            val srmFut: Future[SioReqMd] = mnodeOpt1 match {
+              case Some(mnode) =>
+                SioReqMd.fromPwOptAdn(pwOpt, mnode.id.get)
+              case other =>
+                LOGGER.trace(s"Node[$adnIdOpt] missing or not accessable by user[${pw.personId}]")
+                SioReqMd.fromPwOpt(pwOpt)
+            }
+            srmFut flatMap { srm =>
+              val req1 = RequestWithNodeOpt(mnodeOpt1, srm, pwOpt, request)
+              block(req1)
+            }
+          }
+
+        case None =>
+          IsAuth.onUnauth(request)
+      }
     }
+
   }
+
+  sealed abstract class IsAdnNodeAdminOptOrAuthBase2
+    extends IsAdnNodeAdminOptOrAuthBase
+    with ExpireSession[RequestWithNodeOpt]
+
+  case class IsAdnNodeAdminOptOrAuthGet(override val adnIdOpt: Option[String])
+    extends IsAdnNodeAdminOptOrAuthBase2
+    with CsrfGet[RequestWithNodeOpt]
 
 }
 
@@ -60,11 +72,3 @@ case class RequestWithNodeOpt[A](
   request  : Request[A]
 ) extends AbstractRequestWithPwOpt(request)
 
-
-sealed trait IsAdnNodeAdminOptOrAuthBase2
-  extends IsAdnNodeAdminOptOrAuthBase
-  with ExpireSession[RequestWithNodeOpt]
-
-case class IsAdnNodeAdminOptOrAuthGet(adnIdOpt: Option[String])
-  extends IsAdnNodeAdminOptOrAuthBase2
-  with CsrfGet[RequestWithNodeOpt]

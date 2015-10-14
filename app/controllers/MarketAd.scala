@@ -8,6 +8,7 @@ import models.mtag.MTagUtil
 import org.elasticsearch.client.Client
 import org.joda.time.DateTime
 import play.api.cache.CacheApi
+import play.api.db.Database
 import play.api.i18n.{MessagesApi, Messages}
 import play.api.libs.json.JsValue
 import play.core.parsers.Multipart
@@ -35,19 +36,22 @@ import scala.util.{Failure, Success}
  * Description: Контроллер для работы с рекламным фунционалом.
  */
 class MarketAd @Inject() (
-  override val messagesApi      : MessagesApi,
-  override implicit val current : play.api.Application,
-  override val cache            : CacheApi,
-  tempImgSupport                : TempImgSupport,
-  override implicit val ec      : ExecutionContext,
-  implicit val esClient         : Client,
-  override implicit val sn      : SioNotifierStaticClientI
+  override val messagesApi        : MessagesApi,
+  override implicit val current   : play.api.Application,
+  override val cache              : CacheApi,
+  tempImgSupport                  : TempImgSupport,
+  override val db                 : Database,
+  override implicit val ec        : ExecutionContext,
+  override implicit val esClient  : Client,
+  override implicit val sn        : SioNotifierStaticClientI
 )
   extends SioController
   with PlayMacroLogsImpl
   with BruteForceProtectCtl
   with MarketAdPreview
   with ad.NodeTagsEdit
+  with CanEditAd
+  with CanUpdateSls
 {
 
   import LOGGER._

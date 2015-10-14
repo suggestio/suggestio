@@ -88,7 +88,10 @@ import IsAdnNodeAdmin.onUnauth
 
 /** В реквесте содержится администрируемый узел, если всё ок. */
 sealed trait IsAdnNodeAdminBase extends ActionBuilder[AbstractRequestForAdnNode] with PlayMacroLogsI {
+
+  /** id запрашиваемого узла. */
   def adnId: String
+
   override def invokeBlock[A](request: Request[A], block: (AbstractRequestForAdnNode[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOptAdn(pwOpt, adnId)
@@ -187,9 +190,6 @@ sealed trait AdnNodeAccessBase extends ActionBuilder[RequestForAdnNode] {
  * Доступ к узлу, к которому НЕ обязательно есть права на админство.
  * @param adnId узел.
  */
-final case class AdnNodeAccess(adnId: String, povAdnIdOpt: Option[String])
-  extends AdnNodeAccessBase
-  with ExpireSession[RequestForAdnNode]
 final case class AdnNodeAccessGet(adnId: String, povAdnIdOpt: Option[String])
   extends AdnNodeAccessBase
   with ExpireSession[RequestForAdnNode]
@@ -266,15 +266,4 @@ case class AdnNodeMaybeAuth(adnId: String) extends AdnNodeMaybeAuthAbstractEs {
   override def isNodeValid(adnNode: MAdnNode): Boolean = true
 }
 
-
-/**
- * Является ли этот узел публичным, т.е. отображаемым для анонимных юзеров?
- * Да, если не тестовый и если ресивер.
- * @param adnId id узла.
- */
-final case class AdnNodePubMaybeAuth(adnId: String) extends AdnNodeMaybeAuthAbstractEs {
-  override def isNodeValid(adnNode: MAdnNode): Boolean = {
-    adnNode.adn.isReceiver && !adnNode.adn.testNode
-  }
-}
 

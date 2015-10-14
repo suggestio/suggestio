@@ -38,20 +38,24 @@ import play.api.data._, Forms._
  * - узелы-получатели одобряют или отсеивают входящие рекламные карточки.
  */
 class MarketAdv @Inject() (
-  mmpDailyBilling               : MmpDailyBilling,
-  lkAdUtil                      : LkAdUtil,
-  scUtil                        : ShowcaseUtil,
-  ctlGeoAdvUtil                 : CtlGeoAdvUtil,
-  override val messagesApi      : MessagesApi,
-  override val current          : play.api.Application,
-  implicit val db               : Database,
-  override implicit val ec      : ExecutionContext,
-  implicit val esClient         : Client,
-  override implicit val sn      : SioNotifierStaticClientI
+  override val canAdvAdUtil       : CanAdvertiseAdUtil,
+  mmpDailyBilling                 : MmpDailyBilling,
+  lkAdUtil                        : LkAdUtil,
+  scUtil                          : ShowcaseUtil,
+  ctlGeoAdvUtil                   : CtlGeoAdvUtil,
+  override val messagesApi        : MessagesApi,
+  override val current            : play.api.Application,
+  override implicit val db        : Database,
+  override implicit val ec        : ExecutionContext,
+  override implicit val esClient  : Client,
+  override implicit val sn        : SioNotifierStaticClientI
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
   with ICurrentConf
+  with CanAdvertiseAd
+  with CanReceiveAdvReq
+  with AdvWndAccess
 {
 
   import LOGGER._

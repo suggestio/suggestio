@@ -5,6 +5,7 @@ import models.req.SioReqMd
 import play.api.mvc._
 import util.di.IIdentUtil
 import scala.concurrent.Future
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>

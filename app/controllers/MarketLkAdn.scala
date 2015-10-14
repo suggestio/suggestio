@@ -54,6 +54,7 @@ class MarketLkAdn @Inject() (
   with BruteForceProtectCtl
   with ChangePwAction
   with NodeEactAcl
+  with IsAdnNodeAdminOptOrAuth
 {
 
   import LOGGER._

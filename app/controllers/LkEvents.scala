@@ -29,17 +29,18 @@ import scala.util.{Success, Failure}
  * Контроллер поддерживает отображение уведомлений, удаление оных и прочие действия.
  */
 class LkEvents @Inject() (
-  lkEventsUtil                  : LkEventsUtil,
-  lkAdUtil                      : LkAdUtil,
-  override val messagesApi      : MessagesApi,
-  override val current          : play.api.Application,
-  override implicit val ec      : ExecutionContext,
-  implicit val esClient         : Client,
-  override implicit val sn      : SioNotifierStaticClientI
+  lkEventsUtil                    : LkEventsUtil,
+  lkAdUtil                        : LkAdUtil,
+  override val messagesApi        : MessagesApi,
+  override val current            : play.api.Application,
+  override implicit val ec        : ExecutionContext,
+  override implicit val esClient  : Client,
+  override implicit val sn        : SioNotifierStaticClientI
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
   with ICurrentConf
+  with HasNodeEventAccess
 {
 
   import LOGGER._

@@ -35,6 +35,7 @@ import scala.concurrent.{ExecutionContext, Future}
  * Логический родственник [[MarketAdv]], который занимается размещениями карточек на узлах.
  */
 class LkAdvExt @Inject() (
+  override val canAdvAdUtil       : CanAdvertiseAdUtil,
   override val messagesApi        : MessagesApi,
   system                          : ActorSystem,
   override implicit val ec        : ExecutionContext,
@@ -46,6 +47,8 @@ class LkAdvExt @Inject() (
   with PlayMacroLogsImpl
   with CanAccessExtTargetBaseCtl
   with ICurrentConf
+  with CanAdvertiseAd
+  with CanSubmitExtTargetForNode
 {
 
   import LOGGER._
@@ -207,7 +210,7 @@ class LkAdvExt @Inject() (
       madFut
         .flatMap { mad =>
           val req1 = RequestHeaderAsRequest(requestHeader)
-          CanAdvertiseAd.maybeAllowed(pwOpt, mad, req1)
+          canAdvAdUtil.maybeAllowed(pwOpt, mad, req1)
         }
         .map(_.get)
         .recoverWith { case ex: NoSuchElementException =>
@@ -246,7 +249,7 @@ class LkAdvExt @Inject() (
    * @return 200 Ok если цель создана.
    *         406 NotAcceptable если форма заполнена с ошибками. body содержит рендер формы с ошибками.
    */
-  def writeTargetSubmit(adnId: String) = CanSubmitExtTargetForNode(adnId).async { implicit request =>
+  def writeTargetSubmit(adnId: String) = CanSubmitExtTargetForNodePost(adnId).async { implicit request =>
     request.newTgForm.fold(
       {formWithErrors =>
         debug(s"createTargetSubmit($adnId): Unable to bind form:\n ${formatFormErrors(formWithErrors)}")

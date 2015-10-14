@@ -1,5 +1,7 @@
 package util.acl
 
+import controllers.{IDb, SioController}
+import io.suggest.di.IEsClient
 import models.req.SioReqMd
 import play.api.mvc._
 import models._
@@ -7,13 +9,8 @@ import util.acl.PersonWrapper.PwOpt_t
 import util.async.AsyncUtil
 import util.xplay.SioHttpErrorHandler
 import scala.concurrent.Future
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.SiowebEsUtil.client
-import com.fasterxml.jackson.annotation.JsonIgnore
 import IsAdnNodeAdmin.onUnauth
-import play.api.Play.current
-import play.api.db.DB
-import util.PlayMacroLogsImpl
+import util.{PlayMacroLogsDyn, PlayMacroLogsI}
 
 /**
  * Suggest.io
@@ -22,120 +19,130 @@ import util.PlayMacroLogsImpl
  * Description: Проверка прав на управление рекламной карточкой.
  */
 
-object IsAdEditor extends PlayMacroLogsImpl {
+trait AdEditBaseCtl extends SioController with IEsClient {
 
-  import LOGGER._
+  /** Кое какая утиль для action builder'ов, редактирующих карточку. */
+  trait AdEditBase extends PlayMacroLogsI {
+    /** id рекламной карточки, которую клиент хочет поредактировать. */
+    def adId: String
 
-  def forbidden[A](adId: String, msg: String, request: Request[A]): Result = {
-    Results.Forbidden(s"Forbidden access for ad[$adId]: $msg")
-  }
-  def forbiddenFut[A](adId: String, msg: String, request: Request[A]): Future[Result] = {
-    Future successful forbidden(adId, msg, request)
-  }
+    def forbidden[A](msg: String, request: Request[A]): Result = {
+      Forbidden(s"Forbidden access for ad[$adId]: $msg")
+    }
 
-  def adNotFound(adId: String, request: RequestHeader): Future[Result] = {
-    trace(s"invokeBlock(): Ad not found: $adId")
-    SioHttpErrorHandler.http404Fut(request)
-  }
+    def forbiddenFut[A](msg: String, request: Request[A]): Future[Result] = {
+      Future successful forbidden(msg, request)
+    }
 
-  /** Асинхронно обратится к реализации модели MAdvStatic за инфой по наличию текущих размещений. */
-  def hasAdvUntilNow(adId: String, model: MAdvStatic): Future[Boolean] = {
-    Future {
-      DB.withConnection { implicit c =>
-        model.hasAdvUntilNow(adId)
-      }
-    }(AsyncUtil.jdbcExecutionContext)
-  }
-
-  /** Асинхронно параллельно обратится к [[models.MAdvOk]] и [[models.MAdvReq]] моделям инфой о наличии текущих размещений. */
-  def hasAdv(adId: String): Future[Boolean] = {
-    val hasAdvReqFut = hasAdvUntilNow(adId, MAdvReq)
-    for {
-      hasAdvOk  <- hasAdvUntilNow(adId, MAdvOk)
-      hasAdvReq <- hasAdvReqFut
-    } yield {
-      hasAdvOk || hasAdvReq
+    def adNotFound(request: RequestHeader): Future[Result] = {
+      LOGGER.trace(s"invokeBlock(): Ad not found: $adId")
+      SioHttpErrorHandler.http404Fut(request)
     }
   }
 
 }
 
-import IsAdEditor._
 
-/** Редактировать карточку может только владелец магазина. */
-trait CanEditAdBase extends ActionBuilder[RequestWithAdAndProducer] {
-  import LOGGER._
+/** Аддон для контроллеров, занимающихся редактированием рекламных карточек. */
+trait CanEditAd extends AdEditBaseCtl with IDb {
 
-  /** id рекламной карточки, которую клиент хочет поредактировать. */
-  def adId: String
+  /** Редактировать карточку может только владелец магазина. */
+  trait CanEditAdBase extends ActionBuilder[RequestWithAdAndProducer] with AdEditBase {
 
-  override def invokeBlock[A](request: Request[A], block: (RequestWithAdAndProducer[A]) => Future[Result]): Future[Result] = {
-    val pwOpt = PersonWrapper.getFromRequest(request)
-    pwOpt match {
-      case Some(pw) =>
-        val madOptFut = MAd.getById(adId)
-        val srmFut = SioReqMd.fromPwOpt(pwOpt)
-        val hasAdvFut = hasAdv(adId)
-        madOptFut flatMap {
-          case Some(mad) =>
-            val adnNodeOpt = MAdnNodeCache.getById(mad.producerId)
-            val isSuperuser = PersonWrapper.isSuperuser(pwOpt)
-            hasAdvFut flatMap { hasAdv =>
-              if (hasAdv && !isSuperuser) {
-                // Если объява уже где-то опубликована, то значит редактировать её нельзя.
-                forbiddenFut(adId, "Ad is advertised somewhere. Cannot edit during advertising.", request)
-              } else {
-                if (isSuperuser) {
-                  MAdnNodeCache.getById(mad.producerId).flatMap { adnNodeOpt =>
-                    srmFut flatMap { srm =>
-                      val req1 = RequestWithAdAndProducer(mad, request, pwOpt, srm, adnNodeOpt.get)
-                      block(req1)
-                    }
-                  }
-                } else {
-                  adnNodeOpt flatMap { adnNodeOpt =>
-                    adnNodeOpt
-                      .filter { adnNode => IsAdnNodeAdmin.isAdnNodeAdminCheck(adnNode, pwOpt) }
-                      .fold {
-                        debug(s"isEditAllowed(${mad.id.get}, $pwOpt): Not a producer[${mad.producerId}] admin.")
-                        forbiddenFut(adId, "No node admin rights", request)
-                      } { adnNode =>
-                        srmFut flatMap { srm =>
-                          val req1 = RequestWithAdAndProducer(mad, request, pwOpt, srm, adnNode)
-                          block(req1)
-                        }
-                      }
-                  }
-                } // else
-              }
-            }
-
-          case None =>
-            adNotFound(adId, request)
+    /** Асинхронно обратится к реализации модели MAdvStatic за инфой по наличию текущих размещений. */
+    def hasAdvUntilNow(adId: String, model: MAdvStatic): Future[Boolean] = {
+      Future {
+        db.withConnection { implicit c =>
+          model.hasAdvUntilNow(adId)
         }
+      }(AsyncUtil.jdbcExecutionContext)
+    }
 
-      // Анонимусу нельзя запрашивать редактирование карточки при любых обстоятельства.
-      case None =>
-        IsAuth.onUnauth(request)
+    /** Асинхронно параллельно обратится к [[models.MAdvOk]] и [[models.MAdvReq]] моделям инфой о наличии текущих размещений. */
+    def hasAdv(adId: String): Future[Boolean] = {
+      val hasAdvReqFut = hasAdvUntilNow(adId, MAdvReq)
+      for {
+        hasAdvOk  <- hasAdvUntilNow(adId, MAdvOk)
+        hasAdvReq <- hasAdvReqFut
+      } yield {
+        hasAdvOk || hasAdvReq
+      }
+    }
+
+    override def invokeBlock[A](request: Request[A], block: (RequestWithAdAndProducer[A]) => Future[Result]): Future[Result] = {
+      val pwOpt = PersonWrapper.getFromRequest(request)
+      pwOpt match {
+        case Some(pw) =>
+          val madOptFut = MAd.getById(adId)
+          val srmFut = SioReqMd.fromPwOpt(pwOpt)
+          val hasAdvFut = hasAdv(adId)
+          madOptFut flatMap {
+            case Some(mad) =>
+              val adnNodeOpt = MAdnNodeCache.getById(mad.producerId)
+              val isSuperuser = PersonWrapper.isSuperuser(pwOpt)
+              hasAdvFut flatMap { hasAdv =>
+                if (hasAdv && !isSuperuser) {
+                  // Если объява уже где-то опубликована, то значит редактировать её нельзя.
+                  forbiddenFut("Ad is advertised somewhere. Cannot edit during advertising.", request)
+                } else {
+                  if (isSuperuser) {
+                    MAdnNodeCache.getById(mad.producerId).flatMap { adnNodeOpt =>
+                      srmFut flatMap { srm =>
+                        val req1 = RequestWithAdAndProducer(mad, request, pwOpt, srm, adnNodeOpt.get)
+                        block(req1)
+                      }
+                    }
+                  } else {
+                    adnNodeOpt flatMap { adnNodeOpt =>
+                      adnNodeOpt
+                        .filter { adnNode => IsAdnNodeAdmin.isAdnNodeAdminCheck(adnNode, pwOpt) }
+                        .fold {
+                          LOGGER.debug(s"isEditAllowed(${mad.id.get}, $pwOpt): Not a producer[${mad.producerId}] admin.")
+                          forbiddenFut("No node admin rights", request)
+                        } { adnNode =>
+                          srmFut flatMap { srm =>
+                            val req1 = RequestWithAdAndProducer(mad, request, pwOpt, srm, adnNode)
+                            block(req1)
+                          }
+                        }
+                    }
+                  } // else
+                }
+              }
+
+            case None =>
+              adNotFound(request)
+          }
+
+        // Анонимусу нельзя запрашивать редактирование карточки при любых обстоятельства.
+        case None =>
+          IsAuth.onUnauth(request)
+      }
     }
   }
+
+  sealed abstract class CanEditAd
+    extends CanEditAdBase
+    with ExpireSession[RequestWithAdAndProducer]
+    with PlayMacroLogsDyn
+
+  /** Запрос формы редактирования карточки должен сопровождаться выставлением CSRF-токена. */
+  case class CanEditAdGet(override val adId: String)
+    extends CanEditAd
+    with CsrfGet[RequestWithAdAndProducer]
+
+  /** Сабмит формы редактирования рекламной карточки должен начинаться с проверки CSRF-токена. */
+  case class CanEditAdPost(override val adId: String)
+    extends CanEditAd
+    with CsrfPost[RequestWithAdAndProducer]
+
 }
-/** Запрос формы редактирования карточки должен сопровождаться выставлением CSRF-токена. */
-case class CanEditAdGet(adId: String)
-  extends CanEditAdBase
-  with ExpireSession[RequestWithAdAndProducer]
-  with CsrfGet[RequestWithAdAndProducer]
-
-/** Сабмит формы редактирования рекламной карточки должен начинаться с проверки CSRF-токена. */
-case class CanEditAdPost(adId: String)
-  extends CanEditAdBase
-  with ExpireSession[RequestWithAdAndProducer]
-  with CsrfPost[RequestWithAdAndProducer]
-
 
 
 /** Абстрактный реквест в сторону какой-то рекламной карточки на тему воздействия со стороны продьюсера. */
-abstract class AbstractRequestWithAdAndProducer[A](request: Request[A]) extends AbstractRequestWithAd(request) {
+abstract class AbstractRequestWithAdAndProducer[A](request: Request[A])
+  extends AbstractRequestWithAd(request)
+{
   def producer: MAdnNode
 }
 
@@ -149,13 +156,14 @@ abstract class AbstractRequestWithAdAndProducer[A](request: Request[A]) extends 
  * @tparam A Параметр типа реквеста.
  */
 case class RequestWithAdAndProducer[A](
-  mad: MAd,
-  request: Request[A],
-  pwOpt: PwOpt_t,
-  sioReqMd: SioReqMd,
-  producer: MAdnNode
-) extends AbstractRequestWithAdAndProducer(request) {
-  @JsonIgnore
+  mad       : MAd,
+  request   : Request[A],
+  pwOpt     : PwOpt_t,
+  sioReqMd  : SioReqMd,
+  producer  : MAdnNode
+)
+  extends AbstractRequestWithAdAndProducer(request)
+{
   def producerId = mad.producerId
 }
 
@@ -163,61 +171,61 @@ case class RequestWithAdAndProducer[A](
 
 /** Статический логгер для класса запиливаем тут. object всё равно создаётся при компиляции case class'а, поэтому
   * оверхеда тут нет. */
-object CanUpdateSls extends PlayMacroLogsImpl
+trait CanUpdateSls extends AdEditBaseCtl {
 
-/** Проверка прав на возможность обновления уровней отображения рекламной карточки. */
-trait CanUpdateSlsBase extends ActionBuilder[RequestWithAdAndProducer] {
-  import CanUpdateSls.LOGGER._
+  /** Проверка прав на возможность обновления уровней отображения рекламной карточки. */
+  trait CanUpdateSlsBase extends ActionBuilder[RequestWithAdAndProducer] with AdEditBase {
 
-  def adId: String
-
-  override def invokeBlock[A](request: Request[A], block: (RequestWithAdAndProducer[A]) => Future[Result]): Future[Result] = {
-    val madOptFut = MAd.getById(adId)
-    val pwOpt = PersonWrapper getFromRequest request
-    pwOpt match {
-      // Юзер залогинен. Продолжаем...
-      case Some(pw) =>
-        madOptFut flatMap {
-          // Найдена запрошенная рекламная карточка
-          case Some(mad) =>
-            // Модер может запретить бесплатное размещение карточки. Если стоит черная метка, то на этом можно закончить.
-            val isMdrProhibited = mad.moderation.freeAdv.exists { !_.isAllowed }
-            if (isMdrProhibited) {
-              // Админы s.io когда-то запретили бесплатно размещать эту карточку. Пока бан не снять, карточку публиковать бесплатно нельзя.
-              debug("invokeBlock(): cannot update sls for false-moderated ad " + adId + " mdrResult = " + mad.moderation.freeAdv)
-              forbiddenFut(adId, "false-moderated ad", request)
-            } else {
-              MAdnNodeCache.getById(mad.producerId) flatMap { producerOpt =>
-                val isNodeAdmin = producerOpt.exists {
-                  producer  =>  IsAdnNodeAdmin.isAdnNodeAdminCheck(producer, pwOpt)
-                }
-                if (isNodeAdmin) {
-                  // Юзер является админом. Всё ок.
-                  val req1 = RequestWithAdAndProducer(mad, request, pwOpt, SioReqMd(), producerOpt.get)
-                  block(req1)
-                } else {
-                  // Юзер не является админом, либо (маловероятно) producer-узел был удалён (и нельзя проверить права).
-                  debug(s"invokeBlock(): No node-admin rights for update sls for ad=$adId producer=${producerOpt.flatMap(_.id)}")
-                  forbiddenFut(adId, "No edit rights", request)
+    override def invokeBlock[A](request: Request[A], block: (RequestWithAdAndProducer[A]) => Future[Result]): Future[Result] = {
+      val madOptFut = MAd.getById(adId)
+      val pwOpt = PersonWrapper.getFromRequest(request)
+      pwOpt match {
+        // Юзер залогинен. Продолжаем...
+        case Some(pw) =>
+          madOptFut flatMap {
+            // Найдена запрошенная рекламная карточка
+            case Some(mad) =>
+              // Модер может запретить бесплатное размещение карточки. Если стоит черная метка, то на этом можно закончить.
+              val isMdrProhibited = mad.moderation.freeAdv.exists { !_.isAllowed }
+              if (isMdrProhibited) {
+                // Админы s.io когда-то запретили бесплатно размещать эту карточку. Пока бан не снять, карточку публиковать бесплатно нельзя.
+                LOGGER.debug("invokeBlock(): cannot update sls for false-moderated ad " + adId + " mdrResult = " + mad.moderation.freeAdv)
+                forbiddenFut("false-moderated ad", request)
+              } else {
+                MAdnNodeCache.getById(mad.producerId) flatMap { producerOpt =>
+                  val isNodeAdmin = producerOpt.exists {
+                    producer =>
+                      IsAdnNodeAdmin.isAdnNodeAdminCheck(producer, pwOpt)
+                  }
+                  if (isNodeAdmin) {
+                    // Юзер является админом. Всё ок.
+                    val req1 = RequestWithAdAndProducer(mad, request, pwOpt, SioReqMd(), producerOpt.get)
+                    block(req1)
+                  } else {
+                    // Юзер не является админом, либо (маловероятно) producer-узел был удалён (и нельзя проверить права).
+                    LOGGER.debug(s"invokeBlock(): No node-admin rights for update sls for ad=$adId producer=${producerOpt.flatMap(_.id)}")
+                    forbiddenFut("No edit rights", request)
+                  }
                 }
               }
-            }
 
-          // Рекламная карточка не найдена.
-          case None =>
-            adNotFound(adId, request)
-        }
+            // Рекламная карточка не найдена.
+            case None =>
+              adNotFound(request)
+          }
 
-      // С анонимусами разговор короткий.
-      case None =>
-        trace("invokeBlock(): Anonymous access prohibited to " + adId)
-        onUnauth(request, pwOpt)
+        // С анонимусами разговор короткий.
+        case None =>
+          LOGGER.trace("invokeBlock(): Anonymous access prohibited to " + adId)
+          onUnauth(request, pwOpt)
+      }
     }
   }
+
+  /** Реализация [[CanUpdateSlsBase]] с истечением времени сессии. */
+  case class CanUpdateSls(adId: String)
+    extends CanUpdateSlsBase
+    with ExpireSession[RequestWithAdAndProducer]
+    with PlayMacroLogsDyn
+
 }
-
-/** Реализация [[CanUpdateSlsBase]] с истечением времени сессии. */
-final case class CanUpdateSls(adId: String)
-  extends CanUpdateSlsBase
-  with ExpireSession[RequestWithAdAndProducer]
-
