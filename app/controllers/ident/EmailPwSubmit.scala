@@ -1,6 +1,7 @@
 package controllers.ident
 
-import controllers.{IEsClient, SioController}
+import controllers.SioController
+import io.suggest.di.IEsClient
 import models.{MNode, MNodeTypes}
 import models.msession.{Ttl, ShortTtl, LongTtl, Keys}
 import models.usr._
@@ -9,7 +10,7 @@ import play.api.data.Forms._
 import util.acl._
 import util._
 import play.api.mvc._
-import util.ident.IIdentUtil
+import util.di.IIdentUtil
 import util.xplay.SetLangCookieUtil
 import views.html.ident.login.epw._
 import scala.concurrent.Future

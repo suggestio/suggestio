@@ -1,6 +1,7 @@
 package controllers.sc
 
-import controllers.{IEsClient, routes, SioController}
+import controllers.{routes, SioController}
+import io.suggest.di.IEsClient
 import models._
 import models.im.logo.LogoUtil
 import models.msc.ScJsState

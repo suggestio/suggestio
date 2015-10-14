@@ -7,7 +7,8 @@ import models.usr.MPersonIdent
 import org.elasticsearch.client.Client
 import play.api.i18n.MessagesApi
 import play.api.mvc.Result
-import util.ident.{IIdentUtil, IdentUtil}
+import util.di.IIdentUtil
+import util.ident.IdentUtil
 import util.{FormUtil, PlayLazyMacroLogsImpl}
 import util.acl._
 import util.mail.IMailerWrapper

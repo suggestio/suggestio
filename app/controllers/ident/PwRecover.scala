@@ -1,6 +1,7 @@
 package controllers.ident
 
 import controllers._
+import io.suggest.di.IEsClient
 import models.jsm.init.MTargets
 import models.msession.Keys
 import models.usr.{MPersonIdent, EmailActivation, EmailPwIdent}
@@ -8,7 +9,7 @@ import play.api.data._
 import play.twirl.api.Html
 import util.PlayMacroLogsI
 import util.acl._
-import util.ident.IIdentUtil
+import util.di.IIdentUtil
 import util.xplay.SetLangCookieUtil
 import views.html.helper.CSRF
 import views.html.ident.mySioStartTpl

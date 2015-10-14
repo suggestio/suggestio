@@ -32,6 +32,7 @@ import sysctl.SysMarketUtil._
  * Description: Тут управление компаниями, торговыми центрами и магазинами.
  */
 class SysMarket @Inject() (
+  override val nodesUtil        : NodesUtil,
   advUtil                       : AdvUtil,
   override val messagesApi      : MessagesApi,
   override val mailer           : IMailerWrapper,
@@ -39,7 +40,7 @@ class SysMarket @Inject() (
   override val sysAdRenderUtil  : SysAdRenderUtil,
   override implicit val current : play.api.Application,
   override implicit val ec      : ExecutionContext,
-  implicit val esClient         : Client,
+  override implicit val esClient: Client,
   override implicit val sn      : SioNotifierStaticClientI
 )
   extends SioControllerImpl
@@ -142,7 +143,7 @@ class SysMarket @Inject() (
           testNode        = false,
           isEnabled       = true,
           sinks           = Set(AdnSinks.SINK_GEO),
-          showLevelsInfo  = NodesUtil.dfltShowLevels
+          showLevelsInfo  = nodesUtil.dfltShowLevels
         )
       )
     )
@@ -193,13 +194,13 @@ class SysMarket @Inject() (
           }
         }
         val billFut = f(ncp.billInit, s"$logPrefix Failed to initialize billing") {
-          NodesUtil.createUserNodeBilling(adnId)
+          nodesUtil.createUserNodeBilling(adnId)
         }
         val etgsFut = f(ncp.extTgsInit, s"$logPrefix Failed to create default targets") {
-          NodesUtil.createExtDfltTargets(adnId)(messages)
+          nodesUtil.createExtDfltTargets(adnId)(messages)
         }
         val madsFut = f(ncp.withDfltMads, s"$logPrefix Failed to install default mads") {
-          NodesUtil.installDfltMads(adnId)(messages)
+          nodesUtil.installDfltMads(adnId)(messages)
         }
         billFut flatMap { _ =>
           etgsFut flatMap { _ =>

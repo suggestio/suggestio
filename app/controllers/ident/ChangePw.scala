@@ -1,13 +1,14 @@
 package controllers.ident
 
-import controllers.{IEsClient, SioController}
+import controllers.SioController
+import io.suggest.di.IEsClient
 import models.usr.{MPersonIdent, EmailPwIdent}
 import play.api.data._
 import play.api.data.Forms._
 import util.acl._
 import util._
 import play.api.mvc._
-import util.ident.IIdentUtil
+import util.di.IIdentUtil
 import scala.concurrent.Future
 import FormUtil.{passwordM, passwordWithConfirmM}
 import views.html.ident.changePasswordTpl

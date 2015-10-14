@@ -1,24 +1,23 @@
 package util.adn
 
+import com.google.inject.{Inject, Singleton}
 import controllers.routes
+import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.ym.model.ad.AdsSearchArgsDfltImpl
 import io.suggest.ym.model.common.{NodeConf, AdnMemberShowLevels}
 import models._
-import models.madn.NodeDfltColors
+import models.madn.{MNodeRegSuccess, NodeDfltColors}
 import models.mext.MExtServices
+import org.elasticsearch.client.Client
 import org.joda.time.DateTime
-import play.api.db.DB
+import play.api.Configuration
+import play.api.db.Database
 import play.api.i18n.Messages
 import play.api.mvc.Call
 import util.PlayMacroLogsImpl
 import util.async.AsyncUtil
 
-import scala.concurrent.Future
-import util.SiowebEsUtil.client
-import util.event.SiowebNotifier.Implicts.sn
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-
-import play.api.Play.{current, configuration}
+import scala.concurrent.{ExecutionContext, Future}
 
 import scala.util.Random
 
@@ -30,7 +29,16 @@ import scala.util.Random
  * в нескольких контроллерах.
  * 2015.mar.18: Для новосозданного узла нужно создавать начальные рекламные карточки.
  */
-object NodesUtil extends PlayMacroLogsImpl {
+@Singleton
+class NodesUtil @Inject() (
+  configuration           : Configuration,
+  db                      : Database,
+  implicit val ec         : ExecutionContext,
+  implicit val esClient   : Client,
+  implicit val sn         : SioNotifierStaticClientI
+)
+  extends PlayMacroLogsImpl
+{
 
   import LOGGER._
 
@@ -59,6 +67,15 @@ object NodesUtil extends PlayMacroLogsImpl {
   /** Куда отправлять юзера, когда тот создал новый узел? */
   def userNodeCreatedRedirect(adnId: String): Call = {
     routes.MarketLkAdnEdit.editAdnNode(adnId)
+  }
+
+  /** Для рендера шаблона regSuccessTpl требуется собрать аргументы для рендера. */
+  def nodeRegSuccessArgs(mnode: MAdnNode): MNodeRegSuccess = {
+    MNodeRegSuccess(
+      mnode,
+      userNodeCreatedRedirect( mnode.id.get ),
+      NODE_CREATED_SUCCESS_RDR_AFTER
+    )
   }
 
   def dfltShowLevels: AdnMemberShowLevels = {
@@ -109,7 +126,7 @@ object NodesUtil extends PlayMacroLogsImpl {
    */
   def createUserNodeBilling(adnId: String): Future[_] = {
     Future {
-      DB.withTransaction { implicit ctx =>
+      db.withTransaction { implicit c =>
         MBillContract(adnId = adnId).save
         MBillBalance(adnId = adnId, amount = BILL_START_BALLANCE).save
         // 2015.feb.18: Не надо создавать новый пользовательский узел как платный ресивер.

@@ -1,7 +1,7 @@
 package controllers
 
-import _root_.util.adn.NodesUtil
-import _root_.util.async.AsyncUtil
+import util.adn.NodesUtil
+import util.async.AsyncUtil
 import com.google.inject.Inject
 import controllers.ident._
 import io.suggest.event.SioNotifierStaticClientI
@@ -35,6 +35,7 @@ import play.api.db.Database
  */
 class MarketLkAdn @Inject() (
   override val messagesApi            : MessagesApi,
+  nodesUtil                           : NodesUtil,
   db                                  : Database,
   override val current                : play.api.Application,
   override val cache                  : CacheApi,
@@ -333,13 +334,13 @@ class MarketLkAdn @Inject() (
         NotAcceptable(createTpl(formWithErrors))
       },
       {nodeName =>
-        val nodeFut = NodesUtil.createUserNode(
+        val nodeFut = nodesUtil.createUserNode(
           name      = nodeName,
           personId  = request.pwOpt.get.personId
         )
         // Рендер HTTP-ответа.
         val respFut = nodeFut map { adnNode =>
-          Redirect( NodesUtil.userNodeCreatedRedirect(adnNode.id.get) )
+          Redirect( nodesUtil.userNodeCreatedRedirect(adnNode.id.get) )
             .flashing(FLASH.SUCCESS -> "New.shop.created.fill.info")
         }
         // Вернуть HTTP-ответ.

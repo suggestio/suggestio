@@ -1,4 +1,6 @@
-package util.ident
+package util.di
+
+import util.ident.IdentUtil
 
 /**
  * Suggest.io

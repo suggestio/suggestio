@@ -2,6 +2,7 @@ package controllers
 
 import com.google.inject.Inject
 import controllers.ident._
+import io.suggest.di.IEsClient
 import io.suggest.event.SioNotifierStaticClientI
 import models.jsm.init.{MTargets, MTarget}
 import models.msession.Keys
@@ -11,6 +12,7 @@ import play.api.i18n.MessagesApi
 import util.acl._
 import util._
 import play.api.mvc._
+import util.adn.NodesUtil
 import util.ident.IdentUtil
 import util.mail.IMailerWrapper
 import views.html.ident._
@@ -35,6 +37,7 @@ class Ident @Inject() (
   override val current              : play.api.Application,
   override val cache                : CacheApi,
   override val identUtil            : IdentUtil,
+  override val nodesUtil            : NodesUtil,
   override implicit val ec          : ExecutionContext,
   override implicit val esClient    : Client,
   override implicit val sn          : SioNotifierStaticClientI

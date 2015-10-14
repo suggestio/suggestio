@@ -1,6 +1,7 @@
 package controllers.sysctl
 
-import controllers.{IEsClient, routes, SioController}
+import controllers.{routes, SioController}
+import io.suggest.di.IEsClient
 import io.suggest.playx.ICurrentApp
 import models.{MAdnNodeCache, Context}
 import play.api.data.Form
@@ -8,7 +9,7 @@ import play.api.i18n.{Messages, Lang}
 import play.twirl.api.Html
 import util.PlayMacroLogsI
 import util.acl.{AbstractRequestForAdnNode, IsSuperuserAdnNodePost, IsSuperuserAdnNodeGet}
-import util.adn.NodesUtil
+import util.di.INodesUtil
 import views.html.sys1.market.adn.install._
 
 import scala.concurrent.Future
@@ -48,13 +49,14 @@ trait SysNodeInstall
   with PlayMacroLogsI
   with IEsClient
   with ICurrentApp
+  with INodesUtil
 {
 
   /** Вернуть страницу с формой установки дефолтовых карточек на узлы. */
   def installDfltMads(adnId: String) = IsSuperuserAdnNodeGet(adnId).async { implicit request =>
     implicit val ctx = implicitly[Context]
     val fd = FormData(
-      count = NodesUtil.INIT_ADS_COUNT,
+      count = nodesUtil.INIT_ADS_COUNT,
       lang  = ctx.messages.lang
     )
     val form = mkForm.fill(fd)
@@ -65,7 +67,7 @@ trait SysNodeInstall
   /** Общий код экшенов, связанный с рендером html-ответа. */
   private def _installRender(form: Form[FormData])(implicit ctx: Context, request: AbstractRequestForAdnNode[_]): Future[Html] = {
     for {
-      srcNodes <- MAdnNodeCache.multiGet(NodesUtil.ADN_IDS_INIT_ADS_SOURCE)
+      srcNodes <- MAdnNodeCache.multiGet(nodesUtil.ADN_IDS_INIT_ADS_SOURCE)
     } yield {
       val allLangs = Lang.availables.sortBy(_.code)
       installDfltMadsTpl(allLangs, request.adnNode, form, srcNodes)(ctx)
@@ -84,7 +86,7 @@ trait SysNodeInstall
       {fd =>
         // TODO Надо как-то сделать, чтобы это дело скастовалось автоматом.
         val msgs = new Messages(fd.lang, messagesApi)
-        NodesUtil.installDfltMads(adnId, count = fd.count)(msgs)
+        nodesUtil.installDfltMads(adnId, count = fd.count)(msgs)
           .map { madIds =>
             val count = madIds.size
             LOGGER.trace(s"$logPrefix Cloned ok $count mads: [${madIds.mkString(", ")}]")

@@ -1,6 +1,7 @@
 package util.acl
 
-import controllers.{IEsClient, SioController}
+import controllers.SioController
+import io.suggest.di.IEsClient
 import models.MAdnNode
 import models.adv.MExtTarget
 import models.req.SioReqMd

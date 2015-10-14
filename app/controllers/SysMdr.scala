@@ -1,6 +1,7 @@
 package controllers
 
 import com.google.inject.Inject
+import io.suggest.di.IEsClient
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.ym.model.ad.FreeAdvStatus
 import models.mdr._

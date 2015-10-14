@@ -9,7 +9,7 @@ import models.adv.geo.AdvFormEntry
 import models.blk.{BlockWidths, BlockHeights}
 import org.joda.time.{Period, DateTime, LocalDate}
 import org.joda.time.DateTimeConstants._
-import play.api.{Configuration, Application}
+import play.api.Application
 import scala.annotation.tailrec
 import util.{ICronTasksProvider, PlayMacroLogsImpl}
 import play.api.db.Database

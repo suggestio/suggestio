@@ -1,6 +1,7 @@
 package util.acl
 
-import controllers.{IExecutionContext, SioController, MyConfName}
+import controllers.{SioController, MyConfName}
+import io.suggest.di.IExecutionContext
 import io.suggest.playx.ICurrentConf
 import play.api.Application
 import play.api.mvc._

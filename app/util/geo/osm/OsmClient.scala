@@ -1,5 +1,6 @@
 package util.geo.osm
 
+import com.google.inject.Inject
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.ws._
 import util.geo.osm.OsmElemTypes.OsmElemType
@@ -12,7 +13,9 @@ import scala.concurrent.Future
  * Created: 02.09.14 15:54
  * Description: Статический клиент для доступа к OSM API. Для парсинга используется парсеры для xml api.
  */
-object OsmClient {
+class OsmClient @Inject() (
+  ws1: WSClient
+) {
 
   /**
    * Отфетчить элемент из инета, распарсить и вернуть результат.
@@ -21,7 +24,7 @@ object OsmClient {
    * @param id Числовой id запрашиваемого osm-объекта.
    * @return Полученный и распарсенный osm-объект.
    */
-  def fetchElement(typ: OsmElemType, id: Long)(implicit ws1: WSClient): Future[OsmObject] = {
+  def fetchElement(typ: OsmElemType, id: Long): Future[OsmObject] = {
     val fetcher = new HttpGetToFile {
       override def ws = ws1
       override def urlStr = typ.xmlUrl(id)

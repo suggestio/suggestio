@@ -1,5 +1,6 @@
 package controllers
 
+import io.suggest.di.IEsClient
 import models.MAdnNodeCache
 import models.blk.{OneAdWideQsArgs, OneAdQsArgs}
 import models.im.OutImgFmts

@@ -4,17 +4,17 @@ import java.io.File
 import java.net.JarURLConnection
 
 import akka.actor.ActorSystem
-import io.suggest.event.SioNotifierStaticClientI
-import org.elasticsearch.client.Client
+import io.suggest.di.IExecutionContext
 import org.joda.time.DateTime
 import play.api.db.Database
 import play.api.i18n.{I18nSupport, Lang}
 import play.api.mvc._
 import util._
+import util.di.ISioNotifier
 import util.jsa.init.CtlJsInitT
 import util.mail.IMailerWrapper
 import util.ws.WsDispatcherActor
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 import scala.concurrent.duration._
 import play.api.Play.{current, configuration}
 import play.api.data.Form
@@ -82,15 +82,9 @@ object SioControllerUtil extends PlayLazyMacroLogsImpl {
 }
 
 
-trait IEsClient {
-  implicit def esClient: Client
-}
-trait IExecutionContext {
-  implicit def ec: ExecutionContext         = play.api.libs.concurrent.Execution.defaultContext
-}
-trait ISioNotifier {
-  implicit def sn: SioNotifierStaticClientI = util.event.SiowebNotifier.Implicts.sn
-}
+
+
+
 trait IDb {
   def db: Database
 }

@@ -3,7 +3,7 @@ package util.acl
 import controllers.SioController
 import models.req.SioReqMd
 import play.api.mvc._
-import util.ident.IIdentUtil
+import util.di.IIdentUtil
 import scala.concurrent.Future
 /**
  * Suggest.io

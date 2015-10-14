@@ -1,6 +1,7 @@
 package util.acl
 
-import controllers.{IEsClient, SioController}
+import controllers.SioController
+import io.suggest.di.IEsClient
 import models.{MAdnNodeCache, MAdnNode}
 import models.req.SioReqMd
 import models.usr.{EmailPwIdent, EmailActivation}

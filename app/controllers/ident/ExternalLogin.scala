@@ -1,7 +1,8 @@
 package controllers.ident
 
 import com.google.inject.Inject
-import controllers.{IExecutionContext, IEsClient, routes, SioController}
+import controllers.{routes, SioController}
+import io.suggest.di.{IExecutionContext, IEsClient}
 import io.suggest.playx.ICurrentApp
 import models.mext.{MExtServices, ILoginProvider}
 import models.msession.{CustomTtl, Keys}
@@ -15,11 +16,11 @@ import securesocial.controllers.ProviderControllerHelper._
 import securesocial.core.RuntimeEnvironment.Default
 import securesocial.core.services.RoutesService
 import securesocial.core._
-import util.adn.NodesUtil
+import util.di.{INodesUtil, IIdentUtil}
 import util.xplay.SetLangCookieUtil
 import util.{PlayMacroLogsDyn, FormUtil, PlayMacroLogsI}
 import util.acl._
-import util.ident.{IdentUtil, IIdentUtil}
+import util.ident.IdentUtil
 import views.html.ident.reg._
 import views.html.ident.reg.ext._
 
@@ -114,6 +115,7 @@ trait ExternalLogin
   with ICurrentApp
   with IEsClient
   with CanConfirmIdpRegCtl
+  with INodesUtil
 {
 
   /** Доступ к DI-инстансу */
@@ -258,8 +260,12 @@ trait ExternalLogin
       },
       {nodeName =>
         // Развернуть узел для юзера, отобразить страницу успехоты.
-        NodesUtil.createUserNode(name = nodeName, personId = request.pwOpt.get.personId)
-          .map { adnNode => Ok(regSuccessTpl(adnNode)) }
+        for {
+          mnode <- nodesUtil.createUserNode(name = nodeName, personId = request.pwOpt.get.personId)
+        } yield {
+          val args = nodesUtil.nodeRegSuccessArgs( mnode )
+          Ok( regSuccessTpl(args) )
+        }
       }
     )
   }

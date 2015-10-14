@@ -1,9 +1,9 @@
-package util.xplay
+package util.di
 
 import io.suggest.event.SioNotifierStaticClientI
 import org.elasticsearch.client.Client
-import play.api.{Configuration, Environment}
 import play.api.inject._
+import play.api.{Configuration, Environment}
 import util.SiowebEsUtil
 
 /**

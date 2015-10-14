@@ -1,16 +1,15 @@
-@(adnNode: MAdnNode)(implicit ctx: Context)
+@(args: madn.INodeRegSuccess)(implicit ctx: Context)
 
 @* Страница отображения успеха регистрации нового юзера и нового магаза. *@
 
-@import util.adn._
 @import ctx.messages
 
 @headAfter1 = {
-  <meta http-equiv="refresh" content="@NodesUtil.NODE_CREATED_SUCCESS_RDR_AFTER; url=@NodesUtil.userNodeCreatedRedirect(adnNode.id.get)"/>
+  <meta http-equiv="refresh" content="@args.autoRdrAfterSeconds; url=@args.rdrCall"/>
 }
 
 @views.html.ident.mySioStartTpl(
   title     = messages("Sign.up"),
-  columns   = Seq(_regSuccessColumnTpl(adnNode)),
+  columns   = Seq(_regSuccessColumnTpl(args)),
   headAfter = Some(headAfter1)
 )

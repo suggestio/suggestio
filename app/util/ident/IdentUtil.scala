@@ -1,7 +1,8 @@
 package util.ident
 
 import com.google.inject.{Singleton, Inject}
-import controllers.{IExecutionContext, IEsClient, routes}
+import controllers.routes
+import io.suggest.di.{IExecutionContext, IEsClient}
 import models.MAdnNode
 import models.usr.{SuperUsers, MExtIdent}
 import org.elasticsearch.client.Client

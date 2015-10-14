@@ -1,6 +1,7 @@
 package controllers.ident
 
-import controllers.{IEsClient, IMailer, CaptchaValidator, SioController}
+import controllers.{IMailer, CaptchaValidator, SioController}
+import io.suggest.di.IEsClient
 import models._
 import models.jsm.init.MTargets
 import models.msession.Keys
@@ -9,8 +10,8 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.mvc.Result
 import play.twirl.api.Html
-import util.adn.NodesUtil
 import util.captcha.CaptchaUtil._
+import util.di.INodesUtil
 import util.{FormUtil, PlayMacroLogsI}
 import util.acl._
 import views.html.ident.reg.regSuccessTpl
@@ -62,6 +63,7 @@ trait EmailPwReg
   with IEsClient
   with IsAnonCtl
   with CanConfirmEmailPwRegCtl
+  with INodesUtil
 {
 
   def sendEmailAct(ea: EmailActivation)(implicit ctx: Context): Unit = {
@@ -154,7 +156,7 @@ trait EmailPwReg
         val lang = request2lang
         MNode.applyPerson(lang = lang.code).save flatMap { personId =>
           // Развернуть узел для юзера
-          val adnNodeFut = NodesUtil.createUserNode(name = data.adnName, personId = personId)
+          val adnNodeFut = nodesUtil.createUserNode(name = data.adnName, personId = personId)
           // Сохранить новый epw-ident
           val idSaveFut = EmailPwIdent(
             email       = eaInfo.email,
@@ -163,8 +165,9 @@ trait EmailPwReg
             isVerified  = true
           ).save
           // Рендерим результат запроса сразу как только нода будет готова к использованию.
-          val resFut = adnNodeFut map { adnNode =>
-            Ok(regSuccessTpl(adnNode))
+          val resFut = adnNodeFut map { mnode =>
+            val args = nodesUtil.nodeRegSuccessArgs(mnode)
+            Ok( regSuccessTpl(args) )
               .addingToSession(Keys.PersonId.name -> personId)
               .withLang(lang)
           }

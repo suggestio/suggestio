@@ -9,7 +9,6 @@ import org.elasticsearch.client.Client
 import org.elasticsearch.common.unit.DistanceUnit
 import play.api.data._, Forms._
 import play.api.i18n.MessagesApi
-import play.api.libs.ws.WSClient
 import play.api.mvc.Result
 import util.PlayLazyMacroLogsImpl
 import util.FormUtil._
@@ -29,7 +28,7 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 class SysAdnGeo @Inject() (
   override val messagesApi      : MessagesApi,
-  implicit val ws               : WSClient,
+  implicit val osmClient        : OsmClient,
   override implicit val ec      : ExecutionContext,
   implicit val esClient         : Client,
   override implicit val sn      : SioNotifierStaticClientI
@@ -102,7 +101,7 @@ class SysAdnGeo @Inject() (
       },
       {case (glevel, urlPr) =>
         // Запросить у osm.org инфу по элементу
-        val resFut = OsmClient.fetchElement(urlPr.osmType, urlPr.id) flatMap { osmObj =>
+        val resFut = osmClient.fetchElement(urlPr.osmType, urlPr.id) flatMap { osmObj =>
           // Есть объект osm. Нужно его привести к шейпу, пригодному для модели и сохранить в ней же.
           val geo   = MAdnNodeGeo(
             adnId   = adnId,
@@ -180,7 +179,7 @@ class SysAdnGeo @Inject() (
         val adnGeo2Fut = urlPrOpt match {
           // Админ задал новую ссылку для скачивания контура.
           case Some(urlPr2) =>
-            OsmClient.fetchElement(urlPr2.osmType, urlPr2.id) map { osmObj =>
+            osmClient.fetchElement(urlPr2.osmType, urlPr2.id) map { osmObj =>
               request.adnGeo.copy(
                 shape   = osmObj.toGeoShape,
                 glevel  = glevel2,

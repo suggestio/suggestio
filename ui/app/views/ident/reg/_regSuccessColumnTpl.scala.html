@@ -1,4 +1,4 @@
-@(adnNode: MAdnNode)(implicit ctx: Context)
+@(args: madn.INodeRegSuccess)(implicit ctx: Context)
 
 @* Колонка рендерится, когда регистрация по email завершена успешно. *@
 
@@ -12,7 +12,7 @@
   <br/>
   @Html(messages(
     "If.no.rdr.click.here",
-    s"""<a class="link" href="${NodesUtil.userNodeCreatedRedirect(adnNode.id.get)}">""",
+    s"""<a class="link" href="${args.rdrCall}">""",
     "</a>"
   ))
 </div>

@@ -1,12 +1,13 @@
 package util.acl
 
-import controllers.{IEsClient, SioController}
+import controllers.SioController
+import io.suggest.di.IEsClient
 import models.req.SioReqMd
 import models.usr.{IEaEmailId, EmailActivation}
 import play.api.mvc.{Result, Request, ActionBuilder}
 import util.PlayMacroLogsDyn
 import util.acl.PersonWrapper.PwOpt_t
-import util.ident.IIdentUtil
+import util.di.IIdentUtil
 
 import scala.concurrent.Future
 
