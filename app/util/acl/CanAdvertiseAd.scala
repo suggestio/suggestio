@@ -11,7 +11,6 @@ import util.di.ICanAdvAdUtil
 import util.{PlayMacroLogsDyn, PlayMacroLogsI, PlayMacroLogsImpl}
 import util.acl.PersonWrapper.PwOpt_t
 import scala.concurrent.{ExecutionContext, Future}
-import IsAdnNodeAdmin.onUnauth
 
 /**
  * Suggest.io
@@ -88,10 +87,15 @@ trait CanAdvertiseAd
   extends ICanAdvAdUtil
   with IExecutionContext
   with IEsClient
+  with OnUnauthNodeCtl
 {
 
   /** Редактировать карточку может только владелец магазина. */
-  trait CanAdvertiseAdBase extends ActionBuilder[RequestWithAdAndProducer] with PlayMacroLogsI {
+  trait CanAdvertiseAdBase
+    extends ActionBuilder[RequestWithAdAndProducer]
+    with PlayMacroLogsI
+    with OnUnauthNode
+  {
 
     /** id запрошенной рекламной карточки. */
     def adId: String
@@ -105,12 +109,12 @@ trait CanAdvertiseAd
               block(req1)
             case None =>
               LOGGER.debug(s"invokeBlock(): maybeAllowed($pwOpt, mad=${mad.id.get}) -> false.")
-              onUnauth(request, pwOpt)
+              onUnauthNode(request, pwOpt)
           }
 
         case None =>
           LOGGER.debug("invokeBlock(): MAd not found: " + adId)
-          onUnauth(request, pwOpt)
+          onUnauthNode(request, pwOpt)
       }
     }
   }

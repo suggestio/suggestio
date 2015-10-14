@@ -18,10 +18,11 @@ import scala.concurrent.Future
 trait CanReceiveAdvReq
   extends SioController
   with IDb
+  with OnUnauthNodeCtl
 {
 
   /** Базовая реализация action-builder'ов проверки права на обработку реквестов размещения. */
-  trait CanReceiveAdvReqBase extends ActionBuilder[RequestWithAdvReq] {
+  trait CanReceiveAdvReqBase extends ActionBuilder[RequestWithAdvReq] with OnUnauthNode {
 
     /** id запрашиваемого adv-запроса. */
     def advReqId: Int
@@ -46,7 +47,7 @@ trait CanReceiveAdvReq
 
                 // Юзер не является админом.
                 case None =>
-                  IsAdnNodeAdmin.onUnauth(request, pwOpt)
+                  onUnauthNode(request, pwOpt)
               }
 
             case None =>

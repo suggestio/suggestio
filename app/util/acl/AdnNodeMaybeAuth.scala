@@ -4,6 +4,7 @@ import io.suggest.di.{IExecutionContext, IEsClient}
 import models.{MAdnNodeCache, MAdnNode}
 import models.req.SioReqMd
 import play.api.mvc.{Result, ActionBuilder, Request}
+import util.xplay.SioHttpErrorHandler
 import util.{PlayMacroLogsDyn, PlayMacroLogsI}
 import util.acl.PersonWrapper.PwOpt_t
 
@@ -49,12 +50,12 @@ trait AdnNodeMaybeAuth extends IEsClient with IExecutionContext {
 
     def accessProhibited[A](adnNode: MAdnNode, request: Request[A]): Future[Result] = {
       LOGGER.warn(s"Failed access to acl-prohibited node: ${adnNode.id.get} (${adnNode.meta.name}) :: Returning 404 to ${request.remoteAddress}")
-      IsAdnNodeAdmin.nodeNotFound(adnId)(request)
+      nodeNotFound(request)
     }
 
-    def nodeNotFound[A](request: Request[A]): Future[Result] = {
+    def nodeNotFound(implicit request: Request[_]): Future[Result] = {
       LOGGER.warn(s"Node $adnId not found, requested by ${request.remoteAddress}")
-      IsAdnNodeAdmin.nodeNotFound(adnId)(request)
+      SioHttpErrorHandler.http404Fut
     }
   }
 

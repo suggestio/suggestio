@@ -1,5 +1,6 @@
 package util.acl
 
+import controllers.SioController
 import models._
 import models.req.SioReqMd
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -17,11 +18,26 @@ import play.api.mvc.Result
  * Created: 18.04.14 18:35
  * Description: Проверка прав на управление абстрактным узлом рекламной сети.
  */
+
+trait OnUnauthNodeCtl extends SioController {
+
+  trait OnUnauthNode {
+    /** Что делать, когда юзер не авторизован, но долбится в ЛК? */
+    def onUnauthNode(req: RequestHeader, pwOpt: PwOpt_t): Future[Result] = {
+      pwOpt match {
+        case None => IsAuth.onUnauth(req)
+        case _ => Future successful Forbidden(FORBIDDEN + " Forbidden")
+      }
+    }
+  }
+
+}
+
+
 object IsAdnNodeAdmin extends PlayLazyMacroLogsImpl {
 
-  import LOGGER._
-
   /** Что делать, когда юзер не авторизован, но долбится в ЛК? */
+  @deprecated("Use OnUnauthNodeCtl.OnUnauthNode.onUnauthNode() instead.", "2015.oct.14")
   def onUnauth(req: RequestHeader, pwOpt: PwOpt_t): Future[Result] = {
     pwOpt match {
       case None => IsAuth.onUnauth(req)
@@ -51,7 +67,7 @@ object IsAdnNodeAdmin extends PlayLazyMacroLogsImpl {
 
   def checkAdnNodeCreds(adnNodeOpt: Option[MAdnNode], adnId: String, pwOpt: PwOpt_t): Either[Option[MAdnNode], MAdnNode] = {
     adnNodeOpt.fold [Either[Option[MAdnNode], MAdnNode]] {
-      warn(s"checkAdnNodeCreds(): Node[$adnId] does not exist!")
+      LOGGER.warn(s"checkAdnNodeCreds(): Node[$adnId] does not exist!")
       Left(None)
     } { adnNode =>
       val isAllowed = isAdnNodeAdminCheck(adnNode, pwOpt)
@@ -59,7 +75,7 @@ object IsAdnNodeAdmin extends PlayLazyMacroLogsImpl {
         Right(adnNode)
       } else {
         if (pwOpt.isDefined)
-          warn(s"checkAdnNodeCreds(): User $pwOpt not allowed to access to node ${adnNode.id.get}")
+          LOGGER.warn(s"checkAdnNodeCreds(): User $pwOpt not allowed to access to node ${adnNode.id.get}")
         Left(adnNodeOpt)
       }
     }
@@ -72,19 +88,13 @@ object IsAdnNodeAdmin extends PlayLazyMacroLogsImpl {
     }
   }
 
-
   def isAdnNodeAdmin(adnId: String, pwOpt: PwOpt_t): Future[Option[MAdnNode]] = {
     val fut = MAdnNodeCache.getById(adnId)
     checkAdnNodeCredsOpt(fut, adnId, pwOpt)
   }
 
-  def nodeNotFound(adnId: String)(implicit request: RequestHeader): Future[Result] = {
-    SioHttpErrorHandler.http404Fut
-  }
 }
 
-
-import IsAdnNodeAdmin.onUnauth
 
 /** В реквесте содержится администрируемый узел, если всё ок. */
 sealed trait IsAdnNodeAdminBase extends ActionBuilder[AbstractRequestForAdnNode] with PlayMacroLogsI {
@@ -104,7 +114,7 @@ sealed trait IsAdnNodeAdminBase extends ActionBuilder[AbstractRequestForAdnNode]
 
       case _ =>
         LOGGER.debug(s"User $pwOpt has NO admin access to node $adnId")
-        onUnauth(request, pwOpt)
+        IsAdnNodeAdmin.onUnauth(request, pwOpt)
     }
   }
 }

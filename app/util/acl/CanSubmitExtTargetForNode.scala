@@ -39,11 +39,18 @@ case class ExtTargetSubmitRequest[A](
 
 
 /** Аддон для контроллера для добавления поддержки */
-trait CanSubmitExtTargetForNode extends SioController with IEsClient {
+trait CanSubmitExtTargetForNode
+  extends OnUnauthNodeCtl
+  with IEsClient
+{
 
   /** Заготовка ActionBuilder'а для проверки доступа на запись (create, edit) для target'а,
     * id которого возможно задан в теле POST'а. */
-  trait CanSubmitExtTargetForNodeBase extends ActionBuilder[ExtTargetSubmitRequest] with PlayMacroLogsDyn {
+  trait CanSubmitExtTargetForNodeBase
+    extends ActionBuilder[ExtTargetSubmitRequest]
+    with PlayMacroLogsDyn
+    with OnUnauthNode
+  {
 
     /** id узла, заявленного клиентом. */
     def adnId: String
@@ -99,7 +106,7 @@ trait CanSubmitExtTargetForNode extends SioController with IEsClient {
 
         // Нет прав на узел.
         case None =>
-          IsAdnNodeAdmin.onUnauth(request, pwOpt)
+          onUnauthNode(request, pwOpt)
       }
     }
 

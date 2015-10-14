@@ -1,6 +1,5 @@
 package util.acl
 
-import controllers.SioController
 import io.suggest.di.IEsClient
 import models.MAdnNode
 import models.adv.MExtTarget
@@ -18,10 +17,17 @@ import scala.concurrent.Future
  * Description: ActionBuilder для экшенов доступа к записям [[models.adv.MExtTarget]] по id.
  */
 
-trait CanAccessExtTargetBaseCtl extends SioController with IEsClient {
+trait CanAccessExtTargetBaseCtl
+  extends OnUnauthNodeCtl
+  with IEsClient
+{
 
   /** Базовая логика [[CanAccessExtTarget]] живёт в этом трейте. */
-  trait CanAccessExtTargetBase extends ActionBuilder[ExtTargetRequest] with PlayMacroLogsDyn {
+  trait CanAccessExtTargetBase
+    extends ActionBuilder[ExtTargetRequest]
+    with PlayMacroLogsDyn
+    with OnUnauthNode
+  {
 
     /** id ранее сохранённого экземпляра [[models.adv.MExtTarget]]. */
     def tgId: String
@@ -50,7 +56,7 @@ trait CanAccessExtTargetBaseCtl extends SioController with IEsClient {
 
             // Нет прав на узел.
             case None =>
-              IsAdnNodeAdmin.onUnauth(request, pwOpt)
+              onUnauthNode(request, pwOpt)
           }
 
         case None =>

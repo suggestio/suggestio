@@ -1,11 +1,10 @@
 package util.acl
 
-import controllers.SioController
 import io.suggest.di.IEsClient
 import models.MAdnNode
 import models.event.MEvent
 import models.req.SioReqMd
-import play.api.mvc.{Results, Result, Request, ActionBuilder}
+import play.api.mvc.{Result, Request, ActionBuilder}
 import util.acl.PersonWrapper.PwOpt_t
 
 import scala.concurrent.Future
@@ -17,10 +16,10 @@ import scala.concurrent.Future
  * Description: Контроль доступа к событиям.
  */
 
-trait HasNodeEventAccess extends SioController with IEsClient {
+trait HasNodeEventAccess extends OnUnauthNodeCtl with IEsClient {
 
   /** Проверка доступа к событию, которое относится к узлу. */
-  trait HasNodeEventAccessBase extends ActionBuilder[NodeEventRequest] {
+  trait HasNodeEventAccessBase extends ActionBuilder[NodeEventRequest] with OnUnauthNode {
     def eventId: String
 
     /** Нужен ли доступ к кошельку узла и другие функции sioReqMd? */
@@ -68,11 +67,11 @@ trait HasNodeEventAccess extends SioController with IEsClient {
     }
 
     def forbidden(request: Request[_], pwOpt: PwOpt_t): Future[Result] = {
-      IsAdnNodeAdmin.onUnauth(request, pwOpt)
+      onUnauthNode(request, pwOpt)
     }
 
     def eventNotFound(request: Request[_], pwOpt: PwOpt_t): Future[Result] = {
-      val res = Results.NotFound("Event not found: " + eventId)
+      val res = NotFound("Event not found: " + eventId)
       Future successful res
     }
   }

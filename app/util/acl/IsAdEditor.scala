@@ -9,7 +9,6 @@ import util.acl.PersonWrapper.PwOpt_t
 import util.async.AsyncUtil
 import util.xplay.SioHttpErrorHandler
 import scala.concurrent.Future
-import IsAdnNodeAdmin.onUnauth
 import util.{PlayMacroLogsDyn, PlayMacroLogsI}
 
 /**
@@ -171,10 +170,10 @@ case class RequestWithAdAndProducer[A](
 
 /** Статический логгер для класса запиливаем тут. object всё равно создаётся при компиляции case class'а, поэтому
   * оверхеда тут нет. */
-trait CanUpdateSls extends AdEditBaseCtl {
+trait CanUpdateSls extends AdEditBaseCtl with OnUnauthNodeCtl {
 
   /** Проверка прав на возможность обновления уровней отображения рекламной карточки. */
-  trait CanUpdateSlsBase extends ActionBuilder[RequestWithAdAndProducer] with AdEditBase {
+  trait CanUpdateSlsBase extends ActionBuilder[RequestWithAdAndProducer] with AdEditBase with OnUnauthNode {
 
     override def invokeBlock[A](request: Request[A], block: (RequestWithAdAndProducer[A]) => Future[Result]): Future[Result] = {
       val madOptFut = MAd.getById(adId)
@@ -217,7 +216,7 @@ trait CanUpdateSls extends AdEditBaseCtl {
         // С анонимусами разговор короткий.
         case None =>
           LOGGER.trace("invokeBlock(): Anonymous access prohibited to " + adId)
-          onUnauth(request, pwOpt)
+          onUnauthNode(request, pwOpt)
       }
     }
   }
