@@ -26,6 +26,8 @@ class AdvUtil @Inject() (
   mmpDailyBilling         : MmpDailyBilling,
   configuration           : Configuration,
   db                      : Database,
+  advTownCoverageRcvrs    : AdvTownCoverageRcvrs,
+  advFreeGeoParentRcvrs   : AdvFreeGeoParentRcvrs,
   implicit val ec         : ExecutionContext,
   implicit val esClient   : Client,
   implicit val sn         : SioNotifierStaticClientI
@@ -38,8 +40,8 @@ class AdvUtil @Inject() (
   /** Текущие активные аддоны, участвующие в генерации списка ресиверов. */
   val EXTRA_RCVRS_CALCS: List[AdvExtraRcvrsCalculator] = {
     List(
-      AdvFreeGeoParentRcvrs,
-      AdvTownCoverageRcvrs
+      advFreeGeoParentRcvrs,
+      advTownCoverageRcvrs
     )
     .filter(_.isEnabled)
   }

@@ -124,13 +124,14 @@ object Global extends WithFilters(new HtmlCompressFilter, new DumpXffHeaders, Se
   private def crontab(app: Application)         = _inject[Crontab](app)
   private def jmxImpl(app: Application)         = _inject[JMXImpl](app)
   private def siowebEsModel(app: Application)   = _inject[SiowebEsModel](app)
+  private def scStatSaver(app: Application)     = _inject[ScStatSaver](app)
 
   /**
    * При остановке системы (например, при обновлении исходников), нужно выполнить все нижеперечисленные действия.
    * @param app Экщемпляр класса Application.
    */
   override def onStop(app: Application) {
-    ScStatSaver.BACKEND.close()
+    scStatSaver(app).BACKEND.close()
     // Сразу в фоне запускаем отключение тяжелых клиентов к кластерных хранилищам:
     val casCloseFut = SioCassandraClient.close()
     // Была одна ошибка после проблемы в DI после onStart(). JMXImpl должен останавливаться перед elasticsearch.

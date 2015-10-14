@@ -1,5 +1,6 @@
 package controllers.sc
 
+import _root_.util.di.{IScUtil, IScStatUtil}
 import _root_.util.jsa.{JsAppendById, JsAction, SmRcvResp, Js}
 import io.suggest.common.css.FocusedTopLeft
 import io.suggest.util.Lists
@@ -9,7 +10,6 @@ import models.jsm.ProducerAdsResp
 import models.msc._
 import play.api.mvc.Result
 import play.twirl.api.Html
-import util.showcase._
 import util.PlayMacroLogsI
 import util.acl._
 import views.html.sc.foc._
@@ -24,7 +24,11 @@ import scala.concurrent.Future
  * Created: 12.11.14 19:38
  * Description: Поддержка открытых рекламных карточек.
  */
-trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
+trait ScFocusedAdsBase
+  extends ScController
+  with PlayMacroLogsI
+  with IScUtil
+{
 
   /** Базовая логика обработки запросов сбора данных по рекламным карточкам и компиляции оных в результаты выполнения запросов. */
   trait FocusedAdsLogic extends AdCssRenderArgs {
@@ -164,7 +168,7 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
       val _withCssClasses = withCssClasses
       _mads2Fut flatMap { mads =>
         Future.traverse(mads) { mad =>
-          ShowcaseUtil.focusedBrArgsFor(mad)(_ctx)
+          scUtil.focusedBrArgsFor(mad)(_ctx)
             .map { brArgs =>
               brArgs.copy(
                 inlineStyles    = false,
@@ -301,8 +305,8 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
           .flatMap(logosMap.get)
       }
 
-      val _fgColor = producer.meta.fgColor getOrElse ShowcaseUtil.SITE_FGCOLOR_DFLT
-      val _bgColor = producer.meta.color  getOrElse  ShowcaseUtil.SITE_BGCOLOR_DFLT
+      val _fgColor = producer.meta.fgColor getOrElse scUtil.SITE_FGCOLOR_DFLT
+      val _bgColor = producer.meta.color  getOrElse  scUtil.SITE_BGCOLOR_DFLT
 
       for (_logoImgOpt <- logoImgOptFut) yield {
         FocusedAdsTplArgs2(
@@ -432,7 +436,10 @@ trait ScFocusedAdsBase extends ScController with PlayMacroLogsI {
 
 
 /** Поддержка экшена для focused-ads API v1. */
-trait ScFocusedAds extends ScFocusedAdsBase {
+trait ScFocusedAds
+  extends ScFocusedAdsBase
+  with IScStatUtil
+{
 
   /** Экшен для рендера горизонтальной выдачи карточек.
     * @param adSearch Поисковый запрос.
@@ -466,7 +473,7 @@ trait ScFocusedAds extends ScFocusedAdsBase {
 
     // В фоне, когда поступят карточки, нужно будет сохранить по ним статистику:
     logic.mads2Fut onSuccess { case mads =>
-      ScFocusedAdsStatUtil(
+      scStatUtil.FocusedAdsStat(
         adSearch    = logic._adSearch,
         madIds      = mads.flatMap(_.id),
         withHeadAd  = logic._adSearch.withHeadAd

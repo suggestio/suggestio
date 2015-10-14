@@ -1,12 +1,12 @@
 package util.adv
 
+import com.google.inject.Inject
 import io.suggest.ym.model.common.AdnSinks
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
-import play.api.Play.{configuration, current}
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import org.elasticsearch.client.Client
+import play.api.Configuration
 import util.PlayMacroLogsImpl
-import util.SiowebEsUtil.client
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import models._
 
 /**
@@ -16,7 +16,14 @@ import models._
  * Description: Если все районы города покрыты размещением, то размещение должно перебрасываться и на весь город.
  * Здесь калькулятор карты экстра-ресиверов, который реализует этот принцип. 
  */
-object AdvTownCoverageRcvrs extends AdvExtraRcvrsCalculator with PlayMacroLogsImpl {
+class AdvTownCoverageRcvrs @Inject() (
+  configuration                   : Configuration,
+  implicit private val esClient   : Client,
+  implicit private val ec         : ExecutionContext
+)
+  extends AdvExtraRcvrsCalculator
+  with PlayMacroLogsImpl
+{
 
   import LOGGER._
 

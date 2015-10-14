@@ -5,7 +5,8 @@ import java.{util => ju}
 import java.util.UUID
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
-import play.api.Play.{current, configuration}
+import com.google.inject.{Inject, Singleton}
+import play.api.Configuration
 import io.suggest.util.UuidUtil._
 
 import org.apache.commons.codec.binary.Base64
@@ -21,7 +22,12 @@ import util.PlayMacroLogsImpl
  * куками.
  * 2014.sep.22: uuid-конвертеры вынесены в sioutil/io.suggest.util.UuidUtil.
  */
-object StatUtil extends PlayMacroLogsImpl {
+@Singleton
+class StatUtil @Inject() (
+  configuration: Configuration
+)
+  extends PlayMacroLogsImpl
+{
 
   import LOGGER._
 

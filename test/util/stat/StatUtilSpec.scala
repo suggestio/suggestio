@@ -13,9 +13,12 @@ import org.scalatestplus.play._
  */
 class StatUtilSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
 
-  import StatUtil._
+  lazy val statUtil = app.injector.instanceOf[StatUtil]
+
 
   "StatUtil" must {
+
+    import statUtil._
 
     "serialize and deserialize UUIDs to String+MAC" in {
       def ed: Unit = {

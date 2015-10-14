@@ -1,17 +1,17 @@
 package util.img
 
+import com.google.inject.{Singleton, Inject}
+import io.suggest.event.SioNotifierStaticClientI
 import models.im._
 import models.madn.EditConstants
 import models.msc.WelcomeRenderArgsT
+import org.elasticsearch.client.Client
+import play.api.Configuration
 import util.PlayMacroLogsImpl
 import util.cdn.CdnUtil
 import util.showcase.ShowcaseUtil
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import models._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.SiowebEsUtil.client
-import util.event.SiowebNotifier.Implicts.sn
-import play.api.Play.{current, configuration}
 
 /**
  * Suggest.io
@@ -19,7 +19,16 @@ import play.api.Play.{current, configuration}
  * Created: 03.07.14 10:54
  * Description: Утиль для картинки/карточки приветствия.
  */
-object WelcomeUtil extends PlayMacroLogsImpl {
+@Singleton
+class WelcomeUtil @Inject() (
+  configuration          : Configuration,
+  scUtil                 : ShowcaseUtil,
+  implicit val ec        : ExecutionContext,
+  implicit val esClient  : Client,
+  implicit val sn        : SioNotifierStaticClientI
+)
+  extends PlayMacroLogsImpl
+{
 
   import LOGGER._
 
@@ -197,7 +206,7 @@ object WelcomeUtil extends PlayMacroLogsImpl {
 
   /** внутренний метод для генерации ответа по фону приветствия в режиме цвета. */
   private def colorBg(adnNode: MAdnNode) = {
-    val bgColor = adnNode.meta.color.getOrElse(ShowcaseUtil.SITE_BGCOLOR_DFLT)
+    val bgColor = adnNode.meta.color.getOrElse(scUtil.SITE_BGCOLOR_DFLT)
     Left(bgColor)
   }
 

@@ -1,5 +1,6 @@
 package util.showcase
 
+import com.google.inject.{Singleton, Inject}
 import controllers.routes
 import io.suggest.sc.tile.ColumnsCountT
 import io.suggest.ym.model.MAd
@@ -9,13 +10,12 @@ import models.blk.{BlockHeights, SzMult_t, BlockWidth, BlockWidths}
 import models.im._
 import models.im.make.{MakeResult, MakeArgs, Makers}
 import models.msc.{IScSiteColors, ScSiteColors, TileArgs}
-import play.api.Play.{current, configuration}
+import org.elasticsearch.client.Client
+import play.api.Configuration
 import util.blocks.BgImg
 import util.cdn.CdnUtil
 import scala.annotation.tailrec
-import scala.concurrent.Future
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.SiowebEsUtil.client
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -23,7 +23,14 @@ import util.SiowebEsUtil.client
  * Created: 02.07.14 14:10
  * Description: Всякая статическая утиль для выдачи.
  */
-object ShowcaseUtil extends ColumnsCountT {
+@Singleton
+class ShowcaseUtil @Inject() (
+  configuration             : Configuration,
+  implicit val ec           : ExecutionContext,
+  implicit val esClient     : Client
+)
+  extends ColumnsCountT
+{
 
   /** Дефолтовое имя ноды. */
   val SITE_NAME_GEO = configuration.getString("market.showcase.nodeName.dflt") getOrElse "Suggest.io"
@@ -40,13 +47,8 @@ object ShowcaseUtil extends ColumnsCountT {
   /** Цвет для выдачи, которая вне узла. */
   val SITE_FGCOLOR_GEO = configuration.getString("market.showcase.color.fg.geo") getOrElse SITE_FGCOLOR_DFLT
 
-
-
   /** Отображать ли пустые категории? */
   val SHOW_EMPTY_CATS = configuration.getBoolean("market.frontend.cats.empty.show") getOrElse true
-
-  /** Путь до ассета со скриптом выдачи. */
-  val SHOWCASE_JS_ASSET = configuration.getString("showcase.js.asset.path") getOrElse "javascripts/market/showcase/showcase2.js"
 
   /** Фон под рекламными карточками заполняется на основе цвета с добавление прозрачности от фона. */
   val TILES_BG_FILL_ALPHA: Float = configuration.getDouble("showcase.tiles.bg.fill.ratio") match {
@@ -129,30 +131,6 @@ object ShowcaseUtil extends ColumnsCountT {
       }
     }
     GetCatsResult(catsStatsFut, mmcatsFut)
-  }
-
-
-  /** Генерация абсолютной ссылки на скрипт showcase2.js.
-    * @param mkPermanentUrl Создавать постоянную ссылку. Такая ссылка может быть встроена на другие сайты.
-    *                       У неё проблемы с геоэффективным кешированием, но она не будет изменятся во времени.
-    * @param ctx Контекст рендера шаблонов.
-    * @return Строка абсолютной ссылки (URL).
-    */
-  def showcaseJsAbsUrl(mkPermanentUrl: Boolean)(implicit ctx: Context): String = {
-    if (mkPermanentUrl) {
-      // Генерим ссылку на скрипт, которой потом можно будет поделится с другим сайтом.
-      ctx.currAudienceUrl + routes.Assets.at(SHOWCASE_JS_ASSET).url
-    } else {
-      // Генерим постоянную ссылку на ассет с бешеным кешированием и возможностью загона в CDN.
-      val call1 = CdnUtil.asset(SHOWCASE_JS_ASSET)
-      if(call1.isInstanceOf[ExternalCall]) {
-        // У нас тут ссылка на CDN.
-        call1.url
-      } else {
-        // Поддержка CDN невозможна. Допиливаем адрес до абсолютной ссылки.
-        ctx.currAudienceUrl + call1.url
-      }
-    }
   }
 
 
@@ -346,6 +324,39 @@ object ShowcaseUtil extends ColumnsCountT {
         )
       case None =>
         SC_COLORS_GEO
+    }
+  }
+
+}
+
+
+/** Кое-какая static-only утиль для sc v1. */
+// TODO v1 Выпилить вслед за sc v1 _installScriptTpl
+object ScScriptV1TplUtil {
+
+  /** Путь до ассета со скриптом выдачи. */
+  def SHOWCASE_JS_ASSET = "javascripts/market/showcase/showcase2.js"
+
+  /** Генерация абсолютной ссылки на скрипт showcase2.js.
+    * @param mkPermanentUrl Создавать постоянную ссылку. Такая ссылка может быть встроена на другие сайты.
+    *                       У неё проблемы с геоэффективным кешированием, но она не будет изменятся во времени.
+    * @param ctx Контекст рендера шаблонов.
+    * @return Строка абсолютной ссылки (URL).
+    */
+  def showcaseJsAbsUrl(mkPermanentUrl: Boolean)(implicit ctx: Context): String = {
+    if (mkPermanentUrl) {
+      // Генерим ссылку на скрипт, которой потом можно будет поделится с другим сайтом.
+      ctx.currAudienceUrl + routes.Assets.at(SHOWCASE_JS_ASSET).url
+    } else {
+      // Генерим постоянную ссылку на ассет с бешеным кешированием и возможностью загона в CDN.
+      val call1 = CdnUtil.asset(SHOWCASE_JS_ASSET)
+      if (call1.isInstanceOf[ExternalCall]) {
+        // У нас тут ссылка на CDN.
+        call1.url
+      } else {
+        // Поддержка CDN невозможна. Допиливаем адрес до абсолютной ссылки.
+        ctx.currAudienceUrl + call1.url
+      }
     }
   }
 

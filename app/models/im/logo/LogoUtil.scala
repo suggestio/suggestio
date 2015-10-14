@@ -1,6 +1,7 @@
 package models.im.logo
 
 import com.google.inject.{Inject, Singleton}
+import io.suggest.playx.CacheApiUtil
 import models.{MAdnNode, MPredicates, IEdge}
 import io.suggest.sc.ScConstants
 import io.suggest.ym.model.common.MImgInfoMeta
@@ -8,12 +9,9 @@ import models.blk._
 import models.im._
 import play.api.Play._
 import util.img.ImgFormUtil
-import util.xplay.CacheUtil
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.SiowebEsUtil.client
-import util.event.SiowebNotifier.Implicts.sn
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration._
 
 /**
  * Suggest.io
@@ -23,11 +21,15 @@ import scala.concurrent.Future
  */
 @Singleton
 class LogoUtil @Inject() (
-  mImg3  : MImg3_
+  mImg3             : MImg3_,
+  cache             : CacheApiUtil,
+  implicit val ec   : ExecutionContext
 ) {
 
   /** Сколько секунд кешировать результат getLogoOfNode? */
-  val GET_NODE_LOGO_CACHE_SECONDS = configuration.getInt("logo.of.node.cache.seconds") getOrElse 10
+  val GET_NODE_LOGO_CACHE_SECONDS = configuration.getInt("logo.of.node.cache.seconds")
+    .getOrElse(10)
+    .seconds
 
   /** Приведение ребра графа к метаданным изображения логотипа. */
   def edge2logoImg(medge: IEdge): MImgT = {
@@ -92,7 +94,7 @@ class LogoUtil @Inject() (
   }
 
   def getLogoOfNodeCached(adnNodeId: String): Future[LogoOpt_t] = {
-    CacheUtil.getOrElse(adnNodeId + ".n2lo", GET_NODE_LOGO_CACHE_SECONDS) {
+    cache.getOrElseFut(adnNodeId + ".n2lo", GET_NODE_LOGO_CACHE_SECONDS) {
       getLogoOfNode(adnNodeId)
     }
   }

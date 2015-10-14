@@ -15,7 +15,10 @@ import util.blocks.BlocksConf
  * Description: Тесты для утили siom-выдачи.
  */
 class ShowcaseUtilSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
-  import ShowcaseUtil._
+
+  lazy val scUtil = app.injector.instanceOf[ShowcaseUtil]
+
+  import scUtil._
 
   private def pxr15 = Some(DevPixelRatios.HDPI)  // Нужно lazy или def, иначе будет exception in initializer error.
   private def pxr30 = Some(DevPixelRatios.DPR3)

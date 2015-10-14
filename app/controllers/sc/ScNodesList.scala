@@ -1,6 +1,7 @@
 package controllers.sc
 
 import java.util.NoSuchElementException
+import _root_.util.di.{IScNlUtil, IScStatUtil}
 import _root_.util.jsa.{Js, SmRcvResp}
 import io.suggest.playx.ICurrentConf
 import models.jsm.NodeListResp
@@ -8,7 +9,6 @@ import models.msc._
 import play.api.mvc.Result
 import play.twirl.api.Html
 import util.PlayMacroLogsI
-import _root_.util.showcase._
 import util.acl._
 import views.html.sc._
 import play.api.libs.json._
@@ -22,7 +22,11 @@ import play.api.Play
  * Created: 13.11.14 18:10
  * Description: Поддержка экшена доступа к списку узлов и логики генерации этого списка.
  */
-trait ScNodesListBase extends ScController with PlayMacroLogsI {
+trait ScNodesListBase
+  extends ScController
+  with PlayMacroLogsI
+  with IScNlUtil
+{
 
   /** Гибкая логика обработки запроса сбора списка узлов. */
   protected trait FindNodesLogic {
@@ -35,21 +39,25 @@ trait ScNodesListBase extends ScController with PlayMacroLogsI {
     // Запуск детектора текущей ноды, если необходимо. Асинхронно возвращает (lvl, node) или экзепшен.
     // Экзепшен означает, что переключение нод отключено или не удалось найти текущую ноду.
     lazy val nextNodeSwitchFut: Future[GeoDetectResult] = if (_nsArgs.isNodeSwitch) {
-      ShowcaseNodeListUtil.detectCurrentNode(_nsArgs.geoMode, gsiOptFut)
+      scNlUtil.detectCurrentNode(_nsArgs.geoMode, gsiOptFut)
     } else {
       Future failed new NoSuchElementException("Node detect disabled")
     }
 
     /** Нода, которая будет отображена как текущая на грядущем шаге. */
-    def nextNodeFut = ShowcaseNodeListUtil.detectRecoverGuessCurrentNode(gsiOptFut, _nsArgs.currAdnId)(nextNodeSwitchFut)
+    def nextNodeFut = {
+      scNlUtil.detectRecoverGuessCurrentNode(gsiOptFut, _nsArgs.currAdnId)(nextNodeSwitchFut)
+    }
 
     /** Привести nextNodeFut к формату nextNodeSwitchFut. */
-    lazy val nextNodeWithLayerFut = ShowcaseNodeListUtil.nextNodeWithLvlOptFut(nextNodeSwitchFut, nextNodeFut)
+    lazy val nextNodeWithLayerFut = {
+      scNlUtil.nextNodeWithLvlOptFut(nextNodeSwitchFut, nextNodeFut)
+    }
 
     /** Сырые навигационные слои узлов. */
     def nglsFut: Future[Seq[GeoNodesLayer]] = {
       nextNodeWithLayerFut.flatMap { nextNodeGdr =>
-        ShowcaseNodeListUtil.collectLayers(Some(_nsArgs.geoMode), nextNodeGdr.node, nextNodeGdr.ngl)
+        scNlUtil.collectLayers(Some(_nsArgs.geoMode), nextNodeGdr.node, nextNodeGdr.ngl)
       }
     }
 
@@ -104,7 +112,11 @@ trait ScNodesListBase extends ScController with PlayMacroLogsI {
 
 
 /** Аддон к Showcase-контроллеру, добавляющий обработку запроса списка узлов. */
-trait ScNodesList extends ScNodesListBase with ICurrentConf {
+trait ScNodesList
+  extends ScNodesListBase
+  with ICurrentConf
+  with IScStatUtil
+{
 
   /** Кеш ответа findNodes() на клиенте. Это существенно ускоряет навигацию. */
   protected val FIND_NODES_CACHE_SECONDS: Int = {
@@ -124,7 +136,7 @@ trait ScNodesList extends ScNodesListBase with ICurrentConf {
     //LOGGER.trace( s"findNodes($args): [$tstamp] remote = ${request.remoteAddress}; path=${request.uri}" )
 
     // Одновременно собираем статистику по текущему запросу:
-    ScNodeListingStat(args, logic.gsiOptFut)
+    scStatUtil.NodeListingStat(args, logic.gsiOptFut)
       .saveStats
       .onFailure { case ex =>
         LOGGER.warn("Failed to save stats", ex)

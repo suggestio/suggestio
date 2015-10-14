@@ -1,13 +1,13 @@
 package util.adv
 
+import com.google.inject.Inject
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import models._
-import play.api.Play.{configuration, current}
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import org.elasticsearch.client.Client
+import play.api.Configuration
 import util.PlayMacroLogsImpl
-import util.SiowebEsUtil.client
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -17,7 +17,14 @@ import scala.concurrent.Future
  */
 
 /** Статическая утиль для вычисления списка экстра-ресиверов на основе гео-родительских связей. */
-object AdvFreeGeoParentRcvrs extends AdvExtraRcvrsCalculator with PlayMacroLogsImpl {
+class AdvFreeGeoParentRcvrs @Inject() (
+  configuration                   : Configuration,
+  implicit private val esClient   : Client,
+  implicit private val ec         : ExecutionContext
+)
+  extends AdvExtraRcvrsCalculator
+  with PlayMacroLogsImpl
+{
 
   import LOGGER._
 

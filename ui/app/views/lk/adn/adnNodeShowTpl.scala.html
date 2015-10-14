@@ -4,7 +4,6 @@
    Если isMyNode, то идёт рендер управляемого узла, и povAdnIdOpt игнорируется.
    Если !isMyNode, то юзер смотрит чужой нередактируемый узел. *@
 
-@import util.showcase.ShowcaseUtil.SITE_BGCOLOR_DFLT
 @import ctx._
 @import node._
 @import util.img.GalleryUtil
@@ -81,10 +80,10 @@
           @messages("Bg.color.of.sc.hint")
         </td>
         <td class="td __color-title">
-	  <span class="dark-gray ft-S">@Html( messages("Main.color", "<br/>") )</span>
+	        <span class="dark-gray ft-S">@Html( messages("Main.color", "<br/>") )</span>
         </td>
         <td class="td __padding-S">
-          <div class="color" style="background-color: #@mnode.meta.color.getOrElse(SITE_BGCOLOR_DFLT);"></div>
+          <div class="color" style="background-color: #@args.bgColor;"></div>
         </td>
         <td class="td __padding-S">
           <div class="delimiter __light __vertical @VLines.JSVL_CLASS"></div>
@@ -93,10 +92,10 @@
           @messages("Fg.color.of.sc.hint")
         </td>
         <td class="td __color-title">
-	  <span class="dark-gray ft-S">@Html( messages("Content.color", "<br/>") )</span>
+	        <span class="dark-gray ft-S">@Html( messages("Content.color", "<br/>") )</span>
         </td>
         <td class="td __padding-S dark-gray">
-          <div class="color" style="background-color: #@mnode.meta.fgColor.getOrElse(SITE_BGCOLOR_DFLT);"></div>
+          <div class="color" style="background-color: #@args.fgColor;"></div>
         </td>
       </tr>
     </table>

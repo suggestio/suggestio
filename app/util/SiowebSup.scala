@@ -76,7 +76,7 @@ class SiowebSup extends Actor with Logs {
    * @return
    */
   override def supervisorStrategy: SupervisorStrategy = {
-    OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 10 seconds) {
+    OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 10.seconds) {
       case _:Exception => Restart
     }
   }

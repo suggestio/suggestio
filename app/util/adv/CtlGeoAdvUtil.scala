@@ -18,7 +18,7 @@ import scala.concurrent.Future
  * Для ускорения работы с SQL-базой было включено активное распараллеливание.
  */
 
-object CtlGeoAdvUtil {
+class CtlGeoAdvUtil {
 
   def LIMIT_DFLT = -1
 

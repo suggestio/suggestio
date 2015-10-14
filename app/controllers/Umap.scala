@@ -31,6 +31,7 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 class Umap @Inject() (
   override val messagesApi        : MessagesApi,
+  umapUtil                        : UmapUtil,
   override implicit val current   : play.api.Application,
   override implicit val ec        : ExecutionContext,
   override implicit val esClient  : Client,
@@ -113,7 +114,7 @@ class Umap @Inject() (
   private def _getDataLayerGeoJson(adnIdOpt: Option[String], ngl: NodeGeoLevel, nodesMap: Map[String, MAdnNode],
                                    geos: Seq[MAdnNodeGeo])(implicit request: RequestHeader): Result = {
     val features: Seq[JsObject] = {
-      val shapeFeaturesIter = UmapUtil.prepareDataLayerGeos(geos.iterator)
+      val shapeFeaturesIter = umapUtil.prepareDataLayerGeos(geos.iterator)
         .map { geo =>
           JsObject(Seq(
             "type" -> JsString("Feature"),
@@ -203,7 +204,7 @@ class Umap @Inject() (
       } finally {
         tempFile.ref.file.delete()
       }
-      val layerData = UmapUtil.deserializeFromBytes(jsonBytes).get
+      val layerData = umapUtil.deserializeFromBytes(jsonBytes).get
       // Собираем BulkRequest для сохранения данных.
       val bulkSave = esClient.prepareBulk()
       layerData.features

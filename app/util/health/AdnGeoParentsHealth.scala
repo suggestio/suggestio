@@ -29,6 +29,7 @@ class AdnGeoParentsHealth @Inject() (
   configuration         : Configuration,
   mailer                : IMailerWrapper,
   messagesApi           : MessagesApi,
+  scNlUtil              : ShowcaseNodeListUtil,
   implicit val ec       : ExecutionContext,
   implicit val esClient : Client
 )
@@ -84,7 +85,7 @@ class AdnGeoParentsHealth @Inject() (
       } else {
         val testsFut = AdnShownTypes.withName(mnode.adn.shownTypeId).ngls.map { ngl =>
           // Для проверки валидности пропихиваем этот узел в ShowcaseNodeListUtil и анализируем результат.
-          ShowcaseNodeListUtil.collectLayers(geoMode = None, currNode = mnode, currNodeLayer = ngl)
+          scNlUtil.collectLayers(geoMode = None, currNode = mnode, currNodeLayer = ngl)
             .filter { _.nonEmpty }
             .map { _ => Option.empty[NodeProblem] }
             .recover { case ex: Throwable =>

@@ -1,7 +1,6 @@
 @(args: msc.ScRenderArgs)(implicit ctx: Context)
 
 @import util.TplDataFormatUtil._
-@import util.showcase.ShowcaseUtil.TILES_BG_FILL_ALPHA
 @import io.suggest.sc.ScConstants.Grid._
 @import views.html.sc.stuff._
 
@@ -38,7 +37,7 @@
 
   .sm-grid-ads,
   .sm-grid-ads_loader-spinner-inner{
-    background-color: rgba(@{colorHex2rgb(args.bgColor).mkString(",")},@TILES_BG_FILL_ALPHA)!important;
+    background-color: rgba(@{colorHex2rgb(args.bgColor).mkString(",")}, @args.tilesBgFillAlpha)!important;
   }
 
 </style>

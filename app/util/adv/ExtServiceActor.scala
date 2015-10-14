@@ -23,7 +23,12 @@ object ExtServiceActor extends IServiceActorCompanion
 
 /** Очень базовая логика service-актора. Вынесена из актора, чтобы была возможность заюзать эту логику
   * ещё в каком-нибудь акторе. */
-trait ExtServiceActorLogic extends FsmActor with ISendCommand with ExtServiceActorEnv with SvcActorJsRenderUtil {
+trait ExtServiceActorLogic
+  extends FsmActor
+  with ISendCommand
+  with ExtServiceActorEnv
+  with SvcActorJsRenderUtil
+{
 
   /** Абстрактный state инициализации сервиса. */
   trait EnsureServiceStateStub extends FsmState {

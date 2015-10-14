@@ -40,6 +40,8 @@ import play.api.data._, Forms._
 class MarketAdv @Inject() (
   mmpDailyBilling               : MmpDailyBilling,
   lkAdUtil                      : LkAdUtil,
+  scUtil                        : ShowcaseUtil,
+  ctlGeoAdvUtil                 : CtlGeoAdvUtil,
   override val messagesApi      : MessagesApi,
   override val current          : play.api.Application,
   implicit val db               : Database,
@@ -218,11 +220,11 @@ class MarketAdv @Inject() (
    * @param limit Необязательный лимит.
    * @return Фьючерс с контейнером результатов.
    */
-  private def getAdAdvInfo(adId: String, limit: Int = CtlGeoAdvUtil.LIMIT_DFLT): Future[AdAdvInfoResult] = {
-    val advsOkFut  = CtlGeoAdvUtil.advFindNonExpiredByAdId(MAdvOk, adId, limit)
-    val advsReqFut = CtlGeoAdvUtil.advFindByAdId(MAdvReq, adId, limit)
+  private def getAdAdvInfo(adId: String, limit: Int = ctlGeoAdvUtil.LIMIT_DFLT): Future[AdAdvInfoResult] = {
+    val advsOkFut  = ctlGeoAdvUtil.advFindNonExpiredByAdId(MAdvOk, adId, limit)
+    val advsReqFut = ctlGeoAdvUtil.advFindByAdId(MAdvReq, adId, limit)
     for {
-      advsRefused     <- CtlGeoAdvUtil.advFindByAdId(MAdvRefuse, adId, limit)
+      advsRefused     <- ctlGeoAdvUtil.advFindByAdId(MAdvRefuse, adId, limit)
       advsOk          <- advsOkFut
       advsReq         <- advsReqFut
     } yield {
@@ -257,7 +259,7 @@ class MarketAdv @Inject() (
     }
 
     // Для сокрытия узлов, которые не имеют тарифного плана, надо получить список тех, у кого он есть.
-    val adnIdsReadyFut = CtlGeoAdvUtil.findAdnIdsMmpReady()
+    val adnIdsReadyFut = ctlGeoAdvUtil.findAdnIdsMmpReady()
 
     // Работа с синхронными моделями: собрать инфу обо всех размещениях текущей рекламной карточки.
     val adAdvInfoFut = getAdAdvInfo(adId)
@@ -589,7 +591,7 @@ class MarketAdv @Inject() (
     AdvWndAccess(adId, povAdnId, needMBB = false).async { implicit request =>
       implicit val ctx = implicitly[Context]
       // Запуск сборки данных по фоновой картинке.
-      val brArgsFut = ShowcaseUtil.focusedBrArgsFor(request.mad)(ctx)
+      val brArgsFut = scUtil.focusedBrArgsFor(request.mad)(ctx)
       val wndFullArgsFut = brArgsFut map { brArgs =>
         WndFullArgs(
           producer    = request.producer,
@@ -812,7 +814,7 @@ class MarketAdv @Inject() (
         if (madOpt.isDefined && adProducerOpt.isDefined) {
           val mad = madOpt.get
           implicit val ctx = implicitly[Context]
-          val brArgsFut = ShowcaseUtil.focusedBrArgsFor(mad)(ctx)
+          val brArgsFut = scUtil.focusedBrArgsFor(mad)(ctx)
           val wndArgsFut = brArgsFut map { brArgs =>
             WndFullArgs(
               producer    = adProducerOpt.get,

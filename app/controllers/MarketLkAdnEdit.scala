@@ -23,7 +23,6 @@ import play.api.data.{Mapping, Form}
 import play.api.data.Forms._
 import util.FormUtil._
 import GalleryUtil._
-import WelcomeUtil._
 import models.madn.EditConstants._
 import util.img.ImgFormUtil.img3IdOptM
 
@@ -41,6 +40,7 @@ class MarketLkAdnEdit @Inject() (
   override val messagesApi  : MessagesApi,
   override val current      : play.api.Application,
   override val cache        : CacheApi,
+  welcomeUtil               : WelcomeUtil,
   logoUtil                  : LogoUtil,
   mImg3                     : MImg3_,
   tempImgSupport            : TempImgSupport,
@@ -156,7 +156,7 @@ class MarketLkAdnEdit @Inject() (
     val metaKM = "meta" -> metaM
     // У ресивера есть поля для картинки приветствия и галерея для демонстрации.
     val m: Mapping[FormMapResult] = if (nodeInfo.isReceiver) {
-      mapping(metaKM, logoKM, welcomeImgIdKM, galleryKM)
+      mapping(metaKM, logoKM, welcomeUtil.welcomeImgIdKM, galleryKM)
         { FormMapResult.apply }
         { FormMapResult.unapply }
     } else {
@@ -173,7 +173,7 @@ class MarketLkAdnEdit @Inject() (
     import request.adnNode
 
     // Запуск асинхронной сборки данных из моделей.
-    val waOptFut = getWelcomeAdOpt(adnNode)
+    val waOptFut = welcomeUtil.getWelcomeAdOpt(adnNode)
     val nodeLogoOptFut = logoUtil.getLogoOfNode(adnId)
     val gallerryIks = gallery2iiks( adnNode.gallery )
 
@@ -183,7 +183,7 @@ class MarketLkAdnEdit @Inject() (
       welcomeAdOpt <- waOptFut
       nodeLogoOpt  <- nodeLogoOptFut
     } yield {
-      val welcomeImgKey = welcomeAd2iik(welcomeAdOpt)
+      val welcomeImgKey = welcomeUtil.welcomeAd2iik(welcomeAdOpt)
       val fmr = FormMapResult(adnNode.meta, nodeLogoOpt, welcomeImgKey, gallerryIks)
       formM fill fmr
     }
@@ -216,14 +216,14 @@ class MarketLkAdnEdit @Inject() (
     lazy val logPrefix = s"editAdnNodeSubmit($adnId): "
     nodeFormM(adnNode.adn).bindFromRequest().fold(
       {formWithErrors =>
-        val waOptFut = getWelcomeAdOpt(request.adnNode)
+        val waOptFut = welcomeUtil.getWelcomeAdOpt(request.adnNode)
         debug(s"${logPrefix}Failed to bind form: ${formatFormErrors(formWithErrors)}")
         _editAdnNode(formWithErrors, waOptFut)
           .map { NotAcceptable(_) }
       },
       {fmr =>
         // В фоне обновляем картинку карточки-приветствия.
-        val savedWelcomeImgsFut = WelcomeUtil.updateWelcodeAdFut(adnNode, fmr.waImgOpt)
+        val savedWelcomeImgsFut = welcomeUtil.updateWelcodeAdFut(adnNode, fmr.waImgOpt)
         trace(s"${logPrefix}newGallery[${fmr.gallery.size}] ;; newLogo = ${fmr.logoOpt.map(_.fileName)}")
         // В фоне обновляем логотип узла
         val savedLogoFut = logoUtil.updateLogoFor(adnNode, fmr.logoOpt)

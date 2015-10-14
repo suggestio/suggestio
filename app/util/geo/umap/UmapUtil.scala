@@ -2,12 +2,13 @@ package util.geo.umap
 
 import java.{lang => jl, util => ju}
 
+import com.google.inject.Inject
 import io.suggest.model.EsModel.{intParser, stringParser}
-import io.suggest.model.geo.{GsTypes, PolygonGs, MultiPolygonGs, GeoShape}
+import io.suggest.model.geo.{GsTypes, MultiPolygonGs, GeoShape}
 import io.suggest.ym.model.NodeGeoLevels
 import models.{MAdnNodeGeo, NodeGeoLevel}
 import org.elasticsearch.common.xcontent.XContentHelper
-import play.api.Play.{current, configuration}
+import play.api.Configuration
 import scala.collection.JavaConversions._
 
 /**
@@ -16,13 +17,20 @@ import scala.collection.JavaConversions._
  * Created: 16.09.14 9:14
  * Description: Утиль для работы с фронтендом UMap (leaflet-storage).
  */
-object UmapUtil {
+object UmapConstants {
+
+  /** Название поля в форме карты, которое содержит id узла. */
+  def ADN_ID_SHAPE_FORM_FN = "description"
+
+}
+
+
+class UmapUtil @Inject() (
+  configuration: Configuration
+) {
 
   /** 2014.09.23: Umap не поддерживает тип фигур MultiPolygon. Можно их сплиттить на полигоны. */
   val SPLIT_MULTIPOLYGON: Boolean = configuration.getBoolean("umap.mpoly.split") getOrElse true
-
-  /** Название поля в форме карты, которое содержит id узла. */
-  val ADN_ID_SHAPE_FORM_FN = "description"
 
   /**
    * Десериализация json-выхлопа, присланного фронтендом.
@@ -93,7 +101,11 @@ object UmapUtil {
 }
 
 case class UmapFeature(geometry: GeoShape, properties: Map[String, AnyRef]) {
-  val adnIdOpt = properties.get(UmapUtil.ADN_ID_SHAPE_FORM_FN).map(stringParser)
+  val adnIdOpt: Option[String] = {
+    properties
+      .get(UmapConstants.ADN_ID_SHAPE_FORM_FN)
+      .map(stringParser)
+  }
 }
 
 case class UmapDataLayer(ngl: NodeGeoLevel, features: Seq[UmapFeature])

@@ -4,9 +4,8 @@ import java.util.NoSuchElementException
 
 import models.msc._
 import play.twirl.api.Html
-import util.showcase._
+import util.di.{IScUtil, IScNlUtil, IScStatUtil}
 import util.acl._
-import ShowcaseUtil._
 import models._
 import scala.concurrent.Future
 import play.api.mvc._
@@ -23,7 +22,13 @@ import play.api.mvc._
  */
 
 /** Аддон для контроллера, добавляющий экшены от гео-indexTpl, которые представляют выдачу вне явно-заданного узла. */
-trait ScIndexGeo extends ScIndexConstants with ScIndexNodeCommon { that =>
+trait ScIndexGeo
+  extends ScIndexConstants
+  with ScIndexNodeCommon
+  with IScStatUtil
+  with IScNlUtil
+  with IScUtil
+{ that =>
 
   /**
    * indexTpl для выдачи, отвязанной от конкретного узла.
@@ -41,7 +46,12 @@ trait ScIndexGeo extends ScIndexConstants with ScIndexNodeCommon { that =>
     val resultFut = logic()
     // Собираем статистику асинхронно
     resultFut onSuccess { case logRes =>
-      ScIndexStatUtil(Some(AdnSinks.SINK_GEO), logic.gsiOptFut, logRes.helper.ctx.deviceScreenOpt, logRes.nodeOpt)
+      scStatUtil.IndexStat(
+        Some(AdnSinks.SINK_GEO),
+        logic.gsiOptFut,
+        logRes.helper.ctx.deviceScreenOpt,
+        logRes.nodeOpt
+      )
         .saveStats
         .onFailure { case ex =>
           LOGGER.warn("geoShowcase(): Failed to save statistics: args = " + args, ex)
@@ -81,7 +91,7 @@ trait ScIndexGeo extends ScIndexConstants with ScIndexNodeCommon { that =>
 
     def gsiOptFut = _reqArgs.geo.geoSearchInfoOpt
 
-    def _gdrFut = ShowcaseNodeListUtil.detectCurrentNode(_reqArgs.geo, gsiOptFut)
+    def _gdrFut = scNlUtil.detectCurrentNode(_reqArgs.geo, gsiOptFut)
     lazy val gdrFut = _gdrFut
 
     /** Запуск логики на исполнение. */
@@ -241,13 +251,13 @@ trait ScIndexGeo extends ScIndexConstants with ScIndexNodeCommon { that =>
 
     /** Контейнер палитры выдачи. */
     override def colorsFut: Future[IColors] = {
-      Future successful Colors(SITE_BGCOLOR_GEO, fgColor = SITE_FGCOLOR_GEO)
+      Future successful Colors(scUtil.SITE_BGCOLOR_GEO, fgColor = scUtil.SITE_FGCOLOR_GEO)
     }
 
     override def currAdnIdFut = Future successful None
 
     override def renderArgsFut: Future[ScRenderArgs] = {
-      val _gcrFut = getCats(None).future
+      val _gcrFut = scUtil.getCats(None).future
       val _colorsFut = colorsFut
       val _topLeftBtnHtmlFut = topLeftBtnHtmlFut
       val _hBtnArgsFut = hBtnArgsFut
@@ -258,13 +268,14 @@ trait ScIndexGeo extends ScIndexConstants with ScIndexNodeCommon { that =>
         _hBtnArgs       <- _hBtnArgsFut
       } yield {
         new ScRenderArgs with ScReqArgsWrapper with IColorsWrapper {
-          override def _underlying    = _colors
-          override def reqArgsUnderlying = _reqArgs
-          override def hBtnArgs       = _hBtnArgs
-          override def topLeftBtnHtml = _topLeftBtnHtml
-          override def title          = SITE_NAME_GEO
-          override def mmcats         = _mmcats
-          override def catsStats      = _catsStats
+          override def tilesBgFillAlpha   = scUtil.TILES_BG_FILL_ALPHA
+          override def _underlying        = _colors
+          override def reqArgsUnderlying  = _reqArgs
+          override def hBtnArgs           = _hBtnArgs
+          override def topLeftBtnHtml     = _topLeftBtnHtml
+          override def title              = scUtil.SITE_NAME_GEO
+          override def mmcats             = _mmcats
+          override def catsStats          = _catsStats
           override lazy val spsr = new AdSearch {
             override def levels = List(AdShowLevels.LVL_START_PAGE)
             override def geo    = GeoIp

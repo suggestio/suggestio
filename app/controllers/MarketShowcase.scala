@@ -7,6 +7,9 @@ import models.im.logo.LogoUtil
 import org.elasticsearch.client.Client
 import play.api.i18n.MessagesApi
 import util._
+import util.img.WelcomeUtil
+import util.showcase.{ShowcaseUtil, ShowcaseNodeListUtil, ScStatUtil}
+import util.stat.StatUtil
 
 import scala.concurrent.ExecutionContext
 
@@ -21,6 +24,11 @@ import scala.concurrent.ExecutionContext
 class MarketShowcase @Inject() (
   override val messagesApi        : MessagesApi,
   override val logoUtil           : LogoUtil,
+  override val welcomeUtil        : WelcomeUtil,
+  override val scStatUtil         : ScStatUtil,
+  override val statUtil           : StatUtil,
+  override val scNlUtil           : ShowcaseNodeListUtil,
+  override val scUtil             : ShowcaseUtil,
   override implicit val current   : play.api.Application,
   override implicit val ec        : ExecutionContext,
   override implicit val esClient  : Client,

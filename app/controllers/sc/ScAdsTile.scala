@@ -3,14 +3,13 @@ package controllers.sc
 import java.util.NoSuchElementException
 
 import _root_.util.blocks.BgImg
+import _root_.util.di.{IScUtil, IScNlUtil, IScStatUtil}
 import _root_.util.jsa.{JsAppendById, JsAction, SmRcvResp, Js}
 import io.suggest.playx.ICurrentConf
 import models.im.make.{MakeResult, Makers}
 import models.msc.{MGridParams, MFindAdsResp, MFoundAd, MScApiVsns}
 import play.api.mvc.Result
 import util.jsa.cbca.grid._
-import _root_.util.showcase._
-import ShowcaseUtil._
 import io.suggest.ym.model.common.SlNameTokenStr
 import models.blk._
 import models.jsm.{FindAdsResp, SearchAdsResp}
@@ -29,7 +28,13 @@ import models._
  * Created: 11.11.14 16:47
  * Description: Поддержка плитки в контроллере: логика подготовки к сборке ответа.
  */
-trait ScAdsTileBase extends ScController with PlayMacroLogsI with ICurrentConf {
+trait ScAdsTileBase
+  extends ScController
+  with PlayMacroLogsI
+  with ICurrentConf
+  with IScNlUtil
+  with IScUtil
+{
 
   /** Изменябельная логика обработки запроса рекламных карточек для плитки. */
   trait TileAdsLogic extends AdCssRenderArgs {
@@ -42,7 +47,7 @@ trait ScAdsTileBase extends ScController with PlayMacroLogsI with ICurrentConf {
 
     /** 2014.11.25: Размер плиток в выдаче должен способствовать заполнению экрана по горизонтали,
       * избегая или минимизируя белые пустоты по краям экрана клиентского устройства. */
-    lazy val tileArgs = ShowcaseUtil.getTileArgs()(ctx)
+    lazy val tileArgs = scUtil.getTileArgs()(ctx)
 
     def szMult = tileArgs.szMult
 
@@ -80,7 +85,9 @@ trait ScAdsTileBase extends ScController with PlayMacroLogsI with ICurrentConf {
     lazy val adSearch2Fut: Future[AdSearch] = {
       if (catsRequested) {
         Future.successful(_adSearch)
+
       } else {
+
         // При поиске по категориям надо искать только если есть указанный show level.
         if (_adSearch.catIds.nonEmpty) {
           val result = new AdSearchWrapper {
@@ -88,6 +95,7 @@ trait ScAdsTileBase extends ScController with PlayMacroLogsI with ICurrentConf {
             override def levels: Seq[SlNameTokenStr] = AdShowLevels.LVL_CATS :: super.levels.toList
           }
           Future successful result
+
         } else if (_adSearch.receiverIds.nonEmpty) {
           // TODO Можно спилить этот костыль?
           val result = new AdSearchWrapper {
@@ -95,10 +103,11 @@ trait ScAdsTileBase extends ScController with PlayMacroLogsI with ICurrentConf {
             override val levels: Seq[SlNameTokenStr] = (AdShowLevels.LVL_START_PAGE :: _adSearch.levels.toList).distinct
           }
           Future successful result
+
         } else if (_adSearch.geo.isWithGeo) {
           // TODO При таком поиске надо использовать cache-controle: private, если ip-геолокация.
           // При геопоиске надо найти узлы, географически подходящие под запрос. Затем, искать карточки по этим узлам.
-          ShowcaseNodeListUtil.detectCurrentNode(_adSearch.geo, _adSearch.geo.geoSearchInfoOpt)
+          scNlUtil.detectCurrentNode(_adSearch.geo, _adSearch.geo.geoSearchInfoOpt)
             .map { gdr => Some(gdr.node) }
             .recover { case ex: NoSuchElementException => None }
             .map {
@@ -117,6 +126,7 @@ trait ScAdsTileBase extends ScController with PlayMacroLogsI with ICurrentConf {
                 LOGGER.error(logPrefix + " Failed to get geoip info for " + _request.remoteAddress, ex)
                 _adSearch
             }
+
         } else {
           // Слегка неожиданные параметры запроса.
           LOGGER.warn(logPrefix + " Strange search request: " + _adSearch)
@@ -172,7 +182,7 @@ trait ScAdsTileBase extends ScController with PlayMacroLogsI with ICurrentConf {
     }
 
 
-    def madsGroupedFut = madsFut.map { groupNarrowAds }
+    def madsGroupedFut = madsFut.map { scUtil.groupNarrowAds }
 
     /** Очень параллельный рендер в HTML всех необходимых карточек. */
     lazy val madsRenderedFut: Future[Seq[T]] = {
@@ -214,7 +224,10 @@ trait ScAdsTileBase extends ScController with PlayMacroLogsI with ICurrentConf {
 
 
 /** Поддержка ответов на выдачу v1. */
-trait ScAdsTile extends ScAdsTileBase {
+trait ScAdsTile
+  extends ScAdsTileBase
+  with IScStatUtil
+{
 
   /** Начальный размер буффера сборки ответа на запрос findAds(). */
   private val TILE_JS_RESP_BUFFER_SIZE_BYTES: Int = configuration.getInt("sc.tiles.jsresp.buffer.size.bytes") getOrElse 8192
@@ -232,7 +245,7 @@ trait ScAdsTile extends ScAdsTileBase {
     // В фоне собираем статистику
     logic.madsFut onSuccess { case mads =>
       logic.adSearch2Fut onSuccess { case adSearch2 =>
-        ScTilesStatUtil(adSearch2, mads.flatMap(_.id), logic.gsiFut)
+        scStatUtil.TilesStat(adSearch2, mads.flatMap(_.id), logic.gsiFut)
           .saveStats
       }
     }
@@ -261,7 +274,7 @@ trait ScAdsTile extends ScAdsTileBase {
     def resultFut: Future[Result]
 
     def cellSizeCssPx: Int    = szMulted(BlockWidths.NARROW.widthPx, tileArgs.szMult)
-    def cellPaddingCssPx: Int = szMulted(ShowcaseUtil.TILE_PADDING_CSSPX, tileArgs.szMult)
+    def cellPaddingCssPx: Int = szMulted(scUtil.TILE_PADDING_CSSPX, tileArgs.szMult)
   }
 
 

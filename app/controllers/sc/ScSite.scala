@@ -1,11 +1,11 @@
 package controllers.sc
 
-import controllers.{routes, SioController}
+import controllers.routes
 import models.mext.MExtServices
 import models.msc._
 import play.twirl.api.Html
 import util.PlayMacroLogsI
-import util.showcase._
+import util.di.{IScUtil, IScStatUtil}
 import util.acl._
 import util.xplay.SioHttpErrorHandler
 import views.html.sc._
@@ -22,7 +22,12 @@ import play.api.mvc._
  */
 
 /** Базовый трейт с утилью для сборки конкретных реализация экшенов раздачи "сайтов" выдачи. */
-trait ScSiteBase extends ScController with PlayMacroLogsI {
+trait ScSiteBase
+  extends ScController
+  with PlayMacroLogsI
+  with IScStatUtil
+  with IScUtil
+{
 
   /** Настраиваемая логика сборки результата запроса сайта выдачи. */
   protected trait SiteLogic {
@@ -83,7 +88,7 @@ trait ScSiteBase extends ScController with PlayMacroLogsI {
       } yield {
         new ScSiteArgs {
           override def nodeOpt = _nodeOpt
-          override val scColors = ShowcaseUtil.siteScColors(nodeOpt)
+          override val scColors = scUtil.siteScColors(nodeOpt)
           override def headAfter: Traversable[Html] = {
             super.headAfter ++ _headAfter
           }
@@ -164,7 +169,10 @@ trait ScSiteBase extends ScController with PlayMacroLogsI {
 
 
 /** Поддержка гео-сайта. */
-trait ScSiteGeo extends ScSiteBase {
+trait ScSiteGeo
+  extends ScSiteBase
+  with IScStatUtil
+{
 
   /** Пользователь заходит в sio.market напрямую через интернет, без помощи сторонних узлов. */
   def geoSite(maybeJsState: ScJsState, siteArgs: SiteQsArgs) = MaybeAuth.async { implicit request =>
@@ -194,7 +202,7 @@ trait ScSiteGeo extends ScSiteBase {
   /** Фоновый сбор статистики. Можно переназначать. */
   protected def _geoSiteStats(implicit request: AbstractRequestWithPwOpt[_]): Future[_] = {
     val fut = Future {
-      ScSiteStat(AdnSinks.SINK_GEO)
+      scStatUtil.SiteStat(AdnSinks.SINK_GEO)
     }.flatMap {
       _.saveStats
     }
@@ -231,7 +239,10 @@ trait ScSiteGeo extends ScSiteBase {
 
 
 /** Поддержка node-сайтов. */
-trait ScSiteNode extends ScSiteBase {
+trait ScSiteNode
+  extends ScSiteBase
+  with IScStatUtil
+{
 
   /** Экшн, который рендерит страничку с дефолтовой выдачей узла. */
   def demoWebSite(adnId: String) = AdnNodeMaybeAuth(adnId).async { implicit request =>
@@ -240,7 +251,7 @@ trait ScSiteNode extends ScSiteBase {
     if (nodeEnabled && isReceiver || request.isMyNode) {
       // Собираем статистику. Тут скорее всего wifi
       Future {
-        ScSiteStat(AdnSinks.SINK_WIFI, Some(request.adnNode))
+        scStatUtil.SiteStat(AdnSinks.SINK_WIFI, Some(request.adnNode))
           .saveStats
           .onFailure {
             case ex => LOGGER.warn(s"demoWebSite($adnId): Failed to save stats", ex)

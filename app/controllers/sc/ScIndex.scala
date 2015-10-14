@@ -1,5 +1,6 @@
 package controllers.sc
 
+import _root_.util.di.{IScUtil, IStatUtil, IScStatUtil, IWelcomeUtil}
 import io.suggest.playx.ICurrentConf
 import models.im.logo.LogoOpt_t
 import _root_.util.jsa.{SmRcvResp, Js}
@@ -10,9 +11,6 @@ import models.jsm.ScIndexResp
 import models.msc.ScRenderArgs.ProdsLetterGrouped_t
 import models.msc._
 import play.twirl.api.Html
-import _root_.util.img.WelcomeUtil
-import util.showcase._
-import util.stat._
 import util.acl._
 import views.html.sc._
 import play.api.libs.json._
@@ -45,7 +43,11 @@ trait ScIndexConstants extends ICurrentConf {
 
 
 /** Общая утиль, испрользуемая в контроллере. */
-trait ScIndexCommon extends ScController with PlayMacroLogsI {
+trait ScIndexCommon
+  extends ScController
+  with PlayMacroLogsI
+  with IStatUtil
+{
 
   /** Базовый трейт для написания генератора производных indexTpl и ответов. */
   trait ScIndexHelperBase {
@@ -141,7 +143,7 @@ trait ScIndexCommon extends ScController with PlayMacroLogsI {
       } yield {
         // TODO Нужен аккуратный кеш тут. Проблемы с просто cache-control возникают, если список категорий изменился или
         // произошло какое-то другое изменение
-        StatUtil.resultWithStatCookie {
+        statUtil.resultWithStatCookie {
           res
         }(ctx.request)
       }
@@ -154,7 +156,12 @@ trait ScIndexCommon extends ScController with PlayMacroLogsI {
 
 
 /** Вспомогательная утиль для рендера indexTpl на нодах. */
-trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
+trait ScIndexNodeCommon
+  extends ScIndexCommon
+  with ScIndexConstants
+  with IWelcomeUtil
+  with IScUtil
+{
 
   /** Логика формирования indexTpl для конкретного узла. */
   trait ScIndexNodeHelper extends ScIndexHelperBase {
@@ -234,7 +241,7 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
     /** Получение данных по категориям: статистика и сами категории. */
     def getCatsResult: Future[GetCatsSyncResult] = {
       currAdnIdFut.flatMap { adnIdOpt =>
-        ShowcaseUtil.getCats(adnIdOpt).future
+        scUtil.getCats(adnIdOpt).future
       }
     }
 
@@ -242,7 +249,7 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
     def welcomeAdOptFut: Future[Option[WelcomeRenderArgsT]] = {
       if (_reqArgs.withWelcomeAd) {
         adnNodeFut.flatMap { adnNode =>
-          WelcomeUtil.getWelcomeRenderArgs(adnNode, ctx.deviceScreenOpt)(ctx)
+          welcomeUtil.getWelcomeRenderArgs(adnNode, ctx.deviceScreenOpt)(ctx)
         }
       } else {
         Future successful None
@@ -286,9 +293,8 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
     /** Контейнер палитры выдачи. */
     override def colorsFut: Future[IColors] = {
       adnNodeFut map { adnNode =>
-        import ShowcaseUtil._
-        val _bgColor = adnNode.meta.color getOrElse SITE_BGCOLOR_DFLT
-        val _fgColor = adnNode.meta.fgColor getOrElse SITE_FGCOLOR_DFLT
+        val _bgColor = adnNode.meta.color   getOrElse scUtil.SITE_BGCOLOR_DFLT
+        val _fgColor = adnNode.meta.fgColor getOrElse scUtil.SITE_FGCOLOR_DFLT
         Colors(bgColor = _bgColor, fgColor = _fgColor)
       }
     }
@@ -319,18 +325,19 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
         _topLeftBtnHtml <- _topLeftBtnHtmlFut
       } yield {
         new ScRenderArgs with ScReqArgsWrapper with IColorsWrapper {
-          override def reqArgsUnderlying = _reqArgs
-          override def _underlying    = _colors
-          override def hBtnArgs       = _hBtnArgs
-          override def topLeftBtnHtml = _topLeftBtnHtml
-          override def title          = adnNode.meta.name
-          override def mmcats         = _mmCats
-          override def catsStats      = _catsStats
-          override def spsr           = _spsr
-          override def onCloseHref    = _onCloseHref
-          override def logoImgOpt     = _logoImgOpt
-          override def geoListGoBack  = _geoListGoBack
-          override def welcomeOpt     = waOpt
+          override def tilesBgFillAlpha   = scUtil.TILES_BG_FILL_ALPHA
+          override def reqArgsUnderlying  = _reqArgs
+          override def _underlying        = _colors
+          override def hBtnArgs           = _hBtnArgs
+          override def topLeftBtnHtml     = _topLeftBtnHtml
+          override def title              = adnNode.meta.name
+          override def mmcats             = _mmCats
+          override def catsStats          = _catsStats
+          override def spsr               = _spsr
+          override def onCloseHref        = _onCloseHref
+          override def logoImgOpt         = _logoImgOpt
+          override def geoListGoBack      = _geoListGoBack
+          override def welcomeOpt         = waOpt
           override def shopsLetterGrouped = _prodsLetGrp
         }
       }
@@ -358,7 +365,10 @@ trait ScIndexNodeCommon extends ScIndexCommon with ScIndexConstants {
 
 
 /** Экшены для рендера indexTpl нод. */
-trait ScIndexNode extends ScIndexNodeCommon {
+trait ScIndexNode
+  extends ScIndexNodeCommon
+  with IScStatUtil
+{
 
   /** Базовая выдача для rcvr-узла sio-market. */
   def showcase(adnId: String, args: ScReqArgs) = AdnNodeMaybeAuth(adnId).async { implicit request =>
@@ -378,7 +388,7 @@ trait ScIndexNode extends ScIndexNodeCommon {
     }
     val resultFut = helper.result
     // собираем статистику, пока идёт подготовка результата
-    val stat = ScIndexStatUtil(
+    val stat = scStatUtil.IndexStat(
       scSinkOpt = None,
       gsiFut    = args.geo.geoSearchInfoOpt,
       screenOpt = helper.ctx.deviceScreenOpt,

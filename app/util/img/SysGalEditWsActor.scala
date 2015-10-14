@@ -13,9 +13,13 @@ import util.ws._
  * о детектирование цвета.
  */
 object SysGalEditWsActor {
-  def props(out: ActorRef, wsId: String) = Props(SysGalEditWsActor(out, wsId))
+
+  def props(out: ActorRef, wsId: String) = Props(apply(out, wsId))
+
 }
 
+
+/** Реализация актора, обслуживающего вебсокет sys-редактора галлереи. */
 case class SysGalEditWsActor(out: ActorRef, wsId: String)
   extends WsActorDummy
   with SubscribeToWsDispatcher

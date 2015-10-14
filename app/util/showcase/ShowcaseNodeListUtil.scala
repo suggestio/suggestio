@@ -1,25 +1,32 @@
 package util.showcase
 
+import com.google.inject.{Singleton, Inject}
 import io.suggest.model.geo.GeoShapeQueryData
 import io.suggest.ym.model.NodeGeoLevels
+import org.elasticsearch.client.Client
+import play.api.Configuration
 import play.api.i18n.Messages
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.Play.{current, configuration}
 import util.PlayMacroLogsImpl
-import util.SiowebEsUtil.client
 import models._
 import AdnShownTypes.adnInfo2val
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 17.09.14 18:40
- * Description:
+ * Description: Утиль для работы со списком узлов в выдаче: определение нод, построение дерева и т.д.
  */
 
-object ShowcaseNodeListUtil extends PlayMacroLogsImpl {
+@Singleton
+class ShowcaseNodeListUtil @Inject() (
+  configuration           : Configuration,
+  implicit val ec         : ExecutionContext,
+  implicit val esClient   : Client
+)
+  extends PlayMacroLogsImpl
+{
 
   import LOGGER._
 

@@ -5,8 +5,9 @@ import java.io.File
 import akka.actor.ActorSystem
 import com.google.inject.{Singleton, ImplementedBy, Inject}
 import io.suggest.common.geom.d2.ISize2di
+import io.suggest.di.ICacheApiUtil
 import io.suggest.img.crop.CropConstants
-import io.suggest.playx.ICurrentConf
+import io.suggest.playx.{ICurrentConf, IConfiguration, CacheApiUtil}
 import io.suggest.popup.PopupConstants
 import models.Context
 import play.api.cache.CacheApi
@@ -23,7 +24,6 @@ import org.joda.time.{ReadableInstant, DateTime}
 import play.api.Play
 import util.acl._
 import util.img._
-import util.xplay.CacheUtil
 import scala.concurrent.duration._
 import net.sf.jmimemagic.{MagicMatch, Magic}
 import scala.concurrent.{ExecutionContext, Future}
@@ -47,6 +47,7 @@ class Img @Inject() (
   override val actorSystem      : ActorSystem,
   override implicit val current : play.api.Application,
   override val cache            : CacheApi,
+  override val cacheApiUtil     : CacheApiUtil,
   override implicit val ec      : ExecutionContext,
   override val imgCtlUtil       : ImgCtlUtil
 )
@@ -54,6 +55,7 @@ class Img @Inject() (
   with PlayMacroLogsImpl
   with TempImgSupport
   with BruteForceProtectCtl
+  with ICurrentConf
 {
 
   import LOGGER._
@@ -226,7 +228,8 @@ trait TempImgSupport
   with NotifyWs
   with MyConfName
   with I18nSupport
-  with ICurrentConf
+  with IConfiguration
+  with ICacheApiUtil
 {
 
   /** DI-инстанс [[ImgCtlUtil]], т.е. статическая утиль для img-контроллеров. */
@@ -257,7 +260,7 @@ trait TempImgSupport
     }
     val cacheSec = CACHE_COLOR_HISTOGRAM_SEC
     val fut = if (cacheSec > 0) {
-      CacheUtil.getOrElse("mcd." + im.rowKeyStr + ".hist", expirationSec = cacheSec)(f())
+      cacheApiUtil.getOrElseFut("mcd." + im.rowKeyStr + ".hist", cacheSec.seconds)(f())
     } else {
       f()
     }

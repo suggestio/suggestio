@@ -1,7 +1,6 @@
 package models
 
 import models.blk.SzMult_t
-import play.api.mvc.QueryStringBindable
 
 import scala.concurrent.{ExecutionContext, Future}
 

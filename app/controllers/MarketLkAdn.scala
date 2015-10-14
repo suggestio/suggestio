@@ -18,6 +18,7 @@ import util.acl._
 import models._
 import util.ident.IdentUtil
 import util.lk.LkAdUtil
+import util.showcase.ShowcaseUtil
 import scala.concurrent.{ExecutionContext, Future}
 import views.html.lk.adn._
 import views.html.lk.usr._
@@ -38,6 +39,7 @@ class MarketLkAdn @Inject() (
   nodesUtil                           : NodesUtil,
   lkAdUtil                            : LkAdUtil,
   db                                  : Database,
+  scUtil                              : ShowcaseUtil,
   override val current                : play.api.Application,
   override val cache                  : CacheApi,
   override val identUtil              : IdentUtil,
@@ -85,7 +87,9 @@ class MarketLkAdn @Inject() (
           isMyNode      = isMyNode,
           povAdnIdOpt   = request.povAdnNodeOpt
             .flatMap(_.id),
-          logoImgOpt    = logoOpt
+          logoImgOpt    = logoOpt,
+          bgColor       = adnNode.meta.color.getOrElse( scUtil.SITE_BGCOLOR_DFLT ),
+          fgColor       = adnNode.meta.fgColor.getOrElse( scUtil.SITE_FGCOLOR_DFLT )
         )
         val html = adnNodeShowTpl( rargs )
         Ok(html)

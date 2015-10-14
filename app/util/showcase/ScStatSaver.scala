@@ -1,33 +1,48 @@
 package util.showcase
 
+import com.google.inject.{Singleton, Inject}
+import io.suggest.event.SioNotifierStaticClientI
+import io.suggest.playx.ICurrentConf
 import io.suggest.ym.model.stat.MAdStat
 import org.elasticsearch.action.bulk.{BulkResponse, BulkRequest, BulkProcessor}
+import org.elasticsearch.client.Client
 import org.elasticsearch.common.unit.{ByteSizeValue, TimeValue}
-import play.api.Logger
+import play.api.{Configuration, Application}
 import util.async.{EcParInfo, AsyncUtil}
-import util.PlayMacroLogsImpl
+import util.{PlayMacroLogsDyn, PlayMacroLogsImpl}
 
-import scala.concurrent.Future
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.event.SiowebNotifier.Implicts.sn
-import util.SiowebEsUtil.client
-import play.api.Play.{current, configuration}
+import scala.concurrent.{ExecutionContext, Future}
+
+import scala.reflect.ClassTag
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 17.10.14 9:47
- * Description: Сохранялка статистики. Возникла из-за приближающейся необходимости снизить нагрузку на ES из-за
- * сохранения статистики.
- * 2014.oct.17: Простая реализация через BulkProcessor. Она имеет внутренние блокировки, подавляемые через содержание
- * отдельного однопоточного thread-pool'a.
+ * Description: Сохранялка статистики.
+ * Возникла из-за приближающейся необходимости снизить нагрузку на ES из-за сохранения статистики.
+ *
+ * 2014.oct.17: Простая реализация через BulkProcessor.
+ * Она имеет внутренние блокировки, подавляемые через содержание отдельного однопоточного thread-pool'a.
  * TODO Надо бы сделать через akka actor.
  */
-object ScStatSaver {
+@Singleton
+class ScStatSaver @Inject() (
+  override val current    : Application
+)
+  extends PlayMacroLogsDyn
+  with ICurrentConf
+{
 
-  private def LOGGER = Logger(getClass)
+  private def _inject[T <: ScStatSaverBackend : ClassTag]: T = {
+    current.injector.instanceOf[T]
+  }
 
-  private def defaultBackend = new BulkProcessorSaveBackend
+  private def _bulk  = _inject[BulkProcessorSaveBackend]
+  private def _plain = _inject[PlainSaverBackend]
+  private def _dummy = _inject[DummySaverBackend]
+
+  private def defaultBackend: ScStatSaverBackend = _bulk
 
   /** Используемый backend для сохранения статистики. */
   val BACKEND: ScStatSaverBackend = {
@@ -35,11 +50,13 @@ object ScStatSaver {
     configuration.getString(ck)
       .fold [ScStatSaverBackend] (defaultBackend) { raw =>
         raw.trim.toLowerCase match {
-          case "plain" | ""     => new PlainSaverBackend
-          case "bp"    | "bulk" => new BulkProcessorSaveBackend
+          case "plain" | ""     =>
+            _plain
+          case "bp"    | "bulk" =>
+            _bulk
           case "dummy" | "null" =>
             LOGGER.warn("BACKEND: dummy save backend enabled. All stats will be saved to /dev/null!")
-            new DummySaverBackend
+            _dummy
           case other =>
             val backend = defaultBackend
             LOGGER.warn(s"BACKEND: Unknown value '$other' for conf key '$ck'. Please check your application.conf. Fallbacking to default backend: ${backend.getClass.getSimpleName}")
@@ -80,7 +97,13 @@ class DummySaverBackend extends ScStatSaverBackend {
 
 
 /** Plain backend вызывает save() для всех элементов очереди. */
-class PlainSaverBackend extends ScStatSaverBackend {
+class PlainSaverBackend @Inject() (
+  implicit private val ec       : ExecutionContext,
+  implicit private val esClient : Client,
+  implicit private val sn       : SioNotifierStaticClientI
+)
+  extends ScStatSaverBackend
+{
   override def save(stat: MAdStat): Future[_] = {
     stat.save
   }
@@ -90,19 +113,30 @@ class PlainSaverBackend extends ScStatSaverBackend {
 
 
 /** BulkProcessor backend накапливает очередь и отправляет всё индексацию разом. */
-class BulkProcessorSaveBackend extends ScStatSaverBackend with PlayMacroLogsImpl {
-
-  /** Не хранить в очереди дольше указанного интервала (в секундах). */
-  def FLUSH_INTERVAL_SECONDS: Long = configuration.getLong("sc.stat.saver.bp.flush.interval.seconds").getOrElse(20L)
-
-  /** Максимальный размер bulk-реквеста в байтах. */
-  def BULK_SIZE_BYTES: Long = configuration.getLong("sc.stat.saver.bp.size.bytes").getOrElse(200000L)
+@Singleton
+class BulkProcessorSaveBackend @Inject() (
+  configuration           : Configuration,
+  implicit val esClient   : Client
+)
+  extends ScStatSaverBackend
+  with PlayMacroLogsImpl
+{
 
   import LOGGER._
 
+  /** Не хранить в очереди дольше указанного интервала (в секундах). */
+  def FLUSH_INTERVAL_SECONDS: Long = {
+    configuration.getLong("sc.stat.saver.bp.flush.interval.seconds").getOrElse(20L)
+  }
+
+  /** Максимальный размер bulk-реквеста в байтах. */
+  def BULK_SIZE_BYTES: Long = {
+    configuration.getLong("sc.stat.saver.bp.size.bytes").getOrElse(200000L)
+  }
+
   /** Используемый bulk processor. */
   protected val bp: BulkProcessor = {
-    val br = BulkProcessor.builder(client, new BulkProcessor.Listener {
+    val br = BulkProcessor.builder(esClient, new BulkProcessor.Listener {
       override def beforeBulk(executionId: Long, request: BulkRequest): Unit = {
         trace(s"[$executionId] Will bulk save stats with ${request.numberOfActions} actions")
       }

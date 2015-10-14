@@ -65,7 +65,15 @@ import models.msc.ScRenderArgs._
 
 
 /** Аргументы для рендера market/showcase/indexTpl. */
-trait ScRenderArgs extends ScReqArgs with IColors with ILogoRenderArgs with IHBtnRenderArgs with IHBtnArgsFieldImpl {
+abstract class ScRenderArgs
+  extends ScReqArgs
+  with IColors
+  with ILogoRenderArgs
+  with IHBtnRenderArgs
+  with IHBtnArgsFieldImpl
+{
+  /** Прозрачность фона тайлов. */
+  def tilesBgFillAlpha: Float
   /** Категории для отображения. */
   def mmcats        : Seq[MMartCategory]
   /** Статистика по категориям. */
