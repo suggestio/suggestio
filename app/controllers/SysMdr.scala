@@ -26,6 +26,7 @@ import scala.concurrent.{ExecutionContext, Future}
  * Description: Sys Moderation - контроллер, заправляющий s.io-модерацией рекламных карточек.
  */
 class SysMdr @Inject() (
+  lkAdUtil                          : LkAdUtil,
   override val messagesApi          : MessagesApi,
   override implicit val ec          : ExecutionContext,
   override implicit val esClient    : Client,
@@ -68,7 +69,7 @@ class SysMdr @Inject() (
 
     val brArgssFut = madsFut flatMap { mads =>
       Future.traverse(mads) { mad =>
-        LkAdUtil.tiledAdBrArgs(mad)
+        lkAdUtil.tiledAdBrArgs(mad)
       }
     }
 

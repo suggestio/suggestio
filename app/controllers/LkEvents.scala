@@ -30,6 +30,7 @@ import scala.util.{Success, Failure}
  */
 class LkEvents @Inject() (
   lkEventsUtil                  : LkEventsUtil,
+  lkAdUtil                      : LkAdUtil,
   override val messagesApi      : MessagesApi,
   override val current          : play.api.Application,
   override implicit val ec      : ExecutionContext,
@@ -95,7 +96,7 @@ class LkEvents @Inject() (
         val dsOpt = ctx.deviceScreenOpt
         val ressFut = Future.traverse(madsMap) {
           case (madId, mad) =>
-            LkAdUtil.tiledAdBrArgs(mad, dsOpt)
+            lkAdUtil.tiledAdBrArgs(mad, dsOpt)
               .map { madId -> _ }
         }
         ressFut.map { _.toMap }

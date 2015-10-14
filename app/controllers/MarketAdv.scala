@@ -39,6 +39,7 @@ import play.api.data._, Forms._
  */
 class MarketAdv @Inject() (
   mmpDailyBilling               : MmpDailyBilling,
+  lkAdUtil                      : LkAdUtil,
   override val messagesApi      : MessagesApi,
   override val current          : play.api.Application,
   implicit val db               : Database,
@@ -743,12 +744,19 @@ class MarketAdv @Inject() (
     implicit val ctx = implicitly[Context]
     // Собираем данные по рендеру блоков карточек.
     val devScreenOpt = ctx.deviceScreenOpt
-    val brArgsMapFut = madsFut.flatMap { mads =>
-      Future.traverse(mads) { mad =>
-        LkAdUtil.tiledAdBrArgs(mad, devScreenOpt)
-          .map { brArgs => mad.id.get -> brArgs }
+    val brArgsMapFut = for {
+      mads        <- madsFut
+      madId2Args  <- {
+        Future.traverse(mads) { mad =>
+          for {
+            brArgs <- lkAdUtil.tiledAdBrArgs(mad, devScreenOpt)
+          } yield {
+            mad.id.get -> brArgs
+          }
+        }
       }
-        .map { _.toMap }
+    } yield {
+      madId2Args.toMap
     }
 
     // Объединяем все карты данных по карточкам.

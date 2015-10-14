@@ -36,6 +36,7 @@ import play.api.db.Database
 class MarketLkAdn @Inject() (
   override val messagesApi            : MessagesApi,
   nodesUtil                           : NodesUtil,
+  lkAdUtil                            : LkAdUtil,
   db                                  : Database,
   override val current                : play.api.Application,
   override val cache                  : CacheApi,
@@ -186,7 +187,7 @@ class MarketLkAdn @Inject() (
       val brArgssFut = madsFut flatMap { mads =>
         val dsOpt = ctx.deviceScreenOpt
         Future.traverse(mads) { mad =>
-          LkAdUtil.tiledAdBrArgs(mad, dsOpt)
+          lkAdUtil.tiledAdBrArgs(mad, dsOpt)
         }
       }
 

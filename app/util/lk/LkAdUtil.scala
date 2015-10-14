@@ -1,5 +1,7 @@
 package util.lk
 
+import com.google.inject.Inject
+import io.suggest.di.IExecutionContext
 import models.blk.SzMult_t
 import models.im.make.{Makers, MakeArgs}
 import models.{blk, MAd}
@@ -14,7 +16,11 @@ import scala.concurrent.{ExecutionContext, Future}
  * Created: 20.04.15 14:01
  * Description: Утиль для работы с рекламными карточками в личном кабинете.
  */
-object LkAdUtil {
+class LkAdUtil @Inject() (
+  override implicit val ec: ExecutionContext
+)
+  extends IExecutionContext
+{
 
   /** Коэфф масштабирования карточек в ЛК-таблицах. Можно 0.5F наверное выставить. */
   def TILE_SZ_MULT: SzMult_t = 1.0F
@@ -25,8 +31,7 @@ object LkAdUtil {
    * @param devScreenOpt Инфа по скрину.
    * @return Фьючерс с контейнером аргументов для рендера блока.
    */
-  def tiledAdBrArgs(mad: MAd, devScreenOpt: Option[DevScreen] = None)
-                   (implicit ec: ExecutionContext): Future[blk.RenderArgs] = {
+  def tiledAdBrArgs(mad: MAd, devScreenOpt: Option[DevScreen] = None): Future[blk.RenderArgs] = {
     val szMult = TILE_SZ_MULT
     val bgImgOptFut = BgImg.getBgImg(mad) match {
       case Some(bgImgInfo) =>

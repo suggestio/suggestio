@@ -33,6 +33,7 @@ import sysctl.SysMarketUtil._
  */
 class SysMarket @Inject() (
   override val nodesUtil        : NodesUtil,
+  lkAdUtil                      : LkAdUtil,
   advUtil                       : AdvUtil,
   override val messagesApi      : MessagesApi,
   override val mailer           : IMailerWrapper,
@@ -335,7 +336,7 @@ class SysMarket @Inject() (
     val madsFut = MAd.dynSearch(a)
     val brArgssFut = madsFut flatMap { mads =>
       Future.traverse(mads) { mad =>
-        LkAdUtil.tiledAdBrArgs(mad)
+        lkAdUtil.tiledAdBrArgs(mad)
       }
     }
     // Узнаём текущий узел на основе запроса. TODO Кривовато это как-то, может стоит через аргумент передавать?
