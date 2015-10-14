@@ -1,6 +1,6 @@
 package io.suggest.playx
 
-import play.api.Application
+import play.api.{Configuration, Application}
 
 /**
  * Suggest.io
@@ -16,8 +16,13 @@ trait ICurrentApp {
 }
 
 
+trait IConfiguration {
+  def configuration: Configuration
+}
+
+
 /** Трейт для быстрого доступа к play config через DI Application. */
-trait ICurrentConf extends ICurrentApp {
+trait ICurrentConf extends ICurrentApp with IConfiguration {
 
   /** Доступ к play config через экземпляр Application, вброшенный через DI. */
   def configuration = current.configuration
