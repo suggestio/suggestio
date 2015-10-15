@@ -23,6 +23,7 @@ import scala.concurrent.{ExecutionContext, Future}
  * Description: sys-контроллер для работы с mmp-тарификацией, т.е. когда тарификация настраивается по рекламным модулям.
  */
 class SysMarketBillingMmp @Inject() (
+  mCalendar                     : MCalendar_,
   override val messagesApi      : MessagesApi,
   override val db               : Database,
   override implicit val ec      : ExecutionContext,
@@ -86,7 +87,7 @@ class SysMarketBillingMmp @Inject() (
   }
 
   private def _createMmpDaily(formM: Form[MBillMmpDaily])(implicit request: ContractRequest[AnyContent]): Future[Html] = {
-    val mcalsFut = MCalendar.getAll()
+    val mcalsFut = mCalendar.getAll()
     for {
       adnNodeOpt <- MAdnNodeCache.getById(request.contract.adnId)
       mcals      <- mcalsFut
@@ -128,7 +129,7 @@ class SysMarketBillingMmp @Inject() (
   }
 
   private def _editMmpDaily(mmpdId: Int, form: Form[MBillMmpDaily])(implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Html] = {
-    val mcalsFut = MCalendar.getAll()
+    val mcalsFut = mCalendar.getAll()
     val syncResult = db.withConnection { implicit c =>
       val mbmd = MBillMmpDaily.getById(mmpdId).get
       val mbc  = MBillContract.getById(mbmd.contractId).get
@@ -222,7 +223,7 @@ class SysMarketBillingMmp @Inject() (
    * @return HTML страницы формы редактирования.
     */
   private def _updateAllFormHtml(formM: Form[MBillMmpDaily])(implicit request: AbstractRequestWithPwOpt[_]): Future[Html] = {
-    val mcalsFut = MCalendar.getAll()
+    val mcalsFut = mCalendar.getAll()
     for {
       mcals <- mcalsFut
     } yield {

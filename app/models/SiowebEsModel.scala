@@ -22,7 +22,11 @@ import scala.concurrent.duration._
  * Created: 24.02.14 17:43
  * Description: Дополнительная утиль для ES-моделей.
  */
-class SiowebEsModel @Inject() (mMedia: MMedia_, implicit val ec: ExecutionContext) extends PlayMacroLogsDyn {
+class SiowebEsModel @Inject() (
+  mMedia              : MMedia_,
+  mCalendar           : MCalendar_,
+  implicit val ec     : ExecutionContext
+) extends PlayMacroLogsDyn {
 
   /**
    * Список моделей, которые должны быть проинициалированы при старте.
@@ -30,7 +34,7 @@ class SiowebEsModel @Inject() (mMedia: MMedia_, implicit val ec: ExecutionContex
    */
   def ES_MODELS: Seq[EsModelCommonStaticT] = {
     EsModel.ES_MODELS ++ Seq[EsModelCommonStaticT](
-      EmailPwIdent, EmailActivation, MExtIdent, MMartCategory, MInviteRequest, MCalendar,
+      EmailPwIdent, EmailActivation, MExtIdent, MMartCategory, MInviteRequest, mCalendar,
       MRemoteError, MGallery, MAiMad,
       adv.MExtTarget,
       event.MEvent, sec.MAsymKey,

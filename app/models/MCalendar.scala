@@ -1,5 +1,6 @@
 package models
 
+import com.google.inject.{Singleton, Inject}
 import io.suggest.model._
 import util.PlayMacroLogsImpl
 import io.suggest.model.EsModel.FieldsJsonAcc
@@ -17,7 +18,12 @@ import io.suggest.util.SioEsUtil._
  * Created: 30.05.14 18:36
  * Description: Модель для хранения календарей в текстовых форматах.
  */
-object MCalendar extends EsModelStaticT with PlayMacroLogsImpl with EsmV2Deserializer {
+@Singleton
+class MCalendar_
+  extends EsModelStaticT
+  with PlayMacroLogsImpl
+  with EsmV2Deserializer
+{
 
   override type T = MCalendar
 
@@ -39,10 +45,11 @@ object MCalendar extends EsModelStaticT with PlayMacroLogsImpl with EsmV2Deseria
   @deprecated("Use deserializeOne2() instead", "2015.sep.05")
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
     MCalendar(
-      id = id,
-      name = m.get(NAME_ESFN).fold("WTF?")(EsModel.stringParser),
-      data = EsModel.stringParser( m(DATA_ESFN) ),
-      versionOpt = version
+      id          = id,
+      name        = m.get(NAME_ESFN).fold("WTF?")(EsModel.stringParser),
+      companion   = this,
+      data        = EsModel.stringParser( m(DATA_ESFN) ),
+      versionOpt  = version
     )
   }
 
@@ -55,29 +62,35 @@ object MCalendar extends EsModelStaticT with PlayMacroLogsImpl with EsmV2Deseria
   override protected def esDocReads(meta: IEsDocMeta): Reads[T] = {
     _reads0 {
       (name, data) =>
-        apply(name, data, meta.id, meta.version)
+        MCalendar(
+          name        = name,
+          data        = data,
+          companion   = this,
+          id          = meta.id,
+          versionOpt  = meta.version
+        )
     }
   }
 
 }
 
 
-import MCalendar._
-
-
 case class MCalendar(
-  name        : String,
-  data        : String,
-  id          : Option[String]  = None,
-  versionOpt  : Option[Long]    = None
-) extends EsModelPlayJsonT with EsModelT {
+  name                    : String,
+  data                    : String,
+  override val companion  : MCalendar_,
+  id                      : Option[String]  = None,
+  versionOpt              : Option[Long]    = None
+)
+  extends EsModelPlayJsonT
+  with EsModelT
+{
 
   override type T = MCalendar
-  override def companion = MCalendar
 
   override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
-    NAME_ESFN -> JsString(name) ::
-      DATA_ESFN -> JsString(data) ::
+    companion.NAME_ESFN -> JsString(name) ::
+      companion.DATA_ESFN -> JsString(data) ::
       acc
   }
 }
@@ -85,9 +98,13 @@ case class MCalendar(
 
 // Поддержка JMX.
 trait MCalendarJmxMBean extends EsModelJMXMBeanI
-final class MCalendarJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+
+class MCalendarJmx @Inject() (
+  override val companion  : MCalendar_,
+  override val ec         : ExecutionContext,
+  override val client     : Client,
+  override val sn         : SioNotifierStaticClientI
+)
   extends EsModelJMXBase
   with MCalendarJmxMBean
-{
-  override def companion = MCalendar
-}
+

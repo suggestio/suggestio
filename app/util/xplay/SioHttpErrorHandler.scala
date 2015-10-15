@@ -14,6 +14,7 @@ import scala.concurrent.Future
  * Description: Заготовка для обработчика ошибок play.
  * По идее можно будет допилить его до реализации error handler'а и закинуть в play через Global.
  */
+// TODO Сделать трейтом, зависящим от SioController и внедрить везде.
 object SioHttpErrorHandler {
 
   /** Тело экшена, генерирующее страницу 404. Используется при минимальном окружении. */

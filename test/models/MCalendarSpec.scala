@@ -11,6 +11,8 @@ import org.scalatestplus.play.PlaySpec
  */
 class MCalendarSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
 
+  lazy val mCalendar = app.injector.instanceOf[MCalendar_]
+
   "MCalendar JSON" must {
 
     "handle fully-filled fields" in {
@@ -18,10 +20,11 @@ class MCalendarSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
         name        = "RUSSIAN prime",
         data        = """asdasd\n\asddasd\53535\t\n\sdfasdf """,
         id          = Some("aADw4312rqefasef"),
-        versionOpt  = Some(1)
+        versionOpt  = Some(1),
+        companion   = mCalendar
       )
 
-      MCalendar.deserializeOne2(mcal) mustBe mcal
+      mCalendar.deserializeOne2(mcal) mustBe mcal
     }
 
 
@@ -30,10 +33,11 @@ class MCalendarSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
         name        = "RUSSIAN prime календарррррь",
         data        = """ asdasd\n\asddasd\53535\t\n\sdf$$##asdf\n#\n\n\n\t\rasdasd  """,
         id          = None,
-        versionOpt  = None
+        versionOpt  = None,
+        companion   = mCalendar
       )
 
-      MCalendar.deserializeOne2(mcal) mustBe mcal
+      mCalendar.deserializeOne2(mcal) mustBe mcal
     }
 
   }

@@ -30,6 +30,7 @@ import play.api.mvc.Result
  * @see [[http://jollyday.sourceforge.net/index.html]]
  */
 class SysCalendar @Inject() (
+  mCalendar                     : MCalendar_,
   override val messagesApi      : MessagesApi,
   db                            : Database,
   override implicit val ec      : ExecutionContext,
@@ -84,7 +85,11 @@ class SysCalendar @Inject() (
     }
   )
   {(name, data) =>
-    MCalendar(name = name, data = data)
+    MCalendar(
+      name = name,
+      data = data,
+      companion = mCalendar
+    )
   }
   {mcal =>
     Some((mcal.name, mcal.data))
@@ -94,7 +99,7 @@ class SysCalendar @Inject() (
   /** Отобразить список всех сохранённых календарей. */
   def showCalendars = IsSuperuser.async { implicit request =>
     val createFormM = newCalTplFormM fill HolidayCalendar.RUSSIA
-    MCalendar.getAll(maxResults = 500).map { cals =>
+    mCalendar.getAll(maxResults = 500).map { cals =>
       Ok(listCalsTpl(cals, createFormM))
     }
   }
@@ -104,7 +109,7 @@ class SysCalendar @Inject() (
   def newCalendarFromTemplateSubmit = IsSuperuser.async { implicit request =>
     newCalTplFormM.bindFromRequest().fold(
       {formWithErrors =>
-        val calsFut = MCalendar.getAll(maxResults = 500)
+        val calsFut = mCalendar.getAll(maxResults = 500)
         debug("newCalendarFormTpl(): Form bind failed:\n" + formatFormErrors(formWithErrors))
         calsFut.map { cals =>
           NotAcceptable(listCalsTpl(cals, formWithErrors))
@@ -120,7 +125,12 @@ class SysCalendar @Inject() (
               val sw = new StringWriter()
               IOUtils.copy(stream, sw)
               val data = sw.toString
-              val newFormBinded = calFormM fill MCalendar(name = "", data = data)
+              val stub = MCalendar(
+                name = "",
+                data = data,
+                companion = mCalendar
+              )
+              val newFormBinded = calFormM.fill( stub )
               Ok(createCalFormTpl(newFormBinded))
             } finally {
               stream.close()
@@ -209,7 +219,7 @@ class SysCalendar @Inject() (
     * @return xml-содержимое календаря текстом.
     */
   def getCalendarXml(calId: String) = Action.async { implicit request =>
-    MCalendar.getById(calId) map {
+    mCalendar.getById(calId) map {
       case Some(mcal) =>
         Ok(mcal.data).as("text/xml")
       case None =>
@@ -225,7 +235,7 @@ class SysCalendar @Inject() (
       val pwOpt = PersonWrapper getFromRequest request
       if (PersonWrapper.isSuperuser(pwOpt)) {
         val srmFut = SioReqMd.fromPwOpt(pwOpt)
-        MCalendar.getById(calId) flatMap {
+        mCalendar.getById(calId) flatMap {
           case Some(mcal) =>
             srmFut flatMap { srm =>
               val req1 = CalendarRequest(mcal, request, pwOpt, srm)
