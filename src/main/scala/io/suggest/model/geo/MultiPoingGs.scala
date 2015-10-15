@@ -5,6 +5,9 @@ import io.suggest.model.EsModel.FieldsJsonAcc
 import org.elasticsearch.common.geo.builders.{MultiPointBuilder, PointCollection, ShapeBuilder}
 import java.{util => ju}
 
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -31,7 +34,7 @@ case class MultiPoingGs(coords: Seq[GeoPoint]) extends MultiPointShape {
 /** Общий static-код моделей, которые описываются массивом точек. */
 trait MultiPointShapeStatic {
 
-  type Shape_t <: GeoShape
+  type Shape_t <: MultiPointShape
 
   def apply(coords: Seq[GeoPoint]): Shape_t
 
@@ -39,6 +42,12 @@ trait MultiPointShapeStatic {
     Option(jmap get COORDS_ESFN)
       .map { rawCoords => apply( LineStringGs.parseCoords(rawCoords) ) }
   }
+
+  def DATA_FORMAT: Format[Shape_t] = {
+    (__ \ COORDS_ESFN).format[Seq[GeoPoint]]
+      .inmap[Shape_t](apply, _.coords)
+  }
+
 }
 
 

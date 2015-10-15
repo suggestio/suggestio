@@ -30,7 +30,7 @@ class CircleGsTest extends FlatSpec with Matchers with CoordRnd {
   }
 
 
-  "CircleGs" should "serialize/deserialize to/from ES JSON" in {
+  "Jackson JSON" should "serialize/deserialize to/from ES JSON" in {
     mkTests { cgs =>
       val jsonStr = Json.stringify( cgs.toPlayJson() )
       val jacksonJson = JacksonWrapper.deserialize [ju.HashMap[Any, Any]] (jsonStr)
@@ -38,6 +38,29 @@ class CircleGsTest extends FlatSpec with Matchers with CoordRnd {
       val esShape = cgs.toEsShapeBuilder
       esShape  should not equal null
     }
+  }
+
+
+  /**
+   * @see [[https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-shape-type.html#_circle]]
+   */
+  "play.json DATA_FORMAT" should "parse data from documented ES circle example" in {
+    val jsonStr =
+      """
+        |{
+        |  "type" : "circle",
+        |  "coordinates" : [-45.0, 45.0],
+        |  "radius" : "100m"
+        |}
+      """.stripMargin
+    val jsv = Json.parse(jsonStr)
+    val res = jsv.validate(CircleGs.DATA_FORMAT)
+    assert( res.isSuccess, res )
+    val cgs = res.get
+    cgs shouldBe CircleGs(
+      center = GeoPoint(lon = -45.0, lat = 45.0),
+      radius = Distance(100, DistanceUnit.METERS)
+    )
   }
 
 }

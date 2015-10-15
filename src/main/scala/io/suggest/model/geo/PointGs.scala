@@ -23,7 +23,7 @@ object PointGs {
   }
 
   /** play-json deserializer. */
-  implicit val FORMAT: Format[PointGs] = {
+  def DATA_FORMAT: Format[PointGs] = {
     (__ \ COORDS_ESFN)
       .format( GeoPoint.FORMAT_GEO_ARRAY )
       .inmap(apply, unlift(unapply))

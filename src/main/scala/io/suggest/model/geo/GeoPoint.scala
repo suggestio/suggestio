@@ -6,6 +6,7 @@ import io.suggest.geo.IGeoPoint
 import io.suggest.model.EsModel.doubleParser
 import io.suggest.util.{JacksonWrapper, MacroLogsImpl}
 import org.elasticsearch.common.geo.{GeoHashUtils, GeoPoint => EsGeoPoint}
+import play.api.data.validation.ValidationError
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -108,23 +109,35 @@ object GeoPoint extends MacroLogsImpl {
     GeoPoint(lat = lat, lon = lon)
   }
 
-  /** Десериализация из js-массива вида [-13.22,45.34]. */
-  val FORMAT_GEO_ARRAY: Format[GeoPoint] = {
-    __.format[Seq[Double]]
-      .inmap [GeoPoint] ({
-        case Seq(lon, lat) =>
-          apply(lat = lat,  lon = lon)
-        },
-        { gp =>
-          Seq(gp.lon, gp.lat)
-        }
+  val READS_GEO_ARRAY = Reads[GeoPoint] {
+    case JsArray(Seq(lonV, latV)) =>
+      val gp = GeoPoint(
+        lat = latV.as[Double],
+        lon = lonV.as[Double]
       )
+      JsSuccess(gp)
+    case other =>
+      JsError( ValidationError("expected.jsarray", other) )
   }
 
+  val WRITES_GEO_ARRAY = Writes[GeoPoint] { gp =>
+    JsArray(
+      Seq(
+        JsNumber(gp.lon),
+        JsNumber(gp.lat)
+      )
+    )
+  }
+
+  /** Десериализация из js-массива вида [-13.22,45.34]. */
+  val FORMAT_GEO_ARRAY = Format[GeoPoint](READS_GEO_ARRAY, WRITES_GEO_ARRAY)
+
   /** Десериализация из строки вида "45.34,-13.22". */
-  val READS_STRING: Reads[GeoPoint] = {
-    __.read[String]
-      .map { apply }
+  val READS_STRING = Reads[GeoPoint] {
+    case JsString(raw) =>
+      JsSuccess( apply(raw) )
+    case other =>
+      JsError( ValidationError("expected.jsstring", other) )
   }
 
   /** JSON-формат для ввода-вывода в виде JSON-объекта с полями lat и lon. */
@@ -133,21 +146,17 @@ object GeoPoint extends MacroLogsImpl {
     (__ \ ES_LON_FN).format[Double]
   )(apply(_, _), unlift(unapply))
 
-  /** Десериализация из JSON-представления в виде объекта:
-    * {lat: 45.34, lon: -13.22}. */
-  def READS_OBJECT: Reads[GeoPoint] = FORMAT_OBJECT
-
   /** Десериализация из JSON из различных видов представления геоточки. */
   val READS_ANY: Reads[GeoPoint] = {
-    READS_OBJECT
-      .orElse( FORMAT_GEO_ARRAY )
+    FORMAT_GEO_ARRAY
+      .orElse( FORMAT_OBJECT )
       .orElse( READS_STRING )
   }
 
   /** Дефолтовый JSON-форматтер для десериализации из разных форматов,
     * но сериализации в JSON object с полями lat и lon. */
-  implicit val FORMAT_ANY_TO_OBJECT: Format[GeoPoint] = {
-    Format[GeoPoint](READS_ANY, FORMAT_OBJECT)
+  implicit val FORMAT_ANY_TO_ARRAY: Format[GeoPoint] = {
+    Format[GeoPoint](READS_ANY, FORMAT_GEO_ARRAY)
   }
 
 }

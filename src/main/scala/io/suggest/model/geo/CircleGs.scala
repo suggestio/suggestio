@@ -25,7 +25,7 @@ object CircleGs {
     }
   }
 
-  implicit val FORMAT: OFormat[CircleGs] = (
+  def DATA_FORMAT: OFormat[CircleGs] = (
     (__ \ COORDS_ESFN).format[GeoPoint] and
     (__ \ RADIUS_ESFN).format[Distance]
   )(apply, unlift(unapply))

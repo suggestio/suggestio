@@ -11,8 +11,26 @@ import java.{util => ju}
  * Description: Тесты для Linestring GeoShape'ов.
  */
 class LineStringGsTest extends MultiPoingGeoShapeTest {
+
   override type T = LineStringGs
   override def companion = LineStringGs
+
+  override protected def JSON_EXAMPLE: String = {
+    """
+      |{
+      |  "type" : "linestring",
+      |  "coordinates" : [[-77.03653, 38.897676], [-77.009051, 38.889939]]
+      |}
+    """.stripMargin
+  }
+
+  override protected def JSON_EXAMPLE_PARSED: LineStringGs = {
+    LineStringGs(Seq(
+      GeoPoint(lat = 38.897676, lon = -77.03653),
+      GeoPoint(lat = 38.889939, lon = -77.009051)
+    ))
+  }
+
 }
 
 
@@ -25,8 +43,6 @@ trait MultiPoingGeoShapeTest extends FlatSpec with Matchers with CoordLineRnd {
   
   type T <: GeoShapeQuerable
 
-  protected def testName = companion.apply(Nil).getClass.getSimpleName
-  
   def companion: MultiPointShapeStatic { type Shape_t = T }
 
   protected def mkTests(f: T => Unit): Unit = {
@@ -37,13 +53,24 @@ trait MultiPoingGeoShapeTest extends FlatSpec with Matchers with CoordLineRnd {
   }
 
 
-  testName should "serialize/deserialize to/from ES JSON" in {
+  "Jackson JSON" should "serialize/deserialize to/from ES JSON" in {
     mkTests { lsgs =>
       val jsonStr = Json.stringify( lsgs.toPlayJson() )
       val jacksonJson = JacksonWrapper.deserialize [ju.HashMap[Any, Any]] (jsonStr)
       companion.deserialize(jacksonJson)  shouldBe  Some(lsgs)
       lsgs.toEsShapeBuilder  should not be  null
     }
+  }
+
+  protected def JSON_EXAMPLE: String
+  protected def JSON_EXAMPLE_PARSED: T
+
+  "play.json DATA_FORMAT" should "parse documented example" in {
+    val jsr = Json.parse(JSON_EXAMPLE)
+      .validate(companion.DATA_FORMAT)
+    assert( jsr.isSuccess, jsr )
+    val mpgs = jsr.get
+    mpgs shouldBe JSON_EXAMPLE_PARSED
   }
 
 }
