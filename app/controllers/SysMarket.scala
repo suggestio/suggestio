@@ -49,6 +49,7 @@ class SysMarket @Inject() (
   with SysNodeInstall
   with SmSendEmailInvite
   with SysAdRender
+  with IsSuperuserMad
 {
 
   import LOGGER._

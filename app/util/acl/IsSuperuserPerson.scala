@@ -5,7 +5,7 @@ import io.suggest.di.{IExecutionContext, IEsClient}
 import io.suggest.model.n2.node.MNodeTypes
 import models.MNode
 import models.req.SioReqMd
-import play.api.mvc.{Results, Result, ActionBuilder, Request}
+import play.api.mvc.{Result, ActionBuilder, Request}
 import util.acl.PersonWrapper.PwOpt_t
 
 import scala.concurrent.Future
@@ -17,7 +17,11 @@ import scala.concurrent.Future
  * Description: Гибрид IsSuperuser и чтения произвольного юзера из хранилища по id.
  */
 
-trait IsSuperuserPerson extends SioController with IEsClient with IExecutionContext {
+trait IsSuperuserPerson
+  extends SioController
+  with IEsClient
+  with IExecutionContext
+{
 
   trait IsSuperuserPersonBase extends ActionBuilder[MPersonRequest] {
     /** id юзера. */
@@ -45,7 +49,7 @@ trait IsSuperuserPerson extends SioController with IEsClient with IExecutionCont
 
     /** Юзер не найден. */
     def personNotFound(request: Request[_]): Future[Result] = {
-      val res = Results.NotFound("person not exists: " + personId)
+      val res = NotFound("person not exists: " + personId)
       Future successful res
     }
   }
@@ -65,4 +69,5 @@ case class MPersonRequest[A](
   pwOpt     : PwOpt_t,
   request   : Request[A],
   sioReqMd  : SioReqMd
-) extends AbstractRequestWithPwOpt[A](request)
+)
+  extends AbstractRequestWithPwOpt[A](request)

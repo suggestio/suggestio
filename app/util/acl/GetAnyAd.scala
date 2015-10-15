@@ -53,3 +53,19 @@ trait GetAnyAd extends SioController with IEsClient with IExecutionContext {
     with ExpireSession[RequestWithAd]
 
 }
+
+
+/** Абстрактный реквест в сторону какой-то рекламной карточки. */
+abstract class AbstractRequestWithAd[A](request: Request[A]) extends AbstractRequestWithPwOpt(request) {
+  def mad: MAd
+}
+
+/** Экземпляр реквеста, содержащего рекламную запрашиваемую карточку. */
+case class RequestWithAd[A](
+  mad       : MAd,
+  request   : Request[A],
+  pwOpt     : PwOpt_t,
+  sioReqMd  : SioReqMd
+)
+  extends AbstractRequestWithAd(request)
+

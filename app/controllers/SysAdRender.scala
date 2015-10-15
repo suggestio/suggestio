@@ -8,7 +8,7 @@ import models.msc.OneAdRenderVariant
 import play.api.data.{Mapping, Form}
 import play.twirl.api.Html
 import util.{PlayMacroLogsI, FormUtil}
-import util.acl.{RequestWithAd, IsSuperuserMadPost, IsSuperuserMadGet}
+import util.acl.{IsSuperuserMad, RequestWithAd}
 import views.html.sys1.market.ad.one._
 
 import scala.concurrent.Future
@@ -50,6 +50,7 @@ trait SysAdRender
   extends SioController
   with PlayMacroLogsI
   with IEsClient
+  with IsSuperuserMad
 {
 
   val sysAdRenderUtil: SysAdRenderUtil

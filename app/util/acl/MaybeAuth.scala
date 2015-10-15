@@ -1,10 +1,8 @@
 package util.acl
 
 import io.suggest.di.IExecutionContext
-import models.MAd
 import models.req.SioReqMd
 import play.api.mvc._
-import util.acl.PersonWrapper.PwOpt_t
 import scala.concurrent.Future
 
 /**
@@ -54,21 +52,3 @@ trait MaybeAuth extends IExecutionContext {
     with CsrfPost[AbstractRequestWithPwOpt]
 
 }
-
-
-/** Абстрактный реквест в сторону какой-то рекламной карточки. */
-abstract class AbstractRequestWithAd[A](request: Request[A]) extends AbstractRequestWithPwOpt(request) {
-  def mad: MAd
-}
-
-/** Экземпляр реквеста, содержащего рекламную запрашиваемую карточку. */
-case class RequestWithAd[A](
-  mad       : MAd,
-  request   : Request[A],
-  pwOpt     : PwOpt_t,
-  sioReqMd  : SioReqMd
-)
-  extends AbstractRequestWithAd(request)
-
-
-
