@@ -3,6 +3,7 @@ package io.suggest.model.geo
 import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.model.EsModel
 import io.suggest.model.EsModel.FieldsJsonAcc
+import io.suggest.util.MacroLogsDyn
 import org.elasticsearch.common.geo.builders.ShapeBuilder
 import play.api.libs.json._
 import java.{util => ju}
@@ -15,7 +16,7 @@ import java.{util => ju}
  * В функциях модуля избегаем использования jts из-за возможных проблем с XYZ-координатами в будущем.
  */
 
-object GeoShape {
+object GeoShape extends MacroLogsDyn {
 
   val COORDS_ESFN = "coordinates"
   val TYPE_ESFN   = "type"
@@ -35,7 +36,7 @@ object GeoShape {
           case GsTypes.multipolygon       => MultiPolygonGs.deserialize(jmap)
           case GsTypes.geometrycollection => GeometryCollectionGs.deserialize(jmap)
           case other =>
-            println("Unsupported geo shape type: " + other)
+            LOGGER.error("deserialize(): Unsupported geo shape type: " + other + "\n data was: " + jmap)
             None
         }
   }
@@ -59,7 +60,8 @@ trait GeoShape {
     } else {
       shapeType.esName
     }
-    val acc = TYPE_ESFN -> JsString(typeName) :: _toPlayJsonInternal(geoJsonCompatible)
+    val acc = TYPE_ESFN -> JsString(typeName) ::
+      _toPlayJsonInternal(geoJsonCompatible)
     JsObject(acc)
   }
 
@@ -85,23 +87,45 @@ trait GeoShapeQuerable extends GeoShape {
 /** Типы плоских фигур, допустимых для отправки в ES для geo-поиска/geo-фильтрации. */
 object GsTypes extends Enumeration with EnumMaybeWithName {
 
-  protected[this] sealed case class Val(esName: String, geoJsonName: Option[String])
+  protected[this] sealed class Val(val esName: String)
     extends super.Val(esName)
   {
+    /** Имя в рамках спецификации GeoJSON. */
+    def geoJsonName: Option[String] = None
+
     def isGeoJsonCompatible: Boolean = geoJsonName.isDefined
   }
 
   override type T = Val
 
-  val point               : T = Val("point", Some("Point"))
-  val linestring          : T = Val("linestring", Some("LineString"))
-  val polygon             : T = Val("polygon", Some("Polygon"))
-  val multipoint          : T = Val("multipoint", Some("MultiPoint"))
-  val multilinestring     : T = Val("multilinestring", Some("MultiLineString"))
-  val multipolygon        : T = Val("multipolygon", Some("MultiPolygon"))
-  val geometrycollection  : T = Val("geometrycollection", Some("GeometryCollection"))
-  val envelope            : T = Val("envelope", None)
-  val circle              : T = Val("circle", None)
+  val point               : T = new Val("point") {
+    override def geoJsonName = Some("Point")
+  }
+
+  val linestring          : T = new Val("linestring") {
+    override def geoJsonName = Some("LineString")
+  }
+
+  val polygon             : T = new Val("polygon") {
+    override def geoJsonName = Some("Polygon")
+  }
+  val multipoint          : T = new Val("multipoint") {
+    override def geoJsonName = Some("MultiPoint")
+  }
+
+  val multilinestring     : T = new Val("multilinestring") {
+    override def geoJsonName = Some("MultiLineString")
+  }
+
+  val multipolygon        : T = new Val("multipolygon") {
+    override def geoJsonName = Some("MultiPolygon")
+  }
+  val geometrycollection  : T = new Val("geometrycollection") {
+    override def geoJsonName = Some("GeometryCollection")
+  }
+
+  val envelope            : T = new Val("envelope")
+  val circle              : T = new Val("circle")
 
   override def maybeWithName(n: String): Option[T] = {
     values

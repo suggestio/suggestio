@@ -109,13 +109,16 @@ object GeoPoint extends MacroLogsImpl {
   }
 
   /** Десериализация из js-массива вида [-13.22,45.34]. */
-  val READS_GEO_ARRAY: Reads[GeoPoint] = {
-    __.read[Seq[Double]]
-      .filter { _.size == 2 }
-      .map {
+  val FORMAT_GEO_ARRAY: Format[GeoPoint] = {
+    __.format[Seq[Double]]
+      .inmap [GeoPoint] ({
         case Seq(lon, lat) =>
           apply(lat = lat,  lon = lon)
-      }
+        },
+        { gp =>
+          Seq(gp.lon, gp.lat)
+        }
+      )
   }
 
   /** Десериализация из строки вида "45.34,-13.22". */
@@ -137,13 +140,13 @@ object GeoPoint extends MacroLogsImpl {
   /** Десериализация из JSON из различных видов представления геоточки. */
   val READS_ANY: Reads[GeoPoint] = {
     READS_OBJECT
-      .orElse( READS_GEO_ARRAY )
+      .orElse( FORMAT_GEO_ARRAY )
       .orElse( READS_STRING )
   }
 
-  /** JSON-маппер для десериализации из разных форматов,
+  /** Дефолтовый JSON-форматтер для десериализации из разных форматов,
     * но сериализации в JSON object с полями lat и lon. */
-  implicit val FORMAT_ANY: Format[GeoPoint] = {
+  implicit val FORMAT_ANY_TO_OBJECT: Format[GeoPoint] = {
     Format[GeoPoint](READS_ANY, FORMAT_OBJECT)
   }
 

@@ -27,10 +27,18 @@ object Distance {
     Distance(esDistance)
   }
 
-  implicit def reads: Reads[Distance] = {
-    __.read[String]
-      .map { apply }
+  val READS = Reads[Distance] {
+    case JsString(raw) =>
+      JsSuccess(apply(raw))
+    case other =>
+      JsError("expected.jsstring")
   }
+
+  val WRITES = Writes[Distance] { dst =>
+    JsString( dst.toString )
+  }
+
+  implicit val FORMAT = Format(READS, WRITES)
 
 }
 

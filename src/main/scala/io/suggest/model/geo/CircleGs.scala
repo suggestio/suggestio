@@ -25,10 +25,10 @@ object CircleGs {
     }
   }
 
-  implicit def reads: Reads[CircleGs] = (
-    (__ \ COORDS_ESFN).read[GeoPoint] and
-    (__ \ RADIUS_ESFN).read[Distance]
-  )(apply _)
+  implicit val FORMAT: OFormat[CircleGs] = (
+    (__ \ COORDS_ESFN).format[GeoPoint] and
+    (__ \ RADIUS_ESFN).format[Distance]
+  )(apply, unlift(unapply))
 
 }
 
@@ -37,8 +37,8 @@ import CircleGs._
 
 
 case class CircleGs(center: GeoPoint, radius: Distance) extends GeoShapeQuerable {
-  override def shapeType = GsTypes.circle
 
+  override def shapeType = GsTypes.circle
 
   override def _toPlayJsonInternal(geoJsonCompatible: Boolean): FieldsJsonAcc = {
     List(

@@ -5,6 +5,7 @@ import org.elasticsearch.common.geo.builders.ShapeBuilder
 import java.{util => ju}
 import GeoShape._
 import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
  * Suggest.io
@@ -22,10 +23,10 @@ object PointGs {
   }
 
   /** play-json deserializer. */
-  implicit def reads: Reads[PointGs] = {
+  implicit val FORMAT: Format[PointGs] = {
     (__ \ COORDS_ESFN)
-      .read[GeoPoint]
-      .map { apply }
+      .format( GeoPoint.FORMAT_GEO_ARRAY )
+      .inmap(apply, unlift(unapply))
   }
 
 }
