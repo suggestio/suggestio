@@ -236,7 +236,7 @@ class SysCalendar @Inject() (
             NotFound("Calendar not found: " + calId)
         }
       } else {
-        IsSuperuser.onUnauthFut(request, pwOpt)
+        IsSuperuser.supOnUnauthFut(request, pwOpt)
       }
     }
   }

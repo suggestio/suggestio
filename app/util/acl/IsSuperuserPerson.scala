@@ -47,7 +47,7 @@ trait IsSuperuserPerson
         }
 
       } else {
-        onUnauthFut(request, pwOpt)
+        supOnUnauthFut(request, pwOpt)
       }
     }
 

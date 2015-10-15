@@ -45,7 +45,7 @@ trait IsSuperuserAiMad
           case None => aiMadNotFound
         }
       } else {
-        onUnauthFut(request, pwOpt)
+        supOnUnauthFut(request, pwOpt)
       }
     }
 

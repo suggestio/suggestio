@@ -56,6 +56,7 @@ class Img @Inject() (
   with TempImgSupport
   with BruteForceProtectCtl
   with ICurrentConf
+  with IsAuth
 {
 
   import LOGGER._

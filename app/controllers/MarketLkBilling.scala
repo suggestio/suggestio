@@ -36,6 +36,7 @@ class MarketLkBilling @Inject() (
   with PlayMacroLogsImpl
   with ICurrentConf
   with IsAdnNodeAdmin
+  with IsAuth
 {
 
   import LOGGER._

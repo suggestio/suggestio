@@ -51,7 +51,7 @@ trait IsSuperuserFeeTariffContract
         }
 
       } else {
-        onUnauthFut(request, pwOpt)
+        supOnUnauthFut(request, pwOpt)
       }
     }
 

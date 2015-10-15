@@ -51,7 +51,7 @@ trait IsSuperuserContractNode
         }
 
       } else {
-        onUnauthFut(request, pwOpt)
+        supOnUnauthFut(request, pwOpt)
       }
     }
   }

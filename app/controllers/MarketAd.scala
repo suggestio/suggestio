@@ -53,6 +53,7 @@ class MarketAd @Inject() (
   with CanEditAd
   with CanUpdateSls
   with IsAdnNodeAdmin
+  with IsAuth
 {
 
   import LOGGER._

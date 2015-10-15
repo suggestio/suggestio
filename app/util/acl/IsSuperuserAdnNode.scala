@@ -43,7 +43,7 @@ trait IsSuperuserAdnNode
         }
 
       } else {
-        onUnauthFut(request, pwOpt)
+        supOnUnauthFut(request, pwOpt)
       }
     }
 

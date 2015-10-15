@@ -13,18 +13,18 @@ import util.acl.PersonWrapper.PwOpt_t
  * Created: 16.10.13 13:48
  * Description: Суперпользователи сервиса имеют все необходимые права, в т.ч. для доступа в /sys/.
  */
-trait IsSuperuserUtilCtl extends IExecutionContext {
+trait IsSuperuserUtilCtl extends OnUnauthUtilCtl {
 
-  trait IsSuperuserUtil extends PlayMacroLogsDyn {
+  trait IsSuperuserUtil extends OnUnauthUtil with PlayMacroLogsDyn {
 
-    def onUnauthFut(request: RequestHeader, pwOpt: PwOpt_t): Future[Result] = {
+    def supOnUnauthFut(request: RequestHeader, pwOpt: PwOpt_t): Future[Result] = {
       import request._
       LOGGER.warn(s"$method $path <- BLOCKED access to hidden/priveleged place from $remoteAddress user=$pwOpt")
-      onUnauthResult(request, pwOpt)
+      supOnUnauthResult(request, pwOpt)
     }
 
-    def onUnauthResult(request: RequestHeader, pwOpt: PwOpt_t): Future[Result] = {
-      IsAuth.onUnauth(request)
+    def supOnUnauthResult(request: RequestHeader, pwOpt: PwOpt_t): Future[Result] = {
+      onUnauth(request)
     }
 
   }
@@ -32,7 +32,7 @@ trait IsSuperuserUtilCtl extends IExecutionContext {
 }
 
 
-trait IsSuperuser extends IsSuperuserUtilCtl {
+trait IsSuperuser extends IsSuperuserUtilCtl with IExecutionContext {
 
   trait IsSuperuserBase
     extends ActionBuilder[AbstractRequestWithPwOpt]
@@ -52,27 +52,27 @@ trait IsSuperuser extends IsSuperuserUtilCtl {
           block( RequestWithPwOpt(pwOpt, request, srm) )
         }
       } else {
-        onUnauthFut(request, pwOpt)
+        supOnUnauthFut(request, pwOpt)
       }
     }
 
   }
 
 
-  sealed abstract class IsSuperuserBase2
+  sealed abstract class IsSuperuserAbstract
     extends IsSuperuserBase
     with ExpireSession[AbstractRequestWithPwOpt]
     with CookieCleanup[AbstractRequestWithPwOpt]
 
   object IsSuperuser
-    extends IsSuperuserBase2
+    extends IsSuperuserAbstract
 
   object IsSuperuserGet
-    extends IsSuperuserBase2
+    extends IsSuperuserAbstract
     with CsrfGet[AbstractRequestWithPwOpt]
 
   object IsSuperuserPost
-    extends IsSuperuserBase2
+    extends IsSuperuserAbstract
     with CsrfPost[AbstractRequestWithPwOpt]
 
 }

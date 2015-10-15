@@ -22,6 +22,7 @@ class Application @Inject() (
   extends SioControllerImpl
   with MaybeAuth
   with IsSuperuserOr404
+  with IsAuth
 {
 
   /** Время кеширования /robots.txt ответа на клиенте. */

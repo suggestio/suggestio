@@ -46,7 +46,7 @@ trait IsSuperuserGallery
             galNotFound
         }
       } else {
-        onUnauthFut(request, pwOpt)
+        supOnUnauthFut(request, pwOpt)
       }
     }
 

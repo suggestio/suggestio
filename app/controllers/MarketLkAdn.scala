@@ -57,6 +57,7 @@ class MarketLkAdn @Inject() (
   with IsAdnNodeAdminOptOrAuth
   with AdnNodeAccess
   with IsAdnNodeAdmin
+  with IsAuth
 {
 
   import LOGGER._

@@ -44,7 +44,7 @@ trait IsSuperuserMad
             madNotFound(request)
         }
       } else {
-        onUnauthFut(request, pwOpt)
+        supOnUnauthFut(request, pwOpt)
       }
     }
 

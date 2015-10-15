@@ -52,6 +52,7 @@ class MarketLkAdnEdit @Inject() (
   with PlayMacroLogsImpl
   with BruteForceProtectCtl
   with IsAdnNodeAdmin
+  with IsAuth
 {
 
   import LOGGER._

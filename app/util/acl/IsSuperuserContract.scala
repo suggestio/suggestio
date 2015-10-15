@@ -39,7 +39,7 @@ trait IsSuperuserContract
           block(req1)
         }
       } else {
-        onUnauthFut(request, pwOpt)
+        supOnUnauthFut(request, pwOpt)
       }
     }
   }

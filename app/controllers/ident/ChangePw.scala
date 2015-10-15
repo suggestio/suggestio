@@ -35,7 +35,10 @@ import ChangePw._
 
 
 /** Ident-контроллер придерживается этих экшенов. */
-trait ChangePw extends ChangePwAction {
+trait ChangePw
+  extends ChangePwAction
+  with IsAuth
+{
 
   /** Страница с формой смены пароля. */
   def changePassword = IsAuth { implicit request =>
@@ -53,7 +56,12 @@ trait ChangePw extends ChangePwAction {
 
 /** Контексто-зависимое тело экшена, которое реализует смену пароля у пользователя.
   * Реализации должны оборачивать логику экшена в экшен, выставляя обработчики для ошибок и успехов. */
-trait ChangePwAction extends SioController with PlayMacroLogsI with IEsClient with IIdentUtil {
+trait ChangePwAction
+  extends SioController
+  with PlayMacroLogsI
+  with IEsClient
+  with IIdentUtil
+{
 
   /** Если неясно куда надо редиректить юзера, то что делать? */
   def changePwOkRdrDflt(implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Call] = {

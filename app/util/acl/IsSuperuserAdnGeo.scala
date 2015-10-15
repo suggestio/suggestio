@@ -48,7 +48,7 @@ trait IsSuperuserAdnGeo
             geoNotFound
         }
       } else {
-        onUnauthFut(request, pwOpt)
+        supOnUnauthFut(request, pwOpt)
       }
     }
 

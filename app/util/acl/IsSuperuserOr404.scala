@@ -17,7 +17,7 @@ import play.api.Play.isDev
 trait IsSuperuserOr404Ctl extends IsSuperuser {
 
   trait IsSuperuserOr404Base extends IsSuperuserBase with ExpireSession[AbstractRequestWithPwOpt] {
-    override def onUnauthResult(request: RequestHeader, pwOpt: PwOpt_t): Future[Result] = {
+    override def supOnUnauthResult(request: RequestHeader, pwOpt: PwOpt_t): Future[Result] = {
       SioHttpErrorHandler.http404Fut(request)
     }
   }

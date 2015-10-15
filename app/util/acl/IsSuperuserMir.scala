@@ -49,7 +49,7 @@ trait IsSuperuserMir
             Future successful mirNotFound(mirId)
         }
       } else {
-        onUnauthFut(request, pwOpt)
+        supOnUnauthFut(request, pwOpt)
       }
     }
 

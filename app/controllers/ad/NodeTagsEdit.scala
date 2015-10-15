@@ -38,6 +38,7 @@ import NodeTagsEdit._
 trait NodeTagsEdit
   extends SioController
   with PlayMacroLogsI
+  with IsAuth
 {
   
   /**

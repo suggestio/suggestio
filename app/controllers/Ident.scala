@@ -51,6 +51,7 @@ class Ident @Inject() (
   with EmailPwReg
   with ExternalLogin
   with IEsClient
+  with IsAuth
 {
 
   /**

@@ -37,6 +37,7 @@ class MarketLkSupport @Inject() (
   with IMailer
   with IIdentUtil
   with IsAdnNodeAdmin
+  with IsAuth
 {
 
   import LOGGER._
