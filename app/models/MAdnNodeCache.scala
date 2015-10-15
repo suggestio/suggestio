@@ -2,10 +2,7 @@ package models
 
 import play.api.Play.current
 import io.suggest.event._
-import io.suggest.event.SioNotifier.{Event, Subscriber, Classifier}
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.SiowebEsUtil.client
-import scala.concurrent.Future
+import io.suggest.event.SioNotifier.Event
 
 /**
  * Suggest.io
