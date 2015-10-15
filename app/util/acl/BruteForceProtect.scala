@@ -138,9 +138,9 @@ trait BruteForceProtectCtl extends BruteForceProtectBase with SioController {
 }
 
 /** С минимумом зависимостей. */
-trait BruteForceProtectSimple extends BruteForceProtectBase {
+trait BruteForceProtectSimple extends BruteForceProtectBase with SioController {
   override def bruteForceRequestDrop: Future[Result] = {
-    Future successful Results.TooManyRequest("Too many requests. Do not want.")
+    Future successful TooManyRequest("Too many requests. Do not want.")
   }
 }
 

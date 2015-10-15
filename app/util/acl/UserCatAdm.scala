@@ -14,7 +14,11 @@ import util.acl.PersonWrapper.PwOpt_t
  * Description: Управление пользовательскими категориями. В основном для дедубликации кода между экшенами.
  */
 
-trait UserCatAdm extends IEsClient with IExecutionContext {
+trait UserCatAdm
+  extends IEsClient
+  with IExecutionContext
+  with OnUnauthUtilCtl
+{
 
   object UserCatAdm {
     def apply(ownerId: Option[String], catId: Option[String]): ActionBuilder[RequestUserCatAdm] = {
@@ -31,7 +35,10 @@ trait UserCatAdm extends IEsClient with IExecutionContext {
   }
 
   /** Пока нет конкретной категории, с которой работаем. */
-  trait TreeUserCatAdmBase extends ActionBuilder[RequestUserCatAdm] {
+  trait TreeUserCatAdmBase
+    extends ActionBuilder[RequestUserCatAdm]
+    with OnUnauthUtil
+  {
     def ownerId: String
     override def invokeBlock[A](request: Request[A], block: (RequestUserCatAdm[A]) => Future[Result]): Future[Result] = {
       // TODO нужно проверить права над указанным субъектов ownerId.
@@ -43,7 +50,7 @@ trait UserCatAdm extends IEsClient with IExecutionContext {
           block(req1)
         }
       } else {
-        IsAuth.onUnauth(request)
+        onUnauth(request)
       }
     }
   }
@@ -54,7 +61,10 @@ trait UserCatAdm extends IEsClient with IExecutionContext {
 
 
   /** Есть конкретная категория, с которой работаем. */
-  trait UserCatAdmBase extends ActionBuilder[RequestUserCatAdm] {
+  trait UserCatAdmBase
+    extends ActionBuilder[RequestUserCatAdm]
+    with OnUnauthUtil
+  {
     def catId: String
     override def invokeBlock[A](request: Request[A], block: (RequestUserCatAdm[A]) => Future[Result]): Future[Result] = {
       val pwOpt = PersonWrapper.getFromRequest(request)
@@ -67,10 +77,11 @@ trait UserCatAdm extends IEsClient with IExecutionContext {
               block(req1)
             }
 
-          case _ => IsAuth.onUnauth(request)
+          case _ =>
+            onUnauth(request)
         }
       } else {
-        IsAuth.onUnauth(request)
+        onUnauth(request)
       }
     }
   }
@@ -81,9 +92,12 @@ trait UserCatAdm extends IEsClient with IExecutionContext {
 
   /** Статический ActionBuilder на случай, если заведомо у юзера нет прав доступа. Такое бывает при неправильном вызове.
     * Реализован в виде класса из-за музейной редкости подобных запросов. */
-  class UnauthCatAdm extends ActionBuilder[RequestUserCatAdm] {
+  class UnauthCatAdm
+    extends ActionBuilder[RequestUserCatAdm]
+    with OnUnauthUtil
+  {
     override def invokeBlock[A](request: Request[A], block: (RequestUserCatAdm[A]) => Future[Result]): Future[Result] = {
-      IsAuth onUnauth request
+      onUnauth(request)
     }
   }
 

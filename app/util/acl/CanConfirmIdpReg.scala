@@ -18,10 +18,19 @@ import scala.concurrent.Future
  * Description: Юзер, залогинившийся через внешнего провайдера идентификакции, требует
  * подтверждения регистрации (создания первой ноды).
  */
-trait CanConfirmIdpRegCtl extends SioController with IEsClient with IIdentUtil {
+trait CanConfirmIdpReg
+  extends SioController
+  with IEsClient
+  with IIdentUtil
+  with OnUnauthUtilCtl
+{
 
   /** Код базовой реализации ActionBuilder'ов, проверяющих возможность подтверждения регистрации. */
-  trait CanConfirmIdpRegBase extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacroLogsI {
+  trait CanConfirmIdpRegBase
+    extends ActionBuilder[AbstractRequestWithPwOpt]
+    with PlayMacroLogsI
+    with OnUnauthUtil
+  {
     override def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[Result]): Future[Result] = {
       val pwOpt = PersonWrapper.getFromRequest(request)
       pwOpt match {
@@ -62,7 +71,7 @@ trait CanConfirmIdpRegCtl extends SioController with IEsClient with IIdentUtil {
 
         case None =>
           LOGGER.trace("User not logged in.")
-          IsAuth.onUnauth(request)
+          onUnauth(request)
       }
     }
 
@@ -73,7 +82,7 @@ trait CanConfirmIdpRegCtl extends SioController with IEsClient with IIdentUtil {
     }
   }
 
-  sealed trait CanConfirmIdpRegBase2
+  sealed abstract class CanConfirmIdpRegBase2
     extends CanConfirmIdpRegBase
     with ExpireSession[AbstractRequestWithPwOpt]
     with PlayMacroLogsDyn

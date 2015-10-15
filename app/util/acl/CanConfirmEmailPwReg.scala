@@ -28,10 +28,19 @@ object CanConfirmEmailPwReg {
 import CanConfirmEmailPwReg._
 
 
-trait CanConfirmEmailPwRegCtl extends SioController with IEsClient with IIdentUtil {
+trait CanConfirmEmailPwRegCtl
+  extends SioController
+  with IEsClient
+  with IIdentUtil
+  with OnUnauthUtilCtl
+{
 
   /** Код проверки возможности подтверждения регистрации по email. */
-  trait CanConfirmEmailPwRegBase extends ActionBuilder[EmailPwRegConfirmRequest] with PlayMacroLogsDyn {
+  trait CanConfirmEmailPwRegBase
+    extends ActionBuilder[EmailPwRegConfirmRequest]
+    with PlayMacroLogsDyn
+    with OnUnauthUtil
+  {
 
     /** Инфа по активации, присланная через URL qs. */
     def eaInfo: IEaEmailId
@@ -58,7 +67,7 @@ trait CanConfirmEmailPwRegCtl extends SioController with IEsClient with IIdentUt
           LOGGER.debug(s"Client requested activation for $eaInfo , but it doesn't exists. Redirecting...")
           val rdrFut = pwOpt match {
             case None =>
-              IsAuth.onUnauth(request)
+              onUnauth(request)
             case Some(pw) =>
               identUtil.redirectUserSomewhere(pw.personId)
           }
@@ -70,7 +79,7 @@ trait CanConfirmEmailPwRegCtl extends SioController with IEsClient with IIdentUt
         // [xakep] Внезапно, кто-то пытается пропихнуть левую активацию из какого-то другого места.
         case Some(ea) =>
           LOGGER.warn(s"Client ip[${request.remoteAddress}] User[$pwOpt] tried to use foreign activation key:\n  eaInfo = $eaInfo\n  ea = $ea")
-          IsAuth.onUnauth(request)
+          onUnauth(request)
       }
     }
   }

@@ -122,14 +122,14 @@ trait SioController
     val rdrTo = rdrPath
       .filter(_ startsWith "/")
       .getOrElse(dflt.url)
-    Results.Redirect(rdrTo)
+    Redirect(rdrTo)
   }
 
   def RdrBackOrFut(rdrPath: Option[String])(dflt: => Future[Call]): Future[Result] = {
     rdrPath
       .filter(_ startsWith "/")
       .fold { dflt.map(_.url) }  { Future.successful }
-      .map { r => Results.Redirect(r) }
+      .map { r => Redirect(r) }
   }
 
   /** Бывает нужно просто впендюрить кеш для результата, но только когда продакшен. */

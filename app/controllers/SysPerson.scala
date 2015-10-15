@@ -1,7 +1,6 @@
 package controllers
 
 import com.google.inject.Inject
-import io.suggest.di.IEsClient
 import io.suggest.event.SioNotifierStaticClientI
 import models.{Context, AdnNodesSearchArgs, MAdnNode}
 import models.usr._
@@ -29,7 +28,7 @@ class SysPerson @Inject() (
   override implicit val sn        : SioNotifierStaticClientI
 )
   extends SioControllerImpl
-  with IEsClient
+  with IsSuperuserPerson
 {
 
   /** Генерация экземпляра EmailActivation с бессмысленными данными. */

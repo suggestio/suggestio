@@ -17,13 +17,18 @@ import play.api.mvc.Result
  * Description: Проверка прав на управление абстрактным узлом рекламной сети.
  */
 
-trait OnUnauthNodeCtl extends SioController {
-  trait OnUnauthNode {
+trait OnUnauthNodeCtl
+  extends SioController
+  with OnUnauthUtilCtl
+{
+  trait OnUnauthNode extends OnUnauthUtil {
     /** Что делать, когда юзер не авторизован, но долбится в ЛК? */
     def onUnauthNode(req: RequestHeader, pwOpt: PwOpt_t): Future[Result] = {
       pwOpt match {
-        case None => IsAuth.onUnauth(req)
-        case _ => Future successful Forbidden(FORBIDDEN + " Forbidden")
+        case None =>
+          onUnauth(req)
+        case _ =>
+          Future successful Forbidden(FORBIDDEN + " Forbidden")
       }
     }
   }

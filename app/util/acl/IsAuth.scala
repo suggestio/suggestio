@@ -2,9 +2,9 @@ package util.acl
 
 import models.req.SioReqMd
 import play.api.mvc._
-import util.PlayMacroLogsImpl
+import util.{PlayMacroLogsI, PlayMacroLogsImpl}
 import scala.concurrent.Future
-import controllers.routes
+import controllers.{SioController, routes}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 /**
@@ -14,12 +14,25 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
  * Description: Убедится, что юзер является авторизованным пользователем. Иначе - отправить на страницу логина или в иное место.
  */
 
-trait IsAuthBase extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacroLogsImpl {
+trait OnUnauthUtilCtl extends SioController {
+  trait OnUnauthUtil {
+    /** Подчинятся редиректу назад? Если false, то юзер будет куда-то отредиректен, заведомо неизвестно куда. */
+    def obeyReturnPath: Boolean = true
 
-  import LOGGER._
+    def onUnauthBase(request: RequestHeader): Result = {
+      val r = if (obeyReturnPath) Some(request.path) else None
+      Redirect( routes.Ident.emailPwLoginForm(r = r) )
+    }
 
-  /** Подчинятся редиректу назад? Если false, то юзер будет куда-то отредиректен, заведомо неизвестно куда. */
-  def obeyReturnPath: Boolean = true
+    /** Что делать, когда юзер не авторизован? */
+    def onUnauth(request: RequestHeader): Future[Result] = {
+      Future successful onUnauthBase(request)
+    }
+  }
+}
+
+
+trait IsAuthBase extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacroLogsI {
 
   override def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
@@ -31,10 +44,13 @@ trait IsAuthBase extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacroL
         block(req1)
       }
     } else {
-      debug("invokeBlock(): anonymous access prohibited. path = " + request.path)
+      LOGGER.debug("invokeBlock(): anonymous access prohibited. path = " + request.path)
       onUnauth(request)
     }
   }
+
+  /** Подчинятся редиректу назад? Если false, то юзер будет куда-то отредиректен, заведомо неизвестно куда. */
+  def obeyReturnPath: Boolean = true
 
   def onUnauthBase(request: RequestHeader): Result = {
     val r = if (obeyReturnPath) Some(request.path) else None
@@ -49,21 +65,22 @@ trait IsAuthBase extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacroL
 }
 
 /** Реализация IsAuth с возможностью задания значения поля obeyReturnPath. */
-class IsAuthC(override val obeyReturnPath: Boolean = true)
+sealed class IsAuthC
   extends IsAuthBase
   with ExpireSession[AbstractRequestWithPwOpt]
+  with PlayMacroLogsImpl
 
 
 /** Проверка на залогиненность юзера без CSRF-дейстий. */
 object IsAuth
-  extends IsAuthC()
+  extends IsAuthC
 
 /** Проверка на залогиненность юзера с выставлением CSRF-токена. */
 object IsAuthGet
-  extends IsAuthC()
+  extends IsAuthC
   with CsrfGet[AbstractRequestWithPwOpt]
 
 /** Проверка на залогиненность юзера с проверкой CSRF-токена, выставленного ранее. */
 object IsAuthPost
-  extends IsAuthC()
+  extends IsAuthC
   with CsrfPost[AbstractRequestWithPwOpt]

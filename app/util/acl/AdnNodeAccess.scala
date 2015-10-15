@@ -15,10 +15,19 @@ import play.api.mvc.Result
  * Description: Проверка наличия не-админского доступа к узлу.
  * Такое бывает, когда другой магазин пытается зайти в ЛК третьего лица.
  */
-trait AdnNodeAccess extends IsAdnNodeAdminUtilCtl with IExecutionContext with IEsClient {
+trait AdnNodeAccess
+  extends IsAdnNodeAdminUtilCtl
+  with IExecutionContext
+  with IEsClient
+  with OnUnauthUtilCtl
+{
 
   /** Доступ к узлу, к которому НЕ обязательно есть права на админство. */
-  sealed trait AdnNodeAccessBase extends ActionBuilder[RequestForAdnNode] with IsAdnNodeAdminUtil {
+  sealed trait AdnNodeAccessBase
+    extends ActionBuilder[RequestForAdnNode]
+    with IsAdnNodeAdminUtil
+    with OnUnauthUtil
+  {
 
     def adnId: String
 
@@ -60,11 +69,12 @@ trait AdnNodeAccess extends IsAdnNodeAdminUtilCtl with IExecutionContext with IE
 
             // Узел не существует.
             case Left(None) =>
-              Future successful Results.NotFound
+              Future successful NotFound
           }
 
         // Отправить анонима на страницу логина.
-        case None => IsAuth.onUnauth(request)
+        case None =>
+          onUnauth(request)
       }
     }
   }

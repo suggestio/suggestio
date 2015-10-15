@@ -5,7 +5,7 @@ import java.sql.Connection
 import controllers.{IDb, SioController}
 import io.suggest.di.{IExecutionContext, IEsClient}
 import models.req.SioReqMd
-import play.api.mvc.{Results, Result, ActionBuilder, Request}
+import play.api.mvc.{Result, ActionBuilder, Request}
 import util.{PlayLazyMacroLogsImpl, PlayMacroLogsI}
 import util.acl.PersonWrapper.PwOpt_t
 import models._
@@ -27,11 +27,16 @@ trait AdvWndAccess
   with IEsClient
   with IExecutionContext
   with IDb
+  with OnUnauthUtilCtl
 {
 
   /** Логика работы ActionBuilder'а, проверяющего права доступа к окошку
     * с инфой по размещению одной карточки. */
-  trait AdvWndAccessBase extends ActionBuilder[AdvWndRequest] with PlayMacroLogsI {
+  trait AdvWndAccessBase
+    extends ActionBuilder[AdvWndRequest]
+    with PlayMacroLogsI
+    with OnUnauthUtil
+  {
 
     val adId: String
     val povAdnId: Option[String]
@@ -188,7 +193,7 @@ trait AdvWndAccess
                   rcvrInfoFut flatMap {
                     // Юзер шел к успеху, но не фартануло с проверкой прав доступа. Причина отказа уже в логах.
                     case None if !isProducerAdmin =>
-                      Future successful Results.Forbidden("Access denied.")
+                      Future successful Forbidden("Access denied.")
                     case povInfoOpt =>
                       LOGGER.trace(s"ad[$adId] povAdnId=$povAdnId :: OK :: isProdAdm -> $isProducerAdmin rcvrId -> $rcvrIdOpt povInfoOpt -> $povInfoOpt")
                       val srmFut: Future[SioReqMd] = Some(mad.producerId)
@@ -214,7 +219,7 @@ trait AdvWndAccess
                 case None =>
                   val msg = "Ad producer node not exist, but it should."
                   LOGGER.error(s"ISE: adId=$adId producerId=${mad.producerId} :: $msg")
-                  Future successful Results.InternalServerError(msg)
+                  Future successful InternalServerError(msg)
               }
 
             case None =>
@@ -224,11 +229,13 @@ trait AdvWndAccess
 
         case None =>
           LOGGER.trace(s"User is NOT logged in: " + request.remoteAddress)
-          IsAuth.onUnauth(request)
+          onUnauth(request)
       }
     }
 
-    def notFoundFut = Future successful NotFound("Something of requested was not found.")
+    def notFoundFut: Future[Result] = {
+      Future successful NotFound("Something of requested was not found.")
+    }
 
   }
 

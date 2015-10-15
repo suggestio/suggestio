@@ -18,10 +18,18 @@ import scala.concurrent.Future
  * Появилось для lkList, где по дизайну было наличие текущей ноды, но для шаблона это было необязательно.
  */
 
-trait IsAdnNodeAdminOptOrAuth extends IEsClient with IExecutionContext {
+trait IsAdnNodeAdminOptOrAuth
+  extends IEsClient
+  with IExecutionContext
+  with OnUnauthUtilCtl
+{
 
   /** Абстрактная логика работы action-builder'ов, занимающихся вышеописанной проверкой. */
-  trait IsAdnNodeAdminOptOrAuthBase extends ActionBuilder[RequestWithNodeOpt] with PlayMacroLogsDyn {
+  trait IsAdnNodeAdminOptOrAuthBase
+    extends ActionBuilder[RequestWithNodeOpt]
+    with PlayMacroLogsDyn
+    with OnUnauthUtil
+  {
 
     /** id узла, если есть. */
     def adnIdOpt: Option[String]
@@ -48,7 +56,7 @@ trait IsAdnNodeAdminOptOrAuth extends IEsClient with IExecutionContext {
           }
 
         case None =>
-          IsAuth.onUnauth(request)
+          onUnauth(request)
       }
     }
 
@@ -70,5 +78,6 @@ case class RequestWithNodeOpt[A](
   sioReqMd : SioReqMd,
   pwOpt    : PwOpt_t,
   request  : Request[A]
-) extends AbstractRequestWithPwOpt(request)
+)
+  extends AbstractRequestWithPwOpt(request)
 

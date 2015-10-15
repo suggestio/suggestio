@@ -19,10 +19,18 @@ import scala.concurrent.Future
  * Description: ActionBuilder'ы для доступа к инвайтам на управление узлом через email.
  * Аддон подмешивается к контроллерам, где необходима поддержка NodeEact.
  */
-trait NodeEactAcl extends SioController with PlayMacroLogsI with IEsClient {
+trait NodeEactAcl
+  extends SioController
+  with PlayMacroLogsI
+  with IEsClient
+  with OnUnauthUtilCtl
+{
 
   /** Абстрактная логика ActionBuider'ов, обрабатывающих запросы активации инвайта на узел. */
-  protected[this] trait NodeEactBase extends ActionBuilder[NodeEactRequest] {
+  sealed trait NodeEactBase
+    extends ActionBuilder[NodeEactRequest]
+    with OnUnauthUtil
+  {
 
     /** id в модели EmailActivation. */
     def eaId: String
@@ -56,7 +64,7 @@ trait NodeEactAcl extends SioController with PlayMacroLogsI with IEsClient {
                 // email, на который выслан запрос, уже зареган в системе, но текущий юзер не подходит: тут у нас анонимус или левый юзер.
                 case Some(epwIdent) if epwIdent.isVerified && !pwOpt.exists(_.personId == epwIdent.personId) =>
                   LOGGER.debug(s"eAct has email = ${epwIdent.email}. This is personId[${epwIdent.personId}], but current pwOpt = ${pwOpt.map(_.personId)} :: Rdr user to login...")
-                  val result = IsAuth.onUnauthBase(request)
+                  val result = onUnauthBase(request)
                   val isAuth = pwOpt.isDefined
                   val res2 = if (isAuth) result.withNewSession else result
                   Future successful res2
@@ -88,13 +96,13 @@ trait NodeEactAcl extends SioController with PlayMacroLogsI with IEsClient {
   }
 
   /** Реализация NodeEactBase для CSRF+GET-запросов. */
-  protected case class NodeEactGet(override val nodeId: String, override val eaId: String)
+  case class NodeEactGet(override val nodeId: String, override val eaId: String)
     extends NodeEactBase
     with CsrfGet[NodeEactRequest]
     with ExpireSession[NodeEactRequest]
 
   /** Реализация NodeEactBase для CSRF+POST-запросов. */
-  protected case class NodeEactPost(override val nodeId: String, override val eaId: String)
+  case class NodeEactPost(override val nodeId: String, override val eaId: String)
     extends NodeEactBase
     with CsrfPost[NodeEactRequest]
     with ExpireSession[NodeEactRequest]

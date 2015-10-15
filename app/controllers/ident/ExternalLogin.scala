@@ -114,7 +114,7 @@ trait ExternalLogin
   with SetLangCookieUtil
   with ICurrentApp
   with IEsClient
-  with CanConfirmIdpRegCtl
+  with CanConfirmIdpReg
   with INodesUtil
   with MaybeAuth
 {

@@ -43,10 +43,18 @@ trait AdEditBaseCtl extends SioController with IEsClient {
 
 
 /** Аддон для контроллеров, занимающихся редактированием рекламных карточек. */
-trait CanEditAd extends AdEditBaseCtl with IDb {
+trait CanEditAd
+  extends AdEditBaseCtl
+  with IDb
+  with OnUnauthUtilCtl
+{
 
   /** Редактировать карточку может только владелец магазина. */
-  trait CanEditAdBase extends ActionBuilder[RequestWithAdAndProducer] with AdEditBase {
+  trait CanEditAdBase
+    extends ActionBuilder[RequestWithAdAndProducer]
+    with AdEditBase
+    with OnUnauthUtil
+  {
 
     /** Асинхронно обратится к реализации модели MAdvStatic за инфой по наличию текущих размещений. */
     def hasAdvUntilNow(adId: String, model: MAdvStatic): Future[Boolean] = {
@@ -115,7 +123,7 @@ trait CanEditAd extends AdEditBaseCtl with IDb {
 
         // Анонимусу нельзя запрашивать редактирование карточки при любых обстоятельства.
         case None =>
-          IsAuth.onUnauth(request)
+          onUnauth(request)
       }
     }
   }

@@ -20,6 +20,7 @@ trait CanReceiveAdvReq
   with IDb
   with OnUnauthNodeCtl
   with IsAdnNodeAdminUtilCtl
+  with OnUnauthUtilCtl
 {
 
   /** Базовая реализация action-builder'ов проверки права на обработку реквестов размещения. */
@@ -27,10 +28,15 @@ trait CanReceiveAdvReq
     extends ActionBuilder[RequestWithAdvReq]
     with OnUnauthNode
     with IsAdnNodeAdminUtil
+    with OnUnauthUtil
   {
 
     /** id запрашиваемого adv-запроса. */
     def advReqId: Int
+
+    def _advReqNotFound(request: Request[_]): Future[Result] = {
+      Future successful NotFound("adv request not found: " + advReqId)
+    }
 
     override def invokeBlock[A](request: Request[A], block: (RequestWithAdvReq[A]) => Future[Result]): Future[Result] = {
       PersonWrapper.getFromRequest(request) match {
@@ -56,11 +62,11 @@ trait CanReceiveAdvReq
               }
 
             case None =>
-              Future successful NotFound("adv request not found: " + advReqId)
+              _advReqNotFound(request)
           }
 
         case None =>
-          IsAuth.onUnauth(request)
+          onUnauth(request)
       }
     }
   }
