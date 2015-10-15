@@ -1,7 +1,6 @@
 package controllers
 
 import com.google.inject.Inject
-import io.suggest.di.IEsClient
 import io.suggest.event.SioNotifierStaticClientI
 import models.MBillContract.LegalContractId
 import org.elasticsearch.client.Client
@@ -36,8 +35,9 @@ class SysMarketBilling @Inject() (
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
-  with IEsClient
-  with IDb
+  with IsSuperuserContractNode
+  with IsSuperuserAdnNode
+  with IsSuperuser
 {
 
   import LOGGER._

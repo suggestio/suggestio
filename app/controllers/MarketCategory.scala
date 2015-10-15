@@ -27,6 +27,7 @@ class MarketCategory @Inject() (
   extends SioController
   with PlayMacroLogsImpl
   with UserCatAdm
+  with IsSuperuser
 {
 
   import LOGGER._

@@ -1,7 +1,6 @@
 package controllers
 
 import com.google.inject.Inject
-import io.suggest.di.IEsClient
 import io.suggest.event.SioNotifierStaticClientI
 import org.elasticsearch.client.Client
 import play.api.i18n.MessagesApi
@@ -26,36 +25,27 @@ import scala.util.matching.Regex
  */
 class SysAi @Inject() (
   override val messagesApi        : MessagesApi,
-  override implicit val ws        : WSClient,
+  implicit val ws                 : WSClient,
   override implicit val ec        : ExecutionContext,
   override implicit val esClient  : Client,
   override implicit val sn        : SioNotifierStaticClientI
 )
   extends SioControllerImpl
-  with SysAiMadT
+  with PlayLazyMacroLogsImpl
+  with IsSuperuserAiMad
+  with IsSuperuser
 {
 
   import views.html.sys1.ai._
+  import views.html.sys1.ai.mad._
+  import LOGGER._
+
 
   /** Раздача страницы с оглавлением по ai-подсистемам. */
   def index = IsSuperuser { implicit request =>
     Ok(indexTpl())
   }
 
-}
-
-
-/** ai.mad - работа с автогенераторами рекламных карточек. */
-trait SysAiMadT
-  extends SioController
-  with PlayLazyMacroLogsImpl
-  with IEsClient
-{
-
-  import views.html.sys1.ai.mad._
-  import LOGGER._
-
-  implicit def ws: WSClient
 
   /** Заглавная страница генераторов рекламных карточек. */
   def madIndex = IsSuperuser.async { implicit request =>

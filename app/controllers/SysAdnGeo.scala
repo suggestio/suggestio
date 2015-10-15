@@ -27,13 +27,16 @@ import scala.concurrent.{ExecutionContext, Future}
  * Расширение собственной геоинформации необходимо из-за [[https://github.com/elasticsearch/elasticsearch/issues/7663]].
  */
 class SysAdnGeo @Inject() (
-  override val messagesApi      : MessagesApi,
-  implicit val osmClient        : OsmClient,
-  override implicit val ec      : ExecutionContext,
-  implicit val esClient         : Client,
-  override implicit val sn      : SioNotifierStaticClientI
+  override val messagesApi        : MessagesApi,
+  implicit val osmClient          : OsmClient,
+  override implicit val ec        : ExecutionContext,
+  override implicit val esClient  : Client,
+  override implicit val sn        : SioNotifierStaticClientI
 )
-  extends SioControllerImpl with PlayLazyMacroLogsImpl
+  extends SioControllerImpl
+  with PlayLazyMacroLogsImpl
+  with IsSuperuserAdnGeo
+  with IsSuperuserAdnNode
 {
 
   import LOGGER._
@@ -111,7 +114,7 @@ class SysAdnGeo @Inject() (
           )
           geo.save map { geoId =>
             Redirect( routes.SysAdnGeo.forNode(adnId) )
-              .flashing("success" -> "Создан geo-элемент. Обновите страницу, чтобы он появился в списке.")
+              .flashing(FLASH.SUCCESS -> "Создан geo-элемент. Обновите страницу, чтобы он появился в списке.")
           }
         }
         recoverOsm(resFut, glevel, Some(urlPr))
@@ -140,9 +143,9 @@ class SysAdnGeo @Inject() (
     // Надо прочитать geo-информацию, чтобы узнать adnId. Затем удалить его и отредиректить.
     request.adnGeo.delete map { isDel =>
       val flash: (String, String) = if (isDel) {
-        "success" -> "География удалена."
+        FLASH.SUCCESS -> "География удалена."
       } else {
-        "error" -> "Географический объект не найден."
+        FLASH.ERROR   -> "Географический объект не найден."
       }
       Redirect( routes.SysAdnGeo.forNode(request.adnGeo.adnId) )
         .flashing(flash)
@@ -197,7 +200,7 @@ class SysAdnGeo @Inject() (
           _geoId  <- adnGeo2.save
         } yield {
           Redirect( routes.SysAdnGeo.forNode(request.adnGeo.adnId) )
-            .flashing("success" -> "Географическая фигура обновлена.")
+            .flashing(FLASH.SUCCESS -> "Географическая фигура обновлена.")
         }
         // Повесить recover() для перехвата ошибок
         recoverOsm(resFut, glevel2, urlPrOpt)
@@ -257,7 +260,7 @@ class SysAdnGeo @Inject() (
         val geo = geoStub.copy(adnId = adnId)
         geo.save.map { geoId =>
           Redirect( routes.SysAdnGeo.forNode(adnId) )
-            .flashing("success" -> "Создан круг.")
+            .flashing(FLASH.SUCCESS -> "Создан круг.")
         }
       }
     )
@@ -292,7 +295,7 @@ class SysAdnGeo @Inject() (
         )
         geo2.save map { _geoId =>
           Redirect( routes.SysAdnGeo.forNode(geo2.adnId) )
-            .flashing("success" -> "Изменения сохранены.")
+            .flashing(FLASH.SUCCESS -> "Изменения сохранены.")
         }
       }
     )
@@ -450,7 +453,7 @@ class SysAdnGeo @Inject() (
             )
           }.map { _adnId =>
             Redirect( routes.SysAdnGeo.forNode(_adnId) )
-              .flashing("success" -> "Геоданные узла обновлены.")
+              .flashing(FLASH.SUCCESS -> "Геоданные узла обновлены.")
           }
         }
       }

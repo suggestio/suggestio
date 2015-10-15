@@ -21,9 +21,13 @@ trait IsSuperuserPerson
   extends SioController
   with IEsClient
   with IExecutionContext
+  with IsSuperuserUtilCtl
 {
 
-  trait IsSuperuserPersonBase extends ActionBuilder[MPersonRequest] {
+  trait IsSuperuserPersonBase
+    extends ActionBuilder[MPersonRequest]
+    with IsSuperuserUtil
+  {
     /** id юзера. */
     def personId: String
 
@@ -43,7 +47,7 @@ trait IsSuperuserPerson
         }
 
       } else {
-        IsSuperuser.onUnauthFut(request, pwOpt)
+        onUnauthFut(request, pwOpt)
       }
     }
 

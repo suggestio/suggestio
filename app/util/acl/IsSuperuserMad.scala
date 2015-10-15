@@ -18,9 +18,13 @@ trait IsSuperuserMad
   extends SioController
   with IEsClient
   with IExecutionContext
+  with IsSuperuserUtilCtl
 {
 
-  sealed trait IsSuperuserMadBase extends ActionBuilder[RequestWithAd] {
+  sealed trait IsSuperuserMadBase
+    extends ActionBuilder[RequestWithAd]
+    with IsSuperuserUtil
+  {
 
     /** id запрашиваемой рекламной карточки. */
     def adId: String
@@ -40,7 +44,7 @@ trait IsSuperuserMad
             madNotFound(request)
         }
       } else {
-        IsSuperuser.onUnauthFut(request, pwOpt)
+        onUnauthFut(request, pwOpt)
       }
     }
 

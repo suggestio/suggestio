@@ -19,12 +19,13 @@ import scala.concurrent.ExecutionContext
  */
 
 class Static @Inject() (
-  implicit val current          : play.api.Application,
+  override implicit val current : play.api.Application,
   override val messagesApi      : MessagesApi,
   override implicit val ec      : ExecutionContext
 )
   extends SioControllerImpl
   with MaybeAuth
+  with IsSuperuserOrDevelOr404
 {
 
   private def booklet = routes.Market.marketBooklet().url

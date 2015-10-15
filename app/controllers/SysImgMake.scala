@@ -9,7 +9,7 @@ import play.api.data.{Form, Mapping}
 import play.twirl.api.Html
 import util.blocks.BlocksConf
 import util.{FormUtil, PlayMacroLogsI}
-import util.acl.{IsSuperuserPost, IsSuperuserGet}
+import util.acl.IsSuperuser
 import views.html.sys1.img.make._
 
 import scala.concurrent.Future
@@ -50,7 +50,11 @@ object SysImgMake {
 import SysImgMake._
 
 
-trait SysImgMake extends SioController with PlayMacroLogsI {
+trait SysImgMake
+  extends SioController
+  with PlayMacroLogsI
+  with IsSuperuser
+{
 
   /**
    * Рендер страницы с формой задания произвольных параметров вызова maker'а для указанного изображения.

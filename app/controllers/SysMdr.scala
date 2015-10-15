@@ -36,6 +36,7 @@ class SysMdr @Inject() (
   extends SioControllerImpl
   with PlayMacroLogsImpl
   with IEsClient
+  with IsSuperuser
 {
 
   import LOGGER._

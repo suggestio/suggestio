@@ -26,13 +26,17 @@ import sysctl.SysMarketUtil._
  * обработки запроса и т.д.
  */
 class SysMarketInvReq @Inject() (
-  override val messagesApi      : MessagesApi,
-  override val mailer           : IMailerWrapper,
-  override implicit val ec      : ExecutionContext,
-  implicit val esClient         : Client,
-  override implicit val sn      : SioNotifierStaticClientI
+  override val messagesApi        : MessagesApi,
+  override val mailer             : IMailerWrapper,
+  override implicit val ec        : ExecutionContext,
+  override implicit val esClient  : Client,
+  override implicit val sn        : SioNotifierStaticClientI
 )
-  extends SioControllerImpl with PlayMacroLogsImpl with SmSendEmailInvite
+  extends SioControllerImpl
+  with PlayMacroLogsImpl
+  with SmSendEmailInvite
+  with IsSuperuserMir
+  with IsSuperuser
 {
 
   import LOGGER._
@@ -264,29 +268,6 @@ class SysMarketInvReq @Inject() (
   private def rdrToIr(mirId: String, flashMsg: String, flashCode: String = "success") = {
     Redirect( routes.SysMarketInvReq.showIR(mirId) )
       .flashing(flashCode -> flashMsg)
-  }
-
-
-  private def isCompanyLeft(mirId: String) = new IsSuperuserMir(mirId) {
-    override def mirStateInvalidMsg: String = {
-      "MIR.company already installed, but action requested possible only on not-installed company. Go back and press F5."
-    }
-    override def isMirStateOk(mir: MInviteRequest): Boolean = {
-      super.isMirStateOk(mir) && {
-        mir.company.isLeft
-      }
-    }
-  }
-
-  private def isCompanyRight(mirId: String) = new IsSuperuserMir(mirId) {
-    override def mirStateInvalidMsg: String = {
-      "MIR.company NOT installed, but action requested possible only for installed company. Go back and press F5."
-    }
-    override def isMirStateOk(mir: MInviteRequest): Boolean = {
-      super.isMirStateOk(mir) && {
-        mir.company.isRight
-      }
-    }
   }
 
   private def isNodeLeft(mirId: String) = new IsSuperuserMir(mirId) {

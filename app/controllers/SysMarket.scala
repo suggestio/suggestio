@@ -50,6 +50,8 @@ class SysMarket @Inject() (
   with SmSendEmailInvite
   with SysAdRender
   with IsSuperuserMad
+  with IsSuperuserAdnNode
+  with IsSuperuser
 {
 
   import LOGGER._
@@ -107,20 +109,23 @@ class SysMarket @Inject() (
   }
 
   /** Безвозвратное удаление узла рекламной сети. */
-  def deleteAdnNodeSubmit(adnId: String) = IsSuperuserAdnNodePost(adnId).async { implicit request =>
-    import request.adnNode
-    adnNode
-      .delete
-      .filter(identity)
-      .map { _ =>
-        Redirect(routes.SysMarket.adnNodesList())
-          .flashing(FLASH.SUCCESS -> "Узел ADN удалён.")
-      }
-      .recover {
-        case nse: NoSuchElementException =>
-          warn(s"deleteAdnNodeSubmit($adnId): Node not found. Anyway, resources re-erased.")
-          IsSuperuserAdnNode.nodeNotFound(adnId)
-      }
+  def deleteAdnNodeSubmit(adnId: String) = {
+    val ab = IsSuperuserAdnNodePost(adnId)
+    ab.async { implicit request =>
+      import request.adnNode
+      adnNode
+        .delete
+        .filter(identity)
+        .map { _ =>
+          Redirect( routes.SysMarket.adnNodesList() )
+            .flashing(FLASH.SUCCESS -> "Узел ADN удалён.")
+        }
+        .recoverWith {
+          case nse: NoSuchElementException =>
+            warn(s"deleteAdnNodeSubmit($adnId): Node not found. Anyway, resources re-erased.")
+            ab.nodeNotFound
+        }
+    }
   }
 
 

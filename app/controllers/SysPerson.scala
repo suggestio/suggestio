@@ -29,6 +29,7 @@ class SysPerson @Inject() (
 )
   extends SioControllerImpl
   with IsSuperuserPerson
+  with IsSuperuser
 {
 
   /** Генерация экземпляра EmailActivation с бессмысленными данными. */

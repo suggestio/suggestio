@@ -24,12 +24,15 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 class SysMarketBillingMmp @Inject() (
   override val messagesApi      : MessagesApi,
-  db                            : Database,
+  override val db               : Database,
   override implicit val ec      : ExecutionContext,
   implicit val esClient         : Client,
   override implicit val sn      : SioNotifierStaticClientI
 )
-  extends SioControllerImpl with PlayMacroLogsImpl
+  extends SioControllerImpl
+  with PlayMacroLogsImpl
+  with IsSuperuserContract
+  with IsSuperuser
 {
 
   /** Маппинг для формы редактирования [[models.MBillMmpDaily]]. */

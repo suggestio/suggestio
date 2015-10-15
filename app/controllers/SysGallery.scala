@@ -26,16 +26,18 @@ import scala.concurrent.{ExecutionContext, Future}
  * Description: Контроллер для управления галереями картинок: создание, изменение, удаление.
  */
 class SysGallery @Inject() (
-  override val messagesApi      : MessagesApi,
-  override implicit val current : play.api.Application,
-  tempImgSupport                : TempImgSupport,
-  override implicit val ec      : ExecutionContext,
-  implicit val esClient         : Client,
-  override implicit val sn      : SioNotifierStaticClientI
+  override val messagesApi        : MessagesApi,
+  override implicit val current   : play.api.Application,
+  tempImgSupport                  : TempImgSupport,
+  override implicit val ec        : ExecutionContext,
+  override implicit val esClient  : Client,
+  override implicit val sn        : SioNotifierStaticClientI
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
   with ICurrentConf
+  with IsSuperuserGallery
+  with IsSuperuser
 {
 
   import LOGGER._
@@ -167,7 +169,7 @@ class SysGallery @Inject() (
           )
           gal1.save.map { galId =>
             Redirect(routes.SysGallery.showOne(galId))
-              .flashing("success" -> s"Создана новая галерея с ${imgs2.size} картинками: $galId")
+              .flashing(FLASH.SUCCESS -> s"Создана новая галерея с ${imgs2.size} картинками: $galId")
           }
         }
       }
@@ -199,7 +201,7 @@ class SysGallery @Inject() (
           )
           gal3.save.map { _galId =>
             Redirect(routes.SysGallery.showOne(_galId))
-              .flashing("success" -> s"Галерея '${gal3.name}' обновлена.")
+              .flashing(FLASH.SUCCESS -> s"Галерея '${gal3.name}' обновлена.")
           }
         }
       }
@@ -215,9 +217,9 @@ class SysGallery @Inject() (
   def deleteGallerySubmit(galId: String) = IsSuperuserGallery(galId).async { implicit request =>
     request.gallery.delete map { isDeleted =>
       val flash = if (isDeleted)
-        "success" -> "Галерея удалена."
+        FLASH.SUCCESS -> "Галерея удалена."
       else
-        "error" -> "Кажется, галерея не была найдена."
+        FLASH.ERROR   -> "Кажется, галерея не была найдена."
       Redirect(routes.SysGallery.showList())
         .flashing(flash)
     }

@@ -2,7 +2,6 @@ package controllers
 
 import java.nio.file.Files
 import com.google.inject.Inject
-import io.suggest.di.IEsClient
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.geo.{PointGs, GsTypes}
 import io.suggest.playx.ICurrentConf
@@ -39,8 +38,9 @@ class Umap @Inject() (
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
-  with IEsClient
   with ICurrentConf
+  with IsSuperuserAdnNode
+  with IsSuperuser
 {
 
   import LOGGER._

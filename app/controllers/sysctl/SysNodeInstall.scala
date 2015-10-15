@@ -8,7 +8,7 @@ import play.api.data.Form
 import play.api.i18n.{Messages, Lang}
 import play.twirl.api.Html
 import util.PlayMacroLogsI
-import util.acl.{AbstractRequestForAdnNode, IsSuperuserAdnNodePost, IsSuperuserAdnNodeGet}
+import util.acl.{IsSuperuserAdnNode, AbstractRequestForAdnNode}
 import util.di.INodesUtil
 import views.html.sys1.market.adn.install._
 
@@ -50,6 +50,7 @@ trait SysNodeInstall
   with IEsClient
   with ICurrentApp
   with INodesUtil
+  with IsSuperuserAdnNode
 {
 
   /** Вернуть страницу с формой установки дефолтовых карточек на узлы. */

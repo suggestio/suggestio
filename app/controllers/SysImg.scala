@@ -27,6 +27,7 @@ class SysImg @Inject() (
   extends SioControllerImpl
   with PlayMacroLogsImpl
   with SysImgMake
+  with IsSuperuser
 {
 
   import LOGGER._

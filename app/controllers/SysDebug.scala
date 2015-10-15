@@ -1,7 +1,7 @@
 package controllers
 
 import com.google.inject.Inject
-import org.elasticsearch.client.Client
+import io.suggest.di.IExecutionContext
 import play.api.i18n.MessagesApi
 import util.acl.IsSuperuser
 import util.health.AdnGeoParentsHealth
@@ -18,15 +18,16 @@ import scala.concurrent.ExecutionContext
 class SysDebug @Inject() (
   override val messagesApi      : MessagesApi,
   geoParentsHealth              : AdnGeoParentsHealth,
-  override implicit val ec      : ExecutionContext,
-  implicit val esClient         : Client
+  override implicit val ec      : ExecutionContext
 )
   extends SioController
+  with IExecutionContext
+  with IsSuperuser
 {
 
   /** Экшен для отображения индексной страницы. */
   def index = IsSuperuser { implicit request =>
-    Ok(indexTpl())
+    Ok( indexTpl() )
   }
 
   /**

@@ -36,7 +36,9 @@ class SysCalendar @Inject() (
   implicit val esClient         : Client,
   override implicit val sn      : SioNotifierStaticClientI
 )
-  extends SioControllerImpl with PlayMacroLogsImpl
+  extends SioControllerImpl
+  with PlayMacroLogsImpl
+  with IsSuperuser
 {
   import LOGGER._
 
