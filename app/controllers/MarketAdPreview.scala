@@ -22,7 +22,11 @@ import views.html.sc.foc._adFullTpl
  * 2015.feb.11: В этом контроллере так и остался ровно один экшен. Он был объединён с MarketAd через trait.
  */
 
-trait MarketAdPreview extends SioController with PlayMacroLogsI {
+trait MarketAdPreview
+  extends SioController
+  with PlayMacroLogsI
+  with IsAdnNodeAdmin
+{
 
   /**
    * Сабмит формы редактирования карточки для генерации превьюшки.

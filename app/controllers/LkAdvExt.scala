@@ -49,6 +49,7 @@ class LkAdvExt @Inject() (
   with ICurrentConf
   with CanAdvertiseAd
   with CanSubmitExtTargetForNode
+  with IsAdnNodeAdmin
 {
 
   import LOGGER._

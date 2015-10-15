@@ -19,7 +19,7 @@ trait IsAuthBase extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacroL
   import LOGGER._
 
   /** Подчинятся редиректу назад? Если false, то юзер будет куда-то отредиректен, заведомо неизвестно куда. */
-  def obeyReturnPath: Boolean
+  def obeyReturnPath: Boolean = true
 
   override def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)

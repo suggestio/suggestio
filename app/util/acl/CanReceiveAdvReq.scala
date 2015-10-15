@@ -19,10 +19,15 @@ trait CanReceiveAdvReq
   extends SioController
   with IDb
   with OnUnauthNodeCtl
+  with IsAdnNodeAdminUtilCtl
 {
 
   /** Базовая реализация action-builder'ов проверки права на обработку реквестов размещения. */
-  trait CanReceiveAdvReqBase extends ActionBuilder[RequestWithAdvReq] with OnUnauthNode {
+  trait CanReceiveAdvReqBase
+    extends ActionBuilder[RequestWithAdvReq]
+    with OnUnauthNode
+    with IsAdnNodeAdminUtil
+  {
 
     /** id запрашиваемого adv-запроса. */
     def advReqId: Int
@@ -38,7 +43,7 @@ trait CanReceiveAdvReq
           advReqOptFut flatMap {
             case Some(advReq) =>
               val srmFut = SioReqMd.fromPwOptAdn(pwOpt, advReq.rcvrAdnId)
-              IsAdnNodeAdmin.isAdnNodeAdmin(advReq.rcvrAdnId, pwOpt) flatMap {
+              isAdnNodeAdmin(advReq.rcvrAdnId, pwOpt) flatMap {
                 case Some(adnNode) =>
                   srmFut flatMap { srm =>
                     val req1 = RequestWithAdvReq(request, advReq, adnNode, pwOpt, srm)

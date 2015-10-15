@@ -55,6 +55,8 @@ class MarketLkAdn @Inject() (
   with ChangePwAction
   with NodeEactAcl
   with IsAdnNodeAdminOptOrAuth
+  with AdnNodeAccess
+  with IsAdnNodeAdmin
 {
 
   import LOGGER._

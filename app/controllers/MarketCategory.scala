@@ -2,14 +2,15 @@ package controllers
 
 import _root_.util.{MartCategories, PlayMacroLogsImpl}
 import com.google.inject.Inject
+import io.suggest.event.SioNotifierStaticClientI
+import org.elasticsearch.client.Client
 import play.api.data._, Forms._
 import play.api.i18n.MessagesApi
 import util.FormUtil._
 import models._
-import util.SiowebEsUtil.client
 import util.acl._
 import views.html.sys1.market.cat._
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -18,9 +19,14 @@ import scala.concurrent.Future
  * Description: Контроллер управления категориями магазина/ТЦ.
  */
 class MarketCategory @Inject() (
-  override val messagesApi: MessagesApi
+  override val messagesApi        : MessagesApi,
+  override implicit val ec        : ExecutionContext,
+  override implicit val esClient  : Client,
+  override implicit val sn        : SioNotifierStaticClientI
 )
-  extends SioController with PlayMacroLogsImpl
+  extends SioController
+  with PlayMacroLogsImpl
+  with UserCatAdm
 {
 
   import LOGGER._

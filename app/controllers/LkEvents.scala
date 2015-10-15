@@ -41,6 +41,7 @@ class LkEvents @Inject() (
   with PlayMacroLogsImpl
   with ICurrentConf
   with HasNodeEventAccess
+  with IsAdnNodeAdmin
 {
 
   import LOGGER._

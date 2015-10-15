@@ -20,6 +20,7 @@ import scala.concurrent.Future
 trait CanAccessExtTargetBaseCtl
   extends OnUnauthNodeCtl
   with IEsClient
+  with IsAdnNodeAdminUtilCtl
 {
 
   /** Базовая логика [[CanAccessExtTarget]] живёт в этом трейте. */
@@ -27,6 +28,7 @@ trait CanAccessExtTargetBaseCtl
     extends ActionBuilder[ExtTargetRequest]
     with PlayMacroLogsDyn
     with OnUnauthNode
+    with IsAdnNodeAdminUtil
   {
 
     /** id ранее сохранённого экземпляра [[models.adv.MExtTarget]]. */
@@ -38,7 +40,7 @@ trait CanAccessExtTargetBaseCtl
       tgOptFut flatMap {
         // Запрошенная цель существует. Нужно проверить права на её узел.
         case Some(tg) =>
-          val adnNodeOptFut = IsAdnNodeAdmin.isAdnNodeAdmin(tg.adnId, pwOpt)
+          val adnNodeOptFut = isAdnNodeAdmin(tg.adnId, pwOpt)
           val srmFut = SioReqMd.fromPwOptAdn(pwOpt, tg.adnId)
           adnNodeOptFut flatMap {
             // У юзера есть права на узел. Запускаем экшен на исполнение.

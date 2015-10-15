@@ -35,6 +35,7 @@ class MarketLkBilling @Inject() (
   extends SioController
   with PlayMacroLogsImpl
   with ICurrentConf
+  with IsAdnNodeAdmin
 {
 
   import LOGGER._

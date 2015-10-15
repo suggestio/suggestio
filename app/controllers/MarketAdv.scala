@@ -56,6 +56,7 @@ class MarketAdv @Inject() (
   with CanAdvertiseAd
   with CanReceiveAdvReq
   with AdvWndAccess
+  with IsAdnNodeAdmin
 {
 
   import LOGGER._

@@ -52,6 +52,7 @@ class MarketAd @Inject() (
   with ad.NodeTagsEdit
   with CanEditAd
   with CanUpdateSls
+  with IsAdnNodeAdmin
 {
 
   import LOGGER._

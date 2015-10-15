@@ -51,6 +51,7 @@ class MarketLkAdnEdit @Inject() (
   extends SioController
   with PlayMacroLogsImpl
   with BruteForceProtectCtl
+  with IsAdnNodeAdmin
 {
 
   import LOGGER._

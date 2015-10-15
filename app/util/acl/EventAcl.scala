@@ -16,10 +16,18 @@ import scala.concurrent.Future
  * Description: Контроль доступа к событиям.
  */
 
-trait HasNodeEventAccess extends OnUnauthNodeCtl with IEsClient {
+trait HasNodeEventAccess
+  extends OnUnauthNodeCtl
+  with IEsClient
+  with IsAdnNodeAdminUtilCtl
+{
 
   /** Проверка доступа к событию, которое относится к узлу. */
-  trait HasNodeEventAccessBase extends ActionBuilder[NodeEventRequest] with OnUnauthNode {
+  trait HasNodeEventAccessBase
+    extends ActionBuilder[NodeEventRequest]
+    with OnUnauthNode
+    with IsAdnNodeAdminUtil
+  {
     def eventId: String
 
     /** Нужен ли доступ к кошельку узла и другие функции sioReqMd? */
@@ -47,7 +55,7 @@ trait HasNodeEventAccess extends OnUnauthNodeCtl with IEsClient {
             } else {
               SioReqMd.fromPwOpt(pwOpt)
             }
-            IsAdnNodeAdmin.isAdnNodeAdmin(mevent.ownerId, pwOpt) flatMap {
+            isAdnNodeAdmin(mevent.ownerId, pwOpt) flatMap {
               case Some(adnNode) =>
                 // Юзер имеет доступ к узлу. Значит, и к событию узла тоже.
                 srmFut flatMap { srm =>

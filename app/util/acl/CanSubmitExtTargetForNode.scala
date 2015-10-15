@@ -1,6 +1,5 @@
 package util.acl
 
-import controllers.SioController
 import io.suggest.di.IEsClient
 import models.MAdnNode
 import models.req.SioReqMd
@@ -42,6 +41,7 @@ case class ExtTargetSubmitRequest[A](
 trait CanSubmitExtTargetForNode
   extends OnUnauthNodeCtl
   with IEsClient
+  with IsAdnNodeAdminUtilCtl
 {
 
   /** Заготовка ActionBuilder'а для проверки доступа на запись (create, edit) для target'а,
@@ -50,6 +50,7 @@ trait CanSubmitExtTargetForNode
     extends ActionBuilder[ExtTargetSubmitRequest]
     with PlayMacroLogsDyn
     with OnUnauthNode
+    with IsAdnNodeAdminUtil
   {
 
     /** id узла, заявленного клиентом. */
@@ -57,7 +58,7 @@ trait CanSubmitExtTargetForNode
 
     override def invokeBlock[A](request: Request[A], block: (ExtTargetSubmitRequest[A]) => Future[Result]): Future[Result] = {
       val pwOpt = PersonWrapper.getFromRequest(request)
-      val isAdnNodeAdmFut = IsAdnNodeAdmin.isAdnNodeAdmin(adnId, pwOpt)
+      val isAdnNodeAdmFut = isAdnNodeAdmin(adnId, pwOpt)
       val formBinded = ExtUtil.oneTargetFullFormM(adnId).bindFromRequest()(request)
       val srmFut = SioReqMd.fromPwOptAdn(pwOpt, adnId)
       // Запускаем сразу в фоне поиск уже сохранённой цели.

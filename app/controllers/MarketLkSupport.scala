@@ -36,6 +36,7 @@ class MarketLkSupport @Inject() (
   with PlayLazyMacroLogsImpl
   with IMailer
   with IIdentUtil
+  with IsAdnNodeAdmin
 {
 
   import LOGGER._
