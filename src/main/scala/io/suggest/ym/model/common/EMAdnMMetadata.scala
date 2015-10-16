@@ -1,12 +1,13 @@
 package io.suggest.ym.model.common
 
 import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.model.EsModel.FieldsJsonAcc
+import io.suggest.model.es.{EsModelPlayJsonT, EsModelStaticMutAkvT, EsModelUtil}
+import EsModelUtil.FieldsJsonAcc
 import io.suggest.ym.model.MWelcomeAd
 import org.elasticsearch.action.search.SearchResponse
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.QueryBuilders
-import io.suggest.model.{PrefixedFn, EsModel, EsModelPlayJsonT, EsModelStaticMutAkvT}
+import io.suggest.model.PrefixedFn
 import io.suggest.util.SioEsUtil._
 import play.api.libs.json._
 import scala.collection.JavaConversions._
@@ -39,10 +40,10 @@ object EMAdnMMetadataStatic extends PrefixedFn {
    * @return Фьючерс с результирующим аккамулятором-множеством.
    * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/client/java-api/current/search.html#scrolling]]
    */
-  def searchScrollResp2strSet(searchResp: SearchResponse, fn: String, firstReq: Boolean, acc0: Set[String] = Set.empty, keepAliveMs: Long = EsModel.SCROLL_KEEPALIVE_MS_DFLT)
+  def searchScrollResp2strSet(searchResp: SearchResponse, fn: String, firstReq: Boolean, acc0: Set[String] = Set.empty, keepAliveMs: Long = EsModelUtil.SCROLL_KEEPALIVE_MS_DFLT)
                              (implicit ec: ExecutionContext, client: Client): Future[Set[String]] = {
     // TODO Часть кода этого метода была вынесена в EsModel.foldSearchScroll(), но не тестирована после этого.
-    EsModel.foldSearchScroll(searchResp, acc0, keepAliveMs = keepAliveMs, firstReq = firstReq) {
+    EsModelUtil.foldSearchScroll(searchResp, acc0, keepAliveMs = keepAliveMs, firstReq = firstReq) {
       (acc0, hits) =>
         val acc1 = hits.getHits.foldLeft[List[String]] (Nil) { (acc, hit) =>
         hit.field(fn) match {
@@ -64,14 +65,14 @@ object EMAdnMMetadataStatic extends PrefixedFn {
   /** Десериализация сериализованного экземпляра класса AdnMMetadata. */
   val deserializeMNodeMeta: PartialFunction[Any, MNodeMeta] = {
     case jmap: ju.Map[_,_] =>
-      import EsModel.{stringParser, iteratorParser}
+      import EsModelUtil.{stringParser, iteratorParser}
       MNodeMeta(
         nameOpt      = Option(jmap get NAME_FN) map stringParser,
         nameShortOpt = Option(jmap get NAME_SHORT_FN)
           .orElse(Option(jmap get "ns"))    // 2014.oct.01: Переименовано поле: ns -> sn из-за изменения в маппинге.
           .map(stringParser),
         hiddenDescr = Option(jmap get HIDDEN_DESCR_FN) map stringParser,
-        dateCreated = EsModel.dateTimeParser(jmap get DATE_CREATED_FN),
+        dateCreated = EsModelUtil.dateTimeParser(jmap get DATE_CREATED_FN),
         town        = Option(jmap get TOWN_FN) map stringParser,
         address     = Option(jmap get ADDRESS_FN) map stringParser,
         phone       = Option(jmap get PHONE_FN) map stringParser,
@@ -79,7 +80,7 @@ object EMAdnMMetadataStatic extends PrefixedFn {
         section     = Option(jmap get SECTION_FN) map stringParser,
         siteUrl     = Option(jmap get SITE_URL_FN) map stringParser,
         audienceDescr = Option(jmap get AUDIENCE_DESCR_FN) map stringParser,
-        humanTrafficAvg = Option(jmap get HUMAN_TRAFFIC_AVG_FN) map EsModel.intParser,
+        humanTrafficAvg = Option(jmap get HUMAN_TRAFFIC_AVG_FN) map EsModelUtil.intParser,
         info        = Option(jmap get INFO_FN) map stringParser,
         color       = Option(jmap get BG_COLOR_FN) map stringParser,
         fgColor     = Option(jmap get FG_COLOR_FN) map stringParser,

@@ -1,7 +1,7 @@
 package io.suggest.model.n2.tag.vertex
 
+import io.suggest.model.es.GenEsMappingPropsDummy
 import io.suggest.model.n2.{FieldNamesL1, node}
-import io.suggest.model.GenEsMappingPropsDummy
 import io.suggest.util.SioEsUtil._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._

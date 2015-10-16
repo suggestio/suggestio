@@ -2,8 +2,8 @@ package io.suggest.model.n2.tag.edge
 
 import java.{util => ju}
 
-import io.suggest.model.EsModel.FieldsJsonAcc
-import io.suggest.model.{EsModelCommonStaticT, EsModelPlayJsonT, EsModelStaticMutAkvT}
+import io.suggest.model.es.{EsModelPlayJsonT, EsModelStaticMutAkvT, EsModelCommonStaticT, EsModelUtil}
+import EsModelUtil.FieldsJsonAcc
 import io.suggest.util.SioEsUtil._
 import play.api.libs.json.Json
 

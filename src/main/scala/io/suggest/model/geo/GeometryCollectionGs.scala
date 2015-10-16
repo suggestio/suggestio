@@ -1,6 +1,7 @@
 package io.suggest.model.geo
 
-import io.suggest.model.EsModel.FieldsJsonAcc
+import io.suggest.model.es.EsModelUtil
+import EsModelUtil.FieldsJsonAcc
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import java.{util => ju, lang => jl}

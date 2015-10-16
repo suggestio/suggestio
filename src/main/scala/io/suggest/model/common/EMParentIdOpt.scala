@@ -1,7 +1,7 @@
 package io.suggest.model.common
 
-import io.suggest.model.EsModel._
-import io.suggest.model.{EsModelCommonStaticT, EsModelStaticT, EsModelStaticMutAkvT, EsModelPlayJsonT}
+import io.suggest.model.es.{EsModelPlayJsonT, EsModelStaticMutAkvT, EsModelCommonStaticT, EsModelUtil}
+import EsModelUtil._
 import play.api.libs.json.JsString
 import io.suggest.util.SioEsUtil._
 

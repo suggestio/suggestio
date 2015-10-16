@@ -1,7 +1,8 @@
 package io.suggest.model.n2.extra
 
 import io.suggest.common.EmptyProduct
-import io.suggest.model.{PrefixedFn, IGenEsMappingProps}
+import io.suggest.model.PrefixedFn
+import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.model.n2.tag.vertex.{EMTagVertex, EMTagVertexStaticT, MTagVertex}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._

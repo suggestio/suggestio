@@ -1,8 +1,8 @@
 package io.suggest.ym.model.common
 
+import io.suggest.model.es.{IGenEsMappingProps, EsModelUtil}
 import io.suggest.model.n2.node.meta._
 import io.suggest.model.n2.node.meta.colors.{MColorData, MColors}
-import io.suggest.model.{EsModel, IGenEsMappingProps}
 import io.suggest.util.SioEsUtil.FieldIndexingVariants.FieldIndexingVariant
 import io.suggest.util.SioEsUtil._
 import org.joda.time.DateTime
@@ -81,7 +81,7 @@ object MNodeMeta extends IGenEsMappingProps {
     (__ \ NAME_FN).formatNullable[String] and
     (__ \ NAME_SHORT_FN).formatNullable[String] and
     (__ \ HIDDEN_DESCR_FN).formatNullable[String] and
-    (__ \ DATE_CREATED_FN).format(EsModel.Implicits.jodaDateTimeFormat) and
+    (__ \ DATE_CREATED_FN).format(EsModelUtil.Implicits.jodaDateTimeFormat) and
     (__ \ TOWN_FN).formatNullable[String] and
     (__ \ ADDRESS_FN).formatNullable[String] and
     (__ \ PHONE_FN).formatNullable[String] and

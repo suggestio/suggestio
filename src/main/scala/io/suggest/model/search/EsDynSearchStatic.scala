@@ -1,6 +1,6 @@
 package io.suggest.model.search
 
-import io.suggest.model.EsModelStaticT
+import io.suggest.model.es.EsModelStaticT
 import io.suggest.util.MacroLogsI
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 import org.elasticsearch.action.search.SearchRequestBuilder

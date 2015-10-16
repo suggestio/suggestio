@@ -1,7 +1,8 @@
 package io.suggest.model.geo
 
 import GeoShape.COORDS_ESFN
-import io.suggest.model.EsModel.FieldsJsonAcc
+import io.suggest.model.es.EsModelUtil
+import EsModelUtil.FieldsJsonAcc
 import org.elasticsearch.common.geo.builders.{MultiPointBuilder, PointCollection, ShapeBuilder}
 import java.{util => ju}
 

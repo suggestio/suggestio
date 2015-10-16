@@ -1,8 +1,8 @@
 package io.suggest.ym.model.common
 
+import io.suggest.model.es.{EsModelPlayJsonT, EsModelStaticMutAkvT, EsModelUtil}
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
-import io.suggest.model.{EsModelPlayJsonT, EsModelStaticMutAkvT}
-import io.suggest.model.EsModel._
+import EsModelUtil._
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders, QueryBuilder}
 import play.api.libs.json._

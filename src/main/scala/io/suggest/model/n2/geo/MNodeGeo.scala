@@ -1,7 +1,7 @@
 package io.suggest.model.n2.geo
 
 import io.suggest.common.EmptyProduct
-import io.suggest.model.IGenEsMappingProps
+import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.model.geo.GeoPoint
 import play.api.libs.json._
 import play.api.libs.functional.syntax._

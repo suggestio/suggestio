@@ -1,7 +1,7 @@
 package io.suggest.ym.model.ad
 
-import io.suggest.model.{EsModelPlayJsonT, EsModelStaticMutAkvT}
-import io.suggest.model.EsModel.{FieldsJsonAcc, stringParser}
+import io.suggest.model.es.{EsModelPlayJsonT, EsModelStaticMutAkvT, EsModelUtil}
+import EsModelUtil.{FieldsJsonAcc, stringParser}
 import play.api.libs.json._
 import io.suggest.util.SioEsUtil._
 import java.{util => ju}

@@ -4,7 +4,8 @@ import java.text.SimpleDateFormat
 
 import com.sun.org.glassfish.gmbal.{Description, Impact, ManagedOperation}
 import io.suggest.model._
-import io.suggest.model.EsModel._
+import io.suggest.model.es._
+import EsModelUtil._
 import io.suggest.model.geo.GeoPoint
 import io.suggest.ym.model.common.{AdnSink, AdnSinks}
 import org.elasticsearch.action.deletebyquery.DeleteByQueryResponse
@@ -39,7 +40,7 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
   override type T = MAdStat
 
   /** Используем изолированный индекс для статистики из-за крайней суровости статистической информации. */
-  override def ES_INDEX_NAME = EsModel.GARBAGE_INDEX
+  override def ES_INDEX_NAME = EsModelUtil.GARBAGE_INDEX
   override val ES_TYPE_NAME = "adStat"
 
   // Поля модели.
@@ -479,7 +480,7 @@ final class MAdStatJmx(implicit val ec: ExecutionContext, val client: Client, va
       val dt = dtParse(dtStr)
       companion.findBefore(dt, maxResults) map { results =>
         // Отрендерить результаты в json
-        EsModel.toEsJsonDocs(results)
+        EsModelUtil.toEsJsonDocs(results)
       }
     } catch {
       case ex: Throwable =>

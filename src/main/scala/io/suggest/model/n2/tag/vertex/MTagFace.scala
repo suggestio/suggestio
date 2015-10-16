@@ -1,6 +1,7 @@
 package io.suggest.model.n2.tag.vertex
 
-import io.suggest.model.{PrefixedFn, IGenEsMappingProps}
+import io.suggest.model.PrefixedFn
+import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.primo.IName
 import io.suggest.util.SioConstants
 import io.suggest.util.SioEsUtil._

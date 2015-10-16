@@ -1,7 +1,7 @@
 package io.suggest.ym.model.common
 
-import io.suggest.model.EsModel
 import io.suggest.model.common._
+import io.suggest.model.es.EsModelUtil
 import io.suggest.model.search._
 
 /**
@@ -28,8 +28,8 @@ with NodeIsEnabledDsaDflt with GeoDistanceDsaDflt
 with ShowInScNodeListDsaDflt with WithIdsDflt with GeoDistanceSortDsaDflt
 with NameSortDflt with LimitDflt with OffsetDflt
 {
-  override def limit: Int = EsModel.MAX_RESULTS_DFLT
-  override def offset: Int = EsModel.OFFSET_DFLT
+  override def limit: Int = EsModelUtil.MAX_RESULTS_DFLT
+  override def offset: Int = EsModelUtil.OFFSET_DFLT
 }
 
 class AdnNodesSearchArgsImpl

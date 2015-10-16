@@ -1,8 +1,8 @@
 package io.suggest.ym.model.common
 
 import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.model.EsModel.FieldsJsonAcc
-import io.suggest.model.{EsModel, EsModelStaticMutAkvT, EsModelPlayJsonT, EsModelCommonStaticT}
+import io.suggest.model.es.{EsModelPlayJsonT, EsModelStaticMutAkvT, EsModelCommonStaticT, EsModelUtil}
+import EsModelUtil.FieldsJsonAcc
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.client.Client
 import play.api.libs.json.JsBoolean
@@ -37,7 +37,7 @@ trait EMAlienRscStatic extends EsModelCommonStaticT with EsModelStaticMutAkvT {
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
     super.applyKeyValue(acc) orElse {
       case (ALIEN_RSC_ESFN, raw) =>
-        acc.alienRsc = EsModel.booleanParser(raw)
+        acc.alienRsc = EsModelUtil.booleanParser(raw)
     }
   }
 }

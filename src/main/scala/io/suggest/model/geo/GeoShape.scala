@@ -1,8 +1,9 @@
 package io.suggest.model.geo
 
 import io.suggest.common.menum.EnumMaybeWithName
-import io.suggest.model.EsModel
-import io.suggest.model.EsModel.FieldsJsonAcc
+import io.suggest.model.es.EsModelUtil
+import EsModelUtil.FieldsJsonAcc
+import io.suggest.model.es.EsModelUtil
 import io.suggest.model.menum.EnumJsonReadsValT
 import io.suggest.util.MacroLogsDyn
 import org.elasticsearch.common.geo.builders.ShapeBuilder
@@ -26,7 +27,7 @@ object GeoShape extends MacroLogsDyn {
   val deserialize: PartialFunction[Any, Option[GeoShape]] = {
     case jmap: ju.Map[_,_] =>
       Option(jmap get TYPE_ESFN)
-        .map(EsModel.stringParser)
+        .map(EsModelUtil.stringParser)
         .flatMap { GsTypes.maybeWithName }
         .flatMap {
           case GsTypes.point              => PointGs.deserialize(jmap)

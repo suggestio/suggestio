@@ -1,6 +1,7 @@
 package io.suggest.ym.model.ad
 
-import io.suggest.model.EsModel.FieldsJsonAcc
+import io.suggest.model.es.{EsModelPlayJsonT, EsModelStaticMutAkvT, EsModelUtil}
+import EsModelUtil.FieldsJsonAcc
 import io.suggest.model._
 import io.suggest.util.SioEsUtil._
 import io.suggest.ym.model.common.{EMReceivers, EMProducerId}
@@ -212,11 +213,11 @@ object FreeAdvStatus {
     case jmap: ju.Map[_,_] =>
       FreeAdvStatus(
         isAllowed = Option(jmap get IS_ALLOWED_ESFN)
-          .fold[Boolean] (false) (EsModel.booleanParser),
+          .fold[Boolean] (false) (EsModelUtil.booleanParser),
         when = Option(jmap get WHEN_ESFN)
-          .fold (new DateTime(1970, 1, 1, 0, 0)) (EsModel.dateTimeParser),
-        byUser = EsModel.stringParser(jmap get BY_USER_ESFN),
-        reason = Option(jmap get REASON_ESFN) map EsModel.stringParser
+          .fold (new DateTime(1970, 1, 1, 0, 0)) (EsModelUtil.dateTimeParser),
+        byUser = EsModelUtil.stringParser(jmap get BY_USER_ESFN),
+        reason = Option(jmap get REASON_ESFN) map EsModelUtil.stringParser
       )
   }
 }
@@ -240,7 +241,7 @@ case class FreeAdvStatus(
     var acc: FieldsJsonAcc = List(
       IS_ALLOWED_ESFN -> JsBoolean(isAllowed),
       BY_USER_ESFN    -> JsString(byUser),
-      WHEN_ESFN       -> EsModel.date2JsStr(when)
+      WHEN_ESFN       -> EsModelUtil.date2JsStr(when)
     )
     if (reason exists { !_.isEmpty })
       acc ::= REASON_ESFN -> JsString(reason.get)

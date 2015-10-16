@@ -1,8 +1,8 @@
 package io.suggest.ym.model.common
 
-import io.suggest.model.{EsModel, EsModelPlayJsonT, EsModelStaticMutAkvT}
+import io.suggest.model.es.{EsModelStaticMutAkvT, EsModelPlayJsonT, EsModelUtil}
 import io.suggest.util.SioEsUtil._
-import io.suggest.model.EsModel.FieldsJsonAcc
+import EsModelUtil.FieldsJsonAcc
 import play.api.libs.json.{JsBoolean, JsObject, JsNumber}
 import io.suggest.util.MyConfig.CONFIG
 
@@ -48,7 +48,7 @@ trait EMBlockMetaI extends EsModelPlayJsonT with IEMBlockMeta {
   override type T <: EMBlockMetaI
 }
 
-/** Аддон для экземпляра [[io.suggest.model.EsModelPlayJsonT]] для интеграции поля blockId в модель. */
+/** Аддон для экземпляра [[EsModelPlayJsonT]] для интеграции поля blockId в модель. */
 trait EMBlockMeta extends EMBlockMetaI {
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     BLOCK_META_ESFN -> blockMeta.toPlayJson :: super.writeJsonFields(acc)
@@ -78,10 +78,10 @@ object BlockMeta {
     x match {
       case m: java.util.Map[_,_] =>
         BlockMeta(
-          blockId = EsModel.intParser(m get BLOCK_ID_ESFN),
-          height  = EsModel.intParser(m get HEIGHT_ESFN),
-          width   = Option(m get WIDTH_ESFN).fold(WIDTH_DFLT)(EsModel.intParser),
-          wide    = Option(m get WIDE_ESFN).fold(false)(EsModel.booleanParser)
+          blockId = EsModelUtil.intParser(m get BLOCK_ID_ESFN),
+          height  = EsModelUtil.intParser(m get HEIGHT_ESFN),
+          width   = Option(m get WIDTH_ESFN).fold(WIDTH_DFLT)(EsModelUtil.intParser),
+          wide    = Option(m get WIDE_ESFN).fold(false)(EsModelUtil.booleanParser)
         )
     }
   }

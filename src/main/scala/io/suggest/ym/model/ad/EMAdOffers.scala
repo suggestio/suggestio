@@ -1,12 +1,12 @@
 package io.suggest.ym.model.ad
 
-import io.suggest.model.{EsModel, EsModelPlayJsonT, EsModelStaticMutAkvT}
+import io.suggest.model.es.{EsModelStaticMutAkvT, EsModelPlayJsonT, EsModelUtil}
 import java.util.Currency
 import java.{util => ju}
 import com.fasterxml.jackson.annotation.JsonIgnore
 import io.suggest.util.SioEsUtil._
 import scala.collection.JavaConversions._
-import io.suggest.model.EsModel.FieldsJsonAcc
+import EsModelUtil.FieldsJsonAcc
 import play.api.libs.json._
 
 /**
@@ -114,7 +114,7 @@ trait EMAdOffersI extends EsModelPlayJsonT with IOffers {
   override type T <: EMAdOffersI
 }
 
-/** read-only аддон для экземпляра [[io.suggest.model.EsModelPlayJsonT]] для добавления поддержки работы с полем offers. */
+/** read-only аддон для экземпляра [[EsModelPlayJsonT]] для добавления поддержки работы с полем offers. */
 trait EMAdOffers extends EMAdOffersI {
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     val acc0 = super.writeJsonFields(acc)
@@ -143,7 +143,7 @@ object AdOffer {
     x match {
       case jsObject: ju.Map[_, _] =>
         val n: Int = Option(jsObject get N_ESFN)
-          .map(EsModel.intParser)
+          .map(EsModelUtil.intParser)
           .getOrElse(0)
         val offerBody = jsObject.get(OFFER_BODY_ESFN)
         AOBlock.deserializeBody(offerBody, n)
@@ -183,7 +183,7 @@ object AOBlock {
           text2 = Option(m get TEXT2_ESFN)
             .flatMap(AOStringField.deserializeOpt),
           href = Option(m get HREF_ESFN)
-            .map(EsModel.stringParser)
+            .map(EsModelUtil.stringParser)
         )
     }
   }
@@ -243,7 +243,7 @@ sealed trait AOValueField {
 object AOStringField {
   def getAndDeserializeValue(jm: ju.Map[_,_]): String = {
     Option(jm.get(VALUE_ESFN))
-      .fold("")(EsModel.stringParser)
+      .fold("")(EsModelUtil.stringParser)
   }
   
   val deserializeOpt: PartialFunction[Any, Option[AOStringField]] = {
@@ -280,7 +280,7 @@ trait AOFloatFieldT extends AOValueField {
 
 object AOFloatField {
   def getAndDeserializeValue(jm: ju.Map[_,_]): Float = {
-    Option(jm.get(VALUE_ESFN)).fold(0F)(EsModel.floatParser)
+    Option(jm.get(VALUE_ESFN)).fold(0F)(EsModelUtil.floatParser)
   }
 
   val deserializeOpt: PartialFunction[Any, Option[AOFloatField]] = {
@@ -336,14 +336,14 @@ object AOFieldFont {
     case jm: ju.Map[_,_] =>
       AOFieldFont(
         color  = Option(jm.get(COLOR_ESFN))
-          .fold(FONT_COLOR_DFLT)(EsModel.stringParser),
+          .fold(FONT_COLOR_DFLT)(EsModelUtil.stringParser),
         size   = Option(jm.get(SIZE_ESFN))
-          .map(EsModel.intParser),
+          .map(EsModelUtil.intParser),
         align  = Option(jm.get(ALIGN_ESFN))
-          .map(EsModel.stringParser)
+          .map(EsModelUtil.stringParser)
           .flatMap(TextAligns.maybeWithName),
         family = Option(jm.get(FAMILY_ESFN))
-          .map(EsModel.stringParser)
+          .map(EsModelUtil.stringParser)
       )
   }
 }
@@ -385,9 +385,9 @@ object AOPriceField {
         val result = AOPriceField(
           value = AOFloatField.getAndDeserializeValue(jm),
           currencyCode = Option(jm.get(CURRENCY_CODE_ESFN))
-            .fold("RUB")(EsModel.stringParser),
+            .fold("RUB")(EsModelUtil.stringParser),
           orig = Option(jm.get(ORIG_ESFN))
-            .fold("")(EsModel.stringParser),
+            .fold("")(EsModelUtil.stringParser),
           font = AOValueField.getAndDeserializeFont(jm),
           coords = AOValueField.getAndDeserializeCoords(jm)
         )
@@ -421,7 +421,7 @@ object Coords2D {
   val Y_ESFN = "y"
 
   def getAndDeserializeCoord(fn: String, jm: ju.Map[_,_]): Int = {
-    Option(jm.get(fn)).fold(0)(EsModel.intParser)
+    Option(jm.get(fn)).fold(0)(EsModelUtil.intParser)
   }
 
   val deserialize: PartialFunction[Any, Coords2D] = {

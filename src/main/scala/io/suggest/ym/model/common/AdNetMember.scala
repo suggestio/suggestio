@@ -1,6 +1,7 @@
 package io.suggest.ym.model.common
 
 import io.suggest.common.menum.EnumMaybeWithName
+import io.suggest.model.es._
 import io.suggest.model.menum.EnumJsonReadsValT
 import io.suggest.model.n2.extra.{MSlInfo, MAdnExtra}
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
@@ -8,7 +9,7 @@ import io.suggest.model._
 import io.suggest.util.SioEsUtil._
 import com.fasterxml.jackson.annotation.JsonIgnore
 import scala.collection.JavaConversions._
-import EsModel._
+import EsModelUtil._
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.{FilterBuilder, FilterBuilders, QueryBuilder, QueryBuilders}

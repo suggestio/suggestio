@@ -7,7 +7,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import io.suggest.event.SioNotifier.Event
 import io.suggest.event.subscriber.SnClassSubscriber
 import io.suggest.event.{AdnNodeDeletedEvent, SNStaticSubscriber, SioNotifierStaticClientI}
-import io.suggest.model.EsModel.FieldsJsonAcc
+import io.suggest.model.es._
+import EsModelUtil.FieldsJsonAcc
 import io.suggest.model._
 import io.suggest.model.geo.{IGeoShapeIndexed, CircleGs, GeoShape, GeoShapeQuerable}
 import io.suggest.util.MacroLogsImpl
@@ -97,7 +98,7 @@ object MAdnNodeGeo extends EsChildModelStaticT with MacroLogsImpl {
   @deprecated("nested-object geo structure replaced by flat structure.", "2014.09.09")
   private[this] def _deserializeGeoTuple(raw: (Any,Any)): (NodeGeoLevel, GeoShape) = {
     val (esfnRaw, shapeRaw) = raw
-    val esfn = NodeGeoLevels.withName( EsModel.stringParser(esfnRaw) )
+    val esfn = NodeGeoLevels.withName( EsModelUtil.stringParser(esfnRaw) )
     val shape = GeoShape.deserialize(shapeRaw).get
     (esfn, shape)
   }
@@ -106,7 +107,7 @@ object MAdnNodeGeo extends EsChildModelStaticT with MacroLogsImpl {
     // 2014.09.09: Вместо nested object используется полностью flat-структура полей без всяких object'ов вообще.
     // Название используемого поля хранится в поле GLEVEL_ESFN.
     val glevelOpt: Option[NodeGeoLevel] = m.get(GLEVEL_ESFN)
-      .map(EsModel.stringParser)
+      .map(EsModelUtil.stringParser)
       .map(NodeGeoLevels.withName)
     val (glevel, shape): (NodeGeoLevel, GeoShape) = glevelOpt match {
       // Современный формат геоданных
@@ -120,11 +121,11 @@ object MAdnNodeGeo extends EsChildModelStaticT with MacroLogsImpl {
         deserializeGeoContainer( m(GEO_ESFN) )
     }
     MAdnNodeGeo(
-      adnId       = EsModel.stringParser( m(ADN_ID_ESFN) ),
+      adnId       = EsModelUtil.stringParser( m(ADN_ID_ESFN) ),
       glevel      = glevel,
       shape       = shape,
-      url         = m.get(URL_ESFN).map(EsModel.stringParser),
-      lastModified = m.get(LAST_MODIFIED_ESFN).fold(DateTime.now)(EsModel.dateTimeParser),
+      url         = m.get(URL_ESFN).map(EsModelUtil.stringParser),
+      lastModified = m.get(LAST_MODIFIED_ESFN).fold(DateTime.now)(EsModelUtil.dateTimeParser),
       id          = id,
       versionOpt  = versionOpt
     )
@@ -384,7 +385,7 @@ final case class MAdnNodeGeo(
       ADN_ID_ESFN -> JsString(adnId) ::
       GLEVEL_ESFN -> JsString(glevel.esfn) ::
       glevel.esfn -> shape.toPlayJson(geoJsonCompatible = false) ::
-      LAST_MODIFIED_ESFN -> EsModel.date2JsStr(lastModified) ::
+      LAST_MODIFIED_ESFN -> EsModelUtil.date2JsStr(lastModified) ::
       GEO_JSON_COMPATIBLE_ESFN -> JsBoolean(shape.shapeType.isGeoJsonCompatible) ::
       acc0
     if (url.isDefined)

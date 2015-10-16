@@ -1,8 +1,8 @@
 package io.suggest.ym.model.common
 
-import io.suggest.model.{EsModel, EsModelPlayJsonT, EsModelStaticMutAkvT}
+import io.suggest.model.es.{EsModelPlayJsonT, EsModelStaticMutAkvT, EsModelUtil}
 import io.suggest.util.SioEsUtil._
-import io.suggest.model.EsModel.FieldsJsonAcc
+import EsModelUtil.FieldsJsonAcc
 import java.{util => ju, lang => jl}
 import scala.collection.JavaConversions._
 import TariffTypes.TariffType
@@ -147,17 +147,17 @@ object Tariff {
    * @return
    */
   def deserialize(tm: ju.Map[_,_]): Tariff = {
-    val tid = EsModel.intParser(tm.get(ID_ESFN))
+    val tid = EsModelUtil.intParser(tm.get(ID_ESFN))
     val tName = tm.get(NAME_ESFN).toString
     val tType: TariffType = TariffTypes.withName(tm.get(TTYPE_ESFN).toString)
-    val isEnabled: Boolean = EsModel.booleanParser(tm.get(ENABLED_ESFN))
+    val isEnabled: Boolean = EsModelUtil.booleanParser(tm.get(ENABLED_ESFN))
     val tBody = tm.get(TBODY_ESFN) match {
       case tbodyRaw: ju.Map[_,_]  =>  TariffBody.deserialize(tType, tbodyRaw)
     }
-    val dateStart    = EsModel.dateTimeParser(tm.get(DATE_FIRST_ESFN))
-    val dateCreated  = EsModel.dateTimeParser(tm.get(DATE_CREATED_ESFN))
-    val dateStatus   = EsModel.dateTimeParser(tm.get(DATE_STATUS_ESFN))
-    val dateModified = Option(tm.get(DATE_MODIFIED_ESFN)).map(EsModel.dateTimeParser)
+    val dateStart    = EsModelUtil.dateTimeParser(tm.get(DATE_FIRST_ESFN))
+    val dateCreated  = EsModelUtil.dateTimeParser(tm.get(DATE_CREATED_ESFN))
+    val dateStatus   = EsModelUtil.dateTimeParser(tm.get(DATE_STATUS_ESFN))
+    val dateModified = Option(tm.get(DATE_MODIFIED_ESFN)).map(EsModelUtil.dateTimeParser)
     Tariff(
       id    = tid,
       name  = tName,
@@ -192,12 +192,12 @@ case class Tariff(
       TTYPE_ESFN   -> JsString(tType.toString),
       ENABLED_ESFN -> JsBoolean(isEnabled),
       TBODY_ESFN   -> tBody.toPlayJson,
-      DATE_FIRST_ESFN   -> EsModel.date2JsStr(dateFirst),
-      DATE_CREATED_ESFN -> EsModel.date2JsStr(dateCreated),
-      DATE_STATUS_ESFN  -> EsModel.date2JsStr(dateStatus)
+      DATE_FIRST_ESFN   -> EsModelUtil.date2JsStr(dateFirst),
+      DATE_CREATED_ESFN -> EsModelUtil.date2JsStr(dateCreated),
+      DATE_STATUS_ESFN  -> EsModelUtil.date2JsStr(dateStatus)
     )
     if (dateModified.isDefined)
-      jsonFields ::= DATE_MODIFIED_ESFN -> EsModel.date2JsStr(dateModified.get)
+      jsonFields ::= DATE_MODIFIED_ESFN -> EsModelUtil.date2JsStr(dateModified.get)
     JsObject(jsonFields)
   }
 }
@@ -226,7 +226,7 @@ object PeriodicalTariffBody {
   
   def deserialize(tbRaw: ju.Map[_,_]): PeriodicalTariffBody = {
     val period = PERIOD_FORMATTER.parsePeriod(tbRaw.get(PERIOD_ESFN).toString)
-    val amount: Float = EsModel.floatParser(tbRaw.get(AMOUNT_ESFN))
+    val amount: Float = EsModelUtil.floatParser(tbRaw.get(AMOUNT_ESFN))
     val currencyCode = tbRaw.get(CURRENCY_CODE_ESFN).toString
     PeriodicalTariffBody(period, amount, currencyCode)
   }

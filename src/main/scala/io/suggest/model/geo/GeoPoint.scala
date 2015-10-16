@@ -3,7 +3,8 @@ package io.suggest.model.geo
 import java.{lang => jl, util => ju}
 
 import io.suggest.geo.IGeoPoint
-import io.suggest.model.EsModel.doubleParser
+import io.suggest.model.es.EsModelUtil
+import EsModelUtil.doubleParser
 import io.suggest.util.{JacksonWrapper, MacroLogsImpl}
 import org.elasticsearch.common.geo.{GeoHashUtils, GeoPoint => EsGeoPoint}
 import play.api.data.validation.ValidationError

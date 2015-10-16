@@ -1,9 +1,9 @@
 package io.suggest.ym.model.common
 
+import io.suggest.model.es.{EsModelPlayJsonT, EsModelStaticMutAkvT, EsModelUtil}
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
-import io.suggest.model.{EsModel, EsModelStaticMutAkvT, EsModelPlayJsonT}
 import io.suggest.util.SioEsUtil._
-import io.suggest.model.EsModel.FieldsJsonAcc
+import EsModelUtil.FieldsJsonAcc
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders, QueryBuilder}
 import play.api.libs.json.{JsArray, JsString}
 import scala.concurrent.{Future, ExecutionContext}
@@ -12,7 +12,7 @@ import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import scala.collection.JavaConversions._
 import java.{lang => jl}
-import EsModel.{stringParser, iteratorParser}
+import EsModelUtil.{stringParser, iteratorParser}
 
 /**
  * Suggest.io

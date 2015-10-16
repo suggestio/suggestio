@@ -1,7 +1,8 @@
 package io.suggest.model.n2.node.meta
 
-import io.suggest.model.EsModel.Implicits.jodaDateTimeFormat
-import io.suggest.model.{PrefixedFn, IGenEsMappingProps}
+import io.suggest.model.es.{IGenEsMappingProps, EsModelUtil}
+import EsModelUtil.Implicits.jodaDateTimeFormat
+import io.suggest.model.PrefixedFn
 import io.suggest.ym.model.common.MNodeMeta
 import org.joda.time.DateTime
 import play.api.libs.json._

@@ -1,9 +1,9 @@
 package io.suggest.model.common
 
-import io.suggest.model.{EsModelStaticMutAkvT, EsModelPlayJsonT}
+import io.suggest.model.es.{EsModelPlayJsonT, EsModelStaticMutAkvT, EsModelUtil}
 import org.joda.time.DateTime
 import io.suggest.util.SioEsUtil._
-import io.suggest.model.EsModel.{FieldsJsonAcc, date2JsStr, dateTimeParser}
+import EsModelUtil.{FieldsJsonAcc, date2JsStr, dateTimeParser}
 import com.github.nscala_time.time.OrderingImplicits._
 
 /**

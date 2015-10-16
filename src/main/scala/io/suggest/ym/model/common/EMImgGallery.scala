@@ -2,8 +2,9 @@ package io.suggest.ym.model.common
 
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model._
+import io.suggest.model.es.{EsModelPlayJsonT, EsModelStaticMutAkvT, EsModelUtil}
 import io.suggest.util.SioEsUtil._
-import io.suggest.model.EsModel.FieldsJsonAcc
+import EsModelUtil.FieldsJsonAcc
 import org.elasticsearch.client.Client
 import play.api.libs.json.{JsString, JsArray}
 import java.{lang => jl}
@@ -40,7 +41,7 @@ trait EMImgGalleryStatic extends EsModelStaticMutAkvT {
       case (IMG_GALLERY_ESFN, v: jl.Iterable[_]) =>
         acc.gallery = v
           .foldLeft(List.empty[String]) {
-            (acc, e) => EsModel.stringParser(e) :: acc
+            (acc, e) => EsModelUtil.stringParser(e) :: acc
           }
           .reverse
     }

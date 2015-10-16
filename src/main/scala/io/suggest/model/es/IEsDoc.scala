@@ -1,4 +1,4 @@
-package io.suggest.model
+package io.suggest.model.es
 
 import io.suggest.util.JacksonWrapper
 import org.elasticsearch.action.get.GetResponse

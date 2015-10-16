@@ -2,6 +2,7 @@ package io.suggest.model.n2.node
 
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model._
+import io.suggest.model.es._
 import io.suggest.model.n2.edge.MNodeEdges
 import io.suggest.model.n2.geo.MNodeGeo
 import io.suggest.model.n2.node.common.MNodeCommon

@@ -1,7 +1,7 @@
 package io.suggest.model.n2.extra
 
 import io.suggest.common.menum.EnumMaybeWithName
-import io.suggest.model.IGenEsMappingProps
+import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.ym.model.AdShowLevel
 import io.suggest.ym.model.common.AdnRight
 import io.suggest.ym.model.common.AdnSink

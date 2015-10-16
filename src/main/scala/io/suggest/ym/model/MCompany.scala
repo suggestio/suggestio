@@ -1,6 +1,7 @@
 package io.suggest.ym.model
 
 import io.suggest.model.common.{EMName, EMDateCreatedStatic}
+import io.suggest.model.es._
 import io.suggest.ym.model.common.{EMCompanyMetaMut, MCompanyMeta, EMCompanyMetaStatic}
 import scala.concurrent.ExecutionContext
 import org.elasticsearch.client.Client
@@ -42,9 +43,9 @@ object MCompany
   override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
     super.applyKeyValue(acc) orElse {
       case (EMName.NAME_ESFN, nameRaw) =>
-        acc.meta = acc.meta.copy(name = EsModel.stringParser(nameRaw))
+        acc.meta = acc.meta.copy(name = EsModelUtil.stringParser(nameRaw))
       case (EMDateCreatedStatic.DATE_CREATED_ESFN, dcRaw) =>
-        acc.meta = acc.meta.copy(dateCreated = EsModel.dateTimeParser(dcRaw))
+        acc.meta = acc.meta.copy(dateCreated = EsModelUtil.dateTimeParser(dcRaw))
     }
   }
 }
@@ -59,7 +60,7 @@ final case class MCompany(
   id          : Option[String] = None,
   versionOpt  : Option[Long] = None
 )
-  extends EsModelEmpty
+  extends EsModelPlayJsonEmpty
   with EsModelT
   with EMCompanyMetaMut
 {

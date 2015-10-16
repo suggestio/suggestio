@@ -1,13 +1,13 @@
 package io.suggest.ym.model.common
 
+import io.suggest.model.es.{EsModelPlayJsonT, EsModelStaticMutAkvT, EsModelUtil}
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
-import io.suggest.model.{EsModel, EsModelStaticMutAkvT, EsModelPlayJsonT}
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.search.sort.SortBuilder
 import scala.concurrent.{ExecutionContext, Future}
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
-import io.suggest.model.EsModel.{FieldsJsonAcc, stringParser}
+import EsModelUtil.{FieldsJsonAcc, stringParser}
 import play.api.libs.json.JsString
 import io.suggest.event.SioNotifierStaticClientI
 import org.elasticsearch.search.aggregations.{Aggregations, AggregationBuilders}

@@ -1,6 +1,7 @@
 package io.suggest.ym.model
 
 import io.suggest.model._
+import io.suggest.model.es._
 import io.suggest.model.n2.edge.{MPredicates, MEdge, NodeEdgesMap_t, MNodeEdges}
 import io.suggest.model.n2.extra.MNodeExtras
 import io.suggest.model.n2.geo.MNodeGeo
@@ -82,7 +83,7 @@ final case class MAdnNode(
   var id            : Option[String]    = None,
   versionOpt        : Option[Long]      = None
 )
-  extends EsModelEmpty
+  extends EsModelPlayJsonEmpty
   with EsModelT
   with EMAdNetMember
   with EMPersonIds

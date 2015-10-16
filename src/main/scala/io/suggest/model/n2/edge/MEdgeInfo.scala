@@ -1,7 +1,7 @@
 package io.suggest.model.n2.edge
 
 import io.suggest.common.{EmptyProduct, IEmpty}
-import io.suggest.model.IGenEsMappingProps
+import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.util.SioConstants
 import io.suggest.ym.model.common.SinkShowLevel
 import play.api.libs.functional.syntax._

@@ -1,6 +1,7 @@
 package io.suggest.model.n2.tag.vertex
 
 import io.suggest.model._
+import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.util.SioEsUtil._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._

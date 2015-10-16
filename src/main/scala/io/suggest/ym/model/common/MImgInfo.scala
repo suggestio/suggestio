@@ -2,9 +2,9 @@ package io.suggest.ym.model.common
 
 import com.fasterxml.jackson.annotation.{JsonIgnore, JsonIgnoreProperties}
 import io.suggest.common.geom.d2.ISize2di
-import io.suggest.model.EsModel
+import io.suggest.model.es.EsModelUtil
 import play.api.libs.json._
-import io.suggest.model.EsModel.FieldsJsonAcc
+import EsModelUtil.FieldsJsonAcc
 import java.{util => ju}
 
 /**
@@ -69,8 +69,8 @@ object MImgInfoMeta {
   def convertFrom(v: Any): MImgInfoMeta = {
     v match {
       case m: java.util.Map[_,_] =>
-        val width  = EsModel.intParser(m.get(WIDTH_ESFN))
-        val height = EsModel.intParser(m.get(HEIGHT_ESFN))
+        val width  = EsModelUtil.intParser(m.get(WIDTH_ESFN))
+        val height = EsModelUtil.intParser(m.get(HEIGHT_ESFN))
         MImgInfoMeta(height=height, width=width)
     }
   }

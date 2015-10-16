@@ -1,6 +1,6 @@
 package io.suggest.model.n2.geo
 
-import io.suggest.model.IGenEsMappingProps
+import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.model.geo.GeoShape
 import io.suggest.ym.model.{NodeGeoLevels, NodeGeoLevel}
 import play.api.data.validation.ValidationError

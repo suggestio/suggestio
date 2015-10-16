@@ -1,12 +1,12 @@
 package io.suggest.ym.model.common
 
-import io.suggest.model.{EsModel, EsModelStaticMutAkvT, EsModelPlayJsonT}
+import io.suggest.model.es.{EsModelPlayJsonT, EsModelStaticMutAkvT, EsModelUtil}
 import io.suggest.util.SioEsUtil._
 import java.{util => ju, lang => jl}
 import com.fasterxml.jackson.annotation.JsonIgnore
 import scala.collection.JavaConversions._
 import play.api.libs.json.{JsArray, JsString, JsObject}
-import io.suggest.model.EsModel.FieldsJsonAcc
+import EsModelUtil.FieldsJsonAcc
 
 /**
  * Suggest.io
@@ -74,7 +74,7 @@ object Texts4Search {
   def deserialize(value: ju.Map[_,_]): Texts4Search = {
     Texts4Search(
       producerName = Option(value get PRODUCER_NAME_ESFN)
-        .map(EsModel.stringParser),
+        .map(EsModelUtil.stringParser),
       userCat = Option(value get USER_CAT_ESFN)
         .fold (List.empty[String]) {
           case catsRaw: jl.Iterable[_] =>

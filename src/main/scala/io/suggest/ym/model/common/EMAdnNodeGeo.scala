@@ -1,8 +1,8 @@
 package io.suggest.ym.model.common
 
-import io.suggest.model.EsModel.FieldsJsonAcc
+import io.suggest.model.es.{EsModelPlayJsonT, EsModelStaticMutAkvT, EsModelUtil}
+import EsModelUtil.FieldsJsonAcc
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
-import io.suggest.model.{EsModelStaticMutAkvT, EsModel, EsModelPlayJsonT}
 import io.suggest.model.geo.{CircleGs, GeoShapeQueryData, GeoPoint}
 import io.suggest.util.SioEsUtil._
 import io.suggest.ym.model.MAdnNodeGeo
@@ -97,7 +97,7 @@ object AdnNodeGeodata {
     Option(jmap get fn).fold (Set.empty[String]) {
       case raws: jl.Iterable[_]  =>
         raws.iterator()
-          .map(EsModel.stringParser)
+          .map(EsModelUtil.stringParser)
           .toSet
     }
   }

@@ -2,6 +2,7 @@ package io.suggest.ym.model
 
 import io.suggest.model._
 import com.fasterxml.jackson.annotation.JsonIgnore
+import io.suggest.model.es._
 import io.suggest.model.n2.tag.edge.{TagsMap_t, EMTagsEdgeMut, EMTagsEdgeStaticMut}
 import io.suggest.util.SioEsUtil._
 import scala.concurrent.{Future, ExecutionContext}
@@ -156,7 +157,7 @@ final case class MAd(
   var tags          : TagsMap_t           = Map.empty,
   var versionOpt    : Option[Long]        = None
 )
-  extends EsModelEmpty
+  extends EsModelPlayJsonEmpty
   with EsModelT
   with MAdT
   with EMProducerIdMut

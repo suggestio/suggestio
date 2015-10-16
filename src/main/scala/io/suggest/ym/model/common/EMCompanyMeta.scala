@@ -1,7 +1,7 @@
 package io.suggest.ym.model.common
 
-import io.suggest.model.EsModel.FieldsJsonAcc
-import io.suggest.model.{EsModel, EsModelPlayJsonT, EsModelStaticMutAkvT}
+import io.suggest.model.es.{EsModelPlayJsonT, EsModelStaticMutAkvT, EsModelUtil}
+import EsModelUtil.FieldsJsonAcc
 import io.suggest.util.SioEsUtil._
 import org.joda.time.DateTime
 import play.api.libs.json._
@@ -81,7 +81,7 @@ object MCompanyMeta {
   /** Фунцкия-десериализатор сериализованного значения MCompanyMeta. */
   val deserialize: PartialFunction[Any, MCompanyMeta] = {
     case jmap: ju.Map[_,_] =>
-      import EsModel.{stringParser, dateTimeParser, strListParser, intParser}
+      import EsModelUtil.{stringParser, dateTimeParser, strListParser, intParser}
       MCompanyMeta(
         name          = stringParser(jmap get NAME_ESFN),
         dateCreated   = dateTimeParser(jmap get DATE_CREATED_ESFN),
@@ -115,7 +115,7 @@ case class MCompanyMeta(
   def toPlayJson: JsObject = {
     var acc: FieldsJsonAcc = List(
       NAME_ESFN         -> JsString(name),
-      DATE_CREATED_ESFN -> EsModel.date2JsStr(dateCreated)
+      DATE_CREATED_ESFN -> EsModelUtil.date2JsStr(dateCreated)
     )
     if (officePhones.nonEmpty) {
       val ophs = officePhones.map(JsString.apply)

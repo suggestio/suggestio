@@ -1,6 +1,7 @@
 package io.suggest.model.n2.edge
 
-import io.suggest.model.{PrefixedFn, IGenEsMappingProps}
+import io.suggest.model.PrefixedFn
+import io.suggest.model.es.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 

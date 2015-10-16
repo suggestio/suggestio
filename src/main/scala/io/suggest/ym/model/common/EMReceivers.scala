@@ -1,5 +1,6 @@
 package io.suggest.ym.model.common
 
+import io.suggest.model.es.{EsModelPlayJsonT, EsModelStaticMutAkvT, EsModelUtil}
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import io.suggest.util.{Lists, SioConstants}
 import io.suggest.util.SioEsUtil._
@@ -12,7 +13,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import io.suggest.event.SioNotifierStaticClientI
 import org.elasticsearch.client.Client
 import org.elasticsearch.action.update.UpdateRequestBuilder
-import io.suggest.model.EsModel.FieldsJsonAcc
+import EsModelUtil.FieldsJsonAcc
 import play.api.libs.json._
 import org.elasticsearch.search.aggregations.{Aggregations, AggregationBuilders}
 import org.elasticsearch.search.aggregations.bucket.nested.Nested

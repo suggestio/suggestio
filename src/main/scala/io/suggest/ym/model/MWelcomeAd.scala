@@ -1,6 +1,7 @@
 package io.suggest.ym.model
 
 import io.suggest.model._
+import io.suggest.model.es._
 import org.joda.time.DateTime
 import io.suggest.util.SioEsUtil._
 import scala.concurrent.{Future, ExecutionContext}
@@ -56,7 +57,7 @@ final case class MWelcomeAd(
   var id          : Option[String] = None,
   versionOpt      : Option[Long] = None
 )
-  extends EsModelEmpty
+  extends EsModelPlayJsonEmpty
   with EsModelT
   with MAdT
   with EMProducerIdMut

@@ -1,7 +1,8 @@
 package io.suggest.model.common
 
 import io.suggest.model._
-import io.suggest.model.EsModel.{FieldsJsonAcc, asJsonStrArray}
+import io.suggest.model.es.{EsModelPlayJsonT, EsModelStaticMutAkvT, EsModelUtil}
+import EsModelUtil.{FieldsJsonAcc, asJsonStrArray}
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import io.suggest.util.SioEsUtil._
 import scala.collection.JavaConversions._

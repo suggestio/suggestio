@@ -1,6 +1,7 @@
 package io.suggest.model.geo
 
-import io.suggest.model.EsModel.FieldsJsonAcc
+import io.suggest.model.es.EsModelUtil
+import EsModelUtil.FieldsJsonAcc
 import org.elasticsearch.common.geo.builders.ShapeBuilder
 import java.{util => ju}
 import GeoShape._

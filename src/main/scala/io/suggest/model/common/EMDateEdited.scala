@@ -1,10 +1,10 @@
 package io.suggest.model.common
 
-import io.suggest.model.EsModel.FieldsJsonAcc
-import io.suggest.model.{EsModelPlayJsonT, EsModelStaticMutAkvT}
+import io.suggest.model.es.{EsModelPlayJsonT, EsModelStaticMutAkvT, EsModelUtil}
+import EsModelUtil.FieldsJsonAcc
 import io.suggest.util.SioEsUtil._
 import org.joda.time.DateTime
-import io.suggest.model.EsModel.{date2JsStr, dateTimeParser}
+import EsModelUtil.{date2JsStr, dateTimeParser}
 
 /**
  * Suggest.io

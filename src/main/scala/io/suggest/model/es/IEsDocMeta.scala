@@ -1,4 +1,4 @@
-package io.suggest.model
+package io.suggest.model.es
 
 /**
  * Suggest.io

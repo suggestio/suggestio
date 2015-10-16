@@ -2,9 +2,10 @@ package io.suggest.ym.model.common
 
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model._
+import io.suggest.model.es.{EsModelPlayJsonT, EsModelStaticMutAkvT, EsModelUtil}
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import io.suggest.util.SioEsUtil._
-import io.suggest.model.EsModel.FieldsJsonAcc
+import EsModelUtil.FieldsJsonAcc
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.{FilterBuilder, FilterBuilders, QueryBuilders, QueryBuilder}
 

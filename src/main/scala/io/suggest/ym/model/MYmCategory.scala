@@ -1,5 +1,6 @@
 package io.suggest.ym.model
 
+import io.suggest.model.es.{EsModelPlayJsonEmpty, EsModelStaticMutAkvEmptyT, EsModelT, EsModelStaticT}
 import io.suggest.util.SioEsUtil._
 import io.suggest.model._
 import scala.concurrent.{ExecutionContext, Future}
@@ -128,7 +129,7 @@ final case class MYmCategory(
   var parentId  : Option[String],
   id            : Option[String] = None
 )
-  extends EsModelEmpty
+  extends EsModelPlayJsonEmpty
   with EsModelT
   with EMNameMut
   with EMParentIdOptMut
