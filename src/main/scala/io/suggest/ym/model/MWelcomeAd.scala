@@ -1,6 +1,5 @@
 package io.suggest.ym.model
 
-import io.suggest.model._
 import io.suggest.model.es._
 import org.joda.time.DateTime
 import io.suggest.util.SioEsUtil._

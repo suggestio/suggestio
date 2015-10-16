@@ -3,6 +3,7 @@ package io.suggest.model.es
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.action.delete.DeleteRequestBuilder
+import org.elasticsearch.action.get.MultiGetRequest.Item
 import org.elasticsearch.action.index.IndexRequestBuilder
 import org.elasticsearch.client.Client
 
@@ -35,27 +36,33 @@ trait EsModelStaticT extends EsModelCommonStaticT {
    * @param id id магазина.
    * @return true/false
    */
-  def isExist(id: String)(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
+  def isExist(id: String)(implicit ec: ExecutionContext, client: Client): Future[Boolean] = {
     prepareGet(id)
       .setFields()
       .execute()
       .map { _.isExists }
   }
 
+  /** Дефолтовое значение GetArgs, когда GET-опции не указаны. */
+  def _getArgsDflt: IGetOpts = GetOptsDflt
 
   /**
    * Выбрать ряд из таблицы по id.
    * @param id Ключ документа.
    * @return Экземпляр сабжа, если такой существует.
    */
-  def getById(id: String)(implicit ec:ExecutionContext, client: Client): Future[Option[T]] = {
-    prepareGet(id)
-      .execute()
+  def getById(id: String, options: IGetOpts = _getArgsDflt)
+             (implicit ec: ExecutionContext, client: Client): Future[Option[T]] = {
+    val rq = prepareGet(id)
+    for (sf <- options.sourceFiltering) {
+      rq.setFetchSource(sf.includes.toArray, sf.excludes.toArray)
+    }
+    rq.execute()
       .map { deserializeGetRespFull }
   }
 
   /** Вернуть id если он задан. Часто бывает, что idOpt, а не id. */
-  def maybeGetById(idOpt: Option[String])(implicit ec:ExecutionContext, client: Client): Future[Option[T]] = {
+  def maybeGetById(idOpt: Option[String])(implicit ec: ExecutionContext, client: Client): Future[Option[T]] = {
     idOpt match {
       case Some(id) => getById(id)
       case None     => Future successful None
@@ -67,7 +74,7 @@ trait EsModelStaticT extends EsModelCommonStaticT {
    * @param id id документа.
    * @return Строка json с содержимым документа или None.
    */
-  def getRawContentById(id: String)(implicit ec:ExecutionContext, client: Client): Future[Option[String]] = {
+  def getRawContentById(id: String)(implicit ec: ExecutionContext, client: Client): Future[Option[String]] = {
     prepareGet(id)
       .execute()
       .map { EsModelUtil.deserializeGetRespBodyRawStr }
@@ -78,7 +85,7 @@ trait EsModelStaticT extends EsModelCommonStaticT {
    * @param id id документа.
    * @return Строка json с документом полностью или None.
    */
-  def getRawById(id: String)(implicit ec:ExecutionContext, client: Client): Future[Option[String]] = {
+  def getRawById(id: String)(implicit ec: ExecutionContext, client: Client): Future[Option[String]] = {
     prepareGet(id)
       .execute()
       .map { EsModelUtil.deserializeGetRespFullRawStr }
@@ -90,26 +97,29 @@ trait EsModelStaticT extends EsModelCommonStaticT {
    * @param acc0 Начальный аккамулятор.
    * @return Список результатов в неопределённом порядке.
    */
-  def multiGetRev(ids: TraversableOnce[String], acc0: List[T] = Nil)
+  def multiGetRev(ids: TraversableOnce[String], acc0: List[T] = Nil, options: IGetOpts = _getArgsDflt)
                  (implicit ec: ExecutionContext, client: Client): Future[List[T]] = {
     if (ids.isEmpty) {
       Future successful acc0
     } else {
       val req = client.prepareMultiGet()
         .setRealtime(true)
-      ids.foreach {
-        id  =>  req.add(ES_INDEX_NAME, ES_TYPE_NAME, id)
+      for (id <- ids) {
+        val item = new Item(ES_INDEX_NAME, ES_TYPE_NAME, id)
+        for (sf <- options.sourceFiltering) {
+          item.fetchSourceContext( sf.toFetchSourceCtx )
+        }
+        req.add(item)
       }
       req.execute()
-        .map { resp =>
-          mgetResp2list(resp, acc0)
-        }
+        .map { mgetResp2list(_, acc0) }
     }
   }
 
   /** Надстройка над multiGetRev(), но при этом возвращает элементы в исходном порядке (как в es response). */
-  def multiGet(ids: TraversableOnce[String])(implicit ec: ExecutionContext, client: Client): Future[List[T]] = {
-    multiGetRev(ids)
+  def multiGet(ids: TraversableOnce[String], options: IGetOpts = _getArgsDflt)
+              (implicit ec: ExecutionContext, client: Client): Future[List[T]] = {
+    multiGetRev(ids, options = options)
       // В инете не нагуглить гарантий того, что порядок результатов будет соблюдаться согласно ids.
       .map { _.reverse }
   }
@@ -122,9 +132,9 @@ trait EsModelStaticT extends EsModelCommonStaticT {
    * @param acc0 Необязательный начальный акк. полезен, когда некоторые инстансы уже есть на руках.
    * @return Фьючерс с картой результатов.
    */
-  def multiGetMap(ids: TraversableOnce[String], acc0: List[T] = Nil)
+  def multiGetMap(ids: TraversableOnce[String], acc0: List[T] = Nil, options: IGetOpts = _getArgsDflt)
                  (implicit ec: ExecutionContext, client: Client): Future[Map[String, T]] = {
-    multiGetRev(ids, acc0)
+    multiGetRev(ids, acc0, options)
       // Конвертим список результатов в карту, где ключ -- это id. Если id нет, то выкидываем.
       .map { resultsToMap }
   }
