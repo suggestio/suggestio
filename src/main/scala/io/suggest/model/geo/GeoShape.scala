@@ -3,8 +3,10 @@ package io.suggest.model.geo
 import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.model.EsModel
 import io.suggest.model.EsModel.FieldsJsonAcc
+import io.suggest.model.menum.EnumJsonReadsValT
 import io.suggest.util.MacroLogsDyn
 import org.elasticsearch.common.geo.builders.ShapeBuilder
+import play.api.data.validation.ValidationError
 import play.api.libs.json._
 import java.{util => ju}
 
@@ -40,6 +42,25 @@ object GeoShape extends MacroLogsDyn {
             None
         }
   }
+
+  val TYPE_FORMAT = (__ \ TYPE_ESFN).format[GsType]
+
+  val READS = Reads[GeoShape] {
+    case o: JsObject =>
+      o.validate(TYPE_FORMAT)
+        .flatMap { gsType =>
+          o.validate( gsType.companion.DATA_FORMAT )
+        }
+
+    case other =>
+      JsError( ValidationError("expected.jsobject", other) )
+  }
+
+  val WRITES = Writes[GeoShape] { gs =>
+    gs.toPlayJson()
+  }
+
+  implicit val FORMAT = Format(READS, WRITES)
 
 }
 
@@ -85,47 +106,61 @@ trait GeoShapeQuerable extends GeoShape {
 
 
 /** Типы плоских фигур, допустимых для отправки в ES для geo-поиска/geo-фильтрации. */
-object GsTypes extends Enumeration with EnumMaybeWithName {
+object GsTypes extends Enumeration with EnumMaybeWithName with EnumJsonReadsValT {
 
-  protected[this] sealed class Val(val esName: String)
+  protected[this] abstract sealed class Val(val esName: String)
     extends super.Val(esName)
   {
     /** Имя в рамках спецификации GeoJSON. */
     def geoJsonName: Option[String] = None
 
     def isGeoJsonCompatible: Boolean = geoJsonName.isDefined
+
+    def companion: GsStatic
   }
 
   override type T = Val
 
   val point               : T = new Val("point") {
-    override def geoJsonName = Some("Point")
-  }
-
-  val linestring          : T = new Val("linestring") {
-    override def geoJsonName = Some("LineString")
+    override def geoJsonName  = Some("Point")
+    override def companion    = PointGs
   }
 
   val polygon             : T = new Val("polygon") {
-    override def geoJsonName = Some("Polygon")
+    override def geoJsonName  = Some("Polygon")
+    override def companion    = PolygonGs
   }
+
+  val circle              : T = new Val("circle") {
+    override def companion    = CircleGs
+  }
+
+  val linestring          : T = new Val("linestring") {
+    override def geoJsonName  = Some("LineString")
+    override def companion    = LineStringGs
+  }
+
   val multipoint          : T = new Val("multipoint") {
-    override def geoJsonName = Some("MultiPoint")
+    override def geoJsonName  = Some("MultiPoint")
+    override def companion    = MultiPoingGs
   }
 
   val multilinestring     : T = new Val("multilinestring") {
-    override def geoJsonName = Some("MultiLineString")
+    override def geoJsonName  = Some("MultiLineString")
+    override def companion    = MultiLineStringGs
   }
 
   val multipolygon        : T = new Val("multipolygon") {
-    override def geoJsonName = Some("MultiPolygon")
-  }
-  val geometrycollection  : T = new Val("geometrycollection") {
-    override def geoJsonName = Some("GeometryCollection")
+    override def geoJsonName  = Some("MultiPolygon")
+    override def companion    = MultiPolygonGs
   }
 
-  val envelope            : T = new Val("envelope")
-  val circle              : T = new Val("circle")
+  val geometrycollection  : T = new Val("geometrycollection") {
+    override def geoJsonName  = Some("GeometryCollection")
+    override def companion    = GeometryCollectionGs
+  }
+
+  //val envelope            : T = new Val("envelope")
 
   override def maybeWithName(n: String): Option[T] = {
     values
@@ -138,3 +173,11 @@ object GsTypes extends Enumeration with EnumMaybeWithName {
 
 }
 
+
+trait GsStatic {
+
+  type Shape_t <: GeoShape
+
+  def DATA_FORMAT: Reads[Shape_t]
+
+}

@@ -13,7 +13,9 @@ import GeoShape.COORDS_ESFN
  * Created: 22.08.14 12:29
  * Description: Круг в двумерном пространстве.
  */
-object CircleGs {
+object CircleGs extends GsStatic  {
+
+  override type Shape_t = CircleGs
 
   val RADIUS_ESFN = "radius"
 
@@ -25,7 +27,7 @@ object CircleGs {
     }
   }
 
-  def DATA_FORMAT: OFormat[CircleGs] = (
+  override def DATA_FORMAT: OFormat[CircleGs] = (
     (__ \ COORDS_ESFN).format[GeoPoint] and
     (__ \ RADIUS_ESFN).format[Distance]
   )(apply, unlift(unapply))

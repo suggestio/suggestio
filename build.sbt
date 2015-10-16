@@ -115,5 +115,5 @@ updateMarketCategoriesCsv := {
     cmd1 !
 }
 
-testOptions in Test += Tests.Argument("-oF")
+//testOptions in Test += Tests.Argument("-oF")
 

@@ -32,9 +32,9 @@ case class MultiPoingGs(coords: Seq[GeoPoint]) extends MultiPointShape {
 
 
 /** Общий static-код моделей, которые описываются массивом точек. */
-trait MultiPointShapeStatic {
+trait MultiPointShapeStatic extends GsStatic  {
 
-  type Shape_t <: MultiPointShape
+  override type Shape_t <: MultiPointShape
 
   def apply(coords: Seq[GeoPoint]): Shape_t
 
@@ -43,7 +43,7 @@ trait MultiPointShapeStatic {
       .map { rawCoords => apply( LineStringGs.parseCoords(rawCoords) ) }
   }
 
-  def DATA_FORMAT: Format[Shape_t] = {
+  override def DATA_FORMAT: Format[Shape_t] = {
     (__ \ COORDS_ESFN).format[Seq[GeoPoint]]
       .inmap[Shape_t](apply, _.coords)
   }

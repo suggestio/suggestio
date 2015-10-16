@@ -14,7 +14,9 @@ import play.api.libs.functional.syntax._
  * Description: Sio-представление точки в двумерном пространстве WGS84.
  */
 
-object PointGs {
+object PointGs extends GsStatic {
+
+  override type Shape_t = PointGs
 
   def deserialize(jmap: ju.Map[_,_]): Option[PointGs] = {
     Option(jmap.get(COORDS_ESFN))
@@ -23,7 +25,7 @@ object PointGs {
   }
 
   /** play-json deserializer. */
-  def DATA_FORMAT: Format[PointGs] = {
+  override def DATA_FORMAT: Format[PointGs] = {
     (__ \ COORDS_ESFN)
       .format( GeoPoint.FORMAT_GEO_ARRAY )
       .inmap(apply, unlift(unapply))

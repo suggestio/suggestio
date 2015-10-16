@@ -3,6 +3,7 @@ package io.suggest.model.geo
 import io.suggest.model.EsModel.FieldsJsonAcc
 import org.elasticsearch.common.geo.builders.{MultiLineStringBuilder, ShapeBuilder}
 import play.api.libs.json._
+import play.api.libs.functional.syntax._
 import GeoShape.COORDS_ESFN
 import java.{util => ju, lang => jl}
 import scala.collection.JavaConversions._
@@ -14,7 +15,9 @@ import scala.collection.JavaConversions._
  * Description: Представление multiline-объектов в рамках s.io.
  */
 
-object MultiLineStringGs {
+object MultiLineStringGs extends GsStatic {
+
+  override type Shape_t = MultiLineStringGs
 
   def deserialize(jmap: ju.Map[_,_]): Option[MultiLineStringGs] = {
     Option(jmap get COORDS_ESFN)
@@ -35,6 +38,15 @@ object MultiLineStringGs {
         fromCoordLines( allCoordLines.toIterator )
     }
   }
+
+  override def DATA_FORMAT: Format[MultiLineStringGs] = {
+    (__ \ COORDS_ESFN).format[Seq[Seq[GeoPoint]]]
+      .inmap [MultiLineStringGs] (
+        { ss => apply( ss.map(LineStringGs.apply)) },
+        { _.lines.map(_.coords) }
+      )
+  }
+
 }
 
 

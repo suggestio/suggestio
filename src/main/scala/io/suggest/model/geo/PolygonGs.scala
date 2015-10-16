@@ -3,6 +3,7 @@ package io.suggest.model.geo
 import io.suggest.model.EsModel.FieldsJsonAcc
 import org.elasticsearch.common.geo.builders.{BasePolygonBuilder, ShapeBuilder}
 import play.api.libs.json._
+import play.api.libs.functional.syntax._
 import GeoShape.COORDS_ESFN
 import java.{util => ju, lang => jl}
 import scala.collection.JavaConversions._
@@ -14,7 +15,9 @@ import scala.collection.JavaConversions._
  * Description: Sio-класс для полигона.
  */
 
-object PolygonGs {
+object PolygonGs extends GsStatic {
+
+  override type Shape_t = PolygonGs
 
   def deserialize(jmap: ju.Map[_,_]): Option[PolygonGs] = {
     Option(jmap get COORDS_ESFN)
@@ -25,14 +28,45 @@ object PolygonGs {
     coordLines match {
       case allCoords: Traversable[_] =>
         PolygonGs(
-          outer = LineStringGs( allCoords.headOption.fold(Seq.empty[GeoPoint])(LineStringGs.parseCoords) ),
-          holes = allCoords.toList.tail.map { ptsRaw => LineStringGs(LineStringGs.parseCoords(ptsRaw)) }
+          outer = LineStringGs(
+            allCoords
+              .headOption
+              .fold [Seq[GeoPoint]] (Nil) (LineStringGs.parseCoords)
+          ),
+          holes = {
+            val iter = allCoords.toIterator
+            if (iter.nonEmpty) {
+              iter.next() // типа вызов .tail()
+              iter
+                .map { ptsRaw =>
+                  LineStringGs(LineStringGs.parseCoords(ptsRaw))
+                }
+                .toList
+            } else {
+              Nil
+            }
+          }
         )
 
       case allCoords: jl.Iterable[_] =>
         val allCoordsSeq: Traversable[_] = allCoords
         fromCoordLines(allCoordsSeq)
     }
+  }
+
+  override def DATA_FORMAT: Format[PolygonGs] = {
+    (__ \ COORDS_ESFN).format[List[Seq[GeoPoint]]]
+      .inmap [PolygonGs] (
+        apply,
+        _.toMpGss
+      )
+  }
+
+  def apply(lsgss: List[Seq[GeoPoint]]): PolygonGs = {
+    PolygonGs(
+      outer = LineStringGs( lsgss.head ),
+      holes = lsgss.tail.map(LineStringGs.apply)
+    )
   }
 
 }
@@ -72,4 +106,6 @@ case class PolygonGs(outer: LineStringGs, holes: List[LineStringGs] = Nil) exten
   }
 
   override def firstPoint = outer.firstPoint
+
+  def toMpGss = (outer :: holes).map(_.coords)
 }

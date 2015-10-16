@@ -1,7 +1,7 @@
 package io.suggest.model.geo
 
 import org.elasticsearch.common.geo.builders.{LineStringBuilder, ShapeBuilder}
-import play.api.libs.json.{Reads, JsArray}
+import play.api.libs.json.JsArray
 import scala.collection.JavaConversions._
 import java.{lang => jl}
 

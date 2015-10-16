@@ -2,7 +2,8 @@ package io.suggest.model.geo
 
 import io.suggest.model.EsModel.FieldsJsonAcc
 import org.elasticsearch.common.geo.builders.{MultiPolygonBuilder, ShapeBuilder}
-import play.api.libs.json.JsArray
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 import GeoShape.COORDS_ESFN
 import java.{util => ju, lang => jl}
 import scala.collection.JavaConversions._
@@ -13,7 +14,9 @@ import scala.collection.JavaConversions._
  * Created: 29.08.14 18:58
  * Description: Мультиполигон - это список полигонов.
  */
-object MultiPolygonGs {
+object MultiPolygonGs extends GsStatic {
+
+  override type Shape_t = MultiPolygonGs
 
   def deserialize(jmap: ju.Map[_,_]): Option[MultiPolygonGs] = {
     Option(jmap get COORDS_ESFN)
@@ -30,6 +33,23 @@ object MultiPolygonGs {
       case l: jl.Iterable[_] =>
         fromCoordPolys(l.iterator() : TraversableOnce[_])
     }
+  }
+
+  override def DATA_FORMAT: Format[MultiPolygonGs] = {
+    (__ \ COORDS_ESFN).format[Seq[List[Seq[GeoPoint]]]]
+      .inmap [MultiPolygonGs] (
+        {polyGss =>
+          MultiPolygonGs(
+            polyGss.map { polyCoords =>
+              PolygonGs(polyCoords)
+            }
+          )
+        },
+        {mpGs =>
+          mpGs.polygons
+            .map { _.toMpGss }
+        }
+      )
   }
 
 }
@@ -57,5 +77,6 @@ case class MultiPolygonGs(polygons: Seq[PolygonGs]) extends GeoShapeQuerable {
   }
 
   override def firstPoint = polygons.head.firstPoint
+
 }
 
