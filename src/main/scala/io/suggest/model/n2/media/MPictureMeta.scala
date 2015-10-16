@@ -1,7 +1,7 @@
 package io.suggest.model.n2.media
 
 import io.suggest.common.geom.d2.ISize2di
-import io.suggest.model.IGenEsMappingProps
+import io.suggest.model.es.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 

@@ -3,6 +3,7 @@ package io.suggest.model.n2.media
 import com.google.inject.{Singleton, Inject}
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model._
+import io.suggest.model.es._
 import io.suggest.model.n2.media.storage.{IMediaStorage_, IMediaStorage}
 import io.suggest.util.MacroLogsImpl
 import org.elasticsearch.client.Client

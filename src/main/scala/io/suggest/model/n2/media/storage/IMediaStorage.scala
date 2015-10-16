@@ -2,7 +2,7 @@ package io.suggest.model.n2.media.storage
 
 import com.google.inject.Inject
 import io.suggest.fio.{IReadResponse, IWriteRequest}
-import io.suggest.model.IGenEsMappingProps
+import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.model.n2.media.storage.swfs.SwfsStorage_
 import io.suggest.util.SioEsUtil.DocField
 import play.api.libs.json._
