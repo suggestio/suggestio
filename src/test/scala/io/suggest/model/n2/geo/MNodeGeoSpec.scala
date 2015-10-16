@@ -1,7 +1,8 @@
 package io.suggest.model.n2.geo
 
 import io.suggest.model.PlayJsonTestUtil
-import io.suggest.model.geo.GeoPoint
+import io.suggest.model.geo.{PointGs, GeoPoint}
+import io.suggest.ym.model.NodeGeoLevels
 import org.scalatest.FlatSpec
 
 /**
@@ -22,7 +23,11 @@ class MNodeGeoSpec extends FlatSpec with PlayJsonTestUtil {
   it should "handle full-filled model" in {
     jsonTest {
       MNodeGeo(
-        point = Some( GeoPoint(22.22222, -44.44444) )
+        point = Some( GeoPoint(22.22222, -44.44444) ),
+        shape = Some(MGeoShape(
+          glevel  = NodeGeoLevels.NGL_BUILDING,
+          shape   = PointGs( GeoPoint(10, 20) )
+        ))
       )
     }
   }

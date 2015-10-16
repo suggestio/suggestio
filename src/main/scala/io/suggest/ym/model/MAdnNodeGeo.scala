@@ -67,7 +67,7 @@ object MAdnNodeGeo extends EsChildModelStaticT with MacroLogsImpl {
 
   override def generateMappingProps: List[DocField] = {
     val nglFields = NodeGeoLevels.values
-      .foldLeft(List[DocField]()) {
+      .foldLeft( List.empty[DocField] ) {
         (acc, nglv)  =>
           val ngl: NodeGeoLevel = nglv
           FieldGeoShape(ngl.esfn, precision = ngl.precision)  ::  acc

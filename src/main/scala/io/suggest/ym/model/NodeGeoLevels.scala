@@ -12,7 +12,9 @@ import io.suggest.util.MyConfig.CONFIG
  */
 object NodeGeoLevels extends Enumeration(1) with EnumMaybeWithName with EnumMaybeWithId with EnumJsonReadsT {
 
+  /** Класс экземпляров модели. */
   protected[this] sealed abstract class Val(val esfn: String) extends super.Val(esfn) {
+
     /** Заявленная точность. */
     def precision: String
 
@@ -65,7 +67,7 @@ object NodeGeoLevels extends Enumeration(1) with EnumMaybeWithName with EnumMayb
     def accuracyMetersMax: Option[Int] = CONFIG.getInt(s"geo.node.level.$esfn.accuracy.max.meters")
   }
 
-  type T = Val
+  override type T = Val
 
   // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   // !!! Двигаемся от мелкому к крупному. На этом принципе построены зависмые модели, например web21/GeoMode. !!!

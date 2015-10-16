@@ -16,6 +16,7 @@ object MNodeGeo extends IGenEsMappingProps {
 
   object Fields {
     val POINT_FN = "p"
+    val SHAPE_FN = "s"
   }
 
   val empty = new MNodeGeo() {
@@ -25,10 +26,10 @@ object MNodeGeo extends IGenEsMappingProps {
 
   import Fields._
 
-  implicit val FORMAT: Format[MNodeGeo] = {
-    (__ \ POINT_FN).formatNullable[GeoPoint]
-      .inmap[MNodeGeo](apply, _.point)
-  }
+  implicit val FORMAT: Format[MNodeGeo] = (
+    (__ \ POINT_FN).formatNullable[GeoPoint] and
+    (__ \ SHAPE_FN).formatNullable[MGeoShape]
+  )(apply, unlift(unapply))
 
 
   import io.suggest.util.SioEsUtil._
@@ -38,7 +39,8 @@ object MNodeGeo extends IGenEsMappingProps {
       FieldGeoPoint(POINT_FN, latLon = true,
         geohash = true, geohashPrefix = true,  geohashPrecision = "8",
         fieldData = GeoPointFieldData(format = GeoPointFieldDataFormats.compressed, precision = "3m")
-      )
+      ),
+      FieldObject(SHAPE_FN, enabled = true, properties = MGeoShape.generateMappingProps)
     )
   }
 
@@ -46,6 +48,7 @@ object MNodeGeo extends IGenEsMappingProps {
 
 
 case class MNodeGeo(
-  point: Option[GeoPoint] = None
+  point: Option[GeoPoint] = None,
+  shape: Option[MGeoShape] = None
 )
   extends EmptyProduct
