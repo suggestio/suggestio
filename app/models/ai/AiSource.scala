@@ -1,6 +1,7 @@
 package models.ai
 
 import io.suggest.model._
+import io.suggest.model.es.EsModelUtil
 import io.suggest.util.SioEsUtil._
 import play.api.libs.json.{JsObject, JsArray, JsString}
 import java.{util => ju}
@@ -30,12 +31,12 @@ object AiSource {
       case jmap: ju.Map[_,_] =>
         AiSource(
           url = Option( jmap.get(URL_ESFN) )
-            .map(EsModel.stringParser)
+            .map(EsModelUtil.stringParser)
             .getOrElse(""),
           contentHandlers = Option( jmap.get(CONTENT_HANDLERS_ESFN) )
             .map { rawChs =>
-              EsModel.iteratorParser(rawChs)
-                .map { rawChId => MAiMadContentHandlers.withName(EsModel.stringParser(rawChId)): MAiMadContentHandler }
+              EsModelUtil.iteratorParser(rawChs)
+                .map { rawChId => MAiMadContentHandlers.withName(EsModelUtil.stringParser(rawChId)): MAiMadContentHandler }
                 .toSeq
             }
             .getOrElse(Seq.empty)

@@ -1,6 +1,7 @@
 package models.jsm
 
-import io.suggest.model.EsModel.FieldsJsonAcc
+import io.suggest.model.es.EsModelUtil
+import EsModelUtil.FieldsJsonAcc
 import models.MAdnNode
 import models.msc.FocRenderResult
 import play.api.libs.json._

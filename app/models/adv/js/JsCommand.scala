@@ -3,7 +3,8 @@ package models.adv.js
 import io.suggest.adv.ext.model.MCommandTypesT
 import io.suggest.adv.ext.model.JsCommand._
 import io.suggest.adv.ext.model.ctx.MAskActionsT
-import io.suggest.model.EsModel.FieldsJsonAcc
+import io.suggest.model.es.EsModelUtil
+import EsModelUtil.FieldsJsonAcc
 import io.suggest.model.menum.EnumJsonReadsT
 import models.adv.js.ctx.MJsCtx
 import play.api.libs.json._

@@ -1,13 +1,13 @@
 package models.im
 
 import io.suggest.event.SioNotifierStaticClientI
+import io.suggest.model.es.{EsModelPlayJsonT, EsModelT, EsModelStaticT, EsModelUtil}
 import org.elasticsearch.action.search.SearchRequestBuilder
 import org.elasticsearch.client.Client
 import org.elasticsearch.search.sort.SortOrder
 import util.PlayMacroLogsImpl
 import com.fasterxml.jackson.annotation.JsonIgnore
-import io.suggest.model.EsModel.FieldsJsonAcc
-import io.suggest.model.{EsModel, EsModelPlayJsonT, EsModelT, EsModelStaticT}
+import EsModelUtil.FieldsJsonAcc
 import io.suggest.util.SioEsUtil._
 import org.joda.time.DateTime
 import play.api.libs.json._
@@ -62,24 +62,24 @@ object MGallery extends EsModelStaticT with PlayMacroLogsImpl {
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
     MGallery(
       name = m.get(NAME_ESFN)
-        .map(EsModel.stringParser)
+        .map(EsModelUtil.stringParser)
         .orElse(id)
         .get,
       imgs = m.get(IMGS_ESFN)
         .fold(List.empty[MImgT]) { raw =>
-          EsModel.iteratorParser(raw)
-            .map(EsModel.stringParser)
+          EsModelUtil.iteratorParser(raw)
+            .map(EsModelUtil.stringParser)
             .map(MImg.apply)
             .toList
         },
       descr = m.get(DESCR_ESFN)
-        .map(EsModel.stringParser),
+        .map(EsModelUtil.stringParser),
       dateCreated = m.get(DATE_CREATED_ESFN)
-        .fold(DateTime.now)(EsModel.dateTimeParser),
+        .fold(DateTime.now)(EsModelUtil.dateTimeParser),
       modifiedBy = m.get(MODIFIED_BY_ESFN)
-        .map(EsModel.stringParser),
+        .map(EsModelUtil.stringParser),
       dateModified = m.get(DATE_MODIFIED_ESFN)
-        .map(EsModel.dateTimeParser),
+        .map(EsModelUtil.dateTimeParser),
       versionOpt = version
     )
   }
@@ -121,7 +121,7 @@ case class MGallery(
   override def writeJsonFields(acc0: FieldsJsonAcc): FieldsJsonAcc = {
     var acc =
       NAME_ESFN -> JsString(name) ::
-      DATE_CREATED_ESFN -> EsModel.date2JsStr(dateCreated) ::
+      DATE_CREATED_ESFN -> EsModelUtil.date2JsStr(dateCreated) ::
       acc0
     if (imgs.nonEmpty)
       acc ::= IMGS_ESFN -> JsArray( imgs.map(img => JsString(img.fileName)) )
@@ -130,7 +130,7 @@ case class MGallery(
     if (modifiedBy.nonEmpty)
       acc ::= MODIFIED_BY_ESFN -> JsString(modifiedBy.get)
     if (dateModified.nonEmpty)
-      acc ::= DATE_MODIFIED_ESFN -> EsModel.date2JsStr(dateModified.get)
+      acc ::= DATE_MODIFIED_ESFN -> EsModelUtil.date2JsStr(dateModified.get)
     acc
   }
 

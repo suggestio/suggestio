@@ -1,7 +1,9 @@
 package models.usr
 
 import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.model.EsModel._
+import io.suggest.model.common.OptStrId
+import io.suggest.model.es._
+import EsModelUtil._
 import io.suggest.model._
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.StringUtil

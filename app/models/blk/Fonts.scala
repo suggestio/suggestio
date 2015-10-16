@@ -1,7 +1,8 @@
 package models.blk
 
 import io.suggest.common.menum.{EnumValue2Val, EnumMaybeWithMultiNameMap}
-import io.suggest.model.EsModel.FieldsJsonAcc
+import io.suggest.model.es.EsModelUtil
+import EsModelUtil.FieldsJsonAcc
 import play.api.libs.json.{JsString, JsObject, JsArray}
 
 /**

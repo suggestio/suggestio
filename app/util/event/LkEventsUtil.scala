@@ -1,7 +1,7 @@
 package util.event
 
 import com.google.inject.Inject
-import io.suggest.model.{EsModelStaticT, EsModelT}
+import io.suggest.model.es.{EsModelT, EsModelStaticT}
 import io.suggest.playx.ICurrentApp
 import models.event.search.MEventsSearchArgs
 import models.event._

@@ -1,15 +1,15 @@
 package models.usr
 
 import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.model.{IEsDocMeta, EsmV2Deserializer, EsModelJMXBase, EsModelJMXMBeanI}
-import io.suggest.model.EsModel.FieldsJsonAcc
+import io.suggest.model.es._
+import EsModelUtil.FieldsJsonAcc
 import io.suggest.util.SioEsUtil._
 import models.mext.ILoginProvider
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders}
 import securesocial.core.IProfileDflt
 import _root_.util.PlayMacroLogsImpl
-import io.suggest.model.EsModel.stringParser
+import EsModelUtil.stringParser
 
 import play.api.libs.json._
 import play.api.libs.functional.syntax._

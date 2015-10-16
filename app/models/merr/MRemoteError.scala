@@ -1,7 +1,8 @@
 package models.merr
 
 import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.model.EsModel.FieldsJsonAcc
+import io.suggest.model.es._
+import EsModelUtil.FieldsJsonAcc
 import io.suggest.model._
 import io.suggest.util.SioEsUtil._
 import models._
@@ -25,7 +26,7 @@ object MRemoteError extends EsModelStaticT with PlayMacroLogsImpl with EsmV2Dese
 
   override type T = MRemoteError
 
-  override val ES_INDEX_NAME = EsModel.GARBAGE_INDEX
+  override val ES_INDEX_NAME = EsModelUtil.GARBAGE_INDEX
   override val ES_TYPE_NAME = "rerr"
 
   // Имена полей. По возможности должны совпадать с названиями в MAdStat.
@@ -84,7 +85,7 @@ object MRemoteError extends EsModelStaticT with PlayMacroLogsImpl with EsmV2Dese
    */
   @deprecated("Delete it", "2015.sep.7")
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
-    import EsModel.{booleanParser, dateTimeParser, stringParser}
+    import EsModelUtil.{booleanParser, dateTimeParser, stringParser}
     def parseStr(fn: String) = m.get(fn).fold("")(stringParser)
     MRemoteError(
       errorType   = m.get(ERROR_TYPE_FN)
@@ -177,7 +178,7 @@ case class MRemoteError(
     var acc: FieldsJsonAcc =
       ERROR_TYPE_FN   -> JsString(errorType.toString) ::
       MESSAGE_FN          -> JsString(msg) ::
-      TIMESTAMP_FN    -> EsModel.date2JsStr(timestamp) ::
+      TIMESTAMP_FN    -> EsModelUtil.date2JsStr(timestamp) ::
       CLIENT_ADDR_FN  -> JsString(clientAddr) ::
       acc0
     if (ua.isDefined)

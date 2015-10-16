@@ -5,8 +5,8 @@ import anorm._
 import io.suggest.event.{AdnNodeDeletedEvent, SNStaticSubscriber}
 import io.suggest.event.SioNotifier.{Subscriber, Classifier, Event}
 import io.suggest.event.subscriber.SnClassSubscriber
-import io.suggest.model.{ToPlayJsonObj, EsModel}
-import io.suggest.model.EsModel.FieldsJsonAcc
+import io.suggest.model.es.{ToPlayJsonObj, EsModelUtil}
+import EsModelUtil.FieldsJsonAcc
 import play.api.db.DB
 import util.anorm.{AnormPgArray, AnormJodaTime}
 import AnormJodaTime._
@@ -190,7 +190,7 @@ object MBillContract extends SqlModelStatic with FromJson {
   /** Десериализация из json для нужд [[MInviteRequest]]. */
   val fromJson: PartialFunction[Any, MBillContract] = {
     case jmap: ju.Map[_,_] =>
-      import EsModel.{stringParser, intParser, booleanParser, dateTimeParser}
+      import EsModelUtil.{stringParser, intParser, booleanParser, dateTimeParser}
       MBillContract(
         adnId         = stringParser(jmap get ADN_ID_FN),
         contractDate  = dateTimeParser(jmap get CONTRACT_DATE_FN),
@@ -311,8 +311,8 @@ final case class MBillContract(
   def toPlayJsonAcc: FieldsJsonAcc = {
     var acc: FieldsJsonAcc = List(
       ADN_ID_FN         -> JsString(adnId),
-      CONTRACT_DATE_FN  -> EsModel.date2JsStr(contractDate),
-      DATE_CREATED_FN   -> EsModel.date2JsStr(dateCreated),
+      CONTRACT_DATE_FN  -> EsModelUtil.date2JsStr(contractDate),
+      DATE_CREATED_FN   -> EsModelUtil.date2JsStr(dateCreated),
       IS_ACTIVE_FN      -> JsBoolean(isActive),
       CRAND_FN          -> JsNumber(crand)
     )

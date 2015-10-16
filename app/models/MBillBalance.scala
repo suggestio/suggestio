@@ -1,8 +1,8 @@
 package models
 
 import anorm._
-import io.suggest.model.EsModel.FieldsJsonAcc
-import io.suggest.model.ToPlayJsonObj
+import io.suggest.model.es.{ToPlayJsonObj, EsModelUtil}
+import EsModelUtil.FieldsJsonAcc
 import util.SqlModelSave
 import java.sql.Connection
 import util.anorm.AnormPgArray
@@ -123,7 +123,7 @@ object MBillBalance extends SqlModelStaticMinimal with FromJson {
   /** Десериализатор экземпляра модели из json-представления. */
   val fromJson: PartialFunction[Any, MBillBalance] = {
     case jmap: ju.Map[_,_] =>
-      import io.suggest.model.EsModel.{stringParser, floatParser}
+      import EsModelUtil.{stringParser, floatParser}
       MBillBalance(
         adnId     = stringParser(jmap get ADN_ID_FN),
         amount    = floatParser(jmap get AMOUNT_FN),

@@ -1,7 +1,7 @@
 package util.showcase
 
 import controllers.routes
-import io.suggest.model.EsModel
+import io.suggest.model.es.EsModelUtil
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 import io.suggest.ym.model.MAd
 import models.crawl.{ChangeFreqs, SiteMapUrl, SiteMapUrlT}
@@ -49,7 +49,7 @@ class ScSitemapsXml extends SiteMapXmlCtl {
       // Пришел ответ без результатов с начальным scrollId.
       Enumerator.unfoldM(searchResp0.getScrollId) { scrollId0 =>
         client.prepareSearchScroll(scrollId0)
-          .setScroll(new TimeValue(EsModel.SCROLL_KEEPALIVE_MS_DFLT))
+          .setScroll(new TimeValue(EsModelUtil.SCROLL_KEEPALIVE_MS_DFLT))
           .execute()
           .map { sr =>
             val scrollId = sr.getScrollId

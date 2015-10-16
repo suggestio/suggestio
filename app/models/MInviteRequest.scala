@@ -3,10 +3,11 @@ package models
 import _root_.util.qsb.QsbUtil
 import io.suggest.model._
 import io.suggest.model.common.{EMNameStaticMut, EMDateCreatedStatic, EMNameMut, EMDateCreatedMut}
+import io.suggest.model.es._
 import models.usr.EmailActivation
 import org.joda.time.DateTime
 import util.PlayMacroLogsImpl
-import io.suggest.model.EsModel.FieldsJsonAcc
+import EsModelUtil.FieldsJsonAcc
 import io.suggest.util.SioEsUtil._
 import play.api.libs.json._
 import io.suggest.util.SioEsUtil.FieldAll
@@ -21,7 +22,7 @@ import org.elasticsearch.client.Client
 import play.api.mvc.QueryStringBindable
 import java.{util => ju}
 import scala.collection.JavaConversions._
-import EsModel.{stringParser, booleanParser, intParser}
+import EsModelUtil.{stringParser, booleanParser, intParser}
 
 /**
  * Suggest.io
@@ -143,7 +144,7 @@ final case class MInviteRequest(
   id            : Option[String] = None,
   versionOpt    : Option[Long] = None
 )
-  extends EsModelEmpty
+  extends EsModelPlayJsonEmpty
   with EsModelT
   with EMInviteRequestMut
   with EMDateCreatedMut

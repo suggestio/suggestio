@@ -1,10 +1,10 @@
 package models.usr
 
-import io.suggest.model.es.BulkRespCounted
+import io.suggest.model.es._
 import io.suggest.model.n2.node.MNode
 import util.PlayMacroLogsImpl
 import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.model.EsModel._
+import EsModelUtil._
 import io.suggest.model._
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.client.Client

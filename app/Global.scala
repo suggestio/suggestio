@@ -1,5 +1,6 @@
 import akka.actor.{ActorSystem, Cancellable}
-import io.suggest.model.{SioCassandraClient, EsModel}
+import io.suggest.model.SioCassandraClient
+import io.suggest.model.es.EsModelUtil
 import io.suggest.util.SioEsUtil
 import models.usr.SuperUsers
 import org.elasticsearch.client.Client
@@ -96,7 +97,7 @@ object Global extends WithFilters(new HtmlCompressFilter, new DumpXffHeaders, Se
     val _siowebEsModel = siowebEsModel(app)
     _siowebEsModel.maybeErrorIfIncorrectModels()
     val esModels = _siowebEsModel.ES_MODELS
-    val futInx = EsModel.ensureEsModelsIndices(esModels)
+    val futInx = EsModelUtil.ensureEsModelsIndices(esModels)
     val logPrefix = "initializeEsModels(): "
     futInx onComplete {
       case Success(result) => debug(logPrefix + "ensure() -> " + result)
@@ -113,7 +114,7 @@ object Global extends WithFilters(new HtmlCompressFilter, new DumpXffHeaders, Se
     futMappings recoverWith {
       case ex: MapperException if !triedIndexUpdate =>
         info("Trying to update main index to v2.1 settings...")
-        SioEsUtil.updateIndex2_1To2_2(EsModel.DFLT_INDEX) flatMap { _ =>
+        SioEsUtil.updateIndex2_1To2_2(EsModelUtil.DFLT_INDEX) flatMap { _ =>
           initializeEsModels(app, triedIndexUpdate = true)
         }
     }

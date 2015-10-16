@@ -1,6 +1,6 @@
 package models.adv.search.etg
 
-import io.suggest.model.EsModel
+import io.suggest.model.es.EsModelUtil
 import io.suggest.model.search.{Limit, Offset, DynSearchArgs}
 import models.adv.MExtTarget._
 import org.elasticsearch.action.search.SearchRequestBuilder
@@ -24,7 +24,7 @@ trait IExtTargetSearchArgs
 case class ExtTargetSearchArgs(
   override val adnId            : Option[String] = None,
   override val sortByDate       : Option[SortOrder] = None,
-  override val limit            : Int = EsModel.MAX_RESULTS_DFLT,
+  override val limit            : Int = EsModelUtil.MAX_RESULTS_DFLT,
   override val offset           : Int = 0
 )
   extends IExtTargetSearchArgs

@@ -1,8 +1,8 @@
 package models
 
 import anorm._
-import io.suggest.model.EsModel.FieldsJsonAcc
-import io.suggest.model.ToPlayJsonObj
+import io.suggest.model.es.{ToPlayJsonObj, EsModelUtil}
+import EsModelUtil.FieldsJsonAcc
 import play.api.libs.json.{JsString, JsNumber, JsObject}
 import util.SqlModelSave
 import java.sql.Connection
@@ -79,7 +79,7 @@ object MBillMmpDaily extends FindByContract with FromJson {
   /** Десериализация того, что хранилось в виде JSON, например внутри [[MInviteRequest]]. */
   val fromJson: PartialFunction[Any, MBillMmpDaily] = {
     case jmap: ju.Map[_,_] =>
-      import io.suggest.model.EsModel.{stringParser, intParser, floatParser}
+      import EsModelUtil.{stringParser, intParser, floatParser}
       MBillMmpDaily(
         contractId    = intParser(jmap get CONTRACT_ID_FN),
         mmpWeekday    = floatParser(jmap get MMP_WEEKDAY_FN),

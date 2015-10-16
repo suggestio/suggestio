@@ -1,6 +1,7 @@
 package util.img
 
-import io.suggest.model.EsModel.FieldsJsonAcc
+import io.suggest.model.es.EsModelUtil
+import EsModelUtil.FieldsJsonAcc
 import org.joda.time.{Instant, ReadableInstant}
 import play.api.libs.json.{JsObject, JsString}
 import play.api.mvc.{RequestHeader, Call}

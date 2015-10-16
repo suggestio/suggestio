@@ -1,6 +1,6 @@
 package models
 
-import io.suggest.model.{EsModelT, EsModelStaticT}
+import io.suggest.model.es.{EsModelT, EsModelStaticT}
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import io.suggest.event.subscriber.SnClassSubscriber

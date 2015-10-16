@@ -1,7 +1,8 @@
 package models.sec
 
+import io.suggest.model.es._
 import util.PlayMacroLogsImpl
-import io.suggest.model.EsModel.FieldsJsonAcc
+import EsModelUtil.FieldsJsonAcc
 import io.suggest.model._
 import io.suggest.util.SioEsUtil._
 import play.api.libs.json._
@@ -53,8 +54,8 @@ object MAsymKey extends EsModelStaticT with PlayMacroLogsImpl with EsmV2Deserial
     MAsymKey(
       id          = id,
       versionOpt  = version,
-      pubKey      = EsModel.stringParser( m(PUB_KEY_FN) ),
-      secKey      = m.get(SEC_KEY_FN).map(EsModel.stringParser)
+      pubKey      = EsModelUtil.stringParser( m(PUB_KEY_FN) ),
+      secKey      = m.get(SEC_KEY_FN).map(EsModelUtil.stringParser)
     )
   }
 

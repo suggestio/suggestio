@@ -1,7 +1,9 @@
 package models.ai
 
 import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.model.EsModel.FieldsJsonAcc
+import io.suggest.model.common.OptStrId
+import io.suggest.model.es._
+import EsModelUtil.FieldsJsonAcc
 import io.suggest.model._
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.client.Client
@@ -58,7 +60,7 @@ object MAiMad extends EsModelStaticT with PlayMacroLogsImpl {
    * @return Экземпляр модели.
    */
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
-    import EsModel.{stringParser, strListParser, iteratorParser}
+    import EsModelUtil.{stringParser, strListParser, iteratorParser}
     MAiMad(
       name = stringParser(m(NAME_ESFN)),
       sources = iteratorParser( m(SOURCES_ESFN) )

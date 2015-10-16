@@ -2,7 +2,7 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.model.OptStrId
+import io.suggest.model.common.OptStrId
 import io.suggest.playx.ICurrentConf
 import io.suggest.ym.model.common.EMAdNetMember
 import models.adv.geo.{ReqInfo, AdvFormEntry, WndFullArgs}

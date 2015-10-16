@@ -2,8 +2,9 @@ package models
 
 import com.google.inject.{Singleton, Inject}
 import io.suggest.model._
+import io.suggest.model.es._
 import util.PlayMacroLogsImpl
-import io.suggest.model.EsModel.FieldsJsonAcc
+import EsModelUtil.FieldsJsonAcc
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import scala.collection.Map
@@ -46,9 +47,9 @@ class MCalendar_
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
     MCalendar(
       id          = id,
-      name        = m.get(NAME_ESFN).fold("WTF?")(EsModel.stringParser),
+      name        = m.get(NAME_ESFN).fold("WTF?")(EsModelUtil.stringParser),
       companion   = this,
-      data        = EsModel.stringParser( m(DATA_ESFN) ),
+      data        = EsModelUtil.stringParser( m(DATA_ESFN) ),
       versionOpt  = version
     )
   }

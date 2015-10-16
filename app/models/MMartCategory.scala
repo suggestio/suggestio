@@ -1,7 +1,7 @@
 package models
 
-import io.suggest.model._
-import EsModel._
+import io.suggest.model.es._
+import EsModelUtil._
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.JacksonWrapper
 import scala.collection.Map
@@ -11,8 +11,7 @@ import io.suggest.event.SioNotifierStaticClientI
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders}
 import org.elasticsearch.action.search.SearchResponse
 import util.PlayMacroLogsImpl
-import scala.collection.JavaConversions._
-import io.suggest.model.common.{EMParentIdOpt, EMName, EMParentIdOptMut, EMNameMut}
+import io.suggest.model.common.{EMParentIdOpt, EMName}
 import play.api.libs.json._
 import com.fasterxml.jackson.annotation.JsonIgnore
 import play.api.Play.{current, configuration}
@@ -91,7 +90,7 @@ object MMartCategory extends EsModelStaticT with PlayMacroLogsImpl {
    */
   def getAllTreeForOwner(ownerId: String)(implicit ec:ExecutionContext, client: Client): Future[Seq[(Int, MMartCategory)]] = {
     getAllForOwner(ownerId).map { catsUnsorted =>
-      seqTreeSort(catsUnsorted.toList)
+      TreeSort.seqTreeSort(catsUnsorted.toList)
     }
   }
 
@@ -293,7 +292,7 @@ final case class MMartCategory(
   id            : Option[String] = None,
   cssClass      : Option[String] = None,
   includeInAll  : Boolean = true
-) extends EsModelEmpty with EsModelT with EMName with EMParentIdOpt with TreeSortable {
+) extends EsModelPlayJsonEmpty with EsModelT with EMName with EMParentIdOpt with TreeSortable {
 
   override type T = MMartCategory
   override def companion = MMartCategory

@@ -3,7 +3,8 @@ package util.geo.umap
 import java.{lang => jl, util => ju}
 
 import com.google.inject.Inject
-import io.suggest.model.EsModel.{intParser, stringParser}
+import io.suggest.model.es.EsModelUtil
+import EsModelUtil.{intParser, stringParser}
 import io.suggest.model.geo.{GsTypes, MultiPolygonGs, GeoShape}
 import io.suggest.ym.model.NodeGeoLevels
 import models.{MAdnNodeGeo, NodeGeoLevel}

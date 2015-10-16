@@ -3,7 +3,7 @@ package models.event
 import io.suggest.common.EmptyProduct
 import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.event.SioNotifier.{Classifier, Event}
-import io.suggest.model.EsModel
+import io.suggest.model.es.EsModelUtil
 import models.adv.MExtTarget
 import models._
 import models.mext.MExtService
@@ -112,16 +112,16 @@ object ArgsInfo {
         EmptyArgsInfo
       } else {
         val f = ArgsInfo(
-          adnIdOpt      = Option(jm get AdnId.strId).map(EsModel.stringParser),
+          adnIdOpt      = Option(jm get AdnId.strId).map(EsModelUtil.stringParser),
           advExtTgIds = Option(jm get AdvExtTarget.strId)
             .iterator
-            .flatMap(EsModel.iteratorParser)
-            .map(EsModel.stringParser)
+            .flatMap(EsModelUtil.iteratorParser)
+            .map(EsModelUtil.stringParser)
             .toSeq,
-          adIdOpt       = Option(jm get AdId.strId).map(EsModel.stringParser),
-          advOkIdOpt    = Option(jm get AdvOkId.strId).map(EsModel.intParser),
-          advReqIdOpt   = Option(jm get AdvReqId.strId).map(EsModel.intParser),
-          advRefuseIdOpt = Option(jm get AdvRefuseId.strId).map(EsModel.intParser)
+          adIdOpt       = Option(jm get AdId.strId).map(EsModelUtil.stringParser),
+          advOkIdOpt    = Option(jm get AdvOkId.strId).map(EsModelUtil.intParser),
+          advReqIdOpt   = Option(jm get AdvReqId.strId).map(EsModelUtil.intParser),
+          advRefuseIdOpt = Option(jm get AdvRefuseId.strId).map(EsModelUtil.intParser)
         )
         // На случай появления мусора в карте...
         if (f.isEmpty)

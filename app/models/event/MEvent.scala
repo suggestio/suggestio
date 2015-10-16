@@ -1,10 +1,12 @@
 package models.event
 
+import io.suggest.model.common.OptStrId
+import io.suggest.model.es._
 import io.suggest.model.search.EsDynSearchStatic
 import search.IEventsSearchArgs
 import io.suggest.event.SioNotifier.{Classifier, Event}
 import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.model.EsModel.{FieldsJsonAcc, stringParser}
+import EsModelUtil.{FieldsJsonAcc, stringParser}
 import io.suggest.model._
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.action.index.IndexRequestBuilder
@@ -80,11 +82,11 @@ with EsmV2Deserializer {
       argsInfo    = m.get(ARGS_ESFN)
         .fold [ArgsInfo] (EmptyArgsInfo) (ArgsInfo.fromJacksonJson),
       dateCreated = m.get(DATE_CREATED_ESFN)
-        .fold(DateTime.now)(EsModel.dateTimeParser),
+        .fold(DateTime.now)(EsModelUtil.dateTimeParser),
       isCloseable = m.get(IS_CLOSEABLE_ESFN)
-        .fold(isCloseableDflt)(EsModel.booleanParser),
+        .fold(isCloseableDflt)(EsModelUtil.booleanParser),
       isUnseen    = m.get(IS_UNSEEN_ESFN)
-        .fold(false)(EsModel.booleanParser),
+        .fold(false)(EsModelUtil.booleanParser),
       id          = id,
       versionOpt  = version
     )
@@ -152,7 +154,7 @@ case class MEvent(
     var acc: FieldsJsonAcc = List(
       EVT_TYPE_ESFN     -> JsString(etype.strId),
       OWNER_ID_ESFN     -> JsString(ownerId),
-      DATE_CREATED_ESFN -> EsModel.date2JsStr(dateCreated)
+      DATE_CREATED_ESFN -> EsModelUtil.date2JsStr(dateCreated)
     )
     if (isUnseen)
       acc ::= IS_UNSEEN_ESFN -> JsBoolean(isUnseen)

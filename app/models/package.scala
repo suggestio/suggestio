@@ -71,9 +71,6 @@ package object models {
 
   type AOValueField         = ym.model.ad.AOValueField
 
-  val  AdPanelSettings      = ym.model.common.AdPanelSettings 
-  type AdPanelSettings      = ym.model.common.AdPanelSettings
-
   val  MImgInfo             = ym.model.common.MImgInfo
   type MImgInfo             = ym.model.common.MImgInfo
   type MImgInfoT            = ym.model.common.MImgInfoT

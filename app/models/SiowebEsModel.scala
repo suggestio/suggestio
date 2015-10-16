@@ -1,8 +1,8 @@
 package models
 
 import com.google.inject.Inject
+import io.suggest.model.es.{CopyContentResult, EsModelCommonStaticT, EsModelUtil}
 import io.suggest.model.n2.media.MMedia_
-import io.suggest.model.{EsModelCommonStaticT, CopyContentResult, EsModel}
 import io.suggest.util.{JMXBase, SioEsUtil}
 import models.ai.MAiMad
 import models.im.MGallery
@@ -33,7 +33,7 @@ class SiowebEsModel @Inject() (
    * @return Список EsModelMinimalStaticT.
    */
   def ES_MODELS: Seq[EsModelCommonStaticT] = {
-    EsModel.ES_MODELS ++ Seq[EsModelCommonStaticT](
+    EsModelUtil.ES_MODELS ++ Seq[EsModelCommonStaticT](
       EmailPwIdent, EmailActivation, MExtIdent, MMartCategory, MInviteRequest, mCalendar,
       MRemoteError, MGallery, MAiMad,
       adv.MExtTarget,
@@ -45,14 +45,14 @@ class SiowebEsModel @Inject() (
   /** Вернуть экзепшен, если есть какие-то проблемы при обработке ES-моделей. */
   def maybeErrorIfIncorrectModels() {
     if (configuration.getBoolean("es.mapping.model.conflict.check.enabled") getOrElse true)
-      EsModel.errorIfIncorrectModels(ES_MODELS)
+      EsModelUtil.errorIfIncorrectModels(ES_MODELS)
   }
 
   /** Отправить маппинги всех моделей в хранилище. */
   def putAllMappings(models: Seq[EsModelCommonStaticT] = ES_MODELS)(implicit client: Client): Future[Boolean] = {
     val ignoreExist = configuration.getBoolean("es.mapping.model.ignore_exist") getOrElse false
     LOGGER.trace("putAllMappings(): ignoreExists = " + ignoreExist)
-    EsModel.putAllMappings(models, ignoreExist)
+    EsModelUtil.putAllMappings(models, ignoreExist)
   }
 
 

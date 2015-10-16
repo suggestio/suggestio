@@ -2,7 +2,8 @@ package models.adv
 
 import io.suggest.adv.ext.model.ctx.MExtTargetT
 import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.model.EsModel.FieldsJsonAcc
+import io.suggest.model.es._
+import EsModelUtil.FieldsJsonAcc
 import io.suggest.model._
 import io.suggest.model.search.EsDynSearchStatic
 import io.suggest.util.SioEsUtil._
@@ -13,7 +14,7 @@ import org.joda.time.DateTime
 import util.PlayMacroLogsImpl
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import io.suggest.model.EsModel.stringParser
+import EsModelUtil.stringParser
 
 import scala.collection.Map
 
@@ -74,7 +75,7 @@ with EsmV2Deserializer {
       name        = m.get(NAME_ESFN)
         .map(stringParser),
       dateCreated = m.get(DATE_CREATED_ESFN)
-        .fold(DateTime.now)(EsModel.dateTimeParser)
+        .fold(DateTime.now)(EsModelUtil.dateTimeParser)
     )
   }
 
@@ -118,7 +119,7 @@ case class MExtTarget(
   override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     SERVICE_ID_ESFN   -> JsString(service.strId) ::
     ADN_ID_ESFN       -> JsString(adnId) ::
-    DATE_CREATED_ESFN -> EsModel.date2JsStr(dateCreated) ::
+    DATE_CREATED_ESFN -> EsModelUtil.date2JsStr(dateCreated) ::
     toJsTargetPlayJsonFields
   }
 
