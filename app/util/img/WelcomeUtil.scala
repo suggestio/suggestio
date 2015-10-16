@@ -43,7 +43,7 @@ class WelcomeUtil @Inject() (
   /** Асинхронно получить welcome-ad-карточку. */
   def getWelcomeAdOpt(welcomeAdId: Option[String]): Future[Option[MWelcomeAd]] = {
     welcomeAdId
-      .fold [Future[Option[MWelcomeAd]]] (Future successful None) (MWelcomeAd.getById)
+      .fold [Future[Option[MWelcomeAd]]] (Future successful None) (MWelcomeAd.getById(_))
   }
   def getWelcomeAdOpt(node: MAdnNode): Future[Option[MWelcomeAd]] = {
     getWelcomeAdOpt( node.meta.welcomeAdId )
@@ -122,7 +122,7 @@ class WelcomeUtil @Inject() (
   def getWelcomeRenderArgs(adnNode: MAdnNode, screen: Option[DevScreen])(implicit ctx: Context): Future[Option[WelcomeRenderArgsT]] = {
     val welcomeAdOptFut = adnNode.meta
       .welcomeAdId
-      .fold (Future successful Option.empty[MWelcomeAd]) (MWelcomeAd.getById)
+      .fold (Future successful Option.empty[MWelcomeAd]) (MWelcomeAd.getById(_))
     // Получить параметры (метаданные) фоновой картинки из хранилища картирок.
     def _colorBg = colorBg(adnNode)   // дедубликация кода. Можно наверное через Future.filter такое отрабатывать.
     val bgFut = adnNode.gallery

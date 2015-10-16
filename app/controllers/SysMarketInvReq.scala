@@ -336,7 +336,7 @@ class SysMarketInvReq @Inject() (
     mir.emailAct.fold [Future[Option[EmailActivation]]] (Future successful None) { eactEith =>
       eactEith.fold[Future[Option[EmailActivation]]](
         { eact => Future successful Option(eact)},
-        { EmailActivation.getById }
+        { EmailActivation.getById(_) }
       )
     }
   }
