@@ -3,13 +3,13 @@ package controllers.sysctl
 import controllers.{routes, SioController}
 import io.suggest.di.IEsClient
 import io.suggest.playx.ICurrentApp
-import models.{MAdnNodeCache, Context}
+import models.Context
 import play.api.data.Form
 import play.api.i18n.{Messages, Lang}
 import play.twirl.api.Html
 import util.PlayMacroLogsI
 import util.acl.{IsSuperuserAdnNode, AbstractRequestForAdnNode}
-import util.di.INodesUtil
+import util.di.{INodeCache, INodesUtil}
 import views.html.sys1.market.adn.install._
 
 import scala.concurrent.Future
@@ -51,6 +51,7 @@ trait SysNodeInstall
   with ICurrentApp
   with INodesUtil
   with IsSuperuserAdnNode
+  with INodeCache
 {
 
   /** Вернуть страницу с формой установки дефолтовых карточек на узлы. */
@@ -68,7 +69,7 @@ trait SysNodeInstall
   /** Общий код экшенов, связанный с рендером html-ответа. */
   private def _installRender(form: Form[FormData])(implicit ctx: Context, request: AbstractRequestForAdnNode[_]): Future[Html] = {
     for {
-      srcNodes <- MAdnNodeCache.multiGet(nodesUtil.ADN_IDS_INIT_ADS_SOURCE)
+      srcNodes <- mNodeCache.multiGet(nodesUtil.ADN_IDS_INIT_ADS_SOURCE)
     } yield {
       val allLangs = Lang.availables.sortBy(_.code)
       installDfltMadsTpl(allLangs, request.adnNode, form, srcNodes)(ctx)

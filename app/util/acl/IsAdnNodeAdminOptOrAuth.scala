@@ -2,10 +2,11 @@ package util.acl
 
 import io.suggest.di.{IExecutionContext, IEsClient}
 import models.req.SioReqMd
-import models.{MAdnNodeCache, MAdnNode}
+import models.MAdnNode
 import play.api.mvc.{Result, Request, ActionBuilder}
 import util.PlayMacroLogsDyn
 import util.acl.PersonWrapper.PwOpt_t
+import util.di.INodeCache
 
 import scala.concurrent.Future
 
@@ -22,6 +23,7 @@ trait IsAdnNodeAdminOptOrAuth
   extends IEsClient
   with IExecutionContext
   with OnUnauthUtilCtl
+  with INodeCache
 {
 
   /** Абстрактная логика работы action-builder'ов, занимающихся вышеописанной проверкой. */
@@ -38,7 +40,7 @@ trait IsAdnNodeAdminOptOrAuth
       val pwOpt = PersonWrapper.getFromRequest(request)
       pwOpt match {
         case Some(pw) =>
-          MAdnNodeCache.maybeGetByIdCached(adnIdOpt).flatMap { mnodeOpt =>
+          mNodeCache.maybeGetByIdCached(adnIdOpt).flatMap { mnodeOpt =>
             val mnodeOpt1 = mnodeOpt.filter { mnode =>
               IsAdnNodeAdmin.isAdnNodeAdminCheck(mnode, pwOpt)
             }

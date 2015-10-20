@@ -1,12 +1,12 @@
 package controllers
 
 import io.suggest.di.IEsClient
-import models.MAdnNodeCache
 import models.blk.{OneAdWideQsArgs, OneAdQsArgs}
 import models.im.OutImgFmts
 import models.msc.OneAdRenderVariant
 import play.api.data.{Mapping, Form}
 import play.twirl.api.Html
+import util.di.INodeCache
 import util.{PlayMacroLogsI, FormUtil}
 import util.acl.{IsSuperuserMad, RequestWithAd}
 import views.html.sys1.market.ad.one._
@@ -51,6 +51,7 @@ trait SysAdRender
   with PlayMacroLogsI
   with IEsClient
   with IsSuperuserMad
+  with INodeCache
 {
 
   val sysAdRenderUtil: SysAdRenderUtil
@@ -83,7 +84,7 @@ trait SysAdRender
   }
 
   private def _showOneAdFormRender(qf: Form[OneAdQsArgs], rvar: OneAdRenderVariant)(implicit request: RequestWithAd[_]): Future[Html] = {
-    val nodeOptFut = MAdnNodeCache.getById( request.mad.producerId )
+    val nodeOptFut = mNodeCache.getById( request.mad.producerId )
     for {
       nodeOpt <- nodeOptFut
     } yield {

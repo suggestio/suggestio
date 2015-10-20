@@ -42,6 +42,7 @@ class MarketLkAdn @Inject() (
   scUtil                              : ShowcaseUtil,
   override val current                : play.api.Application,
   override val cache                  : CacheApi,
+  override val mNodeCache             : MAdnNodeCache,
   override val identUtil              : IdentUtil,
   logoUtil                            : LogoUtil,
   billing                             : Billing,

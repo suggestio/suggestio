@@ -1,8 +1,8 @@
 package util
 
-import play.api.Play.current
-import play.api.libs.concurrent.Akka
+import com.google.inject.{Singleton, Inject}
 import akka.actor._
+import play.api.Application
 import util.ws.WsDispatcherActor
 import scala.concurrent.duration._
 import akka.actor.SupervisorStrategy._
@@ -19,30 +19,41 @@ import util.event.SiowebNotifier
  */
 
 // Статический клиент к актору. Запускает всё дерево супервизора.
-object SiowebSup {
+@Singleton
+class SiowebSup @Inject() (
+  current       : Application
+) { outer =>
 
   private def timeoutSec = 5.seconds
+
   private implicit def timeout = Timeout(timeoutSec)
 
   def actorName = "siowebSup"
-  def actorPath = Akka.system / actorName
 
+  def actorPath = current.actorSystem / actorName
+
+  def actorProps = Props( current.injector.instanceOf[SiowebSupActor] )
 
   /** Запуск супервизора в top-level. */
-  def startLink(system: ActorSystem): ActorRef = {
-    system.actorOf(Props[SiowebSup], name=actorName)
+  def startLink(): ActorRef = {
+    current.actorSystem.actorOf(actorProps, name = actorName)
   }
 
-  type GetChildRefReply_t = Option[ActorRef]    // Тип возвращаемого значения getChildRef.
+  type GetChildRefReply_t = Option[ActorRef]
+
+  // Тип возвращаемого значения getChildRef.
 
   // Сообщение запроса дочернего процесса
   sealed case class GetChildRef(childName: String)
+
 }
 
 
-import SiowebSup._
+class SiowebSupActor @Inject() (
+  companion: SiowebSup
+) extends Actor with Logs {
 
-class SiowebSup extends Actor with Logs {
+  import companion.{GetChildRef, GetChildRefReply_t}
 
   /**
    * Нужно запустить все дочерние процессы.
@@ -50,12 +61,11 @@ class SiowebSup extends Actor with Logs {
   override def preStart() {
     super.preStart()
     // Убедится, что статический actor-путь до этого супервизора стабилен и корректен.
-    if (self.path != SiowebSup.actorPath) {
-      throw new Exception("self.path==%s but it must be equal to val %s.actorPath = %s" format (self.path, SiowebSup.getClass.getSimpleName, actorPath))
+    if (self.path != companion.actorPath) {
+      throw new Exception(s"self.path==${self.path} but it must be equal to val ${companion.getClass.getSimpleName}.actorPath = ${companion.actorPath}")
     }
     // Запускаем все дочерние процессы.
     SiowebNotifier.startLink(context)
-    billing.StatBillingQueueActor.startLink(context)
     WsDispatcherActor.startLink(context)
   }
 
@@ -66,7 +76,7 @@ class SiowebSup extends Actor with Logs {
    */
   def receive = {
     case GetChildRef(childName) =>
-      val reply: GetChildRefReply_t = context.child(childName)  // вручную проверяем тип из-за динамической типизации в akka.
+      val reply: GetChildRefReply_t = context.child(childName) // вручную проверяем тип из-за динамической типизации в akka.
       sender ! reply
   }
 
@@ -77,7 +87,7 @@ class SiowebSup extends Actor with Logs {
    */
   override def supervisorStrategy: SupervisorStrategy = {
     OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 10.seconds) {
-      case _:Exception => Restart
+      case _: Exception => Restart
     }
   }
 

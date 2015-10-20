@@ -2,9 +2,10 @@ package util.acl
 
 import controllers.IDb
 import io.suggest.di.{IExecutionContext, IEsClient}
-import models.{MAdnNodeCache, MAdnNode, MBillContract}
+import models.{MAdnNode, MBillContract}
 import models.req.SioReqMd
 import util.async.AsyncUtil
+import util.di.INodeCache
 import scala.concurrent.Future
 import play.api.mvc.{ActionBuilder, Request, Result}
 import util.acl.PersonWrapper.PwOpt_t
@@ -21,6 +22,7 @@ trait IsSuperuserContractNode
   with IEsClient
   with IExecutionContext
   with IsSuperuserUtilCtl
+  with INodeCache
 {
 
   trait IsSuperuserContractNodeBase
@@ -41,7 +43,7 @@ trait IsSuperuserContractNode
           }
         }(AsyncUtil.jdbcExecutionContext)
         contractFut flatMap { contract =>
-          MAdnNodeCache.getById(contract.adnId) flatMap { adnNodeOpt =>
+          mNodeCache.getById(contract.adnId) flatMap { adnNodeOpt =>
             val adnNode = adnNodeOpt.get
             sioReqMdFut flatMap { srm =>
               val req1 = ContractNodeRequest(contract, adnNode, pwOpt, request, srm)

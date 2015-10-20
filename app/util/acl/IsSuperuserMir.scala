@@ -6,6 +6,7 @@ import models.MInviteRequest
 import models.req.SioReqMd
 import play.api.mvc.{ActionBuilder, Result, Request}
 import util.acl.PersonWrapper.PwOpt_t
+import util.di.IInviteRequest
 
 import scala.concurrent.Future
 
@@ -20,6 +21,7 @@ trait IsSuperuserMir
   with IExecutionContext
   with IEsClient
   with IsSuperuserUtilCtl
+  with IInviteRequest
 {
 
   trait IsSuperuserMirBase
@@ -34,7 +36,7 @@ trait IsSuperuserMir
     override def invokeBlock[A](request: Request[A], block: (MirRequest[A]) => Future[Result]): Future[Result] = {
       val pwOpt = PersonWrapper.getFromRequest(request)
       if (PersonWrapper.isSuperuser(pwOpt)) {
-        MInviteRequest.getById(mirId) flatMap {
+        mInviteRequest.getById(mirId) flatMap {
           case Some(mir) =>
             if (isMirStateOk(mir)) {
               SioReqMd.fromPwOpt(pwOpt) flatMap { srm =>

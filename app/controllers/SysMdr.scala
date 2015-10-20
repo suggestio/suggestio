@@ -28,6 +28,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class SysMdr @Inject() (
   lkAdUtil                          : LkAdUtil,
   scUtil                            : ShowcaseUtil,
+  mNodeCache                        : MAdnNodeCache,
   override val messagesApi          : MessagesApi,
   override implicit val ec          : ExecutionContext,
   override implicit val esClient    : Client,
@@ -61,7 +62,7 @@ class SysMdr @Inject() (
     }
     val producersFut = madsFut flatMap { mads =>
       val producerIds = mads.map(_.producerId).toSet ++ args.producerId.toSet
-      MAdnNodeCache.multiGet( producerIds )
+      mNodeCache.multiGet( producerIds )
     }
     val prodsMapFut = producersFut map { prods =>
       prods
@@ -113,7 +114,7 @@ class SysMdr @Inject() (
     madFut flatMap { mad =>
       // 2015.apr.20: Использован функционал выдачи для сбора данных по рендеру. По идее это ок, но лучше бы протестировать.
       val brArgsFut = scUtil.focusedBrArgsFor(mad)(ctx)
-      val producerFut = MAdnNodeCache.getById(mad.producerId)
+      val producerFut = mNodeCache.getById(mad.producerId)
         .map { _.get }
       for {
         _brArgs   <- brArgsFut

@@ -1,7 +1,7 @@
 package controllers
 
 import com.google.inject.Inject
-import controllers.sysctl.SmSendEmailInvite
+import controllers.sysctl.{SysMarketUtil, SmSendEmailInvite}
 import io.suggest.event.SioNotifierStaticClientI
 import models.usr.EmailActivation
 import org.elasticsearch.client.Client
@@ -14,7 +14,6 @@ import util.mail.IMailerWrapper
 import scala.concurrent.{ExecutionContext, Future}
 import views.html.sys1.market.invreq._
 import util.PlayMacroLogsImpl
-import sysctl.SysMarketUtil._
 
 /**
  * Suggest.io
@@ -26,6 +25,9 @@ import sysctl.SysMarketUtil._
  * обработки запроса и т.д.
  */
 class SysMarketInvReq @Inject() (
+  mNodeCache                      : MAdnNodeCache,
+  sysMarketUtil                   : SysMarketUtil,
+  override val mInviteRequest     : MInviteRequest_,
   override val messagesApi        : MessagesApi,
   override val mailer             : IMailerWrapper,
   override implicit val ec        : ExecutionContext,
@@ -49,10 +51,10 @@ class SysMarketInvReq @Inject() (
   /** Вернуть страницу, отображающую всю инфу по текущему состоянию подсистемы IR.
     * Список реквестов, в первую очередь. */
   def index = IsSuperuser.async { implicit request =>
-    MInviteRequest.getAll(MIRS_FETCH_COUNT) flatMap { mirs =>
+    mInviteRequest.getAll(MIRS_FETCH_COUNT) flatMap { mirs =>
       val thisCount = mirs.size
       val allCountFut: Future[Long] = if (thisCount >= MIRS_FETCH_COUNT) {
-        MInviteRequest.countAll
+        mInviteRequest.countAll
       } else {
         Future successful thisCount.toLong
       }
@@ -103,12 +105,8 @@ class SysMarketInvReq @Inject() (
   private def nodeEditBody(mir: MInviteRequest)(onSuccess: Html => Result)
                           (implicit request: MirRequest[AnyContent]): Future[Result] = {
     getNodeOptFut(mir) map { adnNodeOpt =>
-      val formFilled = adnNodeOpt match {
-        case Some(adnNode) =>
-          adnNodeFormM fill adnNode
-        case None =>
-          adnNodeFormM
-      }
+      val form0 = sysMarketUtil.adnNodeFormM
+      val formFilled = adnNodeOpt.fold(form0)(form0.fill)
       Ok(nodeEditTpl(mir, adnNodeOpt, formFilled))
     }
   }
@@ -117,15 +115,15 @@ class SysMarketInvReq @Inject() (
     * Здесь может быть подвох в поле companyId, которое может содержать пустое значение. */
   def nodeEditFormSubmit(mirId: String) = isNodeLeftOrMissing(mirId).async { implicit request =>
     import request.mir
-    adnNodeFormM.bindFromRequest().fold(
+    sysMarketUtil.adnNodeFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"nodeEditFormSubmit($mirId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
         nodeEditBody(mir)(NotAcceptable(_))
       },
       {adnNode2 =>
-        MInviteRequest.tryUpdate(mir) { mir0 =>
+        mInviteRequest.tryUpdate(mir) { mir0 =>
           val adnNode3 = mir0.adnNode.fold [MAdnNode] (adnNode2) { adnNodeEith =>
-            updateAdnNode(adnNodeEith.left.get, adnNode2)
+            sysMarketUtil.updateAdnNode(adnNodeEith.left.get, adnNode2)
           }
           mir0.copy(
             adnNode = Some(Left(adnNode3))
@@ -161,7 +159,7 @@ class SysMarketInvReq @Inject() (
         // Запуск сохранения узла.
         val resultFut = adnNode.save flatMap { adnId =>
           // Узел сохранён. Пора обновить экземпляр MIR
-          val updateFut = MInviteRequest.tryUpdate(mir) { mir0 =>
+          val updateFut = mInviteRequest.tryUpdate(mir) { mir0 =>
             mir0.copy(
               adnNode = Some(Right(adnId)),
               waOpt = waSavedIdOpt.map(Right.apply)
@@ -198,7 +196,7 @@ class SysMarketInvReq @Inject() (
         adnNode.delete flatMap {
           case true =>
             // Узел удалён. Пора залить его в состояние MIR
-            val updateFut = MInviteRequest.tryUpdate(mir) { mir0 =>
+            val updateFut = mInviteRequest.tryUpdate(mir) { mir0 =>
               mir0.copy(
                 adnNode = Some(Left(adnNode))
               )
@@ -224,7 +222,7 @@ class SysMarketInvReq @Inject() (
   def eactInstallSubmit(mirId: String) = isNodeEactLeft(mirId).async { implicit request =>
     import request.mir
     val adnId = mir.adnNode.get.right.get
-    val adnNodeOptFut = MAdnNodeCache.getById(adnId)
+    val adnNodeOptFut = mNodeCache.getById(adnId)
     val eact = mir.emailAct.get.left.get.copy(
       key = adnId
     )
@@ -241,7 +239,7 @@ class SysMarketInvReq @Inject() (
             }
             val updFut = sendEmailFut flatMap { _ =>
               // Пора переключить состояние mir
-              MInviteRequest.tryUpdate(mir) { mir0 =>
+              mInviteRequest.tryUpdate(mir) { mir0 =>
                 mir0.copy(
                   emailAct = Some(Right(eaId))
                 )
@@ -327,7 +325,7 @@ class SysMarketInvReq @Inject() (
     mir.adnNode.fold [Future[Option[MAdnNode]]] (Future successful None) { nodeEith =>
       nodeEith.fold[Future[Option[MAdnNode]]](
         { an => Future successful Option(an)},
-        { adnId => MAdnNodeCache.getById(adnId)}
+        { adnId => mNodeCache.getById(adnId)}
       )
     }
   }

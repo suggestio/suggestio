@@ -23,7 +23,6 @@ import scala.concurrent.{ExecutionContext, Future}
 import play.api.mvc.{Result, Call, AnyContent}
 import play.api.i18n.{Messages, MessagesApi}
 import controllers.sysctl._
-import sysctl.SysMarketUtil._
 
 /**
  * Suggest.io
@@ -35,9 +34,11 @@ class SysMarket @Inject() (
   override val nodesUtil        : NodesUtil,
   lkAdUtil                      : LkAdUtil,
   advUtil                       : AdvUtil,
+  sysMarketUtil                 : SysMarketUtil,
   override val messagesApi      : MessagesApi,
   override val mailer           : IMailerWrapper,
   db                            : Database,
+  override val mNodeCache       : MAdnNodeCache,
   override val sysAdRenderUtil  : SysAdRenderUtil,
   override implicit val current : play.api.Application,
   override implicit val ec      : ExecutionContext,
@@ -55,6 +56,7 @@ class SysMarket @Inject() (
 {
 
   import LOGGER._
+  import sysMarketUtil._
 
   /** Индексная страница продажной части. Тут ссылки на дальнейшие страницы. */
   def index = IsSuperuser { implicit request =>
@@ -350,7 +352,7 @@ class SysMarket @Inject() (
     val adFreqsFut: Future[AdFreqs_t] = adnNodeIdOpt
       .fold [Future[MAdStat.AdFreqs_t]] (Future successful Map.empty) { MAdStat.findAdByActionFreqs }
     val adnNodeOptFut: Future[Option[MAdnNode]] = {
-      adnNodeIdOpt.fold (Future successful Option.empty[MAdnNode]) { MAdnNodeCache.getById }
+      adnNodeIdOpt.fold (Future successful Option.empty[MAdnNode]) { mNodeCache.getById }
     }
     // Собираем карту размещений рекламных карточек.
     val ad2advMapFut = madsFut map { mads =>
@@ -376,7 +378,7 @@ class SysMarket @Inject() (
     val rcvrsFut: Future[Map[String, Seq[MAdnNode]]] = if (a.receiverIds.nonEmpty) {
       // Используем только переданные ресиверы.
       Future
-        .traverse(a.receiverIds) { MAdnNodeCache.getById }
+        .traverse(a.receiverIds) { mNodeCache.getById }
         .flatMap { rcvrOpts =>
           val rcvrs = rcvrOpts.flatten
           madsFut map { mads =>
@@ -394,7 +396,7 @@ class SysMarket @Inject() (
               (acc1, adv) => adv.rcvrAdnId :: acc1
             }
         }
-        MAdnNodeCache.multiGet(allRcvrIds.toSet) map { allRcvrs =>
+        mNodeCache.multiGet(allRcvrIds.toSet) map { allRcvrs =>
           // Список ресиверов конвертим в карту ресиверов.
           val rcvrsMap = allRcvrs.map { rcvr => rcvr.id.get -> rcvr }.toMap
           // Заменяем в исходной карте ad2advs списки adv на списки ресиверов.
@@ -492,7 +494,7 @@ class SysMarket @Inject() (
    */
   def showAd(adId: String) = IsSuperuserMad(adId).async { implicit request =>
     import request.mad
-    val producerOptFut = MAdnNodeCache.getById(mad.producerId)
+    val producerOptFut = mNodeCache.getById(mad.producerId)
     val imgs = mad.imgs
       .mapValues { MImg.apply }
     for {
@@ -506,15 +508,15 @@ class SysMarket @Inject() (
   /** Вывести результат анализа ресиверов рекламной карточки. */
   def analyzeAdRcvrs(adId: String) = IsSuperuserMad(adId).async { implicit request =>
     import request.mad
-    val producerOptFut = MAdnNodeCache.getById(mad.producerId)
+    val producerOptFut = mNodeCache.getById(mad.producerId)
     val newRcvrsMapFut = producerOptFut flatMap { advUtil.calculateReceiversFor(mad, _) }
     // Достаём из кеша узлы.
     val nodesMapFut: Future[Map[String, MAdnNode]] = {
       val adnIds1 = mad.receivers.keySet
       for {
-        adns1       <- MAdnNodeCache.multiGet(adnIds1)
+        adns1       <- mNodeCache.multiGet(adnIds1)
         newRcvrsMap <- newRcvrsMapFut
-        newAdns     <- MAdnNodeCache.multiGet(newRcvrsMap.keySet -- adnIds1)
+        newAdns     <- mNodeCache.multiGet(newRcvrsMap.keySet -- adnIds1)
       } yield {
         (adns1.iterator ++ newAdns.iterator)
           .map { adnNode => adnNode.id.get -> adnNode }

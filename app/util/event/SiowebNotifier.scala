@@ -9,7 +9,7 @@ import scala.concurrent.duration._
 import play.api.Play.current
 import play.api.libs.concurrent.Akka
 import scala.concurrent.Future
-import play.api.libs.concurrent.Execution.Implicits._
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import models._
 import SiowebEsUtil.client
 
@@ -28,17 +28,20 @@ object SiowebNotifier extends SioNotifierStaticActorSelection with SNStaticSubsc
 
   implicit val SN_ASK_TIMEOUT: Timeout = {
     val ms = current.configuration.getInt("sn.ask.timeout_ms") getOrElse 5000
-    Timeout(ms milliseconds)
+    Timeout( ms.milliseconds )
   }
 
-  def supPath = SiowebSup.actorPath
+  // TODO Сделать нормальную инжекцию.
+  private lazy val siowebSup = current.injector.instanceOf[SiowebSup]
+  def supPath = siowebSup.actorPath
 
   protected def getSystem = Akka.system
 
   /** Набор модулей, которые необходимо статически подписать на события. */
   // TODO Вынести это отсюда?
   protected def getStaticSubscribers: Seq[SNStaticSubscriber] = List(
-    MAdnNodeCache,
+    // TODO inject
+    current.injector.instanceOf[MAdnNodeCache],
     deleteAdsOnAdnNodeDeleteSNSC,
     new MAdnNodeGeo.CleanUpOnAdnNodeDelete(),
     new MAdv.DeleteAllAdvsOnAdDeleted(),

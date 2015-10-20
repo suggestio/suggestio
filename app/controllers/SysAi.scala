@@ -24,6 +24,7 @@ import scala.util.matching.Regex
  * На момент создания здесь система заполнения карточек, живущая в MadAiUtil и её модель.
  */
 class SysAi @Inject() (
+  madAiUtil                       : MadAiUtil,
   override val messagesApi        : MessagesApi,
   implicit val ws                 : WSClient,
   override implicit val ec        : ExecutionContext,
@@ -166,7 +167,7 @@ class SysAi @Inject() (
       },
       {maimad =>
         // Запускаем асинхронные проверки полученных данных: проверяем, что все указанные карточки существуют:
-        MadAiUtil.dryRun(maimad)
+        madAiUtil.dryRun(maimad)
           .flatMap[Result] { _ =>
             maimad.save map { savedId =>
               Redirect( routes.SysAi.madIndex() )
@@ -211,7 +212,7 @@ class SysAi @Inject() (
           descr       = aim1.descr
         )
         // Запускаем асинхронные проверки полученных данных: проверяем, что все указанные карточки существуют:
-        MadAiUtil.dryRun(aim2)
+        madAiUtil.dryRun(aim2)
           .flatMap[Result] { _ =>
             aim2.save map { savedId =>
               Redirect( routes.SysAi.madIndex() )
@@ -231,7 +232,7 @@ class SysAi @Inject() (
   /** Запуск одного [[models.ai.MAiMad]] на исполнение. Результат запроса содержит инфу о проблеме. */
   def runMadAi(aiMadId: String) = IsSuperuserAiMad(aiMadId).async { implicit request =>
     trace(s"runMadAi($aiMadId): Starting by user ${request.pwOpt}")
-    MadAiUtil.run(request.aiMad)
+    madAiUtil.run(request.aiMad)
       // Рендерим результаты работы:
       .map { res =>
         Redirect( routes.SysAi.madIndex() )

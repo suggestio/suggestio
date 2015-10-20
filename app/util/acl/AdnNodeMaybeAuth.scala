@@ -1,9 +1,10 @@
 package util.acl
 
 import io.suggest.di.{IExecutionContext, IEsClient}
-import models.{MAdnNodeCache, MAdnNode}
+import models.MAdnNode
 import models.req.SioReqMd
 import play.api.mvc.{Result, ActionBuilder, Request}
+import util.di.INodeCache
 import util.xplay.SioHttpErrorHandler
 import util.{PlayMacroLogsDyn, PlayMacroLogsI}
 import util.acl.PersonWrapper.PwOpt_t
@@ -16,7 +17,11 @@ import scala.concurrent.Future
  * Created: 14.10.15 18:49
  * Description: Смесь принципов MaybeAuth и считывания указанного узла.
  */
-trait AdnNodeMaybeAuth extends IEsClient with IExecutionContext {
+trait AdnNodeMaybeAuth
+  extends IEsClient
+  with IExecutionContext
+  with INodeCache
+{
 
   /** Общий код проверок типа AdnNodeMaybeAuth. */
   sealed trait AdnNodeMaybeAuthBase
@@ -30,7 +35,7 @@ trait AdnNodeMaybeAuth extends IEsClient with IExecutionContext {
     override def invokeBlock[A](request: Request[A], block: (SimpleRequestForAdnNode[A]) => Future[Result]): Future[Result] = {
       val pwOpt = PersonWrapper.getFromRequest(request)
       val srmFut = SioReqMd.fromPwOpt(pwOpt)
-      MAdnNodeCache.getById(adnId) flatMap {
+      mNodeCache.getById(adnId) flatMap {
         case Some(adnNode) =>
           if (isNodeValid(adnNode)) {
             srmFut flatMap { srm =>

@@ -2,19 +2,19 @@ package util.ai.mad
 
 import java.io.FileInputStream
 
+import com.google.inject.Inject
+import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.ym.model.MAd
 import models.ai._
 import org.apache.tika.metadata.{TikaMetadataKeys, Metadata}
 import org.apache.tika.sax.TeeContentHandler
 import org.clapper.scalasti.ST
+import org.elasticsearch.client.Client
 import play.api.libs.ws.WSClient
 import util.PlayMacroLogsImpl
 import util.ws.HttpGetToFile
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.SiowebEsUtil.client
-import util.event.SiowebNotifier.Implicts.sn
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -22,7 +22,14 @@ import scala.concurrent.Future
  * Created: 28.11.14 11:00
  * Description: Утиль для обеспечения работоспособности автогенератора рекламных карточек.
  */
-object MadAiUtil extends PlayMacroLogsImpl {
+class MadAiUtil @Inject() (
+  implicit val ws1        : WSClient,
+  implicit val ec         : ExecutionContext,
+  implicit val esClient   : Client,
+  implicit val sn         : SioNotifierStaticClientI
+)
+  extends PlayMacroLogsImpl
+{
 
   /**
    * Привести HTTP-хидеры ответа к метаданным tika.
@@ -80,7 +87,8 @@ object MadAiUtil extends PlayMacroLogsImpl {
    * @param targetAds Целевые карточки, которые нужно обновить с помощью рендереров и карточки-шаблона.
    * @return Отрендеренные карточки в неопределённом порядке.
    */
-  def renderTplAd(tplAd: MAd, renderers: Seq[MAiRenderer], args: Map[String, ContentHandlerResult], targetAds: Seq[MAd]): Future[Seq[MAd]] = {
+  def renderTplAd(tplAd: MAd, renderers: Seq[MAiRenderer], args: Map[String, ContentHandlerResult],
+                  targetAds: Seq[MAd]): Future[Seq[MAd]] = {
     // Параллельно маппим все рекламные карточки. Это нарушает исходный порядок, но на это плевать.
     Future.traverse( targetAds ) { targetAd =>
       renderers.foldLeft(Future successful targetAd) {
@@ -99,7 +107,7 @@ object MadAiUtil extends PlayMacroLogsImpl {
    * @param madAi id рекламной карточки.
    * @return Фьючерс с отрендеренными карточками, которые ещё не сохранены.
    */
-  def dryRun(madAi: MAiMad)(implicit ws1: WSClient): Future[Seq[MAd]] = {
+  def dryRun(madAi: MAiMad): Future[Seq[MAd]] = {
     // Запустить получение результата по ссылки от remote-сервера.
     val urlRenderCtx = new UrlRenderContextBeanImpl()
     val renderArgsFut = Future.traverse( madAi.sources ) { source =>
@@ -149,7 +157,7 @@ object MadAiUtil extends PlayMacroLogsImpl {
    * @param madAi Данные по сборке карточек.
    * @return Фьючерс для синхронизации.
    */
-  def run(madAi: MAiMad)(implicit ws: WSClient): Future[_] = {
+  def run(madAi: MAiMad): Future[_] = {
     // Сохранить целевые карточки
     dryRun(madAi) flatMap { madsRendered =>
       Future.traverse(madsRendered)(_.save)

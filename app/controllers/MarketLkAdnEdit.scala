@@ -44,6 +44,7 @@ class MarketLkAdnEdit @Inject() (
   logoUtil                  : LogoUtil,
   mImg3                     : MImg3_,
   tempImgSupport            : TempImgSupport,
+  override val mNodeCache   : MAdnNodeCache,
   override implicit val ec  : ExecutionContext,
   implicit val esClient     : Client,
   override implicit val sn  : SioNotifierStaticClientI

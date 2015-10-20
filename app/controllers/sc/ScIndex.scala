@@ -1,6 +1,6 @@
 package controllers.sc
 
-import _root_.util.di.{IScUtil, IStatUtil, IScStatUtil, IWelcomeUtil}
+import _root_.util.di._
 import io.suggest.playx.ICurrentConf
 import models.im.logo.LogoOpt_t
 import _root_.util.jsa.{SmRcvResp, Js}
@@ -161,6 +161,7 @@ trait ScIndexNodeCommon
   with ScIndexConstants
   with IWelcomeUtil
   with IScUtil
+  with INodeCache
 {
 
   /** Логика формирования indexTpl для конкретного узла. */
@@ -193,7 +194,7 @@ trait ScIndexNodeCommon
         .iterator
         .filter { _._2 > 0 }
         .map { _._1 }
-      MAdnNodeCache.multiGet(prodIds)
+      mNodeCache.multiGet(prodIds)
     }
 
     /** Сделать карту продьюсеров. */

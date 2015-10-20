@@ -43,6 +43,7 @@ class MarketAdv @Inject() (
   lkAdUtil                        : LkAdUtil,
   scUtil                          : ShowcaseUtil,
   ctlGeoAdvUtil                   : CtlGeoAdvUtil,
+  override val mNodeCache         : MAdnNodeCache,
   override val messagesApi        : MessagesApi,
   override val current            : play.api.Application,
   override implicit val db        : Database,
@@ -639,7 +640,7 @@ class MarketAdv @Inject() (
         // Запускаем сбор узлов
         val rcvrsFut = adv2adnIdsFut flatMap { adv2adnIds =>
           val adnIds = adv2adnIds.valuesIterator.toSet
-          MAdnNodeCache.multiGet(adnIds)
+          mNodeCache.multiGet(adnIds)
         }
 
         // Объединение всех списков
@@ -812,7 +813,7 @@ class MarketAdv @Inject() (
     val madOptFut = MAd.getById(request.advReq.adId)
     val adProducerOptFut = madOptFut flatMap { madOpt =>
       val prodIdOpt = madOpt.map(_.producerId)
-      MAdnNodeCache.maybeGetByIdCached(prodIdOpt)
+      mNodeCache.maybeGetByIdCached(prodIdOpt)
     }
     adProducerOptFut flatMap { adProducerOpt =>
       madOptFut flatMap { madOpt =>

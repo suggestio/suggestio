@@ -1,4 +1,4 @@
-import akka.actor.{ActorSystem, Cancellable}
+import akka.actor.Cancellable
 import io.suggest.model.SioCassandraClient
 import io.suggest.model.es.EsModelUtil
 import io.suggest.util.SioEsUtil
@@ -31,7 +31,12 @@ import models._
  * http://www.playframework.com/documentation/2.1.0/ScalaGlobal
  */
 
-object Global extends WithFilters(new HtmlCompressFilter, new DumpXffHeaders, SecHeadersFilter(), new CorsFilter) {
+object Global extends WithFilters(
+  new HtmlCompressFilter,
+  new DumpXffHeaders,
+  SecHeadersFilter(),
+  new CorsFilter
+) {
 
   // Логгеры тут работают через вызов Logger.*
   import Logger._
@@ -51,9 +56,8 @@ object Global extends WithFilters(new HtmlCompressFilter, new DumpXffHeaders, Se
       SiowebEsUtil.ensureNode()
     }
     ensureScryptNoJni()
-    // Запускаем супервизора
-    val akka = app.injector.instanceOf[ActorSystem]
-    SiowebSup.startLink(akka)
+    // Запускаем супервизора вместе с деревом остальных акторов.
+    _inject[SiowebSup](app).startLink()
     // Запускать es-клиент при старте, ибо подключение к кластеру ES это занимает некоторое время.
     val esClientFut = esNodeFut map {
       _.client()
@@ -79,7 +83,11 @@ object Global extends WithFilters(new HtmlCompressFilter, new DumpXffHeaders, Se
 
     jmxImpl(app).registerAll()
     // Блокируемся, чтобы не было ошибок в браузере и консоли из-за асинхронной работы с ещё не запущенной системой.
-    val startTimeout: FiniteDuration = (app.configuration.getInt("start.timeout_sec") getOrElse 32).seconds
+    val startTimeout = {
+      app.configuration.getInt("start.timeout_sec")
+        .getOrElse(32)
+        .seconds
+    }
     CipherUtil.ensureBcJce()
     Await.ready(fut, startTimeout)
     synchronized {

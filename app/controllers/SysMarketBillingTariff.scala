@@ -24,6 +24,7 @@ import scala.concurrent.ExecutionContext
  * Description: Работа с fee- и stat-тарифами в биллинге.
  */
 class SysMarketBillingTariff @Inject() (
+  mNodeCache                    : MAdnNodeCache,
   override val messagesApi      : MessagesApi,
   override val db               : Database,
   override implicit val ec      : ExecutionContext,
@@ -71,7 +72,7 @@ class SysMarketBillingTariff @Inject() (
   /** Отрендерить страницу с формой создания нового тарифа. */
   def addFeeTariffForm(contractId: Int) = IsSuperuserContract(contractId).async { implicit request =>
     import request.contract
-    MAdnNodeCache.getById(contract.adnId) map { adnNodeOpt =>
+    mNodeCache.getById(contract.adnId) map { adnNodeOpt =>
       Ok(addTariffFormTpl(adnNodeOpt.get, contract, feeTariffFormM(contractId)))
     }
   }
@@ -84,7 +85,7 @@ class SysMarketBillingTariff @Inject() (
     formBinded.fold(
       {formWithErrors =>
         debug(logPrefix + "Failed to bind form: " + formatFormErrors(formWithErrors))
-        MAdnNodeCache.getById(contract.adnId) map { adnNodeOpt =>
+        mNodeCache.getById(contract.adnId) map { adnNodeOpt =>
           NotAcceptable(addTariffFormTpl(adnNodeOpt.get, contract, formWithErrors))
         }
       },
@@ -103,7 +104,7 @@ class SysMarketBillingTariff @Inject() (
   /** Отрендерить страницу с формой редактирования существующего тарифа. */
   def editFeeTariffForm(tariffId: Int) = IsSuperuserFeeTariffContract(tariffId).async { implicit request =>
     import request.{contract, tariff}
-    MAdnNodeCache.getById(contract.adnId) map { adnNodeOpt =>
+    mNodeCache.getById(contract.adnId) map { adnNodeOpt =>
       val form = feeTariffFormM(contract.id.get).fill(tariff)
       Ok(editTariffFormTpl(adnNodeOpt.get, contract, tariff, form))
     }
@@ -116,7 +117,7 @@ class SysMarketBillingTariff @Inject() (
     feeTariffFormM(contract.id.get).bindFromRequest().fold(
       {formWithErrors =>
         debug(logPrefix + "Failed to bind form: " + formatFormErrors(formWithErrors))
-        MAdnNodeCache.getById(contract.adnId).map { adnNodeOpt =>
+        mNodeCache.getById(contract.adnId).map { adnNodeOpt =>
           NotAcceptable(editTariffFormTpl(adnNodeOpt.get, contract, tariff0, formWithErrors))
         }
       },
@@ -195,7 +196,7 @@ class SysMarketBillingTariff @Inject() (
 
   /** Экшен рендера страницы добавления тарификации по просмотрам/переходам. */
   def addStatTariff(contractId: Int) = IsSuperuserContract(contractId).async { implicit request =>
-    MAdnNodeCache.getById(request.contract.adnId) map {
+    mNodeCache.getById(request.contract.adnId) map {
       case Some(adnNode) =>
         val stf = statTariffFormM(contractId)
         Ok(addStatTariffFormTpl(adnNode, stf, request.contract))
@@ -210,7 +211,7 @@ class SysMarketBillingTariff @Inject() (
     stf.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"addStatTariffFormSubmit($contractId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
-        MAdnNodeCache.getById(request.contract.adnId) map { adnNodeOpt =>
+        mNodeCache.getById(request.contract.adnId) map { adnNodeOpt =>
           NotAcceptable(addStatTariffFormTpl(adnNodeOpt.get, formWithErrors, request.contract))
         }
       },
@@ -226,7 +227,7 @@ class SysMarketBillingTariff @Inject() (
 
   /** Рендер страницы с формой редактирования существующего stat-тарифа. */
   def editStatTariff(tariffId: Int) = IsSuperuserStatTariffContract(tariffId).async { implicit request =>
-    MAdnNodeCache.getById(request.contract.adnId) map { adnNodeOpt =>
+    mNodeCache.getById(request.contract.adnId) map { adnNodeOpt =>
       val formBinded = statTariffFormM(request.contract.id.get).fill(request.tariff)
       Ok(editStatTariffFormTpl(adnNodeOpt.get, request.tariff, request.contract, formBinded))
     }
@@ -238,7 +239,7 @@ class SysMarketBillingTariff @Inject() (
     statTariffFormM(request.contract.id.get).bindFromRequest().fold(
       {formWithErrors =>
         debug(s"editStatTariffSubmit($tariffId): Failed to bind edit form:\n${formatFormErrors(formWithErrors)}")
-        MAdnNodeCache.getById(request.contract.adnId) map { adnNodeOpt =>
+        mNodeCache.getById(request.contract.adnId) map { adnNodeOpt =>
           NotAcceptable(editStatTariffFormTpl(adnNodeOpt.get, tariff, request.contract, formWithErrors))
         }
       },

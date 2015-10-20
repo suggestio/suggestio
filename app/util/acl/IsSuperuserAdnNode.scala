@@ -2,8 +2,8 @@ package util.acl
 
 import controllers.SioController
 import io.suggest.di.{IExecutionContext, IEsClient}
-import models.MAdnNodeCache
 import models.req.SioReqMd
+import util.di.INodeCache
 import scala.concurrent.Future
 import play.api.mvc.{Request, ActionBuilder, Result}
 
@@ -18,6 +18,7 @@ trait IsSuperuserAdnNode
   with IEsClient
   with IExecutionContext
   with IsSuperuserUtilCtl
+  with INodeCache
 {
 
   /** Часто нужно админить узлы рекламной сети. Тут комбинация IsSuperuser + IsAdnAdmin. */
@@ -33,7 +34,7 @@ trait IsSuperuserAdnNode
       val pwOpt = PersonWrapper.getFromRequest(request)
       if (PersonWrapper.isSuperuser(pwOpt)) {
         val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)
-        MAdnNodeCache.getById(adnId) flatMap {
+        mNodeCache.getById(adnId) flatMap {
           case Some(adnNode) =>
             sioReqMdFut flatMap { srm =>
               block(RequestForAdnNodeAdm(adnNode, isMyNode = true, request, pwOpt, srm))

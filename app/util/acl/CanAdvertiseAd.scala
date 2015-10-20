@@ -7,7 +7,7 @@ import models.req.SioReqMd
 import org.elasticsearch.client.Client
 import play.api.mvc._
 import models._
-import util.di.ICanAdvAdUtil
+import util.di.{INodeCache, ICanAdvAdUtil}
 import util.{PlayMacroLogsDyn, PlayMacroLogsI, PlayMacroLogsImpl}
 import util.acl.PersonWrapper.PwOpt_t
 import scala.concurrent.{ExecutionContext, Future}
@@ -20,6 +20,7 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 
 class CanAdvertiseAdUtil @Inject() (
+  mNodeCache                      : MAdnNodeCache,
   implicit private val ec         : ExecutionContext,
   implicit private val esClient   : Client
 )
@@ -43,7 +44,7 @@ class CanAdvertiseAdUtil @Inject() (
    */
   def maybeAllowed[A](pwOpt: PwOpt_t, mad: MAd, request: Request[A], jsInitActions: Seq[MTarget] = Nil): Future[Option[RequestWithAdAndProducer[A]]] = {
     if (PersonWrapper isSuperuser pwOpt) {
-      MAdnNodeCache.getById(mad.producerId) flatMap { adnNodeOpt =>
+      mNodeCache.getById(mad.producerId) flatMap { adnNodeOpt =>
         if (adnNodeOpt exists isAdvertiserNode) {
           val adnNode = adnNodeOpt.get
           SioReqMd.fromPwOptAdn(pwOpt, adnNode.id.get) map { srm =>
@@ -57,7 +58,7 @@ class CanAdvertiseAdUtil @Inject() (
     } else {
       pwOpt match {
         case Some(pw) =>
-          MAdnNodeCache.getById(mad.producerId).flatMap { adnNodeOpt =>
+          mNodeCache.getById(mad.producerId).flatMap { adnNodeOpt =>
             adnNodeOpt
               .filter { adnNode =>
                 adnNode.personIds.contains(pw.personId)  &&  isAdvertiserNode(adnNode)

@@ -5,7 +5,7 @@ import models.mext.MExtServices
 import models.msc._
 import play.twirl.api.Html
 import util.PlayMacroLogsI
-import util.di.{IScUtil, IScStatUtil}
+import util.di.{INodeCache, IScUtil, IScStatUtil}
 import util.acl._
 import util.xplay.SioHttpErrorHandler
 import views.html.sc._
@@ -27,6 +27,7 @@ trait ScSiteBase
   with PlayMacroLogsI
   with IScStatUtil
   with IScUtil
+  with INodeCache
 {
 
   /** Настраиваемая логика сборки результата запроса сайта выдачи. */
@@ -46,7 +47,7 @@ trait ScSiteBase
 
     /** Опциональный экземпляр текущего узла. */
     def nodeOptFut: Future[Option[MAdnNode]] = {
-      MAdnNodeCache.maybeGetByIdCached( adnIdOpt )
+      mNodeCache.maybeGetByIdCached( adnIdOpt )
     }
 
     /** Добавки к тегу head в siteTpl. */

@@ -31,6 +31,7 @@ import scala.util.{Success, Failure}
 class LkEvents @Inject() (
   lkEventsUtil                    : LkEventsUtil,
   lkAdUtil                        : LkAdUtil,
+  override val mNodeCache         : MAdnNodeCache,
   override val messagesApi        : MessagesApi,
   override val current            : play.api.Application,
   override implicit val ec        : ExecutionContext,
@@ -112,7 +113,7 @@ class LkEvents @Inject() (
           .flatMap { _.argsInfo.adnIdOpt }
           .filter { _ != adnId }    // Текущую ноду фетчить не надо -- она уже в request лежит.
           .toSet
-        MAdnNodeCache.multiGetMap(allNodeIds, List(request.adnNode))
+        mNodeCache.multiGetMap(allNodeIds, List(request.adnNode))
       }
 
       for {

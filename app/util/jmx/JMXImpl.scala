@@ -34,7 +34,8 @@ class JMXImpl @Inject() (
   siowebEsModelJmx  : SiowebEsModelJmx,
   migration         : img3.MigrationJmx,
   advUtilJmx        : AdvUtilJmx,
-  mCalendarJmx      : MCalendarJmx
+  mCalendarJmx      : MCalendarJmx,
+  mInviteRequestJmx : MInviteRequestJmx
 )
   extends PlayLazyMacroLogsImpl
 {
@@ -56,7 +57,7 @@ class JMXImpl @Inject() (
     new MPersonJmx,
     new MCompanyJmx,
     mCalendarJmx,
-    new MInviteRequestJmx,
+    mInviteRequestJmx,
     new MAdnNodeGeoJmx,
     siowebEsModelJmx,
     new MRemoteErrorJmx,

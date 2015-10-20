@@ -7,6 +7,7 @@ import play.api.mvc._
 import models._
 import util.acl.PersonWrapper.PwOpt_t
 import util.async.AsyncUtil
+import util.di.INodeCache
 import util.xplay.SioHttpErrorHandler
 import scala.concurrent.Future
 import util.{PlayMacroLogsDyn, PlayMacroLogsI}
@@ -47,6 +48,7 @@ trait CanEditAd
   extends AdEditBaseCtl
   with IDb
   with OnUnauthUtilCtl
+  with INodeCache
 {
 
   /** Редактировать карточку может только владелец магазина. */
@@ -85,7 +87,7 @@ trait CanEditAd
           val hasAdvFut = hasAdv(adId)
           madOptFut flatMap {
             case Some(mad) =>
-              val adnNodeOpt = MAdnNodeCache.getById(mad.producerId)
+              val adnNodeOpt = mNodeCache.getById(mad.producerId)
               val isSuperuser = PersonWrapper.isSuperuser(pwOpt)
               hasAdvFut flatMap { hasAdv =>
                 if (hasAdv && !isSuperuser) {
@@ -93,7 +95,7 @@ trait CanEditAd
                   forbiddenFut("Ad is advertised somewhere. Cannot edit during advertising.", request)
                 } else {
                   if (isSuperuser) {
-                    MAdnNodeCache.getById(mad.producerId).flatMap { adnNodeOpt =>
+                    mNodeCache.getById(mad.producerId).flatMap { adnNodeOpt =>
                       srmFut flatMap { srm =>
                         val req1 = RequestWithAdAndProducer(mad, request, pwOpt, srm, adnNodeOpt.get)
                         block(req1)
@@ -176,63 +178,3 @@ case class RequestWithAdAndProducer[A](
 
 
 
-/** Статический логгер для класса запиливаем тут. object всё равно создаётся при компиляции case class'а, поэтому
-  * оверхеда тут нет. */
-trait CanUpdateSls extends AdEditBaseCtl with OnUnauthNodeCtl {
-
-  /** Проверка прав на возможность обновления уровней отображения рекламной карточки. */
-  trait CanUpdateSlsBase extends ActionBuilder[RequestWithAdAndProducer] with AdEditBase with OnUnauthNode {
-
-    override def invokeBlock[A](request: Request[A], block: (RequestWithAdAndProducer[A]) => Future[Result]): Future[Result] = {
-      val madOptFut = MAd.getById(adId)
-      val pwOpt = PersonWrapper.getFromRequest(request)
-      pwOpt match {
-        // Юзер залогинен. Продолжаем...
-        case Some(pw) =>
-          madOptFut flatMap {
-            // Найдена запрошенная рекламная карточка
-            case Some(mad) =>
-              // Модер может запретить бесплатное размещение карточки. Если стоит черная метка, то на этом можно закончить.
-              val isMdrProhibited = mad.moderation.freeAdv.exists { !_.isAllowed }
-              if (isMdrProhibited) {
-                // Админы s.io когда-то запретили бесплатно размещать эту карточку. Пока бан не снять, карточку публиковать бесплатно нельзя.
-                LOGGER.debug("invokeBlock(): cannot update sls for false-moderated ad " + adId + " mdrResult = " + mad.moderation.freeAdv)
-                forbiddenFut("false-moderated ad", request)
-              } else {
-                MAdnNodeCache.getById(mad.producerId) flatMap { producerOpt =>
-                  val isNodeAdmin = producerOpt.exists {
-                    producer =>
-                      IsAdnNodeAdmin.isAdnNodeAdminCheck(producer, pwOpt)
-                  }
-                  if (isNodeAdmin) {
-                    // Юзер является админом. Всё ок.
-                    val req1 = RequestWithAdAndProducer(mad, request, pwOpt, SioReqMd(), producerOpt.get)
-                    block(req1)
-                  } else {
-                    // Юзер не является админом, либо (маловероятно) producer-узел был удалён (и нельзя проверить права).
-                    LOGGER.debug(s"invokeBlock(): No node-admin rights for update sls for ad=$adId producer=${producerOpt.flatMap(_.id)}")
-                    forbiddenFut("No edit rights", request)
-                  }
-                }
-              }
-
-            // Рекламная карточка не найдена.
-            case None =>
-              adNotFound(request)
-          }
-
-        // С анонимусами разговор короткий.
-        case None =>
-          LOGGER.trace("invokeBlock(): Anonymous access prohibited to " + adId)
-          onUnauthNode(request, pwOpt)
-      }
-    }
-  }
-
-  /** Реализация [[CanUpdateSlsBase]] с истечением времени сессии. */
-  case class CanUpdateSls(adId: String)
-    extends CanUpdateSlsBase
-    with ExpireSession[RequestWithAdAndProducer]
-    with PlayMacroLogsDyn
-
-}

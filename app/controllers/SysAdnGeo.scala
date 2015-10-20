@@ -29,6 +29,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class SysAdnGeo @Inject() (
   override val messagesApi        : MessagesApi,
   implicit val osmClient          : OsmClient,
+  override val mNodeCache         : MAdnNodeCache,
   override implicit val ec        : ExecutionContext,
   override implicit val esClient  : Client,
   override implicit val sn        : SioNotifierStaticClientI
@@ -156,7 +157,7 @@ class SysAdnGeo @Inject() (
   /** Рендер страницы с формой редактирования osm-производной. */
   def editNodeOsm(geoId: String, adnId: String) = IsSuperuserAdnGeoGet(geoId, adnId).async { implicit request =>
     import request.adnGeo
-    val nodeFut = MAdnNodeCache.getById(adnGeo.adnId)
+    val nodeFut = mNodeCache.getById(adnGeo.adnId)
     val form = {
       val urlPrOpt = adnGeo.url
         .flatMap { OsmUrlParseResult.fromUrl }
@@ -172,7 +173,7 @@ class SysAdnGeo @Inject() (
     lazy val logPrefix = s"editNodeOsmSubmit($geoId): "
     editOsmNodeFormM.bindFromRequest().fold(
       {formWithErrors =>
-        val nodeFut = MAdnNodeCache.getById(request.adnGeo.adnId)
+        val nodeFut = mNodeCache.getById(request.adnGeo.adnId)
         debug(logPrefix + "Failed to bind form:\n" + formatFormErrors(formWithErrors))
         nodeFut map { nodeOpt =>
           NotAcceptable(editAdnGeoOsmTpl(request.adnGeo, formWithErrors, nodeOpt.get))
@@ -270,7 +271,7 @@ class SysAdnGeo @Inject() (
   /** Рендер страницы с формой редактирования geo-круга. */
   def editCircle(geoId: String, adnId: String) = IsSuperuserAdnGeoGet(geoId, adnId).async { implicit request =>
     import request.adnGeo
-    val nodeOptFut = MAdnNodeCache.getById(adnGeo.adnId)
+    val nodeOptFut = mNodeCache.getById(adnGeo.adnId)
     val formBinded = circleFormM.fill(adnGeo)
     nodeOptFut map { nodeOpt =>
       Ok(editCircleTpl(adnGeo, formBinded, nodeOpt.get))
@@ -282,7 +283,7 @@ class SysAdnGeo @Inject() (
     lazy val logPrefix = s"editCircleSubmit($geoId): "
     circleFormM.bindFromRequest().fold(
       {formWithErrors =>
-        val nodeOptFut = MAdnNodeCache.getById(request.adnGeo.adnId)
+        val nodeOptFut = mNodeCache.getById(request.adnGeo.adnId)
         debug(logPrefix + "Failed to bind form:\n" + formatFormErrors(formWithErrors))
         nodeOptFut.map { nodeOpt =>
           NotAcceptable(editCircleTpl(request.adnGeo, formWithErrors, nodeOpt.get))
@@ -321,7 +322,7 @@ class SysAdnGeo @Inject() (
 
   /** Собрать карту узлов на основе списка. */
   private def adnIds2NodesMap(parentIds: TraversableOnce[String]): Future[Map[String, MAdnNode]] = {
-    MAdnNodeCache.multiGet(parentIds)
+    mNodeCache.multiGet(parentIds)
       .map { nodes2nodesMap }
   }
 
@@ -334,7 +335,7 @@ class SysAdnGeo @Inject() (
   private def collectNodesOnLevels(glevels: Seq[NodeGeoLevel]): Future[Seq[MAdnNode]] = {
     MAdnNodeGeo.findAdnIdsWithLevels(glevels)
       .map { _.toSet }
-      .flatMap { MAdnNodeCache.multiGet(_) }
+      .flatMap { mNodeCache.multiGet(_) }
   }
 
   /**
@@ -431,7 +432,7 @@ class SysAdnGeo @Inject() (
       {geo2 =>
         // Нужно собрать значение для поля allParentIds, пройдясь по все родительским узлам.
         Future.traverse( geo2.directParentIds ) { parentAdnId =>
-          MAdnNodeCache.getById(parentAdnId).map { parentNodeOpt =>
+          mNodeCache.getById(parentAdnId).map { parentNodeOpt =>
             parentNodeOpt.get.geo.allParentIds
           }
         }.map { idsSets =>

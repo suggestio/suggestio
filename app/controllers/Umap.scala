@@ -29,8 +29,9 @@ import scala.concurrent.{ExecutionContext, Future}
  * Description: Контроллер для umap-backend'ов.
  */
 class Umap @Inject() (
-  override val messagesApi        : MessagesApi,
   umapUtil                        : UmapUtil,
+  override val mNodeCache         : MAdnNodeCache,
+  override val messagesApi        : MessagesApi,
   override implicit val current   : play.api.Application,
   override implicit val ec        : ExecutionContext,
   override implicit val esClient  : Client,
@@ -101,7 +102,7 @@ class Umap @Inject() (
   def getDataLayerGeoJson(ngl: NodeGeoLevel) = IsSuperuser.async { implicit request =>
     MAdnNodeGeo.findAllRenderable(ngl, maxResults = 600).flatMap { geos =>
       val nodesMapFut: Future[Map[String, MAdnNode]] = {
-        MAdnNodeCache.multiGet(geos.map(_.adnId).toSet)
+        mNodeCache.multiGet(geos.map(_.adnId).toSet)
           .map { nodes => nodes.map(node => node.id.get -> node).toMap}
       }
       nodesMapFut map { nodesMap =>
@@ -238,7 +239,7 @@ class Umap @Inject() (
       val nodesCentersUpdateInfoFut: Future[Iterable[(MAdnNode, Option[GeoPoint])]] = {
         Future.traverse( centersUpdateMap ) {
           case (adnId, newCenterOpt) =>
-            MAdnNodeCache.getById(adnId).map {
+            mNodeCache.getById(adnId).map {
               _.map { _ -> newCenterOpt }
             }
         } map {

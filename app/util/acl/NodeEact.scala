@@ -2,12 +2,13 @@ package util.acl
 
 import controllers.SioController
 import io.suggest.di.IEsClient
-import models.{MAdnNodeCache, MAdnNode}
+import models.MAdnNode
 import models.req.SioReqMd
 import models.usr.{EmailPwIdent, EmailActivation}
 import play.api.mvc.{Result, ActionBuilder, Request}
 import util.PlayMacroLogsI
 import util.acl.PersonWrapper.PwOpt_t
+import util.di.INodeCache
 import views.html.lk.adn.invite.inviteInvalidTpl
 
 import scala.concurrent.Future
@@ -24,6 +25,7 @@ trait NodeEactAcl
   with PlayMacroLogsI
   with IEsClient
   with OnUnauthUtilCtl
+  with INodeCache
 {
 
   /** Абстрактная логика ActionBuider'ов, обрабатывающих запросы активации инвайта на узел. */
@@ -41,7 +43,7 @@ trait NodeEactAcl
     /** Запуск логики экшена. */
     override def invokeBlock[A](request: Request[A], block: (NodeEactRequest[A]) => Future[Result]): Future[Result] = {
       val eaOptFut = EmailActivation.getById(eaId)
-      val nodeOptFut = MAdnNodeCache.getById(nodeId)
+      val nodeOptFut = mNodeCache.getById(nodeId)
 
       val pwOpt = PersonWrapper.getFromRequest(request)
       val srmFut = SioReqMd.fromPwOpt(pwOpt)

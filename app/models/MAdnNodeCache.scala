@@ -1,8 +1,12 @@
 package models
 
-import play.api.Play.current
+import com.google.inject.Inject
+import play.api.Configuration
 import io.suggest.event._
 import io.suggest.event.SioNotifier.Event
+import play.api.cache.CacheApi
+
+import scala.concurrent.duration._
 
 /**
  * Suggest.io
@@ -12,9 +16,19 @@ import io.suggest.event.SioNotifier.Event
  * для оперативного опустошения кеша.
  * getByIdCached() не следует активно использовать в личном кабинете, т.к. она не гарантирует реалтайма.
  */
-object MAdnNodeCache extends AdnEsModelCache[MAdnNode] {
+class MAdnNodeCache @Inject() (
+  configuration         : Configuration,
+  override val cache    : CacheApi
+)
+  extends AdnEsModelCache[MAdnNode]
+{
 
-  override val EXPIRE_SEC: Int = current.configuration.getInt("adn.node.cache.expire.seconds") getOrElse 60
+  override val EXPIRE: FiniteDuration = {
+    configuration.getInt("adn.node.cache.expire.seconds")
+      .getOrElse(60)
+      .seconds
+  }
+
   override val CACHE_KEY_SUFFIX = ".nc"
 
   override type GetAs_t = MAdnNode

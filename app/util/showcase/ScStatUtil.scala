@@ -31,6 +31,7 @@ class ScStatUtil @Inject() (
   configuration           : Configuration,
   statUtil                : StatUtil,
   scStatSaver             : ScStatSaver,
+  mNodeCache              : MAdnNodeCache,
   implicit val ec         : ExecutionContext,
   implicit val esClient   : Client
 ) {
@@ -125,7 +126,7 @@ class ScStatUtil @Inject() (
 
     def screenOpt: Option[DevScreen] = adSearchOpt.flatMap(_.screen)
 
-    def adnNodeOptFut = MAdnNodeCache.maybeGetByIdCached(onNodeIdOpt)
+    def adnNodeOptFut = mNodeCache.maybeGetByIdCached(onNodeIdOpt)
 
     def reqPath: Option[String] = Some(request.uri)
 

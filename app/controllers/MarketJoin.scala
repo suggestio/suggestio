@@ -25,8 +25,9 @@ import scala.concurrent.ExecutionContext
  * Description: Контроллер раздела сайта со страницами и формами присоединения к sio-market.
  */
 class MarketJoin @Inject() (
-  override val messagesApi: MessagesApi,
-  override val mailer: IMailerWrapper,
+  mInviteRequest                : MInviteRequest_,
+  override val messagesApi      : MessagesApi,
+  override val mailer           : IMailerWrapper,
   override val current          : play.api.Application,
   override implicit val ec      : ExecutionContext,
   implicit val esClient         : Client,
@@ -63,7 +64,8 @@ class MarketJoin @Inject() (
         MInviteRequest(
           name = s"Запрос звонка от '$name' тел $phone",
           reqType = InviteReqTypes.Adv,
-          company = Left(mc)
+          company = Left(mc),
+          companion = mInviteRequest
         )
       }
       {mir =>

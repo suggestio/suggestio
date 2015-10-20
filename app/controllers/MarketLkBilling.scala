@@ -27,6 +27,7 @@ import play.api.mvc.Result
 class MarketLkBilling @Inject() (
   override val messagesApi      : MessagesApi,
   db                            : Database,
+  override val mNodeCache       : MAdnNodeCache,
   override val current          : play.api.Application,
   override implicit val ec      : ExecutionContext,
   implicit val esClient         : Client,
@@ -144,7 +145,7 @@ class MarketLkBilling @Inject() (
   private def _prepareNodeMbmds(adnId: String)(f: (List[MBillMmpDaily], MAdnNode) => Result)
                                (implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
     // TODO По идее надо бы проверять узел на то, является ли он ресивером наверное?
-    val adnNodeFut = MAdnNodeCache.getById(adnId)
+    val adnNodeFut = mNodeCache.getById(adnId)
     val mbdms = db.withConnection { implicit c =>
       // TODO Opt Нам тут нужны только номера договоров (id), а не сами договоры.
       val contracts = MBillContract.findForAdn(adnId, isActive = Some(true))

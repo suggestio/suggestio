@@ -25,6 +25,7 @@ import scala.concurrent.duration._
 class SiowebEsModel @Inject() (
   mMedia              : MMedia_,
   mCalendar           : MCalendar_,
+  mInviteRequest      : MInviteRequest_,
   implicit val ec     : ExecutionContext
 ) extends PlayMacroLogsDyn {
 
@@ -34,7 +35,7 @@ class SiowebEsModel @Inject() (
    */
   def ES_MODELS: Seq[EsModelCommonStaticT] = {
     EsModelUtil.ES_MODELS ++ Seq[EsModelCommonStaticT](
-      EmailPwIdent, EmailActivation, MExtIdent, MMartCategory, MInviteRequest, mCalendar,
+      EmailPwIdent, EmailActivation, MExtIdent, MMartCategory, mInviteRequest, mCalendar,
       MRemoteError, MGallery, MAiMad,
       adv.MExtTarget,
       event.MEvent, sec.MAsymKey,

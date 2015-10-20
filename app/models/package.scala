@@ -128,7 +128,7 @@ package object models {
 
   type MAdvMode             = MAdvModes.MAdvMode
   type AudienceSize         = AudienceSizes.AudienceSize
-  type InviteReqType        = InviteReqTypes.InviteReqType
+  type InviteReqType        = InviteReqTypes.T
 
   type AdnShownType         = AdnShownTypes.AdnShownType
 

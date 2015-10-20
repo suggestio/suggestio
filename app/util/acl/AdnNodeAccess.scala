@@ -3,6 +3,7 @@ package util.acl
 import io.suggest.di.{IExecutionContext, IEsClient}
 import models._
 import models.req.SioReqMd
+import util.di.INodeCache
 import scala.concurrent.Future
 import util.acl.PersonWrapper.PwOpt_t
 import play.api.mvc._
@@ -20,6 +21,7 @@ trait AdnNodeAccess
   with IExecutionContext
   with IEsClient
   with OnUnauthUtilCtl
+  with INodeCache
 {
 
   /** Доступ к узлу, к которому НЕ обязательно есть права на админство. */
@@ -39,7 +41,7 @@ trait AdnNodeAccess
           val povAdnNodeOptFut = povAdnIdOpt.fold
             { Future successful Option.empty[MAdnNode] }
             { povAdnId => isAdnNodeAdmin(povAdnId, pwOpt) }
-          val adnNodeOptFut = MAdnNodeCache.getById(adnId)
+          val adnNodeOptFut = mNodeCache.getById(adnId)
           checkAdnNodeCredsFut(adnNodeOptFut, adnId, pwOpt) flatMap {
             // Это админ текущего узла
             case Right(adnNode) =>

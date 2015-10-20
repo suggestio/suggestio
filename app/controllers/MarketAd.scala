@@ -40,6 +40,7 @@ class MarketAd @Inject() (
   override implicit val current   : play.api.Application,
   override val cache              : CacheApi,
   tempImgSupport                  : TempImgSupport,
+  override val mNodeCache         : MAdnNodeCache,
   override val db                 : Database,
   override implicit val ec        : ExecutionContext,
   override implicit val esClient  : Client,

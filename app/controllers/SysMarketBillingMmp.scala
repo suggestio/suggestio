@@ -26,6 +26,7 @@ class SysMarketBillingMmp @Inject() (
   mCalendar                     : MCalendar_,
   override val messagesApi      : MessagesApi,
   override val db               : Database,
+  mNodeCache                    : MAdnNodeCache,
   override implicit val ec      : ExecutionContext,
   implicit val esClient         : Client,
   override implicit val sn      : SioNotifierStaticClientI
@@ -89,7 +90,7 @@ class SysMarketBillingMmp @Inject() (
   private def _createMmpDaily(formM: Form[MBillMmpDaily])(implicit request: ContractRequest[AnyContent]): Future[Html] = {
     val mcalsFut = mCalendar.getAll()
     for {
-      adnNodeOpt <- MAdnNodeCache.getById(request.contract.adnId)
+      adnNodeOpt <- mNodeCache.getById(request.contract.adnId)
       mcals      <- mcalsFut
     } yield {
       createMppDailyTpl(request.contract, formM, adnNodeOpt, mcals)
@@ -136,7 +137,7 @@ class SysMarketBillingMmp @Inject() (
       (mbmd, mbc)
     }
     val (mbmd, mbc) = syncResult
-    val nodeOptFut = MAdnNodeCache.getById(mbc.adnId)
+    val nodeOptFut = mNodeCache.getById(mbc.adnId)
     val formBinded = mmpFormM.fill(mbmd)
     for {
       nodeOpt <- nodeOptFut

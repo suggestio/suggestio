@@ -1,12 +1,12 @@
 package models
 
 import io.suggest.model.es.{EsModelT, EsModelStaticT}
+import util.xplay.ICacheApi
+import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import io.suggest.event.subscriber.SnClassSubscriber
 import io.suggest.event.SNStaticSubscriber
-import play.api.Play.current
-import play.api.cache.Cache
 import io.suggest.event.SioNotifier.Event
 import akka.actor.ActorContext
 import io.suggest.ym.model.common.EMAdNetMember
@@ -23,13 +23,17 @@ import scala.reflect.ClassTag
 /** В sioweb есть быстрый кеш, поэтому тут кеш-прослойка для моделей. */
 // TODO Следует засунуть поддержку ehcache в sioutil и отправить этот трейт с кеш-поддержкой туда.
 // TODO Это по идее как бы трейт, но из-за ClassTag использовать trait нельзя.
-abstract class EsModelCache[T1 <: EsModelT : ClassTag] extends SNStaticSubscriber with SnClassSubscriber {
+abstract class EsModelCache[T1 <: EsModelT : ClassTag]
+  extends SNStaticSubscriber
+  with SnClassSubscriber
+  with ICacheApi
+{
 
   type StaticModel_t <: EsModelStaticT { type T = T1 }
   def companion: StaticModel_t
 
-  val EXPIRE_SEC: Int
-  val CACHE_KEY_SUFFIX: String
+  val EXPIRE            : FiniteDuration
+  val CACHE_KEY_SUFFIX  : String
 
   type GetAs_t
 
@@ -42,7 +46,7 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag] extends SNStaticSubscribe
 
   def getByIdFromCache(id: String): Option[T1] = {
     val ck = cacheKey(id)
-    Cache.getAs[T1](ck)
+    cache.get[T1](ck)
   }
 
   /**
@@ -53,7 +57,7 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag] extends SNStaticSubscribe
   def getById(id: String)(implicit ec: ExecutionContext, client: Client): Future[Option[T1]] = {
     // 2014.nov.24: Форсируем полный асинхрон при работе с кешем.
     val ck = cacheKey(id)
-    Future { Cache.getAs[T1](ck) }
+    Future { cache.get[T1](ck) }
       .filter { _.isDefined }
       .recoverWith { case ex: NoSuchElementException => getByIdAndCache(id, ck) }
   }
@@ -83,7 +87,7 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag] extends SNStaticSubscribe
           val id = result.idOrNull
           if (ncisSet contains id) {
             val ck = cacheKey(id)
-            Cache.set(ck, result, EXPIRE_SEC)
+            cache.set(ck, result, EXPIRE)
           }
         }
       }
@@ -121,7 +125,7 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag] extends SNStaticSubscribe
     val resultFut = companion.getById(id)
     resultFut onSuccess {
       case Some(adnn) =>
-        Cache.set(ck, adnn, EXPIRE_SEC)
+        cache.set(ck, adnn, EXPIRE)
       case _ => // do nothing
     }
     resultFut
@@ -143,7 +147,7 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag] extends SNStaticSubscribe
     val idOrNull = event2id(event)
     if (idOrNull != null) {
       val ck = cacheKey(idOrNull)
-      Cache.remove(ck)
+      cache.remove(ck)
     }
   }
 

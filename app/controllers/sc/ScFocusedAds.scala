@@ -1,6 +1,6 @@
 package controllers.sc
 
-import _root_.util.di.{IScUtil, IScStatUtil}
+import _root_.util.di.{INodeCache, IScUtil, IScStatUtil}
 import _root_.util.jsa.{JsAppendById, JsAction, SmRcvResp, Js}
 import io.suggest.common.css.FocusedTopLeft
 import io.suggest.util.Lists
@@ -28,6 +28,7 @@ trait ScFocusedAdsBase
   extends ScController
   with PlayMacroLogsI
   with IScUtil
+  with INodeCache
 {
 
   /** Базовая логика обработки запросов сбора данных по рекламным карточкам и компиляции оных в результаты выполнения запросов. */
@@ -141,7 +142,7 @@ trait ScFocusedAdsBase
       * Порядок продьюсеров в списке неопределён. */
     def mads2ProdsFut: Future[Seq[MAdnNode]] = {
       prodIdsFut.flatMap { prodIds =>
-        MAdnNodeCache.multiGet(prodIds)
+        mNodeCache.multiGet(prodIds)
       }
     }
 
@@ -288,7 +289,7 @@ trait ScFocusedAdsBase
 
     def madProducerOptFut(madOpt: Option[MAd]): Future[Option[MAdnNode]] = {
       val prodIdOpt = madOpt.map(_.producerId)
-      MAdnNodeCache.maybeGetByIdCached(prodIdOpt)
+      mNodeCache.maybeGetByIdCached(prodIdOpt)
     }
 
     def firstAdIndex = _adSearch.offset

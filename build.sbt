@@ -96,6 +96,8 @@ libraryDependencies ++= {
     exclude("commons-logging", "commons-logging")
     exclude("org.w3c.css", "sac")
   ,
+  // спаривание guice и акторов требует танцев вприсядку
+  //"net.codingwell" %% "scala-guice" % "4.0.0",
   "commons-io" % "commons-io" % "2.4",
   // test
   // play-2.3.x: Устарел selenium

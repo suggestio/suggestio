@@ -4,6 +4,7 @@ import controllers.SioController
 import io.suggest.di.{IExecutionContext, IEsClient}
 import models._
 import models.req.SioReqMd
+import util.di.INodeCache
 import util.{PlayMacroLogsI, PlayMacroLogsDyn, PlayLazyMacroLogsImpl}
 import scala.concurrent.Future
 import util.acl.PersonWrapper.PwOpt_t
@@ -36,7 +37,11 @@ trait OnUnauthNodeCtl
 
 
 /** Аддон для сборки ctl-аддонов с проверкой admin-доступа на узел. */
-trait IsAdnNodeAdminUtilCtl extends IEsClient with IExecutionContext {
+trait IsAdnNodeAdminUtilCtl
+  extends IEsClient
+  with IExecutionContext
+  with INodeCache
+{
   trait IsAdnNodeAdminUtil extends PlayMacroLogsDyn {
 
     def checkAdnNodeCredsFut(adnNodeOptFut: Future[Option[MAdnNode]], adnId: String, pwOpt: PwOpt_t): Future[Either[Option[MAdnNode], MAdnNode]] = {
@@ -69,7 +74,7 @@ trait IsAdnNodeAdminUtilCtl extends IEsClient with IExecutionContext {
     }
 
     def isAdnNodeAdmin(adnId: String, pwOpt: PwOpt_t): Future[Option[MAdnNode]] = {
-      val fut = MAdnNodeCache.getById(adnId)
+      val fut = mNodeCache.getById(adnId)
       checkAdnNodeCredsOpt(fut, adnId, pwOpt)
     }
 

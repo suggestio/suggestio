@@ -3,11 +3,12 @@ package controllers.sc
 import io.suggest.ym.model.MAd
 import io.suggest.ym.model.ad.AdsSearchArgsDfltImpl
 import io.suggest.ym.model.common.AdShowLevels
-import models.{MAdnNode, MAdnNodeCache}
+import models.MAdnNode
 import models.im.DevScreen
 import models.msc.{MScApiVsn, ScReqArgsDflt, ScReqArgs}
 import play.api.mvc.Result
 import util.acl.AbstractRequestWithPwOpt
+import util.di.INodeCache
 
 import scala.concurrent.Future
 
@@ -18,7 +19,11 @@ import scala.concurrent.Future
  * Description: Поддержка переключения узла выдачи при щелчке на размещенную карточку.
  * По сути тут комбинация из index и focused логик.
  */
-trait ScIndexAdOpen extends ScFocusedAds with ScIndexNodeCommon {
+trait ScIndexAdOpen
+  extends ScFocusedAds
+  with ScIndexNodeCommon
+  with INodeCache
+{
 
   /** Тело экшена возврата медиа-кнопок расширено поддержкой переключения на index-выдачу узла-продьюсера
     * рекламной карточки, которая заинтересовала юзера. */
@@ -44,7 +49,7 @@ trait ScIndexAdOpen extends ScFocusedAds with ScIndexNodeCommon {
           MAd.dynCount(args)
         }
 
-        val prodFut = MAdnNodeCache.getById(producerId)
+        val prodFut = mNodeCache.getById(producerId)
           .map(_.get)
         // Как выяснилось, бывают карточки-сироты (продьюсер удален, карточка -- нет). Нужно сообщать об этой ошибке.
         prodFut onFailure { case ex =>

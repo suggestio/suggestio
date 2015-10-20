@@ -18,6 +18,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 /** Статическая утиль для вычисления списка экстра-ресиверов на основе гео-родительских связей. */
 class AdvFreeGeoParentRcvrs @Inject() (
+  mNodeCache                      : MAdnNodeCache,
   configuration                   : Configuration,
   implicit private val esClient   : Client,
   implicit private val ec         : ExecutionContext
@@ -72,7 +73,7 @@ class AdvFreeGeoParentRcvrs @Inject() (
    *         с исходной картой.
    */
   def calcFreeGeoParentRcvrs(geoRcvrIds: TraversableOnce[String]): Future[Receivers_t] = {
-    MAdnNodeCache.multiGet(geoRcvrIds)
+    mNodeCache.multiGet(geoRcvrIds)
       .map { nodes =>
         val sls = Set(SinkShowLevels.GEO_PRODUCER_SL)
         nodes.iterator

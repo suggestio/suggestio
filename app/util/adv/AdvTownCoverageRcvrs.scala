@@ -17,6 +17,7 @@ import models._
  * Здесь калькулятор карты экстра-ресиверов, который реализует этот принцип. 
  */
 class AdvTownCoverageRcvrs @Inject() (
+  mNodeCache                      : MAdnNodeCache,
   configuration                   : Configuration,
   implicit private val esClient   : Client,
   implicit private val ec         : ExecutionContext
@@ -41,7 +42,7 @@ class AdvTownCoverageRcvrs @Inject() (
       val rcvrsIter = allDirectRcvrs
         .iterator
         .map(_._2.receiverId)
-      MAdnNodeCache.multiGet(rcvrsIter)
+      mNodeCache.multiGet(rcvrsIter)
     }
     val districtTypeNames = AdnShownTypes.districtNames
     // Выбрать только ресиверы районов, сгруппировать по гео-родителям (городам).
@@ -53,7 +54,7 @@ class AdvTownCoverageRcvrs @Inject() (
     }
     // Рисуем карту узлов городов: townAdnId -> townNode
     val townsMapFut = townDistrictsRcvrsMapFut.flatMap { tdRcvrsMap =>
-      MAdnNodeCache.multiGet( tdRcvrsMap.keysIterator )
+      mNodeCache.multiGet( tdRcvrsMap.keysIterator )
     } map {
        _.iterator
         .filter { _.adn.shownTypeId  ==  AdnShownTypes.TOWN.name }

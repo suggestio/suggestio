@@ -29,6 +29,7 @@ class SysMarketBilling @Inject() (
   override val messagesApi        : MessagesApi,
   billing                         : Billing,
   override val db                 : Database,
+  override val mNodeCache         : MAdnNodeCache,
   override implicit val ec        : ExecutionContext,
   override implicit val esClient  : Client,
   override implicit val sn        : SioNotifierStaticClientI
@@ -81,7 +82,7 @@ class SysMarketBilling @Inject() (
 
   /** Страница с информацией по биллингу. */
   def billingFor(adnId: String) = IsSuperuser.async { implicit request =>
-    val adnNodeOptFut = MAdnNodeCache.getById(adnId)
+    val adnNodeOptFut = mNodeCache.getById(adnId)
     // Синхронные модели
     val syncResult = db.withConnection { implicit c =>
       val contracts = MBillContract.findForAdn(adnId)
@@ -263,7 +264,7 @@ class SysMarketBilling @Inject() (
           if (maybeMbc0.isDefined)
             mbcs ::= maybeMbc0.get
           Future.traverse(mbcs) { mbc =>
-            MAdnNodeCache.getById(mbc.adnId) map { adnNodeOpt =>
+            mNodeCache.getById(mbc.adnId) map { adnNodeOpt =>
               mbc -> adnNodeOpt.get
             }
           } map { mbcsNoded =>
@@ -272,7 +273,7 @@ class SysMarketBilling @Inject() (
         } else {
           // Есть точное совпадение. Нужно отрендерить страницу-подтверждение.
           val mbc = maybeMbc.get
-          MAdnNodeCache.getById(mbc.adnId) map { adnNodeOpt =>
+          mNodeCache.getById(mbc.adnId) map { adnNodeOpt =>
             val adnNode = adnNodeOpt.get
             Ok(confirmIncomingPaymentTpl(adnNode, mbc, formBinded))
           }
@@ -376,7 +377,7 @@ class SysMarketBilling @Inject() (
         val contract = db.withConnection { implicit c =>
           MBillContract.getById(contractId).get
         }
-        MAdnNodeCache.getById(contract.adnId) map { adnNodeOpt =>
+        mNodeCache.getById(contract.adnId) map { adnNodeOpt =>
           Ok(createSinkComTpl(formWithErrors, contract, adnNodeOpt.get))
         }
       },
@@ -405,7 +406,7 @@ class SysMarketBilling @Inject() (
       msc -> mbc
     }
     val (msc, mbc) = syncResult
-    val adnNodeOptFut = MAdnNodeCache.getById(mbc.adnId)
+    val adnNodeOptFut = mNodeCache.getById(mbc.adnId)
     val form: Form[MSinkComission] = formOpt getOrElse { sinkComFormM fill msc }
     adnNodeOptFut map { adnNodeOpt =>
       Ok(editSinkComTpl(msc, form, mbc, adnNodeOpt.get))

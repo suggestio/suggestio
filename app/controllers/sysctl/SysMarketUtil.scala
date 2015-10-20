@@ -18,7 +18,7 @@ import util.acl.AbstractRequestWithPwOpt
  * Created: 06.04.15 21:37
  * Description: Утиль для контроллеров Sys-Market. Формы, код и т.д.
  */
-object SysMarketUtil extends PlayMacroLogsDyn {
+class SysMarketUtil extends PlayMacroLogsDyn {
 
   /** Форма для маппинг метаданных произвольного узла ADN. */
   def adnNodeMetaM = mapping(

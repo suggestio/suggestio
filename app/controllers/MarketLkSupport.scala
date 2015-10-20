@@ -28,6 +28,7 @@ class MarketLkSupport @Inject() (
   override val mailer           : IMailerWrapper,
   override val identUtil        : IdentUtil,
   supportUtil                   : SupportUtil,
+  override val mNodeCache       : MAdnNodeCache,
   override implicit val ec      : ExecutionContext,
   implicit val esClient         : Client,
   override implicit val sn      : SioNotifierStaticClientI

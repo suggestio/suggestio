@@ -21,6 +21,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class ShowcaseNodeListUtil @Inject() (
+  mNodeCache              : MAdnNodeCache,
   configuration           : Configuration,
   implicit val ec         : ExecutionContext,
   implicit val esClient   : Client
@@ -130,7 +131,7 @@ class ShowcaseNodeListUtil @Inject() (
       .recoverWith {
         case ex: NoSuchElementException =>
           // Запускаем чтение из кеша уже известного узла.
-          MAdnNodeCache.maybeGetByIdCached(currAdnIdOpt)
+          mNodeCache.maybeGetByIdCached(currAdnIdOpt)
             .filter(_.nonEmpty)
             .map(_.get)
 

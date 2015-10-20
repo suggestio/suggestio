@@ -23,6 +23,7 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 @Singleton
 class AdvUtil @Inject() (
+  mNodeCache              : MAdnNodeCache,
   mmpDailyBilling         : MmpDailyBilling,
   configuration           : Configuration,
   db                      : Database,
@@ -68,7 +69,7 @@ class AdvUtil @Inject() (
         // самоконтроль: резать переданного продьюсера, если он не является продьюсером данной карточки.
         .filter { _.id contains mad.producerId }
         .fold[Future[MAdnNode]]
-          { MAdnNodeCache.getById(mad.producerId).map(_.get) }
+          { mNodeCache.getById(mad.producerId).map(_.get) }
           { Future.successful }
     } else {
       Future successful producerOpt.orNull

@@ -6,6 +6,7 @@ import controllers.{IDb, SioController}
 import io.suggest.di.{IExecutionContext, IEsClient}
 import models.req.SioReqMd
 import play.api.mvc.{Result, ActionBuilder, Request}
+import util.di.INodeCache
 import util.{PlayLazyMacroLogsImpl, PlayMacroLogsI}
 import util.acl.PersonWrapper.PwOpt_t
 import models._
@@ -28,6 +29,7 @@ trait AdvWndAccess
   with IExecutionContext
   with IDb
   with OnUnauthUtilCtl
+  with INodeCache
 {
 
   /** Логика работы ActionBuilder'а, проверяющего права доступа к окошку
@@ -60,7 +62,7 @@ trait AdvWndAccess
      *         Если связей не установлено или узел отсутствует, то None.
      */
     def findRcvrMdr(pai: String, pwOpt: PwOpt_t): Future[Option[PovRcvrInfo]] = {
-      val dgNodeOptFut = MAdnNodeCache.getById(pai)
+      val dgNodeOptFut = mNodeCache.getById(pai)
         .map { _.filter {
           IsAdnNodeAdmin.isAdnNodeAdminCheck(_, pwOpt)
         }}
@@ -150,13 +152,13 @@ trait AdvWndAccess
         case pwOpt @ Some(pw) =>
           MAd.getById(adId).flatMap {
             case Some(mad) =>
-              val producerOptFut = MAdnNodeCache.getById(mad.producerId)
+              val producerOptFut = mNodeCache.getById(mad.producerId)
               // Вычислить id ресивера исходя того, что передано в fromAdnId. Если во fromAdnId узел-модератор, то
               val rcvrIdOpt = povAdnId filter {
                 rcvrId  =>  rcvrId != mad.producerId  &&  hasNotExpiredAdvs(rcvrId)
               }
               val rcvrOptFut = rcvrIdOpt
-                .fold [Future[Option[MAdnNode]]] { Future successful None } { MAdnNodeCache.getById }
+                .fold [Future[Option[MAdnNode]]] { Future successful None } { mNodeCache.getById }
               producerOptFut flatMap {
                 case Some(producer) =>
                   // Strict-проверка прав на продьюсер, чтобы не терять логику работы в случае ресивера при суперюзера.

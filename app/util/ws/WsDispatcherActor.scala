@@ -10,6 +10,8 @@ import scala.collection.mutable
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
+import play.api.Play.current
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -22,7 +24,8 @@ object WsDispatcherActor {
 
   implicit val ASK_TIMEOUT = Timeout(5.seconds)
 
-  val ACTOR_PATH = SiowebSup.actorPath / ACTOR_NAME
+  private val siowebSup = current.injector.instanceOf[SiowebSup]
+  val ACTOR_PATH = siowebSup.actorPath / ACTOR_NAME
 
   def actorSelection = Akka.system.actorSelection(ACTOR_PATH)
 

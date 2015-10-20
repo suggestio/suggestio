@@ -9,6 +9,7 @@ import play.api.mvc.Result
 import play.twirl.api.{HtmlFormat, Html}
 import util.PlayMacroLogsI
 import util.acl.{MaybeAuth, AbstractRequestWithPwOpt}
+import util.di.INodeCache
 
 import scala.concurrent.Future
 
@@ -32,6 +33,7 @@ trait ScSyncSiteGeo
   with ScNodesListBase
   with ScSiteBase
   with MaybeAuth
+  with INodeCache
 {
 
   /**
@@ -253,7 +255,7 @@ trait ScSyncSiteGeo
     lazy val adnNodeReqFut: Future[Option[MAdnNode]] = {
       // Использовать любой заданный id узла, если возможно.
       val adnIdOpt = _scState.adnId orElse _siteArgs.adnId
-      MAdnNodeCache.maybeGetByIdCached( adnIdOpt )
+      mNodeCache.maybeGetByIdCached( adnIdOpt )
     }
 
     def indexHtmlLogicFut: Future[HtmlGeoIndexLogic] = {
