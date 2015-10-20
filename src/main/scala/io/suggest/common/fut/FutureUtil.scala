@@ -25,4 +25,22 @@ object FutureUtil {
     }
   }
 
+
+  /**
+   * Часто бывает необходимость сверстки Option[T] в фьючерс с опциональным значением.
+   * Тут код для укорачивания такой сверстки.
+   * @param opt Исходное опциональное значение.
+   * @param defined Функция, вызываемая для исходного значения T.
+   * @tparam T Тип исходного значения.
+   * @tparam R Тип результирующего значения.
+   * @return Фьючерс с опциональным результатом.
+   */
+  def optFut2futOpt[T, R](opt: Option[T])(defined: T => Future[Option[R]]): Future[Option[R]] = {
+    opt.fold {
+      Future successful Option.empty[R]
+    } { v =>
+      defined(v)
+    }
+  }
+
 }
