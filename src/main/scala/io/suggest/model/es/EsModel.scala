@@ -1,5 +1,6 @@
 package io.suggest.model.es
 
+import io.suggest.common.fut.FutureUtil
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.action.delete.DeleteRequestBuilder
@@ -62,10 +63,10 @@ trait EsModelStaticT extends EsModelCommonStaticT {
   }
 
   /** Вернуть id если он задан. Часто бывает, что idOpt, а не id. */
-  def maybeGetById(idOpt: Option[String])(implicit ec: ExecutionContext, client: Client): Future[Option[T]] = {
-    idOpt match {
-      case Some(id) => getById(id)
-      case None     => Future successful None
+  def maybeGetById(idOpt: Option[String], options: IGetOpts = _getArgsDflt)
+                  (implicit ec: ExecutionContext, client: Client): Future[Option[T]] = {
+    FutureUtil.optFut2futOpt(idOpt) {
+      getById(_, options)
     }
   }
 

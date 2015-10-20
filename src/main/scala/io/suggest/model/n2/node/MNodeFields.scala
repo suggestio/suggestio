@@ -7,6 +7,7 @@ import io.suggest.model.n2.geo.MNodeGeo
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.extra.MNodeExtras
 import io.suggest.model.n2.node.meta.MMeta
+import io.suggest.ym.model.NodeGeoLevel
 
 /**
  * Suggest.io
@@ -69,10 +70,21 @@ object MNodeFields {
 
   /** Абсолютные названия географических полей.*/
   object Geo extends PrefixedFn {
+
     def GEO_FN = FieldNamesL1.Geo.name
     override protected def _PARENT_FN = GEO_FN
 
     def POINT_FN = _fullFn( MNodeGeo.Fields.POINT_FN )
+
+    def SHAPE_FN = _fullFn( MNodeGeo.Fields.Shape.SHAPE_FN )
+    def SHAPE_GLEVEL_FN = _fullFn( MNodeGeo.Fields.Shape.SHAPE_GLEVEL_FN )
+
+    /** Абсолютное имя shape-поля указанного уровня в SHAPE_FN. */
+    def geoShapeFn(ngl: NodeGeoLevel): String = {
+      // TODO Тут дублируется часть логики SHAPE_FN, могут быть ошибки и есть возможности для оптимизации.
+      _fullFn( MNodeGeo.Fields.Shape.geoShapeFullFn(ngl) )
+    }
+
   }
 
 }

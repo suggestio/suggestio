@@ -18,6 +18,7 @@ import io.suggest.util.MacroLogsImplLazy
 trait MNodeSearch
   extends FtsAll
   with WithIds
+  with GeoShapeIntersect
   with OutEdges
   with ShownTypeId
   with AdnRights
@@ -45,6 +46,7 @@ trait MNodeSearchDflt
   extends MNodeSearch
   with FtsAllDflt
   with WithIdsDflt
+  with GeoShapeIntersectDflt
   with OutEdgesDflt
   with ShownTypeIdDflt
   with AdnRightsDflt
@@ -75,6 +77,7 @@ trait MNodeSearchWrap
   extends MNodeSearch
   with FtsAllWrap
   with WithIdsWrap
+  with GeoShapeIntersectWrap
   with OutEdgesWrap
   with ShownTypeIdWrap
   with AdnRightsWrap
