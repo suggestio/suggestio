@@ -60,15 +60,15 @@ class AdvUtil @Inject() (
    * @param mad Исходная рекламная карточка или её интерфейс.
    * @param producerOpt Экземпляр продьюсера
    */
-  def calculateReceiversFor(mad: MAdT, producerOpt: Option[MAdnNode] = None): Future[Receivers_t] = {
+  def calculateReceiversFor(mad: MAdT, producerOpt: Option[MNode] = None): Future[Receivers_t] = {
     val priOpt = mad.receivers.get(mad.producerId)
     val needProducer = priOpt.isDefined
     // Нам нужен продьюсер для фильтрации копируемых sls продьюсера. Ищем его в фоне.
-    val producerFut: Future[MAdnNode] = if (needProducer) {
+    val producerFut: Future[MNode] = if (needProducer) {
       producerOpt
         // самоконтроль: резать переданного продьюсера, если он не является продьюсером данной карточки.
         .filter { _.id contains mad.producerId }
-        .fold[Future[MAdnNode]]
+        .fold[Future[MNode]]
           { mNodeCache.getById(mad.producerId).map(_.get) }
           { Future.successful }
     } else {
@@ -84,7 +84,13 @@ class AdvUtil @Inject() (
         val psls2 = pri.sls
           // Выкинуть sink-уровни продьюсера, которые не соответствуют доступным синкам и
           // уровням отображения, которые записаны в политике исходящих размещений
-          .filter { ssl  =>  producer.adn.isReceiver  &&  producer.adn.hasSink(ssl.adnSink)  &&  producer.adn.canOutAtLevel(ssl.sl) }
+          .filter { ssl =>
+            producer.extras.adn.exists { adn =>
+              adn.isReceiver &&
+              adn.sinks.contains( ssl.adnSink ) &&
+              adn.outSls.get( ssl.sl ).exists(_.limit > 0)
+            }
+          }
         if (psls2.isEmpty) {
           // Удаляем саморесивер, т.к. уровни пусты.
           receiversMmp

@@ -1,7 +1,7 @@
 package models.adv.js.ctx
 
 import _root_.util.{TplDataFormatUtil, FormUtil}
-import models.{MAdnNode, MAdT}
+import models.{MNode, MAdT}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.api.Play.{current, configuration}
@@ -24,7 +24,7 @@ object MAdContentCtx {
     * @param producer Узел-продьюсер. Нужен для генерации title карточки.
     * @return Экземпляр MAdContentCtx.
     */
-  def fromAd(mad: MAdT, producer: MAdnNode): MAdContentCtx = {
+  def fromAd(mad: MAdT, producer: MNode): MAdContentCtx = {
     MAdContentCtx(
       // Поля карточки -- это именно поля.
       fields = mad.offers
@@ -36,10 +36,10 @@ object MAdContentCtx {
         .toSeq,
       // Заголовок карточки -- это заголовок узла.
       title = {
-        val sb = new StringBuilder(128, producer.meta.name)
-        if (producer.meta.town.isDefined) {
+        val sb = new StringBuilder(128, producer.meta.basic.name)
+        for (town <- producer.meta.address.town) {
           sb.append(" | ")
-            .append(producer.meta.town.get)
+            .append(town)
         }
         Some(sb.toString())
       },

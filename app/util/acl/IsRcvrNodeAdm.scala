@@ -109,7 +109,7 @@ trait AdvWndAccess
      * @return Фьючерс с опшином. Если Some() значит узел существует, и юзер является админом этого узла.
      *         Иначе None.
      */
-    def maybeRcvrAdmin(rcvrOptFut: Future[Option[MAdnNode]], pwOpt: PwOpt_t): Future[Option[PovRcvrInfo]] = {
+    def maybeRcvrAdmin(rcvrOptFut: Future[Option[MNode]], pwOpt: PwOpt_t): Future[Option[PovRcvrInfo]] = {
       rcvrOptFut map {
         _.filter { rcvrId  =>
           val result = IsAdnNodeAdmin.isAdnNodeAdminCheck(rcvrId, pwOpt)
@@ -136,7 +136,7 @@ trait AdvWndAccess
      * @param pwOpt Инфа по юзеру.
      * @return Фьючерс с опшеном. Если Some(), значит узел ресивера существует. Иначе None.
      */
-    def maybeRcvr2arInfo(rcvrOptFut: Future[Option[MAdnNode]], pwOpt: PwOpt_t): Future[Option[PovRcvrInfo]] = {
+    def maybeRcvr2arInfo(rcvrOptFut: Future[Option[MNode]], pwOpt: PwOpt_t): Future[Option[PovRcvrInfo]] = {
       rcvrOptFut map {
         _.map { rcvr =>
           val rcvrAdmin = IsAdnNodeAdmin.isAdnNodeAdminCheck(rcvr, pwOpt)
@@ -158,7 +158,7 @@ trait AdvWndAccess
                 rcvrId  =>  rcvrId != mad.producerId  &&  hasNotExpiredAdvs(rcvrId)
               }
               val rcvrOptFut = rcvrIdOpt
-                .fold [Future[Option[MAdnNode]]] { Future successful None } { mNodeCache.getById }
+                .fold [Future[Option[MNode]]] { Future successful None } { mNodeCache.getById }
               producerOptFut flatMap {
                 case Some(producer) =>
                   // Strict-проверка прав на продьюсер, чтобы не терять логику работы в случае ресивера при суперюзера.
@@ -256,11 +256,11 @@ trait AdvWndAccess
 
 case class AdvWndRequest[A](
   mad             : MAd,
-  producer        : MAdnNode,
-  rcvrOpt         : Option[MAdnNode],
+  producer        : MNode,
+  rcvrOpt         : Option[MNode],
   isProducerAdmin : Boolean,
   isRcvrAdmin     : Boolean,
-  mdrOpt          : Option[MAdnNode],
+  mdrOpt          : Option[MNode],
   rcvrIds         : Set[String],
   pwOpt           : PwOpt_t,
   request         : Request[A],
@@ -274,7 +274,7 @@ case class AdvWndRequest[A](
 
 /** Контейнер для данных результата работы метода [[AdvWndAccess]].findRcvrMdr(). */
 sealed case class PovRcvrInfo(
-  node        : MAdnNode,
+  node        : MNode,
   rcvrIds     : Set[String],
   isNodeAdm   : Boolean,
   isMdr       : Boolean

@@ -1,6 +1,6 @@
 package models.msys
 
-import models.MAdnNode
+import models.MNode
 
 /**
  * Suggest.io
@@ -9,6 +9,6 @@ import models.MAdnNode
  * Description: Модель выявленной проблемы с узлом при каком-то тесте.
  */
 case class NodeProblem(
-  mnode: MAdnNode,
+  mnode: MNode,
   ex   : Throwable
 )

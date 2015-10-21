@@ -14,10 +14,16 @@ import scala.concurrent.Future
  * Created: 14.10.15 17:32
  * Description: ActionBuild для запроса действия над любой карточкой без проверки прав.
  */
-trait GetAnyAd extends SioController with IEsClient with IExecutionContext {
+trait GetAnyAd
+  extends SioController
+  with IEsClient
+  with IExecutionContext
+{
 
   /** Комбинация из MaybeAuth и читалки adId из модели [[models.MAd]]. */
-  trait GetAnyAdAbstract extends ActionBuilder[RequestWithAd] {
+  trait GetAnyAdAbstract
+    extends ActionBuilder[RequestWithAd]
+  {
 
     /** id запрашиваемой карточки. */
     def adId: String

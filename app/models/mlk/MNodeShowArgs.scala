@@ -1,6 +1,6 @@
 package models.mlk
 
-import models.MAdnNode
+import models.MNode
 import models.im.MImgT
 import models.msc.{IColors, ILogoImgOpt}
 
@@ -15,14 +15,14 @@ trait INodeShowArgs
   extends ILogoImgOpt
   with IColors
 {
-  def mnode       : MAdnNode
+  def mnode       : MNode
   def isMyNode    : Boolean
   def povAdnIdOpt : Option[String]
 }
 
 
 case class MNodeShowArgs(
-  override val mnode       : MAdnNode,
+  override val mnode       : MNode,
   override val isMyNode    : Boolean,
   override val povAdnIdOpt : Option[String],
   override val logoImgOpt  : Option[MImgT],

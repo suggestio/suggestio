@@ -46,7 +46,7 @@ trait ScSiteBase
     def adnIdOpt: Option[String] = _siteArgs.adnId
 
     /** Опциональный экземпляр текущего узла. */
-    def nodeOptFut: Future[Option[MAdnNode]] = {
+    def nodeOptFut: Future[Option[MNode]] = {
       mNodeCache.maybeGetByIdCached( adnIdOpt )
     }
 
@@ -157,7 +157,7 @@ trait ScSiteBase
     * С другой стороны, лучше сразу выдать ошибку юзеру, чем отрендерить зависшую на GET showcaseIndex выдачу. */
   protected trait NodeSuppressErrors extends SiteLogic {
     /** Опциональный экземпляр текущего узла. */
-    override def nodeOptFut: Future[Option[MAdnNode]] = {
+    override def nodeOptFut: Future[Option[MNode]] = {
       super.nodeOptFut
         .recover { case ex: Throwable =>
           LOGGER.warn("Failed to get node adnId = " + _siteArgs.adnId, ex)
@@ -249,8 +249,8 @@ trait ScSiteNode
 
   /** Экшн, который рендерит страничку с дефолтовой выдачей узла. */
   def demoWebSite(adnId: String) = AdnNodeMaybeAuth(adnId).async { implicit request =>
-    val isReceiver = request.adnNode.adn.isReceiver
-    val nodeEnabled = request.adnNode.adn.isEnabled
+    val isReceiver = request.adnNode.extras.adn.exists(_.isReceiver)
+    val nodeEnabled = request.adnNode.common.isEnabled
     if (nodeEnabled && isReceiver || request.isMyNode) {
       // Собираем статистику. Тут скорее всего wifi
       Future {

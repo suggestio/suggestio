@@ -1,6 +1,8 @@
 package util.adv
 
 import com.google.inject.Inject
+import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.ym.model.common.AdnSinks
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import org.elasticsearch.client.Client
@@ -49,7 +51,11 @@ class AdvTownCoverageRcvrs @Inject() (
     val townDistrictsRcvrsMapFut = allRcvrsFut map { districtNodes =>
       val filtered = districtNodes
         .iterator
-        .filter { adnNode  =>  districtTypeNames.contains(adnNode.adn.shownTypeId) }
+        .filter { mnode =>
+          mnode.extras.adn
+            .flatMap( _.shownTypeIdOpt )
+            .exists( districtTypeNames.contains )
+        }
       groupByDirectGeoParents(filtered)
     }
     // Рисуем карту узлов городов: townAdnId -> townNode
@@ -57,8 +63,8 @@ class AdvTownCoverageRcvrs @Inject() (
       mNodeCache.multiGet( tdRcvrsMap.keysIterator )
     } map {
        _.iterator
-        .filter { _.adn.shownTypeId  ==  AdnShownTypes.TOWN.name }
-        .filter { _.adn.hasGeoSink }
+        .filter { _.extras.adn.flatMap(_.shownTypeIdOpt).contains(AdnShownTypes.TOWN.name) }
+        .filter { _.extras.adn.exists(_.sinks contains AdnSinks.SINK_GEO) }
         .flatMap { node => node.id.map(_ -> node) }
         .toMap
     }
@@ -73,13 +79,16 @@ class AdvTownCoverageRcvrs @Inject() (
     val townAll2DistrictIdsMapFut = townsMapFut flatMap { townsMap =>
       // Для существенного снижения нагрузки на RAM используем запросы по городам.
       Future.traverse(townsMap.keysIterator) { townAdnId =>
-        val sargs = new AdnNodesSearchArgs {
-          override def withDirectGeoParents = Seq(townAdnId)
-          override def limit           = 70    // Наврядли в городе больше указанного кол-ва узлов. // TODO Брать число из другого места...
-          override def shownTypeIds         = districtTypeNames
-          override def onlyWithSinks        = Seq(AdnSinks.SINK_GEO)
+        val sargs2 = new MNodeSearchDfltImpl {
+          override def outEdges: Seq[ICriteria] = {
+            val cr = Criteria(Seq(townAdnId), Seq(MPredicates.GeoParent.Direct))
+            Seq(cr)
+          }
+          override def limit            = 70    // Наврядли в городе больше указанного кол-ва узлов. // TODO Брать число из другого места...
+          override def shownTypeIds     = districtTypeNames
+          override def onlyWithSinks    = Seq(AdnSinks.SINK_GEO)
         }
-        MAdnNode.dynSearchIds(sargs) map { allTownDistrictsIds =>
+        for(allTownDistrictsIds <- MNode.dynSearchIds(sargs2)) yield {
           townAdnId -> allTownDistrictsIds.toSet
         }
       } map { _.toMap }
@@ -132,9 +141,13 @@ class AdvTownCoverageRcvrs @Inject() (
   }
 
 
-  private def groupByDirectGeoParents(nodes: Iterator[MAdnNode]): Map[String, Seq[MAdnNode]] = {
+  private def groupByDirectGeoParents(nodes: Iterator[MNode]): Map[String, Seq[MNode]] = {
     nodes
-      .flatMap { node => node.geo.directParentIds.map(_ -> node) }
+      .flatMap { mnode =>
+        mnode.edges
+          .withPredicateIterIds( MPredicates.GeoParent.Direct )
+          .map { _ -> mnode }
+      }
       .toSeq
       .groupBy(_._1)
       .mapValues(_.map(_._2))

@@ -116,7 +116,7 @@ class MarketAd @Inject() (
     * @param adnNode Магазин, с которым происходит сейчас работа.
     * @return NotAcceptable со страницей с create-формой.
     */
-  private def createAdFormError(formWithErrors: AdFormM, catOwnerId: String, adnNode: MAdnNode, withBC: Option[BlockConf])
+  private def createAdFormError(formWithErrors: AdFormM, catOwnerId: String, adnNode: MNode, withBC: Option[BlockConf])
                                (implicit request: AbstractRequestForAdnNode[_]) = {
     renderCreateFormWith(formWithErrors, catOwnerId, adnNode, withBC)
       .map(NotAcceptable(_))
@@ -173,7 +173,7 @@ class MarketAd @Inject() (
   }
 
   /** Общий код рендера createShopAdTpl с запросом необходимых категорий. */
-  private def renderCreateFormWith(af: AdFormM, catOwnerId: String, adnNode: MAdnNode, withBC: Option[BlockConf] = None)
+  private def renderCreateFormWith(af: AdFormM, catOwnerId: String, adnNode: MNode, withBC: Option[BlockConf] = None)
                                   (implicit request: AbstractRequestForAdnNode[_]) = {
     _renderPage(af) { (mmcats, ctx) =>
       createAdTpl(mmcats, af, adnNode, withBC)(ctx)
@@ -317,7 +317,7 @@ class MarketAd @Inject() (
    * @param newMadData Забинденные данные формы для новой (будущей) рекламной карточки.
    * @param producer Нода-продьюсер рекламной карточки.
    */
-  private def newTexts4search(newMadData: MAd, producer: MAdnNode)(implicit messages: Messages): Future[Texts4Search] = {
+  private def newTexts4search(newMadData: MAd, producer: MNode)(implicit messages: Messages): Future[Texts4Search] = {
     // Собираем названия родительских категорий:
     val catNamesFut: Future[List[String]] = if (newMadData.userCatId.nonEmpty) {
       val futs = newMadData.userCatId.foldLeft (List[Future[List[String]]]() ) { (accFut, catId) =>
@@ -343,7 +343,7 @@ class MarketAd @Inject() (
     } yield {
       newMadData.texts4search.copy(
         userCat = catNames,
-        producerName = Some(producer.meta.name)
+        producerName = Some(producer.meta.basic.name)
       )
     }
   }
@@ -391,7 +391,9 @@ class MarketAd @Inject() (
         }
         // Маппим уровни отображения на sink-уровни отображения, доступные узлу-продьюсеру.
         // Нет смысла делить на wi-fi и geo, т.к. вектор идёт на геолокации, и wifi становится вторичным.
-        val prodSinks = request.producer.adn.sinks + AdnSinks.SINK_GEO
+        val prodSinks = request.producer
+          .extras.adn
+          .fold(Set.empty[AdnSink])(_.sinks) + AdnSinks.SINK_GEO
         val ssls = prodSinks
           .map { SinkShowLevels.withArgs(_, sl) }
         trace(s"${logPrefix}Updating ad[$adId] with sinkSls = [${ssls.mkString(", ")}]; prodSinks = [${prodSinks.mkString(",")}] sl=$sl prodId=${request.producerId}")
@@ -435,9 +437,9 @@ class MarketAd @Inject() (
 
 
   /** Детектор получателей рекламы. Заглядывает к себе и к прямому родителю, если он указан. */
-  private def detectReceivers(producer: MAdnNode): Future[Receivers_t] = {
+  private def detectReceivers(producer: MNode): Future[Receivers_t] = {
     val selfRcvrIds: Seq[String] = Some(producer)
-      .filter(_.adn.isReceiver)
+      .filter(_.extras.adn.exists(_.isReceiver))
       .map(_.idOrNull)
       .toSeq
     val result = selfRcvrIds.map { rcvrId =>

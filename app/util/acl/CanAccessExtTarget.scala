@@ -1,7 +1,7 @@
 package util.acl
 
 import io.suggest.di.IEsClient
-import models.MAdnNode
+import models.MNode
 import models.adv.MExtTarget
 import models.req.SioReqMd
 import play.api.mvc.{Result, Request, ActionBuilder}
@@ -88,7 +88,7 @@ trait CanAccessExtTargetBaseCtl
 case class ExtTargetRequest[A](
   extTarget   : MExtTarget,
   pwOpt       : PwOpt_t,
-  adnNode     : MAdnNode,
+  adnNode     : MNode,
   sioReqMd    : SioReqMd,
   request     : Request[A]
 )

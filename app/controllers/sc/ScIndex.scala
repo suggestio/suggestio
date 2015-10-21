@@ -2,7 +2,6 @@ package controllers.sc
 
 import _root_.util.di._
 import io.suggest.playx.ICurrentConf
-import models.im.logo.LogoOpt_t
 import _root_.util.jsa.{SmRcvResp, Js}
 import _root_.util.PlayMacroLogsI
 import models.Context
@@ -63,10 +62,10 @@ trait ScIndexCommon
     def titleOptFut: Future[Option[String]]
 
     /** Сборка значения для titleFut на основе имеющегося узла. */
-    protected def _node2titleOpt(mnode: MAdnNode): Option[String] = {
+    protected def _node2titleOpt(mnode: MNode): Option[String] = {
       val m = mnode.meta
-      val title0 = m.name
-      val title2 = m.town.fold(title0)(townName => title0 + " (" + townName + ")")
+      val title0 = m.basic.name
+      val title2 = m.address.town.fold(title0)(townName => title0 + " (" + townName + ")")
       Some(title2)
     }
 
@@ -166,7 +165,7 @@ trait ScIndexNodeCommon
 
   /** Логика формирования indexTpl для конкретного узла. */
   trait ScIndexNodeHelper extends ScIndexHelperBase {
-    def adnNodeFut        : Future[MAdnNode]
+    def adnNodeFut        : Future[MNode]
     def spsrFut           : Future[AdSearch]
     def onCloseHrefFut    : Future[String]
     def geoListGoBackFut  : Future[Option[Boolean]]
@@ -220,11 +219,15 @@ trait ScIndexNodeCommon
         adnNodeFut
       } filter { mnode =>
         // Продолжать только если текущий узел не связан с географией.
-        mnode.geo.directParentIds.isEmpty && {
+        val directGpIter = mnode.edges
+          .withPredicateIter( MPredicates.GeoParent.Direct )
+        directGpIter.isEmpty && {
           // Если в город (верхний узел) перешли из левого подузла, то у города НЕ должна отображаться кнопка "назад",
           // несмотря на отсутствие гео-родителей.
-          !AdnShownTypes.maybeWithName(mnode.adn.shownTypeId)
-            .exists(_.isTopLevel)
+          val stiOpt = mnode.extras.adn
+            .flatMap( _.shownTypeIdOpt )
+            .flatMap( AdnShownTypes.maybeWithName )
+          !stiOpt.exists( _.isTopLevel )
         }
       } flatMap { mnode =>
         // Надо рендерить кнопку возврата, а не дефолтовую.
@@ -257,11 +260,17 @@ trait ScIndexNodeCommon
       }
     }
 
-    def getAdnIdForSearchIn(adnNode: MAdnNode): Option[String] = {
-      (adnNode.geo.allParentIds -- adnNode.geo.directParentIds)
+    def getAdnIdForSearchIn(mnode: MNode): Option[String] = {
+      val allParentIds = mnode.edges
+        .withPredicateIterIds( MPredicates.GeoParent )
+        .toSet
+      val directParentIds = mnode.edges
+        .withPredicateIterIds( MPredicates.GeoParent.Direct )
+        .toSet
+      (allParentIds -- directParentIds)
         .headOption
-        .orElse(adnNode.geo.directParentIds.headOption)
-        .orElse(adnNode.id)
+        .orElse(directParentIds.headOption)
+        .orElse(mnode.id)
     }
 
     /** Для рендера списка магазинов требуется сгруппированный по первой букве список узлов. */
@@ -278,12 +287,8 @@ trait ScIndexNodeCommon
     /** Получение графического логотипа узла, если возможно. */
     def logoImgOptFut: Future[Option[MImgT]] = {
       for {
-        currAdnIdOpt <- currAdnIdFut
-        logoOptRaw   <- currAdnIdOpt.fold [Future[LogoOpt_t]] {
-          Future successful None
-        } {
-          logoUtil.getLogoOfNode
-        }
+        currNode     <- adnNodeFut
+        logoOptRaw   <- logoUtil.getLogoOfNode(currNode)
         logoOptScr   <- logoUtil.getLogoOpt4scr(logoOptRaw, _reqArgs.screen)
       } yield {
         logoOptScr
@@ -294,8 +299,8 @@ trait ScIndexNodeCommon
     /** Контейнер палитры выдачи. */
     override def colorsFut: Future[IColors] = {
       adnNodeFut map { adnNode =>
-        val _bgColor = adnNode.meta.color   getOrElse scUtil.SITE_BGCOLOR_DFLT
-        val _fgColor = adnNode.meta.fgColor getOrElse scUtil.SITE_FGCOLOR_DFLT
+        val _bgColor = adnNode.meta.colors.bg.fold(scUtil.SITE_BGCOLOR_DFLT)(_.code)
+        val _fgColor = adnNode.meta.colors.fg.fold(scUtil.SITE_FGCOLOR_DFLT)(_.code)
         Colors(bgColor = _bgColor, fgColor = _fgColor)
       }
     }
@@ -331,7 +336,7 @@ trait ScIndexNodeCommon
           override def _underlying        = _colors
           override def hBtnArgs           = _hBtnArgs
           override def topLeftBtnHtml     = _topLeftBtnHtml
-          override def title              = adnNode.meta.name
+          override def title              = adnNode.meta.basic.name
           override def mmcats             = _mmCats
           override def catsStats          = _catsStats
           override def spsr               = _spsr
@@ -356,7 +361,9 @@ trait ScIndexNodeCommon
     }
 
     override def onCloseHrefFut: Future[String] = adnNodeFut.map { adnNode =>
-      adnNode.meta.siteUrl
+      adnNode.meta
+        .business
+        .siteUrl
         .filter { _ => ONCLOSE_HREF_USE_NODE_SITE }
         .getOrElse { ONCLOSE_HREF_DFLT }
     }

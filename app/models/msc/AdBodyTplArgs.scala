@@ -1,6 +1,6 @@
 package models.msc
 
-import models.{blk, MAdnNode}
+import models.{blk, MNode}
 
 /**
  * Suggest.io
@@ -28,7 +28,7 @@ trait IAdBodyTplArgs extends IProducer {
 /** Дефолтовая реализация [[IAdBodyTplArgs]]. */
 case class AdBodyTplArgs(
   override val brArgs    : blk.IRenderArgs,
-  override val producer  : MAdnNode,
+  override val producer  : MNode,
   override val adsCount  : Int,
   override val index     : Int,
   override val is3rdParty: Boolean

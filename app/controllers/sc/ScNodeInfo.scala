@@ -68,7 +68,7 @@ trait ScNodeInfo
     } else {
       val ck = nodeIconJsCacheKey(adnId)
       CacheUtil.getOrElse [Result] (ck, NODE_ICON_JS_CACHE_TTL_SECONDS) {
-        val logoFut = logoUtil.getLogoOfNodeCached( adnId )
+        val logoFut = logoUtil.getLogoOfNode( request.adnNode )
         var cacheHeaders: List[(String, String)] = List(
           CONTENT_TYPE  -> "text/javascript; charset=utf-8",
           LAST_MODIFIED -> DateTimeUtil.rfcDtFmt.print(PROJECT_CODE_LAST_MODIFIED),
@@ -91,7 +91,9 @@ trait ScNodeInfo
   /** Экшн, который выдает базовую инфу о ноде */
   def nodeData(adnId: String) = AdnNodeMaybeAuth(adnId).async { implicit request =>
     val node = request.adnNode
-    val logoCallOptFut = logoUtil.getLogoOfNodeCached(adnId) map { logoOpt =>
+    val logoCallOptFut = for(
+      logoOpt <- logoUtil.getLogoOfNode( request.adnNode )
+    ) yield {
       logoOpt.map { logoImg =>
         CdnUtil.dynImg( logoImg )
       }
@@ -100,7 +102,7 @@ trait ScNodeInfo
       logoCallOpt <- logoCallOptFut
     } yield {
       val resp = NodeDataResp(
-        colorOpt    = node.meta.color,
+        colorOpt    = node.meta.colors.bg.map(_.code),
         logoUrlOpt  = logoCallOpt
       )
       cacheControlShort {

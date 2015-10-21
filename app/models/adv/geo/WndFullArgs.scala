@@ -2,7 +2,7 @@ package models.adv.geo
 
 import models.blk.IBrArgs
 import models.msc.IAdBodyTplArgs
-import models.{blk, MAdnNode, MAd}
+import models.{blk, MNode}
 
 /**
  * Suggest.io
@@ -23,7 +23,7 @@ trait IWndFullArgs extends IAdBodyTplArgs with IBrArgs {
 
 /** Дефолтовая реализация [[IWndFullArgs]]. */
 case class WndFullArgs(
-  producer  : MAdnNode,
+  producer  : MNode,
   brArgs    : blk.RenderArgs,
   goBackTo  : Option[String] = None
 )

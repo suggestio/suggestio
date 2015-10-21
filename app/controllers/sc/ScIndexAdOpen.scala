@@ -3,7 +3,7 @@ package controllers.sc
 import io.suggest.ym.model.MAd
 import io.suggest.ym.model.ad.AdsSearchArgsDfltImpl
 import io.suggest.ym.model.common.AdShowLevels
-import models.MAdnNode
+import models.{MNode, MAdnNode}
 import models.im.DevScreen
 import models.msc.{MScApiVsn, ScReqArgsDflt, ScReqArgs}
 import play.api.mvc.Result
@@ -89,7 +89,7 @@ trait ScIndexAdOpen
    * @param request Исходный реквест.
    * @return Фьючерс с http-результатом.
    */
-  private def _goToProducerIndex(producer: MAdnNode, focLogic: FocusedAdsLogicHttp)
+  private def _goToProducerIndex(producer: MNode, focLogic: FocusedAdsLogicHttp)
                                 (implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
     // Извлекаем MAdnNode втупую. exception будет перехвачен в recoverWith.
     val idxLogic = new ScIndexNodeSimpleHelper {

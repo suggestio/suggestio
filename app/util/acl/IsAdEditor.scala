@@ -152,7 +152,7 @@ trait CanEditAd
 abstract class AbstractRequestWithAdAndProducer[A](request: Request[A])
   extends AbstractRequestWithAd(request)
 {
-  def producer: MAdnNode
+  def producer: MNode
 }
 
 
@@ -169,7 +169,7 @@ case class RequestWithAdAndProducer[A](
   request   : Request[A],
   pwOpt     : PwOpt_t,
   sioReqMd  : SioReqMd,
-  producer  : MAdnNode
+  producer  : MNode
 )
   extends AbstractRequestWithAdAndProducer(request)
 {

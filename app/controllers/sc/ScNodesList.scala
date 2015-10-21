@@ -86,7 +86,7 @@ trait ScNodesListBase
         new NodeListRenderArgs {
           override def apiVsn       = _nsArgs.apiVsn
           override def nodeLayers   = gnls4Render
-          override def currNode: Option[MAdnNode] = Some(nextNodeGdr.node)
+          override def currNode: Option[MNode] = Some(nextNodeGdr.node)
         }
       }
     }

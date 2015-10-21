@@ -2,7 +2,7 @@ package util.acl
 
 import io.suggest.di.{IExecutionContext, IEsClient}
 import models.req.SioReqMd
-import models.MAdnNode
+import models.MNode
 import play.api.mvc.{Result, Request, ActionBuilder}
 import util.PlayMacroLogsDyn
 import util.acl.PersonWrapper.PwOpt_t
@@ -76,7 +76,7 @@ trait IsAdnNodeAdminOptOrAuth
 
 
 case class RequestWithNodeOpt[A](
-  mnodeOpt : Option[MAdnNode],
+  mnodeOpt : Option[MNode],
   sioReqMd : SioReqMd,
   pwOpt    : PwOpt_t,
   request  : Request[A]

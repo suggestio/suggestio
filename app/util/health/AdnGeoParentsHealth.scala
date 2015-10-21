@@ -1,7 +1,8 @@
 package util.health
 
 import com.google.inject.{Singleton, Inject}
-import models.MAdnNode
+import io.suggest.model.n2.edge.MPredicates
+import models.MNode
 import models.usr.MPersonIdent
 import models.{CronTask, ICronTask, AdnShownTypes}
 import models.msys.NodeProblem
@@ -77,13 +78,19 @@ class AdnGeoParentsHealth @Inject() (
   def testAll(): Future[List[NodeProblem]] = {
     implicit val msgs = messagesApi.preferred( Seq(Lang.defaultLang) )
     // TODO Фильтровать узлы по наличию directGeoParent. Сейчас фильтрация идёт через if внутри тела функции-предиката.
-    MAdnNode.foldLeftAsync(acc0 = List.empty[NodeProblem]) { (acc0Fut, mnode) =>
-      if (mnode.geo.directParentIds.isEmpty) {
+    MNode.foldLeftAsync(acc0 = List.empty[NodeProblem]) { (acc0Fut, mnode) =>
+      val directParentsIter = mnode.edges
+        .withPredicateIter( MPredicates.GeoParent.Direct )
+      if (directParentsIter.isEmpty) {
         // Узел не привязан к другим узлам географически, поэтому просто пропускаем его.
         acc0Fut
 
       } else {
-        val testsFut = AdnShownTypes.withName(mnode.adn.shownTypeId).ngls.map { ngl =>
+        val ast = mnode.extras.adn
+          .flatMap(_.shownTypeIdOpt)
+          .flatMap(AdnShownTypes.maybeWithName)
+          .getOrElse(AdnShownTypes.default)
+        val testsFut = ast.ngls.map { ngl =>
           // Для проверки валидности пропихиваем этот узел в ShowcaseNodeListUtil и анализируем результат.
           scNlUtil.collectLayers(geoMode = None, currNode = mnode, currNodeLayer = ngl)
             .filter { _.nonEmpty }

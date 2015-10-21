@@ -6,7 +6,7 @@ import play.api.mvc._
 import util.acl._
 import util.cdn.{CorsUtil2, CorsUtil}
 import play.api.i18n.MessagesApi
-import play.api.Play, Play.{current, configuration}
+import play.api.{Configuration, Play}
 import util.seo.SiteMapUtil
 import views.html.static.sitemap._
 import views.html.sys1._
@@ -15,6 +15,8 @@ import views.txt.static.robotsTxtTpl
 import scala.concurrent.ExecutionContext
 
 class Application @Inject() (
+  configuration                 : Configuration,
+  implicit val current          : play.api.Application,
   override val messagesApi      : MessagesApi,
   override implicit val ec      : ExecutionContext,
   siteMapUtil                   : SiteMapUtil

@@ -16,7 +16,7 @@ import views.html.sc.script._
 object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImpl {
 
   /** Экземпляр модели версий. */
-  protected[this] abstract sealed class Val(val versionNumber: Int) extends super.Val(versionNumber) {
+  protected[this] abstract class Val(val versionNumber: Int) extends super.Val(versionNumber) {
     override def toString(): String = id.toString
 
     /** Всегда рендерить инструменты для закрытия выдачи. */

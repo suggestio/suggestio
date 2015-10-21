@@ -21,7 +21,7 @@ class MAdnNodeCache @Inject() (
   configuration         : Configuration,
   override val cache    : CacheApi
 )
-  extends AdnEsModelCache[MAdnNode]
+  extends EsModelCache[MNode]
 {
 
   override val EXPIRE: FiniteDuration = {
@@ -32,7 +32,7 @@ class MAdnNodeCache @Inject() (
 
   override val CACHE_KEY_SUFFIX = ".nc"
 
-  override type GetAs_t = MAdnNode
+  override type GetAs_t = MNode
 
   /** Карта событий adnNode для статического подписывания в SioNotifier. */
   override def snMap = {
@@ -44,8 +44,8 @@ class MAdnNodeCache @Inject() (
     )
   }
 
-  override type StaticModel_t = MAdnNode.type
-  override def companion: StaticModel_t = MAdnNode
+  override type StaticModel_t = MNode.type
+  override def companion: StaticModel_t = MNode
 
   /** Извлекаем adnId из события. */
   override def event2id(event: Event): String = {

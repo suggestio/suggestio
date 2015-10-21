@@ -121,7 +121,7 @@ class MarketJoin @Inject() (
       .left.map(_.meta.name)
       .left.getOrElse {
         mir.adnNode
-          .fold("") { _.left.map(_.meta.name).left.getOrElse("") }
+          .fold("") { _.left.map(_.meta.basic.name).left.getOrElse("") }
       }
   }
 

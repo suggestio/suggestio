@@ -1,5 +1,8 @@
 package controllers
 
+import io.suggest.model.n2.edge.search.Criteria
+import io.suggest.model.n2.node.meta.colors.MColorData
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import util.adn.NodesUtil
 import util.async.AsyncUtil
 import com.google.inject.Inject
@@ -66,7 +69,16 @@ class MarketLkAdn @Inject() (
   /** Список личных кабинетов юзера. */
   def lkList(fromAdnId: Option[String]) = IsAdnNodeAdminOptOrAuthGet(fromAdnId).async { implicit request =>
     val personId = request.pwOpt.get.personId
-    val mnodesFut = MAdnNode.findByPersonId(personId)
+    val msearch = new MNodeSearchDfltImpl {
+      override def outEdges = Seq(
+        Criteria(
+          nodeIds     = Seq(personId),
+          predicates  = Seq(MPredicates.OwnedBy)
+        )
+      )
+      override def limit      = 100
+    }
+    val mnodesFut = MNode.dynSearch(msearch)
     for {
       mnodes      <- mnodesFut
     } yield {
@@ -83,7 +95,7 @@ class MarketLkAdn @Inject() (
   def showAdnNode(adnId: String, povAdnIdOpt: Option[String]) = {
     AdnNodeAccessGet(adnId, povAdnIdOpt).async { implicit request =>
       import request.{adnNode, isMyNode}
-      val logoOptFut = logoUtil.getLogoOfNode(adnId)
+      val logoOptFut = logoUtil.getLogoOfNode(adnNode)
       for {
         logoOpt <- logoOptFut
       } yield {
@@ -93,8 +105,8 @@ class MarketLkAdn @Inject() (
           povAdnIdOpt   = request.povAdnNodeOpt
             .flatMap(_.id),
           logoImgOpt    = logoOpt,
-          bgColor       = adnNode.meta.color.getOrElse( scUtil.SITE_BGCOLOR_DFLT ),
-          fgColor       = adnNode.meta.fgColor.getOrElse( scUtil.SITE_FGCOLOR_DFLT )
+          bgColor       = colorCodeOrDflt(adnNode.meta.colors.bg, scUtil.SITE_BGCOLOR_DFLT),
+          fgColor       = colorCodeOrDflt(adnNode.meta.colors.fg, scUtil.SITE_FGCOLOR_DFLT)
         )
         val html = adnNodeShowTpl( rargs )
         Ok(html)
@@ -102,6 +114,9 @@ class MarketLkAdn @Inject() (
     }
   }
 
+  private def colorCodeOrDflt(cdOpt: Option[MColorData], dflt: => String): String = {
+    cdOpt.fold(dflt)(_.code)
+  }
 
   /**
    * Рендер страницы ЛК с рекламными карточками узла.
@@ -179,7 +194,7 @@ class MarketLkAdn @Inject() (
       // Надо ли отображать кнопку "управление" под карточками? Да, если есть баланс и контракт.
       // Параллельности это не добавляет, но позволяет разблокировать play defaultContext от блокировки из-за JDBC.
       val canAdvFut: Future[Boolean] = {
-        if (isMyNode && adnNode.adn.isProducer) {
+        if (isMyNode && adnNode.extras.adn.exists(_.isProducer)) {
           Future {
             db.withConnection { implicit c =>
               MBillContract.hasActiveForNode(adnId)  &&  MBillBalance.hasForNode(adnId)
@@ -276,10 +291,18 @@ class MarketLkAdn @Inject() (
             // Для обновления полей MMart требуется доступ к personId. Дожидаемся сохранения юзера...
             newPersonIdOptFut flatMap { personIdOpt =>
               val personId = (personIdOpt orElse request.pwOpt.map(_.personId)).get
-              val nodeUpdateFut: Future[_] = if (!(mnode.personIds contains personId)) {
-                MAdnNode.tryUpdate(mnode) { adnNode0 =>
-                  adnNode0.copy(
-                    personIds = adnNode0.personIds + personId
+              val nodeOwnedByPersonId = {
+                mnode.edges
+                  .withPredicateIter( MPredicates.OwnedBy )
+                  .exists(_.nodeId == personId)
+              }
+              val nodeUpdateFut: Future[_] = if (!nodeOwnedByPersonId) {
+                val ownEdge = MEdge(MPredicates.OwnedBy, personId)
+                MNode.tryUpdate(mnode) { mnode0 =>
+                  mnode0.copy(
+                    edges = mnode0.edges.copy(
+                      out = mnode0.edges.out + (ownEdge.toEmapKey -> ownEdge)
+                    )
                   )
                 }
               } else {

@@ -2,7 +2,10 @@ package util.acl
 
 import controllers.SioController
 import io.suggest.di.IEsClient
-import models.MAdnNode
+import io.suggest.model.n2.edge.MPredicates
+import io.suggest.model.n2.edge.search.Criteria
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import models.MNode
 import models.req.SioReqMd
 import models.usr.MExtIdent
 import play.api.mvc.{Result, Request, ActionBuilder}
@@ -39,13 +42,22 @@ trait CanConfirmIdpReg
           val hasAccess: Future[Boolean] = if (PersonWrapper isSuperuser pwOpt) {
             Future successful true
           } else {
-            val pcntFut = MAdnNode.countByPersonId(pw.personId)
-              .map(_.toInt)
+            // Запустить подсчет имеющихся у юзера магазинов
+            val msearch = new MNodeSearchDfltImpl {
+              override def outEdges = {
+                val cr = Criteria(Seq(pw.personId), Seq(MPredicates.OwnedBy))
+                Seq(cr)
+              }
+              override def limit    = 5
+            }
+            val pcntFut = MNode.dynCount(msearch)
+            // Запустить поиск имеющихся внешних идентов
             val hasExtIdent = MExtIdent.countByPersonId(pw.personId)
               .map(_ > 0L)
+            // Дождаться результата поиска узлов.
             pcntFut flatMap { pcnt =>
-              if (pcnt > 0) {
-                LOGGER.debug(s"User[${pw.personId}] already have $pcnt nodes. Refusing reg.confirmation.")
+              if (pcnt > 0L) {
+                LOGGER.debug(s"User[${pw.personId}] already have $pcnt or more nodes. Refusing reg.confirmation.")
                 Future successful false
               } else {
                 // Юзер пока не имеет узлов. Проверить наличие идентов.

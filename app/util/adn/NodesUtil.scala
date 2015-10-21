@@ -3,8 +3,13 @@ package util.adn
 import com.google.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.event.SioNotifierStaticClientI
+import io.suggest.model.n2.edge.MNodeEdges
+import io.suggest.model.n2.extra.{MSlInfo, MAdnExtra, MNodeExtras}
+import io.suggest.model.n2.node.common.MNodeCommon
+import io.suggest.model.n2.node.meta.MBasicMeta
+import io.suggest.model.n2.node.meta.colors.{MColorData, MColors}
 import io.suggest.ym.model.ad.AdsSearchArgsDfltImpl
-import io.suggest.ym.model.common.{NodeConf, AdnMemberShowLevels}
+import io.suggest.ym.model.common.AdnMemberShowLevels
 import models._
 import models.madn.{MNodeRegSuccess, NodeDfltColors}
 import models.mext.MExtServices
@@ -70,7 +75,7 @@ class NodesUtil @Inject() (
   }
 
   /** Для рендера шаблона regSuccessTpl требуется собрать аргументы для рендера. */
-  def nodeRegSuccessArgs(mnode: MAdnNode): MNodeRegSuccess = {
+  def nodeRegSuccessArgs(mnode: MNode): MNodeRegSuccess = {
     MNodeRegSuccess(
       mnode,
       userNodeCreatedRedirect( mnode.id.get ),
@@ -92,29 +97,43 @@ class NodesUtil @Inject() (
    * @param personId id юзера-владельца.
    * @return Экземпляр узла без id.
    */
-  def userNodeInstance(name: String, personId: String): MAdnNode = {
-    MAdnNode(
-      adn = AdNetMemberInfo(
-        rights          = Set(AdnRights.PRODUCER, AdnRights.RECEIVER),
-        isUser          = true,
-        shownTypeIdOpt  = Some(AdnShownTypes.SHOP.name),
-        isEnabled       = true,
-        testNode        = false,
-        showLevelsInfo  = AdnMemberShowLevels(
-          out = Map(AdShowLevels.LVL_START_PAGE -> SL_START_PAGE_LIMIT_DFLT)
-        )
+  def userNodeInstance(name: String, personId: String): MNode = {
+    MNode(
+      common = MNodeCommon(
+        ntype = MNodeTypes.AdnNode,
+        isDependent = true,
+        isEnabled = true
       ),
-      personIds = Set(personId),
-      meta = {
-        val dc = NodeDfltColors.getOneRandom()
-        MNodeMeta(
-          nameOpt   = Some(name),
-          color     = Some(dc.bgColor),
-          fgColor   = Some(dc.fgColor)
-        )
-      },
-      conf = NodeConf(
-        showInScNodesList = false
+      meta = MMeta(
+        basic = MBasicMeta(
+          nameOpt = Some(name)
+        ),
+        colors = {
+          val dc = NodeDfltColors.getOneRandom()
+          MColors(
+            bg = Some( MColorData(dc.bgColor) ),
+            fg = Some( MColorData(dc.fgColor) )
+          )
+        }
+      ),
+      extras = MNodeExtras(
+        adn =  Some(MAdnExtra(
+          rights          = Set(AdnRights.PRODUCER, AdnRights.RECEIVER),
+          isUser          = true,
+          shownTypeIdOpt  = Some(AdnShownTypes.SHOP.name),
+          testNode        = false,
+          showInScNl      = false,
+          outSls          = {
+            val sli = MSlInfo(AdShowLevels.LVL_START_PAGE, SL_START_PAGE_LIMIT_DFLT)
+            Map(sli.sl -> sli)
+          }
+        ))
+      ),
+      edges = MNodeEdges(
+        out = {
+          val medge = MEdge(MPredicates.OwnedBy, personId)
+          MNodeEdges.edgesToMap(medge)
+        }
       )
     )
   }
@@ -154,7 +173,7 @@ class NodesUtil @Inject() (
    * @param personId id юзера-владельца.
    * @return Фьючерс с готовым инстансом нового существующего узла.
    */
-  def createUserNode(name: String, personId: String)(implicit lang: Messages): Future[MAdnNode] = {
+  def createUserNode(name: String, personId: String)(implicit lang: Messages): Future[MNode] = {
     val inst = userNodeInstance(name = name, personId = personId)
     val nodeSaveFut = inst.save
     nodeSaveFut flatMap { adnId =>

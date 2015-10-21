@@ -12,7 +12,7 @@ import scala.concurrent.Future
  * Created: 19.06.14 17:42
  * Description: Является ли текущий юзер НЕзалогиненным (анонимусом)?
  */
-trait IsAnonCtl extends SioController with IIdentUtil {
+trait IsAnon extends SioController with IIdentUtil {
 
   trait IsAnonBase extends ActionBuilder[AbstractRequestWithPwOpt] {
     override def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[Result]): Future[Result] = {

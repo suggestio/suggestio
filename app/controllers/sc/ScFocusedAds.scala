@@ -132,7 +132,7 @@ trait ScFocusedAdsBase
       }
     }
 
-    lazy val prodIdsFut: Future[Seq[String]] = {
+    def prodIdsFut: Future[Seq[String]] = {
       mads2Fut.map { mads2 =>
         mads2.map(_.producerId)
       }
@@ -140,14 +140,14 @@ trait ScFocusedAdsBase
 
     /** Список продьюсеров, относящихся к запрошенным focused-карточкам.
       * Порядок продьюсеров в списке неопределён. */
-    def mads2ProdsFut: Future[Seq[MAdnNode]] = {
+    lazy val mads2ProdsFut: Future[Seq[MNode]] = {
       prodIdsFut.flatMap { prodIds =>
         mNodeCache.multiGet(prodIds)
       }
     }
 
     /** Карта продьюсеров, относящихся к запрошенным focused-карточкам. */
-    lazy val mads2ProdsMapFut: Future[Map[String, MAdnNode]] = {
+    lazy val mads2ProdsMapFut: Future[Map[String, MNode]] = {
       for (prods <- mads2ProdsFut) yield {
         prods
           .iterator
@@ -201,7 +201,8 @@ trait ScFocusedAdsBase
     /** Карта СЫРЫХ логотипов продьюсеров без подгонки под экран.
       * Если в карте нет искомого продьюсера, то значит он без логотипа-картинки. */
     def prod2logoImgMapFut: Future[Map[String, MImgT]] = {
-      prodIdsFut.flatMap( logoUtil.getLogoOfNodes )
+      mads2ProdsFut
+        .flatMap( logoUtil.getLogoOfNodes )
     }
     /** Карта логотипов продьюсеров, подогнанных под запрашиваемый экран. */
     lazy val prod2logoScrImgMapFut: Future[Map[String, MImgT]] = {
@@ -275,7 +276,7 @@ trait ScFocusedAdsBase
     }
 
     /** Фьючерс продьюсера, относящегося к текущей карточке. */
-    def focAdProducerOptFut: Future[Option[MAdnNode]] = {
+    def focAdProducerOptFut: Future[Option[MNode]] = {
       val _prodsMapFut = mads2ProdsMapFut
       focAdOptFut flatMap {
         case Some(focMad) =>
@@ -287,7 +288,7 @@ trait ScFocusedAdsBase
       }
     }
 
-    def madProducerOptFut(madOpt: Option[MAd]): Future[Option[MAdnNode]] = {
+    def madProducerOptFut(madOpt: Option[MAd]): Future[Option[MNode]] = {
       val prodIdOpt = madOpt.map(_.producerId)
       mNodeCache.maybeGetByIdCached(prodIdOpt)
     }
@@ -306,8 +307,8 @@ trait ScFocusedAdsBase
           .flatMap(logosMap.get)
       }
 
-      val _fgColor = producer.meta.fgColor getOrElse scUtil.SITE_FGCOLOR_DFLT
-      val _bgColor = producer.meta.color  getOrElse  scUtil.SITE_BGCOLOR_DFLT
+      val _fgColor = producer.meta.colors.fg.fold(scUtil.SITE_FGCOLOR_DFLT)(_.code)
+      val _bgColor = producer.meta.colors.bg.fold(scUtil.SITE_BGCOLOR_DFLT)(_.code)
 
       for (_logoImgOpt <- logoImgOptFut) yield {
         FocusedAdsTplArgs2(

@@ -2,6 +2,8 @@ package controllers.sc
 
 import java.util.NoSuchElementException
 
+import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.msc._
 import play.twirl.api.Html
 import util.di.{IScUtil, IScNlUtil, IScStatUtil}
@@ -146,13 +148,15 @@ trait ScIndexGeo
           // Не делать подсчет geo-child-узлов, если узел на уровне, где не может быть child узлов.
           if !gdr.ngl.isLowest
           geoChilderCount <- {
-            val gparents = gdr.node.id.toSeq
-            val searchArgs = new AdnNodesSearchArgs {
-              override def withDirectGeoParents = gparents
-              override def limit = 5
+            val msearch = new MNodeSearchDfltImpl {
+              override def outEdges: Seq[ICriteria] = {
+                val cr = Criteria( gdr.node.id.toSeq, Seq(MPredicates.GeoParent.Direct) )
+                Seq(cr)
+              }
+              override def limit = 1
               // TODO Фильтровать по наличию geoshape'ов
             }
-            MAdnNode.dynCount(searchArgs)
+            MNode.dynCount( msearch )
           }
         } yield {
           geoChilderCount <= 0L
@@ -196,7 +200,7 @@ trait ScIndexGeo
 
     /** Внутренний класс для возврата результата.
       * Вынести в models нельзя, потому аргументом является внутренний хелпер контроллера. */
-    case class LogicResult(result: Result, nodeOpt: Option[MAdnNode], helper: ScIndexHelperBase)
+    case class LogicResult(result: Result, nodeOpt: Option[MNode], helper: ScIndexHelperBase)
 
     type T = LogicResult
     // gsiOptFut в любом случае понадобится, поэтому делаем его val'ом.

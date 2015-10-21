@@ -1,4 +1,4 @@
-@(af: Form[MAdnNode], call: Call, btnText: String, formAfter: Option[Html] = None)(implicit ctx: Context)
+@(af: Form[MNode], call: Call, btnText: String, formAfter: Option[Html] = None)(implicit ctx: Context)
 
 @* Форма для создания/редактирования узла рекламной сети.
    При верстке шаблона следует помнить, что mcompany.id может быть None. *@
@@ -28,7 +28,16 @@
   </table>
 
   <table class="input-w __size-L">
-    @checkbox(af("adn.isEnabled"), '_label -> "Включён?", '_class -> "sys-checkbox")
+    @checkbox(af("common.isEnabled"), '_label -> "Включён?", '_class -> "sys-checkbox")
+  </table>
+
+  <table class="input-w __size-L">
+    @checkbox(
+      af("common.isDependent"),
+      '_label -> "Подчинён?",
+      '_class -> "sys-checkbox",
+      '_title -> "Узел должен существовать, имея родительский узел N2?"
+    )
   </table>
 
 
@@ -60,18 +69,6 @@
   <table class="input-w __size-L">
     @inputText(af("meta.siteUrl"), 'placeholder -> "http://",         '_label -> "Адрес сайта в интернете")
   </table>
-  <table class="input-w __size-L">
-    @inputText(af("meta.color"),   'placeholder -> "cceeff",          '_label -> "Цвет")
-  </table>
-  <table class="input-w __size-L">
-    @inputText(af("personIds"),    '_label -> "id пользователей админов узла через запятую")
-  </table>
-
-  @* conf *@
-  <table class="input-w __size-L">
-    @inputText(af("conf.withBlocks"), 'placeholder -> "1, 2, 3",      '_label -> "Доп.id блоков")
-  </table>
-
 
   @AdnRights.values.map { adnRight =>
     <table class="input-w __size-L">
@@ -81,7 +78,7 @@
 
   <div>
     <table class="input-w __size-L">
-      @inputText(af("adn.sls.out"), '_label -> "Исходящие уровни отображения и лимиты")
+      @inputText(af("adn.sls"), '_label -> "Исходящие уровни отображения и лимиты")
     </table>
 
     <p>
@@ -113,7 +110,7 @@
 
   <table class="input-w __size-L">
     @checkbox(
-      af("conf.showInScNodeList"),
+      af("adn.showInScNl"),
       '_label -> "Отображать в списке узлов выдачи?"
     )
   </table>

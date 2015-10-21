@@ -6,7 +6,6 @@ import java.net.JarURLConnection
 import akka.actor.ActorSystem
 import io.suggest.di.IExecutionContext
 import org.joda.time.DateTime
-import play.api.db.Database
 import play.api.i18n.{I18nSupport, Lang}
 import play.api.mvc._
 import util._

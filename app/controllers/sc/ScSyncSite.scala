@@ -217,7 +217,7 @@ trait ScSyncSiteGeo
       }
     }
 
-    def currNodeGeoOptFut: Future[Option[MAdnNode]] = {
+    def currNodeGeoOptFut: Future[Option[MNode]] = {
       maybeGeoDetectResultFut.map {
         _.map { gdr =>
           gdr.node
@@ -252,7 +252,7 @@ trait ScSyncSiteGeo
     }
 
     /** Узел, запрошенный в qs-аргументах. */
-    lazy val adnNodeReqFut: Future[Option[MAdnNode]] = {
+    lazy val adnNodeReqFut: Future[Option[MNode]] = {
       // Использовать любой заданный id узла, если возможно.
       val adnIdOpt = _scState.adnId orElse _siteArgs.adnId
       mNodeCache.maybeGetByIdCached( adnIdOpt )
@@ -269,8 +269,11 @@ trait ScSyncSiteGeo
             adnNodeReqFut.flatMap {
               case Some(node) =>
                 // Нужно привести найденный узел к GeoDetectResult:
-                val ngl: AdnShownType = AdnShownTypes.withName( node.adn.shownTypeId )
-                val gdr = GeoDetectResult(ngl.ngls.head, node)
+                val ast = node.extras.adn
+                  .flatMap( _.shownTypeIdOpt )
+                  .flatMap( AdnShownTypes.maybeWithName )
+                  .getOrElse( AdnShownTypes.default )
+                val gdr = GeoDetectResult(ast.ngls.head, node)
                 Future successful gdr
               case None =>
                 // Имитируем экзепшен, чтобы перехватить его в Future.recover():

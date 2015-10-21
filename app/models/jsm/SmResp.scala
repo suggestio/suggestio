@@ -2,7 +2,7 @@ package models.jsm
 
 import io.suggest.model.es.EsModelUtil
 import EsModelUtil.FieldsJsonAcc
-import models.MAdnNode
+import models.MNode
 import models.msc.FocRenderResult
 import play.api.libs.json._
 import play.api.mvc.Call
@@ -206,12 +206,12 @@ trait NodeListHtml extends SmJsonResp {
 
 trait NodeNameId extends SmJsonResp {
   def adnNodeNameIdFn: String
-  def adnNode: MAdnNode
+  def adnNode: MNode
   override def toJsonAcc: FieldsJsonAcc = {
     val acc0 = super.toJsonAcc
     val mnode = adnNode
     val v = JsObject(Seq(
-      "name" -> JsString(mnode.meta.name),
+      "name" -> JsString(mnode.meta.basic.name),
       "_id"  -> JsString(mnode.id getOrElse "")
     ))
     adnNodeNameIdFn -> v :: acc0
@@ -225,7 +225,7 @@ trait NodeNameId extends SmJsonResp {
  * @param timestamp Время запроса.
  * @param status Статус. Возможно, это бесполезное поле.
  */
-case class NodeListResp(adnNode: MAdnNode, nodesListHtml: JsString, timestamp: Long, status: String)
+case class NodeListResp(adnNode: MNode, nodesListHtml: JsString, timestamp: Long, status: String)
 extends NodeNameId with NodeListHtml with Status with Timestamp with Action {
   override def adnNodeNameIdFn = "first_node"
   override def action = "findNodes"

@@ -46,19 +46,8 @@ object GalleryUtil {
    * @param oldGallery Старое содержимое галереи.
    * @return Фьючерс с новой галереи в формате старой галереи.
    */
-  def updateGallery(newGallery: Seq[MImg], oldGallery: Seq[String]): Future[List[String]] = {
+  def updateGallery(newGallery: Seq[MImg], oldGallery: Seq[String]): Future[Seq[MImgT]] = {
     ImgFormUtil.updateOrigImgId(needImgs = newGallery, oldImgIds = oldGallery)
-      .flatMap { mimgs =>
-        Future.traverse(mimgs.zipWithIndex) { case (mimg, i) =>
-          ImgFormUtil.img2imgInfo(mimg)
-            .map { _ -> i }
-        } map { res =>
-          res.sortBy(_._2)
-            .iterator
-            .map(_._1.filename)
-            .toList
-        }
-      }
   }
 
 

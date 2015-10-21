@@ -2,7 +2,9 @@ package controllers
 
 import com.google.inject.Inject
 import controllers.sysctl.{SysMarketUtil, SmSendEmailInvite}
+import io.suggest.common.fut.FutureUtil
 import io.suggest.event.SioNotifierStaticClientI
+import io.suggest.model.n2.edge.MNodeEdges
 import models.usr.EmailActivation
 import org.elasticsearch.client.Client
 import play.api.i18n.MessagesApi
@@ -122,7 +124,7 @@ class SysMarketInvReq @Inject() (
       },
       {adnNode2 =>
         mInviteRequest.tryUpdate(mir) { mir0 =>
-          val adnNode3 = mir0.adnNode.fold [MAdnNode] (adnNode2) { adnNodeEith =>
+          val adnNode3 = mir0.adnNode.fold [MNode] (adnNode2) { adnNodeEith =>
             sysMarketUtil.updateAdnNode(adnNodeEith.left.get, adnNode2)
           }
           mir0.copy(
@@ -142,7 +144,7 @@ class SysMarketInvReq @Inject() (
     // Определить, существовал ли узел. Если нет, то при ошибке обновления MIR новый созданный узел будет удалён.
     val previoslyExistedFut = adnNode0.id.fold [Future[Boolean]]
       { Future successful false }
-      { MAdnNode.isExist }
+      { MNode.isExist }
     val waSavedIdOptFut = mir.waOpt.fold [Future[Option[String]]]
       { Future successful None }
       { _.fold[Future[Option[String]]] (
@@ -151,9 +153,18 @@ class SysMarketInvReq @Inject() (
       )}
     previoslyExistedFut flatMap { previoslyExisted =>
       waSavedIdOptFut flatMap { waSavedIdOpt =>
+        val p = MPredicates.NodeWelcomeAdIs
+        val edges0Iter = adnNode0.edges
+          .withoutPredicateIter(p)
         val adnNode = adnNode0.copy(
-          meta = adnNode0.meta.copy(
-            welcomeAdId = waSavedIdOpt
+          edges = adnNode0.edges.copy(
+            out = {
+              val iter2 = waSavedIdOpt.fold(edges0Iter) { waId =>
+                val waEdge = MEdge(p, waId)
+                edges0Iter ++ Iterator(waEdge)
+              }
+              MNodeEdges.edgesToMap1(iter2)
+            }
           )
         )
         // Запуск сохранения узла.
@@ -168,7 +179,7 @@ class SysMarketInvReq @Inject() (
           if (previoslyExisted) {
             updateFut onFailure { case ex =>
               warn(s"nodeInstallSubmit($mirId): Rollbacking node[$adnId] installation due to exception during MIR update")
-              MAdnNode.deleteById(adnId)
+              MNode.deleteById(adnId)
             }
           }
           updateFut map { _ =>
@@ -191,7 +202,7 @@ class SysMarketInvReq @Inject() (
   def nodeUninstallSubmit(mirId: String) = isNodeRight(mirId).async { implicit request =>
     import request.mir
     val adnId = mir.adnNode.get.right.get
-    MAdnNode.getById(adnId) flatMap {
+    MNode.getById(adnId) flatMap {
       case Some(adnNode) =>
         adnNode.delete flatMap {
           case true =>
@@ -321,9 +332,9 @@ class SysMarketInvReq @Inject() (
     )
   }
 
-  private def getNodeOptFut(mir: MInviteRequest): Future[Option[MAdnNode]] = {
-    mir.adnNode.fold [Future[Option[MAdnNode]]] (Future successful None) { nodeEith =>
-      nodeEith.fold[Future[Option[MAdnNode]]](
+  private def getNodeOptFut(mir: MInviteRequest): Future[Option[MNode]] = {
+    FutureUtil.optFut2futOpt(mir.adnNode) { nodeEith =>
+      nodeEith.fold[Future[Option[MNode]]](
         { an => Future successful Option(an)},
         { adnId => mNodeCache.getById(adnId)}
       )
@@ -331,7 +342,7 @@ class SysMarketInvReq @Inject() (
   }
 
   private def getEactOptFut(mir: MInviteRequest): Future[Option[EmailActivation]] = {
-    mir.emailAct.fold [Future[Option[EmailActivation]]] (Future successful None) { eactEith =>
+    FutureUtil.optFut2futOpt(mir.emailAct) { eactEith =>
       eactEith.fold[Future[Option[EmailActivation]]](
         { eact => Future successful Option(eact)},
         { EmailActivation.getById(_) }

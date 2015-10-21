@@ -38,7 +38,7 @@ class LkEventsUtil @Inject() (
    * @param ctx Контекст рендера.
    * @return Фьючерс, если есть чего рендерить.
    */
-  def getGeoWelcome(adnNode: MAdnNode)(implicit ctx: Context): Future[Option[(Html, DateTime)]] = {
+  def getGeoWelcome(adnNode: MNode)(implicit ctx: Context): Future[Option[(Html, DateTime)]] = {
     val adnId = adnNode.id.get
     MAdnNodeGeo.countByNode(adnId).map {
       // Нет гео-шейпов у этого ресивера. Нужно отрендерить сообщение об этой проблеме. TODO Отсеивать просто-точки из подсчёта?
@@ -46,7 +46,9 @@ class LkEventsUtil @Inject() (
         val etype = MEventTypes.NodeGeoWelcome
         // Дата создания события формируется на основе даты создания узла.
         // Нужно также, чтобы это событие не было первым в списке событий, связанных с созданием узла.
-        val dt = adnNode.meta.dateCreated.plusSeconds(10)
+        val dt = adnNode.meta.basic
+          .dateCreated
+          .plusSeconds(10)
         val mevt = MEventTmp(
           etype       = etype,
           ownerId     = adnId,

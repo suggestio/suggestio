@@ -1,6 +1,7 @@
 package util.img
 
 import com.google.inject.{Singleton, Inject}
+import io.suggest.common.fut.FutureUtil
 import io.suggest.event.SioNotifierStaticClientI
 import models.im._
 import models.madn.EditConstants
@@ -42,11 +43,14 @@ class WelcomeUtil @Inject() (
 
   /** Асинхронно получить welcome-ad-карточку. */
   def getWelcomeAdOpt(welcomeAdId: Option[String]): Future[Option[MWelcomeAd]] = {
-    welcomeAdId
-      .fold [Future[Option[MWelcomeAd]]] (Future successful None) (MWelcomeAd.getById(_))
+    FutureUtil.optFut2futOpt(welcomeAdId)(MWelcomeAd.getById(_))
   }
-  def getWelcomeAdOpt(node: MAdnNode): Future[Option[MWelcomeAd]] = {
-    getWelcomeAdOpt( node.meta.welcomeAdId )
+  def getWelcomeAdOpt(mnode: MNode): Future[Option[MWelcomeAd]] = {
+    val waIdOpt = mnode.edges
+      .withPredicateIterIds( MPredicates.NodeWelcomeAdIs )
+      .toStream
+      .headOption
+    getWelcomeAdOpt(waIdOpt)
   }
 
   def updateWaImg(waOpt: Option[MWelcomeAd], newWaImgOpt: Option[MImgT]) = {
@@ -62,16 +66,19 @@ class WelcomeUtil @Inject() (
 
   /** Обновление картинки и карточки приветствия. Картинка хранится в полу-рекламной карточке, поэтому надо ещё
     * обновить карточку и пересохранить её. */
-  def updateWelcodeAdFut(adnNode: MAdnNode, newWelcomeImgOpt: Option[MImgT]): Future[Option[String]] = {
+  def updateWelcodeAdFut(adnNode: MNode, newWelcomeImgOpt: Option[MImgT]): Future[Option[String]] = {
     getWelcomeAdOpt(adnNode) flatMap { currWelcomeAdOpt =>
       updateWaImg(currWelcomeAdOpt, newWelcomeImgOpt) flatMap {
         // Новой картинки нет. Надо удалить старую карточку (если была), и очистить соотв. welcome-поле.
         case None =>
-          adnNode.meta
-            .welcomeAdId
-            .fold [Future[Option[String]]]
-              { Future successful None }
-              { waId => MWelcomeAd.deleteById(waId).map { _ => None } }
+          val waIdOpt = adnNode.edges
+            .withPredicateIterIds( MPredicates.NodeWelcomeAdIs )
+            .toStream
+            .headOption
+          FutureUtil.optFut2futOpt(waIdOpt) { waId =>
+            MWelcomeAd.deleteById(waId)
+            .map { _ => None }
+          }
 
         // Новая картинка есть. Пора обновить текущую карточук, или новую создать.
         case Some(newImg) =>

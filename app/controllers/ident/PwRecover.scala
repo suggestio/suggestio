@@ -105,7 +105,7 @@ trait PwRecover
   with BruteForceProtectCtl
   with SetLangCookieUtil
   with CanRecoverPwCtl
-  with IsAnonCtl
+  with IsAnon
   with IIdentUtil
 {
 

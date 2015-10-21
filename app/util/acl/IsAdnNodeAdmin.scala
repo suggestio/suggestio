@@ -44,14 +44,14 @@ trait IsAdnNodeAdminUtilCtl
 {
   trait IsAdnNodeAdminUtil extends PlayMacroLogsDyn {
 
-    def checkAdnNodeCredsFut(adnNodeOptFut: Future[Option[MAdnNode]], adnId: String, pwOpt: PwOpt_t): Future[Either[Option[MAdnNode], MAdnNode]] = {
+    def checkAdnNodeCredsFut(adnNodeOptFut: Future[Option[MNode]], adnId: String, pwOpt: PwOpt_t): Future[Either[Option[MNode], MNode]] = {
       adnNodeOptFut map {
         checkAdnNodeCreds(_, adnId, pwOpt)
       }
     }
 
-    def checkAdnNodeCreds(adnNodeOpt: Option[MAdnNode], adnId: String, pwOpt: PwOpt_t): Either[Option[MAdnNode], MAdnNode] = {
-      adnNodeOpt.fold [Either[Option[MAdnNode], MAdnNode]] {
+    def checkAdnNodeCreds(adnNodeOpt: Option[MNode], adnId: String, pwOpt: PwOpt_t): Either[Option[MNode], MNode] = {
+      adnNodeOpt.fold [Either[Option[MNode], MNode]] {
         LOGGER.warn(s"checkAdnNodeCreds(): Node[$adnId] does not exist!")
         Left(None)
       } { adnNode =>
@@ -66,14 +66,14 @@ trait IsAdnNodeAdminUtilCtl
       }
     }
 
-    def checkAdnNodeCredsOpt(adnNodeOptFut: Future[Option[MAdnNode]], adnId: String, pwOpt: PwOpt_t): Future[Option[MAdnNode]] = {
+    def checkAdnNodeCredsOpt(adnNodeOptFut: Future[Option[MNode]], adnId: String, pwOpt: PwOpt_t): Future[Option[MNode]] = {
       checkAdnNodeCredsFut(adnNodeOptFut, adnId, pwOpt) map {
         case Right(adnNode) => Some(adnNode)
         case _ => None
       }
     }
 
-    def isAdnNodeAdmin(adnId: String, pwOpt: PwOpt_t): Future[Option[MAdnNode]] = {
+    def isAdnNodeAdmin(adnId: String, pwOpt: PwOpt_t): Future[Option[MNode]] = {
       val fut = mNodeCache.getById(adnId)
       checkAdnNodeCredsOpt(fut, adnId, pwOpt)
     }
@@ -85,14 +85,16 @@ trait IsAdnNodeAdminUtilCtl
 object IsAdnNodeAdmin extends PlayLazyMacroLogsImpl {
 
   /** Проверка прав на управления узлом с учётом того, что юзер может быть суперюзером s.io. */
-  def isAdnNodeAdminCheck(adnNode: MAdnNode, pwOpt: PwOpt_t): Boolean = {
+  def isAdnNodeAdminCheck(adnNode: MNode, pwOpt: PwOpt_t): Boolean = {
     PersonWrapper.isSuperuser(pwOpt) || isAdnNodeAdminCheckStrict(adnNode, pwOpt)
   }
 
   /** Проверка прав на домен без учёта суперюзеров. */
-  def isAdnNodeAdminCheckStrict(adnNode: MAdnNode, pwOpt: PwOpt_t): Boolean = {
+  def isAdnNodeAdminCheckStrict(mnode: MNode, pwOpt: PwOpt_t): Boolean = {
     pwOpt.exists { pw =>
-      adnNode.personIds contains pw.personId
+      mnode.edges
+        .withPredicateIterIds( MPredicates.OwnedBy )
+        .contains( pw.personId )
     }
   }
 
@@ -159,12 +161,12 @@ trait IsAdnNodeAdmin
 
 abstract class AbstractRequestForAdnNode[A](request: Request[A])
   extends AbstractRequestWithPwOpt(request) {
-  def adnNode: MAdnNode
+  def adnNode : MNode
   def isMyNode: Boolean
 }
 
 case class RequestForAdnNodeAdm[A](
-  adnNode   : MAdnNode,
+  adnNode   : MNode,
   isMyNode  : Boolean,
   request   : Request[A],
   pwOpt     : PwOpt_t,

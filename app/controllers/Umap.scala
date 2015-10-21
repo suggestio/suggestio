@@ -4,6 +4,7 @@ import java.nio.file.Files
 import com.google.inject.Inject
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.geo.{PointGs, GsTypes}
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.playx.ICurrentConf
 import org.elasticsearch.action.bulk.BulkResponse
 import org.elasticsearch.client.Client
@@ -53,16 +54,22 @@ class Umap @Inject() (
   /** Рендер статической карты для всех узлов, которая запросит и отобразит географию узлов. */
   def getAdnNodesMap = IsSuperuserGet.async { implicit request =>
     // Скачиваем все узлы из базы. TODO Закачать через кэш?
-    val allNodesMapFut: Future[Map[AdnShownType, Seq[MAdnNode]]] = {
-      val sargs = new AdnNodesSearchArgs {
-        override def withAdnRights = Seq(AdnRights.RECEIVER)
-        override def limit = 500
+    val allNodesMapFut: Future[Map[AdnShownType, Seq[MNode]]] = {
+      val msearch = new MNodeSearchDfltImpl {
+        override def withAdnRights  = Seq(AdnRights.RECEIVER)
+        override def limit          = 500
+        override def nodeTypes      = Seq( MNodeTypes.AdnNode )
       }
-      MAdnNode.dynSearch(sargs)
+      MNode.dynSearch( msearch )
     } map { allNodes =>
       allNodes
-        .groupBy { node => AdnShownTypes.withName(node.adn.shownTypeId) : AdnShownType }
-        .mapValues { _.sortBy(_.meta.name) }
+        .groupBy { node =>
+          node.extras.adn
+            .flatMap( _.shownTypeIdOpt )
+            .flatMap( AdnShownTypes.maybeWithName )
+            .getOrElse( AdnShownTypes.default )
+        }
+        .mapValues { _.sortBy(_.meta.basic.name) }
     }
     allNodesMapFut map { nodesMap =>
       val dlUrl = "/sys/umap/nodes/datalayer?ngl={pk}"
@@ -74,7 +81,7 @@ class Umap @Inject() (
         title         = "Сводная карта всех узлов",
         ngls          = NodeGeoLevels.valuesNgl.toSeq.sortBy(_.id)
       )
-      Ok(mapBaseTpl(args))
+      Ok( mapBaseTpl(args) )
     }
   }
 
@@ -84,24 +91,29 @@ class Umap @Inject() (
    * @param adnId id узла.
    * @return 200 OK и страница с картой.
    */
-  def getAdnNodeMap(adnId: String) = IsSuperuserAdnNodeGet(adnId).async { implicit request =>
+  def getAdnNodeMap(adnId: String) = IsSuperuserAdnNodeGet(adnId) { implicit request =>
     val dlUrl = s"/sys/umap/node/$adnId/datalayer?ngl={pk}"
     val args = UmapTplArgs(
       dlUpdateUrl   = dlUrl, // TODO Нужно задействовать reverse-роутер.
       dlGetUrl      = dlUrl,
       nodesMap      = Map.empty,
       editAllowed   = true,
-      title         = "Карта: " + request.adnNode.meta.name + request.adnNode.meta.town.fold("")(" / " + _),
-      ngls          = request.adnNode.adn.ngls
+      title         = "Карта: " +
+        request.adnNode.meta.basic.name +
+        request.adnNode.meta.address.town.fold("")(" / " + _),
+      ngls          = request.adnNode
+        .extras
+        .adn
+        .fold (List.empty[NodeGeoLevel]) (_.ngls)
     )
-    Ok(mapBaseTpl(args))
+    Ok( mapBaseTpl(args) )
   }
 
 
   /** Рендер одного слоя, перечисленного в карте слоёв. */
   def getDataLayerGeoJson(ngl: NodeGeoLevel) = IsSuperuser.async { implicit request =>
     MAdnNodeGeo.findAllRenderable(ngl, maxResults = 600).flatMap { geos =>
-      val nodesMapFut: Future[Map[String, MAdnNode]] = {
+      val nodesMapFut: Future[Map[String, MNode]] = {
         mNodeCache.multiGet(geos.map(_.adnId).toSet)
           .map { nodes => nodes.map(node => node.id.get -> node).toMap}
       }
@@ -112,7 +124,7 @@ class Umap @Inject() (
   }
 
   /** Общий код экшенов, занимающихся рендером слоёв в geojson-представление, пригодное для фронтенда. */
-  private def _getDataLayerGeoJson(adnIdOpt: Option[String], ngl: NodeGeoLevel, nodesMap: Map[String, MAdnNode],
+  private def _getDataLayerGeoJson(adnIdOpt: Option[String], ngl: NodeGeoLevel, nodesMap: Map[String, MNode],
                                    geos: Seq[MAdnNodeGeo])(implicit request: RequestHeader): Result = {
     val features: Seq[JsObject] = {
       val shapeFeaturesIter = umapUtil.prepareDataLayerGeos(geos.iterator)
@@ -121,7 +133,7 @@ class Umap @Inject() (
             "type" -> JsString("Feature"),
             "geometry" -> geo.shape.toPlayJson(geoJsonCompatible = true),
             "properties" -> JsObject(Seq(
-              "name"        -> JsString( nodesMap.get(geo.adnId).fold(geo.adnId)(_.meta.name) ),
+              "name"        -> JsString( nodesMap.get(geo.adnId).fold(geo.adnId)(_.meta.basic.name) ),
               "description" -> JsString( routes.SysMarket.showAdnNode(geo.adnId).absoluteURL() )
             ))
           ))
@@ -134,7 +146,7 @@ class Umap @Inject() (
               "type" -> JsString("Feature"),
               "geometry"   -> PointGs(pt).toPlayJson(geoJsonCompatible = true),
               "properties" -> JsObject(Seq(
-                "name"        -> JsString( adnNode.meta.name + " (центр)" ),
+                "name"        -> JsString( adnNode.meta.basic.name + " (центр)" ),
                 "description" -> JsString( routes.SysMarket.showAdnNode(adnNode.id.get).absoluteURL() )
               ))
             ))
@@ -236,7 +248,7 @@ class Umap @Inject() (
             .headOption
         }
       }
-      val nodesCentersUpdateInfoFut: Future[Iterable[(MAdnNode, Option[GeoPoint])]] = {
+      val nodesCentersUpdateInfoFut: Future[Iterable[(MNode, Option[GeoPoint])]] = {
         Future.traverse( centersUpdateMap ) {
           case (adnId, newCenterOpt) =>
             mNodeCache.getById(adnId).map {
@@ -269,7 +281,7 @@ class Umap @Inject() (
         val layersSaveFut: Future[BulkResponse] = bulkSave.execute()
         val nodesUpdFut = nodesCentersUpdateInfoFut.flatMap { data =>
           Future.traverse(data) { case (node, newCenter) =>
-            MAdnNode.tryUpdate(node) { node0 =>
+            MNode.tryUpdate(node) { node0 =>
               node0.copy(
                 geo = node0.geo.copy(
                   point = newCenter

@@ -2,6 +2,7 @@ package util
 
 import io.suggest.common.menum.{EnumMaybeWithId, EnumMaybeWithName, EnumValue2Val}
 import io.suggest.model.geo.{CircleGs, Distance, GeoPoint}
+import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.ym.model.NodeGeoLevels
 import io.suggest.ym.model.common.AdnMemberShowLevels.LvlMap_t
 import io.suggest.ym.model.common.MImgSizeT
@@ -254,6 +255,17 @@ object FormUtil {
   val colorOptM = optional(colorM)
     .transform [Option[String]] (emptyStrOptToNone, identity)
   def colorSomeM = toSomeStrM(colorM)
+
+  def colorDataM = colorM.transform [MColorData] (MColorData.apply, _.code)
+
+  private def _color2dataOptM(m0: Mapping[Option[String]]): Mapping[Option[MColorData]] = {
+    m0.transform [Option[MColorData]] (
+      _.map(MColorData.apply),
+      _.map(_.code)
+    )
+  }
+  def colorDataOptM  = _color2dataOptM(colorOptM)
+  def colorDataSomeM = _color2dataOptM(colorSomeM)
 
   def publishedTextM = text(maxLength = 2048)
     .transform(strFmtTrimF, strIdentityF)

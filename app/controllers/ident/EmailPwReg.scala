@@ -61,7 +61,7 @@ trait EmailPwReg
   with SendPwRecoverEmail
   with IMailer
   with IEsClient
-  with IsAnonCtl
+  with IsAnon
   with CanConfirmEmailPwRegCtl
   with INodesUtil
 {

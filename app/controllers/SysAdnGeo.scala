@@ -3,7 +3,7 @@ package controllers
 import com.google.inject.Inject
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.geo.{GeoShapeQuerable, Distance, CircleGs}
-import io.suggest.ym.model.common.AdnNodeGeodata
+import io.suggest.model.n2.edge.MNodeEdges
 import models.msys.OsmUrlParseResult
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.unit.DistanceUnit
@@ -40,6 +40,8 @@ class SysAdnGeo @Inject() (
   with IsSuperuserAdnNode
 {
 
+  // TODO Выпилить отсюда MAdnNodeGeo, использовать MNode.geo.shape
+
   import LOGGER._
 
   private def glevelKM = "glevel" -> nodeGeoLevelM
@@ -68,7 +70,10 @@ class SysAdnGeo @Inject() (
 
   /** Выдать страницу с географиями по узлам. */
   def forNode(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
-    val parentsMapFut = adnIds2NodesMap(request.adnNode.geo.allParentIds)
+    val parentsMapFut = adnIds2NodesMap(
+      request.adnNode.edges
+        .withPredicateIterIds( MPredicates.GeoParent )
+    )
     for {
       geos        <- MAdnNodeGeo.findByNode(adnId, withVersions = true)
       parentsMap  <- parentsMapFut
@@ -84,7 +89,9 @@ class SysAdnGeo @Inject() (
   }
 
   private def guessGeoLevel(implicit request: AbstractRequestForAdnNode[_]): Option[NodeGeoLevel] = {
-    AdnShownTypes.maybeWithName( request.adnNode.adn.shownTypeId )
+    request.adnNode.extras.adn
+      .flatMap(_.shownTypeIdOpt)
+      .flatMap(AdnShownTypes.maybeWithName)
       .flatMap( _.ngls.headOption )
   }
 
@@ -296,7 +303,7 @@ class SysAdnGeo @Inject() (
         )
         geo2.save map { _geoId =>
           Redirect( routes.SysAdnGeo.forNode(geo2.adnId) )
-            .flashing(FLASH.SUCCESS -> "Изменения сохранены.")
+            .flashing(FLASH.SUCCESS -> "Changes.saved")
         }
       }
     )
@@ -309,30 +316,28 @@ class SysAdnGeo @Inject() (
 
 
   /** Маппинг для формы, которая описывает поле geo в модели MAdnNode. */
-  private def nodeGeoFormM: Form[AdnNodeGeodata] = {
+  private def nodeGeoFormM = {
     Form(
-      mapping(
+      tuple(
         "point"         -> latLng2geopointOptM,
         "parentAdnId"   -> optional(esIdM)
       )
-      {(pointOpt, parentIdOpt) => AdnNodeGeodata(pointOpt, directParentIds = parentIdOpt.toSet) }
-      { angd => Some((angd.point, angd.directParentIds.headOption)) }
     )
   }
 
   /** Собрать карту узлов на основе списка. */
-  private def adnIds2NodesMap(parentIds: TraversableOnce[String]): Future[Map[String, MAdnNode]] = {
+  private def adnIds2NodesMap(parentIds: TraversableOnce[String]): Future[Map[String, MNode]] = {
     mNodeCache.multiGet(parentIds)
       .map { nodes2nodesMap }
   }
 
   /** Список узлов в карту (adnId -> adnNode). */
-  private def nodes2nodesMap(nodes: Iterable[MAdnNode]): Map[String, MAdnNode] = {
+  private def nodes2nodesMap(nodes: Iterable[MNode]): Map[String, MNode] = {
     nodes.iterator.map { parent => parent.id.get -> parent }.toMap
   }
 
   /** Сбор узлов, находящихся на указанных уровнях. TODO: Нужен радиус обнаружения. */
-  private def collectNodesOnLevels(glevels: Seq[NodeGeoLevel]): Future[Seq[MAdnNode]] = {
+  private def collectNodesOnLevels(glevels: Seq[NodeGeoLevel]): Future[Seq[MNode]] = {
     MAdnNodeGeo.findAdnIdsWithLevels(glevels)
       .map { _.toSet }
       .flatMap { mNodeCache.multiGet(_) }
@@ -347,15 +352,14 @@ class SysAdnGeo @Inject() (
     // Запускаем поиск всех шейпов текущего узла.
     val nodeShapesFut = MAdnNodeGeo.findByNode(adnId)
     // Для parentAdnId: берем шейп на текущем уровне, затем ищем пересечение с ним на уровне (уровнях) выше.
-    val parentAdnIdsFut: Future[Set[String]] = nodeShapesFut.flatMap { shapes =>
+    val parentAdnIdsFut: Future[Seq[String]] = nodeShapesFut.flatMap { shapes =>
       shapes
         .filter(_.glevel.upper.isDefined)
         .find(_.shape.isInstanceOf[GeoShapeQuerable])
-        .fold(Future successful Set.empty[String]) { geo =>
+        .fold [Future[Seq[String]]] (Future successful Nil) { geo =>
           val upperGlevel = geo.glevel.upper.get
           val shapeq = geo.shape.asInstanceOf[GeoShapeQuerable]
           MAdnNodeGeo.geoFindAdnIdsOnLevel(upperGlevel, shapeq, maxResults = 1)
-            .map { _.toSet }
         }
     }
     val nodesMapFut = nodeShapesFut flatMap { geos =>
@@ -363,7 +367,7 @@ class SysAdnGeo @Inject() (
         .map(_.glevel.allUpperLevels)
         .filter(_.nonEmpty)
         .fold
-          { Future successful Map.empty[String, MAdnNode] }
+          { Future successful Map.empty[String, MNode] }
           { upperLevels => collectNodesOnLevels(upperLevels) map nodes2nodesMap }
     }
     // Предлагаем центр имеющегося круга за точку центра.
@@ -377,14 +381,13 @@ class SysAdnGeo @Inject() (
       parentAdnIds  <- parentAdnIdsFut
       nodesMap      <- nodesMapFut
     } yield {
-      val geo = AdnNodeGeodata(pointOpt, parentAdnIds)
-      val formBinded = nodeGeoFormM.fill(geo)
+      val formBinded = nodeGeoFormM.fill((pointOpt, parentAdnIds.headOption))
       Ok(editNodeGeodataTpl(request.adnNode, formBinded, nodesMap, isProposed = true))
     }
   }
 
   /** Сбор возможных родительских узлов. */
-  private def adnId2possibleParentsMap(adnId: String): Future[Map[String, MAdnNode]] = {
+  private def adnId2possibleParentsMap(adnId: String): Future[Map[String, MNode]] = {
     MAdnNodeGeo.findIndexedPtrsForNode(adnId).flatMap { geoPtrs =>
       val glevels0 = geoPtrs
         .map(_.glevel)
@@ -408,7 +411,14 @@ class SysAdnGeo @Inject() (
    */
   def editAdnNodeGeodata(adnId: String) = IsSuperuserAdnNodeGet(adnId).async { implicit request =>
     val nodesMapFut = adnId2possibleParentsMap(adnId)
-    val formBinded = nodeGeoFormM fill request.adnNode.geo
+    val directParentId: Option[String] = {
+      request.adnNode
+        .edges
+        .withPredicateIterIds( MPredicates.GeoParent.Direct )
+        .toStream
+        .headOption
+    }
+    val formBinded = nodeGeoFormM fill (request.adnNode.geo.point, directParentId)
     nodesMapFut map { nodesMap =>
       Ok(editNodeGeodataTpl(request.adnNode, formBinded, nodesMap, isProposed = false))
     }
@@ -429,28 +439,40 @@ class SysAdnGeo @Inject() (
           NotAcceptable(editNodeGeodataTpl(request.adnNode, formWithErrors, nodesMap, isProposed = false))
         }
       },
-      {geo2 =>
+      {case (pointOpt, parentNodeIdOpt) =>
         // Нужно собрать значение для поля allParentIds, пройдясь по все родительским узлам.
-        Future.traverse( geo2.directParentIds ) { parentAdnId =>
-          mNodeCache.getById(parentAdnId).map { parentNodeOpt =>
-            parentNodeOpt.get.geo.allParentIds
+        parentNodeIdOpt.fold {
+          Future successful Set.empty[String]
+        } { parentNodeId =>
+          for {
+            Some(parentNode) <- mNodeCache.getById(parentNodeId)
+          } yield {
+            parentNode.edges
+              .withPredicateIterIds( MPredicates.GeoParent )
+              .toSet
           }
-        }.map { idsSets =>
-          if (idsSets.nonEmpty) {
-            idsSets.reduce(_ ++ _)
-          } else {
-            Set.empty
+
+        }.flatMap { parentParentIds0 =>
+          val allParentIds = parentParentIds0 ++ parentNodeIdOpt
+          val parentEdges = {
+            val p = MPredicates.GeoParent
+            allParentIds.iterator
+              .map { parentId => MEdge(p, parentId) }
+              .toStream
           }
-        }.flatMap { allParentIds0 =>
-          val allParentIds = geo2.directParentIds ++ allParentIds0
-          MAdnNode.tryUpdate(request.adnNode) { adnNode =>
-            val geo3 = adnNode.geo.copy(
-              point           = geo2.point,
-              directParentIds = geo2.directParentIds,
-              allParentIds    = allParentIds
-            )
-            adnNode.copy(
-              geo = geo3
+          MNode.tryUpdate(request.adnNode) { mnode =>
+            mnode.copy(
+              geo = mnode.geo.copy(
+                point = pointOpt
+              ),
+              edges = mnode.edges.copy(
+                out = {
+                  val iter = mnode.edges.withoutPredicateIter( MPredicates.GeoParent ) ++
+                    parentEdges.iterator ++
+                    parentNodeIdOpt.iterator.map( MEdge(MPredicates.GeoParent.Direct, _) )
+                  MNodeEdges.edgesToMap1( iter )
+                }
+              )
             )
           }.map { _adnId =>
             Redirect( routes.SysAdnGeo.forNode(_adnId) )

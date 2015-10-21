@@ -153,7 +153,3 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
 
 }
 
-/** EsModelCache - расширение [[EsModelCache]] с фильтрацией по adn.memberType. */
-// TODO Наверное надо спилить, ибо противоречит архитектуре N2.
-abstract class AdnEsModelCache[T <: EMAdNetMember : ClassTag]
-  extends EsModelCache[T]

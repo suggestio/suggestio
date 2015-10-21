@@ -1,7 +1,7 @@
 package util.acl
 
 import io.suggest.di.IEsClient
-import models.MAdnNode
+import models.MNode
 import models.event.MEvent
 import models.req.SioReqMd
 import play.api.mvc.{Result, Request, ActionBuilder}
@@ -97,7 +97,7 @@ abstract class AbstractEventRequest[A](request: Request[A]) extends AbstractRequ
 
 /** Экземпляр реквеста к экшену управления событием. */
 case class NodeEventRequest[A](
-  adnNode   : MAdnNode,
+  adnNode   : MNode,
   mevent    : MEvent,
   request   : Request[A],
   pwOpt     : PwOpt_t,

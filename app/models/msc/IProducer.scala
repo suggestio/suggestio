@@ -1,7 +1,7 @@
 package models.msc
 
 import io.suggest.primo.IUnderlying
-import models.MAdnNode
+import models.MNode
 
 /**
  * Suggest.io
@@ -12,7 +12,7 @@ import models.MAdnNode
 trait IProducer {
 
   /** Экземпляр узла-продьюсера . */
-  def producer  : MAdnNode
+  def producer  : MNode
 
 }
 

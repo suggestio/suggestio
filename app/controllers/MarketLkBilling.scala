@@ -3,9 +3,11 @@ package controllers
 import com.google.inject.Inject
 import io.suggest.bill.TxnsListConstants
 import io.suggest.event.SioNotifierStaticClientI
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.playx.ICurrentConf
 import models.jsm.init.MTargets
 import org.elasticsearch.client.Client
+import org.elasticsearch.search.sort.SortOrder
 import play.api.i18n.MessagesApi
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
@@ -66,10 +68,20 @@ class MarketLkBilling @Inject() (
    * @param adnId id узла.
    */
   def showAdnNodeBilling(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
-    val isProducer = request.adnNode.adn.isProducer
-    val otherRcvrsFut = if (isProducer) {
-      MAdnNode.findByAllAdnRights(Seq(AdnRights.RECEIVER), withoutTestNodes = false)
-        .map { _.filter(_.id.get != adnId).sortBy(_.meta.name) }
+    val isProducer = request.adnNode
+      .extras
+      .adn
+      .exists(_.isProducer)
+    val otherRcvrsFut: Future[Seq[MNode]] = if (isProducer) {
+      val msearch = new MNodeSearchDfltImpl {
+        override def limit          = 100
+        override def withAdnRights  = Seq(AdnRights.RECEIVER)
+        override def withoutIds     = Seq(adnId)
+        override def withNameSort   = Some( SortOrder.ASC )
+        override def nodeTypes      = Seq( MNodeTypes.AdnNode )
+      }
+      MNode.dynSearch( msearch )
+
     } else {
       Future successful Nil
     }
@@ -79,7 +91,7 @@ class MarketLkBilling @Inject() (
         .map { mbc =>
           val contractId = mbc.id.get
           // Если этот узел - приёмник рекламы, то нужно найти в базе его тарифные планы.
-          val myMbmds = if (request.adnNode.adn.isReceiver) {
+          val myMbmds = if (request.adnNode.extras.adn.exists(_.isReceiver)) {
             MBillMmpDaily.findByContractId(contractId)
           } else {
             Nil
@@ -142,7 +154,7 @@ class MarketLkBilling @Inject() (
    * @param f функция вызова рендера результата.
    * @return Фьючерс с результатом. Если нет узла, то 404.
    */
-  private def _prepareNodeMbmds(adnId: String)(f: (List[MBillMmpDaily], MAdnNode) => Result)
+  private def _prepareNodeMbmds(adnId: String)(f: (List[MBillMmpDaily], MNode) => Result)
                                (implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
     // TODO По идее надо бы проверять узел на то, является ли он ресивером наверное?
     val adnNodeFut = mNodeCache.getById(adnId)

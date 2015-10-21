@@ -1,5 +1,7 @@
 package models
 
+import io.suggest.model.n2.extra.MAdnExtra
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -126,7 +128,11 @@ object AdnShownTypes extends Enumeration {
 
   implicit def value2val(x: Value): AdnShownType = x.asInstanceOf[AdnShownType]
 
-  implicit def adnInfo2val(adnInfo: AdNetMemberInfo): AdnShownType = shownTypeId2val(adnInfo.shownTypeId)
+  implicit def adnInfo2val(adnInfo: MAdnExtra): AdnShownType = {
+    adnInfo.shownTypeIdOpt
+      .map( shownTypeId2val )
+      .getOrElse( default )
+  }
   implicit def shownTypeId2val(sti: String): AdnShownType = withName(sti)
 
 
@@ -135,5 +141,7 @@ object AdnShownTypes extends Enumeration {
 
   /** Часто используется при сборке списков узлов. */
   val districtNames = districts.iterator.map(_.name).toSeq
+
+  def default = SHOP
 
 }

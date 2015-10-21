@@ -2,8 +2,6 @@ package util.acl
 
 import java.net.InetAddress
 
-import models.event.MEvent
-import models.event.search.MEventsSearchArgs
 import models.msc.ScJsState
 import models.req.SioReqMd
 import play.api.http.HeaderNames
@@ -11,13 +9,7 @@ import play.core.parsers.FormUrlEncodedParser
 import util.PlayMacroLogsImpl
 import util.acl.PersonWrapper._
 import play.api.mvc._
-import models._
-import util.async.AsyncUtil
-import scala.concurrent.Future
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.db.DB
-import play.api.Play.current
-import util.SiowebEsUtil.client
+import scala.concurrent.{ExecutionContext, Future}
 
 
 object SioWrappedRequest {
@@ -90,7 +82,7 @@ object SioRequestHeader extends PlayMacroLogsImpl {
 
 object RichRequestHeader {
 
-  def apply(rh: RequestHeader): Future[RichRequestHeader] = {
+  def apply(rh: RequestHeader)(implicit ec: ExecutionContext): Future[RichRequestHeader] = {
     val _pwOpt = PersonWrapper.getFromRequest(rh)
     SioReqMd.fromPwOpt(_pwOpt).map { srm =>
       new RequestHeaderWrapper with RichRequestHeader {

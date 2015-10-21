@@ -1,6 +1,6 @@
 package models.msc
 
-import models.{GeoNodesLayer, MAdnNode}
+import models.{GeoNodesLayer, MNode}
 
 /**
  * Suggest.io
@@ -11,7 +11,7 @@ import models.{GeoNodesLayer, MAdnNode}
 
 trait NodeListRenderArgs extends SyncRenderInfoDflt {
   def nodeLayers  : Seq[GeoNodesLayer]
-  def currNode    : Option[MAdnNode]
+  def currNode    : Option[MNode]
   def apiVsn      : MScApiVsn
 }
 

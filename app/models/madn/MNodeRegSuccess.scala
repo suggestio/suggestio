@@ -1,6 +1,6 @@
 package models.madn
 
-import models.MAdnNode
+import models.MNode
 import play.api.mvc.Call
 
 /**
@@ -12,7 +12,7 @@ import play.api.mvc.Call
 trait INodeRegSuccess {
 
   /** Созданный узел. */
-  def mnode: MAdnNode
+  def mnode: MNode
 
   /** Куда юзера редиректить после инсталляции узла. */
   def rdrCall: Call
@@ -24,7 +24,7 @@ trait INodeRegSuccess {
 
 
 case class MNodeRegSuccess(
-  override val mnode                : MAdnNode,
+  override val mnode                : MNode,
   override val rdrCall              : Call,
   override val autoRdrAfterSeconds  : Int
 )

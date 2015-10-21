@@ -93,7 +93,7 @@ trait CanReceiveAdvReq
 case class RequestWithAdvReq[A](
   request   : Request[A],
   advReq    : MAdvReq,
-  rcvrNode  : MAdnNode,
+  rcvrNode  : MNode,
   pwOpt     : PwOpt_t,
   sioReqMd  : SioReqMd
 )

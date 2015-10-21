@@ -363,7 +363,7 @@ object MarketAdFormUtil {
    * @param adnNode Узел рекламной сети.
    * @return id узла-владельца категорий.
    */
-  def getCatOwnerId(adnNode: MAdnNode): String = {
+  def getCatOwnerId(adnNode: MNode): String = {
     /*
     import AdNetMemberTypes._
     adnNode.adn.memberType match {

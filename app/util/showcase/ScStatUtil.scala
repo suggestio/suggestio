@@ -142,7 +142,7 @@ class ScStatUtil @Inject() (
             adIds       = madIds,
             adsRendered = adsCount,
             onNodeIdOpt = onNodeIdOpt,
-            nodeName    = adnNodeOpt.map(_.meta.name),
+            nodeName    = adnNodeOpt.map(_.meta.basic.name),
             ua          = uaOpt,
             personId    = personId,
             timestamp   = now,
@@ -236,7 +236,7 @@ class ScStatUtil @Inject() (
 
   /** Эта статистика касается указанного узла. */
   trait NodeStatT extends StatT {
-    val nodeOpt: Option[MAdnNode]
+    val nodeOpt: Option[MNode]
     override lazy val onNodeIdOpt = nodeOpt.flatMap(_.id)
     override def adnNodeOptFut = Future successful nodeOpt
   }
@@ -261,7 +261,7 @@ class ScStatUtil @Inject() (
     override val scSinkOpt: Option[AdnSink],
     gsiFut: Future[Option[GeoSearchInfo]],
     override val screenOpt: Option[DevScreen],
-    nodeOpt: Option[MAdnNode]
+    nodeOpt: Option[MNode]
   )(
     implicit val request: AbstractRequestWithPwOpt[_]
   )
@@ -279,7 +279,7 @@ class ScStatUtil @Inject() (
    */
   case class SiteStat(
     scSink: AdnSink,
-    nodeOpt: Option[MAdnNode] = None
+    nodeOpt: Option[MNode] = None
   )(
     implicit val request: AbstractRequestWithPwOpt[_]
   )

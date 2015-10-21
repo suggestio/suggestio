@@ -1,7 +1,7 @@
 package util.acl
 
 import io.suggest.di.{IExecutionContext, IEsClient}
-import models.{MAdnNode, MBillContract}
+import models.{MNode, MBillContract}
 import models.req.SioReqMd
 import util.async.AsyncUtil
 import util.di.{IDb, INodeCache}
@@ -79,7 +79,7 @@ trait IsSuperuserContractNode
 
 case class ContractNodeRequest[A](
   contract  : MBillContract,
-  adnNode   : MAdnNode,
+  adnNode   : MNode,
   pwOpt     : PwOpt_t,
   request   : Request[A],
   sioReqMd  : SioReqMd

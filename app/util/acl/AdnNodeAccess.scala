@@ -39,7 +39,7 @@ trait AdnNodeAccess
       PersonWrapper.getFromRequest(request) match {
         case pwOpt @ Some(pw) =>
           val povAdnNodeOptFut = povAdnIdOpt.fold
-            { Future successful Option.empty[MAdnNode] }
+            { Future successful Option.empty[MNode] }
             { povAdnId => isAdnNodeAdmin(povAdnId, pwOpt) }
           val adnNodeOptFut = mNodeCache.getById(adnId)
           checkAdnNodeCredsFut(adnNodeOptFut, adnId, pwOpt) flatMap {
@@ -94,8 +94,8 @@ trait AdnNodeAccess
 
 
 case class RequestForAdnNode[A](
-  adnNode       : MAdnNode,
-  povAdnNodeOpt : Option[MAdnNode],
+  adnNode       : MNode,
+  povAdnNodeOpt : Option[MNode],
   isMyNode      : Boolean,
   request       : Request[A],
   pwOpt         : PwOpt_t,
@@ -104,7 +104,7 @@ case class RequestForAdnNode[A](
   extends AbstractRequestForAdnNode(request)
 {
 
-  def myNode: Option[MAdnNode] = if (isMyNode) Some(adnNode) else povAdnNodeOpt
+  def myNode: Option[MNode] = if (isMyNode) Some(adnNode) else povAdnNodeOpt
   def myNodeId: Option[String] = myNode.flatMap(_.id)
 }
 

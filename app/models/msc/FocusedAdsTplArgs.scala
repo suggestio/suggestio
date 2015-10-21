@@ -8,9 +8,14 @@ import models.im.MImgT
  * Created: 10.04.15 15:28
  * Description: Аргумента для вызова рендера шаблона sc._focusedAdsTpl.
  */
-trait IFocusedAdsTplArgs extends SyncRenderInfo with IAdBodyTplArgs with IColors with ILogoRenderArgs
-with IHBtnRenderArgs {
-  override def title = producer.meta.nameShort
+trait IFocusedAdsTplArgs
+  extends SyncRenderInfo
+  with IAdBodyTplArgs
+  with IColors
+  with ILogoRenderArgs
+  with IHBtnRenderArgs
+{
+  override def title = producer.meta.basic.nameShort
 }
 
 // (Тут до web21:0af93c09f23a включительно был код дефолтовой реализации модели, но реализация оказалась невостребована.)

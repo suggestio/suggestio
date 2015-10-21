@@ -94,7 +94,7 @@ final case class MInviteRequest(
   override val companion: MInviteRequest_,
   var company   : Either[MCompany, String],
   var waOpt     : Option[Either[MWelcomeAd, String]] = None,
-  var adnNode   : Option[Either[MAdnNode, String]] = None,
+  var adnNode   : Option[Either[MNode, String]] = None,
   var contract  : Option[Either[MBillContract, Int]] = None,
   var mmp       : Option[Either[MBillMmpDaily, Int]] = None,
   var balance   : Option[Either[MBillBalance, String]] = None,
@@ -333,7 +333,7 @@ sealed trait EMInviteRequestStatic extends EsModelStaticMutAkvT {
     FieldString(REQ_TYPE_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false) ::
       // ES-модели индексируем, чтоб можно было искать потом среди инвайтов.
       FieldObject(COMPANY_ESFN, enabled = true, properties = idField :: MCompany.generateMappingProps) ::
-      FieldObject(ADN_NODE_ESFN, enabled = true, properties = idField :: MAdnNode.generateMappingProps) ::
+      FieldObject(ADN_NODE_ESFN, enabled = true, properties = idField :: MNode.generateMappingProps) ::
       // SQL-модели: не индексируем.
       FieldObject(CONTRACT_EFSN, enabled = false, properties = Nil) ::
       FieldObject(DAILY_MMP_ESFN, enabled = false, properties = Nil) ::
@@ -384,7 +384,7 @@ sealed trait EMInviteRequestStatic extends EsModelStaticMutAkvT {
       case (COMPANY_ESFN, jmap: ju.Map[_, _]) =>
         acc.company = deserializeEsModel(MCompany, jmap)
       case (ADN_NODE_ESFN, jmap: ju.Map[_, _]) =>
-        acc.adnNode = Some( deserializeEsModel(MAdnNode, jmap) )
+        acc.adnNode = Some( deserializeEsModel(MNode, jmap) )
       case (CONTRACT_EFSN, jmap: ju.Map[_, _]) =>
         acc.contract = Some( deseralizeSqlIntModel(MBillContract, jmap) )
       case (DAILY_MMP_ESFN, jmap: ju.Map[_, _]) =>
@@ -412,7 +412,7 @@ sealed trait EMInviteRequestMut extends EsModelPlayJsonT {
 
   var reqType   : InviteReqType
   var company   : Either[MCompany, String]
-  var adnNode   : Option[Either[MAdnNode, String]]
+  var adnNode   : Option[Either[MNode, String]]
   var contract  : Option[Either[MBillContract, Int]]
   var mmp       : Option[Either[MBillMmpDaily, Int]]
   var balance   : Option[Either[MBillBalance, String]]
@@ -429,7 +429,7 @@ sealed trait EMInviteRequestMut extends EsModelPlayJsonT {
   abstract override def writeJsonFields(acc0: FieldsJsonAcc): FieldsJsonAcc = {
     val acc1 = super.writeJsonFields(acc0)
     var acc =
-      REQ_TYPE_ESFN   -> JsString(reqType.toString) ::
+      REQ_TYPE_ESFN   -> JsString(reqType.name) ::
       COMPANY_ESFN    -> strModel2json(company) ::
       acc1
     if (adnNode.isDefined)

@@ -77,7 +77,7 @@ class AdvFreeGeoParentRcvrs @Inject() (
       .map { nodes =>
         val sls = Set(SinkShowLevels.GEO_PRODUCER_SL)
         nodes.iterator
-          .flatMap(_.geo.allParentIds)
+          .flatMap { _.edges.withPredicateIterIds( MPredicates.GeoParent) }
           .map { parentId => parentId -> AdReceiverInfo(parentId, sls) }
           .toMap
       }

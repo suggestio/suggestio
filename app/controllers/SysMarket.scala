@@ -1,7 +1,10 @@
 package controllers
 
 import com.google.inject.Inject
+import io.suggest.common.fut.FutureUtil
 import io.suggest.event.SioNotifierStaticClientI
+import io.suggest.model.n2.edge.MNodeEdges
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.im.MImg
 import models.msys.NodeCreateParams
 import models.usr.{MPerson, EmailActivation}
@@ -74,14 +77,14 @@ class SysMarket @Inject() (
       }
     val adnNodesFut = stiIdOpt match {
       case Some(stiId) =>
-        val sargs = new AdnNodesSearchArgs {
+        val sargs = new MNodeSearchDfltImpl {
+          override def nodeTypes    = Seq( MNodeTypes.AdnNode )
           override def shownTypeIds = Seq(stiId)
-          override def limit = 1000
-          override def testNode = None
+          override def limit        = 1000
         }
-        MAdnNode.dynSearch(sargs)
+        MNode.dynSearch(sargs)
       case None =>
-        MAdnNode.getAll(maxResults = 1000)
+        MNode.getAll(maxResults = 1000)
     }
     for {
       adnNodes <- adnNodesFut
@@ -94,7 +97,9 @@ class SysMarket @Inject() (
   /** Унифицированая страница отображения узла рекламной сети. */
   def showAdnNode(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
     import request.adnNode
-    val personNamesFut = Future.traverse(adnNode.personIds) { personId =>
+    val ownerIds = adnNode.edges
+      .withPredicateIterIds( MPredicates.OwnedBy )
+    val personNamesFut = Future.traverse( ownerIds ) { personId =>
       MPerson.findUsernameCached(personId)
         .map { nameOpt =>
           val name = nameOpt.getOrElse(personId)
@@ -131,7 +136,7 @@ class SysMarket @Inject() (
   }
 
 
-  private def createAdnNodeRender(nodeFormM: Form[MAdnNode], ncpForm: Form[NodeCreateParams])
+  private def createAdnNodeRender(nodeFormM: Form[MNode], ncpForm: Form[NodeCreateParams])
                                  (implicit request: AbstractRequestWithPwOpt[_]): Future[Html] = {
     val html = createAdnNodeFormTpl(nodeFormM, ncpForm)
     Future successful html
@@ -142,19 +147,9 @@ class SysMarket @Inject() (
   /** Страница с формой создания нового узла. */
   def createAdnNode() = IsSuperuser.async { implicit request =>
     // Генерим stub и втыкаем его в форму, чтобы меньше галочек ставить.
+    // 2015.oct.21: Используем nodesUtil для сборки дефолтового инстанса.
     val dfltFormM = adnNodeFormM.fill(
-      // TODO Может быть, использовать dflt user node из NodesUtil?
-      MAdnNode(
-        adn = AdNetMemberInfo(
-          isUser          = false,
-          rights          = Set(AdnRights.PRODUCER, AdnRights.RECEIVER),
-          shownTypeIdOpt  = Some(AdnShownTypes.MART.name),
-          testNode        = false,
-          isEnabled       = true,
-          sinks           = Set(AdnSinks.SINK_GEO),
-          showLevelsInfo  = nodesUtil.dfltShowLevels
-        )
-      )
+      nodesUtil.userNodeInstance("", personId = request.pwOpt.get.personId)
     )
     val ncpForm = nodeCreateParamsFormM fill NodeCreateParams()
     createAdnNodeRender(dfltFormM, ncpForm)
@@ -172,8 +167,16 @@ class SysMarket @Inject() (
           NotAcceptable(_)
         }
       },
-      {adnNode =>
-        for (adnId <- adnNode.save) yield {
+      {mnode0 =>
+        val mnode1 = mnode0.copy(
+          edges = mnode0.edges.copy(
+            out = {
+              val ownEdge = MEdge(MPredicates.OwnedBy, request.pwOpt.get.personId)
+              MNodeEdges.edgesToMap(ownEdge)
+            }
+          )
+        )
+        for (adnId <- mnode1.save) yield {
           // Инициализировать новосозданный узел.
           maybeInitializeNode(ncpForm, adnId)
           // Отредиректить админа в созданный узел.
@@ -231,7 +234,7 @@ class SysMarket @Inject() (
       .map { Ok(_) }
   }
 
-  private def editAdnNodeBody(adnId: String, form: Form[MAdnNode])
+  private def editAdnNodeBody(adnId: String, form: Form[MNode])
                              (implicit request: AbstractRequestForAdnNode[AnyContent]): Future[Html] = {
     val res = editAdnNodeFormTpl(request.adnNode, form)
     Future successful res
@@ -249,7 +252,7 @@ class SysMarket @Inject() (
       },
       {adnNode2 =>
         for {
-          _ <- MAdnNode.tryUpdate(adnNode) { updateAdnNode(_, adnNode2) }
+          _ <- MNode.tryUpdate(adnNode) { updateAdnNode(_, adnNode2) }
         } yield {
           Redirect(routes.SysMarket.showAdnNode(adnId))
             .flashing(FLASH.SUCCESS -> "Changes.saved")
@@ -351,9 +354,7 @@ class SysMarket @Inject() (
     val adnNodeIdOpt = a.producerIds.headOption orElse a.receiverIds.headOption
     val adFreqsFut: Future[AdFreqs_t] = adnNodeIdOpt
       .fold [Future[MAdStat.AdFreqs_t]] (Future successful Map.empty) { MAdStat.findAdByActionFreqs }
-    val adnNodeOptFut: Future[Option[MAdnNode]] = {
-      adnNodeIdOpt.fold (Future successful Option.empty[MAdnNode]) { mNodeCache.getById }
-    }
+    val adnNodeOptFut = FutureUtil.optFut2futOpt(adnNodeIdOpt)( mNodeCache.getById )
     // Собираем карту размещений рекламных карточек.
     val ad2advMapFut = madsFut map { mads =>
       lazy val adIds = mads.flatMap(_.id)
@@ -375,7 +376,7 @@ class SysMarket @Inject() (
       advs.groupBy(_.adId)
     }
     // Собираем ресиверов рекламных карточек.
-    val rcvrsFut: Future[Map[String, Seq[MAdnNode]]] = if (a.receiverIds.nonEmpty) {
+    val rcvrsFut: Future[Map[String, Seq[MNode]]] = if (a.receiverIds.nonEmpty) {
       // Используем только переданные ресиверы.
       Future
         .traverse(a.receiverIds) { mNodeCache.getById }
@@ -467,11 +468,11 @@ class SysMarket @Inject() (
   def showShopEmailAdDisableMsg(adId: String) = IsSuperuserMad(adId).async { implicit request =>
     import request.mad
     val mmartFut = mad.receivers.headOption match {
-      case Some(rcvr) => MAdnNode.getById(rcvr._2.receiverId)
-      case None       => MAdnNode.getAll(maxResults = 1).map { _.headOption }
+      case Some(rcvr) => MNode.getById(rcvr._2.receiverId)
+      case None       => MNode.getAll(maxResults = 1).map { _.headOption }
     }
     for {
-      mshopOpt <- MAdnNode.getById( mad.producerId )
+      mshopOpt <- MNode.getById( mad.producerId )
       mmartOpt <- mmartFut
     } yield {
       val reason = "Причина отключения ТЕСТ причина отключения 123123 ТЕСТ причина отключения."
@@ -511,7 +512,7 @@ class SysMarket @Inject() (
     val producerOptFut = mNodeCache.getById(mad.producerId)
     val newRcvrsMapFut = producerOptFut flatMap { advUtil.calculateReceiversFor(mad, _) }
     // Достаём из кеша узлы.
-    val nodesMapFut: Future[Map[String, MAdnNode]] = {
+    val nodesMapFut: Future[Map[String, MNode]] = {
       val adnIds1 = mad.receivers.keySet
       for {
         adns1       <- mNodeCache.multiGet(adnIds1)

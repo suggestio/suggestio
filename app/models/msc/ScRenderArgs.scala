@@ -13,7 +13,7 @@ import play.twirl.api.Html
 
 object ScRenderArgs {
 
-  type ProdsLetterGrouped_t = Seq[(Char, Seq[MAdnNode])]
+  type ProdsLetterGrouped_t = Seq[(Char, Seq[MNode])]
 
   /** Регэксп для нахождения первого словесного символа в строке. */
   val NON_PUNCTUATION_CHAR = "(?U)\\w".r
@@ -42,16 +42,16 @@ object ScRenderArgs {
    * @param prods Список узлов.
    * @return Список сгруппированных узлов.
    */
-  def groupNodesByNameLetter(prods: Seq[MAdnNode]): ProdsLetterGrouped_t = {
+  def groupNodesByNameLetter(prods: Seq[MNode]): ProdsLetterGrouped_t = {
     prods
       // Сгруппировать по первой букве или цифре.
       .groupBy { node =>
-        val firstChar = firstWordChar(node.meta.nameShort)
+        val firstChar = firstWordChar(node.meta.basic.nameShort)
         java.lang.Character.toUpperCase(firstChar)
       }
       // Отсортировать ноды по названиям в рамках группы.
       .mapValues { nodes =>
-        nodes.sortBy(_.meta.nameShort.toLowerCase)
+        nodes.sortBy(_.meta.basic.nameShort.toLowerCase)
       }
       .toSeq
       // Отсортировать по первой букве группы, но русские -- сверху.

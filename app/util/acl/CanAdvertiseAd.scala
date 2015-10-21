@@ -7,7 +7,7 @@ import models.req.SioReqMd
 import org.elasticsearch.client.Client
 import play.api.mvc._
 import models._
-import util.di.{INodeCache, ICanAdvAdUtil}
+import util.di.ICanAdvAdUtil
 import util.{PlayMacroLogsDyn, PlayMacroLogsI, PlayMacroLogsImpl}
 import util.acl.PersonWrapper.PwOpt_t
 import scala.concurrent.{ExecutionContext, Future}
@@ -30,8 +30,8 @@ class CanAdvertiseAdUtil @Inject() (
   import LOGGER._
 
   /** Является ли указанный узел рекламодателем? */
-  def isAdvertiserNode(adnNode: MAdnNode): Boolean = {
-    adnNode.adn.isEnabled  &&  adnNode.adn.isProducer
+  def isAdvertiserNode(mnode: MNode): Boolean = {
+    mnode.common.isEnabled  &&  mnode.extras.adn.exists(_.isProducer)
   }
 
   /**
@@ -60,8 +60,11 @@ class CanAdvertiseAdUtil @Inject() (
         case Some(pw) =>
           mNodeCache.getById(mad.producerId).flatMap { adnNodeOpt =>
             adnNodeOpt
-              .filter { adnNode =>
-                adnNode.personIds.contains(pw.personId)  &&  isAdvertiserNode(adnNode)
+              .filter { mnode =>
+                val isOwnedByMe = mnode.edges
+                  .withPredicateIterIds( MPredicates.OwnedBy )
+                  .contains(pw.personId)
+                isOwnedByMe  &&  isAdvertiserNode(mnode)
               }
               .fold {
                 debug(s"maybeAllowed($pwOpt, ${mad.id.get}): User is not node ${mad.producerId} admin or node is not a producer.")

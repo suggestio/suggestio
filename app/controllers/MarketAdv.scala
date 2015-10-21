@@ -2,9 +2,9 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.model.common.OptStrId
+import io.suggest.model.n2.node
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.playx.ICurrentConf
-import io.suggest.ym.model.common.EMAdNetMember
 import models.adv.geo.{ReqInfo, AdvFormEntry, WndFullArgs}
 import org.elasticsearch.client.Client
 import org.joda.time.format.ISOPeriodFormat
@@ -238,7 +238,7 @@ class MarketAdv @Inject() (
     }
   }
 
-  private def toAdvswArgs(adAdvInfo: AdAdvInfoResult, rcvrs: Seq[MAdnNode]): CurrentAdvsTplArgs = {
+  private def toAdvswArgs(adAdvInfo: AdAdvInfoResult, rcvrs: Seq[MNode]): CurrentAdvsTplArgs = {
     import adAdvInfo._
     val advs = (advsReq ++ advsRefused ++ advsOk).sortBy(_.dateCreated)
     val adv2adnIds = mkAdv2adnIds(advsReq, advsRefused, advsOk)
@@ -253,7 +253,7 @@ class MarketAdv @Inject() (
    * @param rcvrsAllFutOpt Опционально: асинхронный список ресиверов. Экшен контроллера может передавать его сюда.
    * @return Отрендеренная страница управления карточкой с формой размещения.
    */
-  private def renderAdvForm(adId: String, form: AdvFormM_t, rcvrsAllFutOpt: Option[Future[Seq[MAdnNode]]] = None)
+  private def renderAdvForm(adId: String, form: AdvFormM_t, rcvrsAllFutOpt: Option[Future[Seq[MNode]]] = None)
                            (implicit request: RequestWithAdAndProducer[AnyContent]): Future[Html] = {
     // Если поиск ресиверов ещё не запущен, то сделать это.
     val rcvrsAllFut = rcvrsAllFutOpt  getOrElse  collectAllReceivers(request.producer)
@@ -321,7 +321,13 @@ class MarketAdv @Inject() (
         .filter(!_._1.isEmpty)
         .map { case (cityId, cityNodes) =>
           val cityNode = rcvrsMap(cityId)
-          val cats = cityNodes.groupBy(_.adn.shownTypeId)
+          val cats = cityNodes
+            .groupBy { mnode =>
+              mnode.extras
+                .adn
+                .flatMap( _.shownTypeIdOpt )
+                .getOrElse( AdnShownTypes.MART.name )
+            }
             .iterator
             .zipWithIndex
             .map { case ((shownTypeId, catNodes), i) =>
@@ -340,8 +346,8 @@ class MarketAdv @Inject() (
         .zipWithIndex
         .map { case ((cityNode, cats), i)  =>  AdvFormCity(cityNode, cats, i) }
         .toSeq
-        .sortBy(_.node.meta.name)
-    }
+        .sortBy(_.node.meta.basic.name)
+      }
 
     // Строим карту уже занятых какими-то размещением узлы.
     val busyAdvsFut: Future[Map[String, MAdvI]] = adAdvInfoFut.map { adAdvInfo =>
@@ -382,14 +388,14 @@ class MarketAdv @Inject() (
 
 
   /** Используя дерево гео-связей нужно найти родительский узел, имеющий указанный shownType. */
-  private def findFirstGeoParentOfType(node: MAdnNode, parentShowType: AdnShownType, nodes: Map[String, MAdnNode]): Option[MAdnNode] = {
+  private def findFirstGeoParentOfType(node: MNode, parentShowType: AdnShownType, nodes: Map[String, MNode]): Option[MNode] = {
     // Поднимаемся наверх по иерархии гео-родительства.
-    val iter = node.geo
-      .directParentIds
-      .iterator // Для ленивого обхода коллекции используем итератор. Нам по факту нужен только первый подходящий узел.
+    val iter = node.edges
+      .withPredicateIter( MPredicates.GeoParent.Direct )
+      .map { _.nodeId }
       .flatMap(nodes.get)
       .flatMap { parentNode =>
-        if (parentNode.adn.shownTypeId == parentShowType.name) {
+        if (parentNode.extras.adn.flatMap(_.shownTypeIdOpt).contains( parentShowType.name) ) {
           // Текущий узел имеет искомый id типа
           Some(parentNode)
         } else {
@@ -404,12 +410,12 @@ class MarketAdv @Inject() (
     }
   }
 
-  private def mkAdv2adnMap(adv2adnIds: Map[Int, String], rcvrs: Seq[MAdnNode]): Map[Int, MAdnNode] = {
+  private def mkAdv2adnMap(adv2adnIds: Map[Int, String], rcvrs: Seq[MNode]): Map[Int, MNode] = {
     val rcvrsMap = rcvrs.map { rcvr => rcvr.id.get -> rcvr }.toMap
     // Собираем карту adv.id -> rcvr.
     adv2adnIds.flatMap { case (advId, adnId) =>
       rcvrsMap.get(adnId)
-        .fold { List.empty[(Int, MAdnNode)] }  { rcvr => List(advId -> rcvr) }
+        .fold { List.empty[(Int, MNode)] }  { rcvr => List(advId -> rcvr) }
     }
   }
 
@@ -568,20 +574,16 @@ class MarketAdv @Inject() (
 
 
   /** Собрать все узлы сети, пригодные для размещения рекламной карточки. */
-  private def collectAllReceivers(myNode: OptStrId with EMAdNetMember) = {
+  private def collectAllReceivers(producer: MNode): Future[Seq[MNode]] = {
     // TODO Этот запрос возвращает огромный список нод, которые рендерятся в огромный список. Надо переверстать эти шаблоны.
-    val nodesFut = MAdnNode.findByAllAdnRights(
-      Seq(AdnRights.RECEIVER),
-      withoutTestNodes = !myNode.adn.testNode,
-      maxResults = 500
-    )
-    // Самому себе через "управление размещением" публиковать нельзя.
-    for (nodes <- nodesFut) yield {
-      val dropRcvrId = myNode.id.get
-      nodes.filter {
-        _.id.get != dropRcvrId
-      }
+    val msearch = new MNodeSearchDfltImpl {
+      override def withAdnRights  = Seq(AdnRights.RECEIVER)
+      override def testNode       = producer.extras.adn.map(_.testNode)
+      override def limit: Int     = 500
+      override def withoutIds     = producer.id.toSeq
+      override def nodeTypes      = Seq( MNodeTypes.AdnNode )
     }
+    MNode.dynSearch( msearch )
   }
 
 
@@ -711,19 +713,16 @@ class MarketAdv @Inject() (
   def showNodeAdvs(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
     // Отрабатываем делегирование adv-прав текущему узлу:
     val dgAdnIdsFut: Future[Set[String]] = {
-      // TODO N2 реализовать выборку id узлов, от которых делегировано право этому узлу в модерации запросов размещения.
-      LOGGER.warn(s"showNodeAdvs($adnId): adv delegation not implemened")
-      /*for {
-        edges <- MEdge.dynSearch( FindEdgesByAdvDelegate(adnId) )
-      } yield {
-        var iter = edges.iterator
-          .map { _.fromId }
-        // Дописать в начало ещё текущей узел, если он также является рекламо-получателем.
-        if (request.adnNode.adn.isReceiver)
-          iter ++= Iterator(adnId)
-        iter.toSet
-        */
-      Future successful Set.empty
+      // TODO Код не тестирован после переписывания на N2.
+      var iter = request.adnNode
+        .edges
+        .withPredicateIterIds( MPredicates.AdvMdrDgTo )
+      // Дописать в начало ещё текущей узел, если он также является рекламо-получателем.
+      if (request.adnNode.extras.adn.exists(_.isReceiver)) {
+        iter ++= Iterator(adnId)
+      }
+      val res = iter.toSet
+      Future successful res
     }
 
     // TODO Отрабатывать цепочное делегирование, когда узел делегирует дальше adv-права ещё какому-то узлу.

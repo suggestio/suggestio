@@ -23,9 +23,6 @@ package object models {
   type MCompanyMeta         = ym.model.common.MCompanyMeta
   val  MCompanyMeta         = ym.model.common.MCompanyMeta
 
-  val  MAdnNode             = ym.model.MAdnNode
-  type MAdnNode             = ym.model.MAdnNode
-
   type MYmCategory          = ym.model.MYmCategory
   val  MYmCategory          = ym.model.MYmCategory
 
@@ -35,8 +32,10 @@ package object models {
   val  MAd                  = ym.model.MAd
   type MAd                  = ym.model.MAd
 
-  val  AdNetMemberInfo      = ym.model.common.AdNetMemberInfo
-  type AdNetMemberInfo      = ym.model.common.AdNetMemberInfo
+  @deprecated("Use MAdnExtra instead", "2015.oct.21")
+  val  AdNetMemberInfo      = n2.extra.MAdnExtra //ym.model.common.AdNetMemberInfo
+  @deprecated("Use MAdnExtra instead", "2015.oct.21")
+  type AdNetMemberInfo      = n2.extra.MAdnExtra //ym.model.common.AdNetMemberInfo
 
   val  AdnRights            = ym.model.common.AdnRights
   type AdnRight             = ym.model.common.AdnRight
@@ -217,9 +216,6 @@ package object models {
   type MNodeType            = n2.node.MNodeType
   val  MNodeTypes           = n2.node.MNodeTypes
 
-  type MNodeCommon          = n2.node.common.MNodeCommon
-  val  MNodeCommon          = n2.node.common.MNodeCommon
-
   type MEdge                = n2.edge.MEdge
   val  MEdge                = n2.edge.MEdge
   type IEdge                = n2.edge.IEdge
@@ -227,16 +223,23 @@ package object models {
   type MPredicate           = n2.edge.MPredicate
   val  MPredicates          = n2.edge.MPredicates
 
-  val  MNodeMeta            = common.MNodeMeta
-  type MNodeMeta            = common.MNodeMeta
-
   val  MMeta                = n2.node.meta.MMeta
   type MMeta                = n2.node.meta.MMeta
+
+  @deprecated("Use MMeta instead", "2015.oct.21")
+  val  MNodeMeta            = MMeta // common.MNodeMeta
+  @deprecated("Use MMeta instead", "2015.oct.21")
+  type MNodeMeta            = MMeta // common.MNodeMeta
 
   val  MPersonMeta          = n2.node.meta.MPersonMeta
   type MPersonMeta          = n2.node.meta.MPersonMeta
 
   val  MMedia               = n2.media.MMedia
   type MMedia               = n2.media.MMedia
+
+  @deprecated("Use MNode instead", "2015.oct.21")
+  val  MAdnNode             = MNode // ym.model.MAdnNode
+  @deprecated("Use MNode instead", "2015.oct.21")
+  type MAdnNode             = MNode // ym.model.MAdnNode
 
 }

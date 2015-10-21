@@ -1,7 +1,7 @@
 package util.acl
 
 import io.suggest.di.IEsClient
-import models.MAdnNode
+import models.MNode
 import models.req.SioReqMd
 import play.api.data._
 import models.adv._
@@ -25,7 +25,7 @@ import scala.concurrent.Future
 /** Экземпляр реквеста на сабмит цели. */
 case class ExtTargetSubmitRequest[A](
   pwOpt       : PwOpt_t,
-  adnNode     : MAdnNode,
+  adnNode     : MNode,
   newTgForm   : Form[(MExtTarget, Option[MExtReturn])],
   tgExisting  : Option[MExtTarget],
   sioReqMd    : SioReqMd,

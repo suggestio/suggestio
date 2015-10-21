@@ -1,17 +1,14 @@
 package models.im.logo
 
 import com.google.inject.{Inject, Singleton}
-import io.suggest.playx.CacheApiUtil
-import models.{MAdnNode, MPredicates, IEdge}
+import models._
 import io.suggest.sc.ScConstants
 import io.suggest.ym.model.common.MImgInfoMeta
 import models.blk._
 import models.im._
-import play.api.Play._
 import util.img.ImgFormUtil
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.concurrent.duration._
 
 /**
  * Suggest.io
@@ -22,14 +19,8 @@ import scala.concurrent.duration._
 @Singleton
 class LogoUtil @Inject() (
   mImg3             : MImg3_,
-  cache             : CacheApiUtil,
   implicit val ec   : ExecutionContext
 ) {
-
-  /** Сколько секунд кешировать результат getLogoOfNode? */
-  val GET_NODE_LOGO_CACHE_SECONDS = configuration.getInt("logo.of.node.cache.seconds")
-    .getOrElse(10)
-    .seconds
 
   /** Приведение ребра графа к метаданным изображения логотипа. */
   def edge2logoImg(medge: IEdge): MImgT = {
@@ -37,66 +28,52 @@ class LogoUtil @Inject() (
   }
 
   // TODO Допилить этот метод, привязать его к контроллеру, разобраться с MImg.deleteAllFor(UUID), обновить маппинги форм.
-  def updateLogoFor(adnNode: MAdnNode, newLogo: LogoOpt_t): Future[Seq[MImgT]] = {
-    /*val edgeSearchArgs = LogoEdgesSearch( adnNodeId )
-    for {
-      // Найти текущие логотипы через эджи:
-      curEdges   <- MEdge.dynSearch(edgeSearchArgs)
-      // Сохранить картинки-логотипы в хранилище.
-      newLogos <- {
-        val oldImgs = curEdges
-          .iterator
-          .map { edge2logoImg }
-          .toIterable
-        ImgFormUtil.updateOrigImgFull(needImgs = newLogo.toSeq, oldImgs = oldImgs)
-      }
-      // Обновить эджи:
-      _ <- {
-        MEdge.updateEdgesFrom(
-          adnNodeId,
-          Seq(MPredicates.Logo, MPredicates.Owns),
-          oldToIds = curEdges.map(_.toId),
-          newToIds = newLogos.map(_.rowKeyStr)
-        )
-      }
-    } yield {
-      newLogos
-    }*/
-    Future successful Nil
+  def updateLogoFor(mnode: MNode, newLogo: LogoOpt_t): Future[Option[MImgT]] = {
+    val oldImgs = mnode.edges
+      .withPredicateIter( MPredicates.Logo )
+      .map { edge2logoImg }
+      .toIterable
+    val newLogosFut = ImgFormUtil.updateOrigImgFull(
+      needImgs  = newLogo.toSeq,
+      oldImgs   = oldImgs
+    )
+    newLogosFut
+      .map { _.headOption }
   }
 
 
   /** Получить логотипы нескольких узлов, вернув карту имеющихся логотипов.
     * Если какого-то запрошенного узла нет в карте, то значит он без логотипа. */
-  def getLogoOfNodes(adnNodeIds: Seq[String]): Future[Map[String, MImgT]] = {
-    /*val edgeSearchArgs = LogoEdgesSearch(adnNodeIds)
-    for (medges <- MEdge.dynSearch(edgeSearchArgs)) yield {
-      medges.iterator
-        .map { medge =>
-          medge.fromId -> edge2logoImg(medge)
+  def getLogoOfNodes(nodes: TraversableOnce[MNode]): Future[Map[String, MImgT]] = {
+    val res = nodes.toIterator
+      .flatMap { mnode =>
+        val eopt = mnode.edges
+          .withPredicateIter( MPredicates.Logo )
+          .toStream
+          .headOption
+        for {
+          e     <- eopt
+          id    <- mnode.id
+        } yield {
+          id -> edge2logoImg(e)
         }
-        .toMap
-    }*/
-    Future successful Map.empty
+      }
+      .toMap
+    Future successful res
   }
 
   /**
    * Доставание картинки логотипа без подгонки под свойства экрана.
-   * @param adnNodeId id узла, к которому прилинкован логотип.
+   * @param mnode Узел, к которому прилинкован логотип.
    * @return Фьючерс с результатом: None -- логотип не выставлен.
    */
-  def getLogoOfNode(adnNodeId: String): Future[LogoOpt_t] = {
-    /*val edgeSearchArgs = LogoEdgesSearch( adnNodeId )
-    for (medgeOpt <- MEdge.dynSearchOne(edgeSearchArgs)) yield {
-      medgeOpt.map(edge2logoImg)
-    }*/
-    Future successful None
-  }
-
-  def getLogoOfNodeCached(adnNodeId: String): Future[LogoOpt_t] = {
-    cache.getOrElseFut(adnNodeId + ".n2lo", GET_NODE_LOGO_CACHE_SECONDS) {
-      getLogoOfNode(adnNodeId)
-    }
+  def getLogoOfNode(mnode: MNode): Future[LogoOpt_t] = {
+    val res = mnode.edges
+      .withPredicateIter( MPredicates.Logo )
+      .toStream
+      .headOption
+      .map { edge2logoImg }
+    Future successful res
   }
 
   /**

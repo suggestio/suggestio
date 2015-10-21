@@ -29,7 +29,7 @@ trait EmailPwSubmit
   with BruteForceProtectCtl
   with SetLangCookieUtil
   with IEsClient
-  with IsAnonCtl
+  with IsAnon
   with IIdentUtil
 {
 

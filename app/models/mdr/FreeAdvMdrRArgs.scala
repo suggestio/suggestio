@@ -1,7 +1,7 @@
 package models.mdr
 
 import models.msc.IAdBodyTplArgs
-import models.{MAdnNode, blk}
+import models.{MNode, blk}
 import play.api.data.Form
 
 /**
@@ -24,7 +24,7 @@ trait IFreeAdvMdrRArgs extends IAdBodyTplArgs {
 /** Дефолтовая реализация [[IFreeAdvMdrRArgs]]. */
 case class FreeAdvMdrRArgs(
   override val brArgs   : blk.IRenderArgs,
-  override val producer : MAdnNode,
+  override val producer : MNode,
   override val banFormM : Form[String]
 )
   extends IFreeAdvMdrRArgs

@@ -1,6 +1,9 @@
 package controllers.sysctl
 
 import controllers.{IMailer, SioController}
+import io.suggest.model.n2.extra.{MNodeExtras, MSlInfo, MAdnExtra}
+import io.suggest.model.n2.node.common.MNodeCommon
+import io.suggest.model.n2.node.meta.{MBusinessInfo, MAddress, MBasicMeta}
 import models._
 import models.usr.EmailActivation
 import play.api.data._, Forms._
@@ -8,7 +11,7 @@ import play.api.i18n.Messages
 import play.api.mvc.AnyContent
 import util.FormUtil._
 import io.suggest.ym.model.common.AdnMemberShowLevels.LvlMap_t
-import io.suggest.ym.model.common.{NodeConf, AdnMemberShowLevels}
+import io.suggest.ym.model.common.AdnMemberShowLevels
 import util.PlayMacroLogsDyn
 import util.acl.AbstractRequestWithPwOpt
 
@@ -21,7 +24,7 @@ import util.acl.AbstractRequestWithPwOpt
 class SysMarketUtil extends PlayMacroLogsDyn {
 
   /** Форма для маппинг метаданных произвольного узла ADN. */
-  def adnNodeMetaM = mapping(
+  def adnNodeMetaM: Mapping[MMeta] = mapping(
     "name"          -> nameM,
     "nameShort"     -> optional(text(maxLength = 25))
       .transform [Option[String]] (emptyStrOptToNone, identity),
@@ -31,26 +34,39 @@ class SysMarketUtil extends PlayMacroLogsDyn {
     "phone"         -> phoneOptM,
     "floor"         -> floorOptM,
     "section"       -> sectionOptM,
-    "siteUrl"       -> urlStrOptM,
-    "color"         -> colorOptM
+    "siteUrl"       -> urlStrOptM
   )
-  {(name, nameShort, descr, town, address, phone, floor, section, siteUrl, color) =>
-    MNodeMeta(
-      nameOpt = Some(name),
-      nameShortOpt = nameShort,
-      hiddenDescr = descr,
-      town    = town,
-      address = address,
-      phone   = phone,
-      floor   = floor,
-      section = section,
-      siteUrl = siteUrl,
-      color   = color
+  {(name, nameShort, descr, town, address, phone, floor, section, siteUrl) =>
+    MMeta(
+      basic = MBasicMeta(
+        nameOpt       = Some(name),
+        nameShortOpt  = nameShort,
+        hiddenDescr   = descr
+      ),
+      address = MAddress(
+        town    = town,
+        address = address,
+        phone   = phone,
+        floor   = floor,
+        section = section
+      ),
+      business = MBusinessInfo(
+        siteUrl = siteUrl
+      )
     )
   }
   {meta =>
-    import meta._
-    Some((name, nameShortOpt, hiddenDescr, town, address, phone, floor, section, siteUrl, color))
+    Some((
+      meta.basic.nameOpt.getOrElse(""),
+      meta.basic.nameShortOpt,
+      meta.basic.hiddenDescr,
+      meta.address.town,
+      meta.address.address,
+      meta.address.phone,
+      meta.address.floor,
+      meta.address.section,
+      meta.business.siteUrl
+    ))
   }
 
   def adnRightsM: Mapping[Set[AdnRight]] = {
@@ -72,10 +88,36 @@ class SysMarketUtil extends PlayMacroLogsDyn {
     }
   }
 
+  def lvlMapOrEmpty: Mapping[LvlMap_t] = {
+    default(slsStrM, Map.empty)
+  }
+
+  /** Маппинг карты доступных ShowLevels для узлов N2. */
+  def mSlInfoMapM: Mapping[Map[AdShowLevel, MSlInfo]] = {
+    // TODO Тут из одной карты делается другая. Может стоит реализовать напрямую?
+    lvlMapOrEmpty
+      .transform[Map[AdShowLevel,MSlInfo]](
+        {lvlMap =>
+          lvlMap.iterator
+            .map { case (sl, limit) =>
+              val msli = MSlInfo(sl, limit)
+              sl -> msli
+            }
+            .toMap
+        },
+        {mslMap =>
+          mslMap.iterator
+            .map { case (sl, msli) =>
+              sl -> msli.limit
+            }
+            .toMap
+        }
+      )
+  }
+
   def adnSlInfoM: Mapping[AdnMemberShowLevels] = {
-    val slsStrOptM: Mapping[LvlMap_t] = default(slsStrM, Map.empty)
     mapping(
-      "out" -> slsStrOptM
+      "out" -> lvlMapOrEmpty
     )
     { AdnMemberShowLevels.apply }
     { AdnMemberShowLevels.unapply }
@@ -102,111 +144,97 @@ class SysMarketUtil extends PlayMacroLogsDyn {
     }
   }
 
-  /** Маппинг для adn-полей формы adn-узла. */
-  def adnMemberM: Mapping[AdNetMemberInfo] = mapping(
-    "isEnabled"     -> boolean,
-    "shownTypeIdOpt" -> adnShownTypeIdOptM,
-    "rights"        -> adnRightsM,
-    "sls"           -> adnSlInfoM,
-    "testNode"      -> boolean,
-    "isUser"        -> boolean,
-    "sink"          -> adnSinksM
-  )
-  {(isEnabled, shownTypeIdOpt, rights, sls, isTestNode, isUser, sinks) =>
-    AdNetMemberInfo(
-      isEnabled = isEnabled,
-      rights    = rights,
-      shownTypeIdOpt = shownTypeIdOpt,
-      showLevelsInfo = sls,
-      testNode  = isTestNode,
-      isUser    = isUser,
-      sinks     = sinks
-    )
-  }
-  {anmi =>
-    import anmi._
-    Some((isEnabled, Some(shownTypeId), rights, showLevelsInfo, testNode, isUser, sinks))
-  }
-
-
-  /** Маппинг для конфига ноды. */
-  def nodeConfM: Mapping[NodeConf] = {
+  def nodeCommonM: Mapping[MNodeCommon] = {
     mapping(
-      "showInScNodeList"    -> boolean
+      "isEnabled"     -> boolean,
+      "isDependent"   -> boolean
     )
-    { NodeConf.apply }
-    { NodeConf.unapply }
-  }
-  
-  
-  /** Накатить отмаппленные изменения на существующий интанс узла, породив новый интанс.*/
-  def updateAdnNode(adnNode: MAdnNode, adnNode2: MAdnNode): MAdnNode = {
-    adnNode.copy(
-      personIds = adnNode2.personIds,
-      meta = adnNode.meta.copy(
-        nameOpt = adnNode2.meta.nameOpt,
-        nameShortOpt = adnNode2.meta.nameShortOpt,
-        hiddenDescr = adnNode2.meta.hiddenDescr,
-        town    = adnNode2.meta.town,
-        address = adnNode2.meta.address,
-        phone   = adnNode2.meta.phone,
-        floor   = adnNode2.meta.floor,
-        section = adnNode2.meta.section,
-        siteUrl = adnNode2.meta.siteUrl,
-        color   = adnNode2.meta.color
-      ),
-      adn = adnNode.adn.copy(
-        rights      = adnNode2.adn.rights,
-        shownTypeIdOpt = adnNode2.adn.shownTypeIdOpt,
-        isEnabled   = adnNode2.adn.isEnabled,
-        showLevelsInfo = adnNode2.adn.showLevelsInfo,
-        testNode    = adnNode2.adn.testNode,
-        isUser      = adnNode2.adn.isUser,
-        sinks       = adnNode2.adn.sinks
-      ),
-      conf = adnNode.conf.copy(
-        showInScNodesList = adnNode2.conf.showInScNodesList
-      )
-    )
-  }
-
-
-  /** Маппер для поля, содержащего список id юзеров. */
-  def personIdsM: Mapping[Set[String]] = {
-    text(maxLength = 1024)
-      .transform[Set[String]](
-        {s =>
-          s.trim
-            .split("\\s*[,;]\\s*")
-            .iterator
-            .filter(!_.isEmpty)
-            .toSet
-        },
-        { _.mkString(", ") }
-      )
-  }
-
-  def adnKM  = "adn" -> adnMemberM
-  def metaKM = "meta" -> adnNodeMetaM
-  def confKM = "conf" -> nodeConfM
-  def personIdsKM = "personIds" -> personIdsM
-
-  /** Сборка маппинга для формы добавления/редактирования рекламного узла. */
-  def adnNodeFormM: Form[MAdnNode] = {
-    Form(mapping(
-      adnKM, metaKM, confKM, personIdsKM
-    )
-    {(anmi, meta, conf, personIds) =>
-      MAdnNode(
-        meta = meta,
-        adn = anmi,
-        conf = conf,
-        personIds = personIds
+    {(isEnabled, isDependent) =>
+      MNodeCommon(
+        ntype       = MNodeTypes.AdnNode,     // TODO Это заглушка, рождённая во время переезда на N2. Нужно дать возможность менять тип.
+        isEnabled   = isEnabled,
+        isDependent = isDependent
       )
     }
-    {adnNode =>
-      import adnNode._
-      Some((adn, meta, conf, personIds))
+    {mnc =>
+      Some((mnc.isEnabled, mnc.isDependent))
+    }
+  }
+
+  /** Маппинг для adn-полей формы adn-узла. */
+  def adnExtraM: Mapping[MAdnExtra] = mapping(
+    "shownTypeIdOpt" -> adnShownTypeIdOptM,
+    "rights"        -> adnRightsM,
+    "sls"           -> mSlInfoMapM,
+    "testNode"      -> boolean,
+    "isUser"        -> boolean,
+    "sink"          -> adnSinksM,
+    "showInScNl"    -> boolean
+  )
+  {(shownTypeIdOpt, rights, sls, isTestNode, isUser, sinks, showInScNl) =>
+    MAdnExtra(
+      rights          = rights,
+      shownTypeIdOpt  = shownTypeIdOpt,
+      outSls          = sls,
+      testNode        = isTestNode,
+      isUser          = isUser,
+      sinks           = sinks,
+      showInScNl      = showInScNl
+    )
+  }
+  {mae =>
+    import mae._
+    Some((shownTypeIdOpt, rights, outSls, testNode, isUser, sinks, showInScNl))
+  }
+
+
+  /** Накатить отмаппленные изменения на существующий интанс узла, породив новый интанс.*/
+  def updateAdnNode(old: MNode, changes: MNode): MNode = {
+    old.copy(
+      meta = old.meta.copy(
+        basic = {
+          import changes.meta.basic._
+          old.meta.basic.copy(
+            nameOpt       = nameOpt,
+            nameShortOpt  = nameShortOpt,
+            hiddenDescr   = hiddenDescr
+          )
+        },
+        address = old.meta.address,
+        business = old.meta.business.copy(
+          siteUrl = changes.meta.business.siteUrl
+        )
+      ),
+      extras = old.extras.copy(
+        adn = changes.extras.adn
+      )
+    )
+  }
+
+  def adnExtraKM  = "adn"     -> adnExtraM
+  def metaKM      = "meta"    -> adnNodeMetaM
+  def commonKM    = "common"  -> nodeCommonM
+
+  /** Сборка маппинга для формы добавления/редактирования рекламного узла. */
+  def adnNodeFormM: Form[MNode] = {
+    Form(mapping(
+      commonKM, adnExtraKM, metaKM
+    )
+    {(common, adnExtra, meta) =>
+      MNode(
+        common  = common,
+        meta    = meta,
+        extras  = MNodeExtras(
+          adn = Some(adnExtra)
+        )
+      )
+    }
+    {mnode =>
+      Some((
+        mnode.common,
+        mnode.extras.adn.getOrElse(MAdnExtra()),
+        mnode.meta
+      ))
     })
   }
 
@@ -222,11 +250,18 @@ class SysMarketUtil extends PlayMacroLogsDyn {
 trait SmSendEmailInvite extends SioController with IMailer {
 
   /** Выслать письмо активации. */
-  def sendEmailInvite(ea: EmailActivation, adnNode: MAdnNode)(implicit request: AbstractRequestWithPwOpt[AnyContent]) {
+  def sendEmailInvite(ea: EmailActivation, adnNode: MNode)(implicit request: AbstractRequestWithPwOpt[AnyContent]) {
     // Собираем и отправляем письмо адресату
     val msg = mailer.instance
-    val ctx = implicitly[Context]   // нано-оптимизация: один контекст для обоих шаблонов.
-    msg.setSubject("Suggest.io | " + Messages("Your")(ctx.messages) + " " + Messages("amt.of.type." + adnNode.adn.shownTypeId)(ctx.messages))
+    val ctx = implicitly[Context]
+    val ast = adnNode.extras.adn
+      .flatMap( _.shownTypeIdOpt )
+      .flatMap( AdnShownTypes.maybeWithName )
+      .getOrElse( AdnShownTypes.default )
+    msg.setSubject("Suggest.io | " +
+      Messages("Your")(ctx.messages) + " " +
+      Messages(ast.singular)(ctx.messages)
+    )
     msg.setFrom("no-reply@suggest.io")
     msg.setRecipients(ea.email)
     msg.setHtml( views.html.lk.adn.invite.emailNodeOwnerInviteTpl(adnNode, ea)(ctx) )

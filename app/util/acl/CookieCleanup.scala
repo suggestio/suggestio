@@ -7,6 +7,8 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Future
 import scala.collection.JavaConversions._
 
+import scala.language.higherKinds
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -39,7 +41,7 @@ trait CookieCleanup[R[_]] extends ActionBuilder[R] {
       val garbageCookiesIter = request.cookies
         .toStream
         .map(_.name)
-        .filter(BAD_NAMES contains)
+        .filter(BAD_NAMES.contains)
       if (garbageCookiesIter.isEmpty) {
         // Мусора нет. Возвращаем исходный результат.
         superFut

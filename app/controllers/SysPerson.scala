@@ -2,9 +2,14 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.event.SioNotifierStaticClientI
-import models.{Context, AdnNodesSearchArgs, MAdnNode}
+import io.suggest.model.n2.edge.MPredicates
+import io.suggest.model.n2.edge.search.Criteria
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import models.Context
+import models.MNode
 import models.usr._
 import org.elasticsearch.client.Client
+import org.elasticsearch.search.sort.SortOrder
 import play.api.i18n.MessagesApi
 import util.acl.{IsSuperuserPerson, IsSuperuser}
 import views.html.ident.reg.email.emailRegMsgTpl
@@ -105,10 +110,15 @@ class SysPerson @Inject() (
    */
   def showPerson(personId: String) = IsSuperuserPerson(personId).async { implicit request =>
     // Сразу запускаем поиск узлов: он самый тяжелый тут.
-    val nodesFut = MAdnNode.dynSearch(new AdnNodesSearchArgs {
-      override def anyOfPersonIds = Seq(personId)
-      override def withNameSort   = true
-    })
+    val msearch = new MNodeSearchDfltImpl {
+      override def outEdges  = {
+        Seq(
+          Criteria(Seq(personId), Seq(MPredicates.OwnedBy))
+        )
+      }
+      override def withNameSort = Some(SortOrder.ASC)
+    }
+    val nodesFut = MNode.dynSearch( msearch )
     // Запускаем поиски ident'ов. Сортируем результаты.
     val epwIdentsFut = EmailPwIdent.findByPersonId(personId)
       .map { _.sortBy(_.email) }

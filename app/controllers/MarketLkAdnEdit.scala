@@ -3,6 +3,10 @@ package controllers
 import com.google.inject.Inject
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.js.UploadConstants
+import io.suggest.model.n2.edge.MEdgeInfo
+import io.suggest.model.n2.extra.MAdnExtra
+import io.suggest.model.n2.node.meta.colors.MColors
+import io.suggest.model.n2.node.meta.{MBusinessInfo, MAddress, MBasicMeta}
 import models.im.logo.{LogoOpt_t, LogoUtil}
 import models.im.{MImg3_, MImgT, MImg}
 import models.jsm.init.MTargets
@@ -18,7 +22,6 @@ import util.PlayMacroLogsImpl
 import util.acl._
 import models._
 import views.html.lk.adn.edit._
-import io.suggest.ym.model.common
 import play.api.data.{Mapping, Form}
 import play.api.data.Forms._
 import util.FormUtil._
@@ -68,12 +71,15 @@ class MarketLkAdnEdit @Inject() (
     LOGO_IMG_FN -> img3IdOptM
   }
 
+  // TODO N2 После переезда на N2 метаданные узла были раскиданы по нескольким моделям, но этого не видно в форме:
+  //      тут всё по старому, убого.
+
   // У нас несколько вариантов развития событий с формами: ресивер, продьюсер или что-то иное. Нужно три маппинга.
   private def nameKM        = "name"    -> nameM
   private def townKM        = "town"    -> townSomeM
   private def addressKM     = "address" -> addressOptM
-  private def colorKM       = "color"   -> colorSomeM
-  private def fgColorKM     = "fgColor" -> colorOptM
+  private def colorKM       = "color"   -> colorDataSomeM
+  private def fgColorKM     = "fgColor" -> colorDataOptM
   private def siteUrlKM     = "siteUrl" -> urlStrOptM
   private def phoneKM       = "phone"   -> phoneOptM
 
@@ -86,22 +92,38 @@ class MarketLkAdnEdit @Inject() (
   private def rcvrMetaM = {
     mapping(nameKM, townKM, addressKM, colorKM, fgColorKM, siteUrlKM, phoneKM, audDescrKM, humTrafAvgKM, infoKM)
     {(name, town, address, color, fgColorOpt, siteUrlOpt, phoneOpt, audDescr, humanTrafficAvg, info) =>
-      MNodeMeta(
-        nameOpt = Some(name),
-        town    = town,
-        address = address,
-        color   = color,
-        fgColor = fgColorOpt,
-        siteUrl = siteUrlOpt,
-        phone   = phoneOpt,
-        audienceDescr = audDescr,
-        humanTrafficAvg = humanTrafficAvg,
-        info    = info
+      MMeta(
+        basic = MBasicMeta(
+          nameOpt = Some(name)
+        ),
+        address = MAddress(
+          town    = town,
+          address = address,
+          phone   = phoneOpt
+        ),
+        business = MBusinessInfo(
+          siteUrl           = siteUrlOpt,
+          audienceDescr     = audDescr,
+          humanTrafficAvg   = humanTrafficAvg,
+          info              = info
+        ),
+        colors = MColors(
+          bg = color,
+          fg = fgColorOpt
+        )
       )
     }
     {meta =>
-      import meta._
-      Some((name, town, address, color, fgColor, siteUrl, phone, audienceDescr, humanTrafficAvg, info))
+      Some((
+        meta.basic.name,
+        meta.address.town, meta.address.address,
+        meta.colors.bg, meta.colors.fg,
+        meta.business.siteUrl,
+        meta.address.phone,
+        meta.business.audienceDescr,
+        meta.business.humanTrafficAvg,
+        meta.business.info
+      ))
     }
   }
 
@@ -109,20 +131,34 @@ class MarketLkAdnEdit @Inject() (
   private def prodMetaM = {
     mapping(nameKM, townKM, addressKM, colorKM, fgColorKM, siteUrlKM, phoneKM, infoKM)
     {(name, town, address, color, fgColor, siteUrlOpt, phoneOpt, info) =>
-      MNodeMeta(
-        nameOpt = Some(name),
-        town    = town,
-        address = address,
-        color   = color,
-        fgColor = fgColor,
-        siteUrl = siteUrlOpt,
-        phone   = phoneOpt,
-        info    = info
+      MMeta(
+        basic = MBasicMeta(
+          nameOpt = Some(name)
+        ),
+        address = MAddress(
+          town    = town,
+          address = address,
+          phone   = phoneOpt
+        ),
+        colors = MColors(
+          bg = color,
+          fg = fgColor
+        ),
+        business = MBusinessInfo(
+          info = info
+        )
       )
     }
     {meta =>
-      import meta._
-      Some((name, town, address, color, fgColor, siteUrl, phone, info))
+      Some((
+        meta.basic.name,
+        meta.address.town,
+        meta.address.address,
+        meta.colors.bg, meta.colors.fg,
+        meta.business.siteUrl,
+        meta.address.phone,
+        meta.business.info
+      ))
     }
   }
 
@@ -131,24 +167,35 @@ class MarketLkAdnEdit @Inject() (
   private def nodeMetaM = {
     mapping(nameKM, townKM, addressKM, colorKM, fgColorKM, siteUrlKM, phoneKM)
     {(name, town, address, color, fgColor, siteUrlOpt, phoneOpt) =>
-      MNodeMeta(
-        nameOpt = Some(name),
-        town    = town,
-        address = address,
-        color   = color,
-        fgColor = fgColor,
-        siteUrl = siteUrlOpt,
-        phone   = phoneOpt
+      MMeta(
+        basic = MBasicMeta(
+          nameOpt = Some(name)
+        ),
+        address = MAddress(
+          town    = town,
+          address = address,
+          phone   = phoneOpt
+        ),
+        colors = MColors(
+          bg = color,
+          fg = fgColor
+        )
       )
     }
     {meta =>
-      import meta._
-      Some((name, town, address, color, fgColor, siteUrl, phone))
+      Some((
+        meta.basic.name,
+        meta.address.town,
+        meta.address.address,
+        meta.colors.bg, meta.colors.fg,
+        meta.business.siteUrl,
+        meta.address.phone
+      ))
     }
   }
 
   /** Маппинг для формы добавления/редактирования торгового центра. */
-  private def nodeFormM(nodeInfo: AdNetMemberInfo): Form[FormMapResult] = {
+  private def nodeFormM(nodeInfo: MAdnExtra): Form[FormMapResult] = {
     val metaM = if (nodeInfo.isReceiver) {
       rcvrMetaM
     } else if (nodeInfo.isProducer) {
@@ -177,11 +224,15 @@ class MarketLkAdnEdit @Inject() (
 
     // Запуск асинхронной сборки данных из моделей.
     val waOptFut = welcomeUtil.getWelcomeAdOpt(adnNode)
-    val nodeLogoOptFut = logoUtil.getLogoOfNode(adnId)
-    val gallerryIks = gallery2iiks( adnNode.gallery )
+    val nodeLogoOptFut = logoUtil.getLogoOfNode(adnNode)
+    val gallerryIks = gallery2iiks {
+      adnNode.edges
+        .withPredicateIterIds( MPredicates.GalleryItem )
+        .toList
+    }
 
     // Сборка и наполнения маппинга формы.
-    val formM = nodeFormM(adnNode.adn)
+    val formM = nodeFormM(adnNode.extras.adn.get)
     val formFilledFut = for {
       welcomeAdOpt <- waOptFut
       nodeLogoOpt  <- nodeLogoOptFut
@@ -217,7 +268,7 @@ class MarketLkAdnEdit @Inject() (
   def editAdnNodeSubmit(adnId: String) = IsAdnNodeAdminPost(adnId).async { implicit request =>
     import request.adnNode
     lazy val logPrefix = s"editAdnNodeSubmit($adnId): "
-    nodeFormM(adnNode.adn).bindFromRequest().fold(
+    nodeFormM(adnNode.extras.adn.get).bindFromRequest().fold(
       {formWithErrors =>
         val waOptFut = welcomeUtil.getWelcomeAdOpt(request.adnNode)
         debug(s"${logPrefix}Failed to bind form: ${formatFormErrors(formWithErrors)}")
@@ -231,13 +282,19 @@ class MarketLkAdnEdit @Inject() (
         // В фоне обновляем логотип узла
         val savedLogoFut = logoUtil.updateLogoFor(adnNode, fmr.logoOpt)
         // Запускаем апдейт галереи.
-        val galleryUpdFut = GalleryUtil.updateGallery(fmr.gallery, oldGallery = adnNode.gallery)
+        val galleryUpdFut = GalleryUtil.updateGallery(
+          newGallery = fmr.gallery,
+          oldGallery = adnNode.edges
+            .withPredicateIter( MPredicates.GalleryItem )
+            .map { _.nodeId }
+            .toSeq
+        )
         for {
           savedLogo <- savedLogoFut
           waIdOpt   <- savedWelcomeImgsFut
           gallery   <- galleryUpdFut
-          _         <- MAdnNode.tryUpdate(adnNode) {
-            applyNodeChanges(_, fmr.meta, waIdOpt, gallery)
+          _         <- MNode.tryUpdate(adnNode) {
+            applyNodeChanges(_, fmr.meta, savedLogo, waIdOpt, gallery)
           }
         } yield {
           trace("New gallery = " + gallery.mkString(", "))
@@ -252,26 +309,69 @@ class MarketLkAdnEdit @Inject() (
 
   /** Накатить изменения на инстанс узла, породив новый инстанс.
     * Вынесена из editAdnNodeSubmit() для декомпозиции и для нужд for{}-синтаксиса. */
-  private def applyNodeChanges(adnNode: MAdnNode, adnMeta2: common.MNodeMeta, waIdOpt: Option[String],
-                               newImgGallery: List[String]): MAdnNode = {
-    adnNode.copy(
-      meta = adnNode.meta.copy(
-        // сохраняем метаданные
-        nameOpt = adnMeta2.nameOpt,
-        town    = adnMeta2.town,
-        address = adnMeta2.address,
-        color   = adnMeta2.color,
-        fgColor = adnMeta2.fgColor,
-        siteUrl = adnMeta2.siteUrl,
-        phone   = adnMeta2.phone,
-        // TODO Нужно осторожнее обновлять поля, которые не всегда содержат значения (зависят от типа узла).
-        audienceDescr = adnMeta2.audienceDescr,
-        humanTrafficAvg = adnMeta2.humanTrafficAvg,
-        info = adnMeta2.info,
-        // сохраняем welcome ad id
-        welcomeAdId = waIdOpt
+  private def applyNodeChanges(mnode: MNode, meta2: MMeta, newLogoOpt: Option[MImgT], waIdOpt: Option[String],
+                               newImgGallery: Seq[MImgT]): MNode = {
+    mnode.copy(
+      meta = mnode.meta.copy(
+        basic = mnode.meta.basic.copy(
+          nameOpt = meta2.basic.nameOpt
+        ),
+        address = mnode.meta.address.copy(
+          town    = meta2.address.town,
+          address = meta2.address.address,
+          phone   = meta2.address.phone
+        ),
+        colors = mnode.meta.colors.copy(
+          bg = meta2.colors.bg,
+          fg = meta2.colors.fg
+        ),
+        business = mnode.meta.business.copy(
+          // TODO Нужно осторожнее обновлять поля, которые не всегда содержат значения (зависят от типа узла).
+          audienceDescr   = meta2.business.audienceDescr,
+          humanTrafficAvg = meta2.business.humanTrafficAvg,
+          info            = meta2.business.info,
+          siteUrl         = meta2.business.siteUrl
+        )
       ),
-      gallery = newImgGallery
+      edges = {
+        import MPredicates._
+        // Готовим начальный итератор эджей-результатов.
+        var edgesIter = mnode.edges
+          .withoutPredicateIter(NodeWelcomeAdIs, Logo, GalleryItem)
+        // Отрабатываем карточку приветствия.
+        for (waId <- waIdOpt) {
+          val waEdge = MEdge(NodeWelcomeAdIs, waId)
+          edgesIter ++= Iterator(waEdge)
+        }
+        // Отрабатываем логотип
+        for (newLogo <- newLogoOpt) {
+          val logoEdge = MEdge(Logo, newLogo.rowKeyStr)
+          edgesIter ++= Iterator(logoEdge)
+        }
+        // Отрабатываем галлерею
+        if (newImgGallery.nonEmpty) {
+          edgesIter ++= newImgGallery
+            .iterator
+            .zipWithIndex
+            .map { case (img, i) =>
+              MEdge(
+                GalleryItem,
+                img.rowKeyStr,
+                order = Some(i),
+                info  = MEdgeInfo(
+                dynImgArgs = Some( img.dynImgOpsString )
+              ))
+            }
+        }
+        // Генерим результат
+        mnode.edges.copy(
+          out = edgesIter
+            .map { medge =>
+              medge.toEmapKey -> medge
+            }
+            .toMap
+        )
+      }
     )
   }
 
@@ -337,7 +437,7 @@ class MarketLkAdnEdit @Inject() (
 
   /** Внутренняя модель этого контроллера, отражающая результирующее значение биндинга формы редактирования узла. */
   sealed case class FormMapResult(
-    meta        : common.MNodeMeta,
+    meta        : MMeta,
     logoOpt     : LogoOpt_t,
     waImgOpt    : Option[MImgT]   = None,
     gallery     : List[MImg]      = Nil

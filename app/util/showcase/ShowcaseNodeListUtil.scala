@@ -1,14 +1,17 @@
 package util.showcase
 
 import com.google.inject.{Singleton, Inject}
-import io.suggest.model.geo.GeoShapeQueryData
+import io.suggest.common.fut.FutureUtil
+import io.suggest.model.geo.GeoDistanceQuery
+import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
+import io.suggest.model.n2.node.search.{MNodeSearchDfltImpl, MNodeSearch}
 import io.suggest.ym.model.NodeGeoLevels
 import org.elasticsearch.client.Client
+import org.elasticsearch.search.sort.SortOrder
 import play.api.Configuration
 import play.api.i18n.Messages
 import util.PlayMacroLogsImpl
 import models._
-import AdnShownTypes.adnInfo2val
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -50,21 +53,27 @@ class ShowcaseNodeListUtil @Inject() (
    * @return Фьючерс с результатом детектирования. Если не удалось, то будет exception.
    */
   def detectCurrentNodeUsing[T](geoMode: GeoMode, gsiOptFut: Future[Option[GeoSearchInfo]])
-                               (searchF: AdnNodesSearchArgsT => Future[Seq[T]]): Future[(NodeGeoLevel, T)] = {
+                               (searchF: MNodeSearch => Future[Seq[T]]): Future[(NodeGeoLevel, T)] = {
     val detectLevels = geoMode.nodeDetectLevels.iterator.zipWithIndex
     Future.traverse(detectLevels) { case (lvl, prio) =>
       gsiOptFut.map { gsiOpt =>
-        new NodeDetectArgsT {
-          override def geoDistance = gsiOpt.map { gsi =>
-            GeoShapeQueryData(gsi.geoDistanceQuery, lvl)
-          }
-          override def withGeoDistanceSort = {
+        new MNodeSearchDfltImpl {
+          override def limit = 1
+          override def withGeoDistanceSort: Option[GeoPoint] = {
             // 2015.jun.30 Стараемся всегда искать с учетом всех возможных опорных геоточек.
             geoMode.exactGeodata
               .orElse { gsiOpt.map(_.geoPoint) }
           }
-          override def limit = 1
+
+          override def gsLevels = Seq(lvl)
+
+          override def gsShapes: Seq[GeoDistanceQuery] = {
+            gsiOpt
+              .map { _.geoDistanceQuery }
+              .toSeq
+          }
         }
+
       } flatMap { sargs =>
         searchF(sargs)
       } map {
@@ -98,7 +107,7 @@ class ShowcaseNodeListUtil @Inject() (
    * @return Фьючерс с GeoDetectResult.
    */
   def detectCurrentNode(geoMode: GeoMode, gsiOptFut: Future[Option[GeoSearchInfo]]): Future[GeoDetectResult] = {
-    detectCurrentNodeUsing(geoMode, gsiOptFut)(MAdnNode.dynSearch)
+    detectCurrentNodeUsing(geoMode, gsiOptFut)(MNode.dynSearch)
       .map { case (lvl, node) => GeoDetectResult(lvl, node) }
   }
 
@@ -109,8 +118,8 @@ class ShowcaseNodeListUtil @Inject() (
    * @param currAdnIdOpt Возможные данные по текущему узлу.
    * @return Опциональный результат с узлом, на котором сейчас находимся.
    */
-  private def detectOrGuessCurrentNode(geoMode: GeoMode, gsiOptFut: Future[Option[GeoSearchInfo]], currAdnIdOpt: Option[String]
-                               ) : Future[MAdnNode] = {
+  private def detectOrGuessCurrentNode(geoMode: GeoMode, gsiOptFut: Future[Option[GeoSearchInfo]],
+                                       currAdnIdOpt: Option[String]) : Future[MNode] = {
     detectRecoverGuessCurrentNode(gsiOptFut, currAdnIdOpt) {
       detectCurrentNode(geoMode, gsiOptFut)
     }
@@ -125,7 +134,7 @@ class ShowcaseNodeListUtil @Inject() (
    * @return Фьючерс с узлом. Если в базе нет продакшен-ресиверов вообще, то будет экзепшен.
    */
   def detectRecoverGuessCurrentNode(gsiOptFut: Future[Option[GeoSearchInfo]], currAdnIdOpt: Option[String])
-                                   (detectFut: Future[GeoDetectResult]): Future[MAdnNode] = {
+                                   (detectFut: Future[GeoDetectResult]): Future[MNode] = {
     detectFut
       .map(_.node)
       .recoverWith {
@@ -144,7 +153,7 @@ class ShowcaseNodeListUtil @Inject() (
               override val withGeoDistanceSort = gsiOpt.map(_.geoPoint)
               override val shownTypeIds = Seq(AdnShownTypes.TOWN.name)
             }
-            MAdnNode.dynSearch(sargs)
+            MNode.dynSearch(sargs)
               .map(_.head)
           }
       }
@@ -159,25 +168,30 @@ class ShowcaseNodeListUtil @Inject() (
 
   /**
    * Найти узел города для узла.
-   * @param node Текущий ADN-узел.
+   * @param mnode Текущий ADN-узел.
    * @return Фьючерс с найденным городом или текущий узел, если он и есть город.
    *         NoSuchElementException если нода болтается в воздухе.
    */
-  def getTownOfNode(node: MAdnNode): Future[MAdnNode] = {
-    val ast: AdnShownType = node.adn
+  def getTownOfNode(mnode: MNode): Future[MNode] = {
+    val ast: AdnShownType = mnode.extras.adn
+      .flatMap(_.shownTypeIdOpt)
+      .flatMap(AdnShownTypes.maybeWithName)
+      .getOrElse( AdnShownTypes.default )
     if (ast == AdnShownTypes.TOWN) {
-      Future successful node
+      Future successful mnode
     } else {
-      val allParentIds = node.geo.allParentIds.toSeq
-      MAdnNode.dynSearch(
-        NodeSearchByIdShownType(allParentIds, shownTypeIds = Seq(AdnShownTypes.TOWN.name))
-      ) .map(_.head)
-        // 2015.jun.18 Была выявлена проблема в head, когда город отствует. Пытаемся найти район, а из него город уже.
+      val allParentIds = mnode.edges
+        .withPredicateIterIds( MPredicates.GeoParent )
+        .toSeq
+      val sargs1 = NodeSearchByIdShownType(allParentIds, shownTypeIds = Seq(AdnShownTypes.TOWN.name))
+      MNode.dynSearch( sargs1 )
+        .map(_.head)
+        // 2015.jun.18 Была выявлена проблема в head, когда город отсутствует. Пытаемся найти район, а из него город уже.
         .recoverWith { case ex: NoSuchElementException if ast.isBuilding =>
-          error("getTownOfNode() geo-inconsistent linked node: id=" + node.id, ex)
+          error("getTownOfNode() geo-inconsistent linked node: id=" + mnode.id, ex)
           val districtTypeNames = AdnShownTypes.districtNames
           val sargs2 = NodeSearchByIdShownType(allParentIds, shownTypeIds = districtTypeNames)
-          MAdnNode.dynSearch(sargs2)
+          MNode.dynSearch(sargs2)
             .map { _.head }
             .flatMap { districtNode =>
               getTownOfNode(districtNode)
@@ -186,29 +200,29 @@ class ShowcaseNodeListUtil @Inject() (
     }
   }
 
-  def getTownLayerOfNode(node: MAdnNode)(implicit lang: Messages): Future[GeoNodesLayer] = {
+  def getTownLayerOfNode(node: MNode)(implicit lang: Messages): Future[GeoNodesLayer] = {
     getTownOfNode(node)
       .map { town2layer(_) }
   }
 
-  def town2layer(townNode: MAdnNode, expanded: Boolean = false) = {
+  def town2layer(townNode: MNode, expanded: Boolean = false) = {
     GeoNodesLayer( Seq(townNode), NodeGeoLevels.NGL_TOWN )
   }
 
 
   /** Выдать все города */
-  def allTowns(currGeoPoint: Option[GeoPoint]): Future[Seq[MAdnNode]] = {
+  def allTowns(currGeoPoint: Option[GeoPoint]): Future[Seq[MNode]] = {
     val sargs = new NodeDetectArgsT {
       override def shownTypeIds = Seq(AdnShownTypes.TOWN.name)
+      override def withNameSort = if (currGeoPoint.isEmpty) Some(SortOrder.ASC) else None
+      override def limit        = MAX_TOWNS
       override def withGeoDistanceSort = currGeoPoint
-      override def withNameSort = currGeoPoint.isEmpty
-      override def limit = MAX_TOWNS
     }
-    MAdnNode.dynSearch(sargs)
+    MNode.dynSearch(sargs)
   }
 
   /** Обернуть список городов в гео-слой. */
-  def townsToLayer(townNodes: Seq[MAdnNode], expanded: Boolean)(implicit lang: Messages): GeoNodesLayer = {
+  def townsToLayer(townNodes: Seq[MNode], expanded: Boolean)(implicit lang: Messages): GeoNodesLayer = {
     if (townNodes.isEmpty) {
       GeoNodesLayer(Seq.empty, NodeGeoLevels.NGL_TOWN, expanded = expanded)
     } else if (townNodes.size == 1) {
@@ -229,7 +243,7 @@ class ShowcaseNodeListUtil @Inject() (
    * @param currNodeFut результат detectRecoverGuessCurrentNode().
    * @return Фьючерс, по формату совпадающий с detectRecoverGuessCurrentNode().
    */
-  def nextNodeWithLvlOptFut(detectFut: Future[GeoDetectResult], currNodeFut: Future[MAdnNode]): Future[GeoDetectResult] = {
+  def nextNodeWithLvlOptFut(detectFut: Future[GeoDetectResult], currNodeFut: Future[MNode]): Future[GeoDetectResult] = {
     detectFut
       .recoverWith {
         case ex: NoSuchElementException =>
@@ -238,7 +252,10 @@ class ShowcaseNodeListUtil @Inject() (
               .map { vs =>
                 // 2014.sep.29: возник экзепшен на узле, который не имел нормальных гео-настроек, но был выбран вручную в выдаче.
                 val glevel: NodeGeoLevel = vs.headOption.map(_.glevel).orElse {
-                  AdnShownTypes.maybeWithName(nextNode.adn.shownTypeId).flatMap(_.ngls.headOption)
+                  nextNode.extras.adn
+                    .flatMap(_.shownTypeIdOpt)
+                    .flatMap(AdnShownTypes.maybeWithName)
+                    .flatMap(_.ngls.headOption)
                 } getOrElse {
                   NodeGeoLevels.default    // should never happen
                 }
@@ -254,19 +271,22 @@ class ShowcaseNodeListUtil @Inject() (
    * @param townNodeId id узла-города.
    * @return Список узлов-районов.
    */
-  def getDistrictsForTown(townNodeId: String, gravity: Option[GeoPoint]): Future[Seq[MAdnNode]] = {
+  def getDistrictsForTown(townNodeId: String, gravity: Option[GeoPoint]): Future[Seq[MNode]] = {
     val sargs = new SmNodesSearchArgsT {
       override def limit = 20
       override def withAdnRights = Seq(AdnRights.RECEIVER)
-      override def withDirectGeoParents = Seq(townNodeId)
+      override def outEdges: Seq[ICriteria] = {
+        val cr = Criteria(Seq(townNodeId), Seq(MPredicates.GeoParent.Direct))
+        Seq(cr)
+      }
       override def shownTypeIds = AdnShownTypes.districtNames
-      override def withNameSort = gravity.isEmpty
+      override def withNameSort = if (gravity.isEmpty) Some(SortOrder.ASC) else None
       override def withGeoDistanceSort = gravity
     }
-    MAdnNode.dynSearch(sargs)
+    MNode.dynSearch(sargs)
   }
 
-  def getDistrictsLayerForTown(townNode: MAdnNode, gravity: Option[GeoPoint], expanded: Boolean = false)
+  def getDistrictsLayerForTown(townNode: MNode, gravity: Option[GeoPoint], expanded: Boolean = false)
                               (implicit lang: Messages): Future[GeoNodesLayer] = {
     val townNodeId = townNode.id.get
     getDistrictsForTown(townNodeId, gravity)
@@ -274,7 +294,8 @@ class ShowcaseNodeListUtil @Inject() (
         // 2014.sep.30: В Москве у нас "округа", а не "районы". Да и возможны иные вариации. Определяем код названия по найденным нодам.
         val nameL10n = districtNodes
           .headOption
-          .map(_.adn.shownTypeId)
+          .flatMap(_.extras.adn)
+          .flatMap(_.shownTypeIdOpt)
           .flatMap(AdnShownTypes.maybeWithName)
           .fold(NodeGeoLevels.NGL_TOWN_DISTRICT.l10nPluralShort)(_.pluralNoTown)
         GeoNodesLayer(
@@ -292,15 +313,18 @@ class ShowcaseNodeListUtil @Inject() (
    * @param districtAdnId id района.
    * @return Список узлов на раёне в алфавитном порядке.
    */
-  def getBuildingsOfDistrict(districtAdnId: String, gravity: Option[GeoPoint]): Future[Seq[MAdnNode]] = {
+  def getBuildingsOfDistrict(districtAdnId: String, gravity: Option[GeoPoint]): Future[Seq[MNode]] = {
     val sargs = new SmNodesSearchArgsT {
       override def limit = 30
       override def withAdnRights = Seq(AdnRights.RECEIVER)
-      override def withDirectGeoParents = Seq(districtAdnId)
+      override def outEdges: Seq[ICriteria] = {
+        val cr = Criteria(Seq(districtAdnId), Seq(MPredicates.GeoParent.Direct))
+        Seq(cr)
+      }
       override def withGeoDistanceSort = gravity
-      override def withNameSort = gravity.isEmpty
+      override def withNameSort = if (gravity.isEmpty)  Some(SortOrder.ASC)  else  None
     }
-    MAdnNode.dynSearch(sargs)
+    MNode.dynSearch(sargs)
   }
 
   /**
@@ -313,11 +337,23 @@ class ShowcaseNodeListUtil @Inject() (
                                   (implicit lang: Messages): Future[List[GeoNodesLayer]] = {
     getBuildingsOfDistrict(districtAdnId, gravity)
       .map { nodes =>
-        nodes.groupBy(_.adn.shownTypeId)
+        nodes
           .iterator
+          .flatMap { mnode =>
+            mnode.extras.adn
+              .flatMap( _.shownTypeIdOpt )
+              .flatMap( AdnShownTypes.maybeWithName )
+              .map { _ -> mnode }
+          }
+          .toSeq
+          .groupBy(_._1)
+          .iterator
+          .map { case (sti, layNodesSti) =>
+            sti -> layNodesSti.map(_._2)
+          }
           .map { case (sti, layNodes) =>
             val ast: AdnShownType = sti
-            val lsSorted = layNodes.sortBy(_.meta.nameShort)
+            val lsSorted = layNodes.sortBy(_.meta.basic.nameShort)
             val expanded = expandOnNode.isDefined && {
               val currAdnId = expandOnNode.get
               layNodes.iterator
@@ -339,7 +375,7 @@ class ShowcaseNodeListUtil @Inject() (
    * @param currNodeLayer Уровень, на котором находится текущий узел.
    * @return Фьючерс со слоями в порядке рендера (город внизу).
    */
-  def collectLayers(geoMode: Option[GeoMode], currNode: MAdnNode, currNodeLayer: NodeGeoLevel)
+  def collectLayers(geoMode: Option[GeoMode], currNode: MNode, currNodeLayer: NodeGeoLevel)
                    (implicit lang: Messages): Future[Seq[GeoNodesLayer]] = {
     // Задаём опорные геоточки для гео-сортировки и гео-поиска.
     val (gravity0, gravity1) = if (DISTANCE_SORT && geoMode.isDefined) {
@@ -378,12 +414,14 @@ class ShowcaseNodeListUtil @Inject() (
         val buildingsFut = getBuildingsLayersOfDistrict(currNode.id.get, gravity1)
         val districtsOptFut: Future[Option[GeoNodesLayer]] = {
           townFut flatMap { townNode =>
-            currNode.geo.directParentIds.headOption match {
-              case Some(dparent) =>
-                getDistrictsLayerForTown(townNode, gravity0, expanded = true)
-                  .map(Some.apply)
-              case None =>
-                Future successful None
+            val directParentOpt = {
+              currNode.edges
+                .withPredicateIterIds( MPredicates.GeoParent.Direct )
+                .collectFirst { case x => x }
+            }
+            FutureUtil.optFut2futOpt(directParentOpt) { dparent =>
+              getDistrictsLayerForTown(townNode, gravity0, expanded = true)
+                .map( Some.apply )
             }
           }
         }
@@ -410,10 +448,12 @@ class ShowcaseNodeListUtil @Inject() (
         }
         val townLayerFut = townFut.map { town2layer(_) }
         val buildingsLayersFut = {
-          currNode.geo.directParentIds.headOption match {
-            case Some(currDistrictId) => getBuildingsLayersOfDistrict(currDistrictId, gravity1, expandOnNode = currNode.id)
-            case None                 => Future successful Nil
-          }
+          currNode.edges
+            .withPredicateIterIds( MPredicates.GeoParent.Direct )
+            .collectFirst { case x => x }
+            .fold(Future successful List.empty[GeoNodesLayer]) { currDistrictId =>
+              getBuildingsLayersOfDistrict(currDistrictId, gravity1, expandOnNode = currNode.id)
+            }
         }
         for {
           townLayer         <- townLayerFut
@@ -431,7 +471,7 @@ class ShowcaseNodeListUtil @Inject() (
 
 
 /** общие аргументов для обоих целей. */
-sealed class SmNodesSearchArgsCommonT extends AdnNodesSearchArgs {
+sealed class SmNodesSearchArgsCommonT extends MNodeSearchDfltImpl {
   override def testNode = Some(false)
   override def isEnabled = Some(true)
 }

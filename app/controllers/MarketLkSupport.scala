@@ -79,7 +79,7 @@ class MarketLkSupport @Inject() (
     _supportForm(None, r)
   }
 
-  private def _supportForm(nodeOpt: Option[MAdnNode], r: Option[String])(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+  private def _supportForm(nodeOpt: Option[MNode], r: Option[String])(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
     // Взять дефолтовое значение email'а по сессии
     val emailsDfltFut = request.pwOpt.fold [Future[Seq[String]]]
       { Future successful Nil }
@@ -105,7 +105,7 @@ class MarketLkSupport @Inject() (
     _supportFormSubmit(None, r)
   }
 
-  private def _supportFormSubmit(nodeOpt: Option[MAdnNode], r: Option[String])(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+  private def _supportFormSubmit(nodeOpt: Option[MNode], r: Option[String])(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
     val adnIdOpt = nodeOpt.flatMap(_.id)
     lazy val logPrefix = s"supportFormSubmit($adnIdOpt): "
     supportFormM.bindFromRequest().fold(
@@ -163,7 +163,11 @@ class MarketLkSupport @Inject() (
         trace(logPrefix + "Processing from ip=" + request.remoteAddress)
         // собираем письмо админам s.io
         val msg = mailer.instance
-        msg.setSubject("sio-market: Запрос геолокации для узла " + request.adnNode.meta.name + request.adnNode.meta.town.fold("")(" / " + _))
+        msg.setSubject(
+          "sio-market: Запрос геолокации для узла " +
+            request.adnNode.meta.basic.name +
+            request.adnNode.meta.address.town.fold("")(" / " + _)
+        )
         msg.setRecipients( supportUtil.FEEDBACK_RCVR_EMAILS : _* )
         msg.setFrom("no-reply@suggest.io")
         emailsFut map { emails =>

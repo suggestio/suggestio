@@ -3,7 +3,10 @@ package util.ident
 import com.google.inject.{Singleton, Inject}
 import controllers.routes
 import io.suggest.di.{IExecutionContext, IEsClient}
-import models.MAdnNode
+import io.suggest.model.n2.edge.MPredicates
+import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import models.MNode
 import models.usr.{SuperUsers, MExtIdent}
 import org.elasticsearch.client.Client
 import play.api.mvc._
@@ -27,13 +30,22 @@ class IdentUtil @Inject() (
   /** При логине юзера по email-pw мы определяем его присутствие в маркете, и редиректим в ЛК магазина или в ЛК ТЦ. */
   def getMarketRdrCallFor(personId: String): Future[Option[Call]] = {
     // Нам тут не надо выводить элементы, нужно лишь определять кол-во личных кабинетов и данные по ним.
-    MAdnNode.findByPersonId(personId, maxResults = 2).map { adnNodes =>
-      val rdrOrNull: Call = if (adnNodes.isEmpty) {
+    val msearch = new MNodeSearchDfltImpl {
+      override def outEdges: Seq[ICriteria] = {
+        val cr = Criteria(Seq(personId), Seq(MPredicates.OwnedBy))
+        Seq(cr)
+      }
+      override def limit = 2
+    }
+    for (
+      mnodes <- MNode.dynSearch(msearch)
+    ) yield {
+      val rdrOrNull: Call = if (mnodes.isEmpty) {
         // У юзера нет рекламных узлов во владении. Некуда его редиректить, вероятно ошибся адресом.
         null
-      } else if (adnNodes.size == 1) {
+      } else if (mnodes.size == 1) {
         // У юзера есть один рекламный узел
-        val adnNode = adnNodes.head
+        val adnNode = mnodes.head
         routes.MarketLkAdn.showNodeAds(adnNode.id.get)
       } else {
         // У юзера есть несколько узлов во владении. Нужно предоставить ему выбор.

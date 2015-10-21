@@ -76,7 +76,7 @@ class LkEvents @Inject() (
 
     // Если начало списка, и узел -- ресивер, то нужно проверить, есть ли у него геошейпы. Если нет, то собрать ещё одно событие...
     val geoWelcomeFut: Future[Option[(Html, DateTime)]] = {
-      if (offset == 0  &&  request.adnNode.adn.isReceiver) {
+      if (offset == 0  &&  request.adnNode.extras.adn.exists(_.isReceiver)) {
         lkEventsUtil.getGeoWelcome(request.adnNode)(ctx)
       } else {
         Future successful None

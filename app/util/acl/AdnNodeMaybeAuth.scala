@@ -1,7 +1,7 @@
 package util.acl
 
 import io.suggest.di.{IExecutionContext, IEsClient}
-import models.MAdnNode
+import models.MNode
 import models.req.SioReqMd
 import play.api.mvc.{Result, ActionBuilder, Request}
 import util.di.INodeCache
@@ -51,10 +51,10 @@ trait AdnNodeMaybeAuth
       }
     }
 
-    def isNodeValid(adnNode: MAdnNode): Boolean
+    def isNodeValid(adnNode: MNode): Boolean
 
-    def accessProhibited[A](adnNode: MAdnNode, request: Request[A]): Future[Result] = {
-      LOGGER.warn(s"Failed access to acl-prohibited node: ${adnNode.id.get} (${adnNode.meta.name}) :: Returning 404 to ${request.remoteAddress}")
+    def accessProhibited[A](adnNode: MNode, request: Request[A]): Future[Result] = {
+      LOGGER.warn(s"Failed access to acl-prohibited node: ${adnNode.id.get} (${adnNode.meta.basic.name}) :: Returning 404 to ${request.remoteAddress}")
       nodeNotFound(request)
     }
 
@@ -78,17 +78,17 @@ trait AdnNodeMaybeAuth
   case class AdnNodeMaybeAuth(override val adnId: String)
     extends AdnNodeMaybeAuthAbstract
   {
-    override def isNodeValid(adnNode: MAdnNode): Boolean = true
+    override def isNodeValid(adnNode: MNode): Boolean = true
   }
 
 }
 
 
 case class SimpleRequestForAdnNode[A](
-  adnNode: MAdnNode,
-  request: Request[A],
-  pwOpt: PwOpt_t,
-  sioReqMd: SioReqMd
+  adnNode   : MNode,
+  request   : Request[A],
+  pwOpt     : PwOpt_t,
+  sioReqMd  : SioReqMd
 )
   extends AbstractRequestForAdnNode(request)
 {

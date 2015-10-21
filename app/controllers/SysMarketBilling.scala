@@ -313,15 +313,19 @@ class SysMarketBilling @Inject() (
       _lastPays -> _contracts
     }
     val adnIds = contracts.map(_.adnId).distinct
-    val adnsFut = MAdnNode.multiGetRev(adnIds)
+    val adnsFut = MNode.multiGetRev(adnIds)
       .map { adnNodes =>
         adnNodes.map {
           adnNode => adnNode.id.get -> adnNode
         }.toMap
       }
-    val contractsMap = contracts.map { mbc =>
-      mbc.id.get -> mbc
-    }.toMap
+    val contractsMap = {
+      contracts.iterator
+        .map { mbc =>
+          mbc.id.get -> mbc
+        }
+        .toMap
+    }
     adnsFut map { adnsMap =>
       Ok(billingIndexTpl(lastPays, contractsMap, adnsMap))
     }
@@ -358,7 +362,11 @@ class SysMarketBilling @Inject() (
     val currentMscs = db.withConnection { implicit c =>
       MSinkComission.findByContractId(contractId)
     }
-    val needSinks = request.adnNode.adn.sinks -- currentMscs.map(_.sink)
+    val currSinks = request.adnNode
+      .extras
+      .adn
+      .fold(Set.empty[AdnSink])(_.sinks)
+    val needSinks = currSinks -- currentMscs.map(_.sink)
     val sink = needSinks.headOption getOrElse AdnSinks.default
     val mscStub = MSinkComission(
       contractId = contractId,

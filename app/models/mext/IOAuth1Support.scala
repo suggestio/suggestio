@@ -3,7 +3,7 @@ package models.mext
 import io.suggest.model.geo.GeoPoint
 import io.suggest.ym.model.common.MImgInfoMeta
 import models.adv.{MExtTarget, MExtReturn}
-import models.{MAdnNode, MAd, MImgSizeT}
+import models.{MNode, MAd, MImgSizeT}
 import play.api.libs.oauth._
 import play.api.libs.ws.WSClient
 
@@ -54,7 +54,7 @@ trait IOa1MkPostArgs {
   /** Геоинфа. */
   def geo: Option[GeoPoint]
   /** Узел, с которого идёт постинг. */
-  def mnode: MAdnNode
+  def mnode: MNode
   /** Генератор ссылки возврата для юзера. */
   def returnTo: MExtReturn
   /** Таргет, т.е. цель размещения. */

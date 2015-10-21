@@ -2,7 +2,7 @@ package util.acl
 
 import controllers.SioController
 import io.suggest.di.IEsClient
-import models.MAdnNode
+import models.MNode
 import models.req.SioReqMd
 import models.usr.{EmailPwIdent, EmailActivation}
 import play.api.mvc.{Result, ActionBuilder, Request}
@@ -114,7 +114,7 @@ trait NodeEactAcl
 
 /** Реквест, передаваемый из реализаций [[NodeEactAcl.NodeEactBase]]. */
 case class NodeEactRequest[A](
-  mnode     : MAdnNode,
+  mnode     : MNode,
   eact      : EmailActivation,
   epwIdOpt  : Option[EmailPwIdent],
   pwOpt     : PwOpt_t,
