@@ -41,11 +41,12 @@ trait OutEdges extends DynSearchArgs with MacroLogsI {
         // Предикаты рёбер добавить через фильтр либо query.
         if (oe.predicates.nonEmpty) {
           val fn = EDGE_OUT_PREDICATE_FULL_FN
+          val predIds = oe.predicates.map(_.strId)
           _qOpt = _qOpt map { _q =>
-            val predf = FilterBuilders.termsFilter(fn, oe.nodeIds : _*)
+            val predf = FilterBuilders.termsFilter(fn, predIds: _*)
             QueryBuilders.filteredQuery(_q, predf)
           } orElse {
-            val _q = QueryBuilders.termsQuery(fn, oe.nodeIds : _*)
+            val _q = QueryBuilders.termsQuery(fn, predIds: _*)
             Some(_q)
           }
         }

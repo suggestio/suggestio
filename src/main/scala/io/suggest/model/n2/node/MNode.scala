@@ -1,6 +1,7 @@
 package io.suggest.model.n2.node
 
 import io.suggest.event.SioNotifierStaticClientI
+import io.suggest.model.es.EsModelUtil.FieldsJsonAcc
 import io.suggest.model.es._
 import io.suggest.model.n2.edge.MNodeEdges
 import io.suggest.model.n2.geo.MNodeGeo
@@ -189,6 +190,7 @@ case class MNode(
 )
   extends EsModelT
   with EsModelJsonWrites
+  with EsModelPlayJsonT   // compat с некоторым API MAdnNode типа MInviteRequest. Потом можно удалить.
 {
 
   override type T = MNode
@@ -199,6 +201,13 @@ case class MNode(
       id = dmeta.id,
       versionOpt = dmeta.version
     )
+  }
+
+  override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
+    companion.esDocWrites
+      .writes(this)
+      .fields
+      .toList
   }
 
 }

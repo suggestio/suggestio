@@ -25,10 +25,10 @@ trait ShownTypeId extends DynSearchArgs {
     } else {
       val fn = MNodeFields.Extras.ADN_SHOWN_TYPE_FN
       qbOpt0 map { qb =>
-        val stiFilter = FilterBuilders.termsFilter(fn, shownTypeIds: _*)
+        val stiFilter = FilterBuilders.termsFilter(fn, _sti: _*)
         QueryBuilders.filteredQuery(qb, stiFilter)
       } orElse {
-        val stiQuery = QueryBuilders.termsQuery(fn, shownTypeIds: _*)
+        val stiQuery = QueryBuilders.termsQuery(fn, _sti: _*)
           .minimumMatch(1) // может быть только один тип ведь у одного узла.
         Some(stiQuery)
       }

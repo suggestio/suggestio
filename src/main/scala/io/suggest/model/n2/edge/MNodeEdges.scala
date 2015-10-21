@@ -104,3 +104,29 @@ case class MNodeEdges(
   out   : NodeEdgesMap_t    = Map.empty
 )
   extends EmptyProduct
+{
+
+  def withPredicateIter(preds: MPredicate*): Iterator[MEdge] = {
+    out.valuesIterator
+      .filter { medge =>
+        preds.exists { p =>
+          medge.predicate ==>> p
+        }
+      }
+  }
+
+  def withoutPredicateIter(preds: MPredicate*): Iterator[MEdge] = {
+    out.valuesIterator
+      .filter { e =>
+        !preds.exists { p =>
+          e.predicate ==>> p
+        }
+      }
+  }
+
+  def withPredicateIterIds(pred: MPredicate*): Iterator[String] = {
+    withPredicateIter(pred: _*)
+      .map { _.nodeId }
+  }
+
+}

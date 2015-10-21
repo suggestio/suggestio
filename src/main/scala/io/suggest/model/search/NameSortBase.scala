@@ -45,7 +45,7 @@ trait NameSortBase extends DynSearchArgs {
 
 
 trait NameSortBaseDflt extends NameSortBase {
-  override def withNameSort = None
+  override def withNameSort: Option[SortOrder] = None
 }
 
 

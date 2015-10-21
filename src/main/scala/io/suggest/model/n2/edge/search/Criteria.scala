@@ -1,6 +1,7 @@
 package io.suggest.model.n2.edge.search
 
 import io.suggest.common.{IEmpty, EmptyProduct}
+import io.suggest.model.n2.edge.MPredicate
 import io.suggest.ym.model.common.SlNameTokenStr
 
 /**
@@ -14,13 +15,13 @@ import io.suggest.ym.model.common.SlNameTokenStr
 
 trait ICriteria extends IEmpty {
   def nodeIds     : Seq[String]
-  def predicates  : Seq[String]
+  def predicates  : Seq[MPredicate]
   def sls         : Seq[SlNameTokenStr]
 }
 
 case class Criteria(
-  nodeIds     : Seq[String] = Nil,
-  predicates  : Seq[String] = Nil,
+  nodeIds     : Seq[String]         = Nil,
+  predicates  : Seq[MPredicate]     = Nil,
   sls         : Seq[SlNameTokenStr] = Nil
 )
   extends ICriteria

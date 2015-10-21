@@ -3,8 +3,7 @@ package io.suggest.model.n2.extra
 import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.ym.model.AdShowLevel
-import io.suggest.ym.model.common.AdnRight
-import io.suggest.ym.model.common.AdnSink
+import io.suggest.ym.model.common.{AdnRights, AdnRight, AdnSink}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -112,4 +111,10 @@ case class MAdnExtra(
   outSls                : Map[AdShowLevel, MSlInfo] = Map.empty,
   sinks                 : Set[AdnSink]              = Set.empty,
   showInScNl            : Boolean                   = true
-)
+) {
+
+
+  def isProducer: Boolean = rights.contains( AdnRights.PRODUCER )
+  def isReceiver: Boolean = rights.contains( AdnRights.RECEIVER )
+
+}
