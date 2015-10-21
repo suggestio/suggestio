@@ -2,11 +2,11 @@ package util.acl
 
 import java.sql.Connection
 
-import controllers.{IDb, SioController}
+import controllers.SioController
 import io.suggest.di.{IExecutionContext, IEsClient}
 import models.req.SioReqMd
 import play.api.mvc.{Result, ActionBuilder, Request}
-import util.di.INodeCache
+import util.di.{IDb, INodeCache}
 import util.{PlayLazyMacroLogsImpl, PlayMacroLogsI}
 import util.acl.PersonWrapper.PwOpt_t
 import models._

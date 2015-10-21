@@ -83,12 +83,6 @@ object SioControllerUtil extends PlayLazyMacroLogsImpl {
 
 
 
-
-
-trait IDb {
-  def db: Database
-}
-
 /** Базовый хелпер для контроллеров suggest.io. Используется почти всегда вместо обычного Controller. */
 trait SioController
   extends Controller

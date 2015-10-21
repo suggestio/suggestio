@@ -46,7 +46,7 @@ class MarketAdv @Inject() (
   override val mNodeCache         : MAdnNodeCache,
   override val messagesApi        : MessagesApi,
   override val current            : play.api.Application,
-  override implicit val db        : Database,
+  override val db                 : Database,
   override implicit val ec        : ExecutionContext,
   override implicit val esClient  : Client,
   override implicit val sn        : SioNotifierStaticClientI
@@ -576,7 +576,7 @@ class MarketAdv @Inject() (
       maxResults = 500
     )
     // Самому себе через "управление размещением" публиковать нельзя.
-    nodesFut.map { nodes =>
+    for (nodes <- nodesFut) yield {
       val dropRcvrId = myNode.id.get
       nodes.filter {
         _.id.get != dropRcvrId
@@ -866,13 +866,13 @@ class MarketAdv @Inject() (
           .map { _.fold(identity, NotAcceptable(_)) }
       },
       {reason =>
-        Future {
+        val refuseFut = Future {
           mmpDailyBilling.refuseAdvReq(request.advReq, reason)
         }(AsyncUtil.jdbcExecutionContext)
-          .map { _ =>
-            RdrBackOr(r) { routes.MarketAdv.showNodeAdvs(request.rcvrNode.id.get) }
-              .flashing(FLASH.SUCCESS -> "Adv.req.refused")
-          }
+        for (_ <- refuseFut) yield {
+          RdrBackOr(r) { routes.MarketAdv.showNodeAdvs(request.rcvrNode.id.get) }
+            .flashing(FLASH.SUCCESS -> "Adv.req.refused")
+        }
       }
     )
   }
@@ -884,14 +884,15 @@ class MarketAdv @Inject() (
    */
   def advReqAcceptSubmit(advReqId: Int, r: Option[String]) = CanReceiveAdvReqPost(advReqId).async { implicit request =>
     // Надо провести платёж, запилить транзакции для prod и rcvr и т.д.
-    Future {
+    val acceptFut = Future {
       mmpDailyBilling.acceptAdvReq(request.advReq, isAuto = false)
     }(AsyncUtil.jdbcExecutionContext)
-      .map { _ =>
-        // Всё сохранено. Можно отредиректить юзера, чтобы он дальше продолжил одобрять рекламные карточки.
-        RdrBackOr(r) { routes.MarketAdv.showNodeAdvs(request.advReq.rcvrAdnId) }
-          .flashing(FLASH.SUCCESS -> "Adv.req.accepted")
-      }
+    // Когда всё сохранено, то нужно отрендерить результат.
+    for (_ <- acceptFut) yield {
+      // Отредиректить юзера куда-нибудь, чтобы он дальше продолжил одобрять рекламные карточки.
+      RdrBackOr(r) { routes.MarketAdv.showNodeAdvs(request.advReq.rcvrAdnId) }
+        .flashing(FLASH.SUCCESS -> "Adv.req.accepted")
+    }
   }
 
 

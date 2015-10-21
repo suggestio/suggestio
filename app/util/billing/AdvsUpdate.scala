@@ -1,7 +1,6 @@
 package util.billing
 
 import com.google.inject.Inject
-import controllers.IDb
 import io.suggest.di.{IExecutionContext, IEsClient}
 import io.suggest.event.SioNotifierStaticClientI
 import models._
@@ -10,7 +9,7 @@ import org.joda.time.{Period, DateTime}
 import play.api.db.Database
 import util.adv.AdvUtil
 import util.PlayMacroLogsImpl
-import util.di.ISioNotifier
+import util.di.{IDb, ISioNotifier}
 import scala.concurrent.{ExecutionContext, Future}
 import java.sql.Connection
 

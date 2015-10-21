@@ -1,12 +1,12 @@
 package util.acl
 
-import controllers.IDb
 import io.suggest.di.IExecutionContext
 import models.req.SioReqMd
 import models.{MBillTariffFee, MBillContract}
 import play.api.mvc.{Result, ActionBuilder, Request}
 import util.acl.PersonWrapper.PwOpt_t
 import util.async.AsyncUtil
+import util.di.IDb
 
 import scala.concurrent.Future
 

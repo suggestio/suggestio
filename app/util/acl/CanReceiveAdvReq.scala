@@ -1,11 +1,12 @@
 package util.acl
 
-import controllers.{IDb, SioController}
+import controllers.SioController
 import models.req.SioReqMd
 import play.api.mvc.{Result, Request, ActionBuilder}
 import models._
 import util.acl.PersonWrapper.PwOpt_t
 import util.async.AsyncUtil
+import util.di.IDb
 import scala.concurrent.Future
 
 /**
