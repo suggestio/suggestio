@@ -1,11 +1,10 @@
 package models.usr
 
 import io.suggest.model.es._
-import io.suggest.model.n2.node.MNode
 import util.PlayMacroLogsImpl
 import io.suggest.event.SioNotifierStaticClientI
 import EsModelUtil._
-import io.suggest.model._
+import models.MNode
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.client.Client
 import play.api.Play.current

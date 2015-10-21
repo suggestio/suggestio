@@ -40,6 +40,7 @@ class MarketAd @Inject() (
   override implicit val current   : play.api.Application,
   override val cache              : CacheApi,
   tempImgSupport                  : TempImgSupport,
+  mTagUtil                        : MTagUtil,
   override val mNodeCache         : MAdnNodeCache,
   override val db                 : Database,
   override implicit val ec        : ExecutionContext,
@@ -162,7 +163,7 @@ class MarketAd @Inject() (
         }
         // Сохранение новых тегов в MNode.
         adIdFut.onSuccess { case _ =>
-          val fut = MTagUtil.handleNewTagsM(mad.tags)
+          val fut = mTagUtil.handleNewTagsM(mad.tags)
           logTagsUpdate(fut, logPrefix)
         }
         // Возврат HTTP-ответа.
@@ -276,7 +277,7 @@ class MarketAd @Inject() (
         }
         // Параллельно произвести обновление графа MNode на предмет новых тегов:
         saveFut.onSuccess { case _ =>
-          val fut = MTagUtil.handleNewTagsI(mad2,  oldTags = mad)
+          val fut = mTagUtil.handleNewTagsI(mad2,  oldTags = mad)
           logTagsUpdate(fut, logPrefix)
         }
         // Вернуть HTTP-ответ

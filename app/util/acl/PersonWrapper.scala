@@ -1,9 +1,8 @@
 package util.acl
 
-import io.suggest.model.n2.node.MNode
 import models.msession.{LoginTimestamp, Keys}
 import models.usr.{MPersonLinks, MPerson}
-import models.MNodeTypes
+import models.{MNodeTypes, MNode}
 import play.api.mvc._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.PlayMacroLogsImpl

@@ -1,6 +1,6 @@
 package models.usr
 
-import io.suggest.model.n2.node.MNode
+import models.MNode
 import org.elasticsearch.client.Client
 import util.PlayMacroLogsImpl
 

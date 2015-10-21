@@ -19,7 +19,7 @@ import scala.util.{Failure, Success}
  * Created: 14.09.15 16:53
  * Description: Модель для некоторых высокоуровневых над содержимым MNode.tag.
  */
-object MTagUtil extends PlayMacroLogsImpl {
+class MTagUtil extends PlayMacroLogsImpl {
 
   import LOGGER._
 

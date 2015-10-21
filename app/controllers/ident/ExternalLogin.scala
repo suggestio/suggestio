@@ -37,6 +37,7 @@ import scala.concurrent.duration._
 
 class ExternalLogin_ @Inject() (
   routesSvc                       : SsRoutesService,
+  ssUserService                   : SsUserService,
   override val identUtil          : IdentUtil,
   override implicit val ec        : ExecutionContext
 )
@@ -57,7 +58,7 @@ class ExternalLogin_ @Inject() (
   implicit val env: RuntimeEnvironment[SsUser] = {
     new Default[SsUser] {
       override lazy val routes = routesSvc
-      override def userService = SsUserService
+      override def userService = ssUserService
       override lazy val providers: ListMap[String, IdentityProvider] = {
         // Аккуратная инициализация доступных провайдеров и без дубликации кода.
         val provs = MExtServices.values

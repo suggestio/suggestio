@@ -17,7 +17,7 @@ import util.event.SiowebNotifier.Implicts.sn
  * Created: 02.02.15 14:56
  * Description: Реализация над-модели прослойки между suggest.io и secure-social.
  */
-object SsUserService extends UserService[SsUser] {
+class SsUserService extends UserService[SsUser] {
 
   /**
    * Finds a SocialUser that maches the specified id
