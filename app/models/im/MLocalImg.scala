@@ -139,7 +139,14 @@ trait MLocalImgT extends ImgWithTimestamp with PlayMacroLogsI with MAnyImgT {
   lazy val file = new File(fsImgDir, fsFileName)
 
   /** Определение mime-типа из файла. */
-  lazy val mime = ImgFileUtil.getMimeOrUnknown(file)
+  lazy val mime: String = {
+    try {
+      ImgFileUtil.getMimeOrUnknown(file)
+    } catch { case ex: Throwable =>
+      LOGGER.error(s"Failed to get mime for file: $file [${file.length()} bytes]", ex)
+      throw ex
+    }
+  }
 
   /** 
    * Принудительно в фоне обновляем file last modified time.

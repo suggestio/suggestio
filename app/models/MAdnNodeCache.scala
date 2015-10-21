@@ -1,6 +1,6 @@
 package models
 
-import com.google.inject.Inject
+import com.google.inject.{Singleton, Inject}
 import play.api.Configuration
 import io.suggest.event._
 import io.suggest.event.SioNotifier.Event
@@ -16,6 +16,7 @@ import scala.concurrent.duration._
  * для оперативного опустошения кеша.
  * getByIdCached() не следует активно использовать в личном кабинете, т.к. она не гарантирует реалтайма.
  */
+@Singleton
 class MAdnNodeCache @Inject() (
   configuration         : Configuration,
   override val cache    : CacheApi

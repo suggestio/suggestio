@@ -1,8 +1,10 @@
 package util.compat.img3
 
 import com.google.inject.Inject
+import io.suggest.common.fut.FutureUtil
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.n2.edge.{MNodeEdges, MEdgeInfo}
+import io.suggest.model.n2.geo.MGeoShape
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.util.JMXBase
 import models.im.{MImg3, MImg3_, MImg}
@@ -23,11 +25,13 @@ import scala.util.{Failure, Success}
  * Description: Система обновления картинок на новую архитектуру: N2, seaweedfs.
  */
 class Migration @Inject() (
+  mImg3                 : MImg3_,
   implicit val ec       : ExecutionContext,
   implicit val esClient : Client,
-  implicit val sn       : SioNotifierStaticClientI,
-  mImg3                 : MImg3_
-) extends PlayLazyMacroLogsImpl {
+  implicit val sn       : SioNotifierStaticClientI
+)
+  extends PlayLazyMacroLogsImpl
+{
 
   import LOGGER._
 
@@ -42,10 +46,8 @@ class Migration @Inject() (
       trace(s"$logPrefix Processing ADN node: ${madnNode.meta.name} / ${madnNode.meta.town}")
 
       // Запуск обработки логотипа узла.
-      val logoEdgeOptFut = madnNode.logoImgOpt.fold {
-        Future successful Option.empty[MEdge]
-      } { logoImg =>
-        val mimg =  mImg3( MImg(logoImg) ).original
+      val logoEdgeOptFut = FutureUtil.optFut2futOpt(madnNode.logoImgOpt) { logoImg =>
+        val mimg = mImg3( MImg(logoImg) ).original
         portOneImage(mimg, adnNodeId, madnNode.meta.dateCreated, logoImg.meta)
           .map { imgNodeId =>
             Some( MEdge(MPredicates.Logo, imgNodeId) )
@@ -63,17 +65,40 @@ class Migration @Inject() (
             }
       }
 
+      // В n2-архитектуре гео-шейпы узла хранятся прямо в узле, т.е. nested doc вместо parent-child doc.
+      val nodeGssFut = for {
+        nodeGss <- MAdnNodeGeo.findByNode(adnNodeId, maxResults = 50)
+      } yield {
+        nodeGss
+          .iterator
+          .zipWithIndex
+          .map { case (madnGeo, i) =>
+            MGeoShape(
+              id          = i,
+              glevel      = madnGeo.glevel,
+              shape       = madnGeo.shape,
+              fromUrl     = madnGeo.url,
+              dateEdited  = madnGeo.lastModified
+            )
+          }
+          .toSeq
+      }
+
       val mnode0 = madnNode.toMNode
 
       val mnode1Fut = for {
         logoEdgeOpt <- logoEdgeOptFut
         galEdges    <- galEdgesFut
+        nodeGss     <- nodeGssFut
       } yield {
         mnode0.copy(
           edges = mnode0.edges.copy(
             out = mnode0.edges.out ++ MNodeEdges.edgesToMapIter(
               logoEdgeOpt.iterator ++ galEdges.iterator
             )
+          ),
+          geo = mnode0.geo.copy(
+            shapes = nodeGss
           )
         )
       }
@@ -81,16 +106,22 @@ class Migration @Inject() (
       val mnode1SaveFut = mnode1Fut
         .flatMap(_.save)
 
+      val logosCountFut = logoEdgeOptFut.map(_.size)
+      val galImgsCountFut = galEdgesFut.map(_.size)
+      val gssCountFut = nodeGssFut.map(_.size)
+
       for {
-        logosCount    <- logoEdgeOptFut.map(_.size)
-        galImgsCount  <- galEdgesFut.map(_.size)
+        logosCount    <- logosCountFut
+        galImgsCount  <- galImgsCountFut
+        gssCount      <- gssCountFut
         mnode1id      <- mnode1SaveFut
         acc0          <- acc0Fut
       } yield {
         acc0.copy(
           adnNodes = acc0.adnNodes  + 1,
           logos    = acc0.logos     + logosCount,
-          galImgs  = acc0.galImgs   + galImgsCount
+          galImgs  = acc0.galImgs   + galImgsCount,
+          gss      = acc0.gss       + gssCount
         )
       }
     }
@@ -100,11 +131,12 @@ class Migration @Inject() (
   case class LogosAcc(
     adnNodes  : Int = 0,
     logos     : Int = 0,
-    galImgs   : Int = 0
+    galImgs   : Int = 0,
+    gss       : Int = 0
   ) {
 
     def toReport: String = {
-      s"ADN Nodes: $adnNodes;\nLogos: $logos;\nGal imgs: $galImgs"
+      s"ADN Nodes: $adnNodes;\nLogos: $logos;\nGal imgs: $galImgs\nGeoShapes: $gss"
     }
   }
 
@@ -188,7 +220,10 @@ trait MigrationJmxMBean {
   def adnNodesToN2(): String
 }
 
-class MigrationJmx @Inject() (migration: Migration, implicit val ec: ExecutionContext)
+class MigrationJmx @Inject() (
+  migration       : Migration,
+  implicit val ec : ExecutionContext
+)
   extends JMXBase
   with MigrationJmxMBean
 {
