@@ -24,9 +24,11 @@ class MNodeGeoSpec extends FlatSpec with PlayJsonTestUtil {
     jsonTest {
       MNodeGeo(
         point = Some( GeoPoint(22.22222, -44.44444) ),
-        shape = Some(MGeoShape(
+        shapes = Seq(MGeoShape(
+          id      = 0,
           glevel  = NodeGeoLevels.NGL_BUILDING,
-          shape   = PointGs( GeoPoint(10, 20) )
+          shape   = PointGs( GeoPoint(10, 20) ),
+          fromUrl = None
         ))
       )
     }

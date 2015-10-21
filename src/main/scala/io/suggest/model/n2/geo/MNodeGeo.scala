@@ -39,7 +39,11 @@ object MNodeGeo extends IGenEsMappingProps {
 
   implicit val FORMAT: Format[MNodeGeo] = (
     (__ \ Fields.POINT_FN).formatNullable[GeoPoint] and
-    (__ \ Fields.Shape.SHAPE_FN).formatNullable[MGeoShape]
+    (__ \ Fields.Shape.SHAPE_FN).formatNullable[Seq[MGeoShape]]
+      .inmap [Seq[MGeoShape]] (
+        _ getOrElse Nil,
+        { gss => if (gss.isEmpty) None else Some(gss) }
+      )
   )(apply, unlift(unapply))
 
 
@@ -47,9 +51,13 @@ object MNodeGeo extends IGenEsMappingProps {
 
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldGeoPoint(Fields.POINT_FN, latLon = true,
-        geohash = true, geohashPrefix = true,  geohashPrecision = "8",
-        fieldData = GeoPointFieldData(format = GeoPointFieldDataFormats.compressed, precision = "3m")
+      FieldGeoPoint(
+        id                = Fields.POINT_FN,
+        latLon            = true,
+        geohash           = true,
+        geohashPrefix     = true,
+        geohashPrecision  = "8",
+        fieldData         = GeoPointFieldData(format = GeoPointFieldDataFormats.compressed, precision = "3m")
       ),
       FieldNestedObject(Fields.Shape.SHAPE_FN, enabled = true, properties = MGeoShape.generateMappingProps)
     )
@@ -59,7 +67,7 @@ object MNodeGeo extends IGenEsMappingProps {
 
 
 case class MNodeGeo(
-  point: Option[GeoPoint] = None,
-  shape: Option[MGeoShape] = None
+  point     : Option[GeoPoint]  = None,
+  shapes    : Seq[MGeoShape]    = Nil
 )
   extends EmptyProduct

@@ -69,14 +69,18 @@ object MGeoShape extends IGenEsMappingProps {
     // Собираем промежуточный JSON-врайтер.
     val write1: Writes[MGeoShape] = (
       (__ \ mgs.glevel.esfn).write[GeoShape] and
+      ID_FORMAT and
       GLEVEL_FORMAT and
       GJC_FORMAT and
-      FROM_URL_FORMAT
+      FROM_URL_FORMAT and
+      DATE_EDITED_FORMAT
     ) { mgs =>
       (mgs.shape,
+       mgs.id,
        mgs.glevel,
        mgs.shape.shapeType.isGeoJsonCompatible,
-       mgs.fromUrl
+       mgs.fromUrl,
+       mgs.dateEdited
       )
     }
     // Запускаем сериализацию.
