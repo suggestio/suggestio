@@ -102,3 +102,7 @@ trait MNodeSearchWrap
 abstract class MNodeSearchWrapImpl
   extends MNodeSearchImpl
   with MNodeSearchWrap
+  with MacroLogsImplLazy
+{
+  override type WT = MNodeSearch
+}

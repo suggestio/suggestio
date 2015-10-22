@@ -8,14 +8,17 @@ import io.suggest.model.n2.geo.MNodeGeo
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.extra.{EMNodeExtras, MNodeExtras}
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
-import io.suggest.model.n2.node.search.MNodeSearch
+import io.suggest.model.n2.node.search.{MNodeSearchDfltImpl, MNodeSearch}
 import io.suggest.model.search.EsDynSearchStatic
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.{MacroLogsImpl, SioConstants}
 import io.suggest.ym.model.common.{EMAdnMMetadataStatic, MNodeMeta}
 import org.elasticsearch.client.Client
+import org.elasticsearch.search.aggregations.AggregationBuilders
+import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
+import scala.collection.JavaConversions._
 
 import scala.collection.Map
 import scala.concurrent.{Future, ExecutionContext}
@@ -159,6 +162,34 @@ object MNode
         person  = mpm
       )
     )
+  }
+
+
+  /**
+   * Сбор статистики по кол-ву N2-узлов различных типов.
+   * @param dsa Критерий выборки, если требуется.
+   * @return Карта, где ключ -- тип узла, а значение -- кол-во результатов в индексе.
+   */
+  def ntypeStats(dsa: MNodeSearch = new MNodeSearchDfltImpl)
+                (implicit ec: ExecutionContext, client: Client): Future[Map[MNodeType, Long]] = {
+    val aggName = "ntypeAgg"
+    dynSearchReqBuilder(dsa)
+      .addAggregation(
+        AggregationBuilders.terms(aggName)
+          .field( MNodeFields.Common.NODE_TYPE_FN )
+      )
+      .execute()
+      .map { resp =>
+        resp.getAggregations
+          .get[Terms](aggName)
+          .getBuckets
+          .iterator()
+          .map { bucket =>
+            val ntype: MNodeType = MNodeTypes.withName( bucket.getKey )
+            ntype -> bucket.getDocCount
+          }
+          .toMap
+      }
   }
 
 

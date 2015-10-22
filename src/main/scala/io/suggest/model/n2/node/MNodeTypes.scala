@@ -2,6 +2,7 @@ package io.suggest.model.n2.node
 
 import io.suggest.common.menum.{EnumTree, EnumMaybeWithName}
 import io.suggest.model.menum.EnumJsonReadsValT
+import play.api.mvc.QueryStringBindable
 
 /**
  * Suggest.io
@@ -14,7 +15,11 @@ import io.suggest.model.menum.EnumJsonReadsValT
 object MNodeTypes extends EnumMaybeWithName with EnumJsonReadsValT with EnumTree {
 
   /** Трейт каждого элемента данной модели. */
-  protected sealed trait ValT extends super.ValT { that: T =>
+  protected sealed trait ValT
+    extends super.ValT
+  { that: T =>
+    def singular = "Ntype." + strId
+    def plural   = "Ntypes." + strId
   }
 
   /** Абстрактная класс одного элемента модели. */
@@ -64,5 +69,27 @@ object MNodeTypes extends EnumMaybeWithName with EnumJsonReadsValT with EnumTree
 
   /** Карточка приветствия. */
   val WelcomeAd: T = new ValNoSub("w")
+
+
+  /** Поддержка binding'а из URL query string, для play router'а. */
+  implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[T] = {
+    new QueryStringBindable[T] {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, T]] = {
+        for (strIdEith <- strB.bind(key, params)) yield {
+          strIdEith.right.flatMap { strId =>
+            maybeWithName(strId)
+              .fold [Either[String, T]] {
+                Left("node.type.invalid")
+              } { ntype =>
+                Right(ntype)
+              }
+          }
+        }
+      }
+      override def unbind(key: String, value: T): String = {
+        strB.unbind(key, value.strId)
+      }
+    }
+  }
 
 }
