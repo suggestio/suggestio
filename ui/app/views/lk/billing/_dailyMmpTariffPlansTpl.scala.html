@@ -1,45 +1,47 @@
-@(mbmds: Seq[MBillMmpDaily], adnNode: MAdnNode)(implicit ctx: Context)
+@(mbmds: Seq[MBillMmpDaily], mnode: MNode)(implicit ctx: Context)
 
 @* Рендер списка тарифных сеток (посуточная mmp-тарификация). *@
 
 @import util.TplDataFormatUtil._
 @import util.FormUtil.replaceEOLwithBR
 @import util.img.GalleryUtil
+@import lk.lkProp
+@import ctx.messages
+@import lk.adn.node._galleryTpl
 
-
-@if(adnNode.gallery.nonEmpty) {
+@if( GalleryUtil.galleryEdges(mnode).nonEmpty ) {
   <div class="tariff_photo-lst">
-    <div class="js-photo-slider">
-      @adnNode.gallery.map { imgId =>
-        <img class="tariff_photo-i" src="@GalleryUtil.dynLkBigCall(imgId)" />
-      }
-    </div>
+    @_galleryTpl(mnode, "tariff_photo-i")
   </div>
 }
 
 @mbmds.map { mbmd =>
-  @_dailyMmpTariffPlanTpl(mbmd, adnNode)
+  @_dailyMmpTariffPlanTpl(mbmd, mnode)
 }
 
 <div class="ovh">
 
-  @adnNode.meta.address.map { address =>
-    @lk.lkProp(){ Адрес } {
+  @mnode.meta.address.address.map { address =>
+    @lkProp( messages("Address")) {
       @Html(replaceEOLwithBR(address))
-      @adnNode.meta.phone.map { phone =>
-        тел. @phone
+      @mnode.meta.address.phone.map { phone =>
+        @messages("tel.") @phone
       }
     }
     <hr class="delimiter __light"/>
   }
 
-  @adnNode.meta.humanTrafficAvg.map { htAvg =>
-    @lk.lkProp(){ Суточный трафик } { @formatIntHtml(htAvg) человек в сутки. }
+  @mnode.meta.business.humanTrafficAvg.map { htAvg =>
+    @lkProp( messages("Daily.people.traffic")) {
+      @messages("N.humans.per.day", formatIntHtml(htAvg))
+    }
     <hr class="delimiter __light"/>
   }
 
-  @adnNode.meta.audienceDescr.map { audDescr =>
-    @lk.lkProp(){ Описание аудитории } { @Html(audDescr) }
+  @mnode.meta.business.audienceDescr.map { audDescr =>
+    @lkProp( messages("Audience.descr")) {
+      @Html(audDescr)
+    }
   }
 
 </div>

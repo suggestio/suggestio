@@ -63,6 +63,8 @@ trait ImgFileNameParsers extends JavaTokenParsers with ImgCropParsers {
   /** Парсер полного filename'а. */
   def fileNameP = uuidP ~ imOpsP
 
+
+  def parseImOps(imOpsStr: String) = parseAll(imOpsP, imOpsStr)
 }
 
 /** Реализация [[ImgFileNameParsers]]. */

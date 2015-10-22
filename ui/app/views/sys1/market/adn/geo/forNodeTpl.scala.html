@@ -1,4 +1,4 @@
-@(adnNode: MAdnNode, geos: Seq[MAdnNodeGeo], parentsMap: Map[String, MAdnNode], mapStateHash: Option[String] = None)(implicit ctx: Context)
+@(mnode: MNode, geos: Seq[MAdnNodeGeo], parentsMap: Map[String, MNode], mapStateHash: Option[String] = None)(implicit ctx: Context)
 
 @* Вывод гео-информации по узлу. *@
 
@@ -7,29 +7,51 @@
 @import stuff._
 
 @* Отрендерить список нод на основе списка id нод. Используется карта parentsMap для доступа к инфе по узлу. *@
-@_renderNodes(nodesIds: Traversable[String]) = {
+@_renderNodes(nodesIds: TraversableOnce[String]) = {
   @nodesIds.map { parentId =>
     <a href="@routes.SysMarket.showAdnNode(parentId)">
       @parentsMap.get(parentId).fold {
         @parentId
       } { parentNode =>
-        <span title="@parentNode.meta.town / @parentId">@parentNode.meta.name</span>
+        <span title="@parentNode.meta.town / @parentId">
+          @parentNode.meta.basic.name
+        </span>
       }
     </a>,
   }
 }
 
+@* Рендер одного списка узлов-геородителей. *@
+@_renderGeoParents(p: MPredicate, title: String, label: String) = {
+  @defining( mnode.edges.withPredicateIterIds(p) ) { parentIdsIter =>
+    @if( parentIdsIter.nonEmpty ) {
+      <p>
+        <span title="@title">
+          @label
+        </span>
+        @_renderNodes( parentIdsIter )
+      </p>
+    }
+  }
+}
+
 
 @* Рендер самой страницы. *@
-@geoBase("География узла", nodeOpt = Some(adnNode)) {
+@geoBase("География узла", nodeOpt = Some(mnode)) {
 
   <h2>
-    <a href="@routes.Umap.getAdnNodeMap(adnNode.id.get)@mapStateHash">Картографический редактор...</a>
+    <a href="@routes.Umap.getAdnNodeMap(mnode.id.get)@mapStateHash">Картографический редактор...</a>
     (@geos.iterator.filter(_.shape.shapeType.isGeoJsonCompatible).size отображаемых фигур)
   </h2>
   <br/>
 
-  <h1>География узла <a href="@routes.SysMarket.showAdnNode(adnNode.id.get)">@adnNode.meta.name</a></h1>
+  <h1>
+    География узла
+    <a href="@routes.SysMarket.showAdnNode(mnode.id.get)">
+      @mnode.meta.basic.name
+    </a>
+  </h1>
+
   <p>Географическая информация узла -- это геометрические фигуры в координатах поверхности земли. Они тяжеловесные, и
      хранятся отдельно от родительского узла, в той же шарде узла, но в отдельной модели.</p>
   @if(geos.nonEmpty) {
@@ -73,11 +95,11 @@
   }
 
   <p>
-    <a href="@routes.SysAdnGeo.createForNodeOsm(adnNode.id.get)">Добавить OSM-контур к этому узлу...</a>
+    <a href="@routes.SysAdnGeo.createForNodeOsm(mnode.id.get)">Добавить OSM-контур к этому узлу...</a>
   </p>
 
   <p>
-    <a href="@routes.SysAdnGeo.createCircle(adnNode.id.get)">Добавить круг...</a>
+    <a href="@routes.SysAdnGeo.createCircle(mnode.id.get)">Добавить круг...</a>
   </p>
 
   <p>
@@ -88,11 +110,14 @@
   <br/><br/>
   <h1>Геоданные узла</h1>
   <p>Геоданные узла хранятся и индексируются в самом узле.</p>
-  @if(adnNode.geo.isEmpty) {
+
+  @if(mnode.geo.isEmpty) {
     Отсутствуют.
-    <a href="@routes.SysAdnGeo.editAdnNodeGeodataPropose(adnNode.id.get)">Попробовать автозаполнение геоданных...</a>
+    <a href="@routes.SysAdnGeo.editAdnNodeGeodataPropose(mnode.id.get)">Попробовать автозаполнение геоданных...</a>
+
   } else {
-    @adnNode.geo.point.map { point =>
+
+    @mnode.geo.point.map { point =>
       @* TODO Почему-то маркер точки не подсвечивается на карте, поэтому используем большое увеличение (18) и отметку по центру. *@
       <span title="Примитивная координата, до которой можно измерить расстояние или использовать при сортировки по расстоянию. Например географический центр узла.">
         Координата:
@@ -105,21 +130,20 @@
       <br/>
     }
 
-    @if(adnNode.geo.directParentIds.nonEmpty) {
-      <p>
-        <span title="Прямые родители узла в географическом плане.">Геородительские узлы:</span>
-        @_renderNodes(adnNode.geo.directParentIds)
-      </p>
-    }
+    @_renderGeoParents(
+      p = MPredicates.GeoParent.Direct,
+      title = "Прямые родители узла в географическом плане.",
+      label = "Геородительские узлы:"
+    )
 
-    @if(adnNode.geo.allParentIds.nonEmpty) {
-      <p>
-        <span title="Все географически родительские узлы. Т.е. прямые родители и все их геородители.">Все геородительские узлы:</span>
-        @_renderNodes(adnNode.geo.allParentIds)
-      </p>
-    }
+    @_renderGeoParents(
+      p = MPredicates.GeoParent,
+      title = "Все географически родительские узлы. Т.е. прямые родители и все их геородители.",
+      label = "Все геородительские узлы:"
+    )
+
   }
 
-  <a href="@routes.SysAdnGeo.editAdnNodeGeodata(adnNode.id.get)">Редактировать...</a>
+  <a href="@routes.SysAdnGeo.editAdnNodeGeodata(mnode.id.get)">Редактировать...</a>
 
 }

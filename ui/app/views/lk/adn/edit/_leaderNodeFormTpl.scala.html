@@ -1,5 +1,4 @@
-@(adnId:String, btnText: String, mf: Form[_], submitCall:Call, welcomeAdOpt: Option[MAdT],
-  nodeInfo: AdNetMemberInfo)(implicit ctx: Context)
+@(args: mlk.INodeEditArgs, btnText: String, submitCall: Call)(implicit ctx: Context)
 
 @* Форма для создания/редактирования торгового центра через личный кабинет. *@
 @import ovl._
@@ -15,6 +14,7 @@
 @import io.suggest.js.UploadConstants
 @import views.html.lk.forms.img._
 @import madn.EditConstants._
+@import args.mf
 
 @form(CSRF(submitCall), 'id -> "profileEdit") {
 
@@ -69,7 +69,7 @@
       '_label -> messages("Site")
     )
 
-    @if(nodeInfo.isProducer || nodeInfo.isReceiver) {
+    @if( args.mnode.extras.adn.exists(a => a.isProducer || a.isReceiver) ) {
       @textarea(
         mf("meta.info"),
         '_label -> messages("Info.about.prods.and.svcs")
@@ -78,7 +78,7 @@
 
     <hr class="delimiter __light"/>
 
-    @if(nodeInfo.isReceiver) {
+    @if( args.mnode.extras.adn.exists(_.isReceiver) ) {
       @inputText(
         mf("meta.humanTrafficAvg"),
         '_label -> messages("Daily.people.traffic")
@@ -92,7 +92,7 @@
 
       <div class="prop" >
         <p class="prop_name __block">@messages("Welcome.screen"):</p>
-        @_welcomeAdFormTpl(adnId, welcomeAdOpt, mf)
+        @_welcomeAdFormTpl(args.mnode.id.get, args.welcomeAdOpt, mf)
       </div>
 
       <hr class="delimiter __light"/>

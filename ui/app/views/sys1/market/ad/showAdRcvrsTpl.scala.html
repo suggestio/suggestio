@@ -1,4 +1,4 @@
-@(mad: MAd, newRcvrsMap: Receivers_t, nodesMap: Map[String, MAdnNode], nodeOpt: Option[MAdnNode] = None)(implicit ctx: Context)
+@(mad: MAd, newRcvrsMap: Receivers_t, nodesMap: Map[String, MNode], nodeOpt: Option[MNode] = None)(implicit ctx: Context)
 
 @* Отображение доп.инфы по карточке. *@
 
@@ -24,7 +24,10 @@
                 @nodesMap.get(rcvrId).fold {
                   @rcvrId
                 } { rcvrNode =>
-                  @rcvrNode.meta.name <span title="@rcvrNode.meta.address">/ @rcvrNode.meta.town</span>
+                  @rcvrNode.meta.basic.name
+                  <span title="@rcvrNode.meta.address.address">
+                    / @rcvrNode.meta.address.town
+                  </span>
                 }
               </a>
             </td>

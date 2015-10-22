@@ -10,10 +10,12 @@
 
 @views.html.sc._adTpl(brArgs)
 
-@defining( producer.meta.fgColor.getOrElse("ffffff") ) { pFgColor =>
+@* TODO Нужно как-то через args получать правильные цвета от контроллера, там их вычислять. *@
+
+@defining( producer.meta.colors.fg.fold("ffffff")(_.code) ) { pFgColor =>
 
 @* Информация о магазине *@
-<div class="focused-ad_location" style="@producer.meta.color.map {c => @_bgcolor(c);}color: #@pFgColor">
+<div class="focused-ad_location" style="@producer.meta.colors.bg.map {c => @_bgcolor(c);}color: #@pFgColor">
 
   <div class="focused-ad_count" style="color: #@pFgColor; border-color: #@pFgColor;">
     <div>@index/@adsCount</div>
@@ -23,8 +25,8 @@
     @svg._fadLocationIconTpl(pFgColor)
   </div>
   <div class="focused-ad_location-info">
-    <span>@producer.meta.address</span>
-    <div>@producer.meta.name</div>
+    <span>@producer.meta.address.address</span>
+    <div>@producer.meta.basic.name</div>
   </div>
   <div class="sm-clear"></div>
 </div>

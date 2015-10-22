@@ -27,6 +27,7 @@ Install=Install
 Uninstall=Uninstall
 Town=Town
 Phone=Phone
+tel.=tel.
 Photo=Photo
 Node.photos=Shop photos
 Welcome.screen=Welcome screen
@@ -193,6 +194,7 @@ join.qsn.audienceSz.gt50=> 50
 Request.invite=Request invite
 Audience.descr=Audience descriptio
 Daily.people.traffic=Daily traffic
+N.humans.per.day={0} humans every day.
 Office.phone.number=Office phone number
 Your.IR.accepted=Your connection request accepted successfully.
 

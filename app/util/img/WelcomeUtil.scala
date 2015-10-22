@@ -122,30 +122,36 @@ class WelcomeUtil @Inject() (
 
   /**
    * Асинхронно собрать аргументы для рендера карточки приветствия.
-   * @param adnNode Узел, для которого нужно подготовить настройки рендера приветствия.
+   * @param mnode Узел, для которого нужно подготовить настройки рендера приветствия.
    * @param screen Настройки экрана, если есть.
    * @return Фьючерс с опциональными настройками. Если None, то приветствие рендерить не надо.
    */
-  def getWelcomeRenderArgs(adnNode: MAdnNode, screen: Option[DevScreen])(implicit ctx: Context): Future[Option[WelcomeRenderArgsT]] = {
-    val welcomeAdOptFut = adnNode.meta
-      .welcomeAdId
-      .fold (Future successful Option.empty[MWelcomeAd]) (MWelcomeAd.getById(_))
+  def getWelcomeRenderArgs(mnode: MNode, screen: Option[DevScreen])(implicit ctx: Context): Future[Option[WelcomeRenderArgsT]] = {
+    val waIdOpt = {
+      mnode.edges
+        .withPredicateIterIds( MPredicates.NodeWelcomeAdIs )
+        .toStream
+        .headOption
+    }
+    val welcomeAdOptFut = FutureUtil.optFut2futOpt(waIdOpt)(MWelcomeAd.getById(_))
     // Получить параметры (метаданные) фоновой картинки из хранилища картирок.
-    def _colorBg = colorBg(adnNode)   // дедубликация кода. Можно наверное через Future.filter такое отрабатывать.
-    val bgFut = adnNode.gallery
+    def _colorBg = colorBg(mnode)   // дедубликация кода. Можно наверное через Future.filter такое отрабатывать.
+    val bgFut = mnode.edges
+      .withPredicateIterIds( MPredicates.GalleryItem )
+      .toStream
       .headOption
       .fold[Future[Either[String, ImgUrlInfoT]]] {
         Future successful _colorBg
       } { bgImgFilename =>
         val oiik = MImg(bgImgFilename)
         val fut0 = oiik.original.getImageWH
-        lazy val logPrefix = s"getWelcomeRenderArgs(${adnNode.idOrNull}): "
+        lazy val logPrefix = s"getWelcomeRenderArgs(${mnode.idOrNull}): "
         fut0.map {
           case Some(meta) =>
             Right(bgCallForScreen(oiik, screen, meta))
           case _ =>
-            trace(s"getWelcomeRenderArgs(${adnNode.idOrNull}): no welcome bg WH for " + bgImgFilename)
-            colorBg(adnNode)
+            trace(s"getWelcomeRenderArgs(${mnode.idOrNull}): no welcome bg WH for " + bgImgFilename)
+            colorBg(mnode)
         }
         .recover { case ex: Throwable =>
           error(logPrefix + "Failed to read welcome image data", ex)
@@ -159,7 +165,7 @@ class WelcomeUtil @Inject() (
       val wra = new WelcomeRenderArgsT {
         override def bg = bg1
         override def fgImage = welcomeAdOpt.flatMap(_.imgs.get(WELCOME_IMG_KEY))
-        override def fgText = Some(adnNode.meta.name)
+        override def fgText = Some(mnode.meta.basic.name)
       }
       Some(wra)
     }
@@ -212,8 +218,8 @@ class WelcomeUtil @Inject() (
   }
 
   /** внутренний метод для генерации ответа по фону приветствия в режиме цвета. */
-  private def colorBg(adnNode: MAdnNode) = {
-    val bgColor = adnNode.meta.color.getOrElse(scUtil.SITE_BGCOLOR_DFLT)
+  private def colorBg(adnNode: MNode) = {
+    val bgColor = adnNode.meta.colors.bg.fold(scUtil.SITE_BGCOLOR_DFLT)(_.code)
     Left(bgColor)
   }
 

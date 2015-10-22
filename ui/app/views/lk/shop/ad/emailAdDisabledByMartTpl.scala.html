@@ -1,4 +1,4 @@
-@(mmart: MAdnNode, mshop: MAdnNode, ad: MAdT, reason: String)(implicit ctx: Context)
+@(mmart: MNode, ad: MAdT, reason: String)(implicit ctx: Context)
 
 @* Шаблон для HTML-почтового сообщения об отключении рекламного сообщения из выдачи модератором ТЦ. *@
 
@@ -20,7 +20,7 @@
     <td style="background: #E1E1E1; padding-left: 20px; padding-top: 20px; padding-right: 20px;
       font-size: 18px; font-family: 'Arial'; color: #e24a4a; font-weight: bold;
       text-shadow: 1px 1px 1px #FFFFFF; ">
-      @mmart.meta.name скрыл Вашу карточку
+      @mmart.meta.basic.name скрыл Вашу карточку
       товара из выдачи
     </td>
   </tr>

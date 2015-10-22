@@ -1,4 +1,4 @@
-@(mad: MAd, producerOpt: Option[MAdnNode], imgs: Map[String, im.MImg])(implicit ctx: Context)
+@(mad: MAd, producerOpt: Option[MNode], imgs: Map[String, im.MImgT])(implicit ctx: Context)
 
 @import models.im.OutImgFmts.JPEG
 @import ctx.messages
@@ -18,10 +18,10 @@
 
   <p>Продьюсер карточки:
     <a href="@routes.SysMarket.showAdnNode(mad.producerId)">
-      @if(producerOpt) {
-        Узел: @producerOpt.get.meta.name / @producerOpt.get.meta.town.
-      } else {
+      @producerOpt.fold {
         ошибочен!
+      } { prod =>
+        Узел: @prod.meta.basic.name / @prod.meta.addree.town
       }
     </a>
   </p>

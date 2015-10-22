@@ -1,4 +1,4 @@
-@(title: String, hPathAfter:Option[Html] = None, nodeOpt: Option[MAdnNode] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+@(title: String, hPathAfter:Option[Html] = None, nodeOpt: Option[MNode] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
 
 @* Подложка для страниц, работающих с унифицированными adn-узлами. *@
 @import sys1.market._
@@ -6,9 +6,12 @@
 
 @hPathAfter1 = {
   / <a class="blue-link" href="@routes.SysMarket.adnNodesList()">ADN</a>
-  @nodeOpt.map { node =>
-    / <a class="blue-link" href="@routes.SysMarket.showAdnNode(node.id.get)"
-         title="@messages("amt.of.type." + node.adn.shownTypeId) / @node.meta.town">@node.meta.name</a>
+  @nodeOpt.map { mnode =>
+    / <a class="blue-link"
+         href="@routes.SysMarket.showAdnNode(mnode.id.get)"
+         title="@messages( AdnShownTypes.node2val(mnode).singular) / @node.meta.address.town">
+        @mnode.meta.basic.name
+      </a>
   }
   @hPathAfter.getOrElse {
     / @title

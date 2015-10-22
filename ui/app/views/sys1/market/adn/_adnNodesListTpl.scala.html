@@ -1,10 +1,10 @@
-@(adnNodes: Seq[MAdnNode], withDelims: Boolean = true)(implicit ctx: Context)
+@(mnodes: Seq[MNode], withDelims: Boolean = true)(implicit ctx: Context)
 
 @* Инлайновый список узлов. *@
 @import ctx._
 @import sys1.stuff.ntable._
 
-@if(adnNodes.nonEmpty) {
+@if(mnodes.nonEmpty) {
 @defining("M") { sz =>
 
   @_ntable() {
@@ -23,7 +23,7 @@
   } {
     @* _ntable.rows *@
 
-    @adnNodes.groupBy(_.adn.shownTypeId).map { case (shownTypeId, adnNodes1) =>
+    @mnodes.groupBy(AdnShownTypes.node2val).map { case (ast, mnodes1) =>
 
       @* Строка явных разделителей групп узлов. Она наверху, чтобы озаглавить нижеследующую группу узлов. Вниз переносить её не надо. *@
       @if(withDelims) {
@@ -32,8 +32,8 @@
             -------------
           }
           @_td(sz) {
-            <a class="blue-link" href="@routes.SysMarket.adnNodesList(Some(shownTypeId))">
-              @messages("amts.of.type." + shownTypeId)
+            <a class="blue-link" href="@routes.SysMarket.mnodesList(Some(ast.name))">
+              @messages( ast.singular )
             </a>
           }
           @_td(sz) {
@@ -42,33 +42,33 @@
         }
       }
 
-      @adnNodes1.sortBy(_.meta.name).map { adnNode =>
+      @mnodes1.sortBy(_.meta.basic.name).map { mnode =>
         @_tr() {
           @_td(sz) {
-            @if(adnNode.adn.isEnabled) {<strong>} else {<strike title="Этот узел отключён (isEnabled = false).">}
-              <a class="blue-link" href="@routes.SysMarket.showAdnNode(adnNode.id.get)">
-                @adnNode.meta.name
+            @if(mnode.common.isEnabled) {<strong>} else {<strike title="Этот узел отключён (isEnabled = false).">}
+              <a class="blue-link" href="@routes.SysMarket.showAdnNode(mnode.id.get)">
+                @mnode.meta.basic.name
               </a>
-            @if(adnNode.adn.isEnabled) {</strong>} else {</strike>}
-            @if(adnNode.adn.testNode) {<span title="Тестовый узел. Он скрыт от нетестовых узлов.">⚗</span>}
-            @if(adnNode.adn.isReceiver) {<span title="Приёмник рекламных карточек (receiver).">®</span>}
-            @if(adnNode.adn.hasWifiSink) {<span title="Включена Wi-Fi выдача.">wifi</span>}
-            @if(adnNode.adn.hasGeoSink) {<span title="Включена geo-выдача.">geo</span>}
-            @if(adnNode.adn.isUser) {<span title="Этот узел создан пользователем, НЕ администратором.">&#x2692;</span>}
+            @if(mnode.common.isEnabled) {</strong>} else {</strike>}
+            @mnode.extras.adn.map { adn =>
+              @if(adn.testNode) {<span title="Тестовый узел. Он скрыт от нетестовых узлов.">⚗</span>}
+              @if(adn.isReceiver) {<span title="Приёмник рекламных карточек (receiver).">®</span>}
+              @if(adn.isUser) {<span title="Этот узел создан пользователем, НЕ администратором.">&#x2692;</span>}
+            }
           }
           @_td(sz) {
-            @messages("amt.of.type." + adnNode.adn.shownTypeId)
+            @messages( ast.singular )
           }
           @_td(sz) {
-            @adnNode.meta.town
+            @mnode.meta.address.town
           }
 
         } @* _tr() *@
 
-      } @* adnNodesGroup.map *@
-    }   @* adnNodes.groupBy.map *@
+      } @* mnodesGroup.map *@
+    }   @* mnodes.groupBy.map *@
 
   } @* _ntable.rows *@
 
 } @* defining sz = M *@
-} @* if adnNodes.nonEmpty *@
+} @* if mnodes.nonEmpty *@

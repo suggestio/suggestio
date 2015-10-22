@@ -1,0 +1,9 @@
+@(mnode: MNode, imgClass: String)(implicit ctx: Context)
+
+@import util.img.GalleryUtil
+
+<div class="js-photo-slider">
+  @GalleryUtil.galleryImgs(mnode).map { mimg =>
+    <img class="@imgClass" src="@GalleryUtil.dynLkBigCall(mimg)" />
+  }
+</div>

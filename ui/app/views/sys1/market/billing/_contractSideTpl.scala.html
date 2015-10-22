@@ -1,7 +1,7 @@
-@(adnNode: MAdnNode)
+@(mnode: MNode)
 
 @* Описать сторону контракта используя её + супер-узел. *@
 
-@adnNode.meta.name (
-  @adnNode.meta.town.map { town => @town }
+@mnode.meta.name (
+  @mnode.meta.address.town.map { town => @town }
 )

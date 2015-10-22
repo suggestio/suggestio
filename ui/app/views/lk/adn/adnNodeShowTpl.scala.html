@@ -10,13 +10,14 @@
 @import util.img.DynImgUtil
 @import io.suggest.vlines.VLines
 @import args._
+@import lk.lkProp
 
 @headAfter1 = {
   <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/lib/bxslider/jquery.bxslider.css")'/>
 }
 
 @nodeBaseTpl(
-  title         = mnode.meta.name + " | " + messages("Profile"),
+  title         = mnode.meta.basic.name + " | " + messages("Profile"),
   isMyNode      = isMyNode,
   node          = mnode,
   rightCurrEl   = NodeRightPanelLinks.RPL_NODE,
@@ -25,10 +26,10 @@
 ) {
 
   <div class="profile_logo-bar">
-    @if(mnode.meta.color.isDefined) {
+    @if(mnode.meta.colors.bg.isDefined) {
       @args.logoImgOpt.map { img =>
-        <div class="image __size-L" style="background-color: #@mnode.meta.color;">
-          <img class="image_src" src="@DynImgUtil.imgCall(img)" alt="@mnode.meta.name"/>
+        <div class="image __size-L" style="background-color: #@mnode.meta.colors.bg.map(_.code);">
+          <img class="image_src" src="@DynImgUtil.imgCall(img)" alt="@mnode.meta.basic.name"/>
         </div>
       }
     }
@@ -37,25 +38,37 @@
   <div class="profile_info-bar">
     <hr class="delimiter __light"/>
 
-    @lk.lkProp() { @messages("Name") } { @mnode.meta.name }
-
-    @if(mnode.meta.town.isDefined) {
-      @lk.lkProp(){ @messages("Address") } { @mnode.meta.town@if(mnode.meta.address.isDefined) {, @mnode.meta.address} }
+    @lkProp( messages("Name")) {
+      @mnode.meta.basic.name
     }
 
-    @if(mnode.meta.siteUrl.isDefined) {
-      @lk.lkProp(){ @messages("Site") } { <a class="link" href="@mnode.meta.siteUrl" target="_blank">@mnode.meta.siteUrl</a> }
+    @mnode.meta.address.town.map { town =>
+      @lkProp( messages("Address")) {
+        @town@mnode.meta.address.address.map { addr =>, addr}
+      }
     }
 
-    @if(mnode.meta.info.isDefined) {
-      @lk.lkProp(){ @messages("Info.about.prods.and.svcs") } { @mnode.meta.info  }
+    @mnode.meta.business.siteUrl.map { siteUrl =>
+      @lkProp( messages("Site")) {
+        <a class="link" href="@siteUrl" target="_blank">@siteUrl</a>
+      }
+    }
+
+    @mnode.meta.business.info.map { info =>
+      @lkProp( messages("Info.about.prods.and.svcs")) {
+        @info
+      }
     }
 
 
-    @if(mnode.adn.isReceiver) {
+    @if( mnode.extras.adn.exists(_.isReceiver) ) {
       <hr class="delimiter __light"/>
-      @lk.lkProp(){ @messages("Daily.people.traffic") } { @mnode.meta.humanTrafficAvg  }
-      @lk.lkProp(){ @messages("Audience.descr") } { @mnode.meta.audienceDescr  }
+      @lkProp( messages("Daily.people.traffic")) {
+        @mnode.meta.business.humanTrafficAvg
+      }
+      @lkProp( messages("Audience.descr")) {
+        @mnode.meta.business.audienceDescr
+      }
 
       @* TODO добавить вывод картинки приветствия *@
 
@@ -63,11 +76,7 @@
       <div class="prop">
         <p class="prop_name __block">@messages("Node.photos"):</p>
         <div class="profile_photo-lst">
-          <div class="js-photo-slider">
-            @mnode.gallery.map { imgId =>
-              <img class="profile_photo-i" src="@GalleryUtil.dynLkBigCall(imgId)" />
-            }
-          </div>
+          @_galleryTpl(mnode, "profile_photo-i")
         </div>
       </div>
     }

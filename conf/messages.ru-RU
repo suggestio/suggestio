@@ -27,6 +27,7 @@ Install=Установить
 Uninstall=Деинсталлировать
 Town=Город
 Phone=Телефон
+tel.=тел.
 Photo=Фото
 Node.photos=Фотографии магазина
 Welcome.screen=Экран приветствия
@@ -187,6 +188,7 @@ join.qsn.audienceSz.gt50=> 50
 Request.invite=Запросить инвайт
 Audience.descr=Описание аудитории
 Daily.people.traffic=Суточный трафик
+N.humans.per.day={0} человек в сутки.
 Office.phone.number=Офисный телефон
 Your.IR.accepted=Ваш запрос на подключение к системе принят.
 

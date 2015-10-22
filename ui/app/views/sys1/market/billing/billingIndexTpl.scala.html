@@ -92,8 +92,10 @@
               </td>
               <td class="siom-table_vertical-cnt">
                 <div class="siom-cell-cnt __size-L">
-                  @mbcOpt.map(_.adnId).flatMap(adns.get).map { adnNode =>
-                    <a class="blue-link" href="@routes.SysMarket.showAdnNode(adnNode.id.get)">@adnNode.meta.name / @adnNode.meta.town</a>
+                  @mbcOpt.map(_.adnId).flatMap(adns.get).map { mnode =>
+                    <a class="blue-link" href="@routes.SysMarket.showAdnNode(mnode.id.get)">
+                      @mnode.meta.basic.name / @mnode.meta.address.town
+                    </a>
                   }
                 </div>
                 <div class="border-line"></div>

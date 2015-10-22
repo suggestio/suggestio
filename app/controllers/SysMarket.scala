@@ -26,6 +26,8 @@ import scala.concurrent.{ExecutionContext, Future}
 import play.api.mvc.{Result, Call, AnyContent}
 import play.api.i18n.{Messages, MessagesApi}
 import controllers.sysctl._
+import views.html.lk.shop.ad.emailAdDisabledByMartTpl
+import views.html.lk.adn.invite.emailNodeOwnerInviteTpl
 
 /**
  * Suggest.io
@@ -336,7 +338,7 @@ class SysMarket @Inject() (
   def showEmailInviteMsg(adnId: String) = IsSuperuserAdnNode(adnId) { implicit request =>
     import request.adnNode
     val eAct = EmailActivation("test@test.com", id = Some("asdQE123_"))
-    Ok(views.html.lk.adn.invite.emailNodeOwnerInviteTpl(adnNode, eAct))
+    Ok( emailNodeOwnerInviteTpl(adnNode, eAct) )
   }
 
 
@@ -472,20 +474,19 @@ class SysMarket @Inject() (
       case None       => MNode.getAll(maxResults = 1).map { _.headOption }
     }
     for {
-      mshopOpt <- MNode.getById( mad.producerId )
+      //mshopOpt <- MNode.getById( mad.producerId )
       mmartOpt <- mmartFut
     } yield {
       val reason = "Причина отключения ТЕСТ причина отключения 123123 ТЕСТ причина отключения."
-      val adOwner = mshopOpt.orElse(mmartOpt).get
-      Ok(views.html.lk.shop.ad.emailAdDisabledByMartTpl(mmartOpt.get, adOwner, mad, reason))
+      //val adOwner = mshopOpt.orElse(mmartOpt).get
+      Ok( emailAdDisabledByMartTpl(mmartOpt.get, mad, reason) )
     }
   }
 
   /** Отрендериить тела email-сообщений инвайта передачи прав на ТЦ. */
   def showNodeOwnerEmailInvite(adnId: String) = IsSuperuserAdnNode(adnId) { implicit request =>
     val eAct = EmailActivation("asdasd@kde.org", key=adnId, id = Some("123123asdasd_-123"))
-    val ctx = implicitly[Context]
-    Ok(views.html.lk.adn.invite.emailNodeOwnerInviteTpl(request.adnNode, eAct)(ctx))
+    Ok( emailNodeOwnerInviteTpl(request.adnNode, eAct) )
   }
 
 

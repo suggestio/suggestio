@@ -8,8 +8,9 @@ import io.suggest.model.n2.extra.MAdnExtra
 import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.model.n2.node.meta.{MBusinessInfo, MAddress, MBasicMeta}
 import models.im.logo.{LogoOpt_t, LogoUtil}
-import models.im.{MImg3_, MImgT, MImg}
+import models.im.{MImg3_, MImgT}
 import models.jsm.init.MTargets
+import models.mlk.{FormMapResult, NodeEditArgs}
 import org.elasticsearch.client.Client
 import play.api.cache.CacheApi
 import play.api.i18n.MessagesApi
@@ -258,7 +259,12 @@ class MarketLkAdnEdit @Inject() (
     for {
       welcomeAdOpt <- waOptFut
     } yield {
-      nodeEditTpl(request.adnNode, form, welcomeAdOpt)
+      val args = NodeEditArgs(
+        mnode         = request.adnNode,
+        mf            = form,
+        welcomeAdOpt  = welcomeAdOpt
+      )
+      nodeEditTpl(args)
     }
   }
 
@@ -434,14 +440,6 @@ class MarketLkAdnEdit @Inject() (
     }
   }
 
-
-  /** Внутренняя модель этого контроллера, отражающая результирующее значение биндинга формы редактирования узла. */
-  sealed case class FormMapResult(
-    meta        : MMeta,
-    logoOpt     : LogoOpt_t,
-    waImgOpt    : Option[MImgT]   = None,
-    gallery     : List[MImg]      = Nil
-  )
 
 }
 

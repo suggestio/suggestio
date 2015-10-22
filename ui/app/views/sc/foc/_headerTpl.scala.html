@@ -22,7 +22,7 @@
   @hdr._logoTpl(args,  withId = false)
 
   @* Кнопка с 4-мя квадратиками для перехода в выдачу стороннего продьюсера, если он является также ресивером. *@
-  @if(args.is3rdParty && args.producer.adn.isReceiver) {
+  @if( args.is3rdParty && args.producer.extras.adn.exists(_.isReceiver) ) {
     @args.producer.id.map { producerId =>
       @hdr._prodIndexBtnTpl(producerId, args)
     }

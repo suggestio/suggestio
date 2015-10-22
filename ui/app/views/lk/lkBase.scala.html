@@ -1,4 +1,4 @@
-@(title: String, leftCurrEl: Option[LkLeftPanelLink] = None, nodeOpt: Option[MAdnNode] = None,
+@(title: String, leftCurrEl: Option[LkLeftPanelLink] = None, nodeOpt: Option[MNode] = None,
   headAfter:Option[Html] = None, popupContent: Option[Html] = None,
   povAdnId: Option[String] = None, showSwitchNodeBtn: Boolean = true)(content: Html)(implicit ctx: Context)
 
@@ -42,8 +42,8 @@
       @if(nodeOpt.isEmpty) {
         <img class="header_logo-text" src='@routes.Assets.versioned("images/market/index/logo_retina.png")' width="101" height="26"/>
       } else {
-        @nodeOpt.map { node =>
-          <span class="header_logo-text">@node.meta.name</span>
+        @nodeOpt.map { mnode =>
+          <span class="header_logo-text">@mnode.meta.basic.name</span>
         }
       }
 
@@ -57,7 +57,10 @@
        href="@routes.LkLang.showLangSwitcher(r = ctx.r)">@ctx.messages.lang.language</a>
 
     @if(showSwitchNodeBtn && ctx.isAuth) {
-      <a class="btn __size-M __major header_change-node" href="@routes.MarketLkAdn.lkList(fromNode = nodeOpt.flatMap(_.id))">@messages("Switch.shop")</a>
+      <a class="btn __size-M __major header_change-node"
+         href="@routes.MarketLkAdn.lkList(fromNode = nodeOpt.flatMap(_.id))">
+        @messages("Switch.shop")
+      </a>
     }
 
   </header>

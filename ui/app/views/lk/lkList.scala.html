@@ -1,4 +1,4 @@
-@(mnodes: Seq[MAdnNode], currNode: Option[MAdnNode])(implicit ctx: Context)
+@(mnodes: Seq[MNode], currNode: Option[MNode])(implicit ctx: Context)
 
 @* Список узлов (личных кабинетов) юзера. *@
 
@@ -24,7 +24,9 @@
             <div class="node-list_i">
               @* Текущему магазину добавлять класс __current. *@
               <a class="node-list_i-link @if(currAdnId == mnode.id){__current}"
-                 href="@routes.MarketLkAdn.showNodeAds(mnode.id.get)">@mnode.meta.name</a>
+                 href="@routes.MarketLkAdn.showNodeAds(mnode.id.get)">
+                @mnode.meta.basic.name
+              </a>
             </div>
           }
           }
@@ -35,7 +37,9 @@
       </div>
 
       @* Кнопка создания магазина. *@
-      <a class="btn __size-M __helper-green node-list_add-btn" href="@routes.MarketLkAdn.createNode()">@messages("Create.node")...</a>
+      <a class="btn __size-M __helper-green node-list_add-btn" href="@routes.MarketLkAdn.createNode()">
+        @messages("Create.node")...
+      </a>
 
     </article>
   </div>

@@ -1,10 +1,12 @@
-@(propClass: Option[String] = None)(name: Html)(value: Html)
+@(name: String, propClass: Option[String] = None)(value: Html)
 
 <table class="prop @propClass">
-  <td class="prop_name">
-    @name
-  </td>
-  <td class="prop_value">
-    @value
-  </td>
+  <tr>
+    <td class="prop_name">
+      @name
+    </td>
+    <td class="prop_value">
+      @value
+    </td>
+  </tr>
 </table>

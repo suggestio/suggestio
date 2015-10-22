@@ -1,4 +1,4 @@
-@(gf: Form[_], submitCall: Call, btnText: String, nodesMap: Map[String, MAdnNode])(implicit ctx: Context)
+@(gf: Form[_], submitCall: Call, btnText: String, nodesMap: Map[String, MNode])(implicit ctx: Context)
 
 @* Форма для редактирования geo-части узла ADN. *@
 
@@ -16,8 +16,14 @@
 
   @select(
     gf("parentAdnId"),
-    options = options(("" -> "") :: nodesMap.mapValues(adnNode => messages("amt.of.type." + adnNode.adn.shownTypeId) + ": " + adnNode.meta.name + " (" + adnNode.meta.town.getOrElse("") + ")").toList.sortBy(_._2)  :  _*),
-    'title -> "adn_id геородителя"
+    options = options(
+      ("" -> "") ::
+      nodesMap.mapValues(mnode =>
+        messages("amt.of.type." + mnode.adn.shownTypeId) + ": " +
+        mnode.meta.basic.name + mnode.meta.address.town.fold("")(" (" + _ + ")")
+      ).toList.sortBy(_._2) :  _*
+    ),
+    'title -> "id узла-геородителя"
   )
 
   <div class="btn-w __size-M">

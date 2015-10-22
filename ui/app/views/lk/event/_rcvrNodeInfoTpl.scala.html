@@ -1,0 +1,11 @@
+@(mnode: MNode)(implicit ctx: Context)
+
+@import ctx.messages
+
+@messages( AdnShownTypes.node2val(mnode).singular )
+<strong>
+  @mnode.meta.basic.name
+  @mnode.meta.address.town.map { town =>
+    / @town
+  }
+</strong>

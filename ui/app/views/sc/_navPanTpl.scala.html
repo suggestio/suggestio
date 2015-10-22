@@ -27,7 +27,7 @@
       <div class="sm-geo-screen_current-location-icon" id="smGeoLocationButtonIcon">@svg._geoRefresh(args.fgColor)</div>
       <div class="sm-geo-screen_current-location-spinner" id="smGeoLocationButtonSpinner">@svg._spinnerTpl(args.fgColor)</div>
       <span id="smGeoLocationLabel" style="color: #@args.fgColor;">
-        @args.adnNodeCurrentGeo.fold( messages("Detect.geolocation") )( _.meta.name )
+        @args.adnNodeCurrentGeo.fold( messages("Detect.geolocation") )( _.meta.basic.name )
       </span>
     </div>
   </div>
@@ -35,7 +35,7 @@
   @_scrollableContainerTpl( "sm-geo-nodes", id = "smGeoNodes", "style" -> (_bgcolor( args.bgColor, true ).toString + "height: 83%;")) {
     @args.inlineNodesList
   }
-  
+
   <style type="text/css">
     @defining( colorRgb2Hsl(colorHex2rgb(args.bgColor)) ) { hslColor =>
     .shops-list_row {

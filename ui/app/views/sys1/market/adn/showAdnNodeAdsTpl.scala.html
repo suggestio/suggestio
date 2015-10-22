@@ -1,4 +1,5 @@
-@(mads: Seq[blk.IRenderArgs], nodeOpt: Option[MAdnNode], adFreqs: AdFreqs_t, rcvrsMap: Map[String, Seq[MAdnNode]], a: AdSearch, ad2advMap: Map[String, Traversable[MAdvI]])(implicit ctx: Context)
+@(mads: Seq[blk.IRenderArgs], nodeOpt: Option[MNode], adFreqs: AdFreqs_t, rcvrsMap: Map[String, Seq[MNode]],
+  a: AdSearch, ad2advMap: Map[String, Traversable[MAdvI]])(implicit ctx: Context)
 
 @* Список реклам и сервисных функций. *@
 
@@ -53,7 +54,7 @@
             <a class="siom-ac-btn __color-3 __size-XL __ft-XM __list-vertical js-submit-btn">
               Убрать из выдачи<br/>
               на узле<br/>
-              <strong>&laquo;@rcvr.meta.name / @rcvr.meta.town &raquo;</strong>
+              <strong>&laquo;@rcvr.meta.basic.name / @rcvr.meta.address.town &raquo;</strong>
             </a>
           }
         }

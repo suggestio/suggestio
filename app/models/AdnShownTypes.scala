@@ -133,6 +133,11 @@ object AdnShownTypes extends Enumeration {
       .map( shownTypeId2val )
       .getOrElse( default )
   }
+  def node2val(mnode: MNode): AdnShownType = {
+    mnode.extras.adn
+      .fold(default)(adnInfo2val)
+  }
+
   implicit def shownTypeId2val(sti: String): AdnShownType = withName(sti)
 
 

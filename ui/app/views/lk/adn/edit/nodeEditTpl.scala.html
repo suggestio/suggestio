@@ -1,4 +1,4 @@
-@(mnode: MAdnNode, mf: Form[_], welcomeAdOpt: Option[MAdT])(implicit ctx: Context)
+@(args: mlk.INodeEditArgs)(implicit ctx: Context)
 
 @* Рендер страницы редактирования узла, имеющего высокий статус, т.е. супервизора или ресивера. *@
 @import ctx._
@@ -33,7 +33,7 @@
 
 @nodeBaseTpl(
   title         = messages("Edit.profile"),
-  node          = mnode,
+  node          = args.mnode,
   isMyNode      = true,
   rightCurrEl   = NodeRightPanelLinks.RPL_NODE_EDIT,
   rightBarAfter = Some(rightBarAfter),
@@ -42,12 +42,9 @@
 ) {
 
   @_leaderNodeFormTpl(
-    adnId         = mnode.id.get,
+    args          = args,
     btnText       = messages("Save"),
-    mf            = mf,
-    submitCall    = routes.MarketLkAdnEdit.editAdnNodeSubmit(mnode.id.get),
-    welcomeAdOpt  = welcomeAdOpt,
-    nodeInfo      = mnode.adn
+    submitCall    = routes.MarketLkAdnEdit.editAdnNodeSubmit(args.mnode.id.get)
   )
 
   @helper.javascriptRouter("jsRoutes")(

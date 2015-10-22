@@ -1,4 +1,4 @@
-@(emails: Seq[String], mnode: MAdnNode, msg: String)(implicit ctx: Context)
+@(emails: Seq[String], mnode: MNode, msg: String)(implicit ctx: Context)
 
 @* email-уведомление админам sio о том, что юзер запрашивает поддержку геолокации для узла. *@
 
@@ -12,7 +12,9 @@
     запросил поддержку геолокации на узле:
   </p>
 
-  <p><a href="@routes.SysMarket.showAdnNode(mnode.id.get)">@mnode.meta.name / @mnode.meta.town</a>.</p>
+  <p><a href="@routes.SysMarket.showAdnNode(mnode.id.get)">
+    @mnode.meta.basic.name / @mnode.meta.address.town
+  </a>.</p>
 
   @if(emails.size > 1) {
     <p>Пользователь также доступен по следующим email:

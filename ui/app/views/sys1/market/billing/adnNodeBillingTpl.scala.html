@@ -1,4 +1,4 @@
-@(adnNode: MAdnNode, args: SysAdnNodeBillingArgs)(implicit ctx: Context)
+@(mnode: MNode, args: SysAdnNodeBillingArgs)(implicit ctx: Context)
 
 @* Страница с информацией по биллингу указанного узла рекламной сети. *@
 @import datetime._
@@ -10,7 +10,7 @@
 @import models.stat.AdStatActionsTpl._
 @import lk.lkBlock
 
-@billingBase("Биллинг", Some(adnNode)) {
+@billingBase("Биллинг", Some(mnode)) {
 
   @balanceOpt.map { balance =>
     <p class="paragraph __size-M color-light-strong">
@@ -85,8 +85,8 @@
           <div>
             @defining(sinkComissionMap.getOrElse(contract.id.get, Nil)) { mscs =>
               @* Рендерим плашку, сообщающую о неисправности узла в связи с отсутствием ожидаемого тарифа. *@
-              @if( adnNode.adn.isReceiver ) {
-                @defining( adnNode.adn.sinks -- mscs.map(_.sink) ) { missingSinks =>
+              @if( mnode.extras.adn.exists(_.isReceiver) ) {
+                @defining( mnode.extras.adn.fold( Set.empty[AdnSink] )(a => a.sinks -- mscs.map(_.sink)) ) { missingSinks =>
                   @missingSinks.map { sink =>
                     <p class="error">Необходимо <a href="@routes.SysMarketBilling.createSinkCom(contract.id.get)">добавить тариф</a> на выдачи: @messages("adn.sink." + sink.longName)!<p/>
                   }
@@ -108,7 +108,7 @@
                       <td>@msc.sioComission</td>
                       <td>
                         <a href="@routes.SysMarketBilling.editSinkCom(msc.id.get)">@messages("Edit")</a>
-                        @if(!(adnNode.adn.sinks contains msc.sink) ) {
+                        @if( !mnode.extras.adn.exists(_.sinks.contains(msc.sink)) ) {
                           Это тариф НЕ используется: узел не имеет доступа к @messages("adn.sink." + msc.sink.longName).
                         }
                       </td>
@@ -205,7 +205,7 @@
   }
 
   <div class="btn-w __between-blocks">
-    <a class="siom-ac-btn __color-1 __size-M __ft-XM f-left" href="@routes.SysMarketBilling.createContractForm(adnNode.id.get)">Создать контракт...</a>
+    <a class="siom-ac-btn __color-1 __size-M __ft-XM f-left" href="@routes.SysMarketBilling.createContractForm(mnode.id.get)">Создать контракт...</a>
   </div>
 
   @lkBlock("Транзакции("+txns.size+")") {

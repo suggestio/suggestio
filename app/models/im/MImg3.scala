@@ -28,7 +28,13 @@ import util.SiowebEsUtil.client
  * [[MImg3_]] -- DI-реализация объекта-компаньона.
  */
 @Singleton
-class MImg3_ @Inject() (implicit val swfsStorage: SwfsStorage_, val mMedia: MMedia_) extends IMImgCompanion {
+class MImg3_ @Inject() (
+  implicit val swfsStorage  : SwfsStorage_,
+  val mMedia                : MMedia_
+)
+  extends IMImgCompanion
+  with PlayLazyMacroLogsImpl
+{
 
   override type T = MImg3
 
@@ -56,6 +62,21 @@ class MImg3_ @Inject() (implicit val swfsStorage: SwfsStorage_, val mMedia: MMed
     apply(img.rowKeyStr, dynOps2.getOrElse(img.dynImgOps))
   }
 
+  /** Экстракция указателя на картинку из эджа узла N2. */
+  def apply(medge: IEdge): MImg3 = {
+    val dops = {
+      medge.info
+        .dynImgArgs
+        .fold( List.empty[ImOp] ) { imOpsStr =>
+          val pr = (new Parsers).parseImOps(imOpsStr)
+          pr.getOrElse {
+            LOGGER.warn(s"apply($medge): Ignoring ops. Failed to parse imOps str '''$imOpsStr'''\n$pr")
+            Nil
+          }
+      }
+    }
+    apply(medge.nodeId, dops)
+  }
 
   def apply(rowKeyStr: String, dynImgOps: Seq[ImOp]): MImg3 = {
     MImg3(rowKeyStr, dynImgOps, this)

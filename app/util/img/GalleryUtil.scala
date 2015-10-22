@@ -1,14 +1,14 @@
 package util.img
 
+import io.suggest.model.n2.edge.MPredicates
 import io.suggest.ym.model.common.MImgInfoMeta
 import models.im._
-import models.Context
+import models.{MEdge, MNode, Context}
 import models.madn.EditConstants
 import play.api.data.Forms._
 import play.api.Play.{current, configuration}
 import play.api.data.Mapping
 import play.api.mvc.Call
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import models.blk.szMulted
 
 import scala.concurrent.Future
@@ -20,6 +20,9 @@ import scala.concurrent.Future
  * Description: Утиль для работы с галереей картинок.
  */
 object GalleryUtil {
+
+  // TODO DI
+  private val mImg3 = current.injector.instanceOf[MImg3_]
 
   // Ширина/высота картинки галереи, отображаемой в ЛК на странице узла.
   val LK_NODE_GALLERY_SHOW_WIDTH_PX: Int  = configuration.getInt("lk.node.gallery.show.width.px") getOrElse 625
@@ -58,7 +61,9 @@ object GalleryUtil {
    * @return Экземпляр Call, пригодный для заворачивания в ссылку.
    */
   def dynLkBigCall(imgId: String)(implicit ctx: Context): Call = {
-    val oiik = MImg(imgId)
+    dynLkBigCall( mImg3(imgId) )
+  }
+  def dynLkBigCall(oiik: MImgT)(implicit ctx: Context): Call = {
     val devPixelRatio = ctx.deviceScreenOpt
       .fold(DevPixelRatios.default)(_.pixelRatio)
     // Всегда ресайзим до необходимого отображаемого размера. Используем fg-качество для сжатия.
@@ -78,8 +83,19 @@ object GalleryUtil {
       val crop = oiik.cropOpt.get
       imOps ::= AbsCropOp(crop)
     }
-    val dynArgs = oiik.copy(dynImgOps = imOps)
+    val dynArgs = oiik.withDynOps(imOps)
     DynImgUtil.imgCall(dynArgs)
+  }
+
+
+  def galleryEdges(mnode: MNode): Iterator[MEdge] = {
+    mnode.edges
+      .withPredicateIter( MPredicates.GalleryItem )
+  }
+
+  def galleryImgs(mnode: MNode): Iterator[MImgT] = {
+    galleryEdges(mnode)
+      .map { mImg3.apply }
   }
 
 }

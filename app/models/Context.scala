@@ -4,9 +4,9 @@ import java.util.UUID
 
 import controllers.routes
 import io.suggest.util.UuidUtil
-import models.im.DevScreen
-import models.jsm.init.MTarget
-import models.req.{SioReqMdOptWrapper, SioReqMdWrapper, ISioReqMd}
+import _root_.models.im.DevScreen
+import _root_.models.jsm.init.MTarget
+import _root_.models.req.{SioReqMdOptWrapper, SioReqMdWrapper, ISioReqMd}
 import org.joda.time.DateTime
 import play.api.Play
 import play.api.i18n.Messages

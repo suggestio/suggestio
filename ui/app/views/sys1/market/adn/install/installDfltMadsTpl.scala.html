@@ -1,9 +1,9 @@
-@(langs: Seq[Lang], mnode: MAdnNode, ff: Form[_], srcNodes: Seq[MAdnNode])(implicit ctx: Context)
+@(langs: Seq[Lang], mnode: MNode, ff: Form[_], srcNodes: Seq[MNode])(implicit ctx: Context)
 
 @* Страница с формой установки дефолтовых карточек на текущий узел. *@
 
 @ibase(
-  title = "Установка дефолт-карточек на узел " + mnode.meta.name,
+  title = "Установка дефолт-карточек на узел " + mnode.meta.basic.name,
   mnode = mnode
 ) {
 

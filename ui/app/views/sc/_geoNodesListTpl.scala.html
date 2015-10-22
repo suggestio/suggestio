@@ -17,7 +17,7 @@
       fadOpenedIdOpt  = None,
       fadsOffsetOpt   = None,
       tilesCatIdOpt   = None,
-      navNglsMap      = mnode.adn.ngls.map(_ -> true).toMap
+      navNglsMap      = mnode.extras.adn.map(_.ngls.iterator.map(_ -> true).toMap).getOrElse(Map.empty)
     ))">
   }
   @content
@@ -63,7 +63,7 @@
                             @if(si%2 == 0){__odd}else{__even} @GN_NODE_CSS_CLASS
                             @if(args.apiVsn.geoNodeIdAsClass) {@GNL_NODE_ID_PREFIX@mnode.id"} else {" id="@GNL_NODE_ID_PREFIX@mnode.id"}
                      @GN_ATTR_NODE_ID="@mnode.id">
-                  @mnode.meta.nameShort
+                  @mnode.meta.basic.nameShort
                 </div>
               }
             }
@@ -76,7 +76,9 @@
       @nl.nodes.iterator.zipWithIndex.map { case (mnode, si) =>
         @nodeSyncUrl(mnode) {
           <div class="geo-nodes-list_layer js-gnlayer @if( i==0 ){ __bo-border }">
-            <div class="geo-nodes-list_layer-inner @GN_NODE_CSS_CLASS" @GN_ATTR_NODE_ID="@mnode.id">@mnode.meta.nameShort</div>
+            <div class="geo-nodes-list_layer-inner @GN_NODE_CSS_CLASS" @GN_ATTR_NODE_ID="@mnode.id">
+              @mnode.meta.basic.nameShort
+            </div>
           </div>
         }
       }

@@ -315,12 +315,12 @@ class ShowcaseUtil @Inject() (
   /** Обычные цвета выдачи, не нужны в 99% случаев. */
   def SC_COLORS_GEO = ScSiteColors(bgColor = SITE_BGCOLOR_GEO, fgColor = SITE_FGCOLOR_GEO)
 
-  def siteScColors(nodeOpt: Option[MAdnNode]): IScSiteColors = {
+  def siteScColors(nodeOpt: Option[MNode]): IScSiteColors = {
     nodeOpt match {
       case Some(mnode) =>
         ScSiteColors(
-          bgColor = mnode.meta.color getOrElse SITE_BGCOLOR_DFLT,
-          fgColor = mnode.meta.fgColor getOrElse SITE_FGCOLOR_DFLT
+          bgColor = mnode.meta.colors.bg.fold(SITE_BGCOLOR_DFLT)(_.code),
+          fgColor = mnode.meta.colors.fg.fold(SITE_FGCOLOR_DFLT)(_.code)
         )
       case None =>
         SC_COLORS_GEO

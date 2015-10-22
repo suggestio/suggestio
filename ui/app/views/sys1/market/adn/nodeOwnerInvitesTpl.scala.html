@@ -1,4 +1,4 @@
-@(adnNode: MAdnNode, imf: Form[_], eActs: Seq[usr.EmailActivation])(implicit ctx: Context)
+@(mnode: MNode, imf: Form[_], eActs: Seq[usr.EmailActivation])(implicit ctx: Context)
 
 @* Форма для создания инвайта на управление узлом рекламной сети. *@
 
@@ -13,19 +13,21 @@
 }
 
 @adnBase(
-  title = "Инвайт на управление ТЦ " + adnNode.meta.name,
-  hPathAfter = Some(hPathAfter1),
-  nodeOpt = Some(adnNode)
+  title       = "Инвайт на управление ТЦ " + mnode.meta.basic.name,
+  hPathAfter  = Some(hPathAfter1),
+  nodeOpt     = Some(mnode)
 ) {
 
   @lkBlock("Текущие владельцы ТЦ") {
 
-    @if(adnNode.personIds.isEmpty) {
-      У этого ТЦ нет пользователей, имеющих права доступа.
-    } else {
-      Текущие подтверждённые пользователи: <strong class="color-strong">@adnNode.personIds.mkString("  ")</strong>
+    @defining( mnode.edges.withPredicateIter( MPredicates.OwnedBy ).isEmpty ) { personIdsIter =>
+      @if( personIdsIter.isEmpty ) {
+        У этого узла нет владельцев, имеющих права доступа.
+      } else {
+        Текущие подтверждённые пользователи:
+        <strong class="color-strong">@personIdsIter.mkString("  ")</strong>
+      }
     }
-
   }
 
   @lkBlock("Текущие отправленные инвайты") {
@@ -43,11 +45,11 @@
   @lkBlock("Новый инвайт") {
 
     Для отправки приглашения на управление ТЦ
-    <a class="blue-link" href="@routes.SysMarket.showAdnNode(adnNode.id.get)">@adnNode.meta.name</a>
+    <a class="blue-link" href="@routes.SysMarket.showAdnNode(mnode.id.get)">@mnode.meta.basic.name</a>
     введите email получателя прав в нижеуказанном поле.
 
     @* Форма инвайта прямо тут, т.к. не с кем её шарить. *@
-    @form( CSRF(routes.SysMarket.nodeOwnerInviteFormSubmit(adnNode.id.get)) ) {
+    @form( CSRF(routes.SysMarket.nodeOwnerInviteFormSubmit(mnode.id.get)) ) {
       <table class="input-w __size-L">
         @inputText(imf("email"))
       </table>
@@ -59,7 +61,7 @@
   @lkBlock("Отладка") {
 
     Отобразить тело invite-письма:
-    <a class="blue-link" href="@routes.SysMarket.showNodeOwnerEmailInvite(adnNode.id.get)">HTML</a>
+    <a class="blue-link" href="@routes.SysMarket.showNodeOwnerEmailInvite(mnode.id.get)">HTML</a>
 
   }
 

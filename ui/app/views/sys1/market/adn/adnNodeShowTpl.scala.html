@@ -1,4 +1,4 @@
-@(adnNode: MAdnNode, personNames: Map[String, String] = Map.empty)(implicit ctx: Context)
+@(mnode: MNode, personNames: Map[String, String])(implicit ctx: Context)
 
 @* Страница, отображающая информацию по торговому центру. *@
 
@@ -39,90 +39,93 @@
 @hPathAfter = { }
 
 @adnBase(
-  title = adnNode.meta.name,
-  hPathAfter = Some(hPathAfter),
-  nodeOpt = Some(adnNode)
+  title       = mnode.meta.basic.name,
+  hPathAfter  = Some(hPathAfter),
+  nodeOpt     = Some(mnode)
 ) {
 
   <div class="sys_t">
-    @messages("amt.of.type." + adnNode.adn.shownTypeId):
-    @adnNode.meta.nameShort
+    @messages( AdnShownTypes.node2val(mnode).singular ):
+    @mnode.meta.basic.nameShort
 
-    <a class="edit-btn __color-1 __ft-XS" href="@routes.SysMarket.editAdnNode(adnNode.id.get)">@messages("Edit")</a>
+    <a class="edit-btn __color-1 __ft-XS" href="@routes.SysMarket.editAdnNode(mnode.id.get)">
+      @messages("Edit")
+    </a>
   </div>
 
   <div class="i-list">
 
-    @btn(routes.MarketLkAdn.showNodeAds(adnNode.id.get), 28) { ЛИЧНЫЙ<br/>КАБИНЕТ<br/>УЗЛА }
+    @btn(routes.MarketLkAdn.showNodeAds(mnode.id.get), 28) { ЛИЧНЫЙ<br/>КАБИНЕТ<br/>УЗЛА }
 
-    @btn1(ctx.SC_URL_PREFIX + routes.MarketShowcase.demoWebSite(adnNode.id.get).url, 52) { ВЫДАЧА }
+    @btn1(ctx.SC_URL_PREFIX + routes.MarketShowcase.demoWebSite(mnode.id.get).url, 52) { ВЫДАЧА }
 
-    @btn(routes.SysMarketBilling.billingFor(adnNode.id.get), 52) { БИЛЛИНГ }
+    @btn(routes.SysMarketBilling.billingFor(mnode.id.get), 52) { БИЛЛИНГ }
 
-    @btn(routes.SysAdnGeo.forNode(adnNode.id.get), 52) { GEO }
+    @btn(routes.SysAdnGeo.forNode(mnode.id.get), 52) { GEO }
   </div>
 
 
   @lkBlock("Метаданные") {
-    @_nodeMetaTpl(adnNode.meta.toMMeta)
+    @_nodeMetaTpl(mnode.meta)
   }
 
-  @lkBlock("Пользователи") {
-    @if(adnNode.personIds.isEmpty) {
-      <p class="color-light-strong">Нет пользователей, управляющих этим узлом.</p>
-    } else {
-      @adnNode.personIds.iterator.map { personId =>
-        @_personLinkTpl(personId, personNames)
+  @lkBlock("Владельцы") {
+    @defining( mnode.edges.withPredicateIterIds( MPredicate.OwnedBy ) ) { personIdsIter =>
+      @if(personIdsIter.isEmpty) {
+        <p class="color-light-strong">Нет владельцев узла.</p>
+      } else {
+        @personIdsIter.map { personId =>
+          @_personLinkTpl(personId, personNames)
+        }
       }
     }
   }
 
   @lkBlock("Участие в рекламной сети") {
-
     <table class="color-light-strong">
-      @tableRow("Права:") {
 
-        <strong class="color-strong">
-          @adnNode.adn.rights.map(_.longName).mkString(", ")
-        </strong>
-
+      @mnode.extras.adn.map { adn =>
+        @tableRow("Права:") {
+          <strong class="color-strong">
+            @adn.rights.map(_.longName).mkString(", ")
+          </strong>
+        }
       }
 
       @* TODO Надо бы отображать как-то showLevelsInfo. *@
       @tableRow("isEnabled:") {
-        <strong class="color-strong">@adnNode.adn.isEnabled</strong>
+        <strong class="color-strong">@mnode.common.isEnabled</strong>
       }
 
-      @adnNode.adn.disableReason.map { dr =>
+      @mnode.common.disableReason.map { dr =>
         @tableRow("disableReason:") {
           <strong class="color-strong">@dr</strong>
         }
-
       }
-    </table>
 
+    </table>
   }
 
 
   @lkBlock("Управление") {
 
     @btn(
-      href = routes.SysMarket.showAdnNodeAds(new AdSearchImpl { override def producerIds = adnNode.id.toList }),
+      href = routes.SysMarket.showAdnNodeAds(new AdSearchImpl { override def producerIds = mnode.id.toList }),
       paddingPx = 28
     ) { Собственные<br/>рекламные<br/>карточки }
 
     @btn(
-      href = routes.SysMarket.showAdnNodeAds(new AdSearchImpl { override def receiverIds = adnNode.id.toList }),
+      href = routes.SysMarket.showAdnNodeAds(new AdSearchImpl { override def receiverIds = mnode.id.toList }),
       paddingPx  = 28
     ) { Рекламные<br/>карточки<br/>в выдаче }
 
     @btn(
-      href = routes.SysMarket.nodeOwnerInviteForm(adnNode.id.get),
+      href = routes.SysMarket.nodeOwnerInviteForm(mnode.id.get),
       paddingPx = 28
     ) { Инвайты на<br/>управление<br/>узлом }
 
     @btn(
-      href = routes.SysMarket.installDfltMads(adnNode.id.get),
+      href = routes.SysMarket.installDfltMads(mnode.id.get),
       paddingPx = 28
     ) { Установка<br/>дефолтовых<br/>карточек }
 
@@ -131,9 +134,9 @@
 
   @lkBlock("Модерация бесплатного размещения") {
 
-    <a class="siom-ac-btn __color-2 __size-M __ft-XM __list f-left" href="@routes.SysMdr.freeAdvs(MdrSearchArgs(producerId = adnNode.id))">Очередь на модерацию</a>
-    <a class="siom-ac-btn __color-1 __size-M __ft-XM __list f-left" href="@routes.SysMdr.freeAdvs(MdrSearchArgs(freeAdvIsAllowed = Some(true), producerId = adnNode.id))">Одобренные</a>
-    <a class="siom-ac-btn __color-4 __size-M __ft-XM __list f-left" href="@routes.SysMdr.freeAdvs(MdrSearchArgs(freeAdvIsAllowed = Some(false), producerId = adnNode.id))">Отклонённые</a>
+    <a class="siom-ac-btn __color-2 __size-M __ft-XM __list f-left" href="@routes.SysMdr.freeAdvs(MdrSearchArgs(producerId = mnode.id))">Очередь на модерацию</a>
+    <a class="siom-ac-btn __color-1 __size-M __ft-XM __list f-left" href="@routes.SysMdr.freeAdvs(MdrSearchArgs(freeAdvIsAllowed = Some(true), producerId = mnode.id))">Одобренные</a>
+    <a class="siom-ac-btn __color-4 __size-M __ft-XM __list f-left" href="@routes.SysMdr.freeAdvs(MdrSearchArgs(freeAdvIsAllowed = Some(false), producerId = mnode.id))">Отклонённые</a>
   }
 
 
@@ -141,7 +144,7 @@
 
     <p class="color-light-strong">
       Отобразить email-письмо инвайта:
-      <a class="blue-link" href="@routes.SysMarket.showEmailInviteMsg(adnNode.id.get)">HTML</a>
+      <a class="blue-link" href="@routes.SysMarket.showEmailInviteMsg(mnode.id.get)">HTML</a>
     </p>
 
   }

@@ -1,4 +1,4 @@
-@(mcal: MCalendar, cf: Form[_], calUsers: Seq[MAdnNode])(implicit ctx: Context)
+@(mcal: MCalendar, cf: Form[_], calUsers: Seq[MNode])(implicit ctx: Context)
 
 @* Страница редактирования календаря. *@
 
@@ -12,7 +12,7 @@
     <h3>Этот календарь используется @calUsers.size узлами:</h3>
     <ul>
       @calUsers.map { cu =>
-        <li><a href="@routes.SysMarket.showAdnNode(cu.id.get)">@cu.meta.name</a></li>
+        <li><a href="@routes.SysMarket.showAdnNode(cu.id.get)">@cu.meta.basic.name</a></li>
       }
     </ul>
   }

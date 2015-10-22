@@ -16,7 +16,10 @@
       @testResults.iterator.map { tr =>
         <li>
           @tr.mnode.id.map { adnId =>
-            <a href="@routes.SysMarket.showAdnNode(adnId)">@tr.mnode.meta.name / @tr.mnode.meta.town</a>
+            <a href="@routes.SysMarket.showAdnNode(adnId)">
+              @tr.mnode.meta.basic.name
+              / @tr.mnode.meta.address.town
+            </a>
             / <a href="@routes.SysAdnGeo.forNode(adnId)">geo</a>
             / <strong><a href="@routes.SysAdnGeo.editAdnNodeGeodata(adnId)">EDIT</a></strong>
           }
