@@ -83,6 +83,10 @@ trait IEdge {
     (predicate, nodeId)
   }
 
+  override def toString: String = {
+    predicate.strId + "/" + nodeId
+  }
+
 }
 
 

@@ -13,7 +13,9 @@ import io.suggest.util.MyConfig.CONFIG
 object NodeGeoLevels extends Enumeration(1) with EnumMaybeWithName with EnumMaybeWithId with EnumJsonReadsT {
 
   /** Класс экземпляров модели. */
-  protected[this] sealed abstract class Val(val esfn: String) extends super.Val(esfn) {
+  protected[this] abstract class Val(val esfn: String)
+    extends super.Val(esfn)
+  {
 
     /** Заявленная точность. */
     def precision: String
