@@ -70,7 +70,7 @@
   }
 
   @lkBlock("Владельцы") {
-    @defining( mnode.edges.withPredicateIterIds( MPredicate.OwnedBy ) ) { personIdsIter =>
+    @defining( mnode.edges.withPredicateIterIds( MPredicates.OwnedBy ) ) { personIdsIter =>
       @if(personIdsIter.isEmpty) {
         <p class="color-light-strong">Нет владельцев узла.</p>
       } else {

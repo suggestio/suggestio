@@ -1,4 +1,4 @@
-@(mbmds: Seq[MBillMmpDaily], adnNode: MAdnNode)(implicit ctx: Context)
+@(mbmds: Seq[MBillMmpDaily], mnode: MNode)(implicit ctx: Context)
 
 @* Рендер окошка, которое должно бы отображаться при щелчке на имени узла в форме размещения рекламной карточки. *@
 @import ctx._
@@ -13,11 +13,16 @@
   </div>
 
   <h2 class="minor-title">
-    Ставка тарифных планов @adnNode.meta.name / @adnNode.meta.town
+    @messages("Tariff.rate")
+    @mnode.meta.basic.name
+    @mnode.meta.address.town.map { town =>
+      / @town
+    }
   </h2>
 
-  <div class="tariff __in-popup"> <!--этот класс используется, чтобы нормально рендерилась информация о тарифе -->
-    @_dailyMmpTariffPlansTpl(mbmds, adnNode)
+  @* [Макc] Этот класс используется, чтобы нормально рендерилась информация о тарифе. *@
+  <div class="tariff __in-popup">
+    @_dailyMmpTariffPlansTpl(mbmds, mnode)
   </div>
 
 </div>

@@ -73,7 +73,9 @@
         </div>
       } {
         @args.cities.map { city =>
-          <div class="adv-management_city-i js-select-city" data-value="@city.i">@city.node.meta.name</div>
+          <div class="adv-management_city-i js-select-city" data-value="@city.i">
+            @city.node.meta.basic.name
+          </div>
         }
       }
 
@@ -111,7 +113,7 @@
                     </label>
                     <input type="hidden" name="node[@midOpt].adnId" value="@adnId"/>
                     <span class="checkbox_title __major">
-                      @an.node.meta.name
+                      @an.node.meta.basic.name
                     </span>
                     <a class="slide-block_info-btn js-btn" href="@routes.MarketLkBilling._renderNodeMbmdsWindow(adnId)">i</a>
                   } {
@@ -134,7 +136,7 @@
                 } else {
                   <div class="slide-block_title">
                     <span class="checkbox_title __major">
-                      <a href="#" class="link">@an.node.meta.name</a>
+                      <a href="#" class="link">@an.node.meta.basic.name</a>
                     </span>
                     <span class="ft-S light-gray"> (@messages("advertised"))</span>
                   </div>

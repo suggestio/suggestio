@@ -1,4 +1,5 @@
-@(mads: Seq[blk.IRenderArgs], prodsMap: Map[String, MAdnNode], currPage: Int, hasNextPage: Boolean, adnNodeOpt: Option[MAdnNode] = None)(implicit ctx: Context)
+@(mads: Seq[blk.IRenderArgs], prodsMap: Map[String, MNode], currPage: Int, hasNextPage: Boolean,
+  mnodeOpt: Option[MNode] = None)(implicit ctx: Context)
 
 @* Страница для отображения списка карточек, бесплатно размещенных и требующих пост-модерации s.io. *@
 @import ctx._
@@ -11,9 +12,9 @@
 }
 
 @mdrBase(
-  title      = "Free Advs",
-  headAfter  = Some(headAfter),
-  adnNodeOpt = adnNodeOpt
+  title       = "Free Advs",
+  headAfter   = Some(headAfter),
+  mnodeOpt    = mnodeOpt
 ) {
   <div class="sys_t">
     Саморазмещённые (бесплатные) карточки, подлежащие модерации
@@ -24,11 +25,13 @@
 
     @_adsListTpl(mads, coverDisableReason = true, startIndex = 0, itemsInLine = 4) { mad =>
 
-      <a class="siom-link-btn __color-1 __size-XL __ft-M __list-vertical" href="@routes.SysMarket.showAdnNode(mad.producerId)">@prodsMap.get(mad.producerId).fold {
-        ? ? ?
-      } { producer =>
-        @producer.meta.name / @producer.meta.town
-      }</a>
+      <a class="siom-link-btn __color-1 __size-XL __ft-M __list-vertical" href="@routes.SysMarket.showAdnNode(mad.producerId)">
+        @prodsMap.get(mad.producerId).fold {
+          ? ? ?
+        } { producer =>
+          @producer.meta.basic.name / @producer.meta.address.town
+        }
+      </a>
 
       <div class="clear"></div>
 

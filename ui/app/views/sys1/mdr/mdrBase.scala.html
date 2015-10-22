@@ -1,14 +1,20 @@
-@(title: String, adnNodeOpt: Option[MAdnNode] = None, hPathAfter: Option[Html] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+@(title: String, mnodeOpt: Option[MNode] = None, hPathAfter: Option[Html] = None,
+  headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
 
 @* Базовый шаблон для модерации. *@
+
 @import sys1.market._
 
 @hPathAfter1 = {
   / <a class="blue-link" href="@routes.SysMdr.index()">Moder</a>
-  @adnNodeOpt.map { adnNode =>
-    / <a class="blue-link" href="@routes.SysMarket.showAdnNode(adnNode.id.get)">@adnNode.meta.name</a>
+  @mnodeOpt.map { mnode =>
+    /
+    <a class="blue-link" href="@routes.SysMarket.showAdnNode(mnode.id.get)">
+      @mnode.meta.basic.name
+    </a>
   }
   @hPathAfter.getOrElse { / @title }
+
 }
 
 @marketBase(

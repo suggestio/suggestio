@@ -16,7 +16,7 @@
   <p>Для добавления поддержки географии <a class="link" href="#">свяжитесь с нами...</a></p>
 
   @rargs.adnNodeOpt.flatMap(_.id).map { adnId =>
-    @if(rargs.adnNodeOpt.flatMap(_.meta.address).isEmpty) {
+    @if(rargs.adnNodeOpt.flatMap(_.meta.address.address).isEmpty) {
       @* Скрытая подсказка по заполнению данных узла. *@
       <p>
         Необходимо сначала заполнить адрес и остальные реквизиты объекта

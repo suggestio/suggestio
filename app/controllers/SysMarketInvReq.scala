@@ -73,11 +73,10 @@ class SysMarketInvReq @Inject() (
     val nodeOptFut = getNodeOptFut(mir)
     val eactOptFut = getEactOptFut(mir)
     for {
-      mcOpt   <- getCompanyOptFut(mir)
       nodeOpt <- nodeOptFut
       eactOpt <- eactOptFut
     } yield {
-      Ok(irShowOneTpl(mir, mcOpt, nodeOpt, eactOpt))
+      Ok(irShowOneTpl(mir, nodeOpt, eactOpt))
     }
   }
 

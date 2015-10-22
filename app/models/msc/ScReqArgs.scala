@@ -99,7 +99,7 @@ trait ScReqArgs extends SyncRenderInfo {
   def focusedContent      : Option[Html]
   def inlineNodesList     : Option[Html]
   /** Текущая нода согласно геоопределению, если есть. */
-  def adnNodeCurrentGeo   : Option[MAdnNode]
+  def adnNodeCurrentGeo   : Option[MNode]
 
   override def toString: String = {
     import QueryStringBindable._
@@ -115,7 +115,7 @@ trait ScReqArgsDflt extends ScReqArgs with SyncRenderInfoDflt {
   override def inlineTiles          : Seq[RenderedAdBlock] = Nil
   override def focusedContent       : Option[Html] = None
   override def inlineNodesList      : Option[Html] = None
-  override def adnNodeCurrentGeo    : Option[MAdnNode] = None
+  override def adnNodeCurrentGeo    : Option[MNode] = None
 }
 /** Враппер [[ScReqArgs]] для имитации вызова copy(). */
 trait ScReqArgsWrapper extends ScReqArgs {

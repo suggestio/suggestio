@@ -1,4 +1,4 @@
-@(adnNode: MAdnNode, cf: Form[_])(implicit ctx: Context)
+@(mnode: MNode, cf: Form[_])(implicit ctx: Context)
 
 @* Страница с формой создания нового договора. *@
 @import ctx._
@@ -7,13 +7,13 @@
 
   <div class="sys_t">Создание нового контракта</div>
 
-  <p class="paragraph __size-M">Сторона контракта: <strong>@_contractSideTpl(adnNode)</strong></p>
+  <p class="paragraph __size-M">Сторона контракта: <strong>@_contractSideTpl(mnode)</strong></p>
 
   @_contractFormTpl(
-    adnId	      = adnNode.id.get,
+    adnId	      = mnode.id.get,
     cf		      = cf,
     btnText	    = messages("Create"),
-    submitCall	= routes.SysMarketBilling.createContractFormSubmit(adnNode.id.get)
+    submitCall	= routes.SysMarketBilling.createContractFormSubmit(mnode.id.get)
   )
 
 }

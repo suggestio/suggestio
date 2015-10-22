@@ -141,6 +141,8 @@ adv.period.P3D=Три дня
 adv.period.P1W=Неделя
 adv.period.P1M=Месяц
 
+_x.asking.for.adv=запрашивает размещение.
+
 adn.sink.wifi=Wi-Fi
 adn.sink.geo=Геолокация
 
@@ -488,6 +490,7 @@ Add.funds=Пополнить баланс
 Total.funds=Всего на счете
 Available.funds=Доступно для операций
 Blocked=Заблокировано
+Tariff.rate=Ставка тарифных планов
 My.node.tariff.rate=Ставка тарифных планов моего магазина
 Adv.tariff.rates=Ставки тарифных планов рекламного размещения
 Holidays.primetime=Праздники/праймтайм

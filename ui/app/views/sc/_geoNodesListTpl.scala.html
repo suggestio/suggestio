@@ -9,7 +9,7 @@
 @import io.suggest.sc.ScConstants.NavPane._
 
 @* Функция оборачивая верстки ноды в ссылку с версткой этой ноды, если используется синхронный режим работы. *@
-@nodeSyncUrl(mnode: MAdnNode)(content: Html) = {
+@nodeSyncUrl(mnode: MNode)(content: Html) = {
   @jsStateOpt.map { jsState =>
     <a href="@syncUrl( jsState.copy(
       adnId           = mnode.id,

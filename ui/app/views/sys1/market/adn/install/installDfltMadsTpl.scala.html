@@ -9,7 +9,9 @@
 
   Установка карточек с @srcNodes.size узлов:
   @srcNodes.map { srcNode =>
-    <a href="@routes.SysMarket.showAdnNode(srcNode.id.get)">@srcNode.meta.name</a>,
+    <a href="@routes.SysMarket.showAdnNode(srcNode.id.get)">
+      @srcNode.meta.basic.name
+    </a>,
   }
 
   @_instDfltMadsFormTpl(mnode.id.get, langs, ff)

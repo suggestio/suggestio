@@ -20,7 +20,7 @@
 
   @lkBlock("Текущие владельцы ТЦ") {
 
-    @defining( mnode.edges.withPredicateIter( MPredicates.OwnedBy ).isEmpty ) { personIdsIter =>
+    @defining( mnode.edges.withPredicateIter( MPredicates.OwnedBy ) ) { personIdsIter =>
       @if( personIdsIter.isEmpty ) {
         У этого узла нет владельцев, имеющих права доступа.
       } else {

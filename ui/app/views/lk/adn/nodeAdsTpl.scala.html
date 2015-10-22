@@ -1,10 +1,14 @@
-@(mnode: MAdnNode, mode: MNodeAdsMode, mads: Seq[blk.IRenderArgs], isMyNode: Boolean, povAdnIdOpt: Option[String], canAdv: Boolean,
-  ad2advMap: Map[String, MAdvI])(implicit ctx: Context)
+@(args: mlk.INodeAdsTplArgs)(implicit ctx: Context)
 
-@* Страница в ЛК, которая отображает карточки узла. *@
+@* Страница в ЛК, которая отображает карточки узла.
+   TODO Распилить этот шаблон по флагу isMyNode: чтобы логика была в контроллере,
+        а тут только прямолинейный рендер без всяких логических разветвлений.
+*@
+
 @import ctx._
 @import node._
 @import lk.right._
+@import args._
 
 @rightBar = {
   @_navTpl( sysCall = mnode.id.map(routes.SysMarket.showAdnNode) ) {
@@ -34,17 +38,17 @@
   povAdnId      = povAdnIdOpt
 ) {
 
-  @if(mnode.adn.isProducer) {
+  @if( mnode.extras.adn.exists(_.isProducer) ) {
     @if(isMyNode) {
-      @_myAdsTpl(mnode, mads, canAdv, ad2advMap)
+      @_myAdsTpl(args)
     } else {
-      @_readOnlyAdsListTpl(mads, povAdnIdOpt, ad2advMap)
+      @_readOnlyAdsListTpl(args)
     }
 
     @* Ссылка на demo web site. *@
     @if(isMyNode) {
       <div class="sm-note">
-        @if(mnode.adn.isReceiver) {
+        @if( mnode.extras.adn.exists(_.isReceiver) ) {
           @messages("You.can.look.on.ads.in")
           <a class="blue-link" href="@ctx.SC_URL_PREFIX@routes.MarketShowcase.geoSite(msc.ScJsState(adnId = mnode.id))"
              target="_blank">@messages("_ad.showcase.link")</a>.

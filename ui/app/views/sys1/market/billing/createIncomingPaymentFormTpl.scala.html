@@ -1,22 +1,32 @@
-@(tf: Form[_], maybeMbcs: Option[Seq[(MBillContract, MAdnNode)]] = None)(implicit ctx: Context)
+@(tf: Form[_], maybeMbcs: Option[Seq[(MBillContract, MNode)]] = None)(implicit ctx: Context)
 
 @* Страница с формой ввода новой платежной транзакции в систему.
    maybeMbcs содержит контракты-подсказки в случае, если не найдено подходящего. *@
+
 @import ctx._
 @import io.suggest.util.UrlUtil._
 
 @billingBase("Новый платёж") {
+
   <h1>Принять новый платеж по безналу</h1>
+
   @maybeMbcs.map { mbcs =>
+
     <p>Проверьте номер договора в комментарии платежа.</p>
+
     @if(!mbcs.isEmpty) {
       Некоторые похожие номера договоров:
       <ul>
-        @mbcs.map { case (mbc, madn) =>
+        @mbcs.map { case (mbc, mnode) =>
           <li>@mbc.legalContractId от @mbc.printContractDate
-              (<a href="@routes.SysMarket.showAdnNode(madn.id.get)">@madn.meta.name</a>
-                @madn.meta.town.map { town => / @town }
-                @madn.meta.siteUrl.map { siteUrl => / <a href="@siteUrl">@humanizeUrl(siteUrl)</a> } )
+            (<a href="@routes.SysMarket.showAdnNode(mnode.id.get)">@mnode.meta.basic.name</a>
+              @mnode.meta.address.town.map { town =>
+                / @town
+              }
+              @mnode.meta.business.siteUrl.map { siteUrl =>
+                / <a href="@siteUrl">@humanizeUrl(siteUrl)</a>
+              }
+            )
           </li>
         }
       </ul>
@@ -24,4 +34,5 @@
   }
 
   @_paymentFormTpl(tf, isActive = true)
+
 }

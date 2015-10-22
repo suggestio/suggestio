@@ -84,7 +84,8 @@ case class S2sPictureUpload(url: String, partName: String) extends PictureUpload
 object PictureUploadModes extends EnumMaybeWithName with EnumJsonReadsT with MPicUploadModesT {
 
   /** Экземпляр modes-модели. */
-  protected[this] sealed class Val(val jsName: String) extends super.Val(jsName) with ValT
+  protected[this] class Val(val jsName: String)
+    extends super.Val(jsName) with ValT
 
   override type T = Val
 

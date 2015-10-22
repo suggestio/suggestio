@@ -1,5 +1,5 @@
-@(adnNode: MAdnNode, mmpDailyTariffs: Seq[MBillMmpDaily], mbc: MBillContract,
-  otherRcvrs: Seq[MAdnNode])(implicit ctx: Context)
+@(mnode: MNode, mmpDailyTariffs: Seq[MBillMmpDaily], mbc: MBillContract,
+  otherRcvrs: Seq[MNode])(implicit ctx: Context)
 
 @* Страница с информацией по биллингу для узла рекламной сети. *@
 @import ctx._
@@ -8,7 +8,7 @@
 
 @billingBaseTpl(
   title         = messages("Billing"),
-  node          = adnNode,
+  mnode         = mnode,
   rightCurrEl   = BillingRightPanelLinks.RPL_BILLING
 ) {
 
@@ -44,7 +44,7 @@
 
     @mmpDailyTariffs.map { mbmd =>
       <div class="tariff">
-        @_dailyMmpTariffPlanTpl(mbmd, adnNode)
+        @_dailyMmpTariffPlanTpl(mbmd, mnode)
       </div>
     }
   }
@@ -68,8 +68,10 @@
         href = Some( routes.MarketLkBilling._renderNodeMbmds(rcvr.id.get)),
         open = false
       ) {
-        @rcvr.meta.name
-        @rcvr.meta.town.map { town => / <span class="ft-S light-gray">@town</span>}
+        @rcvr.meta.basic.name
+        @rcvr.meta.address.town.map { town =>
+          / <span class="ft-S light-gray">@town</span>
+        }
       } { }
 
     }

@@ -1,4 +1,4 @@
-@(mir: MInviteRequest, mcOpt: Option[MCompany], nodeOpt: Option[MAdnNode], eactOpt: Option[usr.EmailActivation])(implicit ctx: Context)
+@(mir: MInviteRequest, nodeOpt: Option[MNode], eactOpt: Option[usr.EmailActivation])(implicit ctx: Context)
 
 @* Отображение одного реквеста. *@
 @import ctx._
@@ -61,13 +61,13 @@
           Узел не существует даже в виде заготовки.
           <a href="@routes.SysMarketInvReq.nodeEdit(mir.id.get)">Создать заготовку...</a>
         </p>
-      } { node =>
+      } { mnode =>
         <h3>@if(nodeInstalled) {Узел} else {Шаблон узла}</h3>
-        @_nodeMetaTpl(node.meta.toMMeta)
+        @_nodeMetaTpl( mnode.meta )
         @if(nodeInstalled) {
-          Этот узел сейчас <a href="@routes.SysMarket.showAdnNode(node.id.get)">существует</a> в системе.
+          Этот узел сейчас <a href="@routes.SysMarket.showAdnNode(mnode.id.get)">существует</a> в системе.
         }
-        <a href="@if(nodeInstalled) {@routes.SysMarket.editAdnNode(node.id.get)} else {@routes.SysMarketInvReq.nodeEdit(mir.id.get)}">@Messages("Edit")</a>
+        <a href="@if(nodeInstalled) {@routes.SysMarket.editAdnNode(mnode.id.get)} else {@routes.SysMarketInvReq.nodeEdit(mir.id.get)}">@Messages("Edit")</a>
         @if(mcInstalled) {
           @if(nodeInstalled) {
             @btn("Деинсталировать узла назад в заготовку", routes.SysMarketInvReq.nodeUninstallSubmit(mir.id.get))

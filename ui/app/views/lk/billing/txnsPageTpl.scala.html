@@ -1,4 +1,4 @@
-@(adnNode: MAdnNode, txns: Seq[MBillTxn], currPage: Int, txnsPerPage: Int)(implicit ctx: Context)
+@(mnode: MNode, txns: Seq[MBillTxn], currPage: Int, txnsPerPage: Int)(implicit ctx: Context)
 
 @* Страница с историей транзакций. *@
 
@@ -9,7 +9,7 @@
 
 @billingBaseTpl(
   title         = messages("Transactions.history"),
-  node          = adnNode,
+  mnode         = mnode,
   rightCurrEl   = BillingRightPanelLinks.RPL_TRANSACTIONS
 ) {
 
@@ -37,7 +37,7 @@
     @if(txns.size >= txnsPerPage) {
       <div class="btn-w __size-M">
         <a class="btn __size-S __radial-major" id="@GET_MORE_TXNS_BTN_ID"
-           href="@routes.MarketLkBilling.txnsList(adnNode.id.get, page = currPage + 1, inline = true)">@messages("Show.more")</a>
+           href="@routes.MarketLkBilling.txnsList(mnode.id.get, page = currPage + 1, inline = true)">@messages("Show.more")</a>
       </div>
     }
 
@@ -45,10 +45,10 @@
     @messages("No.records").
   }
 
-  <input type="hidden" id="@ADN_ID_INPUT_ID" value="@adnNode.id"/>
+  <input type="hidden" id="@ADN_ID_INPUT_ID" value="@mnode.id"/>
   <input type="hidden" id="@CURR_PAGE_NUM_INPUT_ID" value="@currPage"/>
 
-  @helper.javascriptRouter("jsRoutes")( 
+  @helper.javascriptRouter("jsRoutes")(
     routes.javascript.MarketLkBilling.txnsList
   )
 

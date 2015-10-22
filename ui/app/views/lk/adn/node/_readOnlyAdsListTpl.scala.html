@@ -1,10 +1,11 @@
-@(mads: Seq[blk.IRenderArgs] = Nil, povAdnIdOpt: Option[String], ad2advMap: Map[String, MAdvI])(implicit ctx: Context)
+@(args: mlk.IAdsListTplArgsRo)(implicit ctx: Context)
 
 @* Список рекламных карточек при просмотре чужого узла. При щелчке по карточке должна появится инфа по размещению
    с точки зрения узла povAdnIdOpt. *@
 
 @import views.html.lk.ad._
 @import ctx._
+@import args._
 
 @wndAnchor(adId: String, advIdOpt: Option[Int])(text: Html) = {
   <a class="ads-list-block__link js-advertising-requests-item_get-info"

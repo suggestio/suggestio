@@ -1,9 +1,11 @@
-@(adnNode: MAdnNode, contract: MBillContract, tf: Form[_])(implicit ctx: Context)
+@(mnode: MNode, contract: MBillContract, tf: Form[_])(implicit ctx: Context)
 
 @* Страница с формой добавления нового тарифа для узла рекламной сети. *@
-@import ctx._
 
-@sys1.market.billing.billingBase("Новый тариф", Some(adnNode)) {
+@import ctx._
+@import sys1.market.billing._
+
+@billingBase("Новый тариф", Some(mnode)) {
 
   <div class="sys_t">Добавление нового тарифа к договору @contract.legalContractId от @contract.printContractDate.</div>
 

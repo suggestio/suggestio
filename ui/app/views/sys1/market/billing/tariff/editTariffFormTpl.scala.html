@@ -1,9 +1,11 @@
-@(adnNode: MAdnNode, contract: MBillContract, tariff: MBillTariffFee, tf: Form[_])(implicit ctx: Context)
+@(mnode: MNode, contract: MBillContract, tariff: MBillTariffFee, tf: Form[_])(implicit ctx: Context)
 
 @* Страница с формой добавления нового тарифа для узла рекламной сети. *@
-@import ctx._
 
-@sys1.market.billing.billingBase("Тариф #" + tariff.id, Some(adnNode)) {
+@import ctx._
+@import sys1.market.billing.billingBase
+
+@billingBase("Тариф #" + tariff.id, Some(mnode)) {
 
   <div class="sys_t">Изменение тарифа #@tariff.id.get.
      Договор @contract.legalContractId от @contract.printContractDate.</div>
@@ -15,7 +17,7 @@
   <br/><br/>
 
   @_tariffFormTpl(
-    submitCall = routes.SysMarketBillingTariff.editFeeTariffFormSubmit(tariff.id.get),
+    submitCall = routes.SysMarketBillingTariff.editFeeTariffFormSubmit( tariff.id.get ),
     tf         = tf,
     btnText    = messages("Save")
   )

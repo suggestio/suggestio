@@ -1,4 +1,4 @@
-@(adnNode: MAdnNode, advsWithAds: TraversableOnce[adv.geo.IReqInfo])(implicit ctx: Context)
+@(mnode: MNode, advsWithAds: TraversableOnce[adv.geo.IReqInfo])(implicit ctx: Context)
 
 @* Страница, которая появляется при нажатии на кнопку "рекламодатели". *@
 
@@ -9,7 +9,7 @@
 
 @adn.nodeBaseTpl(
   title         = messages("Advertisers"),
-  node          = adnNode,
+  mnode         = mnode,
   rightCurrEl   = RPL_ADVERTISERS,
   isMyNode      = true
 ) {
@@ -36,7 +36,7 @@
                 @_adNormalTpl(info.brArgs)
               </div>
               <div class="ads-list-block__zigzag-mask"></div>
-              <a href="@routes.MarketAdv.advFullWnd(info.req.adId, povAdnId = adnNode.id, advId = info.req.id, r = ctx.r)"
+              <a href="@routes.MarketAdv.advFullWnd(info.req.adId, povAdnId = mnode.id, advId = info.req.id, r = ctx.r)"
                  class="ads-list-block__link js-btn">
                 @Html( messages("Click.for.more.info", "<br/>") )
               </a>

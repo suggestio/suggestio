@@ -138,6 +138,8 @@ adv.period.P3D=Three days
 adv.period.P1W=Week
 adv.period.P1M=Month
 
+_x.asking.for.adv=запрашивает размещение.
+
 adn.sink.wifi=Wi-Fi
 adn.sink.geo=Geolocation
 
@@ -479,6 +481,7 @@ Add.funds=Add funds
 Total.funds=Total funds
 Available.funds=Available funds
 Blocked=Blocked
+Tariff.rate=Tariff plan rate
 My.node.tariff.rate=My shop tariff plan rate
 Adv.tariff.rates=Ad deployment tariff plan rates
 Holidays.primetime=Holidays/primetime

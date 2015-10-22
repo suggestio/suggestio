@@ -1,4 +1,4 @@
-@(title: String, node: MAdnNode, rightCurrEl: BillingRightPanelLink)(content: Html)(implicit ctx: Context)
+@(title: String, mnode: MNode, rightCurrEl: BillingRightPanelLink)(content: Html)(implicit ctx: Context)
 
 @* Базовый шаблон для шаблонов биллинга в личном кабинете. *@
 
@@ -8,7 +8,7 @@
 @import util.tpl.CssFormat._
 
 @rightBar = {
-  @node.id.map { adnId =>
+  @mnode.id.map { adnId =>
     @_navTpl(sysCall = Some(routes.SysMarketBilling.billingFor(adnId)) ) {
 
       @_navItemTpl(
@@ -41,7 +41,7 @@
 @lk.lkBaseLayout(
   title       = title,
   leftCurrEl  = Some(LkLeftPanelLinks.LPL_BILLING),
-  nodeOpt     = Some(node),
+  nodeOpt     = Some(mnode),
   rightBar    = Some(rightBar),
   headAfter   = Some(headAfter1)
 ) {

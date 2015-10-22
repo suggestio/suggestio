@@ -13,7 +13,7 @@
       @parentsMap.get(parentId).fold {
         @parentId
       } { parentNode =>
-        <span title="@parentNode.meta.town / @parentId">
+        <span title="@parentNode.meta.address.town / @parentId">
           @parentNode.meta.basic.name
         </span>
       }

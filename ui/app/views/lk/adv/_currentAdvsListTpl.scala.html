@@ -8,9 +8,12 @@
 @import util.TplDataFormatUtil._
 @import args._
 
-@_single_status(statusClass: String, node: MAdnNode)(content: Html) = {
+@_single_status(statusClass: String, node: MNode)(content: Html) = {
   <div class="adv-status_i __@statusClass">
-    <span class="ft-M light-gray f-left">@node.meta.name / @node.meta.town</span>
+    <span class="ft-M light-gray f-left">
+      @node.meta.basic.name
+      @node.meta.address.town.map { town => / @town }
+    </span>
     @content
   </div>
 }

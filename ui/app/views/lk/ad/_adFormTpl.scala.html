@@ -1,4 +1,4 @@
-@(af: AdFormM, call: Call, mmcats: Seq[MMartCategory], withBC: Option[BlockConf], adnNode: MAdnNode)(implicit ctx: Context)
+@(af: AdFormM, call: Call, mmcats: Seq[MMartCategory], withBC: Option[BlockConf], mnode: MNode)(implicit ctx: Context)
 
 @* Рендер формы редактирования произвольной рекламы.
  * offerType - предпочитаемый тип оффера, когда он неизвестен. *@
@@ -31,8 +31,8 @@
       @* Отображение превьюшки *@
       <div class="lk-ad-block-edit-form__preview">
 
-        <input class="js-ad-block-preview-action" type="hidden" value="@CSRF(routes.MarketAd.adFormPreviewSubmit(adnNode.id.get, isFull = false))"/>
-        <input class="js-ad-block-full-preview-action" type="hidden" value="@CSRF(routes.MarketAd.adFormPreviewSubmit(adnNode.id.get, isFull = true))"/>
+        <input class="js-ad-block-preview-action" type="hidden" value="@CSRF(routes.MarketAd.adFormPreviewSubmit(mnode.id.get, isFull = false))"/>
+        <input class="js-ad-block-full-preview-action" type="hidden" value="@CSRF(routes.MarketAd.adFormPreviewSubmit(mnode.id.get, isFull = true))"/>
 
         <div class="lk-ad-block-edit-form__preview_container" id="adFormBlockPreview"></div>
 

@@ -1,4 +1,4 @@
-@(title: String, adnNode: MAdnNode, madOpt: Option[MAd] = None, bottomLeft: Option[Html] = None)(content: Html)(implicit ctx: Context)
+@(title: String, mnode: MNode, madOpt: Option[MAd] = None, bottomLeft: Option[Html] = None)(content: Html)(implicit ctx: Context)
 
 @* Страница с внешней версткой для формы _adFormTpl. *@
 
@@ -12,7 +12,7 @@
 
 @lk.lkBase(
   title         = title,
-  nodeOpt       = Some(adnNode),
+  nodeOpt       = Some(mnode),
   leftCurrEl    = Some(LkLeftPanelLinks.LPL_ADS),
   headAfter     = Some(headAfter)
 ) {

@@ -1,12 +1,14 @@
-@(title: String, mbc: MBillContract, nodeOpt: Option[MAdnNode] = None, hPathAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+@(title: String, mbc: MBillContract, nodeOpt: Option[MNode] = None, hPathAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@import sys1.market.billing._
 
 @hPathAfter1 = {
   @hPathAfter
 }
 
-@sys1.market.billing.billingBase(
-  title = title,
-  nodeOpt = nodeOpt,
-  hPathAfter = Some(hPathAfter1),
-  mbcOpt = Some(mbc)
+@billingBase(
+  title       = title,
+  nodeOpt     = nodeOpt,
+  hPathAfter  = Some(hPathAfter1),
+  mbcOpt      = Some(mbc)
 )(content)

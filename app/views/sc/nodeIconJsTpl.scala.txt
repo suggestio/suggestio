@@ -1,4 +1,4 @@
-@(adnNode: MAdnNode, logoOpt: Option[im.MImgT])(implicit ctx: Context)
+@(mnode: MNode, logoOpt: Option[im.MImgT])(implicit ctx: Context)
 
 @import util.CoffeeScriptTemplate._
 @import util.cdn.CdnUtil
@@ -12,7 +12,7 @@ siom =
   config :
     host : 'http://www.suggest.io'
     sm_trigger_class : 'sio-mart-trigger'
-    node_color : '@adnNode.meta.color'
+    node_color : '@mnode.meta.colors.bg.fold("ffffff")(_.code)'
     @logoOpt.map { logoImg =>
     logo_src : '@CdnUtil.dynImg(logoImg)'
     }

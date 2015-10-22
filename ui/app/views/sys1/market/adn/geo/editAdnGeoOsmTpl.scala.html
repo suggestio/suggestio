@@ -1,22 +1,22 @@
-@(geo: MAdnNodeGeo, gf: Form[_], adnNode: MAdnNode)(implicit ctx: Context)
+@(geo: MAdnNodeGeo, gf: Form[_], mnode: MNode)(implicit ctx: Context)
 
 @import ctx._
 @import stuff._
 @import helper._
 
-@geoBase("Редактировать OSM-производную", nodeOpt = Some(adnNode)) {
+@geoBase("Редактировать OSM-производную", nodeOpt = Some(mnode)) {
 
-  @_deleteSmthFormBtnTpl( CSRF(routes.SysAdnGeo.deleteSubmit(geo.id.get, adnId = adnNode.id.get)) )
+  @_deleteSmthFormBtnTpl( CSRF(routes.SysAdnGeo.deleteSubmit(geo.id.get, adnId = mnode.id.get)) )
 
   <p>Для импорта фигуры надо указать ссылку на сайт openstreetmap.org. Ссылка должна содержать указатель на конкретную фигуру.</p>
 
   <p>Вместо импорта osm-фигуры можно
-    <a href="@routes.SysAdnGeo.createCircle(adnNode.id.get)">создать круг.</a>
+    <a href="@routes.SysAdnGeo.createCircle(mnode.id.get)">создать круг.</a>
   </p>
 
   @_osmGeoFormTpl(
     gf          = gf,
-    submitCall  = routes.SysAdnGeo.editNodeOsmSubmit(geo.id.get, adnId = adnNode.id.get),
+    submitCall  = routes.SysAdnGeo.editNodeOsmSubmit(geo.id.get, adnId = mnode.id.get),
     btnText     = messages("Update")
   )
 

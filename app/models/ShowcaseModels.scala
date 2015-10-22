@@ -12,7 +12,10 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 
 /** Результат работы детектора текущего узла. */
-case class GeoDetectResult(ngl: NodeGeoLevel, node: MAdnNode)
+case class GeoDetectResult(
+  ngl   : NodeGeoLevel,
+  node  : MNode
+)
 
 
 /**
@@ -22,7 +25,7 @@ case class GeoDetectResult(ngl: NodeGeoLevel, node: MAdnNode)
  * @param expanded Отображать уже развёрнутов? false по умолчанию.
  */
 case class GeoNodesLayer(
-  nodes     : Seq[MAdnNode],
+  nodes     : Seq[MNode],
   ngl       : NodeGeoLevel,
   nameOpt   : Option[String] = None,
   expanded  : Boolean = false

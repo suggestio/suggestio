@@ -19,7 +19,7 @@
     options = options(
       ("" -> "") ::
       nodesMap.mapValues(mnode =>
-        messages("amt.of.type." + mnode.adn.shownTypeId) + ": " +
+        AdnShownTypes.node2val(mnode).singular + ": " +
         mnode.meta.basic.name + mnode.meta.address.town.fold("")(" (" + _ + ")")
       ).toList.sortBy(_._2) :  _*
     ),

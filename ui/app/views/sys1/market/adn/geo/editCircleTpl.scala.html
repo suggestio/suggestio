@@ -1,4 +1,4 @@
-@(geo: MAdnNodeGeo, cf: Form[_], adnNode: MAdnNode)(implicit ctx: Context)
+@(geo: MAdnNodeGeo, cf: Form[_], mnode: MNode)(implicit ctx: Context)
 
 @* Страница с формой редактирования круга. *@
 
@@ -6,13 +6,13 @@
 @import stuff._
 @import helper._
 
-@geoBase("Редактировать гео.круг", nodeOpt = Some(adnNode)) {
+@geoBase("Редактировать гео.круг", nodeOpt = Some(mnode)) {
 
-  @_deleteSmthFormBtnTpl( CSRF(routes.SysAdnGeo.deleteSubmit(geo.id.get, adnId = adnNode.id.get)) )
+  @_deleteSmthFormBtnTpl( CSRF(routes.SysAdnGeo.deleteSubmit(geo.id.get, adnId = mnode.id.get)) )
 
   @_circleFormTpl(
     cf          = cf,
-    submitCall  = routes.SysAdnGeo.editCircleSubmit(geo.id.get, adnId = adnNode.id.get),
+    submitCall  = routes.SysAdnGeo.editCircleSubmit(geo.id.get, adnId = mnode.id.get),
     btnText     = messages("Save")
   )
 

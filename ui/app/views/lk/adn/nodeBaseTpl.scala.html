@@ -1,4 +1,4 @@
-@(title: String, node: MAdnNode, isMyNode: Boolean, rightCurrEl: NodeRightPanelLink, povAdnIdOpt: Option[String] = None,
+@(title: String, mnode: MNode, isMyNode: Boolean, rightCurrEl: NodeRightPanelLink, povAdnIdOpt: Option[String] = None,
   popupContent:Option[Html] = None, rightBarAfter: Option[Html] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
 
 
@@ -28,7 +28,7 @@
       css   = classesAct(rightCurrEl == RPL_USER_EDIT, "__change-pass")
     )
 
-    @if(node.adn.isReceiver) {
+    @if( mnode.extras.adn.exists(_.isReceiver) ) {
       @_navItemTpl(
         title = messages("Advertisers"),
         href  = Some( routes.MarketAdv.showNodeAdvs(adnId) ),
@@ -40,7 +40,7 @@
 
 @* Билдим содержимое правой панели. *@
 @rightBar1 = {
-  @node.id.map { adnId =>
+  @mnode.id.map { adnId =>
     @_navTpl( Some(routes.SysMarket.showAdnNode(adnId)) ) {
       @rightBarBody(adnId)
     }
@@ -53,7 +53,7 @@
 @lk.lkBaseLayout(
   title         = title,
   leftCurrEl    = Some(LkLeftPanelLinks.LPL_NODE),
-  nodeOpt       = Some(node),
+  nodeOpt       = Some(mnode),
   rightBar      = Some(rightBar1),
   povAdnId      = povAdnIdOpt,
   popupContent  = popupContent,

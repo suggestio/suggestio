@@ -2,9 +2,7 @@ package models
 
 import java.util.Currency
 import org.joda.time.Period
-import play.api.i18n.{Lang, Messages}
 import play.api.data.Form
-import play.api.libs.json._
 import play.api.mvc.{RequestHeader, Call}
 import _root_.util.PlayLazyMacroLogsImpl
 import play.mvc.Http.Request
@@ -53,50 +51,50 @@ object CurrencyCodeDflt extends CurrencyCode {
 /** У шаблона [[views.html.sys1.market.billing.adnNodeBillingTpl]] очень много параметров со сложными типам.
   * Тут удобный контейнер для всей кучи параметров шаблона. */
 case class SysAdnNodeBillingArgs(
-  balanceOpt: Option[MBillBalance],
-  contracts: Seq[MBillContract],
-  txns: Seq[MBillTxn],
-  feeTariffsMap: collection.Map[Int, Seq[MBillTariffFee]],
-  statTariffsMap: collection.Map[Int, Seq[MBillTariffStat]],
-  dailyMmpsMap: collection.Map[Int, Seq[MBillMmpDaily]],
-  sinkComissionMap: collection.Map[Int, Seq[MSinkComission]]
+  balanceOpt        : Option[MBillBalance],
+  contracts         : Seq[MBillContract],
+  txns              : Seq[MBillTxn],
+  feeTariffsMap     : collection.Map[Int, Seq[MBillTariffFee]],
+  statTariffsMap    : collection.Map[Int, Seq[MBillTariffStat]],
+  dailyMmpsMap      : collection.Map[Int, Seq[MBillMmpDaily]],
+  sinkComissionMap  : collection.Map[Int, Seq[MSinkComission]]
 )
 
 
 
 case class CurrentAdvsTplArgs(
-  advs: Seq[MAdvI],
-  adv2adn: Map[Int, MAdnNode]
+  advs      : Seq[MAdvI],
+  adv2adn   : Map[Int, MNode]
 )
 
 /** Аргументы для рендера страницы управления рекламной карточкой с формой размещения оной. */
 case class AdvFormTplArgs(
-  adId: String,
-  af: Form[_],
-  busyAdvs: Map[String, MAdvI],
-  cities: Seq[AdvFormCity],
-  adnId2formIndex: Map[String, Int],
-  advPeriodsAvail: List[(String, String)]
+  adId              : String,
+  af                : Form[_],
+  busyAdvs          : Map[String, MAdvI],
+  cities            : Seq[AdvFormCity],
+  adnId2formIndex   : Map[String, Int],
+  advPeriodsAvail   : List[(String, String)]
 )
 
 /** advForm: Описание одного узла для размещения рекламы. */
 case class AdvFormNode(
-  node: MAdnNode
+  node: MNode
 )
 /** advForm: Описание одной вкладки группы узлов в рамках города. */
 case class AdvFormCityCat(
-  shownType: AdnShownType,
-  nodes: Seq[AdvFormNode],
-  name: String,
-  i: Int,
-  isSelected: Boolean = false
+  shownType   : AdnShownType,
+  nodes       : Seq[AdvFormNode],
+  name        : String,
+  i           : Int,
+  isSelected  : Boolean = false
 )
 /** advForm: Описание одного города в списке городов. */
 case class AdvFormCity(
-  node: MAdnNode,
-  cats: Seq[AdvFormCityCat],
-  i: Int,
-  isSelected: Boolean = false
+  node        : MNode,
+  cats        : Seq[AdvFormCityCat],
+  i           : Int,
+  isSelected  : Boolean = false
 )
 
 
@@ -118,8 +116,8 @@ object AudienceSizes extends Enumeration {
 
 
 case class MAdvPricing(
-  prices: Iterable[(Currency, Float)],
-  hasEnoughtMoney: Boolean
+  prices          : Iterable[(Currency, Float)],
+  hasEnoughtMoney : Boolean
 )
 
 
@@ -237,9 +235,9 @@ class ExternalCall(
 
 /** Интерфейс cron-задачи. */
 trait ICronTask extends Runnable {
-  def startDelay: FiniteDuration
-  def every: FiniteDuration
-  def displayName: String
+  def startDelay    : FiniteDuration
+  def every         : FiniteDuration
+  def displayName   : String
 }
 
 /**
@@ -250,9 +248,9 @@ trait ICronTask extends Runnable {
  * @param actionF Тело задачи.
  */
 case class CronTask(
-  startDelay: FiniteDuration,
-  every: FiniteDuration,
-  displayName: String
+  startDelay  : FiniteDuration,
+  every       : FiniteDuration,
+  displayName : String
 )(actionF: => Unit) extends ICronTask {
   def run(): Unit = actionF
 }

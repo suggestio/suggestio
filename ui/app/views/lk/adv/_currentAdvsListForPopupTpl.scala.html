@@ -1,4 +1,4 @@
-@(advs: Seq[MAdvI], adv2adn: Map[Int, MAdnNode])(implicit ctx: Context)
+@(advs: Seq[MAdvI], adv2adn: Map[Int, MNode])(implicit ctx: Context)
 
 @* Список размещений какой-то рекламной карточки. *@
 
@@ -7,9 +7,12 @@
 @import datetime._
 @import util.TplDataFormatUtil._
 
-@_single_status(statusClass: String, node: MAdnNode)(content: Html) = {
+@_single_status(statusClass: String, node: MNode)(content: Html) = {
   <div class="adv-status_i __in-popup __@statusClass">
-    <span class="light-gray">@node.meta.name@if(node.meta.town){ / @node.meta.town }</span>
+    <span class="light-gray">
+      @node.meta.basic.name
+      @node.meta.address.town.map { town => / @town }
+    </span>
     @content
   </div>
 }

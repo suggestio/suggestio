@@ -1,9 +1,13 @@
-@(msc: MSinkComission, sf: Form[_], mbc: MBillContract, adnNode: MAdnNode)(implicit ctx: Context)
+@(msc: MSinkComission, sf: Form[_], mbc: MBillContract, mnode: MNode)(implicit ctx: Context)
 
 @import ctx._
 @import stuff._
 
-@sinkComBase("Редактирование sink comm #" + msc.id.get, nodeOpt = Some(adnNode), mbcOpt = Some(mbc) ) {
+@sinkComBase(
+  title   = "Редактирование sink comm #" + msc.id.get,
+  nodeOpt = Some(mnode),
+  mbcOpt  = Some(mbc)
+) {
 
   <h1>Редактировать sink-тариф #@msc.id.get</h1>
 

@@ -1,4 +1,5 @@
-@(title: String, nodeOpt: Option[MAdnNode] = None, hPathAfter: Option[Html] = None, mbcOpt: Option[MBillContract] = None)(content: Html)(implicit ctx: Context)
+@(title: String, nodeOpt: Option[MNode] = None, hPathAfter: Option[Html] = None,
+  mbcOpt: Option[MBillContract] = None)(content: Html)(implicit ctx: Context)
 
 @* Подложка страниц с управлением биллингом. *@
 
@@ -28,9 +29,9 @@
 
     @* Задан adn-узел, рендерим через adnBase *@
     @sys1.market.adn.adnBase(
-      title = title1,
-      hPathAfter = Some(hPathAfter1),
-      nodeOpt = nodeOpt
+      title       = title1,
+      hPathAfter  = Some(hPathAfter1),
+      nodeOpt     = nodeOpt
     )(content)
 
   }

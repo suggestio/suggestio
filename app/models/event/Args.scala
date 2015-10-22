@@ -188,7 +188,7 @@ object EmptyArgsInfo extends ArgsInfo() {
 case class RenderArgs(
   mevent        : IEvent,
   withContainer : Boolean             = false,
-  adnNodeOpt    : Option[MAdnNode]    = None,
+  adnNodeOpt    : Option[MNode]       = None,
   advExtTgs     : Seq[MExtTarget]     = Nil,
   madOpt        : Option[MAd]         = None,
   advOkOpt      : Option[MAdvOk]      = None,

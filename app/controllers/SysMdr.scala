@@ -82,10 +82,10 @@ class SysMdr @Inject() (
     } yield {
       Ok(freeAdvsTpl(
         brArgss,
-        prodsMap = prodsMap,
-        currPage = args.page,
+        prodsMap    = prodsMap,
+        currPage    = args.page,
         hasNextPage = brArgss.size >= MdrSearchArgs.FREE_ADVS_PAGE_SZ,
-        adnNodeOpt = args.producerId.flatMap(prodsMap.get)
+        mnodeOpt    = args.producerId.flatMap(prodsMap.get)
       ))
     }
   }

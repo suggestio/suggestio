@@ -1,4 +1,4 @@
-@(adnNode: MAdnNode, pf: Form[_], r: Option[String] = None)(implicit ctx: Context)
+@(mnode: MNode, pf: Form[_], r: Option[String] = None)(implicit ctx: Context)
 
 @* Страница редактирования профиля пользователя. *@
 
@@ -15,7 +15,7 @@
 
 @adn.nodeBaseTpl(
   title         = messages("User.profile.edit"),
-  node          = adnNode,
+  mnode         = mnode,
   isMyNode      = true,
   rightCurrEl   = NodeRightPanelLinks.RPL_USER_EDIT,
   rightBarAfter = Some(rightBarAfter)
@@ -23,8 +23,8 @@
 
   @form(
     CSRF(routes.MarketLkAdn.changePasswordSubmit(
-      adnId = adnNode.id.get,
-      r = r orElse Some(routes.MarketLkAdn.userProfileEdit(adnNode.id.get).url)
+      adnId = mnode.id.get,
+      r = r orElse Some(routes.MarketLkAdn.userProfileEdit(mnode.id.get).url)
     )),
     'id -> "userProfileEdit"
   ) {

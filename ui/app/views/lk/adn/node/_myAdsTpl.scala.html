@@ -1,15 +1,16 @@
-@(node: MAdnNode, mads: Seq[blk.IRenderArgs], canAdv: Boolean, ad2advMap: Map[String, MAdvI])(implicit ctx: Context)
+@(args: mlk.IAdsListTplArgsMy)(implicit ctx: Context)
 
 @* Список рекламных карточек для создателя рекламы. В нём галочки есть. *@
 @import views.html.lk.ad._
 @import ctx._
+@import args._
 
 @* Флаг single переименовывает единственную галочку "Выводить". *@
-@defining(node.adn.showLevelsInfo.out4render) { outLvlMap =>
+@defining( mnode.extras.adn.map(_.out4render).getOrElse(Nil) ) { outLvlMap =>
 
   @* Раскрыть для скриптов текущую информацию о лимитах по кол-ву объяв на доступных уровнях отображения. *@
-  @outLvlMap.map { case (sl, (slAllowed, slMax)) =>
-    <input id="maxShownAds_@sl" type="hidden" value="@slMax"/>
+  @outLvlMap.map { msl =>
+    <input id="maxShownAds_@msl.sl" type="hidden" value="@msl.limit"/>
   }
 
   @_adsListOuterTpl {
@@ -19,7 +20,7 @@
     )
 
 
-    <a class="add-adv-btn f-left" href="@routes.MarketAd.createAd(node.id.get)">
+    <a class="add-adv-btn f-left" href="@routes.MarketAd.createAd(mnode.id.get)">
       <span>@Html( messages("Create.ad", "<br/>") )</span>
     </a>
 
@@ -56,26 +57,26 @@
 
           @* Бесплатное размещение не запрещено. *@
           <div class="ads-list-block__controls">
-            @defining( mad.receivers.get(node.id.get).map(_.allShowLevels).getOrElse(Set.empty) ) { adSls =>
-              @* Обходим карту уровней, переводя её в список галочек. *@
-              @outLvlMap.map { case (sl, (slAllowed, slMax)) =>
-                @defining(node.adn.canOutAtLevel(sl)) { hl =>
-                  <label class="@sl.checkboxCssClass@if(!slAllowed){ inactive}">
-                    <input class="@if(slMax == 1){js-one-}checkbox" type="checkbox"
-                           data-level="@sl" data-adid="@mad.id" data-name="@sl.checkboxCssClass"
-                           @if(!slAllowed) {disabled="disabled"} @if(adSls contains sl) {checked="checked"}
+            @defining( mad.receivers.get(mnode.id.get).map(_.allShowLevels).getOrElse(Set.empty) ) { adSls =>
+              @* Обходим данные по out-уровня, превращая её в список галочек. *@
+              @outLvlMap.map { msl =>
+                @defining(mnode.common.isEnabled && msl.allowed) { hl =>
+                  <label class="@msl.sl.checkboxCssClass@if(!msl.allowed){ inactive}">
+                    <input class="@if(msl.limit == 1){js-one-}checkbox" type="checkbox"
+                           data-level="@msl.sl" data-adid="@mad.id" data-name="@msl.sl.checkboxCssClass"
+                           @if(!msl.allowed) {disabled="disabled"} @if(adSls contains msl.sl) {checked="checked"}
                            />
-                          <span class="styled-checkbox"></span>&nbsp;@messages(if(isSingleOutLvl) "lk.sl.enable_ad" else ("lk.sl." + sl.name))
+                          <span class="styled-checkbox"></span>&nbsp;@messages(if(isSingleOutLvl) "lk.sl.enable_ad" else ("lk.sl." + msl.sl.name))
                   </label>
                 }
               }
             }
-          </div><!-- .ads-list-block__controls end -->
+          </div>
         } { faMdr =>
           @* Модератор запретил бесплатное размещение указанное карточки. *@
           @faMdr.reason
         }
-        </div><!-- .js-equal-height end -->
+        </div>
         @if(canAdv) {
           <a class="btn __size-XM __radial-major" href="@routes.LkAdvExt.forAd(mad.id.get)">
             @messages("ad.Manage")

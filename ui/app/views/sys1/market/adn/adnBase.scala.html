@@ -9,7 +9,7 @@
   @nodeOpt.map { mnode =>
     / <a class="blue-link"
          href="@routes.SysMarket.showAdnNode(mnode.id.get)"
-         title="@messages( AdnShownTypes.node2val(mnode).singular) / @node.meta.address.town">
+         title="@messages( AdnShownTypes.node2val(mnode).singular) / @mnode.meta.address.town">
         @mnode.meta.basic.name
       </a>
   }

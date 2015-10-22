@@ -3,19 +3,24 @@
 @* Уведомление: какой-то узел запрашивает размещение своей рекламы у меня. *@
 
 @import ctx._
-@import AdnShownTypes._
 @import datetime._
 
 @_oneEvtBase(rargs, Some("__bg-1 __icon-7 __with-preview-ad")) {
 
   <div class="event_t">
     @rargs.adnNodeOpt.map { mnode =>
-      @messages(mnode.adn.singular)
-      <strong>@mnode.meta.name @if(mnode.meta.town) { / @mnode.meta.town}</strong>
+      @messages( AdnShownTypes.node2val(mnode).singular )
+      <strong>
+        @mnode.meta.basic.name
+        @mnode.meta.address.town.map { town =>
+          / @town
+        }
+      </strong>
     }
   </div>
 
-  запрашивает размещение.
+  @messages( "_x.asking.for.adv" )
+
   @rargs.advReqOpt.map { advReq =>
     @_prettyDate(advReq.dateStatus)
   }

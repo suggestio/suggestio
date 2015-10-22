@@ -1,4 +1,4 @@
-@(adnNodes: Seq[MAdnNode], companies: Option[Map[String, MCompany]] = None)(implicit ctx: Context)
+@(mnodes: Seq[MNode], companies: Option[Map[String, MCompany]] = None)(implicit ctx: Context)
 
 @* Страница со списком торговых центров. *@
 
@@ -6,14 +6,14 @@
 @import ctx._
 
 @hPathAfter = {
-  / Узлы (@adnNodes.size)
+  / Узлы (@mnodes.size)
 }
 
 @adnBase("Узлы", hPathAfter = Some(hPathAfter)) {
-  @if(adnNodes.isEmpty) {
+  @if(mnodes.isEmpty) {
     Узлов рекламной сети пока нет.
   } else {
-    @_adnNodesListTpl(adnNodes, companies)
+    @_adnNodesListTpl(mnodes, companies)
   }
 
   <div class="btn-w __size-M">

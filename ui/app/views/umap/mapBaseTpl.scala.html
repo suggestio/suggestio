@@ -1,4 +1,4 @@
-@(args: UmapTplArgs)(implicit ctx: Context)
+@(args: IUmapTplArgs)(implicit ctx: Context)
 
 @import ctx._
 @import helper._
@@ -23,7 +23,9 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 </head>
+
 <body class="map_detail">
+
   <div id="storage-ui-container"></div>
   <div id="storage-alert-container"></div>
   <div id="storage-tooltip-container"></div>
@@ -35,34 +37,31 @@
   @* Если карты узлов нет, значит идёт редактирование в рамках известного узла. *@
   @if(args.nodesMap.nonEmpty) {
     <div class="custom-ui">
-      @defining( args.nodesMap.toSeq ) { nodesSeq =>
-        <div class="custom-ui_btn-lst js-select-label">
-          @nodesSeq.map { case (ast, _) =>
-            <button class="custom-ui_btn @if(ast.id == 0){js-act}" data-label="@ast.id">@messages("amts.of.type." + ast.name)</button>
-          }
-        </div>
-
-        @nodesSeq.map { case (ast, nodes) =>
-          <select class="js-select-id" data-label="@ast.id">
-            <option value="0">Выберите @messages("amt.of.type." + ast.name)</option>
-            @nodes.iterator.zipWithIndex.map { case (adnNode, i) =>
-              <option value="@adnNode.id">@adnNode.meta.name / @adnNode.meta.town</option>
-            }
-          </select>
+      <div class="custom-ui_btn-lst js-select-label">
+        @args.nodesMap.keysIterator.map { ast =>
+          <button class="custom-ui_btn @if(ast.id == 0){js-act}" data-label="@ast.id">
+            @messages( ast.plural )
+          </button>
         }
+      </div>
+
+      @args.nodesMap.iterator.map { case (ast, nodes) =>
+        <select class="js-select-id" data-label="@ast.id">
+          <option value="0">Выберите @messages( ast.singular )</option>
+          @nodes.iterator.zipWithIndex.map { case (mnode, i) =>
+            <option value="@mnode.id">@mnode.meta.basic.name / @mnode.meta.address.town</option>
+          }
+        </select>
       }
     </div>
   }
-    
-    
+
+
     <script type="text/javascript">
         var MAP = new L.Storage.Map("map", {
           "geometry": {
             "type": "Point",
-            "coordinates": [
-              30,
-              60
-            ]
+            "coordinates": [30, 60]
           },
           "type": "Feature",
           "properties": {
@@ -295,7 +294,6 @@
 
     <script src="@routes.Assets.versioned("javascripts/jquery.min.js")"></script>
     <script src="@routes.Assets.versioned("javascripts/umap/custom_ui.js")"></script>
-
 
 </body>
 </html>

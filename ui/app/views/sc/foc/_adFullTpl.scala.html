@@ -15,7 +15,7 @@
 @defining( producer.meta.colors.fg.fold("ffffff")(_.code) ) { pFgColor =>
 
 @* Информация о магазине *@
-<div class="focused-ad_location" style="@producer.meta.colors.bg.map {c => @_bgcolor(c);}color: #@pFgColor">
+<div class="focused-ad_location" style="@producer.meta.colors.bg.map {c => @_bgcolor(c.code);}color: #@pFgColor">
 
   <div class="focused-ad_count" style="color: #@pFgColor; border-color: #@pFgColor;">
     <div>@index/@adsCount</div>

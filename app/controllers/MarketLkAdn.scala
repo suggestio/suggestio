@@ -9,7 +9,7 @@ import com.google.inject.Inject
 import controllers.ident._
 import io.suggest.event.SioNotifierStaticClientI
 import models.im.logo.LogoUtil
-import models.mlk.MNodeShowArgs
+import models.mlk.{MNodeAdsTplArgs, MNodeShowArgs}
 import models.msession.Keys
 import models.usr.EmailPwIdent
 import org.elasticsearch.client.Client
@@ -192,7 +192,6 @@ class MarketLkAdn @Inject() (
       }
 
       // Надо ли отображать кнопку "управление" под карточками? Да, если есть баланс и контракт.
-      // Параллельности это не добавляет, но позволяет разблокировать play defaultContext от блокировки из-за JDBC.
       val canAdvFut: Future[Boolean] = {
         if (isMyNode && adnNode.extras.adn.exists(_.isProducer)) {
           Future {
@@ -221,15 +220,15 @@ class MarketLkAdn @Inject() (
         ad2advMap <- ad2advMapFut
         canAdv    <- canAdvFut
       } yield {
-        val render = nodeAdsTpl(
+        val args = MNodeAdsTplArgs(
           mnode       = adnNode,
-          mode        = mode,
           mads        = brArgss,
           isMyNode    = isMyNode,
           povAdnIdOpt = request.povAdnNodeOpt.flatMap(_.id),
           canAdv      = canAdv,
           ad2advMap   = ad2advMap
-        )(ctx)
+        )
+        val render = nodeAdsTpl(args)(ctx)
         Ok(render)
       }
     }
@@ -324,21 +323,25 @@ class MarketLkAdn @Inject() (
 
   /** Рендер страницы редактирования профиля пользователя в рамках ЛК узла. */
   def userProfileEdit(adnId: String, r: Option[String]) = IsAdnNodeAdminGet(adnId).apply { implicit request =>
-    Ok(userProfileEditTpl(
-      adnNode = request.adnNode,
-      pf = ChangePw.changePasswordFormM,
-      r = r
-    ))
+    Ok {
+      userProfileEditTpl(
+        mnode = request.adnNode,
+        pf    = ChangePw.changePasswordFormM,
+        r     = r
+      )
+    }
   }
 
   /** Сабмит формы смены пароля. */
   def changePasswordSubmit(adnId: String, r: Option[String]) = IsAdnNodeAdminPost(adnId).async { implicit request =>
     _changePasswordSubmit(r) { formWithErrors =>
-      NotAcceptable(userProfileEditTpl(
-        adnNode = request.adnNode,
-        pf = formWithErrors,
-        r = r
-      ))
+      NotAcceptable {
+        userProfileEditTpl(
+          mnode = request.adnNode,
+          pf    = formWithErrors,
+          r     = r
+        )
+      }
     }
   }
 

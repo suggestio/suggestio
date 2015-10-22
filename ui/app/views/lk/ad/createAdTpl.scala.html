@@ -1,16 +1,16 @@
-@(mmcats: Seq[MMartCategory], af: AdFormM, adnNode: MAdnNode, withBC: Option[BlockConf] = None)(implicit ctx: Context)
+@(mmcats: Seq[MMartCategory], af: AdFormM, mnode: MNode, withBC: Option[BlockConf] = None)(implicit ctx: Context)
 
 @* Рендер страницы с формой создания рекламы. *@
 @import ctx._
 
-@adFormBase(messages("Ad.card.create"), adnNode) {
+@adFormBase(messages("Ad.card.create"), mnode) {
 
   @_adFormTpl(
     af      = af,
-    call    = routes.MarketAd.createAdSubmit(adnNode.id.get),
+    call    = routes.MarketAd.createAdSubmit(mnode.id.get),
     mmcats  = mmcats,
     withBC  = withBC,
-    adnNode = adnNode
+    mnode   = mnode
   )
 
 }

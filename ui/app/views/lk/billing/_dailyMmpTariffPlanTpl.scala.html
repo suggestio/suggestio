@@ -1,4 +1,4 @@
-@(mbmd: MBillMmpDaily, adnNode: MAdnNode)(implicit ctx: Context)
+@(mbmd: MBillMmpDaily, mnode: MNode)(implicit ctx: Context)
 
 @import ctx._
 @import util.TplDataFormatUtil._
@@ -50,7 +50,12 @@
     <tr>
       <td colspan="2"></td>
       <td class="td light-gray ft-XS" colspan="5">
-        @messages("Agreement.btw.CBCA.and.node.tariffs.for.year", messages("amt.of.type." + adnNode.adn.shownTypeId), adnNode.meta.name, ctx.now.getYear)
+        @messages(
+          "Agreement.btw.CBCA.and.node.tariffs.for.year",
+          messages( AdnShownTypes.node2val(mnode).singular ),
+          mnode.meta.basic.name,
+          ctx.now.getYear
+        )
       </td>
     </tr>
   </table>
