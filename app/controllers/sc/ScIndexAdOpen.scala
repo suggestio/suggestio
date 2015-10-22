@@ -3,7 +3,7 @@ package controllers.sc
 import io.suggest.ym.model.MAd
 import io.suggest.ym.model.ad.AdsSearchArgsDfltImpl
 import io.suggest.ym.model.common.AdShowLevels
-import models.{MNode, MAdnNode}
+import models.MNode
 import models.im.DevScreen
 import models.msc.{MScApiVsn, ScReqArgsDflt, ScReqArgs}
 import play.api.mvc.Result

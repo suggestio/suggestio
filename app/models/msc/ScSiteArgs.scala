@@ -15,7 +15,7 @@ trait ScSiteArgs extends SyncRenderInfoDflt {
   /** Контейнер с цветами выдачи. */
   def scColors      : IScSiteColors
   /** Текущая нода. Создавалась для генерации заголовка в head.title. */
-  def nodeOpt       : Option[MAdnNode] = None
+  def nodeOpt       : Option[MNode] = None
   /** Инлайновый рендер индексной страницы выдачи. В параметре содержится отрендеренный HTML. */
   def inlineIndex   : Option[Html] = None
   /** Закинуть сие в конец тега head. */

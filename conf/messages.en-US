@@ -638,3 +638,20 @@ Your.msg.sent=Your message has been sent.
 Your.req.sent=Your request has been sent.
 Activation.impossible=Activation impossible.
 
+
+Ntype.p=Person
+Ntype.n=Cabinet
+Ntype.a=Promo card
+Ntype.t=Tag
+Ntype.m=Media
+Ntype.i=Picture
+Ntype.w=Welcome card
+
+Ntype.p=People
+Ntype.n=Cabinets
+Ntype.a=Promo cards
+Ntype.t=Tags
+Ntype.m=Medias
+Ntype.i=Pictures
+Ntype.w=Welcome cards
+Nodes=Nodes

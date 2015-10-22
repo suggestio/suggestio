@@ -1,6 +1,8 @@
 package models
 
+import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.model.n2.extra.MAdnExtra
+import play.api.mvc.QueryStringBindable
 
 /**
  * Suggest.io
@@ -8,7 +10,7 @@ import io.suggest.model.n2.extra.MAdnExtra
  * Created: 03.07.14 16:44
  * Description: Enum-список отображаемых типов узлов.
  */
-object AdnShownTypes extends Enumeration {
+object AdnShownTypes extends EnumMaybeWithName {
   
   /** Трейт экземпляра модели. */
   sealed trait ValT {
@@ -45,13 +47,13 @@ object AdnShownTypes extends Enumeration {
    * Интанс этой модели.
    * @param name Название (обычно - однобуквенное).
    */
-  protected[this] abstract sealed class Val(val name: String)
+  protected[this] abstract class Val(val name: String)
     extends super.Val(name)
     with ValT
 
 
   /** Это район города. */
-  sealed trait TownDistrictT extends ValT {
+  sealed protected trait TownDistrictT extends ValT {
     override def isTownDistrict = true
     override def ngls = List(NodeGeoLevels.NGL_TOWN_DISTRICT)
   }
@@ -66,15 +68,15 @@ object AdnShownTypes extends Enumeration {
   private class BuildingVal(name: String) extends Val(name) with BuildingT
   
 
-  type AdnShownType = Val
+  override type T = Val
 
 
   // Штатные (исторические) типы узлов
-  val MART: AdnShownType              = new BuildingVal("m")
-  val SHOP: AdnShownType              = new BuildingVal("s")
-  val RESTAURANT: AdnShownType        = new BuildingVal("r")
+  val MART: T              = new BuildingVal("m")
+  val SHOP: T              = new BuildingVal("s")
+  val RESTAURANT: T        = new BuildingVal("r")
   @deprecated("Please remove, if unused", "2015.sep.25")
-  val RESTAURANT_SUP: AdnShownType    = new Val("R") {
+  val RESTAURANT_SUP: T    = new Val("R") {
     override def ngls = Nil
   }
 
@@ -82,19 +84,19 @@ object AdnShownTypes extends Enumeration {
   // При совпадении двух id будет ошибка после запуска при первом обращении к этой модели.
 
   /** Вокзалы, аэропорты и др. более-менее крупные транспортные узлы. */
-  val TRANSPORT_NODE: AdnShownType = new BuildingVal("a")
+  val TRANSPORT_NODE: T = new BuildingVal("a")
 
   /** Станция метро. */
-  val METRO_STATION: AdnShownType = new BuildingVal("b")
+  val METRO_STATION: T = new BuildingVal("b")
 
   /** Район города. */
-  val TOWN_DISTRICT: AdnShownType = new TownDistrictVal("c") {
+  val TOWN_DISTRICT: T = new TownDistrictVal("c") {
     override def singularNoTown = "District"
     override def pluralNoTown   = "Districts"
   }
 
   /** Город, населенный пункт. */
-  val TOWN: AdnShownType = new Val("d") {
+  val TOWN: T = new Val("d") {
     override def ngls = List(NodeGeoLevels.NGL_TOWN)
     override def showWithTown = false
     override def isTown = true
@@ -102,16 +104,16 @@ object AdnShownTypes extends Enumeration {
   }
 
   /** Спортивные объекты: фитнес, стадионы и т.д. */
-  val SPORT: AdnShownType = new BuildingVal("e")
+  val SPORT: T = new BuildingVal("e")
 
   /** Округ мегаполиса. Логически находится над городскими районами, но занимает слой районов. */
-  val CITY_DISTRICT: AdnShownType = new TownDistrictVal("f") {
+  val CITY_DISTRICT: T = new TownDistrictVal("f") {
     override def pluralNoTown = "Areas"
     override def singularNoTown = "Area"
   }
   
   /** Другое здание. */
-  val OTHER_BUILDING: AdnShownType = new BuildingVal("g") {
+  val OTHER_BUILDING: T = new BuildingVal("g") {
     override def pluralNoTown = "Others"
     override def singularNoTown = "Other"
   }
@@ -119,26 +121,18 @@ object AdnShownTypes extends Enumeration {
 
   // При добавлении новых элементов, нужно добавлять в conf/messages.* соответствующие "amt.of.type.X" и "amts.of.type.X".
 
-  /** Опциональный поиск в этом множестве. */
-  def maybeWithName(n: String): Option[AdnShownType] = {
-    values
-      .find(_.name == n)
-      .asInstanceOf[Option[AdnShownType]]
-  }
 
-  implicit def value2val(x: Value): AdnShownType = x.asInstanceOf[AdnShownType]
-
-  implicit def adnInfo2val(adnInfo: MAdnExtra): AdnShownType = {
+  implicit def adnInfo2val(adnInfo: MAdnExtra): T = {
     adnInfo.shownTypeIdOpt
       .map( shownTypeId2val )
       .getOrElse( default )
   }
-  def node2val(mnode: MNode): AdnShownType = {
+  def node2val(mnode: MNode): T = {
     mnode.extras.adn
       .fold(default)(adnInfo2val)
   }
 
-  implicit def shownTypeId2val(sti: String): AdnShownType = withName(sti)
+  implicit def shownTypeId2val(sti: String): T = withName(sti)
 
 
   /** Все типы районов. */
@@ -147,6 +141,28 @@ object AdnShownTypes extends Enumeration {
   /** Часто используется при сборке списков узлов. */
   val districtNames = districts.iterator.map(_.name).toSeq
 
+  /** Дефолтовое значение. Используется когда очень нужно, а подходящего значения нет. */
   def default = SHOP
+
+
+  /** Поддержка со стороны play router'а. */
+  implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[T] = {
+    new QueryStringBindable[T] {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, T]] = {
+        for (nameEith <- strB.bind(key, params)) yield {
+          nameEith.right.flatMap { name =>
+            maybeWithName(name).fold [Either[String, T]] {
+              Left("shown.type.name.unknown")
+            } { ast =>
+              Right(ast)
+            }
+          }
+        }
+      }
+      override def unbind(key: String, value: T): String = {
+        strB.unbind(key, value.name)
+      }
+    }
+  }
 
 }

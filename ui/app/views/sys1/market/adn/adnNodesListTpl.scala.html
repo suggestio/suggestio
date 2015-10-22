@@ -1,22 +1,56 @@
-@(mnodes: Seq[MNode], companies: Option[Map[String, MCompany]] = None)(implicit ctx: Context)
+@(args: msys.ISysNodeListTplArgs)(implicit ctx: Context)
 
 @* Страница со списком торговых центров. *@
 
 @import sys1.market._
 @import ctx._
+@import sys1.stuff.pager._
 
-@hPathAfter = {
-  / Узлы (@mnodes.size)
-}
+@adnBase(
+  title = messages(args.args0.ntypeOpt.fold("Nodes")(_.plural)) + " (" + args.total + ")"
+) {
 
-@adnBase("Узлы", hPathAfter = Some(hPathAfter)) {
-  @if(mnodes.isEmpty) {
-    Узлов рекламной сети пока нет.
+  <div>
+    @args.ntypes.map { nti =>
+      @defining( args.args0.ntypeOpt.contains(nti.ntype) ) { isCurrent =>
+        @if( isCurrent ) {
+          <strong>
+        } else {
+          <a href="@routes.SysMarket.adnNodesList( args.args0.copy(ntypeOpt = Some(nti.ntype), offset = 0) )">
+        }
+        @nti.name (@nti.count)
+        @if( isCurrent ) {
+          </strong>
+        } else {
+          </a>
+        }
+        ,
+      }
+    }
+  </div>
+
+  @if(args.mnodes.isEmpty) {
+    Узлов пока нет.
   } else {
-    @_adnNodesListTpl(mnodes, companies)
+    @_adnNodesListTpl(args.mnodes)
   }
 
   <div class="btn-w __size-M">
-    <a class="siom-ac-btn __color-1 __size-M __ft-XM f-left" href="@routes.SysMarket.createAdnNode()">Добавить ADN-узел верхнего уровня</a>
+    <a class="siom-ac-btn __color-1 __size-M __ft-XM f-left" href="@routes.SysMarket.createAdnNode()">
+      Создать узел...
+    </a>
   </div>
+
+
+  @_simple3pTpl(
+    count  = args.mnodes.size,
+    limit  = args.args0.limit,
+    offset = args.args0.offset,
+    urlF   = { off1 =>
+      routes.SysMarket.adnNodesList(
+        args.args0.copy(offset = off1)
+      )
+    }
+  )
+
 }

@@ -30,28 +30,6 @@ object QsbUtil {
 
 object QSBs extends JavaTokenParsers with PicSzParsers with AdsCssQsbUtil with IBlockMetaQsb {
 
-  private def companyNameSuf = ".meta.name"
-
-  /** qsb для MCompany. */
-  implicit def mcompanyQSB(implicit strBinder: QueryStringBindable[String]): QueryStringBindable[MCompany] = {
-    new QueryStringBindable[MCompany] {
-      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MCompany]] = {
-        for {
-          maybeCompanyName <- strBinder.bind(key + companyNameSuf, params)
-        } yield {
-          maybeCompanyName.right.map { companyName =>
-            MCompany(meta = MCompanyMeta(name = companyName))
-          }
-        }
-      }
-
-      override def unbind(key: String, value: MCompany): String = {
-        strBinder.unbind(key + companyNameSuf, value.meta.name)
-      }
-    }
-  }
-
-
   /** qsb для NodeGeoLevel, записанной в виде int или string (esfn). */
   implicit def nodeGeoLevelQSB(implicit strB: QueryStringBindable[String],
                                intB: QueryStringBindable[Int]): QueryStringBindable[NodeGeoLevel] = {

@@ -1,4 +1,4 @@
-@(title:String, hPathAfter: Option[Html] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+@(title: String, hPathAfter: Option[Html] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
 
 @* Подложка для шаблонов системной админки магазинной части. *@
 
@@ -8,7 +8,7 @@
 }
 
 @sys1.sysBase(
-  title = title + " | market",
-  hPathAfter = Some(hPathAfter1),
-  headAfter = headAfter
+  title       = title + " | market",
+  hPathAfter  = Some(hPathAfter1),
+  headAfter   = headAfter
 )(content)

@@ -18,8 +18,6 @@ import _root_.util.acl._
 import views.html.umap._
 import play.api.libs.json._
 import io.suggest.util.SioEsUtil.laFuture2sFuture
-import AdnShownTypes._
-import AdnShownTypes.adnInfo2val
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -104,7 +102,9 @@ class Umap @Inject() (
       ngls          = request.adnNode
         .extras
         .adn
-        .fold (List.empty[NodeGeoLevel]) (_.ngls)
+        .fold (List.empty[NodeGeoLevel]) { adn =>
+          AdnShownTypes.adnInfo2val(adn).ngls
+        }
     )
     Ok( mapBaseTpl(args) )
   }

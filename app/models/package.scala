@@ -32,11 +32,6 @@ package object models {
   val  MAd                  = ym.model.MAd
   type MAd                  = ym.model.MAd
 
-  @deprecated("Use MAdnExtra instead", "2015.oct.21")
-  val  AdNetMemberInfo      = n2.extra.MAdnExtra //ym.model.common.AdNetMemberInfo
-  @deprecated("Use MAdnExtra instead", "2015.oct.21")
-  type AdNetMemberInfo      = n2.extra.MAdnExtra //ym.model.common.AdNetMemberInfo
-
   val  AdnRights            = ym.model.common.AdnRights
   type AdnRight             = ym.model.common.AdnRight
 
@@ -129,7 +124,7 @@ package object models {
   type AudienceSize         = AudienceSizes.AudienceSize
   type InviteReqType        = InviteReqTypes.T
 
-  type AdnShownType         = AdnShownTypes.AdnShownType
+  type AdnShownType         = AdnShownTypes.T
 
   type Imgs_t               = EMImg.Imgs_t
 
@@ -226,20 +221,10 @@ package object models {
   val  MMeta                = n2.node.meta.MMeta
   type MMeta                = n2.node.meta.MMeta
 
-  @deprecated("Use MMeta instead", "2015.oct.21")
-  val  MNodeMeta            = MMeta // common.MNodeMeta
-  @deprecated("Use MMeta instead", "2015.oct.21")
-  type MNodeMeta            = MMeta // common.MNodeMeta
-
   val  MPersonMeta          = n2.node.meta.MPersonMeta
   type MPersonMeta          = n2.node.meta.MPersonMeta
 
   val  MMedia               = n2.media.MMedia
   type MMedia               = n2.media.MMedia
-
-  @deprecated("Use MNode instead", "2015.oct.21")
-  val  MAdnNode             = MNode // ym.model.MAdnNode
-  @deprecated("Use MNode instead", "2015.oct.21")
-  type MAdnNode             = MNode // ym.model.MAdnNode
 
 }

@@ -1,14 +1,16 @@
 package controllers
 
 import com.google.inject.Inject
+import com.typesafe.scalalogging.slf4j.Logger
 import io.suggest.common.fut.FutureUtil
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.n2.edge.MNodeEdges
-import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchWrapImpl, MNodeSearchDfltImpl}
 import models.im.MImg
-import models.msys.NodeCreateParams
+import models.msys.{MSysNodeListArgs, MNodeTypeInfo, MSysNodeListTplArgs, NodeCreateParams}
 import models.usr.{MPerson, EmailActivation}
 import org.elasticsearch.client.Client
+import org.elasticsearch.search.sort.SortOrder
 import play.api.db.Database
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
@@ -70,29 +72,69 @@ class SysMarket @Inject() (
 
 
   /** Страница с унифицированным списком узлов рекламной сети в алфавитном порядке с делёжкой по memberType. */
-  // TODO stiIdOpt должен быть не id, а конретным экземпляром ShownTypeId.
-  def adnNodesList(stiIdOpt: Option[String]) = IsSuperuser.async { implicit request =>
-    val companiesFut = MCompany
-      .getAll(maxResults = 1000)
-      .map { companies =>
-        companies.map { c  =>  c.id.get -> c }.toMap
-      }
-    val adnNodesFut = stiIdOpt match {
-      case Some(stiId) =>
-        val sargs = new MNodeSearchDfltImpl {
-          override def nodeTypes    = Seq( MNodeTypes.AdnNode )
-          override def shownTypeIds = Seq(stiId)
-          override def limit        = 1000
-        }
-        MNode.dynSearch(sargs)
-      case None =>
-        MNode.getAll(maxResults = 1000)
+  def adnNodesList(args: MSysNodeListArgs) = IsSuperuser.async { implicit request =>
+    // Запустить сбор статистики по типам N2-узлов:
+    val ntypeStatsFut = MNode.ntypeStats()
+
+    // Собрать es-запрос согласно запросу, описанному в URL.
+    val msearch = new MNodeSearchDfltImpl {
+      override def nodeTypes    = args.ntypeOpt.toSeq
+      override def shownTypeIds = args.stiOpt.toSeq.map(_.name)
+      override def limit        = args.limit
+      override def offset       = args.offset
+      override def withNameSort = Some( SortOrder.ASC )
     }
-    for {
-      adnNodes <- adnNodesFut
-      companies <- companiesFut
+
+    // Запустить поиск узлов для рендера:
+    val mnodesFut = MNode.dynSearch(msearch)
+
+    // Считаем общее кол-во элементов указанного типа.
+    val totalCountFut: Future[Long] = {
+      ntypeStatsFut map { stats =>
+        args.ntypeOpt.fold[Long] {
+          stats.valuesIterator.sum
+        } { ntype =>
+          stats.getOrElse(ntype, 0L)
+        }
+      }
+    }
+
+    implicit val ctx = implicitly[Context]
+
+    // Нужно сгенерить список кнопок-типов на основе статистики типов
+    val ntypesFut = for {
+      stats <- ntypeStatsFut
     } yield {
-      Ok(adnNodesListTpl(adnNodes, Some(companies)))
+      // Полоска управления наверху подготавливается здесь
+      MNodeTypes.values
+        .iterator
+        .flatMap { nt =>
+          val ntype: MNodeType = nt
+          stats.get(ntype).map { count =>
+            MNodeTypeInfo(
+              name  = ctx.messages( ntype.singular ),
+              ntype = ntype,
+              count = count
+            )
+          }
+        }
+        .toSeq
+        .sortBy(_.name)
+    }
+
+    // Объединение асинхронных результатов:
+    for {
+      mnodes <- mnodesFut
+      ntypes <- ntypesFut
+      total  <- totalCountFut
+    } yield {
+      val rargs = MSysNodeListTplArgs(
+        mnodes = mnodes,
+        ntypes = ntypes,
+        args0  = args,
+        total  = total
+      )
+      Ok( adnNodesListTpl(rargs)(ctx) )
     }
   }
 

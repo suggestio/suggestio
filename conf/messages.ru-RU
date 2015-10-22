@@ -651,3 +651,20 @@ Your.msg.sent=Ваше сообщение отправлено.
 Your.req.sent=Ваш запрос отправлен.
 Activation.impossible=Активация невозможна.
 
+
+Ntype.p=Человек
+Ntype.n=Кабинет
+Ntype.a=Рекламная карточка
+Ntype.t=Тег
+Ntype.m=Медиа
+Ntype.i=Картинка
+Ntype.w=Карточка приветствия
+
+Ntypes.p=Люди
+Ntypes.n=Кабинеты
+Ntypes.a=Рекламные карточки
+Ntypes.t=Теги
+Ntypes.m=Медия
+Ntypes.i=Картинки
+Ntypes.w=Карточки приветствия
+Nodes=Узлы

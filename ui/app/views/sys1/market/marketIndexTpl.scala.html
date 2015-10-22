@@ -1,8 +1,9 @@
 @()(implicit ctx: Context)
 
 @* Список ссылок на страницы управления магазинной частью. *@
-@import MMartCategory._
 
+@import MMartCategory._
+@import msys._
 
 @* Подшаблон генерации квадратной кнопки. *@
 @btn(href: Call, paddingPx: Int)(btnText: Html)(afterBtn: Html) = {
@@ -38,7 +39,7 @@
         <div class="paragraph __size-M ovh">
           @btn(routes.SysMarket.index, 52) { --- } { }
 
-          @btn(routes.SysMarket.adnNodesList(), 52) { ADNetwork } {
+          @btn(routes.SysMarket.adnNodesList( MSysNodeListArgs(Some(MNodeTypes.AdnNode)) ), 52) { ADNetwork } {
             <a href="@routes.SysMarket.createAdnNode()" class="siom-ac-btn __color-1 __size-XL __ft-XM __sys-market-index">
               +добавить<br/>узел верхнего<br/>уровня
             </a>

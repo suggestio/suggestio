@@ -1,8 +1,10 @@
 @(mnodes: Seq[MNode], withDelims: Boolean = true)(implicit ctx: Context)
 
 @* Инлайновый список узлов. *@
+
 @import ctx._
 @import sys1.stuff.ntable._
+@import msys._
 
 @if(mnodes.nonEmpty) {
 @defining("M") { sz =>
@@ -32,7 +34,7 @@
             -------------
           }
           @_td(sz) {
-            <a class="blue-link" href="@routes.SysMarket.adnNodesList( Some(ast.name) )">
+            <a class="blue-link" href="@routes.SysMarket.adnNodesList( MSysNodeListArgs(Some(MNodeTypes.AdnNode), Some(ast)) )">
               @messages( ast.singular )
             </a>
           }
