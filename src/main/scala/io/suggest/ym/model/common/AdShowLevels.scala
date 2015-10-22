@@ -16,7 +16,7 @@ object AdShowLevels extends EnumMaybeWithName with EnumJsonReadsValT {
    * Надстройка над исходным классом-значением.
    * @param name Исходный строковой id enum-элемента.
    */
-  protected[this] sealed abstract class Val(val name: String)
+  protected[this] abstract class Val(val name: String)
    extends super.Val(name)
    with SlNameTokenStr {
 

@@ -117,4 +117,11 @@ case class MAdnExtra(
   def isProducer: Boolean = rights.contains( AdnRights.PRODUCER )
   def isReceiver: Boolean = rights.contains( AdnRights.RECEIVER )
 
+  def out4render: Seq[MSlInfo] = {
+    outSls
+      .valuesIterator
+      .toSeq
+      .sortBy(_.sl.visualPrio)
+  }
+
 }

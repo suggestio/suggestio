@@ -36,6 +36,17 @@ object MSlInfo extends IGenEsMappingProps {
 }
 
 
+/** Интерфейс и логика экземпляров модели реализована в этом трейте. */
+trait ISlInfo {
+
+  def sl    : AdShowLevel
+  def limit : Int
+
+  def allowed = limit > 0
+
+}
+
+
 /**
  * Экземпляр модели.
  * @param sl Уровень отображения, к которому относяться остальные настройки.
@@ -45,3 +56,4 @@ case class MSlInfo(
   sl    : AdShowLevel,
   limit : Int
 )
+  extends ISlInfo
