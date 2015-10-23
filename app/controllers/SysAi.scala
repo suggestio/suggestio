@@ -2,6 +2,7 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.event.SioNotifierStaticClientI
+import models.Context2Factory
 import org.elasticsearch.client.Client
 import play.api.i18n.MessagesApi
 import play.api.libs.ws.WSClient
@@ -27,6 +28,7 @@ class SysAi @Inject() (
   madAiUtil                       : MadAiUtil,
   override val messagesApi        : MessagesApi,
   implicit val ws                 : WSClient,
+  override val _contextFactory    : Context2Factory,
   override implicit val ec        : ExecutionContext,
   override implicit val esClient  : Client,
   override implicit val sn        : SioNotifierStaticClientI

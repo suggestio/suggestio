@@ -127,9 +127,13 @@ object AdnShownTypes extends EnumMaybeWithName {
       .map( shownTypeId2val )
       .getOrElse( default )
   }
-  def node2val(mnode: MNode): T = {
+  def node2valOpt(mnode: MNode): Option[T] = {
     mnode.extras.adn
-      .fold(default)(adnInfo2val)
+      .map( adnInfo2val )
+  }
+  def node2val(mnode: MNode): T = {
+    node2valOpt(mnode)
+      .getOrElse(default)
   }
 
   implicit def shownTypeId2val(sti: String): T = withName(sti)

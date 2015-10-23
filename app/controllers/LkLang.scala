@@ -4,7 +4,7 @@ import com.google.inject.Inject
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.n2.node.MNode
 import io.suggest.playx.ICurrentApp
-import models.Context
+import models.{Context2Factory, Context}
 import org.elasticsearch.client.Client
 import play.api.data.Form
 import play.api.i18n.{MessagesApi, Lang}
@@ -24,11 +24,12 @@ import scala.concurrent.{ExecutionContext, Future}
  * Относится к ЛК, т.к. форма переключения языков сверстана именно там.
  */
 class LkLang @Inject() (
-  override val messagesApi      : MessagesApi,
-  override implicit val current : play.api.Application,
-  override implicit val ec      : ExecutionContext,
-  implicit val esClient         : Client,
-  override implicit val sn      : SioNotifierStaticClientI
+  override val _contextFactory    : Context2Factory,
+  override val messagesApi        : MessagesApi,
+  override implicit val current   : play.api.Application,
+  override implicit val ec        : ExecutionContext,
+  implicit val esClient           : Client,
+  override implicit val sn        : SioNotifierStaticClientI
 )
   extends SioController
   with PlayMacroLogsImpl
@@ -98,7 +99,10 @@ class LkLang @Inject() (
                   )
                 case None =>
                   warn("User logged in, but not found in MPerson. Creating...")
-                  MNode.applyPerson(lang = newLangCode, id = Some(pw.personId))
+                  MNode.applyPerson(
+                    lang = newLangCode,
+                    id = Some(pw.personId)
+                  )
               }
               .flatMap { _.save }
           case None =>

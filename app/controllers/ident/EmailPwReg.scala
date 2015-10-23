@@ -2,6 +2,8 @@ package controllers.ident
 
 import controllers.{IMailer, CaptchaValidator, SioController}
 import io.suggest.di.IEsClient
+import io.suggest.model.n2.node.common.MNodeCommon
+import io.suggest.model.n2.node.meta.MBasicMeta
 import models._
 import models.jsm.init.MTargets
 import models.msession.Keys
@@ -154,7 +156,22 @@ trait EmailPwReg
       {data =>
         // Создать юзера и его ident, удалить активацию, создать новый узел-ресивер.
         val lang = request2lang
-        MNode.applyPerson(lang = lang.code).save flatMap { personId =>
+        val mperson0 = MNode(
+          common = MNodeCommon(
+            ntype = MNodeTypes.Person,
+            isDependent = false
+          ),
+          meta = MMeta(
+            basic = MBasicMeta(
+              nameOpt = Some(eaInfo.email),
+              langs   = List( lang.code )
+            ),
+            person = MPersonMeta(
+              emails = List(eaInfo.email)
+            )
+          )
+        )
+        mperson0.save flatMap { personId =>
           // Развернуть узел для юзера
           val adnNodeFut = nodesUtil.createUserNode(name = data.adnName, personId = personId)
           // Сохранить новый epw-ident

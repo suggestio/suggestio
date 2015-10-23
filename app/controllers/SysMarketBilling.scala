@@ -30,6 +30,7 @@ class SysMarketBilling @Inject() (
   billing                         : Billing,
   override val db                 : Database,
   override val mNodeCache         : MAdnNodeCache,
+  override val _contextFactory    : Context2Factory,
   override implicit val ec        : ExecutionContext,
   override implicit val esClient  : Client,
   override implicit val sn        : SioNotifierStaticClientI

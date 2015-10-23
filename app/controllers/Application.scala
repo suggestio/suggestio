@@ -1,6 +1,7 @@
 package controllers
 
 import com.google.inject.Inject
+import models.Context2Factory
 import play.api.libs.iteratee.Enumerator
 import play.api.mvc._
 import util.acl._
@@ -14,10 +15,14 @@ import views.txt.static.robotsTxtTpl
 
 import scala.concurrent.ExecutionContext
 
+// TODO Замержить этот контроллер в Static, а этот удалить окончательно.
+
 class Application @Inject() (
   configuration                 : Configuration,
   implicit val current          : play.api.Application,
   override val messagesApi      : MessagesApi,
+  override val errorHandler     : ErrorHandler,
+  override val _contextFactory  : Context2Factory,
   override implicit val ec      : ExecutionContext,
   siteMapUtil                   : SiteMapUtil
 )
@@ -39,7 +44,8 @@ class Application @Inject() (
 
 
   /** Раздача содержимого robots.txt. */
-  def robotsTxt = Action { implicit request =>
+  // TODO Opt вместо MaybeAuth следует использовать ещё что-то более легкое.
+  def robotsTxt = MaybeAuth { implicit request =>
     Ok( robotsTxtTpl() )
       .withHeaders(
         CONTENT_TYPE  -> "text/plain; charset=utf-8",

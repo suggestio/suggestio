@@ -1,4 +1,4 @@
-@(mnodes: Seq[MNode], withDelims: Boolean = true)(implicit ctx: Context)
+@(mnodes: Seq[MNode], withAdnDelims: Boolean = true, withNtype: Boolean = true)(implicit ctx: Context)
 
 @* Инлайновый список узлов. *@
 
@@ -15,8 +15,10 @@
     @_th(sz) {
       @messages("Name")
     }
-    @_th(sz) {
-      @messages("Type")
+    @if( withAdnDelims || withNtype ) {
+      @_th(sz) {
+        @messages("Type")
+      }
     }
     @_th(sz) {
       @messages("Town")
@@ -25,17 +27,19 @@
   } {
     @* _ntable.rows *@
 
-    @mnodes.groupBy(AdnShownTypes.node2val).map { case (ast, mnodes1) =>
+    @mnodes.groupBy(AdnShownTypes.node2valOpt).map { case (astOpt, mnodes1) =>
 
       @* Строка явных разделителей групп узлов. Она наверху, чтобы озаглавить нижеследующую группу узлов. Вниз переносить её не надо. *@
-      @if(withDelims) {
+      @if( withAdnDelims ) {
         @_tr() {
           @_td(sz) {
             -------------
           }
           @_td(sz) {
-            <a class="blue-link" href="@routes.SysMarket.adnNodesList( MSysNodeListArgs(Some(MNodeTypes.AdnNode), Some(ast)) )">
-              @messages( ast.singular )
+            <a class="blue-link" href="@routes.SysMarket.adnNodesList( MSysNodeListArgs(mnodes.headOption.map(_.common.ntype), astOpt) )">
+              @astOpt.map { ast =>
+                @messages( ast.singular )
+              }
             </a>
           }
           @_td(sz) {
@@ -47,19 +51,31 @@
       @mnodes1.sortBy(_.meta.basic.name).map { mnode =>
         @_tr() {
           @_td(sz) {
-            @if(mnode.common.isEnabled) {<strong>} else {<strike title="Этот узел отключён (isEnabled = false).">}
               <a class="blue-link" href="@routes.SysMarket.showAdnNode(mnode.id.get)">
-                @mnode.meta.basic.name
+                @mnode.guessDisplayName.fold {
+                  Без имени / @mnode.id
+                } { name =>
+                  @if(mnode.common.isEnabled) {<strong>} else {<strike title="Этот узел отключён (isEnabled = false).">}
+                    @mnode.guessDisplayName.getOrElse("__UNNAMED__")
+                  @if(mnode.common.isEnabled) {</strong>} else {</strike>}
+                }
               </a>
-            @if(mnode.common.isEnabled) {</strong>} else {</strike>}
             @mnode.extras.adn.map { adn =>
               @if(adn.testNode) {<span title="Тестовый узел. Он скрыт от нетестовых узлов.">⚗</span>}
               @if(adn.isReceiver) {<span title="Приёмник рекламных карточек (receiver).">®</span>}
               @if(adn.isUser) {<span title="Этот узел создан пользователем, НЕ администратором.">&#x2692;</span>}
             }
           }
-          @_td(sz) {
-            @messages( ast.singular )
+          @if( withAdnDelims || withNtype ) {
+            @_td(sz) {
+              @if( withNtype ) {
+                @messages( mnode.common.ntype.singular )
+              }
+              @astOpt.map { ast =>
+                @if( withNtype ) {, }
+                @messages( ast.singular )
+              }
+            }
           }
           @_td(sz) {
             @mnode.meta.address.town

@@ -4,7 +4,7 @@ import com.google.inject.Inject
 import io.suggest.di.IEsClient
 import io.suggest.event.SioNotifierStaticClientI
 import models.merr.{MRemoteErrorTypes, MRemoteError}
-import models.GeoIp
+import models.{Context2Factory, GeoIp}
 import org.elasticsearch.client.Client
 import play.api.cache.CacheApi
 import play.api.data._, Forms._
@@ -26,6 +26,7 @@ class RemoteError @Inject() (
   override val messagesApi        : MessagesApi,
   override val current            : play.api.Application,
   override val cache              : CacheApi,
+  override val _contextFactory    : Context2Factory,
   override implicit val ec        : ExecutionContext,
   override implicit val esClient  : Client,
   override implicit val sn        : SioNotifierStaticClientI

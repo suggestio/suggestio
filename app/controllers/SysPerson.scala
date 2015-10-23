@@ -5,8 +5,7 @@ import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
-import models.Context
-import models.MNode
+import models.{Context2Factory, Context, MNode}
 import models.usr._
 import org.elasticsearch.client.Client
 import org.elasticsearch.search.sort.SortOrder
@@ -28,6 +27,7 @@ import scala.concurrent.ExecutionContext
  */
 class SysPerson @Inject() (
   override val messagesApi        : MessagesApi,
+  override val _contextFactory    : Context2Factory,
   override implicit val ec        : ExecutionContext,
   override implicit val esClient  : Client,
   override implicit val sn        : SioNotifierStaticClientI
@@ -156,7 +156,11 @@ class SysPerson @Inject() (
     val nodesHtmlFut = for {
       mnodes    <- nodesFut
     } yield {
-      _adnNodesListTpl(mnodes, withDelims = false)(ctx)
+      _adnNodesListTpl(
+        mnodes        = mnodes,
+        withAdnDelims = false,
+        withNtype     = true
+      )(ctx)
     }
 
     // Рендерим конечный шаблон.

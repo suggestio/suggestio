@@ -4,8 +4,7 @@ import io.suggest.di.{IExecutionContext, IEsClient}
 import models.MNode
 import models.req.SioReqMd
 import play.api.mvc.{Result, ActionBuilder, Request}
-import util.di.INodeCache
-import util.xplay.SioHttpErrorHandler
+import util.di.{IErrorHandler, INodeCache}
 import util.{PlayMacroLogsDyn, PlayMacroLogsI}
 import util.acl.PersonWrapper.PwOpt_t
 
@@ -21,6 +20,7 @@ trait AdnNodeMaybeAuth
   extends IEsClient
   with IExecutionContext
   with INodeCache
+  with IErrorHandler
 {
 
   /** Общий код проверок типа AdnNodeMaybeAuth. */
@@ -60,7 +60,7 @@ trait AdnNodeMaybeAuth
 
     def nodeNotFound(implicit request: Request[_]): Future[Result] = {
       LOGGER.warn(s"Node $adnId not found, requested by ${request.remoteAddress}")
-      SioHttpErrorHandler.http404Fut
+      errorHandler.http404Fut
     }
   }
 

@@ -3,6 +3,7 @@ package controllers
 import java.net.{MalformedURLException, URL}
 
 import com.google.inject.Inject
+import models.Context2Factory
 import models.im.{MImgT, MImg}
 import play.api.i18n.MessagesApi
 import util.{FormUtil, PlayMacroLogsImpl}
@@ -21,8 +22,9 @@ import scala.concurrent.ExecutionContext
  * изображениям.
  */
 class SysImg @Inject() (
-  override val messagesApi      : MessagesApi,
-  override implicit val ec      : ExecutionContext
+  override val _contextFactory    : Context2Factory,
+  override val messagesApi        : MessagesApi,
+  override implicit val ec        : ExecutionContext
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl

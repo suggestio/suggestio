@@ -24,14 +24,15 @@ import play.api.data._, Forms._
  * Description: Контроллер для обратной связи с техподдержкой s.io в личном кабинете узла.
  */
 class MarketLkSupport @Inject() (
-  override val messagesApi      : MessagesApi,
-  override val mailer           : IMailerWrapper,
-  override val identUtil        : IdentUtil,
-  supportUtil                   : SupportUtil,
-  override val mNodeCache       : MAdnNodeCache,
-  override implicit val ec      : ExecutionContext,
-  implicit val esClient         : Client,
-  override implicit val sn      : SioNotifierStaticClientI
+  override val messagesApi        : MessagesApi,
+  override val mailer             : IMailerWrapper,
+  override val identUtil          : IdentUtil,
+  supportUtil                     : SupportUtil,
+  override val mNodeCache         : MAdnNodeCache,
+  override val _contextFactory    : Context2Factory,
+  override implicit val ec        : ExecutionContext,
+  implicit val esClient           : Client,
+  override implicit val sn        : SioNotifierStaticClientI
 )
   extends SioController
   with PlayLazyMacroLogsImpl

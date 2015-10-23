@@ -5,6 +5,7 @@ import io.suggest.common.fut.FutureUtil
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.n2.edge.{MPredicates, MEdge, MNodeEdges, MEdgeInfo}
 import io.suggest.model.n2.geo.MGeoShape
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{MNode, MNodeTypes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
@@ -26,6 +27,14 @@ import scala.util.{Failure, Success}
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 28.09.15 17:47
  * Description: Система обновления картинок на новую архитектуру: N2, seaweedfs.
+ *
+ * Чек-лист миграции #1.
+ * 1. application.conf:
+ *  {{{
+ *    play.http.errorHandler = "controllers.ErrorHandler"
+ *    play.http.filters = "util.xplay.Filters"
+ *  }}}
+ * 2. Отработать всё нижеследующее через JMX.
  */
 class Migration @Inject() (
   mImg3                 : MImg3_,
@@ -51,7 +60,7 @@ class Migration @Inject() (
       // Запуск обработки логотипа узла.
       val logoEdgeOptFut = FutureUtil.optFut2futOpt(madnNode.logoImgOpt) { logoImg =>
         val mimg = mImg3( MImg(logoImg) ).original
-        portOneImage(mimg, adnNodeId, madnNode.meta.dateCreated, logoImg.meta)
+        portOneImage("logo", mimg, adnNodeId, madnNode.meta.dateCreated, logoImg.meta)
           .map { imgNodeId =>
             Some( MEdge(MPredicates.Logo, imgNodeId) )
           }
@@ -60,7 +69,7 @@ class Migration @Inject() (
       val galEdgesFut = Future.traverse( madnNode.gallery.zipWithIndex ) {
         case (galImgFileName, i) =>
           val mimg = mImg3( MImg( galImgFileName ) ).original
-          portOneImage(mimg, adnNodeId, madnNode.meta.dateCreated)
+          portOneImage("gal", mimg, adnNodeId, madnNode.meta.dateCreated)
             .map { imgNodeId =>
               MEdge( MPredicates.GalleryItem, imgNodeId, order = Some(i), info = MEdgeInfo(
                 dynImgArgs = mimg.qOpt
@@ -145,7 +154,7 @@ class Migration @Inject() (
 
 
   /** Портирование одного оригинала картинки. */
-  def portOneImage(mimg: MImg3, ownNodeId: String, dateCreatedDflt: DateTime, imetaOpt: Option[ISize2di] = None): Future[String] = {
+  def portOneImage(prefix: String, mimg: MImg3, ownNodeId: String, dateCreatedDflt: DateTime, imetaOpt: Option[ISize2di] = None): Future[String] = {
 
     lazy val logPrefix = s"portOneImage(${mimg.rowKeyStr}):"
 
@@ -160,7 +169,7 @@ class Migration @Inject() (
     // Узнать file extension
     val fextFut = mmFut map { mmOpt =>
       mmOpt.fold {
-        LOGGER.warn("Logo extension is unknown, guessing PNG")
+        LOGGER.warn(prefix + " extension is unknown, guessing as PNG")
         "png"
       } { _.getExtension }
     }
@@ -181,7 +190,7 @@ class Migration @Inject() (
         ),
         meta = MMeta(
           basic = MBasicMeta(
-            nameOpt     = Some("logo-" + ownNodeId + "." + fext),
+            techName    = Some(prefix + "-" + ownNodeId + "." + fext),
             dateCreated = perm.map(_.dateCreated)
               .getOrElse { dateCreatedDflt }
           )
@@ -216,11 +225,24 @@ class Migration @Inject() (
     }
   }
 
+
+  /** Первыми MNode'ами были теги. Они не имели типа, но это отрабатывалось на уровне последующих парсеров.
+    * Нужно найти и пересохранить все необходимые теги. */
+  def resaveMissingTypeTags(): Future[Int] = {
+    val msearch = new MNodeSearchDfltImpl {
+      override def nodeTypes = Seq(null)
+    }
+    MNode.updateAll(queryOpt = Some(msearch.toEsQuery)) { mnode0 =>
+      Future successful mnode0
+    }
+  }
+
 }
 
 
 trait MigrationJmxMBean {
   def adnNodesToN2(): String
+  def resaveMissingTypeTags(): String
 }
 
 class MigrationJmx @Inject() (
@@ -238,7 +260,15 @@ class MigrationJmx @Inject() (
       .map { acc =>
         "Total processed\n\n" + acc.toReport
       }
-    awaitString(strFut)
+    awaitString( strFut )
+  }
+
+  override def resaveMissingTypeTags(): String = {
+    val strFut = migration.resaveMissingTypeTags()
+      .map { count =>
+        "Total resaved: " + count
+      }
+    awaitString( strFut )
   }
 
 }

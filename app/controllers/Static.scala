@@ -1,6 +1,7 @@
 package controllers
 
 import com.google.inject.Inject
+import models.Context2Factory
 import play.api.Play.isProd
 import play.api.i18n.MessagesApi
 import play.api.mvc._
@@ -19,9 +20,11 @@ import scala.concurrent.ExecutionContext
  */
 
 class Static @Inject() (
-  override implicit val current : play.api.Application,
-  override val messagesApi      : MessagesApi,
-  override implicit val ec      : ExecutionContext
+  override val _contextFactory    : Context2Factory,
+  override val errorHandler       : ErrorHandler,
+  override implicit val current   : play.api.Application,
+  override val messagesApi        : MessagesApi,
+  override implicit val ec        : ExecutionContext
 )
   extends SioControllerImpl
   with MaybeAuth

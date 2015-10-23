@@ -41,8 +41,10 @@ class MarketAd @Inject() (
   override val cache              : CacheApi,
   tempImgSupport                  : TempImgSupport,
   mTagUtil                        : MTagUtil,
+  override val _contextFactory    : Context2Factory,
   override val mNodeCache         : MAdnNodeCache,
   override val db                 : Database,
+  override val errorHandler       : ErrorHandler,
   override implicit val ec        : ExecutionContext,
   override implicit val esClient  : Client,
   override implicit val sn        : SioNotifierStaticClientI

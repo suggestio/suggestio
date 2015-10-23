@@ -27,9 +27,10 @@ import scala.concurrent.{ExecutionContext, Future}
  * Расширение собственной геоинформации необходимо из-за [[https://github.com/elasticsearch/elasticsearch/issues/7663]].
  */
 class SysAdnGeo @Inject() (
-  override val messagesApi        : MessagesApi,
   implicit val osmClient          : OsmClient,
   override val mNodeCache         : MAdnNodeCache,
+  override val _contextFactory    : Context2Factory,
+  override val messagesApi        : MessagesApi,
   override implicit val ec        : ExecutionContext,
   override implicit val esClient  : Client,
   override implicit val sn        : SioNotifierStaticClientI

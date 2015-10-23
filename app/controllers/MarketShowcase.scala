@@ -3,7 +3,7 @@ package controllers
 import com.google.inject.Inject
 import controllers.sc._
 import io.suggest.event.SioNotifierStaticClientI
-import models.MAdnNodeCache
+import models.{Context2Factory, MAdnNodeCache}
 import models.im.logo.LogoUtil
 import org.elasticsearch.client.Client
 import play.api.i18n.MessagesApi
@@ -31,6 +31,8 @@ class MarketShowcase @Inject() (
   override val scNlUtil           : ShowcaseNodeListUtil,
   override val scUtil             : ShowcaseUtil,
   override val mNodeCache         : MAdnNodeCache,
+  override val _contextFactory    : Context2Factory,
+  override val errorHandler       : ErrorHandler,
   override implicit val current   : play.api.Application,
   override implicit val ec        : ExecutionContext,
   override implicit val esClient  : Client,

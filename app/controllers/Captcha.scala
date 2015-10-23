@@ -20,11 +20,16 @@ import scala.util.Random
  * Created: 18.06.14 9:57
  * Description: Контроллер и сопутствующая утиль для капчеванию пользователей.
  */
-class Captcha extends KaptchaGenerator with PlayMacroLogsImpl
+class Captcha
+  extends KaptchaGenerator
+  with PlayMacroLogsImpl
 
 
 /** Абстрактный кусок контроллера для генерации капч с помощью какой-то неопределённой библиотеки. */
-trait CaptchaGeneratorBase extends Controller with PlayMacroLogsI {
+trait CaptchaGeneratorBase
+  extends Controller
+  with PlayMacroLogsI
+{
 
   def createCaptchaText: String
 

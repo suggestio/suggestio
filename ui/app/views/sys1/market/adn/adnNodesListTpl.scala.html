@@ -12,11 +12,11 @@
 
   <div>
     @args.ntypes.map { nti =>
-      @defining( args.args0.ntypeOpt.contains(nti.ntype) ) { isCurrent =>
+      @defining( args.args0.ntypeOpt == nti.ntypeOpt ) { isCurrent =>
         @if( isCurrent ) {
           <strong>
         } else {
-          <a href="@routes.SysMarket.adnNodesList( args.args0.copy(ntypeOpt = Some(nti.ntype), offset = 0) )">
+          <a href="@routes.SysMarket.adnNodesList( args.args0.copy(ntypeOpt = nti.ntypeOpt, offset = 0) )">
         }
         @nti.name (@nti.count)
         @if( isCurrent ) {
@@ -32,7 +32,11 @@
   @if(args.mnodes.isEmpty) {
     Узлов пока нет.
   } else {
-    @_adnNodesListTpl(args.mnodes)
+    @_adnNodesListTpl(
+      mnodes          = args.mnodes,
+      withAdnDelims   = args.args0.ntypeOpt.contains( MNodeTypes.AdnNode ),
+      withNtype       = args.args0.ntypeOpt.isEmpty
+    )
   }
 
   <div class="btn-w __size-M">

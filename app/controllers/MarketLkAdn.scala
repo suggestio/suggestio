@@ -1,6 +1,8 @@
 package controllers
 
 import io.suggest.model.n2.edge.search.Criteria
+import io.suggest.model.n2.node.common.MNodeCommon
+import io.suggest.model.n2.node.meta.MBasicMeta
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import util.adn.NodesUtil
@@ -49,6 +51,7 @@ class MarketLkAdn @Inject() (
   override val identUtil              : IdentUtil,
   logoUtil                            : LogoUtil,
   billing                             : Billing,
+  override val _contextFactory        : Context2Factory,
   override implicit val ec            : ExecutionContext,
   override implicit val esClient      : Client,
   override implicit val sn            : SioNotifierStaticClientI
@@ -279,7 +282,22 @@ class MarketLkAdn @Inject() (
           // Сначала удаляем запись об активации, убедившись что она не была удалена асинхронно.
           eact.delete.flatMap { isDeleted =>
             val newPersonIdOptFut: Future[Option[String]] = if (!request.isAuth) {
-              MNode.applyPerson(lang = request2lang.code).save flatMap { personId =>
+              val mperson0 = MNode(
+                common = MNodeCommon(
+                  ntype = MNodeTypes.Person,
+                  isDependent = false
+                ),
+                meta = MMeta(
+                  basic = MBasicMeta(
+                    nameOpt = Some(eact.email),
+                    langs = List( request2lang.code )
+                  ),
+                  person = MPersonMeta(
+                    emails = List(eact.email)
+                  )
+                )
+              )
+              mperson0.save flatMap { personId =>
                 EmailPwIdent.applyWithPw(email = eact.email, personId = personId, password = passwordOpt.get, isVerified = true)
                   .save
                   .map { emailPwIdentId => Some(personId) }

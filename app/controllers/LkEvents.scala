@@ -34,6 +34,7 @@ class LkEvents @Inject() (
   override val mNodeCache         : MAdnNodeCache,
   override val messagesApi        : MessagesApi,
   override val current            : play.api.Application,
+  override val _contextFactory    : Context2Factory,
   override implicit val ec        : ExecutionContext,
   override implicit val esClient  : Client,
   override implicit val sn        : SioNotifierStaticClientI

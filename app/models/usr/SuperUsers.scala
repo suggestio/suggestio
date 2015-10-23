@@ -1,5 +1,8 @@
 package models.usr
 
+import io.suggest.model.n2.node.MNodeTypes
+import io.suggest.model.n2.node.common.MNodeCommon
+import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import models.MNode
 import org.elasticsearch.client.Client
 import util.PlayMacroLogsImpl
@@ -45,7 +48,19 @@ object SuperUsers extends PlayMacroLogsImpl {
           val logPrefix1 = s"$logPrefix[$email] "
           if (createIfMissing) {
             info(logPrefix1 + "Installing new sio superuser...")
-            MNode.applyPerson(lang = "ru").save.flatMap { personId =>
+            val mperson0 = MNode(
+              common = MNodeCommon(
+                ntype = MNodeTypes.Person,
+                isDependent = false
+              ),
+              meta = MMeta(
+                basic = MBasicMeta(
+                  nameOpt = Some(email),
+                  langs   = List("ru")
+                )
+              )
+            )
+            mperson0.save.flatMap { personId =>
               val pwHash = MPersonIdent.mkHash(email)
               EmailPwIdent(email=email, personId=personId, pwHash = pwHash).save.map { mpiId =>
                 info(s"$logPrefix1 New superuser installed as $personId. mpi=$mpiId")

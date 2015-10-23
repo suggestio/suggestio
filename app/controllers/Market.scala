@@ -1,6 +1,7 @@
 package controllers
 
 import com.google.inject.Inject
+import models.Context2Factory
 import play.api.i18n.MessagesApi
 import util.acl._
 import views.html.market._
@@ -14,7 +15,8 @@ import views.html.market._
  */
 
 class Market @Inject() (
-  override val messagesApi: MessagesApi
+  override val _contextFactory    : Context2Factory,
+  override val messagesApi        : MessagesApi
 )
   extends SioController
   with MaybeAuth

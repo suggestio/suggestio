@@ -20,6 +20,7 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 class MarketCategory @Inject() (
   override val messagesApi        : MessagesApi,
+  override val _contextFactory    : Context2Factory,
   override implicit val ec        : ExecutionContext,
   override implicit val esClient  : Client,
   override implicit val sn        : SioNotifierStaticClientI

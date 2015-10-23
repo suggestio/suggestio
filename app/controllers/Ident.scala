@@ -38,6 +38,7 @@ class Ident @Inject() (
   override val cache                : CacheApi,
   override val identUtil            : IdentUtil,
   override val nodesUtil            : NodesUtil,
+  override val _contextFactory      : Context2Factory,
   override implicit val ec          : ExecutionContext,
   override implicit val esClient    : Client,
   override implicit val sn          : SioNotifierStaticClientI

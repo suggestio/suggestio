@@ -27,6 +27,7 @@ class SysMarketBillingMmp @Inject() (
   override val messagesApi      : MessagesApi,
   override val db               : Database,
   mNodeCache                    : MAdnNodeCache,
+  override val _contextFactory  : Context2Factory,
   override implicit val ec      : ExecutionContext,
   implicit val esClient         : Client,
   override implicit val sn      : SioNotifierStaticClientI

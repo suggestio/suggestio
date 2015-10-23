@@ -2,19 +2,20 @@ package models
 
 import java.util.UUID
 
+import com.google.inject.{Singleton, Inject}
+import com.google.inject.assistedinject.Assisted
 import controllers.routes
 import io.suggest.util.UuidUtil
 import _root_.models.im.DevScreen
 import _root_.models.jsm.init.MTarget
-import _root_.models.req.{SioReqMdOptWrapper, SioReqMdWrapper, ISioReqMd}
+import _root_.models.req.{SioReqMdWrapper, ISioReqMd}
 import org.joda.time.DateTime
-import play.api.Play
 import play.api.i18n.Messages
 import play.api.mvc.RequestHeader
 import play.api.Play.{current, configuration, isDev}
 import util.acl._, PersonWrapper.PwOpt_t
 import play.api.http.HeaderNames._
-import util.jsa.init.{JsInitTargetsDflt, ITargets}
+import util.jsa.init.ITargets
 import scala.util.Random
 import SioRequestHeader.{firstForwarded, lastForwarded}
 import play.api.routing.Router.Tags._
@@ -72,9 +73,6 @@ object Context extends MyHostsT {
       source
   }
 
-  /** Название js-контроллера, который занимается инициализацией flash-уведомлений. */
-  def FLASH_INIT_SJS_CTL = "_Flashing"
-
 }
 
 
@@ -92,8 +90,12 @@ trait MyHostsT {
   def DFLT_PROTO: String
 }
 
-/** Трейт аддон для контроллеров, которым нужен доступ к сборке контекстов. */
+
+/** Трейт-аддон для контроллеров, которым нужен доступ к сборке контекстов. */
 trait ContextT { this: ITargets =>
+
+  /** Доступ к сборщику контекстов, с поддержкой DI. */
+  val _contextFactory: Context2Factory
 
   /**
    * Выдать контекст. Неявно вызывается при вызове шаблона из контроллера.
@@ -103,7 +105,7 @@ trait ContextT { this: ITargets =>
                                  request: RichRequestHeader,
                                  lang: Messages,
                                  extraJsInitTargets: Seq[MTarget] = Nil ): Context = {
-    Context2(this)
+    _contextFactory.create(this)
   }
 }
 
@@ -112,6 +114,10 @@ trait ContextT { this: ITargets =>
   * Интерфейс можно только расширять и аккуратно рефакторить, иначе хана.
   */
 trait Context extends MyHostsT with ISioReqMd {
+
+  /** Доступ к DI-инжектируемым сущностям.
+    * Например, к утили какой-нить или DI-моделям и прочей утвари. */
+  val api: ContextApi
 
   // abstract val вместо def'ов в качестве возможной оптимизации обращений к ним со стороны scalac и jvm. Всегда можно вернуть def.
 
@@ -251,10 +257,6 @@ trait Context extends MyHostsT with ISioReqMd {
   override def DFLT_HOST_PORT = Context.DFLT_HOST_PORT
   override def DFLT_PROTO     = Context.DFLT_PROTO
 
-  def isProd  = Play.isProd
-  def isDev   = Play.isDev
-  def isTest  = Play.isTest
-
   /**
    * Текущий контроллер, если вызывается. (fqcn)
    * @return "controllers.LkAdvExt" например.
@@ -286,15 +288,34 @@ trait Context extends MyHostsT with ISioReqMd {
 }
 
 
+/** Шаблонам бывает нужно залезть в util'ь, модели или ещё куда-нить.
+  * DI препятствует этому, поэтому необходимо обеспечивать доступ с помощью класса-костыля. */
+@Singleton
+class ContextApi @Inject() (
+)
+
+
+/** Guice-assisted factory для сборки контекстов с использованием DI.
+  * У шаблонов бывает необходимость залезть в util/models к статическим вещам. */
+trait Context2Factory {
+  /**
+   * Сборка контекста, код метода реализуется автоматом через Guice Assisted inject.
+   * @see [[util.di.GuiceDiModule]] для тюнинга assisted-линковки контекста.
+   */
+  def create(jsInitTargeter: ITargets)
+            (implicit request: RichRequestHeader, messages: Messages, jsInitTargetsExtra: Seq[MTarget]): Context2
+}
+
+
 // Непосредственные реализации контекстов. Расширять их API в обход trait Context не имеет смысла.
 
 /** Основная реализация контекста, с которой работают sio-контроллеры автоматически. */
-case class Context2(
-  override val jsInitTargeter: ITargets
-)(implicit
-  override val request: RichRequestHeader,
-  override val messages: Messages,
-  override val jsInitTargetsExtra: Seq[MTarget]
+case class Context2 @Inject() (
+  override val api                                      : ContextApi,
+  @Assisted override val jsInitTargeter                 : ITargets,
+  @Assisted implicit override val request               : RichRequestHeader,
+  @Assisted implicit override val messages              : Messages,
+  @Assisted implicit override val jsInitTargetsExtra    : Seq[MTarget]
 )
   extends Context
   with SioReqMdWrapper
@@ -304,16 +325,3 @@ case class Context2(
   override def sioReqMd = request.sioReqMd
   override def maybeRichRequest = Some(request)
 }
-
-
-/** Упрощенная запасная реализация контекста, используемая в минимальных условиях и вручную. */
-case class ContextImpl(implicit val request: RequestHeader, val messages: Messages)
-  extends Context
-  with SioReqMdOptWrapper
-{
-  override def jsInitTargeter: ITargets = JsInitTargetsDflt
-  override def pwOpt = PersonWrapper.getFromRequest(request)
-  override def sioReqMdOpt = None
-  override def jsInitTargetsExtra = Nil
-}
-

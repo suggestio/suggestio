@@ -25,6 +25,7 @@ import scala.concurrent.ExecutionContext
  */
 class SysMarketBillingTariff @Inject() (
   mNodeCache                    : MAdnNodeCache,
+  override val _contextFactory  : Context2Factory,
   override val messagesApi      : MessagesApi,
   override val db               : Database,
   override implicit val ec      : ExecutionContext,

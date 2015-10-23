@@ -14,7 +14,6 @@ import util.PlayMacroLogsImpl
 import util.acl._
 import models._
 import util.async.AsyncUtil
-import util.xplay.SioHttpErrorHandler
 import views.html.lk.billing._
 import play.api.db.Database
 import scala.concurrent.{ExecutionContext, Future}
@@ -27,13 +26,15 @@ import play.api.mvc.Result
  * Description: Контроллер управления биллингом в личном кабинете узла рекламной сети.
  */
 class MarketLkBilling @Inject() (
-  override val messagesApi      : MessagesApi,
-  db                            : Database,
-  override val mNodeCache       : MAdnNodeCache,
-  override val current          : play.api.Application,
-  override implicit val ec      : ExecutionContext,
-  implicit val esClient         : Client,
-  override implicit val sn      : SioNotifierStaticClientI
+  override val messagesApi        : MessagesApi,
+  db                              : Database,
+  override val mNodeCache         : MAdnNodeCache,
+  override val current            : play.api.Application,
+  override val _contextFactory    : Context2Factory,
+  errorHandler                    : ErrorHandler,
+  override implicit val ec        : ExecutionContext,
+  implicit val esClient           : Client,
+  override implicit val sn        : SioNotifierStaticClientI
 )
   extends SioController
   with PlayMacroLogsImpl
@@ -58,7 +59,7 @@ class MarketLkBilling @Inject() (
 
       case None =>
         // Нет заключенных договоров, оплата невозможна.
-        SioHttpErrorHandler.http404ctx
+        errorHandler.http404ctx
     }
   }
 
@@ -114,7 +115,7 @@ class MarketLkBilling @Inject() (
 
       case None =>
         warn(s"showAdnNodeBilling($adnId): No active contracts found for node, but billing page requested by user ${request.pwOpt} ref=${request.headers.get("Referer")}")
-        SioHttpErrorHandler.http404ctx
+        errorHandler.http404ctx
     }
   }
 
@@ -168,7 +169,7 @@ class MarketLkBilling @Inject() (
       case Some(adnNode) =>
         f(mbdms, adnNode)
       case None =>
-        SioHttpErrorHandler.http404ctx
+        errorHandler.http404ctx
     }
   }
 

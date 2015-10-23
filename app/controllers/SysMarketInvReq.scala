@@ -29,6 +29,7 @@ import util.PlayMacroLogsImpl
 class SysMarketInvReq @Inject() (
   mNodeCache                      : MAdnNodeCache,
   sysMarketUtil                   : SysMarketUtil,
+  override val _contextFactory    : Context2Factory,
   override val mInviteRequest     : MInviteRequest_,
   override val messagesApi        : MessagesApi,
   override val mailer             : IMailerWrapper,

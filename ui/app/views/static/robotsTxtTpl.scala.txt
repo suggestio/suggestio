@@ -1,6 +1,6 @@
-@()
+@()(implicit ctx: Context)
 User-Agent: *
 Disallow: /help
 
-Sitemap: @Context.SC_URL_PREFIX@routes.Application.siteMapXml()
-Host: @Context.SC_HOST_PORT
+Sitemap: @ctx.SC_URL_PREFIX@routes.Application.siteMapXml()
+Host: @ctx.SC_HOST_PORT

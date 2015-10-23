@@ -9,7 +9,7 @@ import io.suggest.di.ICacheApiUtil
 import io.suggest.img.crop.CropConstants
 import io.suggest.playx.{ICurrentConf, IConfiguration, CacheApiUtil}
 import io.suggest.popup.PopupConstants
-import models.Context
+import models.{Context2Factory, Context}
 import play.api.cache.CacheApi
 import play.twirl.api.Html
 import util.img.ImgCtlUtil
@@ -43,13 +43,14 @@ import scala.util.{Success, Failure}
  */
 @Singleton
 class Img @Inject() (
-  override val messagesApi      : MessagesApi,
-  override val actorSystem      : ActorSystem,
-  override implicit val current : play.api.Application,
-  override val cache            : CacheApi,
-  override val cacheApiUtil     : CacheApiUtil,
-  override implicit val ec      : ExecutionContext,
-  override val imgCtlUtil       : ImgCtlUtil
+  override val messagesApi        : MessagesApi,
+  override val actorSystem        : ActorSystem,
+  override implicit val current   : play.api.Application,
+  override val cache              : CacheApi,
+  override val cacheApiUtil       : CacheApiUtil,
+  override val _contextFactory    : Context2Factory,
+  override implicit val ec        : ExecutionContext,
+  override val imgCtlUtil         : ImgCtlUtil
 )
   extends SioController
   with PlayMacroLogsImpl

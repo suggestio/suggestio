@@ -72,6 +72,7 @@ class SsUserService extends UserService[SsUser] {
    * @param mode a mode that tells you why the save method was called
    */
   override def save(profile: IProfile, mode: SaveMode): Future[SsUser] = {
+    // TODO Скорее всего этот метод никогда не вызвается, т.к. его логика заинлайнилась в ExternalLogin.handleAuth1().
     if (mode is SaveMode.SignUp) {
       // Зарегать нового юзера
       val mnode = MNode.applyPerson(

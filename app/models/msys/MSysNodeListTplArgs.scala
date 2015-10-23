@@ -11,9 +11,9 @@ import models.{MNodeType, MNode}
 
 /** Аргументы рендера кнопки-ссылки на тип узла. */
 case class MNodeTypeInfo(
-  name  : String,
-  ntype : MNodeType,
-  count : Long
+  name      : String,
+  ntypeOpt  : Option[MNodeType],
+  count     : Long
 )
 
 

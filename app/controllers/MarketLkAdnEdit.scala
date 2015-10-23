@@ -12,6 +12,7 @@ import models.im.{MImg3_, MImgT}
 import models.jsm.init.MTargets
 import models.mlk.{FormMapResult, NodeEditArgs}
 import org.elasticsearch.client.Client
+import org.joda.time.DateTime
 import play.api.cache.CacheApi
 import play.api.i18n.MessagesApi
 import play.api.libs.Files.TemporaryFile
@@ -41,17 +42,18 @@ import scala.concurrent.{ExecutionContext, Future}
  * Супервайзер ресторанной сети и ТЦ имеют одну форму и здесь обозначаются как "узлы-лидеры".
  */
 class MarketLkAdnEdit @Inject() (
-  override val messagesApi  : MessagesApi,
-  override val current      : play.api.Application,
-  override val cache        : CacheApi,
-  welcomeUtil               : WelcomeUtil,
-  logoUtil                  : LogoUtil,
-  mImg3                     : MImg3_,
-  tempImgSupport            : TempImgSupport,
-  override val mNodeCache   : MAdnNodeCache,
-  override implicit val ec  : ExecutionContext,
-  implicit val esClient     : Client,
-  override implicit val sn  : SioNotifierStaticClientI
+  override val messagesApi        : MessagesApi,
+  override val current            : play.api.Application,
+  override val cache              : CacheApi,
+  welcomeUtil                     : WelcomeUtil,
+  logoUtil                        : LogoUtil,
+  mImg3                           : MImg3_,
+  tempImgSupport                  : TempImgSupport,
+  override val mNodeCache         : MAdnNodeCache,
+  override val _contextFactory    : Context2Factory,
+  override implicit val ec        : ExecutionContext,
+  implicit val esClient           : Client,
+  override implicit val sn        : SioNotifierStaticClientI
 )
   extends SioController
   with PlayMacroLogsImpl
@@ -320,7 +322,8 @@ class MarketLkAdnEdit @Inject() (
     mnode.copy(
       meta = mnode.meta.copy(
         basic = mnode.meta.basic.copy(
-          nameOpt = meta2.basic.nameOpt
+          nameOpt = meta2.basic.nameOpt,
+          dateEdited = Some( DateTime.now )
         ),
         address = mnode.meta.address.copy(
           town    = meta2.address.town,

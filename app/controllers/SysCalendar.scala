@@ -33,6 +33,7 @@ class SysCalendar @Inject() (
   mCalendar                     : MCalendar_,
   override val messagesApi      : MessagesApi,
   db                            : Database,
+  override val _contextFactory  : Context2Factory,
   override implicit val ec      : ExecutionContext,
   implicit val esClient         : Client,
   override implicit val sn      : SioNotifierStaticClientI

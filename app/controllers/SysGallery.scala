@@ -3,6 +3,7 @@ package controllers
 import com.google.inject.Inject
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.playx.ICurrentConf
+import models.Context2Factory
 import org.elasticsearch.client.Client
 import play.api.data._
 import play.api.i18n.MessagesApi
@@ -29,6 +30,7 @@ class SysGallery @Inject() (
   override val messagesApi        : MessagesApi,
   override implicit val current   : play.api.Application,
   tempImgSupport                  : TempImgSupport,
+  override val _contextFactory    : Context2Factory,
   override implicit val ec        : ExecutionContext,
   override implicit val esClient  : Client,
   override implicit val sn        : SioNotifierStaticClientI

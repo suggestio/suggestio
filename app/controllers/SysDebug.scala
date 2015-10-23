@@ -2,6 +2,7 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.di.IExecutionContext
+import models.Context2Factory
 import play.api.i18n.MessagesApi
 import util.acl.IsSuperuser
 import util.health.AdnGeoParentsHealth
@@ -18,6 +19,7 @@ import scala.concurrent.ExecutionContext
 class SysDebug @Inject() (
   override val messagesApi      : MessagesApi,
   geoParentsHealth              : AdnGeoParentsHealth,
+  override val _contextFactory  : Context2Factory,
   override implicit val ec      : ExecutionContext
 )
   extends SioController

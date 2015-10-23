@@ -5,19 +5,15 @@ import io.suggest.util.SioEsUtil
 import models.usr.SuperUsers
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.mapper.MapperException
-import play.api.mvc.{Result, WithFilters, RequestHeader}
-import util.cdn.{CorsFilter, DumpXffHeaders}
 import util.event.SiowebNotifier
 import util.radius.RadiusServerImpl
 import util.secure.PgpUtil
 import util.showcase.ScStatSaver
-import util.xplay.{SioHttpErrorHandler, SecHeadersFilter}
 import scala.concurrent.{Await, Future}
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success}
 import util.jmx.JMXImpl
 import util._
-import play.api.Play._
 import play.api._
 import scala.concurrent.duration._
 import models._
@@ -31,12 +27,7 @@ import models._
  * http://www.playframework.com/documentation/2.1.0/ScalaGlobal
  */
 
-object Global extends WithFilters(
-  new HtmlCompressFilter,
-  new DumpXffHeaders,
-  SecHeadersFilter(),
-  new CorsFilter
-) {
+object Global extends GlobalSettings {
 
   // Логгеры тут работают через вызов Logger.*
   import Logger._
@@ -162,21 +153,6 @@ object Global extends WithFilters(
     // Дожидаемся завершения асинхронных задач.
     val closeFut = casCloseFut.flatMap(_ => esCloseFut)
     Await.ready(closeFut, 20.seconds)
-  }
-
-
-  /** Вызов страницы 404. В продакшене надо выводить специальную страницу 404. */
-  override def onHandlerNotFound(request: RequestHeader): Future[Result] = {
-    // TODO логгер тут не работает почему-то...
-    trace(request.path + " - 404")
-    maybeApplication match {
-      case Some(app) if app.mode == Mode.Prod =>
-        SioHttpErrorHandler.http404Fut(request)
-
-      // При разработке следует выводить нормальное 404.
-      case _ =>
-        super.onHandlerNotFound(request)
-    }
   }
 
 

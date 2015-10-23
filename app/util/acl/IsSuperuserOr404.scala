@@ -3,7 +3,7 @@ package util.acl
 import io.suggest.playx.ICurrentApp
 import play.api.mvc.{RequestHeader, Result}
 import util.acl.PersonWrapper.PwOpt_t
-import util.xplay.SioHttpErrorHandler
+import util.di.IErrorHandler
 
 import scala.concurrent.Future
 import play.api.Play.isDev
@@ -14,11 +14,14 @@ import play.api.Play.isDev
  * Created: 15.10.15 15:56
  * Description: Трейты-аддоны для контроллеров для IsSuperuser or 404.
  */
-trait IsSuperuserOr404Ctl extends IsSuperuser {
+trait IsSuperuserOr404Ctl
+  extends IsSuperuser
+  with IErrorHandler
+{
 
   trait IsSuperuserOr404Base extends IsSuperuserBase with ExpireSession[AbstractRequestWithPwOpt] {
     override def supOnUnauthResult(request: RequestHeader, pwOpt: PwOpt_t): Future[Result] = {
-      SioHttpErrorHandler.http404Fut(request)
+      errorHandler.http404Fut(request)
     }
   }
 

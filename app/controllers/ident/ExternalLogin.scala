@@ -3,6 +3,8 @@ package controllers.ident
 import com.google.inject.Inject
 import controllers.{routes, SioController}
 import io.suggest.di.{IExecutionContext, IEsClient}
+import io.suggest.model.n2.node.common.MNodeCommon
+import io.suggest.model.n2.node.meta.{MBusinessInfo, MPersonMeta, MBasicMeta, MMeta}
 import io.suggest.playx.ICurrentApp
 import models.mext.{MExtServices, ILoginProvider}
 import models.msession.{CustomTtl, Keys}
@@ -167,7 +169,26 @@ trait ExternalLogin
             // Сохраняем, если требуется. В результате приходит также новосохранный person MNode.
             val saveFut: Future[(MExtIdent, Option[MNode])] = maybeExisting match {
               case None =>
-                val mperson0 = MNode.applyPerson(lang = request2lang.code)
+                val mperson0 = MNode(
+                  common = MNodeCommon(
+                    ntype       = MNodeTypes.Person,
+                    isDependent = false
+                  ),
+                  meta = MMeta(
+                    basic = MBasicMeta(
+                      nameOpt   = profile.fullName,
+                      techName  = Some(profile.providerId + ":" + profile.userId),
+                      langs     = List(request2lang.code)
+                    ),
+                    person  = MPersonMeta(
+                      nameFirst   = profile.firstName,
+                      nameLast    = profile.lastName,
+                      extAvaUrls  = profile.avatarUrl.toList,
+                      emails      = profile.email.toList
+                    )
+                    // Ссылку на страничку юзера в соц.сети можно генерить на ходу через ident'ы и костыли самописные.
+                  )
+                )
                 val mpersonSaveFut = mperson0.save
                 val meiFut = mpersonSaveFut.flatMap { personId =>
                   // Сохранить данные идентификации через соц.сеть.

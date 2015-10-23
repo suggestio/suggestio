@@ -29,6 +29,7 @@ class SysMdr @Inject() (
   lkAdUtil                          : LkAdUtil,
   scUtil                            : ShowcaseUtil,
   mNodeCache                        : MAdnNodeCache,
+  override val _contextFactory      : Context2Factory,
   override val messagesApi          : MessagesApi,
   override implicit val ec          : ExecutionContext,
   override implicit val esClient    : Client,

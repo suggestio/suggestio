@@ -38,19 +38,20 @@ import views.html.lk.adn.invite.emailNodeOwnerInviteTpl
  * Description: Тут управление компаниями, торговыми центрами и магазинами.
  */
 class SysMarket @Inject() (
-  override val nodesUtil        : NodesUtil,
-  lkAdUtil                      : LkAdUtil,
-  advUtil                       : AdvUtil,
-  sysMarketUtil                 : SysMarketUtil,
-  override val messagesApi      : MessagesApi,
-  override val mailer           : IMailerWrapper,
-  db                            : Database,
-  override val mNodeCache       : MAdnNodeCache,
-  override val sysAdRenderUtil  : SysAdRenderUtil,
-  override implicit val current : play.api.Application,
-  override implicit val ec      : ExecutionContext,
-  override implicit val esClient: Client,
-  override implicit val sn      : SioNotifierStaticClientI
+  override val nodesUtil          : NodesUtil,
+  lkAdUtil                        : LkAdUtil,
+  advUtil                         : AdvUtil,
+  sysMarketUtil                   : SysMarketUtil,
+  override val messagesApi        : MessagesApi,
+  override val mailer             : IMailerWrapper,
+  db                              : Database,
+  override val mNodeCache         : MAdnNodeCache,
+  override val sysAdRenderUtil    : SysAdRenderUtil,
+  override val _contextFactory    : Context2Factory,
+  override implicit val current   : play.api.Application,
+  override implicit val ec        : ExecutionContext,
+  override implicit val esClient  : Client,
+  override implicit val sn        : SioNotifierStaticClientI
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
@@ -88,13 +89,22 @@ class SysMarket @Inject() (
     // Запустить поиск узлов для рендера:
     val mnodesFut = MNode.dynSearch(msearch)
 
+    // Кол-во вообще всех узлов.
+    val allCountFut = for {
+      stats <- ntypeStatsFut
+    } yield {
+      stats.valuesIterator.sum
+    }
+
     // Считаем общее кол-во элементов указанного типа.
-    val totalCountFut: Future[Long] = {
-      ntypeStatsFut map { stats =>
-        args.ntypeOpt.fold[Long] {
-          stats.valuesIterator.sum
-        } { ntype =>
-          stats.getOrElse(ntype, 0L)
+    val totalFut: Future[Long] = {
+      ntypeStatsFut flatMap { stats =>
+        args.ntypeOpt match {
+          case Some(ntype) =>
+            val res = stats.getOrElse(ntype, 0L)
+            Future successful res
+          case None =>
+            allCountFut
         }
       }
     }
@@ -112,21 +122,34 @@ class SysMarket @Inject() (
           val ntype: MNodeType = nt
           stats.get(ntype).map { count =>
             MNodeTypeInfo(
-              name  = ctx.messages( ntype.singular ),
-              ntype = ntype,
-              count = count
+              name      = ctx.messages( ntype.plural ),
+              ntypeOpt  = Some(ntype),
+              count     = count
             )
           }
         }
-        .toSeq
+        .toStream
         .sortBy(_.name)
+    }
+
+    // Добавить ссылку "Все" в начало списка поисковых ссылок.
+    val ntypes2Fut = for {
+      allCount <- allCountFut
+      ntypes0  <- ntypesFut
+    } yield {
+      val allNti = MNodeTypeInfo(
+        name      = ctx.messages("All"),
+        ntypeOpt  = None,
+        count     = allCount
+      )
+      allNti #:: ntypes0
     }
 
     // Объединение асинхронных результатов:
     for {
       mnodes <- mnodesFut
-      ntypes <- ntypesFut
-      total  <- totalCountFut
+      ntypes <- ntypes2Fut
+      total  <- totalFut
     } yield {
       val rargs = MSysNodeListTplArgs(
         mnodes = mnodes,

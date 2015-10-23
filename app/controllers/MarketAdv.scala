@@ -2,7 +2,6 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.model.n2.node
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.playx.ICurrentConf
 import models.adv.geo.{ReqInfo, AdvFormEntry, WndFullArgs}
@@ -19,7 +18,6 @@ import util.adv.CtlGeoAdvUtil
 import util.async.AsyncUtil
 import util.lk.LkAdUtil
 import util.showcase.ShowcaseUtil
-import util.xplay.SioHttpErrorHandler
 import views.html.lk.adv._
 import util.PlayMacroLogsImpl
 import scala.concurrent.{ExecutionContext, Future}
@@ -47,6 +45,8 @@ class MarketAdv @Inject() (
   override val messagesApi        : MessagesApi,
   override val current            : play.api.Application,
   override val db                 : Database,
+  override val _contextFactory    : Context2Factory,
+  errorHandler                    : ErrorHandler,
   override implicit val ec        : ExecutionContext,
   override implicit val esClient  : Client,
   override implicit val sn        : SioNotifierStaticClientI
@@ -835,7 +835,7 @@ class MarketAdv @Inject() (
         } else {
           val advReqId = request.advReq.id.get
           warn(s"_showAdvReq1($advReqId): Something not found, but it should: mad=$madOpt producer=$adProducerOpt")
-          val res = Left(SioHttpErrorHandler.http404ctx)
+          val res = Left(errorHandler.http404ctx)
           Future successful res
         }
       }

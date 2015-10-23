@@ -7,8 +7,7 @@ import play.api.mvc._
 import models._
 import util.acl.PersonWrapper.PwOpt_t
 import util.async.AsyncUtil
-import util.di.{IDb, INodeCache}
-import util.xplay.SioHttpErrorHandler
+import util.di.{IErrorHandler, IDb, INodeCache}
 import scala.concurrent.Future
 import util.{PlayMacroLogsDyn, PlayMacroLogsI}
 
@@ -19,7 +18,11 @@ import util.{PlayMacroLogsDyn, PlayMacroLogsI}
  * Description: Проверка прав на управление рекламной карточкой.
  */
 
-trait AdEditBaseCtl extends SioController with IEsClient {
+trait AdEditBaseCtl
+  extends SioController
+  with IEsClient
+  with IErrorHandler
+{
 
   /** Кое какая утиль для action builder'ов, редактирующих карточку. */
   trait AdEditBase extends PlayMacroLogsI {
@@ -36,7 +39,7 @@ trait AdEditBaseCtl extends SioController with IEsClient {
 
     def adNotFound(request: RequestHeader): Future[Result] = {
       LOGGER.trace(s"invokeBlock(): Ad not found: $adId")
-      SioHttpErrorHandler.http404Fut(request)
+      errorHandler.http404Fut(request)
     }
   }
 

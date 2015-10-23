@@ -5,9 +5,8 @@ import models.mext.MExtServices
 import models.msc._
 import play.twirl.api.Html
 import util.PlayMacroLogsI
-import util.di.{INodeCache, IScUtil, IScStatUtil}
+import util.di.{IErrorHandler, INodeCache, IScUtil, IScStatUtil}
 import util.acl._
-import util.xplay.SioHttpErrorHandler
 import views.html.sc._
 import models._
 import scala.concurrent.Future
@@ -28,6 +27,7 @@ trait ScSiteBase
   with IScStatUtil
   with IScUtil
   with INodeCache
+  with IErrorHandler
 {
 
   /** Настраиваемая логика сборки результата запроса сайта выдачи. */
@@ -272,7 +272,7 @@ trait ScSiteNode
 
     } else {
       LOGGER.debug(s"demoWebSite($adnId): Requested node exists, but not available in public: enabled=$nodeEnabled isRcvr=$isReceiver")
-      SioHttpErrorHandler.http404ctx
+      errorHandler.http404ctx
     }
   }
 

@@ -12,9 +12,9 @@ import util.acl.MaybeAuth
 import models._
 import util.mail.IMailerWrapper
 import views.html.market.join._
+import views.txt.sys1.market.invreq.emailNewIRCreatedTpl
 import util.FormUtil._
 import play.api.data._, Forms._
-import play.api.mvc.RequestHeader
 
 import scala.concurrent.ExecutionContext
 
@@ -29,6 +29,7 @@ class MarketJoin @Inject() (
   override val messagesApi      : MessagesApi,
   override val mailer           : IMailerWrapper,
   override val current          : play.api.Application,
+  override val _contextFactory  : Context2Factory,
   override implicit val ec      : ExecutionContext,
   implicit val esClient         : Client,
   override implicit val sn      : SioNotifierStaticClientI
@@ -106,9 +107,10 @@ class MarketJoin @Inject() (
       },
       {mir =>
         mir.save.map { irId =>
-          sendEmailNewIR(irId, mir)
+          implicit val ctx = implicitly[Context]
+          sendEmailNewIR(irId, mir)(ctx)
           rmCaptcha(formBinded) {
-            Ok( callbackRequestAcceptedTpl(mir.company.left.get.meta) )
+            Ok( callbackRequestAcceptedTpl(mir.company.left.get.meta)(ctx) )
           }
         }
       }
@@ -143,7 +145,7 @@ class MarketJoin @Inject() (
 
 
   /** Отправить письмецо администрации s.io с ссылой на созданный запрос. */
-  private def sendEmailNewIR(irId: String, mir0: MInviteRequest)(implicit request: RequestHeader) {
+  private def sendEmailNewIR(irId: String, mir0: MInviteRequest)(implicit ctx: Context) {
     val suEmailsConfKey = "market.join.request.notify.superusers.emails"
     val emails: Seq[String] = configuration.getStringSeq(suEmailsConfKey).getOrElse {
       // Нет ключа, уведомить разработчика, чтобы он настроил конфиг.
@@ -154,9 +156,8 @@ class MarketJoin @Inject() (
     msg.setRecipients(emails : _*)
     msg.setFrom("no-reply@suggest.io")
     msg.setSubject("Новый запрос на подключение | Suggest.io")
-    val ctx = ContextImpl()
     val mir1 = mir0.copy(id = Some(irId))
-    msg.setText( views.txt.sys1.market.invreq.emailNewIRCreatedTpl(mir1)(ctx) )
+    msg.setText( emailNewIRCreatedTpl(mir1) )
     msg.send()
   }
 
