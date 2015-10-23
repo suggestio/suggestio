@@ -197,6 +197,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
   }
 
 
+  // !!! map() с сохранением реализован в методе updateAll() !!!
+
   /**
    * foreach для асинхронного обхода всех документов модели.
    * @param resultsPerScroll По сколько документов скроллить?

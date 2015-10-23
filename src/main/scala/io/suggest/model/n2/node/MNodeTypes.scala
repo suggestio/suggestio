@@ -20,6 +20,7 @@ object MNodeTypes extends EnumMaybeWithName with EnumJsonReadsValT with EnumTree
   { that: T =>
     def singular = "Ntype." + strId
     def plural   = "Ntypes." + strId
+    def guessNodeDisplayName(mnode: MNode): Option[String] = None
   }
 
   /** Абстрактная класс одного элемента модели. */
@@ -42,7 +43,24 @@ object MNodeTypes extends EnumMaybeWithName with EnumJsonReadsValT with EnumTree
   // Элементы дерева типов N2-узлов.
 
   /** Юзер. */
-  val Person: T   = new ValNoSub("p")
+  val Person: T   = new ValNoSub("p") {
+    override def guessNodeDisplayName(mnode: MNode): Option[String] = {
+      mnode.meta.person
+        .emails.headOption
+        .orElse {
+          import mnode.meta.person._
+          if (nameFirst.nonEmpty || nameLast.nonEmpty) {
+            val nameFull = nameFirst.fold("")(_ + " ") + nameLast.getOrElse("")
+            Some(nameFull)
+          } else {
+            None
+          }
+        }
+        .orElse {
+          super.guessNodeDisplayName(mnode)
+        }
+    }
+  }
 
   /** Узел ADN. */
   val AdnNode: T  = new ValNoSub("n")
@@ -51,7 +69,14 @@ object MNodeTypes extends EnumMaybeWithName with EnumJsonReadsValT with EnumTree
   val Ad: T       = new ValNoSub("a")
 
   /** Теги/ключевые слова. */
-  val Tag: T      = new ValNoSub("t")
+  val Tag: T      = new ValNoSub("t") {
+    override def guessNodeDisplayName(mnode: MNode): Option[String] = {
+      mnode.extras.tag
+        .flatMap(_.faces.headOption)
+        .map(_._2.name)
+        .orElse { super.guessNodeDisplayName(mnode) }
+    }
+  }
 
   /** Картинки, видео и т.д. */
   val Media       = new Val("m") with NoParent { that =>

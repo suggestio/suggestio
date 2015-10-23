@@ -31,6 +31,7 @@ object MBasicMeta extends IGenEsMappingProps {
     }
 
     val HIDDEN_DESCR_FN       = "hd"
+    val TECHNICAL_NAME_FN     = "tn"
     val DATE_CREATED_FN       = "dc"
     val DATE_EDITED_FN        = "de"
     val LANGS_ESFN            = "l"
@@ -44,6 +45,7 @@ object MBasicMeta extends IGenEsMappingProps {
   implicit val FORMAT: OFormat[MBasicMeta] = (
     (__ \ NAME_FN).formatNullable[String] and
     (__ \ NAME_SHORT_FN).formatNullable[String] and
+    (__ \ TECHNICAL_NAME_FN).formatNullable[String] and
     (__ \ HIDDEN_DESCR_FN).formatNullable[String] and
     (__ \ DATE_CREATED_FN).format(jodaDateTimeFormat) and
     (__ \ DATE_EDITED_FN).formatNullable(jodaDateTimeFormat) and
@@ -63,6 +65,7 @@ object MBasicMeta extends IGenEsMappingProps {
       FieldString(NAME_SHORT_FN, index = FieldIndexingVariants.analyzed, include_in_all = true, fields = Seq(
         FieldString(NOTOK_SUF, index = FieldIndexingVariants.not_analyzed, include_in_all = true)
       )),
+      FieldString(TECHNICAL_NAME_FN, index = FieldIndexingVariants.no, include_in_all = false),
       FieldString(HIDDEN_DESCR_FN, index = FieldIndexingVariants.no, include_in_all = false),
       FieldDate(DATE_CREATED_FN, index = FieldIndexingVariants.no, include_in_all = false),
       FieldDate(DATE_EDITED_FN, index = FieldIndexingVariants.no, include_in_all = false),
@@ -73,16 +76,37 @@ object MBasicMeta extends IGenEsMappingProps {
 }
 
 
-/** Все экземпляры модели принадлежат к этому классу. */
+/**
+ * Все экземпляры модели принадлежат к этому классу.
+ * @param nameOpt Индексируемое отображаемое имя узла. Например "Василеостровский район"
+ * @param nameShortOpt Короткое индексируемое имя.
+ *                     Например "Васильевский". Также это поле используется для name-сортировки.
+ * @param techName Скрытое/техническое неиндексируемое имя. Бывают динамические имена,
+ *                 которые не требуется индексировать.
+ * @param hiddenDescr Скрытое описание. Выставляется и отображается только администрацией sio.
+ * @param dateCreated Дата создания.
+ * @param dateEdited Дата редактирования.
+ * @param langs Названия языков.
+ */
 case class MBasicMeta(
   nameOpt       : Option[String]    = None,
   nameShortOpt  : Option[String]    = None,
+  techName      : Option[String]    = None,
   hiddenDescr   : Option[String]    = None,
   dateCreated   : DateTime          = DateTime.now,
   dateEdited    : Option[DateTime]  = None,
   langs         : List[String]      = Nil
 )
   extends MBasicMetaUtil
+{
+
+  def guessDisplayName: Option[String] = {
+    nameOpt
+      .orElse( nameShortOpt )
+      .orElse( techName )
+  }
+
+}
 
 
 /** Утиль для basic-meta моделей: текущей и legacy [[MNodeMeta]]. */

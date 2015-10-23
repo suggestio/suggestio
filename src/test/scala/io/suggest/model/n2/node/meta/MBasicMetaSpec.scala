@@ -23,6 +23,7 @@ class MBasicMetaSpec extends FlatSpec with PlayJsonTestUtil {
       MBasicMeta(
         nameOpt       = Some("some name"),
         nameShortOpt  = Some("ЯПредлагаю"),
+        techName    = Some("nomad.jpg"),
         hiddenDescr   = Some("Все свои, всё схвачено."),
         dateCreated   = DateTime.now.minusMinutes(5),
         dateEdited    = Some( DateTime.now.plusSeconds(1) ),

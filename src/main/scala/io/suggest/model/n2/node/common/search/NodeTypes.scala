@@ -12,7 +12,8 @@ import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilder
  */
 trait NodeTypes extends DynSearchArgs {
 
-  /** Искомые типы узлов. */
+  /** Искомые типы узлов.
+    * Если Seq(null), то будет поиск документов без сохранного значения. */
   def nodeTypes: Seq[MNodeType]
 
   override def toEsQueryOpt: Option[QueryBuilder] = {
@@ -22,15 +23,26 @@ trait NodeTypes extends DynSearchArgs {
       qbOpt0
     } else {
       val fn = MNodeFields.Common.NODE_TYPE_FN
-      val strNodeTypes = _nodeTypes.map(_.strId)
-      qbOpt0.map { qb0 =>
-        val ntf = FilterBuilders.termsFilter(fn, strNodeTypes: _*)
-          .execution("or")
-        QueryBuilders.filteredQuery(qb0, ntf)
+      if (nodeTypes.head == null) {
+        // Seq(null) -- режим поиска элементов, у которых отсутствует сохранянное значение в поле ntype.
+        val qb0 = qbOpt0 getOrElse {
+          QueryBuilders.matchAllQuery()
+        }
+        val mf = FilterBuilders.missingFilter( fn )
+        val qb1 = QueryBuilders.filteredQuery(qb0, mf)
+        Some(qb1)
 
-      }.orElse {
-        val ntq = QueryBuilders.termsQuery(fn, strNodeTypes: _*)
-        Some(ntq)
+      } else {
+        val strNodeTypes = _nodeTypes.map(_.strId)
+        qbOpt0.map { qb0 =>
+          val ntf = FilterBuilders.termsFilter(fn, strNodeTypes: _*)
+            .execution("or")
+          QueryBuilders.filteredQuery(qb0, ntf)
+
+        }.orElse {
+          val ntq = QueryBuilders.termsQuery(fn, strNodeTypes: _*)
+          Some(ntq)
+        }
       }
     }
   }

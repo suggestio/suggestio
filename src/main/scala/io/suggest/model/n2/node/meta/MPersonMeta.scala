@@ -15,9 +15,10 @@ import play.api.libs.functional.syntax._
 object MPersonMeta extends IGenEsMappingProps {
 
   object Fields {
-    val NAME_FIRST_FN = "f"
-    val NAME_LAST_FN = "l"
-    val EXT_AVA_URL_FN = "a"
+    val NAME_FIRST_FN   = "f"
+    val NAME_LAST_FN    = "l"
+    val EXT_AVA_URL_FN  = "a"
+    val EMAIL_FN        = "e"
   }
 
 
@@ -36,6 +37,11 @@ object MPersonMeta extends IGenEsMappingProps {
       .inmap[List[String]](
         { _ getOrElse Nil },
         { urls => if (urls.isEmpty) None else Some(urls) }
+      ) and
+    (__ \ EMAIL_FN).formatNullable[List[String]]
+      .inmap [List[String]] (
+        _ getOrElse Nil,
+        { emails => if (emails.isEmpty) None else Some(emails) }
       )
   )(apply, unlift(unapply))
 
@@ -46,7 +52,8 @@ object MPersonMeta extends IGenEsMappingProps {
     List(
       FieldString(NAME_FIRST_FN,    index = FieldIndexingVariants.analyzed, include_in_all = true),
       FieldString(NAME_LAST_FN,     index = FieldIndexingVariants.analyzed, include_in_all = true),
-      FieldString(EXT_AVA_URL_FN,   index = FieldIndexingVariants.no, include_in_all = false)
+      FieldString(EXT_AVA_URL_FN,   index = FieldIndexingVariants.no, include_in_all = false),
+      FieldString(EMAIL_FN,         index = FieldIndexingVariants.no, include_in_all = false)
     )
   }
 
@@ -56,7 +63,8 @@ object MPersonMeta extends IGenEsMappingProps {
 case class MPersonMeta(
   nameFirst     : Option[String]    = None,
   nameLast      : Option[String]    = None,
-  extAvaUrls    : List[String]      = List.empty
+  extAvaUrls    : List[String]      = Nil,
+  emails        : List[String]      = Nil
 )
   extends EmptyProduct
 

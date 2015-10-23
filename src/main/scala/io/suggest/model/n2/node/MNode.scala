@@ -241,6 +241,17 @@ case class MNode(
       .toList
   }
 
+  def guessDisplayName: Option[String] = {
+    meta.basic
+      .guessDisplayName
+      .orElse { common.ntype.guessNodeDisplayName(this) }
+  }
+
+  def guessDisplayNameOrId: Option[String] = {
+    guessDisplayName
+      .orElse { id }
+  }
+
 }
 
 
