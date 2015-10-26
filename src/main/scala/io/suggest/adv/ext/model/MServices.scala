@@ -42,7 +42,9 @@ trait MServicesBaseT extends ILightEnumeration {
 
 /** Абстрактная реализация [[MServicesBaseT]] на базе scala.Enumeration. */
 trait MServicesT extends Enumeration with EnumMaybeWithName with MServicesBaseT {
-  protected class Val(val strId: String) extends super.Val(strId) with ValT
+  protected class Val(val strId: String)
+    extends super.Val(strId)
+    with ValT
   override type T <: Val
 }
 
