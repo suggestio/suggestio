@@ -65,3 +65,23 @@ case class MEdgeInfo(
 )
   extends EmptyProduct
   with IEdgeInfo
+{
+
+  /** Форматирование для вывода в шаблонах. */
+  override def toString: String = {
+    if (nonEmpty) {
+      val sb = new StringBuilder(32)
+      dynImgArgs.foreach { dia =>
+        sb.append("dynImg=").append(dia).append(" ")
+      }
+      if (sls.nonEmpty) {
+        sb.append("sls=").append( sls.mkString(",") )
+      }
+      sb.toString()
+
+    } else {
+      ""
+    }
+  }
+
+}

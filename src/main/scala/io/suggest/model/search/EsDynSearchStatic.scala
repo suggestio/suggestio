@@ -38,6 +38,22 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with MacroLog
   }
 
   /**
+   * Поиск и сборка карты результатов в id в качестве ключа.
+   * @param dsa Поисковые критерии.
+   * @return Карта с найденными элементами в неопределённом порядке.
+   */
+  def dynSearchMap(dsa: A)(implicit ec: ExecutionContext, client: Client): Future[Map[String, T]] = {
+    for (res <- dynSearch(dsa)) yield {
+      res.iterator
+        .flatMap { r =>
+          r.id
+            .map { _ -> r }
+        }
+        .toMap
+    }
+  }
+
+  /**
    * Разновидность dynSearch для максимум одного результата. Вместо коллекции возвращается Option[T].
    * @param dsa Аргументы поиска.
    * @return Фьючерс с Option[T] внутри.

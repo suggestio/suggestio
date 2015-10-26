@@ -248,6 +248,7 @@ case class MNode(
     )
   }
 
+  // это compat для EsModelPlayJsonT. По факту оно не нужно, и должно быть выпилено.
   override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     companion.esDocWrites
       .writes(this)
@@ -255,7 +256,7 @@ case class MNode(
       .toList
   }
 
-  def guessDisplayName: Option[String] = {
+  lazy val guessDisplayName: Option[String] = {
     meta.basic
       .guessDisplayName
       .orElse { common.ntype.guessNodeDisplayName(this) }

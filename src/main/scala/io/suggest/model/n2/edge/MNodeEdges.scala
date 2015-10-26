@@ -129,4 +129,11 @@ case class MNodeEdges(
       .map { _.nodeId }
   }
 
+  def withNodeId(nodeIds: String*): Iterator[MEdge] = {
+    out.valuesIterator
+      .filter { medge =>
+        nodeIds contains medge.nodeId
+      }
+  }
+
 }

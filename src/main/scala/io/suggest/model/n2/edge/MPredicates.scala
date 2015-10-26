@@ -23,6 +23,7 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
     /** Типы узлов, которые могут выступать объектами данного предиката. */
     def toTypeValid(ntype: MNodeType): Boolean
 
+    def singular = "edge.predicate." + strId
   }
 
 
