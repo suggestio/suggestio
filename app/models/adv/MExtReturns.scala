@@ -17,7 +17,9 @@ import util.FormUtil
 
 object MExtReturns extends Enumeration with EnumMaybeWithName {
 
-  abstract protected class Val(val strId: String) extends super.Val(strId) {
+  abstract protected[this] class Val(val strId: String)
+    extends super.Val(strId)
+  {
     /**
      * Сгенерить экземпляр билдера для дальнейшей сборки ссылки на возврат.
      * @return Конкретная реализация [[ReturnToScBuilder]].
@@ -29,19 +31,18 @@ object MExtReturns extends Enumeration with EnumMaybeWithName {
   }
 
 
-  type MExtReturn = Val
-  override type T = MExtReturn
+  override type T = Val
 
 
   /** Юзер должен возвращаться на выдачу размещающего. */
-  val ToShowCase: MExtReturn = new Val("sc") {
+  val ToShowCase: T = new Val("sc") {
     override def builder(): ReturnToScBuilder = {
       new RetToNode {}
     }
   }
 
   /** Юзер должен возвращаться на открытую рекламную карточку. */
-  val ToAd: MExtReturn = new Val("ad") {
+  val ToAd: T = new Val("ad") {
     override def builder(): ReturnToScBuilder = {
       new RetToNode with RetToFocusedAd {}
     }
@@ -60,17 +61,17 @@ object MExtReturns extends Enumeration with EnumMaybeWithName {
   import play.api.data.Forms._
 
   /** Form mapping для опционального поля со значением [[MExtReturn]]. */
-  def optMapping: Mapping[Option[MExtReturn]] = {
+  def optMapping: Mapping[Option[T]] = {
     val m = text(minLength = strIdLenMin, maxLength = strIdLenMax * 3)
     FormUtil.toStrOptM(m)
-      .transform [Option[MExtReturn]] (_.flatMap(maybeWithName), _.map(_.strId))
+      .transform [Option[T]] (_.flatMap(maybeWithName), _.map(_.strId))
   }
 
   /** Form mapping для обязательного поля со значением [[MExtReturn]]. */
-  def mapping: Mapping[MExtReturn] = {
+  def mapping: Mapping[T] = {
     optMapping
       .verifying("error.required", _.isDefined)
-      .transform[MExtReturn] (_.get, Some.apply)
+      .transform[T] (_.get, Some.apply)
   }
 
 }

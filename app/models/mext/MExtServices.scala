@@ -4,11 +4,9 @@ import _root_.util.PlayLazyMacroLogsImpl
 import io.suggest.adv.ext.model.MServices._
 import io.suggest.adv.ext.model._
 import io.suggest.model.menum.EnumJsonReadsT
-import models.adv.MExtTarget
 import models.mext.fb.FacebookService
 import models.mext.tw.TwitterService
 import models.mext.vk.VkService
-import play.api.i18n.Messages
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -24,20 +22,11 @@ object MExtServices extends MServicesT with PlayLazyMacroLogsImpl with EnumJsonR
   override type T = Val
 
   /** Экземпляр модели. */
-  protected sealed abstract class Val(strId: String) extends super.Val(strId) with IExtService {
+  protected[this] abstract class Val(strId: String)
+    extends super.Val(strId)
+    with IExtService
+  {
     override lazy val APP_ID_OPT = super.APP_ID_OPT
-
-    override def dfltTarget(adnId: String)(implicit lang: Messages): Option[MExtTarget] = {
-      dfltTargetUrl.map { url =>
-        MExtTarget(
-          url     = url,
-          adnId   = adnId,
-          service = this,
-          name    = Some(Messages(iAtServiceI18N))
-        )
-      }
-    }
-
     override val imgFmt = super.imgFmt
     override val szMult = super.szMult
   }

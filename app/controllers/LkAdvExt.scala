@@ -6,6 +6,7 @@ import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.playx.ICurrentConf
 import models._
 import models.adv._
+import models.adv.ext.MForAdTplArgs
 import models.adv.ext.act.{OAuthVerifier, ActorPathQs}
 import models.adv.search.etg.ExtTargetSearchArgs
 import models.jsm.init.MTargets
@@ -15,10 +16,9 @@ import play.api.i18n.MessagesApi
 import play.api.libs.json.JsValue
 import play.api.mvc.WebSocket.HandlerProps
 import play.api.mvc.{Result, WebSocket}
-import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 import util.acl._
-import util.adv.{ExtUtil, ExtAdvWsActor}
+import util.adv.{ExtAdvWsActor_, ExtUtil}
 import play.api.data._, Forms._
 import util.FormUtil._
 import views.html.lk.adv.ext._
@@ -39,6 +39,7 @@ class LkAdvExt @Inject() (
   override val messagesApi        : MessagesApi,
   system                          : ActorSystem,
   override val mNodeCache         : MAdnNodeCache,
+  extAdvWsActor                   : ExtAdvWsActor_,
   override val _contextFactory    : Context2Factory,
   override implicit val ec        : ExecutionContext,
   override implicit val esClient  : Client,
@@ -78,10 +79,9 @@ class LkAdvExt @Inject() (
     )
   }
 
-  private type Form_t = Form[List[MExtTargetInfo]]
 
   /** Маппинг формы со списком целей. */
-  private def advsFormM: Form_t = {
+  private def advsFormM: ExtAdvForm = {
     Form(
       "adv" -> list(advM)
         .transform[List[MExtTargetInfo]] (_.flatten, _.map(Some.apply))
@@ -96,24 +96,33 @@ class LkAdvExt @Inject() (
    * @return 200 Ок + страница с данными по размещениям на внешних сервисах.
    */
   def forAd(adId: String) = CanAdvertiseAdGet(adId).async { implicit request =>
-    _forAdRender(adId, advsFormM)
-      .map { Ok(_) }
+    _forAdRender(adId, advsFormM, Ok)
   }
 
-  private def _forAdRender(adId: String, form: Form_t)(implicit request: RequestWithAdAndProducer[_]): Future[Html] = {
+  private def _forAdRender(adId: String, form: ExtAdvForm, respStatus: Status)
+                          (implicit request: RequestWithAdAndProducer[_]): Future[Result] = {
     val targetsFut: Future[Seq[MExtTarget]] = {
       val args = ExtTargetSearchArgs(
         adnId       = request.producer.id,
         sortByDate  = Some(SortOrder.ASC),
-        limit  = 100
+        limit       = 100
       )
       MExtTarget.dynSearch(args)
     }
     for {
       targets       <- targetsFut
     } yield {
-      implicit val jsInitTgs = Seq(MTargets.LkAdvExtForm)
-      forAdTpl(request.mad, request.producer, targets, form)
+      val args = MForAdTplArgs(
+        mad         = request.mad,
+        producer    = request.producer,
+        targets     = targets,
+        advForm     = form,
+        oneTgForm   = ExtUtil.formForTarget
+      )
+      respStatus {
+        implicit val jsInitTgs = Seq(MTargets.LkAdvExtForm)
+        forAdTpl(args)
+      }
     }
   }
 
@@ -130,8 +139,7 @@ class LkAdvExt @Inject() (
     advsFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"advFormSubmit($adId): failed to bind from request:\n ${formatFormErrors(formWithErrors)}")
-        _forAdRender(adId, formWithErrors)
-          .map { NotAcceptable(_) }
+        _forAdRender(adId, formWithErrors, NotAcceptable)
       },
       {advs =>
         val wsArgs = MExtAdvQs(
@@ -222,7 +230,7 @@ class LkAdvExt @Inject() (
     }.map { implicit req1 =>
       // Всё ок, запускаем актора, который будет вести переговоры с этим websocket'ом.
       val eaArgs = MExtWsActorArgs(qsArgs, req1, targetsFut)
-      val hp: HandlerProps = ExtAdvWsActor.props(_, eaArgs)
+      val hp: HandlerProps = extAdvWsActor.props(_, eaArgs)
       Right(hp)
     }.recover {
       case ExceptionWithResult(res) =>

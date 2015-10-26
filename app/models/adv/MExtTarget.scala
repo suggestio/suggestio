@@ -4,13 +4,13 @@ import io.suggest.adv.ext.model.ctx.MExtTargetT
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.es._
 import EsModelUtil.FieldsJsonAcc
-import io.suggest.model._
 import io.suggest.model.search.EsDynSearchStatic
 import io.suggest.util.SioEsUtil._
 import models.adv.search.etg.IExtTargetSearchArgs
 import models.mext.{MExtServices, MExtService}
 import org.elasticsearch.client.Client
 import org.joda.time.DateTime
+import play.api.i18n.Messages
 import util.PlayMacroLogsImpl
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -28,8 +28,12 @@ import scala.concurrent.ExecutionContext
  * Он содержит целевую ссылку, id обнаруженного сервиса, дату добавление и прочее.
  */
 
-object MExtTarget extends EsModelStaticT with PlayMacroLogsImpl with EsDynSearchStatic[IExtTargetSearchArgs]
-with EsmV2Deserializer {
+object MExtTarget
+  extends EsModelStaticT
+  with PlayMacroLogsImpl
+  with EsDynSearchStatic[IExtTargetSearchArgs]
+  with EsmV2Deserializer
+{
 
   override type T = MExtTarget
 
@@ -94,6 +98,26 @@ with EsmV2Deserializer {
     _reads0 {
       (url, service, adnId, name, dataCreated) =>
         MExtTarget(url, service, adnId, name, dataCreated, meta.version, meta.id)
+    }
+  }
+
+
+  /**
+   * Создавать ли экземпляр этой модели для новых узлов?
+   * @param svc Сервис.
+   * @param adnId id узла.
+   * @param lang язык. Для связи с Messages().
+   * @return Some с экземпляром [[MExtTarget]].
+   *         None, если по дефолту таргет создавать не надо.
+   */
+  def dfltTarget(svc: MExtService, adnId: String)(implicit lang: Messages): Option[MExtTarget] = {
+    svc.dfltTargetUrl.map { url =>
+      MExtTarget(
+        url     = url,
+        adnId   = adnId,
+        service = svc,
+        name    = Some( Messages(svc.iAtServiceI18N) )
+      )
     }
   }
 

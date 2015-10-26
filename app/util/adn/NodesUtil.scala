@@ -11,6 +11,7 @@ import io.suggest.model.n2.node.meta.colors.{MColorData, MColors}
 import io.suggest.ym.model.ad.AdsSearchArgsDfltImpl
 import io.suggest.ym.model.common.AdnMemberShowLevels
 import models._
+import models.adv.MExtTarget
 import models.madn.{MNodeRegSuccess, NodeDfltColors}
 import models.mext.MExtServices
 import org.elasticsearch.client.Client
@@ -163,7 +164,7 @@ class NodesUtil @Inject() (
   def createExtDfltTargets(adnId: String)(implicit lang: Messages): Future[_] = {
     val tgtsIter = MExtServices.values
       .iterator
-      .flatMap { _.dfltTarget(adnId) }
+      .flatMap { svc => MExtTarget.dfltTarget(svc, adnId) }
     Future.traverse(tgtsIter)(_.save)
   }
 

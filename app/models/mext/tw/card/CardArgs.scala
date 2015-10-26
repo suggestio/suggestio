@@ -1,8 +1,7 @@
 package models.mext.tw.card
 
-import models.{IRenderable, Context}
+import models.IRenderable
 import models.mext.MExtServices
-import play.twirl.api.Html
 
 /**
  * Suggest.io

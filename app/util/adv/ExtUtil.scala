@@ -79,7 +79,9 @@ object ExtUtil {
    * @param adnId id узла, в рамках которого происходит действо.
    * @return Экземпляр формы.
    */
-  def oneTargetFullFormM(adnId: String) = Form(oneTargetFullM(adnId))
+  def oneTargetFullFormM(adnId: String): OneExtTgForm = {
+    Form(oneTargetFullM(adnId))
+  }
 
   def oneRawTargetFullFormM(adnId: String) = Form(
     TG_FN -> rawTargetM(adnId)

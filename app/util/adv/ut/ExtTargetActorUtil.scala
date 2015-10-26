@@ -10,7 +10,11 @@ import util.jsa.{InnerHtmlById, JsAppendById}
 import util.adv.ExtUtil.RUNNER_EVENTS_DIV_ID
 
 /** Утиль для сборки target-акторов. */
-trait ExtTargetActorUtil extends ISendCommand with ReplyTo with ExtTargetActorEnv {
+trait ExtTargetActorUtil
+  extends ISendCommand
+  with ReplyTo
+  with ExtTargetActorEnv
+{
 
   override val args: IExtAdvTargetActorArgs
 

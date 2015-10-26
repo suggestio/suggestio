@@ -5,17 +5,19 @@ import _root_.util.async.FsmActor
 import _root_.util.jsa.JsAppendById
 import _root_.util.ws.SubscribeToWsDispatcher
 import akka.actor.{SupervisorStrategy, Actor, ActorRef, Props}
+import com.google.inject.Inject
+import com.google.inject.assistedinject.Assisted
 import models.adv._
 import models.adv.js.ctx.MJsCtx
 import models.adv.js._
 import models.event.{MEventTypes, RenderArgs, MEventTmp}
 import models.mws.AnswerStatuses
 import play.api.libs.json._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import ExtUtil.RUNNER_EVENTS_DIV_ID
 
 import scala.annotation.tailrec
 import scala.collection.immutable.Queue
+import scala.concurrent.ExecutionContext
 import scala.util.{Random, Failure, Success}
 
 /**
@@ -24,18 +26,31 @@ import scala.util.{Random, Failure, Success}
  * Created: 26.12.14 16:24
  * Description: Утиль и код актора, который занимается общением с js api размещения рекламных карточек на клиенте.
  */
-object ExtAdvWsActor {
+class ExtAdvWsActor_ @Inject() (
+  factory: ExtAdvWsActorFactory
+) {
 
   /** Сборка конфигурации актора. */
   def props(out: ActorRef, eactx: IExtWsActorArgs): Props = {
-    Props(ExtAdvWsActor(out, eactx))
+    Props( factory.create(out, eactx) )
   }
 
 }
 
 
+/** Интерфейс сборщика экземпляров ExtAdvWsActor. */
+trait ExtAdvWsActorFactory {
+  /** Сборка экземпляра класса актора. */
+  def create(out: ActorRef, eactx: IExtWsActorArgs): ExtAdvWsActor
+}
+
+
 /** ws-актор, готовый к использованию websocket api. */
-case class ExtAdvWsActor(out: ActorRef, eactx: IExtWsActorArgs)
+case class ExtAdvWsActor @Inject() (
+  @Assisted out     : ActorRef,
+  @Assisted eactx   : IExtWsActorArgs,
+  implicit val ec   : ExecutionContext
+)
   extends FsmActor
   with SubscribeToWsDispatcher
   with PlayMacroLogsImpl

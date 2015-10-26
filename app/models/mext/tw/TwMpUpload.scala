@@ -12,7 +12,11 @@ import play.api.libs.ws.WSResponse
  * Created: 14.04.15 15:15
  * Description: Поддержка аплоада media для твиттера.
  */
-trait TwMpUpload extends MpUploadSupportDflt with IExtMpUploadSupport { this: TwitterService =>
+trait TwMpUpload
+  extends MpUploadSupportDflt
+  with IExtMpUploadSupport
+{ this: TwitterService =>
+
   /**
    * Твиттер поддерживает upload по одному и тому же ресурсу.
    * @param args ignored.

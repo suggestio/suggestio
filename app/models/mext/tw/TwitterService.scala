@@ -3,7 +3,7 @@ package models.mext.tw
 import _root_.util.adv.OAuth1ServiceActor
 import controllers.routes
 import models.adv.ext.Mad2ImgUrlCalcT
-import models.im.{OutImgFmts, OutImgFmt}
+import models.im.OutImgFmts
 import models.mext.tw.card.{TwImgSizes, PhotoCardArgs}
 import models.{Context, IRenderable, MAd}
 import models.mext.{MExtServices, IExtService}
@@ -18,7 +18,12 @@ import scala.concurrent.{ExecutionContext, Future}
  * Created: 10.04.15 19:14
  * Description: Абстрактная реализация twitter-сервиса.
  */
-trait TwitterService extends IExtService with OAuth1Support with TwMpUpload with PlayMacroLogsImpl {
+trait TwitterService
+  extends IExtService
+  with OAuth1Support
+  with TwMpUpload
+  with PlayMacroLogsImpl
+{
 
   /** Ссылка на главную твиттера, и на собственный акк, если юзер залогинен. */
   override def mainPageUrl = "https://twitter.com/"

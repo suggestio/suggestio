@@ -5,12 +5,10 @@ import java.net.URL
 import _root_.util.adv.IServiceActorCompanion
 import io.suggest.common.geom.d2.INamedSize2di
 import io.suggest.util.UrlUtil
-import models.adv.MExtTarget
 import models.blk.{OneAdWideQsArgs, SzMult_t, szMulted}
 import models.im.{OutImgFmt, OutImgFmts}
 import models.{IRenderable, MAd}
 import play.api.Play._
-import play.api.i18n.Messages
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -48,15 +46,6 @@ trait IExtService {
 
   /** Дефолтовая цель размещения, если есть. При создании узлов дефолтовые цели создаются автоматом. */
   def dfltTargetUrl: Option[String]
-
-  /**
-   * Создавать ли экземпляр этой модели для новых узлов?
-   * @param adnId id узла.
-   * @param lang язык. Для связи с Messages().
-   * @return Some с экземпляром [[MExtTarget]].
-   *         None, если по дефолту таргет создавать не надо.
-   */
-  def dfltTarget(adnId: String)(implicit lang: Messages): Option[MExtTarget]
 
   /**
    * Клиент прислал upload-ссылку. Нужно её проверить на валидность.
