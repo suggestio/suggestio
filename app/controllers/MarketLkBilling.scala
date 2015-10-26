@@ -6,6 +6,7 @@ import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.playx.ICurrentConf
 import models.jsm.init.MTargets
+import models.mbill.MDailyMmpsTplArgs
 import org.elasticsearch.client.Client
 import org.elasticsearch.search.sort.SortOrder
 import play.api.i18n.MessagesApi
@@ -14,10 +15,10 @@ import util.PlayMacroLogsImpl
 import util.acl._
 import models._
 import util.async.AsyncUtil
+import util.img.GalleryUtil
 import views.html.lk.billing._
 import play.api.db.Database
 import scala.concurrent.{ExecutionContext, Future}
-import play.api.mvc.Result
 
 /**
  * Suggest.io
@@ -26,12 +27,13 @@ import play.api.mvc.Result
  * Description: Контроллер управления биллингом в личном кабинете узла рекламной сети.
  */
 class MarketLkBilling @Inject() (
+  galleryUtil                     : GalleryUtil,
   override val messagesApi        : MessagesApi,
   db                              : Database,
   override val mNodeCache         : MAdnNodeCache,
   override val current            : play.api.Application,
   override val _contextFactory    : Context2Factory,
-  errorHandler                    : ErrorHandler,
+  override val errorHandler       : ErrorHandler,
   override implicit val ec        : ExecutionContext,
   implicit val esClient           : Client,
   override implicit val sn        : SioNotifierStaticClientI
@@ -41,6 +43,7 @@ class MarketLkBilling @Inject() (
   with ICurrentConf
   with IsAdnNodeAdmin
   with IsAuth
+  with IsAuthNode
 {
 
   import LOGGER._
@@ -151,36 +154,45 @@ class MarketLkBilling @Inject() (
   /**
    * Одинаковые куски [[_renderNodeMbmds()]] и [[_renderNodeMbmdsWindow()]] вынесены в эту функцию.
    * Она собирает данные для рендера шаблонов, относящихся к этим экшенам и дергает фунцию рендера, когда всё готово.
-   * @param adnId id узла.
-   * @param f функция вызова рендера результата.
-   * @return Фьючерс с результатом. Если нет узла, то 404.
+   * @param mnode Текущий узел N2.
+   * @return Фьючерс с Some и аргументами рендера. Если нет узла, то None
    */
-  private def _prepareNodeMbmds(adnId: String)(f: (List[MBillMmpDaily], MNode) => Result)
-                               (implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+  private def _prepareNodeMbmds(mnode: MNode)
+                               (implicit request: AbstractRequestWithPwOpt[_]): Future[MDailyMmpsTplArgs] = {
     // TODO По идее надо бы проверять узел на то, является ли он ресивером наверное?
-    val adnNodeFut = mNodeCache.getById(adnId)
-    val mbdms = db.withConnection { implicit c =>
-      // TODO Opt Нам тут нужны только номера договоров (id), а не сами договоры.
-      val contracts = MBillContract.findForAdn(adnId, isActive = Some(true))
-      val contractIds = contracts.map(_.id.get)
-      MBillMmpDaily.findByContractIds(contractIds)
-    }
-    adnNodeFut.map {
-      case Some(adnNode) =>
-        f(mbdms, adnNode)
-      case None =>
-        errorHandler.http404ctx
+    val nodeId = mnode.id.get
+    val tariffsFut = Future {
+      db.withConnection { implicit c =>
+        // TODO Opt Нам тут нужны только номера договоров (id), а не сами договоры.
+        val contracts = MBillContract.findForAdn(nodeId, isActive = Some(true))
+        val contractIds = contracts.map(_.id.get)
+        MBillMmpDaily.findByContractIds(contractIds)
+      }
+    }(AsyncUtil.jdbcExecutionContext)
+
+    val galleryFut = galleryUtil.galleryImgs(mnode)
+
+    for {
+      tariffs   <- tariffsFut
+      gallery   <- galleryFut
+    } yield {
+      MDailyMmpsTplArgs(
+        tariffs = tariffs,
+        mnode = mnode,
+        gallery = gallery
+      )
     }
   }
+
 
   /**
    * Инлайновый рендер сеток тарифных планов.
    * @param adnId id узла, к которому нужно найти и отрендерить посуточные тарифные сетки.
    * @return inline выхлоп для отображения внутри какой-то страницы с тарифами.
    */
-  def _renderNodeMbmds(adnId: String) = IsAuth.async { implicit request =>
-    _prepareNodeMbmds(adnId) { (mbdms, adnNode) =>
-      Ok(_dailyMmpTariffPlansTpl(mbdms, adnNode))
+  def _renderNodeMbmds(adnId: String) = IsAuthNode(adnId).async { implicit request =>
+    _prepareNodeMbmds(request.adnNode) map { args =>
+      Ok( _dailyMmpTariffPlansTpl(args) )
     }
   }
 
@@ -190,9 +202,9 @@ class MarketLkBilling @Inject() (
    * в плавающей форме.
    * @param adnId id просматриваемого узла.
    */
-  def _renderNodeMbmdsWindow(adnId: String) = IsAuth.async { implicit request =>
-    _prepareNodeMbmds(adnId) { (mbdms, adnNode) =>
-      Ok(_dailyMmpsWindowTpl(mbdms, adnNode))
+  def _renderNodeMbmdsWindow(adnId: String) = IsAuthNode(adnId).async { implicit request =>
+    _prepareNodeMbmds(request.adnNode) map { args =>
+      Ok( _dailyMmpsWindowTpl(args) )
     }
   }
 

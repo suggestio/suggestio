@@ -75,6 +75,10 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   /** Маппер для новых картинок на базе MMedia. */
   def img3IdOptM = mkImgIdOptM[MImgT](mImg3)
 
+  /** Обязательный маппинг MImg3-картинки. */
+  def img3IdM = img3IdOptM
+    .verifying("error.required", _.isDefined)
+    .transform [MImgT] (_.get, Some.apply)
 
 
   // Валидация значений crop'а.

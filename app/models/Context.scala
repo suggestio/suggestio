@@ -15,6 +15,7 @@ import play.api.mvc.RequestHeader
 import play.api.Play.{current, configuration, isDev}
 import util.acl._, PersonWrapper.PwOpt_t
 import play.api.http.HeaderNames._
+import util.img.GalleryUtil
 import util.jsa.init.ITargets
 import scala.util.Random
 import SioRequestHeader.{firstForwarded, lastForwarded}
@@ -282,6 +283,7 @@ trait Context extends MyHostsT with ISioReqMd {
 
   /** Генератор списка js-init-целей. */
   def jsInitTargeter: ITargets
+
   /** Список js-init-целей. */
   def jsInitTargets: Seq[MTarget] = jsInitTargeter.getJsInitTargets(this)
 
@@ -292,6 +294,7 @@ trait Context extends MyHostsT with ISioReqMd {
   * DI препятствует этому, поэтому необходимо обеспечивать доступ с помощью класса-костыля. */
 @Singleton
 class ContextApi @Inject() (
+  val galleryUtil         : GalleryUtil
 )
 
 

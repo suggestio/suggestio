@@ -5,7 +5,7 @@
 @import ctx._
 @import helper._
 @import util.FC.tdFc
-@import util.img.GalleryUtil.GALLERY_LEN_MAX
+@import ctx.api.galleryUtil.GALLERY_LEN_MAX
 @import util.img.DynImgUtil
 @import io.suggest.img.crop.CropConstants._
 @import io.suggest.img.ImgConstants._
@@ -49,7 +49,7 @@
     </td>
     @defining( gf("imgs") ) { gf =>
     <td id="imgs">
-  
+
       @gf("gallery").errors.map { error =>
         <p class="block __margin-M red">@messages("Error"): @messages(error.message, error.args: _*)</p>
       }

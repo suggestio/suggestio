@@ -4,7 +4,7 @@ import _root_.util.jsa.{Js, SmRcvResp}
 import controllers.SioControllerUtil
 import SioControllerUtil.PROJECT_CODE_LAST_MODIFIED
 import io.suggest.event.subscriber.SnFunSubscriber
-import io.suggest.event.AdnNodeSavedEvent
+import io.suggest.event.MNodeSavedEvent
 import io.suggest.playx.ICurrentConf
 import models.jsm.NodeDataResp
 import play.api.Play
@@ -38,11 +38,11 @@ trait ScNodeInfo
   // Подписаться на события обновления узлов, чтобы сбрасывать кеш.
   sn.subscribe(
     subscriber = SnFunSubscriber {
-      case anse: AdnNodeSavedEvent =>
-        val ck = nodeIconJsCacheKey(anse.adnId)
+      case anse: MNodeSavedEvent =>
+        val ck = nodeIconJsCacheKey(anse.nodeId)
         Cache.remove(ck)
     },
-    classifier = AdnNodeSavedEvent.getClassifier(isCreated = Some(false))
+    classifier = MNodeSavedEvent.getClassifier(isCreated = Some(false))
   )
 
   /** Кеш-ключ для nodeIconJs. */

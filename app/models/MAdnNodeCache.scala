@@ -38,9 +38,8 @@ class MAdnNodeCache @Inject() (
   override def snMap = {
     val subs = Seq(this)
     List(
-      AdnNodeSavedEvent.getClassifier()   -> subs,
-      AdnNodeDeletedEvent.getClassifier() -> subs,
-      AdnNodeOnOffEvent.getClassifier()   -> subs
+      MNodeSavedEvent.getClassifier()       -> subs,
+      MNodeDeletedEvent.getClassifier()     -> subs
     )
   }
 
@@ -51,8 +50,8 @@ class MAdnNodeCache @Inject() (
   override def event2id(event: Event): String = {
     // Все подписанные события реализуют интерфейс IAdnId. Но всё же надо перестраховаться.
     event match {
-      case e: IAdnId =>
-        e.adnId
+      case e: INodeId =>
+        e.nodeId
 
       case _ => null
     }

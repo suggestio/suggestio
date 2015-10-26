@@ -17,7 +17,7 @@ case class FormMapResult(
   meta        : MMeta,
   logoOpt     : LogoOpt_t,
   waImgOpt    : Option[MImgT]   = None,
-  gallery     : List[MImg]      = Nil
+  gallery     : List[MImgT]     = Nil
 )
 
 

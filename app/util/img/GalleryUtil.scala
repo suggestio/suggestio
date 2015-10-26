@@ -1,12 +1,13 @@
 package util.img
 
+import com.google.inject.{Singleton, Inject}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.ym.model.common.MImgInfoMeta
 import models.im._
-import models.{MEdge, MNode, Context}
+import models.{IEdge, MEdge, MNode, Context}
 import models.madn.EditConstants
+import play.api.Configuration
 import play.api.data.Forms._
-import play.api.Play.{current, configuration}
 import play.api.data.Mapping
 import play.api.mvc.Call
 import models.blk.szMulted
@@ -19,10 +20,14 @@ import scala.concurrent.Future
  * Created: 03.07.14 9:46
  * Description: Утиль для работы с галереей картинок.
  */
-object GalleryUtil {
+@Singleton
+class GalleryUtil @Inject() (
+  mImg3           : MImg3_,
+  configuration   : Configuration
+) {
 
   // TODO DI
-  private val mImg3 = current.injector.instanceOf[MImg3_]
+  //private val mImg3 = current.injector.instanceOf[MImg3_]
 
   // Ширина/высота картинки галереи, отображаемой в ЛК на странице узла.
   val LK_NODE_GALLERY_SHOW_WIDTH_PX: Int  = configuration.getInt("lk.node.gallery.show.width.px") getOrElse 625
@@ -31,15 +36,21 @@ object GalleryUtil {
   /** Максимально кол-во картинок в галереи. */
   val GALLERY_LEN_MAX = configuration.getInt("adn.gallery.len.max") getOrElse 7
 
-  def galleryM: Mapping[List[MImg]] = {
-    list(ImgFormUtil.imgIdM)
+  def galleryM: Mapping[List[MImgT]] = {
+    list(ImgFormUtil.img3IdM)
       .verifying("error.gallery.too.large",  { _.size <= GALLERY_LEN_MAX })
   }
 
   def galleryKM = EditConstants.GALLERY_FN -> galleryM
 
-  def gallery2iiks(gallery: List[String]) = {
-    gallery.map { MImg.apply }
+  def gallery2iiks(gallery: TraversableOnce[IEdge]) = {
+    gallery
+      .toIterator
+      .map { galEdge2img }
+  }
+
+  def galEdge2img(edge: IEdge): MImg3 = {
+    mImg3(edge)
   }
 
 
@@ -49,7 +60,7 @@ object GalleryUtil {
    * @param oldGallery Старое содержимое галереи.
    * @return Фьючерс с новой галереи в формате старой галереи.
    */
-  def updateGallery(newGallery: Seq[MImg], oldGallery: Seq[String]): Future[Seq[MImgT]] = {
+  def updateGallery(newGallery: Seq[MImgT], oldGallery: Seq[String]): Future[Seq[MImgT]] = {
     ImgFormUtil.updateOrigImgId(needImgs = newGallery, oldImgIds = oldGallery)
   }
 
@@ -93,9 +104,11 @@ object GalleryUtil {
       .withPredicateIter( MPredicates.GalleryItem )
   }
 
-  def galleryImgs(mnode: MNode): Iterator[MImgT] = {
-    galleryEdges(mnode)
+  def galleryImgs(mnode: MNode): Future[Seq[MImgT]] = {
+    val res = galleryEdges(mnode)
       .map { mImg3.apply }
+      .toSeq
+    Future successful res
   }
 
 }

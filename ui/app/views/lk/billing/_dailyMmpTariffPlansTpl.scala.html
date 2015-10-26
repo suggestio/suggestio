@@ -1,44 +1,43 @@
-@(mbmds: Seq[MBillMmpDaily], mnode: MNode)(implicit ctx: Context)
+@(args: mbill.IDailyMmpsTplArgs)(implicit ctx: Context)
 
 @* Рендер списка тарифных сеток (посуточная mmp-тарификация). *@
 
 @import util.TplDataFormatUtil._
 @import util.FormUtil.replaceEOLwithBR
-@import util.img.GalleryUtil
 @import lk.lkProp
 @import ctx.messages
 @import lk.adn.node._galleryTpl
 
-@if( GalleryUtil.galleryEdges(mnode).nonEmpty ) {
+@if( args.gallery.nonEmpty ) {
   <div class="tariff_photo-lst">
-    @_galleryTpl(mnode, "tariff_photo-i")
+    @_galleryTpl(args.gallery, "tariff_photo-i")
   </div>
 }
 
-@mbmds.map { mbmd =>
-  @_dailyMmpTariffPlanTpl(mbmd, mnode)
+@args.tariffs.map { mbmd =>
+  @_dailyMmpTariffPlanTpl(mbmd, args.mnode)
 }
 
 <div class="ovh">
 
-  @mnode.meta.address.address.map { address =>
+  @args.mnode.meta.address.address.map { address =>
     @lkProp( messages("Address")) {
       @Html(replaceEOLwithBR(address))
-      @mnode.meta.address.phone.map { phone =>
+      @args.mnode.meta.address.phone.map { phone =>
         @messages("tel.") @phone
       }
     }
     <hr class="delimiter __light"/>
   }
 
-  @mnode.meta.business.humanTrafficAvg.map { htAvg =>
+  @args.mnode.meta.business.humanTrafficAvg.map { htAvg =>
     @lkProp( messages("Daily.people.traffic")) {
       @messages("N.humans.per.day", formatIntHtml(htAvg))
     }
     <hr class="delimiter __light"/>
   }
 
-  @mnode.meta.business.audienceDescr.map { audDescr =>
+  @args.mnode.meta.business.audienceDescr.map { audDescr =>
     @lkProp( messages("Audience.descr")) {
       @Html(audDescr)
     }

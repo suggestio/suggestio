@@ -68,7 +68,7 @@ class MImg3_ @Inject() (
       medge.info
         .dynImgArgs
         .fold( List.empty[ImOp] ) { imOpsStr =>
-          val pr = (new Parsers).parseImOps(imOpsStr)
+          val pr = (new Parsers).parseImgArgs(imOpsStr)
           pr.getOrElse {
             LOGGER.warn(s"apply($medge): Ignoring ops. Failed to parse imOps str '''$imOpsStr'''\n$pr")
             Nil

@@ -1,7 +1,7 @@
 package util.event
 
 import akka.actor.ActorContext
-import io.suggest.event.{AdnNodeSavedEvent, SNStaticSubscriber}
+import io.suggest.event.{MNodeSavedEvent, SNStaticSubscriber}
 import io.suggest.event.SioNotifier.{Event, Subscriber, Classifier}
 import io.suggest.event.subscriber.SnClassSubscriber
 import models.{MAdvMode, MAdvI, MAdvModes}
@@ -40,7 +40,7 @@ object AdnNodeEvents extends SNStaticSubscriber with SnClassSubscriber with Play
     val subs = Seq(this)
     val someTrue = Some(true)
     List(
-      AdnNodeSavedEvent.getClassifier(isCreated = someTrue)   -> subs,
+      MNodeSavedEvent.getClassifier(isCreated = someTrue)   -> subs,
       AdvSavedEvent.getClassifier(isCreated = someTrue)       -> subs
     )
   }
@@ -76,13 +76,13 @@ object AdnNodeEvents extends SNStaticSubscriber with SnClassSubscriber with Play
   override def publish(event: Event)(implicit ctx: ActorContext): Unit = {
     event match {
       // Произошел insert узла.
-      case anse: AdnNodeSavedEvent =>
-        import anse.adnId
+      case anse: MNodeSavedEvent =>
+        import anse.nodeId
         if (EVT_YOU_CAN_ADD_NEW_SHOPS) {
-          addEvtAddNewShops(adnId)
+          addEvtAddNewShops(nodeId)
         }
         if (EVT_START_YOUR_WORK_USING_CARD_MGR) {
-          addEvtUseCardMgr(adnId)
+          addEvtUseCardMgr(nodeId)
         }
 
       // Произошло insert одного из вариантов adv

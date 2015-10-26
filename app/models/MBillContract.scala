@@ -2,8 +2,8 @@ package models
 
 import akka.actor.ActorContext
 import anorm._
-import io.suggest.event.{AdnNodeDeletedEvent, SNStaticSubscriber}
-import io.suggest.event.SioNotifier.{Subscriber, Classifier, Event}
+import io.suggest.event.{MNodeDeletedEvent, SNStaticSubscriber}
+import io.suggest.event.SioNotifier.Event
 import io.suggest.event.subscriber.SnClassSubscriber
 import io.suggest.model.es.{ToPlayJsonObj, EsModelUtil}
 import EsModelUtil.FieldsJsonAcc
@@ -234,17 +234,17 @@ object MBillContract extends SqlModelStatic with FromJson {
 
     /** Подписка на события. */
     override def snMap = List(
-      AdnNodeDeletedEvent.getClassifier() -> Seq(this)
+      MNodeDeletedEvent.getClassifier() -> Seq(this)
     )
 
     /** Обработать наступившие событие. */
     override def publish(event: Event)(implicit ctx: ActorContext): Unit = {
       event match {
-        case ande: AdnNodeDeletedEvent =>
+        case ande: MNodeDeletedEvent =>
           val totalDeleted = DB.withConnection { implicit c =>
-            deleteByAdnId(ande.adnId)
+            deleteByAdnId(ande.nodeId)
           }
-          info(s"Deleted $totalDeleted contracts for deleted adnId[${ande.adnId}].")
+          info(s"Deleted $totalDeleted contracts for deleted adnId[${ande.nodeId}].")
 
         case other =>
           warn("Unknown event received: " + other)

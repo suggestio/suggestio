@@ -22,6 +22,7 @@ import _root_.util.{FormUtil, PlayMacroLogsImpl}
 import util.acl._
 import models._
 import util.ident.IdentUtil
+import util.img.GalleryUtil
 import util.lk.LkAdUtil
 import util.showcase.ShowcaseUtil
 import scala.concurrent.{ExecutionContext, Future}
@@ -51,6 +52,8 @@ class MarketLkAdn @Inject() (
   override val identUtil              : IdentUtil,
   logoUtil                            : LogoUtil,
   billing                             : Billing,
+  galleryUtil                         : GalleryUtil,
+  override val errorHandler           : ErrorHandler,
   override val _contextFactory        : Context2Factory,
   override implicit val ec            : ExecutionContext,
   override implicit val esClient      : Client,
@@ -99,8 +102,10 @@ class MarketLkAdn @Inject() (
     AdnNodeAccessGet(adnId, povAdnIdOpt).async { implicit request =>
       import request.{adnNode, isMyNode}
       val logoOptFut = logoUtil.getLogoOfNode(adnNode)
+      val galleryFut = galleryUtil.galleryImgs( adnNode )
       for {
         logoOpt <- logoOptFut
+        gallery <- galleryFut
       } yield {
         val rargs = MNodeShowArgs(
           mnode         = adnNode,
@@ -109,7 +114,8 @@ class MarketLkAdn @Inject() (
             .flatMap(_.id),
           logoImgOpt    = logoOpt,
           bgColor       = colorCodeOrDflt(adnNode.meta.colors.bg, scUtil.SITE_BGCOLOR_DFLT),
-          fgColor       = colorCodeOrDflt(adnNode.meta.colors.fg, scUtil.SITE_FGCOLOR_DFLT)
+          fgColor       = colorCodeOrDflt(adnNode.meta.colors.fg, scUtil.SITE_FGCOLOR_DFLT),
+          gallery       = gallery
         )
         val html = adnNodeShowTpl( rargs )
         Ok(html)

@@ -27,7 +27,6 @@ import views.html.lk.adn.edit._
 import play.api.data.{Mapping, Form}
 import play.api.data.Forms._
 import util.FormUtil._
-import GalleryUtil._
 import models.madn.EditConstants._
 import util.img.ImgFormUtil.img3IdOptM
 
@@ -49,6 +48,7 @@ class MarketLkAdnEdit @Inject() (
   logoUtil                        : LogoUtil,
   mImg3                           : MImg3_,
   tempImgSupport                  : TempImgSupport,
+  galleryUtil                     : GalleryUtil,
   override val mNodeCache         : MAdnNodeCache,
   override val _contextFactory    : Context2Factory,
   override implicit val ec        : ExecutionContext,
@@ -209,7 +209,7 @@ class MarketLkAdnEdit @Inject() (
     val metaKM = "meta" -> metaM
     // У ресивера есть поля для картинки приветствия и галерея для демонстрации.
     val m: Mapping[FormMapResult] = if (nodeInfo.isReceiver) {
-      mapping(metaKM, logoKM, welcomeUtil.welcomeImgIdKM, galleryKM)
+      mapping(metaKM, logoKM, welcomeUtil.welcomeImgIdKM, galleryUtil.galleryKM)
         { FormMapResult.apply }
         { FormMapResult.unapply }
     } else {
@@ -228,11 +228,12 @@ class MarketLkAdnEdit @Inject() (
     // Запуск асинхронной сборки данных из моделей.
     val waOptFut = welcomeUtil.getWelcomeAdOpt(adnNode)
     val nodeLogoOptFut = logoUtil.getLogoOfNode(adnNode)
-    val gallerryIks = gallery2iiks {
-      adnNode.edges
-        .withPredicateIterIds( MPredicates.GalleryItem )
-        .toList
-    }
+    val gallerryIks = galleryUtil
+      .gallery2iiks {
+        adnNode.edges
+          .withPredicateIter( MPredicates.GalleryItem )
+      }
+      .toList
 
     // Сборка и наполнения маппинга формы.
     val formM = nodeFormM(adnNode.extras.adn.get)
@@ -248,15 +249,15 @@ class MarketLkAdnEdit @Inject() (
     // Рендер и возврат http-ответа.
     for {
       formFilled <- formFilledFut
-      html       <- _editAdnNode(formFilled, waOptFut)
+      resp       <- _editAdnNode(formFilled, waOptFut, Ok)
     } yield {
-      Ok(html)
+      resp
     }
   }
 
 
-  private def _editAdnNode(form: Form[FormMapResult], waOptFut: Future[Option[MWelcomeAd]])
-                          (implicit request: AbstractRequestForAdnNode[_]): Future[Html] = {
+  private def _editAdnNode(form: Form[FormMapResult], waOptFut: Future[Option[MWelcomeAd]], respStatus: Status)
+                          (implicit request: AbstractRequestForAdnNode[_]): Future[Result] = {
     implicit val jsInitTargets = Seq(MTargets.LkNodeEditForm)
     for {
       welcomeAdOpt <- waOptFut
@@ -266,7 +267,8 @@ class MarketLkAdnEdit @Inject() (
         mf            = form,
         welcomeAdOpt  = welcomeAdOpt
       )
-      nodeEditTpl(args)
+      val render = nodeEditTpl(args)
+      respStatus( render )
     }
   }
 
@@ -280,8 +282,7 @@ class MarketLkAdnEdit @Inject() (
       {formWithErrors =>
         val waOptFut = welcomeUtil.getWelcomeAdOpt(request.adnNode)
         debug(s"${logPrefix}Failed to bind form: ${formatFormErrors(formWithErrors)}")
-        _editAdnNode(formWithErrors, waOptFut)
-          .map { NotAcceptable(_) }
+        _editAdnNode(formWithErrors, waOptFut, NotAcceptable)
       },
       {fmr =>
         // В фоне обновляем картинку карточки-приветствия.
@@ -290,7 +291,7 @@ class MarketLkAdnEdit @Inject() (
         // В фоне обновляем логотип узла
         val savedLogoFut = logoUtil.updateLogoFor(adnNode, fmr.logoOpt)
         // Запускаем апдейт галереи.
-        val galleryUpdFut = GalleryUtil.updateGallery(
+        val galleryUpdFut = galleryUtil.updateGallery(
           newGallery = fmr.gallery,
           oldGallery = adnNode.edges
             .withPredicateIter( MPredicates.GalleryItem )

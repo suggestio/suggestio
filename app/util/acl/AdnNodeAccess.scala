@@ -3,7 +3,7 @@ package util.acl
 import io.suggest.di.{IExecutionContext, IEsClient}
 import models._
 import models.req.SioReqMd
-import util.di.INodeCache
+import util.di.{IErrorHandler, INodeCache}
 import scala.concurrent.Future
 import util.acl.PersonWrapper.PwOpt_t
 import play.api.mvc._
@@ -22,6 +22,7 @@ trait AdnNodeAccess
   with IEsClient
   with OnUnauthUtilCtl
   with INodeCache
+  with IErrorHandler
 {
 
   /** Доступ к узлу, к которому НЕ обязательно есть права на админство. */
@@ -71,7 +72,7 @@ trait AdnNodeAccess
 
             // Узел не существует.
             case Left(None) =>
-              Future successful NotFound
+              errorHandler.http404Fut(request)
           }
 
         // Отправить анонима на страницу логина.

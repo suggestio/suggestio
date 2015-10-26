@@ -18,6 +18,7 @@ trait INodeShowArgs
   def mnode       : MNode
   def isMyNode    : Boolean
   def povAdnIdOpt : Option[String]
+  def gallery     : Seq[MImgT]
 }
 
 
@@ -27,6 +28,7 @@ case class MNodeShowArgs(
   override val povAdnIdOpt : Option[String],
   override val logoImgOpt  : Option[MImgT],
   override val bgColor     : String,
-  override val fgColor     : String
+  override val fgColor     : String,
+  override val gallery     : Seq[MImgT]
 )
   extends INodeShowArgs

@@ -25,7 +25,7 @@ trait ImgFileNameParsers extends JavaTokenParsers with ImgCropParsers {
   def uuidP: Parser[UUID] = {
     uuidStrP ^^ UuidUtil.base64ToUuid
   }
-
+    
   /** Парсер списка dynImg-аргументов, сериализованного в виде qs-строки. */
   def dynImgArgsP: Parser[List[ImOp]] = {
     "[^/?]*".r ^^ { qsStr =>
@@ -63,8 +63,8 @@ trait ImgFileNameParsers extends JavaTokenParsers with ImgCropParsers {
   /** Парсер полного filename'а. */
   def fileNameP = uuidP ~ imOpsP
 
+  def parseImgArgs(imOpsStr: String) = parseAll(dynImgArgsP, imOpsStr)
 
-  def parseImOps(imOpsStr: String) = parseAll(imOpsP, imOpsStr)
 }
 
 /** Реализация [[ImgFileNameParsers]]. */

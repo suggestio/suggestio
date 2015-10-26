@@ -6,7 +6,6 @@
 
 @import ctx._
 @import node._
-@import util.img.GalleryUtil
 @import util.img.DynImgUtil
 @import io.suggest.vlines.VLines
 @import args._
@@ -76,7 +75,7 @@
       <div class="prop">
         <p class="prop_name __block">@messages("Node.photos"):</p>
         <div class="profile_photo-lst">
-          @_galleryTpl(mnode, "profile_photo-i")
+          @_galleryTpl(args.gallery, "profile_photo-i")
         </div>
       </div>
     }

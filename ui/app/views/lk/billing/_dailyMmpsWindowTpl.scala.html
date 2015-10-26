@@ -1,4 +1,4 @@
-@(mbmds: Seq[MBillMmpDaily], mnode: MNode)(implicit ctx: Context)
+@(args: mbill.MDailyMmpsTplArgs)(implicit ctx: Context)
 
 @* Рендер окошка, которое должно бы отображаться при щелчке на имени узла в форме размещения рекламной карточки. *@
 @import ctx._
@@ -9,20 +9,20 @@
 <div class="@PopupConstants.POPUP_CLASS @PopupConstants.JS_POPUP_CLASS" id="dailyMmpsWindow" >
 
   <div class="popup_header">
-    <a class="close f-right @PopupConstants.CLOSE_CSS_CLASS" href="#"></a>
+    <a class="close f-right @PopupConstants.CLOSE_CSS_CLASS" href="@ctx.request.path"></a>
   </div>
 
   <h2 class="minor-title">
     @messages("Tariff.rate")
-    @mnode.meta.basic.name
-    @mnode.meta.address.town.map { town =>
+    @args.mnode.meta.basic.name
+    @args.mnode.meta.address.town.map { town =>
       / @town
     }
   </h2>
 
-  @* [Макc] Этот класс используется, чтобы нормально рендерилась информация о тарифе. *@
+  @* [Макс] Этот класс используется, чтобы нормально рендерилась информация о тарифе. *@
   <div class="tariff __in-popup">
-    @_dailyMmpTariffPlansTpl(mbmds, mnode)
+    @_dailyMmpTariffPlansTpl(args)
   </div>
 
 </div>
