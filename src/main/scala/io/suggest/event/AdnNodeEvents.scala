@@ -2,7 +2,8 @@ package io.suggest.event
 
 import io.suggest.event.SioNotifier.Classifier
 import io.suggest.model.es.EsModelStaticT
-import io.suggest.ym.model.{MWelcomeAd, MAd, MAdnNode}
+import io.suggest.model.n2.node.{MNodeType, MNode}
+import io.suggest.ym.model.{MWelcomeAd, MAd}
 import io.suggest.event.subscriber.SnFunSubscriber
 import io.suggest.util.MacroLogsImpl
 import scala.util.{Failure, Try, Success}
@@ -13,78 +14,64 @@ import org.elasticsearch.client.Client
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 04.04.14 14:36
- * Description: Этот исходник содержит события, относящиеся к узлам рекламной сети
- * [[io.suggest.ym.model.MAdnNode]]. Как правило, все перечисленные события порождаются моделью узла сети.
+ * Description: Этот исходник содержит события, относящиеся к узлам рекламной сети MNode.
+ * Как правило, все перечисленные события порождаются моделью узла сети.
  */
 
 /** Событие сохранения узла рекламной сети. Используется как при создании, так и при обновлении узла. */
-object AdnNodeSavedEvent {
+object MNodeSavedEvent {
   val headSne = Some(getClass.getSimpleName)
 
-  def getClassifier(nodeId: Option[String] = None,
-                    isCreated: Option[Boolean] = None): Classifier = {
-    List(headSne, nodeId, isCreated)
+  def getClassifier(nodeId    : Option[String]    = None,
+                    nodeType  : Option[MNodeType] = None,
+                    isCreated : Option[Boolean]   = None): Classifier = {
+    List(headSne, nodeId, nodeType, isCreated)
   }
 }
 
-case class AdnNodeSavedEvent(adnId: String, adnNode: MAdnNode, isCreated: Boolean) extends SioEventT with IAdnId {
-  def getClassifier: Classifier = AdnNodeSavedEvent.getClassifier(
-    nodeId = Option(adnId),
-    isCreated = Some(isCreated)
+case class MNodeSavedEvent(mnode: MNode, isCreated: Boolean) extends SioEventT with INodeId {
+  def getClassifier: Classifier = MNodeSavedEvent.getClassifier(
+    nodeId    = mnode.id,
+    nodeType  = Some( mnode.common.ntype ),
+    isCreated = Some( isCreated )
   )
 
-  override def toString: String = s"""${getClass.getSimpleName}($adnId)"""
+  override def nodeId = mnode.id.get
 }
 
 
 
 /** Событие удаления узла рекламной сети. Это нечто очень редкое в продакшене. */
-object AdnNodeDeletedEvent {
+object MNodeDeletedEvent {
   val headSne = Some(getClass.getSimpleName)
 
-  def getClassifier(adnId: Option[String] = None,
-                    isDeleted: Option[Boolean] = None): Classifier = {
-    List(headSne, adnId, isDeleted)
+  def getClassifier(nodeId    : Option[String]    = None,
+                    isDeleted : Option[Boolean]   = None): Classifier = {
+    List(headSne, nodeId, isDeleted)
   }
 }
 
-case class AdnNodeDeletedEvent(adnId: String, isDeleted: Boolean) extends SioEventT with IAdnId {
+case class MNodeDeletedEvent(nodeId: String, isDeleted: Boolean)
+  extends SioEventT
+  with INodeId
+{
   def getClassifier: Classifier = {
-    AdnNodeDeletedEvent.getClassifier(
-      adnId = Option(adnId),
+    MNodeDeletedEvent.getClassifier(
+      nodeId    = Option(nodeId),
       isDeleted = Some(isDeleted)
     )
   }
 
-  override def toString: String = s"""${getClass.getSimpleName}($adnId, isDeleted=$isDeleted)"""
 }
 
 
-/** Событие включения выключения узла рекламной сети. */
-object AdnNodeOnOffEvent {
-  val headSne = Some(getClass.getSimpleName)
-
-  def getClassifier(adnId: Option[String] = None,
-                    isEnabled: Option[Boolean] = None): Classifier = {
-    List(headSne, adnId, isEnabled)
-  }
-}
-
-case class AdnNodeOnOffEvent(adnId: String, isEnabled: Boolean) extends SioEventT with IAdnId {
-  def getClassifier: Classifier = AdnNodeOnOffEvent.getClassifier(
-    adnId = Option(adnId),
-    isEnabled = Some(isEnabled)
-  )
-
-  override def toString: String = s"""${getClass.getSimpleName}($adnId, isEnabled=$isEnabled)"""
+/** Все MNode-события имеют adnId. Тут интерфейс, описывающий это: */
+trait INodeId {
+  def nodeId: String
 }
 
 
-/** Все AdnNode-события имеют adnId. Тут интерфейс, описывающий это: */
-trait IAdnId {
-  def adnId: String
-}
-
+// TODO 2015.oct.26: Когда будет реализована чистка по MNode.common.isDependent, этот код можно будет упростить/удалить.
 
 /** Если нужно удалять рекламные карточки, созданные каким-то узлом при удалении оного, то можно
   * можно использовать этот subscriber. */
@@ -93,18 +80,20 @@ object DeleteAdsOnAdnNodeDeleteSubscriber extends MacroLogsImpl {
 
   /** Карта подписчиков вместе с содержимым подписчика. */
   def getSnMap(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI) = {
-    List(
-      AdnNodeDeletedEvent.getClassifier() -> Seq(SnFunSubscriber {
-        case ande: AdnNodeDeletedEvent =>
-          val producerId = ande.adnId
-          val logPrefix = s"event(prodId=$producerId): "
-          debug(logPrefix + "Starting deletion of all ads, related to producer...")
-          MAd.deleteByProducerId1by1(producerId) onComplete handleFinishPf(logPrefix, MAd)
-          MWelcomeAd.deleteByProducerId1by1(producerId) onComplete handleFinishPf(logPrefix, MWelcomeAd)
+    val classifier = MNodeDeletedEvent.getClassifier()
+    val sub = SnFunSubscriber {
+      case ande: MNodeDeletedEvent =>
+        val producerId = ande.nodeId
+        val logPrefix = s"event(prodId=$producerId): "
+        debug(logPrefix + "Starting deletion of all ads, related to producer...")
+        MAd.deleteByProducerId1by1(producerId) onComplete handleFinishPf(logPrefix, MAd)
+        MWelcomeAd.deleteByProducerId1by1(producerId) onComplete handleFinishPf(logPrefix, MWelcomeAd)
 
-        case other =>
-          warn("Unexpected event received: " + other)
-      })
+      case other =>
+        warn("Unexpected event received: " + other)
+    }
+    List(
+      classifier -> Seq(sub)
     )
   }
 

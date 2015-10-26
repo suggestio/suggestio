@@ -54,20 +54,6 @@ object MAdnNode
     FieldAll(enabled = true)
   )
 
-  /**
-   * Удалить документ по id.
-   * @param id id документа.
-   * @return true, если документ найден и удалён. Если не найден, то false
-   */
-  override def deleteById(id: String, ignoreResources: Boolean = false)
-                         (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
-    val delFut = super.deleteById(id, ignoreResources)
-    delFut onSuccess { case isDeleted =>
-      sn publish AdnNodeDeletedEvent(id, isDeleted)
-    }
-    delFut
-  }
-
 }
 
 
@@ -105,19 +91,6 @@ final case class MAdnNode(
       meta != null && meta != null
   }
 
-
-  /**
-   * Сохранить экземпляр в хранилище модели.
-   * При успехе будет отправлено событие [[io.suggest.event.AdnNodeSavedEvent]] в шину событий.
-   * @return Фьючерс с новым/текущим id.
-   */
-  override def save(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
-    val saveFut = super.save
-    saveFut onSuccess { case adnId =>
-      sn publish AdnNodeSavedEvent(adnId, this, isCreated = id.isEmpty)
-    }
-    saveFut
-  }
 
   /** Конвертация экземпляра этой модели в N2 MNode.
     * Карта эджей требует заливки в неё данных по картинкам. */

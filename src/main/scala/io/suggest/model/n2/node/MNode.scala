@@ -1,6 +1,6 @@
 package io.suggest.model.n2.node
 
-import io.suggest.event.SioNotifierStaticClientI
+import io.suggest.event.{MNodeDeletedEvent, MNodeSavedEvent, SioNotifierStaticClientI}
 import io.suggest.model.es.EsModelUtil.FieldsJsonAcc
 import io.suggest.model.es._
 import io.suggest.model.n2.edge.MNodeEdges
@@ -206,6 +206,20 @@ object MNode
     )
   }
 
+  /**
+   * Удалить документ по id.
+   * @param id id документа.
+   * @return true, если документ найден и удалён. Если не найден, то false
+   */
+  override def deleteById(id: String, ignoreResources: Boolean = false)
+                         (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
+    val delFut = super.deleteById(id, ignoreResources)
+    delFut onSuccess { case isDeleted =>
+      sn publish MNodeDeletedEvent(id, isDeleted)
+    }
+    delFut
+  }
+
 }
 
 
@@ -250,6 +264,19 @@ case class MNode(
   def guessDisplayNameOrId: Option[String] = {
     guessDisplayName
       .orElse { id }
+  }
+
+  /**
+   * Сохранить экземпляр в хранилище модели.
+   * При успехе будет отправлено событие [[io.suggest.event.MNodeSavedEvent]] в шину событий.
+   * @return Фьючерс с новым/текущим id.
+   */
+  override def save(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
+    val saveFut = super.save
+    saveFut onSuccess { case adnId =>
+      sn publish MNodeSavedEvent(this, isCreated = id.isEmpty)
+    }
+    saveFut
   }
 
 }

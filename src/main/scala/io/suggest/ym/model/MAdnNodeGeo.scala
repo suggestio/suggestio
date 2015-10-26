@@ -6,7 +6,7 @@ import akka.actor.ActorContext
 import com.fasterxml.jackson.annotation.JsonIgnore
 import io.suggest.event.SioNotifier.Event
 import io.suggest.event.subscriber.SnClassSubscriber
-import io.suggest.event.{AdnNodeDeletedEvent, SNStaticSubscriber, SioNotifierStaticClientI}
+import io.suggest.event.{MNodeDeletedEvent, SNStaticSubscriber, SioNotifierStaticClientI}
 import io.suggest.model.es._
 import EsModelUtil.FieldsJsonAcc
 import io.suggest.model._
@@ -302,16 +302,16 @@ object MAdnNodeGeo extends EsChildModelStaticT with MacroLogsImpl {
   /** Подписчик на события удаления узла. Нужно чистить модель при удалении узла. */
   class CleanUpOnAdnNodeDelete(implicit ec: ExecutionContext, client: Client) extends SNStaticSubscriber with SnClassSubscriber {
     override def snMap = List(
-      AdnNodeDeletedEvent.getClassifier() -> Seq(this)
+      MNodeDeletedEvent.getClassifier() -> Seq(this)
     )
 
     override def publish(event: Event)(implicit ctx: ActorContext): Unit = {
       event match {
-        case nde: AdnNodeDeletedEvent =>
-          trace(s"Node ${nde.adnId} deletion signal received. Let's clean-up node's geos...")
-          deleteByAdnId(nde.adnId) onComplete {
-            case Success(r)  => info(s"Successfully deleted $r geos related to node ${nde.adnId}.")
-            case Failure(ex) => error("Failed to cleanup geos, related to node " + nde.adnId, ex)
+        case nde: MNodeDeletedEvent =>
+          trace(s"Node ${nde.nodeId} deletion signal received. Let's clean-up node's geos...")
+          deleteByAdnId(nde.nodeId) onComplete {
+            case Success(r)  => info(s"Successfully deleted $r geos related to node ${nde.nodeId}.")
+            case Failure(ex) => error("Failed to cleanup geos, related to node " + nde.nodeId, ex)
           }
 
         case _ => warn("Unexpected event received: " + event)

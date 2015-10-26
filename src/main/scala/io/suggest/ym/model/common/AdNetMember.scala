@@ -5,7 +5,6 @@ import io.suggest.model.es._
 import io.suggest.model.menum.EnumJsonReadsValT
 import io.suggest.model.n2.extra.{MSlInfo, MAdnExtra}
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
-import io.suggest.model._
 import io.suggest.util.SioEsUtil._
 import com.fasterxml.jackson.annotation.JsonIgnore
 import scala.collection.JavaConversions._
@@ -15,7 +14,6 @@ import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.{FilterBuilder, FilterBuilders, QueryBuilder, QueryBuilders}
 import io.suggest.ym.model.AdShowLevel
 import java.{util => ju, lang => jl}
-import io.suggest.event.{AdnNodeOnOffEvent, SioNotifierStaticClientI}
 import play.api.libs.json._
 
 /**
@@ -192,33 +190,6 @@ trait EMAdNetMemberStatic extends EsModelStaticMutAkvT with EsModelStaticT {
       )
   }
 
-  /**
-   * Статическое обновление сеттингов isEnabled и disabledReason.
-   * @param adnId id изменяемого магазина
-   * @param isEnabled Новое значение поля isEnabled.
-   * @param reason Причина изменения статуса.
-   * @return Фьючерс. Внутри, скорее всего, лежит UpdateResponse.
-   */
-  def setIsEnabled(adnId: String, isEnabled: Boolean, reason: Option[String])
-                  (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
-    var jsonFieldsAcc: FieldsJsonAcc = List(
-      IS_ENABLED_ESFN -> JsBoolean(isEnabled)
-    )
-    if (reason.isDefined)
-      jsonFieldsAcc ::= DISABLE_REASON_ESFN -> JsString(reason.get)
-    val updateJson = JsObject(Seq(
-      ADN_ESFN -> JsObject(jsonFieldsAcc)
-    ))
-    val fut: Future[_] = prepareUpdate(adnId)
-      .setDoc(updateJson.toString())
-      .execute()
-    // Уведомить о переключении состояния магазина
-    fut onSuccess { case _ =>
-      sn publish AdnNodeOnOffEvent(adnId, isEnabled)
-    }
-    fut
-  }
-
 
   def findByAllAdnRightsBuilder(rights: Seq[AdnRight], withoutTestNodes: Boolean)(implicit client: Client) = {
     var query: QueryBuilder = adnRightsAllQuery(rights)
@@ -254,17 +225,6 @@ trait EMAdNetMember extends EsModelPlayJsonT with EsModelT {
 
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     ADN_ESFN -> adn.toPlayJson :: super.writeJsonFields(acc)
-  }
-
-
-  /** Быстрый доступ к статическому EMAdNetMemberStatic.setIsEnabled().
-    * @param isEnabled Новое значение isEnabled.
-    * @param reason Причина отлючения.
-    * @return Фьючерс для синхронизации.
-    */
-  def setIsEnabled(isEnabled: Boolean, reason: Option[String])
-                  (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
-    companion.setIsEnabled(id.get, isEnabled, reason)
   }
 
 }

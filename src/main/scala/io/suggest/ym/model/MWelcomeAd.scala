@@ -91,6 +91,7 @@ final class MWelcomeAdJmx(implicit val ec: ExecutionContext, val client: Client,
   extends EsModelJMXBase with MWelcomeAdJmxMBean {
   def companion = MWelcomeAd
 
+  // TODO unused
   def findUnusedByAdnNodes(): Future[Set[String]] = {
     val usedIdsFut = MAdnNode.findAllWelcomeAdIds()
     val allIdsFut  = MWelcomeAd.getAllIds(maxResults = -1)
@@ -103,11 +104,13 @@ final class MWelcomeAdJmx(implicit val ec: ExecutionContext, val client: Client,
     }
   }
 
+  // TODO unused
   override def printAllUnusedByAdnNodes(): String = {
     findUnusedByAdnNodes()
       .mkString("\n")
   }
 
+  // TODO unused
   override def deleteAllUnusedByAdnNodes(): String = {
     findUnusedByAdnNodes().flatMap { ids =>
       Future.traverse(ids) { wadId =>
