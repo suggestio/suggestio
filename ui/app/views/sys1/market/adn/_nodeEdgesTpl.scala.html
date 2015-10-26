@@ -1,0 +1,68 @@
+@(eis: Seq[msys.MNodeEdgeInfo], isIncoming: Boolean)(implicit ctx: Context)
+
+@* Табличка с эджами и прочим. *@
+
+@import lk.lkBlock
+@import sys1.stuff.ntable._
+@import ctx.messages
+
+@if( eis.isEmpty ) {
+
+  <p class="color-light-strong">Связи отсутствуют.</p>
+
+} else {
+
+  @defining("M") { sz =>
+  @_ntable() {
+
+    @_th(sz) {
+      @messages("Predicate")
+    }
+
+    @_th(sz) {
+      @messages("Name")
+    }
+
+    @_th(sz) {
+      @messages("Info")
+    }
+
+  } {
+    @eis.map { ei =>
+      @_tr() {
+
+        @_td(sz) {
+          @if( isIncoming ) {
+            &lt;=
+          } else {
+            =&gt;
+          }
+          @messages( ei.medge.predicate.singular )
+          @ei.medge.order.map { orderN =>
+            #@orderN
+          }
+        }
+
+        @_td(sz) {
+          @ei.mnodeEith.right.toOption.map { mnode =>
+            <a href="@routes.SysMarket.showAdnNode( mnode.id.get )">
+              @mnode.guessDisplayName.fold {
+                @mnode.id
+              } { name =>
+                <strong>@name</strong>
+              }
+            </a>
+          }
+          @ei.mnodeEith.left.toOption
+        }
+
+        @_td(sz) {
+          @ei.medge.info
+        }
+
+      }
+    }
+  } @* ntable *@
+  } @* defining sz *@
+
+}   @* if nonEmpty *@

@@ -65,6 +65,7 @@ Provider=Провайдер
 Page=Страница
 Signup.confirmation=Подтверждение регистрации
 Signup.finished=Регистрация завершена.
+Predicate=Предикат
 
 requisites=Платёжные реквизиты для вывода средств
 
@@ -668,3 +669,12 @@ Ntypes.m=Медия
 Ntypes.i=Картинки
 Ntypes.w=Карточки приветствия
 Nodes=Узлы
+
+edge.predicate.a=Владелец
+edge.predicate.c=Adv mdr dg
+edge.predicate.d=Создатель
+edge.predicate.e=Логотип
+edge.predicate.f=Геородитель
+edge.predicate.g=Прямой геородитель
+edge.predicate.h=Карточка приветствия
+edge.predicate.i=Элемент галереи

@@ -26,9 +26,6 @@ class GalleryUtil @Inject() (
   configuration   : Configuration
 ) {
 
-  // TODO DI
-  //private val mImg3 = current.injector.instanceOf[MImg3_]
-
   // Ширина/высота картинки галереи, отображаемой в ЛК на странице узла.
   val LK_NODE_GALLERY_SHOW_WIDTH_PX: Int  = configuration.getInt("lk.node.gallery.show.width.px") getOrElse 625
   val LK_NODE_GALLERY_SHOW_HEIGHT_PX: Int = configuration.getInt("lk.node.gallery.show.height.px") getOrElse 200
@@ -43,13 +40,13 @@ class GalleryUtil @Inject() (
 
   def galleryKM = EditConstants.GALLERY_FN -> galleryM
 
-  def gallery2iiks(gallery: TraversableOnce[IEdge]) = {
+  def gallery2iiks(gallery: TraversableOnce[IEdge]): Iterator[MImgT] = {
     gallery
       .toIterator
       .map { galEdge2img }
   }
 
-  def galEdge2img(edge: IEdge): MImg3 = {
+  def galEdge2img(edge: IEdge): MImgT = {
     mImg3(edge)
   }
 

@@ -1,13 +1,13 @@
 package controllers
 
 import com.google.inject.Inject
-import com.typesafe.scalalogging.slf4j.Logger
 import io.suggest.common.fut.FutureUtil
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.n2.edge.MNodeEdges
-import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchWrapImpl, MNodeSearchDfltImpl}
+import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.im.MImg
-import models.msys.{MSysNodeListArgs, MNodeTypeInfo, MSysNodeListTplArgs, NodeCreateParams}
+import models.msys._
 import models.usr.{MPerson, EmailActivation}
 import org.elasticsearch.client.Client
 import org.elasticsearch.search.sort.SortOrder
@@ -161,26 +161,97 @@ class SysMarket @Inject() (
     }
   }
 
+
   /** Унифицированая страница отображения узла рекламной сети. */
   def showAdnNode(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
     import request.adnNode
-    val ownerIds = adnNode.edges
-      .withPredicateIterIds( MPredicates.OwnedBy )
-    val personNamesFut = Future.traverse( ownerIds ) { personId =>
-      MPerson.findUsernameCached(personId)
-        .map { nameOpt =>
-          val name = nameOpt.getOrElse(personId)
-          personId -> name
+
+    def _prepareEdgeInfos(eis: TraversableOnce[MNodeEdgeInfo]): Seq[MNodeEdgeInfo] = {
+      eis.toSeq
+        .sortBy { ei =>
+          // Собрать ключ для сортировки
+          val nodeName = ei.mnodeEith
+            .fold [String] (identity, _.guessDisplayNameOrId.getOrElse(""))
+          (ei.medge.predicate.strId,
+            ei.medge.order.getOrElse(Int.MaxValue),
+            nodeName)
         }
-    } map {
-      _.toMap
     }
+
+    // Узнаём исходящие ребра.
+    val outEdgesFut: Future[Seq[MNodeEdgeInfo]] = {
+      MNode.multiGetMap {
+        adnNode.edges.out
+          .valuesIterator
+          .map(_.nodeId)
+      } map { nmap =>
+        val iter = adnNode.edges.out
+          .valuesIterator
+          .map { medge =>
+            val nodeId = medge.nodeId
+            val mnodeOpt = nmap.get(nodeId)
+            val mnodeEith = mnodeOpt.toRight( nodeId )
+            MNodeEdgeInfo(medge, mnodeEith)
+          }
+        _prepareEdgeInfos(iter)
+      }
+    }
+
+    // Узнаём входящие ребра
+    val inEdgesFut = {
+      val msearch = new MNodeSearchDfltImpl {
+        override def outEdges: Seq[ICriteria] = {
+          val cr = Criteria(nodeIds = Seq(adnId))
+          Seq(cr)
+        }
+        override def limit = 200
+      }
+      for {
+        mnodes <- MNode.dynSearch( msearch )
+      } yield {
+        val iter = mnodes.iterator
+          .flatMap { mnode =>
+            mnode.edges
+              .withNodeId( adnId )
+              .map { medge =>
+                MNodeEdgeInfo(medge, Right(mnode))
+              }
+          }
+        _prepareEdgeInfos(iter)
+      }
+    }
+
+    // Определить имена юзеров-владельцев. TODO Удалить, ибо во многом дублирует логику outEdges.
+    val personNamesFut = {
+      val ownerIds = adnNode.edges
+        .withPredicateIterIds( MPredicates.OwnedBy )
+      Future.traverse( ownerIds ) { personId =>
+        MPerson.findUsernameCached(personId)
+          .map { nameOpt =>
+            val name = nameOpt.getOrElse(personId)
+            personId -> name
+          }
+      } map {
+        _.toMap
+      }
+    }
+
+    // Сгенерить асинхронный результат.
     for {
+      outEdges    <- outEdgesFut
+      inEdges     <- inEdgesFut
       personNames <- personNamesFut
     } yield {
-      Ok(adnNodeShowTpl(adnNode, personNames))
+      val args = MSysNodeShowTplArgs(
+        mnode       = adnNode,
+        inEdges     = inEdges,
+        outEdges    = outEdges,
+        personNames = personNames
+      )
+      Ok( adnNodeShowTpl(args) )
     }
   }
+
 
   /** Безвозвратное удаление узла рекламной сети. */
   def deleteAdnNodeSubmit(adnId: String) = {

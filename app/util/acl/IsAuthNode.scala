@@ -4,6 +4,7 @@ import io.suggest.di.{IEsClient, IExecutionContext}
 import models.MNodeType
 import models.req.SioReqMd
 import play.api.mvc.{Result, Request, ActionBuilder}
+import util.PlayMacroLogsDyn
 import util.di.{INodeCache, IErrorHandler}
 
 import scala.concurrent.Future
@@ -26,6 +27,7 @@ trait IsAuthNode
   trait IsAuthNodeBase
     extends ActionBuilder[SimpleRequestForAdnNode]
     with OnUnauthUtil
+    with PlayMacroLogsDyn
   {
 
     /** id запрашиваемого узла. */
@@ -39,19 +41,25 @@ trait IsAuthNode
                                 block: (SimpleRequestForAdnNode[A]) => Future[Result]): Future[Result] = {
       val pwOpt = PersonWrapper.getFromRequest(request)
       if (pwOpt.isEmpty) {
+        // Не залогинен.
         onUnauth(request)
 
       } else {
+        // Юзер залогинен, нужно продолжать запрос.
         val nodeOptFut = mNodeCache.getById( nodeId )
         val srmFut = SioReqMd.fromPwOpt( pwOpt )
+        val _ntypes = ntypes
         nodeOptFut flatMap {
-          case Some(mnode) if ntypes.contains(mnode.common.ntype) =>
+          case Some(mnode) if _ntypes.isEmpty || _ntypes.contains(mnode.common.ntype) =>
             srmFut flatMap { srm =>
               val req1 = SimpleRequestForAdnNode(mnode, request, pwOpt, srm)
               block(req1)
             }
 
-          case None =>
+          case other =>
+            other.foreach { mnode =>
+              LOGGER.warn(s"404 for existing node[$nodeId] with unexpected ntype. Expected one of [${_ntypes.mkString(",")}], but node[$nodeId] has ntype ${mnode.common.ntype}.")
+            }
             errorHandler.http404Fut(request)
         }
       }

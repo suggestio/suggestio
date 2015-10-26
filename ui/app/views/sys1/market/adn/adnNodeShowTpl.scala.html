@@ -1,4 +1,4 @@
-@(mnode: MNode, personNames: Map[String, String])(implicit ctx: Context)
+@(args: msys.ISysNodeShowTplArgs)(implicit ctx: Context)
 
 @* Страница, отображающая информацию по торговому центру. *@
 
@@ -8,6 +8,7 @@
 @import lk.lkBlock
 @import sys1.person.parts._personLinkTpl
 @import models.mdr._
+@import args.mnode
 
 
 @* Подшаблон генерации квадратной кнопки. *@
@@ -22,8 +23,8 @@
   @btn1(href.url, paddingPx)(btnText)
 }
 
-@tableRow(title: String)(value: Html) = {
 
+@tableRow(title: String)(value: Html) = {
   <tr>
     <td class="siom-cell __size-S __inner-S">
       @title
@@ -32,11 +33,12 @@
       @value
     </td>
   </tr>
-
 }
+
 
 @* Обязательно нужен пустой токен пути заголовка, иначе будет дублирование названия узла в пути заголовка. *@
 @hPathAfter = { }
+
 
 @adnBase(
   title       = mnode.meta.basic.name,
@@ -69,13 +71,25 @@
     @_nodeMetaTpl(mnode.meta)
   }
 
+  @if( args.outEdges.nonEmpty ) {
+    @lkBlock("Исходящие связи") {
+      @_nodeEdgesTpl( args.outEdges, isIncoming = false )
+    }
+  }
+
+  @if( args.outEdges.nonEmpty ) {
+    @lkBlock("Входящие связи") {
+      @_nodeEdgesTpl( args.inEdges, isIncoming = true )
+    }
+  }
+
   @lkBlock("Владельцы") {
     @defining( mnode.edges.withPredicateIterIds( MPredicates.OwnedBy ) ) { personIdsIter =>
       @if(personIdsIter.isEmpty) {
         <p class="color-light-strong">Нет владельцев узла.</p>
       } else {
         @personIdsIter.map { personId =>
-          @_personLinkTpl(personId, personNames)
+          @_personLinkTpl(personId, args.personNames)
         }
       }
     }

@@ -65,6 +65,7 @@ Provider=Provider
 Page=Page
 Signup.confirmation=Signup confirmation
 Signup.finished=Signup finished.
+Predicate=Predicate
 
 requisites=Payment details for withdrawal
 
@@ -655,3 +656,12 @@ Ntype.m=Medias
 Ntype.i=Pictures
 Ntype.w=Welcome cards
 Nodes=Nodes
+
+edge.predicate.a=Owner
+edge.predicate.c=Adv mdr dg
+edge.predicate.d=Creator
+edge.predicate.e=Logo
+edge.predicate.f=GeoParent
+edge.predicate.g=Direct GeoParent
+edge.predicate.h=Welcome ad
+edge.predicate.i=Gallery item
