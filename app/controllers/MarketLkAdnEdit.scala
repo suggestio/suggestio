@@ -306,7 +306,6 @@ class MarketLkAdnEdit @Inject() (
             applyNodeChanges(_, fmr.meta, savedLogo, waIdOpt, gallery)
           }
         } yield {
-          trace("New gallery = " + gallery.mkString(", "))
           // Собираем новый экземпляр узла
           Redirect(routes.MarketLkAdn.showAdnNode(adnId))
             .flashing(FLASH.SUCCESS -> "Changes.saved")

@@ -32,6 +32,7 @@ class Umap @Inject() (
   override val mNodeCache         : MAdnNodeCache,
   override val messagesApi        : MessagesApi,
   override val _contextFactory    : Context2Factory,
+  override val errorHandler       : ErrorHandler,
   override implicit val current   : play.api.Application,
   override implicit val ec        : ExecutionContext,
   override implicit val esClient  : Client,

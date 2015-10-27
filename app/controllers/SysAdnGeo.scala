@@ -30,6 +30,7 @@ class SysAdnGeo @Inject() (
   implicit val osmClient          : OsmClient,
   override val mNodeCache         : MAdnNodeCache,
   override val _contextFactory    : Context2Factory,
+  override val errorHandler       : ErrorHandler,
   override val messagesApi        : MessagesApi,
   override implicit val ec        : ExecutionContext,
   override implicit val esClient  : Client,

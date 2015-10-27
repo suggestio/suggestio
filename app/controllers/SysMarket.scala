@@ -45,6 +45,7 @@ class SysMarket @Inject() (
   override val messagesApi        : MessagesApi,
   override val mailer             : IMailerWrapper,
   db                              : Database,
+  override val errorHandler       : ErrorHandler,
   override val mNodeCache         : MAdnNodeCache,
   override val sysAdRenderUtil    : SysAdRenderUtil,
   override val _contextFactory    : Context2Factory,
@@ -162,8 +163,11 @@ class SysMarket @Inject() (
   }
 
 
-  /** Унифицированая страница отображения узла рекламной сети. */
-  def showAdnNode(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
+  /**
+   * Страница отображения узла сети.
+   * @param nodeId id узла
+   */
+  def showAdnNode(nodeId: String) = IsSuperuserAdnNode(nodeId).async { implicit request =>
     import request.adnNode
 
     def _prepareEdgeInfos(eis: TraversableOnce[MNodeEdgeInfo]): Seq[MNodeEdgeInfo] = {
@@ -201,7 +205,7 @@ class SysMarket @Inject() (
     val inEdgesFut = {
       val msearch = new MNodeSearchDfltImpl {
         override def outEdges: Seq[ICriteria] = {
-          val cr = Criteria(nodeIds = Seq(adnId))
+          val cr = Criteria(nodeIds = Seq(nodeId))
           Seq(cr)
         }
         override def limit = 200
@@ -212,7 +216,7 @@ class SysMarket @Inject() (
         val iter = mnodes.iterator
           .flatMap { mnode =>
             mnode.edges
-              .withNodeId( adnId )
+              .withNodeId( nodeId )
               .map { medge =>
                 MNodeEdgeInfo(medge, Right(mnode))
               }

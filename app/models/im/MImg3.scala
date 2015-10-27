@@ -8,9 +8,12 @@ import io.suggest.model.img.{ImgSzDated, IImgMeta}
 import io.suggest.model.n2.media.storage.swfs.SwfsStorage_
 import io.suggest.model.n2.media.storage.{CassandraStorage, IMediaStorage}
 import io.suggest.model.n2.media.{MMedia_, MPictureMeta, MFileMeta}
+import io.suggest.model.n2.node.common.MNodeCommon
+import io.suggest.model.n2.node.meta.MBasicMeta
 import io.suggest.util.UuidUtil
 import models._
 import models.mfs.FileUtil
+import org.joda.time.DateTime
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.iteratee.Enumerator
 import util.PlayLazyMacroLogsImpl
@@ -30,7 +33,8 @@ import util.SiowebEsUtil.client
 @Singleton
 class MImg3_ @Inject() (
   implicit val swfsStorage  : SwfsStorage_,
-  val mMedia                : MMedia_
+  val mMedia                : MMedia_,
+  val mNodeCache            : MAdnNodeCache
 )
   extends IMImgCompanion
   with PlayLazyMacroLogsImpl
@@ -58,7 +62,7 @@ class MImg3_ @Inject() (
       .get
   }
 
-  override def apply(img: MAnyImgT, dynOps2: Option[List[ImOp]] = None): MImg3 = {
+  override def fromImg(img: MAnyImgT, dynOps2: Option[List[ImOp]] = None): MImg3 = {
     apply(img.rowKeyStr, dynOps2.getOrElse(img.dynImgOps))
   }
 
@@ -78,8 +82,8 @@ class MImg3_ @Inject() (
     apply(medge.nodeId, dops)
   }
 
-  def apply(rowKeyStr: String, dynImgOps: Seq[ImOp]): MImg3 = {
-    MImg3(rowKeyStr, dynImgOps, this)
+  def apply(rowKeyStr: String, dynImgOps: Seq[ImOp], userFileName: Option[String] = None): MImg3 = {
+    MImg3(rowKeyStr, dynImgOps, this, userFileName)
   }
 
 }
@@ -90,6 +94,9 @@ class MImg3_ @Inject() (
 abstract class MImg3T extends MImgT {
 
   override type MImg_t <: MImg3T
+
+  /** Пользовательское имя файла, если известно. */
+  def userFileName: Option[String]
 
   /** DI-инстанс статической части модели MMedia. */
   def companion: MImg3_
@@ -145,10 +152,59 @@ abstract class MImg3T extends MImgT {
   /** Подготовить и вернуть новое медиа-хранилище для модели. */
   protected def _newMediaStorage: Future[IMediaStorage]
 
+  /** Убедится, что в хранилищах существует сохраненный экземпляр MNode.
+    * Если нет, то создрать и сохранить. */
+  def ensureMnode(loc: MLocalImgT): Future[MNode] = {
+    companion.mNodeCache
+      .getById(rowKeyStr)
+      .map(_.get)
+      .recoverWith { case ex: NoSuchElementException =>
+        saveMnode(loc)
+      }
+  }
+
+  /** Сгенерить новый экземпляр MNode и сохранить. */
+  def saveMnode(loc: MLocalImgT): Future[MNode] = {
+    val fnameFut = userFileName
+      .fold [Future[String]] (loc.generateFileName) (Future.successful)
+    val mnodeFut = for {
+      perm    <- permMetaCached
+      fname   <- fnameFut
+    } yield {
+      MNode(
+        id = Some( rowKeyStr ),
+        common = MNodeCommon(
+          ntype         = MNodeTypes.Media.Image,
+          isDependent   = true
+        ),
+        meta = MMeta(
+          basic = MBasicMeta(
+            techName    = Some(fname),
+            dateCreated = perm.map(_.dateCreated)
+              .getOrElse { DateTime.now() }
+          )
+        )
+      )
+    }
+    // Запустить сохранение, вернуть экземпляр MNode.
+    for {
+      mnode <- mnodeFut
+      _     <- mnode.save
+    } yield {
+      mnode
+    }
+  }
+
   /** Сохранить в постоянное хранилище, (пере-)создать MMedia. */
   override protected def _doSaveToPermanent(loc: MLocalImgT): Future[MMedia] = {
-    val mimeFut = Future( loc.mime )
-    _mediaFut.recoverWith { case ex: Throwable =>
+    val mimeFut = loc.mimeFut
+    val media0Fut = _mediaFut
+    media0Fut onSuccess { case res =>
+      LOGGER.trace(s"_doSaveInPermanent($loc): MMedia already exist: $res")
+    }
+
+    // Вернуть экземпляр MMedia.
+    val mediaFut: Future[MMedia] = media0Fut.recoverWith { case ex: Throwable =>
       // Перезаписывать нечего, т.к. элемент ещё не существует в MMedia.
       val whOptFut = loc.getImageWH
       val sha1Fut = Future( FileUtil.sha1(loc.file) )
@@ -164,42 +220,58 @@ abstract class MImg3T extends MImgT {
         mime  <- mimeFut
         sha1  <- sha1Fut
         stor  <- storFut
-        mm    <- {
-          val _mm = MMedia(
-            nodeId  = rowKeyStr,
-            id      = Some(_mediaId),
-            file    = MFileMeta(
-              mime        = mime,
-              sizeB       = szB,
-              isOriginal  = isOriginal,
-              sha1        = Some(sha1)
-            ),
-            picture = whOpt.map(MPictureMeta.apply),
-            storage = stor,
-            companion = mMedia
-          )
-          _mm.save
-            .map { _mmId => _mm }
-        }
       } yield {
-        mm
+        MMedia(
+          nodeId  = rowKeyStr,
+          id      = Some(_mediaId),
+          file    = MFileMeta(
+            mime        = mime,
+            sizeB       = szB,
+            isOriginal  = isOriginal,
+            sha1        = Some(sha1)
+          ),
+          picture = whOpt.map(MPictureMeta.apply),
+          storage = stor,
+          companion = mMedia
+        )
       }
+    }
 
-    }.flatMap { mm =>
-      // Осуществить сохранение файла в хранилище.
+    val mediaSavedFut = media0Fut.recoverWith { case ex: Throwable =>
       for {
-        mime <- mimeFut
-        _    <- {
-          val wargs = WriteRequest(
-            contentType = mime,
-            file        = loc.file
-          )
-          mm.storage
-            .write( wargs )
-        }
+        mmedia      <- mediaFut
+        _mmediaId   <- mmedia.save
       } yield {
-        mm
+        mmedia
       }
+    }
+
+    // Параллельно запустить поиск и сохранение экземпляра MNode.
+    val mnodeSaved = ensureMnode( loc )
+
+    // Параллельно выполнить заливку файла в постоянное надежное хранилище.
+    val storWriteFut = for {
+      mm   <- mediaFut
+      mime <- mimeFut
+      res  <- {
+        val wargs = WriteRequest(
+          contentType = mime,
+          file        = loc.file
+        )
+        mm.storage
+          .write( wargs )
+      }
+    } yield {
+      res
+    }
+
+    // Дождаться завершения всех паралельных операций.
+    for {
+      _   <- mnodeSaved
+      _   <- storWriteFut
+      mm  <- mediaSavedFut
+    } yield {
+      mm
     }
   }
 
@@ -230,7 +302,8 @@ abstract class MImg3T extends MImgT {
 case class MImg3(
   override val rowKeyStr            : String,
   override val dynImgOps            : Seq[ImOp],
-  companion                         : MImg3_
+  companion                         : MImg3_,
+  override val userFileName         : Option[String] = None
 )
   extends MImg3T
   with PlayLazyMacroLogsImpl

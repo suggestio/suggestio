@@ -41,14 +41,19 @@
 
 
 @adnBase(
-  title       = mnode.meta.basic.name,
+  title       = mnode.guessDisplayNameOrId.getOrElse("???"),
   hPathAfter  = Some(hPathAfter),
   nodeOpt     = Some(mnode)
 ) {
 
   <div class="sys_t">
-    @messages( AdnShownTypes.node2val(mnode).singular ):
-    @mnode.meta.basic.nameShort
+    @messages( mnode.common.ntype.singular )
+    @AdnShownTypes.node2valOpt(mnode).map { ast =>
+      (@messages( ast.singular ))
+    }:
+    <strong>
+      @mnode.guessDisplayNameOrId
+    </strong>
 
     <a class="edit-btn __color-1 __ft-XS" href="@routes.SysMarket.editAdnNode(mnode.id.get)">
       @messages("Edit")
@@ -72,13 +77,13 @@
   }
 
   @if( args.outEdges.nonEmpty ) {
-    @lkBlock("Исходящие связи") {
+    @lkBlock("Исходящие связи (" + args.outEdges.size + ")") {
       @_nodeEdgesTpl( args.outEdges, isIncoming = false )
     }
   }
 
-  @if( args.outEdges.nonEmpty ) {
-    @lkBlock("Входящие связи") {
+  @if( args.inEdges.nonEmpty ) {
+    @lkBlock("Входящие связи (" + args.inEdges.size + ")") {
       @_nodeEdgesTpl( args.inEdges, isIncoming = true )
     }
   }

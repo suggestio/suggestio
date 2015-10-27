@@ -3,9 +3,9 @@ package util.acl
 import controllers.SioController
 import io.suggest.di.{IExecutionContext, IEsClient}
 import models.req.SioReqMd
-import util.di.INodeCache
+import util.di.{IErrorHandler, INodeCache}
 import scala.concurrent.Future
-import play.api.mvc.{Request, ActionBuilder, Result}
+import play.api.mvc.{RequestHeader, Request, ActionBuilder, Result}
 
 /**
  * Suggest.io
@@ -19,6 +19,7 @@ trait IsSuperuserAdnNode
   with IExecutionContext
   with IsSuperuserUtilCtl
   with INodeCache
+  with IErrorHandler
 {
 
   /** Часто нужно админить узлы рекламной сети. Тут комбинация IsSuperuser + IsAdnAdmin. */
@@ -33,14 +34,15 @@ trait IsSuperuserAdnNode
     override def invokeBlock[A](request: Request[A], block: (RequestForAdnNodeAdm[A]) => Future[Result]): Future[Result] = {
       val pwOpt = PersonWrapper.getFromRequest(request)
       if (PersonWrapper.isSuperuser(pwOpt)) {
+        val mnodeOptFut = mNodeCache.getById(adnId)
         val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)
-        mNodeCache.getById(adnId) flatMap {
-          case Some(adnNode) =>
+        mnodeOptFut flatMap {
+          case Some(mnode) =>
             sioReqMdFut flatMap { srm =>
-              block(RequestForAdnNodeAdm(adnNode, isMyNode = true, request, pwOpt, srm))
+              block(RequestForAdnNodeAdm(mnode, isMyNode = true, request, pwOpt, srm))
             }
           case None =>
-            nodeNotFound
+            nodeNotFound(request)
         }
 
       } else {
@@ -48,9 +50,8 @@ trait IsSuperuserAdnNode
       }
     }
 
-    def nodeNotFound: Future[Result] = {
-      val render = NotFound("Adn node not found: " + adnId)
-      Future successful render
+    def nodeNotFound(implicit request: RequestHeader): Future[Result] = {
+      errorHandler.http404Fut
     }
 
   }

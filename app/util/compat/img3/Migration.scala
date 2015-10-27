@@ -59,7 +59,7 @@ class Migration @Inject() (
 
       // Запуск обработки логотипа узла.
       val logoEdgeOptFut = FutureUtil.optFut2futOpt(madnNode.logoImgOpt) { logoImg =>
-        val mimg = mImg3( MImg(logoImg) ).original
+        val mimg = mImg3.fromImg( MImg(logoImg) ).original
         portOneImage("logo", mimg, adnNodeId, madnNode.meta.dateCreated, logoImg.meta)
           .map { imgNodeId =>
             Some( MEdge(MPredicates.Logo, imgNodeId) )
@@ -68,7 +68,7 @@ class Migration @Inject() (
 
       val galEdgesFut = Future.traverse( madnNode.gallery.zipWithIndex ) {
         case (galImgFileName, i) =>
-          val mimg = mImg3( MImg( galImgFileName ) ).original
+          val mimg = mImg3.fromImg( MImg( galImgFileName ) ).original
           portOneImage("gal", mimg, adnNodeId, madnNode.meta.dateCreated)
             .map { imgNodeId =>
               MEdge( MPredicates.GalleryItem, imgNodeId, order = Some(i), info = MEdgeInfo(
@@ -158,54 +158,8 @@ class Migration @Inject() (
 
     lazy val logPrefix = s"portOneImage(${mimg.rowKeyStr}):"
 
-    trace(s"$logPrefix Starting: ownNodeId=$ownNodeId")
-
-    val mLocImgFut = DynImgUtil.ensureImgReady(mimg, cacheResult = false)
-
-    val mmFut = for (mLocImg <- mLocImgFut) yield {
-      FileUtil.getMimeMatch( mLocImg.file )
-    }
-
-    // Узнать file extension
-    val fextFut = mmFut map { mmOpt =>
-      mmOpt.fold {
-        LOGGER.warn(prefix + " extension is unknown, guessing as PNG")
-        "png"
-      } { _.getExtension }
-    }
-
     val imgNodeId = mimg.rowKeyStr
-    trace(s"$logPrefix Processing img: $mimg")
-
-    // Создать node для картинки с какими-то минимальными данными.
-    val mnodeFut = for {
-      perm    <- mimg.permMetaCached
-      fext    <- fextFut
-    } yield {
-      MNode(
-        id = Some( imgNodeId ),
-        common = MNodeCommon(
-          ntype         = MNodeTypes.Media.Image,
-          isDependent   = true
-        ),
-        meta = MMeta(
-          basic = MBasicMeta(
-            techName    = Some(prefix + "-" + ownNodeId + "." + fext),
-            dateCreated = perm.map(_.dateCreated)
-              .getOrElse { dateCreatedDflt }
-          )
-        )
-      )
-    }
-
-    val mnodeSaveFut = mnodeFut.flatMap(_.save)
-
-    mnodeSaveFut onComplete {
-      case Success(lid) =>
-        trace(s"$logPrefix created logo MNode as [$lid]")
-      case Failure(ex) =>
-        error(s"$logPrefix failed to save logo MNode", ex)
-    }
+    trace(s"$logPrefix Processing img: $mimg ownNodeId=$ownNodeId")
 
     val imgSaveFut = mimg.saveToPermanent
 
@@ -217,7 +171,6 @@ class Migration @Inject() (
     }
 
     for {
-      _     <- mnodeSaveFut
       _     <- imgSaveFut
     } yield {
       info(s"$logPrefix Logo done: [$imgNodeId]")

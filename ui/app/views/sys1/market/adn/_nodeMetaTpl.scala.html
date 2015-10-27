@@ -10,8 +10,16 @@
 
 @_ptableTpl() {
 
-  @_ptableRowTpl(messages("Name") + ":") {
-    @meta.basic.name
+  @meta.basic.nameOpt.map { name =>
+    @_ptableRowTpl(messages("Name") + ":") {
+      @name
+    }
+  }
+
+  @meta.basic.techName.map { tn =>
+    @_ptableRowTpl("Техническое имя:") {
+      @tn
+    }
   }
 
   @meta.basic.hiddenDescr.map { descr =>
@@ -22,6 +30,12 @@
 
   @_ptableRowTpl( messages("Created")+":") {
     @_prettyDate(meta.basic.dateCreated, withSpan = true)
+  }
+
+  @meta.basic.dateEdited.map { de =>
+    @_ptableRowTpl( messages("Edited") + ":") {
+      @_prettyDate(de, withSpan = true)
+    }
   }
 
   @meta.address.town.map { town =>
@@ -74,14 +88,17 @@
 
   @meta.business.siteUrl.map { siteUrl =>
     @_ptableRowTpl( "Сайт:") {
-      <a class="blue-link" href="http://anonym.to/?@siteUrl" target="_blank" title="@humanizeUrl(siteUrl)">@humanizeUrlAggressive(siteUrl)</a>
+      <a class="blue-link" href="http://anonym.to/?@siteUrl" target="_blank" title="@humanizeUrl(siteUrl)">
+        @humanizeUrlAggressive(siteUrl)
+      </a>
     }
   }
 
-  @meta.colors.bg.map { color =>
-    @_ptableRowTpl("Цвет фона:") {
-      #@color
-      <span style="background-color: #@color;">&nbsp;&nbsp;&nbsp;&nbsp;</span>
+  @if( meta.colors.nonEmpty ) {
+    @_ptableRowTpl( messages("Colors") ) {
+      @_colorInfoTpl("Bg", meta.colors.bg)
+      @_colorInfoTpl("Fg", meta.colors.fg)
+      @_colorInfoTpl("Pattern", meta.colors.pattern)
     }
   }
 

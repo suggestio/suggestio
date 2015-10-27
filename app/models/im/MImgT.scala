@@ -278,5 +278,5 @@ abstract class MImgT extends MAnyImgT {
 trait IMImgCompanion extends TypeT {
   override type T <: MImgT
   def apply(fileName: String): T
-  def apply(img: MAnyImgT, dynOps2: Option[List[ImOp]] = None): T
+  def fromImg(img: MAnyImgT, dynOps2: Option[List[ImOp]] = None): T
 }

@@ -43,7 +43,13 @@ class GalleryUtil @Inject() (
   def gallery2iiks(gallery: TraversableOnce[IEdge]): Iterator[MImgT] = {
     gallery
       .toIterator
-      .map { galEdge2img }
+      .map { medge =>
+        galEdge2img(medge) -> medge.order.getOrElse(Int.MaxValue)
+      }
+      .toSeq
+      .sortBy( _._2 )
+      .iterator
+      .map(_._1)
   }
 
   def galEdge2img(edge: IEdge): MImgT = {

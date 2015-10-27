@@ -12,6 +12,7 @@ import io.suggest.model.img.{ImgSzDated, IImgMeta}
 import io.suggest.model.{Img2FullyDeletedEvent, ImgWithTimestamp}
 import io.suggest.util.UuidUtil
 import io.suggest.ym.model.common.MImgInfoMeta
+import models.mfs.FileUtil
 import models.{CronTask, ICronTask}
 import org.apache.commons.io.FileUtils
 import org.joda.time.DateTime
@@ -138,13 +139,40 @@ trait MLocalImgT extends ImgWithTimestamp with PlayMacroLogsI with MAnyImgT {
   
   lazy val file = new File(fsImgDir, fsFileName)
 
-  /** Определение mime-типа из файла. */
-  lazy val mime: String = {
-    try {
-      ImgFileUtil.getMimeOrUnknown(file)
-    } catch { case ex: Throwable =>
+  lazy val mimeMatchOptFut = {
+    val fut = Future {
+      FileUtil.getMimeMatch(file)
+    }
+    fut onFailure { case ex: Throwable =>
       LOGGER.error(s"Failed to get mime for file: $file [${file.length()} bytes]", ex)
-      throw ex
+    }
+    fut
+  }
+
+  /** Определение mime-типа из файла. */
+  lazy val mimeFut: Future[String] = for {
+    mmOpt <- mimeMatchOptFut
+  } yield {
+    val mimeOpt = ImgFileUtil.getMime(mmOpt)
+    ImgFileUtil.orUnknown( mimeOpt )
+  }
+
+  def fileExtensionFut: Future[String] = {
+    mimeMatchOptFut map { mimeMatchOpt =>
+      mimeMatchOpt.fold {
+        LOGGER.warn("Mime match failed, guessing PNG extension")
+        "png"
+      } { mm =>
+        mm.getExtension
+      }
+    }
+  }
+
+  def generateFileName: Future[String] = {
+    for {
+      fext <- fileExtensionFut
+    } yield {
+      rowKeyStr + "." + fext
     }
   }
 
@@ -448,7 +476,8 @@ trait PeriodicallyDeleteNotExistingInPermanent extends ICronTasksProvider with P
         .foreach { currDir =>
           val rowKeyStr = currDir.getName
           val rowKey = UuidUtil.base64ToUuid(rowKeyStr)
-          MLocalImg(rowKey).toWrappedImg
+          MLocalImg(rowKey)
+            .toWrappedImg
             .existsInPermanent
             .filter(!_)
             .andThen { case _: Success[_] =>

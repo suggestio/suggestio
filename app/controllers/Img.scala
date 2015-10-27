@@ -339,7 +339,7 @@ trait TempImgSupport
             }
             // Генерим уменьшенную превьюшку для отображения в форме редактирования чего-то.
             val imOps = List(_imgRszPreviewOp)
-            val im = mImgCompanion(mptmp, Some(imOps))
+            val im = mImgCompanion.fromImg(mptmp, Some(imOps))
             val res2Fut = imgPrepareFut map { _ =>
               Ok( jsonTempOk(
                 mptmp.fileName,

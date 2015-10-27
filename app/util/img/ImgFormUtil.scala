@@ -142,9 +142,11 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     // Разделяем на картинки, которые уже были, и которые затребованы для отправки в хранилище:
     val newOldImgsMapFut = {
       Future.traverse(needImgsIndexed) { case a @ (img, i) =>
-        img.original.existsInPermanent map { existsInPermanent =>
-          (a, existsInPermanent)
-        }
+        img.original
+          .existsInPermanent
+          .map { existsInPermanent =>
+            (a, existsInPermanent)
+          }
       } map { results =>
         results
           .groupBy(_._2)

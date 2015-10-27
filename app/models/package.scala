@@ -205,6 +205,8 @@ package object models {
   type ITagEdge             = io.suggest.model.n2.tag.edge.ITagEdge
   type TagsMap_t            = io.suggest.model.n2.tag.edge.TagsMap_t
 
+  type MColorData           = n2.node.meta.colors.MColorData
+
   type MNode                = n2.node.MNode
   val  MNode                = n2.node.MNode
 

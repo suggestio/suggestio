@@ -1,0 +1,5 @@
+@(title: String, cdOpt: Option[MColorData])(implicit ctx: Context)
+
+@cdOpt.map { cd =>
+  @title<span style="background-color: #@cd.code;">&nbsp;&nbsp;&nbsp;&nbsp;</span>
+}

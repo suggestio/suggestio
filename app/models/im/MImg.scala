@@ -78,7 +78,7 @@ object MImg extends PlayLazyMacroLogsImpl with IMImgCompanion { model =>
     }
   }
 
-  override def apply(img: MAnyImgT, dynOps2: Option[List[ImOp]] = None): MImg = {
+  override def fromImg(img: MAnyImgT, dynOps2: Option[List[ImOp]] = None): MImg = {
     apply(img.rowKey, dynOps2.getOrElse(img.dynImgOps))
   }
 

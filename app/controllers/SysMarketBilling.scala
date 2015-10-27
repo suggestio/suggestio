@@ -28,6 +28,7 @@ import util.billing.Billing
 class SysMarketBilling @Inject() (
   override val messagesApi        : MessagesApi,
   billing                         : Billing,
+  override val errorHandler       : ErrorHandler,
   override val db                 : Database,
   override val mNodeCache         : MAdnNodeCache,
   override val _contextFactory    : Context2Factory,
