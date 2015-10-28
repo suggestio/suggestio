@@ -173,7 +173,9 @@ abstract class MImgT extends MAnyImgT {
       IteeUtil.writeIntoFile(enumer, inst.file)
         .map { _ => Option(inst) }
         .recover { case ex: Throwable =>
-          if (!ex.isInstanceOf[NoSuchElementException])
+          if (ex.isInstanceOf[NoSuchElementException])
+            LOGGER.debug("toLocalImg: img not found in permanent storage: " + inst, ex)
+          else
             LOGGER.warn(s"toLocalImg: _getImgBytes2 or writeIntoFile ${inst.file} failed", ex)
           None
         }

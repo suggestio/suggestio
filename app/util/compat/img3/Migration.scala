@@ -56,7 +56,7 @@ class Migration @Inject() (
       // Запуск обработки логотипа узла.
       val logoEdgeOptFut = FutureUtil.optFut2futOpt(madnNode.logoImgOpt) { logoImg =>
         val oldImg = MImg(logoImg)
-        val mlocImgFut = oldImg.toLocalImg
+        val mlocImgFut = oldImg.original.toLocalImg
         val mimg = mImg3.fromImg( oldImg ).original
         for {
           mLocImg     <- mlocImgFut
@@ -69,7 +69,7 @@ class Migration @Inject() (
       val galEdgesFut = Future.traverse( madnNode.gallery.zipWithIndex ) {
         case (galImgFileName, i) =>
           val oldImg = MImg( galImgFileName )
-          val mlocImgFut = oldImg.toLocalImg
+          val mlocImgFut = oldImg.original.toLocalImg
           val mimg = mImg3.fromImg( oldImg ).original
           for {
             mlocImg   <- mlocImgFut
