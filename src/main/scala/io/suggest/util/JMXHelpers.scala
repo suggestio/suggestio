@@ -23,7 +23,7 @@ trait JMXBase {
 
   def jmxName: String
 
-  def futureTimeout: FiniteDuration = 10 seconds
+  def futureTimeout: FiniteDuration = 10.seconds
 
   /** Хелпер для быстрой синхронизации фьючерсов. */
   implicit protected def awaitFuture[T](fut: Awaitable[T]) = {
