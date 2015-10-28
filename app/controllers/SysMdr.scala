@@ -1,16 +1,17 @@
 package controllers
 
 import com.google.inject.Inject
+import io.suggest.common.fut.FutureUtil
 import io.suggest.di.IEsClient
 import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.ym.model.ad.FreeAdvStatus
+import io.suggest.model.n2.extra.mdr.MFreeAdv
 import models.mdr._
+import models.msys.MSysMdrFreeAdvsTplArgs
 import org.elasticsearch.client.Client
-import org.elasticsearch.index.engine.VersionConflictEngineException
 import play.api.i18n.MessagesApi
-import play.twirl.api.Html
+import play.api.mvc.Result
 import util.PlayMacroLogsImpl
-import util.acl.{AbstractRequestWithPwOpt, IsSuperuser}
+import util.acl.{RequestWithAd, IsSuperuserMad, IsSuperuser}
 import util.lk.LkAdUtil
 import util.showcase.ShowcaseUtil
 import views.html.sys1.mdr._
@@ -39,24 +40,22 @@ class SysMdr @Inject() (
   with PlayMacroLogsImpl
   with IEsClient
   with IsSuperuser
+  with IsSuperuserMad
 {
 
   import LOGGER._
 
   /** Отобразить начальную страницу раздела модерации рекламных карточек. */
   def index = IsSuperuser { implicit request =>
-    Ok(mdrIndexTpl())
+    Ok( mdrIndexTpl() )
   }
 
   /** Страница с бесплатно-размещёнными рекламными карточками, подлежащими модерации s.io.
     * @param args Аргументы для поиска (QSB).
-    * @param hideAdId Можно скрыть какую-нибудь карточку. Полезно скрывать отмодерированную, т.к. она
-    *                 некоторое время ещё будет висеть на этой странице.
     */
-  def freeAdvs(args: MdrSearchArgs, hideAdId: Option[String]) = IsSuperuser.async { implicit request =>
+  def freeAdvs(args: MdrSearchArgs) = IsSuperuser.async { implicit request =>
     var madsFut = MAd.findSelfAdvNonMdr(args)
-    if (hideAdId.isDefined) {
-      val hai = hideAdId.get
+    for (hai <- args.hideAdIdOpt) {
       madsFut = madsFut.map { mads0 =>
         mads0.filter(_.id.get != hai)
       }
@@ -77,17 +76,24 @@ class SysMdr @Inject() (
       }
     }
 
+    val prodOptFut = FutureUtil.optFut2futOpt( args.producerId ) { prodId =>
+      prodsMapFut map { prodsMap =>
+        prodsMap.get(prodId)
+      }
+    }
+
     for {
       brArgss   <- brArgssFut
       prodsMap  <- prodsMapFut
+      mnodeOpt  <- prodOptFut
     } yield {
-      Ok(freeAdvsTpl(
-        brArgss,
-        prodsMap    = prodsMap,
-        currPage    = args.page,
-        hasNextPage = brArgss.size >= MdrSearchArgs.FREE_ADVS_PAGE_SZ,
-        mnodeOpt    = args.producerId.flatMap(prodsMap.get)
-      ))
+      val rargs = MSysMdrFreeAdvsTplArgs(
+        args0     = args,
+        mads      = brArgss,
+        prodsMap  = prodsMap,
+        producerOpt  = mnodeOpt
+      )
+      Ok( freeAdvsTpl(rargs) )
     }
   }
 
@@ -102,112 +108,91 @@ class SysMdr @Inject() (
   }
 
   /** Страница для модерации одной карточки. */
-  def freeAdvMdr(adId: String) = IsSuperuser.async { implicit request =>
-    freeAdvMdrBody(adId, banFreeAdvFormM)
-      .map { Ok(_) }
+  def freeAdvMdr(adId: String) = IsSuperuserMad(adId).async { implicit request =>
+    freeAdvMdrBody(banFreeAdvFormM, Ok)
   }
 
   /** Рендер тела ответа. */
-  private def freeAdvMdrBody(adId: String, banForm: Form[String])(implicit request: AbstractRequestWithPwOpt[_]): Future[Html] = {
-    val madFut = MAd.getById(adId)
-      .map(_.get)
-    val ctx = implicitly[Context]
-    madFut flatMap { mad =>
-      // 2015.apr.20: Использован функционал выдачи для сбора данных по рендеру. По идее это ок, но лучше бы протестировать.
-      val brArgsFut = scUtil.focusedBrArgsFor(mad)(ctx)
-      val producerFut = mNodeCache.getById(mad.producerId)
-        .map { _.get }
-      for {
-        _brArgs   <- brArgsFut
-        _producer <- producerFut
-      } yield {
-        val args = FreeAdvMdrRArgs(
-          brArgs    = _brArgs,
-          producer  = _producer,
-          banFormM  = banForm
-        )
-        freeAdvMdrTpl(args)(ctx)
-      }
+  private def freeAdvMdrBody(banForm: Form[String], respStatus: Status)
+                            (implicit request: RequestWithAd[_]): Future[Result] = {
+    import request.mad
+    implicit val ctx = implicitly[Context]
+    // 2015.apr.20: Использован функционал выдачи для сбора данных по рендеру. По идее это ок, но лучше бы протестировать.
+    val brArgsFut = scUtil.focusedBrArgsFor(mad)(ctx)
+    val producerFut = mNodeCache.getById(mad.producerId)
+      .map { _.get }
+    for {
+      _brArgs   <- brArgsFut
+      _producer <- producerFut
+    } yield {
+      val args = FreeAdvMdrRArgs(
+        brArgs    = _brArgs,
+        producer  = _producer,
+        banFormM  = banForm
+      )
+      val render = freeAdvMdrTpl(args)(ctx)
+      respStatus(render)
     }
   }
 
-  /** Сколько попыток обновить данные по модерации надо делать, прежде чем бросать это дело? */
-  def UPDATE_MDR_TRY_MAX = 5
 
   /** Сабмит одобрения пост-модерации бесплатного размещения.
     * Нужно выставить в карточку данные о модерации. */
-  def freeAdvMdrAccept(adId: String) = IsSuperuser.async { implicit request =>
-    // Для атомарного обновления поля используем optimistic locking (ES versionising)
-    def tryUpdate(counter: Int = 0): Future[_] = {
-      MAd.getById(adId) flatMap { madOpt =>
-        val mad = madOpt.get
-        mad.moderation = mad.moderation.copy (
-          freeAdv = Some(FreeAdvStatus(
-            isAllowed = true,
-            byUser = request.pwOpt.get.personId
-          ))
+  def freeAdvMdrAccept(adId: String) = IsSuperuserMad(adId).async { implicit request =>
+    // Сгенерить обновлённые данные модерации.
+    val mdr2 = Some(MFreeAdv(
+      isAllowed = true,
+      byUser    = request.pwOpt.get.personId
+    ))
+
+    // Запускаем сохранение данных модерации.
+    val updFut = MAd.tryUpdate(request.mad) { mad0 =>
+      mad0.copy(
+        moderation = mad0.moderation.copy(
+          freeAdv = mdr2
         )
-        mad.saveModeration
-          .recoverWith {
-            case ex: VersionConflictEngineException =>
-              val tryMax = UPDATE_MDR_TRY_MAX
-              if (counter < tryMax) {
-                // Счетчик попыток ещё не истёк. Повторить попытку.
-                val counter1 = counter + 1
-                debug(s"freeAdvMdrAccept($adId): ES said: 409 Version conflict. Retrying ($counter1/$tryMax)...")
-                tryUpdate(counter1)
-              } else {
-                Future failed new RuntimeException(s"Too many version conflicts: $counter, lastVsn = ${mad.versionOpt}", ex)
-              }
-          }
-      }
+      )
     }
-    tryUpdate() map { _ =>
+
+    // После завершения асинхронный операций, вернуть результат.
+    for(_ <- updFut) yield {
       // Обновление выполнено. Пора отредиректить юзера на страницу модерации других карточек.
-      Redirect(routes.SysMdr.freeAdvs(hideAdId = Some(adId)))
-        .flashing("success" -> "Карточка помечена как проверенная.")
+      val args = MdrSearchArgs(
+        hideAdIdOpt = Some(adId)
+      )
+      Redirect( routes.SysMdr.freeAdvs(args) )
+        .flashing(FLASH.SUCCESS -> "Карточка помечена как проверенная.")
     }
   }
 
   /** Сабмит формы блокирования бесплатного размещения рекламной карточки. */
-  def freeAdvMdrBan(adId: String) = IsSuperuser.async { implicit request =>
+  def freeAdvMdrBan(adId: String) = IsSuperuserMad(adId).async { implicit request =>
     banFreeAdvFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"freeAdvMdrBan($adId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
-        freeAdvMdrBody(adId, formWithErrors)
-          .map { NotAcceptable(_) }
+        freeAdvMdrBody(formWithErrors, NotAcceptable)
       },
       {reason =>
-        // Отклонено. Надо бы снять карточку из бесплатного размещения и выставить причину в результат модерации.
-        def tryUpdate(counter: Int = 0): Future[_] = {
-          MAd.getById(adId) flatMap { madOpt =>
-            val mad = madOpt.get
-            mad.moderation = mad.moderation.copy(
-              freeAdv = Some(FreeAdvStatus(
-                isAllowed = false,
-                byUser = request.pwOpt.get.personId,
-                reason = Some(reason)
-              ))
+        val freeAdvOpt2 = Some(MFreeAdv(
+          isAllowed = false,
+          byUser    = request.pwOpt.get.personId,
+          reason    = Some(reason)
+        ))
+
+        val saveFut = MAd.tryUpdate(request.mad) { mad0 =>
+          mad0.copy(
+            moderation = mad0.moderation.copy(
+              freeAdv = freeAdvOpt2
             )
-            mad.receivers = mad.receivers.filter {
-              case (rcvrId, _)  =>  rcvrId != mad.producerId
-            }
-            mad.save.recoverWith {
-              case ex: VersionConflictEngineException =>
-                val tryMax = UPDATE_MDR_TRY_MAX
-                if (counter < tryMax) {
-                  val counter1 = counter + 1
-                  debug(s"freeAdvMdrBan($adId): ES said: 409 Vsn conflict. Retrying ($counter1/$tryMax)...")
-                  tryUpdate(counter1)
-                } else {
-                  Future failed new RuntimeException(s"Too many version conflicts: $counter, lastVsn = ${mad.versionOpt}", ex)
-                }
-            }
-          }
+          )
         }
-        tryUpdate() map { _ =>
-          Redirect(routes.SysMdr.freeAdvs(hideAdId = Some(adId)))
-            .flashing("error" -> "Карточка убрана из бесплатной выдачи.")
+
+        for(_ <- saveFut) yield {
+          val args = MdrSearchArgs(
+            hideAdIdOpt = Some(adId)
+          )
+          Redirect( routes.SysMdr.freeAdvs(args) )
+            .flashing(FLASH.ERROR -> "Карточка убрана из бесплатной выдачи.")
         }
       }
     )

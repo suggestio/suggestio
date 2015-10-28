@@ -236,7 +236,7 @@ POST /sys/ir/install/:mirId/eact         @controllers.SysMarketInvReq.eactInstal
 
 ## sys: mdr - модерация контента
 GET  /sys/mdr                            @controllers.SysMdr.index
-GET  /sys/mdr/freeAdvs                   @controllers.SysMdr.freeAdvs(a: mdr.MdrSearchArgs ?= mdr.MdrSearchArgs(), hideAdId: Option[String] ?= None)
+GET  /sys/mdr/freeAdvs                   @controllers.SysMdr.freeAdvs(a: mdr.MdrSearchArgs ?= mdr.MdrSearchArgs.default)
 GET  /sys/mdr/freeAdv/:adId              @controllers.SysMdr.freeAdvMdr(adId)
 POST /sys/mdr/freeAdv/:adId/accept       @controllers.SysMdr.freeAdvMdrAccept(adId)
 POST /sys/mdr/freeAdv/:adId/ban          @controllers.SysMdr.freeAdvMdrBan(adId)

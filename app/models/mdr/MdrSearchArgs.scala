@@ -4,7 +4,6 @@ import io.suggest.ym.model.ad.MdrSearchArgsI
 import play.api.Play.{configuration, current}
 import play.api.mvc.QueryStringBindable
 import util.qsb.QsbKey1T
-import util.qsb.QsbUtil._
 
 /**
  * Suggest.io
@@ -14,46 +13,68 @@ import util.qsb.QsbUtil._
  */
 object MdrSearchArgs {
 
+  // TODO Убрать отсюда размер страницы куда-нить в контроллер/настройки.
   /** Сколько карточек на одну страницу модерации. */
   val FREE_ADVS_PAGE_SZ: Int = configuration.getInt("mdr.freeAdvs.page.size") getOrElse 10
 
-  def PRODUCER_ID_FN          = "producerId"
-  def PAGE_ID_FN              = "page"
-  def FREE_ADV_IS_ALLOWED_FN  = "fa.ia"
+  def PRODUCER_ID_FN          = "prodId"
+  def OFFSET_FN               = "o"
+  def FREE_ADV_IS_ALLOWED_FN  = "f"
 
-  implicit def queryStringBinder(implicit strOptBinder: QueryStringBindable[Option[String]],
-                                 intBinder: QueryStringBindable[Int],
-                                 boolOptBinder: QueryStringBindable[Option[Boolean]]) = {
+  /**
+   * Можно скрыть какую-нибудь карточку. Полезно скрывать только что отмодерированную, т.к. она
+   * некоторое время ещё будет висеть на этой странице.
+   */
+  def HIDE_AD_ID_FN           = "h"
+
+
+  implicit def qsb(implicit
+                   strOptB   : QueryStringBindable[Option[String]],
+                   intOptB   : QueryStringBindable[Option[Int]],
+                   boolOptB  : QueryStringBindable[Option[Boolean]]
+                  ): QueryStringBindable[MdrSearchArgs] = {
     new QueryStringBindable[MdrSearchArgs] with QsbKey1T {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MdrSearchArgs]] = {
         val k1 = key1F(key)
         for {
-          maybeProducerIdOpt    <- strOptBinder.bind  (k1(PRODUCER_ID_FN),          params)
-          maybePage             <- intBinder.bind     (k1(PAGE_ID_FN),              params)
-          maybeFreeAdvIsAllowed <- boolOptBinder.bind (k1(FREE_ADV_IS_ALLOWED_FN),  params)
+          maybeOffsetOpt        <- intOptB.bind  (k1(OFFSET_FN),               params)
+          maybeProducerIdOpt    <- strOptB.bind  (k1(PRODUCER_ID_FN),          params)
+          maybeFreeAdvIsAllowed <- boolOptB.bind (k1(FREE_ADV_IS_ALLOWED_FN),  params)
+          maybeHideAdIdOpt      <- strOptB.bind  (k1(HIDE_AD_ID_FN),           params)
         } yield {
-          Right(
+          for {
+            offsetOpt           <- maybeOffsetOpt.right
+            prodIdOpt           <- maybeProducerIdOpt.right
+            freeAdvIsAllowed    <- maybeFreeAdvIsAllowed.right
+            hideAdIdOpt         <- maybeHideAdIdOpt.right
+          } yield {
             MdrSearchArgs(
-              page        = maybePage.fold({_ => 0}, identity),
-              producerId  = maybeProducerIdOpt,
-              freeAdvIsAllowed = maybeFreeAdvIsAllowed
+              offsetOpt         = offsetOpt,
+              producerId        = prodIdOpt,
+              freeAdvIsAllowed  = freeAdvIsAllowed,
+              hideAdIdOpt       = hideAdIdOpt
             )
-          )
+          }
         }
       }
 
       override def unbind(key: String, value: MdrSearchArgs): String = {
         val k1 = key1F(key)
         Iterator(
-          strOptBinder.unbind (k1(PRODUCER_ID_FN),          value.producerId),
-          intBinder.unbind    (k1(PAGE_ID_FN),              value.page),
-          boolOptBinder.unbind(k1(FREE_ADV_IS_ALLOWED_FN),  value.freeAdvIsAllowed)
+          strOptB.unbind (k1(PRODUCER_ID_FN),          value.producerId),
+          intOptB.unbind (k1(OFFSET_FN),               value.offsetOpt),
+          boolOptB.unbind(k1(FREE_ADV_IS_ALLOWED_FN),  value.freeAdvIsAllowed),
+          strOptB.unbind (k1(HIDE_AD_ID_FN),           value.hideAdIdOpt)
         )
-          .filter { qv => !qv.isEmpty && !qv.endsWith("=") }
+          .filter { qv =>
+            !qv.isEmpty && !qv.endsWith("=")
+          }
           .mkString("&")
       }
     }
   }
+
+  def default = MdrSearchArgs()
 
 }
 
@@ -62,12 +83,15 @@ import models.mdr.MdrSearchArgs._
 
 
 case class MdrSearchArgs(
-  page              : Int             = 0,
-  producerId        : Option[String]  = None,
-  freeAdvIsAllowed  : Option[Boolean] = None
-) extends MdrSearchArgsI {
+  offsetOpt             : Option[Int]       = None,
+  producerId            : Option[String]    = None,
+  freeAdvIsAllowed      : Option[Boolean]   = None,
+  hideAdIdOpt           : Option[String]    = None
+)
+  extends MdrSearchArgsI
+{
 
-  def maxResults = FREE_ADVS_PAGE_SZ
-  def offset = page * FREE_ADVS_PAGE_SZ
+  def offset  = offsetOpt getOrElse 0
+  def limit   = FREE_ADVS_PAGE_SZ
 
 }
