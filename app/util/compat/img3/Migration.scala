@@ -6,18 +6,14 @@ import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.n2.edge.{MPredicates, MEdge, MNodeEdges, MEdgeInfo}
 import io.suggest.model.n2.geo.MGeoShape
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
-import io.suggest.model.n2.node.{MNode, MNodeTypes}
-import io.suggest.model.n2.node.common.MNodeCommon
-import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
+import io.suggest.model.n2.node.MNode
 import io.suggest.util.JMXBase
 import io.suggest.ym.model.{MAdnNodeGeo, MAdnNode}
 import models.ISize2di
 import models.im.{MImg3, MImg3_, MImg}
-import models.mfs.FileUtil
 import org.elasticsearch.client.Client
 import org.joda.time.DateTime
 import util.PlayLazyMacroLogsImpl
-import util.img.DynImgUtil
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
@@ -59,22 +55,30 @@ class Migration @Inject() (
 
       // Запуск обработки логотипа узла.
       val logoEdgeOptFut = FutureUtil.optFut2futOpt(madnNode.logoImgOpt) { logoImg =>
-        val mimg = mImg3.fromImg( MImg(logoImg) ).original
-        portOneImage("logo", mimg, adnNodeId, madnNode.meta.dateCreated, logoImg.meta)
-          .map { imgNodeId =>
-            Some( MEdge(MPredicates.Logo, imgNodeId) )
-          }
+        val oldImg = MImg(logoImg)
+        val mlocImgFut = oldImg.toLocalImg
+        val mimg = mImg3.fromImg( oldImg ).original
+        for {
+          mLocImg     <- mlocImgFut
+          imgNodeId   <- portOneImage("logo", mimg, adnNodeId, madnNode.meta.dateCreated, logoImg.meta)
+        } yield {
+          Some( MEdge(MPredicates.Logo, imgNodeId) )
+        }
       }
 
       val galEdgesFut = Future.traverse( madnNode.gallery.zipWithIndex ) {
         case (galImgFileName, i) =>
-          val mimg = mImg3.fromImg( MImg( galImgFileName ) ).original
-          portOneImage("gal", mimg, adnNodeId, madnNode.meta.dateCreated)
-            .map { imgNodeId =>
-              MEdge( MPredicates.GalleryItem, imgNodeId, order = Some(i), info = MEdgeInfo(
-                dynImgArgs = mimg.qOpt
-              ))
-            }
+          val oldImg = MImg( galImgFileName )
+          val mlocImgFut = oldImg.toLocalImg
+          val mimg = mImg3.fromImg( oldImg ).original
+          for {
+            mlocImg   <- mlocImgFut
+            imgNodeId <- portOneImage("gal", mimg, adnNodeId, madnNode.meta.dateCreated)
+          } yield {
+            MEdge( MPredicates.GalleryItem, imgNodeId, order = Some(i), info = MEdgeInfo(
+              dynImgArgs = mimg.qOpt
+            ))
+          }
       }
 
       // В n2-архитектуре гео-шейпы узла хранятся прямо в узле, т.е. nested doc вместо parent-child doc.
