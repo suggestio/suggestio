@@ -15,6 +15,7 @@ import org.elasticsearch.client.Client
 import org.joda.time.DateTime
 import util.PlayLazyMacroLogsImpl
 
+import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
@@ -45,101 +46,109 @@ class Migration @Inject() (
 
   /** Пройтись по узлам ADN, логотипы сохранить через MMedia, создать необходимые MEdge. */
   def adnNodesToN2(): Future[LogosAcc] = {
-
     // Обойти все узлы ADN, прочитав оттуда данные по логотипам.
-    MAdnNode.foldLeftAsync( LogosAcc() ) { (acc0Fut, madnNode) =>
+    MAdnNode.foldLeftAsync( LogosAcc() ) { (acc0Fut, mAdnNode) =>
+      // Принудительно тормозим обработку из-за большого траффика между cassandra, sioweb и seaweedfs.
+      // Узлы обходятся строго по очереди. Иначе будет Too many connections, и Broken pipe в http-клиенте при
+      // аплоаде картинки как итог.
+      acc0Fut flatMap { _ =>
+        portOneNode(acc0Fut, mAdnNode)
+      }
+    }
+  }
 
-      val adnNodeId = madnNode.id.get
-      val logPrefix = s"[$adnNodeId]"
-      trace(s"$logPrefix Processing ADN node: ${madnNode.meta.name} / ${madnNode.meta.town}")
+  /** Портировать одну картинку. */
+  def portOneNode(acc0Fut: Future[LogosAcc], mAdnNode: MAdnNode): Future[LogosAcc] = {
+    val adnNodeId = mAdnNode.id.get
+    val logPrefix = s"[$adnNodeId]"
+    trace(s"$logPrefix Processing ADN node: ${mAdnNode.meta.name} / ${mAdnNode.meta.town}")
 
-      // Запуск обработки логотипа узла.
-      val logoEdgeOptFut = FutureUtil.optFut2futOpt(madnNode.logoImgOpt) { logoImg =>
-        val oldImg = MImg(logoImg)
+    // Запуск обработки логотипа узла.
+    val logoEdgeOptFut = FutureUtil.optFut2futOpt(mAdnNode.logoImgOpt) { logoImg =>
+      val oldImg = MImg(logoImg)
+      val mlocImgFut = oldImg.original.toLocalImg
+      val mimg = mImg3.fromImg( oldImg ).original
+      for {
+        mLocImg     <- mlocImgFut
+        imgNodeId   <- portOneImage("logo", mimg, adnNodeId, mAdnNode.meta.dateCreated, logoImg.meta)
+      } yield {
+        Some( MEdge(MPredicates.Logo, imgNodeId) )
+      }
+    }
+
+    val galEdgesFut = Future.traverse( mAdnNode.gallery.zipWithIndex ) {
+      case (galImgFileName, i) =>
+        val oldImg = MImg( galImgFileName )
         val mlocImgFut = oldImg.original.toLocalImg
         val mimg = mImg3.fromImg( oldImg ).original
         for {
-          mLocImg     <- mlocImgFut
-          imgNodeId   <- portOneImage("logo", mimg, adnNodeId, madnNode.meta.dateCreated, logoImg.meta)
+          mlocImg   <- mlocImgFut
+          imgNodeId <- portOneImage("gal", mimg, adnNodeId, mAdnNode.meta.dateCreated)
         } yield {
-          Some( MEdge(MPredicates.Logo, imgNodeId) )
+          MEdge( MPredicates.GalleryItem, imgNodeId, order = Some(i), info = MEdgeInfo(
+            dynImgArgs = mimg.qOpt
+          ))
         }
-      }
+    }
 
-      val galEdgesFut = Future.traverse( madnNode.gallery.zipWithIndex ) {
-        case (galImgFileName, i) =>
-          val oldImg = MImg( galImgFileName )
-          val mlocImgFut = oldImg.original.toLocalImg
-          val mimg = mImg3.fromImg( oldImg ).original
-          for {
-            mlocImg   <- mlocImgFut
-            imgNodeId <- portOneImage("gal", mimg, adnNodeId, madnNode.meta.dateCreated)
-          } yield {
-            MEdge( MPredicates.GalleryItem, imgNodeId, order = Some(i), info = MEdgeInfo(
-              dynImgArgs = mimg.qOpt
-            ))
-          }
-      }
-
-      // В n2-архитектуре гео-шейпы узла хранятся прямо в узле, т.е. nested doc вместо parent-child doc.
-      val nodeGssFut = for {
-        nodeGss <- MAdnNodeGeo.findByNode(adnNodeId, maxResults = 50)
-      } yield {
-        nodeGss
-          .iterator
-          .zipWithIndex
-          .map { case (madnGeo, i) =>
-            MGeoShape(
-              id          = i,
-              glevel      = madnGeo.glevel,
-              shape       = madnGeo.shape,
-              fromUrl     = madnGeo.url,
-              dateEdited  = madnGeo.lastModified
-            )
-          }
-          .toSeq
-      }
-
-      val mnode0 = madnNode.toMNode
-
-      val mnode1Fut = for {
-        logoEdgeOpt <- logoEdgeOptFut
-        galEdges    <- galEdgesFut
-        nodeGss     <- nodeGssFut
-      } yield {
-        mnode0.copy(
-          edges = mnode0.edges.copy(
-            out = mnode0.edges.out ++ MNodeEdges.edgesToMapIter(
-              logoEdgeOpt.iterator ++ galEdges.iterator
-            )
-          ),
-          geo = mnode0.geo.copy(
-            shapes = nodeGss
+    // В n2-архитектуре гео-шейпы узла хранятся прямо в узле, т.е. nested doc вместо parent-child doc.
+    val nodeGssFut = for {
+      nodeGss <- MAdnNodeGeo.findByNode(adnNodeId, maxResults = 50)
+    } yield {
+      nodeGss
+        .iterator
+        .zipWithIndex
+        .map { case (madnGeo, i) =>
+          MGeoShape(
+            id          = i,
+            glevel      = madnGeo.glevel,
+            shape       = madnGeo.shape,
+            fromUrl     = madnGeo.url,
+            dateEdited  = madnGeo.lastModified
           )
+        }
+        .toSeq
+    }
+
+    val mnode0 = mAdnNode.toMNode
+
+    val mnode1Fut = for {
+      logoEdgeOpt <- logoEdgeOptFut
+      galEdges    <- galEdgesFut
+      nodeGss     <- nodeGssFut
+    } yield {
+      mnode0.copy(
+        edges = mnode0.edges.copy(
+          out = mnode0.edges.out ++ MNodeEdges.edgesToMapIter(
+            logoEdgeOpt.iterator ++ galEdges.iterator
+          )
+        ),
+        geo = mnode0.geo.copy(
+          shapes = nodeGss
         )
-      }
+      )
+    }
 
-      val mnode1SaveFut = mnode1Fut
-        .flatMap(_.save)
+    val mnode1SaveFut = mnode1Fut
+      .flatMap(_.save)
 
-      val logosCountFut = logoEdgeOptFut.map(_.size)
-      val galImgsCountFut = galEdgesFut.map(_.size)
-      val gssCountFut = nodeGssFut.map(_.size)
+    val logosCountFut = logoEdgeOptFut.map(_.size)
+    val galImgsCountFut = galEdgesFut.map(_.size)
+    val gssCountFut = nodeGssFut.map(_.size)
 
-      for {
-        logosCount    <- logosCountFut
-        galImgsCount  <- galImgsCountFut
-        gssCount      <- gssCountFut
-        mnode1id      <- mnode1SaveFut
-        acc0          <- acc0Fut
-      } yield {
-        acc0.copy(
-          adnNodes = acc0.adnNodes  + 1,
-          logos    = acc0.logos     + logosCount,
-          galImgs  = acc0.galImgs   + galImgsCount,
-          gss      = acc0.gss       + gssCount
-        )
-      }
+    for {
+      logosCount    <- logosCountFut
+      galImgsCount  <- galImgsCountFut
+      gssCount      <- gssCountFut
+      mnode1id      <- mnode1SaveFut
+      acc0          <- acc0Fut
+    } yield {
+      acc0.copy(
+        adnNodes = acc0.adnNodes  + 1,
+        logos    = acc0.logos     + logosCount,
+        galImgs  = acc0.galImgs   + galImgsCount,
+        gss      = acc0.gss       + gssCount
+      )
     }
   }
 
@@ -227,5 +236,7 @@ class MigrationJmx @Inject() (
       }
     awaitString( strFut )
   }
+
+  override def futureTimeout = 1000.seconds
 
 }

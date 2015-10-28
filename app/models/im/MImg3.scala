@@ -247,7 +247,11 @@ abstract class MImg3T extends MImgT {
     }
 
     // Параллельно запустить поиск и сохранение экземпляра MNode.
-    val mnodeSaved = ensureMnode( loc )
+    val mnodeSaveFut = ensureMnode( loc )
+
+    mnodeSaveFut onFailure { case ex: Throwable =>
+      LOGGER.error("Failed to save picture MNode for local img " + loc)
+    }
 
     // Параллельно выполнить заливку файла в постоянное надежное хранилище.
     val storWriteFut = for {
@@ -265,9 +269,13 @@ abstract class MImg3T extends MImgT {
       res
     }
 
+    storWriteFut onFailure { case ex: Throwable =>
+      LOGGER.error("Failed to send to storage local image: " + loc)
+    }
+
     // Дождаться завершения всех паралельных операций.
     for {
-      _   <- mnodeSaved
+      _   <- mnodeSaveFut
       _   <- storWriteFut
       mm  <- mediaSavedFut
     } yield {
