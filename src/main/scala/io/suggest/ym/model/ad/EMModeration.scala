@@ -2,15 +2,12 @@ package io.suggest.ym.model.ad
 
 import io.suggest.model.es.{EsModelPlayJsonT, EsModelStaticMutAkvT, EsModelUtil}
 import EsModelUtil.FieldsJsonAcc
-import io.suggest.model._
+import io.suggest.model.n2.extra.mdr.{MMdrExtra, MFreeAdv}
 import io.suggest.util.SioEsUtil._
 import io.suggest.ym.model.common.{EMReceivers, EMProducerId}
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.{QueryBuilder, FilterBuilders, QueryBuilders}
-import org.joda.time.DateTime
 import play.api.libs.json._
-import java.{util => ju}
-import scala.collection.JavaConversions._
 import scala.concurrent.{Future, ExecutionContext}
 
 /**
@@ -22,9 +19,12 @@ import scala.concurrent.{Future, ExecutionContext}
  */
 object EMModeration {
 
+
   /** Название поля, с которого начинается всё остальное в этом файле.
     * В нём хранится объект с данными по модерации. */
   val MODERATION_ESFN = "mdr"
+
+  def MDR_IS_ALLOWED_ESFN = MODERATION_ESFN + "." + MMdrExtra.FREE_ADV_ESFN + "." + MFreeAdv.IS_ALLOWED_ESFN
 
   /** MVEL-код определения рекламной карточки, у которой producer_id совпадает с одним из ресиверов.
     * Сначала скрипт проверяет наличие былой проверки и отфильтровывает, если уже выверено.
@@ -32,7 +32,7 @@ object EMModeration {
   val FREE_ADV_NEED_MDR_MVEL = {
     import EMProducerId.PRODUCER_ID_ESFN
     import EMReceivers._
-    import ModerationInfo.FREE_ADV_ESFN, FreeAdvStatus.IS_ALLOWED_ESFN
+    import MMdrExtra.FREE_ADV_ESFN, MFreeAdv.IS_ALLOWED_ESFN
     s"""
       |if (doc['$MODERATION_ESFN.$FREE_ADV_ESFN.$IS_ALLOWED_ESFN'].values != empty)
       |  return false;
@@ -64,14 +64,14 @@ object EMModeration {
         queryFilteredFreeAdvNeedMdr(pqb)
       } { freeAdvIsAllowed =>
         // Есть искомый вердикт модерации. Нужно фильтровать по полю.
-        val fn = FreeAdvStatus.MDR_IS_ALLOWED_ESFN
+        val fn = MDR_IS_ALLOWED_ESFN
         val f = FilterBuilders.termFilter(fn, freeAdvIsAllowed)
         QueryBuilders.filteredQuery(pqb, f)
       }
     } orElse {
       // producerId не задан. Нужно попытаться поискать по следующему параметру
       args.freeAdvIsAllowed.map { freeAdvIsAllowed =>
-        val fn = FreeAdvStatus.MDR_IS_ALLOWED_ESFN
+        val fn = MDR_IS_ALLOWED_ESFN
         QueryBuilders.termQuery(fn, freeAdvIsAllowed)
       }
     } getOrElse {
@@ -89,14 +89,14 @@ trait EMModerationStatic extends EsModelStaticMutAkvT {
   override type T <: EMModerationMut
 
   abstract override def generateMappingProps: List[DocField] = {
-    val mapping = FieldObject(MODERATION_ESFN, enabled = true, properties = ModerationInfo.generateMappingProps)
+    val mapping = FieldObject(MODERATION_ESFN, enabled = true, properties = MMdrExtra.generateMappingProps)
     mapping :: super.generateMappingProps
   }
 
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
     super.applyKeyValue(acc) orElse {
       case (MODERATION_ESFN, jmap) =>
-        acc.moderation = ModerationInfo.deserialize(jmap)
+        acc.moderation = MMdrExtra.deserialize(jmap)
     }
   }
 
@@ -104,7 +104,7 @@ trait EMModerationStatic extends EsModelStaticMutAkvT {
   def findSelfAdvNonMdr(args: MdrSearchArgsI)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
     prepareSearch
       .setQuery( mdrSearchArgs2query(args) )
-      .setSize(args.maxResults)
+      .setSize(args.limit)
       .setFrom(args.offset)
       .execute()
       .map { searchResp2list }
@@ -115,7 +115,7 @@ trait EMModerationStatic extends EsModelStaticMutAkvT {
 
 /** Интерфейс к полю с инфой по модерации. */
 trait EMModerationI {
-  def moderation: ModerationInfo
+  def moderation: MMdrExtra
 }
 
 /** Аддон с функционалом для сериализации поля. */
@@ -143,110 +143,7 @@ trait EMModeration extends EsModelPlayJsonT with EMModerationI {
 
 /** mutable-версия поля. */
 trait EMModerationMut extends EMModeration {
-  var moderation: ModerationInfo
-}
-
-
-
-object ModerationInfo {
-  val FREE_ADV_ESFN   = "fa"
-
-  def generateMappingProps: List[DocField] = List(
-    FieldObject(FREE_ADV_ESFN, enabled = true, properties = FreeAdvStatus.generateMappingProps)
-  )
-
-  val deserialize: PartialFunction[Any, ModerationInfo] = {
-    case jmap: ju.Map[_,_] =>
-      ModerationInfo(
-        freeAdv = Option(jmap.get(FREE_ADV_ESFN)).map(FreeAdvStatus.deserialize)
-      )
-  }
-
-  val EMPTY = ModerationInfo()
-}
-
-/**
- * Инфа по модерации.
- * @param freeAdv Данные по возможности бесплатного размещения карточки (у себя самого, например).
- */
-case class ModerationInfo(
-  freeAdv: Option[FreeAdvStatus] = None
-) {
-  import ModerationInfo._
-
-  def nonEmpty: Boolean = {
-    productIterator.exists {
-      case opt: Option[_] => opt.nonEmpty
-      case _ => true
-    }
-  }
-  def isEmpty = !nonEmpty
-
-  def toPlayJson: JsObject = {
-    var acc: FieldsJsonAcc = Nil
-    if (freeAdv.nonEmpty)
-      acc ::= FREE_ADV_ESFN -> freeAdv.get.toPlayJson
-    JsObject(acc)
-  }
-}
-
-
-
-object FreeAdvStatus {
-  val IS_ALLOWED_ESFN = "ia"
-  val WHEN_ESFN = "w"
-  val BY_USER_ESFN = "bu"
-  val REASON_ESFN = "r"
-
-  def MDR_IS_ALLOWED_ESFN = MODERATION_ESFN + "." + ModerationInfo.FREE_ADV_ESFN + "." + IS_ALLOWED_ESFN
-
-  /** Создать под-маппинг для индекса. */
-  def generateMappingProps: List[DocField] = List(
-    FieldBoolean(IS_ALLOWED_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-    FieldDate(WHEN_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
-    FieldString(BY_USER_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-    FieldString(REASON_ESFN, index = FieldIndexingVariants.no, include_in_all = false)
-  )
-
-  /** Десериализация распарсенных данных FreeAdvStatus, ранее сериализованных в JSON. */
-  val deserialize: PartialFunction[Any, FreeAdvStatus] = {
-    case jmap: ju.Map[_,_] =>
-      FreeAdvStatus(
-        isAllowed = Option(jmap get IS_ALLOWED_ESFN)
-          .fold[Boolean] (false) (EsModelUtil.booleanParser),
-        when = Option(jmap get WHEN_ESFN)
-          .fold (new DateTime(1970, 1, 1, 0, 0)) (EsModelUtil.dateTimeParser),
-        byUser = EsModelUtil.stringParser(jmap get BY_USER_ESFN),
-        reason = Option(jmap get REASON_ESFN) map EsModelUtil.stringParser
-      )
-  }
-}
-
-/**
- * Экземпляр информации по результатам модерации карточки для бесплатного размещения.
- * @param isAllowed Разрешена ли карточка к эксплуатации?
- * @param when Когда было выставлено [не]разрешение?
- * @param byUser personId модератора sio.
- * @param reason Опциональное текстовое пояснение вердикта модератора.
- */
-case class FreeAdvStatus(
-  isAllowed : Boolean,
-  byUser    : String,
-  when      : DateTime = DateTime.now,
-  reason    : Option[String] = None
-) {
-  import FreeAdvStatus._
-
-  def toPlayJson: JsObject = {
-    var acc: FieldsJsonAcc = List(
-      IS_ALLOWED_ESFN -> JsBoolean(isAllowed),
-      BY_USER_ESFN    -> JsString(byUser),
-      WHEN_ESFN       -> EsModelUtil.date2JsStr(when)
-    )
-    if (reason exists { !_.isEmpty })
-      acc ::= REASON_ESFN -> JsString(reason.get)
-    JsObject(acc)
-  }
+  var moderation: MMdrExtra
 }
 
 
@@ -255,7 +152,7 @@ case class FreeAdvStatus(
 trait MdrSearchArgsI {
   def producerId: Option[String]
   def freeAdvIsAllowed: Option[Boolean]
-  def maxResults: Int
+  def limit: Int
   def offset: Int
 }
 

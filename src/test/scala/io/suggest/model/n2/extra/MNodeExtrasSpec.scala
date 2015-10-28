@@ -1,6 +1,7 @@
 package io.suggest.model.n2.extra
 
 import io.suggest.model.PlayJsonTestUtil
+import io.suggest.model.n2.extra.mdr.{MFreeAdv, MMdrExtra}
 import io.suggest.model.n2.tag.vertex.{MTagFace, MTagVertex}
 import org.scalatest.FlatSpec
 
@@ -28,6 +29,12 @@ class MNodeExtrasSpec extends FlatSpec with PlayJsonTestUtil {
         adn = Some(MAdnExtra(
           testNode  = true,
           isUser    = true
+        )),
+        mdr = Some(MMdrExtra(
+          freeAdv = Some(MFreeAdv(
+            isAllowed = true,
+            byUser    = "af43w90fk3490f34f43-ff"
+          ))
         ))
       )
     }

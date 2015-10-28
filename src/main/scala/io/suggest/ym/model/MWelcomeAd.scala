@@ -1,13 +1,14 @@
 package io.suggest.ym.model
 
 import io.suggest.model.es._
+import io.suggest.model.n2.extra.mdr.MMdrExtra
 import org.joda.time.DateTime
 import io.suggest.util.SioEsUtil._
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.ym.model.common._
-import io.suggest.ym.model.ad.{ModerationInfo, MAdT}
+import io.suggest.ym.model.ad.MAdT
 import io.suggest.model.common._
 import io.suggest.util.MacroLogsImplLazy
 import io.suggest.ym.model.common.EMImg.Imgs_t
@@ -73,7 +74,7 @@ final case class MWelcomeAd(
   override def colors = Map.empty
   override def disableReason = Nil
   override def richDescrOpt = None
-  override def moderation = ModerationInfo.EMPTY
+  override def moderation = MMdrExtra.empty
 }
 
 
