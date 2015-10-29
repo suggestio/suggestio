@@ -39,7 +39,7 @@ import scala.util.{Failure, Success}
 
 // TODO Удалить сие счастье целиком. Ибо есть N2, где используется MNode.geo.shape.
 
-@deprecated("Use MNode.geo.shape instead.", "2015.oct.28")
+//@deprecated("Use MNode.geo.shape instead.", "2015.oct.28")
 object MAdnNodeGeo extends EsChildModelStaticT with MacroLogsImpl {
 
   import LOGGER._
