@@ -7,7 +7,7 @@ import io.suggest.model.es.EsModelUtil
 import EsModelUtil.{intParser, stringParser}
 import io.suggest.model.geo.{GsTypes, MultiPolygonGs, GeoShape}
 import io.suggest.ym.model.NodeGeoLevels
-import models.{MAdnNodeGeo, NodeGeoLevel}
+import models.{MNode, NodeGeoLevel}
 import org.elasticsearch.common.xcontent.XContentHelper
 import play.api.Configuration
 import scala.collection.JavaConversions._
@@ -32,6 +32,8 @@ class UmapUtil @Inject() (
 
   /** 2014.09.23: Umap не поддерживает тип фигур MultiPolygon. Можно их сплиттить на полигоны. */
   val SPLIT_MULTIPOLYGON: Boolean = configuration.getBoolean("umap.mpoly.split") getOrElse true
+
+  // TODO Нужен play json парсер и InputStream.
 
   /**
    * Десериализация json-выхлопа, присланного фронтендом.
@@ -60,9 +62,12 @@ class UmapUtil @Inject() (
                 val gsOpt = GeoShape.deserialize(featureRaw get "geometry") map { gs =>
                   UmapFeature(
                     geometry = gs,
-                    properties = Option(featureRaw get "properties").map {
-                      case pjmap: ju.Map[_,_]  =>  pjmap.toMap.asInstanceOf[Map[String, AnyRef]]
-                    }.getOrElse(Map.empty)
+                    properties = Option(featureRaw get "properties")
+                      .map {
+                        case pjmap: ju.Map[_,_] =>
+                          pjmap.toMap.asInstanceOf[Map[String, AnyRef]]
+                      }
+                      .getOrElse(Map.empty)
                   )
                 }
                 gsOpt.get   // При ошибке парсинга должен быть экзепшен, чтобы не потерять элементы карты.
@@ -75,27 +80,43 @@ class UmapUtil @Inject() (
 
   /**
    * Из-за особенностей Umap, бывает необходимо допилить список фигур перед рендером json-слоя.
-   * @param geos Коллекция или итератор фигур, которые надо рендерить в слое.
+   * @param nodes Коллекция или итератор фигур, которые надо рендерить в слое.
    * @return Обновлённый или тот же список фигур в исходном порядке.
    */
-  def prepareDataLayerGeos(geos: TraversableOnce[MAdnNodeGeo]): TraversableOnce[MAdnNodeGeo] = {
+  def prepareDataLayerGeos(nodes: TraversableOnce[MNode]): TraversableOnce[MNode] = {
     // Если включена какая-то опция модификации списка geo-фигур, то нужно запустить обход списка.
     if (SPLIT_MULTIPOLYGON) {
-      geos.flatMap { geo =>
-        // Если включена трансформация мультирополигонов (Umap их не поддерживала), то размножаем инстанс шейпа на полигоны:
-        if (SPLIT_MULTIPOLYGON && geo.shape.shapeType == GsTypes.multipolygon) {
-          val mpoly = geo.shape.asInstanceOf[MultiPolygonGs]
-          mpoly.polygons.map { poly =>
-            geo.copy(shape = poly, id = None)
-          }
-        } else {
-          Seq(geo)
-        }
+      for {
+        mnode <- nodes
+      } yield {
+        val shapes1 =
+          mnode.geo.shapes
+            .iterator
+            .flatMap { shape =>
+              // Если включена трансформация мультирополигонов (Umap их не поддерживала), то размножаем инстанс шейпа на полигоны:
+              if (SPLIT_MULTIPOLYGON && shape.shape.shapeType == GsTypes.multipolygon) {
+                val mpoly = shape.shape.asInstanceOf[MultiPolygonGs]
+                mpoly.polygons.map { poly =>
+                  shape.copy(
+                    shape = poly,
+                    id    = -1
+                  )
+                }
+              } else {
+                Seq(shape)
+              }
+            }
+            .toSeq
+          mnode.copy(
+            geo = mnode.geo.copy(
+              shapes = shapes1
+            )
+          )
       }
 
     } else {
       // Ничего менять не требуется.
-      geos
+      nodes
     }
   }
 

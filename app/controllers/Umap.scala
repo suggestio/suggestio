@@ -6,7 +6,6 @@ import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.geo.{PointGs, GsTypes}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.playx.ICurrentConf
-import org.elasticsearch.action.bulk.BulkResponse
 import org.elasticsearch.client.Client
 import play.api.libs.Files.TemporaryFile
 import play.api.mvc.{MultipartFormData, RequestHeader, Result}
@@ -17,7 +16,6 @@ import util.PlayMacroLogsImpl
 import _root_.util.acl._
 import views.html.umap._
 import play.api.libs.json._
-import io.suggest.util.SioEsUtil.laFuture2sFuture
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -44,8 +42,6 @@ class Umap @Inject() (
   with IsSuperuserAdnNode
   with IsSuperuser
 {
-
-  import LOGGER._
 
   /** Разрешено ли редактирование глобальной карты всех узлов? */
   val GLOBAL_MAP_EDIT_ALLOWED: Boolean = configuration.getBoolean("umap.global.map.edit.allowed") getOrElse false
@@ -114,42 +110,48 @@ class Umap @Inject() (
 
   /** Рендер одного слоя, перечисленного в карте слоёв. */
   def getDataLayerGeoJson(ngl: NodeGeoLevel) = IsSuperuser.async { implicit request =>
-    MAdnNodeGeo.findAllRenderable(ngl, maxResults = 600).flatMap { geos =>
-      val nodesMapFut: Future[Map[String, MNode]] = {
-        mNodeCache.multiGet(geos.map(_.adnId).toSet)
-          .map { nodes => nodes.map(node => node.id.get -> node).toMap}
-      }
-      nodesMapFut map { nodesMap =>
-        _getDataLayerGeoJson(None, ngl, nodesMap, geos)
-      }
+    val msearch = new MNodeSearchDfltImpl {
+      override def gsGeoJsonCompatible  = Some(true)
+      override def gsLevels             = Seq(ngl)
+      override def limit                = 600
+    }
+    for {
+      mnodes <- MNode.dynSearch(msearch)
+    } yield {
+      _getDataLayerGeoJson(None, ngl, mnodes)
     }
   }
 
   /** Общий код экшенов, занимающихся рендером слоёв в geojson-представление, пригодное для фронтенда. */
-  private def _getDataLayerGeoJson(adnIdOpt: Option[String], ngl: NodeGeoLevel, nodesMap: Map[String, MNode],
-                                   geos: Seq[MAdnNodeGeo])(implicit request: RequestHeader): Result = {
+  private def _getDataLayerGeoJson(adnIdOpt: Option[String], ngl: NodeGeoLevel, nodes: Seq[MNode])
+                                  (implicit request: RequestHeader): Result = {
+    // TODO Вынести json в отдельную модель.
     val features: Seq[JsObject] = {
-      val shapeFeaturesIter = umapUtil.prepareDataLayerGeos(geos.iterator)
-        .map { geo =>
+      val shapeFeaturesIter = for {
+        mnode <- umapUtil.prepareDataLayerGeos(nodes.iterator)
+        shape <- mnode.geo.shapes if shape.shape.shapeType.isGeoJsonCompatible
+      } yield {
           JsObject(Seq(
-            "type" -> JsString("Feature"),
-            "geometry" -> geo.shape.toPlayJson(geoJsonCompatible = true),
-            "properties" -> JsObject(Seq(
-              "name"        -> JsString( nodesMap.get(geo.adnId).fold(geo.adnId)(_.meta.basic.name) ),
-              "description" -> JsString( routes.SysMarket.showAdnNode(geo.adnId).absoluteURL() )
+            "type"        -> JsString("Feature"),
+            "geometry"    -> shape.shape.toPlayJson(geoJsonCompatible = true),
+            "properties"  -> JsObject(Seq(
+              "name" -> JsString( mnode.guessDisplayNameOrId.get ),
+              "description" -> JsString(
+                routes.SysMarket.showAdnNode(mnode.id.get).absoluteURL()
+              )
             ))
           ))
         }
-      val centersFeaturesIter = nodesMap
-        .valuesIterator
-        .flatMap { adnNode =>
-          adnNode.geo.point.map { pt =>
+      val centersFeaturesIter = nodes
+        .iterator
+        .flatMap { mnode =>
+          mnode.geo.point.map { pt =>
             JsObject(Seq(
               "type" -> JsString("Feature"),
               "geometry"   -> PointGs(pt).toPlayJson(geoJsonCompatible = true),
               "properties" -> JsObject(Seq(
-                "name"        -> JsString( adnNode.meta.basic.name + " (центр)" ),
-                "description" -> JsString( routes.SysMarket.showAdnNode(adnNode.id.get).absoluteURL() )
+                "name"        -> JsString( mnode.meta.basic.name + " (центр)" ),
+                "description" -> JsString( routes.SysMarket.showAdnNode(mnode.id.get).absoluteURL() )
               ))
             ))
           }
@@ -167,12 +169,9 @@ class Umap @Inject() (
 
   /** Получение геослоя в рамках карты одного узла. */
   def getDataLayerNodeGeoJson(adnId: String, ngl: NodeGeoLevel) = IsSuperuserAdnNode(adnId).async { implicit request =>
-    // Наноэкономия памяти:
     val adnIdOpt = request.adnNode.id
-    MAdnNodeGeo.findAllRenderable(ngl, adnIdOpt) map { geos =>
-      val nodesMap = Map(adnId -> request.adnNode)
-      _getDataLayerGeoJson(adnIdOpt, ngl, nodesMap, geos)
-    }
+    val nodes = Seq(request.adnNode)
+    _getDataLayerGeoJson(adnIdOpt, ngl, nodes)
   }
 
 
@@ -211,8 +210,8 @@ class Umap @Inject() (
     // Для обновления слоя нужно удалить все renderable-данные в этом слое, и затем залить в слой все засабмиченные через bulk request.
     request.body.file("geojson").fold[Future[Result]] {
       NotAcceptable("geojson not found in response")
+
     } { tempFile =>
-      val allRenderableFut = MAdnNodeGeo.findAllRenderable(ngl, adnIdOpt)
       // TODO Надо бы задействовать InputStream или что-то ещё для парсинга.
       val jsonBytes = try {
         Files.readAllBytes(tempFile.ref.file.toPath)
@@ -220,25 +219,35 @@ class Umap @Inject() (
         tempFile.ref.file.delete()
       }
       val layerData = umapUtil.deserializeFromBytes(jsonBytes).get
-      // Собираем BulkRequest для сохранения данных.
-      val bulkSave = esClient.prepareBulk()
-      layerData.features
+
+      // Собираем запрос в карту, где ключ -- это nodeId.
+      val nodeFeatures = layerData
+        .features
         .iterator
-        .filter { _.geometry.shapeType == GsTypes.polygon }
-        .foreach { feature =>
-          val geo = MAdnNodeGeo(
-            adnId = getAdnIdF(feature),
-            glevel = ngl,
-            shape = feature.geometry
-          )
-          bulkSave.add(geo.indexRequestBuilder)
-        }
-      // Точки отрабатываем как центры для узлов (MAdnNode.geo.point).
-      val centersUpdateMap: Map[String, Option[GeoPoint]] = {
-        layerData.features
-          .groupBy(getAdnIdF)
-          .mapValues { nodeFeatures =>
-          nodeFeatures
+        .toSeq
+        .groupBy(getAdnIdF)
+
+      // Собираем карту узлов.
+      val mnodesMapFut = mNodeCache.multiGetMap( nodeFeatures.keysIterator )
+
+      val updAllFut = mnodesMapFut.flatMap { mnodesMap =>
+        // Для каждого узла произвести персональное обновление.
+        Future.traverse( nodeFeatures ) { case (adnId, features) =>
+          // Собираем шейпы для узла
+          val shapes = features
+            .iterator
+            .filter { _.geometry.shapeType == GsTypes.polygon }
+            .zipWithIndex
+            .map { case (poly, i) =>
+              MGeoShape(
+                id      = i,
+                shape   = poly.geometry,
+                glevel  = ngl
+              )
+            }
+            .toSeq
+          // Узнаём центр.
+          val centerOpt = features
             .iterator
             .flatMap { f =>
               f.geometry match {
@@ -248,84 +257,22 @@ class Umap @Inject() (
             }
             .toStream
             .headOption
-        }
-      }
-      val nodesCentersUpdateInfoFut: Future[Iterable[(MNode, Option[GeoPoint])]] = {
-        Future.traverse( centersUpdateMap ) {
-          case (adnId, newCenterOpt) =>
-            mNodeCache.getById(adnId).map {
-              _.map { _ -> newCenterOpt }
-            }
-        } map {
-          _.flatMap {
-            // Не надо обновлять узел, если точка не изменилась.
-            _.filter {
-              case (node, ncOpt)  =>  node.geo.point != ncOpt
-            }
-          }
-        }
-      }
-      // Слой распарсился и готов к сохранению. Запускаем удаление исходных данных слоя.
-      allRenderableFut.flatMap { all =>
-        if (all.nonEmpty) {
-          val bulkDel = esClient.prepareBulk()
-          all.foreach { geo =>
-            bulkDel.add(geo.prepareDelete)
-          }
-          trace(logPrefix + "Deleting " + bulkDel.numberOfActions() + " shapes on layer...")
-          bulkDel.execute() map { Some.apply }
-        } else {
-          Future successful None
-        }
-
-      } flatMap { bulkDelResultOpt =>
-        trace(s"${logPrefix}Layer $ngl wiped: $bulkDelResultOpt ;; Starting to save new shapes...")
-        val layersSaveFut: Future[BulkResponse] = bulkSave.execute()
-        val nodesUpdFut = nodesCentersUpdateInfoFut.flatMap { data =>
-          Future.traverse(data) { case (node, newCenter) =>
-            MNode.tryUpdate(node) { node0 =>
-              node0.copy(
-                geo = node0.geo.copy(
-                  point = newCenter
-                )
+          // Пытаемся сохранить новые геоданные в узел.
+          MNode.tryUpdate( mnodesMap(adnId) ) { mnode0 =>
+            mnode0.copy(
+              geo = mnode0.geo.copy(
+                shapes  = shapes,
+                point   = centerOpt
               )
-            }
+            )
           }
         }
-        nodesUpdFut flatMap { _ => layersSaveFut }
+      }
 
-      } map { br =>
-        if (br.hasFailures) {
-          warn("Layer saved with problems: " + br.buildFailureMessage())
-        } else {
-          trace(logPrefix + "Layer saved without problems.")
-        }
+      for (nodeIds <- updAllFut) yield {
+        LOGGER.trace(s"$logPrefix Updated ${nodeIds.size} nodes.")
         val resp = layerJson(ngl)
         Ok(resp)
-
-      } recoverWith {
-        // При любом экзепшене откатываем все данные назад.
-        case ex: Throwable =>
-          error("Failed to update layer " + ngl, ex)
-          val bulkReSave = esClient.prepareBulk()
-          val rollbackNodesFut = nodesCentersUpdateInfoFut.map { data =>
-            data.foreach {
-              case (adnNode0, _)  =>  bulkReSave add adnNode0.indexRequestBuilder
-            }
-          }
-          val rollbackLayersFut = allRenderableFut map { all =>
-            all.foreach { geo =>
-              bulkReSave add geo.indexRequestBuilder
-            }
-          }
-          for {
-            _       <- rollbackLayersFut
-            _       <- rollbackNodesFut
-            result  <- bulkReSave.execute()
-          } yield {
-            debug("Successfully rollbacked updated data. Result = " + result)
-            InternalServerError("Failed to save. See logs.")
-          }
       }
     }
   }
@@ -337,6 +284,7 @@ class Umap @Inject() (
 
   /** Рендер json'а, описывающего геослой. */
   private def layerJson(ngl: NodeGeoLevel)(implicit messages: Messages): JsObject = {
+    // TODO Нужна отдельная модель с play.json
     JsObject(Seq(
       "name"          -> JsString( messages("ngls." + ngl.esfn) ),
       "id"            -> JsNumber(ngl.id),

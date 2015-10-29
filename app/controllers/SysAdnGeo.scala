@@ -4,9 +4,13 @@ import com.google.inject.Inject
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.geo.{GeoShapeQuerable, Distance, CircleGs}
 import io.suggest.model.n2.edge.MNodeEdges
-import models.msys.OsmUrlParseResult
+import io.suggest.model.n2.geo.MGeoShape
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import models.mgeo.MGsPtr
+import models.msys._
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.unit.DistanceUnit
+import org.joda.time.DateTime
 import play.api.data._, Forms._
 import play.api.i18n.MessagesApi
 import play.api.mvc.Result
@@ -38,7 +42,6 @@ class SysAdnGeo @Inject() (
 )
   extends SioControllerImpl
   with PlayLazyMacroLogsImpl
-  with IsSuperuserAdnGeo
   with IsSuperuserAdnNode
 {
 
@@ -72,35 +75,58 @@ class SysAdnGeo @Inject() (
 
   /** Выдать страницу с географиями по узлам. */
   def forNode(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
-    val parentsMapFut = adnIds2NodesMap(
-      request.adnNode.edges
+    // Сборка карты данных по родительским узлам.
+    val parentsMapFut = {
+      val parentIdsIter = request.adnNode
+        .edges
         .withPredicateIterIds( MPredicates.GeoParent )
-    )
-    for {
-      geos        <- MAdnNodeGeo.findByNode(adnId, withVersions = true)
-      parentsMap  <- parentsMapFut
-    } yield {
-      val mapStateHash: Option[String] = {
-        request.adnNode.geo.point.orElse(geos.headOption.map(_.shape.firstPoint)).map { point =>
-          val scale = geos.headOption.map { _.glevel.osmMapScale }.getOrElse(10)
+      mNodeCache.multiGetMap(parentIdsIter)
+    }
+
+    val geos = request.adnNode
+      .geo
+      .shapes
+
+    val mapStateHash: Option[String] = {
+      request.adnNode
+        .geo
+        .point
+        .orElse {
+          geos.headOption
+            .map(_.shape.firstPoint)
+        }
+        .map { point =>
+          val scale = geos.headOption
+            .map { _.glevel.osmMapScale }
+            .getOrElse(10)
           "#" + scale + "/" + point.lat + "/" + point.lon
         }
-      }
-      Ok(forNodeTpl(request.adnNode, geos, parentsMap, mapStateHash))
+    }
+
+    for {
+      parentsMap  <- parentsMapFut
+    } yield {
+      val rargs = MSysGeoForNodeTplArgs(
+        mnode         = request.adnNode,
+        parentsMap    = parentsMap,
+        mapStateHash  = mapStateHash
+      )
+      Ok( forNodeTpl(rargs) )
     }
   }
 
   private def guessGeoLevel(implicit request: AbstractRequestForAdnNode[_]): Option[NodeGeoLevel] = {
-    request.adnNode.extras.adn
-      .flatMap(_.shownTypeIdOpt)
-      .flatMap(AdnShownTypes.maybeWithName)
+    AdnShownTypes.node2valOpt( request.adnNode )
       .flatMap( _.ngls.headOption )
   }
 
   /** Страница с созданием геофигуры на базе произвольного osm-объекта. */
   def createForNodeOsm(adnId: String) = IsSuperuserAdnNodeGet(adnId).apply { implicit request =>
-    val form = guessGeoLevel
-      .fold(createOsmNodeFormM) { ngl => createOsmNodeFormM.fill((ngl, OsmUrlParseResult("", null, -1))) }
+    val form = guessGeoLevel.fold(createOsmNodeFormM) { ngl =>
+      val pr = OsmUrlParseResult("", null, -1)
+      val formRes = (ngl, pr)
+      createOsmNodeFormM.fill(formRes)
+    }
     Ok(createAdnGeoOsmTpl(form, request.adnNode))
   }
 
@@ -113,19 +139,32 @@ class SysAdnGeo @Inject() (
         NotAcceptable(createAdnGeoOsmTpl(formWithErrors, request.adnNode))
       },
       {case (glevel, urlPr) =>
-        // Запросить у osm.org инфу по элементу
-        val resFut = osmClient.fetchElement(urlPr.osmType, urlPr.id) flatMap { osmObj =>
-          // Есть объект osm. Нужно его привести к шейпу, пригодному для модели и сохранить в ней же.
-          val geo   = MAdnNodeGeo(
-            adnId   = adnId,
-            glevel  = glevel,
-            shape   = osmObj.toGeoShape,
-            url     = Some(urlPr.url)
-          )
-          geo.save map { geoId =>
-            Redirect( routes.SysAdnGeo.forNode(adnId) )
-              .flashing(FLASH.SUCCESS -> "Создан geo-элемент. Обновите страницу, чтобы он появился в списке.")
+        val resFut = for {
+          // Запросить у osm.org инфу по элементу
+          osmObj <- osmClient.fetchElement(urlPr.osmType, urlPr.id)
+          // Попытаться сохранить новый шейп в документ узла N2.
+          _  <- {
+            // Есть объект osm. Нужно залить его в шейпы узла.
+            MNode.tryUpdate(request.adnNode) { mnode0 =>
+              mnode0.copy(
+                geo = mnode0.geo.copy(
+                  shapes = {
+                    val shapes0 = mnode0.geo.shapes
+                    val mshape = MGeoShape(
+                      id      = mnode0.geo.nextShapeId,
+                      glevel  = glevel,
+                      shape   = osmObj.toGeoShape,
+                      fromUrl = Some(urlPr.url)
+                    )
+                    shapes0 ++ Seq(mshape)
+                  }
+                )
+              )
+            }
           }
+        } yield {
+          Redirect( routes.SysAdnGeo.forNode(adnId) )
+            .flashing(FLASH.SUCCESS -> "Создан geo-элемент. Обновите страницу, чтобы он появился в списке.")
         }
         recoverOsm(resFut, glevel, Some(urlPr))
       }
@@ -138,84 +177,130 @@ class SysAdnGeo @Inject() (
       val rest = urlPrOpt.fold("-") { urlPr =>
         urlPr.osmType.xmlUrl(urlPr.id)
       }
-      ex match {
+      val respBody = ex match {
         case ocex: OsmClientStatusCodeInvalidException =>
-          NotFound(s"osm.org returned unexpected http status: ${ocex.statusCode} for $rest")
+          s"osm.org returned unexpected http status: ${ocex.statusCode} for $rest"
         case _ =>
           warn("Exception occured while fetch/parsing of " + rest, ex)
-          NotFound(s"Failed to fetch/parse geo element: " + ex.getClass.getSimpleName + ": " + ex.getMessage)
+          s"Failed to fetch/parse geo element: " + ex.getClass.getSimpleName + ": " + ex.getMessage
       }
+      NotFound(respBody)
     }
   }
 
+
   /** Сабмит запроса на удаление элемента. */
-  def deleteSubmit(geoId: String, adnId: String) = IsSuperuserAdnGeoPost(geoId, adnId).async { implicit request =>
-    // Надо прочитать geo-информацию, чтобы узнать adnId. Затем удалить его и отредиректить.
-    request.adnGeo.delete map { isDel =>
-      val flash: (String, String) = if (isDel) {
+  def deleteSubmit(g: MGsPtr) = IsSuperuserAdnNodePost(g.nodeId).async { implicit request =>
+    // Запустить обновление узла.
+    val updFut = MNode.tryUpdate(request.adnNode) { mnode0 =>
+      val shapes0 = mnode0.geo.shapes
+      val (found, shapes1) = shapes0.partition(_.id == g.gsId)
+      // Если ничего не удалено, то вернуть исключение.
+      if (found.isEmpty) {
+        throw new NoSuchElementException(s"Shape ${g.gsId} not exists on node ${g.nodeId}")
+      } else {
+        mnode0.copy(
+          geo = mnode0.geo.copy(
+            shapes = shapes1
+          )
+        )
+      }
+    }
+
+    // Понять, удалён шейп или нет
+    val isDeletedFut = updFut
+      .map(_ => true)
+      .recover {
+        case ex: NoSuchElementException => false
+      }
+
+    // Отредиректить юзера на страницу со списком узлов, когда всё будет готово.
+    for {
+      isDeleted  <- isDeletedFut
+    } yield {
+      val flash: (String, String) = if (isDeleted) {
         FLASH.SUCCESS -> "География удалена."
       } else {
         FLASH.ERROR   -> "Географический объект не найден."
       }
-      Redirect( routes.SysAdnGeo.forNode(request.adnGeo.adnId) )
+      Redirect( routes.SysAdnGeo.forNode( g.nodeId ) )
         .flashing(flash)
     }
   }
 
+  private def _withNodeShape(gsId: Int)
+                            (notFoundF: => Future[Result] = NotFound("No such geo shape"))
+                            (foundF: MGeoShape => Future[Result])
+                            (implicit request: RequestForAdnNodeAdm[_]): Future[Result] = {
+    request.adnNode
+      .geo
+      .findShape(gsId)
+      .fold(notFoundF)(foundF)
+  }
 
   /** Рендер страницы с формой редактирования osm-производной. */
-  def editNodeOsm(geoId: String, adnId: String) = IsSuperuserAdnGeoGet(geoId, adnId).async { implicit request =>
-    import request.adnGeo
-    val nodeFut = mNodeCache.getById(adnGeo.adnId)
-    val form = {
-      val urlPrOpt = adnGeo.url
+  def editNodeOsm(g: MGsPtr) = IsSuperuserAdnNodeGet(g.nodeId).async { implicit request =>
+    _withNodeShape(g.gsId)() { mgs =>
+      val urlPrOpt = mgs.fromUrl
         .flatMap { OsmUrlParseResult.fromUrl }
-      editOsmNodeFormM.fill( (adnGeo.glevel, urlPrOpt) )
-    }
-    nodeFut map { nodeOpt =>
-      Ok(editAdnGeoOsmTpl(adnGeo, form, nodeOpt.get))
+      val form = editOsmNodeFormM.fill( (mgs.glevel, urlPrOpt) )
+      val rargs = MSysNodeGeoOsmEditTplArgs(mgs, form, request.adnNode, g)
+      Ok( editAdnGeoOsmTpl(rargs) )
     }
   }
 
   /** Сабмит формы редактирования osm-производной. */
-  def editNodeOsmSubmit(geoId: String, adnId: String) = IsSuperuserAdnGeoPost(geoId, adnId).async { implicit request =>
-    lazy val logPrefix = s"editNodeOsmSubmit($geoId): "
-    editOsmNodeFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        val nodeFut = mNodeCache.getById(request.adnGeo.adnId)
-        debug(logPrefix + "Failed to bind form:\n" + formatFormErrors(formWithErrors))
-        nodeFut map { nodeOpt =>
-          NotAcceptable(editAdnGeoOsmTpl(request.adnGeo, formWithErrors, nodeOpt.get))
-        }
-      },
-      {case (glevel2, urlPrOpt) =>
-        val adnGeo2Fut = urlPrOpt match {
-          // Админ задал новую ссылку для скачивания контура.
-          case Some(urlPr2) =>
-            osmClient.fetchElement(urlPr2.osmType, urlPr2.id) map { osmObj =>
-              request.adnGeo.copy(
-                shape   = osmObj.toGeoShape,
-                glevel  = glevel2,
-                url     = Some(urlPr2.url)
+  def editNodeOsmSubmit(g: MGsPtr) = IsSuperuserAdnNodePost(g.nodeId).async { implicit request =>
+    _withNodeShape(g.gsId)() { mgs =>
+      lazy val logPrefix = s"editNodeOsmSubmit(${g.nodeId}#${g.gsId}): "
+      editOsmNodeFormM.bindFromRequest().fold(
+        {formWithErrors =>
+          debug(logPrefix + "Failed to bind form:\n" + formatFormErrors(formWithErrors))
+          val rargs = MSysNodeGeoOsmEditTplArgs(mgs, formWithErrors, request.adnNode, g)
+          NotAcceptable( editAdnGeoOsmTpl(rargs) )
+        },
+        {case (glevel2, urlPrOpt) =>
+          val now = DateTime.now()
+          val adnGeo2Fut = urlPrOpt match {
+            // Админ задал новую ссылку для скачивания контура.
+            case Some(urlPr2) =>
+              for {
+                osmObj <- osmClient.fetchElement(urlPr2.osmType, urlPr2.id)
+              } yield {
+                mgs.copy(
+                  shape       = osmObj.toGeoShape,
+                  glevel      = glevel2,
+                  fromUrl     = Some(urlPr2.url),
+                  dateEdited  = now
+                )
+              }
+            // Без ссылки - нужно немного обновить то, что уже имеется.
+            case None =>
+              val r = mgs.copy(
+                glevel      = glevel2,
+                dateEdited  = now
               )
+              Future successful r
+          }
+          // Сохранить и сгенерить результат
+          val resFut = for {
+            mgs2 <- adnGeo2Fut
+            _    <- {
+              MNode.tryUpdate( request.adnNode ) { mnode0 =>
+                mnode0.copy(
+                  geo = mnode0.geo.updateShape(mgs2)
+                )
+              }
             }
-          // Без ссылки - нужно немного обновить то, что уже имеется.
-          case None =>
-            val r = request.adnGeo.copy(glevel = glevel2)
-            Future successful r
+          } yield {
+            Redirect( routes.SysAdnGeo.forNode(g.nodeId) )
+              .flashing(FLASH.SUCCESS -> "Географическая фигура обновлена.")
+          }
+          // Повесить recover() для перехвата ошибок
+          recoverOsm(resFut, glevel2, urlPrOpt)
         }
-        // Сохранить и сгенерить результат
-        val resFut = for {
-          adnGeo2 <- adnGeo2Fut
-          _geoId  <- adnGeo2.save
-        } yield {
-          Redirect( routes.SysAdnGeo.forNode(request.adnGeo.adnId) )
-            .flashing(FLASH.SUCCESS -> "Географическая фигура обновлена.")
-        }
-        // Повесить recover() для перехвата ошибок
-        recoverOsm(resFut, glevel2, urlPrOpt)
-      }
-    )
+      )
+    }
   }
 
 
@@ -226,10 +311,10 @@ class SysAdnGeo @Inject() (
       "circle" -> circleM
     )
     {(glevel, circle) =>
-      MAdnNodeGeo(
-        shape = circle,
-        adnId = null,
-        glevel = glevel
+      MGeoShape(
+        id = -1,
+        glevel = glevel,
+        shape = circle
       )
     }
     {geo =>
@@ -245,17 +330,17 @@ class SysAdnGeo @Inject() (
 
 
   /** Рендер страницы с формой создания круга. */
-  def createCircle(adnId: String) = IsSuperuserAdnNodeGet(adnId).apply { implicit request =>
+  def createCircle(nodeId: String) = IsSuperuserAdnNodeGet(nodeId).apply { implicit request =>
     val ngl = guessGeoLevel getOrElse NodeGeoLevels.default
     // Нередко в узле указана geo point, характеризующая её. Надо попытаться забиндить её в круг.
     val gpStub = request.adnNode.geo.point getOrElse GeoPoint(0, 0)
-    val geoStub = MAdnNodeGeo(
-      adnId = adnId,
-      glevel = ngl,
-      shape = CircleGs(gpStub, Distance(0.0, DistanceUnit.METERS))
+    val stub = MGeoShape(
+      id      = -1,
+      glevel  = ngl,
+      shape   = CircleGs(gpStub, Distance(0.0, DistanceUnit.METERS))
     )
-    val form1 = circleFormM fill geoStub
-    Ok(createCircleTpl(form1, request.adnNode))
+    val form1 = circleFormM.fill( stub )
+    Ok( createCircleTpl(form1, request.adnNode) )
   }
 
   /** Сабмит формы создания круга. */
@@ -266,9 +351,22 @@ class SysAdnGeo @Inject() (
         debug(logPrefix + "Failed to bind form:\n" + formatFormErrors(formWithErrors))
         NotAcceptable(createCircleTpl(formWithErrors, request.adnNode))
       },
-      {geoStub =>
-        val geo = geoStub.copy(adnId = adnId)
-        geo.save.map { geoId =>
+      {circle0 =>
+        val saveFut = MNode.tryUpdate(request.adnNode) { mnode0 =>
+          mnode0.copy(
+            geo = mnode0.geo.copy(
+              shapes = {
+                val circle1 = circle0.copy(
+                  id = mnode0.geo.nextShapeId
+                )
+                mnode0.geo.shapes ++ Seq(circle1)
+              }
+            )
+          )
+        }
+        for {
+          _ <- saveFut
+        } yield {
           Redirect( routes.SysAdnGeo.forNode(adnId) )
             .flashing(FLASH.SUCCESS -> "Создан круг.")
         }
@@ -278,42 +376,52 @@ class SysAdnGeo @Inject() (
 
 
   /** Рендер страницы с формой редактирования geo-круга. */
-  def editCircle(geoId: String, adnId: String) = IsSuperuserAdnGeoGet(geoId, adnId).async { implicit request =>
-    import request.adnGeo
-    val nodeOptFut = mNodeCache.getById(adnGeo.adnId)
-    val formBinded = circleFormM.fill(adnGeo)
-    nodeOptFut map { nodeOpt =>
-      Ok(editCircleTpl(adnGeo, formBinded, nodeOpt.get))
+  def editCircle(g: MGsPtr) = IsSuperuserAdnNodeGet(g.nodeId).async { implicit request =>
+    _withNodeShape(g.gsId)() { mgs =>
+      val formBinded = circleFormM.fill(mgs)
+      val rargs = MSysNodeGeoCircleEditTplArgs(mgs, formBinded, request.adnNode, g)
+      Ok( editCircleTpl(rargs) )
     }
   }
 
   /** Сабмит формы редактирования круга. */
-  def editCircleSubmit(geoId: String, adnId: String) = IsSuperuserAdnGeoPost(geoId, adnId).async { implicit request =>
-    lazy val logPrefix = s"editCircleSubmit($geoId): "
-    circleFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        val nodeOptFut = mNodeCache.getById(request.adnGeo.adnId)
-        debug(logPrefix + "Failed to bind form:\n" + formatFormErrors(formWithErrors))
-        nodeOptFut.map { nodeOpt =>
-          NotAcceptable(editCircleTpl(request.adnGeo, formWithErrors, nodeOpt.get))
+  def editCircleSubmit(g: MGsPtr) = IsSuperuserAdnNodePost(g.nodeId).async { implicit request =>
+    _withNodeShape(g.gsId)() { mgs =>
+      lazy val logPrefix = s"editCircleSubmit(${g.nodeId}#${g.gsId}): "
+      circleFormM.bindFromRequest().fold(
+        {formWithErrors =>
+          debug(logPrefix + "Failed to bind form:\n" + formatFormErrors(formWithErrors))
+          val rargs = MSysNodeGeoCircleEditTplArgs(mgs, formWithErrors, request.adnNode, g)
+          NotAcceptable( editCircleTpl(rargs) )
+        },
+        {geoStub =>
+          val mgs2 = mgs.copy(
+            glevel      = geoStub.glevel,
+            shape       = geoStub.shape,
+            dateEdited  = DateTime.now()
+          )
+          val updFut = MNode.tryUpdate( request.adnNode ) { mnode0 =>
+            mnode0.copy(
+              geo = mnode0.geo.updateShape(mgs2)
+            )
+          }
+          for {
+            _ <- updFut
+          } yield {
+            Redirect( routes.SysAdnGeo.forNode(g.nodeId) )
+              .flashing(FLASH.SUCCESS -> "Changes.saved")
+          }
         }
-      },
-      {geoStub =>
-        val geo2 = request.adnGeo.copy(
-          shape = geoStub.shape,
-          glevel = geoStub.glevel
-        )
-        geo2.save map { _geoId =>
-          Redirect( routes.SysAdnGeo.forNode(geo2.adnId) )
-            .flashing(FLASH.SUCCESS -> "Changes.saved")
-        }
-      }
-    )
+      )
+    }
   }
 
+
   /** Отрендерить geojson для валидации через geojsonlint. */
-  def showGeoJson(geoId: String, adnId: String) = IsSuperuserAdnGeo(geoId, adnId).apply { implicit request =>
-    Ok(request.adnGeo.shape.toPlayJson())
+  def showGeoJson(g: MGsPtr) = IsSuperuserAdnNode(g.nodeId).async { implicit request =>
+    _withNodeShape(g.gsId)() { mgs =>
+      Ok( mgs.shape.toPlayJson() )
+    }
   }
 
 
@@ -327,22 +435,23 @@ class SysAdnGeo @Inject() (
     )
   }
 
-  /** Собрать карту узлов на основе списка. */
-  private def adnIds2NodesMap(parentIds: TraversableOnce[String]): Future[Map[String, MNode]] = {
-    mNodeCache.multiGet(parentIds)
-      .map { nodes2nodesMap }
-  }
-
   /** Список узлов в карту (adnId -> adnNode). */
   private def nodes2nodesMap(nodes: Iterable[MNode]): Map[String, MNode] = {
     nodes.iterator.map { parent => parent.id.get -> parent }.toMap
   }
 
-  /** Сбор узлов, находящихся на указанных уровнях. TODO: Нужен радиус обнаружения. */
+  /** Сбор узлов, находящихся на указанных уровнях. TODO: Нужен радиус обнаружения или сортировка по близости к какой-то точке. */
   private def collectNodesOnLevels(glevels: Seq[NodeGeoLevel]): Future[Seq[MNode]] = {
-    MAdnNodeGeo.findAdnIdsWithLevels(glevels)
-      .map { _.toSet }
-      .flatMap { mNodeCache.multiGet(_) }
+    val msearch = new MNodeSearchDfltImpl {
+      override def gsLevels = glevels
+      override def limit    = 100
+    }
+    for {
+      nodeIds <- MNode.dynSearchIds(msearch)
+      nodes   <- mNodeCache.multiGet( nodeIds.toSet )
+    } yield {
+      nodes
+    }
   }
 
   /**
@@ -352,57 +461,69 @@ class SysAdnGeo @Inject() (
    */
   def editAdnNodeGeodataPropose(adnId: String) = IsSuperuserAdnNodeGet(adnId).async { implicit request =>
     // Запускаем поиск всех шейпов текущего узла.
-    val nodeShapesFut = MAdnNodeGeo.findByNode(adnId)
+    val shapes = request.adnNode.geo.shapes
+
     // Для parentAdnId: берем шейп на текущем уровне, затем ищем пересечение с ним на уровне (уровнях) выше.
-    val parentAdnIdsFut: Future[Seq[String]] = nodeShapesFut.flatMap { shapes =>
+    val parentAdnIdsFut: Future[Seq[String]] = {
       shapes
+        .iterator
         .filter(_.glevel.upper.isDefined)
         .find(_.shape.isInstanceOf[GeoShapeQuerable])
         .fold [Future[Seq[String]]] (Future successful Nil) { geo =>
-          val upperGlevel = geo.glevel.upper.get
           val shapeq = geo.shape.asInstanceOf[GeoShapeQuerable]
-          MAdnNodeGeo.geoFindAdnIdsOnLevel(upperGlevel, shapeq, maxResults = 1)
+          val msearch = new MNodeSearchDfltImpl {
+            override def limit = 1
+            override def gsShapes = Seq(shapeq)
+            override def gsLevels = geo.glevel.upper.toSeq
+          }
+          MNode.dynSearchIds(msearch)
         }
     }
-    val nodesMapFut = nodeShapesFut flatMap { geos =>
-      geos.headOption
+
+    val nodesMapFut = {
+      shapes.headOption
         .map(_.glevel.allUpperLevels)
         .filter(_.nonEmpty)
         .fold
           { Future successful Map.empty[String, MNode] }
           { upperLevels => collectNodesOnLevels(upperLevels) map nodes2nodesMap }
     }
+
     // Предлагаем центр имеющегося круга за точку центра.
-    val pointOptFut: Future[Option[GeoPoint]] = nodeShapesFut.map { geos =>
-      geos.find(_.shape.isInstanceOf[CircleGs])
+    val pointOpt: Option[GeoPoint] = {
+      shapes
+        .find(_.shape.isInstanceOf[CircleGs])
         .map(_.shape.asInstanceOf[CircleGs].center)
     }
+
     // Когда всё готово, рендерим шаблон.
     for {
-      pointOpt      <- pointOptFut
       parentAdnIds  <- parentAdnIdsFut
       nodesMap      <- nodesMapFut
     } yield {
-      val formBinded = nodeGeoFormM.fill((pointOpt, parentAdnIds.headOption))
-      Ok(editNodeGeodataTpl(request.adnNode, formBinded, nodesMap, isProposed = true))
+      val formValue = (pointOpt, parentAdnIds.headOption)
+      val formBinded = nodeGeoFormM.fill( formValue )
+      val rargs = MSysNodeGeoEditDataTplArgs(request.adnNode, formBinded, nodesMap, isProposed = true)
+      Ok( editNodeGeodataTpl(rargs) )
     }
   }
 
   /** Сбор возможных родительских узлов. */
-  private def adnId2possibleParentsMap(adnId: String): Future[Map[String, MNode]] = {
-    MAdnNodeGeo.findIndexedPtrsForNode(adnId).flatMap { geoPtrs =>
-      val glevels0 = geoPtrs
-        .map(_.glevel)
-        .headOption
-        .fold[List[NodeGeoLevel]] (Nil) { _.allUpperLevels }
-      // Бывает, что нет результатов.
-      val glevels = if (glevels0.nonEmpty) {
-        glevels0
-      } else {
-        List(NodeGeoLevels.NGL_TOWN, NodeGeoLevels.NGL_TOWN_DISTRICT)
-      }
-      collectNodesOnLevels(glevels) map nodes2nodesMap
+  private def adnId2possibleParentsMap(mnode: MNode): Future[Map[String, MNode]] = {
+    val glevels0 = mnode
+      .geo.shapes
+      .iterator
+      .map(_.glevel)
+      .toSeq
+      .headOption
+      .fold (List.empty[NodeGeoLevel]) { _.allUpperLevels }
+    // Бывает, что нет результатов.
+    val glevels = if (glevels0.nonEmpty) {
+      glevels0
+    } else {
+      List(NodeGeoLevels.NGL_TOWN, NodeGeoLevels.NGL_TOWN_DISTRICT)
     }
+    collectNodesOnLevels(glevels) map nodes2nodesMap
   }
 
   /**
@@ -412,7 +533,6 @@ class SysAdnGeo @Inject() (
    * @return 200 Ok + страница с формой редактирования узла.
    */
   def editAdnNodeGeodata(adnId: String) = IsSuperuserAdnNodeGet(adnId).async { implicit request =>
-    val nodesMapFut = adnId2possibleParentsMap(adnId)
     val directParentId: Option[String] = {
       request.adnNode
         .edges
@@ -421,8 +541,15 @@ class SysAdnGeo @Inject() (
         .headOption
     }
     val formBinded = nodeGeoFormM fill (request.adnNode.geo.point, directParentId)
+    _editAdnNodeGeodata(formBinded, Ok)
+  }
+
+  private def _editAdnNodeGeodata(form: Form[_], respStatus: Status)
+                                 (implicit request: RequestForAdnNodeAdm[_]): Future[Result] = {
+    val nodesMapFut = adnId2possibleParentsMap(request.adnNode)
     nodesMapFut map { nodesMap =>
-      Ok(editNodeGeodataTpl(request.adnNode, formBinded, nodesMap, isProposed = false))
+      val rargs = MSysNodeGeoEditDataTplArgs(request.adnNode, form, nodesMap, isProposed = false)
+      respStatus( editNodeGeodataTpl(rargs) )
     }
   }
 
@@ -435,11 +562,8 @@ class SysAdnGeo @Inject() (
     lazy val logPrefix = s"editAdnNodeGeodataSubmit($adnId): "
     nodeGeoFormM.bindFromRequest().fold(
       {formWithErrors =>
-        val nodesMapFut = adnId2possibleParentsMap(adnId)
         debug(logPrefix + "Failed to bind form:\n" + formatFormErrors(formWithErrors))
-        nodesMapFut map { nodesMap =>
-          NotAcceptable(editNodeGeodataTpl(request.adnNode, formWithErrors, nodesMap, isProposed = false))
-        }
+        _editAdnNodeGeodata(formWithErrors, NotAcceptable)
       },
       {case (pointOpt, parentNodeIdOpt) =>
         // Нужно собрать значение для поля allParentIds, пройдясь по все родительским узлам.

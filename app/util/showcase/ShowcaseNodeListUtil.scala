@@ -247,20 +247,17 @@ class ShowcaseNodeListUtil @Inject() (
     detectFut
       .recoverWith {
         case ex: NoSuchElementException =>
-          currNodeFut flatMap { nextNode =>
-            MAdnNodeGeo.findIndexedPtrsForNode(nextNode.id.get, maxResults = 1)
-              .map { vs =>
-                // 2014.sep.29: возник экзепшен на узле, который не имел нормальных гео-настроек, но был выбран вручную в выдаче.
-                val glevel: NodeGeoLevel = vs.headOption.map(_.glevel).orElse {
-                  nextNode.extras.adn
-                    .flatMap(_.shownTypeIdOpt)
-                    .flatMap(AdnShownTypes.maybeWithName)
-                    .flatMap(_.ngls.headOption)
-                } getOrElse {
-                  NodeGeoLevels.default    // should never happen
-                }
-                GeoDetectResult(glevel, nextNode)
-            }
+          for (mnode <- currNodeFut) yield {
+            val glevel = mnode.geo.shapes
+              .headOption
+              .map(_.glevel)
+              .orElse {
+                AdnShownTypes.node2valOpt(mnode)
+                  .flatMap(_.ngls.headOption)
+              } getOrElse {
+                NodeGeoLevels.default    // should never happen
+              }
+            GeoDetectResult(glevel, mnode)
           }
       }
   }

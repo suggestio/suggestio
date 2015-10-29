@@ -34,34 +34,34 @@ class LkEventsUtil @Inject() (
   /**
    * Если узел -- ресивер без геолокации, то надо отрендерить плашку на эту тему.
    * Этот метод вызывается контроллером при рендере начала списка событий.
-   * @param adnNode Узел.
+   * @param mnode Узел.
    * @param ctx Контекст рендера.
    * @return Фьючерс, если есть чего рендерить.
    */
-  def getGeoWelcome(adnNode: MNode)(implicit ctx: Context): Future[Option[(Html, DateTime)]] = {
-    val adnId = adnNode.id.get
-    MAdnNodeGeo.countByNode(adnId).map {
+  def getGeoWelcome(mnode: MNode)(implicit ctx: Context): Future[Option[(Html, DateTime)]] = {
+    val res = mnode.geo.shapes.size match {
       // Нет гео-шейпов у этого ресивера. Нужно отрендерить сообщение об этой проблеме. TODO Отсеивать просто-точки из подсчёта?
       case 0 =>
         val etype = MEventTypes.NodeGeoWelcome
         // Дата создания события формируется на основе даты создания узла.
         // Нужно также, чтобы это событие не было первым в списке событий, связанных с созданием узла.
-        val dt = adnNode.meta.basic
+        val dt = mnode.meta.basic
           .dateCreated
           .plusSeconds(10)
+        val nodeId = mnode.id.get
         val mevt = MEventTmp(
           etype       = etype,
-          ownerId     = adnId,
-          argsInfo    = ArgsInfo(adnIdOpt = Some(adnId)),
+          ownerId     = nodeId,
+          argsInfo    = ArgsInfo(adnIdOpt = Some(nodeId)),
           isCloseable = false,
           isUnseen    = true,
-          id          = Some(adnId),
+          id          = Some(nodeId),
           dateCreated = dt
         )
         val rargs = event.RenderArgs(
           mevent        = mevt,
           withContainer = true,
-          adnNodeOpt    = Some(adnNode)
+          adnNodeOpt    = Some(mnode)
         )
         val html = etype.render(rargs)(ctx)
         Some(html -> dt)
@@ -69,6 +69,7 @@ class LkEventsUtil @Inject() (
       // Есть геошейпы для узла. Ничего рендерить не надо.
       case _ => None
     }
+    Future successful res
   }
 
   /**

@@ -249,22 +249,22 @@ POST /sys/m/b/sink/comm/edit/:scId       @controllers.SysMarketBilling.editSinkC
 POST /sys/m/b/sink/comm/del/:scId        @controllers.SysMarketBilling.sinkComDeleteSubmit(scId: Int)
 
 ## sys adn geo
-GET  /sys/adn/geo/all/:adnId             @controllers.SysAdnGeo.forNode(adnId)
+GET  /sys/adn/geo/all/:nodeId            @controllers.SysAdnGeo.forNode(nodeId)
 ## MAdnNodeGeo
-GET  /sys/adn/geo/add/:adnId/osm         @controllers.SysAdnGeo.createForNodeOsm(adnId)
-POST /sys/adn/geo/add/:adnId/osm         @controllers.SysAdnGeo.createForNodeOsmSubmit(adnId)
-POST /sys/adn/geo/del/:geoId             @controllers.SysAdnGeo.deleteSubmit(geoId, adnId)
-GET  /sys/adn/geo/edit/:geoId            @controllers.SysAdnGeo.editNodeOsm(geoId, adnId)
-POST /sys/adn/geo/edit/:geoId/osm        @controllers.SysAdnGeo.editNodeOsmSubmit(geoId, adnId)
-GET  /sys/adn/geo/add/:adnId/crcl        @controllers.SysAdnGeo.createCircle(adnId)
-POST /sys/adn/geo/add/:adnId/crcl        @controllers.SysAdnGeo.createCircleSubmit(adnId)
-GET  /sys/adn/geo/edit/:geoId/crcl       @controllers.SysAdnGeo.editCircle(geoId, adnId)
-POST /sys/adn/geo/edit/:geoId/crcl       @controllers.SysAdnGeo.editCircleSubmit(geoId, adnId)
-GET  /sys/adn/geo/json/:geoId            @controllers.SysAdnGeo.showGeoJson(geoId, adnId)
+GET  /sys/adn/geo/add/osm/:nodeId        @controllers.SysAdnGeo.createForNodeOsm(nodeId)
+POST /sys/adn/geo/add/osm/:nodeId        @controllers.SysAdnGeo.createForNodeOsmSubmit(nodeId)
+POST /sys/adn/geo/delete                 @controllers.SysAdnGeo.deleteSubmit(g: mgeo.MGsPtr)
+GET  /sys/adn/geo/edit/osm               @controllers.SysAdnGeo.editNodeOsm(g: mgeo.MGsPtr)
+POST /sys/adn/geo/edit/osm               @controllers.SysAdnGeo.editNodeOsmSubmit(g: mgeo.MGsPtr)
+GET  /sys/adn/geo/add/circl/:nodeId      @controllers.SysAdnGeo.createCircle(nodeId)
+POST /sys/adn/geo/add/circl/:nodeId      @controllers.SysAdnGeo.createCircleSubmit(nodeId)
+GET  /sys/adn/geo/edit/circl             @controllers.SysAdnGeo.editCircle(g: mgeo.MGsPtr)
+POST /sys/adn/geo/edit/circl             @controllers.SysAdnGeo.editCircleSubmit(g: mgeo.MGsPtr)
+GET  /sys/adn/geo/json                   @controllers.SysAdnGeo.showGeoJson(g: mgeo.MGsPtr)
 ## node geodata
-GET  /sys/adn/geodata/edit/:adnId        @controllers.SysAdnGeo.editAdnNodeGeodata(adnId)
-GET  /sys/adn/geodata/propose/:adnId     @controllers.SysAdnGeo.editAdnNodeGeodataPropose(adnId)
-POST /sys/adn/geodata/edit/:adnId        @controllers.SysAdnGeo.editAdnNodeGeodataSubmit(adnId)
+GET  /sys/adn/geodata/edit/:nodeId       @controllers.SysAdnGeo.editAdnNodeGeodata(nodeId)
+GET  /sys/adn/geodata/propose/:nodeId    @controllers.SysAdnGeo.editAdnNodeGeodataPropose(nodeId)
+POST /sys/adn/geodata/edit/:nodeId       @controllers.SysAdnGeo.editAdnNodeGeodataSubmit(nodeId)
 
 ## Карта umap
 GET  /sys/umap/nodes                     @controllers.Umap.getAdnNodesMap

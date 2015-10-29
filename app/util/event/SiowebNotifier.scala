@@ -43,7 +43,6 @@ object SiowebNotifier extends SioNotifierStaticActorSelection with SNStaticSubsc
     // TODO inject
     current.injector.instanceOf[MAdnNodeCache],
     deleteAdsOnAdnNodeDeleteSNSC,
-    new MAdnNodeGeo.CleanUpOnAdnNodeDelete(),
     new MAdv.DeleteAllAdvsOnAdDeleted(),
     new MBillContract.DelContractsWhenAdnNodeDeleted,
     AdnNodeEvents,

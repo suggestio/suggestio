@@ -1,16 +1,17 @@
-@(mnode: MNode, geos: Seq[MAdnNodeGeo], parentsMap: Map[String, MNode], mapStateHash: Option[String] = None)(implicit ctx: Context)
+@(args: msys.ISysGeoForNodeTplArgs)(implicit ctx: Context)
 
 @* Вывод гео-информации по узлу. *@
 
 @import ctx._
 @import datetime._
 @import stuff._
+@import mgeo.MGsPtr
 
 @* Отрендерить список нод на основе списка id нод. Используется карта parentsMap для доступа к инфе по узлу. *@
 @_renderNodes(nodesIds: TraversableOnce[String]) = {
   @nodesIds.map { parentId =>
     <a href="@routes.SysMarket.showAdnNode(parentId)">
-      @parentsMap.get(parentId).fold {
+      @args.parentsMap.get(parentId).fold {
         @parentId
       } { parentNode =>
         <span title="@parentNode.meta.address.town / @parentId">
@@ -23,7 +24,7 @@
 
 @* Рендер одного списка узлов-геородителей. *@
 @_renderGeoParents(p: MPredicate, title: String, label: String) = {
-  @defining( mnode.edges.withPredicateIterIds(p) ) { parentIdsIter =>
+  @defining( args.mnode.edges.withPredicateIterIds(p) ) { parentIdsIter =>
     @if( parentIdsIter.nonEmpty ) {
       <p>
         <span title="@title">
@@ -37,24 +38,29 @@
 
 
 @* Рендер самой страницы. *@
-@geoBase("География узла", nodeOpt = Some(mnode)) {
-
+@geoBase(
+  title   = "География узла",
+  nodeOpt = Some(args.mnode)
+) {
+@defining( args.mnode.id.get ) { nodeId =>
   <h2>
-    <a href="@routes.Umap.getAdnNodeMap(mnode.id.get)@mapStateHash">Картографический редактор...</a>
-    (@geos.iterator.filter(_.shape.shapeType.isGeoJsonCompatible).size отображаемых фигур)
+    <a href="@routes.Umap.getAdnNodeMap(nodeId)@args.mapStateHash">
+      Картографический редактор...
+    </a>
+    (@args.countGeoJsonCompat отображаемых фигур)
   </h2>
   <br/>
 
   <h1>
     География узла
-    <a href="@routes.SysMarket.showAdnNode(mnode.id.get)">
-      @mnode.meta.basic.name
+    <a href="@routes.SysMarket.showAdnNode(nodeId)">
+      @args.mnode.meta.basic.name
     </a>
   </h1>
 
   <p>Географическая информация узла -- это геометрические фигуры в координатах поверхности земли. Они тяжеловесные, и
      хранятся отдельно от родительского узла, в той же шарде узла, но в отдельной модели.</p>
-  @if(geos.nonEmpty) {
+  @if( args.shapes.nonEmpty ) {
     <table>
       <thead>
         <tr>
@@ -63,47 +69,61 @@
           <th>Level</th>
           <th>Shape</th>
           <th>Last-Modified</th>
-          <th>version</th>
           <th>Другое</th>
         </tr>
       </thead>
       <tbody>
-        @geos.map { geo =>
+        @args.shapes.map { geo =>
+          @defining( MGsPtr(nodeId, geo.id) ) { mGsPtr =>
           <tr>
-            <td><span title="@geo.id">@geo.id.get.substring(0, 4)...</span></td>
-            <td>@geo.url.map { url =><a href="@url" target="_blank">Go</a>}</td>
+            <td><span title="@geo.id">@geo.id</span></td>
+            <td>
+              @geo.fromUrl.map { url =>
+                <a href="@url" target="_blank">Go</a>
+              }
+            </td>
             <td>@geo.glevel.precision</td>
             <td>
-              <a href="@routes.SysAdnGeo.showGeoJson(geo.id.get, geo.adnId)">
-                <span title='@geo.shape'>@geo.shape.getClass.getSimpleName</span>
+              <a href="@routes.SysAdnGeo.showGeoJson( mGsPtr )">
+                <span title='@geo.shape'>
+                  @geo.shape.displayTypeName
+                </span>
               </a>
             </td>
-            <td>@_prettyDate(geo.lastModified)</td>
-            <td>@geo.versionOpt</td>
+            <td>@_prettyDate(geo.dateEdited)</td>
             <td>
               @if(!geo.shape.shapeType.isGeoJsonCompatible) {
-                <span title="Круги и прямоугольники не совместимо со стандартном GeoJSON, поэтому не отображаются в картографическом редакторе фигур.">
+                <span title="Круги и прямоугольники не совместимы со стандартном GeoJSON, поэтому не отображаются в картографическом редакторе фигур.">
                   НЕ отображается на карте.
                 </span>
               }
-              <a href="@if(geo.isCircle){@routes.SysAdnGeo.editCircle(geo.id.get, geo.adnId)} else {@routes.SysAdnGeo.editNodeOsm(geo.id.get, geo.adnId)}">@messages("Edit")</a>
+              <a href="@if(geo.shape.shapeType.isCircle) {@routes.SysAdnGeo.editCircle(mGsPtr)} else {@routes.SysAdnGeo.editNodeOsm(mGsPtr)}">
+                @messages("Edit")
+              </a>
             </td>
           </tr>
+          }
         }
       </tbody>
     </table>
   }
 
   <p>
-    <a href="@routes.SysAdnGeo.createForNodeOsm(mnode.id.get)">Добавить OSM-контур к этому узлу...</a>
+    <a href="@routes.SysAdnGeo.createForNodeOsm(nodeId)">
+      Добавить OSM-контур к этому узлу...
+    </a>
   </p>
 
   <p>
-    <a href="@routes.SysAdnGeo.createCircle(mnode.id.get)">Добавить круг...</a>
+    <a href="@routes.SysAdnGeo.createCircle(nodeId)">
+      Добавить круг...
+    </a>
   </p>
 
   <p>
-    <a href="http://geojsonlint.com/">Визуальная проверка GeoJSON.</a>
+    <a href="http://geojsonlint.com/">
+      Визуальная проверка GeoJSON.
+    </a>
   </p>
 
 
@@ -111,18 +131,22 @@
   <h1>Геоданные узла</h1>
   <p>Геоданные узла хранятся и индексируются в самом узле.</p>
 
-  @if(mnode.geo.isEmpty) {
+  @if( args.mnode.geo.isEmpty ) {
     Отсутствуют.
-    <a href="@routes.SysAdnGeo.editAdnNodeGeodataPropose(mnode.id.get)">Попробовать автозаполнение геоданных...</a>
+    <a href="@routes.SysAdnGeo.editAdnNodeGeodataPropose(nodeId)">
+      Попробовать автозаполнение геоданных...
+    </a>
 
   } else {
 
-    @mnode.geo.point.map { point =>
+    @args.mnode.geo.point.map { point =>
       @* TODO Почему-то маркер точки не подсвечивается на карте, поэтому используем большое увеличение (18) и отметку по центру. *@
       <span title="Примитивная координата, до которой можно измерить расстояние или использовать при сортировки по расстоянию. Например географический центр узла.">
         Координата:
       </span>
-      <a href="http://www.openstreetmap.org/#map=18/@point.lat/@point.lon" target="_blank" title="Открыть карту в новой вкладке. Цель будет в центре.">
+      <a href="http://www.openstreetmap.org/#map=18/@point.lat/@point.lon"
+         target="_blank"
+         title="Открыть карту в новой вкладке. Цель будет в центре.">
         <span title="(lat, lon), т.е. (широта, долгота) в WGS84.">
           (@point.lat, @point.lon)
         </span>
@@ -144,6 +168,9 @@
 
   }
 
-  <a href="@routes.SysAdnGeo.editAdnNodeGeodata(mnode.id.get)">Редактировать...</a>
+  <a href="@routes.SysAdnGeo.editAdnNodeGeodata(nodeId)">
+    @messages("Edit")...
+  </a>
 
-}
+} @* defining nodeId *@
+} @* geoBase *@

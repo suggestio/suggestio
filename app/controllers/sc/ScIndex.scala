@@ -384,10 +384,10 @@ trait ScIndexNode
     val _adnNodeFut = Future successful request.adnNode
     val helper = new ScIndexNodeSimpleHelper {
       override val geoListGoBackFut: Future[Option[Boolean]] = {
-        MAdnNodeGeo.findIndexedPtrsForNode(adnId, maxResults = 1)
-          .map { geos =>
-            geos.headOption.map(_.glevel.isLowest)
-          }
+        for (mnode <- adnNodeFut) yield {
+          mnode.geo.shapes
+            .headOption.map(_.glevel.isLowest)
+        }
       }
       override def _reqArgs = args
       override def adnNodeFut = _adnNodeFut

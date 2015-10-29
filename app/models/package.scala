@@ -147,7 +147,9 @@ package object models {
   val  NodeGeoLevels        = ym.model.NodeGeoLevels
   type NodeGeoLevel         = ym.model.NodeGeoLevel
 
+  @deprecated("Use MNode.geo.shape instead.", "2015.oct.28")
   val  MAdnNodeGeo          = ym.model.MAdnNodeGeo
+  @deprecated("Use MNode.geo.shape instead.", "2015.oct.28")
   type MAdnNodeGeo          = ym.model.MAdnNodeGeo
 
   val  AdnNodeGeodata       = ym.model.common.AdnNodeGeodata
@@ -228,5 +230,8 @@ package object models {
 
   val  MMedia               = n2.media.MMedia
   type MMedia               = n2.media.MMedia
+
+  type MGeoShape            = n2.geo.MGeoShape
+  val  MGeoShape            = n2.geo.MGeoShape
 
 }
