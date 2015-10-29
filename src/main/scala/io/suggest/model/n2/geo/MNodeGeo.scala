@@ -27,6 +27,8 @@ object MNodeGeo extends IGenEsMappingProps {
         _fullFn( MGeoShape.Fields.shapeFn(ngl) )
       }
       def SHAPE_GLEVEL_FN = _fullFn( MGeoShape.Fields.GLEVEL_FN )
+      
+      def GEO_JSON_COMPATIBLE_FN = _fullFn( MGeoShape.Fields.GEO_JSON_COMPATIBLE_FN )
     }
   }
 
@@ -71,3 +73,32 @@ case class MNodeGeo(
   shapes    : Seq[MGeoShape]    = Nil
 )
   extends EmptyProduct
+{
+
+  def nextShapeId: Int = {
+    if (shapes.isEmpty) {
+      0
+    } else {
+      shapes.iterator.map(_.id).max + 1
+    }
+  }
+
+  def updateShapeSeq(mgs2: MGeoShape): Seq[MGeoShape] = {
+    shapes
+      .iterator
+      .filter { _.id != mgs2.id }
+      .++( Iterator(mgs2) )
+      .toSeq
+  }
+
+  def updateShape(mgs2: MGeoShape): MNodeGeo = {
+    copy(
+      shapes = updateShapeSeq(mgs2)
+    )
+  }
+
+  def findShape(gsId: Int): Option[MGeoShape] = {
+    shapes.find(_.id == gsId)
+  }
+
+}

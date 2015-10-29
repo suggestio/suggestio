@@ -9,7 +9,6 @@ import io.suggest.event.subscriber.SnClassSubscriber
 import io.suggest.event.{MNodeDeletedEvent, SNStaticSubscriber, SioNotifierStaticClientI}
 import io.suggest.model.es._
 import EsModelUtil.FieldsJsonAcc
-import io.suggest.model._
 import io.suggest.model.geo.{IGeoShapeIndexed, CircleGs, GeoShape, GeoShapeQuerable}
 import io.suggest.util.MacroLogsImpl
 import io.suggest.util.SioEsUtil._
@@ -37,6 +36,10 @@ import scala.util.{Failure, Success}
  * геообъектов необходимо, чтобы гибко управлять точностью и ресурсоёмкостью индекса. И просто чтобы регулировать
  * приоритет объектов.
  */
+
+// TODO Удалить сие счастье целиком. Ибо есть N2, где используется MNode.geo.shape.
+
+@deprecated("Use MNode.geo.shape instead.", "2015.oct.28")
 object MAdnNodeGeo extends EsChildModelStaticT with MacroLogsImpl {
 
   import LOGGER._

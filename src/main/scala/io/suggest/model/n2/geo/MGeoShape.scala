@@ -124,6 +124,6 @@ case class MGeoShape(
   id            : Int,
   glevel        : NodeGeoLevel,
   shape         : GeoShape,
-  fromUrl       : Option[String],
+  fromUrl       : Option[String]  = None,
   dateEdited    : DateTime        = DateTime.now()
 )

@@ -7,6 +7,7 @@ import io.suggest.model.es.EsModelUtil
 import io.suggest.model.menum.EnumJsonReadsValT
 import io.suggest.util.MacroLogsDyn
 import org.elasticsearch.common.geo.builders.ShapeBuilder
+import org.elasticsearch.index.query.{QueryBuilders, QueryBuilder}
 import play.api.data.validation.ValidationError
 import play.api.libs.json._
 import java.{util => ju}
@@ -91,17 +92,28 @@ trait GeoShape {
   def _toPlayJsonInternal(geoJsonCompatible: Boolean): FieldsJsonAcc
 
   def firstPoint: GeoPoint
+
+  /** Отображаемое для пользователя имя шейпа. */
+  def displayTypeName: String = {
+    shapeType.geoJsonName
+      .getOrElse( getClass.getSimpleName )
+  }
+
 }
 
 
 /** Если элемент можно запрашивать в geo-shape search/filter, то нужен билдер для Shape'а. */
-trait GeoShapeQuerable extends GeoShape {
+trait GeoShapeQuerable extends GeoShape with IToEsQueryFn {
 
   /**
    * Отрендерить в изменяемый ShapeBuilder для построения ES-запросов.
    * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html]]
    */
   def toEsShapeBuilder: ShapeBuilder
+
+  override def toEsQuery(fn: String): QueryBuilder = {
+    QueryBuilders.geoShapeQuery(fn, toEsShapeBuilder)
+  }
 
 }
 
@@ -118,6 +130,9 @@ object GsTypes extends Enumeration with EnumMaybeWithName with EnumJsonReadsValT
     def isGeoJsonCompatible: Boolean = geoJsonName.isDefined
 
     def companion: GsStatic
+
+    /** Является ли фигура кругом? У нас редактор кругов отдельно, поэтому и проверка совместимости тут, отдельно. */
+    def isCircle: Boolean = false
   }
 
   override type T = Val
@@ -134,6 +149,7 @@ object GsTypes extends Enumeration with EnumMaybeWithName with EnumJsonReadsValT
 
   val circle              : T = new Val("circle") {
     override def companion    = CircleGs
+    override def isCircle     = true
   }
 
   val linestring          : T = new Val("linestring") {

@@ -1,5 +1,6 @@
 package io.suggest.model.geo
 
+import io.suggest.model.n2.node.MNodeFields
 import io.suggest.ym.model.NodeGeoLevel
 import org.elasticsearch.common.geo.ShapeRelation
 import org.elasticsearch.common.unit.DistanceUnit
@@ -51,12 +52,36 @@ case class Distance(distance: Double, units: DistanceUnit) {
 }
 
 
+trait IToEsQueryFn {
+  def toEsQuery(fn: String): QueryBuilder
+}
+
+
 /** Описание того, как надо фильтровать по дистанции относительно какой-то точки на поверхности планеты. */
-case class GeoDistanceQuery(center: GeoPoint, distanceMin: Option[Distance], distanceMax: Distance) {
+case class GeoDistanceQuery(
+  center      : GeoPoint,
+  distanceMin : Option[Distance],
+  distanceMax : Distance
+)
+  extends IToEsQueryFn
+{
 
   def outerCircle = CircleGs(center, distanceMax)
 
   def innerCircleOpt = distanceMin.map { CircleGs(center, _) }
+
+  override def toEsQuery(fn: String): QueryBuilder = {
+    val gq = QueryBuilders.geoShapeQuery(fn, outerCircle.toEsShapeBuilder)
+    // Просверлить дырку, если требуется.
+    innerCircleOpt.fold[QueryBuilder](gq) { inCircle =>
+      // TODO Этот фильтр скорее всего не пашет, т.к. ни разу не тестировался и уже пережил ДВА перепиливания подсистемы географии.
+      val innerFilter = FilterBuilders.geoDistanceFilter( MNodeFields.Geo.POINT_FN )
+        .point(inCircle.center.lat, inCircle.center.lon)
+        .distance(inCircle.radius.distance, inCircle.radius.units)
+      val notInner = FilterBuilders.notFilter(innerFilter)
+      QueryBuilders.filteredQuery(gq, notInner)
+    }
+  }
 
 }
 

@@ -79,6 +79,8 @@ object MNodeFields {
     def SHAPE_FN = _fullFn( MNodeGeo.Fields.Shape.SHAPE_FN )
     def SHAPE_GLEVEL_FN = _fullFn( MNodeGeo.Fields.Shape.SHAPE_GLEVEL_FN )
 
+    def GEO_JSON_COMPATIBLE_FN = _fullFn( MNodeGeo.Fields.Shape.GEO_JSON_COMPATIBLE_FN )
+
     /** Абсолютное имя shape-поля указанного уровня в SHAPE_FN. */
     def geoShapeFn(ngl: NodeGeoLevel): String = {
       // TODO Тут дублируется часть логики SHAPE_FN, могут быть ошибки и есть возможности для оптимизации.
