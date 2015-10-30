@@ -1,12 +1,12 @@
 package controllers.ad
 
 import io.suggest.model.n2.ad.ent
+import io.suggest.model.n2.ad.rd.RichDescr
 import models._
 import models.blk._
 import util.FormUtil._
 import play.api.data._, Forms._
 import util.blocks.BlockMapperResult
-import io.suggest.ym.model.ad.RichDescr
 import io.suggest.ad.form.AdFormConstants._
 
 /**
