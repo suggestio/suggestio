@@ -30,12 +30,12 @@ class MNodeExtrasSpec extends FlatSpec with PlayJsonTestUtil {
           testNode  = true,
           isUser    = true
         )),
-        mdr = Some(MMdrExtra(
+        mdr = MMdrExtra(
           freeAdv = Some(MFreeAdv(
             isAllowed = true,
             byUser    = "af43w90fk3490f34f43-ff"
           ))
-        ))
+        )
       )
     }
   }

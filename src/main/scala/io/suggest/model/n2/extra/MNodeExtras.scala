@@ -72,6 +72,10 @@ object MNodeExtras extends IGenEsMappingProps {
     (__ \ TAG_FN).formatNullable[MTagVertex] and
     (__ \ ADN_FN).formatNullable[MAdnExtra] and
     (__ \ MDR_FN).formatNullable[MMdrExtra]
+      .inmap [MMdrExtra] (
+        _ getOrElse MMdrExtra.empty,
+        {mdr => if (mdr.nonEmpty) Some(mdr) else None }
+      )
   )(apply, unlift(unapply))
 
 
@@ -100,6 +104,6 @@ trait EMNodeExtrasStatic
 case class MNodeExtras(
   tag: Option[MTagVertex] = None,
   adn: Option[MAdnExtra]  = None,
-  mdr: Option[MMdrExtra]  = None
+  mdr: MMdrExtra          = MMdrExtra.empty
 )
   extends EmptyProduct
