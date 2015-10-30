@@ -1,5 +1,6 @@
 package util.blocks
 
+import io.suggest.model.n2.ad.ent.text.ValueEnt
 import play.api.data._, Forms._
 import models._
 import play.api.Play.{current, configuration}
@@ -87,7 +88,7 @@ trait SingleListBlockT extends ListBlock {
   /** Макс кол-во офферов (макс.длина списка офферов). */
   def offersCountMax: Int = OFFERS_COUNT_MAX
 
-  type T1 <: AOValueField
+  type T1 <: ValueEnt
   type BfT1 <: BlockAOValueFieldT { type T = T1 }
   def bf1(offerNopt: Option[Int]): BfT1
 
@@ -174,7 +175,7 @@ trait SingleListBlockT extends ListBlock {
 trait TitleListBlockT extends SingleListBlockT {
 
   def TITLE_FN = Title.BF_NAME_DFLT
-  override type T1 = AOStringField
+  override type T1 = TextEnt
   override type BfT1 = BfText
   override def bf1(offerNopt: Option[Int]) = ListBlock.mkBfText(TITLE_FN, offerNopt)
   def titleBf = bf1(None)

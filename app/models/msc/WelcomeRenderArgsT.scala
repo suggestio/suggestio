@@ -34,3 +34,11 @@ trait WelcomeRenderArgsT {
     sb.toString()
   }
 }
+
+
+case class MWelcomeRenderArgs(
+  override val bg       : Either[String, ImgUrlInfoT],
+  override val fgImage  : Option[MImgInfoT],
+  override val fgText   : Option[String]
+)
+  extends WelcomeRenderArgsT

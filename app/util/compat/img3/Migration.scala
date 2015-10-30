@@ -26,12 +26,12 @@ import scala.util.{Failure, Success}
  * Description: Система обновления картинок на новую архитектуру: N2, seaweedfs.
  *
  * Чек-лист миграции #1.
- * 1. application.conf:
+ * 1.[СДЕЛАНО 2015.oct.29] application.conf:
  *  {{{
  *    play.http.errorHandler = "controllers.ErrorHandler"
  *    play.http.filters = "util.xplay.Filters"
  *  }}}
- * 2. Отработать всё нижеследующее через JMX.
+ * 2.[СДЕЛАНО 2015.oct.29] Отработать всё нижеследующее через JMX.
  */
 class Migration @Inject() (
   mImg3                 : MImg3_,
@@ -45,6 +45,7 @@ class Migration @Inject() (
   import LOGGER._
 
   /** Пройтись по узлам ADN, логотипы сохранить через MMedia, создать необходимые MEdge. */
+  // TODO Исполнено на продакшене 2015.oct.29. Можно удалять, если в течение недели не понадобится снова.
   def adnNodesToN2(): Future[LogosAcc] = {
     // Обойти все узлы ADN, прочитав оттуда данные по логотипам.
     MAdnNode.foldLeftAsync( LogosAcc() ) { (acc0Fut, mAdnNode) =>
@@ -58,7 +59,7 @@ class Migration @Inject() (
   }
 
   /** Портировать одну картинку. */
-  def portOneNode(acc0Fut: Future[LogosAcc], mAdnNode: MAdnNode): Future[LogosAcc] = {
+  private def portOneNode(acc0Fut: Future[LogosAcc], mAdnNode: MAdnNode): Future[LogosAcc] = {
     val adnNodeId = mAdnNode.id.get
     val logPrefix = s"[$adnNodeId]"
     trace(s"$logPrefix Processing ADN node: ${mAdnNode.meta.name} / ${mAdnNode.meta.town}")
@@ -167,7 +168,7 @@ class Migration @Inject() (
 
 
   /** Портирование одного оригинала картинки. */
-  def portOneImage(prefix: String, mimg: MImg3, ownNodeId: String, dateCreatedDflt: DateTime, imetaOpt: Option[ISize2di] = None): Future[String] = {
+  private def portOneImage(prefix: String, mimg: MImg3, ownNodeId: String, dateCreatedDflt: DateTime, imetaOpt: Option[ISize2di] = None): Future[String] = {
 
     lazy val logPrefix = s"portOneImage(${mimg.rowKeyStr}):"
 
@@ -194,6 +195,7 @@ class Migration @Inject() (
 
   /** Первыми MNode'ами были теги. Они не имели типа, но это отрабатывалось на уровне последующих парсеров.
     * Нужно найти и пересохранить все необходимые теги. */
+  // TODO Исполнено на продакшене 2015.oct.29. Можно удалить через неделю, если не понадобится.
   def resaveMissingTypeTags(): Future[Int] = {
     val msearch = new MNodeSearchDfltImpl {
       override def nodeTypes = Seq(null)
@@ -221,6 +223,7 @@ class MigrationJmx @Inject() (
 
   override def jmxName: String = "io.suggest.compat:type=img3,name=" + migration.getClass.getSimpleName
 
+  // TODO Исполнено на продакшене 2015.oct.29. Можно удалить через неделю, если не понадобится.
   override def adnNodesToN2(): String = {
     val strFut = migration.adnNodesToN2()
       .map { acc =>
@@ -229,6 +232,7 @@ class MigrationJmx @Inject() (
     awaitString( strFut )
   }
 
+  // TODO Исполнено на продакшене 2015.oct.29. Можно удалить через неделю, если не понадобится.
   override def resaveMissingTypeTags(): String = {
     val strFut = migration.resaveMissingTypeTags()
       .map { count =>

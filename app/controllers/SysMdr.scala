@@ -155,7 +155,7 @@ class SysMdr @Inject() (
     }
 
     // После завершения асинхронный операций, вернуть результат.
-    for(_ <- updFut) yield {
+    for (_ <- updFut) yield {
       // Обновление выполнено. Пора отредиректить юзера на страницу модерации других карточек.
       val args = MdrSearchArgs(
         hideAdIdOpt = Some(adId)
@@ -187,7 +187,7 @@ class SysMdr @Inject() (
           )
         }
 
-        for(_ <- saveFut) yield {
+        for (_ <- saveFut) yield {
           val args = MdrSearchArgs(
             hideAdIdOpt = Some(adId)
           )

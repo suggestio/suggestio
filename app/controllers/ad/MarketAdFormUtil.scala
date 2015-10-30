@@ -1,5 +1,6 @@
 package controllers.ad
 
+import io.suggest.model.n2.ad.ent
 import models._
 import models.blk._
 import util.FormUtil._
@@ -95,7 +96,7 @@ object MarketAdFormUtil {
    * Сборка маппинга для шрифта.
    * @return Маппинг для AOFieldFont.
    */
-  def fontM: Mapping[AOFieldFont] = {
+  def fontM: Mapping[EntFont] = {
     mapping(
       "color"  -> colorM,
       "size"   -> fontSizeM,
@@ -103,7 +104,7 @@ object MarketAdFormUtil {
       "family" -> fontFamilyOptM
     )
     {(color, fsz, align, family) =>
-      AOFieldFont(
+      EntFont(
         color  = color,
         size   = Some(fsz.size),
         align  = align,
@@ -146,87 +147,39 @@ object MarketAdFormUtil {
       .verifying("error.coord.too.big", { _ <= 2048 })
       .transform[Int](Math.max(0, _), identity)
   }
-  def coords2DM: Mapping[Coords2D] = {
+  def coords2DM: Mapping[ent.Coords2d] = {
     // сохраняем маппинг в переменную на случай если coordM станет def вместо val.
     val _coordM = coordM
     mapping(
       "x" -> _coordM,
       "y" -> _coordM
     )
-    { Coords2D.apply }
-    { Coords2D.unapply }
+    { Coords2d.apply }
+    { Coords2d.unapply }
   }
-  def coords2DOptM: Mapping[Option[Coords2D]] = optional(coords2DM)
+  def coords2DOptM: Mapping[Option[ent.Coords2d]] = optional(coords2DM)
 
 
   /** Маппим строковое поле с настройками шрифта. */
-  def aoStringFieldM(m: Mapping[String], fontM: Mapping[AOFieldFont], withCoords: Boolean): Mapping[AOStringField] = {
+  def aoStringFieldM(m: Mapping[String], fontM: Mapping[EntFont], withCoords: Boolean): Mapping[TextEnt] = {
     if (withCoords) {
       mapping(
         "value" -> m,
         "font"  -> fontM,
         "coords" -> coords2DOptM
       )
-      { AOStringField.apply }
-      { AOStringField.unapply }
+      { TextEnt.apply }
+      { TextEnt.unapply }
     } else {
       mapping(
         "value" -> m,
         "font"  -> fontM
       )
-      { AOStringField.apply(_, _) }
-      { aosf => AOStringField.unapply(aosf).map { u => u._1 -> u._2 } }
+      { TextEnt.apply(_, _) }
+      { aosf => TextEnt.unapply(aosf).map { u => u._1 -> u._2 } }
     }
   }
 
-  /** Маппим числовое (Float) поле. */
-  def aoFloatFieldM(m: Mapping[Float], fontM: Mapping[AOFieldFont], withCoords: Boolean): Mapping[AOFloatField] = {
-    if (withCoords) {
-      mapping(
-        "value"  -> m,
-        "font"   -> fontM,
-        "coords" -> coords2DOptM
-      )
-      { AOFloatField.apply }
-      { AOFloatField.unapply }
-    } else {
-      mapping(
-        "value" -> m,
-        "font"  -> fontM
-      )
-      { AOFloatField.apply(_, _) }
-      { AOFloatField.unapply(_).map { u => u._1 -> u._2} }
-    }
-  }
-
-
-  /** Маппим необязательное Float-поле. */
-  def aoFloatFieldOptM(m: Mapping[Float], fontM: Mapping[AOFieldFont], withCoords: Boolean): Mapping[Option[AOFloatField]] = {
-    if (withCoords) {
-      mapping(
-        "value"  -> optional(m),
-        "font"   -> fontM,
-        "coords" -> coords2DOptM
-      )
-      {(valueOpt, color, coordsOpt) =>
-        valueOpt map { AOFloatField(_, color, coordsOpt) }
-      }
-      {_.map { mmaff =>
-        (Option(mmaff.value), mmaff.font, mmaff.coords)
-      }}
-    } else {
-      mapping(
-        "value" -> optional(m),
-        "font"  -> fontM
-      )
-      {(valueOpt, color) =>
-        valueOpt map { AOFloatField(_, color) }
-      }
-      {_.map { mmaff =>
-        (Option(mmaff.value), mmaff.font)
-      }}
-    }
-  }
 
   /** Максимальная символьная длина одного тега. */
   def TAG_LEN_MAX = 40

@@ -24,8 +24,10 @@ object Href extends MergeBindAccAOBlock[String] {
   }
 
   /** Обновить указанный изменяемый AOBlock с помощью текущего значения ссылки. */
-  def updateAOBlockWith(blk: AOBlock, href: Option[String]) {
-    blk.href = href
+  def updateAOBlockWith(blk: AOBlock, href: Option[String]): AOBlock = {
+    blk.copy(
+      href = href
+    )
   }
 
   def getHref(bmr: BlockMapperResult) = bmr.flatMapFirstOffer(_.href)

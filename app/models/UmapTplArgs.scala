@@ -1,13 +1,13 @@
 package models
 
-import play.api.i18n.{Messages, Lang}
+import play.api.i18n.Messages
 import play.api.libs.json._
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 13.10.14 13:34
- * Description:
+ * Description: Модель контейнера аргументов для передачи в редактор umap из контроллера.
  */
 
 object UmapTplArgs {

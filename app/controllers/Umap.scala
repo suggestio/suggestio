@@ -131,17 +131,17 @@ class Umap @Inject() (
         mnode <- umapUtil.prepareDataLayerGeos(nodes.iterator)
         shape <- mnode.geo.shapes if shape.shape.shapeType.isGeoJsonCompatible
       } yield {
-          JsObject(Seq(
-            "type"        -> JsString("Feature"),
-            "geometry"    -> shape.shape.toPlayJson(geoJsonCompatible = true),
-            "properties"  -> JsObject(Seq(
-              "name" -> JsString( mnode.guessDisplayNameOrId.get ),
-              "description" -> JsString(
-                routes.SysMarket.showAdnNode(mnode.id.get).absoluteURL()
-              )
-            ))
+        JsObject(Seq(
+          "type"        -> JsString("Feature"),
+          "geometry"    -> shape.shape.toPlayJson(geoJsonCompatible = true),
+          "properties"  -> JsObject(Seq(
+            "name" -> JsString( mnode.guessDisplayNameOrId.get ),
+            "description" -> JsString(
+              routes.SysMarket.showAdnNode(mnode.id.get).absoluteURL()
+            )
           ))
-        }
+        ))
+      }
       val centersFeaturesIter = nodes
         .iterator
         .flatMap { mnode =>

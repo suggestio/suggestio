@@ -10,12 +10,15 @@ import play.api.data.{Mapping, FormError}
  * Description: Утиль для блоков, содержащих titleBf.
  */
 
-object Title extends MergeBindAccAOBlock[AOStringField] {
+object Title extends MergeBindAccAOBlock[TextEnt] {
+
   val BF_NAME_DFLT = "title"
   val BF_TITLE_DFLT = BfText(BF_NAME_DFLT)
 
-  override def updateAOBlockWith(blk: AOBlock, titleOpt: Option[AOStringField]) {
-    blk.text1 = titleOpt
+  override def updateAOBlockWith(blk: AOBlock, titleOpt: Option[TextEnt]): AOBlock = {
+    blk.copy(
+      text1 = titleOpt
+    )
   }
 
   def getTitle(bmr: BlockMapperResult) = bmr.flatMapFirstOffer(_.text1)

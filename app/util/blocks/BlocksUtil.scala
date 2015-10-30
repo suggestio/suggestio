@@ -1,5 +1,6 @@
 package util.blocks
 
+import io.suggest.model.n2.ad.ent.text.{ValueEnt, EntFont}
 import models.blk._
 import models.im.MImgT
 import play.api.data._, Forms._
@@ -8,7 +9,7 @@ import models._
 import views.html.blocks.editor._
 import controllers.ad.MarketAdFormUtil
 import io.suggest.ym.model.common.{IColors, IEMBlockMeta, BlockMeta}
-import io.suggest.ym.model.ad.{AOValueField, IOffers}
+import io.suggest.ym.model.ad.IOffers
 import util.img._
 import play.twirl.api.{Html, Template5}
 
@@ -35,7 +36,7 @@ object BlocksUtil {
       m0
   }
 
-  def defaultFont: AOFieldFont = AOFieldFont(color = "000000")
+  def defaultFont: EntFont = EntFont(color = "000000")
 
 }
 
@@ -87,7 +88,7 @@ object BlocksEditorFields extends Enumeration {
 
   /** Это когда много букв с указанием цвета. */
   val TextArea = new Val("textarea") {
-    override type VT = AOStringField
+    override type VT = TextEnt
     override type BFT = BfText
     override def fieldTemplate = _textareaTpl
   }
@@ -148,14 +149,14 @@ trait BlockFieldT { that =>
 
 
 trait BlockAOValueFieldT extends BlockFieldT {
-  override type T <: AOValueField
+  override type T <: ValueEnt
 
   def withFontColor: Boolean
   def withFontSize = true
   def fontSizeDflt: Option[Int]
   def withFontFamily: Boolean
   def withTextAlign: Boolean
-  def defaultFont: AOFieldFont = BlocksUtil.defaultFont
+  def defaultFont: EntFont = BlocksUtil.defaultFont
   def getFontMapping = MarketAdFormUtil.fontM
 
   def withCoords: Boolean
@@ -213,7 +214,7 @@ case class BfWidth(
 case class BfText(
   name            : String,
   offerNopt       : Option[Int] = None,
-  defaultValue    : Option[AOStringField] = None,
+  defaultValue    : Option[TextEnt] = None,
   minLen          : Int = 0,
   maxLen          : Int = 512,
   withFontColor   : Boolean = true,
@@ -222,7 +223,7 @@ case class BfText(
   withCoords      : Boolean = true,
   withTextAlign   : Boolean = true
 ) extends BlockAOValueFieldT {
-  override type T = AOStringField
+  override type T = TextEnt
 
   def strTransformF = strTrimSanitizeF
 
@@ -235,7 +236,7 @@ case class BfText(
   }
 
   /** Когда очень нужно получить от поля какое-то значение, можно использовать fallback. */
-  override def fallbackValue: T = AOStringField(
+  override def fallbackValue: T = TextEnt(
     value = "Домик на рублёвке",    // TODO Нужен каталог примеров fallback-строк, новая на каждый раз.
     font = defaultFont
   )
@@ -424,17 +425,17 @@ trait MergeBindAcc[T] {
 trait MergeBindAccAOBlock[T] extends MergeBindAcc[Option[T]] {
 
   /** Обновить указанный изменяемый AOBlock с помощью текущего значения. */
-  def updateAOBlockWith(blk: AOBlock, v: Option[T])
+  def updateAOBlockWith(blk: AOBlock, v: Option[T]): AOBlock
 
   def updateAcc(offerN: Int, acc0: BindAcc, vOpt: Option[T]) {
     if (vOpt.isDefined) {
-      acc0.offers.find { _.n == offerN } match {
-        case Some(blk) =>
-          updateAOBlockWith(blk, vOpt)
-        case None =>
-          val blk = AOBlock(n = offerN)
-          updateAOBlockWith(blk, vOpt)
-          acc0.offers ::= blk
+      acc0.offers = {
+        val (found, rest) = acc0.offers
+          .partition { _.n == offerN }
+        val off00 = found.headOption
+        val off0 = off00 getOrElse AOBlock(n = offerN)
+        val off1 = updateAOBlockWith(off0, vOpt)
+        off1 :: rest
       }
     }
   }

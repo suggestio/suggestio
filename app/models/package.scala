@@ -55,15 +55,13 @@ package object models {
   val  AOBlock              = ym.model.ad.AOBlock
   type AOBlock              = ym.model.ad.AOBlock
 
-  val  AOFloatField         = ym.model.ad.AOFloatField
-  type AOFloatField         = ym.model.ad.AOFloatField
-  val  AOStringField        = ym.model.ad.AOStringField
-  type AOStringField        = ym.model.ad.AOStringField
+  val  TextEnt              = io.suggest.model.n2.ad.ent.text.TextEnt
+  type TextEnt              = io.suggest.model.n2.ad.ent.text.TextEnt
 
-  val  AOFieldFont          = ym.model.ad.AOFieldFont
-  type AOFieldFont          = ym.model.ad.AOFieldFont
+  val  EntFont              = io.suggest.model.n2.ad.ent.text.EntFont
+  type EntFont              = io.suggest.model.n2.ad.ent.text.EntFont
 
-  type AOValueField         = ym.model.ad.AOValueField
+  type ValueEnt             = io.suggest.model.n2.ad.ent.text.ValueEnt
 
   val  MImgInfo             = ym.model.common.MImgInfo
   type MImgInfo             = ym.model.common.MImgInfo
@@ -110,12 +108,11 @@ package object models {
   type BfCheckbox           = util.blocks.BfCheckbox
   type BfNoValueT           = util.blocks.BfNoValueT
 
-  type ICoords2D            = ym.model.ad.ICoords2D
-  type Coords2D             = ym.model.ad.Coords2D
-  val  Coords2D             = ym.model.ad.Coords2D
+  type Coords2d             = io.suggest.model.n2.ad.ent.Coords2d
+  val  Coords2d             = io.suggest.model.n2.ad.ent.Coords2d
 
-  val  TextAligns           = ym.model.ad.TextAligns
-  type TextAlign            = TextAligns.TextAlign
+  val  TextAligns           = io.suggest.model.n2.ad.ent.text.TextAligns
+  type TextAlign            = io.suggest.model.n2.ad.ent.text.TextAlign
 
   val  DisableReason        = ym.model.common.DisableReason
   type DisableReason        = ym.model.common.DisableReason

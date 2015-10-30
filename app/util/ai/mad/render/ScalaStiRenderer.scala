@@ -1,7 +1,7 @@
 package util.ai.mad.render
 
 import io.suggest.ym.model.ad.AOBlock
-import models.{AOStringField, MAd}
+import models.{TextEnt, MAd}
 import models.ai.ContentHandlerResult
 import org.clapper.scalasti.ST
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -57,7 +57,7 @@ object ScalaStiRenderer extends MadAiRenderedT {
     * @param args Аргументы для рендера.
     * @return Новое опциональное строковое поле.
     */
-  private def renderTextFieldOpt(tfOpt: Option[AOStringField], args: Map[String, ContentHandlerResult], tgFieldOpt: Option[AOStringField]): Option[AOStringField] = {
+  private def renderTextFieldOpt(tfOpt: Option[TextEnt], args: Map[String, ContentHandlerResult], tgFieldOpt: Option[TextEnt]): Option[TextEnt] = {
     tfOpt.fold(tgFieldOpt) { tf =>
       val st = ST(tf.value, '#', '#')
         .addAttributes(args, raw = true)

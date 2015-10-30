@@ -59,8 +59,6 @@ import play.twirl.api.{Template2, Html}
 
 object BlocksConf extends Enumeration with PlayMacroLogsImpl with EnumValue2Val with IdEnumFormMappings {
 
-  import LOGGER._
-
   /** Всё описание блока идёт через наследование Val и её интерфейса [[ValT]] при необходимости. */
   protected abstract class Val(id: Int)
     extends super.Val(id)
@@ -147,6 +145,7 @@ case class BlockMapperResult(bd: BlockData, bim: BlockImgMap) {
 
 /** Базовый интерфейс для реализаций класса Enumeration.Val. */
 trait ValT extends ISaveImgs with Mapping[BlockMapperResult] {
+
   def id: Int
 
   def ordering: Int = 10000
@@ -228,14 +227,18 @@ case class BindAcc(
    * @param blockId id блока.
    * @return Неизменяемый экземпляр BlockMeta.
    */
-  def toBlockMeta(blockId: Int) = BlockMeta(blockId = blockId, height = height, width = width, wide = isWide)
+  def toBlockMeta(blockId: Int): BlockMeta = {
+    BlockMeta(blockId = blockId, height = height, width = width, wide = isWide)
+  }
 
 }
 
 
 abstract class ValTWrapper(v: ValT) extends ValT {
   override def id = v.id
-  override def i18nLabelOf(bk: String) = v.i18nLabelOf(bk)
+  override def i18nLabelOf(bk: String) = {
+    v.i18nLabelOf(bk)
+  }
   override def renderEditor(af: AdFormM, formDataSer: Option[String])(implicit ctx: Context): Html = {
     v.renderEditor(af, formDataSer)
   }
@@ -244,15 +247,21 @@ abstract class ValTWrapper(v: ValT) extends ValT {
 
 /** Враппер понадобился из-за проблем со scala.Enumeration, который не даёт делать инстансы Val несколько раз. */
 trait ValTEmpty extends ValT {
-  override def blockFieldsRev(af: AdFormM): List[BlockFieldT] = Nil
+  override def blockFieldsRev(af: AdFormM): List[BlockFieldT] = {
+    Nil
+  }
   override def unbind(value: BlockMapperResult): Map[String, String] = {
     Map.empty
   }
   override def unbindAndValidate(value: BlockMapperResult): (Map[String, String], Seq[FormError]) = {
     Map.empty[String, String] -> Seq.empty[FormError]
   }
-  override def bindAcc(data: Map[String, String]): Either[Seq[FormError], BindAcc] = Right(BindAcc())
-  override def mappingsAcc: List[Mapping[_]] = Nil
+  override def bindAcc(data: Map[String, String]): Either[Seq[FormError], BindAcc] = {
+    Right(BindAcc())
+  }
+  override def mappingsAcc: List[Mapping[_]] = {
+    Nil
+  }
 }
 
 

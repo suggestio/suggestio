@@ -5,7 +5,7 @@ import io.suggest.common.fut.FutureUtil
 import io.suggest.event.SioNotifierStaticClientI
 import models.im._
 import models.madn.EditConstants
-import models.msc.WelcomeRenderArgsT
+import models.msc.{MWelcomeRenderArgs, WelcomeRenderArgsT}
 import org.elasticsearch.client.Client
 import play.api.Configuration
 import util.PlayMacroLogsImpl
@@ -134,8 +134,11 @@ class WelcomeUtil @Inject() (
         .headOption
     }
     val welcomeAdOptFut = FutureUtil.optFut2futOpt(waIdOpt)(MWelcomeAd.getById(_))
+
+    // дедубликация кода. Можно наверное через Future.filter такое отрабатывать.
+    def _colorBg = colorBg(mnode)
+
     // Получить параметры (метаданные) фоновой картинки из хранилища картирок.
-    def _colorBg = colorBg(mnode)   // дедубликация кода. Можно наверное через Future.filter такое отрабатывать.
     val bgFut = mnode.edges
       .withPredicateIterIds( MPredicates.GalleryItem )
       .toStream
@@ -158,22 +161,35 @@ class WelcomeUtil @Inject() (
           _colorBg
         }
       }
+
+    val fgImgOptFut = for {
+      welcomeAdOpt <- welcomeAdOptFut
+    } yield {
+      for {
+        welcomeAd <- welcomeAdOpt
+        imgKey    <- welcomeAd.imgs.get(WELCOME_IMG_KEY)
+      } yield {
+        imgKey
+      }
+    }
+
     for {
       welcomeAdOpt <- welcomeAdOptFut
       bg1          <- bgFut
+      fgImgOpt     <- fgImgOptFut
     } yield {
-      val wra = new WelcomeRenderArgsT {
-        override def bg = bg1
-        override def fgImage = welcomeAdOpt.flatMap(_.imgs.get(WELCOME_IMG_KEY))
-        override def fgText = Some(mnode.meta.basic.name)
-      }
+      val wra = MWelcomeRenderArgs(
+        bg      = bg1,
+        fgImage = fgImgOpt,
+        fgText  = Some( mnode.meta.basic.name )
+      )
       Some(wra)
     }
   }
 
 
   /** Собрать ссылку на фоновую картинку. */
-  def bgCallForScreen(oiik: MImg, screenOpt: Option[DevScreen], origMeta: ISize2di)(implicit ctx: Context): ImgUrlInfoT = {
+  def bgCallForScreen(oiik: MImgT, screenOpt: Option[DevScreen], origMeta: ISize2di)(implicit ctx: Context): ImgUrlInfoT = {
     val oiik2 = oiik.original
     screenOpt
       .filter { _ => BG_VIA_DYN_IMG }
@@ -187,7 +203,7 @@ class WelcomeUtil @Inject() (
         )
       } { case (bss, screen) =>
         val imOps = imConvertArgs(bss, screen)
-        val dynArgs = oiik2.copy(dynImgOps = imOps)
+        val dynArgs = oiik2.withDynOps(imOps)
         ImgUrlInfo(
           call = CdnUtil.dynImg(dynArgs),
           meta = Some(bss)

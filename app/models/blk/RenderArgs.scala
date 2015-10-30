@@ -1,6 +1,8 @@
 package models.blk
 
 import io.suggest.common.css.ITopLeft
+import io.suggest.common.geom.coord.{ICoords2di, ICoord2d}
+import io.suggest.model.n2.ad.ent.text
 import models._
 import models.im.make.{MakeResult, IMakeResult}
 import models.msc.{MScApiVsns, MScApiVsn}
@@ -83,10 +85,10 @@ case class RenderArgs(
 
 /** Интерфейс аргументов шаблона _blockStyleCss для рендера стиля блока. */
 trait FieldCssRenderArgsT extends IRenderArgs {
-  def aovf          : AOValueField
+  def aovf          : text.ValueEnt
   def bf            : BlockAOValueFieldT
   def fieldCssClass : String
-  def xy            : ICoords2D
+  def xy            : ICoords2di
 
   override def indexOpt: Option[Int] = None
 }
@@ -100,7 +102,7 @@ trait FieldCssRenderArgsT extends IRenderArgs {
  */
 case class FieldCssRenderArgs2(
   brArgs      : blk.IRenderArgs,
-  aovf        : AOStringField,
+  aovf        : TextEnt,
   bf          : BfText,
   offerN      : Int,
   yoff        : Int,
@@ -110,7 +112,7 @@ case class FieldCssRenderArgs2(
 
 ) extends FieldCssRenderArgsT with IRenderArgsWrapper0 {
 
-  override def xy: ICoords2D = Coords2D(38, 70*( offerN + 1) + yoff)
+  override def xy: ICoords2di = Coords2d(38, 70*( offerN + 1) + yoff)
   override lazy val fieldCssClass: String = s"$fid-$offerN"
 
 }

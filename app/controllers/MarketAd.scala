@@ -480,10 +480,10 @@ class MarketAd @Inject() (
       producerId = "",
       offers = List(AOBlock(
         n = offerN,
-        text1 = Some(AOStringField(
+        text1 = Some(TextEnt(
           value = ctx.messages("bf.text.example", offerN),
-          font = AOFieldFont(),
-          coords = Some(Coords2D(
+          font = EntFont(),
+          coords = Some(Coords2d(
             x = height / 2,
             y = width / 4
           ))  // Coords2D
