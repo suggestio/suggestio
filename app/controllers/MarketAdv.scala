@@ -4,7 +4,10 @@ import com.google.inject.Inject
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.playx.ICurrentConf
+import models.adv._
+import models.adv.form._
 import models.adv.geo.{ReqInfo, AdvFormEntry, WndFullArgs}
+import models.adv.tpl.{MCurrentAdvsTplArgs, MAdvPricing}
 import org.elasticsearch.client.Client
 import org.joda.time.format.ISOPeriodFormat
 import play.api.i18n.MessagesApi
@@ -238,12 +241,12 @@ class MarketAdv @Inject() (
     }
   }
 
-  private def toAdvswArgs(adAdvInfo: AdAdvInfoResult, rcvrs: Seq[MNode]): CurrentAdvsTplArgs = {
+  private def toAdvswArgs(adAdvInfo: AdAdvInfoResult, rcvrs: Seq[MNode]): MCurrentAdvsTplArgs = {
     import adAdvInfo._
     val advs = (advsReq ++ advsRefused ++ advsOk).sortBy(_.dateCreated)
     val adv2adnIds = mkAdv2adnIds(advsReq, advsRefused, advsOk)
     val adv2adnMap = mkAdv2adnMap(adv2adnIds, rcvrs)
-    CurrentAdvsTplArgs(advs, adv2adnMap)
+    MCurrentAdvsTplArgs(advs, adv2adnMap)
   }
 
   /**
@@ -307,7 +310,7 @@ class MarketAdv @Inject() (
     // Кешируем определённый язык юзера прямо тут. Это нужно для обращения к Messages().
     implicit val ctx = implicitly[Context]
     // Строим набор городов и их узлов, сгруппированных по категориям.
-    val citiesFut: Future[Seq[AdvFormCity]] = for {
+    val citiesFut: Future[Seq[MAdvFormCity]] = for {
       rcvrs     <- rcvrsReadyFut
       rcvrsMap  <- allRcvrsMapFut
     } yield {
@@ -332,9 +335,9 @@ class MarketAdv @Inject() (
             .zipWithIndex
             .map { case ((shownTypeId, catNodes), i) =>
               val ast = AdnShownTypes.shownTypeId2val(shownTypeId)
-              AdvFormCityCat(
+              MAdvFormCityCat(
                 shownType = ast,
-                nodes = catNodes.map(AdvFormNode.apply),
+                nodes = catNodes.map(MAdvFormNode.apply),
                 name = ctx.messages(ast.pluralNoTown),
                 i = i
               )
@@ -344,7 +347,7 @@ class MarketAdv @Inject() (
           (cityNode, cats)
         }
         .zipWithIndex
-        .map { case ((cityNode, cats), i)  =>  AdvFormCity(cityNode, cats, i) }
+        .map { case ((cityNode, cats), i)  =>  MAdvFormCity(cityNode, cats, i) }
         .toSeq
         .sortBy(_.node.meta.basic.name)
       }
@@ -362,12 +365,12 @@ class MarketAdv @Inject() (
       .map(ps => ps -> ctx.messages("adv.period." + ps))
 
     // Сборка финального контейнера аргументов для _advFormTpl().
-    val advFormTplArgsFut: Future[AdvFormTplArgs] = for {
+    val advFormTplArgsFut: Future[MAdvFormTplArgs] = for {
       adnId2indexMap  <- adnId2indexMapFut
       cities          <- citiesFut
       busyAdvs        <- busyAdvsFut
     } yield {
-      AdvFormTplArgs(
+      MAdvFormTplArgs(
         adId            = adId,
         af              = form,
         busyAdvs        = busyAdvs,

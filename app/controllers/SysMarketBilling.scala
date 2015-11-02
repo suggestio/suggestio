@@ -3,6 +3,7 @@ package controllers
 import com.google.inject.Inject
 import io.suggest.event.SioNotifierStaticClientI
 import models.MBillContract.LegalContractId
+import models.msys.MSysAdnNodeBillingArgs
 import org.elasticsearch.client.Client
 import play.api.i18n.MessagesApi
 import play.api.mvc.{Result, AnyContent}
@@ -90,7 +91,7 @@ class SysMarketBilling @Inject() (
       val contracts = MBillContract.findForAdn(adnId)
       val contractIds = contracts.map(_.id.get)
       val mbtsGrouper = { mbt: MBillContractSel => mbt.contractId }
-      SysAdnNodeBillingArgs(
+      MSysAdnNodeBillingArgs(
         balanceOpt      = MBillBalance.getByAdnId(adnId),
         contracts       = contracts,
         txns            = MBillTxn.findForContracts(contractIds),

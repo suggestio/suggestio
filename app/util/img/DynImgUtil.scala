@@ -37,7 +37,9 @@ class DynImgUtil @Inject() (
   cacheApiUtil      : CacheApiUtil,
   configuration     : Configuration,
   implicit val ec   : ExecutionContext
-) extends PlayMacroLogsImpl {
+)
+  extends PlayMacroLogsImpl
+{
 
   import LOGGER._
 
@@ -51,11 +53,17 @@ class DynImgUtil @Inject() (
 
   /** Если true, то производные от оригинала картники будут дублироваться в cassandra.
     * Если false, то производные будут только на локалхосте. */
-  val SAVE_DERIVATIVES_TO_PERMANENT = configuration.getBoolean("img.dyn.derivative.save.to.permanent.enabled") getOrElse true
+  val SAVE_DERIVATIVES_TO_PERMANENT: Boolean = {
+    configuration.getBoolean("img.dyn.derivative.save.to.permanent.enabled")
+      .getOrElse(true)
+  }
 
   /** Активен ли префетчинг, т.е. опережающая подготовка картинки?
     * Префетчинг начинается асинхронно в момент генерации ссылки на картинку. */
-  val PREFETCH_ENABLED = configuration.getBoolean("img.dyn.prefetch.enabled") getOrElse true
+  val PREFETCH_ENABLED: Boolean = {
+    configuration.getBoolean("img.dyn.prefetch.enabled")
+      .getOrElse(true)
+  }
 
   info(s"DynImgUtil: esnureCache=$ENSURE_DYN_CACHE_TTL, saveDerivatives=$SAVE_DERIVATIVES_TO_PERMANENT, prefetch=$PREFETCH_ENABLED")
 

@@ -1,8 +1,7 @@
 package models
 
 import java.util.Currency
-import org.joda.time.Period
-import play.api.data.Form
+import io.suggest.common.menum.EnumMaybeWithName
 import play.api.mvc.{RequestHeader, Call}
 import _root_.util.PlayLazyMacroLogsImpl
 import play.mvc.Http.Request
@@ -48,77 +47,17 @@ object CurrencyCodeDflt extends CurrencyCode {
 }
 
 
-/** У шаблона [[views.html.sys1.market.billing.adnNodeBillingTpl]] очень много параметров со сложными типам.
-  * Тут удобный контейнер для всей кучи параметров шаблона. */
-case class SysAdnNodeBillingArgs(
-  balanceOpt        : Option[MBillBalance],
-  contracts         : Seq[MBillContract],
-  txns              : Seq[MBillTxn],
-  feeTariffsMap     : collection.Map[Int, Seq[MBillTariffFee]],
-  statTariffsMap    : collection.Map[Int, Seq[MBillTariffStat]],
-  dailyMmpsMap      : collection.Map[Int, Seq[MBillMmpDaily]],
-  sinkComissionMap  : collection.Map[Int, Seq[MSinkComission]]
-)
-
-
-
-case class CurrentAdvsTplArgs(
-  advs      : Seq[MAdvI],
-  adv2adn   : Map[Int, MNode]
-)
-
-/** Аргументы для рендера страницы управления рекламной карточкой с формой размещения оной. */
-case class AdvFormTplArgs(
-  adId              : String,
-  af                : Form[_],
-  busyAdvs          : Map[String, MAdvI],
-  cities            : Seq[AdvFormCity],
-  adnId2formIndex   : Map[String, Int],
-  advPeriodsAvail   : List[(String, String)]
-)
-
-/** advForm: Описание одного узла для размещения рекламы. */
-case class AdvFormNode(
-  node: MNode
-)
-/** advForm: Описание одной вкладки группы узлов в рамках города. */
-case class AdvFormCityCat(
-  shownType   : AdnShownType,
-  nodes       : Seq[AdvFormNode],
-  name        : String,
-  i           : Int,
-  isSelected  : Boolean = false
-)
-/** advForm: Описание одного города в списке городов. */
-case class AdvFormCity(
-  node        : MNode,
-  cats        : Seq[AdvFormCityCat],
-  i           : Int,
-  isSelected  : Boolean = false
-)
-
 
 /** Размеры аудиторий. */
-object AudienceSizes extends Enumeration {
-  type AudienceSize = Value
+object AudienceSizes extends EnumMaybeWithName {
+
+  override type T = Value
+
   val LessThan20 = Value("lt20")
   val LessThan50 = Value("lt50")
   val Greater50  = Value("gt50")
 
-  def maybeWithName(n: String): Option[AudienceSize] = {
-    try {
-      Some(withName(n))
-    } catch {
-      case ex: NoSuchElementException  =>  None
-    }
-  }
 }
-
-
-case class MAdvPricing(
-  prices          : Iterable[(Currency, Float)],
-  hasEnoughtMoney : Boolean
-)
 
 
 /** Экземпляр запроса помощи через обратную связь в ЛК. */
@@ -130,74 +69,26 @@ case class MLkSupportRequest(
 )
 
 
-/** Доступные интервалы размещения рекламных карточек. Отображаются в select'е вариантов adv-формы. */
-object QuickAdvPeriods extends Enumeration {
-
-  /**
-   * Класс элемента этого enum'а.
-   * @param isoPeriod Строка iso-периода. Заодно является названием элемента. Заглавные буквы и цифры.
-   */
-  protected abstract class Val(val isoPeriod: String) extends super.Val(isoPeriod) {
-    /** Приоритет при фильтрации. */
-    def prio: Int
-    def toPeriod = new Period(isoPeriod)
-  }
-
-  type QuickAdvPeriod = Val
-
-  val P3D: QuickAdvPeriod = new Val("P3D") {
-    override def prio = 100
-  }
-  val P1W: QuickAdvPeriod = new Val("P1W") {
-    override def prio = 200
-  }
-  val P1M: QuickAdvPeriod = new Val("P1M") {
-    override def prio = 300
-  }
-
-  implicit def value2val(x: Value): QuickAdvPeriod = x.asInstanceOf[QuickAdvPeriod]
-
-  def maybeWithName(n: String): Option[QuickAdvPeriod] = {
-    try {
-      Some(withName(n))
-    } catch {
-      case ex: NoSuchElementException => None
-    }
-  }
-
-  def default = P1W
-  
-  def ordered: List[QuickAdvPeriod] = {
-    values
-      .foldLeft( List[QuickAdvPeriod]() ) { (acc, e) => e :: acc }
-      .sortBy(_.prio)
-  }
-
-}
-
 
 /** Enum для задания параметра подсветки текущей ссылки на правой панели личного кабинета узла. */
 object NodeRightPanelLinks extends Enumeration {
-  type NodeRightPanelLink = Value
-  val RPL_NODE, RPL_NODE_EDIT, RPL_USER_EDIT, RPL_ADVERTISERS = Value : NodeRightPanelLink
+  type T = Value
+  val RPL_NODE, RPL_NODE_EDIT, RPL_USER_EDIT, RPL_ADVERTISERS = Value : T
 }
 
 /** Enum для задания параметра подсветки текущей ссылки на правой панели в разделе биллинга узла. */
 object BillingRightPanelLinks extends Enumeration {
-  type BillingRightPanelLink = Value
-  val RPL_BILLING, RPL_TRANSACTIONS, RPL_REQUISITES = Value : BillingRightPanelLink
+  type T = Value
+  val RPL_BILLING, RPL_TRANSACTIONS, RPL_REQUISITES = Value : T
 }
 
 /** Enum для задания параметра подсветки текущей ссылки на левой панели ЛК.*/
 object LkLeftPanelLinks extends Enumeration {
-  type LkLeftPanelLink = Value
-  val LPL_NODE, LPL_ADS, LPL_BILLING, LPL_SUPPORT, LPL_EVENTS  =  Value : LkLeftPanelLink
+  type T = Value
+  val LPL_NODE, LPL_ADS, LPL_BILLING, LPL_SUPPORT, LPL_EVENTS  =  Value : T
 }
 
-object LkAdvRightLinks extends Enumeration {
-  type LkAdvRightLink = Value
-  val LARL_GEO, LARL_EXT, LARL_HISTORY = Value : LkAdvRightLink
-}
+
 
 
 /** Исчерпывающая инфа по картинке, которую можно отрендерить в шаблоне ссылку. */
@@ -221,8 +112,8 @@ case class ImgUrlInfo(call: Call, meta: Option[ISize2di])
  * @param method - Обычно "GET", который по умолчанию и есть.
  */
 class ExternalCall(
-  url: String,
-  method: String = "GET"
+  url     : String,
+  method  : String = "GET"
 ) extends Call(method = method, url = url) {
 
   override def absoluteURL(secure: Boolean)(implicit request: RequestHeader): String = url

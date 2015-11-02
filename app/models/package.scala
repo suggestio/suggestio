@@ -4,6 +4,7 @@ import io.suggest.model.n2
 import io.suggest.ym
 import io.suggest.ym.model.common
 import io.suggest.ym.model.common.EMImg
+import models.adv.tpl.LkAdvRightLinks
 import models.usr.EmailPwConfirmInfo
 import play.api.data.Form
 import util.blocks.BlocksUtil.BlockImgMap
@@ -117,8 +118,8 @@ package object models {
   val  DisableReason        = ym.model.common.DisableReason
   type DisableReason        = ym.model.common.DisableReason
 
-  type MAdvMode             = MAdvModes.MAdvMode
-  type AudienceSize         = AudienceSizes.AudienceSize
+  type MAdvMode             = MAdvModes.T
+  type AudienceSize         = AudienceSizes.T
   type InviteReqType        = InviteReqTypes.T
 
   type AdnShownType         = AdnShownTypes.T
@@ -134,12 +135,10 @@ package object models {
   val  AdnSinks             = ym.model.common.AdnSinks
   type AdnSink              = ym.model.common.AdnSink
 
-  type QuickAdvPeriod       = QuickAdvPeriods.QuickAdvPeriod
   type MNodeAdsMode         = MNodeAdsModes.T
-  type NodeRightPanelLink   = NodeRightPanelLinks.NodeRightPanelLink
-  type BillingRightPanelLink= BillingRightPanelLinks.BillingRightPanelLink
-  type LkLeftPanelLink      = LkLeftPanelLinks.LkLeftPanelLink
-  type LkAdvRightLink       = LkAdvRightLinks.LkAdvRightLink
+  type NodeRightPanelLink   = NodeRightPanelLinks.T
+  type BillingRightPanelLink= BillingRightPanelLinks.T
+  type LkLeftPanelLink      = LkLeftPanelLinks.T
 
   val  NodeGeoLevels        = ym.model.NodeGeoLevels
   type NodeGeoLevel         = ym.model.NodeGeoLevel

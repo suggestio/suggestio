@@ -6,6 +6,7 @@ import io.suggest.playx.ICurrentConf
 import io.suggest.ym.model.common.EMBlockMetaI
 import models._
 import models.adv.geo.AdvFormEntry
+import models.adv.tpl.MAdvPricing
 import models.blk.{BlockWidths, BlockHeights}
 import org.joda.time.{Period, DateTime, LocalDate}
 import org.joda.time.DateTimeConstants._
