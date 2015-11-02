@@ -7,7 +7,6 @@ import _root_.util.PlayLazyMacroLogsImpl
 import play.mvc.Http.Request
 import play.twirl.api.Html
 import scala.collection.JavaConversions._
-import scala.concurrent.duration.FiniteDuration
 
 /**
  * Suggest.io
@@ -25,7 +24,8 @@ trait CurrencyCode {
   import CurrencyCodeOpt.LOGGER._
 
   def currencyCode: String
-  def currency = {
+
+  def currency: Currency = {
     try {
       Currency.getInstance(currencyCode)
     } catch {
@@ -123,28 +123,6 @@ class ExternalCall(
 
 }
 
-
-/** Интерфейс cron-задачи. */
-trait ICronTask extends Runnable {
-  def startDelay    : FiniteDuration
-  def every         : FiniteDuration
-  def displayName   : String
-}
-
-/**
- * Описание задача для Cron.
- * @param startDelay Задержка после старта перед первым исполнением задачи.
- * @param every Интервал повторения задачи.
- * @param displayName Отображаемое название задачи. Обычно, название вызываемого метода.
- * @param actionF Тело задачи.
- */
-case class CronTask(
-  startDelay  : FiniteDuration,
-  every       : FiniteDuration,
-  displayName : String
-)(actionF: => Unit) extends ICronTask {
-  def run(): Unit = actionF
-}
 
 
 /** Интерфейс для возможности задания моделей, умеющих рендер в html. */

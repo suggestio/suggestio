@@ -4,6 +4,7 @@ import java.sql.Connection
 
 import controllers.SioController
 import io.suggest.di.{IExecutionContext, IEsClient}
+import models.adv.{MAdvReq, MAdvOk}
 import models.req.SioReqMd
 import play.api.mvc.{Result, ActionBuilder, Request}
 import util.di.{IDb, INodeCache}

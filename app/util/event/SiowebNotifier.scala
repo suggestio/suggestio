@@ -1,6 +1,7 @@
 package util.event
 
 import io.suggest.event._
+import models.adv.DeleteAllAdvsOnAdDeleted
 import models.im.MLocalImg
 import util._
 import akka.actor.{Props, ActorRef, ActorRefFactory}
@@ -11,7 +12,8 @@ import play.api.libs.concurrent.Akka
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import models._
-import SiowebEsUtil.client
+
+import scala.reflect.ClassTag
 
 /**
  * Suggest.io
@@ -20,7 +22,10 @@ import SiowebEsUtil.client
  * Description: Поддержка SioNotifier с уклоном на текущий проект.
  * Полностью статический клиент + реализация, подписывающая всех вокруг на события.
  */
-object SiowebNotifier extends SioNotifierStaticActorSelection with SNStaticSubscriptionManager {
+object SiowebNotifier
+  extends SioNotifierStaticActorSelection
+  with SNStaticSubscriptionManager
+{
 
   object Implicts {
     implicit def sn = SiowebNotifier
@@ -37,21 +42,27 @@ object SiowebNotifier extends SioNotifierStaticActorSelection with SNStaticSubsc
 
   protected def getSystem = Akka.system
 
+  private def _inj[X <: SNStaticSubscriber : ClassTag]: X = {
+    current.injector.instanceOf[X]
+  }
+
   /** Набор модулей, которые необходимо статически подписать на события. */
   // TODO Вынести это отсюда?
-  protected def getStaticSubscribers: Seq[SNStaticSubscriber] = List(
-    // TODO inject
-    current.injector.instanceOf[MAdnNodeCache],
-    deleteAdsOnAdnNodeDeleteSNSC,
-    new MAdv.DeleteAllAdvsOnAdDeleted(),
-    new MBillContract.DelContractsWhenAdnNodeDeleted,
-    current.injector.instanceOf[AdnNodeEvents],
-    MLocalImg
-  )
+  protected def getStaticSubscribers: Seq[SNStaticSubscriber] = {
+    List(
+      // TODO inject
+      _inj[MAdnNodeCache],
+      _inj[DeleteAdsOnAdnNodeDeleteSubscriber],
+      _inj[DeleteAllAdvsOnAdDeleted],
+      new MBillContract.DelContractsWhenAdnNodeDeleted,
+      _inj[AdnNodeEvents],
+      MLocalImg
+    )
+  }
 
   /** SiowebSup собирается запустить сие. */
   def startLink(arf: ActorRefFactory): ActorRef = {
-    arf.actorOf(Props[SiowebNotifier], name=actorName)
+    arf.actorOf(Props[SiowebNotifier], name = actorName)
   }
 
   /** Сабжевый актор стартанул. Надо выполнить асинхронно какие-то действия.
@@ -61,12 +72,6 @@ object SiowebNotifier extends SioNotifierStaticActorSelection with SNStaticSubsc
     Future {
       staticSubscribeAllSync()
     }
-  }
-
-  import Implicts.sn
-
-  private def deleteAdsOnAdnNodeDeleteSNSC = new SNStaticSubscriber {
-    def snMap = DeleteAdsOnAdnNodeDeleteSubscriber.getSnMap
   }
 
 }

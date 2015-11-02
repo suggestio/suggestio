@@ -4,6 +4,7 @@ import io.suggest.model.n2
 import io.suggest.ym
 import io.suggest.ym.model.common
 import io.suggest.ym.model.common.EMImg
+import models.adv.MAdvModes
 import models.adv.tpl.LkAdvRightLinks
 import models.usr.EmailPwConfirmInfo
 import play.api.data.Form
@@ -91,7 +92,7 @@ package object models {
   val  TariffTypes          = ym.model.common.TariffTypes
   type TariffType           = TariffTypes.TariffType
 
-  type SelectPolicy         = SelectPolicies.SelectPolicy
+  type SelectPolicy         = SelectPolicies.T
 
   type BlockData            = common.IEMBlockMeta with ym.model.ad.IOffers with common.IColors
 

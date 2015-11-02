@@ -2,6 +2,7 @@ package models
 
 import anorm._
 import java.sql.Connection
+import io.suggest.common.menum.EnumValue2Val
 import util.anorm.AnormPgArray
 import AnormPgArray._
 
@@ -19,10 +20,16 @@ object SqlModelStatic {
 }
 
 
-trait SqlTableName {
+/** Интерфейс для доступа к имени таблицы, которая обслуживается текущей моделью. */
+trait ITableName {
 
   /** Название таблицы. Используется при сборке sql-запросов. */
-  val TABLE_NAME: String
+  def TABLE_NAME: String
+
+}
+
+
+trait SqlTableName extends ITableName {
 
   /** Блокировка таблицы на запись в целях защиты от добавления рядов. */
   def lockTableWrite(implicit c: Connection) {
@@ -33,7 +40,7 @@ trait SqlTableName {
   def hasId(id: Int)(implicit c: Connection): Boolean = {
     SQL("SELECT count(*) > 0 AS bool FROM " + TABLE_NAME + " WHERE id = {id}")
       .on('id -> id)
-      .as(SqlModelStatic.boolColumnParser single)
+      .as(SqlModelStatic.boolColumnParser.single)
   }
 
   /**
@@ -61,7 +68,7 @@ trait SqlModelStaticMinimal extends SqlTableName {
   /** Прочитать всю таблицу. */
   def getAll(implicit c: Connection): List[T] = {
     SQL("SELECT * FROM " + TABLE_NAME)
-      .as(rowParser *)
+      .as(rowParser.*)
   }
 
   /** Произвольный поиск с доступом к блокировкам.
@@ -76,7 +83,7 @@ trait SqlModelStaticMinimal extends SqlTableName {
     policy.append2sb(sb)
     SQL(sb.toString())
       .on(args: _*)
-      .as(rowParser *)
+      .as(rowParser.*)
   }
 
 }
@@ -104,7 +111,7 @@ trait SqlModelStatic extends SqlModelStaticMinimal {
     policy.append2sb(req)
     SQL(req.toString())
       .on('id -> id)
-      .as(rowParser *)
+      .as(rowParser.*)
       .headOption
   }
 
@@ -119,7 +126,7 @@ trait SqlModelStatic extends SqlModelStaticMinimal {
     } else {
       SQL("SELECT * FROM " + TABLE_NAME + " WHERE id = ANY({ids})")
         .on('ids -> seqInt2pgArray(ids))
-        .as(rowParser *)
+        .as(rowParser.*)
     }
   }
 
@@ -143,30 +150,35 @@ trait SqlModelDelete {
 /** Бывает необходимо блокировать ряд. Для этого используются SELECT FOR UPDATE, SELECT FOR SHARE.
   * Эти блокировки задаются через параметры к getById(). Следует помнить, что блокировка вызывает акт
   * записи при чтении. */
-object SelectPolicies extends Enumeration {
-  /** Класс значения. */
-  protected abstract case class Val(name: String) extends super.Val(name) {
+object SelectPolicies extends EnumValue2Val {
+
+  protected[this] trait ValT {
+    def name: String
     /** При построении запроса через StringBuilder используется сие: */
     def append2sb(sb: StringBuilder): StringBuilder
   }
 
-  protected class WithLock(name: String) extends Val(name) {
+  /** Класс значения. */
+  protected[this] abstract class Val(override val name: String)
+    extends super.Val(name)
+    with ValT
+
+  protected[this] class WithLock(name: String) extends Val(name) {
     override def append2sb(sb: StringBuilder): StringBuilder = {
       sb.append(" FOR ").append(name)
     }
   }
 
-  type SelectPolicy = Val
+  override type T = Val
 
-  val NONE: SelectPolicy = new Val("NONE") {
+  val NONE    : T = new Val("NONE") {
     // Если нет политики, то и проблем нет.
     override def append2sb(sb: StringBuilder) = sb
   }
 
-  val UPDATE: SelectPolicy = new WithLock("UPDATE")
-  val SHARE: SelectPolicy  = new WithLock("SHARE")
+  val UPDATE  : T = new WithLock("UPDATE")
+  val SHARE   : T = new WithLock("SHARE")
 
-  implicit def value2val(x: Value) = x.asInstanceOf[SelectPolicy]
 }
 
 

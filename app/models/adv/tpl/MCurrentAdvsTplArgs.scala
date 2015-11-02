@@ -1,6 +1,7 @@
 package models.adv.tpl
 
 import models._
+import models.adv.MAdvI
 
 /**
  * Suggest.io

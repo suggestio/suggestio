@@ -4,7 +4,8 @@ import java.sql.Connection
 import java.util.Currency
 
 import com.google.inject.Inject
-import models.{MBillMmpDaily, MAdvReq, MAdvI, MAdvStatic}
+import models.adv.{MAdvReq, MAdvStaticT, MAdvI}
+import models.MBillMmpDaily
 import play.api.db.Database
 import util.async.AsyncUtil
 
@@ -32,7 +33,7 @@ class CtlGeoAdvUtil @Inject() (
    * @tparam T Тип возвращаемых значений adv-модели.
    * @return Фьючерс со списком результатов.
    */
-  def advFind[T](model: MAdvStatic, limit: Int = LIMIT_DFLT)(f: (Int, Connection) => T): Future[T] = {
+  def advFind[T](model: MAdvStaticT, limit: Int = LIMIT_DFLT)(f: (Int, Connection) => T): Future[T] = {
     val limit1 = if (limit > 0) limit else model.LIMIT_DFLT
     Future {
       db.withConnection { implicit c =>
@@ -62,7 +63,7 @@ class CtlGeoAdvUtil @Inject() (
    * @tparam T1 Тип возвращаемого значения.
    * @return Фьючерс со списком экземпляров указанной модели.
    */
-  def advFindByAdId[T1 <: MAdvI](model: MAdvStatic {type T = T1}, adId: String,
+  def advFindByAdId[T1 <: MAdvI](model: MAdvStaticT {type T = T1}, adId: String,
                                  limit: Int = LIMIT_DFLT): Future[List[T1]] = {
     advFind(model, limit) { (limit1, c) =>
       model.findByAdId(adId, limit = limit1)(c)
@@ -77,7 +78,7 @@ class CtlGeoAdvUtil @Inject() (
    * @tparam T1 Тип возвращаемых экземпляров модели.
    * @return Фьючерс со списком результатов.
    */
-  def advFindNonExpiredByAdId[T1 <: MAdvI](model: MAdvStatic {type T = T1}, adId: String,
+  def advFindNonExpiredByAdId[T1 <: MAdvI](model: MAdvStaticT {type T = T1}, adId: String,
                                            limit: Int = LIMIT_DFLT): Future[List[T1]] = {
     advFind(model, limit) { (limit1, c) =>
       model.findNotExpiredByAdId(adId, limit = limit1)(c)

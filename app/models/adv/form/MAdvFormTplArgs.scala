@@ -1,6 +1,6 @@
 package models.adv.form
 
-import models.MAdvI
+import models.adv.MAdvI
 import play.api.data.Form
 
 

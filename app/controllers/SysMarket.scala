@@ -6,6 +6,7 @@ import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.n2.edge.MNodeEdges
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import models.adv.{MAdvReq, MAdvOk, MAdvI}
 import models.im.MImg
 import models.msys._
 import models.usr.{MPerson, EmailActivation}

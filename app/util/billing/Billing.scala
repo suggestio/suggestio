@@ -2,6 +2,7 @@ package util.billing
 
 import com.google.inject.{Inject, Singleton}
 import models._
+import models.mcron.{ICronTask, MCronTask}
 import play.api.{Configuration, Application}
 import play.api.db.Database
 import org.joda.time.{Period, DateTime}
@@ -39,7 +40,7 @@ class Billing @Inject() (
   /** Набор периодических задач для крона. */
   override def cronTasks(app: Application): TraversableOnce[ICronTask] = {
     if (CRON_FEE_CHECK_ENABLED) {
-      val task = CronTask(
+      val task = MCronTask(
         startDelay = 10.seconds,
         every = SCHED_TARIFFICATION_DURATION,
         displayName = "processFeeTarificationAll()"

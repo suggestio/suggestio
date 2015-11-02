@@ -1,16 +1,14 @@
-package models
+package models.adv
 
-import anorm._
-import MAdv._
-import org.joda.time.DateTime
-import util.anorm.{AnormPgArray, AnormJodaTime}
-import AnormPgArray._
-import util.anorm.AnormJodaTime
-import AnormJodaTime._
-import util.SqlModelSave
 import java.sql.Connection
 import java.util.Currency
-import AdShowLevels.sls2strings
+
+import anorm._
+import models._
+import org.joda.time.DateTime
+import util.SqlModelSave
+import util.anorm.AnormJodaTime._
+import util.anorm.AnormPgArray._
 
 /**
  * Suggest.io
@@ -18,14 +16,14 @@ import AdShowLevels.sls2strings
  * Created: 23.05.14 17:04
  * Description: Список запросов на размещение рекламы.
  */
-object MAdvReq extends MAdvStatic {
+object MAdvReq extends MAdvStaticT {
   import SqlParser._
 
   override type T = MAdvReq
 
-  val TABLE_NAME = "adv_req"
+  override val TABLE_NAME = "adv_req"
 
-  val rowParser = ADV_ROW_PARSER_1 ~ get[Int]("prod_contract_id") ~ SHOW_LEVELS_PARSER map {
+  val rowParser = MAdv.ADV_ROW_PARSER_1 ~ get[Int]("prod_contract_id") ~ MAdv.SHOW_LEVELS_PARSER map {
     case id ~ adId ~ amount ~ currencyCode ~ dateCreated ~ mode ~ dateStart ~ dateEnd ~ prodAdnId ~
       rcvrAdnId ~ prodContractId ~ showLevels =>
       MAdvReq(
@@ -44,7 +42,7 @@ object MAdvReq extends MAdvStatic {
   }
 
   /** Row-парсер выхлопа calculateBlockedSumForAd(). */
-  val blockedSumParser = AMOUNT_PARSER ~ CURRENCY_PARSER map {
+  val blockedSumParser = MAdv.AMOUNT_PARSER ~ MAdv.CURRENCY_PARSER map {
     case amount ~ currency => (amount, currency)
   }
 
@@ -56,28 +54,32 @@ object MAdvReq extends MAdvStatic {
   def calculateBlockedSumForAd(adId: String)(implicit c: Connection): List[(Float, Currency)] = {
     SQL("SELECT SUM(amount) AS amount, currency_code FROM " + TABLE_NAME + " WHERE ad_id = {adId} GROUP BY currency_code")
       .on('adId -> adId)
-      .as(blockedSumParser *)
+      .as(blockedSumParser.*)
   }
 
 }
 
 
-import MAdvReq._
+import models.adv.MAdvReq._
 
 
 final case class MAdvReq(
-  adId          : String,
-  amount        : Float,
-  currencyCode  : String = CurrencyCodeOpt.CURRENCY_CODE_DFLT,
-  prodContractId: Int,
-  prodAdnId     : String,
-  rcvrAdnId     : String,
-  dateStart     : DateTime,
-  dateEnd       : DateTime,
-  showLevels    : Set[SinkShowLevel],
-  dateCreated   : DateTime = DateTime.now(),
-  id            : Option[Int] = None
-) extends MAdvReqT with SqlModelDelete with MAdvModelSave {
+  override val adId               : String,
+  override val amount             : Float,
+  override val currencyCode       : String              = CurrencyCodeOpt.CURRENCY_CODE_DFLT,
+  override val prodContractId     : Int,
+  override val prodAdnId          : String,
+  override val rcvrAdnId          : String,
+  override val dateStart          : DateTime,
+  override val dateEnd            : DateTime,
+  override val showLevels         : Set[SinkShowLevel],
+  override val dateCreated        : DateTime            = DateTime.now(),
+  override val id                 : Option[Int]         = None
+)
+  extends MAdvReqT
+  with SqlModelDelete
+  with MAdvModelSave
+{
 
   override def mode = MAdvModes.REQ
   override def hasId = id.isDefined
@@ -86,10 +88,12 @@ final case class MAdvReq(
 
 }
 
+
 sealed trait MAdvReqT extends SqlModelSave with MAdvI {
 
   override type T = MAdvReq
 
+  /** id контракта продьюсера, по которому проходит этот запрос. */
   def prodContractId: Int
 
   def saveInsert(implicit c: Connection): T = {
@@ -99,7 +103,7 @@ sealed trait MAdvReqT extends SqlModelSave with MAdvI {
       .on('adId -> adId, 'amount -> amount, 'currencyCode -> currencyCode, 'dateCreated -> dateCreated,
           'mode -> mode.toString, 'showLevels -> strings2pgArray(SinkShowLevels.sls2strings(showLevels)), 'dateStart -> dateStart,
           'dateEnd -> dateEnd, 'prodContractId -> prodContractId, 'prodAdnId -> prodAdnId, 'rcvrAdnId -> rcvrAdnId)
-      .executeInsert(rowParser single)
+      .executeInsert(rowParser.single)
   }
 
 }

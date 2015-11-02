@@ -5,7 +5,8 @@ import java.net.InetAddress
 import java.sql.Connection
 import java.util.Comparator
 import com.jolbox.bonecp.ConnectionHandle
-import models.{CronTask, IpGeoBaseCity, IpGeoBaseRange}
+import models.mcron.MCronTask
+import models.{IpGeoBaseCity, IpGeoBaseRange}
 import org.apache.commons.io.{FileUtils, FilenameUtils}
 import org.postgresql.copy.CopyManager
 import org.postgresql.core.BaseConnection
@@ -61,10 +62,10 @@ class IpGeoBaseImport extends PlayMacroLogsImpl with ICronTasksProvider {
   def CITIES_FILE_ENCODING = configuration.getString("ipgeobase.cities.encoding") getOrElse IP_RANGES_FILE_ENCODING
 
 
-  override def cronTasks(app: Application): TraversableOnce[CronTask] = {
+  override def cronTasks(app: Application): TraversableOnce[MCronTask] = {
     if (IS_ENABLED) {
       // TODO Нужно обновлять 1-2 раза в день максимум, а не после каждого запуска.
-      val task = CronTask(
+      val task = MCronTask(
         startDelay = 20.seconds,
         every = 1.day,
         displayName = "updateIpBase()"

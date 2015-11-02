@@ -1,14 +1,13 @@
-package models
+package models.adv
+
+import java.sql.Connection
 
 import anorm._
-import MAdv._
+import models._
 import org.joda.time.DateTime
-import util.anorm.{AnormPgArray, AnormJodaTime}
-import AnormJodaTime._
-import AnormPgArray._
 import util.SqlModelSave
-import java.sql.Connection
-import AdShowLevels.sls2strings
+import util.anorm.AnormJodaTime._
+import util.anorm.AnormPgArray._
 
 /**
  * Suggest.io
@@ -16,7 +15,7 @@ import AdShowLevels.sls2strings
  * Created: 23.05.14 17:35
  * Description: Одобренные заявки на размещение рекламы, т.е. проведённые сделки.
  */
-object MAdvOk extends MAdvStatic {
+object MAdvOk extends MAdvStaticT {
   import SqlParser._
 
   override type T = MAdvOk
@@ -26,9 +25,9 @@ object MAdvOk extends MAdvStatic {
   val RCVR_TXN_IDS_PARSER = get[Option[Seq[Int]]]("rcvr_txn_ids") map { _ getOrElse Nil }
 
   override val rowParser = {
-    ADV_ROW_PARSER_1 ~ get[DateTime]("date_status") ~ get[Option[Int]]("prod_txn_id") ~
+    MAdv.ADV_ROW_PARSER_1 ~ get[DateTime]("date_status") ~ get[Option[Int]]("prod_txn_id") ~
       get[Boolean]("online") ~ get[Boolean]("is_auto") ~ get[Boolean]("is_partner") ~
-      SHOW_LEVELS_PARSER ~ RCVR_TXN_IDS_PARSER  map {
+      MAdv.SHOW_LEVELS_PARSER ~ RCVR_TXN_IDS_PARSER  map {
       case id ~ adId ~ amount ~ currencyCode ~ dateCreated ~ mode ~ dateStart ~ dateEnd ~
         prodAdnId ~ rcvrAdnId ~ dateStatus ~ prodTxnId ~ isOnline ~ isAuto ~ isPartner ~ showLevels ~ rcvrTxnIds  =>
         MAdvOk(
@@ -83,7 +82,7 @@ object MAdvOk extends MAdvStatic {
    */
   def findAllOfflineOnTime(implicit c: Connection): List[MAdvOk] = {
     SQL("SELECT * FROM " + TABLE_NAME + " WHERE NOT online AND date_start <= now() AND date_end >= now()")
-      .as(rowParser *)
+      .as(rowParser.*)
   }
 
   /** Найти все ряды, у которых date_end уже в прошлом. Т.е. неактуальные ряды. */
@@ -117,7 +116,7 @@ object MAdvOk extends MAdvStatic {
   def findAllProducersForRcvrsPartner(rcvrAdnIds: Traversable[String], isPartner: Boolean)(implicit c: Connection): List[String] = {
     SQL("SELECT DISTINCT prod_adn_id FROM " + TABLE_NAME + " WHERE rcvr_adn_id = ANY({rcvrs}) AND date_end >= now() AND is_partner = {isPartner}")
      .on('rcvrs -> strings2pgArray(rcvrAdnIds), 'isPartner -> isPartner)
-     .as(MAdv.PROD_ADN_ID_PARSER *)
+     .as(MAdv.PROD_ADN_ID_PARSER.*)
   }
 
   def findByAdIdsAndProducersOnline(adIds: Traversable[String], prodIds: Traversable[String], isOnline: Boolean,
@@ -131,27 +130,31 @@ object MAdvOk extends MAdvStatic {
 }
 
 
-import MAdvOk._
+import models.adv.MAdvOk._
 
 
 final case class MAdvOk(
-  adId          : String,
-  amount        : Float,
-  currencyCode  : String = CurrencyCodeOpt.CURRENCY_CODE_DFLT,
-  dateStart     : DateTime,
-  dateEnd       : DateTime,
-  prodTxnId     : Option[Int],
-  rcvrTxnIds    : Seq[Int],
-  prodAdnId     : String,
-  rcvrAdnId     : String,
-  isAuto        : Boolean,
-  showLevels    : Set[SinkShowLevel],
-  dateCreated   : DateTime = DateTime.now(),
-  dateStatus    : DateTime = DateTime.now(),
-  isOnline      : Boolean = false,
-  isPartner     : Boolean = false,
-  id            : Option[Int] = None
-) extends MAdvOkT with SqlModelDelete with MAdvModelSave {
+  override val adId          : String,
+  override val amount        : Float,
+  override val currencyCode  : String = CurrencyCodeOpt.CURRENCY_CODE_DFLT,
+  override val dateStart     : DateTime,
+  override val dateEnd       : DateTime,
+  override val prodTxnId     : Option[Int],
+  override val rcvrTxnIds    : Seq[Int],
+  override val prodAdnId     : String,
+  override val rcvrAdnId     : String,
+  override val isAuto        : Boolean,
+  override val showLevels    : Set[SinkShowLevel],
+  override val dateCreated   : DateTime             = DateTime.now(),
+  override val dateStatus    : DateTime             = DateTime.now(),
+  override val isOnline      : Boolean              = false,
+  override val isPartner     : Boolean              = false,
+  override val id            : Option[Int]          = None
+)
+  extends MAdvOkT
+  with SqlModelDelete
+  with MAdvModelSave
+{
 
   override def mode = MAdvModes.OK
   override def hasId: Boolean = id.isDefined
@@ -171,6 +174,7 @@ final case class MAdvOk(
 
 
 sealed trait MAdvOkT extends SqlModelSave with MAdvI {
+
   override type T = MAdvOk
 
   def prodTxnId   : Option[Int]
@@ -190,7 +194,7 @@ sealed trait MAdvOkT extends SqlModelSave with MAdvI {
         'dateStatus -> dateStatus, 'dateEnd -> dateEnd, 'prodAdnId -> prodAdnId, 'rcvrAdnId -> rcvrAdnId,
         'prodTxnId -> prodTxnId, 'rcvrTxnIds -> seqInt2pgArray(rcvrTxnIds), 'isOnline -> isOnline, 'isAuto -> isAuto,
         'isPartner -> isPartner)
-    .executeInsert(rowParser single)
+    .executeInsert(rowParser.single)
   }
 
 }

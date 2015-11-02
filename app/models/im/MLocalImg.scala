@@ -12,8 +12,8 @@ import io.suggest.model.img.{ImgSzDated, IImgMeta}
 import io.suggest.model.{Img2FullyDeletedEvent, ImgWithTimestamp}
 import io.suggest.util.UuidUtil
 import io.suggest.ym.model.common.MImgInfoMeta
+import models.mcron.{ICronTask, MCronTask}
 import models.mfs.FileUtil
-import models.{CronTask, ICronTask}
 import org.apache.commons.io.FileUtils
 import org.joda.time.DateTime
 import play.api.Application
@@ -367,7 +367,7 @@ trait PeriodicallyDeleteEmptyDirs extends ICronTasksProvider with PlayMacroLogsI
   abstract override def cronTasks(app: Application): TraversableOnce[ICronTask] = {
     val cts1 = super.cronTasks(app)
     if (DELETE_EMPTY_DIRS_ENABLED) {
-      val ct2 = CronTask(startDelay = DELETE_EMPTY_DIRS_START_DELAY, every = DELETE_EMPTY_DIRS_EVERY, displayName = EDD_CONF_PREFIX) {
+      val ct2 = MCronTask(startDelay = DELETE_EMPTY_DIRS_START_DELAY, every = DELETE_EMPTY_DIRS_EVERY, displayName = EDD_CONF_PREFIX) {
         findAndDeleteEmptyDirsAsync onFailure { case ex =>
           LOGGER.warn("Failed to findAndDeleteEmptyDirs()", ex)
         }
@@ -448,7 +448,7 @@ trait PeriodicallyDeleteNotExistingInPermanent extends ICronTasksProvider with P
   abstract override def cronTasks(app: Application): TraversableOnce[ICronTask] = {
     val cts0 = super.cronTasks(app)
     if (DNEIP_ENABLED) {
-      val task = CronTask(startDelay = DNEIP_START_DELAY, every = DNEIP_EVERY, displayName = DNEIP_CONF_PREFIX) {
+      val task = MCronTask(startDelay = DNEIP_START_DELAY, every = DNEIP_EVERY, displayName = DNEIP_CONF_PREFIX) {
         dneipFindAndDeleteAsync() onFailure { case ex =>
           LOGGER.error("DNEIP: Clean-up failed.", ex)
         }

@@ -5,9 +5,11 @@ import de.jollyday.parameter.UrlManagerParameter
 import io.suggest.playx.ICurrentConf
 import io.suggest.ym.model.common.EMBlockMetaI
 import models._
+import models.adv.{MAdvReq, MAdvRefuse, MAdvOk, IAdvTerms}
 import models.adv.geo.AdvFormEntry
 import models.adv.tpl.MAdvPricing
 import models.blk.{BlockWidths, BlockHeights}
+import models.mcron.{ICronTask, MCronTask}
 import org.joda.time.{Period, DateTime, LocalDate}
 import org.joda.time.DateTimeConstants._
 import play.api.Application
@@ -82,7 +84,7 @@ class MmpDailyBilling @Inject() (
     if (CRON_BILLING_CHECK_ENABLED) {
       val every = CHECK_ADVS_OK_DURATION
 
-      val applyOldReqs = CronTask(
+      val applyOldReqs = MCronTask(
         startDelay = 3.seconds,
         every = every,
         displayName = "autoApplyOldAdvReqs()"
@@ -90,7 +92,7 @@ class MmpDailyBilling @Inject() (
         autoApplyOldAdvReqs()
       }
 
-      val depubExpired = CronTask(
+      val depubExpired = MCronTask(
         startDelay = 10.seconds,
         every = every,
         displayName = "depublishExpiredAdvs()"
@@ -98,7 +100,7 @@ class MmpDailyBilling @Inject() (
         depublishExpiredAdvs()
       }
 
-      val advOfflineAdvs = CronTask(
+      val advOfflineAdvs = MCronTask(
         startDelay = 30.seconds,
         every = every,
         displayName = "advertiseOfflineAds()"
@@ -127,7 +129,7 @@ class MmpDailyBilling @Inject() (
    * Цена блока рассчитывается по площади, тарифам размещения узла-получателя и исходя из будней-праздников.
    * @return
    */
-  def calculateAdvPrice(blockModulesCount: Int, rcvrPricing: MBillMmpDaily, advTerms: AdvTerms): Price = {
+  def calculateAdvPrice(blockModulesCount: Int, rcvrPricing: MBillMmpDaily, advTerms: IAdvTerms): Price = {
     lazy val logPrefix = s"calculateAdvPrice($blockModulesCount/${rcvrPricing.id.get}): "
     trace(s"${logPrefix}rcvr: tariffId=${rcvrPricing.id.get} mbcId=${rcvrPricing.contractId};; terms: from=${advTerms.dateStart} to=${advTerms.dateEnd} sls=${advTerms.showLevels}")
     // Во избежание бесконечного цикла, огораживаем dateStart <= dateEnd

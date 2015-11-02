@@ -13,7 +13,7 @@
 
 
 @* sink show level checkbox - базовая верстка чекбокса уровней отображения по любому из измерений. *@
-@sslCheckbox(maybeBusyAdv: Option[MAdvI], midOpt: Option[Int], fnSuffix: String, label: String, showLevel: Option[String] = None)(busyAttrs: => Html) = {
+@sslCheckbox(maybeBusyAdv: Option[adv.MAdvI], midOpt: Option[Int], fnSuffix: String, label: String, showLevel: Option[String] = None)(busyAttrs: => Html) = {
   <label class="block">
     <input type="checkbox"
       @if(showLevel){data-show-level="@showLevel"}
@@ -31,7 +31,7 @@
 }
 
 @* Генератор чекбоксов, задающих/с заданными уровнями отображения. *@
-@slCheckbox(maybeBusyAdv: Option[MAdvI], midOpt: Option[Int], fnSuffix: String, sl: AdShowLevel, label: String, showLevel: String) = {
+@slCheckbox(maybeBusyAdv: Option[adv.MAdvI], midOpt: Option[Int], fnSuffix: String, sl: AdShowLevel, label: String, showLevel: String) = {
   @* TODO Генерить label на основе sl. *@
   @sslCheckbox(maybeBusyAdv, midOpt, fnSuffix, label, Some(showLevel)) {
     @if(maybeBusyAdv.exists(_ hasOnAdSl sl)) {checked="checked"}

@@ -1,14 +1,13 @@
-package models
+package models.adv
+
+import java.sql.Connection
 
 import anorm._
-import MAdv._
+import models._
 import org.joda.time.DateTime
-import util.anorm.{AnormPgArray, AnormJodaTime}
-import AnormJodaTime._
-import AnormPgArray._
 import util.SqlModelSave
-import java.sql.Connection
-import util.event.SiowebNotifier.Implicts.sn
+import util.anorm.AnormJodaTime._
+import util.anorm.AnormPgArray._
 
 /**
  * Suggest.io
@@ -17,7 +16,8 @@ import util.event.SiowebNotifier.Implicts.sn
  * Description: Модель для хранения записей об отказах в размещении рекламы. Т.е. некий антипод [[MAdvOk]].
  */
 
-object MAdvRefuse extends MAdvStatic {
+object MAdvRefuse extends MAdvStaticT {
+
   import SqlParser._
 
   override type T = MAdvRefuse
@@ -25,7 +25,7 @@ object MAdvRefuse extends MAdvStatic {
   override val TABLE_NAME = "adv_refuse"
 
   override val rowParser = {
-    ADV_ROW_PARSER_1 ~ get[DateTime]("date_status") ~ get[String]("reason") ~ SHOW_LEVELS_PARSER map {
+    MAdv.ADV_ROW_PARSER_1 ~ get[DateTime]("date_status") ~ get[String]("reason") ~ MAdv.SHOW_LEVELS_PARSER map {
       case id ~ adId ~ amount ~ currencyCode ~ dateCreated ~ mode ~ dateStart ~ dateEnd ~ prodAdnId ~
         rcvrAdnId ~ dateStatus ~ reason ~ showLevels =>
         MAdvRefuse(
@@ -66,28 +66,33 @@ object MAdvRefuse extends MAdvStatic {
 }
 
 
-import MAdvRefuse._
+import models.adv.MAdvRefuse._
 
 
 final case class MAdvRefuse(
-  adId          : String,
-  amount        : Float,
-  currencyCode  : String,
-  reason        : String,
-  prodAdnId     : String,
-  rcvrAdnId     : String,
-  dateStart     : DateTime,
-  dateEnd       : DateTime,
-  showLevels    : Set[SinkShowLevel],
-  dateStatus    : DateTime = DateTime.now,
-  dateCreated   : DateTime = DateTime.now,
-  id            : Option[Int] = None
-) extends MAdvRefuseT with SqlModelDelete with MAdvModelSave {
+  override val adId          : String,
+  override val amount        : Float,
+  override val currencyCode  : String,
+  override val reason        : String,
+  override val prodAdnId     : String,
+  override val rcvrAdnId     : String,
+  override val dateStart     : DateTime,
+  override val dateEnd       : DateTime,
+  override val showLevels    : Set[SinkShowLevel],
+  override val dateStatus    : DateTime             = DateTime.now,
+  override val dateCreated   : DateTime             = DateTime.now,
+  override val id            : Option[Int]          = None
+)
+  extends MAdvRefuseT
+  with SqlModelDelete
+  with MAdvModelSave
+{
 
   override def mode = MAdvModes.REFUSED
   override def hasId: Boolean = id.isDefined
   override def companion = MAdvRefuse
 }
+
 
 /** mixin из-за использования abstract override для saveInsert. */
 sealed trait MAdvRefuseT extends MAdvI with SqlModelSave {
@@ -101,6 +106,6 @@ sealed trait MAdvRefuseT extends MAdvI with SqlModelSave {
     .on('adId -> adId, 'amount -> amount, 'currencyCode -> currencyCode, 'dateCreated -> dateCreated,
         'mode -> mode.toString, 'showLevels -> strings2pgArray(SinkShowLevels.sls2strings(showLevels)), 'dateStatus -> dateStatus,
         'reason -> reason, 'prodAdnId -> prodAdnId, 'rcvrAdnId -> rcvrAdnId, 'dateStart -> dateStart, 'dateEnd -> dateEnd)
-    .executeInsert(rowParser single)
+    .executeInsert(rowParser.single)
   }
 }

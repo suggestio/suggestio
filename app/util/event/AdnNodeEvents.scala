@@ -5,8 +5,8 @@ import com.google.inject.Inject
 import io.suggest.event.{MNodeSavedEvent, SNStaticSubscriber}
 import io.suggest.event.SioNotifier.{Event, Subscriber, Classifier}
 import io.suggest.event.subscriber.SnClassSubscriber
-import models.{MAdvMode, MAdvI, MAdvModes}
-import models.adv.AdvSavedEvent
+import models.MAdvMode
+import models.adv.{MAdvModes, MAdvI, AdvSavedEvent}
 import models.event.{MEventType, MEventTypes, ArgsInfo, MEvent}
 import org.elasticsearch.client.Client
 import play.api.Configuration

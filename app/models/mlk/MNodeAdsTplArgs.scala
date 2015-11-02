@@ -1,6 +1,7 @@
 package models.mlk
 
-import models.{MNode, MAdvI, blk}
+import models.adv.MAdvI
+import models.{MNode, blk}
 
 /**
  * Suggest.io

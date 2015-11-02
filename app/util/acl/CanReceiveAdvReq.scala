@@ -1,6 +1,7 @@
 package util.acl
 
 import controllers.SioController
+import models.adv.MAdvReq
 import models.req.SioReqMd
 import play.api.mvc.{Result, Request, ActionBuilder}
 import models._

@@ -4,6 +4,7 @@ import com.google.inject.Inject
 import io.suggest.di.{IExecutionContext, IEsClient}
 import io.suggest.event.SioNotifierStaticClientI
 import models._
+import models.adv.{MAdvOk, MAdv}
 import org.elasticsearch.client.Client
 import org.joda.time.{Period, DateTime}
 import play.api.db.Database

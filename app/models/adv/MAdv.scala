@@ -1,24 +1,23 @@
-package models
+package models.adv
+
+import java.sql.Connection
+import java.util.Currency
 
 import akka.actor.ActorContext
 import anorm._
-import io.suggest.common.menum.EnumValue2Val
-import io.suggest.event.{AdDeletedEvent, SNStaticSubscriber}
+import com.google.inject.Inject
 import io.suggest.event.SioNotifier.Event
 import io.suggest.event.subscriber.SnClassSubscriber
-import models.adv.AdvSavedEvent
-import models.event.{MEventType, MEventTypes}
-import org.joda.time.{Period, LocalDate, DateTime}
-import play.api.db.DB
+import io.suggest.event.{AdDeletedEvent, SNStaticSubscriber}
+import models._
+import org.joda.time.{DateTime, Period}
+import play.api.db.Database
+import util.anorm.AnormJodaTime._
+import util.anorm.AnormPgArray._
+import util.anorm.AnormPgInterval._
 import util.async.AsyncUtil
-import util.{SqlModelSave, PlayLazyMacroLogsImpl}
-import util.anorm.{AnormPgInterval, AnormPgArray, AnormJodaTime}
-import AnormJodaTime._
-import AnormPgArray._
-import AnormPgInterval._
-import java.sql.Connection
-import java.util.Currency
 import util.event.SiowebNotifier.Implicts.sn
+import util.{PlayMacroLogsDyn, SqlModelSave}
 
 import scala.concurrent.Future
 
@@ -28,7 +27,7 @@ import scala.concurrent.Future
  * Created: 23.05.14 16:59
  * Description: Модель для группы родственных таблиц adv_*.
  */
-object MAdv {
+object MAdv extends ITableName with DeleteByAdIdT {
 
   import SqlParser._
 
@@ -62,11 +61,13 @@ object MAdv {
   val COUNT_PARSER = get[Long]("c")
 
   /** Список статических adv-моделей. */
-  def ADV_MODELS: Seq[MAdvStatic] = Seq(MAdvOk, MAdvRefuse, MAdvReq)
+  def ADV_MODELS: Seq[MAdvStaticT] = Seq(MAdvOk, MAdvRefuse, MAdvReq)
 
-  implicit def modes2strs(modes: Traversable[MAdvMode]): Traversable[String] = {
-    modes.map(_.toString)
+  def modes2strs(modes: Traversable[MAdvMode]): Traversable[String] = {
+    modes.map(_.strId)
   }
+
+  override val TABLE_NAME = "adv"
 
   /**
    * Найти все ad_id (id рекламных карточек), ряды которых имеют указанные режимы и которые ещё не
@@ -75,9 +76,9 @@ object MAdv {
    * @return Список ad_id в неопределённом порядке, но без дубликатов.
    */
   def findAllNonExpiredAdIdsForModes(modes: Set[MAdvMode])(implicit c: Connection): List[String] = {
-    SQL("SELECT DISTINCT ad_id FROM adv WHERE mode = ANY({modes}) AND date_end <= now()")
-      .on('modes -> strings2pgArray(modes))
-      .as(AD_ID_PARSER *)
+    SQL("SELECT DISTINCT ad_id FROM " + TABLE_NAME + " WHERE mode = ANY({modes}) AND date_end <= now()")
+      .on('modes -> strings2pgArray(modes2strs(modes)))
+      .as(AD_ID_PARSER.*)
   }
 
 
@@ -90,54 +91,45 @@ object MAdv {
    * @return Список ad_id без дубликатов в неопределённом порядке.
    */
   def findActualAdIdsBetweenNodes(modes: Set[MAdvMode], prodId: String, rcvrId: String)(implicit c: Connection): List[String] = {
-    SQL("SELECT DISTINCT ad_id FROM adv WHERE mode = ANY({modes}) AND prod_adn_id = {prodId} AND rcvr_adn_id = {rcvrId} AND date_end >= now()")
-      .on('modes -> strings2pgArray(modes), 'prodId -> prodId, 'rcvrId -> rcvrId)
-      .as(MAdv.AD_ID_PARSER *)
+    SQL("SELECT DISTINCT ad_id FROM " + TABLE_NAME + " WHERE mode = ANY({modes}) AND prod_adn_id = {prodId} AND rcvr_adn_id = {rcvrId} AND date_end >= now()")
+      .on('modes -> strings2pgArray(modes2strs(modes)), 'prodId -> prodId, 'rcvrId -> rcvrId)
+      .as(AD_ID_PARSER.*)
   }
 
-  /**
-   * Удалить все записи для рекламной карточки из всех моделей.
-   * @param adId id рекламной карточки.
-   * @return Кол-во удалённых рядов.
-   */
-  def deleteByAdId(adId: String)(implicit c: Connection): Int = {
-    ADV_MODELS.foldLeft(0) {
-      (counter, advModel) =>
-        advModel.deleteByAdId(adId) + counter
-    }
-  }
+}
 
-  /** Обработчик события удаления MAd. Стираются все adv-ряды из всех adv-моделей. */
-  class DeleteAllAdvsOnAdDeleted(implicit current: play.api.Application)
-    extends SnClassSubscriber
-    with SNStaticSubscriber
-    with PlayLazyMacroLogsImpl
-  {
-    import LOGGER._
 
-    /** Карта подписок. */
-    override def snMap = List(
-      AdDeletedEvent.getClassifier() -> Seq(this)
-    )
+/** Обработчик события удаления рекламного узла. Быстренько стираются все adv-ряды из всех adv-моделей. */
+class DeleteAllAdvsOnAdDeleted @Inject() (
+  db: Database
+)
+  extends SnClassSubscriber
+  with SNStaticSubscriber
+  with PlayMacroLogsDyn
+{
 
-    /** Обработать событие удаления рекламной карточки. */
-    override def publish(event: Event)(implicit ctx: ActorContext): Unit = {
-      event match {
-        case ade: AdDeletedEvent =>
-          ade.mad.id.foreach { adId =>
-            Future {
-              val totalDeleted = {
-                DB.withConnection { implicit c =>
-                  deleteByAdId(adId)
-                }
+  /** Карта подписок. */
+  override def snMap = List(
+    AdDeletedEvent.getClassifier() -> Seq(this)
+  )
+
+  /** Обработать событие удаления рекламной карточки. */
+  override def publish(event: Event)(implicit ctx: ActorContext): Unit = {
+    event match {
+      case ade: AdDeletedEvent =>
+        for (adId <- ade.mad.id) {
+          Future {
+            val totalDeleted = {
+              db.withConnection { implicit c =>
+                MAdv.deleteByAdId(adId)
               }
-              info(s"Deleted $totalDeleted advs for adId[$adId].")
-            }(AsyncUtil.jdbcExecutionContext)
-          }
+            }
+            LOGGER.info(s"Deleted $totalDeleted advs for adId[$adId].")
+          }(AsyncUtil.jdbcExecutionContext)
+        }
 
-        case other =>
-          warn("Unknown message received: " + other)
-      }
+      case other =>
+        LOGGER.warn("Unknown message received: " + other)
     }
   }
 }
@@ -158,7 +150,7 @@ trait MAdvI extends CurrencyCode with SinkShowLevelsFilters {
   def prodAdnId     : String
   def rcvrAdnId     : String
 
-  def advTerms: AdvTerms = new AdvTerms {
+  def advTerms: IAdvTerms = new IAdvTerms {
     override def showLevels = madvi.showLevels
     override def dateEnd    = madvi.dateStart.toLocalDate
     override def dateStart  = madvi.dateEnd.toLocalDate
@@ -210,65 +202,8 @@ trait MAdvModelSave extends SqlModelSave with MAdvI {
 }
 
 
-/** Статическая модель, описывающая разновидности размещений. */
-object MAdvModes extends EnumValue2Val {
-  
-  protected[this] trait ValT {
-    /** Строковой id типа. */
-    def strId: String
 
-    /** Тип события, сопутствующего этому экземпляру. */
-    def eventType: MEventType
-
-    /**
-     * Владелец порождаемого события. Это receiver для req, и producer для ok и refused.
-     * @param adv Абстрактное размещение.
-     * @return adnId владельца события.
-     */
-    def eventOwner(adv: MAdvI): String
-
-    /**
-     * AdnId узла-источника события.
-     * @param adv Абстрактное размещение.
-     * @return AdnId узла.
-     */
-    def eventSource(adv: MAdvI): String
-  }
-
-  /** Быстрый mixin для req и ok размещений, говорящий системе, что owner'ом события является продьюсер. */
-  protected[this] trait EvtOwnerIsProd extends ValT {
-    override def eventOwner(adv: MAdvI): String = adv.prodAdnId
-    override def eventSource(adv: MAdvI): String = adv.rcvrAdnId
-  }
-
-  protected abstract class Val(val strId: String)
-    extends super.Val(strId)
-    with ValT
-
-  type T = Val
-
-  /** Заапрувленное размещение. */
-  val OK: T = new Val("o") with EvtOwnerIsProd {
-    override def eventType = MEventTypes.AdvOutcomingOk
-  }
-
-  /** Запрос размещения. */
-  val REQ: T = new Val("r") {
-    override def eventType = MEventTypes.AdvReqIncoming
-    override def eventOwner(adv: MAdvI) = adv.rcvrAdnId
-    override def eventSource(adv: MAdvI) = adv.prodAdnId
-  }
-
-  /** Отклонённое размение. */
-  val REFUSED: T = new Val("e") with EvtOwnerIsProd {
-    override def eventType = MEventTypes.AdvOutcomingRefused
-  }
-
-  def busyModes: Set[T] = Set(OK, REQ)
-}
-
-
-trait MAdvStatic extends SqlModelStatic {
+trait MAdvStaticT extends SqlModelStatic with DeleteByAdIdT {
 
   override type T <: MAdvI
 
@@ -311,7 +246,7 @@ trait MAdvStatic extends SqlModelStatic {
   def findActualAdIdsBetweenNodes(prodId: String, rcvrId: String)(implicit c: Connection): List[String] = {
     SQL("SELECT DISTICT ad_id FROM " + TABLE_NAME + " WHERE prod_adn_id = {prodId} AND rcvr_adn_id = {rcvrId} AND date_end >= now()")
       .on('prodId -> prodId, 'rcvrId -> rcvrId)
-      .as(MAdv.AD_ID_PARSER *)
+      .as(MAdv.AD_ID_PARSER.*)
   }
 
   /**
@@ -324,7 +259,7 @@ trait MAdvStatic extends SqlModelStatic {
   def hasNotExpiredByAdIdAndRcvr(adId: String, rcvrId: String)(implicit c: Connection): Boolean = {
     SQL("SELECT count(*) > 0 AS bool FROM " + TABLE_NAME + " WHERE ad_id = {adId} AND rcvr_adn_id = {rcvrId} AND now() <= date_end LIMIT 1")
       .on('adId -> adId, 'rcvrId -> rcvrId)
-      .as(SqlModelStatic.boolColumnParser single)
+      .as(SqlModelStatic.boolColumnParser.single)
   }
 
   def findNotExpiredByAdIdAndRcvr(adId: String, rcvrId: String, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
@@ -396,7 +331,7 @@ trait MAdvStatic extends SqlModelStatic {
   def hasAdvUntilNow(adId: String)(implicit c: Connection): Boolean = {
     SQL("SELECT count(*) > 0 AS bool FROM " + TABLE_NAME + " WHERE ad_id = {adId} AND date_end >= now() LIMIT 1")
       .on('adId -> adId)
-      .as(SqlModelStatic.boolColumnParser single)
+      .as(SqlModelStatic.boolColumnParser.single)
   }
 
   /**
@@ -407,12 +342,12 @@ trait MAdvStatic extends SqlModelStatic {
   def findAllProducersForRcvr(rcvrAdnId: String)(implicit c: Connection): List[String] = {
     SQL("SELECT DISTINCT prod_adn_id FROM " + TABLE_NAME + " WHERE rcvr_adn_id = {rcvrAdnId} AND date_end >= now()")
      .on('rcvrAdnId -> rcvrAdnId)
-     .as(MAdv.PROD_ADN_ID_PARSER *)
+     .as(MAdv.PROD_ADN_ID_PARSER.*)
   }
   def findAllProducersForRcvrs(rcvrAdnIds: Traversable[String])(implicit c: Connection): List[String] = {
     SQL("SELECT DISTINCT prod_adn_id FROM " + TABLE_NAME + " WHERE rcvr_adn_id = ANY({rcvrs}) AND date_end >= now()")
      .on('rcvrs -> strings2pgArray(rcvrAdnIds))
-     .as(MAdv.PROD_ADN_ID_PARSER *)
+     .as(MAdv.PROD_ADN_ID_PARSER.*)
   }
 
   /**
@@ -423,12 +358,12 @@ trait MAdvStatic extends SqlModelStatic {
   def countForRcvr(rcvrAdnId: String)(implicit c: Connection): Long = {
     SQL("SELECT count(*) AS c FROM " + TABLE_NAME + " WHERE rcvr_adn_id = {rcvrAdnId}")
       .on('rcvrAdnId -> rcvrAdnId)
-      .as(MAdv.COUNT_PARSER single)
+      .as(MAdv.COUNT_PARSER.single)
   }
   def countForRcvrs(rcvrAdnIds: Traversable[String])(implicit c: Connection): Long = {
     SQL("SELECT count(*) AS c FROM " + TABLE_NAME + " WHERE rcvr_adn_id = ANY({rcvrs})")
       .on('rcvrs -> strings2pgArray(rcvrAdnIds))
-      .as(MAdv.COUNT_PARSER single)
+      .as(MAdv.COUNT_PARSER.single)
   }
 
   /**
@@ -448,10 +383,16 @@ trait MAdvStatic extends SqlModelStatic {
   def getLastActualByAdIdRcvr(adId: String, rcvrId: String)(implicit c: Connection): Option[T] = {
     SQL("SELECT * FROM " + TABLE_NAME + " WHERE ad_id = {adId} AND rcvr_adn_id = {rcvrId} AND date_end >= now() ORDER BY id DESC LIMIT 1")
       .on('adId -> adId, 'rcvrId -> rcvrId)
-      .as(rowParser *)
+      .as(rowParser.*)
       .headOption
   }
 
+}
+
+
+/** Трейт, добавляющий метод для удаления adv-рядов по id указанной рекламной карточки. */
+trait DeleteByAdIdT extends ITableName {
+  
   /**
    * Удалить все ряды по id рекламной карточки.
    * @param adId id рекламной карточки.
@@ -462,23 +403,7 @@ trait MAdvStatic extends SqlModelStatic {
       .on('adId -> adId)
       .executeUpdate()
   }
-
-}
-
-
-/** Условия размещения с точки зрения юзера. */
-trait AdvTerms extends SinkShowLevelsFilters {
-  def dateStart: LocalDate
-  def dateEnd: LocalDate
-}
-
-
-trait AdvTermsWrapper extends AdvTerms {
-  def underlying: AdvTerms
-
-  override def dateStart = underlying.dateStart
-  override def dateEnd = underlying.dateEnd
-  override def showLevels = underlying.showLevels
+  
 }
 
 

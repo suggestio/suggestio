@@ -5,6 +5,7 @@ import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.util.JMXBase
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import models._
+import models.adv.{MAdvReq, MAdvOk}
 import org.elasticsearch.client.Client
 import org.joda.time.DateTime
 import play.api.Configuration

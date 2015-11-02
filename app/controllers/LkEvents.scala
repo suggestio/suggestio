@@ -5,7 +5,7 @@ import com.google.inject.Inject
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.playx.ICurrentConf
 import models._
-import models.adv.MExtTarget
+import models.adv.{MAdvReq, MAdvRefuse, MAdvOk, MExtTarget}
 import models.event.search.MEventsSearchArgs
 import models.event.MEvent
 import org.elasticsearch.client.Client

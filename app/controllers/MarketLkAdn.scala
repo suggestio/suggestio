@@ -5,6 +5,7 @@ import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import models.adv._
 import util.adn.NodesUtil
 import util.async.AsyncUtil
 import com.google.inject.Inject

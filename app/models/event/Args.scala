@@ -4,7 +4,7 @@ import io.suggest.common.EmptyProduct
 import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.event.SioNotifier.{Classifier, Event}
 import io.suggest.model.es.EsModelUtil
-import models.adv.MExtTarget
+import models.adv.{MAdvReq, MAdvRefuse, MAdvOk, MExtTarget}
 import models._
 import models.mext.MExtService
 import play.api.libs.json._

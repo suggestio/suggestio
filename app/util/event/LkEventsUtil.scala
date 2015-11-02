@@ -3,6 +3,7 @@ package util.event
 import com.google.inject.Inject
 import io.suggest.model.es.{EsModelT, EsModelStaticT}
 import io.suggest.playx.ICurrentApp
+import models.adv.{MAdvStaticT, MAdvI}
 import models.event.search.MEventsSearchArgs
 import models.event._
 import models._
@@ -73,15 +74,15 @@ class LkEventsUtil @Inject() (
   }
 
   /**
-   * MultiGet-чтение одной из adv-моделей в карту (id -> [[models.MAdvI]]+).
+   * MultiGet-чтение одной из adv-моделей в карту (id -> [[MAdvI]]+).
    * Из модели извлечь только необходимые id'шники.
    * @param mevents Коллекция событий.
-   * @param model Модель [[models.MAdvStatic]].
+   * @param model Модель [[MAdvStatic]].
    * @param getIdF Функция для извлечения id из коллекции.
    * @tparam T1 Тип экземпляров модели, с которой работаем.
    * @return Фьючерс с результатами.
    */
-  def readAdvModel[T1 <: MAdvI](mevents: Iterable[IEvent], model: MAdvStatic {type T = T1})
+  def readAdvModel[T1 <: MAdvI](mevents: Iterable[IEvent], model: MAdvStaticT {type T = T1})
                                (getIdF: IEvent => TraversableOnce[Int]): Future[Map[Int, T1]] = {
     val allAdvIdsIter = mevents
       .iterator

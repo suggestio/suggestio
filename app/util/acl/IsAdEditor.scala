@@ -2,6 +2,7 @@ package util.acl
 
 import controllers.SioController
 import io.suggest.di.IEsClient
+import models.adv.{MAdvStaticT, MAdvReq, MAdvOk}
 import models.req.SioReqMd
 import play.api.mvc._
 import models._
@@ -62,7 +63,7 @@ trait CanEditAd
   {
 
     /** Асинхронно обратится к реализации модели MAdvStatic за инфой по наличию текущих размещений. */
-    def hasAdvUntilNow(adId: String, model: MAdvStatic): Future[Boolean] = {
+    def hasAdvUntilNow(adId: String, model: MAdvStaticT): Future[Boolean] = {
       Future {
         db.withConnection { implicit c =>
           model.hasAdvUntilNow(adId)
@@ -70,7 +71,7 @@ trait CanEditAd
       }(AsyncUtil.jdbcExecutionContext)
     }
 
-    /** Асинхронно параллельно обратится к [[models.MAdvOk]] и [[models.MAdvReq]] моделям инфой о наличии текущих размещений. */
+    /** Асинхронно параллельно обратится к [[MAdvOk]] и [[MAdvReq]] моделям инфой о наличии текущих размещений. */
     def hasAdv(adId: String): Future[Boolean] = {
       val hasAdvReqFut = hasAdvUntilNow(adId, MAdvReq)
       for {

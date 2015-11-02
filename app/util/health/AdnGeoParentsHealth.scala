@@ -3,8 +3,9 @@ package util.health
 import com.google.inject.{Singleton, Inject}
 import io.suggest.model.n2.edge.MPredicates
 import models.MNode
+import models.mcron.{ICronTask, MCronTask}
 import models.usr.MPersonIdent
-import models.{CronTask, ICronTask, AdnShownTypes}
+import models.AdnShownTypes
 import models.msys.NodeProblem
 import org.elasticsearch.client.Client
 import org.joda.time.{DateTimeZone, DateTime}
@@ -52,7 +53,7 @@ class AdnGeoParentsHealth @Inject() (
     val logVerb = if (GEO_PARENTS_AUTO) {
       val tz = DateTimeZone.forID("Europe/Moscow")
       val h24 = 24
-      val t = CronTask(
+      val t = MCronTask(
         // Тестировать надо ночью или утром наверное. Тест тяжеловат по нагрузке.
         startDelay  = (h24 - DateTime.now().withZone(tz).getHourOfDay).hours,
         every       = h24.hours,

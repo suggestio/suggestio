@@ -1,6 +1,7 @@
 package models.adv.geo
 
-import models.{AdvTerms, SinkShowLevel}
+import models.SinkShowLevel
+import models.adv.IAdvTerms
 import org.joda.time.LocalDate
 
 /**
@@ -17,4 +18,4 @@ case class AdvFormEntry(
   dateStart : LocalDate,
   dateEnd   : LocalDate
 )
-  extends AdvTerms
+  extends IAdvTerms

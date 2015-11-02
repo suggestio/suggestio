@@ -1,7 +1,7 @@
 package models.adv
 
 import io.suggest.event.SioNotifier.{Classifier, Event}
-import models.{MAdvI, MAdvMode}
+import models.MAdvMode
 
 /**
  * Suggest.io
@@ -21,7 +21,7 @@ object AdvSavedEvent {
   }
 }
 
-/** Событие сохранения экземпляра-реализации [[models.MAdvI]]. */
+/** Событие сохранения экземпляра-реализации [[MAdvI]]. */
 case class AdvSavedEvent(adv: MAdvI, isCreated: Boolean) extends Event {
   override def getClassifier: Classifier = {
     AdvSavedEvent.getClassifier(

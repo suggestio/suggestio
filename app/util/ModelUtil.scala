@@ -2,6 +2,7 @@ package util
 
 import java.sql.Connection
 
+import io.suggest.primo.TypeT
 import models.SqlModelStaticMinimal
 
 /**
@@ -16,9 +17,9 @@ import models.SqlModelStaticMinimal
   * подмешиваем к классам моделей этот трейт.
   * @tparam T Тип записи.
   */
-trait SqlModelSave {
+trait SqlModelSave extends TypeT {
 
-  type T <: SqlModelSave
+  override type T <: SqlModelSave
 
   def companion: SqlModelStaticMinimal
 

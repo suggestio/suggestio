@@ -1,7 +1,8 @@
-@(advs: Seq[MAdvI], adv2adn: Map[Int, MNode])(implicit ctx: Context)
+@(advs: Seq[adv.MAdvI], adv2adn: Map[Int, MNode])(implicit ctx: Context)
 
 @* Список размещений какой-то рекламной карточки. *@
 
+@import adv._
 @import MAdvModes._
 @import ctx._
 @import datetime._

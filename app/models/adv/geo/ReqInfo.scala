@@ -1,7 +1,8 @@
 package models.adv.geo
 
+import models.adv.MAdvReq
 import models.blk.IBrArgs
-import models.{blk, MAd, MAdvReq}
+import models.{blk, MAd}
 
 /**
  * Suggest.io
