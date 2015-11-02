@@ -1,9 +1,9 @@
 @(prefix: String, withLauncherJs: Boolean = false)(implicit ctx: Context)
 
 @import play.api.Play.{isProd, current}
-@import util.cdn.CdnUtil
+@import ctx.api.cdn
 
-<script src="@CdnUtil.asset(prefix + (if(isProd) "-" else "-fast") + "opt.js")"></script>
+<script src="@cdn.asset(prefix + (if(isProd) "-" else "-fast") + "opt.js")"></script>
 @if( withLauncherJs ) {
-  <script src="@CdnUtil.asset(prefix + "-launcher.js")"></script>
+  <script src="@cdn.asset(prefix + "-launcher.js")"></script>
 }

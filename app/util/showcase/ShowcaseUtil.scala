@@ -12,7 +12,6 @@ import models.msc.{IScSiteColors, ScSiteColors, TileArgs}
 import org.elasticsearch.client.Client
 import play.api.Configuration
 import util.blocks.BgImg
-import util.cdn.CdnUtil
 import scala.annotation.tailrec
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -333,6 +332,10 @@ class ShowcaseUtil @Inject() (
 // TODO v1 Выпилить вслед за sc v1 _installScriptTpl
 object ScScriptV1TplUtil {
 
+  import util.cdn.CdnUtil
+
+  private val cdnUtil = play.api.Play.current.injector.instanceOf[CdnUtil]
+
   /** Путь до ассета со скриптом выдачи. */
   def SHOWCASE_JS_ASSET = "javascripts/market/showcase/showcase2.js"
 
@@ -348,7 +351,7 @@ object ScScriptV1TplUtil {
       ctx.currAudienceUrl + routes.Assets.at(SHOWCASE_JS_ASSET).url
     } else {
       // Генерим постоянную ссылку на ассет с бешеным кешированием и возможностью загона в CDN.
-      val call1 = CdnUtil.asset(SHOWCASE_JS_ASSET)
+      val call1 = cdnUtil.asset(SHOWCASE_JS_ASSET)
       if (call1.isInstanceOf[ExternalCall]) {
         // У нас тут ссылка на CDN.
         call1.url

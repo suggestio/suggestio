@@ -3,11 +3,11 @@
 @* HTML для подключения скрипта второй версии выдачи (sc-sjs). *@
 
 @import views.html.stuff._
-@import util.cdn.CdnUtil
+@import ctx.api.cdn
 @import io.suggest.sc.ScConstants.JsRouter.DOM_ID
 
 @* id-атрибут у script-тега нарушает HTML-валидацию, но это плевать. *@
-<script id="@DOM_ID" type="text/javascript" async src="@CdnUtil.forCall( routes.MarketShowcase.scJsRouter() )">
+<script id="@DOM_ID" type="text/javascript" async src="@cdn.forCall( routes.MarketShowcase.scJsRouter() )">
 </script>
 
 @_sjsScript("sc-sjs", withLauncherJs = true)

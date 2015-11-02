@@ -2,7 +2,7 @@
 
 @* Рендер логотипа узла в заголовке. *@
 
-@import util.cdn.CdnUtil
+@import ctx.api.cdn
 @import io.suggest.sc.ScConstants.Logo._
 @import views.html.sc.stuff._
 
@@ -16,7 +16,7 @@
     }
   } { logoImg =>
     @* Логотип-картинка. *@
-    <img class="sm-producer-header_logo" height="@HEIGHT_CSSPX" src="@CdnUtil.dynImg(logoImg)"/>
+    <img class="sm-producer-header_logo" height="@HEIGHT_CSSPX" src="@cdn.dynImg(logoImg)"/>
   }
 
 </span>

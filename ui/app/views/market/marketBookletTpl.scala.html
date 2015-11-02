@@ -1,6 +1,6 @@
 @()(implicit ctx: Context)
 
-@import util.cdn.CdnUtil
+@import ctx.api.cdn
 
 @* Страница с вертикальной презенташкой sio market. *@
 
@@ -16,27 +16,27 @@
     <meta name="format-detection" content="telephone=no">
 
 
-    <link rel="stylesheet" type="text/css" href='@CdnUtil.asset("stylesheets/market/booklet.css")'/>
-    <link rel="stylesheet" type="text/css" href='@CdnUtil.asset("javascripts/lib/bxslider/jquery.bxslider.css")'/>
+    <link rel="stylesheet" type="text/css" href='@cdn.asset("stylesheets/market/booklet.css")'/>
+    <link rel="stylesheet" type="text/css" href='@cdn.asset("javascripts/lib/bxslider/jquery.bxslider.css")'/>
 
     <style>
 
       @@media screen and (max-width: 767px) {
 
         .price_map {
-          background-image: url('@CdnUtil.asset("images/market/booklet/price-map_retina_phone.png")') !important;
+          background-image: url('@cdn.asset("images/market/booklet/price-map_retina_phone.png")') !important;
         }
 
         .individual_ipad {
-          background-image: url('@CdnUtil.asset("images/market/booklet/ipad-map_phone_retina.jpg")') !important;
+          background-image: url('@cdn.asset("images/market/booklet/ipad-map_phone_retina.jpg")') !important;
         }
 
         .slide-4_ipad {
-          background-image: url('@CdnUtil.asset("images/market/booklet/search_phone_retina.jpg")') !important;
+          background-image: url('@cdn.asset("images/market/booklet/search_phone_retina.jpg")') !important;
         }
 
         .advantages_gadgets {
-          background-image: url('@CdnUtil.asset("images/market/booklet/gadgets_phone_retina.png")') !important;
+          background-image: url('@cdn.asset("images/market/booklet/gadgets_phone_retina.png")') !important;
         }
 
       }
@@ -48,7 +48,7 @@
     <header class="header">
       <div class="header_cnt">
         <a class="header_logo link" href="/">
-          <img alt="" src='@CdnUtil.asset("images/market/booklet/logo_retina.png")' width="92" />
+          <img alt="" src='@cdn.asset("images/market/booklet/logo_retina.png")' width="92" />
         </a>
         <nav class="header_nav top-menu">
           <a class="top-menu_i link def-transition js-slide-to" href="#price">О проекте</a>
@@ -65,7 +65,7 @@
     <header class="header __slide" id="headerSlide">
       <div class="header_cnt">
         <a class="header_logo link js-slide-to" href="#yourAdv">
-          <img alt="" src='@CdnUtil.asset("images/market/booklet/logo_retina.png")' width="92" />
+          <img alt="" src='@cdn.asset("images/market/booklet/logo_retina.png")' width="92" />
         </a>
         <nav class="header_nav top-menu">
           <a class="top-menu_i link def-transition js-slide-to" href="#price">О проекте</a>
@@ -80,7 +80,7 @@
     </header>
 
     <!-- Ваша реклама -->
-    <section class="your-adv" id="yourAdv" style="background-image: url('@CdnUtil.asset("images/market/index/bg_retina.jpg")');">
+    <section class="your-adv" id="yourAdv" style="background-image: url('@cdn.asset("images/market/index/bg_retina.jpg")');">
       <div class="your-adv_cnt">
         <h2 class="your-adv_t title">Ваша реклама</h2>
         в системе таргетированной мобильной рекламы
@@ -125,7 +125,7 @@
           <div class="phones_step-i">
             <h3 class="phones_step-t">Шаг 1</h3>
             <div class="phones_step-img">
-              <img src='@CdnUtil.asset("images/market/booklet/ios-photo-1_retina.png")' width="164"/>
+              <img src='@cdn.asset("images/market/booklet/ios-photo-1_retina.png")' width="164"/>
             </div>
             <p class="phones_step-descr">
               Нажмите на адресную строку браузера,
@@ -135,7 +135,7 @@
           <div class="phones_step-i">
             <h3 class="phones_step-t">Шаг 2</h3>
             <div class="phones_step-img">
-              <img src='@CdnUtil.asset("images/market/booklet/ios-photo-2_retina.png")' width="164"/>
+              <img src='@cdn.asset("images/market/booklet/ios-photo-2_retina.png")' width="164"/>
             </div>
             <p class="phones_step-descr">
               Нажмите кнопку <br/>
@@ -145,7 +145,7 @@
           <div class="phones_step-i">
             <h3 class="phones_step-t">Шаг 3</h3>
             <div class="phones_step-img">
-              <img src='@CdnUtil.asset("images/market/booklet/ios-photo-3_retina.png")' width="176" style="margin-top: -18px;"/>
+              <img src='@cdn.asset("images/market/booklet/ios-photo-3_retina.png")' width="176" style="margin-top: -18px;"/>
             </div>
             <p class="phones_step-descr">
               Нажмите кнопку<br/>
@@ -155,7 +155,7 @@
           <div class="phones_step-i __last">
             <h3 class="phones_step-t">Шаг 4</h3>
             <div class="phones_step-img">
-              <img src='@CdnUtil.asset("images/market/booklet/ios-photo-4_retina.png")' width="164"/>
+              <img src='@cdn.asset("images/market/booklet/ios-photo-4_retina.png")' width="164"/>
             </div>
             <p class="phones_step-descr">
               Теперь вы можете заходить <br/>
@@ -170,7 +170,7 @@
           <div class="phones_step-i">
             <h3 class="phones_step-t">Шаг 1</h3>
             <div class="phones_step-img __big">
-              <img src='@CdnUtil.asset("images/market/booklet/android-photo-1_retina.png")' width="211"/>
+              <img src='@cdn.asset("images/market/booklet/android-photo-1_retina.png")' width="211"/>
             </div>
             <p class="phones_step-descr">
               Нажмите на кнопку выбора инструментов
@@ -180,7 +180,7 @@
           <div class="phones_step-i">
             <h3 class="phones_step-t">Шаг 2</h3>
             <div class="phones_step-img __big">
-              <img src='@CdnUtil.asset("images/market/booklet/android-photo-2_retina.png")' width="174"/>
+              <img src='@cdn.asset("images/market/booklet/android-photo-2_retina.png")' width="174"/>
             </div>
             <p class="phones_step-descr">
               Выберите из появившегося меню <br/>
@@ -190,7 +190,7 @@
           <div class="phones_step-i">
             <h3 class="phones_step-t">Шаг 3</h3>
             <div class="phones_step-img __big">
-              <img src='@CdnUtil.asset("images/market/booklet/android-photo-3_retina.png")' width="174" />
+              <img src='@cdn.asset("images/market/booklet/android-photo-3_retina.png")' width="174" />
             </div>
             <p class="phones_step-descr">
               Нажмите кнопку
@@ -200,7 +200,7 @@
           <div class="phones_step-i __last">
             <h3 class="phones_step-t">Шаг 4</h3>
             <div class="phones_step-img __big">
-              <img src='@CdnUtil.asset("images/market/booklet/android-photo-4_retina.png")' width="174"/>
+              <img src='@cdn.asset("images/market/booklet/android-photo-4_retina.png")' width="174"/>
             </div>
             <p class="phones_step-descr">
               Теперь вы можете заходить <br/>
@@ -231,8 +231,8 @@
             мобильных коммуникаторов.
           </p>
         </div>
-        <div class="price_fingers" style="background-image: url('@CdnUtil.asset("images/market/booklet/phone_lacation_retina.png")');"></div>
-        <div class="price_map" style="background-image: url('@CdnUtil.asset("images/market/booklet/map_retina.jpg")');">
+        <div class="price_fingers" style="background-image: url('@cdn.asset("images/market/booklet/phone_lacation_retina.png")');"></div>
+        <div class="price_map" style="background-image: url('@cdn.asset("images/market/booklet/map_retina.jpg")');">
           <div class="price_map-inner">
             <p class="price_map-text">
               Таргетированная рекламная выдача<br/>
@@ -282,7 +282,7 @@
           </div>
 
         </div>
-        <div class="individual_ipad" style="background-image: url('@CdnUtil.asset("images/market/booklet/ipad-map_retina.png")');"></div>
+        <div class="individual_ipad" style="background-image: url('@cdn.asset("images/market/booklet/ipad-map_retina.png")');"></div>
       </div>
       <div class="individual_footer-text">
         В зависимости от масштаба вашего бизнеса и характеристик вашей целевой аудитории вы можете разместить<br/>свою интернет-рекламу в таргетированной рекламной выдаче Suggest.io в любой локации, в нескольких локациях или во<br/>всех локациях сразу.
@@ -297,7 +297,7 @@
         для каждой локации.
       </div>
       <div class="levels_white">
-        <div class="levels_phone" style="background-image: url('@CdnUtil.asset("images/market/booklet/phone_screen_retina.png")');">
+        <div class="levels_phone" style="background-image: url('@cdn.asset("images/market/booklet/phone_screen_retina.png")');">
           <span class="levels_phone-text __left">Каталог&nbsp;/&nbsp;рубрикатор</span>
           <span class="levels_phone-text __right">Собственный раздел<br/>рекламодателя со всеми<br/>товарными предложениями</span>
           <span class="levels_phone-text __bottom">Первый экран</span>
@@ -314,7 +314,7 @@
     <!-- Slider -->
     <section class="slider" id="slider">
       <div class="slider_i slide-1">
-        <div class="slide-1_bg" style="background-image: url('@CdnUtil.asset("images/market/booklet/slide-1_retina.jpg")');">
+        <div class="slide-1_bg" style="background-image: url('@cdn.asset("images/market/booklet/slide-1_retina.jpg")');">
           <h2 class="slide-1_t title">
             Кто увидит мою рекламу?
           </h2>
@@ -351,7 +351,7 @@
       </div>
 
       <div class="slider_i slide-2">
-        <div class="slide-2_bg" style="background-image: url('@CdnUtil.asset("images/market/booklet/slide-2_retina.jpg")');">
+        <div class="slide-2_bg" style="background-image: url('@cdn.asset("images/market/booklet/slide-2_retina.jpg")');">
           <h2 class="slide-2_t title">
             Торговые центры
           </h2>
@@ -376,7 +376,7 @@
       </div>
 
       <div class="slider_i slide-3">
-        <div class="slide-3_bg" style="background-image: url('@CdnUtil.asset("images/market/booklet/slide-3_retina.jpg")');">
+        <div class="slide-3_bg" style="background-image: url('@cdn.asset("images/market/booklet/slide-3_retina.jpg")');">
           <h2 class="slide-3_t title">
             Аэропорты
           </h2>
@@ -420,7 +420,7 @@
       </div>
 
       <div class="slider_i slide-4">
-        <div class="slide-4_bg" style="background-image: url('@CdnUtil.asset("images/market/booklet/slide-4_retina.jpg")');">
+        <div class="slide-4_bg" style="background-image: url('@cdn.asset("images/market/booklet/slide-4_retina.jpg")');">
           <h2 class="slide-4_t title">
             Поиск по товарам<br/>
             и услугам
@@ -442,7 +442,7 @@
           рекламодателей
           и соответствующие поисковому запросу.
         </p>
-        <div class="slide-4_ipad" style="background-image: url('@CdnUtil.asset("images/market/booklet/slide-4_ipad_retina.png")');"></div>
+        <div class="slide-4_ipad" style="background-image: url('@cdn.asset("images/market/booklet/slide-4_ipad_retina.png")');"></div>
       </div>
 
     </section>
@@ -472,10 +472,10 @@
         </div>
       </div>
       <div class="advantages_bottom">
-        <div class="advantages_map" style="background-image: url('@CdnUtil.asset("images/market/booklet/map-advantages_retina.jpg")');"></div>
-        <div class="advantages_wood" style="background-image: url('@CdnUtil.asset("images/market/booklet/wood_retina.jpg")');"></div>
+        <div class="advantages_map" style="background-image: url('@cdn.asset("images/market/booklet/map-advantages_retina.jpg")');"></div>
+        <div class="advantages_wood" style="background-image: url('@cdn.asset("images/market/booklet/wood_retina.jpg")');"></div>
 
-        <div class="advantages_gadgets" style="background-image: url('@CdnUtil.asset("images/market/booklet/gadgets_retina.png")');">
+        <div class="advantages_gadgets" style="background-image: url('@cdn.asset("images/market/booklet/gadgets_retina.png")');">
           <strong class="advantages_phone">8 812 640 76 46</strong>
           <a class="advantages_mail" href=mailto:"adv@@suggest.io">adv@@suggest.io</a>
           <a class="advantages_btn btn __major __size-M" href="@routes.MarketJoin.joinAdvRequest">Разместить рекламу</a>
@@ -485,9 +485,9 @@
 
 
 
-    <script src='@CdnUtil.asset("javascripts/jquery.min.js")'></script>
-    <script src='@CdnUtil.asset("javascripts/lib/bxslider/jquery.bxslider.min.js")'></script>
-    <script src='@CdnUtil.asset("javascripts/market/booklet.js")'></script>
+    <script src='@cdn.asset("javascripts/jquery.min.js")'></script>
+    <script src='@cdn.asset("javascripts/lib/bxslider/jquery.bxslider.min.js")'></script>
+    <script src='@cdn.asset("javascripts/market/booklet.js")'></script>
 
 
   </body>

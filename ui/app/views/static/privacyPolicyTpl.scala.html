@@ -1,10 +1,10 @@
 @()(implicit ctx: Context)
 
-@import util.cdn.CdnUtil
+@import ctx.api.cdn
 
 
 @headAfter = {
-  <link rel="stylesheet" type="text/css" href='@CdnUtil.asset("stylesheets/market/lk_new-design/lk.css")'/>
+  <link rel="stylesheet" type="text/css" href='@cdn.asset("stylesheets/market/lk_new-design/lk.css")'/>
 }
 
 @content = {

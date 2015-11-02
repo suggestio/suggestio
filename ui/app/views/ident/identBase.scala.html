@@ -4,10 +4,10 @@
    Судя по исходному дизайну: надо просто дёргать дизайн вышестоящего шаблона. *@
 
 @import market._
-@import util.cdn.CdnUtil
+@import ctx.api.cdn
 
 @headAfter1 = {
-  <link rel="stylesheet" type="text/css" href='@CdnUtil.asset("stylesheets/market/lk_new-design/lk.css")'/>
+  <link rel="stylesheet" type="text/css" href='@cdn.asset("stylesheets/market/lk_new-design/lk.css")'/>
 
   @static._faviconsTpl()
   @headAfter

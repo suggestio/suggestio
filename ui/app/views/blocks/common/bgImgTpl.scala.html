@@ -2,7 +2,6 @@
   dfltImg: Option[String] = None,  alt: Option[String] = None,  style: Option[String] = None)(implicit ctx: Context)
 
 @import models.blk.AdColorFns.IMG_BG_COLOR_FN.{toString => IMG_BG_COLOR_FN}
-@import util.cdn.CdnUtil
 
 @* Код для рендера тега/тегов, относящихся к фоновой (основной) картинке блока. *@
 
@@ -11,7 +10,7 @@
   @* Есть картинка в карточке. Рендерим img-тег: *@
   <img alt="@alt"
        @cssClass.map { _cssClass => class="@_cssClass" }
-       src="@CdnUtil.forCall( bg.dynImgCall )"
+       src="@ctx.api.cdn.forCall( bg.dynImgCall )"
        @defining( args.mad.colors.get(IMG_BG_COLOR_FN) ) { iBgColorOpt =>
          @if(iBgColorOpt || style) {
            style="@iBgColorOpt.map { ibgColor =>background-color:#@ibgColor;}@style"

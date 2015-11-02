@@ -12,7 +12,7 @@ import play.api.cache.Cache
 import play.api.mvc.Result
 import util.DateTimeUtil
 import util.acl.AdnNodeMaybeAuth
-import util.cdn.CdnUtil
+import util.cdn.ICdnUtilDi
 import util.xplay.CacheUtil
 import views.html.lk.adn.node._installScriptTpl
 import views.txt.sc._
@@ -27,12 +27,21 @@ trait ScNodeInfo
   extends ScController
   with ICurrentConf
   with AdnNodeMaybeAuth
+  with ICdnUtilDi
 {
 
   /** Сколько времени кешировать скомпиленный скрипт nodeIconJsTpl. */
-  private val NODE_ICON_JS_CACHE_TTL_SECONDS = configuration.getInt("market.node.icon.js.cache.ttl.seconds") getOrElse 30
-  private val NODE_ICON_JS_CACHE_CONTROL_MAX_AGE: Int = configuration.getInt("market.node.icon.js.cache.control.max.age") getOrElse {
-    if (Play.isProd)  60  else  6
+  private val NODE_ICON_JS_CACHE_TTL_SECONDS: Int = {
+    configuration.getInt("market.node.icon.js.cache.ttl.seconds")
+      .getOrElse(30)
+  }
+
+  private val NODE_ICON_JS_CACHE_CONTROL_MAX_AGE: Int = {
+    configuration
+      .getInt("market.node.icon.js.cache.control.max.age")
+      .getOrElse {
+        if (Play.isProd)  60  else  6
+      }
   }
 
   // Подписаться на события обновления узлов, чтобы сбрасывать кеш.
@@ -95,7 +104,7 @@ trait ScNodeInfo
       logoOpt <- logoUtil.getLogoOfNode( request.adnNode )
     ) yield {
       logoOpt.map { logoImg =>
-        CdnUtil.dynImg( logoImg )
+        cdnUtil.dynImg( logoImg )
       }
     }
     for {

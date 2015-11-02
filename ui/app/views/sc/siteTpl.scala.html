@@ -3,7 +3,7 @@
 @* Шаблон для рендеринга демо выдачи. Содержит предполагаемый сайт ТЦ, поверх которого рисуется Sio.Market *@
 @import ctx._
 @import _root_.views.html.stuff._
-@import util.cdn.CdnUtil
+@import ctx.api.cdn
 @import models.msc.ScJsState.{qsbStandalone => scJsQsb}
 @import io.suggest.sc.ScConstants.Init.IGNORE_GEO_MASK_ID
 
@@ -39,12 +39,12 @@
   @* fb, vk, pinterest, ff-android home-screen, etc.
      TODO: У OSM.org стоит тут 120х120px. Надо разобраться, какой размер сюда стоит втыкать.
      + og:image допускает несколько размеров. *@
-  <meta property="og:image" content="@CdnUtil.asset("images/favicon/228.png")" />
+  <meta property="og:image" content="@cdn.asset("images/favicon/228.png")" />
 
   @* CDN может быть отключен в конфиге, чтобы Same-Origin не резал webfonts. CORS работает как-то ненадежно на ^старых^ iOS на iphone через webapp. *@
   @defining( "stylesheets/market/showcase.css" ) { scCss =>
     <link type="text/css" rel="stylesheet" media="screen"
-          href="@(if(CdnUtil.FONTS_ENABLED) CdnUtil.asset(scCss) else routes.Assets.versioned(scCss))"/>
+          href="@(if(cdn.FONTS_ENABLED) cdn.asset(scCss) else routes.Assets.versioned(scCss))"/>
   }
 
   @args.headAfter

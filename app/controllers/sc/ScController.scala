@@ -7,7 +7,7 @@ import models.im.logo.LogoUtil
 import models.msc.ScJsState
 import play.api.libs.json.JsString
 import play.twirl.api.{Txt, Html}
-import util.cdn.CdnUtil
+import util.cdn.ICdnUtilDi
 import util.jsa.JsAction
 import views.txt.blocks.common._
 
@@ -20,7 +20,11 @@ import scala.concurrent.Future
  * Created: 07.11.14 19:57
  * Description: Всякая базисная утиль для сборки MarketShowcase-контроллера.
  */
-trait ScController extends SioController with IEsClient {
+trait ScController
+  extends SioController
+  with IEsClient
+  with ICdnUtilDi
+{
 
   def logoUtil: LogoUtil
 
@@ -33,7 +37,7 @@ trait ScController extends SioController with IEsClient {
    */
   protected def htmlAdsCssLink(args: Seq[AdCssArgs])(implicit ctx: Context): Html = {
     val call = routes.MarketShowcase.serveBlockCss(args)
-    val call1 = CdnUtil.forCall(call)
+    val call1 = cdnUtil.forCall(call)
     views.html.sc.stuff._cssLinkTpl(call1)
   }
 

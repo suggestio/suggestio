@@ -3,7 +3,7 @@
 @* Рендер страницы приветствия, если таковая имеется.
    Она может отсутствовать, иметь фон цвета или фон картинки. *@
 
-@import util.cdn.CdnUtil
+@import ctx.api.cdn
 @import views.html.sc.stuff._
 @import io.suggest.sc.ScConstants.Welcome._
 @import io.suggest.sc.ScConstants.Logo
@@ -17,7 +17,7 @@
     @* Нету карточки приветствия. *@
     <span class="sm-welcome-ad_helper"></span>
     <img height="@Logo.HEIGHT_CSSPX" class="sm-welcome-div_img"
-         src="@args.logoImgOpt.fold( CdnUtil.asset("images/market/showcase-logo.png") )( CdnUtil.dynImg )"
+         src="@args.logoImgOpt.fold( cdn.asset("images/market/showcase-logo.png") )( cdn.dynImg )"
          />
 
   } { wargs =>
@@ -52,7 +52,7 @@
       <img id="@FG_IMG_ID" class="sm-welcome-ad_fg-img"
            data-width="@fgImage.meta.map(_.width)"
            data-height="@fgImage.meta.map(_.height)"
-           src="@CdnUtil.dynImg(fgImage.filename)"/>
+           src="@cdn.dynImg(fgImage.filename)"/>
     }
 
     @* Рендерим покрывающую картинку (svg/png) *@

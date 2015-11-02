@@ -1,7 +1,7 @@
 @(mnode: MNode, logoOpt: Option[im.MImgT])(implicit ctx: Context)
 
 @import util.CoffeeScriptTemplate._
-@import util.cdn.CdnUtil
+@import ctx.api.cdn
 
 @coffee{
 
@@ -14,7 +14,7 @@ siom =
     sm_trigger_class : 'sio-mart-trigger'
     node_color : '@mnode.meta.colors.bg.fold("ffffff")(_.code)'
     @logoOpt.map { logoImg =>
-    logo_src : '@CdnUtil.dynImg(logoImg)'
+    logo_src : '@cdn.dynImg(logoImg)'
     }
   utils :
     elts_cache : {}

@@ -24,6 +24,7 @@ import models._
 class WelcomeUtil @Inject() (
   configuration          : Configuration,
   scUtil                 : ShowcaseUtil,
+  cdnUtil                : CdnUtil,
   implicit val ec        : ExecutionContext,
   implicit val esClient  : Client,
   implicit val sn        : SioNotifierStaticClientI
@@ -198,14 +199,14 @@ class WelcomeUtil @Inject() (
       }
       .fold [ImgUrlInfoT] {
         ImgUrlInfo(
-          call = CdnUtil.dynImg(oiik2.fileName),
+          call = cdnUtil.dynImg(oiik2.fileName),
           meta = Some(origMeta)
         )
       } { case (bss, screen) =>
         val imOps = imConvertArgs(bss, screen)
         val dynArgs = oiik2.withDynOps(imOps)
         ImgUrlInfo(
-          call = CdnUtil.dynImg(dynArgs),
+          call = cdnUtil.dynImg(dynArgs),
           meta = Some(bss)
         )
       }

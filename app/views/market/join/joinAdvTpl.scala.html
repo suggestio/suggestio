@@ -4,7 +4,7 @@
 
 @import util.captcha.CaptchaUtil.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
 @import io.suggest.util.StringUtil.randomId
-@import util.cdn.CdnUtil
+@import ctx.api.cdn
 
 @joinBase("Suggest.io: мобильная таргетированная реклама в Москве и СПБ, размещение рекламы в Интернете.") {
 
@@ -64,7 +64,7 @@
 
         <div class="adv-req-page_left">
           <a class="index-page_logo-link" href="@routes.Ident.mySioStartPage()" >
-            <img class="index-page_logo-image" src='@CdnUtil.asset("images/market/index/logo_retina.png")'/>
+            <img class="index-page_logo-image" src='@cdn.asset("images/market/index/logo_retina.png")'/>
           </a>
 
 

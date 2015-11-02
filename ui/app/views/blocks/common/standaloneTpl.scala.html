@@ -2,7 +2,7 @@
 
 @* Шаблон для рендера ровно одной карточки на экране. *@
 
-@import util.cdn.CdnUtil
+@import ctx.api.cdn
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ru" lang="ru" style="overflow: hidden;">
@@ -14,12 +14,12 @@
   <meta name="viewport" content="@if(ctx.isIpad) {width=640, initial-scale = 1} else {width=320,initial-scale = 1},user-scalable=no"/>
 
   @* Тут надо логотип узла рекламной сети? *@
-  <link rel="shortcut icon" type="image/png" href="@CdnUtil.asset("images/favicon.ico")">
+  <link rel="shortcut icon" type="image/png" href="@cdn.asset("images/favicon.ico")">
 
-  <script src="@CdnUtil.asset("javascripts/jquery.min.js")"></script>
+  <script src="@cdn.asset("javascripts/jquery.min.js")"></script>
 
-  <link rel="stylesheet" type="text/css" href='@CdnUtil.asset("stylesheets/market/showcase.css")'/>
-  <script src="@CdnUtil.asset("javascripts/market/lk/mx_cof.js")"></script>
+  <link rel="stylesheet" type="text/css" href='@cdn.asset("stylesheets/market/showcase.css")'/>
+  <script src="@cdn.asset("javascripts/market/lk/mx_cof.js")"></script>
 
   @headAfter
 </head>

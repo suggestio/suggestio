@@ -1,19 +1,19 @@
 package util.event
 
 import akka.actor.ActorContext
+import com.google.inject.Inject
 import io.suggest.event.{MNodeSavedEvent, SNStaticSubscriber}
 import io.suggest.event.SioNotifier.{Event, Subscriber, Classifier}
 import io.suggest.event.subscriber.SnClassSubscriber
 import models.{MAdvMode, MAdvI, MAdvModes}
 import models.adv.AdvSavedEvent
 import models.event.{MEventType, MEventTypes, ArgsInfo, MEvent}
+import org.elasticsearch.client.Client
+import play.api.Configuration
 import util.PlayMacroLogsImpl
-import play.api.Play.{current, configuration}
 import util.event.SiowebNotifier.Implicts.sn
-import util.SiowebEsUtil.client
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -22,7 +22,15 @@ import scala.concurrent.Future
  * Description: При создании узла надо добавить в него кое-какие начальные события.
  * Для этого нужно отреагировать на событие создание узла.
  */
-object AdnNodeEvents extends SNStaticSubscriber with SnClassSubscriber with PlayMacroLogsImpl {
+class AdnNodeEvents @Inject() (
+  configuration         : Configuration,
+  implicit val esClient : Client,
+  implicit val ec       : ExecutionContext
+)
+  extends SNStaticSubscriber
+  with SnClassSubscriber
+  with PlayMacroLogsImpl
+{
 
   import LOGGER._
 
@@ -41,7 +49,7 @@ object AdnNodeEvents extends SNStaticSubscriber with SnClassSubscriber with Play
     val someTrue = Some(true)
     List(
       MNodeSavedEvent.getClassifier(isCreated = someTrue)   -> subs,
-      AdvSavedEvent.getClassifier(isCreated = someTrue)       -> subs
+      AdvSavedEvent.getClassifier(isCreated = someTrue)     -> subs
     )
   }
 

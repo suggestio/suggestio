@@ -2,7 +2,7 @@
 
 @* Страница с запросом обратного звонка. *@
 
-@import util.cdn.CdnUtil
+@import ctx.api.cdn
 
 @joinBase("Запросить обратный звонок") {
 
@@ -22,6 +22,6 @@
   </div>
 
   @* В форме есть поле для ввода номера телефона. *@
-  <script src="@CdnUtil.asset("javascripts/lib/maskedinput/maskedInput.min.js")"></script>
+  <script src="@cdn.asset("javascripts/lib/maskedinput/maskedInput.min.js")"></script>
 
 }

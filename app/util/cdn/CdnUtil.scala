@@ -1,9 +1,10 @@
 package util.cdn
 
+import com.google.inject.Inject
 import controllers.routes
 import models.im.{MImgT, MImg}
 import models.{Context, ExternalCall}
-import play.api.Play.{current, configuration}
+import play.api.Configuration
 import play.api.mvc.Call
 import util.PlayMacroLogsImpl
 import util.img.DynImgUtil
@@ -15,7 +16,11 @@ import scala.collection.JavaConversions._
  * Created: 09.10.14 18:31
  * Description: Утииль для работы с CDN.
  */
-object CdnUtil extends PlayMacroLogsImpl {
+class CdnUtil @Inject() (
+  configuration: Configuration
+)
+  extends PlayMacroLogsImpl
+{
 
   import LOGGER._
 
@@ -35,7 +40,10 @@ object CdnUtil extends PlayMacroLogsImpl {
   }
 
   /** Раздавать ли шрифты через CDN? Дергается из шаблонов. Если Cors отключен, то этот параметр тоже отключается. */
-  val FONTS_ENABLED: Boolean = configuration.getBoolean("cdn.fonts.enabled").exists(_ && CorsUtil.IS_ENABLED)
+  val FONTS_ENABLED: Boolean = {
+    configuration.getBoolean("cdn.fonts.enabled")
+      .exists(_ && CorsUtil.IS_ENABLED)
+  }
 
   /** Отключено использование CDN на хостах: */
   val DISABLED_ON_HOSTS: Set[String] = {

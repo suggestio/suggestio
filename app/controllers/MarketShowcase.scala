@@ -8,6 +8,7 @@ import models.im.logo.LogoUtil
 import org.elasticsearch.client.Client
 import play.api.i18n.MessagesApi
 import util._
+import util.cdn.CdnUtil
 import util.img.WelcomeUtil
 import util.showcase.{ShowcaseUtil, ShowcaseNodeListUtil, ScStatUtil}
 import util.stat.StatUtil
@@ -30,6 +31,7 @@ class MarketShowcase @Inject() (
   override val statUtil           : StatUtil,
   override val scNlUtil           : ShowcaseNodeListUtil,
   override val scUtil             : ShowcaseUtil,
+  override val cdnUtil            : CdnUtil,
   override val mNodeCache         : MAdnNodeCache,
   override val _contextFactory    : Context2Factory,
   override val errorHandler       : ErrorHandler,

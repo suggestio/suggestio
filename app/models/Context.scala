@@ -15,6 +15,7 @@ import play.api.mvc.RequestHeader
 import play.api.Play.{current, configuration, isDev}
 import util.acl._, PersonWrapper.PwOpt_t
 import play.api.http.HeaderNames._
+import util.cdn.CdnUtil
 import util.img.GalleryUtil
 import util.jsa.init.ITargets
 import scala.util.Random
@@ -294,7 +295,8 @@ trait Context extends MyHostsT with ISioReqMd {
   * DI препятствует этому, поэтому необходимо обеспечивать доступ с помощью класса-костыля. */
 @Singleton
 class ContextApi @Inject() (
-  val galleryUtil         : GalleryUtil
+  val galleryUtil         : GalleryUtil,
+  val cdn                 : CdnUtil
 )
 
 
