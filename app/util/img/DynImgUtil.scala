@@ -5,21 +5,23 @@ import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.util.UUID
 
+import com.google.inject.{Singleton, Inject}
 import controllers.routes
+import io.suggest.playx.CacheApiUtil
 import io.suggest.util.UuidUtil
 import models._
 import models.im._
 import org.im4java.core.{ConvertCmd, IMOperation}
 import org.joda.time.DateTime
-import play.api.cache.Cache
+import play.api.Configuration
+import play.api.cache.CacheApi
 import play.api.mvc.Call
-import play.api.Play.{current, configuration}
 import util.PlayMacroLogsImpl
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.async.AsyncUtil
 import scala.collection.JavaConversions._
 
-import scala.concurrent.{Promise, Future}
+import scala.concurrent.{ExecutionContext, Promise, Future}
+import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
 /**
@@ -29,13 +31,23 @@ import scala.util.{Failure, Success}
  * Description: Утиль для работы с динамическими картинками.
  * В основном -- это прослойка между img-контроллером и моделью orig img и смежными ей.
  */
-object DynImgUtil extends PlayMacroLogsImpl {
+@Singleton
+class DynImgUtil @Inject() (
+  cacheApi          : CacheApi,
+  cacheApiUtil      : CacheApiUtil,
+  configuration     : Configuration,
+  implicit val ec   : ExecutionContext
+) extends PlayMacroLogsImpl {
 
   import LOGGER._
 
   /** Сколько времени кешировать результат подготовки картинки?
     * Кеш используется для подавления параллельных запросов. */
-  val ENSURE_DYN_CACHE_TTL_SECONDS = configuration.getInt("img.dyn.ensure.cache.ttl.seconds") getOrElse 10
+  val ENSURE_DYN_CACHE_TTL = {
+    configuration.getInt("img.dyn.ensure.cache.ttl.seconds")
+      .getOrElse(10)
+      .seconds
+  }
 
   /** Если true, то производные от оригинала картники будут дублироваться в cassandra.
     * Если false, то производные будут только на локалхосте. */
@@ -45,7 +57,7 @@ object DynImgUtil extends PlayMacroLogsImpl {
     * Префетчинг начинается асинхронно в момент генерации ссылки на картинку. */
   val PREFETCH_ENABLED = configuration.getBoolean("img.dyn.prefetch.enabled") getOrElse true
 
-  info(s"DynImgUtil: esnureCache=$ENSURE_DYN_CACHE_TTL_SECONDS sec, saveDerivatives=$SAVE_DERIVATIVES_TO_PERMANENT, prefetch=$PREFETCH_ENABLED")
+  info(s"DynImgUtil: esnureCache=$ENSURE_DYN_CACHE_TTL, saveDerivatives=$SAVE_DERIVATIVES_TO_PERMANENT, prefetch=$PREFETCH_ENABLED")
 
   /**
    * Враппер для вызова routes.Img.dynImg(). Нужен чтобы навешивать сайд-эффекты и трансформировать результат вызова.
@@ -120,13 +132,14 @@ object DynImgUtil extends PlayMacroLogsImpl {
     val ck = args.fileNameSb()
       .append(":eIR")
       .toString()
-    Cache.getAs[Future[MLocalImg]](ck) match {
+    // TODO Тут наверное можно задейстовать cacheApiUtil.
+    cacheApi.get [Future[MLocalImg]] (ck) match {
       // Результирующего фьючерс нет в кеше. Запускаем поиск/генерацию картинки:
       case None =>
         val localImgResult = args.toLocalImg
         // Если настроено, фьючерс результата работы сразу кешируем, не дожидаясь результатов:
         if (cacheResult)
-          Cache.set(ck, resultFut, expiration = ENSURE_DYN_CACHE_TTL_SECONDS)
+          cacheApi.set(ck, resultFut, expiration = ENSURE_DYN_CACHE_TTL)
         // Готовим асинхронный результат работы:
         localImgResult onComplete {
           case Success(Some(img)) =>
@@ -134,7 +147,7 @@ object DynImgUtil extends PlayMacroLogsImpl {
 
           // Картинки в указанном виде нету. Нужно сделать её из оригинала:
           case Success(None) =>
-            val localResultFut = DynImgUtil.mkReadyImgToFile(args)
+            val localResultFut = mkReadyImgToFile(args)
             // В фоне запускаем сохранение полученной картинки в permanent-хранилище (если включено):
             if (saveToPermanent) {
               localResultFut onSuccess { case localImg2 =>
@@ -156,6 +169,12 @@ object DynImgUtil extends PlayMacroLogsImpl {
     resultFut
   }
 
+  val CONVERT_CACHE_TTL: FiniteDuration = {
+    configuration.getInt("dyn.img.convert.cache.seconds")
+      .getOrElse(10)
+      .seconds
+  }
+
 
   /**
    * Конвертация из in в out согласно списку инструкций.
@@ -175,34 +194,18 @@ object DynImgUtil extends PlayMacroLogsImpl {
     val opStr = op.toString
     // Бывает, что происходят двойные одинаковые вызовы из-за слишком сильной параллельности в работе системы.
     // Пытаемся подавить двойные вызовы через короткий Cache.
-    val p = Promise[Int]()
-    val pfut = p.future
-    try {
-      Cache.getAs [Future[Int]] (opStr) match {
-        case None =>
-          // Немедленно заливаем в кеш сие
-          Cache.set(opStr, pfut, expiration = 10)
-          // Запускаем генерацию картинки.
-          val listener = new Im4jAsyncSuccessProcessListener
-          cmd.addProcessEventListener(listener)
-          trace("convert(): " + cmd.getCommand.mkString(" ") + " " + opStr)
-          cmd run op
-          val resFut = listener.future
-          resFut onSuccess { case res =>
-            trace(s"convert(): returned $res, result ${out.length} bytes")
-          }
-          p completeWith resFut
-        // Обработчик картинки уже в кеше. На этом и закончить.
-        case Some(res) =>
-          p completeWith res
+    cacheApiUtil.getOrElseFut[Int](opStr, expiration = CONVERT_CACHE_TTL) {
+      // Запускаем генерацию картинки.
+      val listener = new Im4jAsyncSuccessProcessListener
+      cmd.addProcessEventListener(listener)
+      trace("convert(): " + cmd.getCommand.mkString(" ") + " " + opStr)
+      cmd run op
+      val resFut = listener.future
+      resFut onSuccess { case res =>
+        trace(s"convert(): returned $res, result ${out.length} bytes")
       }
-
-    } catch {
-      case ex: Throwable =>
-        p failure ex
+      resFut
     }
-
-    pfut
   }
 
 

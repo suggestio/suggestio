@@ -1,6 +1,6 @@
 package util.cdn
 
-import com.google.inject.Inject
+import com.google.inject.{Singleton, Inject}
 import controllers.routes
 import models.im.{MImgT, MImg}
 import models.{Context, ExternalCall}
@@ -16,8 +16,10 @@ import scala.collection.JavaConversions._
  * Created: 09.10.14 18:31
  * Description: Утииль для работы с CDN.
  */
+@Singleton
 class CdnUtil @Inject() (
-  configuration: Configuration
+  dynImgUtil      : DynImgUtil,
+  configuration   : Configuration
 )
   extends PlayMacroLogsImpl
 {
@@ -111,7 +113,7 @@ class CdnUtil @Inject() (
 
   /** Вызов к dynImg через CDN. */
   def dynImg(dargs: MImgT)(implicit ctx: Context): Call = {
-    forCall( DynImgUtil.imgCall(dargs) )
+    forCall( dynImgUtil.imgCall(dargs) )
   }
   def dynImg(filename: String)(implicit ctx: Context): Call = {
     val img = MImg(filename)

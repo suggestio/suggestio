@@ -1,7 +1,7 @@
 @(imgs: Seq[im.MImgT], uf: Form[_])(implicit ctx: Context)
 
 @* Шаблон главной страницы sys.img-раздела админки. *@
-@import util.img.DynImgUtil.thumb256Call
+@import ctx.api.dynImgUtil
 
 @hPathAfter1 = { }
 
@@ -18,7 +18,7 @@
   } else {
     @imgs.iterator.map { img =>
       <a href="@routes.SysImg.showOne(img)">
-        <img src="@thumb256Call(img, fillArea = true)" alt="rowKey: @img.rowKeyStr" />
+        <img src="@dynImgUtil.thumb256Call(img, fillArea = true)" alt="rowKey: @img.rowKeyStr" />
       </a>
     }
   }

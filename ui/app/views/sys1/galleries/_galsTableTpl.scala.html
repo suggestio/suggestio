@@ -5,7 +5,7 @@
 
 @import ctx._
 @import datetime._
-@import util.img.DynImgUtil
+@import ctx.api.dynImgUtil
 
 
 @for(gal <- gals) {
@@ -42,8 +42,8 @@
     @* Рендерим превьюшки картинок. *@
     <td>
       @gal.imgs.map { img =>
-        <a class="image __size-M f-left" href="@DynImgUtil.imgCall(img)">
-          <img class="image_src" src="@DynImgUtil.thumb256Call(img, fillArea = true)" alt="id картинки: @img.rowKeyStr"/>
+        <a class="image __size-M f-left" href="@dynImgUtil.imgCall(img)">
+          <img class="image_src" src="@dynImgUtil.thumb256Call(img, fillArea = true)" alt="id картинки: @img.rowKeyStr"/>
         </a>
       }
     </td>

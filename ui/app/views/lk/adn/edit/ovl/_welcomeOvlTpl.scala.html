@@ -6,14 +6,14 @@
 @import ctx.messages
 @import io.suggest.img.ImgConstants
 @import views.html.lk.forms.img._
-@import util.img.DynImgUtil
+@import ctx.api.dynImgUtil
 @import madn.EditConstants.WELCOME_IMG_FN
 
 @_jsPreviewOverlayTpl(
-  btnText	    = messages("Delete"),
-  name	        = WELCOME_IMG_FN,
-  imgKey	    = imgId,
-  imgPreviewUrl = DynImgUtil.thumb256Call(imgId, fillArea = false),
-  divCss	    = Seq("__size-M"),
-  btnCss	    = Seq("image_remove-btn", ImgConstants.JS_REMOVE_IMG_CLASS)
+  btnText	        = messages("Delete"),
+  name	          = WELCOME_IMG_FN,
+  imgKey	        = imgId,
+  imgPreviewUrl   = dynImgUtil.thumb256Call(imgId, fillArea = false),
+  divCss	        = Seq("__size-M"),
+  btnCss	        = Seq("image_remove-btn", ImgConstants.JS_REMOVE_IMG_CLASS)
 )

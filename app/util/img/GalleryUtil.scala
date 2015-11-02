@@ -22,6 +22,7 @@ import scala.concurrent.Future
  */
 @Singleton
 class GalleryUtil @Inject() (
+  dynImgUtil      : DynImgUtil,
   mImg3           : MImg3_,
   configuration   : Configuration
 ) {
@@ -98,7 +99,7 @@ class GalleryUtil @Inject() (
       imOps ::= AbsCropOp(crop)
     }
     val dynArgs = oiik.withDynOps(imOps)
-    DynImgUtil.imgCall(dynArgs)
+    dynImgUtil.imgCall(dynArgs)
   }
 
 

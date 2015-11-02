@@ -6,7 +6,7 @@
 
 @import ctx._
 @import node._
-@import util.img.DynImgUtil
+@import ctx.api.dynImgUtil
 @import io.suggest.vlines.VLines
 @import args._
 @import lk.lkProp
@@ -28,7 +28,7 @@
     @if(mnode.meta.colors.bg.isDefined) {
       @args.logoImgOpt.map { img =>
         <div class="image __size-L" style="background-color: #@mnode.meta.colors.bg.map(_.code);">
-          <img class="image_src" src="@DynImgUtil.imgCall(img)" alt="@mnode.meta.basic.name"/>
+          <img class="image_src" src="@dynImgUtil.imgCall(img)" alt="@mnode.meta.basic.name"/>
         </div>
       }
     }

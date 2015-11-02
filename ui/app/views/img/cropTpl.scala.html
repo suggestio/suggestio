@@ -2,7 +2,7 @@
 
 @import ctx._
 @import helper._
-@import util.img.DynImgUtil
+@import ctx.api.dynImgUtil
 @import io.suggest.popup.PopupConstants
 @import io.suggest.img.ImgConstants
 
@@ -20,7 +20,7 @@
 
       @* Рендер превьшки, но с реальными размерами. *@
       <div>
-        <img class="bg abs" data-width="@imeta.width" data-height="@imeta.height" src="@DynImgUtil.thumb256Call(imgId, fillArea = true)" />
+        <img class="bg abs" data-width="@imeta.width" data-height="@imeta.height" src="@dynImgUtil.thumb256Call(imgId, fillArea = true)" />
       </div>
 
     </div>

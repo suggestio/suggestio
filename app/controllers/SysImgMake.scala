@@ -6,6 +6,7 @@ import models.blk.{BlockWidths, BlockHeights, BlockMetaUtil}
 import models.im.{MImgT, CompressModes, DevScreen}
 import models.im.make.{Makers, MakeArgs, IMakeArgs, SysForm_t}
 import play.api.data.{Form, Mapping}
+import play.api.mvc.Result
 import play.twirl.api.Html
 import util.blocks.BlocksConf
 import util.{FormUtil, PlayMacroLogsI}
@@ -80,14 +81,14 @@ trait SysImgMake
       )
     ))
     // Запустить рендер страницы с формой
-    _makeFormRender(img, form)(ctx)
-      .map { Ok(_) }
+    _makeFormRender(img, form, Ok)(ctx)
   }
 
   /** Рендер страницы с формой параметров make. */
-  private def _makeFormRender(img: MImgT, form: SysForm_t)(implicit ctx: Context): Future[Html] = {
+  private def _makeFormRender(img: MImgT, form: SysForm_t, respStatus: Status)
+                             (implicit ctx: Context): Future[Result] = {
     val html = makeFormTpl(img, form)(ctx)
-    Future successful html
+    Future successful respStatus(html)
   }
 
   /**
@@ -99,8 +100,7 @@ trait SysImgMake
     makeFormM(img).bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug(s"makeFormSubmit(${img.rowKeyStr}): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
-        _makeFormRender(img, formWithErrors)
-          .map { NotAcceptable(_) }
+        _makeFormRender(img, formWithErrors, NotAcceptable)
       },
       {case (maker, makeArgs) =>
         maker.icompile(makeArgs).map { makeRes =>

@@ -12,6 +12,7 @@ import io.suggest.popup.PopupConstants
 import models.{Context2Factory, Context}
 import play.api.cache.CacheApi
 import play.twirl.api.Html
+import util.di.IDynImgUtil
 import util.img.ImgCtlUtil
 import _root_.util.async.AsyncUtil
 import models.im._
@@ -43,6 +44,7 @@ import scala.util.{Success, Failure}
  */
 @Singleton
 class Img @Inject() (
+  override val dynImgUtil         : DynImgUtil,
   override val messagesApi        : MessagesApi,
   override val actorSystem        : ActorSystem,
   override implicit val current   : play.api.Application,
@@ -160,7 +162,7 @@ class Img @Inject() (
               val previewCall = {
                 val imOps = List(cropOp, _imgRszPreviewOp)
                 val img = MImg(localImg.rowKey, imOps)
-                DynImgUtil.imgCall(img)
+                dynImgUtil.imgCall(img)
               }
               Ok( jsonTempOk(croppedImgFileName, previewCall) )
             }
@@ -201,7 +203,7 @@ class Img @Inject() (
 
       // Изменилась картинка. Выдать её. Если картинки нет, то создать надо на основе оригинала.
       case false =>
-        DynImgUtil.ensureImgReady(args, cacheResult = false) map { localImg =>
+        dynImgUtil.ensureImgReady(args, cacheResult = false) map { localImg =>
           serveImgFromFile(
             file = localImg.file,
             cacheSeconds = CACHE_ORIG_CLIENT_SECONDS,
@@ -232,6 +234,7 @@ trait TempImgSupport
   with I18nSupport
   with IConfiguration
   with ICacheApiUtil
+  with IDynImgUtil
 {
 
   /** DI-инстанс [[ImgCtlUtil]], т.е. статическая утиль для img-контроллеров. */
@@ -343,7 +346,7 @@ trait TempImgSupport
             val res2Fut = imgPrepareFut map { _ =>
               Ok( jsonTempOk(
                 mptmp.fileName,
-                DynImgUtil.imgCall(im),
+                dynImgUtil.imgCall(im),
                 ovlOpt
               ) )
             }

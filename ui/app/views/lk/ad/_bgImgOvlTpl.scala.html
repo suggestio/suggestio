@@ -3,17 +3,17 @@
 @import ctx.messages
 @import io.suggest.img.crop.CropConstants._
 @import views.html.lk.forms.img._
-@import util.img.DynImgUtil
+@import ctx.api.dynImgUtil
 @import io.suggest.img.ImgConstants
 @import io.suggest.ad.form.AdFormConstants._
 
 @* Оверлей для фоновой картинки карточки. *@
 
 @_jsPreviewOverlayTpl(
-  btnText	    = messages("Delete"),
-  name		    = OFFER_K + ".bgImg",
-  imgKey	    = imgId,
-  imgPreviewUrl	    = DynImgUtil.thumb256Call(imgId, fillArea = false),
-  divCss	    = Seq("__size-M"),
-  btnCss	    = Seq("image_remove-btn", ImgConstants.JS_REMOVE_IMG_CLASS)
+  btnText	          = messages("Delete"),
+  name		          = OFFER_K + ".bgImg",
+  imgKey	          = imgId,
+  imgPreviewUrl	    = dynImgUtil.thumb256Call(imgId, fillArea = false),
+  divCss	          = Seq("__size-M"),
+  btnCss	          = Seq("image_remove-btn", ImgConstants.JS_REMOVE_IMG_CLASS)
 )

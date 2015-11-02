@@ -7,13 +7,13 @@
 @import ctx.messages
 @import io.suggest.img.crop.CropConstants._
 @import views.html.lk.forms.img._
-@import util.img.DynImgUtil
+@import ctx.api.dynImgUtil
 
 @_jsPreviewOverlayTpl(
   btnText       = messages("Edit"),
   name          = fn,
   imgKey        = imgId,
-  imgPreviewUrl = DynImgUtil.thumb256Call(imgId, fillArea = false),
+  imgPreviewUrl = dynImgUtil.thumb256Call(imgId, fillArea = false),
   divCss        = Seq("__size-M", "f-left"),
   btnCss        = Seq("image_edit-btn", CROP_IMAGE_BTN_CLASS),
   whOpt         = Some(MImgInfoMeta(width = 790, height = 250))
