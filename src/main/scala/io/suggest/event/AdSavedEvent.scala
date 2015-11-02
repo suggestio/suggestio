@@ -19,16 +19,6 @@ object AdSavedEvent {
 
 }
 
-case class AdSavedEvent(mad: MAd) extends SioEventT {
-  def getClassifier: Classifier = AdSavedEvent.getClassifier(
-    producerId = Option(mad.producerId),
-    id = mad.id
-  )
-
-  override def toString: String = s"""${getClass.getSimpleName}(${mad.id.getOrElse("")})"""
-}
-
-
 
 /** Событие удаления рекламной карточки из БД. */
 object AdDeletedEvent {
@@ -42,10 +32,12 @@ object AdDeletedEvent {
 
 /** Экземпляр события удаления рекламной карточки из БД. */
 case class AdDeletedEvent(mad: MAd) extends SioEventT {
-  def getClassifier: Classifier = AdSavedEvent.getClassifier(
-    producerId = Option(mad.producerId),
-    id = mad.id
-  )
+  def getClassifier: Classifier = {
+    AdSavedEvent.getClassifier(
+      producerId = Option(mad.producerId),
+      id = mad.id
+    )
+  }
 
   override def toString: String = s"""${getClass.getSimpleName}(${mad.id.getOrElse("")})"""
 }

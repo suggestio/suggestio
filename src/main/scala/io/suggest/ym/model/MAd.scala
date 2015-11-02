@@ -123,20 +123,6 @@ object MAd
       }
   }
 
-  /** Сохранить все значения ресиверов со всех переданных карточек в хранилище модели.
-    * Другие поля не будут обновляться. Для ускорения и некоторого подобия транзакционности делаем всё через bulk. */
-  override def updateAllReceivers(mads: Seq[T])
-                                 (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
-    val resultFut = super.updateAllReceivers(mads)
-    // В добавок к выполненным действиям нужно породить уведомление о сохранении:
-    resultFut onSuccess { case _ =>
-      mads.foreach {
-        _.emitSavedEvent
-      }
-    }
-    resultFut
-  }
-
 }
 
 
@@ -193,13 +179,9 @@ final case class MAd(
     resultFut onSuccess { case adId =>
       if (this.id.isEmpty)
         this.id = Option(adId)
-      emitSavedEvent
     }
     resultFut
   }
-
-  /** Отправить в шину SN событие успешного сохранения этого экземпляра. */
-  def emitSavedEvent(implicit sn: SioNotifierStaticClientI) = sn publish AdSavedEvent(this)
 
 }
 
