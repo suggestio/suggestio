@@ -2,10 +2,8 @@ package util
 
 import javax.crypto.Cipher
 import javax.crypto.spec.{IvParameterSpec, SecretKeySpec}
-import io.suggest.util.SioRandom
 import org.apache.commons.codec.binary.Base64
 import org.apache.commons.lang3.ArrayUtils
-import scala.util.Random
 import java.security.{SecureRandom, MessageDigest, Security}
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 /**

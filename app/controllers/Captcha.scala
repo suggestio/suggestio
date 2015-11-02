@@ -4,11 +4,13 @@ import java.io.ByteArrayOutputStream
 import java.util.Properties
 import javax.imageio.ImageIO
 import com.google.code.kaptcha.util.Config
+import com.google.inject.Inject
 import io.suggest.util.TextUtil
 import com.google.code.kaptcha.Producer
 import com.google.code.kaptcha.impl.DefaultKaptcha
 import play.api.data.Form
 import play.api.mvc._
+import util.captcha.{CaptchaUtil, ICaptchaUtilDi}
 import util.{PlayMacroLogsI, PlayMacroLogsImpl}
 import util.captcha.CaptchaUtil._
 
@@ -20,7 +22,9 @@ import scala.util.Random
  * Created: 18.06.14 9:57
  * Description: Контроллер и сопутствующая утиль для капчеванию пользователей.
  */
-class Captcha
+class Captcha @Inject() (
+  override val captchaUtil: CaptchaUtil
+)
   extends KaptchaGenerator
   with PlayMacroLogsImpl
 
@@ -29,6 +33,7 @@ class Captcha
 trait CaptchaGeneratorBase
   extends Controller
   with PlayMacroLogsI
+  with ICaptchaUtilDi
 {
 
   def createCaptchaText: String
@@ -36,7 +41,7 @@ trait CaptchaGeneratorBase
   /** Генерация текста цифровой капчи (n цифр от 0 до 9). */
   def createCaptchaDigits: String = {
     val rnd = new Random()
-    val l = DIGITS_CAPTCHA_LEN
+    val l = captchaUtil.DIGITS_CAPTCHA_LEN
     val sb = new StringBuilder(l)
     for(_ <- 1 to l) {
       sb append rnd.nextInt(10)
@@ -47,20 +52,20 @@ trait CaptchaGeneratorBase
   def createCaptchaImg(ctext: String): Array[Byte]
 
   protected def _getCaptchaImg(captchaId: String, ctext: String, cookiePath: String)(implicit request: RequestHeader): Result = {
-    val ctextCrypt = encryptPrintable(ctext, ivMaterial = ivMaterial(captchaId))
+    val ctextCrypt = captchaUtil.encryptPrintable(ctext, ivMaterial = captchaUtil.ivMaterial(captchaId))
     Ok(createCaptchaImg(ctext))
       .withHeaders(
-        CONTENT_TYPE  -> ("image/" + CAPTCHA_FMT_LC),
+        CONTENT_TYPE  -> ("image/" + captchaUtil.CAPTCHA_FMT_LC),
         EXPIRES       -> "0",
         PRAGMA        -> "no-cache",
         CACHE_CONTROL -> "no-store, no-cache, must-revalidate"
       )
       .withCookies(Cookie(
-        name      = cookieName(captchaId),
+        name      = captchaUtil.cookieName(captchaId),
         value     = ctextCrypt,
-        maxAge    = Some(COOKIE_MAXAGE_SECONDS),
+        maxAge    = Some( captchaUtil.COOKIE_MAXAGE_SECONDS ),
         httpOnly  = true,
-        secure    = COOKIE_FLAG_SECURE,
+        secure    = captchaUtil.COOKIE_FLAG_SECURE,
         path      = cookiePath
       ))
   }
@@ -105,8 +110,8 @@ trait KaptchaGenerator extends CaptchaGeneratorBase {
   def createCaptchaImg(ctext: String): Array[Byte] = {
     val img = CAPTCHA_PRODUCER.createImage(ctext)
     val baos = new ByteArrayOutputStream(8192)
-    if (!ImageIO.write(img, CAPTCHA_FMT_LC, baos)) {
-      throw new IllegalStateException("ImageIO writer returned false. No writer for captcha image or format " + CAPTCHA_FMT_LC)
+    if (!ImageIO.write(img, captchaUtil.CAPTCHA_FMT_LC, baos)) {
+      throw new IllegalStateException("ImageIO writer returned false. No writer for captcha image or format " + captchaUtil.CAPTCHA_FMT_LC)
     }
     baos.toByteArray
   }
@@ -115,7 +120,7 @@ trait KaptchaGenerator extends CaptchaGeneratorBase {
 
 
 /** Проверка капчи, миксуемая в трейт для проверки введённой капчи. */
-trait CaptchaValidator extends PlayMacroLogsI {
+trait CaptchaValidator extends PlayMacroLogsI with ICaptchaUtilDi {
 
   /** Проверить капчу, присланную в форме. Вызывается перез Form.fold().
     * @param form Маппинг формы.
@@ -124,12 +129,12 @@ trait CaptchaValidator extends PlayMacroLogsI {
   def checkCaptcha[T](form: Form[T])(implicit request: RequestHeader): Form[T] = {
     val maybeCookieOk = form.data.get(CAPTCHA_ID_FN) flatMap { captchaId =>
       form.data.get(CAPTCHA_TYPED_FN) flatMap { captchaTyped =>
-        val _cookieName = cookieName(captchaId)
+        val _cookieName = captchaUtil.cookieName(captchaId)
         val cookieRaw = request.cookies.get(_cookieName)
         val cookie = cookieRaw
           .filter { cookie =>
             try {
-              val ctext = decryptPrintable(cookie.value, ivMaterial = ivMaterial(captchaId))
+              val ctext = captchaUtil.decryptPrintable(cookie.value, ivMaterial = captchaUtil.ivMaterial(captchaId))
               // Бывает юзер вводит английские буквы с помощью кириллицы. Исправляем это:
               // TODO Надо исправлять только буквы
               val captchaTyped2 = captchaTyped.trim.map { TextUtil.mischarFixEnAlpha }
@@ -168,8 +173,8 @@ trait CaptchaValidator extends PlayMacroLogsI {
     form.data.get(CAPTCHA_ID_FN).fold(response) { captchaId =>
       response
         .discardingCookies(DiscardingCookie(
-          name = cookieName(captchaId),
-          secure = COOKIE_FLAG_SECURE
+          name   = captchaUtil.cookieName(captchaId),
+          secure = captchaUtil.COOKIE_FLAG_SECURE
         ))
     }
   }

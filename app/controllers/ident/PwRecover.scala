@@ -26,18 +26,6 @@ import util.FormUtil.passwordWithConfirmM
  * Description: Аддон для Ident-контроллера для поддержки восстановления пароля.
  */
 
-object PwRecover {
-
-  /** Маппинг формы восстановления пароля. */
-  def recoverPwFormM: EmailPwRecoverForm_t = {
-    EmailPwReg.emailRegFormM
-  }
-
-}
-
-
-import PwRecover._
-
 
 /** Хелпер контроллеров, занимающийся отправкой почты для восстановления пароля. */
 trait SendPwRecoverEmail
@@ -107,7 +95,14 @@ trait PwRecover
   with CanRecoverPwCtl
   with IsAnon
   with IIdentUtil
+  with EmailPwRegUtil
 {
+
+  /** Маппинг формы восстановления пароля. */
+  private def recoverPwFormM: EmailPwRecoverForm_t = {
+    emailRegFormM
+  }
+
 
   // TODO Сделать это шаблоном!
   protected def _outer(html: Html)(implicit ctx: Context): Html = {

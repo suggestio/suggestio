@@ -666,3 +666,10 @@ edge.predicate.f=GeoParent
 edge.predicate.g=Direct GeoParent
 edge.predicate.h=Welcome ad
 edge.predicate.i=Gallery item
+
+Your.name=Your name
+First.name=First name
+Last.name=Last name
+
+Type.digits.from.picture=Введите цифры, изображенные на картинке.
+

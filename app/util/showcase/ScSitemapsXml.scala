@@ -3,9 +3,9 @@ package util.showcase
 import controllers.routes
 import io.suggest.model.es.EsModelUtil
 import io.suggest.util.SioEsUtil.laFuture2sFuture
-import io.suggest.ym.model.MAd
 import models.crawl.{ChangeFreqs, SiteMapUrl, SiteMapUrlT}
 import models.msc.ScJsState
+import models.MAd
 import models.{AdSearch, Context}
 import org.elasticsearch.common.unit.TimeValue
 import org.joda.time.LocalDate

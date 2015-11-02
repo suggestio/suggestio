@@ -1,12 +1,11 @@
 package controllers.sc
 
 import controllers.SioController
-import io.suggest.ym.model.MAd
-import models.{AdCssArgs, blk}
+import io.suggest.di.IEsClient
+import models.{AdCssArgs, blk, MAd}
 import play.api.mvc.Action
 import play.twirl.api.Txt
 import util.PlayMacroLogsI
-import util.SiowebEsUtil.client
 import util.blocks.BlocksConf
 import views.txt.blocks.common._
 
@@ -20,7 +19,11 @@ import scala.concurrent.Future
  * динамических css'ок для блоков выдачи.
  * Изначально, весь css рендерился прямо в выдачу, что вызывало ряд проблем.
  */
-trait ScBlockCss extends SioController with PlayMacroLogsI {
+trait ScBlockCss
+  extends SioController
+  with PlayMacroLogsI
+  with IEsClient
+{
 
   /**
    * Экшен раздачи css'ок.

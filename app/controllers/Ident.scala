@@ -13,6 +13,7 @@ import util.acl._
 import util._
 import play.api.mvc._
 import util.adn.NodesUtil
+import util.captcha.CaptchaUtil
 import util.ident.IdentUtil
 import util.mail.IMailerWrapper
 import views.html.ident._
@@ -38,6 +39,7 @@ class Ident @Inject() (
   override val cache                : CacheApi,
   override val identUtil            : IdentUtil,
   override val nodesUtil            : NodesUtil,
+  override val captchaUtil          : CaptchaUtil,
   override val _contextFactory      : Context2Factory,
   override implicit val ec          : ExecutionContext,
   override implicit val esClient    : Client,
@@ -83,7 +85,7 @@ class Ident @Inject() (
     val ctx = implicitly[Context]
     val formFut = emailPwLoginFormStubM
     val title = ctx.messages("Login.page.title")
-    val rc = _regColumnTpl(EmailPwReg.emailRegFormM, captchaShown = false)(ctx)
+    val rc = _regColumnTpl(emailRegFormM, captchaShown = false)(ctx)
     formFut.map { lf =>
       val lc = _loginColumnTpl(lf, r)(ctx)
       Ok( mySioStartTpl(title, Seq(lc, rc))(ctx) )

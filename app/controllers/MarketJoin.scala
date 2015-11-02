@@ -6,6 +6,7 @@ import io.suggest.playx.ICurrentConf
 import models.CallBackReqCallTimes.CallBackReqCallTime
 import org.elasticsearch.client.Client
 import play.api.i18n.MessagesApi
+import util.captcha.CaptchaUtil
 import util.captcha.CaptchaUtil._
 import util.PlayMacroLogsImpl
 import util.acl.MaybeAuth
@@ -26,6 +27,7 @@ import scala.concurrent.ExecutionContext
  */
 class MarketJoin @Inject() (
   mInviteRequest                : MInviteRequest_,
+  override val captchaUtil      : CaptchaUtil,
   override val messagesApi      : MessagesApi,
   override val mailer           : IMailerWrapper,
   override val current          : play.api.Application,
@@ -51,8 +53,8 @@ class MarketJoin @Inject() (
         "name"  -> nameM,
         "phone" -> phoneM,
         "callTime" -> CallBackReqCallTimes.mapping,
-        CAPTCHA_ID_FN     -> captchaIdM,
-        CAPTCHA_TYPED_FN  -> captchaTypedM
+        CAPTCHA_ID_FN     -> captchaUtil.captchaIdM,
+        CAPTCHA_TYPED_FN  -> captchaUtil.captchaTypedM
       )
       {(name, phone, callTime, _, _) =>
         val mcMeta = MCompanyMeta(

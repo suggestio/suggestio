@@ -3,17 +3,16 @@
 @import ctx._
 @import helper._
 @import util.FC.radialFc
-@import util.captcha.CaptchaUtil.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN, DIGITS_CAPTCHA_LEN}
+@import util.captcha.CaptchaUtil.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
 @import io.suggest.util.StringUtil.randomId
 
-@defining( CSRF(submitCall) ) { submitCall1 =>
-@form(submitCall1, 'class -> "adv-req-page_call-back-form") {
+@form(CSRF(submitCall), 'class -> "adv-req-page_call-back-form") {
 
   @* TODO Name нужно вставить в смысле имени, а не в смысле названия. *@
   @inputText(
     crf("name"),
     '_class       -> "__transparent",
-    'placeholder  -> "Имя"
+    'placeholder  -> messages("Your.name")
   )
 
     @inputText(
@@ -45,7 +44,7 @@
     <div class="captcha">
       @defining( crf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
         <input id="captchaId" type="hidden" name="captchaId" value="@captchaId"/>
-        <div class="captcha_img" id="captchaImageCallbackForm" style="background: url( @routes.Captcha.getDigitalCaptcha(captchaId, submitCall1.url) );" ></div>
+        <div class="captcha_img" id="captchaImageCallbackForm" style="background: url( @routes.Captcha.getDigitalCaptcha(captchaId, submitCall.url) );" ></div>
         <a class="captcha_reload-btn" id="captchaReload" data-for="#captchaImageCallbackForm" href=""></a>
       }
     </div>
@@ -54,7 +53,7 @@
       crf(CAPTCHA_TYPED_FN),
       '_class      -> "__transparent",
       'type        -> "tel",
-      'placeholder -> s"Введите $DIGITS_CAPTCHA_LEN цифр, изображенных на картинке"
+      'placeholder -> messages("Type.digits.from.picture")
     )
 
     <div class="btn-w __size-M">
@@ -62,4 +61,3 @@
     </div>
 
 } @* form *@
-} @* defining submitCall1 *@

@@ -3,7 +3,6 @@ package util.showcase
 import com.google.inject.{Singleton, Inject}
 import controllers.routes
 import io.suggest.sc.tile.ColumnsCountT
-import io.suggest.ym.model.MAd
 import io.suggest.ym.model.common.{BlockMeta, AdShowLevels, IEMBlockMeta}
 import models._
 import models.blk.{BlockHeights, SzMult_t, BlockWidth, BlockWidths}

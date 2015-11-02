@@ -1,11 +1,12 @@
 package util.captcha
 
+import com.google.inject.{Singleton, Inject}
+import play.api.Configuration
 import play.api.http.HeaderNames
 import play.api.mvc.{Session, RequestHeader}
 import util.CipherUtilAddon
 import play.api.data.Forms._
 import util.FormUtil._
-import play.api.Play.{current, configuration}
 
 /**
  * Suggest.io
@@ -20,10 +21,20 @@ import play.api.Play.{current, configuration}
 
 
 /** Утиль для криптографии, используемой при stateless-капчевании. */
-object CaptchaUtil extends CipherUtilAddon {
+object CaptchaUtil {
 
   val CAPTCHA_ID_FN     = "captchaId"
   val CAPTCHA_TYPED_FN  = "captchaTyped"
+}
+
+
+/** Инжектируемая часть капча-утили. */
+@Singleton
+class CaptchaUtil @Inject() (
+  configuration: Configuration
+)
+  extends CipherUtilAddon
+{
 
   def CAPTCHA_FMT_LC = "png"
 
@@ -66,4 +77,10 @@ object CaptchaUtil extends CipherUtilAddon {
       .getBytes
   }
 
+}
+
+
+/** Интерфейс для доступа к инжектируемому через DI инстансу [[CaptchaUtil]]. */
+trait ICaptchaUtilDi {
+  def captchaUtil: CaptchaUtil
 }

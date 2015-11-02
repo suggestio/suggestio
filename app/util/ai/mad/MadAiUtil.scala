@@ -4,7 +4,7 @@ import java.io.FileInputStream
 
 import com.google.inject.Inject
 import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.ym.model.MAd
+import models.MAd
 import models.ai._
 import org.apache.tika.metadata.{TikaMetadataKeys, Metadata}
 import org.apache.tika.sax.TeeContentHandler

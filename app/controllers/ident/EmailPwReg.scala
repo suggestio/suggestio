@@ -13,6 +13,7 @@ import play.api.data.Forms._
 import play.api.mvc.Result
 import play.twirl.api.Html
 import util.captcha.CaptchaUtil._
+import util.captcha.ICaptchaUtilDi
 import util.di.INodesUtil
 import util.{FormUtil, PlayMacroLogsI}
 import util.acl._
@@ -27,14 +28,14 @@ import scala.concurrent.Future
  * Created: 27.01.15 18:04
  * Description: Поддержка регистрации по имени и паролю в контроллере.
  */
-object EmailPwReg {
+trait EmailPwRegUtil extends ICaptchaUtilDi {
 
   /** Маппинг формы регистрации по email. Форма с капчей. */
   def emailRegFormM: EmailPwRegReqForm_t = Form(
     mapping(
       "email"           -> email,
-      CAPTCHA_ID_FN     -> captchaIdM,
-      CAPTCHA_TYPED_FN  -> captchaTypedM
+      CAPTCHA_ID_FN     -> captchaUtil.captchaIdM,
+      CAPTCHA_TYPED_FN  -> captchaUtil.captchaTypedM
     )
     {(email1, _, _) => email1 }
     {email1 => Some((email1, "", ""))}
@@ -53,9 +54,6 @@ object EmailPwReg {
 }
 
 
-import EmailPwReg._
-
-
 trait EmailPwReg
   extends SioController
   with PlayMacroLogsI
@@ -66,6 +64,7 @@ trait EmailPwReg
   with IsAnon
   with CanConfirmEmailPwRegCtl
   with INodesUtil
+  with EmailPwRegUtil
 {
 
   def sendEmailAct(ea: EmailActivation)(implicit ctx: Context): Unit = {
