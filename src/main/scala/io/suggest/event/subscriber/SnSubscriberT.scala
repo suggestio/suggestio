@@ -12,18 +12,20 @@ import io.suggest.event.SioNotifier
 
 trait SnSubscriberT {
 
+  // TODO Нужно избавиться от ActorContext.
+
   /**
    * Передать событие подписчику.
    * @param event событие.
    * @param ctx контекст sio-notifier.
    */
-  def publish(event:SioNotifier.Event)(implicit ctx:ActorContext)
+  def publish(event: SioNotifier.Event)(implicit ctx: ActorContext): Unit
 
   /**
    * Актор, относящийся к подписчику, если есть.
    * @return
    */
-  def getActor(implicit ctx:ActorContext) : Option[ActorRef]
+  def getActor(implicit ctx: ActorContext) : Option[ActorRef]
 
   /**
    * Хелпер для toString(). Выдаёт суффиксы.

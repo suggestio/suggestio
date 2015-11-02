@@ -1,6 +1,7 @@
 package io.suggest.event
 
-import io.suggest.event.SioNotifier.Classifier
+import com.google.inject.Inject
+import io.suggest.event.SioNotifier.{Subscriber, Classifier}
 import io.suggest.model.es.EsModelStaticT
 import io.suggest.model.n2.node.{MNodeType, MNode}
 import io.suggest.ym.model.{MWelcomeAd, MAd}
@@ -75,19 +76,27 @@ trait INodeId {
 
 /** Если нужно удалять рекламные карточки, созданные каким-то узлом при удалении оного, то можно
   * можно использовать этот subscriber. */
-object DeleteAdsOnAdnNodeDeleteSubscriber extends MacroLogsImpl {
+class DeleteAdsOnAdnNodeDeleteSubscriber @Inject() (
+  implicit val ec: ExecutionContext,
+  implicit val client: Client,
+  implicit val sn: SioNotifierStaticClientI
+)
+  extends SNStaticSubscriber with MacroLogsImpl
+{
   import LOGGER._
 
   /** Карта подписчиков вместе с содержимым подписчика. */
-  def getSnMap(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI) = {
+  override def snMap: List[(Classifier, Seq[Subscriber])] = {
     val classifier = MNodeDeletedEvent.getClassifier()
     val sub = SnFunSubscriber {
       case ande: MNodeDeletedEvent =>
         val producerId = ande.nodeId
         val logPrefix = s"event(prodId=$producerId): "
         debug(logPrefix + "Starting deletion of all ads, related to producer...")
-        MAd.deleteByProducerId1by1(producerId) onComplete handleFinishPf(logPrefix, MAd)
-        MWelcomeAd.deleteByProducerId1by1(producerId) onComplete handleFinishPf(logPrefix, MWelcomeAd)
+        MAd.deleteByProducerId1by1(producerId)
+          .onComplete( handleFinishPf(logPrefix, MAd) )
+        MWelcomeAd.deleteByProducerId1by1(producerId)
+          .onComplete( handleFinishPf(logPrefix, MWelcomeAd) )
 
       case other =>
         warn("Unexpected event received: " + other)
