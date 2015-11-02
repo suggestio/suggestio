@@ -1,6 +1,7 @@
 package io.suggest.playx
 
 import com.google.inject.Inject
+import io.suggest.common.fut.FutureUtil
 import play.api.cache.CacheApi
 
 import scala.concurrent.duration.Duration
@@ -25,13 +26,18 @@ class CacheApiUtil @Inject() (cache: CacheApi) {
   def getOrElseFut[T](key: String, expiration: Duration)(f: => Future[T]): Future[T] = {
     val p = Promise[T]()
     val pfut = p.future
+
     val resFut: Future[T] = cache.get [Future[T]] (key) match {
       case None =>
+        // Сразу сохранить в кеш будущий фьючерс
         cache.set(key, pfut, expiration)
-        f
+        // Аккуратно начать вычисление кешируемого результата.
+        FutureUtil.tryCatchFut(f)
+
       case Some(fut) =>
         fut
     }
+
     p completeWith resFut
     pfut
   }
