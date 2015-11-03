@@ -2,6 +2,7 @@ package io.suggest.ym.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import io.suggest.model.es._
+import io.suggest.model.n2.ad.blk.BlockMeta
 import io.suggest.model.n2.ad.rd.RichDescr
 import io.suggest.model.n2.extra.mdr.MMdrExtra
 import io.suggest.model.n2.tag.edge.{TagsMap_t, EMTagsEdgeMut, EMTagsEdgeStaticMut}

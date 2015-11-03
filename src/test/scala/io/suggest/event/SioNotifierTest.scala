@@ -39,7 +39,7 @@ class SioNotifierTest extends FlatSpec with ShouldMatchers with Logs {
 
       def startLink(arf: ActorRefFactory): ActorRef = {
         val props = Props(new SioNotifier with Logs {
-          override protected def ec = global
+          override def ec = global
         })
         asys.actorOf(props, name=actorName)
       }

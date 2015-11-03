@@ -1,6 +1,7 @@
 package io.suggest.ym.model
 
 import io.suggest.model.es._
+import io.suggest.model.n2.ad.blk.BlockMeta
 import io.suggest.model.n2.extra.mdr.MMdrExtra
 import org.joda.time.DateTime
 import io.suggest.util.SioEsUtil._

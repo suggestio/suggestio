@@ -2,8 +2,10 @@ package io.suggest.model.n2.ad
 
 import io.suggest.common.EmptyProduct
 import io.suggest.model.es.IGenEsMappingProps
+import io.suggest.model.n2.ad.blk.BlockMeta
 import io.suggest.model.n2.ad.ent.MEntity
-import io.suggest.util.SioEsUtil.{FieldNestedObject, DocField}
+import io.suggest.model.n2.ad.rd.RichDescr
+import io.suggest.util.SioEsUtil.{FieldObject, FieldNestedObject, DocField}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -31,15 +33,33 @@ object MNodeAd extends IGenEsMappingProps {
       val RDESCR_FN = "rd"
     }
 
+    object BlockMeta {
+      val BLOCK_META_FN = "bm"
+    }
+
   }
 
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldNestedObject(Fields.Entities.ENTITIES_FN, enabled = true, properties = MEntity.generateMappingProps)
+      FieldNestedObject(
+        id          = Fields.Entities.ENTITIES_FN,
+        enabled     = true,
+        properties  = MEntity.generateMappingProps
+      ),
+      FieldObject(
+        id          = Fields.RDescr.RDESCR_FN,
+        enabled     = true,
+        properties  = RichDescr.generateMappingProps
+      ),
+      FieldObject(
+        id          = Fields.BlockMeta.BLOCK_META_FN,
+        enabled     = true,
+        properties  = BlockMeta.generateMappingProps
+      )
     )
   }
 
-  implicit val FORMAT: OFormat[MNodeAd] = {
+  implicit val FORMAT: OFormat[MNodeAd] = (
     (__ \ Fields.Entities.ENTITIES_FN).formatNullable[Seq[MEntity]]
       .inmap [Map[Int, MEntity]] (
         {ents =>
@@ -57,9 +77,10 @@ object MNodeAd extends IGenEsMappingProps {
             Some(ents)
           }
         }
-      )
-      .inmap[MNodeAd](apply, _.entities)
-  }
+      ) and
+    (__ \ Fields.RDescr.RDESCR_FN).formatNullable[RichDescr] and
+    (__ \ Fields.BlockMeta.BLOCK_META_FN).formatNullable[BlockMeta]
+  )(apply, unlift(unapply))
 
 
   def toEntMap(es: MEntity*): EntMap_t = {
@@ -75,6 +96,8 @@ object MNodeAd extends IGenEsMappingProps {
 
 
 case class MNodeAd(
-  entities      : EntMap_t     = Map.empty
+  entities      : EntMap_t              = Map.empty,
+  richDescr     : Option[RichDescr]     = None,
+  blockMeta     : Option[BlockMeta]     = None
 )
   extends EmptyProduct

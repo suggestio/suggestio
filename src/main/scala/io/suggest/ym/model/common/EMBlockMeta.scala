@@ -1,10 +1,10 @@
 package io.suggest.ym.model.common
 
 import io.suggest.model.es.{EsModelStaticMutAkvT, EsModelPlayJsonT, EsModelUtil}
+import io.suggest.model.n2.ad.blk.{IBlockMeta, BlockMeta}
 import io.suggest.util.SioEsUtil._
 import EsModelUtil.FieldsJsonAcc
 import play.api.libs.json.{JsBoolean, JsObject, JsNumber}
-import io.suggest.util.MyConfig.CONFIG
 
 /**
  * Suggest.io
@@ -32,9 +32,27 @@ trait EMBlockMetaStatic extends EsModelStaticMutAkvT {
       // 2014.oct.14: Раньше был просто blockMeta и оно не индексировалось вообще никак. Но понадобилось это дело исправить
       // TODO Удалить поддержку ключа blockMeta вместе с этим комментом через какое-то время.
       case ((BLOCK_META_ESFN | "blockMeta"), blockMetaRaw) =>
-        acc.blockMeta = BlockMeta.deserialize(blockMetaRaw)
+        acc.blockMeta = deserializeBm(blockMetaRaw)
     }
   }
+
+
+  /** Десериализация BlockMeta из выхлопа jackson. */
+  private def deserializeBm(x: Any): BlockMeta = {
+    x match {
+      case m: java.util.Map[_,_] =>
+        import BlockMeta._
+        BlockMeta(
+          blockId = EsModelUtil.intParser(m get BLOCK_ID_ESFN),
+          height  = EsModelUtil.intParser(m get HEIGHT_ESFN),
+          width   = Option(m get WIDTH_ESFN)
+            .fold(WIDTH_DFLT)(EsModelUtil.intParser),
+          wide    = Option(m get WIDE_ESFN)
+            .fold(false)(EsModelUtil.booleanParser)
+        )
+    }
+  }
+
 }
 
 
@@ -51,8 +69,20 @@ trait EMBlockMetaI extends EsModelPlayJsonT with IEMBlockMeta {
 /** Аддон для экземпляра [[EsModelPlayJsonT]] для интеграции поля blockId в модель. */
 trait EMBlockMeta extends EMBlockMetaI {
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
-    BLOCK_META_ESFN -> blockMeta.toPlayJson :: super.writeJsonFields(acc)
+    BLOCK_META_ESFN -> toPlayJsonBm(blockMeta) :: super.writeJsonFields(acc)
   }
+
+  /** Сериализация экземпляра этого класса в json-объект. */
+  private def toPlayJsonBm(bm: IBlockMeta): JsObject = {
+    import BlockMeta._
+    JsObject(Seq(
+      BLOCK_ID_ESFN -> JsNumber(bm.blockId),
+      HEIGHT_ESFN   -> JsNumber(bm.height),
+      WIDTH_ESFN    -> JsNumber(bm.width),
+      WIDE_ESFN     -> JsBoolean(bm.wide)
+    ))
+  }
+
 }
 
 
@@ -63,75 +93,4 @@ trait EMBlockMetaMut extends EMBlockMeta {
 
 
 
-object BlockMeta {
-
-  val BLOCK_ID_ESFN = "blockId"
-  val HEIGHT_ESFN   = "height"
-  val WIDTH_ESFN    = "width"
-  val WIDE_ESFN     = "wide"
-
-  /** Поле ширины долго жило в настройках блока, а когда пришло время переезжать, возникла проблема с дефолтовым значением. */
-  val WIDTH_DFLT = CONFIG.getInt("block.meta.width.dflt.px") getOrElse 300
-
-  /** Десериализация BlockMeta из выхлопа jackson. */
-  def deserialize(x: Any): BlockMeta = {
-    x match {
-      case m: java.util.Map[_,_] =>
-        BlockMeta(
-          blockId = EsModelUtil.intParser(m get BLOCK_ID_ESFN),
-          height  = EsModelUtil.intParser(m get HEIGHT_ESFN),
-          width   = Option(m get WIDTH_ESFN).fold(WIDTH_DFLT)(EsModelUtil.intParser),
-          wide    = Option(m get WIDE_ESFN).fold(false)(EsModelUtil.booleanParser)
-        )
-    }
-  }
-
-  private def fint(fn: String) = {
-    FieldNumber(fn, fieldType = DocFieldTypes.integer, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
-  }
-
-  def generateMappingProps: List[DocField] = {
-    List(
-      fint(BLOCK_ID_ESFN),
-      fint(HEIGHT_ESFN),
-      fint(WIDTH_ESFN),
-      FieldBoolean(WIDE_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
-    )
-  }
-
-  val DEFAULT = BlockMeta(blockId = 20, height = 300, width = WIDTH_DFLT)
-
-}
-
-
-import BlockMeta._
-
-
-/** Интерфейс для экземпляром BlockMeta. */
-trait IBlockMeta extends MImgSizeT {
-  /** id шаблона блока. */
-  def blockId: Int
-  /** Использовать широкое отображение? */
-  def wide: Boolean
-}
-
-/**
- * Неизменяемое представление глобальных парамеров блока.
- * @param blockId
- * @param height высота блока.
- */
-case class BlockMeta(
-  blockId : Int,
-  height  : Int,
-  width   : Int,
-  wide    : Boolean = false
-) extends IBlockMeta {
-  /** Сериализация экземпляра этого класса в json-объект. */
-  def toPlayJson = JsObject(Seq(
-    BLOCK_ID_ESFN -> JsNumber(blockId),
-    HEIGHT_ESFN   -> JsNumber(height),
-    WIDTH_ESFN    -> JsNumber(width),
-    WIDE_ESFN     -> JsBoolean(wide)
-  ))
-}
 

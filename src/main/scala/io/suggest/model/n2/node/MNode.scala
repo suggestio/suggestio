@@ -1,5 +1,6 @@
 package io.suggest.model.n2.node
 
+import com.google.inject.Inject
 import io.suggest.event.{MNodeDeletedEvent, MNodeSavedEvent, SioNotifierStaticClientI}
 import io.suggest.model.es.EsModelUtil.FieldsJsonAcc
 import io.suggest.model.es._
@@ -287,7 +288,11 @@ case class MNode(
 
 
 trait MNodeJmxMBean extends EsModelJMXMBeanI
-final class MNodeJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+final class MNodeJmx @Inject() (
+  implicit val ec     : ExecutionContext,
+  implicit val client : Client,
+  implicit val sn     : SioNotifierStaticClientI
+)
   extends EsModelJMXBase
   with MNodeJmxMBean
 {

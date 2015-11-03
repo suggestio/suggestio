@@ -2,6 +2,7 @@ package io.suggest.event
 
 import com.google.inject.Inject
 import io.suggest.event.SioNotifier.{Subscriber, Classifier}
+import io.suggest.model.common.OptStrId
 import io.suggest.model.es.EsModelStaticT
 import io.suggest.model.n2.node.{MNodeType, MNode}
 import io.suggest.ym.model.{MWelcomeAd, MAd}
@@ -30,13 +31,14 @@ object MNodeSavedEvent {
   }
 }
 
-case class MNodeSavedEvent(mnode: MNode, isCreated: Boolean) extends SioEventT with INodeId {
+case class MNodeSavedEvent(mnode: MNode, isCreated: Boolean) extends SioEventT with INodeId with OptStrId {
   def getClassifier: Classifier = MNodeSavedEvent.getClassifier(
     nodeId    = mnode.id,
     nodeType  = Some( mnode.common.ntype ),
     isCreated = Some( isCreated )
   )
 
+  override def id = mnode.id
   override def nodeId = mnode.id.get
 }
 
