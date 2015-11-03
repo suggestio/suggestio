@@ -1,6 +1,11 @@
 package io.suggest.model.n2.node
 
+import io.suggest.model.geo.GeoPoint
+import io.suggest.model.n2.ad.MNodeAd
+import io.suggest.model.n2.ad.blk.BlockMeta
+import io.suggest.model.n2.edge.{MPredicates, MEdge, MNodeEdges}
 import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
+import io.suggest.model.n2.geo.MNodeGeo
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.model.n2.tag.vertex.{MTagFace, MTagVertex}
@@ -53,6 +58,19 @@ class MNodeSpec extends FlatSpec {
           adn = Some(MAdnExtra(
             rights = Set(AdnRights.PRODUCER)
           ))
+        ),
+        edges = MNodeEdges(
+          out = {
+            MNodeEdges.edgesToMap(
+              MEdge(MPredicates.Logo, "fa4f493wfr3420f3904__4")
+            )
+          }
+        ),
+        geo = MNodeGeo(
+          point = Some(GeoPoint(10.0, 33.2))
+        ),
+        ad = MNodeAd(
+          blockMeta = Some(BlockMeta.DEFAULT)
         )
       )
     }

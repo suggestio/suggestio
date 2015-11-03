@@ -4,6 +4,7 @@ import com.google.inject.Inject
 import io.suggest.event.{MNodeDeletedEvent, MNodeSavedEvent, SioNotifierStaticClientI}
 import io.suggest.model.es.EsModelUtil.FieldsJsonAcc
 import io.suggest.model.es._
+import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.edge.MNodeEdges
 import io.suggest.model.n2.geo.MNodeGeo
 import io.suggest.model.n2.node.common.MNodeCommon
@@ -114,14 +115,19 @@ object MNode
       .inmap [MNodeGeo] (
         _ getOrElse MNodeGeo.empty,
         { mng => if (mng.nonEmpty) Some(mng) else None }
+      ) and
+    (__ \ Fields.Ad.AD_FN).formatNullable[MNodeAd]
+      .inmap [MNodeAd] (
+        _ getOrElse MNodeAd.empty,
+        { mna => if (mna.nonEmpty) Some(mna) else None }
       )
   )(
-    {(common, meta, extras, edges, geo) =>
-      MNode(common, meta, extras, edges, geo)
+    {(common, meta, extras, edges, geo, ad) =>
+      MNode(common, meta, extras, edges, geo, ad)
     },
     {mnode =>
       import mnode._
-      (common, meta, extras, edges, geo)
+      (common, meta, extras, edges, geo, ad)
     }
   )
 
@@ -203,7 +209,8 @@ object MNode
       _obj(Fields.Meta.META_FN,       MMeta),
       _obj(Fields.Extras.EXTRAS_FN,   MNodeExtras),
       _obj(Fields.Edges.EDGES_FN,     MNodeEdges),
-      _obj(Fields.Geo.GEO_FN,         MNodeGeo)
+      _obj(Fields.Geo.GEO_FN,         MNodeGeo),
+      _obj(Fields.Ad.AD_FN,           MNodeAd)
     )
   }
 
@@ -231,6 +238,7 @@ case class MNode(
   extras                      : MNodeExtras     = MNodeExtras.empty,
   edges                       : MNodeEdges      = MNodeEdges.empty,
   geo                         : MNodeGeo        = MNodeGeo.empty,
+  ad                          : MNodeAd         = MNodeAd.empty,
   override val id             : Option[String]  = None,
   override val versionOpt     : Option[Long]    = None
 )

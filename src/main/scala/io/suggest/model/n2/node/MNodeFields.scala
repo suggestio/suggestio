@@ -89,5 +89,10 @@ object MNodeFields {
 
   }
 
+
+  object Ad {
+    def AD_FN = FieldNamesL1.Ad.name
+  }
+
 }
 

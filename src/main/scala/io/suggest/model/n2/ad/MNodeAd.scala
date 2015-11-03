@@ -92,6 +92,12 @@ object MNodeAd extends IGenEsMappingProps {
       .toMap
   }
 
+  val empty: MNodeAd = {
+    new MNodeAd() {
+      override def nonEmpty = false
+    }
+  }
+
 }
 
 

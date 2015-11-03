@@ -36,4 +36,7 @@ object FieldNamesL1 extends EnumValue2Val {
   /** Имя поля-контейнера геоданных. */
   val Geo                         : T = new Val("g")
 
+  /** Имя поля с данными рекламной карточки. */
+  val Ad                          : T = new Val("a")
+
 }
