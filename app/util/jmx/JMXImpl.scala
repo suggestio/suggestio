@@ -35,7 +35,8 @@ class JMXImpl @Inject() (
   migration         : img3.MigrationJmx,
   advUtilJmx        : AdvUtilJmx,
   mCalendarJmx      : MCalendarJmx,
-  mInviteRequestJmx : MInviteRequestJmx
+  mInviteRequestJmx : MInviteRequestJmx,
+  mNodeJmx          : MNodeJmx
 )
   extends PlayLazyMacroLogsImpl
 {
@@ -65,7 +66,7 @@ class JMXImpl @Inject() (
     advUtilJmx,
     new MEventJmx,
     new MExtTargetJmx,
-    new MNodeJmx,
+    mNodeJmx,
     mMediaJmx,
     // cassandra
     new SioCassandraClientJmx,

@@ -1,7 +1,6 @@
 package models.im.make
 
-import io.suggest.ym.model.common.IBlockMeta
-import models.blk.SzMult_t
+import models.blk.{IBlockMeta, SzMult_t}
 import models.im.{MImgT, DevScreen, CompressMode}
 
 /**

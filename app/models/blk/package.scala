@@ -20,7 +20,10 @@ package object blk {
 
   type FontSize    = FontSizes.FontSize
 
-  type IBlockMeta  = io.suggest.ym.model.common.IBlockMeta
+  type IBlockMeta  = io.suggest.model.n2.ad.blk.IBlockMeta
+
+  type BlockMeta   = io.suggest.model.n2.ad.blk.BlockMeta
+  val  BlockMeta   = io.suggest.model.n2.ad.blk.BlockMeta
 
 
   // Т.к. SzMult_t является примитивным типом, то модели у него своей нет, и утиль выброшена прямо сюда.

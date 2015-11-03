@@ -1,6 +1,6 @@
 package models
 
-import models.blk.SzMult_t
+import _root_.models.blk.SzMult_t
 
 import scala.concurrent.{ExecutionContext, Future}
 

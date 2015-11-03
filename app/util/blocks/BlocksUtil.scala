@@ -1,5 +1,6 @@
 package util.blocks
 
+import io.suggest.common.menum.EnumValue2Val
 import io.suggest.model.n2.ad.ent.text.{ValueEnt, EntFont}
 import models.blk._
 import models.im.MImgT
@@ -8,7 +9,7 @@ import util.FormUtil._
 import models._
 import views.html.blocks.editor._
 import controllers.ad.MarketAdFormUtil
-import io.suggest.ym.model.common.{IColors, IEMBlockMeta, BlockMeta}
+import io.suggest.ym.model.common.{IColors, IEMBlockMeta}
 import io.suggest.ym.model.ad.IOffers
 import util.img._
 import play.twirl.api.{Html, Template5}
@@ -55,16 +56,14 @@ sealed trait BefValT { bv =>
 }
 
 
-object BlocksEditorFields extends Enumeration {
+object BlocksEditorFields extends EnumValue2Val {
 
   // TODO Наверное надо параметризовать BFT или T, иначе тут какая-то задница с типами получается.
-  protected abstract class Val(val name: String) extends super.Val(name) with BefValT
+  protected abstract class Val(val name: String)
+    extends super.Val(name)
+    with BefValT
 
-  type BlockEditorField = Val
-
-  implicit def value2val(x: Value): BlockEditorField = {
-    x.asInstanceOf[BlockEditorField]
-  }
+  override type T = Val
 
   /** Скрытое поле для указания высоты блока. */
   val Height = new Val("height") {

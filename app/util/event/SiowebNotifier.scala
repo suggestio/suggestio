@@ -10,7 +10,7 @@ import akka.util.Timeout
 import scala.concurrent.duration._
 import play.api.Play.current
 import play.api.libs.concurrent.Akka
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import models._
 

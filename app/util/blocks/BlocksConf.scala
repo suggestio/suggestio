@@ -1,14 +1,13 @@
 package util.blocks
 
 import io.suggest.common.menum.EnumValue2Val
-import models.blk.{BlockHeights, BlockWidths}
+import models.blk.{BlockMeta, BlockHeights, BlockWidths}
 import play.api.data._
 import BlocksUtil._
 import util.FormUtil.IdEnumFormMappings
 import util.PlayMacroLogsImpl
 import views.html.blocks._
 import models._
-import io.suggest.ym.model.common.BlockMeta
 import util.blocks.BlocksUtil.BlockImgMap
 import play.api.data.validation.Constraint
 import play.twirl.api.{Template2, Html}

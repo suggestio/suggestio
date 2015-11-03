@@ -1,9 +1,9 @@
-package models
+package models.mbill
 
 import java.sql.Connection
 
 import anorm._
-import models.mbill.{FindByContract, MContractSel}
+import models._
 import util.SqlModelSave
 import util.anorm.AnormAdnSink._
 
@@ -30,7 +30,7 @@ object MSinkComission extends SqlModelStatic with FindByContract {
 }
 
 
-import MSinkComission._
+import models.mbill.MSinkComission._
 
 
 final case class MSinkComission(

@@ -8,7 +8,7 @@ import models.adv.{MAdvReq, MAdvRefuse, MAdvOk, IAdvTerms}
 import models.adv.geo.AdvFormEntry
 import models.adv.tpl.MAdvPricing
 import models.blk.{BlockWidths, BlockHeights}
-import models.mbill.{MTxn, MTariffDaily, MBalance, MContract}
+import models.mbill._
 import org.joda.time.{DateTime, LocalDate}
 import org.joda.time.DateTimeConstants._
 import play.api.Configuration

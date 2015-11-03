@@ -1,6 +1,5 @@
 package models.blk
 
-import io.suggest.ym.model.common.BlockMeta
 import play.api.data.Mapping
 import play.api.mvc.QueryStringBindable
 import util.blocks.BlocksConf

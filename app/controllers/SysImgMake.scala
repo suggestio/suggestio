@@ -1,13 +1,12 @@
 package controllers
 
-import io.suggest.ym.model.common.{BlockMeta, IBlockMeta}
+import models.blk.BlockMeta
 import models.Context
-import models.blk.{BlockWidths, BlockHeights, BlockMetaUtil}
+import models.blk.{IBlockMeta, BlockWidths, BlockHeights, BlockMetaUtil}
 import models.im.{MImgT, CompressModes, DevScreen}
 import models.im.make.{Makers, MakeArgs, IMakeArgs, SysForm_t}
 import play.api.data.{Form, Mapping}
 import play.api.mvc.Result
-import play.twirl.api.Html
 import util.blocks.BlocksConf
 import util.{FormUtil, PlayMacroLogsI}
 import util.acl.IsSuperuser
@@ -70,12 +69,14 @@ trait SysImgMake
       Makers.StrictWide,
       MakeArgs(
         img = img,
-        blockMeta = bmDflt getOrElse BlockMeta(
-          blockId = BlocksConf.DEFAULT.id,
-          height  = BlockHeights.default.heightPx,
-          width   = BlockWidths.default.widthPx,
-          wide    = true
-        ),
+        blockMeta = bmDflt getOrElse {
+          BlockMeta(
+            blockId = BlocksConf.DEFAULT.id,
+            height  = BlockHeights.default.heightPx,
+            width   = BlockWidths.default.widthPx,
+            wide    = true
+          )
+        },
         szMult = 1.0F,
         devScreenOpt = ctx.deviceScreenOpt
       )

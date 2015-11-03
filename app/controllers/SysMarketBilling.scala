@@ -360,7 +360,7 @@ class SysMarketBilling @Inject() (
   }
   private def sinkComFormM: Form[MSinkComission] = Form(sinkComM)
 
-  /** Рендер страницы с формой создания новой [[models.MSinkComission]]. */
+  /** Рендер страницы с формой создания новой [[mbill.MSinkComission]]. */
   def createSinkCom(contractId: Int) = IsSuperuserContractNode(contractId).apply { implicit request =>
     // Определять необходимый sink, фильтруя node.adn.sinks по имеющимся msc.
     val currentMscs = db.withConnection { implicit c =>
@@ -425,7 +425,7 @@ class SysMarketBilling @Inject() (
     }
   }
 
-  /** Сабмит формы редактирования экземпляра [[models.MSinkComission]]. */
+  /** Сабмит формы редактирования экземпляра [[mbill.MSinkComission]]. */
   def editSinkComSubmit(scId: Int) = IsSuperuser.async { implicit request =>
     sinkComFormM.bindFromRequest().fold(
       {formWithErrors =>

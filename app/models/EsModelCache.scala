@@ -9,7 +9,6 @@ import io.suggest.event.subscriber.SnClassSubscriber
 import io.suggest.event.SNStaticSubscriber
 import io.suggest.event.SioNotifier.Event
 import akka.actor.ActorContext
-import io.suggest.ym.model.common.EMAdNetMember
 import scala.reflect.ClassTag
 
 /**
