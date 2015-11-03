@@ -2,7 +2,8 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.event.SioNotifierStaticClientI
-import models.MBillContract.LegalContractId
+import models.mbill._
+import MContract.LegalContractId
 import models.msys.MSysAdnNodeBillingArgs
 import org.elasticsearch.client.Client
 import play.api.i18n.MessagesApi
@@ -68,7 +69,7 @@ class SysMarketBilling @Inject() (
   )
   // apply()
   {(dateContract, suffix, isActive, hiddenInfo) =>
-    MBillContract(
+    MContract(
       adnId = null,
       contractDate = dateContract,
       suffix = suffix,
@@ -88,16 +89,16 @@ class SysMarketBilling @Inject() (
     val adnNodeOptFut = mNodeCache.getById(adnId)
     // Синхронные модели
     val syncResult = db.withConnection { implicit c =>
-      val contracts = MBillContract.findForAdn(adnId)
+      val contracts = MContract.findForAdn(adnId)
       val contractIds = contracts.map(_.id.get)
-      val mbtsGrouper = { mbt: MBillContractSel => mbt.contractId }
+      val mbtsGrouper = { mbt: MContractSel => mbt.contractId }
       MSysAdnNodeBillingArgs(
-        balanceOpt      = MBillBalance.getByAdnId(adnId),
+        balanceOpt      = MBalance.getByAdnId(adnId),
         contracts       = contracts,
-        txns            = MBillTxn.findForContracts(contractIds),
-        feeTariffsMap   = MBillTariffFee.getAll.groupBy(mbtsGrouper),
-        statTariffsMap  = MBillTariffStat.getAll.groupBy(mbtsGrouper),
-        dailyMmpsMap    = MBillMmpDaily.findByContractIds(contractIds).groupBy(mbtsGrouper),
+        txns            = MTxn.findForContracts(contractIds),
+        feeTariffsMap   = MTariffFee.getAll.groupBy(mbtsGrouper),
+        statTariffsMap  = MTariffStat.getAll.groupBy(mbtsGrouper),
+        dailyMmpsMap    = MTariffDaily.findByContractIds(contractIds).groupBy(mbtsGrouper),
         sinkComissionMap = contractIds.flatMap(MSinkComission.findByContractId(_)).groupBy(_.contractId)
       )
     }
@@ -111,7 +112,7 @@ class SysMarketBilling @Inject() (
 
   /** Форма создания нового контракта (договора). */
   def createContractForm(adnId: String) = IsSuperuserAdnNodeGet(adnId).async { implicit request =>
-    val mbcStub = MBillContract(
+    val mbcStub = MContract(
       adnId         = adnId,
       isActive      = true
     )
@@ -135,8 +136,8 @@ class SysMarketBilling @Inject() (
             db.withConnection { implicit c =>
               val _mbc1 = mbc.save
               // Сразу создать баланс, если ещё не создан.
-              if (MBillBalance.getByAdnId(mbc.adnId).isEmpty) {
-                MBillBalance(mbc.adnId, amount = 0F).save
+              if (MBalance.getByAdnId(mbc.adnId).isEmpty) {
+                MBalance(mbc.adnId, amount = 0F).save
               }
               _mbc1
             }
@@ -197,8 +198,8 @@ class SysMarketBilling @Inject() (
   )
   // apply().
   {(txnUid, price, datePaid, paymentComment) =>
-    val lci = MBillContract.parseLegalContractId(paymentComment).head
-    val txn = MBillTxn(
+    val lci = MContract.parseLegalContractId(paymentComment).head
+    val txn = MTxn(
       contractId = lci.contractId,
       amount     = price.price,
       datePaid   = datePaid,
@@ -217,10 +218,10 @@ class SysMarketBilling @Inject() (
     * вставлять куски реквизитов платежа, а система сама разберётся по какому договору проводить
     * платеж. */
   def incomingPaymentForm = IsSuperuser { implicit request =>
-    val paymentStub: (LegalContractId, MBillTxn) = {
+    val paymentStub: (LegalContractId, MTxn) = {
       val lci = LegalContractId(0, 0, None, "")
       val now = DateTime.now
-      val txn = MBillTxn(
+      val txn = MTxn(
         contractId = -1,
         amount = 0,
         datePaid = now,
@@ -247,7 +248,7 @@ class SysMarketBilling @Inject() (
         // Форма распарсилась, но может быть там неверные данные по платежу.
         // Следует помнить, что этот сабмит для проверки, сохранение данных будет на следующем шаге.
         val maybeMbc0 = db.withConnection { implicit c =>
-          MBillContract.getById(lci.contractId)
+          MContract.getById(lci.contractId)
         }
         val maybeMbc = maybeMbc0.filter { mbc =>
           val crandMatches = mbc.crand == lci.crand
@@ -262,7 +263,7 @@ class SysMarketBilling @Inject() (
         if (maybeMbc.isEmpty) {
           // Нет точного совпадения с искомым контрактом. Надо переспросить оператора, выдав ему подсказки.
           var mbcs = db.withConnection { implicit c =>
-            MBillContract.findByCrand(lci.crand)
+            MContract.findByCrand(lci.crand)
           }
           if (maybeMbc0.isDefined)
             mbcs ::= maybeMbc0.get
@@ -295,7 +296,7 @@ class SysMarketBilling @Inject() (
       },
       {case (lci, txn) =>
         val mbc = db.withConnection { implicit c =>
-          MBillContract.getById(lci.contractId).get
+          MContract.getById(lci.contractId).get
         }
         if (mbc.crand != lci.crand || !mbc.suffixMatches(lci.suffix))
           throw new IllegalArgumentException("invalid id")
@@ -310,9 +311,9 @@ class SysMarketBilling @Inject() (
   /** Индексная страница для быстрого доступа операторов к основным функциям. */
   def index = IsSuperuser.async { implicit request =>
     val (lastPays, contracts) = db.withConnection { implicit c =>
-      val _lastPays = MBillTxn.lastNPayments()
+      val _lastPays = MTxn.lastNPayments()
       val contractIds = _lastPays.map(_.contractId).distinct
-      val _contracts = MBillContract.multigetByIds(contractIds)
+      val _contracts = MContract.multigetByIds(contractIds)
       _lastPays -> _contracts
     }
     val adnIds = contracts.map(_.adnId).distinct
@@ -386,7 +387,7 @@ class SysMarketBilling @Inject() (
       {formWithErrors =>
         debug(s"createSinkComSubmit($contractId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
         val contract = db.withConnection { implicit c =>
-          MBillContract.getById(contractId).get
+          MContract.getById(contractId).get
         }
         mNodeCache.getById(contract.adnId) map { adnNodeOpt =>
           Ok(createSinkComTpl(formWithErrors, contract, adnNodeOpt.get))
@@ -396,7 +397,7 @@ class SysMarketBilling @Inject() (
         val msc = msc0.copy(contractId = contractId)
         val adnId = db.withConnection { implicit c =>
           msc.save
-          MBillContract.getById(contractId).get.adnId
+          MContract.getById(contractId).get.adnId
         }
         // Отправить админа назад на биллинг.
         Redirect( routes.SysMarketBilling.billingFor(adnId) )
@@ -413,7 +414,7 @@ class SysMarketBilling @Inject() (
   private def _editSinkCom(scId: Int, formOpt: Option[Form[MSinkComission]] = None)(implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Result] = {
     val syncResult = db.withConnection { implicit c =>
       val msc = MSinkComission.getById(scId).get
-      val mbc = MBillContract.getById(msc.contractId).get
+      val mbc = MContract.getById(msc.contractId).get
       msc -> mbc
     }
     val (msc, mbc) = syncResult
@@ -440,7 +441,7 @@ class SysMarketBilling @Inject() (
           )
           val msc3 = msc2.save
           // Узнать куда редиректить админа после действа
-          MBillContract.getById(msc3.contractId).get.adnId
+          MContract.getById(msc3.contractId).get.adnId
         }
         Redirect( routes.SysMarketBilling.billingFor(adnId) )
           .flashing(FLASH.SUCCESS -> "Changes.saved")
@@ -454,7 +455,7 @@ class SysMarketBilling @Inject() (
       val msc = MSinkComission.getById(scId)
       msc foreach { _.delete }
       msc
-        .flatMap { msc => MBillContract.getById(msc.contractId) }
+        .flatMap { msc => MContract.getById(msc.contractId) }
         .map { _.adnId }
     }
     adnIdOpt match {

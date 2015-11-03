@@ -2,6 +2,7 @@ package util.billing
 
 import com.google.inject.{Inject, Singleton}
 import models._
+import models.mbill._
 import models.mcron.{ICronTask, MCronTask}
 import play.api.{Configuration, Application}
 import play.api.db.Database
@@ -57,11 +58,11 @@ class Billing @Inject() (
   /** Инициализировать биллинг на узле. */
   def maybeInitializeNodeBilling(adnId: String) {
     lazy val logPrefix = s"maybeInitializeNodeBilling($adnId): "
-    val newMbcOpt: Option[MBillContract] = db.withTransaction { implicit c =>
-      MBillContract.lockTableWrite
-      val currentContracts = MBillContract.findForAdn(adnId)
+    val newMbcOpt: Option[MContract] = db.withTransaction { implicit c =>
+      MContract.lockTableWrite
+      val currentContracts = MContract.findForAdn(adnId)
       if (currentContracts.isEmpty) {
-        val mbc = MBillContract(adnId = adnId).save
+        val mbc = MContract(adnId = adnId).save
         Some(mbc)
       } else {
         None
@@ -72,10 +73,10 @@ class Billing @Inject() (
     } else {
       trace(logPrefix + "Node already have at least one contract.")
     }
-    val newMbbOpt: Option[MBillBalance] = db.withTransaction { implicit c =>
-      MBillBalance.lockTableWrite
-      if (MBillBalance.getByAdnId(adnId).isEmpty) {
-        val mbb = MBillBalance(adnId, amount = 0F).save
+    val newMbbOpt: Option[MBalance] = db.withTransaction { implicit c =>
+      MBalance.lockTableWrite
+      if (MBalance.getByAdnId(adnId).isEmpty) {
+        val mbb = MBalance(adnId, amount = 0F).save
         Some(mbb)
       } else {
         None
@@ -90,15 +91,15 @@ class Billing @Inject() (
 
   /**
    * Обработать платеж внутри sql-транзакции.
-   * @param txn Экземпляр ещё не сохранённой платежной транзакции [[models.MBillTxn]].
+   * @param txn Экземпляр ещё не сохранённой платежной транзакции [[MTxn]].
    * @return Обновлённые и сохранённые данные по финансовой операции.
    */
-  def addPayment(txn: MBillTxn): AddPaymentResult = {
+  def addPayment(txn: MTxn): AddPaymentResult = {
     db.withTransaction { implicit c =>
-      val contract = MBillContract.getById(txn.contractId).get
+      val contract = MContract.getById(txn.contractId).get
       // SelectPolicies.UPDATE не требуется, т.к. фактический инкремент идёт на стороне базы, а не тут.
-      val balance0 = MBillBalance.getByAdnId(contract.adnId) getOrElse {
-        MBillBalance(contract.adnId, 0F).save
+      val balance0 = MBalance.getByAdnId(contract.adnId) getOrElse {
+        MBalance(contract.adnId, 0F).save
       }
       if (txn.currencyCode != balance0.currencyCode)
         throw new UnsupportedOperationException(s"Currency convertion (${txn.currencyCode} -> ${balance0.currencyCode}) not yet implemented.")
@@ -108,7 +109,7 @@ class Billing @Inject() (
     }
   }
 
-  case class AddPaymentResult(txnSaved: MBillTxn, newBalance: MBillBalance, contract: MBillContract)
+  case class AddPaymentResult(txnSaved: MTxn, newBalance: MBalance, contract: MContract)
 
 
   /**
@@ -118,13 +119,13 @@ class Billing @Inject() (
    */
   def processFeeTarificationAll() {
     val feeTariffs = db.withConnection { implicit c =>
-      MBillTariffFee.findAllNonDebitedContractActive
+      MTariffFee.findAllNonDebitedContractActive
     }
     // Есть на руках раскладка по тарифам. Пора пройтись по активным тарифам и попытаться выполнить списания.
     if (feeTariffs.nonEmpty) {
       debug(s"processFeeTarificationAll(): There are ${feeTariffs.size} fee-tariffs to process...")
       val contracts = db.withConnection { implicit c =>
-        MBillContract.findAllActive
+        MContract.findAllActive
       }
       val contractsMap = contracts
         .map { mbc => mbc.id.get -> mbc }
@@ -141,10 +142,10 @@ class Billing @Inject() (
   }
 
   /** Произвести тарификацию для одного тарифа в рамках одного договора. */
-  def processFeeTarification(tariff: MBillTariffFee, contract: MBillContract) {
+  def processFeeTarification(tariff: MTariffFee, contract: MContract) {
     lazy val logPrefix = s"processFeeTarification(${tariff.id.get}, ${tariff.contractId}): "
     val result: Either[String, FeeTarificationSuccess] = db.withTransaction { implicit c =>
-      val balanceOpt = MBillBalance.getByAdnId(contract.adnId, SelectPolicies.UPDATE)
+      val balanceOpt = MBalance.getByAdnId(contract.adnId, SelectPolicies.UPDATE)
         // Нельзя списывать деньги, если на счету нет денег.
         .filter { mbb =>
         // TODO Надо ругаться как-то на валюту
@@ -160,7 +161,7 @@ class Billing @Inject() (
           // Нужно определить дату списания.
           val now = DateTime.now()
           val datePaid = detectNewDatePaid(tariff, now)
-          val txn0 = MBillTxn(
+          val txn0 = MTxn(
             contractId = tariff.contractId,
             amount     = -tariff.fee,
             currencyCodeOpt = Some(tariff.feeCC),
@@ -171,7 +172,7 @@ class Billing @Inject() (
           val txn = txn0.save
           // Транзакция есть. Надо обновить баланс.
           val newBalance = balance.updateAmount(-tariff.fee)
-          val tariffsUpdated = MBillTariffFee.updateDebit(tariff.id.get, datePaid)
+          val tariffsUpdated = MTariffFee.updateDebit(tariff.id.get, datePaid)
           if (tariffsUpdated != 1)
             throw new IllegalStateException(s"Unexpected invalid tariff state update result: $tariffsUpdated rows updated, but 1 expected. Rollback.")
           // По-скорее завершаем транзакцию, возвращая из этой функции положительный результат:
@@ -192,11 +193,11 @@ class Billing @Inject() (
         warn(reason)
     }
   }
-  case class FeeTarificationSuccess(txn: MBillTxn, newBalance: MBillBalance)
+  case class FeeTarificationSuccess(txn: MTxn, newBalance: MBalance)
 
 
   /** Определение даты-времени списания. Если была задержка, то now. Иначе считаем относительно dateLast. */
-  def detectNewDatePaid(tariff: MBillTariffFee, now: DateTime = DateTime.now): DateTime = {
+  def detectNewDatePaid(tariff: MTariffFee, now: DateTime = DateTime.now): DateTime = {
     tariff.dateLast
       .filter { dateLast =>
         // Если была просрочка, то выкидываем эту дату
@@ -216,7 +217,7 @@ class Billing @Inject() (
     * @param now Текущее время.
     * @return
     */
-  def genTariffTxnUid(tariff: MBillTariff, now: DateTime): String = {
+  def genTariffTxnUid(tariff: MTariff, now: DateTime): String = {
     val sb = new StringBuilder
     val delimiter = '-'
     sb.append(tariff.contractId).append(delimiter)

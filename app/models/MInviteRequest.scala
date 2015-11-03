@@ -5,6 +5,7 @@ import com.google.inject.Inject
 import io.suggest.common.menum.EnumValue2Val
 import io.suggest.model.common.{EMNameStaticMut, EMDateCreatedStatic, EMNameMut, EMDateCreatedMut}
 import io.suggest.model.es._
+import models.mbill.{MTariffDaily, MContract, MBalance}
 import models.usr.EmailActivation
 import org.joda.time.DateTime
 import util.PlayMacroLogsImpl
@@ -95,9 +96,9 @@ final case class MInviteRequest(
   var company   : Either[MCompany, String],
   var waOpt     : Option[Either[MWelcomeAd, String]] = None,
   var adnNode   : Option[Either[MNode, String]] = None,
-  var contract  : Option[Either[MBillContract, Int]] = None,
-  var mmp       : Option[Either[MBillMmpDaily, Int]] = None,
-  var balance   : Option[Either[MBillBalance, String]] = None,
+  var contract  : Option[Either[MContract, Int]] = None,
+  var mmp       : Option[Either[MTariffDaily, Int]] = None,
+  var balance   : Option[Either[MBalance, String]] = None,
   var emailAct  : Option[Either[EmailActivation, String]] = None,
   var joinAnswers: Option[SMJoinAnswers] = None,
   var dateCreated: DateTime = DateTime.now(),
@@ -386,12 +387,12 @@ sealed trait EMInviteRequestStatic extends EsModelStaticMutAkvT {
       case (ADN_NODE_ESFN, jmap: ju.Map[_, _]) =>
         acc.adnNode = Some( deserializeEsModel(MNode, jmap) )
       case (CONTRACT_EFSN, jmap: ju.Map[_, _]) =>
-        acc.contract = Some( deseralizeSqlIntModel(MBillContract, jmap) )
+        acc.contract = Some( deseralizeSqlIntModel(MContract, jmap) )
       case (DAILY_MMP_ESFN, jmap: ju.Map[_, _]) =>
-        val result = deseralizeSqlIntModel(MBillMmpDaily, jmap)
+        val result = deseralizeSqlIntModel(MTariffDaily, jmap)
         acc.mmp = Option(result)
       case (BALANCE_ESFN, jmap: ju.Map[_, _]) =>
-        acc.balance = Some( deseralizeSqlStrModel(MBillBalance, jmap) )
+        acc.balance = Some( deseralizeSqlStrModel(MBalance, jmap) )
       case (EMAIL_ACT_ESFN, jmap: ju.Map[_, _]) =>
         acc.emailAct = Some( deserializeEsModel(EmailActivation, jmap) )
       case (JOIN_ANSWERS_ESFN, jaRaw: ju.Map[_, _]) =>
@@ -413,9 +414,9 @@ sealed trait EMInviteRequestMut extends EsModelPlayJsonT {
   var reqType   : InviteReqType
   var company   : Either[MCompany, String]
   var adnNode   : Option[Either[MNode, String]]
-  var contract  : Option[Either[MBillContract, Int]]
-  var mmp       : Option[Either[MBillMmpDaily, Int]]
-  var balance   : Option[Either[MBillBalance, String]]
+  var contract  : Option[Either[MContract, Int]]
+  var mmp       : Option[Either[MTariffDaily, Int]]
+  var balance   : Option[Either[MBalance, String]]
   var emailAct  : Option[Either[EmailActivation, String]]
   var joinAnswers: Option[SMJoinAnswers]
   var payReqsRaw: Option[String]

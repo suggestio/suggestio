@@ -1,7 +1,8 @@
 package util.acl
 
 import io.suggest.di.IExecutionContext
-import models.MBillContract
+import models.mbill
+import models.mbill.MContract
 import models.req.SioReqMd
 import util.di.IDb
 import scala.concurrent.Future
@@ -12,7 +13,7 @@ import util.acl.PersonWrapper.PwOpt_t
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 15.10.15 15:16
- * Description: Аддон для контроллеров с гибридом IsSuperuser + [[models.MBillContract.getById()]].
+ * Description: Аддон для контроллеров с гибридом IsSuperuser + [[mbill.MContract.getById()]].
  */
 trait IsSuperuserContract
   extends IDb
@@ -32,7 +33,7 @@ trait IsSuperuserContract
       if (PersonWrapper.isSuperuser(pwOpt)) {
         val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)
         val contract = db.withConnection { implicit c =>
-          MBillContract.getById(contractId).get
+          MContract.getById(contractId).get
         }
         sioReqMdFut flatMap { srm =>
           val req1 = ContractRequest(contract, pwOpt, request, srm)
@@ -53,11 +54,11 @@ trait IsSuperuserContract
 
 abstract class AbstractContractRequest[A](request: Request[A])
   extends AbstractRequestWithPwOpt(request) {
-  def contract: MBillContract
+  def contract: MContract
 }
 
 case class ContractRequest[A](
-  contract  : MBillContract,
+  contract  : MContract,
   pwOpt     : PwOpt_t,
   request   : Request[A],
   sioReqMd  : SioReqMd

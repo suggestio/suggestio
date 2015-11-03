@@ -1,7 +1,8 @@
 package util.acl
 
 import io.suggest.di.{IExecutionContext, IEsClient}
-import models.{MNode, MBillContract}
+import models.mbill.MContract
+import models.MNode
 import models.req.SioReqMd
 import util.async.AsyncUtil
 import util.di.{IDb, INodeCache}
@@ -13,7 +14,7 @@ import util.acl.PersonWrapper.PwOpt_t
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 15.10.15 15:05
- * Description: Аддон для контроллеров для связки IsSuperuser + [[models.MBillContract]].getById()
+ * Description: Аддон для контроллеров для связки IsSuperuser + [[MContract]].getById()
  * и параллельному чтению узла.
  */
 trait IsSuperuserContractNode
@@ -38,7 +39,7 @@ trait IsSuperuserContractNode
         val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)
         val contractFut = Future {
           db.withConnection { implicit c =>
-            MBillContract.getById(contractId).get
+            MContract.getById(contractId).get
           }
         }(AsyncUtil.jdbcExecutionContext)
         contractFut flatMap { contract =>
@@ -78,7 +79,7 @@ trait IsSuperuserContractNode
 
 
 case class ContractNodeRequest[A](
-  contract  : MBillContract,
+  contract  : MContract,
   adnNode   : MNode,
   pwOpt     : PwOpt_t,
   request   : Request[A],

@@ -2,6 +2,7 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.event.SioNotifierStaticClientI
+import models.mbill.{MTariffStat, MTariffFee, MTariff, MContract}
 import org.elasticsearch.client.Client
 import play.api.i18n.MessagesApi
 import util.PlayMacroLogsImpl
@@ -54,7 +55,7 @@ class SysMarketBillingTariff @Inject() (
     "price"     -> priceStrictNoraw
   )
   {(name, enabled, dateFirst, tinterval, price) =>
-    MBillTariffFee(
+    MTariffFee(
       contractId  = contractId,
       name        = name,
       isEnabled   = enabled,
@@ -160,11 +161,11 @@ class SysMarketBillingTariff @Inject() (
       .flashing("success" -> message)
   }
 
-  private def editSaveFlashMsg(tariff: MBillTariff, contract: MBillContract): String = {
+  private def editSaveFlashMsg(tariff: MTariff, contract: MContract): String = {
     s"Изменения в тарифе #${tariff.id.get} сохранены (договор ${contract.legalContractId})."
   }
 
-  private def deleteFlashMsg(tariffId: Int, rowsDeleted: Int, contract: MBillContract): String = {
+  private def deleteFlashMsg(tariffId: Int, rowsDeleted: Int, contract: MContract): String = {
     s"Тариф #$tariffId удалён: ${rowsDeleted > 0}. Договор ${contract.legalContractId}."
   }
 
@@ -179,7 +180,7 @@ class SysMarketBillingTariff @Inject() (
     "price"     -> priceStrictNoraw
   )
   {(name, isEnabled, dateFirst, debitFor, price) =>
-    MBillTariffStat(
+    MTariffStat(
       contractId  = contractId,
       name        = name,
       isEnabled   = isEnabled,

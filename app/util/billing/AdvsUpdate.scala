@@ -98,6 +98,10 @@ sealed abstract class AdvsUpdate
   }
 }
 
+/** guice factory для быстрой сборки экземпляров [[AdvertiseOfflineAdvs]]. */
+trait AdvertiseOfflineAdvsFactory {
+  def create(): AdvertiseOfflineAdvs
+}
 
 /** Обновлялка adv sls, добавляющая уровни отображаения к существующей рекламе,
   * которая должна бы выйти в свет. */
@@ -125,7 +129,9 @@ class AdvertiseOfflineAdvs @Inject() (
   }
 }
 
-
+trait DepublishExpiredAdvsFactory {
+  def create(): DepublishExpiredAdvs
+}
 /** Обновлялка adv sls, которая снимает уровни отображения с имеющейся рекламы,
   * которая должна уйти из выдачи по истечению срока размещения. */
 class DepublishExpiredAdvs @Inject() (

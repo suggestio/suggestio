@@ -2,6 +2,7 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.event.SioNotifierStaticClientI
+import models.mbill.{MTariffDaily, MContract}
 import models.req.SioReqMd
 import org.elasticsearch.client.Client
 import play.api.i18n.MessagesApi
@@ -173,12 +174,12 @@ class SysCalendar @Inject() (
   private def editCalendarRespBody(calId: String, cf: Form[MCalendar])
                                   (implicit request: CalendarRequest[AnyContent]): Future[Html] = {
     val calMbcs = db.withConnection { implicit c =>
-      val calMbmds = MBillMmpDaily.findForCalId(calId)
+      val calMbmds = MTariffDaily.findForCalId(calId)
       if (calMbmds.isEmpty) {
         Nil
       } else {
         val contractIds = calMbmds.map(_.contractId)
-        MBillContract.multigetByIds(contractIds)
+        MContract.multigetByIds(contractIds)
       }
     }
     val calUsersAdnIds = calMbcs.map(_.adnId)

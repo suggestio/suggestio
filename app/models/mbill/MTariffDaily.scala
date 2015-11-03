@@ -1,13 +1,15 @@
-package models
+package models.mbill
 
-import anorm._
-import io.suggest.model.es.{ToPlayJsonObj, EsModelUtil}
-import EsModelUtil.FieldsJsonAcc
-import play.api.libs.json.{JsString, JsNumber, JsObject}
-import util.SqlModelSave
 import java.sql.Connection
 import java.{util => ju}
-import play.api.Play.{current, configuration}
+
+import anorm._
+import io.suggest.model.es.EsModelUtil.FieldsJsonAcc
+import io.suggest.model.es.{EsModelUtil, ToPlayJsonObj}
+import models._
+import play.api.Play.{configuration, current}
+import play.api.libs.json.{JsNumber, JsObject, JsString}
+import util.SqlModelSave
 
 /**
  * Suggest.io
@@ -16,10 +18,10 @@ import play.api.Play.{current, configuration}
  * Description: Модель работы с тарификациями при посуточной оплате рекламных модулей.
  * mmp = minimal module price.
  */
-object MBillMmpDaily extends FindByContract with FromJson {
+object MTariffDaily extends FindByContract with FromJson {
   import SqlParser._
 
-  override type T = MBillMmpDaily
+  override type T = MTariffDaily
 
   val TABLE_NAME = "bill_mmp_daily"
 
@@ -42,7 +44,7 @@ object MBillMmpDaily extends FindByContract with FromJson {
       get[Float](ON_RCVR_CAT_FN) map {
       case id ~ contractId ~ mmpWeekday ~ mmpWeekend ~ mmpPrimetime ~ currencyCode ~ onStartPage ~
         weekendCalId ~ primeCalId ~ onRcvrCat =>
-        MBillMmpDaily(
+        MTariffDaily(
           id = id, contractId = contractId, currencyCode = currencyCode,
           mmpWeekday = mmpWeekday, mmpWeekend = mmpWeekend, mmpPrimetime = mmpPrimetime,
           onRcvrCat = onRcvrCat, onStartPage = onStartPage, weekendCalId = weekendCalId, primeCalId = primeCalId
@@ -54,12 +56,12 @@ object MBillMmpDaily extends FindByContract with FromJson {
     * @return Список adnId без повторений в неопределённом порядке.
     */
   def findAllAdnIds(implicit c: Connection): List[String] = {
-    SQL(s"SELECT DISTINCT mbc.${MBillContract.ADN_ID_FN} FROM ${MBillContract.TABLE_NAME} mbc WHERE mbc.${MBillContract.ID_FN} IN (SELECT DISTINCT $CONTRACT_ID_FN FROM $TABLE_NAME)")
-      .as(MBillContract.ADN_ID_PARSER *)
+    SQL(s"SELECT DISTINCT mbc.${MContract.ADN_ID_FN} FROM ${MContract.TABLE_NAME} mbc WHERE mbc.${MContract.ID_FN} IN (SELECT DISTINCT $CONTRACT_ID_FN FROM $TABLE_NAME)")
+      .as(MContract.ADN_ID_PARSER *)
   }
 
   /** Найти все ряды, в которых встречается указанный календарь. */
-  def findForCalId(calId: String)(implicit c: Connection): List[MBillMmpDaily] = {
+  def findForCalId(calId: String)(implicit c: Connection): List[MTariffDaily] = {
     SQL(s"SELECT * FROM $TABLE_NAME WHERE $WEEKEND_CAL_ID_FN = {calId} OR $PRIME_CAL_ID_FN = {calId}")
       .on('calId -> calId)
       .as(rowParser *)
@@ -70,17 +72,17 @@ object MBillMmpDaily extends FindByContract with FromJson {
    * @param template Шаблон.
    * @return Кол-во обновлённых рядов.
    */
-  def updateAll(template: MBillMmpDaily)(implicit c: Connection): Int = {
+  def updateAll(template: MTariffDaily)(implicit c: Connection): Int = {
     SQL(updateSqlPreamble)
       .on(template.dataSqlArgs : _*)
       .executeUpdate()
   }
 
   /** Десериализация того, что хранилось в виде JSON, например внутри [[MInviteRequest]]. */
-  val fromJson: PartialFunction[Any, MBillMmpDaily] = {
+  val fromJson: PartialFunction[Any, MTariffDaily] = {
     case jmap: ju.Map[_,_] =>
-      import EsModelUtil.{stringParser, intParser, floatParser}
-      MBillMmpDaily(
+      import EsModelUtil.{floatParser, intParser, stringParser}
+      MTariffDaily(
         contractId    = intParser(jmap get CONTRACT_ID_FN),
         mmpWeekday    = floatParser(jmap get MMP_WEEKDAY_FN),
         mmpWeekend    = floatParser(jmap get MMP_WEEKEND_FN),
@@ -132,25 +134,25 @@ object MBillMmpDaily extends FindByContract with FromJson {
 }
 
 
-import MBillMmpDaily._
+import models.mbill.MTariffDaily._
 
 
-final case class MBillMmpDaily(
+final case class MTariffDaily(
   contractId    : Int,
-  mmpWeekday    : Float   = MBillMmpDaily.Dflts.WEEKDAY,
-  mmpWeekend    : Float   = MBillMmpDaily.Dflts.WEEKEND,
-  mmpPrimetime  : Float   = MBillMmpDaily.Dflts.PRIME,
-  onRcvrCat     : Float   = MBillMmpDaily.Dflts.ON_RCVR_CAT,
-  onStartPage   : Float   = MBillMmpDaily.Dflts.ON_START_PAGE,
-  weekendCalId  : String  = MBillMmpDaily.Dflts.CAL_ID_WEEKEND,
-  primeCalId    : String  = MBillMmpDaily.Dflts.CAL_ID_PRIME,
+  mmpWeekday    : Float   = MTariffDaily.Dflts.WEEKDAY,
+  mmpWeekend    : Float   = MTariffDaily.Dflts.WEEKEND,
+  mmpPrimetime  : Float   = MTariffDaily.Dflts.PRIME,
+  onRcvrCat     : Float   = MTariffDaily.Dflts.ON_RCVR_CAT,
+  onStartPage   : Float   = MTariffDaily.Dflts.ON_START_PAGE,
+  weekendCalId  : String  = MTariffDaily.Dflts.CAL_ID_WEEKEND,
+  primeCalId    : String  = MTariffDaily.Dflts.CAL_ID_PRIME,
   currencyCode  : String  = CurrencyCodeOpt.CURRENCY_CODE_DFLT,
   id            : Option[Int] = None
-) extends SqlModelSave with CurrencyCode with MBillContractSel with SqlModelDelete with ToPlayJsonObj {
+) extends SqlModelSave with CurrencyCode with MContractSel with SqlModelDelete with ToPlayJsonObj {
 
   override def hasId = id.isDefined
-  override def companion = MBillMmpDaily
-  override type T = MBillMmpDaily
+  override def companion = MTariffDaily
+  override type T = MTariffDaily
 
   override def saveInsert(implicit c: Connection): T = {
     val args = ('contractId -> contractId : NamedParameter) :: dataSqlArgs

@@ -1,27 +1,23 @@
-package models
+package models.mbill
 
-import akka.actor.ActorContext
-import anorm._
-import io.suggest.event.{MNodeDeletedEvent, SNStaticSubscriber}
-import io.suggest.event.SioNotifier.Event
-import io.suggest.event.subscriber.SnClassSubscriber
-import io.suggest.model.es.{ToPlayJsonObj, EsModelUtil}
-import EsModelUtil.FieldsJsonAcc
-import play.api.db.DB
-import util.anorm.{AnormPgArray, AnormJodaTime}
-import AnormJodaTime._
-import AnormPgArray._
-import org.joda.time.DateTime
-import io.suggest.util.SioRandom.rnd
 import java.sql.Connection
-import util.event.{ContractDeletedEvent, SiowebNotifier}
-import util.{PlayLazyMacroLogsImpl, SqlModelSave}
 import java.text.DecimalFormat
-import org.joda.time.format.DateTimeFormat
-import io.suggest.util.TextUtil
-import play.api.Play.{current, configuration}
-import play.api.libs.json._
 import java.{util => ju}
+
+import anorm._
+import io.suggest.model.es.EsModelUtil.FieldsJsonAcc
+import io.suggest.model.es.{EsModelUtil, ToPlayJsonObj}
+import io.suggest.util.SioRandom.rnd
+import io.suggest.util.TextUtil
+import models._
+import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
+import play.api.Play.{configuration, current}
+import util.anorm.AnormJodaTime._
+import util.anorm.AnormPgArray._
+import util.event.{ContractDeletedEvent, SiowebNotifier}
+import util.SqlModelSave
+import play.api.libs.json._
 
 /**
  * Suggest.io
@@ -29,10 +25,10 @@ import java.{util => ju}
  * Created: 18.04.14 9:51
  * Description: Биллинг: SQL-модель для работы со списком договоров.
  */
-object MBillContract extends SqlModelStatic with FromJson {
+object MContract extends SqlModelStatic with FromJson {
   import SqlParser._
 
-  override type T = MBillContract
+  override type T = MContract
 
   private def idFormatter = new DecimalFormat("000")
 
@@ -56,7 +52,7 @@ object MBillContract extends SqlModelStatic with FromJson {
     get[DateTime](DATE_CREATED_FN) ~ get[Option[String]](HIDDEN_INFO_FN) ~ bool(IS_ACTIVE_FN) ~
     get[Option[String]](SUFFIX_FN) map {
     case id ~ crand ~ adnId ~ contractDate ~ dateCreated ~ hiddenInfo ~ isActive ~ suffix =>
-      MBillContract(
+      MContract(
         id = id,  crand = crand,  adnId = adnId, contractDate = contractDate,
         dateCreated = dateCreated,  hiddenInfo = hiddenInfo,  isActive = isActive, suffix = suffix
       )
@@ -70,7 +66,7 @@ object MBillContract extends SqlModelStatic with FromJson {
    * @param isActive Опциональная фильтрация по isActive.
    * @return Список контрактов в порядке создания.
    */
-  def findForAdn(adnId: String, isActive: Option[Boolean] = None)(implicit c: Connection): List[MBillContract] = {
+  def findForAdn(adnId: String, isActive: Option[Boolean] = None)(implicit c: Connection): List[MContract] = {
     val reqSql = new StringBuilder()
       .append("SELECT * FROM ").append(TABLE_NAME).append(" WHERE ").append(ADN_ID_FN).append(" = {adnId}")
     var args: List[NamedParameter] = List('adnId -> adnId)
@@ -83,16 +79,16 @@ object MBillContract extends SqlModelStatic with FromJson {
     reqSql.append(" ORDER BY ").append(ID_FN).append(" ASC")
     SQL(reqSql.toString())
       .on(args : _*)
-      .as(rowParser *)
+      .as(rowParser.*)
   }
 
   /**
    * Найди все вхождения для списка ands.
    * @param adnIds Коллекция id узлов рекламной сети.
    * @param isActive Необязательный фильтр по значенияем в колонке is_active.
-   * @return Список экземпляров [[MBillContract]] в неопределённом порядке.
+   * @return Список экземпляров [[MContract]] в неопределённом порядке.
    */
-  def findForAdns(adnIds: Traversable[String], isActive: Option[Boolean] = None)(implicit c: Connection): List[MBillContract] = {
+  def findForAdns(adnIds: Traversable[String], isActive: Option[Boolean] = None)(implicit c: Connection): List[MContract] = {
     val reqSql = new StringBuilder("SELECT * FROM ")
       .append(TABLE_NAME)
       .append(" WHERE ").append(ADN_ID_FN).append(" = ANY({adnIds})")
@@ -104,7 +100,7 @@ object MBillContract extends SqlModelStatic with FromJson {
     }
     SQL(reqSql.toString())
       .on(args : _*)
-      .as(rowParser *)
+      .as(rowParser.*)
   }
 
   /**
@@ -112,11 +108,11 @@ object MBillContract extends SqlModelStatic with FromJson {
    * @param crand Рандомная константа контракта.
    * @return Список найденных с указанной константой.
    */
-  def findByCrand(crand: Int)(implicit c: Connection): List[MBillContract] = {
+  def findByCrand(crand: Int)(implicit c: Connection): List[MContract] = {
     // TODO Добавить сортировку по similarity id и suffix
     SQL(s"SELECT * FROM $TABLE_NAME WHERE $CRAND_FN = {crand}")
       .on('crand -> crand)
-      .as(rowParser *)
+      .as(rowParser.*)
   }
 
   val LEGAL_CONTRACT_ID_RE = "(?iu)(\\d{3,10})-(\\d{3})(/[-a-z_а-я\\d]{1,16})?".r
@@ -176,22 +172,22 @@ object MBillContract extends SqlModelStatic with FromJson {
    * Выдать все активные контракты.
    * @return Список контрактов в неопределённом порядке.
    */
-  def findAllActive(implicit c: Connection): List[MBillContract] = {
+  def findAllActive(implicit c: Connection): List[MContract] = {
     SQL(s"SELECT * FROM $TABLE_NAME WHERE $IS_ACTIVE_FN")
-      .as(rowParser *)
+      .as(rowParser.*)
   }
 
   def hasActiveForNode(adnId: String)(implicit c: Connection): Boolean = {
     SQL(s"SELECT count(*) > 0 AS bool FROM $TABLE_NAME WHERE $ADN_ID_FN = {adnId} AND $IS_ACTIVE_FN")
       .on('adnId -> adnId)
-      .as(SqlModelStatic.boolColumnParser single)
+      .as(SqlModelStatic.boolColumnParser.single)
   }
 
   /** Десериализация из json для нужд [[MInviteRequest]]. */
-  val fromJson: PartialFunction[Any, MBillContract] = {
+  val fromJson: PartialFunction[Any, MContract] = {
     case jmap: ju.Map[_,_] =>
-      import EsModelUtil.{stringParser, intParser, booleanParser, dateTimeParser}
-      MBillContract(
+      import EsModelUtil.{booleanParser, dateTimeParser, intParser, stringParser}
+      MContract(
         adnId         = stringParser(jmap get ADN_ID_FN),
         contractDate  = dateTimeParser(jmap get CONTRACT_DATE_FN),
         suffix        = Option(jmap get SUFFIX_FN) map stringParser,
@@ -210,7 +206,7 @@ object MBillContract extends SqlModelStatic with FromJson {
     }
   }
 
-  private def _deleteMbc(mbc: MBillContract)(implicit c: Connection): Int = {
+  private def _deleteMbc(mbc: MContract)(implicit c: Connection): Int = {
     mbc.id.fold(0) { mbcId =>
       val rowsDeleted = super.deleteById(mbcId)
       if (rowsDeleted > 0)
@@ -228,29 +224,6 @@ object MBillContract extends SqlModelStatic with FromJson {
       .foldLeft(0) { (counter, mbc)  =>  _deleteMbc(mbc) + counter }
   }
 
-  /** Подписчик на события удаления узла. Он удаляет контракт, что вызывает каскадное удаление в bill-моделях. */
-  class DelContractsWhenAdnNodeDeleted extends SNStaticSubscriber with SnClassSubscriber with PlayLazyMacroLogsImpl {
-    import LOGGER._
-
-    /** Подписка на события. */
-    override def snMap = List(
-      MNodeDeletedEvent.getClassifier() -> Seq(this)
-    )
-
-    /** Обработать наступившие событие. */
-    override def publish(event: Event)(implicit ctx: ActorContext): Unit = {
-      event match {
-        case ande: MNodeDeletedEvent =>
-          val totalDeleted = DB.withConnection { implicit c =>
-            deleteByAdnId(ande.nodeId)
-          }
-          info(s"Deleted $totalDeleted contracts for deleted adnId[${ande.nodeId}].")
-
-        case other =>
-          warn("Unknown event received: " + other)
-      }
-    }
-  }
 
   /** Псевдослучайное число от 101 до 999. Избегаем нулей, чтобы не путали с буквой 'O'. */
   def crand(): Int = {
@@ -259,16 +232,16 @@ object MBillContract extends SqlModelStatic with FromJson {
 
 }
 
-import MBillContract._
+import models.mbill.MContract._
 
-final case class MBillContract(
+final case class MContract(
   adnId         : String,
   contractDate  : DateTime        = DateTime.now,
-  suffix        : Option[String]  = Some(MBillContract.CONTRACT_SUFFIX_DFLT),
+  suffix        : Option[String]  = Some(MContract.CONTRACT_SUFFIX_DFLT),
   dateCreated   : DateTime        = DateTime.now,
   hiddenInfo    : Option[String]  = None,
   isActive      : Boolean         = true,
-  crand         : Int             = MBillContract.crand(),
+  crand         : Int             = MContract.crand(),
   id            : Option[Int]     = None
 ) extends SqlModelSave with ToPlayJsonObj with SqlModelDelete {
 
@@ -277,10 +250,10 @@ final case class MBillContract(
 
   def printContractDate: String = CONTRACT_DATE_FMT.print(contractDate)
 
-  override def companion = MBillContract
-  override type T = MBillContract
+  override def companion = MContract
+  override type T = MContract
 
-  def suffixMatches(suffix1: Option[String]) = MBillContract.matchSuffixes(suffix, suffix1)
+  def suffixMatches(suffix1: Option[String]) = MContract.matchSuffixes(suffix, suffix1)
 
   /**
    * Добавить в базу текущую запись.
@@ -291,7 +264,7 @@ final case class MBillContract(
         " VALUES ({adnId}, {contractDate}, {dateCreated}, {hiddenInfo}, {isActive}, {crand}, {suffix})")
       .on('adnId -> adnId, 'contractDate -> contractDate, 'dateCreated -> dateCreated, 'hiddenInfo -> hiddenInfo,
           'isActive -> isActive, 'crand -> crand, 'suffix -> suffix)
-      .executeInsert(rowParser single)
+      .executeInsert(rowParser.single)
   }
 
 
@@ -331,14 +304,14 @@ final case class MBillContract(
   }
 
   override def delete(implicit c: Connection): Int = {
-    MBillContract._deleteMbc(this)
+    MContract._deleteMbc(this)
   }
 }
 
 
-trait MBillContractSel {
+trait MContractSel {
   def contractId: Int
-  def contract(implicit c: Connection) = MBillContract.getById(contractId)
+  def contract(implicit c: Connection) = MContract.getById(contractId)
 }
 
 
@@ -361,7 +334,7 @@ trait FindByContract extends SqlModelStatic {
   def getLatestForContractId(contractId: Int)(implicit c: Connection): Option[T] = {
     SQL(s"SELECT * FROM $TABLE_NAME WHERE contract_id = {contractId} ORDER BY id DESC LIMIT 1")
       .on('contractId -> contractId)
-      .as(rowParser *)
+      .as(rowParser.*)
       .headOption
   }
 
@@ -387,7 +360,7 @@ trait FindByContract extends SqlModelStatic {
   def findByContractAdnId(adnId: String)(implicit c: Connection): List[T] = {
     SQL(s"SELECT t.* FROM $TABLE_NAME t WHERE t.contract_id IN (SELECT id FROM bill_contract WHERE adn_id = {adnId} AND is_active)")
       .on('adnId -> adnId)
-      .as(rowParser *)
+      .as(rowParser.*)
   }
 
   /**
@@ -398,9 +371,7 @@ trait FindByContract extends SqlModelStatic {
   def hasByContractAdnId(adnId: String)(implicit c: Connection): Boolean = {
     SQL("SELECT count(t.*) > 0 AS bool FROM " + TABLE_NAME + " t WHERE t.contract_id IN (SELECT id FROM bill_contract WHERE adn_id = {adnId} AND is_active) LIMIT 1")
       .on('adnId -> adnId)
-      .as(SqlModelStatic.boolColumnParser single)
+      .as(SqlModelStatic.boolColumnParser.single)
   }
 
 }
-
-

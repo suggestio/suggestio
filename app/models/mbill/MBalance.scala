@@ -1,14 +1,15 @@
-package models
+package models.mbill
+
+import java.sql.Connection
+import java.{util => ju}
 
 import anorm._
-import io.suggest.model.es.{ToPlayJsonObj, EsModelUtil}
-import EsModelUtil.FieldsJsonAcc
+import io.suggest.model.es.EsModelUtil.FieldsJsonAcc
+import io.suggest.model.es.{EsModelUtil, ToPlayJsonObj}
+import models._
 import util.SqlModelSave
-import java.sql.Connection
-import util.anorm.AnormPgArray
-import AnormPgArray._
+import util.anorm.AnormPgArray._
 import play.api.libs.json._
-import java.{util => ju}
 
 /**
  * Suggest.io
@@ -16,10 +17,10 @@ import java.{util => ju}
  * Created: 18.04.14 11:07
  * Description: Балансы на счетах узлов рекламной сети. Как бы "кошельки" рекламных узлов.
  */
-object MBillBalance extends SqlModelStaticMinimal with FromJson {
+object MBalance extends SqlModelStaticMinimal with FromJson {
   import SqlParser._
 
-  override type T = MBillBalance
+  override type T = MBalance
 
   val TABLE_NAME: String = "bill_balance"
 
@@ -34,7 +35,7 @@ object MBillBalance extends SqlModelStaticMinimal with FromJson {
   val rowParser = get[String](ADN_ID_FN) ~ get[Float](AMOUNT_FN) ~ get[Option[String]](CURRENCY_FN) ~
     get[Float](OVERDRAFT_FN) ~ get[Float](BLOCKED_FN) map {
     case adnId ~ amount ~ currencyCodeOpt ~ overdraft ~ blocked =>
-      MBillBalance(
+      MBalance(
         adnId = adnId,
         amount = amount,
         currencyCodeOpt = currencyCodeOpt,
@@ -48,7 +49,7 @@ object MBillBalance extends SqlModelStaticMinimal with FromJson {
    * @param adnId id узла сети.
    * @return
    */
-  def getByAdnId(adnId: String, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): Option[MBillBalance] = {
+  def getByAdnId(adnId: String, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): Option[MBalance] = {
     // Собрать реквест с учётом возможного наличия заданной политики селекта ряда.
     val req = new StringBuilder(64, "SELECT * FROM ")
       .append(TABLE_NAME)
@@ -65,9 +66,9 @@ object MBillBalance extends SqlModelStaticMinimal with FromJson {
    * Получение балансов для указанных id узлов рекламной сети.
    * @param adnIds Коллекция из id узлов рекламной сети.
    * @param policy Политика локов в SELECT.
-   * @return Список [[MBillBalance]] в неопределённом порядке.
+   * @return Список [[MBalance]] в неопределённом порядке.
    */
-  def getByAdnIds(adnIds: Traversable[String], policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[MBillBalance] = {
+  def getByAdnIds(adnIds: Traversable[String], policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[MBalance] = {
     val req = new StringBuilder(64, "SELECT * FROM ")
       .append(TABLE_NAME)
       .append(" WHERE ").append(ADN_ID_FN).append(" = ANY({adnIds})")
@@ -121,10 +122,10 @@ object MBillBalance extends SqlModelStaticMinimal with FromJson {
   }
 
   /** Десериализатор экземпляра модели из json-представления. */
-  val fromJson: PartialFunction[Any, MBillBalance] = {
+  val fromJson: PartialFunction[Any, MBalance] = {
     case jmap: ju.Map[_,_] =>
-      import EsModelUtil.{stringParser, floatParser}
-      MBillBalance(
+      import EsModelUtil.{floatParser, stringParser}
+      MBalance(
         adnId     = stringParser(jmap get ADN_ID_FN),
         amount    = floatParser(jmap get AMOUNT_FN),
         currencyCodeOpt = Option(jmap get CURRENCY_FN) map stringParser,
@@ -136,9 +137,9 @@ object MBillBalance extends SqlModelStaticMinimal with FromJson {
 }
 
 
-import MBillBalance._
+import models.mbill.MBalance._
 
-final case class MBillBalance(
+final case class MBalance(
   adnId: String,
   amount: Float,
   currencyCodeOpt: Option[String] = Some(CurrencyCodeOpt.CURRENCY_CODE_DFLT),
@@ -147,13 +148,13 @@ final case class MBillBalance(
 ) extends SqlModelSave with CurrencyCodeOpt with ToPlayJsonObj {
 
   def hasId: Boolean = true
-  override def companion = MBillBalance
-  override type T = MBillBalance
+  override def companion = MBalance
+  override type T = MBalance
 
   /** Добавить в базу текущую запись.
     * @return Новый экземпляр сабжа.
     */
-  def saveInsert(implicit c: Connection): MBillBalance = {
+  def saveInsert(implicit c: Connection): MBalance = {
     SQL(s"INSERT INTO $TABLE_NAME ($ADN_ID_FN, $AMOUNT_FN, $CURRENCY_FN, $BLOCKED_FN)" +
         " VALUES({adnId}, {amount}, {currencyCode}, {blocked})")
       .on('adnId -> adnId, 'amount -> amount, 'currencyCode -> currencyCodeOpt, 'blocked -> blocked)
@@ -172,11 +173,11 @@ final case class MBillBalance(
   /**
    * Добавить на баланс указанный объём денег без учета валюты.
    * @param addAmount Изменение баланса.
-   * @return Новый/этот инстанс [[MBillBalance]].
+   * @return Новый/этот инстанс [[MBalance]].
    */
-  def updateAmount(addAmount: Float)(implicit c: Connection): MBillBalance = {
+  def updateAmount(addAmount: Float)(implicit c: Connection): MBalance = {
     val mbb1 = copy(amount = amount + addAmount)
-    MBillBalance.updateAmount(adnId, addAmount) match {
+    MBalance.updateAmount(adnId, addAmount) match {
       case 0 => mbb1.save
       case 1 => mbb1
     }
@@ -184,7 +185,7 @@ final case class MBillBalance(
 
   /** Атомарно обновить заблокированную и текущую сумму. */
   def updateBlocked(blockAmount: Float)(implicit c: Connection): Int = {
-    MBillBalance.blockAmount(adnId, blockAmount)
+    MBalance.blockAmount(adnId, blockAmount)
   }
 
   /** Сериализация в play JSON. Для нужд [[MInviteRequest]]. */

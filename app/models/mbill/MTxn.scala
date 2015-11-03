@@ -1,11 +1,12 @@
-package models
+package models.mbill
+
+import java.sql.Connection
 
 import anorm._
-import util.anorm.{AnormPgArray, AnormJodaTime}
-import AnormJodaTime._
-import AnormPgArray._
+import models.{CurrencyCodeOpt, SqlModelStatic}
 import org.joda.time.DateTime
-import java.sql.Connection
+import util.anorm.AnormJodaTime._
+import util.anorm.AnormPgArray._
 
 /**
  * Suggest.io
@@ -13,10 +14,10 @@ import java.sql.Connection
  * Created: 18.04.14 11:43
  * Description: Журнал транзакций по биллингу.
  */
-object MBillTxn extends SqlModelStatic {
+object MTxn extends SqlModelStatic {
   import SqlParser._
 
-  override type T = MBillTxn
+  override type T = MTxn
 
   val TABLE_NAME: String = "bill_txn"
 
@@ -25,7 +26,7 @@ object MBillTxn extends SqlModelStatic {
                   get[String]("payment_comment") ~ get[String]("txn_uid") ~ get[Option[String]]("ad_id") ~
                   get[Option[Float]]("comission_pc") map {
     case id ~ contractId ~ amount ~ currencyCodeOpt ~ datePaid ~ dateProcessed ~ paymentComment ~ txnUid ~ adId ~ comissionPc =>
-      MBillTxn(
+      MTxn(
         id = id,  contractId = contractId,  amount = amount,  currencyCodeOpt = currencyCodeOpt,
         datePaid = datePaid,  dateProcessed = dateProcessed,  paymentComment = paymentComment,
         txnUid = txnUid, adId = adId, comissionPc = comissionPc
@@ -37,7 +38,7 @@ object MBillTxn extends SqlModelStatic {
    * @param contractId id контракта.
    * @return Список транзакций, новые сверху.
    */
-  def findForContract(contractId: Int, limit: Int = 10, offset: Int = 0)(implicit c: Connection): List[MBillTxn] = {
+  def findForContract(contractId: Int, limit: Int = 10, offset: Int = 0)(implicit c: Connection): List[MTxn] = {
     SQL("SELECT * FROM " + TABLE_NAME + " WHERE contract_id = {contractId} ORDER BY id DESC LIMIT {limit} OFFSET {offset}")
       .on('contractId -> contractId, 'limit -> limit, 'offset -> offset)
       .as(rowParser *)
@@ -48,7 +49,7 @@ object MBillTxn extends SqlModelStatic {
    * @param contractIds Список номеров договоров.
    * @return Список транзакций в порядке их появления.
    */
-  def findForContracts(contractIds: Traversable[Int], limit: Int = 10, offset: Int = 0)(implicit c: Connection): List[MBillTxn] = {
+  def findForContracts(contractIds: Traversable[Int], limit: Int = 10, offset: Int = 0)(implicit c: Connection): List[MTxn] = {
     SQL("SELECT * FROM " + TABLE_NAME + " WHERE contract_id = ANY({ids}) ORDER BY id DESC LIMIT {limit} OFFSET {offset}")
       .on('ids -> seqInt2pgArray(contractIds), 'limit -> limit, 'offset -> offset)
       .as(rowParser *)
@@ -59,7 +60,7 @@ object MBillTxn extends SqlModelStatic {
    * @param count Размер выдачи.
    * @return
    */
-  def lastNPayments(count: Int = 10)(implicit c: Connection): List[MBillTxn] = {
+  def lastNPayments(count: Int = 10)(implicit c: Connection): List[MTxn] = {
     SQL("SELECT * FROM " + TABLE_NAME + " WHERE amount > 0 ORDER BY id DESC LIMIT {count}")
       .on('count -> count)
       .as(rowParser *)
@@ -68,9 +69,9 @@ object MBillTxn extends SqlModelStatic {
 }
 
 
-import MBillTxn._
+import models.mbill.MTxn._
 
-final case class MBillTxn(
+final case class MTxn(
   contractId      : Int,
   amount          : Float,
   datePaid        : DateTime,
@@ -87,7 +88,7 @@ final case class MBillTxn(
    * Добавить в базу транзакцию.
    * @return Новый экземпляр сабжа.
    */
-  def save(implicit c: Connection): MBillTxn = {
+  def save(implicit c: Connection): MTxn = {
     SQL("INSERT INTO " + TABLE_NAME + "(contract_id, amount, currency, date_paid, date_processed, payment_comment, txn_uid, ad_id, comission_pc)" +
         " VALUES({contractId}, {amount}, {currencyCode}, {datePaid}, {dateProcessed}, {paymentComment}, {txnUid}, {adId}, {comissionPc})")
       .on('contractId -> contractId, 'amount -> amount, 'currencyCode -> currencyCodeOpt,

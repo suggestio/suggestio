@@ -6,7 +6,7 @@ import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.playx.ICurrentConf
 import models.jsm.init.MTargets
-import models.mbill.MDailyMmpsTplArgs
+import models.mbill.{MTxn, MTariffDaily, MContract, MDailyMmpsTplArgs}
 import org.elasticsearch.client.Client
 import org.elasticsearch.search.sort.SortOrder
 import play.api.i18n.MessagesApi
@@ -54,7 +54,7 @@ class MarketLkBilling @Inject() (
   /** Отобразить какую-то страницу с реквизитами для платежа. */
   def paymentRequsites(adnId: String) = IsAdnNodeAdmin(adnId).apply { implicit request =>
     val mbcs = db.withConnection { implicit c =>
-      MBillContract.findForAdn(adnId, isActive = Some(true))
+      MContract.findForAdn(adnId, isActive = Some(true))
     }
     mbcs.headOption match {
       case Some(mbc) =>
@@ -90,18 +90,18 @@ class MarketLkBilling @Inject() (
       Future successful Nil
     }
     val billInfoOpt = db.withConnection { implicit c =>
-      MBillContract.findForAdn(adnId, isActive = Some(true))
+      MContract.findForAdn(adnId, isActive = Some(true))
         .headOption
         .map { mbc =>
           val contractId = mbc.id.get
           // Если этот узел - приёмник рекламы, то нужно найти в базе его тарифные планы.
           val myMbmds = if (request.adnNode.extras.adn.exists(_.isReceiver)) {
-            MBillMmpDaily.findByContractId(contractId)
+            MTariffDaily.findByContractId(contractId)
           } else {
             Nil
           }
           val allRcvrAdnIds = if (isProducer) {
-            MBillMmpDaily.findAllAdnIds
+            MTariffDaily.findAllAdnIds
           } else {
             Nil
           }
@@ -129,9 +129,9 @@ class MarketLkBilling @Inject() (
     val offset = page * tpp
     val txnsFut = Future {
       db.withConnection { implicit c =>
-        val mbcs = MBillContract.findForAdn(adnId, isActive = None)
+        val mbcs = MContract.findForAdn(adnId, isActive = None)
         val mbcIds = mbcs.flatMap(_.id).toSet
-        MBillTxn.findForContracts(mbcIds, limit = tpp, offset = offset)
+        MTxn.findForContracts(mbcIds, limit = tpp, offset = offset)
       }
     }(AsyncUtil.jdbcExecutionContext)
     for {
@@ -164,9 +164,9 @@ class MarketLkBilling @Inject() (
     val tariffsFut = Future {
       db.withConnection { implicit c =>
         // TODO Opt Нам тут нужны только номера договоров (id), а не сами договоры.
-        val contracts = MBillContract.findForAdn(nodeId, isActive = Some(true))
+        val contracts = MContract.findForAdn(nodeId, isActive = Some(true))
         val contractIds = contracts.map(_.id.get)
-        MBillMmpDaily.findByContractIds(contractIds)
+        MTariffDaily.findByContractIds(contractIds)
       }
     }(AsyncUtil.jdbcExecutionContext)
 

@@ -7,6 +7,7 @@ import io.suggest.ym.model.NodeGeoLevels
 import io.suggest.ym.model.common.AdnMemberShowLevels.LvlMap_t
 import io.suggest.ym.model.common.MImgSizeT
 import models.blk.SzMult_t
+import models.mbill.BTariffTypes
 import models.stat.{ScStatActions, ScStatAction}
 import org.apache.commons.lang3.StringEscapeUtils
 import org.elasticsearch.common.unit.DistanceUnit

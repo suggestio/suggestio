@@ -1,13 +1,14 @@
-package models
+package models.mbill
 
-import anorm._
-import models.stat.{ScStatAction, ScStatActions}
-import org.joda.time.DateTime
-import util.anorm.AnormJodaTime
-import AnormJodaTime._
-import util.SqlModelSave
 import java.sql.Connection
 import java.util.Currency
+
+import anorm._
+import models._
+import models.stat.{ScStatAction, ScStatActions}
+import org.joda.time.DateTime
+import util.SqlModelSave
+import util.anorm.AnormJodaTime._
 
 /**
  * Suggest.io
@@ -16,21 +17,21 @@ import java.util.Currency
  * Description: Модель тарифов, где списания происходят по просмотрам/кликам (статистика).
  * Сама статистика по факту в списаниях не участвует, но списания жестко кореллируют с ней.
  */
-object MBillTariffStat extends FindByContract with TariffsAllEnabled {
+object MTariffStat extends FindByContract with TariffsAllEnabled {
   import SqlParser._
 
-  override type T = MBillTariffStat
+  override type T = MTariffStat
   override val TABLE_NAME = "bill_tariff_stat"
 
   val debitForParser = get[String]("debit_for") map {
     ScStatActions.withName
   }
 
-  override val rowParser: RowParser[MBillTariffStat] = {
-    MBillTariff.BASE_ROW_PARSER ~ get[Float]("debited_total") ~ debitForParser ~ get[Float]("debit_amount") ~ get[String]("currency_code") map {
+  override val rowParser: RowParser[MTariffStat] = {
+    MTariff.BASE_ROW_PARSER ~ get[Float]("debited_total") ~ debitForParser ~ get[Float]("debit_amount") ~ get[String]("currency_code") map {
       case id ~ contractId ~ name ~ ttype ~ isEnabled ~ dateFirst ~ dateCreated ~ dateModified ~ dateLast ~
            dateStatus ~ generation ~ debitCount ~ debitedTotal ~ debitFor ~ debitAmount ~ currencyCode =>
-        MBillTariffStat(
+        MTariffStat(
           id           = id,
           contractId   = contractId,
           name         = name,
@@ -62,7 +63,7 @@ object MBillTariffStat extends FindByContract with TariffsAllEnabled {
 
 
 
-final case class MBillTariffStat(
+final case class MTariffStat(
   id              : Option[Int] = None,
   contractId      : Int,
   name            : String,
@@ -79,12 +80,12 @@ final case class MBillTariffStat(
   debitCount      : Int = 0,
   debitedTotal    : Float = 0F,
   currencyCode    : String = "RUB"
-) extends SqlModelSave with MBillContractSel with SqlModelDelete with MBillTariff {
-  import MBillTariffStat._
+) extends SqlModelSave with MContractSel with SqlModelDelete with MTariff {
+  import MTariffStat._
 
-  override type T = MBillTariffStat
+  override type T = MTariffStat
 
-  override def companion = MBillTariffStat
+  override def companion = MTariffStat
 
   /** Доступен ли ключ ряда в текущем инстансе? */
   override def hasId: Boolean = id.isDefined
@@ -109,7 +110,7 @@ final case class MBillTariffStat(
   }
 
   def updateDebited(debitedCount: Int, willDebit: Float)(implicit c: Connection) = {
-    MBillTariffStat.updateDebited(
+    MTariffStat.updateDebited(
       id = id.get,
       debitedCount = debitedCount,
       willDebit = willDebit

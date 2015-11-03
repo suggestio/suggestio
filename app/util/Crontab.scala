@@ -9,7 +9,7 @@ import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.concurrent.Akka
 import util.geo.IpGeoBaseImport
 import play.api.Application
-import util.billing.{MmpDailyBilling, Billing}
+import util.billing.{MmpCronTasks, Billing}
 import util.health.AdnGeoParentsHealth
 
 /**
@@ -26,7 +26,7 @@ class Crontab @Inject() (
   geoParentsHealth              : AdnGeoParentsHealth,
   ipGeoBaseImport               : IpGeoBaseImport,
   billing                       : Billing,
-  mmpDailyBilling               : MmpDailyBilling
+  mmpCronTasks                  : MmpCronTasks
 )
   extends PlayLazyMacroLogsImpl
 {
@@ -35,7 +35,7 @@ class Crontab @Inject() (
 
   /** Список классов, которые являются поставщиками периодических задач при старте. */
   def TASK_PROVIDERS = List[ICronTasksProvider](
-    billing, mmpDailyBilling, ipGeoBaseImport, MLocalImg, geoParentsHealth
+    billing, mmpCronTasks, ipGeoBaseImport, MLocalImg, geoParentsHealth
   )
 
   def sched: Scheduler = {

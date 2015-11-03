@@ -1,11 +1,11 @@
-package models
+package models.mbill
+
+import java.sql.Connection
 
 import anorm._
+import models._
 import org.joda.time.DateTime
-import util.anorm.{AnormPgArray, AnormJodaTime}
-import AnormJodaTime._
-import java.sql.Connection
-import AnormPgArray._
+import util.anorm.AnormJodaTime._
 
 /**
  * Suggest.io
@@ -13,7 +13,7 @@ import AnormPgArray._
  * Created: 21.04.14 16:19
  * Description: Модель тарифов при биллинге в рамках postgresql.
  */
-object MBillTariff {
+object MTariff {
   import SqlParser._
 
   val ttypeP = get[String]("ttype") map { BTariffTypes.withName }
@@ -54,7 +54,7 @@ trait TariffsAllEnabled extends SqlModelStatic {
 
   /** Расширенная версия findAllEnabled: залезает в contracts-таблицу и проверяет там isEnabled. */
   def findAllContractEnabled(implicit c: Connection): List[T] = {
-    SQL(s"SELECT t.* FROM $TABLE_NAME t, ${MBillContract.TABLE_NAME} c WHERE t.is_enabled AND c.is_active AND t.contract_id = c.id")
+    SQL(s"SELECT t.* FROM $TABLE_NAME t, ${MContract.TABLE_NAME} c WHERE t.is_enabled AND c.is_active AND t.contract_id = c.id")
       .as(rowParser *)
   }
 }
@@ -79,7 +79,7 @@ trait UpdateDebitCount {
 
 
 /** Интерфейс экземпляров тарифных моделей. */
-trait MBillTariff extends MBillContractSel {
+trait MTariff extends MContractSel {
   def name        : String
   def ttype       : BTariffType
   def isEnabled   : Boolean

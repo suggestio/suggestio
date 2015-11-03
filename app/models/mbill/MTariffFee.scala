@@ -1,14 +1,15 @@
-package models
+package models.mbill
 
-import anorm._
-import org.joda.time.DateTime
-import util.anorm.{AnormPgInterval, AnormJodaTime}
-import AnormJodaTime._
-import AnormPgInterval._
-import util.{FormUtil, SqlModelSave}
 import java.sql.Connection
 import java.util.Currency
+
+import anorm._
+import models._
+import org.joda.time.DateTime
 import org.postgresql.util.PGInterval
+import util.anorm.AnormJodaTime._
+import util.anorm.AnormPgInterval._
+import util.{FormUtil, SqlModelSave}
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -16,19 +17,19 @@ import org.postgresql.util.PGInterval
  * Description: Тарифы для повременной оплаты.
  */
 
-object MBillTariffFee extends FindByContract with TariffsAllEnabled with UpdateDebitCount {
+object MTariffFee extends FindByContract with TariffsAllEnabled with UpdateDebitCount {
   import SqlParser._
 
-  override type T = MBillTariffFee
+  override type T = MTariffFee
 
   override val TABLE_NAME: String = "bill_tariff_fee"
 
   override val rowParser = {
-    MBillTariff.BASE_ROW_PARSER ~ get[Float]("fee") ~ get[String]("fee_cc") ~ get[PGInterval]("tinterval") map {
+    MTariff.BASE_ROW_PARSER ~ get[Float]("fee") ~ get[String]("fee_cc") ~ get[PGInterval]("tinterval") map {
       case id ~ contractId ~ name ~ ttype ~ isEnabled ~ dateFirst ~ dateCreated ~ dateModified ~ dateLast ~
            dateStatus ~ generation ~ debitCount ~ fee ~ feeCC ~ tinterval =>
         // TODO Надо как-то использовать MBillTariffFee.apply без перечисления аргументов, порядок которых точно совпадает.
-        MBillTariffFee(
+        MTariffFee(
           id          = id,
           contractId  = contractId,
           name        = name,
@@ -51,7 +52,7 @@ object MBillTariffFee extends FindByContract with TariffsAllEnabled with UpdateD
 
   /** Найти тарифы, которые нуждаются в скорейшем списании. Это enabled-тарифы, которые имеют период меньше,
     * чем now - последнее списание. */
-  def findAllNonDebited(implicit c: Connection): List[MBillTariffFee] = {
+  def findAllNonDebited(implicit c: Connection): List[MTariffFee] = {
     SQL("SELECT t.* FROM " + TABLE_NAME + " t WHERE is_enabled AND date_last + tinterval < now()")
       .as(rowParser *)
   }
@@ -61,14 +62,14 @@ object MBillTariffFee extends FindByContract with TariffsAllEnabled with UpdateD
    * Гибрид [[findAllContractEnabled]] и [[findAllNonDebited]].
    * @return Список тарифов в неопределённом порядке.
    */
-  def findAllNonDebitedContractActive(implicit c: Connection): List[MBillTariffFee] = {
-    SQL(s"SELECT t.* FROM $TABLE_NAME t, ${MBillContract.TABLE_NAME} c WHERE t.is_enabled AND c.is_active AND t.contract_id = c.id AND (date_last IS NULL OR date_last + tinterval < now())")
+  def findAllNonDebitedContractActive(implicit c: Connection): List[MTariffFee] = {
+    SQL(s"SELECT t.* FROM $TABLE_NAME t, ${MContract.TABLE_NAME} c WHERE t.is_enabled AND c.is_active AND t.contract_id = c.id AND (date_last IS NULL OR date_last + tinterval < now())")
       .as(rowParser *)
   }
 }
 
 
-final case class MBillTariffFee(
+final case class MTariffFee(
   id          : Option[Int] = None,
   contractId  : Int,
   name        : String,
@@ -84,18 +85,18 @@ final case class MBillTariffFee(
   debitCount  : Int = 0,
   fee         : Float,
   feeCC       : String = "RUB"
-) extends SqlModelSave with MBillContractSel with SqlModelDelete with MBillTariff {
-  import MBillTariffFee._
+) extends SqlModelSave with MContractSel with SqlModelDelete with MTariff {
+  import MTariffFee._
 
-  override type T = MBillTariffFee
-  override def companion = MBillTariffFee
+  override type T = MTariffFee
+  override def companion = MTariffFee
 
   def tintervalPretty: String = FormUtil.pgIntervalPretty(tinterval)
 
   /** Доступен ли ключ ряда в текущем инстансе? */
   override def hasId: Boolean = id.isDefined
 
-  override def saveInsert(implicit c: Connection): MBillTariffFee = {
+  override def saveInsert(implicit c: Connection): MTariffFee = {
     SQL("INSERT INTO " + TABLE_NAME + "(contract_id, name, ttype, is_enabled, date_first, tinterval, date_created, date_status, generation, debit_count, fee, fee_cc) " +
         "VALUES ({contractId}, {name}, {ttype}, {isEnabled}, {dateFirst}, {tinterval}, {dateCreated}, {dateStatus}, {generation}, {debitCount}, {fee}, {feeCC})")
       .on('contractId -> contractId, 'name -> name, 'ttype -> ttype.toString, 'isEnabled -> isEnabled,

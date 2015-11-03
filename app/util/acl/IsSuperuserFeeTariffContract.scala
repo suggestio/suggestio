@@ -1,8 +1,8 @@
 package util.acl
 
 import io.suggest.di.IExecutionContext
+import models.mbill.{MTariffFee, MContract}
 import models.req.SioReqMd
-import models.{MBillTariffFee, MBillContract}
 import play.api.mvc.{Result, ActionBuilder, Request}
 import util.acl.PersonWrapper.PwOpt_t
 import util.async.AsyncUtil
@@ -35,8 +35,8 @@ trait IsSuperuserFeeTariffContract
       if ( PersonWrapper.isSuperuser(pwOpt) ) {
         val dbFut = Future {
           db.withConnection { implicit c =>
-            val _tariff = MBillTariffFee.getById(tariffId).get
-            val _contract = MBillContract.getById(_tariff.contractId).get
+            val _tariff = MTariffFee.getById(tariffId).get
+            val _contract = MContract.getById(_tariff.contractId).get
             _tariff -> _contract
           }
         }(AsyncUtil.jdbcExecutionContext)
@@ -65,8 +65,8 @@ trait IsSuperuserFeeTariffContract
 
 
 case class FeeTariffRequest[A](
-  tariff      : MBillTariffFee,
-  contract    : MBillContract,
+  tariff      : MTariffFee,
+  contract    : MContract,
   pwOpt       : PwOpt_t,
   request     : Request[A],
   sioReqMd    : SioReqMd

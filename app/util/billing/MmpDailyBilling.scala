@@ -2,29 +2,26 @@ package util.billing
 
 import com.google.inject.{Inject, Singleton}
 import de.jollyday.parameter.UrlManagerParameter
-import io.suggest.playx.ICurrentConf
 import io.suggest.ym.model.common.EMBlockMetaI
 import models._
 import models.adv.{MAdvReq, MAdvRefuse, MAdvOk, IAdvTerms}
 import models.adv.geo.AdvFormEntry
 import models.adv.tpl.MAdvPricing
 import models.blk.{BlockWidths, BlockHeights}
-import models.mcron.{ICronTask, MCronTask}
-import org.joda.time.{Period, DateTime, LocalDate}
+import models.mbill.{MTxn, MTariffDaily, MBalance, MContract}
+import org.joda.time.{DateTime, LocalDate}
 import org.joda.time.DateTimeConstants._
-import play.api.Application
+import play.api.Configuration
 import scala.annotation.tailrec
-import util.{ICronTasksProvider, PlayMacroLogsImpl}
+import util.PlayMacroLogsImpl
 import play.api.db.Database
 import io.suggest.ym.parsers.Price
 import java.sql.Connection
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
-import scala.concurrent.duration._
 import de.jollyday.HolidayManager
 import java.net.URL
 import controllers.routes
 import scala.collection.JavaConversions._
-import scala.reflect.ClassTag
 
 /**
  * Suggest.io
@@ -34,29 +31,13 @@ import scala.reflect.ClassTag
  */
 @Singleton
 class MmpDailyBilling @Inject() (
-  override val current    : Application,
+  configuration           : Configuration,
   db                      : Database
 )
   extends PlayMacroLogsImpl
-  with ICronTasksProvider
-  with ICurrentConf
 {
 
   import LOGGER._
-
-  /** Включен ли биллинг по крону? Будет выполнятся публикация карточек, их сокрытие и т.д. */
-  def CRON_BILLING_CHECK_ENABLED: Boolean = configuration.getBoolean("mmp.daily.check.enabled") getOrElse true
-
-  /** Сколько раз пытаться повторять сохранение обновлённого списка ресиверов. */
-  val UPDATE_RCVRS_VSN_CONFLICT_TRY_MAX = configuration.getInt("mmp.daily.save.update.rcvrs.onConflict.try.max") getOrElse 5
-
-  /** Не раньше какого времени можно запускать auto-accept. */
-  val AUTO_ACCEPT_REQS_AFTER_HOURS = configuration.getInt("mmp.daily.accept.auto.after.hours") getOrElse 16
-
-  /** Как часто надо проверять таблицу advsOK на предмет необходимости изменений в выдаче. */
-  def CHECK_ADVS_OK_DURATION: FiniteDuration = configuration.getInt("mmp.daily.check.advs.ok.every.seconds")
-    .getOrElse(120)
-    .seconds
 
   val MYSELF_URL_PREFIX: String = configuration.getString("mmp.daily.localhost.url.prefix") getOrElse {
     val myPort = Option(System.getProperty("http.port")).fold(9000)(_.toInt)
@@ -79,57 +60,12 @@ class MmpDailyBilling @Inject() (
     HolidayManager.getInstance(args)
   }
 
-
-  override def cronTasks(app: Application): TraversableOnce[ICronTask] = {
-    if (CRON_BILLING_CHECK_ENABLED) {
-      val every = CHECK_ADVS_OK_DURATION
-
-      val applyOldReqs = MCronTask(
-        startDelay = 3.seconds,
-        every = every,
-        displayName = "autoApplyOldAdvReqs()"
-      ) {
-        autoApplyOldAdvReqs()
-      }
-
-      val depubExpired = MCronTask(
-        startDelay = 10.seconds,
-        every = every,
-        displayName = "depublishExpiredAdvs()"
-      ) {
-        depublishExpiredAdvs()
-      }
-
-      val advOfflineAdvs = MCronTask(
-        startDelay = 30.seconds,
-        every = every,
-        displayName = "advertiseOfflineAds()"
-      ) {
-        advertiseOfflineAdvs()
-      }
-      List(applyOldReqs, depubExpired, advOfflineAdvs)
-
-    } else {
-      Nil
-    }
-  }
-
-  private def _injRun[T <: AdvsUpdate : ClassTag]: Unit = {
-    current.injector.instanceOf[T].run()
-  }
-  def advertiseOfflineAdvs(): Unit = {
-    _injRun[AdvertiseOfflineAdvs]
-  }
-  def depublishExpiredAdvs(): Unit = {
-    _injRun[DepublishExpiredAdvs]
-  }
-
   /**
    * Рассчитать ценник размещения рекламной карточки.
    * Цена блока рассчитывается по площади, тарифам размещения узла-получателя и исходя из будней-праздников.
    * @return
    */
-  def calculateAdvPrice(blockModulesCount: Int, rcvrPricing: MBillMmpDaily, advTerms: IAdvTerms): Price = {
+  def calculateAdvPrice(blockModulesCount: Int, rcvrPricing: MTariffDaily, advTerms: IAdvTerms): Price = {
     lazy val logPrefix = s"calculateAdvPrice($blockModulesCount/${rcvrPricing.id.get}): "
     trace(s"${logPrefix}rcvr: tariffId=${rcvrPricing.id.get} mbcId=${rcvrPricing.contractId};; terms: from=${advTerms.dateStart} to=${advTerms.dateEnd} sls=${advTerms.showLevels}")
     // Во избежание бесконечного цикла, огораживаем dateStart <= dateEnd
@@ -222,11 +158,11 @@ class MmpDailyBilling @Inject() (
     db.withConnection { implicit c =>
       val someTrue = Some(true)
       val prices = adves2.foldLeft[List[Price]] (Nil) { (acc, adve) =>
-        val rcvrContract = MBillContract.findForAdn(adve.adnId, isActive = someTrue)
+        val rcvrContract = MContract.findForAdn(adve.adnId, isActive = someTrue)
           .sortBy(_.id.get)
           .head
         val contractId = rcvrContract.id.get
-        val rcvrPricing = MBillMmpDaily.getLatestForContractId(contractId).get
+        val rcvrPricing = MTariffDaily.getLatestForContractId(contractId).get
         val bmc = getAdModulesCount(mad)
         val advPrice = calculateAdvPrice(bmc, rcvrPricing, adve)
         advPrice :: acc
@@ -235,7 +171,7 @@ class MmpDailyBilling @Inject() (
         .groupBy { _.currency.getCurrencyCode }
         .mapValues { p => p.head.currency -> p.map(_.price).sum }
         .values
-      val mbb = MBillBalance.getByAdnId(mad.producerId).get
+      val mbb = MBalance.getByAdnId(mad.producerId).get
       // Если есть разные валюты, то операция уже невозможна.
       val hasEnoughtMoney = prices2.size <= 1 && {
         prices2.headOption.exists { price =>
@@ -266,14 +202,14 @@ class MmpDailyBilling @Inject() (
     import mad.producerId
     db.withTransaction { implicit c =>
       // Вешаем update lock на баланс чтобы избежать блокирования суммы, списанной в параллельном треде, и дальнейшего ухода в минус.
-      val mbb0 = MBillBalance.getByAdnId(producerId, SelectPolicies.UPDATE).get
+      val mbb0 = MBalance.getByAdnId(producerId, SelectPolicies.UPDATE).get
       val someTrue = Some(true)
-      val mbc = MBillContract.findForAdn(producerId, isActive = someTrue).head
+      val mbc = MContract.findForAdn(producerId, isActive = someTrue).head
       val prodCurrencyCode = mbb0.currencyCode
       advs.foreach { advEntry =>
         val rcvrContract = getOrCreateContract(advEntry.adnId)
         val contractId = rcvrContract.id.get
-        val rcvrMmp = MBillMmpDaily.getLatestForContractId(contractId).get
+        val rcvrMmp = MTariffDaily.getLatestForContractId(contractId).get
         val bmc = getAdModulesCount(mad)
         // Фильтруем уровни отображения в рамках sink'а.
         val advPrice = calculateAdvPrice(bmc, rcvrMmp, advEntry)
@@ -304,14 +240,14 @@ class MmpDailyBilling @Inject() (
   /**
    * Стрёмная функция для получения активного контракта. Создаёт такой контракт, если его нет.
    * @param adnId id узла, с которым нужен контракт.
-   * @return Экземпляр [[models.MBillContract]].
+   * @return Экземпляр [[MContract]].
    */
-  private def getOrCreateContract(adnId: String)(implicit c: Connection): MBillContract = {
-    MBillContract.findForAdn(adnId, isActive = Some(true))
+  private def getOrCreateContract(adnId: String)(implicit c: Connection): MContract = {
+    MContract.findForAdn(adnId, isActive = Some(true))
       .sortBy(_.id.get)
       .headOption
       .getOrElse {
-        MBillContract(adnId = adnId, contractDate = DateTime.now).save
+        MContract(adnId = adnId, contractDate = DateTime.now).save
       }
   }
 
@@ -364,20 +300,20 @@ class MmpDailyBilling @Inject() (
       assertAdvsReqRowsDeleted(reqsDeleted, 1, advReqId)
       // Провести все денежные операции.
       val prodAdnId = advReq.prodAdnId
-      val prodContractOpt = MBillContract.findForAdn(prodAdnId, isActive = Some(true)).headOption
+      val prodContractOpt = MContract.findForAdn(prodAdnId, isActive = Some(true)).headOption
       assert(prodContractOpt.exists(_.id.get == advReq.prodContractId), "Producer contract not found or changed since request creation.")
       val prodContract = prodContractOpt.get
       val amount0 = advReq.amount
 
       // Списать заблокированную сумму:
-      val oldProdMbbOpt = MBillBalance.getByAdnId(prodAdnId)
+      val oldProdMbbOpt = MBalance.getByAdnId(prodAdnId)
       assert(oldProdMbbOpt.exists(_.currencyCode == advReq.currencyCode), "producer balance currency does not match to adv request")
-      val prodMbbUpdated = MBillBalance.updateBlocked(prodAdnId, -amount0)
+      val prodMbbUpdated = MBalance.updateBlocked(prodAdnId, -amount0)
       assert(prodMbbUpdated == 1, "Failed to debit blocked amount for producer " + prodAdnId)
 
       val now = DateTime.now
       // Запилить единственную транзакцию списания для продьюсера
-      val prodTxn = MBillTxn(
+      val prodTxn = MTxn(
         contractId      = prodContract.id.get,
         amount          = -amount0,
         datePaid        = advReq.dateCreated,
@@ -389,11 +325,11 @@ class MmpDailyBilling @Inject() (
       trace(s"${logPrefix}Debited producer[$prodAdnId] for ${prodTxn.amount} ${prodTxn.currencyCode}. txnId=${prodTxn.id.get} contractId=${prodContract.id.get}")
 
       // Разобраться с кошельком получателя
-      val rcvrContract = MBillContract.findForAdn(rcvrAdnId, isActive = Some(true))
+      val rcvrContract = MContract.findForAdn(rcvrAdnId, isActive = Some(true))
         .headOption
         .getOrElse {
           warn(s"advReqAcceptSubmit($advReqId): Creating new contract for adv. award receiver...")
-          MBillContract(
+          MContract(
             adnId         = rcvrAdnId,
             contractDate  = now,
             isActive      = true,
@@ -412,7 +348,7 @@ class MmpDailyBilling @Inject() (
       val advSinkCount = advSsl.size
       val sinkAmount: Float = amount0 / advSinkCount
       val rcvrTxns = advSsl
-        .foldLeft( List.empty[MBillTxn] ) { case (acc, (sink, sinkShowLevels)) =>
+        .foldLeft( List.empty[MTxn] ) { case (acc, (sink, sinkShowLevels)) =>
           // Считаем комиссированную цену в рамках sink'а. Если sink'а нет, то пусть будет экзепшен и всё.
           // 2015.feb.06: sink'и выдачи незаметно стали не нужны. Разрешаем дефолтовые значения, если тариф не задан.
           val msc: Float = mscsMap.get(sink) match {
@@ -428,11 +364,11 @@ class MmpDailyBilling @Inject() (
             // Сначала надо вычистить долю расхода в рамках текущего sink'а.
             val amount1 = (1.0F - msc) * sinkAmount
             assert(amount1 <= sinkAmount, "Comissioned amount must be less or equal than source amount.")
-            val rcvrMbb = MBillBalance.getByAdnId(rcvrAdnId) getOrElse MBillBalance(rcvrAdnId, 0F, Some(advReq.currencyCode))
+            val rcvrMbb = MBalance.getByAdnId(rcvrAdnId) getOrElse MBalance(rcvrAdnId, 0F, Some(advReq.currencyCode))
             assert(rcvrMbb.currencyCode == advReq.currencyCode, "Rcvr balance currency does not match to adv request")
             // Зачислить деньги на счет получателя. Для списаний с разной комиссией нужны разные транзакции.
             val rcvrMbb2 = rcvrMbb.updateAmount(amount1)
-            val rcvrTxn = MBillTxn(
+            val rcvrTxn = MTxn(
               contractId      = rcvrContractId,
               amount          = amount1,
               comissionPc     = Some(msc),
@@ -473,22 +409,9 @@ class MmpDailyBilling @Inject() (
       assertAdvsReqRowsDeleted(rowsDeleted, 1, advReq.id.get)
       val advr = advRefused.save
       // Разблокировать средства на счёте.
-      MBillBalance.blockAmount(advr.prodAdnId, -advr.amount)  // TODO Нужно ли округлять, чтобы blocked в минус не уходило из-за неточностей float/double?
+      MBalance.blockAmount(advr.prodAdnId, -advr.amount)  // TODO Нужно ли округлять, чтобы blocked в минус не уходило из-за неточностей float/double?
       // Вернуть сохранённый refused
       advr
-    }
-  }
-
-
-  /** Цикл автоматического накатывания MAdvReq в MAdvOk. Нужно найти висячие MAdvReq и заапрувить их. */
-  def autoApplyOldAdvReqs() {
-    val period = new Period(AUTO_ACCEPT_REQS_AFTER_HOURS, 0, 0, 0)
-    val advsReq = db.withConnection { implicit c =>
-      MAdvReq.findCreatedLast(period)
-    }
-    //val logPrefix = "autoApplyOldAdvReqs(): "
-    if (advsReq.nonEmpty) {
-      advsReq.foreach(acceptAdvReq(_, isAuto = true))
     }
   }
 

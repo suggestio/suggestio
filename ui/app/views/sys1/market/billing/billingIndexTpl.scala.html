@@ -1,4 +1,4 @@
-@(lastPays: Seq[MBillTxn], contracts: Map[Int, MBillContract], adns: Map[String, MNode])(implicit ctx: Context)
+@(lastPays: Seq[mbill.MTxn], contracts: Map[Int, mbill.MContract], adns: Map[String, MNode])(implicit ctx: Context)
 
 @* Страница биллинга вне сущностей рекламной сети.
    Здесь есть ссылка на транзакцию и список последний транзакций. *@

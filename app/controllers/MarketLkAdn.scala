@@ -6,6 +6,7 @@ import io.suggest.model.n2.node.meta.MBasicMeta
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.adv._
+import models.mbill.{MContract, MBalance}
 import util.adn.NodesUtil
 import util.async.AsyncUtil
 import com.google.inject.Inject
@@ -206,7 +207,7 @@ class MarketLkAdn @Inject() (
         if (isMyNode && adnNode.extras.adn.exists(_.isProducer)) {
           Future {
             db.withConnection { implicit c =>
-              MBillContract.hasActiveForNode(adnId)  &&  MBillBalance.hasForNode(adnId)
+              MContract.hasActiveForNode(adnId)  &&  MBalance.hasForNode(adnId)
             }
           }(AsyncUtil.jdbcExecutionContext)
         } else {

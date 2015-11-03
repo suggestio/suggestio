@@ -3,13 +3,14 @@ package util.event
 import io.suggest.event._
 import models.adv.DeleteAllAdvsOnAdDeleted
 import models.im.MLocalImg
+import models.mbill.DelContractsWhenNodeDeleted
 import util._
 import akka.actor.{Props, ActorRef, ActorRefFactory}
 import akka.util.Timeout
 import scala.concurrent.duration._
 import play.api.Play.current
 import play.api.libs.concurrent.Akka
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import models._
 
@@ -54,7 +55,7 @@ object SiowebNotifier
       _inj[MAdnNodeCache],
       _inj[DeleteAdsOnAdnNodeDeleteSubscriber],
       _inj[DeleteAllAdvsOnAdDeleted],
-      new MBillContract.DelContractsWhenAdnNodeDeleted,
+      _inj[DelContractsWhenNodeDeleted],
       _inj[AdnNodeEvents],
       MLocalImg
     )
@@ -78,6 +79,8 @@ object SiowebNotifier
 
 
 class SiowebNotifier extends SioNotifier with SioutilLogs {
+
+  override def ec = defaultContext
 
   // После запуска надо подписаться на статические события проекта.
   override def preStart(): Unit = {

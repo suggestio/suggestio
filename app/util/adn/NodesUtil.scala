@@ -13,6 +13,7 @@ import io.suggest.ym.model.common.AdnMemberShowLevels
 import models._
 import models.adv.MExtTarget
 import models.madn.{MNodeRegSuccess, NodeDfltColors}
+import models.mbill.{MContract, MBalance}
 import models.mext.MExtServices
 import org.elasticsearch.client.Client
 import org.joda.time.DateTime
@@ -147,8 +148,8 @@ class NodesUtil @Inject() (
   def createUserNodeBilling(adnId: String): Future[_] = {
     Future {
       db.withTransaction { implicit c =>
-        MBillContract(adnId = adnId).save
-        MBillBalance(adnId = adnId, amount = BILL_START_BALLANCE).save
+        MContract(adnId = adnId).save
+        MBalance(adnId = adnId, amount = BILL_START_BALLANCE).save
         // 2015.feb.18: Не надо создавать новый пользовательский узел как платный ресивер.
         //val mmp0 = MBillMmpDaily(contractId = mbc.id.get).save
         // Можно возвращать все эти экземпляры в результате работы. Сейчас это не требуется, поэтому они висят так.

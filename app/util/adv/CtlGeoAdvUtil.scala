@@ -5,7 +5,7 @@ import java.util.Currency
 
 import com.google.inject.Inject
 import models.adv.{MAdvReq, MAdvStaticT, MAdvI}
-import models.MBillMmpDaily
+import models.mbill.MTariffDaily
 import play.api.db.Database
 import util.async.AsyncUtil
 
@@ -89,7 +89,7 @@ class CtlGeoAdvUtil @Inject() (
   def findAdnIdsMmpReady(): Future[List[String]] = {
     Future {
       db.withConnection { implicit c =>
-        MBillMmpDaily.findAllAdnIds
+        MTariffDaily.findAllAdnIds
       }
     }(AsyncUtil.jdbcExecutionContext)
   }

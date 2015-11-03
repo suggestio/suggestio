@@ -6,6 +6,7 @@ import io.suggest.ym.model.common
 import io.suggest.ym.model.common.EMImg
 import models.adv.MAdvModes
 import models.adv.tpl.LkAdvRightLinks
+import models.mbill.BTariffTypes
 import models.usr.EmailPwConfirmInfo
 import play.api.data.Form
 import util.blocks.BlocksUtil.BlockImgMap

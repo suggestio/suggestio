@@ -1,7 +1,7 @@
 package models.mbill
 
 import models.im.MImgT
-import models.{MNode, MBillMmpDaily}
+import models.MNode
 
 /**
  * Suggest.io
@@ -13,7 +13,7 @@ import models.{MNode, MBillMmpDaily}
 trait IDailyMmpsTplArgs {
 
   /** daily-тарифы. */
-  def tariffs   : List[MBillMmpDaily]
+  def tariffs   : List[MTariffDaily]
 
   /** Узел. */
   def mnode     : MNode
@@ -25,7 +25,7 @@ trait IDailyMmpsTplArgs {
 
 
 case class MDailyMmpsTplArgs(
-  override val tariffs   : List[MBillMmpDaily],
+  override val tariffs   : List[MTariffDaily],
   override val mnode   : MNode,
   override val gallery   : Seq[MImgT]
 )

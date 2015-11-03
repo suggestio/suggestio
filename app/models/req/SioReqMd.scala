@@ -4,6 +4,7 @@ import models._
 import models.event.MEvent
 import models.event.search.MEventsSearchArgs
 import models.jsm.init.MTarget
+import models.mbill.MBalance
 import play.api.Play.current
 import play.api.db.DB
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -51,7 +52,7 @@ object SioReqMd {
     // Получить баланс узла.
     val bbOptFut = Future {
       DB.withConnection { implicit c =>
-        MBillBalance.getByAdnId(adnId)
+        MBalance.getByAdnId(adnId)
       }
     }(AsyncUtil.jdbcExecutionContext)
     // Собрать результат.
@@ -79,7 +80,7 @@ trait ISioReqMd {
   def usernameOpt       : Option[String]
 
   /** Текущий денежный баланс текущего узла. */
-  def billBallanceOpt   : Option[MBillBalance]
+  def billBallanceOpt   : Option[MBalance]
 
   /** Кол-во новых событий у узла. */
   def nodeUnseenEvtsCnt : Option[Int]
@@ -120,7 +121,7 @@ trait SioReqMdWrapper extends ISioReqMd {
 /** Дефолтовая реализация экземпляра модели [[ISioReqMd]] */
 case class SioReqMd(
   override val usernameOpt       : Option[String]       = None,
-  override val billBallanceOpt   : Option[MBillBalance] = None,
+  override val billBallanceOpt   : Option[MBalance] = None,
   override val nodeUnseenEvtsCnt : Option[Int]          = None,
   override val jsInitTargets0    : Seq[MTarget]         = Nil
 )

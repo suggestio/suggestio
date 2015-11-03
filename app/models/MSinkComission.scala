@@ -3,6 +3,7 @@ package models
 import java.sql.Connection
 
 import anorm._
+import models.mbill.{FindByContract, MContractSel}
 import util.SqlModelSave
 import util.anorm.AnormAdnSink._
 
@@ -37,7 +38,7 @@ final case class MSinkComission(
   sink          : AdnSink,
   sioComission  : Float,
   id            : Option[Int] = None
-) extends SqlModelSave with SqlModelDelete with MBillContractSel {
+) extends SqlModelSave with SqlModelDelete with MContractSel {
 
   override type T = MSinkComission
 

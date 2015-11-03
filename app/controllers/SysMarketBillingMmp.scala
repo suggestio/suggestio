@@ -2,6 +2,7 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.event.SioNotifierStaticClientI
+import models.mbill.{MContract, MTariffDaily}
 import org.elasticsearch.client.Client
 import play.api.i18n.MessagesApi
 import play.twirl.api.Html
@@ -38,8 +39,8 @@ class SysMarketBillingMmp @Inject() (
   with IsSuperuser
 {
 
-  /** Маппинг для формы редактирования [[models.MBillMmpDaily]]. */
-  private def mmpDailyM: Mapping[MBillMmpDaily] = {
+  /** Маппинг для формы редактирования [[MTariffDaily]]. */
+  private def mmpDailyM: Mapping[MTariffDaily] = {
     val floatGreaterThan1 = floatM.verifying(_ >= 1.0F)
     mapping(
       "currencyCode"  -> currencyCodeOrDfltM,
@@ -52,7 +53,7 @@ class SysMarketBillingMmp @Inject() (
       "primeCalId"    -> esIdM
     )
     {(currencyCode, mmpWeekday, mmpWeekend, mmpPrimetime, onStartPage, onRcvrCat, weekendCalId, primeCalId) =>
-      MBillMmpDaily(
+      MTariffDaily(
         contractId    = -1,
         currencyCode  = currencyCode,
         mmpWeekday    = mmpWeekday,
@@ -73,8 +74,8 @@ class SysMarketBillingMmp @Inject() (
   /** Маппинг формы для одного daily-тарификатора. */
   private def mmpFormM = Form(mmpDailyM)
 
-  private def mmpStubForm: Form[MBillMmpDaily] = {
-    val mmpStub = MBillMmpDaily(contractId = -1)
+  private def mmpStubForm: Form[MTariffDaily] = {
+    val mmpStub = MTariffDaily(contractId = -1)
     mmpFormM.fill(mmpStub)
   }
 
@@ -88,7 +89,7 @@ class SysMarketBillingMmp @Inject() (
       .map(Ok(_))
   }
 
-  private def _createMmpDaily(formM: Form[MBillMmpDaily])(implicit request: ContractRequest[AnyContent]): Future[Html] = {
+  private def _createMmpDaily(formM: Form[MTariffDaily])(implicit request: ContractRequest[AnyContent]): Future[Html] = {
     val mcalsFut = mCalendar.getAll()
     for {
       adnNodeOpt <- mNodeCache.getById(request.contract.adnId)
@@ -130,11 +131,11 @@ class SysMarketBillingMmp @Inject() (
       .map(Ok(_))
   }
 
-  private def _editMmpDaily(mmpdId: Int, form: Form[MBillMmpDaily])(implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Html] = {
+  private def _editMmpDaily(mmpdId: Int, form: Form[MTariffDaily])(implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Html] = {
     val mcalsFut = mCalendar.getAll()
     val syncResult = db.withConnection { implicit c =>
-      val mbmd = MBillMmpDaily.getById(mmpdId).get
-      val mbc  = MBillContract.getById(mbmd.contractId).get
+      val mbmd = MTariffDaily.getById(mmpdId).get
+      val mbc  = MContract.getById(mbmd.contractId).get
       (mbmd, mbc)
     }
     val (mbmd, mbc) = syncResult
@@ -162,11 +163,11 @@ class SysMarketBillingMmp @Inject() (
       {newMbmd =>
         val rdrToAdnFut = Future {
           db.withTransaction { implicit c =>
-            val mbmd = MBillMmpDaily.getById(mmpdId).get
+            val mbmd = MTariffDaily.getById(mmpdId).get
             val mbmd1 = newMbmd.copy(id = mbmd.id, contractId = mbmd.contractId)
             mbmd1.save
             // Вычисляем, куда нужно редиректить юзера после сохранения.
-            val contract = MBillContract.getById(mbmd.contractId).get
+            val contract = MContract.getById(mbmd.contractId).get
             contract.adnId
           }
         }(AsyncUtil.jdbcExecutionContext)
@@ -185,8 +186,8 @@ class SysMarketBillingMmp @Inject() (
     // Нужно узнать adnId на который редиректить (из контракта) и удалить mmp-тарификатор.
     val resultFut = Future {
       db.withConnection { implicit c =>
-        val adnIdOpt = MBillMmpDaily.getById(mmpId).flatMap(_.contract).map(_.adnId)
-        val rowsDeleted = MBillMmpDaily.deleteById(mmpId)
+        val adnIdOpt = MTariffDaily.getById(mmpId).flatMap(_.contract).map(_.adnId)
+        val rowsDeleted = MTariffDaily.deleteById(mmpId)
         (adnIdOpt, rowsDeleted)
       }
     }(AsyncUtil.jdbcExecutionContext)
@@ -224,7 +225,7 @@ class SysMarketBillingMmp @Inject() (
    * @param formM Маппинг формы для рендера.
    * @return HTML страницы формы редактирования.
     */
-  private def _updateAllFormHtml(formM: Form[MBillMmpDaily])(implicit request: AbstractRequestWithPwOpt[_]): Future[Html] = {
+  private def _updateAllFormHtml(formM: Form[MTariffDaily])(implicit request: AbstractRequestWithPwOpt[_]): Future[Html] = {
     val mcalsFut = mCalendar.getAll()
     for {
       mcals <- mcalsFut
@@ -247,7 +248,7 @@ class SysMarketBillingMmp @Inject() (
       {mmp2 =>
         val countUpdatedFut = Future {
           db.withConnection { implicit c =>
-            MBillMmpDaily.updateAll(mmp2)
+            MTariffDaily.updateAll(mmp2)
           }
         }
         for {
