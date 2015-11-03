@@ -3,11 +3,11 @@ package io.suggest.event
 import akka.event.{EventBus, SubchannelClassification}
 import akka.util.{Timeout, Subclassification}
 import akka.actor._
-import scala.Some
 import akka.actor.Terminated
+import io.suggest.di.IExecutionContext
 import subscriber._
 import akka.pattern.ask
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import io.suggest.util.LogsAbstract
 
 /**
@@ -198,10 +198,10 @@ trait SNStaticSubscriptionManager extends SioNotifierStaticClientI {
 
 
 /** Реализация механизма SioNotifier в виде актора. */
-trait SioNotifier extends Actor with LogsAbstract {
+trait SioNotifier extends Actor with LogsAbstract with IExecutionContext {
 
   // Шина сообщений. Делает все дела.
-  protected val bus = new SioNotifierBus
+  protected val bus = new SNBus
 
   def receive = {
     // Пришло событие. Отправить его в шину.
@@ -300,7 +300,7 @@ trait SioNotifier extends Actor with LogsAbstract {
 
 
   // Реализация шины событий в рамках akka.
-  class SioNotifierBus extends EventBus with SubchannelClassification {
+  class SNBus extends EventBus with SubchannelClassification {
 
     type Subscriber = SioNotifier.Subscriber
     type Event = SioNotifier.Event
@@ -336,7 +336,12 @@ trait SioNotifier extends Actor with LogsAbstract {
      * @param subscriber подписчик
      */
     protected def publish(event: Event, subscriber: Subscriber) {
-      subscriber.publish(event)
+      val fut = Future {
+        subscriber.publish(event)
+      }
+      fut.onFailure { case ex =>
+        error(s"Subscriber $subscriber failed to handle event $event", ex)
+      }
     }
 
 

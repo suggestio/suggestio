@@ -7,10 +7,10 @@ import SioNotifier._
 import akka.pattern.ask
 import scala.concurrent.duration._
 import akka.util.Timeout
-import scala.concurrent.Await
+import scala.concurrent.{ExecutionContext, Await}
 import io.suggest.util.Logs
 import io.suggest.event.subscriber.SnActorRefSubscriber
-import scala.Some
+import scala.concurrent.ExecutionContext.global
 
 /**
  * Suggest.io
@@ -38,7 +38,10 @@ class SioNotifierTest extends FlatSpec with ShouldMatchers with Logs {
       protected def getSystem: ActorSystem = asys
 
       def startLink(arf: ActorRefFactory): ActorRef = {
-        asys.actorOf(Props(new SioNotifier with Logs), name=actorName)
+        val props = Props(new SioNotifier with Logs {
+          override protected def ec = global
+        })
+        asys.actorOf(props, name=actorName)
       }
     }
     import snClient._

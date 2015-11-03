@@ -275,7 +275,9 @@ case class MNode(
   override def save(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
     val saveFut = super.save
     saveFut onSuccess { case adnId =>
-      sn publish MNodeSavedEvent(this, isCreated = id.isEmpty)
+      val mnode2 = copy(id = Option(adnId))
+      val evt = MNodeSavedEvent(mnode2, isCreated = id.isEmpty)
+      sn.publish(evt)
     }
     saveFut
   }
