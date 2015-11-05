@@ -60,6 +60,9 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
   private def _isWcAd(ntype: MNodeType): Boolean = {
     ntype ==>> MNodeTypes.WelcomeAd
   }
+  private def _isTag(ntype: MNodeType): Boolean = {
+    ntype ==>> MNodeTypes.Tag
+  }
 
   protected sealed trait _FromAdnNode extends ValT { that: T =>
     override def fromTypeValid(ntype: MNodeType): Boolean = {
@@ -174,11 +177,36 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
   }
 
   /** Предикат, указывающий на карточку приветствия. */
-  val NodeWelcomeAdIs = new Val("h") with _FromAdnNode {
+  val NodeWelcomeAdIs: T = new Val("h") with _FromAdnNode {
     override def toTypeValid(ntype: MNodeType) = _isWcAd(ntype)
   }
 
   /** Предикат, направляемый в сторону картинки или иного объекта, являющегося предметом галлереи. */
-  val GalleryItem = new Val("i") with _FromAdnNode with _ToImg
+  val GalleryItem: T = new Val("i") with _FromAdnNode with _ToImg
+
+  /** Предикат на юзера, выполнившего модерацию текущего узла.
+    * Такой эдж модерации должен содержать инфу о результате модерации. */
+  val ModeratedBy: T = new Val("j") {
+    override def fromTypeValid(ntype: MNodeType)  = true
+    override def toTypeValid(ntype: MNodeType)    = _isPerson(ntype)
+  }
+
+  /** Предикат для ресивера. Изначально, ресивером был узел (с ЛК), а объектом предиката -- рекламная карточка. */
+  val Receiver: T = new Val("k") {
+    override def fromTypeValid(ntype: MNodeType)  = true
+    override def toTypeValid(ntype: MNodeType)    = true
+  }
+
+  /** Предикат указания на тег. */
+  val TaggedBy: T = new Val("l") {
+    override def fromTypeValid(ntype: MNodeType) = !_isTag(ntype)
+    override def toTypeValid(ntype: MNodeType)   = _isTag(ntype)
+  }
+
+  /** Фоновый объект по отношению к текущему объекту. */
+  val Bg: T = new Val("m") {
+    override def fromTypeValid(ntype: MNodeType)  = true
+    override def toTypeValid(ntype: MNodeType)    = _isImage(ntype)
+  }
 
 }

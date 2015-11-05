@@ -3,7 +3,7 @@ package io.suggest.ym.model.ad
 import com.fasterxml.jackson.annotation.JsonIgnore
 import io.suggest.model.es.{IGenEsMappingProps, EsModelUtil}
 import io.suggest.model.es.EsModelUtil.FieldsJsonAcc
-import io.suggest.model.n2.ad.ent.Coords2d
+import io.suggest.model.n2.ad.ent.{MEntity, Coords2d}
 import io.suggest.model.n2.ad.ent.text.{TextAligns, EntFont, ValueEnt, TextEnt}
 import io.suggest.util.SioEsUtil.{FieldIndexingVariants, FieldString, FieldObject, DocField}
 import play.api.libs.json.{JsNumber, JsObject, JsString}
@@ -147,8 +147,6 @@ object AOBlock extends IGenEsMappingProps {
     ))
   }
 
-
-
 }
 
 
@@ -173,4 +171,10 @@ case class AOBlock(
       acc ::= HREF_ESFN -> JsString(href.get)
     acc
   }
+
+
+  def toMEntity: MEntity = {
+    MEntity(n, text1)
+  }
+
 }

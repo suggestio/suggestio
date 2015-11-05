@@ -1,6 +1,7 @@
 package io.suggest.model.n2.extra.mdr
 
 import io.suggest.model.es.{IGenEsMappingProps, EsModelUtil}
+import io.suggest.model.n2.edge.{MEdgeInfo, MPredicates, MEdge}
 import io.suggest.util.SioEsUtil._
 import org.joda.time.DateTime
 import play.api.libs.json._
@@ -9,6 +10,8 @@ import java.{util => ju}
 import EsModelUtil.Implicits.jodaDateTimeFormat
 
 /** Модель для данных по результатам модерации узла N2. */
+
+// TODO N2 Эта модель стала частным случаем эджа. Нужно её удалить после переключения на N2.
 
 object MFreeAdv extends IGenEsMappingProps {
 
@@ -70,6 +73,20 @@ case class MFreeAdv(
   def toPlayJson: JsObject = {
     MFreeAdv.FORMAT
       .writes( this )
+  }
+
+
+  /** Конвертация экземпляра модели в эдж с метаданными. */
+  def toMEdge: MEdge = {
+    MEdge(
+      predicate = MPredicates.ModeratedBy,
+      nodeId    = byUser,
+      info      = MEdgeInfo(
+        dateNi    = Some(when),
+        flag      = Some(isAllowed),
+        commentNi = reason
+      )
+    )
   }
 
 }

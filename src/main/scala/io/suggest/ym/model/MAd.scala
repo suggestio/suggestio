@@ -1,10 +1,15 @@
 package io.suggest.ym.model
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import io.suggest.model.es._
+import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.ad.blk.BlockMeta
 import io.suggest.model.n2.ad.rd.RichDescr
+import io.suggest.model.n2.edge.{MNodeEdges, MPredicates, MEdge}
 import io.suggest.model.n2.extra.mdr.MMdrExtra
+import io.suggest.model.n2.node.meta.colors.{MColorData, MColors}
+import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
+import io.suggest.model.n2.node.{MNodeTypes, MNode}
+import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.tag.edge.{TagsMap_t, EMTagsEdgeMut, EMTagsEdgeStaticMut}
 import io.suggest.util.SioEsUtil._
 import scala.concurrent.{Future, ExecutionContext}
@@ -165,10 +170,8 @@ final case class MAd(
   with EMAlienRscMut
   with EMTagsEdgeMut
 {
-  @JsonIgnore
-  override type T = MAd
 
-  @JsonIgnore
+  override type T = MAd
   override def companion = MAd
 
   /**
@@ -182,6 +185,70 @@ final case class MAd(
         this.id = Option(adId)
     }
     resultFut
+  }
+
+  /** Сконвертить карточку в черновик MNode.
+    * Теги, картинки и прочее нужно отработать на стороне конвертера. */
+  def toMNode: MNode = {
+    MNode(
+      common = MNodeCommon(
+        ntype         = MNodeTypes.Ad,
+        isDependent   = true,
+        isEnabled     = disableReason.isEmpty
+      ),
+      // Заполняем метаданные будущего узла.
+      meta = MMeta(
+        basic = MBasicMeta(
+          techName = {
+            val tn = offers.iterator.flatMap(_.text1).mkString(" | ")
+            if (tn.isEmpty) None else Some(tn)
+          },
+          dateCreated = dateCreated,
+          dateEdited  = dateEdited
+        ),
+        // Цвета извлекаем из динамической карты в статическую.
+        colors = MColors(
+          bg = {
+            val c = AdColorFns.IMG_BG_COLOR_FN
+            val code = colors.getOrElse(c.name, c.default)
+            Some( MColorData(code) )
+          },
+          pattern = {
+            for {
+              code <- colors.get( AdColorFns.WIDE_IMG_PATTERN_COLOR_FN.name )
+            } yield {
+              MColorData(code)
+            }
+          }
+        )
+      ),
+      edges = {
+        // У рекламной карточки много эджей, карточка живёт эджами: ресиверы, продьюсеры, картинки, модерация, теги.
+        // Отработать продьюсера.
+        val prodEdge = MEdge(
+          predicate = MPredicates.OwnedBy,
+          nodeId    = producerId
+        )
+        var eiter = Iterator(prodEdge)
+        // Отрабатываем данные по модерации карточки
+        eiter ++= moderation.freeAdv
+          .iterator
+          .map { _.toMEdge }
+        // Отработать карту ресиверов
+        eiter ++= receivers.iterator
+          .map { _._2.toMEdge }
+        // Картинки и теги отрабатываются на стороне конвертера с использованием других моделей.
+        MNodeEdges(
+          out = MNodeEdges.edgesToMap1(eiter)
+        )
+      },
+      ad = MNodeAd(
+        entities  = MNodeAd.toEntMap1( offers.iterator.map(_.toMEntity) ),
+        richDescr = richDescrOpt,
+        blockMeta = Some(blockMeta)
+      ),
+      id = id
+    )
   }
 
 }

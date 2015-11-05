@@ -9,7 +9,7 @@ import io.suggest.model.n2.geo.MNodeGeo
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.model.n2.tag.vertex.{MTagFace, MTagVertex}
-import io.suggest.ym.model.common.{MNodeMeta, AdnRights}
+import io.suggest.ym.model.common.AdnRights
 import org.scalatest.Matchers._
 import org.scalatest._
 

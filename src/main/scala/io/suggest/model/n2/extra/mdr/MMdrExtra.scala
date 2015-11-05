@@ -8,6 +8,9 @@ import play.api.libs.functional.syntax._
 import java.{util => ju}
 
 
+// TODO N2 Эта модель стала частью списка эджей. Нужно её удалить после переключения на N2.
+
+
 object MMdrExtra extends IGenEsMappingProps {
 
   val FREE_ADV_ESFN   = "fa"

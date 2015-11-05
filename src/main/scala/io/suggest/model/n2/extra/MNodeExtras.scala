@@ -3,7 +3,6 @@ package io.suggest.model.n2.extra
 import io.suggest.common.EmptyProduct
 import io.suggest.model.PrefixedFn
 import io.suggest.model.es.IGenEsMappingProps
-import io.suggest.model.n2.extra.mdr.MMdrExtra
 import io.suggest.model.n2.tag.vertex.{EMTagVertex, EMTagVertexStaticT, MTagVertex}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -40,11 +39,6 @@ object MNodeExtras extends IGenEsMappingProps {
       def SHOW_IN_SC_NL_FN    = _fullFn( MAdnExtra.Fields.SHOW_IN_SC_NL.fn )
     }
 
-    object Mdr extends PrefixedFn {
-      val MDR_FN = "m"
-      override protected def _PARENT_FN: String = MDR_FN
-    }
-
   }
 
 
@@ -65,17 +59,11 @@ object MNodeExtras extends IGenEsMappingProps {
 
   import Fields.TAG_FN
   import Fields.Adn.ADN_FN
-  import Fields.Mdr.MDR_FN
 
   /** Поддержка JSON для растущей модели [[MNodeExtras]]. */
   implicit val FORMAT: OFormat[MNodeExtras] = (
     (__ \ TAG_FN).formatNullable[MTagVertex] and
-    (__ \ ADN_FN).formatNullable[MAdnExtra] and
-    (__ \ MDR_FN).formatNullable[MMdrExtra]
-      .inmap [MMdrExtra] (
-        _ getOrElse MMdrExtra.empty,
-        {mdr => if (mdr.nonEmpty) Some(mdr) else None }
-      )
+    (__ \ ADN_FN).formatNullable[MAdnExtra]
   )(apply, unlift(unapply))
 
 
@@ -87,8 +75,7 @@ object MNodeExtras extends IGenEsMappingProps {
   override def generateMappingProps: List[DocField] = {
     List(
       _obj(TAG_FN, MTagVertex),
-      _obj(ADN_FN, MAdnExtra),
-      _obj(MDR_FN, MMdrExtra)
+      _obj(ADN_FN, MAdnExtra)
     )
   }
 
@@ -103,7 +90,6 @@ trait EMNodeExtrasStatic
 /** Класс-контейнер-реализация модели. */
 case class MNodeExtras(
   tag: Option[MTagVertex] = None,
-  adn: Option[MAdnExtra]  = None,
-  mdr: MMdrExtra          = MMdrExtra.empty
+  adn: Option[MAdnExtra]  = None
 )
   extends EmptyProduct

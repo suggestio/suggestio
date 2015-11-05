@@ -1,6 +1,7 @@
 package io.suggest.ym.model.common
 
 import io.suggest.model.es.{EsModelPlayJsonT, EsModelStaticMutAkvT, EsModelUtil}
+import io.suggest.model.n2.edge.{MEdgeInfo, MPredicates, MEdge}
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import io.suggest.util.{Lists, SioConstants}
 import io.suggest.util.SioEsUtil._
@@ -290,6 +291,18 @@ case class AdReceiverInfo(
     val rcvrsFmt = sls.iterator.map(_.name).mkString(", ")
     s"ri[$receiverId -> $rcvrsFmt]"
   }
+
+  /** Конверсия в N2 edge. */
+  def toMEdge: MEdge = {
+    MEdge(
+      predicate = MPredicates.Receiver,
+      nodeId    = receiverId,
+      info      = MEdgeInfo(
+        sls = sls
+      )
+    )
+  }
+
 }
 
 
