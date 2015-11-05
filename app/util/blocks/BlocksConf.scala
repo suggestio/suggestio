@@ -213,7 +213,7 @@ trait ValT extends ISaveImgs with Mapping[BlockMapperResult] {
 
 
 case class BindAcc(
-  var colors  : List[(String, String)] = Nil,
+  var colors  : List[(String, String)] = Nil,   // TODO unused
   var offers  : List[AOBlock] = Nil,
   var height  : Int = BlockHeights.default.heightPx,
   var width   : Int = BlockWidths.default.widthPx,

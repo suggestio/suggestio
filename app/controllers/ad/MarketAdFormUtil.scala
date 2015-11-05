@@ -2,6 +2,7 @@ package controllers.ad
 
 import io.suggest.model.n2.ad.ent
 import io.suggest.model.n2.ad.rd.RichDescr
+import models.blk.AdColorFns
 import models._
 import models.blk._
 import util.FormUtil._

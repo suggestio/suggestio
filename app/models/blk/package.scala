@@ -16,7 +16,8 @@ package object blk {
   // TODO Наверное надо перенести SzMult_t на уровень models.
   type SzMult_t    = Float
 
-  type AdColorFn   = AdColorFns.AdColorFn
+  val  AdColorFns  = io.suggest.ym.model.ad.AdColorFns
+  type AdColorFn   = AdColorFns.T
 
   type FontSize    = FontSizes.FontSize
 

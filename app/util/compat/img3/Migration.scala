@@ -6,14 +6,15 @@ import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.n2.edge.{MPredicates, MEdge, MNodeEdges, MEdgeInfo}
 import io.suggest.model.n2.geo.MGeoShape
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
-import io.suggest.model.n2.node.MNode
+import io.suggest.model.n2.node.{MNodeTypes, MNodeType, MNode}
 import io.suggest.util.JMXBase
-import io.suggest.ym.model.{MAdnNodeGeo, MAdnNode}
+import io.suggest.ym.model.{MAd, MAdnNodeGeo, MAdnNode}
 import models.ISize2di
 import models.im.{MImg3, MImg3_, MImg}
 import org.elasticsearch.client.Client
 import org.joda.time.DateTime
 import util.PlayLazyMacroLogsImpl
+import util.blocks.BgImg
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
@@ -205,12 +206,157 @@ class Migration @Inject() (
     }
   }
 
+
+  case class MadsCntsAcc(
+    done        : Int = 0,
+    noProducer  : Int = 0
+  ) {
+
+    def toReport: String = {
+      s"Ads: $done; skipped: missing producer = $noProducer"
+    }
+  }
+
+
+  /** Миграция рекламных карточек. */
+  def migrateMads(): Future[MadsCntsAcc] = {
+
+    // Возможны ошибочные карточки, не привязанные к кабинетам.
+    // Нужно их отсеивать.
+    val prodsExistsFut: Future[Set[String]] = {
+      val msearch = new MNodeSearchDfltImpl {
+        override def nodeTypes: Seq[MNodeType] = Seq( MNodeTypes.AdnNode )
+        // На момент написания этого кода в системе было 229 узлов.
+        override def limit = 500
+      }
+      MNode.dynSearchIds(msearch)
+        .map { _.toSet }
+    }
+    prodsExistsFut.onSuccess { case peSet =>
+      LOGGER.info(s"Producer IDs set have ${peSet.size} keys.")
+    }
+
+    // Собрать общую карту всех тегов, благо их немного сейчас (100-200 тегов вкл.повторяющиеся).
+    val tagEdgesMapFut: Future[Map[String, MEdge]] = {
+      val mtsearch = new MNodeSearchDfltImpl {
+        override def nodeTypes = Seq( MNodeTypes.Tag )
+      }
+      MNode.foldLeftAsync [Iterator[(String, MEdge)]] (Iterator.empty, queryOpt = mtsearch.toEsQueryOpt) {
+        (acc2Fut, mtnode) =>
+          val iter2 = for {
+            tagNodeId     <- mtnode.id.iterator
+            tagExtra      <- mtnode.extras.tag.iterator
+            (_, tagFace)  <- tagExtra.faces.iterator
+          } yield {
+            tagFace.name -> MEdge(MPredicates.TaggedBy, tagNodeId)
+          }
+          acc2Fut map { accIter =>
+            accIter ++ iter2
+          }
+      }.map { iter3 =>
+        iter3.toMap
+      }
+    }
+    tagEdgesMapFut onSuccess { case tem =>
+      LOGGER.info(s"Tags map has ${tem.size} keys (tags).")
+    }
+
+    // Запустить обход карточек.
+    MAd.foldLeftAsync(MadsCntsAcc()) { (acc0Fut, mad) =>
+      val resFut = for {
+        prodsExists   <- prodsExistsFut
+        if prodsExists.contains(mad.producerId)
+        // Принудительно тормозим обработку, чтобы портирование картинок шло легче.
+        _             <- acc0Fut
+        tagEdgesMap   <- tagEdgesMapFut
+        acc2          <- migrateMad(mad, tagEdgesMap, acc0Fut)
+      } yield {
+        acc2
+      }
+      resFut.recoverWith { case ex: NoSuchElementException =>
+        // Нет портированного продьюсера, относящегося к этой карточки. Это значит, это карточка висит в воздухе и недосягаема,
+        // портировать её нет смысла никакого.
+        acc0Fut map { acc0 =>
+          acc0.copy(
+            noProducer = acc0.noProducer + 1
+          )
+        }
+      }
+    }
+  }
+
+
+  /** Выполнить миграцию одной карточки на N2-архитектуру. */
+  private def migrateMad(mad: MAd, tagEdgesMap: Map[String, MEdge], acc0Fut: Future[MadsCntsAcc]): Future[MadsCntsAcc] = {
+    val madId = mad.id.get
+
+    // Отработать картинки
+    val bgEdgesOptFut: Future[Option[MEdge]] = {
+      val fn = BgImg.BG_IMG_FN
+      val imgOpt = mad.imgs.get(fn)
+      FutureUtil.optFut2futOpt(imgOpt) { mii =>
+        val oldImg = MImg(mii)
+        val mlocImgFut = oldImg.original.toLocalImg
+        val mimg = mImg3.fromImg(oldImg).original
+        for {
+          mLocImg   <- mlocImgFut
+          imgNodeId <- portOneImage("bg", mimg, madId, mad.dateCreated, mii.meta)
+        } yield {
+          val e = MEdge(MPredicates.Bg, imgNodeId)
+          Some(e)
+        }
+      }
+    }
+
+    // Отработать возможные теги карточки.
+    val tagEdgesFut: Future[Seq[MEdge]] = {
+      val tedges = mad.tags
+        .iterator
+        .map { case (_, te) =>
+          tagEdgesMap(te.face)
+        }
+        .toList   // форсируем не-Stream-коллекцию, чтобы всё вычислилось в этом потоке, а не в общей куче.
+      Future successful tedges
+    }
+
+    val mnode0 = mad.toMNode
+
+    val mnode1Fut = for {
+      bgEdgeOpt <- bgEdgesOptFut
+      tagsEdges <- tagEdgesFut
+    } yield {
+      mnode0.copy(
+        edges = mnode0.edges.copy(
+          out = {
+            val iter1 = mnode0.edges.out.valuesIterator ++
+              bgEdgeOpt.iterator ++
+              tagsEdges.iterator
+            MNodeEdges.edgesToMap1( iter1 )
+          }
+        )
+      )
+    }
+
+    val saveFut = mnode1Fut
+      .flatMap { _.save }
+
+    for {
+      acc0  <- acc0Fut
+      _adId <- saveFut
+    } yield {
+      acc0.copy(
+        done = acc0.done + 1
+      )
+    }
+  }
+
 }
 
 
 trait MigrationJmxMBean {
   def adnNodesToN2(): String
   def resaveMissingTypeTags(): String
+  def madsToN2(): String
 }
 
 class MigrationJmx @Inject() (
@@ -222,6 +368,7 @@ class MigrationJmx @Inject() (
 {
 
   override def jmxName: String = "io.suggest.compat:type=img3,name=" + migration.getClass.getSimpleName
+  override def futureTimeout = 1000.seconds
 
   // TODO Исполнено на продакшене 2015.oct.29. Можно удалить через неделю, если не понадобится.
   override def adnNodesToN2(): String = {
@@ -241,6 +388,13 @@ class MigrationJmx @Inject() (
     awaitString( strFut )
   }
 
-  override def futureTimeout = 1000.seconds
+
+  /** Портирование рекламных карточек на N2. */
+  override def madsToN2(): String = {
+    val fut = for (info <- migration.migrateMads()) yield {
+      info.toReport
+    }
+    awaitString(fut)
+  }
 
 }

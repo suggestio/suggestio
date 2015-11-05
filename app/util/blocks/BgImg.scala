@@ -56,7 +56,7 @@ object BgImg extends PlayLazyMacroLogsImpl {
       Makers.Block
     maybeMakeBgImgWith(mad, maker, szMult, devScreenOpt)
   }
-  
+
 
 }
 
