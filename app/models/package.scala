@@ -30,15 +30,9 @@ package object models {
 
   val  AdShowLevels         = ym.model.AdShowLevels
   type AdShowLevel          = AdShowLevels.T
-  
-  val  MAd                  = ym.model.MAd
-  type MAd                  = ym.model.MAd
 
   val  AdnRights            = ym.model.common.AdnRights
   type AdnRight             = ym.model.common.AdnRight
-
-  val  AdnMPubSettingsLevels = ym.model.common.AdnMemberShowLevels
-  type AdnMPubSettingsLevels = ym.model.common.AdnMemberShowLevels
 
 
   // Рекламота
@@ -225,5 +219,10 @@ package object models {
 
   type MGeoShape            = n2.geo.MGeoShape
   val  MGeoShape            = n2.geo.MGeoShape
+
+  //@deprecated("Use MNode instead.", "2015.nov.6")
+  val  MAd                  = ym.model.MAd
+  //@deprecated("Use MNode instead.", "2015.nov.6")
+  type MAd                  = ym.model.MAd
 
 }

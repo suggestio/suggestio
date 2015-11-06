@@ -7,7 +7,7 @@ import io.suggest.playx.ICurrentConf
 import models.adv._
 import models.adv.form._
 import models.adv.geo.{ReqInfo, AdvFormEntry, WndFullArgs}
-import models.adv.tpl.{MCurrentAdvsTplArgs, MAdvPricing}
+import models.adv.tpl.{MAdvForAdTplArgs, MAdvHistoryTplArgs, MCurrentAdvsTplArgs, MAdvPricing}
 import org.elasticsearch.client.Client
 import org.joda.time.format.ISOPeriodFormat
 import play.api.i18n.MessagesApi
@@ -385,7 +385,12 @@ class MarketAdv @Inject() (
       formArgs      <- advFormTplArgsFut
     } yield {
       // Запускаем рендер шаблона, собрав аргументы в соотв. группы.
-      advForAdTpl(request.mad, request.producer, formArgs)(ctx)
+      val rargs = MAdvForAdTplArgs(
+        mad       = request.mad,
+        producer  = request.producer,
+        formArgs  = formArgs
+      )
+      advForAdTpl(rargs)(ctx)
     }
   }
 
@@ -917,8 +922,12 @@ class MarketAdv @Inject() (
       adAdvInfo <- getAdAdvInfo(adId)
       rcvrs     <- rcvrsAllFut
     } yield {
-      val args = toAdvswArgs(adAdvInfo, rcvrs)
-      Ok(advHistoryTpl(request.mad, request.producer, args))
+      val rargs = MAdvHistoryTplArgs(
+        mad           = request.mad,
+        producer      = request.producer,
+        currAdvsArgs  = toAdvswArgs(adAdvInfo, rcvrs)
+      )
+      Ok( advHistoryTpl(rargs) )
     }
   }
 

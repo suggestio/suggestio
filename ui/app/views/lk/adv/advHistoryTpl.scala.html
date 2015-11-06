@@ -1,4 +1,4 @@
-@(mad: MAd, producer: MNode, currAdvsArgs: adv.tpl.ICurrentAdvsTplArgs)(implicit ctx: Context)
+@(args: adv.tpl.IAdvHistoryTplArgs)(implicit ctx: Context)
 
 @* Страница с историей размещений этой рекламной карточки. *@
 
@@ -8,11 +8,11 @@
 
 @advBase(
   title         = messages("Ad.adv.history"),
-  mad           = mad,
-  producer      = producer,
+  mad           = args.mad,
+  producer      = args.producer,
   rightLink     = LkAdvRightLinks.LARL_HISTORY
 ) {
 
-  @_currentAdvsListTpl(currAdvsArgs)
+  @_currentAdvsListTpl( args.currAdvsArgs )
 
 }

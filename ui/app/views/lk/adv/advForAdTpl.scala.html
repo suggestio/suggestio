@@ -1,4 +1,4 @@
-@(mad: MAd, producer: MNode, formArgs: adv.form.IAdvFormTplArgs)(implicit ctx: Context)
+@(args: adv.tpl.IAdvForAdTplArgs)(implicit ctx: Context)
 
 @* Страница управления размещением рекламной карточки. *@
 
@@ -28,14 +28,14 @@
 
 @advBase(
   title         = messages("Geo.adv"),
-  mad           = mad,
-  producer      = producer,
+  mad           = args.mad,
+  producer      = args.producer,
   rightLink     = LkAdvRightLinks.LARL_GEO,
   rightAfter    = Some(rightBarAfter),
   headAfter     = Some(headAfter)
 ) {
 
-  @_advFormTpl(formArgs)
+  @_advFormTpl(args.formArgs)
 
   <script src='@routes.Assets.versioned("javascripts/lib/datetimepicker-master/jquery.datetimepicker.js")'></script>
 

@@ -1,4 +1,4 @@
-@(wsCallArgs: adv.MExtAdvQs, mad: MAd, mnode: MNode)(implicit ctx: Context)
+@(args: adv.ext.IAdvRunnerTplArgs)(implicit ctx: Context)
 
 @* Страница с идущими размещениями на внешних сервисах. *@
 
@@ -8,14 +8,14 @@
 
 @base(
   title = messages("Adv.on.ext.services.running"),
-  mnode = mnode,
-  mad   = mad
+  mnode = args.mnode,
+  mad   = args.mad
 ) {
 
   @messages("Adv.deploy.in.process")...
   @messages("Do.not.close.current.page.until.deploy.finish").
 
-  <input id="@ID_WS_URL" type="hidden" value="@ctx.wsUrlPrefix@routes.LkAdvExt.wsRun(wsCallArgs).url" />
+  <input id="@ID_WS_URL" type="hidden" value="@ctx.wsUrlPrefix@routes.LkAdvExt.wsRun(args.wsCallArgs).url" />
 
   <div id="@ID_EVTS_CONTAINER"></div>
 

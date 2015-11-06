@@ -6,7 +6,7 @@ import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.playx.ICurrentConf
 import models._
 import models.adv._
-import models.adv.ext.MForAdTplArgs
+import models.adv.ext.{MAdvRunnerTplArgs, MForAdTplArgs}
 import models.adv.ext.act.{OAuthVerifier, ActorPathQs}
 import models.adv.search.etg.ExtTargetSearchArgs
 import models.jsm.init.MTargets
@@ -169,7 +169,12 @@ class LkAdvExt @Inject() (
           wsId = ctx.ctxIdStr,
           adId = adId
         )
-        Ok( advRunnerTpl(wsArgs2, request.mad, request.producer)(ctx) )
+        val rargs = MAdvRunnerTplArgs(
+          wsCallArgs  = wsArgs2,
+          mad         = request.mad,
+          mnode       = request.producer
+        )
+        Ok( advRunnerTpl(rargs)(ctx) )
 
       // Аргументы не заданы. Такое бывает, когда юзер обратился к runner'у, но изменился ключ сервера или истекла сессия.
       case None =>
