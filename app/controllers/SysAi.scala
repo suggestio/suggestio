@@ -173,7 +173,7 @@ class SysAi @Inject() (
           .flatMap[Result] { _ =>
             maimad.save map { savedId =>
               Redirect( routes.SysAi.madIndex() )
-                .flashing("success" -> "Создано. Обновите страницу.")
+                .flashing(FLASH.SUCCESS -> "Создано. Обновите страницу.")
             }
           }
           .recover {
@@ -218,7 +218,7 @@ class SysAi @Inject() (
           .flatMap[Result] { _ =>
             aim2.save map { savedId =>
               Redirect( routes.SysAi.madIndex() )
-                .flashing("success" -> "Сохранено. Обновите страницу.")
+                .flashing(FLASH.SUCCESS -> "Сохранено. Обновите страницу.")
             }
           }
           .recover {
@@ -238,7 +238,7 @@ class SysAi @Inject() (
       // Рендерим результаты работы:
       .map { res =>
         Redirect( routes.SysAi.madIndex() )
-          .flashing("success" -> (request.aiMad.name + ": Выполнено без ошибок."))
+          .flashing(FLASH.SUCCESS -> (request.aiMad.name + ": Выполнено без ошибок."))
       }
       .recover {
         case ex: Exception =>
@@ -255,10 +255,11 @@ class SysAi @Inject() (
     request.aiMad
       .delete
       .map { isDeleted =>
-        val flash = if (isDeleted)
-          "success" -> "Удалено успешно. Обновите страницу."
-        else
-          "error"   -> "Не удалось удалить элемент."
+        val flash = if (isDeleted) {
+          FLASH.SUCCESS -> "Удалено успешно. Обновите страницу."
+        } else {
+          FLASH.ERROR   -> "Не удалось удалить элемент."
+        }
         Redirect(routes.SysAi.madIndex())
           .flashing(flash)
       }

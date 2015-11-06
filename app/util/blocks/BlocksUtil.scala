@@ -212,16 +212,18 @@ case class BfWidth(
 
 case class BfText(
   name            : String,
-  offerNopt       : Option[Int] = None,
+  offerNopt       : Option[Int]     = None,
   defaultValue    : Option[TextEnt] = None,
-  minLen          : Int = 0,
-  maxLen          : Int = 512,
-  withFontColor   : Boolean = true,
-  fontSizeDflt    : Option[Int] = None,
-  withFontFamily  : Boolean = true,
-  withCoords      : Boolean = true,
-  withTextAlign   : Boolean = true
-) extends BlockAOValueFieldT {
+  minLen          : Int             = 0,
+  maxLen          : Int             = 512,
+  withFontColor   : Boolean         = true,
+  fontSizeDflt    : Option[Int]     = None,
+  withFontFamily  : Boolean         = true,
+  withCoords      : Boolean         = true,
+  withTextAlign   : Boolean         = true
+)
+  extends BlockAOValueFieldT
+{
   override type T = TextEnt
 
   def strTransformF = strTrimSanitizeF
@@ -236,7 +238,7 @@ case class BfText(
 
   /** Когда очень нужно получить от поля какое-то значение, можно использовать fallback. */
   override def fallbackValue: T = TextEnt(
-    value = "Домик на рублёвке",    // TODO Нужен каталог примеров fallback-строк, новая на каждый раз.
+    value = "Example text",    // TODO Нужен каталог примеров fallback-строк, локализованных, новая на каждый раз.
     font = defaultFont
   )
 

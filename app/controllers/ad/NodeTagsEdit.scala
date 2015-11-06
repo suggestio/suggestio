@@ -4,14 +4,12 @@ import controllers.SioController
 import io.suggest.model.n2.tag.edge.MTagEdge
 import models.mtag.MAddTagReplyOk
 import models.{TagsMap_t, TagsEditForm_t}
-import play.api.data._, Forms._
+import play.api.data._
 import play.api.libs.json.Json
 import util.PlayMacroLogsI
 import util.acl.IsAuth
 import views.html.lk.ad._
 import views.html.lk.tag.edit._
-import MarketAdFormUtil._
-import io.suggest.common.tags.edit.TagsEditConstants.NEW_TAG_FN
 
 /**
  * Suggest.io
@@ -19,27 +17,24 @@ import io.suggest.common.tags.edit.TagsEditConstants.NEW_TAG_FN
  * Created: 08.09.15 16:45
  * Description: Аддон для контроллера редактора карточки (узла), добавляющий экшены поддержки тегов.
  */
-object NodeTagsEdit {
-
-  /** Маппинг формы добавления одного тега. */
-  def tagAddFormM: TagsEditForm_t = {
-    Form(tuple(
-      NEW_TAG_FN  -> newTagsM,
-      tagsMapKM
-    ))
-  }
-
-}
-
-
-import NodeTagsEdit._
-
 
 trait NodeTagsEdit
   extends SioController
   with PlayMacroLogsI
   with IsAuth
 {
+
+    /** Маппинг формы добавления одного тега. */
+  private def tagAddFormM: TagsEditForm_t = {
+    import MarketAdFormUtil._
+    import io.suggest.common.tags.edit.TagsEditConstants.NEW_TAG_FN
+    import play.api.data.Forms._
+    Form(tuple(
+      NEW_TAG_FN  -> newTagsM,
+      tagsMapKM
+    ))
+  }
+
   
   /**
    * Добавление тега в редактор тегов.

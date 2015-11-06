@@ -142,7 +142,11 @@ class MarketAd @Inject() (
       },
       {case (mad, bim) =>
         // Асинхронно обрабатываем всякие прочие данные.
-        val saveImgsFut = bc.saveImgs(newImgs = bim, oldImgs = Map.empty, blockHeight = mad.blockMeta.height)
+        val saveImgsFut = bc.saveImgs(
+          newImgs     = bim,
+          oldImgs     = Map.empty,
+          blockHeight = mad.blockMeta.height
+        )
         val t4s2Fut = newTexts4search(mad, request.adnNode)
         // Когда всё готово, сохраняем саму карточку.
         val adIdFut = for {
@@ -242,8 +246,8 @@ class MarketAd @Inject() (
         // TODO Надо отделить удаление врЕменных и былых картинок от сохранения новых. И вызывать эти две фунции отдельно.
         // Сейчас возможна ситуация, что при поздней ошибке сохранения теряется старая картинка, а новая сохраняется вникуда.
         val saveImgsFut = bc.saveImgs(
-          newImgs = bim,
-          oldImgs = mad.imgs,
+          newImgs     = bim,
+          oldImgs     = mad.imgs,
           blockHeight = mad2.blockMeta.height
         )
         // Произвести действия по сохранению карточки.

@@ -88,9 +88,9 @@ class SysMarketInvReq @Inject() (
     mir.eraseResources flatMap { _ =>
       mir.delete map { isDeleted =>
         val flasher: (String, String) = if (isDeleted) {
-          "success" -> "Запрос на подключение удалён."
+          FLASH.SUCCESS -> "Запрос на подключение удалён."
         } else {
-          "error"   -> "Возникли какие-то проблемы с удалением."
+          FLASH.ERROR   -> "Возникли какие-то проблемы с удалением."
         }
         Redirect(routes.SysMarketInvReq.index())
           .flashing(flasher)
@@ -274,7 +274,7 @@ class SysMarketInvReq @Inject() (
 
 
   /** Общий код редиректа назад на страницу обработки реквеста вынесен сюда. */
-  private def rdrToIr(mirId: String, flashMsg: String, flashCode: String = "success") = {
+  private def rdrToIr(mirId: String, flashMsg: String, flashCode: String = FLASH.SUCCESS) = {
     Redirect( routes.SysMarketInvReq.showIR(mirId) )
       .flashing(flashCode -> flashMsg)
   }

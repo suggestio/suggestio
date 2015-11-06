@@ -153,7 +153,7 @@ class SysCalendar @Inject() (
       {mcal =>
         mcal.save.map { mcalId =>
           Redirect(routes.SysCalendar.showCalendars())
-            .flashing("success" -> "Создан новый календарь.")
+            .flashing(FLASH.SUCCESS -> "Создан новый календарь.")
         }
       }
     )
@@ -208,7 +208,7 @@ class SysCalendar @Inject() (
         mcal3.save map { _ =>
           HolidayManager.clearManagerCache()
           Redirect(routes.SysCalendar.showCalendars())
-            .flashing("success" -> "Изменения в календаре сохранены.")
+            .flashing(FLASH.SUCCESS -> "Изменения в календаре сохранены.")
         }
       }
     )

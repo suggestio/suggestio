@@ -5,7 +5,7 @@ import models.blk.{OneAdWideQsArgs, OneAdQsArgs}
 import models.im.OutImgFmts
 import models.msc.OneAdRenderVariant
 import play.api.data.{Mapping, Form}
-import play.twirl.api.Html
+import play.api.mvc.Result
 import util.di.INodeCache
 import util.{PlayMacroLogsI, FormUtil}
 import util.acl.{IsSuperuserMad, RequestWithAd}
@@ -68,32 +68,34 @@ trait SysAdRender
    */
   def showOneAdForm(madId: String, rvar: OneAdRenderVariant) = IsSuperuserMadGet(madId).async { implicit request =>
     // Забиндить форму дефолтовыми данными для отправки в шаблон.
-    val qf = oneAdQsArgsFormM(madId)
-      .fill(OneAdQsArgs(
-        adId    = madId,
-        szMult  = 1.0F,
-        vsnOpt  = request.mad.versionOpt,
-        imgFmt  = OutImgFmts.JPEG,
-        wideOpt = Some(OneAdWideQsArgs(
-          width = request.mad.blockMeta.width * 2
-        ))
+    val formArgs = OneAdQsArgs(
+      adId    = madId,
+      szMult  = 1.0F,
+      vsnOpt  = request.mad.versionOpt,
+      imgFmt  = OutImgFmts.JPEG,
+      wideOpt = Some(OneAdWideQsArgs(
+        width = request.mad.blockMeta.width * 2
       ))
+    )
+    val qf = oneAdQsArgsFormM(madId)
+      .fill( formArgs )
     // Запустить рендер.
-    _showOneAdFormRender(qf, rvar)
-      .map { Ok(_) }
+    _showOneAdFormRender(qf, rvar, Ok)
   }
 
-  private def _showOneAdFormRender(qf: Form[OneAdQsArgs], rvar: OneAdRenderVariant)(implicit request: RequestWithAd[_]): Future[Html] = {
+  private def _showOneAdFormRender(qf: Form[OneAdQsArgs], rvar: OneAdRenderVariant, rs: Status)
+                                  (implicit request: RequestWithAd[_]): Future[Result] = {
     val nodeOptFut = mNodeCache.getById( request.mad.producerId )
     for {
       nodeOpt <- nodeOptFut
     } yield {
-      argsFormTpl(
+      val html = argsFormTpl(
         mad     = request.mad,
         rvar    = rvar,
         qf      = qf,
         nodeOpt = nodeOpt
       )
+      rs( html )
     }
   }
 
@@ -107,8 +109,7 @@ trait SysAdRender
     oneAdQsArgsFormM(madId).bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug(s"oneAdFormSubmit($madId, ${rvar.nameI18n}): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
-        _showOneAdFormRender(formWithErrors, rvar)
-          .map { NotAcceptable(_) }
+        _showOneAdFormRender(formWithErrors, rvar, NotAcceptable)
       },
       {oneAdQsArgs =>
         Redirect( rvar.routesCall(oneAdQsArgs) )

@@ -165,9 +165,9 @@ object MarketAdFormUtil {
   def aoStringFieldM(m: Mapping[String], fontM: Mapping[EntFont], withCoords: Boolean): Mapping[TextEnt] = {
     if (withCoords) {
       mapping(
-        "value" -> m,
-        "font"  -> fontM,
-        "coords" -> coords2DOptM
+        "value"   -> m,
+        "font"    -> fontM,
+        "coords"  -> coords2DOptM
       )
       { TextEnt.apply }
       { TextEnt.unapply }

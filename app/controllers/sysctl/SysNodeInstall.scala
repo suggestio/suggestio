@@ -93,7 +93,7 @@ trait SysNodeInstall
             val count = madIds.size
             LOGGER.trace(s"$logPrefix Cloned ok $count mads: [${madIds.mkString(", ")}]")
             Redirect(routes.SysMarket.showAdnNode(adnId))
-              .flashing("success" -> s"Клонировано $count дефолтовых карточек.")
+              .flashing(FLASH.SUCCESS -> s"Клонировано $count дефолтовых карточек.")
           }
       }
     )

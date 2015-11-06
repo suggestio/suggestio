@@ -158,7 +158,7 @@ class SysMarketBillingTariff @Inject() (
   /** Перенаправить юзера на страницу биллинга узла с flash-сообщением об успехе. */
   private def rdrFlashing(adnId: String, message: String) = {
     Redirect(routes.SysMarketBilling.billingFor(adnId))
-      .flashing("success" -> message)
+      .flashing(FLASH.SUCCESS -> message)
   }
 
   private def editSaveFlashMsg(tariff: MTariff, contract: MContract): String = {
