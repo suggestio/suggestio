@@ -119,7 +119,7 @@ object SioCassandraClient extends MacroLogsImplLazy {
 
 
 trait CassandraJmxBase extends JMXBase {
-  override def jmxName = "io.suggest.model:type=cassandra,name=" + getClass.getSimpleName.replace("Jmx", "")
+  override def jmxName = "io.suggest:type=cassandra,name=" + getClass.getSimpleName.replace("Jmx", "")
 }
 
 

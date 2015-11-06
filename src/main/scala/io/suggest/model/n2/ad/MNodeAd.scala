@@ -92,6 +92,7 @@ object MNodeAd extends IGenEsMappingProps {
       .toMap
   }
 
+  /** Пустой экземпляр модели, расшарен между кучей инстансов [[io.suggest.model.n2.node.MNode]]. */
   val empty: MNodeAd = {
     new MNodeAd() {
       override def nonEmpty = false
