@@ -248,7 +248,7 @@ final class AdvUtilJmx @Inject() (
   with JMXBase
 {
 
-  override def jmxName = "util:type=adv,name=" + getClass.getSimpleName.replace("Jmx", "")
+  override def jmxName = "io.suggest:type=util,name=" + getClass.getSimpleName.replace("Jmx", "")
 
   override def resetAllReceivers(): String = {
     val cntFut = MAd.updateAll() { mad0 =>

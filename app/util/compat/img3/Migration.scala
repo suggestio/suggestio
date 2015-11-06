@@ -13,6 +13,7 @@ import models.ISize2di
 import models.im.{MImg3, MImg3_, MImg}
 import org.elasticsearch.client.Client
 import org.joda.time.DateTime
+import play.api.Configuration
 import util.PlayLazyMacroLogsImpl
 import util.blocks.BgImg
 
@@ -36,6 +37,7 @@ import scala.util.{Failure, Success}
  */
 class Migration @Inject() (
   mImg3                 : MImg3_,
+  configuration         : Configuration,
   implicit val ec       : ExecutionContext,
   implicit val esClient : Client,
   implicit val sn       : SioNotifierStaticClientI
@@ -171,16 +173,16 @@ class Migration @Inject() (
   /** Портирование одного оригинала картинки. */
   private def portOneImage(prefix: String, mimg: MImg3, ownNodeId: String, dateCreatedDflt: DateTime, imetaOpt: Option[ISize2di] = None): Future[String] = {
 
-    lazy val logPrefix = s"portOneImage(${mimg.rowKeyStr}):"
+    lazy val logPrefix = s"portOneImage(${mimg.rowKeyStr}): $prefix"
 
     val imgNodeId = mimg.rowKeyStr
-    trace(s"$logPrefix Processing img: $mimg ownNodeId=$ownNodeId")
+    trace(s"$logPrefix processing: $mimg ownNodeId=$ownNodeId")
 
     val imgSaveFut = mimg.saveToPermanent
 
     imgSaveFut onComplete {
       case Success(mmId) =>
-        trace(s"$logPrefix saved permanently MImg: " + mimg)
+        trace(s"$logPrefix saved permanently: " + mimg)
       case Failure(ex) =>
         error(s"$logPrefix failed to save MMedia", ex)
     }
@@ -188,7 +190,7 @@ class Migration @Inject() (
     for {
       _     <- imgSaveFut
     } yield {
-      info(s"$logPrefix Logo done: [$imgNodeId]")
+      info(s"$logPrefix done: [$imgNodeId]")
       imgNodeId
     }
   }
@@ -286,9 +288,17 @@ class Migration @Inject() (
   }
 
 
+  /** Подавлять ошибки отсутствующих картинок? [false] */
+  private def SUPPRESS_MISSING_IMGS: Boolean = {
+    configuration.getBoolean("compat.migration.imgs.missing.suppress")
+      .getOrElse(false)
+  }
+
   /** Выполнить миграцию одной карточки на N2-архитектуру. */
   private def migrateMad(mad: MAd, tagEdgesMap: Map[String, MEdge], acc0Fut: Future[MadsCntsAcc]): Future[MadsCntsAcc] = {
     val madId = mad.id.get
+
+    val _SUPRESS_MISSING_IMGS = SUPPRESS_MISSING_IMGS
 
     // Отработать картинки
     val bgEdgesOptFut: Future[Option[MEdge]] = {
@@ -298,12 +308,20 @@ class Migration @Inject() (
         val oldImg = MImg(mii)
         val mlocImgFut = oldImg.original.toLocalImg
         val mimg = mImg3.fromImg(oldImg).original
-        for {
+        val fut = for {
           mLocImg   <- mlocImgFut
           imgNodeId <- portOneImage("bg", mimg, madId, mad.dateCreated, mii.meta)
         } yield {
           val e = MEdge(MPredicates.Bg, imgNodeId)
           Some(e)
+        }
+        if (_SUPRESS_MISSING_IMGS) {
+          fut.recover { case ex: Throwable =>
+            LOGGER.warn(s"Supressed error for img $imgOpt", ex)
+            None
+          }
+        } else {
+          fut
         }
       }
     }
@@ -367,7 +385,7 @@ class MigrationJmx @Inject() (
   with MigrationJmxMBean
 {
 
-  override def jmxName: String = "io.suggest.compat:type=img3,name=" + migration.getClass.getSimpleName
+  override def jmxName: String = "io.suggest:type=n2,name=" + migration.getClass.getSimpleName
   override def futureTimeout = 1000.seconds
 
   // TODO Исполнено на продакшене 2015.oct.29. Можно удалить через неделю, если не понадобится.

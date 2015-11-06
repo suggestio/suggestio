@@ -111,7 +111,7 @@ final class SiowebEsModelJmx @Inject() (siowebEsModel: SiowebEsModel, implicit v
 
   import LOGGER._
 
-  override def jmxName = "io.suggest.model:type=elasticsearch,name=" + getClass.getSimpleName.replace("Jmx", "")
+  override def jmxName = "io.suggest:type=elasticsearch,name=" + getClass.getSimpleName.replace("Jmx", "")
 
   /** Импорт может затянуться, несмотря на все ускорения. Увеличиваем таймаут до получения результата. */
   override def futureTimeout = 5.minutes
