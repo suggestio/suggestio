@@ -17,8 +17,14 @@ object Height extends MergeBindAcc[Int] {
   val BF_HEIGHT_NAME_DFLT = "height"
   val BF_HEIGHT_DFLT = BfHeight(BF_HEIGHT_NAME_DFLT)
 
-  def updateAcc(offerN: Int, acc0: BindAcc, height: Int) {
-    acc0.height = height
+  def updateAcc(offerN: Int, acc0: BindAcc, height: Int): BindAcc = {
+    if (acc0.height != height) {
+      acc0.copy(
+        height = height
+      )
+    } else {
+      acc0
+    }
   }
 
 }

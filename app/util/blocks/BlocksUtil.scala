@@ -8,7 +8,7 @@ import util.FormUtil._
 import models._
 import views.html.blocks.editor._
 import controllers.ad.MarketAdFormUtil
-import io.suggest.ym.model.common.{IColors, IEMBlockMeta}
+import io.suggest.ym.model.common.IEMBlockMeta
 import io.suggest.ym.model.ad.IOffers
 import util.img._
 import play.twirl.api.{Html, Template5}
@@ -177,12 +177,15 @@ object BfHeight {
   val HEIGHTS_AVAILABLE_DFLT = BlockHeights.values.map(_.heightPx)
 }
 
+
 /** Поле для какой-то цифры. */
 case class BfHeight(
-  name          : String,
-  defaultValue  : Option[Int] = BfHeight.SOME_HEIGHT_DFLT,
-  availableVals : Set[Int] = BfHeight.HEIGHTS_AVAILABLE_DFLT
-) extends IntBlockSizeBf {
+  override val name             : String,
+  override val defaultValue     : Option[Int]  = BfHeight.SOME_HEIGHT_DFLT,
+  override val availableVals    : Set[Int]     = BfHeight.HEIGHTS_AVAILABLE_DFLT
+)
+  extends IntBlockSizeBf
+{
   override def field = BlocksEditorFields.Height
   override def fallbackValue: T = BlockHeights.H140.heightPx
 
@@ -190,6 +193,7 @@ case class BfHeight(
     field.renderEditorField(this, bfNameBase, af, bc)
   }
 }
+
 
 object BfWidth {
   val WIDTH_DFLT = Some( BlockWidths.default.widthPx )
@@ -209,16 +213,16 @@ case class BfWidth(
 
 
 case class BfText(
-  name            : String,
-  offerNopt       : Option[Int]     = None,
-  defaultValue    : Option[TextEnt] = None,
-  minLen          : Int             = 0,
-  maxLen          : Int             = 512,
-  withFontColor   : Boolean         = true,
-  fontSizeDflt    : Option[Int]     = None,
-  withFontFamily  : Boolean         = true,
-  withCoords      : Boolean         = true,
-  withTextAlign   : Boolean         = true
+  override val name             : String,
+  override val offerNopt        : Option[Int]     = None,
+  override val defaultValue     : Option[TextEnt] = None,
+  minLen                        : Int             = 0,
+  maxLen                        : Int             = 512,
+  withFontColor                 : Boolean         = true,
+  fontSizeDflt                  : Option[Int]     = None,
+  withFontFamily                : Boolean         = true,
+  withCoords                    : Boolean         = true,
+  withTextAlign                 : Boolean         = true
 )
   extends BlockAOValueFieldT
 {
@@ -253,16 +257,18 @@ case class BfText(
 
 /** Поля для строки. */
 case class BfString(
-  name            : String,
-  offerNopt       : Option[Int] = None,
-  defaultValue    : Option[String] = None,
-  withFontColor   : Boolean = true,
-  withFontFamily  : Boolean = false,
-  withCoords      : Boolean = false,
-  withTextAlign   : Boolean = false,
-  minLen          : Int = 0,
-  maxLen          : Int = 16000
-) extends BlockFieldT {
+  override val name             : String,
+  override val offerNopt        : Option[Int] = None,
+  override val defaultValue     : Option[String] = None,
+  withFontColor                 : Boolean = true,
+  withFontFamily                : Boolean = false,
+  withCoords                    : Boolean = false,
+  withTextAlign                 : Boolean = false,
+  minLen                        : Int = 0,
+  maxLen                        : Int = 16000
+)
+  extends BlockFieldT
+{
   def fallbackValue = "example"
 
   override def field = InputString
@@ -287,12 +293,12 @@ case class BfString(
 
 
 case class BfImage(
-  override val name               : String,
-  marker                          : String,
-  override val defaultValue       : Option[BlockImgMap] = None,
-  override val offerNopt          : Option[Int] = None,
-  preDetectMainColor              : Boolean = false,
-  preserveFmt                     : Boolean = false
+  override val name             : String,
+  marker                        : String,
+  override val defaultValue     : Option[BlockImgMap] = None,
+  override val offerNopt        : Option[Int] = None,
+  preDetectMainColor            : Boolean = false,
+  preserveFmt                   : Boolean = false
 )
   extends BlockFieldT
 {
@@ -319,18 +325,21 @@ case class BfImage(
   }
 
 
-  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): Html = {
+  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)
+                                (implicit ctx: Context): Html = {
     field.renderEditorField(this, bfNameBase, af, bc)
   }
 }
 
 
 case class BfColor(
-  name: String,
-  defaultValue: Option[String] = None,
-  fallbackValue: String = "444444",
-  offerNopt: Option[Int] = None
-) extends BlockFieldT {
+  override val name           : String,
+  override val defaultValue   : Option[String]  = None,
+  override val fallbackValue  : String          = "444444",
+  override val offerNopt      : Option[Int]     = None
+)
+  extends BlockFieldT
+{
   override type T = String
 
   override def mappingBase: Mapping[T] = defaultOpt(colorM, defaultValue)
@@ -338,22 +347,26 @@ case class BfColor(
 
   override def field = BlocksEditorFields.Color
 
-  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): Html = {
+  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)
+                                (implicit ctx: Context): Html = {
     field.renderEditorField(this, bfNameBase, af, bc)
   }
 }
 
 
 case class BfCheckbox(
-  name          : String,
-  defaultValue  : Option[Boolean] = None,
-  fallbackValue : Boolean = false,
-  offerNopt     : Option[Int] = None
-) extends BlockFieldT {
+  override val name          : String,
+  override val defaultValue  : Option[Boolean]  = None,
+  override val fallbackValue : Boolean          = false,
+  override val offerNopt     : Option[Int]      = None
+)
+  extends BlockFieldT
+{
   override type T = Boolean
   override def field = Checkbox
   override def mappingBase: Mapping[T] = boolean
-  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): Html = {
+  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)
+                                (implicit ctx: Context): Html = {
     field.renderEditorField(this, bfNameBase, af, bc)
   }
 }
@@ -363,8 +376,12 @@ case class BfCheckbox(
 trait BfNoValueT extends BlockFieldT {
   override type T = None.type
   override def field = NoValue
-  override def mappingBase: Mapping[T] = optional(text).transform[T]({_ => None}, identity)
-  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): Html = {
+  override def mappingBase: Mapping[T] = {
+    optional(text)
+      .transform[T]({_ => None}, identity)
+  }
+  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)
+                                (implicit ctx: Context): Html = {
     field.renderEditorField(this, bfNameBase, af, bc)
   }
   override def defaultValue: Option[T] = None
@@ -378,20 +395,19 @@ case class BfAddStringField(name: String = "addTextField") extends BfNoValueT
 
 /** Класс-реализация для быстрого создания BlockData. Используется вместо new BlockData{}. */
 case class BlockDataImpl(
-  blockMeta   : BlockMeta,
-  offers      : List[AOBlock],
-  colors      : Map[String, String] = Map.empty
+  override val blockMeta   : BlockMeta,
+  override val offers      : List[AOBlock]
 )
   extends IEMBlockMeta
   with IOffers
-  with IColors
 
 
 /** Добавлялка длинного статического метода, который занимается объединением Either-результата
   * промежуточного биндинга и общего аккамулятора биндинга. */
 trait MergeBindAcc[T] {
+
   /** Как-то обновить акк. */
-  def updateAcc(offerN: Int, acc0: BindAcc, v: T)
+  def updateAcc(offerN: Int, acc0: BindAcc, v: T): BindAcc
 
   /**
    * Создать новый bind-аккамулятор (Either) на основе текущего bind-аккамулятора и результата
@@ -407,8 +423,8 @@ trait MergeBindAcc[T] {
                    offerN: Int = 0): Either[Seq[FormError], BindAcc] = {
     (maybeAcc, maybeV) match {
       case (Right(acc0), Right(v)) =>
-        updateAcc(offerN, acc0, v)
-        maybeAcc
+        val acc1 = updateAcc(offerN, acc0, v)
+        Right(acc1)
 
       case (Left(_), Right(_)) =>
         maybeAcc
@@ -428,9 +444,9 @@ trait MergeBindAccAOBlock[T] extends MergeBindAcc[Option[T]] {
   /** Обновить указанный изменяемый AOBlock с помощью текущего значения. */
   def updateAOBlockWith(blk: AOBlock, v: Option[T]): AOBlock
 
-  def updateAcc(offerN: Int, acc0: BindAcc, vOpt: Option[T]) {
+  def updateAcc(offerN: Int, acc0: BindAcc, vOpt: Option[T]): BindAcc = {
     if (vOpt.isDefined) {
-      acc0.offers = {
+      val offers1 = {
         val (found, rest) = acc0.offers
           .partition { _.n == offerN }
         val off00 = found.headOption
@@ -438,6 +454,12 @@ trait MergeBindAccAOBlock[T] extends MergeBindAcc[Option[T]] {
         val off1 = updateAOBlockWith(off0, vOpt)
         off1 :: rest
       }
+      acc0.copy(
+        offers = offers1
+      )
+
+    } else {
+      acc0
     }
   }
 

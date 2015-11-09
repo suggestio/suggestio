@@ -36,8 +36,7 @@ trait MarketAdPreview
    *         406 Not Acceptable при ошибочной форме.
    */
   def adFormPreviewSubmit(adnId: String, isFull: Boolean) = IsAdnNodeAdminPost(adnId).async { implicit request =>
-    val adFormM = MarketAdFormUtil.adFormM
-    adFormM.bindFromRequest().fold(
+    MarketAdFormUtil.adFormM.bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug(s"adFormPreviewSubmit($adnId): form bind failed: " + formatFormErrors(formWithErrors))
         NotAcceptable("Preview form bind failed.")
@@ -45,8 +44,9 @@ trait MarketAdPreview
       {case (mad0, bim) =>
         val imgsFut: Future[Imgs_t] = Future.traverse(bim) {
           case (k, i4s) =>
-            i4s.getImageWH map {
-              imgMetaOpt  =>  k -> MImgInfo(i4s.fileName, meta = imgMetaOpt.map(MImgInfoMeta.apply))
+            i4s.getImageWH map { imgMetaOpt  =>
+              val mii = MImgInfo(i4s.fileName, meta = imgMetaOpt.map(MImgInfoMeta.apply))
+              k -> mii
             }
         } map {
           _.toMap

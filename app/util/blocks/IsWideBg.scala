@@ -14,8 +14,14 @@ object IsWideBg extends MergeBindAcc[Boolean] {
   def IS_WIDE_NAME_DFLT = "isWide"
   def IS_WIDE_BF_DFLT = BfCheckbox(IS_WIDE_NAME_DFLT)
 
-  override def updateAcc(offerN: Int, acc0: BindAcc, v: Boolean): Unit = {
-    acc0.isWide = v
+  override def updateAcc(offerN: Int, acc0: BindAcc, v: Boolean): BindAcc = {
+    if (acc0.isWide != v) {
+      acc0.copy(
+        isWide = v
+      )
+    } else {
+      acc0
+    }
   }
 
 }

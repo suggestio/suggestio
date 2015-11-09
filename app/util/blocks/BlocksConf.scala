@@ -141,10 +141,6 @@ object BlocksConf
 
 
 case class BlockMapperResult(bd: BlockData, bim: BlockImgMap) {
-  def unapplyColor(bfc: BfColor): String = {
-    bd.colors
-      .getOrElse(bfc.name, bfc.anyDefaultValue)
-  }
   def unapplyBIM(bfi: BfImage): BlockImgMap = {
     bim.filter(_._1 == bfi.name)
   }
@@ -214,25 +210,28 @@ trait ValT extends ISaveImgs with Mapping[BlockMapperResult] {
     bindAcc(data).right.map { bindAcc =>
       val bd = BlockDataImpl(
         blockMeta = bindAcc.toBlockMeta(id),
-        offers = bindAcc.offers,
-        colors = bindAcc.colors.toMap
+        offers = bindAcc.offers
       )
       BlockMapperResult(bd, bindAcc.bim.toMap)
     }
   }
 
   def mappingWithNewKey(newKey: String): Mapping[BlockMapperResult]
-  def withPrefix(prefix: String) = addPrefix(prefix).map(mappingWithNewKey).getOrElse(this)
+
+  def withPrefix(prefix: String) = {
+    addPrefix(prefix)
+      .map(mappingWithNewKey)
+      .getOrElse(this)
+  }
 }
 
 
 case class BindAcc(
-  var colors  : List[(String, String)] = Nil,   // TODO unused
-  var offers  : List[AOBlock] = Nil,
-  var height  : Int = BlockHeights.default.heightPx,
-  var width   : Int = BlockWidths.default.widthPx,
-  var isWide  : Boolean = false,
-  var bim     : List[BlockImgEntry] = Nil
+  offers  : List[AOBlock] = Nil,
+  height  : Int = BlockHeights.default.heightPx,
+  width   : Int = BlockWidths.default.widthPx,
+  isWide  : Boolean = false,
+  bim     : List[BlockImgEntry] = Nil
 ) {
 
   /**

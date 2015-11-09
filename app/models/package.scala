@@ -83,7 +83,7 @@ package object models {
 
   type SelectPolicy         = SelectPolicies.T
 
-  type BlockData            = common.IEMBlockMeta with ym.model.ad.IOffers with common.IColors
+  type BlockData            = common.IEMBlockMeta with ym.model.ad.IOffers
 
   val  BlocksConf           = util.blocks.BlocksConf
   type BlockConf            = BlocksConf.T

@@ -81,8 +81,10 @@ object SaveImgUtil extends MergeBindAcc[BlockImgMap] {
     }
   }
 
-  def updateAcc(offerN: Int, acc0: BindAcc, bim: BlockImgMap) {
-    acc0.bim ++= bim
+  def updateAcc(offerN: Int, acc0: BindAcc, bim: BlockImgMap): BindAcc = {
+    acc0.copy(
+      bim = acc0.bim ++ bim
+    )
   }
 
 }

@@ -16,9 +16,16 @@ object Width extends MergeBindAcc[Int] {
   val BF_WIDTH_DFLT = BfWidth(BF_WIDTH_NAME_DFLT)
 
   /** Как-то обновить акк. */
-  override def updateAcc(offerN: Int, acc0: BindAcc, v: Int): Unit = {
-    acc0.width = v
+  override def updateAcc(offerN: Int, acc0: BindAcc, v: Int): BindAcc = {
+    if (acc0.width != v) {
+      acc0.copy(
+        width = v
+      )
+    } else {
+      acc0
+    }
   }
+
 }
 
 

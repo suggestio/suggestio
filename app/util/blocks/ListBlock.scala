@@ -33,6 +33,7 @@ import ListBlock._
 
 
 trait ListBlock extends ValT {
+
   /** Начало отсчета счетчика офферов. */
   def N0: Int = 0
 
@@ -53,8 +54,10 @@ trait ListBlock extends ValT {
     val maybeOffers = m.bind(data)
     (maybeAcc0, maybeOffers) match {
       case (Right(acc0), Right(offers)) =>
-        acc0.offers = offers
-        maybeAcc0
+        val acc1 = acc0.copy(
+          offers = offers
+        )
+        Right(acc1)
 
       case (Left(accFE), Right(descr)) =>
         maybeAcc0
@@ -207,4 +210,5 @@ trait TitleListBlockT extends SingleListBlockT {
       acc1
     }
   }
+
 }
