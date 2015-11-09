@@ -6,7 +6,7 @@ import models.im.{MImg, DevScreen}
 import models.im.make._
 import util.PlayLazyMacroLogsImpl
 import scala.concurrent.{ExecutionContext, Future}
-import util.blocks.BlocksUtil.BlockImgMap
+import util.blocks.BlocksUtil.{BimKey_t, BlockImgMap}
 import play.api.data.{FormError, Mapping}
 import models._
 
@@ -64,7 +64,7 @@ object BgImg extends PlayLazyMacroLogsImpl {
 /** Функционал для сохранения фоновой (основной) картинки блока. */
 trait SaveBgImgI extends ISaveImgs {
 
-  def BG_IMG_FN: String
+  def BG_IMG_FN: BimKey_t
   def bgImgBf: BfImage
 
   /** Прочитать данные по картинки из imgs-поля рекламной карточки. */
@@ -90,8 +90,8 @@ trait BgImg extends ValT with SaveBgImgI {
       super.getImgFieldForName(fn)
   }
 
-  override def _saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t, blockHeight: Int): Future[Imgs_t] = {
-    val supImgsFut = super._saveImgs(newImgs, oldImgs, blockHeight)
+  override def _saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t): Future[Imgs_t] = {
+    val supImgsFut = super._saveImgs(newImgs, oldImgs)
     SaveImgUtil.saveImgsStatic(
       fn = BG_IMG_FN,
       newImgs = newImgs,
@@ -100,7 +100,9 @@ trait BgImg extends ValT with SaveBgImgI {
     )
   }
 
-  abstract override def blockFieldsRev(af: AdFormM): List[BlockFieldT] = bgImgBf :: super.blockFieldsRev(af)
+  abstract override def blockFieldsRev(af: AdFormM): List[BlockFieldT] = {
+    bgImgBf :: super.blockFieldsRev(af)
+  }
 
   // Mapping
   private def m = bgImgBf.getStrictMapping.withPrefix(bgImgBf.name).withPrefix(key)

@@ -4,7 +4,7 @@ import models.im.MImg
 import util.img._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Future
-import util.blocks.BlocksUtil.BlockImgMap
+import util.blocks.BlocksUtil.{BimKey_t, BlockImgMap}
 import models._
 
 /**
@@ -21,11 +21,10 @@ trait ISaveImgs {
    * Метод для обновления карты картинок. Дергает _saveImgs() и подметает потом за ним.
    * @param newImgs Новая карта картинок.
    * @param oldImgs Старая карта картинок.
-   * @param blockHeight Высота блока.
    * @return Новое значение для поля imgs карточки.
    */
-  final def saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t, blockHeight: Int): Future[Imgs_t] = {
-    val resultFut = _saveImgs(newImgs, oldImgs, blockHeight)
+  final def saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t): Future[Imgs_t] = {
+    val resultFut = _saveImgs(newImgs, oldImgs)
     resultFut onSuccess { case newImgs2 =>
       // 2014.sep.24: Выявлена проблема неудаления картинки. Это происходит если старый алиас ушел из новой карты.
       // Картинка оставалась в хранилище, но на неё терялись все указатели.
@@ -44,7 +43,7 @@ trait ISaveImgs {
   }
 
   /** Метод, выполняющий необходимые обновления картинки. Должен быть перезаписан в конкретных подреализациях. */
-  protected def _saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t, blockHeight: Int): Future[Imgs_t] = {
+  protected def _saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t): Future[Imgs_t] = {
     Future successful Map.empty
   }
 
@@ -54,7 +53,7 @@ trait ISaveImgs {
 /** Базовая утиль для работы с картинками из blocks-контекстов. */
 object SaveImgUtil extends MergeBindAcc[BlockImgMap] {
 
-  def saveImgsStatic(fn: String, newImgs: BlockImgMap, oldImgs: Imgs_t, supImgsFut: Future[Imgs_t]): Future[Imgs_t] = {
+  def saveImgsStatic(fn: BimKey_t, newImgs: BlockImgMap, oldImgs: Imgs_t, supImgsFut: Future[Imgs_t]): Future[Imgs_t] = {
     val needImgsThis = newImgs.get(fn)
     val oldImgsThis = oldImgs.get(fn)
       .map { i => MImg(i.filename) }

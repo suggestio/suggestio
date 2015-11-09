@@ -23,8 +23,9 @@ import play.twirl.api.{Html, Template5}
 
 object BlocksUtil {
 
-  type BlockImgEntry = (String, MImgT)
-  type BlockImgMap = Map[String, MImgT]
+  type BimKey_t       = String
+  type BlockImgEntry  = (BimKey_t, MImgT)
+  type BlockImgMap    = Map[BimKey_t, MImgT]
 
   def bDescriptionM = publishedTextM
 
@@ -289,13 +290,15 @@ case class BfString(
 
 
 case class BfImage(
-  name                : String,
-  marker              : String,
-  defaultValue        : Option[BlockImgMap] = None,
-  offerNopt           : Option[Int] = None,
-  preDetectMainColor  : Boolean = false,
-  preserveFmt         : Boolean = false
-) extends BlockFieldT {
+  override val name               : String,
+  marker                          : String,
+  override val defaultValue       : Option[BlockImgMap] = None,
+  override val offerNopt          : Option[Int] = None,
+  preDetectMainColor              : Boolean = false,
+  preserveFmt                     : Boolean = false
+)
+  extends BlockFieldT
+{
   override type T = BlockImgMap
 
   override def field = Image

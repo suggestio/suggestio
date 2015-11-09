@@ -9,7 +9,7 @@ import org.elasticsearch.client.Client
 import org.joda.time.DateTime
 import play.api.cache.CacheApi
 import play.api.db.Database
-import play.api.i18n.{MessagesApi, Messages}
+import play.api.i18n.MessagesApi
 import play.api.libs.json.JsValue
 import play.core.parsers.Multipart
 import play.twirl.api.Html
@@ -24,7 +24,6 @@ import play.api.mvc.{WebSocket, Request}
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import controllers.ad.MarketAdFormUtil
 import MarketAdFormUtil._
-import io.suggest.ym.model.common.Texts4Search
 import io.suggest.ad.form.AdFormConstants._
 
 import scala.util.{Failure, Success}
@@ -144,19 +143,15 @@ class MarketAd @Inject() (
         // Асинхронно обрабатываем всякие прочие данные.
         val saveImgsFut = bc.saveImgs(
           newImgs     = bim,
-          oldImgs     = Map.empty,
-          blockHeight = mad.blockMeta.height
+          oldImgs     = Map.empty
         )
-        val t4s2Fut = newTexts4search(mad, request.adnNode)
         // Когда всё готово, сохраняем саму карточку.
         val adIdFut = for {
-          t4s2      <- t4s2Fut
           savedImgs <- saveImgsFut
           adId      <- {
             mad.copy(
               producerId    = adnId,
-              imgs          = savedImgs,
-              texts4search  = t4s2
+              imgs          = savedImgs
             ).save
           }
         } yield {
@@ -241,23 +236,19 @@ class MarketAd @Inject() (
         renderFailedEditFormWith(formWithErrors)
       },
       {case (mad2, bim) =>
-        val t4s2Fut = newTexts4search(mad2, request.producer)
         val bc = BlocksConf.DEFAULT
         // TODO Надо отделить удаление врЕменных и былых картинок от сохранения новых. И вызывать эти две фунции отдельно.
         // Сейчас возможна ситуация, что при поздней ошибке сохранения теряется старая картинка, а новая сохраняется вникуда.
         val saveImgsFut = bc.saveImgs(
           newImgs     = bim,
-          oldImgs     = mad.imgs,
-          blockHeight = mad2.blockMeta.height
+          oldImgs     = mad.imgs
         )
         // Произвести действия по сохранению карточки.
         val saveFut = for {
           imgsSaved <- saveImgsFut
-          t4s2      <- t4s2Fut
           _adId     <- MAd.tryUpdate(request.mad) { mad0 =>
             mad0.copy(
               imgs          = imgsSaved,
-              texts4search  = t4s2,
               disableReason = Nil,
               moderation    = mad0.moderation.copy(
                 freeAdv = mad0.moderation.freeAdv
@@ -314,43 +305,6 @@ class MarketAd @Inject() (
       val routeCall = routes.MarketLkAdn.showNodeAds(request.mad.producerId)
       Redirect(routeCall)
         .flashing(FLASH.SUCCESS -> "Ad.deleted")
-    }
-  }
-
-
-  /**
-   * Сгенерить экземпляр Text4Search на основе данных старой и новой рекламных карточек.
-   * @param newMadData Забинденные данные формы для новой (будущей) рекламной карточки.
-   * @param producer Нода-продьюсер рекламной карточки.
-   */
-  private def newTexts4search(newMadData: MAd, producer: MNode)(implicit messages: Messages): Future[Texts4Search] = {
-    // Собираем названия родительских категорий:
-    val catNamesFut: Future[List[String]] = if (newMadData.userCatId.nonEmpty) {
-      val futs = newMadData.userCatId.foldLeft (List[Future[List[String]]]() ) { (accFut, catId) =>
-        val fut = MMartCategory.foldUpChain [List[String]] (catId, Nil) {
-          (acc, e) =>
-            if (e.includeInAll) {
-              // TODO Надо бы все названия на всех языках закидывать в акк.
-              messages(e.name) :: acc
-            } else {
-              acc
-            }
-        }
-        fut :: accFut
-      }
-      Future.reduce(futs) { _ ++ _ }
-    } else {
-      Future successful Nil
-    }
-    // Узнаём название узла-продьюсера:
-    // Генерим общий результат:
-    for {
-      catNames <- catNamesFut
-    } yield {
-      newMadData.texts4search.copy(
-        userCat = catNames,
-        producerName = Some(producer.meta.basic.name)
-      )
     }
   }
 
