@@ -1,8 +1,8 @@
 package models.mlk
 
-import models.im.{MImg, MImgT}
+import models.im.MImgT
 import models.im.logo.LogoOpt_t
-import models.{MMeta, MNode, MAdT}
+import models.{MWelcomeAd, MMeta, MNode}
 import play.api.data.Form
 
 /**
@@ -31,7 +31,7 @@ trait INodeEditArgs {
   def mf            : Form[FormMapResult]
 
   /** Данные по текущей карточке приветствия. */
-  def welcomeAdOpt  : Option[MAdT]
+  def welcomeAdOpt  : Option[MWelcomeAd]
 
 }
 
@@ -40,6 +40,6 @@ trait INodeEditArgs {
 case class NodeEditArgs(
   override val mnode         : MNode,
   override val mf            : Form[FormMapResult],
-  override val welcomeAdOpt  : Option[MAdT]
+  override val welcomeAdOpt  : Option[MWelcomeAd]
 )
   extends INodeEditArgs

@@ -26,7 +26,7 @@ object BgImg extends PlayLazyMacroLogsImpl {
 
 
   /** Быстрый экстрактор фоновой картинки из карточки. */
-  def getBgImg(mad: MAdT) = BlocksConf.applyOrDefault(mad.blockMeta.blockId).getMadBgImg(mad)
+  def getBgImg(mad: MAd) = BlocksConf.applyOrDefault(mad.blockMeta.blockId).getMadBgImg(mad)
 
   /**
    * Часто-дублирующийся код опционального вызова maker'а.
@@ -36,7 +36,7 @@ object BgImg extends PlayLazyMacroLogsImpl {
    * @param devScreenOpt Параметры экрана.
    * @return Фьючерс с результатом подготовки изображения.
    */
-  def maybeMakeBgImgWith(mad: MAdT, maker: IMaker, szMult: SzMult_t, devScreenOpt: Option[DevScreen])
+  def maybeMakeBgImgWith(mad: MAd, maker: IMaker, szMult: SzMult_t, devScreenOpt: Option[DevScreen])
                     (implicit ec: ExecutionContext): Future[Option[MakeResult]] = {
     BgImg.getBgImg(mad).fold {
       Future successful Option.empty[MakeResult]
@@ -47,7 +47,7 @@ object BgImg extends PlayLazyMacroLogsImpl {
     }
   }
 
-  def maybeMakeBgImg(mad: MAdT, szMult: SzMult_t, devScreenOpt: Option[DevScreen])
+  def maybeMakeBgImg(mad: MAd, szMult: SzMult_t, devScreenOpt: Option[DevScreen])
                     (implicit ec: ExecutionContext): Future[Option[MakeResult]] = {
     val maker = if (mad.blockMeta.wide)
       Makers.ScWide

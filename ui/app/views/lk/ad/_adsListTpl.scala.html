@@ -1,5 +1,5 @@
 @(mads: Seq[blk.IRenderArgs], coverDisableReason: Boolean, startIndex: Int = 1,
-  itemsInLine: Int = 4)(postContent: MAdT => Html)(implicit ctx: Context)
+  itemsInLine: Int = 4)(postContent: MAd => Html)(implicit ctx: Context)
 
 @* Заготовка списка рекламных карточек на странице узла рекламной сети.
    postContent содержит функцию, которая генерит верстку для каждого элемента списка.

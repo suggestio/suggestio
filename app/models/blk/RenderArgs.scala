@@ -1,7 +1,7 @@
 package models.blk
 
 import io.suggest.common.css.ITopLeft
-import io.suggest.common.geom.coord.{ICoords2di, ICoord2d}
+import io.suggest.common.geom.coord.ICoords2di
 import io.suggest.model.n2.ad.ent.text
 import models._
 import models.im.make.{MakeResult, IMakeResult}
@@ -16,7 +16,7 @@ import models.msc.{MScApiVsns, MScApiVsn}
 
 trait IRenderArgs {
   /** Рекламная карточка, которую надо отрендерить. */
-  def mad             : MAdT
+  def mad             : MAd
   /** Мультипликатор размеров карточки. */
   def szMult          : SzMult_t
   /** Данные о фоновой картинке, если есть. */

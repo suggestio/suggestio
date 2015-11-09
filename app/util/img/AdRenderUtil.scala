@@ -6,7 +6,7 @@ import controllers.routes
 import io.suggest.ym.model.common.MImgInfoMeta
 import models.blk.szMulted
 import models.im.make.{MakeResult, Makers, MakeArgs}
-import models.{MAd, MAdT}
+import models.MAd
 import models.blk.OneAdQsArgs
 import util.blocks.BgImg
 import util.xplay.PlayUtil.httpPort
@@ -77,7 +77,7 @@ object AdRenderUtil {
    * @param mad карточка для рендера.
    * @return Фьючерс с байтами картинки.
    */
-  def renderAd2img(adArgs: OneAdQsArgs, mad: MAdT): Future[File] = {
+  def renderAd2img(adArgs: OneAdQsArgs, mad: MAd): Future[File] = {
     val sourceAdSz = mad.blockMeta
     // Высота отрендеренной карточки с учетом мультипликатора
     lazy val width0 = szMulted(sourceAdSz.width, adArgs.szMult)

@@ -33,9 +33,6 @@ package object models {
   type AdnRight             = ym.model.common.AdnRight
 
 
-  // Рекламота
-  type MAdT                 = ym.model.ad.MAdT
-
   val  AdReceiverInfo       = ym.model.common.AdReceiverInfo
   type AdReceiverInfo       = ym.model.common.AdReceiverInfo
 
@@ -216,7 +213,7 @@ package object models {
   type MGeoShape            = n2.geo.MGeoShape
   val  MGeoShape            = n2.geo.MGeoShape
 
-  //@deprecated("Use MNode instead.", "2015.nov.6")
+  //@deprecated("Use MNode instead.", "2016.nov.6")
   val  MAd                  = ym.model.MAd
   //@deprecated("Use MNode instead.", "2015.nov.6")
   type MAd                  = ym.model.MAd

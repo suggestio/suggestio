@@ -262,9 +262,11 @@ object MarketAdFormUtil {
   def adFormApply(bmr: BlockMapperResult, pattern: Option[String],
                   richDescrOpt: Option[RichDescr], bgColor: String, tags: TagsMap_t): AdFormMResult = {
     val colors: Map[String, String] = {
-      // Чтобы немного сэкономить ресурсов на добавлении цветов, используем склеивание итераторов и генерацию финальной мапы.
+      // TODO bmr.bd.colors.iterator нынче всегда empty.
       var ci = bmr.bd.colors.iterator
+      // Фон
       ci ++= Iterator(AdColorFns.IMG_BG_COLOR_FN.name -> bgColor)
+      // pattern color
       if (pattern.isDefined)
         ci ++= Iterator(AdColorFns.WIDE_IMG_PATTERN_COLOR_FN.name -> pattern.get)
       ci.toMap

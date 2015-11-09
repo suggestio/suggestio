@@ -61,7 +61,7 @@ class AdvUtil @Inject() (
    * @param mad Исходная рекламная карточка или её интерфейс.
    * @param producerOpt Экземпляр продьюсера
    */
-  def calculateReceiversFor(mad: MAdT, producerOpt: Option[MNode] = None): Future[Receivers_t] = {
+  def calculateReceiversFor(mad: MAd, producerOpt: Option[MNode] = None): Future[Receivers_t] = {
     val priOpt = mad.receivers.get(mad.producerId)
     val needProducer = priOpt.isDefined
     // Нам нужен продьюсер для фильтрации копируемых sls продьюсера. Ищем его в фоне.

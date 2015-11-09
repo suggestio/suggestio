@@ -1,7 +1,7 @@
 package models.adv.js.ctx
 
 import _root_.util.{TplDataFormatUtil, FormUtil}
-import models.{MNode, MAdT}
+import models.{MAd, MNode}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.api.Play.{current, configuration}
@@ -24,7 +24,7 @@ object MAdContentCtx {
     * @param producer Узел-продьюсер. Нужен для генерации title карточки.
     * @return Экземпляр MAdContentCtx.
     */
-  def fromAd(mad: MAdT, producer: MNode): MAdContentCtx = {
+  def fromAd(mad: MAd, producer: MNode): MAdContentCtx = {
     MAdContentCtx(
       // Поля карточки -- это именно поля.
       fields = mad.offers
