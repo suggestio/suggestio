@@ -5,7 +5,6 @@ import java.util.UUID
 
 import io.suggest.model.img.IImgMeta
 import io.suggest.model.{MUserImgMeta2, MUserImg2}
-import io.suggest.primo.TypeT
 import models._
 import org.joda.time.DateTime
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -85,9 +84,11 @@ object MImg extends PlayLazyMacroLogsImpl with IMImgCompanion { model =>
 }
 
 
-/** Реализация модели [[MImgT]] для работы напрямую с кассандрой.
-  * Это legacy-модель картинок, потом будет удалена вслед за кассандрой.
-  * Новая модель работает через MMedia, а во всяких мутных хранилищах хранятся только всякая блобота. */
+/**
+ * Реализация модели [[MImgT]] для работы напрямую с кассандрой.
+ * Это legacy-модель картинок, потом будет удалена вслед за кассандрой.
+ * Новая модель работает через MMedia, а во всяких мутных хранилищах хранятся только всякая блобота.
+ */
 case class MImg(override val rowKey: UUID,
                 override val dynImgOps: Seq[ImOp])
   extends MImgT

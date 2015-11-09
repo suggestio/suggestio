@@ -69,7 +69,7 @@ object MarketAdFormUtil {
 
 
   /** Маппер для описания, прилагаемого к рекламной карточке. */
-  def richDescrOptM: Mapping[Option[RichDescr]] = {
+  val richDescrOptM: Mapping[Option[RichDescr]] = {
     val rdTextM = text(maxLength = 20000)
       .transform(strFmtTrimF, strIdentityF)
     val m = mapping(
@@ -124,7 +124,7 @@ object MarketAdFormUtil {
 
 
   /** Маппер для активации и настройки покрывающей сетки-паттерна указанного цвета. */
-  def coveringPatternM: Mapping[Option[String]] = {
+  val coveringPatternM: Mapping[Option[String]] = {
     tuple(
       "enabled" -> boolean,
       "color"   -> optional(colorM)
@@ -246,7 +246,7 @@ object MarketAdFormUtil {
   }
 
   /** Маппинг для множественных значений поля тегов. */
-  def tagsMapM: Mapping[TagsMap_t] = {
+  val tagsMapM: Mapping[TagsMap_t] = {
     list(tagNameAsTagM)
       .transform [TagsMap_t] (
         MTagEdge.tags2map,
@@ -259,7 +259,7 @@ object MarketAdFormUtil {
 
   /** apply-функция для формы добавления/редактировать рекламной карточки.
     * Вынесена за пределы генератора ad-маппингов во избежание многократного создания в памяти экземпляров функции. */
-  def adFormApply(userCatId: Set[String], bmr: BlockMapperResult, pattern: Option[String],
+  def adFormApply(bmr: BlockMapperResult, pattern: Option[String],
                   richDescrOpt: Option[RichDescr], bgColor: String, tags: TagsMap_t): AdFormMResult = {
     val colors: Map[String, String] = {
       // Чтобы немного сэкономить ресурсов на добавлении цветов, используем склеивание итераторов и генерацию финальной мапы.
@@ -275,7 +275,6 @@ object MarketAdFormUtil {
       blockMeta   = bmr.bd.blockMeta,
       colors      = colors,
       imgs        = null,
-      userCatId   = userCatId,
       richDescrOpt = richDescrOpt,
       tags        = tags
     )
@@ -283,13 +282,13 @@ object MarketAdFormUtil {
   }
 
   /** Функция разборки для маппинга формы добавления/редактирования рекламной карточки. */
-  def adFormUnapply(applied: AdFormMResult): Option[(Set[String], BlockMapperResult, Option[String], Option[RichDescr], String, TagsMap_t)] = {
+  def adFormUnapply(applied: AdFormMResult): Option[(BlockMapperResult, Option[String], Option[RichDescr], String, TagsMap_t)] = {
     val mad = applied._1
     val bmr = BlockMapperResult(mad, applied._2)
     val pattern = mad.colors.get(AdColorFns.WIDE_IMG_PATTERN_COLOR_FN.name)
     import AdColorFns._
     val bgColor = mad.colors.getOrElse(IMG_BG_COLOR_FN.name, IMG_BG_COLOR_FN.default)
-    Some( (mad.userCatId, bmr, pattern, mad.richDescrOpt, bgColor, mad.tags) )
+    Some( (bmr, pattern, mad.richDescrOpt, bgColor, mad.tags) )
   }
 
 
@@ -297,36 +296,19 @@ object MarketAdFormUtil {
    * Сборщик форм произвольного назначения для парсинга реквестов с данными рекламной карточки.
    * @return Маппинг формы, готовый к эксплуатации.
    */
+  // TODO Сделать val наверное надо... Но есть циклическая зависимость между этим классом и BfText.
   def adFormM: AdFormM = {
     Form(
       mapping(
-        CAT_ID_K    -> adCatIdsM,
         OFFER_K     -> BlocksConf.DEFAULT.strictMapping,
         PATTERN_K   -> coveringPatternM,
         DESCR_K     -> richDescrOptM,
         BG_COLOR_K  -> colorM,
-        TAGS_K      -> tagsMapM
+        tagsMapKM
       )(adFormApply)(adFormUnapply)
     )
   }
 
-
-
-  /**
-   * Определить владельца категорий узла.
-   * @param adnNode Узел рекламной сети.
-   * @return id узла-владельца категорий.
-   */
-  def getCatOwnerId(adnNode: MNode): String = {
-    /*
-    import AdNetMemberTypes._
-    adnNode.adn.memberType match {
-      case SHOP | RESTAURANT => adnNode.adn.supId getOrElse adnNode.id.get
-      case MART | RESTAURANT_SUP => adnNode.id.get
-    }
-    */
-    MMartCategory.DEFAULT_OWNER_ID
-  }
 
 }
 

@@ -1,4 +1,4 @@
-@(af: AdFormM, call: Call, mmcats: Seq[MMartCategory], withBC: Option[BlockConf], mnode: MNode)(implicit ctx: Context)
+@(af: AdFormM, call: Call, withBC: Option[BlockConf], mnode: MNode)(implicit ctx: Context)
 
 @* Рендер формы редактирования произвольной рекламы.
  * offerType - предпочитаемый тип оффера, когда он неизвестен. *@
@@ -15,10 +15,6 @@
   @* Бывает, что у формы задана ошибка верхнего уровня. TODO А такое теперь возможно вообще?
     @af.globalError
   *@
-
-  @_edLkBlkTpl( messages("Choose.category") ) {
-    @_adFormCatSelectorsTpl(mmcats, af)
-  }
 
   @_tagsTpl(af)
 

@@ -1,11 +1,10 @@
 package util.blocks
 
+import models.blk.{BlockImgMap, BimKey_t, Imgs_t}
 import models.im.MImg
 import util.img._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Future
-import util.blocks.BlocksUtil.{BimKey_t, BlockImgMap}
-import models._
 
 /**
  * Suggest.io

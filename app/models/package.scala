@@ -3,12 +3,10 @@ import io.suggest.model.geo
 import io.suggest.model.n2
 import io.suggest.ym
 import io.suggest.ym.model.common
-import io.suggest.ym.model.common.EMImg
 import models.adv.MAdvModes
 import models.mbill.BTariffTypes
 import models.usr.EmailPwConfirmInfo
 import play.api.data.Form
-import util.blocks.BlocksUtil.BlockImgMap
 
 /**
  * Suggest.io
@@ -119,8 +117,6 @@ package object models {
 
   type AdnShownType         = AdnShownTypes.T
 
-  type Imgs_t               = EMImg.Imgs_t
-
   type GeoPoint             = geo.GeoPoint
   val  GeoPoint             = geo.GeoPoint
 
@@ -180,10 +176,10 @@ package object models {
   type UsrCreateNodeForm_t  = Form[String]
 
   /** Тип результата биндинга формы рекламной карточки. */
-  type AdFormMResult = (MAd, BlockImgMap)
+  type AdFormMResult        = (MAd, models.blk.BlockImgMap)
 
   /** Тип маппинга формы рекламной карточки. */
-  type AdFormM = Form[AdFormMResult]
+  type AdFormM              = Form[AdFormMResult]
 
   type TagsEditForm_t       = Form[(Seq[MTagEdge], TagsMap_t)]
 

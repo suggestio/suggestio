@@ -1,4 +1,4 @@
-@(mad: MAd, mmcats: Seq[MMartCategory], af: AdFormM, mnode: MNode)(implicit ctx: Context)
+@(mad: MAd, af: AdFormM, mnode: MNode)(implicit ctx: Context)
 
 @* Страница с формой редактирования рекламной карточки. *@
 @import ctx._
@@ -10,12 +10,16 @@
   </div>
 }
 
-@adFormBase(messages("Ad.card.edit"), mnode, madOpt = Some(mad), bottomLeft = Some(bottomLeft)) {
+@adFormBase(
+  title       = messages("Ad.card.edit"),
+  mnode       = mnode,
+  madOpt      = Some(mad),
+  bottomLeft  = Some(bottomLeft)
+) {
 
   @_adFormTpl(
     af      = af,
     call    = routes.MarketAd.editAdSubmit(mad.id.get),
-    mmcats  = mmcats,
     withBC  = Some(BlocksConf applyOrDefault mad.blockMeta.blockId),
     mnode   = mnode
   )

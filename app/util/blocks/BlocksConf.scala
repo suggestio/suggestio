@@ -1,14 +1,12 @@
 package util.blocks
 
 import io.suggest.common.menum.EnumValue2Val
-import models.blk.{BlockMeta, BlockHeights, BlockWidths}
+import models.blk._
 import play.api.data._
-import BlocksUtil._
 import util.FormUtil.IdEnumFormMappings
 import util.PlayMacroLogsImpl
 import views.html.blocks._
 import models._
-import util.blocks.BlocksUtil.BlockImgMap
 import play.api.data.validation.Constraint
 import play.twirl.api.{Template2, Html}
 
@@ -56,7 +54,12 @@ import play.twirl.api.{Template2, Html}
  *   Разработка враппера: копируем код враппера соседнего блока, заменив нужные числа на текущий номер блока.
  */
 
-object BlocksConf extends Enumeration with PlayMacroLogsImpl with EnumValue2Val with IdEnumFormMappings {
+object BlocksConf
+  extends Enumeration
+  with PlayMacroLogsImpl
+  with EnumValue2Val
+  with IdEnumFormMappings
+{
 
   /** Всё описание блока идёт через наследование Val и её интерфейса [[ValT]] при необходимости. */
   protected abstract class Val(id: Int)
@@ -110,6 +113,7 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl with EnumValue2Val 
   }
   val Block20 = new Val(20) with Block20t with EmptyKey {
     override def mappingWithNewKey(newKey: String) = Block20Wrapper(key = newKey)
+    override val strictMapping = super.strictMapping
   }
   sealed case class Block20Wrapper(key: String) extends ValTWrapper(Block20) with ValTEmpty with Block20t {
     override def mappingWithNewKey(newKey: String) = copy(key = newKey)
@@ -122,7 +126,8 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl with EnumValue2Val 
   /** Отображаемые блоки. Обращение напрямую к values порождает множество с неопределённым порядком,
     * а тут - сразу отсортировано по id и только отображаемые. */
   val valuesShown: Seq[T] = {
-    val vs0 = values.asInstanceOf[collection.Set[T]]
+    val vs0 = values
+      .asInstanceOf[ collection.Set[T] ]
       .toSeq
       .filter(_.isShown)
     orderBlocks(vs0)
@@ -136,9 +141,18 @@ object BlocksConf extends Enumeration with PlayMacroLogsImpl with EnumValue2Val 
 
 
 case class BlockMapperResult(bd: BlockData, bim: BlockImgMap) {
-  def unapplyColor(bfc: BfColor): String = bd.colors.getOrElse(bfc.name, bfc.anyDefaultValue)
-  def unapplyBIM(bfi: BfImage): BlockImgMap = bim.filter(_._1 == bfi.name)
-  def flatMapFirstOffer[T](f: AOBlock => Option[T]) = bd.offers.headOption.flatMap(f)
+  def unapplyColor(bfc: BfColor): String = {
+    bd.colors
+      .getOrElse(bfc.name, bfc.anyDefaultValue)
+  }
+  def unapplyBIM(bfi: BfImage): BlockImgMap = {
+    bim.filter(_._1 == bfi.name)
+  }
+  def flatMapFirstOffer[T](f: AOBlock => Option[T]): Option[T] = {
+    bd.offers
+      .headOption
+      .flatMap(f)
+  }
 }
 
 

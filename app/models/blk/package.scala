@@ -1,5 +1,7 @@
 package models
 
+import models.im.MImgT
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -43,5 +45,14 @@ package object blk {
   def szRounded(sz: SzMult_t): Int = {
     Math.round(sz)
   }
+
+
+  /** Модель сохраненных картинок карточки-блока. */
+  type Imgs_t               = io.suggest.ym.model.common.EMImg.Imgs_t
+
+  /** Тип ключа в карте картинок блока. */
+  type BimKey_t             = String
+  type BlockImgEntry        = (BimKey_t, MImgT)
+  type BlockImgMap          = Map[BimKey_t, MImgT]
 
 }

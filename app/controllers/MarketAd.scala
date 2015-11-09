@@ -20,7 +20,7 @@ import models._
 import play.api.data._, Forms._
 import util.acl._
 import scala.concurrent.{ExecutionContext, Future}
-import play.api.mvc.{WebSocket, Request}
+import play.api.mvc.{Result, WebSocket, Request}
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import controllers.ad.MarketAdFormUtil
 import MarketAdFormUtil._
@@ -104,23 +104,19 @@ class MarketAd @Inject() (
    */
   def createAd(adnId: String) = IsAdnNodeAdminGet(adnId).async { implicit request =>
     import request.adnNode
-    renderCreateFormWith(
-      af = adFormM,
-      catOwnerId = getCatOwnerId(adnNode),
-      adnNode = adnNode
-    ).map(Ok(_))
+    _renderCreateFormWith(
+      af      = adFormM,
+      adnNode = adnNode,
+      rs      = Ok
+    )
   }
 
-  /** Рендер ошибки в create-форме. Довольно общий, но асинхронный код.
-    * @param formWithErrors Форма для рендера.
-    * @param catOwnerId id владельца категории. Обычно id ТЦ.
-    * @param adnNode Магазин, с которым происходит сейчас работа.
-    * @return NotAcceptable со страницей с create-формой.
-    */
-  private def createAdFormError(formWithErrors: AdFormM, catOwnerId: String, adnNode: MNode, withBC: Option[BlockConf])
-                               (implicit request: AbstractRequestForAdnNode[_]) = {
-    renderCreateFormWith(formWithErrors, catOwnerId, adnNode, withBC)
-      .map(NotAcceptable(_))
+  /** Общий код рендера createShopAdTpl с запросом необходимых категорий. */
+  private def _renderCreateFormWith(af: AdFormM, adnNode: MNode, withBC: Option[BlockConf] = None, rs: Status)
+                                  (implicit request: AbstractRequestForAdnNode[_]): Future[Result] = {
+    _renderPage(af, rs) { implicit ctx =>
+      createAdTpl(af, adnNode, withBC)(ctx)
+    }
   }
 
   /**
@@ -129,15 +125,12 @@ class MarketAd @Inject() (
    */
   def createAdSubmit(adnId: String) = IsAdnNodeAdminPost(adnId).async(parse.urlFormEncoded) { implicit request =>
     import request.adnNode
-    val catOwnerId = getCatOwnerId(adnNode)
     lazy val logPrefix = s"createAdSubmit($adnId): "
-    val formM = adFormM
-    val formBinded = formM.bindFromRequest()
     val bc = BlocksConf.DEFAULT
-    formBinded.fold(
+    adFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(logPrefix + "Bind failed: \n" + formatFormErrors(formWithErrors))
-        createAdFormError(formWithErrors, catOwnerId, adnNode, Some(bc))
+        _renderCreateFormWith(formWithErrors, adnNode, Some(bc), NotAcceptable)
       },
       {case (mad, bim) =>
         // Асинхронно обрабатываем всякие прочие данные.
@@ -158,12 +151,12 @@ class MarketAd @Inject() (
           adId
         }
         // Сборка HTTP-ответа.
-        val resFut = adIdFut map { adId =>
+        val resFut = for (adId <- adIdFut) yield {
           Redirect(routes.MarketLkAdn.showNodeAds(adnId, newAdId = Some(adId)))
             .flashing(FLASH.SUCCESS -> "Ad.created")
         }
         // Сохранение новых тегов в MNode.
-        adIdFut.onSuccess { case _ =>
+        for (_ <- adIdFut) {
           val fut = mTagUtil.handleNewTagsM(mad.tags)
           logTagsUpdate(fut, logPrefix)
         }
@@ -173,37 +166,17 @@ class MarketAd @Inject() (
     )
   }
 
-  /** Общий код рендера createShopAdTpl с запросом необходимых категорий. */
-  private def renderCreateFormWith(af: AdFormM, catOwnerId: String, adnNode: MNode, withBC: Option[BlockConf] = None)
-                                  (implicit request: AbstractRequestForAdnNode[_]) = {
-    _renderPage(af) { (mmcats, ctx) =>
-      createAdTpl(mmcats, af, adnNode, withBC)(ctx)
-    }
-  }
 
-  private def renderEditFormWith(af: AdFormM)(implicit request: RequestWithAdAndProducer[_]) = {
-    _renderPage(af) { (mmcats, ctx) =>
-      import request.{producer, mad}
-      editAdTpl(mad, mmcats, af, producer)(ctx)
-    }
-  }
 
   /** Акт рендера результирующей страницы в отрыве от самой страницы. */
-  private def _renderPage(af: AdFormM)(f: (Seq[MMartCategory], Context) => Html)
-                         (implicit request: AbstractRequestWithPwOpt[_]): Future[Html] = {
-    val cats = mmCats
+  private def _renderPage(af: AdFormM, rs: Status)(f: Context => Html)
+                         (implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
     implicit val _jsInitTargets = Seq(MTargets.AdForm)
     implicit val ctx = implicitly[Context]
     detectMainColorBg(af)(ctx)
-    cats.map(f(_, ctx))
+    rs( f(ctx) )
   }
 
-
-  private def renderFailedEditFormWith(af: AdFormM)(implicit request: RequestWithAdAndProducer[_]) = {
-    renderEditFormWith(af) map {
-      NotAcceptable(_)
-    }
-  }
 
   /** Рендер страницы с формой редактирования рекламной карточки магазина.
     * @param adId id рекламной карточки.
@@ -217,25 +190,29 @@ class MarketAd @Inject() (
         MImg(mii.filename)
       }
     val formFilled = form0 fill ((mad, bim))
-    renderEditFormWith(formFilled)
-      .map { Ok(_) }
+    _renderEditFormWith(formFilled, Ok)
   }
 
+  private def _renderEditFormWith(af: AdFormM, rs: Status)
+                                 (implicit request: RequestWithAdAndProducer[_]): Future[Result] = {
+    _renderPage(af, rs) { implicit ctx =>
+      import request.{producer, mad}
+      editAdTpl(mad, af, producer)(ctx)
+    }
+  }
 
   /** Сабмит формы рендера страницы редактирования рекламной карточки.
     * @param adId id рекламной карточки.
     */
   def editAdSubmit(adId: String) = CanEditAdPost(adId).async(parse.urlFormEncoded) { implicit request =>
-    import request.mad
-    val formM = adFormM
-    val formBinded = formM.bindFromRequest()
     lazy val logPrefix = s"editShopAdSubmit($adId): "
-    formBinded.fold(
+    adFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(logPrefix + "Failed to bind form: " + formWithErrors.errors)
-        renderFailedEditFormWith(formWithErrors)
+        _renderEditFormWith(formWithErrors, NotAcceptable)
       },
       {case (mad2, bim) =>
+        import request.mad
         val bc = BlocksConf.DEFAULT
         // TODO Надо отделить удаление врЕменных и былых картинок от сохранения новых. И вызывать эти две фунции отдельно.
         // Сейчас возможна ситуация, что при поздней ошибке сохранения теряется старая картинка, а новая сохраняется вникуда.
@@ -458,13 +435,6 @@ class MarketAd @Inject() (
 
 
   // ============================== common-методы =================================
-
-  /** Подготовить список категорий асинхронно. */
-  private def mmCats: Future[Seq[MMartCategory]] = {
-    // 2014.dec.10: Плоские категории как были, так и остались. Упрощаем работу с категориями по максимуму.
-    val catOwnerId = MMartCategory.DEFAULT_OWNER_ID
-    MMartCategory.findTopForOwner(catOwnerId)
-  }
 
 
   /** Подготовка картинки, которая загружается в динамическое поле блока. */

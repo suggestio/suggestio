@@ -3,7 +3,6 @@ package util.blocks
 import io.suggest.common.menum.EnumValue2Val
 import io.suggest.model.n2.ad.ent.text.{ValueEnt, EntFont}
 import models.blk._
-import models.im.MImgT
 import play.api.data._, Forms._
 import util.FormUtil._
 import models._
@@ -22,10 +21,6 @@ import play.twirl.api.{Html, Template5}
  */
 
 object BlocksUtil {
-
-  type BimKey_t       = String
-  type BlockImgEntry  = (BimKey_t, MImgT)
-  type BlockImgMap    = Map[BimKey_t, MImgT]
 
   def bDescriptionM = publishedTextM
 
@@ -169,8 +164,10 @@ sealed trait IntBlockSizeBf extends BlockFieldT {
   override def offerNopt: Option[Int] = None
   def availableVals: Set[Int]
 
-  override def mappingBase = number
-    .verifying("error.invalid", availableVals.contains(_) )
+  override def mappingBase: Mapping[Int] = {
+    number
+      .verifying("error.invalid", availableVals.contains(_))
+  }
 }
 
 // TODO Нужно зафиксировать значения высоты через Enumeration. Это избавит от проблем с расчетами стоимостей рекламных модулей.

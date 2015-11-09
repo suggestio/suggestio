@@ -1,12 +1,11 @@
 package util.blocks
 
 import io.suggest.ym.model.common.{Imgs, MImgInfoT}
-import models.blk.SzMult_t
+import models.blk.{BlockImgMap, Imgs_t, BimKey_t, SzMult_t}
 import models.im.{MImg, DevScreen}
 import models.im.make._
 import util.PlayLazyMacroLogsImpl
 import scala.concurrent.{ExecutionContext, Future}
-import util.blocks.BlocksUtil.{BimKey_t, BlockImgMap}
 import play.api.data.{FormError, Mapping}
 import models._
 
@@ -77,6 +76,7 @@ trait SaveBgImgI extends ISaveImgs {
 
 /** Примесь для блока, чтобы в нём появилась поддержка задания/отображения фоновой картинки. */
 trait BgImg extends ValT with SaveBgImgI {
+
   // Константы можно легко переопределить т.к. trait и early initializers.
   def BG_IMG_FN = BgImg.BG_IMG_FN
   def bgImgBf = BgImg.bgImgBf
