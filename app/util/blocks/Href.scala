@@ -1,5 +1,6 @@
 package util.blocks
 
+import models.blk.ed.{BindResult, BindAcc}
 import models.{AdFormM, AOBlock}
 import play.api.data.FormError
 import util.FormUtil
@@ -30,10 +31,13 @@ object Href extends MergeBindAccAOBlock[String] {
     )
   }
 
-  def getHref(bmr: BlockMapperResult) = bmr.flatMapFirstOffer(_.href)
+  def getHref(bmr: BindResult) = bmr.flatMapFirstOffer(_.href)
+
 }
 
+
 import Href._
+
 
 trait Href extends ValT {
   def hrefBf = BF_HREF_DFLT
@@ -52,12 +56,12 @@ trait Href extends ValT {
     mergeBindAcc(maybeAcc0, maybeHref)
   }
 
-  abstract override def unbind(value: BlockMapperResult): Map[String, String] = {
+  abstract override def unbind(value: BindResult): Map[String, String] = {
     val v = m.unbind( getHref(value) )
     super.unbind(value) ++ v
   }
 
-  abstract override def unbindAndValidate(value: BlockMapperResult): (Map[String, String], Seq[FormError]) = {
+  abstract override def unbindAndValidate(value: BindResult): (Map[String, String], Seq[FormError]) = {
     val (ms, fes) = super.unbindAndValidate(value)
     val c = getHref(value)
     val (cms, cfes) = m.unbindAndValidate(c)

@@ -3,6 +3,7 @@ package util.blocks
 import io.suggest.common.menum.EnumValue2Val
 import io.suggest.model.n2.ad.ent.text.{ValueEnt, EntFont}
 import models.blk._
+import models.blk.ed.{BlockImgMap, BindAcc}
 import play.api.data._, Forms._
 import util.FormUtil._
 import models._
@@ -23,8 +24,6 @@ import play.twirl.api.{Html, Template5}
 object BlocksUtil {
 
   def bDescriptionM = publishedTextM
-
-  def extractBlockId(bd: BlockData) = bd.blockMeta.blockId
 
   def defaultOpt[T](m0: Mapping[T], defaultOpt: Option[T]): Mapping[T] = {
     if (defaultOpt.isDefined)

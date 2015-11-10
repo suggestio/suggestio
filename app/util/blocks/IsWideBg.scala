@@ -1,6 +1,7 @@
 package util.blocks
 
 import models.AdFormM
+import models.blk.ed.{BindResult, BindAcc}
 import play.api.data.{Mapping, FormError}
 
 /**
@@ -54,12 +55,12 @@ trait IsWideBg extends ValT with IsWideBgI {
     mergeBindAcc(maybeAcc0, maybeIsWide)
   }
 
-  abstract override def unbind(value: BlockMapperResult): Map[String, String] = {
+  abstract override def unbind(value: BindResult): Map[String, String] = {
     val v = m.unbind( value.bd.blockMeta.wide )
     super.unbind(value) ++ v
   }
 
-  abstract override def unbindAndValidate(value: BlockMapperResult): (Map[String, String], Seq[FormError]) = {
+  abstract override def unbindAndValidate(value: BindResult): (Map[String, String], Seq[FormError]) = {
     val (ms, fes) = super.unbindAndValidate(value)
     val c = value.bd.blockMeta.wide
     val (cms, cfes) = m.unbindAndValidate(c)

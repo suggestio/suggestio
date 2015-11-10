@@ -1,7 +1,8 @@
 package util.blocks
 
 import io.suggest.ym.model.common.{Imgs, MImgInfoT}
-import models.blk.{BlockImgMap, Imgs_t, BimKey_t, SzMult_t}
+import models.blk._
+import models.blk.ed._
 import models.im.{MImg, DevScreen}
 import models.im.make._
 import util.PlayLazyMacroLogsImpl
@@ -117,12 +118,12 @@ trait BgImg extends ValT with SaveBgImgI {
     SaveImgUtil.mergeBindAcc(maybeAcc0, maybeBim)
   }
 
-  abstract override def unbind(value: BlockMapperResult): Map[String, String] = {
+  abstract override def unbind(value: BindResult): Map[String, String] = {
     val v = m.unbind( value.unapplyBIM(bgImgBf) )
     super.unbind(value) ++ v
   }
 
-  abstract override def unbindAndValidate(value: BlockMapperResult): (Map[String, String], Seq[FormError]) = {
+  abstract override def unbindAndValidate(value: BindResult): (Map[String, String], Seq[FormError]) = {
     val (ms, fes) = super.unbindAndValidate(value)
     val c = value.unapplyBIM(bgImgBf)
     val (cms, cfes) = m.unbindAndValidate(c)

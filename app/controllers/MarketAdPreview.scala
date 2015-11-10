@@ -1,6 +1,7 @@
 package controllers
 
-import models.blk.{Imgs_t, SzMult_t}
+import models.blk.ed.Imgs_t
+import models.blk.SzMult_t
 import models.im.make.Makers
 import models.msc.AdBodyTplArgs
 import play.twirl.api.Html

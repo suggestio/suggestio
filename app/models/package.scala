@@ -83,8 +83,6 @@ package object models {
 
   type SelectPolicy         = SelectPolicies.T
 
-  type BlockData            = common.IEMBlockMeta with ym.model.ad.IOffers
-
   val  BlocksConf           = util.blocks.BlocksConf
   type BlockConf            = BlocksConf.T
 
@@ -173,7 +171,7 @@ package object models {
   type UsrCreateNodeForm_t  = Form[String]
 
   /** Тип результата биндинга формы рекламной карточки. */
-  type AdFormMResult        = (MAd, models.blk.BlockImgMap)
+  type AdFormMResult        = (MAd, models.blk.ed.BlockImgMap)
 
   /** Тип маппинга формы рекламной карточки. */
   type AdFormM              = Form[AdFormMResult]

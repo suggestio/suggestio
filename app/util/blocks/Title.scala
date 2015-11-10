@@ -1,6 +1,7 @@
 package util.blocks
 
-import models._
+import models.{AdFormM, AOBlock, TextEnt}
+import models.blk.ed.{BindResult, BindAcc}
 import play.api.data.{Mapping, FormError}
 
 /**
@@ -21,7 +22,7 @@ object Title extends MergeBindAccAOBlock[TextEnt] {
     )
   }
 
-  def getTitle(bmr: BlockMapperResult) = bmr.flatMapFirstOffer(_.text1)
+  def getTitle(bmr: BindResult) = bmr.flatMapFirstOffer(_.text1)
 }
 
 
@@ -46,12 +47,12 @@ trait Title extends ValT {
     mergeBindAcc(maybeAcc0, maybeDescr)
   }
 
-  abstract override def unbind(value: BlockMapperResult): Map[String, String] = {
+  abstract override def unbind(value: BindResult): Map[String, String] = {
     val v = m.unbind( getTitle(value) )
     super.unbind(value) ++ v
   }
 
-  abstract override def unbindAndValidate(value: BlockMapperResult): (Map[String, String], Seq[FormError]) = {
+  abstract override def unbindAndValidate(value: BindResult): (Map[String, String], Seq[FormError]) = {
     val (ms, fes) = super.unbindAndValidate(value)
     val c = getTitle(value)
     val (cms, cfes) = m.unbindAndValidate(c)

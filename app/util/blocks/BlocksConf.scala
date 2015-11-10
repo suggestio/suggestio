@@ -1,7 +1,7 @@
 package util.blocks
 
 import io.suggest.common.menum.EnumValue2Val
-import models.blk._
+import models.blk.ed.{BindResult, BindAcc}
 import play.api.data._
 import util.FormUtil.IdEnumFormMappings
 import util.PlayMacroLogsImpl
@@ -104,7 +104,13 @@ object BlocksConf
   // Начало значений
 
   /** Блок рекламной карточки с произвольным заполнением и без svg. */
-  sealed trait CommonBlock2T extends Height with Width with BgImg with TitleListBlockT with Href with IsWideBg
+  sealed trait CommonBlock2T
+    extends Height
+    with Width
+    with BgImg
+    with TitleListBlockT
+    with Href
+    with IsWideBg
 
   /** Блок рекламной карточки с произвольным заполнением и без svg. */
   sealed trait Block20t extends CommonBlock2T {
@@ -140,20 +146,9 @@ object BlocksConf
 }
 
 
-case class BlockMapperResult(bd: BlockData, bim: BlockImgMap) {
-  def unapplyBIM(bfi: BfImage): BlockImgMap = {
-    bim.filter(_._1 == bfi.name)
-  }
-  def flatMapFirstOffer[T](f: AOBlock => Option[T]): Option[T] = {
-    bd.offers
-      .headOption
-      .flatMap(f)
-  }
-}
-
 
 /** Базовый интерфейс для реализаций класса Enumeration.Val. */
-trait ValT extends ISaveImgs with Mapping[BlockMapperResult] {
+trait ValT extends ISaveImgs with Mapping[BindResult] {
 
   def id: Int
 
@@ -168,7 +163,7 @@ trait ValT extends ISaveImgs with Mapping[BlockMapperResult] {
   def template: Template2[blk.IRenderArgs, Context, Html]
 
   /** Набор маппингов для обработки данных от формы. */
-  def strictMapping: Mapping[BlockMapperResult] = this
+  def strictMapping: Mapping[BindResult] = this
 
   /** Более удобный интерфейс для метода template.render(). */
   def renderBlock(args: blk.IRenderArgs)(implicit ctx: Context) = {
@@ -199,51 +194,31 @@ trait ValT extends ISaveImgs with Mapping[BlockMapperResult] {
   def mappingsAcc: List[Mapping[_]]
   override val mappings = mappingsAcc
 
-  override val constraints: Seq[Constraint[BlockMapperResult]] = Nil
-  override def verifying(constraints: Constraint[BlockMapperResult]*): Mapping[BlockMapperResult] = {
+  override val constraints: Seq[Constraint[BindResult]] = Nil
+  override def verifying(constraints: Constraint[BindResult]*): Mapping[BindResult] = {
     throw new UnsupportedOperationException("verifying() never implemented for BlockConf.")
   }
 
+  /** Пошаговый биндинг динамических маппингов. */
   def bindAcc(data: Map[String, String]): Either[Seq[FormError], BindAcc]
-  override def bind(data: Map[String, String]): Either[Seq[FormError], BlockMapperResult] = {
+
+  override def bind(data: Map[String, String]): Either[Seq[FormError], BindResult] = {
     // Собрать BindAcc и сконвертить в BlockMapperResult
-    bindAcc(data).right.map { bindAcc =>
-      val bd = BlockDataImpl(
-        blockMeta = bindAcc.toBlockMeta(id),
-        offers = bindAcc.offers
-      )
-      BlockMapperResult(bd, bindAcc.bim.toMap)
-    }
+    bindAcc(data)
+      .right
+      .map { _.toBindResult(id) }
   }
 
-  def mappingWithNewKey(newKey: String): Mapping[BlockMapperResult]
+  def mappingWithNewKey(newKey: String): Mapping[BindResult]
 
   def withPrefix(prefix: String) = {
     addPrefix(prefix)
       .map(mappingWithNewKey)
       .getOrElse(this)
   }
-}
-
-
-case class BindAcc(
-  offers  : List[AOBlock] = Nil,
-  height  : Int = BlockHeights.default.heightPx,
-  width   : Int = BlockWidths.default.widthPx,
-  isWide  : Boolean = false,
-  bim     : List[BlockImgEntry] = Nil
-) {
-
-  /**
-   * Данные этого аккб, относящиеся к метаданным блока, скомпилить в экземпляр BlockMeta.
-   * @param blockId id блока.
-   * @return Неизменяемый экземпляр BlockMeta.
-   */
-  def toBlockMeta(blockId: Int): BlockMeta = {
-    BlockMeta(blockId = blockId, height = height, width = width, wide = isWide)
-  }
 
 }
+
 
 
 abstract class ValTWrapper(v: ValT) extends ValT {
@@ -262,10 +237,10 @@ trait ValTEmpty extends ValT {
   override def blockFieldsRev(af: AdFormM): List[BlockFieldT] = {
     Nil
   }
-  override def unbind(value: BlockMapperResult): Map[String, String] = {
+  override def unbind(value: BindResult): Map[String, String] = {
     Map.empty
   }
-  override def unbindAndValidate(value: BlockMapperResult): (Map[String, String], Seq[FormError]) = {
+  override def unbindAndValidate(value: BindResult): (Map[String, String], Seq[FormError]) = {
     Map.empty[String, String] -> Seq.empty[FormError]
   }
   override def bindAcc(data: Map[String, String]): Either[Seq[FormError], BindAcc] = {

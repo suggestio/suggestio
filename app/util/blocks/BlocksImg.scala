@@ -1,6 +1,7 @@
 package util.blocks
 
-import models.blk.{BlockImgMap, BimKey_t, Imgs_t}
+import models.blk.ed.BindAcc
+import models.blk.ed.{BlockImgMap, BimKey_t, Imgs_t}
 import models.im.MImg
 import util.img._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext

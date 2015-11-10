@@ -1,6 +1,7 @@
 package util.blocks
 
 import models.AdFormM
+import models.blk.ed.{BindResult, BindAcc}
 import play.api.data.{Mapping, FormError}
 
 /**
@@ -58,12 +59,12 @@ trait Height extends ValT with HeightI {
     mergeBindAcc(maybeAcc0, maybeHeight)
   }
 
-  abstract override def unbind(value: BlockMapperResult): Map[String, String] = {
+  abstract override def unbind(value: BindResult): Map[String, String] = {
     val v = m.unbind( value.bd.blockMeta.height )
     super.unbind(value) ++ v
   }
 
-  abstract override def unbindAndValidate(value: BlockMapperResult): (Map[String, String], Seq[FormError]) = {
+  abstract override def unbindAndValidate(value: BindResult): (Map[String, String], Seq[FormError]) = {
     val (ms, fes) = super.unbindAndValidate(value)
     val c = value.bd.blockMeta.height
     val (cms, cfes) = m.unbindAndValidate(c)
