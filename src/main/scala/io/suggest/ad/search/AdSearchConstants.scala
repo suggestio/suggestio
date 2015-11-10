@@ -9,6 +9,7 @@ package io.suggest.ad.search
 object AdSearchConstants {
 
   def PRODUCER_ID_FN     = "shopId"
+  @deprecated("categories has been replaced with tags", "2015")
   def CAT_ID_FN          = "catId"
   def LEVEL_ID_FN        = "level"
   def FTS_QUERY_FN       = "q"
