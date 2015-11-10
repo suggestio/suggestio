@@ -1,15 +1,16 @@
 package util.blocks
 
 import io.suggest.common.fut.FutureUtil
-import io.suggest.ym.model.common.{Imgs, MImgInfoT}
-import models.MAd
+import io.suggest.model.n2.edge.MPredicates
+import models.MNode
 import models.blk._
 import models.blk.ed._
-import models.im.{MImg, DevScreen}
+import models.im.{MImgT, MImg3_, DevScreen}
 import models.im.make._
 import util.PlayLazyMacroLogsImpl
 import scala.concurrent.{ExecutionContext, Future}
 import play.api.data.{FormError, Mapping}
+import play.api.Play.current
 
 /**
  * Suggest.io
@@ -26,10 +27,13 @@ object BgImg extends PlayLazyMacroLogsImpl {
   val BG_IMG_FN = "bgImg"
   val bgImgBf = BfImage(BG_IMG_FN, marker = BG_IMG_FN, preDetectMainColor = true)
 
+  protected[blocks] val _mImg3 = current.injector.instanceOf[MImg3_]
+
 
   /** Быстрый экстрактор фоновой картинки из карточки. */
-  def getBgImg(mad: MAd) = {
-    BlocksConf.applyOrDefault(mad.blockMeta.blockId)
+  def getBgImg(mad: MNode) = {
+    mad.ad.blockMeta
+      .fold(BlocksConf.DEFAULT)(bm => BlocksConf.applyOrDefault(bm.blockId))
       .getMadBgImg(mad)
   }
 
@@ -41,18 +45,18 @@ object BgImg extends PlayLazyMacroLogsImpl {
    * @param devScreenOpt Параметры экрана.
    * @return Фьючерс с результатом подготовки изображения.
    */
-  def maybeMakeBgImgWith(mad: MAd, maker: IMaker, szMult: SzMult_t, devScreenOpt: Option[DevScreen])
-                    (implicit ec: ExecutionContext): Future[Option[MakeResult]] = {
+  def maybeMakeBgImgWith(mad: MNode, maker: IMaker, szMult: SzMult_t, devScreenOpt: Option[DevScreen])
+                        (implicit ec: ExecutionContext): Future[Option[MakeResult]] = {
     FutureUtil.optFut2futOpt( BgImg.getBgImg(mad) ) { bgImg =>
-      val iArgs = MakeArgs(MImg(bgImg), mad.blockMeta, szMult = szMult, devScreenOpt)
+      val iArgs = MakeArgs(bgImg, mad.ad.blockMeta.get, szMult = szMult, devScreenOpt)
       maker.icompile(iArgs)
         .map { Some.apply }
     }
   }
 
-  def maybeMakeBgImg(mad: MAd, szMult: SzMult_t, devScreenOpt: Option[DevScreen])
+  def maybeMakeBgImg(mad: MNode, szMult: SzMult_t, devScreenOpt: Option[DevScreen])
                     (implicit ec: ExecutionContext): Future[Option[MakeResult]] = {
-    val maker = if (mad.blockMeta.wide)
+    val maker = if (mad.ad.blockMeta.exists(_.wide))
       Makers.ScWide
     else
       Makers.Block
@@ -70,8 +74,12 @@ trait SaveBgImgI extends ISaveImgs {
   def bgImgBf: BfImage
 
   /** Прочитать данные по картинки из imgs-поля рекламной карточки. */
-  def getMadBgImg(mad: Imgs): Option[MImgInfoT] = {
-    mad.imgs.get(BG_IMG_FN)
+  def getMadBgImg(mad: MNode): Option[MImgT] = {
+    mad.edges
+      .withPredicateIter( BG_IMG_FN )
+      .toStream
+      .headOption
+      .map { BgImg._mImg3.apply }
   }
 
 }
@@ -81,12 +89,12 @@ trait SaveBgImgI extends ISaveImgs {
 trait BgImg extends ValT with SaveBgImgI {
 
   // Константы можно легко переопределить т.к. trait и early initializers.
-  def BG_IMG_FN = BgImg.BG_IMG_FN
+  def BG_IMG_FN = MPredicates.Bg
   def bgImgBf = BgImg.bgImgBf
 
 
   /** Поиск поля картинки для указанного имени поля. */
-  override def getImgFieldForName(fn: String): Option[BfImage] = {
+  override def getImgFieldForName(fn: BimKey_t): Option[BfImage] = {
     if (fn == BG_IMG_FN)
       Some(bgImgBf)
     else

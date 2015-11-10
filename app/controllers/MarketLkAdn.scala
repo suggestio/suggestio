@@ -1,5 +1,6 @@
 package controllers
 
+import io.suggest.common.fut.FutureUtil
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
@@ -144,19 +145,34 @@ class MarketLkAdn @Inject() (
 
       // Для узла нужно отобразить его рекламу.
       // TODO Добавить поддержку агрумента mode
-      val madsFut: Future[Seq[MAd]] = if (isMyNode) {
+      val madsFut: Future[Seq[MNode]] = if (isMyNode) {
+        val ntAd = MNodeTypes.Ad
+        val ntsAd = Seq( ntAd )
+        val producedByCrs = {
+          val cr = Criteria(
+            nodeIds     = Seq( adnId ),
+            predicates  = Seq( MPredicates.OwnedBy )
+          )
+          Seq(cr)
+        }
+        val adsSearch0 = new MNodeSearchDfltImpl {
+          override def nodeTypes = ntsAd
+          override def outEdges  = producedByCrs
+        }
         // Это свой узел. Нужно в реалтайме найти рекламные карточки и проверить newAdIdOpt.
-        val prodAdsFut = MAd.findForProducerRt(adnId)
+        val prodAdsFut = MNode.dynSearchRt(adsSearch0)
+          .map { _.toStream }
+
         // Бывает, что добавлена новая карточка (но индекс ещё не сделал refresh). Нужно её найти и отобразить:
-        val extAdOptFut = newAdIdOpt match {
-          case Some(newAdId) =>
-            MAd.getById(newAdId)
-              // Проверяем права доступа текущего узла на new-отображаемую карточку.
-              .map { _.filter { mad =>
-                mad.producerId == adnId  ||  mad.receivers.valuesIterator.exists(_.receiverId == adnId)
-              } }
-          // Нет id new-карточки -- нет и самой карточки.
-          case _ => Future successful None
+        val extAdOptFut = FutureUtil.optFut2futOpt(newAdIdOpt) { newAdId =>
+          for {
+            newAdOpt <- MNode.getByIdType(newAdId, ntAd)
+            if newAdOpt.exists { newAd =>
+              newAd.edges.out.contains( MPredicates.OwnedBy -> adnId )
+            }
+          } yield {
+            newAdOpt
+          }
         }
         for {
           prodAds  <- prodAdsFut
@@ -164,7 +180,7 @@ class MarketLkAdn @Inject() (
         } yield {
           // Если есть карточка в extAdOpt, то надо добавить её в начало списка, который отсортирован по дате создания.
           if (extAdOpt.isDefined  &&  prodAds.headOption.flatMap(_.id) != extAdOpt.flatMap(_.id)) {
-            extAdOpt.get :: prodAds
+            extAdOpt.get #:: prodAds
           } else {
             prodAds
           }
@@ -178,7 +194,7 @@ class MarketLkAdn @Inject() (
             val adIds = db.withConnection { implicit c =>
               MAdv.findActualAdIdsBetweenNodes(MAdvModes.busyModes, adnId, rcvrId = povAdnNode.id.get)
             }
-            MAd.multiGetRev(adIds)
+            MNode.multiGetRev(adIds)
 
           // pov-узел напрочь отсутствует. Нечего отображать.
           case None =>

@@ -1,7 +1,7 @@
 package util.blocks
 
 import io.suggest.common.menum.EnumValue2Val
-import models.blk.ed.{AdFormM, BindResult, BindAcc}
+import models.blk.ed.{BimKey_t, AdFormM, BindResult, BindAcc}
 import play.api.data._
 import util.FormUtil.IdEnumFormMappings
 import util.PlayMacroLogsImpl
@@ -185,7 +185,7 @@ trait ValT extends ISaveImgs with Mapping[BindResult] {
   def blockFields(af: AdFormM): List[BlockFieldT] = blockFieldsRev(af).reverse
 
   /** Поиск поля картинки для указанного имени поля. */
-  def getImgFieldForName(fn: String): Option[BfImage] = None
+  def getImgFieldForName(fn: BimKey_t): Option[BfImage] = None
 
   /** Отрендерить редактор. */
   def renderEditor(af: AdFormM, formDataSer: Option[String])(implicit ctx: Context): Html

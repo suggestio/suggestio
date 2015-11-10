@@ -93,7 +93,7 @@ class ShowcaseUtil @Inject() (
   def getCats(adnIdOpt: Option[String]): GetCatsResult = {
     val catAdsSearch = new AdSearch {
       override def receiverIds    = adnIdOpt.toList
-      override def maxResultsOpt  = Some(100)
+      override def limitOpt  = Some(100)
       override def levels         = List(AdShowLevels.LVL_CATS)
     }
     // Сборка статитстики по категориям нужна, чтобы подсветить серым пустые категории.

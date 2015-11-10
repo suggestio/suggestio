@@ -202,7 +202,6 @@ package object models {
   type MGeoShape            = n2.geo.MGeoShape
   val  MGeoShape            = n2.geo.MGeoShape
 
-  /*
   val  MEntity              = n2.ad.ent.MEntity
   type MEntity              = n2.ad.ent.MEntity
 
@@ -211,16 +210,17 @@ package object models {
   @deprecated("Use MNode instead.", "2015.nov.6")
   type MAd                  = MNode // ym.model.MAd
 
-  @deprecated("Use MNode instead.", "2015.nov.6")
+  @deprecated("Use MEntity instead.", "2015.nov.6")
   val  AOBlock              = MEntity
-  @deprecated("Use MNode instead.", "2015.nov.6")
+  @deprecated("Use MEntity instead.", "2015.nov.6")
   type AOBlock              = MEntity
-  */
 
+  /*
   val  MAd                  = ym.model.MAd
   type MAd                  = ym.model.MAd
 
   val  AOBlock              = ym.model.ad.AOBlock
   type AOBlock              = ym.model.ad.AOBlock
+  */
 
 }

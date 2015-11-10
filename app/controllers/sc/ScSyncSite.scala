@@ -123,7 +123,7 @@ trait ScSyncSiteGeo
           override implicit def _request = that._request
           override lazy val ctx = that.ctx
           override def _adSearch = new AdSearch {
-            override def maxResultsOpt: Option[Int] = Some(0)
+            override def limitOpt: Option[Int] = Some(0)
           }
           override def renderMadAsync(brArgs: blk.RenderArgs): Future[T] = {
             Future failed new UnsupportedOperationException("Dummy tile ads logic impl.")

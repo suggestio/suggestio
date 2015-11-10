@@ -51,7 +51,7 @@ trait ScAdsTileBase
 
     def szMult = tileArgs.szMult
 
-    private def _brArgsFor(mad: MAd, bgImg: Option[MakeResult], indexOpt: Option[Int] = None): blk.RenderArgs = {
+    private def _brArgsFor(mad: MNode, bgImg: Option[MakeResult], indexOpt: Option[Int] = None): blk.RenderArgs = {
       blk.RenderArgs(
         mad           = mad,
         withEdit      = false,
@@ -80,58 +80,42 @@ trait ScAdsTileBase
     lazy val logPrefix = s"findAds(${System.currentTimeMillis}):"
     lazy val gsiFut = _adSearch.geo.geoSearchInfoOpt
 
-    def catsRequested = _adSearch.catIds.nonEmpty
-
     lazy val adSearch2Fut: Future[AdSearch] = {
-      if (catsRequested) {
-        Future.successful(_adSearch)
+      if (_adSearch.receiverIds.nonEmpty) {
+        // TODO Можно спилить этот костыль?
+        val result = new AdSearchWrapper {
+          override def _dsArgsUnderlying = _adSearch
+          override val levels: Seq[SlNameTokenStr] = (AdShowLevels.LVL_START_PAGE :: _adSearch.levels.toList).distinct
+        }
+        Future successful result
+
+      } else if (_adSearch.geo.isWithGeo) {
+        // TODO При таком поиске надо использовать cache-controle: private, если ip-геолокация.
+        // При геопоиске надо найти узлы, географически подходящие под запрос. Затем, искать карточки по этим узлам.
+        scNlUtil.detectCurrentNode(_adSearch.geo, _adSearch.geo.geoSearchInfoOpt)
+          .map { gdr => Some(gdr.node) }
+          .recover { case ex: NoSuchElementException => None }
+          .map {
+            case Some(adnNode) =>
+              new AdSearchWrapper {
+                override def _dsArgsUnderlying = _adSearch
+                override def receiverIds = List(adnNode.id.get)
+                override def geo: GeoMode = GeoNone
+              }
+            case None =>
+              _adSearch
+          }
+          .recover {
+            // Допустима работа без геолокации при возникновении внутренней ошибки.
+            case ex: Throwable =>
+              LOGGER.error(logPrefix + " Failed to get geoip info for " + _request.remoteAddress, ex)
+              _adSearch
+          }
 
       } else {
-
-        // При поиске по категориям надо искать только если есть указанный show level.
-        if (_adSearch.catIds.nonEmpty) {
-          val result = new AdSearchWrapper {
-            override def _dsArgsUnderlying = _adSearch
-            override def levels: Seq[SlNameTokenStr] = AdShowLevels.LVL_CATS :: super.levels.toList
-          }
-          Future successful result
-
-        } else if (_adSearch.receiverIds.nonEmpty) {
-          // TODO Можно спилить этот костыль?
-          val result = new AdSearchWrapper {
-            override def _dsArgsUnderlying = _adSearch
-            override val levels: Seq[SlNameTokenStr] = (AdShowLevels.LVL_START_PAGE :: _adSearch.levels.toList).distinct
-          }
-          Future successful result
-
-        } else if (_adSearch.geo.isWithGeo) {
-          // TODO При таком поиске надо использовать cache-controle: private, если ip-геолокация.
-          // При геопоиске надо найти узлы, географически подходящие под запрос. Затем, искать карточки по этим узлам.
-          scNlUtil.detectCurrentNode(_adSearch.geo, _adSearch.geo.geoSearchInfoOpt)
-            .map { gdr => Some(gdr.node) }
-            .recover { case ex: NoSuchElementException => None }
-            .map {
-              case Some(adnNode) =>
-                new AdSearchWrapper {
-                  override def _dsArgsUnderlying = _adSearch
-                  override def receiverIds = List(adnNode.id.get)
-                  override def geo: GeoMode = GeoNone
-                }
-              case None =>
-                _adSearch
-            }
-            .recover {
-              // Допустима работа без геолокации при возникновении внутренней ошибки.
-              case ex: Throwable =>
-                LOGGER.error(logPrefix + " Failed to get geoip info for " + _request.remoteAddress, ex)
-                _adSearch
-            }
-
-        } else {
-          // Слегка неожиданные параметры запроса.
-          LOGGER.warn(logPrefix + " Strange search request: " + _adSearch)
-          Future successful _adSearch
-        }
+        // Слегка неожиданные параметры запроса.
+        LOGGER.warn(logPrefix + " Strange search request: " + _adSearch)
+        Future successful _adSearch
       }
     }
 

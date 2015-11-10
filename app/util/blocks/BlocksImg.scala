@@ -1,7 +1,8 @@
 package util.blocks
 
+import io.suggest.ym.model.common.{MImgInfoMeta, MImgInfo}
 import models.blk.ed.BindAcc
-import models.blk.ed.{BlockImgMap, BimKey_t, Imgs_t}
+import models.blk.ed.{BlockImgMap, BimKey_t, Imgs_t, ImgsEmpty}
 import models.im.MImg
 import util.img._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -24,27 +25,28 @@ trait ISaveImgs {
    * @return Новое значение для поля imgs карточки.
    */
   final def saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t): Future[Imgs_t] = {
-    val resultFut = _saveImgs(newImgs, oldImgs)
-    resultFut onSuccess { case newImgs2 =>
-      // 2014.sep.24: Выявлена проблема неудаления картинки. Это происходит если старый алиас ушел из новой карты.
-      // Картинка оставалась в хранилище, но на неё терялись все указатели.
-      val abandonedOldImgAliases = oldImgs.keySet -- newImgs2.keySet
-      val oldImgsAbandoned = oldImgs
-        .iterator
-        .filter(kv  =>  abandonedOldImgAliases contains kv._1)
-        .map { case (k, v)  =>  MImg(v.filename) }
-        .toIterable
-      if (oldImgsAbandoned.nonEmpty) {
-        // Удаляем связанные orig-картинки с помощью updateOrigImg()
-        ImgFormUtil.updateOrigImgFull(needImgs = Seq.empty, oldImgs = oldImgsAbandoned)
-      }
-    }
-    resultFut
+    _saveImgs(newImgs, oldImgs)
   }
+
+  /** Привести результат bind'а формы к виду сохраненных картинок. */
+  final def asSavedImgs(newImgs: BlockImgMap, oldImgs: Imgs_t = Map.empty): Future[Imgs_t] = {
+    Future.traverse(newImgs) {
+      case (k, i4s) =>
+        for {
+          imgMetaOpt <- i4s.getImageWH
+        } yield {
+          val mii = MImgInfo(i4s.fileName, meta = imgMetaOpt.map(MImgInfoMeta.apply))
+          k -> mii
+        }
+    } map { res =>
+      oldImgs ++ res
+    }
+  }
+
 
   /** Метод, выполняющий необходимые обновления картинки. Должен быть перезаписан в конкретных подреализациях. */
   protected def _saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t): Future[Imgs_t] = {
-    Future successful Map.empty
+    Future successful ImgsEmpty
   }
 
 }

@@ -1,6 +1,6 @@
 package controllers
 
-import models.blk.ed.Imgs_t
+import io.suggest.model.n2.edge.MNodeEdges
 import models.blk.SzMult_t
 import models.im.make.Makers
 import models.msc.AdBodyTplArgs
@@ -43,34 +43,34 @@ trait MarketAdPreview
         NotAcceptable("Preview form bind failed.")
       },
       {r =>
-        val imgsFut: Future[Imgs_t] = Future.traverse(r.bim) {
-          case (k, i4s) =>
-            i4s.getImageWH map { imgMetaOpt  =>
-              val mii = MImgInfo(i4s.fileName, meta = imgMetaOpt.map(MImgInfoMeta.apply))
-              k -> mii
+        val bc = BlocksConf.DEFAULT
+        for {
+          imgs <- bc.asSavedImgs(r.bim)
+          html <- {
+            val mad = r.mad.copy(
+              edges = r.mad.edges.copy(
+                out = MNodeEdges.edgesToMap1 {
+                  r.mad.edges.out.valuesIterator ++
+                    imgs ++
+                    Seq( MEdge(MPredicates.OwnedBy, adnId) )
+                }
+              )
+            )
+            if (isFull) {
+              renderFull(mad)
+            } else {
+              renderSmall(mad)
             }
-        } map {
-          _.toMap
-        }
-        imgsFut.flatMap { imgs =>
-          val mad = r.mad.copy(
-            producerId = adnId,
-            imgs = imgs
-          )
-          val renderFut: Future[Html] = if (isFull) {
-            renderFull(mad)
-          } else {
-            renderSmall(mad)
           }
-          renderFut
-            .map { Ok(_) }
+        } yield {
+          Ok(html)
         }
       }
     )
   }
 
   /** Рендер полноэкранного варианта отображения. */
-  private def renderFull(mad: MAd)(implicit request: AbstractRequestForAdnNode[_], ctx: Context): Future[Html] = {
+  private def renderFull(mad: MNode)(implicit request: AbstractRequestForAdnNode[_], ctx: Context): Future[Html] = {
     val szMult: SzMult_t = 2.0F
     // Поддержка wideBg:
     val bgOptFut = BgImg.maybeMakeBgImg(mad, szMult, ctx.deviceScreenOpt)
@@ -90,7 +90,7 @@ trait MarketAdPreview
   }
 
   /** Рендер маленькой превьюшки, прямо в редакторе. */
-  private def renderSmall(mad: MAd)(implicit request: AbstractRequestForAdnNode[_], ctx: Context): Future[Html] = {
+  private def renderSmall(mad: MNode)(implicit request: AbstractRequestForAdnNode[_], ctx: Context): Future[Html] = {
     val szMult: SzMult_t = 1.0F
     val bgOptFut = BgImg.maybeMakeBgImgWith(mad, Makers.Block, szMult, ctx.deviceScreenOpt)
     bgOptFut map { bgOpt =>

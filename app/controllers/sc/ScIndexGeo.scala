@@ -281,7 +281,7 @@ trait ScIndexGeo
           override def title              = scUtil.SITE_NAME_GEO
           override def mmcats             = _mmcats
           override def catsStats          = _catsStats
-          override lazy val spsr = new AdSearch {
+          override lazy val spsr = new AdSearchImpl {
             override def levels = List(AdShowLevels.LVL_START_PAGE)
             override def geo    = GeoIp
           }

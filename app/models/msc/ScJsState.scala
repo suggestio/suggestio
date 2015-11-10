@@ -179,7 +179,7 @@ case class ScJsState(
   def focusedAdSearch(_maxResultsOpt: Option[Int]): FocusedAdsSearchArgs = {
     new FocusedAdsSearchArgs {
       override def firstIds  = that.fadOpenedIdOpt.toList
-      override def maxResultsOpt  = _maxResultsOpt
+      override def limitOpt  = _maxResultsOpt
       override def randomSortSeed  = that.generationOpt
       override def receiverIds    = that.adnId.toList
       override def offsetOpt      = that.fadsOffsetOpt
