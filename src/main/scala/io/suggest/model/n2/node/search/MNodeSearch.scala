@@ -99,10 +99,17 @@ trait MNodeSearchWrap
 }
 
 /** Реализация [[MNodeSearchWrap]] для упрощения жизни компиляторам. */
-abstract class MNodeSearchWrapImpl
+abstract class MNodeSearchWrapImpl_
   extends MNodeSearchImpl
   with MNodeSearchWrap
   with MacroLogsImplLazy
+{
+  override type WT <: MNodeSearch
+}
+
+
+abstract class MNodeSearchWrapImpl
+  extends MNodeSearchWrapImpl_
 {
   override type WT = MNodeSearch
 }
