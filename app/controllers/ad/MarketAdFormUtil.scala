@@ -5,7 +5,7 @@ import io.suggest.model.n2.ad.rd.RichDescr
 import models.blk.AdColorFns
 import models._
 import models.blk._
-import models.blk.ed.BindResult
+import models.blk.ed.{AdFormM, AdFormResult, BindResult}
 import util.FormUtil._
 import play.api.data._, Forms._
 import io.suggest.ad.form.AdFormConstants._
@@ -260,7 +260,7 @@ object MarketAdFormUtil {
   /** apply-функция для формы добавления/редактировать рекламной карточки.
     * Вынесена за пределы генератора ad-маппингов во избежание многократного создания в памяти экземпляров функции. */
   def adFormApply(bmr: BindResult, pattern: Option[String],
-                  richDescrOpt: Option[RichDescr], bgColor: String, tags: TagsMap_t): AdFormMResult = {
+                  richDescrOpt: Option[RichDescr], bgColor: String, tags: TagsMap_t): AdFormResult = {
     val colors: Map[String, String] = {
       // Фон
       var ci = Iterator(AdColorFns.IMG_BG_COLOR_FN.name -> bgColor)
@@ -278,13 +278,13 @@ object MarketAdFormUtil {
       richDescrOpt = richDescrOpt,
       tags        = tags
     )
-    mad -> bmr.bim
+    AdFormResult(mad, bmr.bim)
   }
 
   /** Функция разборки для маппинга формы добавления/редактирования рекламной карточки. */
-  def adFormUnapply(applied: AdFormMResult): Option[(BindResult, Option[String], Option[RichDescr], String, TagsMap_t)] = {
-    val mad = applied._1
-    val bmr = BindResult(mad, applied._2)
+  def adFormUnapply(applied: AdFormResult): Option[(BindResult, Option[String], Option[RichDescr], String, TagsMap_t)] = {
+    val mad = applied.mad
+    val bmr = BindResult(mad, applied.bim)
     val pattern = mad.colors.get(AdColorFns.WIDE_IMG_PATTERN_COLOR_FN.name)
     import AdColorFns._
     val bgColor = mad.colors.getOrElse(IMG_BG_COLOR_FN.name, IMG_BG_COLOR_FN.default)

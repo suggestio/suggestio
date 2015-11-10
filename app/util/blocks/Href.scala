@@ -1,7 +1,7 @@
 package util.blocks
 
-import models.blk.ed.{BindResult, BindAcc}
-import models.{AdFormM, AOBlock}
+import models.blk.ed.{AdFormM, BindResult, BindAcc}
+import models.AOBlock
 import play.api.data.FormError
 import util.FormUtil
 

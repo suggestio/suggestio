@@ -42,8 +42,8 @@ trait MarketAdPreview
         LOGGER.debug(s"adFormPreviewSubmit($adnId): form bind failed: " + formatFormErrors(formWithErrors))
         NotAcceptable("Preview form bind failed.")
       },
-      {case (mad0, bim) =>
-        val imgsFut: Future[Imgs_t] = Future.traverse(bim) {
+      {r =>
+        val imgsFut: Future[Imgs_t] = Future.traverse(r.bim) {
           case (k, i4s) =>
             i4s.getImageWH map { imgMetaOpt  =>
               val mii = MImgInfo(i4s.fileName, meta = imgMetaOpt.map(MImgInfoMeta.apply))
@@ -53,7 +53,7 @@ trait MarketAdPreview
           _.toMap
         }
         imgsFut.flatMap { imgs =>
-          val mad = mad0.copy(
+          val mad = r.mad.copy(
             producerId = adnId,
             imgs = imgs
           )

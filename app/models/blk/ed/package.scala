@@ -1,6 +1,7 @@
 package models.blk
 
 import models.im.MImgT
+import play.api.data.Form
 
 /**
   * Suggest.io
@@ -16,5 +17,8 @@ package object ed {
   type BimKey_t             = String
   type BlockImgEntry        = (BimKey_t, MImgT)
   type BlockImgMap          = Map[BimKey_t, MImgT]
+
+  /** Тип маппинга формы рекламной карточки. */
+  type AdFormM              = Form[AdFormResult]
 
 }

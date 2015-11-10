@@ -1,7 +1,7 @@
 package util.blocks
 
-import models.{AdFormM, AOBlock, TextEnt}
-import models.blk.ed.{BindResult, BindAcc}
+import models.{AOBlock, TextEnt}
+import models.blk.ed.{AdFormM, BindResult, BindAcc}
 import play.api.data.{Mapping, FormError}
 
 /**

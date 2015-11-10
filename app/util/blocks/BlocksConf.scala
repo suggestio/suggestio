@@ -1,7 +1,7 @@
 package util.blocks
 
 import io.suggest.common.menum.EnumValue2Val
-import models.blk.ed.{BindResult, BindAcc}
+import models.blk.ed.{AdFormM, BindResult, BindAcc}
 import play.api.data._
 import util.FormUtil.IdEnumFormMappings
 import util.PlayMacroLogsImpl

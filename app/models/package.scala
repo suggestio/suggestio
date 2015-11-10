@@ -2,7 +2,6 @@ import controllers.routes
 import io.suggest.model.geo
 import io.suggest.model.n2
 import io.suggest.ym
-import io.suggest.ym.model.common
 import models.adv.MAdvModes
 import models.mbill.BTariffTypes
 import models.usr.EmailPwConfirmInfo
@@ -42,9 +41,6 @@ package object models {
   type MWelcomeAd           = ym.model.MWelcomeAd
 
   type AdOfferT             = ym.model.ad.AdOfferT
-
-  val  AOBlock              = ym.model.ad.AOBlock
-  type AOBlock              = ym.model.ad.AOBlock
 
   val  TextEnt              = io.suggest.model.n2.ad.ent.text.TextEnt
   type TextEnt              = io.suggest.model.n2.ad.ent.text.TextEnt
@@ -170,11 +166,6 @@ package object models {
   /** Тип формы создания нового узла-магазина силами юзера. */
   type UsrCreateNodeForm_t  = Form[String]
 
-  /** Тип результата биндинга формы рекламной карточки. */
-  type AdFormMResult        = (MAd, models.blk.ed.BlockImgMap)
-
-  /** Тип маппинга формы рекламной карточки. */
-  type AdFormM              = Form[AdFormMResult]
 
   type TagsEditForm_t       = Form[(Seq[MTagEdge], TagsMap_t)]
 
@@ -211,9 +202,25 @@ package object models {
   type MGeoShape            = n2.geo.MGeoShape
   val  MGeoShape            = n2.geo.MGeoShape
 
-  //@deprecated("Use MNode instead.", "2016.nov.6")
+  /*
+  val  MEntity              = n2.ad.ent.MEntity
+  type MEntity              = n2.ad.ent.MEntity
+
+  @deprecated("Use MNode instead.", "2016.nov.6")
+  val  MAd                  = MNode // ym.model.MAd
+  @deprecated("Use MNode instead.", "2015.nov.6")
+  type MAd                  = MNode // ym.model.MAd
+
+  @deprecated("Use MNode instead.", "2015.nov.6")
+  val  AOBlock              = MEntity
+  @deprecated("Use MNode instead.", "2015.nov.6")
+  type AOBlock              = MEntity
+  */
+
   val  MAd                  = ym.model.MAd
-  //@deprecated("Use MNode instead.", "2015.nov.6")
   type MAd                  = ym.model.MAd
+
+  val  AOBlock              = ym.model.ad.AOBlock
+  type AOBlock              = ym.model.ad.AOBlock
 
 }

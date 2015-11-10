@@ -1,9 +1,9 @@
 package util.blocks
 
 import io.suggest.model.n2.ad.ent.text.ValueEnt
-import models.blk.ed.{BindResult, BindAcc}
+import models.{TextEnt, AOBlock}
+import models.blk.ed.{AdFormM, BindResult, BindAcc}
 import play.api.data._, Forms._
-import models._
 import play.api.Play.{current, configuration}
 
 /**

@@ -1,6 +1,8 @@
 package util.blocks
 
+import io.suggest.common.fut.FutureUtil
 import io.suggest.ym.model.common.{Imgs, MImgInfoT}
+import models.MAd
 import models.blk._
 import models.blk.ed._
 import models.im.{MImg, DevScreen}
@@ -8,7 +10,6 @@ import models.im.make._
 import util.PlayLazyMacroLogsImpl
 import scala.concurrent.{ExecutionContext, Future}
 import play.api.data.{FormError, Mapping}
-import models._
 
 /**
  * Suggest.io
@@ -27,7 +28,10 @@ object BgImg extends PlayLazyMacroLogsImpl {
 
 
   /** Быстрый экстрактор фоновой картинки из карточки. */
-  def getBgImg(mad: MAd) = BlocksConf.applyOrDefault(mad.blockMeta.blockId).getMadBgImg(mad)
+  def getBgImg(mad: MAd) = {
+    BlocksConf.applyOrDefault(mad.blockMeta.blockId)
+      .getMadBgImg(mad)
+  }
 
   /**
    * Часто-дублирующийся код опционального вызова maker'а.
@@ -39,9 +43,7 @@ object BgImg extends PlayLazyMacroLogsImpl {
    */
   def maybeMakeBgImgWith(mad: MAd, maker: IMaker, szMult: SzMult_t, devScreenOpt: Option[DevScreen])
                     (implicit ec: ExecutionContext): Future[Option[MakeResult]] = {
-    BgImg.getBgImg(mad).fold {
-      Future successful Option.empty[MakeResult]
-    } { bgImg =>
+    FutureUtil.optFut2futOpt( BgImg.getBgImg(mad) ) { bgImg =>
       val iArgs = MakeArgs(MImg(bgImg), mad.blockMeta, szMult = szMult, devScreenOpt)
       maker.icompile(iArgs)
         .map { Some.apply }

@@ -1,7 +1,6 @@
 package util.blocks
 
-import models.AdFormM
-import models.blk.ed.{BindResult, BindAcc}
+import models.blk.ed.{AdFormM, BindResult, BindAcc}
 import play.api.data.FormError
 import play.api.data.Mapping
 
@@ -41,7 +40,9 @@ trait WidthI {
 
 trait Width extends ValT with WidthI {
 
-  abstract override def blockFieldsRev(af: AdFormM): List[BlockFieldT] = widthBf :: super.blockFieldsRev(af)
+  abstract override def blockFieldsRev(af: AdFormM): List[BlockFieldT] = {
+    widthBf :: super.blockFieldsRev(af)
+  }
 
   override def widthBf = Width.BF_WIDTH_DFLT
 

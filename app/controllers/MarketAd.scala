@@ -2,6 +2,7 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.event.SioNotifierStaticClientI
+import models.blk.ed.{AdFormM, AdFormResult}
 import models.im.MImg
 import models.jsm.init.MTargets
 import models.mtag.MTagUtil
@@ -132,17 +133,17 @@ class MarketAd @Inject() (
         debug(logPrefix + "Bind failed: \n" + formatFormErrors(formWithErrors))
         _renderCreateFormWith(formWithErrors, adnNode, Some(bc), NotAcceptable)
       },
-      {case (mad, bim) =>
+      {r =>
         // Асинхронно обрабатываем всякие прочие данные.
         val saveImgsFut = bc.saveImgs(
-          newImgs     = bim,
+          newImgs     = r.bim,
           oldImgs     = Map.empty
         )
         // Когда всё готово, сохраняем саму карточку.
         val adIdFut = for {
           savedImgs <- saveImgsFut
           adId      <- {
-            mad.copy(
+            r.mad.copy(
               producerId    = adnId,
               imgs          = savedImgs
             ).save
@@ -157,7 +158,7 @@ class MarketAd @Inject() (
         }
         // Сохранение новых тегов в MNode.
         for (_ <- adIdFut) {
-          val fut = mTagUtil.handleNewTagsM(mad.tags)
+          val fut = mTagUtil.handleNewTagsM(r.mad.tags)
           logTagsUpdate(fut, logPrefix)
         }
         // Возврат HTTP-ответа.
@@ -189,7 +190,7 @@ class MarketAd @Inject() (
       .mapValues { mii =>
         MImg(mii.filename)
       }
-    val formFilled = form0 fill ((mad, bim))
+    val formFilled = form0 fill AdFormResult(mad, bim)
     _renderEditFormWith(formFilled, Ok)
   }
 
@@ -211,13 +212,13 @@ class MarketAd @Inject() (
         debug(logPrefix + "Failed to bind form: " + formWithErrors.errors)
         _renderEditFormWith(formWithErrors, NotAcceptable)
       },
-      {case (mad2, bim) =>
+      {r => //case (mad2, bim) =>
         import request.mad
         val bc = BlocksConf.DEFAULT
         // TODO Надо отделить удаление врЕменных и былых картинок от сохранения новых. И вызывать эти две фунции отдельно.
         // Сейчас возможна ситуация, что при поздней ошибке сохранения теряется старая картинка, а новая сохраняется вникуда.
         val saveImgsFut = bc.saveImgs(
-          newImgs     = bim,
+          newImgs     = r.bim,
           oldImgs     = mad.imgs
         )
         // Произвести действия по сохранению карточки.
@@ -231,13 +232,13 @@ class MarketAd @Inject() (
                 freeAdv = mad0.moderation.freeAdv
                   .filter { _.isAllowed != true }
               ),
-              colors        = mad2.colors,
-              offers        = mad2.offers,
-              userCatId     = mad2.userCatId,
-              blockMeta     = mad2.blockMeta,
-              richDescrOpt  = mad2.richDescrOpt,
+              colors        = r.mad.colors,
+              offers        = r.mad.offers,
+              userCatId     = r.mad.userCatId,
+              blockMeta     = r.mad.blockMeta,
+              richDescrOpt  = r.mad.richDescrOpt,
               dateEdited    = Some(DateTime.now),
-              tags          = mad2.tags
+              tags          = r.mad.tags
             )
           }
         } yield {
@@ -251,7 +252,7 @@ class MarketAd @Inject() (
         }
         // Параллельно произвести обновление графа MNode на предмет новых тегов:
         saveFut.onSuccess { case _ =>
-          val fut = mTagUtil.handleNewTagsI(mad2,  oldTags = mad)
+          val fut = mTagUtil.handleNewTagsI(r.mad,  oldTags = mad)
           logTagsUpdate(fut, logPrefix)
         }
         // Вернуть HTTP-ответ
@@ -425,8 +426,8 @@ class MarketAd @Inject() (
         ))    // AOStringField
       ))      // AOBlock
     )         // MAd
-    val af = adFormM
-      .fill((madStub, Map.empty))
+    val formData = AdFormResult(madStub, Map.empty)
+    val af = adFormM fill formData
     val nameBase = s"$OFFER_K.$OFFER_K[$offerN].${bfText.name}"
     val bc = BlocksConf.DEFAULT
     val render = bfText.renderEditorField(nameBase, af, bc)(ctx)
