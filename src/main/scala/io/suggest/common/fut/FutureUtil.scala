@@ -37,10 +37,22 @@ object FutureUtil {
    */
   def optFut2futOpt[T, R](opt: Option[T])(defined: T => Future[Option[R]]): Future[Option[R]] = {
     opt.fold {
-      Future successful Option.empty[R]
+      Future.successful( Option.empty[R] )
     } { v =>
       defined(v)
     }
+  }
+
+
+  /**
+   * Иногда бывает нужно опциональное значение трансформировать в неопциональный фьючерс.
+   * @param x Option[T]
+   * @param ifEmpty Фьючерс, когда нет значения.
+   * @tparam T Тип отрабатываемого значения.
+   * @return Future[T].
+   */
+  def opt2future[T](x: Option[T])(ifEmpty: => Future[T]): Future[T] = {
+    x.fold(ifEmpty)(Future.successful)
   }
 
 }
