@@ -1,11 +1,11 @@
 package models.adv.js.ctx
 
-import _root_.util.{TplDataFormatUtil, FormUtil}
-import models.{MAd, MNode}
-import play.api.libs.json._
-import play.api.libs.functional.syntax._
-import play.api.Play.{current, configuration}
+import _root_.util.{FormUtil, TplDataFormatUtil}
 import io.suggest.adv.ext.model.ctx.MAdContentCtx._
+import models.MNode
+import play.api.Play.{configuration, current}
+import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
 /**
  * Suggest.io
@@ -24,12 +24,12 @@ object MAdContentCtx {
     * @param producer Узел-продьюсер. Нужен для генерации title карточки.
     * @return Экземпляр MAdContentCtx.
     */
-  def fromAd(mad: MAd, producer: MNode): MAdContentCtx = {
+  def fromAd(mad: MNode, producer: MNode): MAdContentCtx = {
     MAdContentCtx(
       // Поля карточки -- это именно поля.
-      fields = mad.offers
-        .iterator
-        .flatMap { offer => offer.text1.iterator }
+      fields = mad.ad.entities
+        .valuesIterator
+        .flatMap { offer => offer.text }
         .map { field => MAdContentField(
           text = FormUtil.strTrimSanitizeF(field.value)
         )}
@@ -44,7 +44,7 @@ object MAdContentCtx {
         Some(sb.toString())
       },
       // Дескрипшен карточки мы берём из начала long-дескрипшена карточки.
-      descr = mad.richDescrOpt.map { rd =>
+      descr = mad.ad.richDescr.map { rd =>
         // Выкинуть html-теги и пустоты по бокам.
         val allPlain = FormUtil.strTrimSanitizeF(rd.text)
         // Укоротить текст до скольки-то символов. Нужно найти точку срезания, чтобы не обрывать слово.
@@ -70,26 +70,8 @@ object MAdContentCtx {
 }
 
 /** Сырой контент отной рекламной карточки. */
-case class MAdContentCtx(fields: Seq[MAdContentField], title: Option[String], descr: Option[String])
-
-
-import io.suggest.adv.ext.model.ctx.MAdContentField._
-
-object MAdContentField {
-
-  implicit def reads: Reads[MAdContentField] = {
-    (__ \ TEXT_FN)
-      .read[String]
-      .map(apply)
-  }
-
-  implicit def writes: Writes[MAdContentField] = {
-    (__ \ TEXT_FN)
-      .write[String]
-      .contramap(_.text)
-  }
-
-}
-
-case class MAdContentField(text: String)
-
+case class MAdContentCtx(
+  fields  : Seq[MAdContentField],
+  title   : Option[String],
+  descr   : Option[String]
+)

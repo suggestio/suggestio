@@ -95,7 +95,7 @@ trait ScReqArgs extends SyncRenderInfo {
   def prevAdnId           : Option[String]
   def apiVsn              : MScApiVsn
   /** Заинлайненные отрендеренные элементы плитки. Передаются при внутренних рендерах, вне HTTP-запросов и прочего. */
-  def inlineTiles         : Seq[RenderedAdBlock]
+  def inlineTiles         : Seq[IRenderedAdBlock]
   def focusedContent      : Option[Html]
   def inlineNodesList     : Option[Html]
   /** Текущая нода согласно геоопределению, если есть. */
@@ -112,7 +112,7 @@ trait ScReqArgsDflt extends ScReqArgs with SyncRenderInfoDflt {
   override def withWelcomeAd        : Boolean = true
   override def prevAdnId            : Option[String] = None
   override def apiVsn               : MScApiVsn = MScApiVsns.unknownVsn
-  override def inlineTiles          : Seq[RenderedAdBlock] = Nil
+  override def inlineTiles          : Seq[IRenderedAdBlock] = Nil
   override def focusedContent       : Option[Html] = None
   override def inlineNodesList      : Option[Html] = None
   override def adnNodeCurrentGeo    : Option[MNode] = None

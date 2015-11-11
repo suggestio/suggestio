@@ -1,7 +1,7 @@
 package models.adv.ext
 
+import models.MNode
 import models.adv._
-import models.{MAd, MNode}
 import play.api.data.Form
 
 /**
@@ -13,7 +13,7 @@ import play.api.data.Form
 trait IForAdTplArgs {
 
   /** Текущая рекламная карточка. */
-  def mad         : MAd
+  def mad         : MNode
 
   /** Узел-продьюсер. */
   def producer    : MNode
@@ -31,7 +31,7 @@ trait IForAdTplArgs {
 
 
 case class MForAdTplArgs(
-  override val mad        : MAd,
+  override val mad        : MNode,
   override val producer   : MNode,
   override val targets    : Seq[MExtTarget],
   override val advForm    : Form[List[MExtTargetInfo]],

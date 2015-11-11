@@ -35,7 +35,7 @@ object FocusedAdsSearchArgs {
             _fadsLastProdId   <- maybeFadsLastProdId.right
             _onlyWithAdId     <- maybeOnlyWithAd.right
           } yield {
-            new FocusedAdsSearchArgs with AdSearchWrapper {
+            new FocusedAdsSearchArgsWrappedImpl {
               override def _dsArgsUnderlying  = _adSearch
               override def withHeadAd         = _withHeadAd contains true
               override def fadsLastProducerId = _fadsLastProdId
@@ -95,9 +95,16 @@ trait FocusedAdsSearchArgs extends AdSearch {
 
 }
 
+class FocusedAdsSearchArgsImpl
+  extends FocusedAdsSearchArgs
+
+abstract class FocusedAdsSearchArgsWrappedImpl
+  extends AdSearchWrapper
+  with FocusedAdsSearchArgs
+
 
 /** Враппер для [[FocusedAdsSearchArgs]]. */
-trait FocusedAdsSearchArgsWrapper extends FocusedAdsSearchArgs with AdSearchWrapper_ {
+abstract class FocusedAdsSearchArgsWrapper extends AdSearchWrapper_ with FocusedAdsSearchArgs {
 
   override type WT = FocusedAdsSearchArgs
 

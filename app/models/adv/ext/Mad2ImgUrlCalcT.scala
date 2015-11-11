@@ -1,7 +1,7 @@
 package models.adv.ext
 
 import io.suggest.common.geom.d2.INamedSize2di
-import models.MAd
+import models.MNode
 import models.blk.OneAdQsArgs
 import models.mext.MExtService
 import util.blocks.BgImg
@@ -23,7 +23,7 @@ trait Mad2ImgUrlCalcT {
 
   def tgUrl: String
 
-  def mad: MAd
+  def mad: MNode
 
   def adId = mad.id.get
 
@@ -32,9 +32,10 @@ trait Mad2ImgUrlCalcT {
     // Вычисляем мультипликатор размера исходя из отношения высот.
     val srv = service
     val sz = adRenderMaxSz
+    val bm = mad.ad.blockMeta.get
     val whSzM = Math.min(
-      sz.height.toFloat / mad.blockMeta.height.toFloat,
-      sz.width.toFloat  / mad.blockMeta.width.toFloat
+      sz.height.toFloat / bm.height.toFloat,
+      sz.width.toFloat  / bm.width.toFloat
     )
     // Нужно домножить на минимально необходимый размер для сервиса.
     // TODO Проквантовать полученный szMult?
@@ -46,7 +47,7 @@ trait Mad2ImgUrlCalcT {
     //.filter { pmWidth => mad.blockMeta.wide || pmWidth.toFloat > mad.blockMeta.width * 1.15F }
     PicInfo(
       wide   = wideWidthOpt,
-      width  = wideWidthOpt.fold { szMulted(mad.blockMeta.width, srv.szMult) } (_.width),
+      width  = wideWidthOpt.fold { szMulted(bm.width, srv.szMult) } (_.width),
       height = szMulted(sz.height, szMultV),
       szMult = szMultV,
       stdSz  = sz
@@ -69,3 +70,6 @@ trait Mad2ImgUrlCalcT {
   }
 
 }
+
+abstract class Mad2ImgUrlCalc
+  extends Mad2ImgUrlCalcT

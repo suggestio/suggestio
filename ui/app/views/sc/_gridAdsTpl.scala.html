@@ -7,7 +7,9 @@
 @_scrollableContainerTpl("sm-grid-ads", id = ROOT_DIV_ID) {
 
   <div class="sm-grid-ads_container" id="smGridAdsContainer"
-       @if(args.apiVsn.renderActionUrls && !args.syncRender) {data-index-offers-action="@routes.MarketShowcase.findAds(args.spsr)"} >
+       @if(args.apiVsn.renderActionUrls && !args.syncRender) {
+         data-index-offers-action="@routes.MarketShowcase.findAds(args.spsr)"
+       } >
     @* Заинлайненные рекламные карточки при синхронном рендере. *@
     @for(tile <- args.inlineTiles) {
       @args.jsStateOpt.map { jsState =>

@@ -6,6 +6,7 @@ import io.suggest.model.geo.GeoDistanceQuery
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.search.{MNodeSearchDfltImpl, MNodeSearch}
 import io.suggest.ym.model.NodeGeoLevels
+import models.msc.{GeoNodesLayer, GeoDetectResult}
 import org.elasticsearch.client.Client
 import org.elasticsearch.search.sort.SortOrder
 import play.api.Configuration

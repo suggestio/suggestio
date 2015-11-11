@@ -2,11 +2,11 @@ package models.mext.tw
 
 import _root_.util.adv.OAuth1ServiceActor
 import controllers.routes
-import models.adv.ext.Mad2ImgUrlCalcT
+import models.adv.ext.Mad2ImgUrlCalc
 import models.im.OutImgFmts
-import models.mext.tw.card.{TwImgSizes, PhotoCardArgs}
-import models.{Context, IRenderable, MAd}
-import models.mext.{MExtServices, IExtService}
+import models.mext.tw.card.{PhotoCardArgs, TwImgSizes}
+import models.mext.{IExtService, MExtServices}
+import models.{Context, IRenderable, MNode}
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 
@@ -59,13 +59,13 @@ trait TwitterService
    * @param mad1 Экземпляр рекламной карточки.
    * @return экземпляры моделй, готовых для запуска рендера.
    */
-  override def adMetaTagsRender(mad1: MAd)(implicit ec: ExecutionContext): Future[List[IRenderable]] = {
+  override def adMetaTagsRender(mad1: MNode)(implicit ec: ExecutionContext): Future[List[IRenderable]] = {
     val acc0Fut = super.adMetaTagsRender(mad1)
     // Собираем через враппер, т.к. для генерации метаданных нужен доступ к Context.
     val ir = new IRenderable {
       override def render()(implicit ctx: Context): Html = {
         // Калькулятор ссылки
-        val calc = new Mad2ImgUrlCalcT {
+        val calc = new Mad2ImgUrlCalc {
           override def mad            = mad1
           override def tgUrl          = mainPageUrl
           override def adRenderMaxSz  = TwImgSizes.Photo
@@ -94,6 +94,6 @@ trait TwitterService
   override def imgFmtDflt = OutImgFmts.PNG
 
   /** В твиттер надо всегда постить горизонтальные карточки. */
-  override def isAdvExtWide(mad: MAd) = true
+  override def isAdvExtWide(mad: MNode) = true
 
 }

@@ -43,10 +43,6 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImp
 
     /** Тут возможность отключения рендера DOCTYPE в sc/siteTpl. */
     def withScSiteDoctype: Boolean = true
-
-    /** Рендерить ли список "магазинов"? */
-    // TODO Удалить и вычистить вместе с Coffee API
-    def withStaticNodeList: Boolean = false
   }
 
   override type T = Val
@@ -64,8 +60,6 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImp
     override def scriptTpl = _scriptV1Tpl
     /** В sc v1 что-то ломается, и у контейнера плитки появляется внизу белая полоса на 10-15% экрана.  */
     override def withScSiteDoctype = false
-    /** Список магазинов рендерится во время index. */
-    override def withStaticNodeList = true
   }
 
   /** Выдача, переписанная на scala.js. Исходная версия. */

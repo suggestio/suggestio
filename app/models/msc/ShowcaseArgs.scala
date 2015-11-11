@@ -29,11 +29,15 @@ trait SyncRenderInfoDflt extends SyncRenderInfo {
 
 
 /** Экземпляр отрендернной рекламной карточки*/
-trait RenderedAdBlock {
-  def mad: MAd
+trait IRenderedAdBlock {
+  def mad: MNode
   def rendered: Html
 }
-case class RenderedAdBlockImpl(mad: MAd, rendered: Html) extends RenderedAdBlock
+case class RenderedAdBlock(
+  override val mad        : MNode,
+  override val rendered   : Html
+)
+  extends IRenderedAdBlock
 
 
 /** Настройки рендера плитки на клиенте. */

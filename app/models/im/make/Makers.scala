@@ -51,4 +51,18 @@ object Makers extends Enumeration with EnumMaybeWithName with StrEnumFormMapping
   }
 
   override protected def _idMaxLen: Int = 6
+
+
+  /**
+   * У focused-отображения карточки два варианта рендера.
+   * @param isWide true, если требуется широкий рендер. Иначе false.
+   * @return Maker, подходящий под описанные условия.
+   */
+  def forFocusedBg(isWide: Boolean): T = {
+    if (isWide)
+      Makers.ScWide
+    else
+      Makers.Block
+  }
+
 }

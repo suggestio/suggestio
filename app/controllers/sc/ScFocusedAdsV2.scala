@@ -4,6 +4,7 @@ import models.jsm.FocusedAdsResp2
 import models.msc._
 import play.api.mvc.Result
 import util.acl.AbstractRequestWithPwOpt
+import util.n2u.IN2NodesUtilDi
 import views.html.sc.foc._
 
 import scala.concurrent.Future
@@ -26,12 +27,17 @@ import scala.concurrent.Future
  * - index выдачу другого узла.
  * - команду для перехода по внешней ссылке.
  */
-trait ScFocusedAdsV2 extends ScFocusedAds {
+trait ScFocusedAdsV2
+  extends ScFocusedAds
+  with IN2NodesUtilDi
+{
 
   /** Реализация v2-логики. */
   protected class FocusedLogicHttpV2(val _adSearch: FocusedAdsSearchArgs)
                                     (implicit val _request: AbstractRequestWithPwOpt[_])
-    extends FocusedAdsLogicHttp with NoBrAcc {
+    extends FocusedAdsLogicHttp
+    with NoBrAcc
+  {
 
     override def apiVsn = MScApiVsns.Sjs1
 
@@ -42,11 +48,12 @@ trait ScFocusedAdsV2 extends ScFocusedAds {
       val fullArgsFut = focAdsRenderArgsFor(args)
       val bodyFut = renderBlockHtml(args)
         .map { html2str4json }
-      val controlsFut = fullArgsFut map { fullArgs =>
+      val controlsFut = for (fullArgs <- fullArgsFut) yield {
         html2str4json(
           _controlsTpl(fullArgs)
         )
       }
+      val producerId = n2NodesUtil.madProducerId(args.brArgs.mad).get
       for {
         body      <- bodyFut
         controls  <- controlsFut
@@ -55,7 +62,7 @@ trait ScFocusedAdsV2 extends ScFocusedAds {
           madId       = args.brArgs.mad.id.get,
           body        = body,
           controls    = controls,
-          producerId  = args.brArgs.mad.producerId,
+          producerId  = producerId,
           humanIndex  = args.index,
           index       = args.index - 1
         )

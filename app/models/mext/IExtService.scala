@@ -7,7 +7,7 @@ import io.suggest.common.geom.d2.INamedSize2di
 import io.suggest.util.UrlUtil
 import models.blk.{OneAdWideQsArgs, SzMult_t, szMulted}
 import models.im.{OutImgFmt, OutImgFmts}
-import models.{IRenderable, MAd}
+import models.{IRenderable, MNode}
 import play.api.Play._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -74,7 +74,7 @@ trait IExtService {
   def szMultDflt: SzMult_t = 1.0F
 
   /** Разрешен ли и необходим ли wide-постинг? Без учета szMult, т.к. обычно он отличается от заявленного. */
-  def advExtWidePosting(tgUrl: String, mad: MAd, szMult: SzMult_t = szMult): Option[OneAdWideQsArgs] = {
+  def advExtWidePosting(tgUrl: String, mad: MNode, szMult: SzMult_t = szMult): Option[OneAdWideQsArgs] = {
     if (isAdvExtWide(mad)) {
       val sz = advPostMaxSz(tgUrl)
       val v = OneAdWideQsArgs(
@@ -87,8 +87,10 @@ trait IExtService {
   }
 
   /** Исповедовать ли широкое отображение при рендере карточки для размещения карточки на сервисе? */
-  def isAdvExtWide(mad: MAd): Boolean = {
-    mad.blockMeta.wide
+  def isAdvExtWide(mad: MNode): Boolean = {
+    mad.ad
+      .blockMeta
+      .exists(_.wide)
   }
 
   /** Формат рендера в картинку загружаемой карточки. */
@@ -112,7 +114,7 @@ trait IExtService {
    * @param mad Экземпляр рекламной карточки.
    * @return экземпляры моделй, готовых для запуска рендера.
    */
-  def adMetaTagsRender(mad: MAd)(implicit ec: ExecutionContext): Future[List[IRenderable]] = {
+  def adMetaTagsRender(mad: MNode)(implicit ec: ExecutionContext): Future[List[IRenderable]] = {
     Future successful Nil
   }
 

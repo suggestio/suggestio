@@ -6,9 +6,6 @@ import play.api.mvc.QueryStringBindable
 import models._
 import util.PlayLazyMacroLogsImpl
 import util.img.PicSzParsers
-import util.secure.SecretGetter
-import play.api.Play.{current, isProd}
-import scala.language.implicitConversions
 
 import scala.util.parsing.combinator.JavaTokenParsers
 
@@ -21,6 +18,10 @@ import scala.util.parsing.combinator.JavaTokenParsers
 
 object QsbUtil {
 
+  // TODO Спилить эту утиль. От неё больше неочевидности, нежели пользы.
+
+  import scala.language.implicitConversions
+
   implicit def eitherOpt2option[T](e: Either[_, Option[T]]): Option[T] = {
     e.fold({_ => None}, identity)
   }
@@ -28,7 +29,7 @@ object QsbUtil {
 }
 
 
-object QSBs extends JavaTokenParsers with PicSzParsers with AdsCssQsbUtil with IBlockMetaQsb {
+object QSBs extends JavaTokenParsers with PicSzParsers with IBlockMetaQsb {
 
   /** qsb для NodeGeoLevel, записанной в виде int или string (esfn). */
   implicit def nodeGeoLevelQSB(implicit strB: QueryStringBindable[String],
@@ -128,58 +129,6 @@ object QSBs extends JavaTokenParsers with PicSzParsers with AdsCssQsbUtil with I
             sb.append('_')
         }
         sb.toString()
-      }
-    }
-  }
-
-}
-
-
-/** Трейт с qsb для Seq[AdCssArgs] и сопутствующей утилью. */
-trait AdsCssQsbUtil {
-
-  private val SIGN_SECRET: String = {
-    val sg = new SecretGetter with PlayLazyMacroLogsImpl {
-      override val confKey = "ads.css.url.sign.key"
-      override def useRandomIfMissing = isProd
-    }
-    sg()
-  }
-
-  /** Подписываемый QSB для списка AdCssArgs. */
-  implicit def adsCssQsb = {
-    new QueryStringBindable[Seq[AdCssArgs]] {
-      private def getSigner = new QsbSigner(SIGN_SECRET, "sig")
-
-      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, Seq[AdCssArgs]]] = {
-        getSigner.signedOrNone(key, params)
-          .flatMap(_.get(key))
-          .map { vs =>
-            try {
-              val parsed = vs.map { v =>
-                AdCssArgs.fromString(v)
-              }
-              Right(parsed)
-            } catch {
-              case ex: Exception =>
-                Left(ex.getMessage)
-            }
-          }
-      }
-
-      override def unbind(key: String, value: Seq[AdCssArgs]): String = {
-        val sb = new StringBuilder(30 * value.size)
-        value.foreach { aca =>
-          sb.append(key).append('=')
-            .append(aca.adId).append(AdCssArgs.SEP_RE).append(aca.szMult)
-            .append('&')
-        }
-        // Убрать финальный & из ссылки
-        if (value.nonEmpty)
-          sb.setLength(sb.length - 1)
-        // Вернуть подписанный результат
-        val res = sb.toString()
-        getSigner.mkSigned(key, res)
       }
     }
   }

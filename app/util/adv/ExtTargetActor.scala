@@ -10,7 +10,6 @@ import models.adv.js._
 import models.adv._
 import models.adv.js.ctx._
 import models.mws.AnswerStatuses
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.ws.WSResponse
 import play.api.Play.{current, configuration}
 import util.PlayMacroLogsImpl
@@ -72,7 +71,7 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
   override def service = args.target.target.service
 
   /** Реализация модели из [[models.adv.ext.act.EtaCustomArgsBase]]. */
-  case class CustomArgs(override val adRenderMaxSz: INamedSize2di) extends MCustomArgsT {
+  case class CustomArgs(override val adRenderMaxSz: INamedSize2di) extends MCustomArgs {
     // Готовая инфа по отрендеренной карточкчи обычно нужна по несколько раз вподряд. Или не нужна вообще.
     override lazy val madRenderInfo = super.madRenderInfo
   }

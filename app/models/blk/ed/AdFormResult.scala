@@ -1,6 +1,6 @@
 package models.blk.ed
 
-import models.MAd
+import models.MNode
 
 /**
   * Suggest.io
@@ -9,6 +9,6 @@ import models.MAd
   * Description: Контейнер с результатом маппинга формы редактирования рекламной карточки.
   */
 case class AdFormResult(
-  mad: MAd,
+  mad: MNode,
   bim: BlockImgMap
 )

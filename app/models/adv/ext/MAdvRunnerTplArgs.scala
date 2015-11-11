@@ -1,6 +1,6 @@
 package models.adv.ext
 
-import models.{MNode, MAd}
+import models.MNode
 import models.adv.MExtAdvQs
 
 /**
@@ -15,7 +15,7 @@ trait IAdvRunnerTplArgs {
   def wsCallArgs  : MExtAdvQs
 
   /** Размещаемая рекламная карточка. */
-  def mad         : MAd
+  def mad         : MNode
 
   /** Текущий узел, с которого происходит размещение карточки. */
   def mnode       : MNode
@@ -25,7 +25,7 @@ trait IAdvRunnerTplArgs {
 
 case class MAdvRunnerTplArgs(
   override val wsCallArgs  : MExtAdvQs,
-  override val mad         : MAd,
+  override val mad         : MNode,
   override val mnode       : MNode
 )
   extends IAdvRunnerTplArgs

@@ -1,7 +1,9 @@
 package models.msc
 
+import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import models._
 import play.api.mvc.QueryStringBindable
+import play.twirl.api.Html
 import util.qsb.QSBs.NglsStateMap_t
 import util.qsb.QsbUtil._
 
@@ -146,15 +148,15 @@ case class ScJsState(
   /** Инстанс содержит хоть какие-нибудь полезные данные? */
   def isEmpty = !nonEmpty
 
-  implicit protected def orFalse(boolOpt: Option[Boolean]): Boolean = {
+  protected def orFalse(boolOpt: Option[Boolean]): Boolean = {
     boolOpt.isDefined && boolOpt.get
   }
 
-  implicit protected def orZero(intOpt: Option[Int]): Int = {
+  protected def orZero(intOpt: Option[Int]): Int = {
     if (intOpt.isDefined)  intOpt.get  else  0
   }
 
-  implicit protected def bool2boolOpt(bool: Boolean): Option[Boolean] = {
+  protected def bool2boolOpt(bool: Boolean): Option[Boolean] = {
     if (bool) Some(bool) else None
   }
 
@@ -162,35 +164,48 @@ case class ScJsState(
   def geo: GeoMode = GeoIp
 
   /** Экземпляр AdSearch для поиска карточек, отображаемых в плитке. */
-  def tilesAdSearch(): AdSearch = new AdSearch {
-    override def receiverIds    = that.adnId.toList
-    override def randomSortSeed  = that.generationOpt
+  def tilesAdSearch(): AdSearch = new AdSearchImpl {
+    override def randomSortSeed = that.generationOpt
     override def geo            = that.geo
-    override def levels = {
-      val sl = if (catIds.nonEmpty)
-        AdShowLevels.LVL_CATS
-      else
-        AdShowLevels.LVL_START_PAGE
-      Seq(sl)
+    override def outEdges: Seq[ICriteria] = {
+      val cr = Criteria(
+        nodeIds   = that.adnId.toSeq,
+        sls       = Seq(AdShowLevels.LVL_START_PAGE)
+      )
+      Seq(cr)
     }
   }
 
   /** Экземпляр AdSearch для поиска в текущей рекламной карточки. */
   def focusedAdSearch(_maxResultsOpt: Option[Int]): FocusedAdsSearchArgs = {
-    new FocusedAdsSearchArgs {
+    new FocusedAdsSearchArgsImpl {
       override def firstIds  = that.fadOpenedIdOpt.toList
       override def limitOpt  = _maxResultsOpt
       override def randomSortSeed  = that.generationOpt
-      override def receiverIds    = that.adnId.toList
       override def offsetOpt      = that.fadsOffsetOpt
-      override def producerIds    = that.fadsProdIdOpt.toList
+      override def outEdges: Seq[ICriteria] = {
+        val rcvrCrOpt = for (nodeId <- that.adnId) yield {
+          Criteria(
+            nodeIds     = Seq(nodeId),
+            predicates  = Seq(MPredicates.Receiver)
+          )
+        }
+        val prodCrOpt = for (nodeId <- that.fadsProdIdOpt) yield {
+          Criteria(
+            nodeIds     = Seq(nodeId),
+            predicates  = Seq(MPredicates.OwnedBy)
+          )
+        }
+        (rcvrCrOpt ++ prodCrOpt).toSeq
+      }
+
       // При синхронном рендере единственная карточка автоматом является целевой
       override def withHeadAd     = true
     }
   }
 
-  def isSearchScrOpened : Boolean = searchScrOpenedOpt
-  def isNavScrOpened    : Boolean = navScrOpenedOpt
+  def isSearchScrOpened : Boolean = orFalse( searchScrOpenedOpt )
+  def isNavScrOpened    : Boolean = orFalse( navScrOpenedOpt )
   def isAnyPanelOpened  : Boolean = isSearchScrOpened || isNavScrOpened
   def isFadsOpened      : Boolean = fadOpenedIdOpt.isDefined
   def isSomethingOpened : Boolean = isAnyPanelOpened || isFadsOpened
@@ -198,7 +213,7 @@ case class ScJsState(
   def isSearchTabList   : Boolean = searchTabListOpt.exists(identity)
   def isSearchTabCats   : Boolean = !isSearchTabList
 
-  def fadsOffset        : Int = fadsOffsetOpt
+  def fadsOffset        : Int     = orZero( fadsOffsetOpt )
 
   def generation: Long = generationOpt.getOrElse(System.currentTimeMillis)
 
@@ -211,9 +226,13 @@ case class ScJsState(
    * Переключить состояние поля navScrOpenedOpt, сгенерив новое состояние.
    * @return Копия текущего состояния с новым значением поля navScrOpenedOpt.
    */
-  def toggleNavScreen = copy( navScrOpenedOpt = !isNavScrOpened )
+  def toggleNavScreen = copy(
+    navScrOpenedOpt = bool2boolOpt( !isNavScrOpened )
+  )
 
-  def toggleSearchScreen = copy( searchScrOpenedOpt = !isSearchScrOpened )
+  def toggleSearchScreen = copy(
+    searchScrOpenedOpt = bool2boolOpt( !isSearchScrOpened )
+  )
 
 
   /** Очень каноническое состояние выдачи без каких-либо уточнений. */
@@ -228,4 +247,18 @@ case class ScJsState(
   }
 
 }
+
+
+/** Некоторые асинхронные шаблоны выдачи при синхронном рендере требуют для себя js-состояние. */
+abstract class JsStateRenderWrapper {
+
+  /**
+    * Запустить синхронный рендер шаблона используя указанное js-состояние выдачи.
+    * @param jsStateOpt None - происходит асинхронный рендер. Some() - идёт синхронный рендер с указанным состоянием.
+    * @return Отрендеренный HTML.
+    */
+  def apply(jsStateOpt: Option[ScJsState] = None): Html
+
+}
+
 

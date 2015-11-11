@@ -77,7 +77,7 @@ case class OAuth1TargetActor(args: IOAuth1AdvTargetActorArgs)
   /** Состояние рендера текущей карточки в картинку. */
   class RenderAd2ImgState extends RenderAd2ImgStateT {
     /** Аргументы для генерации данных для ссылки рендера карточки. */
-    val _ca = new MCustomArgsT {
+    val _ca = new MCustomArgs {
       override lazy val madRenderInfo = super.madRenderInfo
     }
     override def rendererError(ex: Throwable): Unit = {

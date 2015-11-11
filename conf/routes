@@ -110,7 +110,7 @@ GET  /img/dyn                           @controllers.Img.dynImg(i: im.MImgT)
 GET  /market/site/:adnId                @controllers.MarketShowcase.demoWebSite(adnId)
 GET  /market/index/:adnId               @controllers.MarketShowcase.showcase(adnId, a: msc.ScReqArgs ?= msc.ScReqArgs.empty)
 
-GET  /blk/css                           @controllers.MarketShowcase.serveBlockCss(c: Seq[AdCssArgs])
+GET  /blk/css                           @controllers.MarketShowcase.serveBlockCss(c: Seq[msc.AdCssArgs])
 
 GET  /market/geo/site                   @controllers.MarketShowcase.rdrToGeoSite
 GET  /market/geo/index                  @controllers.MarketShowcase.geoShowcase(a: msc.ScReqArgs ?= msc.ScReqArgs.empty)

@@ -31,18 +31,25 @@ trait ScOnlyOneAd
     import request.mad
     val bgImgOptFut = AdRenderUtil.getBgImgOpt(mad, args)
     // Рендер, когда асинхронные операции будут завершены.
-    bgImgOptFut map { bgImgOpt =>
+    for (bgImgOpt <- bgImgOptFut) yield {
+      // Собираем аргументы для рендера карточки.
       val brArgs = blk.RenderArgs(
         mad           = mad,
         szMult        = args.szMult,
         withEdit      = false,
         inlineStyles  = true,
         bgImg         = bgImgOpt,
-        topLeft    = bgImgOpt.filter(_.isWide).map { wideCtx =>
-          // TODO Нужно сдвигать sm-block div согласно запланированной в BgImg центровке, а не на середину.
-          val blockWidth = szMulted(mad.blockMeta.width, args.szMult)
-          val leftPx = (wideCtx.szCss.width - blockWidth) / 2
-          OnlyOneAdTopLeft(leftPx)
+        topLeft       = {
+          for {
+            wideCtx <- bgImgOpt
+            if wideCtx.isWide
+            bm      <- mad.ad.blockMeta
+          } yield {
+            // TODO Нужно сдвигать sm-block div согласно запланированной в BgImg центровке, а не на середину.
+            val blockWidth = szMulted(bm.width, args.szMult)
+            val leftPx = (wideCtx.szCss.width - blockWidth) / 2
+            OnlyOneAdTopLeft(leftPx)
+          }
         }
       )
       // TODO Нужен title, на основе имени узла-продьюсера например.

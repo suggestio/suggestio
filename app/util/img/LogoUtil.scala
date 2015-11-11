@@ -1,12 +1,12 @@
-package models.im.logo
+package util.img
 
 import com.google.inject.{Inject, Singleton}
-import models._
 import io.suggest.sc.ScConstants
 import io.suggest.ym.model.common.MImgInfoMeta
+import models._
 import models.blk._
 import models.im._
-import util.img.ImgFormUtil
+import models.im.logo._
 
 import scala.concurrent.{ExecutionContext, Future}
 

@@ -186,8 +186,9 @@ object AdSearch extends CommaDelimitedStringSeq {
 
 /** Этот трейт является базовой единицей модели.
   * Он описывает итоговую модель распарсенных аргументов поиска карточек. */
-trait AdSearch extends MNodeSearchDflt { that =>
+trait AdSearch extends MNodeSearchDflt with PlayMacroLogsDyn { that =>
 
+  /** Изначально, этот поиск был заточен только под поиск карточек. */
   override def nodeTypes: Seq[MNodeType] = {
     Seq( MNodeTypes.Ad )
   }

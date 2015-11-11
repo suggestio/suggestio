@@ -2,7 +2,8 @@ package controllers.sc
 
 import controllers.SioController
 import io.suggest.di.IEsClient
-import models.{AdCssArgs, blk, MAd}
+import models.msc.AdCssArgs
+import models.{blk, MAd}
 import play.api.mvc.Action
 import play.twirl.api.Txt
 import util.PlayMacroLogsI

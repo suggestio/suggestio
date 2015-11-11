@@ -4,12 +4,12 @@ import com.google.inject.Inject
 import controllers.sc._
 import io.suggest.event.SioNotifierStaticClientI
 import models.{Context2Factory, MAdnNodeCache}
-import models.im.logo.LogoUtil
 import org.elasticsearch.client.Client
 import play.api.i18n.MessagesApi
 import util._
 import util.cdn.CdnUtil
-import util.img.WelcomeUtil
+import util.img.{LogoUtil, WelcomeUtil}
+import util.n2u.N2NodesUtil
 import util.showcase.{ShowcaseUtil, ShowcaseNodeListUtil, ScStatUtil}
 import util.stat.StatUtil
 
@@ -32,6 +32,7 @@ class MarketShowcase @Inject() (
   override val scNlUtil           : ShowcaseNodeListUtil,
   override val scUtil             : ShowcaseUtil,
   override val cdnUtil            : CdnUtil,
+  override val n2NodesUtil        : N2NodesUtil,
   override val mNodeCache         : MAdnNodeCache,
   override val _contextFactory    : Context2Factory,
   override val errorHandler       : ErrorHandler,

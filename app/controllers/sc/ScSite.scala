@@ -52,9 +52,13 @@ trait ScSiteBase
 
     /** Добавки к тегу head в siteTpl. */
     def headAfterFut: Future[Traversable[Html]] = {
-      MAd.maybeGetById( _siteArgs.povAdId )
+      MNode.maybeGetById( _siteArgs.povAdId )
         .map { _.get }
-        .filter { _.isPublished }
+        .filter { mad =>
+          mad.edges
+            .withPredicateIter(MPredicates.Receiver)
+            .exists(_.info.sls.nonEmpty)
+        }
         .flatMap { mad =>
           val futs = MExtServices.values
             .iterator

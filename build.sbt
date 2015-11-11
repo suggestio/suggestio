@@ -156,7 +156,8 @@ routesImport ++= Seq(
   "models._",
   "util.qsb._",
   "util.qsb.QSBs._",
-  "models.im.ImOp._"
+  "models.im.ImOp._",
+  "models.msc.AdCssArgs._"
 )
 
 

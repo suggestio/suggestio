@@ -2,8 +2,8 @@ package models.adv.ext.act
 
 import controllers.routes
 import io.suggest.common.geom.d2.INamedSize2di
-import models.adv.ext.Mad2ImgUrlCalcT
 import models.Context
+import models.adv.ext.Mad2ImgUrlCalc
 import models.adv.js.ctx.MPictureCtx
 
 // TODO Модель довольно странная, её основная логика вынесена в Mad2ImgUrlCalcT, а тут какие-то непонятные ошметки остались.
@@ -25,7 +25,7 @@ trait EtaCustomArgsBase extends ExtTargetActorEnv { env =>
   def _adRenderMaxSzDflt = service.advPostMaxSz(args.target.target.url)
 
   /** Абстрактная реализация модели в виде трейта. */
-  protected trait MCustomArgsT extends Mad2ImgUrlCalcT {
+  protected class MCustomArgs extends Mad2ImgUrlCalc {
 
     /** Размер дял рендера. */
     def adRenderMaxSz: INamedSize2di = _adRenderMaxSzDflt

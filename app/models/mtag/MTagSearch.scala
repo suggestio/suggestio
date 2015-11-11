@@ -1,6 +1,7 @@
 package models.mtag
 
 import io.suggest.common.text.StringUtil
+import io.suggest.model.n2.node.{MNodeTypes, MNodeType}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import play.api.mvc.QueryStringBindable
 import util.qsb.QsbKey1T
@@ -92,5 +93,9 @@ object MTagSearch {
 class MTagSearch extends MNodeSearchDfltImpl {
 
   override def limit = MTagSearch.LIMIT_DFLT
+
+  override def nodeTypes: Seq[MNodeType] = {
+    Seq( MNodeTypes.Tag )
+  }
 
 }

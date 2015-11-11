@@ -100,26 +100,26 @@ trait ScSyncSiteGeo
     // TODO В logic'ах наверное надо дедублицировать lazy val ctx.
 
     /** Подготовка к рендеру плитки (findAds). Наличие focusedAds перекрывает это, поэтому тут есть выбор. */
-    lazy val tileLogic: TileAdsLogic { type T = RenderedAdBlock } = {
+    lazy val tileLogic: TileAdsLogic { type T = IRenderedAdBlock } = {
       if (needRenderTiles) {
         // Рендерим плитку, как этого требует needRenderTiles().
         new TileAdsLogic {
-          override type T = RenderedAdBlock
+          override type T = IRenderedAdBlock
           override implicit def _request = that._request
           override val _adSearch = _scState.tilesAdSearch()
           override lazy val ctx = that.ctx
           override def renderMadAsync(brArgs: blk.RenderArgs): Future[T] = {
             renderMad2htmlAsync(brArgs) map { rendered =>
-              RenderedAdBlockImpl(brArgs.mad, rendered)
+              RenderedAdBlock(brArgs.mad, rendered)
             }
           }
         }
 
       } else {
         // Нет надобности печатать плитку. Просто генерим заглушку логики рендера плитки:
-        val _noMadsFut = Future successful List.empty[MAd]
+        val _noMadsFut: Future[Seq[MNode]] = Future successful Nil
         new TileAdsLogic {
-          override type T = RenderedAdBlock
+          override type T = IRenderedAdBlock
           override implicit def _request = that._request
           override lazy val ctx = that.ctx
           override def _adSearch = new AdSearch {
@@ -129,8 +129,8 @@ trait ScSyncSiteGeo
             Future failed new UnsupportedOperationException("Dummy tile ads logic impl.")
           }
           override lazy val madsRenderedFut: Future[Seq[T]] = Future successful Nil
-          override def madsGroupedFut: Future[Seq[MAd]] = _noMadsFut
-          override lazy val madsFut: Future[Seq[MAd]] = _noMadsFut
+          override def madsGroupedFut   = _noMadsFut
+          override lazy val madsFut     = _noMadsFut
           override def adsCssExternalFut: Future[Seq[AdCssArgs]] = Future successful Nil
         }
       }

@@ -1,6 +1,6 @@
 package models.msc
 
-import models.{GeoNodesLayer, MNode}
+import models.MNode
 
 /**
  * Suggest.io

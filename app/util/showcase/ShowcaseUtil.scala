@@ -2,8 +2,8 @@ package util.showcase
 
 import com.google.inject.{Singleton, Inject}
 import controllers.routes
+import io.suggest.common.fut.FutureUtil
 import io.suggest.sc.tile.ColumnsCountT
-import io.suggest.ym.model.common.{AdShowLevels, IEMBlockMeta}
 import models._
 import models.blk._
 import models.im._
@@ -62,10 +62,11 @@ class ShowcaseUtil @Inject() (
    * @tparam T Тип элемента.
    * @return
    */
-  def groupNarrowAds[T <: IEMBlockMeta](ads: Seq[T]): Seq[T] = {
+  def groupNarrowAds[T <: MNode](ads: Seq[T]): Seq[T] = {
     val (enOpt1, acc0) = ads.foldLeft [(Option[T], List[T])] (None -> Nil) {
       case ((enOpt, acc), e) =>
-        val bwidth: BlockWidth = BlockWidths(e.blockMeta.width)
+        val bwidth: BlockWidth = e.ad.blockMeta
+          .fold(BlockWidths.default)(bm => BlockWidths(bm.width))
         if (bwidth.isNarrow) {
           enOpt match {
             case Some(en) =>
@@ -84,54 +85,6 @@ class ShowcaseUtil @Inject() (
     acc1.reverse
   }
 
-
-  /**
-   * Сбор данных по категорям для выдачи указанного узла-ресивера.
-   * @param adnIdOpt id узла, если есть.
-   * @return Кортеж из фьючерса с картой статистики категорий и списком отображаемых категорий.
-   */
-  def getCats(adnIdOpt: Option[String]): GetCatsResult = {
-    val catAdsSearch = new AdSearch {
-      override def receiverIds    = adnIdOpt.toList
-      override def limitOpt  = Some(100)
-      override def levels         = List(AdShowLevels.LVL_CATS)
-    }
-    // Сборка статитстики по категориям нужна, чтобы подсветить серым пустые категории.
-    val catsStatsFut = MAd.stats4UserCats(MAd.dynSearchReqBuilder(catAdsSearch))
-      .map { _.toMap }
-    // Текущие категории узла
-    val mmcatsFut: Future[Seq[MMartCategory]] = if(SHOW_EMPTY_CATS) {
-      // Включено отображение всех категорий.
-      val catOwnerId = adnIdOpt.fold(MMartCategory.DEFAULT_OWNER_ID) { getCatOwner }
-      for {
-        mmcats <- MMartCategory.findTopForOwner(catOwnerId)
-        catsStats <- catsStatsFut
-      } yield {
-        // Нужно, чтобы пустые категории шли после непустых. И алфавитная сортировка
-        val nonEmptyCatIds = catsStats
-          .iterator
-          .filter { case (_, count)  =>  count > 0L }
-          .map { _._1 }
-          .toSet
-        mmcats.sortBy { mmcat =>
-          val sortPrefix: String = nonEmptyCatIds.contains(mmcat.idOrNull) match {
-            case true  => "a"
-            case false => "z"
-          }
-          sortPrefix + mmcat.name
-        }
-      }
-    } else {
-      // Отключено отображение скрытых категорий. Исходя из статистики, прочитать из модели только необходимые карточки.
-      catsStatsFut flatMap { catsStats =>
-        MMartCategory.multiGetRev(catsStats.keysIterator)
-          .map { _.sortBy(MMartCategory.sortByMmcat) }
-      }
-    }
-    GetCatsResult(catsStatsFut, mmcatsFut)
-  }
-
-
   /** Дефолтовый мультипликатор размера для блоков, отображаемых через focusedAds(). */
   def FOCUSED_SZ_MULT: SzMult_t = 620F / 300F
 
@@ -140,10 +93,17 @@ class ShowcaseUtil @Inject() (
    * @param mad Рекламная карточка.
    * @return Аргументы для рендера.
    */
-  def focusedBrArgsFor(mad: MAd)(implicit ctx: Context): Future[blk.RenderArgs] = {
-    val szMult: SzMult_t = ctx.deviceScreenOpt match {
-      case Some(dscr) => fitBlockToScreen(mad.blockMeta, dscr)
-      case None       => TILES_SZ_MULTS.last
+  def focusedBrArgsFor(mad: MNode)(implicit ctx: Context): Future[blk.RenderArgs] = {
+    val szMult: SzMult_t = {
+      val dscrSz = for {
+        dscr <- ctx.deviceScreenOpt
+        bm   <- mad.ad.blockMeta
+      } yield {
+        fitBlockToScreen(bm, dscr)
+      }
+      dscrSz getOrElse {
+        TILES_SZ_MULTS.last
+      }
     }
     // Нужно получить данные для рендера широкой карточки.
     for (bgImgOpt <- focWideBgImgArgs(mad, szMult)) yield {
@@ -165,25 +125,22 @@ class ShowcaseUtil @Inject() (
    * @param szMult Требуемый мультипликатор размера картинки.
    * @return None если нет фоновой картинки. Иначе Some() с данными рендера фоновой wide-картинки.
    */
-  def focWideBgImgArgs(mad: MAd, szMult: SzMult_t)(implicit ctx: Context): Future[Option[MakeResult]] = {
-    BgImg.getBgImg(mad) match {
-      case Some(bgImgInfo) =>
-        val mimg = MImg(bgImgInfo)
-        val wArgs = MakeArgs(
-          img           = mimg,
-          blockMeta     = mad.blockMeta,
-          szMult        = szMult,
-          devScreenOpt  = ctx.deviceScreenOpt
-        )
-        val maker = if (mad.blockMeta.wide)
-          Makers.ScWide
-        else
-          Makers.Block
-        maker.icompile(wArgs)
-          .map(Some.apply)
-      case None =>
-        Future successful None
+  def focWideBgImgArgs(mad: MNode, szMult: SzMult_t)(implicit ctx: Context): Future[Option[MakeResult]] = {
+    val optFut = for {
+      mimg <- BgImg.getBgImg(mad)
+      bm   <- mad.ad.blockMeta
+    } yield {
+      val wArgs = MakeArgs(
+        img           = mimg,
+        blockMeta     = bm,
+        szMult        = szMult,
+        devScreenOpt  = ctx.deviceScreenOpt
+      )
+      Makers.forFocusedBg(bm.wide)
+        .icompile(wArgs)
+        .map(Some.apply)
     }
+    FutureUtil.optFut2futOpt(optFut)(identity)
   }
 
   override val MIN_SZ_MULT = super.MIN_SZ_MULT

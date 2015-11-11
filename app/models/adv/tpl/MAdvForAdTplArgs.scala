@@ -1,7 +1,7 @@
 package models.adv.tpl
 
+import models.MNode
 import models.adv.form.IAdvFormTplArgs
-import models.{MAd, MNode}
 
 /**
   * Suggest.io
@@ -12,7 +12,7 @@ import models.{MAd, MNode}
 trait IAdvForAdTplArgs {
 
   /** Размещаемая рекламная карточка. */
-  def mad       : MAd
+  def mad       : MNode
 
   /** Узел-продьюсер размещаемой рекламной карточки. */
   def producer  : MNode
@@ -24,7 +24,7 @@ trait IAdvForAdTplArgs {
 
 
 case class MAdvForAdTplArgs(
-  override val mad       : MAd,
+  override val mad       : MNode,
   override val producer  : MNode,
   override val formArgs  : IAdvFormTplArgs
 )

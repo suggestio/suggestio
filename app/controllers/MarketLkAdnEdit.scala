@@ -7,7 +7,7 @@ import io.suggest.model.n2.edge.MEdgeInfo
 import io.suggest.model.n2.extra.MAdnExtra
 import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.model.n2.node.meta.{MBusinessInfo, MAddress, MBasicMeta}
-import models.im.logo.{LogoOpt_t, LogoUtil}
+import models.im.logo.LogoOpt_t
 import models.im.{MImg3_, MImgT}
 import models.jsm.init.MTargets
 import models.mlk.{FormMapResult, NodeEditArgs}

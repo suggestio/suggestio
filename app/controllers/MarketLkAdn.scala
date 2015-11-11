@@ -13,7 +13,6 @@ import util.async.AsyncUtil
 import com.google.inject.Inject
 import controllers.ident._
 import io.suggest.event.SioNotifierStaticClientI
-import models.im.logo.LogoUtil
 import models.mlk.{MNodeAdsTplArgs, MNodeShowArgs}
 import models.msession.Keys
 import models.usr.EmailPwIdent
@@ -25,7 +24,7 @@ import _root_.util.{FormUtil, PlayMacroLogsImpl}
 import util.acl._
 import models._
 import util.ident.IdentUtil
-import util.img.GalleryUtil
+import util.img.{LogoUtil, GalleryUtil}
 import util.lk.LkAdUtil
 import util.showcase.ShowcaseUtil
 import scala.concurrent.{ExecutionContext, Future}

@@ -2,7 +2,9 @@ package controllers.sc
 
 import _root_.util.di.{INodeCache, IScUtil, IScStatUtil}
 import _root_.util.jsa.{JsAppendById, JsAction, SmRcvResp, Js}
+import _root_.util.n2u.IN2NodesUtilDi
 import io.suggest.common.css.FocusedTopLeft
+import io.suggest.common.fut.FutureUtil
 import io.suggest.util.Lists
 import models.im.MImgT
 import models.im.logo.LogoOpt_t
@@ -29,6 +31,8 @@ trait ScFocusedAdsBase
   with PlayMacroLogsI
   with IScUtil
   with INodeCache
+  with ScCssUtil
+  with IN2NodesUtilDi
 {
 
   /** Базовая логика обработки запросов сбора данных по рекламным карточкам и компиляции оных в результаты выполнения запросов. */
@@ -46,7 +50,7 @@ trait ScFocusedAdsBase
 
     // TODO Не искать вообще карточки, если firstIds.len >= adSearch.size
     // TODO Выставлять offset для поиска с учётом firstIds?
-    lazy val mads1Fut: Future[Seq[MAd]] = {
+    lazy val mads1Fut: Future[Seq[MNode]] = {
       if (_adSearch.limit > _adSearch.firstIds.size) {
         // Костыль, т.к. сортировка forceFirstIds на стороне ES-сервера всё ещё не пашет:
         val adSearch2 = if (_adSearch.firstIds.isEmpty) {
@@ -58,7 +62,7 @@ trait ScFocusedAdsBase
             override def withoutIds         = _adSearch.firstIds
           }
         }
-        MAd.dynSearch(adSearch2)
+        MNode.dynSearch(adSearch2)
 
       } else {
         // Все firstIds перечислены, возвращаемый размер не подразумевает отдельного поиска.
@@ -67,12 +71,16 @@ trait ScFocusedAdsBase
     }
 
     def is3rdPartyProducer(producerId: String): Boolean = {
-      !(_adSearch.receiverIds contains producerId)
+      val hasProdAsRcvr = _adSearch.outEdges.exists { e =>
+        e.predicates.contains( MPredicates.Receiver) &&
+          e.nodeIds.contains( producerId )
+      }
+      !hasProdAsRcvr
     }
 
     /** В countAds() можно отправлять и обычный adSearch: forceFirstIds там игнорируется. */
     def madsCountFut: Future[Long] = {
-      MAd.dynCount(_adSearch)
+      MNode.dynCount(_adSearch)
     }
     lazy val madsCountIntFut = madsCountFut.map(_.toInt)
 
@@ -82,7 +90,7 @@ trait ScFocusedAdsBase
      * @param mads найденные рекламные карточки.
      * @param ids id запрошенных рекламных карточек.
      */
-    protected def logMissingFirstIds(mads: Seq[MAd], ids: Seq[String]): Unit = {
+    protected def logMissingFirstIds(mads: Seq[MNode], ids: Seq[String]): Unit = {
       if (mads.size != ids.size) {
         // Выявить, какие id не были найдены.
         val idsFound = mads.iterator.flatMap(_.id).toSet
@@ -105,10 +113,10 @@ trait ScFocusedAdsBase
     }
 
     /** Первые карточки, если запрошены. */
-    lazy val firstAdsFut: Future[Seq[MAd]] = {
+    lazy val firstAdsFut: Future[Seq[MNode]] = {
       if (fetchFirstAds) {
         val ids = _adSearch.firstIds
-        val fut = MAd.multiGet(ids)
+        val fut = MNode.multiGet(ids)
         fut onSuccess { case mads =>
           logMissingFirstIds(mads, ids)
         }
@@ -121,7 +129,7 @@ trait ScFocusedAdsBase
 
     /** Если выставлены forceFirstIds, то нужно подолнительно запросить получение указанных
       * id карточек и выставить их в начало списка mads1. */
-    lazy val mads2Fut: Future[Seq[MAd]] = {
+    lazy val mads2Fut: Future[Seq[MNode]] = {
       val _mads1Fut = mads1Fut
       for {
         firstAds  <- firstAdsFut
@@ -133,8 +141,17 @@ trait ScFocusedAdsBase
     }
 
     def prodIdsFut: Future[Seq[String]] = {
-      mads2Fut.map { mads2 =>
-        mads2.map(_.producerId)
+      for (mads2 <- mads2Fut) yield {
+        val iter = for {
+          mad <- mads2.iterator
+          e   <- mad.edges.out.valuesIterator
+          // TODO В теории тут может выскочить person, который узлом-продьюсером не является.
+          // Такое возможно, если пользователи будут напрямую владеть карточками.
+          if e.predicate == MPredicates.OwnedBy
+        } yield {
+          e.nodeId
+        }
+        iter.toSeq
       }
     }
 
@@ -225,28 +242,44 @@ trait ScFocusedAdsBase
       // touch-воздействие, чтобы запустить процесс. Сама карта будет опрошена в focAdsRenderArgsFor()
       prod2logoScrImgMapFut
 
-      madsCountIntFut flatMap { madsCountInt =>
-      _mads4blkRenderFut flatMap { mads4blkRender =>
-      _producersMapFut flatMap { producersMap =>
-
-        val (_, futs) = Lists.mapFoldLeft(mads4blkRender, acc0 = (firstAdIndex, blockHtmlRenderAcc0)) {
-          case ((index, brAcc0), brArgs) =>
-            // Сразу инкрементим счетчик, т.к. если отсчитывать от offset, то будет ноль при первом вызове.
-            val index1 = index + 1
-            val producerId = brArgs.mad.producerId
-            val args = AdBodyTplArgs(
-              brArgs    = brArgs,
-              producer  = producersMap(producerId),
-              index     = index1,
-              adsCount  = madsCountInt,
-              is3rdParty = is3rdPartyProducer(producerId)
-            )
-            val (renderFut, brAcc1) = renderOneBlockAcc(args, brAcc0)
-            (index1, brAcc1) -> renderFut
+      for {
+        madsCountInt    <- madsCountIntFut
+        mads4blkRender  <- _mads4blkRenderFut
+        producersMap    <- _producersMapFut
+        res <- {
+          val (_, futs) = Lists.mapFoldLeft(mads4blkRender, acc0 = (firstAdIndex, blockHtmlRenderAcc0)) {
+            case (acc0 @ (index, brAcc0), brArgs) =>
+              // Сразу инкрементим счетчик, т.к. если отсчитывать от offset, то будет ноль при первом вызове.
+              val resOpt = for {
+                // Вычисляем id узла-продьюсера.
+                producerId  <- n2NodesUtil.madProducerId(brArgs.mad)
+                // Вычисляем продьюсера.
+                producer    <- producersMap.get(producerId)
+              } yield {
+                // Запустить рендер одного блока.
+                val index1 = index + 1
+                val args = AdBodyTplArgs(
+                  brArgs      = brArgs,
+                  producer    = producer,
+                  index       = index1,
+                  adsCount    = madsCountInt,
+                  is3rdParty  = is3rdPartyProducer(producerId)
+                )
+                val (renderFut, brAcc1) = renderOneBlockAcc(args, brAcc0)
+                (index1, brAcc1) -> renderFut
+              }
+              resOpt getOrElse {
+                LOGGER.warn(s"Unable to render ad[${brArgs.mad.idOrNull}] #$index, because producer node or info about it is missing.")
+                acc0 -> null
+              }
+          }
+          val futs1 = futs.filter { _ != null }
+          Future.sequence(futs1)
         }
-        Future.sequence(futs)
 
-      }}}
+      } yield {
+        res
+      }
     }
 
     /**
@@ -278,20 +311,17 @@ trait ScFocusedAdsBase
     /** Фьючерс продьюсера, относящегося к текущей карточке. */
     def focAdProducerOptFut: Future[Option[MNode]] = {
       val _prodsMapFut = mads2ProdsMapFut
-      focAdOptFut flatMap {
-        case Some(focMad) =>
-          _prodsMapFut map { prodsMap =>
-            prodsMap.get(focMad.mad.producerId)
+      focAdOptFut flatMap { focAdOpt =>
+        FutureUtil.optFut2futOpt( focAdOpt ) { focMad =>
+          for (prodsMap <- _prodsMapFut) yield {
+            n2NodesUtil
+              .madProducerId(focMad.mad)
+              .flatMap(prodsMap.get)
           }
-        case None =>
-          Future successful None
+        }
       }
     }
 
-    def madProducerOptFut(madOpt: Option[MAd]): Future[Option[MNode]] = {
-      val prodIdOpt = madOpt.map(_.producerId)
-      mNodeCache.maybeGetByIdCached(prodIdOpt)
-    }
 
     def firstAdIndex = _adSearch.offset
 
@@ -317,7 +347,9 @@ trait ScFocusedAdsBase
           fgColor     = _fgColor,
           hBtnArgs    = HBtnArgs(fgColor = _fgColor),
           logoImgOpt  = _logoImgOpt,
-          is3rdParty  = is3rdPartyProducer(abtArgs.brArgs.mad.producerId),
+          is3rdParty  = n2NodesUtil
+            .madProducerId(abtArgs.brArgs.mad)
+            .exists(is3rdPartyProducer),
           jsStateOpt  = _scStateOpt
         )
       }

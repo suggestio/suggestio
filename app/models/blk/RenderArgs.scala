@@ -15,24 +15,34 @@ import models.msc.{MScApiVsns, MScApiVsn}
  */
 
 trait IRenderArgs {
+
   /** Рекламная карточка, которую надо отрендерить. */
-  def mad             : MAd
+  def mad             : MNode
+
   /** Мультипликатор размеров карточки. */
   def szMult          : SzMult_t
+
   /** Данные о фоновой картинке, если есть. */
   def bgImg           : Option[IMakeResult]
+
   /** Рендерим в редакторе. */
   def withEdit        : Boolean
+
   /** Рендерить стили инлайново? */
   def inlineStyles    : Boolean
+
   /** Дополнительные css-классы, которые относятся к рендеру. */
   def cssClasses      : Seq[String]
+
   /** Стили для div .sm-block. */
   def topLeft         : Option[ITopLeft]
+
   /** Версия API выдачи. */
   def apiVsn          : MScApiVsn = MScApiVsns.unknownVsn
+
   /** Порядковый номер. Заполняется только для плитки выдачи. */
   def indexOpt        : Option[Int]
+
   /** Рендер для разглядывания блока, а не в плитке. */
   def isFocused       : Boolean
 
@@ -68,7 +78,7 @@ sealed trait IRenderArgsWrapper0 extends IRenderArgs {
 
 /** Параметры рендера блока. Дефолтовая реализация [[IRenderArgs]]. */
 case class RenderArgs(
-  override val mad            : MAd,
+  override val mad            : MNode,
   override val szMult         : SzMult_t,
   override val bgImg          : Option[MakeResult],
   override val isFocused      : Boolean                 = false,
@@ -104,7 +114,7 @@ case class FieldCssRenderArgs2(
   brArgs      : blk.IRenderArgs,
   aovf        : TextEnt,
   bf          : BfText,
-  offerN      : Int,
+  offerN      : Int,    // TODO N2 Переименовать в entityId.
   yoff        : Int,
   fid         : String,
   override val isFocused : Boolean     = false,

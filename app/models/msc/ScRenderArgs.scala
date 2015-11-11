@@ -11,60 +11,8 @@ import play.twirl.api.Html
  * Description: Модель параметров рендера шаблона sc/indexTpl.
  */
 
-object ScRenderArgs {
+// 5211faccd060 Здесь был код группировки списка магазинов по первой группе.
 
-  type ProdsLetterGrouped_t = Seq[(Char, Seq[MNode])]
-
-  /** Регэксп для нахождения первого словесного символа в строке. */
-  val NON_PUNCTUATION_CHAR = "(?U)\\w".r
-
-  /** Найти первую словесную букву. */
-  def firstWordChar(str: String): Char = {
-    // TODO Может надо использовать Character.isLetterOrDigit()?
-    NON_PUNCTUATION_CHAR.findFirstIn(str).get.charAt(0)
-  }
-
-  /**
-   * При сортировке по символам используется space-префикс для русских букв, чтобы они были сверху.
-   * @param c Символ.
-   * @return Строка.
-   */
-  private def russianFirst(c: Char): String = {
-    val sb = new StringBuilder(2)
-    if (Character.UnicodeBlock.of(c) == Character.UnicodeBlock.CYRILLIC) {
-      sb.append(' ')
-    }
-    sb.append(c).toString()
-  }
-
-  /**
-   * Группировка узлов по первой букве.
-   * @param prods Список узлов.
-   * @return Список сгруппированных узлов.
-   */
-  def groupNodesByNameLetter(prods: Seq[MNode]): ProdsLetterGrouped_t = {
-    prods
-      // Сгруппировать по первой букве или цифре.
-      .groupBy { node =>
-        val firstChar = firstWordChar(node.meta.basic.nameShort)
-        java.lang.Character.toUpperCase(firstChar)
-      }
-      // Отсортировать ноды по названиям в рамках группы.
-      .mapValues { nodes =>
-        nodes.sortBy(_.meta.basic.nameShort.toLowerCase)
-      }
-      .toSeq
-      // Отсортировать по первой букве группы, но русские -- сверху.
-      .sortBy { case (c, _) => russianFirst(c) }
-  }
-
-}
-
-
-import models.msc.ScRenderArgs._
-
-
-/** Аргументы для рендера market/showcase/indexTpl. */
 abstract class ScRenderArgs
   extends ScReqArgs
   with IColors
@@ -72,19 +20,22 @@ abstract class ScRenderArgs
   with IHBtnRenderArgs
   with IHBtnArgsFieldImpl
 {
+
   /** Прозрачность фона тайлов. */
   def tilesBgFillAlpha: Float
-  /** Категории для отображения. */
-  def mmcats        : Seq[MMartCategory]
-  /** Статистика по категориям. */
-  def catsStats     : Map[String, Long]
+
   /** Поисковый запрос. */
+  // TODO Coffee Удалить, используется только coffee-выдачей только в _gridAdsTpl().
   def spsr          : AdSearch
+
   /** Абсолютный URL для выхода из выдачи через кнопку. */
   def onCloseHref   : String
+
   def geoListGoBack : Option[Boolean] = None
+
   /** Логотип, если есть. */
   def logoImgOpt    : Option[MImgT] = None
+
   /** Приветствие, если есть. */
   def welcomeOpt    : Option[WelcomeRenderArgsT] = None
 
@@ -103,9 +54,6 @@ abstract class ScRenderArgs
     !syncRender && (target.isCloseable || apiVsn.forceScCloseable)
   }
 
-  /** Списка групп рекламодателей с группировкой по буквам. */
-  def shopsLetterGrouped: ProdsLetterGrouped_t
-
   override def toString: String = {
     val sb = new StringBuilder(256, "req:")
     sb.append( super.toString )
@@ -114,12 +62,9 @@ abstract class ScRenderArgs
       .append("bgColor=").append(bgColor).append('&')
       .append("fgColor=").append(fgColor).append('&')
       .append("name=").append(title).append('&')
-      .append("mmcats=[").append(mmcats.size).append(']').append('&')
-      .append("catsStats=[").append(catsStats.size).append(']').append('&')
       .append("spsr=").append(spsr.toString).append('&')
       .append("onCloseHref='").append(onCloseHref).append('\'').append('&')
       .append("geoListGoBack").append(geoListGoBack.toString).append('&')
-      .append("prodGroups=[").append(shopsLetterGrouped.size).append(']').append('&')
       .append("syncRender=").append(syncRender).append('&')
     val _lio = logoImgOpt
     if (_lio.isDefined)

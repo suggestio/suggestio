@@ -1,13 +1,13 @@
 package controllers.sc
 
 import _root_.util.di._
+import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.playx.ICurrentConf
 import _root_.util.jsa.{SmRcvResp, Js}
 import _root_.util.PlayMacroLogsI
 import models.Context
 import models.im.MImgT
 import models.jsm.ScIndexResp
-import models.msc.ScRenderArgs.ProdsLetterGrouped_t
 import models.msc._
 import play.twirl.api.Html
 import util.acl._
@@ -160,12 +160,12 @@ trait ScIndexNodeCommon
   with ScIndexConstants
   with IWelcomeUtil
   with IScUtil
-  with INodeCache
 {
 
   /** Логика формирования indexTpl для конкретного узла. */
   trait ScIndexNodeHelper extends ScIndexHelperBase {
     def adnNodeFut        : Future[MNode]
+    // TODO Coffee спилить это, используется тольков coffee-выдаче.
     def spsrFut           : Future[AdSearch]
     def onCloseHrefFut    : Future[String]
     def geoListGoBackFut  : Future[Option[Boolean]]
@@ -180,27 +180,6 @@ trait ScIndexNodeCommon
     override def titleOptFut: Future[Option[String]] = {
       adnNodeFut
         .map { _node2titleOpt }
-    }
-
-    /** Найти все id узлов-продьюсеров, как-то относящихся к текущей ноде как к ресиверу. */
-    def prodsStatsFut = adnNodeFut.flatMap { adnNode =>
-      MAd.findProducerIdsForReceiver(adnNode.id.get)
-    }
-
-    /** id найденных в [[prodsStatsFut()]] продьюсеров отмаппить на экземпляры узлов. */
-    def prodsSeqFut = prodsStatsFut flatMap { prodsStats =>
-      val prodIds = prodsStats
-        .iterator
-        .filter { _._2 > 0 }
-        .map { _._1 }
-      mNodeCache.multiGet(prodIds)
-    }
-
-    /** Сделать карту продьюсеров. */
-    def prodsFut = prodsSeqFut map { prodNodes =>
-      prodNodes
-        .map { adnNode => adnNode.id.get -> adnNode }
-        .toMap
     }
 
     override lazy val hBtnArgsFut = super.hBtnArgsFut
@@ -242,13 +221,6 @@ trait ScIndexNodeCommon
       }
     }
 
-    /** Получение данных по категориям: статистика и сами категории. */
-    def getCatsResult: Future[GetCatsSyncResult] = {
-      currAdnIdFut.flatMap { adnIdOpt =>
-        scUtil.getCats(adnIdOpt).future
-      }
-    }
-
     /** Получение карточки приветствия. */
     def welcomeAdOptFut: Future[Option[WelcomeRenderArgsT]] = {
       if (_reqArgs.withWelcomeAd) {
@@ -271,17 +243,6 @@ trait ScIndexNodeCommon
         .headOption
         .orElse(directParentIds.headOption)
         .orElse(mnode.id)
-    }
-
-    /** Для рендера списка магазинов требуется сгруппированный по первой букве список узлов. */
-    def prodsLetterGroupedFut: Future[ProdsLetterGrouped_t] = {
-      if (_reqArgs.apiVsn.withStaticNodeList) {
-        prodsSeqFut.map {
-          ScRenderArgs.groupNodesByNameLetter
-        }
-      } else {
-        Future successful Nil
-      }
     }
 
     /** Получение графического логотипа узла, если возможно. */
@@ -310,8 +271,6 @@ trait ScIndexNodeCommon
       val _onCloseHrefFut     = onCloseHrefFut
       val _geoListGoBackFut   = geoListGoBackFut
       val _spsrFut            = spsrFut
-      val _getCatsResult      = getCatsResult
-      val _prodsLetGrpFut     = prodsLetterGroupedFut
       val _adnNodeFut         = adnNodeFut
       val _logoImgOptFut      = logoImgOptFut
       val _colorsFut          = colorsFut
@@ -319,12 +278,10 @@ trait ScIndexNodeCommon
       val _topLeftBtnHtmlFut  = topLeftBtnHtmlFut
       for {
         waOpt           <- welcomeAdOptFut
-        GetCatsSyncResult(_catsStats, _mmCats) <- _getCatsResult
         adnNode         <- _adnNodeFut
         _spsr           <- _spsrFut
         _onCloseHref    <- _onCloseHrefFut
         _geoListGoBack  <- _geoListGoBackFut
-        _prodsLetGrp    <- _prodsLetGrpFut
         _logoImgOpt     <- _logoImgOptFut
         _colors         <- _colorsFut
         _hBtnArgs       <- _hBtnArgsFut
@@ -337,14 +294,11 @@ trait ScIndexNodeCommon
           override def hBtnArgs           = _hBtnArgs
           override def topLeftBtnHtml     = _topLeftBtnHtml
           override def title              = adnNode.meta.basic.name
-          override def mmcats             = _mmCats
-          override def catsStats          = _catsStats
           override def spsr               = _spsr
           override def onCloseHref        = _onCloseHref
           override def logoImgOpt         = _logoImgOpt
           override def geoListGoBack      = _geoListGoBack
           override def welcomeOpt         = waOpt
-          override def shopsLetterGrouped = _prodsLetGrp
         }
       }
     }
@@ -353,10 +307,18 @@ trait ScIndexNodeCommon
 
   /** Для обычной корневой выдачи обычно используется этот трейт вместо ScIndexNodeHelper. */
   trait ScIndexNodeSimpleHelper extends ScIndexNodeHelper {
-    override def spsrFut = adnNodeFut map { adnNode =>
-      new AdSearch {
-        override def levels = List(AdShowLevels.LVL_START_PAGE)
-        override def receiverIds = List(adnNode.id.get)
+    override def spsrFut = for {
+      mnode <- adnNodeFut
+    } yield {
+      new AdSearchImpl {
+        override def outEdges: Seq[ICriteria] = {
+          val cr = Criteria(
+            nodeIds     = mnode.id.toSeq,
+            predicates  = Seq( MPredicates.Receiver ),
+            sls         = Seq( AdShowLevels.LVL_START_PAGE )
+          )
+          Seq(cr)
+        }
       }
     }
 

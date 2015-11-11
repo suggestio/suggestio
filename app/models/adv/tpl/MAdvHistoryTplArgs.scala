@@ -1,6 +1,6 @@
 package models.adv.tpl
 
-import models.{MAd, MNode}
+import models.MNode
 
 /**
   * Suggest.io
@@ -11,7 +11,7 @@ import models.{MAd, MNode}
 trait IAdvHistoryTplArgs {
 
   /** Размещаемая рекламная карточка. */
-  def mad           : MAd
+  def mad           : MNode
 
   /** Узел-продьюсер размещаемой карточки. */
   def producer      : MNode
@@ -23,7 +23,7 @@ trait IAdvHistoryTplArgs {
 
 
 case class MAdvHistoryTplArgs(
-  override val mad           : MAd,
+  override val mad           : MNode,
   override val producer      : MNode,
   override val currAdvsArgs  : ICurrentAdvsTplArgs
 )

@@ -190,7 +190,7 @@ case class RenderArgs(
   withContainer : Boolean             = false,
   adnNodeOpt    : Option[MNode]       = None,
   advExtTgs     : Seq[MExtTarget]     = Nil,
-  madOpt        : Option[MAd]         = None,
+  madOpt        : Option[MNode]       = None,
   advOkOpt      : Option[MAdvOk]      = None,
   advReqOpt     : Option[MAdvReq]     = None,
   advRefuseOpt  : Option[MAdvRefuse]  = None,

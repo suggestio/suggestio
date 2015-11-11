@@ -1,13 +1,14 @@
 package controllers.sc
 
-import io.suggest.ym.model.ad.AdsSearchArgsDfltImpl
+import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.ym.model.common.AdShowLevels
-import models.{MNode, MAd}
+import models.{MNode, AdSearchImpl}
 import models.im.DevScreen
 import models.msc.{MScApiVsn, ScReqArgsDflt, ScReqArgs}
 import play.api.mvc.Result
 import util.acl.AbstractRequestWithPwOpt
 import util.di.INodeCache
+import util.n2u.IN2NodesUtilDi
 
 import scala.concurrent.Future
 
@@ -22,6 +23,7 @@ trait ScIndexAdOpen
   extends ScFocusedAds
   with ScIndexNodeCommon
   with INodeCache
+  with IN2NodesUtilDi
 {
 
   /** Тело экшена возврата медиа-кнопок расширено поддержкой переключения на index-выдачу узла-продьюсера
@@ -29,10 +31,14 @@ trait ScIndexAdOpen
   override protected def _focusedAds(logic: FocusedAdsLogicHttp)
                                     (implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
     val resFut = for {
+      madOpt <- MNode.maybeGetById( logic._adSearch.openIndexAdId )
+
       // .get приведут к NSEE, это нормально.
       producerId <- {
-        MAd.maybeGetById( logic._adSearch.openIndexAdId )
-          .map(_.get.producerId)
+        val prodId = madOpt
+          .flatMap(n2NodesUtil.madProducerId)
+          .get
+        Future successful prodId
       }
 
       if logic.is3rdPartyProducer( producerId )
@@ -40,12 +46,17 @@ trait ScIndexAdOpen
       producer <- {
         // 2015.sep.16: Нельзя перепрыгивать на продьюсера, у которого не больше одной карточки на главном экране.
         val prodAdsCountFut: Future[Long] = {
-          val args = new AdsSearchArgsDfltImpl {
-            override def receiverIds  = Seq(producerId)
-            override def levels       = Seq(AdShowLevels.LVL_START_PAGE)
+          val args = new AdSearchImpl {
+            override def outEdges: Seq[ICriteria] = {
+              val cr = Criteria(
+                nodeIds = Seq(producerId),
+                sls     = Seq(AdShowLevels.LVL_START_PAGE)
+              )
+              Seq(cr)
+            }
             override def limit        = 2
           }
-          MAd.dynCount(args)
+          MNode.dynCount(args)
         }
 
         val prodFut = mNodeCache.getById(producerId)
@@ -98,7 +109,11 @@ trait ScIndexAdOpen
       override implicit def _request  = request
       override def _reqArgs: ScReqArgs = new ScReqArgsDflt {
         private val s = focLogic._adSearch
-        override def prevAdnId: Option[String]  = s.receiverIds.headOption
+        override def prevAdnId: Option[String]  = {
+          n2NodesUtil.receiverIds(s.outEdges)
+            .toStream
+            .headOption
+        }
         override def screen: Option[DevScreen]  = s.screen
         override def apiVsn: MScApiVsn          = s.apiVsn
         override def withWelcomeAd              = true

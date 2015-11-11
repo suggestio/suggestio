@@ -262,12 +262,10 @@ trait ScIndexGeo
     override def currAdnIdFut = Future successful None
 
     override def renderArgsFut: Future[ScRenderArgs] = {
-      val _gcrFut = scUtil.getCats(None).future
       val _colorsFut = colorsFut
       val _topLeftBtnHtmlFut = topLeftBtnHtmlFut
       val _hBtnArgsFut = hBtnArgsFut
       for {
-        GetCatsSyncResult(_catsStats, _mmcats) <- _gcrFut
         _colors         <- _colorsFut
         _topLeftBtnHtml <- _topLeftBtnHtmlFut
         _hBtnArgs       <- _hBtnArgsFut
@@ -279,14 +277,17 @@ trait ScIndexGeo
           override def hBtnArgs           = _hBtnArgs
           override def topLeftBtnHtml     = _topLeftBtnHtml
           override def title              = scUtil.SITE_NAME_GEO
-          override def mmcats             = _mmcats
-          override def catsStats          = _catsStats
-          override lazy val spsr = new AdSearchImpl {
-            override def levels = List(AdShowLevels.LVL_START_PAGE)
+          override def spsr = new AdSearchImpl {
+            override def outEdges: Seq[ICriteria] = {
+              val cr = Criteria(
+                predicates = Seq( MPredicates.Receiver ),
+                sls        = Seq( AdShowLevels.LVL_START_PAGE )
+              )
+              Seq(cr)
+            }
             override def geo    = GeoIp
           }
           override def onCloseHref = ONCLOSE_HREF_DFLT
-          override def shopsLetterGrouped = Nil
         }
       }
     }

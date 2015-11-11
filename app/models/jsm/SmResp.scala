@@ -49,9 +49,7 @@ trait TileAdsResp extends Action with Blocks
 case class FindAdsResp(blocks: Seq[JsString]) extends TileAdsResp {
   override def action = "findAds"
 }
-case class SearchAdsResp(blocks: Seq[JsString]) extends TileAdsResp {
-  override def action = "searchAds"
-}
+
 
 trait HtmlOpt extends SmJsonResp {
   def htmlOpt: Option[JsString]

@@ -2,8 +2,8 @@ package models.mext
 
 import io.suggest.model.geo.GeoPoint
 import io.suggest.ym.model.common.MImgInfoMeta
-import models.adv.{MExtTarget, MExtReturn}
-import models.{MNode, MAd, MImgSizeT}
+import models.adv.{MExtReturn, MExtTarget}
+import models.{MImgSizeT, MNode}
 import play.api.libs.oauth._
 import play.api.libs.ws.WSClient
 
@@ -47,18 +47,25 @@ trait IOAuth1Support {
 
 /** Аргументы для вызова [[IOAuth1Support]].mkPost(). */
 trait IOa1MkPostArgs {
+
   /** Экземпляр рекламной карточки. */
-  def mad: MAd
+  def mad: MNode
+
   /** access token. */
   def acTok: RequestToken
+
   /** Геоинфа. */
   def geo: Option[GeoPoint]
+
   /** Узел, с которого идёт постинг. */
   def mnode: MNode
+
   /** Генератор ссылки возврата для юзера. */
   def returnTo: MExtReturn
+
   /** Таргет, т.е. цель размещения. */
   def target: MExtTarget
+
   /** Приложения к посту, если есть. */
   def attachments: TraversableOnce[IPostAttachmentId]
 

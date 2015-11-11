@@ -5,14 +5,14 @@ import java.util.NoSuchElementException
 import _root_.util.blocks.BgImg
 import _root_.util.di.{IScUtil, IScNlUtil, IScStatUtil}
 import _root_.util.jsa.{JsAppendById, JsAction, SmRcvResp, Js}
+import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.playx.ICurrentConf
 import models.im.make.{MakeResult, Makers}
-import models.msc.{MGridParams, MFindAdsResp, MFoundAd, MScApiVsns}
+import models.msc._
 import play.api.mvc.Result
 import util.jsa.cbca.grid._
-import io.suggest.ym.model.common.SlNameTokenStr
 import models.blk._
-import models.jsm.{FindAdsResp, SearchAdsResp}
+import models.jsm.FindAdsResp
 import play.twirl.api.Html
 import util._
 import util.acl._
@@ -34,6 +34,7 @@ trait ScAdsTileBase
   with ICurrentConf
   with IScNlUtil
   with IScUtil
+  with ScCssUtil
 {
 
   /** Изменябельная логика обработки запроса рекламных карточек для плитки. */
@@ -81,17 +82,9 @@ trait ScAdsTileBase
     lazy val gsiFut = _adSearch.geo.geoSearchInfoOpt
 
     lazy val adSearch2Fut: Future[AdSearch] = {
-      if (_adSearch.receiverIds.nonEmpty) {
-        // TODO Можно спилить этот костыль?
-        val result = new AdSearchWrapper {
-          override def _dsArgsUnderlying = _adSearch
-          override val levels: Seq[SlNameTokenStr] = (AdShowLevels.LVL_START_PAGE :: _adSearch.levels.toList).distinct
-        }
-        Future successful result
-
-      } else if (_adSearch.geo.isWithGeo) {
-        // TODO При таком поиске надо использовать cache-controle: private, если ip-геолокация.
+      if (_adSearch.geo.isWithGeo) {
         // При геопоиске надо найти узлы, географически подходящие под запрос. Затем, искать карточки по этим узлам.
+        // TODO При таком поиске надо использовать cache-controle: private, если ip-геолокация.
         scNlUtil.detectCurrentNode(_adSearch.geo, _adSearch.geo.geoSearchInfoOpt)
           .map { gdr => Some(gdr.node) }
           .recover { case ex: NoSuchElementException => None }
@@ -99,7 +92,14 @@ trait ScAdsTileBase
             case Some(adnNode) =>
               new AdSearchWrapper {
                 override def _dsArgsUnderlying = _adSearch
-                override def receiverIds = List(adnNode.id.get)
+                override def outEdges: Seq[ICriteria] = {
+                  val p = MPredicates.Receiver
+                  super.outEdges
+                    .iterator
+                    .filter { e => !e.predicates.contains(p) }
+                    .++( Iterator(Criteria(adnNode.id.toSeq, Seq(p))) )
+                    .toSeq
+                }
                 override def geo: GeoMode = GeoNone
               }
             case None =>
@@ -113,15 +113,13 @@ trait ScAdsTileBase
           }
 
       } else {
-        // Слегка неожиданные параметры запроса.
-        LOGGER.warn(logPrefix + " Strange search request: " + _adSearch)
         Future successful _adSearch
       }
     }
 
-    lazy val madsFut: Future[Seq[MAd]] = {
+    lazy val madsFut: Future[Seq[MNode]] = {
       adSearch2Fut flatMap { adSearch2 =>
-        MAd.dynSearch(adSearch2)
+        MNode.dynSearch(adSearch2)
       }
     }
 
@@ -283,11 +281,7 @@ trait ScAdsTile
     override def resultFut: Future[Result] = {
       // Запускаем асинхронную сборку ответа.
       val smRcvRespFut = madsRenderedFut map { madsRendered =>
-        val resp = if (catsRequested) {
-          SearchAdsResp(madsRendered)
-        } else {
-          FindAdsResp(madsRendered)
-        }
+        val resp = FindAdsResp(madsRendered)
         SmRcvResp(resp)
       }
       // ссылку на css блоков надо составить и передать клиенту отдельно от тела основного ответа прямо в <head>.

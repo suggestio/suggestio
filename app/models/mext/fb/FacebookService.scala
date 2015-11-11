@@ -1,12 +1,11 @@
 package models.mext.fb
 
 import _root_.util.adv.ExtServiceActor
+import io.suggest.adv.ext.model.im.FbWallImgSizesScalaEnumT
 import io.suggest.common.geom.d2.INamedSize2di
+import models.MNode
 import models.blk.SzMult_t
 import models.im.OutImgFmts
-import models.MAd
-import io.suggest.adv.ext.model.im.FbWallImgSizesScalaEnumT
-
 import models.mext.IExtService
 import util.PlayMacroLogsImpl
 
@@ -40,7 +39,7 @@ trait FacebookService extends IExtService with FbLoginProvider with PlayMacroLog
   }
 
   /** В фейсбук если не постить горизонтально, то будет фотография на пасспорт вместо иллюстрации. */
-  override def isAdvExtWide(mad: MAd) = true
+  override def isAdvExtWide(mad: MNode) = true
 
   // akamaihd пересжимает jpeg в jpeg, png в png. Если ШГ, то надо слать увеличенный jpeg.
   override def imgFmtDflt = OutImgFmts.PNG
