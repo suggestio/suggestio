@@ -9,6 +9,7 @@ import models._
 import util.acl.PersonWrapper.PwOpt_t
 import util.async.AsyncUtil
 import util.di.{IErrorHandler, IDb, INodeCache}
+import util.n2u.IN2NodesUtilDi
 import scala.concurrent.Future
 import util.{PlayMacroLogsDyn, PlayMacroLogsI}
 
@@ -53,6 +54,7 @@ trait CanEditAd
   with IDb
   with OnUnauthUtilCtl
   with INodeCache
+  with IN2NodesUtilDi
 {
 
   /** Редактировать карточку может только владелец магазина. */
@@ -86,12 +88,13 @@ trait CanEditAd
       val pwOpt = PersonWrapper.getFromRequest(request)
       pwOpt match {
         case Some(pw) =>
-          val madOptFut = MAd.getById(adId)
+          val madOptFut = MNode.getById(adId)
           val srmFut = SioReqMd.fromPwOpt(pwOpt)
           val hasAdvFut = hasAdv(adId)
           madOptFut flatMap {
             case Some(mad) =>
-              val adnNodeOpt = mNodeCache.getById(mad.producerId)
+              val prodIdOpt = n2NodesUtil.madProducerId(mad)
+              val prodNodeOptFut = mNodeCache.maybeGetByIdCached( prodIdOpt )
               val isSuperuser = PersonWrapper.isSuperuser(pwOpt)
               hasAdvFut flatMap { hasAdv =>
                 if (hasAdv && !isSuperuser) {
@@ -99,18 +102,18 @@ trait CanEditAd
                   forbiddenFut("Ad is advertised somewhere. Cannot edit during advertising.", request)
                 } else {
                   if (isSuperuser) {
-                    mNodeCache.getById(mad.producerId).flatMap { adnNodeOpt =>
+                    prodNodeOptFut.flatMap { adnNodeOpt =>
                       srmFut flatMap { srm =>
                         val req1 = RequestWithAdAndProducer(mad, request, pwOpt, srm, adnNodeOpt.get)
                         block(req1)
                       }
                     }
                   } else {
-                    adnNodeOpt flatMap { adnNodeOpt =>
+                    prodNodeOptFut flatMap { adnNodeOpt =>
                       adnNodeOpt
                         .filter { adnNode => IsAdnNodeAdmin.isAdnNodeAdminCheck(adnNode, pwOpt) }
                         .fold {
-                          LOGGER.debug(s"isEditAllowed(${mad.id.get}, $pwOpt): Not a producer[${mad.producerId}] admin.")
+                          LOGGER.debug(s"isEditAllowed(${mad.id.get}, $pwOpt): Not a producer[$prodIdOpt] admin.")
                           forbiddenFut("No node admin rights", request)
                         } { adnNode =>
                           srmFut flatMap { srm =>
@@ -169,7 +172,7 @@ abstract class AbstractRequestWithAdAndProducer[A](request: Request[A])
  * @tparam A Параметр типа реквеста.
  */
 case class RequestWithAdAndProducer[A](
-  mad       : MAd,
+  mad       : MNode,
   request   : Request[A],
   pwOpt     : PwOpt_t,
   sioReqMd  : SioReqMd,
@@ -177,7 +180,7 @@ case class RequestWithAdAndProducer[A](
 )
   extends AbstractRequestWithAdAndProducer(request)
 {
-  def producerId = mad.producerId
+  def producerId = producer.id.get
 }
 
 

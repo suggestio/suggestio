@@ -123,7 +123,7 @@ class Migration @Inject() (
     } yield {
       mnode0.copy(
         edges = mnode0.edges.copy(
-          out = mnode0.edges.out ++ MNodeEdges.edgesToMapIter(
+          out = mnode0.edges.out ++ MNodeEdges.edgesToMapIter1(
             logoEdgeOpt.iterator ++ galEdges.iterator
           )
         ),

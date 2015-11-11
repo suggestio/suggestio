@@ -4,9 +4,9 @@ import java.io.FileInputStream
 
 import com.google.inject.Inject
 import io.suggest.event.SioNotifierStaticClientI
-import models.MAd
+import models.MNode
 import models.ai._
-import org.apache.tika.metadata.{TikaMetadataKeys, Metadata}
+import org.apache.tika.metadata.{Metadata, TikaMetadataKeys}
 import org.apache.tika.sax.TeeContentHandler
 import org.clapper.scalasti.ST
 import org.elasticsearch.client.Client
@@ -87,8 +87,8 @@ class MadAiUtil @Inject() (
    * @param targetAds Целевые карточки, которые нужно обновить с помощью рендереров и карточки-шаблона.
    * @return Отрендеренные карточки в неопределённом порядке.
    */
-  def renderTplAd(tplAd: MAd, renderers: Seq[MAiRenderer], args: Map[String, ContentHandlerResult],
-                  targetAds: Seq[MAd]): Future[Seq[MAd]] = {
+  def renderTplAd(tplAd: MNode, renderers: Seq[MAiRenderer], args: Map[String, ContentHandlerResult],
+                  targetAds: Seq[MNode]): Future[Seq[MNode]] = {
     // Параллельно маппим все рекламные карточки. Это нарушает исходный порядок, но на это плевать.
     Future.traverse( targetAds ) { targetAd =>
       renderers.foldLeft(Future successful targetAd) {
@@ -107,7 +107,7 @@ class MadAiUtil @Inject() (
    * @param madAi id рекламной карточки.
    * @return Фьючерс с отрендеренными карточками, которые ещё не сохранены.
    */
-  def dryRun(madAi: MAiMad): Future[Seq[MAd]] = {
+  def dryRun(madAi: MAiMad): Future[Seq[MNode]] = {
     // Запустить получение результата по ссылки от remote-сервера.
     val urlRenderCtx = new UrlRenderContextBeanImpl()
     val renderArgsFut = Future.traverse( madAi.sources ) { source =>
@@ -135,9 +135,9 @@ class MadAiUtil @Inject() (
     }
 
     // Запустить в фоне получение шаблонной карточки
-    val tplMadFut = MAd.getById(madAi.tplAdId)
+    val tplMadFut = MNode.getById(madAi.tplAdId)
       .map(_.get)
-    val targetAdsFut = MAd.multiGetRev(madAi.targetAdIds)
+    val targetAdsFut = MNode.multiGetRev(madAi.targetAdIds)
       .filter { mads => mads.size == madAi.targetAdIds.size}
 
     // Отрендерить шаблонную карточку с помощью цепочки рендереров.

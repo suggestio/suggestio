@@ -1,11 +1,12 @@
 package util.lk
 
 import com.google.inject.Inject
+import io.suggest.common.fut.FutureUtil
 import io.suggest.di.IExecutionContext
 import models.blk.SzMult_t
-import models.im.make.{Makers, MakeArgs}
-import models.{blk, MAd}
-import models.im.{MImg, DevScreen}
+import models.im.DevScreen
+import models.im.make.{MakeArgs, Makers}
+import models.{MNode, blk}
 import util.blocks.BgImg
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -31,22 +32,25 @@ class LkAdUtil @Inject() (
    * @param devScreenOpt Инфа по скрину.
    * @return Фьючерс с контейнером аргументов для рендера блока.
    */
-  def tiledAdBrArgs(mad: MAd, devScreenOpt: Option[DevScreen] = None): Future[blk.RenderArgs] = {
+  def tiledAdBrArgs(mad: MNode, devScreenOpt: Option[DevScreen] = None): Future[blk.RenderArgs] = {
     val szMult = TILE_SZ_MULT
-    val bgImgOptFut = BgImg.getBgImg(mad) match {
-      case Some(bgImgInfo) =>
-        val wArgs = MakeArgs(
-          img           = MImg(bgImgInfo),
-          blockMeta     = mad.blockMeta,
-          szMult        = szMult,
-          devScreenOpt  = devScreenOpt
-        )
-        Makers.Block.icompile(wArgs)
-          .map(Some.apply)
 
-      case None =>
-        Future successful None
+    val bgImgFutOpt = for {
+      bm    <- mad.ad.blockMeta
+      bgImg <- BgImg.getBgImg(mad)
+    } yield {
+      val wArgs = MakeArgs(
+        img           = bgImg,
+        blockMeta     = bm,
+        szMult        = szMult,
+        devScreenOpt  = devScreenOpt
+      )
+      Makers.Block.icompile(wArgs)
+        .map(Some.apply)
     }
+
+    val bgImgOptFut = FutureUtil.optFut2futOpt(bgImgFutOpt)(identity)
+
     for (bgImgOpt <- bgImgOptFut) yield {
       blk.RenderArgs(
         mad       = mad,

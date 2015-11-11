@@ -1,6 +1,6 @@
 package util.ai.mad.render
 
-import models.MAd
+import models.MNode
 import models.ai.ContentHandlerResult
 
 import scala.concurrent.Future
@@ -23,5 +23,5 @@ trait MadAiRenderedT {
    * @param args Аргументы рендера.
    * @return Фьючерс с новой карточкой.
    */
-  def renderTplAd(tplAd: MAd, args: Map[String, ContentHandlerResult], targetAd: MAd): Future[MAd]
+  def renderTplAd(tplAd: MNode, args: Map[String, ContentHandlerResult], targetAd: MNode): Future[MNode]
 }

@@ -2,7 +2,8 @@ package util.billing
 
 import com.google.inject.{Inject, Singleton}
 import de.jollyday.parameter.UrlManagerParameter
-import io.suggest.ym.model.common.EMBlockMetaI
+import io.suggest.common.fut.FutureUtil
+import io.suggest.model.n2.edge.{MNodeEdges, MEdgeInfo}
 import models._
 import models.adv.{MAdvReq, MAdvRefuse, MAdvOk, IAdvTerms}
 import models.adv.geo.AdvFormEntry
@@ -12,16 +13,18 @@ import models.mbill._
 import org.joda.time.{DateTime, LocalDate}
 import org.joda.time.DateTimeConstants._
 import play.api.Configuration
+import util.async.AsyncUtil
+import util.n2u.N2NodesUtil
 import scala.annotation.tailrec
 import util.PlayMacroLogsImpl
 import play.api.db.Database
 import io.suggest.ym.parsers.Price
 import java.sql.Connection
-import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import de.jollyday.HolidayManager
 import java.net.URL
 import controllers.routes
 import scala.collection.JavaConversions._
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -31,6 +34,7 @@ import scala.collection.JavaConversions._
  */
 @Singleton
 class MmpDailyBilling @Inject() (
+  n2NodesUtil             : N2NodesUtil,
   configuration           : Configuration,
   db                      : Database
 )
@@ -130,14 +134,15 @@ class MmpDailyBilling @Inject() (
    * @param mad Рекламная карточка или иная реализация блочного документа.
    * @return Площадь карточки.
    */
-  def getAdModulesCount(mad: EMBlockMetaI): Int = {
+  def getAdModulesCount(mad: MNode): Int = {
+    val bm = mad.ad.blockMeta.get   // TODO Следует ли отрабатывать ситуацию, когда нет BlockMeta?
     // Мультипликатор по ширине
-    val wmul = BlockWidths(mad.blockMeta.width).relSz
+    val wmul = BlockWidths(bm.width).relSz
     // Мультипликатор по высоте
-    val hmul = BlockHeights(mad.blockMeta.height).relSz
+    val hmul = BlockHeights(bm.height).relSz
     val blockModulesCount: Int = wmul * hmul
     trace(
-      s"getAdModulesCount(${mad.id.getOrElse("?")}): blockModulesCount = $wmul * $hmul = $blockModulesCount ;; blockId = ${mad.blockMeta.blockId}"
+      s"getAdModulesCount(${mad.id.getOrElse("?")}): blockModulesCount = $wmul * $hmul = $blockModulesCount ;; blockId = ${bm.blockId}"
     )
     blockModulesCount
   }
@@ -154,28 +159,74 @@ class MmpDailyBilling @Inject() (
    * @param mad Размещаемая рекламная карточка.
    * @param adves2 Требования по размещению карточки на узлах.
    */
-  def getAdvPrices(mad: MAd, adves2: List[AdvFormEntry]): MAdvPricing = {
-    db.withConnection { implicit c =>
-      val someTrue = Some(true)
-      val prices = adves2.foldLeft[List[Price]] (Nil) { (acc, adve) =>
-        val rcvrContract = MContract.findForAdn(adve.adnId, isActive = someTrue)
+  def getAdvPrices(mad: MNode, adves2: List[AdvFormEntry]): Future[MAdvPricing] = {
+    // 2015.nov.11 Метод стал очень асинхронным, хотя до этого был вообще синхронным.
+    val someTrue = Some(true)
+    // Параллельно собираем данные о ценниках для всех контрактов узла.
+    val pricesFut = Future.traverse(adves2) { adve =>
+      val contractsFut = Future {
+        db.withConnection { implicit c =>
+          MContract.findForAdn(adve.adnId, isActive = someTrue)
+        }
+      }(AsyncUtil.jdbcExecutionContext)
+
+      val rcvrContractFut = for (contracts <- contractsFut) yield {
+        contracts
           .sortBy(_.id.get)
           .head
-        val contractId = rcvrContract.id.get
-        val rcvrPricing = MTariffDaily.getLatestForContractId(contractId).get
-        val bmc = getAdModulesCount(mad)
-        val advPrice = calculateAdvPrice(bmc, rcvrPricing, adve)
-        advPrice :: acc
       }
-      val prices2 = prices
-        .groupBy { _.currency.getCurrencyCode }
-        .mapValues { p => p.head.currency -> p.map(_.price).sum }
-        .values
-      val mbb = MBalance.getByAdnId(mad.producerId).get
+
+      for {
+        rcvrContract <- rcvrContractFut
+        rcvrPricing  <- {
+          val contractId = rcvrContract.id.get
+          Future {
+            db.withConnection { implicit c =>
+              MTariffDaily.getLatestForContractId(contractId).get
+            }
+          }(AsyncUtil.jdbcExecutionContext)
+        }
+      } yield {
+        val bmc = getAdModulesCount(mad)
+        calculateAdvPrice(bmc, rcvrPricing, adve)
+      }
+    }
+
+    val prodIdOpt = n2NodesUtil.madProducerId(mad)
+
+    // Узнаём финансовое состояние кошелька узла-продьюсера карточки.
+    val mbbFut = FutureUtil.optFut2futOpt(prodIdOpt) { prodId =>
+      Future {
+        db.withConnection { implicit c =>
+          MBalance.getByAdnId(prodId)
+        }
+      }(AsyncUtil.jdbcExecutionContext)
+    } map {
+      _.get
+    }
+
+    // Строим список цен с валютами. По идее тут должна быть ровно одна цена.
+    val prices2Fut = for (prices <- pricesFut) yield {
+      prices
+        .groupBy {
+          _.currency.getCurrencyCode
+        }
+        .valuesIterator
+        .map { p =>
+          p.head.currency -> p.map(_.price).sum
+        }
+        .toSeq
+    }
+
+    // Когда всё готово, определить достаточность бабла и вернуть ответ.
+    for {
+      mbb       <- mbbFut
+      prices2   <- prices2Fut
+    } yield {
       // Если есть разные валюты, то операция уже невозможна.
       val hasEnoughtMoney = prices2.size <= 1 && {
         prices2.headOption.exists { price =>
-          price._1.getCurrencyCode == mbb.currencyCode  &&  price._2 <= mbb.amount
+          price._1.getCurrencyCode == mbb.currencyCode && price._2 <= mbb.amount
         }
       }
       MAdvPricing(prices2, hasEnoughtMoney)
@@ -198,40 +249,42 @@ class MmpDailyBilling @Inject() (
    * @param mad рекламная карточка.
    * @param advs Список запросов на размещение.
    */
-  def mkAdvReqs(mad: MAd, advs: List[AdvFormEntry]) {
-    import mad.producerId
-    db.withTransaction { implicit c =>
-      // Вешаем update lock на баланс чтобы избежать блокирования суммы, списанной в параллельном треде, и дальнейшего ухода в минус.
-      val mbb0 = MBalance.getByAdnId(producerId, SelectPolicies.UPDATE).get
-      val someTrue = Some(true)
-      val mbc = MContract.findForAdn(producerId, isActive = someTrue).head
-      val prodCurrencyCode = mbb0.currencyCode
-      advs.foreach { advEntry =>
-        val rcvrContract = getOrCreateContract(advEntry.adnId)
-        val contractId = rcvrContract.id.get
-        val rcvrMmp = MTariffDaily.getLatestForContractId(contractId).get
-        val bmc = getAdModulesCount(mad)
-        // Фильтруем уровни отображения в рамках sink'а.
-        val advPrice = calculateAdvPrice(bmc, rcvrMmp, advEntry)
-        val rcvrCurrencyCode = advPrice.currency.getCurrencyCode
-        assert(
-          rcvrCurrencyCode == prodCurrencyCode,
-          s"Rcvr node ${advEntry.adnId} currency ($rcvrCurrencyCode) does not match to producer node $producerId currency ($prodCurrencyCode)"
-        )
-        MAdvReq(
-          adId        = mad.id.get,
-          amount      = advPrice.price,
-          prodContractId = mbc.id.get,
-          prodAdnId   = producerId,
-          rcvrAdnId   = advEntry.adnId,
-          dateStart   = advEntry.dateStart.toDateTimeAtStartOfDay,
-          dateEnd     = date2DtAtEndOfDay(advEntry.dateEnd),
-          showLevels  = advEntry.showLevels
-        ).save
-        // Нужно заблокировать на счете узла необходимую сумму денег.
-        mbb0.updateBlocked(advPrice.price)
+  def mkAdvReqs(mad: MNode, advs: List[AdvFormEntry]): Future[_] = {
+    val producerId = n2NodesUtil.madProducerId(mad).get
+    Future {
+      db.withTransaction { implicit c =>
+        // Вешаем update lock на баланс чтобы избежать блокирования суммы, списанной в параллельном треде, и дальнейшего ухода в минус.
+        val mbb0 = MBalance.getByAdnId(producerId, SelectPolicies.UPDATE).get
+        val someTrue = Some(true)
+        val mbc = MContract.findForAdn(producerId, isActive = someTrue).head
+        val prodCurrencyCode = mbb0.currencyCode
+        advs.foreach { advEntry =>
+          val rcvrContract = getOrCreateContract(advEntry.adnId)
+          val contractId = rcvrContract.id.get
+          val rcvrMmp = MTariffDaily.getLatestForContractId(contractId).get
+          val bmc = getAdModulesCount(mad)
+          // Фильтруем уровни отображения в рамках sink'а.
+          val advPrice = calculateAdvPrice(bmc, rcvrMmp, advEntry)
+          val rcvrCurrencyCode = advPrice.currency.getCurrencyCode
+          assert(
+            rcvrCurrencyCode == prodCurrencyCode,
+            s"Rcvr node ${advEntry.adnId} currency ($rcvrCurrencyCode) does not match to producer node $producerId currency ($prodCurrencyCode)"
+          )
+          MAdvReq(
+            adId        = mad.id.get,
+            amount      = advPrice.price,
+            prodContractId = mbc.id.get,
+            prodAdnId   = producerId,
+            rcvrAdnId   = advEntry.adnId,
+            dateStart   = advEntry.dateStart.toDateTimeAtStartOfDay,
+            dateEnd     = date2DtAtEndOfDay(advEntry.dateEnd),
+            showLevels  = advEntry.showLevels
+          ).save
+          // Нужно заблокировать на счете узла необходимую сумму денег.
+          mbb0.updateBlocked(advPrice.price)
+        }
       }
-    }
+    }(AsyncUtil.jdbcExecutionContext)
   }
 
   def date2DtAtEndOfDay(ld: LocalDate) = ld.toDateTimeAtStartOfDay.plusDays(1).minusSeconds(1)
@@ -258,27 +311,29 @@ class MmpDailyBilling @Inject() (
    * @param mad Рекламные карточки.
    * @param advs Список размещений.
    */
-  def mkAdvsOk(mad: MAd, advs: List[AdvFormEntry]): List[MAdvOk] = {
-    import mad.producerId
-    db.withTransaction { implicit c =>
-      advs map { advEntry =>
-        MAdvOk(
-          adId        = mad.id.get,
-          amount      = 0F,
-          prodAdnId   = producerId,
-          rcvrAdnId   = advEntry.adnId,
-          dateStart   = advEntry.dateStart.toDateTimeAtStartOfDay,
-          dateEnd     = date2DtAtEndOfDay(advEntry.dateEnd),
-          showLevels  = advEntry.showLevels,
-          dateStatus  = DateTime.now(),
-          prodTxnId   = None,
-          rcvrTxnIds  = Nil,
-          isOnline    = false,
-          isPartner   = true,
-          isAuto      = false
-        ).save
+  def mkAdvsOk(mad: MNode, advs: List[AdvFormEntry]): Future[List[MAdvOk]] = {
+    val producerId = n2NodesUtil.madProducerId(mad).get
+    Future {
+      db.withTransaction { implicit c =>
+        advs map { advEntry =>
+          MAdvOk(
+            adId        = mad.id.get,
+            amount      = 0F,
+            prodAdnId   = producerId,
+            rcvrAdnId   = advEntry.adnId,
+            dateStart   = advEntry.dateStart.toDateTimeAtStartOfDay,
+            dateEnd     = date2DtAtEndOfDay(advEntry.dateEnd),
+            showLevels  = advEntry.showLevels,
+            dateStatus  = DateTime.now(),
+            prodTxnId   = None,
+            rcvrTxnIds  = Nil,
+            isOnline    = false,
+            isPartner   = true,
+            isAuto      = false
+          ).save
+        }
       }
-    }
+    }(AsyncUtil.jdbcExecutionContext)
   }
 
 
@@ -399,20 +454,22 @@ class MmpDailyBilling @Inject() (
   /**
    * Процессинг отказа в запросе размещения рекламной карточки.
    * @param advReq Запрос размещения.
-   * @param reason Причина отказа.
    * @return Экземпляр сохранённого MAdvRefuse.
    */
-  def refuseAdvReq(advReq: MAdvReq, reason: String): MAdvRefuse = {
-    val advRefused = MAdvRefuse(advReq, reason, DateTime.now)
-    db.withTransaction { implicit c =>
-      val rowsDeleted = advReq.delete
-      assertAdvsReqRowsDeleted(rowsDeleted, 1, advReq.id.get)
-      val advr = advRefused.save
-      // Разблокировать средства на счёте.
-      MBalance.blockAmount(advr.prodAdnId, -advr.amount)  // TODO Нужно ли округлять, чтобы blocked в минус не уходило из-за неточностей float/double?
-      // Вернуть сохранённый refused
-      advr
-    }
+  def refuseAdvReq(advReq: MAdvReq, advRefuse: MAdvRefuse): Future[_] = {
+    Future {
+      db.withTransaction { implicit c =>
+        refuseAdvReqTxn(advReq, advRefuse)
+      }
+    }(AsyncUtil.jdbcExecutionContext)
+  }
+  def refuseAdvReqTxn(advReq: MAdvReq, advRefused: MAdvRefuse)(implicit c: Connection): Unit = {
+    val rowsDeleted = advReq.delete
+    assertAdvsReqRowsDeleted(rowsDeleted, 1, advReq.id.get)
+    val advr = advRefused.save
+    // Разблокировать средства на счёте.
+    // TODO Нужно ли округлять, чтобы blocked в минус не уходило из-за неточностей float/double?
+    MBalance.blockAmount(advr.prodAdnId, -advr.amount)
   }
 
 
@@ -421,19 +478,37 @@ class MmpDailyBilling @Inject() (
    * @param adId id рекламной карточки.
    * @return Карта ресиверов.
    */
-  def calcualteReceiversMapForAd(adId: String): Receivers_t = {
-    val advsOk = db.withConnection { implicit c =>
-      MAdvOk.findOnlineFor(adId, isOnline = true)
+  def calcualteReceiversMapForAd(adId: String): Future[Receivers_t] = {
+    // Прочесть из БД текущие размещения карточки.
+    val advsOkFut = Future {
+      db.withConnection { implicit c =>
+        MAdvOk.findOnlineFor(adId, isOnline = true)
+      }
+    }(AsyncUtil.jdbcExecutionContext)
+    // Привести найденные размещения карточки к карте ресиверов.
+    for (advsOk <- advsOkFut) yield {
+      val eIter = advsOk
+        .map { advOk =>
+          MEdge(
+            predicate = MPredicates.Receiver,
+            nodeId    = advOk.rcvrAdnId,
+            info      = MEdgeInfo(sls = advOk.showLevels)
+          )
+        }
+        // Размещение одной карточки на одном узле на разных уровнях может быть проведено через разные размещения.
+        .groupBy(_.nodeId)
+        .valuesIterator
+        .map {
+          _.reduceLeft[MEdge] { (prev, next) =>
+            next.copy(
+              info = next.info.copy(
+                sls = next.info.sls ++ prev.info.sls
+              )
+            )
+          }
+        }
+      MNodeEdges.edgesToMap1( eIter )
     }
-    advsOk
-      .map { advOk =>
-        AdReceiverInfo(advOk.rcvrAdnId, advOk.showLevels)
-      }
-      // Размещение одной карточки на одном узле на разных уровнях может быть проведено через разные размещения.
-      .groupBy(_.receiverId)
-      .mapValues { _.reduceLeft[AdReceiverInfo] {
-        (prev, next) => next.copy(sls = next.sls ++ prev.sls) }
-      }
   }
 
 }

@@ -1,8 +1,8 @@
 package util.ai.mad.render
 
-import io.suggest.ym.model.ad.AOBlock
-import models.{TextEnt, MAd}
+import io.suggest.model.n2.ad.EntMap_t
 import models.ai.ContentHandlerResult
+import models.{MNode, TextEnt}
 import org.clapper.scalasti.ST
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
@@ -23,34 +23,30 @@ object ScalaStiRenderer extends MadAiRenderedT {
    * @param targetAd Обновляемая карточка.
    * @return Фьючерс с обновлённой карточкой.
    */
-  override def renderTplAd(tplAd: MAd, args: Map[String, ContentHandlerResult], targetAd: MAd): Future[MAd] = {
+  override def renderTplAd(tplAd: MNode, args: Map[String, ContentHandlerResult], targetAd: MNode): Future[MNode] = {
     Future {
-      val tgOffersMap = targetAd
-        .offers
-        .iterator
-        .map(offer2tuple)
-        .toMap
-      // Отрендерить офферы из шаблонной карточки. В качестве исходных значений попытаться задействовать поля исходной карточки.
-      val renderedOffers = tplAd.offers
-        .map { tplOffer =>
-          val srcOffer = tgOffersMap.getOrElse(tplOffer.n, tplOffer)
-          val off2 = srcOffer.copy(
-            text1 = renderTextFieldOpt(tplOffer.text1, args, srcOffer.text1)
-          )
-          offer2tuple(off2)
-        }
-        .toMap
+      // Отрендерить офферы из шаблонной карточки.
+      // В качестве исходных значений попытаться задействовать поля исходной карточки.
+      val renderedOffers: EntMap_t = {
+        tplAd
+          .ad.entities
+          .mapValues { tplOffer =>
+            val srcOffer = targetAd.ad.entities
+              .getOrElse(tplOffer.id, tplOffer)
+            srcOffer.copy(
+              text = renderTextFieldOpt(tplOffer.text, args, srcOffer.text)
+            )
+          }
+      }
       // Накатить отрендеренные офферы на офферы целевой рекламной карточки
       targetAd.copy(
-        offers = tgOffersMap
-          .++(renderedOffers)
-          .valuesIterator
-          .toList
+        ad = targetAd.ad.copy(
+          entities = targetAd.ad.entities ++ renderedOffers
+        )
       )
     }
   }
 
-  private def offer2tuple(off: AOBlock) = off.n -> off
 
   /** Рендер одного текстового поля.
     * @param tfOpt Опциональное строковое поле.

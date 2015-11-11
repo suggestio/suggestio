@@ -1,5 +1,6 @@
 package models
 
+import io.suggest.common.fut.FutureUtil
 import io.suggest.model.es.{EsModelT, EsModelStaticT}
 import util.xplay.ICacheApi
 import scala.concurrent.duration.FiniteDuration
@@ -107,10 +108,7 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
    * @return Тоже самое, что и [[getById]].
    */
   def maybeGetByIdCached(idOpt: Option[String])(implicit ec: ExecutionContext, client: Client): Future[Option[T1]] = {
-    idOpt match {
-      case Some(id) => getById(id)
-      case None     => Future successful None
-    }
+    FutureUtil.optFut2futOpt(idOpt)(getById)
   }
 
   /**

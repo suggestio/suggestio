@@ -86,6 +86,11 @@ final case class MAdvReq(
   override def companion = MAdvReq
   override def dateStatus = dateCreated
 
+
+  def toRefuse(reason: String, when: DateTime = DateTime.now): MAdvRefuse = {
+    MAdvRefuse(this, reason, when)
+  }
+
 }
 
 

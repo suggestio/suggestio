@@ -8,6 +8,7 @@ import org.elasticsearch.client.Client
 import play.api.mvc._
 import models._
 import util.di.ICanAdvAdUtil
+import util.n2u.N2NodesUtil
 import util.{PlayMacroLogsDyn, PlayMacroLogsI, PlayMacroLogsImpl}
 import util.acl.PersonWrapper.PwOpt_t
 import scala.concurrent.{ExecutionContext, Future}
@@ -21,6 +22,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class CanAdvertiseAdUtil @Inject() (
   mNodeCache                      : MAdnNodeCache,
+  n2NodeUtil                      : N2NodesUtil,
   implicit private val ec         : ExecutionContext,
   implicit private val esClient   : Client
 )
@@ -42,23 +44,24 @@ class CanAdvertiseAdUtil @Inject() (
    * @tparam A Параметр типа реквеста.
    * @return None если нельзя. Some([[RequestWithAdAndProducer]]) если можно исполнять реквест.
    */
-  def maybeAllowed[A](pwOpt: PwOpt_t, mad: MAd, request: Request[A], jsInitActions: Seq[MTarget] = Nil): Future[Option[RequestWithAdAndProducer[A]]] = {
+  def maybeAllowed[A](pwOpt: PwOpt_t, mad: MNode, request: Request[A], jsInitActions: Seq[MTarget] = Nil): Future[Option[RequestWithAdAndProducer[A]]] = {
+    val prodIdOpt = n2NodeUtil.madProducerId(mad)
+    def prodOptFut = mNodeCache.maybeGetByIdCached(prodIdOpt)
     if (PersonWrapper isSuperuser pwOpt) {
-      mNodeCache.getById(mad.producerId) flatMap { adnNodeOpt =>
-        if (adnNodeOpt exists isAdvertiserNode) {
-          val adnNode = adnNodeOpt.get
-          SioReqMd.fromPwOptAdn(pwOpt, adnNode.id.get) map { srm =>
-            Some(RequestWithAdAndProducer(mad, request, pwOpt, srm, adnNode))
+      prodOptFut flatMap {
+        case Some(mnode) if isAdvertiserNode(mnode) =>
+          SioReqMd.fromPwOptAdn(pwOpt, mnode.id.get) map { srm =>
+            Some(RequestWithAdAndProducer(mad, request, pwOpt, srm, mnode))
           }
-        } else {
-          debug(s"maybeAllowed($pwOpt, ${mad.id.get}): superuser, but ad producer node ${mad.producerId} is not allowed to advertise.")
+        case None =>
+          debug(s"maybeAllowed($pwOpt, ${mad.id.get}): superuser, but ad producer node $prodIdOpt is not allowed to advertise.")
           Future successful None
-        }
       }
+
     } else {
       pwOpt match {
         case Some(pw) =>
-          mNodeCache.getById(mad.producerId).flatMap { adnNodeOpt =>
+          prodOptFut.flatMap { adnNodeOpt =>
             adnNodeOpt
               .filter { mnode =>
                 val isOwnedByMe = mnode.edges
@@ -67,7 +70,7 @@ class CanAdvertiseAdUtil @Inject() (
                 isOwnedByMe  &&  isAdvertiserNode(mnode)
               }
               .fold {
-                debug(s"maybeAllowed($pwOpt, ${mad.id.get}): User is not node ${mad.producerId} admin or node is not a producer.")
+                debug(s"maybeAllowed($pwOpt, ${mad.id.get}): User is not node $prodIdOpt admin or node is not a producer.")
                 Future successful Option.empty[RequestWithAdAndProducer[A]]
               } {mnode =>
                 SioReqMd.fromPwOptAdn(pwOpt, mnode.id.get, jsInitActions) map { srm =>
@@ -106,7 +109,7 @@ trait CanAdvertiseAd
 
     def invokeBlock[A](request: Request[A], block: (RequestWithAdAndProducer[A]) => Future[Result]): Future[Result] = {
       val pwOpt = PersonWrapper.getFromRequest(request)
-      MAd.getById(adId) flatMap {
+      MNode.getById(adId) flatMap {
         case Some(mad) =>
           canAdvAdUtil.maybeAllowed(pwOpt, mad, request) flatMap {
             case Some(req1) =>

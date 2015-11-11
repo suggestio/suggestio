@@ -8,6 +8,7 @@ import models.adv.{MAdvReq, MAdvOk}
 import models.req.SioReqMd
 import play.api.mvc.{Result, ActionBuilder, Request}
 import util.di.{IDb, INodeCache}
+import util.n2u.IN2NodesUtilDi
 import util.{PlayLazyMacroLogsImpl, PlayMacroLogsI}
 import util.acl.PersonWrapper.PwOpt_t
 import models._
@@ -31,6 +32,7 @@ trait AdvWndAccess
   with IDb
   with OnUnauthUtilCtl
   with INodeCache
+  with IN2NodesUtilDi
 {
 
   /** Логика работы ActionBuilder'а, проверяющего права доступа к окошку
@@ -45,6 +47,7 @@ trait AdvWndAccess
     val povAdnId: Option[String]
     def needMBB: Boolean
 
+    // TODO Сделать тут Future[Boolean]
     def hasNotExpiredAdvs(rcvrId: String): Boolean = {
       db.withConnection { implicit c =>
         hasNotExpiredAdvsConn(rcvrId)
@@ -151,12 +154,14 @@ trait AdvWndAccess
     override def invokeBlock[A](request: Request[A], block: (AdvWndRequest[A]) => Future[Result]): Future[Result] = {
       PersonWrapper.getFromRequest(request) match {
         case pwOpt @ Some(pw) =>
-          MAd.getById(adId).flatMap {
+          MNode.getById(adId).flatMap {
             case Some(mad) =>
-              val producerOptFut = mNodeCache.getById(mad.producerId)
+              val prodIdOpt = n2NodesUtil.madProducerId(mad)
+              val producerOptFut = mNodeCache.maybeGetByIdCached( prodIdOpt )
               // Вычислить id ресивера исходя того, что передано в fromAdnId. Если во fromAdnId узел-модератор, то
-              val rcvrIdOpt = povAdnId filter {
-                rcvrId  =>  rcvrId != mad.producerId  &&  hasNotExpiredAdvs(rcvrId)
+              val povNotProd = !povAdnId.exists( prodIdOpt.contains )
+              val rcvrIdOpt = povAdnId filter { rcvrId  =>
+                povNotProd  &&  hasNotExpiredAdvs(rcvrId)
               }
               val rcvrOptFut = rcvrIdOpt
                 .fold [Future[Option[MNode]]] { Future successful None } { mNodeCache.getById }
@@ -164,9 +169,7 @@ trait AdvWndAccess
                 case Some(producer) =>
                   // Strict-проверка прав на продьюсер, чтобы не терять логику работы в случае ресивера при суперюзера.
                   // var - на случай отложенного признания producer-админа в текущем суперюзере
-                  var isProducerAdmin: Boolean = if (povAdnId exists {
-                    _ != mad.producerId
-                  }) {
+                  var isProducerAdmin: Boolean = if (povNotProd) {
                     // В povAdnId задан не producer, поэтому подразумеваем, что юзер не является админом продьюсером, даже если он админ.
                     false
                   } else {
@@ -175,7 +178,7 @@ trait AdvWndAccess
                   lazy val isSuperuser = PersonWrapper isSuperuser pwOpt
                   val rcvrInfoFut: Future[Option[PovRcvrInfo]] = if (isProducerAdmin) {
                     // Юзер выступает в роли автора рекламной карточки.
-                    LOGGER.trace(s"User[${pw.personId}] is admin of producer node[${mad.producerId}].")
+                    LOGGER.trace(s"User[${pw.personId}] is admin of producer node[$prodIdOpt].")
                     maybeRcvr2arInfo(rcvrOptFut, pwOpt)
                   } else if (povAdnId.isDefined && rcvrIdOpt.isEmpty) {
                     // Возможно, pov-узел - это узел-модератор узла-ресивера.
@@ -199,7 +202,7 @@ trait AdvWndAccess
                       Future successful Forbidden("Access denied.")
                     case povInfoOpt =>
                       LOGGER.trace(s"ad[$adId] povAdnId=$povAdnId :: OK :: isProdAdm -> $isProducerAdmin rcvrId -> $rcvrIdOpt povInfoOpt -> $povInfoOpt")
-                      val srmFut: Future[SioReqMd] = Some(mad.producerId)
+                      val srmFut: Future[SioReqMd] = prodIdOpt
                         .filter { _ => isProducerAdmin }
                         .orElse { povInfoOpt.filter(_.isNodeAdm).flatMap(_.node.id) }
                         .filter { _ => needMBB }    // TODO Opt Надо бы needMBB учитывать до начала вычисления узла текущего кошелька.
@@ -221,7 +224,7 @@ trait AdvWndAccess
                 // should never occur
                 case None =>
                   val msg = "Ad producer node not exist, but it should."
-                  LOGGER.error(s"ISE: adId=$adId producerId=${mad.producerId} :: $msg")
+                  LOGGER.error(s"ISE: adId=$adId producerId=$prodIdOpt :: $msg")
                   Future successful InternalServerError(msg)
               }
 
@@ -256,7 +259,7 @@ trait AdvWndAccess
 
 
 case class AdvWndRequest[A](
-  mad             : MAd,
+  mad             : MNode,
   producer        : MNode,
   rcvrOpt         : Option[MNode],
   isProducerAdmin : Boolean,

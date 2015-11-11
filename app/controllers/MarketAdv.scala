@@ -20,6 +20,7 @@ import com.github.nscala_time.time.OrderingImplicits._
 import util.adv.CtlGeoAdvUtil
 import util.async.AsyncUtil
 import util.lk.LkAdUtil
+import util.n2u.N2NodesUtil
 import util.showcase.ShowcaseUtil
 import views.html.lk.adv._
 import util.PlayMacroLogsImpl
@@ -44,6 +45,7 @@ class MarketAdv @Inject() (
   lkAdUtil                        : LkAdUtil,
   scUtil                          : ShowcaseUtil,
   ctlGeoAdvUtil                   : CtlGeoAdvUtil,
+  override val n2NodesUtil        : N2NodesUtil,
   override val mNodeCache         : MAdnNodeCache,
   override val messagesApi        : MessagesApi,
   override val current            : play.api.Application,
@@ -216,12 +218,15 @@ class MarketAdv @Inject() (
 
   /** Страница управления размещением рекламной карточки. */
   def advForAd(adId: String) = CanAdvertiseAdGet(adId).async { implicit request =>
-    renderAdvForm(adId, advFormM)
-      .map { Ok(_) }
+    renderAdvForm(adId, advFormM, Ok)
   }
 
   /** Класс-контейнер для передачи результатов ряда операций с adv/bill-sql-моделями в renderAdvForm(). */
-  private case class AdAdvInfoResult(advsOk: List[MAdvOk], advsReq: List[MAdvReq], advsRefused: List[MAdvRefuse])
+  private case class AdAdvInfoResult(
+    advsOk      : List[MAdvOk],
+    advsReq     : List[MAdvReq],
+    advsRefused : List[MAdvRefuse]
+  )
 
   /**
    * Очень асинхронно прочитать инфу по текущим размещениям карточки, вернув контейнер результатов.
@@ -256,8 +261,8 @@ class MarketAdv @Inject() (
    * @param rcvrsAllFutOpt Опционально: асинхронный список ресиверов. Экшен контроллера может передавать его сюда.
    * @return Отрендеренная страница управления карточкой с формой размещения.
    */
-  private def renderAdvForm(adId: String, form: AdvFormM_t, rcvrsAllFutOpt: Option[Future[Seq[MNode]]] = None)
-                           (implicit request: RequestWithAdAndProducer[AnyContent]): Future[Html] = {
+  private def renderAdvForm(adId: String, form: AdvFormM_t, rs: Status, rcvrsAllFutOpt: Option[Future[Seq[MNode]]] = None)
+                           (implicit request: RequestWithAdAndProducer[AnyContent]): Future[Result] = {
     // Если поиск ресиверов ещё не запущен, то сделать это.
     val rcvrsAllFut = rcvrsAllFutOpt  getOrElse  collectAllReceivers(request.producer)
     // В фоне строим карту ресиверов, чтобы по ней быстро ориентироваться.
@@ -390,7 +395,7 @@ class MarketAdv @Inject() (
         producer  = request.producer,
         formArgs  = formArgs
       )
-      advForAdTpl(rargs)(ctx)
+      rs( advForAdTpl(rargs)(ctx) )
     }
   }
 
@@ -438,8 +443,9 @@ class MarketAdv @Inject() (
 
   private def maybeFreeAdv(implicit request: AbstractRequestWithPwOpt[_]): Boolean = {
     // Раньше было ограничение на размещение с завтрашнего дня, теперь оно снято.
-    val isFree = isFreeAdv( freeAdvFormM.bindFromRequest().fold({_ => None}, identity) )
-    isFree
+    val isFreeOpt = freeAdvFormM.bindFromRequest()
+      .fold({_ => None}, identity)
+    isFreeAdv( isFreeOpt )
   }
 
   /**
@@ -462,15 +468,19 @@ class MarketAdv @Inject() (
         } yield {
           filterEntiesByPossibleRcvrs(adves1, allRcvrIds)
         }
-        adves2Fut.map { adves2 =>
-          // Начинаем рассчитывать ценник.
-          val advPricing: MAdvPricing = if (adves2.isEmpty || maybeFreeAdv) {
-            zeroPricing
-          } else {
-            mmpDailyBilling.getAdvPrices(request.mad, adves2)
+        // Начинаем рассчитывать ценник.
+        for {
+          adves2      <- adves2Fut
+          advPricing  <- {
+            if (adves2.isEmpty || maybeFreeAdv) {
+              Future successful zeroPricing
+            } else {
+              mmpDailyBilling.getAdvPrices(request.mad, adves2)
+            }
           }
+        } yield {
           Ok(_advFormPriceTpl(advPricing))
-        }(AsyncUtil.jdbcExecutionContext)
+        }
       }
     )
   }
@@ -532,8 +542,7 @@ class MarketAdv @Inject() (
     formBinded.fold(
       {formWithErrors =>
         debug(s"${logPrefix}form bind failed:\n${formatFormErrors(formWithErrors)}")
-        renderAdvForm(adId, formWithErrors)
-          .map(NotAcceptable(_))
+        renderAdvForm(adId, formWithErrors, NotAcceptable)
       },
       {adves =>
         trace(logPrefix + "adves entries submitted: " + adves)
@@ -553,23 +562,27 @@ class MarketAdv @Inject() (
             val isFree = maybeFreeAdv
             try {
               // В зависимости от настроек размещения
-              val successMsg: String = if (isFree) {
-                mmpDailyBilling.mkAdvsOk(request.mad, advs2)
-                "Ads.were.adv"
-              } else {
-                mmpDailyBilling.mkAdvReqs(request.mad, advs2)
-                "Adv.reqs.sent"
+              val successMsgFut: Future[String] = {
+                if (isFree) {
+                  mmpDailyBilling.mkAdvsOk(request.mad, advs2)
+                    .map { _ => "Ads.were.adv" }
+                } else {
+                  mmpDailyBilling.mkAdvReqs(request.mad, advs2)
+                    .map { _ => "Adv.reqs.sent" }
+                }
               }
-              Redirect(routes.MarketAdv.advForAd(adId))
-                .flashing(FLASH.SUCCESS -> successMsg)
+              successMsgFut map { successMsg =>
+                Redirect(routes.MarketAdv.advForAd(adId))
+                  .flashing(FLASH.SUCCESS -> successMsg)
+              }
+
             } catch {
               case ex: SQLException =>
                 warn(s"advFormSumbit($adId): Failed to commit adv transaction for advs:\n " + advs2, ex)
                 // Для бесплатной инжекции: сгенерить экзепшен, чтобы привелегированному юзеру код ошибки отобразился на экране.
                 if (isFree) throw ex
                 val formWithErrors = formBinded.withGlobalError("error.no.money")
-                renderAdvForm(adId, formWithErrors, Some(allRcvrsFut))
-                  .map { NotAcceptable(_) }
+                renderAdvForm(adId, formWithErrors, NotAcceptable, Some(allRcvrsFut))
             }
           } else {
             Redirect(routes.MarketAdv.advForAd(adId))
@@ -747,7 +760,7 @@ class MarketAdv @Inject() (
         .map(_.adId)
         .distinct
       // В фоне запрашиваем рекламные карточки, которые нужно модерачить.
-      MAd.multiGetRev(adIds)
+      MNode.multiGetRev(adIds)
     }
     // Строим карту adId -> MAdvReq
     val advsReqMapFut = advsReqFut map { advsReq =>
@@ -817,10 +830,17 @@ class MarketAdv @Inject() (
 
   private def _showAdvReq1(refuseFormM: Form[String], r: Option[String])
                           (implicit request: RequestWithAdvReq[AnyContent]): Future[Either[Result, Html]] = {
-    val madOptFut = MAd.getById(request.advReq.adId)
-    val adProducerOptFut = madOptFut flatMap { madOpt =>
-      val prodIdOpt = madOpt.map(_.producerId)
-      mNodeCache.maybeGetByIdCached(prodIdOpt)
+    val madOptFut = MNode.getById(request.advReq.adId)
+    val adProducerOptFut = {
+      for {
+        madOpt <- madOptFut
+        prodOpt <- {
+          val prodIdOpt = madOpt.flatMap( n2NodesUtil.madProducerId )
+          mNodeCache.maybeGetByIdCached( prodIdOpt )
+        }
+      } yield {
+        prodOpt
+      }
     }
     adProducerOptFut flatMap { adProducerOpt =>
       madOptFut flatMap { madOpt =>
@@ -873,9 +893,7 @@ class MarketAdv @Inject() (
           .map { _.fold(identity, NotAcceptable(_)) }
       },
       {reason =>
-        val refuseFut = Future {
-          mmpDailyBilling.refuseAdvReq(request.advReq, reason)
-        }(AsyncUtil.jdbcExecutionContext)
+        val refuseFut = mmpDailyBilling.refuseAdvReq(request.advReq, request.advReq.toRefuse(reason))
         for (_ <- refuseFut) yield {
           RdrBackOr(r) { routes.MarketAdv.showNodeAdvs(request.rcvrNode.id.get) }
             .flashing(FLASH.SUCCESS -> "Adv.req.refused")

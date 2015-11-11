@@ -1,6 +1,7 @@
 import controllers.routes
 import io.suggest.model.geo
 import io.suggest.model.n2
+
 import io.suggest.ym
 import models.adv.MAdvModes
 import models.mbill.BTariffTypes
@@ -35,7 +36,7 @@ package object models {
   val  AdReceiverInfo       = ym.model.common.AdReceiverInfo
   type AdReceiverInfo       = ym.model.common.AdReceiverInfo
 
-  type Receivers_t          = ym.model.common.EMReceivers.Receivers_t
+  type Receivers_t          = n2.edge.NodeEdgesMap_t
 
   val  MWelcomeAd           = ym.model.MWelcomeAd
   type MWelcomeAd           = ym.model.MWelcomeAd

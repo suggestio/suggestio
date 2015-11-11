@@ -1,9 +1,11 @@
 package util.adv
 
 import com.google.inject.{Singleton, Inject}
+import io.suggest.common.fut.FutureUtil
 import io.suggest.event.SioNotifierStaticClientI
+import io.suggest.model.n2.edge.MNodeEdges
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.util.JMXBase
-import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import models._
 import models.adv.{MAdvReq, MAdvOk}
 import org.elasticsearch.client.Client
@@ -13,6 +15,7 @@ import play.api.db.Database
 import util.PlayMacroLogsImpl
 import util.async.AsyncUtil
 import util.billing.MmpDailyBilling
+import util.n2u.N2NodesUtil
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -30,6 +33,7 @@ class AdvUtil @Inject() (
   db                      : Database,
   advTownCoverageRcvrs    : AdvTownCoverageRcvrs,
   advFreeGeoParentRcvrs   : AdvFreeGeoParentRcvrs,
+  n2NodesUtil             : N2NodesUtil,
   implicit val ec         : ExecutionContext,
   implicit val esClient   : Client,
   implicit val sn         : SioNotifierStaticClientI
@@ -61,44 +65,60 @@ class AdvUtil @Inject() (
    * @param mad Исходная рекламная карточка или её интерфейс.
    * @param producerOpt Экземпляр продьюсера
    */
-  def calculateReceiversFor(mad: MAd, producerOpt: Option[MNode] = None): Future[Receivers_t] = {
-    val priOpt = mad.receivers.get(mad.producerId)
-    val needProducer = priOpt.isDefined
+  def calculateReceiversFor(mad: MNode, producerOpt: Option[MNode] = None): Future[Receivers_t] = {
+    val prodIdOpt = n2NodesUtil.madProducerId(mad)
+
+    val rcvrEdgeOpt = prodIdOpt.flatMap { prodId =>
+      mad.edges
+        .withPredicateIter(MPredicates.Receiver)
+        .find(_.nodeId == prodId)
+    }
+    val needProducer = rcvrEdgeOpt.isDefined
+
     // Нам нужен продьюсер для фильтрации копируемых sls продьюсера. Ищем его в фоне.
     val producerFut: Future[MNode] = if (needProducer) {
-      producerOpt
+      val _prodOpt = producerOpt
         // самоконтроль: резать переданного продьюсера, если он не является продьюсером данной карточки.
-        .filter { _.id contains mad.producerId }
-        .fold[Future[MNode]]
-          { mNodeCache.getById(mad.producerId).map(_.get) }
-          { Future.successful }
+        .filter { _.id == prodIdOpt }
+      FutureUtil.opt2future(_prodOpt) {
+        mNodeCache.maybeGetByIdCached(prodIdOpt).map(_.get)
+      }
     } else {
       Future successful producerOpt.orNull
     }
+
     // Считаем непосредственных ресиверов через mmp-billing, т.е. платные размещения по времени.
-    val receiversMmp = mmpDailyBilling.calcualteReceiversMapForAd(mad.id.get)
+    val receiversMmpFut = mmpDailyBilling.calcualteReceiversMapForAd(mad.id.get)
 
     // Чистим саморазмещение и добавляем в карту прямых ресиверов.
-    val prodResultFut: Future[Receivers_t] = priOpt.fold(Future successful receiversMmp) { pri =>
-      producerFut map { producer =>
-        // Оставляем только уровни отображения, которые доступны ресиверу.
-        val psls2 = pri.sls
-          // Выкинуть sink-уровни продьюсера, которые не соответствуют доступным синкам и
-          // уровням отображения, которые записаны в политике исходящих размещений
-          .filter { ssl =>
+    val prodResultFut: Future[Receivers_t] = {
+      rcvrEdgeOpt.fold(receiversMmpFut) { rcvrEdge =>
+        producerFut.flatMap { producer =>
+          // Оставляем только уровни отображения, которые доступны ресиверу.
+          val psls2 = rcvrEdge.info.sls
+            // Выкинуть sink-уровни продьюсера, которые не соответствуют доступным синкам и
+            // уровням отображения, которые записаны в политике исходящих размещений
+            .filter { ssl =>
             producer.extras.adn.exists { adn =>
               adn.isReceiver &&
-              adn.sinks.contains( ssl.adnSink ) &&
-              adn.outSls.get( ssl.sl ).exists(_.limit > 0)
+                adn.sinks.contains( ssl.adnSink ) &&
+                adn.outSls.get( ssl.sl ).exists(_.limit > 0)
             }
           }
-        if (psls2.isEmpty) {
-          // Удаляем саморесивер, т.к. уровни пусты.
-          receiversMmp
-        } else {
-          // Добавляем собственный ресивер с обновлёнными уровнями отображениям.
-          val prkv = pri.receiverId -> pri.copy(sls = psls2)
-          receiversMmp + prkv
+          receiversMmpFut.map { receiversMmp =>
+            if (psls2.isEmpty) {
+              // Удаляем саморесивер, т.к. уровни пусты.
+              receiversMmp
+            } else {
+              // Добавляем собственный ресивер с обновлёнными уровнями отображениям.
+              val edge2 = rcvrEdge.copy(
+                info = rcvrEdge.info.copy(
+                  sls = psls2
+                )
+              )
+              receiversMmp ++ MNodeEdges.edgesToMapIter(edge2)
+            }
+          }
         }
       }
     }
@@ -108,13 +128,11 @@ class AdvUtil @Inject() (
       .flatMap { prodResults =>
         // Запускаем сборку данных по доп.ресиверами. Получающиеся карты ресиверов объединяем асинхронно.
         val extrasFuts = EXTRA_RCVRS_CALCS.map { src =>
-          src.calcForDirectRcvrs(prodResults, mad.producerId)
+          src.calcForDirectRcvrs(prodResults, prodIdOpt)
         }
         Future.reduce(prodResultFut :: extrasFuts) {
           (rm1, rm2) =>
-            val result = AdReceiverInfo.mergeRcvrMaps(rm1, rm2)
-            //trace(s"Merging rcvr maps:\n  $rm1\n  + $rm2\n  = $result")
-            result
+            rm1 ++ rm2
         }
       }
 
@@ -130,22 +148,35 @@ class AdvUtil @Inject() (
    */
   def removeAdRcvr(adId: String, rcvrIdOpt: Option[String]): Future[Boolean] = {
     lazy val logPrefix = s"removeAdRcvr(ad[$adId]${rcvrIdOpt.fold("")(", rcvr[" + _ + "]")}): "
-    val madOptFut = MAd.getById(adId)
+    val madOptFut = MNode.getByIdType(adId, MNodeTypes.Ad)
     // Радуемся в лог.
     rcvrIdOpt match {
-      case Some(rcvrId) => info(logPrefix + "Starting removing for single rcvr...")
-      case None => warn(logPrefix + "Starting removing ALL rcvrs...")
+      case Some(rcvrId) =>
+        info(logPrefix + "Starting removing for single rcvr...")
+      case None =>
+        warn(logPrefix + "Starting removing ALL rcvrs...")
     }
+
     // Надо убрать указанного ресиверов из списка ресиверов
     val isOkFut = madOptFut flatMap {
       case Some(mad) =>
-        MAd.tryUpdate(mad) { mad1 =>
+        MNode.tryUpdate(mad) { mad1 =>
           mad1.copy(
-            receivers = if (rcvrIdOpt.isEmpty) {
-              Map.empty
-            } else {
-              mad1.receivers.filterKeys(_ != rcvrIdOpt.get)
-            }
+            edges = mad1.edges.copy(
+              out = {
+                val p = MPredicates.Receiver
+                val fIter = if (rcvrIdOpt.isEmpty) {
+                  mad1.edges.withoutPredicateIter(p)
+                } else {
+                  mad1.edges.out
+                    .valuesIterator
+                    .filterNot { e =>
+                      e.predicate == p && e.nodeId == rcvrIdOpt.get
+                    }
+                }
+                MNodeEdges.edgesToMap1( fIter )
+              }
+            )
           )
         }
           .map { _ => true}
@@ -153,6 +184,7 @@ class AdvUtil @Inject() (
         warn(logPrefix + "MAd not found: " + adId)
         Future successful false
     }
+
     // Надо убрать карточку из текущего размещения на узле, если есть: из advOk и из advReq.
     val dbUpdFut = Future {
       db.withTransaction { implicit c =>
@@ -165,10 +197,10 @@ class AdvUtil @Inject() (
         }
         advsOk
           .foreach { advOk =>
-          info(s"${logPrefix}offlining advOk[${advOk.id.get}]")
-          advOk.copy(dateEnd = DateTime.now, isOnline = false)
-            .saveUpdate
-        }
+            info(s"${logPrefix}offlining advOk[${advOk.id.get}]")
+            advOk.copy(dateEnd = DateTime.now, isOnline = false)
+              .saveUpdate
+          }
         // Запросы размещения переколбашивать в refused с возвратом бабла.
         val advsReq = if (rcvrIdOpt.isDefined) {
           MAdvReq.findByAdIdAndRcvr(adId, rcvrId = rcvrIdOpt.get, policy = sepo)
@@ -180,7 +212,7 @@ class AdvUtil @Inject() (
         advsReq.foreach { madvReq =>
           trace(s"${logPrefix}refusing advReq[${madvReq.id.get}]...")
           // TODO Нужно как-то управлять причиной выпиливания. Этот action работает через POST, поэтому можно замутить форму какую-то.
-          mmpDailyBilling.refuseAdvReq(madvReq, msg)
+          mmpDailyBilling.refuseAdvReqTxn(madvReq, madvReq.toRefuse(msg))
         }
       }
     }(AsyncUtil.jdbcExecutionContext)
@@ -201,10 +233,10 @@ trait AdvExtraRcvrsCalculator {
   /**
    * Рассчет доп.ресиверов на основе карты прямых (непосредственных) ресиверов карточки.
    * @param allDirectRcvrs Карта непосредственных ресиверов.
-   * @param producerId id продьюсера.
+   * @param producerIdOpt id продьюсера.
    * @return Фьючерс с картой extra-ресиверов.
    */
-  def calcForDirectRcvrs(allDirectRcvrs: Receivers_t, producerId: String): Future[Receivers_t]
+  def calcForDirectRcvrs(allDirectRcvrs: Receivers_t, producerIdOpt: Option[String]): Future[Receivers_t]
 }
 
 
@@ -251,10 +283,15 @@ final class AdvUtilJmx @Inject() (
   override def jmxName = "io.suggest:type=util,name=" + getClass.getSimpleName.replace("Jmx", "")
 
   override def resetAllReceivers(): String = {
-    val cntFut = MAd.updateAll() { mad0 =>
+    val search = new MNodeSearchDfltImpl {
+      override def nodeTypes = Seq( MNodeTypes.Ad )
+    }
+    val cntFut = MNode.updateAll(queryOpt = search.toEsQueryOpt) { mad0 =>
       advUtil.calculateReceiversFor(mad0) map { rcvrs1 =>
         mad0.copy(
-          receivers = rcvrs1
+          edges = mad0.edges.copy(
+            out = mad0.edges.out ++ rcvrs1
+          )
         )
       }
     }
@@ -265,18 +302,23 @@ final class AdvUtilJmx @Inject() (
   }
 
   override def resetReceiversForAd(adId: String): String = {
-    val s = MAd.getById(adId) flatMap {
+    val s = MNode.getById(adId) flatMap {
       case None =>
         Future successful s"Not found ad: $adId"
       case Some(mad) =>
-        advUtil.calculateReceiversFor(mad) flatMap { rcvrs1 =>
-          MAd.tryUpdate(mad) { mad0 =>
-            mad0.copy(
-              receivers = rcvrs1
-            )
-          } map { s =>
-            "Successfully reset receivers: " + s + "\n\n" + rcvrs1
+        for {
+          rcvrs1 <- advUtil.calculateReceiversFor(mad)
+          s      <- {
+            MNode.tryUpdate(mad) { mad0 =>
+              mad0.copy(
+                edges = mad0.edges.copy(
+                  out = mad0.edges.out ++ rcvrs1
+                )
+              )
+            }
           }
+        } yield {
+          "Successfully reset receivers: " + s + "\n\n" + rcvrs1
         }
     }
     awaitString(s)

@@ -16,13 +16,13 @@ import play.core.parsers.Multipart
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 import util.blocks.{LkEditorWsActor, ListBlock, BgImg}
+import util.n2u.N2NodesUtil
 import views.html.lk.ad._
 import models._
 import play.api.data._, Forms._
 import util.acl._
 import scala.concurrent.{ExecutionContext, Future}
 import play.api.mvc.{Result, WebSocket, Request}
-import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import controllers.ad.MarketAdFormUtil
 import MarketAdFormUtil._
 import io.suggest.ad.form.AdFormConstants._
@@ -41,6 +41,7 @@ class MarketAd @Inject() (
   override val cache              : CacheApi,
   tempImgSupport                  : TempImgSupport,
   mTagUtil                        : MTagUtil,
+  override val n2NodesUtil        : N2NodesUtil,
   override val _contextFactory    : Context2Factory,
   override val mNodeCache         : MAdnNodeCache,
   override val db                 : Database,

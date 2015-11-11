@@ -4,7 +4,6 @@ import com.google.inject.Inject
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.ym.model.common.AdnSinks
-import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import org.elasticsearch.client.Client
 import play.api.Configuration
 import util.PlayMacroLogsImpl
@@ -36,10 +35,10 @@ class AdvTownCoverageRcvrs @Inject() (
   /**
    * Рассчет town-ресиверов на основе карты прямых (непосредственных) ресиверов карточки.
    * @param allDirectRcvrs Карта непосредственных ресиверов.
-   * @param producerId id продьюсера.
+   * @param producerIdOpt id продьюсера.
    * @return Фьючерс с картой extra-ресиверов.
    */
-  override def calcForDirectRcvrs(allDirectRcvrs: Receivers_t, producerId: String): Future[Receivers_t] = {
+  override def calcForDirectRcvrs(allDirectRcvrs: Receivers_t, producerIdOpt: Option[String]): Future[Receivers_t] = {
     val allRcvrsFut = {
       val rcvrsIter = allDirectRcvrs
         .iterator

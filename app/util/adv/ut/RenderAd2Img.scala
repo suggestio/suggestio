@@ -2,13 +2,13 @@ package util.adv.ut
 
 import java.io.File
 
-import models.MAd
+import models.MNode
 import models.blk.OneAdQsArgs
-import models.event.{MEventTypes, ErrorInfo}
+import models.event.{ErrorInfo, MEventTypes}
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.PlayMacroLogsI
 import util.async.FsmActor
 import util.img.AdRenderUtil
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 import scala.util.{Failure, Success}
 
@@ -23,7 +23,7 @@ trait RenderAd2Img extends FsmActor with PlayMacroLogsI {
   /** Заготовка fsm-состояния рендера карточки в картинку. */
   trait RenderAd2ImgStateT extends FsmState {
 
-    def _mad: MAd
+    def _mad: MNode
     def _adRenderArgs: OneAdQsArgs
 
     /** Действия, если карточка в картинку отрендерилась на отличненько. */
