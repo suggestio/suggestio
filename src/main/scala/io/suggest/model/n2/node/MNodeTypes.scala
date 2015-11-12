@@ -18,13 +18,20 @@ object MNodeTypes extends EnumMaybeWithName with EnumJsonReadsValT with EnumTree
   protected sealed trait ValT
     extends super.ValT
   { that: T =>
+
+    /** Код сообщения в messages для единственного числа. */
     def singular = "Ntype." + strId
+
+    /** Код сообщений в messages для множественного числа. */
     def plural   = "Ntypes." + strId
+
+    /** Логика генерации ntype-specific отображаемого имени для узла. */
     def guessNodeDisplayName(mnode: MNode): Option[String] = None
+
   }
 
   /** Абстрактная класс одного элемента модели. */
-  protected[this] abstract sealed class Val(override val strId: String)
+  protected[this] abstract class Val(override val strId: String)
     extends super.Val(strId)
     with ValT
 

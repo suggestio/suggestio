@@ -30,6 +30,7 @@ object MEdge extends IGenEsMappingProps {
       override protected def _PARENT_FN = INFO_FN
 
       def INFO_SLS_FN   = _fullFn( MEdgeInfo.SLS_FN )
+      def FLAG_FN       = _fullFn( MEdgeInfo.FLAG_FN )
     }
 
   }

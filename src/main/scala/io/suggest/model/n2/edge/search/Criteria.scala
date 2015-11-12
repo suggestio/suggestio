@@ -27,6 +27,19 @@ trait ICriteria extends IEmpty {
   /** Флаг наличия любого уровня или отсутствия всех уровней отображения. */
   def anySl       : Option[Boolean]
 
+  /**
+   * Вместо should clause будет использована must или mustNot для true или false соответственно.
+   * Т.е. тут можно управлять семантикой объединения нескольких критериев, как если бы [OR, AND, NAND].
+   * @return None для should. Хотя бы один из should-clause всегда должен быть истинным.
+   *         Some(true) -- обязательный clause, должна обязательно быть истинной.
+   *         Some(false) -- негативный clause, т.е. срабатывания выкидываются из выборки результатов.
+   */
+  def must        : Option[Boolean]
+
+  /** Состояние дополнительного флага в контейнера info. */
+  def flag        : Option[Boolean]
+
+
   override def toString: String = {
     getClass.getSimpleName + "(" + nodeIds + "," + predicates + "," + sls + "," + anySl + ")"
   }
@@ -39,7 +52,9 @@ case class Criteria(
   override val nodeIds     : Seq[String]          = Nil,
   override val predicates  : Seq[MPredicate]      = Nil,
   override val sls         : Seq[SlNameTokenStr]  = Nil,
-  override val anySl       : Option[Boolean]      = None
+  override val anySl       : Option[Boolean]      = None,
+  override val must        : Option[Boolean]      = None,
+  override val flag        : Option[Boolean]      = None
 )
   extends ICriteria
   with EmptyProduct

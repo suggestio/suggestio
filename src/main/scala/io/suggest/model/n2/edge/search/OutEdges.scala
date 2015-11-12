@@ -27,8 +27,8 @@ trait OutEdges extends DynSearchArgs with MacroLogsI {
     if (_outEdgesIter.isEmpty) {
       qbOpt0
     } else {
+      var shouldClauses = 0
       val nq = QueryBuilders.boolQuery()
-        .minimumNumberShouldMatch(1)
       // Сборка nested query.
       for (oe <- _outEdgesIter) {
 
@@ -80,21 +80,50 @@ trait OutEdges extends DynSearchArgs with MacroLogsI {
         } else if (oe.sls.nonEmpty) {
           val slsStr = oe.sls.map(_.name)
           val slFn = EDGE_OUT_INFO_SLS_FN
-          _qOpt = _qOpt map { _q =>
+          _qOpt = _qOpt.map { _q =>
             val slsf = FilterBuilders.termsFilter(slFn, slsStr : _*)
             QueryBuilders.filteredQuery(_q, slsf)
-          } orElse {
+          }.orElse {
             val _q = QueryBuilders.termsQuery(slFn, slsStr: _*)
             Some( _q )
           }
         }
 
-        _qOpt.foreach { _q =>
-          nq.should(_q)
+        // Ищем/фильтруем по info.flag
+        if (oe.flag.nonEmpty) {
+          val flag = oe.flag.get
+          val flagFn = EDGE_OUT_INFO_FLAG_FN
+          _qOpt = _qOpt.map { _q =>
+            val flagFl = FilterBuilders.termFilter(flagFn, flag)
+            QueryBuilders.filteredQuery(_q, flagFl)
+          }.orElse {
+            val _q = QueryBuilders.termQuery(flagFn, flag)
+            Some(_q)
+          }
+        }
+
+        // Возврат значения происходит через закидывание сгенеренной query в BoolQuery.
+        for (_q <- _qOpt) {
+          // Клиент может настраивать запрос с помощью must/should/mustNot.
+          oe.must match {
+            case None =>
+              nq.should(_q)
+              shouldClauses += 1
+            case Some(true) =>
+              nq.must(_q)
+            case _ =>
+              nq.mustNot(_q)
+          }
         }
         if (_qOpt.isEmpty)
           LOGGER.warn("edge.NestedSearch: suppressed empty bool query for " + oe)
       }
+
+      // Если should-clause'ы отсутствуют, то minimum should match 0. Иначе 1.
+      nq.minimumNumberShouldMatch(
+        Math.max(1, shouldClauses)
+      )
+
       // Сборка основной query
       qbOpt0.map { qb0 =>
         val nf = FilterBuilders.nestedFilter(EDGES_OUT_FULL_FN, nq)

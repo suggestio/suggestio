@@ -151,6 +151,10 @@ trait EMModerationMut extends EMModeration {
   * этот интерфейс. */
 trait MdrSearchArgsI {
   def producerId: Option[String]
+  /**
+    * @return None -- ищем немодерированные карточки.
+    *         Some(x) ищем отмодерированные с isAllowed == x.
+    */
   def freeAdvIsAllowed: Option[Boolean]
   def limit: Int
   def offset: Int

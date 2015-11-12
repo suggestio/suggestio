@@ -204,9 +204,8 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
   }
 
   /** Фоновый объект по отношению к текущему объекту. */
-  val Bg: T = new Val("m") {
+  val Bg: T = new Val("m") with _ToImg {
     override def fromTypeValid(ntype: MNodeType)  = true
-    override def toTypeValid(ntype: MNodeType)    = _isImage(ntype)
   }
 
 }

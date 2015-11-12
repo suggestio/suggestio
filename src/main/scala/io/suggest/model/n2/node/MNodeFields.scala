@@ -66,6 +66,7 @@ object MNodeFields {
     def EDGE_OUT_NODE_ID_FULL_FN   = _fullFn( OUT_NODE_ID_FN )
     def EDGE_OUT_ORDER_FULL_FN     = _fullFn( OUT_ORDER_FN )
     def EDGE_OUT_INFO_SLS_FN       = _fullFn( OUT_INFO_SLS_FN )
+    def EDGE_OUT_INFO_FLAG_FN      = _fullFn( OUT_INFO_FLAG_FN )
   }
 
   /** Абсолютные названия географических полей.*/
