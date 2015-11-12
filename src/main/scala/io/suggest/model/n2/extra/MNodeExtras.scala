@@ -91,5 +91,6 @@ trait EMNodeExtrasStatic
 case class MNodeExtras(
   tag: Option[MTagVertex] = None,
   adn: Option[MAdnExtra]  = None
+  // модерация была вынесена отсюда в эджи.
 )
   extends EmptyProduct

@@ -21,7 +21,9 @@ trait OutEdges extends DynSearchArgs with MacroLogsI {
     val _outEdgesIter = outEdges
       .iterator
       .filter { _.nonEmpty }
+
     val qbOpt0 = super.toEsQueryOpt
+
     if (_outEdgesIter.isEmpty) {
       qbOpt0
     } else {
@@ -52,14 +54,37 @@ trait OutEdges extends DynSearchArgs with MacroLogsI {
         }
 
         // ad search receivers: добавить show levels
-        if (oe.sls.nonEmpty) {
-          val fn = EDGE_OUT_INFO_SLS_FN
+        if (oe.anySl.nonEmpty) {
+          if (_qOpt.nonEmpty && oe.sls.isEmpty) {
+            // missing/existing filter можно навешивать только если уже есть тело nested query
+            val fn = EDGE_OUT_INFO_SLS_FN
+            val f = if (oe.anySl.get) {
+              FilterBuilders.existsFilter(fn)
+            } else {
+              FilterBuilders.missingFilter(fn)
+            }
+            val _nq2 = QueryBuilders.filteredQuery(_qOpt.get, f)
+            _qOpt = Some(_nq2)
+
+          } else {
+            val msg = if (_qOpt.isEmpty ) {
+              // Нельзя навешивать any sl-фильтры без заданного предиката или id узла.
+              "so at least one of [.predicates, .nodeIds] must be non-empty"
+            } else {
+              // Нельзя одновременно задавать sls и anySl критерии.
+              "but .sls is non empty too. Define at once only one of, not both"
+            }
+            throw new IllegalArgumentException("outEdges Criteria: .anySl is defined, " + msg + ": " + oe)
+          }
+
+        } else if (oe.sls.nonEmpty) {
           val slsStr = oe.sls.map(_.name)
+          val slFn = EDGE_OUT_INFO_SLS_FN
           _qOpt = _qOpt map { _q =>
-            val slsf = FilterBuilders.termsFilter(fn, slsStr : _*)
+            val slsf = FilterBuilders.termsFilter(slFn, slsStr : _*)
             QueryBuilders.filteredQuery(_q, slsf)
           } orElse {
-            val _q = QueryBuilders.termsQuery(fn, slsStr: _*)
+            val _q = QueryBuilders.termsQuery(slFn, slsStr: _*)
             Some( _q )
           }
         }

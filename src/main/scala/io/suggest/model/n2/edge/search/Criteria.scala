@@ -14,15 +14,32 @@ import io.suggest.ym.model.common.SlNameTokenStr
  */
 
 trait ICriteria extends IEmpty {
+
+  /** id искомых узлов. */
   def nodeIds     : Seq[String]
+
+  /** id предикатов. */
   def predicates  : Seq[MPredicate]
+
+  /** Искомые уровни отображения. */
   def sls         : Seq[SlNameTokenStr]
+
+  /** Флаг наличия любого уровня или отсутствия всех уровней отображения. */
+  def anySl       : Option[Boolean]
+
+  override def toString: String = {
+    getClass.getSimpleName + "(" + nodeIds + "," + predicates + "," + sls + "," + anySl + ")"
+  }
+
 }
 
+
+/** Дефолтовая реализация [[ICriteria]]. */
 case class Criteria(
-  nodeIds     : Seq[String]         = Nil,
-  predicates  : Seq[MPredicate]     = Nil,
-  sls         : Seq[SlNameTokenStr] = Nil
+  override val nodeIds     : Seq[String]          = Nil,
+  override val predicates  : Seq[MPredicate]      = Nil,
+  override val sls         : Seq[SlNameTokenStr]  = Nil,
+  override val anySl       : Option[Boolean]      = None
 )
   extends ICriteria
   with EmptyProduct

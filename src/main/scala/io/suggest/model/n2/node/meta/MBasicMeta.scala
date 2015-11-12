@@ -106,6 +106,10 @@ case class MBasicMeta(
       .orElse( techName )
   }
 
+  def dateEditedOrCreated: DateTime = {
+    dateEdited getOrElse dateCreated
+  }
+
 }
 
 
