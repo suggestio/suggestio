@@ -9,7 +9,7 @@ import util.FormUtil.IdEnumFormMappings
  * Created: 14.10.14 16:47
  * Description: Допустимые высоты блоков.
  */
-object BlockHeights extends Enumeration with EnumMaybeWithId with IdEnumFormMappings {
+object BlockHeights extends EnumMaybeWithId with IdEnumFormMappings {
 
   /**
    * Экземпляры модели.
@@ -49,5 +49,8 @@ object BlockHeights extends Enumeration with EnumMaybeWithId with IdEnumFormMapp
   def withHeight(height: Int): T = {
     maybeWithHeight(height).get
   }
+
+  /** Высота, после которой в adsListTpl применяется zigZag mask, для сокрытия всего, что не влезает. */
+  def adsListMinZzHeight: T = H300
 
 }

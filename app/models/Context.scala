@@ -18,6 +18,7 @@ import play.api.http.HeaderNames._
 import util.cdn.CdnUtil
 import util.img.{DynImgUtil, GalleryUtil}
 import util.jsa.init.ITargets
+import util.n2u.N2NodesUtil
 import scala.util.Random
 import SioRequestHeader.{firstForwarded, lastForwarded}
 import play.api.routing.Router.Tags._
@@ -297,7 +298,8 @@ trait Context extends MyHostsT with ISioReqMd {
 class ContextApi @Inject() (
   val galleryUtil         : GalleryUtil,
   val cdn                 : CdnUtil,
-  val dynImgUtil          : DynImgUtil
+  val dynImgUtil          : DynImgUtil,
+  val n2NodesUtil         : N2NodesUtil
 )
 
 

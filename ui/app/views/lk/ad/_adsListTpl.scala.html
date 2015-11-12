@@ -1,5 +1,5 @@
 @(mads: Seq[blk.IRenderArgs], coverDisableReason: Boolean, startIndex: Int = 1,
-  itemsInLine: Int = 4)(postContent: MAd => Html)(implicit ctx: Context)
+  itemsInLine: Int = 4)(postContent: MNode => Html)(implicit ctx: Context)
 
 @* Заготовка списка рекламных карточек на странице узла рекламной сети.
    postContent содержит функцию, которая генерит верстку для каждого элемента списка.
@@ -8,7 +8,7 @@
 @import ctx._
 @import AdShowLevels._
 @import views.html.sc._
-@import blk.BlockHeights.H300.{heightPx => minZzHeightPx}
+@import blk.BlockHeights.adsListMinZzHeight
 
 @mads.iterator.zipWithIndex.map { case (brArgs, i) =>
   @defining( i + startIndex ) { itemIndex =>
@@ -16,12 +16,12 @@
 
       <div class="adv-item_preview">
         @if(coverDisableReason) {
-          @_adDisableReasonCoverTpl(brArgs.mad.disableReason)
+          @_adDisableReasonCoverTpl( brArgs.mad.common.disableReason )
         }
         <div class="adv-item_preview-container">
           @_adNormalTpl(brArgs)
         </div>
-        @if(brArgs.mad.blockMeta.height >= minZzHeightPx) {
+        @if( brArgs.mad.ad.blockMeta.exists(_.height >= adsListMinZzHeight.heightPx) ) {
           <div class="adv-item_preview-border"></div>
         }
       </div>

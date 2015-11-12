@@ -5,8 +5,8 @@ import models.{blk, Context}
 import models.msc.AdCssArgs
 import play.api.libs.json.JsString
 import play.twirl.api.{Txt, Html}
-import util.blocks.BlocksConf
 import util.jsa.JsAction
+import util.n2u.IN2NodesUtilDi
 import views.txt.blocks.common.{_blockCss, _textCss}
 
 import scala.collection.immutable
@@ -18,7 +18,10 @@ import scala.concurrent.Future
   * Created: 11.11.15 14:53
   * Description: Утиль для рендера CSS свалена здесь.
   */
-trait ScCssUtil extends ScController {
+trait ScCssUtil
+  extends ScController
+  with IN2NodesUtilDi
+{
 
   /**
    * Вспомогательный метод для генерации ссылки на css блоков из списка данных об этих блоках.
@@ -75,8 +78,7 @@ trait ScCssUtil extends ScController {
     /** Вспомогательная функция для подготовки данных к рендеру css'ок: приведение рекламной карточки к css-параметрам. */
     protected def mad2craIter(brArgs: blk.IRenderArgs, cssClasses: Seq[String]): Iterator[blk.FieldCssRenderArgsT] = {
       import brArgs.mad
-      val bc = mad.ad.blockMeta
-        .fold(BlocksConf.DEFAULT)(bm => BlocksConf(bm.blockId))
+      val bc = n2NodesUtil.bc(mad)
       mad.ad.entities
         .valuesIterator
         .flatMap { ent =>

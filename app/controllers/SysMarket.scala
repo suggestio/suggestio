@@ -560,7 +560,8 @@ class SysMarket @Inject() (
       rcvrs         <- rcvrsFut
       ad2advMap     <- ad2advMapFut
     } yield {
-      Ok(showAdnNodeAdsTpl(brArgss, adnNodeOpt, adFreqs, rcvrs, a, ad2advMap))
+      val rargs = MShowNodeAdsTplArgs(brArgss, adnNodeOpt, adFreqs, rcvrs, a, ad2advMap)
+      Ok( showAdnNodeAdsTpl(rargs) )
     }
   }
 

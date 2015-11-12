@@ -3,11 +3,12 @@ package controllers.sc
 import controllers.SioController
 import io.suggest.di.IEsClient
 import models.msc.AdCssArgs
-import models.{blk, MAd}
+import models.{blk, MNode}
 import play.api.mvc.Action
 import play.twirl.api.Txt
 import util.PlayMacroLogsI
 import util.blocks.BlocksConf
+import util.n2u.IN2NodesUtilDi
 import views.txt.blocks.common._
 
 import scala.concurrent.Future
@@ -24,6 +25,7 @@ trait ScBlockCss
   extends SioController
   with PlayMacroLogsI
   with IEsClient
+  with IN2NodesUtilDi
 {
 
   /**
@@ -33,14 +35,14 @@ trait ScBlockCss
    */
   def serveBlockCss(args: Seq[AdCssArgs]) = Action.async { implicit request =>
     // TODO Надо переписать это дело через асинхронные enumerator'ы
-    val madsFut = MAd.multiGetRev( args.iterator.map(_.adId) )
+    val madsFut = MNode.multiGetRev( args.iterator.map(_.adId) )
     val argsMap = args.iterator
       .map(arg => arg.adId -> arg)
       .toMap
     val resFut = madsFut.flatMap { mads =>
       Future.traverse(mads) { mad =>
         val arg = argsMap(mad.id.get)
-        val bc = BlocksConf.applyOrDefault(mad.blockMeta.blockId)
+        val bc = n2NodesUtil.bc(mad)
         // Картинка вроде нужна, но стоит в этом убедиться... Future для распаралеливания и на случай если картинка понадобиться
         Future {
           val brArgs = blk.RenderArgs(

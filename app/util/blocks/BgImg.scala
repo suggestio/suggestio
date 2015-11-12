@@ -8,6 +8,7 @@ import models.blk.ed._
 import models.im.{MImgT, MImg3_, DevScreen}
 import models.im.make._
 import util.PlayLazyMacroLogsImpl
+import util.n2u.N2NodesUtil
 import scala.concurrent.{ExecutionContext, Future}
 import play.api.data.{FormError, Mapping}
 import play.api.Play.current
@@ -27,13 +28,13 @@ object BgImg extends PlayLazyMacroLogsImpl {
   val BG_IMG_FN = "bgImg"
   val bgImgBf = BfImage(BG_IMG_FN, marker = BG_IMG_FN, preDetectMainColor = true)
 
+  private val n2nNodesUtil = current.injector.instanceOf[N2NodesUtil]
   protected[blocks] val _mImg3 = current.injector.instanceOf[MImg3_]
 
 
   /** Быстрый экстрактор фоновой картинки из карточки. */
   def getBgImg(mad: MNode) = {
-    mad.ad.blockMeta
-      .fold(BlocksConf.DEFAULT)(bm => BlocksConf.applyOrDefault(bm.blockId))
+    n2nNodesUtil.bc(mad)
       .getMadBgImg(mad)
   }
 

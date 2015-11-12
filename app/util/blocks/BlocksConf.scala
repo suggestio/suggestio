@@ -100,6 +100,9 @@ object BlocksConf
         DEFAULT
     }
   }
+  def applyOrDefault(nOpt: Option[Int]): T = {
+    nOpt.fold(DEFAULT)(applyOrDefault)
+  }
 
   // Начало значений
 

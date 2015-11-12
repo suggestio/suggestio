@@ -5,6 +5,7 @@
 @import views.html.lk.ad._
 @import ctx._
 @import args._
+@import ctx.api.{n2NodesUtil => n2n}
 
 @* Флаг single переименовывает единственную галочку "Выводить". *@
 @defining( mnode.extras.adn.map(_.out4render).getOrElse(Nil) ) { outLvlMap =>
@@ -29,11 +30,12 @@
       @_adsListTpl(mads, coverDisableReason = true) { mad =>
 
         <div class="js-equal-height">
-        @ad2advMap.get(mad.id.get).fold {
-          <a class="adv-item_edit-btn" href="@routes.MarketAd.editAd(mad.id.get)">
-            <span></span>
-          </a>
-        } { adv =>
+
+          @ad2advMap.get(mad.id.get).fold {
+            <a class="adv-item_edit-btn" href="@routes.MarketAd.editAd(mad.id.get)">
+              <span></span>
+            </a>
+          } { adv =>
             @adv match {
               case advReq: MAdvReq => {
                 <a class="adv-item_status __request js-btn" href="@routes.MarketAdv.advFullWnd(mad.id.get, advId = adv.id, r = ctx.r)"></a>
@@ -50,34 +52,36 @@
             @if(ctx.isSuperuser) {
               <a class="adv-item_edit-btn" href="@routes.MarketAd.editAd(mad.id.get)">@messages("Edit")</a>
             }
-        }
+          }
 
-        @* Галочки для управления отображением рекламной карточки магазина.
-           Отображаются, если модератор не запретил бесплатное размещение этой карточки. *@
-        @mad.moderation.freeAdv.filter(!_.isAllowed).fold {
+          @* Галочки для управления отображением рекламной карточки магазина.
+             Отображаются, если модератор не запретил бесплатное размещение этой карточки. *@
+          @n2n.mdrs(mad).toStream.headOption.fold {
 
-          @* Бесплатное размещение не запрещено. *@
-          <div class="ads-list-block__controls">
-            @defining( mad.receivers.get(mnode.id.get).map(_.allShowLevels).getOrElse(Set.empty) ) { adSls =>
-              @* Обходим данные по out-уровня, превращая её в список галочек. *@
-              @outLvlMap.map { msl =>
-                @defining(mnode.common.isEnabled && msl.allowed) { hl =>
-                  <label class="@msl.sl.checkboxCssClass@if(!msl.allowed){ inactive}">
-                    <input class="@if(msl.limit == 1){js-one-}checkbox" type="checkbox"
-                           data-level="@msl.sl" data-adid="@mad.id" data-name="@msl.sl.checkboxCssClass"
-                           @if(!msl.allowed) {disabled="disabled"} @if(adSls contains msl.sl) {checked="checked"}
-                           />
-                          <span class="styled-checkbox"></span>&nbsp;@messages(if(isSingleOutLvl) "lk.sl.enable_ad" else ("lk.sl." + msl.sl.name))
-                  </label>
+            @* Бесплатное размещение не запрещено. *@
+            <div class="ads-list-block__controls">
+              @defining( mnode.id.flatMap(n2n.findReceiver).map(_.info.sls).getOrElse(Set.empty) ) { adSls =>
+                @* Обходим данные по out-уровня, превращая её в список галочек. *@
+                @outLvlMap.map { msl =>
+                  @defining(mnode.common.isEnabled && msl.allowed) { hl =>
+                    <label class="@msl.sl.checkboxCssClass@if(!msl.allowed){ inactive}">
+                      <input class="@if(msl.limit == 1){js-one-}checkbox" type="checkbox"
+                             data-level="@msl.sl" data-adid="@mad.id" data-name="@msl.sl.checkboxCssClass"
+                             @if(!msl.allowed) {disabled="disabled"} @if(adSls contains msl.sl) {checked="checked"}
+                             />
+                            <span class="styled-checkbox"></span>&nbsp;@messages(if(isSingleOutLvl) "lk.sl.enable_ad" else ("lk.sl." + msl.sl.name))
+                    </label>
+                  }
                 }
               }
-            }
-          </div>
-        } { faMdr =>
-          @* Модератор запретил бесплатное размещение указанное карточки. *@
-          @faMdr.reason
-        }
-        </div>
+            </div>
+          } { faMdr =>
+            @* Модератор запретил бесплатное размещение указанное карточки. *@
+            @faMdr.commentNi
+          }
+
+        </div> @* js-equal-height *@
+
         @if(canAdv) {
           <a class="btn __size-XM __radial-major" href="@routes.LkAdvExt.forAd(mad.id.get)">
             @messages("ad.Manage")
