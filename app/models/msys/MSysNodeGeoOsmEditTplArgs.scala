@@ -8,7 +8,8 @@ import play.api.data.Form
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 29.10.15 12:05
- * Description: Модель аргументов для вызова шаблона рендера sys/adn/geo/editOsmTpl
+ * Description: Модель аргументов для вызова шаблона рендера шаблона
+ * [[views.html.sys1.market.adn.geo.editAdnGeoOsmTpl]].
  */
 trait ISysNodeGeoOsmEditTplArgs {
   def geo     : MGeoShape

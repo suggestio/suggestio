@@ -59,13 +59,13 @@ trait Width extends ValT with WidthI {
   }
 
   abstract override def unbind(value: BindResult): Map[String, String] = {
-    val v = m.unbind( value.bd.blockMeta.width )
+    val v = m.unbind( value.blockMeta.width )
     super.unbind(value) ++ v
   }
 
   abstract override def unbindAndValidate(value: BindResult): (Map[String, String], Seq[FormError]) = {
     val (ms, fes) = super.unbindAndValidate(value)
-    val c = value.bd.blockMeta.width
+    val c = value.blockMeta.width
     val (cms, cfes) = m.unbindAndValidate(c)
     (ms ++ cms) -> (fes ++ cfes)
   }

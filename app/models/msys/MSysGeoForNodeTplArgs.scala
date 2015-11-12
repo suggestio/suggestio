@@ -6,11 +6,14 @@ import models.MNode
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 28.10.15 22:39
- * Description: Модель аргументов для шаблона sys/adn/geo/forNodeTpl.
+ * Description: Модель аргументов для шаблона [[views.html.sys1.market.adn.geo.forNodeTpl]].
  */
 trait ISysGeoForNodeTplArgs {
+
   def mnode         : MNode
+
   def parentsMap    : Map[String, MNode]
+
   def mapStateHash  : Option[String]
 
   def shapes = mnode.geo.shapes

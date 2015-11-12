@@ -1,10 +1,11 @@
 package util.blocks
 
 import io.suggest.model.n2.ad.ent.text.ValueEnt
-import models.{TextEnt, AOBlock}
-import models.blk.ed.{AdFormM, BindResult, BindAcc}
-import play.api.data._, Forms._
-import play.api.Play.{current, configuration}
+import models.blk.ed.{AdFormM, BindAcc, BindResult}
+import models.{MEntity, TextEnt}
+import play.api.Play.{configuration, current}
+import play.api.data.Forms._
+import play.api.data._
 
 /**
  * Suggest.io
@@ -30,7 +31,7 @@ object ListBlock {
 }
 
 
-import ListBlock._
+import util.blocks.ListBlock._
 
 
 trait ListBlock extends ValT {
@@ -41,7 +42,7 @@ trait ListBlock extends ValT {
   /** Макс кол-во офферов (макс.длина списка офферов). */
   def offersCountMax: Int
 
-  protected def offersMapping: Mapping[List[AOBlock]]
+  protected def offersMapping: Mapping[List[MEntity]]
 
   // Mapping
   private def m = offersMapping.withPrefix("offer").withPrefix(key)
@@ -72,13 +73,13 @@ trait ListBlock extends ValT {
   }
 
   abstract override def unbind(value: BindResult): Map[String, String] = {
-    val v = m.unbind( value.bd.offers )
+    val v = m.unbind( value.entites )
     super.unbind(value) ++ v
   }
 
   abstract override def unbindAndValidate(value: BindResult): (Map[String, String], Seq[FormError]) = {
     val (ms, fes) = super.unbindAndValidate(value)
-    val c = value.bd.offers
+    val c = value.entites
     val (cms, cfes) = m.unbindAndValidate(c)
     (ms ++ cms) -> (fes ++ cfes)
   }
@@ -124,11 +125,11 @@ trait SingleListBlockT extends ListBlock {
     list(offerMapping)
       //.transform[List[T1]] (_.flatMap(_.iterator), _.map(Some.apply))
       .verifying("error.too.much", { _.size <= offersCountMax })
-      .transform[List[AOBlock]] (applyAOBlocks, unapplyAOBlocks)
+      .transform[List[MEntity]] (applyAOBlocks, unapplyAOBlocks)
   }
 
   /** Собрать AOBlock на основе куска выхлопа формы. */
-  protected def applyAOBlocks(l: List[Option[T1]]): List[AOBlock] = {
+  protected def applyAOBlocks(l: List[Option[T1]]): List[MEntity] = {
     l.iterator
       // Делаем zipWithIndex перед фильтром чтобы сохранять выравнивание на странице (css-классы), если 1 или 2 элемент пропущен.
       .zipWithIndex
@@ -143,21 +144,21 @@ trait SingleListBlockT extends ListBlock {
       .toList
   }
 
-  protected def applyAOBlock(offerN: Int, v1: Option[T1]): AOBlock
+  protected def applyAOBlock(offerN: Int, v1: Option[T1]): MEntity
 
 
   /** unapply для offersMapping. Вынесен для упрощения кода. Метод восстанавливает исходный выхлоп формы,
     * даже если были пропущены какие-то группы полей. */
-  protected def unapplyAOBlocks(aoBlocks: Seq[AOBlock]): List[Option[T1]] = {
+  protected def unapplyAOBlocks(aoBlocks: Seq[MEntity]): List[Option[T1]] = {
     // без if isEmpty будет экзепшен в maxBy().
     if (aoBlocks.isEmpty) {
       Nil
     } else {
       // Вычисляем оптимальную длину списка результатов
-      val maxN = aoBlocks.maxBy(_.n).n
+      val maxN = aoBlocks.maxBy(_.id).id
       // Рисуем карту маппингов необходимой длины, ключ - это n.
       val aoBlocksNS = aoBlocks.iterator
-        .map { aoBlock => aoBlock.n -> aoBlock }
+        .map { aoBlock => aoBlock.id -> aoBlock }
         .toMap
       // Восстанавливаем новый список выхлопов мапперов на основе длины и имеющихся экземпляров AOBlock.
       (N0 to maxN)
@@ -170,7 +171,7 @@ trait SingleListBlockT extends ListBlock {
     }
   }
 
-  def unapplyAOBlock(blk: AOBlock): Option[T1]
+  def unapplyAOBlock(blk: MEntity): Option[T1]
 
 }
 
@@ -184,12 +185,12 @@ trait TitleListBlockT extends SingleListBlockT {
   override def bf1(offerNopt: Option[Int]) = ListBlock.mkBfText(TITLE_FN, offerNopt)
   def titleBf = bf1(None)
 
-  override protected def applyAOBlock(offerN: Int, v1: Option[T1]): AOBlock = {
-    AOBlock(n = offerN, text1 = v1)
+  override protected def applyAOBlock(offerN: Int, v1: Option[T1]): MEntity = {
+    MEntity(id = offerN, text = v1)
   }
 
-  override def unapplyAOBlock(blk: AOBlock): Option[T1] = {
-    blk.text1
+  override def unapplyAOBlock(blk: MEntity): Option[T1] = {
+    blk.text
   }
 
   /** Реализация добавления отображаемых полей редактора с учётом реально необходимого кол-ва полей. */

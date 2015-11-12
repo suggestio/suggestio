@@ -1,8 +1,7 @@
 package models.blk.ed
 
-import models.AOBlock
+import models.MEntity
 import models.blk._
-import util.blocks.BlockDataImpl
 
 /**
  * Suggest.io
@@ -13,7 +12,7 @@ import util.blocks.BlockDataImpl
  */
 
 case class BindAcc(
-  offers  : List[AOBlock]         = Nil,
+  offers  : List[MEntity]         = Nil,
   height  : Int                   = BlockHeights.default.heightPx,
   width   : Int                   = BlockWidths.default.widthPx,
   isWide  : Boolean               = false,
@@ -30,11 +29,7 @@ case class BindAcc(
   }
 
   def toBindResult(blockId: Int): BindResult = {
-    val bd = BlockDataImpl(
-      blockMeta = toBlockMeta(blockId),
-      offers    = offers
-    )
-    BindResult(bd, bim.toMap)
+    BindResult(offers, toBlockMeta(blockId), bim.toMap)
   }
 
 }

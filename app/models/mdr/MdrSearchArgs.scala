@@ -1,6 +1,8 @@
 package models.mdr
 
-import io.suggest.ym.model.ad.MdrSearchArgsI
+import io.suggest.model.n2.edge.MPredicates
+import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
+import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import play.api.Play.{configuration, current}
 import play.api.mvc.QueryStringBindable
 import util.qsb.QsbKey1T
@@ -51,7 +53,7 @@ object MdrSearchArgs {
             MdrSearchArgs(
               offsetOpt         = offsetOpt,
               producerId        = prodIdOpt,
-              freeAdvIsAllowed  = freeAdvIsAllowed,
+              isAllowed  = freeAdvIsAllowed,
               hideAdIdOpt       = hideAdIdOpt
             )
           }
@@ -63,7 +65,7 @@ object MdrSearchArgs {
         Iterator(
           strOptB.unbind (k1(PRODUCER_ID_FN),          value.producerId),
           intOptB.unbind (k1(OFFSET_FN),               value.offsetOpt),
-          boolOptB.unbind(k1(FREE_ADV_IS_ALLOWED_FN),  value.freeAdvIsAllowed),
+          boolOptB.unbind(k1(FREE_ADV_IS_ALLOWED_FN),  value.isAllowed),
           strOptB.unbind (k1(HIDE_AD_ID_FN),           value.hideAdIdOpt)
         )
           .filter { qv =>
@@ -85,13 +87,36 @@ import models.mdr.MdrSearchArgs._
 case class MdrSearchArgs(
   offsetOpt             : Option[Int]       = None,
   producerId            : Option[String]    = None,
-  freeAdvIsAllowed      : Option[Boolean]   = None,
+  isAllowed             : Option[Boolean]   = None,
   hideAdIdOpt           : Option[String]    = None
 )
-  extends MdrSearchArgsI
-{
+{ that =>
 
   def offset  = offsetOpt getOrElse 0
   def limit   = FREE_ADVS_PAGE_SZ
+
+  def toNodeSearch: MNodeSearch = {
+    new MNodeSearchDfltImpl {
+      override def offset  = that.offset
+      override def limit   = that.limit
+      override def outEdges: Seq[ICriteria] = {
+        val prodCrOpt = for (prodId <- producerId) yield {
+          Criteria(
+            nodeIds     = Seq( prodId ),
+            predicates  = Seq( MPredicates.OwnedBy ),
+            must        = Some(true)
+          )
+        }
+        // Любое состояние поля freeAdvIsAllowed является значимым и определяет результат.
+        val isAllowedCr = Criteria(
+          predicates  = Seq( MPredicates.ModeratedBy ),
+          flag        = isAllowed,
+          must        = Some(isAllowed.isDefined)
+        )
+        // Объеденить два критерия.
+        isAllowedCr :: prodCrOpt.toList
+      }
+    }
+  }
 
 }

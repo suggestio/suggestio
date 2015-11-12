@@ -1,42 +1,50 @@
-@(mad: MAd, producerOpt: Option[MNode], imgs: Map[String, im.MImgT])(implicit ctx: Context)
+@(args: msys.IShowAdTplArgs)(implicit ctx: Context)
 
 @import models.im.OutImgFmts.JPEG
 @import ctx.messages
 @import msc.OneAdRenderVariants._
-@import im.MImg
 
 @hPathAfter = { }
 
 @sysAdBase(
   title       = "Карточка",
-  madOpt      = Some(mad),
+  madOpt      = Some(args.mad),
   hPathAfter  = Some(hPathAfter),
-  nodeOpt     = producerOpt
+  nodeOpt     = args.producerOpt
 ) {
 
-  <h1>Управление рекламной карточкой @mad.id</h1>
+  <h1>Управление рекламной карточкой @args.mad.id</h1>
 
   <p>Продьюсер карточки:
-    <a href="@routes.SysMarket.showAdnNode(mad.producerId)">
-      @producerOpt.fold {
+    @args.madProducerIdOpt.map { producerId =>
+      <a href="@routes.SysMarket.showAdnNode(producerId)">
+    }
+      @args.producerOpt.fold {
         ошибочен!
       } { prod =>
         Узел: @prod.meta.basic.name / @prod.meta.address.town
       }
-    </a>
+    @if( args.madProducerIdOpt ) {
+      </a>
+    }
   </p>
 
-  <p>Размеры карточки: ширина=@mad.blockMeta.width высота=@mad.blockMeta.height css-пикселей.</p>
+  @args.mad.ad.blockMeta.map { bm =>
+    <p>Размеры карточки: ширина=@bm.width высота=@bm.height css-пикселей.</p>
+  }
 
   <p>
-    <a href="@routes.MarketAd.editAd(mad.id.get)">Редактор карточки...</a>
+    <a href="@routes.MarketAd.editAd(args.mad.id.get)">Редактор карточки...</a>
   </p>
 
-  @defining(mad.receivers.size) { rcvrsCount =>
-    <p>Эта карточка сейчас @if(rcvrsCount > 0) {размещена на @rcvrsCount узлах} else {нигде не отображается}.
-      <a href="@routes.SysMarket.analyzeAdRcvrs(mad.id.get)">Проанализировать...</a>
+    <p>Эта карточка сейчас
+      @if(args.rcvrsCount > 0) {
+        размещена на @args.rcvrsCount узлах
+      } else {
+        нигде не отображается
+      }.
+      <a href="@routes.SysMarket.analyzeAdRcvrs(args.mad.id.get)">Проанализировать...</a>
     </p>
-  }
 
   <br/>
 
@@ -44,14 +52,14 @@
     Отрендерить карточку в
     <ul>
       @defining( 1.0F ) { szMult =>
-      @defining( blk.OneAdQsArgs(mad.id.get, szMult, mad.versionOpt, JPEG) ) { qsArgs =>
+      @defining( blk.OneAdQsArgs(args.mad.id.get, szMult, args.mad.versionOpt, JPEG) ) { qsArgs =>
         <li>
            - <a href="@routes.MarketShowcase.onlyOneAd(qsArgs)">HTML x@szMult</a>
-           или <a href="@routes.SysMarket.showOneAdForm(mad.id.get, ToHtml)">кастомно</a>.
+           или <a href="@routes.SysMarket.showOneAdForm(args.mad.id.get, ToHtml)">кастомно</a>.
         </li>
         <li>
           - <a href="@routes.MarketShowcase.onlyOneAdAsImage(qsArgs)">PNG x@szMult</a>
-          или <a href="@routes.SysMarket.showOneAdForm(mad.id.get, ToImage)">кастомно</a>.
+          или <a href="@routes.SysMarket.showOneAdForm(args.mad.id.get, ToImage)">кастомно</a>.
         </li>
       }
       }
@@ -62,17 +70,17 @@
 
   <div>
     Картинки карточки:
-    @if(imgs.isEmpty) {
+    @if(args.imgs.isEmpty) {
       отсутствуют.
     } else {
       <ul>
-        @imgs.iterator.map { case (k, mimg) =>
+        @args.imgs.map { ei =>
           <li>
             -
-            <a href="@routes.SysImg.showOne(mimg)">
-              <strong>@k</strong>
+            <a href="@routes.SysImg.showOne(ei.mimg)">
+              <strong>@messages(ei.edge.predicate.singular)</strong>
             </a>
-            <a href="@routes.SysImg.makeForm(mimg, Some(mad.blockMeta))">
+            <a href="@routes.SysImg.makeForm(args.mimg, args.mad.ad.blockMeta)">
               [make]
             </a>
           </li>

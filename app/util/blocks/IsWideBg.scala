@@ -55,13 +55,13 @@ trait IsWideBg extends ValT with IsWideBgI {
   }
 
   abstract override def unbind(value: BindResult): Map[String, String] = {
-    val v = m.unbind( value.bd.blockMeta.wide )
+    val v = m.unbind( value.blockMeta.wide )
     super.unbind(value) ++ v
   }
 
   abstract override def unbindAndValidate(value: BindResult): (Map[String, String], Seq[FormError]) = {
     val (ms, fes) = super.unbindAndValidate(value)
-    val c = value.bd.blockMeta.wide
+    val c = value.blockMeta.wide
     val (cms, cfes) = m.unbindAndValidate(c)
     (ms ++ cms) -> (fes ++ cfes)
   }

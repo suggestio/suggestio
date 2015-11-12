@@ -6,7 +6,7 @@ import play.api.data._, Forms._
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 23.04.15 11:01
- * Description: Модель данных формы параметров создания узла через /sys/.
+ * Description: Модель данных формы создания узла шаблона [[views.html.sys1.market.adn.createAdnNodeFormTpl]].
  */
 
 object NodeCreateParams {

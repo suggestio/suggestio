@@ -1,6 +1,5 @@
 package models.msys
 
-import models._
 import models.mbill._
 
 /** У шаблона [[views.html.sys1.market.billing.adnNodeBillingTpl]] очень много параметров со сложными типам.

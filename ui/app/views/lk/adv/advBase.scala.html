@@ -1,4 +1,4 @@
-@(title: String, mad: MAd, producer: MNode, rightLink: adv.tpl.LkAdvRightLink, rightAfter: Option[Html] = None,
+@(title: String, mad: MNode, producer: MNode, rightLink: adv.tpl.LkAdvRightLink, rightAfter: Option[Html] = None,
   headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
 
 @* Базовый шаблон для adv-раздела ЛК. *@
@@ -11,7 +11,7 @@
 @lk.lkBaseLayout(
   title         = title,
   nodeOpt       = Some(producer),
-  backHref      = Some( routes.MarketLkAdn.showNodeAds(mad.producerId).url ),
+  backHref      = ctx.api.n2NodesUtil.madProducerId(mad).map( routes.MarketLkAdn.showNodeAds(_).url ),
   rightBar      = Some(rightBar1),
   leftCurrEl    = Some(LkLeftPanelLinks.LPL_ADS),
   headAfter     = headAfter

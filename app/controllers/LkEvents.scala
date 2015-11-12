@@ -87,7 +87,7 @@ class LkEvents @Inject() (
     // Нужно отрендерить каждое хранимое событие с помощью соотв.шаблона. Для этого нужно собрать аргументы для каждого события.
     val evtsRndrFut = eventsFut.flatMap { mevents =>
       // В фоне пакетно отфетчить рекламные карточки и ext-таргеты в виде карт:
-      val madsMapFut        = lkEventsUtil.readEsModel(mevents, MAd)(_.argsInfo.adIdOpt)
+      val madsMapFut        = lkEventsUtil.readEsModel(mevents, MNode)(_.argsInfo.adIdOpt)
       val advExtTgsMapFut   = lkEventsUtil.readEsModel(mevents, MExtTarget)(_.argsInfo.advExtTgIds)
 
       // Параллельно собираем карты размещений из всех adv-моделей.

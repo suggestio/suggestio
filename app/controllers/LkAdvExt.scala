@@ -217,7 +217,7 @@ class LkAdvExt @Inject() (
     }
     // Одновременно запускаем сбор инфы по карточке и проверку прав на неё.
     fut0.flatMap { _ =>
-      val madFut = MAd.getById(qsArgs.adId)
+      val madFut = MNode.getById(qsArgs.adId)
         .map(_.get)
         .recoverWith { case ex: NoSuchElementException =>
           Future failed ExceptionWithResult(NotFound("Ad not found: " + qsArgs.adId))

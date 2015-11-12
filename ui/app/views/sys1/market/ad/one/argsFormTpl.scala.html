@@ -1,25 +1,21 @@
-@(mad: MAd, rvar: msc.OneAdRenderVariant, qf: Form[blk.OneAdQsArgs], nodeOpt: Option[MNode])(implicit ctx: Context)
+@(args: msys.IShowOneAdFormPageTplArgs)(implicit ctx: Context)
 
-@* Страница с формой рендера  *@
+@* Страница с формой параметров рендера одной карточки. *@
 
 @import ctx.messages
 @import msc.OneAdRenderVariants.{values => rvars}
 
-@oneBase("ONE-рендер в " + messages(rvar.nameI18n), mad, nodeOpt) {
+@oneBase("ONE-рендер в " + messages(args.rvar.nameI18n), args.mad, args.nodeOpt) {
 
-  <p>Произвольный рендер карточки в @messages(rvar.nameI18n).</p>
+  <p>Произвольный рендер карточки в @messages(args.rvar.nameI18n).</p>
 
   <p>
     Можно также рендерить в
-    @rvars.iterator.filter(_ != rvar).map { rvar1 =>
-      <a href="@routes.SysMarket.showOneAdForm(mad.id.get, rvar1)">@messages(rvar1.nameI18n)</a>,
+    @rvars.iterator.filter(_ != args.rvar).map { rvar1 =>
+      <a href="@routes.SysMarket.showOneAdForm(args.mad.id.get, rvar1)">@messages(rvar1.nameI18n)</a>,
     }.
   </p>
 
-  @_oneAdQsFormTpl(
-    madId = mad.id.get,
-    qf    = qf,
-    rvar  = rvar
-  )
+  @_oneAdQsFormTpl(args)
 
 }

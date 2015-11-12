@@ -7,7 +7,7 @@ import io.suggest.model.n2.edge.MNodeEdges
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.adv.{MAdvReq, MAdvOk, MAdvI}
-import models.im.MImg
+import models.im.MImg3_
 import models.msys._
 import models.usr.{MPerson, EmailActivation}
 import org.elasticsearch.client.Client
@@ -21,6 +21,7 @@ import util.adn.NodesUtil
 import util.adv.AdvUtil
 import util.lk.LkAdUtil
 import util.mail.IMailerWrapper
+import util.n2u.N2NodesUtil
 import views.html.sys1.market._
 import views.html.sys1.market.ad._
 import views.html.sys1.market.adn._
@@ -46,6 +47,8 @@ class SysMarket @Inject() (
   override val messagesApi        : MessagesApi,
   override val mailer             : IMailerWrapper,
   db                              : Database,
+  n2NodesUtil                     : N2NodesUtil,
+  mImg3                           : MImg3_,
   override val errorHandler       : ErrorHandler,
   override val mNodeCache         : MAdnNodeCache,
   override val sysAdRenderUtil    : SysAdRenderUtil,
@@ -487,7 +490,7 @@ class SysMarket @Inject() (
   def showAdnNodeAds(a: AdSearch) = IsSuperuser.async { implicit request =>
     // Ищем все рекламные карточки, подходящие под запрос.
     // TODO Нужна устойчивая сортировка.
-    val madsFut = MAd.dynSearch(a)
+    val madsFut = MNode.dynSearch(a)
     val brArgssFut = madsFut flatMap { mads =>
       Future.traverse(mads) { mad =>
         lkAdUtil.tiledAdBrArgs(mad)
@@ -638,13 +641,31 @@ class SysMarket @Inject() (
    */
   def showAd(adId: String) = IsSuperuserMad(adId).async { implicit request =>
     import request.mad
-    val producerOptFut = mNodeCache.getById(mad.producerId)
-    val imgs = mad.imgs
-      .mapValues { MImg.apply }
+    val producerIdOpt = n2NodesUtil.madProducerId( mad )
+    // Определить узла-продьюсера
+    val producerOptFut = mNodeCache.maybeGetByIdCached( producerIdOpt )
+    // Собрать инфу по картинкам.
+    val imgs = {
+      mad.edges.out
+        .valuesIterator
+        .filter { e =>
+          e.predicate.toTypeValid( MNodeTypes.Media.Image )
+        }
+        .map { e =>
+          MImgEdge(e, mImg3(e))
+        }
+        .toSeq
+    }
+    // Считаем кол-во ресиверов.
+    val rcvrsCount = n2NodesUtil.receiverIds(mad)
+      .toSet
+      .size
+    // Вернуть результат, когда всё будет готово.
     for {
       producerOpt <- producerOptFut
     } yield {
-      Ok(showAdTpl(mad, producerOpt, imgs))
+      val rargs = MShowAdTplArgs(mad, producerOpt, imgs, producerIdOpt, rcvrsCount)
+      Ok( showAdTpl(rargs) )
     }
   }
 
@@ -652,27 +673,44 @@ class SysMarket @Inject() (
   /** Вывести результат анализа ресиверов рекламной карточки. */
   def analyzeAdRcvrs(adId: String) = IsSuperuserMad(adId).async { implicit request =>
     import request.mad
-    val producerOptFut = mNodeCache.getById(mad.producerId)
-    val newRcvrsMapFut = producerOptFut flatMap { advUtil.calculateReceiversFor(mad, _) }
+    val producerId = n2NodesUtil.madProducerId(mad).get
+    val producerOptFut = mNodeCache.getById(producerId)
+    val newRcvrsMapFut = producerOptFut
+      .flatMap { advUtil.calculateReceiversFor(mad, _) }
+
+    val rcvrsMap = n2NodesUtil.receiversMap(mad)
+
     // Достаём из кеша узлы.
     val nodesMapFut: Future[Map[String, MNode]] = {
-      val adnIds1 = mad.receivers.keySet
+      def _nodeIds(rcvrs: Receivers_t) = rcvrs.keysIterator.map(_._2).toSet
+      val adnIds1 = _nodeIds(rcvrsMap)
       for {
         adns1       <- mNodeCache.multiGet(adnIds1)
         newRcvrsMap <- newRcvrsMapFut
-        newAdns     <- mNodeCache.multiGet(newRcvrsMap.keySet -- adnIds1)
+        newAdns     <- {
+          val newRcvrIds = _nodeIds(newRcvrsMap)
+          mNodeCache.multiGet(newRcvrIds -- adnIds1)
+        }
       } yield {
         (adns1.iterator ++ newAdns.iterator)
           .map { adnNode => adnNode.id.get -> adnNode }
           .toMap
       }
     }
+
+    // Узнать, совпадает ли рассчетная карта ресиверов с текущей.
+    val rcvrsMapOkFut = for (newRcvrsMap <- newRcvrsMapFut) yield {
+      newRcvrsMap == rcvrsMap
+    }
+
     for {
       newRcvrsMap <- newRcvrsMapFut
       producerOpt <- producerOptFut
       nodesMap    <- nodesMapFut
+      rcvrsMapOk  <- rcvrsMapOkFut
     } yield {
-      Ok(showAdRcvrsTpl(mad, newRcvrsMap, nodesMap, producerOpt))
+      val rargs = MShowAdRcvrsTplArgs( mad, newRcvrsMap, nodesMap, producerOpt, rcvrsMap, rcvrsMapOk )
+      Ok( showAdRcvrsTpl(rargs) )
     }
   }
 

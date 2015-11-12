@@ -1,9 +1,9 @@
 package util.n2u
 
 import com.google.inject.Singleton
-import io.suggest.model.n2.edge.MPredicates
+import io.suggest.model.n2.edge.{MNodeEdges, MPredicates}
 import io.suggest.model.n2.edge.search.ICriteria
-import models.{BlockConf, MEdge, MNode}
+import models.{Receivers_t, BlockConf, MEdge, MNode}
 import util.blocks.BlocksConf
 
 /**
@@ -34,6 +34,16 @@ class N2NodesUtil {
     crs.toIterator
       .filter { _.predicates.contains(MPredicates.Receiver) }
       .flatMap( _.nodeIds )
+  }
+
+  def receivers(mad: MNode): Iterator[MEdge] = {
+    mad.edges
+      .withPredicateIter( MPredicates.Receiver )
+  }
+
+  /** Собрать карту ресиверов. */
+  def receiversMap(mad: MNode): Receivers_t = {
+    MNodeEdges.edgesToMap1( receivers(mad) )
   }
 
   /** Найти первый (любой) отказ от  */

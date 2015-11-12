@@ -59,13 +59,13 @@ trait Height extends ValT with HeightI {
   }
 
   abstract override def unbind(value: BindResult): Map[String, String] = {
-    val v = m.unbind( value.bd.blockMeta.height )
+    val v = m.unbind( value.blockMeta.height )
     super.unbind(value) ++ v
   }
 
   abstract override def unbindAndValidate(value: BindResult): (Map[String, String], Seq[FormError]) = {
     val (ms, fes) = super.unbindAndValidate(value)
-    val c = value.bd.blockMeta.height
+    val c = value.blockMeta.height
     val (cms, cfes) = m.unbindAndValidate(c)
     (ms ++ cms) -> (fes ++ cfes)
   }

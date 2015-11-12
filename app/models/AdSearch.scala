@@ -93,17 +93,20 @@ object AdSearch extends CommaDelimitedStringSeq {
           } yield {
             // Расчитываем значение эджей.
             val _outEdges: Seq[ICriteria] = {
+              val someTrue = Some(true)
               val prodCrOpt = for (prodId <- _prodIdOpt) yield {
                 Criteria(
                   nodeIds     = Seq( prodId ),
-                  predicates  = Seq( MPredicates.OwnedBy )
+                  predicates  = Seq( MPredicates.OwnedBy ),
+                  must        = someTrue
                 )
               }
               val rcvrCrOpt = for (rcvrId <- _rcvrIdOpt) yield {
                 Criteria(
                   nodeIds     = Seq( rcvrId ),
                   predicates  = Seq( MPredicates.Receiver ),
-                  sls         = _rcvrSlOpt.flatMap(AdShowLevels.maybeWithName).toSeq
+                  sls         = _rcvrSlOpt.flatMap(AdShowLevels.maybeWithName).toSeq,
+                  must        = someTrue
                 )
               }
               (prodCrOpt ++ rcvrCrOpt).toSeq
@@ -177,6 +180,21 @@ object AdSearch extends CommaDelimitedStringSeq {
       /** Для js-роутера нужна поддержка через JSON. */
       override def javascriptUnbind: String = {
         adSearchJsUnbindTpl(KEY_DELIM).body
+      }
+    }
+  }
+
+
+  /** Быстрая сборка экземпляра AdSearch для поиска по producerId без лишней конкретики.
+    * Используется шаблонами для краткой сборки экземпляров. */
+  def byProducerId(producerIds: String*): AdSearch = {
+    new AdSearchImpl {
+      override def outEdges: Seq[ICriteria] = {
+        val cr = Criteria(
+          nodeIds = producerIds,
+          predicates = Seq( MPredicates.OwnedBy )
+        )
+        Seq(cr)
       }
     }
   }

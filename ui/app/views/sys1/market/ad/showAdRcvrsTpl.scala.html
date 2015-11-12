@@ -1,4 +1,4 @@
-@(mad: MAd, newRcvrsMap: Receivers_t, nodesMap: Map[String, MNode], nodeOpt: Option[MNode] = None)(implicit ctx: Context)
+@(args: IShowAdRcvrsTplArgs)(implicit ctx: Context)
 
 @* Отображение доп.инфы по карточке. *@
 
@@ -8,6 +8,7 @@
 @_rcvrsMap(rcvrs: Receivers_t) = {
   @if(rcvrs.isEmpty) {
     Карта пуста. Карточка нигде не отображается.
+
   } else {
     <table>
       <thead>
@@ -21,7 +22,7 @@
           <tr>
             <td>
               <a href="@routes.SysMarket.showAdnNode(rcvrId)">
-                @nodesMap.get(rcvrId).fold {
+                @args.nodesMap.get(rcvrId).fold {
                   @rcvrId
                 } { rcvrNode =>
                   @rcvrNode.meta.basic.name
@@ -47,31 +48,33 @@
 
 @sysAdBase(
   title   = "Карта ресиверов",
-  madOpt  = Some(mad),
-  nodeOpt = nodeOpt
+  madOpt  = Some(args.mad),
+  nodeOpt = args.nodeOpt
 ) {
 
   <h2>Текущая карта ресиверов</h2>
-  @_rcvrsMap(mad.receivers)
 
-  @if(mad.receivers == newRcvrsMap) {
+  @_rcvrsMap( args.rcvrsMap )
+
+  @if( args.rcvrsMapOk ) {
     <p><strong>Карта соответствует расчетной.</strong></p>
   } else {
     <br/>
     <p><strong>Рассчетная карта ресиверов отличается от текущей!</strong></p>
     <br/>
-    @_rcvrsMap(newRcvrsMap)
+    @_rcvrsMap( args.newRcvrsMap )
   }
+
 
   <br/><br/>
 
-  @form( routes.SysMarket.resetReceivers(mad.id.get, r = ctx.r) ) {
+  @form( routes.SysMarket.resetReceivers(args.mad.id.get, r = ctx.r) ) {
     <input type="submit" value="Сохранить расчетную карту ресиверов в карточку."/>
   }
 
   <br/><br/>
 
-  @form( routes.SysMarket.cleanReceivers(mad.id.get, r = ctx.r) ) {
+  @form( routes.SysMarket.cleanReceivers(args.mad.id.get, r = ctx.r) ) {
     <input type="submit" value="Очистить карту ресиверов карточки." />
     Очистку карты ресиверов приведёт к сокрытию карточки на всех узлах.<br/>
     Очистку можно отменить на 90% кнопкой сохранения рассчетной карты ресиверов.<br/>
@@ -80,7 +83,7 @@
 
   <br/><br/>
 
-  @form( routes.SysMarket.removeAdRcvr(adId = mad.id.get, r = ctx.r) ) {
+  @form( routes.SysMarket.removeAdRcvr(adId = args.mad.id.get, r = ctx.r) ) {
     <input type="submit" value="Уничтожить все размещения (НЕЛЬЗЯ ОТМЕНИТЬ)." />
     Карта размещений будет стёрта.<br/>
     Все одобренные размещениями этой карточки будут закрыты текущей датой.<br/>

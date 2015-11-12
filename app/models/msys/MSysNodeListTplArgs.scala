@@ -6,7 +6,7 @@ import models.{MNodeType, MNode}
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 22.10.15 19:16
- * Description: Модели аргументов для вызова шаблона adnNodesListTpl.
+ * Description: Модели аргументов для вызова шаблона [[views.html.sys1.market.adn.adnNodesListTpl]].
  */
 
 /** Аргументы рендера кнопки-ссылки на тип узла. */

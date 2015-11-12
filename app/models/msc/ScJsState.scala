@@ -184,16 +184,19 @@ case class ScJsState(
       override def randomSortSeed  = that.generationOpt
       override def offsetOpt      = that.fadsOffsetOpt
       override def outEdges: Seq[ICriteria] = {
+        val someTrue = Some(true)
         val rcvrCrOpt = for (nodeId <- that.adnId) yield {
           Criteria(
             nodeIds     = Seq(nodeId),
-            predicates  = Seq(MPredicates.Receiver)
+            predicates  = Seq(MPredicates.Receiver),
+            must        = someTrue
           )
         }
         val prodCrOpt = for (nodeId <- that.fadsProdIdOpt) yield {
           Criteria(
             nodeIds     = Seq(nodeId),
-            predicates  = Seq(MPredicates.OwnedBy)
+            predicates  = Seq(MPredicates.OwnedBy),
+            must        = someTrue
           )
         }
         (rcvrCrOpt ++ prodCrOpt).toSeq

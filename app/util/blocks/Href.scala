@@ -1,7 +1,7 @@
 package util.blocks
 
+import models.MEntity
 import models.blk.ed.{AdFormM, BindResult, BindAcc}
-import models.AOBlock
 import play.api.data.FormError
 import util.FormUtil
 
@@ -25,12 +25,13 @@ object Href extends MergeBindAccAOBlock[String] {
   }
 
   /** Обновить указанный изменяемый AOBlock с помощью текущего значения ссылки. */
-  def updateAOBlockWith(blk: AOBlock, href: Option[String]): AOBlock = {
+  def updateAOBlockWith(blk: MEntity, href: Option[String]): MEntity = {
     blk.copy(
       href = href
     )
   }
 
+  // TODO Нужно сделать href отдельным полем в BindAcc.
   def getHref(bmr: BindResult) = bmr.flatMapFirstOffer(_.href)
 
 }

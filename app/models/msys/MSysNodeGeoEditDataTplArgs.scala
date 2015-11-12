@@ -7,7 +7,8 @@ import play.api.data.Form
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 29.10.15 14:39
- * Description: Модель аргументов для шаблона редактирования геоданных узла editNodeGeodataTpl.
+ * Description: Модель аргументов для шаблона редактирования геоданных узла
+ * [[views.html.sys1.market.adn.geo.editNodeGeodataTpl]].
  */
 trait ISysNodeGeoEditDataTplArgs {
   def mnode       : MNode

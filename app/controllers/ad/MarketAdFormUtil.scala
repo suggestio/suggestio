@@ -2,6 +2,8 @@ package controllers.ad
 
 import io.suggest.model.n2.ad.ent
 import io.suggest.model.n2.ad.rd.RichDescr
+import io.suggest.model.n2.node.common.MNodeCommon
+import io.suggest.model.n2.node.meta.MBasicMeta
 import models.blk.AdColorFns
 import models._
 import models.blk._
@@ -269,6 +271,20 @@ object MarketAdFormUtil {
         ci ++= Iterator(AdColorFns.WIDE_IMG_PATTERN_COLOR_FN.name -> pattern.get)
       ci.toMap
     }
+    val mad1 = MNode(
+      common = MNodeCommon(
+        ntype = MNodeTypes.Ad,
+        isDependent = true
+      ),
+      meta = MMeta(
+        basic = MBasicMeta(
+          techName = Some {
+            ??? // TODO bmr.bd.offers
+          }
+        )
+      ),
+      ??? // TODO offers и всё остальное (см.ниже).
+    )
     val mad = MAd(
       producerId  = null,
       offers      = bmr.bd.offers,

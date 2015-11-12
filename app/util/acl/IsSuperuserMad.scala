@@ -5,7 +5,7 @@ import io.suggest.di.{IExecutionContext, IEsClient}
 import models.req.SioReqMd
 import scala.concurrent.Future
 import play.api.mvc.{Request, ActionBuilder, Result}
-import models.MAd
+import models.MNode
 
 /**
  * Suggest.io
@@ -30,7 +30,7 @@ trait IsSuperuserMad
     def adId: String
 
     override def invokeBlock[A](request: Request[A], block: (RequestWithAd[A]) => Future[Result]): Future[Result] = {
-      val madOptFut = MAd.getById(adId)
+      val madOptFut = MNode.getById(adId)
       val pwOpt = PersonWrapper.getFromRequest(request)
       if (PersonWrapper isSuperuser pwOpt) {
         val srmFut = SioReqMd.fromPwOpt(pwOpt)

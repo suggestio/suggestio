@@ -4,9 +4,11 @@ import io.suggest.di.IEsClient
 import models.blk.{OneAdWideQsArgs, OneAdQsArgs}
 import models.im.OutImgFmts
 import models.msc.OneAdRenderVariant
+import models.msys.MShowOneAdFormTplArgs
 import play.api.data.{Mapping, Form}
 import play.api.mvc.Result
 import util.di.INodeCache
+import util.n2u.IN2NodesUtilDi
 import util.{PlayMacroLogsI, FormUtil}
 import util.acl.{IsSuperuserMad, RequestWithAd}
 import views.html.sys1.market.ad.one._
@@ -52,6 +54,7 @@ trait SysAdRender
   with IEsClient
   with IsSuperuserMad
   with INodeCache
+  with IN2NodesUtilDi
 {
 
   val sysAdRenderUtil: SysAdRenderUtil
@@ -73,9 +76,11 @@ trait SysAdRender
       szMult  = 1.0F,
       vsnOpt  = request.mad.versionOpt,
       imgFmt  = OutImgFmts.JPEG,
-      wideOpt = Some(OneAdWideQsArgs(
-        width = request.mad.blockMeta.width * 2
-      ))
+      wideOpt = request.mad.ad.blockMeta.map { bm =>
+        OneAdWideQsArgs(
+          width = bm.width * 2
+        )
+      }
     )
     val qf = oneAdQsArgsFormM(madId)
       .fill( formArgs )
@@ -85,16 +90,13 @@ trait SysAdRender
 
   private def _showOneAdFormRender(qf: Form[OneAdQsArgs], rvar: OneAdRenderVariant, rs: Status)
                                   (implicit request: RequestWithAd[_]): Future[Result] = {
-    val nodeOptFut = mNodeCache.getById( request.mad.producerId )
+    val producerIdOpt = n2NodesUtil.madProducerId(request.mad)
+    val nodeOptFut = mNodeCache.maybeGetByIdCached( producerIdOpt )
     for {
       nodeOpt <- nodeOptFut
     } yield {
-      val html = argsFormTpl(
-        mad     = request.mad,
-        rvar    = rvar,
-        qf      = qf,
-        nodeOpt = nodeOpt
-      )
+      val rargs = MShowOneAdFormTplArgs(request.mad, rvar, qf, nodeOpt)
+      val html = argsFormTpl(rargs)
       rs( html )
     }
   }

@@ -4,15 +4,17 @@ import com.google.inject.Inject
 import io.suggest.common.fut.FutureUtil
 import io.suggest.di.IEsClient
 import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.model.n2.extra.mdr.MFreeAdv
+import io.suggest.model.n2.edge.{MNodeEdges, MEdgeInfo}
 import models.mdr._
 import models.msys.MSysMdrFreeAdvsTplArgs
 import org.elasticsearch.client.Client
+import org.joda.time.DateTime
 import play.api.i18n.MessagesApi
 import play.api.mvc.Result
 import util.PlayMacroLogsImpl
 import util.acl.{RequestWithAd, IsSuperuserMad, IsSuperuser}
 import util.lk.LkAdUtil
+import util.n2u.N2NodesUtil
 import util.showcase.ShowcaseUtil
 import views.html.sys1.mdr._
 import models._
@@ -30,6 +32,7 @@ class SysMdr @Inject() (
   lkAdUtil                          : LkAdUtil,
   scUtil                            : ShowcaseUtil,
   mNodeCache                        : MAdnNodeCache,
+  n2NodesUtil                       : N2NodesUtil,
   override val _contextFactory      : Context2Factory,
   override val messagesApi          : MessagesApi,
   override implicit val ec          : ExecutionContext,
@@ -54,15 +57,21 @@ class SysMdr @Inject() (
     * @param args Аргументы для поиска (QSB).
     */
   def freeAdvs(args: MdrSearchArgs) = IsSuperuser.async { implicit request =>
-    var madsFut = MAd.findSelfAdvNonMdr(args)
+    var madsFut: Future[Seq[MNode]] = {
+      MNode.dynSearch( args.toNodeSearch )
+    }
     for (hai <- args.hideAdIdOpt) {
       madsFut = madsFut.map { mads0 =>
         mads0.filter(_.id.get != hai)
       }
     }
     val producersFut = madsFut flatMap { mads =>
-      val producerIds = mads.map(_.producerId).toSet ++ args.producerId.toSet
-      mNodeCache.multiGet( producerIds )
+      // Сгребаем всех продьюсеров карточек + добавляем запрошенных продьюсеров, дедублицируем список.
+      val prodIds = mads.iterator
+        .flatMap { n2NodesUtil.madProducerId }
+        .++( args.producerId )
+        .toSet
+      mNodeCache.multiGet( prodIds )
     }
     val prodsMapFut = producersFut map { prods =>
       prods
@@ -112,6 +121,7 @@ class SysMdr @Inject() (
     freeAdvMdrBody(banFreeAdvFormM, Ok)
   }
 
+
   /** Рендер тела ответа. */
   private def freeAdvMdrBody(banForm: Form[String], respStatus: Status)
                             (implicit request: RequestWithAd[_]): Future[Result] = {
@@ -119,7 +129,7 @@ class SysMdr @Inject() (
     implicit val ctx = implicitly[Context]
     // 2015.apr.20: Использован функционал выдачи для сбора данных по рендеру. По идее это ок, но лучше бы протестировать.
     val brArgsFut = scUtil.focusedBrArgsFor(mad)(ctx)
-    val producerFut = mNodeCache.getById(mad.producerId)
+    val producerFut = mNodeCache.maybeGetByIdCached( n2NodesUtil.madProducerId(mad) )
       .map { _.get }
     for {
       _brArgs   <- brArgsFut
@@ -139,18 +149,11 @@ class SysMdr @Inject() (
   /** Сабмит одобрения пост-модерации бесплатного размещения.
     * Нужно выставить в карточку данные о модерации. */
   def freeAdvMdrAccept(adId: String) = IsSuperuserMad(adId).async { implicit request =>
-    // Сгенерить обновлённые данные модерации.
-    val mdr2 = Some(MFreeAdv(
-      isAllowed = true,
-      byUser    = request.pwOpt.get.personId
-    ))
-
     // Запускаем сохранение данных модерации.
-    val updFut = MAd.tryUpdate(request.mad) { mad0 =>
-      mad0.copy(
-        moderation = mad0.moderation.copy(
-          freeAdv = mdr2
-        )
+    val updFut = _updMdrEdge {
+      MEdgeInfo(
+        flag   = Some(true),
+        dateNi = _someNow
       )
     }
 
@@ -165,6 +168,28 @@ class SysMdr @Inject() (
     }
   }
 
+  private def _someNow = Some( DateTime.now )
+
+  /** Код обновления эджа модерации живёт здесь. */
+  private def _updMdrEdge(info: MEdgeInfo)(implicit request: RequestWithAd[_]): Future[String] = {
+    // Сгенерить обновлённые данные модерации.
+    val mdr2 = MEdge(
+      nodeId    = request.pwOpt.get.personId,
+      predicate = MPredicates.ModeratedBy,
+      info      = info
+    )
+    val mdr2map = MNodeEdges.edgesToMap(mdr2)
+
+    // Запускаем сохранение данных модерации.
+    MNode.tryUpdate(request.mad) { mad0 =>
+      mad0.copy(
+        edges = mad0.edges.copy(
+          out = mad0.edges.out ++ mdr2map
+        )
+      )
+    }
+  }
+
   /** Сабмит формы блокирования бесплатного размещения рекламной карточки. */
   def freeAdvMdrBan(adId: String) = IsSuperuserMad(adId).async { implicit request =>
     banFreeAdvFormM.bindFromRequest().fold(
@@ -173,17 +198,12 @@ class SysMdr @Inject() (
         freeAdvMdrBody(formWithErrors, NotAcceptable)
       },
       {reason =>
-        val freeAdvOpt2 = Some(MFreeAdv(
-          isAllowed = false,
-          byUser    = request.pwOpt.get.personId,
-          reason    = Some(reason)
-        ))
-
-        val saveFut = MAd.tryUpdate(request.mad) { mad0 =>
-          mad0.copy(
-            moderation = mad0.moderation.copy(
-              freeAdv = freeAdvOpt2
-            )
+        // Сохранить отказ в модерации.
+        val saveFut = _updMdrEdge {
+          MEdgeInfo(
+            dateNi    = _someNow,
+            commentNi = Some(reason),
+            flag      = Some(false)
           )
         }
 

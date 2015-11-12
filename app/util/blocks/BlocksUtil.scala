@@ -392,14 +392,6 @@ trait BfNoValueT extends BlockFieldT {
 /** Поле, которое не требует никакого значения для себя. Бывает полезно, когда надо вставить что-нибудь между полями. */
 case class BfAddStringField(name: String = "addTextField") extends BfNoValueT
 
-/** Класс-реализация для быстрого создания BlockData. Используется вместо new BlockData{}. */
-case class BlockDataImpl(
-  override val blockMeta   : BlockMeta,
-  override val offers      : List[AOBlock]
-)
-  extends IEMBlockMeta
-  with IOffers
-
 
 /** Добавлялка длинного статического метода, который занимается объединением Either-результата
   * промежуточного биндинга и общего аккамулятора биндинга. */

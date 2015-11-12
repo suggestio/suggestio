@@ -21,7 +21,7 @@ trait GetAnyAd
   with IExecutionContext
 {
 
-  /** Комбинация из MaybeAuth и читалки adId из модели [[models.MAd]]. */
+  /** Комбинация из MaybeAuth и читалки adId из [[models.MNode]]. */
   trait GetAnyAdAbstract
     extends ActionBuilder[RequestWithAd]
   {

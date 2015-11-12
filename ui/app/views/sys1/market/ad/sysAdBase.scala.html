@@ -1,4 +1,4 @@
-@(title: String, madOpt: Option[MAd], nodeOpt: Option[MNode], hPathAfter: Option[Html] = None,
+@(title: String, madOpt: Option[MNode], nodeOpt: Option[MNode], hPathAfter: Option[Html] = None,
   headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
 
 @* Подложка для страниц, работающих с унифицированными adn-узлами. *@
@@ -7,9 +7,9 @@
 
 @hPathAfter1 = {
   /
-  @defining( nodeOpt.flatMap(_.id).orElse( madOpt.map(_.producerId) ) ) { adnIdOpt =>
-    @adnIdOpt.map { adnId =>
-      <a href="@routes.SysMarket.showAdnNodeAds(new AdSearchImpl { override def producerIds = Seq(adnId) })">
+  @defining( nodeOpt.flatMap(_.id).orElse( madOpt.flatMap(ctx.api.n2NodesUtil.madProducerId) ) ) { adnIdOpt =>
+    @for( adnId <- adnIdOpt ) {
+      <a href="@routes.SysMarket.showAdnNodeAds( AdSearch.byProducerId(adnId) )">
     }
     Карточки
     @if(adnIdOpt) {
@@ -25,7 +25,9 @@
 }
 
 @views.html.sys1.market.adn.adnBase(
-  title         = title + madOpt.flatMap(_.id).fold("")(" | " + _) + " | Карточки",
+  title         = title + madOpt
+    .flatMap(_.guessDisplayNameOrId)
+    .fold("")(" | " + _) + " | Карточки",
   hPathAfter    = Some(hPathAfter1),
   nodeOpt       = nodeOpt,
   headAfter     = headAfter

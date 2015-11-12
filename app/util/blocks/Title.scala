@@ -1,8 +1,8 @@
 package util.blocks
 
-import models.{AOBlock, TextEnt}
-import models.blk.ed.{AdFormM, BindResult, BindAcc}
-import play.api.data.{Mapping, FormError}
+import models.blk.ed.{AdFormM, BindAcc, BindResult}
+import models.{MEntity, TextEnt}
+import play.api.data.{FormError, Mapping}
 
 /**
  * Suggest.io
@@ -16,17 +16,17 @@ object Title extends MergeBindAccAOBlock[TextEnt] {
   val BF_NAME_DFLT = "title"
   val BF_TITLE_DFLT = BfText(BF_NAME_DFLT)
 
-  override def updateAOBlockWith(blk: AOBlock, titleOpt: Option[TextEnt]): AOBlock = {
+  override def updateAOBlockWith(blk: MEntity, titleOpt: Option[TextEnt]): MEntity = {
     blk.copy(
-      text1 = titleOpt
+      text = titleOpt
     )
   }
 
-  def getTitle(bmr: BindResult) = bmr.flatMapFirstOffer(_.text1)
+  def getTitle(bmr: BindResult) = bmr.flatMapFirstOffer(_.text)
 }
 
 
-import Title._
+import util.blocks.Title._
 
 
 /** Базовый трейт для статических и динамических bfTitle. Добавляет поле в форму. */

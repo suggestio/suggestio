@@ -1,8 +1,7 @@
 package models.blk.ed
 
-import io.suggest.ym.model.ad.IOffers
-import io.suggest.ym.model.common.IEMBlockMeta
-import models.{AOBlock, BfImage}
+import models.blk.BlockMeta
+import models.{BfImage, MEntity}
 
 /**
  * Suggest.io
@@ -12,16 +11,17 @@ import models.{AOBlock, BfImage}
  */
 
 case class BindResult(
-  bd  : IEMBlockMeta with IOffers,
-  bim : BlockImgMap
+  entites   : List[MEntity],
+  blockMeta : BlockMeta,
+  bim       : BlockImgMap
 ) {
 
   def unapplyBIM(bfi: BfImage): BlockImgMap = {
     bim.filter(_._1 == bfi.name)
   }
 
-  def flatMapFirstOffer[T](f: AOBlock => Option[T]): Option[T] = {
-    bd.offers
+  def flatMapFirstOffer[T](f: MEntity => Option[T]): Option[T] = {
+    entites
       .headOption
       .flatMap(f)
   }

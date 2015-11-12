@@ -1,4 +1,4 @@
-@(mad: MAd, af: blk.ed.AdFormM, mnode: MNode)(implicit ctx: Context)
+@(mad: MNode, af: blk.ed.AdFormM, mnode: MNode)(implicit ctx: Context)
 
 @* Страница с формой редактирования рекламной карточки. *@
 @import ctx._
@@ -13,14 +13,13 @@
 @adFormBase(
   title       = messages("Ad.card.edit"),
   mnode       = mnode,
-  madOpt      = Some(mad),
   bottomLeft  = Some(bottomLeft)
 ) {
 
   @_adFormTpl(
     af      = af,
     call    = routes.MarketAd.editAdSubmit(mad.id.get),
-    withBC  = Some(BlocksConf applyOrDefault mad.blockMeta.blockId),
+    withBC  = Some( ctx.api.n2NodesUtil.bc(mad) ),
     mnode   = mnode
   )
 

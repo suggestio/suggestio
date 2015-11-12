@@ -6,13 +6,8 @@ import models.{MEdge, MNode}
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 26.10.15 19:06
- * Description:
+ * Description: Модель аргументов для рендера шаблона [[views.html.sys1.market.adn.adnNodeShowTpl]].
  */
-case class MNodeEdgeInfo(
-  medge     : MEdge,
-  mnodeEith : Either[String, MNode]
-)
-
 
 trait ISysNodeShowTplArgs {
   def mnode     : MNode
@@ -23,6 +18,7 @@ trait ISysNodeShowTplArgs {
 }
 
 
+/** Дефолтовая реализация модели [[ISysNodeShowTplArgs]]. */
 case class MSysNodeShowTplArgs(
   override val mnode        : MNode,
   override val outEdges     : Seq[MNodeEdgeInfo],
@@ -30,3 +26,11 @@ case class MSysNodeShowTplArgs(
   override val personNames  : Map[String, String]
 )
   extends ISysNodeShowTplArgs
+
+
+/** Модель контейнера системной информации по одном эджу. */
+case class MNodeEdgeInfo(
+  medge     : MEdge,
+  mnodeEith : Either[String, MNode]
+)
+
