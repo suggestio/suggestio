@@ -3,12 +3,12 @@ package util.adn
 import com.google.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.model.n2.edge.MNodeEdges
+import io.suggest.model.n2.edge.{MEdgeInfo, MNodeEdges}
+import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.extra.{MSlInfo, MAdnExtra, MNodeExtras}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
 import io.suggest.model.n2.node.meta.colors.{MColorData, MColors}
-import io.suggest.ym.model.ad.AdsSearchArgsDfltImpl
 import io.suggest.ym.model.common.AdnMemberShowLevels
 import models._
 import models.adv.MExtTarget
@@ -198,15 +198,24 @@ class NodesUtil @Inject() (
     (Future successful ADN_IDS_INIT_ADS_SOURCE)
       // Если нет продьюсеров, значит функция отключена. Это будет перехвачено в recover()
       .filter { _.nonEmpty }
+
       // Собрать id карточек, относящиеся к заданным узлам-источникам.
       .flatMap { prodIds =>
-        val dsa0 = new AdsSearchArgsDfltImpl {
-          override def producerIds = prodIds
-          override val limit = Math.max(50, count * 2)
+        val _limit = Math.max(50, count * 2)
+        val dsa0 = new AdSearchImpl {
+          override def outEdges: Seq[ICriteria] = {
+            val cr = Criteria(
+              nodeIds     = prodIds,
+              predicates  = Seq( MPredicates.OwnedBy )
+            )
+            Seq(cr)
+          }
+          override def limit  = _limit
           override def offset = 0
         }
-        MAd.dynSearchIds(dsa0)
+        MNode.dynSearchIds(dsa0)
       }
+
       // Случайно выбрать из списка id карточек только указанное кол-во карточек.
       .flatMap { madIds =>
         val count = madIds.size
@@ -214,38 +223,59 @@ class NodesUtil @Inject() (
         val madIds2 = (0 until Math.min(count, count))
           .iterator
           .map { _ =>  madIds( rnd.nextInt(count) ) }
-        MAd.multiGetRev(madIds2)
+        MNode.multiGetRev(madIds2)
       }
+
       // Обновить карточки
       .flatMap { mads0 =>
         trace(s"$logPrefix Will install ${mads0.size} ads: [${mads0.iterator.flatMap(_.id).mkString(", ")}]")
+
         Future.traverse(mads0) { mad0 =>
           // Создать новую карточку на базе текущей.
           val mad1 = mad0.copy(
-            id          = None,
-            versionOpt  = None,
-            dateCreated = DateTime.now(),
-            dateEdited  = None,
-            producerId  = adnId,
-            alienRsc    = true,
-            receivers   = Map(
-              adnId -> AdReceiverInfo(adnId, Set(SinkShowLevels.GEO_START_PAGE_SL))
+            id = None,
+            versionOpt = None,
+            meta = mad0.meta.copy(
+              basic = mad0.meta.basic.copy(
+                dateCreated = DateTime.now,
+                dateEdited = None
+              )
             ),
-            // Нужно локализовать текстовые поля с использование lang.
-            offers = mad0.offers.map { offer =>
-              offer.copy(
-                text1 = offer.text1.map { aosf =>
-                  aosf.copy(
-                    value = Messages(aosf.value)
+            edges = MNodeEdges(
+              out = {
+                val pp = MPredicates.OwnedBy
+                val rp = MPredicates.Receiver
+                val prodE = MEdge(pp, adnId)
+                val selfRcvrE = MEdge(rp, adnId,
+                  info = MEdgeInfo(sls = Set(SinkShowLevels.GEO_START_PAGE_SL))
+                )
+                MNodeEdges.edgesToMap1 {
+                  mad0.edges
+                    .withoutPredicateIter(pp, rp)
+                    .++( Iterator(prodE, selfRcvrE) )
+                }
+              }
+            ),
+            ad = mad0.ad.copy(
+              entities = {
+                mad0.ad.entities.mapValues { ent =>
+                  ent.copy(
+                    text = ent.text.map { aosf =>
+                      aosf.copy(
+                        value = Messages(aosf.value)
+                      )
+                    }
                   )
                 }
-              )
-            }
-            // TODO Нужно проверить содержимое поля text4search.
+              }
+            )
           )
+
+          // Запустить сохранение сгенеренной карточки.
           mad1.save
         }
       }
+
       // Если не было adnId узлов-источников, то
       .recover { case ex: NoSuchElementException =>
         LOGGER.warn(logPrefix + " Node default ads installer is disabled!")

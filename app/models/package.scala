@@ -211,11 +211,6 @@ package object models {
   @deprecated("Use MNode instead.", "2015.nov.6")
   type MAd                  = MNode // ym.model.MAd
 
-  @deprecated("Use MEntity instead.", "2015.nov.6")
-  val  AOBlock              = MEntity
-  @deprecated("Use MEntity instead.", "2015.nov.6")
-  type AOBlock              = MEntity
-
   /*
   val  MAd                  = ym.model.MAd
   type MAd                  = ym.model.MAd

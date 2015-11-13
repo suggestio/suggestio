@@ -2,6 +2,7 @@ package util
 
 import java.text.{DecimalFormat, NumberFormat}
 import java.util.Currency
+import io.suggest.common.text.StringUtil
 import models.Context
 import org.joda.time.{ReadableInstant, ReadablePartial}
 import org.joda.time.format.DateTimeFormat
@@ -10,8 +11,6 @@ import play.twirl.api.{Txt, HtmlFormat, Html}
 import scala.annotation.tailrec
 import views.html.fc._
 import views.html.helper.FieldConstructor
-
-import scala.runtime.RichChar
 
 /**
  * Suggest.io
@@ -169,11 +168,7 @@ object TplDataFormatUtil extends TplFormatUtilT {
   /** Лимитирование длины строки слева. Если строка длинее указанного порога,
     * то она будет урезана и в конце появится многоточие. */
   def strLimitLen(str: String, maxLen: Int): String = {
-    if (str.length <= maxLen) {
-      str
-    } else {
-      str.substring(0, maxLen) + ELLIPSIS
-    }
+    StringUtil.strLimitLen(str, maxLen, ELLIPSIS)
   }
 
   /**

@@ -368,8 +368,8 @@ class MarketLkAdnEdit @Inject() (
                 img.rowKeyStr,
                 order = Some(i),
                 info  = MEdgeInfo(
-                dynImgArgs = Some( img.dynImgOpsString )
-              ))
+                  dynImgArgs = img.qOpt
+                ))
             }
         }
         // Генерим результат

@@ -84,6 +84,7 @@ trait ImgFilename {
 
 /** Поле минимально-сериализованных dynImg-аргументов для класса. */
 trait DynImgOpsString {
+
   def dynImgOps: Seq[ImOp]
 
   def isOriginal: Boolean = dynImgOps.isEmpty
@@ -96,7 +97,10 @@ trait DynImgOpsString {
       sb = sb
     )
   }
+
   def dynImgOpsString: String = {
     dynImgOpsStringSb().toString()
   }
+
+  // Исторически, опциональный доступ к dynImgOpsString осуществляет метод qOpt.
 }

@@ -466,10 +466,7 @@ object FormUtil {
     text
       .transform[(String, Option[Price])](
         {raw =>
-          val raw0 = if (raw.length > PRICE_M_MAX_STRLEN)
-            raw.substring(0, PRICE_M_MAX_STRLEN)
-          else
-            raw
+          val raw0 = TplDataFormatUtil.strLimitLen(raw, PRICE_M_MAX_STRLEN)
           val raw1 = strTrimSanitizeF(raw0)
           raw1 -> parsePrice(raw1) },
         { case (raw, None) => raw

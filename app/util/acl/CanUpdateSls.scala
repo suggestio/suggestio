@@ -5,6 +5,7 @@ import models.req.SioReqMd
 import play.api.mvc._
 import models._
 import util.di.INodeCache
+import util.n2u.IN2NodesUtilDi
 import scala.concurrent.Future
 import util.PlayMacroLogsDyn
 
@@ -22,6 +23,7 @@ trait CanUpdateSls
   with INodeCache
   with IEsClient
   with IExecutionContext
+  with IN2NodesUtilDi
 {
 
   /** Проверка прав на возможность обновления уровней отображения рекламной карточки. */
@@ -32,7 +34,7 @@ trait CanUpdateSls
   {
 
     override def invokeBlock[A](request: Request[A], block: (RequestWithAdAndProducer[A]) => Future[Result]): Future[Result] = {
-      val madOptFut = MAd.getById(adId)
+      val madOptFut = MNode.getById(adId)
       val pwOpt = PersonWrapper.getFromRequest(request)
       pwOpt match {
         // Юзер залогинен. Продолжаем...
@@ -41,13 +43,20 @@ trait CanUpdateSls
             // Найдена запрошенная рекламная карточка
             case Some(mad) =>
               // Модер может запретить бесплатное размещение карточки. Если стоит черная метка, то на этом можно закончить.
-              val isMdrProhibited = mad.moderation.freeAdv.exists { !_.isAllowed }
+              val isMdrProhibited = mad.edges
+                .withPredicateIter( MPredicates.ModeratedBy )
+                .flatMap(_.info.flag)
+                .contains(false)
+
               if (isMdrProhibited) {
                 // Админы s.io когда-то запретили бесплатно размещать эту карточку. Пока бан не снять, карточку публиковать бесплатно нельзя.
-                LOGGER.debug("invokeBlock(): cannot update sls for false-moderated ad " + adId + " mdrResult = " + mad.moderation.freeAdv)
+                LOGGER.debug("invokeBlock(): cannot update sls for false-moderated ad " + adId)
                 forbiddenFut("false-moderated ad", request)
+
               } else {
-                mNodeCache.getById(mad.producerId) flatMap { producerOpt =>
+
+                val producerIdOpt = n2NodesUtil.madProducerId(mad)
+                mNodeCache.maybeGetByIdCached(producerIdOpt) flatMap { producerOpt =>
                   val isNodeAdmin = producerOpt.exists {
                     producer =>
                       IsAdnNodeAdmin.isAdnNodeAdminCheck(producer, pwOpt)

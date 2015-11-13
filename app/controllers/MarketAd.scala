@@ -2,8 +2,12 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.event.SioNotifierStaticClientI
-import models.blk.ed.{AdFormM, AdFormResult}
-import models.im.MImg
+import io.suggest.model.n2.ad.MNodeAd
+import io.suggest.model.n2.edge.MNodeEdges
+import io.suggest.model.n2.node.common.MNodeCommon
+import io.suggest.model.n2.node.meta.MBasicMeta
+import models.blk.ed.{BlockImgMap, AdFormM, AdFormResult}
+import models.im.{MImg3_, MImg}
 import models.jsm.init.MTargets
 import models.mtag.MTagUtil
 import org.elasticsearch.client.Client
@@ -41,6 +45,7 @@ class MarketAd @Inject() (
   override val cache              : CacheApi,
   tempImgSupport                  : TempImgSupport,
   mTagUtil                        : MTagUtil,
+  mImg3                           : MImg3_,
   override val n2NodesUtil        : N2NodesUtil,
   override val _contextFactory    : Context2Factory,
   override val mNodeCache         : MAdnNodeCache,
@@ -115,7 +120,7 @@ class MarketAd @Inject() (
 
   /** Общий код рендера createShopAdTpl с запросом необходимых категорий. */
   private def _renderCreateFormWith(af: AdFormM, adnNode: MNode, withBC: Option[BlockConf] = None, rs: Status)
-                                  (implicit request: AbstractRequestForAdnNode[_]): Future[Result] = {
+                                   (implicit request: AbstractRequestForAdnNode[_]): Future[Result] = {
     _renderPage(af, rs) { implicit ctx =>
       createAdTpl(af, adnNode, withBC)(ctx)
     }
@@ -135,35 +140,33 @@ class MarketAd @Inject() (
         _renderCreateFormWith(formWithErrors, adnNode, Some(bc), NotAcceptable)
       },
       {r =>
-        // Асинхронно обрабатываем всякие прочие данные.
-        val saveImgsFut = bc.saveImgs(
-          newImgs     = r.bim,
-          oldImgs     = Map.empty
-        )
-        // Когда всё готово, сохраняем саму карточку.
+        // Асинхронно обрабатываем сохранение картинок
+        val saveImgsFut = bc.saveImgs(r.bim)
+
+        // Сохраняем саму карточку, когда пришло подтверждение от картинок.
         val adIdFut = for {
           savedImgs <- saveImgsFut
           adId      <- {
             r.mad.copy(
-              producerId    = adnId,
-              imgs          = savedImgs
+              edges = r.mad.edges.copy(
+                out = {
+                  val currEdges = r.mad.edges.out
+                  val prodE = MEdge(MPredicates.OwnedBy, adnId)
+                  MNodeEdges.edgesToMap1(
+                    currEdges.valuesIterator ++ savedImgs ++ Seq(prodE)
+                  )
+                }
+              )
             ).save
           }
         } yield {
           adId
         }
-        // Сборка HTTP-ответа.
-        val resFut = for (adId <- adIdFut) yield {
+        // Сборка и возврат HTTP-ответа.
+        for (adId <- adIdFut) yield {
           Redirect(routes.MarketLkAdn.showNodeAds(adnId, newAdId = Some(adId)))
             .flashing(FLASH.SUCCESS -> "Ad.created")
         }
-        // Сохранение новых тегов в MNode.
-        for (_ <- adIdFut) {
-          val fut = mTagUtil.handleNewTagsM(r.mad.tags)
-          logTagsUpdate(fut, logPrefix)
-        }
-        // Возврат HTTP-ответа.
-        resFut
       }
     )
   }
@@ -180,21 +183,34 @@ class MarketAd @Inject() (
   }
 
 
-  /** Рендер страницы с формой редактирования рекламной карточки магазина.
-    * @param adId id рекламной карточки.
-    */
+  /**
+   * Рендер страницы с формой редактирования рекламной карточки магазина.
+   * @param adId id рекламной карточки.
+   */
   def editAd(adId: String) = CanEditAdGet(adId).async { implicit request =>
     import request.mad
-    val form0 = adFormM
-    val bim = mad
-      .imgs
-      .mapValues { mii =>
-        MImg(mii.filename)
-      }
-    val formFilled = form0 fill AdFormResult(mad, bim)
+    val bc = n2NodesUtil.bc(mad)
+
+    // Собрать карту картинок для маппинга формы.
+    val bim: BlockImgMap = {
+      mad.edges
+        .withPredicateIter(bc.imgKeys : _*)
+        .map { e =>
+          e.predicate -> mImg3(e)
+        }
+        .toMap
+    }
+
+    // Собрать и заполнить маппинг формы.
+    val formVal = AdFormResult(mad, bim)
+    val formFilled = adFormM.fill( formVal )
+
+    // Вернуть страницу с рендером формы.
     _renderEditFormWith(formFilled, Ok)
   }
 
+
+  /** Общий код рендера ad edit страницы живёт в этом методе. */
   private def _renderEditFormWith(af: AdFormM, rs: Status)
                                  (implicit request: RequestWithAdAndProducer[_]): Future[Result] = {
     _renderPage(af, rs) { implicit ctx =>
@@ -202,6 +218,7 @@ class MarketAd @Inject() (
       editAdTpl(mad, af, producer)(ctx)
     }
   }
+
 
   /** Сабмит формы рендера страницы редактирования рекламной карточки.
     * @param adId id рекламной карточки.
@@ -215,17 +232,19 @@ class MarketAd @Inject() (
       },
       {r => //case (mad2, bim) =>
         import request.mad
-        val bc = BlocksConf.DEFAULT
+        val bc = n2NodesUtil.bc(mad)
         // TODO Надо отделить удаление врЕменных и былых картинок от сохранения новых. И вызывать эти две фунции отдельно.
         // Сейчас возможна ситуация, что при поздней ошибке сохранения теряется старая картинка, а новая сохраняется вникуда.
         val saveImgsFut = bc.saveImgs(
           newImgs     = r.bim,
-          oldImgs     = mad.imgs
+          oldImgs     = mad.edges
+            .withPredicateIter(bc.imgKeys: _*)
+            .toList
         )
         // Произвести действия по сохранению карточки.
         val saveFut = for {
           imgsSaved <- saveImgsFut
-          _adId     <- MAd.tryUpdate(request.mad) { mad0 =>
+          _adId     <- MNode.tryUpdate(request.mad) { mad0 =>
             mad0.copy(
               imgs          = imgsSaved,
               disableReason = Nil,
@@ -413,19 +432,30 @@ class MarketAd @Inject() (
     val bfText = ListBlock.mkBfText(offerNopt = Some(offerN))
     // Чтобы залить в форму необходимые данные, надо сгенерить экземпляр рекламной карточки.
     implicit val ctx = implicitly[Context]
-    val madStub = MAd(
-      producerId = "",
-      offers = List(AOBlock(
-        n = offerN,
-        text1 = Some(TextEnt(
-          value = ctx.messages("bf.text.example", offerN),
-          font = EntFont(),
-          coords = Some(Coords2d(
-            x = height / 2,
-            y = width / 4
-          ))  // Coords2D
-        ))    // AOStringField
-      ))      // AOBlock
+    val madStub = MNode(
+      common = MNodeCommon(
+        ntype         = MNodeTypes.Ad,
+        isDependent   = true
+      ),
+      meta = MMeta(
+        basic = MBasicMeta()
+      ),
+      ad = MNodeAd(
+        entities = {
+          val ent = MEntity(
+            id = offerN,
+            text = Some(TextEnt(
+              value = ctx.messages("bf.text.example", offerN),
+              font = EntFont(),
+              coords = Some(Coords2d(
+                x = height / 2,
+                y = width / 4
+              ))  // Coords2D
+            ))    // AOStringField
+          )
+          MNodeAd.toEntMap(ent)
+        }
+      )         // MNodeAd
     )         // MAd
     val formData = AdFormResult(madStub, Map.empty)
     val af = adFormM fill formData

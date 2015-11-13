@@ -1,9 +1,11 @@
 package controllers.ad
 
-import io.suggest.model.n2.ad.ent
+import io.suggest.model.n2.ad.{MNodeAd, ent}
 import io.suggest.model.n2.ad.rd.RichDescr
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
+import io.suggest.model.n2.node.meta.colors.{MColorData, MColors}
+import models.MColorData
 import models.blk.AdColorFns
 import models._
 import models.blk._
@@ -11,6 +13,7 @@ import models.blk.ed.{AdFormM, AdFormResult, BindResult}
 import util.FormUtil._
 import play.api.data._, Forms._
 import io.suggest.ad.form.AdFormConstants._
+import util.{PlayMacroLogsImpl, TplDataFormatUtil}
 
 /**
  * Suggest.io
@@ -18,7 +21,7 @@ import io.suggest.ad.form.AdFormConstants._
  * Created: 23.04.14 10:15
  * Description: Общая утиль для работы с разными ad-формами: preview и обычными.
  */
-object MarketAdFormUtil {
+object MarketAdFormUtil extends PlayMacroLogsImpl {
 
   /** Маппинг для выравнивания текста в рамках поля. */
   def textAlignOptM: Mapping[Option[TextAlign]] = {
@@ -126,18 +129,22 @@ object MarketAdFormUtil {
 
 
   /** Маппер для активации и настройки покрывающей сетки-паттерна указанного цвета. */
-  val coveringPatternM: Mapping[Option[String]] = {
+  val coveringPatternM: Mapping[Option[MColorData]] = {
     tuple(
       "enabled" -> boolean,
-      "color"   -> optional(colorM)
+      "color"   -> colorDataOptM
     )
     .verifying("error.required", {m => m match {
       case (true, None)   => false
       case _              => true
     }})
-    .transform[Option[String]] (
-      { case (isEnabled, colorOpt) => colorOpt.filter(_ => isEnabled) },
-      { colorOpt => (colorOpt.isDefined, colorOpt) }
+    .transform[Option[MColorData]] (
+      { case (isEnabled, colorOpt) =>
+        colorOpt.filter(_ => isEnabled)
+      },
+      {colorOpt =>
+        (colorOpt.isDefined, colorOpt)
+      }
     )
   }
 
@@ -261,50 +268,57 @@ object MarketAdFormUtil {
 
   /** apply-функция для формы добавления/редактировать рекламной карточки.
     * Вынесена за пределы генератора ad-маппингов во избежание многократного создания в памяти экземпляров функции. */
-  def adFormApply(bmr: BindResult, pattern: Option[String],
-                  richDescrOpt: Option[RichDescr], bgColor: String, tags: TagsMap_t): AdFormResult = {
-    val colors: Map[String, String] = {
-      // Фон
-      var ci = Iterator(AdColorFns.IMG_BG_COLOR_FN.name -> bgColor)
-      // pattern color
-      if (pattern.isDefined)
-        ci ++= Iterator(AdColorFns.WIDE_IMG_PATTERN_COLOR_FN.name -> pattern.get)
-      ci.toMap
-    }
-    val mad1 = MNode(
+  def adFormApply(bmr: BindResult, pattern: Option[MColorData],
+                  richDescrOpt: Option[RichDescr], bgColor: MColorData): AdFormResult = {
+    val mad = MNode(
       common = MNodeCommon(
         ntype = MNodeTypes.Ad,
         isDependent = true
       ),
       meta = MMeta(
         basic = MBasicMeta(
+          // Сгенерить неиндексируемое имя карточки на основе полей.
           techName = Some {
-            ??? // TODO bmr.bd.offers
+            val s = bmr.entites
+              .iterator
+              .flatMap(_.text)
+              .map(_.value)
+              .filter(_.length >= 2)
+              .toSet
+              .mkString(" | ")
+            TplDataFormatUtil.strLimitLen(s, 32)
           }
+        ),
+        colors = MColors(
+          pattern = pattern,
+          bg      = Some( bgColor )
         )
       ),
-      ??? // TODO offers и всё остальное (см.ниже).
-    )
-    val mad = MAd(
-      producerId  = null,
-      offers      = bmr.bd.offers,
-      blockMeta   = bmr.bd.blockMeta,
-      colors      = colors,
-      imgs        = null,
-      richDescrOpt = richDescrOpt,
-      tags        = tags
+      ad = MNodeAd(
+        entities  = MNodeAd.toEntMap1( bmr.entites ),
+        richDescr = richDescrOpt,
+        blockMeta = Some(bmr.blockMeta)
+      )
     )
     AdFormResult(mad, bmr.bim)
   }
 
   /** Функция разборки для маппинга формы добавления/редактирования рекламной карточки. */
-  def adFormUnapply(applied: AdFormResult): Option[(BindResult, Option[String], Option[RichDescr], String, TagsMap_t)] = {
+  def adFormUnapply(applied: AdFormResult): Option[(BindResult, Option[MColorData], Option[RichDescr], MColorData)] = {
     val mad = applied.mad
-    val bmr = BindResult(mad, applied.bim)
-    val pattern = mad.colors.get(AdColorFns.WIDE_IMG_PATTERN_COLOR_FN.name)
+    val bmr = BindResult(
+      entites   = mad.ad.entities.valuesIterator.toList,
+      blockMeta = mad.ad.blockMeta.getOrElse {
+        LOGGER.warn("adFormUnapply(): BlockMeta is missing on ad[" + mad.id + "]")
+        BlockMeta.DEFAULT
+      },
+      bim       = applied.bim
+    )
+    val pattern = mad.meta.colors.pattern
     import AdColorFns._
-    val bgColor = mad.colors.getOrElse(IMG_BG_COLOR_FN.name, IMG_BG_COLOR_FN.default)
-    Some( (bmr, pattern, mad.richDescrOpt, bgColor, mad.tags) )
+    val bgColor = mad.meta.colors.bg
+      .getOrElse( MColorData(IMG_BG_COLOR_FN.default) )
+    Some( (bmr, pattern, mad.ad.richDescr, bgColor) )
   }
 
 
@@ -319,8 +333,7 @@ object MarketAdFormUtil {
         OFFER_K     -> BlocksConf.DEFAULT.strictMapping,
         PATTERN_K   -> coveringPatternM,
         DESCR_K     -> richDescrOptM,
-        BG_COLOR_K  -> colorM,
-        tagsMapKM
+        BG_COLOR_K  -> colorDataM
       )(adFormApply)(adFormUnapply)
     )
   }

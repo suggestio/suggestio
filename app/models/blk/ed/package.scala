@@ -12,7 +12,7 @@ import play.api.data.Form
 package object ed {
 
   /** Модель сохраненных картинок карточки-блока. */
-  type Imgs_t               = TraversableOnce[MEdge] // io.suggest.ym.model.common.EMImg.Imgs_t
+  type Imgs_t               = List[MEdge]
   def ImgsEmpty: Imgs_t     = List.empty[MEdge]
 
   /** Тип ключа в карте картинок блока. */

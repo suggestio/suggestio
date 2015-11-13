@@ -53,20 +53,23 @@ sealed abstract class AdvsUpdate
       val advsMap = advs.groupBy(_.adId)
       val now = DateTime.now
       advsMap foreach { case (adId, advsOk) =>
+        val madFut = MNode.getById(adId)
         val advsOk1 = advsOk
           .map { updateAdvOk(_, now) }
         db.withTransaction { implicit c =>
           advsOk1.foreach(_.save)
         }
         // Запустить пересчёт уровней отображения для затронутой рекламной карточки.
-        val madUpdFut = MAd.getById(adId) flatMap {
+        val madUpdFut = madFut flatMap {
           case Some(mad0) =>
             // Запускаем полный пересчет карты ресиверов.
             advUtil.calculateReceiversFor(mad0) flatMap { rcvrs1 =>
               // Новая карта ресиверов готова. Заливаем её в карточку и сохраняем последнюю.
-              MAd.tryUpdate(mad0) { mad1 =>
+              MNode.tryUpdate(mad0) { mad1 =>
                 mad1.copy(
-                  receivers = rcvrs1
+                  edges = mad1.edges.copy(
+                    out = mad1.edges.out ++ rcvrs1
+                  )
                 )
               }
             }
