@@ -1,11 +1,11 @@
 package util.blocks
 
-import io.suggest.ym.model.common.{MImgInfoMeta, MImgInfo}
-import models.blk.ed.BindAcc
-import models.blk.ed.{BlockImgMap, BimKey_t, Imgs_t, ImgsEmpty}
+import io.suggest.ym.model.common.{MImgInfo, MImgInfoMeta}
+import models.blk.ed.{BimKey_t, BindAcc, BlockImgMap, ImgsEmpty, Imgs_t}
 import models.im.MImg
-import util.img._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import util.img._
+
 import scala.concurrent.Future
 
 /**

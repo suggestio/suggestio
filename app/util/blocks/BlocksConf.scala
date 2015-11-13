@@ -75,10 +75,6 @@ object BlocksConf
       */
     override def i18nLabelOf(bk: String) = "blocks.field." + bk
 
-    /** Отрендерить редактор. */
-    override def renderEditor(af: AdFormM, formDataSer: Option[String])(implicit ctx: Context): Html = {
-      editor._blockEditorTpl(af, withBC = Some(this), formDataSer = formDataSer)
-    }
   }
 
   override type T = Val
@@ -190,9 +186,6 @@ trait ValT extends ISaveImgs with Mapping[BindResult] {
   /** Поиск поля картинки для указанного имени поля. */
   def getImgFieldForName(fn: BimKey_t): Option[BfImage] = None
 
-  /** Отрендерить редактор. */
-  def renderEditor(af: AdFormM, formDataSer: Option[String])(implicit ctx: Context): Html
-
   // Mapping:
   def mappingsAcc: List[Mapping[_]]
   override val mappings = mappingsAcc
@@ -228,9 +221,6 @@ abstract class ValTWrapper(v: ValT) extends ValT {
   override def id = v.id
   override def i18nLabelOf(bk: String) = {
     v.i18nLabelOf(bk)
-  }
-  override def renderEditor(af: AdFormM, formDataSer: Option[String])(implicit ctx: Context): Html = {
-    v.renderEditor(af, formDataSer)
   }
 }
 

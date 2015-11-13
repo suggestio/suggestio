@@ -23,8 +23,6 @@ import play.twirl.api.{Html, Template5}
 
 object BlocksUtil {
 
-  def bDescriptionM = publishedTextM
-
   def defaultOpt[T](m0: Mapping[T], defaultOpt: Option[T]): Mapping[T] = {
     if (defaultOpt.isDefined)
       default(m0, defaultOpt.get)
@@ -316,10 +314,13 @@ case class BfImage(
 
   /** Маппинг для картинок, которые можно кадрировать. Есть ключ картинки и есть настройки кадрирования. */
   override def mappingBase: Mapping[T] = {
-    ImgFormUtil.imgIdOptM
+    import MPredicates.{Bg => p}
+    ImgFormUtil.img3IdOptM
       .transform[BlockImgMap] (
-        { _.fold[BlockImgMap] (Map.empty) { i4s => Map(name -> i4s) } },
-        { _.get(name) }
+        { _.fold[BlockImgMap] (Map.empty) { i4s =>
+          Map(p -> i4s)
+        } },
+        { _.get(p) }
       )
   }
 
@@ -433,16 +434,16 @@ trait MergeBindAcc[T] {
 trait MergeBindAccAOBlock[T] extends MergeBindAcc[Option[T]] {
 
   /** Обновить указанный изменяемый AOBlock с помощью текущего значения. */
-  def updateAOBlockWith(blk: AOBlock, v: Option[T]): AOBlock
+  def updateEntityWith(blk: MEntity, v: Option[T]): MEntity
 
   def updateAcc(offerN: Int, acc0: BindAcc, vOpt: Option[T]): BindAcc = {
     if (vOpt.isDefined) {
       val offers1 = {
         val (found, rest) = acc0.offers
-          .partition { _.n == offerN }
+          .partition { _.id == offerN }
         val off00 = found.headOption
-        val off0 = off00 getOrElse AOBlock(n = offerN)
-        val off1 = updateAOBlockWith(off0, vOpt)
+        val off0 = off00 getOrElse MEntity(offerN, text = None)
+        val off1 = updateEntityWith(off0, vOpt)
         off1 :: rest
       }
       acc0.copy(

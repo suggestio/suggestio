@@ -4,7 +4,7 @@ import java.net.{MalformedURLException, URL}
 
 import com.google.inject.Inject
 import models.Context2Factory
-import models.im.{MImgT, MImg}
+import models.im.{MImg3_, MImgT}
 import play.api.i18n.MessagesApi
 import util.{FormUtil, PlayMacroLogsImpl}
 import util.acl.IsSuperuser
@@ -22,6 +22,8 @@ import scala.concurrent.ExecutionContext
  * изображениям.
  */
 class SysImg @Inject() (
+  mImg3                           : MImg3_,
+  override val sysImgMakeUtil     : SysImgMakeUtil,
   override val _contextFactory    : Context2Factory,
   override val messagesApi        : MessagesApi,
   override implicit val ec        : ExecutionContext
@@ -54,7 +56,7 @@ class SysImg @Inject() (
       .transform [Option[MImgT]] (
         {qs =>
           try {
-            Some( MImg(qs) )
+            Some( mImg3(qs) )
           } catch {
             case ex: Exception =>
               val qsMap = FormUtil.parseQsToMap(qs)

@@ -1,5 +1,6 @@
 package controllers
 
+import com.google.inject.Inject
 import models.blk.BlockMeta
 import models.Context
 import models.blk.{IBlockMeta, BlockWidths, BlockHeights, BlockMetaUtil}
@@ -20,20 +21,24 @@ import scala.concurrent.Future
  * Created: 21.04.15 22:50
  * Description: Аддон для SysImg-контроллера, добавляющий экшены для отладки make-движков.
  */
-object SysImgMake {
+class SysImgMakeUtil @Inject() (
+  blockMetaUtil       : BlockMetaUtil
+) {
 
   import play.api.data.Forms._
 
   /** Маппинг для [[models.im.make.IMakeArgs]] под нужды этого контроллера. */
   def makeArgsM(img: MImgT): Mapping[IMakeArgs] = {
     mapping(
-      "blockMeta" -> BlockMetaUtil.imapping,
+      "blockMeta" -> blockMetaUtil.imapping,
       "szMult"    -> FormUtil.szMultM,
       "devScreen" -> optional(DevScreen.mappingFat),
       "compress"  -> CompressModes.mappingOpt
     )
     { MakeArgs(img, _, _, _, _) : IMakeArgs }
-    { ima => Some((ima.blockMeta, ima.szMult, ima.devScreenOpt, ima.compressMode)) }
+    {ima =>
+      Some((ima.blockMeta, ima.szMult, ima.devScreenOpt, ima.compressMode))
+    }
   }
 
   /** Маппинг формы, с которой работают в шаблоны и контроллеры. */
@@ -47,14 +52,14 @@ object SysImgMake {
 }
 
 
-import SysImgMake._
-
 
 trait SysImgMake
   extends SioController
   with PlayMacroLogsI
   with IsSuperuser
 {
+
+  def sysImgMakeUtil : SysImgMakeUtil
 
   /**
    * Рендер страницы с формой задания произвольных параметров вызова maker'а для указанного изображения.
@@ -65,7 +70,7 @@ trait SysImgMake
   def makeForm(img: MImgT, bmDflt: Option[IBlockMeta]) = IsSuperuserGet.async { implicit request =>
     implicit val ctx = implicitly[Context]
     // Забиндить дефолтовые данные в форму
-    val form = makeFormM(img).fill((
+    val form = sysImgMakeUtil.makeFormM(img).fill((
       Makers.StrictWide,
       MakeArgs(
         img = img,
@@ -98,7 +103,7 @@ trait SysImgMake
    * @return Получившаяся картинка.
    */
   def makeFormSubmit(img: MImgT) = IsSuperuserPost.async { implicit request =>
-    makeFormM(img).bindFromRequest().fold(
+    sysImgMakeUtil.makeFormM(img).bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug(s"makeFormSubmit(${img.rowKeyStr}): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
         _makeFormRender(img, formWithErrors, NotAcceptable)

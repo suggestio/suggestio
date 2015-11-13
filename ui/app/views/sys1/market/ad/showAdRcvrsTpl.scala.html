@@ -68,13 +68,13 @@
 
   <br/><br/>
 
-  @form( routes.SysMarket.resetReceivers(args.mad.id.get, r = ctx.r) ) {
+  @form( CSRF(routes.SysMarket.resetReceivers(args.mad.id.get, r = ctx.r)) ) {
     <input type="submit" value="Сохранить расчетную карту ресиверов в карточку."/>
   }
 
   <br/><br/>
 
-  @form( routes.SysMarket.cleanReceivers(args.mad.id.get, r = ctx.r) ) {
+  @form( CSRF(routes.SysMarket.cleanReceivers(args.mad.id.get, r = ctx.r)) ) {
     <input type="submit" value="Очистить карту ресиверов карточки." />
     Очистку карты ресиверов приведёт к сокрытию карточки на всех узлах.<br/>
     Очистку можно отменить на 90% кнопкой сохранения рассчетной карты ресиверов.<br/>
@@ -83,7 +83,7 @@
 
   <br/><br/>
 
-  @form( routes.SysMarket.removeAdRcvr(adId = args.mad.id.get, r = ctx.r) ) {
+  @form( CSRF(routes.SysMarket.removeAdRcvr(adId = args.mad.id.get, r = ctx.r)) ) {
     <input type="submit" value="Уничтожить все размещения (НЕЛЬЗЯ ОТМЕНИТЬ)." />
     Карта размещений будет стёрта.<br/>
     Все одобренные размещениями этой карточки будут закрыты текущей датой.<br/>

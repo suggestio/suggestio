@@ -29,7 +29,7 @@ object QsbUtil {
 }
 
 
-object QSBs extends JavaTokenParsers with PicSzParsers with IBlockMetaQsb {
+object QSBs extends JavaTokenParsers with PicSzParsers {
 
   /** qsb для NodeGeoLevel, записанной в виде int или string (esfn). */
   implicit def nodeGeoLevelQSB(implicit strB: QueryStringBindable[String],

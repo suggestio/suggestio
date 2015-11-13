@@ -16,7 +16,7 @@ object Title extends MergeBindAccAOBlock[TextEnt] {
   val BF_NAME_DFLT = "title"
   val BF_TITLE_DFLT = BfText(BF_NAME_DFLT)
 
-  override def updateAOBlockWith(blk: MEntity, titleOpt: Option[TextEnt]): MEntity = {
+  override def updateEntityWith(blk: MEntity, titleOpt: Option[TextEnt]): MEntity = {
     blk.copy(
       text = titleOpt
     )

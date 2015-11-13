@@ -8,7 +8,7 @@ import models.im.logo.LogoOpt_t
 import models.im._
 import org.im4java.core.Info
 import util.PlayMacroLogsImpl
-import io.suggest.img.{ImgCrop, SioImageUtilT}
+import io.suggest.img.SioImageUtilT
 import play.api.Play.{current, configuration}
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -45,6 +45,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   // TODO Нужна тут подпись через MAC? Или отдельными мапперами запилить?
 
   /** Маппер для поля с id картинки. Используется обертка над id чтобы прозрачно различать tmp и orig картинки. */
+  @deprecated("Use img3IdM instead.", "2015.nov.13")
   def imgIdM: Mapping[MImg] = {
     nonEmptyText(minLength = 8, maxLength = IIK_MAXLEN)
       .transform[MImg](MImg.apply, _.fileName)
@@ -71,6 +72,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   }
 
   /** маппер для поля с id картинки, который может отсутствовать. */
+  @deprecated("Use img3IdOptM instead.", "2015.nov.13")
   def imgIdOptM = mkImgIdOptM[MImgT](MImg)
 
   /** Маппер для новых картинок на базе MMedia. */
@@ -306,6 +308,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
 
 
   /** Приведение выхлопа мапперов imgId к результату сохранения, минуя это самое сохранение. */
+  @deprecated("Delete it or call explicitly.", "2015.nov.13")
   implicit def logoOpt2imgInfo(logoOpt: LogoOpt_t): Option[MImgInfo] = {
     logoOpt.map { logo => MImgInfo(logo.fileName) }
   }

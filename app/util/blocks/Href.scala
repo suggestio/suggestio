@@ -25,7 +25,7 @@ object Href extends MergeBindAccAOBlock[String] {
   }
 
   /** Обновить указанный изменяемый AOBlock с помощью текущего значения ссылки. */
-  def updateAOBlockWith(blk: MEntity, href: Option[String]): MEntity = {
+  def updateEntityWith(blk: MEntity, href: Option[String]): MEntity = {
     blk.copy(
       href = href
     )

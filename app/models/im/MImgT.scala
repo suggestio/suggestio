@@ -74,8 +74,10 @@ object MImgT extends PlayMacroLogsImpl { model =>
   }
 
   /** routes-биндер для query-string. */
-  implicit def qsb(implicit strB: QueryStringBindable[String],
-                   imOpsOptB: QueryStringBindable[Option[Seq[ImOp]]] ): QueryStringBindable[MImgT] = {
+  implicit def qsb(implicit
+                   strB: QueryStringBindable[String],
+                   imOpsOptB: QueryStringBindable[Option[Seq[ImOp]]]
+                  ): QueryStringBindable[MImgT] = {
     new QueryStringBindable[MImgT] {
 
       /** Создать подписывалку для qs. */
@@ -90,11 +92,12 @@ object MImgT extends PlayMacroLogsImpl { model =>
           maybeImgId      <- rowKeyB.bind(key + IMG_ID_SUF, params2)
           maybeImOpsOpt   <- imOpsOptB.bind(keyDotted, params2)
         } yield {
-          maybeImgId.right.flatMap { imgId =>
-            maybeImOpsOpt.right.map { imOpsOpt =>
-              val imOps = imOpsOpt.getOrElse(Nil)
-              MImg(imgId, imOps)
-            }
+          for {
+            imgId     <- maybeImgId.right
+            imOpsOpt  <- maybeImOpsOpt.right
+          } yield {
+            val imOps = imOpsOpt.getOrElse(Nil)
+            MImg(imgId, imOps)
           }
         }
       }
