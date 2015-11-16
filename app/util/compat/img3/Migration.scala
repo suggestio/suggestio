@@ -34,6 +34,10 @@ import scala.util.{Failure, Success}
  *    play.http.filters = "util.xplay.Filters"
  *  }}}
  * 2.[СДЕЛАНО 2015.oct.29] Отработать всё нижеследующее через JMX.
+ *
+ * // Миграция MAd
+ * 09. MNode.resaveMany().
+ * 10. Вызвать this.migrateMads()
  */
 class Migration @Inject() (
   mImg3                 : MImg3_,

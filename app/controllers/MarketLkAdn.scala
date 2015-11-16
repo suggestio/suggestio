@@ -1,6 +1,5 @@
 package controllers
 
-import com.github.nscala_time.time.OrderingImplicits._
 import io.suggest.common.fut.FutureUtil
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.common.MNodeCommon
@@ -9,7 +8,7 @@ import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.adv._
 import models.mbill.{MContract, MBalance}
-import org.joda.time.DateTime
+import org.elasticsearch.search.sort.SortOrder
 import util.adn.NodesUtil
 import util.async.AsyncUtil
 import com.google.inject.Inject
@@ -147,7 +146,6 @@ class MarketLkAdn @Inject() (
       // Для узла нужно отобразить его рекламу.
       // TODO Добавить поддержку агрумента mode
       val madsFut: Future[Seq[MNode]] = if (isMyNode) {
-        val ntAd = MNodeTypes.Ad
         val producedByCrs = {
           val cr = Criteria(
             nodeIds     = Seq( adnId ),
@@ -158,20 +156,16 @@ class MarketLkAdn @Inject() (
         val adsSearch0 = new AdSearchImpl {
           override def outEdges  = producedByCrs
           override def limit     = 200
-          //override def withDateCreatedSort = Some(SortOrder.DESC)
+          // TODO Почему-то сортировка работает задом наперёд, должно быть DESC тут:
+          override def withDateCreatedSort = Some(SortOrder.ASC)
         }
         // Это свой узел. Нужно в реалтайме найти рекламные карточки и проверить newAdIdOpt.
-        val prodAdsFut = for {
-          mads <- MNode.dynSearchRt(adsSearch0)
-        } yield {
-          mads.sortBy(_.meta.basic.dateCreated)(implicitly[Ordering[DateTime]].reverse)
-            .toStream
-        }
+        val prodAdsFut = MNode.dynSearchRt(adsSearch0)
 
         // Бывает, что добавлена новая карточка (но индекс ещё не сделал refresh). Нужно её найти и отобразить:
         val extAdOptFut = FutureUtil.optFut2futOpt(newAdIdOpt) { newAdId =>
           for {
-            newAdOpt <- MNode.getByIdType(newAdId, ntAd)
+            newAdOpt <- MNode.getByIdType(newAdId, MNodeTypes.Ad)
             if newAdOpt.exists { newAd =>
               newAd.edges.out.contains( MPredicates.OwnedBy -> adnId )
             }
@@ -183,13 +177,19 @@ class MarketLkAdn @Inject() (
           prodAds  <- prodAdsFut
           extAdOpt <- extAdOptFut
         } yield {
-          // Если есть карточка в extAdOpt, то надо добавить её в начало списка, который отсортирован по дате создания.
-          if (extAdOpt.isDefined  &&  prodAds.headOption.flatMap(_.id) != extAdOpt.flatMap(_.id)) {
-            extAdOpt.get #:: prodAds
-          } else {
-            prodAds
+          // Если есть карточка в extAdOpt, то надо залить её в список карточек.
+          extAdOpt.fold(prodAds) { extAd =>
+            val i = prodAds.indexWhere(_.id == extAd.id)
+            if ( i >= 0 ) {
+              // Это возврат после edit. Заменить существующую карточку.
+              prodAds.updated(i, extAd)
+            } else {
+              // Это возврат после create. Дописать карточку вначало.
+              extAdOpt.get #:: prodAds.toStream
+            }
           }
         }
+
       } else {
         // Это чужой узел. Нужно отобразить только рекламу, отправленную на размещение pov-узлу.
         request.povAdnNodeOpt match {
