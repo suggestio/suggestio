@@ -32,14 +32,18 @@ object MImgT extends PlayMacroLogsImpl { model =>
   val SIGN_SUF   = ".sig"
   val IMG_ID_SUF = ".id"
 
+  private val mImg3 = current.injector.instanceOf[MImg3_]
+
   /** Использовать QSB[UUID] напрямую нельзя, т.к. он выдает не-base64-выхлопы, что вызывает конфликты. */
-  def rowKeyB(implicit strB: QueryStringBindable[String]) = {
-    new QueryStringBindable[UUID] {
-      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, UUID]] = {
+  def rowKeyB(implicit strB: QueryStringBindable[String]): QueryStringBindable[String] = {
+    new QueryStringBindable[String] {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, String]] = {
         strB.bind(key, params).map {
           _.right.flatMap { raw =>
             try {
-              Right( UuidUtil.base64ToUuid(raw) )
+              // TODO Может спилить отсюда проверку эту?
+              UuidUtil.base64ToUuid(raw)
+              Right(raw)
             } catch {
               case ex: Exception =>
                 val msg = "img id missing or invalid: "
@@ -50,9 +54,8 @@ object MImgT extends PlayMacroLogsImpl { model =>
         }
       }
 
-      override def unbind(key: String, value: UUID): String = {
-        val uuid64 = UuidUtil.uuidToBase64(value)
-        strB.unbind(key, uuid64)
+      override def unbind(key: String, value: String): String = {
+        strB.unbind(key, value)
       }
     }
   }
@@ -97,13 +100,13 @@ object MImgT extends PlayMacroLogsImpl { model =>
             imOpsOpt  <- maybeImOpsOpt.right
           } yield {
             val imOps = imOpsOpt.getOrElse(Nil)
-            MImg(imgId, imOps)
+            mImg3(imgId, imOps)
           }
         }
       }
 
       override def unbind(key: String, value: MImgT): String = {
-        val imgIdRaw = rowKeyB.unbind(key + IMG_ID_SUF, value.rowKey)
+        val imgIdRaw = rowKeyB.unbind(key + IMG_ID_SUF, value.rowKeyStr)
         val imgOpsOpt = if (value.hasImgOps) Some(value.dynImgOps) else None
         val imOpsUnbinded = imOpsOptB.unbind(s"$key.", imgOpsOpt)
         val unsignedResult = if (imOpsUnbinded.isEmpty) {

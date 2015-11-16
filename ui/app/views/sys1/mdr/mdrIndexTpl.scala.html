@@ -12,9 +12,18 @@
     Модерация бесплатного размещения рекламных карточек
   </div
   <div class="submit-w __size-M">
-    <a class="siom-ac-btn __color-2 __size-M __ft-XM __list f-left" href="@routes.SysMdr.freeAdvs()">Очередь на модерацию</a>
-    <a class="siom-ac-btn __color-1 __size-M __ft-XM __list f-left" href="@routes.SysMdr.freeAdvs(MdrSearchArgs(freeAdvIsAllowed = Some(true)))">Одобренные</a>
-    <a class="siom-ac-btn __color-4 __size-M __ft-XM __list f-left" href="@routes.SysMdr.freeAdvs(MdrSearchArgs(freeAdvIsAllowed = Some(false)))">Отклонённые</a>
+    <a class="siom-ac-btn __color-2 __size-M __ft-XM __list f-left"
+       href="@routes.SysMdr.freeAdvs()">
+      Очередь на модерацию
+    </a>
+    <a class="siom-ac-btn __color-1 __size-M __ft-XM __list f-left"
+       href="@routes.SysMdr.freeAdvs( MdrSearchArgs(isAllowed = Some(true)) )">
+      Одобренные
+    </a>
+    <a class="siom-ac-btn __color-4 __size-M __ft-XM __list f-left"
+       href="@routes.SysMdr.freeAdvs( MdrSearchArgs(isAllowed = Some(false)) )">
+      Отклонённые
+    </a>
   </div>
 
 }

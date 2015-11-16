@@ -1,23 +1,17 @@
 package util.img
 
 import java.io.File
-import java.nio.ByteBuffer
-import java.nio.file.Files
-import java.util.UUID
 
 import com.google.inject.{Singleton, Inject}
 import controllers.routes
 import io.suggest.playx.CacheApiUtil
-import io.suggest.util.UuidUtil
 import models._
 import models.im._
 import org.im4java.core.{ConvertCmd, IMOperation}
-import org.joda.time.DateTime
 import play.api.Configuration
 import play.api.cache.CacheApi
 import play.api.mvc.Call
 import util.PlayMacroLogsImpl
-import util.async.AsyncUtil
 import scala.collection.JavaConversions._
 
 import scala.concurrent.{ExecutionContext, Promise, Future}
@@ -36,6 +30,7 @@ class DynImgUtil @Inject() (
   cacheApi          : CacheApi,
   cacheApiUtil      : CacheApiUtil,
   configuration     : Configuration,
+  mImg3             : MImg3_,
   implicit val ec   : ExecutionContext
 )
   extends PlayMacroLogsImpl
@@ -84,7 +79,7 @@ class DynImgUtil @Inject() (
     routes.Img.dynImg(dargs)
   }
   def imgCall(filename: String): Call = {
-    val img = MImg(filename)
+    val img = mImg3(filename)
     imgCall(img)
   }
 
@@ -217,60 +212,9 @@ class DynImgUtil @Inject() (
   }
 
 
-  /**
-   * Сохранение картинки, сгенеренной в mkReadyImgToFile().
-   * Метод блокируется на i/o операциях.
-   * @param imgFile Файл с картинкой.
-   * @param rowKey Сохранить по указанному ключу.
-   * @param qualifier Сохранить в указанной колонке.
-   * @param saveDt Сохранить этой датой.
-   * @return Фьючерс для синхронизации.
-   */
-  def saveDynImg(imgFile: File, rowKey: UUID, qualifier: String, saveDt: DateTime): Future[_] = {
-    // TODO Отделить толстые внешние операции от остальных чтобы улучшить распараллеливание:
-    val imgBytes = Files.readAllBytes(imgFile.toPath)
-    // Запускаем сохранение исходной картинки
-    val mui2 = MUserImg2(id = rowKey, q = qualifier, img = ByteBuffer.wrap(imgBytes), timestamp = saveDt)
-    val imgSaveFut = mui2.save
-    lazy val rowKeyStr = UuidUtil.uuidToBase64(rowKey)
-    imgSaveFut onComplete {
-      case Success(saveImgResult) => trace("Dyn img saved ok: " + saveImgResult)
-      case Failure(ex)            => error(s"Failed to save dyn img id[$rowKeyStr] q[$qualifier]", ex)
-    }
-    // Сохраняем метаданные:
-    val imgInfo = OrigImageUtil.identify(imgFile)
-    val md = ImgFormUtil.identifyInfo2md(imgInfo)
-    val muiMd2 = MUserImgMeta2(id = rowKey, q = qualifier, md = md, timestamp = saveDt)
-    val muiMdSaveFut = muiMd2.save
-    muiMdSaveFut.onComplete {
-      case Success(saveMetaResult) => trace("Dyn img meta saved ok: " + saveMetaResult)
-      case Failure(ex)             => error(s"Dyn img meta failed to save: id[$rowKeyStr] q[$qualifier]", ex)
-    }
-    // Удаляем файл, исходный файл
-    imgFile.delete()
-    imgSaveFut.flatMap(_ => muiMdSaveFut)
-  }
-
-  /**
-   * Полностью неблокирующий вызов к saveDynImg(). Все блокировки идут в отдельном потоке.
-   * @param imgFile Файл с картинкой.
-   * @param rowKey Сохранить по указанному ключу.
-   * @param qualifier Сохранить в указанной колонке.
-   * @param saveDt Сохранить этой датой.
-   * @return Фьючерс для синхронизации.
-   */
-  def saveDynImgAsync(imgFile: File, rowKey: UUID, qualifier: String, saveDt: DateTime): Future[_] = {
-    val futFut = Future {
-      saveDynImg(imgFile, rowKey, qualifier, saveDt)
-    }(AsyncUtil.singleThreadCpuContext)
-    // Распрямить вложенный фьючерс.
-    futFut flatMap identity
-  }
-
-
   /** Сгенерить превьюшку размера не более 256х256. */
   def thumb256Call(fileName: String, fillArea: Boolean): Call = {
-    val img = MImg(fileName)
+    val img = mImg3(fileName)
     thumb256Call(img, fillArea)
   }
   def thumb256Call(img: MImgT, fillArea: Boolean): Call = {

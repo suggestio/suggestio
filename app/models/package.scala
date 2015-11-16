@@ -137,9 +137,6 @@ package object models {
   type MUserImgMeta2        = io.suggest.model.MUserImgMeta2
   val  MUserImgMeta2        = io.suggest.model.MUserImgMeta2
 
-  type MUserImg2            = io.suggest.model.MUserImg2
-  val  MUserImg2            = io.suggest.model.MUserImg2
-
 
   /** Вызов на главную страницу. */
   def MAIN_PAGE_CALL        = routes.MarketShowcase.geoSite()

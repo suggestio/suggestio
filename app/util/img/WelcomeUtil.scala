@@ -25,6 +25,7 @@ class WelcomeUtil @Inject() (
   configuration          : Configuration,
   scUtil                 : ShowcaseUtil,
   cdnUtil                : CdnUtil,
+  mImg3                  : MImg3_,
   implicit val ec        : ExecutionContext,
   implicit val esClient  : Client,
   implicit val sn        : SioNotifierStaticClientI
@@ -59,7 +60,7 @@ class WelcomeUtil @Inject() (
       needImgs = newWaImgOpt.toSeq,
       oldImgs = waOpt
         .flatMap(_.imgs.headOption)
-        .map { kv => MImg(kv._2.filename) }
+        .map { kv => mImg3(kv._2.filename) }
         .toIterable
     )
     saveAllFut map { _.headOption }
@@ -114,10 +115,10 @@ class WelcomeUtil @Inject() (
   }
 
 
-  def welcomeAd2iik(waOpt: Option[MWelcomeAd]) = {
+  def welcomeAd2iik(waOpt: Option[MWelcomeAd]): Option[MImgT] = {
     waOpt
       .flatMap { _.imgs.headOption }
-      .map[MImg] { img => MImg(img._2.filename) }
+      .map[MImgT] { img => mImg3(img._2.filename) }
   }
 
 
@@ -147,7 +148,7 @@ class WelcomeUtil @Inject() (
       .fold[Future[Either[String, ImgUrlInfoT]]] {
         Future successful _colorBg
       } { bgImgFilename =>
-        val oiik = MImg(bgImgFilename)
+        val oiik = mImg3(bgImgFilename)
         val fut0 = oiik.original.getImageWH
         lazy val logPrefix = s"getWelcomeRenderArgs(${mnode.idOrNull}): "
         fut0.map {

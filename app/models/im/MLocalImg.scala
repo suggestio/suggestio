@@ -52,6 +52,9 @@ object MLocalImg
   with PeriodicallyDeleteNotExistingInPermanent
 {
 
+  // TODO DI
+  private val mImg3 = current.injector.instanceOf[MImg3_]
+
   /** Реализация парсеров для filename из данной модели. */
   class Parsers extends ImgFileNameParsersImpl {
 
@@ -297,7 +300,7 @@ case class MLocalImg(
       this
   }
 
-  override lazy val toWrappedImg = MImg(rowKey, dynImgOps)
+  override lazy val toWrappedImg = MLocalImg.mImg3(rowKeyStr, dynImgOps)
 
   override lazy val rawImgMeta: Future[Option[IImgMeta]] = {
     if (isExists) {

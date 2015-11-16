@@ -4,9 +4,7 @@ import java.util.UUID
 
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.util.UuidUtil
-import models.im.logo.LogoOpt_t
 import models.im._
-import org.im4java.core.Info
 import util.PlayMacroLogsImpl
 import io.suggest.img.SioImageUtilT
 import play.api.Play.{current, configuration}
@@ -44,13 +42,6 @@ object ImgFormUtil extends PlayMacroLogsImpl {
 
   // TODO Нужна тут подпись через MAC? Или отдельными мапперами запилить?
 
-  /** Маппер для поля с id картинки. Используется обертка над id чтобы прозрачно различать tmp и orig картинки. */
-  @deprecated("Use img3IdM instead.", "2015.nov.13")
-  def imgIdM: Mapping[MImg] = {
-    nonEmptyText(minLength = 8, maxLength = IIK_MAXLEN)
-      .transform[MImg](MImg.apply, _.fileName)
-  }
-
   /** Сборка маппингов для img-инпутов в форме. */
   def mkImgIdOptM[T1 <: MImgT](applier: IMImgCompanion { type T <: T1 }): Mapping[Option[T1]] = {
     optional( text(maxLength = IIK_MAXLEN) )
@@ -70,10 +61,6 @@ object ImgFormUtil extends PlayMacroLogsImpl {
         { _.map(_.fileName) }
       )
   }
-
-  /** маппер для поля с id картинки, который может отсутствовать. */
-  @deprecated("Use img3IdOptM instead.", "2015.nov.13")
-  def imgIdOptM = mkImgIdOptM[MImgT](MImg)
 
   /** Маппер для новых картинок на базе MMedia. */
   def img3IdOptM = mkImgIdOptM[MImgT](mImg3)
@@ -114,14 +101,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   }
 
   def updateOrigImgId(needImgs: Seq[MImgT], oldImgIds: Iterable[String]): Future[Seq[MImgT]] = {
-    updateOrigImgFull(needImgs, oldImgIds.map(MImg(_)))
-  }
-
-  /** Комбо из updateOrigImgFull() и уже выпиленного метода. */
-  @deprecated("Use updateOrigImgFull() instead.", "2014.oct.29")
-  def updateOrigImg(needImgs: Seq[MImg], oldImgs: Iterable[MImgT]): Future[Option[MImgT]] = {
-    updateOrigImgFull(needImgs, oldImgs)
-      .map { _.headOption } // TODO Надо избегать такого веселья, удалив этот метод начисто.
+    updateOrigImgFull(needImgs, oldImgIds.map(mImg3(_)))
   }
 
   /**
@@ -164,6 +144,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     val newImgIdsSet = mimgs2rkSet(needImgs)
     val imgIds4del = oldImgIdsSet -- newImgIdsSet     //oldImgs.filter { img => !(newImgIdsSet contains img.rowKey) }
     val delOldUnusedFut = Future.traverse(imgIds4del) { mimg =>
+      // TODO Удалить наверное этот код? Нужен gc, который в фоне ищет dependent-узлы без входящих связей.
       val fut = MImg.deleteAllFor(mimg)
       info("updateOrigImgFullDo(): delOldUnusedImgs: deleting img " + UuidUtil.uuidToBase64(mimg))
       fut
@@ -264,16 +245,6 @@ object ImgFormUtil extends PlayMacroLogsImpl {
       MImgInfo(mimg.fileName, wh.map(MImgInfoMeta.apply))
     }
   }
-  def img2SomeImgInfo(mimg: MImgT): Future[Option[MImgInfo]] = {
-    img2imgInfo(mimg)
-      .map { Some.apply }
-  }
-
-  def optImg2OptImgInfo(mimgOpt: Option[MImgT]): Future[Option[MImgInfo]] = {
-    mimgOpt.fold [Future[Option[MImgInfo]]]
-      { Future successful None }
-      { img2SomeImgInfo }
-  }
 
   /**
    * Проверить и уточнить значение кропа картинки.
@@ -295,22 +266,11 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   }
 
 
-  def identifyInfo2md(info: Info): Map[String, String] = {
-    val meta = MImgInfoMeta(width = info.getImageWidth, height = info.getImageHeight)
-    imgMeta2md(meta)
-  }
   def imgMeta2md(sz: ISize2di): Map[String, String] = {
     Map(
       IMETA_WIDTH  -> sz.width.toString,
       IMETA_HEIGHT -> sz.height.toString
     )
-  }
-
-
-  /** Приведение выхлопа мапперов imgId к результату сохранения, минуя это самое сохранение. */
-  @deprecated("Delete it or call explicitly.", "2015.nov.13")
-  implicit def logoOpt2imgInfo(logoOpt: LogoOpt_t): Option[MImgInfo] = {
-    logoOpt.map { logo => MImgInfo(logo.fileName) }
   }
 
 }

@@ -1,36 +1,36 @@
 package controllers
 
 import com.google.inject.Inject
+import controllers.ad.MarketAdFormUtil._
+import io.suggest.ad.form.AdFormConstants._
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.n2.ad.MNodeAd
-import io.suggest.model.n2.edge.{NodeEdgesMap_t, MNodeEdges}
+import io.suggest.model.n2.edge.{MNodeEdges, NodeEdgesMap_t}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
+import models._
 import models.blk.PrepareBlkImgArgs
-import models.blk.ed.{BlockImgMap, AdFormM, AdFormResult}
-import models.im.{MImg3_, MImg}
+import models.blk.ed.{AdFormM, AdFormResult, BlockImgMap}
+import models.im.MImg3_
 import models.jsm.init.MTargets
-import models.mtag.MTagUtil
 import org.elasticsearch.client.Client
 import org.joda.time.DateTime
 import play.api.cache.CacheApi
+import play.api.data.Forms._
+import play.api.data._
 import play.api.db.Database
 import play.api.i18n.MessagesApi
 import play.api.libs.json.JsValue
+import play.api.mvc.{Call, Request, Result, WebSocket}
 import play.core.parsers.Multipart
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
-import util.blocks.{LkEditorWsActor, ListBlock, BgImg}
+import util.acl._
+import util.blocks.{BgImg, ListBlock, LkEditorWsActor}
 import util.n2u.N2NodesUtil
 import views.html.lk.ad._
-import models._
-import play.api.data._, Forms._
-import util.acl._
+
 import scala.concurrent.{ExecutionContext, Future}
-import play.api.mvc.{Call, Result, WebSocket, Request}
-import controllers.ad.MarketAdFormUtil
-import MarketAdFormUtil._
-import io.suggest.ad.form.AdFormConstants._
 
 /**
  * Suggest.io
@@ -43,7 +43,6 @@ class MarketAd @Inject() (
   override implicit val current   : play.api.Application,
   override val cache              : CacheApi,
   tempImgSupport                  : TempImgSupport,
-  mTagUtil                        : MTagUtil,
   mImg3                           : MImg3_,
   override val n2NodesUtil        : N2NodesUtil,
   override val _contextFactory    : Context2Factory,
@@ -94,7 +93,7 @@ class MarketAd @Inject() (
     val vOpt = form(bgImgFullK).value
     try {
       vOpt.foreach { v =>
-        val im = MImg(v)
+        val im = mImg3(v)
         tempImgSupport._detectPalletteWs(im, wsId = ctx.ctxIdStr)
       }
     } catch {
@@ -213,7 +212,7 @@ class MarketAd @Inject() (
   private def _renderEditFormWith(af: AdFormM, rs: Status)
                                  (implicit request: RequestWithAdAndProducer[_]): Future[Result] = {
     _renderPage(af, rs) { implicit ctx =>
-      import request.{producer, mad}
+      import request.{mad, producer}
       editAdTpl(mad, af, producer)(ctx)
     }
   }

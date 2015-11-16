@@ -12,7 +12,7 @@ import io.suggest.popup.PopupConstants
 import models.{Context2Factory, Context}
 import play.api.cache.CacheApi
 import play.twirl.api.Html
-import util.di.IDynImgUtil
+import util.di.{IMImg3Di, IDynImgUtil}
 import util.img.ImgCtlUtil
 import _root_.util.async.AsyncUtil
 import models.im._
@@ -44,6 +44,7 @@ import scala.util.{Success, Failure}
  */
 @Singleton
 class Img @Inject() (
+  override val mImg3              : MImg3_,
   override val dynImgUtil         : DynImgUtil,
   override val messagesApi        : MessagesApi,
   override val actorSystem        : ActorSystem,
@@ -111,7 +112,7 @@ class Img @Inject() (
 
   /** Отрендерить оконный интерфейс для кадрирования картинки. */
   def imgCropForm(imgId: String, width: Int, height: Int) = IsAuth.async { implicit request =>
-    val iik = MImg(imgId).original
+    val iik = mImg3(imgId).original
     iik.getImageWH map { imetaOpt =>
       val imeta: ISize2di = imetaOpt getOrElse {
         val stub = MImgInfoMeta(640, 480)
@@ -153,16 +154,18 @@ class Img @Inject() (
             crop2Fut map { crop2 =>
               // Сгенерить id картинки. Собираем картинку на базе исходника, накатив только crop:
               val cropOp = AbsCropOp(crop2)
+              val mimgOrig = mImg3(localImg.rowKeyStr)
               val croppedImgFileName = {
                 val imOps = List(cropOp)
-                MImg(localImg.rowKey, imOps).fileName
+                val mimg = mimgOrig.withDynOps(imOps)
+                mimg.fileName
               }
               // Сгенерить новую dyn-ссылку на картинку. Откропать согласно запросу.
               // Т.к. это редактор, имеет смысл отресайзить оригинал до превьюшки.
               val previewCall = {
                 val imOps = List(cropOp, _imgRszPreviewOp)
-                val img = MImg(localImg.rowKey, imOps)
-                dynImgUtil.imgCall(img)
+                val mimg = mimgOrig.withDynOps(imOps)
+                dynImgUtil.imgCall(mimg)
               }
               Ok( jsonTempOk(croppedImgFileName, previewCall) )
             }
@@ -235,6 +238,7 @@ trait TempImgSupport
   with IConfiguration
   with ICacheApiUtil
   with IDynImgUtil
+  with IMImg3Di
 {
 
   /** DI-инстанс [[ImgCtlUtil]], т.е. статическая утиль для img-контроллеров. */
@@ -294,7 +298,7 @@ trait TempImgSupport
     */
   def _handleTempImg(preserveUnknownFmt: Boolean = false, runEarlyColorDetector: Boolean = false,
                      wsId: Option[String] = None, ovlRrr: Option[(String, Context) => Html] = None,
-                     mImgCompanion: IMImgCompanion = MImg)
+                     mImgCompanion: IMImgCompanion = mImg3)
                     (implicit request: AbstractRequestWithPwOpt[MultipartFormData[TemporaryFile]]): Future[Result] = {
     // TODO Надо часть синхронной логики загнать в Future{}. Это нужно, чтобы скачанные данные из tmp удалялись автоматом.
     val resultFut: Future[Result] = request.body.file("picture") match {
