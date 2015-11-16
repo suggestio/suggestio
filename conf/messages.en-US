@@ -666,6 +666,10 @@ edge.predicate.f=GeoParent
 edge.predicate.g=Direct GeoParent
 edge.predicate.h=Welcome ad
 edge.predicate.i=Gallery item
+edge.predicate.j=Moderated by
+edge.predicate.k=Receiver
+edge.predicate.l=Tagged
+edge.predicate.m=Background
 
 Your.name=Your name
 First.name=First name

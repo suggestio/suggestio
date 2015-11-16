@@ -680,6 +680,10 @@ edge.predicate.f=Геородитель
 edge.predicate.g=Прямой геородитель
 edge.predicate.h=Карточка приветствия
 edge.predicate.i=Элемент галереи
+edge.predicate.j=Модерировал
+edge.predicate.k=Ресивер
+edge.predicate.l=Тег
+edge.predicate.m=Фон
 
 Your.name=Ваше имя
 First.name=Имя

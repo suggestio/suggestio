@@ -18,7 +18,7 @@ case class BindResult(
 ) {
 
   def unapplyBIM(bfi: BfImage): BlockImgMap = {
-    bim.filter(_._1 == bfi.name)
+    bim.filter(_._1 == bfi.bimKey)
   }
 
   def flatMapFirstOffer[T](f: MEntity => Option[T]): Option[T] = {
