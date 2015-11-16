@@ -26,6 +26,7 @@ object MMeta extends IGenEsMappingProps {
       override protected def _PARENT_FN = BASIC_FN
 
       def NAME_SHORT_NOTOK_FN = _fullFn( MBasicMeta.Fields.NameShort.NAME_SHORT_NOTOK_FN )
+      def DATE_CREATED_FN     = _fullFn( MBasicMeta.Fields.DATE_CREATED_FN )
     }
 
     object Person {

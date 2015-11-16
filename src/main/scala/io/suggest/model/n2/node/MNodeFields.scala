@@ -36,6 +36,7 @@ object MNodeFields {
     override protected def _PARENT_FN = META_FN
 
     def BASIC_NAME_SHORT_NOTOK_FN   = _fullFn( MMeta.Fields.Basic.NAME_SHORT_NOTOK_FN )
+    def DATE_CREATED_FN             = _fullFn( MMeta.Fields.Basic.DATE_CREATED_FN )
   }
 
   /** Абсолютные имена ES-полей в .extras */

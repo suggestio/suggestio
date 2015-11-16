@@ -35,6 +35,7 @@ trait MNodeSearch
   with RandomSort
   with Limit
   with Offset
+  with DateCreatedSort
 
 /** Реализация [[MNodeSearch]] для упрошения жизни компилятору. */
 abstract class MNodeSearchImpl
@@ -63,6 +64,7 @@ trait MNodeSearchDflt
   with RandomSortDflt
   with LimitDflt
   with OffsetDflt
+  with DateCreatedSortDflt
 
 /** Дефолтовая реализация [[MNodeSearchDflt]].
   * Упрощает жизнь компилятору при сборке недефолтовых классов-реализаций. */
@@ -94,6 +96,7 @@ trait MNodeSearchWrap
   with RandomSortWrap
   with LimitWrap
   with OffsetWrap
+  with DateCreatedSortWrap
 {
   override type WT <: MNodeSearch
 }
