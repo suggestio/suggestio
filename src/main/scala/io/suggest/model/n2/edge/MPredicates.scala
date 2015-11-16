@@ -4,6 +4,7 @@ import io.suggest.common.menum.{EnumTree, EnumMaybeWithName}
 import io.suggest.model.menum.EnumJsonReadsValT
 import io.suggest.model.n2.node.{MNodeTypes, MNodeType}
 import play.api.libs.json._
+import play.api.mvc.QueryStringBindable
 
 /**
  * Suggest.io
@@ -206,6 +207,25 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
   /** Фоновый объект по отношению к текущему объекту. */
   val Bg: T = new Val("m") with _ToImg {
     override def fromTypeValid(ntype: MNodeType)  = true
+  }
+
+
+  /** Поддержка биндинга из routes. */
+  implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[T] = {
+    new QueryStringBindable[T] {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, T]] = {
+        for (strIdEith <- strB.bind(key, params)) yield {
+          strIdEith.right
+            .flatMap { strId =>
+              maybeWithName(strId)
+                .toRight("e.predicate.unknown")
+            }
+        }
+      }
+      override def unbind(key: String, value: T): String = {
+        strB.unbind(key, value.strId)
+      }
+    }
   }
 
 }

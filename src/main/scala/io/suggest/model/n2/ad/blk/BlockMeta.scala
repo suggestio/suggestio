@@ -57,14 +57,14 @@ object BlockMeta extends IGenEsMappingProps {
   implicit def blockMetaQsb(implicit
                             intB: QueryStringBindable[Int],
                             boolB: QueryStringBindable[Boolean]
-                           ): QueryStringBindable[IBlockMeta] = {
-    new QueryStringBindable[IBlockMeta] {
+                           ): QueryStringBindable[BlockMeta] = {
+    new QueryStringBindable[BlockMeta] {
       def WIDTH_SUF     = ".a"
       def HEIGHT_SUF    = ".b"
       def BLOCK_ID_SUF  = ".c"
       def IS_WIDE_SUF   = ".d"
 
-      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, IBlockMeta]] = {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, BlockMeta]] = {
         for {
           maybeWidth    <- intB.bind(key + WIDTH_SUF, params)
           maybeHeight   <- intB.bind(key + HEIGHT_SUF, params)
@@ -87,7 +87,7 @@ object BlockMeta extends IGenEsMappingProps {
         }
       }
 
-      override def unbind(key: String, value: IBlockMeta): String = {
+      override def unbind(key: String, value: BlockMeta): String = {
         Iterator(
           intB.unbind(key + WIDTH_SUF,    value.width),
           intB.unbind(key + HEIGHT_SUF,   value.height),

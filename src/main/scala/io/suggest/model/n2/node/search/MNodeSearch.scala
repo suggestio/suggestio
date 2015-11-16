@@ -7,7 +7,7 @@ import io.suggest.model.n2.node.common.search._
 import io.suggest.model.n2.node.meta.search._
 import io.suggest.model.n2.tag.vertex.search._
 import io.suggest.model.search._
-import io.suggest.util.MacroLogsImplLazy
+import io.suggest.util.{MacroLogsDyn, MacroLogsImplLazy}
 
 /**
  * Suggest.io
@@ -69,7 +69,7 @@ trait MNodeSearchDflt
 class MNodeSearchDfltImpl
   extends MNodeSearchImpl
   with MNodeSearchDflt
-  with MacroLogsImplLazy
+  with MacroLogsDyn
 
 
 /** Wrapper-реализация поисковых критериев [[MNodeSearch]] узла. */
