@@ -32,7 +32,8 @@ object MBasicMeta extends IGenEsMappingProps {
 
     val HIDDEN_DESCR_FN       = "hd"
     val TECHNICAL_NAME_FN     = "tn"
-    val DATE_CREATED_FN       = "dc"
+    private[MBasicMeta] val DATE_CREATED_OLD_FN   = "dc"
+    val DATE_CREATED_FN       = "dci"
     val DATE_EDITED_FN        = "de"
     val LANGS_ESFN            = "l"
   }
@@ -41,13 +42,22 @@ object MBasicMeta extends IGenEsMappingProps {
   import Fields._
   import Fields.NameShort._
 
+  /** Изначально поле date created не индексировалось, что вызывало проблемы с сортировкой.
+    * Тут лежит комбинированный маппинг для старого и нового формата поля date created. */
+  // TODO 2015.nov.16 Можно удалить через какое-то время, после migrateMads() на n2.
+  val DATE_CREATED_FORMAT: OFormat[DateTime] = {
+    val normal = (__ \ DATE_CREATED_FN).format(jodaDateTimeFormat)
+    val old = (__ \ DATE_CREATED_OLD_FN).read(jodaDateTimeFormat)
+    OFormat(normal.orElse(old), normal)
+  }
+
   /** Поддержка JSON в модели. */
   implicit val FORMAT: OFormat[MBasicMeta] = (
     (__ \ NAME_FN).formatNullable[String] and
     (__ \ NAME_SHORT_FN).formatNullable[String] and
     (__ \ TECHNICAL_NAME_FN).formatNullable[String] and
     (__ \ HIDDEN_DESCR_FN).formatNullable[String] and
-    (__ \ DATE_CREATED_FN).format(jodaDateTimeFormat) and
+    DATE_CREATED_FORMAT and
     (__ \ DATE_EDITED_FN).formatNullable(jodaDateTimeFormat) and
     (__ \ LANGS_ESFN).formatNullable[List[String]]
       .inmap[List[String]](
@@ -67,7 +77,7 @@ object MBasicMeta extends IGenEsMappingProps {
       )),
       FieldString(TECHNICAL_NAME_FN, index = FieldIndexingVariants.no, include_in_all = false),
       FieldString(HIDDEN_DESCR_FN, index = FieldIndexingVariants.no, include_in_all = false),
-      FieldDate(DATE_CREATED_FN, index = FieldIndexingVariants.no, include_in_all = false),
+      FieldDate(DATE_CREATED_FN, index = null, include_in_all = false),
       FieldDate(DATE_EDITED_FN, index = FieldIndexingVariants.no, include_in_all = false),
       FieldString(LANGS_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
     )
