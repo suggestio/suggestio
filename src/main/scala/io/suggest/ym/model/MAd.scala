@@ -200,7 +200,7 @@ final case class MAd(
       meta = MMeta(
         basic = MBasicMeta(
           techName = {
-            val tn = offers.iterator.flatMap(_.text1).mkString(" | ")
+            val tn = offers.iterator.flatMap(_.text1).map(_.value).mkString(" | ")
             if (tn.isEmpty) None else Some(tn)
           },
           dateCreated = dateCreated,
