@@ -24,7 +24,7 @@ import de.jollyday.HolidayManager
 import java.net.URL
 import controllers.routes
 import scala.collection.JavaConversions._
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -36,7 +36,8 @@ import scala.concurrent.Future
 class MmpDailyBilling @Inject() (
   n2NodesUtil             : N2NodesUtil,
   configuration           : Configuration,
-  db                      : Database
+  db                      : Database,
+  implicit val ec         : ExecutionContext
 )
   extends PlayMacroLogsImpl
 {
@@ -512,5 +513,3 @@ class MmpDailyBilling @Inject() (
   }
 
 }
-
-

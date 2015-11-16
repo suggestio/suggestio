@@ -30,14 +30,14 @@ trait ISaveImgs {
 
   /** Привести результат bind'а формы к виду сохраненных картинок. */
   final def asSavedImgs(newImgs: BlockImgMap, oldImgs: Imgs_t = ImgsEmpty): Future[Imgs_t] = {
-    val imgKeys = imgKeys
+    val _imgKeys = imgKeys
 
     // Лениво выкинуть из исходника все картинки, поддерживаемые этим блоком.
     val oldImgs2Iter: Iterator[MEdge] = {
       val iter = oldImgs.iterator
-      if (oldImgs.nonEmpty && imgKeys.nonEmpty) {
+      if (oldImgs.nonEmpty && _imgKeys.nonEmpty) {
         iter.filterNot { e =>
-          imgKeys.contains( e.predicate )
+          _imgKeys.contains( e.predicate )
         }
       } else {
         iter

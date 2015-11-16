@@ -48,7 +48,7 @@ class SysMarket @Inject() (
   override val messagesApi        : MessagesApi,
   override val mailer             : IMailerWrapper,
   db                              : Database,
-  n2NodesUtil                     : N2NodesUtil,
+  override val n2NodesUtil        : N2NodesUtil,
   mImg3                           : MImg3_,
   override val errorHandler       : ErrorHandler,
   override val mNodeCache         : MAdnNodeCache,
@@ -636,15 +636,7 @@ class SysMarket @Inject() (
               routes.SysMarket.showAdnNode(prodId)
             }
         } { rcvrId =>
-          val adSearch = new AdSearch {
-            override def outEdges: Seq[ICriteria] = {
-              val cr = Criteria(
-                nodeIds     = Seq(rcvrId),
-                predicates  = Seq(MPredicates.Receiver)
-              )
-              Seq(cr)
-            }
-          }
+          val adSearch = AdSearch.byRcvrId(rcvrId)
           routes.SysMarket.showAdnNodeAds(adSearch)
         }
         Future.successful( call )

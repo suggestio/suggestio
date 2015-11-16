@@ -12,28 +12,6 @@
 @_scrollableContainerTpl( "sm-shops", "smShops", "style" -> (_bgcolor( args.bgColor, false ).toString + "display: block;") ) {
 <div id="@LIST_ID" class="shops-list">
 
-  @* Список тегов рендерится по ws на клиенте, список узлов тоже. Поэтому вот этот код закомменчен тут.
-  args.shopsLetterGrouped.iterator.zipWithIndex.map { case ((letter, mshops), i) =>
-    @defining( _mayOdd(i) ) { mayOdd =>
-      <div class="shops-list_row @mayOdd">
-        <div class="shops-list_letter">@letter</div>
-      </div>
-
-      @* Рендер списка магазинов или иных рекламодателей. *@
-      @mshops.map { mshop =>
-        @args.jsStateOpt.map { jsState =>
-          <a href="@args.syncUrl( jsState.copy(fadsProdIdOpt = mshop.id) )">
-        }
-        <div class="shops-list_row @mayOdd @ROW_DIV_CLASS" @ATTR_NODE_ID="@mshop.id">
-          @mshop.meta.basic.name
-        </div>
-        @if( args.jsStateOpt ) {
-          </a>
-        }
-      }
-    }
-  }*@
-
 
   @defining( colorRgb2Hsl(colorHex2rgb(args.bgColor)) ) { hslColor =>
   <style type="text/css">

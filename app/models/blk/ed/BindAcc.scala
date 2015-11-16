@@ -16,6 +16,7 @@ case class BindAcc(
   height  : Int                   = BlockHeights.default.heightPx,
   width   : Int                   = BlockWidths.default.widthPx,
   isWide  : Boolean               = false,
+  href    : Option[String]        = None,
   bim     : List[BlockImgEntry]   = Nil
 ) {
 
@@ -29,7 +30,7 @@ case class BindAcc(
   }
 
   def toBindResult(blockId: Int): BindResult = {
-    BindResult(offers, toBlockMeta(blockId), bim.toMap)
+    BindResult(offers, toBlockMeta(blockId), bim.toMap, href)
   }
 
 }

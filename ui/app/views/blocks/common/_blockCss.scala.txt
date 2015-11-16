@@ -9,12 +9,16 @@
 
 @defining( cssClasses.map {c => List(".", c, " ")} ) { cc =>
 .sm-block@{mad.id}@{cc} {
-  width: @szMulted(mad.blockMeta.width, szMult)px;
-  height: @szMulted(mad.blockMeta.height, szMult)px;
-  @if(!(mad.imgs contains BG_IMG_FN)) {
-    @mad.colors.get(IMG_BG_COLOR_FN.name).map { bgColor =>background-color: #@bgColor;}
+  @mad.ad.blockMeta.map { bm =>
+    width: @szMulted(bm.width, szMult)px;
+    height: @szMulted(bm.height, szMult)px;
   }
-  @args.topLeft.filter(!_.inlineStyle).map { tl =>@_focTopLeftCss(tl, args.wideBg) }
+  @if( mad.edges.withPredicateIter( MPredicates.Bg ).isEmpty ) {
+    @mad.meta.colors.bg.map { bgColor =>background-color: #@bgColor.code;}
+  }
+  @args.topLeft.filter(!_.inlineStyle).map { tl =>
+    @_focTopLeftCss(tl, args.wideBg)
+  }
 }
 }
 
@@ -30,9 +34,9 @@
     position: relative;
   }
 
-  @mad.colors.get(WIDE_IMG_PATTERN_COLOR_FN.toString).map { patternColor =>
+  @mad.meta.colors.pattern.map { patternColor =>
     .dotted-pattern.__id-@{mad.id} {
-      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="2" height="2"><line x1="0" y1="0" x2="1" y2="1" stroke-width="1" stroke="rgb(@colorHex2rgb(patternColor).mkString(","))"/></svg>');
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="2" height="2"><line x1="0" y1="0" x2="1" y2="1" stroke-width="1" stroke="rgb(@colorHex2rgb(patternColor.code).mkString(","))"/></svg>');
     }
   }
 }

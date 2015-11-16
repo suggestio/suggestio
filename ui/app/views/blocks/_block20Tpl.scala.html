@@ -6,21 +6,21 @@
 @blockBase(args, bc) {
 
   @* Картинка рендерится в пределах ссылки оффера, если та существует.
-     Если оффера нет, то чтобы избежать неотображения картинки, картинка будет отрендерена вне блока. *@
+     Если оффера нет, то чтобы избежать неотображения картинки, картинка будет отрендерена вне блока.
+     TODO актуален ли этот костыль сейчас? *@
 
-  @if(args.mad.offers.isEmpty) {
+  @if(args.mad.ad.entities.isEmpty) {
     @_block2BodyCommonTpl(args, bc)
+
   } else {
-    @defining(args.mad.offers.headOption.get) { offer =>
-      @offer.href.map { href =>
+    @args.mad.meta.business.siteUrl.map { href =>
       <a href="@href" target="_blank">
-      }
+    }
 
-      @_block2BodyCommonTpl(args, bc)
+    @_block2BodyCommonTpl(args, bc)
 
-      @if(offer.href.isDefined) {
-        </a>
-      }
+    @if( args.mad.meta.business.siteUrl ) {
+      </a>
     }
   }
 }

@@ -7,7 +7,7 @@ import models.blk.SzMult_t
 import models.im.DevScreen
 import models.im.make.{MakeArgs, Makers}
 import models.{MNode, blk}
-import util.blocks.BgImg
+import util.blocks.{BlocksConf, BgImg}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -51,9 +51,12 @@ class LkAdUtil @Inject() (
 
     val bgImgOptFut = FutureUtil.optFut2futOpt(bgImgFutOpt)(identity)
 
+    val bc = BlocksConf.applyOrDefault( mad )
+
     for (bgImgOpt <- bgImgOptFut) yield {
       blk.RenderArgs(
         mad       = mad,
+        bc        = bc,
         withEdit  = false,
         szMult    = szMult,
         bgImg     = bgImgOpt,

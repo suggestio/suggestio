@@ -11,7 +11,7 @@ import play.api.data.{FormError, Mapping}
  * Description: Утиль для блоков, содержащих titleBf.
  */
 
-object Title extends MergeBindAccAOBlock[TextEnt] {
+object Title extends MergeBindAccEntity[TextEnt] {
 
   val BF_NAME_DFLT = "title"
   val BF_TITLE_DFLT = BfText(BF_NAME_DFLT)

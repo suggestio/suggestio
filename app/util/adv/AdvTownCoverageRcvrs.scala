@@ -1,9 +1,9 @@
 package util.adv
 
 import com.google.inject.Inject
+import io.suggest.model.n2.edge.{MNodeEdges, MEdgeInfo}
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
-import io.suggest.ym.model.common.AdnSinks
 import org.elasticsearch.client.Client
 import play.api.Configuration
 import util.PlayMacroLogsImpl
@@ -42,7 +42,7 @@ class AdvTownCoverageRcvrs @Inject() (
     val allRcvrsFut = {
       val rcvrsIter = allDirectRcvrs
         .iterator
-        .map(_._2.receiverId)
+        .map(_._2.nodeId)
       mNodeCache.multiGet(rcvrsIter)
     }
     val districtTypeNames = AdnShownTypes.districtNames
@@ -101,7 +101,7 @@ class AdvTownCoverageRcvrs @Inject() (
       tdisMap           <- townDistrictIdsMapFut
       tdisCountMap      <- townAllDistrictsCountMapFut
     } yield {
-      tdisMap
+      val eiter = tdisMap
         .iterator
         .flatMap { case (townId, districtIds) =>
           // сколько попаданий по уровню нужно, чтобы он прошел на уровень выше? Столько же, сколько и районов в этом городе.
@@ -110,8 +110,8 @@ class AdvTownCoverageRcvrs @Inject() (
             .iterator
             // Раскрываем уровни отображения
             .flatMap { districtId =>
-              allDirectRcvrs.get(districtId)
-                .fold [Iterator[SinkShowLevel]] (Iterator.empty) { _.sls.iterator }
+              allDirectRcvrs.get(MPredicates.Receiver -> districtId)
+                .fold [Iterator[SinkShowLevel]] (Iterator.empty) { _.info.sls.iterator }
             }
             .toSeq
             // Считаем частоты уровней отображения
@@ -126,8 +126,12 @@ class AdvTownCoverageRcvrs @Inject() (
         .toSeq
         .groupBy(_._1)
         .iterator
-        .map { case (townId, sslsRaw)  =>  townId -> AdReceiverInfo(townId, sslsRaw.map(_._2).toSet) }
-        .toMap
+        .map { case (townId, sslsRaw)  =>
+          MEdge(MPredicates.Receiver, townId, info = MEdgeInfo(
+            sls = sslsRaw.map(_._2).toSet
+          ))
+        }
+      MNodeEdges.edgesToMap1( eiter )
     }
     // Напечатать в логи результат сложной мыслительной работы.
     if (LOGGER.underlying.isDebugEnabled) {

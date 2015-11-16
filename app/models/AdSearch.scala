@@ -188,11 +188,21 @@ object AdSearch extends CommaDelimitedStringSeq {
   /** Быстрая сборка экземпляра AdSearch для поиска по producerId без лишней конкретики.
     * Используется шаблонами для краткой сборки экземпляров. */
   def byProducerId(producerIds: String*): AdSearch = {
+    _adSearchEdge(MPredicates.OwnedBy, producerIds)
+  }
+
+  /** Быстрая сборка экземпляра AdSearch для поиска по producerId без лишней конкретики.
+    * Используется шаблонами для краткой сборки экземпляров. */
+  def byRcvrId(rcvrIds: String*): AdSearch = {
+    _adSearchEdge(MPredicates.Receiver, rcvrIds)
+  }
+
+  private def _adSearchEdge(_pred: MPredicate, _nodeIds: Seq[String]): AdSearch = {
     new AdSearchImpl {
       override def outEdges: Seq[ICriteria] = {
         val cr = Criteria(
-          nodeIds = producerIds,
-          predicates = Seq( MPredicates.OwnedBy )
+          nodeIds     = _nodeIds,
+          predicates  = Seq(_pred)
         )
         Seq(cr)
       }
@@ -204,7 +214,7 @@ object AdSearch extends CommaDelimitedStringSeq {
 
 /** Этот трейт является базовой единицей модели.
   * Он описывает итоговую модель распарсенных аргументов поиска карточек. */
-trait AdSearch extends MNodeSearchDflt with PlayMacroLogsDyn { that =>
+trait AdSearch extends MNodeSearchDflt { that =>
 
   /** Изначально, этот поиск был заточен только под поиск карточек. */
   override def nodeTypes: Seq[MNodeType] = {
@@ -222,7 +232,6 @@ trait AdSearch extends MNodeSearchDflt with PlayMacroLogsDyn { that =>
   override def limit: Int = {
     limitOpt getOrElse AdSearch.MAX_RESULTS_DFLT
   }
-
 
 
   /** Опциональное значение обязательного сдвига в результатах. */
@@ -251,26 +260,10 @@ trait AdSearch extends MNodeSearchDflt with PlayMacroLogsDyn { that =>
   def openIndexAdId : Option[String] = None
 
 
-  // Утиль для удобства работы в шаблонах, привыкших к вызову copy().
-  /** Без оффсета */
-  def withoutOffset: AdSearch = new AdSearchWrapper {
-    override def _dsArgsUnderlying = that
-    override def offsetOpt: Option[Int] = None
-  }
-
-  /** Вычесть указанное число элементов из offset'а, отфильтровать неположительные значения. */
-  def minusOffset(count: Int = limit): AdSearch = new AdSearchWrapper {
-    override def _dsArgsUnderlying = that
-    override def offsetOpt = super.offsetOpt.map(_ - count).filter(_ > 0)
-  }
-
-  /** Инкрементить offset на указанное кол-во элементов. */
-  def plusOffset(count: Int = limit): AdSearch = new AdSearchWrapper {
-    override def _dsArgsUnderlying = that
-    override def offsetOpt: Option[Int] = {
-      super.offsetOpt
-        .map(_ + count)
-        .orElse( Some(count) )
+  def withOffset(offset1: Int): AdSearch = {
+    new AdSearchWrapper {
+      override def _dsArgsUnderlying = that
+      override def offsetOpt = Some(offset1)
     }
   }
 
@@ -285,7 +278,7 @@ class AdSearchImpl
 
 
 /** Враппер для [[AdSearch]] с абстрактным типом. Пригоден для дальнейшего расширения в иных моделях. */
-abstract class AdSearchWrapper_ extends MNodeSearchWrapImpl_ with AdSearch with PlayMacroLogsDyn {
+abstract class AdSearchWrapper_ extends MNodeSearchWrapImpl_ with AdSearch {
 
   override type WT <: AdSearch
 

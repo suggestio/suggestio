@@ -115,10 +115,20 @@ class ScStatUtil @Inject() (
 
     lazy val onNodeIdOpt: Option[String] = {
       adSearchOpt.flatMap { a =>
-        a.receiverIds
-          .headOption
-          // Если задано много ресиверов, то не ясно, где именно оно было отражено.
-          .filter { _ => a.receiverIds.size == 1 }
+        val rcvrs = {
+          a.outEdges
+            .iterator
+            .filter { cr =>
+              cr.predicates.contains(MPredicates.Receiver) && cr.nodeIds.nonEmpty
+            }
+            .toStream
+        }
+        // Если задано много ресиверов, то не ясно, где именно оно было отражено.
+        if (rcvrs.size == 1) {
+          Some(rcvrs.head.nodeIds.head)
+        } else {
+          None
+        }
       }
     }
 

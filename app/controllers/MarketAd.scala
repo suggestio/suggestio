@@ -3,9 +3,10 @@ package controllers
 import com.google.inject.Inject
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.n2.ad.MNodeAd
-import io.suggest.model.n2.edge.MNodeEdges
+import io.suggest.model.n2.edge.{NodeEdgesMap_t, MNodeEdges}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
+import models.blk.PrepareBlkImgArgs
 import models.blk.ed.{BlockImgMap, AdFormM, AdFormResult}
 import models.im.{MImg3_, MImg}
 import models.jsm.init.MTargets
@@ -26,12 +27,10 @@ import models._
 import play.api.data._, Forms._
 import util.acl._
 import scala.concurrent.{ExecutionContext, Future}
-import play.api.mvc.{Result, WebSocket, Request}
+import play.api.mvc.{Call, Result, WebSocket, Request}
 import controllers.ad.MarketAdFormUtil
 import MarketAdFormUtil._
 import io.suggest.ad.form.AdFormConstants._
-
-import scala.util.{Failure, Success}
 
 /**
  * Suggest.io
@@ -231,60 +230,68 @@ class MarketAd @Inject() (
         _renderEditFormWith(formWithErrors, NotAcceptable)
       },
       {r => //case (mad2, bim) =>
-        import request.mad
-        val bc = n2NodesUtil.bc(mad)
+        val bc = n2NodesUtil.bc(request.mad)
         // TODO Надо отделить удаление врЕменных и былых картинок от сохранения новых. И вызывать эти две фунции отдельно.
         // Сейчас возможна ситуация, что при поздней ошибке сохранения теряется старая картинка, а новая сохраняется вникуда.
+        val _imgPreds = bc.imgKeys
         val saveImgsFut = bc.saveImgs(
           newImgs     = r.bim,
-          oldImgs     = mad.edges
-            .withPredicateIter(bc.imgKeys: _*)
+          oldImgs     = request.mad.edges
+            .withPredicateIter(_imgPreds: _*)
             .toList
         )
+        // Подготовить синхронные данные для фильтрации
+        val predsFiltered: Seq[MPredicate] = {
+          MPredicates.ModeratedBy :: _imgPreds
+        }
         // Произвести действия по сохранению карточки.
         val saveFut = for {
           imgsSaved <- saveImgsFut
           _adId     <- MNode.tryUpdate(request.mad) { mad0 =>
             mad0.copy(
-              imgs          = imgsSaved,
-              disableReason = Nil,
-              moderation    = mad0.moderation.copy(
-                freeAdv = mad0.moderation.freeAdv
-                  .filter { _.isAllowed != true }
+              meta = mad0.meta.copy(
+                colors = r.mad.meta.colors,
+                basic  = mad0.meta.basic.copy(
+                  dateEdited = Some( DateTime.now )
+                ),
+                business = mad0.meta.business.copy(
+                  siteUrl = r.mad.meta.business.siteUrl
+                )
               ),
-              colors        = r.mad.colors,
-              offers        = r.mad.offers,
-              userCatId     = r.mad.userCatId,
-              blockMeta     = r.mad.blockMeta,
-              richDescrOpt  = r.mad.richDescrOpt,
-              dateEdited    = Some(DateTime.now),
-              tags          = r.mad.tags
+              ad = r.mad.ad,
+              edges = r.mad.edges.copy(
+                out = {
+                  // Нужно залить новые картинки, сбросить данные по модерации.
+                  val iter = mad0.edges
+                    .withoutPredicateIter(predsFiltered : _*)
+                    .++( imgsSaved )
+                  MNodeEdges.edgesToMap1( iter )
+                }
+              )
             )
           }
         } yield {
           // Просто надо что-нибудь вернуть...
           _adId
         }
-        // Запустить сборку HTTP-ответа.
-        val resFut = saveFut map { _ =>
-          Redirect(routes.MarketLkAdn.showNodeAds(mad.producerId))
+        // HTTP-ответ.
+        for (_ <- saveFut) yield {
+          Redirect( _routeToMadProducerOrLkList(request.mad) )
             .flashing(FLASH.SUCCESS -> "Changes.saved")
         }
-        // Параллельно произвести обновление графа MNode на предмет новых тегов:
-        saveFut.onSuccess { case _ =>
-          val fut = mTagUtil.handleNewTagsI(r.mad,  oldTags = mad)
-          logTagsUpdate(fut, logPrefix)
-        }
-        // Вернуть HTTP-ответ
-        resFut
       }
     )
   }
 
-  private def logTagsUpdate(fut: Future[_], logPrefix: => String): Unit = {
-    fut.onComplete {
-      case Success(res) => trace(logPrefix + "saved tag nodes: " + res)
-      case Failure(ex)  => error(logPrefix + "failed to save tag nodes", ex)
+  /** Безопасная сборка call для редиректа. Маловероятна (но возможна ситуация), когда у редактируемой
+    * карточки нет продьюсера. Если так, то надо будет вернуть lkList(). */
+  private def _routeToMadProducerOrLkList(mad: MNode): Call = {
+    val prodIdOpt = n2NodesUtil.madProducerId(mad)
+    val mlk = routes.MarketLkAdn
+    prodIdOpt.fold[Call] {
+      mlk.lkList()
+    } { prodId =>
+      mlk.showNodeAds(prodId)
     }
   }
 
@@ -299,9 +306,10 @@ class MarketAd @Inject() (
    * @return Редирект в магазин или ТЦ.
    */
   def deleteSubmit(adId: String) = CanEditAdPost(adId).async { implicit request =>
-    MAd.deleteById(adId) map { _ =>
-      val routeCall = routes.MarketLkAdn.showNodeAds(request.mad.producerId)
-      Redirect(routeCall)
+    for {
+      isDeleted <- MNode.deleteById(adId)
+    } yield {
+      Redirect( _routeToMadProducerOrLkList(request.mad) )
         .flashing(FLASH.SUCCESS -> "Ad.deleted")
     }
   }
@@ -336,74 +344,66 @@ class MarketAd @Inject() (
         NotAcceptable("Request body invalid.")
       },
       {case (sl, isLevelEnabled) =>
-        // Бывает, что ресиверы ещё не выставлены. Тогда нужно найти получателя и вписать его сразу.
-        val additionalReceiversFut: Future[Receivers_t] = if (request.mad.receivers.isEmpty) {
-          val rcvrsFut = detectReceivers(request.producer)
-          rcvrsFut onSuccess {
-            case result =>
-              debug(logPrefix + "No receivers found in Ad. Generated new receivers map: " + result.valuesIterator.mkString("[", ", ", "]"))
-          }
-          rcvrsFut
-        } else {
-          Future successful Map.empty
-        }
-        // Маппим уровни отображения на sink-уровни отображения, доступные узлу-продьюсеру.
-        // Нет смысла делить на wi-fi и geo, т.к. вектор идёт на геолокации, и wifi становится вторичным.
-        val prodSinks = request.producer
-          .extras.adn
-          .fold(Set.empty[AdnSink])(_.sinks) + AdnSinks.SINK_GEO
-        val ssls = prodSinks
-          .map { SinkShowLevels.withArgs(_, sl) }
-        trace(s"${logPrefix}Updating ad[$adId] with sinkSls = [${ssls.mkString(", ")}]; prodSinks = [${prodSinks.mkString(",")}] sl=$sl prodId=${request.producerId}")
-        additionalReceiversFut flatMap { addRcvrs =>
-          // Нужно, чтобы настройки отображения также повлияли на выдачу. Добавляем выхлоп для producer'а.
-          MAd.tryUpdate(request.mad) { mad =>
-            val rcvrs1 = mad.receivers ++ addRcvrs
-            val rcvrs2: Receivers_t = rcvrs1.get(mad.producerId) match {
-              // Ещё не было такого ресивера.
-              case None =>
-                if (isLevelEnabled) {
-                  rcvrs1 + (mad.producerId -> AdReceiverInfo(mad.producerId, ssls.toSet))
-                } else {
-                  // Вычитать уровни из отсутсвующего ресивера бессмысленно. TODO Не обновлять mad в этом случае.
-                  rcvrs1
-                }
-              // Уже есть ресивер с какими-то уровнями (или без них) в карте ресиверов.
-              case Some(prodRcvr) =>
-                val sls2 = if (isLevelEnabled)  prodRcvr.sls ++ ssls  else  prodRcvr.sls -- ssls
-                if (sls2.isEmpty) {
-                  // Уровней отображения больше не осталось, поэтому выпиливаем ресивера целиком.
-                  rcvrs1 - mad.producerId
-                } else {
-                  // Добавляем новые уровни отображения к имеющемуся ресиверу.
-                  val prodRcvr1 = prodRcvr.copy(
-                    sls = sls2
-                  )
-                  rcvrs1 + (mad.producerId -> prodRcvr1)
-                }
+        // Если у карточки нет ресивера, то этот экшен невозможно. TODO Вынести на уровень ActionBuilder'а.
+        n2NodesUtil.madProducerId(request.mad).fold[Future[Result]] {
+          val msg = "No producer exists for node " + adId
+          debug(msg)
+          NotFound(msg)
+
+        } { producerId =>
+
+          // Маппим уровни отображения на sink-уровни отображения, доступные узлу-продьюсеру.
+          // Нет смысла делить на wi-fi и geo, т.к. вектор идёт на геолокации, и wifi становится вторичным.
+          val prodSinks = request.producer
+            .extras.adn
+            .fold(Set.empty[AdnSink])(_.sinks) + AdnSinks.SINK_GEO
+          val ssls = prodSinks
+            .map { SinkShowLevels.withArgs(_, sl) }
+
+          trace(s"${logPrefix}Updating ad[$adId] with sinkSls = [${ssls.mkString(", ")}]; prodSinks = [${prodSinks.mkString(",")}] sl=$sl prodId=${request.producerId}")
+
+          for {
+            _ <- MNode.tryUpdate(request.mad) { mad =>
+              // Пробуем обновить инстанс карточки.
+              mad.copy(
+                edges = mad.edges.copy(
+                  out = {
+                    val ek = MPredicates.Receiver -> producerId
+                    // Найти существующий эдж продьюсера-ресивера.
+                    mad.edges.out
+                      .get(ek)
+                      .flatMap { e =>
+                        val sls1 = if (isLevelEnabled)
+                          e.info.sls -- ssls
+                        else
+                          e.info.sls ++ ssls
+                        if (sls1.isEmpty) {
+                          None
+                        } else {
+                          Some(
+                            e.copy(
+                              info = e.info.copy(sls = sls1)
+                            )
+                          )
+                        }
+                      }
+                      .fold[NodeEdgesMap_t] {
+                        // None значит нужно удалить ресивера.
+                        mad.edges.out.filterKeys(_ != ek)
+                      } { e =>
+                        // Обновляем/выставляем ресивера.
+                        mad.edges.out ++ MNodeEdges.edgesToMap(e)
+                      }
+                  }
+                )
+              )
             }
-            mad.copy(
-              receivers = rcvrs2
-            )
-          } map { _ =>
-            Ok("Updated ok.")
+          } yield {
+            Ok("Done")
           }
-        }
-      }
-    )
-  }
-
-
-  /** Детектор получателей рекламы. Заглядывает к себе и к прямому родителю, если он указан. */
-  private def detectReceivers(producer: MNode): Future[Receivers_t] = {
-    val selfRcvrIds: Seq[String] = Some(producer)
-      .filter(_.extras.adn.exists(_.isReceiver))
-      .map(_.idOrNull)
-      .toSeq
-    val result = selfRcvrIds.map { rcvrId =>
-      rcvrId -> AdReceiverInfo(rcvrId)
-    }.toMap
-    Future successful result
+        }   // producerId
+      }     // form.fold() right
+    )       // form.fold()
   }
 
 
@@ -470,17 +470,16 @@ class MarketAd @Inject() (
 
 
   /** Подготовка картинки, которая загружается в динамическое поле блока. */
-  def prepareBlockImg(blockId: Int, fn: String, wsId: Option[String]) = {
+  def prepareBlockImg(args: PrepareBlkImgArgs) = {
     val bp = parse.multipartFormData(Multipart.handleFilePartAsTemporaryFile, maxLength = IMG_UPLOAD_MAXLEN_BYTES.toLong)
     IsAuth.async(bp) { implicit request =>
       bruteForceProtected {
-        val bc = BlocksConf.applyOrDefault(blockId)
-        bc.getImgFieldForName(fn) match {
+        args.bc.getImgFieldForName(args.bimKey) match {
           case Some(bfi) =>
             val resultFut = tempImgSupport._handleTempImg(
               preserveUnknownFmt = false,
               runEarlyColorDetector = bfi.preDetectMainColor,
-              wsId   = wsId,
+              wsId   = args.wsId,
               ovlRrr = Some { (imgId, ctx) =>
                 _bgImgOvlTpl(imgId)(ctx)
               }
@@ -488,7 +487,7 @@ class MarketAd @Inject() (
             resultFut
 
           case _ =>
-            warn(s"prepareBlockImg($blockId,$fn): Unknown img field requested. 404")
+            warn(s"prepareBlockImg($args): Unknown img field requested. 404")
             NotFound
         }
       }

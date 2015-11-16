@@ -129,12 +129,12 @@
   @lkBlock("Управление") {
 
     @btn(
-      href = routes.SysMarket.showAdnNodeAds(new AdSearchImpl { override def producerIds = mnode.id.toList }),
+      href = routes.SysMarket.showAdnNodeAds( AdSearch.byProducerId(mnode.id.get) ),
       paddingPx = 28
     ) { Собственные<br/>рекламные<br/>карточки }
 
     @btn(
-      href = routes.SysMarket.showAdnNodeAds(new AdSearchImpl { override def receiverIds = mnode.id.toList }),
+      href = routes.SysMarket.showAdnNodeAds( AdSearch.byRcvrId(mnode.id.get) ),
       paddingPx  = 28
     ) { Рекламные<br/>карточки<br/>в выдаче }
 
@@ -153,9 +153,18 @@
 
   @lkBlock("Модерация бесплатного размещения") {
 
-    <a class="siom-ac-btn __color-2 __size-M __ft-XM __list f-left" href="@routes.SysMdr.freeAdvs(MdrSearchArgs(producerId = mnode.id))">Очередь на модерацию</a>
-    <a class="siom-ac-btn __color-1 __size-M __ft-XM __list f-left" href="@routes.SysMdr.freeAdvs(MdrSearchArgs(freeAdvIsAllowed = Some(true), producerId = mnode.id))">Одобренные</a>
-    <a class="siom-ac-btn __color-4 __size-M __ft-XM __list f-left" href="@routes.SysMdr.freeAdvs(MdrSearchArgs(freeAdvIsAllowed = Some(false), producerId = mnode.id))">Отклонённые</a>
+    <a class="siom-ac-btn __color-2 __size-M __ft-XM __list f-left"
+       href="@routes.SysMdr.freeAdvs( MdrSearchArgs(producerId = mnode.id) )">
+      Очередь на модерацию
+    </a>
+    <a class="siom-ac-btn __color-1 __size-M __ft-XM __list f-left"
+       href="@routes.SysMdr.freeAdvs( MdrSearchArgs(isAllowed = Some(true), producerId = mnode.id) )">
+      Одобренные
+    </a>
+    <a class="siom-ac-btn __color-4 __size-M __ft-XM __list f-left"
+       href="@routes.SysMdr.freeAdvs( MdrSearchArgs(isAllowed = Some(false), producerId = mnode.id) )">
+      Отклонённые
+    </a>
   }
 
 

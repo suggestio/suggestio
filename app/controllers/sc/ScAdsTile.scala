@@ -55,6 +55,7 @@ trait ScAdsTileBase
     private def _brArgsFor(mad: MNode, bgImg: Option[MakeResult], indexOpt: Option[Int] = None): blk.RenderArgs = {
       blk.RenderArgs(
         mad           = mad,
+        bc            = BlocksConf.applyOrDefault(mad),
         withEdit      = false,
         bgImg         = bgImg,
         szMult        = szMult,

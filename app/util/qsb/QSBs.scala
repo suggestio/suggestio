@@ -1,7 +1,6 @@
 package util.qsb
 
 import io.suggest.ym.model.common.MImgSizeT
-import models.blk.IBlockMetaQsb
 import play.api.mvc.QueryStringBindable
 import models._
 import util.PlayLazyMacroLogsImpl

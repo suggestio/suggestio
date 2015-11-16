@@ -7,7 +7,6 @@ import models.{blk, MNode}
 import play.api.mvc.Action
 import play.twirl.api.Txt
 import util.PlayMacroLogsI
-import util.blocks.BlocksConf
 import util.n2u.IN2NodesUtilDi
 import views.txt.blocks.common._
 
@@ -47,14 +46,17 @@ trait ScBlockCss
         Future {
           val brArgs = blk.RenderArgs(
             mad           = mad,
+            bc            = bc,
             szMult        = arg.szMult,
             inlineStyles  = false,
             bgImg         = None
           )
-          val offerFieldsTxts = mad.offers
-            .iterator
+          val offerFieldsTxts = mad.ad.entities
+            .valuesIterator
             .flatMap { offer =>
-              offer.text1.map { t1 => blk.FieldCssRenderArgs2(brArgs, t1, bc.titleBf, offer.n, yoff = 0, fid = "title") }
+              offer.text.map { t1 =>
+                blk.FieldCssRenderArgs2(brArgs, t1, bc.titleBf, offer.id, yoff = 0, fid = "title")
+              }
             }
             .map { cssRenderArgs =>
               _textCss(cssRenderArgs): Txt

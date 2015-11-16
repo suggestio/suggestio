@@ -3,6 +3,7 @@ package util.blocks
 import io.suggest.common.menum.EnumValue2Val
 import models.blk.ed.{BimKey_t, AdFormM, BindResult, BindAcc}
 import play.api.data._
+import play.api.mvc.QueryStringBindable
 import util.FormUtil.IdEnumFormMappings
 import util.PlayMacroLogsImpl
 import views.html.blocks._
@@ -99,6 +100,9 @@ object BlocksConf
   def applyOrDefault(nOpt: Option[Int]): T = {
     nOpt.fold(DEFAULT)(applyOrDefault)
   }
+  def applyOrDefault(mad: MNode): T = {
+    applyOrDefault( mad.ad.blockMeta.map(_.blockId) )
+  }
 
   // Начало значений
 
@@ -142,6 +146,28 @@ object BlocksConf
   def orderBlocks(values: Seq[T]) = {
     values.sortBy { bc => bc.ordering -> bc.id }
   }
+
+  /** Поддержка биндинга блока из routes. */
+  implicit def qsb(implicit intB: QueryStringBindable[Int]): QueryStringBindable[T] = {
+    new QueryStringBindable[T] {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, T]] = {
+        for {
+          blockIdEith <- intB.bind(key, params)
+        } yield {
+          for {
+            blockId <- blockIdEith.right
+          } yield {
+            applyOrDefault(blockId)
+          }
+        }
+      }
+
+      override def unbind(key: String, value: T): String = {
+        intB.unbind(key, value.id)
+      }
+    }
+  }
+
 }
 
 

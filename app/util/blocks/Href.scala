@@ -1,6 +1,5 @@
 package util.blocks
 
-import models.MEntity
 import models.blk.ed.{AdFormM, BindResult, BindAcc}
 import play.api.data.FormError
 import util.FormUtil
@@ -11,7 +10,7 @@ import util.FormUtil
  * Created: 20.06.14 21:19
  * Description: Поле для ввода ссылки, которая будет присоединена к экземпляру AOBlock.
  */
-object Href extends MergeBindAccAOBlock[String] {
+object Href extends MergeBindAcc[Option[String]] {
 
   val BF_NAME_DFLT = "href"
 
@@ -24,15 +23,15 @@ object Href extends MergeBindAccAOBlock[String] {
     override def getOptionalStrictMapping = FormUtil.urlStrOptM
   }
 
-  /** Обновить указанный изменяемый AOBlock с помощью текущего значения ссылки. */
-  def updateEntityWith(blk: MEntity, href: Option[String]): MEntity = {
-    blk.copy(
-      href = href
+  /** Как-то обновить акк. */
+  override def updateAcc(offerN: Int, acc0: BindAcc, v: Option[String]): BindAcc = {
+    acc0.copy(
+      href = v
     )
   }
 
   // TODO Нужно сделать href отдельным полем в BindAcc.
-  def getHref(bmr: BindResult) = bmr.flatMapFirstOffer(_.href)
+  def getHref(bmr: BindResult) = bmr.href
 
 }
 
@@ -41,6 +40,7 @@ import Href._
 
 
 trait Href extends ValT {
+
   def hrefBf = BF_HREF_DFLT
 
   override def hrefBlock = true

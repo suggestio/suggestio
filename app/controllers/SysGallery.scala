@@ -16,7 +16,6 @@ import util.acl.{IsSuperuserGallery, PersonWrapper, IsSuperuser}
 import models.im.{MImgT, MGallery}
 import play.api.data.Forms._
 import views.html.sys1.galleries._
-import util.img.ImgFormUtil.imgIdOptM
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -73,7 +72,7 @@ class SysGallery @Inject() (
   private def galDescrKM = "descr" -> galDescrM
 
   private def galImgsM: Mapping[List[MImgT]] = {
-    list(imgIdOptM)
+    list( ImgFormUtil.img3IdOptM )
       .transform[List[MImgT]]( _.flatten, _.map(Some.apply) )
       .verifying("error.required", _.nonEmpty)
   }

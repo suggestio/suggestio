@@ -8,7 +8,7 @@
 @import helper._
 @import views.html.lk.ad._
 @import datetime._
-@import stuff.pager._
+@import sys1.stuff.pager._
 
 @hPathAfter1 = {
   / Реклама
@@ -33,9 +33,11 @@
         Редактор карточки
       </a>
 
-      <a class="siom-link-btn __color-3 __size-XL __ft-XM __list-vertical" href="@routes.MarketLkAdn.showAdnNode(mad.producerId)">
-        ЛК создателя карточки
-      </a>
+      @ctx.api.n2NodesUtil.madProducerId(mad).map { producerId =>
+        <a class="siom-link-btn __color-3 __size-XL __ft-XM __list-vertical" href="@routes.MarketLkAdn.showAdnNode(producerId)">
+          ЛК создателя карточки
+        </a>
+      }
 
       <p>Отобразить email-сообщение о деактивации:
         <a class="blue-link" href="@routes.SysMarket.showShopEmailAdDisableMsg(mad.id.get)">HTML</a>
@@ -66,7 +68,7 @@
         }
       }
 
-      @if( args.nodeOpt.flatMap(_.id) exists { adnId => mad.receivers.get(adnId).exists(_.sls.nonEmpty)} ) {
+      @if( args.nodeOpt.flatMap(_.id) exists { adnId => mad.edges.out.get(MPredicates.Receiver -> adnId).exists(_.info.sls.nonEmpty)} ) {
         <p>Саморазмещение</p>
       }
 
@@ -104,7 +106,7 @@
     limit   = args.a.limit,
     offset  = args.a.offset,
     urlF    = { offset1 =>
-      routes.SysMarket.showAdnNodeAds( args.a.copy(offset = offset1) )
+      routes.SysMarket.showAdnNodeAds( args.a.withOffset(offset1) )
     }
   )
 

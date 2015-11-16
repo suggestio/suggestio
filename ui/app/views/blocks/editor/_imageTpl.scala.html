@@ -7,26 +7,28 @@
 @import views.html.stuff._
 @import lk.ad._
 @import io.suggest.img.crop.CropConstants
+@import blk.PrepareBlkImgArgs
 
 @* Форма для загрузки картинки *@
 <div class="lk-file-field">
 
   <div style="overflow: hidden;">
-    @defining( af(bfNameBase).value ) { imgIdOpt =>
-    <div class="f-left" id="@BG_IMG_CONTAINER_ID">
-      <div class="image __size-L f-left @JS_IMG_UPLOAD_CLASS" @if(imgIdOpt) {style="display: none;"}>
-        @_fileUploadTpl(
-          fieldName     = s"$OFFER_K.bgImg",
-          call          = routes.MarketAd.prepareBlockImg(bc.id, bf.name, Some(ctx.ctxIdStr))
-        )
-        <a class="image_add-btn js-file-upload-btn" title="@messages("Upload.file", " ")">
-          <span>@Html( messages("Upload.file", "<br/>") )</span>
-        </a>
+
+    @defining( af(bfNameBase) ) { afield =>
+      <div class="f-left" id="@BG_IMG_CONTAINER_ID">
+        <div class="image __size-L f-left @JS_IMG_UPLOAD_CLASS" @if(afield.value) {style="display: none;"}>
+          @_fileUploadTpl(
+	    fieldName     = afield.name,
+            call          = routes.MarketAd.prepareBlockImg( PrepareBlkImgArgs(bc, bf.bimKey, Some(ctx.ctxIdStr)) )
+          )
+          <a class="image_add-btn js-file-upload-btn" title="@messages("Upload.file", " ")">
+            <span>@Html( messages("Upload.file", "<br/>") )</span>
+          </a>
+        </div>
+        @afield.value.map { imgId =>
+          @_bgImgOvlTpl(imgId)
+        }
       </div>
-      @imgIdOpt.map { imgId =>
-        @_bgImgOvlTpl(imgId)
-      }
-    </div>
     }
 
     <div class="edit-ad_image-upload-helper">

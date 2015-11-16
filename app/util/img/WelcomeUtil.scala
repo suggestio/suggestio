@@ -40,7 +40,7 @@ class WelcomeUtil @Inject() (
   /** Ключ для картинки, используемой в качестве приветствия. */
   val WELCOME_IMG_KEY = "wlcm"
 
-  def welcomeImgIdKM = EditConstants.WELCOME_IMG_FN -> ImgFormUtil.imgIdOptM
+  def welcomeImgIdKM = EditConstants.WELCOME_IMG_FN -> ImgFormUtil.img3IdOptM
 
   /** Асинхронно получить welcome-ad-карточку. */
   def getWelcomeAdOpt(welcomeAdId: Option[String]): Future[Option[MWelcomeAd]] = {

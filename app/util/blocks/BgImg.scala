@@ -26,7 +26,16 @@ import play.api.Play.current
 object BgImg extends PlayLazyMacroLogsImpl {
 
   val BG_IMG_FN = "bgImg"
-  val bgImgBf = BfImage(BG_IMG_FN, marker = BG_IMG_FN, preDetectMainColor = true)
+
+  val bgImgBf = {
+    val fn = BG_IMG_FN
+    BfImage(
+      name    = fn,
+      marker  = fn,
+      preDetectMainColor = true,
+      bimKey  = MPredicates.Bg
+    )
+  }
 
   private val n2nNodesUtil = current.injector.instanceOf[N2NodesUtil]
 

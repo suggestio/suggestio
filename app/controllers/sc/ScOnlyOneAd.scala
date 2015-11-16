@@ -30,11 +30,13 @@ trait ScOnlyOneAd
   def onlyOneAd(args: OneAdQsArgs) = GetAnyAd(args.adId).async { implicit request =>
     import request.mad
     val bgImgOptFut = AdRenderUtil.getBgImgOpt(mad, args)
+    val bc = BlocksConf.applyOrDefault( request.mad )
     // Рендер, когда асинхронные операции будут завершены.
     for (bgImgOpt <- bgImgOptFut) yield {
       // Собираем аргументы для рендера карточки.
       val brArgs = blk.RenderArgs(
         mad           = mad,
+        bc            = bc,
         szMult        = args.szMult,
         withEdit      = false,
         inlineStyles  = true,

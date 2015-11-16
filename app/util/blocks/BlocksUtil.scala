@@ -3,14 +3,12 @@ package util.blocks
 import io.suggest.common.menum.EnumValue2Val
 import io.suggest.model.n2.ad.ent.text.{ValueEnt, EntFont}
 import models.blk._
-import models.blk.ed.{BlockImgMap, BindAcc}
+import models.blk.ed.{BimKey_t, BlockImgMap, BindAcc}
 import play.api.data._, Forms._
 import util.FormUtil._
 import models._
 import views.html.blocks.editor._
 import controllers.ad.MarketAdFormUtil
-import io.suggest.ym.model.common.IEMBlockMeta
-import io.suggest.ym.model.ad.IOffers
 import util.img._
 import play.twirl.api.{Html, Template5}
 
@@ -292,6 +290,7 @@ case class BfString(
 case class BfImage(
   override val name             : String,
   marker                        : String,
+  bimKey                        : BimKey_t,
   override val defaultValue     : Option[BlockImgMap] = None,
   override val offerNopt        : Option[Int] = None,
   preDetectMainColor            : Boolean = false,
@@ -314,13 +313,12 @@ case class BfImage(
 
   /** Маппинг для картинок, которые можно кадрировать. Есть ключ картинки и есть настройки кадрирования. */
   override def mappingBase: Mapping[T] = {
-    import MPredicates.{Bg => p}
     ImgFormUtil.img3IdOptM
       .transform[BlockImgMap] (
         { _.fold[BlockImgMap] (Map.empty) { i4s =>
-          Map(p -> i4s)
+          Map(bimKey -> i4s)
         } },
-        { _.get(p) }
+        { _.get(bimKey) }
       )
   }
 
@@ -431,7 +429,7 @@ trait MergeBindAcc[T] {
 
 }
 
-trait MergeBindAccAOBlock[T] extends MergeBindAcc[Option[T]] {
+trait MergeBindAccEntity[T] extends MergeBindAcc[Option[T]] {
 
   /** Обновить указанный изменяемый AOBlock с помощью текущего значения. */
   def updateEntityWith(blk: MEntity, v: Option[T]): MEntity

@@ -13,9 +13,11 @@
   <p class="paragraph __size-M color-light-strong ft-S">
     <strong class="color-strong">
       @messages("Adv.request.from")
-      <a class="blue-link" href="@routes.MarketLkAdn.showAdnNode(args.brArgs.mad.producerId)">
-        @args.producer.meta.basic.name
-      </a>
+      @args.producer.id.map { producerId =>
+        <a class="blue-link" href="@routes.MarketLkAdn.showAdnNode( producerId )">
+          @args.producer.meta.basic.name
+        </a>
+      }
     </strong>
   </p>
 

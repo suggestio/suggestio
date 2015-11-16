@@ -16,6 +16,9 @@ import models.msc.{MScApiVsns, MScApiVsn}
 
 trait IRenderArgs {
 
+  /** Блок. */
+  def bc              : BlockConf
+
   /** Рекламная карточка, которую надо отрендерить. */
   def mad             : MNode
 
@@ -63,6 +66,7 @@ trait IRenderArgs {
 sealed trait IRenderArgsWrapper0 extends IRenderArgs {
   def brArgs: IRenderArgs
 
+  override def bc           = brArgs.bc
   override def mad          = brArgs.mad
   override def withEdit     = brArgs.withEdit
   override def szMult       = brArgs.szMult
@@ -80,6 +84,7 @@ sealed trait IRenderArgsWrapper0 extends IRenderArgs {
 case class RenderArgs(
   override val mad            : MNode,
   override val szMult         : SzMult_t,
+  override val bc             : BlockConf,
   override val bgImg          : Option[MakeResult],
   override val isFocused      : Boolean                 = false,
   override val withEdit       : Boolean                 = false,

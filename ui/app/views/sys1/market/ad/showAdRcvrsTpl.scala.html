@@ -1,4 +1,4 @@
-@(args: IShowAdRcvrsTplArgs)(implicit ctx: Context)
+@(args: msys.IShowAdRcvrsTplArgs)(implicit ctx: Context)
 
 @* Отображение доп.инфы по карточке. *@
 
@@ -18,12 +18,12 @@
         </tr>
       </thead>
       <tbody>
-        @rcvrs.iterator.map { case (rcvrId, ri) =>
+        @rcvrs.valuesIterator.map { ri =>
           <tr>
             <td>
-              <a href="@routes.SysMarket.showAdnNode(rcvrId)">
-                @args.nodesMap.get(rcvrId).fold {
-                  @rcvrId
+              <a href="@routes.SysMarket.showAdnNode(ri.nodeId)">
+                @args.nodesMap.get(ri.nodeId).fold {
+                  @ri.nodeId
                 } { rcvrNode =>
                   @rcvrNode.meta.basic.name
                   <span title="@rcvrNode.meta.address.address">
@@ -33,7 +33,7 @@
               </a>
             </td>
             <td>
-              @ri.sls.iterator.map { ssl =>
+              @ri.info.sls.iterator.map { ssl =>
                 @messages("adn.sink." + ssl.adnSink.longName): @messages("lk.sl." + ssl.sl)
                 <br/>
               }

@@ -1,5 +1,7 @@
 @(cssClass:Option[String],color:String = "fff")
 
+@* TODO Этот шаблон не используется, как и нижеперечисленные. Удалить ВСЁ. *@
+
 @cssClass match {
   case Some("sm-restraunts") => {@_restrauntsIconTpl(color)}
   case Some("sm-food") =>       {@_foodIconTpl(color)}

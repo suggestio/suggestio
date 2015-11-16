@@ -66,7 +66,7 @@ POST /lk/xadv/ext/oauth1/ret/:adnId     @controllers.LkAdvExt.oauth1PopupReturnP
 GET  /lk/mad/new/:adnId                 @controllers.MarketAd.createAd(adnId)
 POST /lk/mad/new/:adnId                 @controllers.MarketAd.createAdSubmit(adnId)
 POST /lk/mad/preview/:adnId             @controllers.MarketAd.adFormPreviewSubmit(adnId, isFull: Boolean)
-POST /lk/mad/img/:blockId/:fn           @controllers.MarketAd.prepareBlockImg(blockId: Int, fn: String, wsId: Option[String])
+POST /lk/mad/img/prepare                @controllers.MarketAd.prepareBlockImg(h: blk.PrepareBlkImgArgs)
 POST /lk/mad/sa/:adId                   @controllers.MarketAd.updateShowLevelSubmit(adId)
 GET  /lk/mad/edit/:adId                 @controllers.MarketAd.editAd(adId)
 POST /lk/mad/edit/:adId                 @controllers.MarketAd.editAdSubmit(adId)
@@ -293,7 +293,7 @@ POST /sys/img/search                     @controllers.SysImg.searchFormSubmit
 GET  /sys/img/show                       @controllers.SysImg.showOne(i: im.MImgT)
 POST /sys/img/delete                     @controllers.SysImg.deleteOneSubmit(i: im.MImgT)
 ## sys.img.make
-GET  /sys/img/make                       @controllers.SysImg.makeForm(i: im.MImgT, bm: Option[blk.IBlockMeta] ?= None)
+GET  /sys/img/make                       @controllers.SysImg.makeForm(i: im.MImgT, bm: Option[blk.BlockMeta] ?= None)
 POST /sys/img/make                       @controllers.SysImg.makeFormSubmit(i: im.MImgT)
 
 ## sys/AI

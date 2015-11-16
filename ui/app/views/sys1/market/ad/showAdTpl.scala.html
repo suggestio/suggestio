@@ -77,10 +77,10 @@
         @args.imgs.map { ei =>
           <li>
             -
-            <a href="@routes.SysImg.showOne(ei.mimg)">
+            <a href="@routes.SysImg.showOne(ei.img)">
               <strong>@messages(ei.edge.predicate.singular)</strong>
             </a>
-            <a href="@routes.SysImg.makeForm(args.mimg, args.mad.ad.blockMeta)">
+            <a href="@routes.SysImg.makeForm(ei.img, args.mad.ad.blockMeta)">
               [make]
             </a>
           </li>

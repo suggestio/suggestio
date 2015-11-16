@@ -8,7 +8,6 @@
 @jsUnbindBase() {
   @_objQsbTpl(delim) {
     add("@PRODUCER_ID_FN");
-    add("@CAT_ID_FN");
     add("@LEVEL_ID_FN");
     add("@FTS_QUERY_FN");
     add("@RESULTS_LIMIT_FN");

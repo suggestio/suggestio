@@ -4,6 +4,8 @@ import io.suggest.util.UrlUtil
 import models.adv._
 import models.mext.MExtService
 import util.PlayMacroLogsI
+import play.api.Play.current
+import util.n2u.N2NodesUtil
 
 /**
  * Suggest.io
@@ -44,6 +46,8 @@ trait ExtServiceActorEnv extends ExtActorEnv {
  */
 trait ExtTargetActorEnv extends ExtActorEnv {
 
+  protected val n2NodesUtil = current.injector.instanceOf[N2NodesUtil]
+
   /** Параметры вызова этого актора. */
   def args: IExtAdvTargetActorArgs
 
@@ -59,11 +63,13 @@ trait ExtTargetActorEnv extends ExtActorEnv {
    * @return Абсолютный URL в виде строки.
    */
   def getScUrl(ret: MExtReturn): String = {
-    ret.builder()
+    val b = ret.builder()
       .setAdnId( args.target.target.adnId )
       .setFocusedAdId( mad.idOrNull )
-      .setFocusedProducerId( mad.producerId )
-      .toAbsUrl
+    for (prodId <- n2NodesUtil.madProducerId(mad)) {
+      b.setFocusedProducerId(prodId)
+    }
+    b.toAbsUrl
   }
 
 }

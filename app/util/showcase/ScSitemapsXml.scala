@@ -8,8 +8,7 @@ import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 import models.crawl.{ChangeFreqs, SiteMapUrl, SiteMapUrlT}
 import models.msc.ScJsState
-import models.MNode
-import models.{AdSearch, Context}
+import models.{AdSearchImpl, MNode, Context}
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.unit.TimeValue
 import org.joda.time.LocalDate
@@ -45,7 +44,7 @@ class ScSitemapsXml @Inject() (
    * и поточность, а не на скорость исполнения.
    */
   override def siteMapXmlEnumerator(implicit ctx: Context): Enumerator[SiteMapUrlT] = {
-    val adSearch = new AdSearch {
+    val adSearch = new AdSearchImpl {
       override def outEdges: Seq[ICriteria] = {
         val cr = Criteria(
           predicates = Seq( MPredicates.OwnedBy ),

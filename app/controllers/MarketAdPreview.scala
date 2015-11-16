@@ -57,9 +57,9 @@ trait MarketAdPreview
               )
             )
             if (isFull) {
-              renderFull(mad)
+              renderFull(mad, bc)
             } else {
-              renderSmall(mad)
+              renderSmall(mad, bc)
             }
           }
         } yield {
@@ -70,13 +70,14 @@ trait MarketAdPreview
   }
 
   /** Рендер полноэкранного варианта отображения. */
-  private def renderFull(mad: MNode)(implicit request: AbstractRequestForAdnNode[_], ctx: Context): Future[Html] = {
+  private def renderFull(mad: MNode, bc: BlockConf)(implicit request: AbstractRequestForAdnNode[_], ctx: Context): Future[Html] = {
     val szMult: SzMult_t = 2.0F
     // Поддержка wideBg:
     val bgOptFut = BgImg.maybeMakeBgImg(mad, szMult, ctx.deviceScreenOpt)
     bgOptFut map { bgImgOpt =>
       val _brArgs = blk.RenderArgs(
         mad           = mad,
+        bc            = bc,
         withEdit      = false,
         bgImg         = bgImgOpt,
         inlineStyles  = true,
@@ -90,12 +91,13 @@ trait MarketAdPreview
   }
 
   /** Рендер маленькой превьюшки, прямо в редакторе. */
-  private def renderSmall(mad: MNode)(implicit request: AbstractRequestForAdnNode[_], ctx: Context): Future[Html] = {
+  private def renderSmall(mad: MNode, bc: BlockConf)(implicit request: AbstractRequestForAdnNode[_], ctx: Context): Future[Html] = {
     val szMult: SzMult_t = 1.0F
     val bgOptFut = BgImg.maybeMakeBgImgWith(mad, Makers.Block, szMult, ctx.deviceScreenOpt)
     bgOptFut map { bgOpt =>
       val args = blk.RenderArgs(
         mad           = mad,
+        bc            = bc,
         withEdit      = true,
         szMult        = szMult,
         inlineStyles  = true,

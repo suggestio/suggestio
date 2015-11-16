@@ -13,13 +13,13 @@
     <style>@Html(_blockCss(args).toString.trim)</style>
   }
 
-  @args.mad.offers.map { offer =>
+  @args.mad.ad.entities.valuesIterator.map { offer =>
 
     @defining("title") { fid =>
-    @offer.text1.map { aosf =>
-      <div class="@if(args.withEdit){js-mvbl} mvbl-@fid mvbl-@fid-@offer.n"
-           @if(args.withEdit) {data-connected-input="@(OFFER_K).offer[@offer.n].@fid"}>
-        <div class="@fid @fid-@offer.n">@Html(aosf.value)</div>
+    @offer.text.map { aosf =>
+      <div class="@if(args.withEdit){js-mvbl} mvbl-@fid mvbl-@fid-@offer.id"
+           @if(args.withEdit) {data-connected-input="@(OFFER_K).offer[@offer.id].@fid"}>
+        <div class="@fid @fid-@offer.id">@Html(aosf.value)</div>
       </div>
       @if(isStylesInline) {
         <style>
@@ -27,7 +27,7 @@
             aovf    = aosf,
             bf      = bc.titleBf,
             brArgs  = args,
-            offerN  = offer.n,
+            offerN  = offer.id,
             yoff    = 0,
             fid     = fid,
             cssClasses = args.cssClasses,

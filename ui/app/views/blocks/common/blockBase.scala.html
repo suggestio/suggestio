@@ -17,8 +17,10 @@
          @args.indexOpt.map { index => @BLK_INDEX_ATTR="@index" }
        }
      }
-     @WIDTH_ATTR="@szMulted(mad.blockMeta.width, args.szMult)"
-     @HEIGHT_ATTR="@szMulted(mad.blockMeta.height, args.szMult)"
+     @mad.ad.blockMeta.map { bm =>
+       @WIDTH_ATTR="@szMulted(bm.width, args.szMult)"
+       @HEIGHT_ATTR="@szMulted(bm.height, args.szMult)"
+     }
      data-wide-bg="@args.wideBg.isDefined"
      @args.topLeft.filter(_.inlineStyle).map { tl =>style="@_focTopLeftCss(tl, args.wideBg)"}>
   @content

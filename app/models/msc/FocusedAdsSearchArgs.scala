@@ -3,6 +3,7 @@ package models.msc
 import models.{AdSearchWrapper, AdSearchWrapper_, AdSearch}
 import play.api.mvc.QueryStringBindable
 import io.suggest.ad.search.AdSearchConstants._
+import util.PlayMacroLogsDyn
 import util.qsb.QsbKey1T
 import views.js.sc.m._
 
@@ -97,6 +98,8 @@ trait FocusedAdsSearchArgs extends AdSearch {
 
 class FocusedAdsSearchArgsImpl
   extends FocusedAdsSearchArgs
+  with PlayMacroLogsDyn
+
 
 abstract class FocusedAdsSearchArgsWrappedImpl
   extends AdSearchWrapper

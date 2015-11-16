@@ -3,7 +3,7 @@ package controllers.ad
 import io.suggest.model.n2.ad.{MNodeAd, ent}
 import io.suggest.model.n2.ad.rd.RichDescr
 import io.suggest.model.n2.node.common.MNodeCommon
-import io.suggest.model.n2.node.meta.MBasicMeta
+import io.suggest.model.n2.node.meta.{MBusinessInfo, MBasicMeta}
 import io.suggest.model.n2.node.meta.colors.{MColorData, MColors}
 import models.MColorData
 import models.blk.AdColorFns
@@ -292,6 +292,9 @@ object MarketAdFormUtil extends PlayMacroLogsImpl {
         colors = MColors(
           pattern = pattern,
           bg      = Some( bgColor )
+        ),
+        business = MBusinessInfo(
+          siteUrl = bmr.href
         )
       ),
       ad = MNodeAd(
@@ -312,7 +315,8 @@ object MarketAdFormUtil extends PlayMacroLogsImpl {
         LOGGER.warn("adFormUnapply(): BlockMeta is missing on ad[" + mad.id + "]")
         BlockMeta.DEFAULT
       },
-      bim       = applied.bim
+      bim       = applied.bim,
+      href      = mad.meta.business.siteUrl
     )
     val pattern = mad.meta.colors.pattern
     import AdColorFns._

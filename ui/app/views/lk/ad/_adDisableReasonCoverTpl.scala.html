@@ -1,12 +1,12 @@
-@(disableReasons: Seq[DisableReason])(implicit ctx: Context)
+@(disableReason: Option[String])(implicit ctx: Context)
 
 @* Опциональный рендер покрывающего div'а с причиной отключения. *@
 
 @import ctx.messages
 
 @* TODO Пока что выводится только первая причина, если есть. *@
-@disableReasons.headOption.map { dr =>
+@disableReason.headOption.map { dr =>
   <div class="disabled-ad">
-    @messages("Disable.reason"): @dr.reason
+    @messages("Disable.reason"): @dr
   </div>
 }

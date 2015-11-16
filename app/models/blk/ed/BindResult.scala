@@ -13,7 +13,8 @@ import models.{BfImage, MEntity}
 case class BindResult(
   entites   : List[MEntity],
   blockMeta : BlockMeta,
-  bim       : BlockImgMap
+  bim       : BlockImgMap,
+  href      : Option[String]
 ) {
 
   def unapplyBIM(bfi: BfImage): BlockImgMap = {

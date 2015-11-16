@@ -25,27 +25,29 @@
   <div class="ads-list">
 
     @_adsListTpl(args.mads, coverDisableReason = true, startIndex = 0, itemsInLine = 4) { mad =>
+      @ctx.api.n2NodesUtil.madProducerId(mad).map { producerId =>
+        <a class="siom-link-btn __color-1 __size-XL __ft-M __list-vertical"
+           href="@routes.SysMarket.showAdnNode(producerId)">
+          @args.prodsMap.get(producerId).fold {
+             ? ? ?
+          } { producer =>
+            @producer.meta.basic.name / @producer.meta.address.town
+          }
+        </a>
 
-      <a class="siom-link-btn __color-1 __size-XL __ft-M __list-vertical" href="@routes.SysMarket.showAdnNode(mad.producerId)">
-        @args.prodsMap.get(mad.producerId).fold {
-          ? ? ?
-        } { producer =>
-          @producer.meta.basic.name / @producer.meta.address.town
-        }
-      </a>
+        <div class="clear"></div>
 
-      <div class="clear"></div>
+        <a class="siom-ac-btn __color-2 __size-XL __ft-XM __list-vertical" href="@routes.MarketAd.editAd(mad.id.get)">
+          @messages("Edit")
+        </a>
 
-      <a class="siom-ac-btn __color-2 __size-XL __ft-XM __list-vertical" href="@routes.MarketAd.editAd(mad.id.get)">
-        @messages("Edit")
-      </a>
-
-      <a class="siom-ac-btn __color-3 __size-XL __ft-XM __list-vertical" href="@routes.MarketLkAdn.showAdnNode(mad.producerId)">
-        Перейти в ЛК
-      </a>
-      <a class="siom-ac-btn __color-2 __size-XL __ft-XM __list-vertical js-btn" href="@routes.SysMdr.freeAdvMdr(mad.id.get)">
-        Модерировать
-      </a>
+        <a class="siom-ac-btn __color-3 __size-XL __ft-XM __list-vertical" href="@routes.MarketLkAdn.showAdnNode(producerId)">
+          Перейти в ЛК
+        </a>
+        <a class="siom-ac-btn __color-2 __size-XL __ft-XM __list-vertical js-btn" href="@routes.SysMdr.freeAdvMdr(mad.id.get)">
+          Модерировать
+        </a>
+      }
     }
 
   </div>

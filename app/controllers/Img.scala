@@ -127,7 +127,7 @@ class Img @Inject() (
 
   /** Маппинг данных кропа картинки. */
   private def imgCropFormM = Form(tuple(
-    "imgId"  -> ImgFormUtil.imgIdM,
+    "imgId"  -> ImgFormUtil.img3IdM,
     "crop"   -> ImgFormUtil.imgCropM,
     "target" -> FormUtil.whSizeM
   ))

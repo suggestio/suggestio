@@ -60,14 +60,15 @@
 
             @* Бесплатное размещение не запрещено. *@
             <div class="ads-list-block__controls">
-              @defining( mnode.id.flatMap(n2n.findReceiver).map(_.info.sls).getOrElse(Set.empty) ) { adSls =>
+              @defining( mnode.id.flatMap(n2n.findReceiver(mad, _)).map(_.info.sls).getOrElse(Set.empty).map(_.sl) ) { adSls =>
                 @* Обходим данные по out-уровня, превращая её в список галочек. *@
                 @outLvlMap.map { msl =>
                   @defining(mnode.common.isEnabled && msl.allowed) { hl =>
                     <label class="@msl.sl.checkboxCssClass@if(!msl.allowed){ inactive}">
                       <input class="@if(msl.limit == 1){js-one-}checkbox" type="checkbox"
                              data-level="@msl.sl" data-adid="@mad.id" data-name="@msl.sl.checkboxCssClass"
-                             @if(!msl.allowed) {disabled="disabled"} @if(adSls contains msl.sl) {checked="checked"}
+                             @if(!msl.allowed) {disabled="disabled"}
+                             @if(adSls.contains(msl.sl)) {checked="checked"}
                              />
                             <span class="styled-checkbox"></span>&nbsp;@messages(if(isSingleOutLvl) "lk.sl.enable_ad" else ("lk.sl." + msl.sl.name))
                     </label>
@@ -77,7 +78,7 @@
             </div>
           } { faMdr =>
             @* Модератор запретил бесплатное размещение указанное карточки. *@
-            @faMdr.commentNi
+            @faMdr.info.commentNi
           }
 
         </div> @* js-equal-height *@

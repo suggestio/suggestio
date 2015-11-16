@@ -3,6 +3,7 @@ package models.mext.tw
 import com.ning.http.client.AsyncHttpClient
 import io.suggest.ahc.util.NingUtil
 import models.msc.SiteQsArgs
+import util.n2u.N2NodesUtil
 import util.{PlayMacroLogsI, FormUtil, TplDataFormatUtil}
 import models.Context
 import models.mext.{IOa1MkPostArgs, IExtPostInfo, IOAuth1Support}
@@ -55,6 +56,8 @@ import OAuth1Support._
 
 
 trait OAuth1Support extends IOAuth1Support with PlayMacroLogsI { this: TwitterService =>
+
+  protected val n2NodesUtil = current.injector.instanceOf[N2NodesUtil]
 
   /** 2015.apr.14: 28cdf84ad875 twitter cards отнесены в печку, т.к. отображаются скрытыми.
     * Загрузка картинки будет идти напрямую в твиттер и затем публикация твита со встроенным media. */
@@ -115,7 +118,7 @@ trait OAuth1Support extends IOAuth1Support with PlayMacroLogsI { this: TwitterSe
     val nreq = ning.preparePost(MK_TWEET_URL)
 
     // Собираем читабельный текст твита.
-    val tweetTextOpt = mad.richDescrOpt
+    val tweetTextOpt = mad.ad.richDescr
       .map { rd => rdescr2tweetLeadingText(rd.text) }
       .filter { !_.isEmpty }
     LOGGER.trace {
@@ -128,11 +131,15 @@ trait OAuth1Support extends IOAuth1Support with PlayMacroLogsI { this: TwitterSe
     val siteArgs = SiteQsArgs(
       povAdId = mad.id
     )
-    val jsSt = returnTo.builder()
-      .setAdnId( args.mnode.id.get )
-      .setFocusedAdId( args.mad.id.get )
-      .setFocusedProducerId( args.mad.producerId )
-      .toJsState
+    val jsSt = {
+      val b = returnTo.builder()
+        .setAdnId( args.mnode.id.get )
+        .setFocusedAdId( args.mad.id.get )
+      for (producerId <- n2NodesUtil.madProducerId(args.mad)) {
+        b.setFocusedProducerId(producerId)
+      }
+      b.toJsState
+    }
     // twitter не трогает ссылки, до которых не может достучаться. Нужно помнить об этом.
     val tweetUrl = if (WITH_URL) {
       val urlPrefix = /*Context devReplaceLocalHostW127001*/ Context.SC_URL_PREFIX

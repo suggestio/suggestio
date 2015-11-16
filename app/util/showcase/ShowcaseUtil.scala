@@ -105,10 +105,14 @@ class ShowcaseUtil @Inject() (
         TILES_SZ_MULTS.last
       }
     }
+
+    val bc = BlocksConf.applyOrDefault( mad )
+
     // Нужно получить данные для рендера широкой карточки.
     for (bgImgOpt <- focWideBgImgArgs(mad, szMult)) yield {
       blk.RenderArgs(
         mad       = mad,
+        bc        = bc,
         withEdit  = false,
         szMult    = szMult,
         bgImg     = bgImgOpt,

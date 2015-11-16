@@ -3,7 +3,7 @@ package controllers
 import com.google.inject.Inject
 import models.blk.BlockMeta
 import models.Context
-import models.blk.{IBlockMeta, BlockWidths, BlockHeights, BlockMetaUtil}
+import models.blk.{BlockWidths, BlockHeights, BlockMetaUtil}
 import models.im.{MImgT, CompressModes, DevScreen}
 import models.im.make.{Makers, MakeArgs, IMakeArgs, SysForm_t}
 import play.api.data.{Form, Mapping}
@@ -67,7 +67,7 @@ trait SysImgMake
    * @param bmDflt Необязательные дефолтовые данные полей block-meta. Заливаются в начальную форму.
    * @return 200 ok со страницей с формой описания img make-задачи.
    */
-  def makeForm(img: MImgT, bmDflt: Option[IBlockMeta]) = IsSuperuserGet.async { implicit request =>
+  def makeForm(img: MImgT, bmDflt: Option[BlockMeta]) = IsSuperuserGet.async { implicit request =>
     implicit val ctx = implicitly[Context]
     // Забиндить дефолтовые данные в форму
     val form = sysImgMakeUtil.makeFormM(img).fill((
