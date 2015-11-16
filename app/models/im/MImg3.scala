@@ -57,9 +57,10 @@ class MImg3_ @Inject() (
   }
 
   override def apply(fileName: String): MImg3 = {
-    (new Parsers)
-      .fromFileName(fileName)
-      .get
+    val pr = (new Parsers).fromFileName(fileName)
+    if (!pr.successful)
+      LOGGER.error(s"""Failed to parse img from fileName <<$fileName>>:\n$pr""")
+    pr.get
   }
 
   override def fromImg(img: MAnyImgT, dynOps2: Option[List[ImOp]] = None): MImg3 = {

@@ -1,5 +1,6 @@
 package controllers
 
+import com.github.nscala_time.time.OrderingImplicits._
 import io.suggest.common.fut.FutureUtil
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.common.MNodeCommon
@@ -8,6 +9,7 @@ import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.adv._
 import models.mbill.{MContract, MBalance}
+import org.joda.time.DateTime
 import util.adn.NodesUtil
 import util.async.AsyncUtil
 import com.google.inject.Inject
@@ -20,7 +22,7 @@ import org.elasticsearch.client.Client
 import play.api.cache.CacheApi
 import play.api.i18n.MessagesApi
 import util.billing.Billing
-import _root_.util.{FormUtil, PlayMacroLogsImpl}
+import util.{FormUtil, PlayMacroLogsImpl}
 import util.acl._
 import models._
 import util.ident.IdentUtil
@@ -146,7 +148,6 @@ class MarketLkAdn @Inject() (
       // TODO Добавить поддержку агрумента mode
       val madsFut: Future[Seq[MNode]] = if (isMyNode) {
         val ntAd = MNodeTypes.Ad
-        val ntsAd = Seq( ntAd )
         val producedByCrs = {
           val cr = Criteria(
             nodeIds     = Seq( adnId ),
@@ -154,13 +155,18 @@ class MarketLkAdn @Inject() (
           )
           Seq(cr)
         }
-        val adsSearch0 = new MNodeSearchDfltImpl {
-          override def nodeTypes = ntsAd
+        val adsSearch0 = new AdSearchImpl {
           override def outEdges  = producedByCrs
+          override def limit     = 200
+          //override def withDateCreatedSort = Some(SortOrder.DESC)
         }
         // Это свой узел. Нужно в реалтайме найти рекламные карточки и проверить newAdIdOpt.
-        val prodAdsFut = MNode.dynSearchRt(adsSearch0)
-          .map { _.toStream }
+        val prodAdsFut = for {
+          mads <- MNode.dynSearchRt(adsSearch0)
+        } yield {
+          mads.sortBy(_.meta.basic.dateCreated)(implicitly[Ordering[DateTime]].reverse)
+            .toStream
+        }
 
         // Бывает, что добавлена новая карточка (но индекс ещё не сделал refresh). Нужно её найти и отобразить:
         val extAdOptFut = FutureUtil.optFut2futOpt(newAdIdOpt) { newAdId =>
