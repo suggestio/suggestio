@@ -316,7 +316,10 @@ class Migration @Inject() (
           mLocImg   <- mlocImgFut
           imgNodeId <- portOneImage("bg", mimg, madId, mad.dateCreated, mii.meta)
         } yield {
-          val e = MEdge(MPredicates.Bg, imgNodeId)
+          val e = MEdge(MPredicates.Bg, imgNodeId, info = MEdgeInfo(
+            dynImgArgs = oldImg.qOpt
+          ))
+          debug("oldImg = " + oldImg + " FROM " + mii + " TO edge " + e)
           Some(e)
         }
         if (_SUPRESS_MISSING_IMGS) {
