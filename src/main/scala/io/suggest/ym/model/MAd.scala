@@ -1,5 +1,6 @@
 package io.suggest.ym.model
 
+import io.suggest.common.text.StringUtil
 import io.suggest.model.es._
 import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.ad.blk.BlockMeta
@@ -200,8 +201,11 @@ final case class MAd(
       meta = MMeta(
         basic = MBasicMeta(
           techName = {
-            val tn = offers.iterator.flatMap(_.text1).map(_.value).mkString(" | ")
-            if (tn.isEmpty) None else Some(tn)
+            val tn = offers.iterator
+              .flatMap(_.text1)
+              .map(_.value)
+              .mkString(" | ")
+            if (tn.isEmpty) None else Some( StringUtil.strLimitLen(tn, 32, "…") )
           },
           dateCreated = dateCreated,
           dateEdited  = dateEdited
