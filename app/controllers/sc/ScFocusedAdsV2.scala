@@ -33,7 +33,7 @@ trait ScFocusedAdsV2
 {
 
   /** Реализация v2-логики. */
-  protected class FocusedLogicHttpV2(val _adSearch: FocusedAdsSearchArgs)
+  protected class FocusedLogicHttpV2(override val _adSearch: FocusedAdsSearchArgs)
                                     (implicit val _request: AbstractRequestWithPwOpt[_])
     extends FocusedAdsLogicHttp
     with NoBrAcc
@@ -46,13 +46,18 @@ trait ScFocusedAdsV2
 
     override def renderOuterBlock(args: AdBodyTplArgs): Future[OBT] = {
       val fullArgsFut = focAdsRenderArgsFor(args)
+
       val bodyFut = renderBlockHtml(args)
         .map { html2str4json }
-      val controlsFut = for (fullArgs <- fullArgsFut) yield {
+
+      val controlsFut = for {
+        fullArgs <- fullArgsFut
+      } yield {
         html2str4json(
           _controlsTpl(fullArgs)
         )
       }
+
       val producerId = n2NodesUtil.madProducerId(args.brArgs.mad).get
       for {
         body      <- bodyFut

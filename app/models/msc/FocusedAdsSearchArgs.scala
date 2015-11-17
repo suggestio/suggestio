@@ -1,6 +1,6 @@
 package models.msc
 
-import models.{AdSearchWrapper, AdSearchWrapper_, AdSearch}
+import models._
 import play.api.mvc.QueryStringBindable
 import io.suggest.ad.search.AdSearchConstants._
 import util.PlayMacroLogsDyn
@@ -101,13 +101,14 @@ class FocusedAdsSearchArgsImpl
   with PlayMacroLogsDyn
 
 
+/** wrap-значение adSearch + значения, специфичные для [[FocusedAdsSearchArgs]]. */
 abstract class FocusedAdsSearchArgsWrappedImpl
-  extends AdSearchWrapper
-  with FocusedAdsSearchArgs
+  extends FocusedAdsSearchArgsImpl
+  with AdSearchWrap
 
 
 /** Враппер для [[FocusedAdsSearchArgs]]. */
-abstract class FocusedAdsSearchArgsWrapper extends AdSearchWrapper_ with FocusedAdsSearchArgs {
+trait FocusedAdsSearchArgsWrapper extends AdSearchWrapper_ with FocusedAdsSearchArgs {
 
   override type WT = FocusedAdsSearchArgs
 

@@ -70,6 +70,7 @@ trait ScFocusedAdsBase
       }
     }
 
+    /** Является ли указанный продьюсер очень внешним в качестве ресивера? */
     def is3rdPartyProducer(producerId: String): Boolean = {
       val hasProdAsRcvr = _adSearch.outEdges.exists { e =>
         e.predicates.contains( MPredicates.Receiver) &&

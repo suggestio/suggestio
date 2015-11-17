@@ -84,6 +84,7 @@ trait ScAdsTileBase
 
     lazy val adSearch2Fut: Future[AdSearch] = {
       if (_adSearch.outEdges.nonEmpty) {
+        // В оригинале (pre-N2) тут добавлялся LVL_START_PAGE в список уровней.
         Future successful _adSearch
 
       } else if (_adSearch.geo.isWithGeo) {

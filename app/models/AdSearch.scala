@@ -277,8 +277,7 @@ class AdSearchImpl
   with AdSearch
 
 
-/** Враппер для [[AdSearch]] с абстрактным типом. Пригоден для дальнейшего расширения в иных моделях. */
-abstract class AdSearchWrapper_ extends MNodeSearchWrapImpl_ with AdSearch {
+trait AdSearchWrap_ extends AdSearch with MNodeSearchWrap {
 
   override type WT <: AdSearch
 
@@ -292,9 +291,19 @@ abstract class AdSearchWrapper_ extends MNodeSearchWrapImpl_ with AdSearch {
 
 }
 
-
-/** Враппер для AdSearch-контейнера, своим существованием имитирует case class copy(). */
-abstract class AdSearchWrapper extends AdSearchWrapper_ {
+trait AdSearchWrap extends AdSearchWrap_ {
   override type WT = AdSearch
 }
+
+
+/** Враппер для [[AdSearch]] с абстрактным типом. Пригоден для дальнейшего расширения в иных моделях. */
+abstract class AdSearchWrapper_
+  extends MNodeSearchWrapImpl_
+  with AdSearchWrap_
+
+
+/** Враппер для AdSearch-контейнера, своим существованием имитирует case class copy(). */
+abstract class AdSearchWrapper
+  extends AdSearchWrapper_
+  with AdSearchWrap
 
