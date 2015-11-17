@@ -83,7 +83,10 @@ trait ScAdsTileBase
     lazy val gsiFut = _adSearch.geo.geoSearchInfoOpt
 
     lazy val adSearch2Fut: Future[AdSearch] = {
-      if (_adSearch.geo.isWithGeo) {
+      if (_adSearch.outEdges.nonEmpty) {
+        Future successful _adSearch
+
+      } else if (_adSearch.geo.isWithGeo) {
         // При геопоиске надо найти узлы, географически подходящие под запрос. Затем, искать карточки по этим узлам.
         // TODO При таком поиске надо использовать cache-controle: private, если ip-геолокация.
         scNlUtil.detectCurrentNode(_adSearch.geo, _adSearch.geo.geoSearchInfoOpt)
@@ -114,6 +117,7 @@ trait ScAdsTileBase
           }
 
       } else {
+        LOGGER.warn("Strange search request: " + _adSearch + " from " + _request.remoteAddress + " via " + _request.method + " " + _request.path)
         Future successful _adSearch
       }
     }

@@ -256,7 +256,11 @@ trait ScIndexGeo
 
     /** Контейнер палитры выдачи. */
     override def colorsFut: Future[IColors] = {
-      Future successful Colors(scUtil.SITE_BGCOLOR_GEO, fgColor = scUtil.SITE_FGCOLOR_GEO)
+      val res = Colors(
+        bgColor = scUtil.SITE_BGCOLOR_GEO,
+        fgColor = scUtil.SITE_FGCOLOR_GEO
+      )
+      Future.successful( res )
     }
 
     override def currAdnIdFut = Future successful None

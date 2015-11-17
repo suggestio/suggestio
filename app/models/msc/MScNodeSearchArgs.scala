@@ -77,11 +77,12 @@ object MScNodeSearchArgs {
         } yield {
           for {
             apiVsn  <- maybeApiVsn.right
+            geo     <- maybeGeo.right
           } yield {
             //trace(s"bind($key): q=$maybeQOpt ; geo=$maybeGeo ; offset = $maybeOffset ; limit = $maybeMaxResults")
             MScNodeSearchArgs(
               qStr          = maybeQOpt.map(limitStrLen(_, QSTR_LEN_MAX)),
-              geoMode       = maybeGeo,
+              geoMode       = geo,
               offset        = maybeOffset.filter(_ <= OFFSET_LIMIT_HARD),
               maxResults    = maybeMaxResults.filter(_ <= MAX_RESULTS_LIMIT_HARD),
               currAdnId     = maybeCurAdnId,

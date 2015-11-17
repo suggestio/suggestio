@@ -74,14 +74,12 @@ object GeoMode extends PlayLazyMacroLogsImpl with JavaTokenParsers {
 
   /** Биндер для набега на GeoMode, сериализованный в qs. */
   implicit def geoModeQsb(implicit strOptB: QueryStringBindable[Option[String]]): QueryStringBindable[GeoMode] = {
-    import util.qsb.QsbUtil._
-
     new QueryStringBindable[GeoMode] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, GeoMode]] = {
-        for {
-          maybeGeo <- strOptB.bind(key, params)
-        } yield {
-          maybeApply(maybeGeo).fold [Either[String,GeoMode]] {Left("error.unknown")} { Right.apply }
+        for (maybeGeo <- strOptB.bind(key, params)) yield {
+          for (geo <- maybeGeo.right) yield {
+            apply(geo)
+          }
         }
       }
 
@@ -89,10 +87,6 @@ object GeoMode extends PlayLazyMacroLogsImpl with JavaTokenParsers {
         strOptB.unbind(key, value.toQsStringOpt)
       }
     }
-  }
-
-  implicit def eitherGeoMode2gm(e: Either[String, GeoMode]): GeoMode = {
-    e.right getOrElse GeoNone
   }
 
 }
