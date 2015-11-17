@@ -85,7 +85,19 @@ trait IEdge {
   }
 
   override def toString: String = {
-    predicate.strId + "/" + nodeId
+    val sb = new StringBuilder(64)
+    sb.append(predicate.strId)
+      .append('/')
+      .append(nodeId)
+    for (ord <- order) {
+      sb.append(':').append(ord)
+    }
+    if (info.nonEmpty) {
+      sb.append('{')
+        .append(info)
+        .append('}')
+    }
+    sb.toString()
   }
 
 }
