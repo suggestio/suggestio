@@ -445,37 +445,6 @@ class SysMarket @Inject() (
   }
 
 
-
-  /* Магазины (арендаторы ТЦ). */
-
-  /** Отображение категорий яндекс-маркета */
-  def showYmCats = IsSuperuser.async { implicit request =>
-    MYmCategory.getAllTree.map { cats =>
-      Ok(cat.ymCatsTpl(cats))
-    }
-  }
-
-  /** Полный сброс дерева категорий YM. */
-  def resetYmCatsSubmit = IsSuperuser.async { implicit request =>
-    // TODO WARNING DANGER ACHTUNG Эту функцию надо выпилить после запуска.
-    warn("Resetting MYmCategories...")
-    MYmCategory.resetMapping map { _ =>
-      Redirect(routes.SysMarket.showYmCats())
-        .flashing(FLASH.SUCCESS -> "Все категории удалены.")
-    }
-  }
-
-  /** Импорт дерева категорий из io.suggest.ym.cat.YmCategory.CAT_TREE. */
-  def importYmCatsSubmit = IsSuperuser.async { implicit request =>
-    // TODO WARNING DANGER ACHTUNG Эту функцию надо выпилить после запуска.
-    warn("Inserting categories into MYmCategories...")
-    MYmCategory.insertYmCats.map { _ =>
-      Redirect(routes.SysMarket.showYmCats())
-        .flashing(FLASH.SUCCESS -> "Импорт сделан.")
-    }
-  }
-
-
   // ======================================================================
   // отладка email-сообщений
 

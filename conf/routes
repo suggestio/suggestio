@@ -160,10 +160,7 @@ GET  /sys/market/adn/invite/email/:id   @controllers.SysMarket.showNodeOwnerEmai
 # sys.market.shop
 GET  /sys/market/shop/eact/:id          @controllers.SysMarket.showEmailInviteMsg(id)
 GET  /sys/market/mad/email/:adId        @controllers.SysMarket.showShopEmailAdDisableMsg(adId)
-# sys.market.cats
-GET  /sys/market/cats/ym                @controllers.SysMarket.showYmCats
-POST /sys/market/cats/ym/reset          @controllers.SysMarket.resetYmCatsSubmit
-POST /sys/market/cats/ym/import         @controllers.SysMarket.importYmCatsSubmit
+
 # sys.ad
 GET  /sys/mad/:adId/show                @controllers.SysMarket.showAd(adId)
 GET  /sys/mad/:adId/rcvrs/analyze       @controllers.SysMarket.analyzeAdRcvrs(adId)
@@ -173,14 +170,6 @@ POST /sys/mad/:adId/rcvrs/clean         @controllers.SysMarket.cleanReceivers(ad
 GET  /sys/mad/:adId/one/render/:rvar    @controllers.SysMarket.showOneAdForm(adId, rvar: msc.OneAdRenderVariant)
 POST /sys/mad/:adId/one/render/:rvar    @controllers.SysMarket.oneAdFormSubmit(adId, rvar: msc.OneAdRenderVariant)
 
-GET  /sys/market/cats/usr/add           @controllers.MarketCategory.addUserCatForm(ownerId: Option[String], parentId: Option[String])
-POST /sys/market/cats/usr/add           @controllers.MarketCategory.addUserCatFormSubmit(ownerId: Option[String], parentId: Option[String])
-GET  /sys/market/cats/usr/c/:catId      @controllers.MarketCategory.showUserCat(catId)
-GET  /sys/market/cats/usr/:ownerId      @controllers.MarketCategory.showCatsFor(ownerId)
-GET  /sys/market/cats/usr/e/:catId      @controllers.MarketCategory.editUserCatForm(catId)
-POST /sys/market/cats/usr/e/:catId      @controllers.MarketCategory.editUserCatFormSubmit(catId)
-POST /sys/market/cats/usr/:ownerId/inst/m  @controllers.MarketCategory.installMartCategories(ownerId)
-POST /sys/market/cats/usr/d/:catId      @controllers.MarketCategory.deleteUserCatSubmit(catId)
 # sys.market.billing
 GET  /sys/market/billing                @controllers.SysMarketBilling.index
 GET  /sys/market/b/show/:adnId          @controllers.SysMarketBilling.billingFor(adnId)
