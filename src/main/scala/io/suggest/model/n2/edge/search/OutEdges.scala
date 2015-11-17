@@ -26,84 +26,98 @@ trait OutEdges extends DynSearchArgs with MacroLogsI {
 
     if (_outEdgesIter.isEmpty) {
       qbOpt0
+
     } else {
-      var shouldClauses = 0
-      val nq = QueryBuilders.boolQuery()
+
       // Сборка nested query.
-      for (oe <- _outEdgesIter) {
+      val clauses = _outEdgesIter
+        .flatMap { oe =>
 
-        // Поиск по id узлов, на которые указывают эджи.
-        var _qOpt: Option[QueryBuilder] = if (oe.nodeIds.nonEmpty) {
-          val __q = QueryBuilders.termsQuery(EDGE_OUT_NODE_ID_FULL_FN, oe.nodeIds: _*)
-          Some(__q)
-        } else {
-          None
-        }
-
-        // Предикаты рёбер добавить через фильтр либо query.
-        if (oe.predicates.nonEmpty) {
-          val fn = EDGE_OUT_PREDICATE_FULL_FN
-          val predIds = oe.predicates.map(_.strId)
-          _qOpt = _qOpt map { _q =>
-            val predf = FilterBuilders.termsFilter(fn, predIds: _*)
-            QueryBuilders.filteredQuery(_q, predf)
-          } orElse {
-            val _q = QueryBuilders.termsQuery(fn, predIds: _*)
-            Some(_q)
-          }
-        }
-
-        // ad search receivers: добавить show levels
-        if (oe.anySl.nonEmpty) {
-          if (_qOpt.nonEmpty && oe.sls.isEmpty) {
-            // missing/existing filter можно навешивать только если уже есть тело nested query
-            val fn = EDGE_OUT_INFO_SLS_FN
-            val f = if (oe.anySl.get) {
-              FilterBuilders.existsFilter(fn)
-            } else {
-              FilterBuilders.missingFilter(fn)
-            }
-            val _nq2 = QueryBuilders.filteredQuery(_qOpt.get, f)
-            _qOpt = Some(_nq2)
-
+          // Поиск по id узлов, на которые указывают эджи.
+          var _qOpt: Option[QueryBuilder] = if (oe.nodeIds.nonEmpty) {
+            val __q = QueryBuilders.termsQuery(EDGE_OUT_NODE_ID_FULL_FN, oe.nodeIds: _*)
+            Some(__q)
           } else {
-            val msg = if (_qOpt.isEmpty ) {
-              // Нельзя навешивать any sl-фильтры без заданного предиката или id узла.
-              "so at least one of [.predicates, .nodeIds] must be non-empty"
-            } else {
-              // Нельзя одновременно задавать sls и anySl критерии.
-              "but .sls is non empty too. Define at once only one of, not both"
+            None
+          }
+
+          // Предикаты рёбер добавить через фильтр либо query.
+          if (oe.predicates.nonEmpty) {
+            val fn = EDGE_OUT_PREDICATE_FULL_FN
+            val predIds = oe.predicates.map(_.strId)
+            _qOpt = _qOpt map { _q =>
+              val predf = FilterBuilders.termsFilter(fn, predIds: _*)
+              QueryBuilders.filteredQuery(_q, predf)
+            } orElse {
+              val _q = QueryBuilders.termsQuery(fn, predIds: _*)
+              Some(_q)
             }
-            throw new IllegalArgumentException("outEdges Criteria: .anySl is defined, " + msg + ": " + oe)
           }
 
-        } else if (oe.sls.nonEmpty) {
-          val slsStr = oe.sls.map(_.name)
-          val slFn = EDGE_OUT_INFO_SLS_FN
-          _qOpt = _qOpt.map { _q =>
-            val slsf = FilterBuilders.termsFilter(slFn, slsStr : _*)
-            QueryBuilders.filteredQuery(_q, slsf)
-          }.orElse {
-            val _q = QueryBuilders.termsQuery(slFn, slsStr: _*)
-            Some( _q )
+          // ad search receivers: добавить show levels
+          if (oe.anySl.nonEmpty) {
+            if (_qOpt.nonEmpty && oe.sls.isEmpty) {
+              // missing/existing filter можно навешивать только если уже есть тело nested query
+              val fn = EDGE_OUT_INFO_SLS_FN
+              val f = if (oe.anySl.get) {
+                FilterBuilders.existsFilter(fn)
+              } else {
+                FilterBuilders.missingFilter(fn)
+              }
+              val _nq2 = QueryBuilders.filteredQuery(_qOpt.get, f)
+              _qOpt = Some(_nq2)
+
+            } else {
+              val msg = if (_qOpt.isEmpty ) {
+                // Нельзя навешивать any sl-фильтры без заданного предиката или id узла.
+                "so at least one of [.predicates, .nodeIds] must be non-empty"
+              } else {
+                // Нельзя одновременно задавать sls и anySl критерии.
+                "but .sls is non empty too. Define at once only one of, not both"
+              }
+              throw new IllegalArgumentException("outEdges Criteria: .anySl is defined, " + msg + ": " + oe)
+            }
+
+          } else if (oe.sls.nonEmpty) {
+            val slsStr = oe.sls.map(_.name)
+            val slFn = EDGE_OUT_INFO_SLS_FN
+            _qOpt = _qOpt.map { _q =>
+              val slsf = FilterBuilders.termsFilter(slFn, slsStr : _*)
+              QueryBuilders.filteredQuery(_q, slsf)
+            }.orElse {
+              val _q = QueryBuilders.termsQuery(slFn, slsStr: _*)
+              Some( _q )
+            }
+          }
+
+          // Ищем/фильтруем по info.flag
+          if (oe.flag.nonEmpty) {
+            val flag = oe.flag.get
+            val flagFn = EDGE_OUT_INFO_FLAG_FN
+            _qOpt = _qOpt.map { _q =>
+              val flagFl = FilterBuilders.termFilter(flagFn, flag)
+              QueryBuilders.filteredQuery(_q, flagFl)
+            }.orElse {
+              val _q = QueryBuilders.termQuery(flagFn, flag)
+              Some(_q)
+            }
+          }
+
+          if (_qOpt.isEmpty)
+            LOGGER.warn("edge.NestedSearch: suppressed empty bool query for " + oe)
+
+          _qOpt map { _q =>
+            (oe, _q)
           }
         }
+        .toStream
 
-        // Ищем/фильтруем по info.flag
-        if (oe.flag.nonEmpty) {
-          val flag = oe.flag.get
-          val flagFn = EDGE_OUT_INFO_FLAG_FN
-          _qOpt = _qOpt.map { _q =>
-            val flagFl = FilterBuilders.termFilter(flagFn, flag)
-            QueryBuilders.filteredQuery(_q, flagFl)
-          }.orElse {
-            val _q = QueryBuilders.termQuery(flagFn, flag)
-            Some(_q)
-          }
-        }
-
+      val qb2 = if (clauses.size > 1) {
         // Возврат значения происходит через закидывание сгенеренной query в BoolQuery.
-        for (_q <- _qOpt) {
+        var shouldClauses = 0
+        val nq = QueryBuilders.boolQuery()
+
+        for ((oe, _q) <- clauses) yield {
           // Клиент может настраивать запрос с помощью must/should/mustNot.
           oe.must match {
             case None =>
@@ -115,21 +129,21 @@ trait OutEdges extends DynSearchArgs with MacroLogsI {
               nq.mustNot(_q)
           }
         }
-        if (_qOpt.isEmpty)
-          LOGGER.warn("edge.NestedSearch: suppressed empty bool query for " + oe)
-      }
+        // Если should-clause'ы отсутствуют, то minimum should match 0. Иначе 1.
+        nq.minimumNumberShouldMatch(
+          Math.max(1, shouldClauses)
+        )
 
-      // Если should-clause'ы отсутствуют, то minimum should match 0. Иначе 1.
-      nq.minimumNumberShouldMatch(
-        Math.max(1, shouldClauses)
-      )
+      } else {
+        clauses.head._2
+      }
 
       // Сборка основной query
       qbOpt0.map { qb0 =>
-        val nf = FilterBuilders.nestedFilter(EDGES_OUT_FULL_FN, nq)
+        val nf = FilterBuilders.nestedFilter(EDGES_OUT_FULL_FN, qb2)
         QueryBuilders.filteredQuery(qb0, nf)
       }.orElse {
-        val qb = QueryBuilders.nestedQuery(EDGES_OUT_FULL_FN, nq)
+        val qb = QueryBuilders.nestedQuery(EDGES_OUT_FULL_FN, qb2)
         Some(qb)
       }
     }
