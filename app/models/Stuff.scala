@@ -89,22 +89,6 @@ object LkLeftPanelLinks extends Enumeration {
 }
 
 
-
-
-/** Исчерпывающая инфа по картинке, которую можно отрендерить в шаблоне ссылку. */
-trait ImgUrlInfoT {
-
-  /** call для получения ссылки на картинку. */
-  def call: Call
-
-  /** Метаданные для рендера тега img. */
-  def meta: Option[ISize2di]
-}
-case class ImgUrlInfo(call: Call, meta: Option[ISize2di])
-  extends ImgUrlInfoT
-
-
-
 /**
  * Экземпляр хранит вызов к внешнему серверу. Кроме как для индикации этого факта, класс ни для чего
  * больше не используется.

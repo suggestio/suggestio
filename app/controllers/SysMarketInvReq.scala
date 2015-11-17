@@ -145,55 +145,34 @@ class SysMarketInvReq @Inject() (
     val previoslyExistedFut = adnNode0.id.fold [Future[Boolean]]
       { Future successful false }
       { MNode.isExist }
-    val waSavedIdOptFut = mir.waOpt.fold [Future[Option[String]]]
-      { Future successful None }
-      { _.fold[Future[Option[String]]] (
-        { wa => wa.save.map(Some.apply) },
-        { waId => Future successful Option(waId) }
-      )}
     previoslyExistedFut flatMap { previoslyExisted =>
-      waSavedIdOptFut flatMap { waSavedIdOpt =>
-        val p = MPredicates.NodeWelcomeAdIs
-        val edges0Iter = adnNode0.edges
-          .withoutPredicateIter(p)
-        val adnNode = adnNode0.copy(
-          edges = adnNode0.edges.copy(
-            out = {
-              val iter2 = waSavedIdOpt.fold(edges0Iter) { waId =>
-                val waEdge = MEdge(p, waId)
-                edges0Iter ++ Iterator(waEdge)
-              }
-              MNodeEdges.edgesToMap1(iter2)
-            }
-          )
+      val p = MPredicates.NodeWelcomeAdIs
+      val adnNode = adnNode0.copy(
+        edges = adnNode0.edges.copy(
+          out = {
+            val edges0Iter = adnNode0.edges
+              .withoutPredicateIter(p)
+            MNodeEdges.edgesToMap1(edges0Iter)
+          }
         )
-        // Запуск сохранения узла.
-        val resultFut = adnNode.save flatMap { adnId =>
-          // Узел сохранён. Пора обновить экземпляр MIR
-          val updateFut = mInviteRequest.tryUpdate(mir) { mir0 =>
-            mir0.copy(
-              adnNode = Some(Right(adnId)),
-              waOpt = waSavedIdOpt.map(Right.apply)
-            )
-          }
-          if (previoslyExisted) {
-            updateFut onFailure { case ex =>
-              warn(s"nodeInstallSubmit($mirId): Rollbacking node[$adnId] installation due to exception during MIR update")
-              MNode.deleteById(adnId)
-            }
-          }
-          updateFut map { _ =>
-            rdrToIr(mirId, "Рекламный узел добавлен в систему.")
+      )
+      // Запуск сохранения узла.
+      adnNode.save flatMap { adnId =>
+        // Узел сохранён. Пора обновить экземпляр MIR
+        val updateFut = mInviteRequest.tryUpdate(mir) { mir0 =>
+          mir0.copy(
+            adnNode = Some(Right(adnId))
+          )
+        }
+        if (previoslyExisted) {
+          updateFut onFailure { case ex =>
+            warn(s"nodeInstallSubmit($mirId): Rollbacking node[$adnId] installation due to exception during MIR update")
+            MNode.deleteById(adnId)
           }
         }
-        // При ошибке стереть свежесохранённый инстанс welcomeAdOpt
-        if ( waSavedIdOpt.isDefined  &&  mir.waOpt.exists(_.isLeft) ) {
-          resultFut onFailure { case ex =>
-            MWelcomeAd.deleteById(waSavedIdOpt.get)
-            warn(s"nodeInstallSubmit($mirId): Rollbacking welcome ad saving due to exception while MIR update.")
-          }
+        updateFut map { _ =>
+          rdrToIr(mirId, "Рекламный узел добавлен в систему.")
         }
-        resultFut
       }
     }
   }

@@ -2,7 +2,7 @@ package models.mlk
 
 import models.im.MImgT
 import models.im.logo.LogoOpt_t
-import models.{MWelcomeAd, MMeta, MNode}
+import models.{MMeta, MNode}
 import play.api.data.Form
 
 /**
@@ -30,16 +30,12 @@ trait INodeEditArgs {
   /** Маппинг формы редактирования узла. */
   def mf            : Form[FormMapResult]
 
-  /** Данные по текущей карточке приветствия. */
-  def welcomeAdOpt  : Option[MWelcomeAd]
-
 }
 
 
 /** Дефолтовая реализация контейнера передаваемых аргументов для nodeEditTpl. */
 case class NodeEditArgs(
   override val mnode         : MNode,
-  override val mf            : Form[FormMapResult],
-  override val welcomeAdOpt  : Option[MWelcomeAd]
+  override val mf            : Form[FormMapResult]
 )
   extends INodeEditArgs

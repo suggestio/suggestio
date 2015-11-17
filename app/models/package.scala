@@ -38,9 +38,6 @@ package object models {
 
   type Receivers_t          = n2.edge.NodeEdgesMap_t
 
-  val  MWelcomeAd           = ym.model.MWelcomeAd
-  type MWelcomeAd           = ym.model.MWelcomeAd
-
   type AdOfferT             = ym.model.ad.AdOfferT
 
   val  TextEnt              = io.suggest.model.n2.ad.ent.text.TextEnt

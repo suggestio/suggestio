@@ -34,15 +34,14 @@
         </style>
       }
 
-      case Right(imgInfo) => {
+      case Right(bg) => {
         @* Доступно фоновое изображение. *@
         <img id="@BG_IMG_ID"
-             style="background-color: #@args.bgColor;" class="sm-welcome-ad_bg-img"
-             @imgInfo.meta.map { meta =>
-               @WIDTH_ATTR="@meta.width"
-               @HEIGHT_ATTR="@meta.height"
-             }
-             src="@imgInfo.call"/>
+             class="sm-welcome-ad_bg-img"
+             style="background-color: #@args.bgColor;"
+             @WIDTH_ATTR="@bg.meta.width"
+             @HEIGHT_ATTR="@bg.meta.height"
+             src="@cdn.dynImg(bg.mimg)"/>
       }
     }
 
@@ -50,9 +49,9 @@
     @wargs.fgImage.map { fgImage =>
       <span class="sm-welcome-ad_helper"></span>
       <img id="@FG_IMG_ID" class="sm-welcome-ad_fg-img"
-           data-width="@fgImage.meta.map(_.width)"
-           data-height="@fgImage.meta.map(_.height)"
-           src="@cdn.dynImg(fgImage.filename)"/>
+           data-width="@fgImage.meta.width"
+           data-height="@fgImage.meta.height"
+           src="@cdn.dynImg(fgImage.mimg)"/>
     }
 
     @* Рендерим покрывающую картинку (svg/png) *@

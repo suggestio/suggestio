@@ -226,7 +226,6 @@ class MarketLkAdnEdit @Inject() (
     import request.adnNode
 
     // Запуск асинхронной сборки данных из моделей.
-    val waOptFut = welcomeUtil.getWelcomeAdOpt(adnNode)
     val nodeLogoOptFut = logoUtil.getLogoOfNode(adnNode)
     val gallerryIks = galleryUtil
       .gallery2iiks {
@@ -238,38 +237,32 @@ class MarketLkAdnEdit @Inject() (
     // Сборка и наполнения маппинга формы.
     val formM = nodeFormM(adnNode.extras.adn.get)
     val formFilledFut = for {
-      welcomeAdOpt <- waOptFut
       nodeLogoOpt  <- nodeLogoOptFut
     } yield {
-      val welcomeImgKey = welcomeUtil.welcomeAd2iik(welcomeAdOpt)
-      val fmr = FormMapResult(adnNode.meta, nodeLogoOpt, welcomeImgKey, gallerryIks)
+      val wcLogoImg = welcomeUtil.wcLogoImg(adnNode)
+      val fmr = FormMapResult(adnNode.meta, nodeLogoOpt, wcLogoImg, gallerryIks)
       formM fill fmr
     }
 
     // Рендер и возврат http-ответа.
     for {
       formFilled <- formFilledFut
-      resp       <- _editAdnNode(formFilled, waOptFut, Ok)
+      resp       <- _editAdnNode(formFilled, Ok)
     } yield {
       resp
     }
   }
 
 
-  private def _editAdnNode(form: Form[FormMapResult], waOptFut: Future[Option[MWelcomeAd]], respStatus: Status)
+  private def _editAdnNode(form: Form[FormMapResult], respStatus: Status)
                           (implicit request: AbstractRequestForAdnNode[_]): Future[Result] = {
     implicit val jsInitTargets = Seq(MTargets.LkNodeEditForm)
-    for {
-      welcomeAdOpt <- waOptFut
-    } yield {
-      val args = NodeEditArgs(
-        mnode         = request.adnNode,
-        mf            = form,
-        welcomeAdOpt  = welcomeAdOpt
-      )
-      val render = nodeEditTpl(args)
-      respStatus( render )
-    }
+    val args = NodeEditArgs(
+      mnode         = request.adnNode,
+      mf            = form
+    )
+    val render = nodeEditTpl(args)
+    respStatus( render )
   }
 
 
@@ -280,13 +273,12 @@ class MarketLkAdnEdit @Inject() (
     lazy val logPrefix = s"editAdnNodeSubmit($adnId): "
     nodeFormM(adnNode.extras.adn.get).bindFromRequest().fold(
       {formWithErrors =>
-        val waOptFut = welcomeUtil.getWelcomeAdOpt(request.adnNode)
         debug(s"${logPrefix}Failed to bind form: ${formatFormErrors(formWithErrors)}")
-        _editAdnNode(formWithErrors, waOptFut, NotAcceptable)
+        _editAdnNode(formWithErrors, NotAcceptable)
       },
       {fmr =>
         // В фоне обновляем картинку карточки-приветствия.
-        val savedWelcomeImgsFut = welcomeUtil.updateWelcodeAdFut(adnNode, fmr.waImgOpt)
+        val waFgEdgeOptFut = welcomeUtil.updateWcFgImg(adnNode, fmr.waImgOpt)
         trace(s"${logPrefix}newGallery[${fmr.gallery.size}] ;; newLogo = ${fmr.logoOpt.map(_.fileName)}")
         // В фоне обновляем логотип узла
         val savedLogoFut = logoUtil.updateLogoFor(adnNode, fmr.logoOpt)
@@ -299,11 +291,11 @@ class MarketLkAdnEdit @Inject() (
             .toSeq
         )
         for {
-          savedLogo <- savedLogoFut
-          waIdOpt   <- savedWelcomeImgsFut
-          gallery   <- galleryUpdFut
-          _         <- MNode.tryUpdate(adnNode) {
-            applyNodeChanges(_, fmr.meta, savedLogo, waIdOpt, gallery)
+          savedLogo   <- savedLogoFut
+          waFgEdgeOpt <- waFgEdgeOptFut
+          gallery     <- galleryUpdFut
+          _           <- MNode.tryUpdate(adnNode) {
+            applyNodeChanges(_, fmr.meta, savedLogo, waFgEdgeOpt, gallery)
           }
         } yield {
           // Собираем новый экземпляр узла
@@ -317,7 +309,7 @@ class MarketLkAdnEdit @Inject() (
 
   /** Накатить изменения на инстанс узла, породив новый инстанс.
     * Вынесена из editAdnNodeSubmit() для декомпозиции и для нужд for{}-синтаксиса. */
-  private def applyNodeChanges(mnode: MNode, meta2: MMeta, newLogoOpt: Option[MImgT], waIdOpt: Option[String],
+  private def applyNodeChanges(mnode: MNode, meta2: MMeta, newLogoOpt: Option[MImgT], waFgEdgeOpt: Option[MEdge],
                                newImgGallery: Seq[MImgT]): MNode = {
     mnode.copy(
       meta = mnode.meta.copy(
@@ -348,9 +340,8 @@ class MarketLkAdnEdit @Inject() (
         var edgesIter = mnode.edges
           .withoutPredicateIter(NodeWelcomeAdIs, Logo, GalleryItem)
         // Отрабатываем карточку приветствия.
-        for (waId <- waIdOpt) {
-          val waEdge = MEdge(NodeWelcomeAdIs, waId)
-          edgesIter ++= Iterator(waEdge)
+        for (waFgEdge <- waFgEdgeOpt) {
+          edgesIter ++= Iterator(waFgEdge)
         }
         // Отрабатываем логотип
         for (newLogo <- newLogoOpt) {

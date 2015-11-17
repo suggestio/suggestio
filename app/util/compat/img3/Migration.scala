@@ -3,12 +3,13 @@ package util.compat.img3
 import com.google.inject.Inject
 import io.suggest.common.fut.FutureUtil
 import io.suggest.event.SioNotifierStaticClientI
+import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.edge.{MPredicates, MEdge, MNodeEdges, MEdgeInfo}
 import io.suggest.model.n2.geo.MGeoShape
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{MNodeTypes, MNodeType, MNode}
 import io.suggest.util.JMXBase
-import io.suggest.ym.model.{MAd, MAdnNodeGeo, MAdnNode}
+import io.suggest.ym.model.{MWelcomeAd, MAd, MAdnNodeGeo, MAdnNode}
 import models.ISize2di
 import models.im.{MImg3, MImg3_, MImg}
 import org.elasticsearch.client.Client
@@ -78,7 +79,7 @@ class Migration @Inject() (
       val mimg = mImg3.fromImg( oldImg ).original
       for {
         mLocImg     <- mlocImgFut
-        imgNodeId   <- portOneImage("logo", mimg, adnNodeId, mAdnNode.meta.dateCreated, logoImg.meta)
+        imgNodeId   <- portOneImage("logo", mimg, mAdnNode.meta.dateCreated, logoImg.meta)
       } yield {
         Some( MEdge(MPredicates.Logo, imgNodeId) )
       }
@@ -91,7 +92,7 @@ class Migration @Inject() (
         val mimg = mImg3.fromImg( oldImg ).original
         for {
           mlocImg   <- mlocImgFut
-          imgNodeId <- portOneImage("gal", mimg, adnNodeId, mAdnNode.meta.dateCreated)
+          imgNodeId <- portOneImage("gal", mimg, mAdnNode.meta.dateCreated)
         } yield {
           MEdge( MPredicates.GalleryItem, imgNodeId, order = Some(i), info = MEdgeInfo(
             dynImgArgs = mimg.qOpt
@@ -175,12 +176,12 @@ class Migration @Inject() (
 
 
   /** Портирование одного оригинала картинки. */
-  private def portOneImage(prefix: String, mimg: MImg3, ownNodeId: String, dateCreatedDflt: DateTime, imetaOpt: Option[ISize2di] = None): Future[String] = {
+  private def portOneImage(prefix: String, mimg: MImg3, dateCreatedDflt: DateTime, imetaOpt: Option[ISize2di] = None): Future[String] = {
 
     lazy val logPrefix = s"portOneImage(${mimg.rowKeyStr}): $prefix"
 
     val imgNodeId = mimg.rowKeyStr
-    trace(s"$logPrefix processing: $mimg ownNodeId=$ownNodeId")
+    trace(s"$logPrefix processing: $mimg")
 
     val imgSaveFut = mimg.saveToPermanent
 
@@ -300,8 +301,6 @@ class Migration @Inject() (
 
   /** Выполнить миграцию одной карточки на N2-архитектуру. */
   private def migrateMad(mad: MAd, tagEdgesMap: Map[String, MEdge], acc0Fut: Future[MadsCntsAcc]): Future[MadsCntsAcc] = {
-    val madId = mad.id.get
-
     val _SUPRESS_MISSING_IMGS = SUPPRESS_MISSING_IMGS
 
     // Отработать картинки
@@ -314,7 +313,7 @@ class Migration @Inject() (
         val mimg = mImg3.fromImg(oldImg).original
         val fut = for {
           mLocImg   <- mlocImgFut
-          imgNodeId <- portOneImage("bg", mimg, madId, mad.dateCreated, mii.meta)
+          imgNodeId <- portOneImage("bg", mimg, mad.dateCreated, mii.meta)
         } yield {
           val e = MEdge(MPredicates.Bg, imgNodeId, info = MEdgeInfo(
             dynImgArgs = oldImg.qOpt
@@ -375,6 +374,139 @@ class Migration @Inject() (
     }
   }
 
+
+  /** Миграция карточек приветствия. Т.к. пока не удалось спроецировать приветствия на
+    * рекламные карточки, то карточка приветствия становится опциональным ребром на логотип приветствия. */
+  def wcAdsToN2(): Future[MwaAcc] = {
+    val p = MPredicates.NodeWelcomeAdIs
+
+    // Найти все узлы, имеющие эдж на карточку приветствия
+    val msearch = new MNodeSearchDfltImpl {
+      override def outEdges: Seq[ICriteria] = {
+        val cr = Criteria(
+          predicates = Seq(p)
+        )
+        Seq(cr)
+      }
+      override def nodeTypes = Seq(MNodeTypes.AdnNode)
+      // На момент написания на продакшене было ~230 кабинетов всего.
+      override def limit = 600
+    }
+    val mnodesFut = MNode.dynSearch(msearch)
+
+    // Загрузить в память все карточки приветствия, на которые ссылаются узлы.
+    val wadsMapFut = mnodesFut.flatMap { mnodes =>
+      MWelcomeAd.multiGetMap {
+        mnodes.iterator
+          .flatMap { _.edges.withPredicateIter(p) }
+          .map(_.nodeId)
+      }
+    }
+
+    for {
+      mnodes  <- mnodesFut
+      wadsMap <- wadsMapFut
+      acc     <- {
+        mnodes.foldLeft( Future.successful(MwaAcc()) ) { (acc0Fut, mnode) =>
+          _migradeWad(mnode, acc0Fut, wadsMap)
+        }
+      }
+    } yield {
+      acc
+    }
+  }
+
+  /** Аккамулятор результатов портирования welcome ad. */
+  case class MwaAcc(done: Int = 0, skipped: Int = 0, error: Int = 0) {
+    def toReport: String = {
+      s"WelcomeAds:\n------\ndone = $done\nskipped: missing waOpt = $skipped\nfailed = $error"
+    }
+  }
+
+  private def WELCOME_IMG_KEY = "wlcm"
+
+  /** Миграция одной welcome-карточки. */
+  private def _migradeWad(mnode: MNode, acc0Fut: Future[MwaAcc], wadsMap: Map[String, MWelcomeAd]): Future[MwaAcc] = {
+    mnode.edges
+      .withPredicateIter( MPredicates.NodeWelcomeAdIs )
+      .toStream
+      .headOption
+      .fold {
+        LOGGER.warn(s"Skipped welcome node ${mnode.id.get}")
+        acc0Fut.map { acc0 =>
+          acc0.copy(
+            skipped = acc0.skipped + 1
+          )
+        }
+      } { waEdge =>
+        // Если карточка отсутствует, то она уже портирована. Это связано с тем,
+        // что один и тот же эдж используется в старом и новом формате.
+        val waFut = MWelcomeAd.getById(waEdge.nodeId)
+          .map { _.get }
+        val oldImgInfoFut = for (wa <- waFut) yield {
+          wa.imgs.get( WELCOME_IMG_KEY ).get
+        }
+        val oldImgFut = for (info <- oldImgInfoFut) yield {
+          MImg( info )
+        }
+        val oldLocalImgFut = oldImgFut.flatMap { oldImg =>
+          oldImg.original.toLocalImg
+        }
+        // Запустить операцию обновления.
+        val saveFut = for {
+          oldImgInfo  <- oldImgInfoFut
+          oldImg      <- oldImgFut
+          oldLocalImg <- oldLocalImgFut
+
+          // Портануть картинку на img3-архитектуру.
+          imgNodeId   <- {
+            val newImg = mImg3.fromImg(oldImg.original)
+            portOneImage("wclogo", newImg, DateTime.now, oldImgInfo.meta)
+          }
+
+          // Обновить welcome-эдж узла.
+          mnodeUpdatedId <- {
+            val p = MPredicates.NodeWelcomeAdIs
+            val edge2 = MEdge(p, imgNodeId, info = MEdgeInfo(
+              dynImgArgs = oldImg.qOpt
+            ))
+            MNode.tryUpdate(mnode) { mnode0 =>
+              mnode0.copy(
+                edges = mnode0.edges.copy(
+                  out = {
+                    MNodeEdges.edgesToMap1(
+                      mnode0.edges.withoutPredicateIter(p) ++ Iterator(edge2)
+                    )
+                  }
+                )
+              )
+            }
+          }
+
+          // Обновить аккамулятор
+          acc <- {
+            acc0Fut.map { acc0 =>
+              acc0.copy(
+                done = acc0.done + 1
+              )
+            }
+          }
+        } yield {
+          // Вернуть обновлённый акк.
+          acc
+        }
+
+        saveFut.recoverWith { case ex: Throwable =>
+          LOGGER.warn(s"Failed to port welcome ad [${waEdge.nodeId}] on node [${mnode.id.get}]", ex)
+          acc0Fut.map { acc0 =>
+            acc0.copy(
+              error = acc0.error + 1
+            )
+          }
+        }
+      }
+  }
+
 }
 
 
@@ -382,6 +514,7 @@ trait MigrationJmxMBean {
   def adnNodesToN2(): String
   def resaveMissingTypeTags(): String
   def madsToN2(): String
+  def wcAdsToN2(): String
 }
 
 class MigrationJmx @Inject() (
@@ -417,6 +550,14 @@ class MigrationJmx @Inject() (
   /** Портирование рекламных карточек на N2. */
   override def madsToN2(): String = {
     val fut = for (info <- migration.migrateMads()) yield {
+      info.toReport
+    }
+    awaitString(fut)
+  }
+
+  /** Портирование welcome ads. */
+  override def wcAdsToN2(): String = {
+    val fut = for (info <- migration.wcAdsToN2()) yield {
       info.toReport
     }
     awaitString(fut)

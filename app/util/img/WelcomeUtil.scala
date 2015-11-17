@@ -3,11 +3,11 @@ package util.img
 import com.google.inject.{Singleton, Inject}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.event.SioNotifierStaticClientI
+import io.suggest.model.n2.edge.MEdgeInfo
 import models.im._
 import models.madn.EditConstants
 import models.msc.{MWelcomeRenderArgs, WelcomeRenderArgsT}
 import org.elasticsearch.client.Client
-import play.api.Configuration
 import util.PlayMacroLogsImpl
 import util.cdn.CdnUtil
 import util.showcase.ShowcaseUtil
@@ -22,7 +22,6 @@ import models._
  */
 @Singleton
 class WelcomeUtil @Inject() (
-  configuration          : Configuration,
   scUtil                 : ShowcaseUtil,
   cdnUtil                : CdnUtil,
   mImg3                  : MImg3_,
@@ -35,90 +34,40 @@ class WelcomeUtil @Inject() (
 
   import LOGGER._
 
-  /** Прокидывать ссылку bgImg через dynImg(), а не напрямую. */
-  val BG_VIA_DYN_IMG: Boolean = configuration.getBoolean("showcase.welcome.bg.dynamic.enabled") getOrElse true
-
   /** Ключ для картинки, используемой в качестве приветствия. */
-  val WELCOME_IMG_KEY = "wlcm"
+  // TODO Удалить вслед за старой архитектурой.
 
   def welcomeImgIdKM = EditConstants.WELCOME_IMG_FN -> ImgFormUtil.img3IdOptM
 
-  /** Асинхронно получить welcome-ad-карточку. */
-  def getWelcomeAdOpt(welcomeAdId: Option[String]): Future[Option[MWelcomeAd]] = {
-    FutureUtil.optFut2futOpt(welcomeAdId)(MWelcomeAd.getById(_))
-  }
-  def getWelcomeAdOpt(mnode: MNode): Future[Option[MWelcomeAd]] = {
-    val waIdOpt = mnode.edges
-      .withPredicateIterIds( MPredicates.NodeWelcomeAdIs )
-      .toStream
-      .headOption
-    getWelcomeAdOpt(waIdOpt)
-  }
-
-  def updateWaImg(waOpt: Option[MWelcomeAd], newWaImgOpt: Option[MImgT]) = {
-    val saveAllFut = ImgFormUtil.updateOrigImgFull(
-      needImgs = newWaImgOpt.toSeq,
-      oldImgs = waOpt
-        .flatMap(_.imgs.headOption)
-        .map { kv => mImg3(kv._2.filename) }
-        .toIterable
-    )
-    saveAllFut map { _.headOption }
-  }
 
   /** Обновление картинки и карточки приветствия. Картинка хранится в полу-рекламной карточке, поэтому надо ещё
     * обновить карточку и пересохранить её. */
-  def updateWelcodeAdFut(adnNode: MNode, newWelcomeImgOpt: Option[MImgT]): Future[Option[String]] = {
-    getWelcomeAdOpt(adnNode) flatMap { currWelcomeAdOpt =>
-      updateWaImg(currWelcomeAdOpt, newWelcomeImgOpt) flatMap {
-        // Новой картинки нет. Надо удалить старую карточку (если была), и очистить соотв. welcome-поле.
-        case None =>
-          val waIdOpt = adnNode.edges
-            .withPredicateIterIds( MPredicates.NodeWelcomeAdIs )
-            .toStream
-            .headOption
-          FutureUtil.optFut2futOpt(waIdOpt) { waId =>
-            MWelcomeAd.deleteById(waId)
-            .map { _ => None }
-          }
-
-        // Новая картинка есть. Пора обновить текущую карточук, или новую создать.
-        case Some(newImg) =>
-          ImgFormUtil.img2imgInfo(newImg) flatMap { newImgInfo =>
-            val newWelcomeAd = updateWaOptWith(currWelcomeAdOpt, newImgInfo, adnNode.id.get)
-            newWelcomeAd.save
-              .map { Some.apply }
-          }
+  def updateWcFgImg(adnNode: MNode, newWelcomeImgOpt: Option[MImgT]): Future[Option[MEdge]] = {
+    // Сохранить картинку, вернуть эдж. Нет картинки -- нет эджа.
+    FutureUtil.optFut2futOpt(newWelcomeImgOpt) { fgMimg =>
+      for (_ <- fgMimg.saveToPermanent) yield {
+        val e = MEdge(MPredicates.NodeWelcomeAdIs, fgMimg.rowKeyStr, info = MEdgeInfo(
+          dynImgArgs = fgMimg.qOpt
+        ))
+        Some(e)
       }
     }
   }
 
 
   /**
-   * Обновление указанной рекламной карточки без сайд-эффектов. Если картинки нет, то и карточки на выходе не будет.
-   * @param waOpt Исходная рекламная карточка, если есть.
-   * @param newImgOpt Новая картинка, если есть.
-   * @param newProducerId producerId если понадобится его выставить.
-   * @return Опциональный результат в виде экземпляра MWA (новой или на основе исходной waOpt).
+   * Извлечь логотип карточки приветствия.
+   * @param mnode Отрабатываемый узел.
+   * @return Опциональная картинка.
    */
-  def updateWaOptAdHoc(waOpt: Option[MWelcomeAd], newImgOpt: Option[MImgInfoT], newProducerId: String): Option[MWelcomeAd] = {
-    newImgOpt map { newImg =>
-      updateWaOptWith(waOpt, newImg, newProducerId)
-    }
-  }
-
-  def updateWaOptWith(waOpt: Option[MWelcomeAd], newImg: MImgInfoT, newProducerId: String): MWelcomeAd = {
-    val newImgs = Map(WELCOME_IMG_KEY -> newImg)
-    waOpt.fold
-      { MWelcomeAd(producerId = newProducerId, imgs = newImgs) }
-      { _.copy(imgs = newImgs) }
-  }
-
-
-  def welcomeAd2iik(waOpt: Option[MWelcomeAd]): Option[MImgT] = {
-    waOpt
-      .flatMap { _.imgs.headOption }
-      .map[MImgT] { img => mImg3(img._2.filename) }
+  def wcLogoImg(mnode: MNode): Option[MImgT] = {
+    mnode.edges
+      .withPredicateIter( MPredicates.NodeWelcomeAdIs )
+      .map { e =>
+        mImg3(e)
+      }
+      .toStream
+      .headOption
   }
 
 
@@ -128,15 +77,8 @@ class WelcomeUtil @Inject() (
    * @param screen Настройки экрана, если есть.
    * @return Фьючерс с опциональными настройками. Если None, то приветствие рендерить не надо.
    */
-  def getWelcomeRenderArgs(mnode: MNode, screen: Option[DevScreen])(implicit ctx: Context): Future[Option[WelcomeRenderArgsT]] = {
-    val waIdOpt = {
-      mnode.edges
-        .withPredicateIterIds( MPredicates.NodeWelcomeAdIs )
-        .toStream
-        .headOption
-    }
-    val welcomeAdOptFut = FutureUtil.optFut2futOpt(waIdOpt)(MWelcomeAd.getById(_))
-
+  def getWelcomeRenderArgs(mnode: MNode, screen: Option[DevScreen])
+                          (implicit ctx: Context): Future[Option[WelcomeRenderArgsT]] = {
     // дедубликация кода. Можно наверное через Future.filter такое отрабатывать.
     def _colorBg = colorBg(mnode)
 
@@ -145,7 +87,7 @@ class WelcomeUtil @Inject() (
       .withPredicateIterIds( MPredicates.GalleryItem )
       .toStream
       .headOption
-      .fold[Future[Either[String, ImgUrlInfoT]]] {
+      .fold[Future[Either[String, IImgWithWhInfo]]] {
         Future successful _colorBg
       } { bgImgFilename =>
         val oiik = mImg3(bgImgFilename)
@@ -164,25 +106,23 @@ class WelcomeUtil @Inject() (
         }
       }
 
-    val fgImgOptFut = for {
-      welcomeAdOpt <- welcomeAdOptFut
-    } yield {
-      for {
-        welcomeAd <- welcomeAdOpt
-        imgKey    <- welcomeAd.imgs.get(WELCOME_IMG_KEY)
-      } yield {
-        imgKey
+    val fgImgOpt = wcLogoImg(mnode)
+    val fgMetaOptFut = FutureUtil.optFut2futOpt(fgImgOpt) { fgImg =>
+      fgImg.getImageWH
+    }
+    val fgOptFut = for (fgMetaOpt <- fgMetaOptFut) yield {
+      for (fgImg <- fgImgOpt; fgMeta <- fgMetaOpt) yield {
+        MImgWithWhInfo(fgImg, fgMeta)
       }
     }
 
     for {
-      welcomeAdOpt <- welcomeAdOptFut
-      bg1          <- bgFut
-      fgImgOpt     <- fgImgOptFut
+      bg1   <- bgFut
+      fgOpt <- fgOptFut
     } yield {
       val wra = MWelcomeRenderArgs(
         bg      = bg1,
-        fgImage = fgImgOpt,
+        fgImage = fgOpt,
         fgText  = Some( mnode.meta.basic.name )
       )
       Some(wra)
@@ -191,25 +131,19 @@ class WelcomeUtil @Inject() (
 
 
   /** Собрать ссылку на фоновую картинку. */
-  def bgCallForScreen(oiik: MImgT, screenOpt: Option[DevScreen], origMeta: ISize2di)(implicit ctx: Context): ImgUrlInfoT = {
+  private def bgCallForScreen(oiik: MImgT, screenOpt: Option[DevScreen], origMeta: ISize2di)
+                             (implicit ctx: Context): MImgWithWhInfo = {
     val oiik2 = oiik.original
     screenOpt
-      .filter { _ => BG_VIA_DYN_IMG }
       .flatMap { scr =>
         scr.maybeBasicScreenSize.map(_ -> scr)
       }
-      .fold [ImgUrlInfoT] {
-        ImgUrlInfo(
-          call = cdnUtil.dynImg(oiik2.fileName),
-          meta = Some(origMeta)
-        )
+      .fold {
+        MImgWithWhInfo(oiik, origMeta)
       } { case (bss, screen) =>
         val imOps = imConvertArgs(bss, screen)
         val dynArgs = oiik2.withDynOps(imOps)
-        ImgUrlInfo(
-          call = cdnUtil.dynImg(dynArgs),
-          meta = Some(bss)
-        )
+        MImgWithWhInfo(dynArgs, bss)
       }
   }
 
@@ -217,7 +151,7 @@ class WelcomeUtil @Inject() (
     * @param scrSz Размер конечной картинки.
     * @return Список ImOp в прямом порядке.
     */
-  def imConvertArgs(scrSz: BasicScreenSize, screen: DevScreen): Seq[ImOp] = {
+  private def imConvertArgs(scrSz: BasicScreenSize, screen: DevScreen): Seq[ImOp] = {
     val gravity = ImGravities.Center
     val acc0: List[ImOp] = Nil
     val bgc = screen.pixelRatio.bgCompression

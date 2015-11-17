@@ -1,6 +1,6 @@
 package models.msc
 
-import models._
+import models.im.IImgWithWhInfo
 
 /**
  * Suggest.io
@@ -11,9 +11,9 @@ import models._
 trait WelcomeRenderArgsT {
 
   /** Фон. Либо Left(цвет), либо Right(инфа по картинке). */
-  def bg: Either[String, ImgUrlInfoT]
+  def bg: Either[String, IImgWithWhInfo]
 
-  def fgImage: Option[MImgInfoT]
+  def fgImage: Option[IImgWithWhInfo]
 
   /** Текст, который надо отобразить. Изначально использовался, когда нет fgImage. */
   def fgText: Option[String]
@@ -21,24 +21,29 @@ trait WelcomeRenderArgsT {
   override def toString: String = {
     val sb = new StringBuilder(64, "bg=")
     bg match {
-      case Right(ii) => sb.append(ii.call.url)
-      case Left(color) => sb.append(color)
+      case Right(ii)    => sb.append(ii.mimg.fileName)
+      case Left(color)  => sb.append(color)
     }
     sb.append('&')
     val _fgi = fgImage
     if (_fgi.isDefined)
-      sb.append("fgImage='").append(_fgi.get.filename).append('\'').append('&')
+      sb.append("fgImage='")
+        .append(_fgi.get.mimg.fileName)
+        .append('\'')
+        .append('&')
     val _fgt = fgText
     if (_fgt.isDefined)
-      sb.append("fgText='").append(_fgt.get).append('\'')
+      sb.append("fgText='")
+        .append(_fgt.get)
+        .append('\'')
     sb.toString()
   }
 }
 
 
 case class MWelcomeRenderArgs(
-  override val bg       : Either[String, ImgUrlInfoT],
-  override val fgImage  : Option[MImgInfoT],
+  override val bg       : Either[String, IImgWithWhInfo],
+  override val fgImage  : Option[IImgWithWhInfo],
   override val fgText   : Option[String]
 )
   extends WelcomeRenderArgsT

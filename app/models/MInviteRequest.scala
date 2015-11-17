@@ -94,7 +94,6 @@ final case class MInviteRequest(
   var reqType   : InviteReqType,
   override val companion: MInviteRequest_,
   var company   : Either[MCompany, String],
-  var waOpt     : Option[Either[MWelcomeAd, String]] = None,
   var adnNode   : Option[Either[MNode, String]] = None,
   var contract  : Option[Either[MContract, Int]] = None,
   var mmp       : Option[Either[MTariffDaily, Int]] = None,
@@ -123,9 +122,6 @@ final case class MInviteRequest(
     }
     fut = emailAct.fold(fut) { emailActEith =>
       companion.withEraseLeftResources(fut, emailActEith)
-    }
-    fut = waOpt.fold(fut) {
-      _waOpt => companion.withEraseLeftResources(fut, _waOpt)
     }
     fut
   }
@@ -323,7 +319,6 @@ sealed trait EMInviteRequestStatic extends EsModelStaticMutAkvT {
   val BALANCE_ESFN        = "mbb"
   val EMAIL_ACT_ESFN      = "ea"
   val PAY_REQS_RAW_ESFN   = "prqRaw"
-  val WELCOME_AD_ESFN     = "wa"
 
   val JOIN_ANSWERS_ESFN   = "ja"
 
@@ -399,8 +394,6 @@ sealed trait EMInviteRequestStatic extends EsModelStaticMutAkvT {
         acc.joinAnswers = Option(SMJoinAnswers.deserialize(jaRaw))
       case (PAY_REQS_RAW_ESFN, prqRaw) =>
         acc.payReqsRaw = Option(prqRaw) map stringParser
-      case (WELCOME_AD_ESFN, waOptRaw: ju.Map[_,_]) =>
-        acc.waOpt = Option(waOptRaw) map { deserializeEsModel(MWelcomeAd, _) }
     }
   }
 
@@ -420,7 +413,6 @@ sealed trait EMInviteRequestMut extends EsModelPlayJsonT {
   var emailAct  : Option[Either[EmailActivation, String]]
   var joinAnswers: Option[SMJoinAnswers]
   var payReqsRaw: Option[String]
-  var waOpt     : Option[Either[MWelcomeAd, String]]
 
 
   override val companion: MInviteRequest_
@@ -441,8 +433,6 @@ sealed trait EMInviteRequestMut extends EsModelPlayJsonT {
       acc ::= BALANCE_ESFN -> strModel2json(balance.get)
     if (emailAct.isDefined)
       acc ::= EMAIL_ACT_ESFN -> strModel2json(emailAct.get)
-    if (waOpt.isDefined)
-      acc ::= WELCOME_AD_ESFN -> strModel2json(waOpt.get)
     if (joinAnswers exists { _.isDefined })
       acc ::= JOIN_ANSWERS_ESFN -> joinAnswers.get.toPlayJson
     if (mmp.isDefined)
