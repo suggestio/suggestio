@@ -167,7 +167,6 @@ package object models {
   // Исходящие теги узлов.
   val  MTagEdge             = io.suggest.model.n2.tag.edge.MTagEdge
   type MTagEdge             = io.suggest.model.n2.tag.edge.MTagEdge
-  type ITagEdge             = io.suggest.model.n2.tag.edge.ITagEdge
   type TagsMap_t            = io.suggest.model.n2.tag.edge.TagsMap_t
 
   type MColorData           = n2.node.meta.colors.MColorData

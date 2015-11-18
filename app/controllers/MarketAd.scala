@@ -367,10 +367,11 @@ class MarketAd @Inject() (
               mad.copy(
                 edges = mad.edges.copy(
                   out = {
-                    val ek = MPredicates.Receiver -> producerId
                     // Найти существующий эдж продьюсера-ресивера.
-                    mad.edges.out
-                      .get(ek)
+                    mad.edges
+                      .withNodePred(producerId, MPredicates.Receiver)
+                      .toStream
+                      .headOption
                       .flatMap { e =>
                         val sls1 = if (isLevelEnabled)
                           e.info.sls -- ssls
@@ -388,7 +389,9 @@ class MarketAd @Inject() (
                       }
                       .fold[NodeEdgesMap_t] {
                         // None значит нужно удалить ресивера.
-                        mad.edges.out.filterKeys(_ != ek)
+                        MNodeEdges.edgesToMap1(
+                          mad.edges.withoutNodePred(producerId, MPredicates.Receiver)
+                        )
                       } { e =>
                         // Обновляем/выставляем ресивера.
                         mad.edges.out ++ MNodeEdges.edgesToMap(e)

@@ -167,7 +167,9 @@ class MarketLkAdn @Inject() (
           for {
             newAdOpt <- MNode.getByIdType(newAdId, MNodeTypes.Ad)
             if newAdOpt.exists { newAd =>
-              newAd.edges.out.contains( MPredicates.OwnedBy -> adnId )
+              newAd.edges
+                .withNodePred(adnId, MPredicates.OwnedBy)
+                .nonEmpty
             }
           } yield {
             newAdOpt

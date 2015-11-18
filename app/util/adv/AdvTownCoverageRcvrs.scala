@@ -110,8 +110,13 @@ class AdvTownCoverageRcvrs @Inject() (
             .iterator
             // Раскрываем уровни отображения
             .flatMap { districtId =>
-              allDirectRcvrs.get(MPredicates.Receiver -> districtId)
-                .fold [Iterator[SinkShowLevel]] (Iterator.empty) { _.info.sls.iterator }
+              allDirectRcvrs
+                .valuesIterator
+                .find { e =>
+                  e.predicate == MPredicates.Receiver && e.nodeId == districtId
+                }
+                .iterator
+                .flatMap( _.info.sls.iterator )
             }
             .toSeq
             // Считаем частоты уровней отображения

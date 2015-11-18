@@ -56,8 +56,10 @@ class N2NodesUtil {
   /** Найти указанный ресивер среди эджей. */
   def findReceiver(mad: MNode, nodeId: String): Option[MEdge] = {
     // Тот редкий случай, когда в карте эджей можно поискать по ключу.
-    mad.edges.out
-      .get( (MPredicates.Receiver, nodeId) )
+    mad.edges
+      .withNodePred(nodeId, MPredicates.Receiver)
+      .toStream
+      .headOption
   }
 
   /** Определить BlockConf для карточки или иного узла. */
