@@ -82,7 +82,10 @@ object NodeGeoLevels extends Enumeration(1) with EnumMaybeWithName with EnumMayb
     override def upper: Option[T] = Some(NGL_TOWN_DISTRICT)
     override def precision = "50m"
     override def osmMapScale = 16
-    override val accuracyMetersMax: Option[Int] = super.accuracyMetersMax orElse { Some(400) }
+    override val accuracyMetersMax: Option[Int] = {
+      super.accuracyMetersMax
+        .orElse { Some(400) }
+    }
   }
 
   val NGL_TOWN_DISTRICT: T = new Val("td") {
@@ -94,7 +97,10 @@ object NodeGeoLevels extends Enumeration(1) with EnumMaybeWithName with EnumMayb
     /** У "Районов города" есть короткое название - "Районы" */
     override val l10nSingularShort = "District"
     override val l10nPluralShort = l10nSingularShort + "s"
-    override val accuracyMetersMax: Option[Int] = super.accuracyMetersMax orElse { Some(3000) }
+    override val accuracyMetersMax: Option[Int] = {
+      super.accuracyMetersMax
+        .orElse { Some(3000) }
+    }
   }
 
   val NGL_TOWN: T = new Val("to") {

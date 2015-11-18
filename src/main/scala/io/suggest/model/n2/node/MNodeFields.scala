@@ -50,6 +50,9 @@ object MNodeFields {
     def ADN_RIGHTS_FN           = _fullFn( MNodeExtras.Fields.Adn.RIGHTS_FN )
     def ADN_SHOWN_TYPE_FN       = _fullFn( MNodeExtras.Fields.Adn.SHOWN_TYPE_FN )
     def ADN_SHOW_IN_SC_NL_FN    = _fullFn( MNodeExtras.Fields.Adn.SHOW_IN_SC_NL_FN )
+
+    def TAG_FACE_NAME_FN        = _fullFn( MNodeExtras.Fields.Tag.FACE_NAME_FN )
+    def TAG_FACES_FN            = _fullFn( MNodeExtras.Fields.Tag.FACES_FN )
   }
 
   /** Абсолютные имена ES-полей в .edges */

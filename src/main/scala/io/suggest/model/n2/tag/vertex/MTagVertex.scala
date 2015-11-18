@@ -16,13 +16,19 @@ import scala.collection.Map
  * Description: Модель содержимого tagEdge, т.е. tag-свойства одной вершины N2 Graph.
  */
 
-object MTagVertex extends IGenEsMappingProps with PrefixedFn {
+object MTagVertex extends IGenEsMappingProps {
 
-  override protected def _PARENT_FN = EMTagVertex.TAG_VERTEX_FN
+  object Fields {
+    object Faces extends PrefixedFn {
+      val FACES_FN = "f"
+      override protected def _PARENT_FN: String = FACES_FN
 
-  /** Имя поля, хранящего "лицо" тега, т.е. то, как описывают словами этот тег пользователи интернетов. */
-  val FACES_FN = "f"
-  def FACES_ESFN = _fullFn(FACES_FN)
+      /** Имя поля, хранящего "лицо" тега, т.е. то, как описывают словами этот тег пользователи интернетов. */
+      def FACE_NAME_FN = _fullFn( MTagFace.NAME_FN )
+    }
+  }
+
+  import Fields.Faces.FACES_FN
 
   override def generateMappingProps: List[DocField] = {
     List(
@@ -61,7 +67,7 @@ trait ITagVertex {
 
 /** Субмодель одного тега в рамках вершины графа N2. */
 case class MTagVertex(
-                     // TODO display name нужно для отображения человеческого названия, not_analyzed для возможности сортировки по нему.
+  // TODO display name нужно для отображения человеческого названия, not_analyzed для возможности сортировки по нему.
   override val faces       : TagFacesMap   = Map.empty
 )
   extends ITagVertex

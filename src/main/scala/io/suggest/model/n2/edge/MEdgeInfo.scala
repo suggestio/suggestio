@@ -2,6 +2,7 @@ package io.suggest.model.n2.edge
 
 import io.suggest.common.{EmptyProduct, IEmpty}
 import io.suggest.model.es.IGenEsMappingProps
+import io.suggest.model.geo.GeoShape
 import io.suggest.util.SioConstants
 import io.suggest.ym.model.common.SinkShowLevel
 import org.joda.time.DateTime
@@ -26,6 +27,7 @@ object MEdgeInfo extends IGenEsMappingProps {
   val DATE_NI_FN          = "dtni"
   val COMMENT_NI_FN       = "coni"
   val FLAG_FN             = "flag"
+  val GEO_SHAPE_FN        = "gs"
 
 
   /** Поддержка JSON. */
@@ -34,7 +36,8 @@ object MEdgeInfo extends IGenEsMappingProps {
     (__ \ SLS_FN).format[Set[SinkShowLevel]] and
     (__ \ DATE_NI_FN).formatNullable[DateTime] and
     (__ \ COMMENT_NI_FN).formatNullable[String] and
-    (__ \ FLAG_FN).formatNullable[Boolean]
+    (__ \ FLAG_FN).formatNullable[Boolean] and
+    (__ \ GEO_SHAPE_FN).formatNullable[GeoShape]
   )(apply, unlift(unapply))
 
 
@@ -75,6 +78,10 @@ object MEdgeInfo extends IGenEsMappingProps {
         id              = FLAG_FN,
         index           = FieldIndexingVariants.not_analyzed,
         include_in_all  = false
+      ),
+      FieldGeoShape(
+        id              = GEO_SHAPE_FN,
+        precision       = "50m"
       )
     )
   }
@@ -100,6 +107,9 @@ trait IEdgeInfo extends IEmpty {
   /** Индексируемое значение некоторого флага. */
   def flag         : Option[Boolean]
 
+  /** Геошейп, связанный с этим ребром. */
+  def geoShape     : Option[GeoShape]
+
 }
 
 
@@ -108,7 +118,8 @@ case class MEdgeInfo(
   override val sls          : Set[SinkShowLevel]    = Set.empty,
   override val dateNi       : Option[DateTime]      = None,
   override val commentNi    : Option[String]        = None,
-  override val flag         : Option[Boolean]       = None
+  override val flag         : Option[Boolean]       = None,
+  override val geoShape     : Option[GeoShape]      = None
 )
   extends EmptyProduct
   with IEdgeInfo
@@ -136,6 +147,11 @@ case class MEdgeInfo(
       if (commentNi.nonEmpty) {
         sb.append("commentNi=")
           .append(commentNi.get)
+          .append(' ')
+      }
+      for (gs <- geoShape) {
+        sb.append("gs=")
+          .append(gs)
       }
       sb.toString()
 

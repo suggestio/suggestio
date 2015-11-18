@@ -3,10 +3,9 @@ package io.suggest.model.n2.extra
 import io.suggest.common.EmptyProduct
 import io.suggest.model.PrefixedFn
 import io.suggest.model.es.IGenEsMappingProps
-import io.suggest.model.n2.tag.vertex.{EMTagVertex, EMTagVertexStaticT, MTagVertex}
-import play.api.libs.json._
+import io.suggest.model.n2.tag.vertex.{EMTagVertex, MTagVertex}
 import play.api.libs.functional.syntax._
-import play.api.libs.json.OFormat
+import play.api.libs.json.{OFormat, _}
 
 /**
  * Suggest.io
@@ -27,7 +26,12 @@ object MNodeExtras extends IGenEsMappingProps {
   /** Статическая модель полей модели [[MNodeExtras]]. */
   object Fields {
 
-    val TAG_FN = "t"
+    object Tag extends PrefixedFn {
+      val TAG_FN = "t"
+      override protected def _PARENT_FN = TAG_FN
+      def FACES_FN     = _fullFn( MTagVertex.Fields.Faces.FACES_FN )
+      def FACE_NAME_FN = _fullFn( MTagVertex.Fields.Faces.FACE_NAME_FN )
+    }
 
     object Adn extends PrefixedFn {
       val ADN_FN = "a"
@@ -57,8 +61,8 @@ object MNodeExtras extends IGenEsMappingProps {
   }
 
 
-  import Fields.TAG_FN
   import Fields.Adn.ADN_FN
+  import Fields.Tag.TAG_FN
 
   /** Поддержка JSON для растущей модели [[MNodeExtras]]. */
   implicit val FORMAT: OFormat[MNodeExtras] = (
@@ -80,11 +84,6 @@ object MNodeExtras extends IGenEsMappingProps {
   }
 
 }
-
-
-/** Аддон для модели [[io.suggest.model.n2.node.MNode]] для поддержки маппинга полей. */
-trait EMNodeExtrasStatic
-  extends EMTagVertexStaticT
 
 
 /** Класс-контейнер-реализация модели. */

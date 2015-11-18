@@ -1,6 +1,6 @@
 package io.suggest.model.n2.tag.vertex.search
 
-import io.suggest.model.n2.tag.vertex.{MTagVertex, MTagFace}
+import io.suggest.model.n2.node.MNodeFields
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import org.elasticsearch.index.query.{MatchQueryBuilder, QueryBuilders, FilterBuilders, QueryBuilder}
 
@@ -12,44 +12,79 @@ import org.elasticsearch.index.query.{MatchQueryBuilder, QueryBuilders, FilterBu
  */
 trait FaceTextQuery extends DynSearchArgs {
 
-  /** match-содержимое для матчинга по имени тега. */
-  def tagVxFace: Option[String]
+  /** Критерии поиска тегов. */
+  def tagFaces: Seq[ITagFaceCriteria]
 
   override def toEsQueryOpt: Option[QueryBuilder] = {
     val qb0Opt = super.toEsQueryOpt
-    val tvfOpt = tagVxFace
-    if (tvfOpt.isEmpty) {
+
+    val tfs = tagFaces
+    if (tfs.isEmpty) {
       qb0Opt
 
     } else {
-      val tvf = tvfOpt.get
-      // Сборка nested-запроса.
-      val ftsQb = QueryBuilders.matchQuery(MTagFace.NAME_ESFN, tvf)
-        // TODO Надо ведь 100% по идее, но не ясно, насколько это ок.
-        .minimumShouldMatch( "90%" )
-        .operator( MatchQueryBuilder.Operator.AND )
 
-      // Добавить nested-query к существующей query или создать новую.
+      // Есть какие-то поисковые критерии. Организовать nested search...
+      val fn = MNodeFields.Extras.TAG_FACE_NAME_FN
+
+      // Сконвертить критерии в queries
+      val queries: Seq[(QueryBuilder, ITagFaceCriteria)] = tfs.map { tf =>
+        val q = QueryBuilders.matchQuery(fn, tf.face)
+          // TODO Надо ведь 100% по идее, но не ясно, насколько это ок.
+          .minimumShouldMatch( "90%" )
+          .operator( MatchQueryBuilder.Operator.AND )
+          .`type` {
+            if (tf.isPrefix)
+              MatchQueryBuilder.Type.PHRASE_PREFIX
+            else
+              MatchQueryBuilder.Type.PHRASE
+          }
+          .zeroTermsQuery( MatchQueryBuilder.ZeroTermsQuery.ALL )
+        q -> tf
+      }
+
+      // Объединить несколько query в одну согласно предикатам.
+      val query: QueryBuilder = if (queries.size == 1) {
+        queries.head._1
+      } else {
+        val bq = QueryBuilders.boolQuery()
+        var minShouldMatch = 0
+        for ((q, tf) <- queries) {
+          tf.must match {
+            case None =>
+              minShouldMatch += 1
+              bq.should(q)
+            case Some(true) =>
+              bq.must(q)
+            case Some(false) =>
+              bq.mustNot(q)
+          }
+        }
+        bq.minimumNumberShouldMatch(minShouldMatch)
+      }
+
+      // Завернуть собранный поиск в nested
+      val nestedFn = MNodeFields.Extras.TAG_FACES_FN
       qb0Opt map { qb0 =>
         // Просто полнотекстовый match-поиск по
-        val filter = FilterBuilders.nestedFilter(MTagVertex.FACES_ESFN, ftsQb)
+        val filter = FilterBuilders.nestedFilter(nestedFn, query)
         QueryBuilders.filteredQuery(qb0, filter)
 
       } orElse {
-        val qb2 = QueryBuilders.nestedQuery(MTagVertex.FACES_ESFN, ftsQb)
+        val qb2 = QueryBuilders.nestedQuery(nestedFn, query)
         Some(qb2)
       }
     }
   }
 
   override def toStringBuilder: StringBuilder = {
-    fmtColl2sb("tagVxFace", tagVxFace, super.toStringBuilder)
+    fmtColl2sb("tagFaces", tagFaces, super.toStringBuilder)
   }
   override def sbInitSize: Int = {
     val l1 = super.sbInitSize
-    val tvf = tagVxFace
+    val tvf = tagFaces
     if (tvf.nonEmpty) {
-      l1 + 20 + tvf.get.length
+      l1 + 20 + (30 * tvf.length)
     } else {
       l1
     }
@@ -60,12 +95,12 @@ trait FaceTextQuery extends DynSearchArgs {
 
 /** Дефолтовая реализация [[FaceTextQuery]]. */
 trait FaceTextQueryDflt extends FaceTextQuery {
-  override def tagVxFace: Option[String] = None
+  override def tagFaces: Seq[ITagFaceCriteria] = Nil
 }
 
 
 /** Враппер для реализаций [[FaceTextQuery]]. */
 trait FaceTextQueryWrap extends FaceTextQuery with DynSearchArgsWrapper {
   override type WT <: FaceTextQuery
-  override def tagVxFace = _dsArgsUnderlying.tagVxFace
+  override def tagFaces = _dsArgsUnderlying.tagFaces
 }

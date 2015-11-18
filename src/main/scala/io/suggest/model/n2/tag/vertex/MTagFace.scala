@@ -14,14 +14,10 @@ import play.api.libs.functional.syntax._
  * Created: 11.09.15 16:26
  * Description: M Tag Face -- лицо тега, с которым "взаимодействуют" пользователи.
  */
-object MTagFace extends IGenEsMappingProps with PrefixedFn {
-
-  override protected def _PARENT_FN = MTagVertex.FACES_ESFN
+object MTagFace extends IGenEsMappingProps {
 
   /** Имя поля с именем. Индексируется для FTS-поиска. */
   val NAME_FN    = "n"
-  /** Полное абсолютное имя name-поля. */
-  def NAME_ESFN  = _fullFn(NAME_FN)
   private val NAME_PATH = __ \ NAME_FN
 
   override def generateMappingProps: List[DocField] = {
@@ -36,6 +32,7 @@ object MTagFace extends IGenEsMappingProps with PrefixedFn {
     )
   }
 
+  // TODO Нужен Format здесь!
   implicit val READS: Reads[MTagFace] = {
     NAME_PATH.read[String]
       .map { MTagFace.apply }

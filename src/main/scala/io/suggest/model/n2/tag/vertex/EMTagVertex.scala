@@ -1,10 +1,7 @@
 package io.suggest.model.n2.tag.vertex
 
-import io.suggest.model.es.GenEsMappingPropsDummy
-import io.suggest.model.n2.{FieldNamesL1, node}
-import io.suggest.util.SioEsUtil._
+import io.suggest.model.n2.FieldNamesL1
 import play.api.libs.json._
-import play.api.libs.functional.syntax._
 
 /**
  * Suggest.io
@@ -22,20 +19,6 @@ object EMTagVertex {
   /** JSON-сериализатор и десериализатор для опционального значения tag-поля. */
   val FORMAT: OFormat[Option[MTagVertex]] = {
     (__ \ TAG_VERTEX_FN).formatNullable[MTagVertex]
-  }
-
-}
-
-
-import io.suggest.model.n2.tag.vertex.EMTagVertex.TAG_VERTEX_FN
-
-
-/** Аддон статической стороны [[io.suggest.model.n2.node.MNode]]. */
-trait EMTagVertexStaticT extends GenEsMappingPropsDummy {
-
-  override def generateMappingProps: List[DocField] = {
-    FieldObject(TAG_VERTEX_FN, enabled = true, properties = MTagVertex.generateMappingProps) ::
-      super.generateMappingProps
   }
 
 }

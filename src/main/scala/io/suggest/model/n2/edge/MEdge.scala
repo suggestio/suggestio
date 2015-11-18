@@ -72,16 +72,26 @@ trait IEdge {
 
   /** Предикат. */
   def predicate : MPredicate
+
   /** id ноды на дальнем конце эджа. Это скорее всего toId, в рамках модели это не важно. */
   def nodeId    : String
-  /** Для поддержкания порядка эджей можно использовать это опциональное поле. */
+
+  /** Для поддержкания порядка эджей можно использовать это опциональное поле.
+    * Можно также использовать для некоего внутреннего доп.идентификатора. */
   def order     : Option[Int]
+
   /** Какие-то доп.данные текущего ребра. */
   def info      : MEdgeInfo
 
+  /** Сборка суффикса ключа эджа в карте эджей. */
+  def _extraKeyData: EdgeXKey_t = {
+    val k0 = info._extraKeyData
+    order.fold(k0)(_ :: k0)
+  }
+
   /** Сконвертить в инстанс ключа карты эджей. */
   def toEmapKey: NodeEdgesMapKey_t = {
-    (predicate, nodeId, info._extraKeyData)
+    (predicate, nodeId, _extraKeyData)
   }
 
   override def toString: String = {
