@@ -58,9 +58,6 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
   private def _isImage(ntype: MNodeType): Boolean = {
     ntype ==>> MNodeTypes.Media.Image
   }
-  private def _isWcAd(ntype: MNodeType): Boolean = {
-    ntype ==>> MNodeTypes.WelcomeAd
-  }
   private def _isTag(ntype: MNodeType): Boolean = {
     ntype ==>> MNodeTypes.Tag
   }
@@ -177,10 +174,13 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
     }
   }
 
-  /** Предикат, указывающий на карточку приветствия. */
-  val NodeWelcomeAdIs: T = new Val("h") with _FromAdnNode {
-    override def toTypeValid(ntype: MNodeType) = _isWcAd(ntype)
-  }
+  /** Предикат, указывающий на логотип карточки приветствия.
+    *
+    * Изначально предикат назывался NodeWelcomeAdIs и хранил в себе id карточки приветствия в MWelcomeAd.
+    * После ветки root:mad-to-n2 предикат стал использоваться для указания на логотип приветствия.
+    * а неудавшаяся модель карточки приветствия окончательно отмерла.
+    */
+  val WcLogo: T = new Val("h") with _FromAdnNode with _ToImg
 
   /** Предикат, направляемый в сторону картинки или иного объекта, являющегося предметом галлереи. */
   val GalleryItem: T = new Val("i") with _FromAdnNode with _ToImg

@@ -122,7 +122,7 @@ final case class MAdnNode(
     val edges0 = {
       meta.welcomeAdId
         .iterator
-        .map { wcId => MEdge(MPredicates.NodeWelcomeAdIs, wcId) } ++
+        .map { wcId => MEdge(MPredicates.WcLogo, wcId) } ++
       personIds.iterator
         .map { personId => MEdge(MPredicates.OwnedBy, personId) } ++
       geo.directParentIds

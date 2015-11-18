@@ -99,9 +99,6 @@ object MNodeTypes extends EnumMaybeWithName with EnumJsonReadsValT with EnumTree
 
   }
 
-  /** Карточка приветствия. */
-  val WelcomeAd: T = new ValNoSub("w")
-
 
   /** Поддержка binding'а из URL query string, для play router'а. */
   implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[T] = {

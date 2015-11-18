@@ -38,8 +38,7 @@ object EsModelUtil extends MacroLogsImpl {
 
   /** Список ES-моделей. Нужен для удобства массовых maintance-операций. Расширяется по мере роста числа ES-моделей. */
   def ES_MODELS = List[EsModelCommonStaticT] (
-    MCompany, MWelcomeAd, MYmCategory, MAdStat, MAd,
-    MNode
+    MCompany, MAdStat, MNode
   )
 
 
