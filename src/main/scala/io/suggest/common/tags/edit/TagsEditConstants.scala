@@ -9,10 +9,19 @@ package io.suggest.common.tags.edit
 object TagsEditConstants {
 
   /** id контейнера уже созданных тегов. */
-  def EXIST_CONT_ID          = "tagsExistCont"
+  def EXIST_CONT_ID               = "tagsExistCont"
 
   /** Название поля с названием нового добавляемого тега. */
-  def NEW_TAG_FN                  = "new"
+  def ADD_TAGS_FN                 = "new"
+
+  /** Название поля с уже связанными тегами. */
+  def EXIST_TAGS_FN               = "tags"
+
+  /** Имя поля с именем уже связанного тега. */
+  def EXIST_TAG_NAME_FN           = "name"
+
+  /** Имя поля с id узла связанного тега. */
+  def EXIST_TAG_ID_FN             = "node_id"
 
   /** id контейнера с инпутами для добавления нового тега. */
   def ADD_FORM_ID                 = "tagsAddForm"
@@ -27,7 +36,7 @@ object TagsEditConstants {
   def START_SEARCH_TIMER_MS       = 400
 
   /** Класс-пометка для div'ов тегов в редакторе тегов. */
-  def ONE_EXISTING_CONT_CLASS      = "js-tag-editable"
+  def ONE_EXISTING_CONT_CLASS     = "js-tag-editable"
 
   /** Класс-пометка для элементов удаления в редакторе тегов. */
   def DELETE_EXISTING_CLASS       = "js-tag-delete"
