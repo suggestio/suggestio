@@ -81,7 +81,7 @@ trait IEdge {
 
   /** Сконвертить в инстанс ключа карты эджей. */
   def toEmapKey: NodeEdgesMapKey_t = {
-    (predicate, nodeId)
+    (predicate, nodeId, info._extraKeyData)
   }
 
   override def toString: String = {

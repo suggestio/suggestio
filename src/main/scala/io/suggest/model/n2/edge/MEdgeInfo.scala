@@ -144,4 +144,9 @@ case class MEdgeInfo(
     }
   }
 
+
+  def _extraKeyData: EdgeXKey_t = {
+    EdgeXKeyEmpty
+  }
+
 }

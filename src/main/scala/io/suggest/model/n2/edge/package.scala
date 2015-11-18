@@ -9,8 +9,14 @@ package object edge {
 
   type MPredicate = MPredicates.T
 
+  /** Ключ эджа в карте помимо node id и predicate может содержать произвольные доп.данные в этом формате. */
+  type EdgeXKey_t         = List[Any]
+
+  /** Дефолтовое значение extra-ключа эджа. */
+  def EdgeXKeyEmpty       = Nil
+
   /** Тип ключа карты эджей. */
-  type NodeEdgesMapKey_t  = (MPredicate, String)
+  type NodeEdgesMapKey_t  = (MPredicate, String, EdgeXKey_t)
 
   /** Тип карты inline-эджей. */
   type NodeEdgesMap_t     = Map[NodeEdgesMapKey_t, MEdge]

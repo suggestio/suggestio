@@ -89,8 +89,9 @@ object MNodeEdges extends IGenEsMappingProps {
     edgesToMapIter1(edges)
   }
   def edgesToMapIter1(edges: TraversableOnce[MEdge]): Iterator[(NodeEdgesMapKey_t, MEdge)] = {
-    edges.toIterator
-      .map { edge => edge.toEmapKey -> edge }
+    for (edge <- edges.toIterator) yield {
+      edge.toEmapKey -> edge
+    }
   }
   def edgesToMap1(edges: TraversableOnce[MEdge]): NodeEdgesMap_t = {
     edgesToMapIter1(edges)
@@ -136,6 +137,20 @@ case class MNodeEdges(
     out.valuesIterator
       .filter { medge =>
         nodeIds contains medge.nodeId
+      }
+  }
+
+  def withNodePred(nodeId: String, predicate: MPredicate): Iterator[MEdge] = {
+    out.valuesIterator
+      .filter { medge =>
+        medge.nodeId == nodeId && medge.predicate == predicate
+      }
+  }
+
+  def withoutNodePred(nodeId: String, predicate: MPredicate): Iterator[MEdge] = {
+    out.valuesIterator
+      .filterNot { medge =>
+        medge.nodeId == nodeId && medge.predicate == predicate
       }
   }
 
