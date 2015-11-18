@@ -3,6 +3,7 @@ package models.mtag
 import io.suggest.common.text.StringUtil
 import io.suggest.model.n2.node.{MNodeTypes, MNodeType}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.tag.vertex.search.{ITagFaceCriteria, MTagFaceCriteria}
 import play.api.mvc.QueryStringBindable
 import util.qsb.QsbKey1T
 import io.suggest.sc.TagSearchConstants.Req._
@@ -49,6 +50,12 @@ object MTagSearch {
               else
                 q1
             }
+            val crs = _ftsQueryOpt2
+              .iterator
+              .map { face =>
+                MTagFaceCriteria(face, isPrefix = true)
+              }
+              .toSeq
             val _limit = _limitOpt
               .fold(LIMIT_DFLT) { l =>
                 Math.max(0,
@@ -60,7 +67,7 @@ object MTagSearch {
                   Math.min(OFFSET_MAX, o))
               }
             new MTagSearch {
-              override def tagVxFace = _ftsQueryOpt2
+              override def tagFaces: Seq[ITagFaceCriteria] = crs
               override def limit     = _limit
               override def offset    = _offset
             }
@@ -72,7 +79,7 @@ object MTagSearch {
       override def unbind(key: String, value: MTagSearch): String = {
         val k = key1F(key)
         Iterator(
-          strOptB.unbind  (k(FACE_FTS_QUERY_FN),  value.tagVxFace),
+          strOptB.unbind  (k(FACE_FTS_QUERY_FN),  value.tagFaces.headOption.map(_.face)),
           intOptB.unbind  (k(LIMIT_FN),           Some(value.limit)),
           intOptB.unbind  (k(OFFSET_FN),          Some(value.offset))
         )

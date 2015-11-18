@@ -1,0 +1,21 @@
+@(args: adv.gtag.IForAdTplArgs)(implicit ctx: Context)
+
+@* Страница со формой размещения рекламной карточки на внешних сервисах. *@
+
+@import ctx.{messages, request}
+@import helper._
+@import util.FC.tdRadialFc
+
+@agtBase(
+  title     = messages("Adv.ext"),
+  mnode     = args.producer,
+  mad       = args.mad
+) {
+
+  @helper.javascriptRouter("jsRoutes")(
+    routes.javascript.LkAdvGeoTag.tagEditorAddTag
+  )
+
+  @_tagsTpl( args.form )
+
+}

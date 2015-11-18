@@ -61,6 +61,9 @@ GET  /lk/xadv/ext/runner/:adId          @controllers.LkAdvExt.runner(adId, x: Op
 GET  /lk/xadv/ext/oauth1/ret/:adnId     @controllers.LkAdvExt.oauth1PopupReturnGet(adnId, actorInfoQs: adv.ext.act.ActorPathQs)
 POST /lk/xadv/ext/oauth1/ret/:adnId     @controllers.LkAdvExt.oauth1PopupReturnPost(adnId, actorInfoQs: adv.ext.act.ActorPathQs)
 
+## Размещение в теге с учетом географии.
+GET  /lk/xadv/gtag/for/:adId            @controllers.LkAdvGeoTag.forAd(adId)
+POST /lk/node/tag/add                   @controllers.LkAdvGeoTag.tagEditorAddTag()
 
 ## ЛК: Рекламные карточки
 GET  /lk/mad/new/:adnId                 @controllers.MarketAd.createAd(adnId)
@@ -74,7 +77,6 @@ GET  /lk/mad/delete/:adId               @controllers.MarketAd.deleteWnd(adId)
 POST /lk/mad/delete/:adId               @controllers.MarketAd.deleteSubmit(adId)
 GET  /ws/lk/mad/:wsId                   @controllers.MarketAd.ws(wsId: String)
 GET  /lk/mad/new/field/text/:offerN     @controllers.MarketAd.newTextField(offerN: Int, h: Int, w: Int)
-POST /lk/node/tag/add                   @controllers.MarketAd.tagEditorAddTag()
 # lk.billing
 GET  /lk/bill/brief/:adnId              @controllers.MarketLkBilling.showAdnNodeBilling(adnId)
 GET  /lk/bill/txns/:adnId               @controllers.MarketLkBilling.txnsList(adnId, page: Int ?= 0, inline: Boolean ?= false)

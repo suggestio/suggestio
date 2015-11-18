@@ -57,7 +57,6 @@ class MarketAd @Inject() (
   with PlayMacroLogsImpl
   with BruteForceProtectCtl
   with MarketAdPreview
-  with ad.NodeTagsEdit
   with CanEditAd
   with CanUpdateSls
   with IsAdnNodeAdmin

@@ -1,4 +1,4 @@
-@(fm: Form[_])(implicit ctx: Context)
+@(af: Form[_])(implicit ctx: Context)
 
 @import util.FC.divFc
 @import io.suggest.common.tags.edit.TagsEditConstants._
@@ -11,7 +11,7 @@
 <div id="@ADD_FORM_ID">
 
   @inputText(
-    fm(NEW_TAG_FN),
+    af(EXIST_TAGS_FN),
     '_label -> messages("Add.tags"),
     'id     -> ADD_NAME_INPUT_ID
   )

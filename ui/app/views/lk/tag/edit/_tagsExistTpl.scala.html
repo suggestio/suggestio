@@ -4,10 +4,10 @@
    Рендерится при рендере страницы с формой и при редактировании тегов. *@
 
 @import lk.tag.edit._
-@import io.suggest.ad.form.AdFormConstants._
+@import io.suggest.common.adv.gtag.AdvGeoTagConstants._
 
-@defining( af(TAGS_K) ) { tsField =>
+@defining( af(EXIST_TAGS_FN) ) { tsField =>
   @tsField.indexes.map { inx =>
-    @_oneTagTpl( af(s"${tsField.name}[$inx]") )
+    @_oneTagTpl( tsField(s"[$inx]") )
   }
 }

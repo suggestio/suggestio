@@ -39,6 +39,8 @@ import scala.util.{Failure, Success}
  * // Миграция MAd
  * 09. MNode.resaveMany().
  * 10. Вызвать this.migrateMads()
+ * 11. Вызвать this.wcAdsToN2()
+ *
  */
 class Migration @Inject() (
   mImg3                 : MImg3_,

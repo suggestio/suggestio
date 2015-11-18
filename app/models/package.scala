@@ -161,14 +161,6 @@ package object models {
   /** Тип формы создания нового узла-магазина силами юзера. */
   type UsrCreateNodeForm_t  = Form[String]
 
-
-  type TagsEditForm_t       = Form[(Seq[MTagEdge], TagsMap_t)]
-
-  // Исходящие теги узлов.
-  val  MTagEdge             = io.suggest.model.n2.tag.edge.MTagEdge
-  type MTagEdge             = io.suggest.model.n2.tag.edge.MTagEdge
-  type TagsMap_t            = io.suggest.model.n2.tag.edge.TagsMap_t
-
   type MColorData           = n2.node.meta.colors.MColorData
 
   type MNode                = n2.node.MNode

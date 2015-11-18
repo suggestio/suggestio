@@ -689,5 +689,7 @@ Your.name=Ваше имя
 First.name=Имя
 Last.name=Фамилия
 
-Type.digits.from.picture=Please type digits from the picture.
+Type.digits.from.picture=Введите цифры с картинки.
+
+Adv.in.geo.tags=Размещение в геотегах
 
