@@ -71,14 +71,11 @@ class GalleryUtil @Inject() (
 
   /**
    * Генерация dyn-img ссылки на картинку галереи, которая отображается (обычно) откропанной в ЛК на странице узла.
-   * @param imgId id картинки.
+   * @param mimg id картинки.
    * @param ctx Контекст рендера шаблонов.
    * @return Экземпляр Call, пригодный для заворачивания в ссылку.
    */
-  def dynLkBigCall(imgId: String)(implicit ctx: Context): Call = {
-    dynLkBigCall( mImg3(imgId) )
-  }
-  def dynLkBigCall(oiik: MImgT)(implicit ctx: Context): Call = {
+  def dynLkBigCall(mimg: MImgT)(implicit ctx: Context): Call = {
     val devPixelRatio = ctx.deviceScreenOpt
       .fold(DevPixelRatios.default)(_.pixelRatio)
     // Всегда ресайзим до необходимого отображаемого размера. Используем fg-качество для сжатия.
@@ -94,11 +91,11 @@ class GalleryUtil @Inject() (
     )
     // Если необходимо, то сначала делаем кроп:
     // TODO Если картинка не кропаная, то кропать её принудительно на 200 пикселей по высоте?
-    if (oiik.isCropped) {
-      val crop = oiik.cropOpt.get
+    if (mimg.isCropped) {
+      val crop = mimg.cropOpt.get
       imOps ::= AbsCropOp(crop)
     }
-    val dynArgs = oiik.withDynOps(imOps)
+    val dynArgs = mimg.withDynOps(imOps)
     dynImgUtil.imgCall(dynArgs)
   }
 
