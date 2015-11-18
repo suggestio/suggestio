@@ -6,7 +6,6 @@ import io.suggest.lk.tags.edit.vm.add.{AContainer, ANameInput}
 import io.suggest.lk.tags.edit.vm.exist.EContainer
 import io.suggest.sjs.common.msg.ErrorMsgs
 import org.scalajs.dom.FormData
-import io.suggest.common.tags.edit.TagsEditConstants.NEW_TAG_FN
 
 import scala.util.Failure
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
@@ -33,7 +32,7 @@ trait Add extends TagsEditFsmStub {
         val fd = new FormData()
 
         // Скопировать новое имя тега:
-        fd.append(NEW_TAG_FN, input.value)
+        fd.append(input._underlying.name, input._underlying.value)
 
         // Залить имена текущих тегов:
         econt.tagsIterator

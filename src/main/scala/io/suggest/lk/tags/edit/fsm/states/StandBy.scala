@@ -5,8 +5,6 @@ import io.suggest.lk.tags.edit.fsm.TagsEditFsmStub
 import io.suggest.lk.tags.edit.m.signals._
 import io.suggest.lk.tags.edit.vm.add.ANameInput
 import io.suggest.lk.tags.edit.vm.exist.EDelete
-import io.suggest.sjs.common.view.VUtil
-import io.suggest.sjs.common.vm.Vm
 import org.scalajs.dom
 import org.scalajs.dom.Event
 
@@ -74,7 +72,7 @@ trait StandBy extends TagsEditFsmStub {
       val nameInput = ANameInput( event.target.asInstanceOf[ANameInput.Dom_t] )
 
       // Если текущий текст не пустой, то надо запустить таймер запуска поискового запроса.
-      val namePart = nameInput.value
+      val namePart = nameInput._underlying.value
       if (!namePart.trim.isEmpty) {
         // Перейти на состояние ожидания таймера перед запросом поиска тегов.
         val timerId = dom.setTimeout(

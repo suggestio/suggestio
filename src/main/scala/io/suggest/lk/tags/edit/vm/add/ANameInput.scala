@@ -34,8 +34,6 @@ trait ANameInputT extends IVm with IInitLayoutDummy with OnEventToTagsEditFsmUti
     _addToFsmEventListener("input", NameInputEvent)
   }
 
-  def value = _underlying.value
-
 }
 
 
