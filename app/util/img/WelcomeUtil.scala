@@ -46,7 +46,7 @@ class WelcomeUtil @Inject() (
     // Сохранить картинку, вернуть эдж. Нет картинки -- нет эджа.
     FutureUtil.optFut2futOpt(newWelcomeImgOpt) { fgMimg =>
       for (_ <- fgMimg.saveToPermanent) yield {
-        val e = MEdge(MPredicates.NodeWelcomeAdIs, fgMimg.rowKeyStr, info = MEdgeInfo(
+        val e = MEdge(MPredicates.WcLogo, fgMimg.rowKeyStr, info = MEdgeInfo(
           dynImgArgs = fgMimg.qOpt
         ))
         Some(e)
@@ -62,7 +62,7 @@ class WelcomeUtil @Inject() (
    */
   def wcLogoImg(mnode: MNode): Option[MImgT] = {
     mnode.edges
-      .withPredicateIter( MPredicates.NodeWelcomeAdIs )
+      .withPredicateIter( MPredicates.WcLogo )
       .map { e =>
         mImg3(e)
       }

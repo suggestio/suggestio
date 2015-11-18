@@ -146,7 +146,7 @@ class SysMarketInvReq @Inject() (
       { Future successful false }
       { MNode.isExist }
     previoslyExistedFut flatMap { previoslyExisted =>
-      val p = MPredicates.NodeWelcomeAdIs
+      val p = MPredicates.WcLogo
       val adnNode = adnNode0.copy(
         edges = adnNode0.edges.copy(
           out = {

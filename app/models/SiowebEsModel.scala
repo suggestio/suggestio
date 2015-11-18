@@ -35,7 +35,7 @@ class SiowebEsModel @Inject() (
    */
   def ES_MODELS: Seq[EsModelCommonStaticT] = {
     EsModelUtil.ES_MODELS ++ Seq[EsModelCommonStaticT](
-      EmailPwIdent, EmailActivation, MExtIdent, MMartCategory, mInviteRequest, mCalendar,
+      EmailPwIdent, EmailActivation, MExtIdent, mInviteRequest, mCalendar,
       MRemoteError, MGallery, MAiMad,
       adv.MExtTarget,
       event.MEvent, sec.MAsymKey,

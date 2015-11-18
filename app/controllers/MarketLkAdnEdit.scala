@@ -338,7 +338,7 @@ class MarketLkAdnEdit @Inject() (
         import MPredicates._
         // Готовим начальный итератор эджей-результатов.
         var edgesIter = mnode.edges
-          .withoutPredicateIter(NodeWelcomeAdIs, Logo, GalleryItem)
+          .withoutPredicateIter(WcLogo, Logo, GalleryItem)
         // Отрабатываем карточку приветствия.
         for (waFgEdge <- waFgEdgeOpt) {
           edgesIter ++= Iterator(waFgEdge)

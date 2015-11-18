@@ -378,7 +378,7 @@ class Migration @Inject() (
   /** Миграция карточек приветствия. Т.к. пока не удалось спроецировать приветствия на
     * рекламные карточки, то карточка приветствия становится опциональным ребром на логотип приветствия. */
   def wcAdsToN2(): Future[MwaAcc] = {
-    val p = MPredicates.NodeWelcomeAdIs
+    val p = MPredicates.WcLogo
 
     // Найти все узлы, имеющие эдж на карточку приветствия
     val msearch = new MNodeSearchDfltImpl {
@@ -428,7 +428,7 @@ class Migration @Inject() (
   /** Миграция одной welcome-карточки. */
   private def _migradeWad(mnode: MNode, acc0Fut: Future[MwaAcc], wadsMap: Map[String, MWelcomeAd]): Future[MwaAcc] = {
     mnode.edges
-      .withPredicateIter( MPredicates.NodeWelcomeAdIs )
+      .withPredicateIter( MPredicates.WcLogo )
       .toStream
       .headOption
       .fold {
@@ -441,22 +441,20 @@ class Migration @Inject() (
       } { waEdge =>
         // Если карточка отсутствует, то она уже портирована. Это связано с тем,
         // что один и тот же эдж используется в старом и новом формате.
-        val waFut = MWelcomeAd.getById(waEdge.nodeId)
-          .map { _.get }
-        val oldImgInfoFut = for (wa <- waFut) yield {
-          wa.imgs.get( WELCOME_IMG_KEY ).get
-        }
-        val oldImgFut = for (info <- oldImgInfoFut) yield {
-          MImg( info )
-        }
-        val oldLocalImgFut = oldImgFut.flatMap { oldImg =>
-          oldImg.original.toLocalImg
-        }
+
         // Запустить операцию обновления.
         val saveFut = for {
-          oldImgInfo  <- oldImgInfoFut
-          oldImg      <- oldImgFut
-          oldLocalImg <- oldLocalImgFut
+          wa  <- MWelcomeAd.getById(waEdge.nodeId)
+            .map { _.get }
+          oldImgInfo  <- {
+            val r = wa.imgs.get( WELCOME_IMG_KEY ).get
+            Future.successful(r)
+          }
+          oldImg  <- {
+            val r = MImg( oldImgInfo )
+            Future.successful(r)
+          }
+          oldLocalImg   <- oldImg.original.toLocalImg
 
           // Портануть картинку на img3-архитектуру.
           imgNodeId   <- {
@@ -466,7 +464,7 @@ class Migration @Inject() (
 
           // Обновить welcome-эдж узла.
           mnodeUpdatedId <- {
-            val p = MPredicates.NodeWelcomeAdIs
+            val p = MPredicates.WcLogo
             val edge2 = MEdge(p, imgNodeId, info = MEdgeInfo(
               dynImgArgs = oldImg.qOpt
             ))
