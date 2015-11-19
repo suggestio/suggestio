@@ -28,19 +28,21 @@ trait FaceTextQuery extends DynSearchArgs {
       val fn = MNodeFields.Extras.TAG_FACE_NAME_FN
 
       // Сконвертить критерии в queries
-      val queries: Seq[(QueryBuilder, ITagFaceCriteria)] = tfs.map { tf =>
-        val q = QueryBuilders.matchQuery(fn, tf.face)
-          // TODO Надо ведь 100% по идее, но не ясно, насколько это ок.
-          .minimumShouldMatch( "90%" )
-          .operator( MatchQueryBuilder.Operator.AND )
-          .`type` {
-            if (tf.isPrefix)
-              MatchQueryBuilder.Type.PHRASE_PREFIX
-            else
-              MatchQueryBuilder.Type.PHRASE
-          }
-          .zeroTermsQuery( MatchQueryBuilder.ZeroTermsQuery.ALL )
-        q -> tf
+      val queries: Seq[(QueryBuilder, ITagFaceCriteria)] = {
+        for (tf <- tfs) yield {
+          val q = QueryBuilders.matchQuery(fn, tf.face)
+            // TODO Надо ведь 100% по идее, но не ясно, насколько это ок.
+            .minimumShouldMatch( "90%" )
+            .operator( MatchQueryBuilder.Operator.AND )
+            .`type` {
+              if (tf.isPrefix)
+                MatchQueryBuilder.Type.PHRASE_PREFIX
+              else
+                MatchQueryBuilder.Type.PHRASE
+            }
+            .zeroTermsQuery( MatchQueryBuilder.ZeroTermsQuery.ALL )
+          q -> tf
+        }
       }
 
       // Объединить несколько query в одну согласно предикатам.
@@ -69,7 +71,6 @@ trait FaceTextQuery extends DynSearchArgs {
         // Просто полнотекстовый match-поиск по
         val filter = FilterBuilders.nestedFilter(nestedFn, query)
         QueryBuilders.filteredQuery(qb0, filter)
-
       } orElse {
         val qb2 = QueryBuilders.nestedQuery(nestedFn, query)
         Some(qb2)
@@ -80,6 +81,7 @@ trait FaceTextQuery extends DynSearchArgs {
   override def toStringBuilder: StringBuilder = {
     fmtColl2sb("tagFaces", tagFaces, super.toStringBuilder)
   }
+
   override def sbInitSize: Int = {
     val l1 = super.sbInitSize
     val tvf = tagFaces

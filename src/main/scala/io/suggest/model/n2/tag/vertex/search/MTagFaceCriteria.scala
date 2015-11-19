@@ -25,6 +25,8 @@ trait ITagFaceCriteria {
 
 }
 
+
+/** Дефолтовая реализация модели критерия поиска тега [[ITagFaceCriteria]]. */
 case class MTagFaceCriteria(
   override val face         : String,
   override val isPrefix     : Boolean,
