@@ -1,7 +1,6 @@
 package io.suggest.lk.tags.edit.m.madd
 
 import io.suggest.lk.router.jsRoutes
-import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.xhr.Xhr
 import org.scalajs.dom.FormData
 
@@ -16,7 +15,7 @@ import scala.concurrent.{Future, ExecutionContext}
 object MTagAdd {
 
   def add(body: FormData)(implicit ec: ExecutionContext): Future[IAddResult] = {
-    val route = jsRoutes.controllers.MarketAd.tagEditorAddTag()
+    val route = jsRoutes.controllers.LkAdvGeoTag.tagEditorAddTag()
     val respFut = Xhr.send(
       method  = route.method,
       url     = route.url,

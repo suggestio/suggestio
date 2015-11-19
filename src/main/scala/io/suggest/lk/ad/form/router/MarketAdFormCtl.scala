@@ -16,7 +16,4 @@ sealed trait MarketAdFormCtl extends js.Object {
   /** Вебсокет редактора для связи с сервером. */
   def ws(wsId: String): Route = js.native
 
-  /** Экшен поста добавления нового тега. */
-  def tagEditorAddTag(): Route = js.native
-
 }

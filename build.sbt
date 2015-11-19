@@ -8,10 +8,15 @@ scalaVersion := "2.11.7"
 
 version := "0.0.0-SNAPSHOT"
 
+resolvers ++= Seq(
+  "sonatype-oss-snapshots" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-oss-snapshots"
+)
+
 libraryDependencies ++= Seq(
-  "be.doeraene"   %%% "scalajs-jquery"      % "0.8.1-SNAPSHOT",
-  "io.suggest"    %%% "lk-adv-ext-sjs"      % "0.0.0-SNAPSHOT",
-  "io.suggest"    %%% "common-sjs"          % "0.0.0-SNAPSHOT"
+  "be.doeraene"         %%% "scalajs-jquery"      % "0.8.1",
+  "io.suggest"          %%% "lk-adv-ext-sjs"      % "0.0.0-SNAPSHOT",
+  "io.suggest"          %%% "common-sjs"          % "0.0.0-SNAPSHOT",
+  "io.suggest"          %%% "map-rad-sjs"         % "0.0.0-SNAPSHOT"
   //"org.monifu"  %%% "minitest" % "0.12" % "test",
 )
 
