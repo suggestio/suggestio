@@ -28,4 +28,7 @@ object WarnMsgs extends MsgsStaticT {
 
   def INPUT_UNFOCUSED_EVENT     = E(8)
 
+
+  def RAD_MAP_CONT_MISSING      = E(9)
+
 }
