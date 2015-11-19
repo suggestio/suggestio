@@ -95,7 +95,7 @@ class TagsEditFormUtil {
   def addedKm     = ADD_TAGS_FN   -> addedM
   def existingKm  = EXIST_TAGS_FN -> existingsM
 
-  def addTagsM: Mapping[MTagsAddFormBinded] = {
+  def addTagsFormM: Mapping[MTagsAddFormBinded] = {
     mapping(
       addedKm,
       existingKm
@@ -104,8 +104,8 @@ class TagsEditFormUtil {
     { MTagsAddFormBinded.unapply }
   }
 
-  def addTagsFormM: TagsEditForm_t = {
-    Form(addTagsM)
+  def addTagsForm: TagsEditForm_t = {
+    Form(addTagsFormM)
   }
 
 }

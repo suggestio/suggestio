@@ -10,9 +10,16 @@
 
 <div class="@ONE_EXISTING_CONT_CLASS tag_container">
 
-  <input type="hidden" name="@field.name" value="@field.value" />
+  @defining( field(EXIST_TAG_NAME_FN) ) { existsField =>
+    <input type="hidden" name="@existsField.name" value="@existsField.value" />
+    @existsField.value
+  }
 
-  @field.value
+  @defining( field(EXIST_TAG_ID_FN) ) { idField =>
+    @idField.value.map { tNodeId =>
+      <input type="hidden" name="@idField.name" value="@tNodeId" />
+    }
+  }
 
   <span class="@DELETE_EXISTING_CLASS btn __negative" title="@messages("Delete")">
     [x]

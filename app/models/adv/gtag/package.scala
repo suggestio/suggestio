@@ -10,6 +10,6 @@ import play.api.data.Form
 package object gtag {
 
   /** Тип для маппинга формы размещения в теге с геогафией. */
-  type GtForm_t  = Form[_]
+  type GtForm_t  = Form[MAdvFormResult]
 
 }

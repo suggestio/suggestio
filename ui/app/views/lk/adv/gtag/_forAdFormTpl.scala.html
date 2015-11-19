@@ -1,0 +1,28 @@
+@(args: adv.gtag.IForAdTplArgs)(implicit ctx: Context)
+
+@* Шаблон формы размещения карточки в тегах с географией. *@
+
+@import ctx.{messages, request}
+@import helper._
+@import util.FC.tdRadialFc
+@import io.suggest.common.maps.rad.RadMapConstants._
+@import stuff._inputHiddenTpl
+
+
+@form( CSRF(routes.LkAdvGeoTag.forAdSubmit(args.mad.id.get)) ) {
+
+  @_tagsTpl( args.form )
+
+  @defining( args.form("map") ) { mf =>
+    @defining( mf("center") ) { mcf =>
+      @_inputHiddenTpl( mcf("lat") )
+      @_inputHiddenTpl( mcf("lon") )
+    }
+    @_inputHiddenTpl(mf("zoom"))
+  }
+
+  @* Сюда будет отрендерена карта. *@
+  <div id="@CONTAINER_ID" class="radmap-container"></div>
+
+}
+

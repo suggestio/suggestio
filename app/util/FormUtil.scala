@@ -1,9 +1,8 @@
 package util
 
 import io.suggest.common.menum.{EnumMaybeWithId, EnumMaybeWithName, EnumValue2Val}
-import io.suggest.model.geo.{CircleGs, Distance, GeoPoint}
+import io.suggest.model.geo.{CircleGs, Distance}
 import io.suggest.model.n2.node.meta.colors.MColorData
-import io.suggest.ym.model.NodeGeoLevels
 import io.suggest.ym.model.common.AdnMemberShowLevels.LvlMap_t
 import io.suggest.ym.model.common.MImgSizeT
 import models.blk.SzMult_t
@@ -218,7 +217,7 @@ object FormUtil {
   /** Маппинг для географического круга, задаваемого географическим центром и радиусом. */
   def circleM: Mapping[CircleGs] = {
     mapping(
-      "center"  -> latLng2geopointM,
+      "center"  -> geoPointM,
       "radius"  -> distanceM
     )
     { CircleGs.apply }
@@ -519,7 +518,7 @@ object FormUtil {
       {str => new PGInterval(str) }
     )
   }
-  
+
 
   /** Маппинг для задания цены. Либо цена, либо ошибка. Тащим исходное значение с собой
     * для возможности быстрого доступа к нему из маппинга без помощи локали клиента и т.д. */
@@ -621,7 +620,7 @@ object FormUtil {
 
 
   /** Маппер для lat-lon координат, заданных в двух полях формы. */
-  def latLng2geopointM: Mapping[GeoPoint] = {
+  val geoPointM: Mapping[GeoPoint] = {
     mapping(
       "lat" -> doubleM,
       "lon" -> doubleM
@@ -630,9 +629,12 @@ object FormUtil {
     { GeoPoint.unapply }
   }
 
+  /** Маппинг значения зума карты. */
+  def mapZoomM: Mapping[Int] = number(min = 0, max = 20)
+
   /** Опциональный маппер для lat-lon координат. */
-  def latLng2geopointOptM: Mapping[Option[GeoPoint]] = {
-    optional(latLng2geopointM)
+  def geoPointOptM: Mapping[Option[GeoPoint]] = {
+    optional(geoPointM)
   }
 
 

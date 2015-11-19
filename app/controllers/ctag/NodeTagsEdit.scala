@@ -34,15 +34,16 @@ trait NodeTagsEdit
    * а просто анализирует теги, добавляет новый, сортирует и рендерит.
    */
   def tagEditorAddTag = IsAuth.async { implicit request =>
-    val formBinded = tagsEditFormUtil.addTagsFormM.bindFromRequest()
+    val formBinded = tagsEditFormUtil.addTagsForm.bindFromRequest()
     formBinded.fold(
       {formWithErrors =>
         LOGGER.debug("tagEditorAddTag(): Form bind failed:\n" + formatFormErrors(formWithErrors))
         val formHtml = _addFormTpl(formWithErrors)
         NotAcceptable( formHtml )
       },
+
       // Удачный маппинг запроса на форму.
-      {r => // case (newTags, existTags) =>
+      {r =>
         // Запустить поиск подходящих тегов под добавленные.
         val foundFut = Future.traverse(r.added) { newTagFace =>
           val msearch = new MTagSearch {
@@ -67,8 +68,8 @@ trait NodeTagsEdit
           found <- foundFut
         } yield {
 
+          // Привести теги к MTagBinded
           val existsMap2 = {
-            // Привести теги к MTagBinded.
             val mtesIter = for ((face, mnodeOpt) <- found.iterator) yield {
               val mte = MTagBinded(
                 face    = mnodeOpt

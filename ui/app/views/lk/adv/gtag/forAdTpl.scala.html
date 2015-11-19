@@ -4,7 +4,7 @@
 
 @import ctx.{messages, request}
 @import helper._
-@import util.FC.tdRadialFc
+
 
 @agtBase(
   title     = messages("Adv.ext"),
@@ -12,10 +12,13 @@
   mad       = args.mad
 ) {
 
+  @* При добавлении тегов запросы add-tag-формы отправляются сюда. *@
   @helper.javascriptRouter("jsRoutes")(
     routes.javascript.LkAdvGeoTag.tagEditorAddTag
   )
 
-  @_tagsTpl( args.form )
+
+  @* Рендер самой формы здесь. *@
+  @_forAdFormTpl(args)
 
 }

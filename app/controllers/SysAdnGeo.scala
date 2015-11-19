@@ -429,7 +429,7 @@ class SysAdnGeo @Inject() (
   private def nodeGeoFormM = {
     Form(
       tuple(
-        "point"         -> latLng2geopointOptM,
+        "point"         -> geoPointOptM,
         "parentAdnId"   -> optional(esIdM)
       )
     )

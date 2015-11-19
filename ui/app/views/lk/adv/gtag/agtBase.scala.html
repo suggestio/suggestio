@@ -3,11 +3,23 @@
 @* Базовый шаблон для страниц внешнего размещения карточек. *@
 
 @import adv.tpl.LkAdvRightLinks
+@import views.html.stuff._
+
+@headAfter1 = {
+  <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/leaflet/leaflet.css")" />
+  @headAfter
+}
 
 @lk.adv.advBase(
   title     = title,
   mad       = mad,
   producer  = mnode,
   rightLink = LkAdvRightLinks.LARL_EXT,
-  headAfter = headAfter
-)(content)
+  headAfter = Some(headAfter1)
+) {
+
+  @content
+
+  @_leafletScriptTpl()
+
+}

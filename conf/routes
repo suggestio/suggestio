@@ -63,6 +63,7 @@ POST /lk/xadv/ext/oauth1/ret/:adnId     @controllers.LkAdvExt.oauth1PopupReturnP
 
 ## Размещение в теге с учетом географии.
 GET  /lk/xadv/gtag/for/:adId            @controllers.LkAdvGeoTag.forAd(adId)
+POST /lk/xadv/gtag/for/:adId            @controllers.LkAdvGeoTag.forAdSubmit(adId)
 POST /lk/node/tag/add                   @controllers.LkAdvGeoTag.tagEditorAddTag()
 
 ## ЛК: Рекламные карточки
