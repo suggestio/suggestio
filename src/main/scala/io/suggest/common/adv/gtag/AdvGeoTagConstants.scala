@@ -8,10 +8,4 @@ package io.suggest.common.adv.gtag
  */
 object AdvGeoTagConstants {
 
-  /** input.name для строкового поля, где перечисляются теги. */
-  def ADD_TAGS_INPUT_NAME_FN = "ntn"
-
-  /** form mapping name для маппинга списка связанных тегов. */
-  def EXIST_TAGS_FN    = "ets"
-
 }

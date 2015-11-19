@@ -40,6 +40,8 @@ object JsInitConstants {
   def ID_HIDDEN_CAPTCHA           = "k"
   /** id таргета js-инициализации страницы списка транзакций биллинга. */
   def ID_BILL_TXNS_LIST           = "l"
+  /** id таргета инициализации страницы формой размещения в геотегах. */
+  def ADV_GTAG_FORM               = "m"
 
 }
 
@@ -98,6 +100,9 @@ trait MInitTargetsBaseT extends ILightEnumeration {
   /** Цель для инициализации страницы списка транзакций биллинга. */
   val BillTxnsList: T = instance(ID_BILL_TXNS_LIST)
 
+  /** Цель для инициалазации страницы размещения в геотегах. */
+  val AdvGtagForm: T = instance(ADV_GTAG_FORM)
+
   // TODO Надо не забывать добавлять новые элементы в MInitTargetLightT.maybeWithName().
   // TODO Когда элементов станет много, лучше будет заюзать scala.Enumeration.
 }
@@ -139,6 +144,7 @@ trait MJsInitTargetsLigthT extends MInitTargetsBaseT with LightEnumeration {
       case CaptchaForm.strId          => Some(CaptchaForm)
       case HiddenCaptcha.strId        => Some(HiddenCaptcha)
       case BillTxnsList.strId         => Some(BillTxnsList)
+      case AdvGtagForm.strId          => Some(AdvGtagForm)
       case _                          => None
     }
   }
