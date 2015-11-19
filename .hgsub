@@ -9,3 +9,5 @@ sc-sjs			= sc-sjs
 swfs			= swfs
 logs-macro		= logs-macro
 n2			= n2
+map-rad-sjs		= map-rad-sjs
+scalajs-mapbox		= scalajs-mapbox

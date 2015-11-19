@@ -34,7 +34,10 @@ object SiobixBuild extends Build {
       )
   }
 
-  /** Модуль scala.js для подсистемы внешнего размещения исторически отдельно и он довольно жирный и сложный, чтобы жить внутри дерева lk-sjs. */
+  /** 
+   * Модуль scala.js для подсистемы внешнего размещения исторически отдельно и он довольно жирный и сложный,
+   * чтобы жить внутри дерева lk-sjs.
+   */
   lazy val lkAdvExtSjs = {
     val name = "lk-adv-ext-sjs"
     Project(id = name, base = file(name))
@@ -56,12 +59,27 @@ object SiobixBuild extends Build {
   lazy val n2 = project
     .dependsOn(util, swfs)
 
+  /** Внутренний форк https://github.com/bbarker/scalajs-mapbox/ */
+  lazy val scalaJsMapBox = {
+    val name = "scalajs-mapbox"
+    Project(id = name, base = file(name))
+      .enablePlugins(ScalaJSPlay)
+  }
+
+  /** Модуль поддержки карты. */
+  lazy val mapRadSjs = {
+    val name = "map-rad-sjs"
+    Project(id = name, base = file(name))
+      .enablePlugins(ScalaJSPlay)
+      .dependsOn(commonSjs, scalaJsMapBox)
+  }
+
   /** Все мелкие скрипты кроме выдачи (т.е. весь my.suggest.io + буклет и т.д) объеденены в одном большом js. */
   lazy val lkSjs = {
     val name = "lk-sjs"
     Project(id = name, base = file(name))
       .enablePlugins(ScalaJSPlay)
-      .dependsOn(commonSjs, lkAdvExtSjs)
+      .dependsOn(commonSjs, lkAdvExtSjs, mapRadSjs)
   }
 
   /** Выдача suggest.io, написанная с помощью scala.js. */
@@ -80,7 +98,7 @@ object SiobixBuild extends Build {
   lazy val web21 = project
     .dependsOn(common, util, securesocial, n2)
     .settings(
-      scalaJSProjects := Seq(lkSjs, commonSjs, scSjs),
+      scalaJSProjects := Seq(lkSjs, commonSjs, scSjs, mapRadSjs, scalaJsMapBox),
       pipelineStages += scalaJSProd
     )
     .enablePlugins(PlayScala, SbtWeb, PlayScalaJS)
@@ -92,7 +110,7 @@ object SiobixBuild extends Build {
       .settings(
         scalaVersion := "2.11.6"
       )
-      .aggregate(common, lkAdvExtSjs, lkSjs, util, swfs, n2, securesocial, scSjs, web21)
+      .aggregate(common, lkAdvExtSjs, scalaJsMapBox, mapRadSjs, lkSjs, util, swfs, n2, securesocial, scSjs, web21)
   }
 
   // Активация offline-режима резолва зависимостей.
