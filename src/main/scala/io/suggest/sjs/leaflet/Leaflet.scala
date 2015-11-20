@@ -1,13 +1,16 @@
 package io.suggest.sjs.leaflet
 
 import io.suggest.sjs.leaflet.control.LControl
-import io.suggest.sjs.leaflet.map.{ILayer, Point, LatLng, LMap}
+import io.suggest.sjs.leaflet.layer.group.{FeatureGroup, LayerGroup}
+import io.suggest.sjs.leaflet.map._
 import io.suggest.sjs.leaflet.path.PathOptions
-import io.suggest.sjs.leaflet.path.circle.Circle
+import io.suggest.sjs.leaflet.path.circle.{PathOptionsRadius, CircleMarker, Circle}
+import io.suggest.sjs.leaflet.path.poly.{Rectangle, Polygon, PolylineOptions, Polyline}
 import io.suggest.sjs.leaflet.popup.{Popup, PopupOptions}
 import io.suggest.sjs.leaflet.tilelayer.{TileLayer, TlOptions}
 
 import scala.scalajs.js
+import scala.scalajs.js.`|`
 import scala.scalajs.js.annotation.JSName
 
 /**
@@ -33,10 +36,24 @@ object Leaflet extends js.Object {
   /** Controls. */
   def control: LControl = js.native
 
+  def polyline(latLng: LatLng, options: PolylineOptions = js.native): Polyline = js.native
+
+  def polygon(latLngs: js.Array[LatLng | js.Array[LatLng]], options: PolylineOptions): Polygon = js.native
+
+  def rectangle(bounds: LatLngBounds, options: PathOptions = js.native): Rectangle = js.native
+
   /** Instantiate a circle. */
   def circle(latLng: LatLng, radiusMeters: Double, pathOptions: PathOptions = js.native): Circle = js.native
 
+  def circleMarker(latLng: LatLng, options: PathOptionsRadius = js.native): CircleMarker = js.native
+
   /** Instantiate a popup. */
   def popup(options: PopupOptions = js.native, source: ILayer = js.native): Popup = js.native
+
+  /** Instantiate new layer group. */
+  def layerGroup(layers: js.Array[ILayer] = js.native): LayerGroup = js.native
+
+  /** Instantiate new feature group. */
+  def featureGroup(layers: js.Array[ILayer] = js.native): FeatureGroup = js.native
 
 }
