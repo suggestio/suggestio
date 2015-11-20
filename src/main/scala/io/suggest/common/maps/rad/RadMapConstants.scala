@@ -8,16 +8,13 @@ package io.suggest.common.maps.rad
   */
 object RadMapConstants {
 
+  def _ID_PREFIX = "rm_"
+
   /** id элемента-контейнера карты. */
-  def CONTAINER_ID = "radMapCont"
+  def CONTAINER_ID  = _ID_PREFIX + "cont"
 
-  /** Дефолтовая широта карты. */
-  def ATTR_COORDS_LAT_DFLT = "data-lat"
-
-  /** Дефолтовая долгота карты. */
-  def ATTR_COORDS_LON_DFLT = "data-lon"
-
-  /** Дефолтовый зум карты. */
-  def ATTR_ZOOM_DFLT       = "data-zoom"
+  def INPUT_ID_LAT  = _ID_PREFIX + "a"
+  def INPUT_ID_LON  = _ID_PREFIX + "o"
+  def INPUT_ID_ZOOM = _ID_PREFIX + "z"
 
 }
