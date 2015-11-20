@@ -59,11 +59,12 @@ object SiobixBuild extends Build {
   lazy val n2 = project
     .dependsOn(util, swfs)
 
-  /** Внутренний форк https://github.com/bbarker/scalajs-mapbox/ */
-  lazy val scalaJsMapBox = {
-    val name = "scalajs-mapbox"
+  /** Самописное leaflet API. */
+  lazy val leafletSjs = {
+    val name = "scalajs-leaflet"
     Project(id = name, base = file(name))
       .enablePlugins(ScalaJSPlay)
+      .dependsOn(commonSjs)
   }
 
   /** Модуль поддержки карты. */
@@ -71,7 +72,7 @@ object SiobixBuild extends Build {
     val name = "map-rad-sjs"
     Project(id = name, base = file(name))
       .enablePlugins(ScalaJSPlay)
-      .dependsOn(commonSjs, scalaJsMapBox)
+      .dependsOn(commonSjs, leafletSjs)
   }
 
   /** Все мелкие скрипты кроме выдачи (т.е. весь my.suggest.io + буклет и т.д) объеденены в одном большом js. */
@@ -98,7 +99,7 @@ object SiobixBuild extends Build {
   lazy val web21 = project
     .dependsOn(common, util, securesocial, n2)
     .settings(
-      scalaJSProjects := Seq(lkSjs, commonSjs, scSjs, mapRadSjs, scalaJsMapBox),
+      scalaJSProjects := Seq(lkSjs, commonSjs, scSjs, mapRadSjs, leafletSjs),
       pipelineStages += scalaJSProd
     )
     .enablePlugins(PlayScala, SbtWeb, PlayScalaJS)
@@ -110,7 +111,7 @@ object SiobixBuild extends Build {
       .settings(
         scalaVersion := "2.11.6"
       )
-      .aggregate(common, lkAdvExtSjs, scalaJsMapBox, mapRadSjs, lkSjs, util, swfs, n2, securesocial, scSjs, web21)
+      .aggregate(common, lkAdvExtSjs, leafletSjs, mapRadSjs, lkSjs, util, swfs, n2, securesocial, scSjs, web21)
   }
 
   // Активация offline-режима резолва зависимостей.
