@@ -31,4 +31,6 @@ object WarnMsgs extends MsgsStaticT {
 
   def RAD_MAP_CONT_MISSING      = E(9)
 
+  def RAD_MAP_NO_START_STATE    = E(10)
+
 }
