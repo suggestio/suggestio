@@ -13,16 +13,16 @@ import scala.scalajs.js.annotation.JSName
 @JSName("L.Map")
 class LMap extends js.Object {
 
-  def setView(center: LatLng, zoom: Double = js.native, zoomOpts: ZoomOptions = js.native): LMap = js.native
+  def setView(center: LatLng, zoom: Zoom_t = js.native, zoomOpts: ZoomOptions = js.native): LMap = js.native
 
 
-  def setZoom(zoom: Double, zoopOpts: ZoomOptions = js.native): LMap = js.native
+  def setZoom(zoom: Zoom_t, zoopOpts: ZoomOptions = js.native): LMap = js.native
 
   def zoomIn(delta: Double, zoomOpts: ZoomOptions = js.native): LMap = js.native
 
   def zoomOut(delta: Double, zoomOpts: ZoomOptions = js.native): LMap = js.native
 
-  def setZoomAround(latLng: LatLng, zoom: Double, zoomOpts: ZoomOptions = js.native): LMap = js.native
+  def setZoomAround(latLng: LatLng, zoom: Zoom_t, zoomOpts: ZoomOptions = js.native): LMap = js.native
 
 
   def fitBounds(latLngBounds: LatLngBounds, options: FitBoundsOptions = js.native): LMap = js.native

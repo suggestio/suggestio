@@ -1,5 +1,6 @@
 package io.suggest.sjs.leaflet
 
+import io.suggest.sjs.leaflet.control.LControl
 import io.suggest.sjs.leaflet.map.{Point, LatLng, LMap}
 import io.suggest.sjs.leaflet.tilelayer.{TileLayer, TlOptions}
 
@@ -25,5 +26,8 @@ object Leaflet extends js.Object {
 
   /** Pixel point. */
   def point(x: Int, y: Int): Point = js.native
+
+  /** Controls. */
+  def control: LControl = js.native
 
 }

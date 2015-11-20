@@ -1,6 +1,7 @@
 package io.suggest.sjs.leaflet.tilelayer
 
 import io.suggest.sjs.leaflet.map.LatLngBounds
+import io.suggest.sjs.common.model.FromDict
 
 import scala.scalajs.js
 import scala.scalajs.js.`|`
@@ -11,6 +12,10 @@ import scala.scalajs.js.`|`
   * Created: 19.11.15 18:04
   * Description: Interface for TileLayer options model.
   */
+object TlOptions extends FromDict {
+  override type T = TlOptions
+}
+
 @js.native
 sealed trait TlOptions extends js.Object {
 

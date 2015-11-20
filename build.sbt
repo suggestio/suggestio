@@ -3,7 +3,7 @@ enablePlugins(ScalaJSPlugin)
 
 organization := "io.suggest"
 
-name := "scalajs-mapbox"
+name := "scalajs-leaflet"
 
 version := "0.1s-SNAPSHOT"
 
@@ -19,7 +19,12 @@ testFrameworks += new TestFramework("utest.runner.Framework")
 scalacOptions += "-feature"
 
 libraryDependencies ++= Seq(
-    "org.scala-js" %%% "scalajs-dom" % "0.8.2",
-    "com.lihaoyi" %%% "utest" % "0.3.1" % "test"
+    "io.suggest"   %%% "common-sjs"       % "0.0.0-SNAPSHOT",
+    "org.scala-js" %%% "scalajs-dom"      % "0.8.2",
+    "com.lihaoyi"  %%% "utest"            % "0.3.1"  % "test"
+)
+
+jsDependencies ++= Seq(
+  "org.webjars" % "leaflet" % "0.7.5" / "0.7.5/leaflet.js"
 )
 
