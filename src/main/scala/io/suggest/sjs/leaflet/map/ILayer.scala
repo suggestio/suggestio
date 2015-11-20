@@ -10,4 +10,9 @@ import scala.scalajs.js
   */
 @js.native
 class ILayer extends js.Object {
+
+  def onAdd(lmap: LMap): Unit = js.native
+
+  def onRemove(lmap: LMap): Unit = js.native
+
 }
