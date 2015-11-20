@@ -2,9 +2,12 @@ package io.suggest.lk.adv.gtag.init
 
 import io.suggest.lk.tags.edit.TagsEditInit
 import io.suggest.maps.rad.init.RadMapInit
+import io.suggest.maps.rad.vm.inputs.{InpZoom, InpLon, InpLat}
 import io.suggest.sjs.common.controller.{IInitDummy, InitRouter}
+import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.util.SjsLogger
 import io.suggest.sjs.leaflet.map.LMap
+import io.suggest.sjs.leaflet.{Leaflet => L}
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
@@ -39,9 +42,35 @@ class AdvGtagFormInit
   with SjsLogger
 {
 
+  val inpLatOpt   = InpLat.find()
+  val inpLonOpt   = InpLon.find()
+  val inpZoomOpt  = InpZoom.find()
+
+  /** Провести собственную инициализацию карты на основе моделей инпутов map state. */
+  override protected def _earlyInitMap(lmap: LMap): Unit = {
+    val r = for {
+      inpLat  <- inpLatOpt
+      lat     <- inpLat.value
+      inpLon  <- inpLonOpt
+      lon     <- inpLon.value
+      inpZoom <- inpZoomOpt
+      zoom    <- inpZoom.value
+    } yield {
+      lmap.setView(
+        center = L.latLng(lat, lng = lon),
+        zoom   = zoom
+      )
+    }
+    // Если с инициализацией не фартануло, то передать исполнение на super-инициализацию.
+    if (r.isEmpty) {
+      warn( WarnMsgs.RAD_MAP_NO_START_STATE )
+      super._earlyInitMap(lmap)
+    }
+  }
+
   /** Отработать готовность карты запуском FSM, обрабатывающего эту форму. */
-  override protected def _radMapReady(map: LMap): Unit = {
-    super._radMapReady(map)
+  override protected def _radMapReady(lmap: LMap): Unit = {
+    super._radMapReady(lmap)
     ???
   }
 
