@@ -3,10 +3,13 @@ package controllers
 import com.google.inject.Inject
 import controllers.ctag.NodeTagsEdit
 import io.suggest.event.SioNotifierStaticClientI
-import models.Context2Factory
-import models.adv.gtag.{GtForm_t, MForAdTplArgs}
+import io.suggest.model.geo.{Distance, CircleGs, GeoPoint}
+import models.maps.MapViewState
+import models.{GeoIp, Context2Factory}
+import models.adv.gtag.{MAdvFormResult, GtForm_t, MForAdTplArgs}
 import models.jsm.init.MTargets
 import org.elasticsearch.client.Client
+import org.elasticsearch.common.unit.DistanceUnit
 import play.api.i18n.MessagesApi
 import play.api.mvc.Result
 import util.PlayMacroLogsImpl
@@ -43,8 +46,28 @@ class LkAdvGeoTag @Inject() (
    * @param adId id отрабатываемой карточки.
    */
   def forAd(adId: String) = CanAdvertiseAdGet(adId).async { implicit request =>
-    val form = geoTagsFormUtil.advForm
-    _forAd(form, Ok)
+    val ipLocFut = GeoIp.geoSearchInfoOpt
+    val formEmpty = geoTagsFormUtil.advForm
+
+    val formFut = for {
+      ipLocOpt <- ipLocFut
+    } yield {
+      val gp = ipLocOpt
+        .flatMap(_.ipGeopoint)
+        .getOrElse( GeoPoint(59.93769, 30.30887) )    // Штаб ВМФ СПб, который в центре СПб
+
+      val res = MAdvFormResult(
+        tags      = Nil,
+        mapState  = MapViewState(gp, zoom = 10),
+        circle    = CircleGs(gp, radius = Distance(1, DistanceUnit.KILOMETERS))
+      )
+
+      formEmpty.fill(res)
+    }
+
+    formFut.flatMap { form =>
+      _forAd(form, Ok)
+    }
   }
 
   /**

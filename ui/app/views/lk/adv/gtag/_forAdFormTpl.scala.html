@@ -13,12 +13,30 @@
 
   @_tagsTpl( args.form )
 
+  @* Для сохранения и восстановления состояния карты при POST нужны hidden-поля в рамках формы. *@
   @defining( args.form("map") ) { mf =>
+
     @defining( mf("center") ) { mcf =>
-      @_inputHiddenTpl( mcf("lat") )
-      @_inputHiddenTpl( mcf("lon") )
+
+      @* Широта (центр). *@
+      @_inputHiddenTpl(
+        mcf("lat"),
+        id = Some(INPUT_ID_LAT)
+      )
+
+      @* Долгота (центр). *@
+      @_inputHiddenTpl(
+        mcf("lon"),
+        id = Some(INPUT_ID_LON)
+      )
+
     }
-    @_inputHiddenTpl(mf("zoom"))
+
+    @* Состояние зума карты. *@
+    @_inputHiddenTpl(
+      mf("zoom"),
+      id = Some(INPUT_ID_ZOOM)
+    )
   }
 
   @* Сюда будет отрендерена карта. *@
