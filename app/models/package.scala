@@ -56,6 +56,10 @@ package object models {
   val  ImgCrop              = io.suggest.img.ImgCrop
 
   type ISize2di             = io.suggest.common.geom.d2.ISize2di
+
+  type Size2di              = io.suggest.common.geom.d2.Size2di
+  val  Size2di              = io.suggest.common.geom.d2.Size2di
+
   type MImgSizeT            = ym.model.common.MImgSizeT
 
   val  MImgInfoMeta         = ym.model.common.MImgInfoMeta
@@ -91,6 +95,7 @@ package object models {
   type BfCheckbox           = util.blocks.BfCheckbox
   type BfNoValueT           = util.blocks.BfNoValueT
 
+  type ICoords2di           = io.suggest.common.geom.coord.ICoords2di
   type Coords2d             = io.suggest.model.n2.ad.ent.Coords2d
   val  Coords2d             = io.suggest.model.n2.ad.ent.Coords2d
 

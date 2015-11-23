@@ -1,0 +1,47 @@
+@()(implicit ctx: Context)
+
+@* Шаблон содержит верстку контейнера карты. *@
+
+@import io.suggest.common.maps.rad.RadMapConstants._
+
+@_markerImg(id: String, baseName: String, wh: Option[ISize2di] = None, xy: Option[ICoords2di] = None) = {
+  <img id="@id"
+       src="@routes.Assets.versioned("images/leaflet/marker-" + baseName + ".png")"
+       alt=""
+       @for(wh1 <- wh) {
+         @ATTR_IMG_WIDTH=@wh1.width
+         @ATTR_IMG_HEIGHT=@wh1.height
+       }
+       @for(xy1 <- xy) {
+         @ATTR_IMG_ANCHOR_X=@xy1.x
+         @ATTR_IMG_ANCHOR_Y=@xy1.y
+       }
+  />
+}
+
+@* Сюда будет отрендерена карта. *@
+<div id="@CONTAINER_ID"
+     class="radmap-container"
+></div>
+
+
+@* Скрытые картинки, которые затем будут использоваться для маркеров карты. *@
+<div class="hidden">
+
+  @_markerImg(
+    id  = IMG_ID_MARKER,
+    baseName = "icon",
+    wh  = Some(Size2di(width = 25, height = 41)),
+    xy  = Some(Coords2d(x = 13, y = 41))
+  )
+
+  @_markerImg(IMG_ID_MARKER_RETINA, "icon-2x")
+
+  @_markerImg(
+    id  = IMG_ID_MARKER_SHADOW,
+    baseName = "shadow",
+    wh  = Some(Size2di(41, 41)),
+    xy  = Some(Coords2d(x = 12, y = 41))
+  )
+
+</div>

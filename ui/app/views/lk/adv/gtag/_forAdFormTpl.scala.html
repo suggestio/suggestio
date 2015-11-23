@@ -1,4 +1,4 @@
-@(args: adv.gtag.IForAdTplArgs)(implicit ctx: Context)
+@(args: adv.gtag.IForAdTplArgs)(middle: Html)(implicit ctx: Context)
 
 @* Шаблон формы размещения карточки в тегах с географией. *@
 
@@ -7,30 +7,32 @@
 @import util.FC.tdRadialFc
 @import io.suggest.common.maps.rad.RadMapConstants._
 @import stuff._inputHiddenTpl
+@import stuff.geo._
+@import lk.tag.edit._
+@import lk.adv.geo._
 
+
+@* js-форма добавления тегов. *@
+@_addFormTpl(args.form)
+
+@* Кнопка добавления тега. Вне формы, т.к. форма перезаписывается после сабмитов. *@
+@_addBtnTpl()
 
 @form( CSRF(routes.LkAdvGeoTag.forAdSubmit(args.mad.id.get)) ) {
 
-  @_tagsTpl( args.form )
+  @* Рендер сохранённых тегов. *@
+  @_existTagsContTpl() {
+    @_tagsExistTpl(args.form)
+  }
 
   @* Для сохранения и восстановления состояния карты при POST нужны hidden-поля в рамках формы. *@
   @defining( args.form("map") ) { mf =>
 
-    @defining( mf("center") ) { mcf =>
-
-      @* Широта (центр). *@
-      @_inputHiddenTpl(
-        mcf("lat"),
-        id = Some(INPUT_ID_LAT)
-      )
-
-      @* Долгота (центр). *@
-      @_inputHiddenTpl(
-        mcf("lon"),
-        id = Some(INPUT_ID_LON)
-      )
-
-    }
+    @_hiddenLatLonTpl(
+      f = mf("center"),
+      latId = Some(INPUT_ID_LAT),
+      lonId = Some(INPUT_ID_LON)
+    )
 
     @* Состояние зума карты. *@
     @_inputHiddenTpl(
@@ -39,8 +41,25 @@
     )
   }
 
-  @* Сюда будет отрендерена карта. *@
-  <div id="@CONTAINER_ID" class="radmap-container"></div>
+  @* Сохранение данных круга на карте (области) присходит здесь. *@
+  @defining( args.form("circle") ) { cf =>
+
+    @_hiddenLatLonTpl(
+      cf("center"),
+      latId = Some(INPUT_ID_CIRCLE_LAT),
+      lonId = Some(INPUT_ID_CIRCLE_LON)
+    )
+    @_inputHiddenTpl(
+      cf("radius"),
+      id = Some(INPUT_ID_CIRCLE_RADIUS)
+    )
+
+  }
+
+  @* Какой-то контент внутри формы после тегов. Карта например. *@
+  @middle
+
+
+  @* TODO Кнопка для сабмита, ценник, etc *@
 
 }
-

@@ -59,7 +59,7 @@ class LkAdvGeoTag @Inject() (
       val res = MAdvFormResult(
         tags      = Nil,
         mapState  = MapViewState(gp, zoom = 10),
-        circle    = CircleGs(gp, radius = Distance(1, DistanceUnit.KILOMETERS))
+        circle    = CircleGs(gp, radius = Distance(10000, DistanceUnit.METERS))
       )
 
       formEmpty.fill(res)

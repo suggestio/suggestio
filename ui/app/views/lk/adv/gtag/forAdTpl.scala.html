@@ -4,6 +4,7 @@
 
 @import ctx.{messages, request}
 @import helper._
+@import stuff.geo.radmap._
 
 
 @agtBase(
@@ -14,11 +15,16 @@
 
   @* При добавлении тегов запросы add-tag-формы отправляются сюда. *@
   @helper.javascriptRouter("jsRoutes")(
-    routes.javascript.LkAdvGeoTag.tagEditorAddTag
+    routes.javascript.LkAdvGeoTag.tagEditorAddTag,
+    routes.javascript.Assets.at
   )
 
-
   @* Рендер самой формы здесь. *@
-  @_forAdFormTpl(args)
+  @_forAdFormTpl(args) {
+
+    @* Контейнер карты. *@
+    @_mapContTpl()
+
+  }
 
 }

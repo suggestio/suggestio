@@ -23,12 +23,12 @@ class GeoTagsFormUtil @Inject() (
   // TODO В ожидании DI.
   private def formUtil = FormUtil
 
-  val centerM  = "center"  -> formUtil.geoPointM
+  val centerKM  = "center"  -> formUtil.geoPointM
 
   /** Маппинг состояния карты. Надо вынести его отсюда куда-нибудь. */
   def mapStateM: Mapping[MapViewState] = {
     mapping(
-      centerM,
+      centerKM,
       "zoom"    -> formUtil.mapZoomM
     )
     { MapViewState.apply }
@@ -38,18 +38,18 @@ class GeoTagsFormUtil @Inject() (
   // TODO Разрешить нецелый километраж?
   def radiusM: Mapping[Distance] = {
     formUtil.doubleM
-      .verifying("error.too.big", _ <= 100)      // 100 км
-      .verifying("error.too.low", _ >= 0.001)    // 1 метров
+      .verifying("error.too.big", _ <= 100000)      // 100 км
+      .verifying("error.too.low", _ >= 1)           // 1 метр
       .transform [Distance] (
-        { km => Distance(km, DistanceUnit.KILOMETERS) },
-        { d  => d.distance.toInt }
+        { m  => Distance(m, DistanceUnit.METERS) },
+        { d  => d.distance.toInt }    // TODO Отрабатывать другие единицы измерения.
       )
   }
 
   /** Тег размещается в области, описываемой кругом. */
   def circleM: Mapping[CircleGs] = {
     mapping(
-      centerM,
+      centerKM,
       "radius"  -> radiusM
     )
     { CircleGs.apply }

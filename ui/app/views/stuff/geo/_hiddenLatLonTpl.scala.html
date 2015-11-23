@@ -1,0 +1,17 @@
+@(f: Field, latId: Option[String] = None, lonId: Option[String] = None)
+
+@* Кусок формы, где есть скрытые поля с координатами какой-то геоточки. *@
+
+@import stuff._
+
+@* Широта *@
+@_inputHiddenTpl(
+  f("lat"),
+  id = latId
+)
+
+@* Долгота (центр). *@
+@_inputHiddenTpl(
+  f("lon"),
+  id = lonId
+)
