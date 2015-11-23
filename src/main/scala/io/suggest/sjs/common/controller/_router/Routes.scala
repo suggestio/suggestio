@@ -25,6 +25,9 @@ class Controllers extends js.Object {
   /** Роуты для img-контроллера. */
   def Img: ImgController = js.native
 
+  /** Роуты для assets-контроллера. */
+  def Assets: AssetsController = js.native
+
 }
 
 
@@ -41,6 +44,16 @@ sealed trait ImgController extends js.Object {
 
   /** Форма-окошко для кропа. */
   def imgCropForm(imgId: String, width: Int, height: Int): Route = js.native
+
+}
+
+
+@js.native
+sealed trait AssetsController extends js.Object {
+
+  def versioned(file: String): Route = js.native
+
+  def at(file: String): Route = js.native
 
 }
 

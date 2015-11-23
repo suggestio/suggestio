@@ -6,7 +6,7 @@ package io.suggest.sjs.common.vm.attr
   * Created: 20.11.15 10:59
   * Description: Поддержка чтения/запились double-аттрибутов.
   */
-trait DoubleAttrT extends AttrVmT{
+trait DoubleAttrT extends AttrVmT {
 
   /** Извлечь decimal-значение аттрибута, даже если тот содержит какие-то строковые данные. */
   def getDoubleAttrStrict(name: String): Option[Double] = {
