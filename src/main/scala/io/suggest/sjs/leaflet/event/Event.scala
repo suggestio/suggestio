@@ -13,6 +13,6 @@ class Event extends js.Object {
 
   var `type`: String = js.native
 
-  var `target`: js.Object = js.native
+  var target: js.Object = js.native
 
 }

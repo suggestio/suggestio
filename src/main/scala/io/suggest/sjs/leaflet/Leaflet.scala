@@ -3,9 +3,11 @@ package io.suggest.sjs.leaflet
 import io.suggest.sjs.leaflet.control.LControl
 import io.suggest.sjs.leaflet.layer.group.{FeatureGroup, LayerGroup}
 import io.suggest.sjs.leaflet.map._
+import io.suggest.sjs.leaflet.marker.icon.{Icon, IconOptions}
+import io.suggest.sjs.leaflet.marker.{Marker, MarkerOptions}
 import io.suggest.sjs.leaflet.path.PathOptions
 import io.suggest.sjs.leaflet.path.circle.{PathOptionsRadius, CircleMarker, Circle}
-import io.suggest.sjs.leaflet.path.poly.{Rectangle, Polygon, PolylineOptions, Polyline}
+import io.suggest.sjs.leaflet.path.poly._
 import io.suggest.sjs.leaflet.popup.{Popup, PopupOptions}
 import io.suggest.sjs.leaflet.tilelayer.{TileLayer, TlOptions}
 
@@ -30,6 +32,13 @@ object Leaflet extends js.Object {
   /** Geo coordinates. */
   def latLng(lat: Double, lng: Double): LatLng = js.native
 
+  def bounds(topLeft: Point, bottomRight: Point): Bounds = js.native
+  def bounds(pts: js.Array[Point]): Bounds = js.native
+
+  def icon(options: IconOptions): Icon = js.native
+
+  def marker(latLng: LatLng, options: MarkerOptions = js.native): Marker = js.native
+
   /** Pixel point. */
   def point(x: Int, y: Int): Point = js.native
 
@@ -39,6 +48,8 @@ object Leaflet extends js.Object {
   def polyline(latLng: LatLng, options: PolylineOptions = js.native): Polyline = js.native
 
   def polygon(latLngs: js.Array[LatLng | js.Array[LatLng]], options: PolylineOptions): Polygon = js.native
+
+  def multiPolyline(latLngs: js.Array[js.Array[LatLng]], options: PolylineOptions): MultiPolyline = js.native
 
   def rectangle(bounds: LatLngBounds, options: PathOptions = js.native): Rectangle = js.native
 
