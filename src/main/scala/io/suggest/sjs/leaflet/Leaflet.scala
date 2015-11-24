@@ -30,7 +30,7 @@ object Leaflet extends js.Object {
   def tileLayer(urlTemplate: String, options: TlOptions = js.native): TileLayer = js.native
 
   /** Geo coordinates. */
-  def latLng(lat: Double, lng: Double): LatLng = js.native
+  def latLng(lat: Double, lng: Double, altitude: Double = js.native): LatLng = js.native
 
   def bounds(topLeft: Point, bottomRight: Point): Bounds = js.native
   def bounds(pts: js.Array[Point]): Bounds = js.native
