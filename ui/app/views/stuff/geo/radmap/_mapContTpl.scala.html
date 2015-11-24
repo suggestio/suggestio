@@ -6,7 +6,7 @@
 
 @_markerImg(id: String, baseName: String, wh: Option[ISize2di] = None, xy: Option[ICoords2di] = None) = {
   <img id="@id"
-       src="@routes.Assets.versioned("images/leaflet/marker-" + baseName + ".png")"
+       src="@routes.Assets.versioned("images/" + baseName)"
        alt=""
        @for(wh1 <- wh) {
          @ATTR_IMG_WIDTH=@wh1.width
@@ -30,18 +30,28 @@
 
   @_markerImg(
     id  = IMG_ID_MARKER,
-    baseName = "icon",
+    baseName = "leaflet/marker-icon.png",
     wh  = Some(Size2di(width = 25, height = 41)),
     xy  = Some(Coords2d(x = 13, y = 41))
   )
 
-  @_markerImg(IMG_ID_MARKER_RETINA, "icon-2x")
+  @_markerImg(
+    id  = IMG_ID_MARKER_RETINA,
+    baseName = "leaflet/marker-icon-2x.png"
+  )
 
   @_markerImg(
     id  = IMG_ID_MARKER_SHADOW,
-    baseName = "shadow",
+    baseName = "leaflet/marker-shadow.png",
     wh  = Some(Size2di(41, 41)),
     xy  = Some(Coords2d(x = 12, y = 41))
+  )
+
+  @_markerImg(
+    id  = IMG_ID_RADIUS_MARKER,
+    baseName = "radmap/radius-marker.min.svg",
+    wh  = Some(Size2di(14, 14)),
+    xy  = Some(Coords2d(7, 7))
   )
 
 </div>

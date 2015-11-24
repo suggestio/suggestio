@@ -94,7 +94,17 @@ class LkAdvGeoTag @Inject() (
    * @return 302 see other, 416 not acceptable.
    */
   def forAdSubmit(adId: String) = CanAdvertiseAdPost(adId).async { implicit request =>
-    ???
+    geoTagsFormUtil.advForm.bindFromRequest().fold(
+      {formWithErrors =>
+        val fut = _forAd(formWithErrors, NotAcceptable)
+        LOGGER.debug(s"forAdSubmit($adId): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
+        fut
+      },
+      {result =>
+        LOGGER.trace("Binded: " + result)
+        ???
+      }
+    )
   }
 
 }
