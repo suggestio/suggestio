@@ -1,7 +1,7 @@
 package io.suggest.lk.tags.edit.m.signals
 
 import io.suggest.sjs.common.fsm.{IFsmMsgCompanion, IFsmEventMsgCompanion, IFsmMsg}
-import org.scalajs.dom.{FocusEvent, Event}
+import org.scalajs.dom.{KeyboardEvent, FocusEvent, Event}
 
 /**
  * Suggest.io
@@ -40,6 +40,12 @@ case class NameInputEvent(event: Event)
   extends ITagsEditFsmSignal
 object NameInputEvent
   extends IFsmEventMsgCompanion
+
+
+case class NameInputSubmit(event: KeyboardEvent)
+  extends ITagsEditFsmSignal
+object NameInputSubmit
+  extends IFsmMsgCompanion[KeyboardEvent]
 
 
 /** Сработал таймер для начала запроса поиска тегов по имени. */

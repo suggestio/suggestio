@@ -6,6 +6,8 @@ import io.suggest.lk.tags.edit.vm.util.OnEventToTagsEditFsmUtilT
 import io.suggest.sjs.common.vm.IVm
 import io.suggest.sjs.common.vm.find.FindElT
 import io.suggest.sjs.common.vm.util.IInitLayoutDummy
+import org.scalajs.dom.KeyboardEvent
+import org.scalajs.dom.ext.KeyCode
 import org.scalajs.dom.raw.HTMLInputElement
 
 /**
@@ -28,10 +30,18 @@ trait ANameInputT extends IVm with IInitLayoutDummy with OnEventToTagsEditFsmUti
 
   override def initLayout(): Unit = {
     super.initLayout()
+
     // Вешаем проброску событий ввода и фокуса в FSM.
     _addToFsmEventListener("focus", NameInputFocus)
     _addToFsmEventListener("blur",  NameInputBlur)
     _addToFsmEventListener("input", NameInputEvent)
+
+    // Нужно реагировать на некоторые клавиши, как на сабмит.
+    val f = _sendEventF[KeyboardEvent](NameInputSubmit)
+    addEventListener("keyup") { e: KeyboardEvent =>
+      if (e.keyCode == KeyCode.Enter)
+        f(e)
+    }
   }
 
 }

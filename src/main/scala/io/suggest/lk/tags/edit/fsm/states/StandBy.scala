@@ -6,7 +6,7 @@ import io.suggest.lk.tags.edit.m.signals._
 import io.suggest.lk.tags.edit.vm.add.ANameInput
 import io.suggest.lk.tags.edit.vm.exist.EDelete
 import org.scalajs.dom
-import org.scalajs.dom.Event
+import org.scalajs.dom.{KeyboardEvent, Event}
 
 /**
  * Suggest.io
@@ -26,6 +26,9 @@ trait StandBy extends TagsEditFsmStub {
       // Клик по кнопке удаления тега.
       case DeleteClick(event) =>
         _tagDeleteClick(event)
+      // Вызов сабмита списка тегов с клавиатуры (клавиша enter или др.).
+      case NameInputSubmit(event) =>
+        _addBtnClicked()
     }
 
     /** Реакция на клик по кнопке добавления тега. */
@@ -47,6 +50,7 @@ trait StandBy extends TagsEditFsmStub {
 
 
   /** Трейт состояния, когда ничего не делается. */
+  // TODO UNUSED !!! потому что планировалось поиск сделать.
   protected trait StandByStateT extends FsmEmptyReceiverState {
 
     override def receiverPart: Receive = super.receiverPart orElse {
@@ -62,6 +66,7 @@ trait StandBy extends TagsEditFsmStub {
 
     /** Реакция на попадание фокуса в инпут ввода имени. */
     protected def _onNameInput(event: Event): Unit = {
+      println(event)
       val sd0 = _stateData
 
       // Отменить старый таймер запуска запроса, если есть.
