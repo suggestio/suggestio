@@ -23,11 +23,14 @@ object RadMapConstants {
 
 
   /** id img-тега, хранящего адресок картинки с геомаркером карты. */
-  def IMG_ID_MARKER        = _ID_PREFIX + "im"
+  def IMG_ID_MARKER        = _ID_PREFIX + "ic"
   /** id img-тега, хранящего вариант retina-картинки геомаркера. */
-  def IMG_ID_MARKER_RETINA = _ID_PREFIX + "imr"
+  def IMG_ID_MARKER_RETINA = _ID_PREFIX + "icr"
   /** id img-тега с тенью маркера. */
-  def IMG_ID_MARKER_SHADOW = _ID_PREFIX + "is"
+  def IMG_ID_MARKER_SHADOW = _ID_PREFIX + "ics"
+  /** id img-тега с маркером радиуса охвата. */
+  def IMG_ID_RADIUS_MARKER = _ID_PREFIX + "ir"
+
 
   def ATTR_PREFIX = "data-"
   def ATTR_IMG_WIDTH        = ATTR_PREFIX + "w"
