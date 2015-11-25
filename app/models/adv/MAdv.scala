@@ -17,7 +17,8 @@ import util.anorm.AnormPgArray._
 import util.anorm.AnormPgInterval._
 import util.async.AsyncUtil
 import util.event.SiowebNotifier.Implicts.sn
-import util.{PlayMacroLogsDyn, SqlModelSave}
+import util.sqlm.SqlModelSave
+import util.PlayMacroLogsDyn
 
 import scala.concurrent.Future
 
@@ -178,7 +179,7 @@ trait MAdvI extends CurrencyCode with SinkShowLevelsFilters {
 }
 
 
-/** Надстройка над реализациями [[MAdvI]] и [[util.SqlModelSave]]. */
+/** Надстройка над реализациями [[MAdvI]] и [[SqlModelSave]]. */
 trait MAdvModelSave extends SqlModelSave with MAdvI {
 
   override type T <: MAdvModelSave

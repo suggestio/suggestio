@@ -9,7 +9,7 @@ import io.suggest.model.es.{EsModelUtil, ToPlayJsonObj}
 import models._
 import play.api.Play.{configuration, current}
 import play.api.libs.json.{JsNumber, JsObject, JsString}
-import util.SqlModelSave
+import util.sqlm.SqlModelSave
 
 /**
  * Suggest.io

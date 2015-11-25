@@ -5,8 +5,9 @@ import java.sql.Connection
 
 import anorm._
 import util.anorm.AnormInetAddress
-import util.{PlayLazyMacroLogsImpl, SqlModelSave}
+import util.PlayLazyMacroLogsImpl
 import AnormInetAddress._
+import util.sqlm.SqlModelSave
 
 /**
  * Suggest.io
@@ -52,7 +53,7 @@ object IpGeoBaseRange extends SqlModelStatic with SqlTruncate with SqlAnalyze wi
   def findForIp(ip: InetAddress)(implicit c: Connection): List[IpGeoBaseRange] = {
     SQL(s"""SELECT * FROM $TABLE_NAME WHERE "start" <= {ip} AND {ip} <= "end"""")
       .on('ip -> ip)
-      .as(rowParser *)
+      .as(rowParser.*)
   }
 
 }
@@ -70,12 +71,11 @@ final case class IpGeoBaseRange(
 
   override def hasId = false
   override type T = IpGeoBaseRange
-  override def companion = IpGeoBaseRange
 
   override def saveInsert(implicit c: Connection): T = {
     SQL(s"""INSERT INTO $TABLE_NAME(country_iso2, city_id, "start", "end") VALUES({countryIso2}, {cityId}, {start}, {end})""")
       .on('countryIso2 -> countryIso2, 'cityId -> cityId, 'start -> start, 'end -> end)
-      .executeInsert(rowParser single)
+      .executeInsert(rowParser.single)
   }
 
   /**

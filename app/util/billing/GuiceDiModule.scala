@@ -2,6 +2,7 @@ package util.billing
 
 import com.google.inject.AbstractModule
 import com.google.inject.assistedinject.FactoryModuleBuilder
+import models.adv.bill.MAdv2Factory
 
 /**
  * Suggest.io
@@ -16,9 +17,15 @@ class GuiceDiModule extends AbstractModule {
       new FactoryModuleBuilder()
         .build( classOf[AdvertiseOfflineAdvsFactory] )
     )
+
     install(
       new FactoryModuleBuilder()
         .build( classOf[DepublishExpiredAdvsFactory] )
+    )
+
+    install(
+      new FactoryModuleBuilder()
+        .build( classOf[MAdv2Factory] )
     )
   }
 

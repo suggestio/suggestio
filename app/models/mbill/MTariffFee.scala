@@ -9,7 +9,9 @@ import org.joda.time.DateTime
 import org.postgresql.util.PGInterval
 import util.anorm.AnormJodaTime._
 import util.anorm.AnormPgInterval._
-import util.{FormUtil, SqlModelSave}
+import util.FormUtil
+import util.sqlm.SqlModelSave
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>

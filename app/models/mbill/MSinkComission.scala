@@ -4,8 +4,8 @@ import java.sql.Connection
 
 import anorm._
 import models._
-import util.SqlModelSave
 import util.anorm.AnormAdnSink._
+import util.sqlm.SqlModelSave
 
 /**
  * Suggest.io

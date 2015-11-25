@@ -1,4 +1,4 @@
-package util
+package util.sqlm
 
 import java.sql.Connection
 
@@ -9,19 +9,12 @@ import models.SqlModelStaticMinimal
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 17.05.13 14:59
- * Description: функции-хелперы для dfs-моделей.
+ * Description: Чтобы не писать везде def save() с логикой выборки между saveInsert() и saveUpdate(),
+ * подмешиваем к классам моделей этот трейт.
  */
-
-
-/** Чтобы не писать везде def save() с логикой выборки между saveInsert() и saveUpdate(),
-  * подмешиваем к классам моделей этот трейт.
-  * @tparam T Тип записи.
-  */
 trait SqlModelSave extends TypeT {
 
   override type T <: SqlModelSave
-
-  def companion: SqlModelStaticMinimal
 
   /** Доступен ли ключ ряда в текущем инстансе? */
   def hasId: Boolean
@@ -36,9 +29,10 @@ trait SqlModelSave extends TypeT {
     */
   def saveUpdate(implicit c:Connection): Int
 
-  /** Сохранить в базу текущую запись.
-    * @return Вернуть текущую или новую запись.
-    */
+  /**
+   * Сохранить в базу текущую запись.
+   * @return Вернуть текущую или новую запись.
+   */
   def save(implicit c: Connection): T = {
     if (!hasId) {
       saveInsert
@@ -49,5 +43,6 @@ trait SqlModelSave extends TypeT {
       }
     }
   }
+
 }
 

@@ -3,7 +3,7 @@ package models
 import java.sql.Connection
 
 import anorm._
-import util.SqlModelSave
+import util.sqlm.SqlModelSave
 
 /**
  * Suggest.io
@@ -37,14 +37,13 @@ final case class IpGeoBaseCity(
   lon       : Double
 ) extends SqlModelSave {
 
-  override def companion = IpGeoBaseCity
   override def hasId = true
   override type T = IpGeoBaseCity
 
   override def saveInsert(implicit c: Connection): IpGeoBaseCity = {
     SQL(s"INSERT INTO $TABLE_NAME(id, city_name, region, lat, lon) VALUES({id}, {cityName}, {region}, {lat}, {lon})")
       .on('id -> id, 'cityName -> cityName, 'region -> region, 'lat -> lat, 'lon -> lon)
-      .executeInsert(rowParser single)
+      .executeInsert(rowParser.single)
   }
 
   override def saveUpdate(implicit c: Connection): Int = {

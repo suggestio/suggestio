@@ -16,7 +16,8 @@ import play.api.Play.{configuration, current}
 import util.anorm.AnormJodaTime._
 import util.anorm.AnormPgArray._
 import util.event.{ContractDeletedEvent, SiowebNotifier}
-import util.SqlModelSave
+import util.sqlm.SqlModelSave
+import util.sqlm.SqlModelSave
 import play.api.libs.json._
 
 /**

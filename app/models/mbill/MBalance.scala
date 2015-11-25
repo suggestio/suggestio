@@ -7,8 +7,8 @@ import anorm._
 import io.suggest.model.es.EsModelUtil.FieldsJsonAcc
 import io.suggest.model.es.{EsModelUtil, ToPlayJsonObj}
 import models._
-import util.SqlModelSave
 import util.anorm.AnormPgArray._
+import util.sqlm.SqlModelSave
 import play.api.libs.json._
 
 /**
@@ -57,7 +57,7 @@ object MBalance extends SqlModelStaticMinimal with FromJson {
     policy.append2sb(req)
     SQL(req.toString())
       .on('adnId -> adnId)
-      .as(rowParser *)
+      .as(rowParser.*)
       .headOption
   }
 
@@ -75,7 +75,7 @@ object MBalance extends SqlModelStaticMinimal with FromJson {
     policy.append2sb(req)
     SQL(req.toString())
       .on('adnIds -> strings2pgArray(adnIds))
-      .as(rowParser *)
+      .as(rowParser.*)
   }
 
 
@@ -118,7 +118,7 @@ object MBalance extends SqlModelStaticMinimal with FromJson {
   def hasForNode(adnId: String)(implicit c: Connection): Boolean = {
     SQL(s"SELECT count(*) > 0 AS bool FROM $TABLE_NAME WHERE $ADN_ID_FN = {adnId}")
       .on('adnId -> adnId)
-      .as(SqlModelStatic.boolColumnParser single)
+      .as(SqlModelStatic.boolColumnParser.single)
   }
 
   /** Десериализатор экземпляра модели из json-представления. */
@@ -148,7 +148,6 @@ final case class MBalance(
 ) extends SqlModelSave with CurrencyCodeOpt with ToPlayJsonObj {
 
   def hasId: Boolean = true
-  override def companion = MBalance
   override type T = MBalance
 
   /** Добавить в базу текущую запись.
@@ -158,7 +157,7 @@ final case class MBalance(
     SQL(s"INSERT INTO $TABLE_NAME ($ADN_ID_FN, $AMOUNT_FN, $CURRENCY_FN, $BLOCKED_FN)" +
         " VALUES({adnId}, {amount}, {currencyCode}, {blocked})")
       .on('adnId -> adnId, 'amount -> amount, 'currencyCode -> currencyCodeOpt, 'blocked -> blocked)
-      .executeInsert(rowParser single)
+      .executeInsert(rowParser.single)
   }
 
   /** Обновлить в таблице текущую запись.

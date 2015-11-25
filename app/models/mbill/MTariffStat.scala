@@ -7,8 +7,8 @@ import anorm._
 import models._
 import models.stat.{ScStatAction, ScStatActions}
 import org.joda.time.DateTime
-import util.SqlModelSave
 import util.anorm.AnormJodaTime._
+import util.sqlm.SqlModelSave
 
 /**
  * Suggest.io
