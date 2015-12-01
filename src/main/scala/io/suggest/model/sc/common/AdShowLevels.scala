@@ -1,15 +1,16 @@
-package io.suggest.ym.model.common
+package io.suggest.model.sc.common
 
 import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.model.menum.EnumJsonReadsValT
-
-import scala.collection.JavaConversions._
 import io.suggest.sc.ScConstants.ShowLevels._
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 25.08.14 17:32
- * Description:  Уровни отображения рекламных карточек. */
+ * Description:  Уровни отображения рекламных карточек.
+ */
+
 object AdShowLevels extends EnumMaybeWithName with EnumJsonReadsValT {
 
   /**
@@ -60,9 +61,12 @@ object AdShowLevels extends EnumMaybeWithName with EnumJsonReadsValT {
   // TODO N2 спилить это счастье отсюда.
   val deserializeShowLevels: PartialFunction[Any, Set[T]] = {
     case v: java.lang.Iterable[_] =>
-      v.map {
-        rawSL => AdShowLevels.withName(rawSL.toString) : T
-      }.toSet
+      import scala.collection.JavaConversions._
+      v.toIterator
+        .map {
+          rawSL => AdShowLevels.withName(rawSL.toString) : T
+        }
+        .toSet
 
     case s: String =>
       Set(AdShowLevels.withName(s))

@@ -1,12 +1,11 @@
-package io.suggest.ym.model.common
+package io.suggest.model.sc.common
 
 import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.model.menum.EnumJsonReadsValT
 import io.suggest.util.MacroLogsImplLazy
-import io.suggest.ym.model.AdShowLevel
-import scala.collection.JavaConversions._
-import AdnSinks.{SINK_GEO, SINK_WIFI}
-import AdShowLevels.{LVL_START_PAGE, LVL_CATS, LVL_PRODUCER}
+import AdShowLevels._
+import io.suggest.ym.model.common.AdnSinks._
+import io.suggest.ym.model.common._
 
 /**
  * Suggest.io
@@ -20,7 +19,7 @@ import AdShowLevels.{LVL_START_PAGE, LVL_CATS, LVL_PRODUCER}
 object SinkShowLevels extends EnumMaybeWithName with MacroLogsImplLazy with EnumJsonReadsValT {
 
   import LOGGER._
-  
+
   protected def args2name(adnSink: AdnSink, sl: AdShowLevel): String = {
     adnSink.name + sl.name
   }
@@ -85,7 +84,7 @@ object SinkShowLevels extends EnumMaybeWithName with MacroLogsImplLazy with Enum
   def fromAdSl(sl: AdShowLevel): T = {
     withName(args2name(AdnSinks.SINK_WIFI, sl))
   }
-  
+
 
   /** Все уровни отображения для wifi-sink'ов. */
   def wifiSls = List(WIFI_START_PAGE_SL, WIFI_CATS_SL, WIFI_PRODUCER_SL)
@@ -97,6 +96,7 @@ object SinkShowLevels extends EnumMaybeWithName with MacroLogsImplLazy with Enum
   /** Десериализатор значений из самых примитивных типов и коллекций. */
   val deserializeLevelsSet: PartialFunction[Any, Set[T]] = {
     case v: java.lang.Iterable[_] =>
+      import scala.collection.JavaConversions._
       v.foldLeft[List[T]] (Nil) { (acc, slRaw) =>
         maybeWithName(slRaw.toString) match {
           case Some(sl) =>
@@ -111,11 +111,3 @@ object SinkShowLevels extends EnumMaybeWithName with MacroLogsImplLazy with Enum
   def sls2strings(sls: Set[T]) = sls.map(_.name)
 
 }
-
-
-/** Поле name для поиска по полю sls 2014-aug, которое содержит ngram'мы различной длины.
-  * Можно искать по sink-name из [[AdnSinks]], по [[AdShowLevels]] и по полному имени [[SinkShowLevels]]. */
-trait SlNameTokenStr {
-  def name: String
-}
-

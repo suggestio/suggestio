@@ -12,6 +12,7 @@ import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.model.n2.node.{MNodeTypes, MNode}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.tag.edge.{TagsMap_t, EMTagsEdgeMut, EMTagsEdgeStaticMut}
+import io.suggest.model.sc.common.SinkShowLevels
 import io.suggest.util.SioEsUtil._
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client

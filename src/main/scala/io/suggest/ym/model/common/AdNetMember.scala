@@ -4,6 +4,7 @@ import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.model.es._
 import io.suggest.model.menum.EnumJsonReadsValT
 import io.suggest.model.n2.extra.{MSlInfo, MAdnExtra}
+import io.suggest.model.sc.common.{SlNameTokenStr, AdShowLevel, AdShowLevels}
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import io.suggest.util.SioEsUtil._
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -12,7 +13,6 @@ import EsModelUtil._
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.{FilterBuilder, FilterBuilders, QueryBuilder, QueryBuilders}
-import io.suggest.ym.model.AdShowLevel
 import java.{util => ju, lang => jl}
 import play.api.libs.json._
 

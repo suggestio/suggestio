@@ -1,7 +1,8 @@
 package io.suggest.model.n2.extra
 
 import io.suggest.model.PlayJsonTestUtil
-import io.suggest.ym.model.common.{AdnSinks, AdShowLevels, AdnRights}
+import io.suggest.model.sc.common.AdShowLevels
+import io.suggest.ym.model.common.{AdnSinks, AdnRights}
 import org.scalatest.FlatSpec
 
 /**

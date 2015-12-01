@@ -2,7 +2,7 @@ package io.suggest.model.n2.edge.search
 
 import io.suggest.common.{IEmpty, EmptyProduct}
 import io.suggest.model.n2.edge.MPredicate
-import io.suggest.ym.model.common.SlNameTokenStr
+import io.suggest.model.sc.common.SlNameTokenStr
 
 /**
  * Suggest.io

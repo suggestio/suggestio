@@ -1,7 +1,7 @@
 package io.suggest.model.n2.edge
 
 import io.suggest.model.PlayJsonTestUtil
-import io.suggest.ym.model.common.SinkShowLevels
+import io.suggest.model.sc.common.SinkShowLevels
 import org.scalatest.FlatSpec
 
 /**

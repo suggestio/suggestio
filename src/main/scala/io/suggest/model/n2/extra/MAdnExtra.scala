@@ -2,7 +2,7 @@ package io.suggest.model.n2.extra
 
 import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.model.es.IGenEsMappingProps
-import io.suggest.ym.model.AdShowLevel
+import io.suggest.model.sc.common.AdShowLevel
 import io.suggest.ym.model.common.{AdnRights, AdnRight, AdnSink}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._

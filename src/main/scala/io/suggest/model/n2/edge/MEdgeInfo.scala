@@ -3,8 +3,8 @@ package io.suggest.model.n2.edge
 import io.suggest.common.{EmptyProduct, IEmpty}
 import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.model.geo.GeoShape
+import io.suggest.model.sc.common.SinkShowLevel
 import io.suggest.util.SioConstants
-import io.suggest.ym.model.common.SinkShowLevel
 import org.joda.time.DateTime
 import play.api.libs.functional.syntax._
 import play.api.libs.json._

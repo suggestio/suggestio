@@ -2,11 +2,11 @@ package io.suggest.ym.model.common
 
 import io.suggest.model.es.{EsModelPlayJsonT, EsModelStaticMutAkvT, EsModelUtil}
 import io.suggest.model.n2.edge.{MEdgeInfo, MPredicates, MEdge}
+import io.suggest.model.sc.common.{SlNameTokenStr, AdShowLevel, SinkShowLevel, SinkShowLevels}
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import io.suggest.util.{Lists, SioConstants}
 import io.suggest.util.SioEsUtil._
 import io.suggest.model._
-import io.suggest.ym.model.AdShowLevel
 import com.fasterxml.jackson.annotation.JsonIgnore
 import scala.collection.JavaConversions._
 import org.elasticsearch.index.query.{FilterBuilder, FilterBuilders, QueryBuilder, QueryBuilders}
@@ -241,7 +241,6 @@ object AdReceiverInfo {
 
 }
 
-import AdReceiverInfo._
 
 /**
  * Экземляр информации об одном получателе рекламы.

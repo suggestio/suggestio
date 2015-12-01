@@ -7,9 +7,6 @@ package io.suggest.ym
  */
 package object model {
 
-  val  AdShowLevels       = common.AdShowLevels
-  type AdShowLevel        = AdShowLevels.T
-
   type NodeGeoLevel       = NodeGeoLevels.T
 
 }

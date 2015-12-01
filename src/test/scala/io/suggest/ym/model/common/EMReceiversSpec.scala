@@ -1,5 +1,6 @@
 package io.suggest.ym.model.common
 
+import io.suggest.model.sc.common.SinkShowLevels
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import org.scalatest._
 import SinkShowLevels._
