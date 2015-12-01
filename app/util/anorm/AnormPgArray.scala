@@ -39,11 +39,11 @@ object AnormPgArray {
   }
 
 
-  def seqInt2pgArray(l: Traversable[Int])(implicit c:Connection) = {
-    c.createArrayOf("int", l.map(int2Integer).toArray)
+  def seqInt2pgArray(l: TraversableOnce[Int])(implicit c:Connection) = {
+    c.createArrayOf("int", l.toIterator.map(int2Integer).toArray)
   }
 
-  def strings2pgArray(l: Traversable[String])(implicit c: Connection) = {
+  def strings2pgArray(l: TraversableOnce[String])(implicit c: Connection) = {
     c.createArrayOf("varchar", l.toArray)
   }
 

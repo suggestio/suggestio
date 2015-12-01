@@ -211,10 +211,6 @@ trait MAdvStaticT extends SqlModelStatic with DeleteByAdIdT {
   /** Дефолтовое значение limit'а в методах. */
   def LIMIT_DFLT = 100
 
-  def getActualById(id: Int, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection) = {
-    getByIdBase(id, policy, Some("AND date_end >= now()"))
-  }
-
   /**
    * Поиск по колонке adId, т.е. по id рекламной карточки.
    * @param adId id рекламной карточки, которую размещают.
@@ -235,19 +231,6 @@ trait MAdvStaticT extends SqlModelStatic with DeleteByAdIdT {
 
   def findNotExpiredRelatedTo(adnId: String, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
     findBy(" WHERE (prod_adn_id = {adnId} OR rcvr_adn_id = {adnId}) AND date_end >= now()", policy, 'adnId -> adnId)
-  }
-
-  /**
-   * Найти все id рекламных карточек, которые относятся к актуальным рядам между указанными
-   * продьюсером и ресивером.
-   * @param prodId id продьюсера.
-   * @param rcvrId id ресивера.
-   * @return Список ad_id без дубликатов в неопределённом порядке.
-   */
-  def findActualAdIdsBetweenNodes(prodId: String, rcvrId: String)(implicit c: Connection): List[String] = {
-    SQL("SELECT DISTICT ad_id FROM " + TABLE_NAME + " WHERE prod_adn_id = {prodId} AND rcvr_adn_id = {rcvrId} AND date_end >= now()")
-      .on('prodId -> prodId, 'rcvrId -> rcvrId)
-      .as(MAdv.AD_ID_PARSER.*)
   }
 
   /**
@@ -284,10 +267,6 @@ trait MAdvStaticT extends SqlModelStatic with DeleteByAdIdT {
     findBy(sql1, policy, args1 : _*)
   }
 
-  def findByAdIdAndRcvrs(adId: String, rcvrIds: Traversable[String], policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
-    findBy(" WHERE ad_id = {adId} AND rcvr_adn_id = ANY({rcvrIds})", policy, 'rcvrIds -> strings2pgArray(rcvrIds), 'ad_id -> adId)
-  }
-
   /** Найти все ряды, поля adId и rcvrAdnId которых одновременно лежат в указанных множествах. */
   def findByAdIdsAndRcvrs(adIds: Traversable[String], rcvrIds: Traversable[String],
                           policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
@@ -303,15 +282,6 @@ trait MAdvStaticT extends SqlModelStatic with DeleteByAdIdT {
       " WHERE ad_id = ANY({adIds}) AND prod_adn_id = ANY({prodIds})", policy,
       'adIds -> strings2pgArray(adIds), 'prodIds -> strings2pgArray(prodIds)
     )
-  }
-
-  /** Найти все ряда, содержащие указанного получателя в соотв. колонке.
-    * @param rcvrAdnId id узла-получателя.
-    * @param policy Политика блокировки рядов.
-    * @return Список рядов, адресованных указанному получателю, в неопр.порядке.
-    */
-  def findByRcvr(rcvrAdnId: String, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
-    findBy(" WHERE rcvr_adn_id = {rcvrAdnId}", policy, 'rcvrAdnId -> rcvrAdnId)
   }
 
   /**
@@ -336,56 +306,12 @@ trait MAdvStaticT extends SqlModelStatic with DeleteByAdIdT {
   }
 
   /**
-   * Найти всех продьюсеров (рекламодателей) для указанного ресивера.
-   * @param rcvrAdnId adn id узла-ресивера.
-   * @return Список adn id продьюсеров (узлов-рекламодателей) в неопределённом порядке
-   */
-  def findAllProducersForRcvr(rcvrAdnId: String)(implicit c: Connection): List[String] = {
-    SQL("SELECT DISTINCT prod_adn_id FROM " + TABLE_NAME + " WHERE rcvr_adn_id = {rcvrAdnId} AND date_end >= now()")
-     .on('rcvrAdnId -> rcvrAdnId)
-     .as(MAdv.PROD_ADN_ID_PARSER.*)
-  }
-  def findAllProducersForRcvrs(rcvrAdnIds: Traversable[String])(implicit c: Connection): List[String] = {
-    SQL("SELECT DISTINCT prod_adn_id FROM " + TABLE_NAME + " WHERE rcvr_adn_id = ANY({rcvrs}) AND date_end >= now()")
-     .on('rcvrs -> strings2pgArray(rcvrAdnIds))
-     .as(MAdv.PROD_ADN_ID_PARSER.*)
-  }
-
-  /**
-   * Посчитать кол-во рядов, относящихся к указанному ресиверу.
-   * @param rcvrAdnId adn id узла-ресивера.
-   * @return Неотрицательно кол-во.
-   */
-  def countForRcvr(rcvrAdnId: String)(implicit c: Connection): Long = {
-    SQL("SELECT count(*) AS c FROM " + TABLE_NAME + " WHERE rcvr_adn_id = {rcvrAdnId}")
-      .on('rcvrAdnId -> rcvrAdnId)
-      .as(MAdv.COUNT_PARSER.single)
-  }
-  def countForRcvrs(rcvrAdnIds: Traversable[String])(implicit c: Connection): Long = {
-    SQL("SELECT count(*) AS c FROM " + TABLE_NAME + " WHERE rcvr_adn_id = ANY({rcvrs})")
-      .on('rcvrs -> strings2pgArray(rcvrAdnIds))
-      .as(MAdv.COUNT_PARSER.single)
-  }
-
-  /**
    * Фильтрация по колонке date_created. Поиск всех рядов, которые созданы не ранее последнего времени.
    * @param createdInPeriod Период относительно now(), в течение которого ряды отбрасываются.
    * @return Список рядов, которые уже созданы и существуют не менее указанного периода.
    */
   def findCreatedLast(createdInPeriod: Period, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
     findBy(" WHERE date_created + {createdInPeriod} <= now()", policy, 'createdInPeriod -> createdInPeriod)
-  }
-
-  /** Найти последнюю актуальную запись, касающуюся указанной рекламной карточки, размещаемой на указанном ресивере.
-    * @param adId id рекламной карточки.
-    * @param rcvrId id ресивера.
-    * @return Опциональный результат.
-    */
-  def getLastActualByAdIdRcvr(adId: String, rcvrId: String)(implicit c: Connection): Option[T] = {
-    SQL("SELECT * FROM " + TABLE_NAME + " WHERE ad_id = {adId} AND rcvr_adn_id = {rcvrId} AND date_end >= now() ORDER BY id DESC LIMIT 1")
-      .on('adId -> adId, 'rcvrId -> rcvrId)
-      .as(rowParser.*)
-      .headOption
   }
 
 }

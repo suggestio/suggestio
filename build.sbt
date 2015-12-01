@@ -21,10 +21,20 @@ scalaVersion := "2.11.7"
 
 libraryDependencies ++= {
  val bcVsn = "1.52"
+ val slickVsn = "1.1.1"
+ val slickPgVsn = "0.10.1"
  Seq(
   jdbc exclude("com.h2database", "h2"),
-  // Anorm has been moved to an external module. See https://playframework.com/documentation/2.4.x/Migration24
   "com.typesafe.play" %% "anorm" % "2.4.0",
+  //"io.suggest" %% "anorm-zsql" % "0.0.0-SNAPSHOT",
+  // Slick is an functional relation mapper.
+  "com.typesafe.play" %% "play-slick" % slickVsn,
+  //"com.github.tototoshi" %% "slick-joda-mapper" % "2.1.0",
+  "joda-time" % "joda-time" % "2.8.1",
+  //"org.joda" % "joda-convert" % "1.7",
+  "com.github.tminglei" %% "slick-pg" % slickPgVsn,
+  "com.github.tminglei" %% "slick-pg_joda-time" % slickPgVsn,
+  // "com.typesafe.play" %% "play-slick-evolutions" % slickVsn,
   cache,
   json,
   ws exclude("commons-logging", "commons-logging"),

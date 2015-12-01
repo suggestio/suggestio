@@ -107,19 +107,7 @@ object MAdvOk extends MAdvStaticT {
     )
   }
 
-  /**
-   * Аналог findAllProducersForRcvrs(), но фильтрует по значению флага is_partner, спицифичному только для MAdvOk.
-   * @param rcvrAdnIds id ресиверов.
-   * @param isPartner Значение поля is_partner.
-   * @return Тоже самое, что и findAllProducersForRcvrs().
-   */
-  def findAllProducersForRcvrsPartner(rcvrAdnIds: Traversable[String], isPartner: Boolean)(implicit c: Connection): List[String] = {
-    SQL("SELECT DISTINCT prod_adn_id FROM " + TABLE_NAME + " WHERE rcvr_adn_id = ANY({rcvrs}) AND date_end >= now() AND is_partner = {isPartner}")
-     .on('rcvrs -> strings2pgArray(rcvrAdnIds), 'isPartner -> isPartner)
-     .as(MAdv.PROD_ADN_ID_PARSER.*)
-  }
-
-  def findByAdIdsAndProducersOnline(adIds: Traversable[String], prodIds: Traversable[String], isOnline: Boolean,
+  def findByAdIdsAndProducersOnline(adIds: TraversableOnce[String], prodIds: Traversable[String], isOnline: Boolean,
                               policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
     findBy(
       " WHERE ad_id = ANY({adIds}) AND prod_adn_id = ANY({prodIds}) AND online = {isOnline}", policy,

@@ -11,17 +11,45 @@ import io.suggest.common.menum.EnumMaybeWithName
 
 object MAdv2Modes extends EnumMaybeWithName {
 
+  /** Класс для всех экземпляров модели. */
   protected[this] abstract class Val(val strId: String)
     extends super.Val(strId)
   {
+    /** Суффикс названия adv2-таблицы. */
     def tableSuffix: String
-    def tableName: String = "adv2_" + tableSuffix
+
+    /** Полное имя таблицы, связанной с данным типом. */
+    def tableName: String = {
+      MAdv2.TABLE_NAME + "_" + tableSuffix
+    }
   }
 
   override type T = Val
 
+  /** Запрос на размещение, пока не прошедший модерацию. */
   val Req: T = new Val("r") {
-    override def tableSuffix: String = "req"
+    override def tableSuffix = "req"
   }
+
+  /** Размещение подтверждено, но пока ещё время не пришло для активации. */
+  val Approved: T = new Val("a") {
+    override def tableSuffix = "approved"
+  }
+
+  /** Размещение в процессе. */
+  val Online: T = new Val("o") {
+    override def tableSuffix = "online"
+  }
+
+  /** Все завершенные размещения лежат в одной таблице done. */
+  private class DoneVal(strId: String) extends Val(strId) {
+    override def tableSuffix = "done"
+  }
+
+  /** Отказ в размещении. */
+  val Rejected: T = new DoneVal("e")
+
+  /** Размещение было выполнено, и закончено затем. */
+  val Finished: T = new DoneVal("f")
 
 }
