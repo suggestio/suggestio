@@ -1,0 +1,14 @@
+syntax: glob
+
+.gradle/
+project/
+target/
+lib/
+.idea/
+.idea_modules/
+.ensime
+.ensime_lucene
+*.orig
+*.rej
+~*
+*.swp
