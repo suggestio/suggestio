@@ -3,6 +3,7 @@ package util
 import java.text.{DecimalFormat, NumberFormat}
 import java.util.Currency
 import io.suggest.common.text.StringUtil
+import io.suggest.mbill2.m.price.{MPrice, IPrice}
 import models.Context
 import org.joda.time.{ReadableInstant, ReadablePartial}
 import org.joda.time.format.DateTimeFormat
@@ -80,19 +81,21 @@ object TplDataFormatUtil extends TplFormatUtilT {
     priceStr.replace('\u0020', '\u00A0')
   }
 
-  /** Напечатать цену согласно локали и валюте. */
-  def formatPrice(price: Float, currency: Currency)(implicit ctx: Context): String = {
-    // TODO следует залезать в локаль клиента и форматировать через неё?
-    // TODO Нужна поддержка валют в ценах?
+  def formatPrice(price: IPrice)(implicit ctx: Context): String = {
     val currFmt = NumberFormat.getCurrencyInstance.asInstanceOf[DecimalFormat]
-    currFmt.setCurrency(currency)
+    currFmt.setCurrency(price.currency)
     val dcs = currFmt.getDecimalFormatSymbols
-    val currencySymbol = formatCurrency(currency)
+    val currencySymbol = formatCurrency(price.currency)
     dcs.setCurrencySymbol(currencySymbol)
     currFmt.setDecimalFormatSymbols(dcs)
-    currFmt.setGroupingUsed(price >= 10000)
+    currFmt.setGroupingUsed(price.amount >= 10000)
     val formatted = currFmt.format(price)
     pricePostprocess(formatted)
+  }
+
+  /** Напечатать цену согласно локали и валюте. */
+  def formatPrice(price: Float, currency: Currency)(implicit ctx: Context): String = {
+    formatPrice( MPrice(price, currency) )
   }
 
   /** Рендер целого числа. */

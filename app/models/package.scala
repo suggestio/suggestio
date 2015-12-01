@@ -26,8 +26,8 @@ package object models {
   type MYmCategory          = ym.model.MYmCategory
   val  MYmCategory          = ym.model.MYmCategory
 
-  val  AdShowLevels         = ym.model.AdShowLevels
-  type AdShowLevel          = AdShowLevels.T
+  type AdShowLevel          = io.suggest.model.sc.common.AdShowLevel
+  val  AdShowLevels         = io.suggest.model.sc.common.AdShowLevels
 
   val  AdnRights            = ym.model.common.AdnRights
   type AdnRight             = ym.model.common.AdnRight
@@ -114,8 +114,8 @@ package object models {
   type GeoPoint             = geo.GeoPoint
   val  GeoPoint             = geo.GeoPoint
 
-  val  SinkShowLevels       = ym.model.common.SinkShowLevels
-  type SinkShowLevel        = ym.model.common.SinkShowLevel
+  type SinkShowLevel        = io.suggest.model.sc.common.SinkShowLevel
+  val  SinkShowLevels       = io.suggest.model.sc.common.SinkShowLevels
 
   val  AdnSinks             = ym.model.common.AdnSinks
   type AdnSink              = ym.model.common.AdnSink

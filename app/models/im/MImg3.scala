@@ -1,6 +1,6 @@
 package models.im
 
-import java.util.UUID
+import java.util.{NoSuchElementException, UUID}
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.fio.WriteRequest
@@ -128,12 +128,13 @@ abstract class MImg3T extends MImgT {
     val isExistsFut = _mediaFut
       .flatMap { _.storage.isExist }
     // возвращать false при ошибках.
-    val resFut = isExistsFut
-      .recover { case _ =>
+    val resFut = isExistsFut.recover {
+      // Если подавлять все ошибки связи, то система будет удалять все local imgs.
+      case ex: NoSuchElementException =>
         false
-      }
+    }
     // Залоггировать неожиданные экзепшены.
-    isExistsFut onFailure { case ex: Throwable =>
+    isExistsFut.onFailure { case ex: Throwable =>
       if (!ex.isInstanceOf[NoSuchElementException])
         LOGGER.warn("isExist() or _mediaFut failed / " + this, ex)
     }

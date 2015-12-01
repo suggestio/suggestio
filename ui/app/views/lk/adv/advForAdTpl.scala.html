@@ -13,7 +13,7 @@
         @messages("Total.amount._money")
       </h2>
       <p class="right-bar-price-widget_price-value js-pre-price">
-        @formatPrice(0F, CurrencyCodeDflt.currency)
+        @formatPrice( args.price )
       </p>
       <button class="right-bar-price-widget_request-btn btn __major __size-L js-submit-btn" data-for="#advsForm">@messages("Send.request")</button>
     </div>

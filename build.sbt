@@ -20,23 +20,14 @@ scalaVersion := "2.11.7"
 //updateOptions := updateOptions.value.withCachedResolution(true)
 
 libraryDependencies ++= {
+ val playSlickVsn = "1.1.1"   // play-2.5+: синхронизировать с версией play.
  val bcVsn = "1.52"
- val slickVsn = "1.1.1"
- val slickPgVsn = "0.10.1"
  Seq(
   jdbc exclude("com.h2database", "h2"),
   "com.typesafe.play" %% "anorm" % "2.4.0",
-  //"io.suggest" %% "anorm-zsql" % "0.0.0-SNAPSHOT",
-  // Slick is an functional relation mapper.
-  "com.typesafe.play" %% "play-slick" % slickVsn,
-  //"com.github.tototoshi" %% "slick-joda-mapper" % "2.1.0",
-  "joda-time" % "joda-time" % "2.8.1",
-  //"org.joda" % "joda-convert" % "1.7",
-  "com.github.tminglei" %% "slick-pg" % slickPgVsn,
-  "com.github.tminglei" %% "slick-pg_joda-time" % slickPgVsn,
-  // "com.typesafe.play" %% "play-slick-evolutions" % slickVsn,
   cache,
   json,
+  "com.typesafe.play" %% "play-slick" % playSlickVsn,
   ws exclude("commons-logging", "commons-logging"),
   "com.typesafe.play" %% "play-mailer" % "3.0.0",
   "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.

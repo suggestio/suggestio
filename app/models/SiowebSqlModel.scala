@@ -2,6 +2,7 @@ package models
 
 import anorm._
 import java.sql.Connection
+import io.suggest.common.m.sql.ITableName
 import io.suggest.common.menum.EnumValue2Val
 import util.anorm.AnormPgArray
 import AnormPgArray._
@@ -19,14 +20,6 @@ object SqlModelStatic {
   val boolColumnParser = get[Boolean]("bool")
 }
 
-
-/** Интерфейс для доступа к имени таблицы, которая обслуживается текущей моделью. */
-trait ITableName {
-
-  /** Название таблицы. Используется при сборке sql-запросов. */
-  def TABLE_NAME: String
-
-}
 
 
 trait SqlTableName extends ITableName {

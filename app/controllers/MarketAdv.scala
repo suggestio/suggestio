@@ -2,6 +2,7 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.event.SioNotifierStaticClientI
+import io.suggest.mbill2.m.price.MPrice
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.playx.ICurrentConf
 import models.adv._
@@ -385,6 +386,8 @@ class MarketAdv @Inject() (
       )
     }
 
+    val price0 = MPrice(0.0, CurrencyCodeDflt.currency)
+
     // Когда всё станет готово - рендерим результат.
     for {
       formArgs      <- advFormTplArgsFut
@@ -393,7 +396,8 @@ class MarketAdv @Inject() (
       val rargs = MAdvForAdTplArgs(
         mad       = request.mad,
         producer  = request.producer,
-        formArgs  = formArgs
+        formArgs  = formArgs,
+        price     = price0
       )
       rs( advForAdTpl(rargs)(ctx) )
     }

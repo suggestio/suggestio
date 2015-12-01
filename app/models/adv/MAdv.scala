@@ -6,6 +6,7 @@ import java.util.Currency
 import akka.actor.ActorContext
 import anorm._
 import com.google.inject.Inject
+import io.suggest.common.m.sql.ITableName
 import io.suggest.event.SioNotifier.Event
 import io.suggest.event.subscriber.SnClassSubscriber
 import io.suggest.event.{AdDeletedEvent, SNStaticSubscriber}

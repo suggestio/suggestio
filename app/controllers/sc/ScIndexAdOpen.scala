@@ -1,8 +1,7 @@
 package controllers.sc
 
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
-import io.suggest.ym.model.common.AdShowLevels
-import models.{MNode, AdSearchImpl}
+import models.{MNode, AdSearchImpl, AdShowLevels}
 import models.im.DevScreen
 import models.msc.{MScApiVsn, ScReqArgsDflt, ScReqArgs}
 import play.api.mvc.Result

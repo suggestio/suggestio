@@ -1,5 +1,6 @@
 package models.adv.tpl
 
+import io.suggest.mbill2.m.price.{MPrice, IPrice}
 import models.MNode
 import models.adv.form.IAdvFormTplArgs
 
@@ -20,12 +21,15 @@ trait IAdvForAdTplArgs {
   /** Данные формы размещения. */
   def formArgs  : IAdvFormTplArgs
 
+  def price     : IPrice
+
 }
 
 
 case class MAdvForAdTplArgs(
   override val mad       : MNode,
   override val producer  : MNode,
-  override val formArgs  : IAdvFormTplArgs
+  override val formArgs  : IAdvFormTplArgs,
+  override val price     : MPrice
 )
   extends IAdvForAdTplArgs
