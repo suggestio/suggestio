@@ -59,11 +59,15 @@ object SiobixBuild extends Build {
   lazy val n2 = project
     .dependsOn(util, swfs)
 
-  /*lazy val anormZsql = {
-    val name = "anorm-zsql"
+  /** Утиль для slick-based моделей в подпроектах.*/
+  lazy val commonSlick = {
+    val name = "common-slick"
     Project(id = name, base = file(name))
-      .dependsOn(common)
-  }*/
+  }
+
+  /** Модели биллинга второго поколения. */
+  lazy val mbill2 = project
+    .dependsOn(logsMacro, common, util, commonSlick)
 
   /** Самописное leaflet API. */
   lazy val leafletSjs = {
@@ -103,7 +107,7 @@ object SiobixBuild extends Build {
 
   /** веб-интерфейс suggest.io v2. */
   lazy val web21 = project
-    .dependsOn(common, util, securesocial, n2)
+    .dependsOn(common, util, securesocial, n2, mbill2)
     .settings(
       scalaJSProjects := Seq(lkSjs, commonSjs, scSjs, mapRadSjs, leafletSjs),
       pipelineStages += scalaJSProd
