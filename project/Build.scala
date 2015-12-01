@@ -59,6 +59,12 @@ object SiobixBuild extends Build {
   lazy val n2 = project
     .dependsOn(util, swfs)
 
+  /*lazy val anormZsql = {
+    val name = "anorm-zsql"
+    Project(id = name, base = file(name))
+      .dependsOn(common)
+  }*/
+
   /** Самописное leaflet API. */
   lazy val leafletSjs = {
     val name = "scalajs-leaflet"
