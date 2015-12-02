@@ -3,8 +3,11 @@ package io.suggest.mbill2.m.order
 import com.google.inject.{Inject, Singleton}
 import io.suggest.common.m.sql.ITableName
 import io.suggest.common.slick.driver.ExPgSlickDriverT
-import io.suggest.mbill2.m.contract.MContracts
-import io.suggest.mbill2.m.price.{MPrice, PriceSlick, Amount_t}
+import io.suggest.mbill2.m.contract.{ContractIdSlickIdx, ContractIdSlickFk, MContracts}
+import io.suggest.mbill2.m.dt.DateCreatedSlick
+import io.suggest.mbill2.m.gid.GidSlick
+import io.suggest.mbill2.m.price._
+import io.suggest.mbill2.util.PgaNamesMaker
 import org.joda.time.DateTime
 import slick.lifted.ProvenShape
 
@@ -14,54 +17,45 @@ import slick.lifted.ProvenShape
  * Created: 01.12.15 17:02
  * Description: Модель заказов, т.е. ордеров, т.е. групп item'ов.
  */
-object MOrder extends ITableName {
-
-  override val TABLE_NAME   = "order"
-
-  val ID_FN                 = "id"
-  val STATUS_FN             = "status"
-  val AMOUNT_FN             = "amount"
-  val CURRENCY_CODE_FN      = "currency_code"
-  val CONTRACT_ID_FN        = "contract_id"
-  val DATE_CREATED_FN       = "date_created"
-  val DATE_STATUS_FN        = "date_status"
-
-  def CONTRACT_ID_FK        = s"${TABLE_NAME}_${CONTRACT_ID_FN}_fkey"
-  def CONTRACT_ID_INX       = s"fki_$CONTRACT_ID_FK"
-
-  def STATUS_INX            = s"${TABLE_NAME}_${STATUS_FN}_idx"
-
-}
-
 
 @Singleton
 class MOrders @Inject() (
-  override protected val driver   : ExPgSlickDriverT,
-  protected val mContracts        : MContracts
+  override protected val driver       : ExPgSlickDriverT,
+  override protected val mContracts   : MContracts
 )
   extends PriceSlick
+  with GidSlick
+  with DateCreatedSlick
+  with ContractIdSlickFk with ContractIdSlickIdx
+  with AmountSlick
+  with CurrencyCodeSlick
+  with ITableName
 {
 
-  import MOrder._
   import driver.api._
 
+  override val TABLE_NAME   = "order"
+
+  override def CONTRACT_ID_INX = PgaNamesMaker.fkInx(TABLE_NAME, CONTRACT_ID_FN)
+
+  def STATUS_FN             = "status"
+  def DATE_STATUS_FN        = "date_status"
+
+  def STATUS_INX            = s"${TABLE_NAME}_${STATUS_FN}_idx"
+
   /** Slick-описание таблицы заказов. */
-  class MTable(tag: Tag)
+  class MOrdersTable(tag: Tag)
     extends Table[MOrder](tag, TABLE_NAME)
-    with CurrencyTable[MOrder]
-    with PriceTable[MOrder]
+    with PriceColumn with CurrencyColumn
+    with GidColumn
+    with DateCreatedColumn
+    with ContractIdFk with ContractIdIdx
+    with AmountColumn
+    with CurrencyCodeColumn
   {
 
-    def id            = column[Long](ID_FN, O.PrimaryKey, O.AutoInc)
     def statusStr     = column[String](STATUS_FN)
-    def amount        = column[Amount_t](AMOUNT_FN)
-    def currencyCode  = column[String](CURRENCY_CODE_FN)
-    def contractId    = column[Long](CONTRACT_ID_FN)
-    def dateCreated   = column[DateTime](DATE_CREATED_FN)
     def dateStatus    = column[DateTime](DATE_STATUS_FN)
-
-    def contract      = foreignKey(CONTRACT_ID_FK, contractId, mContracts.contracts)(_.id)
-    def contractIdInx = index(CONTRACT_ID_INX, contractId)
 
     def statusStrInx  = index(STATUS_INX, statusStr)
 
@@ -69,14 +63,14 @@ class MOrders @Inject() (
 
     override def * : ProvenShape[MOrder] = {
       (status, contractId, price, dateCreated, dateStatus, id.?) <> (
-        (MOrder.apply _).tupled, MOrder.unapply
+        MOrder.tupled, MOrder.unapply
       )
     }
 
   }
 
-
-  val orders = TableQuery[MTable]
+  /** Экземпляр статической части модели, пригодный для запуска и проведения запросов. */
+  val orders = TableQuery[MOrdersTable]
 
 }
 
@@ -85,7 +79,7 @@ case class MOrder(
   status        : MOrderStatus,
   contractId    : Long,
   price         : MPrice,
-  dateCreated   : DateTime = DateTime.now,
-  dateStatus    : DateTime = DateTime.now,
-  id            : Option[Long] = None
+  dateCreated   : DateTime      = DateTime.now,
+  dateStatus    : DateTime      = DateTime.now,
+  id            : Option[Long]  = None
 )

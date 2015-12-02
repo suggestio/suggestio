@@ -3,6 +3,8 @@ package io.suggest.mbill2.m.contract
 import com.google.inject.{Inject, Singleton}
 import io.suggest.common.m.sql.ITableName
 import io.suggest.common.slick.driver.ExPgSlickDriverT
+import io.suggest.mbill2.m.dt.DateCreatedSlick
+import io.suggest.mbill2.m.gid.GidSlick
 import org.joda.time.DateTime
 import slick.lifted.ProvenShape
 
@@ -26,11 +28,11 @@ object MContract extends ITableName {
   override val TABLE_NAME     = "contract"
 
   // Названия полей (столбцов).
-  val DATE_CREATED_FN         = "date_created"
-  val CRAND_FN                = "crand"
-  val ID_FN                   = "id"
-  val HIDDEN_INFO_FN          = "hidden_info"
-  val SUFFIX_FN               = "suffix"
+  def CRAND_FN                = "crand"
+  def HIDDEN_INFO_FN          = "hidden_info"
+  def SUFFIX_FN               = "suffix"
+
+  def CRAND_INX               = s"${TABLE_NAME}_${CRAND_FN}_idx"
 
 }
 
@@ -38,22 +40,27 @@ object MContract extends ITableName {
 /** slick-модель таблицы контрактов. */
 @Singleton
 class MContracts @Inject()(
-  protected val driver: ExPgSlickDriverT
-) {
+  override protected val driver     : ExPgSlickDriverT
+)
+  extends GidSlick
+  with DateCreatedSlick
+{
 
   import MContract._
   import driver.api._
 
   /** slick-описание таблицы контрактов. */
-  class MTable(tag: Tag) extends Table[MContract](tag, TABLE_NAME) {
+  class MContractsTable(tag: Tag)
+    extends Table[MContract](tag, TABLE_NAME)
+    with GidColumn
+    with DateCreatedColumn
+  {
 
-    def id          = column[Long](ID_FN, O.PrimaryKey, O.AutoInc)
     def crand       = column[Int](CRAND_FN)
-    def dateCreated = column[DateTime](DATE_CREATED_FN)
     def hiddenInfo  = column[Option[String]](HIDDEN_INFO_FN, O.Length(1024))
     def suffix      = column[Option[String]](SUFFIX_FN, O.Length(8))
 
-    def crandInx    = index("contract_crand_idx", crand, unique = false)
+    def crandInx    = index(CRAND_INX, crand, unique = false)
 
     override def * : ProvenShape[MContract] = {
       (id.?, crand, dateCreated, hiddenInfo, suffix) <> ((MContract.apply _).tupled, MContract.unapply)
@@ -62,7 +69,7 @@ class MContracts @Inject()(
   }
 
   /** Доступ к запросам модели. */
-  val contracts = TableQuery[MTable]
+  val contracts = TableQuery[MContractsTable]
 
 }
 

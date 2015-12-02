@@ -1,6 +1,6 @@
 package io.suggest.mbill2.m.order
 
-import io.suggest.common.menum.EnumMaybeWithName
+import io.suggest.common.menum.{EnumApply, EnumMaybeWithName}
 
 /**
  * Suggest.io
@@ -8,10 +8,11 @@ import io.suggest.common.menum.EnumMaybeWithName
  * Created: 01.12.15 17:53
  * Description: Статусы ордеров.
  */
-object MOrderStatuses extends EnumMaybeWithName {
+object MOrderStatuses extends EnumMaybeWithName with EnumApply {
 
   protected[this] class Val(val strId: String)
     extends super.Val(strId)
+    with ValT
   {
 
     /**
@@ -35,12 +36,5 @@ object MOrderStatuses extends EnumMaybeWithName {
 
   /** Заказ завершён. */
   val Closed = new Val("d")
-
-  def withNameT(n: String): T = {
-    withName(n)
-  }
-  def unapply(v: T): Option[String] = {
-    Some(v.strId)
-  }
 
 }

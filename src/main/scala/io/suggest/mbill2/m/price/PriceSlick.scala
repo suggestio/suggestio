@@ -1,19 +1,16 @@
 package io.suggest.mbill2.m.price
 
 import java.util.Currency
-
-import slick.driver.JdbcProfile
+import io.suggest.common.slick.driver.IDriver
 import slick.lifted.MappedProjection
 
 /**
-  * Suggest.io
-  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
-  * Created: 01.12.15 22:29
-  * Description: Аддоны для работы с ценой через slick.
-  */
-trait PriceSlick {
-
-  protected val driver: JdbcProfile
+ * Suggest.io
+ * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+ * Created: 01.12.15 22:29
+ * Description: Аддоны для работы с ценой через slick.
+ */
+trait PriceSlick extends IDriver {
 
   import driver.api._
 
@@ -22,7 +19,7 @@ trait PriceSlick {
   }
 
   /** Аддон для добавления отмаппленного варианта currencyCode. */
-  trait CurrencyTable[X] extends Table[X] with ICurrencyProjection {
+  trait CurrencyColumn extends ICurrencyProjection {
 
     def currencyCode: Rep[String]
 
@@ -35,7 +32,7 @@ trait PriceSlick {
 
 
   /** Поддержка маппинга цены в таблице. */
-  trait PriceTable[X] extends Table[X] with ICurrencyProjection {
+  trait PriceColumn extends ICurrencyProjection {
 
     def amount: Rep[Amount_t]
 

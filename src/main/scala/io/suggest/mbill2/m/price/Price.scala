@@ -14,6 +14,8 @@ trait IPrice {
   def currency  : Currency
 }
 
+
+/** Дефолтовая реализация модели цены. */
 case class MPrice(
   override val amount    : Amount_t,
   override val currency  : Currency
