@@ -1,5 +1,6 @@
 -- billing v2.
 
+BEGIN;
 
 CREATE TABLE sio2.gid
 (
@@ -166,15 +167,25 @@ CREATE INDEX fki_txn_order_id_fkey
 
 
 
-
 CREATE TABLE sio2.item
 (
--- Унаследована from table sio2.gid:  id bigint NOT NULL DEFAULT nextval('sio2.gid_id_seq'::regclass),
+  -- Унаследована from table sio2.gid:  id bigint NOT NULL DEFAULT nextval('sio2.gid_id_seq'::regclass),
   order_id bigint NOT NULL,
   status "char" NOT NULL, -- статус обработки данного item'а
   type "char" NOT NULL, -- Тип субъекта сделки, для контроля данных между наследуемыми таблицами. Например, прямое размещение на узле или размещение в геотеге.
   amount double precision NOT NULL,
-  currency_code character varying(3) NOT NULL
+  currency_code character varying(3) NOT NULL,
+  date_start timestamp with time zone NOT NULL DEFAULT now(),
+  date_end timestamp with time zone NOT NULL,
+  ad_id character varying(32) NOT NULL, -- id размещаемой карточки.
+  reason character varying(512), -- Причина отказа в размещении. Заказы в размещении карточки могут быть отменены по воле "продавца".
+  rcvr_id character varying(32),
+  sls character varying[], -- show levels
+  gs character varying(8192), -- Geo Shape (GeoJSON), если есть.
+  CONSTRAINT item_order_id_fkey FOREIGN KEY (order_id)
+      REFERENCES sio2."order" (id) MATCH SIMPLE
+      ON UPDATE RESTRICT ON DELETE RESTRICT,
+  CONSTRAINT item_dates_check CHECK (date_start < date_end)
 )
 INHERITS (sio2.gid)
 WITH (
@@ -183,83 +194,17 @@ WITH (
 ALTER TABLE sio2.item
   OWNER TO sio2;
 COMMENT ON TABLE sio2.item
-  IS 'Абстрактное содержимое ордера';
+  IS 'Содержимое ордера: услуга (в т.ч. размещение), товар и иные блага.';
 COMMENT ON COLUMN sio2.item.status IS 'статус обработки данного item''а';
 COMMENT ON COLUMN sio2.item.type IS 'Тип субъекта сделки, для контроля данных между наследуемыми таблицами. Например, прямое размещение на узле или размещение в геотеге.';
+COMMENT ON COLUMN sio2.item.ad_id IS 'id размещаемой карточки.';
+COMMENT ON COLUMN sio2.item.reason IS 'Причина отказа в размещении. Заказы в размещении карточки могут быть отменены по воле "продавца".';
+COMMENT ON COLUMN sio2.item.sls IS 'show levels';
+COMMENT ON COLUMN sio2.item.gs IS 'Geo Shape (GeoJSON), если есть.';
 
-
-
-CREATE TABLE sio2.item_adv
-(
--- Унаследована from table sio2.item:  id bigint NOT NULL DEFAULT nextval('sio2.gid_id_seq'::regclass),
--- Унаследована from table sio2.item:  order_id bigint NOT NULL,
--- Унаследована from table sio2.item:  status "char" NOT NULL,
--- Унаследована from table sio2.item:  type "char" NOT NULL,
--- Унаследована from table sio2.item:  amount double precision NOT NULL,
--- Унаследована from table sio2.item:  currency_code character varying(3) NOT NULL,
-  date_start timestamp with time zone NOT NULL,
-  date_end timestamp with time zone NOT NULL,
-  ad_id character varying(32) NOT NULL, -- id размещаемой карточки.
-  reason character varying(512), -- Причина отказа в размещении. Заказы в размещении карточки могут быть отменены по воле "продавца".
-  CONSTRAINT item_adv_check CHECK (date_start < date_end)
-)
-INHERITS (sio2.item)
-WITH (
-  OIDS=FALSE
-);
-ALTER TABLE sio2.item_adv
-  OWNER TO sio2;
-COMMENT ON TABLE sio2.item_adv
-  IS 'Элемент ордера, связанный с размещением карточки.';
-COMMENT ON COLUMN sio2.item_adv.ad_id IS 'id размещаемой карточки.';
-COMMENT ON COLUMN sio2.item_adv.reason IS 'Причина отказа в размещении. Заказы в размещении карточки могут быть отменены по воле "продавца".';
-
-
-
-CREATE TABLE sio2.item_adv_direct
-(
--- Унаследована from table sio2.item_adv:  id bigint NOT NULL DEFAULT nextval('sio2.gid_id_seq'::regclass),
--- Унаследована from table sio2.item_adv:  order_id bigint NOT NULL,
--- Унаследована from table sio2.item_adv:  status "char" NOT NULL,
--- Унаследована from table sio2.item_adv:  type "char" NOT NULL,
--- Унаследована from table sio2.item_adv:  amount double precision NOT NULL,
--- Унаследована from table sio2.item_adv:  currency_code character varying(3) NOT NULL,
--- Унаследована from table sio2.item_adv:  date_start timestamp with time zone NOT NULL,
--- Унаследована from table sio2.item_adv:  date_end timestamp with time zone NOT NULL,
--- Унаследована from table sio2.item_adv:  ad_id character varying(32) NOT NULL,
--- Унаследована from table sio2.item_adv:  reason character varying(512),
-  rcvr_id character varying(32) NOT NULL,
-  sls character varying[] NOT NULL, -- show levels
-  CONSTRAINT item_adv_direct_order_id_fkey FOREIGN KEY (order_id)
-      REFERENCES sio2."order" (id) MATCH SIMPLE
-      ON UPDATE RESTRICT ON DELETE RESTRICT,
-  CONSTRAINT item_adv_check CHECK (date_start < date_end),
-  CONSTRAINT item_adv_direct_type_check CHECK (type = 'a'::"char")
-)
-INHERITS (sio2.item_adv)
-WITH (
-  OIDS=FALSE
-);
-ALTER TABLE sio2.item_adv_direct
-  OWNER TO sio2;
-COMMENT ON TABLE sio2.item_adv_direct
-  IS 'Таблица прямых размещений карточек на узлах. Пришла на смену bill_adv таблиц, теперь как частный случай заказа.';
-COMMENT ON COLUMN sio2.item_adv_direct.sls IS 'show levels';
-
-CREATE INDEX fki_item_adv_direct_order_id_fkey
-  ON sio2.item_adv_direct
+CREATE INDEX fki_item_order_id_fkey
+  ON sio2.item
   USING btree
   (order_id);
 
-CREATE INDEX item_adv_direct_rcvr_id_idx
-  ON sio2.item_adv_direct
-  USING btree
-  (rcvr_id COLLATE pg_catalog."default");
-
-CREATE INDEX item_adv_direct_status_idx
-  ON sio2.item_adv_direct
-  USING btree
-  (status);
-COMMENT ON INDEX sio2.item_adv_direct_status_idx
-  IS 'Индекс нужен для поиска необработанных рядов по статусу.';
-
+COMMIT;
