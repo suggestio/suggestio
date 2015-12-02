@@ -1,4 +1,4 @@
-package io.suggest.mbill2.m.item.adv.cols
+package io.suggest.mbill2.m.item.cols
 
 import io.suggest.common.slick.driver.IDriver
 

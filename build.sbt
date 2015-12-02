@@ -17,6 +17,7 @@ resolvers ++= Seq(
 libraryDependencies ++= {
   val slickVsn      = "3.1.0"
   val slickPgVsn    = "0.10.1"
+  val playVsn       = "2.4.4"
   Seq(
     "com.google.inject"     %  "guice"                % "4.0",
     "joda-time"             %  "joda-time"            % "2.8.+",
