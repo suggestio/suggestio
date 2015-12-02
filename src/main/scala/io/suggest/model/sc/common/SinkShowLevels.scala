@@ -110,4 +110,29 @@ object SinkShowLevels extends EnumMaybeWithName with MacroLogsImplLazy with Enum
 
   def sls2strings(sls: Set[T]) = sls.map(_.name)
 
+  /** Десериализация уровней отображения. */
+  def applySlsSet(slsRaw: TraversableOnce[String]): Set[SinkShowLevel] = {
+    slsRaw
+      .toIterator
+      .map { slRaw =>
+        val result = if (slRaw.length == 1) {
+          // compat: парсим slsPub, попутно конвертя их в sink-версии
+          val sl = AdShowLevels.withName(slRaw)
+          SinkShowLevels.fromAdSl(sl)
+        } else {
+          SinkShowLevels.withName(slRaw)
+        }
+        result : SinkShowLevel
+      }
+      .toSet
+  }
+
+  /** Сериализация уровней отображения. */
+  def unapplySlsSet(sls: Set[SinkShowLevel]): Option[Seq[String]] = {
+    val seq = sls.iterator
+      .map(_.name)
+      .toSeq
+    Some(seq)
+  }
+
 }
