@@ -19,7 +19,7 @@
   @_addBtnTpl()
 }
 
-@form( CSRF(routes.LkAdvGeoTag.forAdSubmit(args.mad.id.get)) ) {
+@form( CSRF(routes.LkAdvGeoTag.forAdSubmit(args.mad.id.get)), 'id->"advsForm") {
 
   @_barTpl(MHands.Left) {
     @* Рендер сохранённых тегов. *@

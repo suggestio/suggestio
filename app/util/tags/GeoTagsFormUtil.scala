@@ -8,6 +8,7 @@ import org.elasticsearch.common.unit.DistanceUnit
 import play.api.data.{Mapping, Form}
 import play.api.data.Forms._
 import util.FormUtil
+import util.adv.AdvFormUtil
 
 /**
  * Suggest.io
@@ -17,7 +18,8 @@ import util.FormUtil
  */
 @Singleton
 class GeoTagsFormUtil @Inject() (
-  tagsEditFormUtil: TagsEditFormUtil
+  tagsEditFormUtil  : TagsEditFormUtil,
+  advFormUtil       : AdvFormUtil
 ) {
 
   // TODO В ожидании DI.
@@ -61,7 +63,8 @@ class GeoTagsFormUtil @Inject() (
     mapping(
       tagsEditFormUtil.existingKm,
       "map"     -> mapStateM,
-      "circle"  -> circleM
+      "circle"  -> circleM,
+      "period"  -> advFormUtil.advPeriodM
     )
     { MAdvFormResult.apply }
     { MAdvFormResult.unapply }

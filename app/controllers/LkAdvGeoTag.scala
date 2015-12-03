@@ -10,6 +10,7 @@ import models.adv.gtag.{MAdvFormResult, GtForm_t, MForAdTplArgs}
 import models.jsm.init.MTargets
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.unit.DistanceUnit
+import org.joda.time.LocalDate
 import play.api.i18n.MessagesApi
 import play.api.mvc.Result
 import util.PlayMacroLogsImpl
@@ -61,7 +62,11 @@ class LkAdvGeoTag @Inject() (
       val res = MAdvFormResult(
         tags      = Nil,
         mapState  = MapViewState(gp, zoom = 10),
-        circle    = CircleGs(gp, radius = Distance(10000, DistanceUnit.METERS))
+        circle    = CircleGs(gp, radius = Distance(10000, DistanceUnit.METERS)),
+        period    = {
+          val ld = LocalDate.now()
+          (ld, ld.plusDays(3))
+        }
       )
 
       formEmpty.fill(res)

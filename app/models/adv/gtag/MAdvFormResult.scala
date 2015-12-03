@@ -3,6 +3,7 @@ package models.adv.gtag
 import io.suggest.model.geo.CircleGs
 import models.maps.MapViewState
 import models.mtag.MTagBinded
+import org.joda.time.LocalDate
 
 /**
  * Suggest.io
@@ -13,5 +14,6 @@ import models.mtag.MTagBinded
 case class MAdvFormResult(
   tags      : List[MTagBinded],
   mapState  : MapViewState,
-  circle    : CircleGs
+  circle    : CircleGs,
+  period    : (LocalDate, LocalDate)
 )
