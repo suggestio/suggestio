@@ -25,7 +25,7 @@ trait GidSlick extends IDriver {
   /** Добавить поддержку gid колонки. */
   trait GidColumn { that: Table[_] =>
 
-    def id = column[Long](ID_FN, O.PrimaryKey, O.AutoInc)
+    def id = column[Gid_t](ID_FN, O.PrimaryKey, O.AutoInc)
 
   }
 

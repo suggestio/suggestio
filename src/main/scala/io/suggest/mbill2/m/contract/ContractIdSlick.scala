@@ -2,6 +2,7 @@ package io.suggest.mbill2.m.contract
 
 import io.suggest.common.m.sql.ITableName
 import io.suggest.common.slick.driver.IDriver
+import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.util.PgaNamesMaker
 
 /**
@@ -22,7 +23,7 @@ trait ContractIdSlick extends IDriver {
 
   /** Просто колонка contract_id. */
   trait ContractIdColumn { that: Table[_] =>
-    def contractId = column[Long](CONTRACT_ID_FN)
+    def contractId = column[Gid_t](CONTRACT_ID_FN)
   }
 
 }

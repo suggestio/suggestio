@@ -2,6 +2,7 @@ package io.suggest.mbill2.m.balance
 
 import io.suggest.common.m.sql.ITableName
 import io.suggest.common.slick.driver.IDriver
+import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.util.PgaNamesMaker
 
 /**
@@ -17,7 +18,7 @@ trait BalanceIdSlick extends IDriver {
   def BALANCE_ID_FN = "balance_id"
 
   trait BalanceIdColumn { that: Table[_] =>
-    def balanceId = column[Long](BALANCE_ID_FN)
+    def balanceId = column[Gid_t](BALANCE_ID_FN)
   }
 
 

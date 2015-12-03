@@ -8,6 +8,6 @@ package io.suggest.mbill2.m.gid
  */
 trait IGid {
 
-  def id: Option[Long]
+  def id: Option[Gid_t]
 
 }

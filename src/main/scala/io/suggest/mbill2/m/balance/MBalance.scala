@@ -4,7 +4,7 @@ import com.google.inject.{Inject, Singleton}
 import io.suggest.common.m.sql.ITableName
 import io.suggest.common.slick.driver.ExPgSlickDriverT
 import io.suggest.mbill2.m.contract.{MContracts, ContractIdSlickIdx, ContractIdSlickFk}
-import io.suggest.mbill2.m.gid.GidSlick
+import io.suggest.mbill2.m.gid.{Gid_t, GidSlick}
 import io.suggest.mbill2.m.price._
 import io.suggest.mbill2.util.PgaNamesMaker
 import slick.lifted.ProvenShape
@@ -70,11 +70,11 @@ class MBalances @Inject() (
 
 /** Экземпляр модели. */
 case class MBalance(
-  contractId  : Long,
+  contractId  : Gid_t,
   price       : MPrice,
   blocked     : Amount_t,
   lowOpt      : Option[Amount_t],
-  id          : Option[Long]
+  id          : Option[Gid_t]
 ) {
 
   def low = lowOpt getOrElse 0.0

@@ -2,6 +2,7 @@ package io.suggest.mbill2.m.order
 
 import io.suggest.common.m.sql.ITableName
 import io.suggest.common.slick.driver.IDriver
+import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.util.PgaNamesMaker
 
 /**
@@ -19,7 +20,7 @@ trait OrderIdSlick extends IDriver {
 
   /** Добавить колонку orderId. */
   trait OrderIdColumn { that: Table[_] =>
-    def orderId = column[Long](ORDER_ID_FN)
+    def orderId = column[Gid_t](ORDER_ID_FN)
   }
 
 }

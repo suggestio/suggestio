@@ -3,7 +3,7 @@ package io.suggest.mbill2.m.txn
 import com.google.inject.{Inject, Singleton}
 import io.suggest.common.slick.driver.ExPgSlickDriverT
 import io.suggest.mbill2.m.balance.{MBalances, BalanceIdInxSlick, BalanceIdFkSlick}
-import io.suggest.mbill2.m.gid.GidSlick
+import io.suggest.mbill2.m.gid.{Gid_t, GidSlick}
 import io.suggest.mbill2.m.order.MOrders
 import io.suggest.mbill2.m.price.{Amount_t, AmountSlick}
 import io.suggest.mbill2.util.PgaNamesMaker
@@ -51,7 +51,7 @@ class MTxns @Inject() (
     def dateProcessed   = column[DateTime](DATE_PROCESSED_FN)
     def paymentComment  = column[Option[String]](PAYMENT_COMMENT_FN)
     def psTxnUidOpt     = column[Option[String]](PS_TXN_UID_FN)
-    def orderIdOpt      = column[Option[Long]](ORDER_ID_FN)
+    def orderIdOpt      = column[Option[Gid_t]](ORDER_ID_FN)
 
     def order           = foreignKey( PgaNamesMaker.fkey(TABLE_NAME, ORDER_ID_FN), orderIdOpt, mOrders.orders)(_.id.?)
 
@@ -70,12 +70,12 @@ class MTxns @Inject() (
 
 
 case class MTxn(
-  balanceId         : Long,
+  balanceId         : Gid_t,
   amount            : Amount_t,
-  orderIdOpt        : Option[Long],
+  orderIdOpt        : Option[Gid_t],
   paymentComment    : Option[String],
   psTxnUidOpt       : Option[String],
   datePaid          : Option[DateTime]  = None,
   dateProcessed     : DateTime          = DateTime.now(),
-  id                : Option[Long]      = None
+  id                : Option[Gid_t]     = None
 )

@@ -1,5 +1,7 @@
 package io.suggest.mbill2.m.order
 
+import io.suggest.mbill2.m.gid.Gid_t
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -8,6 +10,6 @@ package io.suggest.mbill2.m.order
  */
 trait IOrderId {
 
-  def orderId: Long
+  def orderId: Gid_t
 
 }

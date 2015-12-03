@@ -4,7 +4,7 @@ import com.google.inject.{Inject, Singleton}
 import io.suggest.common.m.sql.ITableName
 import io.suggest.common.slick.driver.ExPgSlickDriverT
 import io.suggest.mbill2.m.dt.{DateStartSlick, DateEndSlick, IDateEnd, IDateStart}
-import io.suggest.mbill2.m.gid.{GidSlick, IGid}
+import io.suggest.mbill2.m.gid.{Gid_t, GidSlick, IGid}
 import io.suggest.mbill2.m.item.cols._
 import io.suggest.mbill2.m.item.status.{ItemStatusSlick, MItemStatus, IMItemStatus}
 import io.suggest.mbill2.m.item.typ.{MItemTypeSlick, MItemType, IMItemType}
@@ -100,7 +100,7 @@ trait IItem
 
 /** Экземпляр модели (ряда абстрактной таблицы item'ов). */
 case class MItem(
-  override val orderId      : Long,
+  override val orderId      : Gid_t,
   override val iType        : MItemType,
   override val status       : MItemStatus,
   override val price        : MPrice,
@@ -110,6 +110,6 @@ case class MItem(
   override val rcvrIdOpt    : Option[String],
   override val sls          : Set[SinkShowLevel]  = Set.empty,
   override val reasonOpt    : Option[String]      = None,
-  override val id           : Option[Long]        = None
+  override val id           : Option[Gid_t]       = None
 )
   extends IItem

@@ -5,7 +5,7 @@ import io.suggest.common.m.sql.ITableName
 import io.suggest.common.slick.driver.ExPgSlickDriverT
 import io.suggest.mbill2.m.contract.{ContractIdSlickIdx, ContractIdSlickFk, MContracts}
 import io.suggest.mbill2.m.dt.DateCreatedSlick
-import io.suggest.mbill2.m.gid.GidSlick
+import io.suggest.mbill2.m.gid.{Gid_t, GidSlick}
 import io.suggest.mbill2.m.price._
 import io.suggest.mbill2.util.PgaNamesMaker
 import org.joda.time.DateTime
@@ -77,9 +77,9 @@ class MOrders @Inject() (
 
 case class MOrder(
   status        : MOrderStatus,
-  contractId    : Long,
+  contractId    : Gid_t,
   price         : MPrice,
   dateCreated   : DateTime      = DateTime.now,
   dateStatus    : DateTime      = DateTime.now,
-  id            : Option[Long]  = None
+  id            : Option[Gid_t]  = None
 )

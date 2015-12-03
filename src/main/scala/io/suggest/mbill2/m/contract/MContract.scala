@@ -4,7 +4,7 @@ import com.google.inject.{Inject, Singleton}
 import io.suggest.common.m.sql.ITableName
 import io.suggest.common.slick.driver.ExPgSlickDriverT
 import io.suggest.mbill2.m.dt.DateCreatedSlick
-import io.suggest.mbill2.m.gid.GidSlick
+import io.suggest.mbill2.m.gid.{Gid_t, GidSlick}
 import org.joda.time.DateTime
 import slick.lifted.ProvenShape
 
@@ -81,7 +81,7 @@ class MContracts @Inject()(
  * @param id Основной id договора.
  */
 case class MContract(
-  id            : Option[Long]    = None,
+  id            : Option[Gid_t]   = None,
   crand         : Int             = MContract.crand(),
   dateCreated   : DateTime        = DateTime.now(),
   hiddenInfo    : Option[String]  = None,
