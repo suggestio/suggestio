@@ -1,4 +1,4 @@
-@(args: adv.form.IAdvFormTplArgs)(implicit ctx: Context)
+@(args: adv.direct.IAdvFormTplArgs)(implicit ctx: Context)
 
 @* Форма для размещения рекламы (ADVertising) на узлах-получателях рекламной сети.
    Отображается на странице управления рекламной карточкой.
@@ -10,6 +10,7 @@
 @import util.DateTimePrettyPrinter._
 @import args._
 @import AdnShownTypes._
+@import lk.adv.widgets._
 
 
 @* sink show level checkbox - базовая верстка чекбокса уровней отображения по любому из измерений. *@
@@ -39,12 +40,8 @@
 }
 
 
-<hr class="delimiter __light"/>
-
-<div class="adv-management" id="advsFormBlock">
-
 @* Глобальная ошибка в форме проявляется, если например недостаточно денег на счете. *@
-@af.globalError.map { ge =>
+@args.af.globalError.map { ge =>
   <p>@messages("Problem.occured"): @messages(ge.message, ge.args : _*)</p>
 }
 
@@ -54,17 +51,14 @@
 
   @* Суперюзерам доступно беплатное размещение на любом узле. *@
   @if(ctx.isSuperuser) {
-    <div style="padding: 20px 0px;padding: 20px 17px; font-weight: bold; background: #f5f5f5; margin-bottom: 10px; -webkit-border-radius: 10px;">
-      <label>
-        <input type="checkbox" name="@af("freeAdv").name" value="true" />
-        <span class="styled-checkbox"></span>
-        Размещать бесплатно, без подтверждения?
-      </label>
-    </div>
+    @_advSuTpl()
   }
 
-  <div class="adv-management_left-bar">
-    <h2 class="minor-title">Выбор города/ места</h2>
+  @_barTpl(MHands.Left) {
+
+    @_minorTitleTpl() {
+      @messages("City.place.choose")
+    }
 
       @* Список городов. *@
       @lk.lkBlockNewDesign( open = false ) {
@@ -149,89 +143,21 @@
         } @* cat in city *@
       } @* city *@
 
-    </div> @* adv-management_left-bar *@
+  } @* adv-management_left-bar *@
 
 
-    <div class="adv-management_right-bar">
-      <h2 class="minor-title">@messages("Date.choosing")</h2>
+  @_barTpl(MHands.Right) {
 
-      <div class="date-widget">
+    @* Даты (период) размещения. *@
+    @_minorTitleTpl() {
+      @messages("Date.choosing")
+    }
+    @_datesPeriodTpl( args.af("period"), args.advPeriodsAvail )
 
-        <div class="date-widget_options">
-          <table class="prop">
-            <td class="prop_name">@messages("Advertising.period")</td>
-            <td class="prop_value">
-              <div class="input __size-S" >
-                <select data-interval="true" data-widget-id="advManagementDateWidget" name="period.period">
-                  @defining( args.af("period.period").value ) { currPeriod =>
-                    @args.advPeriodsAvail.map { case (v, msg) =>
-                      <option value="@v" @if(currPeriod.exists(_ equalsIgnoreCase v)) {selected="selected"}>@msg</option>
-                    }
-                  }
-                </select>
-              </div>
-            </td>
-          </table>
-          <table class="prop" id="advManagementDateStart">
-            <td class="prop_name">@messages("Date.start")</td>
-            <td class="prop_value">
-              <div class="input __size-S">
-                <input class="js-datepicker" type="text" data-start="true" data-widget-id="advManagementDateWidget" name="period.date.start" value="@args.af("period.start").value"/>
-              </div>
-            </td>
-          </table>
-          <table class="prop" id="advManagementDateEnd">
-            <td class="prop_name">@messages("Date.end")</td>
-            <td class="prop_value">
-              <div class="input __size-S">
-                <input class="js-datepicker" type="text" data-end="true" data-widget-id="advManagementDateWidget" name="period.date.end" value="@args.af("period.start").value"/>
-              </div>
-            </td>
-          </table>
-        </div>
+    @* Массовое вывставление уровней отображения. *@
+    @_slsOverallTpl()
 
-        <div class="date-widget_result">
-          <div class="block __margin-S">
-            @messages("Your.ad.will.adv")
-          </div>
-          <div class="date-widget_result-value">
-            @messages("from._date")&nbsp;<span id="advManagementDateStartValue"></span>&nbsp;@messages("till._date")&nbsp;<span id="advManagementDateEndValue"></span>
-          </div>
-        </div>
+  }
 
-      </div>
-
-      <aside class="levels-widget" id="levelsWidget">
-        <h2 class="levels-widget_t">@messages("Adv.levels")</h2>
-        <ul class="levels-widget_lst">
-          <li class="levels-widget_i">
-            <label class="block">
-              <input type="checkbox" data-show-level="onStartPage"><span class="checkbox_title">@messages("Main.screen")</span>
-            </label>
-            <div class="levels-widget_i-descr">
-              @messages("Your.ad.will.see.all.sio.users.in.geolocs")
-            </div>
-          </li>
-          <li class="levels-widget_i">
-            <label class="block">
-              <input type="checkbox" data-show-level="onRcvrCat"><span class="checkbox_title">@messages("Categories")</span>
-            </label>
-            <div class="levels-widget_i-descr">
-              @messages("Ad.will.seen.by.interested.in.cats.users")
-            </div>
-          </li>
-          <li class="levels-widget_i">
-            <label class="block">
-              <input type="checkbox" disabled="disabled" checked="checked"><span class="checkbox_title">@messages("Catalog")</span>
-            </label>
-            <div class="levels-widget_i-descr">
-              @messages("Catalog.ads.will.be.seen.by.walkers")
-            </div>
-          </li>
-        </ul>
-      </aside>
-
-  </div>
 }
-</div>
 

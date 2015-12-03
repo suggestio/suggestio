@@ -1,0 +1,27 @@
+@(args: adv.tpl.IAdvForAdTplArgs)(implicit ctx: Context)
+
+@* Страница управления размещением рекламной карточки. *@
+
+@import adv.tpl.LkAdvRightLinks
+@import ctx._
+@import lk.adv._
+@import lk.adv.widgets._
+@import lk.adv.widgets.price._
+@import static.date.picker._
+
+@advBase(
+  title         = messages("Geo.adv"),
+  mad           = args.mad,
+  producer      = args.producer,
+  rightLink     = LkAdvRightLinks.LARL_GEO,
+  rightAfter    = Some( _rightPriceTpl(args.price) ),
+  headAfter     = Some( _jqDatePickCssTpl() )
+) {
+
+  @_advFormBlockTpl(id = Some("advsFormBlock")) {
+    @_advFormTpl(args.formArgs)
+  }
+
+  @_jqDatePickJsTpl()
+
+}

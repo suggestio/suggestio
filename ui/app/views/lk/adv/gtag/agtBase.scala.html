@@ -1,14 +1,16 @@
-@(title: String, mnode: MNode, mad: MNode, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+@(title: String, mnode: MNode, mad: MNode, headAfter: Option[Html] = None, rightAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
 
 @* Базовый шаблон для страниц внешнего размещения карточек. *@
 
 @import adv.tpl.LkAdvRightLinks
 @import views.html.stuff.leaflet._
+@import static.date.picker._
 
 
 @headAfter1 = {
   @_leafletCssTpl()
   @_locateControlCssTpl()
+  @_jqDatePickCssTpl()
   @headAfter
 }
 
@@ -18,12 +20,14 @@
   mad       = mad,
   producer  = mnode,
   rightLink = LkAdvRightLinks.TAGS_GEO,
-  headAfter = Some(headAfter1)
+  headAfter = Some(headAfter1),
+  rightAfter = rightAfter
 ) {
 
   @content
 
   @_leafletScriptTpl()
   @_locateControlScriptTpl()
+  @_jqDatePickJsTpl()
 
 }

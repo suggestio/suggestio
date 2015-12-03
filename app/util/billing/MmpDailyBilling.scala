@@ -5,8 +5,8 @@ import de.jollyday.parameter.UrlManagerParameter
 import io.suggest.common.fut.FutureUtil
 import io.suggest.model.n2.edge.{MNodeEdges, MEdgeInfo}
 import models._
+import models.adv.direct.AdvFormEntry
 import models.adv.{MAdvReq, MAdvRefuse, MAdvOk, IAdvTerms}
-import models.adv.geo.AdvFormEntry
 import models.adv.tpl.MAdvPricing
 import models.blk.{BlockWidths, BlockHeights}
 import models.mbill._
@@ -214,7 +214,7 @@ class MmpDailyBilling @Inject() (
         }
         .valuesIterator
         .map { p =>
-          p.head.currency -> p.map(_.price).sum
+          MPrice(p.map(_.price).sum, p.head.currency)
         }
         .toSeq
     }
@@ -227,7 +227,7 @@ class MmpDailyBilling @Inject() (
       // Если есть разные валюты, то операция уже невозможна.
       val hasEnoughtMoney = prices2.size <= 1 && {
         prices2.headOption.exists { price =>
-          price._1.getCurrencyCode == mbb.currencyCode && price._2 <= mbb.amount
+          price.currency.getCurrencyCode == mbb.currencyCode && price.amount <= mbb.amount.toDouble
         }
       }
       MAdvPricing(prices2, hasEnoughtMoney)

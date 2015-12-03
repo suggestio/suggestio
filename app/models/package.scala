@@ -196,4 +196,8 @@ package object models {
   val  MEntity              = n2.ad.ent.MEntity
   type MEntity              = n2.ad.ent.MEntity
 
+  type IPrice               = io.suggest.mbill2.m.price.IPrice
+  type MPrice               = io.suggest.mbill2.m.price.MPrice
+  val  MPrice               = io.suggest.mbill2.m.price.MPrice
+
 }

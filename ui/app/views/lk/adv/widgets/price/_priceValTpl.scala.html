@@ -1,0 +1,13 @@
+@(advPricing: adv.tpl.IAdvPricing)(implicit ctx: Context)
+
+@* Рендер плашки с ценой. *@
+@import ctx.messages
+@import util.TplDataFormatUtil.formatPrice
+
+@advPricing.prices.map { price =>
+  @formatPrice(price)
+}
+
+@if( !advPricing.hasEnoughtMoney ) {
+  (@messages("No.enought.deposit"))
+}

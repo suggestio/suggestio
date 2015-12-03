@@ -1,4 +1,4 @@
-package models.adv.geo
+package models.adv.direct
 
 import models.adv.MAdvReq
 import models.blk

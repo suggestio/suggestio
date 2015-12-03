@@ -1,6 +1,6 @@
 package models.adv.tpl
 
-import java.util.Currency
+import models.{IPrice, MPrice}
 
 /**
  * Suggest.io
@@ -10,13 +10,13 @@ import java.util.Currency
  */
 
 trait IAdvPricing {
-  def prices          : Iterable[(Currency, Float)]
+  def prices          : Iterable[IPrice]
   def hasEnoughtMoney : Boolean
 }
 
 
 case class MAdvPricing(
-  prices          : Iterable[(Currency, Float)],
+  prices          : Iterable[MPrice],
   hasEnoughtMoney : Boolean
 )
   extends IAdvPricing

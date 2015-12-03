@@ -34,6 +34,7 @@ libraryDependencies ++= {
   "com.mohiva" %% "play-html-compressor" % "0.5-SNAPSHOT",  // https://github.com/mohiva/play-html-compressor
   //"com.yahoo.platform.yui" % "yuicompressor" % "2.4.+",
   // io.suggest stuff
+  "io.suggest" %% "mbill2" % "0.0.0-SNAPSHOT",
   "io.suggest" %% "util" % "2.0.1-SNAPSHOT" changing()
     exclude("org.jruby", "jruby-complete")
     exclude("org.slf4j", "slf4j-log4j12")

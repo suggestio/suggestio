@@ -1,0 +1,61 @@
+@(pf: Field, advPeriodsAvail: TraversableOnce[String])(implicit ctx: Context)
+
+@* Тут виджет с версткой выбора двух дат: даты начала и даты окончания размещения. *@
+
+@import ctx.messages
+@import lk.lkProp
+@import lk.forms._
+
+@__inputDatePick(suffix: String) = {
+  @_inputJsDatePickTpl(
+    field = pf("date." + suffix),
+    "data-widget-id"  -> "advManagementDateWidget",
+    "data-start"      -> "true"
+  )
+}
+
+
+<div class="date-widget">
+
+  <div class="date-widget_options">
+
+    @lkProp( messages("Advertising.period") ) {
+      <div class="input __size-S" >
+        @defining( pf("period") ) { currPeriod =>
+          <select data-interval="true" data-widget-id="advManagementDateWidget" name="@currPeriod.name">
+            @advPeriodsAvail.map { v =>
+              <option value="@v"
+                      @if(currPeriod.value.exists(_ equalsIgnoreCase v)) {selected="selected"}>
+                @messages("adv.period." + v)
+              </option>
+            }
+          </select>
+        }
+      </div>
+    }
+
+    @lkProp( messages("Date.start"), id = Some("advManagementDateStart") ) {
+      @_inputWrapTpl("S") {
+        @__inputDatePick("start")
+      }
+    }
+
+    @lkProp(messages("Date.end"), id = Some("advManagementDateEnd")) {
+      @_inputWrapTpl("S") {
+        @__inputDatePick("start")
+      }
+    }
+
+  </div>
+
+
+  <div class="date-widget_result">
+    <div class="block __margin-S">
+      @messages("Your.ad.will.adv")
+    </div>
+    <div class="date-widget_result-value">
+      @messages("from._date")&nbsp;<span id="advManagementDateStartValue"></span>&nbsp;@messages("till._date")&nbsp;<span id="advManagementDateEndValue"></span>
+    </div>
+  </div>
+
+</div>

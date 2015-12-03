@@ -14,6 +14,7 @@ import play.api.i18n.MessagesApi
 import play.api.mvc.Result
 import util.PlayMacroLogsImpl
 import util.acl.{RequestWithAdAndProducer, CanAdvertiseAdUtil, CanAdvertiseAd}
+import util.adv.AdvFormUtil
 import util.tags.{GeoTagsFormUtil, TagsEditFormUtil}
 import views.html.lk.adv.gtag._
 
@@ -27,6 +28,7 @@ import scala.concurrent.{Future, ExecutionContext}
   */
 class LkAdvGeoTag @Inject() (
   geoTagsFormUtil                 : GeoTagsFormUtil,
+  advFormUtil                     : AdvFormUtil,
   override val tagsEditFormUtil   : TagsEditFormUtil,
   override val canAdvAdUtil       : CanAdvertiseAdUtil,
   override val _contextFactory    : Context2Factory,
@@ -80,9 +82,11 @@ class LkAdvGeoTag @Inject() (
                     (implicit request: RequestWithAdAndProducer[_]): Future[Result] = {
     implicit val _jsInitTargets = Seq(MTargets.AdvGtagForm)
     val rargs = MForAdTplArgs(
-      mad       = request.mad,
-      producer  = request.producer,
-      form      = form
+      mad             = request.mad,
+      producer        = request.producer,
+      form            = form,
+      advPeriodsAvail = advFormUtil.advPeriodsAvailable,
+      price           = advFormUtil.zeroPricing
     )
     Ok( forAdTpl(rargs) )
   }

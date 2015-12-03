@@ -2,35 +2,33 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.mbill2.m.price.MPrice
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.playx.ICurrentConf
 import models.adv._
-import models.adv.form._
-import models.adv.geo.{ReqInfo, AdvFormEntry, WndFullArgs}
+import models.adv.direct._
 import models.adv.tpl.{MAdvForAdTplArgs, MAdvHistoryTplArgs, MCurrentAdvsTplArgs, MAdvPricing}
 import org.elasticsearch.client.Client
-import org.joda.time.format.ISOPeriodFormat
 import play.api.i18n.MessagesApi
 import play.twirl.api.Html
 import util.acl._
 import models._
-import org.joda.time.{Period, LocalDate}
 import play.api.db.Database
 import com.github.nscala_time.time.OrderingImplicits._
-import util.adv.CtlGeoAdvUtil
+import util.adv.{AdvFormUtil, DirectAdvFormUtil, CtlGeoAdvUtil}
 import util.async.AsyncUtil
 import util.lk.LkAdUtil
 import util.n2u.N2NodesUtil
 import util.showcase.ShowcaseUtil
 import views.html.lk.adv._
+import views.html.lk.adv.widgets.price._
+import views.html.lk.adv.direct._
 import util.PlayMacroLogsImpl
 import scala.concurrent.{ExecutionContext, Future}
 import play.api.mvc.{Result, AnyContent}
 import java.sql.SQLException
 import util.billing.MmpDailyBilling
 import java.util.Currency
-import play.api.data._, Forms._
+import play.api.data._
 
 /**
  * Suggest.io
@@ -46,6 +44,8 @@ class MarketAdv @Inject() (
   lkAdUtil                        : LkAdUtil,
   scUtil                          : ShowcaseUtil,
   ctlGeoAdvUtil                   : CtlGeoAdvUtil,
+  directAdvFormUtil               : DirectAdvFormUtil,
+  advFormUtil                     : AdvFormUtil,
   override val n2NodesUtil        : N2NodesUtil,
   override val mNodeCache         : MAdnNodeCache,
   override val messagesApi        : MessagesApi,
@@ -68,158 +68,13 @@ class MarketAdv @Inject() (
 
   import LOGGER._
 
-  private type AdvFormValueM_t = List[AdvFormEntry]
-  private type AdvFormM_t = Form[AdvFormValueM_t]
 
   val ADVS_MODE_SELECT_LIMIT = configuration.getInt("adv.short.limit") getOrElse 2
-
-  /** Отдельный маппинг для adv-формы, который парсит исходные данные по бесплатному размещению. */
-  private def freeAdvFormM: Form[Option[Boolean]] = Form(
-    "freeAdv" -> optional(boolean)
-  )
-
-  /** Значение поля node[].period.period в случае, когда юзер хочет вручную задать даты начала и окончания. */
-  val CUSTOM_PERIOD = "custom"
-
-  /** Маппинг для вертикальных уровней отображения. */
-  private def adSlsM: Mapping[Set[AdShowLevel]] = {
-    val b = boolean
-    mapping(
-      "onStartPage" -> b,
-      "onRcvrCat"   -> b
-    )
-    {(onStartPage, onRcvrCat) =>
-      var acc = List[AdShowLevel]( AdShowLevels.LVL_PRODUCER )
-      if (onStartPage)
-        acc ::= AdShowLevels.LVL_START_PAGE
-      if (onRcvrCat)
-        acc ::= AdShowLevels.LVL_CATS
-      acc.toSet
-    }
-    {adSls =>
-      val onStartPage = adSls contains AdShowLevels.LVL_START_PAGE
-      val onRcvrCat = adSls contains AdShowLevels.LVL_CATS
-      Some((onStartPage, onRcvrCat))
-    }
-  }
-
-  private type DatePeriod_t = (LocalDate, LocalDate)
-  private type DatePeriodOpt_t = Option[DatePeriod_t]
-
-  /** Маппинг для интервала дат размещения. Его точно нельзя заворачивать в val из-за LocalDate.now(). */
-  private def advDatePeriodOptM: Mapping[DatePeriodOpt_t] = {
-    // option используется, чтобы избежать ошибок маппинга, если галочка isAdv убрана для текущего ресивера, и дата не выставлена одновременно.
-    // TODO Неправильно введённые даты надо заворачивать в None.
-    val dateOptM = optional( jodaLocalDate("yyyy-MM-dd") )
-    tuple(
-      "start" -> dateOptM
-        .verifying("error.date.start.before.today", {dOpt => dOpt match {
-          case Some(d)  => !d.isBefore(LocalDate.now)
-          case None     => true
-        }}),
-      "end"   -> dateOptM
-    )
-    .transform [Option[(LocalDate, LocalDate)]] (
-      {case (Some(dateStart), Some(dateEnd))  =>  Some(dateStart -> dateEnd)
-       case _  =>  None },
-      {case Some((dateStart, dateEnd))  =>  Some(dateStart) -> Some(dateEnd)
-       case None  =>  None -> None }
-    )
-  }
-
-  /** Форма исповедует select, который имеет набор предустановленных интервалов, а также имеет режим задания дат вручную. */
-  private def advPeriodM: Mapping[DatePeriod_t] = {
-    tuple(
-      "period" -> nonEmptyText(minLength = 1, maxLength = 10)
-        .transform [Option[QuickAdvPeriod]] (
-          {case CUSTOM_PERIOD => None
-           case periodRaw => QuickAdvPeriods.maybeWithName(periodRaw) },
-          { _.fold(CUSTOM_PERIOD)(_.isoPeriod) }
-        )
-      ,
-      "date"  -> advDatePeriodOptM
-    )
-    .verifying("error.required", { m => m match {
-      case (periodOpt, datesOpt)  =>  periodOpt.isDefined || datesOpt.isDefined
-    }})
-      // Проверяем даты у тех, у кого выставлены галочки. end должна быть не позднее start.
-    .verifying("error.date.end.before.start", { m => m match {
-       // Если даты имеют смысл, то они заданы, и их проверяем.
-       case (None, Some((dateStart, dateEnd)))    => !(dateStart isAfter dateEnd)
-       // Остальные случаи не отрабатываем - смысла нет.
-       case _ => true
-    }})
-
-    .transform [DatePeriod_t] (
-      // В зависимости от имеющихся значений полей выбираем реальный период.
-      { case (Some(qap), _) =>
-          val now = LocalDate.now()
-          now -> now.plus( qap.toPeriod.minusDays(1) )
-        case (_, dpo) =>
-          dpo.get
-      },
-      // unapply(). Нужно попытаться притянуть имеющийся интервал дат на какой-то период из списка QuickAdvPeriod.
-      // При неудаче вернуть кастомный период.
-      {case dp @ (dateStart, dateEnd) =>
-        // Угадываем период либо откатываемся на custom_period
-        val periodStr = new Period(dateStart, dateEnd).toString(ISOPeriodFormat.standard())
-        QuickAdvPeriods.maybeWithName(periodStr) match {
-          case Some(qap)  =>  Some(qap) -> None
-          case None       =>  None -> Some(dp)
-        }
-      }
-    )
-  }
-
-  /** Маппинг формы размещения рекламы на других узлах. */
-  private def advFormM: AdvFormM_t = {
-    import util.FormUtil._
-    val nodesM = list(
-      tuple(
-        "adnId"         -> esIdM,
-        "advertise"     -> boolean,
-        "showLevel"     -> adSlsM
-      )
-    )
-    Form[AdvFormValueM_t] (
-      mapping(
-        "node"   -> nodesM,
-        "period" -> advPeriodM
-      )
-      {(nodesAdv, advPeriod) =>
-        nodesAdv.foldLeft(List.empty[AdvFormEntry]) {
-          case (acc, (adnId, isAdv @ true, adSls) ) =>
-            val ssls = for(sl <- adSls) yield {
-              SinkShowLevels.withArgs(AdnSinks.SINK_GEO, sl)
-            }
-            val result = AdvFormEntry(
-              adnId       = adnId,
-              advertise   = isAdv,
-              showLevels  = ssls,
-              dateStart   = advPeriod._1,
-              dateEnd     = advPeriod._2
-            )
-            result :: acc
-          case (acc, _) => acc
-        }
-      }
-      {l =>
-        l.headOption.map { first =>
-          val nodesAdvs = l.map { e =>
-            val adSls = e.showLevels.map(_.sl)
-            (e.adnId, e.advertise, adSls)
-          }
-          val dates = first.dateStart -> first.dateEnd
-          nodesAdvs -> dates
-        }
-      }
-    )
-  }
 
 
   /** Страница управления размещением рекламной карточки. */
   def advForAd(adId: String) = CanAdvertiseAdGet(adId).async { implicit request =>
-    renderAdvForm(adId, advFormM, Ok)
+    renderAdvForm(adId, directAdvFormUtil.advForm, Ok)
   }
 
   /** Класс-контейнер для передачи результатов ряда операций с adv/bill-sql-моделями в renderAdvForm(). */
@@ -262,7 +117,7 @@ class MarketAdv @Inject() (
    * @param rcvrsAllFutOpt Опционально: асинхронный список ресиверов. Экшен контроллера может передавать его сюда.
    * @return Отрендеренная страница управления карточкой с формой размещения.
    */
-  private def renderAdvForm(adId: String, form: AdvFormM_t, rs: Status, rcvrsAllFutOpt: Option[Future[Seq[MNode]]] = None)
+  private def renderAdvForm(adId: String, form: DirectAdvFormM_t, rs: Status, rcvrsAllFutOpt: Option[Future[Seq[MNode]]] = None)
                            (implicit request: RequestWithAdAndProducer[AnyContent]): Future[Result] = {
     // Если поиск ресиверов ещё не запущен, то сделать это.
     val rcvrsAllFut = rcvrsAllFutOpt  getOrElse  collectAllReceivers(request.producer)
@@ -367,8 +222,7 @@ class MarketAdv @Inject() (
     }
 
     // Периоды размещения. Обычно одни и те же. Сразу считаем в текущем потоке:
-    val advPeriodsAvailable = (QuickAdvPeriods.ordered.map(_.isoPeriod) ++ List(CUSTOM_PERIOD))
-      .map(ps => ps -> ctx.messages("adv.period." + ps))
+    val advPeriodsAvailable = advFormUtil.advPeriodsAvailable
 
     // Сборка финального контейнера аргументов для _advFormTpl().
     val advFormTplArgsFut: Future[MAdvFormTplArgs] = for {
@@ -386,7 +240,7 @@ class MarketAdv @Inject() (
       )
     }
 
-    val price0 = MPrice(0.0, CurrencyCodeDflt.currency)
+    val price0 = advFormUtil.zeroPricing
 
     // Когда всё станет готово - рендерим результат.
     for {
@@ -447,7 +301,8 @@ class MarketAdv @Inject() (
 
   private def maybeFreeAdv(implicit request: AbstractRequestWithPwOpt[_]): Boolean = {
     // Раньше было ограничение на размещение с завтрашнего дня, теперь оно снято.
-    val isFreeOpt = freeAdvFormM.bindFromRequest()
+    val isFreeOpt = advFormUtil.freeAdvFormM
+      .bindFromRequest()
       .fold({_ => None}, identity)
     isFreeAdv( isFreeOpt )
   }
@@ -458,14 +313,15 @@ class MarketAdv @Inject() (
    * @return Инлайновый рендер отображаемой цены.
    */
   def getAdvPriceSubmit(adId: String) = CanAdvertiseAdPost(adId).async { implicit request =>
-    advFormM.bindFromRequest().fold(
+    directAdvFormUtil.advForm.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"getAdvPriceSubmit($adId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
         NotAcceptable("Cannot bind form.")
       },
-      {adves =>
+      {formRes =>
         val allRcvrIdsFut = collectAllReceivers(request.producer)
           .map { _.iterator.flatMap(_.id).toSet }
+        val adves = _formRes2adves(formRes)
         val adves2Fut = for {
           adves1      <- filterEntiesByBusyRcvrs(adId, adves)
           allRcvrIds  <- allRcvrIdsFut
@@ -477,29 +333,22 @@ class MarketAdv @Inject() (
           adves2      <- adves2Fut
           advPricing  <- {
             if (adves2.isEmpty || maybeFreeAdv) {
-              Future successful zeroPricing
+              Future.successful( advFormUtil.zeroPricing )
             } else {
               mmpDailyBilling.getAdvPrices(request.mad, adves2)
             }
           }
         } yield {
-          Ok(_advFormPriceTpl(advPricing))
+          Ok(_priceValTpl(advPricing))
         }
       }
     )
   }
 
-  /** Нулевая цена, передавая в соотв. шаблон. */
-  private def zeroPricing: MAdvPricing = {
-    val curr = Currency.getInstance(CurrencyCodeOpt.CURRENCY_CODE_DFLT)
-    val prices = List(curr -> 0F)
-    MAdvPricing(prices, hasEnoughtMoney = true)
-  }
-
 
   /** Синхронная фильтрация присланного списка запросов на публикацию по уже размещённым adv.
     * @param adId id размещаемой рекламной карточки.
-    * @param adves Результат сабмита формы [[advFormM]].
+    * @param adves Результат сабмита формы advFormM.
     * @return Новый adves, который НЕ содержит уже размещаемые карточки.
     */
   private def filterEntiesByBusyRcvrs(adId: String, adves: List[AdvFormEntry]): Future[List[AdvFormEntry]] = {
@@ -538,17 +387,37 @@ class MarketAdv @Inject() (
     }
   }
 
+  /** Конвертация результата маппинга формы в список размещений.
+    * Это наследие, надо будет его удалить, используя FormResult напрямую. */
+  private def _formRes2adves(formRes: FormResult): List[AdvFormEntry] = {
+    formRes.nodes.foldLeft(List.empty[AdvFormEntry]) {
+      case (acc, OneNodeInfo(adnId, isAdv, adSls) ) =>
+        val ssls = for(sl <- adSls) yield {
+          SinkShowLevels.withArgs(AdnSinks.SINK_GEO, sl)
+        }
+        val result = AdvFormEntry(
+          adnId       = adnId,
+          advertise   = isAdv,
+          showLevels  = ssls,
+          dateStart   = formRes.period._1,
+          dateEnd     = formRes.period._2
+        )
+        result :: acc
+    }
+  }
 
   /** Сабмит формы размещения рекламной карточки. */
   def advFormSubmit(adId: String) = CanAdvertiseAdPost(adId).async { implicit request =>
     lazy val logPrefix = s"advFormSubmit($adId): "
-    val formBinded = advFormM.bindFromRequest()
+    val formBinded = directAdvFormUtil.advForm.bindFromRequest()
     formBinded.fold(
       {formWithErrors =>
         debug(s"${logPrefix}form bind failed:\n${formatFormErrors(formWithErrors)}")
         renderAdvForm(adId, formWithErrors, NotAcceptable)
       },
-      {adves =>
+      {formRes =>
+        val adves = _formRes2adves(formRes)
+
         trace(logPrefix + "adves entries submitted: " + adves)
         // Перед сохранением надо проверить возможности публикации на каждый узел.
         // Получаем в фоне все возможные узлы-ресиверы.
@@ -721,7 +590,7 @@ class MarketAdv @Inject() (
 
             // req: предложение на состоянии модерации. Надо бы отрендерить страницу судьбоносного набега на мозг
             case advReq: MAdvReq =>
-              Ok( _advReqWndTpl(wndArgs, advReq, reqRefuseFormM)(ctx) )
+              Ok( _advReqWndTpl(wndArgs, advReq, directAdvFormUtil.reqRefuseFormM)(ctx) )
 
             // should never occur
             case other =>
@@ -828,7 +697,7 @@ class MarketAdv @Inject() (
    * @return 404 если что-то не найдено, иначе 200.
    */
   def _showAdvReq(advReqId: Int, r: Option[String]) = CanReceiveAdvReqGet(advReqId).async { implicit request =>
-    _showAdvReq1(reqRefuseFormM, r)
+    _showAdvReq1(directAdvFormUtil.reqRefuseFormM, r)
       .map { _.fold(identity, Ok(_))}
   }
 
@@ -875,14 +744,6 @@ class MarketAdv @Inject() (
   }
 
 
-  /** Маппинг формы отказа от размещения рекламной карточки. Указывать причину надо. */
-  private def reqRefuseFormM = {
-    import play.api.data.Forms._
-    Form(
-      "reason" -> nonEmptyText(minLength = 2, maxLength = 256)
-    )
-  }
-
   /**
    * Сабмит формы отказа от размещения рекламной карточки.
    * @param advReqId id реквеста.
@@ -890,7 +751,7 @@ class MarketAdv @Inject() (
    *         302 если всё ок.
    */
   def advReqRefuseSubmit(advReqId: Int, r: Option[String]) = CanReceiveAdvReqPost(advReqId).async { implicit request =>
-    reqRefuseFormM.bindFromRequest().fold(
+    directAdvFormUtil.reqRefuseFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"advReqRefuseSubmit($advReqId): Failed to bind refuse form:\n${formatFormErrors(formWithErrors)}")
         _showAdvReq1(formWithErrors, r)

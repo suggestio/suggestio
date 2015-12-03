@@ -9,19 +9,27 @@
 @import stuff._inputHiddenTpl
 @import stuff.geo._
 @import lk.tag.edit._
+@import lk.adv.widgets._
 
+@_barTpl(MHands.Left) {
+  @* js-форма добавления тегов. *@
+  @_addFormTpl(args.form)
 
-@* js-форма добавления тегов. *@
-@_addFormTpl(args.form)
-
-@* Кнопка добавления тега. Вне формы, т.к. форма перезаписывается после сабмитов. *@
-@_addBtnTpl()
+  @* Кнопка добавления тега. Вне формы, т.к. форма перезаписывается после сабмитов. *@
+  @_addBtnTpl()
+}
 
 @form( CSRF(routes.LkAdvGeoTag.forAdSubmit(args.mad.id.get)) ) {
 
-  @* Рендер сохранённых тегов. *@
-  @_existTagsContTpl() {
-    @_tagsExistTpl(args.form)
+  @_barTpl(MHands.Left) {
+    @* Рендер сохранённых тегов. *@
+    @_existTagsContTpl() {
+      @_tagsExistTpl(args.form)
+    }
+  }
+
+  @_barTpl(MHands.Right) {
+    @_datesPeriodTpl(args.form("period"), args.advPeriodsAvail)
   }
 
   @* Для сохранения и восстановления состояния карты при POST нужны hidden-поля в рамках формы. *@
@@ -57,9 +65,5 @@
 
   @* Какой-то контент внутри формы после тегов. Карта например. *@
   @middle
-
-
-  @* TODO Нормальная кнопка для сабмита, ценник, etc *@
-  <input type="submit" value="@messages("Advertise")" />
 
 }

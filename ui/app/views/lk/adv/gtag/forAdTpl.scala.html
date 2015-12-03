@@ -5,12 +5,14 @@
 @import ctx.{messages, request}
 @import helper._
 @import stuff.geo.radmap._
-
+@import lk.adv.widgets._
+@import lk.adv.widgets.price._
 
 @agtBase(
-  title     = messages("Adv.in.geo.tags"),
-  mnode     = args.producer,
-  mad       = args.mad
+  title       = messages("Adv.in.geo.tags"),
+  mnode       = args.producer,
+  mad         = args.mad,
+  rightAfter  = Some( _rightPriceTpl(args.price) )
 ) {
 
   @* При добавлении тегов запросы add-tag-формы отправляются сюда. *@
@@ -19,11 +21,14 @@
     routes.javascript.Assets.at
   )
 
-  @* Рендер самой формы здесь. *@
-  @_forAdFormTpl(args) {
+  @_advFormBlockTpl() {
 
-    @* Контейнер карты. *@
-    @_mapContTpl()
+    @* Рендер самой формы здесь. *@
+    @_forAdFormTpl(args) {
+      @* Контейнер карты. *@
+      <br/>
+      @_mapContTpl()
+    }
 
   }
 

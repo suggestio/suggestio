@@ -89,7 +89,7 @@ object TplDataFormatUtil extends TplFormatUtilT {
     dcs.setCurrencySymbol(currencySymbol)
     currFmt.setDecimalFormatSymbols(dcs)
     currFmt.setGroupingUsed(price.amount >= 10000)
-    val formatted = currFmt.format(price)
+    val formatted = currFmt.format(price.amount)
     pricePostprocess(formatted)
   }
 

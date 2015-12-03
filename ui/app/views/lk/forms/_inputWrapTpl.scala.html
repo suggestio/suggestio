@@ -1,0 +1,5 @@
+@(size: String, classes: Option[String] = None, id: Option[String] = None)(content: Html)
+
+<div class="input __size-@size @classes" @if(id){id="@id"}>
+  @content
+</div>

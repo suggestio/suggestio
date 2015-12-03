@@ -1,8 +1,8 @@
-package models.adv.geo
+package models.adv.direct
 
 import models.blk.IBrArgs
 import models.msc.IAdBodyTplArgs
-import models.{blk, MNode}
+import models.{MNode, blk}
 
 /**
  * Suggest.io

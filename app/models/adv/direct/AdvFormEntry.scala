@@ -1,4 +1,4 @@
-package models.adv.geo
+package models.adv.direct
 
 import models.SinkShowLevel
 import models.adv.IAdvTerms

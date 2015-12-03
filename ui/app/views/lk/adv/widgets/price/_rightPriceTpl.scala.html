@@ -1,0 +1,25 @@
+@(price: adv.tpl.IAdvPricing)(implicit ctx: Context)
+
+@* Виджет на самой правой панели с данными по размещению. *@
+
+@import ctx.messages
+
+<div class="right-bar-price-widget">
+  <div class="right-bar-price-widget_cnt">
+
+    <h2 class="right-bar-price-widget_title">
+      @messages("Total.amount._money")
+    </h2>
+
+    <p class="right-bar-price-widget_price-value js-pre-price">
+      @_priceValTpl(price)
+    </p>
+
+    <button class="right-bar-price-widget_request-btn btn __major __size-L js-submit-btn" data-for="#advsForm">
+      @messages("Send.request")
+    </button>
+
+  </div>
+</div>
+
+

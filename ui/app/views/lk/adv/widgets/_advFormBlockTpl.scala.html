@@ -1,0 +1,9 @@
+@(id: Option[String] = None)(content: Html)
+
+@* div-обертка для adv-форм *@
+
+<hr class="delimiter __light"/>
+
+<div class="adv-management" @if(id){id="@id"}>
+  @content
+</div>
