@@ -1,7 +1,6 @@
 package io.suggest.common.slick.driver
 
 import com.github.tminglei.slickpg.{ExPostgresDriver, PgArraySupport, PgDateSupportJoda}
-import com.google.inject.{ImplementedBy, Singleton}
 
 /**
  * Suggest.io
@@ -10,7 +9,6 @@ import com.google.inject.{ImplementedBy, Singleton}
  * Description: Slick-драйвер для postgres'а.
  * @see [[https://github.com/tminglei/slick-pg#usage]]
  */
-@ImplementedBy( classOf[ExPgSlickDriver] )
 trait ExPgSlickDriverT
   extends ExPostgresDriver
   with PgArraySupport
@@ -39,5 +37,4 @@ trait ExPgSlickDriverT
 
 
 /** Дефолтовая реализация slick-pg-драйвера. */
-@Singleton
-class ExPgSlickDriver extends ExPgSlickDriverT
+object ExPgSlickDriver extends ExPgSlickDriverT
