@@ -39,7 +39,7 @@ trait OrderIdFkSlick extends OrderIdSlick with ITableName {
 
   /** Поддержка внешнего ключа таблицы по полю order_id. */
   trait OrderIdFk extends OrderIdColumn { that: Table[_] =>
-    def order = foreignKey(ORDER_ID_FK, orderId, mOrders.orders)(_.id)
+    def order = foreignKey(ORDER_ID_FK, orderId, mOrders.query)(_.id)
   }
 
 }

@@ -53,7 +53,7 @@ class MTxns @Inject() (
     def psTxnUidOpt     = column[Option[String]](PS_TXN_UID_FN)
     def orderIdOpt      = column[Option[Gid_t]](ORDER_ID_FN)
 
-    def order           = foreignKey( PgaNamesMaker.fkey(TABLE_NAME, ORDER_ID_FN), orderIdOpt, mOrders.orders)(_.id.?)
+    def order           = foreignKey( PgaNamesMaker.fkey(TABLE_NAME, ORDER_ID_FN), orderIdOpt, mOrders.query)(_.id.?)
 
     def orderInx        = index(PgaNamesMaker.fkInx(TABLE_NAME, ORDER_ID_FN), orderIdOpt)
     def psTxnUidKey     = index(PgaNamesMaker.uniq(TABLE_NAME, PS_TXN_UID_FN), psTxnUidOpt)

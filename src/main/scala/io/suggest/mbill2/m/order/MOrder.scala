@@ -3,9 +3,10 @@ package io.suggest.mbill2.m.order
 import com.google.inject.{Inject, Singleton}
 import io.suggest.common.m.sql.ITableName
 import io.suggest.common.slick.driver.ExPgSlickDriverT
+import io.suggest.mbill2.m.common.InsertOneReturning
 import io.suggest.mbill2.m.contract.{ContractIdSlickIdx, ContractIdSlickFk, MContracts}
 import io.suggest.mbill2.m.dt.DateCreatedSlick
-import io.suggest.mbill2.m.gid.{Gid_t, GidSlick}
+import io.suggest.mbill2.m.gid.{DeleteById, GetById, Gid_t, GidSlick}
 import io.suggest.mbill2.m.price._
 import io.suggest.mbill2.util.PgaNamesMaker
 import org.joda.time.DateTime
@@ -30,9 +31,15 @@ class MOrders @Inject() (
   with AmountSlick
   with CurrencyCodeSlick
   with ITableName
+  with GetById
+  with InsertOneReturning
+  with DeleteById
 {
 
   import driver.api._
+
+  override type Table_t = MOrdersTable
+  override type El_t    = MOrder
 
   override val TABLE_NAME   = "order"
 
@@ -70,7 +77,21 @@ class MOrders @Inject() (
   }
 
   /** Экземпляр статической части модели, пригодный для запуска и проведения запросов. */
-  val orders = TableQuery[MOrdersTable]
+  val query = TableQuery[MOrdersTable]
+
+  /** Апдейт значения экземпляра модели новым id. */
+  override protected def _withId(el: MOrder, id: Gid_t): MOrder = {
+    el.copy(id = Some(id))
+  }
+
+  /** Поиск ордера-корзины для контракта. */
+  def getCartOrder(contractId: Gid_t) = {
+    query.filter(q => q.contractId === contractId && q.statusStr === MOrderStatuses.Draft.strId)
+      .sortBy(_.id.desc.nullsLast)
+      .take(1)
+      .result
+      .headOption
+  }
 
 }
 
@@ -81,5 +102,5 @@ case class MOrder(
   price         : MPrice,
   dateCreated   : DateTime      = DateTime.now,
   dateStatus    : DateTime      = DateTime.now,
-  id            : Option[Gid_t]  = None
+  id            : Option[Gid_t] = None
 )

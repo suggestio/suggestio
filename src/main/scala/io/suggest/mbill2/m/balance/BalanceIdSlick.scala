@@ -36,7 +36,7 @@ trait BalanceIdFkSlick extends BalanceIdSlick with ITableName {
   protected def mBalances: MBalances
 
   trait BalanceIdFk extends BalanceIdColumn { that: Table[_] =>
-    def balance = foreignKey(BALANCE_ID_FK, balanceId, mBalances.balances)(_.id)
+    def balance = foreignKey(BALANCE_ID_FK, balanceId, mBalances.query)(_.id)
   }
 
 }

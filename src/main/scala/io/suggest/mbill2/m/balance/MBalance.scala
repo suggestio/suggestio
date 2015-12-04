@@ -63,7 +63,7 @@ class MBalances @Inject() (
 
   }
 
-  val balances = TableQuery[MBalancesTable]
+  val query = TableQuery[MBalancesTable]
 
 }
 

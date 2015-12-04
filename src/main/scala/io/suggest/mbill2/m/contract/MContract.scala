@@ -3,8 +3,9 @@ package io.suggest.mbill2.m.contract
 import com.google.inject.{Inject, Singleton}
 import io.suggest.common.m.sql.ITableName
 import io.suggest.common.slick.driver.ExPgSlickDriverT
+import io.suggest.mbill2.m.common.InsertOneReturning
 import io.suggest.mbill2.m.dt.DateCreatedSlick
-import io.suggest.mbill2.m.gid.{Gid_t, GidSlick}
+import io.suggest.mbill2.m.gid.{DeleteById, GetById, Gid_t, GidSlick}
 import org.joda.time.DateTime
 import slick.lifted.ProvenShape
 
@@ -44,10 +45,16 @@ class MContracts @Inject()(
 )
   extends GidSlick
   with DateCreatedSlick
+  with GetById
+  with InsertOneReturning
+  with DeleteById
 {
 
   import MContract._
   import driver.api._
+
+  override type Table_t = MContractsTable
+  override type El_t = MContract
 
   /** slick-описание таблицы контрактов. */
   class MContractsTable(tag: Tag)
@@ -69,7 +76,11 @@ class MContracts @Inject()(
   }
 
   /** Доступ к запросам модели. */
-  val contracts = TableQuery[MContractsTable]
+  override val query = TableQuery[MContractsTable]
+
+  override protected def _withId(el: MContract, id: Gid_t): MContract = {
+    el.copy(id = Some(id))
+  }
 
 }
 

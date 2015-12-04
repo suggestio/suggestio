@@ -41,7 +41,7 @@ trait ContractIdSlickFk extends ContractIdSlick with ITableName {
   import driver.api._
 
   trait ContractIdFk extends ContractIdColumn { that: Table[_] =>
-    def contract = foreignKey(CONTRACT_ID_FK, contractId, mContracts.contracts)(_.id)
+    def contract = foreignKey(CONTRACT_ID_FK, contractId, mContracts.query)(_.id)
   }
 
 }
