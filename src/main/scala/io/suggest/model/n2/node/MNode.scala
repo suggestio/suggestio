@@ -5,6 +5,7 @@ import io.suggest.event.{MNodeDeletedEvent, MNodeSavedEvent, SioNotifierStaticCl
 import io.suggest.model.es.EsModelUtil.FieldsJsonAcc
 import io.suggest.model.es._
 import io.suggest.model.n2.ad.MNodeAd
+import io.suggest.model.n2.bill.MNodeBilling
 import io.suggest.model.n2.edge.MNodeEdges
 import io.suggest.model.n2.geo.MNodeGeo
 import io.suggest.model.n2.node.common.MNodeCommon
@@ -120,14 +121,19 @@ object MNode
       .inmap [MNodeAd] (
         _ getOrElse MNodeAd.empty,
         { mna => if (mna.nonEmpty) Some(mna) else None }
+      ) and
+    (__ \ Fields.Billing.BILLING_FN).formatNullable[MNodeBilling]
+      .inmap [MNodeBilling] (
+        _.getOrElse( MNodeBilling.empty ),
+        { mnb => if (mnb.nonEmpty) Some(mnb) else None }
       )
   )(
-    {(common, meta, extras, edges, geo, ad) =>
-      MNode(common, meta, extras, edges, geo, ad)
+    {(common, meta, extras, edges, geo, ad, billing) =>
+      MNode(common, meta, extras, edges, geo, ad, billing)
     },
     {mnode =>
       import mnode._
-      (common, meta, extras, edges, geo, ad)
+      (common, meta, extras, edges, geo, ad, billing)
     }
   )
 
@@ -210,7 +216,8 @@ object MNode
       _obj(Fields.Extras.EXTRAS_FN,   MNodeExtras),
       _obj(Fields.Edges.EDGES_FN,     MNodeEdges),
       _obj(Fields.Geo.GEO_FN,         MNodeGeo),
-      _obj(Fields.Ad.AD_FN,           MNodeAd)
+      _obj(Fields.Ad.AD_FN,           MNodeAd),
+      _obj(Fields.Billing.BILLING_FN, MNodeBilling)
     )
   }
 
@@ -239,6 +246,7 @@ case class MNode(
   edges                       : MNodeEdges      = MNodeEdges.empty,
   geo                         : MNodeGeo        = MNodeGeo.empty,
   ad                          : MNodeAd         = MNodeAd.empty,
+  billing                     : MNodeBilling    = MNodeBilling.empty,
   override val id             : Option[String]  = None,
   override val versionOpt     : Option[Long]    = None
 )

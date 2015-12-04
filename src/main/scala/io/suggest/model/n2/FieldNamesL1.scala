@@ -39,4 +39,7 @@ object FieldNamesL1 extends EnumValue2Val {
   /** Имя поля с данными рекламной карточки. */
   val Ad                          : T = new Val("a")
 
+  /** Имя поля с данными биллинга узла. */
+  val Billing                     : T = new Val("b")
+
 }

@@ -95,8 +95,21 @@ object MNodeFields {
   }
 
 
+  /** Поля, касающиеся рекламо-карточной стороны узла. */
   object Ad {
+
+    /** Название корневого поля с контейнером данных рекламной карточки. */
     def AD_FN = FieldNamesL1.Ad.name
+
+  }
+
+
+  /** Поля, относящиеся к биллингу. */
+  object Billing {
+
+    /** Название корневого поля биллинга. */
+    def BILLING_FN = FieldNamesL1.Billing.name
+
   }
 
 }
