@@ -133,11 +133,4 @@ class AdvFormUtil {
     )
   }
 
-  /** Нулевая цена, передавая в соотв. шаблон. */
-  def zeroPricing: MAdvPricing = {
-    val curr = Currency.getInstance(CurrencyCodeOpt.CURRENCY_CODE_DFLT)
-    val prices = Seq( MPrice(0.0, curr) )
-    MAdvPricing(prices, hasEnoughtMoney = true)
-  }
-
 }

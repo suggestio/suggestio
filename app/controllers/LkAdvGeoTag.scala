@@ -16,6 +16,7 @@ import play.api.mvc.Result
 import util.PlayMacroLogsImpl
 import util.acl.{RequestWithAdAndProducer, CanAdvertiseAdUtil, CanAdvertiseAd}
 import util.adv.AdvFormUtil
+import util.billing.Bill2Util
 import util.tags.{GeoTagsFormUtil, TagsEditFormUtil}
 import views.html.lk.adv.gtag._
 
@@ -30,6 +31,7 @@ import scala.concurrent.{Future, ExecutionContext}
 class LkAdvGeoTag @Inject() (
   geoTagsFormUtil                 : GeoTagsFormUtil,
   advFormUtil                     : AdvFormUtil,
+  bill2Util                       : Bill2Util,
   override val tagsEditFormUtil   : TagsEditFormUtil,
   override val canAdvAdUtil       : CanAdvertiseAdUtil,
   override val _contextFactory    : Context2Factory,
@@ -91,7 +93,7 @@ class LkAdvGeoTag @Inject() (
       producer        = request.producer,
       form            = form,
       advPeriodsAvail = advFormUtil.advPeriodsAvailable,
-      price           = advFormUtil.zeroPricing
+      price           = bill2Util.zeroPricing
     )
     Ok( forAdTpl(rargs) )
   }
@@ -110,6 +112,11 @@ class LkAdvGeoTag @Inject() (
       },
       {result =>
         LOGGER.trace("Binded: " + result)
+        // TODO Прикрутить free adv для суперпользователей.
+        // TODO Прикрутить рассчет цены, оплату. Тут пока что всё бесплатно.
+
+        // Найти корзину (ЧЬЮ? УЗЛА? ЮЗЕРА?), добавить покупку в корзину.
+        // TODO bill2Util.ensureNodeContract(request.)
         ???
       }
     )

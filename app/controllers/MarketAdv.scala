@@ -26,8 +26,7 @@ import util.PlayMacroLogsImpl
 import scala.concurrent.{ExecutionContext, Future}
 import play.api.mvc.{Result, AnyContent}
 import java.sql.SQLException
-import util.billing.MmpDailyBilling
-import java.util.Currency
+import util.billing.{Bill2Util, MmpDailyBilling}
 import play.api.data._
 
 /**
@@ -46,6 +45,7 @@ class MarketAdv @Inject() (
   ctlGeoAdvUtil                   : CtlGeoAdvUtil,
   directAdvFormUtil               : DirectAdvFormUtil,
   advFormUtil                     : AdvFormUtil,
+  bill2Util                       : Bill2Util,
   override val n2NodesUtil        : N2NodesUtil,
   override val mNodeCache         : MAdnNodeCache,
   override val messagesApi        : MessagesApi,
@@ -240,7 +240,7 @@ class MarketAdv @Inject() (
       )
     }
 
-    val price0 = advFormUtil.zeroPricing
+    val price0 = bill2Util.zeroPricing
 
     // Когда всё станет готово - рендерим результат.
     for {
@@ -333,7 +333,7 @@ class MarketAdv @Inject() (
           adves2      <- adves2Fut
           advPricing  <- {
             if (adves2.isEmpty || maybeFreeAdv) {
-              Future.successful( advFormUtil.zeroPricing )
+              Future.successful( bill2Util.zeroPricing )
             } else {
               mmpDailyBilling.getAdvPrices(request.mad, adves2)
             }

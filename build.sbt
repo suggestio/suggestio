@@ -60,7 +60,7 @@ libraryDependencies ++= {
   "de.jollyday" % "jollyday" % "0.4.+",
   "com.google.code.kaptcha" % "kaptcha" % "2.3" classifier "jdk15",
   // Бомжуем с синхронным драйвером из-за конфликта между postgresql-async и asynchbase в версии netty. Зато anorm работает.
-  "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
+  "org.postgresql" % "postgresql" % "9.4-1206-jdbc42",
   // webjars
   // geo
   "com.spatial4j" % "spatial4j" % "0.4.+",

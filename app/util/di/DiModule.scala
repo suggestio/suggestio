@@ -1,5 +1,6 @@
 package util.di
 
+import io.suggest.common.slick.driver.{ExPgSlickDriver, ExPgSlickDriverT}
 import io.suggest.event.SioNotifierStaticClientI
 import org.elasticsearch.client.Client
 import play.api.inject._
@@ -19,7 +20,9 @@ class DiModule extends Module {
       bind[Client]
         .to( SiowebEsUtil.client ),
       bind[SioNotifierStaticClientI]
-        .to( util.event.SiowebNotifier.Implicts.sn )
+        .to( util.event.SiowebNotifier.Implicts.sn ),
+      bind[ExPgSlickDriverT]
+        .to( ExPgSlickDriver )
     )
   }
 
