@@ -54,8 +54,6 @@ class ShowcaseUtil @Inject() (
     case None        => 0.8F
   }
 
-  def getCatOwner(adnId: String) = MMartCategory.DEFAULT_OWNER_ID
-
   /**
    * Сгруппировать "узкие" карточки, чтобы они были вместе.
    * @param ads Исходный список элементов.

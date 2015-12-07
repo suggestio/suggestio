@@ -3,6 +3,7 @@ package controllers
 import com.google.inject.Inject
 import controllers.sc._
 import io.suggest.event.SioNotifierStaticClientI
+import models.mproj.MProjectInfo
 import models.{Context2Factory, MAdnNodeCache}
 import org.elasticsearch.client.Client
 import play.api.i18n.MessagesApi
@@ -24,7 +25,6 @@ import scala.concurrent.ExecutionContext
  * 2014.nov.10: Из-за активного наращивания функционала был разрезан на части, расположенные в controllers.sc.*.
  */
 class MarketShowcase @Inject() (
-  override val messagesApi        : MessagesApi,
   override val logoUtil           : LogoUtil,
   override val welcomeUtil        : WelcomeUtil,
   override val scStatUtil         : ScStatUtil,
@@ -34,8 +34,10 @@ class MarketShowcase @Inject() (
   override val cdnUtil            : CdnUtil,
   override val n2NodesUtil        : N2NodesUtil,
   override val mNodeCache         : MAdnNodeCache,
-  override val _contextFactory    : Context2Factory,
+  override val mProjectInfo       : MProjectInfo,
   override val errorHandler       : ErrorHandler,
+  override val _contextFactory    : Context2Factory,
+  override val messagesApi        : MessagesApi,
   override implicit val current   : play.api.Application,
   override implicit val ec        : ExecutionContext,
   override implicit val esClient  : Client,

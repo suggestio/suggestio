@@ -1,6 +1,5 @@
 package models.req
 
-import models._
 import models.event.MEvent
 import models.event.search.MEventsSearchArgs
 import models.jsm.init.MTarget
@@ -121,7 +120,7 @@ trait SioReqMdWrapper extends ISioReqMd {
 /** Дефолтовая реализация экземпляра модели [[ISioReqMd]] */
 case class SioReqMd(
   override val usernameOpt       : Option[String]       = None,
-  override val billBallanceOpt   : Option[MBalance] = None,
+  override val billBallanceOpt   : Option[MBalance]     = None,
   override val nodeUnseenEvtsCnt : Option[Int]          = None,
   override val jsInitTargets0    : Seq[MTarget]         = Nil
 )

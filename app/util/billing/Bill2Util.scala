@@ -12,8 +12,8 @@ import models.adv.tpl.MAdvPricing
 import models.{CurrencyCodeOpt, MNode, MPrice}
 import org.elasticsearch.client.Client
 import play.api.db.slick.DatabaseConfigProvider
-import slick.driver.JdbcProfile
 import util.PlayMacroLogsImpl
+import util.di.ISlickDbConfig
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
@@ -26,7 +26,7 @@ import scala.util.{Failure, Success}
  */
 @Singleton
 class Bill2Util @Inject() (
-  dbConfigProvider                : DatabaseConfigProvider,
+  override val dbConfigProvider   : DatabaseConfigProvider,
   mOrders                         : MOrders,
   mContracts                      : MContracts,
   implicit private val ec         : ExecutionContext,
@@ -34,10 +34,8 @@ class Bill2Util @Inject() (
   implicit private val sn         : SioNotifierStaticClientI
 )
   extends PlayMacroLogsImpl
+  with ISlickDbConfig
 {
-
-  private val dbConfig = dbConfigProvider.get[JdbcProfile]
-
 
   /**
    * Найти и вернуть контракт для указанного id.
@@ -88,7 +86,7 @@ class Bill2Util @Inject() (
           updFut.onComplete {
             // Всё хорошо, тихо залоггировать.
             case Success(_) =>
-              LOGGER.trace(s"$logPrefix Initialized new contract[${mc2.id}] for node.")
+              LOGGER.debug(s"$logPrefix Initialized new contract[${mc2.id}] for node.")
             // Не удалось сохранить contract_id в ноду, откатить свежесозданный ордер
             case Failure(ex) =>
               for (id <- mc2.id) {
@@ -125,7 +123,7 @@ class Bill2Util @Inject() (
           mOrders.insertOne(cartOrderStub)
         }
         fut.onSuccess { case cartOrder =>
-          LOGGER.trace(s"ensureNodeCart($contractId): Initialized new cart order[${cartOrder.id}]")
+          LOGGER.debug(s"ensureNodeCart($contractId): Initialized new cart order[${cartOrder.id}]")
         }
         fut
       }

@@ -91,7 +91,7 @@ trait CanEditAd
           val madOptFut = MNode.getById(adId)
           val srmFut = SioReqMd.fromPwOpt(pwOpt)
           val hasAdvFut = hasAdv(adId)
-          madOptFut flatMap {
+          madOptFut.flatMap {
             case Some(mad) =>
               val prodIdOpt = n2NodesUtil.madProducerId(mad)
               val prodNodeOptFut = mNodeCache.maybeGetByIdCached( prodIdOpt )
@@ -111,7 +111,9 @@ trait CanEditAd
                   } else {
                     prodNodeOptFut flatMap { adnNodeOpt =>
                       adnNodeOpt
-                        .filter { adnNode => IsAdnNodeAdmin.isAdnNodeAdminCheck(adnNode, pwOpt) }
+                        .filter { adnNode =>
+                          IsAdnNodeAdmin.isAdnNodeAdminCheck(adnNode, pwOpt)
+                        }
                         .fold {
                           LOGGER.debug(s"isEditAllowed(${mad.id.get}, $pwOpt): Not a producer[$prodIdOpt] admin.")
                           forbiddenFut("No node admin rights", request)

@@ -109,7 +109,8 @@ trait CanAdvertiseAd
 
     def invokeBlock[A](request: Request[A], block: (RequestWithAdAndProducer[A]) => Future[Result]): Future[Result] = {
       val pwOpt = PersonWrapper.getFromRequest(request)
-      MNode.getById(adId) flatMap {
+      val madFut = MNode.getByIdType(adId, MNodeTypes.Ad)
+      madFut.flatMap {
         case Some(mad) =>
           canAdvAdUtil.maybeAllowed(pwOpt, mad, request) flatMap {
             case Some(req1) =>

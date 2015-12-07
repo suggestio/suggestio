@@ -1,11 +1,14 @@
 package util.seo
 
-import controllers.{routes, SioControllerUtil}
+import com.google.inject.Inject
+import controllers.routes
 import models.Context
 import models.crawl.{SiteMapUrlT, SiteMapUrl, ChangeFreqs}
+import models.mproj.MProjectInfo
 import play.api.libs.iteratee.Enumerator
 import play.api.mvc.Call
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
+
+import scala.concurrent.ExecutionContext
 
 /**
  * Suggest.io
@@ -13,7 +16,12 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
  * Created: 06.04.15 22:13
  * Description: sitemap-утиль для информационного раздела /market/
  */
-class MarketSiteMapXml extends SiteMapXmlCtl {
+class MarketSiteMapXml @Inject() (
+  mProjectInfo            : MProjectInfo,
+  implicit private val ec : ExecutionContext
+)
+  extends SiteMapXmlCtl
+{
 
   /** Асинхронно поточно генерировать данные о страницах, подлежащих индексации. */
   override def siteMapXmlEnumerator(implicit ctx: Context): Enumerator[SiteMapUrlT] = {
@@ -22,7 +30,7 @@ class MarketSiteMapXml extends SiteMapXmlCtl {
     ) map { call =>
       SiteMapUrl(
         loc = ctx.SC_URL_PREFIX + call.url,
-        lastMod = Some( SioControllerUtil.PROJECT_CODE_LAST_MODIFIED.toLocalDate ),
+        lastMod = Some( mProjectInfo.PROJECT_CODE_LAST_MODIFIED.toLocalDate ),
         changeFreq = Some( ChangeFreqs.weekly )
       )
     }

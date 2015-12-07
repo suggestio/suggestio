@@ -78,7 +78,7 @@ trait CanConfirmIdpReg
               }
 
             case false =>
-              onAlreadyConfirmed(pw, request)
+              onAlreadyConfirmed(pw.personId, request)
           }
 
         case None =>
@@ -88,9 +88,9 @@ trait CanConfirmIdpReg
     }
 
     /** Что возвращать залогиненному юзеру, если для него это действие недопустимо? */
-    def onAlreadyConfirmed(pw: PersonWrapper, request: Request[_]): Future[Result] = {
+    def onAlreadyConfirmed(personId: String, request: Request[_]): Future[Result] = {
       // Вызвать редиректор, который найдёт для юзера пристанище.
-      identUtil.redirectUserSomewhere(pw.personId)
+      identUtil.redirectUserSomewhere(personId)
     }
   }
 

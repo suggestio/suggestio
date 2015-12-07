@@ -1,12 +1,11 @@
 package controllers.sc
 
 import _root_.util.jsa.{Js, SmRcvResp}
-import controllers.SioControllerUtil
-import SioControllerUtil.PROJECT_CODE_LAST_MODIFIED
-import io.suggest.event.subscriber.SnFunSubscriber
 import io.suggest.event.MNodeSavedEvent
+import io.suggest.event.subscriber.SnFunSubscriber
 import io.suggest.playx.ICurrentConf
 import models.jsm.NodeDataResp
+import models.mproj.IMProjectInfo
 import play.api.Play
 import play.api.cache.Cache
 import play.api.mvc.Result
@@ -28,6 +27,7 @@ trait ScNodeInfo
   with ICurrentConf
   with AdnNodeMaybeAuth
   with ICdnUtilDi
+  with IMProjectInfo
 {
 
   /** Сколько времени кешировать скомпиленный скрипт nodeIconJsTpl. */
@@ -70,7 +70,9 @@ trait ScNodeInfo
     val isCached = isCachedEtag && {
       request.headers.get(IF_MODIFIED_SINCE)
         .flatMap { DateTimeUtil.parseRfcDate }
-        .exists { dt => !(PROJECT_CODE_LAST_MODIFIED isAfter dt)}
+        .exists { dt =>
+          !(mProjectInfo.PROJECT_CODE_LAST_MODIFIED isAfter dt)
+        }
     }
     if (isCached) {
       NotModified
@@ -80,7 +82,7 @@ trait ScNodeInfo
         val logoFut = logoUtil.getLogoOfNode( request.adnNode )
         var cacheHeaders: List[(String, String)] = List(
           CONTENT_TYPE  -> "text/javascript; charset=utf-8",
-          LAST_MODIFIED -> DateTimeUtil.rfcDtFmt.print(PROJECT_CODE_LAST_MODIFIED),
+          LAST_MODIFIED -> DateTimeUtil.rfcDtFmt.print(mProjectInfo.PROJECT_CODE_LAST_MODIFIED),
           CACHE_CONTROL -> ("public, max-age=" + NODE_ICON_JS_CACHE_CONTROL_MAX_AGE)
         )
         if (request.adnNode.versionOpt.isDefined) {

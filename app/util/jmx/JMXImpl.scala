@@ -1,6 +1,7 @@
 package util.jmx
 
 import com.google.inject.Inject
+import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.n2.media.MMediaJmx
 import io.suggest.model.n2.node.MNodeJmx
 import io.suggest.ym.model._
@@ -10,17 +11,17 @@ import models.adv.MExtTargetJmx
 import models.ai.MAiMadJmx
 import models.event.MEventJmx
 import models.merr.MRemoteErrorJmx
-import models.usr.{MExtIdentJmx, MPersonJmx, EmailActivationJmx, EmailPwIdentJmx}
-import util.SiowebEsUtil.client
+import models.usr.{MExtIdentJmx, EmailActivationJmx, EmailPwIdentJmx}
+import org.elasticsearch.client.Client
 import util.adv.AdvUtilJmx
-import util.event.SiowebNotifier.Implicts.sn
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import java.lang.management.ManagementFactory
 import io.suggest.util.JMXBase
 import models._
 import util.PlayLazyMacroLogsImpl
 import io.suggest.util.JMXHelpers._
 import util.compat._
+
+import scala.concurrent.ExecutionContext
 
 /**
  * Suggest.io
@@ -30,13 +31,16 @@ import util.compat._
  */
 
 class JMXImpl @Inject() (
-  mMediaJmx         : MMediaJmx,
-  siowebEsModelJmx  : SiowebEsModelJmx,
-  migration         : img3.MigrationJmx,
-  advUtilJmx        : AdvUtilJmx,
-  mCalendarJmx      : MCalendarJmx,
-  mInviteRequestJmx : MInviteRequestJmx,
-  mNodeJmx          : MNodeJmx
+  mMediaJmx                     : MMediaJmx,
+  siowebEsModelJmx              : SiowebEsModelJmx,
+  migration                     : img3.MigrationJmx,
+  advUtilJmx                    : AdvUtilJmx,
+  mCalendarJmx                  : MCalendarJmx,
+  mInviteRequestJmx             : MInviteRequestJmx,
+  mNodeJmx                      : MNodeJmx,
+  implicit private val ec       : ExecutionContext,
+  implicit private val esClient : Client,
+  implicit private val sn       : SioNotifierStaticClientI
 )
   extends PlayLazyMacroLogsImpl
 {
@@ -51,11 +55,9 @@ class JMXImpl @Inject() (
     new MWelcomeAdJmx,
     new MAdJmx,
     new MAdnNodeJmx,
-    new MMartCategoryJmx,
     new EmailActivationJmx,
     new EmailPwIdentJmx,
     new MExtIdentJmx,
-    new MPersonJmx,
     new MCompanyJmx,
     mCalendarJmx,
     mInviteRequestJmx,

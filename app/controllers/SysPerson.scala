@@ -4,6 +4,7 @@ import com.google.inject.Inject
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
+import io.suggest.model.n2.node.{MNodeTypes, MNodeType}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.{Context2Factory, Context, MNode}
 import models.usr._
@@ -17,7 +18,7 @@ import views.html.sys1.person._
 import views.html.sys1.person.parts._
 import views.html.sys1.market.adn._adnNodesListTpl
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{Future, ExecutionContext}
 
 /**
  * Suggest.io
@@ -25,6 +26,7 @@ import scala.concurrent.ExecutionContext
  * Created: 10.02.15 18:13
  * Description: sys-контроллер для доступа к юзерам.
  */
+// TODO Замержить куски контроллера в отображение узла N2. Сейчас этот контроллер рисует неактуальные данные.
 class SysPerson @Inject() (
   override val messagesApi        : MessagesApi,
   override val _contextFactory    : Context2Factory,
@@ -45,7 +47,13 @@ class SysPerson @Inject() (
   )
 
   def index = IsSuperuser.async { implicit request =>
-    val personsCntFut = MPerson.countAll
+    val personsCntFut: Future[Long] = {
+      val psearch = new MNodeSearchDfltImpl {
+        override def nodeTypes  = Seq(MNodeTypes.Person)
+        override def limit      = Int.MaxValue    // TODO Надо ли оно тут вообще?
+      }
+      MNode.dynCount(psearch)
+    }
     val epwIdsCntFut = EmailPwIdent.countAll
     val extIdsCntFut = MExtIdent.countAll
     val suCnt        = MPersonIdent.SU_EMAILS.size
