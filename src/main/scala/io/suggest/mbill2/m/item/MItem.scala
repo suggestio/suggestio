@@ -3,8 +3,9 @@ package io.suggest.mbill2.m.item
 import com.google.inject.{Inject, Singleton}
 import io.suggest.common.m.sql.ITableName
 import io.suggest.common.slick.driver.ExPgSlickDriverT
+import io.suggest.mbill2.m.common.InsertOneReturning
 import io.suggest.mbill2.m.dt.{DateStartSlick, DateEndSlick, IDateEnd, IDateStart}
-import io.suggest.mbill2.m.gid.{Gid_t, GidSlick, IGid}
+import io.suggest.mbill2.m.gid._
 import io.suggest.mbill2.m.item.cols._
 import io.suggest.mbill2.m.item.status.{ItemStatusSlick, MItemStatus, IMItemStatus}
 import io.suggest.mbill2.m.item.typ.{MItemTypeSlick, MItemType, IMItemType}
@@ -42,11 +43,17 @@ class MItems @Inject() (
   with ReasonOptSlick
   with RcvrIdOptSlick
   with SlsOptSlick
+  with GetById
+  with InsertOneReturning
+  with DeleteById
 {
 
   override val TABLE_NAME = "item"
 
   import driver.api._
+
+  override type Table_t = MItemsTable
+  override type El_t    = MItem
 
   override def ORDER_ID_INX = PgaNamesMaker.fkInx(TABLE_NAME, ORDER_ID_FN)
 
@@ -78,7 +85,12 @@ class MItems @Inject() (
 
   }
 
-  val items = TableQuery[MItemsTable]
+  override val query = TableQuery[MItemsTable]
+
+  /** Апдейт значения экземпляра модели новым id. */
+  override protected def _withId(el: MItem, id: Gid_t): MItem = {
+    el.copy(id = Some(id))
+  }
 
 }
 

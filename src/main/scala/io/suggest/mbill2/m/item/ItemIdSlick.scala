@@ -35,7 +35,7 @@ trait ItemIdFkSlick extends ItemIdSlick with ITableName {
   protected def mItems: MItems
 
   trait ItemIdFk extends ItemIdColumn { that: Table[_] =>
-    def item = foreignKey(ITEM_ID_FK, itemId, mItems.items)(_.id)
+    def item = foreignKey(ITEM_ID_FK, itemId, mItems.query)(_.id)
   }
 
 }

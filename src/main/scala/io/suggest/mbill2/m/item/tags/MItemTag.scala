@@ -2,7 +2,8 @@ package io.suggest.mbill2.m.item.tags
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.common.slick.driver.ExPgSlickDriverT
-import io.suggest.mbill2.m.gid.{GidSlick, Gid_t}
+import io.suggest.mbill2.m.common.InsertOneReturning
+import io.suggest.mbill2.m.gid.{DeleteById, GetById, GidSlick, Gid_t}
 import io.suggest.mbill2.m.item.{MItems, ItemIdInxSlick, ItemIdFkSlick}
 import slick.lifted.ProvenShape
 
@@ -19,12 +20,17 @@ class MItemTags @Inject() (
 )
   extends GidSlick
   with ItemIdFkSlick with ItemIdInxSlick
+  with GetById
+  with InsertOneReturning
+  with DeleteById
 {
 
   import driver.api._
 
   override val TABLE_NAME = mItems.TABLE_NAME + "_tags"
 
+  override type Table_t = MItemTagsTable
+  override type El_t    = MItemTag
 
   /** slick-описалово таблицы item_tags */
   class MItemTagsTable(tag: Tag)
@@ -44,7 +50,12 @@ class MItemTags @Inject() (
 
   }
 
-  val itemTags = TableQuery[MItemTagsTable]
+  override val query = TableQuery[MItemTagsTable]
+
+  /** Апдейт значения экземпляра модели новым id. */
+  override protected def _withId(el: MItemTag, id: Gid_t): MItemTag = {
+    el.copy(id = Some(id))
+  }
 
 }
 

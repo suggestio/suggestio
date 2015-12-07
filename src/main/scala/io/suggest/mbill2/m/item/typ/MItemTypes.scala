@@ -21,6 +21,9 @@ object MItemTypes extends EnumMaybeWithName with EnumApply {
     * Это было самый первый тип размещения в suggest.io. */
   val AdvDirect: T = new Val("a")
 
+  /** Заказ геотеггинга для карточки. */
+  val GeoTag: T = new Val("b")
+
 }
 
 
