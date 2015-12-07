@@ -1,6 +1,6 @@
 organization := "io.suggest"
 
-name := "common-slick"
+name := "common-slick-driver"
 
 version := "0.0.0-SNAPSHOT"
 
