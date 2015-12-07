@@ -59,15 +59,19 @@ object SiobixBuild extends Build {
   lazy val n2 = project
     .dependsOn(util, swfs)
 
-  /** Утиль для slick-based моделей в подпроектах.*/
-  lazy val commonSlick = {
-    val name = "common-slick"
+  /** 
+   * Расширенный pg-драйвер для slick-based моделей в подпроектах.
+   * Из-за проблем с classLoader'ами в play и slick, этот подпроект живёт изолировано.
+   * @see [[]]
+   */
+  lazy val commonSlickDriver = {
+    val name = "common-slick-driver"
     Project(id = name, base = file(name))
   }
 
   /** Модели биллинга второго поколения. */
   lazy val mbill2 = project
-    .dependsOn(logsMacro, common, util, commonSlick)
+    .dependsOn(logsMacro, common, util)
 
   /** Самописное leaflet API. */
   lazy val leafletSjs = {

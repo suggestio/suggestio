@@ -12,4 +12,4 @@ n2			= n2
 map-rad-sjs		= map-rad-sjs
 scalajs-leaflet		= scalajs-leaflet
 mbill2			= mbill2
-common-slick		= common-slick
+common-slick-driver	= common-slick-driver
