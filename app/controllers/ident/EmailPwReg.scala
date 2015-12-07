@@ -1,7 +1,6 @@
 package controllers.ident
 
-import controllers.{IMailer, CaptchaValidator, SioController}
-import io.suggest.di.IEsClient
+import controllers.{CaptchaValidator, SioController}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
 import models._
@@ -15,6 +14,7 @@ import play.twirl.api.Html
 import util.captcha.CaptchaUtil._
 import util.captcha.ICaptchaUtilDi
 import util.di.INodesUtil
+import util.mail.IMailerWrapperDi
 import util.{FormUtil, PlayMacroLogsI}
 import util.acl._
 import views.html.ident.reg.regSuccessTpl
@@ -59,13 +59,14 @@ trait EmailPwReg
   with PlayMacroLogsI
   with CaptchaValidator
   with SendPwRecoverEmail
-  with IMailer
-  with IEsClient
+  with IMailerWrapperDi
   with IsAnon
   with CanConfirmEmailPwRegCtl
   with INodesUtil
   with EmailPwRegUtil
 {
+
+  import mCommonDi._
 
   def sendEmailAct(ea: EmailActivation)(implicit ctx: Context): Unit = {
     val msg = mailer.instance

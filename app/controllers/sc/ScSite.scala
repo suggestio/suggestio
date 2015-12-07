@@ -1,16 +1,17 @@
 package controllers.sc
 
 import controllers.routes
+import models._
 import models.mext.MExtServices
 import models.msc._
+import play.api.mvc._
 import play.twirl.api.Html
 import util.PlayMacroLogsI
-import util.di.{IErrorHandler, INodeCache, IScUtil, IScStatUtil}
 import util.acl._
+import util.di.{IScStatUtil, IScUtil}
 import views.html.sc._
-import models._
+
 import scala.concurrent.Future
-import play.api.mvc._
 
 /**
  * Suggest.io
@@ -26,9 +27,9 @@ trait ScSiteBase
   with PlayMacroLogsI
   with IScStatUtil
   with IScUtil
-  with INodeCache
-  with IErrorHandler
 {
+
+  import mCommonDi._
 
   /** Настраиваемая логика сборки результата запроса сайта выдачи. */
   protected trait SiteLogic {
@@ -180,6 +181,8 @@ trait ScSiteGeo
   with MaybeAuth
 {
 
+  import mCommonDi._
+
   /** Пользователь заходит в sio.market напрямую через интернет, без помощи сторонних узлов. */
   def geoSite(maybeJsState: ScJsState, siteArgs: SiteQsArgs) = MaybeAuth.async { implicit request =>
     if (maybeJsState.nonEmpty) {
@@ -250,6 +253,8 @@ trait ScSiteNode
   with IScStatUtil
   with AdnNodeMaybeAuth
 {
+
+  import mCommonDi._
 
   /** Экшн, который рендерит страничку с дефолтовой выдачей узла. */
   def demoWebSite(adnId: String) = AdnNodeMaybeAuth(adnId).async { implicit request =>

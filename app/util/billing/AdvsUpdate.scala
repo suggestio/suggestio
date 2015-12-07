@@ -1,18 +1,16 @@
 package util.billing
 
-import com.google.inject.Inject
-import io.suggest.di.{IExecutionContext, IEsClient}
-import io.suggest.event.SioNotifierStaticClientI
-import models._
-import models.adv.{MAdvOk, MAdv}
-import org.elasticsearch.client.Client
-import org.joda.time.{Period, DateTime}
-import play.api.db.Database
-import util.adv.AdvUtil
-import util.PlayMacroLogsImpl
-import util.di.{IDb, ISioNotifier}
-import scala.concurrent.{ExecutionContext, Future}
 import java.sql.Connection
+
+import com.google.inject.Inject
+import models._
+import models.adv.{MAdv, MAdvOk}
+import models.mproj.{MCommonDi, IMCommonDi}
+import org.joda.time.{DateTime, Period}
+import util.PlayMacroLogsImpl
+import util.adv.AdvUtil
+
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -27,13 +25,11 @@ import java.sql.Connection
  */
 sealed abstract class AdvsUpdate
   extends PlayMacroLogsImpl
-  with IExecutionContext
-  with IEsClient
-  with ISioNotifier
-  with IDb
+  with IMCommonDi
 {
 
   import LOGGER._
+  import mCommonDi._
 
   /** Экземпляр [[util.adv.AdvUtil]], вбрасываемый через DI. */
   def advUtil: AdvUtil
@@ -109,11 +105,8 @@ trait AdvertiseOfflineAdvsFactory {
 /** Обновлялка adv sls, добавляющая уровни отображаения к существующей рекламе,
   * которая должна бы выйти в свет. */
 class AdvertiseOfflineAdvs @Inject() (
-  override val db                 : Database,
-  override val advUtil            : AdvUtil,
-  override implicit val ec        : ExecutionContext,
-  override implicit val esClient  : Client,
-  override implicit val sn        : SioNotifierStaticClientI
+  override val mCommonDi          : MCommonDi,
+  override val advUtil            : AdvUtil
 )
   extends AdvsUpdate
 {
@@ -138,11 +131,8 @@ trait DepublishExpiredAdvsFactory {
 /** Обновлялка adv sls, которая снимает уровни отображения с имеющейся рекламы,
   * которая должна уйти из выдачи по истечению срока размещения. */
 class DepublishExpiredAdvs @Inject() (
-  override val db                 : Database,
-  override val advUtil            : AdvUtil,
-  override implicit val ec        : ExecutionContext,
-  override implicit val esClient  : Client,
-  override implicit val sn        : SioNotifierStaticClientI
+  override val mCommonDi          : MCommonDi,
+  override val advUtil            : AdvUtil
 )
   extends AdvsUpdate
 {

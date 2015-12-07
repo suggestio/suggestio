@@ -1,6 +1,5 @@
 package util.acl
 
-import io.suggest.di.IExecutionContext
 import models.req.SioReqMd
 import play.api.mvc.{Request, ActionBuilder, Result, RequestHeader}
 import util.{PlayMacroLogsI, PlayMacroLogsImpl}
@@ -33,7 +32,12 @@ trait OnUnauthUtilCtl extends SioController {
 
 
 /** Аддон для контроллеров, добавляющий поддержку IsAuth action builder'ов. */
-trait IsAuth extends OnUnauthUtilCtl with IExecutionContext {
+trait IsAuth
+  extends OnUnauthUtilCtl
+  with Csrf
+{
+
+  import mCommonDi._
 
   trait IsAuthBase extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacroLogsI {
 

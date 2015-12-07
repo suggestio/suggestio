@@ -32,6 +32,8 @@ trait ScFocusedAdsV2
   with IN2NodesUtilDi
 {
 
+  import mCommonDi._
+
   /** Реализация v2-логики. */
   protected class FocusedLogicHttpV2(override val _adSearch: FocusedAdsSearchArgs)
                                     (implicit val _request: AbstractRequestWithPwOpt[_])

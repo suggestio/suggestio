@@ -1,15 +1,12 @@
 package controllers
 
 import com.google.inject.Inject
-import models.Context2Factory
+import models.mproj.MCommonDi
 import play.api.Play.isProd
-import play.api.i18n.MessagesApi
 import play.api.mvc._
 import util.acl.{IsSuperuserOrDevelOr404, MaybeAuth}
 import util.xplay.SecHeadersFilter
 import views.html.static._
-
-import scala.concurrent.ExecutionContext
 
 /**
  * Authors: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -20,16 +17,14 @@ import scala.concurrent.ExecutionContext
  */
 
 class Static @Inject() (
-  override val _contextFactory    : Context2Factory,
-  override val errorHandler       : ErrorHandler,
-  override implicit val current   : play.api.Application,
-  override val messagesApi        : MessagesApi,
-  override implicit val ec        : ExecutionContext
+  override val mCommonDi          : MCommonDi
 )
   extends SioControllerImpl
   with MaybeAuth
   with IsSuperuserOrDevelOr404
 {
+
+  import mCommonDi._
 
   private def booklet = routes.Market.marketBooklet().url
 
@@ -74,9 +69,8 @@ class Static @Inject() (
    * @return 200 Ok и много букв.
    */
   def privacyPolicy = MaybeAuth { implicit request =>
-    Ok(privacyPolicyTpl()).withHeaders(
-      CACHE_CONTROL -> "public, max-age=600"
-    )
+    Ok( privacyPolicyTpl() )
+      .withHeaders( CACHE_CONTROL -> "public, max-age=600" )
   }
 
   /** Содержимое проверочного попап-окна. */

@@ -23,6 +23,8 @@ trait ScCssUtil
   with IN2NodesUtilDi
 {
 
+  import mCommonDi._
+
   /**
    * Вспомогательный метод для генерации ссылки на css блоков из списка данных об этих блоках.
    * Она работает с данными от разных logic'ов, наследующих [[AdCssRenderArgs]].

@@ -2,19 +2,13 @@ package controllers
 
 import com.google.inject.Inject
 import controllers.sc._
-import io.suggest.event.SioNotifierStaticClientI
-import models.mproj.MProjectInfo
-import models.{Context2Factory, MAdnNodeCache}
-import org.elasticsearch.client.Client
-import play.api.i18n.MessagesApi
+import models.mproj.{MCommonDi, MProjectInfo}
 import util._
 import util.cdn.CdnUtil
 import util.img.{LogoUtil, WelcomeUtil}
 import util.n2u.N2NodesUtil
-import util.showcase.{ShowcaseUtil, ShowcaseNodeListUtil, ScStatUtil}
+import util.showcase.{ScStatUtil, ShowcaseNodeListUtil, ShowcaseUtil}
 import util.stat.StatUtil
-
-import scala.concurrent.ExecutionContext
 
 
 /**
@@ -33,15 +27,8 @@ class MarketShowcase @Inject() (
   override val scUtil             : ShowcaseUtil,
   override val cdnUtil            : CdnUtil,
   override val n2NodesUtil        : N2NodesUtil,
-  override val mNodeCache         : MAdnNodeCache,
-  override val mProjectInfo       : MProjectInfo,
-  override val errorHandler       : ErrorHandler,
-  override val _contextFactory    : Context2Factory,
-  override val messagesApi        : MessagesApi,
-  override implicit val current   : play.api.Application,
-  override implicit val ec        : ExecutionContext,
-  override implicit val esClient  : Client,
-  override implicit val sn        : SioNotifierStaticClientI
+  override val mCommonDi          : MCommonDi,
+  override val mProjectInfo       : MProjectInfo
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl

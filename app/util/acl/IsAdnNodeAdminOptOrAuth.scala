@@ -1,12 +1,11 @@
 package util.acl
 
-import io.suggest.di.{IExecutionContext, IEsClient}
+import models.mproj.IMCommonDi
 import models.req.SioReqMd
 import models.MNode
 import play.api.mvc.{Result, Request, ActionBuilder}
 import util.PlayMacroLogsDyn
 import util.acl.PersonWrapper.PwOpt_t
-import util.di.INodeCache
 
 import scala.concurrent.Future
 
@@ -20,11 +19,12 @@ import scala.concurrent.Future
  */
 
 trait IsAdnNodeAdminOptOrAuth
-  extends IEsClient
-  with IExecutionContext
+  extends IMCommonDi
   with OnUnauthUtilCtl
-  with INodeCache
+  with Csrf
 {
+
+  import mCommonDi._
 
   /** Абстрактная логика работы action-builder'ов, занимающихся вышеописанной проверкой. */
   trait IsAdnNodeAdminOptOrAuthBase

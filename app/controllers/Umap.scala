@@ -1,23 +1,22 @@
 package controllers
 
 import java.nio.file.Files
+
+import _root_.util.acl._
+import _root_.util.geo.umap._
 import com.google.inject.Inject
-import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.model.geo.{PointGs, GsTypes}
+import io.suggest.model.geo.{GsTypes, PointGs}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
-import io.suggest.playx.ICurrentConf
-import org.elasticsearch.client.Client
+import models._
+import models.mproj.MCommonDi
+import play.api.i18n.Messages
 import play.api.libs.Files.TemporaryFile
 import play.api.mvc.{MultipartFormData, RequestHeader, Result}
-import _root_.util.geo.umap._
-import models._
-import play.api.i18n.{MessagesApi, Messages}
 import util.PlayMacroLogsImpl
-import _root_.util.acl._
-import views.html.umap._
 import play.api.libs.json._
+import views.html.umap._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -27,21 +26,15 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 class Umap @Inject() (
   umapUtil                        : UmapUtil,
-  override val mNodeCache         : MAdnNodeCache,
-  override val messagesApi        : MessagesApi,
-  override val _contextFactory    : Context2Factory,
-  override val errorHandler       : ErrorHandler,
-  override implicit val current   : play.api.Application,
-  override implicit val ec        : ExecutionContext,
-  override implicit val esClient  : Client,
-  override implicit val sn        : SioNotifierStaticClientI
+  override val mCommonDi          : MCommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
-  with ICurrentConf
   with IsSuperuserAdnNode
   with IsSuperuser
 {
+
+  import mCommonDi._
 
   /** Разрешено ли редактирование глобальной карты всех узлов? */
   val GLOBAL_MAP_EDIT_ALLOWED: Boolean = configuration.getBoolean("umap.global.map.edit.allowed") getOrElse false

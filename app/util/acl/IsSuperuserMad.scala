@@ -1,7 +1,6 @@
 package util.acl
 
 import controllers.SioController
-import io.suggest.di.{IExecutionContext, IEsClient}
 import models.req.SioReqMd
 import scala.concurrent.Future
 import play.api.mvc.{Request, ActionBuilder, Result}
@@ -16,10 +15,11 @@ import models.MNode
  */
 trait IsSuperuserMad
   extends SioController
-  with IEsClient
-  with IExecutionContext
   with IsSuperuserUtilCtl
+  with Csrf
 {
+
+  import mCommonDi._
 
   sealed trait IsSuperuserMadBase
     extends ActionBuilder[RequestWithAd]

@@ -1,7 +1,6 @@
 package controllers.sc
 
 import controllers.SioController
-import io.suggest.di.IEsClient
 import util.cdn.ICdnUtilDi
 import util.di.ILogoUtilDi
 
@@ -13,6 +12,5 @@ import util.di.ILogoUtilDi
  */
 trait ScController
   extends SioController
-  with IEsClient
   with ICdnUtilDi
   with ILogoUtilDi

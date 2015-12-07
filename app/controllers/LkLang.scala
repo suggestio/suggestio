@@ -1,20 +1,18 @@
 package controllers
 
 import com.google.inject.Inject
-import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.n2.node.MNode
-import io.suggest.playx.ICurrentApp
-import models.{Context2Factory, Context}
-import org.elasticsearch.client.Client
+import models.Context
+import models.mproj.MCommonDi
 import play.api.data.Form
-import play.api.i18n.{MessagesApi, Lang}
+import play.api.i18n.Lang
 import play.twirl.api.Html
+import util.FormUtil.uiLangM
 import util.PlayMacroLogsImpl
 import util.acl.MaybeAuth
 import views.html.lk.lang._
-import util.FormUtil.uiLangM
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -24,20 +22,15 @@ import scala.concurrent.{ExecutionContext, Future}
  * Относится к ЛК, т.к. форма переключения языков сверстана именно там.
  */
 class LkLang @Inject() (
-  override val _contextFactory    : Context2Factory,
-  override val messagesApi        : MessagesApi,
-  override implicit val current   : play.api.Application,
-  override implicit val ec        : ExecutionContext,
-  implicit val esClient           : Client,
-  override implicit val sn        : SioNotifierStaticClientI
+  override val mCommonDi          : MCommonDi
 )
   extends SioController
   with PlayMacroLogsImpl
-  with ICurrentApp
   with MaybeAuth
 {
 
   import LOGGER._
+  import mCommonDi._
 
   private def chooseLangFormM(implicit currLang: Lang): Form[Lang] = {
     Form(

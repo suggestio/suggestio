@@ -1,25 +1,24 @@
 package controllers
 
 import com.google.inject.Inject
-import io.suggest.event.SioNotifierStaticClientI
+import io.suggest.ym.parsers.Price
+import models._
+import models.mbill.MContract.LegalContractId
 import models.mbill._
-import MContract.LegalContractId
+import models.mproj.MCommonDi
 import models.msys.MSysAdnNodeBillingArgs
-import org.elasticsearch.client.Client
-import play.api.i18n.MessagesApi
-import play.api.mvc.{Result, AnyContent}
+import org.joda.time.DateTime
+import play.api.data.Forms._
+import play.api.data._
+import play.api.mvc.{AnyContent, Result}
+import util.FormUtil._
 import util.PlayMacroLogsImpl
 import util.acl._
-import models._
-import play.api.db.Database
 import util.async.AsyncUtil
-import views.html.sys1.market.billing._
-import play.api.data._, Forms._
-import util.FormUtil._
-import org.joda.time.DateTime
-import scala.concurrent.{ExecutionContext, Future}
-import io.suggest.ym.parsers.Price
 import util.billing.Billing
+import views.html.sys1.market.billing._
+
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -28,15 +27,8 @@ import util.billing.Billing
  * Description: Контроллер управления биллинга для операторов sio-market.
  */
 class SysMarketBilling @Inject() (
-  override val messagesApi        : MessagesApi,
   billing                         : Billing,
-  override val errorHandler       : ErrorHandler,
-  override val db                 : Database,
-  override val mNodeCache         : MAdnNodeCache,
-  override val _contextFactory    : Context2Factory,
-  override implicit val ec        : ExecutionContext,
-  override implicit val esClient  : Client,
-  override implicit val sn        : SioNotifierStaticClientI
+  override val mCommonDi          : MCommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
@@ -46,6 +38,7 @@ class SysMarketBilling @Inject() (
 {
 
   import LOGGER._
+  import mCommonDi._
 
   /** Внутренний маппинг для даты LocalDate. */
   private def bDate = localDateM
@@ -268,9 +261,10 @@ class SysMarketBilling @Inject() (
           if (maybeMbc0.isDefined)
             mbcs ::= maybeMbc0.get
           Future.traverse(mbcs) { mbc =>
-            mNodeCache.getById(mbc.adnId) map { adnNodeOpt =>
-              mbc -> adnNodeOpt.get
-            }
+            mNodeCache.getById(mbc.adnId)
+              .map { adnNodeOpt =>
+                mbc -> adnNodeOpt.get
+              }
           } map { mbcsNoded =>
             NotAcceptable(createIncomingPaymentFormTpl(formBinded, Some(mbcsNoded)))
           }

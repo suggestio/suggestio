@@ -1,21 +1,19 @@
 package util.event
 
 import com.google.inject.Inject
-import io.suggest.model.es.{EsModelT, EsModelStaticT}
-import io.suggest.playx.ICurrentApp
-import models.adv.{MAdvStaticT, MAdvI}
-import models.event.search.MEventsSearchArgs
-import models.event._
+import io.suggest.model.es.{EsModelStaticT, EsModelT}
 import models._
-import org.elasticsearch.client.Client
+import models.adv.{MAdvI, MAdvStaticT}
+import models.event._
+import models.event.search.MEventsSearchArgs
+import models.mproj.MCommonDi
 import org.joda.time.DateTime
-import play.api.Application
 import play.api.db.DB
 import play.twirl.api.Html
 import util.PlayMacroLogsDyn
 import util.async.AsyncUtil
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -24,13 +22,12 @@ import scala.concurrent.{ExecutionContext, Future}
  * Description: Утиль для контроллера LkEvents, который изрядно разжирел в первые дни разработки.
  */
 class LkEventsUtil @Inject() (
-  implicit val ec                 : ExecutionContext,
-  implicit val esClient           : Client,
-  override implicit val current   : Application
+  mCommonDi: MCommonDi
 )
   extends PlayMacroLogsDyn
-  with ICurrentApp
 {
+
+  import mCommonDi._
 
   /**
    * Если узел -- ресивер без геолокации, то надо отрендерить плашку на эту тему.
@@ -77,7 +74,7 @@ class LkEventsUtil @Inject() (
    * MultiGet-чтение одной из adv-моделей в карту (id -> [[MAdvI]]+).
    * Из модели извлечь только необходимые id'шники.
    * @param mevents Коллекция событий.
-   * @param model Модель [[MAdvStatic]].
+   * @param model Модель [[models.adv.MAdvStaticT]].
    * @param getIdF Функция для извлечения id из коллекции.
    * @tparam T1 Тип экземпляров модели, с которой работаем.
    * @return Фьючерс с результатами.

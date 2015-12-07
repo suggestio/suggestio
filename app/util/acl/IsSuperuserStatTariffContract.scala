@@ -1,10 +1,8 @@
 package util.acl
 
-import io.suggest.di.IExecutionContext
 import models.mbill.{MTariffStat, MContract}
 import models.req.SioReqMd
 import util.async.AsyncUtil
-import util.di.IDb
 import scala.concurrent.Future
 import play.api.mvc.{Request, ActionBuilder, Result}
 import util.acl.PersonWrapper.PwOpt_t
@@ -16,10 +14,10 @@ import util.acl.PersonWrapper.PwOpt_t
  * Description: Аддон для контроллера с гибридом IsSuperuser + доступ к stat-tariff.
  */
 trait IsSuperuserStatTariffContract
-  extends IDb
-  with IExecutionContext
-  with IsSuperuserUtilCtl
+  extends IsSuperuserUtilCtl
 {
+
+  import mCommonDi._
 
   trait IsSuperuserStatTariffContractBase
     extends ActionBuilder[StatTariffRequest]

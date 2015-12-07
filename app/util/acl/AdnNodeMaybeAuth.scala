@@ -1,10 +1,9 @@
 package util.acl
 
-import io.suggest.di.{IExecutionContext, IEsClient}
 import models.MNode
+import models.mproj.IMCommonDi
 import models.req.SioReqMd
 import play.api.mvc.{Result, ActionBuilder, Request}
-import util.di.{IErrorHandler, INodeCache}
 import util.{PlayMacroLogsDyn, PlayMacroLogsI}
 import util.acl.PersonWrapper.PwOpt_t
 
@@ -17,11 +16,10 @@ import scala.concurrent.Future
  * Description: Смесь принципов MaybeAuth и считывания указанного узла.
  */
 trait AdnNodeMaybeAuth
-  extends IEsClient
-  with IExecutionContext
-  with INodeCache
-  with IErrorHandler
+  extends IMCommonDi
 {
+
+  import mCommonDi._
 
   /** Общий код проверок типа AdnNodeMaybeAuth. */
   sealed trait AdnNodeMaybeAuthBase

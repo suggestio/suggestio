@@ -1,10 +1,9 @@
 package util.acl
 
 import controllers.SioController
-import io.suggest.di.{IExecutionContext, IEsClient}
 import models._
+import models.mproj.IMCommonDi
 import models.req.SioReqMd
-import util.di.INodeCache
 import util.{PlayMacroLogsI, PlayMacroLogsDyn, PlayLazyMacroLogsImpl}
 import scala.concurrent.Future
 import util.acl.PersonWrapper.PwOpt_t
@@ -38,10 +37,11 @@ trait OnUnauthNodeCtl
 
 /** Аддон для сборки ctl-аддонов с проверкой admin-доступа на узел. */
 trait IsAdnNodeAdminUtilCtl
-  extends IEsClient
-  with IExecutionContext
-  with INodeCache
+  extends IMCommonDi
 {
+
+  import mCommonDi._
+
   trait IsAdnNodeAdminUtil extends PlayMacroLogsDyn {
 
     def checkAdnNodeCredsFut(adnNodeOptFut: Future[Option[MNode]], adnId: String, pwOpt: PwOpt_t): Future[Either[Option[MNode], MNode]] = {
@@ -104,9 +104,11 @@ object IsAdnNodeAdmin extends PlayLazyMacroLogsImpl {
 /** Аддон для контроллеров для проверки admin-прав доступа к узлу. */
 trait IsAdnNodeAdmin
   extends IsAdnNodeAdminUtilCtl
-  with IExecutionContext
   with OnUnauthNodeCtl
+  with Csrf
 {
+
+  import mCommonDi._
 
   /** В реквесте содержится администрируемый узел, если всё ок. */
   sealed trait IsAdnNodeAdminBase
@@ -135,6 +137,7 @@ trait IsAdnNodeAdmin
       }
     }
   }
+
   /** Трейт [[IsAdnNodeAdminBase]], обвешанный всеми необходимыми для работы надстройками. */
   sealed abstract class IsAdnNodeAdminBase2
     extends IsAdnNodeAdminBase

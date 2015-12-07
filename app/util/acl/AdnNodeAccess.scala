@@ -1,9 +1,7 @@
 package util.acl
 
-import io.suggest.di.{IExecutionContext, IEsClient}
 import models._
 import models.req.SioReqMd
-import util.di.{IErrorHandler, INodeCache}
 import scala.concurrent.Future
 import util.acl.PersonWrapper.PwOpt_t
 import play.api.mvc._
@@ -18,12 +16,11 @@ import play.api.mvc.Result
  */
 trait AdnNodeAccess
   extends IsAdnNodeAdminUtilCtl
-  with IExecutionContext
-  with IEsClient
   with OnUnauthUtilCtl
-  with INodeCache
-  with IErrorHandler
+  with Csrf
 {
+
+  import mCommonDi._
 
   /** Доступ к узлу, к которому НЕ обязательно есть права на админство. */
   sealed trait AdnNodeAccessBase

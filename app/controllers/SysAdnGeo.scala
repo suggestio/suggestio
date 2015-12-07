@@ -1,18 +1,15 @@
 package controllers
 
 import com.google.inject.Inject
-import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.geo.{GeoShapeQuerable, Distance, CircleGs}
 import io.suggest.model.n2.edge.MNodeEdges
-import io.suggest.model.n2.geo.MGeoShape
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.mgeo.MGsPtr
+import models.mproj.MCommonDi
 import models.msys._
-import org.elasticsearch.client.Client
 import org.elasticsearch.common.unit.DistanceUnit
 import org.joda.time.DateTime
 import play.api.data._, Forms._
-import play.api.i18n.MessagesApi
 import play.api.mvc.Result
 import util.PlayLazyMacroLogsImpl
 import util.FormUtil._
@@ -20,7 +17,7 @@ import util.acl._
 import util.geo.osm.{OsmClientStatusCodeInvalidException, OsmClient}
 import views.html.sys1.market.adn.geo._
 import models._
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -31,14 +28,8 @@ import scala.concurrent.{ExecutionContext, Future}
  * Расширение собственной геоинформации необходимо из-за [[https://github.com/elasticsearch/elasticsearch/issues/7663]].
  */
 class SysAdnGeo @Inject() (
-  implicit val osmClient          : OsmClient,
-  override val mNodeCache         : MAdnNodeCache,
-  override val _contextFactory    : Context2Factory,
-  override val errorHandler       : ErrorHandler,
-  override val messagesApi        : MessagesApi,
-  override implicit val ec        : ExecutionContext,
-  override implicit val esClient  : Client,
-  override implicit val sn        : SioNotifierStaticClientI
+  implicit private val osmClient    : OsmClient,
+  override val mCommonDi            : MCommonDi
 )
   extends SioControllerImpl
   with PlayLazyMacroLogsImpl
@@ -48,6 +39,7 @@ class SysAdnGeo @Inject() (
   // TODO Выпилить отсюда MAdnNodeGeo, использовать MNode.geo.shape
 
   import LOGGER._
+  import mCommonDi._
 
   private def glevelKM = "glevel" -> nodeGeoLevelM
 
@@ -305,7 +297,7 @@ class SysAdnGeo @Inject() (
 
 
   /** Маппинг формы биндинга geo-объекта в виде круга. */
-  private def circleFormM = {
+  private def circleFormM: Form[MGeoShape] = {
     Form(mapping(
       glevelKM,
       "circle" -> circleM

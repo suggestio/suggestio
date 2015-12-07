@@ -2,15 +2,13 @@ package controllers
 
 import com.github.nscala_time.time.OrderingImplicits._
 import com.google.inject.Inject
-import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.playx.ICurrentConf
 import models._
-import models.adv.{MAdvReq, MAdvRefuse, MAdvOk, MExtTarget}
-import models.event.search.MEventsSearchArgs
+import models.adv.{MAdvOk, MAdvRefuse, MAdvReq, MExtTarget}
 import models.event.MEvent
-import org.elasticsearch.client.Client
+import models.event.search.MEventsSearchArgs
+import models.mproj.MCommonDi
 import org.joda.time.DateTime
-import play.api.i18n.{MessagesApi, Messages}
+import play.api.i18n.Messages
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 import util.acl.{HasNodeEventAccess, IsAdnNodeAdmin}
@@ -18,8 +16,8 @@ import util.event.LkEventsUtil
 import util.lk.LkAdUtil
 import views.html.lk.event._
 
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Success, Failure}
+import scala.concurrent.Future
+import scala.util.{Failure, Success}
 
 /**
  * Suggest.io
@@ -31,22 +29,16 @@ import scala.util.{Success, Failure}
 class LkEvents @Inject() (
   lkEventsUtil                    : LkEventsUtil,
   lkAdUtil                        : LkAdUtil,
-  override val mNodeCache         : MAdnNodeCache,
-  override val messagesApi        : MessagesApi,
-  override val current            : play.api.Application,
-  override val _contextFactory    : Context2Factory,
-  override implicit val ec        : ExecutionContext,
-  override implicit val esClient  : Client,
-  override implicit val sn        : SioNotifierStaticClientI
+  override val mCommonDi          : MCommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
-  with ICurrentConf
   with HasNodeEventAccess
   with IsAdnNodeAdmin
 {
 
   import LOGGER._
+  import mCommonDi._
 
   private val LIMIT_MAX  = configuration.getInt("lk.events.nodeIndex.limit.max") getOrElse 10
   private val OFFSET_MAX = configuration.getInt("lk.events.nodeIndex.offset.max") getOrElse 300

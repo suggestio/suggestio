@@ -1,38 +1,37 @@
 package controllers
 
 import com.google.inject.Inject
+import controllers.sysctl._
 import io.suggest.common.fut.FutureUtil
-import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.n2.edge.MNodeEdges
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
-import models.adv.{MAdvReq, MAdvOk, MAdvI}
+import models._
+import models.adv.{MAdvI, MAdvOk, MAdvReq}
 import models.im.MImg3_
+import models.mproj.MCommonDi
 import models.msys._
-import models.usr.{MPerson, EmailActivation}
-import org.elasticsearch.client.Client
+import models.usr.{EmailActivation, MPerson}
 import org.elasticsearch.search.sort.SortOrder
-import play.api.db.Database
+import play.api.data._
+import play.api.i18n.Messages
+import play.api.mvc.{AnyContent, Call, Result}
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 import util.acl._
-import models._
 import util.adn.NodesUtil
 import util.adv.AdvUtil
 import util.async.AsyncUtil
 import util.lk.LkAdUtil
 import util.mail.IMailerWrapper
 import util.n2u.N2NodesUtil
+import views.html.lk.adn.invite.emailNodeOwnerInviteTpl
+import views.html.lk.shop.ad.emailAdDisabledByMartTpl
 import views.html.sys1.market._
 import views.html.sys1.market.ad._
 import views.html.sys1.market.adn._
-import play.api.data._
-import scala.concurrent.{ExecutionContext, Future}
-import play.api.mvc.{Result, Call, AnyContent}
-import play.api.i18n.{Messages, MessagesApi}
-import controllers.sysctl._
-import views.html.lk.shop.ad.emailAdDisabledByMartTpl
-import views.html.lk.adn.invite.emailNodeOwnerInviteTpl
+
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -45,19 +44,11 @@ class SysMarket @Inject() (
   lkAdUtil                        : LkAdUtil,
   advUtil                         : AdvUtil,
   sysMarketUtil                   : SysMarketUtil,
-  override val messagesApi        : MessagesApi,
   override val mailer             : IMailerWrapper,
-  db                              : Database,
   override val n2NodesUtil        : N2NodesUtil,
-  mImg3                           : MImg3_,
-  override val errorHandler       : ErrorHandler,
-  override val mNodeCache         : MAdnNodeCache,
   override val sysAdRenderUtil    : SysAdRenderUtil,
-  override val _contextFactory    : Context2Factory,
-  override implicit val current   : play.api.Application,
-  override implicit val ec        : ExecutionContext,
-  override implicit val esClient  : Client,
-  override implicit val sn        : SioNotifierStaticClientI
+  mImg3                           : MImg3_,
+  override val mCommonDi          : MCommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
@@ -70,6 +61,7 @@ class SysMarket @Inject() (
 {
 
   import LOGGER._
+  import mCommonDi._
   import sysMarketUtil._
 
   /** Индексная страница продажной части. Тут ссылки на дальнейшие страницы. */

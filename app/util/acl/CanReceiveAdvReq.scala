@@ -7,7 +7,6 @@ import play.api.mvc.{Result, Request, ActionBuilder}
 import models._
 import util.acl.PersonWrapper.PwOpt_t
 import util.async.AsyncUtil
-import util.di.IDb
 import scala.concurrent.Future
 
 /**
@@ -19,11 +18,13 @@ import scala.concurrent.Future
  */
 trait CanReceiveAdvReq
   extends SioController
-  with IDb
   with OnUnauthNodeCtl
   with IsAdnNodeAdminUtilCtl
   with OnUnauthUtilCtl
+  with Csrf
 {
+
+  import mCommonDi._
 
   /** Базовая реализация action-builder'ов проверки права на обработку реквестов размещения. */
   trait CanReceiveAdvReqBase

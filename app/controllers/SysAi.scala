@@ -1,20 +1,19 @@
 package controllers
 
 import com.google.inject.Inject
-import io.suggest.event.SioNotifierStaticClientI
-import models.Context2Factory
-import org.elasticsearch.client.Client
-import play.api.i18n.MessagesApi
+import models.ai._
+import models.mproj.MCommonDi
+import play.api.data.Forms._
+import play.api.data._
 import play.api.libs.ws.WSClient
 import play.api.mvc.Result
-import util.PlayLazyMacroLogsImpl
-import util.acl.{IsSuperuserAiMad, IsSuperuser}
-import util.ai.mad.MadAiUtil
-import play.api.data._, Forms._
 import util.FormUtil._
-import models.ai._
+import util.PlayLazyMacroLogsImpl
+import util.acl.{IsSuperuser, IsSuperuserAiMad}
+import util.ai.mad.MadAiUtil
+import views.html.sys1.ai._
+import views.html.sys1.ai.mad._
 
-import scala.concurrent.ExecutionContext
 import scala.util.matching.Regex
 
 /**
@@ -26,12 +25,8 @@ import scala.util.matching.Regex
  */
 class SysAi @Inject() (
   madAiUtil                       : MadAiUtil,
-  override val messagesApi        : MessagesApi,
-  implicit val ws                 : WSClient,
-  override val _contextFactory    : Context2Factory,
-  override implicit val ec        : ExecutionContext,
-  override implicit val esClient  : Client,
-  override implicit val sn        : SioNotifierStaticClientI
+  override val mCommonDi          : MCommonDi,
+  implicit private val ws         : WSClient
 )
   extends SioControllerImpl
   with PlayLazyMacroLogsImpl
@@ -39,9 +34,8 @@ class SysAi @Inject() (
   with IsSuperuser
 {
 
-  import views.html.sys1.ai._
-  import views.html.sys1.ai.mad._
   import LOGGER._
+  import mCommonDi._
 
 
   /** Раздача страницы с оглавлением по ai-подсистемам. */

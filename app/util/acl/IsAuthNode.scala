@@ -1,11 +1,9 @@
 package util.acl
 
-import io.suggest.di.{IEsClient, IExecutionContext}
 import models.MNodeType
 import models.req.SioReqMd
 import play.api.mvc.{Result, Request, ActionBuilder}
 import util.PlayMacroLogsDyn
-import util.di.{INodeCache, IErrorHandler}
 
 import scala.concurrent.Future
 
@@ -17,11 +15,9 @@ import scala.concurrent.Future
  */
 trait IsAuthNode
   extends OnUnauthUtilCtl
-  with IExecutionContext
-  with IEsClient
-  with IErrorHandler
-  with INodeCache
 {
+
+  import mCommonDi._
 
   /** Трейт с логикой проверки залогиненности вкупе с доступом к узлу. */
   trait IsAuthNodeBase

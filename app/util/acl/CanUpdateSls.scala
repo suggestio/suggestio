@@ -1,10 +1,8 @@
 package util.acl
 
-import io.suggest.di.{IExecutionContext, IEsClient}
 import models.req.SioReqMd
 import play.api.mvc._
 import models._
-import util.di.INodeCache
 import util.n2u.IN2NodesUtilDi
 import scala.concurrent.Future
 import util.PlayMacroLogsDyn
@@ -20,11 +18,10 @@ import util.PlayMacroLogsDyn
 trait CanUpdateSls
   extends AdEditBaseCtl
   with OnUnauthNodeCtl
-  with INodeCache
-  with IEsClient
-  with IExecutionContext
   with IN2NodesUtilDi
 {
+
+  import mCommonDi._
 
   /** Проверка прав на возможность обновления уровней отображения рекламной карточки. */
   trait CanUpdateSlsBase

@@ -1,6 +1,5 @@
 package util.acl
 
-import io.suggest.di.IEsClient
 import models.MNode
 import models.adv.MExtTarget
 import models.req.SioReqMd
@@ -19,9 +18,10 @@ import scala.concurrent.Future
 
 trait CanAccessExtTargetBaseCtl
   extends OnUnauthNodeCtl
-  with IEsClient
   with IsAdnNodeAdminUtilCtl
 {
+
+  import mCommonDi._
 
   /** Базовая логика [[CanAccessExtTarget]] живёт в этом трейте. */
   trait CanAccessExtTargetBase

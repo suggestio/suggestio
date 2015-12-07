@@ -9,6 +9,7 @@ import io.suggest.util.UuidUtil
 import _root_.models.im.DevScreen
 import _root_.models.jsm.init.MTarget
 import _root_.models.req.{SioReqMdWrapper, ISioReqMd}
+import models.mproj.IMCommonDi
 import org.joda.time.DateTime
 import play.api.i18n.Messages
 import play.api.mvc.RequestHeader
@@ -95,10 +96,7 @@ trait MyHostsT {
 
 
 /** Трейт-аддон для контроллеров, которым нужен доступ к сборке контекстов. */
-trait ContextT { this: ITargets =>
-
-  /** Доступ к сборщику контекстов, с поддержкой DI. */
-  val _contextFactory: Context2Factory
+trait ContextT { this: ITargets with IMCommonDi =>
 
   /**
    * Выдать контекст. Неявно вызывается при вызове шаблона из контроллера.
@@ -108,7 +106,7 @@ trait ContextT { this: ITargets =>
                                  request: RichRequestHeader,
                                  lang: Messages,
                                  extraJsInitTargets: Seq[MTarget] = Nil ): Context = {
-    _contextFactory.create(this)
+    mCommonDi.contextFactory.create(this)
   }
 }
 

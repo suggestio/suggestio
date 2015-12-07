@@ -1,14 +1,12 @@
 package util.acl
 
 import controllers.SioController
-import io.suggest.di.IEsClient
 import models.MNode
 import models.req.SioReqMd
 import models.usr.{EmailPwIdent, EmailActivation}
 import play.api.mvc.{Result, ActionBuilder, Request}
 import util.PlayMacroLogsI
 import util.acl.PersonWrapper.PwOpt_t
-import util.di.INodeCache
 import views.html.lk.adn.invite.inviteInvalidTpl
 
 import scala.concurrent.Future
@@ -23,10 +21,11 @@ import scala.concurrent.Future
 trait NodeEactAcl
   extends SioController
   with PlayMacroLogsI
-  with IEsClient
   with OnUnauthUtilCtl
-  with INodeCache
+  with Csrf
 {
+
+  import mCommonDi._
 
   /** Абстрактная логика ActionBuider'ов, обрабатывающих запросы активации инвайта на узел. */
   sealed trait NodeEactBase

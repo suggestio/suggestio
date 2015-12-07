@@ -1,10 +1,10 @@
 package util.acl
 
+import models.mproj.IMCommonDi
 import play.api.http.HeaderNames
 import play.filters.csrf.{CSRFCheck, CSRFAddToken}
 import play.api.mvc._
 import scala.concurrent.Future
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.language.higherKinds
 
 /**
@@ -13,7 +13,6 @@ import scala.language.higherKinds
  * Created: 13.02.15 17:56
  * Description: Поддержка CSRF-защиты в контроллерах.
  */
-
 
 object CsrfUtil {
 
@@ -31,30 +30,37 @@ object CsrfUtil {
 import CsrfUtil._
 
 
-/** Аддон для action-builder'ов, добавляющий выставление CSRF-токена в сессию. */
-trait CsrfGet[R[_]] extends ActionBuilder[R] {
+// TODO Завернуть в трейт-контейнер для доступа к DI ExecutionContext.
 
-  abstract override def invokeBlock[A](request: Request[A], block: (R[A]) => Future[Result]): Future[Result] = {
-    super.invokeBlock(request, block)
-      .map { withNoCache }
+trait Csrf extends IMCommonDi {
+
+  import mCommonDi.ec
+
+  /** Аддон для action-builder'ов, добавляющий выставление CSRF-токена в сессию. */
+  trait CsrfGet[R[_]] extends ActionBuilder[R] {
+
+    abstract override def invokeBlock[A](request: Request[A], block: (R[A]) => Future[Result]): Future[Result] = {
+      super.invokeBlock(request, block)
+        .map { withNoCache }
+    }
+
+    override protected def composeAction[A](action: Action[A]): Action[A] = {
+      CSRFAddToken(super.composeAction(action))
+    }
   }
 
-  override protected def composeAction[A](action: Action[A]): Action[A] = {
-    CSRFAddToken( super.composeAction(action) )
+
+  /** Аддон для action-builder'ов, добавляющий проверку CSRF-токена перед запуском экшена на исполнение. */
+  trait CsrfPost[R[_]] extends ActionBuilder[R] {
+
+    abstract override def invokeBlock[A](request: Request[A], block: (R[A]) => Future[Result]): Future[Result] = {
+      super.invokeBlock(request, block)
+        .map { withNoCache }
+    }
+
+    override protected def composeAction[A](action: Action[A]): Action[A] = {
+      CSRFCheck(super.composeAction(action))
+    }
   }
+
 }
-
-
-/** Аддон для action-builder'ов, добавляющий проверку CSRF-токена перед запуском экшена на исполнение. */
-trait CsrfPost[R[_]] extends ActionBuilder[R] {
-
-  abstract override def invokeBlock[A](request: Request[A], block: (R[A]) => Future[Result]): Future[Result] = {
-    super.invokeBlock(request, block)
-      .map { withNoCache }
-  }
-
-  override protected def composeAction[A](action: Action[A]): Action[A] = {
-    CSRFCheck( super.composeAction(action) )
-  }
-}
-

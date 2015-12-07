@@ -2,13 +2,15 @@ package controllers
 
 import _root_.util.acl.RichRequestHeader
 import _root_.util.jsa.init.JsInitTargetsDfltT
-import com.google.inject.{Singleton, Provider, Inject}
-import models.{ContextT, Context, Context2Factory}
-import play.api.http.DefaultHttpErrorHandler
+import com.google.inject.{Inject, Provider, Singleton}
+import models.jsm.init.MTarget
+import models.{Context, Context2Factory}
 import play.api._
-import play.api.i18n.{MessagesApi, I18nSupport}
+import play.api.http.DefaultHttpErrorHandler
+import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
 import play.api.routing.Router
+
 import scala.concurrent._
 
 /**
@@ -25,15 +27,19 @@ class ErrorHandler @Inject() (
   config                          : Configuration,
   sourceMapper                    : OptionalSourceMapper,
   router                          : Provider[Router],
-  override val _contextFactory    : Context2Factory,
+  contextFactory                  : Context2Factory,
   override val messagesApi        : MessagesApi,
   implicit val ex                 : ExecutionContext
 )
   extends DefaultHttpErrorHandler(env, config, sourceMapper, router)
   with I18nSupport
   with JsInitTargetsDfltT
-  with ContextT
 {
+
+  implicit private def getContext2(implicit rrh: RichRequestHeader): Context = {
+    implicit val jsInitTargetsExtra: Seq[MTarget] = Nil
+    contextFactory.create(this)
+  }
 
   /** Кешируем значение сравнения текущего режима приложения с Mode.Prod. */
   private val _isProd = env.mode == Mode.Prod

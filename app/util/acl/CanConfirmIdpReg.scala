@@ -1,7 +1,6 @@
 package util.acl
 
 import controllers.SioController
-import io.suggest.di.IEsClient
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
@@ -23,10 +22,12 @@ import scala.concurrent.Future
  */
 trait CanConfirmIdpReg
   extends SioController
-  with IEsClient
   with IIdentUtil
   with OnUnauthUtilCtl
+  with Csrf
 {
+
+  import mCommonDi._
 
   /** Код базовой реализации ActionBuilder'ов, проверяющих возможность подтверждения регистрации. */
   trait CanConfirmIdpRegBase

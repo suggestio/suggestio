@@ -1,12 +1,10 @@
 package util.acl
 
-import io.suggest.di.IExecutionContext
 import models.mbill.{MTariffFee, MContract}
 import models.req.SioReqMd
 import play.api.mvc.{Result, ActionBuilder, Request}
 import util.acl.PersonWrapper.PwOpt_t
 import util.async.AsyncUtil
-import util.di.IDb
 
 import scala.concurrent.Future
 
@@ -17,10 +15,10 @@ import scala.concurrent.Future
  * Description:
  */
 trait IsSuperuserFeeTariffContract
-  extends IDb
-  with IExecutionContext
-  with IsSuperuserUtilCtl
+  extends IsSuperuserUtilCtl
 {
+
+  import mCommonDi._
 
   trait IsSuperuserFeeTariffContractBase
     extends ActionBuilder[FeeTariffRequest]

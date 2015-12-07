@@ -6,7 +6,6 @@ import models.im.DevScreen
 import models.msc.{MScApiVsn, ScReqArgsDflt, ScReqArgs}
 import play.api.mvc.Result
 import util.acl.AbstractRequestWithPwOpt
-import util.di.INodeCache
 import util.n2u.IN2NodesUtilDi
 
 import scala.concurrent.Future
@@ -21,9 +20,9 @@ import scala.concurrent.Future
 trait ScIndexAdOpen
   extends ScFocusedAds
   with ScIndexNodeCommon
-  with INodeCache
   with IN2NodesUtilDi
 {
+  import mCommonDi._
 
   /** Тело экшена возврата медиа-кнопок расширено поддержкой переключения на index-выдачу узла-продьюсера
     * рекламной карточки, которая заинтересовала юзера. */

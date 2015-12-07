@@ -1,17 +1,13 @@
 package controllers
 
-import akka.actor.ActorSystem
-import io.suggest.di.IExecutionContext
+import models.mproj.IMCommonDi
 import play.api.i18n.{I18nSupport, Lang}
 import play.api.mvc._
 import util._
-import util.di.ISioNotifier
 import util.jsa.init.CtlJsInitT
-import util.mail.IMailerWrapper
 import util.ws.WsDispatcherActor
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import play.api.Play.{current, configuration}
 import play.api.data.Form
 import models._
 import play.api.mvc.Result
@@ -32,9 +28,12 @@ trait SioController
   with TplFormatUtilT
   with I18nSupport
   with CtlJsInitT
-  with IExecutionContext
-  with ISioNotifier     // TODO Спилить отсюда, не во всех контроллерах он нужен.
+  with IMCommonDi
 {
+
+  override def messagesApi = mCommonDi.messagesApi
+
+  import mCommonDi._
 
   implicit protected def simpleResult2async(sr: Result): Future[Result] = {
     Future.successful(sr)
@@ -44,13 +43,13 @@ trait SioController
   def FLASH = FlashConstants.Statuses
 
   /** Построчное красивое форматирование ошибок формы для вывода в логи/консоль. */
-  def formatFormErrors(formWithErrors: Form[_]) = {
+  def formatFormErrors(formWithErrors: Form[_]): String = {
     formWithErrors.errors
       .iterator
       .map { e => "  " + e.key + " -> " + e.message }
       .mkString("\n")
   }
-  
+
 
   // Обработка возвратов (?r=/../.../..) либо редиректов.
   /** Вернуть редирект через ?r=/... либо через указанный вызов. */
@@ -110,19 +109,18 @@ abstract class SioControllerImpl extends SioController
 
 /** Трейт, добавляющий константу, хранящую имя текущего модуля, пригодного для использования в конфиге в качестве ключа. */
 trait MyConfName {
- 
+
   /** Имя модуля в ключах конфига. Нельзя, чтобы ключ конфига содержал знак $, который скала добавляет
     * ко всем объектам. Используется только при инициализации. */
   val MY_CONF_NAME = getClass.getSimpleName.replace("$", "")
- 
+
 }
 
 
 /** Утиль для связи с акторами, обрабатывающими ws-соединения. */
 trait NotifyWs extends SioController with PlayMacroLogsI with MyConfName {
 
-  /** akka system, приходящая в контроллер через DI. */
-  def actorSystem: ActorSystem
+  import mCommonDi._
 
   /** Сколько асинхронных попыток предпринимать. */
   val NOTIFY_WS_WAIT_RETRIES_MAX = configuration.getInt(s"ctl.ws.notify.$MY_CONF_NAME.retires.max") getOrElse NOTIFY_WS_WAIT_RETRIES_MAX_DFLT
@@ -159,10 +157,4 @@ trait NotifyWs extends SioController with PlayMacroLogsI with MyConfName {
       }
   }
 
-}
-
-
-/** Интерфейс для mailer'а.  */
-trait IMailer {
-  def mailer: IMailerWrapper
 }

@@ -1,17 +1,17 @@
 package util.acl
 
 import com.google.inject.Inject
-import io.suggest.di.{IEsClient, IExecutionContext}
-import models.jsm.init.MTarget
-import models.req.SioReqMd
-import org.elasticsearch.client.Client
-import play.api.mvc._
 import models._
+import models.jsm.init.MTarget
+import models.mproj.MCommonDi
+import models.req.SioReqMd
+import play.api.mvc._
+import util.acl.PersonWrapper.PwOpt_t
 import util.di.ICanAdvAdUtil
 import util.n2u.N2NodesUtil
 import util.{PlayMacroLogsDyn, PlayMacroLogsI, PlayMacroLogsImpl}
-import util.acl.PersonWrapper.PwOpt_t
-import scala.concurrent.{ExecutionContext, Future}
+
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -21,15 +21,14 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 
 class CanAdvertiseAdUtil @Inject() (
-  mNodeCache                      : MAdnNodeCache,
   n2NodeUtil                      : N2NodesUtil,
-  implicit private val ec         : ExecutionContext,
-  implicit private val esClient   : Client
+  mCommonDi                       : MCommonDi
 )
   extends PlayMacroLogsImpl
 {
 
   import LOGGER._
+  import mCommonDi._
 
   /** Является ли указанный узел рекламодателем? */
   def isAdvertiserNode(mnode: MNode): Boolean = {
@@ -91,11 +90,12 @@ class CanAdvertiseAdUtil @Inject() (
 
 /** Аддон для контроллеров для  */
 trait CanAdvertiseAd
-  extends ICanAdvAdUtil
-  with IExecutionContext
-  with IEsClient
-  with OnUnauthNodeCtl
+  extends OnUnauthNodeCtl
+  with ICanAdvAdUtil
+  with Csrf
 {
+
+  import mCommonDi._
 
   /** Редактировать карточку может только владелец магазина. */
   trait CanAdvertiseAdBase

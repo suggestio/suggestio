@@ -1,23 +1,19 @@
 package controllers
 
 import com.google.inject.Inject
-import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.playx.ICurrentConf
 import models.CallBackReqCallTimes.CallBackReqCallTime
-import org.elasticsearch.client.Client
-import play.api.i18n.MessagesApi
-import util.captcha.CaptchaUtil
-import util.captcha.CaptchaUtil._
+import models._
+import models.mproj.MCommonDi
+import play.api.data.Forms._
+import play.api.data._
+import util.FormUtil._
 import util.PlayMacroLogsImpl
 import util.acl.MaybeAuth
-import models._
-import util.mail.IMailerWrapper
+import util.captcha.CaptchaUtil
+import util.captcha.CaptchaUtil._
+import util.mail.{IMailerWrapper, IMailerWrapperDi}
 import views.html.market.join._
 import views.txt.sys1.market.invreq.emailNewIRCreatedTpl
-import util.FormUtil._
-import play.api.data._, Forms._
-
-import scala.concurrent.ExecutionContext
 
 /**
  * Suggest.io
@@ -28,23 +24,18 @@ import scala.concurrent.ExecutionContext
 class MarketJoin @Inject() (
   mInviteRequest                : MInviteRequest_,
   override val captchaUtil      : CaptchaUtil,
-  override val messagesApi      : MessagesApi,
   override val mailer           : IMailerWrapper,
-  override val current          : play.api.Application,
-  override val _contextFactory  : Context2Factory,
-  override implicit val ec      : ExecutionContext,
-  implicit val esClient         : Client,
-  override implicit val sn      : SioNotifierStaticClientI
+  override val mCommonDi        : MCommonDi
 )
   extends SioController
   with PlayMacroLogsImpl
   with CaptchaValidator
-  with IMailer
-  with ICurrentConf
+  with IMailerWrapperDi
   with MaybeAuth
 {
 
   import LOGGER._
+  import mCommonDi._
 
   /** Маппинг формы запроса обратного звонка с капчей, именем, телефоном и временем прозвона. */
   private def callbackRequestFormM: Form[MInviteRequest] = {

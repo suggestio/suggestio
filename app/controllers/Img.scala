@@ -2,38 +2,34 @@ package controllers
 
 import java.io.File
 
-import akka.actor.ActorSystem
-import com.google.inject.{Singleton, ImplementedBy, Inject}
-import io.suggest.common.geom.d2.ISize2di
-import io.suggest.di.ICacheApiUtil
-import io.suggest.img.crop.CropConstants
-import io.suggest.playx.{ICurrentConf, IConfiguration, CacheApiUtil}
-import io.suggest.popup.PopupConstants
-import models.{Context2Factory, Context}
-import play.api.cache.CacheApi
-import play.twirl.api.Html
-import util.di.{IMImg3Di, IDynImgUtil}
-import util.img.ImgCtlUtil
+import _root_.util._
 import _root_.util.async.AsyncUtil
+import com.google.inject.{ImplementedBy, Inject, Singleton}
+import io.suggest.common.geom.d2.ISize2di
+import io.suggest.img.ConvertModes
+import io.suggest.img.crop.CropConstants
+import io.suggest.popup.PopupConstants
+import io.suggest.ym.model.common.MImgInfoMeta
+import models.Context
 import models.im._
+import models.mproj.MCommonDi
+import net.sf.jmimemagic.{Magic, MagicMatch}
 import org.apache.commons.io.FileUtils
-import play.api.i18n.{I18nSupport, MessagesApi}
+import org.joda.time.{DateTime, ReadableInstant}
+import play.api.Play
+import play.api.data.Forms._
+import play.api.data._
 import play.api.libs.Files.TemporaryFile
 import play.api.mvc._
-import _root_.util._
-import org.joda.time.{ReadableInstant, DateTime}
-import play.api.Play
+import play.twirl.api.Html
 import util.acl._
-import util.img._
-import scala.concurrent.duration._
-import net.sf.jmimemagic.{MagicMatch, Magic}
-import scala.concurrent.{ExecutionContext, Future}
+import util.di.{IDynImgUtil, IMImg3Di}
+import util.img.{ImgCtlUtil, _}
 import views.html.img._
-import play.api.data._, Forms._
-import io.suggest.img.ConvertModes
-import io.suggest.ym.model.common.MImgInfoMeta
 
-import scala.util.{Success, Failure}
+import scala.concurrent.Future
+import scala.concurrent.duration._
+import scala.util.{Failure, Success}
 
 /**
  * Suggest.io
@@ -46,25 +42,19 @@ import scala.util.{Success, Failure}
 class Img @Inject() (
   override val mImg3              : MImg3_,
   override val dynImgUtil         : DynImgUtil,
-  override val messagesApi        : MessagesApi,
-  override val actorSystem        : ActorSystem,
-  override implicit val current   : play.api.Application,
-  override val cache              : CacheApi,
-  override val cacheApiUtil       : CacheApiUtil,
-  override val _contextFactory    : Context2Factory,
-  override implicit val ec        : ExecutionContext,
-  override val imgCtlUtil         : ImgCtlUtil
+  override val imgCtlUtil         : ImgCtlUtil,
+  override val mCommonDi          : MCommonDi
 )
   extends SioController
   with PlayMacroLogsImpl
   with TempImgSupport
   with BruteForceProtectCtl
-  with ICurrentConf
   with IsAuth
 {
 
   import LOGGER._
   import imgCtlUtil._
+  import mCommonDi._
 
   /** Сколько времени можно кешировать на клиенте оригинал картинки. */
   val CACHE_ORIG_CLIENT_SECONDS = {
@@ -234,12 +224,11 @@ trait TempImgSupport
   with PlayMacroLogsI
   with NotifyWs
   with MyConfName
-  with I18nSupport
-  with IConfiguration
-  with ICacheApiUtil
   with IDynImgUtil
   with IMImg3Di
 {
+
+  import mCommonDi._
 
   /** DI-инстанс [[ImgCtlUtil]], т.е. статическая утиль для img-контроллеров. */
   val imgCtlUtil: ImgCtlUtil

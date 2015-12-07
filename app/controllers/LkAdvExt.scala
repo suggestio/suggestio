@@ -1,30 +1,27 @@
 package controllers
 
-import akka.actor.ActorSystem
 import com.google.inject.Inject
-import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.playx.ICurrentConf
 import models._
 import models.adv._
+import models.adv.ext.act.{ActorPathQs, OAuthVerifier}
 import models.adv.ext.{MAdvRunnerTplArgs, MForAdTplArgs}
-import models.adv.ext.act.{OAuthVerifier, ActorPathQs}
 import models.adv.search.etg.ExtTargetSearchArgs
 import models.jsm.init.MTargets
-import org.elasticsearch.client.Client
+import models.mproj.MCommonDi
 import org.elasticsearch.search.sort.SortOrder
-import play.api.i18n.MessagesApi
+import play.api.data.Forms._
+import play.api.data._
 import play.api.libs.json.JsValue
 import play.api.mvc.WebSocket.HandlerProps
 import play.api.mvc.{Result, WebSocket}
+import util.FormUtil._
 import util.PlayMacroLogsImpl
 import util.acl._
 import util.adv.{ExtAdvWsActor_, ExtUtil}
-import play.api.data._, Forms._
-import util.FormUtil._
 import views.html.lk.adv.ext._
 import views.html.static.popups.closingPopupTpl
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -36,26 +33,19 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 class LkAdvExt @Inject() (
   override val canAdvAdUtil       : CanAdvertiseAdUtil,
-  override val messagesApi        : MessagesApi,
-  system                          : ActorSystem,
-  override val mNodeCache         : MAdnNodeCache,
   extAdvWsActor                   : ExtAdvWsActor_,
-  override val _contextFactory    : Context2Factory,
-  override implicit val ec        : ExecutionContext,
-  override implicit val esClient  : Client,
-  override implicit val sn        : SioNotifierStaticClientI,
-  override implicit val current   : play.api.Application
+  override val mCommonDi          : MCommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
   with CanAccessExtTargetBaseCtl
-  with ICurrentConf
   with CanAdvertiseAd
   with CanSubmitExtTargetForNode
   with IsAdnNodeAdmin
 {
 
   import LOGGER._
+  import mCommonDi._
 
   /** Сколько секунд с момента генерации ссылки можно попытаться запустить процесс работы, в секундах. */
   val WS_BEST_BEFORE_SECONDS = configuration.getInt("adv.ext.ws.api.best.before.seconds") getOrElse 30
@@ -315,7 +305,7 @@ class LkAdvExt @Inject() (
     val msg = OAuthVerifier(
       request.getQueryString("oauth_verifier")
     )
-    system.actorSelection(actorInfoQs.path) ! msg
+    actorSystem.actorSelection(actorInfoQs.path) ! msg
     // Закрыть текущее окно
     Ok( closingPopupTpl() )
   }

@@ -1,16 +1,16 @@
 package util.ident
 
-import com.google.inject.{Singleton, Inject}
+import com.google.inject.{Inject, Singleton}
 import controllers.routes
-import io.suggest.di.{IExecutionContext, IEsClient}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.MNode
-import models.usr.{SuperUsers, MExtIdent}
-import org.elasticsearch.client.Client
+import models.mproj.MCommonDi
+import models.usr.{MExtIdent, SuperUsers}
 import play.api.mvc._
-import scala.concurrent.{ExecutionContext, Future}
+
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -20,12 +20,10 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 @Singleton
 class IdentUtil @Inject() (
-  override implicit val esClient  : Client,
-  override implicit val ec        : ExecutionContext
-)
-  extends IEsClient
-  with IExecutionContext
-{
+  mCommonDi   : MCommonDi
+) {
+
+  import mCommonDi._
 
   /** При логине юзера по email-pw мы определяем его присутствие в маркете, и редиректим в ЛК магазина или в ЛК ТЦ. */
   def getMarketRdrCallFor(personId: String): Future[Option[Call]] = {

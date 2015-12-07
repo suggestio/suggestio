@@ -17,6 +17,8 @@ trait ScTags
   with MaybeAuth
 {
 
+  import mCommonDi._
+
   /**
    * Поиск тегов по названиям.
    * @param mts Аргументы поиска, сформированные на клиенте.

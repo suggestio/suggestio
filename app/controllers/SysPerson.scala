@@ -1,24 +1,22 @@
 package controllers
 
 import com.google.inject.Inject
-import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
-import io.suggest.model.n2.node.{MNodeTypes, MNodeType}
+import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
-import models.{Context2Factory, Context, MNode}
+import models.mproj.MCommonDi
 import models.usr._
-import org.elasticsearch.client.Client
+import models.{Context, MNode}
 import org.elasticsearch.search.sort.SortOrder
-import play.api.i18n.MessagesApi
-import util.acl.{IsSuperuserPerson, IsSuperuser}
-import views.html.ident.reg.email.emailRegMsgTpl
+import util.acl.{IsSuperuser, IsSuperuserPerson}
 import views.html.ident.recover.emailPwRecoverTpl
+import views.html.ident.reg.email.emailRegMsgTpl
+import views.html.sys1.market.adn._adnNodesListTpl
 import views.html.sys1.person._
 import views.html.sys1.person.parts._
-import views.html.sys1.market.adn._adnNodesListTpl
 
-import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -28,16 +26,14 @@ import scala.concurrent.{Future, ExecutionContext}
  */
 // TODO Замержить куски контроллера в отображение узла N2. Сейчас этот контроллер рисует неактуальные данные.
 class SysPerson @Inject() (
-  override val messagesApi        : MessagesApi,
-  override val _contextFactory    : Context2Factory,
-  override implicit val ec        : ExecutionContext,
-  override implicit val esClient  : Client,
-  override implicit val sn        : SioNotifierStaticClientI
+  override val mCommonDi    : MCommonDi
 )
   extends SioControllerImpl
   with IsSuperuserPerson
   with IsSuperuser
 {
+
+  import mCommonDi._
 
   /** Генерация экземпляра EmailActivation с бессмысленными данными. */
   private def dummyEa = EmailActivation(

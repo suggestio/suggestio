@@ -1,21 +1,20 @@
 package controllers
 
 import com.google.inject.Inject
-import io.suggest.event.SioNotifierStaticClientI
-import models.mbill.{MContract, MTariffDaily}
-import org.elasticsearch.client.Client
-import play.api.i18n.MessagesApi
-import play.twirl.api.Html
-import util.PlayMacroLogsImpl
 import models._
-import play.api.db.Database
+import models.mbill.{MContract, MTariffDaily}
+import models.mproj.MCommonDi
+import play.api.data.Forms._
+import play.api.data._
+import play.api.mvc.AnyContent
+import play.twirl.api.Html
+import util.FormUtil._
+import util.PlayMacroLogsImpl
+import util.acl._
 import util.async.AsyncUtil
 import views.html.sys1.market.billing.mmp.daily._
-import play.api.data._, Forms._
-import util.FormUtil._
-import util.acl._
-import play.api.mvc.AnyContent
-import scala.concurrent.{ExecutionContext, Future}
+
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -25,19 +24,15 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 class SysMarketBillingMmp @Inject() (
   mCalendar                     : MCalendar_,
-  override val messagesApi      : MessagesApi,
-  override val db               : Database,
-  mNodeCache                    : MAdnNodeCache,
-  override val _contextFactory  : Context2Factory,
-  override implicit val ec      : ExecutionContext,
-  implicit val esClient         : Client,
-  override implicit val sn      : SioNotifierStaticClientI
+  override val mCommonDi        : MCommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
   with IsSuperuserContract
   with IsSuperuser
 {
+
+  import mCommonDi._
 
   /** Маппинг для формы редактирования [[MTariffDaily]]. */
   private def mmpDailyM: Mapping[MTariffDaily] = {

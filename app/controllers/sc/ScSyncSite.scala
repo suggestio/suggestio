@@ -9,7 +9,6 @@ import play.api.mvc.Result
 import play.twirl.api.{HtmlFormat, Html}
 import util.PlayMacroLogsI
 import util.acl.{MaybeAuth, AbstractRequestWithPwOpt}
-import util.di.INodeCache
 
 import scala.concurrent.Future
 
@@ -33,8 +32,9 @@ trait ScSyncSiteGeo
   with ScNodesListBase
   with ScSiteBase
   with MaybeAuth
-  with INodeCache
 {
+
+  import mCommonDi._
 
   /**
    * Раздавалка "сайта" выдачи первой страницы. Можно переопределять, для изменения/расширения функционала.

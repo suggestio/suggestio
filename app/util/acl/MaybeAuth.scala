@@ -1,6 +1,5 @@
 package util.acl
 
-import io.suggest.di.IExecutionContext
 import models.req.SioReqMd
 import play.api.mvc._
 import scala.concurrent.Future
@@ -11,7 +10,12 @@ import scala.concurrent.Future
  * Created: 09.10.13 15:10
  * Description: ActionBuilder для определения залогиненности юзера.
  */
-trait MaybeAuth extends IExecutionContext {
+trait MaybeAuth
+  extends CookieCleanupSupport
+  with Csrf
+{
+
+  import mCommonDi._
 
   /** Здесь логика MaybeAuth action-builder'а. */
   trait MaybeAuthBase extends ActionBuilder[AbstractRequestWithPwOpt] {

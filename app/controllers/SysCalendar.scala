@@ -1,27 +1,26 @@
 package controllers
 
-import com.google.inject.Inject
-import io.suggest.event.SioNotifierStaticClientI
-import models.mbill.{MTariffDaily, MContract}
-import models.req.SioReqMd
-import org.elasticsearch.client.Client
-import play.api.i18n.MessagesApi
-import play.twirl.api.Html
-import util.{FormUtil, PlayMacroLogsImpl}
-import util.acl._
-import models._
-import views.html.sys1.calendar._
-import play.api.data._, Forms._
-import de.jollyday.{HolidayManager, HolidayCalendar}
 import java.io.{ByteArrayInputStream, StringWriter}
-import org.apache.commons.io.IOUtils
-import FormUtil._
+
+import com.google.inject.Inject
 import de.jollyday.util.XMLUtil
-import play.api.mvc._
+import de.jollyday.{HolidayCalendar, HolidayManager}
+import models._
+import models.mbill.{MContract, MTariffDaily}
+import models.mproj.MCommonDi
+import models.req.SioReqMd
+import org.apache.commons.io.IOUtils
+import play.api.data.Forms._
+import play.api.data._
+import play.api.mvc.{Result, _}
+import play.twirl.api.Html
+import util.FormUtil._
 import util.acl.PersonWrapper.PwOpt_t
-import scala.concurrent.{ExecutionContext, Future}
-import play.api.db.Database
-import play.api.mvc.Result
+import util.acl._
+import util.{FormUtil, PlayMacroLogsImpl}
+import views.html.sys1.calendar._
+
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -32,18 +31,14 @@ import play.api.mvc.Result
  */
 class SysCalendar @Inject() (
   mCalendar                     : MCalendar_,
-  override val messagesApi      : MessagesApi,
-  db                            : Database,
-  override val _contextFactory  : Context2Factory,
-  override implicit val ec      : ExecutionContext,
-  implicit val esClient         : Client,
-  override implicit val sn      : SioNotifierStaticClientI
+  override val mCommonDi        : MCommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
   with IsSuperuser
 {
   import LOGGER._
+  import mCommonDi._
 
   /** Форма с селектом шаблона нового календаря. */
   private def newCalTplFormM = Form(

@@ -1,9 +1,7 @@
 package util.acl
 
-import io.suggest.playx.ICurrentApp
 import play.api.mvc.{RequestHeader, Result}
 import util.acl.PersonWrapper.PwOpt_t
-import util.di.IErrorHandler
 
 import scala.concurrent.Future
 import play.api.Play.isDev
@@ -16,8 +14,8 @@ import play.api.Play.isDev
  */
 trait IsSuperuserOr404Ctl
   extends IsSuperuser
-  with IErrorHandler
 {
+  import mCommonDi._
 
   trait IsSuperuserOr404Base extends IsSuperuserBase with ExpireSession[AbstractRequestWithPwOpt] {
     override def supOnUnauthResult(request: RequestHeader, pwOpt: PwOpt_t): Future[Result] = {
@@ -35,7 +33,9 @@ trait IsSuperuserOr404 extends IsSuperuserOr404Ctl {
 }
 
 
-trait IsSuperuserOrDevelOr404 extends IsSuperuserOr404Ctl with ICurrentApp {
+trait IsSuperuserOrDevelOr404 extends IsSuperuserOr404Ctl {
+
+  import mCommonDi._
 
   /** Разрешить не-админам и анонимам доступ в devel-режиме. */
   object IsSuperuserOrDevelOr404 extends IsSuperuserOr404Base {

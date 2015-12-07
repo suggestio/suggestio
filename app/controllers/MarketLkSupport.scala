@@ -1,21 +1,21 @@
 package controllers
 
 import com.google.inject.Inject
-import io.suggest.event.SioNotifierStaticClientI
 import models._
+import models.mproj.MCommonDi
 import models.usr.MPersonIdent
-import org.elasticsearch.client.Client
-import play.api.i18n.MessagesApi
+import play.api.data.Forms._
+import play.api.data._
 import play.api.mvc.Result
+import util.acl._
 import util.di.IIdentUtil
 import util.ident.IdentUtil
-import util.{FormUtil, PlayLazyMacroLogsImpl}
-import util.acl._
-import util.mail.IMailerWrapper
-import views.html.lk.support._
-import scala.concurrent.{ExecutionContext, Future}
+import util.mail.{IMailerWrapper, IMailerWrapperDi}
 import util.support.SupportUtil
-import play.api.data._, Forms._
+import util.{FormUtil, PlayLazyMacroLogsImpl}
+import views.html.lk.support._
+
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -24,25 +24,21 @@ import play.api.data._, Forms._
  * Description: Контроллер для обратной связи с техподдержкой s.io в личном кабинете узла.
  */
 class MarketLkSupport @Inject() (
-  override val messagesApi        : MessagesApi,
   override val mailer             : IMailerWrapper,
   override val identUtil          : IdentUtil,
   supportUtil                     : SupportUtil,
-  override val mNodeCache         : MAdnNodeCache,
-  override val _contextFactory    : Context2Factory,
-  override implicit val ec        : ExecutionContext,
-  implicit val esClient           : Client,
-  override implicit val sn        : SioNotifierStaticClientI
+  override val mCommonDi          : MCommonDi
 )
   extends SioController
   with PlayLazyMacroLogsImpl
-  with IMailer
+  with IMailerWrapperDi
   with IIdentUtil
   with IsAdnNodeAdmin
   with IsAuth
 {
 
   import LOGGER._
+  import mCommonDi._
 
   // TODO Объеденить node и не-node вызовы в единые экшены.
   // TODO Разрешить анонимусам слать запросы при наличии капчи в экшен-билдере.

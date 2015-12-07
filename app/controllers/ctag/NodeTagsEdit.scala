@@ -1,7 +1,6 @@
 package controllers.ctag
 
 import controllers.SioController
-import io.suggest.di.IEsClient
 import io.suggest.model.n2.node.MNode
 import io.suggest.model.n2.tag.vertex.search.{MTagFaceCriteria, ITagFaceCriteria}
 import models.mtag.{MTagsAddFormBinded, MTagBinded, MTagSearch, MAddTagReplyOk}
@@ -25,8 +24,9 @@ trait NodeTagsEdit
   with PlayMacroLogsI
   with IsAuth
   with ITagsEditFormUtilDi
-  with IEsClient
 {
+
+  import mCommonDi._
 
   /**
    * Добавление тега в редактор тегов.

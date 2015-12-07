@@ -1,7 +1,6 @@
 package controllers.sc
 
 import controllers.SioController
-import io.suggest.di.IEsClient
 import models.msc.AdCssArgs
 import models.{blk, MNode}
 import play.api.mvc.Action
@@ -23,9 +22,10 @@ import scala.concurrent.Future
 trait ScBlockCss
   extends SioController
   with PlayMacroLogsI
-  with IEsClient
   with IN2NodesUtilDi
 {
+
+  import mCommonDi._
 
   /**
    * Экшен раздачи css'ок.

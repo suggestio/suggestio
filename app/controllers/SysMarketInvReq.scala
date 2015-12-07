@@ -1,21 +1,20 @@
 package controllers
 
 import com.google.inject.Inject
-import controllers.sysctl.{SysMarketUtil, SmSendEmailInvite}
+import controllers.sysctl.{SmSendEmailInvite, SysMarketUtil}
 import io.suggest.common.fut.FutureUtil
-import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.n2.edge.MNodeEdges
+import models._
+import models.mproj.MCommonDi
 import models.usr.EmailActivation
-import org.elasticsearch.client.Client
-import play.api.i18n.MessagesApi
 import play.api.mvc.{AnyContent, Result}
 import play.twirl.api.Html
-import util.acl._
-import models._
-import util.mail.IMailerWrapper
-import scala.concurrent.{ExecutionContext, Future}
-import views.html.sys1.market.invreq._
 import util.PlayMacroLogsImpl
+import util.acl._
+import util.mail.IMailerWrapper
+import views.html.sys1.market.invreq._
+
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -27,15 +26,10 @@ import util.PlayMacroLogsImpl
  * обработки запроса и т.д.
  */
 class SysMarketInvReq @Inject() (
-  mNodeCache                      : MAdnNodeCache,
   sysMarketUtil                   : SysMarketUtil,
-  override val _contextFactory    : Context2Factory,
   override val mInviteRequest     : MInviteRequest_,
-  override val messagesApi        : MessagesApi,
   override val mailer             : IMailerWrapper,
-  override implicit val ec        : ExecutionContext,
-  override implicit val esClient  : Client,
-  override implicit val sn        : SioNotifierStaticClientI
+  override val mCommonDi          : MCommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
@@ -45,11 +39,12 @@ class SysMarketInvReq @Inject() (
 {
 
   import LOGGER._
+  import mCommonDi._
 
-  val MIRS_FETCH_COUNT = 300
+  def MIRS_FETCH_COUNT = 300
 
   /** Макс.кол-во попыток сохранения экземлпяров MInviteRequest. */
-  val UPDATE_RETRIES_MAX = 5
+  def UPDATE_RETRIES_MAX = 5
 
   /** Вернуть страницу, отображающую всю инфу по текущему состоянию подсистемы IR.
     * Список реквестов, в первую очередь. */

@@ -1,7 +1,6 @@
 package util.acl
 
 import controllers.SioController
-import io.suggest.di.IEsClient
 import models.req.SioReqMd
 import models.usr.{IEaEmailId, EmailActivation}
 import play.api.mvc.{Result, Request, ActionBuilder}
@@ -30,10 +29,12 @@ import CanConfirmEmailPwReg._
 
 trait CanConfirmEmailPwRegCtl
   extends SioController
-  with IEsClient
   with IIdentUtil
   with OnUnauthUtilCtl
+  with Csrf
 {
+
+  import mCommonDi._
 
   /** Код проверки возможности подтверждения регистрации по email. */
   trait CanConfirmEmailPwRegBase
@@ -96,6 +97,7 @@ trait CanConfirmEmailPwRegCtl
     with CsrfPost[EmailPwRegConfirmRequest]
 
 }
+
 
 case class EmailPwRegConfirmRequest[A](
   ea        : EmailActivation,

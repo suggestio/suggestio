@@ -1,15 +1,13 @@
 package controllers.sysctl
 
-import controllers.{routes, SioController}
-import io.suggest.di.IEsClient
-import io.suggest.playx.ICurrentApp
+import controllers.{SioController, routes}
 import models.Context
 import play.api.data.Form
-import play.api.i18n.{Messages, Lang}
-import play.twirl.api.Html
+import play.api.i18n.{Lang, Messages}
+import play.api.mvc.Result
 import util.PlayMacroLogsI
-import util.acl.{IsSuperuserAdnNode, AbstractRequestForAdnNode}
-import util.di.{INodeCache, INodesUtil}
+import util.acl.{AbstractRequestForAdnNode, IsSuperuserAdnNode}
+import util.di.INodesUtil
 import views.html.sys1.market.adn.install._
 
 import scala.concurrent.Future
@@ -40,19 +38,18 @@ object SysNodeInstall {
 }
 
 
-import SysNodeInstall._
+import controllers.sysctl.SysNodeInstall._
 
 
 /** Аддон для контроллера, добавляющий экшены для сабжа. */
 trait SysNodeInstall
   extends SioController
   with PlayMacroLogsI
-  with IEsClient
-  with ICurrentApp
   with INodesUtil
   with IsSuperuserAdnNode
-  with INodeCache
 {
+
+  import mCommonDi._
 
   /** Вернуть страницу с формой установки дефолтовых карточек на узлы. */
   def installDfltMads(adnId: String) = IsSuperuserAdnNodeGet(adnId).async { implicit request =>
@@ -62,17 +59,18 @@ trait SysNodeInstall
       lang  = ctx.messages.lang
     )
     val form = mkForm.fill(fd)
-    _installRender(form)(ctx, request)
-      .map { Ok(_) }
+    _installRender(form, Ok)(ctx, request)
   }
 
   /** Общий код экшенов, связанный с рендером html-ответа. */
-  private def _installRender(form: Form[FormData])(implicit ctx: Context, request: AbstractRequestForAdnNode[_]): Future[Html] = {
+  private def _installRender(form: Form[FormData], rs: Status)
+                            (implicit ctx: Context, request: AbstractRequestForAdnNode[_]): Future[Result] = {
     for {
       srcNodes <- mNodeCache.multiGet(nodesUtil.ADN_IDS_INIT_ADS_SOURCE)
     } yield {
       val allLangs = Lang.availables.sortBy(_.code)
-      installDfltMadsTpl(allLangs, request.adnNode, form, srcNodes)(ctx)
+      val html = installDfltMadsTpl(allLangs, request.adnNode, form, srcNodes)(ctx)
+      rs(html)
     }
   }
 
@@ -82,8 +80,7 @@ trait SysNodeInstall
     mkForm.bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug(logPrefix + "Failed to bind form:\n " + formatFormErrors(formWithErrors) )
-        _installRender(formWithErrors)
-          .map { NotAcceptable(_) }
+        _installRender(formWithErrors, NotAcceptable)
       },
       {fd =>
         // TODO Надо как-то сделать, чтобы это дело скастовалось автоматом.

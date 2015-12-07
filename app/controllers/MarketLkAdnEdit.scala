@@ -1,36 +1,33 @@
 package controllers
 
 import com.google.inject.Inject
-import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.js.UploadConstants
 import io.suggest.model.n2.edge.MEdgeInfo
 import io.suggest.model.n2.extra.MAdnExtra
 import io.suggest.model.n2.node.meta.colors.MColors
-import io.suggest.model.n2.node.meta.{MBusinessInfo, MAddress, MBasicMeta}
+import io.suggest.model.n2.node.meta.{MAddress, MBasicMeta, MBusinessInfo}
+import models._
 import models.im.logo.LogoOpt_t
 import models.im.{MImg3_, MImgT}
 import models.jsm.init.MTargets
+import models.madn.EditConstants._
 import models.mlk.{FormMapResult, NodeEditArgs}
-import org.elasticsearch.client.Client
+import models.mproj.MCommonDi
 import org.joda.time.DateTime
-import play.api.cache.CacheApi
-import play.api.i18n.MessagesApi
+import play.api.data.Forms._
+import play.api.data.{Form, Mapping}
 import play.api.libs.Files.TemporaryFile
 import play.api.mvc.{MultipartFormData, Result}
 import play.core.parsers.Multipart
 import play.twirl.api.Html
-import util.img._
+import util.FormUtil._
 import util.PlayMacroLogsImpl
 import util.acl._
-import models._
-import views.html.lk.adn.edit._
-import play.api.data.{Mapping, Form}
-import play.api.data.Forms._
-import util.FormUtil._
-import models.madn.EditConstants._
 import util.img.ImgFormUtil.img3IdOptM
+import util.img._
+import views.html.lk.adn.edit._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -41,19 +38,12 @@ import scala.concurrent.{ExecutionContext, Future}
  * Супервайзер ресторанной сети и ТЦ имеют одну форму и здесь обозначаются как "узлы-лидеры".
  */
 class MarketLkAdnEdit @Inject() (
-  override val messagesApi        : MessagesApi,
-  override val current            : play.api.Application,
-  override val cache              : CacheApi,
   welcomeUtil                     : WelcomeUtil,
   logoUtil                        : LogoUtil,
   mImg3                           : MImg3_,
   tempImgSupport                  : TempImgSupport,
   galleryUtil                     : GalleryUtil,
-  override val mNodeCache         : MAdnNodeCache,
-  override val _contextFactory    : Context2Factory,
-  override implicit val ec        : ExecutionContext,
-  implicit val esClient           : Client,
-  override implicit val sn        : SioNotifierStaticClientI
+  override val mCommonDi          : MCommonDi
 )
   extends SioController
   with PlayMacroLogsImpl
@@ -63,6 +53,7 @@ class MarketLkAdnEdit @Inject() (
 {
 
   import LOGGER._
+  import mCommonDi._
 
   /** Макс. байтовая длина загружаемой картинки в галлерею. */
   private val IMG_GALLERY_MAX_LEN_BYTES: Int = {

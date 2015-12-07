@@ -1,7 +1,6 @@
 package util.acl
 
 import controllers.SioController
-import io.suggest.di.{IEsClient, IExecutionContext}
 import models.im.MGallery
 import models.req.SioReqMd
 import scala.concurrent.Future
@@ -17,10 +16,10 @@ import util.acl.PersonWrapper.PwOpt_t
 
 trait IsSuperuserGallery
   extends SioController
-  with IExecutionContext
-  with IEsClient
   with IsSuperuserUtilCtl
 {
+
+  import mCommonDi._
 
   /** Логика проверки живёт в этом трейте. */
   trait IsSuperuserGalleryBase

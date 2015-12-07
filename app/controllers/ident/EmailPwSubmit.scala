@@ -1,7 +1,6 @@
 package controllers.ident
 
 import controllers.SioController
-import io.suggest.di.IEsClient
 import models.{MNode, MNodeTypes}
 import models.msession.{Ttl, ShortTtl, LongTtl, Keys}
 import models.usr._
@@ -28,10 +27,11 @@ trait EmailPwSubmit
   with PlayMacroLogsI
   with BruteForceProtectCtl
   with SetLangCookieUtil
-  with IEsClient
   with IsAnon
   with IIdentUtil
 {
+
+  import mCommonDi._
 
   /** Форма логина по email и паролю. */
   def emailPwLoginFormM: EmailPwLoginForm_t = {
@@ -118,9 +118,11 @@ trait EmailPwSubmit
 /** Экшены для Ident-контроллера. */
 trait EmailPwLogin extends EmailPwSubmit {
 
+  import mCommonDi._
+
   /** Рендер страницы с возможностью логина по email и паролю. */
   def emailPwLoginForm(r: Option[String]) = IsAnonGet.async { implicit request =>
-    emailPwLoginFormStubM map { lf =>
+    for (lf <- emailPwLoginFormStubM) yield {
       epwLoginPage(lf, r)
     }
   }

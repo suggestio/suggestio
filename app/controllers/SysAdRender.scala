@@ -1,16 +1,14 @@
 package controllers
 
-import io.suggest.di.IEsClient
-import models.blk.{OneAdWideQsArgs, OneAdQsArgs}
+import models.blk.{OneAdQsArgs, OneAdWideQsArgs}
 import models.im.OutImgFmts
 import models.msc.OneAdRenderVariant
 import models.msys.MShowOneAdFormTplArgs
-import play.api.data.{Mapping, Form}
+import play.api.data.{Form, Mapping}
 import play.api.mvc.Result
-import util.di.INodeCache
-import util.n2u.IN2NodesUtilDi
-import util.{PlayMacroLogsI, FormUtil}
 import util.acl.{IsSuperuserMad, RequestWithAd}
+import util.n2u.IN2NodesUtilDi
+import util.{FormUtil, PlayMacroLogsI}
 import views.html.sys1.market.ad.one._
 
 import scala.concurrent.Future
@@ -51,11 +49,11 @@ class SysAdRenderUtil {
 trait SysAdRender
   extends SioController
   with PlayMacroLogsI
-  with IEsClient
   with IsSuperuserMad
-  with INodeCache
   with IN2NodesUtilDi
 {
+
+  import mCommonDi._
 
   val sysAdRenderUtil: SysAdRenderUtil
 

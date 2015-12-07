@@ -1,17 +1,16 @@
 package util.acl
 
 import controllers.SioController
-import io.suggest.di.IEsClient
-import models.adv.{MAdvStaticT, MAdvReq, MAdvOk}
+import models._
+import models.adv.{MAdvOk, MAdvReq, MAdvStaticT}
 import models.req.SioReqMd
 import play.api.mvc._
-import models._
 import util.acl.PersonWrapper.PwOpt_t
 import util.async.AsyncUtil
-import util.di.{IErrorHandler, IDb, INodeCache}
 import util.n2u.IN2NodesUtilDi
-import scala.concurrent.Future
 import util.{PlayMacroLogsDyn, PlayMacroLogsI}
+
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -22,9 +21,9 @@ import util.{PlayMacroLogsDyn, PlayMacroLogsI}
 
 trait AdEditBaseCtl
   extends SioController
-  with IEsClient
-  with IErrorHandler
 {
+
+  import mCommonDi._
 
   /** Кое какая утиль для action builder'ов, редактирующих карточку. */
   trait AdEditBase extends PlayMacroLogsI {
@@ -51,11 +50,12 @@ trait AdEditBaseCtl
 /** Аддон для контроллеров, занимающихся редактированием рекламных карточек. */
 trait CanEditAd
   extends AdEditBaseCtl
-  with IDb
   with OnUnauthUtilCtl
-  with INodeCache
   with IN2NodesUtilDi
+  with Csrf
 {
+
+  import mCommonDi._
 
   /** Редактировать карточку может только владелец магазина. */
   trait CanEditAdBase

@@ -1,7 +1,6 @@
 package util.acl
 
 import controllers.SioController
-import io.suggest.di.{IEsClient, IExecutionContext}
 import models.MNode
 import models.req.SioReqMd
 import play.api.mvc._
@@ -17,9 +16,9 @@ import scala.concurrent.Future
  */
 trait GetAnyAd
   extends SioController
-  with IEsClient
-  with IExecutionContext
 {
+
+  import mCommonDi._
 
   /** Комбинация из MaybeAuth и читалки adId из [[models.MNode]]. */
   trait GetAnyAdAbstract

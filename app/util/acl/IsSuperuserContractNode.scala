@@ -1,11 +1,9 @@
 package util.acl
 
-import io.suggest.di.{IExecutionContext, IEsClient}
 import models.mbill.MContract
 import models.MNode
 import models.req.SioReqMd
 import util.async.AsyncUtil
-import util.di.{IDb, INodeCache}
 import scala.concurrent.Future
 import play.api.mvc.{ActionBuilder, Request, Result}
 import util.acl.PersonWrapper.PwOpt_t
@@ -18,12 +16,11 @@ import util.acl.PersonWrapper.PwOpt_t
  * и параллельному чтению узла.
  */
 trait IsSuperuserContractNode
-  extends IDb
-  with IEsClient
-  with IExecutionContext
-  with IsSuperuserUtilCtl
-  with INodeCache
+  extends IsSuperuserUtilCtl
+  with Csrf
 {
+
+  import mCommonDi._
 
   trait IsSuperuserContractNodeBase
     extends ActionBuilder[ContractNodeRequest]

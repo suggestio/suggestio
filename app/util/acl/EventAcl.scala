@@ -1,6 +1,5 @@
 package util.acl
 
-import io.suggest.di.IEsClient
 import models.MNode
 import models.event.MEvent
 import models.req.SioReqMd
@@ -18,9 +17,10 @@ import scala.concurrent.Future
 
 trait HasNodeEventAccess
   extends OnUnauthNodeCtl
-  with IEsClient
   with IsAdnNodeAdminUtilCtl
 {
+
+  import mCommonDi._
 
   /** Проверка доступа к событию, которое относится к узлу. */
   trait HasNodeEventAccessBase

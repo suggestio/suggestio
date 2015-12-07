@@ -3,7 +3,6 @@ package controllers
 import com.google.inject.Inject
 import controllers.ad.MarketAdFormUtil._
 import io.suggest.ad.form.AdFormConstants._
-import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.edge.{MNodeEdges, NodeEdgesMap_t}
 import io.suggest.model.n2.node.common.MNodeCommon
@@ -13,13 +12,10 @@ import models.blk.PrepareBlkImgArgs
 import models.blk.ed.{AdFormM, AdFormResult, BlockImgMap}
 import models.im.MImg3_
 import models.jsm.init.MTargets
-import org.elasticsearch.client.Client
+import models.mproj.MCommonDi
 import org.joda.time.DateTime
-import play.api.cache.CacheApi
 import play.api.data.Forms._
 import play.api.data._
-import play.api.db.Database
-import play.api.i18n.MessagesApi
 import play.api.libs.json.JsValue
 import play.api.mvc.{Call, Request, Result, WebSocket}
 import play.core.parsers.Multipart
@@ -30,7 +26,7 @@ import util.blocks.{BgImg, ListBlock, LkEditorWsActor}
 import util.n2u.N2NodesUtil
 import views.html.lk.ad._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -39,19 +35,10 @@ import scala.concurrent.{ExecutionContext, Future}
  * Description: Контроллер для работы с рекламным фунционалом.
  */
 class MarketAd @Inject() (
-  override val messagesApi        : MessagesApi,
-  override implicit val current   : play.api.Application,
-  override val cache              : CacheApi,
   tempImgSupport                  : TempImgSupport,
   mImg3                           : MImg3_,
   override val n2NodesUtil        : N2NodesUtil,
-  override val _contextFactory    : Context2Factory,
-  override val mNodeCache         : MAdnNodeCache,
-  override val db                 : Database,
-  override val errorHandler       : ErrorHandler,
-  override implicit val ec        : ExecutionContext,
-  override implicit val esClient  : Client,
-  override implicit val sn        : SioNotifierStaticClientI
+  override val mCommonDi          : MCommonDi
 )
   extends SioController
   with PlayMacroLogsImpl
@@ -64,6 +51,7 @@ class MarketAd @Inject() (
 {
 
   import LOGGER._
+  import mCommonDi._
 
   type ReqSubmit = Request[collection.Map[String, Seq[String]]]
   type DetectForm_t = Either[AdFormM, (BlockConf, AdFormM)]

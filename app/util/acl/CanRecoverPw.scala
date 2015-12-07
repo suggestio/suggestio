@@ -1,7 +1,6 @@
 package util.acl
 
 import controllers.SioController
-import io.suggest.di.IEsClient
 import models.req.SioReqMd
 import models.usr.{EmailActivation, EmailPwIdent}
 import play.api.mvc._
@@ -21,7 +20,14 @@ import util.acl.PersonWrapper.PwOpt_t
  * Всё сделано в виде аддона для контроллера, т.к. DI-зависимость так проще всего разрулить.
  */
 
-trait CanRecoverPwCtl extends SioController with BruteForceProtectBase with IEsClient with IIdentUtil {
+trait CanRecoverPwCtl
+  extends SioController
+  with BruteForceProtectBase
+  with IIdentUtil
+  with Csrf
+{
+
+  import mCommonDi._
 
   /** Трейт с базовой логикой action-builder'а CanRecoverPw. */
   trait CanRecoverPwBase extends ActionBuilder[RecoverPwRequest] {

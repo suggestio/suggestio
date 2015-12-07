@@ -1,10 +1,8 @@
 package util.acl
 
-import io.suggest.di.IExecutionContext
 import models.mbill
 import models.mbill.MContract
 import models.req.SioReqMd
-import util.di.IDb
 import scala.concurrent.Future
 import play.api.mvc.{Request, ActionBuilder, Result}
 import util.acl.PersonWrapper.PwOpt_t
@@ -16,10 +14,10 @@ import util.acl.PersonWrapper.PwOpt_t
  * Description: Аддон для контроллеров с гибридом IsSuperuser + [[mbill.MContract.getById()]].
  */
 trait IsSuperuserContract
-  extends IDb
-  with IExecutionContext
-  with IsSuperuserUtilCtl
+  extends IsSuperuserUtilCtl
 {
+
+  import mCommonDi._
 
   sealed trait IsSuperuserContractBase
     extends ActionBuilder[ContractRequest]

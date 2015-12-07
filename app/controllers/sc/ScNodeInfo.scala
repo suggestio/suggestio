@@ -3,7 +3,6 @@ package controllers.sc
 import _root_.util.jsa.{Js, SmRcvResp}
 import io.suggest.event.MNodeSavedEvent
 import io.suggest.event.subscriber.SnFunSubscriber
-import io.suggest.playx.ICurrentConf
 import models.jsm.NodeDataResp
 import models.mproj.IMProjectInfo
 import play.api.Play
@@ -24,11 +23,12 @@ import views.txt.sc._
  */
 trait ScNodeInfo
   extends ScController
-  with ICurrentConf
   with AdnNodeMaybeAuth
   with ICdnUtilDi
   with IMProjectInfo
 {
+
+  import mCommonDi._
 
   /** Сколько времени кешировать скомпиленный скрипт nodeIconJsTpl. */
   private val NODE_ICON_JS_CACHE_TTL_SECONDS: Int = {

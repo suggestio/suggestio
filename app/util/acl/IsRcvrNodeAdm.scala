@@ -3,15 +3,14 @@ package util.acl
 import java.sql.Connection
 
 import controllers.SioController
-import io.suggest.di.{IExecutionContext, IEsClient}
-import models.adv.{MAdvReq, MAdvOk}
+import models._
+import models.adv.{MAdvOk, MAdvReq}
 import models.req.SioReqMd
-import play.api.mvc.{Result, ActionBuilder, Request}
-import util.di.{IDb, INodeCache}
+import play.api.mvc.{ActionBuilder, Request, Result}
+import util.acl.PersonWrapper.PwOpt_t
 import util.n2u.IN2NodesUtilDi
 import util.{PlayLazyMacroLogsImpl, PlayMacroLogsI}
-import util.acl.PersonWrapper.PwOpt_t
-import models._
+
 import scala.concurrent.Future
 
 /**
@@ -27,13 +26,11 @@ import scala.concurrent.Future
  */
 trait AdvWndAccess
   extends SioController
-  with IEsClient
-  with IExecutionContext
-  with IDb
   with OnUnauthUtilCtl
-  with INodeCache
   with IN2NodesUtilDi
 {
+
+  import mCommonDi._
 
   /** Логика работы ActionBuilder'а, проверяющего права доступа к окошку
     * с инфой по размещению одной карточки. */

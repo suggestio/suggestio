@@ -1,6 +1,5 @@
 package util.acl
 
-import io.suggest.di.IEsClient
 import models.MNode
 import models.req.SioReqMd
 import play.api.data._
@@ -40,9 +39,11 @@ case class ExtTargetSubmitRequest[A](
 /** Аддон для контроллера для добавления поддержки */
 trait CanSubmitExtTargetForNode
   extends OnUnauthNodeCtl
-  with IEsClient
   with IsAdnNodeAdminUtilCtl
+  with Csrf
 {
+
+  import mCommonDi._
 
   /** Заготовка ActionBuilder'а для проверки доступа на запись (create, edit) для target'а,
     * id которого возможно задан в теле POST'а. */

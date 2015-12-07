@@ -1,7 +1,6 @@
 package controllers.ident
 
 import controllers.SioController
-import io.suggest.di.IEsClient
 import models.usr.{MPersonIdent, EmailPwIdent}
 import play.api.data._
 import play.api.data.Forms._
@@ -59,9 +58,10 @@ trait ChangePw
 trait ChangePwAction
   extends SioController
   with PlayMacroLogsI
-  with IEsClient
   with IIdentUtil
 {
+
+  import mCommonDi._
 
   /** Если неясно куда надо редиректить юзера, то что делать? */
   def changePwOkRdrDflt(implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Call] = {

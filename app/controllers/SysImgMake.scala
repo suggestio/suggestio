@@ -59,6 +59,8 @@ trait SysImgMake
   with IsSuperuser
 {
 
+  import mCommonDi._
+
   def sysImgMakeUtil : SysImgMakeUtil
 
   /**
@@ -91,10 +93,10 @@ trait SysImgMake
   }
 
   /** Рендер страницы с формой параметров make. */
-  private def _makeFormRender(img: MImgT, form: SysForm_t, respStatus: Status)
+  private def _makeFormRender(img: MImgT, form: SysForm_t, rs: Status)
                              (implicit ctx: Context): Future[Result] = {
     val html = makeFormTpl(img, form)(ctx)
-    Future successful respStatus(html)
+    Future.successful( rs(html) )
   }
 
   /**
@@ -109,7 +111,7 @@ trait SysImgMake
         _makeFormRender(img, formWithErrors, NotAcceptable)
       },
       {case (maker, makeArgs) =>
-        maker.icompile(makeArgs).map { makeRes =>
+        for (makeRes <- maker.icompile(makeArgs)) yield {
           Redirect(makeRes.dynImgCall)
         }
       }

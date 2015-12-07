@@ -1,7 +1,6 @@
 package util.acl
 
 import controllers.SioController
-import io.suggest.di.{IExecutionContext, IEsClient}
 import io.suggest.model.n2.node.MNodeTypes
 import models.MNode
 import models.req.SioReqMd
@@ -19,10 +18,10 @@ import scala.concurrent.Future
 
 trait IsSuperuserPerson
   extends SioController
-  with IEsClient
-  with IExecutionContext
   with IsSuperuserUtilCtl
 {
+
+  import mCommonDi._
 
   trait IsSuperuserPersonBase
     extends ActionBuilder[MPersonRequest]

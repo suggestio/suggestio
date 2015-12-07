@@ -1,41 +1,38 @@
 package controllers
 
+import com.google.inject.Inject
+import controllers.ident._
 import io.suggest.common.fut.FutureUtil
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import models._
 import models.adv._
-import models.mbill.{MContract, MBalance}
-import org.elasticsearch.search.sort.SortOrder
-import util.adn.NodesUtil
-import util.async.AsyncUtil
-import com.google.inject.Inject
-import controllers.ident._
-import io.suggest.event.SioNotifierStaticClientI
+import models.mbill.{MBalance, MContract}
 import models.mlk.{MNodeAdsTplArgs, MNodeShowArgs}
+import models.mproj.MCommonDi
 import models.msession.Keys
 import models.usr.EmailPwIdent
-import org.elasticsearch.client.Client
-import play.api.cache.CacheApi
-import play.api.i18n.MessagesApi
-import util.billing.Billing
-import util.{FormUtil, PlayMacroLogsImpl}
-import util.acl._
-import models._
-import util.ident.IdentUtil
-import util.img.{LogoUtil, GalleryUtil}
-import util.lk.LkAdUtil
-import util.showcase.ShowcaseUtil
-import scala.concurrent.{ExecutionContext, Future}
-import views.html.lk.adn._
-import views.html.lk.usr._
-import views.html.lk.{lkList => lkListTpl}
+import org.elasticsearch.search.sort.SortOrder
 import play.api.data.Form
 import play.api.data.Forms._
 import util.FormUtil._
-import play.api.db.Database
+import util.acl._
+import util.adn.NodesUtil
+import util.async.AsyncUtil
+import util.billing.Billing
+import util.ident.IdentUtil
+import util.img.{GalleryUtil, LogoUtil}
+import util.lk.LkAdUtil
+import util.showcase.ShowcaseUtil
+import util.{FormUtil, PlayMacroLogsImpl}
+import views.html.lk.adn._
+import views.html.lk.usr._
+import views.html.lk.{lkList => lkListTpl}
+
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -44,23 +41,14 @@ import play.api.db.Database
  * Description: Унифицированные части личного кабинета.
  */
 class MarketLkAdn @Inject() (
-  override val messagesApi            : MessagesApi,
   nodesUtil                           : NodesUtil,
   lkAdUtil                            : LkAdUtil,
-  db                                  : Database,
   scUtil                              : ShowcaseUtil,
-  override val current                : play.api.Application,
-  override val cache                  : CacheApi,
-  override val mNodeCache             : MAdnNodeCache,
   override val identUtil              : IdentUtil,
   logoUtil                            : LogoUtil,
   billing                             : Billing,
   galleryUtil                         : GalleryUtil,
-  override val errorHandler           : ErrorHandler,
-  override val _contextFactory        : Context2Factory,
-  override implicit val ec            : ExecutionContext,
-  override implicit val esClient      : Client,
-  override implicit val sn            : SioNotifierStaticClientI
+  override val mCommonDi              : MCommonDi
 )
   extends SioController
   with PlayMacroLogsImpl
@@ -74,6 +62,7 @@ class MarketLkAdn @Inject() (
 {
 
   import LOGGER._
+  import mCommonDi._
 
   /** Список личных кабинетов юзера. */
   def lkList(fromAdnId: Option[String]) = IsAdnNodeAdminOptOrAuthGet(fromAdnId).async { implicit request =>

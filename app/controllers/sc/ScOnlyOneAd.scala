@@ -22,6 +22,8 @@ trait ScOnlyOneAd
   with GetAnyAd
 {
 
+  import mCommonDi._
+
   /**
    * Отрендерить одну указанную карточку как веб-страницу.
    * @param args Настройки выборки и отображения результата.

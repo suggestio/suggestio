@@ -2,12 +2,12 @@ package controllers.sc
 
 import _root_.util.di._
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
-import io.suggest.playx.ICurrentConf
 import _root_.util.jsa.{SmRcvResp, Js}
 import _root_.util.PlayMacroLogsI
 import models.Context
 import models.im.MImgT
 import models.jsm.ScIndexResp
+import models.mproj.IMCommonDi
 import models.msc._
 import play.twirl.api.Html
 import util.acl._
@@ -25,7 +25,9 @@ import play.api.mvc._
  */
 
 /** Константы, используемые в рамках этого куска контроллера. */
-trait ScIndexConstants extends ICurrentConf {
+trait ScIndexConstants extends IMCommonDi {
+
+  import mCommonDi._
 
   /** Кеш ответа showcase(adnId) на клиенте. */
   val SC_INDEX_CACHE_SECONDS: Int = configuration.getInt("market.showcase.index.node.cache.client.seconds") getOrElse 20
@@ -47,6 +49,8 @@ trait ScIndexCommon
   with PlayMacroLogsI
   with IStatUtil
 {
+
+  import mCommonDi._
 
   /** Базовый трейт для написания генератора производных indexTpl и ответов. */
   trait ScIndexHelperBase {
@@ -77,14 +81,15 @@ trait ScIndexCommon
     lazy val ctx: Context = implicitly[Context]
 
     def respHtmlFut: Future[Html] = {
-      renderArgsFut
-        .map { indexTpl(_)(ctx) }
+      for (renderArgs <- renderArgsFut) yield {
+        indexTpl(renderArgs)(ctx)
+      }
     }
     def respHtmlJsFut = respHtmlFut.map(JsString(_))
 
 
     def hBtnArgsFut: Future[HBtnArgs] = {
-      colorsFut map { colors =>
+      for (colors <- colorsFut) yield {
         HBtnArgs(fgColor = colors.fgColor)
       }
     }
@@ -120,7 +125,7 @@ trait ScIndexCommon
 
     /** Ответ для coffeescript-выдачи, там возвращался js. */
     protected def _result_v1(args: ScIndexResp): Future[Result] = {
-      Ok(Js(65536, SmRcvResp(args)))
+      Ok( Js(65536, SmRcvResp(args)) )
     }
 
     /** Ответ для sjs-выдачи, там нужен json. */
@@ -161,6 +166,8 @@ trait ScIndexNodeCommon
   with IWelcomeUtil
   with IScUtil
 {
+
+  import mCommonDi._
 
   /** Логика формирования indexTpl для конкретного узла. */
   trait ScIndexNodeHelper extends ScIndexHelperBase {
@@ -341,6 +348,8 @@ trait ScIndexNode
   with AdnNodeMaybeAuth
 {
 
+  import mCommonDi._
+
   /** Базовая выдача для rcvr-узла sio-market. */
   def showcase(adnId: String, args: ScReqArgs) = AdnNodeMaybeAuth(adnId).async { implicit request =>
     val _adnNodeFut = Future successful request.adnNode
@@ -369,10 +378,9 @@ trait ScIndexNode
       LOGGER.warn(s"showcase($adnId): failed to save stats, args = $args", ex)
     }
     // Возвращаем результат основного действа. Результат вполне кешируем по идее.
-    resultFut map { res =>
+    for (res <- resultFut) yield {
       res.withHeaders(CACHE_CONTROL -> s"public, max-age=$SC_INDEX_CACHE_SECONDS")
     }
   }
 
 }
-

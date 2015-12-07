@@ -1,7 +1,6 @@
 package controllers.ident
 
 import controllers._
-import io.suggest.di.IEsClient
 import models.jsm.init.MTargets
 import models.msession.Keys
 import models.usr.{MPersonIdent, EmailActivation, EmailPwIdent}
@@ -10,6 +9,7 @@ import play.twirl.api.Html
 import util.PlayMacroLogsI
 import util.acl._
 import util.di.IIdentUtil
+import util.mail.IMailerWrapperDi
 import util.xplay.SetLangCookieUtil
 import views.html.helper.CSRF
 import views.html.ident.mySioStartTpl
@@ -30,10 +30,11 @@ import util.FormUtil.passwordWithConfirmM
 /** Хелпер контроллеров, занимающийся отправкой почты для восстановления пароля. */
 trait SendPwRecoverEmail
   extends SioController
-  with IMailer
-  with IEsClient
+  with IMailerWrapperDi
   with MaybeAuth
 {
+
+  import mCommonDi._
 
   /**
    * Отправка письма юзеру. Это статический метод, но он сильно завязан на внутренности sio-контроллеров,
@@ -97,6 +98,8 @@ trait PwRecover
   with IIdentUtil
   with EmailPwRegUtil
 {
+
+  import mCommonDi._
 
   /** Маппинг формы восстановления пароля. */
   private def recoverPwFormM: EmailPwRecoverForm_t = {

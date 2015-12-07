@@ -1,22 +1,17 @@
 package controllers
 
 import com.google.inject.Inject
-import io.suggest.event.SioNotifierStaticClientI
-import models.mbill.{MTariffStat, MTariffFee, MTariff, MContract}
-import org.elasticsearch.client.Client
-import play.api.i18n.MessagesApi
-import util.PlayMacroLogsImpl
-import play.api.data._, Forms._
-import util.acl._
-import models._
+import io.suggest.ym.parsers.Price
+import models.mbill.{MContract, MTariff, MTariffFee, MTariffStat}
+import models.mproj.MCommonDi
+import org.joda.time.DateTime
+import play.api.data.Forms._
+import play.api.data._
 import util.FormUtil._
+import util.PlayMacroLogsImpl
+import util.acl._
 import views.html.sys1.market.billing.tariff._
 import views.html.sys1.market.billing.tariff.stat._
-import org.joda.time.DateTime
-import play.api.db.Database
-import io.suggest.ym.parsers.Price
-
-import scala.concurrent.ExecutionContext
 
 /**
  * Suggest.io
@@ -25,13 +20,7 @@ import scala.concurrent.ExecutionContext
  * Description: Работа с fee- и stat-тарифами в биллинге.
  */
 class SysMarketBillingTariff @Inject() (
-  mNodeCache                    : MAdnNodeCache,
-  override val _contextFactory  : Context2Factory,
-  override val messagesApi      : MessagesApi,
-  override val db               : Database,
-  override implicit val ec      : ExecutionContext,
-  implicit val esClient         : Client,
-  override implicit val sn      : SioNotifierStaticClientI
+  override val mCommonDi          : MCommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
@@ -41,9 +30,10 @@ class SysMarketBillingTariff @Inject() (
 {
 
   import LOGGER._
+  import mCommonDi._
 
-  private def nameKM = "name" -> nonEmptyText(maxLength = 128)
-  private def enabledKM = "enabled"   -> boolean
+  private def nameKM      = "name"      -> nonEmptyText(maxLength = 128)
+  private def enabledKM   = "enabled"   -> boolean
   private def dateFirstKM = "dateFirst" -> jodaDate("dd.MM.yyyy HH:mm")
 
   /** Генератор форм для различных тарифов абонплаты. */

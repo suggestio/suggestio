@@ -3,15 +3,13 @@ package controllers
 import java.net.{MalformedURLException, URL}
 
 import com.google.inject.Inject
-import models.Context2Factory
 import models.im.{MImg3_, MImgT}
-import play.api.i18n.MessagesApi
-import util.{FormUtil, PlayMacroLogsImpl}
+import models.mproj.MCommonDi
+import play.api.data.Forms._
+import play.api.data._
 import util.acl.IsSuperuser
+import util.{FormUtil, PlayMacroLogsImpl}
 import views.html.sys1.img._
-import play.api.data._, Forms._
-
-import scala.concurrent.ExecutionContext
 
 /**
  * Suggest.io
@@ -24,9 +22,7 @@ import scala.concurrent.ExecutionContext
 class SysImg @Inject() (
   mImg3                           : MImg3_,
   override val sysImgMakeUtil     : SysImgMakeUtil,
-  override val _contextFactory    : Context2Factory,
-  override val messagesApi        : MessagesApi,
-  override implicit val ec        : ExecutionContext
+  override val mCommonDi          : MCommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
@@ -35,6 +31,7 @@ class SysImg @Inject() (
 {
 
   import LOGGER._
+  import mCommonDi._
 
   /** Маппинг для поисковой формы, который пытается распарсить ссылку с img qs или просто img qs. */
   def imgFormM: Form[MImgT] = Form(
@@ -100,9 +97,8 @@ class SysImg @Inject() (
    * @param im Данные по запрашиваемой картинке.
    */
   def showOne(im: MImgT) = IsSuperuser.async { implicit request =>
-    val metaFut = im.permMetaCached
     // TODO Искать, где используется эта картинка.
-    metaFut map { metaOpt =>
+    for (metaOpt <- im.permMetaCached) yield {
       Ok(showOneTpl(im, metaOpt))
     }
   }
@@ -114,7 +110,7 @@ class SysImg @Inject() (
    */
   def deleteOneSubmit(im: MImgT) = IsSuperuser.async { implicit request =>
     // TODO Удалять на ВСЕХ НОДАХ из кеша /picture/local/
-    im.delete map { _ =>
+    for (_ <- im.delete) yield {
       val (msg, rdr) = if (im.isOriginal) {
         "Оригинал удалён." -> routes.SysImg.index()
       } else {

@@ -2,23 +2,20 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.bill.TxnsListConstants
-import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
-import io.suggest.playx.ICurrentConf
+import models._
 import models.jsm.init.MTargets
-import models.mbill.{MTxn, MTariffDaily, MContract, MDailyMmpsTplArgs}
-import org.elasticsearch.client.Client
+import models.mbill.{MContract, MDailyMmpsTplArgs, MTariffDaily, MTxn}
+import models.mproj.MCommonDi
 import org.elasticsearch.search.sort.SortOrder
-import play.api.i18n.MessagesApi
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 import util.acl._
-import models._
 import util.async.AsyncUtil
 import util.img.GalleryUtil
 import views.html.lk.billing._
-import play.api.db.Database
-import scala.concurrent.{ExecutionContext, Future}
+
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -28,41 +25,37 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 class MarketLkBilling @Inject() (
   galleryUtil                     : GalleryUtil,
-  override val messagesApi        : MessagesApi,
-  db                              : Database,
-  override val mNodeCache         : MAdnNodeCache,
-  override val current            : play.api.Application,
-  override val _contextFactory    : Context2Factory,
-  override val errorHandler       : ErrorHandler,
-  override implicit val ec        : ExecutionContext,
-  implicit val esClient           : Client,
-  override implicit val sn        : SioNotifierStaticClientI
+  override val mCommonDi          : MCommonDi
 )
   extends SioController
   with PlayMacroLogsImpl
-  with ICurrentConf
   with IsAdnNodeAdmin
   with IsAuth
   with IsAuthNode
 {
 
   import LOGGER._
+  import mCommonDi._
 
   val TXNS_PER_PAGE: Int = configuration.getInt("market.billing.txns.page.size") getOrElse 10
 
 
   /** Отобразить какую-то страницу с реквизитами для платежа. */
-  def paymentRequsites(adnId: String) = IsAdnNodeAdmin(adnId).apply { implicit request =>
-    val mbcs = db.withConnection { implicit c =>
-      MContract.findForAdn(adnId, isActive = Some(true))
-    }
-    mbcs.headOption match {
-      case Some(mbc) =>
-        Ok(billPaymentBankTpl(request.adnNode, mbc))
+  def paymentRequsites(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
+    val mbcsFut = Future {
+      db.withConnection { implicit c =>
+        MContract.findForAdn(adnId, isActive = Some(true))
+      }
+    }(AsyncUtil.jdbcExecutionContext)
+    for (mbcs <- mbcsFut) yield {
+      mbcs.headOption match {
+        case Some(mbc) =>
+          Ok(billPaymentBankTpl(request.adnNode, mbc))
 
-      case None =>
-        // Нет заключенных договоров, оплата невозможна.
-        errorHandler.http404ctx
+        case None =>
+          // Нет заключенных договоров, оплата невозможна.
+          errorHandler.http404ctx
+      }
     }
   }
 

@@ -1,33 +1,31 @@
 package controllers
 
+import java.sql.SQLException
+
+import com.github.nscala_time.time.OrderingImplicits._
 import com.google.inject.Inject
-import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
-import io.suggest.playx.ICurrentConf
+import models._
 import models.adv._
 import models.adv.direct._
-import models.adv.tpl.{MAdvForAdTplArgs, MAdvHistoryTplArgs, MCurrentAdvsTplArgs, MAdvPricing}
-import org.elasticsearch.client.Client
-import play.api.i18n.MessagesApi
+import models.adv.tpl.{MAdvForAdTplArgs, MAdvHistoryTplArgs, MCurrentAdvsTplArgs}
+import models.mproj.MCommonDi
+import play.api.data._
+import play.api.mvc.{AnyContent, Result}
 import play.twirl.api.Html
+import util.PlayMacroLogsImpl
 import util.acl._
-import models._
-import play.api.db.Database
-import com.github.nscala_time.time.OrderingImplicits._
-import util.adv.{AdvFormUtil, DirectAdvFormUtil, CtlGeoAdvUtil}
+import util.adv.{AdvFormUtil, CtlGeoAdvUtil, DirectAdvFormUtil}
 import util.async.AsyncUtil
+import util.billing.{Bill2Util, MmpDailyBilling}
 import util.lk.LkAdUtil
 import util.n2u.N2NodesUtil
 import util.showcase.ShowcaseUtil
 import views.html.lk.adv._
-import views.html.lk.adv.widgets.price._
 import views.html.lk.adv.direct._
-import util.PlayMacroLogsImpl
-import scala.concurrent.{ExecutionContext, Future}
-import play.api.mvc.{Result, AnyContent}
-import java.sql.SQLException
-import util.billing.{Bill2Util, MmpDailyBilling}
-import play.api.data._
+import views.html.lk.adv.widgets.price._
+
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -47,19 +45,10 @@ class MarketAdv @Inject() (
   advFormUtil                     : AdvFormUtil,
   bill2Util                       : Bill2Util,
   override val n2NodesUtil        : N2NodesUtil,
-  override val mNodeCache         : MAdnNodeCache,
-  override val messagesApi        : MessagesApi,
-  override val current            : play.api.Application,
-  override val db                 : Database,
-  override val _contextFactory    : Context2Factory,
-  errorHandler                    : ErrorHandler,
-  override implicit val ec        : ExecutionContext,
-  override implicit val esClient  : Client,
-  override implicit val sn        : SioNotifierStaticClientI
+  override val mCommonDi          : MCommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
-  with ICurrentConf
   with CanAdvertiseAd
   with CanReceiveAdvReq
   with AdvWndAccess
@@ -67,7 +56,7 @@ class MarketAdv @Inject() (
 {
 
   import LOGGER._
-
+  import mCommonDi._
 
   val ADVS_MODE_SELECT_LIMIT = configuration.getInt("adv.short.limit") getOrElse 2
 

@@ -29,6 +29,8 @@ trait MarketAdPreview
   with IsAdnNodeAdmin
 {
 
+  import mCommonDi._
+
   /**
    * Сабмит формы редактирования карточки для генерации превьюшки.
    * @param adnId id узла, в рамках которого происходит работа.

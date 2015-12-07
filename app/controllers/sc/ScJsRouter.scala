@@ -1,6 +1,5 @@
 package controllers.sc
 
-import io.suggest.playx.ICurrentApp
 import util.acl.MaybeAuth
 import views.js.sc.jsRouterTpl
 import play.api.Play
@@ -13,9 +12,10 @@ import play.api.Play
  */
 trait ScJsRouter
   extends ScController
-  with ICurrentApp
   with MaybeAuth
 {
+
+  import mCommonDi._
 
   /**
    * Отрендерить js-код роутера вопрошающему.

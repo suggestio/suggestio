@@ -1,11 +1,9 @@
 package util.acl
 
 import controllers.{SioController, MyConfName}
-import io.suggest.di.IExecutionContext
-import io.suggest.playx.ICurrentConf
+import models.mproj.IMCommonDi
 import play.api.mvc._
-import util._
-import util.xplay.ICacheApi
+import util.PlayMacroLogsI
 import scala.concurrent.{Promise, Future}
 import scala.concurrent.duration._
 import play.api.mvc.Result
@@ -25,10 +23,10 @@ import play.api.mvc.Result
 trait BruteForceProtectBase
   extends PlayMacroLogsI
   with MyConfName
-  with ICurrentConf
-  with ICacheApi
-  with IExecutionContext
+  with IMCommonDi
 {
+
+  import mCommonDi._
 
   /** Шаг задержки. Добавляемая задержка ответа будет кратна этому лагу. */
   val BRUTEFORCE_LAG_MS = configuration.getInt(s"bfp.$MY_CONF_NAME.lag_ms") getOrElse BRUTEFORCE_ATTACK_LAG_MS_DFLT

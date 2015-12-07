@@ -1,6 +1,6 @@
 package controllers.sc
 
-import _root_.util.di.{INodeCache, IScUtil, IScStatUtil}
+import _root_.util.di.{IScUtil, IScStatUtil}
 import _root_.util.jsa.{JsAppendById, JsAction, SmRcvResp, Js}
 import _root_.util.n2u.IN2NodesUtilDi
 import io.suggest.common.css.FocusedTopLeft
@@ -30,10 +30,11 @@ trait ScFocusedAdsBase
   extends ScController
   with PlayMacroLogsI
   with IScUtil
-  with INodeCache
   with ScCssUtil
   with IN2NodesUtilDi
 {
+
+  import mCommonDi._
 
   /** Базовая логика обработки запросов сбора данных по рекламным карточкам и компиляции оных в результаты выполнения запросов. */
   trait FocusedAdsLogic extends AdCssRenderArgs {
@@ -476,6 +477,8 @@ trait ScFocusedAds
   with IScStatUtil
   with MaybeAuth
 {
+
+  import mCommonDi._
 
   /** Экшен для рендера горизонтальной выдачи карточек.
     * @param adSearch Поисковый запрос.

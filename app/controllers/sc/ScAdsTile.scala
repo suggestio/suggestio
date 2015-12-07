@@ -6,7 +6,6 @@ import _root_.util.blocks.BgImg
 import _root_.util.di.{IScUtil, IScNlUtil, IScStatUtil}
 import _root_.util.jsa.{JsAppendById, JsAction, SmRcvResp, Js}
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
-import io.suggest.playx.ICurrentConf
 import models.im.make.{MakeResult, Makers}
 import models.msc._
 import play.api.mvc.Result
@@ -31,11 +30,12 @@ import models._
 trait ScAdsTileBase
   extends ScController
   with PlayMacroLogsI
-  with ICurrentConf
   with IScNlUtil
   with IScUtil
   with ScCssUtil
 {
+
+  import mCommonDi._
 
   /** Изменябельная логика обработки запроса рекламных карточек для плитки. */
   trait TileAdsLogic extends AdCssRenderArgs {
@@ -217,6 +217,8 @@ trait ScAdsTile
   with IScStatUtil
   with MaybeAuth
 {
+
+  import mCommonDi._
 
   /** Начальный размер буффера сборки ответа на запрос findAds(). */
   private val TILE_JS_RESP_BUFFER_SIZE_BYTES: Int = configuration.getInt("sc.tiles.jsresp.buffer.size.bytes") getOrElse 8192

@@ -1,6 +1,6 @@
 package controllers.sysctl
 
-import controllers.{IMailer, SioController}
+import controllers.SioController
 import io.suggest.model.n2.extra.{MNodeExtras, MSlInfo, MAdnExtra}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBusinessInfo, MAddress, MBasicMeta}
@@ -14,6 +14,7 @@ import io.suggest.ym.model.common.AdnMemberShowLevels.LvlMap_t
 import io.suggest.ym.model.common.AdnMemberShowLevels
 import util.PlayMacroLogsDyn
 import util.acl.AbstractRequestWithPwOpt
+import util.mail.IMailerWrapperDi
 
 /**
  * Suggest.io
@@ -247,7 +248,7 @@ class SysMarketUtil extends PlayMacroLogsDyn {
 
 
 /** Функционал контроллеров для отправки письма с доступом на узел. */
-trait SmSendEmailInvite extends SioController with IMailer {
+trait SmSendEmailInvite extends SioController with IMailerWrapperDi {
 
   /** Выслать письмо активации. */
   def sendEmailInvite(ea: EmailActivation, adnNode: MNode)(implicit request: AbstractRequestWithPwOpt[AnyContent]) {

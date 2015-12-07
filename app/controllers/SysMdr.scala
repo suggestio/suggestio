@@ -2,25 +2,22 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.common.fut.FutureUtil
-import io.suggest.di.IEsClient
-import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.model.n2.edge.{MNodeEdges, MEdgeInfo}
+import io.suggest.model.n2.edge.{MEdgeInfo, MNodeEdges}
+import models._
 import models.mdr._
+import models.mproj.MCommonDi
 import models.msys.MSysMdrFreeAdvsTplArgs
-import org.elasticsearch.client.Client
 import org.joda.time.DateTime
-import play.api.i18n.MessagesApi
+import play.api.data.Form
 import play.api.mvc.Result
 import util.PlayMacroLogsImpl
-import util.acl.{RequestWithAd, IsSuperuserMad, IsSuperuser}
+import util.acl.{IsSuperuser, IsSuperuserMad, RequestWithAd}
 import util.lk.LkAdUtil
 import util.n2u.N2NodesUtil
 import util.showcase.ShowcaseUtil
 import views.html.sys1.mdr._
-import models._
-import play.api.data.Form
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -31,22 +28,17 @@ import scala.concurrent.{ExecutionContext, Future}
 class SysMdr @Inject() (
   lkAdUtil                          : LkAdUtil,
   scUtil                            : ShowcaseUtil,
-  mNodeCache                        : MAdnNodeCache,
   n2NodesUtil                       : N2NodesUtil,
-  override val _contextFactory      : Context2Factory,
-  override val messagesApi          : MessagesApi,
-  override implicit val ec          : ExecutionContext,
-  override implicit val esClient    : Client,
-  override implicit val sn          : SioNotifierStaticClientI
+  override val mCommonDi            : MCommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
-  with IEsClient
   with IsSuperuser
   with IsSuperuserMad
 {
 
   import LOGGER._
+  import mCommonDi._
 
   /** Отобразить начальную страницу раздела модерации рекламных карточек. */
   def index = IsSuperuser { implicit request =>
@@ -108,7 +100,8 @@ class SysMdr @Inject() (
 
 
   private def banFreeAdvFormM = {
-    import play.api.data._, Forms._
+    import play.api.data._
+    import Forms._
     import util.FormUtil._
     Form(
       "reason" -> nonEmptyText(minLength = 4, maxLength = 1024)

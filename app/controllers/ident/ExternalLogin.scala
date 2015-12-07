@@ -1,33 +1,31 @@
 package controllers.ident
 
 import com.google.inject.Inject
-import controllers.{routes, SioController}
-import io.suggest.di.{IExecutionContext, IEsClient}
+import controllers.{SioController, routes}
 import io.suggest.model.n2.node.common.MNodeCommon
-import io.suggest.model.n2.node.meta.{MBusinessInfo, MPersonMeta, MBasicMeta, MMeta}
-import io.suggest.playx.ICurrentApp
-import models.mext.{MExtServices, ILoginProvider}
+import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
+import models.mext.{ILoginProvider, MExtServices}
+import models.mproj.MCommonDi
 import models.msession.{CustomTtl, Keys}
-import models.{MNode, MNodeTypes, ExtRegConfirmForm_t, ExternalCall, Context}
 import models.usr._
+import models.{Context, ExtRegConfirmForm_t, ExternalCall, MNode, MNodeTypes}
 import play.api.data.Form
 import play.api.mvc._
-import play.api.Play.{current, configuration}
 import play.twirl.api.Html
 import securesocial.controllers.ProviderControllerHelper._
 import securesocial.core.RuntimeEnvironment.Default
-import securesocial.core.services.RoutesService
 import securesocial.core._
-import util.di.{INodesUtil, IIdentUtil}
-import util.xplay.SetLangCookieUtil
-import util.{PlayMacroLogsDyn, FormUtil, PlayMacroLogsI}
+import securesocial.core.services.RoutesService
 import util.acl._
+import util.di.{IIdentUtil, INodesUtil}
 import util.ident.IdentUtil
+import util.xplay.SetLangCookieUtil
+import util.{FormUtil, PlayMacroLogsDyn, PlayMacroLogsI}
 import views.html.ident.reg._
 import views.html.ident.reg.ext._
 
 import scala.collection.immutable.ListMap
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 import scala.concurrent.duration._
 
 /**
@@ -41,12 +39,13 @@ class ExternalLogin_ @Inject() (
   routesSvc                       : SsRoutesService,
   ssUserService                   : SsUserService,
   override val identUtil          : IdentUtil,
-  override implicit val ec        : ExecutionContext
+  mCommonDi                       : MCommonDi
 )
   extends PlayMacroLogsDyn
-  with IExecutionContext
   with IIdentUtil
 {
+
+  import mCommonDi._
 
   /** Фильтровать присылаемый ttl. */
   val MAX_SESSION_TTL_SECONDS = {
@@ -115,12 +114,12 @@ trait ExternalLogin
   extends SioController
   with PlayMacroLogsI
   with SetLangCookieUtil
-  with ICurrentApp
-  with IEsClient
   with CanConfirmIdpReg
   with INodesUtil
   with MaybeAuth
 {
+
+  import mCommonDi._
 
   /** Доступ к DI-инстансу */
   val externalLogin: ExternalLogin_ = current.injector.instanceOf[ExternalLogin_]

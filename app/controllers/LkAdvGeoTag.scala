@@ -2,25 +2,23 @@ package controllers
 
 import com.google.inject.Inject
 import controllers.ctag.NodeTagsEdit
-import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.model.geo.{Distance, CircleGs, GeoPoint}
-import models.maps.MapViewState
-import models.{GeoIp, Context2Factory}
-import models.adv.gtag.{MAdvFormResult, GtForm_t, MForAdTplArgs}
+import io.suggest.model.geo.{CircleGs, Distance, GeoPoint}
+import models.GeoIp
+import models.adv.gtag.{GtForm_t, MAdvFormResult, MForAdTplArgs}
 import models.jsm.init.MTargets
-import org.elasticsearch.client.Client
+import models.maps.MapViewState
+import models.mproj.MCommonDi
 import org.elasticsearch.common.unit.DistanceUnit
 import org.joda.time.LocalDate
-import play.api.i18n.MessagesApi
 import play.api.mvc.Result
 import util.PlayMacroLogsImpl
-import util.acl.{RequestWithAdAndProducer, CanAdvertiseAdUtil, CanAdvertiseAd}
+import util.acl.{CanAdvertiseAd, CanAdvertiseAdUtil, RequestWithAdAndProducer}
 import util.adv.AdvFormUtil
 import util.billing.Bill2Util
 import util.tags.{GeoTagsFormUtil, TagsEditFormUtil}
 import views.html.lk.adv.gtag._
 
-import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.Future
 
 /**
   * Suggest.io
@@ -34,17 +32,15 @@ class LkAdvGeoTag @Inject() (
   bill2Util                       : Bill2Util,
   override val tagsEditFormUtil   : TagsEditFormUtil,
   override val canAdvAdUtil       : CanAdvertiseAdUtil,
-  override val _contextFactory    : Context2Factory,
-  override val messagesApi        : MessagesApi,
-  override implicit val esClient  : Client,
-  override implicit val ec        : ExecutionContext,
-  override implicit val sn        : SioNotifierStaticClientI
+  override val mCommonDi          : MCommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
   with CanAdvertiseAd
   with NodeTagsEdit
 {
+
+  import mCommonDi._
 
   /**
    * Экшен рендера страницы размещения карточки в теге с географией.

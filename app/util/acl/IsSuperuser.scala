@@ -1,6 +1,5 @@
 package util.acl
 
-import io.suggest.di.IExecutionContext
 import models.req.SioReqMd
 import scala.concurrent.Future
 import util.PlayMacroLogsDyn
@@ -32,7 +31,13 @@ trait IsSuperuserUtilCtl extends OnUnauthUtilCtl {
 }
 
 
-trait IsSuperuser extends IsSuperuserUtilCtl with IExecutionContext {
+trait IsSuperuser
+  extends IsSuperuserUtilCtl
+  with CookieCleanupSupport
+  with Csrf
+{
+
+  import mCommonDi._
 
   trait IsSuperuserBase
     extends ActionBuilder[AbstractRequestWithPwOpt]

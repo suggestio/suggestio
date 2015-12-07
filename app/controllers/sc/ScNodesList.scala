@@ -3,7 +3,6 @@ package controllers.sc
 import java.util.NoSuchElementException
 import _root_.util.di.{IScNlUtil, IScStatUtil}
 import _root_.util.jsa.{Js, SmRcvResp}
-import io.suggest.playx.ICurrentConf
 import models.jsm.NodeListResp
 import models.msc._
 import play.api.mvc.Result
@@ -27,6 +26,8 @@ trait ScNodesListBase
   with PlayMacroLogsI
   with IScNlUtil
 {
+
+  import mCommonDi._
 
   /** Гибкая логика обработки запроса сбора списка узлов. */
   protected trait FindNodesLogic {
@@ -114,10 +115,11 @@ trait ScNodesListBase
 /** Аддон к Showcase-контроллеру, добавляющий обработку запроса списка узлов. */
 trait ScNodesList
   extends ScNodesListBase
-  with ICurrentConf
   with IScStatUtil
   with MaybeAuth
 {
+
+  import mCommonDi._
 
   /** Кеш ответа findNodes() на клиенте. Это существенно ускоряет навигацию. */
   protected val FIND_NODES_CACHE_SECONDS: Int = {

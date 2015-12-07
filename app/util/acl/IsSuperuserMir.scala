@@ -1,7 +1,6 @@
 package util.acl
 
 import controllers.SioController
-import io.suggest.di.{IEsClient, IExecutionContext}
 import models.MInviteRequest
 import models.req.SioReqMd
 import play.api.mvc.{ActionBuilder, Result, Request}
@@ -18,11 +17,11 @@ import scala.concurrent.Future
  */
 trait IsSuperuserMir
   extends SioController
-  with IExecutionContext
-  with IEsClient
   with IsSuperuserUtilCtl
   with IInviteRequest
 {
+
+  import mCommonDi._
 
   trait IsSuperuserMirBase
     extends ActionBuilder[MirRequest]

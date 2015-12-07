@@ -1,9 +1,7 @@
 package util.acl
 
 import controllers.SioController
-import io.suggest.di.{IExecutionContext, IEsClient}
 import models.req.SioReqMd
-import util.di.{IErrorHandler, INodeCache}
 import scala.concurrent.Future
 import play.api.mvc.{RequestHeader, Request, ActionBuilder, Result}
 
@@ -15,12 +13,11 @@ import play.api.mvc.{RequestHeader, Request, ActionBuilder, Result}
  */
 trait IsSuperuserAdnNode
   extends SioController
-  with IEsClient
-  with IExecutionContext
   with IsSuperuserUtilCtl
-  with INodeCache
-  with IErrorHandler
+  with Csrf
 {
+
+  import mCommonDi._
 
   /** Часто нужно админить узлы рекламной сети. Тут комбинация IsSuperuser + IsAdnAdmin. */
   sealed trait IsSuperuserAdnNodeBase
