@@ -90,8 +90,6 @@ GET  /lk/bill/pricing/wnd/:adnId        @controllers.MarketLkBilling._renderNode
 GET  /lk/node/eact/:adnId/:eaId         @controllers.MarketLkAdn.nodeOwnerInviteAcceptForm(adnId, eaId)
 POST /lk/node/eact/:adnId/:eaId         @controllers.MarketLkAdn.nodeOwnerInviteAcceptFormSubmit(adnId, eaId)
 
-POST  /error/occured/in/showcase        @controllers.RemoteError.handleShowcaseError
-
 ## Обращение в тех.поддерку зареганного клиента sio-market.
 GET  /lk/support/:adnId                 @controllers.MarketLkSupport.supportFormNode(adnId, r: Option[String] ?= None)
 POST /lk/support/:adnId                 @controllers.MarketLkSupport.supportFormNodeSubmit(adnId, r: Option[String] ?= None)
@@ -135,6 +133,8 @@ GET  /sc/tags/search                    @controllers.MarketShowcase.tagsSearch(t
 GET  /market/nodes/search               @controllers.MarketShowcase.findNodes(a: msc.MScNodeSearchArgs)
 ## Прямой доступ к синхронной выдаче
 GET  /market/geo/syncsite               @controllers.MarketShowcase.syncGeoSite(a: msc.ScJsState ?= msc.ScJsState.empty, x: msc.SiteQsArgs ?= msc.SiteQsArgs.empty)
+## Дамп ошибок выдачи.
+POST /error/occured/in/showcase         @controllers.MarketShowcase.handleScError
 
 
 # market+join: Присоединение к sio-market.

@@ -2,6 +2,7 @@ package util.acl
 
 import controllers.{SioController, MyConfName}
 import models.mproj.IMCommonDi
+import models.req.ExtReqHdr
 import play.api.mvc._
 import util.PlayMacroLogsI
 import scala.concurrent.{Promise, Future}
@@ -57,7 +58,7 @@ trait BruteForceProtectBase
   }
 
   /** Система асинхронного платформонезависимого противодействия брутфорс-атакам. */
-  def bruteForceProtected(f: => Future[Result])(implicit request: SioRequestHeader): Future[Result] = {
+  def bruteForceProtected(f: => Future[Result])(implicit request: ExtReqHdr): Future[Result] = {
     // Для противодействию брутфорсу добавляем асинхронную задержку выполнения проверки по методике https://stackoverflow.com/a/17284760
     val ck = BRUTEFORCE_CACHE_PREFIX + request.remoteAddress
     val prevTryCount: Int = cache.get[Int](ck) getOrElse 0
@@ -101,25 +102,25 @@ trait BruteForceProtectBase
   }
 
   /** Подозрение на брутфорс. В нормале - увеличивается лаг. */
-  def onBruteForceAttackSuspicion(f: => Future[Result], lagMs: Int, prevTryCount: Int)(implicit request: SioRequestHeader): Future[Result] = {
+  def onBruteForceAttackSuspicion(f: => Future[Result], lagMs: Int, prevTryCount: Int)(implicit request: ExtReqHdr): Future[Result] = {
     LOGGER.debug(s"${bruteForceLogPrefix}Inserting lag $lagMs ms, try = $prevTryCount")
     onBruteForceReplyLagged(f, lagMs)
   }
 
   /** Замечен брутфорс. */
-  def onBruteForceAttackDetected(f: => Future[Result], lagMs: Int, prevTryCount: Int)(implicit request: SioRequestHeader): Future[Result] = {
+  def onBruteForceAttackDetected(f: => Future[Result], lagMs: Int, prevTryCount: Int)(implicit request: ExtReqHdr): Future[Result] = {
     LOGGER.warn(s"${bruteForceLogPrefix}Attack is going on! Inserting fat lag $lagMs ms, prev.try count = $prevTryCount.")
     onBruteForceReplyLagged(f, lagMs)
   }
 
   /** Наступил дедлайн, т.е. атака точно подтверждена, и пора дропать запросы. */
-  def onBruteForceDeadline(f: => Future[Result], prevTryCount: Int)(implicit request: SioRequestHeader): Future[Result] = {
+  def onBruteForceDeadline(f: => Future[Result], prevTryCount: Int)(implicit request: ExtReqHdr): Future[Result] = {
     LOGGER.warn(bruteForceLogPrefix + "Too many bruteforce retries. Dropping request...")
     bruteForceRequestDrop
   }
 
   /** Если нет возможности использовать implicit request, тут явная версия: */
-  def bruteForceProtectedNoimpl(request: SioRequestHeader)(f: => Future[Result]): Future[Result] = {
+  def bruteForceProtectedNoimpl(request: ExtReqHdr)(f: => Future[Result]): Future[Result] = {
     bruteForceProtected(f)(request)
   }
 

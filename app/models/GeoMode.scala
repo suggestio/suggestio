@@ -4,12 +4,12 @@ import java.net.InetAddress
 import io.suggest.geo.GeoConstants
 import io.suggest.model.geo
 import io.suggest.model.geo.{GeoDistanceQuery, Distance}
+import models.req.ExtReqHdr
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import org.elasticsearch.common.unit.DistanceUnit
 import play.api.http.HeaderNames
 import play.api.mvc.QueryStringBindable
 import play.api.Play.{current, configuration}
-import util.acl.SioRequestHeader
 import util.async.AsyncUtil
 import util.xplay.CacheUtil
 import util.{PlayLazyMacroLogsImpl, PlayMacroLogsImpl}
@@ -105,7 +105,7 @@ sealed trait GeoMode {
    * @param request Текущий реквест.
    * @return Фьючерс с результатом, пригодным для отправки в модели, поддерживающие геолокацию.
    */
-  def geoSearchInfoOpt(implicit request: SioRequestHeader): Future[Option[GeoSearchInfo]]
+  def geoSearchInfoOpt(implicit request: ExtReqHdr): Future[Option[GeoSearchInfo]]
 
   def exactGeodata: Option[geo.GeoPoint]
 
@@ -140,7 +140,7 @@ trait GeoSearchInfo {
 case object GeoNone extends GeoMode {
   override def isWithGeo = false
   override def toQsStringOpt = None
-  override def geoSearchInfoOpt(implicit request: SioRequestHeader): Future[Option[GeoSearchInfo]] = {
+  override def geoSearchInfoOpt(implicit request: ExtReqHdr): Future[Option[GeoSearchInfo]] = {
     Future successful None
   }
   override def exactGeodata = None
@@ -170,7 +170,7 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
 
   override def isWithGeo = true
   override def toQsStringOpt = Some(GeoConstants.GEO_MODE_IP)
-  override def geoSearchInfoOpt(implicit request: SioRequestHeader): Future[Option[GeoSearchInfo]] = {
+  override def geoSearchInfoOpt(implicit request: ExtReqHdr): Future[Option[GeoSearchInfo]] = {
     // Запускаем небыстрый синхронный поиск в отдельном потоке.
     val ra = getRemoteAddr
     ip2rangeCity(ra).map { resultOpt =>
@@ -205,7 +205,7 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
 
   case class Ip2RangeResult(city: IpGeoBaseCity, range: IpGeoBaseRange)
 
-  def getRemoteAddr(implicit request: SioRequestHeader): String = {
+  def getRemoteAddr(implicit request: ExtReqHdr): String = {
     val ra0 = request.remoteAddress
     // Если это локальный адрес, то нужно его подменить на адрес офиса cbca. Это нужно для облегчения отладки.
     // Обёрнуто в try чтобы подавлять сюрпризы содержимого remoteAddress.
@@ -278,7 +278,7 @@ final case class GeoLocation(geoPoint: GeoPoint, accuracyMeters: Option[Double] 
   override def isWithGeo = true
   override def toQsStringOpt = Some(geoPoint.toQsStr)
 
-  override def geoSearchInfoOpt(implicit request: SioRequestHeader): Future[Option[GeoSearchInfo]] = {
+  override def geoSearchInfoOpt(implicit request: ExtReqHdr): Future[Option[GeoSearchInfo]] = {
     val ra = GeoIp.getRemoteAddr
     GeoIp.ip2rangeCity(ra) map { _ipGeoLoc =>
       val res = new GeoSearchInfo {

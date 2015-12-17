@@ -21,7 +21,7 @@ import util.img.{DynImgUtil, GalleryUtil}
 import util.jsa.init.ITargets
 import util.n2u.N2NodesUtil
 import scala.util.Random
-import SioRequestHeader.{firstForwarded, lastForwarded}
+import models.req.ExtReqHdr.{firstForwarded, lastForwarded}
 import play.api.routing.Router.Tags._
 
 import scala.util.matching.Regex

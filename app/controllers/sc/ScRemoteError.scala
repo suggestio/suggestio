@@ -1,14 +1,13 @@
-package controllers
+package controllers.sc
 
-import com.google.inject.Inject
+import controllers.SioController
 import models.GeoIp
 import models.merr.{MRemoteError, MRemoteErrorTypes}
-import models.mproj.MCommonDi
 import play.api.data.Forms._
 import play.api.data._
 import util.FormUtil._
 import util.PlayMacroLogsImpl
-import util.acl.{BruteForceProtectCtl, SioAction}
+import util.acl.{BruteForceProtectCtl, MaybeAuth}
 
 /**
  * Suggest.io
@@ -17,15 +16,13 @@ import util.acl.{BruteForceProtectCtl, SioAction}
  * Description: Сборка js-ошибок с клиентов и сохранение оных в модель.
  * Клиенты могут слать всякую хрень.
  */
-class RemoteError @Inject() (
-  override val mCommonDi          : MCommonDi
-)
+trait ScRemoteError
   extends SioController
   with PlayMacroLogsImpl
   with BruteForceProtectCtl
+  with MaybeAuth
 {
 
-  import LOGGER._
   import mCommonDi._
 
   override def BRUTEFORCE_TRY_COUNT_DEADLINE_DFLT: Int = 10
@@ -66,11 +63,11 @@ class RemoteError @Inject() (
    * Реакция на ошибку в showcase (в выдаче). Если слишком много запросов с одного ip, то экшен начнёт тупить.
    * @return NoContent или NotAcceptable.
    */
-  def handleShowcaseError = SioAction.async { implicit request =>
+  def handleScError = MaybeAuth.async { implicit request =>
     bruteForceProtected {
       errorFormM.bindFromRequest().fold(
         {formWithErrors =>
-          debug("handleError(): Request body bind failed:\n " + formatFormErrors(formWithErrors))
+          LOGGER.debug("handleError(): Request body bind failed:\n " + formatFormErrors(formWithErrors))
           NotAcceptable("Failed to parse response. See server logs.")
         },
         {merr0 =>
@@ -78,7 +75,7 @@ class RemoteError @Inject() (
             .recover {
               // Should never happen. Подавляем возможную ошибку получения геоданных запроса.
               case ex: Exception =>
-                warn("Suppressing exception for gsiOpt", ex)
+                LOGGER.warn("Suppressing exception for gsiOpt", ex)
                 None
             }
             .flatMap { gsiOpt =>

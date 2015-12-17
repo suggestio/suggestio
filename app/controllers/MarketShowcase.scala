@@ -46,3 +46,4 @@ class MarketShowcase @Inject() (
   with ScIndexAdOpen
   with ScJsRouter
   with ScTags
+  with ScRemoteError
