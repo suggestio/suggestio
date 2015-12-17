@@ -4,7 +4,7 @@ import com.google.inject.{Inject, Singleton}
 import io.suggest.common.m.sql.ITableName
 import io.suggest.common.slick.driver.ExPgSlickDriverT
 import io.suggest.mbill2.m.common.InsertOneReturning
-import io.suggest.mbill2.m.contract.{MContracts, ContractIdSlickIdx, ContractIdSlickFk}
+import io.suggest.mbill2.m.contract.{FindByContractId, MContracts, ContractIdSlickIdx, ContractIdSlickFk}
 import io.suggest.mbill2.m.gid.{GetById, Gid_t, GidSlick}
 import io.suggest.mbill2.m.price._
 import io.suggest.mbill2.util.PgaNamesMaker
@@ -30,6 +30,7 @@ class MBalances @Inject() (
   with ITableName
   with GetById
   with InsertOneReturning
+  with FindByContractId
 {
 
   import driver.api._
