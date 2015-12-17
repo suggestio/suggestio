@@ -4,18 +4,15 @@ import java.util.Currency
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.common.fut.FutureUtil
-import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.mbill2.m.contract.{MContract, MContracts}
 import io.suggest.mbill2.m.gid.Gid_t
-import io.suggest.mbill2.m.order.{MOrderStatuses, MOrders, MOrder}
+import io.suggest.mbill2.m.order.{MOrder, MOrderStatuses, MOrders}
 import models.adv.tpl.MAdvPricing
+import models.mproj.MCommonDi
 import models.{CurrencyCodeOpt, MNode, MPrice}
-import org.elasticsearch.client.Client
-import play.api.db.slick.DatabaseConfigProvider
 import util.PlayMacroLogsImpl
-import util.di.ISlickDbConfig
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 /**
@@ -26,16 +23,14 @@ import scala.util.{Failure, Success}
  */
 @Singleton
 class Bill2Util @Inject() (
-  override val dbConfigProvider   : DatabaseConfigProvider,
   mOrders                         : MOrders,
   mContracts                      : MContracts,
-  implicit private val ec         : ExecutionContext,
-  implicit private val esClient   : Client,
-  implicit private val sn         : SioNotifierStaticClientI
+  mCommonDi                       : MCommonDi
 )
   extends PlayMacroLogsImpl
-  with ISlickDbConfig
 {
+
+  import mCommonDi._
 
   /**
    * Найти и вернуть контракт для указанного id.

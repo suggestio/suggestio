@@ -1,7 +1,6 @@
 package util.di
 
 import play.api.db.slick.DatabaseConfigProvider
-import slick.driver.JdbcProfile
 
 /**
  * Suggest.io
@@ -11,14 +10,7 @@ import slick.driver.JdbcProfile
  */
 trait ISlickDbConfigProvider {
 
-  protected def dbConfigProvider: DatabaseConfigProvider
+  def dbConfigProvider: DatabaseConfigProvider
 
 }
 
-
-/** Получение инстанса dbConfig, с которым можно работать. */
-trait ISlickDbConfig extends ISlickDbConfigProvider {
-
-  protected val dbConfig = dbConfigProvider.get[JdbcProfile]
-
-}

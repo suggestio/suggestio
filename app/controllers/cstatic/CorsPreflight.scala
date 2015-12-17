@@ -30,5 +30,4 @@ trait CorsPreflight extends SioController {
     }
   }
 
-
 }

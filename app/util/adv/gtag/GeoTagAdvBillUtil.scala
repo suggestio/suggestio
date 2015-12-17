@@ -2,18 +2,17 @@ package util.adv.gtag
 
 import com.google.inject.Inject
 import io.suggest.mbill2.m.gid.Gid_t
-import io.suggest.mbill2.m.item.tags.{MItemTags, MItemTag}
-import io.suggest.mbill2.m.item.{MItems, MItem}
 import io.suggest.mbill2.m.item.status.MItemStatuses
+import io.suggest.mbill2.m.item.tags.{MItemTag, MItemTags}
 import io.suggest.mbill2.m.item.typ.MItemTypes
+import io.suggest.mbill2.m.item.{MItem, MItems}
 import models.MPrice
 import models.adv.gtag.MAdvFormResult
-import play.api.db.slick.DatabaseConfigProvider
+import models.mproj.MCommonDi
 import slick.dbio.DBIOAction
 import util.billing.Bill2Util
-import util.di.ISlickDbConfig
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -22,15 +21,13 @@ import scala.concurrent.{ExecutionContext, Future}
  * Description: Утиль для биллинга размещений в тегах.
  */
 class GeoTagAdvBillUtil @Inject() (
-  override val dbConfigProvider       : DatabaseConfigProvider,
   bill2Util                           : Bill2Util,
   mItems                              : MItems,
   mItemTags                           : MItemTags,
-  implicit val ec                     : ExecutionContext
-)
-  extends ISlickDbConfig
-{
+  mCommonDi                           : MCommonDi
+) {
 
+  import mCommonDi._
   import dbConfig.driver.api._
 
   /**
