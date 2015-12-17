@@ -1,11 +1,11 @@
 package models
 
 import io.suggest.common.fut.FutureUtil
+import io.suggest.di.{IEsClient, IExecutionContext}
 import io.suggest.model.es.{EsModelT, EsModelStaticT}
 import util.xplay.ICacheApi
 import scala.concurrent.duration.FiniteDuration
-import scala.concurrent.{Future, ExecutionContext}
-import org.elasticsearch.client.Client
+import scala.concurrent.Future
 import io.suggest.event.subscriber.SnClassSubscriber
 import io.suggest.event.SNStaticSubscriber
 import io.suggest.event.SioNotifier.Event
@@ -27,7 +27,10 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
   extends SNStaticSubscriber
   with SnClassSubscriber
   with ICacheApi
+  with IExecutionContext
+  with IEsClient
 {
+
 
   type StaticModel_t <: EsModelStaticT { type T = T1 }
   def companion: StaticModel_t
@@ -54,7 +57,7 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
    * @param id id исходного документа.
    * @return Тоже самое, что и исходный getById().
    */
-  def getById(id: String)(implicit ec: ExecutionContext, client: Client): Future[Option[T1]] = {
+  def getById(id: String): Future[Option[T1]] = {
     // 2014.nov.24: Форсируем полный асинхрон при работе с кешем.
     val ck = cacheKey(id)
     Future { cache.get[T1](ck) }
@@ -68,7 +71,7 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
    * @param acc0 Необязательный начальный аккамулятор.
    * @return Результаты в неопределённом порядке.
    */
-  def multiGet(ids: TraversableOnce[String], acc0: List[T1] = Nil)(implicit ec: ExecutionContext, client: Client): Future[Seq[T1]] = {
+  def multiGet(ids: TraversableOnce[String], acc0: List[T1] = Nil): Future[Seq[T1]] = {
     val (cached, nonCachedIds) = ids.foldLeft [(List[T1], List[String])] (acc0 -> Nil) {
       case ((accCached, notCached), id) =>
         getByIdFromCache(id) match {
@@ -95,8 +98,7 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
     resultFut
   }
 
-  def multiGetMap(ids: TraversableOnce[String], acc0: List[T1] = Nil)
-                 (implicit ec: ExecutionContext, client: Client): Future[Map[String, T1]] = {
+  def multiGetMap(ids: TraversableOnce[String], acc0: List[T1] = Nil): Future[Map[String, T1]] = {
     multiGet(ids, acc0)
       .map { companion.resultsToMap }
   }
@@ -107,7 +109,7 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
    * @param idOpt Опциональный id.
    * @return Тоже самое, что и [[getById]].
    */
-  def maybeGetByIdCached(idOpt: Option[String])(implicit ec: ExecutionContext, client: Client): Future[Option[T1]] = {
+  def maybeGetByIdCached(idOpt: Option[String]): Future[Option[T1]] = {
     FutureUtil.optFut2futOpt(idOpt)(getById)
   }
 
@@ -117,7 +119,7 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
    * @param ck0 Ключ в кеше.
    * @return Тоже самое, что и исходный getById().
    */
-  def getByIdAndCache(id: String, ck0: String = null)(implicit ec: ExecutionContext, client: Client): Future[Option[T1]] = {
+  def getByIdAndCache(id: String, ck0: String = null): Future[Option[T1]] = {
     val ck: String = if (ck0 == null) cacheKey(id) else ck0
     val resultFut = companion.getById(id)
     resultFut onSuccess {

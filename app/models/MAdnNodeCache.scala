@@ -1,11 +1,13 @@
 package models
 
 import com.google.inject.{Singleton, Inject}
+import org.elasticsearch.client.Client
 import play.api.Configuration
 import io.suggest.event._
 import io.suggest.event.SioNotifier.Event
 import play.api.cache.CacheApi
 
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 
 /**
@@ -18,8 +20,11 @@ import scala.concurrent.duration._
  */
 @Singleton
 class MAdnNodeCache @Inject() (
-  configuration         : Configuration,
-  override val cache    : CacheApi
+  // Тут нельзя инжектить MCommonDi, т.к. будет circular dep.
+  configuration                   : Configuration,
+  override val cache              : CacheApi,
+  override implicit val ec        : ExecutionContext,
+  override implicit val esClient  : Client
 )
   extends EsModelCache[MNode]
 {
@@ -54,6 +59,14 @@ class MAdnNodeCache @Inject() (
         e.nodeId
 
       case _ => null
+    }
+  }
+
+  def getByIdType(nodeId: String, ntype: MNodeType): Future[Option[MNode]] = {
+    for (mnodeOpt <- getById(nodeId)) yield {
+      mnodeOpt.filter { mnode =>
+        mnode.common.ntype == ntype
+      }
     }
   }
 

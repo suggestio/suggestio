@@ -7,7 +7,7 @@ import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.MNode
 import models.mproj.MCommonDi
-import models.usr.{MExtIdent, SuperUsers}
+import models.usr.{MExtIdent, MSuperUsers}
 import play.api.mvc._
 
 import scala.concurrent.Future
@@ -20,7 +20,8 @@ import scala.concurrent.Future
  */
 @Singleton
 class IdentUtil @Inject() (
-  mCommonDi   : MCommonDi
+  mSuperUsers   : MSuperUsers,
+  mCommonDi     : MCommonDi
 ) {
 
   import mCommonDi._
@@ -57,7 +58,7 @@ class IdentUtil @Inject() (
       Option(rdrOrNull)
         // Если некуда отправлять, а юзер - админ, то отправить в /sys/.
         .orElse {
-          if ( SuperUsers.isSuperuserId(personId) ) {
+          if ( mSuperUsers.isSuperuserId(personId) ) {
             Some(routes.SysMarket.sysIndex())
           } else {
             None

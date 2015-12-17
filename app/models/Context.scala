@@ -125,14 +125,6 @@ trait Context extends MyHostsT with ISioReqMd {
   /** Данные текущего реквеста. */
   implicit val request: RequestHeader
 
-  /** Попробовать кастануть request как экземпляр RichRequestHeader, если возможно. */
-  def maybeRichRequest: Option[RichRequestHeader] = {
-    request match {
-      case rrh: RichRequestHeader => Some(rrh)
-      case _                      => None
-    }
-  }
-
   /** Данные о текущем юзере. */
   def pwOpt: PwOpt_t
 
@@ -329,5 +321,4 @@ case class Context2 @Inject() (
 
   override def pwOpt    = request.pwOpt
   override def sioReqMd = request.sioReqMd
-  override def maybeRichRequest = Some(request)
 }

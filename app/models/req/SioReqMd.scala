@@ -28,11 +28,10 @@ object SioReqMd {
   def empty: SioReqMd = apply()
 
   /** Простая генерация srm на основе юзера. */
-  def fromPwOpt(pwOpt: PwOpt_t, jsInitTargets: Seq[MTarget] = Nil): Future[SioReqMd] = {
+  def fromPwOpt(pwOpt: PwOpt_t): Future[SioReqMd] = {
     PersonWrapper.findUserName(pwOpt) map { usernameOpt =>
       SioReqMd(
-        usernameOpt   = usernameOpt,
-        jsInitTargets0 = jsInitTargets
+        usernameOpt   = usernameOpt
       )
     }
   }
@@ -86,23 +85,6 @@ trait ISioReqMd {
 
   /** 2015.apr.29: Поддержка дополнительных целей js-инциализации, передается в action builder через конструктор. */
   def jsInitTargets0     : Seq[MTarget]
-}
-
-
-/** Враппер для опционального значения [[ISioReqMd]]. */
-trait SioReqMdOptWrapper extends ISioReqMd {
-  /** Завернутое опциональное значение. */
-  def sioReqMdOpt: Option[ISioReqMd]
-
-  override def usernameOpt        = sioReqMdOpt.flatMap(_.usernameOpt)
-  override def billBallanceOpt    = sioReqMdOpt.flatMap(_.billBallanceOpt)
-  override def nodeUnseenEvtsCnt  = sioReqMdOpt.flatMap(_.nodeUnseenEvtsCnt)
-  override def jsInitTargets0: Seq[MTarget] = {
-    sioReqMdOpt match {
-      case Some(v)  => v.jsInitTargets0
-      case None     => Nil
-    }
-  }
 }
 
 

@@ -37,12 +37,11 @@ trait ICommonDi
   with ICacheApi
   with ICacheApiUtil
   with IDb
-  with ISlickDbConfigProvider
+  with ISlickDbConfig
   with INodeCache
 {
   def contextFactory  : Context2Factory
   def messagesApi     : MessagesApi
-  def dbConfig        = dbConfigProvider.get[JdbcProfile]
 }
 
 
@@ -64,9 +63,6 @@ class MCommonDi @Inject() (
   override implicit val sn        : SioNotifierStaticClientI
 )
   extends ICommonDi
-{
-  override val dbConfig = super.dbConfig
-}
 
 
 /** Интерфейс к DI-полю со значением [[MCommonDi]] */

@@ -1,17 +1,10 @@
 package models.usr
 
-import io.suggest.model.es._
 import util.PlayMacroLogsImpl
-import io.suggest.event.SioNotifierStaticClientI
-import EsModelUtil._
-import models.MNode
-import io.suggest.util.SioEsUtil._
 import org.elasticsearch.client.Client
 import play.api.Play.current
 import play.api.cache.Cache
-import play.api.libs.json._
 
-import scala.collection.Map
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -43,8 +36,9 @@ object MPerson extends PlayMacroLogsImpl {
   def findUsernameCached(personId: String)(implicit ec: ExecutionContext, client: Client): Future[Option[String]] = {
     val cacheKey = personCacheKey(personId)
     Cache.getAs[String](cacheKey) match {
-      case Some(result) =>
-        Future.successful(Some(result))
+      case res @ Some(result) =>
+        Future.successful(res)
+
       case None =>
         val resultFut = findUsername(personId)
         resultFut onSuccess {
@@ -57,6 +51,8 @@ object MPerson extends PlayMacroLogsImpl {
     }
   }
 
+  private[usr] val mSuperUsers = current.injector.instanceOf[MSuperUsers]
+
 }
 
 
@@ -66,7 +62,7 @@ trait MPersonLinks {
   def personId: String
 
   def isSuperuser: Boolean = {
-    SuperUsers.isSuperuserId(personId)
+    MPerson.mSuperUsers.isSuperuserId( personId )
   }
 
 }

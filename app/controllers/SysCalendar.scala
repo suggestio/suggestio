@@ -229,7 +229,7 @@ class SysCalendar @Inject() (
   sealed trait CanAlterCalBase extends ActionBuilder[CalendarRequest] {
     def calId: String
     override def invokeBlock[A](request: Request[A], block: (CalendarRequest[A]) => Future[Result]): Future[Result] = {
-      val pwOpt = PersonWrapper getFromRequest request
+      val pwOpt = PersonWrapper.getFromRequest(request)
       if (PersonWrapper.isSuperuser(pwOpt)) {
         val srmFut = SioReqMd.fromPwOpt(pwOpt)
         mCalendar.getById(calId) flatMap {
