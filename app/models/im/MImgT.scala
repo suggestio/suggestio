@@ -167,7 +167,7 @@ abstract class MImgT extends MAnyImgT {
   /** Имя файла картинки. Испрользуется как сериализованное представление данных по картинке. */
   override lazy val fileName: String = super.fileName
 
-  /** Прочитать картинку из реального хранилища в файл, если ещё не прочитана. */
+  /** Прочитать картинку из локального хранилища в файл, если ещё не прочитана. */
   override lazy val toLocalImg: Future[Option[MLocalImg]] = {
     val inst = toLocalInstance
     if (inst.isExists) {
@@ -179,10 +179,16 @@ abstract class MImgT extends MAnyImgT {
       IteeUtil.writeIntoFile(enumer, inst.file)
         .map { _ => Option(inst) }
         .recover { case ex: Throwable =>
-          if (ex.isInstanceOf[NoSuchElementException])
-            LOGGER.debug("toLocalImg: img not found in permanent storage: " + inst, ex)
-          else
+          if (ex.isInstanceOf[NoSuchElementException]) {
+            if (LOGGER.underlying.isDebugEnabled) {
+              if (isOriginal)
+                LOGGER.debug("toLocalImg: img not found in permanent storage: " + inst.file, ex)
+              else
+                LOGGER.debug("toLocalImg: non-orig img not in permanent storage: " + inst.file)
+            }
+          } else {
             LOGGER.warn(s"toLocalImg: _getImgBytes2 or writeIntoFile ${inst.file} failed", ex)
+          }
           None
         }
     }

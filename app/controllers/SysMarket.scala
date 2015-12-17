@@ -58,17 +58,27 @@ class SysMarket @Inject() (
   with IsSuperuserMad
   with IsSuperuserAdnNode
   with IsSuperuser
+  with IsSuperuserOr404
 {
 
   import LOGGER._
   import mCommonDi._
   import sysMarketUtil._
 
-  /** Индексная страница продажной части. Тут ссылки на дальнейшие страницы. */
+  /**
+   * Корень /sys/ indexTpl.scala.html для системной панели.
+   *
+   * Изначально оно жило в ctl.Sys, который был замёржен в ctl.Application,
+   * который тоже был упразднён 2015.dec.17.
+   */
+  def sysIndex = IsSuperuserOr404 { implicit request =>
+    Ok( views.html.sys1.indexTpl() )
+  }
+
+  /** Корень /sys/marker/. Тут ссылки на дальнейшие страницы в рамках market. */
   def index = IsSuperuser { implicit request =>
     Ok(marketIndexTpl())
   }
-
 
   /** Страница с унифицированным списком узлов рекламной сети в алфавитном порядке с делёжкой по memberType. */
   def adnNodesList(args: MSysNodeListArgs) = IsSuperuser.async { implicit request =>

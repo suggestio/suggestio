@@ -1,10 +1,12 @@
 package controllers
 
 import com.google.inject.Inject
+import controllers.cstatic.{CorsPreflight, SiteMapsXml, RobotsTxt}
 import models.mproj.MCommonDi
 import play.api.Play.isProd
 import play.api.mvc._
-import util.acl.{IsSuperuserOrDevelOr404, MaybeAuth}
+import util.acl.{IsAuth, IsSuperuserOrDevelOr404, MaybeAuth}
+import util.seo.SiteMapUtil
 import util.xplay.SecHeadersFilter
 import views.html.static._
 
@@ -17,11 +19,16 @@ import views.html.static._
  */
 
 class Static @Inject() (
+  override val siteMapUtil        : SiteMapUtil,
   override val mCommonDi          : MCommonDi
 )
   extends SioControllerImpl
   with MaybeAuth
   with IsSuperuserOrDevelOr404
+  with IsAuth
+  with RobotsTxt
+  with SiteMapsXml
+  with CorsPreflight
 {
 
   import mCommonDi._
@@ -109,5 +116,15 @@ class Static @Inject() (
   }
 
   def assetsSudo(path: String, asset: Assets.Asset) = vassetsSudo(path, asset)
+
+
+  /**
+   * Экшен для скрытого продления сессии в фоне. Может дергаться в js'ом незаметно.
+   * @return 204 No Content - всё ок.
+   *         Другой код - сессия истекла.
+   */
+  def keepAliveSession = IsAuth { implicit request =>
+    NoContent
+  }
 
 }

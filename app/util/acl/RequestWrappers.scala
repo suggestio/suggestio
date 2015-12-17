@@ -23,7 +23,8 @@ class SioWrappedRequest[A](request: Request[A]) extends WrappedRequest(request) 
 
 /** Абстрактный реквест, в рамках которого содержится инфа о текущем sio-юзере. */
 abstract class AbstractRequestWithPwOpt[A](request: Request[A])
-  extends SioWrappedRequest(request) with RichRequestHeader
+  extends SioWrappedRequest(request)
+  with RichRequestHeader
 
 
 object SioRequestHeader extends PlayMacroLogsImpl {
@@ -94,7 +95,7 @@ object RichRequestHeader {
   }
 }
 
-/** Вынос полей из [[AbstractRequestWithPwOpt]]. */
+/** Интерфейс полей из [[AbstractRequestWithPwOpt]]. */
 trait RichRequestHeader extends RequestHeader {
   /** Данные о юзере. */
   def pwOpt: PwOpt_t
@@ -107,7 +108,7 @@ trait RichRequestHeader extends RequestHeader {
 }
 
 
-/** Расширение play RequestHeader функциями S.io. */
+/** Расширение play RequestHeader полями и функциями S.io. */
 trait SioRequestHeader extends RequestHeader {
   import SioRequestHeader._
 

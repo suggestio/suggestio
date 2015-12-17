@@ -2,5 +2,5 @@
 User-Agent: *
 Disallow: /help
 
-Sitemap: @ctx.SC_URL_PREFIX@routes.Application.siteMapXml()
+Sitemap: @ctx.SC_URL_PREFIX@routes.Static.siteMapXml()
 Host: @ctx.SC_HOST_PORT

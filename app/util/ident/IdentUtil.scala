@@ -27,6 +27,7 @@ class IdentUtil @Inject() (
 
   /** При логине юзера по email-pw мы определяем его присутствие в маркете, и редиректим в ЛК магазина или в ЛК ТЦ. */
   def getMarketRdrCallFor(personId: String): Future[Option[Call]] = {
+
     // Нам тут не надо выводить элементы, нужно лишь определять кол-во личных кабинетов и данные по ним.
     val msearch = new MNodeSearchDfltImpl {
       override def outEdges: Seq[ICriteria] = {
@@ -35,9 +36,12 @@ class IdentUtil @Inject() (
       }
       override def limit = 2
     }
-    for (
+
+    for {
       mnodes <- MNode.dynSearch(msearch)
-    ) yield {
+
+    } yield {
+
       val rdrOrNull: Call = if (mnodes.isEmpty) {
         // У юзера нет рекламных узлов во владении. Некуда его редиректить, вероятно ошибся адресом.
         null
@@ -49,11 +53,12 @@ class IdentUtil @Inject() (
         // У юзера есть несколько узлов во владении. Нужно предоставить ему выбор.
         routes.MarketLkAdn.lkList()
       }
+
       Option(rdrOrNull)
         // Если некуда отправлять, а юзер - админ, то отправить в /sys/.
         .orElse {
           if ( SuperUsers.isSuperuserId(personId) ) {
-            Some(routes.Application.sysIndex())
+            Some(routes.SysMarket.sysIndex())
           } else {
             None
           }

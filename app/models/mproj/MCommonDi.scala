@@ -8,6 +8,7 @@ import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.playx.{CacheApiUtil, ICurrentConf}
 import models.{MAdnNodeCache, Context2Factory}
 import org.elasticsearch.client.Client
+import play.api.Application
 import play.api.cache.CacheApi
 import play.api.db.Database
 import play.api.db.slick.DatabaseConfigProvider
@@ -55,7 +56,7 @@ class MCommonDi @Inject() (
   override val mNodeCache         : MAdnNodeCache,
   override val db                 : Database,   // Anorm, спилить потом.
   override val dbConfigProvider   : DatabaseConfigProvider,
-  override implicit val current   : play.api.Application,
+  override implicit val current   : Application,
   override implicit val ec        : ExecutionContext,
   override implicit val esClient  : Client,
   override implicit val sn        : SioNotifierStaticClientI
