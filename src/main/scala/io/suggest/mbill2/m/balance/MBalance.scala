@@ -3,8 +3,9 @@ package io.suggest.mbill2.m.balance
 import com.google.inject.{Inject, Singleton}
 import io.suggest.common.m.sql.ITableName
 import io.suggest.common.slick.driver.ExPgSlickDriverT
+import io.suggest.mbill2.m.common.InsertOneReturning
 import io.suggest.mbill2.m.contract.{MContracts, ContractIdSlickIdx, ContractIdSlickFk}
-import io.suggest.mbill2.m.gid.{Gid_t, GidSlick}
+import io.suggest.mbill2.m.gid.{GetById, Gid_t, GidSlick}
 import io.suggest.mbill2.m.price._
 import io.suggest.mbill2.util.PgaNamesMaker
 import slick.lifted.ProvenShape
@@ -27,9 +28,14 @@ class MBalances @Inject() (
   with CurrencyCodeSlick
   with ContractIdSlickFk with ContractIdSlickIdx
   with ITableName
+  with GetById
+  with InsertOneReturning
 {
 
   import driver.api._
+
+  override type Table_t = MBalancesTable
+  override type El_t    = MBalance
 
   override val TABLE_NAME = "balance"
 
@@ -41,7 +47,7 @@ class MBalances @Inject() (
 
   /** slick-описание таблицы остатков на счетах. */
   class MBalancesTable(tag: Tag)
-    extends Table[MBalance](tag, TABLE_NAME)
+    extends Table[El_t](tag, TABLE_NAME)
     with GidColumn
     with PriceColumn with CurrencyColumn
     with AmountColumn
@@ -63,7 +69,11 @@ class MBalances @Inject() (
 
   }
 
-  val query = TableQuery[MBalancesTable]
+  override protected def _withId(el: El_t, id: Gid_t): El_t = {
+    el.copy(id = Some(id))
+  }
+
+  override val query = TableQuery[MBalancesTable]
 
 }
 
