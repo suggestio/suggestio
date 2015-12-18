@@ -1,6 +1,6 @@
 package util.acl
 
-import models.req.{ExtReqHdr, SioReqMd}
+import models.req.{RequestHeaderWrap, ExtReqHdr, SioReqMd}
 import util.acl.PersonWrapper._
 import play.api.mvc._
 import scala.concurrent.{ExecutionContext, Future}
@@ -29,8 +29,8 @@ object RichRequestHeader {
   def apply(rh: RequestHeader)(implicit ec: ExecutionContext): Future[RichRequestHeader] = {
     val _pwOpt = PersonWrapper.getFromRequest(rh)
     SioReqMd.fromPwOpt(_pwOpt).map { srm =>
-      new RequestHeaderWrapper with RichRequestHeader {
-        override def underlying   = rh
+      new RequestHeaderWrap with RichRequestHeader {
+        override def request   = rh
         override def pwOpt        = _pwOpt
         override def sioReqMd     = srm
       }
@@ -63,22 +63,9 @@ case class RequestWithPwOpt[A](pwOpt: PwOpt_t, request: Request[A], sioReqMd: Si
 
 
 
-/** Враппер над RequestHeader. */
-trait RequestHeaderWrapper extends RequestHeader {
-  def underlying: RequestHeader
-  override def id             = underlying.id
-  override def secure         = underlying.secure
-  override def uri            = underlying.uri
-  override def remoteAddress  = underlying.remoteAddress
-  override def queryString    = underlying.queryString
-  override def method         = underlying.method
-  override def headers        = underlying.headers
-  override def path           = underlying.path
-  override def version        = underlying.version
-  override def tags           = underlying.tags
-}
 
-case class RequestHeaderAsRequest(underlying: RequestHeader) extends Request[Nothing] with RequestHeaderWrapper {
+
+case class RequestHeaderAsRequest(request: RequestHeader) extends Request[Nothing] with RequestHeaderWrap {
   override def body: Nothing = {
     throw new UnsupportedOperationException("This is request headers wrapper. Body never awailable here.")
   }
