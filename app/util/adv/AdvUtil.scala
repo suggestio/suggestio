@@ -27,7 +27,7 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 @Singleton
 class AdvUtil @Inject() (
-  mNodeCache              : MAdnNodeCache,
+  mNodeCache              : MNodeCache,
   mmpDailyBilling         : MmpDailyBilling,
   configuration           : Configuration,
   db                      : Database,

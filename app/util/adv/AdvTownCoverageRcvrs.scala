@@ -18,7 +18,7 @@ import models._
  * Здесь калькулятор карты экстра-ресиверов, который реализует этот принцип. 
  */
 class AdvTownCoverageRcvrs @Inject() (
-  mNodeCache                      : MAdnNodeCache,
+  mNodeCache                      : MNodeCache,
   configuration                   : Configuration,
   implicit private val esClient   : Client,
   implicit private val ec         : ExecutionContext

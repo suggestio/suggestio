@@ -18,7 +18,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 /** Статическая утиль для вычисления списка экстра-ресиверов на основе гео-родительских связей. */
 class AdvFreeGeoParentRcvrs @Inject() (
-  mNodeCache                      : MAdnNodeCache,
+  mNodeCache                      : MNodeCache,
   configuration                   : Configuration,
   implicit private val esClient   : Client,
   implicit private val ec         : ExecutionContext

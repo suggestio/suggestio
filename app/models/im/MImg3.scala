@@ -34,7 +34,7 @@ import util.SiowebEsUtil.client
 class MImg3_ @Inject() (
   implicit val swfsStorage  : SwfsStorage_,
   val mMedia                : MMedia_,
-  val mNodeCache            : MAdnNodeCache
+  val mNodeCache            : MNodeCache
 )
   extends IMImgCompanion
   with PlayLazyMacroLogsImpl

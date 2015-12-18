@@ -6,7 +6,7 @@ import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.balance.{MBalances, MBalance}
 import io.suggest.mbill2.m.contract.{MContracts, MContract}
 import io.suggest.model.n2.node.MNodeTypes
-import models.{MAdnNodeCache, MNode}
+import models.{MNodeCache, MNode}
 import models.event.MEvent
 import models.event.search.MEventsSearchArgs
 import models.msession.{LoginTimestamp, Keys}
@@ -116,6 +116,7 @@ trait ISioUserT extends ISioUser {
   }
 
   override def mBalanceOptFut: Future[Seq[MBalance]] = {
+    // Мысленный эксперимент показал, что кеш здесь практически НЕ нужен. Работаем без кеша, заодно и проблем меньше.
     contractIdOptFut.flatMap { contractIdOpt =>
       contractIdOpt.fold [Future[Seq[MBalance]]] (Future.successful(Nil)) { contractId =>
         val action = mBalances.findByContractId(contractId)
@@ -139,7 +140,7 @@ class MsuStatic @Inject()(
   val mContracts                : MContracts,
   val mBalances                 : MBalances,
   // Не следует тут юзать MCommonDi, т.к. тут живёт слишком фундаментальный для проекта компонент.
-  val mNodeCache                : MAdnNodeCache,
+  val mNodeCache                : MNodeCache,
   override val dbConfigProvider : DatabaseConfigProvider,
   implicit val ec               : ExecutionContext,
   implicit val esClient         : Client

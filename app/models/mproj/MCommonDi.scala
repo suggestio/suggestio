@@ -6,7 +6,7 @@ import controllers.ErrorHandler
 import io.suggest.di.{ICacheApiUtil, IActorSystem, IEsClient, IExecutionContext}
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.playx.{CacheApiUtil, ICurrentConf}
-import models.{MAdnNodeCache, Context2Factory}
+import models.{MNodeCache, Context2Factory}
 import org.elasticsearch.client.Client
 import play.api.Application
 import play.api.cache.CacheApi
@@ -54,8 +54,8 @@ class MCommonDi @Inject() (
   override val actorSystem        : ActorSystem,
   override val cache              : CacheApi,
   override val cacheApiUtil       : CacheApiUtil,
-  override val mNodeCache         : MAdnNodeCache,
-  override val db                 : Database,   // Anorm, спилить потом.
+  override val mNodeCache         : MNodeCache,
+  override val db                 : Database, // Anorm, спилить потом.
   override val dbConfigProvider   : DatabaseConfigProvider,
   override implicit val current   : Application,
   override implicit val ec        : ExecutionContext,

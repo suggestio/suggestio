@@ -31,7 +31,7 @@ class ScStatUtil @Inject() (
   configuration           : Configuration,
   statUtil                : StatUtil,
   scStatSaver             : ScStatSaver,
-  mNodeCache              : MAdnNodeCache,
+  mNodeCache              : MNodeCache,
   implicit val ec         : ExecutionContext,
   implicit val esClient   : Client
 ) {

@@ -25,7 +25,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class ShowcaseNodeListUtil @Inject() (
-  mNodeCache              : MAdnNodeCache,
+  mNodeCache              : MNodeCache,
   configuration           : Configuration,
   implicit val ec         : ExecutionContext,
   implicit val esClient   : Client

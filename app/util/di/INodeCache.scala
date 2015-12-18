@@ -1,6 +1,6 @@
 package util.di
 
-import models.MAdnNodeCache
+import models.MNodeCache
 
 /**
  * Suggest.io
@@ -10,6 +10,6 @@ import models.MAdnNodeCache
  */
 trait INodeCache {
 
-  def mNodeCache: MAdnNodeCache
+  def mNodeCache: MNodeCache
 
 }

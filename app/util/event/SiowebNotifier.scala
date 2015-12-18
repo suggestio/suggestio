@@ -52,7 +52,7 @@ object SiowebNotifier
   protected def getStaticSubscribers: Seq[SNStaticSubscriber] = {
     List(
       // TODO inject
-      _inj[MAdnNodeCache],
+      _inj[MNodeCache],
       _inj[DeleteAdsOnAdnNodeDeleteSubscriber],
       _inj[DeleteAllAdvsOnAdDeleted],
       _inj[DelContractsWhenNodeDeleted],

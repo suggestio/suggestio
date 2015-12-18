@@ -19,7 +19,7 @@ import scala.concurrent.duration._
  * getByIdCached() не следует активно использовать в личном кабинете, т.к. она не гарантирует реалтайма.
  */
 @Singleton
-class MAdnNodeCache @Inject() (
+class MNodeCache @Inject() (
   // Тут нельзя инжектить MCommonDi, т.к. будет circular dep.
   configuration                   : Configuration,
   override val cache              : CacheApi,
