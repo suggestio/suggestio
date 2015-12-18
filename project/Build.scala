@@ -9,13 +9,11 @@ import PlayScalaJS.autoImport._
 
 object SiobixBuild extends Build {
 
+
   /** Общий код серверной и клиентской частей подсистемы внешнего размещения. */
   lazy val common = {
     val name = "common"
-    Project(
-      id = name,
-      base = file(name)
-    )
+    Project(id = name, base = file(name))
   }
 
   /** Утиль, была когда-то расшарена между siobix и sioweb. Постепенно стала просто свалкой. */
@@ -30,7 +28,9 @@ object SiobixBuild extends Build {
       .enablePlugins(ScalaJSPlugin, ScalaJSPlay)
       // Хз нужен ли этот инклюд сорцов прямо здесь.
       .settings(
-        Seq(common).map(p => unmanagedSourceDirectories in Compile <++= unmanagedSourceDirectories in (p, Compile)) : _*
+        List(common).map { p =>
+          unmanagedSourceDirectories in Compile <++= unmanagedSourceDirectories in (p, Compile)
+        } : _*
       )
   }
 
@@ -122,9 +122,7 @@ object SiobixBuild extends Build {
   /** Корневой проект. Он должен аггрегировать подпроекты. */
   lazy val root = {
     Project(id = "root", base = file("."))
-      .settings(
-        scalaVersion := "2.11.6"
-      )
+      .settings(scalaVersion := "2.11.7")
       .aggregate(common, lkAdvExtSjs, leafletSjs, mapRadSjs, lkSjs, util, swfs, n2, securesocial, scSjs, web21)
   }
 
