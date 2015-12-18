@@ -1,17 +1,17 @@
 package util.acl
 
-import models.msession.{LoginTimestamp, Keys}
 import models.usr.{MPersonLinks, MPerson}
 import models.{MNodeTypes, MNode}
 import play.api.mvc._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.PlayMacroLogsImpl
 import util.SiowebEsUtil.client
+import util.secure.SessionUtil
 import scala.concurrent.Future
+import play.api.Play.current
 
-object PersonWrapper extends PlayMacroLogsImpl {
+object PersonWrapper {
 
-  import LOGGER._
+  private val sessionUtil = current.injector.instanceOf[SessionUtil]
 
   type PwOpt_t = Option[PersonWrapper]
 
@@ -28,17 +28,7 @@ object PersonWrapper extends PlayMacroLogsImpl {
    * @return Option[PersonWrapper].
    */
   def getFromSession(implicit session: Session): PwOpt_t = {
-    session.get(Keys.PersonId.name)
-      // Если выставлен timestamp, то проверить валидность защищенного session ttl.
-      .filter { personId =>
-        val tstampOpt = LoginTimestamp.fromSession(session)
-        val result = tstampOpt
-          .exists { _.isTimestampValid() }
-        if (!result)
-          trace(s"getFromSession(): Session expired for user $personId. tstampRaw = $tstampOpt")
-        result
-      }
-      // Если всё ок, то завернуть в PersonWrapper.
+    sessionUtil.getPersonId(session)
       .map { PersonWrapper.apply }
   }
 

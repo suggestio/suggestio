@@ -6,14 +6,13 @@ import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.balance.{MBalances, MBalance}
 import io.suggest.mbill2.m.contract.{MContracts, MContract}
 import io.suggest.model.n2.node.MNodeTypes
+import models.jsm.init.MTarget
 import models.{MNodeCache, MNode}
 import models.event.MEvent
 import models.event.search.MEventsSearchArgs
-import models.msession.{LoginTimestamp, Keys}
 import models.usr.MSuperUsers
 import org.elasticsearch.client.Client
 import play.api.db.slick.DatabaseConfigProvider
-import play.api.mvc.{Session, RequestHeader}
 import util.PlayMacroLogsImpl
 import util.di.ISlickDbConfig
 
@@ -24,14 +23,13 @@ import scala.concurrent.{ExecutionContext, Future}
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 17.12.15 15:19
  * Description: Над-модель с расширенными данными, контекстными к пользовательской сессии.
+ * Это НЕ модель пользователя!
  *
  * Модель может быть пустой внутри, но инстас всегда существует независимо от данных в сессии,
  * т.е. в Option[] заворачиваеть нет нужды.
  *
  * Модель живёт в контексте реквеста и пришла на смену SioReqMd, Option[PersonWrapper],
  * RichRequestHeader, но ещё и c расширением возможностей.
- *
- * Некоторые поля инстансов модели могут быть асинхронными.
  */
 trait ISioUser {
 
@@ -64,6 +62,9 @@ trait ISioUser {
 
   /** Кол-во непрочитанных событий. */
   def unSeenEventsCountFut: Future[Option[Int]]
+
+  /** Дополнительные цели js-инициализации по мнению ActionBuilder'а. */
+  def jsiTgs: List[MTarget]
 
 }
 
@@ -128,9 +129,15 @@ trait ISioUserT extends ISioUser {
 }
 
 
-/** DI-factory для быстрой сборки экземпляров [[MSioUserLazy]]. */
+/** Guice factory для быстрой сборки экземпляров [[MSioUserLazy]]. */
 trait MSioUserLazyFactory {
-  def create(personIdOpt: Option[String]): MSioUserLazy
+  /**
+   * factory-метод для сборки инстансов [[MSioUserLazy]].
+   * @param personIdOpt id текущего юзера, если есть.
+   * @param jsiTgs js init targets, выставленные ActionBuilder'ом, если есть.
+   */
+  def apply(personIdOpt: Option[String],
+            jsiTgs: List[MTarget]): MSioUserLazy
 }
 
 /** Контейнер со статическими моделями для инстансов [[MSioUserLazy]]. */
@@ -148,10 +155,15 @@ class MsuStatic @Inject()(
   extends ISlickDbConfig
 
 
-
-/** Реализация модели [[ISioUser]], где все future-поля реализованы как lazy val. */
+/**
+ * Реализация модели [[ISioUser]], где все future-поля реализованы как lazy val.
+ * @param personIdOpt id текущего юзера.
+ * @param jsiTgs Список целей js-инициализации.
+ * @param msuStatics Статические модели, необходимые для успешной работы ленивых полей инстанса.
+ */
 case class MSioUserLazy @Inject() (
   @Assisted override val personIdOpt  : Option[String],
+  @Assisted override val jsiTgs       : List[MTarget],
   override val msuStatics             : MsuStatic
 )
   extends ISioUserT
@@ -168,6 +180,7 @@ case class MSioUserLazy @Inject() (
 /**
  * Статическая сторона модели пользователя sio, здесь живут высокоуровневые методы.
  * Именно этот класс необходимо юзать для всех задач.
+ * Этот класс по сути враппер над [[MSioUserLazyFactory]], имеющий дефолтовые значения некоторых аргументов.
  */
 @Singleton
 class MSioUsers @Inject() (
@@ -177,31 +190,16 @@ class MSioUsers @Inject() (
 {
 
   /**
-   * Извечь из реквеста данные о залогиненности юзера. Функция враппер над getPersonWrapperFromSession().
-   * @param request Реквест.
-   * @return Option[PersonWrapper].
+   * factory-метод с дефолтовыми значениями некоторых аргументов.
+   * @param personIdOpt Опционалньый id юзера. Экстрактиться из сессии с помощью SessionUtil.
+   * @param jsiTgs Список целей js-инициализации [Nil].
+   * @return Инстанс какой-то реализации [[ISioUser]].
    */
-  def fromRequest(implicit request: RequestHeader): ISioUser = {
-    fromSession(request.session)
-  }
-
-  /**
-   * Извечь данные о залогиненности юзера из сессии.
-   * @param session Сессия.
-   * @return Option[PersonWrapper].
-   */
-  def fromSession(session: Session): ISioUser = {
-    val personIdOpt = session.get(Keys.PersonId.name)
-      // Если выставлен timestamp, то проверить валидность защищенного session ttl.
-      .filter { personId =>
-        val tstampOpt = LoginTimestamp.fromSession(session)
-        val result = tstampOpt
-          .exists { _.isTimestampValid() }
-        if (!result)
-          LOGGER.trace(s"getFromSession(): Session expired for user $personId. tstampRaw = $tstampOpt")
-        result
-      }
-    factory.create(personIdOpt)
+  def apply(personIdOpt: Option[String], jsiTgs: List[MTarget] = Nil): ISioUser = {
+    factory(
+      personIdOpt = personIdOpt,
+      jsiTgs      = jsiTgs
+    )
   }
 
 }

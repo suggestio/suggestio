@@ -42,7 +42,7 @@ trait CanRecoverPwCtl
 
     override def invokeBlock[A](request: Request[A], block: (RecoverPwRequest[A]) => Future[Result]): Future[Result] = {
       lazy val logPrefix = s"CanRecoverPw($eActId): "
-      bruteForceProtectedNoimpl( SioWrappedRequest.request2sio(request) ) {
+      bruteForceProtectedNoimpl( new SioWrappedRequest(request) ) {
         val pwOpt = PersonWrapper.getFromRequest(request)
         val eaOptFut = EmailActivation.getById(eActId)
         val srmFut = SioReqMd.fromPwOpt(pwOpt)

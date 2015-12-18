@@ -5,13 +5,6 @@ import util.acl.PersonWrapper._
 import play.api.mvc._
 import scala.concurrent.{ExecutionContext, Future}
 
-
-object SioWrappedRequest {
-  def request2sio[A](request: Request[A]): SioWrappedRequest[A] = {
-    new SioWrappedRequest[A](request)
-  }
-}
-
 /** Экранизация WrappedRequest[A] с примесями нужд s.io. */
 class SioWrappedRequest[A](request: Request[A])
   extends WrappedRequest(request)
@@ -30,7 +23,7 @@ object RichRequestHeader {
     val _pwOpt = PersonWrapper.getFromRequest(rh)
     SioReqMd.fromPwOpt(_pwOpt).map { srm =>
       new RequestHeaderWrap with RichRequestHeader {
-        override def request   = rh
+        override def request      = rh
         override def pwOpt        = _pwOpt
         override def sioReqMd     = srm
       }

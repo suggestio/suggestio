@@ -1,11 +1,12 @@
 package util.acl
 
-import models.msession._
-import play.api.mvc._
-import scala.concurrent.Future
-import util.PlayMacroLogsImpl
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import models.msession.Keys._
+import models.msession._
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.mvc.{Result, Request, ActionBuilder}
+import util.PlayMacroLogsDyn
+
+import scala.concurrent.Future
 import scala.language.higherKinds
 
 /**
@@ -16,16 +17,13 @@ import scala.language.higherKinds
  * 2014.feb.06: Из-за добавления в сессию securesocial, csrf-token и т.д. нужно аккуратнее работать с сессией,
  * без использования withNewSession().
  */
-object ExpireSession extends PlayMacroLogsImpl
 
-import ExpireSession._
 
 /**
  * Трейт, добавляющий в сессию TTL. Добавляется в конце реализации ActionBuilder'а.
  * @tparam R тип реквеста, с которым работаем. Просто форвардится из декларации класса ActionBuilder'а.
  */
-trait ExpireSession[R[_]] extends ActionBuilder[R] {
-  import LOGGER._
+trait ExpireSession[R[_]] extends ActionBuilder[R] with PlayMacroLogsDyn {
 
   abstract override def invokeBlock[A](request: Request[A], block: (R[A]) => Future[Result]): Future[Result] = {
     super.invokeBlock(request, block) map { result =>
@@ -50,7 +48,7 @@ trait ExpireSession[R[_]] extends ActionBuilder[R] {
         val session1 = newTsOpt match {
           case None =>
             // Таймштамп истёк -- стереть из сессии таймштамп и username.
-            trace("invokeBlock(): Erasing expired session for person " + session0.get(PersonId.name))
+            LOGGER.trace("invokeBlock(): Erasing expired session for person " + session0.get(PersonId.name))
             val filteredKeySet = Keys.onlyLoginIter
               .map(_.name)
               .toSet
@@ -67,5 +65,6 @@ trait ExpireSession[R[_]] extends ActionBuilder[R] {
       }
     }
   }
+
 }
 
