@@ -3,6 +3,7 @@ package controllers.ident
 import controllers._
 import models.jsm.init.MTargets
 import models.msession.Keys
+import models.req.ISioReq
 import models.usr.{MPersonIdent, EmailActivation, EmailPwIdent}
 import play.api.data._
 import play.twirl.api.Html
@@ -42,7 +43,7 @@ trait SendPwRecoverEmail
    * @param email1 email юзера.
    * @return Фьючерс для синхронизации.
    */
-  protected def sendRecoverMail(email1: String)(implicit request: AbstractRequestWithPwOpt[_]): Future[_] = {
+  protected def sendRecoverMail(email1: String)(implicit request: ISioReq[_]): Future[_] = {
     // Надо найти юзера в базах PersonIdent, и если есть, то отправить письмецо.
     MPersonIdent.findIdentsByEmail(email1) flatMap { idents =>
       if (idents.nonEmpty) {
@@ -116,7 +117,7 @@ trait PwRecover
   }
 
   /** Рендер содержимого страницы с формой восстановления пароля. */
-  protected def _recoverPwStep1(form: EmailPwRecoverForm_t)(implicit request: AbstractRequestWithPwOpt[_]): Html = {
+  protected def _recoverPwStep1(form: EmailPwRecoverForm_t)(implicit request: ISioReq[_]): Html = {
     implicit val jsInitTgs = Seq(MTargets.CaptchaForm)
     val ctx = implicitly[Context]
     val colHtml = _emailColTpl(form)(ctx)

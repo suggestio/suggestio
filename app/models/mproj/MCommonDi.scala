@@ -6,6 +6,7 @@ import controllers.ErrorHandler
 import io.suggest.di.{ICacheApiUtil, IActorSystem, IEsClient, IExecutionContext}
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.playx.{CacheApiUtil, ICurrentConf}
+import models.req.MSioUsers
 import models.{MNodeCache, Context2Factory}
 import org.elasticsearch.client.Client
 import play.api.Application
@@ -15,6 +16,7 @@ import play.api.db.slick.DatabaseConfigProvider
 import play.api.i18n.MessagesApi
 import slick.driver.JdbcProfile
 import util.di._
+import util.secure.SessionUtil
 import util.xplay.ICacheApi
 
 import scala.concurrent.ExecutionContext
@@ -40,6 +42,8 @@ trait ICommonDi
   with ISlickDbConfig
   with INodeCache
 {
+  def mSioUsers       : MSioUsers
+  def sessionUtil     : SessionUtil
   def contextFactory  : Context2Factory
   def messagesApi     : MessagesApi
 }
@@ -55,6 +59,8 @@ class MCommonDi @Inject() (
   override val cache              : CacheApi,
   override val cacheApiUtil       : CacheApiUtil,
   override val mNodeCache         : MNodeCache,
+  override val sessionUtil        : SessionUtil,
+  override val mSioUsers          : MSioUsers,
   override val db                 : Database, // Anorm, спилить потом.
   override val dbConfigProvider   : DatabaseConfigProvider,
   override implicit val current   : Application,

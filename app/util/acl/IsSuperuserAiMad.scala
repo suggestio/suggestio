@@ -2,10 +2,9 @@ package util.acl
 
 import controllers.SioController
 import models.ai.MAiMad
-import models.req.SioReqMd
+import models.req.{SioReq, MAiMadReq}
 import scala.concurrent.Future
 import play.api.mvc.{Request, ActionBuilder, Result}
-import util.acl.PersonWrapper.PwOpt_t
 
 /**
  * Suggest.io
@@ -22,52 +21,41 @@ trait IsSuperuserAiMad
 
   /** IsSuperuser + доступ к указанному MAiMad. */
   trait IsSuperuserAiMadBase
-    extends ActionBuilder[AiMadRequest]
+    extends ActionBuilder[MAiMadReq]
     with IsSuperuserUtil
   {
 
-    /** id */
+    /** id описания карточки. */
     def aiMadId: String
 
-    override def invokeBlock[A](request: Request[A], block: (AiMadRequest[A]) => Future[Result]): Future[Result] = {
+    override def invokeBlock[A](request: Request[A], block: (MAiMadReq[A]) => Future[Result]): Future[Result] = {
       val madAiFut = MAiMad.getById(aiMadId)
-      val pwOpt = PersonWrapper.getFromRequest(request)
-      if (PersonWrapper isSuperuser pwOpt) {
-        val srmFut = SioReqMd.fromPwOpt(pwOpt)
+      val personIdOpt = sessionUtil.getPersonId(request)
+      val user = mSioUsers(personIdOpt)
+      if (user.isSuperUser) {
         madAiFut flatMap {
           case Some(madAi) =>
-            srmFut flatMap { srm =>
-              val req1 = AiMadRequest(madAi, pwOpt, request, srm)
-              block(req1)
-            }
+            val req1 = MAiMadReq(madAi, request, user)
+            block(req1)
 
           case None => aiMadNotFound
         }
+
       } else {
-        supOnUnauthFut(request, pwOpt)
+        val req1 = SioReq(request, user)
+        supOnUnauthFut(req1)
       }
     }
 
     def aiMadNotFound: Future[Result] = {
-      val res = NotFound(s"MAiMad($aiMadId) not found.")
-      Future successful res
+      NotFound(s"MAiMad($aiMadId) not found.")
     }
+
   }
 
 
   case class IsSuperuserAiMad(override val aiMadId: String)
     extends IsSuperuserAiMadBase
-    with ExpireSession[AiMadRequest]
+    with ExpireSession[MAiMadReq]
 
 }
-
-
-/** Реквест с доступом к aiMad. */
-case class AiMadRequest[A](
-  aiMad     : MAiMad,
-  pwOpt     : PwOpt_t,
-  request   : Request[A],
-  sioReqMd  : SioReqMd
-)
-  extends AbstractRequestWithPwOpt(request)
-

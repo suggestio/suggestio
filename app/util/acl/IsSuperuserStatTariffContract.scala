@@ -1,11 +1,11 @@
 package util.acl
 
-import models.mbill.{MTariffStat, MContract}
-import models.req.SioReqMd
+import models.mbill.{MContract, MTariffStat}
+import models.req.{MTariffStatContractReq, SioReq}
+import play.api.mvc.{ActionBuilder, Request, Result}
 import util.async.AsyncUtil
+
 import scala.concurrent.Future
-import play.api.mvc.{Request, ActionBuilder, Result}
-import util.acl.PersonWrapper.PwOpt_t
 
 /**
  * Suggest.io
@@ -20,16 +20,19 @@ trait IsSuperuserStatTariffContract
   import mCommonDi._
 
   trait IsSuperuserStatTariffContractBase
-    extends ActionBuilder[StatTariffRequest]
+    extends ActionBuilder[MTariffStatContractReq]
     with IsSuperuserUtil
   {
 
     /** id запрашиваемого stat-тарифа. */
     def tariffId: Int
 
-    override def invokeBlock[A](request: Request[A], block: (StatTariffRequest[A]) => Future[Result]): Future[Result] = {
-      val pwOpt = PersonWrapper.getFromRequest(request)
-      if ( PersonWrapper.isSuperuser(pwOpt) ) {
+    override def invokeBlock[A](request: Request[A], block: (MTariffStatContractReq[A]) => Future[Result]): Future[Result] = {
+      val personIdOpt = sessionUtil.getPersonId(request)
+      val user = mSioUsers(personIdOpt)
+
+      if (user.isSuperUser) {
+
         val dbFut = Future {
           db.withConnection { implicit c =>
             val _tariff = MTariffStat.getById(tariffId).get
@@ -37,16 +40,15 @@ trait IsSuperuserStatTariffContract
             _tariff -> _contract
           }
         }(AsyncUtil.jdbcExecutionContext)
-        val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)
+
         dbFut flatMap { case (tariff, contract) =>
-          sioReqMdFut flatMap { srm =>
-            val req1 = StatTariffRequest(tariff, contract, pwOpt, request, srm)
-            block(req1)
-          }
+          val req1 = MTariffStatContractReq(tariff, contract, request, user)
+          block(req1)
         }
 
       } else {
-        supOnUnauthFut(request, pwOpt)
+        val req1 = SioReq(request, user)
+        supOnUnauthFut(req1)
       }
     }
 
@@ -54,17 +56,6 @@ trait IsSuperuserStatTariffContract
 
   case class IsSuperuserStatTariffContract(override val tariffId: Int)
     extends IsSuperuserStatTariffContractBase
-    with ExpireSession[StatTariffRequest]
+    with ExpireSession[MTariffStatContractReq]
 
 }
-
-
-case class StatTariffRequest[A](
-  tariff    : MTariffStat,
-  contract  : MContract,
-  pwOpt     : PwOpt_t,
-  request   : Request[A],
-  sioReqMd  : SioReqMd
-)
-  extends AbstractRequestWithPwOpt[A](request)
-

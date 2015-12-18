@@ -6,6 +6,7 @@ import io.suggest.model.n2.node.meta.MBasicMeta
 import models._
 import models.jsm.init.MTargets
 import models.msession.Keys
+import models.req.ISioReq
 import models.usr._
 import play.api.data.Form
 import play.api.data.Forms._
@@ -78,7 +79,7 @@ trait EmailPwReg
   }
 
   /** Рендер страницы регистрации по email. */
-  private def _epwRender(form: EmailPwRegReqForm_t)(implicit request: AbstractRequestWithPwOpt[_]): Html = {
+  private def _epwRender(form: EmailPwRegReqForm_t)(implicit request: ISioReq[_]): Html = {
     implicit val jsInitTgs = Seq(MTargets.CaptchaForm)
     epwRegTpl(form, captchaShown = true)
   }

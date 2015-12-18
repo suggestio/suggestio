@@ -6,9 +6,9 @@ import io.suggest.common.fut.FutureUtil
 import io.suggest.model.n2.edge.MNodeEdges
 import models._
 import models.mproj.MCommonDi
+import models.req.IMirReq
 import models.usr.EmailActivation
 import play.api.mvc.{AnyContent, Result}
-import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 import util.acl._
 import util.mail.IMailerWrapper
@@ -96,15 +96,16 @@ class SysMarketInvReq @Inject() (
 
   /** Запрос страницы с формой редактирования заготовки узла. */
   def nodeEdit(mirId: String) = isNodeLeftOrMissing(mirId).async { implicit request =>
-    nodeEditBody(request.mir)(Ok(_))
+    nodeEditBody(request.mir, Ok)
   }
 
-  private def nodeEditBody(mir: MInviteRequest)(onSuccess: Html => Result)
-                          (implicit request: MirRequest[AnyContent]): Future[Result] = {
+  private def nodeEditBody(mir: MInviteRequest, rs: Status)
+                          (implicit request: IMirReq[AnyContent]): Future[Result] = {
     getNodeOptFut(mir) map { adnNodeOpt =>
       val form0 = sysMarketUtil.adnNodeFormM
       val formFilled = adnNodeOpt.fold(form0)(form0.fill)
-      Ok(nodeEditTpl(mir, adnNodeOpt, formFilled))
+      val html = nodeEditTpl(mir, adnNodeOpt, formFilled)
+      rs(html)
     }
   }
 
@@ -115,7 +116,7 @@ class SysMarketInvReq @Inject() (
     sysMarketUtil.adnNodeFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"nodeEditFormSubmit($mirId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
-        nodeEditBody(mir)(NotAcceptable(_))
+        nodeEditBody(mir, NotAcceptable)
       },
       {adnNode2 =>
         mInviteRequest.tryUpdate(mir) { mir0 =>
@@ -296,14 +297,6 @@ class SysMarketInvReq @Inject() (
         mir.adnNode.exists(_.isRight) && mir.emailAct.exists(_.isLeft)
       }
     }
-  }
-
-  /** Прочитать MCompany из реквеста или из модели. */
-  private def getCompanyOptFut(mir: MInviteRequest): Future[Option[MCompany]] = {
-    mir.company.fold[Future[Option[MCompany]]](
-      { mc => Future successful Option(mc) },
-      { mcId => MCompany.getById(mcId) }
-    )
   }
 
   private def getNodeOptFut(mir: MInviteRequest): Future[Option[MNode]] = {

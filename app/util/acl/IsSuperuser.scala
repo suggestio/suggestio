@@ -1,10 +1,9 @@
 package util.acl
 
-import models.req.SioReqMd
+import models.req.{ISioReqHdr, ISioUser, SioReq}
 import scala.concurrent.Future
 import util.PlayMacroLogsDyn
-import play.api.mvc.{RequestHeader, Request, ActionBuilder, Result}
-import util.acl.PersonWrapper.PwOpt_t
+import play.api.mvc.{Request, ActionBuilder, Result}
 
 /**
  * Suggest.io
@@ -16,14 +15,14 @@ trait IsSuperuserUtilCtl extends OnUnauthUtilCtl {
 
   trait IsSuperuserUtil extends OnUnauthUtil with PlayMacroLogsDyn {
 
-    def supOnUnauthFut(request: RequestHeader, pwOpt: PwOpt_t): Future[Result] = {
-      import request._
-      LOGGER.warn(s"$method $path <- BLOCKED access to hidden/priveleged place from $remoteAddress user=$pwOpt")
-      supOnUnauthResult(request, pwOpt)
+    def supOnUnauthFut(req: ISioReqHdr): Future[Result] = {
+      import req._
+      LOGGER.warn(s"$method $path <- BLOCKED access to hidden/priveleged place from $remoteAddress user=${req.user.personIdOpt}")
+      supOnUnauthResult(req)
     }
 
-    def supOnUnauthResult(request: RequestHeader, pwOpt: PwOpt_t): Future[Result] = {
-      onUnauth(request)
+    def supOnUnauthResult(req: ISioReqHdr): Future[Result] = {
+      onUnauth(req)
     }
 
   }
@@ -40,24 +39,24 @@ trait IsSuperuser
   import mCommonDi._
 
   trait IsSuperuserBase
-    extends ActionBuilder[AbstractRequestWithPwOpt]
+    extends ActionBuilder[SioReq]
     with IsSuperuserUtil
   {
 
-    protected def isAllowed(pwOpt: PwOpt_t): Boolean = {
-      PersonWrapper.isSuperuser(pwOpt)
+    protected def isAllowed(user: ISioUser): Boolean = {
+      user.isSuperUser
     }
 
-    override def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[Result]): Future[Result] = {
-      val pwOpt = PersonWrapper.getFromRequest(request)
-      if (isAllowed(pwOpt)) {
-        val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)
-        LOGGER.trace(s"for user $pwOpt :: ${request.method} ${request.path}")
-        sioReqMdFut flatMap { srm =>
-          block( RequestWithPwOpt(pwOpt, request, srm) )
-        }
+    override def invokeBlock[A](request: Request[A], block: (SioReq[A]) => Future[Result]): Future[Result] = {
+      val personIdOpt = sessionUtil.getPersonId(request)
+      val user = mSioUsers(personIdOpt)
+      val req1 = SioReq(request, user)
+      if ( isAllowed(user) ) {
+        LOGGER.trace(s"for user $personIdOpt :: ${request.method} ${request.path}")
+        block(req1)
+
       } else {
-        supOnUnauthFut(request, pwOpt)
+        supOnUnauthFut(req1)
       }
     }
 
@@ -66,19 +65,19 @@ trait IsSuperuser
 
   sealed abstract class IsSuperuserAbstract
     extends IsSuperuserBase
-    with ExpireSession[AbstractRequestWithPwOpt]
-    with CookieCleanup[AbstractRequestWithPwOpt]
+    with ExpireSession[SioReq]
+    with CookieCleanup[SioReq]
 
   object IsSuperuser
     extends IsSuperuserAbstract
 
   object IsSuperuserGet
     extends IsSuperuserAbstract
-    with CsrfGet[AbstractRequestWithPwOpt]
+    with CsrfGet[SioReq]
 
   object IsSuperuserPost
     extends IsSuperuserAbstract
-    with CsrfPost[AbstractRequestWithPwOpt]
+    with CsrfPost[SioReq]
 
 }
 

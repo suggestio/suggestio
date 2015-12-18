@@ -7,6 +7,7 @@ import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
 import models.mext.{ILoginProvider, MExtServices}
 import models.mproj.MCommonDi
 import models.msession.{CustomTtl, Keys}
+import models.req.ISioReq
 import models.usr._
 import models.{Context, ExtRegConfirmForm_t, ExternalCall, MNode, MNodeTypes}
 import play.api.data.Form
@@ -269,7 +270,7 @@ trait ExternalLogin
   }
 
   /** Общий код рендера idpConfig вынесен сюда. */
-  protected def _idpConfirm(form: ExtRegConfirmForm_t)(implicit request: AbstractRequestWithPwOpt[_]): Html = {
+  protected def _idpConfirm(form: ExtRegConfirmForm_t)(implicit request: ISioReq[_]): Html = {
     confirmTpl(form)
   }
 

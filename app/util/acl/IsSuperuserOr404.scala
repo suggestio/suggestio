@@ -1,10 +1,10 @@
 package util.acl
 
-import play.api.mvc.{RequestHeader, Result}
-import util.acl.PersonWrapper.PwOpt_t
+import models.req.{ISioReqHdr, ISioUser, SioReq}
+import play.api.Play.isDev
+import play.api.mvc.Result
 
 import scala.concurrent.Future
-import play.api.Play.isDev
 
 /**
  * Suggest.io
@@ -17,9 +17,10 @@ trait IsSuperuserOr404Ctl
 {
   import mCommonDi._
 
-  trait IsSuperuserOr404Base extends IsSuperuserBase with ExpireSession[AbstractRequestWithPwOpt] {
-    override def supOnUnauthResult(request: RequestHeader, pwOpt: PwOpt_t): Future[Result] = {
-      errorHandler.http404Fut(request)
+  trait IsSuperuserOr404Base[A] extends IsSuperuserBase with ExpireSession[A] {
+
+    override def supOnUnauthResult(req: ISioReqHdr): Future[Result] = {
+      errorHandler.http404Fut(req)
     }
   }
 
@@ -28,7 +29,7 @@ trait IsSuperuserOr404Ctl
 
 trait IsSuperuserOr404 extends IsSuperuserOr404Ctl {
 
-  object IsSuperuserOr404 extends IsSuperuserOr404Base
+  object IsSuperuserOr404 extends IsSuperuserOr404Base[SioReq]
 
 }
 
@@ -38,10 +39,12 @@ trait IsSuperuserOrDevelOr404 extends IsSuperuserOr404Ctl {
   import mCommonDi._
 
   /** Разрешить не-админам и анонимам доступ в devel-режиме. */
-  object IsSuperuserOrDevelOr404 extends IsSuperuserOr404Base {
-    override protected def isAllowed(pwOpt: PwOpt_t): Boolean = {
-      super.isAllowed(pwOpt) || isDev
+  object IsSuperuserOrDevelOr404 extends IsSuperuserOr404Base[SioReq] {
+
+    override protected def isAllowed(user: ISioUser): Boolean = {
+      super.isAllowed(user) || isDev
     }
+
   }
 
 }

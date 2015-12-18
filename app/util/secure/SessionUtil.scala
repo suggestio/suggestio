@@ -2,7 +2,7 @@ package util.secure
 
 import com.google.inject.Singleton
 import models.msession.{LoginTimestamp, Keys}
-import play.api.mvc.Session
+import play.api.mvc.{RequestHeader, Session}
 import util.PlayMacroLogsImpl
 
 /**
@@ -14,6 +14,15 @@ import util.PlayMacroLogsImpl
  */
 @Singleton
 class SessionUtil extends PlayMacroLogsImpl {
+
+  /**
+   * Очень часто сюда передаётся реквест, а не сессия. Это укорачивает код.
+   * @param request HTTP Реквест.
+   * @return Опциональный id юзера.
+   */
+  def getPersonId(request: RequestHeader): Option[String] = {
+    getPersonId(request)
+  }
 
   /**
    * Прочитать значение personId из сессии play.

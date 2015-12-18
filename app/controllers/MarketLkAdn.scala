@@ -54,7 +54,7 @@ class MarketLkAdn @Inject() (
   with PlayMacroLogsImpl
   with BruteForceProtectCtl
   with ChangePwAction
-  with NodeEactAcl
+  with NodeEact
   with IsAdnNodeAdminOptOrAuth
   with AdnNodeAccess
   with IsAdnNodeAdmin
@@ -66,7 +66,7 @@ class MarketLkAdn @Inject() (
 
   /** Список личных кабинетов юзера. */
   def lkList(fromAdnId: Option[String]) = IsAdnNodeAdminOptOrAuthGet(fromAdnId).async { implicit request =>
-    val personId = request.pwOpt.get.personId
+    val personId = request.user.personIdOpt.get
     val msearch = new MNodeSearchDfltImpl {
       override def outEdges = Seq(
         Criteria(
@@ -83,6 +83,7 @@ class MarketLkAdn @Inject() (
       Ok( lkListTpl(mnodes, request.mnodeOpt) )
     }
   }
+
 
   /**
    * Отрендерить страницу ЛК какого-то узла рекламной сети. Экшен различает свои и чужие узлы.
@@ -291,8 +292,9 @@ class MarketLkAdn @Inject() (
         NotAcceptable(invite.inviteAcceptFormTpl(mnode, eact, formWithErrors, withOfferText = false))
 
       }, { case (contractAgreed, passwordOpt) =>
-        if (passwordOpt.isEmpty && !request.isAuth) {
-          debug(s"${logPrefix}Password check failed. isEmpty=${passwordOpt.isEmpty} ;; request.isAuth=${request.isAuth}")
+        val isAuth = request.user.isAuth
+        if (passwordOpt.isEmpty && !isAuth) {
+          debug(s"${logPrefix}Password check failed. isEmpty=${passwordOpt.isEmpty} ;; request.isAuth=$isAuth")
           val form1 = formBinded
             .withError("password.pw1", "error.required")
             .withError("password.pw2", "error.required")
@@ -301,7 +303,7 @@ class MarketLkAdn @Inject() (
         } else {
           // Сначала удаляем запись об активации, убедившись что она не была удалена асинхронно.
           eact.delete.flatMap { isDeleted =>
-            val newPersonIdOptFut: Future[Option[String]] = if (!request.isAuth) {
+            val newPersonIdOptFut: Future[Option[String]] = if (!isAuth) {
               val mperson0 = MNode(
                 common = MNodeCommon(
                   ntype = MNodeTypes.Person,
@@ -327,7 +329,7 @@ class MarketLkAdn @Inject() (
             }
             // Для обновления полей MMart требуется доступ к personId. Дожидаемся сохранения юзера...
             newPersonIdOptFut flatMap { personIdOpt =>
-              val personId = (personIdOpt orElse request.pwOpt.map(_.personId)).get
+              val personId = (personIdOpt orElse request.user.personIdOpt).get
               val nodeOwnedByPersonId = {
                 mnode.edges
                   .withPredicateIter( MPredicates.OwnedBy )
@@ -410,7 +412,7 @@ class MarketLkAdn @Inject() (
       {nodeName =>
         val nodeFut = nodesUtil.createUserNode(
           name      = nodeName,
-          personId  = request.pwOpt.get.personId
+          personId  = request.user.personIdOpt.get
         )
         // Рендер HTTP-ответа.
         val respFut = nodeFut map { adnNode =>

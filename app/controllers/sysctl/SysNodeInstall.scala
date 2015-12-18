@@ -2,11 +2,12 @@ package controllers.sysctl
 
 import controllers.{SioController, routes}
 import models.Context
+import models.req.INodeReq
 import play.api.data.Form
 import play.api.i18n.{Lang, Messages}
 import play.api.mvc.Result
 import util.PlayMacroLogsI
-import util.acl.{AbstractRequestForAdnNode, IsSuperuserAdnNode}
+import util.acl.IsSuperuserAdnNode
 import util.di.INodesUtil
 import views.html.sys1.market.adn.install._
 
@@ -64,12 +65,12 @@ trait SysNodeInstall
 
   /** Общий код экшенов, связанный с рендером html-ответа. */
   private def _installRender(form: Form[FormData], rs: Status)
-                            (implicit ctx: Context, request: AbstractRequestForAdnNode[_]): Future[Result] = {
+                            (implicit ctx: Context, request: INodeReq[_]): Future[Result] = {
     for {
       srcNodes <- mNodeCache.multiGet(nodesUtil.ADN_IDS_INIT_ADS_SOURCE)
     } yield {
       val allLangs = Lang.availables.sortBy(_.code)
-      val html = installDfltMadsTpl(allLangs, request.adnNode, form, srcNodes)(ctx)
+      val html = installDfltMadsTpl(allLangs, request.mnode, form, srcNodes)(ctx)
       rs(html)
     }
   }

@@ -13,6 +13,7 @@ import models.blk.ed.{AdFormM, AdFormResult, BlockImgMap}
 import models.im.MImg3_
 import models.jsm.init.MTargets
 import models.mproj.MCommonDi
+import models.req.{INodeReq, ISioReq}
 import org.joda.time.DateTime
 import play.api.data.Forms._
 import play.api.data._
@@ -95,17 +96,16 @@ class MarketAd @Inject() (
    * @param adnId id узла рекламной сети.
    */
   def createAd(adnId: String) = IsAdnNodeAdminGet(adnId).async { implicit request =>
-    import request.adnNode
     _renderCreateFormWith(
       af      = adFormM,
-      adnNode = adnNode,
+      adnNode = request.mnode,
       rs      = Ok
     )
   }
 
   /** Общий код рендера createShopAdTpl с запросом необходимых категорий. */
   private def _renderCreateFormWith(af: AdFormM, adnNode: MNode, withBC: Option[BlockConf] = None, rs: Status)
-                                   (implicit request: AbstractRequestForAdnNode[_]): Future[Result] = {
+                                   (implicit request: INodeReq[_]): Future[Result] = {
     _renderPage(af, rs) { implicit ctx =>
       createAdTpl(af, adnNode, withBC)(ctx)
     }
@@ -116,13 +116,13 @@ class MarketAd @Inject() (
    * @param adnId id магазина.
    */
   def createAdSubmit(adnId: String) = IsAdnNodeAdminPost(adnId).async(parse.urlFormEncoded) { implicit request =>
-    import request.adnNode
+    import request.mnode
     lazy val logPrefix = s"createAdSubmit($adnId): "
     val bc = BlocksConf.DEFAULT
     adFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(logPrefix + "Bind failed: \n" + formatFormErrors(formWithErrors))
-        _renderCreateFormWith(formWithErrors, adnNode, Some(bc), NotAcceptable)
+        _renderCreateFormWith(formWithErrors, mnode, Some(bc), NotAcceptable)
       },
       {r =>
         // Асинхронно обрабатываем сохранение картинок
@@ -160,7 +160,7 @@ class MarketAd @Inject() (
 
   /** Акт рендера результирующей страницы в отрыве от самой страницы. */
   private def _renderPage(af: AdFormM, rs: Status)(f: Context => Html)
-                         (implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+                         (implicit request: ISioReq[_]): Future[Result] = {
     implicit val _jsInitTargets = Seq(MTargets.AdForm)
     implicit val ctx = implicitly[Context]
     detectMainColorBg(af)(ctx)
@@ -399,7 +399,8 @@ class MarketAd @Inject() (
   /** Открытие websocket'а для обратной асинхронной связи с браузером клиента. */
   def ws(wsId: String) = WebSocket.tryAcceptWithActor[JsValue, JsValue] { implicit request =>
     // Прямо тут проверяем права доступа. Пока просто проверяем залогиненность вопрошающего.
-    val auth = PersonWrapper.getFromRequest.isDefined
+    val personIdOpt = sessionUtil.getPersonId(request)
+    val auth = personIdOpt.isDefined
     Future.successful(
       if (auth) {
         Right(LkEditorWsActor.props(_, wsId))

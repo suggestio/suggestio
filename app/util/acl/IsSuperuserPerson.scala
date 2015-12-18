@@ -3,9 +3,8 @@ package util.acl
 import controllers.SioController
 import io.suggest.model.n2.node.MNodeTypes
 import models.MNode
-import models.req.SioReqMd
-import play.api.mvc.{Result, ActionBuilder, Request}
-import util.acl.PersonWrapper.PwOpt_t
+import models.req.{MPersonReq, SioReq}
+import play.api.mvc.{ActionBuilder, Request, Result}
 
 import scala.concurrent.Future
 
@@ -24,53 +23,53 @@ trait IsSuperuserPerson
   import mCommonDi._
 
   trait IsSuperuserPersonBase
-    extends ActionBuilder[MPersonRequest]
+    extends ActionBuilder[MPersonReq]
     with IsSuperuserUtil
   {
     /** id юзера. */
     def personId: String
 
-    override def invokeBlock[A](request: Request[A], block: (MPersonRequest[A]) => Future[Result]): Future[Result] = {
-      val mpersonOptFut = MNode.getByIdType(personId, MNodeTypes.Person)
-      val pwOpt = PersonWrapper.getFromRequest(request)
-      if (PersonWrapper isSuperuser pwOpt) {
-        val srmFut = SioReqMd.fromPwOpt(pwOpt)
-        mpersonOptFut flatMap {
+    override def invokeBlock[A](request: Request[A], block: (MPersonReq[A]) => Future[Result]): Future[Result] = {
+      val personIdOpt = sessionUtil.getPersonId(request)
+      val user = mSioUsers(personIdOpt)
+
+      if (user.isSuperUser) {
+
+        // Если юзер запрашивает сам себя, то заполняем user.personNodeOptFut. Иначе запрашиваем узел целевого юзера напрямую.
+        val mpersonOptFut: Future[Option[MNode]] = {
+          val _personId = personId
+          if (personIdOpt.contains(_personId)) {
+            user.personNodeOptFut
+          } else {
+            mNodeCache.getByIdType(_personId, MNodeTypes.Person)
+          }
+        }
+
+        mpersonOptFut.flatMap {
           case Some(mperson) =>
-            srmFut flatMap { srm =>
-              val req1 = MPersonRequest(mperson, pwOpt, request, srm)
-              block(req1)
-            }
+            val req1 = MPersonReq(mperson, request, user)
+            block(req1)
           case None =>
             personNotFound(request)
         }
 
       } else {
-        supOnUnauthFut(request, pwOpt)
+        val req1 = SioReq(request, user)
+        supOnUnauthFut(req1)
       }
     }
 
     /** Юзер не найден. */
     def personNotFound(request: Request[_]): Future[Result] = {
-      val res = NotFound("person not exists: " + personId)
-      Future successful res
+      NotFound("person not exists: " + personId)
     }
+
   }
 
 
   /** Дефолтовая реализация [[IsSuperuserPersonBase]]. */
   case class IsSuperuserPerson(personId: String)
     extends IsSuperuserPersonBase
-    with ExpireSession[MPersonRequest]
+    with ExpireSession[MPersonReq]
 
 }
-
-
-/** Экземпляр реквеста. */
-case class MPersonRequest[A](
-  mperson   : MNode,
-  pwOpt     : PwOpt_t,
-  request   : Request[A],
-  sioReqMd  : SioReqMd
-)
-  extends AbstractRequestWithPwOpt[A](request)

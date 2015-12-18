@@ -9,6 +9,7 @@ import models.im.MImgT
 import models.jsm.ScIndexResp
 import models.mproj.IMCommonDi
 import models.msc._
+import models.req.ISioReq
 import play.twirl.api.Html
 import util.acl._
 import views.html.sc._
@@ -73,7 +74,7 @@ trait ScIndexCommon
       Some(title2)
     }
 
-    implicit def _request: AbstractRequestWithPwOpt[_]
+    implicit def _request: ISioReq[_]
 
     /** Контейнер палитры выдачи. */
     def colorsFut: Future[IColors]
@@ -352,7 +353,8 @@ trait ScIndexNode
 
   /** Базовая выдача для rcvr-узла sio-market. */
   def showcase(adnId: String, args: ScReqArgs) = AdnNodeMaybeAuth(adnId).async { implicit request =>
-    val _adnNodeFut = Future successful request.adnNode
+    val _adnNodeFut = Future successful request.mnode
+
     val helper = new ScIndexNodeSimpleHelper {
       override val geoListGoBackFut: Future[Option[Boolean]] = {
         for (mnode <- adnNodeFut) yield {
@@ -366,17 +368,20 @@ trait ScIndexNode
       override def isGeo = false
       override implicit def _request = request
     }
+
     val resultFut = helper.result
+
     // собираем статистику, пока идёт подготовка результата
     val stat = scStatUtil.IndexStat(
       scSinkOpt = None,
       gsiFut    = args.geo.geoSearchInfoOpt,
       screenOpt = helper.ctx.deviceScreenOpt,
-      nodeOpt   = Some(request.adnNode)
+      nodeOpt   = Some(request.mnode)
     )
     stat.saveStats onFailure { case ex =>
       LOGGER.warn(s"showcase($adnId): failed to save stats, args = $args", ex)
     }
+
     // Возвращаем результат основного действа. Результат вполне кешируем по идее.
     for (res <- resultFut) yield {
       res.withHeaders(CACHE_CONTROL -> s"public, max-age=$SC_INDEX_CACHE_SECONDS")

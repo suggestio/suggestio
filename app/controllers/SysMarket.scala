@@ -11,6 +11,7 @@ import models.adv.{MAdvI, MAdvOk, MAdvReq}
 import models.im.MImg3_
 import models.mproj.MCommonDi
 import models.msys._
+import models.req.{INodeReq, ISioReq}
 import models.usr.{EmailActivation, MPerson}
 import org.elasticsearch.search.sort.SortOrder
 import play.api.data._
@@ -175,7 +176,7 @@ class SysMarket @Inject() (
    * @param nodeId id узла
    */
   def showAdnNode(nodeId: String) = IsSuperuserAdnNode(nodeId).async { implicit request =>
-    import request.adnNode
+    import request.mnode
 
     def _prepareEdgeInfos(eis: TraversableOnce[MNodeEdgeInfo]): Seq[MNodeEdgeInfo] = {
       eis.toSeq
@@ -192,11 +193,11 @@ class SysMarket @Inject() (
     // Узнаём исходящие ребра.
     val outEdgesFut: Future[Seq[MNodeEdgeInfo]] = {
       MNode.multiGetMap {
-        adnNode.edges.out
+        mnode.edges.out
           .valuesIterator
           .map(_.nodeId)
       } map { nmap =>
-        val iter = adnNode.edges.out
+        val iter = mnode.edges.out
           .valuesIterator
           .map { medge =>
             val nodeId = medge.nodeId
@@ -234,7 +235,7 @@ class SysMarket @Inject() (
 
     // Определить имена юзеров-владельцев. TODO Удалить, ибо во многом дублирует логику outEdges.
     val personNamesFut = {
-      val ownerIds = adnNode.edges
+      val ownerIds = mnode.edges
         .withPredicateIterIds( MPredicates.OwnedBy )
       Future.traverse( ownerIds ) { personId =>
         MPerson.findUsernameCached(personId)
@@ -254,7 +255,7 @@ class SysMarket @Inject() (
       personNames <- personNamesFut
     } yield {
       val args = MSysNodeShowTplArgs(
-        mnode       = adnNode,
+        mnode       = mnode,
         inEdges     = inEdges,
         outEdges    = outEdges,
         personNames = personNames
@@ -268,8 +269,8 @@ class SysMarket @Inject() (
   def deleteAdnNodeSubmit(adnId: String) = {
     val ab = IsSuperuserAdnNodePost(adnId)
     ab.async { implicit request =>
-      import request.adnNode
-      adnNode
+      import request.mnode
+      mnode
         .delete
         .filter(identity)
         .map { _ =>
@@ -286,7 +287,7 @@ class SysMarket @Inject() (
 
 
   private def createAdnNodeRender(nodeFormM: Form[MNode], ncpForm: Form[NodeCreateParams])
-                                 (implicit request: AbstractRequestWithPwOpt[_]): Future[Html] = {
+                                 (implicit request: ISioReq[_]): Future[Html] = {
     val html = createAdnNodeFormTpl(nodeFormM, ncpForm)
     Future successful html
   }
@@ -298,7 +299,7 @@ class SysMarket @Inject() (
     // Генерим stub и втыкаем его в форму, чтобы меньше галочек ставить.
     // 2015.oct.21: Используем nodesUtil для сборки дефолтового инстанса.
     val dfltFormM = adnNodeFormM.fill(
-      nodesUtil.userNodeInstance("", personId = request.pwOpt.get.personId)
+      nodesUtil.userNodeInstance("", personId = request.user.personIdOpt.get)
     )
     val ncpForm = nodeCreateParamsFormM fill NodeCreateParams()
     createAdnNodeRender(dfltFormM, ncpForm)
@@ -320,7 +321,7 @@ class SysMarket @Inject() (
         val mnode1 = mnode0.copy(
           edges = mnode0.edges.copy(
             out = {
-              val ownEdge = MEdge(MPredicates.OwnedBy, request.pwOpt.get.personId)
+              val ownEdge = MEdge(MPredicates.OwnedBy, request.user.personIdOpt.get)
               MNodeEdges.edgesToMap(ownEdge)
             }
           )
@@ -377,21 +378,21 @@ class SysMarket @Inject() (
 
   /** Страница с формой редактирования узла ADN. */
   def editAdnNode(adnId: String) = IsSuperuserAdnNodeGet(adnId).async { implicit request =>
-    import request.adnNode
-    val formFilled = adnNodeFormM.fill(adnNode)
+    import request.mnode
+    val formFilled = adnNodeFormM.fill(mnode)
     editAdnNodeBody(adnId, formFilled)
       .map { Ok(_) }
   }
 
   private def editAdnNodeBody(adnId: String, form: Form[MNode])
-                             (implicit request: AbstractRequestForAdnNode[AnyContent]): Future[Html] = {
-    val res = editAdnNodeFormTpl(request.adnNode, form)
+                             (implicit request: INodeReq[AnyContent]): Future[Html] = {
+    val res = editAdnNodeFormTpl(request.mnode, form)
     Future successful res
   }
 
   /** Самбит формы редактирования узла. */
   def editAdnNodeSubmit(adnId: String) = IsSuperuserAdnNodePost(adnId).async { implicit request =>
-    import request.adnNode
+    import request.mnode
     val formBinded = adnNodeFormM.bindFromRequest()
     formBinded.fold(
       {formWithErrors =>
@@ -401,7 +402,7 @@ class SysMarket @Inject() (
       },
       {adnNode2 =>
         for {
-          _ <- MNode.tryUpdate(adnNode) { updateAdnNode(_, adnNode2) }
+          _ <- MNode.tryUpdate(mnode) { updateAdnNode(_, adnNode2) }
         } yield {
           Redirect(routes.SysMarket.showAdnNode(adnId))
             .flashing(FLASH.SUCCESS -> "Changes.saved")
@@ -417,18 +418,18 @@ class SysMarket @Inject() (
   def nodeOwnerInviteForm(adnId: String) = IsSuperuserAdnNodeGet(adnId).async { implicit request =>
     val eActsFut = EmailActivation.findByKey(adnId)
     eActsFut map { eActs =>
-      Ok(nodeOwnerInvitesTpl(request.adnNode, nodeOwnerInviteFormM, eActs))
+      Ok(nodeOwnerInvitesTpl(request.mnode, nodeOwnerInviteFormM, eActs))
     }
   }
 
   /** Сабмит формы создания инвайта на управление ТЦ. */
   def nodeOwnerInviteFormSubmit(adnId: String) = IsSuperuserAdnNodePost(adnId).async { implicit request =>
-    import request.adnNode
+    import request.mnode
     nodeOwnerInviteFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"martInviteFormSubmit($adnId): Failed to bind form: ${formWithErrors.errors}")
         EmailActivation.findByKey(adnId) map { eActs =>
-          NotAcceptable(nodeOwnerInvitesTpl(adnNode, formWithErrors, eActs))
+          NotAcceptable(nodeOwnerInvitesTpl(mnode, formWithErrors, eActs))
         }
       },
       {email1 =>
@@ -437,7 +438,7 @@ class SysMarket @Inject() (
           val eact2 = eAct.copy(
             id = Some(eActId)
           )
-          sendEmailInvite(eact2, adnNode)
+          sendEmailInvite(eact2, mnode)
           // Письмо отправлено, вернуть админа назад в магазин
           Redirect(routes.SysMarket.showAdnNode(adnId))
             .flashing(FLASH.SUCCESS -> ("Письмо с приглашением отправлено на " + email1))
@@ -452,9 +453,9 @@ class SysMarket @Inject() (
 
   /** Отобразить html/txt email-сообщение активации без отправки куда-либо чего-либо. Нужно для отладки. */
   def showEmailInviteMsg(adnId: String) = IsSuperuserAdnNode(adnId) { implicit request =>
-    import request.adnNode
+    import request.mnode
     val eAct = EmailActivation("test@test.com", id = Some("asdQE123_"))
-    Ok( emailNodeOwnerInviteTpl(adnNode, eAct) )
+    Ok( emailNodeOwnerInviteTpl(mnode, eAct) )
   }
 
 
@@ -663,7 +664,7 @@ class SysMarket @Inject() (
   /** Отрендериить тела email-сообщений инвайта передачи прав на ТЦ. */
   def showNodeOwnerEmailInvite(adnId: String) = IsSuperuserAdnNode(adnId) { implicit request =>
     val eAct = EmailActivation("asdasd@kde.org", key=adnId, id = Some("123123asdasd_-123"))
-    Ok( emailNodeOwnerInviteTpl(request.adnNode, eAct) )
+    Ok( emailNodeOwnerInviteTpl(request.mnode, eAct) )
   }
 
 

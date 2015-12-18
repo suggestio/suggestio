@@ -3,10 +3,9 @@ package util.acl
 import controllers.SioController
 import models._
 import models.mproj.IMCommonDi
-import models.req.SioReqMd
+import models.req._
 import util.{PlayMacroLogsI, PlayMacroLogsDyn, PlayLazyMacroLogsImpl}
 import scala.concurrent.Future
-import util.acl.PersonWrapper.PwOpt_t
 import play.api.mvc._
 import play.api.mvc.Result
 
@@ -23,12 +22,11 @@ trait OnUnauthNodeCtl
 {
   trait OnUnauthNode extends OnUnauthUtil {
     /** Что делать, когда юзер не авторизован, но долбится в ЛК? */
-    def onUnauthNode(req: RequestHeader, pwOpt: PwOpt_t): Future[Result] = {
-      pwOpt match {
-        case None =>
-          onUnauth(req)
-        case _ =>
-          Future successful Forbidden(FORBIDDEN + " Forbidden")
+    def onUnauthNode(req: ISioReqHdr): Future[Result] = {
+      if (req.user.isAuth) {
+        Forbidden(FORBIDDEN + " Forbidden")
+      } else {
+        onUnauth(req)
       }
     }
   }
@@ -44,38 +42,39 @@ trait IsAdnNodeAdminUtilCtl
 
   trait IsAdnNodeAdminUtil extends PlayMacroLogsDyn {
 
-    def checkAdnNodeCredsFut(adnNodeOptFut: Future[Option[MNode]], adnId: String, pwOpt: PwOpt_t): Future[Either[Option[MNode], MNode]] = {
+    def checkAdnNodeCredsFut(adnNodeOptFut: Future[Option[MNode]], adnId: String, user: ISioUser): Future[Either[Option[MNode], MNode]] = {
       adnNodeOptFut map {
-        checkAdnNodeCreds(_, adnId, pwOpt)
+        checkAdnNodeCreds(_, adnId, user)
       }
     }
 
-    def checkAdnNodeCreds(adnNodeOpt: Option[MNode], adnId: String, pwOpt: PwOpt_t): Either[Option[MNode], MNode] = {
+    def checkAdnNodeCreds(adnNodeOpt: Option[MNode], adnId: String, user: ISioUser): Either[Option[MNode], MNode] = {
       adnNodeOpt.fold [Either[Option[MNode], MNode]] {
         LOGGER.warn(s"checkAdnNodeCreds(): Node[$adnId] does not exist!")
         Left(None)
       } { adnNode =>
-        val isAllowed = IsAdnNodeAdmin.isAdnNodeAdminCheck(adnNode, pwOpt)
+        val isAllowed = IsAdnNodeAdmin.isAdnNodeAdminCheck(adnNode, user)
         if (isAllowed) {
           Right(adnNode)
         } else {
-          if (pwOpt.isDefined)
-            LOGGER.warn(s"checkAdnNodeCreds(): User $pwOpt not allowed to access to node ${adnNode.id.get}")
+          for (personId <- user.personIdOpt) {
+            LOGGER.warn(s"checkAdnNodeCreds(): User $personId not allowed to access to node $adnId")
+          }
           Left(adnNodeOpt)
         }
       }
     }
 
-    def checkAdnNodeCredsOpt(adnNodeOptFut: Future[Option[MNode]], adnId: String, pwOpt: PwOpt_t): Future[Option[MNode]] = {
-      checkAdnNodeCredsFut(adnNodeOptFut, adnId, pwOpt) map {
+    def checkAdnNodeCredsOpt(adnNodeOptFut: Future[Option[MNode]], adnId: String, user: ISioUser): Future[Option[MNode]] = {
+      checkAdnNodeCredsFut(adnNodeOptFut, adnId, user) map {
         case Right(adnNode) => Some(adnNode)
         case _ => None
       }
     }
 
-    def isAdnNodeAdmin(adnId: String, pwOpt: PwOpt_t): Future[Option[MNode]] = {
+    def isAdnNodeAdmin(adnId: String, user: ISioUser): Future[Option[MNode]] = {
       val fut = mNodeCache.getById(adnId)
-      checkAdnNodeCredsOpt(fut, adnId, pwOpt)
+      checkAdnNodeCredsOpt(fut, adnId, user)
     }
 
   }
@@ -85,16 +84,16 @@ trait IsAdnNodeAdminUtilCtl
 object IsAdnNodeAdmin extends PlayLazyMacroLogsImpl {
 
   /** Проверка прав на управления узлом с учётом того, что юзер может быть суперюзером s.io. */
-  def isAdnNodeAdminCheck(adnNode: MNode, pwOpt: PwOpt_t): Boolean = {
-    PersonWrapper.isSuperuser(pwOpt) || isAdnNodeAdminCheckStrict(adnNode, pwOpt)
+  def isAdnNodeAdminCheck(adnNode: MNode, user: ISioUser): Boolean = {
+    user.isSuperUser || isAdnNodeAdminCheckStrict(adnNode, user)
   }
 
   /** Проверка прав на домен без учёта суперюзеров. */
-  def isAdnNodeAdminCheckStrict(mnode: MNode, pwOpt: PwOpt_t): Boolean = {
-    pwOpt.exists { pw =>
+  def isAdnNodeAdminCheckStrict(mnode: MNode, user: ISioUser): Boolean = {
+    user.personIdOpt.exists { personId =>
       mnode.edges
         .withPredicateIterIds( MPredicates.OwnedBy )
-        .contains( pw.personId )
+        .contains( personId )
     }
   }
 
@@ -112,7 +111,7 @@ trait IsAdnNodeAdmin
 
   /** В реквесте содержится администрируемый узел, если всё ок. */
   sealed trait IsAdnNodeAdminBase
-    extends ActionBuilder[AbstractRequestForAdnNode]
+    extends ActionBuilder[MNodeReq]
     with PlayMacroLogsI
     with IsAdnNodeAdminUtil
     with OnUnauthNode
@@ -121,19 +120,19 @@ trait IsAdnNodeAdmin
     /** id запрашиваемого узла. */
     def adnId: String
 
-    override def invokeBlock[A](request: Request[A], block: (AbstractRequestForAdnNode[A]) => Future[Result]): Future[Result] = {
-      val pwOpt = PersonWrapper.getFromRequest(request)
-      val srmFut = SioReqMd.fromPwOptAdn(pwOpt, adnId)
-      isAdnNodeAdmin(adnId, pwOpt) flatMap {
-        case Some(adnNode) =>
-          srmFut flatMap { srm =>
-            val req1 = RequestForAdnNodeAdm(adnNode, isMyNode = true, request, pwOpt, srm)
-            block(req1)
-          }
+    override def invokeBlock[A](request: Request[A], block: (MNodeReq[A]) => Future[Result]): Future[Result] = {
+      val personIdOpt = sessionUtil.getPersonId(request)
+      val user = mSioUsers(personIdOpt)
+
+      isAdnNodeAdmin(adnId, user) flatMap {
+        case Some(mnode) =>
+          val req1 = MNodeReq(mnode, request, user)
+          block(req1)
 
         case _ =>
-          LOGGER.debug(s"User $pwOpt has NO admin access to node $adnId")
-          onUnauthNode(request, pwOpt)
+          LOGGER.debug(s"User $personIdOpt has NO admin access to node $adnId")
+          val req1 = SioReq(request, user)
+          onUnauthNode(req1)
       }
     }
   }
@@ -141,8 +140,7 @@ trait IsAdnNodeAdmin
   /** Трейт [[IsAdnNodeAdminBase]], обвешанный всеми необходимыми для работы надстройками. */
   sealed abstract class IsAdnNodeAdminBase2
     extends IsAdnNodeAdminBase
-    with ExpireSession[AbstractRequestForAdnNode]
-    with PlayMacroLogsDyn
+    with ExpireSession[MNodeReq]
 
 
   /** Просто проверка прав на узел перед запуском экшена. */
@@ -152,27 +150,20 @@ trait IsAdnNodeAdmin
   /** Рендер формы редактирования требует защиты от CSRF. */
   case class IsAdnNodeAdminGet(override val adnId: String)
     extends IsAdnNodeAdminBase2
-    with CsrfGet[AbstractRequestForAdnNode]
+    with CsrfGet[MNodeReq]
 
   /** Сабмит формы редактирования требует проверки CSRF-Token'а. */
   case class IsAdnNodeAdminPost(override val adnId: String)
     extends IsAdnNodeAdminBase2
-    with CsrfPost[AbstractRequestForAdnNode]
+    with CsrfPost[MNodeReq]
 
 }
 
 
+@deprecated("Use smthg like m.req.INodeReq instead", "2015.dec.18")
 abstract class AbstractRequestForAdnNode[A](request: Request[A])
   extends AbstractRequestWithPwOpt(request) {
   def adnNode : MNode
   def isMyNode: Boolean
 }
 
-case class RequestForAdnNodeAdm[A](
-  adnNode   : MNode,
-  isMyNode  : Boolean,
-  request   : Request[A],
-  pwOpt     : PwOpt_t,
-  sioReqMd  : SioReqMd
-)
-  extends AbstractRequestForAdnNode(request)

@@ -1,7 +1,7 @@
 package util.acl
 
 import controllers.SioController
-import models.req.SioReqMd
+import models.req.SioReq
 import play.api.mvc._
 import util.di.IIdentUtil
 import scala.concurrent.Future
@@ -18,34 +18,36 @@ trait IsAnon
   with Csrf
 {
 
-  trait IsAnonBase extends ActionBuilder[AbstractRequestWithPwOpt] {
-    override def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[Result]): Future[Result] = {
-      val pwOpt = PersonWrapper.getFromRequest(request)
-      pwOpt match {
-        case None =>
-          val srm = SioReqMd(usernameOpt = None)
-          val req1 = RequestWithPwOpt(pwOpt, request, srm)
-          block(req1)
+  import mCommonDi._
 
-        case Some(pw) =>
-          identUtil.redirectUserSomewhere(pw.personId)
+  trait IsAnonBase extends ActionBuilder[SioReq] {
+    override def invokeBlock[A](request: Request[A], block: (SioReq[A]) => Future[Result]): Future[Result] = {
+      val personIdOpt = sessionUtil.getPersonId(request)
+      personIdOpt.fold {
+        val user = mSioUsers(personIdOpt)
+        val req1 = SioReq(request, user)
+        block(req1)
+
+      } { personId =>
+        // Юзер залогинен уже как бэ. Этот билдер для него не подходит.
+        identUtil.redirectUserSomewhere(personId)
       }
     }
   }
 
   abstract class IsAnonBase2
     extends IsAnonBase
-    with ExpireSession[AbstractRequestWithPwOpt]
+    with ExpireSession[SioReq]
 
   // CSRF:
   /** GET-запросы с выставлением CSRF-токена. */
   object IsAnonGet
     extends IsAnonBase2
-    with CsrfGet[AbstractRequestWithPwOpt]
+    with CsrfGet[SioReq]
 
   /** POST-запросы с проверкой CSRF-токена, выставленного ранее через [[IsAnonGet]] или иной [[CsrfGet]]. */
   object IsAnonPost
     extends IsAnonBase2
-    with CsrfPost[AbstractRequestWithPwOpt]
+    with CsrfPost[SioReq]
 
 }

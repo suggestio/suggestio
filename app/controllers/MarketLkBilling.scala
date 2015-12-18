@@ -7,6 +7,7 @@ import models._
 import models.jsm.init.MTargets
 import models.mbill.{MContract, MDailyMmpsTplArgs, MTariffDaily, MTxn}
 import models.mproj.MCommonDi
+import models.req.ISioReq
 import org.elasticsearch.search.sort.SortOrder
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
@@ -37,7 +38,7 @@ class MarketLkBilling @Inject() (
   import LOGGER._
   import mCommonDi._
 
-  val TXNS_PER_PAGE: Int = configuration.getInt("market.billing.txns.page.size") getOrElse 10
+  private val TXNS_PER_PAGE: Int = configuration.getInt("market.billing.txns.page.size") getOrElse 10
 
 
   /** Отобразить какую-то страницу с реквизитами для платежа. */
@@ -120,6 +121,7 @@ class MarketLkBilling @Inject() (
   def txnsList(adnId: String, page: Int, inline: Boolean) = IsAdnNodeAdmin(adnId).async { implicit request =>
     val tpp = TXNS_PER_PAGE
     val offset = page * tpp
+
     val txnsFut = Future {
       db.withConnection { implicit c =>
         val mbcs = MContract.findForAdn(adnId, isActive = None)
@@ -127,6 +129,7 @@ class MarketLkBilling @Inject() (
         MTxn.findForContracts(mbcIds, limit = tpp, offset = offset)
       }
     }(AsyncUtil.jdbcExecutionContext)
+
     for {
       txns <- txnsFut
     } yield {
@@ -150,10 +153,10 @@ class MarketLkBilling @Inject() (
    * @param mnode Текущий узел N2.
    * @return Фьючерс с Some и аргументами рендера. Если нет узла, то None
    */
-  private def _prepareNodeMbmds(mnode: MNode)
-                               (implicit request: AbstractRequestWithPwOpt[_]): Future[MDailyMmpsTplArgs] = {
+  private def _prepareNodeMbmds(mnode: MNode)(implicit request: ISioReq[_]): Future[MDailyMmpsTplArgs] = {
     // TODO По идее надо бы проверять узел на то, является ли он ресивером наверное?
     val nodeId = mnode.id.get
+
     val tariffsFut = Future {
       db.withConnection { implicit c =>
         // TODO Opt Нам тут нужны только номера договоров (id), а не сами договоры.
@@ -184,7 +187,7 @@ class MarketLkBilling @Inject() (
    * @return inline выхлоп для отображения внутри какой-то страницы с тарифами.
    */
   def _renderNodeMbmds(adnId: String) = IsAuthNode(adnId).async { implicit request =>
-    _prepareNodeMbmds(request.adnNode) map { args =>
+    _prepareNodeMbmds(request.mnode) map { args =>
       Ok( _dailyMmpTariffPlansTpl(args) )
     }
   }
@@ -196,7 +199,7 @@ class MarketLkBilling @Inject() (
    * @param adnId id просматриваемого узла.
    */
   def _renderNodeMbmdsWindow(adnId: String) = IsAuthNode(adnId).async { implicit request =>
-    _prepareNodeMbmds(request.adnNode) map { args =>
+    _prepareNodeMbmds(request.mnode) map { args =>
       Ok( _dailyMmpsWindowTpl(args) )
     }
   }

@@ -8,8 +8,8 @@
 @import args._
 
 @wndAnchor(adId: String, advIdOpt: Option[Int])(text: Html) = {
-  <a class="ads-list-block__link js-advertising-requests-item_get-info"
-     href="@routes.MarketAdv.advFullWnd(adId, povAdnId = povAdnIdOpt, advId = advIdOpt, r = ctx.r)">
+  @* href указывал на окошко, которое давно не открывалось. Нужна вообще эта страница? Может удалить её и всё? *@
+  <a class="ads-list-block__link js-advertising-requests-item_get-info" href="#">
   </a>
 }
 

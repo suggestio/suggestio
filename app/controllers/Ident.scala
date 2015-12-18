@@ -59,7 +59,7 @@ class Ident @Inject() (
 
   /** Отредиректить юзера куда-нибудь. */
   def rdrUserSomewhere = IsAuth.async { implicit request =>
-    identUtil.redirectUserSomewhere(request.pwOpt.get.personId)
+    identUtil.redirectUserSomewhere(request.user.personIdOpt.get)
   }
 
   /**

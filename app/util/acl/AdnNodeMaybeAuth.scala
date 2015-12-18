@@ -2,10 +2,9 @@ package util.acl
 
 import models.MNode
 import models.mproj.IMCommonDi
-import models.req.SioReqMd
-import play.api.mvc.{Result, ActionBuilder, Request}
+import models.req.MNodeReq
+import play.api.mvc.{ActionBuilder, Request, Result}
 import util.{PlayMacroLogsDyn, PlayMacroLogsI}
-import util.acl.PersonWrapper.PwOpt_t
 
 import scala.concurrent.Future
 
@@ -23,25 +22,26 @@ trait AdnNodeMaybeAuth
 
   /** Общий код проверок типа AdnNodeMaybeAuth. */
   sealed trait AdnNodeMaybeAuthBase
-    extends ActionBuilder[SimpleRequestForAdnNode]
+    extends ActionBuilder[MNodeReq]
     with PlayMacroLogsI
   {
 
     /** id запрашиваемого узла. */
-    def adnId: String
+    def nodeId: String
 
-    override def invokeBlock[A](request: Request[A], block: (SimpleRequestForAdnNode[A]) => Future[Result]): Future[Result] = {
-      val pwOpt = PersonWrapper.getFromRequest(request)
-      val srmFut = SioReqMd.fromPwOpt(pwOpt)
-      mNodeCache.getById(adnId) flatMap {
-        case Some(adnNode) =>
-          if (isNodeValid(adnNode)) {
-            srmFut flatMap { srm =>
-              val req1 = SimpleRequestForAdnNode(adnNode, request, pwOpt, srm)
-              block(req1)
-            }
+    override def invokeBlock[A](request: Request[A], block: (MNodeReq[A]) => Future[Result]): Future[Result] = {
+      val mnodeOptFut = mNodeCache.getById(nodeId)
+
+      val personIdOpt = sessionUtil.getPersonId(request)
+      val user = mSioUsers(personIdOpt)
+
+      mnodeOptFut.flatMap {
+        case Some(mnode) =>
+          if (isNodeValid(mnode)) {
+            val req1 = MNodeReq(mnode, request, user)
+            block(req1)
           } else {
-            accessProhibited(adnNode, request)
+            accessProhibited(mnode, request)
           }
 
         case None =>
@@ -57,7 +57,7 @@ trait AdnNodeMaybeAuth
     }
 
     def nodeNotFound(implicit request: Request[_]): Future[Result] = {
-      LOGGER.warn(s"Node $adnId not found, requested by ${request.remoteAddress}")
+      LOGGER.warn(s"Node $nodeId not found, requested by ${request.remoteAddress}")
       errorHandler.http404Fut
     }
   }
@@ -65,32 +65,18 @@ trait AdnNodeMaybeAuth
   /** Промежуточный трейт из-за использования в ExpireSession модификатора abstract override. */
   sealed abstract class AdnNodeMaybeAuthAbstract
     extends AdnNodeMaybeAuthBase
-    with ExpireSession[SimpleRequestForAdnNode]
+    with ExpireSession[MNodeReq]
     with PlayMacroLogsDyn
 
 
   /**
    * Реализация [[AdnNodeMaybeAuthBase]] с поддержкой таймаута сессии.
-   * @param adnId id узла.
+   * @param nodeId id узла.
    */
-  case class AdnNodeMaybeAuth(override val adnId: String)
+  case class AdnNodeMaybeAuth(override val nodeId: String)
     extends AdnNodeMaybeAuthAbstract
   {
-    override def isNodeValid(adnNode: MNode): Boolean = true
+    override def isNodeValid(mnode: MNode): Boolean = true
   }
 
 }
-
-
-case class SimpleRequestForAdnNode[A](
-  adnNode   : MNode,
-  request   : Request[A],
-  pwOpt     : PwOpt_t,
-  sioReqMd  : SioReqMd
-)
-  extends AbstractRequestForAdnNode(request)
-{
-  override lazy val isMyNode = IsAdnNodeAdmin.isAdnNodeAdminCheck(adnNode, pwOpt)
-}
-
-

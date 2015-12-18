@@ -1,7 +1,7 @@
 package util.acl
 
 import models.MNodeType
-import models.req.SioReqMd
+import models.req.MNodeReq
 import play.api.mvc.{Result, Request, ActionBuilder}
 import util.PlayMacroLogsDyn
 
@@ -21,7 +21,7 @@ trait IsAuthNode
 
   /** Трейт с логикой проверки залогиненности вкупе с доступом к узлу. */
   trait IsAuthNodeBase
-    extends ActionBuilder[SimpleRequestForAdnNode]
+    extends ActionBuilder[MNodeReq]
     with OnUnauthUtil
     with PlayMacroLogsDyn
   {
@@ -33,24 +33,23 @@ trait IsAuthNode
     // TODO Seq используется для доступа к contains(), который до конца не абстрагирован в разных scala.collections.
     def ntypes: Seq[MNodeType]
 
-    override def invokeBlock[A](request: Request[A],
-                                block: (SimpleRequestForAdnNode[A]) => Future[Result]): Future[Result] = {
-      val pwOpt = PersonWrapper.getFromRequest(request)
-      if (pwOpt.isEmpty) {
+    override def invokeBlock[A](request: Request[A], block: (MNodeReq[A]) => Future[Result]): Future[Result] = {
+
+      val personIdOpt = sessionUtil.getPersonId(request)
+      val user = mSioUsers(personIdOpt)
+
+      if (!user.isAuth) {
         // Не залогинен.
         onUnauth(request)
 
       } else {
         // Юзер залогинен, нужно продолжать запрос.
         val nodeOptFut = mNodeCache.getById( nodeId )
-        val srmFut = SioReqMd.fromPwOpt( pwOpt )
         val _ntypes = ntypes
         nodeOptFut flatMap {
           case Some(mnode) if _ntypes.isEmpty || _ntypes.contains(mnode.common.ntype) =>
-            srmFut flatMap { srm =>
-              val req1 = SimpleRequestForAdnNode(mnode, request, pwOpt, srm)
-              block(req1)
-            }
+            val req1 = MNodeReq(mnode, request, user)
+            block(req1)
 
           case other =>
             other.foreach { mnode =>
@@ -66,10 +65,11 @@ trait IsAuthNode
   /** Абстрактный класс с недореализацией IsAuthNodeBase. */
   abstract class IsAuthNodeAbstract
     extends IsAuthNodeBase
-    with ExpireSession[ SimpleRequestForAdnNode ]
+    with ExpireSession[MNodeReq]
 
 
   case class IsAuthNode(override val nodeId: String,
                         override val ntypes: MNodeType*)
     extends IsAuthNodeAbstract
+
 }

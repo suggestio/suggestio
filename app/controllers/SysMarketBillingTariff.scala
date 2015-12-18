@@ -63,22 +63,22 @@ class SysMarketBillingTariff @Inject() (
 
   /** Отрендерить страницу с формой создания нового тарифа. */
   def addFeeTariffForm(contractId: Int) = IsSuperuserContract(contractId).async { implicit request =>
-    import request.contract
-    mNodeCache.getById(contract.adnId) map { adnNodeOpt =>
-      Ok(addTariffFormTpl(adnNodeOpt.get, contract, feeTariffFormM(contractId)))
+    import request.mcontract
+    mNodeCache.getById(mcontract.adnId) map { adnNodeOpt =>
+      Ok(addTariffFormTpl(adnNodeOpt.get, mcontract, feeTariffFormM(contractId)))
     }
   }
 
   /** Сабмит формы добавления нового тарифа. */
   def addFeeTariffFormSubmit(contractId: Int) = IsSuperuserContract(contractId).async { implicit request =>
     lazy val logPrefix = s"addFeeTariffFormSubmit($contractId): "
-    import request.contract
+    import request.mcontract
     val formBinded = feeTariffFormM(contractId).bindFromRequest()
     formBinded.fold(
       {formWithErrors =>
         debug(logPrefix + "Failed to bind form: " + formatFormErrors(formWithErrors))
-        mNodeCache.getById(contract.adnId) map { adnNodeOpt =>
-          NotAcceptable(addTariffFormTpl(adnNodeOpt.get, contract, formWithErrors))
+        mNodeCache.getById(mcontract.adnId) map { adnNodeOpt =>
+          NotAcceptable(addTariffFormTpl(adnNodeOpt.get, mcontract, formWithErrors))
         }
       },
       {tariff =>
@@ -86,8 +86,8 @@ class SysMarketBillingTariff @Inject() (
         val tariffSaved = db.withConnection { implicit c =>
           tariff.save
         }
-        val flashMsg = s"Тариф #${tariffSaved.id.get} добавлен к договору ${contract.legalContractId}."
-        rdrFlashing(contract.adnId, flashMsg)
+        val flashMsg = s"Тариф #${tariffSaved.id.get} добавлен к договору ${mcontract.legalContractId}."
+        rdrFlashing(mcontract.adnId, flashMsg)
       }
     )
   }
@@ -95,22 +95,22 @@ class SysMarketBillingTariff @Inject() (
 
   /** Отрендерить страницу с формой редактирования существующего тарифа. */
   def editFeeTariffForm(tariffId: Int) = IsSuperuserFeeTariffContract(tariffId).async { implicit request =>
-    import request.{contract, tariff}
-    mNodeCache.getById(contract.adnId) map { adnNodeOpt =>
-      val form = feeTariffFormM(contract.id.get).fill(tariff)
-      Ok(editTariffFormTpl(adnNodeOpt.get, contract, tariff, form))
+    import request.{mcontract, mTariffFee}
+    mNodeCache.getById(mcontract.adnId) map { adnNodeOpt =>
+      val form = feeTariffFormM(mcontract.id.get).fill(mTariffFee)
+      Ok(editTariffFormTpl(adnNodeOpt.get, mcontract, mTariffFee, form))
     }
   }
 
   /** Сабмит формы редактирования тарифа. */
   def editFeeTariffFormSubmit(tariffId: Int) = IsSuperuserFeeTariffContract(tariffId).async { implicit request =>
     lazy val logPrefix = s"editFeeTariffFormSubmit($tariffId): "
-    import request.{contract, tariff => tariff0}
-    feeTariffFormM(contract.id.get).bindFromRequest().fold(
+    import request.{mcontract, mTariffFee => tariff0}
+    feeTariffFormM(mcontract.id.get).bindFromRequest().fold(
       {formWithErrors =>
         debug(logPrefix + "Failed to bind form: " + formatFormErrors(formWithErrors))
-        mNodeCache.getById(contract.adnId).map { adnNodeOpt =>
-          NotAcceptable(editTariffFormTpl(adnNodeOpt.get, contract, tariff0, formWithErrors))
+        mNodeCache.getById(mcontract.adnId).map { adnNodeOpt =>
+          NotAcceptable(editTariffFormTpl(adnNodeOpt.get, mcontract, tariff0, formWithErrors))
         }
       },
       {tariff1 =>
@@ -128,20 +128,20 @@ class SysMarketBillingTariff @Inject() (
         val tariffSaved = db.withConnection { implicit c =>
           tariff2.save
         }
-        val flashMsg = editSaveFlashMsg(tariffSaved, contract)
-        rdrFlashing(contract.adnId, flashMsg)
+        val flashMsg = editSaveFlashMsg(tariffSaved, mcontract)
+        rdrFlashing(mcontract.adnId, flashMsg)
       }
     )
   }
 
   /** POST на удаление тарифа. */
   def deleteFeeTariffSubmit(tariffId: Int) = IsSuperuserFeeTariffContract(tariffId).apply { implicit request =>
-    import request.{contract, tariff}
+    import request.{mcontract, mTariffFee}
     val rowsDeleted = db.withConnection { implicit c =>
-      tariff.delete
+      mTariffFee.delete
     }
-    val flashMsg = deleteFlashMsg(tariffId, rowsDeleted, contract)
-    rdrFlashing(contract.adnId, flashMsg)
+    val flashMsg = deleteFlashMsg(tariffId, rowsDeleted, mcontract)
+    rdrFlashing(mcontract.adnId, flashMsg)
   }
 
 
@@ -188,10 +188,10 @@ class SysMarketBillingTariff @Inject() (
 
   /** Экшен рендера страницы добавления тарификации по просмотрам/переходам. */
   def addStatTariff(contractId: Int) = IsSuperuserContract(contractId).async { implicit request =>
-    mNodeCache.getById(request.contract.adnId) map {
+    mNodeCache.getById(request.mcontract.adnId) map {
       case Some(adnNode) =>
         val stf = statTariffFormM(contractId)
-        Ok(addStatTariffFormTpl(adnNode, stf, request.contract))
+        Ok(addStatTariffFormTpl(adnNode, stf, request.mcontract))
       case None =>
         NotFound("Contract not found: " + contractId)
     }
@@ -203,15 +203,15 @@ class SysMarketBillingTariff @Inject() (
     stf.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"addStatTariffFormSubmit($contractId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
-        mNodeCache.getById(request.contract.adnId) map { adnNodeOpt =>
-          NotAcceptable(addStatTariffFormTpl(adnNodeOpt.get, formWithErrors, request.contract))
+        mNodeCache.getById(request.mcontract.adnId) map { adnNodeOpt =>
+          NotAcceptable(addStatTariffFormTpl(adnNodeOpt.get, formWithErrors, request.mcontract))
         }
       },
       {mbts =>
         val tariffSaved = db.withConnection { implicit c =>
           mbts.save
         }
-        rdrFlashing(request.contract.adnId, "Создан тариф #" + tariffSaved.id.get)
+        rdrFlashing(request.mcontract.adnId, "Создан тариф #" + tariffSaved.id.get)
       }
     )
   }
@@ -219,38 +219,38 @@ class SysMarketBillingTariff @Inject() (
 
   /** Рендер страницы с формой редактирования существующего stat-тарифа. */
   def editStatTariff(tariffId: Int) = IsSuperuserStatTariffContract(tariffId).async { implicit request =>
-    mNodeCache.getById(request.contract.adnId) map { adnNodeOpt =>
-      val formBinded = statTariffFormM(request.contract.id.get).fill(request.tariff)
-      Ok(editStatTariffFormTpl(adnNodeOpt.get, request.tariff, request.contract, formBinded))
+    mNodeCache.getById(request.mcontract.adnId) map { adnNodeOpt =>
+      val formBinded = statTariffFormM(request.mcontract.id.get).fill(request.mTariffStat)
+      Ok(editStatTariffFormTpl(adnNodeOpt.get, request.mTariffStat, request.mcontract, formBinded))
     }
   }
 
   /** Сабмит формы редактирования stat-тарифа. */
   def editStatTariffSubmit(tariffId: Int) = IsSuperuserStatTariffContract(tariffId).async { implicit request =>
-    import request.tariff
-    statTariffFormM(request.contract.id.get).bindFromRequest().fold(
+    import request.mTariffStat
+    statTariffFormM(request.mcontract.id.get).bindFromRequest().fold(
       {formWithErrors =>
         debug(s"editStatTariffSubmit($tariffId): Failed to bind edit form:\n${formatFormErrors(formWithErrors)}")
-        mNodeCache.getById(request.contract.adnId) map { adnNodeOpt =>
-          NotAcceptable(editStatTariffFormTpl(adnNodeOpt.get, tariff, request.contract, formWithErrors))
+        mNodeCache.getById(request.mcontract.adnId) map { adnNodeOpt =>
+          NotAcceptable(editStatTariffFormTpl(adnNodeOpt.get, mTariffStat, request.mcontract, formWithErrors))
         }
       },
       {tariff2 =>
         val now = DateTime.now
-        val tariff3 = tariff.copy(
+        val tariff3 = mTariffStat.copy(
           debitAmount = tariff2.debitAmount,
           debitFor    = tariff2.debitFor,
           name        = tariff2.name,
           dateModified = Some(now),
           isEnabled   = tariff2.isEnabled,
-          dateStatus  = if (tariff.isEnabled != tariff2.isEnabled) now else tariff.dateStatus,
+          dateStatus  = if (mTariffStat.isEnabled != tariff2.isEnabled) now else mTariffStat.dateStatus,
           dateFirst   = tariff2.dateFirst
         )
         db.withConnection { implicit c =>
           tariff3.save
         }
-        val flashMsg = editSaveFlashMsg(tariff, request.contract)
-        rdrFlashing(request.contract.adnId, flashMsg)
+        val flashMsg = editSaveFlashMsg(mTariffStat, request.mcontract)
+        rdrFlashing(request.mcontract.adnId, flashMsg)
       }
     )
   }
@@ -258,12 +258,12 @@ class SysMarketBillingTariff @Inject() (
 
   /** Запрос на удаление stat-тарифа. */
   def deleteStatTariffSubmit(tariffId: Int) = IsSuperuserStatTariffContract(tariffId).apply { implicit request =>
-    import request.{contract, tariff}
+    import request.{mcontract, mTariffStat}
     val rowsDeleted = db.withConnection { implicit c =>
-      tariff.delete
+      mTariffStat.delete
     }
-    val flashMsg = deleteFlashMsg(tariffId, rowsDeleted, contract)
-    rdrFlashing(contract.adnId, flashMsg)
+    val flashMsg = deleteFlashMsg(tariffId, rowsDeleted, mcontract)
+    rdrFlashing(mcontract.adnId, flashMsg)
   }
 
 }

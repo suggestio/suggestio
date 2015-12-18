@@ -30,6 +30,8 @@ import scala.concurrent.{ExecutionContext, Future}
  *
  * Модель живёт в контексте реквеста и пришла на смену SioReqMd, Option[PersonWrapper],
  * RichRequestHeader, но ещё и c расширением возможностей.
+ *
+ * При добавлении новых полей в модель, нужно добавлять их в [[ISioUser]] и в apply()-конструкторы ниже.
  */
 trait ISioUser {
 

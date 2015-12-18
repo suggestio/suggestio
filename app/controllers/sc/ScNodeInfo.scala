@@ -60,7 +60,7 @@ trait ScNodeInfo
   /** Экшн, который рендерит скрипт с иконкой. Используется кеширование на клиенте и на сервере. */
   def nodeIconJs(adnId: String) = AdnNodeMaybeAuth(adnId).async { implicit request =>
     // Проверяем ETag
-    val isCachedEtag = request.adnNode.versionOpt
+    val isCachedEtag = request.mnode.versionOpt
       .flatMap { vsn =>
         request.headers.get(IF_NONE_MATCH)
           .filter { etag  =>  vsn.toString == etag }
@@ -79,20 +79,20 @@ trait ScNodeInfo
     } else {
       val ck = nodeIconJsCacheKey(adnId)
       CacheUtil.getOrElse [Result] (ck, NODE_ICON_JS_CACHE_TTL_SECONDS) {
-        val logoFut = logoUtil.getLogoOfNode( request.adnNode )
+        val logoFut = logoUtil.getLogoOfNode( request.mnode )
         var cacheHeaders: List[(String, String)] = List(
           CONTENT_TYPE  -> "text/javascript; charset=utf-8",
           LAST_MODIFIED -> DateTimeUtil.rfcDtFmt.print(mProjectInfo.PROJECT_CODE_LAST_MODIFIED),
           CACHE_CONTROL -> ("public, max-age=" + NODE_ICON_JS_CACHE_CONTROL_MAX_AGE)
         )
-        if (request.adnNode.versionOpt.isDefined) {
-          cacheHeaders  ::=  ETAG -> request.adnNode.versionOpt.get.toString
+        if (request.mnode.versionOpt.isDefined) {
+          cacheHeaders  ::=  ETAG -> request.mnode.versionOpt.get.toString
         }
         for (logoOpt <- logoFut) yield {
           // TODO Добавить минификацию скомпиленного js-кода. Это снизит нагрузку на кеш (на RAM) и на сеть.
           // TODO Добавить поддержку gzip надо бы.
           // TODO Кешировать отрендеренные результаты на HDD, а не в RAM.
-          Ok(nodeIconJsTpl(request.adnNode, logoOpt))
+          Ok(nodeIconJsTpl(request.mnode, logoOpt))
             .withHeaders(cacheHeaders : _*)
         }
       }
@@ -101,9 +101,9 @@ trait ScNodeInfo
 
   /** Экшн, который выдает базовую инфу о ноде */
   def nodeData(adnId: String) = AdnNodeMaybeAuth(adnId).async { implicit request =>
-    val node = request.adnNode
+    val mnode = request.mnode
     val logoCallOptFut = for(
-      logoOpt <- logoUtil.getLogoOfNode( request.adnNode )
+      logoOpt <- logoUtil.getLogoOfNode( mnode )
     ) yield {
       logoOpt.map { logoImg =>
         cdnUtil.dynImg( logoImg )
@@ -113,7 +113,7 @@ trait ScNodeInfo
       logoCallOpt <- logoCallOptFut
     } yield {
       val resp = NodeDataResp(
-        colorOpt    = node.meta.colors.bg.map(_.code),
+        colorOpt    = mnode.meta.colors.bg.map(_.code),
         logoUrlOpt  = logoCallOpt
       )
       cacheControlShort {
@@ -124,7 +124,7 @@ trait ScNodeInfo
 
   /** Рендер скрипта выдачи для указанного узла. */
   def nodeSiteScript(adnId: String) = AdnNodeMaybeAuth(adnId).apply { implicit request =>
-    Ok(_installScriptTpl(request.adnNode.id, mkPermanent = true))
+    Ok(_installScriptTpl(request.mnode.id, mkPermanent = true))
       .withHeaders(
         CONTENT_TYPE  -> "text/javascript; charset=utf-8",
         CACHE_CONTROL -> "public, max-age=36000"

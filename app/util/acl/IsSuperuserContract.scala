@@ -2,10 +2,11 @@ package util.acl
 
 import models.mbill
 import models.mbill.MContract
-import models.req.SioReqMd
+import models.req.{MContractReq, SioReq}
+import play.api.mvc.{ActionBuilder, Request, Result}
+import util.async.AsyncUtil
+
 import scala.concurrent.Future
-import play.api.mvc.{Request, ActionBuilder, Result}
-import util.acl.PersonWrapper.PwOpt_t
 
 /**
  * Suggest.io
@@ -20,46 +21,39 @@ trait IsSuperuserContract
   import mCommonDi._
 
   sealed trait IsSuperuserContractBase
-    extends ActionBuilder[ContractRequest]
+    extends ActionBuilder[MContractReq]
     with IsSuperuserUtil
   {
 
+    /** id запрашиваемого контракта. */
     def contractId: Int
 
-    override def invokeBlock[A](request: Request[A], block: (ContractRequest[A]) => Future[Result]): Future[Result] = {
-      val pwOpt = PersonWrapper.getFromRequest(request)
-      if (PersonWrapper.isSuperuser(pwOpt)) {
-        val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)
-        val contract = db.withConnection { implicit c =>
-          MContract.getById(contractId).get
-        }
-        sioReqMdFut flatMap { srm =>
-          val req1 = ContractRequest(contract, pwOpt, request, srm)
+    override def invokeBlock[A](request: Request[A], block: (MContractReq[A]) => Future[Result]): Future[Result] = {
+      val personIdOpt = sessionUtil.getPersonId(request)
+      val user = mSioUsers(personIdOpt)
+
+      if (user.isSuperUser) {
+
+        val contractFut = Future {
+          db.withConnection { implicit c =>
+            MContract.getById(contractId).get
+          }
+        }(AsyncUtil.jdbcExecutionContext)
+
+        contractFut.flatMap { mcontract =>
+          val req1 = MContractReq(mcontract, request, user)
           block(req1)
         }
+
       } else {
-        supOnUnauthFut(request, pwOpt)
+        val req1 = SioReq(request, user)
+        supOnUnauthFut(req1)
       }
     }
   }
 
   case class IsSuperuserContract(contractId: Int)
     extends IsSuperuserContractBase
-    with ExpireSession[ContractRequest]
+    with ExpireSession[MContractReq]
 
 }
-
-
-abstract class AbstractContractRequest[A](request: Request[A])
-  extends AbstractRequestWithPwOpt(request) {
-  def contract: MContract
-}
-
-case class ContractRequest[A](
-  contract  : MContract,
-  pwOpt     : PwOpt_t,
-  request   : Request[A],
-  sioReqMd  : SioReqMd
-)
-  extends AbstractContractRequest[A](request)
-

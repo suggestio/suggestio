@@ -3,6 +3,7 @@ package controllers
 import com.google.inject.Inject
 import models._
 import models.mproj.MCommonDi
+import models.req.ISioReq
 import models.usr.MPersonIdent
 import play.api.data.Forms._
 import play.api.data._
@@ -76,11 +77,11 @@ class MarketLkSupport @Inject() (
     _supportForm(None, r)
   }
 
-  private def _supportForm(nodeOpt: Option[MNode], r: Option[String])(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+  private def _supportForm(nodeOpt: Option[MNode], r: Option[String])(implicit request: ISioReq[_]): Future[Result] = {
     // Взять дефолтовое значение email'а по сессии
-    val emailsDfltFut = request.pwOpt.fold [Future[Seq[String]]]
+    val emailsDfltFut = request.user.personIdOpt.fold [Future[Seq[String]]]
       { Future successful Nil }
-      { pw => MPersonIdent.findAllEmails(pw.personId) }
+      { personId => MPersonIdent.findAllEmails(personId) }
     for {
       emailsDflt <- emailsDfltFut
     } yield {
@@ -102,7 +103,7 @@ class MarketLkSupport @Inject() (
     _supportFormSubmit(None, r)
   }
 
-  private def _supportFormSubmit(nodeOpt: Option[MNode], r: Option[String])(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+  private def _supportFormSubmit(nodeOpt: Option[MNode], r: Option[String])(implicit request: ISioReq[_]): Future[Result] = {
     val adnIdOpt = nodeOpt.flatMap(_.id)
     lazy val logPrefix = s"supportFormSubmit($adnIdOpt): "
     supportFormM.bindFromRequest().fold(
@@ -111,13 +112,13 @@ class MarketLkSupport @Inject() (
         NotAcceptable(supportFormTpl(nodeOpt, formWithErrors, r))
       },
       {lsr =>
-        val userEmailsFut = MPersonIdent.findAllEmails(request.pwOpt.get.personId)
+        val personId = request.user.personIdOpt.get
+        val userEmailsFut = MPersonIdent.findAllEmails(personId)
         trace(logPrefix + "Processing from ip=" + request.remoteAddress)
         val msg = mailer.instance
         msg.setReplyTo(lsr.replyEmail)
         msg.setFrom("no-reply@suggest.io")
         msg.setRecipients( supportUtil.FEEDBACK_RCVR_EMAILS : _* )
-        val personId = request.pwOpt.get.personId
         userEmailsFut.map { ues =>
           val username = ues.headOption getOrElse personId
           msg.setSubject("S.io Market: Вопрос от пользователя " + lsr.name.orElse(ues.headOption).getOrElse(""))

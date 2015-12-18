@@ -13,6 +13,7 @@ import io.suggest.ym.model.common.MImgInfoMeta
 import models.Context
 import models.im._
 import models.mproj.MCommonDi
+import models.req.ISioReq
 import net.sf.jmimemagic.{Magic, MagicMatch}
 import org.apache.commons.io.FileUtils
 import org.joda.time.{DateTime, ReadableInstant}
@@ -288,7 +289,7 @@ trait TempImgSupport
   def _handleTempImg(preserveUnknownFmt: Boolean = false, runEarlyColorDetector: Boolean = false,
                      wsId: Option[String] = None, ovlRrr: Option[(String, Context) => Html] = None,
                      mImgCompanion: IMImgCompanion = mImg3)
-                    (implicit request: AbstractRequestWithPwOpt[MultipartFormData[TemporaryFile]]): Future[Result] = {
+                    (implicit request: ISioReq[MultipartFormData[TemporaryFile]]): Future[Result] = {
     // TODO Надо часть синхронной логики загнать в Future{}. Это нужно, чтобы скачанные данные из tmp удалялись автоматом.
     val resultFut: Future[Result] = request.body.file("picture") match {
       case Some(pictureFile) =>

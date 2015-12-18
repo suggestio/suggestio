@@ -10,6 +10,7 @@ import models.adv._
 import models.adv.direct._
 import models.adv.tpl.{MAdvForAdTplArgs, MAdvHistoryTplArgs, MCurrentAdvsTplArgs}
 import models.mproj.MCommonDi
+import models.req.ISioReq
 import play.api.data._
 import play.api.mvc.{AnyContent, Result}
 import play.twirl.api.Html
@@ -44,14 +45,13 @@ class MarketAdv @Inject() (
   directAdvFormUtil               : DirectAdvFormUtil,
   advFormUtil                     : AdvFormUtil,
   bill2Util                       : Bill2Util,
-  override val n2NodesUtil        : N2NodesUtil,
+  n2NodesUtil                     : N2NodesUtil,
   override val mCommonDi          : MCommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
   with CanAdvertiseAd
   with CanReceiveAdvReq
-  with AdvWndAccess
   with IsAdnNodeAdmin
 {
 
@@ -288,7 +288,7 @@ class MarketAdv @Inject() (
     }.toMap
   }
 
-  private def maybeFreeAdv(implicit request: AbstractRequestWithPwOpt[_]): Boolean = {
+  private def maybeFreeAdv(implicit request: ISioReq[_]): Boolean = {
     // Раньше было ограничение на размещение с завтрашнего дня, теперь оно снято.
     val isFreeOpt = advFormUtil.freeAdvFormM
       .bindFromRequest()
@@ -467,127 +467,6 @@ class MarketAdv @Inject() (
       override def nodeTypes      = Seq( MNodeTypes.AdnNode )
     }
     MNode.dynSearch( msearch )
-  }
-
-
-  /** Запрос к рендеру окошка с полноразмерной превьюшкой карточки и специфичным для конкретной ситуации функционалом.
-    * @param adId id рекламной карточки.
-    * @param povAdnId Опциональный id узла, с точки зрения которого идёт просмотр карточки.
-    * @param advId Опциональный id adv-реквеста, к которому относится запрос. Появился в связи с возможностями
-    *              внешней модерации, которая по определению допускает обработку нескольких активных реквестов
-    *              для одной карточки.
-    * @return Рендер отображения поверх текущей страницы.
-    */
-  def advFullWnd(adId: String, povAdnId: Option[String], advId: Option[Int], r: Option[String]) = {
-    AdvWndAccess(adId, povAdnId, needMBB = false).async { implicit request =>
-      implicit val ctx = implicitly[Context]
-      // Запуск сборки данных по фоновой картинке.
-      val brArgsFut = scUtil.focusedBrArgsFor(request.mad)(ctx)
-      val wndFullArgsFut = brArgsFut map { brArgs =>
-        WndFullArgs(
-          producer    = request.producer,
-          brArgs      = brArgs,
-          goBackTo    = r
-        )
-      }
-      // Есть разные варианты отображения в зависимости от роли. TODO Распилить сий велосипед это на два экшена.
-      if (request.isProducerAdmin) {
-        // Узел-продьюсер смотрит инфу по размещению карточки. Нужно отобразить ему список по текущим векторам размещения.
-        val limit = ADVS_MODE_SELECT_LIMIT
-
-        // Параллельные вызовы к моделям размещений.
-        val advsOkFut = Future {
-          db.withConnection { implicit c =>
-            MAdvOk.findNotExpiredByAdId(adId, limit = limit)
-          }
-        }(AsyncUtil.jdbcExecutionContext)
-
-        val advsReqFut = Future {
-          db.withConnection { implicit c =>
-            MAdvReq.findNotExpiredByAdId(adId, limit = limit)
-          }
-        }(AsyncUtil.jdbcExecutionContext)
-
-        val advsRefusedFut = Future {
-          db.withConnection { implicit c =>
-            MAdvRefuse.findByAdId(adId, limit = limit)
-          }
-        }(AsyncUtil.jdbcExecutionContext)
-
-        val adv2adnIdsFut = for {
-          advsOk       <- advsOkFut
-          advsReq      <- advsReqFut
-          advsRefused  <- advsRefusedFut
-        } yield {
-          mkAdv2adnIds(advsOk, advsReq, advsRefused)
-        }
-
-        // Запускаем сбор узлов
-        val rcvrsFut = adv2adnIdsFut flatMap { adv2adnIds =>
-          val adnIds = adv2adnIds.valuesIterator.toSet
-          mNodeCache.multiGet(adnIds)
-        }
-
-        // Объединение всех списков
-        val advsFut = for {
-          advsOk       <- advsOkFut
-          advsReq      <- advsReqFut
-          advsRefused  <- advsRefusedFut
-        } yield {
-          val allIter = advsOk.iterator ++ advsReq.iterator ++ advsRefused.iterator
-          allIter.toSeq
-        }
-
-        val adn2advMapFut = for {
-          adv2adnIds <- adv2adnIdsFut
-          rcvrs      <- rcvrsFut
-        } yield {
-          mkAdv2adnMap(adv2adnIds, rcvrs)
-        }
-
-        for {
-          adn2advMap  <- adn2advMapFut
-          advs        <- advsFut
-          wndArgs     <- wndFullArgsFut
-        } yield {
-          val render = _advWndFullListTpl(wndArgs, advs, adn2advMap)(ctx)
-          Ok(render)
-        }
-
-      } else {
-        // Доступ не-продьюсера к чужой рекламной карточке. Это узел-ресивер или узел-модератор, которому делегировали возможности размещения.
-        val advOptFut = advId.fold [Future[Option[MAdvI]]] (Future successful None) { _advId =>
-          Future {
-            db.withConnection { implicit c =>
-              MAdvOk.getById(_advId) orElse MAdvReq.getById(_advId)
-            }
-          }(AsyncUtil.jdbcExecutionContext)
-        }
-        for {
-          advOpt  <- advOptFut
-          wndArgs <- wndFullArgsFut
-        } yield {
-          advOpt.filter { adv =>
-            (adv.adId == adId) && (request.rcvrIds contains adv.rcvrAdnId)
-          }.fold [Result] {
-              error(s"advFullWnd($adId, pov=$povAdnId): Cannot find adv[$advId] for ad[$adId] and rcvrs = [${request.rcvrIds.mkString(", ")}]")
-              InternalServerError("Unexpected situation.")
-          } {
-            // ok: предложение было одобрено юзером
-            case advOk: MAdvOk =>
-              Ok( _advWndFullOkTpl(wndArgs, advOk)(ctx) )
-
-            // req: предложение на состоянии модерации. Надо бы отрендерить страницу судьбоносного набега на мозг
-            case advReq: MAdvReq =>
-              Ok( _advReqWndTpl(wndArgs, advReq, directAdvFormUtil.reqRefuseFormM)(ctx) )
-
-            // should never occur
-            case other =>
-              throw new IllegalArgumentException("Unexpected result from MAdv models: " + other)
-          }
-        }
-      }
-    }
   }
 
 

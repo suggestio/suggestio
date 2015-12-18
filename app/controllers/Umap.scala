@@ -9,6 +9,7 @@ import io.suggest.model.geo.{GsTypes, PointGs}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models._
 import models.mproj.MCommonDi
+import models.req.ISioReq
 import play.api.i18n.Messages
 import play.api.libs.Files.TemporaryFile
 import play.api.mvc.{MultipartFormData, RequestHeader, Result}
@@ -88,9 +89,9 @@ class Umap @Inject() (
       nodesMap      = Map.empty,
       editAllowed   = true,
       title         = "Карта: " +
-        request.adnNode.meta.basic.name +
-        request.adnNode.meta.address.town.fold("")(" / " + _),
-      ngls          = request.adnNode
+        request.mnode.meta.basic.name +
+        request.mnode.meta.address.town.fold("")(" / " + _),
+      ngls          = request.mnode
         .extras
         .adn
         .fold (List.empty[NodeGeoLevel]) { adn =>
@@ -162,8 +163,8 @@ class Umap @Inject() (
 
   /** Получение геослоя в рамках карты одного узла. */
   def getDataLayerNodeGeoJson(adnId: String, ngl: NodeGeoLevel) = IsSuperuserAdnNode(adnId).async { implicit request =>
-    val adnIdOpt = request.adnNode.id
-    val nodes = Seq(request.adnNode)
+    val adnIdOpt = request.mnode.id
+    val nodes = Seq(request.mnode)
     _getDataLayerGeoJson(adnIdOpt, ngl, nodes)
   }
 
@@ -191,13 +192,13 @@ class Umap @Inject() (
   /** Сабмит одного слоя на карте узла. */
   def saveNodeDataLayer(adnId: String, ngl: NodeGeoLevel) = {
     IsSuperuserAdnNodePost(adnId).async(parse.multipartFormData) { implicit request =>
-      _saveMapDataLayer(ngl, request.adnNode.id){ _ => adnId }
+      _saveMapDataLayer(ngl, request.mnode.id){ _ => adnId }
     }
   }
 
   /** Общий код экшенов, занимающихся сохранением геослоёв. */
   private def _saveMapDataLayer(ngl: NodeGeoLevel, adnIdOpt: Option[String])(getAdnIdF: UmapFeature => String)
-                               (implicit request: AbstractRequestWithPwOpt[MultipartFormData[TemporaryFile]]): Future[Result] = {
+                               (implicit request: ISioReq[MultipartFormData[TemporaryFile]]): Future[Result] = {
     // Готовимся к сохранению присланных данных.
     val logPrefix = s"saveMapDataLayer($ngl): "
     // Для обновления слоя нужно удалить все renderable-данные в этом слое, и затем залить в слой все засабмиченные через bulk request.

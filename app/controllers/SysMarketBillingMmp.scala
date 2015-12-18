@@ -4,9 +4,10 @@ import com.google.inject.Inject
 import models._
 import models.mbill.{MContract, MTariffDaily}
 import models.mproj.MCommonDi
+import models.req.{ISioReq, IContractReq}
 import play.api.data.Forms._
 import play.api.data._
-import play.api.mvc.AnyContent
+import play.api.mvc.{Result, AnyContent}
 import play.twirl.api.Html
 import util.FormUtil._
 import util.PlayMacroLogsImpl
@@ -23,7 +24,7 @@ import scala.concurrent.Future
  * Description: sys-контроллер для работы с mmp-тарификацией, т.е. когда тарификация настраивается по рекламным модулям.
  */
 class SysMarketBillingMmp @Inject() (
-  mCalendar                     : MCalendar_,
+  mCalendars                    : MCalendars,
   override val mCommonDi        : MCommonDi
 )
   extends SioControllerImpl
@@ -84,13 +85,13 @@ class SysMarketBillingMmp @Inject() (
       .map(Ok(_))
   }
 
-  private def _createMmpDaily(formM: Form[MTariffDaily])(implicit request: ContractRequest[AnyContent]): Future[Html] = {
-    val mcalsFut = mCalendar.getAll()
+  private def _createMmpDaily(formM: Form[MTariffDaily])(implicit request: IContractReq[_]): Future[Html] = {
+    val mcalsFut = mCalendars.getAll()
     for {
-      adnNodeOpt <- mNodeCache.getById(request.contract.adnId)
+      adnNodeOpt <- mNodeCache.getById(request.mcontract.adnId)
       mcals      <- mcalsFut
     } yield {
-      createMppDailyTpl(request.contract, formM, adnNodeOpt, mcals)
+      createMppDailyTpl(request.mcontract, formM, adnNodeOpt, mcals)
     }
   }
 
@@ -110,8 +111,8 @@ class SysMarketBillingMmp @Inject() (
         val mbmd1 = db.withConnection { implicit c =>
           mbmd.save
         }
-        Redirect(routes.SysMarketBilling.billingFor(request.contract.adnId))
-          .flashing(FLASH.SUCCESS -> s"Создан посуточный тарификатор #${mbmd1.id.get} для договора ${request.contract.legalContractId}")
+        Redirect(routes.SysMarketBilling.billingFor(request.mcontract.adnId))
+          .flashing(FLASH.SUCCESS -> s"Создан посуточный тарификатор #${mbmd1.id.get} для договора ${request.mcontract.legalContractId}")
       }
     )
   }
@@ -126,8 +127,8 @@ class SysMarketBillingMmp @Inject() (
       .map(Ok(_))
   }
 
-  private def _editMmpDaily(mmpdId: Int, form: Form[MTariffDaily])(implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Html] = {
-    val mcalsFut = mCalendar.getAll()
+  private def _editMmpDaily(mmpdId: Int, form: Form[MTariffDaily])(implicit request: ISioReq[AnyContent]): Future[Html] = {
+    val mcalsFut = mCalendars.getAll()
     val syncResult = db.withConnection { implicit c =>
       val mbmd = MTariffDaily.getById(mmpdId).get
       val mbc  = MContract.getById(mbmd.contractId).get
@@ -211,8 +212,7 @@ class SysMarketBillingMmp @Inject() (
    * @return Страница с формой массового редактирования mmp-тарифа.
    */
   def updateAllForm = IsSuperuser.async { implicit request =>
-    _updateAllFormHtml( mmpStubForm )
-      .map { Ok(_) }
+    _updateAllFormHtml(mmpStubForm, Ok)
   }
 
   /**
@@ -220,12 +220,14 @@ class SysMarketBillingMmp @Inject() (
    * @param formM Маппинг формы для рендера.
    * @return HTML страницы формы редактирования.
     */
-  private def _updateAllFormHtml(formM: Form[MTariffDaily])(implicit request: AbstractRequestWithPwOpt[_]): Future[Html] = {
-    val mcalsFut = mCalendar.getAll()
+  private def _updateAllFormHtml(formM: Form[MTariffDaily], rs: Status)
+                                (implicit request: ISioReq[_]): Future[Result] = {
+    val mcalsFut = mCalendars.getAll()
     for {
       mcals <- mcalsFut
     } yield {
-      updateAllFormTpl(formM, mcals)
+      val html = updateAllFormTpl(formM, mcals)
+      rs(html)
     }
   }
 
@@ -237,8 +239,7 @@ class SysMarketBillingMmp @Inject() (
     mmpFormM.bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug("updateAllSubmit(): Failed to bind form:\n" + formatFormErrors(formWithErrors))
-        _updateAllFormHtml(formWithErrors)
-          .map { NotAcceptable(_) }
+        _updateAllFormHtml(formWithErrors, NotAcceptable)
       },
       {mmp2 =>
         val countUpdatedFut = Future {

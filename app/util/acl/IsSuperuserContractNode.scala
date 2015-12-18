@@ -1,12 +1,11 @@
 package util.acl
 
 import models.mbill.MContract
-import models.MNode
-import models.req.SioReqMd
-import util.async.AsyncUtil
-import scala.concurrent.Future
+import models.req.{MNodeContractReq, SioReq}
 import play.api.mvc.{ActionBuilder, Request, Result}
-import util.acl.PersonWrapper.PwOpt_t
+import util.async.AsyncUtil
+
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -23,41 +22,47 @@ trait IsSuperuserContractNode
   import mCommonDi._
 
   trait IsSuperuserContractNodeBase
-    extends ActionBuilder[ContractNodeRequest]
+    extends ActionBuilder[MNodeContractReq]
     with IsSuperuserUtil
   {
 
     /** id запрашиваемого контракта. */
     def contractId: Int
 
-    override def invokeBlock[A](request: Request[A], block: (ContractNodeRequest[A]) => Future[Result]): Future[Result] = {
-      val pwOpt = PersonWrapper.getFromRequest(request)
-      if ( PersonWrapper.isSuperuser(pwOpt) ) {
-        val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)
+    override def invokeBlock[A](request: Request[A], block: (MNodeContractReq[A]) => Future[Result]): Future[Result] = {
+      val personIdOpt = sessionUtil.getPersonId(request)
+      val user = mSioUsers(personIdOpt)
+
+      if (user.isSuperUser) {
+
         val contractFut = Future {
           db.withConnection { implicit c =>
             MContract.getById(contractId).get
           }
         }(AsyncUtil.jdbcExecutionContext)
-        contractFut flatMap { contract =>
-          mNodeCache.getById(contract.adnId) flatMap { adnNodeOpt =>
-            val adnNode = adnNodeOpt.get
-            sioReqMdFut flatMap { srm =>
-              val req1 = ContractNodeRequest(contract, adnNode, pwOpt, request, srm)
-              block(req1)
-            }
+
+        val mnodeOptFut = contractFut.flatMap { mcontract =>
+          mNodeCache.getById(mcontract.adnId)
+        }
+
+        contractFut flatMap { mcontract =>
+          mnodeOptFut flatMap { mnodeOpt =>
+            val mnode = mnodeOpt.get
+            val req1 = MNodeContractReq(mnode, mcontract, request, user)
+            block(req1)
           }
         }
 
       } else {
-        supOnUnauthFut(request, pwOpt)
+        val req1 = SioReq(request, user)
+        supOnUnauthFut(req1)
       }
     }
   }
 
   abstract class IsSuperuserContractNodeAbstract
     extends IsSuperuserContractNodeBase
-    with ExpireSession[ContractNodeRequest]
+    with ExpireSession[MNodeContractReq]
 
   case class IsSuperuserContractNode(override val contractId: Int)
     extends IsSuperuserContractNodeAbstract
@@ -65,22 +70,11 @@ trait IsSuperuserContractNode
   /** Реализация [[IsSuperuserContractNodeBase]] с выставлением CSRF-токена. */
   case class IsSuperuserContractNodeGet(override val contractId: Int)
     extends IsSuperuserContractNodeAbstract
-    with CsrfGet[ContractNodeRequest]
+    with CsrfGet[MNodeContractReq]
 
   /** Реализация [[IsSuperuserContractNodeBase]] с проверкой CSRF-токена. */
   case class IsSuperuserContractNodePost(override val contractId: Int)
     extends IsSuperuserContractNodeAbstract
-    with CsrfPost[ContractNodeRequest]
+    with CsrfPost[MNodeContractReq]
 
 }
-
-
-case class ContractNodeRequest[A](
-  contract  : MContract,
-  adnNode   : MNode,
-  pwOpt     : PwOpt_t,
-  request   : Request[A],
-  sioReqMd  : SioReqMd
-)
-  extends AbstractContractRequest(request)
-
