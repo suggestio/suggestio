@@ -14,7 +14,7 @@ resolvers ++= Seq(
 
 
 libraryDependencies ++= {
-  val playVsn       = "2.4.4"
+  val playVsn       = "2.4.6"
   Seq(
     "io.suggest"        %% "util" % "2.0.1-SNAPSHOT" changing()
       exclude("org.jruby", "jruby-complete")
