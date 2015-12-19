@@ -284,7 +284,7 @@ trait ExternalLogin
       {nodeName =>
         // Развернуть узел для юзера, отобразить страницу успехоты.
         for {
-          mnode <- nodesUtil.createUserNode(name = nodeName, personId = request.pwOpt.get.personId)
+          mnode <- nodesUtil.createUserNode(name = nodeName, personId = request.user.personIdOpt.get)
         } yield {
           val args = nodesUtil.nodeRegSuccessArgs( mnode )
           Ok( regSuccessTpl(args) )

@@ -65,7 +65,8 @@ class MarketLkSupport @Inject() (
    * @return 200 Ок и страница с формой.
    */
   def supportFormNode(adnId: String, r: Option[String]) = IsAdnNodeAdminGet(adnId).async { implicit request =>
-    _supportForm(Some(request.adnNode), r)
+    val mnodeOpt = Some(request.mnode)
+    _supportForm(mnodeOpt, r)
   }
 
   /**
@@ -95,7 +96,8 @@ class MarketLkSupport @Inject() (
 
   /** Сабмит формы обращения за помощью по узлу, которым управляем. */
   def supportFormNodeSubmit(adnId: String, r: Option[String]) = IsAdnNodeAdminPost(adnId).async { implicit request =>
-    _supportFormSubmit(Some(request.adnNode), r)
+    val mnodeOpt = Some(request.mnode)
+    _supportFormSubmit(mnodeOpt, r)
   }
 
   /** Сабмит формы обращения за помощью вне узла. */
@@ -148,7 +150,7 @@ class MarketLkSupport @Inject() (
   }
 
   /** Сабмит формы запроса выставления географии узла. */
-  def askGeo4NodeSubmit(adnId: String, r: Option[String]) = IsAdnNodeAdmin(adnId).async { implicit request =>
+  def askGeo4NodeSubmit(adnId: String, r: Option[String]) = IsAdnNodeAdminPost(adnId).async { implicit request =>
     lazy val logPrefix = s"addNodeGeoSubmit($adnId): "
     geoNodeFormM.bindFromRequest().fold(
       {formWithErrors =>
@@ -156,15 +158,16 @@ class MarketLkSupport @Inject() (
         NotAcceptable
       },
       {text =>
-        val personId = request.pwOpt.get.personId
+        val personId = request.user.personIdOpt.get
         val emailsFut = MPersonIdent.findAllEmails(personId)
         trace(logPrefix + "Processing from ip=" + request.remoteAddress)
         // собираем письмо админам s.io
         val msg = mailer.instance
+        val mnode = request.mnode
         msg.setSubject(
           "sio-market: Запрос геолокации для узла " +
-            request.adnNode.meta.basic.name +
-            request.adnNode.meta.address.town.fold("")(" / " + _)
+            mnode.meta.basic.name +
+            mnode.meta.address.town.fold("")(" / " + _)
         )
         msg.setRecipients( supportUtil.FEEDBACK_RCVR_EMAILS : _* )
         msg.setFrom("no-reply@suggest.io")
@@ -172,7 +175,7 @@ class MarketLkSupport @Inject() (
           val emailOpt = emails.headOption
           if (emailOpt.isDefined)
             msg.setReplyTo(emailOpt.get)
-          msg.setHtml( views.html.lk.support.emailGeoNodeRequestTpl(emails, request.adnNode, text) )
+          msg.setHtml( views.html.lk.support.emailGeoNodeRequestTpl(emails, mnode, text) )
           msg.send()
         } flatMap { _ =>
           // Письмо отправлено админам. Нужно куда-то перенаправить юзера.

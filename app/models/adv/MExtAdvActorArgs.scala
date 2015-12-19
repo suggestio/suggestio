@@ -4,8 +4,8 @@ import akka.actor.{Props, ActorRef}
 import models.Context
 import models.adv.js.ctx.MJsCtx
 import models.mext.MExtService
+import models.req.IAdProdReq
 import play.api.libs.oauth.RequestToken
-import util.acl.RequestWithAdAndProducer
 
 import scala.concurrent.Future
 
@@ -23,7 +23,7 @@ trait IExtActorArgs {
   def qs      : MExtAdvQs
 
   /** Экземпляр распарсенного http-реквеста. Содержит в себе продьюсера и карточку. */
-  def request : RequestWithAdAndProducer[_]
+  def request : IAdProdReq[_]
 
   /** Для рендера шаблонов, акторам нужен экземпляр Context, который изготовит для них контроллер. */
   implicit def ctx: Context
@@ -42,7 +42,7 @@ trait IExtWsActorArgs extends IExtActorArgs {
   * ws и акторами, исполняющими конкретные задачи. */
 case class MExtWsActorArgs(
   qs        : MExtAdvQs,
-  request   : RequestWithAdAndProducer[_],
+  request   : IAdProdReq[_],
   targetsFut: Future[ActorTargets_t]
 )(implicit val ctx: Context) extends IExtWsActorArgs
 

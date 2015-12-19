@@ -5,16 +5,15 @@ import java.util.UUID
 import com.google.inject.{Singleton, Inject}
 import com.google.inject.assistedinject.Assisted
 import controllers.routes
+import io.suggest.mbill2.m.balance.MBalance
 import io.suggest.util.UuidUtil
 import _root_.models.im.DevScreen
 import _root_.models.jsm.init.MTarget
-import _root_.models.req.{SioReqMdWrapper, ISioReqMd}
+import models.req.ISioReqHdr
 import models.mproj.IMCommonDi
 import org.joda.time.DateTime
 import play.api.i18n.Messages
-import play.api.mvc.RequestHeader
 import play.api.Play.{current, configuration, isDev}
-import util.acl._, PersonWrapper.PwOpt_t
 import play.api.http.HeaderNames._
 import util.cdn.CdnUtil
 import util.img.{DynImgUtil, GalleryUtil}
@@ -103,10 +102,29 @@ trait ContextT { this: ITargets with IMCommonDi =>
    * @return Экземпляр [[Context]].
    */
   implicit final def getContext2(implicit
-                                 request: RichRequestHeader,
-                                 lang: Messages,
-                                 extraJsInitTargets: Seq[MTarget] = Nil ): Context = {
-    mCommonDi.contextFactory.create(this)
+                                 request  : ISioReqHdr,
+                                 messages : Messages,
+                                 ctxData  : CtxData = CtxData.empty): Context = {
+    // Получить js init targets с уровня контроллера, объеденить с остальными, залить их в data.
+    val ctxData1 = {
+      val ctlJsiTgs = jsiTgs(request)
+      val usrJsiTgs = request.user.jsiTgs
+      if (ctlJsiTgs.isEmpty && usrJsiTgs.isEmpty) {
+        // Нет новых целей, вернуть исходный вариант ctxData.
+        ctxData
+
+      } else {
+        val b = Seq.newBuilder[MTarget]
+        b ++= request.user.jsiTgs
+        b ++= jsiTgs(request)
+        b ++= ctxData.jsiTgs
+        ctxData.copy(
+          jsiTgs = b.result()
+        )
+      }
+    }
+
+    mCommonDi.contextFactory.create(request, messages, ctxData1)
   }
 }
 
@@ -114,7 +132,7 @@ trait ContextT { this: ITargets with IMCommonDi =>
 /** Базовый трейт контекста. Используется всеми шаблонами и везде. Переименовывать и менять нельзя.
   * Интерфейс можно только расширять и аккуратно рефакторить, иначе хана.
   */
-trait Context extends MyHostsT with ISioReqMd {
+trait Context extends MyHostsT {
 
   /** Доступ к DI-инжектируемым сущностям.
     * Например, к утили какой-нить или DI-моделям и прочей утвари. */
@@ -123,10 +141,7 @@ trait Context extends MyHostsT with ISioReqMd {
   // abstract val вместо def'ов в качестве возможной оптимизации обращений к ним со стороны scalac и jvm. Всегда можно вернуть def.
 
   /** Данные текущего реквеста. */
-  implicit val request: RequestHeader
-
-  /** Данные о текущем юзере. */
-  def pwOpt: PwOpt_t
+  implicit val request: ISioReqHdr
 
   /** Текущий язык запроса. Определеляется в контроллерах на основе запроса. */
   implicit val messages: Messages
@@ -154,7 +169,7 @@ trait Context extends MyHostsT with ISioReqMd {
       .get(X_FORWARDED_HOST)        // TODO Желательно ещё отрабатывать нестандартные порты.
       .map(_.trim)
       .filter(!_.isEmpty)
-      .map { raw => 
+      .map { raw =>
         val h = lastForwarded(raw)
         // Если входящий запрос на backend, то нужно отобразить его на www.
         Context.BACKEND_HOST_RE.replaceFirstIn(h, "www.")
@@ -175,9 +190,6 @@ trait Context extends MyHostsT with ISioReqMd {
   lazy val currAudienceUrl: String = myProto + "://" + myHost
 
   implicit lazy val now : DateTime = DateTime.now
-
-  def isAuth: Boolean = pwOpt.isDefined
-  def isSuperuser: Boolean = PersonWrapper.isSuperuser(pwOpt)
 
   def userAgent: Option[String] = request.headers.get(USER_AGENT)
 
@@ -271,13 +283,8 @@ trait Context extends MyHostsT with ISioReqMd {
    */
   def action: Option[String] = request.tags.get(RouteActionMethod)
 
-  def jsInitTargetsExtra: Seq[MTarget]
-
-  /** Генератор списка js-init-целей. */
-  def jsInitTargeter: ITargets
-
-  /** Список js-init-целей. */
-  def jsInitTargets: Seq[MTarget] = jsInitTargeter.getJsInitTargets(this)
+  /** Кастомные данные в контексте. */
+  def data: CtxData
 
 }
 
@@ -293,15 +300,14 @@ class ContextApi @Inject() (
 )
 
 
-/** Guice-assisted factory для сборки контекстов с использованием DI.
+/** Guice factory для сборки контекстов с использованием DI.
   * У шаблонов бывает необходимость залезть в util/models к статическим вещам. */
 trait Context2Factory {
   /**
    * Сборка контекста, код метода реализуется автоматом через Guice Assisted inject.
    * @see [[util.di.GuiceDiModule]] для тюнинга assisted-линковки контекста.
    */
-  def create(jsInitTargeter: ITargets)
-            (implicit request: RichRequestHeader, messages: Messages, jsInitTargetsExtra: Seq[MTarget]): Context2
+  def create(implicit request: ISioReqHdr, messages: Messages, ctxData: CtxData): Context2
 }
 
 
@@ -309,16 +315,24 @@ trait Context2Factory {
 
 /** Основная реализация контекста, с которой работают sio-контроллеры автоматически. */
 case class Context2 @Inject() (
-  override val api                                      : ContextApi,
-  @Assisted override val jsInitTargeter                 : ITargets,
-  @Assisted implicit override val request               : RichRequestHeader,
-  @Assisted implicit override val messages              : Messages,
-  @Assisted implicit override val jsInitTargetsExtra    : Seq[MTarget]
+  override val api                          : ContextApi,
+  @Assisted override val data               : CtxData,
+  @Assisted implicit override val request   : ISioReqHdr,
+  @Assisted implicit override val messages  : Messages
 )
   extends Context
-  with SioReqMdWrapper
-{
 
-  override def pwOpt    = request.pwOpt
-  override def sioReqMd = request.sioReqMd
+
+/**
+ * Модель для произвольных данных, закидываемых в контекст.
+ * @param jsiTgs Какие-то доп.цели инициализации, выставляемые на уровне экшена
+ * @param mUsrBalances Остатки на счетах юзера, обычно приходят из request.user.balancesFut в контроллер.
+ */
+case class CtxData(
+  jsiTgs          : Seq[MTarget]    = Nil,
+  mUsrBalances    : Seq[MBalance]   = Nil
+)
+object CtxData {
+  /** Пустой immutable-инстанс [[CtxData]]. */
+  val empty = CtxData()
 }

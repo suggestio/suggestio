@@ -10,8 +10,7 @@ import play.api.mvc.Request
  * Created: 18.12.15 22:29
  * Description: Реквест с данными активации узла (реализация инвайта на узел).
  */
-trait INodeEactReq[A] extends INodeReq[A] {
-  def eact      : EmailActivation
+trait INodeEactReq[A] extends INodeReq[A] with MEmailActivationReq[A] {
   def epwIdOpt  : Option[EmailPwIdent]
 }
 

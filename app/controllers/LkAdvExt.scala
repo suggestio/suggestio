@@ -8,6 +8,7 @@ import models.adv.ext.{MAdvRunnerTplArgs, MForAdTplArgs}
 import models.adv.search.etg.ExtTargetSearchArgs
 import models.jsm.init.MTargets
 import models.mproj.MCommonDi
+import models.req.IAdProdReq
 import org.elasticsearch.search.sort.SortOrder
 import play.api.data.Forms._
 import play.api.data._
@@ -38,7 +39,7 @@ class LkAdvExt @Inject() (
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
-  with CanAccessExtTargetBaseCtl
+  with CanAccessExtTarget
   with CanAdvertiseAd
   with CanSubmitExtTargetForNode
   with IsAdnNodeAdmin
@@ -90,7 +91,7 @@ class LkAdvExt @Inject() (
   }
 
   private def _forAdRender(adId: String, form: ExtAdvForm, respStatus: Status)
-                          (implicit request: RequestWithAdAndProducer[_]): Future[Result] = {
+                          (implicit request: IAdProdReq[_]): Future[Result] = {
     val targetsFut: Future[Seq[MExtTarget]] = {
       val args = ExtTargetSearchArgs(
         adnId       = request.producer.id,
@@ -110,7 +111,9 @@ class LkAdvExt @Inject() (
         oneTgForm   = ExtUtil.formForTarget
       )
       respStatus {
-        implicit val jsInitTgs = Seq(MTargets.LkAdvExtForm)
+        implicit val ctxData = CtxData(
+          jsiTgs = Seq(MTargets.LkAdvExtForm)
+        )
         forAdTpl(args)
       }
     }
@@ -153,7 +156,9 @@ class LkAdvExt @Inject() (
   def runner(adId: String, wsArgsOpt: Option[MExtAdvQs]) = CanAdvertiseAdPost(adId) { implicit request =>
     wsArgsOpt match {
       case Some(wsArgs) =>
-        implicit val jsInitTargets = Seq(MTargets.AdvExtRunner)
+        implicit val ctxData = CtxData(
+          jsiTgs = Seq(MTargets.AdvExtRunner)
+        )
         implicit val ctx = implicitly[Context]
         val wsArgs2 = wsArgs.copy(
           wsId = ctx.ctxIdStr,
@@ -180,6 +185,7 @@ class LkAdvExt @Inject() (
    * @return 101 Upgrade.
    */
   def wsRun(qsArgs: MExtAdvQs) = WebSocket.tryAcceptWithActor[JsValue, JsValue] { implicit requestHeader =>
+
     // Сначала нужно проверить права доступа всякие.
     val fut0 = if (qsArgs.bestBeforeSec <= BestBefore.nowSec) {
       Future successful None
@@ -187,6 +193,7 @@ class LkAdvExt @Inject() (
       val res = RequestTimeout("Request expired. Return back, refresh page and try again.")
       Future failed ExceptionWithResult(res)
     }
+
     // Если купон валиден, то сразу запускаем в фоне чтение данных по целям размещения...
     val targetsFut: Future[ActorTargets_t] = fut0.flatMap { _ =>
       val ids = qsArgs.targets.iterator.map(_.targetId)
@@ -205,6 +212,7 @@ class LkAdvExt @Inject() (
           .toList
       }
     }
+
     // Одновременно запускаем сбор инфы по карточке и проверку прав на неё.
     fut0.flatMap { _ =>
       val madFut = MNode.getById(qsArgs.adId)
@@ -212,21 +220,25 @@ class LkAdvExt @Inject() (
         .recoverWith { case ex: NoSuchElementException =>
           Future failed ExceptionWithResult(NotFound("Ad not found: " + qsArgs.adId))
         }
-      val pwOpt = PersonWrapper.getFromRequest
+      val personIdOpt = sessionUtil.getPersonId(requestHeader)
+      val user = mSioUsers(personIdOpt)
       madFut
         .flatMap { mad =>
           val req1 = RequestHeaderAsRequest(requestHeader)
-          canAdvAdUtil.maybeAllowed(pwOpt, mad, req1)
+          canAdvAdUtil.maybeAllowed(user, mad, req1)
         }
         .map(_.get)
         .recoverWith { case ex: NoSuchElementException =>
-           Future failed ExceptionWithResult(Forbidden("Login session expired. Return back and press F5."))
+          val ex = ExceptionWithResult(Forbidden("Login session expired. Return back and press F5."))
+          Future.failed(ex)
         }
+
     }.map { implicit req1 =>
       // Всё ок, запускаем актора, который будет вести переговоры с этим websocket'ом.
       val eaArgs = MExtWsActorArgs(qsArgs, req1, targetsFut)
       val hp: HandlerProps = extAdvWsActor.props(_, eaArgs)
       Right(hp)
+
     }.recover {
       case ExceptionWithResult(res) =>
         Left(res)
@@ -241,7 +253,7 @@ class LkAdvExt @Inject() (
    * @param adnId id узла.
    * @return 200 Ok с отрендеренной формой.
    */
-  def writeTarget(adnId: String) = IsAdnNodeAdminGet(adnId) { implicit request =>
+  def writeTarget(adnId: String) = IsAdnNodeAdminGet(adnId, false) { implicit request =>
     val ctx = implicitly[Context]
     val form0 = ExtUtil.oneRawTargetFullFormM(adnId)
       .fill( ("", Some(ctx.messages("New.target")), None) )

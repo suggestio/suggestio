@@ -80,7 +80,9 @@ trait EmailPwReg
 
   /** Рендер страницы регистрации по email. */
   private def _epwRender(form: EmailPwRegReqForm_t)(implicit request: ISioReq[_]): Html = {
-    implicit val jsInitTgs = Seq(MTargets.CaptchaForm)
+    implicit val ctxData = CtxData(
+      jsiTgs = Seq(MTargets.CaptchaForm)
+    )
     epwRegTpl(form, captchaShown = true)
   }
 
@@ -143,7 +145,7 @@ trait EmailPwReg
   /** Юзер возвращается по ссылке из письма. Отрендерить страницу завершения регистрации. */
   def emailReturn(eaInfo: IEaEmailId) = CanConfirmEmailPwRegGet(eaInfo) { implicit request =>
     // ActionBuilder уже выверил всё. Нужно показать юзеру страницу с формой ввода пароля, названия узла и т.д.
-    Ok(confirmTpl(request.ea, epwRegConfirmFormM))
+    Ok(confirmTpl(request.eact, epwRegConfirmFormM))
   }
 
   /** Сабмит формы подтверждения регистрации по email. */
@@ -152,7 +154,7 @@ trait EmailPwReg
     epwRegConfirmFormM.bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug(s"emailConfirmSubmit($eaInfo): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
-        NotAcceptable(confirmTpl(request.ea, formWithErrors))
+        NotAcceptable(confirmTpl(request.eact, formWithErrors))
       },
       {data =>
         // Создать юзера и его ident, удалить активацию, создать новый узел-ресивер.
@@ -190,7 +192,7 @@ trait EmailPwReg
               .withLang(lang)
           }
           // Дожидаемся завершения всех операций и возвращаем результат.
-          request.ea.delete flatMap { _ =>
+          request.eact.delete flatMap { _ =>
             idSaveFut flatMap { _ =>
               resFut
             }

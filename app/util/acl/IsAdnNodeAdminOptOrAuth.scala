@@ -29,13 +29,11 @@ trait IsAdnNodeAdminOptOrAuth
     extends ActionBuilder[MNodeOptReq]
     with PlayMacroLogsDyn
     with OnUnauthUtil
+    with InitUserBalance
   {
 
     /** id узла, если есть. */
     def adnIdOpt: Option[String]
-
-    /** Запускать ли в фоне чтение из БД баланса текущего юзера? */
-    def readPersonBalance: Boolean
 
     override def invokeBlock[A](request: Request[A], block: (MNodeOptReq[A]) => Future[Result]): Future[Result] = {
       val personIdOpt = sessionUtil.getPersonId(request)
@@ -45,8 +43,7 @@ trait IsAdnNodeAdminOptOrAuth
         val user = mSioUsers(personIdOpt)
 
         // Запустить в фоне получение кошелька юзера, т.к. экшены все относятся к этому кошельку
-        if (readPersonBalance)
-          user.mBalanceOptFut
+        maybeInitUserBalance(user)
 
         mnodeOptFut.flatMap { mnodeOpt =>
           val mnodeOpt1 = mnodeOpt.filter { mnode =>
@@ -67,7 +64,7 @@ trait IsAdnNodeAdminOptOrAuth
 
   case class IsAdnNodeAdminOptOrAuthGet(
     override val adnIdOpt: Option[String],
-    override val readPersonBalance: Boolean = true
+    override val initUserBalance: Boolean = true
   )
     extends IsAdnNodeAdminOptOrAuthBase2
     with CsrfGet[MNodeOptReq]

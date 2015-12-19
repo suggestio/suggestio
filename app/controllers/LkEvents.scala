@@ -69,8 +69,9 @@ class LkEvents @Inject() (
 
     // Если начало списка, и узел -- ресивер, то нужно проверить, есть ли у него геошейпы. Если нет, то собрать ещё одно событие...
     val geoWelcomeFut: Future[Option[(Html, DateTime)]] = {
-      if (offset == 0  &&  request.adnNode.extras.adn.exists(_.isReceiver)) {
-        lkEventsUtil.getGeoWelcome(request.adnNode)(ctx)
+      val mnode = request.mnode
+      if (offset == 0  &&  mnode.extras.adn.exists(_.isReceiver)) {
+        lkEventsUtil.getGeoWelcome(mnode)(ctx)
       } else {
         Future successful None
       }
@@ -106,7 +107,7 @@ class LkEvents @Inject() (
           .flatMap { _.argsInfo.adnIdOpt }
           .filter { _ != adnId }    // Текущую ноду фетчить не надо -- она уже в request лежит.
           .toSet
-        mNodeCache.multiGetMap(allNodeIds, List(request.adnNode))
+        mNodeCache.multiGetMap(allNodeIds, List(request.mnode))
       }
 
       for {
@@ -165,7 +166,7 @@ class LkEvents @Inject() (
       val render: Html = if (inline)
         _eventsListTpl(evtsRndr)(ctx)
       else
-        nodeIndexTpl(evtsRndr, request.adnNode)(ctx)
+        nodeIndexTpl(evtsRndr, request.mnode)(ctx)
       Ok(render)
     }
   }
@@ -177,7 +178,7 @@ class LkEvents @Inject() (
    * @param eventId id события.
    * @return 2хх если всё ок. Иначе 4xx.
    */
-  def nodeEventDelete(eventId: String) = HasNodeEventAccess(eventId, srmFull = false, onlyCloseable = true).async {
+  def nodeEventDelete(eventId: String) = HasNodeEventAccess(eventId, initUserBalance = false, onlyCloseable = true).async {
     implicit request =>
       request.mevent.delete.map {
         case true =>

@@ -2,7 +2,6 @@ package models.adv
 
 import play.api.mvc.QueryStringBindable
 import util.PlayLazyMacroLogsImpl
-import util.acl.RequestWithAdAndProducer
 import util.qsb.QsbSigner
 import util.secure.SecretGetter
 import play.api.Play._

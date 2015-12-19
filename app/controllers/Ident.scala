@@ -5,6 +5,7 @@ import controllers.ident._
 import models.jsm.init.{MTargets, MTarget}
 import models.mproj.MCommonDi
 import models.msession.Keys
+import models.req.ISioReqHdr
 import util.acl._
 import util._
 import play.api.mvc._
@@ -69,8 +70,10 @@ class Ident @Inject() (
    *         Иначе редирект в личный кабинет.
    */
   def mySioStartPage(r: Option[String]) = IsAnonGet.async { implicit request =>
+    implicit val ctxData = CtxData(
+      jsiTgs = Seq(MTargets.CaptchaForm, MTargets.HiddenCaptcha)
+    )
     // TODO Затолкать это в отдельный шаблон!
-    implicit val jsInitTgs = Seq(MTargets.CaptchaForm, MTargets.HiddenCaptcha)
     val ctx = implicitly[Context]
     val formFut = emailPwLoginFormStubM
     val title = ctx.messages("Login.page.title")
@@ -81,9 +84,11 @@ class Ident @Inject() (
     }
   }
 
-  /** Страницы ident-контроллера нуждаются в доп.центровке колонок по вертикали. */
-  override protected def _jsInitTargets0: List[MTarget] = {
-    MTargets.IdentVCenterContent :: super._jsInitTargets0
+
+  /** Вернуть список целей инициализации js.
+    * Страницы ident-контроллера нуждаются в доп.центровке колонок по вертикали. */
+  override def jsiTgs(req: ISioReqHdr): List[MTarget] = {
+    MTargets.IdentVCenterContent :: super.jsiTgs(req)
   }
 
 }

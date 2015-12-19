@@ -7,11 +7,12 @@ import models._
 import models.mdr._
 import models.mproj.MCommonDi
 import models.msys.MSysMdrFreeAdvsTplArgs
+import models.req.IAdReq
 import org.joda.time.DateTime
 import play.api.data.Form
 import play.api.mvc.Result
 import util.PlayMacroLogsImpl
-import util.acl.{IsSuperuser, IsSuperuserMad, RequestWithAd}
+import util.acl.{IsSuperuser, IsSuperuserMad}
 import util.lk.LkAdUtil
 import util.n2u.N2NodesUtil
 import util.showcase.ShowcaseUtil
@@ -117,7 +118,7 @@ class SysMdr @Inject() (
 
   /** Рендер тела ответа. */
   private def freeAdvMdrBody(banForm: Form[String], respStatus: Status)
-                            (implicit request: RequestWithAd[_]): Future[Result] = {
+                            (implicit request: IAdReq[_]): Future[Result] = {
     import request.mad
     implicit val ctx = implicitly[Context]
     // 2015.apr.20: Использован функционал выдачи для сбора данных по рендеру. По идее это ок, но лучше бы протестировать.
@@ -164,10 +165,10 @@ class SysMdr @Inject() (
   private def _someNow = Some( DateTime.now )
 
   /** Код обновления эджа модерации живёт здесь. */
-  private def _updMdrEdge(info: MEdgeInfo)(implicit request: RequestWithAd[_]): Future[String] = {
+  private def _updMdrEdge(info: MEdgeInfo)(implicit request: IAdReq[_]): Future[String] = {
     // Сгенерить обновлённые данные модерации.
     val mdr2 = MEdge(
-      nodeId    = request.pwOpt.get.personId,
+      nodeId    = request.user.personIdOpt.get,
       predicate = MPredicates.ModeratedBy,
       info      = info
     )

@@ -1,11 +1,9 @@
 package util.acl
 
-import models.MNode
 import models.adv.MExtTarget
-import models.req.SioReqMd
-import play.api.mvc.{Result, Request, ActionBuilder}
+import models.req.{MExtTargetNodeReq, SioReq}
+import play.api.mvc.{ActionBuilder, Request, Result}
 import util.PlayMacroLogsDyn
-import util.acl.PersonWrapper.PwOpt_t
 
 import scala.concurrent.Future
 
@@ -16,7 +14,7 @@ import scala.concurrent.Future
  * Description: ActionBuilder для экшенов доступа к записям [[models.adv.MExtTarget]] по id.
  */
 
-trait CanAccessExtTargetBaseCtl
+trait CanAccessExtTarget
   extends OnUnauthNodeCtl
   with IsAdnNodeAdminUtilCtl
 {
@@ -25,7 +23,7 @@ trait CanAccessExtTargetBaseCtl
 
   /** Базовая логика [[CanAccessExtTarget]] живёт в этом трейте. */
   trait CanAccessExtTargetBase
-    extends ActionBuilder[ExtTargetRequest]
+    extends ActionBuilder[MExtTargetNodeReq]
     with PlayMacroLogsDyn
     with OnUnauthNode
     with IsAdnNodeAdminUtil
@@ -34,41 +32,36 @@ trait CanAccessExtTargetBaseCtl
     /** id ранее сохранённого экземпляра [[models.adv.MExtTarget]]. */
     def tgId: String
 
-    override def invokeBlock[A](request: Request[A], block: (ExtTargetRequest[A]) => Future[Result]): Future[Result] = {
+    override def invokeBlock[A](request: Request[A], block: (MExtTargetNodeReq[A]) => Future[Result]): Future[Result] = {
       val tgOptFut = MExtTarget.getById(tgId)
-      val pwOpt = PersonWrapper.getFromRequest(request)
+
+      val personIdOpt = sessionUtil.getPersonId(request)
+
       tgOptFut flatMap {
         // Запрошенная цель существует. Нужно проверить права на её узел.
         case Some(tg) =>
-          val adnNodeOptFut = isAdnNodeAdmin(tg.adnId, pwOpt)
-          val srmFut = SioReqMd.fromPwOptAdn(pwOpt, tg.adnId)
+          val user = mSioUsers(personIdOpt)
+          val adnNodeOptFut = isAdnNodeAdmin(tg.adnId, user)
           adnNodeOptFut flatMap {
             // У юзера есть права на узел. Запускаем экшен на исполнение.
             case Some(mnode) =>
-              srmFut flatMap { srm =>
-                val req1 = ExtTargetRequest(
-                  extTarget = tg,
-                  pwOpt     = pwOpt,
-                  adnNode   = mnode,
-                  sioReqMd  = srm,
-                  request   = request
-                )
-                block(req1)
-              }
+              val req1 = MExtTargetNodeReq(tg, mnode, request, user)
+              block(req1)
 
             // Нет прав на узел.
             case None =>
-              onUnauthNode(request, pwOpt)
+              val req1 = SioReq(request, user)
+              onUnauthNode(req1)
           }
 
         case None =>
-          LOGGER.info(s"User $pwOpt tried to access to ExtTarget[$tgId], but id does not exist.")
-          tgNotFound(request, pwOpt)
+          LOGGER.info(s"User $personIdOpt tried to access to ExtTarget[$tgId], but id does not exist.")
+          tgNotFound(request)
       }
     }
 
     /** Что делать и что возвращать юзеру, если цель не найдена? */
-    def tgNotFound(request: Request[_], pwOpt: PwOpt_t): Future[Result] = {
+    def tgNotFound(request: Request[_]): Future[Result] = {
       val res = NotFound("Target does not exist: " + tgId)
       Future successful res
     }
@@ -77,22 +70,8 @@ trait CanAccessExtTargetBaseCtl
 
 
   /** Дефолтовая реализация [[CanAccessExtTargetBase]] с поддержкой проления сессии. */
-  case class CanAccessExtTarget(tgId: String)
+  case class CanAccessExtTarget(override val tgId: String)
     extends CanAccessExtTargetBase
-    with ExpireSession[ExtTargetRequest]
+    with ExpireSession[MExtTargetNodeReq]
 
-}
-
-
-/** Экземпляр реквеста, касающегося таргета. */
-case class ExtTargetRequest[A](
-  extTarget   : MExtTarget,
-  pwOpt       : PwOpt_t,
-  adnNode     : MNode,
-  sioReqMd    : SioReqMd,
-  request     : Request[A]
-)
-  extends AbstractRequestForAdnNode(request)
-{
-  override def isMyNode = true
 }

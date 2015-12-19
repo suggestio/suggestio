@@ -1,10 +1,9 @@
 package util.acl
 
 import controllers.SioController
-import models.MNode
-import models.req.SioReqMd
-import play.api.mvc._
-import util.acl.PersonWrapper.PwOpt_t
+import io.suggest.model.n2.node.MNodeTypes
+import models.req.MAdReq
+import play.api.mvc.{Result, Request, ActionBuilder}
 
 import scala.concurrent.Future
 
@@ -21,30 +20,30 @@ trait GetAnyAd
   import mCommonDi._
 
   /** Комбинация из MaybeAuth и читалки adId из [[models.MNode]]. */
-  trait GetAnyAdAbstract
-    extends ActionBuilder[RequestWithAd]
+  trait GetAnyAdBase
+    extends ActionBuilder[MAdReq]
   {
 
     /** id запрашиваемой карточки. */
     def adId: String
 
-    override def invokeBlock[A](request: Request[A], block: (RequestWithAd[A]) => Future[Result]): Future[Result] = {
-      val madFut = MNode.getById(adId)
-      val pwOpt = PersonWrapper.getFromRequest(request)
-      val srmFut = SioReqMd.fromPwOpt(pwOpt)
-      madFut flatMap {
+    override def invokeBlock[A](request: Request[A], block: (MAdReq[A]) => Future[Result]): Future[Result] = {
+      val madOptFut = mNodeCache.getByIdType(adId, MNodeTypes.Ad)
+
+      val personIdOpt = sessionUtil.getPersonId(request)
+      val user = mSioUsers(personIdOpt)
+
+      madOptFut flatMap {
         case Some(mad) =>
-          srmFut flatMap { srm =>
-            val req1 = RequestWithAd(mad, request, pwOpt, srm)
-            block(req1)
-          }
+          val req1 = MAdReq(mad, request, user)
+          block(req1)
         case None =>
-          adNotFound(pwOpt, request)
+          adNotFound(request)
       }
     }
 
     /** Что возвращать, если карточка не найдена. */
-    def adNotFound(pwOpt: PwOpt_t, request: Request[_]): Future[Result] = {
+    def adNotFound(request: Request[_]): Future[Result] = {
       val res = NotFound("Ad not found: " + adId)
       Future successful res
     }
@@ -55,23 +54,7 @@ trait GetAnyAd
    * @param adId id рекламной карточки.
    */
   case class GetAnyAd(override val adId: String)
-    extends GetAnyAdAbstract
-    with ExpireSession[RequestWithAd]
+    extends GetAnyAdBase
+    with ExpireSession[MAdReq]
 
 }
-
-
-/** Абстрактный реквест в сторону какой-то рекламной карточки. */
-abstract class AbstractRequestWithAd[A](request: Request[A]) extends AbstractRequestWithPwOpt(request) {
-  def mad: MNode
-}
-
-/** Экземпляр реквеста, содержащего рекламную запрашиваемую карточку. */
-case class RequestWithAd[A](
-  mad       : MNode,
-  request   : Request[A],
-  pwOpt     : PwOpt_t,
-  sioReqMd  : SioReqMd
-)
-  extends AbstractRequestWithAd(request)
-

@@ -2,11 +2,10 @@ package util.acl
 
 import controllers.SioController
 import models.adv.MAdvReq
-import models.req.SioReqMd
-import play.api.mvc.{Result, Request, ActionBuilder}
-import models._
-import util.acl.PersonWrapper.PwOpt_t
+import models.req.{MNodeAdvReqReq, SioReq}
+import play.api.mvc.{ActionBuilder, Request, Result}
 import util.async.AsyncUtil
+
 import scala.concurrent.Future
 
 /**
@@ -28,7 +27,7 @@ trait CanReceiveAdvReq
 
   /** Базовая реализация action-builder'ов проверки права на обработку реквестов размещения. */
   trait CanReceiveAdvReqBase
-    extends ActionBuilder[RequestWithAdvReq]
+    extends ActionBuilder[MNodeAdvReqReq]
     with OnUnauthNode
     with IsAdnNodeAdminUtil
     with OnUnauthUtil
@@ -38,38 +37,39 @@ trait CanReceiveAdvReq
     def advReqId: Int
 
     def _advReqNotFound(request: Request[_]): Future[Result] = {
-      Future successful NotFound("adv request not found: " + advReqId)
+      NotFound("adv request not found: " + advReqId)
     }
 
-    override def invokeBlock[A](request: Request[A], block: (RequestWithAdvReq[A]) => Future[Result]): Future[Result] = {
-      PersonWrapper.getFromRequest(request) match {
-        case pwOpt @ Some(pw) =>
-          val advReqOptFut = Future {
-            db.withConnection { implicit c =>
-              MAdvReq.getById(advReqId)
-            }
-          }(AsyncUtil.jdbcExecutionContext)
-          advReqOptFut flatMap {
-            case Some(advReq) =>
-              val srmFut = SioReqMd.fromPwOptAdn(pwOpt, advReq.rcvrAdnId)
-              isAdnNodeAdmin(advReq.rcvrAdnId, pwOpt) flatMap {
-                case Some(adnNode) =>
-                  srmFut flatMap { srm =>
-                    val req1 = RequestWithAdvReq(request, advReq, adnNode, pwOpt, srm)
-                    block(req1)
-                  }
+    override def invokeBlock[A](request: Request[A], block: (MNodeAdvReqReq[A]) => Future[Result]): Future[Result] = {
+      val personIdOpt = sessionUtil.getPersonId(request)
 
-                // Юзер не является админом.
-                case None =>
-                  onUnauthNode(request, pwOpt)
-              }
-
-            case None =>
-              _advReqNotFound(request)
+      personIdOpt.fold {
+        onUnauth(request)
+      } { personId =>
+        val advReqOptFut = Future {
+          db.withConnection { implicit c =>
+            MAdvReq.getById(advReqId)
           }
+        }(AsyncUtil.jdbcExecutionContext)
 
-        case None =>
-          onUnauth(request)
+        val user = mSioUsers(personIdOpt)
+
+        advReqOptFut flatMap {
+          case Some(advReq) =>
+            isAdnNodeAdmin(advReq.rcvrAdnId, user) flatMap {
+              case Some(mnode) =>
+                val req1 = MNodeAdvReqReq(advReq, mnode, request, user)
+                block(req1)
+
+              // Юзер не является админом.
+              case None =>
+                val req1 = SioReq(request, user)
+                onUnauthNode(req1)
+            }
+
+          case None =>
+            _advReqNotFound(request)
+        }
       }
     }
   }
@@ -77,28 +77,15 @@ trait CanReceiveAdvReq
 
   sealed abstract class CanReceiveAdvReqBase2
     extends CanReceiveAdvReqBase
-    with ExpireSession[RequestWithAdvReq]
+    with ExpireSession[MNodeAdvReqReq]
 
   /** GET Запрос окна обработки запроса размещения. */
   case class CanReceiveAdvReqGet(override val advReqId: Int)
     extends CanReceiveAdvReqBase2
-    with CsrfGet[RequestWithAdvReq]
+    with CsrfGet[MNodeAdvReqReq]
 
   case class CanReceiveAdvReqPost(override val advReqId: Int)
     extends CanReceiveAdvReqBase2
-    with CsrfPost[RequestWithAdvReq]
+    with CsrfPost[MNodeAdvReqReq]
 
 }
-
-
-/** Экземпляр одобренного запроса на обработку реквеста размещения рекламной карточки. */
-case class RequestWithAdvReq[A](
-  request   : Request[A],
-  advReq    : MAdvReq,
-  rcvrNode  : MNode,
-  pwOpt     : PwOpt_t,
-  sioReqMd  : SioReqMd
-)
-  extends AbstractRequestWithPwOpt(request)
-
-

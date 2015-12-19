@@ -115,22 +115,24 @@ trait IsAdnNodeAdmin
     with PlayMacroLogsI
     with IsAdnNodeAdminUtil
     with OnUnauthNode
+    with InitUserBalance
   {
 
     /** id запрашиваемого узла. */
-    def adnId: String
+    def nodeId: String
 
     override def invokeBlock[A](request: Request[A], block: (MNodeReq[A]) => Future[Result]): Future[Result] = {
       val personIdOpt = sessionUtil.getPersonId(request)
       val user = mSioUsers(personIdOpt)
 
-      isAdnNodeAdmin(adnId, user) flatMap {
+      isAdnNodeAdmin(nodeId, user) flatMap {
         case Some(mnode) =>
+          maybeInitUserBalance(user)
           val req1 = MNodeReq(mnode, request, user)
           block(req1)
 
         case _ =>
-          LOGGER.debug(s"User $personIdOpt has NO admin access to node $adnId")
+          LOGGER.debug(s"User $personIdOpt has NO admin access to node $nodeId")
           val req1 = SioReq(request, user)
           onUnauthNode(req1)
       }
@@ -144,26 +146,26 @@ trait IsAdnNodeAdmin
 
 
   /** Просто проверка прав на узел перед запуском экшена. */
-  case class IsAdnNodeAdmin(override val adnId: String)
+  case class IsAdnNodeAdmin(
+    override val nodeId: String,
+    override val initUserBalance: Boolean = true
+  )
     extends IsAdnNodeAdminBase2
 
   /** Рендер формы редактирования требует защиты от CSRF. */
-  case class IsAdnNodeAdminGet(override val adnId: String)
+  case class IsAdnNodeAdminGet(
+    override val nodeId: String,
+    override val initUserBalance: Boolean = true
+  )
     extends IsAdnNodeAdminBase2
     with CsrfGet[MNodeReq]
 
   /** Сабмит формы редактирования требует проверки CSRF-Token'а. */
-  case class IsAdnNodeAdminPost(override val adnId: String)
+  case class IsAdnNodeAdminPost(
+    override val nodeId: String,
+    override val initUserBalance: Boolean = false
+  )
     extends IsAdnNodeAdminBase2
     with CsrfPost[MNodeReq]
 
 }
-
-
-@deprecated("Use smthg like m.req.INodeReq instead", "2015.dec.18")
-abstract class AbstractRequestForAdnNode[A](request: Request[A])
-  extends AbstractRequestWithPwOpt(request) {
-  def adnNode : MNode
-  def isMyNode: Boolean
-}
-

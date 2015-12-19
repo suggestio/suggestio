@@ -3,7 +3,7 @@ package controllers.ident
 import controllers._
 import models.jsm.init.MTargets
 import models.msession.Keys
-import models.req.ISioReq
+import models.req.{IRecoverPwReq, ISioReq}
 import models.usr.{MPersonIdent, EmailActivation, EmailPwIdent}
 import play.api.data._
 import play.twirl.api.Html
@@ -94,7 +94,7 @@ trait PwRecover
   with CaptchaValidator
   with BruteForceProtectCtl
   with SetLangCookieUtil
-  with CanRecoverPwCtl
+  with CanRecoverPw
   with IsAnon
   with IIdentUtil
   with EmailPwRegUtil
@@ -118,7 +118,9 @@ trait PwRecover
 
   /** Рендер содержимого страницы с формой восстановления пароля. */
   protected def _recoverPwStep1(form: EmailPwRecoverForm_t)(implicit request: ISioReq[_]): Html = {
-    implicit val jsInitTgs = Seq(MTargets.CaptchaForm)
+    implicit val ctxData = CtxData(
+      jsiTgs = Seq(MTargets.CaptchaForm)
+    )
     val ctx = implicitly[Context]
     val colHtml = _emailColTpl(form)(ctx)
     _outer(colHtml)(ctx)
@@ -162,9 +164,9 @@ trait PwRecover
   /** Форма сброса пароля. */
   private def pwResetFormM: PwResetForm_t = Form(passwordWithConfirmM)
 
-  protected def _pwReset(form: PwResetForm_t)(implicit request: RecoverPwRequest[_]): Html = {
+  protected def _pwReset(form: PwResetForm_t)(implicit request: IRecoverPwReq[_]): Html = {
     val ctx = implicitly[Context]
-    val colHtml = _pwResetColTpl(form, request.eAct)(ctx)
+    val colHtml = _pwResetColTpl(form, request.eact)(ctx)
     _outer(colHtml)(ctx)
   }
 
@@ -186,7 +188,7 @@ trait PwRecover
         val epw2 = request.epw.copy(pwHash = pwHash2, isVerified = true)
         // Запускаем сохранение новых данных по паролю
         val updateFut = epw2.save flatMap { _ =>
-          request.eAct.delete
+          request.eact.delete
         }
         // Генерить ответ как только появляется возможность.
         val resFut = identUtil.redirectUserSomewhere(epw2.personId) map { rdr =>

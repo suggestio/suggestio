@@ -1,12 +1,9 @@
 package util.acl
 
-import models.MNode
-import models.req.SioReqMd
-import play.api.data._
 import models.adv._
-import play.api.mvc.{Result, Request, ActionBuilder}
+import models.req.{ISioUser, MNodeExtTgSubmitReq, SioReq}
+import play.api.mvc.{ActionBuilder, Request, Result}
 import util.PlayMacroLogsDyn
-import util.acl.PersonWrapper.PwOpt_t
 import util.adv.ExtUtil
 
 import scala.concurrent.Future
@@ -21,21 +18,6 @@ import scala.concurrent.Future
  */
 
 
-/** Экземпляр реквеста на сабмит цели. */
-case class ExtTargetSubmitRequest[A](
-  pwOpt       : PwOpt_t,
-  adnNode     : MNode,
-  newTgForm   : Form[(MExtTarget, Option[MExtReturn])],
-  tgExisting  : Option[MExtTarget],
-  sioReqMd    : SioReqMd,
-  request     : Request[A]
-)
-  extends AbstractRequestForAdnNode(request)
-{
-  override def isMyNode = true
-}
-
-
 /** Аддон для контроллера для добавления поддержки */
 trait CanSubmitExtTargetForNode
   extends OnUnauthNodeCtl
@@ -48,20 +30,21 @@ trait CanSubmitExtTargetForNode
   /** Заготовка ActionBuilder'а для проверки доступа на запись (create, edit) для target'а,
     * id которого возможно задан в теле POST'а. */
   trait CanSubmitExtTargetForNodeBase
-    extends ActionBuilder[ExtTargetSubmitRequest]
+    extends ActionBuilder[MNodeExtTgSubmitReq]
     with PlayMacroLogsDyn
     with OnUnauthNode
     with IsAdnNodeAdminUtil
   {
 
     /** id узла, заявленного клиентом. */
-    def adnId: String
+    def nodeId: String
 
-    override def invokeBlock[A](request: Request[A], block: (ExtTargetSubmitRequest[A]) => Future[Result]): Future[Result] = {
-      val pwOpt = PersonWrapper.getFromRequest(request)
-      val isAdnNodeAdmFut = isAdnNodeAdmin(adnId, pwOpt)
-      val formBinded = ExtUtil.oneTargetFullFormM(adnId).bindFromRequest()(request)
-      val srmFut = SioReqMd.fromPwOptAdn(pwOpt, adnId)
+    override def invokeBlock[A](request: Request[A], block: (MNodeExtTgSubmitReq[A]) => Future[Result]): Future[Result] = {
+      val personIdOpt = sessionUtil.getPersonId(request)
+      val user = mSioUsers(personIdOpt)
+
+      val isAdnNodeAdmFut = isAdnNodeAdmin(nodeId, user)
+      val formBinded = ExtUtil.oneTargetFullFormM(nodeId).bindFromRequest()(request)
       // Запускаем сразу в фоне поиск уже сохранённой цели.
       val tgIdOpt = formBinded.apply("id").value
       val tgOptFut = tgIdOpt match {
@@ -75,54 +58,46 @@ trait CanSubmitExtTargetForNode
         case Some(mnode) =>
           // Всё ок может быть в разных случаях, Общий код вынесен сюда.
           def allOk(tgOpt: Option[MExtTarget] = None): Future[Result] = {
-            srmFut flatMap { srm =>
-              val req1 = ExtTargetSubmitRequest(
-                pwOpt       = pwOpt,
-                adnNode     = mnode,
-                newTgForm   = formBinded,
-                tgExisting  = tgOpt,
-                sioReqMd    = srm,
-                request     = request
-              )
-              block(req1)
-            }
+            val req1 = MNodeExtTgSubmitReq(mnode, formBinded, tgOpt, request, user)
+            block(req1)
           }
           tgOptFut flatMap {
             // Цель не существует...
             case None =>
               if (tgIdOpt.isDefined)
                 // но если id цели передан, то это ненормально
-                LOGGER.debug(s"User[$pwOpt] submitted tg_id[${tgIdOpt.get}] for inexisting ext target. Tolerating...")
+                LOGGER.debug(s"User[$personIdOpt] submitted tg_id[${tgIdOpt.get}] for inexisting ext target. Tolerating...")
               allOk()
 
             // Есть такая цель в хранилищах.
             case someTg @ Some(tg) =>
-              if (tg.adnId == adnId) {
+              if (tg.adnId == nodeId) {
                 // Эта цель принадлежит узлу, которым владеет текущий юзер.
                 allOk(someTg)
               } else {
                 // [xakep] Ксакеп отакует: попытка перезаписать чужую цель.
-                breakInAttempted(pwOpt, request, tg)
+                breakInAttempted(user, request, tg)
               }
           }
 
         // Нет прав на узел.
         case None =>
-          onUnauthNode(request, pwOpt)
+          val req1 = SioReq(request, user)
+          onUnauthNode(req1)
       }
     }
 
-    def breakInAttempted(pwOpt: PwOpt_t, request: Request[_], tg: MExtTarget): Future[Result] = {
-      LOGGER.warn(s"FORBIDDEN: User[$pwOpt] @${request.remoteAddress} tried to rewrite foreign target[${tg.id.get}] via node[$adnId]. AdnNode expected = ${tg.adnId}.")
-      val res = Forbidden(s"Target ${tg.id.get} doesn't belongs to node[$adnId].")
+    def breakInAttempted(user: ISioUser, request: Request[_], tg: MExtTarget): Future[Result] = {
+      LOGGER.warn(s"FORBIDDEN: User[${user.personIdOpt}] @${request.remoteAddress} tried to rewrite foreign target[${tg.id.get}] via node[$nodeId]. AdnNode expected = ${tg.adnId}.")
+      val res = Forbidden(s"Target ${tg.id.get} doesn't belongs to node[$nodeId].")
       Future successful res
     }
 
   }
 
-  case class CanSubmitExtTargetForNodePost(override val adnId: String)
+  case class CanSubmitExtTargetForNodePost(override val nodeId: String)
     extends CanSubmitExtTargetForNodeBase
-    with ExpireSession[ExtTargetSubmitRequest]
-    with CsrfPost[ExtTargetSubmitRequest]
+    with ExpireSession[MNodeExtTgSubmitReq]
+    with CsrfPost[MNodeExtTgSubmitReq]
 
 }

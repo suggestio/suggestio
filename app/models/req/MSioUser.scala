@@ -60,7 +60,7 @@ trait ISioUser {
    * Часто используется в личном кабинете, поэтому живёт прямо здесь.
    * @return Фьючерс со списком остатков на балансах в различных валютах.
    */
-  def mBalanceOptFut: Future[Seq[MBalance]]
+  def mBalancesFut: Future[Seq[MBalance]]
 
   /** Кол-во непрочитанных событий. */
   def unSeenEventsCountFut: Future[Option[Int]]
@@ -68,6 +68,22 @@ trait ISioUser {
   /** Дополнительные цели js-инициализации по мнению ActionBuilder'а. */
   def jsiTgs: List[MTarget]
 
+}
+
+
+/** Пустая инфа по юзеру. Инстанс кешируется в factory. Полезно для анонимусов без js-init-таргетов. */
+class MSioUserEmpty extends ISioUser {
+  private def _futOptOk[T] = Future.successful(Option.empty[T])
+
+  override def personIdOpt          = None
+  override def mContractOptFut      = _futOptOk[MContract]
+  override def unSeenEventsCountFut = _futOptOk[Int]
+  override def personNodeOptFut     = _futOptOk[MNode]
+  override def isSuperUser          = false
+  override def contractIdOptFut     = _futOptOk[Long]
+  override def isAuth               = false
+  override def jsiTgs               = Nil
+  override def mBalancesFut       = Future.successful(Nil)
 }
 
 
@@ -118,7 +134,7 @@ trait ISioUserT extends ISioUser {
     }
   }
 
-  override def mBalanceOptFut: Future[Seq[MBalance]] = {
+  override def mBalancesFut: Future[Seq[MBalance]] = {
     // Мысленный эксперимент показал, что кеш здесь практически НЕ нужен. Работаем без кеша, заодно и проблем меньше.
     contractIdOptFut.flatMap { contractIdOpt =>
       contractIdOpt.fold [Future[Seq[MBalance]]] (Future.successful(Nil)) { contractId =>
@@ -174,7 +190,7 @@ case class MSioUserLazy @Inject() (
   override lazy val personNodeOptFut  = super.personNodeOptFut
   override lazy val contractIdOptFut  = super.contractIdOptFut
   override lazy val mContractOptFut   = super.mContractOptFut
-  override lazy val mBalanceOptFut    = super.mBalanceOptFut
+  override lazy val mBalancesFut    = super.mBalancesFut
   override lazy val isSuperUser       = super.isSuperUser
 }
 
@@ -191,6 +207,8 @@ class MSioUsers @Inject() (
   extends PlayMacroLogsImpl
 {
 
+  val empty = new MSioUserEmpty
+
   /**
    * factory-метод с дефолтовыми значениями некоторых аргументов.
    * @param personIdOpt Опционалньый id юзера. Экстрактиться из сессии с помощью SessionUtil.
@@ -198,10 +216,15 @@ class MSioUsers @Inject() (
    * @return Инстанс какой-то реализации [[ISioUser]].
    */
   def apply(personIdOpt: Option[String], jsiTgs: List[MTarget] = Nil): ISioUser = {
-    factory(
-      personIdOpt = personIdOpt,
-      jsiTgs      = jsiTgs
-    )
+    // Частые анонимные запросы можно огулять одним общим инстансом ISioUser.
+    if (personIdOpt.isEmpty && jsiTgs.isEmpty) {
+      empty
+    } else {
+      factory(
+        personIdOpt = personIdOpt,
+        jsiTgs = jsiTgs
+      )
+    }
   }
 
 }

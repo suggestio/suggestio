@@ -51,7 +51,7 @@ class MarketLkBilling @Inject() (
     for (mbcs <- mbcsFut) yield {
       mbcs.headOption match {
         case Some(mbc) =>
-          Ok(billPaymentBankTpl(request.adnNode, mbc))
+          Ok(billPaymentBankTpl(request.mnode, mbc))
 
         case None =>
           // Нет заключенных договоров, оплата невозможна.
@@ -66,7 +66,7 @@ class MarketLkBilling @Inject() (
    * @param adnId id узла.
    */
   def showAdnNodeBilling(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
-    val isProducer = request.adnNode
+    val isProducer = request.mnode
       .extras
       .adn
       .exists(_.isProducer)
@@ -89,7 +89,7 @@ class MarketLkBilling @Inject() (
         .map { mbc =>
           val contractId = mbc.id.get
           // Если этот узел - приёмник рекламы, то нужно найти в базе его тарифные планы.
-          val myMbmds = if (request.adnNode.extras.adn.exists(_.isReceiver)) {
+          val myMbmds = if (request.mnode.extras.adn.exists(_.isReceiver)) {
             MTariffDaily.findByContractId(contractId)
           } else {
             Nil
@@ -107,11 +107,11 @@ class MarketLkBilling @Inject() (
         val allRcvrAdnIdsSet = allRcvrAdnIds.toSet
         otherRcvrsFut.map { otherRcvrs =>
           val otherRcvrs1 = otherRcvrs.filter(_.id.exists(allRcvrAdnIdsSet.contains))
-          Ok(showAdnNodeBillingTpl(request.adnNode, mbmds, mbc, otherRcvrs1))
+          Ok(showAdnNodeBillingTpl(request.mnode, mbmds, mbc, otherRcvrs1))
         }
 
       case None =>
-        warn(s"showAdnNodeBilling($adnId): No active contracts found for node, but billing page requested by user ${request.pwOpt} ref=${request.headers.get("Referer")}")
+        warn(s"showAdnNodeBilling($adnId): No active contracts found for node, but billing page requested by user ${request.user.personIdOpt} ref=${request.headers.get("Referer")}")
         errorHandler.http404ctx
     }
   }
@@ -133,11 +133,13 @@ class MarketLkBilling @Inject() (
     for {
       txns <- txnsFut
     } yield {
-      implicit val jsInitTgs = Seq(MTargets.BillTxnsList)
+      implicit val ctxData = CtxData(
+        jsiTgs = Seq(MTargets.BillTxnsList)
+      )
       val render: Html = if (inline) {
         _txnsListTpl(txns)
       } else {
-        txnsPageTpl(request.adnNode, txns, currPage = page, txnsPerPage = tpp)
+        txnsPageTpl(request.mnode, txns, currPage = page, txnsPerPage = tpp)
       }
       Ok(render)
         .withHeaders(

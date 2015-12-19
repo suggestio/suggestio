@@ -248,7 +248,9 @@ class MarketLkAdnEdit @Inject() (
 
   private def _editAdnNode(form: Form[FormMapResult], respStatus: Status)
                           (implicit request: INodeReq[_]): Future[Result] = {
-    implicit val jsInitTargets = Seq(MTargets.LkNodeEditForm)
+    implicit val ctxData = CtxData(
+      jsiTgs = Seq(MTargets.LkNodeEditForm)
+    )
     val args = NodeEditArgs(
       mnode         = request.mnode,
       mf            = form

@@ -1,10 +1,8 @@
 package util.acl
 
-import models.MNode
 import models.event.MEvent
-import models.req.SioReqMd
-import play.api.mvc.{Result, Request, ActionBuilder}
-import util.acl.PersonWrapper.PwOpt_t
+import models.req.{ISioReq, MNodeEventReq, SioReq}
+import play.api.mvc.{ActionBuilder, Request, Result}
 
 import scala.concurrent.Future
 
@@ -24,82 +22,70 @@ trait HasNodeEventAccess
 
   /** Проверка доступа к событию, которое относится к узлу. */
   trait HasNodeEventAccessBase
-    extends ActionBuilder[NodeEventRequest]
+    extends ActionBuilder[MNodeEventReq]
     with OnUnauthNode
     with IsAdnNodeAdminUtil
+    with InitUserBalance
   {
     def eventId: String
-
-    /** Нужен ли доступ к кошельку узла и другие функции sioReqMd? */
-    def srmFull: Boolean
 
     /** Разрешить это только для закрывабельных событий? */
     def onlyCloseable: Boolean
 
-    override def invokeBlock[A](request: Request[A], block: (NodeEventRequest[A]) => Future[Result]): Future[Result] = {
+    override def invokeBlock[A](request: Request[A], block: (MNodeEventReq[A]) => Future[Result]): Future[Result] = {
       val eventOptFut = MEvent.getById(eventId)
-      val pwOpt = PersonWrapper.getFromRequest(request)
-      if (pwOpt.isEmpty) {
-        forbidden(request, pwOpt)
-      } else {
+
+      val personIdOpt = sessionUtil.getPersonId(request)
+      val user = mSioUsers(personIdOpt)
+
+      val reqErr = SioReq(request, user)
+      personIdOpt.fold ( forbidden(reqErr) ) { personId =>
         eventOptFut flatMap {
           // Нет такого события в модели.
           case None =>
-            eventNotFound(request, pwOpt)
+            eventNotFound(reqErr)
 
           // Есть событие и оно подходит под пожелания контроллера.
           case Some(mevent) if !onlyCloseable || mevent.isCloseable =>
             // Для наличия прав на событие нужны права на узел.
-            val srmFut = if (srmFull) {
-              SioReqMd.fromPwOptAdn(pwOpt, mevent.ownerId)
-            } else {
-              SioReqMd.fromPwOpt(pwOpt)
-            }
-            isAdnNodeAdmin(mevent.ownerId, pwOpt) flatMap {
-              case Some(adnNode) =>
+            maybeInitUserBalance(user)
+
+            isAdnNodeAdmin(mevent.ownerId, user) flatMap {
+              case Some(mnode) =>
                 // Юзер имеет доступ к узлу. Значит, и к событию узла тоже.
-                srmFut flatMap { srm =>
-                  val req1 = NodeEventRequest(adnNode, mevent, request, pwOpt, srm)
-                  block(req1)
-                }
+                val req1 = MNodeEventReq(mevent, mnode, request, user)
+                block(req1)
 
               case None =>
-                forbidden(request, pwOpt)
+                LOGGER.warn("Not a event owner node admin: " + mevent.ownerId)
+                forbidden(reqErr)
             }
 
           // Контроллер требует, чтобы флаг isCloseable был выставлен, а клиент хочет обойти это ограничение.
           case Some(mevent) =>
-            forbidden(request, pwOpt)
+            LOGGER.warn("event isCloseable conflicted, 403")
+            forbidden(reqErr)
         }
       }
     }
 
-    def forbidden(request: Request[_], pwOpt: PwOpt_t): Future[Result] = {
-      onUnauthNode(request, pwOpt)
+    def forbidden(req: ISioReq[_]): Future[Result] = {
+      onUnauthNode(req)
     }
 
-    def eventNotFound(request: Request[_], pwOpt: PwOpt_t): Future[Result] = {
+    def eventNotFound(req: ISioReq[_]): Future[Result] = {
       val res = NotFound("Event not found: " + eventId)
       Future successful res
     }
   }
 
-  case class HasNodeEventAccess(eventId: String,  srmFull: Boolean = true,  onlyCloseable: Boolean = false)
+  case class HasNodeEventAccess(
+    override val eventId          : String,
+    override val initUserBalance  : Boolean = true,
+    override val onlyCloseable    : Boolean = false
+  )
     extends HasNodeEventAccessBase
-    with ExpireSession[NodeEventRequest]
+    with ExpireSession[MNodeEventReq]
 
 }
 
-
-abstract class AbstractEventRequest[A](request: Request[A]) extends AbstractRequestWithPwOpt(request) {
-  def mevent: MEvent
-}
-
-/** Экземпляр реквеста к экшену управления событием. */
-case class NodeEventRequest[A](
-  adnNode   : MNode,
-  mevent    : MEvent,
-  request   : Request[A],
-  pwOpt     : PwOpt_t,
-  sioReqMd  : SioReqMd
-) extends AbstractEventRequest(request)

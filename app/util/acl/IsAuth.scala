@@ -25,7 +25,7 @@ trait OnUnauthUtilCtl extends SioController {
 
     /** Что делать, когда юзер не авторизован? */
     def onUnauth(request: RequestHeader): Future[Result] = {
-      Future successful onUnauthBase(request)
+      onUnauthBase(request)
     }
   }
 }

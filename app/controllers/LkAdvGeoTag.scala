@@ -3,16 +3,17 @@ package controllers
 import com.google.inject.Inject
 import controllers.ctag.NodeTagsEdit
 import io.suggest.model.geo.{CircleGs, Distance, GeoPoint}
-import models.GeoIp
+import models.{CtxData, GeoIp}
 import models.adv.gtag.{GtForm_t, MAdvFormResult, MForAdTplArgs}
 import models.jsm.init.MTargets
 import models.maps.MapViewState
 import models.mproj.MCommonDi
+import models.req.IAdProdReq
 import org.elasticsearch.common.unit.DistanceUnit
 import org.joda.time.LocalDate
 import play.api.mvc.Result
 import util.PlayMacroLogsImpl
-import util.acl.{CanAdvertiseAd, CanAdvertiseAdUtil, RequestWithAdAndProducer}
+import util.acl.{CanAdvertiseAd, CanAdvertiseAdUtil}
 import util.adv.AdvFormUtil
 import util.billing.Bill2Util
 import util.tags.{GeoTagsFormUtil, TagsEditFormUtil}
@@ -82,8 +83,10 @@ class LkAdvGeoTag @Inject() (
    * @return Фьючерс с ответом.
    */
   private def _forAd(form: GtForm_t, rs: Status)
-                    (implicit request: RequestWithAdAndProducer[_]): Future[Result] = {
-    implicit val _jsInitTargets = Seq(MTargets.AdvGtagForm)
+                    (implicit request: IAdProdReq[_]): Future[Result] = {
+    implicit val ctxData = CtxData(
+      jsiTgs = Seq(MTargets.AdvGtagForm)
+    )
     val rargs = MForAdTplArgs(
       mad             = request.mad,
       producer        = request.producer,

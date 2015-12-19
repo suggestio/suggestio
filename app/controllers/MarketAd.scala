@@ -13,7 +13,7 @@ import models.blk.ed.{AdFormM, AdFormResult, BlockImgMap}
 import models.im.MImg3_
 import models.jsm.init.MTargets
 import models.mproj.MCommonDi
-import models.req.{INodeReq, ISioReq}
+import models.req.{IAdProdReq, INodeReq, ISioReq}
 import org.joda.time.DateTime
 import play.api.data.Forms._
 import play.api.data._
@@ -161,7 +161,9 @@ class MarketAd @Inject() (
   /** Акт рендера результирующей страницы в отрыве от самой страницы. */
   private def _renderPage(af: AdFormM, rs: Status)(f: Context => Html)
                          (implicit request: ISioReq[_]): Future[Result] = {
-    implicit val _jsInitTargets = Seq(MTargets.AdForm)
+    implicit val ctxData = CtxData(
+      jsiTgs = Seq(MTargets.AdForm)
+    )
     implicit val ctx = implicitly[Context]
     detectMainColorBg(af)(ctx)
     rs( f(ctx) )
@@ -197,7 +199,7 @@ class MarketAd @Inject() (
 
   /** Общий код рендера ad edit страницы живёт в этом методе. */
   private def _renderEditFormWith(af: AdFormM, rs: Status)
-                                 (implicit request: RequestWithAdAndProducer[_]): Future[Result] = {
+                                 (implicit request: IAdProdReq[_]): Future[Result] = {
     _renderPage(af, rs) { implicit ctx =>
       import request.{mad, producer}
       editAdTpl(mad, af, producer)(ctx)
@@ -322,6 +324,7 @@ class MarketAd @Inject() (
    * Включение/выключение какого-то уровня отображения указанной рекламы.
    * Сабмит сюда должен отсылаться при нажатии на чекбоксы отображения на тех или иных экранах в _showAdsTpl.
    */
+  // TODO Sec Нужна поддержка CSRF тут. Её пока нет из-за работы через jsRouter.
   def updateShowLevelSubmit(adId: String) = CanUpdateSls(adId).async { implicit request =>
     lazy val logPrefix = s"updateShowLevelSubmit($adId): "
     adShowLevelFormM.bindFromRequest().fold(
@@ -346,7 +349,7 @@ class MarketAd @Inject() (
           val ssls = prodSinks
             .map { SinkShowLevels.withArgs(_, sl) }
 
-          trace(s"${logPrefix}Updating ad[$adId] with sinkSls = [${ssls.mkString(", ")}]; prodSinks = [${prodSinks.mkString(",")}] sl=$sl prodId=${request.producerId}")
+          trace(s"${logPrefix}Updating ad[$adId] with sinkSls = [${ssls.mkString(", ")}]; prodSinks = [${prodSinks.mkString(",")}] sl=$sl prodId=${request.producer.id.get}")
 
           for {
             _ <- MNode.tryUpdate(request.mad) { mad =>

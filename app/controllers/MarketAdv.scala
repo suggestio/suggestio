@@ -10,7 +10,7 @@ import models.adv._
 import models.adv.direct._
 import models.adv.tpl.{MAdvForAdTplArgs, MAdvHistoryTplArgs, MCurrentAdvsTplArgs}
 import models.mproj.MCommonDi
-import models.req.ISioReq
+import models.req.{INodeAdvReqReq, IAdProdReq, ISioReq}
 import play.api.data._
 import play.api.mvc.{AnyContent, Result}
 import play.twirl.api.Html
@@ -107,7 +107,7 @@ class MarketAdv @Inject() (
    * @return Отрендеренная страница управления карточкой с формой размещения.
    */
   private def renderAdvForm(adId: String, form: DirectAdvFormM_t, rs: Status, rcvrsAllFutOpt: Option[Future[Seq[MNode]]] = None)
-                           (implicit request: RequestWithAdAndProducer[AnyContent]): Future[Result] = {
+                           (implicit request: IAdProdReq[AnyContent]): Future[Result] = {
     // Если поиск ресиверов ещё не запущен, то сделать это.
     val rcvrsAllFut = rcvrsAllFutOpt  getOrElse  collectAllReceivers(request.producer)
     // В фоне строим карту ресиверов, чтобы по ней быстро ориентироваться.
@@ -473,14 +473,15 @@ class MarketAdv @Inject() (
   /** Рендер страницы, которая появляется по ссылке-кнопке "рекламодатели". */
   // TODO Вместо IsAdnAdmin надо какой-то IsAdnRcvrAdmin
   def showNodeAdvs(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
+    val mnode = request.mnode
+
     // Отрабатываем делегирование adv-прав текущему узлу:
     val dgAdnIdsFut: Future[Set[String]] = {
       // TODO Код не тестирован после переписывания на N2.
-      var iter = request.adnNode
-        .edges
+      var iter = mnode.edges
         .withPredicateIterIds( MPredicates.AdvMdrDgTo )
       // Дописать в начало ещё текущей узел, если он также является рекламо-получателем.
-      if (request.adnNode.extras.adn.exists(_.isReceiver)) {
+      if (mnode.extras.adn.exists(_.isReceiver)) {
         iter ++= Iterator(adnId)
       }
       val res = iter.toSet
@@ -554,7 +555,7 @@ class MarketAdv @Inject() (
 
     // Рендер результата.
     infosFut map { infos =>
-      Ok( nodeAdvsTpl(request.adnNode, infos)(ctx) )
+      Ok( nodeAdvsTpl(mnode, infos)(ctx) )
     }
   }
 
@@ -570,8 +571,8 @@ class MarketAdv @Inject() (
   }
 
   private def _showAdvReq1(refuseFormM: Form[String], r: Option[String])
-                          (implicit request: RequestWithAdvReq[AnyContent]): Future[Either[Result, Html]] = {
-    val madOptFut = MNode.getById(request.advReq.adId)
+                          (implicit request: INodeAdvReqReq[AnyContent]): Future[Either[Result, Html]] = {
+    val madOptFut = mNodeCache.getByIdType(request.advReq.adId, MNodeTypes.Ad)
     val adProducerOptFut = {
       for {
         madOpt <- madOptFut
@@ -628,7 +629,7 @@ class MarketAdv @Inject() (
       {reason =>
         val refuseFut = mmpDailyBilling.refuseAdvReq(request.advReq, request.advReq.toRefuse(reason))
         for (_ <- refuseFut) yield {
-          RdrBackOr(r) { routes.MarketAdv.showNodeAdvs(request.rcvrNode.id.get) }
+          RdrBackOr(r) { routes.MarketAdv.showNodeAdvs(request.mnode.id.get) }
             .flashing(FLASH.SUCCESS -> "Adv.req.refused")
         }
       }
@@ -656,9 +657,8 @@ class MarketAdv @Inject() (
 
   /** На основе маппинга формы и сессии суперюзера определить, как размещать рекламу:
     * бесплатно инжектить или за деньги размещать. */
-  private def isFreeAdv(isFreeOpt: Option[Boolean])(implicit request: AbstractRequestWithPwOpt[_]): Boolean = {
-    isFreeOpt
-      .fold(false) { _ && request.isSuperuser }
+  private def isFreeAdv(isFreeOpt: Option[Boolean])(implicit request: ISioReq[_]): Boolean = {
+    isFreeOpt.exists { _ && request.user.isSuperUser }
   }
 
 

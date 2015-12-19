@@ -56,7 +56,6 @@ class MarketLkAdn @Inject() (
   with ChangePwAction
   with NodeEact
   with IsAdnNodeAdminOptOrAuth
-  with AdnNodeAccess
   with IsAdnNodeAdmin
   with IsAuth
 {
@@ -87,32 +86,25 @@ class MarketLkAdn @Inject() (
 
   /**
    * Отрендерить страницу ЛК какого-то узла рекламной сети. Экшен различает свои и чужие узлы.
-   * @param adnId id узла.
-   * @param povAdnIdOpt С точки зрения какого узла идёт просмотр указанного узла.
-   *                    Выверенное значение это аргумента можно получить из request.povAdnNodeOpt.
+   * @param nodeId id узла.
    */
-  def showAdnNode(adnId: String, povAdnIdOpt: Option[String]) = {
-    AdnNodeAccessGet(adnId, povAdnIdOpt).async { implicit request =>
-      import request.{adnNode, isMyNode}
-      val logoOptFut = logoUtil.getLogoOfNode(adnNode)
-      val galleryFut = galleryUtil.galleryImgs( adnNode )
-      for {
-        logoOpt <- logoOptFut
-        gallery <- galleryFut
-      } yield {
-        val rargs = MNodeShowArgs(
-          mnode         = adnNode,
-          isMyNode      = isMyNode,
-          povAdnIdOpt   = request.povAdnNodeOpt
-            .flatMap(_.id),
-          logoImgOpt    = logoOpt,
-          bgColor       = colorCodeOrDflt(adnNode.meta.colors.bg, scUtil.SITE_BGCOLOR_DFLT),
-          fgColor       = colorCodeOrDflt(adnNode.meta.colors.fg, scUtil.SITE_FGCOLOR_DFLT),
-          gallery       = gallery
-        )
-        val html = adnNodeShowTpl( rargs )
-        Ok(html)
-      }
+  def showAdnNode(nodeId: String) = IsAdnNodeAdminGet(nodeId).async { implicit request =>
+    val mnode = request.mnode
+    val logoOptFut = logoUtil.getLogoOfNode(mnode)
+    val galleryFut = galleryUtil.galleryImgs( mnode )
+    for {
+      logoOpt <- logoOptFut
+      gallery <- galleryFut
+    } yield {
+      val rargs = MNodeShowArgs(
+        mnode         = mnode,
+        logoImgOpt    = logoOpt,
+        bgColor       = colorCodeOrDflt(mnode.meta.colors.bg, scUtil.SITE_BGCOLOR_DFLT),
+        fgColor       = colorCodeOrDflt(mnode.meta.colors.fg, scUtil.SITE_FGCOLOR_DFLT),
+        gallery       = gallery
+      )
+      val html = adnNodeShowTpl( rargs )
+      Ok(html)
     }
   }
 
@@ -126,16 +118,15 @@ class MarketLkAdn @Inject() (
    * @param mode Режим фильтрации карточек.
    * @param newAdIdOpt Костыль: если была добавлена рекламная карточка, то она должна отобразится сразу,
    *                   независимо от refresh в индексе. Тут её id.
-   * @param povAdnIdOpt id узла, с точки зрения которого идёт обзор узла.
    * @return 200 Ok + страница ЛК со списком карточек.
    */
-  def showNodeAds(adnId: String, mode: MNodeAdsMode, newAdIdOpt: Option[String], povAdnIdOpt: Option[String]) = {
-    AdnNodeAccessGet(adnId, povAdnIdOpt).async { implicit request =>
-      import request.{adnNode, isMyNode}
+  def showNodeAds(adnId: String, mode: MNodeAdsMode, newAdIdOpt: Option[String]) = {
+    IsAdnNodeAdminGet(adnId).async { implicit request =>
+      import request.mnode
 
       // Для узла нужно отобразить его рекламу.
       // TODO Добавить поддержку агрумента mode
-      val madsFut: Future[Seq[MNode]] = if (isMyNode) {
+      val madsFut: Future[Seq[MNode]] = {
         val producedByCrs = {
           val cr = Criteria(
             nodeIds     = Seq( adnId ),
@@ -182,42 +173,24 @@ class MarketLkAdn @Inject() (
           }
         }
 
-      } else {
-        // Это чужой узел. Нужно отобразить только рекламу, отправленную на размещение pov-узлу.
-        request.povAdnNodeOpt match {
-          // Есть pov-узел, и юзер является админом оного. Нужно поискать рекламу, созданную на adnId и размещенную на pov-узле.
-          case Some(povAdnNode) =>
-            // Вычислить взаимоотношения между двумя узлами через список ad_id
-            val adIds = db.withConnection { implicit c =>
-              MAdv.findActualAdIdsBetweenNodes(MAdvModes.busyModes, adnId, rcvrId = povAdnNode.id.get)
-            }
-            MNode.multiGetRev(adIds)
-
-          // pov-узел напрочь отсутствует. Нечего отображать.
-          case None =>
-            debug(s"showAdnNode($adnId, pov=$povAdnIdOpt): pov node is empty, no rcvr, no ads.")
-            Future successful Nil
-        }
       }
 
       // Собрать карту занятых размещением карточек.
       val ad2advMapFut = {
-        request.myNodeId.fold(Future successful Map.empty[String, MAdvI]) { myAdnId =>
           Future.traverse(Seq(MAdvOk, MAdvReq)) { model =>
             Future {
               db.withConnection { implicit c =>
-                model.findNotExpiredRelatedTo(myAdnId)
+                model.findNotExpiredRelatedTo(adnId)
               }
             }(AsyncUtil.jdbcExecutionContext)
           } map { results =>
             advs2adIdMap(results : _*)
           }
-        }
       }
 
       // Надо ли отображать кнопку "управление" под карточками? Да, если есть баланс и контракт.
       val canAdvFut: Future[Boolean] = {
-        if (isMyNode && adnNode.extras.adn.exists(_.isProducer)) {
+        if (mnode.extras.adn.exists(_.isProducer)) {
           Future {
             db.withConnection { implicit c =>
               MContract.hasActiveForNode(adnId)  &&  MBalance.hasForNode(adnId)
@@ -245,10 +218,8 @@ class MarketLkAdn @Inject() (
         canAdv    <- canAdvFut
       } yield {
         val args = MNodeAdsTplArgs(
-          mnode       = adnNode,
+          mnode       = mnode,
           mads        = brArgss,
-          isMyNode    = isMyNode,
-          povAdnIdOpt = request.povAdnNodeOpt.flatMap(_.id),
           canAdv      = canAdv,
           ad2advMap   = ad2advMap
         )
@@ -365,7 +336,7 @@ class MarketLkAdn @Inject() (
   def userProfileEdit(adnId: String, r: Option[String]) = IsAdnNodeAdminGet(adnId).apply { implicit request =>
     Ok {
       userProfileEditTpl(
-        mnode = request.adnNode,
+        mnode = request.mnode,
         pf    = ChangePw.changePasswordFormM,
         r     = r
       )
@@ -377,7 +348,7 @@ class MarketLkAdn @Inject() (
     _changePasswordSubmit(r) { formWithErrors =>
       NotAcceptable {
         userProfileEditTpl(
-          mnode = request.adnNode,
+          mnode = request.mnode,
           pf    = formWithErrors,
           r     = r
         )
