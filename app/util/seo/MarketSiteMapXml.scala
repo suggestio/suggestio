@@ -2,8 +2,8 @@ package util.seo
 
 import com.google.inject.Inject
 import controllers.routes
-import models.Context
 import models.crawl.{SiteMapUrlT, SiteMapUrl, ChangeFreqs}
+import models.mctx.Context
 import models.mproj.MProjectInfo
 import play.api.libs.iteratee.Enumerator
 import play.api.mvc.Call

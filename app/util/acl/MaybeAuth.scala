@@ -1,7 +1,8 @@
 package util.acl
 
-import models.req.SioReqMd
+import models.req.{MReq, MUserInit}
 import play.api.mvc._
+
 import scala.concurrent.Future
 
 /**
@@ -18,7 +19,10 @@ trait MaybeAuth
   import mCommonDi._
 
   /** Здесь логика MaybeAuth action-builder'а. */
-  trait MaybeAuthBase extends ActionBuilder[AbstractRequestWithPwOpt] {
+  sealed trait MaybeAuthBase
+    extends ActionBuilder[MReq]
+    with InitUserCmds
+  {
 
     /**
      * Вызывается генератор экшена в билдере.
@@ -28,31 +32,31 @@ trait MaybeAuth
      * @return Фьючерс, описывающий результат.
      */
     override def invokeBlock[A](request: Request[A],
-                                block: (AbstractRequestWithPwOpt[A]) => Future[Result]): Future[Result] = {
-      val pwOpt = PersonWrapper.getFromRequest(request)
-      val srmFut = SioReqMd.fromPwOpt(pwOpt)
-      srmFut flatMap { srm =>
-        block(RequestWithPwOpt(pwOpt, request, srm))
-      }
+                                block: (MReq[A]) => Future[Result]): Future[Result] = {
+      val personIdOpt = sessionUtil.getPersonId(request)
+      val user = mSioUsers(personIdOpt)
+      maybeInitUser(user)
+      val req1 = MReq(request, user)
+      block(req1)
     }
 
   }
 
-  class MaybeAuth
+  sealed abstract class MaybeAuthAbstract
     extends MaybeAuthBase
-    with ExpireSession[AbstractRequestWithPwOpt]
-    with CookieCleanup[AbstractRequestWithPwOpt]
+    with ExpireSession[MReq]
+    with CookieCleanup[MReq]
 
   /** Сборка данных по текущей сессии юзера в реквест. */
-  object MaybeAuth
-    extends MaybeAuth
+  case class MaybeAuth(override val userInits: MUserInit*)
+    extends MaybeAuthAbstract
 
-  object MaybeAuthGet
-    extends MaybeAuth
-    with CsrfGet[AbstractRequestWithPwOpt]
+  case class MaybeAuthGet(override val userInits: MUserInit*)
+    extends MaybeAuthAbstract
+    with CsrfGet[MReq]
 
-  object MaybeAuthPost
-    extends MaybeAuth
-    with CsrfPost[AbstractRequestWithPwOpt]
+  case class MaybeAuthPost(override val userInits: MUserInit*)
+    extends MaybeAuthAbstract
+    with CsrfPost[MReq]
 
 }

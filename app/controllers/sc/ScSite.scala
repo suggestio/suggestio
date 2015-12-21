@@ -2,8 +2,10 @@ package controllers.sc
 
 import controllers.routes
 import models._
+import models.mctx.Context
 import models.mext.MExtServices
 import models.msc._
+import models.req.IReq
 import play.api.mvc._
 import play.twirl.api.Html
 import util.PlayMacroLogsI
@@ -38,7 +40,7 @@ trait ScSiteBase
     def _siteArgs: SiteQsArgs
 
     /** Исходный http-реквест. */
-    implicit def _request: AbstractRequestWithPwOpt[_]
+    implicit def _request: IReq[_]
 
     /** Контекст рендера нижелижещих шаблонов. */
     implicit lazy val ctx = implicitly[Context]
@@ -184,7 +186,7 @@ trait ScSiteGeo
   import mCommonDi._
 
   /** Пользователь заходит в sio.market напрямую через интернет, без помощи сторонних узлов. */
-  def geoSite(maybeJsState: ScJsState, siteArgs: SiteQsArgs) = MaybeAuth.async { implicit request =>
+  def geoSite(maybeJsState: ScJsState, siteArgs: SiteQsArgs) = MaybeAuth().async { implicit request =>
     if (maybeJsState.nonEmpty) {
       // Было раньше MovedPermanently, но почему-то оно может сбойнуть и закешироваться на CDN.
       LOGGER.trace("Qs js state is nonEmpty, redirecting... " + maybeJsState)
@@ -201,7 +203,7 @@ trait ScSiteGeo
    * @param request Экземпляр реквеста.
    * @return Результат работы экшена.
    */
-  protected def _geoSite(siteArgs: SiteQsArgs)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+  protected def _geoSite(siteArgs: SiteQsArgs)(implicit request: IReq[_]): Future[Result] = {
     // Запускаем сбор статистики в фоне.
     _geoSiteStats
     // Запускаем выдачу результата запроса:
@@ -209,7 +211,7 @@ trait ScSiteGeo
   }
 
   /** Фоновый сбор статистики. Можно переназначать. */
-  protected def _geoSiteStats(implicit request: AbstractRequestWithPwOpt[_]): Future[_] = {
+  protected def _geoSiteStats(implicit request: IReq[_]): Future[_] = {
     val fut = Future {
       scStatUtil.SiteStat(AdnSinks.SINK_GEO)
     }.flatMap {
@@ -226,7 +228,7 @@ trait ScSiteGeo
    * @param siteArgs Доп.аргументы для рендера сайта.
    * @param request Реквест.
    */
-  protected def _geoSiteResult(siteArgs: SiteQsArgs)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+  protected def _geoSiteResult(siteArgs: SiteQsArgs)(implicit request: IReq[_]): Future[Result] = {
     val logic = new SiteLogic with SiteScript {
       override implicit def _request  = request
       override def _siteArgs          = siteArgs
@@ -258,12 +260,13 @@ trait ScSiteNode
 
   /** Экшн, который рендерит страничку с дефолтовой выдачей узла. */
   def demoWebSite(adnId: String) = AdnNodeMaybeAuth(adnId).async { implicit request =>
-    val isReceiver = request.adnNode.extras.adn.exists(_.isReceiver)
-    val nodeEnabled = request.adnNode.common.isEnabled
-    if (nodeEnabled && isReceiver || request.isMyNode) {
+    val mnode = request.mnode
+    val isReceiver = mnode.extras.adn.exists(_.isReceiver)
+    val nodeEnabled = mnode.common.isEnabled
+    if (nodeEnabled && isReceiver) {
       // Собираем статистику. Тут скорее всего wifi
       Future {
-        scStatUtil.SiteStat(AdnSinks.SINK_WIFI, Some(request.adnNode))
+        scStatUtil.SiteStat(AdnSinks.SINK_WIFI, Some(mnode))
           .saveStats
           .onFailure {
             case ex => LOGGER.warn(s"demoWebSite($adnId): Failed to save stats", ex)

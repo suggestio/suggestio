@@ -1,6 +1,8 @@
 package controllers
 
+import models.mctx.ContextT
 import models.mproj.IMCommonDi
+import models.req.MUserInits
 import play.api.i18n.{I18nSupport, Lang}
 import play.api.mvc._
 import util._
@@ -38,6 +40,8 @@ trait SioController
   implicit protected def simpleResult2async(sr: Result): Future[Result] = {
     Future.successful(sr)
   }
+
+  def U = MUserInits
 
   /** Быстрый доступ к константам flash-статусов. */
   def FLASH = FlashConstants.Statuses

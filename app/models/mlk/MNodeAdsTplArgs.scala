@@ -16,9 +16,7 @@ sealed trait IAdsListTplArgs {
 }
 
 /** Интерфейс контейнера аргументов для шаблона _readOnlyAdsListTpl. */
-trait IAdsListTplArgsRo extends IAdsListTplArgs{
-  def povAdnIdOpt : Option[String]
-}
+trait IAdsListTplArgsRo extends IAdsListTplArgs
 
 /** Интерфейс контейнера аргументов для шаблона _myAdsTpl. */
 trait IAdsListTplArgsMy extends IAdsListTplArgs {
@@ -28,17 +26,13 @@ trait IAdsListTplArgsMy extends IAdsListTplArgs {
 
 
 /** Интерфейс модели контейнера аргументов для шаблона nodeAdsTpl. */
-trait INodeAdsTplArgs extends IAdsListTplArgsRo with IAdsListTplArgsMy {
-  def isMyNode: Boolean
-}
+trait INodeAdsTplArgs extends IAdsListTplArgsRo with IAdsListTplArgsMy
 
 
 /** Контейнер аргументов для шаблона nodeAdsTpl. */
 case class MNodeAdsTplArgs(
   override val mnode        : MNode,
   override val mads         : Seq[blk.IRenderArgs],
-  override val isMyNode     : Boolean,
-  override val povAdnIdOpt  : Option[String],
   override val canAdv       : Boolean,
   override val ad2advMap    : Map[String, MAdvI]
 )

@@ -10,7 +10,7 @@
   </nav>
 
   <div class="left-bar_bottom">
-    @if(ctx.isAuth) {
+    @if(ctx.user.isAuth) {
       <a class="left-bar_exit js-btn" href="#logoutPopup">@messages("Logout")</a>
       <hr class="delimiter"/>
     }

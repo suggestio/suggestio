@@ -1,7 +1,7 @@
 package models.msc
 
 import io.suggest.common.menum.EnumMaybeWithId
-import models.Context
+import models.mctx.Context
 import play.api.mvc.QueryStringBindable
 import play.twirl.api.{Template2, Html}
 import util.PlayMacroLogsImpl

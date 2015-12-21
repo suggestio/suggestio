@@ -11,8 +11,10 @@ import models.im.logo.LogoOpt_t
 import models.im.{MImg3_, MImgT}
 import models.jsm.init.MTargets
 import models.madn.EditConstants._
+import models.mctx.{CtxData, Context}
 import models.mlk.{FormMapResult, NodeEditArgs}
-import models.mproj.MCommonDi
+import models.mproj.ICommonDi
+import models.req.{INodeReq, IReq}
 import org.joda.time.DateTime
 import play.api.data.Forms._
 import play.api.data.{Form, Mapping}
@@ -43,7 +45,7 @@ class MarketLkAdnEdit @Inject() (
   mImg3                           : MImg3_,
   tempImgSupport                  : TempImgSupport,
   galleryUtil                     : GalleryUtil,
-  override val mCommonDi          : MCommonDi
+  override val mCommonDi          : ICommonDi
 )
   extends SioController
   with PlayMacroLogsImpl
@@ -213,70 +215,79 @@ class MarketLkAdnEdit @Inject() (
 
 
   /** Страница с формой редактирования узла рекламной сети. Функция смотрит тип узла и рендерит ту или иную страницу. */
-  def editAdnNode(adnId: String) = IsAdnNodeAdminGet(adnId).async { implicit request =>
-    import request.adnNode
+  def editAdnNode(adnId: String) = IsAdnNodeAdminGet(adnId, U.Lk).async { implicit request =>
+    import request.mnode
 
     // Запуск асинхронной сборки данных из моделей.
-    val nodeLogoOptFut = logoUtil.getLogoOfNode(adnNode)
+    val nodeLogoOptFut = logoUtil.getLogoOfNode(mnode)
     val gallerryIks = galleryUtil
       .gallery2iiks {
-        adnNode.edges
+        mnode.edges
           .withPredicateIter( MPredicates.GalleryItem )
       }
       .toList
 
     // Сборка и наполнения маппинга формы.
-    val formM = nodeFormM(adnNode.extras.adn.get)
+    val formM = nodeFormM(mnode.extras.adn.get)
     val formFilledFut = for {
       nodeLogoOpt  <- nodeLogoOptFut
     } yield {
-      val wcLogoImg = welcomeUtil.wcLogoImg(adnNode)
-      val fmr = FormMapResult(adnNode.meta, nodeLogoOpt, wcLogoImg, gallerryIks)
+      val wcLogoImg = welcomeUtil.wcLogoImg(mnode)
+      val fmr = FormMapResult(mnode.meta, nodeLogoOpt, wcLogoImg, gallerryIks)
       formM fill fmr
     }
 
     // Рендер и возврат http-ответа.
     for {
-      formFilled <- formFilledFut
-      resp       <- _editAdnNode(formFilled, Ok)
+      formFilled  <- formFilledFut
+      resp        <- _editAdnNode(formFilled, Ok)
     } yield {
       resp
     }
   }
 
-
-  private def _editAdnNode(form: Form[FormMapResult], respStatus: Status)
-                          (implicit request: AbstractRequestForAdnNode[_]): Future[Result] = {
-    implicit val jsInitTargets = Seq(MTargets.LkNodeEditForm)
+  /** Общий код рендера редактирования узла. */
+  private def _editAdnNode(form: Form[FormMapResult], rs: Status)
+                          (implicit request: INodeReq[_]): Future[Result] = {
     val args = NodeEditArgs(
-      mnode         = request.adnNode,
+      mnode         = request.mnode,
       mf            = form
     )
-    val render = nodeEditTpl(args)
-    respStatus( render )
+
+    val jsiTgs1 = Seq(MTargets.LkNodeEditForm)
+
+    for {
+      ctxData0  <- request.user.lkCtxData
+    } yield {
+      implicit val ctxData = ctxData0.copy(
+        jsiTgs        = jsiTgs1
+      )
+      val render = nodeEditTpl(args)
+      rs(render)
+    }
   }
 
 
   /** Сабмит формы редактирования узла рекламной сети. Функция смотрит тип узла рекламной сети и использует
     * тот или иной хелпер. */
-  def editAdnNodeSubmit(adnId: String) = IsAdnNodeAdminPost(adnId).async { implicit request =>
-    import request.adnNode
+  def editAdnNodeSubmit(adnId: String) = IsAdnNodeAdminPost(adnId, U.Lk).async { implicit request =>
+    import request.mnode
     lazy val logPrefix = s"editAdnNodeSubmit($adnId): "
-    nodeFormM(adnNode.extras.adn.get).bindFromRequest().fold(
+    nodeFormM(mnode.extras.adn.get).bindFromRequest().fold(
       {formWithErrors =>
         debug(s"${logPrefix}Failed to bind form: ${formatFormErrors(formWithErrors)}")
         _editAdnNode(formWithErrors, NotAcceptable)
       },
       {fmr =>
         // В фоне обновляем картинку карточки-приветствия.
-        val waFgEdgeOptFut = welcomeUtil.updateWcFgImg(adnNode, fmr.waImgOpt)
+        val waFgEdgeOptFut = welcomeUtil.updateWcFgImg(mnode, fmr.waImgOpt)
         trace(s"${logPrefix}newGallery[${fmr.gallery.size}] ;; newLogo = ${fmr.logoOpt.map(_.fileName)}")
         // В фоне обновляем логотип узла
-        val savedLogoFut = logoUtil.updateLogoFor(adnNode, fmr.logoOpt)
+        val savedLogoFut = logoUtil.updateLogoFor(mnode, fmr.logoOpt)
         // Запускаем апдейт галереи.
         val galleryUpdFut = galleryUtil.updateGallery(
           newGallery = fmr.gallery,
-          oldGallery = adnNode.edges
+          oldGallery = mnode.edges
             .withPredicateIter( MPredicates.GalleryItem )
             .map { _.nodeId }
             .toSeq
@@ -285,7 +296,7 @@ class MarketLkAdnEdit @Inject() (
           savedLogo   <- savedLogoFut
           waFgEdgeOpt <- waFgEdgeOptFut
           gallery     <- galleryUpdFut
-          _           <- MNode.tryUpdate(adnNode) {
+          _           <- MNode.tryUpdate(mnode) {
             applyNodeChanges(_, fmr.meta, savedLogo, waFgEdgeOpt, gallery)
           }
         } yield {
@@ -403,7 +414,7 @@ class MarketLkAdnEdit @Inject() (
 
 
   /** Обертка экшена для всех экшенов загрузки картинков. */
-  private def _imgUploadBase(f: AbstractRequestWithPwOpt[MultipartFormData[TemporaryFile]] => Future[Result]) = {
+  private def _imgUploadBase(f: IReq[MultipartFormData[TemporaryFile]] => Future[Result]) = {
     val bp = parse.multipartFormData(Multipart.handleFilePartAsTemporaryFile, maxLength = IMG_GALLERY_MAX_LEN_BYTES)
     IsAuth.async(bp) { implicit request =>
       bruteForceProtected {

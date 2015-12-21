@@ -1,12 +1,10 @@
 package util.acl
 
 import controllers.SioController
-import models.MNode
-import models.req.SioReqMd
+import models.req.{MReq, MNodeEactReq}
 import models.usr.{EmailPwIdent, EmailActivation}
 import play.api.mvc.{Result, ActionBuilder, Request}
 import util.PlayMacroLogsI
-import util.acl.PersonWrapper.PwOpt_t
 import views.html.lk.adn.invite.inviteInvalidTpl
 
 import scala.concurrent.Future
@@ -18,7 +16,7 @@ import scala.concurrent.Future
  * Description: ActionBuilder'ы для доступа к инвайтам на управление узлом через email.
  * Аддон подмешивается к контроллерам, где необходима поддержка NodeEact.
  */
-trait NodeEactAcl
+trait NodeEact
   extends SioController
   with PlayMacroLogsI
   with OnUnauthUtilCtl
@@ -29,7 +27,7 @@ trait NodeEactAcl
 
   /** Абстрактная логика ActionBuider'ов, обрабатывающих запросы активации инвайта на узел. */
   sealed trait NodeEactBase
-    extends ActionBuilder[NodeEactRequest]
+    extends ActionBuilder[MNodeEactReq]
     with OnUnauthUtil
   {
 
@@ -40,19 +38,17 @@ trait NodeEactAcl
     def nodeId: String
 
     /** Запуск логики экшена. */
-    override def invokeBlock[A](request: Request[A], block: (NodeEactRequest[A]) => Future[Result]): Future[Result] = {
+    override def invokeBlock[A](request: Request[A], block: (MNodeEactReq[A]) => Future[Result]): Future[Result] = {
       val eaOptFut = EmailActivation.getById(eaId)
       val nodeOptFut = mNodeCache.getById(nodeId)
 
-      val pwOpt = PersonWrapper.getFromRequest(request)
-      val srmFut = SioReqMd.fromPwOpt(pwOpt)
+      val personIdOpt = sessionUtil.getPersonId(request)
+      val user = mSioUsers(personIdOpt)
 
       /** Общий код рендера отрицательного ответа на запрос вынесен сюда. */
       def _renderInvalidTpl(reason: String): Future[Result] = {
-        srmFut map { srm =>
-          implicit val req = RequestWithPwOpt(pwOpt, request, srm)
-          NotFound( inviteInvalidTpl(reason) )
-        }
+        implicit val req = MReq(request, user)
+        NotFound( inviteInvalidTpl(reason) )
       }
 
       eaOptFut.flatMap {
@@ -61,21 +57,18 @@ trait NodeEactAcl
           nodeOptFut flatMap {
 
             case Some(mnode) =>
-              epwIdOptFut flatMap {
+              epwIdOptFut.flatMap {
                 // email, на который выслан запрос, уже зареган в системе, но текущий юзер не подходит: тут у нас анонимус или левый юзер.
-                case Some(epwIdent) if epwIdent.isVerified && !pwOpt.exists(_.personId == epwIdent.personId) =>
-                  LOGGER.debug(s"eAct has email = ${epwIdent.email}. This is personId[${epwIdent.personId}], but current pwOpt = ${pwOpt.map(_.personId)} :: Rdr user to login...")
+                case Some(epwIdent) if epwIdent.isVerified && !personIdOpt.contains(epwIdent.personId) =>
+                  LOGGER.debug(s"eAct has email = ${epwIdent.email}. This is personId[${epwIdent.personId}], but current pwOpt = $personIdOpt :: Rdr user to login...")
                   val result = onUnauthBase(request)
-                  val isAuth = pwOpt.isDefined
-                  val res2 = if (isAuth) result.withNewSession else result
+                  val res2 = if (user.isAuth) result.withNewSession else result
                   Future successful res2
 
                 // Юзер анонимус и такие email неизвестны системе, либо тут у нас текущий необходимый юзер.
                 case epwIdOpt =>
-                  srmFut flatMap { srm =>
-                    val req1 = NodeEactRequest(mnode, ea, epwIdOpt, pwOpt, request, srm)
-                    block(req1)
-                  }
+                  val req1 = MNodeEactReq(mnode, ea, epwIdOpt, request, user)
+                  block(req1)
               }
 
             case None =>
@@ -96,28 +89,18 @@ trait NodeEactAcl
 
   }
 
+  sealed abstract class NodeEactAbstract
+    extends NodeEactBase
+    with ExpireSession[MNodeEactReq]
+
   /** Реализация NodeEactBase для CSRF+GET-запросов. */
   case class NodeEactGet(override val nodeId: String, override val eaId: String)
-    extends NodeEactBase
-    with CsrfGet[NodeEactRequest]
-    with ExpireSession[NodeEactRequest]
+    extends NodeEactAbstract
+    with CsrfGet[MNodeEactReq]
 
   /** Реализация NodeEactBase для CSRF+POST-запросов. */
   case class NodeEactPost(override val nodeId: String, override val eaId: String)
-    extends NodeEactBase
-    with CsrfPost[NodeEactRequest]
-    with ExpireSession[NodeEactRequest]
+    extends NodeEactAbstract
+    with CsrfPost[MNodeEactReq]
 
 }
-
-
-/** Реквест, передаваемый из реализаций [[NodeEactAcl.NodeEactBase]]. */
-case class NodeEactRequest[A](
-  mnode     : MNode,
-  eact      : EmailActivation,
-  epwIdOpt  : Option[EmailPwIdent],
-  pwOpt     : PwOpt_t,
-  request   : Request[A],
-  sioReqMd  : SioReqMd
-)
-  extends AbstractRequestWithPwOpt[A](request)

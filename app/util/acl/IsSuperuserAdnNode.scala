@@ -1,7 +1,7 @@
 package util.acl
 
 import controllers.SioController
-import models.req.SioReqMd
+import models.req.{IReqHdr, MReq, MNodeReq}
 import scala.concurrent.Future
 import play.api.mvc.{RequestHeader, Request, ActionBuilder, Result}
 
@@ -21,41 +21,43 @@ trait IsSuperuserAdnNode
 
   /** Часто нужно админить узлы рекламной сети. Тут комбинация IsSuperuser + IsAdnAdmin. */
   sealed trait IsSuperuserAdnNodeBase
-    extends ActionBuilder[RequestForAdnNodeAdm]
+    extends ActionBuilder[MNodeReq]
     with IsSuperuserUtil
   {
 
     /** id запрашиваемого узла. */
     def adnId: String
 
-    override def invokeBlock[A](request: Request[A], block: (RequestForAdnNodeAdm[A]) => Future[Result]): Future[Result] = {
-      val pwOpt = PersonWrapper.getFromRequest(request)
-      if (PersonWrapper.isSuperuser(pwOpt)) {
+    override def invokeBlock[A](request: Request[A], block: (MNodeReq[A]) => Future[Result]): Future[Result] = {
+      val personIdOpt = sessionUtil.getPersonId(request)
+      val user = mSioUsers(personIdOpt)
+      if (user.isSuper) {
         val mnodeOptFut = mNodeCache.getById(adnId)
-        val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)
         mnodeOptFut flatMap {
           case Some(mnode) =>
-            sioReqMdFut flatMap { srm =>
-              block(RequestForAdnNodeAdm(mnode, isMyNode = true, request, pwOpt, srm))
-            }
+            val req1 = MNodeReq(mnode, request, user)
+            block(req1)
+
           case None =>
-            nodeNotFound(request)
+            val req1 = MReq(request, user)
+            nodeNotFound(req1)
         }
 
       } else {
-        supOnUnauthFut(request, pwOpt)
+        val req1 = MReq(request, user)
+        supOnUnauthFut(req1)
       }
     }
 
-    def nodeNotFound(implicit request: RequestHeader): Future[Result] = {
-      errorHandler.http404Fut
+    def nodeNotFound(req: IReqHdr): Future[Result] = {
+      errorHandler.http404Fut(req)
     }
 
   }
 
   sealed abstract class IsSuperuserAdnNodeBase2
     extends IsSuperuserAdnNodeBase
-    with ExpireSession[RequestForAdnNodeAdm]
+    with ExpireSession[MNodeReq]
 
   /**
    * Часто нужно админить узлы рекламной сети. Тут комбинация IsSuperuser + IsAdnAdmin.
@@ -67,11 +69,11 @@ trait IsSuperuserAdnNode
   /** Аналог [[IsSuperuserAdnNode]] с выставлением CSRF-токена. */
   case class IsSuperuserAdnNodeGet(override val adnId: String)
     extends IsSuperuserAdnNodeBase2
-    with CsrfGet[RequestForAdnNodeAdm]
+    with CsrfGet[MNodeReq]
 
   /** Аналог [[IsSuperuserAdnNode]] с проверкой CSRF-токена при сабмитах. */
   case class IsSuperuserAdnNodePost(override val adnId: String)
     extends IsSuperuserAdnNodeBase2
-    with CsrfPost[RequestForAdnNodeAdm]
+    with CsrfPost[MNodeReq]
 
 }

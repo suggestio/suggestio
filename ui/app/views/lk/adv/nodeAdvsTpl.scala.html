@@ -10,8 +10,7 @@
 @adn.nodeBaseTpl(
   title         = messages("Advertisers"),
   mnode         = mnode,
-  rightCurrEl   = RPL_ADVERTISERS,
-  isMyNode      = true
+  rightCurrEl   = RPL_ADVERTISERS
 ) {
 
   @lk.lkBlock( messages("Under.consideration") ) {
@@ -36,7 +35,7 @@
                 @_adNormalTpl(info.brArgs)
               </div>
               <div class="ads-list-block__zigzag-mask"></div>
-              <a href="@routes.MarketAdv.advFullWnd(info.req.adId, povAdnId = mnode.id, advId = info.req.id, r = ctx.r)"
+              <a href="#" @* Тут была нерабочая ссылка на окошко модерации. *@
                  class="ads-list-block__link js-btn">
                 @Html( messages("Click.for.more.info", "<br/>") )
               </a>

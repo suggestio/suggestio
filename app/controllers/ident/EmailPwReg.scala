@@ -5,7 +5,9 @@ import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
 import models._
 import models.jsm.init.MTargets
+import models.mctx.{CtxData, Context}
 import models.msession.Keys
+import models.req.IReq
 import models.usr._
 import play.api.data.Form
 import play.api.data.Forms._
@@ -78,8 +80,10 @@ trait EmailPwReg
   }
 
   /** Рендер страницы регистрации по email. */
-  private def _epwRender(form: EmailPwRegReqForm_t)(implicit request: AbstractRequestWithPwOpt[_]): Html = {
-    implicit val jsInitTgs = Seq(MTargets.CaptchaForm)
+  private def _epwRender(form: EmailPwRegReqForm_t)(implicit request: IReq[_]): Html = {
+    implicit val ctxData = CtxData(
+      jsiTgs = Seq(MTargets.CaptchaForm)
+    )
     epwRegTpl(form, captchaShown = true)
   }
 
@@ -142,7 +146,7 @@ trait EmailPwReg
   /** Юзер возвращается по ссылке из письма. Отрендерить страницу завершения регистрации. */
   def emailReturn(eaInfo: IEaEmailId) = CanConfirmEmailPwRegGet(eaInfo) { implicit request =>
     // ActionBuilder уже выверил всё. Нужно показать юзеру страницу с формой ввода пароля, названия узла и т.д.
-    Ok(confirmTpl(request.ea, epwRegConfirmFormM))
+    Ok(confirmTpl(request.eact, epwRegConfirmFormM))
   }
 
   /** Сабмит формы подтверждения регистрации по email. */
@@ -151,7 +155,7 @@ trait EmailPwReg
     epwRegConfirmFormM.bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug(s"emailConfirmSubmit($eaInfo): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
-        NotAcceptable(confirmTpl(request.ea, formWithErrors))
+        NotAcceptable(confirmTpl(request.eact, formWithErrors))
       },
       {data =>
         // Создать юзера и его ident, удалить активацию, создать новый узел-ресивер.
@@ -189,7 +193,7 @@ trait EmailPwReg
               .withLang(lang)
           }
           // Дожидаемся завершения всех операций и возвращаем результат.
-          request.ea.delete flatMap { _ =>
+          request.eact.delete flatMap { _ =>
             idSaveFut flatMap { _ =>
               resFut
             }

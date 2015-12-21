@@ -2,7 +2,7 @@ package controllers
 
 import com.google.inject.Inject
 import models.ai._
-import models.mproj.MCommonDi
+import models.mproj.ICommonDi
 import play.api.data.Forms._
 import play.api.data._
 import play.api.libs.ws.WSClient
@@ -25,7 +25,7 @@ import scala.util.matching.Regex
  */
 class SysAi @Inject() (
   madAiUtil                       : MadAiUtil,
-  override val mCommonDi          : MCommonDi,
+  override val mCommonDi          : ICommonDi,
   implicit private val ws         : WSClient
 )
   extends SioControllerImpl
@@ -227,7 +227,7 @@ class SysAi @Inject() (
 
   /** Запуск одного [[models.ai.MAiMad]] на исполнение. Результат запроса содержит инфу о проблеме. */
   def runMadAi(aiMadId: String) = IsSuperuserAiMad(aiMadId).async { implicit request =>
-    trace(s"runMadAi($aiMadId): Starting by user ${request.pwOpt}")
+    trace(s"runMadAi($aiMadId): Starting by user ${request.user.personIdOpt}")
     madAiUtil.run(request.aiMad)
       // Рендерим результаты работы:
       .map { res =>
@@ -245,7 +245,7 @@ class SysAi @Inject() (
 
   /** Сабмит удаления [[models.ai.MAiMad]]. */
   def deleteMadAi(aiMadId: String) = IsSuperuserAiMad(aiMadId).async { implicit request =>
-    trace(s"deleteMadAi($aiMadId): Called by superuser ${request.pwOpt}")
+    trace(s"deleteMadAi($aiMadId): Called by superuser ${request.user.personIdOpt}")
     request.aiMad
       .delete
       .map { isDeleted =>

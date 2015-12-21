@@ -6,7 +6,8 @@ import models._
 import models.adv.{MAdvOk, MAdvRefuse, MAdvReq, MExtTarget}
 import models.event.MEvent
 import models.event.search.MEventsSearchArgs
-import models.mproj.MCommonDi
+import models.mctx.Context
+import models.mproj.ICommonDi
 import org.joda.time.DateTime
 import play.api.i18n.Messages
 import play.twirl.api.Html
@@ -29,7 +30,7 @@ import scala.util.{Failure, Success}
 class LkEvents @Inject() (
   lkEventsUtil                    : LkEventsUtil,
   lkAdUtil                        : LkAdUtil,
-  override val mCommonDi          : MCommonDi
+  override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
@@ -51,7 +52,7 @@ class LkEvents @Inject() (
    * @param inline Инлайновый рендер ответа, вместо страницы? Для ajax-вызовов.
    * @return 200 OK + страница со списком уведомлений.
    */
-  def nodeIndex(adnId: String, limit0: Int, offset0: Int, inline: Boolean) = IsAdnNodeAdmin(adnId).async { implicit request =>
+  def nodeIndex(adnId: String, limit0: Int, offset0: Int, inline: Boolean) = IsAdnNodeAdmin(adnId, U.Lk).async { implicit request =>
     val limit = Math.min(LIMIT_MAX, limit0)
     val offset = Math.min(OFFSET_MAX, offset0)
     // Запустить фетчинг событий из хранилища.
@@ -64,87 +65,103 @@ class LkEvents @Inject() (
     )
     val eventsFut = MEvent.dynSearch(eventsSearch)
 
-    // implicit чтобы компилятор сразу показал те места, где этот ctx забыли явно передать.
-    implicit val ctx = implicitly[Context]
+    val ctxFut = request.user.lkCtxData.map { implicit ctxData =>
+      implicitly[Context]
+    }
 
     // Если начало списка, и узел -- ресивер, то нужно проверить, есть ли у него геошейпы. Если нет, то собрать ещё одно событие...
-    val geoWelcomeFut: Future[Option[(Html, DateTime)]] = {
-      if (offset == 0  &&  request.adnNode.extras.adn.exists(_.isReceiver)) {
-        lkEventsUtil.getGeoWelcome(request.adnNode)(ctx)
+    val geoWelcomeFut: Future[Option[(Html, DateTime)]] = ctxFut.flatMap { implicit ctx =>
+      val mnode = request.mnode
+      if (offset == 0  &&  mnode.extras.adn.exists(_.isReceiver)) {
+        lkEventsUtil.getGeoWelcome(mnode)(ctx)
       } else {
         Future successful None
       }
     }
 
     // Нужно отрендерить каждое хранимое событие с помощью соотв.шаблона. Для этого нужно собрать аргументы для каждого события.
-    val evtsRndrFut = eventsFut.flatMap { mevents =>
-      // В фоне пакетно отфетчить рекламные карточки и ext-таргеты в виде карт:
-      val madsMapFut        = lkEventsUtil.readEsModel(mevents, MNode)(_.argsInfo.adIdOpt)
-      val advExtTgsMapFut   = lkEventsUtil.readEsModel(mevents, MExtTarget)(_.argsInfo.advExtTgIds)
+    val evtsRndrFut = for {
+      mevents   <- eventsFut
+      ctx       <- ctxFut
+      evtsRndr  <- {
+        // В фоне пакетно отфетчить рекламные карточки и ext-таргеты в виде карт:
+        val madsMapFut = lkEventsUtil.readEsModel(mevents, MNode)(_.argsInfo.adIdOpt)
+        val advExtTgsMapFut = lkEventsUtil.readEsModel(mevents, MExtTarget)(_.argsInfo.advExtTgIds)
 
-      // Параллельно собираем карты размещений из всех adv-моделей.
-      val advsReqMapFut     = lkEventsUtil.readAdvModel(mevents, MAdvReq)(_.argsInfo.advReqIdOpt)
-      val advsOkMapFut      = lkEventsUtil.readAdvModel(mevents, MAdvOk)(_.argsInfo.advOkIdOpt)
-      val advsRefuseMapFut  = lkEventsUtil.readAdvModel(mevents, MAdvRefuse)(_.argsInfo.advRefuseIdOpt)
+        // Параллельно собираем карты размещений из всех adv-моделей.
+        val advsReqMapFut = lkEventsUtil.readAdvModel(mevents, MAdvReq)(_.argsInfo.advReqIdOpt)
+        val advsOkMapFut = lkEventsUtil.readAdvModel(mevents, MAdvOk)(_.argsInfo.advOkIdOpt)
+        val advsRefuseMapFut = lkEventsUtil.readAdvModel(mevents, MAdvRefuse)(_.argsInfo.advRefuseIdOpt)
 
-      // Если передается карточка, то следует сразу передать и block RenderArgs для отображения превьюшки.
-      val brArgsMapFut = madsMapFut.flatMap { madsMap =>
-        val dsOpt = ctx.deviceScreenOpt
-        val ressFut = Future.traverse(madsMap) {
-          case (madId, mad) =>
-            lkAdUtil.tiledAdBrArgs(mad, dsOpt)
-              .map { madId -> _ }
-        }
-        ressFut.map { _.toMap }
-      }
-
-      // В фоне пакетно отфетчить все необходимые ноды через кеш узлов, но текущий узел прямо закинуть в финальную карту.
-      // Используется кеш, поэтому это будет быстрее и должно запускаться в последнюю очередь.
-      val nodesMapFut = {
-        val allNodeIds = mevents
-          .iterator
-          .flatMap { _.argsInfo.adnIdOpt }
-          .filter { _ != adnId }    // Текущую ноду фетчить не надо -- она уже в request лежит.
-          .toSet
-        mNodeCache.multiGetMap(allNodeIds, List(request.adnNode))
-      }
-
-      for {
-        // Когда все карты будут готовы, надо будет запустить рендер отфетченных событий в HTML.
-        madsMap       <- madsMapFut
-        nodesMap      <- nodesMapFut
-        advExtTgsMap  <- advExtTgsMapFut
-        advsReqMap    <- advsReqMapFut
-        advsOkMap     <- advsOkMapFut
-        advsRefuseMap <- advsRefuseMapFut
-        brArgsMap     <- brArgsMapFut
-        // Параллельный рендер всех событий
-        events        <- Future.traverse(mevents) { case mevent =>
-          Future {
-            // Запускаем рендер одного нотификейшена
-            val ai = mevent.argsInfo
-            val rArgs = event.RenderArgs(
-              mevent        = mevent,
-              adnNodeOpt    = ai.adnIdOpt.flatMap(nodesMap.get),
-              advExtTgs     = ai.advExtTgIds.flatMap(advExtTgsMap.get),
-              madOpt        = ai.adIdOpt.flatMap(madsMap.get),
-              advReqOpt     = ai.advReqIdOpt.flatMap(advsReqMap.get),
-              advOkOpt      = ai.advOkIdOpt.flatMap(advsOkMap.get),
-              advRefuseOpt  = ai.advRefuseIdOpt.flatMap(advsRefuseMap.get),
-              brArgs        = ai.adIdOpt.flatMap(brArgsMap.get)
-            )
-            mevent.etype.render(rArgs)(ctx) -> mevent.dateCreated
+        // Если передается карточка, то следует сразу передать и block RenderArgs для отображения превьюшки.
+        val brArgsMapFut = madsMapFut.flatMap { madsMap =>
+          val dsOpt = ctx.deviceScreenOpt
+          val ressFut = Future.traverse(madsMap) {
+            case (madId, mad) =>
+              lkAdUtil.tiledAdBrArgs(mad, dsOpt)
+                .map {
+                  madId -> _
+                }
+          }
+          ressFut.map {
+            _.toMap
           }
         }
-        // Нужно закинуть в кучу ещё уведомление об отсутствующей геолокации
-        geoWelcomeOpt <- geoWelcomeFut
-      } yield {
-        // Восстанавливаем порядок по дате после параллельного рендера.
-        // TODO Opt тут можно оптимизировать объединение и сортировку коллекций.
-        (geoWelcomeOpt.toSeq ++ events)
-          .sortBy(_._2)
-          .map(_._1)
+
+        // В фоне пакетно отфетчить все необходимые ноды через кеш узлов, но текущий узел прямо закинуть в финальную карту.
+        // Используется кеш, поэтому это будет быстрее и должно запускаться в последнюю очередь.
+        val nodesMapFut = {
+          val allNodeIds = mevents
+            .iterator
+            .flatMap {
+              _.argsInfo.adnIdOpt
+            }
+            .filter {
+              _ != adnId
+            } // Текущую ноду фетчить не надо -- она уже в request лежит.
+            .toSet
+          mNodeCache.multiGetMap(allNodeIds, List(request.mnode))
+        }
+
+        for {
+          // Когда все карты будут готовы, надо будет запустить рендер отфетченных событий в HTML.
+          madsMap       <- madsMapFut
+          nodesMap      <- nodesMapFut
+          advExtTgsMap  <- advExtTgsMapFut
+          advsReqMap    <- advsReqMapFut
+          advsOkMap     <- advsOkMapFut
+          advsRefuseMap <- advsRefuseMapFut
+          brArgsMap     <- brArgsMapFut
+          // Параллельный рендер всех событий
+          events <- Future.traverse(mevents) { case mevent =>
+            Future {
+              // Запускаем рендер одного нотификейшена
+              val ai = mevent.argsInfo
+              val rArgs = event.RenderArgs(
+                mevent = mevent,
+                adnNodeOpt = ai.adnIdOpt.flatMap(nodesMap.get),
+                advExtTgs = ai.advExtTgIds.flatMap(advExtTgsMap.get),
+                madOpt = ai.adIdOpt.flatMap(madsMap.get),
+                advReqOpt = ai.advReqIdOpt.flatMap(advsReqMap.get),
+                advOkOpt = ai.advOkIdOpt.flatMap(advsOkMap.get),
+                advRefuseOpt = ai.advRefuseIdOpt.flatMap(advsRefuseMap.get),
+                brArgs = ai.adIdOpt.flatMap(brArgsMap.get)
+              )
+              mevent.etype.render(rArgs)(ctx) -> mevent.dateCreated
+            }
+          }
+          // Нужно закинуть в кучу ещё уведомление об отсутствующей геолокации
+          geoWelcomeOpt <- geoWelcomeFut
+        } yield {
+          // Восстанавливаем порядок по дате после параллельного рендера.
+          // TODO Opt тут можно оптимизировать объединение и сортировку коллекций.
+          (geoWelcomeOpt.toSeq ++ events)
+            .sortBy(_._2)
+            .map(_._1)
+        }
       }
+    } yield {
+      evtsRndr
     }
 
     // Автоматически помечать все сообщения как прочитанные при первом заходе на страницу событий:
@@ -161,11 +178,14 @@ class LkEvents @Inject() (
     }
 
     // Рендерим конечный результат: страница или же инлайн
-    evtsRndrFut.map { evtsRndr =>
+    for {
+      evtsRndr  <- evtsRndrFut
+      ctx       <- ctxFut
+    } yield {
       val render: Html = if (inline)
         _eventsListTpl(evtsRndr)(ctx)
       else
-        nodeIndexTpl(evtsRndr, request.adnNode)(ctx)
+        nodeIndexTpl(evtsRndr, request.mnode)(ctx)
       Ok(render)
     }
   }
@@ -177,7 +197,7 @@ class LkEvents @Inject() (
    * @param eventId id события.
    * @return 2хх если всё ок. Иначе 4xx.
    */
-  def nodeEventDelete(eventId: String) = HasNodeEventAccess(eventId, srmFull = false, onlyCloseable = true).async {
+  def nodeEventDelete(eventId: String) = HasNodeEventAccess(eventId, onlyCloseable = true).async {
     implicit request =>
       request.mevent.delete.map {
         case true =>

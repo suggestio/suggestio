@@ -6,7 +6,8 @@ import models._
 import models.adv.{MAdvI, MAdvStaticT}
 import models.event._
 import models.event.search.MEventsSearchArgs
-import models.mproj.MCommonDi
+import models.mctx.Context
+import models.mproj.ICommonDi
 import org.joda.time.DateTime
 import play.api.db.DB
 import play.twirl.api.Html
@@ -22,7 +23,7 @@ import scala.concurrent.Future
  * Description: Утиль для контроллера LkEvents, который изрядно разжирел в первые дни разработки.
  */
 class LkEventsUtil @Inject() (
-  mCommonDi: MCommonDi
+  mCommonDi: ICommonDi
 )
   extends PlayMacroLogsDyn
 {

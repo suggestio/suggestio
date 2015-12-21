@@ -3,7 +3,8 @@ package util.cdn
 import com.google.inject.{Singleton, Inject}
 import controllers.routes
 import models.im.{MImg3_, MImgT}
-import models.{Context, ExternalCall}
+import models.ExternalCall
+import models.mctx.Context
 import play.api.Configuration
 import play.api.mvc.Call
 import util.PlayMacroLogsImpl

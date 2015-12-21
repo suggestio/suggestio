@@ -5,7 +5,7 @@ import java.sql.Connection
 import com.google.inject.Inject
 import models._
 import models.adv.{MAdv, MAdvOk}
-import models.mproj.{MCommonDi, IMCommonDi}
+import models.mproj.{ICommonDi, IMCommonDi}
 import org.joda.time.{DateTime, Period}
 import util.PlayMacroLogsImpl
 import util.adv.AdvUtil
@@ -105,7 +105,7 @@ trait AdvertiseOfflineAdvsFactory {
 /** Обновлялка adv sls, добавляющая уровни отображаения к существующей рекламе,
   * которая должна бы выйти в свет. */
 class AdvertiseOfflineAdvs @Inject() (
-  override val mCommonDi          : MCommonDi,
+  override val mCommonDi          : ICommonDi,
   override val advUtil            : AdvUtil
 )
   extends AdvsUpdate
@@ -131,7 +131,7 @@ trait DepublishExpiredAdvsFactory {
 /** Обновлялка adv sls, которая снимает уровни отображения с имеющейся рекламы,
   * которая должна уйти из выдачи по истечению срока размещения. */
 class DepublishExpiredAdvs @Inject() (
-  override val mCommonDi          : MCommonDi,
+  override val mCommonDi          : ICommonDi,
   override val advUtil            : AdvUtil
 )
   extends AdvsUpdate

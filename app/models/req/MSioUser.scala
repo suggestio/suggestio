@@ -7,6 +7,7 @@ import io.suggest.mbill2.m.balance.{MBalances, MBalance}
 import io.suggest.mbill2.m.contract.{MContracts, MContract}
 import io.suggest.model.n2.node.MNodeTypes
 import models.jsm.init.MTarget
+import models.mctx.CtxData
 import models.{MNodeCache, MNode}
 import models.event.MEvent
 import models.event.search.MEventsSearchArgs
@@ -30,6 +31,8 @@ import scala.concurrent.{ExecutionContext, Future}
  *
  * Модель живёт в контексте реквеста и пришла на смену SioReqMd, Option[PersonWrapper],
  * RichRequestHeader, но ещё и c расширением возможностей.
+ *
+ * При добавлении новых полей в модель, нужно добавлять их в [[ISioUser]] и в apply()-конструкторы ниже.
  */
 trait ISioUser {
 
@@ -44,7 +47,7 @@ trait ISioUser {
   def personNodeOptFut: Future[Option[MNode]]
 
   /** Является ли текущий юзер суперпользователем? */
-  def isSuperUser: Boolean
+  def isSuper: Boolean
 
   /** id контракта, записанный к узле юзера. */
   def contractIdOptFut: Future[Option[Long]]
@@ -58,14 +61,35 @@ trait ISioUser {
    * Часто используется в личном кабинете, поэтому живёт прямо здесь.
    * @return Фьючерс со списком остатков на балансах в различных валютах.
    */
-  def mBalanceOptFut: Future[Seq[MBalance]]
+  def mBalancesFut: Future[Seq[MBalance]]
 
   /** Кол-во непрочитанных событий. */
-  def unSeenEventsCountFut: Future[Option[Int]]
+  def evtsCountFut: Future[Option[Int]]
 
   /** Дополнительные цели js-инициализации по мнению ActionBuilder'а. */
   def jsiTgs: List[MTarget]
 
+  /** Частый экземпяр CtxData для нужд ЛК. */
+  implicit def lkCtxData: Future[CtxData]
+
+}
+
+
+/** Пустая инфа по юзеру. Инстанс кешируется в factory. Полезно для анонимусов без js-init-таргетов. */
+class MSioUserEmpty extends ISioUser {
+  private def _futOptOk[T] = Future.successful(Option.empty[T])
+
+  override def personIdOpt          = None
+  override def mContractOptFut      = _futOptOk[MContract]
+  override def evtsCountFut         = _futOptOk[Int]
+  override def personNodeOptFut     = _futOptOk[MNode]
+  override def isSuper              = false
+  override def contractIdOptFut     = _futOptOk[Long]
+  override def isAuth               = false
+  override def jsiTgs               = Nil
+  override def mBalancesFut         = Future.successful(Nil)
+
+  override implicit def lkCtxData   = Future.successful(CtxData.empty)
 }
 
 
@@ -79,7 +103,7 @@ trait ISioUserT extends ISioUser {
 
   override def isAuth = personIdOpt.isDefined
 
-  override def isSuperUser: Boolean = {
+  override def isSuper: Boolean = {
     personIdOpt.exists { personId =>
       mSuperUsers.isSuperuserId(personId)
     }
@@ -106,7 +130,7 @@ trait ISioUserT extends ISioUser {
     }
   }
 
-  override def unSeenEventsCountFut: Future[Option[Int]] = {
+  override def evtsCountFut: Future[Option[Int]] = {
     FutureUtil.optFut2futOpt(personIdOpt) { personId =>
       // TODO Нужно портировать события на MNode и тут искать их.
       val search = new MEventsSearchArgs(ownerId = Some(personId))
@@ -116,13 +140,26 @@ trait ISioUserT extends ISioUser {
     }
   }
 
-  override def mBalanceOptFut: Future[Seq[MBalance]] = {
+  override def mBalancesFut: Future[Seq[MBalance]] = {
     // Мысленный эксперимент показал, что кеш здесь практически НЕ нужен. Работаем без кеша, заодно и проблем меньше.
     contractIdOptFut.flatMap { contractIdOpt =>
       contractIdOpt.fold [Future[Seq[MBalance]]] (Future.successful(Nil)) { contractId =>
         val action = mBalances.findByContractId(contractId)
         dbConfig.db.run(action)
       }
+    }
+  }
+
+  override implicit def lkCtxData: Future[CtxData] = {
+    val _evtsCountFut = evtsCountFut
+    for {
+      mBalances <- mBalancesFut
+      evtsCount <- _evtsCountFut
+    } yield {
+      CtxData(
+        mUsrBalances  = mBalances,
+        evtsCount     = evtsCount
+      )
     }
   }
 
@@ -172,8 +209,12 @@ case class MSioUserLazy @Inject() (
   override lazy val personNodeOptFut  = super.personNodeOptFut
   override lazy val contractIdOptFut  = super.contractIdOptFut
   override lazy val mContractOptFut   = super.mContractOptFut
-  override lazy val mBalanceOptFut    = super.mBalanceOptFut
-  override lazy val isSuperUser       = super.isSuperUser
+  override lazy val mBalancesFut      = super.mBalancesFut
+  override lazy val isSuper           = super.isSuper
+  override lazy val evtsCountFut      = super.evtsCountFut
+
+  override implicit lazy val lkCtxData = super.lkCtxData
+
 }
 
 
@@ -189,6 +230,8 @@ class MSioUsers @Inject() (
   extends PlayMacroLogsImpl
 {
 
+  val empty = new MSioUserEmpty
+
   /**
    * factory-метод с дефолтовыми значениями некоторых аргументов.
    * @param personIdOpt Опционалньый id юзера. Экстрактиться из сессии с помощью SessionUtil.
@@ -196,10 +239,15 @@ class MSioUsers @Inject() (
    * @return Инстанс какой-то реализации [[ISioUser]].
    */
   def apply(personIdOpt: Option[String], jsiTgs: List[MTarget] = Nil): ISioUser = {
-    factory(
-      personIdOpt = personIdOpt,
-      jsiTgs      = jsiTgs
-    )
+    // Частые анонимные запросы можно огулять одним общим инстансом ISioUser.
+    if (personIdOpt.isEmpty && jsiTgs.isEmpty) {
+      empty
+    } else {
+      factory(
+        personIdOpt = personIdOpt,
+        jsiTgs = jsiTgs
+      )
+    }
   }
 
 }

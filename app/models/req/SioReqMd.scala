@@ -23,6 +23,7 @@ import scala.concurrent.Future
  * Вынесена из util.acl из RequestWrappers.scala.
  */
 
+@deprecated("Use ISioUser instead", "2015.dec.18")
 object SioReqMd {
 
   def empty: SioReqMd = apply()
@@ -72,6 +73,7 @@ object SioReqMd {
 
 
 /** Интерфейс модели. */
+@deprecated("Use ISioUser instead", "2015.dec.18")
 trait ISioReqMd {
   /** Отображаемое имя юзера, если есть. Формируются на основе данных сессии и данных из
     * MNode и моделей [[models.usr.MPersonIdent]]. */
@@ -89,6 +91,7 @@ trait ISioReqMd {
 
 
 /** Враппер для [[ISioReqMd]]. */
+@deprecated("Use ISioUser instead", "2015.dec.18")
 trait SioReqMdWrapper extends ISioReqMd {
   def sioReqMd: ISioReqMd
 
@@ -100,6 +103,7 @@ trait SioReqMdWrapper extends ISioReqMd {
 
 
 /** Дефолтовая реализация экземпляра модели [[ISioReqMd]] */
+@deprecated("Use ISioUser instead", "2015.dec.18")
 case class SioReqMd(
   override val usernameOpt       : Option[String]       = None,
   override val billBallanceOpt   : Option[MBalance]     = None,

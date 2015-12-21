@@ -2,9 +2,9 @@ package models.adv.ext.act
 
 import controllers.routes
 import io.suggest.common.geom.d2.INamedSize2di
-import models.Context
 import models.adv.ext.Mad2ImgUrlCalc
 import models.adv.js.ctx.MPictureCtx
+import models.mctx.Context
 
 // TODO Модель довольно странная, её основная логика вынесена в Mad2ImgUrlCalcT, а тут какие-то непонятные ошметки остались.
 // Возможно, эту модель надо заинлайнить и удалить.

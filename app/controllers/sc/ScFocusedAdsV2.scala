@@ -2,8 +2,8 @@ package controllers.sc
 
 import models.jsm.FocusedAdsResp2
 import models.msc._
+import models.req.IReq
 import play.api.mvc.Result
-import util.acl.AbstractRequestWithPwOpt
 import util.n2u.IN2NodesUtilDi
 import views.html.sc.foc._
 
@@ -36,7 +36,7 @@ trait ScFocusedAdsV2
 
   /** Реализация v2-логики. */
   protected class FocusedLogicHttpV2(override val _adSearch: FocusedAdsSearchArgs)
-                                    (implicit val _request: AbstractRequestWithPwOpt[_])
+                                    (implicit val _request: IReq[_])
     extends FocusedAdsLogicHttp
     with NoBrAcc
   {
@@ -95,7 +95,7 @@ trait ScFocusedAdsV2
 
   // Добавить поддержку v2-логики в getLogic()
   override def getLogicFor(adSearch: FocusedAdsSearchArgs)
-                          (implicit request: AbstractRequestWithPwOpt[_]): FocusedAdsLogicHttp = {
+                          (implicit request: IReq[_]): FocusedAdsLogicHttp = {
     if (adSearch.apiVsn == MScApiVsns.Sjs1) {
       new FocusedLogicHttpV2(adSearch)
     } else {

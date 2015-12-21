@@ -1,10 +1,10 @@
 package util.acl
 
-import play.api.mvc.{RequestHeader, Result}
-import util.acl.PersonWrapper.PwOpt_t
+import models.req.{IReqHdr, ISioUser, MReq}
+import play.api.Play.isDev
+import play.api.mvc.Result
 
 import scala.concurrent.Future
-import play.api.Play.isDev
 
 /**
  * Suggest.io
@@ -17,9 +17,10 @@ trait IsSuperuserOr404Ctl
 {
   import mCommonDi._
 
-  trait IsSuperuserOr404Base extends IsSuperuserBase with ExpireSession[AbstractRequestWithPwOpt] {
-    override def supOnUnauthResult(request: RequestHeader, pwOpt: PwOpt_t): Future[Result] = {
-      errorHandler.http404Fut(request)
+  trait IsSuperuserOr404Base extends IsSuperuserBase with ExpireSession[MReq] {
+
+    override def supOnUnauthResult(req: IReqHdr): Future[Result] = {
+      errorHandler.http404Fut(req)
     }
   }
 
@@ -39,9 +40,11 @@ trait IsSuperuserOrDevelOr404 extends IsSuperuserOr404Ctl {
 
   /** Разрешить не-админам и анонимам доступ в devel-режиме. */
   object IsSuperuserOrDevelOr404 extends IsSuperuserOr404Base {
-    override protected def isAllowed(pwOpt: PwOpt_t): Boolean = {
-      super.isAllowed(pwOpt) || isDev
+
+    override protected def isAllowed(user: ISioUser): Boolean = {
+      super.isAllowed(user) || isDev
     }
+
   }
 
 }

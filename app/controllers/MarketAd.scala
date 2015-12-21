@@ -12,7 +12,9 @@ import models.blk.PrepareBlkImgArgs
 import models.blk.ed.{AdFormM, AdFormResult, BlockImgMap}
 import models.im.MImg3_
 import models.jsm.init.MTargets
-import models.mproj.MCommonDi
+import models.mctx.Context
+import models.mproj.ICommonDi
+import models.req.{IAdProdReq, INodeReq, IReq}
 import org.joda.time.DateTime
 import play.api.data.Forms._
 import play.api.data._
@@ -38,7 +40,7 @@ class MarketAd @Inject() (
   tempImgSupport                  : TempImgSupport,
   mImg3                           : MImg3_,
   override val n2NodesUtil        : N2NodesUtil,
-  override val mCommonDi          : MCommonDi
+  override val mCommonDi          : ICommonDi
 )
   extends SioController
   with PlayMacroLogsImpl
@@ -94,18 +96,17 @@ class MarketAd @Inject() (
    * Рендер унифицированной страницы добаления рекламной карточки.
    * @param adnId id узла рекламной сети.
    */
-  def createAd(adnId: String) = IsAdnNodeAdminGet(adnId).async { implicit request =>
-    import request.adnNode
+  def createAd(adnId: String) = IsAdnNodeAdminGet(adnId, U.Balance).async { implicit request =>
     _renderCreateFormWith(
       af      = adFormM,
-      adnNode = adnNode,
+      adnNode = request.mnode,
       rs      = Ok
     )
   }
 
   /** Общий код рендера createShopAdTpl с запросом необходимых категорий. */
   private def _renderCreateFormWith(af: AdFormM, adnNode: MNode, withBC: Option[BlockConf] = None, rs: Status)
-                                   (implicit request: AbstractRequestForAdnNode[_]): Future[Result] = {
+                                   (implicit request: INodeReq[_]): Future[Result] = {
     _renderPage(af, rs) { implicit ctx =>
       createAdTpl(af, adnNode, withBC)(ctx)
     }
@@ -116,13 +117,13 @@ class MarketAd @Inject() (
    * @param adnId id магазина.
    */
   def createAdSubmit(adnId: String) = IsAdnNodeAdminPost(adnId).async(parse.urlFormEncoded) { implicit request =>
-    import request.adnNode
+    import request.mnode
     lazy val logPrefix = s"createAdSubmit($adnId): "
     val bc = BlocksConf.DEFAULT
     adFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(logPrefix + "Bind failed: \n" + formatFormErrors(formWithErrors))
-        _renderCreateFormWith(formWithErrors, adnNode, Some(bc), NotAcceptable)
+        _renderCreateFormWith(formWithErrors, mnode, Some(bc), NotAcceptable)
       },
       {r =>
         // Асинхронно обрабатываем сохранение картинок
@@ -160,11 +161,17 @@ class MarketAd @Inject() (
 
   /** Акт рендера результирующей страницы в отрыве от самой страницы. */
   private def _renderPage(af: AdFormM, rs: Status)(f: Context => Html)
-                         (implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
-    implicit val _jsInitTargets = Seq(MTargets.AdForm)
-    implicit val ctx = implicitly[Context]
-    detectMainColorBg(af)(ctx)
-    rs( f(ctx) )
+                         (implicit request: IReq[_]): Future[Result] = {
+    for {
+      ctxData0      <- request.user.lkCtxData
+    } yield {
+      implicit val ctxData = ctxData0.copy(
+        jsiTgs        = Seq(MTargets.AdForm)
+      )
+      implicit val ctx = implicitly[Context]
+      detectMainColorBg(af)(ctx)
+      rs(f(ctx))
+    }
   }
 
 
@@ -172,7 +179,7 @@ class MarketAd @Inject() (
    * Рендер страницы с формой редактирования рекламной карточки магазина.
    * @param adId id рекламной карточки.
    */
-  def editAd(adId: String) = CanEditAdGet(adId).async { implicit request =>
+  def editAd(adId: String) = CanEditAdGet(adId, U.Lk).async { implicit request =>
     import request.mad
     val bc = n2NodesUtil.bc(mad)
 
@@ -197,7 +204,7 @@ class MarketAd @Inject() (
 
   /** Общий код рендера ad edit страницы живёт в этом методе. */
   private def _renderEditFormWith(af: AdFormM, rs: Status)
-                                 (implicit request: RequestWithAdAndProducer[_]): Future[Result] = {
+                                 (implicit request: IAdProdReq[_]): Future[Result] = {
     _renderPage(af, rs) { implicit ctx =>
       import request.{mad, producer}
       editAdTpl(mad, af, producer)(ctx)
@@ -322,6 +329,7 @@ class MarketAd @Inject() (
    * Включение/выключение какого-то уровня отображения указанной рекламы.
    * Сабмит сюда должен отсылаться при нажатии на чекбоксы отображения на тех или иных экранах в _showAdsTpl.
    */
+  // TODO Sec Нужна поддержка CSRF тут. Её пока нет из-за работы через jsRouter.
   def updateShowLevelSubmit(adId: String) = CanUpdateSls(adId).async { implicit request =>
     lazy val logPrefix = s"updateShowLevelSubmit($adId): "
     adShowLevelFormM.bindFromRequest().fold(
@@ -346,7 +354,7 @@ class MarketAd @Inject() (
           val ssls = prodSinks
             .map { SinkShowLevels.withArgs(_, sl) }
 
-          trace(s"${logPrefix}Updating ad[$adId] with sinkSls = [${ssls.mkString(", ")}]; prodSinks = [${prodSinks.mkString(",")}] sl=$sl prodId=${request.producerId}")
+          trace(s"${logPrefix}Updating ad[$adId] with sinkSls = [${ssls.mkString(", ")}]; prodSinks = [${prodSinks.mkString(",")}] sl=$sl prodId=${request.producer.id.get}")
 
           for {
             _ <- MNode.tryUpdate(request.mad) { mad =>
@@ -399,7 +407,8 @@ class MarketAd @Inject() (
   /** Открытие websocket'а для обратной асинхронной связи с браузером клиента. */
   def ws(wsId: String) = WebSocket.tryAcceptWithActor[JsValue, JsValue] { implicit request =>
     // Прямо тут проверяем права доступа. Пока просто проверяем залогиненность вопрошающего.
-    val auth = PersonWrapper.getFromRequest.isDefined
+    val personIdOpt = sessionUtil.getPersonId(request)
+    val auth = personIdOpt.isDefined
     Future.successful(
       if (auth) {
         Right(LkEditorWsActor.props(_, wsId))

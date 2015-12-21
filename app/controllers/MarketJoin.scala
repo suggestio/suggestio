@@ -3,7 +3,8 @@ package controllers
 import com.google.inject.Inject
 import models.CallBackReqCallTimes.CallBackReqCallTime
 import models._
-import models.mproj.MCommonDi
+import models.mctx.Context
+import models.mproj.ICommonDi
 import play.api.data.Forms._
 import play.api.data._
 import util.FormUtil._
@@ -25,7 +26,7 @@ class MarketJoin @Inject() (
   mInviteRequest                : MInviteRequest_,
   override val captchaUtil      : CaptchaUtil,
   override val mailer           : IMailerWrapper,
-  override val mCommonDi        : MCommonDi
+  override val mCommonDi        : ICommonDi
 )
   extends SioController
   with PlayMacroLogsImpl
@@ -81,7 +82,7 @@ class MarketJoin @Inject() (
   }
 
   /** Рендер страницы с формой обратного звонка. */
-  def callbackRequest = MaybeAuthGet { implicit request =>
+  def callbackRequest = MaybeAuthGet() { implicit request =>
     cacheControlShort {
       Ok(callbackRequestTpl(callbackRequestFormM))
     }
@@ -91,7 +92,7 @@ class MarketJoin @Inject() (
    * Сабмит формы запроса обратного вызова.
    * @return
    */
-  def callbackRequestSubmit = MaybeAuthPost.async { implicit request =>
+  def callbackRequestSubmit = MaybeAuthPost().async { implicit request =>
     val formBinded = checkCaptcha( callbackRequestFormM.bindFromRequest() )
     formBinded.fold(
       {formWithErrors =>
@@ -130,7 +131,7 @@ class MarketJoin @Inject() (
 
   /** Юзер хочется зарегаться как рекламное агентство. Отрендерить страницу с формой, похожей на форму
     * заполнения сведений по wi-fi сети. */
-  def joinAdvRequest = MaybeAuthGet { implicit request =>
+  def joinAdvRequest = MaybeAuthGet() { implicit request =>
     cacheControlShort {
       Ok(joinAdvTpl())
     }

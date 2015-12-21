@@ -1,6 +1,6 @@
 package util.acl
 
-import models.req.SioReqMd
+import models.req.MReq
 import play.api.mvc.{Request, ActionBuilder, Result, RequestHeader}
 import util.{PlayMacroLogsI, PlayMacroLogsImpl}
 import scala.concurrent.Future
@@ -25,7 +25,7 @@ trait OnUnauthUtilCtl extends SioController {
 
     /** Что делать, когда юзер не авторизован? */
     def onUnauth(request: RequestHeader): Future[Result] = {
-      Future successful onUnauthBase(request)
+      onUnauthBase(request)
     }
   }
 }
@@ -39,17 +39,16 @@ trait IsAuth
 
   import mCommonDi._
 
-  trait IsAuthBase extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacroLogsI {
+  trait IsAuthBase extends ActionBuilder[MReq] with PlayMacroLogsI {
 
-    override def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[Result]): Future[Result] = {
-      val pwOpt = PersonWrapper.getFromRequest(request)
-      val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)
-      if (pwOpt.isDefined) {
+    override def invokeBlock[A](request: Request[A], block: (MReq[A]) => Future[Result]): Future[Result] = {
+      val personIdOpt = sessionUtil.getPersonId(request)
+      if (personIdOpt.isDefined) {
         // Юзер залогинен. Продолжить выполнения экшена.
-        sioReqMdFut flatMap { sioReqMd =>
-          val req1 = new RequestWithPwOpt(pwOpt, request, sioReqMd)
-          block(req1)
-        }
+        val user = mSioUsers(personIdOpt)
+        val req1 = MReq(request, user)
+        block(req1)
+
       } else {
         LOGGER.debug("invokeBlock(): anonymous access prohibited. path = " + request.path)
         onUnauth(request)
@@ -74,7 +73,7 @@ trait IsAuth
   /** Реализация IsAuth с возможностью задания значения поля obeyReturnPath. */
   sealed class IsAuthC
     extends IsAuthBase
-    with ExpireSession[AbstractRequestWithPwOpt]
+    with ExpireSession[MReq]
     with PlayMacroLogsImpl
 
 
@@ -85,12 +84,12 @@ trait IsAuth
   /** Проверка на залогиненность юзера с выставлением CSRF-токена. */
   object IsAuthGet
     extends IsAuthC
-    with CsrfGet[AbstractRequestWithPwOpt]
+    with CsrfGet[MReq]
 
   /** Проверка на залогиненность юзера с проверкой CSRF-токена, выставленного ранее. */
   object IsAuthPost
     extends IsAuthC
-    with CsrfPost[AbstractRequestWithPwOpt]
+    with CsrfPost[MReq]
 
 }
 

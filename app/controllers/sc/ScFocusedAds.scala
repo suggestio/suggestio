@@ -9,7 +9,9 @@ import io.suggest.util.Lists
 import models.im.MImgT
 import models.im.logo.LogoOpt_t
 import models.jsm.ProducerAdsResp
+import models.mctx.Context
 import models.msc._
+import models.req.IReq
 import play.api.mvc.Result
 import play.twirl.api.Html
 import util.PlayMacroLogsI
@@ -47,7 +49,7 @@ trait ScFocusedAdsBase
 
     def _adSearch: FocusedAdsSearchArgs
     def _scStateOpt: Option[ScJsState]
-    implicit def _request: AbstractRequestWithPwOpt[_]
+    implicit def _request: IReq[_]
 
     // TODO Не искать вообще карточки, если firstIds.len >= adSearch.size
     // TODO Выставлять offset для поиска с учётом firstIds?
@@ -484,7 +486,7 @@ trait ScFocusedAds
     * @param adSearch Поисковый запрос.
     * @return JSONP с отрендеренными карточками.
     */
-  def focusedAds(adSearch: FocusedAdsSearchArgs) = MaybeAuth.async { implicit request =>
+  def focusedAds(adSearch: FocusedAdsSearchArgs) = MaybeAuth().async { implicit request =>
     val logic = getLogicFor(adSearch)
     // Запустить изменябельное тело экшена на исполнение.
     _focusedAds(logic)
@@ -496,7 +498,7 @@ trait ScFocusedAds
    * @param request Экземпляр реквеста.
    * @return Фьючерс с результатом.
    */
-  protected def _focusedAds(logic: FocusedAdsLogicHttp)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+  protected def _focusedAds(logic: FocusedAdsLogicHttp)(implicit request: IReq[_]): Future[Result] = {
     _showFocusedAds(logic)
   }
 
@@ -506,7 +508,7 @@ trait ScFocusedAds
    * @param request Исходный запрос.
    * @return Фьючерс с http-результатом.
    */
-  protected def _showFocusedAds(logic: FocusedAdsLogicHttp)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+  protected def _showFocusedAds(logic: FocusedAdsLogicHttp)(implicit request: IReq[_]): Future[Result] = {
     // Запускаем сборку ответа:
     val resultFut = logic.resultFut
 
@@ -524,7 +526,7 @@ trait ScFocusedAds
 
 
   /** Перезаписываемый сборкщик логик для версий. */
-  def getLogicFor(adSearch: FocusedAdsSearchArgs)(implicit request: AbstractRequestWithPwOpt[_]): FocusedAdsLogicHttp = {
+  def getLogicFor(adSearch: FocusedAdsSearchArgs)(implicit request: IReq[_]): FocusedAdsLogicHttp = {
     val vsn = adSearch.apiVsn
     if (vsn == MScApiVsns.Coffee) {
       new FocusedAdsLogicHttpV1(adSearch)
@@ -552,7 +554,7 @@ trait ScFocusedAds
    * продьюсерах в пачке карточек.
    */
   protected class FocusedAdsLogicHttpV1(val _adSearch: FocusedAdsSearchArgs)
-                                       (implicit val _request: AbstractRequestWithPwOpt[_])
+                                       (implicit val _request: IReq[_])
     extends FocusedAdsLogicHttp
     with NoBrAcc
   {

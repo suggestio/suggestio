@@ -1,6 +1,6 @@
 @(title: String, leftCurrEl: Option[LkLeftPanelLink] = None, nodeOpt: Option[MNode] = None,
   headAfter:Option[Html] = None, popupContent: Option[Html] = None,
-  povAdnId: Option[String] = None, showSwitchNodeBtn: Boolean = true)(content: Html)(implicit ctx: Context)
+  showSwitchNodeBtn: Boolean = true)(content: Html)(implicit ctx: Context)
 
 @* Базовый шаблон для личного кабинета sio-маркета (не важно: ТЦ или магазин). *@
 
@@ -56,7 +56,7 @@
     <a class="lang-widget" title="Switch language@if(messages.lang.language != "en") { | @messages("Switch.lang")}"
        href="@routes.LkLang.showLangSwitcher(r = ctx.r)">@ctx.messages.lang.language</a>
 
-    @if(showSwitchNodeBtn && ctx.isAuth) {
+    @if(showSwitchNodeBtn && ctx.user.isAuth) {
       <a class="btn __size-M __major header_change-node"
          href="@routes.MarketLkAdn.lkList(fromNode = nodeOpt.flatMap(_.id))">
         @messages("Switch.shop")
@@ -70,7 +70,7 @@
 
     @_flashMsgTpl()
 
-    @_nodeLeftBarTpl(adnIdOpt, leftCurrEl, povAdnId)
+    @_nodeLeftBarTpl(adnIdOpt, leftCurrEl)
 
     @content
 

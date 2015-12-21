@@ -3,16 +3,17 @@ package controllers
 import com.google.inject.Inject
 import controllers.ctag.NodeTagsEdit
 import io.suggest.model.geo.{CircleGs, Distance, GeoPoint}
-import models.GeoIp
 import models.adv.gtag.{GtForm_t, MAdvFormResult, MForAdTplArgs}
 import models.jsm.init.MTargets
 import models.maps.MapViewState
-import models.mproj.MCommonDi
+import models.mproj.ICommonDi
+import models.req.IAdProdReq
+import models.GeoIp
 import org.elasticsearch.common.unit.DistanceUnit
 import org.joda.time.LocalDate
 import play.api.mvc.Result
 import util.PlayMacroLogsImpl
-import util.acl.{CanAdvertiseAd, CanAdvertiseAdUtil, RequestWithAdAndProducer}
+import util.acl.{CanAdvertiseAd, CanAdvertiseAdUtil}
 import util.adv.AdvFormUtil
 import util.billing.Bill2Util
 import util.tags.{GeoTagsFormUtil, TagsEditFormUtil}
@@ -32,7 +33,7 @@ class LkAdvGeoTag @Inject() (
   bill2Util                       : Bill2Util,
   override val tagsEditFormUtil   : TagsEditFormUtil,
   override val canAdvAdUtil       : CanAdvertiseAdUtil,
-  override val mCommonDi          : MCommonDi
+  override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
@@ -46,7 +47,7 @@ class LkAdvGeoTag @Inject() (
    * Экшен рендера страницы размещения карточки в теге с географией.
    * @param adId id отрабатываемой карточки.
    */
-  def forAd(adId: String) = CanAdvertiseAdGet(adId).async { implicit request =>
+  def forAd(adId: String) = CanAdvertiseAdGet(adId, U.Lk).async { implicit request =>
     val ipLocFut = GeoIp.geoSearchInfoOpt
     val formEmpty = geoTagsFormUtil.advForm
 
@@ -82,16 +83,22 @@ class LkAdvGeoTag @Inject() (
    * @return Фьючерс с ответом.
    */
   private def _forAd(form: GtForm_t, rs: Status)
-                    (implicit request: RequestWithAdAndProducer[_]): Future[Result] = {
-    implicit val _jsInitTargets = Seq(MTargets.AdvGtagForm)
-    val rargs = MForAdTplArgs(
-      mad             = request.mad,
-      producer        = request.producer,
-      form            = form,
-      advPeriodsAvail = advFormUtil.advPeriodsAvailable,
-      price           = bill2Util.zeroPricing
-    )
-    Ok( forAdTpl(rargs) )
+                    (implicit request: IAdProdReq[_]): Future[Result] = {
+    for {
+      ctxData0 <- request.user.lkCtxData
+    } yield {
+      implicit val ctxData = ctxData0.copy(
+        jsiTgs = Seq(MTargets.AdvGtagForm)
+      )
+      val rargs = MForAdTplArgs(
+        mad       = request.mad,
+        producer  = request.producer,
+        form      = form,
+        advPeriodsAvail = advFormUtil.advPeriodsAvailable,
+        price     = bill2Util.zeroPricing
+      )
+      Ok(forAdTpl(rargs))
+    }
   }
 
 

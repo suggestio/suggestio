@@ -1,6 +1,7 @@
-@(title: String, mnode: MNode, isMyNode: Boolean, rightCurrEl: NodeRightPanelLink, povAdnIdOpt: Option[String] = None,
+@(title: String, mnode: MNode, rightCurrEl: NodeRightPanelLink,
   popupContent:Option[Html] = None, rightBarAfter: Option[Html] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
 
+@* Какой-то базовый шаблон узла в личном кабинете. *@
 
 @import lk.adn.node._
 @import ctx._
@@ -8,35 +9,37 @@
 @import lk.right._
 @import util.tpl.CssFormat._
 
+
 @rightBarBody(adnId: String) = {
+
   @_navItemTpl(
     title = messages("Profile"),
     href  = Some( routes.MarketLkAdn.showAdnNode(adnId) ),
     css   = classesAct(rightCurrEl == RPL_NODE, "__show-profile")
   )
 
-  @if(isMyNode) {
-    @_navItemTpl(
-      title = messages("Edit.profile"),
-      href  = Some( routes.MarketLkAdnEdit.editAdnNode(adnId) ),
-      css   = classesAct(rightCurrEl == RPL_NODE_EDIT, "__edit-profile")
-    )
+  @_navItemTpl(
+    title = messages("Edit.profile"),
+    href  = Some( routes.MarketLkAdnEdit.editAdnNode(adnId) ),
+    css   = classesAct(rightCurrEl == RPL_NODE_EDIT, "__edit-profile")
+  )
 
-    @_navItemTpl(
-      title = messages("Password.change"),
-      href  = Some( routes.MarketLkAdn.userProfileEdit(adnId, r = ctx.r) ),
-      css   = classesAct(rightCurrEl == RPL_USER_EDIT, "__change-pass")
-    )
+  @_navItemTpl(
+    title = messages("Password.change"),
+    href  = Some( routes.MarketLkAdn.userProfileEdit(adnId, r = ctx.r) ),
+    css   = classesAct(rightCurrEl == RPL_USER_EDIT, "__change-pass")
+  )
 
-    @if( mnode.extras.adn.exists(_.isReceiver) ) {
-      @_navItemTpl(
-        title = messages("Advertisers"),
-        href  = Some( routes.MarketAdv.showNodeAdvs(adnId) ),
-        css   = classesAct(rightCurrEl == RPL_ADVERTISERS)
-      )
-    }
+  @if( mnode.extras.adn.exists(_.isReceiver) ) {
+    @_navItemTpl(
+      title = messages("Advertisers"),
+      href  = Some( routes.MarketAdv.showNodeAdvs(adnId) ),
+      css   = classesAct(rightCurrEl == RPL_ADVERTISERS)
+    )
   }
+
 }
+
 
 @* Билдим содержимое правой панели. *@
 @rightBar1 = {
@@ -55,7 +58,6 @@
   leftCurrEl    = Some(LkLeftPanelLinks.LPL_NODE),
   nodeOpt       = Some(mnode),
   rightBar      = Some(rightBar1),
-  povAdnId      = povAdnIdOpt,
   popupContent  = popupContent,
   headAfter	= headAfter
 )(content)

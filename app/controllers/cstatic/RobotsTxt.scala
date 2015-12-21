@@ -1,6 +1,5 @@
 package controllers.cstatic
 
-import controllers.SioController
 import play.api.Play
 import util.acl.IgnoreAuth
 import views.txt.static.robotsTxtTpl
@@ -11,7 +10,7 @@ import views.txt.static.robotsTxtTpl
  * Created: 17.12.15 11:18
  * Description: Трейт для контроллеров с экшеном поддержки раздачи robots.txt.
  */
-trait RobotsTxt extends SioController {
+trait RobotsTxt extends IgnoreAuth {
 
   import mCommonDi._
 

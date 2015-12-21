@@ -10,7 +10,7 @@
      data-ri="a,b,c"
 *@
 
-@defining( ctx.jsInitTargets ) { itgs =>
+@defining( ctx.data.jsiTgs ) { itgs =>
   @if(itgs.nonEmpty) {
     @RI_ATTR_NAME="@itgs.iterator.map(_.strId).mkString(";")"
   }

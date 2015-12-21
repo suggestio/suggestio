@@ -1,4 +1,4 @@
-@(adnIdOpt: Option[String], leftCurrEl: Option[LkLeftPanelLink], povAdnId: Option[String])(implicit ctx: Context)
+@(adnIdOpt: Option[String], leftCurrEl: Option[LkLeftPanelLink])(implicit ctx: Context)
 
 @* Реализация левой панели для ноды. *@
 
@@ -11,23 +11,23 @@
 
     @_leftBarItemTpl(
       title = messages("Ad.cards"),
-      href  = routes.MarketLkAdn.showNodeAds(adnId, povAdnId = povAdnId),
+      href  = routes.MarketLkAdn.showNodeAds(adnId),
       css   = classesAct(leftCurrEl contains LPL_ADS, "__cards")
     )()
 
     @_leftBarItemTpl(
       title = messages("Profile"),
-      href  = routes.MarketLkAdn.showAdnNode(adnId, povAdnId = povAdnId),
+      href  = routes.MarketLkAdn.showAdnNode(adnId),
       css   = classesAct(leftCurrEl contains LPL_NODE, "__profile")
     )()
 
-    @if(ctx.billBallanceOpt) {
+    @*if( ctx.data.mUsrBalances.nonEmpty ) { *@
       @_leftBarItemTpl(
         title = messages("Billing"),
         href  = routes.MarketLkBilling.showAdnNodeBilling(adnId),
         css   = classesAct(leftCurrEl contains LPL_BILLING, "__billing")
       )()
-    }
+    @*}*@
 
     @_leftBarItemTpl(
       title = messages("Events"),
@@ -35,7 +35,7 @@
       css   = classesAct(leftCurrEl contains LPL_EVENTS, "__events")
     ) {
       @* Заметный кружок с кол-вом непрочитанных сообщений. *@
-      @ctx.nodeUnseenEvtsCnt.map { cnt =>
+      @for( cnt <- ctx.data.evtsCount) {
         @if(cnt > 0) {
           <span class="left-bar_menu-bubble" title="@messages("New.events.cnt", cnt)">@cnt</span>
         }

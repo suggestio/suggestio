@@ -10,9 +10,10 @@ import io.suggest.img.ConvertModes
 import io.suggest.img.crop.CropConstants
 import io.suggest.popup.PopupConstants
 import io.suggest.ym.model.common.MImgInfoMeta
-import models.Context
 import models.im._
-import models.mproj.MCommonDi
+import models.mctx.Context
+import models.mproj.ICommonDi
+import models.req.IReq
 import net.sf.jmimemagic.{Magic, MagicMatch}
 import org.apache.commons.io.FileUtils
 import org.joda.time.{DateTime, ReadableInstant}
@@ -43,7 +44,7 @@ class Img @Inject() (
   override val mImg3              : MImg3_,
   override val dynImgUtil         : DynImgUtil,
   override val imgCtlUtil         : ImgCtlUtil,
-  override val mCommonDi          : MCommonDi
+  override val mCommonDi          : ICommonDi
 )
   extends SioController
   with PlayMacroLogsImpl
@@ -288,7 +289,7 @@ trait TempImgSupport
   def _handleTempImg(preserveUnknownFmt: Boolean = false, runEarlyColorDetector: Boolean = false,
                      wsId: Option[String] = None, ovlRrr: Option[(String, Context) => Html] = None,
                      mImgCompanion: IMImgCompanion = mImg3)
-                    (implicit request: AbstractRequestWithPwOpt[MultipartFormData[TemporaryFile]]): Future[Result] = {
+                    (implicit request: IReq[MultipartFormData[TemporaryFile]]): Future[Result] = {
     // TODO Надо часть синхронной логики загнать в Future{}. Это нужно, чтобы скачанные данные из tmp удалялись автоматом.
     val resultFut: Future[Result] = request.body.file("picture") match {
       case Some(pictureFile) =>

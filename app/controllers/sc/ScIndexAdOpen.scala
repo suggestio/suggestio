@@ -1,11 +1,11 @@
 package controllers.sc
 
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
+import models.req.IReq
 import models.{MNode, AdSearchImpl, AdShowLevels}
 import models.im.DevScreen
 import models.msc.{MScApiVsn, ScReqArgsDflt, ScReqArgs}
 import play.api.mvc.Result
-import util.acl.AbstractRequestWithPwOpt
 import util.n2u.IN2NodesUtilDi
 
 import scala.concurrent.Future
@@ -27,7 +27,7 @@ trait ScIndexAdOpen
   /** Тело экшена возврата медиа-кнопок расширено поддержкой переключения на index-выдачу узла-продьюсера
     * рекламной карточки, которая заинтересовала юзера. */
   override protected def _focusedAds(logic: FocusedAdsLogicHttp)
-                                    (implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+                                    (implicit request: IReq[_]): Future[Result] = {
     val resFut = for {
       madOpt <- MNode.maybeGetById( logic._adSearch.openIndexAdId )
 
@@ -98,7 +98,7 @@ trait ScIndexAdOpen
    * @return Фьючерс с http-результатом.
    */
   private def _goToProducerIndex(producer: MNode, focLogic: FocusedAdsLogicHttp)
-                                (implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+                                (implicit request: IReq[_]): Future[Result] = {
     // Извлекаем MAdnNode втупую. exception будет перехвачен в recoverWith.
     val idxLogic = new ScIndexNodeSimpleHelper {
       override def geoListGoBackFut   = Future successful Some(true)

@@ -5,7 +5,7 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.MNode
-import models.req.SioReqMd
+import models.req.{MReq, SioReqMd}
 import models.usr.MExtIdent
 import play.api.mvc.{Result, Request, ActionBuilder}
 import util.di.IIdentUtil
@@ -31,60 +31,58 @@ trait CanConfirmIdpReg
 
   /** Код базовой реализации ActionBuilder'ов, проверяющих возможность подтверждения регистрации. */
   trait CanConfirmIdpRegBase
-    extends ActionBuilder[AbstractRequestWithPwOpt]
+    extends ActionBuilder[MReq]
     with PlayMacroLogsI
     with OnUnauthUtil
   {
-    override def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[Result]): Future[Result] = {
-      val pwOpt = PersonWrapper.getFromRequest(request)
-      pwOpt match {
-        case Some(pw) =>
-          // Разрешить суперюзеру доступ, чтобы можно было верстать и проверять форму без шаманств.
-          val hasAccess: Future[Boolean] = if (PersonWrapper isSuperuser pwOpt) {
-            Future successful true
-          } else {
-            // Запустить подсчет имеющихся у юзера магазинов
-            val msearch = new MNodeSearchDfltImpl {
-              override def outEdges = {
-                val cr = Criteria(Seq(pw.personId), Seq(MPredicates.OwnedBy))
-                Seq(cr)
-              }
-              override def limit    = 5
+    override def invokeBlock[A](request: Request[A], block: (MReq[A]) => Future[Result]): Future[Result] = {
+      val personIdOpt = sessionUtil.getPersonId(request)
+
+      personIdOpt.fold {
+        LOGGER.trace("User not logged in.")
+        onUnauth(request)
+
+      } { personId =>
+        val user = mSioUsers(personIdOpt)
+        // Разрешить суперюзеру доступ, чтобы можно было верстать и проверять форму без шаманств.
+        val hasAccess: Future[Boolean] = if (user.isSuper) {
+          Future successful true
+        } else {
+          // Запустить подсчет имеющихся у юзера магазинов
+          val msearch = new MNodeSearchDfltImpl {
+            override def outEdges = {
+              val cr = Criteria(Seq(personId), Seq(MPredicates.OwnedBy))
+              Seq(cr)
             }
-            val pcntFut = MNode.dynCount(msearch)
-            // Запустить поиск имеющихся внешних идентов
-            val hasExtIdent = MExtIdent.countByPersonId(pw.personId)
-              .map(_ > 0L)
-            // Дождаться результата поиска узлов.
-            pcntFut flatMap { pcnt =>
-              if (pcnt > 0L) {
-                LOGGER.debug(s"User[${pw.personId}] already have $pcnt or more nodes. Refusing reg.confirmation.")
-                Future successful false
-              } else {
-                // Юзер пока не имеет узлов. Проверить наличие идентов.
-                hasExtIdent.filter(identity).onFailure {
-                  case ex: NoSuchElementException =>
-                    LOGGER.debug(s"User[${pw.personId}] has no MExtIdents. IdP reg not allowed.")
-                }
-                hasExtIdent
+            override def limit = 5
+          }
+          val pcntFut = MNode.dynCount(msearch)
+          // Запустить поиск имеющихся внешних идентов
+          val hasExtIdent = MExtIdent.countByPersonId(personId)
+            .map(_ > 0L)
+          // Дождаться результата поиска узлов.
+          pcntFut flatMap { pcnt =>
+            if (pcnt > 0L) {
+              LOGGER.debug(s"User[$personId] already have $pcnt or more nodes. Refusing reg.confirmation.")
+              Future successful false
+            } else {
+              // Юзер пока не имеет узлов. Проверить наличие идентов.
+              hasExtIdent.filter(identity).onFailure {
+                case ex: NoSuchElementException =>
+                  LOGGER.debug(s"User[$personId] has no MExtIdents. IdP reg not allowed.")
               }
+              hasExtIdent
             }
           }
-          val srmFut = SioReqMd.fromPwOpt(pwOpt)
-          hasAccess flatMap {
-            case true =>
-              srmFut flatMap { srm =>
-                val req1 = RequestWithPwOpt(pwOpt, request, srm)
-                block(req1)
-              }
+        }
+        hasAccess flatMap {
+          case true =>
+            val req1 = MReq(request, user)
+            block(req1)
 
-            case false =>
-              onAlreadyConfirmed(pw.personId, request)
-          }
-
-        case None =>
-          LOGGER.trace("User not logged in.")
-          onUnauth(request)
+          case false =>
+            onAlreadyConfirmed(personId, request)
+        }
       }
     }
 
@@ -97,17 +95,17 @@ trait CanConfirmIdpReg
 
   sealed abstract class CanConfirmIdpRegBase2
     extends CanConfirmIdpRegBase
-    with ExpireSession[AbstractRequestWithPwOpt]
+    with ExpireSession[MReq]
     with PlayMacroLogsDyn
 
   /** Реализация [[CanConfirmIdpRegBase]] с выставлением CSRF-токена. */
   object CanConfirmIdpRegGet
     extends CanConfirmIdpRegBase2
-    with CsrfGet[AbstractRequestWithPwOpt]
+    with CsrfGet[MReq]
 
   /** Реализация [[CanConfirmIdpRegBase]] с проверкой CSRF-токена. */
   object CanConfirmIdpRegPost
     extends CanConfirmIdpRegBase2
-    with CsrfPost[AbstractRequestWithPwOpt]
+    with CsrfPost[MReq]
 
 }

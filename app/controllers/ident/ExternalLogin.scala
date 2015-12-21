@@ -4,11 +4,13 @@ import com.google.inject.Inject
 import controllers.{SioController, routes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
+import models.mctx.Context
 import models.mext.{ILoginProvider, MExtServices}
-import models.mproj.MCommonDi
+import models.mproj.ICommonDi
 import models.msession.{CustomTtl, Keys}
+import models.req.IReq
 import models.usr._
-import models.{Context, ExtRegConfirmForm_t, ExternalCall, MNode, MNodeTypes}
+import models.{ExtRegConfirmForm_t, ExternalCall, MNode, MNodeTypes}
 import play.api.data.Form
 import play.api.mvc._
 import play.twirl.api.Html
@@ -39,7 +41,7 @@ class ExternalLogin_ @Inject() (
   routesSvc                       : SsRoutesService,
   ssUserService                   : SsUserService,
   override val identUtil          : IdentUtil,
-  mCommonDi                       : MCommonDi
+  mCommonDi                       : ICommonDi
 )
   extends PlayMacroLogsDyn
   with IIdentUtil
@@ -144,7 +146,7 @@ trait ExternalLogin
 
   // Код handleAuth() спасён из умирающего securesocial c целью отпиливания от грёбаных authentificator'ов,
   // которые по сути являются переусложнёнными stateful(!)-сессиями, которые придумал какой-то нехороший человек.
-  protected def handleAuth1(provider: ILoginProvider, redirectTo: Option[String]) = MaybeAuth.async { implicit request =>
+  protected def handleAuth1(provider: ILoginProvider, redirectTo: Option[String]) = MaybeAuth().async { implicit request =>
     lazy val logPrefix = s"handleAuth1($provider):"
     env.providers.get(provider.ssProvName).map {
       _.authenticate().flatMap {
@@ -269,7 +271,7 @@ trait ExternalLogin
   }
 
   /** Общий код рендера idpConfig вынесен сюда. */
-  protected def _idpConfirm(form: ExtRegConfirmForm_t)(implicit request: AbstractRequestWithPwOpt[_]): Html = {
+  protected def _idpConfirm(form: ExtRegConfirmForm_t)(implicit request: IReq[_]): Html = {
     confirmTpl(form)
   }
 
@@ -283,7 +285,7 @@ trait ExternalLogin
       {nodeName =>
         // Развернуть узел для юзера, отобразить страницу успехоты.
         for {
-          mnode <- nodesUtil.createUserNode(name = nodeName, personId = request.pwOpt.get.personId)
+          mnode <- nodesUtil.createUserNode(name = nodeName, personId = request.user.personIdOpt.get)
         } yield {
           val args = nodesUtil.nodeRegSuccessArgs( mnode )
           Ok( regSuccessTpl(args) )

@@ -16,16 +16,12 @@ trait INodeShowArgs
   with IColors
 {
   def mnode       : MNode
-  def isMyNode    : Boolean
-  def povAdnIdOpt : Option[String]
   def gallery     : Seq[MImgT]
 }
 
 
 case class MNodeShowArgs(
   override val mnode       : MNode,
-  override val isMyNode    : Boolean,
-  override val povAdnIdOpt : Option[String],
   override val logoImgOpt  : Option[MImgT],
   override val bgColor     : String,
   override val fgColor     : String,

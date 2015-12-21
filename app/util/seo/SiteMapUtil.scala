@@ -1,8 +1,8 @@
 package util.seo
 
 import com.google.inject.Inject
-import models.Context
 import models.crawl.SiteMapUrlT
+import models.mctx.Context
 import play.api.libs.iteratee.Enumerator
 import util.showcase.ScSitemapsXml
 

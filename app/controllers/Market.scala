@@ -1,7 +1,7 @@
 package controllers
 
 import com.google.inject.Inject
-import models.mproj.MCommonDi
+import models.mproj.ICommonDi
 import util.acl._
 import views.html.market._
 
@@ -14,28 +14,28 @@ import views.html.market._
  */
 
 class Market @Inject() (
-  override val mCommonDi          : MCommonDi
+  override val mCommonDi          : ICommonDi
 )
   extends SioController
   with MaybeAuth
 {
 
   /** Статическая страничка, описывающая суть sio market для владельцев WiFi. */
-  def aboutMarket = MaybeAuth { implicit request =>
+  def aboutMarket = MaybeAuth() { implicit request =>
     // 2014.oct.22: Удаление старого about'а, который уже постарел совсем и потерял актуальность.
     //              Буклет о sio-маркете лежит по новой ссылке.
     MovedPermanently( routes.Market.marketBooklet().url )
   }
 
   /** Статическая страничка, описывающая суть sio market для рекламодателей. */
-  def aboutForAdMakers = MaybeAuth { implicit request =>
+  def aboutForAdMakers = MaybeAuth() { implicit request =>
     cacheControlShort {
       Redirect(routes.Market.marketBooklet().url)
     }
   }
 
   /** Выдать страницу с вертикальной страницой-презенташкой sio-маркета. */
-  def marketBooklet = MaybeAuth { implicit request =>
+  def marketBooklet = MaybeAuth() { implicit request =>
     cacheControlShort {
       Ok(marketBookletTpl())
     }

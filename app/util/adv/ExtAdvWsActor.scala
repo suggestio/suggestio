@@ -170,7 +170,7 @@ case class ExtAdvWsActor @Inject() (
             // TODO Пока поддерживается только отображение проблемы с блокировкой попапов. Нужно определять ошибку, и рендерить необходимый шаблон.
             val mevent = MEventTmp(
               etype       = MEventTypes.BrowserBlockPopupsError,
-              ownerId     = eactx.request.producerId,
+              ownerId     = eactx.request.producer.id.get,
               isCloseable = false,
               isUnseen    = true
             )

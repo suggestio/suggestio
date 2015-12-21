@@ -11,7 +11,7 @@ import org.scalatestplus.play.PlaySpec
  */
 class MCalendarSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
 
-  lazy val mCalendar = app.injector.instanceOf[MCalendar_]
+  lazy val mCalendar = app.injector.instanceOf[MCalendars]
 
   "MCalendar JSON" must {
 

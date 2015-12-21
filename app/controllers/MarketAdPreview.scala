@@ -3,7 +3,9 @@ package controllers
 import io.suggest.model.n2.edge.MNodeEdges
 import models.blk.SzMult_t
 import models.im.make.Makers
+import models.mctx.Context
 import models.msc.AdBodyTplArgs
+import models.req.INodeReq
 import play.twirl.api.Html
 import util.PlayMacroLogsI
 import models._
@@ -72,7 +74,7 @@ trait MarketAdPreview
   }
 
   /** Рендер полноэкранного варианта отображения. */
-  private def renderFull(mad: MNode, bc: BlockConf)(implicit request: AbstractRequestForAdnNode[_], ctx: Context): Future[Html] = {
+  private def renderFull(mad: MNode, bc: BlockConf)(implicit request: INodeReq[_], ctx: Context): Future[Html] = {
     val szMult: SzMult_t = 2.0F
     // Поддержка wideBg:
     val bgOptFut = BgImg.maybeMakeBgImg(mad, szMult, ctx.deviceScreenOpt)
@@ -87,13 +89,13 @@ trait MarketAdPreview
         cssClasses    = Seq("__popup"),
         isFocused     = true
       )
-      val args = AdBodyTplArgs(_brArgs, request.adnNode, 1, 1, is3rdParty = false)
+      val args = AdBodyTplArgs(_brArgs, request.mnode, 1, 1, is3rdParty = false)
       _adFullTpl(args)(ctx)
     }
   }
 
   /** Рендер маленькой превьюшки, прямо в редакторе. */
-  private def renderSmall(mad: MNode, bc: BlockConf)(implicit request: AbstractRequestForAdnNode[_], ctx: Context): Future[Html] = {
+  private def renderSmall(mad: MNode, bc: BlockConf)(implicit request: INodeReq[_], ctx: Context): Future[Html] = {
     val szMult: SzMult_t = 1.0F
     val bgOptFut = BgImg.maybeMakeBgImgWith(mad, Makers.Block, szMult, ctx.deviceScreenOpt)
     bgOptFut map { bgOpt =>

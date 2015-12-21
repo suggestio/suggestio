@@ -26,8 +26,8 @@ GET  /market/booklet                    @controllers.Market.marketBooklet
 GET  /lk/nodes                          @controllers.MarketLkAdn.lkList(fromNode: Option[String] ?= None)
 GET  /lk/node/create                    @controllers.MarketLkAdn.createNode
 POST /lk/node/create                    @controllers.MarketLkAdn.createNodeSubmit
-GET  /lk/node/profile/:adnId            @controllers.MarketLkAdn.showAdnNode(adnId, povAdnId: Option[String] ?= None)
-GET  /lk/node/mads/:adnId               @controllers.MarketLkAdn.showNodeAds(adnId, mode: MNodeAdsMode ?= MNodeAdsModes.ALL_ADS, newAdId: Option[String] ?= None, povAdnId: Option[String] ?= None)
+GET  /lk/node/profile/:nodeId           @controllers.MarketLkAdn.showAdnNode(nodeId)
+GET  /lk/node/mads/:adnId               @controllers.MarketLkAdn.showNodeAds(adnId, mode: MNodeAdsMode ?= MNodeAdsModes.ALL_ADS, newAdId: Option[String] ?= None)
 GET  /lk/node/edit/:adnId               @controllers.MarketLkAdnEdit.editAdnNode(adnId)
 POST /lk/node/edit/:adnId               @controllers.MarketLkAdnEdit.editAdnNodeSubmit(adnId)
 POST /lk/node/img/gal/prepare           @controllers.MarketLkAdnEdit.handleGalleryImg
@@ -37,8 +37,6 @@ POST /lk/node/img/logo                  @controllers.MarketLkAdnEdit.handleTempL
 ## Редактирования профиля юзера из личного кабинета узла.
 GET  /lk/own/edit/:adnId                @controllers.MarketLkAdn.userProfileEdit(adnId, r: Option[String] ?= None)
 POST /lk/own/pwchange/:adnId            @controllers.MarketLkAdn.changePasswordSubmit(adnId, r: Option[String] ?= None)
-## Окно для георазмещения рекламных карточек
-GET  /lk/xadv/geo/wnd/:adId             @controllers.MarketAdv.advFullWnd(adId, povAdnId: Option[String] ?= None, advId: Option[Int] ?= None, r: Option[String] ?= None)
 
 ## Размещение рекламы (adv) на узлах-получателях
 GET  /lk/xadv/geo/for/:adId             @controllers.MarketAdv.advForAd(adId)
@@ -191,12 +189,6 @@ POST /sys/market/btf/new/:contractId     @controllers.SysMarketBillingTariff.add
 GET  /sys/market/btf/edit/:tariffId      @controllers.SysMarketBillingTariff.editFeeTariffForm(tariffId: Int)
 POST /sys/market/btf/edit/:tariffId      @controllers.SysMarketBillingTariff.editFeeTariffFormSubmit(tariffId: Int)
 POST /sys/market/btf/delete/:tariffId    @controllers.SysMarketBillingTariff.deleteFeeTariffSubmit(tariffId: Int)
-## Тарифы: просмотры/переходы (stat-тарифы)
-GET  /sys/market/bts/new/:contractId     @controllers.SysMarketBillingTariff.addStatTariff(contractId: Int)
-POST /sys/market/bts/new/:contractId     @controllers.SysMarketBillingTariff.addStatTariffSubmit(contractId: Int)
-GET  /sys/market/bts/edit/:tariffId      @controllers.SysMarketBillingTariff.editStatTariff(tariffId: Int)
-POST /sys/market/bts/edit/:tariffId      @controllers.SysMarketBillingTariff.editStatTariffSubmit(tariffId: Int)
-POST /sys/market/bts/delete/:tariffId    @controllers.SysMarketBillingTariff.deleteStatTariffSubmit(tariffId: Int)
 
 ## Тарифы: посуточные mmp
 GET  /sys/bill/mmp/new/:mbcId             @controllers.SysMarketBillingMmp.createMmpDaily(mbcId: Int)

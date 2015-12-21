@@ -294,3 +294,6 @@ dockerExposedPorts := Seq(9000, 9443, 9200, 9201, 9300, 9301)
 // Есть ассеты, которые нет смысла сжимать. Правда, они в /public, но на всякий случай сделаем.
 excludeFilter in gzip := "*.woff" || "*.woff2"
 
+// Дополнительные импорты для twirl-шаблонов.
+TwirlKeys.templateImports += "models.mctx.Context"
+

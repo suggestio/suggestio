@@ -22,7 +22,7 @@ trait SvcActorJsRenderUtil extends ISendCommand {
   def serviceInitFailedRender(errors: Seq[IErrorInfo]): Unit = {
     val mevent = MEventTmp(
       etype       = MEventTypes.AdvServiceError,
-      ownerId     = args.request.producerId,
+      ownerId     = args.request.producer.id.get,
       isCloseable = false,
       isUnseen    = true
     )
@@ -54,7 +54,7 @@ trait SvcActorJsRenderUtil extends ISendCommand {
       onClickUrl = tg.returnTo.builder()
         .setAdnId( tg.target.adnId )
         .setFocusedAdId( args.request.mad.id.get )
-        .setFocusedProducerId( args.request.producerId )
+        .setFocusedProducerId( args.request.producer.id.get )
         .toAbsUrl
     )
   }

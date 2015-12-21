@@ -11,13 +11,16 @@ import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models._
 import models.adv._
 import models.mbill.{MBalance, MContract}
+import models.mctx.Context
 import models.mlk.{MNodeAdsTplArgs, MNodeShowArgs}
-import models.mproj.MCommonDi
+import models.mproj.ICommonDi
 import models.msession.Keys
+import models.req.INodeReq
 import models.usr.EmailPwIdent
 import org.elasticsearch.search.sort.SortOrder
 import play.api.data.Form
 import play.api.data.Forms._
+import play.api.mvc.Result
 import util.FormUtil._
 import util.acl._
 import util.adn.NodesUtil
@@ -48,15 +51,14 @@ class MarketLkAdn @Inject() (
   logoUtil                            : LogoUtil,
   billing                             : Billing,
   galleryUtil                         : GalleryUtil,
-  override val mCommonDi              : MCommonDi
+  override val mCommonDi              : ICommonDi
 )
   extends SioController
   with PlayMacroLogsImpl
   with BruteForceProtectCtl
   with ChangePwAction
-  with NodeEactAcl
+  with NodeEact
   with IsAdnNodeAdminOptOrAuth
-  with AdnNodeAccess
   with IsAdnNodeAdmin
   with IsAuth
 {
@@ -65,8 +67,8 @@ class MarketLkAdn @Inject() (
   import mCommonDi._
 
   /** Список личных кабинетов юзера. */
-  def lkList(fromAdnId: Option[String]) = IsAdnNodeAdminOptOrAuthGet(fromAdnId).async { implicit request =>
-    val personId = request.pwOpt.get.personId
+  def lkList(fromAdnId: Option[String]) = IsAdnNodeAdminOptOrAuthGet(fromAdnId, U.Lk).async { implicit request =>
+    val personId = request.user.personIdOpt.get
     val msearch = new MNodeSearchDfltImpl {
       override def outEdges = Seq(
         Criteria(
@@ -78,40 +80,39 @@ class MarketLkAdn @Inject() (
     }
     val mnodesFut = MNode.dynSearch(msearch)
     for {
+      ctxData     <- request.user.lkCtxData
       mnodes      <- mnodesFut
     } yield {
+      implicit val ctxData1 = ctxData
       Ok( lkListTpl(mnodes, request.mnodeOpt) )
     }
   }
 
+
   /**
    * Отрендерить страницу ЛК какого-то узла рекламной сети. Экшен различает свои и чужие узлы.
-   * @param adnId id узла.
-   * @param povAdnIdOpt С точки зрения какого узла идёт просмотр указанного узла.
-   *                    Выверенное значение это аргумента можно получить из request.povAdnNodeOpt.
+   * @param nodeId id узла.
    */
-  def showAdnNode(adnId: String, povAdnIdOpt: Option[String]) = {
-    AdnNodeAccessGet(adnId, povAdnIdOpt).async { implicit request =>
-      import request.{adnNode, isMyNode}
-      val logoOptFut = logoUtil.getLogoOfNode(adnNode)
-      val galleryFut = galleryUtil.galleryImgs( adnNode )
-      for {
-        logoOpt <- logoOptFut
-        gallery <- galleryFut
-      } yield {
-        val rargs = MNodeShowArgs(
-          mnode         = adnNode,
-          isMyNode      = isMyNode,
-          povAdnIdOpt   = request.povAdnNodeOpt
-            .flatMap(_.id),
-          logoImgOpt    = logoOpt,
-          bgColor       = colorCodeOrDflt(adnNode.meta.colors.bg, scUtil.SITE_BGCOLOR_DFLT),
-          fgColor       = colorCodeOrDflt(adnNode.meta.colors.fg, scUtil.SITE_FGCOLOR_DFLT),
-          gallery       = gallery
-        )
-        val html = adnNodeShowTpl( rargs )
-        Ok(html)
-      }
+  def showAdnNode(nodeId: String) = IsAdnNodeAdminGet(nodeId, U.Lk).async { implicit request =>
+    val mnode = request.mnode
+    val logoOptFut = logoUtil.getLogoOfNode(mnode)
+    val galleryFut = galleryUtil.galleryImgs( mnode )
+    for {
+      ctxData   <- request.user.lkCtxData
+      logoOpt   <- logoOptFut
+      gallery   <- galleryFut
+    } yield {
+      val rargs = MNodeShowArgs(
+        mnode         = mnode,
+        logoImgOpt    = logoOpt,
+        bgColor       = colorCodeOrDflt(mnode.meta.colors.bg, scUtil.SITE_BGCOLOR_DFLT),
+        fgColor       = colorCodeOrDflt(mnode.meta.colors.fg, scUtil.SITE_FGCOLOR_DFLT),
+        gallery       = gallery
+      )
+
+      implicit val ctxData1 = ctxData
+      val html = adnNodeShowTpl( rargs )
+      Ok(html)
     }
   }
 
@@ -125,16 +126,15 @@ class MarketLkAdn @Inject() (
    * @param mode Режим фильтрации карточек.
    * @param newAdIdOpt Костыль: если была добавлена рекламная карточка, то она должна отобразится сразу,
    *                   независимо от refresh в индексе. Тут её id.
-   * @param povAdnIdOpt id узла, с точки зрения которого идёт обзор узла.
    * @return 200 Ok + страница ЛК со списком карточек.
    */
-  def showNodeAds(adnId: String, mode: MNodeAdsMode, newAdIdOpt: Option[String], povAdnIdOpt: Option[String]) = {
-    AdnNodeAccessGet(adnId, povAdnIdOpt).async { implicit request =>
-      import request.{adnNode, isMyNode}
+  def showNodeAds(adnId: String, mode: MNodeAdsMode, newAdIdOpt: Option[String]) = {
+    IsAdnNodeAdminGet(adnId, U.Lk).async { implicit request =>
+      import request.mnode
 
       // Для узла нужно отобразить его рекламу.
       // TODO Добавить поддержку агрумента mode
-      val madsFut: Future[Seq[MNode]] = if (isMyNode) {
+      val madsFut: Future[Seq[MNode]] = {
         val producedByCrs = {
           val cr = Criteria(
             nodeIds     = Seq( adnId ),
@@ -181,42 +181,24 @@ class MarketLkAdn @Inject() (
           }
         }
 
-      } else {
-        // Это чужой узел. Нужно отобразить только рекламу, отправленную на размещение pov-узлу.
-        request.povAdnNodeOpt match {
-          // Есть pov-узел, и юзер является админом оного. Нужно поискать рекламу, созданную на adnId и размещенную на pov-узле.
-          case Some(povAdnNode) =>
-            // Вычислить взаимоотношения между двумя узлами через список ad_id
-            val adIds = db.withConnection { implicit c =>
-              MAdv.findActualAdIdsBetweenNodes(MAdvModes.busyModes, adnId, rcvrId = povAdnNode.id.get)
-            }
-            MNode.multiGetRev(adIds)
-
-          // pov-узел напрочь отсутствует. Нечего отображать.
-          case None =>
-            debug(s"showAdnNode($adnId, pov=$povAdnIdOpt): pov node is empty, no rcvr, no ads.")
-            Future successful Nil
-        }
       }
 
       // Собрать карту занятых размещением карточек.
       val ad2advMapFut = {
-        request.myNodeId.fold(Future successful Map.empty[String, MAdvI]) { myAdnId =>
           Future.traverse(Seq(MAdvOk, MAdvReq)) { model =>
             Future {
               db.withConnection { implicit c =>
-                model.findNotExpiredRelatedTo(myAdnId)
+                model.findNotExpiredRelatedTo(adnId)
               }
             }(AsyncUtil.jdbcExecutionContext)
           } map { results =>
             advs2adIdMap(results : _*)
           }
-        }
       }
 
       // Надо ли отображать кнопку "управление" под карточками? Да, если есть баланс и контракт.
       val canAdvFut: Future[Boolean] = {
-        if (isMyNode && adnNode.extras.adn.exists(_.isProducer)) {
+        if (mnode.extras.adn.exists(_.isProducer)) {
           Future {
             db.withConnection { implicit c =>
               MContract.hasActiveForNode(adnId)  &&  MBalance.hasForNode(adnId)
@@ -227,14 +209,22 @@ class MarketLkAdn @Inject() (
         }
       }
 
-      implicit val ctx = implicitly[Context]
+      val ctxFut = request.user.lkCtxData.map { implicit ctxData =>
+        implicitly[Context]
+      }
 
       // 2015.apr.20: Вместо списка рекламных карточек надо передавать данные для рендера.
-      val brArgssFut = madsFut flatMap { mads =>
-        val dsOpt = ctx.deviceScreenOpt
-        Future.traverse(mads) { mad =>
-          lkAdUtil.tiledAdBrArgs(mad, dsOpt)
+      val brArgssFut = for {
+        mads <- madsFut
+        ctx  <- ctxFut
+        res  <- {
+          val dsOpt = ctx.deviceScreenOpt
+          Future.traverse(mads) { mad =>
+            lkAdUtil.tiledAdBrArgs(mad, dsOpt)
+          }
         }
+      } yield {
+        res
       }
 
       // Рендер результата, когда все карточки будут собраны.
@@ -242,12 +232,11 @@ class MarketLkAdn @Inject() (
         brArgss   <- brArgssFut
         ad2advMap <- ad2advMapFut
         canAdv    <- canAdvFut
+        ctx       <- ctxFut
       } yield {
         val args = MNodeAdsTplArgs(
-          mnode       = adnNode,
+          mnode       = mnode,
           mads        = brArgss,
-          isMyNode    = isMyNode,
-          povAdnIdOpt = request.povAdnNodeOpt.flatMap(_.id),
           canAdv      = canAdv,
           ad2advMap   = ad2advMap
         )
@@ -291,8 +280,9 @@ class MarketLkAdn @Inject() (
         NotAcceptable(invite.inviteAcceptFormTpl(mnode, eact, formWithErrors, withOfferText = false))
 
       }, { case (contractAgreed, passwordOpt) =>
-        if (passwordOpt.isEmpty && !request.isAuth) {
-          debug(s"${logPrefix}Password check failed. isEmpty=${passwordOpt.isEmpty} ;; request.isAuth=${request.isAuth}")
+        val isAuth = request.user.isAuth
+        if (passwordOpt.isEmpty && !isAuth) {
+          debug(s"${logPrefix}Password check failed. isEmpty=${passwordOpt.isEmpty} ;; request.isAuth=$isAuth")
           val form1 = formBinded
             .withError("password.pw1", "error.required")
             .withError("password.pw2", "error.required")
@@ -301,7 +291,7 @@ class MarketLkAdn @Inject() (
         } else {
           // Сначала удаляем запись об активации, убедившись что она не была удалена асинхронно.
           eact.delete.flatMap { isDeleted =>
-            val newPersonIdOptFut: Future[Option[String]] = if (!request.isAuth) {
+            val newPersonIdOptFut: Future[Option[String]] = if (!isAuth) {
               val mperson0 = MNode(
                 common = MNodeCommon(
                   ntype = MNodeTypes.Person,
@@ -327,7 +317,7 @@ class MarketLkAdn @Inject() (
             }
             // Для обновления полей MMart требуется доступ к personId. Дожидаемся сохранения юзера...
             newPersonIdOptFut flatMap { personIdOpt =>
-              val personId = (personIdOpt orElse request.pwOpt.map(_.personId)).get
+              val personId = (personIdOpt orElse request.user.personIdOpt).get
               val nodeOwnedByPersonId = {
                 mnode.edges
                   .withPredicateIter( MPredicates.OwnedBy )
@@ -360,26 +350,26 @@ class MarketLkAdn @Inject() (
 
 
   /** Рендер страницы редактирования профиля пользователя в рамках ЛК узла. */
-  def userProfileEdit(adnId: String, r: Option[String]) = IsAdnNodeAdminGet(adnId).apply { implicit request =>
-    Ok {
-      userProfileEditTpl(
-        mnode = request.adnNode,
-        pf    = ChangePw.changePasswordFormM,
+  def userProfileEdit(adnId: String, r: Option[String]) = IsAdnNodeAdminGet(adnId, U.Lk).async { implicit request =>
+    _userProfileEdit(ChangePw.changePasswordFormM, r, Ok)
+  }
+
+  private def _userProfileEdit(form: Form[(String, String)], r: Option[String], rs: Status)
+                              (implicit request: INodeReq[_]): Future[Result] = {
+    request.user.lkCtxData.map { implicit ctxData =>
+      val html = userProfileEditTpl(
+        mnode = request.mnode,
+        pf    = form,
         r     = r
       )
+      rs(html)
     }
   }
 
   /** Сабмит формы смены пароля. */
   def changePasswordSubmit(adnId: String, r: Option[String]) = IsAdnNodeAdminPost(adnId).async { implicit request =>
     _changePasswordSubmit(r) { formWithErrors =>
-      NotAcceptable {
-        userProfileEditTpl(
-          mnode = request.adnNode,
-          pf    = formWithErrors,
-          r     = r
-        )
-      }
+      _userProfileEdit(formWithErrors, r, NotAcceptable)
     }
   }
 
@@ -410,7 +400,7 @@ class MarketLkAdn @Inject() (
       {nodeName =>
         val nodeFut = nodesUtil.createUserNode(
           name      = nodeName,
-          personId  = request.pwOpt.get.personId
+          personId  = request.user.personIdOpt.get
         )
         // Рендер HTTP-ответа.
         val respFut = nodeFut map { adnNode =>

@@ -5,15 +5,15 @@ import io.suggest.model.n2.extra.{MNodeExtras, MSlInfo, MAdnExtra}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBusinessInfo, MAddress, MBasicMeta}
 import models._
+import models.mctx.Context
+import models.req.IReqHdr
 import models.usr.EmailActivation
 import play.api.data._, Forms._
 import play.api.i18n.Messages
-import play.api.mvc.AnyContent
 import util.FormUtil._
 import io.suggest.ym.model.common.AdnMemberShowLevels.LvlMap_t
 import io.suggest.ym.model.common.AdnMemberShowLevels
 import util.PlayMacroLogsDyn
-import util.acl.AbstractRequestWithPwOpt
 import util.mail.IMailerWrapperDi
 
 /**
@@ -251,7 +251,7 @@ class SysMarketUtil extends PlayMacroLogsDyn {
 trait SmSendEmailInvite extends SioController with IMailerWrapperDi {
 
   /** Выслать письмо активации. */
-  def sendEmailInvite(ea: EmailActivation, adnNode: MNode)(implicit request: AbstractRequestWithPwOpt[AnyContent]) {
+  def sendEmailInvite(ea: EmailActivation, adnNode: MNode)(implicit request: IReqHdr) {
     // Собираем и отправляем письмо адресату
     val msg = mailer.instance
     val ctx = implicitly[Context]

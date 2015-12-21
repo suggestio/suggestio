@@ -1,11 +1,9 @@
 package util.acl
 
 import models.mproj.IMCommonDi
-import models.req.SioReqMd
-import models.MNode
-import play.api.mvc.{Result, Request, ActionBuilder}
+import models.req.{MUserInit, MNodeOptReq}
+import play.api.mvc.{ActionBuilder, Request, Result}
 import util.PlayMacroLogsDyn
-import util.acl.PersonWrapper.PwOpt_t
 
 import scala.concurrent.Future
 
@@ -28,37 +26,32 @@ trait IsAdnNodeAdminOptOrAuth
 
   /** Абстрактная логика работы action-builder'ов, занимающихся вышеописанной проверкой. */
   trait IsAdnNodeAdminOptOrAuthBase
-    extends ActionBuilder[RequestWithNodeOpt]
+    extends ActionBuilder[MNodeOptReq]
     with PlayMacroLogsDyn
     with OnUnauthUtil
+    with InitUserCmds
   {
 
     /** id узла, если есть. */
     def adnIdOpt: Option[String]
 
-    override def invokeBlock[A](request: Request[A], block: (RequestWithNodeOpt[A]) => Future[Result]): Future[Result] = {
-      val pwOpt = PersonWrapper.getFromRequest(request)
-      pwOpt match {
-        case Some(pw) =>
-          mNodeCache.maybeGetByIdCached(adnIdOpt).flatMap { mnodeOpt =>
-            val mnodeOpt1 = mnodeOpt.filter { mnode =>
-              IsAdnNodeAdmin.isAdnNodeAdminCheck(mnode, pwOpt)
-            }
-            val srmFut: Future[SioReqMd] = mnodeOpt1 match {
-              case Some(mnode) =>
-                SioReqMd.fromPwOptAdn(pwOpt, mnode.id.get)
-              case other =>
-                LOGGER.trace(s"Node[$adnIdOpt] missing or not accessable by user[${pw.personId}]")
-                SioReqMd.fromPwOpt(pwOpt)
-            }
-            srmFut flatMap { srm =>
-              val req1 = RequestWithNodeOpt(mnodeOpt1, srm, pwOpt, request)
-              block(req1)
-            }
-          }
+    override def invokeBlock[A](request: Request[A], block: (MNodeOptReq[A]) => Future[Result]): Future[Result] = {
+      val personIdOpt = sessionUtil.getPersonId(request)
 
-        case None =>
-          onUnauth(request)
+      personIdOpt.fold (onUnauth(request)) { personId =>
+        val mnodeOptFut = mNodeCache.maybeGetByIdCached(adnIdOpt)
+        val user = mSioUsers(personIdOpt)
+
+        // Запустить в фоне получение кошелька юзера, т.к. экшены все относятся к этому кошельку
+        maybeInitUser(user)
+
+        mnodeOptFut.flatMap { mnodeOpt =>
+          val mnodeOpt1 = mnodeOpt.filter { mnode =>
+            IsAdnNodeAdmin.isAdnNodeAdminCheck(mnode, user)
+          }
+          val req1 = MNodeOptReq(mnodeOpt1, request, user)
+          block(req1)
+        }
       }
     }
 
@@ -66,20 +59,14 @@ trait IsAdnNodeAdminOptOrAuth
 
   sealed abstract class IsAdnNodeAdminOptOrAuthBase2
     extends IsAdnNodeAdminOptOrAuthBase
-    with ExpireSession[RequestWithNodeOpt]
+    with ExpireSession[MNodeOptReq]
 
-  case class IsAdnNodeAdminOptOrAuthGet(override val adnIdOpt: Option[String])
+
+  case class IsAdnNodeAdminOptOrAuthGet(
+    override val adnIdOpt   : Option[String],
+    override val userInits  : MUserInit*
+  )
     extends IsAdnNodeAdminOptOrAuthBase2
-    with CsrfGet[RequestWithNodeOpt]
+    with CsrfGet[MNodeOptReq]
 
 }
-
-
-case class RequestWithNodeOpt[A](
-  mnodeOpt : Option[MNode],
-  sioReqMd : SioReqMd,
-  pwOpt    : PwOpt_t,
-  request  : Request[A]
-)
-  extends AbstractRequestWithPwOpt(request)
-

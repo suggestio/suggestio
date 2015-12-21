@@ -7,7 +7,9 @@ import models.adv.ext.act.{ActorPathQs, OAuthVerifier}
 import models.adv.ext.{MAdvRunnerTplArgs, MForAdTplArgs}
 import models.adv.search.etg.ExtTargetSearchArgs
 import models.jsm.init.MTargets
-import models.mproj.MCommonDi
+import models.mctx.Context
+import models.mproj.ICommonDi
+import models.req.IAdProdReq
 import org.elasticsearch.search.sort.SortOrder
 import play.api.data.Forms._
 import play.api.data._
@@ -34,11 +36,11 @@ import scala.concurrent.Future
 class LkAdvExt @Inject() (
   override val canAdvAdUtil       : CanAdvertiseAdUtil,
   extAdvWsActor                   : ExtAdvWsActor_,
-  override val mCommonDi          : MCommonDi
+  override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
-  with CanAccessExtTargetBaseCtl
+  with CanAccessExtTarget
   with CanAdvertiseAd
   with CanSubmitExtTargetForNode
   with IsAdnNodeAdmin
@@ -89,8 +91,8 @@ class LkAdvExt @Inject() (
     _forAdRender(adId, advsFormM, Ok)
   }
 
-  private def _forAdRender(adId: String, form: ExtAdvForm, respStatus: Status)
-                          (implicit request: RequestWithAdAndProducer[_]): Future[Result] = {
+  private def _forAdRender(adId: String, form: ExtAdvForm, rs: Status)
+                          (implicit request: IAdProdReq[_]): Future[Result] = {
     val targetsFut: Future[Seq[MExtTarget]] = {
       val args = ExtTargetSearchArgs(
         adnId       = request.producer.id,
@@ -99,7 +101,9 @@ class LkAdvExt @Inject() (
       )
       MExtTarget.dynSearch(args)
     }
+
     for {
+      ctxData0      <- request.user.lkCtxData
       targets       <- targetsFut
     } yield {
       val args = MForAdTplArgs(
@@ -109,10 +113,10 @@ class LkAdvExt @Inject() (
         advForm     = form,
         oneTgForm   = ExtUtil.formForTarget
       )
-      respStatus {
-        implicit val jsInitTgs = Seq(MTargets.LkAdvExtForm)
-        forAdTpl(args)
-      }
+      implicit val ctxData = ctxData0.copy(
+        jsiTgs = Seq(MTargets.LkAdvExtForm)
+      )
+      rs( forAdTpl(args) )
     }
   }
 
@@ -150,21 +154,25 @@ class LkAdvExt @Inject() (
    *                  Если не заданы, то будет редирект на форму размещения.
    * @return Страница с системой размещения.
    */
-  def runner(adId: String, wsArgsOpt: Option[MExtAdvQs]) = CanAdvertiseAdPost(adId) { implicit request =>
+  def runner(adId: String, wsArgsOpt: Option[MExtAdvQs]) = CanAdvertiseAdPost(adId, U.Lk).async { implicit request =>
     wsArgsOpt match {
       case Some(wsArgs) =>
-        implicit val jsInitTargets = Seq(MTargets.AdvExtRunner)
-        implicit val ctx = implicitly[Context]
-        val wsArgs2 = wsArgs.copy(
-          wsId = ctx.ctxIdStr,
-          adId = adId
-        )
-        val rargs = MAdvRunnerTplArgs(
-          wsCallArgs  = wsArgs2,
-          mad         = request.mad,
-          mnode       = request.producer
-        )
-        Ok( advRunnerTpl(rargs)(ctx) )
+        request.user.lkCtxData.map { ctxData0 =>
+          implicit val ctxData = ctxData0.copy(
+            jsiTgs = Seq(MTargets.AdvExtRunner)
+          )
+          implicit val ctx = implicitly[Context]
+          val wsArgs2 = wsArgs.copy(
+            wsId = ctx.ctxIdStr,
+            adId = adId
+          )
+          val rargs = MAdvRunnerTplArgs(
+            wsCallArgs  = wsArgs2,
+            mad         = request.mad,
+            mnode       = request.producer
+          )
+          Ok( advRunnerTpl(rargs)(ctx) )
+        }
 
       // Аргументы не заданы. Такое бывает, когда юзер обратился к runner'у, но изменился ключ сервера или истекла сессия.
       case None =>
@@ -180,6 +188,7 @@ class LkAdvExt @Inject() (
    * @return 101 Upgrade.
    */
   def wsRun(qsArgs: MExtAdvQs) = WebSocket.tryAcceptWithActor[JsValue, JsValue] { implicit requestHeader =>
+
     // Сначала нужно проверить права доступа всякие.
     val fut0 = if (qsArgs.bestBeforeSec <= BestBefore.nowSec) {
       Future successful None
@@ -187,6 +196,7 @@ class LkAdvExt @Inject() (
       val res = RequestTimeout("Request expired. Return back, refresh page and try again.")
       Future failed ExceptionWithResult(res)
     }
+
     // Если купон валиден, то сразу запускаем в фоне чтение данных по целям размещения...
     val targetsFut: Future[ActorTargets_t] = fut0.flatMap { _ =>
       val ids = qsArgs.targets.iterator.map(_.targetId)
@@ -205,6 +215,7 @@ class LkAdvExt @Inject() (
           .toList
       }
     }
+
     // Одновременно запускаем сбор инфы по карточке и проверку прав на неё.
     fut0.flatMap { _ =>
       val madFut = MNode.getById(qsArgs.adId)
@@ -212,21 +223,25 @@ class LkAdvExt @Inject() (
         .recoverWith { case ex: NoSuchElementException =>
           Future failed ExceptionWithResult(NotFound("Ad not found: " + qsArgs.adId))
         }
-      val pwOpt = PersonWrapper.getFromRequest
+      val personIdOpt = sessionUtil.getPersonId(requestHeader)
+      val user = mSioUsers(personIdOpt)
       madFut
         .flatMap { mad =>
           val req1 = RequestHeaderAsRequest(requestHeader)
-          canAdvAdUtil.maybeAllowed(pwOpt, mad, req1)
+          canAdvAdUtil.maybeAllowed(user, mad, req1)
         }
         .map(_.get)
         .recoverWith { case ex: NoSuchElementException =>
-           Future failed ExceptionWithResult(Forbidden("Login session expired. Return back and press F5."))
+          val ex = ExceptionWithResult(Forbidden("Login session expired. Return back and press F5."))
+          Future.failed(ex)
         }
+
     }.map { implicit req1 =>
       // Всё ок, запускаем актора, который будет вести переговоры с этим websocket'ом.
       val eaArgs = MExtWsActorArgs(qsArgs, req1, targetsFut)
       val hp: HandlerProps = extAdvWsActor.props(_, eaArgs)
       Right(hp)
+
     }.recover {
       case ExceptionWithResult(res) =>
         Left(res)

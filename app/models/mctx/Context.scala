@@ -1,29 +1,26 @@
-package models
+package models.mctx
 
 import java.util.UUID
 
-import com.google.inject.{Singleton, Inject}
+import _root_.models.im.DevScreen
 import com.google.inject.assistedinject.Assisted
+import com.google.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.util.UuidUtil
-import _root_.models.im.DevScreen
-import _root_.models.jsm.init.MTarget
-import _root_.models.req.{SioReqMdWrapper, ISioReqMd}
 import models.mproj.IMCommonDi
+import models.req.ExtReqHdr.{firstForwarded, lastForwarded}
+import models.req.IReqHdr
 import org.joda.time.DateTime
-import play.api.i18n.Messages
-import play.api.mvc.RequestHeader
-import play.api.Play.{current, configuration, isDev}
-import util.acl._, PersonWrapper.PwOpt_t
+import play.api.Play.{configuration, current, isDev}
 import play.api.http.HeaderNames._
+import play.api.i18n.Messages
+import play.api.routing.Router.Tags._
 import util.cdn.CdnUtil
 import util.img.{DynImgUtil, GalleryUtil}
 import util.jsa.init.ITargets
 import util.n2u.N2NodesUtil
-import scala.util.Random
-import models.req.ExtReqHdr.{firstForwarded, lastForwarded}
-import play.api.routing.Router.Tags._
 
+import scala.util.Random
 import scala.util.matching.Regex
 
 /**
@@ -35,6 +32,7 @@ import scala.util.matching.Regex
  * метода в implicit-списке параметров.
  */
 
+// TODO Заинжектить инжектить этот объект в ContextApi.
 object Context extends MyHostsT {
 
   val mobileUaPattern = "(iPhone|webOS|iPod|Android|BlackBerry|mobile|SAMSUNG|IEMobile|OperaMobi)".r.unanchored
@@ -103,10 +101,16 @@ trait ContextT { this: ITargets with IMCommonDi =>
    * @return Экземпляр [[Context]].
    */
   implicit final def getContext2(implicit
-                                 request: RichRequestHeader,
-                                 lang: Messages,
-                                 extraJsInitTargets: Seq[MTarget] = Nil ): Context = {
-    mCommonDi.contextFactory.create(this)
+                                 request  : IReqHdr,
+                                 messages : Messages,
+                                 ctxData  : CtxData = CtxData.empty): Context = {
+    // Получить js init targets с уровня контроллера, объеденить с остальными, залить их в data.
+    val ctxData1 = ctxData.prependJsiTgs(
+      jsiTgs(request),
+      request.user.jsiTgs
+    )
+    // Собрать контекст с обновлёнными данными в ctxData.
+    mCommonDi.contextFactory.create(request, messages, ctxData1)
   }
 }
 
@@ -114,19 +118,21 @@ trait ContextT { this: ITargets with IMCommonDi =>
 /** Базовый трейт контекста. Используется всеми шаблонами и везде. Переименовывать и менять нельзя.
   * Интерфейс можно только расширять и аккуратно рефакторить, иначе хана.
   */
-trait Context extends MyHostsT with ISioReqMd {
+trait Context extends MyHostsT {
 
   /** Доступ к DI-инжектируемым сущностям.
     * Например, к утили какой-нить или DI-моделям и прочей утвари. */
   val api: ContextApi
 
+  def withData(data1: CtxData): Context
+
   // abstract val вместо def'ов в качестве возможной оптимизации обращений к ним со стороны scalac и jvm. Всегда можно вернуть def.
 
   /** Данные текущего реквеста. */
-  implicit val request: RequestHeader
+  implicit val request: IReqHdr
 
-  /** Данные о текущем юзере. */
-  def pwOpt: PwOpt_t
+  /** Укороченный доступ к пользовательским данным sio-реквеста. */
+  def user = request.user
 
   /** Текущий язык запроса. Определеляется в контроллерах на основе запроса. */
   implicit val messages: Messages
@@ -154,7 +160,7 @@ trait Context extends MyHostsT with ISioReqMd {
       .get(X_FORWARDED_HOST)        // TODO Желательно ещё отрабатывать нестандартные порты.
       .map(_.trim)
       .filter(!_.isEmpty)
-      .map { raw => 
+      .map { raw =>
         val h = lastForwarded(raw)
         // Если входящий запрос на backend, то нужно отобразить его на www.
         Context.BACKEND_HOST_RE.replaceFirstIn(h, "www.")
@@ -176,9 +182,6 @@ trait Context extends MyHostsT with ISioReqMd {
 
   implicit lazy val now : DateTime = DateTime.now
 
-  def isAuth: Boolean = pwOpt.isDefined
-  def isSuperuser: Boolean = PersonWrapper.isSuperuser(pwOpt)
-
   def userAgent: Option[String] = request.headers.get(USER_AGENT)
 
   def uaMatches(re: Regex): Boolean = {
@@ -191,7 +194,6 @@ trait Context extends MyHostsT with ISioReqMd {
   lazy val isIpad: Boolean = uaMatches(Context.isIpadRe)
   lazy val isIphone: Boolean = uaMatches(Context.isIphoneRe)
 
-  lazy val canAddSites: Boolean = current.configuration.getBoolean("can_add_sites") getOrElse true
   lazy val isDebug: Boolean     = request.getQueryString("debug").isDefined
 
   lazy val timestamp: Long = now.toInstant.getMillis
@@ -271,13 +273,8 @@ trait Context extends MyHostsT with ISioReqMd {
    */
   def action: Option[String] = request.tags.get(RouteActionMethod)
 
-  def jsInitTargetsExtra: Seq[MTarget]
-
-  /** Генератор списка js-init-целей. */
-  def jsInitTargeter: ITargets
-
-  /** Список js-init-целей. */
-  def jsInitTargets: Seq[MTarget] = jsInitTargeter.getJsInitTargets(this)
+  /** Кастомные данные в контексте. */
+  def data: CtxData
 
 }
 
@@ -293,15 +290,14 @@ class ContextApi @Inject() (
 )
 
 
-/** Guice-assisted factory для сборки контекстов с использованием DI.
+/** Guice factory для сборки контекстов с использованием DI.
   * У шаблонов бывает необходимость залезть в util/models к статическим вещам. */
 trait Context2Factory {
   /**
    * Сборка контекста, код метода реализуется автоматом через Guice Assisted inject.
-   * @see [[util.di.GuiceDiModule]] для тюнинга assisted-линковки контекста.
+   * @see [[GuiceDiModule]] для тюнинга assisted-линковки контекста.
    */
-  def create(jsInitTargeter: ITargets)
-            (implicit request: RichRequestHeader, messages: Messages, jsInitTargetsExtra: Seq[MTarget]): Context2
+  def create(implicit request: IReqHdr, messages: Messages, ctxData: CtxData): Context2
 }
 
 
@@ -309,16 +305,15 @@ trait Context2Factory {
 
 /** Основная реализация контекста, с которой работают sio-контроллеры автоматически. */
 case class Context2 @Inject() (
-  override val api                                      : ContextApi,
-  @Assisted override val jsInitTargeter                 : ITargets,
-  @Assisted implicit override val request               : RichRequestHeader,
-  @Assisted implicit override val messages              : Messages,
-  @Assisted implicit override val jsInitTargetsExtra    : Seq[MTarget]
+                                override val api                          : ContextApi,
+                                @Assisted override val data               : CtxData,
+                                @Assisted implicit override val request   : IReqHdr,
+                                @Assisted implicit override val messages  : Messages
 )
   extends Context
-  with SioReqMdWrapper
 {
-
-  override def pwOpt    = request.pwOpt
-  override def sioReqMd = request.sioReqMd
+  override def withData(data1: CtxData): Context = {
+    copy(data = data1)
+  }
 }
+

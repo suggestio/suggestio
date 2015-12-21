@@ -5,6 +5,7 @@ import java.util.NoSuchElementException
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.msc._
+import models.req.IReq
 import play.twirl.api.Html
 import util.di.{IScUtil, IScNlUtil, IScStatUtil}
 import util.acl._
@@ -41,7 +42,7 @@ trait ScIndexGeo
    * либо geoShowcase на дефолтовых параметрах.
    * @param args Аргументы.
    */
-  def geoShowcase(args: ScReqArgs) = MaybeAuth.async { implicit request =>
+  def geoShowcase(args: ScReqArgs) = MaybeAuth().async { implicit request =>
     // Собираем хелпер, который займётся выстраиванием результата работы.
     val logic = new GeoScIndexLogic {
       override def _reqArgs = args
@@ -92,7 +93,7 @@ trait ScIndexGeo
     type NfHelper_t <: ScIndexNodeHelper
 
     def _reqArgs: ScReqArgs
-    implicit def _request: AbstractRequestWithPwOpt[_]
+    implicit def _request: IReq[_]
 
     def gsiOptFut = _reqArgs.geo.geoSearchInfoOpt
 

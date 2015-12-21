@@ -27,9 +27,7 @@
           <a class="siom-logo-def" href="@routes.SysMarket.sysIndex()">
             <img src='@routes.Assets.versioned("images/market/sio-logo.png")' alt="logo" width="65" height="47"/>
           </a>
-          @ctx.usernameOpt.map { username =>
-            <a class="logout-btn" href="@CSRF(routes.Ident.logout())"></a>
-          }
+          <a class="logout-btn" href="@CSRF(routes.Ident.logout())"></a>
         </div>
 
       </div>

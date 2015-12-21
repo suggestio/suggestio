@@ -4,9 +4,10 @@ import models.blk.{OneAdQsArgs, OneAdWideQsArgs}
 import models.im.OutImgFmts
 import models.msc.OneAdRenderVariant
 import models.msys.MShowOneAdFormTplArgs
+import models.req.IAdReq
 import play.api.data.{Form, Mapping}
 import play.api.mvc.Result
-import util.acl.{IsSuperuserMad, RequestWithAd}
+import util.acl.IsSuperuserMad
 import util.n2u.IN2NodesUtilDi
 import util.{FormUtil, PlayMacroLogsI}
 import views.html.sys1.market.ad.one._
@@ -87,7 +88,7 @@ trait SysAdRender
   }
 
   private def _showOneAdFormRender(qf: Form[OneAdQsArgs], rvar: OneAdRenderVariant, rs: Status)
-                                  (implicit request: RequestWithAd[_]): Future[Result] = {
+                                  (implicit request: IAdReq[_]): Future[Result] = {
     val producerIdOpt = n2NodesUtil.madProducerId(request.mad)
     val nodeOptFut = mNodeCache.maybeGetByIdCached( producerIdOpt )
     for {

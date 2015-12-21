@@ -1,13 +1,12 @@
 package util.acl
 
 import controllers.SioController
-import models.req.SioReqMd
+import models.req.{IReq, MReq, MRecoverPwReq}
 import models.usr.{EmailActivation, EmailPwIdent}
 import play.api.mvc._
 import util.di.IIdentUtil
 import views.html.ident.recover._
 import scala.concurrent.Future
-import util.acl.PersonWrapper.PwOpt_t
 
 /**
  * Suggest.io
@@ -20,7 +19,7 @@ import util.acl.PersonWrapper.PwOpt_t
  * Всё сделано в виде аддона для контроллера, т.к. DI-зависимость так проще всего разрулить.
  */
 
-trait CanRecoverPwCtl
+trait CanRecoverPw
   extends SioController
   with BruteForceProtectBase
   with IIdentUtil
@@ -30,28 +29,29 @@ trait CanRecoverPwCtl
   import mCommonDi._
 
   /** Трейт с базовой логикой action-builder'а CanRecoverPw. */
-  trait CanRecoverPwBase extends ActionBuilder[RecoverPwRequest] {
+  trait CanRecoverPwBase extends ActionBuilder[MRecoverPwReq] {
 
     def eActId: String
 
-    protected def keyNotFound(implicit request: RequestHeader): Future[Result] = {
-      RichRequestHeader(request) map { implicit rh =>
-        NotFound( failedColTpl() )
-      }
+    protected def keyNotFound(implicit req: IReq[_]): Future[Result] = {
+      NotFound( failedColTpl() )
     }
 
-    override def invokeBlock[A](request: Request[A], block: (RecoverPwRequest[A]) => Future[Result]): Future[Result] = {
+    override def invokeBlock[A](request: Request[A], block: (MRecoverPwReq[A]) => Future[Result]): Future[Result] = {
       lazy val logPrefix = s"CanRecoverPw($eActId): "
-      bruteForceProtectedNoimpl( new SioWrappedRequest(request) ) {
-        val pwOpt = PersonWrapper.getFromRequest(request)
+
+      val personIdOpt = sessionUtil.getPersonId(request)
+      val user = mSioUsers(personIdOpt)
+
+      val wrappedReq = MReq(request, user)
+
+      bruteForceProtectedNoimpl(wrappedReq) {
         val eaOptFut = EmailActivation.getById(eActId)
-        val srmFut = SioReqMd.fromPwOpt(pwOpt)
         def runF(eAct: EmailActivation, epw: EmailPwIdent): Future[Result] = {
-          srmFut flatMap { srm =>
-            val req1 = RecoverPwRequest(request, pwOpt, epw, eAct, srm)
-            block(req1)
-          }
+          val req1 = MRecoverPwReq(epw, eAct, request, user)
+          block(req1)
         }
+        def _reqErr = MReq(request, user)
         eaOptFut.flatMap {
           // Юзер обращается по корректной активационной записи.
           case Some(eAct) =>
@@ -64,20 +64,21 @@ trait CanRecoverPwCtl
               // should never occur: Почему-то нет парольной записи для активатора.
               // Такое возможно, если юзер взял ключ инвайта в маркет и вставил его в качестве ключа восстановления пароля.
               case None =>
-                LOGGER.error(s"${logPrefix}eAct exists, but emailPw is NOT! Hacker? pwOpt = $pwOpt ;; eAct = $eAct")
-                keyNotFound(request)
+                LOGGER.error(s"${logPrefix}eAct exists, but emailPw is NOT! Hacker? pwOpt = $personIdOpt ;; eAct = $eAct")
+                keyNotFound(_reqErr)
             }
 
           // Суперюзер (верстальщик например) должен иметь доступ без шаманства.
-          case result if PersonWrapper.isSuperuser(pwOpt) =>
+          case result if user.isSuper =>
+            val personId = personIdOpt.get
             LOGGER.trace("Superuser mocking activation...")
-            val epwFut = EmailPwIdent.findByPersonId(pwOpt.get.personId)
+            val epwFut = EmailPwIdent.findByPersonId(personId)
               .map(_.head)
               .recover {
                 // should never occur
                 case ex: NoSuchElementException =>
-                  LOGGER.warn("Oops, superuser access for unknown epw! " + pwOpt + " Mocking...")
-                  EmailPwIdent("mock@suggest.io", personId = pwOpt.get.personId, pwHash = "", isVerified = true)
+                  LOGGER.warn("Oops, superuser access for unknown epw! " + personId + " Mocking...")
+                  EmailPwIdent("mock@suggest.io", personId = personId, pwHash = "", isVerified = true)
               }
             val ea = result getOrElse {
               LOGGER.debug("Superuser requested form with invalid/inexisting activation: " + result)
@@ -90,14 +91,14 @@ trait CanRecoverPwCtl
 
           // Остальные случаи -- мимо кассы
           case _ =>
-            pwOpt match {
+            personIdOpt match {
               // Вероятно, юзер повторно перешел по ссылке из письма.
-              case Some(pw) =>
-                identUtil.redirectUserSomewhere(pw.personId)
+              case Some(personId) =>
+                identUtil.redirectUserSomewhere(personId)
               // Юзер неизвестен и ключ неизвестен. Возможно, перебор ключей какой-то?
               case None =>
-                LOGGER.warn(logPrefix + "Unknown eAct key. pwOpt = " + pwOpt)
-                keyNotFound(request)
+                LOGGER.warn(logPrefix + "Unknown eAct key. pwOpt = " + personIdOpt)
+                keyNotFound(_reqErr)
             }
         }
       }
@@ -107,26 +108,13 @@ trait CanRecoverPwCtl
   /** Реализация [[CanRecoverPwBase]] с выставлением CSRF-токена. */
   case class CanRecoverPwGet(eActId: String)
     extends CanRecoverPwBase
-    with CsrfGet[RecoverPwRequest]
-    with ExpireSession[RecoverPwRequest]
+    with CsrfGet[MRecoverPwReq]
+    with ExpireSession[MRecoverPwReq]
 
   /** Реализация [[CanRecoverPwBase]] с проверкой CSRF-токена. */
   case class CanRecoverPwPost(eActId: String)
     extends CanRecoverPwBase
-    with CsrfPost[RecoverPwRequest]
-    with ExpireSession[RecoverPwRequest]
+    with CsrfPost[MRecoverPwReq]
+    with ExpireSession[MRecoverPwReq]
 
 }
-
-
-/** Реквест активации. */
-case class RecoverPwRequest[A](
-  request   : Request[A],
-  pwOpt     : PwOpt_t,
-  epw       : EmailPwIdent,
-  eAct      : EmailActivation,
-  sioReqMd  : SioReqMd
-)
-  extends AbstractRequestWithPwOpt(request)
-
-

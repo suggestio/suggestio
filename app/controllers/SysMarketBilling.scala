@@ -5,8 +5,9 @@ import io.suggest.ym.parsers.Price
 import models._
 import models.mbill.MContract.LegalContractId
 import models.mbill._
-import models.mproj.MCommonDi
+import models.mproj.ICommonDi
 import models.msys.MSysAdnNodeBillingArgs
+import models.req.IReq
 import org.joda.time.DateTime
 import play.api.data.Forms._
 import play.api.data._
@@ -28,7 +29,7 @@ import scala.concurrent.Future
  */
 class SysMarketBilling @Inject() (
   billing                         : Billing,
-  override val mCommonDi          : MCommonDi
+  override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
@@ -90,7 +91,6 @@ class SysMarketBilling @Inject() (
         contracts       = contracts,
         txns            = MTxn.findForContracts(contractIds),
         feeTariffsMap   = MTariffFee.getAll.groupBy(mbtsGrouper),
-        statTariffsMap  = MTariffStat.getAll.groupBy(mbtsGrouper),
         dailyMmpsMap    = MTariffDaily.findByContractIds(contractIds).groupBy(mbtsGrouper),
         sinkComissionMap = contractIds.flatMap(MSinkComission.findByContractId(_)).groupBy(_.contractId)
       )
@@ -110,7 +110,7 @@ class SysMarketBilling @Inject() (
       isActive      = true
     )
     val formM = contractFormM fill mbcStub
-    Ok( createContractFormTpl(request.adnNode, formM) )
+    Ok( createContractFormTpl(request.mnode, formM) )
   }
 
   /** Сабмит формы создания нового контакта (договора). */
@@ -119,7 +119,7 @@ class SysMarketBilling @Inject() (
       contractFormM.bindFromRequest().fold(
         {formWithErrors =>
           debug("createContractFormSubmit(): Form bind failed: " + formatFormErrors(formWithErrors))
-          NotAcceptable(createContractFormTpl(request.adnNode, formWithErrors))
+          NotAcceptable(createContractFormTpl(request.mnode, formWithErrors))
         },
         {mbcRaw =>
           val mbc = mbcRaw.copy(
@@ -147,8 +147,8 @@ class SysMarketBilling @Inject() (
 
   /** Запрос страницы редактирования контракта. */
   def editContractForm(contractId: Int) = IsSuperuserContractNodeGet(contractId) { implicit request =>
-    val formFilled = contractFormM.fill( request.contract )
-    Ok( editContractFormTpl(request.adnNode, request.contract, formFilled) )
+    val formFilled = contractFormM.fill( request.mcontract )
+    Ok( editContractFormTpl(request.mnode, request.mcontract, formFilled) )
   }
 
   /** Самбит формы редактирования договора. */
@@ -156,10 +156,10 @@ class SysMarketBilling @Inject() (
     contractFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug("editContractFormSubmit(): Form bind failed: " + formatFormErrors(formWithErrors))
-        NotAcceptable(editContractFormTpl(request.adnNode, request.contract, formWithErrors))
+        NotAcceptable(editContractFormTpl(request.mnode, request.mcontract, formWithErrors))
       },
       {mbc1 =>
-        val mbc3 = request.contract.copy(
+        val mbc3 = request.mcontract.copy(
           contractDate = mbc1.contractDate,
           hiddenInfo   = mbc1.hiddenInfo,
           isActive     = mbc1.isActive,
@@ -360,7 +360,7 @@ class SysMarketBilling @Inject() (
     val currentMscs = db.withConnection { implicit c =>
       MSinkComission.findByContractId(contractId)
     }
-    val currSinks = request.adnNode
+    val currSinks = request.mnode
       .extras
       .adn
       .fold(Set.empty[AdnSink])(_.sinks)
@@ -371,8 +371,8 @@ class SysMarketBilling @Inject() (
       sink = sink,
       sioComission = sink.sioComissionDflt
     )
-    val form = sinkComFormM fill mscStub
-    Ok(createSinkComTpl(form, request.contract, request.adnNode))
+    val form = sinkComFormM.fill(mscStub)
+    Ok(createSinkComTpl(form, request.mcontract, request.mnode))
   }
 
   /** Сабмит формы создания тарифа sink comission. */
@@ -405,7 +405,8 @@ class SysMarketBilling @Inject() (
     _editSinkCom(scId)
   }
 
-  private def _editSinkCom(scId: Int, formOpt: Option[Form[MSinkComission]] = None)(implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Result] = {
+  private def _editSinkCom(scId: Int, formOpt: Option[Form[MSinkComission]] = None)
+                          (implicit request: IReq[AnyContent]): Future[Result] = {
     val syncResult = db.withConnection { implicit c =>
       val msc = MSinkComission.getById(scId).get
       val mbc = MContract.getById(msc.contractId).get

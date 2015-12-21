@@ -1,7 +1,6 @@
 package controllers.cstatic
 
-import controllers.SioController
-import models.Context
+import models.mctx.Context
 import play.api.Play
 import play.api.libs.iteratee.Enumerator
 import util.acl.IgnoreAuth
@@ -14,7 +13,7 @@ import views.html.static.sitemap._
  * Created: 17.12.15 11:45
  * Description: Трейт для контроллера для поддержки экшена с раздачей sitemap'ов.
  */
-trait SiteMapsXml extends SioController {
+trait SiteMapsXml extends IgnoreAuth {
 
   def siteMapUtil: SiteMapUtil
 

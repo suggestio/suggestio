@@ -63,7 +63,7 @@ trait ScRemoteError
    * Реакция на ошибку в showcase (в выдаче). Если слишком много запросов с одного ip, то экшен начнёт тупить.
    * @return NoContent или NotAcceptable.
    */
-  def handleScError = MaybeAuth.async { implicit request =>
+  def handleScError = MaybeAuth().async { implicit request =>
     bruteForceProtected {
       errorFormM.bindFromRequest().fold(
         {formWithErrors =>

@@ -7,17 +7,16 @@ import de.jollyday.util.XMLUtil
 import de.jollyday.{HolidayCalendar, HolidayManager}
 import models._
 import models.mbill.{MContract, MTariffDaily}
-import models.mproj.MCommonDi
-import models.req.SioReqMd
+import models.mproj.ICommonDi
+import models.req.ICalendarReq
 import org.apache.commons.io.IOUtils
 import play.api.data.Forms._
 import play.api.data._
-import play.api.mvc.{Result, _}
+import play.api.mvc._
 import play.twirl.api.Html
 import util.FormUtil._
-import util.acl.PersonWrapper.PwOpt_t
 import util.acl._
-import util.{FormUtil, PlayMacroLogsImpl}
+import util.PlayMacroLogsImpl
 import views.html.sys1.calendar._
 
 import scala.concurrent.Future
@@ -30,13 +29,16 @@ import scala.concurrent.Future
  * @see [[http://jollyday.sourceforge.net/index.html]]
  */
 class SysCalendar @Inject() (
-  mCalendar                     : MCalendar_,
-  override val mCommonDi        : MCommonDi
+  override val mCalendars     : MCalendars,
+  override val mCommonDi      : ICommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
   with IsSuperuser
+  with IsSuperuserCalendar
+  with CalendarAccessAny
 {
+
   import LOGGER._
   import mCommonDi._
 
@@ -85,7 +87,7 @@ class SysCalendar @Inject() (
     MCalendar(
       name = name,
       data = data,
-      companion = mCalendar
+      companion = mCalendars
     )
   }
   {mcal =>
@@ -96,7 +98,7 @@ class SysCalendar @Inject() (
   /** Отобразить список всех сохранённых календарей. */
   def showCalendars = IsSuperuser.async { implicit request =>
     val createFormM = newCalTplFormM fill HolidayCalendar.RUSSIA
-    mCalendar.getAll(maxResults = 500).map { cals =>
+    mCalendars.getAll(maxResults = 500).map { cals =>
       Ok(listCalsTpl(cals, createFormM))
     }
   }
@@ -106,7 +108,7 @@ class SysCalendar @Inject() (
   def newCalendarFromTemplateSubmit = IsSuperuser.async { implicit request =>
     newCalTplFormM.bindFromRequest().fold(
       {formWithErrors =>
-        val calsFut = mCalendar.getAll(maxResults = 500)
+        val calsFut = mCalendars.getAll(maxResults = 500)
         debug("newCalendarFormTpl(): Form bind failed:\n" + formatFormErrors(formWithErrors))
         calsFut.map { cals =>
           NotAcceptable(listCalsTpl(cals, formWithErrors))
@@ -125,7 +127,7 @@ class SysCalendar @Inject() (
               val stub = MCalendar(
                 name = "",
                 data = data,
-                companion = mCalendar
+                companion = mCalendars
               )
               val newFormBinded = calFormM.fill( stub )
               Ok(createCalFormTpl(newFormBinded))
@@ -159,7 +161,7 @@ class SysCalendar @Inject() (
    * Редактировать календарь.
    * @param calId id календаря.
    */
-  def editCalendar(calId: String) = CanAlterCal(calId).async { implicit request =>
+  def editCalendar(calId: String) = IsSuperuserCalendarGet(calId).async { implicit request =>
     val cf = calFormM fill request.mcal
     editCalendarRespBody(calId, cf)
       .map(Ok(_))
@@ -167,7 +169,7 @@ class SysCalendar @Inject() (
 
   /** Общий код экшенов, рендерящих страницу редактирования. */
   private def editCalendarRespBody(calId: String, cf: Form[MCalendar])
-                                  (implicit request: CalendarRequest[AnyContent]): Future[Html] = {
+                                  (implicit request: ICalendarReq[AnyContent]): Future[Html] = {
     val calMbcs = db.withConnection { implicit c =>
       val calMbmds = MTariffDaily.findForCalId(calId)
       if (calMbmds.isEmpty) {
@@ -188,7 +190,7 @@ class SysCalendar @Inject() (
    * Сабмит формы редактирования календаря.
    * @param calId id календаря.
    */
-  def editCalendarSubmit(calId: String) = CanAlterCal(calId).async { implicit request =>
+  def editCalendarSubmit(calId: String) = IsSuperuserCalendarPost(calId).async { implicit request =>
     calFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"editCalendarSubmit($calId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
@@ -210,50 +212,15 @@ class SysCalendar @Inject() (
   }
 
 
-  /** Раздача xml-контента календаря. Это нужно для передачи календаря в HolidayManager через URL и кеширования в нём.
-    * Проверка прав тут отсутствует.
-    * @param calId id календаря.
-    * @return xml-содержимое календаря текстом.
-    */
-  def getCalendarXml(calId: String) = Action.async { implicit request =>
-    mCalendar.getById(calId) map {
-      case Some(mcal) =>
-        Ok(mcal.data).as("text/xml")
-      case None =>
-        NotFound
-    }
-  }
-
-
-  /** ACL для нужд календаря. */
-  sealed trait CanAlterCalBase extends ActionBuilder[CalendarRequest] {
-    def calId: String
-    override def invokeBlock[A](request: Request[A], block: (CalendarRequest[A]) => Future[Result]): Future[Result] = {
-      val pwOpt = PersonWrapper.getFromRequest(request)
-      if (PersonWrapper.isSuperuser(pwOpt)) {
-        val srmFut = SioReqMd.fromPwOpt(pwOpt)
-        mCalendar.getById(calId) flatMap {
-          case Some(mcal) =>
-            srmFut flatMap { srm =>
-              val req1 = CalendarRequest(mcal, request, pwOpt, srm)
-              block(req1)
-            }
-
-          case None =>
-            NotFound("Calendar not found: " + calId)
-        }
-      } else {
-        IsSuperuser.supOnUnauthFut(request, pwOpt)
-      }
-    }
-  }
-
   /**
-   * Реализация CanAlterCalBase с поддержкой [[util.acl.ExpireSession]].
+   * Раздача xml-контента календаря. Это нужно для передачи календаря в HolidayManager через URL и кеширования в нём.
+   * Проверка прав тут отсутствует.
    * @param calId id календаря.
+   * @return xml-содержимое календаря текстом.
    */
-  sealed case class CanAlterCal(calId: String) extends CanAlterCalBase with ExpireSession[CalendarRequest]
+  def getCalendarXml(calId: String) = CalendarAccessAny(calId) { implicit request =>
+    Ok(request.mcal.data)
+      .as("text/xml")
+  }
 
-  sealed case class CalendarRequest[A](mcal: MCalendar, request: Request[A], pwOpt: PwOpt_t, sioReqMd: SioReqMd)
-    extends AbstractRequestWithPwOpt(request)
 }

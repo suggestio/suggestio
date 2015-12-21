@@ -9,6 +9,7 @@ import util.secure.SessionUtil
 import scala.concurrent.Future
 import play.api.Play.current
 
+@deprecated("Use m.req.ISioUser instead", "2015.dec.18")
 object PersonWrapper {
 
   private val sessionUtil = current.injector.instanceOf[SessionUtil]
@@ -57,6 +58,7 @@ object PersonWrapper {
  * PersonWrapper нужен для ленивого доступа к данным. Часто содержимое MPerson не нужно, поэтому зачем его читать сразу?
  * @param personId id юзера
  */
+@deprecated("Use m.req.ISioUser instead", "2015.dec.18")
 final case class PersonWrapper(personId: String) extends MPersonLinks {
   lazy val personOptFut = MNode.getByIdType(personId, MNodeTypes.Person)
 }

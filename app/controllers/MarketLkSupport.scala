@@ -2,7 +2,8 @@ package controllers
 
 import com.google.inject.Inject
 import models._
-import models.mproj.MCommonDi
+import models.mproj.ICommonDi
+import models.req.{IReqHdr, IReq}
 import models.usr.MPersonIdent
 import play.api.data.Forms._
 import play.api.data._
@@ -27,7 +28,7 @@ class MarketLkSupport @Inject() (
   override val mailer             : IMailerWrapper,
   override val identUtil          : IdentUtil,
   supportUtil                     : SupportUtil,
-  override val mCommonDi          : MCommonDi
+  override val mCommonDi          : ICommonDi
 )
   extends SioController
   with PlayLazyMacroLogsImpl
@@ -63,8 +64,9 @@ class MarketLkSupport @Inject() (
    * Отрендерить форму с запросом помощи с узла.
    * @return 200 Ок и страница с формой.
    */
-  def supportFormNode(adnId: String, r: Option[String]) = IsAdnNodeAdminGet(adnId).async { implicit request =>
-    _supportForm(Some(request.adnNode), r)
+  def supportFormNode(adnId: String, r: Option[String]) = IsAdnNodeAdminGet(adnId, U.Lk).async { implicit request =>
+    val mnodeOpt = Some(request.mnode)
+    _supportForm(mnodeOpt, r)
   }
 
   /**
@@ -76,25 +78,35 @@ class MarketLkSupport @Inject() (
     _supportForm(None, r)
   }
 
-  private def _supportForm(nodeOpt: Option[MNode], r: Option[String])(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+  private def _supportForm(nodeOpt: Option[MNode], r: Option[String])(implicit request: IReq[_]): Future[Result] = {
     // Взять дефолтовое значение email'а по сессии
-    val emailsDfltFut = request.pwOpt.fold [Future[Seq[String]]]
-      { Future successful Nil }
-      { pw => MPersonIdent.findAllEmails(pw.personId) }
-    for {
-      emailsDflt <- emailsDfltFut
-    } yield {
+    val emailsDfltFut = request.user
+      .personIdOpt
+      .fold [Future[Seq[String]]] {
+        Future successful Nil
+      } { personId =>
+        MPersonIdent.findAllEmails(personId)
+      }
+    emailsDfltFut.flatMap { emailsDflt =>
       val emailDflt = emailsDflt.headOption getOrElse ""
       val lsr = MLkSupportRequest(name = None, replyEmail = emailDflt, msg = "")
-      val form = supportFormM fill lsr
-      Ok(supportFormTpl(nodeOpt, form, r))
+      val form = supportFormM.fill(lsr)
+
+      _supportForm2(nodeOpt, form, r, Ok)
     }
   }
 
+  private def _supportForm2(nodeOpt: Option[MNode], form: Form[MLkSupportRequest], r: Option[String], rs: Status)
+                           (implicit request: IReqHdr): Future[Result] = {
+    request.user.lkCtxData.map { implicit ctxData =>
+      rs( supportFormTpl(nodeOpt, form, r) )
+    }
+  }
 
   /** Сабмит формы обращения за помощью по узлу, которым управляем. */
   def supportFormNodeSubmit(adnId: String, r: Option[String]) = IsAdnNodeAdminPost(adnId).async { implicit request =>
-    _supportFormSubmit(Some(request.adnNode), r)
+    val mnodeOpt = Some(request.mnode)
+    _supportFormSubmit(mnodeOpt, r)
   }
 
   /** Сабмит формы обращения за помощью вне узла. */
@@ -102,22 +114,22 @@ class MarketLkSupport @Inject() (
     _supportFormSubmit(None, r)
   }
 
-  private def _supportFormSubmit(nodeOpt: Option[MNode], r: Option[String])(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+  private def _supportFormSubmit(nodeOpt: Option[MNode], r: Option[String])(implicit request: IReq[_]): Future[Result] = {
     val adnIdOpt = nodeOpt.flatMap(_.id)
     lazy val logPrefix = s"supportFormSubmit($adnIdOpt): "
     supportFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(logPrefix + "Failed to bind lk-feedback form:\n" + formatFormErrors(formWithErrors))
-        NotAcceptable(supportFormTpl(nodeOpt, formWithErrors, r))
+        _supportForm2(nodeOpt, formWithErrors, r, NotAcceptable)
       },
       {lsr =>
-        val userEmailsFut = MPersonIdent.findAllEmails(request.pwOpt.get.personId)
+        val personId = request.user.personIdOpt.get
+        val userEmailsFut = MPersonIdent.findAllEmails(personId)
         trace(logPrefix + "Processing from ip=" + request.remoteAddress)
         val msg = mailer.instance
         msg.setReplyTo(lsr.replyEmail)
         msg.setFrom("no-reply@suggest.io")
         msg.setRecipients( supportUtil.FEEDBACK_RCVR_EMAILS : _* )
-        val personId = request.pwOpt.get.personId
         userEmailsFut.map { ues =>
           val username = ues.headOption getOrElse personId
           msg.setSubject("S.io Market: Вопрос от пользователя " + lsr.name.orElse(ues.headOption).getOrElse(""))
@@ -147,7 +159,7 @@ class MarketLkSupport @Inject() (
   }
 
   /** Сабмит формы запроса выставления географии узла. */
-  def askGeo4NodeSubmit(adnId: String, r: Option[String]) = IsAdnNodeAdmin(adnId).async { implicit request =>
+  def askGeo4NodeSubmit(adnId: String, r: Option[String]) = IsAdnNodeAdminPost(adnId).async { implicit request =>
     lazy val logPrefix = s"addNodeGeoSubmit($adnId): "
     geoNodeFormM.bindFromRequest().fold(
       {formWithErrors =>
@@ -155,15 +167,16 @@ class MarketLkSupport @Inject() (
         NotAcceptable
       },
       {text =>
-        val personId = request.pwOpt.get.personId
+        val personId = request.user.personIdOpt.get
         val emailsFut = MPersonIdent.findAllEmails(personId)
         trace(logPrefix + "Processing from ip=" + request.remoteAddress)
         // собираем письмо админам s.io
         val msg = mailer.instance
+        val mnode = request.mnode
         msg.setSubject(
           "sio-market: Запрос геолокации для узла " +
-            request.adnNode.meta.basic.name +
-            request.adnNode.meta.address.town.fold("")(" / " + _)
+            mnode.meta.basic.name +
+            mnode.meta.address.town.fold("")(" / " + _)
         )
         msg.setRecipients( supportUtil.FEEDBACK_RCVR_EMAILS : _* )
         msg.setFrom("no-reply@suggest.io")
@@ -171,7 +184,7 @@ class MarketLkSupport @Inject() (
           val emailOpt = emails.headOption
           if (emailOpt.isDefined)
             msg.setReplyTo(emailOpt.get)
-          msg.setHtml( views.html.lk.support.emailGeoNodeRequestTpl(emails, request.adnNode, text) )
+          msg.setHtml( views.html.lk.support.emailGeoNodeRequestTpl(emails, mnode, text) )
           msg.send()
         } flatMap { _ =>
           // Письмо отправлено админам. Нужно куда-то перенаправить юзера.

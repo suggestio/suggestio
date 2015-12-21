@@ -6,7 +6,7 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.MNode
-import models.mproj.MCommonDi
+import models.mproj.ICommonDi
 import models.usr.{MExtIdent, MSuperUsers}
 import play.api.mvc._
 
@@ -21,7 +21,7 @@ import scala.concurrent.Future
 @Singleton
 class IdentUtil @Inject() (
   mSuperUsers   : MSuperUsers,
-  mCommonDi     : MCommonDi
+  mCommonDi     : ICommonDi
 ) {
 
   import mCommonDi._

@@ -2,9 +2,8 @@ package util.acl
 
 import controllers.SioController
 import models.MInviteRequest
-import models.req.SioReqMd
-import play.api.mvc.{ActionBuilder, Result, Request}
-import util.acl.PersonWrapper.PwOpt_t
+import models.req.{MirReq, MReq}
+import play.api.mvc.{ActionBuilder, Request, Result}
 import util.di.IInviteRequest
 
 import scala.concurrent.Future
@@ -24,7 +23,7 @@ trait IsSuperuserMir
   import mCommonDi._
 
   trait IsSuperuserMirBase
-    extends ActionBuilder[MirRequest]
+    extends ActionBuilder[MirReq]
     with IsSuperuserUtil
   {
 
@@ -32,35 +31,39 @@ trait IsSuperuserMir
 
     def isMirStateOk(mir: MInviteRequest) = true
 
-    override def invokeBlock[A](request: Request[A], block: (MirRequest[A]) => Future[Result]): Future[Result] = {
-      val pwOpt = PersonWrapper.getFromRequest(request)
-      if (PersonWrapper.isSuperuser(pwOpt)) {
-        mInviteRequest.getById(mirId) flatMap {
+    override def invokeBlock[A](request: Request[A], block: (MirReq[A]) => Future[Result]): Future[Result] = {
+      val mirOptFut = mInviteRequest.getById(mirId)
+
+      val personIdOpt = sessionUtil.getPersonId(request)
+      val user = mSioUsers(personIdOpt)
+
+      if (user.isSuper) {
+        mirOptFut.flatMap {
           case Some(mir) =>
             if (isMirStateOk(mir)) {
-              SioReqMd.fromPwOpt(pwOpt) flatMap { srm =>
-                val req1 = MirRequest(mir, pwOpt, request, srm)
-                block(req1)
-              }
+              val req1 = MirReq(mir, request, user)
+              block(req1)
             } else {
-              Future successful mirStateInvalid
+              mirStateInvalid
             }
 
           case None =>
-            Future successful mirNotFound(mirId)
+            mirNotFound
         }
+
       } else {
-        supOnUnauthFut(request, pwOpt)
+        val req1 = MReq(request, user)
+        supOnUnauthFut(req1)
       }
     }
 
     def mirStateInvalidMsg = s"MIR[$mirId] has impossible state for this action."
 
-    def mirNotFound(mirId: String): Result = {
+    def mirNotFound: Future[Result] = {
       NotFound("Invite request not found: " + mirId)
     }
 
-    def mirStateInvalid: Result = {
+    def mirStateInvalid: Future[Result] = {
       ExpectationFailed(mirStateInvalidMsg)
     }
 
@@ -69,16 +72,6 @@ trait IsSuperuserMir
 
   case class IsSuperuserMir(mirId: String)
     extends IsSuperuserMirBase
-    with ExpireSession[MirRequest]
+    with ExpireSession[MirReq]
 
 }
-
-
-case class MirRequest[A](
-  mir       : MInviteRequest,
-  pwOpt     : PwOpt_t,
-  request   : Request[A],
-  sioReqMd  : SioReqMd
-)
-  extends AbstractRequestWithPwOpt(request)
-

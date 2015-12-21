@@ -5,9 +5,10 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
-import models.mproj.MCommonDi
+import models.mctx.Context
+import models.mproj.ICommonDi
 import models.usr._
-import models.{Context, MNode}
+import models.MNode
 import org.elasticsearch.search.sort.SortOrder
 import util.acl.{IsSuperuser, IsSuperuserPerson}
 import views.html.ident.recover.emailPwRecoverTpl
@@ -26,7 +27,7 @@ import scala.concurrent.Future
  */
 // TODO Замержить куски контроллера в отображение узла N2. Сейчас этот контроллер рисует неактуальные данные.
 class SysPerson @Inject() (
-  override val mCommonDi    : MCommonDi
+  override val mCommonDi    : ICommonDi
 )
   extends SioControllerImpl
   with IsSuperuserPerson

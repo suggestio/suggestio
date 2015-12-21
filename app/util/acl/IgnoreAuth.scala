@@ -1,7 +1,8 @@
 package util.acl
 
-import models.req.SioReqMd
-import play.api.mvc.{Result, Request, ActionBuilder}
+import controllers.SioController
+import models.req.MReq
+import play.api.mvc.{ActionBuilder, Request, Result}
 
 import scala.concurrent.Future
 
@@ -9,17 +10,22 @@ import scala.concurrent.Future
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 17.12.15 11:28
- * Description: Быстрый ActionBuilder с игнором всех данных сессии с минимальным инстансом [[AbstractRequestWithPwOpt]].
+ * Description: Быстрый ActionBuilder с игнором всех данных сессии с минимальным инстансом sio-реквеста.
  * Полезно, когда нужен нормальный реквест, но абсолютно не важно, какой именно.
  */
 
-object IgnoreAuth extends ActionBuilder[RequestWithPwOpt] {
-  override def invokeBlock[A](request: Request[A], block: (RequestWithPwOpt[A]) => Future[Result]): Future[Result] = {
-    val req1 = RequestWithPwOpt(
-      pwOpt = None,
-      request = request,
-      sioReqMd = SioReqMd.empty
-    )
-    block(req1)
+trait IgnoreAuth extends SioController {
+
+  import mCommonDi._
+
+  object IgnoreAuth extends ActionBuilder[MReq] {
+
+    override def invokeBlock[A](request: Request[A], block: (MReq[A]) => Future[Result]): Future[Result] = {
+      val user = mSioUsers(None)
+      val req1 = MReq(request, user)
+      block(req1)
+    }
+
   }
+
 }

@@ -2,18 +2,20 @@ package controllers
 
 import com.google.inject.Inject
 import controllers.ident._
-import models.jsm.init.{MTargets, MTarget}
-import models.mproj.MCommonDi
+import models._
+import models.jsm.init.{MTarget, MTargets}
+import models.mctx.{CtxData, Context}
+import models.mproj.ICommonDi
 import models.msession.Keys
-import util.acl._
-import util._
+import models.req.IReqHdr
 import play.api.mvc._
+import util._
+import util.acl._
 import util.adn.NodesUtil
 import util.captcha.CaptchaUtil
 import util.ident.IdentUtil
 import util.mail.IMailerWrapper
 import views.html.ident._
-import models._
 import views.html.ident.login.epw._loginColumnTpl
 import views.html.ident.reg.email._regColumnTpl
 
@@ -31,7 +33,7 @@ class Ident @Inject() (
   override val identUtil            : IdentUtil,
   override val nodesUtil            : NodesUtil,
   override val captchaUtil          : CaptchaUtil,
-  override val mCommonDi            : MCommonDi
+  override val mCommonDi            : ICommonDi
 )
   extends SioController
   with PlayMacroLogsImpl
@@ -59,7 +61,7 @@ class Ident @Inject() (
 
   /** Отредиректить юзера куда-нибудь. */
   def rdrUserSomewhere = IsAuth.async { implicit request =>
-    identUtil.redirectUserSomewhere(request.pwOpt.get.personId)
+    identUtil.redirectUserSomewhere(request.user.personIdOpt.get)
   }
 
   /**
@@ -69,8 +71,10 @@ class Ident @Inject() (
    *         Иначе редирект в личный кабинет.
    */
   def mySioStartPage(r: Option[String]) = IsAnonGet.async { implicit request =>
+    implicit val ctxData = CtxData(
+      jsiTgs = Seq(MTargets.CaptchaForm, MTargets.HiddenCaptcha)
+    )
     // TODO Затолкать это в отдельный шаблон!
-    implicit val jsInitTgs = Seq(MTargets.CaptchaForm, MTargets.HiddenCaptcha)
     val ctx = implicitly[Context]
     val formFut = emailPwLoginFormStubM
     val title = ctx.messages("Login.page.title")
@@ -81,9 +85,11 @@ class Ident @Inject() (
     }
   }
 
-  /** Страницы ident-контроллера нуждаются в доп.центровке колонок по вертикали. */
-  override protected def _jsInitTargets0: List[MTarget] = {
-    MTargets.IdentVCenterContent :: super._jsInitTargets0
+
+  /** Вернуть список целей инициализации js.
+    * Страницы ident-контроллера нуждаются в доп.центровке колонок по вертикали. */
+  override def jsiTgs(req: IReqHdr): List[MTarget] = {
+    MTargets.IdentVCenterContent :: super.jsiTgs(req)
   }
 
 }

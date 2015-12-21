@@ -1,8 +1,8 @@
 package controllers
 
 import com.google.inject.Inject
-import controllers.cstatic.{CorsPreflight, SiteMapsXml, RobotsTxt}
-import models.mproj.MCommonDi
+import controllers.cstatic.{CorsPreflight, RobotsTxt, SiteMapsXml}
+import models.mproj.ICommonDi
 import play.api.Play.isProd
 import play.api.mvc._
 import util.acl.{IsAuth, IsSuperuserOrDevelOr404, MaybeAuth}
@@ -20,7 +20,7 @@ import views.html.static._
 
 class Static @Inject() (
   override val siteMapUtil        : SiteMapUtil,
-  override val mCommonDi          : MCommonDi
+  override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with MaybeAuth
@@ -75,13 +75,13 @@ class Static @Inject() (
    * Страница с политикой приватности.
    * @return 200 Ok и много букв.
    */
-  def privacyPolicy = MaybeAuth { implicit request =>
+  def privacyPolicy = MaybeAuth() { implicit request =>
     Ok( privacyPolicyTpl() )
       .withHeaders( CACHE_CONTROL -> "public, max-age=600" )
   }
 
   /** Содержимое проверочного попап-окна. */
-  def popupCheckContent = MaybeAuth { implicit request =>
+  def popupCheckContent = MaybeAuth() { implicit request =>
     Ok(popups.popupCheckTpl()).withHeaders(
       CACHE_CONTROL -> "public, max-age=86400"
     )
@@ -91,7 +91,7 @@ class Static @Inject() (
    * Костыль в связи с проблемами в play-html-compressor в play-2.3 https://github.com/mohiva/play-html-compressor/issues/20
    * Без этого костыля, запрос html'ки просто подвисает.
    */
-  def tinymceColorpicker(filename: String) = MaybeAuth { implicit request =>
+  def tinymceColorpicker(filename: String) = MaybeAuth() { implicit request =>
     Ok(tinymce.colorpicker.indexTpl())
       .withHeaders(
         CACHE_CONTROL -> "public, max-age=3600",
