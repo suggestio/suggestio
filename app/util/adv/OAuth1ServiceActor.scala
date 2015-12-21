@@ -4,7 +4,6 @@ import java.io.ByteArrayOutputStream
 import java.util.concurrent.TimeoutException
 
 import controllers.routes
-import models.Context
 import models.adv._
 import models.adv.ext.act.{ExtServiceActorEnv, OAuthVerifier, ActorPathQs}
 import models.adv.js.ctx.MStorageKvCtx
@@ -12,6 +11,7 @@ import models.adv.js._
 import models.event.ErrorInfo
 import models.jsm.DomWindowSpecs
 import models.ls.LsOAuth1Info
+import models.mctx.Context
 import models.sec.MAsymKey
 import oauth.signpost.exception.OAuthException
 import org.apache.commons.io.IOUtils
@@ -98,7 +98,7 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
   }
 
   /** Ключ для хранения секретов access_token'а, относящихся к юзеру. */
-  lazy val lsValueKey = s"adv.ext.svc.${args.service.strId}.access.${args.request.pwOpt.fold("__ANON__")(_.personId)}"
+  lazy val lsValueKey = s"adv.ext.svc.${args.service.strId}.access.${args.request.user.personIdOpt.getOrElse("__ANON__")}"
 
   /** Имя js-попапа, в рамках которого происходит авторизация пользователя сервисом. */
   def domWndTargetName = "popup-authz-" + args.service.strId
@@ -244,7 +244,7 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
               .asOpt[LsOAuth1Info]
               // Убедится, что токен был выдан именно текущему юзеру.
               .filter { info =>
-                val currPersonIdOpt = args.request.pwOpt.map(_.personId)
+                val currPersonIdOpt = args.request.user.personIdOpt
                 val res = currPersonIdOpt.contains( info.personId )
                 if (!res)
                   warn(s"[XAKEP] User $currPersonIdOpt is detected while tried to use foreign access token: orig ownerId = ${info.personId} since ${info.created}")
@@ -338,7 +338,7 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
       super.afterBecome()
       askToken {
         val returnCall = routes.LkAdvExt.oauth1PopupReturnGet(
-          adnId = args.request.producerId,
+          adnId       = args.request.producer.id.get,
           actorInfoQs = ActorPathQs(self.path)
         )
         // Вычисляем URL prefix. в devel-режиме нужно использовать ip локалхоста, а не его имя.
@@ -413,11 +413,11 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
 
     /** Сохранение access_token'а на клиенте. */
     def saveAcTokOnClient(acTok: RequestToken): Unit = {
-      args.request.pwOpt match {
+      args.request.user.personIdOpt match {
         case None =>
           debug("NOT saving access_token, because user is anonymous.")
-        case Some(pw) =>
-          val info = LsOAuth1Info(acTok, pw.personId)
+        case Some(personId) =>
+          val info = LsOAuth1Info(acTok, personId)
           saveOa1Info(info)
       }
     }

@@ -6,8 +6,9 @@ import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models._
 import models.jsm.init.MTargets
 import models.mbill.{MContract, MDailyMmpsTplArgs, MTariffDaily, MTxn}
-import models.mproj.MCommonDi
-import models.req.ISioReq
+import models.mctx.CtxData
+import models.mproj.ICommonDi
+import models.req.IReq
 import org.elasticsearch.search.sort.SortOrder
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
@@ -26,7 +27,7 @@ import scala.concurrent.Future
  */
 class MarketLkBilling @Inject() (
   galleryUtil                     : GalleryUtil,
-  override val mCommonDi          : MCommonDi
+  override val mCommonDi          : ICommonDi
 )
   extends SioController
   with PlayMacroLogsImpl
@@ -155,7 +156,7 @@ class MarketLkBilling @Inject() (
    * @param mnode Текущий узел N2.
    * @return Фьючерс с Some и аргументами рендера. Если нет узла, то None
    */
-  private def _prepareNodeMbmds(mnode: MNode)(implicit request: ISioReq[_]): Future[MDailyMmpsTplArgs] = {
+  private def _prepareNodeMbmds(mnode: MNode)(implicit request: IReq[_]): Future[MDailyMmpsTplArgs] = {
     // TODO По идее надо бы проверять узел на то, является ли он ресивером наверное?
     val nodeId = mnode.id.get
 

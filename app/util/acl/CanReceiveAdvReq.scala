@@ -2,7 +2,7 @@ package util.acl
 
 import controllers.SioController
 import models.adv.MAdvReq
-import models.req.{MNodeAdvReqReq, SioReq}
+import models.req.{MNodeAdvReqReq, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result}
 import util.async.AsyncUtil
 
@@ -63,7 +63,7 @@ trait CanReceiveAdvReq
 
               // Юзер не является админом.
               case None =>
-                val req1 = SioReq(request, user)
+                val req1 = MReq(request, user)
                 onUnauthNode(req1)
             }
 

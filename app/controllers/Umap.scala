@@ -8,8 +8,8 @@ import com.google.inject.Inject
 import io.suggest.model.geo.{GsTypes, PointGs}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models._
-import models.mproj.MCommonDi
-import models.req.ISioReq
+import models.mproj.ICommonDi
+import models.req.IReq
 import play.api.i18n.Messages
 import play.api.libs.Files.TemporaryFile
 import play.api.mvc.{MultipartFormData, RequestHeader, Result}
@@ -27,7 +27,7 @@ import scala.concurrent.Future
  */
 class Umap @Inject() (
   umapUtil                        : UmapUtil,
-  override val mCommonDi          : MCommonDi
+  override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
@@ -198,7 +198,7 @@ class Umap @Inject() (
 
   /** Общий код экшенов, занимающихся сохранением геослоёв. */
   private def _saveMapDataLayer(ngl: NodeGeoLevel, adnIdOpt: Option[String])(getAdnIdF: UmapFeature => String)
-                               (implicit request: ISioReq[MultipartFormData[TemporaryFile]]): Future[Result] = {
+                               (implicit request: IReq[MultipartFormData[TemporaryFile]]): Future[Result] = {
     // Готовимся к сохранению присланных данных.
     val logPrefix = s"saveMapDataLayer($ngl): "
     // Для обновления слоя нужно удалить все renderable-данные в этом слое, и затем залить в слой все засабмиченные через bulk request.

@@ -1,7 +1,7 @@
 package util.acl
 
 import controllers.SioController
-import models.req.{SioReq, MNodeEactReq}
+import models.req.{MReq, MNodeEactReq}
 import models.usr.{EmailPwIdent, EmailActivation}
 import play.api.mvc.{Result, ActionBuilder, Request}
 import util.PlayMacroLogsI
@@ -47,7 +47,7 @@ trait NodeEact
 
       /** Общий код рендера отрицательного ответа на запрос вынесен сюда. */
       def _renderInvalidTpl(reason: String): Future[Result] = {
-        implicit val req = SioReq(request, user)
+        implicit val req = MReq(request, user)
         NotFound( inviteInvalidTpl(reason) )
       }
 

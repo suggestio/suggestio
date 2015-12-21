@@ -7,8 +7,9 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 import models.crawl.{ChangeFreqs, SiteMapUrl, SiteMapUrlT}
+import models.mctx.Context
 import models.msc.ScJsState
-import models.{AdSearchImpl, MNode, Context}
+import models.{AdSearchImpl, MNode}
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.unit.TimeValue
 import org.joda.time.LocalDate

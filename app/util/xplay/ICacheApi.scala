@@ -10,6 +10,6 @@ import play.api.cache.CacheApi
  */
 trait ICacheApi {
 
-  protected[this] def cache: CacheApi
+  def cache: CacheApi
 
 }

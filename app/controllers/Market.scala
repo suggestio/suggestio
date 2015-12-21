@@ -1,7 +1,7 @@
 package controllers
 
 import com.google.inject.Inject
-import models.mproj.MCommonDi
+import models.mproj.ICommonDi
 import util.acl._
 import views.html.market._
 
@@ -14,7 +14,7 @@ import views.html.market._
  */
 
 class Market @Inject() (
-  override val mCommonDi          : MCommonDi
+  override val mCommonDi          : ICommonDi
 )
   extends SioController
   with MaybeAuth

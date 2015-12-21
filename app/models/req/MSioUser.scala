@@ -46,7 +46,7 @@ trait ISioUser {
   def personNodeOptFut: Future[Option[MNode]]
 
   /** Является ли текущий юзер суперпользователем? */
-  def isSuperUser: Boolean
+  def isSuper: Boolean
 
   /** id контракта, записанный к узле юзера. */
   def contractIdOptFut: Future[Option[Long]]
@@ -79,11 +79,11 @@ class MSioUserEmpty extends ISioUser {
   override def mContractOptFut      = _futOptOk[MContract]
   override def unSeenEventsCountFut = _futOptOk[Int]
   override def personNodeOptFut     = _futOptOk[MNode]
-  override def isSuperUser          = false
+  override def isSuper              = false
   override def contractIdOptFut     = _futOptOk[Long]
   override def isAuth               = false
   override def jsiTgs               = Nil
-  override def mBalancesFut       = Future.successful(Nil)
+  override def mBalancesFut         = Future.successful(Nil)
 }
 
 
@@ -97,7 +97,7 @@ trait ISioUserT extends ISioUser {
 
   override def isAuth = personIdOpt.isDefined
 
-  override def isSuperUser: Boolean = {
+  override def isSuper: Boolean = {
     personIdOpt.exists { personId =>
       mSuperUsers.isSuperuserId(personId)
     }
@@ -190,8 +190,8 @@ case class MSioUserLazy @Inject() (
   override lazy val personNodeOptFut  = super.personNodeOptFut
   override lazy val contractIdOptFut  = super.contractIdOptFut
   override lazy val mContractOptFut   = super.mContractOptFut
-  override lazy val mBalancesFut    = super.mBalancesFut
-  override lazy val isSuperUser       = super.isSuperUser
+  override lazy val mBalancesFut      = super.mBalancesFut
+  override lazy val isSuper           = super.isSuper
 }
 
 

@@ -5,7 +5,7 @@ import controllers.sysctl.{SmSendEmailInvite, SysMarketUtil}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.model.n2.edge.MNodeEdges
 import models._
-import models.mproj.MCommonDi
+import models.mproj.ICommonDi
 import models.req.IMirReq
 import models.usr.EmailActivation
 import play.api.mvc.{AnyContent, Result}
@@ -29,7 +29,7 @@ class SysMarketInvReq @Inject() (
   sysMarketUtil                   : SysMarketUtil,
   override val mInviteRequest     : MInviteRequest_,
   override val mailer             : IMailerWrapper,
-  override val mCommonDi          : MCommonDi
+  override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl

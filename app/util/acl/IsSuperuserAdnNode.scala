@@ -1,7 +1,7 @@
 package util.acl
 
 import controllers.SioController
-import models.req.{SioReq, MNodeReq}
+import models.req.{IReqHdr, MReq, MNodeReq}
 import scala.concurrent.Future
 import play.api.mvc.{RequestHeader, Request, ActionBuilder, Result}
 
@@ -31,7 +31,7 @@ trait IsSuperuserAdnNode
     override def invokeBlock[A](request: Request[A], block: (MNodeReq[A]) => Future[Result]): Future[Result] = {
       val personIdOpt = sessionUtil.getPersonId(request)
       val user = mSioUsers(personIdOpt)
-      if (user.isSuperUser) {
+      if (user.isSuper) {
         val mnodeOptFut = mNodeCache.getById(adnId)
         mnodeOptFut flatMap {
           case Some(mnode) =>
@@ -39,17 +39,18 @@ trait IsSuperuserAdnNode
             block(req1)
 
           case None =>
-            nodeNotFound(request)
+            val req1 = MReq(request, user)
+            nodeNotFound(req1)
         }
 
       } else {
-        val req1 = SioReq(request, user)
+        val req1 = MReq(request, user)
         supOnUnauthFut(req1)
       }
     }
 
-    def nodeNotFound(implicit request: RequestHeader): Future[Result] = {
-      errorHandler.http404Fut
+    def nodeNotFound(req: IReqHdr): Future[Result] = {
+      errorHandler.http404Fut(req)
     }
 
   }

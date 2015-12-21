@@ -7,7 +7,8 @@ import models.adv.ext.act.{ActorPathQs, OAuthVerifier}
 import models.adv.ext.{MAdvRunnerTplArgs, MForAdTplArgs}
 import models.adv.search.etg.ExtTargetSearchArgs
 import models.jsm.init.MTargets
-import models.mproj.MCommonDi
+import models.mctx.{CtxData, Context}
+import models.mproj.ICommonDi
 import models.req.IAdProdReq
 import org.elasticsearch.search.sort.SortOrder
 import play.api.data.Forms._
@@ -35,7 +36,7 @@ import scala.concurrent.Future
 class LkAdvExt @Inject() (
   override val canAdvAdUtil       : CanAdvertiseAdUtil,
   extAdvWsActor                   : ExtAdvWsActor_,
-  override val mCommonDi          : MCommonDi
+  override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl

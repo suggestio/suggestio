@@ -4,8 +4,9 @@ import com.google.inject.Inject
 import io.suggest.common.fut.FutureUtil
 import io.suggest.model.n2.edge.{MEdgeInfo, MNodeEdges}
 import models._
+import models.mctx.Context
 import models.mdr._
-import models.mproj.MCommonDi
+import models.mproj.ICommonDi
 import models.msys.MSysMdrFreeAdvsTplArgs
 import models.req.IAdReq
 import org.joda.time.DateTime
@@ -30,7 +31,7 @@ class SysMdr @Inject() (
   lkAdUtil                          : LkAdUtil,
   scUtil                            : ShowcaseUtil,
   n2NodesUtil                       : N2NodesUtil,
-  override val mCommonDi            : MCommonDi
+  override val mCommonDi            : ICommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl

@@ -8,7 +8,7 @@ import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import models.MPrice
 import models.adv.gtag.MAdvFormResult
-import models.mproj.MCommonDi
+import models.mproj.ICommonDi
 import slick.dbio.DBIOAction
 import util.billing.Bill2Util
 
@@ -24,7 +24,7 @@ class GeoTagAdvBillUtil @Inject() (
   bill2Util                           : Bill2Util,
   mItems                              : MItems,
   mItemTags                           : MItemTags,
-  mCommonDi                           : MCommonDi
+  mCommonDi                           : ICommonDi
 ) {
 
   import mCommonDi._

@@ -10,7 +10,7 @@ import play.api.mvc.Request
  * Description: Модель реквеста с каким-то узлом внутри.
  */
 trait INodeReq[A]
-  extends ISioReq[A]
+  extends IReq[A]
 {
   def mnode: MNode
 }
@@ -22,6 +22,6 @@ case class MNodeReq[A](
   override val request  : Request[A],
   override val user     : ISioUser
 )
-  extends SioReqWrap[A]
+  extends MReqWrap[A]
   with INodeReq[A]
 

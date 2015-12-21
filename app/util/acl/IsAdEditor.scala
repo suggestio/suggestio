@@ -2,7 +2,7 @@ package util.acl
 
 import controllers.SioController
 import models._
-import models.req.MAdProdReq
+import models.req.{MReq, IReqHdr, MAdProdReq}
 import play.api.mvc._
 import util.n2u.IN2NodesUtilDi
 import util.{PlayMacroLogsDyn, PlayMacroLogsI}
@@ -32,12 +32,13 @@ trait AdEditBaseCtl
     }
 
     def forbiddenFut[A](msg: String, request: Request[A]): Future[Result] = {
-      Future successful forbidden(msg, request)
+      val resp = forbidden(msg, request)
+      Future.successful(resp)
     }
 
-    def adNotFound(request: RequestHeader): Future[Result] = {
+    def adNotFound(req: IReqHdr): Future[Result] = {
       LOGGER.trace(s"invokeBlock(): Ad not found: $adId")
-      errorHandler.http404Fut(request)
+      errorHandler.http404Fut(req)
     }
   }
 
@@ -70,17 +71,16 @@ trait CanEditAd
 
       personIdOpt.fold (onUnauth(request)) { personId =>
         val madOptFut = mNodeCache.getByIdType(adId, MNodeTypes.Ad)
+        val user = mSioUsers(personIdOpt)
 
         madOptFut.flatMap {
           case Some(mad) =>
             val prodIdOpt = n2NodesUtil.madProducerId(mad)
             val prodNodeOptFut = mNodeCache.maybeGetByIdCached( prodIdOpt )
 
-            val user = mSioUsers(personIdOpt)
-
             prodNodeOptFut.flatMap {
               case Some(producer) =>
-                val allowed = user.isSuperUser || IsAdnNodeAdmin.isAdnNodeAdminCheck(producer, user)
+                val allowed = user.isSuper || IsAdnNodeAdmin.isAdnNodeAdminCheck(producer, user)
 
                 if (!allowed) {
                   LOGGER.debug(s"isEditAllowed(${mad.id.get}, $user): Not a producer[$prodIdOpt] admin.")
@@ -94,9 +94,9 @@ trait CanEditAd
                 prodNotFound(personIdOpt)
             }
 
-
           case None =>
-            adNotFound(request)
+            val req1 = MReq(request, user)
+            adNotFound(req1)
         }
       }
     }

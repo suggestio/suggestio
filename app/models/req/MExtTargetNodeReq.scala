@@ -21,5 +21,5 @@ case class MExtTargetNodeReq[A](
   override val request   : Request[A],
   override val user      : ISioUser
 )
-  extends ISioReqWrap[A]
+  extends IReqWrap[A]
   with IExtTargetNodeReq[A]

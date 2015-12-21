@@ -12,8 +12,9 @@ import models.blk.PrepareBlkImgArgs
 import models.blk.ed.{AdFormM, AdFormResult, BlockImgMap}
 import models.im.MImg3_
 import models.jsm.init.MTargets
-import models.mproj.MCommonDi
-import models.req.{IAdProdReq, INodeReq, ISioReq}
+import models.mctx.{CtxData, Context}
+import models.mproj.ICommonDi
+import models.req.{IAdProdReq, INodeReq, IReq}
 import org.joda.time.DateTime
 import play.api.data.Forms._
 import play.api.data._
@@ -39,7 +40,7 @@ class MarketAd @Inject() (
   tempImgSupport                  : TempImgSupport,
   mImg3                           : MImg3_,
   override val n2NodesUtil        : N2NodesUtil,
-  override val mCommonDi          : MCommonDi
+  override val mCommonDi          : ICommonDi
 )
   extends SioController
   with PlayMacroLogsImpl
@@ -160,7 +161,7 @@ class MarketAd @Inject() (
 
   /** Акт рендера результирующей страницы в отрыве от самой страницы. */
   private def _renderPage(af: AdFormM, rs: Status)(f: Context => Html)
-                         (implicit request: ISioReq[_]): Future[Result] = {
+                         (implicit request: IReq[_]): Future[Result] = {
     implicit val ctxData = CtxData(
       jsiTgs = Seq(MTargets.AdForm)
     )

@@ -6,7 +6,8 @@ import models._
 import models.adv.{MAdvOk, MAdvRefuse, MAdvReq, MExtTarget}
 import models.event.MEvent
 import models.event.search.MEventsSearchArgs
-import models.mproj.MCommonDi
+import models.mctx.Context
+import models.mproj.ICommonDi
 import org.joda.time.DateTime
 import play.api.i18n.Messages
 import play.twirl.api.Html
@@ -29,7 +30,7 @@ import scala.util.{Failure, Success}
 class LkEvents @Inject() (
   lkEventsUtil                    : LkEventsUtil,
   lkAdUtil                        : LkAdUtil,
-  override val mCommonDi          : MCommonDi
+  override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl

@@ -3,7 +3,8 @@ package controllers
 import com.google.inject.Inject
 import models.CallBackReqCallTimes.CallBackReqCallTime
 import models._
-import models.mproj.MCommonDi
+import models.mctx.Context
+import models.mproj.ICommonDi
 import play.api.data.Forms._
 import play.api.data._
 import util.FormUtil._
@@ -25,7 +26,7 @@ class MarketJoin @Inject() (
   mInviteRequest                : MInviteRequest_,
   override val captchaUtil      : CaptchaUtil,
   override val mailer           : IMailerWrapper,
-  override val mCommonDi        : MCommonDi
+  override val mCommonDi        : ICommonDi
 )
   extends SioController
   with PlayMacroLogsImpl

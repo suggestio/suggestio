@@ -1,7 +1,7 @@
 package util.acl
 
 import models.adv._
-import models.req.{ISioUser, MNodeExtTgSubmitReq, SioReq}
+import models.req.{ISioUser, MNodeExtTgSubmitReq, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result}
 import util.PlayMacroLogsDyn
 import util.adv.ExtUtil
@@ -82,7 +82,7 @@ trait CanSubmitExtTargetForNode
 
         // Нет прав на узел.
         case None =>
-          val req1 = SioReq(request, user)
+          val req1 = MReq(request, user)
           onUnauthNode(req1)
       }
     }

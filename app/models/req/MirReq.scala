@@ -9,7 +9,7 @@ import play.api.mvc.Request
  * Created: 18.12.15 21:53
  * Description: Реквест с экземпляром MInviteRequest внутри.
  */
-trait IMirReq[A] extends ISioReq[A] {
+trait IMirReq[A] extends IReq[A] {
   def mir: MInviteRequest
 }
 
@@ -19,6 +19,6 @@ case class MirReq[A](
   override val request   : Request[A],
   override val user      : ISioUser
 )
-  extends SioReqWrap[A]
+  extends MReqWrap[A]
   with IMirReq[A]
 

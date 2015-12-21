@@ -34,27 +34,20 @@
   title         = messages("Ad.cards"),
   nodeOpt       = Some(mnode),
   leftCurrEl    = Some(LkLeftPanelLinks.LPL_ADS),
-  rightBar      = Some(rightBar),
-  povAdnId      = povAdnIdOpt
+  rightBar      = Some(rightBar)
 ) {
 
   @if( mnode.extras.adn.exists(_.isProducer) ) {
-    @if(isMyNode) {
-      @_myAdsTpl(args)
-    } else {
-      @_readOnlyAdsListTpl(args)
-    }
+    @_myAdsTpl(args)
 
     @* Ссылка на demo web site. *@
-    @if(isMyNode) {
-      <div class="sm-note">
-        @if( mnode.extras.adn.exists(_.isReceiver) ) {
-          @messages("You.can.look.on.ads.in")
-          <a class="blue-link" href="@ctx.SC_URL_PREFIX@routes.MarketShowcase.geoSite(msc.ScJsState(adnId = mnode.id))"
-             target="_blank">@messages("_ad.showcase.link")</a>.
-        }
-      </div>
-    }
+    <div class="sm-note">
+      @if( mnode.extras.adn.exists(_.isReceiver) ) {
+        @messages("You.can.look.on.ads.in")
+        <a class="blue-link" href="@ctx.SC_URL_PREFIX@routes.MarketShowcase.geoSite(msc.ScJsState(adnId = mnode.id))"
+           target="_blank">@messages("_ad.showcase.link")</a>.
+      }
+    </div>
   }
 
 }

@@ -1,7 +1,7 @@
 package util.acl
 
 import controllers.SioController
-import models.req.{SioReq, MRecoverPwReq}
+import models.req.{IReq, MReq, MRecoverPwReq}
 import models.usr.{EmailActivation, EmailPwIdent}
 import play.api.mvc._
 import util.di.IIdentUtil
@@ -33,10 +33,8 @@ trait CanRecoverPw
 
     def eActId: String
 
-    protected def keyNotFound(implicit request: RequestHeader): Future[Result] = {
-      RichRequestHeader(request) map { implicit rh =>
-        NotFound( failedColTpl() )
-      }
+    protected def keyNotFound(implicit req: IReq[_]): Future[Result] = {
+      NotFound( failedColTpl() )
     }
 
     override def invokeBlock[A](request: Request[A], block: (MRecoverPwReq[A]) => Future[Result]): Future[Result] = {
@@ -45,7 +43,7 @@ trait CanRecoverPw
       val personIdOpt = sessionUtil.getPersonId(request)
       val user = mSioUsers(personIdOpt)
 
-      val wrappedReq = SioReq(request, user)
+      val wrappedReq = MReq(request, user)
 
       bruteForceProtectedNoimpl(wrappedReq) {
         val eaOptFut = EmailActivation.getById(eActId)
@@ -53,6 +51,7 @@ trait CanRecoverPw
           val req1 = MRecoverPwReq(epw, eAct, request, user)
           block(req1)
         }
+        def _reqErr = MReq(request, user)
         eaOptFut.flatMap {
           // Юзер обращается по корректной активационной записи.
           case Some(eAct) =>
@@ -66,11 +65,11 @@ trait CanRecoverPw
               // Такое возможно, если юзер взял ключ инвайта в маркет и вставил его в качестве ключа восстановления пароля.
               case None =>
                 LOGGER.error(s"${logPrefix}eAct exists, but emailPw is NOT! Hacker? pwOpt = $personIdOpt ;; eAct = $eAct")
-                keyNotFound(request)
+                keyNotFound(_reqErr)
             }
 
           // Суперюзер (верстальщик например) должен иметь доступ без шаманства.
-          case result if user.isSuperUser =>
+          case result if user.isSuper =>
             val personId = personIdOpt.get
             LOGGER.trace("Superuser mocking activation...")
             val epwFut = EmailPwIdent.findByPersonId(personId)
@@ -99,7 +98,7 @@ trait CanRecoverPw
               // Юзер неизвестен и ключ неизвестен. Возможно, перебор ключей какой-то?
               case None =>
                 LOGGER.warn(logPrefix + "Unknown eAct key. pwOpt = " + personIdOpt)
-                keyNotFound(request)
+                keyNotFound(_reqErr)
             }
         }
       }

@@ -2,9 +2,10 @@ package controllers.sc
 
 import controllers.routes
 import models._
+import models.mctx.Context
 import models.mext.MExtServices
 import models.msc._
-import models.req.ISioReq
+import models.req.IReq
 import play.api.mvc._
 import play.twirl.api.Html
 import util.PlayMacroLogsI
@@ -39,7 +40,7 @@ trait ScSiteBase
     def _siteArgs: SiteQsArgs
 
     /** Исходный http-реквест. */
-    implicit def _request: ISioReq[_]
+    implicit def _request: IReq[_]
 
     /** Контекст рендера нижелижещих шаблонов. */
     implicit lazy val ctx = implicitly[Context]
@@ -202,7 +203,7 @@ trait ScSiteGeo
    * @param request Экземпляр реквеста.
    * @return Результат работы экшена.
    */
-  protected def _geoSite(siteArgs: SiteQsArgs)(implicit request: ISioReq[_]): Future[Result] = {
+  protected def _geoSite(siteArgs: SiteQsArgs)(implicit request: IReq[_]): Future[Result] = {
     // Запускаем сбор статистики в фоне.
     _geoSiteStats
     // Запускаем выдачу результата запроса:
@@ -210,7 +211,7 @@ trait ScSiteGeo
   }
 
   /** Фоновый сбор статистики. Можно переназначать. */
-  protected def _geoSiteStats(implicit request: ISioReq[_]): Future[_] = {
+  protected def _geoSiteStats(implicit request: IReq[_]): Future[_] = {
     val fut = Future {
       scStatUtil.SiteStat(AdnSinks.SINK_GEO)
     }.flatMap {
@@ -227,7 +228,7 @@ trait ScSiteGeo
    * @param siteArgs Доп.аргументы для рендера сайта.
    * @param request Реквест.
    */
-  protected def _geoSiteResult(siteArgs: SiteQsArgs)(implicit request: ISioReq[_]): Future[Result] = {
+  protected def _geoSiteResult(siteArgs: SiteQsArgs)(implicit request: IReq[_]): Future[Result] = {
     val logic = new SiteLogic with SiteScript {
       override implicit def _request  = request
       override def _siteArgs          = siteArgs

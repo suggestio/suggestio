@@ -19,9 +19,10 @@ abstract class AbstractRequestWithPwOpt[A](request: Request[A])
 
 
 
-@deprecated("Use m.req.ISioReq instead", "2015.dec.18")
+@deprecated("Use m.req.ISioReqHdr instead", "2015.dec.18")
 object RichRequestHeader {
 
+  @deprecated("Use m.req.ISioReqHdr instead", "2015.dec.18")
   def apply(rh: RequestHeader)(implicit ec: ExecutionContext): Future[RichRequestHeader] = {
     val _pwOpt = PersonWrapper.getFromRequest(rh)
     SioReqMd.fromPwOpt(_pwOpt).map { srm =>

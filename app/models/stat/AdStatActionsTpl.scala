@@ -1,6 +1,6 @@
 package models.stat
 
-import models.Context
+import models.mctx.Context
 import play.api.i18n.Messages
 
 /**

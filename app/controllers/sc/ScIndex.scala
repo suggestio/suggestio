@@ -4,12 +4,12 @@ import _root_.util.di._
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import _root_.util.jsa.{SmRcvResp, Js}
 import _root_.util.PlayMacroLogsI
-import models.Context
 import models.im.MImgT
 import models.jsm.ScIndexResp
+import models.mctx.Context
 import models.mproj.IMCommonDi
 import models.msc._
-import models.req.ISioReq
+import models.req.IReq
 import play.twirl.api.Html
 import util.acl._
 import views.html.sc._
@@ -74,7 +74,7 @@ trait ScIndexCommon
       Some(title2)
     }
 
-    implicit def _request: ISioReq[_]
+    implicit def _request: IReq[_]
 
     /** Контейнер палитры выдачи. */
     def colorsFut: Future[IColors]

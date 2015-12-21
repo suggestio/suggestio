@@ -4,12 +4,13 @@ import com.google.inject.Inject
 import controllers.{SioController, routes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
+import models.mctx.Context
 import models.mext.{ILoginProvider, MExtServices}
-import models.mproj.MCommonDi
+import models.mproj.ICommonDi
 import models.msession.{CustomTtl, Keys}
-import models.req.ISioReq
+import models.req.IReq
 import models.usr._
-import models.{Context, ExtRegConfirmForm_t, ExternalCall, MNode, MNodeTypes}
+import models.{ExtRegConfirmForm_t, ExternalCall, MNode, MNodeTypes}
 import play.api.data.Form
 import play.api.mvc._
 import play.twirl.api.Html
@@ -40,7 +41,7 @@ class ExternalLogin_ @Inject() (
   routesSvc                       : SsRoutesService,
   ssUserService                   : SsUserService,
   override val identUtil          : IdentUtil,
-  mCommonDi                       : MCommonDi
+  mCommonDi                       : ICommonDi
 )
   extends PlayMacroLogsDyn
   with IIdentUtil
@@ -270,7 +271,7 @@ trait ExternalLogin
   }
 
   /** Общий код рендера idpConfig вынесен сюда. */
-  protected def _idpConfirm(form: ExtRegConfirmForm_t)(implicit request: ISioReq[_]): Html = {
+  protected def _idpConfirm(form: ExtRegConfirmForm_t)(implicit request: IReq[_]): Html = {
     confirmTpl(form)
   }
 

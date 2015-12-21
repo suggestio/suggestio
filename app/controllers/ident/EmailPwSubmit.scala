@@ -1,7 +1,7 @@
 package controllers.ident
 
 import controllers.SioController
-import models.req.ISioReq
+import models.req.IReq
 import models.{MNode, MNodeTypes}
 import models.msession.{Ttl, ShortTtl, LongTtl, Keys}
 import models.usr._
@@ -67,11 +67,11 @@ trait EmailPwSubmit
   }
 
 
-  def emailSubmitOkCall(personId: String)(implicit request: ISioReq[_]): Future[Call] = {
+  def emailSubmitOkCall(personId: String)(implicit request: IReq[_]): Future[Call] = {
     identUtil.redirectCallUserSomewhere(personId)
   }
 
-  def emailSubmitError(lf: EmailPwLoginForm_t, r: Option[String])(implicit request: ISioReq[_]): Future[Result]
+  def emailSubmitError(lf: EmailPwLoginForm_t, r: Option[String])(implicit request: IReq[_]): Future[Result]
 
   /** Самбит формы логина по email и паролю. */
   def emailPwLoginFormSubmit(r: Option[String]) = IsAnonPost.async { implicit request =>
@@ -130,12 +130,12 @@ trait EmailPwLogin extends EmailPwSubmit {
 
   /** Общий код методов emailPwLoginForm() и emailSubmitError(). */
   protected def epwLoginPage(lf: EmailPwLoginForm_t, r: Option[String])
-                            (implicit request: ISioReq[_]): Result = {
+                            (implicit request: IReq[_]): Result = {
     Ok( loginTpl(lf, r) )
   }
 
   override def emailSubmitError(lf: EmailPwLoginForm_t, r: Option[String])
-                               (implicit request: ISioReq[_]): Future[Result] = {
+                               (implicit request: IReq[_]): Future[Result] = {
     epwLoginPage(lf, r)
   }
 

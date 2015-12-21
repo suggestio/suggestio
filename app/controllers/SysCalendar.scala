@@ -7,7 +7,7 @@ import de.jollyday.util.XMLUtil
 import de.jollyday.{HolidayCalendar, HolidayManager}
 import models._
 import models.mbill.{MContract, MTariffDaily}
-import models.mproj.MCommonDi
+import models.mproj.ICommonDi
 import models.req.ICalendarReq
 import org.apache.commons.io.IOUtils
 import play.api.data.Forms._
@@ -30,7 +30,7 @@ import scala.concurrent.Future
  */
 class SysCalendar @Inject() (
   override val mCalendars     : MCalendars,
-  override val mCommonDi      : MCommonDi
+  override val mCommonDi      : ICommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl

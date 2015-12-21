@@ -3,8 +3,8 @@ package controllers
 import com.google.inject.Inject
 import models._
 import models.mbill.{MContract, MTariffDaily}
-import models.mproj.MCommonDi
-import models.req.{ISioReq, IContractReq}
+import models.mproj.ICommonDi
+import models.req.{IReq, IContractReq}
 import play.api.data.Forms._
 import play.api.data._
 import play.api.mvc.{Result, AnyContent}
@@ -25,7 +25,7 @@ import scala.concurrent.Future
  */
 class SysMarketBillingMmp @Inject() (
   mCalendars                    : MCalendars,
-  override val mCommonDi        : MCommonDi
+  override val mCommonDi        : ICommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
@@ -127,7 +127,7 @@ class SysMarketBillingMmp @Inject() (
       .map(Ok(_))
   }
 
-  private def _editMmpDaily(mmpdId: Int, form: Form[MTariffDaily])(implicit request: ISioReq[AnyContent]): Future[Html] = {
+  private def _editMmpDaily(mmpdId: Int, form: Form[MTariffDaily])(implicit request: IReq[AnyContent]): Future[Html] = {
     val mcalsFut = mCalendars.getAll()
     val syncResult = db.withConnection { implicit c =>
       val mbmd = MTariffDaily.getById(mmpdId).get
@@ -221,7 +221,7 @@ class SysMarketBillingMmp @Inject() (
    * @return HTML страницы формы редактирования.
     */
   private def _updateAllFormHtml(formM: Form[MTariffDaily], rs: Status)
-                                (implicit request: ISioReq[_]): Future[Result] = {
+                                (implicit request: IReq[_]): Future[Result] = {
     val mcalsFut = mCalendars.getAll()
     for {
       mcals <- mcalsFut

@@ -3,7 +3,7 @@ package controllers
 import com.google.inject.Inject
 import io.suggest.ym.parsers.Price
 import models.mbill.{MContract, MTariff, MTariffFee, MTariffStat}
-import models.mproj.MCommonDi
+import models.mproj.ICommonDi
 import org.joda.time.DateTime
 import play.api.data.Forms._
 import play.api.data._
@@ -20,7 +20,7 @@ import views.html.sys1.market.billing.tariff.stat._
  * Description: Работа с fee- и stat-тарифами в биллинге.
  */
 class SysMarketBillingTariff @Inject() (
-  override val mCommonDi          : MCommonDi
+  override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl

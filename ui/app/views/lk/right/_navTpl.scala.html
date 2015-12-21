@@ -7,7 +7,7 @@
   @content
 
   @* Для суперюзеров надо отображать всегда возможность перехода в /sys/ *@
-  @if(ctx.isSuperuser) {
+  @if(ctx.user.isSuper) {
     @_navItemTpl(
       title = "System",
       href  = sysCall orElse Some(routes.SysMarket.index())

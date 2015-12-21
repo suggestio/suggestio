@@ -1,23 +1,22 @@
 package util.showcase
 
 import com.google.inject.Inject
+import io.suggest.util.UuidUtil
 import models.im.DevScreen
 import models.msc.MScNodeSearchArgs
-import models.{GeoSearchInfo, AdSearch}
-import org.elasticsearch.client.Client
-import play.api.Configuration
-import util.PlayMacroLogsImpl
-import util.acl.AbstractRequestWithPwOpt
-import play.api.http.HeaderNames.USER_AGENT
-
-import io.suggest.util.UuidUtil
-import models.stat.{ScStatActions, ScStatAction}
+import models.req.IReqHdr
+import models.stat.{ScStatAction, ScStatActions}
+import models.{AdSearch, GeoSearchInfo, _}
 import net.sf.uadetector.service.UADetectorServiceFactory
+import org.elasticsearch.client.Client
 import org.joda.time.DateTime
-import models._
+import play.api.Configuration
+import play.api.http.HeaderNames.USER_AGENT
+import util.PlayMacroLogsImpl
 import util.stat.StatUtil
-import scala.concurrent.{ExecutionContext, Future}
+
 import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -59,7 +58,7 @@ class ScStatUtil @Inject() (
 
     import LOGGER._
 
-    implicit def request: AbstractRequestWithPwOpt[_]
+    implicit def request: IReqHdr
 
     def gsiFut: Future[Option[GeoSearchInfo]]
     def madIds: Seq[String]
@@ -107,7 +106,7 @@ class ScStatUtil @Inject() (
 
     val now = DateTime.now()
 
-    def personId = request.pwOpt.map(_.personId)
+    def personId = request.user.personIdOpt
 
     def adsCount = madIds.size
 
@@ -144,7 +143,7 @@ class ScStatUtil @Inject() (
       val screenOpt = this.screenOpt
       val agentOs = this.agentOs
       gsiFut flatMap { gsiOpt =>
-        val isLocalClient = request.isSuperuser || gsiOpt.fold(false)(_.isLocalClient)
+        val isLocalClient = request.user.isSuper || gsiOpt.fold(false)(_.isLocalClient)
         adnNodeOptFut flatMap { adnNodeOpt =>
           val adStat = new MAdStat(
             clientAddr  = request.remoteAddress,
@@ -214,7 +213,7 @@ class ScStatUtil @Inject() (
     adSearch: AdSearch,
     madIds: Seq[String],
     gsiFut: Future[Option[GeoSearchInfo]]
-  )(implicit val request: AbstractRequestWithPwOpt[_])
+  )(implicit val request: IReqHdr)
     extends StatT
   {
     override def statAction = ScStatActions.Tiles
@@ -233,9 +232,7 @@ class ScStatUtil @Inject() (
     adSearch: AdSearch,
     madIds: Seq[String],
     override val withHeadAd: Boolean
-  )(
-    implicit val request: AbstractRequestWithPwOpt[_]
-  )
+  )(implicit val request: IReqHdr)
     extends StatT
   {
     override def gsiFut = adSearch.geo.geoSearchInfoOpt
@@ -272,9 +269,7 @@ class ScStatUtil @Inject() (
     gsiFut: Future[Option[GeoSearchInfo]],
     override val screenOpt: Option[DevScreen],
     nodeOpt: Option[MNode]
-  )(
-    implicit val request: AbstractRequestWithPwOpt[_]
-  )
+  )(implicit val request: IReqHdr)
     extends StatT with NodeStatT with NoAdsStatT
   {
     override def statAction = ScStatActions.Index
@@ -290,9 +285,7 @@ class ScStatUtil @Inject() (
   case class SiteStat(
     scSink: AdnSink,
     nodeOpt: Option[MNode] = None
-  )(
-    implicit val request: AbstractRequestWithPwOpt[_]
-  )
+  )(implicit val request: IReqHdr)
     extends StatT with NodeStatT with NoAdsStatT
   {
     override def gsiFut = GeoIp.geoSearchInfoOpt
@@ -310,9 +303,7 @@ class ScStatUtil @Inject() (
   case class NodeListingStat(
     args: MScNodeSearchArgs,
     gsiFut: Future[Option[GeoSearchInfo]]
-  )(
-    implicit val request: AbstractRequestWithPwOpt[_]
-  )
+  )(implicit val request: IReqHdr)
     extends StatT with NoAdsStatT
   {
     override def statAction = ScStatActions.Nodes

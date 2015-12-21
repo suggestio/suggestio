@@ -11,7 +11,7 @@ import play.api.mvc.Request
  */
 
 trait ICalendarReq[A]
-  extends ISioReq[A]
+  extends IReq[A]
 {
   def mcal: MCalendar
 }
@@ -23,5 +23,5 @@ case class MCalendarReq[A](
   override val request  : Request[A],
   override val user     : ISioUser
 )
-  extends SioReqWrap[A]
+  extends MReqWrap[A]
   with ICalendarReq[A]

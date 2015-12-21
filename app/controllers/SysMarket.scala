@@ -9,9 +9,10 @@ import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models._
 import models.adv.{MAdvI, MAdvOk, MAdvReq}
 import models.im.MImg3_
-import models.mproj.MCommonDi
+import models.mctx.Context
+import models.mproj.ICommonDi
 import models.msys._
-import models.req.{INodeReq, ISioReq}
+import models.req.{INodeReq, IReq}
 import models.usr.{EmailActivation, MPerson}
 import org.elasticsearch.search.sort.SortOrder
 import play.api.data._
@@ -49,7 +50,7 @@ class SysMarket @Inject() (
   override val n2NodesUtil        : N2NodesUtil,
   override val sysAdRenderUtil    : SysAdRenderUtil,
   mImg3                           : MImg3_,
-  override val mCommonDi          : MCommonDi
+  override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
@@ -280,14 +281,14 @@ class SysMarket @Inject() (
         .recoverWith {
           case nse: NoSuchElementException =>
             warn(s"deleteAdnNodeSubmit($adnId): Node not found. Anyway, resources re-erased.")
-            ab.nodeNotFound
+            ab.nodeNotFound(request)
         }
     }
   }
 
 
   private def createAdnNodeRender(nodeFormM: Form[MNode], ncpForm: Form[NodeCreateParams])
-                                 (implicit request: ISioReq[_]): Future[Html] = {
+                                 (implicit request: IReq[_]): Future[Html] = {
     val html = createAdnNodeFormTpl(nodeFormM, ncpForm)
     Future successful html
   }

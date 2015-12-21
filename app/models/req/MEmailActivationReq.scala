@@ -9,7 +9,7 @@ import play.api.mvc.Request
  * Created: 19.12.15 12:57
  * Description: Модель реквеста с экземпляром EmailActivation внутри.
  */
-trait IEmailActivationReq[A] extends ISioReq[A] {
+trait IEmailActivationReq[A] extends IReq[A] {
   def eact      : EmailActivation
 }
 
@@ -19,5 +19,5 @@ case class MEmailActivationReq[A](
   override val request : Request[A],
   override val user    : ISioUser
 )
-  extends SioReqWrap[A]
+  extends MReqWrap[A]
   with IEmailActivationReq[A]

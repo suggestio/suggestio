@@ -2,7 +2,7 @@ package util.acl
 
 import models.MNode
 import models.mproj.IMCommonDi
-import models.req.MNodeReq
+import models.req.{IReqHdr, INodeReq, MReq, MNodeReq}
 import play.api.mvc.{ActionBuilder, Request, Result}
 import util.{PlayMacroLogsDyn, PlayMacroLogsI}
 
@@ -37,28 +37,29 @@ trait AdnNodeMaybeAuth
 
       mnodeOptFut.flatMap {
         case Some(mnode) =>
+          val req1 = MNodeReq(mnode, request, user)
           if (isNodeValid(mnode)) {
-            val req1 = MNodeReq(mnode, request, user)
             block(req1)
           } else {
-            accessProhibited(mnode, request)
+            accessProhibited(req1)
           }
 
         case None =>
-          nodeNotFound(request)
+          val req1 = MReq(request, user)
+          nodeNotFound(req1)
       }
     }
 
     def isNodeValid(adnNode: MNode): Boolean
 
-    def accessProhibited[A](adnNode: MNode, request: Request[A]): Future[Result] = {
-      LOGGER.warn(s"Failed access to acl-prohibited node: ${adnNode.id.get} (${adnNode.meta.basic.name}) :: Returning 404 to ${request.remoteAddress}")
-      nodeNotFound(request)
+    def accessProhibited[A](req: INodeReq[_]): Future[Result] = {
+      LOGGER.warn(s"Failed access to acl-prohibited node: ${req.mnode.id.get} (${req.mnode.meta.basic.name}) :: Returning 404 to ${req.remoteAddress}")
+      nodeNotFound(req)
     }
 
-    def nodeNotFound(implicit request: Request[_]): Future[Result] = {
-      LOGGER.warn(s"Node $nodeId not found, requested by ${request.remoteAddress}")
-      errorHandler.http404Fut
+    def nodeNotFound(req: IReqHdr): Future[Result] = {
+      LOGGER.warn(s"Node $nodeId not found, requested by ${req.remoteAddress}")
+      errorHandler.http404Fut(req)
     }
   }
 

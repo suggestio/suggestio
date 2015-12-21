@@ -5,7 +5,7 @@ import java.util.NoSuchElementException
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.msc._
-import models.req.ISioReq
+import models.req.IReq
 import play.twirl.api.Html
 import util.di.{IScUtil, IScNlUtil, IScStatUtil}
 import util.acl._
@@ -93,7 +93,7 @@ trait ScIndexGeo
     type NfHelper_t <: ScIndexNodeHelper
 
     def _reqArgs: ScReqArgs
-    implicit def _request: ISioReq[_]
+    implicit def _request: IReq[_]
 
     def gsiOptFut = _reqArgs.geo.geoSearchInfoOpt
 

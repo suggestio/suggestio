@@ -1,7 +1,7 @@
 package util.acl
 
 import models.adv.MExtTarget
-import models.req.{MExtTargetNodeReq, SioReq}
+import models.req.{MExtTargetNodeReq, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result}
 import util.PlayMacroLogsDyn
 
@@ -50,7 +50,7 @@ trait CanAccessExtTarget
 
             // Нет прав на узел.
             case None =>
-              val req1 = SioReq(request, user)
+              val req1 = MReq(request, user)
               onUnauthNode(req1)
           }
 

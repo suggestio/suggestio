@@ -23,5 +23,5 @@ case class MAdProdReq[A](
   request   : Request[A],
   user      : ISioUser
 )
-  extends SioReqWrap[A]
+  extends MReqWrap[A]
   with IAdProdReq[A]

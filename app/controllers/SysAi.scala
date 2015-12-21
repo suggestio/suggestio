@@ -2,7 +2,7 @@ package controllers
 
 import com.google.inject.Inject
 import models.ai._
-import models.mproj.MCommonDi
+import models.mproj.ICommonDi
 import play.api.data.Forms._
 import play.api.data._
 import play.api.libs.ws.WSClient
@@ -25,7 +25,7 @@ import scala.util.matching.Regex
  */
 class SysAi @Inject() (
   madAiUtil                       : MadAiUtil,
-  override val mCommonDi          : MCommonDi,
+  override val mCommonDi          : ICommonDi,
   implicit private val ws         : WSClient
 )
   extends SioControllerImpl

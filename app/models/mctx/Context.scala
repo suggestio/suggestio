@@ -1,28 +1,26 @@
-package models
+package models.mctx
 
 import java.util.UUID
 
-import com.google.inject.{Singleton, Inject}
-import com.google.inject.assistedinject.Assisted
-import controllers.routes
-import io.suggest.mbill2.m.balance.MBalance
-import io.suggest.util.UuidUtil
 import _root_.models.im.DevScreen
-import _root_.models.jsm.init.MTarget
-import models.req.ISioReqHdr
+import com.google.inject.assistedinject.Assisted
+import com.google.inject.{Inject, Singleton}
+import controllers.routes
+import io.suggest.util.UuidUtil
 import models.mproj.IMCommonDi
+import models.req.ExtReqHdr.{firstForwarded, lastForwarded}
+import models.req.IReqHdr
 import org.joda.time.DateTime
-import play.api.i18n.Messages
-import play.api.Play.{current, configuration, isDev}
+import play.api.Play.{configuration, current, isDev}
 import play.api.http.HeaderNames._
+import play.api.i18n.Messages
+import play.api.routing.Router.Tags._
 import util.cdn.CdnUtil
 import util.img.{DynImgUtil, GalleryUtil}
 import util.jsa.init.ITargets
 import util.n2u.N2NodesUtil
-import scala.util.Random
-import models.req.ExtReqHdr.{firstForwarded, lastForwarded}
-import play.api.routing.Router.Tags._
 
+import scala.util.Random
 import scala.util.matching.Regex
 
 /**
@@ -34,6 +32,7 @@ import scala.util.matching.Regex
  * метода в implicit-списке параметров.
  */
 
+// TODO Заинжектить инжектить этот объект в ContextApi.
 object Context extends MyHostsT {
 
   val mobileUaPattern = "(iPhone|webOS|iPod|Android|BlackBerry|mobile|SAMSUNG|IEMobile|OperaMobi)".r.unanchored
@@ -102,28 +101,15 @@ trait ContextT { this: ITargets with IMCommonDi =>
    * @return Экземпляр [[Context]].
    */
   implicit final def getContext2(implicit
-                                 request  : ISioReqHdr,
+                                 request  : IReqHdr,
                                  messages : Messages,
-                                 ctxData  : CtxData = CtxData.empty): Context = {
+                                 ctxData  : ICtxData = CtxData.empty): Context = {
     // Получить js init targets с уровня контроллера, объеденить с остальными, залить их в data.
-    val ctxData1 = {
-      val ctlJsiTgs = jsiTgs(request)
-      val usrJsiTgs = request.user.jsiTgs
-      if (ctlJsiTgs.isEmpty && usrJsiTgs.isEmpty) {
-        // Нет новых целей, вернуть исходный вариант ctxData.
-        ctxData
-
-      } else {
-        val b = Seq.newBuilder[MTarget]
-        b ++= request.user.jsiTgs
-        b ++= jsiTgs(request)
-        b ++= ctxData.jsiTgs
-        ctxData.copy(
-          jsiTgs = b.result()
-        )
-      }
-    }
-
+    val ctxData1 = ctxData.prependJsiTgs(
+      jsiTgs(request),
+      request.user.jsiTgs
+    )
+    // Собрать контекст с обновлёнными данными в ctxData.
     mCommonDi.contextFactory.create(request, messages, ctxData1)
   }
 }
@@ -141,7 +127,10 @@ trait Context extends MyHostsT {
   // abstract val вместо def'ов в качестве возможной оптимизации обращений к ним со стороны scalac и jvm. Всегда можно вернуть def.
 
   /** Данные текущего реквеста. */
-  implicit val request: ISioReqHdr
+  implicit val request: IReqHdr
+
+  /** Укороченный доступ к пользовательским данным sio-реквеста. */
+  def user = request.user
 
   /** Текущий язык запроса. Определеляется в контроллерах на основе запроса. */
   implicit val messages: Messages
@@ -203,7 +192,6 @@ trait Context extends MyHostsT {
   lazy val isIpad: Boolean = uaMatches(Context.isIpadRe)
   lazy val isIphone: Boolean = uaMatches(Context.isIphoneRe)
 
-  lazy val canAddSites: Boolean = current.configuration.getBoolean("can_add_sites") getOrElse true
   lazy val isDebug: Boolean     = request.getQueryString("debug").isDefined
 
   lazy val timestamp: Long = now.toInstant.getMillis
@@ -284,7 +272,7 @@ trait Context extends MyHostsT {
   def action: Option[String] = request.tags.get(RouteActionMethod)
 
   /** Кастомные данные в контексте. */
-  def data: CtxData
+  def data: ICtxData
 
 }
 
@@ -305,9 +293,9 @@ class ContextApi @Inject() (
 trait Context2Factory {
   /**
    * Сборка контекста, код метода реализуется автоматом через Guice Assisted inject.
-   * @see [[util.di.GuiceDiModule]] для тюнинга assisted-линковки контекста.
+   * @see [[GuiceDiModule]] для тюнинга assisted-линковки контекста.
    */
-  def create(implicit request: ISioReqHdr, messages: Messages, ctxData: CtxData): Context2
+  def create(implicit request: IReqHdr, messages: Messages, ctxData: ICtxData): Context2
 }
 
 
@@ -315,24 +303,10 @@ trait Context2Factory {
 
 /** Основная реализация контекста, с которой работают sio-контроллеры автоматически. */
 case class Context2 @Inject() (
-  override val api                          : ContextApi,
-  @Assisted override val data               : CtxData,
-  @Assisted implicit override val request   : ISioReqHdr,
-  @Assisted implicit override val messages  : Messages
+                                override val api                          : ContextApi,
+                                @Assisted override val data               : ICtxData,
+                                @Assisted implicit override val request   : IReqHdr,
+                                @Assisted implicit override val messages  : Messages
 )
   extends Context
 
-
-/**
- * Модель для произвольных данных, закидываемых в контекст.
- * @param jsiTgs Какие-то доп.цели инициализации, выставляемые на уровне экшена
- * @param mUsrBalances Остатки на счетах юзера, обычно приходят из request.user.balancesFut в контроллер.
- */
-case class CtxData(
-  jsiTgs          : Seq[MTarget]    = Nil,
-  mUsrBalances    : Seq[MBalance]   = Nil
-)
-object CtxData {
-  /** Пустой immutable-инстанс [[CtxData]]. */
-  val empty = CtxData()
-}

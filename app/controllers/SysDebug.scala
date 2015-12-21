@@ -1,7 +1,7 @@
 package controllers
 
 import com.google.inject.Inject
-import models.mproj.MCommonDi
+import models.mproj.ICommonDi
 import util.acl.IsSuperuser
 import util.health.AdnGeoParentsHealth
 import views.html.sys1.debug._
@@ -14,7 +14,7 @@ import views.html.sys1.debug._
  */
 class SysDebug @Inject() (
   geoParentsHealth              : AdnGeoParentsHealth,
-  override val mCommonDi        : MCommonDi
+  override val mCommonDi        : ICommonDi
 )
   extends SioController
   with IsSuperuser

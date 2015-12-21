@@ -1,7 +1,7 @@
 package util.acl
 
 import controllers.SioController
-import models.req.SioReq
+import models.req.MReq
 import play.api.mvc._
 import util.di.IIdentUtil
 import scala.concurrent.Future
@@ -20,12 +20,12 @@ trait IsAnon
 
   import mCommonDi._
 
-  trait IsAnonBase extends ActionBuilder[SioReq] {
-    override def invokeBlock[A](request: Request[A], block: (SioReq[A]) => Future[Result]): Future[Result] = {
+  trait IsAnonBase extends ActionBuilder[MReq] {
+    override def invokeBlock[A](request: Request[A], block: (MReq[A]) => Future[Result]): Future[Result] = {
       val personIdOpt = sessionUtil.getPersonId(request)
       personIdOpt.fold {
         val user = mSioUsers(personIdOpt)
-        val req1 = SioReq(request, user)
+        val req1 = MReq(request, user)
         block(req1)
 
       } { personId =>
@@ -37,17 +37,17 @@ trait IsAnon
 
   abstract class IsAnonBase2
     extends IsAnonBase
-    with ExpireSession[SioReq]
+    with ExpireSession[MReq]
 
   // CSRF:
   /** GET-запросы с выставлением CSRF-токена. */
   object IsAnonGet
     extends IsAnonBase2
-    with CsrfGet[SioReq]
+    with CsrfGet[MReq]
 
   /** POST-запросы с проверкой CSRF-токена, выставленного ранее через [[IsAnonGet]] или иной [[CsrfGet]]. */
   object IsAnonPost
     extends IsAnonBase2
-    with CsrfPost[SioReq]
+    with CsrfPost[MReq]
 
 }

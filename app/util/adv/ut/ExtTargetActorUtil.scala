@@ -27,7 +27,7 @@ trait ExtTargetActorUtil
     RenderArgs(
       mevent = MEventTmp(
         etype   = etype,
-        ownerId = args.request.producerId,
+        ownerId = args.request.producer.id.get,
         id      = Some(replyTo)
       ),
       advExtTgs = Seq(args.target.target),

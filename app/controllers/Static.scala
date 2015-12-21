@@ -1,8 +1,8 @@
 package controllers
 
 import com.google.inject.Inject
-import controllers.cstatic.{CorsPreflight, SiteMapsXml, RobotsTxt}
-import models.mproj.MCommonDi
+import controllers.cstatic.{CorsPreflight, RobotsTxt, SiteMapsXml}
+import models.mproj.ICommonDi
 import play.api.Play.isProd
 import play.api.mvc._
 import util.acl.{IsAuth, IsSuperuserOrDevelOr404, MaybeAuth}
@@ -20,7 +20,7 @@ import views.html.static._
 
 class Static @Inject() (
   override val siteMapUtil        : SiteMapUtil,
-  override val mCommonDi          : MCommonDi
+  override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with MaybeAuth

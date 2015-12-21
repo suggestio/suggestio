@@ -2,7 +2,7 @@ package util.acl
 
 import controllers.SioController
 import models.ai.MAiMad
-import models.req.{SioReq, MAiMadReq}
+import models.req.{MReq, MAiMadReq}
 import scala.concurrent.Future
 import play.api.mvc.{Request, ActionBuilder, Result}
 
@@ -32,7 +32,7 @@ trait IsSuperuserAiMad
       val madAiFut = MAiMad.getById(aiMadId)
       val personIdOpt = sessionUtil.getPersonId(request)
       val user = mSioUsers(personIdOpt)
-      if (user.isSuperUser) {
+      if (user.isSuper) {
         madAiFut flatMap {
           case Some(madAi) =>
             val req1 = MAiMadReq(madAi, request, user)
@@ -42,7 +42,7 @@ trait IsSuperuserAiMad
         }
 
       } else {
-        val req1 = SioReq(request, user)
+        val req1 = MReq(request, user)
         supOnUnauthFut(req1)
       }
     }

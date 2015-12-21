@@ -1,7 +1,7 @@
 package util.acl
 
 import models.mbill.{MTariffFee, MContract}
-import models.req.{SioReq, MTariffFeeContractReq, SioReqMd}
+import models.req.{MReq, MTariffFeeContractReq, SioReqMd}
 import play.api.mvc.{Result, ActionBuilder, Request}
 import util.acl.PersonWrapper.PwOpt_t
 import util.async.AsyncUtil
@@ -32,7 +32,7 @@ trait IsSuperuserFeeTariffContract
       val personIdOpt = sessionUtil.getPersonId(request)
       val user = mSioUsers(personIdOpt)
 
-      if (user.isSuperUser) {
+      if (user.isSuper) {
 
         val dbFut = Future {
           db.withConnection { implicit c =>
@@ -48,7 +48,7 @@ trait IsSuperuserFeeTariffContract
         }
 
       } else {
-        val req1 = SioReq(request, user)
+        val req1 = MReq(request, user)
         supOnUnauthFut(req1)
       }
     }

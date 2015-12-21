@@ -1,9 +1,10 @@
 package controllers
 
 import com.google.inject.Inject
+import io.suggest.common.fut.FutureUtil
 import io.suggest.model.n2.node.MNode
-import models.Context
-import models.mproj.MCommonDi
+import models.mctx.Context
+import models.mproj.ICommonDi
 import play.api.data.Form
 import play.api.i18n.Lang
 import play.twirl.api.Html
@@ -22,7 +23,7 @@ import scala.concurrent.Future
  * Относится к ЛК, т.к. форма переключения языков сверстана именно там.
  */
 class LkLang @Inject() (
-  override val mCommonDi          : MCommonDi
+  override val mCommonDi          : ICommonDi
 )
   extends SioController
   with PlayMacroLogsImpl
@@ -77,10 +78,10 @@ class LkLang @Inject() (
         NotAcceptable( _showLangSwitcher(formWithErrors, r) )
       },
       {newLang =>
-        val saveUserLangFut: Future[_] = request.pwOpt match {
-          case Some(pw) =>
+        val saveUserLangFut: Future[_] = {
+          FutureUtil.optFut2futOpt( request.user.personIdOpt ) { personId =>
             val newLangCode = newLang.code
-            pw.personOptFut
+            request.user.personNodeOptFut
               .map {
                 case Some(mperson0) =>
                   mperson0.copy(
@@ -94,12 +95,12 @@ class LkLang @Inject() (
                   warn("User logged in, but not found in MPerson. Creating...")
                   MNode.applyPerson(
                     lang = newLangCode,
-                    id = Some(pw.personId)
+                    id = Some(personId)
                   )
               }
               .flatMap { _.save }
-          case None =>
-            Future successful None
+              .map { Some.apply }
+          }
         }
         saveUserLangFut onFailure {
           case ex: Throwable  =>  error("Failed to save lang for mperson", ex)

@@ -1,6 +1,6 @@
 package util.acl
 
-import models.req.{SioReq, SioReqMd}
+import models.req.{MReq, SioReqMd}
 import play.api.mvc._
 import scala.concurrent.Future
 
@@ -18,7 +18,7 @@ trait MaybeAuth
   import mCommonDi._
 
   /** Здесь логика MaybeAuth action-builder'а. */
-  trait MaybeAuthBase extends ActionBuilder[SioReq] {
+  trait MaybeAuthBase extends ActionBuilder[MReq] {
 
     /**
      * Вызывается генератор экшена в билдере.
@@ -28,9 +28,9 @@ trait MaybeAuth
      * @return Фьючерс, описывающий результат.
      */
     override def invokeBlock[A](request: Request[A],
-                                block: (SioReq[A]) => Future[Result]): Future[Result] = {
+                                block: (MReq[A]) => Future[Result]): Future[Result] = {
       val personIdOpt = sessionUtil.getPersonId(request)
-      val req1 = SioReq(
+      val req1 = MReq(
         request = request,
         user    = mSioUsers(personIdOpt)
       )
@@ -41,8 +41,8 @@ trait MaybeAuth
 
   class MaybeAuth
     extends MaybeAuthBase
-    with ExpireSession[SioReq]
-    with CookieCleanup[SioReq]
+    with ExpireSession[MReq]
+    with CookieCleanup[MReq]
 
   /** Сборка данных по текущей сессии юзера в реквест. */
   object MaybeAuth
@@ -50,10 +50,10 @@ trait MaybeAuth
 
   object MaybeAuthGet
     extends MaybeAuth
-    with CsrfGet[SioReq]
+    with CsrfGet[MReq]
 
   object MaybeAuthPost
     extends MaybeAuth
-    with CsrfPost[SioReq]
+    with CsrfPost[MReq]
 
 }

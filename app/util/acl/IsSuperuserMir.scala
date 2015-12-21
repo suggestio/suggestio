@@ -2,7 +2,7 @@ package util.acl
 
 import controllers.SioController
 import models.MInviteRequest
-import models.req.{MirReq, SioReq}
+import models.req.{MirReq, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result}
 import util.di.IInviteRequest
 
@@ -37,7 +37,7 @@ trait IsSuperuserMir
       val personIdOpt = sessionUtil.getPersonId(request)
       val user = mSioUsers(personIdOpt)
 
-      if (user.isSuperUser) {
+      if (user.isSuper) {
         mirOptFut.flatMap {
           case Some(mir) =>
             if (isMirStateOk(mir)) {
@@ -52,7 +52,7 @@ trait IsSuperuserMir
         }
 
       } else {
-        val req1 = SioReq(request, user)
+        val req1 = MReq(request, user)
         supOnUnauthFut(req1)
       }
     }

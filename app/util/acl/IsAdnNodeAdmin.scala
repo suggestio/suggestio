@@ -22,7 +22,7 @@ trait OnUnauthNodeCtl
 {
   trait OnUnauthNode extends OnUnauthUtil {
     /** Что делать, когда юзер не авторизован, но долбится в ЛК? */
-    def onUnauthNode(req: ISioReqHdr): Future[Result] = {
+    def onUnauthNode(req: IReqHdr): Future[Result] = {
       if (req.user.isAuth) {
         Forbidden(FORBIDDEN + " Forbidden")
       } else {
@@ -85,7 +85,7 @@ object IsAdnNodeAdmin extends PlayLazyMacroLogsImpl {
 
   /** Проверка прав на управления узлом с учётом того, что юзер может быть суперюзером s.io. */
   def isAdnNodeAdminCheck(adnNode: MNode, user: ISioUser): Boolean = {
-    user.isSuperUser || isAdnNodeAdminCheckStrict(adnNode, user)
+    user.isSuper || isAdnNodeAdminCheckStrict(adnNode, user)
   }
 
   /** Проверка прав на домен без учёта суперюзеров. */
@@ -133,7 +133,7 @@ trait IsAdnNodeAdmin
 
         case _ =>
           LOGGER.debug(s"User $personIdOpt has NO admin access to node $nodeId")
-          val req1 = SioReq(request, user)
+          val req1 = MReq(request, user)
           onUnauthNode(req1)
       }
     }

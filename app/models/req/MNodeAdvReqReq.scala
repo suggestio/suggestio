@@ -10,7 +10,7 @@ import play.api.mvc.Request
  * Created: 19.12.15 13:37
  * Description: Реквест с инстансом запроса размещения и связанным узлом (ресивером, изначально).
  */
-trait IAdvReqReq[A] extends ISioReq[A] {
+trait IAdvReqReq[A] extends IReq[A] {
   def advReq: MAdvReq
 }
 
@@ -25,5 +25,5 @@ case class MNodeAdvReqReq[A](
   override val request : Request[A],
   override val user    : ISioUser
 )
-  extends SioReqWrap[A]
+  extends MReqWrap[A]
   with INodeAdvReqReq[A]

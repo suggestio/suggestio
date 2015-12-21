@@ -1,7 +1,7 @@
 package util.acl
 
 import controllers.SioController
-import models.req.SioReq
+import models.req.MReq
 import play.api.mvc.{ActionBuilder, Request, Result}
 
 import scala.concurrent.Future
@@ -18,11 +18,11 @@ trait IgnoreAuth extends SioController {
 
   import mCommonDi._
 
-  object IgnoreAuth extends ActionBuilder[SioReq] {
+  object IgnoreAuth extends ActionBuilder[MReq] {
 
-    override def invokeBlock[A](request: Request[A], block: (SioReq[A]) => Future[Result]): Future[Result] = {
+    override def invokeBlock[A](request: Request[A], block: (MReq[A]) => Future[Result]): Future[Result] = {
       val user = mSioUsers(None)
-      val req1 = SioReq(request, user)
+      val req1 = MReq(request, user)
       block(req1)
     }
 

@@ -8,7 +8,7 @@ import io.suggest.mbill2.m.contract.{MContract, MContracts}
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.order.{MOrder, MOrderStatuses, MOrders}
 import models.adv.tpl.MAdvPricing
-import models.mproj.MCommonDi
+import models.mproj.ICommonDi
 import models.{CurrencyCodeOpt, MNode, MPrice}
 import util.PlayMacroLogsImpl
 
@@ -25,7 +25,7 @@ import scala.util.{Failure, Success}
 class Bill2Util @Inject() (
   mOrders                         : MOrders,
   mContracts                      : MContracts,
-  mCommonDi                       : MCommonDi
+  mCommonDi                       : ICommonDi
 )
   extends PlayMacroLogsImpl
 {

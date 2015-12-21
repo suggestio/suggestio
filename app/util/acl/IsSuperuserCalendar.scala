@@ -1,7 +1,7 @@
 package util.acl
 
 import models.IMCalendars
-import models.req.{SioReq, MCalendarReq}
+import models.req.{MReq, MCalendarReq}
 import play.api.mvc.{Result, Request, ActionBuilder}
 
 import scala.concurrent.Future
@@ -31,7 +31,7 @@ trait IsSuperuserCalendar
     override def invokeBlock[A](request: Request[A], block: (MCalendarReq[A]) => Future[Result]): Future[Result] = {
       val personIdOpt = sessionUtil.getPersonId(request)
       val user = mSioUsers(personIdOpt)
-      if (user.isSuperUser) {
+      if (user.isSuper) {
         mCalendars.getById(calId) flatMap {
           case Some(mcal) =>
             val req1 = MCalendarReq(mcal, request, user)
@@ -42,7 +42,7 @@ trait IsSuperuserCalendar
         }
 
       } else {
-        val req1 = SioReq(request, user)
+        val req1 = MReq(request, user)
         supOnUnauthFut(req1)
       }
     }

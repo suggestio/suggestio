@@ -5,7 +5,7 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.MNode
-import models.req.{SioReq, SioReqMd}
+import models.req.{MReq, SioReqMd}
 import models.usr.MExtIdent
 import play.api.mvc.{Result, Request, ActionBuilder}
 import util.di.IIdentUtil
@@ -31,11 +31,11 @@ trait CanConfirmIdpReg
 
   /** Код базовой реализации ActionBuilder'ов, проверяющих возможность подтверждения регистрации. */
   trait CanConfirmIdpRegBase
-    extends ActionBuilder[SioReq]
+    extends ActionBuilder[MReq]
     with PlayMacroLogsI
     with OnUnauthUtil
   {
-    override def invokeBlock[A](request: Request[A], block: (SioReq[A]) => Future[Result]): Future[Result] = {
+    override def invokeBlock[A](request: Request[A], block: (MReq[A]) => Future[Result]): Future[Result] = {
       val personIdOpt = sessionUtil.getPersonId(request)
 
       personIdOpt.fold {
@@ -45,7 +45,7 @@ trait CanConfirmIdpReg
       } { personId =>
         val user = mSioUsers(personIdOpt)
         // Разрешить суперюзеру доступ, чтобы можно было верстать и проверять форму без шаманств.
-        val hasAccess: Future[Boolean] = if (user.isSuperUser) {
+        val hasAccess: Future[Boolean] = if (user.isSuper) {
           Future successful true
         } else {
           // Запустить подсчет имеющихся у юзера магазинов
@@ -77,7 +77,7 @@ trait CanConfirmIdpReg
         }
         hasAccess flatMap {
           case true =>
-            val req1 = SioReq(request, user)
+            val req1 = MReq(request, user)
             block(req1)
 
           case false =>
@@ -95,17 +95,17 @@ trait CanConfirmIdpReg
 
   sealed abstract class CanConfirmIdpRegBase2
     extends CanConfirmIdpRegBase
-    with ExpireSession[SioReq]
+    with ExpireSession[MReq]
     with PlayMacroLogsDyn
 
   /** Реализация [[CanConfirmIdpRegBase]] с выставлением CSRF-токена. */
   object CanConfirmIdpRegGet
     extends CanConfirmIdpRegBase2
-    with CsrfGet[SioReq]
+    with CsrfGet[MReq]
 
   /** Реализация [[CanConfirmIdpRegBase]] с проверкой CSRF-токена. */
   object CanConfirmIdpRegPost
     extends CanConfirmIdpRegBase2
-    with CsrfPost[SioReq]
+    with CsrfPost[MReq]
 
 }

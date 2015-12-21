@@ -24,5 +24,5 @@ case class MNodeExtTgSubmitReq[A](
   override val request     : Request[A],
   override val user        : ISioUser
 )
-  extends SioReqWrap[A]
+  extends MReqWrap[A]
   with INodeExtTgSubmitReq[A]

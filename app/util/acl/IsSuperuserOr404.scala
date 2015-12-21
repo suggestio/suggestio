@@ -1,6 +1,6 @@
 package util.acl
 
-import models.req.{ISioReqHdr, ISioUser, SioReq}
+import models.req.{IReqHdr, ISioUser, MReq}
 import play.api.Play.isDev
 import play.api.mvc.Result
 
@@ -17,9 +17,9 @@ trait IsSuperuserOr404Ctl
 {
   import mCommonDi._
 
-  trait IsSuperuserOr404Base[A] extends IsSuperuserBase with ExpireSession[A] {
+  trait IsSuperuserOr404Base extends IsSuperuserBase with ExpireSession[MReq] {
 
-    override def supOnUnauthResult(req: ISioReqHdr): Future[Result] = {
+    override def supOnUnauthResult(req: IReqHdr): Future[Result] = {
       errorHandler.http404Fut(req)
     }
   }
@@ -29,7 +29,7 @@ trait IsSuperuserOr404Ctl
 
 trait IsSuperuserOr404 extends IsSuperuserOr404Ctl {
 
-  object IsSuperuserOr404 extends IsSuperuserOr404Base[SioReq]
+  object IsSuperuserOr404 extends IsSuperuserOr404Base
 
 }
 
@@ -39,7 +39,7 @@ trait IsSuperuserOrDevelOr404 extends IsSuperuserOr404Ctl {
   import mCommonDi._
 
   /** Разрешить не-админам и анонимам доступ в devel-режиме. */
-  object IsSuperuserOrDevelOr404 extends IsSuperuserOr404Base[SioReq] {
+  object IsSuperuserOrDevelOr404 extends IsSuperuserOr404Base {
 
     override protected def isAllowed(user: ISioUser): Boolean = {
       super.isAllowed(user) || isDev

@@ -1,7 +1,7 @@
 package util.acl
 
 import models.event.MEvent
-import models.req.{ISioReq, MNodeEventReq, SioReq}
+import models.req.{IReq, MNodeEventReq, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result}
 
 import scala.concurrent.Future
@@ -38,7 +38,7 @@ trait HasNodeEventAccess
       val personIdOpt = sessionUtil.getPersonId(request)
       val user = mSioUsers(personIdOpt)
 
-      val reqErr = SioReq(request, user)
+      val reqErr = MReq(request, user)
       personIdOpt.fold ( forbidden(reqErr) ) { personId =>
         eventOptFut flatMap {
           // Нет такого события в модели.
@@ -69,11 +69,11 @@ trait HasNodeEventAccess
       }
     }
 
-    def forbidden(req: ISioReq[_]): Future[Result] = {
+    def forbidden(req: IReq[_]): Future[Result] = {
       onUnauthNode(req)
     }
 
-    def eventNotFound(req: ISioReq[_]): Future[Result] = {
+    def eventNotFound(req: IReq[_]): Future[Result] = {
       val res = NotFound("Event not found: " + eventId)
       Future successful res
     }

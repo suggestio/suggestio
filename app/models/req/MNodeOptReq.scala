@@ -10,7 +10,7 @@ import play.api.mvc.Request
  * Description: Реквест с опциональным узлом внутри.
  * @see [[MNodeReq]]
  */
-trait INodeOptReq[A] extends ISioReq[A] {
+trait INodeOptReq[A] extends IReq[A] {
   def mnodeOpt: Option[MNode]
 }
 
@@ -20,5 +20,5 @@ case class MNodeOptReq[A](
   override val request   : Request[A],
   override val user      : ISioUser
 )
-  extends SioReqWrap[A]
+  extends MReqWrap[A]
   with INodeOptReq[A]

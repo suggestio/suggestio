@@ -9,7 +9,7 @@ import play.api.mvc.Request
  * Created: 18.12.15 18:42
  * Description: Модель реквеста с инстансом какого-то контракта.
  */
-trait IContractReq[A] extends ISioReq[A] {
+trait IContractReq[A] extends IReq[A] {
   def mcontract: MContract
 }
 
@@ -19,5 +19,5 @@ case class MContractReq[A](
   override val request    : Request[A],
   override val user       : ISioUser
 )
-  extends SioReqWrap[A]
+  extends MReqWrap[A]
   with IContractReq[A]

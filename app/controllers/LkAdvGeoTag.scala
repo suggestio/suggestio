@@ -3,12 +3,13 @@ package controllers
 import com.google.inject.Inject
 import controllers.ctag.NodeTagsEdit
 import io.suggest.model.geo.{CircleGs, Distance, GeoPoint}
-import models.{CtxData, GeoIp}
 import models.adv.gtag.{GtForm_t, MAdvFormResult, MForAdTplArgs}
 import models.jsm.init.MTargets
 import models.maps.MapViewState
-import models.mproj.MCommonDi
+import models.mctx.CtxData
+import models.mproj.ICommonDi
 import models.req.IAdProdReq
+import models.GeoIp
 import org.elasticsearch.common.unit.DistanceUnit
 import org.joda.time.LocalDate
 import play.api.mvc.Result
@@ -33,7 +34,7 @@ class LkAdvGeoTag @Inject() (
   bill2Util                       : Bill2Util,
   override val tagsEditFormUtil   : TagsEditFormUtil,
   override val canAdvAdUtil       : CanAdvertiseAdUtil,
-  override val mCommonDi          : MCommonDi
+  override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl

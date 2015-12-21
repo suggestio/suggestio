@@ -4,7 +4,7 @@ import java.text.{DecimalFormat, NumberFormat}
 import java.util.Currency
 import io.suggest.common.text.StringUtil
 import io.suggest.mbill2.m.price.{MPrice, IPrice}
-import models.Context
+import models.mctx.Context
 import org.joda.time.{ReadableInstant, ReadablePartial}
 import org.joda.time.format.DateTimeFormat
 import play.api.libs.json.JsString
@@ -95,6 +95,9 @@ object TplDataFormatUtil extends TplFormatUtilT {
 
   /** Напечатать цену согласно локали и валюте. */
   def formatPrice(price: Float, currency: Currency)(implicit ctx: Context): String = {
+    formatPrice(price.toDouble, currency)
+  }
+  def formatPrice(price: Double, currency: Currency)(implicit ctx: Context): String = {
     formatPrice( MPrice(price, currency) )
   }
 

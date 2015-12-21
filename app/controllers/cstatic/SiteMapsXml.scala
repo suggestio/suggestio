@@ -1,6 +1,6 @@
 package controllers.cstatic
 
-import models.Context
+import models.mctx.Context
 import play.api.Play
 import play.api.libs.iteratee.Enumerator
 import util.acl.IgnoreAuth

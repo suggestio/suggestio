@@ -11,7 +11,7 @@ import play.api.mvc.{Request, RequestHeader}
  */
 
 /** Интерфейс заголовков реквеста sio. */
-trait ISioReqHdr
+trait IReqHdr
   extends RequestHeader
   with ExtReqHdr
 {
@@ -24,33 +24,37 @@ trait ISioReqHdr
 
 
 /** Завёрнутый заголовок реквест с дополнения от sio. */
-trait ISioReqHdrWrap
+trait IReqHdrWrap
   extends RequestHeaderWrap
-  with ISioReqHdr
+  with IReqHdr
+
+abstract class MReqHdrWrap
+  extends IReqHdrWrap
 
 
 /** Трейт реквеста sio. */
-trait ISioReq[A]
+trait IReq[A]
   extends Request[A]
-  with ISioReqHdr
+  with IReqHdr
 
 
 /** Трейт завёрнутого реквеста. */
-trait ISioReqWrap[A]
+trait IReqWrap[A]
   extends RequestWrap[A]
-  with ISioReq[A]
+  with IReq[A]
 
 
 /** Абстрактный класс, реализующий части ISioReq.
   * Именно он пришел на смену AbstractRequestWithPwOpt[A] и некоторым смежным классам.
   * Готовый класс упрощает жизнь компилятору, финальные реквесты должны наследовать именно этот класс. */
-abstract class SioReqWrap[A]
-  extends ISioReqWrap[A]
+abstract class MReqWrap[A]
+  extends MReqHdrWrap
+  with IReqWrap[A]
 
 
 /** Реквест, но без тела. Обращение к телу такого реквеста будет вызывать исключение.
   * Подмешивается к ISioReq[A] для websocket-экшенов. */
-trait NoBodyRequest extends ISioReq[Nothing] with ISioReqHdrWrap {
+trait NoBodyRequest extends IReq[Nothing] with IReqHdrWrap {
 
   /** @return [[java.lang.UnsupportedOperationException]] всегда */
   override def body: Nothing = {
@@ -59,9 +63,16 @@ trait NoBodyRequest extends ISioReq[Nothing] with ISioReqHdrWrap {
 }
 
 
+case class MReqHdr(
+  override val request: RequestHeader,
+  override val user   : ISioUser
+)
+  extends MReqHdrWrap
+
+
 /** Реквест к sio. */
-case class SioReq[A](
+case class MReq[A](
   override val request  : Request[A],
   override val user     : ISioUser
 )
-  extends ISioReqWrap[A]
+  extends MReqWrap[A]

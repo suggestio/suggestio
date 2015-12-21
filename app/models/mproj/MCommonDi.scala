@@ -6,8 +6,9 @@ import controllers.ErrorHandler
 import io.suggest.di.{ICacheApiUtil, IActorSystem, IEsClient, IExecutionContext}
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.playx.{CacheApiUtil, ICurrentConf}
+import models.mctx.Context2Factory
 import models.req.MSioUsers
-import models.{MNodeCache, Context2Factory}
+import models.MNodeCache
 import org.elasticsearch.client.Client
 import play.api.Application
 import play.api.cache.CacheApi
@@ -27,6 +28,7 @@ import scala.concurrent.ExecutionContext
  * Created: 07.12.15 17:13
  * Description: DI-контейнер для контроллеров с очень частоиспользуемыми DI-компонентами.
  * Сформирована для возможности быстро расширять список очень базовых зависимых компонент контроллеров и трейтов ACL.
+ * Инжектить нужно именно этот [[ICommonDi]].
  */
 @ImplementedBy( classOf[MCommonDi] )
 trait ICommonDi
@@ -42,10 +44,21 @@ trait ICommonDi
   with ISlickDbConfig
   with INodeCache
 {
-  def mSioUsers       : MSioUsers
-  def sessionUtil     : SessionUtil
-  def contextFactory  : Context2Factory
-  def messagesApi     : MessagesApi
+  // Для возможно оптимизации, всё объявляем как val, т.к. по сути так оно и есть.
+  val mSioUsers       : MSioUsers
+  val sessionUtil     : SessionUtil
+  val contextFactory  : Context2Factory
+  val messagesApi     : MessagesApi
+  override implicit val esClient: Client
+  override val errorHandler: ErrorHandler
+  override implicit val ec: ExecutionContext
+  override val actorSystem: ActorSystem
+  override val cache: CacheApi
+  override val cacheApiUtil: CacheApiUtil
+  override val db: Database
+  override val mNodeCache: MNodeCache
+  override val dbConfigProvider: DatabaseConfigProvider
+  override implicit val current: Application
 }
 
 
@@ -73,5 +86,5 @@ class MCommonDi @Inject() (
 
 /** Интерфейс к DI-полю со значением [[MCommonDi]] */
 trait IMCommonDi {
-  val mCommonDi: MCommonDi
+  val mCommonDi: ICommonDi
 }

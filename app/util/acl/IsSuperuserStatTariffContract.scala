@@ -1,7 +1,7 @@
 package util.acl
 
 import models.mbill.{MContract, MTariffStat}
-import models.req.{MTariffStatContractReq, SioReq}
+import models.req.{MTariffStatContractReq, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result}
 import util.async.AsyncUtil
 
@@ -31,7 +31,7 @@ trait IsSuperuserStatTariffContract
       val personIdOpt = sessionUtil.getPersonId(request)
       val user = mSioUsers(personIdOpt)
 
-      if (user.isSuperUser) {
+      if (user.isSuper) {
 
         val dbFut = Future {
           db.withConnection { implicit c =>
@@ -47,7 +47,7 @@ trait IsSuperuserStatTariffContract
         }
 
       } else {
-        val req1 = SioReq(request, user)
+        val req1 = MReq(request, user)
         supOnUnauthFut(req1)
       }
     }

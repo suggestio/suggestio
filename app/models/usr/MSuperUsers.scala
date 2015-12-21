@@ -5,7 +5,7 @@ import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import models.MNode
-import models.mproj.MCommonDi
+import models.mproj.ICommonDi
 import util.PlayMacroLogsImpl
 
 import scala.concurrent.Future
@@ -19,7 +19,7 @@ import scala.util.{Failure, Success}
  */
 @Singleton
 class MSuperUsers @Inject()(
-  mCommonDi: MCommonDi
+  mCommonDi       : ICommonDi
 )
   extends PlayMacroLogsImpl
 {

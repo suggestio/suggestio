@@ -7,8 +7,9 @@ import _root_.util.di.{IScUtil, IScNlUtil, IScStatUtil}
 import _root_.util.jsa.{JsAppendById, JsAction, SmRcvResp, Js}
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import models.im.make.{MakeResult, Makers}
+import models.mctx.Context
 import models.msc._
-import models.req.ISioReq
+import models.req.IReq
 import play.api.mvc.Result
 import util.jsa.cbca.grid._
 import models.blk._
@@ -42,7 +43,7 @@ trait ScAdsTileBase
   trait TileAdsLogic extends AdCssRenderArgs {
 
     type T
-    implicit def _request: ISioReq[_]
+    implicit def _request: IReq[_]
     def _adSearch: AdSearch
 
     lazy val ctx = implicitly[Context]
@@ -250,7 +251,7 @@ trait ScAdsTile
   /** Компаньон логик для разруливания версий логик обработки HTTP-запросов. */
   protected object TileAdsLogicV {
     /** Собрать необходимую логику обработки запроса в зависимости от версии API. */
-    def apply(adSearch: AdSearch)(implicit request: ISioReq[_]): TileAdsLogicV = {
+    def apply(adSearch: AdSearch)(implicit request: IReq[_]): TileAdsLogicV = {
       adSearch.apiVsn match {
         case MScApiVsns.Coffee =>
           new TileAdsLogicV1(adSearch)
@@ -272,7 +273,7 @@ trait ScAdsTile
 
   /** Логика сборки http-ответов для API v1. */
   protected class TileAdsLogicV1(val _adSearch: AdSearch)
-                                (implicit val _request: ISioReq[_]) extends TileAdsLogicV {
+                                (implicit val _request: IReq[_]) extends TileAdsLogicV {
 
     override type T = JsString
 
@@ -314,7 +315,7 @@ trait ScAdsTile
 
   /** Логика сборки HTTP-ответа для API v2. */
   protected class TileAdsLogicV2(val _adSearch: AdSearch)
-                                (implicit val _request: ISioReq[_]) extends TileAdsLogicV {
+                                (implicit val _request: IReq[_]) extends TileAdsLogicV {
 
     override type T = MFoundAd
 

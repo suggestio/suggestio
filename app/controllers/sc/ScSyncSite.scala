@@ -2,13 +2,15 @@ package controllers.sc
 
 import java.util.NoSuchElementException
 
-import controllers.{routes, SioController}
+import controllers.{SioController, routes}
 import models._
+import models.mctx.Context
 import models.msc._
+import models.req.IReq
 import play.api.mvc.Result
-import play.twirl.api.{HtmlFormat, Html}
+import play.twirl.api.{Html, HtmlFormat}
 import util.PlayMacroLogsI
-import util.acl.{MaybeAuth, AbstractRequestWithPwOpt}
+import util.acl.MaybeAuth
 
 import scala.concurrent.Future
 
@@ -40,7 +42,7 @@ trait ScSyncSiteGeo
    * Раздавалка "сайта" выдачи первой страницы. Можно переопределять, для изменения/расширения функционала.
    * @param request Реквест.
    */
-  override protected def _geoSiteResult(siteArgs: SiteQsArgs)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+  override protected def _geoSiteResult(siteArgs: SiteQsArgs)(implicit request: IReq[_]): Future[Result] = {
     request.ajaxJsScState match {
       case None =>
         super._geoSiteResult(siteArgs)
@@ -64,7 +66,7 @@ trait ScSyncSiteGeo
    * @param urlGenF Генератор внутренних ссылок, получающий на вход изменённое состояние выдачи.
    */
   protected def _syncGeoSite(scState: ScJsState, siteArgs: SiteQsArgs)(urlGenF: ScJsState => String)
-                            (implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+                            (implicit request: IReq[_]): Future[Result] = {
     val logic = new ScSyncSiteLogic {
       override def _scState   = scState
       override def _urlGenF   = urlGenF
@@ -84,7 +86,7 @@ trait ScSyncSiteGeo
     /** Дополнительные параметры для сайта. */
     def _siteArgs: SiteQsArgs
 
-    implicit def _request: AbstractRequestWithPwOpt[_]
+    implicit def _request: IReq[_]
 
     /** Генератор ссылок на выдачу. */
     def _urlGenF: ScJsState => String

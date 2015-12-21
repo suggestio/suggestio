@@ -1,7 +1,7 @@
 package util.acl
 
 import models.MNodeType
-import models.req.MNodeReq
+import models.req.{MReq, MNodeReq}
 import play.api.mvc.{Result, Request, ActionBuilder}
 import util.PlayMacroLogsDyn
 
@@ -55,7 +55,8 @@ trait IsAuthNode
             other.foreach { mnode =>
               LOGGER.warn(s"404 for existing node[$nodeId] with unexpected ntype. Expected one of [${_ntypes.mkString(",")}], but node[$nodeId] has ntype ${mnode.common.ntype}.")
             }
-            errorHandler.http404Fut(request)
+            val req1 = MReq(request, user)
+            errorHandler.http404Fut(req1)
         }
       }
     }

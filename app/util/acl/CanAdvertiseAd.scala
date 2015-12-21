@@ -2,8 +2,8 @@ package util.acl
 
 import com.google.inject.Inject
 import models._
-import models.mproj.MCommonDi
-import models.req.{ISioUser, MAdProdReq, SioReq}
+import models.mproj.ICommonDi
+import models.req.{ISioUser, MAdProdReq, MReq}
 import play.api.mvc._
 import util.di.ICanAdvAdUtil
 import util.n2u.N2NodesUtil
@@ -20,7 +20,7 @@ import scala.concurrent.Future
 
 class CanAdvertiseAdUtil @Inject() (
   n2NodeUtil                      : N2NodesUtil,
-  mCommonDi                       : MCommonDi
+  mCommonDi                       : ICommonDi
 )
   extends PlayMacroLogsImpl
 {
@@ -44,7 +44,7 @@ class CanAdvertiseAdUtil @Inject() (
   def maybeAllowed[A](user: ISioUser, mad: MNode, request: Request[A]): Future[Option[MAdProdReq[A]]] = {
     val prodIdOpt = n2NodeUtil.madProducerId(mad)
     def prodOptFut = mNodeCache.maybeGetByIdCached(prodIdOpt)
-    if (user.isSuperUser) {
+    if (user.isSuper) {
       prodOptFut.map { prodOpt =>
         val resOpt = prodOpt
           .filter { isAdvertiserNode }
@@ -106,7 +106,7 @@ trait CanAdvertiseAd
       val personIdOpt = sessionUtil.getPersonId(request)
       val madFut = mNodeCache.getByIdType(adId, MNodeTypes.Ad)
       val user = mSioUsers(personIdOpt)
-      def reqBlank = SioReq(request, user)
+      def reqBlank = MReq(request, user)
       madFut.flatMap {
         case Some(mad) =>
           canAdvAdUtil.maybeAllowed(user, mad, request) flatMap {

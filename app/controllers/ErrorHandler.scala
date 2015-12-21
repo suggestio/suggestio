@@ -1,10 +1,10 @@
 package controllers
 
-import _root_.util.acl.RichRequestHeader
 import _root_.util.jsa.init.ITargetsEmpty
+import _root_.util.secure.SessionUtil
 import com.google.inject.{Inject, Provider, Singleton}
-import models.req.ISioReqHdr
-import models.{CtxData, Context, Context2Factory}
+import models.mctx.{CtxData, Context2Factory, Context}
+import models.req.{MReqHdr, MSioUsers, IReqHdr}
 import play.api._
 import play.api.http.DefaultHttpErrorHandler
 import play.api.i18n.{I18nSupport, MessagesApi}
@@ -28,6 +28,8 @@ class ErrorHandler @Inject() (
   sourceMapper                    : OptionalSourceMapper,
   router                          : Provider[Router],
   contextFactory                  : Context2Factory,
+  mSioUsers                       : MSioUsers,
+  sessionUtil                     : SessionUtil,
   override val messagesApi        : MessagesApi,
   implicit val ex                 : ExecutionContext
 )
@@ -36,7 +38,7 @@ class ErrorHandler @Inject() (
   with ITargetsEmpty
 {
 
-  implicit private def getContext2(implicit rrh: ISioReqHdr): Context = {
+  implicit private def getContext2(implicit rrh: IReqHdr): Context = {
     contextFactory.create(rrh, implicitly[play.api.i18n.Messages], CtxData.empty)
   }
 
@@ -45,22 +47,24 @@ class ErrorHandler @Inject() (
 
   override protected def onNotFound(request: RequestHeader, message: String): Future[Result] = {
     if (_isProd) {
-      http404Fut(request)
+      val personIdOpt = sessionUtil.getPersonId(request)
+      val user = mSioUsers(personIdOpt)
+      val reqHdr = MReqHdr(request, user)
+      http404Fut(reqHdr)
     } else {
       super.onNotFound(request, message)
     }
   }
 
+  /** Асинхронный рендер 404-результата для сырого запроса. */
+  def http404Fut(implicit req: IReqHdr): Future[Result] = {
+    val resp = http404ctx
+    Future.successful(resp)
+  }
+
   /** Рендер 404-результата. */
   def http404ctx(implicit ctx: Context): Result = {
     Results.NotFound( views.html.static.http404Tpl() )
-  }
-
-  /** Асинхронный рендер 404-результата для сырого запроса. */
-  def http404Fut(implicit request: RequestHeader): Future[Result] = {
-    RichRequestHeader(request) map { implicit rrh =>
-      http404ctx
-    }
   }
 
 }

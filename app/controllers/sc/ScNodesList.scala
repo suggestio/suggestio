@@ -5,6 +5,7 @@ import _root_.util.di.{IScNlUtil, IScStatUtil}
 import _root_.util.jsa.{Js, SmRcvResp}
 import models.jsm.NodeListResp
 import models.msc._
+import models.req.IReq
 import play.api.mvc.Result
 import play.twirl.api.Html
 import util.PlayMacroLogsI
@@ -33,7 +34,7 @@ trait ScNodesListBase
   protected trait FindNodesLogic {
 
     def _nsArgs: MScNodeSearchArgs
-    implicit def _request: AbstractRequestWithPwOpt[_]
+    implicit def _request: IReq[_]
 
     lazy val gsiOptFut = _nsArgs.geoMode.geoSearchInfoOpt
 
@@ -153,7 +154,7 @@ trait ScNodesList
   /** Компаньон логик для разруливания версий логик обработки HTTP-запросов. */
   protected object FindNodesLogicV {
     /** Собрать необходимую логику обработки ответа в заисимости от версии API. */
-    def apply(tstamp: Long, args: MScNodeSearchArgs)(implicit request: AbstractRequestWithPwOpt[_]): FindNodesLogicV = {
+    def apply(tstamp: Long, args: MScNodeSearchArgs)(implicit request: IReq[_]): FindNodesLogicV = {
       args.apiVsn match {
         case MScApiVsns.Coffee =>
           new FindNodesLogicV1(tstamp, args)
@@ -206,7 +207,7 @@ trait ScNodesList
 
   /** Реализация логики для SC API v1: ответы JSONP. */
   protected class FindNodesLogicV1(val timestamp: Long, val _nsArgs: MScNodeSearchArgs)
-                                  (implicit val _request: AbstractRequestWithPwOpt[_]) extends FindNodesLogicV {
+                                  (implicit val _request: IReq[_]) extends FindNodesLogicV {
     override def resultFut: Future[Result] = {
       for (respArgs <- respArgsFut) yield {
         Ok(Js(8192, SmRcvResp(respArgs)))
@@ -216,7 +217,7 @@ trait ScNodesList
 
   /** Реализация логики для SC API v2: ответы в чистом JSON. */
   protected class FindNodesLogicV2(val timestamp: Long, val _nsArgs: MScNodeSearchArgs)
-                                  (implicit val _request: AbstractRequestWithPwOpt[_]) extends FindNodesLogicV {
+                                  (implicit val _request: IReq[_]) extends FindNodesLogicV {
     override def resultFut: Future[Result] = {
       for (respArgs <- respArgsFut) yield {
         Ok(respArgs.toJson)

@@ -5,9 +5,9 @@ import io.suggest.ym.parsers.Price
 import models._
 import models.mbill.MContract.LegalContractId
 import models.mbill._
-import models.mproj.MCommonDi
+import models.mproj.ICommonDi
 import models.msys.MSysAdnNodeBillingArgs
-import models.req.ISioReq
+import models.req.IReq
 import org.joda.time.DateTime
 import play.api.data.Forms._
 import play.api.data._
@@ -29,7 +29,7 @@ import scala.concurrent.Future
  */
 class SysMarketBilling @Inject() (
   billing                         : Billing,
-  override val mCommonDi          : MCommonDi
+  override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
@@ -407,7 +407,7 @@ class SysMarketBilling @Inject() (
   }
 
   private def _editSinkCom(scId: Int, formOpt: Option[Form[MSinkComission]] = None)
-                          (implicit request: ISioReq[AnyContent]): Future[Result] = {
+                          (implicit request: IReq[AnyContent]): Future[Result] = {
     val syncResult = db.withConnection { implicit c =>
       val msc = MSinkComission.getById(scId).get
       val mbc = MContract.getById(msc.contractId).get

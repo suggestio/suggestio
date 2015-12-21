@@ -1,7 +1,7 @@
 package controllers.ident
 
 import controllers.SioController
-import models.req.ISioReq
+import models.req.IReq
 import models.usr.{MPersonIdent, EmailPwIdent}
 import play.api.data._
 import play.api.data.Forms._
@@ -65,14 +65,14 @@ trait ChangePwAction
   import mCommonDi._
 
   /** Если неясно куда надо редиректить юзера, то что делать? */
-  def changePwOkRdrDflt(implicit request: ISioReq[AnyContent]): Future[Call] = {
+  def changePwOkRdrDflt(implicit request: IReq[AnyContent]): Future[Call] = {
     // TODO Избавится от get, редиректя куда-нить в другое место.
     identUtil.redirectCallUserSomewhere(request.user.personIdOpt.get)
   }
 
   /** Сабмит формы смены пароля. Нужно проверить старый пароль и затем заменить его новым. */
   def _changePasswordSubmit(r: Option[String])(onError: Form[(String, String)] => Future[Result])
-                           (implicit request: ISioReq[AnyContent]): Future[Result] = {
+                           (implicit request: IReq[AnyContent]): Future[Result] = {
     val personId = request.user.personIdOpt.get
     lazy val logPrefix = s"_changePasswordSubmit($personId): "
     changePasswordFormM.bindFromRequest().fold(

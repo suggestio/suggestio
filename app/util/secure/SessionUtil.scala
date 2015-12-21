@@ -21,7 +21,7 @@ class SessionUtil extends PlayMacroLogsImpl {
    * @return Опциональный id юзера.
    */
   def getPersonId(request: RequestHeader): Option[String] = {
-    getPersonId(request)
+    getPersonId(request.session)
   }
 
   /**

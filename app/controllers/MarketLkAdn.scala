@@ -11,8 +11,9 @@ import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models._
 import models.adv._
 import models.mbill.{MBalance, MContract}
+import models.mctx.Context
 import models.mlk.{MNodeAdsTplArgs, MNodeShowArgs}
-import models.mproj.MCommonDi
+import models.mproj.ICommonDi
 import models.msession.Keys
 import models.usr.EmailPwIdent
 import org.elasticsearch.search.sort.SortOrder
@@ -48,7 +49,7 @@ class MarketLkAdn @Inject() (
   logoUtil                            : LogoUtil,
   billing                             : Billing,
   galleryUtil                         : GalleryUtil,
-  override val mCommonDi              : MCommonDi
+  override val mCommonDi              : ICommonDi
 )
   extends SioController
   with PlayMacroLogsImpl

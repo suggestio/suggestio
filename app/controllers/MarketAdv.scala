@@ -9,8 +9,9 @@ import models._
 import models.adv._
 import models.adv.direct._
 import models.adv.tpl.{MAdvForAdTplArgs, MAdvHistoryTplArgs, MCurrentAdvsTplArgs}
-import models.mproj.MCommonDi
-import models.req.{INodeAdvReqReq, IAdProdReq, ISioReq}
+import models.mctx.Context
+import models.mproj.ICommonDi
+import models.req.{INodeAdvReqReq, IAdProdReq, IReq}
 import play.api.data._
 import play.api.mvc.{AnyContent, Result}
 import play.twirl.api.Html
@@ -46,7 +47,7 @@ class MarketAdv @Inject() (
   advFormUtil                     : AdvFormUtil,
   bill2Util                       : Bill2Util,
   n2NodesUtil                     : N2NodesUtil,
-  override val mCommonDi          : MCommonDi
+  override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
@@ -288,7 +289,7 @@ class MarketAdv @Inject() (
     }.toMap
   }
 
-  private def maybeFreeAdv(implicit request: ISioReq[_]): Boolean = {
+  private def maybeFreeAdv(implicit request: IReq[_]): Boolean = {
     // Раньше было ограничение на размещение с завтрашнего дня, теперь оно снято.
     val isFreeOpt = advFormUtil.freeAdvFormM
       .bindFromRequest()
@@ -657,8 +658,8 @@ class MarketAdv @Inject() (
 
   /** На основе маппинга формы и сессии суперюзера определить, как размещать рекламу:
     * бесплатно инжектить или за деньги размещать. */
-  private def isFreeAdv(isFreeOpt: Option[Boolean])(implicit request: ISioReq[_]): Boolean = {
-    isFreeOpt.exists { _ && request.user.isSuperUser }
+  private def isFreeAdv(isFreeOpt: Option[Boolean])(implicit request: IReq[_]): Boolean = {
+    isFreeOpt.exists { _ && request.user.isSuper }
   }
 
 

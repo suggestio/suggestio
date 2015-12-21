@@ -50,7 +50,7 @@
   <input type="hidden" value="@routes.MarketAdv.getAdvPriceSubmit(adId)" id="advsPriceUpdateUrl">
 
   @* Суперюзерам доступно беплатное размещение на любом узле. *@
-  @if(ctx.isSuperuser) {
+  @if(ctx.user.isSuper) {
     @_advSuTpl()
   }
 

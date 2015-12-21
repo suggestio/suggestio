@@ -4,7 +4,8 @@ import com.google.inject.{Singleton, Inject}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.ym.model.common.MImgInfoMeta
 import models.im._
-import models.{IEdge, MEdge, MNode, Context}
+import models.mctx.Context
+import models.{IEdge, MEdge, MNode}
 import models.madn.EditConstants
 import play.api.Configuration
 import play.api.data.Forms._

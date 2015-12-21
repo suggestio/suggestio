@@ -9,7 +9,7 @@ import play.api.mvc.Request
  * Created: 18.12.15 18:28
  * Description: Модель реквеста с инстансом MAiMad внутри.
  */
-trait IAiMadReq[A] extends ISioReq[A] {
+trait IAiMadReq[A] extends IReq[A] {
   def aiMad: MAiMad
 }
 
@@ -20,5 +20,5 @@ case class MAiMadReq[A](
   override val request  : Request[A],
   override val user     : ISioUser
 )
-  extends SioReqWrap[A]
+  extends MReqWrap[A]
   with IAiMadReq[A]

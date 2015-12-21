@@ -2,8 +2,8 @@ package controllers
 
 import com.google.inject.Inject
 import models._
-import models.mproj.MCommonDi
-import models.req.ISioReq
+import models.mproj.ICommonDi
+import models.req.IReq
 import models.usr.MPersonIdent
 import play.api.data.Forms._
 import play.api.data._
@@ -28,7 +28,7 @@ class MarketLkSupport @Inject() (
   override val mailer             : IMailerWrapper,
   override val identUtil          : IdentUtil,
   supportUtil                     : SupportUtil,
-  override val mCommonDi          : MCommonDi
+  override val mCommonDi          : ICommonDi
 )
   extends SioController
   with PlayLazyMacroLogsImpl
@@ -78,7 +78,7 @@ class MarketLkSupport @Inject() (
     _supportForm(None, r)
   }
 
-  private def _supportForm(nodeOpt: Option[MNode], r: Option[String])(implicit request: ISioReq[_]): Future[Result] = {
+  private def _supportForm(nodeOpt: Option[MNode], r: Option[String])(implicit request: IReq[_]): Future[Result] = {
     // Взять дефолтовое значение email'а по сессии
     val emailsDfltFut = request.user.personIdOpt.fold [Future[Seq[String]]]
       { Future successful Nil }
@@ -105,7 +105,7 @@ class MarketLkSupport @Inject() (
     _supportFormSubmit(None, r)
   }
 
-  private def _supportFormSubmit(nodeOpt: Option[MNode], r: Option[String])(implicit request: ISioReq[_]): Future[Result] = {
+  private def _supportFormSubmit(nodeOpt: Option[MNode], r: Option[String])(implicit request: IReq[_]): Future[Result] = {
     val adnIdOpt = nodeOpt.flatMap(_.id)
     lazy val logPrefix = s"supportFormSubmit($adnIdOpt): "
     supportFormM.bindFromRequest().fold(

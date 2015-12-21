@@ -9,7 +9,7 @@ import play.api.mvc.Request
  * Created: 18.12.15 19:16
  * Description: Реквест с инстансом рекламной карточки внутри.
  */
-trait IAdReq[A] extends ISioReq[A] {
+trait IAdReq[A] extends IReq[A] {
   def mad: MNode
 }
 
@@ -20,5 +20,5 @@ case class MAdReq[A](
   request : Request[A],
   user    : ISioUser
 )
-  extends SioReqWrap[A]
+  extends MReqWrap[A]
   with IAdReq[A]

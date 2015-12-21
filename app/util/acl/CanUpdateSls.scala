@@ -1,7 +1,7 @@
 package util.acl
 
 import models._
-import models.req.{MAdProdReq, SioReq}
+import models.req.{MAdProdReq, MReq}
 import play.api.mvc._
 import util.PlayMacroLogsDyn
 import util.n2u.IN2NodesUtilDi
@@ -37,7 +37,7 @@ trait CanUpdateSls
       val personIdOpt = sessionUtil.getPersonId(request)
       val user = mSioUsers(personIdOpt)
 
-      val reqErr = SioReq(request, user)
+      def reqErr = MReq(request, user)
 
       personIdOpt.fold {
         LOGGER.trace("invokeBlock(): Anonymous access prohibited to " + adId)
@@ -79,7 +79,7 @@ trait CanUpdateSls
 
           // Рекламная карточка не найдена.
           case None =>
-            adNotFound(request)
+            adNotFound(reqErr)
         }
       }
     }

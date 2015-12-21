@@ -3,7 +3,7 @@ package util.acl
 import controllers.SioController
 import io.suggest.model.n2.node.MNodeTypes
 import models.MNode
-import models.req.{MPersonReq, SioReq}
+import models.req.{MPersonReq, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result}
 
 import scala.concurrent.Future
@@ -33,7 +33,7 @@ trait IsSuperuserPerson
       val personIdOpt = sessionUtil.getPersonId(request)
       val user = mSioUsers(personIdOpt)
 
-      if (user.isSuperUser) {
+      if (user.isSuper) {
 
         // Если юзер запрашивает сам себя, то заполняем user.personNodeOptFut. Иначе запрашиваем узел целевого юзера напрямую.
         val mpersonOptFut: Future[Option[MNode]] = {
@@ -54,7 +54,7 @@ trait IsSuperuserPerson
         }
 
       } else {
-        val req1 = SioReq(request, user)
+        val req1 = MReq(request, user)
         supOnUnauthFut(req1)
       }
     }

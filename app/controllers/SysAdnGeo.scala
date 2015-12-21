@@ -5,7 +5,7 @@ import io.suggest.model.geo.{GeoShapeQuerable, Distance, CircleGs}
 import io.suggest.model.n2.edge.MNodeEdges
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.mgeo.MGsPtr
-import models.mproj.MCommonDi
+import models.mproj.ICommonDi
 import models.msys._
 import models.req.INodeReq
 import org.elasticsearch.common.unit.DistanceUnit
@@ -30,7 +30,7 @@ import scala.concurrent.Future
  */
 class SysAdnGeo @Inject() (
   implicit private val osmClient    : OsmClient,
-  override val mCommonDi            : MCommonDi
+  override val mCommonDi            : ICommonDi
 )
   extends SioControllerImpl
   with PlayLazyMacroLogsImpl

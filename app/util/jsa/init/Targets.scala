@@ -1,7 +1,7 @@
 package util.jsa.init
 
 import models.jsm.init.{MTargets, MTarget}
-import models.req.ISioReqHdr
+import models.req.IReqHdr
 
 /**
  * Suggest.io
@@ -13,7 +13,7 @@ import models.req.ISioReqHdr
 /** Интерфейс для доступа к необходимым целям. */
 trait ITargets {
   /** Вернуть список целей инициализации js. */
-  def jsiTgs(req: ISioReqHdr): List[MTarget]
+  def jsiTgs(req: IReqHdr): List[MTarget]
 }
 
 
@@ -26,14 +26,14 @@ trait ITargets {
  *   }
  */
 trait ITargetsEmpty extends ITargets {
-  override def jsiTgs(req: ISioReqHdr): List[MTarget] = Nil
+  override def jsiTgs(req: IReqHdr): List[MTarget] = Nil
 }
 
 
 
 /** Поддержка добавления таргета для отображения flashing-уведомлений, если они есть. */
-trait FlashingJsInit extends ITargets {
-  override def jsiTgs(req: ISioReqHdr): List[MTarget] = {
+trait FlashingJsInit extends ITargetsEmpty {
+  override def jsiTgs(req: IReqHdr): List[MTarget] = {
     var tgs = super.jsiTgs(req)
     // Добавить flashing-цель, если есть flashing-уведомления в запросе.
     if (!req.flash.isEmpty)
@@ -45,5 +45,4 @@ trait FlashingJsInit extends ITargets {
 
 /** Аддон для контроллеров с дефолтовым набором трейтов для компиляции списка js init целей. */
 trait CtlJsInitT
-  extends ITargetsEmpty
-  with FlashingJsInit
+  extends FlashingJsInit

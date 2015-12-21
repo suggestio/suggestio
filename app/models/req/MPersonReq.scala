@@ -10,7 +10,7 @@ import play.api.mvc.Request
  * Description: Реквест с узлом юзера внутри.
  */
 
-trait IPersonReq[A] extends ISioReq[A] {
+trait IPersonReq[A] extends IReq[A] {
   def mperson   : MNode
 }
 
@@ -20,5 +20,5 @@ case class MPersonReq[A](
   override val request : Request[A],
   override val user    : ISioUser
 )
-  extends SioReqWrap[A]
+  extends MReqWrap[A]
   with IPersonReq[A]

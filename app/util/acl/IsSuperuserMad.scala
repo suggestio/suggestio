@@ -2,7 +2,7 @@ package util.acl
 
 import controllers.SioController
 import io.suggest.model.n2.node.MNodeTypes
-import models.req.{MAdReq, SioReq}
+import models.req.{MAdReq, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result}
 
 import scala.concurrent.Future
@@ -36,7 +36,7 @@ trait IsSuperuserMad
       val personIdOpt = sessionUtil.getPersonId(request)
       val user = mSioUsers(personIdOpt)
 
-      if (user.isSuperUser) {
+      if (user.isSuper) {
         madOptFut.flatMap {
           case Some(mad) =>
             val req1 = MAdReq(mad, request, user)
@@ -46,7 +46,7 @@ trait IsSuperuserMad
         }
 
       } else {
-        val req1 = SioReq(request, user)
+        val req1 = MReq(request, user)
         supOnUnauthFut(req1)
       }
     }

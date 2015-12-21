@@ -11,9 +11,10 @@ import models.im.logo.LogoOpt_t
 import models.im.{MImg3_, MImgT}
 import models.jsm.init.MTargets
 import models.madn.EditConstants._
+import models.mctx.{CtxData, Context}
 import models.mlk.{FormMapResult, NodeEditArgs}
-import models.mproj.MCommonDi
-import models.req.{INodeReq, ISioReq}
+import models.mproj.ICommonDi
+import models.req.{INodeReq, IReq}
 import org.joda.time.DateTime
 import play.api.data.Forms._
 import play.api.data.{Form, Mapping}
@@ -44,7 +45,7 @@ class MarketLkAdnEdit @Inject() (
   mImg3                           : MImg3_,
   tempImgSupport                  : TempImgSupport,
   galleryUtil                     : GalleryUtil,
-  override val mCommonDi          : MCommonDi
+  override val mCommonDi          : ICommonDi
 )
   extends SioController
   with PlayMacroLogsImpl
@@ -406,7 +407,7 @@ class MarketLkAdnEdit @Inject() (
 
 
   /** Обертка экшена для всех экшенов загрузки картинков. */
-  private def _imgUploadBase(f: ISioReq[MultipartFormData[TemporaryFile]] => Future[Result]) = {
+  private def _imgUploadBase(f: IReq[MultipartFormData[TemporaryFile]] => Future[Result]) = {
     val bp = parse.multipartFormData(Multipart.handleFilePartAsTemporaryFile, maxLength = IMG_GALLERY_MAX_LEN_BYTES)
     IsAuth.async(bp) { implicit request =>
       bruteForceProtected {

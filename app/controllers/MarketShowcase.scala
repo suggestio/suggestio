@@ -2,7 +2,7 @@ package controllers
 
 import com.google.inject.Inject
 import controllers.sc._
-import models.mproj.{MCommonDi, MProjectInfo}
+import models.mproj.{ICommonDi, MProjectInfo}
 import util._
 import util.cdn.CdnUtil
 import util.img.{LogoUtil, WelcomeUtil}
@@ -27,7 +27,7 @@ class MarketShowcase @Inject() (
   override val scUtil             : ShowcaseUtil,
   override val cdnUtil            : CdnUtil,
   override val n2NodesUtil        : N2NodesUtil,
-  override val mCommonDi          : MCommonDi,
+  override val mCommonDi          : ICommonDi,
   override val mProjectInfo       : MProjectInfo
 )
   extends SioControllerImpl

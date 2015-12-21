@@ -2,7 +2,7 @@ package models.event
 
 import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.model.menum.EnumJsonReadsT
-import models.Context
+import models.mctx.Context
 import play.api.libs.json._
 import play.twirl.api.{Html, Template2}
 import views.html.lk.adv.ext.event._

@@ -5,7 +5,7 @@
 <div>
   <p>
     Пользователь @emails.headOption.fold {
-      @ctx.pwOpt
+      @ctx.user.personIdOpt
     } { email =>
       <a href="mailto:@email">@email</a>
     }
