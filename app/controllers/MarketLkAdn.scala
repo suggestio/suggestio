@@ -9,7 +9,6 @@ import io.suggest.model.n2.node.meta.MBasicMeta
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models._
-import models.adv._
 import models.mbill.{MBalance, MContract}
 import models.mctx.Context
 import models.mlk.{MNodeAdsTplArgs, MNodeShowArgs}
@@ -183,19 +182,6 @@ class MarketLkAdn @Inject() (
 
       }
 
-      // Собрать карту занятых размещением карточек.
-      val ad2advMapFut = {
-          Future.traverse(Seq(MAdvOk, MAdvReq)) { model =>
-            Future {
-              db.withConnection { implicit c =>
-                model.findNotExpiredRelatedTo(adnId)
-              }
-            }(AsyncUtil.jdbcExecutionContext)
-          } map { results =>
-            advs2adIdMap(results : _*)
-          }
-      }
-
       // Надо ли отображать кнопку "управление" под карточками? Да, если есть баланс и контракт.
       val canAdvFut: Future[Boolean] = {
         if (mnode.extras.adn.exists(_.isProducer)) {
@@ -230,15 +216,13 @@ class MarketLkAdn @Inject() (
       // Рендер результата, когда все карточки будут собраны.
       for {
         brArgss   <- brArgssFut
-        ad2advMap <- ad2advMapFut
         canAdv    <- canAdvFut
         ctx       <- ctxFut
       } yield {
         val args = MNodeAdsTplArgs(
           mnode       = mnode,
           mads        = brArgss,
-          canAdv      = canAdv,
-          ad2advMap   = ad2advMap
+          canAdv      = canAdv
         )
         val render = nodeAdsTpl(args)(ctx)
         Ok(render)
@@ -246,14 +230,6 @@ class MarketLkAdn @Inject() (
     }
   }
 
-
-  private def advs2adIdMap(advss: Seq[MAdvI] *): Map[String, MAdvI] = {
-    advss.foldLeft [List[(String, MAdvI)]] (Nil) { (acc1, advs) =>
-      advs.foldLeft(acc1) { (acc2, adv) =>
-        adv.adId -> adv  ::  acc2
-      }
-    }.toMap
-  }
 
   // Обработка инвайтов на управление узлом.
   /** Маппинг формы принятия инвайта. Содержит галочку для договора и опциональный пароль. */

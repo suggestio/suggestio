@@ -1,6 +1,5 @@
 package models.mlk
 
-import models.adv.MAdvI
 import models.{MNode, blk}
 
 /**
@@ -10,30 +9,18 @@ import models.{MNode, blk}
  * Description: Модели аргументов для вызова рендера шаблона lk.adn.nodeAdsTpl() и смежных.
  */
 
-sealed trait IAdsListTplArgs {
-  def mads        : Seq[blk.IRenderArgs]
-  def ad2advMap   : Map[String, MAdvI]
-}
-
-/** Интерфейс контейнера аргументов для шаблона _readOnlyAdsListTpl. */
-trait IAdsListTplArgsRo extends IAdsListTplArgs
-
 /** Интерфейс контейнера аргументов для шаблона _myAdsTpl. */
-trait IAdsListTplArgsMy extends IAdsListTplArgs {
+trait INodeAdsTplArgs {
+  def mads        : Seq[blk.IRenderArgs]
   def mnode       : MNode
   def canAdv      : Boolean
 }
-
-
-/** Интерфейс модели контейнера аргументов для шаблона nodeAdsTpl. */
-trait INodeAdsTplArgs extends IAdsListTplArgsRo with IAdsListTplArgsMy
 
 
 /** Контейнер аргументов для шаблона nodeAdsTpl. */
 case class MNodeAdsTplArgs(
   override val mnode        : MNode,
   override val mads         : Seq[blk.IRenderArgs],
-  override val canAdv       : Boolean,
-  override val ad2advMap    : Map[String, MAdvI]
+  override val canAdv       : Boolean
 )
   extends INodeAdsTplArgs

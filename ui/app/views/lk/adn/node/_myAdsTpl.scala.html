@@ -1,4 +1,4 @@
-@(args: mlk.IAdsListTplArgsMy)(implicit ctx: Context)
+@(args: mlk.INodeAdsTplArgs)(implicit ctx: Context)
 
 @* Список рекламных карточек для создателя рекламы. В нём галочки есть. *@
 @import adv._
@@ -31,7 +31,7 @@
 
         <div class="js-equal-height">
 
-	  @* Карточку можно редактировать всегда. Раньше нельзя было редактировать размещенную. *@
+	        @* Карточку можно редактировать всегда. Раньше нельзя было редактировать размещенную. *@
           <a class="adv-item_edit-btn" href="@routes.MarketAd.editAd(mad.id.get)">
             <span></span>
           </a>
