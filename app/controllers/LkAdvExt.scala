@@ -9,7 +9,7 @@ import models.adv.search.etg.ExtTargetSearchArgs
 import models.jsm.init.MTargets
 import models.mctx.Context
 import models.mproj.ICommonDi
-import models.req.IAdProdReq
+import models.req.{MReqNoBody, IAdProdReq}
 import org.elasticsearch.search.sort.SortOrder
 import play.api.data.Forms._
 import play.api.data._
@@ -227,8 +227,8 @@ class LkAdvExt @Inject() (
       val user = mSioUsers(personIdOpt)
       madFut
         .flatMap { mad =>
-          val req1 = RequestHeaderAsRequest(requestHeader)
-          canAdvAdUtil.maybeAllowed(user, mad, req1)
+          val req1 = MReqNoBody(requestHeader, user) // RequestHeaderAsRequest(requestHeader)
+          canAdvAdUtil.maybeAllowed(mad, req1)
         }
         .map(_.get)
         .recoverWith { case ex: NoSuchElementException =>

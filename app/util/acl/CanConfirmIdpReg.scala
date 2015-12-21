@@ -5,11 +5,11 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.MNode
-import models.req.{MReq, SioReqMd}
+import models.req.MReq
 import models.usr.MExtIdent
-import play.api.mvc.{Result, Request, ActionBuilder}
+import play.api.mvc.{ActionBuilder, Request, Result}
 import util.di.IIdentUtil
-import util.{PlayMacroLogsI, PlayMacroLogsDyn}
+import util.{PlayMacroLogsDyn, PlayMacroLogsI}
 
 import scala.concurrent.Future
 

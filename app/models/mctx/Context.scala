@@ -10,6 +10,7 @@ import io.suggest.util.UuidUtil
 import models.mproj.IMCommonDi
 import models.req.ExtReqHdr.{firstForwarded, lastForwarded}
 import models.req.IReqHdr
+import models.usr.MSuperUsers
 import org.joda.time.DateTime
 import play.api.Play.{configuration, current, isDev}
 import play.api.http.HeaderNames._
@@ -286,7 +287,8 @@ class ContextApi @Inject() (
   val galleryUtil         : GalleryUtil,
   val cdn                 : CdnUtil,
   val dynImgUtil          : DynImgUtil,
-  val n2NodesUtil         : N2NodesUtil
+  val n2NodesUtil         : N2NodesUtil,
+  val mSuperUsers         : MSuperUsers
 )
 
 

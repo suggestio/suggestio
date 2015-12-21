@@ -50,6 +50,7 @@ class SysMarket @Inject() (
   override val n2NodesUtil        : N2NodesUtil,
   override val sysAdRenderUtil    : SysAdRenderUtil,
   mImg3                           : MImg3_,
+  mPerson                         : MPerson,
   override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
@@ -239,7 +240,7 @@ class SysMarket @Inject() (
       val ownerIds = mnode.edges
         .withPredicateIterIds( MPredicates.OwnedBy )
       Future.traverse( ownerIds ) { personId =>
-        MPerson.findUsernameCached(personId)
+        mPerson.findUsernameCached(personId)
           .map { nameOpt =>
             val name = nameOpt.getOrElse(personId)
             personId -> name

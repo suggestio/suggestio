@@ -27,6 +27,7 @@ import scala.concurrent.Future
  */
 // TODO Замержить куски контроллера в отображение узла N2. Сейчас этот контроллер рисует неактуальные данные.
 class SysPerson @Inject() (
+  mPerson                   : MPerson,
   override val mCommonDi    : ICommonDi
 )
   extends SioControllerImpl
@@ -131,7 +132,7 @@ class SysPerson @Inject() (
       .map { _.sortBy { ei => ei.providerId + "." + ei.userId } }
 
     // Определить имя юзера, если возможно.
-    val personNameOptFut = MPerson.findUsernameCached(personId)
+    val personNameOptFut = mPerson.findUsernameCached(personId)
     // Карта имен юзеров, передается в шаблоны.
     val personNamesFut = personNameOptFut
       .map { _.map(personId -> _).toMap }

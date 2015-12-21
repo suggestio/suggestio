@@ -3,7 +3,7 @@ package util.acl
 import com.google.inject.Inject
 import models._
 import models.mproj.ICommonDi
-import models.req.{MUserInit, ISioUser, MAdProdReq, MReq}
+import models.req._
 import play.api.mvc._
 import util.di.ICanAdvAdUtil
 import util.n2u.N2NodesUtil
@@ -35,24 +35,23 @@ class CanAdvertiseAdUtil @Inject() (
 
   /**
    * Определить, можно ли пропускать реквест на исполнение экшена.
-   * @param user Данные о текущем юзере.
    * @param mad Рекламная карточка.
-   * @param request Реквест.
+   * @param req Реквест sio.
    * @tparam A Параметр типа реквеста.
    * @return None если нельзя. Some([[models.req.MAdProdReq]]) если можно исполнять реквест.
    */
-  def maybeAllowed[A](user: ISioUser, mad: MNode, request: Request[A]): Future[Option[MAdProdReq[A]]] = {
+  def maybeAllowed[A](mad: MNode, req: IReq[A]): Future[Option[MAdProdReq[A]]] = {
     val prodIdOpt = n2NodeUtil.madProducerId(mad)
+    // TODO Далее говнокод какой-то, переписать.
     def prodOptFut = mNodeCache.maybeGetByIdCached(prodIdOpt)
-    if (user.isSuper) {
+    def req2(mnode: MNode) = MAdProdReq(mad, mnode, req, req.user)
+    if (req.user.isSuper) {
       prodOptFut.map { prodOpt =>
         val resOpt = prodOpt
           .filter { isAdvertiserNode }
-          .map { mnode =>
-            MAdProdReq(mad, mnode, request, user)
-          }
+          .map { req2 }
         if (resOpt.isEmpty)
-          LOGGER.debug(s"maybeAllowed(${user.personIdOpt}, ${mad.id.get}): superuser, but ad producer node $prodIdOpt is not allowed to advertise.")
+          LOGGER.debug(s"maybeAllowed(${req.user.personIdOpt}, ${mad.id.get}): superuser, but ad producer node $prodIdOpt is not allowed to advertise.")
         resOpt
       }
 
@@ -69,9 +68,7 @@ class CanAdvertiseAdUtil @Inject() (
                 .contains(personId)
               isOwnedByMe  &&  isAdvertiserNode(mnode)
             }
-            .map { mnode =>
-              MAdProdReq(mad, mnode, request, user)
-            }
+            .map { req2 }
           if (resOpt.isEmpty)
             debug(s"maybeAllowed($personId, ${mad.id.get}): User is not node $prodIdOpt admin or node is not a producer.")
           resOpt
@@ -108,10 +105,10 @@ trait CanAdvertiseAd
       val madFut = mNodeCache.getByIdType(adId, MNodeTypes.Ad)
       val user = mSioUsers(personIdOpt)
       maybeInitUser(user)
-      def reqBlank = MReq(request, user)
+      val reqBlank = MReq(request, user)
       madFut.flatMap {
         case Some(mad) =>
-          canAdvAdUtil.maybeAllowed(user, mad, request) flatMap {
+          canAdvAdUtil.maybeAllowed(mad, reqBlank) flatMap {
             case Some(req1) =>
               block(req1)
             case None =>

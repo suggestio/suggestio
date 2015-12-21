@@ -95,7 +95,7 @@ final case class EmailActivation(
   email     : String,
   key       : String = EmailActivation.randomActivationKey,
   id        : Option[String] = None
-) extends MPersonIdent with MPersonLinks with IEaEmailId {
+) extends MPersonIdent with IEaEmailId {
   override type T = EmailActivation
 
   override def personId = email

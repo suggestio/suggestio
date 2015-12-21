@@ -3,7 +3,6 @@ package models.usr
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.es._
 import EsModelUtil._
-import io.suggest.model._
 import org.elasticsearch.client.Client
 import util.PlayMacroLogsImpl
 import play.api.libs.json._
@@ -83,7 +82,7 @@ final case class EmailPwIdent(
   personId  : String,
   pwHash    : String,
   isVerified: Boolean = EmailPwIdent.IS_VERIFIED_DFLT
-) extends MPersonIdent with MPersonLinks with MPIWithEmail {
+) extends MPersonIdent with MPIWithEmail {
   override type T = EmailPwIdent
 
   override def id: Option[String] = Some(email)

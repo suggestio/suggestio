@@ -1,6 +1,6 @@
 package models.req
 
-import play.api.mvc.{Request, RequestHeader}
+import play.api.mvc.{AnyContent, Request, RequestHeader}
 
 /**
  * Suggest.io
@@ -53,16 +53,17 @@ abstract class MReqWrap[A]
 
 
 /** Реквест, но без тела. Обращение к телу такого реквеста будет вызывать исключение.
-  * Подмешивается к ISioReq[A] для websocket-экшенов. */
-trait NoBodyRequest extends IReq[Nothing] with IReqHdrWrap {
+  * Подмешивается для websocket-экшенов, когда нужен именно реквест. */
+trait NoBodyRequest extends IReq[AnyContent] with IReqHdrWrap {
 
   /** @return [[java.lang.UnsupportedOperationException]] всегда */
-  override def body: Nothing = {
+  override def body: AnyContent = {
     throw new UnsupportedOperationException("This is request headers wrapper. Body never awailable here.")
   }
 }
 
 
+/** Заголовки реквеста в представлении sio. */
 case class MReqHdr(
   override val request: RequestHeader,
   override val user   : ISioUser
@@ -76,3 +77,14 @@ case class MReq[A](
   override val user     : ISioUser
 )
   extends MReqWrap[A]
+
+
+/** Особый случай реквеста, когда нет тела реквеста, но очень нужно API от реквеста.
+  * Используется, когда на входе только RequestHeader, а очень нужен Request[],
+  * и body() точно никто дёргать не будет. */
+case class MReqNoBody(
+  override val request: RequestHeader,
+  override val user   : ISioUser
+)
+  extends MReqHdrWrap
+  with NoBodyRequest
