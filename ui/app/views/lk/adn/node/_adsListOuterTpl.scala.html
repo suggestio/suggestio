@@ -1,10 +1,12 @@
 @(content: Html)(implicit ctx: Context)
 
+@import lk.dsl._
+
 @* Внешний (обрамляющий) шаблон для списка рекламных карточек.
    Используется для editable и read-only списков карточек при просмотре конкретного узла. *@
 
+@_delimTpl()
 
-<hr class="delimiter __light"/>
 <div class="adv-lst">
   @content
 </div>

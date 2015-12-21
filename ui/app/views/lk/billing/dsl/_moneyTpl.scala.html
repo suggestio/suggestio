@@ -1,0 +1,8 @@
+@(classRoot: String, title: String)(value: Html)
+
+@* Один div с отображением средств на счете. *@
+
+<div class="billing_@classRoot-money">
+  <span class="light-gray">@title</span>
+  <div class="dark-gray billing_money-value">@value</div>
+</div>

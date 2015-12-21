@@ -2,13 +2,11 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.bill.TxnsListConstants
-import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models._
 import models.jsm.init.MTargets
 import models.mbill.{MContract, MDailyMmpsTplArgs, MTariffDaily, MTxn}
 import models.mproj.ICommonDi
 import models.req.IReq
-import org.elasticsearch.search.sort.SortOrder
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 import util.acl._
@@ -69,23 +67,6 @@ class MarketLkBilling @Inject() (
    * @param adnId id узла.
    */
   def showAdnNodeBilling(adnId: String) = IsAdnNodeAdmin(adnId, U.Lk).async { implicit request =>
-    val isProducer = request.mnode
-      .extras
-      .adn
-      .exists(_.isProducer)
-    val otherRcvrsFut: Future[Seq[MNode]] = if (isProducer) {
-      val msearch = new MNodeSearchDfltImpl {
-        override def limit          = 100
-        override def withAdnRights  = Seq(AdnRights.RECEIVER)
-        override def withoutIds     = Seq(adnId)
-        override def withNameSort   = Some( SortOrder.ASC )
-        override def nodeTypes      = Seq( MNodeTypes.AdnNode )
-      }
-      MNode.dynSearch( msearch )
-
-    } else {
-      Future successful Nil
-    }
 
     val billInfoOptFut = Future {
       db.withConnection { implicit c =>
@@ -99,25 +80,16 @@ class MarketLkBilling @Inject() (
             } else {
               Nil
             }
-            val allRcvrAdnIds = if (isProducer) {
-              MTariffDaily.findAllAdnIds
-            } else {
-              Nil
-            }
-            (mbc, myMbmds, allRcvrAdnIds)
+            (mbc, myMbmds)
           }
       }
     }(AsyncUtil.jdbcExecutionContext)
 
     billInfoOptFut flatMap {
-      case Some((mbc, mbmds, allRcvrAdnIds)) =>
-        val allRcvrAdnIdsSet = allRcvrAdnIds.toSet
-        request.user.lkCtxData.flatMap { implicit ctxData =>
-          otherRcvrsFut.map { otherRcvrs =>
-            val otherRcvrs1 = otherRcvrs.filter(_.id.exists(allRcvrAdnIdsSet.contains))
-            val html = showAdnNodeBillingTpl(request.mnode, mbmds, mbc, otherRcvrs1)
-            Ok(html)
-          }
+      case Some((mbc, mbmds)) =>
+        request.user.lkCtxData.map { implicit ctxData =>
+          val html = showAdnNodeBillingTpl(request.mnode, mbmds, mbc)
+          Ok(html)
         }
 
       case None =>
@@ -161,7 +133,7 @@ class MarketLkBilling @Inject() (
 
 
   /**
-   * Одинаковые куски [[_renderNodeMbmds()]] и [[_renderNodeMbmdsWindow()]] вынесены в эту функцию.
+   * Одинаковые куски [[_renderNodeMbmdsWindow()]] вынесены в эту функцию.
    * Она собирает данные для рендера шаблонов, относящихся к этим экшенам и дергает фунцию рендера, когда всё готово.
    * @param mnode Текущий узел N2.
    * @return Фьючерс с Some и аргументами рендера. Если нет узла, то None
@@ -190,18 +162,6 @@ class MarketLkBilling @Inject() (
         mnode = mnode,
         gallery = gallery
       )
-    }
-  }
-
-
-  /**
-   * Инлайновый рендер сеток тарифных планов.
-   * @param adnId id узла, к которому нужно найти и отрендерить посуточные тарифные сетки.
-   * @return inline выхлоп для отображения внутри какой-то страницы с тарифами.
-   */
-  def _renderNodeMbmds(adnId: String) = IsAuthNode(adnId).async { implicit request =>
-    _prepareNodeMbmds(request.mnode) map { args =>
-      Ok( _dailyMmpTariffPlansTpl(args) )
     }
   }
 

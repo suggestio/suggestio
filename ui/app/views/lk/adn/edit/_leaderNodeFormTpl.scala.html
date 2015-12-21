@@ -13,6 +13,7 @@
 @import views.html.lk.forms.img._
 @import madn.EditConstants._
 @import args.mf
+@import lk.dsl._
 
 @form(CSRF(submitCall), 'id -> "profileEdit") {
 
@@ -41,7 +42,7 @@
   </div>
 
   <div class="profile_info-bar">
-    <hr class="delimiter __light"/>
+    @_delimTpl()
 
     @mf.globalError.map { errors =>
       <p class="block __margin-M red">@messages("Error"): @messages(errors.message)</p>
@@ -74,7 +75,7 @@
       )
     }
 
-    <hr class="delimiter __light"/>
+    @_delimTpl()
 
     @if( args.mnode.extras.adn.exists(_.isReceiver) ) {
       @inputText(
@@ -86,14 +87,14 @@
         mf("meta.audienceDescr"),
         '_label -> messages("Audience.descr")
       )
-      <hr class="delimiter __light"/>
+      @_delimTpl()
 
       <div class="prop" >
         <p class="prop_name __block">@messages("Welcome.screen"):</p>
         @_welcomeAdFormTpl(args.mnode.id.get, mf)
       </div>
 
-      <hr class="delimiter __light"/>
+      @_delimTpl()
 
 
       @defining( mf(GALLERY_FN) ) { gf =>
@@ -127,7 +128,7 @@
       </div>
       }
 
-      <hr class="delimiter __light"/>
+      @_delimTpl()
 
     }
 
@@ -137,7 +138,7 @@
           @messages("Bg.color.of.sc.hint")
         </td>
         <td class="td __color-title">
-	  <span class="dark-gray ft-S">@Html( messages("Main.color", "<br/>") )</span>
+	        <span class="dark-gray ft-S">@Html( messages("Main.color", "<br/>") )</span>
         </td>
         <td class="td __padding-S">
           @defining( mf("meta.color").value.map(_.trim).filter(!_.isEmpty).getOrElse("FFFFFF") ) { colorValue =>

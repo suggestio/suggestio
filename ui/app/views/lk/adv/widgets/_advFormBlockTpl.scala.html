@@ -1,8 +1,10 @@
 @(id: Option[String] = None)(content: Html)
 
+@import lk.dsl._
+
 @* div-обертка для adv-форм *@
 
-<hr class="delimiter __light"/>
+@_delimTpl()
 
 <div class="adv-management" @if(id){id="@id"}>
   @content

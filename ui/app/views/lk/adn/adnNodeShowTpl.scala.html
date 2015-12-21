@@ -10,6 +10,7 @@
 @import io.suggest.vlines.VLines
 @import args._
 @import lk.lkProp
+@import lk.dsl._
 
 @headAfter1 = {
   <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/lib/bxslider/jquery.bxslider.css")'/>
@@ -33,7 +34,7 @@
   </div>
 
   <div class="profile_info-bar">
-    <hr class="delimiter __light"/>
+    @_delimTpl()
 
     @lkProp( messages("Name")) {
       @mnode.meta.basic.name
@@ -59,7 +60,8 @@
 
 
     @if( mnode.extras.adn.exists(_.isReceiver) ) {
-      <hr class="delimiter __light"/>
+      @_delimTpl()
+
       @lkProp( messages("Daily.people.traffic")) {
         @mnode.meta.business.humanTrafficAvg
       }
@@ -69,7 +71,7 @@
 
       @* TODO добавить вывод картинки приветствия *@
 
-      <hr class="delimiter __light"/>
+      @_delimTpl()
       <div class="prop">
         <p class="prop_name __block">@messages("Node.photos"):</p>
         <div class="profile_photo-lst">
@@ -78,7 +80,7 @@
       </div>
     }
 
-    <hr class="delimiter __light"/>
+    @_delimTpl()
 
     <table class="prop">
       <tr>

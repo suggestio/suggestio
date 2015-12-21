@@ -8,6 +8,7 @@
 @import util.adv.ExtUtil.formForTarget
 @import io.suggest.adv.ext.view.FormPage._
 @import stuff._
+@import lk.dsl._
 
 @base(
   title     = messages("Adv.ext"),
@@ -33,7 +34,7 @@
     @* Кнопка добавления цели к данной форме не относится. *@
     <a class="btn __size-M __minor add-target" id="@ID_ADD_TARGET_LINK"
        href="@routes.LkAdvExt.writeTarget(args.producer.id.get)">@messages("Add.target")...</a>
-    <hr class="delimiter __light">
+    @_delimTpl()
 
     <div class="btn-w __size-XS">
       <input class="btn __size-M __major social-submit" type="submit" value="@messages("Adv.deploy.now")..." />

@@ -81,7 +81,6 @@ GET  /lk/bill/brief/:adnId              @controllers.MarketLkBilling.showAdnNode
 GET  /lk/bill/txns/:adnId               @controllers.MarketLkBilling.txnsList(adnId, page: Int ?= 0, inline: Boolean ?= false)
 GET  /lk/bill/pay/bank/for/:adnId       @controllers.MarketLkBilling.paymentRequsites(adnId)
 # lk.billing: рендер списка тарифных сеток MBillMmpDaily для указанного узла
-GET  /lk/bill/pricing/raw/:adnId        @controllers.MarketLkBilling._renderNodeMbmds(adnId)
 GET  /lk/bill/pricing/wnd/:adnId        @controllers.MarketLkBilling._renderNodeMbmdsWindow(adnId)
 
 ## Принятие приглашения на управления узлом.

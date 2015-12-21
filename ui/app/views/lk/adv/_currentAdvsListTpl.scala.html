@@ -8,6 +8,7 @@
 @import datetime._
 @import util.TplDataFormatUtil._
 @import args._
+@import lk.dsl._
 
 @_single_status(statusClass: String, node: MNode)(content: Html) = {
   <div class="adv-status_i __@statusClass">
@@ -19,7 +20,8 @@
   </div>
 }
 
-<hr class="delimiter __light"/>
+@_delimTpl()
+
 <div class="adv-status_lst">
 
   @if(advs.size == 0) {

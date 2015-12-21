@@ -1,10 +1,11 @@
-@(mnode: MNode, mmpDailyTariffs: Seq[mbill.MTariffDaily], mbc: mbill.MContract,
-  otherRcvrs: Seq[MNode])(implicit ctx: Context)
+@(mnode: MNode, mmpDailyTariffs: Seq[mbill.MTariffDaily], mbc: mbill.MContract)(implicit ctx: Context)
 
 @* Страница с информацией по биллингу для узла рекламной сети. *@
 @import ctx._
 @import util.TplDataFormatUtil._
 @import datetime._
+@import lk.dsl._
+@import dsl._
 
 @billingBaseTpl(
   title         = messages("Billing"),
@@ -12,71 +13,37 @@
   rightCurrEl   = BillingRightPanelLinks.RPL_BILLING
 ) {
 
-  @for( mbb <- ctx.data.mUsrBalances.headOption) {
+  @for( mbb <- ctx.data.mUsrBalances) {
+    @_delimTpl()
 
-    <hr class="delimiter __light"/>
+    @_moneyCntTpl() {
+      @_moneyTpl("all", messages("Total.funds")) {
+        @formatPrice(mbb.price.amount + mbb.blocked, mbb.price.currency)
+      }
+      @_moneyTpl("available", messages("Available.funds")) {
+        @formatPrice(mbb.price)
+      }
+      @_moneyTpl("locked", messages("Blocked")) {
+        @formatPrice(mbb.blocked, mbb.price.currency)
+      }
+    }
 
-    <div class="billing_money-info">
-      <div class="billing_all-money">
-        <span class="light-gray">@messages("Total.funds")</span>
-        <div class="dark-gray billing_money-value">@formatPrice(mbb.price.amount + mbb.blocked, mbb.price.currency)</div>
-      </div>
-
-      <div class="billing_available-money">
-        <span class="light-gray">@messages("Available.funds")</span>
-        <div class="dark-gray billing_money-value">@formatPrice(mbb.price)</div>
-      </div>
-
-      <div class="billing_locked-money">
-        <span class="light-gray">@messages("Blocked")</span>
-        <div class="dark-gray billing_money-value">@formatPrice(mbb.blocked, mbb.price.currency)</div>
-      </div>
-    </div>
   }
 
   @* Посуточная mmp-тарифная сетка этого узла-ресивера. Если не ресивер, то в шаблон придёт пустой список. *@
   @if(!mmpDailyTariffs.isEmpty) {
 
-    <h2 class="minor-title">
+    @_minorTitleTpl() {
       @messages("My.node.tariff.rate")
-    </h2>
-    <hr class="delimiter __light"/>
+    }
+
+    @_delimTpl()
 
     @mmpDailyTariffs.map { mbmd =>
-      <div class="tariff">
+      @_tariffCntTpl() {
         @_dailyMmpTariffPlanTpl(mbmd, mnode)
-      </div>
+      }
     }
-  }
-
-
-
-  @* Если продьюсер, то надо отобразить список узлов-ресиверов, на которые можно разместить рекламную карточку.
-     Содержимое узла (тарифная сетка) рендерится асинхронно при нажатии кнопки "развернуть" в списке. *@
-  @if(!otherRcvrs.isEmpty) {
-
-    <h2 class="minor-title">
-      @messages("Adv.tariff.rates")
-    </h2>
-    <hr class="delimiter __light"/>
-
-    @* Пока без вкладок, просто сплошным списком. *@
-    @otherRcvrs.map { rcvr =>
-      @* При развертывании элемента нужно слать запрос по указанной ссылке. При повторном развертывании нужно отображать уже полученную табличку тарифов. *@
-
-      @lk.lkBlockNewDesign(
-        href = Some( routes.MarketLkBilling._renderNodeMbmds(rcvr.id.get)),
-        open = false
-      ) {
-        @rcvr.meta.basic.name
-        @rcvr.meta.address.town.map { town =>
-          / <span class="ft-S light-gray">@town</span>
-        }
-      } { }
-
-    }
-
   }
 
 }
-

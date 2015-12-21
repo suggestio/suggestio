@@ -10,8 +10,8 @@
 @import util.DateTimePrettyPrinter._
 @import args._
 @import AdnShownTypes._
+@import lk.dsl._
 @import lk.adv.widgets._
-
 
 @* sink show level checkbox - базовая верстка чекбокса уровней отображения по любому из измерений. *@
 @sslCheckbox(maybeBusyAdv: Option[adv.MAdvI], midOpt: Option[Int], fnSuffix: String, label: String, showLevel: Option[String] = None)(busyAttrs: => Html) = {
@@ -115,12 +115,12 @@
                       <div class="advm-node_left">
                         <p class="block">@messages("Adv.levels")</p>
                         <div class="block __margin-XS">
-                          <hr class="delimiter __light"/>
+			  @_delimTpl()
                         </div>
                         @* Галочки уровней отображения. *@
                         @slCheckbox(maybeBusyAdv, midOpt, "showLevel.onStartPage", AdShowLevels.LVL_START_PAGE, messages("Main.screen"), "onStartPage")
                         @slCheckbox(maybeBusyAdv, midOpt, "showLevel.onRcvrCat", AdShowLevels.LVL_CATS, messages("Product.categories"), "onRcvrCat")
-                        <div class="block __margin-XS"><hr class="delimiter __light"/></div>
+                        <div class="block __margin-XS">@_delimTpl()</div>
                         <label class="block">
                           <input type="checkbox" disabled="disabled" checked="checked"/><span class="checkbox_title __disabled">@messages("Catalog")</span>
                         </label>

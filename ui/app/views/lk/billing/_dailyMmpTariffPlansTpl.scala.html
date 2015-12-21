@@ -7,6 +7,7 @@
 @import lk.lkProp
 @import ctx.messages
 @import lk.adn.node._galleryTpl
+@import lk.dsl._
 
 @if( args.gallery.nonEmpty ) {
   <div class="tariff_photo-lst">
@@ -27,14 +28,14 @@
         @messages("tel.") @phone
       }
     }
-    <hr class="delimiter __light"/>
+    @_delimTpl()
   }
 
   @args.mnode.meta.business.humanTrafficAvg.map { htAvg =>
     @lkProp( messages("Daily.people.traffic")) {
       @messages("N.humans.per.day", formatIntHtml(htAvg))
     }
-    <hr class="delimiter __light"/>
+    @_delimTpl()
   }
 
   @args.mnode.meta.business.audienceDescr.map { audDescr =>

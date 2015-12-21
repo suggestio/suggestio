@@ -2,6 +2,7 @@
 
 @import util.blocks._
 @import io.suggest.ad.form.AdFormConstants._
+@import lk.dsl._
 
 @defining( OFFER_K ) { nameBase =>
   @defining(withBC getOrElse BlocksConf.DEFAULT) { bc =>
@@ -18,7 +19,7 @@
         </div>
 
         @if(bf.name == "bgImg" || bf.name == "addTextField") {
-          <hr class="delimiter __light"/>
+	  @_delimTpl()
         }
 
       }
