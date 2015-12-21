@@ -91,7 +91,6 @@ class SysMarketBilling @Inject() (
         contracts       = contracts,
         txns            = MTxn.findForContracts(contractIds),
         feeTariffsMap   = MTariffFee.getAll.groupBy(mbtsGrouper),
-        statTariffsMap  = MTariffStat.getAll.groupBy(mbtsGrouper),
         dailyMmpsMap    = MTariffDaily.findByContractIds(contractIds).groupBy(mbtsGrouper),
         sinkComissionMap = contractIds.flatMap(MSinkComission.findByContractId(_)).groupBy(_.contractId)
       )

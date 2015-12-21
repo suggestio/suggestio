@@ -189,12 +189,6 @@ POST /sys/market/btf/new/:contractId     @controllers.SysMarketBillingTariff.add
 GET  /sys/market/btf/edit/:tariffId      @controllers.SysMarketBillingTariff.editFeeTariffForm(tariffId: Int)
 POST /sys/market/btf/edit/:tariffId      @controllers.SysMarketBillingTariff.editFeeTariffFormSubmit(tariffId: Int)
 POST /sys/market/btf/delete/:tariffId    @controllers.SysMarketBillingTariff.deleteFeeTariffSubmit(tariffId: Int)
-## Тарифы: просмотры/переходы (stat-тарифы)
-GET  /sys/market/bts/new/:contractId     @controllers.SysMarketBillingTariff.addStatTariff(contractId: Int)
-POST /sys/market/bts/new/:contractId     @controllers.SysMarketBillingTariff.addStatTariffSubmit(contractId: Int)
-GET  /sys/market/bts/edit/:tariffId      @controllers.SysMarketBillingTariff.editStatTariff(tariffId: Int)
-POST /sys/market/bts/edit/:tariffId      @controllers.SysMarketBillingTariff.editStatTariffSubmit(tariffId: Int)
-POST /sys/market/bts/delete/:tariffId    @controllers.SysMarketBillingTariff.deleteStatTariffSubmit(tariffId: Int)
 
 ## Тарифы: посуточные mmp
 GET  /sys/bill/mmp/new/:mbcId             @controllers.SysMarketBillingMmp.createMmpDaily(mbcId: Int)

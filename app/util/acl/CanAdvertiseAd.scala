@@ -107,6 +107,7 @@ trait CanAdvertiseAd
       val personIdOpt = sessionUtil.getPersonId(request)
       val madFut = mNodeCache.getByIdType(adId, MNodeTypes.Ad)
       val user = mSioUsers(personIdOpt)
+      maybeInitUser(user)
       def reqBlank = MReq(request, user)
       madFut.flatMap {
         case Some(mad) =>

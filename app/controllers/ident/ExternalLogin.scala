@@ -146,7 +146,7 @@ trait ExternalLogin
 
   // Код handleAuth() спасён из умирающего securesocial c целью отпиливания от грёбаных authentificator'ов,
   // которые по сути являются переусложнёнными stateful(!)-сессиями, которые придумал какой-то нехороший человек.
-  protected def handleAuth1(provider: ILoginProvider, redirectTo: Option[String]) = MaybeAuth.async { implicit request =>
+  protected def handleAuth1(provider: ILoginProvider, redirectTo: Option[String]) = MaybeAuth().async { implicit request =>
     lazy val logPrefix = s"handleAuth1($provider):"
     env.providers.get(provider.ssProvName).map {
       _.authenticate().flatMap {

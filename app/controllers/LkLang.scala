@@ -7,7 +7,7 @@ import models.mctx.Context
 import models.mproj.ICommonDi
 import play.api.data.Form
 import play.api.i18n.Lang
-import play.twirl.api.Html
+import play.api.mvc.Result
 import util.FormUtil.uiLangM
 import util.PlayMacroLogsImpl
 import util.acl.MaybeAuth
@@ -41,15 +41,14 @@ class LkLang @Inject() (
 
 
   /** Рендер страницы выбора языка. */
-  def showLangSwitcher(r: Option[String]) = MaybeAuthGet { implicit request =>
+  def showLangSwitcher(r: Option[String]) = MaybeAuthGet(U.Lk).async { implicit request =>
     val ctx = implicitly[Context]
     val l0 = ctx.messages.lang
     val langForm = chooseLangFormM(l0).fill(l0)
-    Ok( _showLangSwitcher(langForm, r)(ctx) )
+    _showLangSwitcher(langForm, r, Ok)(ctx)
   }
 
-
-  private def _showLangSwitcher(langForm: Form[Lang], r: Option[String])(implicit ctx: Context): Html = {
+  private def _showLangSwitcher(langForm: Form[Lang], r: Option[String], rs: Status)(implicit ctx: Context): Future[Result] = {
     val langs = Lang.availables
       .sortBy(_.code)
     val englishLang = langs
@@ -59,7 +58,7 @@ class LkLang @Inject() (
       .getOrElse { Lang.defaultLang }
     val english = ctx.messages.copy(lang = englishLang)
     val nodeOpt = None    // TODO Нужно собственную ноду получать из параметра и проверять админские права.
-    langChooserTpl(
+    val html = langChooserTpl(
       english = english,
       lf      = langForm,
       isNowEnglish = ctx.messages.lang.language == "en",
@@ -67,15 +66,16 @@ class LkLang @Inject() (
       nodeOpt = nodeOpt,
       rr      = r
     )(ctx)
+    rs(html)
   }
 
 
   /** Сабмит формы выбора текущего языка. Нужно выставить язык в куку и текущему юзеру в MPerson. */
-  def selectLangSubmit(r: Option[String]) = MaybeAuthPost { implicit request =>
+  def selectLangSubmit(r: Option[String]) = MaybeAuthPost().async { implicit request =>
     chooseLangFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug("selectLangSubmit(): Failed to bind lang form: \n" + formatFormErrors(formWithErrors))
-        NotAcceptable( _showLangSwitcher(formWithErrors, r) )
+        _showLangSwitcher(formWithErrors, r, NotAcceptable)
       },
       {newLang =>
         val saveUserLangFut: Future[_] = {

@@ -124,6 +124,8 @@ trait Context extends MyHostsT {
     * Например, к утили какой-нить или DI-моделям и прочей утвари. */
   val api: ContextApi
 
+  def withData(data1: CtxData): Context
+
   // abstract val вместо def'ов в качестве возможной оптимизации обращений к ним со стороны scalac и jvm. Всегда можно вернуть def.
 
   /** Данные текущего реквеста. */
@@ -309,4 +311,9 @@ case class Context2 @Inject() (
                                 @Assisted implicit override val messages  : Messages
 )
   extends Context
+{
+  override def withData(data1: CtxData): Context = {
+    copy(data = data1)
+  }
+}
 

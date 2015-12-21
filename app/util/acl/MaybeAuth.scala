@@ -1,7 +1,8 @@
 package util.acl
 
-import models.req.{MReq, SioReqMd}
+import models.req.{MReq, MUserInit}
 import play.api.mvc._
+
 import scala.concurrent.Future
 
 /**
@@ -18,7 +19,10 @@ trait MaybeAuth
   import mCommonDi._
 
   /** Здесь логика MaybeAuth action-builder'а. */
-  trait MaybeAuthBase extends ActionBuilder[MReq] {
+  sealed trait MaybeAuthBase
+    extends ActionBuilder[MReq]
+    with InitUserCmds
+  {
 
     /**
      * Вызывается генератор экшена в билдере.
@@ -30,30 +34,29 @@ trait MaybeAuth
     override def invokeBlock[A](request: Request[A],
                                 block: (MReq[A]) => Future[Result]): Future[Result] = {
       val personIdOpt = sessionUtil.getPersonId(request)
-      val req1 = MReq(
-        request = request,
-        user    = mSioUsers(personIdOpt)
-      )
+      val user = mSioUsers(personIdOpt)
+      maybeInitUser(user)
+      val req1 = MReq(request, user)
       block(req1)
     }
 
   }
 
-  class MaybeAuth
+  sealed abstract class MaybeAuthAbstract
     extends MaybeAuthBase
     with ExpireSession[MReq]
     with CookieCleanup[MReq]
 
   /** Сборка данных по текущей сессии юзера в реквест. */
-  object MaybeAuth
-    extends MaybeAuth
+  case class MaybeAuth(override val userInits: MUserInit*)
+    extends MaybeAuthAbstract
 
-  object MaybeAuthGet
-    extends MaybeAuth
+  case class MaybeAuthGet(override val userInits: MUserInit*)
+    extends MaybeAuthAbstract
     with CsrfGet[MReq]
 
-  object MaybeAuthPost
-    extends MaybeAuth
+  case class MaybeAuthPost(override val userInits: MUserInit*)
+    extends MaybeAuthAbstract
     with CsrfPost[MReq]
 
 }

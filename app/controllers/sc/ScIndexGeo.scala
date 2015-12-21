@@ -42,7 +42,7 @@ trait ScIndexGeo
    * либо geoShowcase на дефолтовых параметрах.
    * @param args Аргументы.
    */
-  def geoShowcase(args: ScReqArgs) = MaybeAuth.async { implicit request =>
+  def geoShowcase(args: ScReqArgs) = MaybeAuth().async { implicit request =>
     // Собираем хелпер, который займётся выстраиванием результата работы.
     val logic = new GeoScIndexLogic {
       override def _reqArgs = args

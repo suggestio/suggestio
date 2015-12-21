@@ -67,7 +67,7 @@ class MarketLkAdn @Inject() (
   import mCommonDi._
 
   /** Список личных кабинетов юзера. */
-  def lkList(fromAdnId: Option[String]) = IsAdnNodeAdminOptOrAuthGet(fromAdnId).async { implicit request =>
+  def lkList(fromAdnId: Option[String]) = IsAdnNodeAdminOptOrAuthGet(fromAdnId, U.Lk).async { implicit request =>
     val personId = request.user.personIdOpt.get
     val msearch = new MNodeSearchDfltImpl {
       override def outEdges = Seq(
@@ -80,8 +80,10 @@ class MarketLkAdn @Inject() (
     }
     val mnodesFut = MNode.dynSearch(msearch)
     for {
+      ctxData     <- request.user.lkCtxData
       mnodes      <- mnodesFut
     } yield {
+      implicit val ctxData1 = ctxData
       Ok( lkListTpl(mnodes, request.mnodeOpt) )
     }
   }

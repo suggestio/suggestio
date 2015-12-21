@@ -230,7 +230,7 @@ trait ScAdsTile
     * @param adSearch Поисковый запрос.
     * @return JSONP с рекламными карточками для рендера в выдаче.
     */
-  def findAds(adSearch: AdSearch) = MaybeAuth.async { implicit request =>
+  def findAds(adSearch: AdSearch) = MaybeAuth().async { implicit request =>
     // В зависимости от версии API, используем ту или иную реализацию логики.
     val logic = TileAdsLogicV(adSearch)
     val resultFut = logic.resultFut

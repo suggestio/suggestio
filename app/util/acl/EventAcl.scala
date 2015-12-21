@@ -38,6 +38,8 @@ trait HasNodeEventAccess
       val personIdOpt = sessionUtil.getPersonId(request)
       val user = mSioUsers(personIdOpt)
 
+      maybeInitUser(user)
+
       val reqErr = MReq(request, user)
       personIdOpt.fold ( forbidden(reqErr) ) { personId =>
         eventOptFut flatMap {

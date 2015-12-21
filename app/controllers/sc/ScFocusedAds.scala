@@ -486,7 +486,7 @@ trait ScFocusedAds
     * @param adSearch Поисковый запрос.
     * @return JSONP с отрендеренными карточками.
     */
-  def focusedAds(adSearch: FocusedAdsSearchArgs) = MaybeAuth.async { implicit request =>
+  def focusedAds(adSearch: FocusedAdsSearchArgs) = MaybeAuth().async { implicit request =>
     val logic = getLogicFor(adSearch)
     // Запустить изменябельное тело экшена на исполнение.
     _focusedAds(logic)

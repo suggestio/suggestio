@@ -82,7 +82,7 @@ class MarketJoin @Inject() (
   }
 
   /** Рендер страницы с формой обратного звонка. */
-  def callbackRequest = MaybeAuthGet { implicit request =>
+  def callbackRequest = MaybeAuthGet() { implicit request =>
     cacheControlShort {
       Ok(callbackRequestTpl(callbackRequestFormM))
     }
@@ -92,7 +92,7 @@ class MarketJoin @Inject() (
    * Сабмит формы запроса обратного вызова.
    * @return
    */
-  def callbackRequestSubmit = MaybeAuthPost.async { implicit request =>
+  def callbackRequestSubmit = MaybeAuthPost().async { implicit request =>
     val formBinded = checkCaptcha( callbackRequestFormM.bindFromRequest() )
     formBinded.fold(
       {formWithErrors =>
@@ -131,7 +131,7 @@ class MarketJoin @Inject() (
 
   /** Юзер хочется зарегаться как рекламное агентство. Отрендерить страницу с формой, похожей на форму
     * заполнения сведений по wi-fi сети. */
-  def joinAdvRequest = MaybeAuthGet { implicit request =>
+  def joinAdvRequest = MaybeAuthGet() { implicit request =>
     cacheControlShort {
       Ok(joinAdvTpl())
     }

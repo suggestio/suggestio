@@ -155,7 +155,7 @@ trait PwRecover
 
   /** Рендер страницы, отображаемой когда запрос восстановления пароля принят.
     * CSRF используется, чтобы никому нельзя было слать ссылку с сообщением "ваш пароль выслан вам на почту". */
-  def recoverPwAccepted(email1: String) = MaybeAuthPost { implicit request =>
+  def recoverPwAccepted(email1: String) = MaybeAuthPost() { implicit request =>
     val ctx = implicitly[Context]
     val colHtml = _acceptedColTpl(email1)(ctx)
     val html = _outer(colHtml)(ctx)

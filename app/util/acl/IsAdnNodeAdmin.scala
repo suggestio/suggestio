@@ -124,10 +124,12 @@ trait IsAdnNodeAdmin
     override def invokeBlock[A](request: Request[A], block: (MNodeReq[A]) => Future[Result]): Future[Result] = {
       val personIdOpt = sessionUtil.getPersonId(request)
       val user = mSioUsers(personIdOpt)
+      val isAllowedFut = isAdnNodeAdmin(nodeId, user)
 
-      isAdnNodeAdmin(nodeId, user) flatMap {
+      maybeInitUser(user)
+
+      isAllowedFut.flatMap {
         case Some(mnode) =>
-          maybeInitUser(user)
           val req1 = MNodeReq(mnode, request, user)
           block(req1)
 

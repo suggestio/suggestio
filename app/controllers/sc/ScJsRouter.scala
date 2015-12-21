@@ -21,7 +21,7 @@ trait ScJsRouter
    * Отрендерить js-код роутера вопрошающему.
    * @return 200 OK, text/javascript.
    */
-  def scJsRouter = MaybeAuth { implicit request =>
+  def scJsRouter = MaybeAuth() { implicit request =>
     // TODO Нужно получать параметры кеширования через qs на клиенте и выдавать соответствующие заголовки кеширования.
     // TODO Выставлять заголовки ETag, Last-Modified.
     val cacheSeconds = if (Play.isDev) 1 else 100

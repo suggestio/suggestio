@@ -186,7 +186,7 @@ trait ScSiteGeo
   import mCommonDi._
 
   /** Пользователь заходит в sio.market напрямую через интернет, без помощи сторонних узлов. */
-  def geoSite(maybeJsState: ScJsState, siteArgs: SiteQsArgs) = MaybeAuth.async { implicit request =>
+  def geoSite(maybeJsState: ScJsState, siteArgs: SiteQsArgs) = MaybeAuth().async { implicit request =>
     if (maybeJsState.nonEmpty) {
       // Было раньше MovedPermanently, но почему-то оно может сбойнуть и закешироваться на CDN.
       LOGGER.trace("Qs js state is nonEmpty, redirecting... " + maybeJsState)

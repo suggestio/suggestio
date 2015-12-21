@@ -3,7 +3,7 @@ package controllers
 import com.google.inject.Inject
 import models._
 import models.mproj.ICommonDi
-import models.req.IReq
+import models.req.{IReqHdr, IReq}
 import models.usr.MPersonIdent
 import play.api.data.Forms._
 import play.api.data._
@@ -79,8 +79,6 @@ class MarketLkSupport @Inject() (
   }
 
   private def _supportForm(nodeOpt: Option[MNode], r: Option[String])(implicit request: IReq[_]): Future[Result] = {
-    val mBalancesFut = request.user.mBalancesFut
-
     // Взять дефолтовое значение email'а по сессии
     val emailsDfltFut = request.user
       .personIdOpt
@@ -89,20 +87,21 @@ class MarketLkSupport @Inject() (
       } { personId =>
         MPersonIdent.findAllEmails(personId)
       }
-
-    for {
-      ctxData     <- request.user.lkCtxData
-      emailsDflt  <- emailsDfltFut
-    } yield {
+    emailsDfltFut.flatMap { emailsDflt =>
       val emailDflt = emailsDflt.headOption getOrElse ""
       val lsr = MLkSupportRequest(name = None, replyEmail = emailDflt, msg = "")
       val form = supportFormM.fill(lsr)
 
-      implicit val ctxData1 = ctxData
-      Ok( supportFormTpl(nodeOpt, form, r) )
+      _supportForm2(nodeOpt, form, r, Ok)
     }
   }
 
+  private def _supportForm2(nodeOpt: Option[MNode], form: Form[MLkSupportRequest], r: Option[String], rs: Status)
+                           (implicit request: IReqHdr): Future[Result] = {
+    request.user.lkCtxData.map { implicit ctxData =>
+      rs( supportFormTpl(nodeOpt, form, r) )
+    }
+  }
 
   /** Сабмит формы обращения за помощью по узлу, которым управляем. */
   def supportFormNodeSubmit(adnId: String, r: Option[String]) = IsAdnNodeAdminPost(adnId).async { implicit request =>
@@ -121,7 +120,7 @@ class MarketLkSupport @Inject() (
     supportFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(logPrefix + "Failed to bind lk-feedback form:\n" + formatFormErrors(formWithErrors))
-        NotAcceptable(supportFormTpl(nodeOpt, formWithErrors, r))
+        _supportForm2(nodeOpt, formWithErrors, r, NotAcceptable)
       },
       {lsr =>
         val personId = request.user.personIdOpt.get

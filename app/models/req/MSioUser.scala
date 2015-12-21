@@ -81,7 +81,7 @@ class MSioUserEmpty extends ISioUser {
 
   override def personIdOpt          = None
   override def mContractOptFut      = _futOptOk[MContract]
-  override def evtsCountFut = _futOptOk[Int]
+  override def evtsCountFut         = _futOptOk[Int]
   override def personNodeOptFut     = _futOptOk[MNode]
   override def isSuper              = false
   override def contractIdOptFut     = _futOptOk[Long]

@@ -74,6 +74,8 @@ trait CanEditAd
         val madOptFut = mNodeCache.getByIdType(adId, MNodeTypes.Ad)
         val user = mSioUsers(personIdOpt)
 
+        maybeInitUser(user)
+
         madOptFut.flatMap {
           case Some(mad) =>
             val prodIdOpt = n2NodesUtil.madProducerId(mad)

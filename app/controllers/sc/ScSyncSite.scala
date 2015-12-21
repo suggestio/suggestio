@@ -54,7 +54,7 @@ trait ScSyncSiteGeo
   }
 
   /** Прямой доступ к синхронному сайту выдачи. */
-  def syncGeoSite(scState: ScJsState, siteArgs: SiteQsArgs) = MaybeAuth.async { implicit request =>
+  def syncGeoSite(scState: ScJsState, siteArgs: SiteQsArgs) = MaybeAuth().async { implicit request =>
     _syncGeoSite(scState, siteArgs) { jsSt =>
       routes.MarketShowcase.syncGeoSite(jsSt).url
     }
