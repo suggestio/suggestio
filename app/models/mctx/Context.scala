@@ -103,7 +103,7 @@ trait ContextT { this: ITargets with IMCommonDi =>
   implicit final def getContext2(implicit
                                  request  : IReqHdr,
                                  messages : Messages,
-                                 ctxData  : ICtxData = CtxData.empty): Context = {
+                                 ctxData  : CtxData = CtxData.empty): Context = {
     // Получить js init targets с уровня контроллера, объеденить с остальными, залить их в data.
     val ctxData1 = ctxData.prependJsiTgs(
       jsiTgs(request),
@@ -272,7 +272,7 @@ trait Context extends MyHostsT {
   def action: Option[String] = request.tags.get(RouteActionMethod)
 
   /** Кастомные данные в контексте. */
-  def data: ICtxData
+  def data: CtxData
 
 }
 
@@ -295,7 +295,7 @@ trait Context2Factory {
    * Сборка контекста, код метода реализуется автоматом через Guice Assisted inject.
    * @see [[GuiceDiModule]] для тюнинга assisted-линковки контекста.
    */
-  def create(implicit request: IReqHdr, messages: Messages, ctxData: ICtxData): Context2
+  def create(implicit request: IReqHdr, messages: Messages, ctxData: CtxData): Context2
 }
 
 
@@ -304,7 +304,7 @@ trait Context2Factory {
 /** Основная реализация контекста, с которой работают sio-контроллеры автоматически. */
 case class Context2 @Inject() (
                                 override val api                          : ContextApi,
-                                @Assisted override val data               : ICtxData,
+                                @Assisted override val data               : CtxData,
                                 @Assisted implicit override val request   : IReqHdr,
                                 @Assisted implicit override val messages  : Messages
 )

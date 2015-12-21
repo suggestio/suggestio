@@ -1,7 +1,7 @@
 package util.acl
 
 import models.event.MEvent
-import models.req.{IReq, MNodeEventReq, MReq}
+import models.req.{MUserInit, IReq, MNodeEventReq, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result}
 
 import scala.concurrent.Future
@@ -25,7 +25,7 @@ trait HasNodeEventAccess
     extends ActionBuilder[MNodeEventReq]
     with OnUnauthNode
     with IsAdnNodeAdminUtil
-    with InitUserBalance
+    with InitUserCmds
   {
     def eventId: String
 
@@ -48,7 +48,7 @@ trait HasNodeEventAccess
           // Есть событие и оно подходит под пожелания контроллера.
           case Some(mevent) if !onlyCloseable || mevent.isCloseable =>
             // Для наличия прав на событие нужны права на узел.
-            maybeInitUserBalance(user)
+            maybeInitUser(user)
 
             isAdnNodeAdmin(mevent.ownerId, user) flatMap {
               case Some(mnode) =>
@@ -81,8 +81,8 @@ trait HasNodeEventAccess
 
   case class HasNodeEventAccess(
     override val eventId          : String,
-    override val initUserBalance  : Boolean = true,
-    override val onlyCloseable    : Boolean = false
+    override val onlyCloseable    : Boolean,
+    override val userInits        : MUserInit*
   )
     extends HasNodeEventAccessBase
     with ExpireSession[MNodeEventReq]

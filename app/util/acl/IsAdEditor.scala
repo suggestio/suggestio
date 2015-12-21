@@ -2,7 +2,7 @@ package util.acl
 
 import controllers.SioController
 import models._
-import models.req.{MReq, IReqHdr, MAdProdReq}
+import models.req.{MUserInit, MReq, IReqHdr, MAdProdReq}
 import play.api.mvc._
 import util.n2u.IN2NodesUtilDi
 import util.{PlayMacroLogsDyn, PlayMacroLogsI}
@@ -60,6 +60,7 @@ trait CanEditAd
     extends ActionBuilder[MAdProdReq]
     with AdEditBase
     with OnUnauthUtil
+    with InitUserCmds
   {
 
     def prodNotFound(nodeIdOpt: Option[String]): Future[Result] = {
@@ -108,12 +109,14 @@ trait CanEditAd
     with PlayMacroLogsDyn
 
   /** Запрос формы редактирования карточки должен сопровождаться выставлением CSRF-токена. */
-  case class CanEditAdGet(override val adId: String)
+  case class CanEditAdGet(override val adId: String,
+                          override val userInits: MUserInit*)
     extends CanEditAd
     with CsrfGet[MAdProdReq]
 
   /** Сабмит формы редактирования рекламной карточки должен начинаться с проверки CSRF-токена. */
-  case class CanEditAdPost(override val adId: String)
+  case class CanEditAdPost(override val adId: String,
+                           override val userInits: MUserInit*)
     extends CanEditAd
     with CsrfPost[MAdProdReq]
 

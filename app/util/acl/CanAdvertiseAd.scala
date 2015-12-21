@@ -3,7 +3,7 @@ package util.acl
 import com.google.inject.Inject
 import models._
 import models.mproj.ICommonDi
-import models.req.{ISioUser, MAdProdReq, MReq}
+import models.req.{MUserInit, ISioUser, MAdProdReq, MReq}
 import play.api.mvc._
 import util.di.ICanAdvAdUtil
 import util.n2u.N2NodesUtil
@@ -97,6 +97,7 @@ trait CanAdvertiseAd
     extends ActionBuilder[MAdProdReq]
     with PlayMacroLogsI
     with OnUnauthNode
+    with InitUserCmds
   {
 
     /** id запрошенной рекламной карточки. */
@@ -130,12 +131,18 @@ trait CanAdvertiseAd
     with PlayMacroLogsDyn
 
   /** Запрос какой-то формы размещения рекламной карточки. */
-  case class CanAdvertiseAdGet(override val adId: String)
+  case class CanAdvertiseAdGet(
+    override val adId       : String,
+    override val userInits  : MUserInit*
+  )
     extends CanAdvertiseAdBase2
     with CsrfGet[MAdProdReq]
 
   /** Сабмит какой-то формы размещения рекламной карточки. */
-  case class CanAdvertiseAdPost(override val adId: String)
+  case class CanAdvertiseAdPost(
+    override val adId       : String,
+    override val userInits  : MUserInit*
+  )
     extends CanAdvertiseAdBase2
     with CsrfPost[MAdProdReq]
 

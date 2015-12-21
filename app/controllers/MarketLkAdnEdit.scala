@@ -215,7 +215,7 @@ class MarketLkAdnEdit @Inject() (
 
 
   /** Страница с формой редактирования узла рекламной сети. Функция смотрит тип узла и рендерит ту или иную страницу. */
-  def editAdnNode(adnId: String) = IsAdnNodeAdminGet(adnId).async { implicit request =>
+  def editAdnNode(adnId: String) = IsAdnNodeAdminGet(adnId, U.Lk).async { implicit request =>
     import request.mnode
 
     // Запуск асинхронной сборки данных из моделей.
@@ -239,31 +239,38 @@ class MarketLkAdnEdit @Inject() (
 
     // Рендер и возврат http-ответа.
     for {
-      formFilled <- formFilledFut
-      resp       <- _editAdnNode(formFilled, Ok)
+      formFilled  <- formFilledFut
+      resp        <- _editAdnNode(formFilled, Ok)
     } yield {
       resp
     }
   }
 
-
-  private def _editAdnNode(form: Form[FormMapResult], respStatus: Status)
+  /** Общий код рендера редактирования узла. */
+  private def _editAdnNode(form: Form[FormMapResult], rs: Status)
                           (implicit request: INodeReq[_]): Future[Result] = {
-    implicit val ctxData = CtxData(
-      jsiTgs = Seq(MTargets.LkNodeEditForm)
-    )
     val args = NodeEditArgs(
       mnode         = request.mnode,
       mf            = form
     )
-    val render = nodeEditTpl(args)
-    respStatus( render )
+
+    val jsiTgs1 = Seq(MTargets.LkNodeEditForm)
+
+    for {
+      ctxData0  <- request.user.lkCtxData
+    } yield {
+      implicit val ctxData = ctxData0.copy(
+        jsiTgs        = jsiTgs1
+      )
+      val render = nodeEditTpl(args)
+      rs(render)
+    }
   }
 
 
   /** Сабмит формы редактирования узла рекламной сети. Функция смотрит тип узла рекламной сети и использует
     * тот или иной хелпер. */
-  def editAdnNodeSubmit(adnId: String) = IsAdnNodeAdminPost(adnId).async { implicit request =>
+  def editAdnNodeSubmit(adnId: String) = IsAdnNodeAdminPost(adnId, U.Lk).async { implicit request =>
     import request.mnode
     lazy val logPrefix = s"editAdnNodeSubmit($adnId): "
     nodeFormM(mnode.extras.adn.get).bindFromRequest().fold(

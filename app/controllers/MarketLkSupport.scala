@@ -64,7 +64,7 @@ class MarketLkSupport @Inject() (
    * Отрендерить форму с запросом помощи с узла.
    * @return 200 Ок и страница с формой.
    */
-  def supportFormNode(adnId: String, r: Option[String]) = IsAdnNodeAdminGet(adnId).async { implicit request =>
+  def supportFormNode(adnId: String, r: Option[String]) = IsAdnNodeAdminGet(adnId, U.Lk).async { implicit request =>
     val mnodeOpt = Some(request.mnode)
     _supportForm(mnodeOpt, r)
   }
@@ -79,17 +79,27 @@ class MarketLkSupport @Inject() (
   }
 
   private def _supportForm(nodeOpt: Option[MNode], r: Option[String])(implicit request: IReq[_]): Future[Result] = {
+    val mBalancesFut = request.user.mBalancesFut
+
     // Взять дефолтовое значение email'а по сессии
-    val emailsDfltFut = request.user.personIdOpt.fold [Future[Seq[String]]]
-      { Future successful Nil }
-      { personId => MPersonIdent.findAllEmails(personId) }
+    val emailsDfltFut = request.user
+      .personIdOpt
+      .fold [Future[Seq[String]]] {
+        Future successful Nil
+      } { personId =>
+        MPersonIdent.findAllEmails(personId)
+      }
+
     for {
-      emailsDflt <- emailsDfltFut
+      ctxData     <- request.user.lkCtxData
+      emailsDflt  <- emailsDfltFut
     } yield {
       val emailDflt = emailsDflt.headOption getOrElse ""
       val lsr = MLkSupportRequest(name = None, replyEmail = emailDflt, msg = "")
-      val form = supportFormM fill lsr
-      Ok(supportFormTpl(nodeOpt, form, r))
+      val form = supportFormM.fill(lsr)
+
+      implicit val ctxData1 = ctxData
+      Ok( supportFormTpl(nodeOpt, form, r) )
     }
   }
 

@@ -15,10 +15,12 @@ import models.mctx.Context
 import models.mlk.{MNodeAdsTplArgs, MNodeShowArgs}
 import models.mproj.ICommonDi
 import models.msession.Keys
+import models.req.INodeReq
 import models.usr.EmailPwIdent
 import org.elasticsearch.search.sort.SortOrder
 import play.api.data.Form
 import play.api.data.Forms._
+import play.api.mvc.Result
 import util.FormUtil._
 import util.acl._
 import util.adn.NodesUtil
@@ -89,13 +91,14 @@ class MarketLkAdn @Inject() (
    * Отрендерить страницу ЛК какого-то узла рекламной сети. Экшен различает свои и чужие узлы.
    * @param nodeId id узла.
    */
-  def showAdnNode(nodeId: String) = IsAdnNodeAdminGet(nodeId).async { implicit request =>
+  def showAdnNode(nodeId: String) = IsAdnNodeAdminGet(nodeId, U.Lk).async { implicit request =>
     val mnode = request.mnode
     val logoOptFut = logoUtil.getLogoOfNode(mnode)
     val galleryFut = galleryUtil.galleryImgs( mnode )
     for {
-      logoOpt <- logoOptFut
-      gallery <- galleryFut
+      ctxData   <- request.user.lkCtxData
+      logoOpt   <- logoOptFut
+      gallery   <- galleryFut
     } yield {
       val rargs = MNodeShowArgs(
         mnode         = mnode,
@@ -104,6 +107,8 @@ class MarketLkAdn @Inject() (
         fgColor       = colorCodeOrDflt(mnode.meta.colors.fg, scUtil.SITE_FGCOLOR_DFLT),
         gallery       = gallery
       )
+
+      implicit val ctxData1 = ctxData
       val html = adnNodeShowTpl( rargs )
       Ok(html)
     }
@@ -122,7 +127,7 @@ class MarketLkAdn @Inject() (
    * @return 200 Ok + страница ЛК со списком карточек.
    */
   def showNodeAds(adnId: String, mode: MNodeAdsMode, newAdIdOpt: Option[String]) = {
-    IsAdnNodeAdminGet(adnId).async { implicit request =>
+    IsAdnNodeAdminGet(adnId, U.Lk).async { implicit request =>
       import request.mnode
 
       // Для узла нужно отобразить его рекламу.
@@ -202,14 +207,22 @@ class MarketLkAdn @Inject() (
         }
       }
 
-      implicit val ctx = implicitly[Context]
+      val ctxFut = request.user.lkCtxData.map { implicit ctxData =>
+        implicitly[Context]
+      }
 
       // 2015.apr.20: Вместо списка рекламных карточек надо передавать данные для рендера.
-      val brArgssFut = madsFut flatMap { mads =>
-        val dsOpt = ctx.deviceScreenOpt
-        Future.traverse(mads) { mad =>
-          lkAdUtil.tiledAdBrArgs(mad, dsOpt)
+      val brArgssFut = for {
+        mads <- madsFut
+        ctx  <- ctxFut
+        res  <- {
+          val dsOpt = ctx.deviceScreenOpt
+          Future.traverse(mads) { mad =>
+            lkAdUtil.tiledAdBrArgs(mad, dsOpt)
+          }
         }
+      } yield {
+        res
       }
 
       // Рендер результата, когда все карточки будут собраны.
@@ -217,6 +230,7 @@ class MarketLkAdn @Inject() (
         brArgss   <- brArgssFut
         ad2advMap <- ad2advMapFut
         canAdv    <- canAdvFut
+        ctx       <- ctxFut
       } yield {
         val args = MNodeAdsTplArgs(
           mnode       = mnode,
@@ -334,26 +348,26 @@ class MarketLkAdn @Inject() (
 
 
   /** Рендер страницы редактирования профиля пользователя в рамках ЛК узла. */
-  def userProfileEdit(adnId: String, r: Option[String]) = IsAdnNodeAdminGet(adnId).apply { implicit request =>
-    Ok {
-      userProfileEditTpl(
+  def userProfileEdit(adnId: String, r: Option[String]) = IsAdnNodeAdminGet(adnId, U.Lk).async { implicit request =>
+    _userProfileEdit(ChangePw.changePasswordFormM, r, Ok)
+  }
+
+  private def _userProfileEdit(form: Form[(String, String)], r: Option[String], rs: Status)
+                              (implicit request: INodeReq[_]): Future[Result] = {
+    request.user.lkCtxData.map { implicit ctxData =>
+      val html = userProfileEditTpl(
         mnode = request.mnode,
-        pf    = ChangePw.changePasswordFormM,
+        pf    = form,
         r     = r
       )
+      rs(html)
     }
   }
 
   /** Сабмит формы смены пароля. */
   def changePasswordSubmit(adnId: String, r: Option[String]) = IsAdnNodeAdminPost(adnId).async { implicit request =>
     _changePasswordSubmit(r) { formWithErrors =>
-      NotAcceptable {
-        userProfileEditTpl(
-          mnode = request.mnode,
-          pf    = formWithErrors,
-          r     = r
-        )
-      }
+      _userProfileEdit(formWithErrors, r, NotAcceptable)
     }
   }
 

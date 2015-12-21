@@ -6,7 +6,6 @@ import io.suggest.model.geo.{CircleGs, Distance, GeoPoint}
 import models.adv.gtag.{GtForm_t, MAdvFormResult, MForAdTplArgs}
 import models.jsm.init.MTargets
 import models.maps.MapViewState
-import models.mctx.CtxData
 import models.mproj.ICommonDi
 import models.req.IAdProdReq
 import models.GeoIp
@@ -48,7 +47,7 @@ class LkAdvGeoTag @Inject() (
    * Экшен рендера страницы размещения карточки в теге с географией.
    * @param adId id отрабатываемой карточки.
    */
-  def forAd(adId: String) = CanAdvertiseAdGet(adId).async { implicit request =>
+  def forAd(adId: String) = CanAdvertiseAdGet(adId, U.Lk).async { implicit request =>
     val ipLocFut = GeoIp.geoSearchInfoOpt
     val formEmpty = geoTagsFormUtil.advForm
 
@@ -85,17 +84,21 @@ class LkAdvGeoTag @Inject() (
    */
   private def _forAd(form: GtForm_t, rs: Status)
                     (implicit request: IAdProdReq[_]): Future[Result] = {
-    implicit val ctxData = CtxData(
-      jsiTgs = Seq(MTargets.AdvGtagForm)
-    )
-    val rargs = MForAdTplArgs(
-      mad             = request.mad,
-      producer        = request.producer,
-      form            = form,
-      advPeriodsAvail = advFormUtil.advPeriodsAvailable,
-      price           = bill2Util.zeroPricing
-    )
-    Ok( forAdTpl(rargs) )
+    for {
+      ctxData0 <- request.user.lkCtxData
+    } yield {
+      implicit val ctxData = ctxData0.copy(
+        jsiTgs = Seq(MTargets.AdvGtagForm)
+      )
+      val rargs = MForAdTplArgs(
+        mad       = request.mad,
+        producer  = request.producer,
+        form      = form,
+        advPeriodsAvail = advFormUtil.advPeriodsAvailable,
+        price     = bill2Util.zeroPricing
+      )
+      Ok(forAdTpl(rargs))
+    }
   }
 
 

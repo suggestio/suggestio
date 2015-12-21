@@ -7,7 +7,7 @@ import models.adv.ext.act.{ActorPathQs, OAuthVerifier}
 import models.adv.ext.{MAdvRunnerTplArgs, MForAdTplArgs}
 import models.adv.search.etg.ExtTargetSearchArgs
 import models.jsm.init.MTargets
-import models.mctx.{CtxData, Context}
+import models.mctx.Context
 import models.mproj.ICommonDi
 import models.req.IAdProdReq
 import org.elasticsearch.search.sort.SortOrder
@@ -91,7 +91,7 @@ class LkAdvExt @Inject() (
     _forAdRender(adId, advsFormM, Ok)
   }
 
-  private def _forAdRender(adId: String, form: ExtAdvForm, respStatus: Status)
+  private def _forAdRender(adId: String, form: ExtAdvForm, rs: Status)
                           (implicit request: IAdProdReq[_]): Future[Result] = {
     val targetsFut: Future[Seq[MExtTarget]] = {
       val args = ExtTargetSearchArgs(
@@ -101,7 +101,9 @@ class LkAdvExt @Inject() (
       )
       MExtTarget.dynSearch(args)
     }
+
     for {
+      ctxData0      <- request.user.lkCtxData
       targets       <- targetsFut
     } yield {
       val args = MForAdTplArgs(
@@ -111,12 +113,10 @@ class LkAdvExt @Inject() (
         advForm     = form,
         oneTgForm   = ExtUtil.formForTarget
       )
-      respStatus {
-        implicit val ctxData = CtxData(
-          jsiTgs = Seq(MTargets.LkAdvExtForm)
-        )
-        forAdTpl(args)
-      }
+      implicit val ctxData = ctxData0.copy(
+        jsiTgs = Seq(MTargets.LkAdvExtForm)
+      )
+      rs( forAdTpl(args) )
     }
   }
 
@@ -154,23 +154,25 @@ class LkAdvExt @Inject() (
    *                  Если не заданы, то будет редирект на форму размещения.
    * @return Страница с системой размещения.
    */
-  def runner(adId: String, wsArgsOpt: Option[MExtAdvQs]) = CanAdvertiseAdPost(adId) { implicit request =>
+  def runner(adId: String, wsArgsOpt: Option[MExtAdvQs]) = CanAdvertiseAdPost(adId, U.Lk).async { implicit request =>
     wsArgsOpt match {
       case Some(wsArgs) =>
-        implicit val ctxData = CtxData(
-          jsiTgs = Seq(MTargets.AdvExtRunner)
-        )
-        implicit val ctx = implicitly[Context]
-        val wsArgs2 = wsArgs.copy(
-          wsId = ctx.ctxIdStr,
-          adId = adId
-        )
-        val rargs = MAdvRunnerTplArgs(
-          wsCallArgs  = wsArgs2,
-          mad         = request.mad,
-          mnode       = request.producer
-        )
-        Ok( advRunnerTpl(rargs)(ctx) )
+        request.user.lkCtxData.map { ctxData0 =>
+          implicit val ctxData = ctxData0.copy(
+            jsiTgs = Seq(MTargets.AdvExtRunner)
+          )
+          implicit val ctx = implicitly[Context]
+          val wsArgs2 = wsArgs.copy(
+            wsId = ctx.ctxIdStr,
+            adId = adId
+          )
+          val rargs = MAdvRunnerTplArgs(
+            wsCallArgs  = wsArgs2,
+            mad         = request.mad,
+            mnode       = request.producer
+          )
+          Ok( advRunnerTpl(rargs)(ctx) )
+        }
 
       // Аргументы не заданы. Такое бывает, когда юзер обратился к runner'у, но изменился ключ сервера или истекла сессия.
       case None =>
@@ -254,7 +256,7 @@ class LkAdvExt @Inject() (
    * @param adnId id узла.
    * @return 200 Ok с отрендеренной формой.
    */
-  def writeTarget(adnId: String) = IsAdnNodeAdminGet(adnId, false) { implicit request =>
+  def writeTarget(adnId: String) = IsAdnNodeAdminGet(adnId) { implicit request =>
     val ctx = implicitly[Context]
     val form0 = ExtUtil.oneRawTargetFullFormM(adnId)
       .fill( ("", Some(ctx.messages("New.target")), None) )

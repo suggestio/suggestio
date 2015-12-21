@@ -11,7 +11,7 @@ import models.adv.direct._
 import models.adv.tpl.{MAdvForAdTplArgs, MAdvHistoryTplArgs, MCurrentAdvsTplArgs}
 import models.mctx.Context
 import models.mproj.ICommonDi
-import models.req.{INodeAdvReqReq, IAdProdReq, IReq}
+import models.req.{IAdProdReq, INodeAdvReqReq, IReq}
 import play.api.data._
 import play.api.mvc.{AnyContent, Result}
 import play.twirl.api.Html
@@ -473,7 +473,7 @@ class MarketAdv @Inject() (
 
   /** Рендер страницы, которая появляется по ссылке-кнопке "рекламодатели". */
   // TODO Вместо IsAdnAdmin надо какой-то IsAdnRcvrAdmin
-  def showNodeAdvs(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
+  def showNodeAdvs(adnId: String) = IsAdnNodeAdmin(adnId, U.Lk).async { implicit request =>
     val mnode = request.mnode
 
     // Отрабатываем делегирование adv-прав текущему узлу:
@@ -512,15 +512,20 @@ class MarketAdv @Inject() (
         .toMap
     }
 
-    implicit val ctx = implicitly[Context]
+    // Инициализация контекста с учётом данных состояния.
+    val ctxFut = request.user.lkCtxData.map { implicit ctxData =>
+      implicitly[Context]
+    }
+
     // Собираем данные по рендеру блоков карточек.
-    val devScreenOpt = ctx.deviceScreenOpt
     val brArgsMapFut = for {
       mads        <- madsFut
+      ctx         <- ctxFut
       madId2Args  <- {
+        val devScrOpt = ctx.deviceScreenOpt
         Future.traverse(mads) { mad =>
           for {
-            brArgs <- lkAdUtil.tiledAdBrArgs(mad, devScreenOpt)
+            brArgs <- lkAdUtil.tiledAdBrArgs(mad, devScrOpt)
           } yield {
             mad.id.get -> brArgs
           }
@@ -555,7 +560,10 @@ class MarketAdv @Inject() (
     }
 
     // Рендер результата.
-    infosFut map { infos =>
+    for {
+      infos <- infosFut
+      ctx   <- ctxFut
+    } yield {
       Ok( nodeAdvsTpl(mnode, infos)(ctx) )
     }
   }

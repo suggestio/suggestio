@@ -14,24 +14,8 @@ trait ICtxData {
 
   def jsiTgs          : Seq[MTarget]
   def mUsrBalances    : Seq[MBalance]
-  def evtsCount       : Option[Long]
+  def evtsCount       : Option[Int]
 
-  /**
-   * builder-метод, враппер над copy. Приписывает новые цели js-инициализации перед текущими.
-   * @param jsiTgss Списки новых целей js-инициализации.
-   * @return Экземпляр [[CtxData]], этот либо обновлённый.
-   */
-  def prependJsiTgs(jsiTgss: Seq[MTarget]*): ICtxData = {
-    if (jsiTgss.exists(_.nonEmpty)) {
-      withJsiTgs(
-        jsiTgs1 = (jsiTgs.iterator ++ jsiTgss.iterator.flatten).toSeq
-      )
-    } else {
-      this
-    }
-  }
-
-  def withJsiTgs(jsiTgs1: Seq[MTarget]): ICtxData
 }
 
 
@@ -44,25 +28,31 @@ trait ICtxData {
 case class CtxData(
   override val jsiTgs           : Seq[MTarget]    = Nil,
   override val mUsrBalances     : Seq[MBalance]   = Nil,
-  override val evtsCount        : Option[Long]    = None
+  override val evtsCount        : Option[Int]     = None
 )
   extends ICtxData
 {
-  override def withJsiTgs(jsiTgs1: Seq[MTarget]) = copy(jsiTgs = jsiTgs1)
-}
 
+  /**
+   * builder-метод, враппер над copy. Приписывает новые цели js-инициализации перед текущими.
+   * @param jsiTgss Списки новых целей js-инициализации.
+   * @return Экземпляр [[CtxData]], этот либо обновлённый.
+   */
+  def prependJsiTgs(jsiTgss: Seq[MTarget]*): CtxData = {
+    if (jsiTgss.exists(_.nonEmpty)) {
+      copy(
+        jsiTgs = (jsiTgs.iterator ++ jsiTgss.iterator.flatten).toSeq
+      )
+    } else {
+      this
+    }
+  }
 
-/** Пустая реализация [[ICtxData]] без каких-либо контекстных данных. */
-class CtxDataEmpty extends ICtxData {
-  override def jsiTgs: Seq[MTarget] = Nil
-  override def mUsrBalances: Seq[MBalance] = Nil
-  override def evtsCount: Option[Long] = None
-  override def withJsiTgs(jsiTgs1: Seq[MTarget]) = CtxData(jsiTgs1)
 }
 
 
 object CtxData {
 
   /** Часто-используемый пустой инстанс [[ICtxData]]. */
-  val empty: ICtxData = new CtxDataEmpty
+  val empty = CtxData()
 }

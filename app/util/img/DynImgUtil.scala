@@ -188,8 +188,8 @@ class DynImgUtil @Inject() (
   def convert(in: File, out: File, imOps: Seq[ImOp]): Future[_] = {
     val op = new IMOperation
     op.addImage(in.getAbsolutePath + "[0]")
-    imOps.foreach { imOp =>
-      imOp addOperation op
+    for (imOp <- imOps) {
+      imOp.addOperation(op)
     }
     op.addImage(out.getAbsolutePath)
     val cmd = new ConvertCmd()
@@ -201,11 +201,14 @@ class DynImgUtil @Inject() (
       // Запускаем генерацию картинки.
       val listener = new Im4jAsyncSuccessProcessListener
       cmd.addProcessEventListener(listener)
-      trace("convert(): " + cmd.getCommand.mkString(" ") + " " + opStr)
-      cmd run op
+      cmd.run(op)
       val resFut = listener.future
-      resFut onSuccess { case res =>
-        trace(s"convert(): returned $res, result ${out.length} bytes")
+      if (LOGGER.underlying.isTraceEnabled()) {
+        val tstamp = System.currentTimeMillis() * imOps.hashCode() * in.hashCode()
+        trace(s"convert(): [$tstamp] ${cmd.getCommand.mkString(" ")} $opStr")
+        resFut onSuccess { case res =>
+          trace(s"convert(): [$tstamp] returned $res, result ${out.length} bytes")
+        }
       }
       resFut
     }

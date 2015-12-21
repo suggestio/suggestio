@@ -7,6 +7,7 @@ import io.suggest.mbill2.m.balance.{MBalances, MBalance}
 import io.suggest.mbill2.m.contract.{MContracts, MContract}
 import io.suggest.model.n2.node.MNodeTypes
 import models.jsm.init.MTarget
+import models.mctx.CtxData
 import models.{MNodeCache, MNode}
 import models.event.MEvent
 import models.event.search.MEventsSearchArgs
@@ -63,10 +64,13 @@ trait ISioUser {
   def mBalancesFut: Future[Seq[MBalance]]
 
   /** Кол-во непрочитанных событий. */
-  def unSeenEventsCountFut: Future[Option[Int]]
+  def evtsCountFut: Future[Option[Int]]
 
   /** Дополнительные цели js-инициализации по мнению ActionBuilder'а. */
   def jsiTgs: List[MTarget]
+
+  /** Частый экземпяр CtxData для нужд ЛК. */
+  implicit def lkCtxData: Future[CtxData]
 
 }
 
@@ -77,13 +81,15 @@ class MSioUserEmpty extends ISioUser {
 
   override def personIdOpt          = None
   override def mContractOptFut      = _futOptOk[MContract]
-  override def unSeenEventsCountFut = _futOptOk[Int]
+  override def evtsCountFut = _futOptOk[Int]
   override def personNodeOptFut     = _futOptOk[MNode]
   override def isSuper              = false
   override def contractIdOptFut     = _futOptOk[Long]
   override def isAuth               = false
   override def jsiTgs               = Nil
   override def mBalancesFut         = Future.successful(Nil)
+
+  override implicit def lkCtxData   = Future.successful(CtxData.empty)
 }
 
 
@@ -124,7 +130,7 @@ trait ISioUserT extends ISioUser {
     }
   }
 
-  override def unSeenEventsCountFut: Future[Option[Int]] = {
+  override def evtsCountFut: Future[Option[Int]] = {
     FutureUtil.optFut2futOpt(personIdOpt) { personId =>
       // TODO Нужно портировать события на MNode и тут искать их.
       val search = new MEventsSearchArgs(ownerId = Some(personId))
@@ -141,6 +147,19 @@ trait ISioUserT extends ISioUser {
         val action = mBalances.findByContractId(contractId)
         dbConfig.db.run(action)
       }
+    }
+  }
+
+  override implicit def lkCtxData: Future[CtxData] = {
+    val _evtsCountFut = evtsCountFut
+    for {
+      mBalances <- mBalancesFut
+      evtsCount <- _evtsCountFut
+    } yield {
+      CtxData(
+        mUsrBalances  = mBalances,
+        evtsCount     = evtsCount
+      )
     }
   }
 
@@ -192,6 +211,10 @@ case class MSioUserLazy @Inject() (
   override lazy val mContractOptFut   = super.mContractOptFut
   override lazy val mBalancesFut      = super.mBalancesFut
   override lazy val isSuper           = super.isSuper
+  override lazy val evtsCountFut      = super.evtsCountFut
+
+  override implicit lazy val lkCtxData = super.lkCtxData
+
 }
 
 

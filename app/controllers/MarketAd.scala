@@ -12,7 +12,7 @@ import models.blk.PrepareBlkImgArgs
 import models.blk.ed.{AdFormM, AdFormResult, BlockImgMap}
 import models.im.MImg3_
 import models.jsm.init.MTargets
-import models.mctx.{CtxData, Context}
+import models.mctx.Context
 import models.mproj.ICommonDi
 import models.req.{IAdProdReq, INodeReq, IReq}
 import org.joda.time.DateTime
@@ -96,7 +96,7 @@ class MarketAd @Inject() (
    * Рендер унифицированной страницы добаления рекламной карточки.
    * @param adnId id узла рекламной сети.
    */
-  def createAd(adnId: String) = IsAdnNodeAdminGet(adnId).async { implicit request =>
+  def createAd(adnId: String) = IsAdnNodeAdminGet(adnId, U.Balance).async { implicit request =>
     _renderCreateFormWith(
       af      = adFormM,
       adnNode = request.mnode,
@@ -162,12 +162,16 @@ class MarketAd @Inject() (
   /** Акт рендера результирующей страницы в отрыве от самой страницы. */
   private def _renderPage(af: AdFormM, rs: Status)(f: Context => Html)
                          (implicit request: IReq[_]): Future[Result] = {
-    implicit val ctxData = CtxData(
-      jsiTgs = Seq(MTargets.AdForm)
-    )
-    implicit val ctx = implicitly[Context]
-    detectMainColorBg(af)(ctx)
-    rs( f(ctx) )
+    for {
+      ctxData0      <- request.user.lkCtxData
+    } yield {
+      implicit val ctxData = ctxData0.copy(
+        jsiTgs        = Seq(MTargets.AdForm)
+      )
+      implicit val ctx = implicitly[Context]
+      detectMainColorBg(af)(ctx)
+      rs(f(ctx))
+    }
   }
 
 
@@ -175,7 +179,7 @@ class MarketAd @Inject() (
    * Рендер страницы с формой редактирования рекламной карточки магазина.
    * @param adId id рекламной карточки.
    */
-  def editAd(adId: String) = CanEditAdGet(adId).async { implicit request =>
+  def editAd(adId: String) = CanEditAdGet(adId, U.Lk).async { implicit request =>
     import request.mad
     val bc = n2NodesUtil.bc(mad)
 

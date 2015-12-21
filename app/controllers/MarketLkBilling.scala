@@ -6,7 +6,6 @@ import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models._
 import models.jsm.init.MTargets
 import models.mbill.{MContract, MDailyMmpsTplArgs, MTariffDaily, MTxn}
-import models.mctx.CtxData
 import models.mproj.ICommonDi
 import models.req.IReq
 import org.elasticsearch.search.sort.SortOrder
@@ -43,20 +42,23 @@ class MarketLkBilling @Inject() (
 
 
   /** Отобразить какую-то страницу с реквизитами для платежа. */
-  def paymentRequsites(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
+  def paymentRequsites(adnId: String) = IsAdnNodeAdmin(adnId, U.Lk).async { implicit request =>
     val mbcsFut = Future {
       db.withConnection { implicit c =>
         MContract.findForAdn(adnId, isActive = Some(true))
       }
     }(AsyncUtil.jdbcExecutionContext)
-    for (mbcs <- mbcsFut) yield {
+
+    mbcsFut.flatMap { mbcs =>
       mbcs.headOption match {
         case Some(mbc) =>
-          Ok(billPaymentBankTpl(request.mnode, mbc))
+          request.user.lkCtxData.map { implicit ctxData =>
+            Ok(billPaymentBankTpl(request.mnode, mbc))
+          }
 
         case None =>
           // Нет заключенных договоров, оплата невозможна.
-          errorHandler.http404ctx
+          errorHandler.http404Fut
       }
     }
   }
@@ -66,7 +68,7 @@ class MarketLkBilling @Inject() (
    * Рендер страницы, содержащей общую биллинговую информацию для узла.
    * @param adnId id узла.
    */
-  def showAdnNodeBilling(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
+  def showAdnNodeBilling(adnId: String) = IsAdnNodeAdmin(adnId, U.Lk).async { implicit request =>
     val isProducer = request.mnode
       .extras
       .adn
@@ -84,42 +86,49 @@ class MarketLkBilling @Inject() (
     } else {
       Future successful Nil
     }
-    val billInfoOpt = db.withConnection { implicit c =>
-      MContract.findForAdn(adnId, isActive = Some(true))
-        .headOption
-        .map { mbc =>
-          val contractId = mbc.id.get
-          // Если этот узел - приёмник рекламы, то нужно найти в базе его тарифные планы.
-          val myMbmds = if (request.mnode.extras.adn.exists(_.isReceiver)) {
-            MTariffDaily.findByContractId(contractId)
-          } else {
-            Nil
+
+    val billInfoOptFut = Future {
+      db.withConnection { implicit c =>
+        MContract.findForAdn(adnId, isActive = Some(true))
+          .headOption
+          .map { mbc =>
+            val contractId = mbc.id.get
+            // Если этот узел - приёмник рекламы, то нужно найти в базе его тарифные планы.
+            val myMbmds = if (request.mnode.extras.adn.exists(_.isReceiver)) {
+              MTariffDaily.findByContractId(contractId)
+            } else {
+              Nil
+            }
+            val allRcvrAdnIds = if (isProducer) {
+              MTariffDaily.findAllAdnIds
+            } else {
+              Nil
+            }
+            (mbc, myMbmds, allRcvrAdnIds)
           }
-          val allRcvrAdnIds = if (isProducer) {
-            MTariffDaily.findAllAdnIds
-          } else {
-            Nil
-          }
-          (mbc, myMbmds, allRcvrAdnIds)
-        }
-    }
-    billInfoOpt match {
+      }
+    }(AsyncUtil.jdbcExecutionContext)
+
+    billInfoOptFut flatMap {
       case Some((mbc, mbmds, allRcvrAdnIds)) =>
         val allRcvrAdnIdsSet = allRcvrAdnIds.toSet
-        otherRcvrsFut.map { otherRcvrs =>
-          val otherRcvrs1 = otherRcvrs.filter(_.id.exists(allRcvrAdnIdsSet.contains))
-          Ok(showAdnNodeBillingTpl(request.mnode, mbmds, mbc, otherRcvrs1))
+        request.user.lkCtxData.flatMap { implicit ctxData =>
+          otherRcvrsFut.map { otherRcvrs =>
+            val otherRcvrs1 = otherRcvrs.filter(_.id.exists(allRcvrAdnIdsSet.contains))
+            val html = showAdnNodeBillingTpl(request.mnode, mbmds, mbc, otherRcvrs1)
+            Ok(html)
+          }
         }
 
       case None =>
         warn(s"showAdnNodeBilling($adnId): No active contracts found for node, but billing page requested by user ${request.user.personIdOpt} ref=${request.headers.get("Referer")}")
-        errorHandler.http404ctx
+        errorHandler.http404Fut
     }
   }
 
 
   /** Подгрузка страницы из списка транзакций. */
-  def txnsList(adnId: String, page: Int, inline: Boolean) = IsAdnNodeAdmin(adnId).async { implicit request =>
+  def txnsList(adnId: String, page: Int, inline: Boolean) = IsAdnNodeAdmin(adnId, U.Lk).async { implicit request =>
     val tpp = TXNS_PER_PAGE
     val offset = page * tpp
 
@@ -132,9 +141,10 @@ class MarketLkBilling @Inject() (
     }(AsyncUtil.jdbcExecutionContext)
 
     for {
-      txns <- txnsFut
+      ctxData0  <- request.user.lkCtxData
+      txns      <- txnsFut
     } yield {
-      implicit val ctxData = CtxData(
+      implicit val ctxData = ctxData0.copy(
         jsiTgs = Seq(MTargets.BillTxnsList)
       )
       val render: Html = if (inline) {

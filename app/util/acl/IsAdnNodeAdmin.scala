@@ -115,7 +115,7 @@ trait IsAdnNodeAdmin
     with PlayMacroLogsI
     with IsAdnNodeAdminUtil
     with OnUnauthNode
-    with InitUserBalance
+    with InitUserCmds
   {
 
     /** id запрашиваемого узла. */
@@ -127,7 +127,7 @@ trait IsAdnNodeAdmin
 
       isAdnNodeAdmin(nodeId, user) flatMap {
         case Some(mnode) =>
-          maybeInitUserBalance(user)
+          maybeInitUser(user)
           val req1 = MNodeReq(mnode, request, user)
           block(req1)
 
@@ -148,14 +148,14 @@ trait IsAdnNodeAdmin
   /** Просто проверка прав на узел перед запуском экшена. */
   case class IsAdnNodeAdmin(
     override val nodeId: String,
-    override val initUserBalance: Boolean = true
+    override val userInits: MUserInit*
   )
     extends IsAdnNodeAdminBase2
 
   /** Рендер формы редактирования требует защиты от CSRF. */
   case class IsAdnNodeAdminGet(
     override val nodeId: String,
-    override val initUserBalance: Boolean = true
+    override val userInits: MUserInit*
   )
     extends IsAdnNodeAdminBase2
     with CsrfGet[MNodeReq]
@@ -163,7 +163,7 @@ trait IsAdnNodeAdmin
   /** Сабмит формы редактирования требует проверки CSRF-Token'а. */
   case class IsAdnNodeAdminPost(
     override val nodeId: String,
-    override val initUserBalance: Boolean = false
+    override val userInits: MUserInit*
   )
     extends IsAdnNodeAdminBase2
     with CsrfPost[MNodeReq]

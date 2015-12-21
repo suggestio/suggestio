@@ -1,7 +1,7 @@
 package util.acl
 
 import models.mproj.IMCommonDi
-import models.req.MNodeOptReq
+import models.req.{MUserInit, MNodeOptReq}
 import play.api.mvc.{ActionBuilder, Request, Result}
 import util.PlayMacroLogsDyn
 
@@ -29,7 +29,7 @@ trait IsAdnNodeAdminOptOrAuth
     extends ActionBuilder[MNodeOptReq]
     with PlayMacroLogsDyn
     with OnUnauthUtil
-    with InitUserBalance
+    with InitUserCmds
   {
 
     /** id узла, если есть. */
@@ -43,7 +43,7 @@ trait IsAdnNodeAdminOptOrAuth
         val user = mSioUsers(personIdOpt)
 
         // Запустить в фоне получение кошелька юзера, т.к. экшены все относятся к этому кошельку
-        maybeInitUserBalance(user)
+        maybeInitUser(user)
 
         mnodeOptFut.flatMap { mnodeOpt =>
           val mnodeOpt1 = mnodeOpt.filter { mnode =>
@@ -63,8 +63,8 @@ trait IsAdnNodeAdminOptOrAuth
 
 
   case class IsAdnNodeAdminOptOrAuthGet(
-    override val adnIdOpt: Option[String],
-    override val initUserBalance: Boolean = true
+    override val adnIdOpt   : Option[String],
+    override val userInits  : MUserInit*
   )
     extends IsAdnNodeAdminOptOrAuthBase2
     with CsrfGet[MNodeOptReq]
