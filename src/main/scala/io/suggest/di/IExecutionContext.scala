@@ -9,5 +9,5 @@ import scala.concurrent.ExecutionContext
  * Description: Интерфейс для DI-инжектируемого поля execution context.
  */
 trait IExecutionContext {
-  implicit def ec: ExecutionContext         = play.api.libs.concurrent.Execution.defaultContext
+  implicit def ec: ExecutionContext
 }
