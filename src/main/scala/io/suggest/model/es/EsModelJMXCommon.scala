@@ -2,6 +2,7 @@ package io.suggest.model.es
 
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.util.{MacroLogsImplLazy, JMXBase, JacksonWrapper}
+import org.elasticsearch.action.bulk.BulkResponse
 import org.elasticsearch.client.Client
 
 import scala.concurrent.ExecutionContext
@@ -83,8 +84,10 @@ trait EsModelCommonJMXBase extends JMXBase with EsModelJMXMBeanCommonI with Macr
 
   override def resaveMany(maxResults: Int): String = {
     warn(s"resaveMany(maxResults = $maxResults)")
-    val resavedIds = companion.resaveMany(maxResults).toSeq
-    s"Total: ${resavedIds.size}\n---------\n" + resavedIds.mkString("\n")
+    val fut = for (resp <- companion.resaveMany(maxResults)) yield {
+      s"Total: ${resp.getItems.length} took=${resp.getTook.seconds()}s\n---------\n ${resp.buildFailureMessage()}"
+    }
+    awaitString(fut)
   }
 
 

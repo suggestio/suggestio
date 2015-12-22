@@ -469,11 +469,14 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
    * @return
    */
   def resaveMany(maxResults: Int = MAX_RESULTS_DFLT)
-                (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Seq[String]] = {
-    getAll(maxResults, withVsn = true).flatMap { results =>
-      Future.traverse(results) { el =>
-        tryUpdate(el)(identity)
+                (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[BulkResponse] = {
+    val allFut = getAll(maxResults, withVsn = true)
+    val br = client.prepareBulk()
+    allFut.flatMap { results =>
+      for (r <- results) {
+        br.add( r.indexRequestBuilder )
       }
+      br.execute()
     }
   }
 
