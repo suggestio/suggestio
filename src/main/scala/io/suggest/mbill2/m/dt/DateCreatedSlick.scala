@@ -17,7 +17,7 @@ trait DateCreatedSlick extends IPgDriver {
   def DATE_CREATED_FN = "date_created"
 
   /** Добавить колонку dateCreated. */
-  trait DateCreatedColumn { that: Table[_] =>
+  trait DateCreated { that: Table[_] =>
     def dateCreated = column[DateTime](DATE_CREATED_FN)
   }
 

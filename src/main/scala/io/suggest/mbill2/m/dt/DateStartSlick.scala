@@ -16,12 +16,9 @@ trait DateStartSlick extends IPgDriver {
   def DATE_START_FN = "date_start"
 
   /** Добавить колонку dateStart. */
-  trait DateStartColumn { that: Table[_] =>
-    def dateStart = column[DateTime](DATE_START_FN)
+  trait DateStartOpt { that: Table[_] =>
+    def dateStartOpt = column[Option[DateTime]](DATE_START_FN)
   }
 
 }
 
-trait IDateStart {
-  def dateStart: DateTime
-}

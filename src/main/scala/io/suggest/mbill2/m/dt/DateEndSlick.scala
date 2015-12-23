@@ -16,13 +16,8 @@ trait DateEndSlick extends IPgDriver {
   def DATE_END_FN = "date_end"
 
   /** Добавить колонку dateEnd. */
-  trait DateEndColumn { that: Table[_] =>
-    def dateEnd = column[DateTime](DATE_END_FN)
+  trait DateEndOpt { that: Table[_] =>
+    def dateEndOpt = column[Option[DateTime]](DATE_END_FN)
   }
 
-}
-
-
-trait IDateEnd {
-  def dateEnd: DateTime
 }

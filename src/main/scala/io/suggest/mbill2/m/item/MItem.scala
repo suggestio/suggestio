@@ -4,16 +4,18 @@ import com.google.inject.{Inject, Singleton}
 import io.suggest.common.m.sql.ITableName
 import io.suggest.common.slick.driver.ExPgSlickDriverT
 import io.suggest.mbill2.m.common.InsertOneReturning
-import io.suggest.mbill2.m.dt.{DateStartSlick, DateEndSlick, IDateEnd, IDateStart}
+import io.suggest.mbill2.m.dt._
 import io.suggest.mbill2.m.gid._
 import io.suggest.mbill2.m.item.cols._
 import io.suggest.mbill2.m.item.status.{ItemStatusSlick, MItemStatus, IMItemStatus}
 import io.suggest.mbill2.m.item.typ.{MItemTypeSlick, MItemType, IMItemType}
 import io.suggest.mbill2.m.order.{OrderIdInxSlick, IOrderId, MOrders, OrderIdFkSlick}
 import io.suggest.mbill2.m.price._
+import io.suggest.mbill2.m.txn.MTxns
 import io.suggest.mbill2.util.PgaNamesMaker
 import io.suggest.model.sc.common.SinkShowLevel
-import org.joda.time.DateTime
+import io.suggest.ym.model.common.ProducerIdsDsa
+import org.joda.time.Interval
 import slick.lifted.ProvenShape
 
 /**
@@ -27,7 +29,7 @@ import slick.lifted.ProvenShape
 @Singleton
 class MItems @Inject() (
   override protected val driver   : ExPgSlickDriverT,
-  override protected val mOrders  : MOrders
+  override val mOrders            : MOrders
 )
   extends GidSlick
   with PriceSlick
@@ -37,8 +39,7 @@ class MItems @Inject() (
   with OrderIdFkSlick with OrderIdInxSlick
   with ItemStatusSlick
   with MItemTypeSlick
-  with DateStartSlick
-  with DateEndSlick
+  with IntervalSlick
   with AdIdSlick
   with ReasonOptSlick
   with RcvrIdOptSlick
@@ -55,7 +56,8 @@ class MItems @Inject() (
   override type Table_t = MItemsTable
   override type El_t    = MItem
 
-  override def ORDER_ID_INX = PgaNamesMaker.fkInx(TABLE_NAME, ORDER_ID_FN)
+  def PROD_ID_FN        = "prodId"
+  def PROD_ID_INX       = PgaNamesMaker.inx(TABLE_NAME, PROD_ID_FN)
 
   /** Реализация абстрактной slick-таблицы item'ов. */
   class MItemsTable(tag: Tag)
@@ -65,20 +67,23 @@ class MItems @Inject() (
     with CurrencyCodeColumn
     with CurrencyColumn
     with AmountColumn
-    with OrderIdColumn with OrderIdInx
-    with OrderIdFk
+    with OrderIdFk with OrderIdInx
     with ItemStatusColumn
     with ItemTypeColumn
-    with DateStartColumn
-    with DateEndColumn
+    with IntervalColumn
     with AdIdColumn
     with ReasonOptColumn
     with RcvrIdOptColumn
     with SlsColumn
   {
 
+    // TODO buyer_txn_id, seller_txn_id
+
+    def prodId          = column[String](PROD_ID_FN)
+    def prodIdInx       = index(PROD_ID_INX, prodId)
+
     override def * : ProvenShape[MItem] = {
-      (orderId, iType, status, price, adId, dateStart, dateEnd, rcvrIdOpt, sls, reasonOpt, id.?) <> (
+      (orderId, iType, status, price, adId, prodId, dtIntervalOpt, rcvrIdOpt, sls, reasonOpt, id.?) <> (
         MItem.tupled, MItem.unapply
       )
     }
@@ -102,26 +107,28 @@ trait IItem
   with IMPrice
   with IMItemType
   with IMItemStatus
-  with IDateStart
-  with IDateEnd
+  with IDtIntervalOpt
   with IAdId
   with IReasonOpt
   with IRcvrIdOpt
   with ISls
-
+{
+  def prodId          : String
+}
 
 /** Экземпляр модели (ряда абстрактной таблицы item'ов). */
 case class MItem(
-  override val orderId      : Gid_t,
-  override val iType        : MItemType,
-  override val status       : MItemStatus,
-  override val price        : MPrice,
-  override val adId         : String,
-  override val dateStart    : DateTime            = DateTime.now,
-  override val dateEnd      : DateTime,
-  override val rcvrIdOpt    : Option[String],
-  override val sls          : Set[SinkShowLevel]  = Set.empty,
-  override val reasonOpt    : Option[String]      = None,
-  override val id           : Option[Gid_t]       = None
+  override val orderId        : Gid_t,
+  override val iType          : MItemType,
+  override val status         : MItemStatus,
+  override val price          : MPrice,
+  override val adId           : String,
+  override val prodId         : String,
+  override val dtIntervalOpt  : Option[Interval],
+  override val rcvrIdOpt      : Option[String],
+  override val sls            : Set[SinkShowLevel]  = Set.empty,
+  override val reasonOpt      : Option[String]      = None,
+  override val id             : Option[Gid_t]       = None
 )
   extends IItem
+

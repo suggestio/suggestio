@@ -15,8 +15,8 @@ import slick.lifted.ProvenShape
  */
 @Singleton
 class MItemTags @Inject() (
-  override protected val driver: ExPgSlickDriverT,
-  override protected val mItems: MItems
+  override protected val driver : ExPgSlickDriverT,
+  override val mItems           : MItems
 )
   extends GidSlick
   with ItemIdFkSlick with ItemIdInxSlick

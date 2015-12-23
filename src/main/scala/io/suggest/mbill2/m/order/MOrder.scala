@@ -7,7 +7,6 @@ import io.suggest.mbill2.m.common.InsertOneReturning
 import io.suggest.mbill2.m.contract.{ContractIdSlickIdx, ContractIdSlickFk, MContracts}
 import io.suggest.mbill2.m.dt.DateCreatedSlick
 import io.suggest.mbill2.m.gid.{DeleteById, GetById, Gid_t, GidSlick}
-import io.suggest.mbill2.m.price._
 import io.suggest.mbill2.util.PgaNamesMaker
 import org.joda.time.DateTime
 import slick.lifted.ProvenShape
@@ -24,12 +23,9 @@ class MOrders @Inject() (
   override protected val driver       : ExPgSlickDriverT,
   override protected val mContracts   : MContracts
 )
-  extends PriceSlick
-  with GidSlick
+  extends GidSlick
   with DateCreatedSlick
   with ContractIdSlickFk with ContractIdSlickIdx
-  with AmountSlick
-  with CurrencyCodeSlick
   with ITableName
   with GetById
   with InsertOneReturning
@@ -53,12 +49,9 @@ class MOrders @Inject() (
   /** Slick-описание таблицы заказов. */
   class MOrdersTable(tag: Tag)
     extends Table[MOrder](tag, TABLE_NAME)
-    with PriceColumn with CurrencyColumn
     with GidColumn
-    with DateCreatedColumn
+    with DateCreated
     with ContractIdFk with ContractIdIdx
-    with AmountColumn
-    with CurrencyCodeColumn
   {
 
     def statusStr     = column[String](STATUS_FN)
@@ -69,7 +62,7 @@ class MOrders @Inject() (
     def status = statusStr <> (MOrderStatuses.withNameT, MOrderStatuses.unapply)
 
     override def * : ProvenShape[MOrder] = {
-      (status, contractId, price, dateCreated, dateStatus, id.?) <> (
+      (status, contractId, dateCreated, dateStatus, id.?) <> (
         MOrder.tupled, MOrder.unapply
       )
     }
@@ -99,7 +92,6 @@ class MOrders @Inject() (
 case class MOrder(
   status        : MOrderStatus,
   contractId    : Gid_t,
-  price         : MPrice,
   dateCreated   : DateTime      = DateTime.now,
   dateStatus    : DateTime      = DateTime.now,
   id            : Option[Gid_t] = None

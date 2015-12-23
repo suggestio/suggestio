@@ -55,8 +55,10 @@ class MTxns @Inject() (
 
     def order           = foreignKey( PgaNamesMaker.fkey(TABLE_NAME, ORDER_ID_FN), orderIdOpt, mOrders.query)(_.id.?)
 
-    def orderInx        = index(PgaNamesMaker.fkInx(TABLE_NAME, ORDER_ID_FN), orderIdOpt)
+    def orderIdInx      = index(PgaNamesMaker.fkInx(TABLE_NAME, ORDER_ID_FN), orderIdOpt)
     def psTxnUidKey     = index(PgaNamesMaker.uniq(TABLE_NAME, PS_TXN_UID_FN), psTxnUidOpt)
+
+    // TODO comission из payment
 
     override def * : ProvenShape[MTxn] = {
       (balanceId, amount, orderIdOpt, paymentComment, psTxnUidOpt, datePaidOpt, dateProcessed, id.?) <> (
@@ -65,6 +67,8 @@ class MTxns @Inject() (
     }
 
   }
+
+  val query = TableQuery[MTxnsTable]
 
 }
 

@@ -60,7 +60,7 @@ class MContracts @Inject()(
   class MContractsTable(tag: Tag)
     extends Table[MContract](tag, TABLE_NAME)
     with GidColumn
-    with DateCreatedColumn
+    with DateCreated
   {
 
     def crand       = column[Int](CRAND_FN)

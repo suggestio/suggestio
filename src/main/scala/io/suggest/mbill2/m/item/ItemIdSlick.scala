@@ -11,11 +11,13 @@ import io.suggest.mbill2.util.PgaNamesMaker
  * Created: 03.12.15 10:53
  * Description: Поддержка slick-поля item_id в таблицах.
  */
-trait ItemIdSlick extends IDriver {
+trait ItemIdFn {
+  def ITEM_ID_FN = "item_id"
+}
+
+trait ItemIdSlick extends IDriver with ItemIdFn {
 
   import driver.api._
-
-  def ITEM_ID_FN = "item_id"
 
   trait ItemIdColumn { that: Table[_] =>
     def itemId = column[Gid_t](ITEM_ID_FN)
@@ -24,15 +26,13 @@ trait ItemIdSlick extends IDriver {
 }
 
 
-trait ItemIdFkSlick extends ItemIdSlick with ITableName {
-
-  import driver.api._
-
+trait ItemIdFkFn extends ItemIdFn with ITableName {
   /** Название внешнего ключа. */
   def ITEM_ID_FK = PgaNamesMaker.fkey(TABLE_NAME, ITEM_ID_FN)
+}
+trait ItemIdFkSlick extends ItemIdSlick with ItemIdFkFn with IMItems {
 
-  /** DI-экземпляр slick-модели [[MItems]]. */
-  protected def mItems: MItems
+  import driver.api._
 
   trait ItemIdFk extends ItemIdColumn { that: Table[_] =>
     def item = foreignKey(ITEM_ID_FK, itemId, mItems.query)(_.id)
@@ -41,11 +41,12 @@ trait ItemIdFkSlick extends ItemIdSlick with ITableName {
 }
 
 
-trait ItemIdInxSlick extends ItemIdSlick with ITableName {
+trait ItemIdInxFn extends ItemIdFn with ITableName {
+  def ITEM_ID_INX = PgaNamesMaker.fkInx(TABLE_NAME, ITEM_ID_FN)
+}
+trait ItemIdInxSlick extends ItemIdSlick with ItemIdInxFn {
 
   import driver.api._
-
-  def ITEM_ID_INX = PgaNamesMaker.fkInx(TABLE_NAME, ITEM_ID_FN)
 
   trait ItemIdInx extends ItemIdColumn { that: Table[_] =>
     def itemInx = index(ITEM_ID_INX, itemId)
