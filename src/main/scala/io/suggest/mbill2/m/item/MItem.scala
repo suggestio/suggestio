@@ -11,10 +11,8 @@ import io.suggest.mbill2.m.item.status.{ItemStatusSlick, MItemStatus, IMItemStat
 import io.suggest.mbill2.m.item.typ.{MItemTypeSlick, MItemType, IMItemType}
 import io.suggest.mbill2.m.order.{OrderIdInxSlick, IOrderId, MOrders, OrderIdFkSlick}
 import io.suggest.mbill2.m.price._
-import io.suggest.mbill2.m.txn.MTxns
 import io.suggest.mbill2.util.PgaNamesMaker
 import io.suggest.model.sc.common.SinkShowLevel
-import io.suggest.ym.model.common.ProducerIdsDsa
 import org.joda.time.Interval
 import slick.lifted.ProvenShape
 
@@ -76,8 +74,6 @@ class MItems @Inject() (
     with RcvrIdOptColumn
     with SlsColumn
   {
-
-    // TODO buyer_txn_id, seller_txn_id
 
     def prodId          = column[String](PROD_ID_FN)
     def prodIdInx       = index(PROD_ID_INX, prodId)

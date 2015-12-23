@@ -45,7 +45,7 @@ trait ComissionBalanceIdOptInxSlick extends ComissionBalanceIdOptSlick with ITab
 
   def COMISSION_BALANCE_ID_INX = PgaNamesMaker.fkInx(TABLE_NAME, COMISSION_BALANCE_ID_FN)
 
-  trait ComissionBalanceIdInx extends ComissionBalanceIdOpt { that: Table[_] =>
+  trait ComissionBalanceIdOptInx extends ComissionBalanceIdOpt { that: Table[_] =>
     def comissionBalanceIdInx = index(COMISSION_BALANCE_ID_INX, comissionBalanceIdOpt, unique = false)
   }
 
