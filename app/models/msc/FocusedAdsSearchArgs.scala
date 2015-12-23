@@ -103,7 +103,7 @@ class FocusedAdsSearchArgsImpl
 
 /** wrap-значение adSearch + значения, специфичные для [[FocusedAdsSearchArgs]]. */
 abstract class FocusedAdsSearchArgsWrappedImpl
-  extends FocusedAdsSearchArgsImpl
+  extends FocusedAdsSearchArgs
   with AdSearchWrap
 
 
@@ -117,3 +117,7 @@ trait FocusedAdsSearchArgsWrapper extends AdSearchWrapper_ with FocusedAdsSearch
   override def onlyWithAdId       = _dsArgsUnderlying.onlyWithAdId
 
 }
+
+abstract class FocusedAdsSearchArgsWrapperImpl
+  extends FocusedAdsSearchArgsWrapper
+

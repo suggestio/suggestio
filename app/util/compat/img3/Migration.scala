@@ -230,19 +230,25 @@ class Migration @Inject() (
   /** Миграция рекламных карточек. */
   def migrateMads(): Future[MadsCntsAcc] = {
 
+    val prodMissIgnore = configuration.getBoolean("compat.migration.mad.check.prod.exists") getOrElse false
+
     // Возможны ошибочные карточки, не привязанные к кабинетам.
     // Нужно их отсеивать.
-    val prodsExistsFut: Future[Set[String]] = {
+    val prodsExistsFut: Future[Set[String]] = if (!prodMissIgnore) {
       val msearch = new MNodeSearchDfltImpl {
         override def nodeTypes: Seq[MNodeType] = Seq( MNodeTypes.AdnNode )
         // На момент написания этого кода в системе было 229 узлов.
         override def limit = 500
       }
-      MNode.dynSearchIds(msearch)
+      val fut = MNode.dynSearchIds(msearch)
         .map { _.toSet }
-    }
-    prodsExistsFut.onSuccess { case peSet =>
-      LOGGER.info(s"Producer IDs set have ${peSet.size} keys.")
+      fut.onSuccess { case peSet =>
+        LOGGER.info(s"Producer IDs set have ${peSet.size} keys.")
+      }
+      fut
+
+    } else {
+      Future.successful(Set.empty)
     }
 
     // Собрать общую карту всех тегов, благо их немного сейчас (100-200 тегов вкл.повторяющиеся).
@@ -276,7 +282,7 @@ class Migration @Inject() (
     val finalFut = MAd.foldLeftAsync(MadsCntsAcc()) { (acc0Fut, mad) =>
       val resFut = for {
         prodsExists   <- prodsExistsFut
-        if prodsExists.contains(mad.producerId)
+        if prodMissIgnore || prodsExists.contains(mad.producerId)
         // Принудительно тормозим обработку, чтобы портирование картинок шло легче.
         _             <- acc0Fut
         tagEdgesMap   <- tagEdgesMapFut

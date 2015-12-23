@@ -52,15 +52,16 @@ trait ScFocusedAdsBase
     // TODO Не искать вообще карточки, если firstIds.len >= adSearch.size
     // TODO Выставлять offset для поиска с учётом firstIds?
     lazy val mads1Fut: Future[Seq[MNode]] = {
-      if (_adSearch.limit > _adSearch.firstIds.size) {
+      val adSearch0 = _adSearch
+      if (adSearch0.limit > adSearch0.firstIds.size) {
         // Костыль, т.к. сортировка forceFirstIds на стороне ES-сервера всё ещё не пашет:
-        val adSearch2 = if (_adSearch.firstIds.isEmpty) {
-          _adSearch
+        val adSearch2 = if (adSearch0.firstIds.isEmpty) {
+          adSearch0
         } else {
-          new AdSearchWrapper {
-            override def _dsArgsUnderlying  = _adSearch
+          new FocusedAdsSearchArgsWrappedImpl {
+            override def _dsArgsUnderlying  = adSearch0
             override def firstIds           = Nil
-            override def withoutIds         = _adSearch.firstIds
+            override def withoutIds         = adSearch0.firstIds
           }
         }
         MNode.dynSearch(adSearch2)
@@ -551,8 +552,8 @@ trait ScFocusedAds
    * а остальные рендерились в основном поле. Такой подход вызывал неисправимые проблемы при нескольких
    * продьюсерах в пачке карточек.
    */
-  protected class FocusedAdsLogicHttpV1(val _adSearch: FocusedAdsSearchArgs)
-                                       (implicit val _request: AbstractRequestWithPwOpt[_])
+  protected class FocusedAdsLogicHttpV1(override val _adSearch: FocusedAdsSearchArgs)
+                                       (override implicit val _request: AbstractRequestWithPwOpt[_])
     extends FocusedAdsLogicHttp
     with NoBrAcc
   {
