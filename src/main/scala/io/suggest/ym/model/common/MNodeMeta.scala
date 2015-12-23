@@ -153,7 +153,7 @@ case class MNodeMeta(
   extends MBasicMetaUtil
 {
 
-  /** Приведение к модели [[MMeta]]. */
+  /** Приведение к модели [[io.suggest.model.n2.node.meta.MMeta]]. */
   lazy val toMMeta: MMeta = {
     MMeta(
       basic = MBasicMeta(
