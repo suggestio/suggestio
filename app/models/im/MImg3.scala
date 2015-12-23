@@ -201,6 +201,7 @@ abstract class MImg3T extends MImgT {
   override protected def _doSaveToPermanent(loc: MLocalImgT): Future[MMedia] = {
     val mimeFut = loc.mimeFut
     val media0Fut = _mediaFut
+
     media0Fut onSuccess { case res =>
       LOGGER.trace(s"_doSaveInPermanent($loc): MMedia already exist: $res")
     }
