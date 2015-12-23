@@ -1,6 +1,8 @@
 // Comment to get more information during initialization
 //logLevel := Level.Warn
 
+offline := true
+
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 
 resolvers ++= Seq(
