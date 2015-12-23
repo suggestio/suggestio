@@ -263,7 +263,7 @@ class Migration @Inject() (
     // Запустить обход карточек.
     // rps = 2, т.к. 5 шард х 2 = 10. Карточки с картинками обрабатываются неспешно, нужно подстраиваться.
     val finalFut = MAd.foldLeftAsync(MadsCntsAcc(), resultsPerScroll = 2, keepAliveMs = 90000) { (acc0Fut, mad) =>
-      val resFut = for {
+      for {
         // Принудительно тормозим обработку, чтобы портирование картинок шло легче.
         _             <- acc0Fut
         tagEdgesMap   <- tagEdgesMapFut
@@ -276,17 +276,6 @@ class Migration @Inject() (
         }
       } yield {
         acc2
-      }
-
-      resFut.recoverWith { case ex: NoSuchElementException =>
-        // Нет портированного продьюсера, относящегося к этой карточки. Это значит, это карточка висит в воздухе и недосягаема,
-        // портировать её нет смысла никакого.
-        LOGGER.warn(s"Skipped no-producer ad[${mad.id.get}], producerId=${mad.producerId}")
-        acc0Fut map { acc0 =>
-          acc0.copy(
-            noProducer = acc0.noProducer + 1
-          )
-        }
       }
     }
 
