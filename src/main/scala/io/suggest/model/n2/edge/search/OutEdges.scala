@@ -29,7 +29,9 @@ trait OutEdges extends DynSearchArgs with MacroLogsI {
 
     } else {
 
-      // Сборка nested query.
+      val nestPath = EDGES_OUT_FULL_FN
+
+      // Сборка nested queries.
       val clauses = _outEdgesIter
         .flatMap { oe =>
 
@@ -106,18 +108,19 @@ trait OutEdges extends DynSearchArgs with MacroLogsI {
           if (_qOpt.isEmpty)
             LOGGER.warn("edge.NestedSearch: suppressed empty bool query for " + oe)
 
-          _qOpt map { _q =>
-            (oe, _q)
+          for (_q <- _qOpt) yield {
+            val _qn = QueryBuilders.nestedQuery(nestPath, _q)
+            (oe, _qn)
           }
         }
         .toStream
 
-      val qb2 = if (clauses.size > 1) {
+      val qb2: QueryBuilder = if (clauses.size > 1) {
         // Возврат значения происходит через закидывание сгенеренной query в BoolQuery.
         var shouldClauses = 0
         val nq = QueryBuilders.boolQuery()
 
-        for ((oe, _q) <- clauses) yield {
+        for ((oe, _q) <- clauses) {
           // Клиент может настраивать запрос с помощью must/should/mustNot.
           oe.must match {
             case None =>
@@ -131,7 +134,7 @@ trait OutEdges extends DynSearchArgs with MacroLogsI {
         }
         // Если should-clause'ы отсутствуют, то minimum should match 0. Иначе 1.
         nq.minimumNumberShouldMatch(
-          Math.max(1, shouldClauses)
+          Math.min(1, shouldClauses)
         )
 
       } else {
@@ -140,11 +143,10 @@ trait OutEdges extends DynSearchArgs with MacroLogsI {
 
       // Сборка основной query
       qbOpt0.map { qb0 =>
-        val nf = FilterBuilders.nestedFilter(EDGES_OUT_FULL_FN, qb2)
+        val nf = FilterBuilders.queryFilter(qb2)
         QueryBuilders.filteredQuery(qb0, nf)
       }.orElse {
-        val qb = QueryBuilders.nestedQuery(EDGES_OUT_FULL_FN, qb2)
-        Some(qb)
+        Some(qb2)
       }
     }
   }
