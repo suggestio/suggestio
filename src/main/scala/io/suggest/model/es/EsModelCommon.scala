@@ -96,6 +96,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
   /** Включить скролл для указанного собираемого запроса. */
   def prepareScrollFor(srb: SearchRequestBuilder, keepAlive: TimeValue = SCROLL_KEEPALIVE_DFLT): SearchRequestBuilder = {
     srb
+      // Setting search_type to scan disables sorting and makes scrolling very efficient.
       .setSearchType(SearchType.SCAN)
       .setScroll(keepAlive)
   }
@@ -139,11 +140,13 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
   def startScroll(queryOpt: Option[QueryBuilder] = None, resultsPerScroll: Int = SCROLL_SIZE_DFLT,
                   keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)
                  (implicit ec: ExecutionContext, client: Client): Future[SearchResponse] = {
-    prepareScroll(new TimeValue(keepAliveMs))
-      .setQuery(queryOpt getOrElse QueryBuilders.matchAllQuery())
-      .setSize(10)
+    val query = queryOpt getOrElse QueryBuilders.matchAllQuery()
+    val req = prepareScroll(new TimeValue(keepAliveMs))
+      .setQuery(query)
+      .setSize(resultsPerScroll)
       .setFetchSource(true)
-      .execute()
+    LOGGER.trace(s"startScroll($queryOpt, rps=$resultsPerScroll, kaMs=$keepAliveMs): query = $query")
+    req.execute()
   }
 
   /**
@@ -174,7 +177,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
   /**
    * Аналог foldLeft, но с асинхронным аккамулированием. Полезно, если функция совершает какие-то сайд-эффекты.
    * @param acc0 Начальный акк.
-   * @param resultsPerScroll Кол-во результатов за scroll-итерацию [10].
+   * @param resultsPerScroll Кол-во результатов с каждой шарды за одну scroll-итерацию [10].
    * @param keepAliveMs TTL scroll-курсора на стороне ES.
    * @param f Функция асинхронной сверстки.
    * @tparam A Тип значения аккамулятора (без Future[]).
@@ -187,9 +190,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
       .flatMap { searchResp =>
         EsModelUtil.foldSearchScroll(searchResp, acc0, firstReq = true, keepAliveMs) {
           (acc01, hits) =>
-            LOGGER.trace(s"foldLeftAsync(): Starting next scroll with ${hits.getHits.length} new hits...")
-            hits
-              .iterator()
+            hits.iterator()
               .map { deserializeSearchHit }
               .foldLeft(Future successful acc01)(f)
         }

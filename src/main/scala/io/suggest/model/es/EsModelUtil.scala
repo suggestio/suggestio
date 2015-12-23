@@ -396,11 +396,15 @@ object EsModelUtil extends MacroLogsImpl {
   def foldSearchScroll[A](searchResp: SearchResponse, acc0: A, firstReq: Boolean = true, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)
                          (f: (A, SearchHits) => Future[A])
                          (implicit ec: ExecutionContext, client: Client): Future[A] = {
-    if (!firstReq  &&  searchResp.getHits.getHits.isEmpty) {
+    val hits = searchResp.getHits
+    val scrollId = searchResp.getScrollId
+    lazy val logPrefix = s"foldSearchScroll($scrollId, 1st=$firstReq):"
+    if (!firstReq  &&  hits.getHits.isEmpty) {
+      LOGGER.trace(s"$logPrefix no more hits.")
       Future successful acc0
     } else {
       // Запустить в фоне получение следующей порции результатов
-      val scrollId = searchResp.getScrollId
+      LOGGER.trace(s"$logPrefix has ${hits.getHits.length} hits, total = ${hits.getTotalHits}")
       // Убеждаемся, что scroll выставлен. Имеет смысл проверять это только на первом запросе.
       if (firstReq)
         assert(scrollId != null && !scrollId.isEmpty, "Scrolling looks like disabled. Cannot continue.")
@@ -408,7 +412,7 @@ object EsModelUtil extends MacroLogsImpl {
         .setScroll(new TimeValue(keepAliveMs))
         .execute()
       // Синхронно залить результаты текущего реквеста в аккамулятор
-      val acc1Fut = f(acc0, searchResp.getHits)
+      val acc1Fut = f(acc0, hits)
       // Асинхронно перейти на следующую итерацию, дождавшись новой порции результатов.
       nextScrollRespFut flatMap { searchResp2 =>
         acc1Fut flatMap { acc1 =>
