@@ -332,8 +332,11 @@ class Migration @Inject() (
     val tagEdgesFut: Future[Seq[MEdge]] = {
       val tedges = mad.tags
         .iterator
-        .map { case (_, te) =>
-          tagEdgesMap(te.face)
+        .flatMap { case (_, te) =>
+          val res = tagEdgesMap.get(te.face)
+          if (res.isEmpty)
+            LOGGER.warn(s"Tag missing for ad[${mad.id.get}]: ${te.face}")
+          res
         }
         .toList   // форсируем не-Stream-коллекцию, чтобы всё вычислилось в этом потоке, а не в общей куче.
       Future successful tedges
