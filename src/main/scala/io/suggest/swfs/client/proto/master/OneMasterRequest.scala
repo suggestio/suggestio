@@ -66,7 +66,14 @@ trait OneMasterRequestT extends MacroLogsI {
     val url = _mkUrl(master)
     val fut = _ws.url( url )
       .execute(_method)
-    _handleResp(url, fut)
+    // Логгируем ответы на запросы трейсом
+    if (LOGGER.underlying.isTraceEnabled()) {
+      fut.onSuccess { case resp =>
+        LOGGER.trace(s"$_method $url =>\n ${resp.body}")
+      }
+    }
+    val resFut = _handleResp(url, fut)
+    resFut
   }
 
 
