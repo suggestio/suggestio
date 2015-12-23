@@ -279,7 +279,8 @@ class Migration @Inject() (
     val _SUPRESS_MISSING_IMGS = SUPPRESS_MISSING_IMGS
 
     // Запустить обход карточек.
-    val finalFut = MAd.foldLeftAsync(MadsCntsAcc()) { (acc0Fut, mad) =>
+    // rps = 2, т.к. 5 шард х 2 = 10. Карточки с картинками обрабатываются неспешно, нужно подстраиваться.
+    val finalFut = MAd.foldLeftAsync(MadsCntsAcc(), resultsPerScroll = 2, keepAliveMs = 90000) { (acc0Fut, mad) =>
       val resFut = for {
         prodsExists   <- prodsExistsFut
         if prodMissIgnore || prodsExists.contains(mad.producerId)
