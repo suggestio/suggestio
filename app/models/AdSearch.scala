@@ -5,6 +5,7 @@ import io.suggest.model.n2.node.search._
 import models.im.DevScreen
 import models.msc.{MScApiVsns, MScApiVsn}
 import play.api.mvc.QueryStringBindable
+import util.PlayMacroLogsDyn
 import util.qsb.{CommaDelimitedStringSeq, QsbKey1T}
 import io.suggest.ad.search.AdSearchConstants._
 import views.js.stuff.m.adSearchJsUnbindTpl
@@ -105,6 +106,7 @@ object AdSearch extends CommaDelimitedStringSeq {
                   nodeIds     = Seq( rcvrId ),
                   predicates  = Seq( MPredicates.Receiver ),
                   sls         = _rcvrSlOpt.flatMap(AdShowLevels.maybeWithName).toSeq,
+                  anySl       = if (_rcvrSlOpt.isEmpty) someTrue else None,
                   must        = someTrue
                 )
               }
@@ -213,7 +215,7 @@ object AdSearch extends CommaDelimitedStringSeq {
 
 /** Этот трейт является базовой единицей модели.
   * Он описывает итоговую модель распарсенных аргументов поиска карточек. */
-trait AdSearch extends MNodeSearchDflt { that =>
+trait AdSearch extends MNodeSearchDflt with PlayMacroLogsDyn { that =>
 
   /** Изначально, этот поиск был заточен только под поиск карточек. */
   override def nodeTypes: Seq[MNodeType] = {
@@ -297,12 +299,10 @@ trait AdSearchWrap extends AdSearchWrap_ {
 
 /** Враппер для [[AdSearch]] с абстрактным типом. Пригоден для дальнейшего расширения в иных моделях. */
 abstract class AdSearchWrapper_
-  extends MNodeSearchWrapImpl_
-  with AdSearchWrap_
+  extends AdSearchWrap_
 
 
 /** Враппер для AdSearch-контейнера, своим существованием имитирует case class copy(). */
 abstract class AdSearchWrapper
-  extends AdSearchWrapper_
-  with AdSearchWrap
+  extends AdSearchWrap
 

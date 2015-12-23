@@ -3,7 +3,7 @@ package models.adv.gtag
 import io.suggest.model.geo.CircleGs
 import models.maps.MapViewState
 import models.mtag.MTagBinded
-import org.joda.time.LocalDate
+import org.joda.time.{Interval, LocalDate}
 
 /**
  * Suggest.io
@@ -16,4 +16,9 @@ case class MAdvFormResult(
   mapState  : MapViewState,
   circle    : CircleGs,
   period    : (LocalDate, LocalDate)
-)
+) {
+
+  def interval = new Interval(period._1.toDateTimeAtStartOfDay, period._2.toDateTimeAtStartOfDay)
+
+
+}

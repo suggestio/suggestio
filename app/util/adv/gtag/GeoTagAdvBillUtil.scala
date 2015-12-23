@@ -34,21 +34,21 @@ class GeoTagAdvBillUtil @Inject() (
    * Закинуть в корзину bill-v2
    * @param orderId id-ордера-корзины, т.е. текущего заказа. Туда надо добавить возможную покупку.
    *                Например, выхлоп [[util.billing.Bill2Util.ensureNodeCart()]].
-   * @param advTargetId id узла-цели размещения тегов, обычно рекламная карточка.
+   * @param adId id узла-цели размещения тегов, обычно рекламная карточка.
    * @param res Данные по размещаемым тегам.
    * @return Фьючерс c результатом.
    */
-  def addToOrder(orderId: Gid_t, advTargetId: String, price: MPrice, res: MAdvFormResult): Future[_] = {
+  def addToOrder(orderId: Gid_t, producerId: String, adId: String, price: MPrice, res: MAdvFormResult): Future[_] = {
     // Собираем инстанс нового товара в корзине: пачка тегов.
     val mitem0 = MItem(
-      orderId   = orderId,
-      iType     = MItemTypes.GeoTag,
-      status    = MItemStatuses.Draft,
-      price     = price,
-      adId      = advTargetId,
-      dateStart = res.period._1.toDateTimeAtStartOfDay,
-      dateEnd   = res.period._2.toDateTimeAtStartOfDay,
-      rcvrIdOpt = None
+      orderId       = orderId,
+      iType         = MItemTypes.GeoTag,
+      status        = MItemStatuses.Draft,
+      price         = price,
+      adId          = adId,
+      prodId        = producerId,
+      dtIntervalOpt = Some(res.interval),
+      rcvrIdOpt     = None
     )
 
     // Собираем экшен для внесения item'а с заказанными тегами в БД.

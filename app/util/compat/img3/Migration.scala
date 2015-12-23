@@ -7,7 +7,7 @@ import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.edge.{MPredicates, MEdge, MNodeEdges, MEdgeInfo}
 import io.suggest.model.n2.geo.MGeoShape
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
-import io.suggest.model.n2.node.{MNodeTypes, MNodeType, MNode}
+import io.suggest.model.n2.node.{MNodeTypes, MNode}
 import io.suggest.util.JMXBase
 import io.suggest.ym.model.{MWelcomeAd, MAd, MAdnNodeGeo, MAdnNode}
 import models.ISize2di
@@ -230,21 +230,6 @@ class Migration @Inject() (
   /** Миграция рекламных карточек. */
   def migrateMads(): Future[MadsCntsAcc] = {
 
-    // Возможны ошибочные карточки, не привязанные к кабинетам.
-    // Нужно их отсеивать.
-    val prodsExistsFut: Future[Set[String]] = {
-      val msearch = new MNodeSearchDfltImpl {
-        override def nodeTypes: Seq[MNodeType] = Seq( MNodeTypes.AdnNode )
-        // На момент написания этого кода в системе было 229 узлов.
-        override def limit = 500
-      }
-      MNode.dynSearchIds(msearch)
-        .map { _.toSet }
-    }
-    prodsExistsFut.onSuccess { case peSet =>
-      LOGGER.info(s"Producer IDs set have ${peSet.size} keys.")
-    }
-
     // Собрать общую карту всех тегов, благо их немного сейчас (100-200 тегов вкл.повторяющиеся).
     val tagEdgesMapFut: Future[Map[String, MEdge]] = {
       val mtsearch = new MNodeSearchDfltImpl {
@@ -266,32 +251,42 @@ class Migration @Inject() (
         iter3.toMap
       }
     }
-    tagEdgesMapFut onSuccess { case tem =>
-      LOGGER.info(s"Tags map has ${tem.size} keys (tags).")
+    tagEdgesMapFut.onComplete  {
+      case Success(tem) =>
+        LOGGER.info(s"Tags map has ${tem.size} keys (tags).")
+      case Failure(ex) =>
+        LOGGER.error(s"Tags map failed to build", ex)
     }
 
+    val _SUPRESS_MISSING_IMGS = SUPPRESS_MISSING_IMGS
+
     // Запустить обход карточек.
-    MAd.foldLeftAsync(MadsCntsAcc()) { (acc0Fut, mad) =>
-      val resFut = for {
-        prodsExists   <- prodsExistsFut
-        if prodsExists.contains(mad.producerId)
+    // rps = 2, т.к. 5 шард х 2 = 10. Карточки с картинками обрабатываются неспешно, нужно подстраиваться.
+    val finalFut = MAd.foldLeftAsync(MadsCntsAcc(), resultsPerScroll = 2, keepAliveMs = 90000) { (acc0Fut, mad) =>
+      for {
         // Принудительно тормозим обработку, чтобы портирование картинок шло легче.
         _             <- acc0Fut
         tagEdgesMap   <- tagEdgesMapFut
-        acc2          <- migrateMad(mad, tagEdgesMap, acc0Fut)
+        acc2          <- {
+          val migrFut = migrateMad(mad, tagEdgesMap, acc0Fut, _SUPRESS_MISSING_IMGS)
+          migrFut.onFailure { case ex: Throwable =>
+            LOGGER.error(s"Failed to migrate mad ${mad.id.get}", ex)
+          }
+          migrFut
+        }
       } yield {
         acc2
       }
-      resFut.recoverWith { case ex: NoSuchElementException =>
-        // Нет портированного продьюсера, относящегося к этой карточки. Это значит, это карточка висит в воздухе и недосягаема,
-        // портировать её нет смысла никакого.
-        acc0Fut map { acc0 =>
-          acc0.copy(
-            noProducer = acc0.noProducer + 1
-          )
-        }
-      }
     }
+
+    finalFut.onComplete {
+      case Success(acc3) =>
+        LOGGER.info("migrateMads(): final report: \n" + acc3.toReport)
+      case Failure(ex) =>
+        LOGGER.error("migrateMads(): Overral failure occured", ex)
+    }
+
+    finalFut
   }
 
 
@@ -302,8 +297,7 @@ class Migration @Inject() (
   }
 
   /** Выполнить миграцию одной карточки на N2-архитектуру. */
-  private def migrateMad(mad: MAd, tagEdgesMap: Map[String, MEdge], acc0Fut: Future[MadsCntsAcc]): Future[MadsCntsAcc] = {
-    val _SUPRESS_MISSING_IMGS = SUPPRESS_MISSING_IMGS
+  private def migrateMad(mad: MAd, tagEdgesMap: Map[String, MEdge], acc0Fut: Future[MadsCntsAcc], suppressMissingImg: Boolean): Future[MadsCntsAcc] = {
 
     // Отработать картинки
     val bgEdgesOptFut: Future[Option[MEdge]] = {
@@ -323,7 +317,7 @@ class Migration @Inject() (
           debug("oldImg = " + oldImg + " FROM " + mii + " TO edge " + e)
           Some(e)
         }
-        if (_SUPRESS_MISSING_IMGS) {
+        if (suppressMissingImg) {
           fut.recover { case ex: Throwable =>
             LOGGER.warn(s"Supressed error for img $imgOpt", ex)
             None
@@ -338,8 +332,11 @@ class Migration @Inject() (
     val tagEdgesFut: Future[Seq[MEdge]] = {
       val tedges = mad.tags
         .iterator
-        .map { case (_, te) =>
-          tagEdgesMap(te.face)
+        .flatMap { case (_, te) =>
+          val res = tagEdgesMap.get(te.face)
+          if (res.isEmpty)
+            LOGGER.warn(s"Tag missing for ad[${mad.id.get}]: ${te.face}")
+          res
         }
         .toList   // форсируем не-Stream-коллекцию, чтобы всё вычислилось в этом потоке, а не в общей куче.
       Future successful tedges
@@ -365,6 +362,10 @@ class Migration @Inject() (
 
     val saveFut = mnode1Fut
       .flatMap { _.save }
+
+    saveFut.onFailure { case ex: Throwable =>
+      LOGGER.error(s"Failed to migrate mad[${mad.id.get}]", ex)
+    }
 
     for {
       acc0  <- acc0Fut

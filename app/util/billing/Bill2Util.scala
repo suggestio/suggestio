@@ -113,7 +113,7 @@ class Bill2Util @Inject() (
     ocOptFut
       .map(_.get)
       .recoverWith { case ex: NoSuchElementException =>
-        val cartOrderStub = MOrder(MOrderStatuses.Draft, contractId, zeroPrice)
+        val cartOrderStub = MOrder(MOrderStatuses.Draft, contractId)
         val fut = dbConfig.db.run {
           mOrders.insertOne(cartOrderStub)
         }
