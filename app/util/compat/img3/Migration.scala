@@ -7,7 +7,7 @@ import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.edge.{MPredicates, MEdge, MNodeEdges, MEdgeInfo}
 import io.suggest.model.n2.geo.MGeoShape
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
-import io.suggest.model.n2.node.{MNodeTypes, MNodeType, MNode}
+import io.suggest.model.n2.node.{MNodeTypes, MNode}
 import io.suggest.util.JMXBase
 import io.suggest.ym.model.{MWelcomeAd, MAd, MAdnNodeGeo, MAdnNode}
 import models.ISize2di
@@ -230,27 +230,6 @@ class Migration @Inject() (
   /** Миграция рекламных карточек. */
   def migrateMads(): Future[MadsCntsAcc] = {
 
-    val prodMissIgnore = configuration.getBoolean("compat.migration.mad.check.prod.exists") getOrElse false
-
-    // Возможны ошибочные карточки, не привязанные к кабинетам.
-    // Нужно их отсеивать.
-    val prodsExistsFut: Future[Set[String]] = if (!prodMissIgnore) {
-      val msearch = new MNodeSearchDfltImpl {
-        override def nodeTypes: Seq[MNodeType] = Seq( MNodeTypes.AdnNode )
-        // На момент написания этого кода в системе было 229 узлов.
-        override def limit = 500
-      }
-      val fut = MNode.dynSearchIds(msearch)
-        .map { _.toSet }
-      fut.onSuccess { case peSet =>
-        LOGGER.info(s"Producer IDs set have ${peSet.size} keys.")
-      }
-      fut
-
-    } else {
-      Future.successful(Set.empty)
-    }
-
     // Собрать общую карту всех тегов, благо их немного сейчас (100-200 тегов вкл.повторяющиеся).
     val tagEdgesMapFut: Future[Map[String, MEdge]] = {
       val mtsearch = new MNodeSearchDfltImpl {
@@ -272,8 +251,11 @@ class Migration @Inject() (
         iter3.toMap
       }
     }
-    tagEdgesMapFut onSuccess { case tem =>
-      LOGGER.info(s"Tags map has ${tem.size} keys (tags).")
+    tagEdgesMapFut.onComplete  {
+      case Success(tem) =>
+        LOGGER.info(s"Tags map has ${tem.size} keys (tags).")
+      case Failure(ex) =>
+        LOGGER.error(s"Tags map failed to build", ex)
     }
 
     val _SUPRESS_MISSING_IMGS = SUPPRESS_MISSING_IMGS
@@ -282,12 +264,16 @@ class Migration @Inject() (
     // rps = 2, т.к. 5 шард х 2 = 10. Карточки с картинками обрабатываются неспешно, нужно подстраиваться.
     val finalFut = MAd.foldLeftAsync(MadsCntsAcc(), resultsPerScroll = 2, keepAliveMs = 90000) { (acc0Fut, mad) =>
       val resFut = for {
-        prodsExists   <- prodsExistsFut
-        if prodMissIgnore || prodsExists.contains(mad.producerId)
         // Принудительно тормозим обработку, чтобы портирование картинок шло легче.
         _             <- acc0Fut
         tagEdgesMap   <- tagEdgesMapFut
-        acc2          <- migrateMad(mad, tagEdgesMap, acc0Fut, _SUPRESS_MISSING_IMGS)
+        acc2          <- {
+          val migrFut = migrateMad(mad, tagEdgesMap, acc0Fut, _SUPRESS_MISSING_IMGS)
+          migrFut.onFailure { case ex: Throwable =>
+            LOGGER.error(s"Failed to migrate mad ${mad.id.get}", ex)
+          }
+          migrFut
+        }
       } yield {
         acc2
       }
