@@ -34,7 +34,7 @@ class SysAdnGeo @Inject() (
 )
   extends SioControllerImpl
   with PlayLazyMacroLogsImpl
-  with IsSuperuserAdnNode
+  with IsSuNode
 {
 
   // TODO Выпилить отсюда MAdnNodeGeo, использовать MNode.geo.shape
@@ -67,7 +67,7 @@ class SysAdnGeo @Inject() (
 
 
   /** Выдать страницу с географиями по узлам. */
-  def forNode(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
+  def forNode(adnId: String) = IsSuNode(adnId).async { implicit request =>
     // Сборка карты данных по родительским узлам.
     val parentsMapFut = {
       val parentIdsIter = request.mnode
@@ -114,7 +114,7 @@ class SysAdnGeo @Inject() (
   }
 
   /** Страница с созданием геофигуры на базе произвольного osm-объекта. */
-  def createForNodeOsm(adnId: String) = IsSuperuserAdnNodeGet(adnId).apply { implicit request =>
+  def createForNodeOsm(adnId: String) = IsSuNodeGet(adnId).apply { implicit request =>
     val form = guessGeoLevel.fold(createOsmNodeFormM) { ngl =>
       val pr = OsmUrlParseResult("", null, -1)
       val formRes = (ngl, pr)
@@ -124,7 +124,7 @@ class SysAdnGeo @Inject() (
   }
 
   /** Сабмит формы создания фигуры на базе osm-объекта. */
-  def createForNodeOsmSubmit(adnId: String) = IsSuperuserAdnNodePost(adnId).async { implicit request =>
+  def createForNodeOsmSubmit(adnId: String) = IsSuNodePost(adnId).async { implicit request =>
     lazy val logPrefix = s"createForNodeOsmSubmit($adnId): "
     createOsmNodeFormM.bindFromRequest().fold(
       {formWithErrors =>
@@ -183,7 +183,7 @@ class SysAdnGeo @Inject() (
 
 
   /** Сабмит запроса на удаление элемента. */
-  def deleteSubmit(g: MGsPtr) = IsSuperuserAdnNodePost(g.nodeId).async { implicit request =>
+  def deleteSubmit(g: MGsPtr) = IsSuNodePost(g.nodeId).async { implicit request =>
     // Запустить обновление узла.
     val updFut = MNode.tryUpdate(request.mnode) { mnode0 =>
       val shapes0 = mnode0.geo.shapes
@@ -232,7 +232,7 @@ class SysAdnGeo @Inject() (
   }
 
   /** Рендер страницы с формой редактирования osm-производной. */
-  def editNodeOsm(g: MGsPtr) = IsSuperuserAdnNodeGet(g.nodeId).async { implicit request =>
+  def editNodeOsm(g: MGsPtr) = IsSuNodeGet(g.nodeId).async { implicit request =>
     _withNodeShape(g.gsId)() { mgs =>
       val urlPrOpt = mgs.fromUrl
         .flatMap { OsmUrlParseResult.fromUrl }
@@ -243,7 +243,7 @@ class SysAdnGeo @Inject() (
   }
 
   /** Сабмит формы редактирования osm-производной. */
-  def editNodeOsmSubmit(g: MGsPtr) = IsSuperuserAdnNodePost(g.nodeId).async { implicit request =>
+  def editNodeOsmSubmit(g: MGsPtr) = IsSuNodePost(g.nodeId).async { implicit request =>
     _withNodeShape(g.gsId)() { mgs =>
       lazy val logPrefix = s"editNodeOsmSubmit(${g.nodeId}#${g.gsId}): "
       editOsmNodeFormM.bindFromRequest().fold(
@@ -323,7 +323,7 @@ class SysAdnGeo @Inject() (
 
 
   /** Рендер страницы с формой создания круга. */
-  def createCircle(nodeId: String) = IsSuperuserAdnNodeGet(nodeId).apply { implicit request =>
+  def createCircle(nodeId: String) = IsSuNodeGet(nodeId).apply { implicit request =>
     val ngl = guessGeoLevel getOrElse NodeGeoLevels.default
     // Нередко в узле указана geo point, характеризующая её. Надо попытаться забиндить её в круг.
     val gpStub = request.mnode.geo.point getOrElse GeoPoint(0, 0)
@@ -337,7 +337,7 @@ class SysAdnGeo @Inject() (
   }
 
   /** Сабмит формы создания круга. */
-  def createCircleSubmit(adnId: String) = IsSuperuserAdnNodePost(adnId).async { implicit request =>
+  def createCircleSubmit(adnId: String) = IsSuNodePost(adnId).async { implicit request =>
     lazy val logPrefix = s"createCircleSubmit($adnId): "
     circleFormM.bindFromRequest().fold(
       {formWithErrors =>
@@ -369,7 +369,7 @@ class SysAdnGeo @Inject() (
 
 
   /** Рендер страницы с формой редактирования geo-круга. */
-  def editCircle(g: MGsPtr) = IsSuperuserAdnNodeGet(g.nodeId).async { implicit request =>
+  def editCircle(g: MGsPtr) = IsSuNodeGet(g.nodeId).async { implicit request =>
     _withNodeShape(g.gsId)() { mgs =>
       val formBinded = circleFormM.fill(mgs)
       val rargs = MSysNodeGeoCircleEditTplArgs(mgs, formBinded, request.mnode, g)
@@ -378,7 +378,7 @@ class SysAdnGeo @Inject() (
   }
 
   /** Сабмит формы редактирования круга. */
-  def editCircleSubmit(g: MGsPtr) = IsSuperuserAdnNodePost(g.nodeId).async { implicit request =>
+  def editCircleSubmit(g: MGsPtr) = IsSuNodePost(g.nodeId).async { implicit request =>
     _withNodeShape(g.gsId)() { mgs =>
       lazy val logPrefix = s"editCircleSubmit(${g.nodeId}#${g.gsId}): "
       circleFormM.bindFromRequest().fold(
@@ -411,7 +411,7 @@ class SysAdnGeo @Inject() (
 
 
   /** Отрендерить geojson для валидации через geojsonlint. */
-  def showGeoJson(g: MGsPtr) = IsSuperuserAdnNode(g.nodeId).async { implicit request =>
+  def showGeoJson(g: MGsPtr) = IsSuNode(g.nodeId).async { implicit request =>
     _withNodeShape(g.gsId)() { mgs =>
       Ok( mgs.shape.toPlayJson() )
     }
@@ -452,7 +452,7 @@ class SysAdnGeo @Inject() (
    * @param adnId id узла.
    * @return 200 ок + страница с формой редактирования geo-поля узла.
    */
-  def editAdnNodeGeodataPropose(adnId: String) = IsSuperuserAdnNodeGet(adnId).async { implicit request =>
+  def editAdnNodeGeodataPropose(adnId: String) = IsSuNodeGet(adnId).async { implicit request =>
     // Запускаем поиск всех шейпов текущего узла.
     val shapes = request.mnode.geo.shapes
 
@@ -525,7 +525,7 @@ class SysAdnGeo @Inject() (
    * @param adnId id редактируемого узла.
    * @return 200 Ok + страница с формой редактирования узла.
    */
-  def editAdnNodeGeodata(adnId: String) = IsSuperuserAdnNodeGet(adnId).async { implicit request =>
+  def editAdnNodeGeodata(adnId: String) = IsSuNodeGet(adnId).async { implicit request =>
     val directParentId: Option[String] = {
       request.mnode
         .edges
@@ -551,7 +551,7 @@ class SysAdnGeo @Inject() (
    * @param adnId id редактируемого узла.
    * @return редирект || 406 NotAcceptable.
    */
-  def editAdnNodeGeodataSubmit(adnId: String) = IsSuperuserAdnNodePost(adnId).async { implicit request =>
+  def editAdnNodeGeodataSubmit(adnId: String) = IsSuNodePost(adnId).async { implicit request =>
     lazy val logPrefix = s"editAdnNodeGeodataSubmit($adnId): "
     nodeGeoFormM.bindFromRequest().fold(
       {formWithErrors =>

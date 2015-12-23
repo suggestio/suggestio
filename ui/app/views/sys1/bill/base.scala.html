@@ -1,0 +1,36 @@
+@(title: String, nodeOpt: Option[MNode] = None, hPathAfter: Option[Html] = None,
+  headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@* Базовый шаблон биллинга второго поколения. *@
+
+@import ctx.messages
+
+@hPathAfter1 = {
+  / <a href="@routes.SysMarketBilling.index()">@messages("Billing")</a>
+  @hPathAfter.getOrElse {
+    / @title
+  }
+}
+
+@defining( title + " | Биллинг" ) { title1 =>
+
+  @if(nodeOpt.isEmpty) {
+
+   @* Текущий n2-узел не задан. Рендерим через примитивный marketBase *@
+   @sys1.market.marketBase(
+     title      = title1,
+     hPathAfter = Some(hPathAfter1)
+   )(content)
+
+  } else {
+
+    @* Задан adn-узел, рендерим через adnBase *@
+    @sys1.market.adn.adnBase(
+      title       = title1,
+      hPathAfter  = Some(hPathAfter1),
+      nodeOpt     = nodeOpt
+    )(content)
+
+  }
+
+}

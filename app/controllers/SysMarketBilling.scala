@@ -34,7 +34,7 @@ class SysMarketBilling @Inject() (
   extends SioControllerImpl
   with PlayMacroLogsImpl
   with IsSuperuserContractNode
-  with IsSuperuserAdnNode
+  with IsSuNode
   with IsSuperuser
 {
 
@@ -104,7 +104,7 @@ class SysMarketBilling @Inject() (
   }
 
   /** Форма создания нового контракта (договора). */
-  def createContractForm(adnId: String) = IsSuperuserAdnNodeGet(adnId).async { implicit request =>
+  def createContractForm(adnId: String) = IsSuNodeGet(adnId).async { implicit request =>
     val mbcStub = MContract(
       adnId         = adnId,
       isActive      = true
@@ -115,7 +115,7 @@ class SysMarketBilling @Inject() (
 
   /** Сабмит формы создания нового контакта (договора). */
   def createContractFormSubmit(nodeId: String) = {
-    IsSuperuserAdnNodePost(nodeId).async(parse.urlFormEncoded) { implicit request =>
+    IsSuNodePost(nodeId).async(parse.urlFormEncoded) { implicit request =>
       contractFormM.bindFromRequest().fold(
         {formWithErrors =>
           debug("createContractFormSubmit(): Form bind failed: " + formatFormErrors(formWithErrors))

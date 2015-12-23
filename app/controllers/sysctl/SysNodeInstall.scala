@@ -7,7 +7,7 @@ import play.api.data.Form
 import play.api.i18n.{Lang, Messages}
 import play.api.mvc.Result
 import util.PlayMacroLogsI
-import util.acl.IsSuperuserAdnNode
+import util.acl.IsSuNode
 import util.di.INodesUtil
 import views.html.sys1.market.adn.install._
 
@@ -47,13 +47,13 @@ trait SysNodeInstall
   extends SioController
   with PlayMacroLogsI
   with INodesUtil
-  with IsSuperuserAdnNode
+  with IsSuNode
 {
 
   import mCommonDi._
 
   /** Вернуть страницу с формой установки дефолтовых карточек на узлы. */
-  def installDfltMads(adnId: String) = IsSuperuserAdnNodeGet(adnId).async { implicit request =>
+  def installDfltMads(adnId: String) = IsSuNodeGet(adnId).async { implicit request =>
     implicit val ctx = implicitly[Context]
     val fd = FormData(
       count = nodesUtil.INIT_ADS_COUNT,
@@ -76,7 +76,7 @@ trait SysNodeInstall
   }
 
   /** Сабмит формы установки дефолтовых карточек. */
-  def installDfltMadsSubmit(adnId: String) = IsSuperuserAdnNodePost(adnId).async { implicit request =>
+  def installDfltMadsSubmit(adnId: String) = IsSuNodePost(adnId).async { implicit request =>
     lazy val logPrefix = s"installDfltMadsSubmit($adnId):"
     mkForm.bindFromRequest().fold(
       {formWithErrors =>

@@ -10,8 +10,10 @@ import play.api.mvc.{RequestHeader, Request, ActionBuilder, Result}
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 15.10.15 15:48
  * Description: Аддон для контроллеров с гибридом IsSuperuser + MAdnNode.getById().
+ *
+ * 2015.dec.23: Изначально назывался IsSuperuserAdnNode и обслуживал только MAdnNode.
  */
-trait IsSuperuserAdnNode
+trait IsSuNode
   extends SioController
   with IsSuperuserUtilCtl
   with Csrf
@@ -20,19 +22,19 @@ trait IsSuperuserAdnNode
   import mCommonDi._
 
   /** Часто нужно админить узлы рекламной сети. Тут комбинация IsSuperuser + IsAdnAdmin. */
-  sealed trait IsSuperuserAdnNodeBase
+  sealed trait IsSuNodeBase
     extends ActionBuilder[MNodeReq]
     with IsSuperuserUtil
   {
 
     /** id запрашиваемого узла. */
-    def adnId: String
+    def nodeId: String
 
     override def invokeBlock[A](request: Request[A], block: (MNodeReq[A]) => Future[Result]): Future[Result] = {
       val personIdOpt = sessionUtil.getPersonId(request)
       val user = mSioUsers(personIdOpt)
       if (user.isSuper) {
-        val mnodeOptFut = mNodeCache.getById(adnId)
+        val mnodeOptFut = mNodeCache.getById(nodeId)
         mnodeOptFut flatMap {
           case Some(mnode) =>
             val req1 = MNodeReq(mnode, request, user)
@@ -55,25 +57,25 @@ trait IsSuperuserAdnNode
 
   }
 
-  sealed abstract class IsSuperuserAdnNodeBase2
-    extends IsSuperuserAdnNodeBase
+  sealed abstract class IsSuNodeBase2
+    extends IsSuNodeBase
     with ExpireSession[MNodeReq]
 
   /**
    * Часто нужно админить узлы рекламной сети. Тут комбинация IsSuperuser + IsAdnAdmin.
-   * @param adnId id рекламного узла, которым интересуется суперпользователь.
+   * @param nodeId id рекламного узла, которым интересуется суперпользователь.
    */
-  case class IsSuperuserAdnNode(override val adnId: String)
-    extends IsSuperuserAdnNodeBase2
+  case class IsSuNode(override val nodeId: String)
+    extends IsSuNodeBase2
 
-  /** Аналог [[IsSuperuserAdnNode]] с выставлением CSRF-токена. */
-  case class IsSuperuserAdnNodeGet(override val adnId: String)
-    extends IsSuperuserAdnNodeBase2
+  /** Аналог [[IsSuNode]] с выставлением CSRF-токена. */
+  case class IsSuNodeGet(override val nodeId: String)
+    extends IsSuNodeBase2
     with CsrfGet[MNodeReq]
 
-  /** Аналог [[IsSuperuserAdnNode]] с проверкой CSRF-токена при сабмитах. */
-  case class IsSuperuserAdnNodePost(override val adnId: String)
-    extends IsSuperuserAdnNodeBase2
+  /** Аналог [[IsSuNode]] с проверкой CSRF-токена при сабмитах. */
+  case class IsSuNodePost(override val nodeId: String)
+    extends IsSuNodeBase2
     with CsrfPost[MNodeReq]
 
 }
