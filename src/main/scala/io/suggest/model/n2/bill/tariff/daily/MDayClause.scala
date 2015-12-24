@@ -27,6 +27,26 @@ object MDayClause extends IGenEsMappingProps {
   )(apply, unlift(unapply))
 
 
+  def clauses2map(clauses: MDayClause*): ClausesMap_t = {
+    clauses2map1(clauses)
+  }
+  def clauses2map1(clauses: TraversableOnce[MDayClause]): ClausesMap_t = {
+    clauses.toIterator
+      .map { v => v.name -> v }
+      .toMap
+  }
+
+  def clausesMap2list(clausesMap: ClausesMap_t): List[MDayClause] = {
+    clausesMap
+      .valuesIterator
+      .toList
+  }
+  def clausesMap2seq(clausesMap: ClausesMap_t): Seq[MDayClause] = {
+    clausesMap
+      .valuesIterator
+      .toSeq
+  }
+
   import io.suggest.util.SioEsUtil._
 
   override def generateMappingProps: List[DocField] = {

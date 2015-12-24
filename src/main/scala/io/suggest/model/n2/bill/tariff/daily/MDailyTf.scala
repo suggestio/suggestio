@@ -53,7 +53,7 @@ object MDailyTf extends IGenEsMappingProps {
  */
 case class MDailyTf(
   currencyCode  : String,
-  clauses       : Map[String, MDayClause],
+  clauses       : ClausesMap_t,
   comissionPc   : Option[Double] = None
 ) {
 
@@ -67,5 +67,9 @@ case class MDailyTf(
 
   if ( clauses.valuesIterator.count(_.calId.isEmpty) > 1 )
     _err("Too many default clauses with empty calId field.")
+
+  override def toString: String = {
+    s"$currencyCode(${clauses.valuesIterator.map(_.amount).mkString(";")})-${comissionPc.fold("")(_ + "%%")}"
+  }
 
 }
