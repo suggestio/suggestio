@@ -12,6 +12,8 @@ import java.util.Currency
 trait IPrice {
   def amount    : Amount_t
   def currency  : Currency
+
+  def currencyCode = currency.getCurrencyCode
 }
 
 
