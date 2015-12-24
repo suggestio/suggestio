@@ -1,5 +1,7 @@
 package models.msys.bill
 
+import io.suggest.mbill2.m.balance.MBalance
+import io.suggest.mbill2.m.contract.MContract
 import models.MNode
 
 /**
@@ -12,11 +14,20 @@ trait IForNodeTplArgs {
 
   def mnode: MNode
 
+  /** Контракт узла, если есть. */
+  def mContractOpt: Option[MContract]
+
+  /** Валютные депозиты узла в рамках контракта. */
+  def mBalances: Seq[MBalance]
+
 }
 
 
+/** Дефолтовая реализация модели [[IForNodeTplArgs]]. */
 case class MForNodeTplArgs(
-  override val mnode        : MNode
+  override val mnode        : MNode,
+  override val mContractOpt : Option[MContract],
+  override val mBalances    : Seq[MBalance]
 )
   extends IForNodeTplArgs
 

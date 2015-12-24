@@ -1,6 +1,9 @@
 package controllers.sysctl.bill
 
 import controllers.routes
+import io.suggest.common.fut.FutureUtil
+import io.suggest.mbill2.m.balance.{MBalance, IMBalances}
+import io.suggest.mbill2.m.contract.IMContracts
 import models.req.INodeReq
 import models.{MDailyTf, IMCalendars}
 import models.msys.bill.{MTfDailyEditTplArgs, MForNodeTplArgs}
@@ -27,6 +30,8 @@ trait SbNode
   with IMCalendars
   with PlayMacroLogsI
   with PlayMacroLogsImpl
+  with IMContracts
+  with IMBalances
 {
 
   import mCommonDi._
@@ -36,9 +41,32 @@ trait SbNode
    * @param nodeId id просматриваемого узла.
    */
   def forNode(nodeId: String) = IsSuNode(nodeId).async { implicit request =>
-    // Поискать контракт, собрать аргументы для рендера, отрендерить forNodeTpl.
-    val args = MForNodeTplArgs(request.mnode)
-    Ok( forNodeTpl(args) )
+    val contractIdOpt = request.mnode.billing.contractId
+
+    val mContractOptFut = FutureUtil.optFut2futOpt(contractIdOpt) { contractId =>
+      val mContractOptAction = mContracts.getById(contractId)
+      dbConfig.db.run(mContractOptAction)
+    }
+
+    val mBalancesFut = contractIdOpt.fold[Future[Seq[MBalance]]] {
+      Future.successful(Nil)
+    } { contractId =>
+      val mBalancesAction = mBalances.findByContractId(contractId)
+      dbConfig.db.run(mBalancesAction)
+    }
+
+    for {
+      mContractOpt <- mContractOptFut
+      mBalances    <- mBalancesFut
+    } yield {
+      // Поискать контракт, собрать аргументы для рендера, отрендерить forNodeTpl.
+      val args = MForNodeTplArgs(
+        mnode         = request.mnode,
+        mContractOpt  = mContractOpt,
+        mBalances     = mBalances
+      )
+      Ok( forNodeTpl(args) )
+    }
   }
 
   /**

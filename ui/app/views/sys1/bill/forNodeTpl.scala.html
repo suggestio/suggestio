@@ -12,6 +12,7 @@
   @lkBlock("Тарифы и цены") {
 
     Тариф для входящих размещений:
+    <br/>
 
     @args.mnode.billing.tariffs.daily.fold {
       по умолчанию
@@ -23,6 +24,39 @@
       @messages("Edit")...
     </a>
 
+  }
+
+
+  @lkBlock("Плательщики") {
+  @defining( args.mnode.common.ntype ) { ntype =>
+
+    <p>
+      Текущий узел --
+      <strong>@messages(ntype.singular)</strong>.
+    </p>
+
+    <div>
+      @if( ntype == MNodeTypes.Person ) {
+        @if( !args.mContractOpt ) {
+          @* Человеку желательно бы иметь контракт и кошелёк. *@
+          Необходимо создать контракт.
+        }
+
+      } else {
+        @if( args.mContractOpt ) {
+          Внимание: данный узел имеет контракт, не являсь пользователем!
+        }
+      }
+    </div>
+
+    @if( args.mBalances.nonEmpty ) {
+      Остатки на балансах:
+      @for(mb <- args.mBalances) {
+        @mb.price.amount @mb.price.currencyCode
+      }
+    }
+
+  }
   }
 
 }

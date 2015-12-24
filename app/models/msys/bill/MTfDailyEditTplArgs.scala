@@ -30,8 +30,8 @@ trait ITfDailyEditTplArgs extends ITfDailyFormTplArgs {
 
 /** Дефолтовая реализация модели [[ITfDailyEditTplArgs]]. */
 case class MTfDailyEditTplArgs(
-  override val mnode    : MNode,
-  override val mcals    : Seq[MCalendar],
-  override val tf       : Form[MDailyTf]
+  override val mnode        : MNode,
+  override val mcals        : Seq[MCalendar],
+  override val tf           : Form[MDailyTf]
 )
   extends ITfDailyEditTplArgs
