@@ -1,0 +1,61 @@
+@(args: msys.bill.ITfDailyFormTplArgs, submitCall: Call, btnText: String)(implicit ctx: Context)
+
+@* Форма редактирования одного посуточного тарифа. *@
+
+@import ctx._
+@import helper._
+@import util.FC.tdFc
+@import args.{tf, mcals}
+
+@form( CSRF(submitCall) ) {
+
+  <table class="input-w __size-L">
+    @inputText(
+      tf("currencyCode"),
+      '_label -> "Валюта тарифа (RUB, USD, EUR, ...)"
+    )
+  </table>
+
+  @* Для задания условий тарифа рендерим n полей. *@
+  @defining( tf("clauses") ) { cfs =>
+  @defining( ("", "Остальные дни") :: mcals.iterator.map(mc => mc.id.get -> mc.name).toList ) { mcalsOptions =>
+    @for(i <- 0 until Math.max(3, (cfs.indexes.max + 1)) ) {
+      @defining( cfs(s"[$i]") ) { cf =>
+        <table class="input-w __size-L">
+          @inputText(
+            cf("name"),
+            '_label       -> "Название",
+            'placeholder  -> "Например, 'Будни' или 'Выходные'",
+            'title        -> "Название условия, например 'Будни'."
+          )
+          @inputText(
+            cf("amount"),
+            '_label       -> "Стоимость",
+            'placeholder  -> "1.50",
+            'title        -> "Цена в единицах текущей валюты, например '1.05'"
+          )
+          @select(
+            cf("calId"),
+            options = mcalsOptions,
+            '_label -> "Календарь",
+            '_class -> "sys-checkbox"
+          )
+        </table>
+      }
+    }
+  }
+  }
+
+  @* Задание размера комиссии в тарифе. *@
+  <table class="input-w __size-L">
+    @inputText(
+      tf("comission"),
+      '_label -> "Доля комиссии",
+      'title  -> "Доля комиссии в тарифе, не более 1.0. Если 1, 1.0 или пусто -- значит всё уйдёт в CBCA."
+    )
+  </table>
+
+
+  <input type="submit" value="@btnText" class="btn-w __size-M"/>
+
+}

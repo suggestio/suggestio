@@ -60,17 +60,14 @@
     </a>
   </div>
 
-  <div class="i-list">
-
-    @btn(routes.MarketLkAdn.showNodeAds(mnode.id.get), 28) { ЛИЧНЫЙ<br/>КАБИНЕТ<br/>УЗЛА }
-
-    @btn1(ctx.SC_URL_PREFIX + routes.MarketShowcase.demoWebSite(mnode.id.get).url, 52) { ВЫДАЧА }
-
-    @btn(routes.SysMarketBilling.billingFor(mnode.id.get), 52) { БИЛЛИНГ }
-
-    @btn(routes.SysAdnGeo.forNode(mnode.id.get), 52) { GEO }
-  </div>
-
+  @for(nodeId <- mnode.id) {
+    <div class="i-list">
+      @btn(routes.MarketLkAdn.showNodeAds(nodeId), 28) { ЛИЧНЫЙ<br/>КАБИНЕТ<br/>УЗЛА }
+      @btn1(ctx.SC_URL_PREFIX + routes.MarketShowcase.demoWebSite(nodeId).url, 52) { ВЫДАЧА }
+      @btn(routes.SysBilling.forNode(nodeId), 52) { БИЛЛИНГ }
+      @btn(routes.SysAdnGeo.forNode(nodeId), 52) { GEO }
+    </div>
+  }
 
   @lkBlock("Метаданные") {
     @_nodeMetaTpl(mnode.meta)

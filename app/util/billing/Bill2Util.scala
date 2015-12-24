@@ -11,6 +11,7 @@ import models.adv.tpl.MAdvPricing
 import models.mproj.ICommonDi
 import models.{CurrencyCodeOpt, MNode, MPrice}
 import util.PlayMacroLogsImpl
+import play.api.Play.isProd
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
@@ -31,6 +32,22 @@ class Bill2Util @Inject() (
 {
 
   import mCommonDi._
+
+  /** id узла, на который должна сыпаться комиссия с этого биллинга. */
+  val CBCA_NODE_ID: String = {
+    configuration
+      .getString("bill.cbca.node.id")
+      .getOrElse {
+        if (isProd) {
+          // узел cbca в кластере sio2prod.
+          "-vr-hrgNRd6noyQ3_teu_A"
+        } else {
+          // test-узел какой-то в кластере sio2dev.
+          "AUzledEIITehtyXq7GtI"
+        }
+      }
+  }
+
 
   /**
    * Найти и вернуть контракт для указанного id.
@@ -136,4 +153,11 @@ class Bill2Util @Inject() (
     MAdvPricing(prices, hasEnoughtMoney = true)
   }
 
+}
+
+
+/** Интерфейс для DI. */
+trait IBill2UtilDi {
+  /** Инстанс DI-поля. */
+  def bill2Util: Bill2Util
 }

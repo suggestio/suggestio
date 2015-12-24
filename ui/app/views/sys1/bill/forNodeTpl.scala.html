@@ -1,6 +1,28 @@
-@()(implicit ctx: Context)
+@(args: msys.bill.IForNodeTplArgs)(implicit ctx: Context)
 
 @* Страница биллинга узла второго поколения. *@
 
-TODO
+@import ctx.messages
+@import lk.lkBlock
 
+@base(
+  title = args.mnode.guessDisplayNameOrId.getOrElse("???")
+) {
+
+  @lkBlock("Тарифы и цены") {
+
+    Тариф для входящих размещений:
+
+    @args.mnode.billing.tariffs.daily.fold {
+      по умолчанию
+    } { tf =>
+      <strong>другой: @tf</strong>
+    }
+
+    <a href="@routes.SysBilling.editNodeTfDaily(args.mnode.id.get)">
+      @messages("Edit")...
+    </a>
+
+  }
+
+}

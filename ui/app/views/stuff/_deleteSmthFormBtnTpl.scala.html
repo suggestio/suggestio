@@ -1,4 +1,4 @@
-@(call: Call, btnClass: Option[String] = None, formClass: String = "")(implicit ctx: Context)
+@(call: Call, btnClass: Option[String] = None, formClass: String = "", btnText: Option[String] = None)(implicit ctx: Context)
 
 @* Форма-кнопка удаления чего-либо. *@
 
@@ -6,5 +6,7 @@
 @import ctx._
 
 @form(call, 'class -> formClass) {
-  <input type="submit" class="btn @btnClass" value="@messages("Delete")"/>
+  <input type="submit"
+         class="btn @btnClass"
+         value="@btnText.getOrElse(messages("Delete"))"/>
 }

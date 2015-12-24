@@ -290,6 +290,12 @@ GET  /sys/person/show/:personId          @controllers.SysPerson.showPerson(perso
 GET  /sys/person/epws                    @controllers.SysPerson.allEpws(offset: Int ?= 0)
 GET  /sys/person/extids                  @controllers.SysPerson.allExtIdents(offset: Int ?= 0)
 
+## sys/billing v2 -- Весь новый биллинг разом в этом контроллере.
+GET  /sys/bill/node/:nodeId              @controllers.SysBilling.forNode(nodeId)
+GET  /sys/bill/tf/daily/:nodeId          @controllers.SysBilling.editNodeTfDaily(nodeId)
+POST /sys/bill/tf/daily/:nodeId          @controllers.SysBilling.editNodeTfDailySubmit(nodeId)
+POST /sys/bill/tf/daily/del/:nodeId      @controllers.SysBilling.deleteNodeTfDaily(nodeId)
+
 ## sys/debug
 GET  /sys/debug                          @controllers.SysDebug.index
 POST /sys/debug/geo/parent/execute       @controllers.SysDebug.testNodesAllGeoParents

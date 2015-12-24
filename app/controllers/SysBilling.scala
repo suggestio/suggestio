@@ -1,7 +1,10 @@
 package controllers
 
+import com.google.inject.Inject
+import controllers.sysctl.bill.SbNode
+import models.MCalendars
 import models.mproj.ICommonDi
-import util.acl.{IsSuNode, IsSuperuser}
+import util.billing.{Bill2Util, TfDailyUtil}
 
 /**
  * Suggest.io
@@ -10,18 +13,11 @@ import util.acl.{IsSuNode, IsSuperuser}
  * Description: Контроллер sys-биллинга второго поколения.
  * Второй биллинг имеет тарифы внутри узлов и контракты-ордеры-item'ы в РСУБД.
  */
-class SysBilling(
-  override val mCommonDi: ICommonDi
+class SysBilling @Inject() (
+  override val tfDailyUtil          : TfDailyUtil,
+  override val bill2Util            : Bill2Util,
+  override val mCalendars           : MCalendars,
+  override val mCommonDi            : ICommonDi
 )
   extends SioControllerImpl
-  with IsSuNode
-{
-
-  import mCommonDi._
-
-  def forNode(nodeId: String) = IsSuNode(nodeId).async { implicit request =>
-    // Поискать контракт, собрать аргументы для рендера, отрендерить forNodeTpl.
-    ???
-  }
-
-}
+  with SbNode

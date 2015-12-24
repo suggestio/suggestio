@@ -198,4 +198,6 @@ package object models {
   type MPrice               = io.suggest.mbill2.m.price.MPrice
   val  MPrice               = io.suggest.mbill2.m.price.MPrice
 
+  type MDailyTf             = io.suggest.model.n2.bill.tariff.daily.MDailyTf
+
 }
