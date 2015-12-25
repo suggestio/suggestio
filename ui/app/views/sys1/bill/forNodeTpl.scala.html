@@ -4,9 +4,16 @@
 
 @import ctx.messages
 @import lk.lkBlock
+@import lk.dsl._
+@import sys1.stuff.ntable._
+@import datetime._
+
+@hPathAfter = { }
 
 @base(
-  title = args.mnode.guessDisplayNameOrId.getOrElse("???")
+  title       = messages("Billing"),
+  nodeOpt     = Some(args.mnode),
+  hPathAfter  = Some(hPathAfter)
 ) {
 
   @lkBlock("Тарифы и цены") {
@@ -28,35 +35,126 @@
 
 
   @lkBlock("Плательщики") {
-  @defining( args.mnode.common.ntype ) { ntype =>
 
-    <p>
-      Текущий узел --
-      <strong>@messages(ntype.singular)</strong>.
-    </p>
+    @defining( args.mnode.common.ntype ) { ntype =>
+      <p>
+        Текущий узел --
+        <strong>@messages(ntype.singular)</strong>.
+      </p>
 
-    <div>
-      @if( ntype == MNodeTypes.Person ) {
-        @if( !args.mContractOpt ) {
-          @* Человеку желательно бы иметь контракт и кошелёк. *@
-          Необходимо создать контракт.
+      <div>
+        @if( ntype == MNodeTypes.Person ) {
+          @args.mContractOpt.fold {
+            @* Человеку желательно бы иметь контракт и кошелёк. *@
+            Необходимо @* создать контракт *@
+          } { mc =>
+            С человеком заключен контракт @mc.legalContractId.
+          }
+
+        } else {
+          @args.mContractOpt.fold {
+            Контракт этому узлу <strong>не</strong> нужен,
+            но если есть веские причины, то можно @* создать контракт *@
+          } { mc =>
+            Внимание: данный узел имеет контракт @mc.legalContractId, не являсь пользователем!
+          }
         }
 
-      } else {
-        @if( args.mContractOpt ) {
-          Внимание: данный узел имеет контракт, не являсь пользователем!
+        @for(nodeId <- args.mnode.id) {
+          @args.mContractOpt.fold {
+            <a href="@routes.SysBilling.createContract(nodeId)">создать контракт</a>.
+          } { mc =>
+            <a href="@routes.SysBilling.editContract(nodeId)">Изменить...</a>
+
+            @* Отрендерить данные по текущему контракту. *@
+            @defining("M") { sz =>
+              @_ntable() {
+                @_th(sz, title = Some("Уникальный id контракта")) {
+                  #
+                }
+                @_th(sz) {
+                  Номер
+                }
+                @_th(sz) {
+                  Создан
+                }
+                @_th("L", title = Some("Инфа для служебного пользования.")) {
+                  Инфо
+                }
+              } {
+                @_tr() {
+                  @_td(sz) {
+                    @mc.id
+                  }
+                  @_td(sz) {
+                    @mc.legalContractId
+                  }
+                  @_td(sz) {
+                    @_prettyDate( mc.dateCreated, withSpan = true)
+                  }
+                  @_td("L") {
+                    @mc.hiddenInfo.getOrElse {
+                      &nbsp;
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
-      }
-    </div>
+      </div>
+    }       @* defining ntype *@
 
-    @if( args.mBalances.nonEmpty ) {
-      Остатки на балансах:
-      @for(mb <- args.mBalances) {
-        @mb.price.amount @mb.price.currencyCode
-      }
-    }
+  } @* lkBlock плательщики *@
 
-  }
-  }
+
+  @if( args.mBalances.nonEmpty ) {
+
+    @lkBlock("Депозиты") {
+      @_minorTitleTpl() {
+        Остатки на балансах
+      }
+      @defining("L") { sz =>
+        @_ntable() {
+          @_th(sz, title = Some("Уникальный id кошелька в БД")) {
+            #
+          }
+          @_th(sz) {
+            Валюта
+          }
+          @_th(sz) {
+            Доступно
+          }
+          @_th(sz) {
+            Заблокировано
+          }
+          @_th(sz) {
+            Овердрафт
+          }
+        } {
+          @for(mb <- args.mBalances) {
+            @_tr() {
+              @_td(sz) {
+                @mb.id
+              }
+              @_td(sz) {
+                @mb.price.currencyCode
+              }
+              @_td(sz) {
+                @mb.price.amount
+              }
+              @_td(sz) {
+                @mb.blocked
+              }
+              @_td(sz) {
+                @mb.low
+              }
+            }
+          }
+        } @* ntable body *@
+      }   @* defining sz *@
+
+    }     @* lkBlock депозиты *@
+  }       @* if mBalances *@
 
 }

@@ -1,0 +1,7 @@
+@(sz: String = "L")(content: Html)(implicit ctx: Context)
+
+@* Кривые поделки типа tdFc требуют враппера в виде table-тега. *@
+
+<table class="input-w __size-@sz">
+  @content
+</table>

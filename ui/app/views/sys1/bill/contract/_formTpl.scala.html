@@ -1,16 +1,17 @@
-@(cf: Form[_], btnText: String, submitCall: Call)(implicit ctx: Context)
+@(cf: Form[MContract], btnText: String, submitCall: Call)(implicit ctx: Context)
 
 @* Шаблон формы добавления/редактирования контракта. *@
 @import helper._
 @import util.FC.tdFc
 @import fc._tdFcTableTpl
 @import ctx.{messages, request}
+@import sys1.stuff.sform._
 
 @form( CSRF(submitCall) ) {
 
   @_tdFcTableTpl("L") {
     @inputText(
-      cf("dateContract"),
+      cf("dateCreated"),
       '_label -> "Дата подписания",
       'title  -> "Дата в удобном формате, например '12 апреля 2014' или '12.04.2014'."
     )
@@ -25,15 +26,6 @@
   }
 
   @_tdFcTableTpl("L") {
-    @checkbox(
-      cf("isActive"),
-      '_class -> "sys-checkbox",
-      '_label -> "Договор активен?",
-      'title  -> "Не забывайте убирать галочку при расторжении договора, и поставить при заключении."
-    )
-  }
-
-  @_tdFcTableTpl("L") {
     @textarea(
       cf("hiddenInfo"),
       '_label -> "Служебные заметки",
@@ -41,8 +33,6 @@
     )
   }
 
-  <div class="btn-w __size-M">
-    <input class="siom-ac-btn __color-1 __size-M __ft-XM f-right" type="submit" value="@btnText">
-  </div>
+  @_submitTpl(btnText)
 
 }

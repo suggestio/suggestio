@@ -1,7 +1,7 @@
 package util.acl
 
 import models.mbill.MContract
-import models.req.{MNodeContractReq, MReq}
+import models.req.{MNodeContract1Req, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result}
 import util.async.AsyncUtil
 
@@ -22,14 +22,14 @@ trait IsSuperuserContractNode
   import mCommonDi._
 
   trait IsSuperuserContractNodeBase
-    extends ActionBuilder[MNodeContractReq]
+    extends ActionBuilder[MNodeContract1Req]
     with IsSuperuserUtil
   {
 
     /** id запрашиваемого контракта. */
     def contractId: Int
 
-    override def invokeBlock[A](request: Request[A], block: (MNodeContractReq[A]) => Future[Result]): Future[Result] = {
+    override def invokeBlock[A](request: Request[A], block: (MNodeContract1Req[A]) => Future[Result]): Future[Result] = {
       val personIdOpt = sessionUtil.getPersonId(request)
       val user = mSioUsers(personIdOpt)
 
@@ -48,7 +48,7 @@ trait IsSuperuserContractNode
         contractFut flatMap { mcontract =>
           mnodeOptFut flatMap { mnodeOpt =>
             val mnode = mnodeOpt.get
-            val req1 = MNodeContractReq(mnode, mcontract, request, user)
+            val req1 = MNodeContract1Req(mnode, mcontract, request, user)
             block(req1)
           }
         }
@@ -62,7 +62,7 @@ trait IsSuperuserContractNode
 
   abstract class IsSuperuserContractNodeAbstract
     extends IsSuperuserContractNodeBase
-    with ExpireSession[MNodeContractReq]
+    with ExpireSession[MNodeContract1Req]
 
   case class IsSuperuserContractNode(override val contractId: Int)
     extends IsSuperuserContractNodeAbstract
@@ -70,11 +70,11 @@ trait IsSuperuserContractNode
   /** Реализация [[IsSuperuserContractNodeBase]] с выставлением CSRF-токена. */
   case class IsSuperuserContractNodeGet(override val contractId: Int)
     extends IsSuperuserContractNodeAbstract
-    with CsrfGet[MNodeContractReq]
+    with CsrfGet[MNodeContract1Req]
 
   /** Реализация [[IsSuperuserContractNodeBase]] с проверкой CSRF-токена. */
   case class IsSuperuserContractNodePost(override val contractId: Int)
     extends IsSuperuserContractNodeAbstract
-    with CsrfPost[MNodeContractReq]
+    with CsrfPost[MNodeContract1Req]
 
 }

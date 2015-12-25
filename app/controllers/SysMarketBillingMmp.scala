@@ -4,7 +4,7 @@ import com.google.inject.Inject
 import models._
 import models.mbill.{MContract, MTariffDaily}
 import models.mproj.ICommonDi
-import models.req.{IReq, IContractReq}
+import models.req.{IReq, IContract1Req}
 import play.api.data.Forms._
 import play.api.data._
 import play.api.mvc.{Result, AnyContent}
@@ -85,7 +85,7 @@ class SysMarketBillingMmp @Inject() (
       .map(Ok(_))
   }
 
-  private def _createMmpDaily(formM: Form[MTariffDaily])(implicit request: IContractReq[_]): Future[Html] = {
+  private def _createMmpDaily(formM: Form[MTariffDaily])(implicit request: IContract1Req[_]): Future[Html] = {
     val mcalsFut = mCalendars.getAll()
     for {
       adnNodeOpt <- mNodeCache.getById(request.mcontract.adnId)

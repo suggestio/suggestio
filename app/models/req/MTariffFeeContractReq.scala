@@ -10,7 +10,7 @@ import play.api.mvc.Request
  * Description: Модель реквеста с инстансами MTariffFee и MContract внутри.
  */
 trait ITariffFeeContractReq[A]
-  extends IContractReq[A]
+  extends IContract1Req[A]
 {
   def mTariffFee: MTariffFee
 }

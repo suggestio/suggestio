@@ -1,6 +1,6 @@
 package models.req
 
-import io.suggest.mbill2.m.contract.MContract
+import models.mbill.MContract
 import play.api.mvc.Request
 
 /**
@@ -9,15 +9,15 @@ import play.api.mvc.Request
  * Created: 18.12.15 18:42
  * Description: Модель реквеста с инстансом какого-то контракта.
  */
-trait IContractReq[A] extends IReq[A] {
+trait IContract1Req[A] extends IReq[A] {
   def mcontract: MContract
 }
 
 
-case class MContractReq[A](
+case class MContract1Req[A](
   override val mcontract  : MContract,
   override val request    : Request[A],
   override val user       : ISioUser
 )
   extends MReqWrap[A]
-  with IContractReq[A]
+  with IContract1Req[A]

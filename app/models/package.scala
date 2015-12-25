@@ -199,5 +199,6 @@ package object models {
   val  MPrice               = io.suggest.mbill2.m.price.MPrice
 
   type MDailyTf             = io.suggest.model.n2.bill.tariff.daily.MDailyTf
+  type MContract            = io.suggest.mbill2.m.contract.MContract
 
 }

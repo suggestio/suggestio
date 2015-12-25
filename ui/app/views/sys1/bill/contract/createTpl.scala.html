@@ -1,0 +1,21 @@
+@(mnode: MNode, cf: Form[MContract])(implicit ctx: Context)
+
+@* Страница с формой создания нового договора. *@
+@import ctx._
+
+@base(
+  title   = "Новый контракт",
+  nodeOpt = Some(mnode)
+) {
+
+  <div class="sys_t">Создание нового контракта</div>
+
+  <p class="paragraph __size-M">Сторона контракта: <strong>@_sideTpl(mnode)</strong></p>
+
+  @_formTpl(
+    cf		      = cf,
+    btnText	    = messages("Create"),
+    submitCall	= routes.SysBilling.createContractSubmit(mnode.id.get)
+  )
+
+}

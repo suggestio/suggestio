@@ -4,11 +4,13 @@ import com.google.inject.{Inject, Singleton}
 import de.jollyday.parameter.UrlManagerParameter
 import io.suggest.common.fut.FutureUtil
 import io.suggest.model.n2.edge.{MNodeEdges, MEdgeInfo}
+import io.suggest.model.sc.common.AdShowLevels
 import models._
 import models.adv.direct.AdvFormEntry
 import models.adv.{MAdvReq, MAdvRefuse, MAdvOk, IAdvTerms}
 import models.adv.tpl.MAdvPricing
 import models.blk.{BlockWidths, BlockHeights}
+import models.mbill.{MContract => MContract1}
 import models.mbill._
 import org.joda.time.{DateTime, LocalDate}
 import org.joda.time.DateTimeConstants._
@@ -167,7 +169,7 @@ class MmpDailyBilling @Inject() (
     val pricesFut = Future.traverse(adves2) { adve =>
       val contractsFut = Future {
         db.withConnection { implicit c =>
-          MContract.findForAdn(adve.adnId, isActive = someTrue)
+          MContract1.findForAdn(adve.adnId, isActive = someTrue)
         }
       }(AsyncUtil.jdbcExecutionContext)
 
@@ -257,7 +259,7 @@ class MmpDailyBilling @Inject() (
         // Вешаем update lock на баланс чтобы избежать блокирования суммы, списанной в параллельном треде, и дальнейшего ухода в минус.
         val mbb0 = MBalance.getByAdnId(producerId, SelectPolicies.UPDATE).get
         val someTrue = Some(true)
-        val mbc = MContract.findForAdn(producerId, isActive = someTrue).head
+        val mbc = MContract1.findForAdn(producerId, isActive = someTrue).head
         val prodCurrencyCode = mbb0.currencyCode
         advs.foreach { advEntry =>
           val rcvrContract = getOrCreateContract(advEntry.adnId)
@@ -294,14 +296,14 @@ class MmpDailyBilling @Inject() (
   /**
    * Стрёмная функция для получения активного контракта. Создаёт такой контракт, если его нет.
    * @param adnId id узла, с которым нужен контракт.
-   * @return Экземпляр [[MContract]].
+   * @return Экземпляр MContract.
    */
-  private def getOrCreateContract(adnId: String)(implicit c: Connection): MContract = {
-    MContract.findForAdn(adnId, isActive = Some(true))
+  private def getOrCreateContract(adnId: String)(implicit c: Connection): MContract1 = {
+    MContract1.findForAdn(adnId, isActive = Some(true))
       .sortBy(_.id.get)
       .headOption
       .getOrElse {
-        MContract(adnId = adnId, contractDate = DateTime.now).save
+        MContract1(adnId = adnId, contractDate = DateTime.now).save
       }
   }
 
@@ -356,7 +358,7 @@ class MmpDailyBilling @Inject() (
       assertAdvsReqRowsDeleted(reqsDeleted, 1, advReqId)
       // Провести все денежные операции.
       val prodAdnId = advReq.prodAdnId
-      val prodContractOpt = MContract.findForAdn(prodAdnId, isActive = Some(true)).headOption
+      val prodContractOpt = MContract1.findForAdn(prodAdnId, isActive = Some(true)).headOption
       assert(prodContractOpt.exists(_.id.get == advReq.prodContractId), "Producer contract not found or changed since request creation.")
       val prodContract = prodContractOpt.get
       val amount0 = advReq.amount
@@ -381,11 +383,11 @@ class MmpDailyBilling @Inject() (
       trace(s"${logPrefix}Debited producer[$prodAdnId] for ${prodTxn.amount} ${prodTxn.currencyCode}. txnId=${prodTxn.id.get} contractId=${prodContract.id.get}")
 
       // Разобраться с кошельком получателя
-      val rcvrContract = MContract.findForAdn(rcvrAdnId, isActive = Some(true))
+      val rcvrContract = MContract1.findForAdn(rcvrAdnId, isActive = Some(true))
         .headOption
         .getOrElse {
           warn(s"advReqAcceptSubmit($advReqId): Creating new contract for adv. award receiver...")
-          MContract(
+          MContract1(
             adnId         = rcvrAdnId,
             contractDate  = now,
             isActive      = true,

@@ -6,7 +6,9 @@
 @import ctx.messages
 
 @hPathAfter1 = {
-  / <a href="@routes.SysMarketBilling.index()">@messages("Billing")</a>
+  @for(mnode <- nodeOpt; nodeId <- mnode.id) {
+    / <a href="@routes.SysBilling.forNode(nodeId)">@messages("Billing")</a>
+  }
   @hPathAfter.getOrElse {
     / @title
   }

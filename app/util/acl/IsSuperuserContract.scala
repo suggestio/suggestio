@@ -2,7 +2,7 @@ package util.acl
 
 import models.mbill
 import models.mbill.MContract
-import models.req.{MContractReq, MReq}
+import models.req.{MContract1Req, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result}
 import util.async.AsyncUtil
 
@@ -21,14 +21,14 @@ trait IsSuperuserContract
   import mCommonDi._
 
   sealed trait IsSuperuserContractBase
-    extends ActionBuilder[MContractReq]
+    extends ActionBuilder[MContract1Req]
     with IsSuperuserUtil
   {
 
     /** id запрашиваемого контракта. */
     def contractId: Int
 
-    override def invokeBlock[A](request: Request[A], block: (MContractReq[A]) => Future[Result]): Future[Result] = {
+    override def invokeBlock[A](request: Request[A], block: (MContract1Req[A]) => Future[Result]): Future[Result] = {
       val personIdOpt = sessionUtil.getPersonId(request)
       val user = mSioUsers(personIdOpt)
 
@@ -41,7 +41,7 @@ trait IsSuperuserContract
         }(AsyncUtil.jdbcExecutionContext)
 
         contractFut.flatMap { mcontract =>
-          val req1 = MContractReq(mcontract, request, user)
+          val req1 = MContract1Req(mcontract, request, user)
           block(req1)
         }
 
@@ -54,6 +54,6 @@ trait IsSuperuserContract
 
   case class IsSuperuserContract(contractId: Int)
     extends IsSuperuserContractBase
-    with ExpireSession[MContractReq]
+    with ExpireSession[MContract1Req]
 
 }

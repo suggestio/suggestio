@@ -7,8 +7,10 @@ import models.{MNode, CurrencyCodeDflt}
 import models.mproj.ICommonDi
 import play.api.data._, Forms._
 import util.FormUtil.{doubleM, esIdM, currencyCodeM}
+import util.PlayMacroLogsImpl
 
 import scala.concurrent.Future
+import scala.util.{Failure, Success}
 
 /**
  * Suggest.io
@@ -20,7 +22,9 @@ import scala.concurrent.Future
 class TfDailyUtil @Inject()(
   mCommonDi: ICommonDi,
   bill2Util: Bill2Util
-) {
+)
+  extends PlayMacroLogsImpl
+{
 
   import mCommonDi._
 
@@ -102,7 +106,8 @@ class TfDailyUtil @Inject()(
    * @return Фьючерс из tryUpdate().
    */
   def updateNodeTf(mnode0: MNode, newTf: Option[MDailyTf]) = {
-    MNode.tryUpdate(mnode0) { mnode =>
+    // Запускаем апдейт узла.
+    val fut = MNode.tryUpdate(mnode0) { mnode =>
       mnode.copy(
         billing = mnode.billing.copy(
           tariffs = mnode.billing.tariffs.copy(
@@ -111,6 +116,17 @@ class TfDailyUtil @Inject()(
         )
       )
     }
+
+    // Логгируем в фоне результаты апдейта.
+    lazy val logPrefix = s"updateNodeTf(${mnode0.id.get}):"
+    fut.onComplete {
+      case _: Success[_] =>
+        LOGGER.debug(s"$logPrefix Saved new daily tariff[$newTf] for node")
+      case Failure(ex) =>
+        LOGGER.error(s"$logPrefix Failed to save tariff $newTf into node", ex)
+    }
+
+    fut
   }
 
 }

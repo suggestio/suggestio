@@ -1,0 +1,213 @@
+package controllers.sysctl.bill
+
+import controllers.routes
+import io.suggest.mbill2.m.contract.{IMContracts, MContract}
+import io.suggest.model.n2.node.MNode
+import models.req.{INodeContractReq, INodeReq}
+import play.api.data.Form
+import play.api.mvc.Result
+import util.PlayMacroLogsI
+import util.acl.{IsSuNodeContract, IsSuNodeNoContract}
+import util.billing.IContractUtilDi
+import views.html.sys1.bill.contract._
+
+import scala.concurrent.Future
+
+/**
+ * Suggest.io
+ * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+ * Created: 25.12.15 11:42
+ * Description: Трейт для sys billing контроллера для поддержки редактирования контрактов.
+ */
+trait SbNodeContract
+  extends IsSuNodeNoContract
+  with IsSuNodeContract
+  with PlayMacroLogsI
+  with IContractUtilDi
+  with IMContracts
+{
+
+  import mCommonDi._
+
+  // ----------------------------- Создание контракта ----------------------------------
+
+  /**
+   * Рендер страницы с формой создания контракта.
+   * @param nodeId id узла, для которого создаётся контракт.
+   */
+  def createContract(nodeId: String) = IsSuNodeNoContractGet(nodeId).async { implicit request =>
+    val form0 = contractUtil.contractForm
+
+    val formDummy = form0.fill(
+      MContract(
+        suffix = Some( mContracts.SUFFIX_DFLT )
+      )
+    )
+
+    _createContract(formDummy, Ok)
+  }
+
+  private def _createContract(cf: Form[MContract], rs: Status)(implicit request: INodeReq[_]): Future[Result] = {
+    Ok(createTpl(
+      mnode = request.mnode,
+      cf    = cf
+    ))
+  }
+
+  /**
+   * Сабмит формы создания контракта.
+   * @param nodeId id узла, для которого создаётся контракт.
+   */
+  def createContractSubmit(nodeId: String) = IsSuNodeNoContractPost(nodeId).async { implicit request =>
+    contractUtil.contractForm.bindFromRequest().fold(
+      {formWithErrors =>
+        val respFut = _createContract(formWithErrors, NotAcceptable)
+        LOGGER.debug(s"createContractSubmit($nodeId): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
+        respFut
+      },
+      {mc =>
+        LOGGER.trace(s"Creating new contract for node $nodeId...")
+        val mcAct = mContracts.insertOne(mc)
+        val mcSaveFut = dbConfig.db.run(mcAct)
+
+        // Запустить сохранение нового id контракта в узел.
+        val nodeSaveFut = mcSaveFut.flatMap { mc =>
+          MNode.tryUpdate(request.mnode) { mnode =>
+            assert(mnode.billing.contractId.isEmpty)
+            mnode.copy(
+              billing = mnode.billing.copy(
+                contractId = mc.id
+              )
+            )
+          }
+        }
+
+        // Если контракт создан, а узел не обновлён, то надо удалить свежесозданный контракт.
+        mcSaveFut.onSuccess { case mc2 =>
+          nodeSaveFut.onFailure { case ex: Throwable =>
+            val contractId = mc2.id.get
+            val deleteAct = mContracts.deleteById(contractId)
+            val deleteFut = dbConfig.db.run(deleteAct)
+            LOGGER.warn("Rollbacking contract save because of node save error", ex)
+            if (LOGGER.underlying.isTraceEnabled) {
+              deleteFut.onComplete { case result =>
+                LOGGER.trace(s"Deleted recently created contract $contractId.")
+              }
+            }
+          }
+        }
+
+        for {
+          _   <- nodeSaveFut
+          mc  <- mcSaveFut
+        } yield {
+          Redirect( routes.SysBilling.forNode(nodeId) )
+            .flashing(FLASH.SUCCESS -> s"Создан контракт ${mc.legalContractId} для узла $nodeId")
+        }
+      }
+    )
+  }
+
+
+
+  // ----------------------------- Редактирование контракта ----------------------------------
+
+  /**
+   * Экшен рендера страницы редактирования контракта узла.
+   * @param nodeId id изменяемого узла.
+   */
+  def editContract(nodeId: String) = IsSuNodeContractGet(nodeId).async { implicit request =>
+    val cf = contractUtil.contractForm.fill( request.mcontract )
+    _editContract(cf, Ok)
+  }
+
+  private def _editContract(cf: Form[MContract], rs: Status)
+                           (implicit request: INodeContractReq[_]): Future[Result] = {
+    val html = editTpl(request.mnode, request.mcontract, cf)
+    rs(html)
+  }
+
+  /**
+   * Сабмит формы редактирования контракта.
+   * @param nodeId id узла.
+   */
+  def editContractSubmit(nodeId: String) = IsSuNodeContractPost(nodeId).async { implicit request =>
+    contractUtil.contractForm.bindFromRequest().fold(
+      {formWithErrors =>
+        val fut = _editContract(formWithErrors, NotAcceptable)
+        LOGGER.debug(s"editContractSubmit($nodeId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
+        fut
+      },
+      {mc1 =>
+        val mc2 = request.mcontract.copy(
+          dateCreated = mc1.dateCreated,
+          hiddenInfo  = mc1.hiddenInfo,
+          suffix      = mc1.suffix
+        )
+        val updFut = dbConfig.db.run(
+          mContracts.updateOne(mc2)
+        )
+
+        LOGGER.trace(s"editContractSubmit($nodeId): Saving new contract: $mc2")
+
+        for (rowsUpdated <- updFut if rowsUpdated == 1) yield {
+          Redirect( routes.SysBilling.forNode(nodeId) )
+            .flashing(FLASH.SUCCESS -> s"Сохранён контракт ${mc2.legalContractId}.")
+        }
+      }
+    )
+  }
+
+
+  // ----------------------------- Редактирование контракта ----------------------------------
+
+
+  /**
+   * Сабмит удаления контракта.
+   * @param nodeId id узла.
+   * @return Редирект на forNode().
+   */
+  def deleteContractSubmit(nodeId: String) = IsSuNodeContractPost(nodeId).async { implicit request =>
+    val contractId = request.mcontract.id.get
+    val act = mContracts.deleteById(contractId)
+    val deleteFut = dbConfig.db.run(act)
+
+    lazy val logPrefix = s"deleteContractSubmit($nodeId):"
+
+    LOGGER.debug(s"$logPrefix Erasing #${request.mcontract.legalContractId}")
+
+    val nodeSaveFut = deleteFut.flatMap { _ =>
+      MNode.tryUpdate(request.mnode) { mnode =>
+        mnode.copy(
+          billing = mnode.billing.copy(
+            contractId = None
+          )
+        )
+      }
+    }
+
+    // Отработать сценарии, когда возникает ошибка при сохранении узла.
+    deleteFut.onSuccess { case _ =>
+      nodeSaveFut.onFailure { case ex: Throwable =>
+        val act2 = mContracts.insertOne( request.mcontract )
+        val reInsFut = dbConfig.db.run(act2)
+        LOGGER.error(s"$logPrefix Re-inserting deleted contract after node update failure: ${request.mcontract}", ex)
+      }
+    }
+
+    for {
+      _           <- nodeSaveFut
+      rowsDeleted <- deleteFut
+    } yield {
+      val res = Redirect( routes.SysBilling.forNode(nodeId) )
+      val flash = rowsDeleted match {
+        case 1 =>
+          FLASH.SUCCESS -> "Контракт удалён безвозравтно."
+        case 0 =>
+          FLASH.ERROR   -> "Кажется, контракт уже был удалён."
+      }
+      res.flashing(flash)
+    }
+  }
+
+}

@@ -2,7 +2,7 @@ package util.billing
 
 import com.google.inject.{Inject, Singleton}
 import models._
-import models.mbill._
+import models.mbill.{MContract => MContract1, _}
 import models.mcron.{ICronTask, MCronTask}
 import play.api.{Configuration, Application}
 import play.api.db.Database
@@ -58,11 +58,11 @@ class Billing @Inject() (
   /** Инициализировать биллинг на узле. */
   def maybeInitializeNodeBilling(adnId: String) {
     lazy val logPrefix = s"maybeInitializeNodeBilling($adnId): "
-    val newMbcOpt: Option[MContract] = db.withTransaction { implicit c =>
-      MContract.lockTableWrite
-      val currentContracts = MContract.findForAdn(adnId)
+    val newMbcOpt: Option[MContract1] = db.withTransaction { implicit c =>
+      MContract1.lockTableWrite
+      val currentContracts = MContract1.findForAdn(adnId)
       if (currentContracts.isEmpty) {
-        val mbc = MContract(adnId = adnId).save
+        val mbc = MContract1(adnId = adnId).save
         Some(mbc)
       } else {
         None
@@ -96,7 +96,7 @@ class Billing @Inject() (
    */
   def addPayment(txn: MTxn): AddPaymentResult = {
     db.withTransaction { implicit c =>
-      val contract = MContract.getById(txn.contractId).get
+      val contract = MContract1.getById(txn.contractId).get
       // SelectPolicies.UPDATE не требуется, т.к. фактический инкремент идёт на стороне базы, а не тут.
       val balance0 = MBalance.getByAdnId(contract.adnId) getOrElse {
         MBalance(contract.adnId, 0F).save
@@ -109,7 +109,7 @@ class Billing @Inject() (
     }
   }
 
-  case class AddPaymentResult(txnSaved: MTxn, newBalance: MBalance, contract: MContract)
+  case class AddPaymentResult(txnSaved: MTxn, newBalance: MBalance, contract: MContract1)
 
 
   /**
@@ -125,7 +125,7 @@ class Billing @Inject() (
     if (feeTariffs.nonEmpty) {
       debug(s"processFeeTarificationAll(): There are ${feeTariffs.size} fee-tariffs to process...")
       val contracts = db.withConnection { implicit c =>
-        MContract.findAllActive
+        MContract1.findAllActive
       }
       val contractsMap = contracts
         .map { mbc => mbc.id.get -> mbc }
@@ -142,7 +142,7 @@ class Billing @Inject() (
   }
 
   /** Произвести тарификацию для одного тарифа в рамках одного договора. */
-  def processFeeTarification(tariff: MTariffFee, contract: MContract) {
+  def processFeeTarification(tariff: MTariffFee, contract: MContract1) {
     lazy val logPrefix = s"processFeeTarification(${tariff.id.get}, ${tariff.contractId}): "
     val result: Either[String, FeeTarificationSuccess] = db.withTransaction { implicit c =>
       val balanceOpt = MBalance.getByAdnId(contract.adnId, SelectPolicies.UPDATE)
