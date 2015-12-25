@@ -109,9 +109,11 @@ class MarketAdv @Inject() (
   private def renderAdvForm(adId: String, form: DirectAdvFormM_t, rs: Status, rcvrsAllFutOpt: Option[Future[Seq[MNode]]] = None)
                            (implicit request: RequestWithAdAndProducer[AnyContent]): Future[Result] = {
     // Если поиск ресиверов ещё не запущен, то сделать это.
-    val rcvrsAllFut = rcvrsAllFutOpt  getOrElse  collectAllReceivers(request.producer)
+    val rcvrsAllFut = rcvrsAllFutOpt.getOrElse {
+      collectAllReceivers(request.producer)
+    }
     // В фоне строим карту ресиверов, чтобы по ней быстро ориентироваться.
-    val allRcvrsMapFut = rcvrsAllFut map { rcvrs =>
+    val allRcvrsMapFut = for (rcvrs <- rcvrsAllFut) yield {
       rcvrs.iterator
         .map { rcvr  =>  rcvr.id.get -> rcvr }
         .toMap
@@ -130,12 +132,13 @@ class MarketAdv @Inject() (
     } yield {
       val adnIdsReadySet = adnIdsReady.toSet
       // Выкинуть узлы, у которых нет своего тарифного плана.
-      // TODO Нельзя публиковать прямо в городах. Нужно фильтровать тут и при сабмите.
-      rcvrs filter { node => adnIdsReadySet contains node.id.get }
+      rcvrs.filter { node =>
+        adnIdsReadySet.contains( node.id.get )
+      }
     }
 
     // Нужно заодно собрать карту (adnId -> Int), которая отражает целочисленные id узлов в list-маппинге.
-    val adnId2indexMapFut: Future[Map[String, Int]] = rcvrsReadyFut map { rcvrs =>
+    val adnId2indexMapFut: Future[Map[String, Int]] = for (rcvrs <- rcvrsReadyFut) yield {
       // Карта строится на основе данных из исходной формы и дополняется недостающими adn_id.
       val formIndex2adnIdMap0 = form("node").indexes
         .flatMap { fi => form(s"node[$fi].adnId").value.map(fi -> _) }
@@ -159,6 +162,7 @@ class MarketAdv @Inject() (
 
     // Кешируем определённый язык юзера прямо тут. Это нужно для обращения к Messages().
     implicit val ctx = implicitly[Context]
+
     // Строим набор городов и их узлов, сгруппированных по категориям.
     val citiesFut: Future[Seq[MAdvFormCity]] = for {
       rcvrs     <- rcvrsReadyFut
@@ -203,11 +207,13 @@ class MarketAdv @Inject() (
       }
 
     // Строим карту уже занятых какими-то размещением узлы.
-    val busyAdvsFut: Future[Map[String, MAdvI]] = adAdvInfoFut.map { adAdvInfo =>
-      import adAdvInfo._
-      val adnAdvsReq = advsReq.map { advReq  =>  advReq.rcvrAdnId -> advReq }
-      val adnAdvsOk = advsOk.map { advOk => advOk.rcvrAdnId -> advOk }
-      (adnAdvsOk ++ adnAdvsReq).toMap
+    val busyAdvsFut: Future[Map[String, MAdvI]] = {
+      for (adAdvInfo <- adAdvInfoFut) yield {
+        import adAdvInfo._
+        val adnAdvsReq = advsReq.map { advReq  =>  advReq.rcvrAdnId -> advReq }
+        val adnAdvsOk = advsOk.map { advOk => advOk.rcvrAdnId -> advOk }
+        (adnAdvsOk ++ adnAdvsReq).toMap
+      }
     }
 
     // Периоды размещения. Обычно одни и те же. Сразу считаем в текущем потоке:
@@ -459,10 +465,14 @@ class MarketAdv @Inject() (
   /** Собрать все узлы сети, пригодные для размещения рекламной карточки. */
   private def collectAllReceivers(producer: MNode): Future[Seq[MNode]] = {
     // TODO Этот запрос возвращает огромный список нод, которые рендерятся в огромный список. Надо переверстать эти шаблоны.
+    val isTestOpt = producer.extras.adn.map(_.testNode)
+    if ( isTestOpt.contains(true) )
+      LOGGER.debug(s"collectAllReceivers(${producer.id.get}): Searching for isolated nodes with isTest = true")
+
     val msearch = new MNodeSearchDfltImpl {
       override def withAdnRights  = Seq(AdnRights.RECEIVER)
-      override def testNode       = producer.extras.adn.map(_.testNode)
-      override def limit: Int     = 500
+      override def testNode       = isTestOpt
+      override def limit          = 500
       override def withoutIds     = producer.id.toSeq
       override def nodeTypes      = Seq( MNodeTypes.AdnNode )
     }

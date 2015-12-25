@@ -5,7 +5,11 @@
 @import ctx._
 
 @hPathAfter1 = {
-  / <a class="blue-link" href="@routes.SysMarket.adnNodesList()">ADN</a>
+  /
+  <a class="blue-link"
+     href="@routes.SysMarket.adnNodesList( msys.MSysNodeListArgs(ntypeOpt = Some(MNodeTypes.AdnNode)) )">
+    ADN
+  </a>
   @nodeOpt.map { mnode =>
     / <a class="blue-link"
          href="@routes.SysMarket.showAdnNode(mnode.id.get)"

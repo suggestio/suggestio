@@ -1,7 +1,6 @@
 package models
 
 import com.google.inject.{Singleton, Inject}
-import io.suggest.model._
 import io.suggest.model.es._
 import util.PlayMacroLogsImpl
 import EsModelUtil.FieldsJsonAcc
@@ -20,7 +19,7 @@ import io.suggest.util.SioEsUtil._
  * Description: Модель для хранения календарей в текстовых форматах.
  */
 @Singleton
-class MCalendar_
+class MCalendars
   extends EsModelStaticT
   with PlayMacroLogsImpl
   with EsmV2Deserializer
@@ -79,7 +78,7 @@ class MCalendar_
 case class MCalendar(
   name                    : String,
   data                    : String,
-  override val companion  : MCalendar_,
+  override val companion  : MCalendars,
   id                      : Option[String]  = None,
   versionOpt              : Option[Long]    = None
 )
@@ -101,7 +100,7 @@ case class MCalendar(
 trait MCalendarJmxMBean extends EsModelJMXMBeanI
 
 class MCalendarJmx @Inject() (
-  override val companion  : MCalendar_,
+  override val companion  : MCalendars,
   override val ec         : ExecutionContext,
   override val client     : Client,
   override val sn         : SioNotifierStaticClientI

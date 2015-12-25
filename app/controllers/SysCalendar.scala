@@ -30,8 +30,8 @@ import scala.concurrent.Future
  * @see [[http://jollyday.sourceforge.net/index.html]]
  */
 class SysCalendar @Inject() (
-  mCalendar                     : MCalendar_,
-  override val mCommonDi        : MCommonDi
+                              mCalendar                     : MCalendars,
+                              override val mCommonDi        : MCommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl

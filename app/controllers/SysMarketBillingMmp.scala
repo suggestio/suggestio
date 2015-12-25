@@ -23,8 +23,8 @@ import scala.concurrent.Future
  * Description: sys-контроллер для работы с mmp-тарификацией, т.е. когда тарификация настраивается по рекламным модулям.
  */
 class SysMarketBillingMmp @Inject() (
-  mCalendar                     : MCalendar_,
-  override val mCommonDi        : MCommonDi
+                                      mCalendar                     : MCalendars,
+                                      override val mCommonDi        : MCommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl

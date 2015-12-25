@@ -57,7 +57,7 @@ libraryDependencies ++= {
   "com.google.guava" % "guava" % "18.+",
   "com.lambdaworks" % "scrypt" % "1.4.0",     // Чтобы хешировать пароли (models.EmailPwIdent например)
   // Календарь праздников
-  "de.jollyday" % "jollyday" % "0.4.+",
+  "de.jollyday" % "jollyday" % "0.5.+",
   "com.google.code.kaptcha" % "kaptcha" % "2.3" classifier "jdk15",
   // Бомжуем с синхронным драйвером из-за конфликта между postgresql-async и asynchbase в версии netty. Зато anorm работает.
   "org.postgresql" % "postgresql" % "9.4-1206-jdbc42",

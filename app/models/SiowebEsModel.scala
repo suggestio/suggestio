@@ -23,10 +23,10 @@ import scala.concurrent.duration._
  * Description: Дополнительная утиль для ES-моделей.
  */
 class SiowebEsModel @Inject() (
-  mMedia              : MMedia_,
-  mCalendar           : MCalendar_,
-  mInviteRequest      : MInviteRequest_,
-  implicit val ec     : ExecutionContext
+                                mMedia              : MMedia_,
+                                mCalendar           : MCalendars,
+                                mInviteRequest      : MInviteRequest_,
+                                implicit val ec     : ExecutionContext
 ) extends PlayMacroLogsDyn {
 
   /**
