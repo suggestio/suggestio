@@ -8,6 +8,7 @@ import io.suggest.mbill2.m.dt.DateCreatedSlick
 import io.suggest.mbill2.m.gid.{DeleteById, GetById, Gid_t, GidSlick}
 import org.joda.time.DateTime
 import slick.lifted.ProvenShape
+import play.api.Configuration
 
 import scala.util.Random
 
@@ -41,7 +42,8 @@ object MContract extends ITableName {
 /** slick-модель таблицы контрактов. */
 @Singleton
 class MContracts @Inject()(
-  override protected val driver     : ExPgSlickDriverT
+  override protected val driver     : ExPgSlickDriverT,
+  configuration                     : Configuration
 )
   extends GidSlick
   with DateCreatedSlick
@@ -55,6 +57,9 @@ class MContracts @Inject()(
 
   override type Table_t = MContractsTable
   override type El_t = MContract
+
+  /** Дефолтовый суффикс контракта, может быть использован при создании инстанса MContract. */
+  lazy val SUFFIX_DFLT = configuration.getString("bill.contract.suffix.dflt") getOrElse "CEO"
 
   /** slick-описание таблицы контрактов. */
   class MContractsTable(tag: Tag)
@@ -82,9 +87,15 @@ class MContracts @Inject()(
     el.copy(id = Some(id))
   }
 
+
+  def updateOne(el: El_t) = {
+    query
+      .filter { _.id === el.id.get }
+      .map { v => (v.dateCreated, v.hiddenInfo, v.suffix) }
+      .update((el.dateCreated, el.hiddenInfo, el.suffix))
+  }
+
 }
-
-
 
 
 
@@ -101,3 +112,9 @@ case class MContract(
   hiddenInfo    : Option[String]  = None,
   suffix        : Option[String]  = None
 )
+  extends LegalContractIdT
+{
+  override protected def contractId: Gid_t = {
+    id.get
+  }
+}
