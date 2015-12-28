@@ -5,24 +5,29 @@
 @import ctx.messages
 @import lk.lkProp
 @import lk.forms._
+@import io.suggest.dt.interval.DatesIntervalConstants._
 
-@__inputDatePick(suffix: String) = {
+@__inputDatePick(suffix: String, id: String) = {
   @_inputJsDatePickTpl(
     field = pf("date." + suffix),
     "data-widget-id"  -> "advManagementDateWidget",
-    "data-start"      -> "true"
+    "data-start"      -> "true",
+    "id"              -> id
   )
 }
 
 
-<div class="date-widget">
+<div id="@CONT_ID" class="date-widget">
 
-  <div class="date-widget_options">
+  <div id="@OPTIONS_CONT_ID" class="date-widget_options">
 
     @lkProp( messages("Advertising.period") ) {
       <div class="input __size-S" >
         @defining( pf("period") ) { currPeriod =>
-          <select data-interval="true" data-widget-id="advManagementDateWidget" name="@currPeriod.name">
+          <select id="@PERIOD_SELECT_ID"
+                  data-interval="true"
+		              data-widget-id="advManagementDateWidget"
+                  name="@currPeriod.name">
             @advPeriodsAvail.map { v =>
               <option value="@v"
                       @if(currPeriod.value.exists(_ equalsIgnoreCase v)) {selected="selected"}>
@@ -34,22 +39,24 @@
       </div>
     }
 
-    @lkProp( messages("Date.start"), id = Some("advManagementDateStart") ) {
-      @_inputWrapTpl("S") {
-        @__inputDatePick("start")
+    <div id="@DATES_CONT_ID">
+      @lkProp( messages("Date.start"), id = Some("advManagementDateStart") ) {
+        @_inputWrapTpl("S") {
+          @__inputDatePick("start", DATE_START_INPUT_ID)
+        }
       }
-    }
 
-    @lkProp(messages("Date.end"), id = Some("advManagementDateEnd")) {
-      @_inputWrapTpl("S") {
-        @__inputDatePick("start")
+      @lkProp(messages("Date.end"), id = Some("advManagementDateEnd")) {
+        @_inputWrapTpl("S") {
+          @__inputDatePick("start", DATE_END_INPUT_ID)
+        }
       }
-    }
+    </div>
 
   </div>
 
 
-  <div class="date-widget_result">
+  <div id="@INFO_CONT_ID" class="date-widget_result">
     <div class="block __margin-S">
       @messages("Your.ad.will.adv")
     </div>

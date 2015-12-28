@@ -9,6 +9,7 @@ import models._
 import models.adv._
 import models.adv.direct._
 import models.adv.tpl.{MAdvForAdTplArgs, MAdvHistoryTplArgs, MCurrentAdvsTplArgs}
+import models.jsm.init.{MTargets, MTarget}
 import models.mproj.MCommonDi
 import play.api.data._
 import play.api.mvc.{AnyContent, Result}
@@ -161,7 +162,10 @@ class MarketAdv @Inject() (
     }
 
     // Кешируем определённый язык юзера прямо тут. Это нужно для обращения к Messages().
-    implicit val ctx = implicitly[Context]
+    implicit val ctx = {
+      implicit val jsiTgs = Seq( MTargets.AdvDirectForm )
+      implicitly[Context]
+    }
 
     // Строим набор городов и их узлов, сгруппированных по категориям.
     val citiesFut: Future[Seq[MAdvFormCity]] = for {
