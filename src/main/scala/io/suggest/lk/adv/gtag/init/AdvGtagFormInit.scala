@@ -9,11 +9,11 @@ import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 /**
-  * Suggest.io
-  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
-  * Created: 19.11.15 10:24
-  * Description: Инициализация формы размещения в геотегах.
-  */
+ * Suggest.io
+ * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+ * Created: 19.11.15 10:24
+ * Description: Инициализация формы размещения в геотегах.
+ */
 trait AdvGtagFormInitRouter extends InitRouter {
 
   override protected def routeInitTarget(itg: MInitTarget): Future[_] = {

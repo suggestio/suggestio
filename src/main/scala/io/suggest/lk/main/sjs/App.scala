@@ -2,6 +2,7 @@ package io.suggest.lk.main.sjs
 
 import io.suggest.lk.ad.form.init.AdFormInitRouter
 import io.suggest.lk.adn.edit.init.NodeEditInitRouter
+import io.suggest.lk.adv.direct.init.AdvDirectFormInitRouter
 import io.suggest.lk.adv.gtag.init.AdvGtagFormInitRouter
 import io.suggest.lk.bill.txn.TxnsListInit
 import io.suggest.lk.flash.FlashInitRouter
@@ -55,3 +56,4 @@ class LkInitRouter
   with PopupsInitRouter
   with NodeEditInitRouter
   with AdvGtagFormInitRouter
+  with AdvDirectFormInitRouter
