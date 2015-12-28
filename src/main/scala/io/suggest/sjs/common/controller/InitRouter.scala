@@ -53,6 +53,7 @@ import InitRouter._
 trait InitRouter extends ISjsLogger with SafeSyncVoid {
 
   /** Модель таргетов используется только в роутере, поэтому она тут и живет. */
+  // TODO упразнить эту модель, сделать просто карту String -> F
   object MInitTargets extends MJsInitTargetsLigthT
 
   /** Тип одного экземпляра модели целей инициализации. Вынесен сюда для удобства построения API. */
