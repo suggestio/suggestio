@@ -42,6 +42,8 @@ object JsInitConstants {
   def ID_BILL_TXNS_LIST           = "l"
   /** id таргета инициализации страницы формой размещения в геотегах. */
   def ADV_GTAG_FORM               = "m"
+  /** id таргета инициализации формы прямого размещения карточки на узлах сети. */
+  def ADV_DIRECT_FORM             = "n"
 
 }
 
@@ -100,17 +102,19 @@ trait MInitTargetsBaseT extends ILightEnumeration {
   /** Цель для инициализации страницы списка транзакций биллинга. */
   val BillTxnsList: T = instance(ID_BILL_TXNS_LIST)
 
-  /** Цель для инициалазации страницы размещения в геотегах. */
+  /** Цель для инициализации страницы размещения в геотегах. */
   val AdvGtagForm: T = instance(ADV_GTAG_FORM)
 
-  // TODO Надо не забывать добавлять новые элементы в MInitTargetLightT.maybeWithName().
-  // TODO Когда элементов станет много, лучше будет заюзать scala.Enumeration.
+  /** Цель инициализации формы прямого размещения карточки на узлах. */
+  val AdvDirectForm: T = instance(ADV_DIRECT_FORM)
+
 }
 
 
 /** Заготовка для scala.Enumeration-реализации модели. */
 trait MJsInitTargetsT extends Enumeration with MInitTargetsBaseT with EnumMaybeWithName {
   /** Экземпляр модели. */
+  // TODO Когда элементов станет много, лучше будет заюзать аккамулятор + карту вместо Enumeration. Но это будет на стороне реализации, не здесь.
   protected sealed class Val(val strId: String)
     extends super.Val(strId)
     with ValT
@@ -145,6 +149,7 @@ trait MJsInitTargetsLigthT extends MInitTargetsBaseT with LightEnumeration {
       case HiddenCaptcha.strId        => Some(HiddenCaptcha)
       case BillTxnsList.strId         => Some(BillTxnsList)
       case AdvGtagForm.strId          => Some(AdvGtagForm)
+      case AdvDirectForm.strId        => Some(AdvDirectForm)
       case _                          => None
     }
   }
