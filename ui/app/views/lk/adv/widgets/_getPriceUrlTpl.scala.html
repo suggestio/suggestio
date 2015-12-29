@@ -1,0 +1,11 @@
+@(call: Call)(implicit ctx: Context)
+
+@* Верста инпута, который содержит URL для промежуточного сабмита формы с целью получения цены и прочего. *@
+
+@import helper._
+@import ctx.request
+@import io.suggest.adv.AdvConstants._
+
+<input type="hidden"
+       value="@CSRF(call)"
+       id="@GET_PRICE_URL_INPUT_ID" />

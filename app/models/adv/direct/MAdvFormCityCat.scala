@@ -9,4 +9,8 @@ case class MAdvFormCityCat(
   name        : String,
   i           : Int,
   isSelected  : Boolean = false
-)
+) {
+
+  def id = shownType.name
+
+}

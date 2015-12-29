@@ -11,6 +11,7 @@
 @import args._
 @import AdnShownTypes._
 @import lk.adv.widgets._
+@import io.suggest.adv.direct.AdvDirectFormConstants._
 
 
 @* sink show level checkbox - базовая верстка чекбокса уровней отображения по любому из измерений. *@
@@ -45,103 +46,114 @@
   <p>@messages("Problem.occured"): @messages(ge.message, ge.args : _*)</p>
 }
 
-@form( CSRF(routes.MarketAdv.advFormSubmit(adId)), 'id->"advsForm", 'class->"adv-management_main-form") {
-@*form(routes.MarketAdv.getAdvPriceSubmit(adId)) *@   @* Сабмит для получения стоимости текущей конфигурации размещения. *@
-  <input type="hidden" value="@routes.MarketAdv.getAdvPriceSubmit(adId)" id="advsPriceUpdateUrl">
+@form(CSRF( routes.MarketAdv.advFormSubmit(adId) ),
+      'id     -> "advsForm",
+      'class  -> "adv-management_main-form") {
+
+  @* URL для рассчета стоимости размещения. *@
+  @_getPriceUrlTpl( routes.MarketAdv.getAdvPriceSubmit(adId) )
+
 
   @* Суперюзерам доступно беплатное размещение на любом узле. *@
   @if(ctx.isSuperuser) {
     @_advSuTpl()
   }
 
-  @_barTpl(MHands.Left) {
+
+  @_barTpl(MHands.Left, id = Some(NODES_BAR_ID)) {
 
     @_minorTitleTpl() {
       @messages("City.place.choose")
     }
 
-      @* Список городов. *@
-      @lk.lkBlockNewDesign( open = false ) {
-        <div class="js-city">
-          <span class="checkbox_title __major __no-input">@messages("Select.town")</span>
-        </div>
-      } {
-        @args.cities.map { city =>
-          <div class="adv-management_city-i js-select-city" data-value="@city.i">
-            @city.node.meta.basic.name
-          </div>
+    @* Список городов. *@
+    @lk.lkBlockNewDesign( open = false ) {
+      <div class="js-city">
+        <span class="checkbox_title __major __no-input">@messages("Select.town")</span>
+      </div>
+    } {
+      @_citiesHeadsTpl() {
+        @for(city <- args.cities; cityId <- city.node.id.toSeq) {
+          @_cityTabHeadTpl(
+            title   = city.node.meta.basic.name,
+            cityId  = cityId
+          )
         }
       }
+    }
 
-      @* Списки-вкладки категорий в городах. *@
-      @args.cities.map { city =>
-        <div class="select-tab_lst js-select-type_w" data-city="@city.i">
-          <div class="select-tab_i js-select-type" data-value="-1">
-            <label><input type="checkbox"/><span class="styled-checkbox"></span></label>
-            <span class="select-tab_i-title">@messages("All.places")</span>
-          </div>
-          @city.cats.map { cat =>
-            <div class="select-tab_i js-select-type" data-value="@cat.i">
-              <label><input type="checkbox"/><span class="styled-checkbox"></span></label>
-              <span class="select-tab_i-title">@cat.name</span>
-              <span class="js-active-nodes-count"></span>
-            </div>
-          }
-        </div>
-      }
+    @* Списки-вкладки категорий в городах. *@
+    @_citiesBodiesTpl() {
+      @for(city <- args.cities; cityId <- city.node.id.toSeq) {
 
-      @* Рендер списков узлов в городах. *@
-      @args.cities.map { city =>
-        @city.cats.map { cat =>
-          <div class="select-tab_lst js-select-node_w" data-city="@city.i" data-type="@cat.i">
-            <h3 class="adv-management_cat-title">@cat.name</h3>
-            @cat.nodes.map { an =>
-              @defining( an.node.id.get ) { adnId =>
-              @defining( args.adnId2formIndex.get(adnId) ) { midOpt =>
-              @defining( args.busyAdvs get adnId ) { maybeBusyAdv =>
-                @if(maybeBusyAdv.isEmpty) {
-                  @lk.lkBlockNewDesign( open = false ) {
-                    <label>
-                      <input type="checkbox" name="node[@midOpt].advertise" value="false"/>
-                      <span class="styled-checkbox"></span>
-                    </label>
-                    <input type="hidden" name="node[@midOpt].adnId" value="@adnId"/>
-                    <span class="checkbox_title __major">
-                      @an.node.meta.basic.name
-                    </span>
-                    <a class="slide-block_info-btn js-btn" href="@routes.MarketLkBilling._renderNodeMbmdsWindow(adnId)">i</a>
-                  } {
-                    <div class="advm-node_block">
-                      <div class="advm-node_left">
-                        <p class="block">@messages("Adv.levels")</p>
-                        <div class="block __margin-XS">
-                          <hr class="delimiter __light"/>
-                        </div>
-                        @* Галочки уровней отображения. *@
-                        @slCheckbox(maybeBusyAdv, midOpt, "showLevel.onStartPage", AdShowLevels.LVL_START_PAGE, messages("Main.screen"), "onStartPage")
-                        @slCheckbox(maybeBusyAdv, midOpt, "showLevel.onRcvrCat", AdShowLevels.LVL_CATS, messages("Product.categories"), "onRcvrCat")
-                        <div class="block __margin-XS"><hr class="delimiter __light"/></div>
-                        <label class="block">
-                          <input type="checkbox" disabled="disabled" checked="checked"/><span class="checkbox_title __disabled">@messages("Catalog")</span>
-                        </label>
-                      </div>
+        @_cityTabsTpl(cityId) {
+
+          @_tabTitleTpl(
+            title   = messages("All.places"),
+            cityId  = cityId
+          )
+
+          @for(cat <- city.cats) {
+            @_tabTitleTpl(
+              title       = cat.name,
+              cityId      = cityId,
+              catId       = Some(cat.id),
+              withCounter = true
+            )
+          }   @* for cat *@
+        }     @* cityTabs *@
+      }       @* for city, cityId *@
+    }         @* citiesBodiesTpl *@
+
+    @* Рендер списков узлов в городах. *@
+    @for(city <- args.cities; cityId <- city.node.id.toSeq; cat <- city.cats) {
+      @_nodesTabContTpl(cat.name, cityId, catId = cat.id) {
+        @for(an <- cat.nodes) {
+          @defining( an.node.id.get ) { adnId =>
+          @defining( args.adnId2formIndex.get(adnId) ) { midOpt =>
+          @defining( args.busyAdvs get adnId ) { maybeBusyAdv =>
+            @if(maybeBusyAdv.isEmpty) {
+              @lk.lkBlockNewDesign( open = false ) {
+                <label>
+                  <input type="checkbox" name="node[@midOpt].advertise" value="false"/>
+                  <span class="styled-checkbox"></span>
+                </label>
+                <input type="hidden" name="node[@midOpt].adnId" value="@adnId"/>
+                <span class="checkbox_title __major">
+                  @an.node.meta.basic.name
+                </span>
+                <a class="slide-block_info-btn js-btn" href="@routes.MarketLkBilling._renderNodeMbmdsWindow(adnId)">i</a>
+              } {
+                <div class="advm-node_block">
+                  <div class="advm-node_left">
+                    <p class="block">@messages("Adv.levels")</p>
+                    <div class="block __margin-XS">
+                      <hr class="delimiter __light"/>
                     </div>
-                  }
-                } else {
-                  <div class="slide-block_title">
-                    <span class="checkbox_title __major">
-                      <a href="#" class="link">@an.node.meta.basic.name</a>
-                    </span>
-                    <span class="ft-S light-gray"> (@messages("advertised"))</span>
+                    @* Галочки уровней отображения. *@
+                    @slCheckbox(maybeBusyAdv, midOpt, "showLevel.onStartPage", AdShowLevels.LVL_START_PAGE, messages("Main.screen"), "onStartPage")
+                    @slCheckbox(maybeBusyAdv, midOpt, "showLevel.onRcvrCat", AdShowLevels.LVL_CATS, messages("Product.categories"), "onRcvrCat")
+                    <div class="block __margin-XS"><hr class="delimiter __light"/></div>
+                    <label class="block">
+                      <input type="checkbox" disabled="disabled" checked="checked"/><span class="checkbox_title __disabled">@messages("Catalog")</span>
+                    </label>
                   </div>
-                }
-              } @* lkBlockNewDesign cnt *@
-              } @* mid *@
-              } @* adnId *@
-            } @* node in cat *@
-          </div>
-        } @* cat in city *@
-      } @* city *@
+                </div>
+              }
+            } else {
+              <div class="slide-block_title">
+                <span class="checkbox_title __major">
+                  <a href="#" class="link">@an.node.meta.basic.name</a>
+                </span>
+                <span class="ft-S light-gray"> (@messages("advertised"))</span>
+              </div>
+            }
+          } @* lkBlockNewDesign cnt *@
+          } @* mid *@
+          } @* adnId *@
+        }   @* node in cat *@
+      }     @* _nodesTabTpl *@
+    }       @* city *@
 
   } @* adv-management_left-bar *@
 

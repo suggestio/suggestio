@@ -5,14 +5,11 @@
   <div class="slide-block_title js-slide-title @if(open){ __js-open }">
     @title
 
-    @if(open) {
-      <a class="slide-block_btn __js-open js-slide-btn "></a>
-    } else {
-      <a class="slide-block_btn js-slide-btn " href="@href"></a>
-    }
+    <a class="slide-block_btn @if(open){__js-open} js-slide-btn "
+       @if(href){href="@href"}></a>
   </div>
 
-  <div class="slide-block_cnt js-slide-cnt"  @if(!open){ style="display: none;" }>
+  <div class="slide-block_cnt js-slide-cnt @if(!open){hidden}">
     @cnt
   </div>
 
