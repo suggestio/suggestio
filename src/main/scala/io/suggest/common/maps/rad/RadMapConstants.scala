@@ -1,5 +1,7 @@
 package io.suggest.common.maps.rad
 
+import io.suggest.common.html.HtmlConstants.ATTR_PREFIX
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -32,7 +34,6 @@ object RadMapConstants {
   def IMG_ID_RADIUS_MARKER = _ID_PREFIX + "ir"
 
 
-  def ATTR_PREFIX = "data-"
   def ATTR_IMG_WIDTH        = ATTR_PREFIX + "w"
   def ATTR_IMG_HEIGHT       = ATTR_PREFIX + "h"
   def ATTR_IMG_ANCHOR_X     = ATTR_PREFIX + "x"
