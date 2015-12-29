@@ -1,5 +1,7 @@
 package io.suggest.lk.adv.direct.m
 
+import io.suggest.lk.dt.interval.m.PeriodEith_t
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -7,5 +9,5 @@ package io.suggest.lk.adv.direct.m
  * Description: Модель данных состояния FSM формы прямого размещения.
  */
 case class MStateData(
-
+  period: PeriodEith_t
 )

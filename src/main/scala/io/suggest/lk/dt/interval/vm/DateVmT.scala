@@ -20,4 +20,6 @@ trait DateVmT extends InitLayoutFsmChange {
 
   override type T = HTMLInputElement
 
+  def valueOpt = Option(_underlying.value)
+
 }

@@ -1,7 +1,9 @@
 package io.suggest.lk.dt.interval.m
 
+import io.suggest.lk.dt.interval.vm.PeriodVm
 import io.suggest.sjs.common.fsm.{IFsmEventMsgCompanion, IFsmMsg}
 import org.scalajs.dom.Event
+import org.scalajs.dom.raw.HTMLSelectElement
 
 /**
  * Suggest.io
@@ -10,6 +12,10 @@ import org.scalajs.dom.Event
  * Description: Модель сообщений об изменении периода дат.
  */
 case class PeriodChangedEvent(event: Event)
-  extends IFsmMsg
+  extends IFsmMsg {
+
+  lazy val vm = PeriodVm( event.target.asInstanceOf[HTMLSelectElement] )
+}
+
 object PeriodChangedEvent
   extends IFsmEventMsgCompanion

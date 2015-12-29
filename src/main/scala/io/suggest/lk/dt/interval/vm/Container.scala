@@ -1,6 +1,7 @@
 package io.suggest.lk.dt.interval.vm
 
 import io.suggest.dt.interval.DatesIntervalConstants
+import io.suggest.lk.dt.interval.m.PeriodEith_t
 import io.suggest.sjs.common.fsm.{SjsFsm, IInitLayoutFsm}
 import io.suggest.sjs.common.vm.IVm
 import io.suggest.sjs.common.vm.find.FindDiv
@@ -32,6 +33,28 @@ trait ContainerT extends IVm with IInitLayoutFsm {
     val f = IInitLayoutFsm.f(fsm)
     datesCont.foreach(f)
     period.foreach(f)
+  }
+
+  /**
+   * Прочитать текущее значение периода.
+   * @return None чтение невозможно
+   *         Some(Left) период из дат.
+   *         Some(Right) период-презет.
+   */
+  def getCurrPeriod: Option[PeriodEith_t] = {
+    // Читаем селект.
+    period.flatMap { periodSel =>
+      periodSel.isoPeriodOpt.fold [Option[PeriodEith_t]] {
+        for {
+          dc <- datesCont
+          dp <- dc.datesPeriodOpt
+        } yield {
+          Left(dp)
+        }
+      } { isoPeriod =>
+        Some(Right(isoPeriod))
+      }
+    }
   }
 
 }

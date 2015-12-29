@@ -35,6 +35,17 @@ trait DsContainerT
     end.foreach(f)
   }
 
+  def datesPeriodOpt: Option[(String, String)] = {
+    for {
+      s   <- start
+      sd  <- s.valueOpt
+      e   <- end
+      ed  <- e.valueOpt
+    } yield {
+      (sd, ed)
+    }
+  }
+
 }
 
 
