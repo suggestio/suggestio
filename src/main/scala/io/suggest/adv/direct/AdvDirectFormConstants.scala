@@ -13,6 +13,9 @@ object AdvDirectFormConstants {
   /** Префикс id ряда элементов только данной формы. */
   def PREFIX                  = "adi"
 
+  /** id всей формы прямого размещения. */
+  def FORM_ID                 = "advsForm"
+
   /** id контейнера динамического списка выборки узлов. */
   def NODES_BAR_ID            = PREFIX + "N"
 
@@ -25,6 +28,12 @@ object AdvDirectFormConstants {
   /** Префикс id таба города. */
   def CITY_TAB_BODY_PREFIX    = CITIES_HEADS_CONT_ID + "b"
 
+  /** Класс-пометка о том, что данный элемент является "кнопкой" города. */
+  def CITY_TAB_HEAD_CLASS     = "adv-management_city-i"
+
+  /** id элемента, содержащего название текущего (активного) города. */
+  def CITY_CURR_TITLE_ID      = CITIES_HEADS_CONT_ID + "T"
+
   /** id таба одного города. */
   def CITY_TAB_HEAD_ID(cityId: String) = CITIES_HEADS_CONT_ID + "." + cityId
 
@@ -33,6 +42,12 @@ object AdvDirectFormConstants {
 
   def ATTR_CITY_ID            = ATTR_NODE_ID
   def ATTR_CAT_ID             = ATTR_PREFIX + "ci"
+
+  /** Класс заголовка вкладки группы (категории) узлов. */
+  def NGRP_TAB_HEAD_CLASS = "select-tab_i"
+
+  /** Контейнер всех групп нод из всех городов. */
+  def NGRPS_CONT_ID           = NODES_BAR_ID + "Ngc"
 
   /** Сборка id контейнеров заголовков табов нод в рамках города. */
   def CITY_NODES_TAB_HEAD_ID(cityId: String, catId: Option[String] = None): String = {
@@ -43,6 +58,20 @@ object AdvDirectFormConstants {
   /** Сборка id контейнера одного тела нод в рамках группы узлов города. */
   def CITY_NODES_TAB_BODY_ID(cityId: String, catId: String): String = {
     CITY_TAB_BODY_ID(cityId) + ".Ns." + catId
+  }
+
+  /** id контейнера всех групп узлов в рамках одного города. */
+  def NGRPS_CITY_CONT_ID(cityId: String): String = {
+    NGRPS_CONT_ID + "." + cityId
+  }
+
+  /** id контейнера одного узла в списке узлов. */
+  def NODE_ROW_ID(nodeId: String): String = {
+    PREFIX + "O." + nodeId
+  }
+
+  def NODE_CHECK_BOX_ID(nodeId: String): String = {
+    NODE_ROW_ID(nodeId) + ".cb"
   }
 
 }
