@@ -1,14 +1,13 @@
 package io.suggest.lk.adv.direct.vm.nbar.ngroups
 
 import io.suggest.adv.direct.AdvDirectFormConstants
-import io.suggest.sjs.common.fsm.{SjsFsm, IInitLayoutFsm}
+import io.suggest.sjs.common.fsm.{IInitLayoutFsm, SjsFsm}
 import io.suggest.sjs.common.model.dom.DomListIterator
 import io.suggest.sjs.common.vm.evtg.OnMouseClickT
 import io.suggest.sjs.common.vm.find.FindDiv
 import io.suggest.sjs.common.vm.input.CheckBoxVm
-import io.suggest.sjs.common.vm.util.IInitLayout
 import org.scalajs.dom.Event
-import org.scalajs.dom.raw.{HTMLDivElement, HTMLElement, HTMLInputElement}
+import org.scalajs.dom.raw.{HTMLElement, HTMLInputElement}
 
 /**
  * Suggest.io
@@ -40,6 +39,8 @@ trait NgCitiesT extends OnMouseClickT with IInitLayoutFsm {
 
   override def initLayout(fsm: SjsFsm): Unit = {
     onClick { event: Event =>
+      // Нужно, чтобы чекбоксы выставляли себе value при смене isChecked!
+      // TODO Тут экстренный говнокод, нужно разрулить это через vm'ки, по-красивому.
       val el = event.target.asInstanceOf[HTMLElement]
       if (el.tagName.equalsIgnoreCase("INPUT")) {
         val el2 = el.asInstanceOf[HTMLInputElement]

@@ -4,10 +4,10 @@ import io.suggest.adv.direct.AdvDirectFormConstants
 import io.suggest.lk.adv.direct.vm.nbar.cities.CityIdT
 import io.suggest.lk.adv.direct.vm.nbar.nodes.NodeCheckBox
 import io.suggest.sjs.common.model.dom.DomListIterator
-import io.suggest.sjs.common.vm.{Vm, IVm}
+import io.suggest.sjs.common.vm.IVm
 import io.suggest.sjs.common.vm.find.FindElDynIdT
 import io.suggest.sjs.common.vm.style.{SetIsShown, ShowHideDisplayT}
-import org.scalajs.dom.raw.{HTMLInputElement, HTMLDivElement}
+import org.scalajs.dom.raw.{HTMLDivElement, HTMLInputElement}
 
 /**
  * Suggest.io
@@ -28,7 +28,7 @@ object NgBody extends FindElDynIdT {
 }
 
 
-import NgBody.Dom_t
+import io.suggest.lk.adv.direct.vm.nbar.ngroups.NgBody.Dom_t
 
 
 trait NgBodyT extends IVm with CityIdT with NgIdT with ShowHideDisplayT with SetIsShown {
