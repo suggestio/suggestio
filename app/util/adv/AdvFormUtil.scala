@@ -43,7 +43,7 @@ class AdvFormUtil {
       "onRcvrCat"   -> b
     )
     {(onStartPage, onRcvrCat) =>
-      var acc = List[AdShowLevel]( AdShowLevels.LVL_PRODUCER )
+      var acc = List[AdShowLevel](AdShowLevels.LVL_PRODUCER, AdShowLevels.LVL_START_PAGE)
       if (onStartPage)
         acc ::= AdShowLevels.LVL_START_PAGE
       if (onRcvrCat)

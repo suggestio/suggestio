@@ -9,7 +9,7 @@ import models._
 import models.adv._
 import models.adv.direct._
 import models.adv.tpl.{MAdvForAdTplArgs, MAdvHistoryTplArgs, MCurrentAdvsTplArgs}
-import models.jsm.init.{MTargets, MTarget}
+import models.jsm.init.MTargets
 import models.mproj.MCommonDi
 import play.api.data._
 import play.api.mvc.{AnyContent, Result}
