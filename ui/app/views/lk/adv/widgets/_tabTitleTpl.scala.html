@@ -10,7 +10,7 @@
      @if(catId) {@ATTR_CAT_ID="@catId"} >
 
   @if(withCheckBox) {
-    <label><input type="checkbox"/><span class="styled-checkbox"></span></label>
+    @_checkBoxTpl(false)
   }
 
   <span class="select-tab_i-title">@title</span>

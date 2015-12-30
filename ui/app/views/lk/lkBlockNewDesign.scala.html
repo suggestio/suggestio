@@ -1,13 +1,15 @@
 @(href: Option[Call] = None, open: Boolean = true, cssClass: String = "")(title: Html)(cnt: Html)(implicit ctx: Context)
 
+@import lk.lkwdgts._
+
 <div class="slide-block js-slide-w @cssClass">
 
-  <div class="slide-block_title js-slide-title @if(open){ __js-open }">
+  @_slideBlkTitleTpl(open) {
     @title
 
     <a class="slide-block_btn @if(open){__js-open} js-slide-btn "
        @if(href){href="@href"}></a>
-  </div>
+  }
 
   <div class="slide-block_cnt js-slide-cnt @if(!open){hidden}">
     @cnt
