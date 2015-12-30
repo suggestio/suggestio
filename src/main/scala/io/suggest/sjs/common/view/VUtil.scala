@@ -73,16 +73,18 @@ object VUtil extends CssSzImplicits with CreateDiv {
     e
   }
 
+
   /**
-   * Определить, если ли у тега или его родителей указанный css-класс.
-   * @param el Исходный тег, от которого пляшем.
-   * @param className название искомого css-класса.
-   * @return Some с узлом, у которой замечен указанный класс. Это el либо один из родительских тегов.
-   *         None, если указанный класс не найден у тега и его родителей.
+   * Поиск первого элемента вверх по дереву, удовлетворяющего предикату.
+   * @param el VM начального элемента.
+   * @param f Предикат.
+   * @return Some, если что-то найдено.
    */
   @tailrec
-  def hasCssClass(el: VmT, className: String): Option[VmT] = {
-    if (el.containsClass(className)) {
+  def hasOrHasParent(el: VmT)(f: VmT => Boolean): Option[VmT] = {
+    if (dom.document == el._underlying) {
+      None
+    } else if ( f(el) ) {
       Some(el)
     } else {
       val parentEl = el._underlying.parentNode
@@ -90,9 +92,20 @@ object VUtil extends CssSzImplicits with CreateDiv {
         None
       } else {
         val parentSafeEl = Vm( parentEl )
-        hasCssClass(parentSafeEl, className)
+        hasOrHasParent(parentSafeEl)(f)
       }
     }
+  }
+
+  /**
+   * Определить, если ли у тега или его родителей указанный css-класс.
+   * @param el Исходный тег, от которого пляшем.
+   * @param className название искомого css-класса.
+   * @return Some с узлом, у которой замечен указанный класс. Это el либо один из родительских тегов.
+   *         None, если указанный класс не найден у тега и его родителей.
+   */
+  def hasCssClass(el: VmT, className: String): Option[VmT] = {
+    hasOrHasParent(el)(_.containsClass(className))
   }
 
 

@@ -51,3 +51,19 @@ trait ShowHideDisplayT extends StyleDisplayT with IShowHide {
   }
 
 }
+
+
+/** Выставить скрытость или отображенность на основе флага. */
+trait SetIsShown { this: IShowHide =>
+
+  /**
+   * Вызвать show или hide в зависимости от значения флага.
+   * @param isShown Флаг, описывающий отображаемость элемент.
+    *               true -- отображен,
+    *               false -- скрыт.
+   */
+  def setIsShown(isShown: Boolean): Unit = {
+    if (isShown) show() else hide()
+  }
+
+}
