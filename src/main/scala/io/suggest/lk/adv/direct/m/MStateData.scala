@@ -8,6 +8,29 @@ import io.suggest.lk.dt.interval.m.PeriodEith_t
  * Created: 28.12.15 16:27
  * Description: Модель данных состояния FSM формы прямого размещения.
  */
+
+trait IStateData {
+
+  /** Текущий период/интервал размещения. */
+  def period      : PeriodEith_t
+
+  /** id текущего города или None, если город не выбран. */
+  def currCityId  : Option[String]
+
+  /** id текущей группы узлов.
+    * @return None -- нет текущей вкладки.
+    *         Some(None) -- выбраны все места.
+    *         Some(Some(id)) -- выбрана указанная категория.
+    */
+  def currNgId    : Option[Option[String]]
+
+}
+
+
+/** Реализация модели. */
 case class MStateData(
-  period: PeriodEith_t
+  override val period         : PeriodEith_t,
+  override val currCityId     : Option[String]              = None,
+  override val currNgId       : Option[Option[String]]      = None
 )
+  extends IStateData

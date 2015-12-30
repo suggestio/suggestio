@@ -1,5 +1,7 @@
 package io.suggest.lk.adv.direct.init
 
+import io.suggest.lk.adv.direct.fsm.AdvDirectFormFsm
+import io.suggest.lk.adv.direct.vm.Form
 import io.suggest.sjs.common.controller.{IInitDummy, InitRouter}
 
 import scala.concurrent.Future
@@ -30,3 +32,15 @@ trait AdvDirectFormInitRouter extends InitRouter {
 
 class AdvDirectFormInit
   extends IInitDummy
+{
+
+  override def init(): Unit = {
+    super.init()
+    val fsm = AdvDirectFormFsm
+    fsm.start()
+    for (form <- Form.find()) {
+      form.initLayout(fsm)
+    }
+  }
+
+}

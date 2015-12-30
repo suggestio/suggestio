@@ -31,7 +31,23 @@ object AdvDirectFormFsm
     sdOpt.get
   }
 
+  private class DummyState extends FsmEmptyReceiverState
+
   /** Начальное состояние FSM. */
-  override protected var _state: State_t = ???
+  override protected var _state: State_t = new DummyState
+
+
+  /** Запуск этого FSM. */
+  def start(): Unit = {
+    become(new StandByState)
+  }
+
+
+  /*-------------- states -------------------*/
+
+  class StandByState extends StandByStateT {
+    // TODO Обновлять состояние
+    override protected def _srvUpdateFormState: FsmState = this
+  }
 
 }

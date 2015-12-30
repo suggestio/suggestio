@@ -1,19 +1,40 @@
-package io.suggest.lk.adv.direct.fsm.states
+package io.suggest.lk.dt.interval.fsm
 
-import io.suggest.lk.adv.direct.fsm.FsmStubT
-import io.suggest.lk.dt.interval.m.{PeriodEith_t, PeriodChangedEvent, IDateChangedEvt}
+import io.suggest.fsm.StateData
+import io.suggest.lk.dt.interval.m.{PeriodEith_t, IDateChangedEvt, PeriodChangedEvent}
 import io.suggest.lk.dt.interval.vm.DatesContainer
+import io.suggest.sjs.common.fsm.SjsFsm
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 29.12.15 16:05
- * Description: Трейты для сборки состояний, воспринимающих изменения периода размещения.
+ * Created: 30.12.15 9:41
+ * Description: Довольно абстрагированный от реализаций FSM-аддон
+ * для поддержки принятия сигналов от подформы периодов.
  */
-trait PeriodSignals extends FsmStubT {
+trait IntervalSignalsBase
+  extends SjsFsm
+  with StateData
+{
 
-  /** Трейт обработки событий интерфейса. */
-  protected[this] trait PeriodSignalsState extends FsmEmptyReceiverState {
+  /**
+   * Получить из state-data текущее значение периода.
+   * @param sd Исходное значение _stateData.
+   * @return Значение периода.
+   */
+  protected[this] def _sdGetPeriod(sd: SD): PeriodEith_t
+
+  /**
+   * Выставить новое значение периода в контейнер данных состояния.
+   * @param newPeriod Новое значение периода.
+   * @param sd0 Инстанс данных состояния.
+   * @return Новый инстанс данных состояния.
+   */
+  protected[this] def _sdSetPeriod(newPeriod: PeriodEith_t, sd0: SD): SD
+
+
+  /** Трейт обработки событий интерфейса виджета задания интервала размещения. */
+  protected[this] trait PeriodSignalsStateT extends FsmEmptyReceiverState {
 
     override def receiverPart: Receive = super.receiverPart orElse {
       // Юзер сменил период размещения
@@ -36,7 +57,7 @@ trait PeriodSignals extends FsmStubT {
         .fold [Option[PeriodEith_t]] {
           // Теперь кастомный период. А был до этого какой?
           for {
-            oldPeriod     <- sd0.period.right.toOption
+            oldPeriod     <- _sdGetPeriod(sd0).right.toOption
             result        <- _getDatesPeriodEithOpt
           } yield {
             result
@@ -44,7 +65,7 @@ trait PeriodSignals extends FsmStubT {
 
         } { isoPeriod =>
           // Включен какой-то период-презет.
-          val p = sd0.period
+          val p = _sdGetPeriod(sd0)
           if (p.isLeft || p.right.exists(_ != isoPeriod)) {
             Some(Right(isoPeriod))
           } else {
@@ -61,7 +82,7 @@ trait PeriodSignals extends FsmStubT {
       val sd0 = _stateData
 
       val newPeriodOpt = for {
-        oldDatesPeriod <- sd0.period.left.toOption
+        oldDatesPeriod <- _sdGetPeriod(sd0).left.toOption
         result         <- _getDatesPeriodEithOpt
       } yield {
         result
@@ -85,16 +106,15 @@ trait PeriodSignals extends FsmStubT {
     protected def _handleNewPeriodOpt(newPeriodOpt: Option[PeriodEith_t], sd0: SD = _stateData): Unit = {
       for (newPeriod <- newPeriodOpt) {
         // Необходимо обновить состояние FSM.
-        val sd1 = sd0.copy(
-          period = newPeriod
-        )
-        become(updateSrvDataState, sd1)
+        val sd1 = _sdSetPeriod(newPeriod, sd0)
+        become(_srvUpdateFormState, sd1)
       }
     }
 
     /** Состояние запроса к серверу за инфой (цена, отчет по датам размещения, etc). */
-    protected def updateSrvDataState: FsmState
+    protected def _srvUpdateFormState: State_t
 
   }
+
 
 }
