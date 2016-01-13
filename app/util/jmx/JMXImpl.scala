@@ -19,7 +19,6 @@ import io.suggest.util.JMXBase
 import models._
 import util.PlayLazyMacroLogsImpl
 import io.suggest.util.JMXHelpers._
-import util.compat._
 
 import scala.concurrent.ExecutionContext
 
@@ -33,7 +32,6 @@ import scala.concurrent.ExecutionContext
 class JMXImpl @Inject() (
   mMediaJmx                     : MMediaJmx,
   siowebEsModelJmx              : SiowebEsModelJmx,
-  migration                     : img3.MigrationJmx,
   advUtilJmx                    : AdvUtilJmx,
   mCalendarJmx                  : MCalendarJmx,
   mInviteRequestJmx             : MInviteRequestJmx,
@@ -73,9 +71,7 @@ class JMXImpl @Inject() (
     // cassandra
     new SioCassandraClientJmx,
     new MUserImgMeta2Jmx,
-    new MUserImg2Jmx,
-    // web21 compat
-    migration
+    new MUserImg2Jmx
   )
 
   private def getSrv = ManagementFactory.getPlatformMBeanServer

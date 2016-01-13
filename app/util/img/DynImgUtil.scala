@@ -2,20 +2,18 @@ package util.img
 
 import java.io.File
 
-import com.google.inject.{Singleton, Inject}
+import com.google.inject.{Inject, Singleton}
 import controllers.routes
-import io.suggest.playx.CacheApiUtil
 import models._
 import models.im._
+import models.mproj.ICommonDi
 import org.im4java.core.{ConvertCmd, IMOperation}
-import play.api.Configuration
-import play.api.cache.CacheApi
 import play.api.mvc.Call
 import util.PlayMacroLogsImpl
-import scala.collection.JavaConversions._
 
-import scala.concurrent.{ExecutionContext, Promise, Future}
+import scala.collection.JavaConversions._
 import scala.concurrent.duration._
+import scala.concurrent.{Future, Promise}
 import scala.util.{Failure, Success}
 
 /**
@@ -27,16 +25,14 @@ import scala.util.{Failure, Success}
  */
 @Singleton
 class DynImgUtil @Inject() (
-                             cacheApi          : CacheApi,
-                             cacheApiUtil      : CacheApiUtil,
-                             configuration     : Configuration,
-                             mImg3             : MImgs3,
-                             implicit val ec   : ExecutionContext
+  mImgs3                    : MImgs3,
+  mCommonDi                 : ICommonDi
 )
   extends PlayMacroLogsImpl
 {
 
   import LOGGER._
+  import mCommonDi._
 
   /** Сколько времени кешировать результат подготовки картинки?
     * Кеш используется для подавления параллельных запросов. */
@@ -79,7 +75,7 @@ class DynImgUtil @Inject() (
     routes.Img.dynImg(dargs)
   }
   def imgCall(filename: String): Call = {
-    val img = mImg3(filename)
+    val img = mImgs3(filename)
     imgCall(img)
   }
 
@@ -136,13 +132,13 @@ class DynImgUtil @Inject() (
       .append(":eIR")
       .toString()
     // TODO Тут наверное можно задейстовать cacheApiUtil.
-    cacheApi.get [Future[MLocalImg]] (ck) match {
+    cache.get [Future[MLocalImg]] (ck) match {
       // Результирующего фьючерс нет в кеше. Запускаем поиск/генерацию картинки:
       case None =>
         val localImgResult = args.toLocalImg
         // Если настроено, фьючерс результата работы сразу кешируем, не дожидаясь результатов:
         if (cacheResult)
-          cacheApi.set(ck, resultFut, expiration = ENSURE_DYN_CACHE_TTL)
+          cache.set(ck, resultFut, expiration = ENSURE_DYN_CACHE_TTL)
         // Готовим асинхронный результат работы:
         localImgResult onComplete {
           case Success(Some(img)) =>
@@ -214,7 +210,7 @@ class DynImgUtil @Inject() (
 
   /** Сгенерить превьюшку размера не более 256х256. */
   def thumb256Call(fileName: String, fillArea: Boolean): Call = {
-    val img = mImg3(fileName)
+    val img = mImgs3(fileName)
     thumb256Call(img, fillArea)
   }
   def thumb256Call(img: MImgT, fillArea: Boolean): Call = {

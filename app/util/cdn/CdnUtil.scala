@@ -20,7 +20,7 @@ import scala.collection.JavaConversions._
 class CdnUtil @Inject() (
   dynImgUtil      : DynImgUtil,
   configuration   : Configuration,
-  mImg3           : MImgs3
+  mImgs3          : MImgs3
 )
   extends PlayMacroLogsImpl
 {
@@ -117,7 +117,7 @@ class CdnUtil @Inject() (
     forCall( dynImgUtil.imgCall(dargs) )
   }
   def dynImg(filename: String)(implicit ctx: Context): Call = {
-    val img = mImg3(filename)
+    val img = mImgs3(filename)
     dynImg(img)
   }
 

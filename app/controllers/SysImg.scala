@@ -20,9 +20,9 @@ import views.html.sys1.img._
  * изображениям.
  */
 class SysImg @Inject() (
-                         mImg3                           : MImgs3,
-                         override val sysImgMakeUtil     : SysImgMakeUtil,
-                         override val mCommonDi          : MCommonDi
+  mImgs3                          : MImgs3,
+  override val sysImgMakeUtil     : SysImgMakeUtil,
+  override val mCommonDi          : MCommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
@@ -53,7 +53,7 @@ class SysImg @Inject() (
       .transform [Option[MImgT]] (
         {qs =>
           try {
-            Some( mImg3(qs) )
+            Some( mImgs3(qs) )
           } catch {
             case ex: Exception =>
               val qsMap = FormUtil.parseQsToMap(qs)

@@ -35,10 +35,10 @@ import scala.concurrent.Future
  * Description: Контроллер для работы с рекламным фунционалом.
  */
 class MarketAd @Inject() (
-                           tempImgSupport                  : TempImgSupport,
-                           mImg3                           : MImgs3,
-                           override val n2NodesUtil        : N2NodesUtil,
-                           override val mCommonDi          : MCommonDi
+  tempImgSupport                  : TempImgSupport,
+  mImgs3                          : MImgs3,
+  override val n2NodesUtil        : N2NodesUtil,
+  override val mCommonDi          : MCommonDi
 )
   extends SioController
   with PlayMacroLogsImpl
@@ -80,7 +80,7 @@ class MarketAd @Inject() (
     val vOpt = form(bgImgFullK).value
     try {
       vOpt.foreach { v =>
-        val im = mImg3(v)
+        val im = mImgs3(v)
         tempImgSupport._detectPalletteWs(im, wsId = ctx.ctxIdStr)
       }
     } catch {
@@ -181,7 +181,7 @@ class MarketAd @Inject() (
       mad.edges
         .withPredicateIter(bc.imgKeys : _*)
         .map { e =>
-          e.predicate -> mImg3(e)
+          e.predicate -> mImgs3(e)
         }
         .toMap
     }

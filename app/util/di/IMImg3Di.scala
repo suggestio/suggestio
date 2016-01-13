@@ -9,5 +9,5 @@ import models.im.MImgs3
   * Description: Интерфейс для компаньону модели картинок третьего поколения.
   */
 trait IMImg3Di {
-  def mImg3: MImgs3
+  def mImgs3: MImgs3
 }

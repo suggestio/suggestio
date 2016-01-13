@@ -40,15 +40,15 @@ import scala.concurrent.Future
  * Description: Тут управление компаниями, торговыми центрами и магазинами.
  */
 class SysMarket @Inject() (
-                            override val nodesUtil          : NodesUtil,
-                            lkAdUtil                        : LkAdUtil,
-                            advUtil                         : AdvUtil,
-                            sysMarketUtil                   : SysMarketUtil,
-                            override val mailer             : IMailerWrapper,
-                            override val n2NodesUtil        : N2NodesUtil,
-                            override val sysAdRenderUtil    : SysAdRenderUtil,
-                            mImg3                           : MImgs3,
-                            override val mCommonDi          : MCommonDi
+  override val nodesUtil          : NodesUtil,
+  lkAdUtil                        : LkAdUtil,
+  advUtil                         : AdvUtil,
+  sysMarketUtil                   : SysMarketUtil,
+  override val mailer             : IMailerWrapper,
+  override val n2NodesUtil        : N2NodesUtil,
+  override val sysAdRenderUtil    : SysAdRenderUtil,
+  mImgs3                          : MImgs3,
+  override val mCommonDi          : MCommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
@@ -686,7 +686,7 @@ class SysMarket @Inject() (
           e.predicate.toTypeValid( MNodeTypes.Media.Image )
         }
         .map { e =>
-          MImgEdge(e, mImg3(e))
+          MImgEdge(e, mImgs3(e))
         }
         .toSeq
     }

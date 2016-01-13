@@ -38,12 +38,12 @@ import scala.concurrent.Future
  * Супервайзер ресторанной сети и ТЦ имеют одну форму и здесь обозначаются как "узлы-лидеры".
  */
 class MarketLkAdnEdit @Inject() (
-                                  welcomeUtil                     : WelcomeUtil,
-                                  logoUtil                        : LogoUtil,
-                                  mImg3                           : MImgs3,
-                                  tempImgSupport                  : TempImgSupport,
-                                  galleryUtil                     : GalleryUtil,
-                                  override val mCommonDi          : MCommonDi
+  welcomeUtil                     : WelcomeUtil,
+  logoUtil                        : LogoUtil,
+  mImgs3                          : MImgs3,
+  tempImgSupport                  : TempImgSupport,
+  galleryUtil                     : GalleryUtil,
+  override val mCommonDi          : MCommonDi
 )
   extends SioController
   with PlayMacroLogsImpl
@@ -378,7 +378,7 @@ class MarketLkAdnEdit @Inject() (
       ovlRrr = Some { (imgId, ctx) =>
         _logoOvlTpl(imgId)(ctx)
       },
-      mImgCompanion = mImg3
+      mImgCompanion = mImgs3
     )
   }
 

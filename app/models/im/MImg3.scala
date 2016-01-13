@@ -4,24 +4,22 @@ import java.util.{NoSuchElementException, UUID}
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.fio.WriteRequest
-import io.suggest.model.img.{ImgSzDated, IImgMeta}
-import io.suggest.model.n2.media.storage.swfs.SwfsStorage_
-import io.suggest.model.n2.media.storage.{CassandraStorage, IMediaStorage}
-import io.suggest.model.n2.media.{MMedias, MPictureMeta, MFileMeta}
+import io.suggest.model.img.{IImgMeta, ImgSzDated}
+import io.suggest.model.n2.media.storage.IMediaStorage
+import io.suggest.model.n2.media.storage.swfs.SwfsStorages
+import io.suggest.model.n2.media.{MFileMeta, MMedias, MPictureMeta}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
 import io.suggest.util.UuidUtil
 import models._
 import models.mfs.FileUtil
+import models.mproj.ICommonDi
 import org.joda.time.DateTime
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.iteratee.Enumerator
 import util.PlayLazyMacroLogsImpl
-import util.event.SiowebNotifier.Implicts.sn
 import util.img.ImgFileNameParsersImpl
 
 import scala.concurrent.Future
-import util.SiowebEsUtil.client
 
 /**
  * Suggest.io
@@ -32,9 +30,9 @@ import util.SiowebEsUtil.client
  */
 @Singleton
 class MImgs3 @Inject()(
-  implicit val swfsStorage  : SwfsStorage_,
+  val swfsStorages          : SwfsStorages,
   val mMedias               : MMedias,
-  val mNodeCache            : MNodeCache
+  val mCommonDi             : ICommonDi
 )
   extends IMImgCompanion
   with PlayLazyMacroLogsImpl
@@ -96,21 +94,24 @@ abstract class MImg3T extends MImgT {
 
   override type MImg_t <: MImg3T
 
+  /** DI-инстанс статической части модели MMedia. */
+  val companion: MImgs3
+
+  import companion.mCommonDi._
+
   /** Пользовательское имя файла, если известно. */
   def userFileName: Option[String]
 
-  /** DI-инстанс статической части модели MMedia. */
-  def companion: MImgs3
-  def mMedia = companion.mMedias
+  def mMedias = companion.mMedias
 
   override lazy val rowKey: UUID = {
     UuidUtil.base64ToUuid(rowKeyStr)
   }
 
-  lazy val _mediaId = mMedia.mkId(rowKeyStr, qOpt)
+  lazy val _mediaId = mMedias.mkId(rowKeyStr, qOpt)
 
   // Не val потому что результат может меняться с None на Some() в результате сохранения картинки.
-  def _mediaOptFut = mMedia.getById(_mediaId)
+  def _mediaOptFut = mMedias.getById(_mediaId)
   def _mediaFut = _mediaOptFut.map(_.get)
 
   override protected lazy val _getImgMeta: Future[Option[IImgMeta]] = {
@@ -157,7 +158,7 @@ abstract class MImg3T extends MImgT {
   /** Убедится, что в хранилищах существует сохраненный экземпляр MNode.
     * Если нет, то создрать и сохранить. */
   def ensureMnode(loc: MLocalImgT): Future[MNode] = {
-    companion.mNodeCache
+    mNodeCache
       .getById(rowKeyStr)
       .map(_.get)
       .recoverWith { case ex: NoSuchElementException =>
@@ -235,7 +236,7 @@ abstract class MImg3T extends MImgT {
           ),
           picture = whOpt.map(MPictureMeta.apply),
           storage = stor,
-          companion = mMedia
+          companion = mMedias
         )
       }
     }
@@ -313,7 +314,7 @@ abstract class MImg3T extends MImgT {
 case class MImg3(
   override val rowKeyStr            : String,
   override val dynImgOps            : Seq[ImOp],
-  companion                         : MImgs3,
+  override val companion            : MImgs3,   // TODO Использовать Assisted DI, и прямую инжекцию реальных зависимостей вместо инстанса компаньона.
   override val userFileName         : Option[String] = None
 )
   extends MImg3T
@@ -332,18 +333,12 @@ case class MImg3(
 }
 
 
-/** Использовать кассандру для сохранения новых картинок. */
-trait I3Cassandra extends MImg3T {
-  override protected def _newMediaStorage: Future[CassandraStorage] = {
-    val stor = CassandraStorage(rowKey, qOpt)
-    Future successful stor
-  }
-}
-
-
 /** Использовать seaweedfs для сохранения новых картинок. */
 trait I3SeaWeedFs extends MImg3T {
+
+  import companion.mCommonDi._
+
   override protected def _newMediaStorage = {
-    companion.swfsStorage.assingNew()
+    companion.swfsStorages.assingNew()
   }
 }

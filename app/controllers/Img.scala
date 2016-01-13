@@ -40,10 +40,10 @@ import scala.util.{Failure, Success}
  */
 @Singleton
 class Img @Inject() (
-                      override val mImg3              : MImgs3,
-                      override val dynImgUtil         : DynImgUtil,
-                      override val imgCtlUtil         : ImgCtlUtil,
-                      override val mCommonDi          : MCommonDi
+  override val mImgs3             : MImgs3,
+  override val dynImgUtil         : DynImgUtil,
+  override val imgCtlUtil         : ImgCtlUtil,
+  override val mCommonDi          : MCommonDi
 )
   extends SioController
   with PlayMacroLogsImpl
@@ -102,7 +102,7 @@ class Img @Inject() (
 
   /** Отрендерить оконный интерфейс для кадрирования картинки. */
   def imgCropForm(imgId: String, width: Int, height: Int) = IsAuth.async { implicit request =>
-    val iik = mImg3(imgId).original
+    val iik = mImgs3(imgId).original
     iik.getImageWH map { imetaOpt =>
       val imeta: ISize2di = imetaOpt getOrElse {
         val stub = MImgInfoMeta(640, 480)
@@ -144,7 +144,7 @@ class Img @Inject() (
             crop2Fut map { crop2 =>
               // Сгенерить id картинки. Собираем картинку на базе исходника, накатив только crop:
               val cropOp = AbsCropOp(crop2)
-              val mimgOrig = mImg3(localImg.rowKeyStr)
+              val mimgOrig = mImgs3(localImg.rowKeyStr)
               val croppedImgFileName = {
                 val imOps = List(cropOp)
                 val mimg = mimgOrig.withDynOps(imOps)
@@ -287,7 +287,7 @@ trait TempImgSupport
     */
   def _handleTempImg(preserveUnknownFmt: Boolean = false, runEarlyColorDetector: Boolean = false,
                      wsId: Option[String] = None, ovlRrr: Option[(String, Context) => Html] = None,
-                     mImgCompanion: IMImgCompanion = mImg3)
+                     mImgCompanion: IMImgCompanion = mImgs3)
                     (implicit request: AbstractRequestWithPwOpt[MultipartFormData[TemporaryFile]]): Future[Result] = {
     // TODO Надо часть синхронной логики загнать в Future{}. Это нужно, чтобы скачанные данные из tmp удалялись автоматом.
     val resultFut: Future[Result] = request.body.file("picture") match {
