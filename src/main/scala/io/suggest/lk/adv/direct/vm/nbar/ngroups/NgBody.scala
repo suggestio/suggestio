@@ -5,7 +5,6 @@ import io.suggest.lk.adv.direct.m.NgBodyId
 import io.suggest.lk.adv.direct.vm.nbar.cities.CityIdT
 import io.suggest.lk.adv.direct.vm.nbar.nodes.NodeCheckBox
 import io.suggest.sjs.common.model.dom.DomListIterator
-import io.suggest.sjs.common.vm.IVm
 import io.suggest.sjs.common.vm.find.FindElDynIdT
 import io.suggest.sjs.common.vm.style.{SetIsShown, ShowHideDisplayT}
 import org.scalajs.dom.raw.{HTMLDivElement, HTMLInputElement}
