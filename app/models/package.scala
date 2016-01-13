@@ -62,12 +62,6 @@ package object models {
 
   type BTariffType          = BTariffTypes.BTariffType
 
-  val  Tariff               = ym.model.common.Tariff
-  type Tariff               = ym.model.common.Tariff
-
-  val  TariffTypes          = ym.model.common.TariffTypes
-  type TariffType           = TariffTypes.TariffType
-
   type SelectPolicy         = SelectPolicies.T
 
   val  BlocksConf           = util.blocks.BlocksConf
@@ -113,13 +107,6 @@ package object models {
 
   val  NodeGeoLevels        = ym.model.NodeGeoLevels
   type NodeGeoLevel         = ym.model.NodeGeoLevel
-
-  val  AdnNodeGeodata       = ym.model.common.AdnNodeGeodata
-  type AdnNodeGeodata       = ym.model.common.AdnNodeGeodata
-
-  type AdnNodesSearchArgs   = ym.model.common.AdnNodesSearchArgsImpl
-  type AdnNodesSearchArgsT  = ym.model.common.AdnNodesSearchArgsT
-
 
 
   /** Вызов на главную страницу. */

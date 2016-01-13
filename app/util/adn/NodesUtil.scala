@@ -9,7 +9,6 @@ import io.suggest.model.n2.extra.{MSlInfo, MAdnExtra, MNodeExtras}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
 import io.suggest.model.n2.node.meta.colors.{MColorData, MColors}
-import io.suggest.ym.model.common.AdnMemberShowLevels
 import models._
 import models.adv.MExtTarget
 import models.madn.{MNodeRegSuccess, NodeDfltColors}
@@ -82,14 +81,6 @@ class NodesUtil @Inject() (
       mnode,
       userNodeCreatedRedirect( mnode.id.get ),
       NODE_CREATED_SUCCESS_RDR_AFTER
-    )
-  }
-
-  def dfltShowLevels: AdnMemberShowLevels = {
-    AdnMemberShowLevels(
-      out = Map(
-        AdShowLevels.LVL_START_PAGE -> SL_START_PAGE_LIMIT_DFLT
-      )
     )
   }
 

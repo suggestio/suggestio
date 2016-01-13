@@ -3,7 +3,7 @@ package util
 import io.suggest.common.menum.{EnumMaybeWithId, EnumMaybeWithName, EnumValue2Val}
 import io.suggest.model.geo.{CircleGs, Distance}
 import io.suggest.model.n2.node.meta.colors.MColorData
-import io.suggest.ym.model.common.AdnMemberShowLevels.LvlMap_t
+import io.suggest.ym.model.common.ShowLevelLimits.LvlMap_t
 import io.suggest.ym.model.common.MImgSizeT
 import models.blk.SzMult_t
 import models.mbill.BTariffTypes

@@ -10,8 +10,8 @@ import play.api.data._, Forms._
 import play.api.i18n.Messages
 import play.api.mvc.AnyContent
 import util.FormUtil._
-import io.suggest.ym.model.common.AdnMemberShowLevels.LvlMap_t
-import io.suggest.ym.model.common.AdnMemberShowLevels
+import io.suggest.ym.model.common.ShowLevelLimits.LvlMap_t
+import io.suggest.ym.model.common.ShowLevelLimits
 import util.PlayMacroLogsDyn
 import util.acl.AbstractRequestWithPwOpt
 import util.mail.IMailerWrapperDi
@@ -114,14 +114,6 @@ class SysMarketUtil extends PlayMacroLogsDyn {
             .toMap
         }
       )
-  }
-
-  def adnSlInfoM: Mapping[AdnMemberShowLevels] = {
-    mapping(
-      "out" -> lvlMapOrEmpty
-    )
-    { AdnMemberShowLevels.apply }
-    { AdnMemberShowLevels.unapply }
   }
 
   /** Доступная узлу пути рекламной выдачи. */
