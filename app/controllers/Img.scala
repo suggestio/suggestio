@@ -24,6 +24,7 @@ import play.api.mvc._
 import play.twirl.api.Html
 import util.acl._
 import util.di.{IDynImgUtil, IMImg3Di}
+import util.img.detect.main.MainColorDetector
 import util.img.{ImgCtlUtil, _}
 import views.html.img._
 
@@ -40,6 +41,7 @@ import scala.util.{Failure, Success}
  */
 @Singleton
 class Img @Inject() (
+  override val mainColorDetector  : MainColorDetector,
   override val mImgs3             : MImgs3,
   override val dynImgUtil         : DynImgUtil,
   override val imgCtlUtil         : ImgCtlUtil,
@@ -230,6 +232,8 @@ trait TempImgSupport
 
   import mCommonDi._
 
+  def mainColorDetector: MainColorDetector
+
   /** DI-инстанс [[ImgCtlUtil]], т.е. статическая утиль для img-контроллеров. */
   val imgCtlUtil: ImgCtlUtil
 
@@ -254,7 +258,7 @@ trait TempImgSupport
   def _detectPalletteWs(im: MImgT, wsId: String): Future[Histogram] = {
     // Кеширование ресурсоемких результатов работы MCD.
     val f = { () =>
-      MainColorDetector.detectPaletteFor(im, maxColors = MAIN_COLORS_PALETTE_SIZE)
+      mainColorDetector.detectPaletteFor(im, maxColors = MAIN_COLORS_PALETTE_SIZE)
     }
     val cacheSec = CACHE_COLOR_HISTOGRAM_SEC
     val fut = if (cacheSec > 0) {
@@ -262,7 +266,7 @@ trait TempImgSupport
     } else {
       f()
     }
-    fut andThen {
+    fut.andThen {
       case Success(result) =>
         val res2 = if (MAIN_COLORS_PALETTE_SHRINK_SIZE < MAIN_COLORS_PALETTE_SIZE) {
           result.copy(

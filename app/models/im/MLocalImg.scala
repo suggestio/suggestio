@@ -4,12 +4,8 @@ import java.io.File
 import java.nio.file.{Path, Files}
 import java.util.UUID
 
-import akka.actor.ActorContext
-import io.suggest.event.SNStaticSubscriber
-import io.suggest.event.SioNotifier.Event
-import io.suggest.event.subscriber.SnClassSubscriber
 import io.suggest.model.img.{ImgSzDated, IImgMeta}
-import io.suggest.model.{Img2FullyDeletedEvent, ImgWithTimestamp}
+import io.suggest.model.ImgWithTimestamp
 import io.suggest.util.UuidUtil
 import io.suggest.ym.model.common.MImgInfoMeta
 import models.mcron.{ICronTask, MCronTask}
@@ -46,7 +42,6 @@ import scala.util.Success
 
 object MLocalImg
   extends PlayLazyMacroLogsImpl
-  with DeleteOnIm2FullyDeletedEvent
   with CronTasksProviderEmpty
   with PeriodicallyDeleteEmptyDirs
   with PeriodicallyDeleteNotExistingInPermanent
@@ -317,33 +312,6 @@ case class MLocalImg(
   override lazy val cropOpt = super.cropOpt
 }
 
-
-/** Статический аддон для добавления поддержки удаления локальных картинок по событию удаления картинки
-  * из permanent-хранилища. */
-trait DeleteOnIm2FullyDeletedEvent extends SNStaticSubscriber with SnClassSubscriber with PlayMacroLogsI {
-
-  val DIR: File
-  def deleteAllFor(rowKey: UUID): Future[_]
-
-  override def snMap = {
-    List(Img2FullyDeletedEvent.getClassifier() -> Seq(this))
-  }
-
-  override def publish(event: Event)(implicit ctx: ActorContext): Unit = {
-    event match {
-      case e @ Img2FullyDeletedEvent(rowKey) =>
-        deleteAllFor(rowKey) onFailure {
-          case ex =>
-            LOGGER.error(classOf[DeleteOnIm2FullyDeletedEvent].getSimpleName +
-              ": Failed to delete locel img with key " + e.rowKeyStr, ex)
-        }
-
-      case other =>
-        LOGGER.warn("Unexpected event received: " + other)
-    }
-  }
-
-}
 
 
 /** Периодически стирать пустые директории через Cron. Это статический аддон к object MLocalImg.

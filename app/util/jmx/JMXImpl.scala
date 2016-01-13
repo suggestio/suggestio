@@ -5,7 +5,6 @@ import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.n2.media.MMediaJmx
 import io.suggest.model.n2.node.MNodeJmx
 import io.suggest.ym.model._
-import io.suggest.model._
 import io.suggest.ym.model.stat._
 import models.adv.MExtTargetJmx
 import models.ai.MAiMadJmx
@@ -67,11 +66,7 @@ class JMXImpl @Inject() (
     new MEventJmx,
     new MExtTargetJmx,
     mNodeJmx,
-    mMediaJmx,
-    // cassandra
-    new SioCassandraClientJmx,
-    new MUserImgMeta2Jmx,
-    new MUserImg2Jmx
+    mMediaJmx
   )
 
   private def getSrv = ManagementFactory.getPlatformMBeanServer

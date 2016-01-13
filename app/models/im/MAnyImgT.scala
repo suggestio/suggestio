@@ -11,7 +11,9 @@ import scala.concurrent.Future
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 29.09.15 18:27
- * Description: Интерфейс, объединяющий [[MImg]] и [[MAnyImgT]].
+ * Description: Интерфейс, унифицирующий различные над-модели картинок:
+ * - локальные картинки на ФС: [[MLocalImg]].
+ * - удалённые permanent-хранилища на кластере: [[MImg3]].
  */
 trait MAnyImgT extends PlayMacroLogsI with ImgFilename with DynImgOpsString {
 

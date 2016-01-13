@@ -143,11 +143,12 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     // В списке old-картинок могут быть картинки, которые отсутствуют в new-выборке. Нужно их найти и удалить:
     val newImgIdsSet = mimgs2rkSet(needImgs)
     val imgIds4del = oldImgIdsSet -- newImgIdsSet     //oldImgs.filter { img => !(newImgIdsSet contains img.rowKey) }
-    val delOldUnusedFut = Future.traverse(imgIds4del) { mimg =>
-      // TODO Удалить наверное этот код? Нужен gc, который в фоне ищет dependent-узлы без входящих связей.
-      val fut = MImg.deleteAllFor(mimg)
-      info("updateOrigImgFullDo(): delOldUnusedImgs: deleting img " + UuidUtil.uuidToBase64(mimg))
-      fut
+
+    // Отреагировать на картинки, которые больше не нужны.
+    if (imgIds4del.nonEmpty) {
+      // Теперь только логгирование, потому что нужно, чтобы N2 GC собрал их.
+      LOGGER.debug("Possibly-unused imgs: " +
+        imgIds4del.map(UuidUtil.uuidToBase64).mkString(", ") )
     }
 
     var imgsKeepFut: Future[Seq[(MImgT, Int)]] = newOldImgsMapFut.map { m =>
@@ -224,9 +225,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     }
 
     // Дожидаемся завершения удаления ненужных картинок:
-    delOldUnusedFut flatMap { _ =>
-      resultFut
-    }
+    resultFut
   }
 
   /** Из коллекции MImg-указателей сделать множество uuid картинок.

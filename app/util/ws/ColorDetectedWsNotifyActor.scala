@@ -4,9 +4,8 @@ import akka.actor.{ActorRef, Actor}
 import models.im.Histogram
 import play.api.libs.json.{JsValue, JsArray, JsString, JsObject}
 import util.PlayMacroLogsI
-import util.img.MainColorDetector
-import util.img.MainColorDetector.ImgBgColorUpdateAction
 import io.suggest.ad.form.AdFormConstants.{WS_MSG_DATA_FN, WS_MSG_TYPE_FN, TYPE_COLOR_PALETTE}
+import util.img.detect.main.{ImgBgColorUpdateAction, Update}
 
 /**
  * Suggest.io
@@ -28,7 +27,7 @@ trait ColorDetectedWsNotifyActor extends Actor with PlayMacroLogsI {
       out ! _toWsMsgJson(TYPE_COLOR_PALETTE, data)
 
     // Пришло сообщение, что успешно выявлен цвет картинки
-    case MainColorDetector.Update(newColorHex) =>
+    case Update(newColorHex) =>
       //LOGGER.trace(s"Sending detected $newColorHex color to client via ws...")
       val data = JsString(newColorHex)
       out ! _toWsMsgJson("imgColor", data)

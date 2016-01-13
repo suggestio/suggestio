@@ -133,10 +133,6 @@ package object models {
   type AdnNodesSearchArgsT  = ym.model.common.AdnNodesSearchArgsT
 
 
-  // cassandra img models
-  type MUserImgMeta2        = io.suggest.model.MUserImgMeta2
-  val  MUserImgMeta2        = io.suggest.model.MUserImgMeta2
-
 
   /** Вызов на главную страницу. */
   def MAIN_PAGE_CALL        = routes.MarketShowcase.geoSite()
