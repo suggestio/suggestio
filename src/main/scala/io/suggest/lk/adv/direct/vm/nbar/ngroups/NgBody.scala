@@ -1,6 +1,7 @@
 package io.suggest.lk.adv.direct.vm.nbar.ngroups
 
 import io.suggest.adv.direct.AdvDirectFormConstants
+import io.suggest.lk.adv.direct.m.NgBodyId
 import io.suggest.lk.adv.direct.vm.nbar.cities.CityIdT
 import io.suggest.lk.adv.direct.vm.nbar.nodes.NodeCheckBox
 import io.suggest.sjs.common.model.dom.DomListIterator
@@ -17,21 +18,26 @@ import org.scalajs.dom.raw.{HTMLDivElement, HTMLInputElement}
  */
 object NgBody extends FindElDynIdT {
 
-  override type DomIdArg_t  = (String, String)   // cityId, catId
+  override type DomIdArg_t  = NgBodyId
   override type Dom_t       = HTMLDivElement
   override type T           = NgBody
 
   override def getDomId(cityCat: DomIdArg_t): String = {
-    AdvDirectFormConstants.CITY_NODES_TAB_BODY_ID(cityCat._1, cityCat._2)
+    AdvDirectFormConstants.CITY_NODES_TAB_BODY_ID(cityCat.cityId, catId = cityCat.ngId)
   }
 
 }
 
 
-import io.suggest.lk.adv.direct.vm.nbar.ngroups.NgBody.Dom_t
+import NgBody.Dom_t
 
 
-trait NgBodyT extends IVm with CityIdT with NgIdT with ShowHideDisplayT with SetIsShown {
+trait NgBodyT
+  extends CityIdT
+  with NgIdT
+  with ShowHideDisplayT
+  with SetIsShown
+{
 
   override type T = Dom_t
 
@@ -41,11 +47,11 @@ trait NgBodyT extends IVm with CityIdT with NgIdT with ShowHideDisplayT with Set
   def checkBoxes = {
     DomListIterator(_underlying.getElementsByTagName("input"))
       .filter { _.asInstanceOf[HTMLInputElement].`type`.equalsIgnoreCase("checkbox") }
-      .toSeq
       .map { el =>
         val el1 = el.asInstanceOf[NodeCheckBox.Dom_t]
         NodeCheckBox(el1)
       }
+      .toSeq
   }
 
 }

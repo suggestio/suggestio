@@ -6,6 +6,7 @@ import io.suggest.lk.dt.interval.vm.Container
 import io.suggest.sjs.common.fsm.{SjsFsm, IInitLayoutFsm}
 import io.suggest.sjs.common.vm.IVm
 import io.suggest.sjs.common.vm.find.FindElT
+import io.suggest.sjs.common.vm.input.FormDataVmT
 import org.scalajs.dom.raw.HTMLFormElement
 
 /**
@@ -24,7 +25,10 @@ object Form extends FindElT {
 import Form.Dom_t
 
 
-trait FormT extends IVm with IInitLayoutFsm {
+trait FormT
+  extends FormDataVmT
+  with IInitLayoutFsm
+{
 
   override type T = Dom_t
 

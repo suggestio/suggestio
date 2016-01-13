@@ -34,7 +34,9 @@ trait NgCityBodiesT extends CityIdT with ShowHideDisplayT {
   override type T = Dom_t
 
   def ngs: Iterator[NgBody] = {
-    for (ngEl <- DomListIterator( _underlying.children )) yield {
+    for {
+      ngEl <- DomListIterator( _underlying.children )
+    } yield {
       val ngEl1 = ngEl.asInstanceOf[ NgBody.Dom_t ]
       NgBody(ngEl1)
     }

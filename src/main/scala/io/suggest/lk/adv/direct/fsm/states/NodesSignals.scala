@@ -1,7 +1,7 @@
 package io.suggest.lk.adv.direct.fsm.states
 
 import io.suggest.lk.adv.direct.fsm.FsmStubT
-import io.suggest.lk.adv.direct.m.{CityTabHeadClick, NgClick}
+import io.suggest.lk.adv.direct.m.{NgBodyId, CityTabHeadClick, NgClick}
 import io.suggest.lk.adv.direct.vm.nbar.cities.{CitiesHeads, CityBodies, CurrCityTitle}
 import io.suggest.lk.adv.direct.vm.nbar.ngroups.{NgBodiesCity, NgBody, NgCities}
 import io.suggest.sjs.common.vm.input.CheckBoxVm
@@ -122,7 +122,7 @@ trait NodesSignals extends FsmStubT {
             // TODO Выставить все галочки в NgHeads
             ngsCityCont.ngs
           } { ngId =>
-            NgBody.find((cityId, ngId)).iterator
+            NgBody.find(NgBodyId(cityId, ngId = ngId)).iterator
           }
 
           for (ng <- iter; cb <- ng.checkBoxes) {
