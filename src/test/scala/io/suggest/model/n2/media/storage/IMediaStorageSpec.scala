@@ -16,12 +16,13 @@ class IMediaStorageSpec extends PlaySpec with OneAppPerSuite with PlayJsonTestUt
 
   override type T = IMediaStorage
 
-  lazy val iMediaStorage = app.injector.instanceOf[IMediaStorage_]
-  def swfsStorage = iMediaStorage.swfsStorage
+  private lazy val iMediaStorages = app.injector.instanceOf[IMediaStorages]
+
+  private def swfsStorage = iMediaStorages.swfsStorage
 
   "JSON" must {
 
-    import iMediaStorage.FORMAT
+    import iMediaStorages.FORMAT
 
     "support CassandraStorage" in {
       jsonTest {

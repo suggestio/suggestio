@@ -2,9 +2,8 @@ package io.suggest.model.n2.media
 
 import com.google.inject.{Singleton, Inject}
 import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.model._
 import io.suggest.model.es._
-import io.suggest.model.n2.media.storage.{IMediaStorage_, IMediaStorage}
+import io.suggest.model.n2.media.storage.{IMediaStorages, IMediaStorage}
 import io.suggest.util.MacroLogsImpl
 import org.elasticsearch.client.Client
 import play.api.libs.json._
@@ -25,7 +24,7 @@ import scala.concurrent.ExecutionContext
  */
 @Singleton
 class MMedias @Inject()(
-  val iMediaStorage: IMediaStorage_
+  iMediaStorages: IMediaStorages
 )
   extends EsModelStaticT
   with EsmV2Deserializer
@@ -33,7 +32,7 @@ class MMedias @Inject()(
   with IEsDocJsonWrites
 { that =>
 
-  import iMediaStorage.FORMAT
+  import iMediaStorages.FORMAT
 
   override type T = MMedia
 
@@ -103,7 +102,7 @@ class MMedias @Inject()(
     List(
       FieldString(NODE_ID_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
       FieldObject(FILE_META_FN, enabled = true, properties = MFileMeta.generateMappingProps),
-      FieldObject(STORAGE_FN, enabled = true, properties = iMediaStorage.generateMappingProps),
+      FieldObject(STORAGE_FN, enabled = true, properties = iMediaStorages.generateMappingProps),
       FieldObject(PICTURE_META_FN, enabled = true, properties = MPictureMeta.generateMappingProps)
     )
   }

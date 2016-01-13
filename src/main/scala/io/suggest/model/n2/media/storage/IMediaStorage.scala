@@ -15,7 +15,7 @@ import scala.concurrent.{Future, ExecutionContext}
  * Created: 29.09.15 18:53
  * Description: Данные по backend-хранилищу, задействованному в
  */
-class IMediaStorage_ @Inject() (
+class IMediaStorages @Inject() (
   val swfsStorage: SwfsStorage_
 ) extends IGenEsMappingProps {
 
