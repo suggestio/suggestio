@@ -1,6 +1,6 @@
 package util.di
 
-import models.im.MImg3_
+import models.im.MImgs3
 
 /**
   * Suggest.io
@@ -9,5 +9,5 @@ import models.im.MImg3_
   * Description: Интерфейс для компаньону модели картинок третьего поколения.
   */
 trait IMImg3Di {
-  def mImg3: MImg3_
+  def mImg3: MImgs3
 }

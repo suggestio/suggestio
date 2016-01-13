@@ -8,7 +8,7 @@ import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.model.n2.node.meta.{MAddress, MBasicMeta, MBusinessInfo}
 import models._
 import models.im.logo.LogoOpt_t
-import models.im.{MImg3_, MImgT}
+import models.im.{MImgs3, MImgT}
 import models.jsm.init.MTargets
 import models.madn.EditConstants._
 import models.mlk.{FormMapResult, NodeEditArgs}
@@ -38,12 +38,12 @@ import scala.concurrent.Future
  * Супервайзер ресторанной сети и ТЦ имеют одну форму и здесь обозначаются как "узлы-лидеры".
  */
 class MarketLkAdnEdit @Inject() (
-  welcomeUtil                     : WelcomeUtil,
-  logoUtil                        : LogoUtil,
-  mImg3                           : MImg3_,
-  tempImgSupport                  : TempImgSupport,
-  galleryUtil                     : GalleryUtil,
-  override val mCommonDi          : MCommonDi
+                                  welcomeUtil                     : WelcomeUtil,
+                                  logoUtil                        : LogoUtil,
+                                  mImg3                           : MImgs3,
+                                  tempImgSupport                  : TempImgSupport,
+                                  galleryUtil                     : GalleryUtil,
+                                  override val mCommonDi          : MCommonDi
 )
   extends SioController
   with PlayMacroLogsImpl

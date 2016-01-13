@@ -26,10 +26,10 @@ import scala.concurrent.Future
  * обработки запроса и т.д.
  */
 class SysMarketInvReq @Inject() (
-  sysMarketUtil                   : SysMarketUtil,
-  override val mInviteRequest     : MInviteRequest_,
-  override val mailer             : IMailerWrapper,
-  override val mCommonDi          : MCommonDi
+                                  sysMarketUtil                   : SysMarketUtil,
+                                  override val mInviteRequest     : MInviteRequests,
+                                  override val mailer             : IMailerWrapper,
+                                  override val mCommonDi          : MCommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl

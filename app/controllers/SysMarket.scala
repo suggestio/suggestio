@@ -8,7 +8,7 @@ import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models._
 import models.adv.{MAdvI, MAdvOk, MAdvReq}
-import models.im.MImg3_
+import models.im.MImgs3
 import models.mproj.MCommonDi
 import models.msys._
 import models.usr.{EmailActivation, MPerson}
@@ -40,15 +40,15 @@ import scala.concurrent.Future
  * Description: Тут управление компаниями, торговыми центрами и магазинами.
  */
 class SysMarket @Inject() (
-  override val nodesUtil          : NodesUtil,
-  lkAdUtil                        : LkAdUtil,
-  advUtil                         : AdvUtil,
-  sysMarketUtil                   : SysMarketUtil,
-  override val mailer             : IMailerWrapper,
-  override val n2NodesUtil        : N2NodesUtil,
-  override val sysAdRenderUtil    : SysAdRenderUtil,
-  mImg3                           : MImg3_,
-  override val mCommonDi          : MCommonDi
+                            override val nodesUtil          : NodesUtil,
+                            lkAdUtil                        : LkAdUtil,
+                            advUtil                         : AdvUtil,
+                            sysMarketUtil                   : SysMarketUtil,
+                            override val mailer             : IMailerWrapper,
+                            override val n2NodesUtil        : N2NodesUtil,
+                            override val sysAdRenderUtil    : SysAdRenderUtil,
+                            mImg3                           : MImgs3,
+                            override val mCommonDi          : MCommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl

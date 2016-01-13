@@ -18,8 +18,8 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 @Singleton
 class LogoUtil @Inject() (
-  mImg3             : MImg3_,
-  implicit val ec   : ExecutionContext
+                           mImg3             : MImgs3,
+                           implicit val ec   : ExecutionContext
 ) {
 
   /** Приведение ребра графа к метаданным изображения логотипа. */

@@ -2,7 +2,7 @@ package util.cdn
 
 import com.google.inject.{Singleton, Inject}
 import controllers.routes
-import models.im.{MImg3_, MImgT}
+import models.im.{MImgs3, MImgT}
 import models.{Context, ExternalCall}
 import play.api.Configuration
 import play.api.mvc.Call
@@ -20,7 +20,7 @@ import scala.collection.JavaConversions._
 class CdnUtil @Inject() (
   dynImgUtil      : DynImgUtil,
   configuration   : Configuration,
-  mImg3           : MImg3_
+  mImg3           : MImgs3
 )
   extends PlayMacroLogsImpl
 {

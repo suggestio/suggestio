@@ -3,7 +3,7 @@ package controllers
 import java.net.{MalformedURLException, URL}
 
 import com.google.inject.Inject
-import models.im.{MImg3_, MImgT}
+import models.im.{MImgs3, MImgT}
 import models.mproj.MCommonDi
 import play.api.data.Forms._
 import play.api.data._
@@ -20,9 +20,9 @@ import views.html.sys1.img._
  * изображениям.
  */
 class SysImg @Inject() (
-  mImg3                           : MImg3_,
-  override val sysImgMakeUtil     : SysImgMakeUtil,
-  override val mCommonDi          : MCommonDi
+                         mImg3                           : MImgs3,
+                         override val sysImgMakeUtil     : SysImgMakeUtil,
+                         override val mCommonDi          : MCommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl

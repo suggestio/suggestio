@@ -22,9 +22,9 @@ import scala.concurrent.Future
  */
 @Singleton
 class GalleryUtil @Inject() (
-  dynImgUtil      : DynImgUtil,
-  mImg3           : MImg3_,
-  configuration   : Configuration
+                              dynImgUtil      : DynImgUtil,
+                              mImg3           : MImgs3,
+                              configuration   : Configuration
 ) {
 
   // Ширина/высота картинки галереи, отображаемой в ЛК на странице узла.

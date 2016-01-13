@@ -23,7 +23,7 @@ import models._
 object ImgFormUtil extends PlayMacroLogsImpl {
 
   // TODO Реализовать это через DI к play3.
-  private val mImg3 = current.injector.instanceOf( classOf[MImg3_] )
+  private val mImg3 = current.injector.instanceOf( classOf[MImgs3] )
 
 
   import play.api.data.Forms._

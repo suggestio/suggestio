@@ -22,10 +22,10 @@ import views.txt.sys1.market.invreq.emailNewIRCreatedTpl
  * Description: Контроллер раздела сайта со страницами и формами присоединения к sio-market.
  */
 class MarketJoin @Inject() (
-  mInviteRequest                : MInviteRequest_,
-  override val captchaUtil      : CaptchaUtil,
-  override val mailer           : IMailerWrapper,
-  override val mCommonDi        : MCommonDi
+                             mInviteRequest                : MInviteRequests,
+                             override val captchaUtil      : CaptchaUtil,
+                             override val mailer           : IMailerWrapper,
+                             override val mCommonDi        : MCommonDi
 )
   extends SioController
   with PlayMacroLogsImpl

@@ -53,7 +53,7 @@ object MLocalImg
 {
 
   // TODO DI
-  private val mImg3 = current.injector.instanceOf[MImg3_]
+  private val mImg3 = current.injector.instanceOf[MImgs3]
 
   /** Реализация парсеров для filename из данной модели. */
   class Parsers extends ImgFileNameParsersImpl {

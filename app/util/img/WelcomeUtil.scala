@@ -22,12 +22,12 @@ import models._
  */
 @Singleton
 class WelcomeUtil @Inject() (
-  scUtil                 : ShowcaseUtil,
-  cdnUtil                : CdnUtil,
-  mImg3                  : MImg3_,
-  implicit val ec        : ExecutionContext,
-  implicit val esClient  : Client,
-  implicit val sn        : SioNotifierStaticClientI
+                              scUtil                 : ShowcaseUtil,
+                              cdnUtil                : CdnUtil,
+                              mImg3                  : MImgs3,
+                              implicit val ec        : ExecutionContext,
+                              implicit val esClient  : Client,
+                              implicit val sn        : SioNotifierStaticClientI
 )
   extends PlayMacroLogsImpl
 {

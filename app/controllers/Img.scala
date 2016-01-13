@@ -40,10 +40,10 @@ import scala.util.{Failure, Success}
  */
 @Singleton
 class Img @Inject() (
-  override val mImg3              : MImg3_,
-  override val dynImgUtil         : DynImgUtil,
-  override val imgCtlUtil         : ImgCtlUtil,
-  override val mCommonDi          : MCommonDi
+                      override val mImg3              : MImgs3,
+                      override val dynImgUtil         : DynImgUtil,
+                      override val imgCtlUtil         : ImgCtlUtil,
+                      override val mCommonDi          : MCommonDi
 )
   extends SioController
   with PlayMacroLogsImpl

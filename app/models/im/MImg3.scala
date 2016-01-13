@@ -7,7 +7,7 @@ import io.suggest.fio.WriteRequest
 import io.suggest.model.img.{ImgSzDated, IImgMeta}
 import io.suggest.model.n2.media.storage.swfs.SwfsStorage_
 import io.suggest.model.n2.media.storage.{CassandraStorage, IMediaStorage}
-import io.suggest.model.n2.media.{MMedia_, MPictureMeta, MFileMeta}
+import io.suggest.model.n2.media.{MMedias, MPictureMeta, MFileMeta}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
 import io.suggest.util.UuidUtil
@@ -28,12 +28,12 @@ import util.SiowebEsUtil.client
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 30.09.15 17:27
  * Description: Реализация модели [[MImgT]] на базе MMedia, вместо прямого взаимодействия с кассандрой.
- * [[MImg3_]] -- DI-реализация объекта-компаньона.
+ * [[MImgs3]] -- DI-реализация объекта-компаньона.
  */
 @Singleton
-class MImg3_ @Inject() (
+class MImgs3 @Inject()(
   implicit val swfsStorage  : SwfsStorage_,
-  val mMedia                : MMedia_,
+  val mMedias               : MMedias,
   val mNodeCache            : MNodeCache
 )
   extends IMImgCompanion
@@ -100,8 +100,8 @@ abstract class MImg3T extends MImgT {
   def userFileName: Option[String]
 
   /** DI-инстанс статической части модели MMedia. */
-  def companion: MImg3_
-  def mMedia = companion.mMedia
+  def companion: MImgs3
+  def mMedia = companion.mMedias
 
   override lazy val rowKey: UUID = {
     UuidUtil.base64ToUuid(rowKeyStr)
@@ -313,7 +313,7 @@ abstract class MImg3T extends MImgT {
 case class MImg3(
   override val rowKeyStr            : String,
   override val dynImgOps            : Seq[ImOp],
-  companion                         : MImg3_,
+  companion                         : MImgs3,
   override val userFileName         : Option[String] = None
 )
   extends MImg3T

@@ -10,7 +10,7 @@ import io.suggest.model.n2.node.meta.MBasicMeta
 import models._
 import models.blk.PrepareBlkImgArgs
 import models.blk.ed.{AdFormM, AdFormResult, BlockImgMap}
-import models.im.MImg3_
+import models.im.MImgs3
 import models.jsm.init.MTargets
 import models.mproj.MCommonDi
 import org.joda.time.DateTime
@@ -35,10 +35,10 @@ import scala.concurrent.Future
  * Description: Контроллер для работы с рекламным фунционалом.
  */
 class MarketAd @Inject() (
-  tempImgSupport                  : TempImgSupport,
-  mImg3                           : MImg3_,
-  override val n2NodesUtil        : N2NodesUtil,
-  override val mCommonDi          : MCommonDi
+                           tempImgSupport                  : TempImgSupport,
+                           mImg3                           : MImgs3,
+                           override val n2NodesUtil        : N2NodesUtil,
+                           override val mCommonDi          : MCommonDi
 )
   extends SioController
   with PlayMacroLogsImpl

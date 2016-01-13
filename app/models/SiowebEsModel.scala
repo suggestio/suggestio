@@ -2,7 +2,7 @@ package models
 
 import com.google.inject.Inject
 import io.suggest.model.es.{CopyContentResult, EsModelCommonStaticT, EsModelUtil}
-import io.suggest.model.n2.media.MMedia_
+import io.suggest.model.n2.media.MMedias
 import io.suggest.util.{JMXBase, SioEsUtil}
 import models.ai.MAiMad
 import models.im.MGallery
@@ -23,9 +23,9 @@ import scala.concurrent.duration._
  * Description: Дополнительная утиль для ES-моделей.
  */
 class SiowebEsModel @Inject() (
-                                mMedia              : MMedia_,
-                                mCalendar           : MCalendars,
-                                mInviteRequest      : MInviteRequest_,
+                                mMedias             : MMedias,
+                                mCalendars          : MCalendars,
+                                mInviteRequests     : MInviteRequests,
                                 implicit val ec     : ExecutionContext
 ) extends PlayMacroLogsDyn {
 
@@ -35,11 +35,11 @@ class SiowebEsModel @Inject() (
    */
   def ES_MODELS: Seq[EsModelCommonStaticT] = {
     EsModelUtil.ES_MODELS ++ Seq[EsModelCommonStaticT](
-      EmailPwIdent, EmailActivation, MExtIdent, mInviteRequest, mCalendar,
+      EmailPwIdent, EmailActivation, MExtIdent, mInviteRequests, mCalendars,
       MRemoteError, MGallery, MAiMad,
       adv.MExtTarget,
       event.MEvent, sec.MAsymKey,
-      mMedia
+      mMedias
     )
   }
 

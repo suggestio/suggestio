@@ -33,7 +33,7 @@ import EsModelUtil.{stringParser, booleanParser, intParser}
  * Description: Запросы на инвайты.
  */
 
-class MInviteRequest_
+class MInviteRequests
   extends EsModelStaticMutAkvEmptyT
   with EsModelStaticT
   with EMInviteRequestStatic
@@ -90,20 +90,20 @@ class MInviteRequest_
 
 /** Экземпляр модели, хранящий данные по запросу подключения и состояние его обработки. */
 final case class MInviteRequest(
-  var name      : String,
-  var reqType   : InviteReqType,
-  override val companion: MInviteRequest_,
-  var company   : Either[MCompany, String],
-  var adnNode   : Option[Either[MNode, String]] = None,
-  var contract  : Option[Either[MContract, Int]] = None,
-  var mmp       : Option[Either[MTariffDaily, Int]] = None,
-  var balance   : Option[Either[MBalance, String]] = None,
-  var emailAct  : Option[Either[EmailActivation, String]] = None,
-  var joinAnswers: Option[SMJoinAnswers] = None,
-  var dateCreated: DateTime = DateTime.now(),
-  var payReqsRaw : Option[String] = None,
-  id            : Option[String] = None,
-  versionOpt    : Option[Long] = None
+                                 var name      : String,
+                                 var reqType   : InviteReqType,
+                                 override val companion: MInviteRequests,
+                                 var company   : Either[MCompany, String],
+                                 var adnNode   : Option[Either[MNode, String]] = None,
+                                 var contract  : Option[Either[MContract, Int]] = None,
+                                 var mmp       : Option[Either[MTariffDaily, Int]] = None,
+                                 var balance   : Option[Either[MBalance, String]] = None,
+                                 var emailAct  : Option[Either[EmailActivation, String]] = None,
+                                 var joinAnswers: Option[SMJoinAnswers] = None,
+                                 var dateCreated: DateTime = DateTime.now(),
+                                 var payReqsRaw : Option[String] = None,
+                                 id            : Option[String] = None,
+                                 versionOpt    : Option[Long] = None
 )
   extends EsModelPlayJsonEmpty
   with EsModelT
@@ -151,10 +151,10 @@ object InviteReqTypes extends EnumValue2Val {
 trait MInviteRequestJmxMBean extends EsModelJMXMBeanI
 /** Реализация mbean'a: */
 class MInviteRequestJmx @Inject() (
-  override val companion          : MInviteRequest_,
-  override implicit val ec        : ExecutionContext,
-  override implicit val client    : Client,
-  override implicit val sn        : SioNotifierStaticClientI
+                                    override val companion          : MInviteRequests,
+                                    override implicit val ec        : ExecutionContext,
+                                    override implicit val client    : Client,
+                                    override implicit val sn        : SioNotifierStaticClientI
 )
   extends EsModelJMXBase
   with MInviteRequestJmxMBean
@@ -415,7 +415,7 @@ sealed trait EMInviteRequestMut extends EsModelPlayJsonT {
   var payReqsRaw: Option[String]
 
 
-  override val companion: MInviteRequest_
+  override val companion: MInviteRequests
 
   import companion._
 

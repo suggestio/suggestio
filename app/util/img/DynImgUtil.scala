@@ -27,11 +27,11 @@ import scala.util.{Failure, Success}
  */
 @Singleton
 class DynImgUtil @Inject() (
-  cacheApi          : CacheApi,
-  cacheApiUtil      : CacheApiUtil,
-  configuration     : Configuration,
-  mImg3             : MImg3_,
-  implicit val ec   : ExecutionContext
+                             cacheApi          : CacheApi,
+                             cacheApiUtil      : CacheApiUtil,
+                             configuration     : Configuration,
+                             mImg3             : MImgs3,
+                             implicit val ec   : ExecutionContext
 )
   extends PlayMacroLogsImpl
 {

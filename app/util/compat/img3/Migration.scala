@@ -11,7 +11,7 @@ import io.suggest.model.n2.node.{MNodeTypes, MNode}
 import io.suggest.util.JMXBase
 import io.suggest.ym.model.{MWelcomeAd, MAd, MAdnNodeGeo, MAdnNode}
 import models.ISize2di
-import models.im.{MImg3, MImg3_, MImg}
+import models.im.{MImg3, MImgs3, MImg}
 import org.elasticsearch.client.Client
 import org.joda.time.DateTime
 import play.api.Configuration
@@ -43,11 +43,11 @@ import scala.util.{Failure, Success}
  *
  */
 class Migration @Inject() (
-  mImg3                 : MImg3_,
-  configuration         : Configuration,
-  implicit val ec       : ExecutionContext,
-  implicit val esClient : Client,
-  implicit val sn       : SioNotifierStaticClientI
+                            mImg3                 : MImgs3,
+                            configuration         : Configuration,
+                            implicit val ec       : ExecutionContext,
+                            implicit val esClient : Client,
+                            implicit val sn       : SioNotifierStaticClientI
 )
   extends PlayLazyMacroLogsImpl
 {
