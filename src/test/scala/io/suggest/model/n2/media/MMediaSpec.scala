@@ -1,11 +1,7 @@
 package io.suggest.model.n2.media
 
-import java.util.UUID
-
-import io.suggest.model.n2.media.storage.CassandraStorage
-import io.suggest.model.n2.media.storage.swfs.{SwfsStorage_, SwfsStorage}
+import io.suggest.model.n2.media.storage.swfs.SwfsStorages
 import io.suggest.swfs.client.proto.fid.Fid
-import org.scalatest.FlatSpec
 import org.scalatest.Matchers._
 import org.scalatestplus.play.{OneAppPerSuite, PlaySpec}
 
@@ -17,8 +13,8 @@ import org.scalatestplus.play.{OneAppPerSuite, PlaySpec}
  */
 class MMediaSpec extends PlaySpec with OneAppPerSuite {
 
-  lazy val mMedias = app.injector.instanceOf[MMedias]
-  lazy val swfsStorage = app.injector.instanceOf[SwfsStorage_]
+  private lazy val mMedias = app.injector.instanceOf[MMedias]
+  private lazy val swfsStorage = app.injector.instanceOf[SwfsStorages]
 
   private def t(mn: MMedia): Unit = {
     mMedias.deserializeOne2(mn)  shouldBe  mn
@@ -34,9 +30,11 @@ class MMediaSpec extends PlaySpec with OneAppPerSuite {
         sha1  = None
       ),
       id = None,
-      storage = CassandraStorage(
-        rowKey = UUID.randomUUID(),
-        qOpt   = Some("asd/asdasda94tieg-e5ge")
+      storage = swfsStorage(
+        Fid(
+          volumeId = 22,
+          fileId = "asdf4390tf34gfs?sd.sdtr4390w=124sf24f"
+        )
       ),
       companion = mMedias
     )
@@ -55,13 +53,7 @@ class MMediaSpec extends PlaySpec with OneAppPerSuite {
             height = 480
           )),
           id = Some("asdaffafr23?awf349025234=f3w4fewfgse98ug3jg"),
-          versionOpt = Some(45L),
-          storage = swfsStorage(
-            Fid(
-              volumeId = 22,
-              fileId = "asdf4390tf34gfs?sd.sdtr4390w=124sf24f"
-            )
-          )
+          versionOpt = Some(45L)
         )
       }
     }

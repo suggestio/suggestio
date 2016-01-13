@@ -1,7 +1,7 @@
 package io.suggest.model.n2.media.storage
 
 import io.suggest.model.PlayJsonTestUtil
-import io.suggest.model.n2.media.storage.swfs.{SwfsStorage_, SwfsStorage}
+import io.suggest.model.n2.media.storage.swfs.{SwfsStorages, SwfsStorage}
 import io.suggest.swfs.client.proto.fid.Fid
 import org.scalatestplus.play.{OneAppPerSuite, PlaySpec}
 
@@ -15,7 +15,7 @@ class SwfsStorageSpec extends PlaySpec with OneAppPerSuite with PlayJsonTestUtil
 
   override type T = SwfsStorage
 
-  private lazy val swfsStorage = app.injector.instanceOf[SwfsStorage_]
+  private lazy val swfsStorage = app.injector.instanceOf[SwfsStorages]
 
   "JSON" must {
 

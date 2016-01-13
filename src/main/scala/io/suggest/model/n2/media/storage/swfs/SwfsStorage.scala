@@ -23,7 +23,7 @@ import scala.concurrent.{ExecutionContext, Future}
  * @see [[https://github.com/chrislusf/seaweedfs]]
  */
 @Singleton
-class SwfsStorage_ @Inject() (
+class SwfsStorages @Inject()(
   val volCache          : SwfsVolumeCache,
   implicit val client   : ISwfsClient
 )
@@ -62,7 +62,7 @@ class SwfsStorage_ @Inject() (
 }
 
 
-case class SwfsStorage(fid: Fid, companion: SwfsStorage_)
+case class SwfsStorage(fid: Fid, companion: SwfsStorages)
   extends IMediaStorage
 {
 

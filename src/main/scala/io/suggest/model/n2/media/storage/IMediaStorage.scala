@@ -3,7 +3,7 @@ package io.suggest.model.n2.media.storage
 import com.google.inject.Inject
 import io.suggest.fio.{IReadResponse, IWriteRequest}
 import io.suggest.model.es.IGenEsMappingProps
-import io.suggest.model.n2.media.storage.swfs.SwfsStorage_
+import io.suggest.model.n2.media.storage.swfs.SwfsStorages
 import io.suggest.util.SioEsUtil.DocField
 import play.api.libs.json._
 
@@ -16,7 +16,7 @@ import scala.concurrent.{Future, ExecutionContext}
  * Description: Данные по backend-хранилищу, задействованному в
  */
 class IMediaStorages @Inject() (
-  val swfsStorage: SwfsStorage_
+  val swfsStorage: SwfsStorages
 ) extends IGenEsMappingProps {
 
   val READS: Reads[IMediaStorage] = new Reads[IMediaStorage] {
