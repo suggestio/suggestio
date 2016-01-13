@@ -1,9 +1,7 @@
 package io.suggest.ym.model.common
 
-import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.es.{EsModelPlayJsonT, EsModelStaticMutAkvT, EsModelUtil}
 import EsModelUtil.FieldsJsonAcc
-import io.suggest.ym.model.MWelcomeAd
 import org.elasticsearch.action.search.SearchResponse
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.QueryBuilders
@@ -145,6 +143,8 @@ trait EMAdnMMetadata extends EsModelPlayJsonT {
     f :: super.writeJsonFields(acc)
   }
 
+  // В ходе спиливания старой архитектуры тут производится отсоединение от модели MWelcomeAd.
+  /*
   override def doEraseResources(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
     val fut = super.doEraseResources
     // Раньше вызывался MWelcomeAd.deleteByProducerId1by1(producerId) через событие SioNotifier.
@@ -160,6 +160,7 @@ trait EMAdnMMetadata extends EsModelPlayJsonT {
         }
     }
   }
+  */
 }
 
 

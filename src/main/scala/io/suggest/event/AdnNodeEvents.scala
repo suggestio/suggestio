@@ -1,16 +1,8 @@
 package io.suggest.event
 
-import com.google.inject.Inject
-import io.suggest.event.SioNotifier.{Subscriber, Classifier}
+import io.suggest.event.SioNotifier.Classifier
 import io.suggest.model.common.OptStrId
-import io.suggest.model.es.EsModelStaticT
-import io.suggest.model.n2.node.{MNodeType, MNode}
-import io.suggest.ym.model.{MWelcomeAd, MAd}
-import io.suggest.event.subscriber.SnFunSubscriber
-import io.suggest.util.MacroLogsImpl
-import scala.util.{Failure, Try, Success}
-import scala.concurrent.ExecutionContext
-import org.elasticsearch.client.Client
+import io.suggest.model.n2.node.{MNode, MNodeType}
 
 /**
  * Suggest.io
@@ -73,48 +65,4 @@ trait INodeId {
   def nodeId: String
 }
 
-
-// TODO 2015.oct.26: Когда будет реализована чистка по MNode.common.isDependent, этот код можно будет упростить/удалить.
-
-/** Если нужно удалять рекламные карточки, созданные каким-то узлом при удалении оного, то можно
-  * можно использовать этот subscriber. */
-class DeleteAdsOnAdnNodeDeleteSubscriber @Inject() (
-  implicit val ec: ExecutionContext,
-  implicit val client: Client,
-  implicit val sn: SioNotifierStaticClientI
-)
-  extends SNStaticSubscriber with MacroLogsImpl
-{
-  import LOGGER._
-
-  /** Карта подписчиков вместе с содержимым подписчика. */
-  override def snMap: List[(Classifier, Seq[Subscriber])] = {
-    val classifier = MNodeDeletedEvent.getClassifier()
-    val sub = SnFunSubscriber {
-      case ande: MNodeDeletedEvent =>
-        val producerId = ande.nodeId
-        val logPrefix = s"event(prodId=$producerId): "
-        debug(logPrefix + "Starting deletion of all ads, related to producer...")
-        MAd.deleteByProducerId1by1(producerId)
-          .onComplete( handleFinishPf(logPrefix, MAd) )
-        MWelcomeAd.deleteByProducerId1by1(producerId)
-          .onComplete( handleFinishPf(logPrefix, MWelcomeAd) )
-
-      case other =>
-        warn("Unexpected event received: " + other)
-    }
-    List(
-      classifier -> Seq(sub)
-    )
-  }
-
-  /** Генератор complete-функции подхвата завершения удаления рекламных карточек.
-    * Функция только сообщает в логи о своих успехах. */
-  private def handleFinishPf(logPrefix: String, model: EsModelStaticT): PartialFunction[Try[_], _] = {
-    case Success(result) =>
-      debug(logPrefix + "All ads removed ok from model " + model.getClass.getSimpleName + " ;; result = " + result)
-    case Failure(ex) =>
-      error(logPrefix + "Failed to rm ads from model " + model.getClass.getSimpleName, ex)
-  }
-}
 

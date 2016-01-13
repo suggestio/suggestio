@@ -122,7 +122,7 @@ object MNodeMeta extends IGenEsMappingProps {
  * @param siteUrl Ссылка на сайт.@param dateCreated
  * @param color Цвет оформления.
  * @param fgColor Цвет элементов переднего плана. Должен контрастировать с цветом оформления.
- * @param welcomeAdId id карточки приветствия в [[io.suggest.ym.model.MWelcomeAd]].
+ * @param welcomeAdId id карточки приветствия в MWelcomeAd.
  * @param info Описание бизнес-стороны узла. Например, описание товаров и услуг.
  */
 case class MNodeMeta(

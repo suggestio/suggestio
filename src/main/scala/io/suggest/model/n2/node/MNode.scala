@@ -230,7 +230,8 @@ object MNode
                          (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
     val delFut = super.deleteById(id, ignoreResources)
     delFut onSuccess { case isDeleted =>
-      sn publish MNodeDeletedEvent(id, isDeleted)
+      val evt = MNodeDeletedEvent(id, isDeleted)
+      sn.publish(evt)
     }
     delFut
   }
