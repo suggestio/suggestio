@@ -17,11 +17,11 @@ import org.scalatestplus.play.{OneAppPerSuite, PlaySpec}
  */
 class MMediaSpec extends PlaySpec with OneAppPerSuite {
 
-  lazy val mMedia = app.injector.instanceOf[MMedia_]
+  lazy val mMedias = app.injector.instanceOf[MMedias]
   lazy val swfsStorage = app.injector.instanceOf[SwfsStorage_]
 
   private def t(mn: MMedia): Unit = {
-    mMedia.deserializeOne2(mn)  shouldBe  mn
+    mMedias.deserializeOne2(mn)  shouldBe  mn
   }
 
   private val m1 = {
@@ -38,7 +38,7 @@ class MMediaSpec extends PlaySpec with OneAppPerSuite {
         rowKey = UUID.randomUUID(),
         qOpt   = Some("asd/asdasda94tieg-e5ge")
       ),
-      companion = mMedia
+      companion = mMedias
     )
   }
 

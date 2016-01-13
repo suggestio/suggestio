@@ -24,7 +24,7 @@ import scala.concurrent.ExecutionContext
  * Поле _id должно формироваться клиентом и включать в себя значение поля nodeId.
  */
 @Singleton
-class MMedia_ @Inject() (
+class MMedias @Inject()(
   val iMediaStorage: IMediaStorage_
 )
   extends EsModelStaticT
@@ -118,7 +118,7 @@ case class MMedia(
   override val id           : Option[String],
   picture                   : Option[MPictureMeta]  = None,
   override val versionOpt   : Option[Long]          = None,
-  override val companion    : MMedia_
+  override val companion    : MMedias
 )
   extends EsModelT
   with EsModelJsonWrites
@@ -137,10 +137,10 @@ case class MMedia(
 trait MMediaJmxMBean extends EsModelJMXMBeanI
 
 final class MMediaJmx @Inject() (
-  mMedia      : MMedia_,
-  val ec      : ExecutionContext,
-  val client  : Client,
-  val sn      : SioNotifierStaticClientI
+                                  mMedia      : MMedias,
+                                  val ec      : ExecutionContext,
+                                  val client  : Client,
+                                  val sn      : SioNotifierStaticClientI
 )
   extends EsModelJMXBase
   with MMediaJmxMBean
