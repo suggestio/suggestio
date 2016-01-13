@@ -5,7 +5,6 @@ import java.nio.file.{Path, Files}
 import java.util.UUID
 
 import io.suggest.model.img.{ImgSzDated, IImgMeta}
-import io.suggest.model.ImgWithTimestamp
 import io.suggest.util.UuidUtil
 import io.suggest.ym.model.common.MImgInfoMeta
 import models.mcron.{ICronTask, MCronTask}
@@ -120,7 +119,7 @@ object MLocalImg
 
 
 /** Трейт, выносящий часть функционала экземпляра, на случай дальнейших расширений и разделений. */
-trait MLocalImgT extends ImgWithTimestamp with PlayMacroLogsI with MAnyImgT {
+trait MLocalImgT extends MAnyImgT with PlayMacroLogsI {
 
   import MLocalImg._
 
@@ -207,10 +206,6 @@ trait MLocalImgT extends ImgWithTimestamp with PlayMacroLogsI with MAnyImgT {
       deleteSync
     }(AsyncUtil.singleThreadIoContext)
   }
-
-  override def timestampMs: Long = file.lastModified
-
-  override def imgBytes: Array[Byte] = Files.readAllBytes(file.toPath)
 
   def imgBytesEnumerator: Enumerator[Array[Byte]] = {
     Enumerator.fromFile(file)

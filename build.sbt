@@ -72,9 +72,6 @@ libraryDependencies ++= {
   "org.tinyradius" % "tinyradius" % "1.0.3"
     exclude("commons-logging", "commons-logging")
   ,
-  // Явный дубляж из util, эти зависимости по факту нужны datastax-cassandra-драйверу, но он их не тянет.
-  "org.xerial.snappy" % "snappy-java" % "1.+",
-  "net.jpountz.lz4" % "lz4" % "1.+",
   // scalasti - это простой гибкий динамический шаблонизатор строк. Нужен для генерации динамических карточек.
   "org.clapper" %% "scalasti" % "2.+",
   // bouncy castle используется для шифрования. pg используется для стойкого шифрования с подписью.

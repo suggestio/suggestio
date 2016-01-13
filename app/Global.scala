@@ -1,5 +1,4 @@
 import akka.actor.Cancellable
-import io.suggest.model.SioCassandraClient
 import io.suggest.model.es.EsModelUtil
 import io.suggest.util.SioEsUtil
 import models.usr.MSuperUsers
@@ -133,8 +132,6 @@ object Global extends GlobalSettings {
    */
   override def onStop(app: Application) {
     scStatSaver(app).BACKEND.close()
-    // Сразу в фоне запускаем отключение тяжелых клиентов к кластерных хранилищам:
-    val casCloseFut = SioCassandraClient.close()
     // Была одна ошибка после проблемы в DI после onStart(). JMXImpl должен останавливаться перед elasticsearch.
     jmxImpl(app).unregisterAll()
     val esCloseFut = Future {
@@ -152,8 +149,7 @@ object Global extends GlobalSettings {
     RadiusServerImpl.stop()
 
     // Дожидаемся завершения асинхронных задач.
-    val closeFut = casCloseFut.flatMap(_ => esCloseFut)
-    Await.ready(closeFut, 20.seconds)
+    Await.ready(esCloseFut, 20.seconds)
   }
 
 
