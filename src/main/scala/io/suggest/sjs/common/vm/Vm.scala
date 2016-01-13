@@ -22,7 +22,7 @@ object Vm {
    * Генератор анонимной фунции-экстрактора underlying-элемента.
    * @tparam Tmin Минимальный возвращаемый тип underlying-элемента.
    */
-  def extractorF[Tmin <: js.Object] = {
+  def underlyingF[Tmin <: js.Object] = {
     { el: IVm { type T <: Tmin} =>
       el._underlying
     }
