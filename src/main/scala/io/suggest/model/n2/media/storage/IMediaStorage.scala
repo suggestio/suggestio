@@ -21,8 +21,7 @@ class IMediaStorages @Inject() (
 
   val READS: Reads[IMediaStorage] = new Reads[IMediaStorage] {
     override def reads(json: JsValue): JsResult[IMediaStorage] = {
-      json.validate(CassandraStorage.READS)
-        .orElse { json.validate(swfsStorage.READS) }
+      json.validate(swfsStorage.READS)
     }
   }
 

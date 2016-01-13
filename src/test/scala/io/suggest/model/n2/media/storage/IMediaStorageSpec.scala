@@ -1,7 +1,5 @@
 package io.suggest.model.n2.media.storage
 
-import java.util.UUID
-
 import io.suggest.model.PlayJsonTestUtil
 import io.suggest.swfs.client.proto.fid.Fid
 import org.scalatestplus.play.{OneAppPerSuite, PlaySpec}
@@ -23,15 +21,6 @@ class IMediaStorageSpec extends PlaySpec with OneAppPerSuite with PlayJsonTestUt
   "JSON" must {
 
     import iMediaStorages.FORMAT
-
-    "support CassandraStorage" in {
-      jsonTest {
-        CassandraStorage(
-          rowKey = UUID.randomUUID(),
-          qOpt = None
-        )
-      }
-    }
 
     "support SwfsStorage" in {
       jsonTest {
