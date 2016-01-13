@@ -3,25 +3,15 @@ package models.adv
 import java.sql.Connection
 import java.util.Currency
 
-import akka.actor.ActorContext
 import anorm._
-import com.google.inject.Inject
 import io.suggest.common.m.sql.ITableName
-import io.suggest.event.SioNotifier.Event
-import io.suggest.event.subscriber.SnClassSubscriber
-import io.suggest.event.{AdDeletedEvent, SNStaticSubscriber}
 import models._
 import org.joda.time.{DateTime, Period}
-import play.api.db.Database
 import util.anorm.AnormJodaTime._
 import util.anorm.AnormPgArray._
 import util.anorm.AnormPgInterval._
-import util.async.AsyncUtil
 import util.event.SiowebNotifier.Implicts.sn
 import util.sqlm.SqlModelSave
-import util.PlayMacroLogsDyn
-
-import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -100,41 +90,6 @@ object MAdv extends ITableName with DeleteByAdIdT {
 
 }
 
-
-/** Обработчик события удаления рекламного узла. Быстренько стираются все adv-ряды из всех adv-моделей. */
-class DeleteAllAdvsOnAdDeleted @Inject() (
-  db: Database
-)
-  extends SnClassSubscriber
-  with SNStaticSubscriber
-  with PlayMacroLogsDyn
-{
-
-  /** Карта подписок. */
-  override def snMap = List(
-    AdDeletedEvent.getClassifier() -> Seq(this)
-  )
-
-  /** Обработать событие удаления рекламной карточки. */
-  override def publish(event: Event)(implicit ctx: ActorContext): Unit = {
-    event match {
-      case ade: AdDeletedEvent =>
-        for (adId <- ade.mad.id) {
-          Future {
-            val totalDeleted = {
-              db.withConnection { implicit c =>
-                MAdv.deleteByAdId(adId)
-              }
-            }
-            LOGGER.info(s"Deleted $totalDeleted advs for adId[$adId].")
-          }(AsyncUtil.jdbcExecutionContext)
-        }
-
-      case other =>
-        LOGGER.warn("Unknown message received: " + other)
-    }
-  }
-}
 
 
 /** Интерфейс всех экземпляров MAdv* моделей. */

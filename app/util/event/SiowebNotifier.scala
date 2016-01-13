@@ -1,7 +1,6 @@
 package util.event
 
 import io.suggest.event._
-import models.adv.DeleteAllAdvsOnAdDeleted
 import models.mbill.DelContractsWhenNodeDeleted
 import util._
 import akka.actor.{Props, ActorRef, ActorRefFactory}
@@ -52,7 +51,6 @@ object SiowebNotifier
     List(
       // TODO inject
       _inj[MNodeCache],
-      _inj[DeleteAllAdvsOnAdDeleted],
       _inj[DelContractsWhenNodeDeleted],
       _inj[AdnNodeEvents]
     )
