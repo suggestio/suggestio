@@ -52,7 +52,6 @@ object SiowebNotifier
     List(
       // TODO inject
       _inj[MNodeCache],
-      _inj[DeleteAdsOnAdnNodeDeleteSubscriber],
       _inj[DeleteAllAdvsOnAdDeleted],
       _inj[DelContractsWhenNodeDeleted],
       _inj[AdnNodeEvents]

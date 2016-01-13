@@ -49,7 +49,6 @@ class JMXImpl @Inject() (
     // compat
     // elasticsearch
     new MAdStatJmx,
-    new MWelcomeAdJmx,
     new MAdJmx,
     new MAdnNodeJmx,
     new EmailActivationJmx,
