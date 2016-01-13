@@ -44,7 +44,7 @@ object AdvDirectFormConstants {
   def ATTR_CAT_ID             = ATTR_PREFIX + "ci"
 
   /** Класс заголовка вкладки группы (категории) узлов. */
-  def NGRP_TAB_HEAD_CLASS = "select-tab_i"
+  def NGRP_TAB_HEAD_CLASS     = "select-tab_i"
 
   /** Контейнер всех групп нод из всех городов. */
   def NGRPS_CONT_ID           = NODES_BAR_ID + "Ngc"
