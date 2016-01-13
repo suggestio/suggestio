@@ -2,7 +2,6 @@ package io.suggest.model.n2.node.meta
 
 import io.suggest.common.EmptyProduct
 import io.suggest.model.es.IGenEsMappingProps
-import io.suggest.ym.model.common.MNodeMeta
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -10,7 +9,7 @@ import play.api.libs.functional.syntax._
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 25.09.15 10:15
- * Description: Модель инфы о человеке (фио и т.д.), живёт внутри [[MNodeMeta]].
+ * Description: Модель инфы о человеке (фио и т.д.), живёт внутри MNodeMeta.
  */
 object MPersonMeta extends IGenEsMappingProps {
 

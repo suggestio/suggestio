@@ -3,7 +3,6 @@ package io.suggest.model.n2.node.meta
 import io.suggest.model.es.{IGenEsMappingProps, EsModelUtil}
 import EsModelUtil.Implicits.jodaDateTimeFormat
 import io.suggest.model.PrefixedFn
-import io.suggest.ym.model.common.MNodeMeta
 import org.joda.time.DateTime
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -123,7 +122,7 @@ case class MBasicMeta(
 }
 
 
-/** Утиль для basic-meta моделей: текущей и legacy [[MNodeMeta]]. */
+/** Утиль для basic-meta моделей: текущей и legacy MNodeMeta. */
 trait MBasicMetaUtil {
 
   def nameOpt: Option[String]

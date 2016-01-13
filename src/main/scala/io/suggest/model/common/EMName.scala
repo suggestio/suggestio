@@ -1,6 +1,5 @@
 package io.suggest.model.common
 
-import io.suggest.model._
 import io.suggest.model.es.{EsModelPlayJsonT, EsModelStaticMutAkvT, EsModelCommonStaticT, EsModelUtil}
 import EsModelUtil.{FieldsJsonAcc, stringParser}
 import io.suggest.primo.IName

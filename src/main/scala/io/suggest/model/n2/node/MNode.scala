@@ -15,7 +15,6 @@ import io.suggest.model.n2.node.search.{MNodeSearchDfltImpl, MNodeSearch}
 import io.suggest.model.search.EsDynSearchStatic
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.{MacroLogsImpl, SioConstants}
-import io.suggest.ym.model.common.{EMAdnMMetadataStatic, MNodeMeta}
 import org.elasticsearch.client.Client
 import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
@@ -73,29 +72,6 @@ object MNode
     )
   }
 
-  /** JSON-форматирование поля meta сейчас реализовано через MMeta,
-    * но ранее использовалась MNodeMeta. Этот груз совместимости с прошлым лежит тут. */
-  val META_COMPAT_FORMAT: Format[MMeta] = {
-
-    val META_FORMAT = (__ \ Fields.Meta.META_FN).format[MMeta]
-
-    val META_COMPAT_READS: Reads[MMeta] = {
-      META_FORMAT
-        .orElse {
-          (__ \ EMAdnMMetadataStatic.META_FN).read[MNodeMeta]
-            .map { _.toMMeta }
-        }
-        .orElse {
-          Reads[MMeta] { other =>
-            LOGGER.warn("json metadata looks empty: " + other)
-            JsSuccess( MMeta(MBasicMeta()) )
-          }
-        }
-    }
-
-    Format[MMeta](META_COMPAT_READS, META_FORMAT)
-  }
-
   /** Почти-собранный play.json.Format. */
   val DATA_FORMAT: OFormat[MNode] = (
     (__ \ Fields.Common.COMMON_FN).formatNullable(MNodeCommon.FORMAT)
@@ -103,7 +79,7 @@ object MNode
         { _ getOrElse MNodeCommon(MNodeTypes.Tag, isDependent = true) },
         { Some.apply }
       ) and
-    __.format(META_COMPAT_FORMAT) and
+    (__ \ Fields.Meta.META_FN).format[MMeta] and
     // TODO EMNodeExtras нетривиальный READS внутри FORMAT из-за compatibility, он пока вынесен в отдельный файл.
     // Нужно будет почистить и заинлайнить FORMAT, когда в ES значения тегов переместяться на уровень extas из L1 (после JMX MNode.resaveMany() на продакшене).
     __.format(EMNodeExtras.COMPAT_FORMAT) and
