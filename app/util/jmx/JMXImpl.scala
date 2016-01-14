@@ -1,7 +1,6 @@
 package util.jmx
 
 import com.google.inject.Inject
-import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.n2.media.MMediaJmx
 import io.suggest.model.n2.node.MNodeJmx
 import io.suggest.ym.model._
@@ -10,16 +9,14 @@ import models.adv.MExtTargetJmx
 import models.ai.MAiMadJmx
 import models.event.MEventJmx
 import models.merr.MRemoteErrorJmx
+import models.mproj.ICommonDi
 import models.usr.{MExtIdentJmx, EmailActivationJmx, EmailPwIdentJmx}
-import org.elasticsearch.client.Client
 import util.adv.AdvUtilJmx
 import java.lang.management.ManagementFactory
 import io.suggest.util.JMXBase
 import models._
 import util.PlayLazyMacroLogsImpl
 import io.suggest.util.JMXHelpers._
-
-import scala.concurrent.ExecutionContext
 
 /**
  * Suggest.io
@@ -35,9 +32,7 @@ class JMXImpl @Inject() (
   mCalendarJmx                  : MCalendarJmx,
   mInviteRequestJmx             : MInviteRequestJmx,
   mNodeJmx                      : MNodeJmx,
-  implicit private val ec       : ExecutionContext,
-  implicit private val esClient : Client,
-  implicit private val sn       : SioNotifierStaticClientI
+  mCommonDi                     : ICommonDi
 )
   extends PlayLazyMacroLogsImpl
 {
@@ -45,39 +40,43 @@ class JMXImpl @Inject() (
   import LOGGER._
 
   /** Список моделей, отправляемых в MBeanServer. private для защиты от возможных воздействий извне. */
-  private val JMX_MODELS = List[JMXBase](
-    // compat
-    // elasticsearch
-    new MAdStatJmx,
-    new EmailActivationJmx,
-    new EmailPwIdentJmx,
-    new MExtIdentJmx,
-    new MCompanyJmx,
-    mCalendarJmx,
-    mInviteRequestJmx,
-    siowebEsModelJmx,
-    new MRemoteErrorJmx,
-    new MAiMadJmx,
-    advUtilJmx,
-    new MEventJmx,
-    new MExtTargetJmx,
-    mNodeJmx,
-    mMediaJmx
-  )
+  private val JMX_MODELS = {
+    import mCommonDi._
+    List[JMXBase](
+      // compat
+      // elasticsearch
+      new MAdStatJmx,
+      new EmailActivationJmx,
+      new EmailPwIdentJmx,
+      new MExtIdentJmx,
+      new MCompanyJmx,
+      mCalendarJmx,
+      mInviteRequestJmx,
+      siowebEsModelJmx,
+      new MRemoteErrorJmx,
+      new MAiMadJmx,
+      advUtilJmx,
+      new MEventJmx,
+      new MExtTargetJmx,
+      mNodeJmx,
+      mMediaJmx
+    )
+  }
 
   private def getSrv = ManagementFactory.getPlatformMBeanServer
 
   /** Глобально зарегать все поддерживаемые возможные MBean'ы. */
   def registerAll() {
     val srv = getSrv
-    JMX_MODELS.foreach { jmxMB =>
+    for (jmxMB <- JMX_MODELS) {
+      val name = jmxMB.jmxName
       try {
-        srv.registerMBean(jmxMB, jmxMB.jmxName)
+        srv.registerMBean(jmxMB, name)
       } catch {
         case _: javax.management.InstanceAlreadyExistsException =>
           warn("Instance already registered: " + jmxMB)
         case ex: Exception =>
-          error("Cannot register " + jmxMB, ex)
+          error("Cannot register " + name, ex)
       }
     }
   }
@@ -85,14 +84,15 @@ class JMXImpl @Inject() (
   /** При выключении/перезапуске системы нужно провести де-регистрацию всех MBean'ов. */
   def unregisterAll() {
     val srv = getSrv
-    JMX_MODELS.foreach { jmxMB =>
+    for (jmxMB <- JMX_MODELS) {
+      val name = jmxMB.jmxName
       try {
-        srv.unregisterMBean(jmxMB.jmxName)
+        srv.unregisterMBean(name)
       } catch {
         case _: javax.management.InstanceNotFoundException =>
           warn("JMX instance not registered: " + jmxMB)
         case ex: Exception =>
-          warn("Cannot unregister " + jmxMB.jmxName, ex)
+          warn("Cannot unregister " + name, ex)
       }
     }
   }

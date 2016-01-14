@@ -2,7 +2,6 @@ package util.adn
 
 import com.google.inject.{Inject, Singleton}
 import controllers.routes
-import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.n2.edge.{MEdgeInfo, MNodeEdges}
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.extra.{MSlInfo, MAdnExtra, MNodeExtras}
@@ -14,16 +13,14 @@ import models.adv.MExtTarget
 import models.madn.{MNodeRegSuccess, NodeDfltColors}
 import models.mbill.{MContract, MBalance}
 import models.mext.MExtServices
-import org.elasticsearch.client.Client
+import models.mproj.ICommonDi
 import org.joda.time.DateTime
-import play.api.Configuration
-import play.api.db.Database
 import play.api.i18n.Messages
 import play.api.mvc.Call
 import util.PlayMacroLogsImpl
 import util.async.AsyncUtil
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 import scala.util.Random
 
@@ -37,16 +34,13 @@ import scala.util.Random
  */
 @Singleton
 class NodesUtil @Inject() (
-  configuration           : Configuration,
-  db                      : Database,
-  implicit val ec         : ExecutionContext,
-  implicit val esClient   : Client,
-  implicit val sn         : SioNotifierStaticClientI
+  mCommonDi               : ICommonDi
 )
   extends PlayMacroLogsImpl
 {
 
   import LOGGER._
+  import mCommonDi._
 
   /** Дефолтовый лимит на размещение у самого себя на главной. */
   val SL_START_PAGE_LIMIT_DFLT: Int = configuration.getInt("user.node.adn.sl.out.statpage.limit.dflt") getOrElse 50

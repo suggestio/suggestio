@@ -1,9 +1,9 @@
 package models.mtag
 
 import io.suggest.common.text.StringUtil
+import io.suggest.model.n2.extra.tag.search.{ITagFaceCriteria, MTagFaceCriteria}
 import io.suggest.model.n2.node.{MNodeTypes, MNodeType}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
-import io.suggest.model.n2.tag.vertex.search.{ITagFaceCriteria, MTagFaceCriteria}
 import play.api.mvc.QueryStringBindable
 import util.qsb.QsbKey1T
 import io.suggest.sc.TagSearchConstants.Req._

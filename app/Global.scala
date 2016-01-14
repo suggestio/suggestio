@@ -102,15 +102,15 @@ object Global extends GlobalSettings {
       case Success(result) => debug(logPrefix + "ensure() -> " + result)
       case Failure(ex)     => error(logPrefix + "ensureIndex() failed", ex)
     }
-    val futMappings = futInx flatMap { _ =>
+    val futMappings = futInx.flatMap { _ =>
       _siowebEsModel.putAllMappings(esModels)
     }
-    futMappings onComplete {
+    futMappings.onComplete {
       case Success(_)  => info(logPrefix + "Finishied successfully.")
       case Failure(ex) => error(logPrefix + "Failure", ex)
     }
     // Это код обновления на следующую версию. Его можно держать и после обновления.
-    futMappings recoverWith {
+    futMappings.recoverWith {
       case ex: MapperException if !triedIndexUpdate =>
         info("Trying to update main index to v2.1 settings...")
         SioEsUtil.updateIndex2_1To2_2(EsModelUtil.DFLT_INDEX) flatMap { _ =>

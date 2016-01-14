@@ -1,8 +1,8 @@
 package controllers.ctag
 
 import controllers.SioController
+import io.suggest.model.n2.extra.tag.search.{ITagFaceCriteria, MTagFaceCriteria}
 import io.suggest.model.n2.node.MNode
-import io.suggest.model.n2.tag.vertex.search.{MTagFaceCriteria, ITagFaceCriteria}
 import models.mtag.{MTagsAddFormBinded, MTagBinded, MTagSearch, MAddTagReplyOk}
 import play.api.libs.json.Json
 import util.PlayMacroLogsI

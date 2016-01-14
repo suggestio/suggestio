@@ -3,8 +3,9 @@ package models.mbill
 import akka.actor.ActorContext
 import com.google.inject.Inject
 import io.suggest.event.SioNotifier.Event
-import io.suggest.event.{MNodeDeletedEvent, SNStaticSubscriber}
+import io.suggest.event.SNStaticSubscriber
 import io.suggest.event.subscriber.SnClassSubscriber
+import io.suggest.model.n2.node.event.MNodeDeleted
 import play.api.db.Database
 import util.PlayLazyMacroLogsImpl
 
@@ -29,13 +30,13 @@ class DelContractsWhenNodeDeleted @Inject() (
 
   /** Подписка на события. */
   override def snMap = List(
-    MNodeDeletedEvent.getClassifier() -> Seq(this)
+    MNodeDeleted.getClassifier() -> Seq(this)
   )
 
   /** Обработать наступившие событие. */
   override def publish(event: Event)(implicit ctx: ActorContext): Unit = {
     event match {
-      case ande: MNodeDeletedEvent =>
+      case ande: MNodeDeleted =>
         Future {
           val totalDeleted = db.withConnection { implicit c =>
             MContract.deleteByAdnId(ande.nodeId)

@@ -1,8 +1,8 @@
 package controllers.sc
 
 import _root_.util.jsa.{Js, SmRcvResp}
-import io.suggest.event.MNodeSavedEvent
 import io.suggest.event.subscriber.SnFunSubscriber
+import io.suggest.model.n2.node.event.MNodeSaved
 import models.jsm.NodeDataResp
 import models.mproj.IMProjectInfo
 import play.api.Play
@@ -47,11 +47,11 @@ trait ScNodeInfo
   // Подписаться на события обновления узлов, чтобы сбрасывать кеш.
   sn.subscribe(
     subscriber = SnFunSubscriber {
-      case anse: MNodeSavedEvent =>
+      case anse: MNodeSaved =>
         val ck = nodeIconJsCacheKey(anse.nodeId)
         Cache.remove(ck)
     },
-    classifier = MNodeSavedEvent.getClassifier(isCreated = Some(false))
+    classifier = MNodeSaved.getClassifier(isCreated = Some(false))
   )
 
   /** Кеш-ключ для nodeIconJs. */

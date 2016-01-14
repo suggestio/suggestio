@@ -2,18 +2,17 @@ package util.event
 
 import akka.actor.ActorContext
 import com.google.inject.Inject
-import io.suggest.event.{MNodeSavedEvent, SNStaticSubscriber}
+import io.suggest.event.SNStaticSubscriber
 import io.suggest.event.SioNotifier.{Event, Subscriber, Classifier}
 import io.suggest.event.subscriber.SnClassSubscriber
+import io.suggest.model.n2.node.event.MNodeSaved
 import models.MAdvMode
 import models.adv.{MAdvModes, MAdvI, AdvSavedEvent}
 import models.event.{MEventType, MEventTypes, ArgsInfo, MEvent}
-import org.elasticsearch.client.Client
-import play.api.Configuration
+import models.mproj.ICommonDi
 import util.PlayMacroLogsImpl
-import util.event.SiowebNotifier.Implicts.sn
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -23,9 +22,7 @@ import scala.concurrent.{ExecutionContext, Future}
  * Для этого нужно отреагировать на событие создание узла.
  */
 class AdnNodeEvents @Inject() (
-  configuration         : Configuration,
-  implicit val esClient : Client,
-  implicit val ec       : ExecutionContext
+  mCommonDi             : ICommonDi
 )
   extends SNStaticSubscriber
   with SnClassSubscriber
@@ -33,6 +30,7 @@ class AdnNodeEvents @Inject() (
 {
 
   import LOGGER._
+  import mCommonDi._
 
   /** Автодобавление уведомления о создании нового магазина можно отключить через конфиг. */
   val EVT_YOU_CAN_ADD_NEW_SHOPS = configuration.getBoolean("node.evn.created.youCanAddNewShopsEvent")
@@ -48,7 +46,7 @@ class AdnNodeEvents @Inject() (
     val subs = Seq(this)
     val someTrue = Some(true)
     List(
-      MNodeSavedEvent.getClassifier(isCreated = someTrue)   -> subs,
+      MNodeSaved.getClassifier(isCreated = someTrue)   -> subs,
       AdvSavedEvent.getClassifier(isCreated = someTrue)     -> subs
     )
   }
@@ -84,7 +82,7 @@ class AdnNodeEvents @Inject() (
   override def publish(event: Event)(implicit ctx: ActorContext): Unit = {
     event match {
       // Произошел insert узла.
-      case anse: MNodeSavedEvent =>
+      case anse: MNodeSaved =>
         import anse.nodeId
         if (EVT_YOU_CAN_ADD_NEW_SHOPS) {
           addEvtAddNewShops(nodeId)
