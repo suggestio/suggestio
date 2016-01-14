@@ -3,7 +3,6 @@ package io.suggest.model.es
 import java.{lang => jl, util => ju}
 
 import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.model.n2.node.MNode
 import io.suggest.util.SioConstants._
 import io.suggest.util.SioEsUtil._
 import io.suggest.util._
@@ -38,7 +37,7 @@ object EsModelUtil extends MacroLogsImpl {
 
   /** Список ES-моделей. Нужен для удобства массовых maintance-операций. Расширяется по мере роста числа ES-моделей. */
   def ES_MODELS = List[EsModelCommonStaticT] (
-    MCompany, MAdStat, MNode
+    MCompany, MAdStat
   )
 
 
