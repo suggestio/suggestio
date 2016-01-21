@@ -12,8 +12,6 @@ import SioConstants._
 import scala.concurrent.{Future, Promise}
 import org.elasticsearch.action.{ActionListener, ListenableActionFuture}
 import scala.concurrent.ExecutionContext
-import scala.util.{Success, Failure}
-import io.suggest.model.MVirtualIndex
 import org.elasticsearch.node.{NodeBuilder, Node}
 import org.elasticsearch.cluster.ClusterName
 
@@ -162,62 +160,6 @@ object SioEsUtil extends MacroLogsImpl {
 
   // Кол-во попыток поиска свободного имени для будущего индекса.
   def FREE_INDEX_NAME_MAX_FIND_ATTEMPTS = 8
-
-  /**
-   * Совсем асинхронно найти свободное имя индекса (не занятое другими индексами).
-   * @return Фьючерс строки названия индекса.
-   */
-  def findFreeVirtualIndex(shardCount: Int, maxAttempts: Int = FREE_INDEX_NAME_MAX_FIND_ATTEMPTS)
-                          (implicit client: Client, ec: ExecutionContext) : Future[MVirtualIndex] = {
-    lazy val logPrefix = "findFreeIndexName(shardCount=%s, maxAttempts=%s): " format (shardCount, maxAttempts)
-    trace(logPrefix + "Starting...")
-    val p = Promise[MVirtualIndex]()
-    // Тут как бы рекурсивный неблокирующий фьючерс.
-    def freeIndexNameLookup(n: Int) {
-      if (n < maxAttempts) {
-        val vinPrefix = MVirtualIndex.generateVinPrefix()
-        debug(logPrefix + "Trying vinPrefix = %s" format vinPrefix)
-        val mvi = MVirtualIndex(vinPrefix, shardCount)
-        val firstEsShard = mvi.head
-        debug(logPrefix + "Asking for random index name %s..." format firstEsShard)
-        SioEsUtil.isIndexExist(firstEsShard) onComplete {
-          case Success(true) =>
-            trace(s"${logPrefix}Index name '$firstEsShard' is busy. Retrying.")
-            freeIndexNameLookup(n + 1)
-
-          case Success(false) =>
-            debug(logPrefix + "Free index name found: %s" format firstEsShard)
-            p success mvi
-
-          case Failure(ex) =>
-            warn(logPrefix + "Cannot call isIndexExist(%s). Retry" format firstEsShard, ex)
-            freeIndexNameLookup(n + 1)
-        }
-      } else {
-        p failure new RuntimeException(logPrefix + "Too many failure attemps")
-      }
-    }
-    freeIndexNameLookup(0)
-    p.future
-  }
-
-
-  /**
-   * Создать рандомный индекс.
-   * @param shardCount Кол-во шард, будет вдолблено в имя домена.
-   * @param maxAttempts Число попыток поиска свободного имени индекса. просто передается в getFreeIndexName.
-   * @return Фьчерс с именами созданных индексов-шард.
-   */
-  def createRandomVirtualIndex(shardCount: Int, replicasCount: Int, maxAttempts: Int = FREE_INDEX_NAME_MAX_FIND_ATTEMPTS)
-                              (implicit client: Client, ec: ExecutionContext): Future[MVirtualIndex] = {
-    lazy val logPrefix = "createRandomIndex(shardCount=%s, maxAttempts=%s): " format (shardCount, maxAttempts)
-    trace(logPrefix + "starting")
-    findFreeVirtualIndex(shardCount, maxAttempts)
-      .flatMap { mvi =>
-        info(logPrefix + "Ensuring shards for mvi=%s" format mvi)
-        mvi.ensureShards(replicasCount) map { _ => mvi }
-      }
-  }
 
 
   /**

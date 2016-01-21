@@ -16,8 +16,7 @@ resolvers ++= Seq(
   "apache-releases" at "https://ivy2-internal.cbca.ru/artifactory/apache-releases",
   "conjars-repo" at "https://ivy2-internal.cbca.ru/artifactory/conjars-repo",
   "maven-twttr-com" at "https://ivy2-internal.cbca.ru/artifactory/maven-twttr-com",
-  "sonatype-oss-snapshots" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-oss-snapshots",
-  "websudos-releases" at "https://ivy2-internal.cbca.ru/artifactory/websudos-local-releases"
+  "sonatype-oss-snapshots" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-oss-snapshots"
 )
 
 
@@ -28,7 +27,6 @@ libraryDependencies ++= {
   val tikaVsn       = "1.7"
   val cascadingVsn  = "2.6.3"
   val morphVsn      = "1.3-SNAPSHOT"
-  val phantomVersion = "1.2.7"
   Seq(
     "io.suggest" %% "common"       % "0.0.0-SNAPSHOT",
     "io.suggest" %% "logs-macro"   % "0.0.0-SNAPSHOT",
@@ -64,10 +62,6 @@ libraryDependencies ++= {
     // akka
     "com.typesafe.akka" %% "akka-actor"  % akkaVsn,
     "com.typesafe.akka" %% "akka-remote" % akkaVsn,
-    // cassandra
-    "com.websudos"  %% "phantom-dsl" % phantomVersion,
-    "org.xerial.snappy" % "snappy-java" % "1.+",
-    "net.jpountz.lz4" % "lz4" % "1.+",
     // cascading
     "cascading" % "cascading-core" % cascadingVsn,
     // Морфология
