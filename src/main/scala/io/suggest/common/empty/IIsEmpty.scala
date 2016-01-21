@@ -1,4 +1,4 @@
-package io.suggest.common
+package io.suggest.common.empty
 
 /**
  * Suggest.io
@@ -14,15 +14,15 @@ trait INonEmpty {
   def nonEmpty: Boolean
 }
 
-trait IEmpty
+trait IIsNonEmpty
   extends IIsEmpty
   with INonEmpty
 
 
-trait NonEmpty extends IEmpty {
+trait NonEmpty extends IIsNonEmpty {
   override def nonEmpty = !isEmpty
 }
 
-trait IsEmpty extends IEmpty {
+trait IsEmpty extends IIsNonEmpty {
   override def isEmpty = !nonEmpty
 }

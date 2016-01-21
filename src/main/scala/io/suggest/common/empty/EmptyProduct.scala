@@ -1,4 +1,4 @@
-package io.suggest.common
+package io.suggest.common.empty
 
 /**
  * Suggest.io
