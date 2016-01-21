@@ -2,7 +2,7 @@ package io.suggest.model.n2.bill.tariff
 
 import io.suggest.common.empty.{IEmpty, EmptyProduct}
 import io.suggest.model.es.IGenEsMappingProps
-import io.suggest.model.n2.bill.tariff.adv.get.tag.MGeoTagAdvTf
+import io.suggest.model.n2.bill.tariff.daily.MDailyTf
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -16,15 +16,15 @@ object MNodeTariffs extends IGenEsMappingProps with IEmpty {
 
   override type T = MNodeTariffs
 
-  val GEO_TAG_TF_FN = "gt"
+  val DAILY_FN  = "day"
 
   override val empty: MNodeTariffs = {
     apply()
   }
 
   implicit val FORMAT: Format[MNodeTariffs] = {
-    (__ \ GEO_TAG_TF_FN).formatNullable[MGeoTagAdvTf]
-      .inmap[MNodeTariffs](apply, _.geoTagTf)
+    (__ \ DAILY_FN).formatNullable[MDailyTf]
+      .inmap[MNodeTariffs](apply, _.daily)
   }
 
 
@@ -32,14 +32,14 @@ object MNodeTariffs extends IGenEsMappingProps with IEmpty {
 
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldObject(GEO_TAG_TF_FN, enabled = true, properties = MGeoTagAdvTf.generateMappingProps)
+      FieldObject(DAILY_FN, enabled = true, properties = MDailyTf.generateMappingProps)
     )
   }
 
 }
 
+
 case class MNodeTariffs(
-  geoTagTf    : Option[MGeoTagAdvTf]    = None
-  // TODO Тариф посуточный, тариф геотегов, тариф покупки
+  daily         : Option[MDailyTf]      = None
 )
   extends EmptyProduct

@@ -51,7 +51,7 @@ object MNodeBilling extends IGenEsMappingProps with IEmpty {
 
 
 case class MNodeBilling(
-  contractId    : Option[Long] = None,
-  tariffs       : MNodeTariffs = MNodeTariffs.empty
+  contractId    : Option[Long]      = None,
+  tariffs       : MNodeTariffs      = MNodeTariffs.empty
 )
   extends EmptyProduct
