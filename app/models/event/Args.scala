@@ -1,6 +1,6 @@
 package models.event
 
-import io.suggest.common.EmptyProduct
+import io.suggest.common.empty.EmptyProduct
 import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.event.SioNotifier.{Classifier, Event}
 import io.suggest.model.es.EsModelUtil
@@ -150,6 +150,7 @@ object ArgsInfo {
 
 /**
  * Экземпляр того, что получается при десериализации набора MEvent.argsInfo.
+ *
  * @param adnIdOpt Если событие связано с другим узлом, то тут id узла.
  * @param adIdOpt Если событие связано с рекламной карточкой, то тут id карточки.
  */
@@ -175,6 +176,7 @@ object EmptyArgsInfo extends ArgsInfo() {
 /**
  * Контейнер для представления готовых инстансов аргументов. Он передаётся в шаблоны для рендера.
  * Заполняется контроллером перед рендером всех событий.
+ *
  * @param mevent Экземпляр события [[IEvent]].
  * @param withContainer Рендерить обрамляющий контейнер? [false] Контейнер используется при первичном рендере,
  *                      чтобы его потом перезаписывать через js innerHTML() содержимое этого контейнера.
@@ -224,6 +226,7 @@ trait IErrorInfo {
 
 /**
  * Инфа по ошибке.
+ *
  * @param msg Сообщение или его код в messages.
  * @param args Параметры сообщения из messages, если есть/нужны.
  * @param info Какая-то доп.инфа по проблеме, если есть.
