@@ -32,7 +32,7 @@ object MImgT extends PlayMacroLogsImpl { model =>
   val SIGN_SUF   = ".sig"
   val IMG_ID_SUF = ".id"
 
-  private val mImg3 = current.injector.instanceOf[MImg3_]
+  private val mImg3 = current.injector.instanceOf[MImgs3]
 
   /** Использовать QSB[UUID] напрямую нельзя, т.к. он выдает не-base64-выхлопы, что вызывает конфликты. */
   def rowKeyB(implicit strB: QueryStringBindable[String]): QueryStringBindable[String] = {

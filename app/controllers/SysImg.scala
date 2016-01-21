@@ -3,8 +3,8 @@ package controllers
 import java.net.{MalformedURLException, URL}
 
 import com.google.inject.Inject
-import models.im.{MImg3_, MImgT}
 import models.mproj.ICommonDi
+import models.im.{MImgs3, MImgT}
 import play.api.data.Forms._
 import play.api.data._
 import util.acl.IsSuperuser
@@ -20,7 +20,7 @@ import views.html.sys1.img._
  * изображениям.
  */
 class SysImg @Inject() (
-  mImg3                           : MImg3_,
+  mImgs3                          : MImgs3,
   override val sysImgMakeUtil     : SysImgMakeUtil,
   override val mCommonDi          : ICommonDi
 )
@@ -53,7 +53,7 @@ class SysImg @Inject() (
       .transform [Option[MImgT]] (
         {qs =>
           try {
-            Some( mImg3(qs) )
+            Some( mImgs3(qs) )
           } catch {
             case ex: Exception =>
               val qsMap = FormUtil.parseQsToMap(qs)

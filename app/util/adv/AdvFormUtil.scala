@@ -1,11 +1,8 @@
 package util.adv
 
-import java.util.Currency
-
 import com.google.inject.Singleton
-import io.suggest.mbill2.m.price.MPrice
-import models.adv.tpl.MAdvPricing
-import models.{CurrencyCodeOpt, AdShowLevel, AdShowLevels}
+import io.suggest.dt.interval.PeriodsConstants
+import models.{AdShowLevel, AdShowLevels}
 import models.adv.form.{DatePeriodOpt_t, QuickAdvPeriod, DatePeriod_t, QuickAdvPeriods}
 import org.joda.time.{LocalDate, Period}
 import org.joda.time.format.ISOPeriodFormat
@@ -21,9 +18,6 @@ import play.api.data._, Forms._
 @Singleton
 class AdvFormUtil {
 
-  /** Значение поля node[].period.period в случае, когда юзер хочет вручную задать даты начала и окончания. */
-  def CUSTOM_PERIOD = "custom"
-
   /** Отдельный маппинг для adv-формы, который парсит исходные данные по бесплатному размещению. */
   def freeAdvFormM: Form[Option[Boolean]] = {
     Form(
@@ -36,7 +30,7 @@ class AdvFormUtil {
     val isoPeriodsIter = QuickAdvPeriods.ordered
       .iterator
       .map(_.isoPeriod)
-    val iter = isoPeriodsIter ++ Iterator(CUSTOM_PERIOD)
+    val iter = isoPeriodsIter ++ Iterator(PeriodsConstants.CUSTOM)
     iter.toSeq
   }
 
@@ -49,7 +43,7 @@ class AdvFormUtil {
       "onRcvrCat"   -> b
     )
     {(onStartPage, onRcvrCat) =>
-      var acc = List[AdShowLevel]( AdShowLevels.LVL_PRODUCER )
+      var acc = List[AdShowLevel](AdShowLevels.LVL_PRODUCER, AdShowLevels.LVL_START_PAGE)
       if (onStartPage)
         acc ::= AdShowLevels.LVL_START_PAGE
       if (onRcvrCat)
@@ -87,7 +81,7 @@ class AdvFormUtil {
 
   /** Форма исповедует select, который имеет набор предустановленных интервалов, а также имеет режим задания дат вручную. */
   def advPeriodM: Mapping[DatePeriod_t] = {
-    val custom = CUSTOM_PERIOD
+    val custom = PeriodsConstants.CUSTOM
     tuple(
       "period" -> nonEmptyText(minLength = 1, maxLength = 10)
         .transform [Option[QuickAdvPeriod]] (

@@ -3,7 +3,7 @@ package models
 import _root_.util.qsb.QsbUtil
 import com.google.inject.Inject
 import io.suggest.common.menum.EnumValue2Val
-import io.suggest.model.common.{EMNameStaticMut, EMDateCreatedStatic, EMNameMut, EMDateCreatedMut}
+import io.suggest.model.common.{EMNameMut, EMDateCreatedMut, EMNameStaticMut, EMDateCreatedStatic}
 import io.suggest.model.es._
 import models.mbill.{MTariffDaily, MContract => MContract1, MBalance => MBalance1}
 import models.usr.EmailActivation
@@ -33,7 +33,7 @@ import EsModelUtil.{stringParser, booleanParser, intParser}
  * Description: Запросы на инвайты.
  */
 
-class MInviteRequest_
+class MInviteRequests
   extends EsModelStaticMutAkvEmptyT
   with EsModelStaticT
   with EMInviteRequestStatic
@@ -92,7 +92,7 @@ class MInviteRequest_
 final case class MInviteRequest(
   var name      : String,
   var reqType   : InviteReqType,
-  override val companion: MInviteRequest_,
+  override val companion: MInviteRequests,
   var company   : Either[MCompany, String],
   var adnNode   : Option[Either[MNode, String]] = None,
   var contract  : Option[Either[MContract1, Int]] = None,
@@ -112,19 +112,6 @@ final case class MInviteRequest(
   with EMNameMut
 {
   override type T = MInviteRequest
-
-  /** Стирание ресурсов, относящихся к этой модели. */
-  override def doEraseResources(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
-    var fut = super.doEraseResources
-    fut = companion.withEraseLeftResources(fut, company)
-    fut = adnNode.fold(fut) { adnNodeEith =>
-      companion.withEraseLeftResources(fut, adnNodeEith)
-    }
-    fut = emailAct.fold(fut) { emailActEith =>
-      companion.withEraseLeftResources(fut, emailActEith)
-    }
-    fut
-  }
 }
 
 
@@ -151,10 +138,10 @@ object InviteReqTypes extends EnumValue2Val {
 trait MInviteRequestJmxMBean extends EsModelJMXMBeanI
 /** Реализация mbean'a: */
 class MInviteRequestJmx @Inject() (
-  override val companion          : MInviteRequest_,
-  override implicit val ec        : ExecutionContext,
-  override implicit val client    : Client,
-  override implicit val sn        : SioNotifierStaticClientI
+                                    override val companion          : MInviteRequests,
+                                    override implicit val ec        : ExecutionContext,
+                                    override implicit val client    : Client,
+                                    override implicit val sn        : SioNotifierStaticClientI
 )
   extends EsModelJMXBase
   with MInviteRequestJmxMBean
@@ -415,7 +402,7 @@ sealed trait EMInviteRequestMut extends EsModelPlayJsonT {
   var payReqsRaw: Option[String]
 
 
-  override val companion: MInviteRequest_
+  override val companion: MInviteRequests
 
   import companion._
 

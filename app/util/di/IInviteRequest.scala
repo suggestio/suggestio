@@ -1,6 +1,6 @@
 package util.di
 
-import models.MInviteRequest_
+import models.MInviteRequests
 
 /**
  * Suggest.io
@@ -10,6 +10,6 @@ import models.MInviteRequest_
  */
 trait IInviteRequest {
 
-  def mInviteRequest: MInviteRequest_
+  def mInviteRequest: MInviteRequests
 
 }

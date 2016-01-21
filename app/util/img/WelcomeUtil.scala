@@ -1,19 +1,19 @@
 package util.img
 
-import com.google.inject.{Singleton, Inject}
+import com.google.inject.{Inject, Singleton}
 import io.suggest.common.fut.FutureUtil
-import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.n2.edge.MEdgeInfo
+import models._
 import models.im._
 import models.madn.EditConstants
 import models.mctx.Context
+import models.mproj.ICommonDi
 import models.msc.{MWelcomeRenderArgs, WelcomeRenderArgsT}
-import org.elasticsearch.client.Client
 import util.PlayMacroLogsImpl
 import util.cdn.CdnUtil
 import util.showcase.ShowcaseUtil
-import scala.concurrent.{ExecutionContext, Future}
-import models._
+
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -25,15 +25,14 @@ import models._
 class WelcomeUtil @Inject() (
   scUtil                 : ShowcaseUtil,
   cdnUtil                : CdnUtil,
-  mImg3                  : MImg3_,
-  implicit val ec        : ExecutionContext,
-  implicit val esClient  : Client,
-  implicit val sn        : SioNotifierStaticClientI
+  mImg3                  : MImgs3,
+  mCommonDi              : ICommonDi
 )
   extends PlayMacroLogsImpl
 {
 
   import LOGGER._
+  import mCommonDi._
 
   /** Ключ для картинки, используемой в качестве приветствия. */
   // TODO Удалить вслед за старой архитектурой.

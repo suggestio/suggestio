@@ -27,7 +27,7 @@ import scala.concurrent.Future
  */
 class SysMarketInvReq @Inject() (
   sysMarketUtil                   : SysMarketUtil,
-  override val mInviteRequest     : MInviteRequest_,
+  override val mInviteRequest     : MInviteRequests,
   override val mailer             : IMailerWrapper,
   override val mCommonDi          : ICommonDi
 )

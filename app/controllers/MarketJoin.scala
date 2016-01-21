@@ -23,7 +23,7 @@ import views.txt.sys1.market.invreq.emailNewIRCreatedTpl
  * Description: Контроллер раздела сайта со страницами и формами присоединения к sio-market.
  */
 class MarketJoin @Inject() (
-  mInviteRequest                : MInviteRequest_,
+  mInviteRequests               : MInviteRequests,
   override val captchaUtil      : CaptchaUtil,
   override val mailer           : IMailerWrapper,
   override val mCommonDi        : ICommonDi
@@ -60,7 +60,7 @@ class MarketJoin @Inject() (
           name = s"Запрос звонка от '$name' тел $phone",
           reqType = InviteReqTypes.Adv,
           company = Left(mc),
-          companion = mInviteRequest
+          companion = mInviteRequests
         )
       }
       {mir =>

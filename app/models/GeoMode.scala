@@ -181,7 +181,6 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
           override def geoDistanceQuery = {
             GeoDistanceQuery(
               center = ipGeoPoint,
-              distanceMin = None,
               distanceMax = DISTANCE_DFLT
             )
           }
@@ -285,7 +284,6 @@ final case class GeoLocation(geoPoint: GeoPoint, accuracyMeters: Option[Double] 
         override def geoPoint: geo.GeoPoint = gl.geoPoint
         override def geoDistanceQuery = GeoDistanceQuery(
           center      = gl.geoPoint,
-          distanceMin = None,
           distanceMax = GeoLocation.DISTANCE_DFLT
         )
         override def exactGeopoint = Some(gl.geoPoint)

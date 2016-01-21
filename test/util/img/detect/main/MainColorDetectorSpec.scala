@@ -1,12 +1,13 @@
-package util.img
+package util.img.detect.main
 
 import java.io.File
+
 import functional.OneAppPerSuiteNoGlobalStart
 import models.im.RGB
-import org.apache.commons.io.{FilenameUtils, FileUtils}
+import org.apache.commons.io.{FileUtils, FilenameUtils}
 import org.scalatestplus.play._
-import play.api.test.{DefaultAwaitTimeout, FutureAwaits}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.test.{DefaultAwaitTimeout, FutureAwaits}
 
 /**
  * Suggest.io
@@ -18,7 +19,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
  */
 class MainColorDetectorSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart with FutureAwaits with DefaultAwaitTimeout {
 
-  import MainColorDetector._
+  private lazy val mainColorDetector = app.injector.instanceOf[MainColorDetector]
 
   /** Путь к ресурсом в рамках classpath. Ресурсы лежат внутри sioweb21/test/resources/. */
   private val RSC_BASEPATH = "/util/img/"
@@ -38,8 +39,8 @@ class MainColorDetectorSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart wi
       val rscUrl = getClass.getResource(rscFilepath)
       val tmpImgFile = File.createTempFile(classOf[MainColorDetectorSpec].getSimpleName, "." + fileExt)
       FileUtils.copyURLToFile(rscUrl, tmpImgFile)
-      val detectResultFut = detectFileMainColor(tmpImgFile, suppressErrors = false, maxColors = 8)
-      detectResultFut onComplete { case _ =>
+      val detectResultFut = mainColorDetector.detectFileMainColor(tmpImgFile, suppressErrors = false, maxColors = 8)
+      for (_ <- detectResultFut) {
         tmpImgFile.delete()
       }
       val detectResult = await(detectResultFut)
@@ -47,7 +48,7 @@ class MainColorDetectorSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart wi
       val dmchRgb = detectResult.get.rgb
       mainColorsHex foreach { mch =>
         val mchRgb = RGB(mch)
-        val distance = MainColorDetector.colorDistance3D(dmchRgb, mchRgb)
+        val distance = mainColorDetector.colorDistance3D(dmchRgb, mchRgb)
         distance mustBe <= (maxColorDistance)
       }
     }

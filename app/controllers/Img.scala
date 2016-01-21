@@ -25,6 +25,7 @@ import play.api.mvc._
 import play.twirl.api.Html
 import util.acl._
 import util.di.{IDynImgUtil, IMImg3Di}
+import util.img.detect.main.MainColorDetector
 import util.img.{ImgCtlUtil, _}
 import views.html.img._
 
@@ -41,7 +42,8 @@ import scala.util.{Failure, Success}
  */
 @Singleton
 class Img @Inject() (
-  override val mImg3              : MImg3_,
+  override val mainColorDetector  : MainColorDetector,
+  override val mImgs3             : MImgs3,
   override val dynImgUtil         : DynImgUtil,
   override val imgCtlUtil         : ImgCtlUtil,
   override val mCommonDi          : ICommonDi
@@ -103,7 +105,7 @@ class Img @Inject() (
 
   /** Отрендерить оконный интерфейс для кадрирования картинки. */
   def imgCropForm(imgId: String, width: Int, height: Int) = IsAuth.async { implicit request =>
-    val iik = mImg3(imgId).original
+    val iik = mImgs3(imgId).original
     iik.getImageWH map { imetaOpt =>
       val imeta: ISize2di = imetaOpt getOrElse {
         val stub = MImgInfoMeta(640, 480)
@@ -145,7 +147,7 @@ class Img @Inject() (
             crop2Fut map { crop2 =>
               // Сгенерить id картинки. Собираем картинку на базе исходника, накатив только crop:
               val cropOp = AbsCropOp(crop2)
-              val mimgOrig = mImg3(localImg.rowKeyStr)
+              val mimgOrig = mImgs3(localImg.rowKeyStr)
               val croppedImgFileName = {
                 val imOps = List(cropOp)
                 val mimg = mimgOrig.withDynOps(imOps)
@@ -231,6 +233,8 @@ trait TempImgSupport
 
   import mCommonDi._
 
+  def mainColorDetector: MainColorDetector
+
   /** DI-инстанс [[ImgCtlUtil]], т.е. статическая утиль для img-контроллеров. */
   val imgCtlUtil: ImgCtlUtil
 
@@ -255,7 +259,7 @@ trait TempImgSupport
   def _detectPalletteWs(im: MImgT, wsId: String): Future[Histogram] = {
     // Кеширование ресурсоемких результатов работы MCD.
     val f = { () =>
-      MainColorDetector.detectPaletteFor(im, maxColors = MAIN_COLORS_PALETTE_SIZE)
+      mainColorDetector.detectPaletteFor(im, maxColors = MAIN_COLORS_PALETTE_SIZE)
     }
     val cacheSec = CACHE_COLOR_HISTOGRAM_SEC
     val fut = if (cacheSec > 0) {
@@ -263,7 +267,7 @@ trait TempImgSupport
     } else {
       f()
     }
-    fut andThen {
+    fut.andThen {
       case Success(result) =>
         val res2 = if (MAIN_COLORS_PALETTE_SHRINK_SIZE < MAIN_COLORS_PALETTE_SIZE) {
           result.copy(
@@ -288,7 +292,7 @@ trait TempImgSupport
     */
   def _handleTempImg(preserveUnknownFmt: Boolean = false, runEarlyColorDetector: Boolean = false,
                      wsId: Option[String] = None, ovlRrr: Option[(String, Context) => Html] = None,
-                     mImgCompanion: IMImgCompanion = mImg3)
+                     mImgCompanion: IMImgCompanion = mImgs3)
                     (implicit request: IReq[MultipartFormData[TemporaryFile]]): Future[Result] = {
     // TODO Надо часть синхронной логики загнать в Future{}. Это нужно, чтобы скачанные данные из tmp удалялись автоматом.
     val resultFut: Future[Result] = request.body.file("picture") match {

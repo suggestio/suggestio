@@ -1,40 +1,37 @@
 package models.adv.form
 
 import io.suggest.common.menum.EnumMaybeWithName
+import io.suggest.dt.interval.PeriodsConstants._
+import io.suggest.dt.interval.QuickAdvPeriodsT
 import org.joda.time.Period
 
 /** Доступные интервалы размещения рекламных карточек. Отображаются в select'е вариантов adv-формы. */
-object QuickAdvPeriods extends EnumMaybeWithName {
+object QuickAdvPeriods extends EnumMaybeWithName with QuickAdvPeriodsT {
 
   /**
    * Класс элемента этого enum'а.
    * @param isoPeriod Строка iso-периода. Заодно является названием элемента. Заглавные буквы и цифры.
    */
-  protected abstract class Val(val isoPeriod: String) extends super.Val(isoPeriod) {
-    /** Приоритет при фильтрации. */
-    def prio: Int
+  protected class Val(override val isoPeriod: String)
+    extends super.Val(isoPeriod)
+    with super.ValT
+  {
     def toPeriod = new Period(isoPeriod)
   }
 
   override type T = Val
 
-  val P3D: T = new Val("P3D") {
-    override def prio = 100
-  }
-  val P1W: T = new Val("P1W") {
-    override def prio = 200
-  }
-  val P1M: T = new Val("P1M") {
-    override def prio = 300
-  }
+  override val P3D: T = new Val(P_3DAYS)
+  override val P1W: T = new Val(P_1WEEK)
+  override val P1M: T = new Val(P_1MONTH)
 
 
   def default = P1W
 
-  def ordered: List[T] = {
-    values
-      .foldLeft( List[T]() ) { (acc, e) => e :: acc }
-      .sortBy(_.prio)
+  def valuesT = values.asInstanceOf[collection.Set[T]]
+
+  def ordered: Iterable[T] = {
+    valuesT
   }
 
 }

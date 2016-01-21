@@ -1,7 +1,8 @@
-package util.img
+package util.img.detect.main
 
-import java.io.{PrintWriter, File}
-import models.im.{RGB, HistogramEntry}
+import java.io.{File, PrintWriter}
+
+import models.im.{HistogramEntry, RGB}
 import org.scalatestplus.play._
 
 /**

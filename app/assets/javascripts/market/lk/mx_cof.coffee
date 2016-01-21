@@ -557,44 +557,6 @@ PersonalCabinet =
       updateLevelsWidget()
       $(".js-select-type.__js-act").removeClass "__js-act"
 
-    $ document
-    .on 'click', '.js-select-type', (e)->
-      $this = $ this
-      type = $this.data "value"
-
-      setActiveType()
-      showNodes()
-      updateLevelsWidget()
-
-    # чекбоксы у типов
-    $ document
-    .on 'click', '.js-select-type label', (e)->
-      e.stopPropagation()
-
-    $ document
-    .on 'click', '.js-select-type input:checkbox', (e)->
-      e.stopPropagation()
-      $this = $ this
-      $selectType = $this.closest '.js-select-type'
-      type = parseInt( $selectType.data("value") )
-      checked = $this.prop 'checked'
-
-      setActiveType()
-      checkNodes(checked)
-      showNodes()
-      if type < 0
-        # если ставим галочку у типа Все места, то ставим/снимаем галочки со всех типов
-        checkTypes(checked)
-      else
-        # снять чекбокс с элемента Все места
-        $ ".js-select-type_w[data-city = #{city}] .js-select-type[data-value = '-1'] input"
-        .prop 'checked', false
-        .attr 'value', false
-
-      nodesObserver()
-      typesObserver()
-      setTimeout market.adv_form.update_price, 100
-
     # чекбоксы у заголовков узлов
     $ document
     .on 'click', '.js-select-node_w .js-slide-title label', (e)->

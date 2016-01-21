@@ -2,7 +2,7 @@ package util.blocks
 
 import io.suggest.model.n2.edge.{MEdgeInfo, MEdge}
 import models.blk.ed.{BimKey_t, BindAcc, BlockImgMap, ImgsEmpty, Imgs_t}
-import models.im.MImg3_
+import models.im.MImgs3
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.img._
 
@@ -81,7 +81,7 @@ object SaveImgUtil extends MergeBindAcc[BlockImgMap] {
 
   // TODO DI, портировать на DI модель BlockConf, а затем и это.
   import play.api.Play.current
-  protected[blocks] val mImg3 = current.injector.instanceOf[MImg3_]
+  protected[blocks] val mImg3 = current.injector.instanceOf[MImgs3]
 
   def saveImgsStatic(fn: BimKey_t, newImgs: BlockImgMap, oldImgs: Imgs_t, supImgsFut: Future[Imgs_t]): Future[Imgs_t] = {
     val needImgsThis = newImgs.get(fn)

@@ -231,9 +231,9 @@ GET  /sys/m/b/sink/comm/edit/:scId       @controllers.SysMarketBilling.editSinkC
 POST /sys/m/b/sink/comm/edit/:scId       @controllers.SysMarketBilling.editSinkComSubmit(scId: Int)
 POST /sys/m/b/sink/comm/del/:scId        @controllers.SysMarketBilling.sinkComDeleteSubmit(scId: Int)
 
-## sys adn geo
+## sys node geo
 GET  /sys/adn/geo/all/:nodeId            @controllers.SysAdnGeo.forNode(nodeId)
-## MAdnNodeGeo
+## sys node geo shape
 GET  /sys/adn/geo/add/osm/:nodeId        @controllers.SysAdnGeo.createForNodeOsm(nodeId)
 POST /sys/adn/geo/add/osm/:nodeId        @controllers.SysAdnGeo.createForNodeOsmSubmit(nodeId)
 POST /sys/adn/geo/delete                 @controllers.SysAdnGeo.deleteSubmit(g: mgeo.MGsPtr)

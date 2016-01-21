@@ -23,9 +23,6 @@ package object models {
   type MCompanyMeta         = ym.model.common.MCompanyMeta
   val  MCompanyMeta         = ym.model.common.MCompanyMeta
 
-  type MYmCategory          = ym.model.MYmCategory
-  val  MYmCategory          = ym.model.MYmCategory
-
   type AdShowLevel          = io.suggest.model.sc.common.AdShowLevel
   val  AdShowLevels         = io.suggest.model.sc.common.AdShowLevels
 
@@ -33,12 +30,7 @@ package object models {
   type AdnRight             = ym.model.common.AdnRight
 
 
-  val  AdReceiverInfo       = ym.model.common.AdReceiverInfo
-  type AdReceiverInfo       = ym.model.common.AdReceiverInfo
-
   type Receivers_t          = n2.edge.NodeEdgesMap_t
-
-  type AdOfferT             = ym.model.ad.AdOfferT
 
   val  TextEnt              = io.suggest.model.n2.ad.ent.text.TextEnt
   type TextEnt              = io.suggest.model.n2.ad.ent.text.TextEnt
@@ -50,7 +42,6 @@ package object models {
 
   val  MImgInfo             = ym.model.common.MImgInfo
   type MImgInfo             = ym.model.common.MImgInfo
-  type MImgInfoT            = ym.model.common.MImgInfoT
 
   type ImgCrop              = io.suggest.img.ImgCrop
   val  ImgCrop              = io.suggest.img.ImgCrop
@@ -70,12 +61,6 @@ package object models {
   type AdFreqs_t            = MAdStat.AdFreqs_t
 
   type BTariffType          = BTariffTypes.BTariffType
-
-  val  Tariff               = ym.model.common.Tariff
-  type Tariff               = ym.model.common.Tariff
-
-  val  TariffTypes          = ym.model.common.TariffTypes
-  type TariffType           = TariffTypes.TariffType
 
   type SelectPolicy         = SelectPolicies.T
 
@@ -100,9 +85,6 @@ package object models {
   val  TextAligns           = io.suggest.model.n2.ad.ent.text.TextAligns
   type TextAlign            = io.suggest.model.n2.ad.ent.text.TextAlign
 
-  val  DisableReason        = ym.model.common.DisableReason
-  type DisableReason        = ym.model.common.DisableReason
-
   type MAdvMode             = MAdvModes.T
   type AudienceSize         = AudienceSizes.T
   type InviteReqType        = InviteReqTypes.T
@@ -125,17 +107,6 @@ package object models {
 
   val  NodeGeoLevels        = ym.model.NodeGeoLevels
   type NodeGeoLevel         = ym.model.NodeGeoLevel
-
-  val  AdnNodeGeodata       = ym.model.common.AdnNodeGeodata
-  type AdnNodeGeodata       = ym.model.common.AdnNodeGeodata
-
-  type AdnNodesSearchArgs   = ym.model.common.AdnNodesSearchArgsImpl
-  type AdnNodesSearchArgsT  = ym.model.common.AdnNodesSearchArgsT
-
-
-  // cassandra img models
-  type MUserImgMeta2        = io.suggest.model.MUserImgMeta2
-  val  MUserImgMeta2        = io.suggest.model.MUserImgMeta2
 
 
   /** Вызов на главную страницу. */

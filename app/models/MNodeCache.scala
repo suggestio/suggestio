@@ -1,6 +1,8 @@
 package models
 
 import com.google.inject.{Singleton, Inject}
+import io.suggest.model.n2.node.INodeId
+import io.suggest.model.n2.node.event.{MNodeDeleted, MNodeSaved}
 import org.elasticsearch.client.Client
 import play.api.Configuration
 import io.suggest.event._
@@ -43,8 +45,8 @@ class MNodeCache @Inject() (
   override def snMap = {
     val subs = Seq(this)
     List(
-      MNodeSavedEvent.getClassifier()       -> subs,
-      MNodeDeletedEvent.getClassifier()     -> subs
+      MNodeSaved.getClassifier()       -> subs,
+      MNodeDeleted.getClassifier()     -> subs
     )
   }
 

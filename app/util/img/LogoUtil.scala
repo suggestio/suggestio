@@ -18,13 +18,13 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 @Singleton
 class LogoUtil @Inject() (
-  mImg3             : MImg3_,
-  implicit val ec   : ExecutionContext
+  mImgs3                    : MImgs3,
+  implicit private val ec   : ExecutionContext
 ) {
 
   /** Приведение ребра графа к метаданным изображения логотипа. */
   def edge2logoImg(medge: IEdge): MImgT = {
-    mImg3(medge.nodeId, Nil)
+    mImgs3(medge.nodeId, Nil)
   }
 
   // TODO Допилить этот метод, привязать его к контроллеру, разобраться с MImg.deleteAllFor(UUID), обновить маппинги форм.

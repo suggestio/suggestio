@@ -23,9 +23,9 @@ import scala.concurrent.Future
  */
 @Singleton
 class GalleryUtil @Inject() (
-  dynImgUtil      : DynImgUtil,
-  mImg3           : MImg3_,
-  configuration   : Configuration
+  dynImgUtil        : DynImgUtil,
+  mImgs3            : MImgs3,
+  configuration     : Configuration
 ) {
 
   // Ширина/высота картинки галереи, отображаемой в ЛК на странице узла.
@@ -55,7 +55,7 @@ class GalleryUtil @Inject() (
   }
 
   def galEdge2img(edge: IEdge): MImgT = {
-    mImg3(edge)
+    mImgs3(edge)
   }
 
 
@@ -108,7 +108,7 @@ class GalleryUtil @Inject() (
 
   def galleryImgs(mnode: MNode): Future[Seq[MImgT]] = {
     val res = galleryEdges(mnode)
-      .map { mImg3.apply }
+      .map { mImgs3.apply }
       .toSeq
     Future successful res
   }

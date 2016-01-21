@@ -8,9 +8,9 @@ import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models._
 import models.adv.{MAdvI, MAdvOk, MAdvReq}
-import models.im.MImg3_
 import models.mctx.Context
 import models.mproj.ICommonDi
+import models.im.MImgs3
 import models.msys._
 import models.req.{INodeReq, IReq}
 import models.usr.{EmailActivation, MPerson}
@@ -49,9 +49,9 @@ class SysMarket @Inject() (
   override val mailer             : IMailerWrapper,
   override val n2NodesUtil        : N2NodesUtil,
   override val sysAdRenderUtil    : SysAdRenderUtil,
-  mImg3                           : MImg3_,
   mPerson                         : MPerson,
-  override val mCommonDi          : ICommonDi
+  override val mCommonDi          : ICommonDi,
+  mImgs3                          : MImgs3
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
@@ -689,7 +689,7 @@ class SysMarket @Inject() (
           e.predicate.toTypeValid( MNodeTypes.Media.Image )
         }
         .map { e =>
-          MImgEdge(e, mImg3(e))
+          MImgEdge(e, mImgs3(e))
         }
         .toSeq
     }

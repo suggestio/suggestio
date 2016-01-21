@@ -2,17 +2,15 @@ package models
 
 import com.google.inject.Inject
 import io.suggest.model.es.{CopyContentResult, EsModelCommonStaticT, EsModelUtil}
-import io.suggest.model.n2.media.MMedia_
+import io.suggest.model.n2.media.MMedias
 import io.suggest.util.{JMXBase, SioEsUtil}
 import models.ai.MAiMad
-import models.im.MGallery
 import models.merr.MRemoteError
+import models.mproj.ICommonDi
 import models.usr.{MExtIdent, EmailActivation, EmailPwIdent}
 import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
 import util.{PlayMacroLogsDyn, PlayLazyMacroLogsImpl, SiowebEsUtil}
 import scala.concurrent.{ExecutionContext, Future}
-import org.elasticsearch.client.Client
-import play.api.Play.{current, configuration}
 import scala.util.{Failure, Success}
 import scala.concurrent.duration._
 
@@ -23,11 +21,15 @@ import scala.concurrent.duration._
  * Description: Дополнительная утиль для ES-моделей.
  */
 class SiowebEsModel @Inject() (
-                                mMedia              : MMedia_,
-                                mCalendar           : MCalendars,
-                                mInviteRequest      : MInviteRequest_,
-                                implicit val ec     : ExecutionContext
-) extends PlayMacroLogsDyn {
+  mMedias             : MMedias,
+  mCalendars          : MCalendars,
+  mInviteRequests     : MInviteRequests,
+  mCommonDi           : ICommonDi
+)
+  extends PlayMacroLogsDyn
+{
+
+  import mCommonDi._
 
   /**
    * Список моделей, которые должны быть проинициалированы при старте.
@@ -35,11 +37,12 @@ class SiowebEsModel @Inject() (
    */
   def ES_MODELS: Seq[EsModelCommonStaticT] = {
     EsModelUtil.ES_MODELS ++ Seq[EsModelCommonStaticT](
-      EmailPwIdent, EmailActivation, MExtIdent, mInviteRequest, mCalendar,
-      MRemoteError, MGallery, MAiMad,
+      MNode,
+      EmailPwIdent, EmailActivation, MExtIdent, mInviteRequests, mCalendars,
+      MRemoteError, MAiMad,
       adv.MExtTarget,
       event.MEvent, sec.MAsymKey,
-      mMedia
+      mMedias
     )
   }
 
@@ -50,7 +53,7 @@ class SiowebEsModel @Inject() (
   }
 
   /** Отправить маппинги всех моделей в хранилище. */
-  def putAllMappings(models: Seq[EsModelCommonStaticT] = ES_MODELS)(implicit client: Client): Future[Boolean] = {
+  def putAllMappings(models: Seq[EsModelCommonStaticT] = ES_MODELS): Future[Boolean] = {
     val ignoreExist = configuration.getBoolean("es.mapping.model.ignore_exist") getOrElse false
     LOGGER.trace("putAllMappings(): ignoreExists = " + ignoreExist)
     EsModelUtil.putAllMappings(models, ignoreExist)

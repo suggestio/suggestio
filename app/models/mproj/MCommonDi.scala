@@ -15,7 +15,6 @@ import play.api.cache.CacheApi
 import play.api.db.Database
 import play.api.db.slick.DatabaseConfigProvider
 import play.api.i18n.MessagesApi
-import slick.driver.JdbcProfile
 import util.di._
 import util.secure.SessionUtil
 import util.xplay.ICacheApi

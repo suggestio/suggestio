@@ -1,0 +1,22 @@
+@(title: String, cityId: String, catId: Option[String] = None, withCounter: Boolean = false, withCheckBox: Boolean = true)
+
+@* Верстка заголовка таба, используемого в форме. *@
+
+@import io.suggest.adv.direct.AdvDirectFormConstants._
+
+<div id="@CITY_NODES_TAB_HEAD_ID(cityId, catId)"
+     class="select-tab_i js-select-type"
+     @ATTR_CITY_ID="@cityId"
+     @if(catId) {@ATTR_CAT_ID="@catId"} >
+
+  @if(withCheckBox) {
+    @_checkBoxTpl(false)
+  }
+
+  <span class="select-tab_i-title">@title</span>
+
+  @if(withCounter) {
+    <span class="js-active-nodes-count"></span>
+  }
+
+</div>

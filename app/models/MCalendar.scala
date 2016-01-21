@@ -1,7 +1,6 @@
 package models
 
 import com.google.inject.{Singleton, Inject}
-import io.suggest.model._
 import io.suggest.model.es._
 import util.PlayMacroLogsImpl
 import EsModelUtil.FieldsJsonAcc
@@ -77,11 +76,11 @@ class MCalendars
 
 
 case class MCalendar(
-                      name                    : String,
-                      data                    : String,
-                      override val companion  : MCalendars,
-                      id                      : Option[String]  = None,
-                      versionOpt              : Option[Long]    = None
+  name                    : String,
+  data                    : String,
+  override val companion  : MCalendars,
+  id                      : Option[String]  = None,
+  versionOpt              : Option[Long]    = None
 )
   extends EsModelPlayJsonT
   with EsModelT
@@ -101,10 +100,10 @@ case class MCalendar(
 trait MCalendarJmxMBean extends EsModelJMXMBeanI
 
 class MCalendarJmx @Inject() (
-                               override val companion  : MCalendars,
-                               override val ec         : ExecutionContext,
-                               override val client     : Client,
-                               override val sn         : SioNotifierStaticClientI
+  override val companion  : MCalendars,
+  override val ec         : ExecutionContext,
+  override val client     : Client,
+  override val sn         : SioNotifierStaticClientI
 )
   extends EsModelJMXBase
   with MCalendarJmxMBean

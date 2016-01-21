@@ -3,9 +3,9 @@
 @* Инпуты для суперюзера при размещении. *@
 
 <div class="adv-su-inputs-wrap">
-  <label>
-    <input type="checkbox" name="freeAdv" value="true" />
-    <span class="styled-checkbox"></span>
+  @* TODO: _checkBoxTpl(false, "name" -> "freeAdv") *@
+    <input id="freeAdvCheckBox" type="checkbox" name="freeAdv" value="true" checked="true" />
+  <label for="freeAdvCheckBox">
     Размещать бесплатно, без подтверждения?
   </label>
 </div>

@@ -1,5 +1,7 @@
 package util.billing
 
+import java.{time => jat}
+
 import com.google.inject.{Inject, Singleton}
 import de.jollyday.parameter.UrlManagerParameter
 import io.suggest.common.fut.FutureUtil
@@ -12,21 +14,20 @@ import models.adv.tpl.MAdvPricing
 import models.blk.{BlockWidths, BlockHeights}
 import models.mbill.{MContract => MContract1}
 import models.mbill._
+import models.mproj.ICommonDi
 import org.joda.time.{DateTime, LocalDate}
 import org.joda.time.DateTimeConstants._
-import play.api.Configuration
 import util.async.AsyncUtil
 import util.n2u.N2NodesUtil
 import scala.annotation.tailrec
 import util.PlayMacroLogsImpl
-import play.api.db.Database
 import io.suggest.ym.parsers.Price
 import java.sql.Connection
 import de.jollyday.HolidayManager
 import java.net.URL
 import controllers.routes
 import scala.collection.JavaConversions._
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -37,14 +38,13 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class MmpDailyBilling @Inject() (
   n2NodesUtil             : N2NodesUtil,
-  configuration           : Configuration,
-  db                      : Database,
-  implicit val ec         : ExecutionContext
+  mCommonDi               : ICommonDi
 )
   extends PlayMacroLogsImpl
 {
 
   import LOGGER._
+  import mCommonDi._
 
   val MYSELF_URL_PREFIX: String = configuration.getString("mmp.daily.localhost.url.prefix") getOrElse {
     val myPort = Option(System.getProperty("http.port")).fold(9000)(_.toInt)
@@ -52,19 +52,26 @@ class MmpDailyBilling @Inject() (
   }
 
   /** Если внезапно необходимо создать контракт, то сделать его с таким суффиксом. */
-  lazy val CONTRACT_SUFFIX_DFLT = configuration.getString("mmp.daily.contract.suffix.dflt") getOrElse "СЕО"
+  private def CONTRACT_SUFFIX_DFLT = MContract.CONTRACT_SUFFIX_DFLT
 
   /** Дни недели, относящиеся к выходным. Задаются списком чисел от 1 (пн) до 7 (вс), согласно DateTimeConstants. */
   val WEEKEND_DAYS: Set[Int] = configuration.getIntList("mmp.daily.weekend.days").map(_.map(_.intValue).toSet) getOrElse Set(FRIDAY, SATURDAY, SUNDAY)
 
 
+
   /** Сгенерить localhost-ссылку на xml-текст календаря. */
-  // TODO Надо бы асинхронно фетчить тело календаря и потом результат как-то заворачивать в URL, чтобы не было лишних блокировок.
   // Часть блокировок подавляет кеш на стороне jollyday.
-  private def getUrlCal(calId: String): HolidayManager = {
-    val calUrl = new URL(MYSELF_URL_PREFIX + routes.SysCalendar.getCalendarXml(calId))
-    val args = new UrlManagerParameter(calUrl, null)
-    HolidayManager.getInstance(args)
+  private def getUrlCalAsync(calId: String): Future[HolidayManager] = {
+    // 2015.dec.25: Усилены асинхронность и кеширование, т.к. под высоко-параллельной тут возникал deadlock,
+    // а jollyday-кеш (v0.4.x) это не ловил это, а блокировал всё.
+    import scala.concurrent.duration._
+    cacheApiUtil.getOrElseFut(calId + ".holyman", expiration = 2.minute) {
+      val calUrl = new URL(MYSELF_URL_PREFIX + routes.SysCalendar.getCalendarXml(calId))
+      val args = new UrlManagerParameter(calUrl, null)
+      Future {
+        HolidayManager.getInstance(args)
+      }(AsyncUtil.singleThreadCpuContext)
+    }
   }
 
   /**
@@ -72,22 +79,22 @@ class MmpDailyBilling @Inject() (
    * Цена блока рассчитывается по площади, тарифам размещения узла-получателя и исходя из будней-праздников.
    * @return
    */
-  def calculateAdvPrice(blockModulesCount: Int, rcvrPricing: MTariffDaily, advTerms: IAdvTerms): Price = {
+  def calculateAdvPrice(blockModulesCount: Int, rcvrPricing: MTariffDaily, advTerms: IAdvTerms, mcalCtx: MCals1Ctx): Price = {
     lazy val logPrefix = s"calculateAdvPrice($blockModulesCount/${rcvrPricing.id.get}): "
     trace(s"${logPrefix}rcvr: tariffId=${rcvrPricing.id.get} mbcId=${rcvrPricing.contractId};; terms: from=${advTerms.dateStart} to=${advTerms.dateEnd} sls=${advTerms.showLevels}")
     // Во избежание бесконечного цикла, огораживаем dateStart <= dateEnd
     val dateStart = advTerms.dateStart
     val dateEnd = advTerms.dateEnd
     //assert(!(dateStart isAfter dateEnd), "dateStart must not be after dateEnd")
-    // TODO Нужно использовать специфичные для узла календари.
-    val primeHolidays = getUrlCal(rcvrPricing.weekendCalId)
-    lazy val weekendCal = getUrlCal(rcvrPricing.primeCalId)
+
     def calculateDateAdvPrice(day: LocalDate): Float = {
-      if (primeHolidays isHoliday day) {
+      val dayJat = jat.LocalDate.of(day.getYear, day.getMonthOfYear, day.getDayOfMonth)
+
+      if ( mcalCtx.prime.isHoliday(dayJat) ) {
         trace(s"$logPrefix $day -> primetime -> +${rcvrPricing.mmpPrimetime}")
         rcvrPricing.mmpPrimetime
       } else {
-        val isWeekend = (WEEKEND_DAYS contains day.getDayOfWeek) || (weekendCal isHoliday day)
+        val isWeekend = (WEEKEND_DAYS contains day.getDayOfWeek) || mcalCtx.weekend.isHoliday(dayJat)
         if (isWeekend) {
           trace(s"$logPrefix $day -> weekend -> +${rcvrPricing.mmpWeekend}")
           rcvrPricing.mmpWeekend
@@ -180,18 +187,26 @@ class MmpDailyBilling @Inject() (
       }
 
       for {
-        rcvrContract <- rcvrContractFut
-        rcvrPricing  <- {
-          val contractId = rcvrContract.id.get
+        mbc <- rcvrContractFut
+        mmp  <- {
+          val contractId = mbc.id.get
           Future {
             db.withConnection { implicit c =>
               MTariffDaily.getLatestForContractId(contractId).get
             }
           }(AsyncUtil.jdbcExecutionContext)
         }
+        mcalCtx <- {
+          for {
+            weekend <- getUrlCalAsync(mmp.weekendCalId)
+            prime   <- getUrlCalAsync(mmp.primeCalId)
+          } yield {
+            MCals1Ctx(weekend = weekend, prime = prime)
+          }
+        }
       } yield {
         val bmc = getAdModulesCount(mad)
-        calculateAdvPrice(bmc, rcvrPricing, adve)
+        calculateAdvPrice(bmc, mmp, adve, mcalCtx)
       }
     }
 
@@ -254,40 +269,98 @@ class MmpDailyBilling @Inject() (
    */
   def mkAdvReqs(mad: MNode, advs: List[AdvFormEntry]): Future[_] = {
     val producerId = n2NodesUtil.madProducerId(mad).get
-    Future {
-      db.withTransaction { implicit c =>
-        // Вешаем update lock на баланс чтобы избежать блокирования суммы, списанной в параллельном треде, и дальнейшего ухода в минус.
-        val mbb0 = MBalance.getByAdnId(producerId, SelectPolicies.UPDATE).get
-        val someTrue = Some(true)
-        val mbc = MContract1.findForAdn(producerId, isActive = someTrue).head
-        val prodCurrencyCode = mbb0.currencyCode
-        advs.foreach { advEntry =>
-          val rcvrContract = getOrCreateContract(advEntry.adnId)
-          val contractId = rcvrContract.id.get
-          val rcvrMmp = MTariffDaily.getLatestForContractId(contractId).get
-          val bmc = getAdModulesCount(mad)
-          // Фильтруем уровни отображения в рамках sink'а.
-          val advPrice = calculateAdvPrice(bmc, rcvrMmp, advEntry)
-          val rcvrCurrencyCode = advPrice.currency.getCurrencyCode
-          assert(
-            rcvrCurrencyCode == prodCurrencyCode,
-            s"Rcvr node ${advEntry.adnId} currency ($rcvrCurrencyCode) does not match to producer node $producerId currency ($prodCurrencyCode)"
-          )
-          MAdvReq(
-            adId        = mad.id.get,
-            amount      = advPrice.price,
-            prodContractId = mbc.id.get,
-            prodAdnId   = producerId,
-            rcvrAdnId   = advEntry.adnId,
-            dateStart   = advEntry.dateStart.toDateTimeAtStartOfDay,
-            dateEnd     = date2DtAtEndOfDay(advEntry.dateEnd),
-            showLevels  = advEntry.showLevels
-          ).save
-          // Нужно заблокировать на счете узла необходимую сумму денег.
-          mbb0.updateBlocked(advPrice.price)
-        }
+
+    val node2mbcMapFut = Future {
+      db.withConnection { implicit c =>
+        advs.iterator
+          .map { adv =>
+            val adnId = adv.adnId
+            val mbc = getOrCreateContract(adnId)
+            adnId -> mbc
+          }
+          .toMap
       }
     }(AsyncUtil.jdbcExecutionContext)
+
+    val contractId2mmpMapFut = node2mbcMapFut.map { node2mbcMap =>
+      db.withConnection { implicit c =>
+        val iter = for {
+          mbc         <- node2mbcMap.valuesIterator
+          contractId  <- mbc.id
+          mmp         <- MTariffDaily.getLatestForContractId(contractId)
+        } yield {
+          contractId -> mmp
+        }
+        iter.toMap
+      }
+    }(AsyncUtil.jdbcExecutionContext)
+
+    val calsMapFut = contractId2mmpMapFut.flatMap { mmpMap =>
+      val calIds = mmpMap.valuesIterator
+        .flatMap { mmp =>
+          Seq(mmp.primeCalId, mmp.weekendCalId)
+        }
+        .toSet
+      Future.traverse(calIds) { calId =>
+        for (calMan <- getUrlCalAsync(calId)) yield {
+          calId -> calMan
+        }
+      } map {
+        _.toMap
+      }
+    }
+
+    for {
+      node2mbcMap       <- node2mbcMapFut
+      contractId2mmpMap <- contractId2mmpMapFut
+      calsMap           <- calsMapFut
+      res               <- {
+        Future {
+          db.withTransaction { implicit c =>
+            // Вешаем update lock на баланс чтобы избежать блокирования суммы, списанной в параллельном треде, и дальнейшего ухода в минус.
+            val mbb0 = MBalance.getByAdnId(producerId, SelectPolicies.UPDATE).get
+            val someTrue = Some(true)
+            val mbc = MContract.findForAdn(producerId, isActive = someTrue).head
+            val prodCurrencyCode = mbb0.currencyCode
+            advs.foreach { advEntry =>
+              val rcvrContract = node2mbcMap(advEntry.adnId)
+              val contractId = rcvrContract.id.get
+              val rcvrMmp = contractId2mmpMap(contractId)
+              val bmc = getAdModulesCount(mad)
+              // Готовим календари
+              val mcalCtx = MCals1Ctx(
+                weekend = calsMap(rcvrMmp.weekendCalId),
+                prime   = calsMap(rcvrMmp.primeCalId)
+              )
+              // Фильтруем уровни отображения в рамках sink'а.
+              val advPrice = calculateAdvPrice(bmc, rcvrMmp, advEntry, mcalCtx)
+              val rcvrCurrencyCode = advPrice.currency.getCurrencyCode
+              assert(
+                rcvrCurrencyCode == prodCurrencyCode,
+                s"Rcvr node ${advEntry.adnId} currency ($rcvrCurrencyCode) does not match to producer node $producerId currency ($prodCurrencyCode)"
+              )
+              MAdvReq(
+                adId        = mad.id.get,
+                amount      = advPrice.price,
+                prodContractId = mbc.id.get,
+                prodAdnId   = producerId,
+                rcvrAdnId   = advEntry.adnId,
+                dateStart   = advEntry.dateStart.toDateTimeAtStartOfDay,
+                dateEnd     = date2DtAtEndOfDay(advEntry.dateEnd),
+                showLevels  = advEntry.showLevels
+              ).save
+              // Нужно заблокировать на счете узла необходимую сумму денег.
+              mbb0.updateBlocked(advPrice.price)
+            }
+          }
+        }(AsyncUtil.jdbcExecutionContext)
+      }
+
+    } yield {
+      res
+    }
+
+
   }
 
   def date2DtAtEndOfDay(ld: LocalDate) = ld.toDateTimeAtStartOfDay.plusDays(1).minusSeconds(1)
