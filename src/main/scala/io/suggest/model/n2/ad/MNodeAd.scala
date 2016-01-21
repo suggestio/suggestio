@@ -1,6 +1,6 @@
 package io.suggest.model.n2.ad
 
-import io.suggest.common.EmptyProduct
+import io.suggest.common.empty.{IEmpty, EmptyProduct}
 import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.model.n2.ad.blk.BlockMeta
 import io.suggest.model.n2.ad.ent.MEntity
@@ -18,7 +18,9 @@ import play.api.libs.functional.syntax._
  *
  * При отсутствие данных внутри, это неявно-пустая модель.
  */
-object MNodeAd extends IGenEsMappingProps {
+object MNodeAd extends IGenEsMappingProps with IEmpty {
+
+  override type T = MNodeAd
 
   /** Поля этой под-модели. */
   object Fields {
@@ -93,7 +95,7 @@ object MNodeAd extends IGenEsMappingProps {
   }
 
   /** Пустой экземпляр модели, расшарен между кучей инстансов [[io.suggest.model.n2.node.MNode]]. */
-  val empty: MNodeAd = {
+  override val empty: MNodeAd = {
     new MNodeAd() {
       override def nonEmpty = false
     }

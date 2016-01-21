@@ -16,6 +16,7 @@ import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.model.search.EsDynSearchStatic
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.{MacroLogsImpl, SioConstants}
+import io.suggest.common.empty.EmptyUtil._
 import org.elasticsearch.client.Client
 import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
@@ -77,34 +78,34 @@ object MNode
   val DATA_FORMAT: OFormat[MNode] = (
     (__ \ Fields.Common.COMMON_FN).formatNullable(MNodeCommon.FORMAT)
       .inmap[MNodeCommon](
-        { _ getOrElse MNodeCommon(MNodeTypes.Tag, isDependent = true) },
-        { Some.apply }
+        opt2ImplEmpty1F( MNodeCommon(MNodeTypes.Tag, isDependent = true) ),
+        someF
       ) and
     (__ \ Fields.Meta.META_FN).format[MMeta] and
     (__ \ Fields.Extras.EXTRAS_FN).formatNullable[MNodeExtras]
       .inmap [MNodeExtras] (
-        _.getOrElse( MNodeExtras.empty ),
-        { mnex => if (mnex.nonEmpty) Some(mnex) else None }
+        opt2ImplMEmptyF( MNodeExtras ),
+        implEmpty2OptF
       ) and
     (__ \ Fields.Edges.EDGES_FN).formatNullable[MNodeEdges]
       .inmap [MNodeEdges] (
-        _ getOrElse MNodeEdges.empty,
-        { mne => if (mne.nonEmpty) Some(mne) else None }
+        opt2ImplMEmptyF( MNodeEdges ),
+        implEmpty2OptF
       ) and
     (__ \ Fields.Geo.GEO_FN).formatNullable[MNodeGeo]
       .inmap [MNodeGeo] (
-        _ getOrElse MNodeGeo.empty,
-        { mng => if (mng.nonEmpty) Some(mng) else None }
+        opt2ImplMEmptyF( MNodeGeo ),
+        implEmpty2OptF
       ) and
     (__ \ Fields.Ad.AD_FN).formatNullable[MNodeAd]
       .inmap [MNodeAd] (
-        _ getOrElse MNodeAd.empty,
-        { mna => if (mna.nonEmpty) Some(mna) else None }
+        opt2ImplMEmptyF( MNodeAd ),
+        implEmpty2OptF
       ) and
     (__ \ Fields.Billing.BILLING_FN).formatNullable[MNodeBilling]
       .inmap [MNodeBilling] (
-        _.getOrElse( MNodeBilling.empty ),
-        { mnb => if (mnb.nonEmpty) Some(mnb) else None }
+        opt2ImplMEmptyF( MNodeBilling ),
+        implEmpty2OptF
       )
   )(
     {(common, meta, extras, edges, geo, ad, billing) =>

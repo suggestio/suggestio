@@ -1,6 +1,6 @@
 package io.suggest.model.n2.geo
 
-import io.suggest.common.EmptyProduct
+import io.suggest.common.empty.{IEmpty, EmptyProduct}
 import io.suggest.model.PrefixedFn
 import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.model.geo.GeoPoint
@@ -14,9 +14,12 @@ import play.api.libs.functional.syntax._
  * Created: 06.10.15 17:28
  * Description: JSON-модель для представления геоданных узлов [[io.suggest.model.n2.node.MNode]].
  */
-object MNodeGeo extends IGenEsMappingProps {
+object MNodeGeo extends IGenEsMappingProps with IEmpty {
+
+  override type T = MNodeGeo
 
   object Fields {
+
     val POINT_FN = "p"
 
     object Shape extends PrefixedFn {
@@ -32,7 +35,7 @@ object MNodeGeo extends IGenEsMappingProps {
     }
   }
 
-  val empty: MNodeGeo = {
+  override val empty: MNodeGeo = {
     new MNodeGeo() {
       override def nonEmpty = false
     }
@@ -43,7 +46,7 @@ object MNodeGeo extends IGenEsMappingProps {
     (__ \ Fields.POINT_FN).formatNullable[GeoPoint] and
     (__ \ Fields.Shape.SHAPE_FN).formatNullable[Seq[MGeoShape]]
       .inmap [Seq[MGeoShape]] (
-        _ getOrElse Nil,
+        _.getOrElse(Nil),
         { gss => if (gss.isEmpty) None else Some(gss) }
       )
   )(apply, unlift(unapply))

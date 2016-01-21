@@ -1,6 +1,6 @@
 package io.suggest.model.n2.node.meta
 
-import io.suggest.common.EmptyProduct
+import io.suggest.common.empty.{IEmpty, EmptyProduct}
 import io.suggest.model.es.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -11,7 +11,9 @@ import play.api.libs.functional.syntax._
  * Created: 25.09.15 15:04
  * Description: Модель метаданных по описанию делишек узла: инфа о товарах, посетителях, сайте и т.д.
  */
-object MBusinessInfo extends IGenEsMappingProps {
+object MBusinessInfo extends IGenEsMappingProps with IEmpty {
+
+  override type T = MBusinessInfo
 
   object Fields {
     val SITE_URL_FN             = "su"
@@ -21,16 +23,15 @@ object MBusinessInfo extends IGenEsMappingProps {
     val BDESCR_FN               = "bd"
   }
 
-
-  import Fields._
-
   /** Частоиспользуемый пустой экземпляр модели [[MBusinessInfo]]. */
-  val empty: MBusinessInfo = {
+  override val empty: MBusinessInfo = {
     new MBusinessInfo() {
       override def nonEmpty = false
     }
   }
 
+
+  import Fields._
 
   /** Поддержка JSON. */
   implicit val FORMAT: OFormat[MBusinessInfo] = (

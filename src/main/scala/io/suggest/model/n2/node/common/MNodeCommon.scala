@@ -4,6 +4,7 @@ import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.model.n2.node.MNodeType
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
+import io.suggest.common.empty.EmptyUtil._
 
 /**
  * Suggest.io
@@ -23,7 +24,7 @@ object MNodeCommon extends IGenEsMappingProps {
     (__ \ NODE_TYPE_FN).format[MNodeType] and
     (__ \ IS_DEPEND_FN).format[Boolean] and
     (__ \ IS_ENABLED_FN).formatNullable[Boolean]
-      .inmap [Boolean] (_ getOrElse true, Some.apply) and
+      .inmap [Boolean] (_.getOrElse(true), someF) and
     (__ \ DISABLE_REASON_FN).formatNullable[String]
   )(apply, unlift(unapply))
 

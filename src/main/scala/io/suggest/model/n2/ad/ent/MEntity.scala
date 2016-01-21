@@ -1,6 +1,6 @@
 package io.suggest.model.n2.ad.ent
 
-import io.suggest.common.IEmpty
+import io.suggest.common.empty.IIsNonEmpty
 import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.model.n2.ad.ent.text.TextEnt
 import io.suggest.util.SioEsUtil._
@@ -53,7 +53,7 @@ case class MEntity(
   id    : Int,
   text  : Option[TextEnt]
 )
-  extends IEmpty
+  extends IIsNonEmpty
 {
 
   override def isEmpty = !nonEmpty

@@ -1,6 +1,6 @@
 package io.suggest.model.n2.node.meta
 
-import io.suggest.common.EmptyProduct
+import io.suggest.common.empty.{IEmpty, EmptyProduct}
 import io.suggest.model.es.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -11,7 +11,9 @@ import play.api.libs.functional.syntax._
  * Created: 25.09.15 10:15
  * Description: Модель инфы о человеке (фио и т.д.), живёт внутри MNodeMeta.
  */
-object MPersonMeta extends IGenEsMappingProps {
+object MPersonMeta extends IGenEsMappingProps with IEmpty {
+
+  override type T = MPersonMeta
 
   object Fields {
     val NAME_FIRST_FN   = "f"
@@ -20,13 +22,15 @@ object MPersonMeta extends IGenEsMappingProps {
     val EMAIL_FN        = "e"
   }
 
+  /** Вернуть пустой экземпляр модели, используется очень часто. */
+  override val empty: MPersonMeta = {
+    new MPersonMeta() {
+      override def nonEmpty = false
+    }
+  }
+
 
   import Fields._
-
-  /** Вернуть пустой экземпляр модели, используется очень часто. */
-  val empty: MPersonMeta = new MPersonMeta() {
-    override def nonEmpty = false
-  }
 
   /** Поддержка JSON. */
   implicit val FORMAT: OFormat[MPersonMeta] = (

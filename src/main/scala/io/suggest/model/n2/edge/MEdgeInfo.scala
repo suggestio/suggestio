@@ -1,6 +1,6 @@
 package io.suggest.model.n2.edge
 
-import io.suggest.common.{EmptyProduct, IEmpty}
+import io.suggest.common.empty.{IEmpty, EmptyProduct, IIsNonEmpty}
 import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.model.geo.GeoShape
 import io.suggest.model.sc.common.SinkShowLevel
@@ -20,15 +20,31 @@ import io.suggest.model.es.EsModelUtil.Implicits.jodaDateTimeFormat
  *
  * Это неявно-пустая модель, т.е. все поля модели могут быть пустыми.
  */
-object MEdgeInfo extends IGenEsMappingProps {
+object MEdgeInfo extends IGenEsMappingProps with IEmpty {
 
-  val DYN_IMG_ARGS_FN     = "di"
-  val SLS_FN              = "sls"
-  val DATE_NI_FN          = "dtni"
-  val COMMENT_NI_FN       = "coni"
-  val FLAG_FN             = "flag"
-  val GEO_SHAPE_FN        = "gs"
+  override type T = MEdgeInfo
 
+  /** Статический пустой экземпляр модели. */
+  override val empty: MEdgeInfo = {
+    new MEdgeInfo() {
+      override def nonEmpty = false
+    }
+  }
+
+
+  object Fields {
+
+    val DYN_IMG_ARGS_FN   = "di"
+    val SLS_FN            = "sls"
+    val DATE_NI_FN        = "dtni"
+    val COMMENT_NI_FN     = "coni"
+    val FLAG_FN           = "flag"
+    val GEO_SHAPE_FN      = "gs"
+
+  }
+
+
+  import Fields._
 
   /** Поддержка JSON. */
   implicit val FORMAT: Format[MEdgeInfo] = (
@@ -41,10 +57,6 @@ object MEdgeInfo extends IGenEsMappingProps {
   )(apply, unlift(unapply))
 
 
-  /** Статический пустой экземпляр модели. */
-  val empty: MEdgeInfo = new MEdgeInfo() {
-    override def nonEmpty = false
-  }
 
 
   import io.suggest.util.SioEsUtil._
@@ -90,7 +102,7 @@ object MEdgeInfo extends IGenEsMappingProps {
 
 
 /** Интерфейс элементов модели. */
-trait IEdgeInfo extends IEmpty {
+trait IEdgeInfo extends IIsNonEmpty {
 
   /** При указании на картинку бывает нужно указать исходный кроп или что-то ещё. */
   def dynImgArgs   : Option[String]

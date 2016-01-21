@@ -2,6 +2,7 @@ package io.suggest.model.n2.ad.blk
 
 import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.ym.model.common.MImgSizeT
+import io.suggest.common.empty.EmptyUtil._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.api.mvc.QueryStringBindable
@@ -25,9 +26,9 @@ object BlockMeta extends IGenEsMappingProps {
     (__ \ BLOCK_ID_ESFN).format[Int] and
     (__ \ HEIGHT_ESFN).format[Int] and
     (__ \ WIDTH_ESFN).formatNullable[Int]
-      .inmap [Int] (_ getOrElse WIDTH_DFLT,  Some.apply) and
+      .inmap [Int] (_.getOrElse(WIDTH_DFLT), someF) and
     (__ \ WIDE_ESFN).formatNullable[Boolean]
-      .inmap [Boolean] (_ getOrElse false, Some.apply)
+      .inmap [Boolean] (_.getOrElse(false), someF)
   )(apply, unlift(unapply))
 
 

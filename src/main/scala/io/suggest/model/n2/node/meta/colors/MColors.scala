@@ -1,6 +1,6 @@
 package io.suggest.model.n2.node.meta.colors
 
-import io.suggest.common.EmptyProduct
+import io.suggest.common.empty.{IEmpty, EmptyProduct}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -13,9 +13,11 @@ import play.api.libs.functional.syntax._
  * Модель не анализируется со стороны ES вообще.
  */
 
-object MColors {
+object MColors extends IEmpty {
 
-  val empty: MColors = {
+  override type T = MColors
+
+  override val empty: MColors = {
     new MColors() {
       override def nonEmpty = false
     }

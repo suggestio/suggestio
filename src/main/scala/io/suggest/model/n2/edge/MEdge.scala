@@ -2,6 +2,7 @@ package io.suggest.model.n2.edge
 
 import io.suggest.model.PrefixedFn
 import io.suggest.model.es.IGenEsMappingProps
+import io.suggest.common.empty.EmptyUtil._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -29,8 +30,8 @@ object MEdge extends IGenEsMappingProps {
     object Info extends PrefixedFn {
       override protected def _PARENT_FN = INFO_FN
 
-      def INFO_SLS_FN   = _fullFn( MEdgeInfo.SLS_FN )
-      def FLAG_FN       = _fullFn( MEdgeInfo.FLAG_FN )
+      def INFO_SLS_FN   = _fullFn( MEdgeInfo.Fields.SLS_FN )
+      def FLAG_FN       = _fullFn( MEdgeInfo.Fields.FLAG_FN )
     }
 
   }
@@ -45,8 +46,8 @@ object MEdge extends IGenEsMappingProps {
     (__ \ ORDER_FN).formatNullable[Int] and
     (__ \ INFO_FN).formatNullable[MEdgeInfo]
       .inmap [MEdgeInfo] (
-        _ getOrElse MEdgeInfo.empty,
-        { mei => if (mei.isEmpty) None else Some(mei) }
+        opt2ImplMEmptyF( MEdgeInfo ),
+        implEmpty2OptF
       )
   )(apply, unlift(unapply))
 

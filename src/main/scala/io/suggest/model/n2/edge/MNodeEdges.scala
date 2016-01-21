@@ -1,8 +1,9 @@
 package io.suggest.model.n2.edge
 
-import io.suggest.common.EmptyProduct
+import io.suggest.common.empty.{IEmpty, EmptyProduct}
 import io.suggest.model.PrefixedFn
 import io.suggest.model.es.IGenEsMappingProps
+import io.suggest.common.empty.EmptyUtil._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -21,7 +22,9 @@ import play.api.libs.functional.syntax._
  * эджи возвращаются внутрь моделей, из которых они исходят. Это как бы золотая середина
  * для исходной архитектуры и новой.
  */
-object MNodeEdges extends IGenEsMappingProps {
+object MNodeEdges extends IGenEsMappingProps with IEmpty {
+
+  override type T = MNodeEdges
 
   object Fields {
 
@@ -43,7 +46,7 @@ object MNodeEdges extends IGenEsMappingProps {
   }
 
   /** Статический пустой экземпляр модели. */
-  val empty: MNodeEdges = {
+  override val empty: MNodeEdges = {
     new MNodeEdges() {
       override def nonEmpty = false
     }
@@ -66,7 +69,7 @@ object MNodeEdges extends IGenEsMappingProps {
     (__ \ Fields.OUT_FN).formatNullable[NodeEdgesMap_t]
       // Приведение опциональной карты к неопциональной.
       .inmap [NodeEdgesMap_t] (
-        _ getOrElse Map.empty,
+        opt2ImplEmpty1F( Map.empty ),
         {mnes => if (mnes.isEmpty) None else Some(mnes) }
       )
       // Вместо apply используем inmap, т.к. только одно поле тут.
@@ -103,6 +106,7 @@ object MNodeEdges extends IGenEsMappingProps {
 
   /**
     * Узнать следующий номер для order id.
+ *
     * @param edges Эджи.
     * @return Значение Order id, пригодное для сборки нового [[IEdge]].
     */

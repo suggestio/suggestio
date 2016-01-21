@@ -1,6 +1,6 @@
 package io.suggest.model.n2.bill.tariff
 
-import io.suggest.common.EmptyProduct
+import io.suggest.common.empty.{IEmpty, EmptyProduct}
 import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.model.n2.bill.tariff.adv.get.tag.MGeoTagAdvTf
 import play.api.libs.json._
@@ -12,11 +12,13 @@ import play.api.libs.functional.syntax._
  * Created: 04.12.15 14:12
  * Description: Тарифы узла для каких-то платных действий.
  */
-object MNodeTariffs extends IGenEsMappingProps {
+object MNodeTariffs extends IGenEsMappingProps with IEmpty {
+
+  override type T = MNodeTariffs
 
   val GEO_TAG_TF_FN = "gt"
 
-  val empty: MNodeTariffs = {
+  override val empty: MNodeTariffs = {
     apply()
   }
 

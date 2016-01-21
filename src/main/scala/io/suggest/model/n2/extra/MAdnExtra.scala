@@ -4,6 +4,7 @@ import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.model.sc.common.AdShowLevel
 import io.suggest.ym.model.common.{AdnRights, AdnRight, AdnSink}
+import io.suggest.common.empty.EmptyUtil._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -36,7 +37,7 @@ object MAdnExtra extends IGenEsMappingProps {
   }
 
 
-  /**  */
+  /** Поддержка JSON. */
   implicit val FORMAT: OFormat[MAdnExtra] = (
     (__ \ Fields.RIGHTS.fn).formatNullable[Set[AdnRight]]
       .inmap [Set[AdnRight]] (
@@ -46,13 +47,13 @@ object MAdnExtra extends IGenEsMappingProps {
     (__ \ Fields.IS_BY_USER.fn).formatNullable[Boolean]
       .inmap [Boolean] (
         _ getOrElse false,
-        Some.apply
+        someF
       ) and
     (__ \ Fields.SHOWN_TYPE.fn).formatNullable[String] and
     (__ \ Fields.IS_TEST.fn).formatNullable[Boolean]
       .inmap [Boolean] (
         _ getOrElse false,
-        Some.apply
+        someF
       ) and
     (__ \ Fields.OUT_SLS.fn).formatNullable[Iterable[MSlInfo]]
       .inmap [Map[AdShowLevel, MSlInfo]] (
@@ -67,7 +68,7 @@ object MAdnExtra extends IGenEsMappingProps {
     (__ \ Fields.SHOW_IN_SC_NL.fn).formatNullable[Boolean]
       .inmap [Boolean] (
         _ getOrElse true,
-        Some.apply
+        someF
       )
   )(apply, unlift(unapply))
 

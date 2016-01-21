@@ -1,6 +1,6 @@
 package io.suggest.model.n2.node.meta
 
-import io.suggest.common.EmptyProduct
+import io.suggest.common.empty.{IEmpty, EmptyProduct}
 import io.suggest.model.es.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -11,7 +11,9 @@ import play.api.libs.functional.syntax._
  * Created: 25.09.15 12:51
  * Description: Модель метаданных географического адреса узла.
  */
-object MAddress extends IGenEsMappingProps {
+object MAddress extends IGenEsMappingProps with IEmpty {
+
+  override type T = MAddress
 
   object Fields {
     val TOWN_FN         = "t"
@@ -21,14 +23,14 @@ object MAddress extends IGenEsMappingProps {
     val SECTION_FN      = "s"
   }
 
-
-  import Fields._
-
-  val empty: MAddress = {
+  override val empty: MAddress = {
     new MAddress() {
       override def nonEmpty = false
     }
   }
+
+
+  import Fields._
 
   implicit val FORMAT: OFormat[MAddress] = (
     (__ \ TOWN_FN).formatNullable[String] and

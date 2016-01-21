@@ -1,6 +1,6 @@
 package io.suggest.model.n2.extra.mdr
 
-import io.suggest.common.EmptyProduct
+import io.suggest.common.empty.EmptyProduct
 import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.util.SioEsUtil._
 import play.api.libs.json._
@@ -38,6 +38,7 @@ object MMdrExtra extends IGenEsMappingProps {
 
 /**
  * Инфа по модерации.
+ *
  * @param freeAdv Данные по возможности бесплатного размещения карточки (у себя самого, например).
  */
 case class MMdrExtra(

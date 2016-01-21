@@ -1,11 +1,11 @@
 package io.suggest.model.n2.node.meta
 
-import io.suggest.common.EmptyProduct
 import io.suggest.model.PrefixedFn
 import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.model.n2.node.meta.colors.MColors
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import io.suggest.common.empty.EmptyUtil._
 
 /**
  * Suggest.io
@@ -60,38 +60,31 @@ object MMeta extends IGenEsMappingProps {
     // TODO Потом (после наверное 2015.nov) можно будет "Nullable" удалить у basic meta.
     (__ \ BASIC_FN).formatNullable[MBasicMeta]
       .inmap[MBasicMeta](
-        _ getOrElse MBasicMeta(),
-        Some.apply
+        opt2ImplEmpty1F( MBasicMeta() ),
+        someF
       ) and
     (__ \ PERSON_FN).formatNullable[MPersonMeta]
       .inmap[MPersonMeta] (
-        _ getOrElse MPersonMeta.empty,
-        product2emptyOpt
+        opt2ImplMEmptyF ( MPersonMeta ),
+        implEmpty2OptF
       ) and
     (__ \ ADDRESS_FN).formatNullable[MAddress]
       .inmap [MAddress] (
-        _ getOrElse MAddress.empty,
-        product2emptyOpt
+        opt2ImplMEmptyF( MAddress ),
+        implEmpty2OptF
       ) and
     (__ \ BUSINESS_FN).formatNullable[MBusinessInfo]
       .inmap[MBusinessInfo](
-        _ getOrElse MBusinessInfo.empty,
-        product2emptyOpt
+        opt2ImplMEmptyF( MBusinessInfo ),
+        implEmpty2OptF
       ) and
     (__ \ COLORS_FN).formatNullable[MColors]
       .inmap[MColors](
-        _ getOrElse MColors.empty,
-        product2emptyOpt
+        opt2ImplMEmptyF( MColors ),
+        implEmpty2OptF
       )
   )(apply, unlift(unapply))
 
-  /** Конвертация возможно пустой подмодели в опциональное значение подмодели. */
-  private def product2emptyOpt[T <: EmptyProduct](product: T): Option[T] = {
-    if (product.nonEmpty)
-      Some(product)
-    else
-      None
-  }
 
   import io.suggest.util.SioEsUtil._
 

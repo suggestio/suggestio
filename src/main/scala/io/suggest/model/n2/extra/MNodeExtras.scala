@@ -1,6 +1,6 @@
 package io.suggest.model.n2.extra
 
-import io.suggest.common.EmptyProduct
+import io.suggest.common.empty.{IEmpty, EmptyProduct}
 import io.suggest.model.PrefixedFn
 import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.model.n2.extra.tag.MTagExtra
@@ -14,10 +14,12 @@ import play.api.libs.json.{OFormat, _}
  * Description: Модель-контейнер для различных субмоделей (ADN node, ad, tag, place, etc) одного узла N2.
  * В рамках extra-моделей узел N2 как бы "специализируется" на своей задаче.
  */
-object MNodeExtras extends IGenEsMappingProps {
+object MNodeExtras extends IGenEsMappingProps with IEmpty {
+
+  override type T = MNodeExtras
 
   /** Расшаренный пустой экземпляр для дедубликации пустых инстансов контейнера в памяти. */
-  val empty: MNodeExtras = {
+  override val empty: MNodeExtras = {
     new MNodeExtras() {
       override def nonEmpty = false
     }
@@ -73,8 +75,8 @@ object MNodeExtras extends IGenEsMappingProps {
 
 /** Класс-контейнер-реализация модели. */
 case class MNodeExtras(
-                        tag: Option[MTagExtra] = None,
-                        adn: Option[MAdnExtra]  = None
-                        // модерация была вынесена отсюда в эджи.
+  tag: Option[MTagExtra] = None,
+  adn: Option[MAdnExtra]  = None
+  // модерация была вынесена отсюда в эджи.
 )
   extends EmptyProduct

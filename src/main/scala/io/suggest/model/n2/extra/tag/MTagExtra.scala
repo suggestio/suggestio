@@ -5,6 +5,7 @@ import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.util.SioEsUtil._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import io.suggest.common.empty.EmptyUtil._
 
 import scala.collection.Map
 
@@ -39,7 +40,7 @@ object MTagExtra extends IGenEsMappingProps {
   implicit val FORMAT: Format[MTagExtra] = {
     (__ \ FACES_FN).formatNullable( MTagFace.FACES_MAP_FORMAT )
       .inmap [TagFacesMap] (
-        _ getOrElse Map.empty,
+        opt2ImplEmpty1F( Map.empty ),
         { tfm => if (tfm.isEmpty) None else Some(tfm) }
       )
       .inmap [MTagExtra] (

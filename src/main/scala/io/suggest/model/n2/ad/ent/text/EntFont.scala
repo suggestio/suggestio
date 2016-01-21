@@ -1,5 +1,6 @@
 package io.suggest.model.n2.ad.ent.text
 
+import io.suggest.common.empty.EmptyUtil._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -18,8 +19,8 @@ object EntFont {
   implicit val FORMAT: OFormat[EntFont] = (
     (__ \ COLOR_FN).formatNullable[String]
       .inmap[String](
-        _ getOrElse FONT_COLOR_DFLT,
-        Some.apply
+        _.getOrElse(FONT_COLOR_DFLT),
+        someF
       ) and
     (__ \ SIZE_FN).formatNullable[Int] and
     (__ \ ALIGN_FN).formatNullable[TextAlign] and
