@@ -122,7 +122,7 @@ object SiobixBuild extends Build {
   /** Корневой проект. Он должен аггрегировать подпроекты. */
   lazy val root = {
     Project(id = "root", base = file("."))
-      .settings(scalaVersion := "2.11.7")
+      .settings(Common.settingsOrg: _*)
       .aggregate(common, lkAdvExtSjs, leafletSjs, mapRadSjs, lkSjs, util, swfs, n2, securesocial, scSjs, web21)
   }
 
