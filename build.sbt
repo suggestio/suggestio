@@ -1,10 +1,8 @@
-organization := "io.suggest"
+Common.settingsOrg
 
 name := "common-slick-driver"
 
 version := "0.0.0-SNAPSHOT"
-
-scalaVersion := "2.11.7"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation")
 
