@@ -1,13 +1,11 @@
-organization := "io.suggest"
+Common.settingsOrg
 
 name := "sc-sjs"
-
-scalaVersion := "2.11.7"
 
 version := "0.0.0-SNAPSHOT"
 
 libraryDependencies ++= Seq(
-  "io.suggest"    %%% "common-sjs"          % "0.0.0-SNAPSHOT",
+  Common.ORG      %%% "common-sjs"          % "0.0.0-SNAPSHOT",
   "org.monifu"    %%% "minitest"            % "0.12"            % "test"
 )
 
