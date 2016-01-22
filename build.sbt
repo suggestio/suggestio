@@ -1,6 +1,6 @@
 Common.settingsOrg
 
-name := "common"
+name := "svg-util"
 
 version := "0.0.0-SNAPSHOT"
 
