@@ -34,6 +34,13 @@ object SiobixBuild extends Build {
       )
   }
 
+  /** 2016.jan.22: SVG-утиль свалена выведена в отдельный подпроект из web21. */
+  lazy val svgUtil = {
+    val name = "svg-util"
+    Project(name, base = file(name))
+      .dependsOn(logsMacro)
+  }
+
   /** 
    * Модуль scala.js для подсистемы внешнего размещения исторически отдельно и он довольно жирный и сложный,
    * чтобы жить внутри дерева lk-sjs.
@@ -111,7 +118,7 @@ object SiobixBuild extends Build {
 
   /** веб-интерфейс suggest.io v2. */
   lazy val web21 = project
-    .dependsOn(common, util, securesocial, n2, mbill2)
+    .dependsOn(common, util, securesocial, n2, mbill2, svgUtil)
     .settings(
       scalaJSProjects := Seq(lkSjs, commonSjs, scSjs, mapRadSjs, leafletSjs),
       pipelineStages += scalaJSProd
@@ -122,8 +129,8 @@ object SiobixBuild extends Build {
   /** Корневой проект. Он должен аггрегировать подпроекты. */
   lazy val root = {
     Project(id = "root", base = file("."))
-      .settings(scalaVersion := "2.11.7")
-      .aggregate(common, lkAdvExtSjs, leafletSjs, mapRadSjs, lkSjs, util, swfs, n2, securesocial, scSjs, web21)
+      .settings(Common.settingsOrg: _*)
+      .aggregate(common, lkAdvExtSjs, leafletSjs, mapRadSjs, lkSjs, util, swfs, n2, securesocial, scSjs, web21, svgUtil)
   }
 
   // Активация offline-режима резолва зависимостей.

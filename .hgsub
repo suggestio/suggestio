@@ -13,3 +13,4 @@ map-rad-sjs		= map-rad-sjs
 scalajs-leaflet		= scalajs-leaflet
 mbill2			= mbill2
 common-slick-driver	= common-slick-driver
+svg-util		= svg-util
