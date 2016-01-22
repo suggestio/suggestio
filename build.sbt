@@ -1,10 +1,8 @@
 import org.scalajs.core.tools.javascript.OutputMode
 
-organization := "io.suggest"
+Common.settingsOrg
 
 name := "lk-sjs"
-
-scalaVersion := "2.11.7"
 
 version := "0.0.0-SNAPSHOT"
 
@@ -14,9 +12,9 @@ resolvers ++= Seq(
 
 libraryDependencies ++= Seq(
   "be.doeraene"         %%% "scalajs-jquery"      % "0.8.1",
-  "io.suggest"          %%% "lk-adv-ext-sjs"      % "0.0.0-SNAPSHOT",
-  "io.suggest"          %%% "common-sjs"          % "0.0.0-SNAPSHOT",
-  "io.suggest"          %%% "map-rad-sjs"         % "0.0.0-SNAPSHOT"
+  Common.ORG            %%% "lk-adv-ext-sjs"      % "0.0.0-SNAPSHOT",
+  Common.ORG            %%% "common-sjs"          % "0.0.0-SNAPSHOT",
+  Common.ORG            %%% "map-rad-sjs"         % "0.0.0-SNAPSHOT"
   //"org.monifu"  %%% "minitest" % "0.12" % "test",
 )
 
