@@ -1,10 +1,8 @@
+Common.settingsOrg
+
 name := "securesocial"
 
-organization := "io.suggest"
-
 version := "3.4.0-SNAPSHOT"
-
-scalaVersion := "2.11.7"
 
 
 //generateRefReverseRouter := false
@@ -13,7 +11,7 @@ libraryDependencies ++= Seq(
   cache,
   ws,
   "com.typesafe.play" %% "play-mailer" % "3.0.0",
-  "com.typesafe.play" %% "filters-helpers" % "2.4.6",
+  "com.typesafe.play" %% "filters-helpers" % Common.playVsn,
   "org.mindrot" % "jbcrypt" % "0.3m",
   "org.specs2" %% "specs2" % "2.3.12" % "test",
   "org.mockito" % "mockito-all" % "1.9.5" % "test"
