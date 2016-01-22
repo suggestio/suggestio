@@ -17,7 +17,6 @@ JsEngineKeys.engineType := JsEngineKeys.EngineType.Node
 //updateOptions := updateOptions.value.withCachedResolution(true)
 
 libraryDependencies ++= {
- val baticVsn = "1.7"
  Seq(
   jdbc exclude("com.h2database", "h2"),
   "com.typesafe.play" %% "anorm" % "2.4.0",
@@ -75,17 +74,6 @@ libraryDependencies ++= {
   "org.bouncycastle" % "bcmail-jdk15on" % Common.bcVsn,
   "org.bouncycastle" % "bcprov-jdk15on" % Common.bcVsn,
   "io.trbl.bcpg" % "bcpg-simple-jdk15on" % "1.51.0",
-  // svg. batik довольно кривой, exclude(batik-ext) не пашет, приходится сочинять чудеса.
-  "org.apache.xmlgraphics" % "batik-svg-dom" % baticVsn intransitive(),
-  "org.apache.xmlgraphics" % "batik-dom" % baticVsn intransitive(),
-  "org.apache.xmlgraphics" % "batik-css" % baticVsn intransitive(),
-  "org.apache.xmlgraphics" % "batik-xml" % baticVsn intransitive(),
-  "org.apache.xmlgraphics" % "batik-util" % baticVsn intransitive(),
-  "org.apache.xmlgraphics" % "batik-parser" % baticVsn intransitive(),
-  "org.apache.xmlgraphics" % "batik-anim" % baticVsn intransitive(),
-  "org.apache.xmlgraphics" % "batik-awt-util" % baticVsn intransitive(),
-  "xml-apis" % "xml-apis" % "1.4.01",
-  "xml-apis" % "xml-apis-ext" % "1.3.04",
   // Логин через соц.сети
   Common.ORG %% "securesocial" % "3.4.0-SNAPSHOT"
     exclude("commons-logging", "commons-logging")
