@@ -1,10 +1,8 @@
+Common.settingsOrg
+
 name := "n2"
 
-organization := "io.suggest"
-
 version := "0.0.0-SNAPSHOT"
-
-scalaVersion := "2.11.7"
 
 resolvers ++= Seq(
   "typesafe-releases" at "https://ivy2-internal.cbca.ru/artifactory/typesafe-releases",
@@ -14,14 +12,13 @@ resolvers ++= Seq(
 
 
 libraryDependencies ++= {
-  val playVsn       = "2.4.6"
   Seq(
-    "io.suggest"        %% "util" % "2.0.1-SNAPSHOT" changing()
+    Common.ORG          %% "util" % "2.0.1-SNAPSHOT" changing()
       exclude("org.jruby", "jruby-complete")
       exclude("org.slf4j", "slf4j-log4j12")
       exclude("log4j", "log4j")
       exclude("org.slf4j", "log4j-over-slf4j"),
-    "io.suggest"        %% "swfs" % "0.0.0-SNAPSHOT"
+    Common.ORG          %% "swfs" % "0.0.0-SNAPSHOT"
       exclude("org.jruby", "jruby-complete")
       exclude("org.slf4j", "slf4j-log4j12")
       exclude("log4j",     "log4j")
