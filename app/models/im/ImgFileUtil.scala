@@ -2,9 +2,9 @@ package models.im
 
 import java.io.File
 
+import io.suggest.svg.SvgUtil
 import models.mfs.FileUtil
 import net.sf.jmimemagic.MagicMatch
-import util.img.SvgUtil
 
 /**
  * Suggest.io

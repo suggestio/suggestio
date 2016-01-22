@@ -9,6 +9,7 @@ import io.suggest.common.geom.d2.ISize2di
 import io.suggest.img.ConvertModes
 import io.suggest.img.crop.CropConstants
 import io.suggest.popup.PopupConstants
+import io.suggest.svg.SvgUtil
 import io.suggest.ym.model.common.MImgInfoMeta
 import models.im._
 import models.mctx.Context
@@ -174,6 +175,7 @@ class Img @Inject() (
   /**
    * Запрос картинки с опрделёнными параметрами.
    * Ссылка на картинку формируется на сервере и имеет HMAC-подпись для защиты от модификации.
+ *
    * @param args Данные по желаемой картинке.
    * @return Картинки или 304 Not modified.
    */
@@ -253,6 +255,7 @@ trait TempImgSupport
 
   /**
    * Запуск в фоне определения палитры и отправки уведомления по веб-сокету.
+ *
    * @param im Картинка для обработки.
    * @param wsId id для уведомления.
    */
@@ -283,6 +286,7 @@ trait TempImgSupport
   }
 
   /** Обработчик полученной картинки в контексте реквеста, содержащего необходимые данные. Считается, что ACL-проверка уже сделана.
+ *
     * @param preserveUnknownFmt Оставлено на случай поддержки всяких странных форматов.
     * @param request HTTP-реквест.
     * @param ovlRrr Overlay HTML renderer. Опциональный.

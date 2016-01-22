@@ -6,8 +6,7 @@ import com.typesafe.sbt.web._
 import com.typesafe.sbt.SbtProguard.ProguardKeys._
 import com.tuplejump.sbt.yeoman.Yeoman
 
-
-organization := "io.suggest"
+Common.settingsOrg
 
 name := "sioweb21"
 
@@ -15,33 +14,29 @@ version := "1.0-SNAPSHOT"
 
 JsEngineKeys.engineType := JsEngineKeys.EngineType.Node
 
-scalaVersion := "2.11.7"
-
 //updateOptions := updateOptions.value.withCachedResolution(true)
 
 libraryDependencies ++= {
- val playSlickVsn = "1.1.1"   // play-2.5+: синхронизировать с версией play.
- val bcVsn = "1.52"
  Seq(
   jdbc exclude("com.h2database", "h2"),
   "com.typesafe.play" %% "anorm" % "2.4.0",
   cache,
   json,
-  "com.typesafe.play" %% "play-slick" % playSlickVsn,
+  "com.typesafe.play" %% "play-slick" % Common.playSlickVsn,
   ws exclude("commons-logging", "commons-logging"),
   "com.typesafe.play" %% "play-mailer" % "3.0.0",
   "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
   "com.mohiva" %% "play-html-compressor" % "0.5-SNAPSHOT",  // https://github.com/mohiva/play-html-compressor
   //"com.yahoo.platform.yui" % "yuicompressor" % "2.4.+",
   // io.suggest stuff
-  "io.suggest" %% "mbill2" % "0.0.0-SNAPSHOT",
-  "io.suggest" %% "util" % "2.0.1-SNAPSHOT" changing()
+  Common.ORG %% "mbill2" % "0.0.0-SNAPSHOT",
+  Common.ORG %% "util" % "2.0.1-SNAPSHOT" changing()
     exclude("org.jruby", "jruby-complete")
     exclude("org.slf4j", "slf4j-log4j12")
     exclude("log4j", "log4j")
     exclude("org.slf4j", "log4j-over-slf4j")
   ,
-  "io.suggest" %% "n2" % "0.0.0-SNAPSHOT",
+  Common.ORG %% "n2" % "0.0.0-SNAPSHOT",
   // для разбора upload-частей, нужна помощь mime magic bytes
   "jmimemagic" % "jmimemagic" % "0.1.2"
     exclude("xml-apis", "xml-apis")
@@ -75,23 +70,12 @@ libraryDependencies ++= {
   // scalasti - это простой гибкий динамический шаблонизатор строк. Нужен для генерации динамических карточек.
   "org.clapper" %% "scalasti" % "2.+",
   // bouncy castle используется для шифрования. pg используется для стойкого шифрования с подписью.
-  "org.bouncycastle" % "bcpg-jdk15on"   % bcVsn,
-  "org.bouncycastle" % "bcmail-jdk15on" % bcVsn,
-  "org.bouncycastle" % "bcprov-jdk15on" % bcVsn,
+  "org.bouncycastle" % "bcpg-jdk15on"   % Common.bcVsn,
+  "org.bouncycastle" % "bcmail-jdk15on" % Common.bcVsn,
+  "org.bouncycastle" % "bcprov-jdk15on" % Common.bcVsn,
   "io.trbl.bcpg" % "bcpg-simple-jdk15on" % "1.51.0",
-  // svg. batik довольно кривой, exclude(batik-ext) не пашет, приходится сочинять чудеса.
-  "org.apache.xmlgraphics" % "batik-svg-dom" % "1.7" intransitive(),
-  "org.apache.xmlgraphics" % "batik-dom" % "1.7" intransitive(),
-  "org.apache.xmlgraphics" % "batik-css" % "1.7" intransitive(),
-  "org.apache.xmlgraphics" % "batik-xml" % "1.7" intransitive(),
-  "org.apache.xmlgraphics" % "batik-util" % "1.7" intransitive(),
-  "org.apache.xmlgraphics" % "batik-parser" % "1.7" intransitive(),
-  "org.apache.xmlgraphics" % "batik-anim" % "1.7" intransitive(),
-  "org.apache.xmlgraphics" % "batik-awt-util" % "1.7" intransitive(),
-  "xml-apis" % "xml-apis" % "1.4.01",
-  "xml-apis" % "xml-apis-ext" % "1.3.04",
   // Логин через соц.сети
-  "io.suggest" %% "securesocial" % "3.4.0-SNAPSHOT"
+  Common.ORG %% "securesocial" % "3.4.0-SNAPSHOT"
     exclude("commons-logging", "commons-logging")
     exclude("org.w3c.css", "sac")
   ,
