@@ -1,10 +1,8 @@
+Common.settingsOrg
+
 name := "logs-macro"
 
-organization := "io.suggest"
-
 version := "0.0.0-SNAPSHOT"
-
-scalaVersion := "2.11.7"
 
 resolvers ++= Seq(
   "typesafe-releases" at "https://ivy2-internal.cbca.ru/artifactory/typesafe-releases"
