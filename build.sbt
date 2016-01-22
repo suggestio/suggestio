@@ -1,7 +1,5 @@
-organization := "io.suggest"
+Common.settingsOrg
 
 name := "common"
-
-scalaVersion := "2.11.7"
 
 version := "0.0.0-SNAPSHOT"
