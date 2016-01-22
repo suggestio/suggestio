@@ -1,12 +1,10 @@
 import play.sbt.PlayImport
 
+Common.settingsOrg
+
 name := "util"
 
-organization := "io.suggest"
-
 version := "2.0.1-SNAPSHOT"
-
-scalaVersion := "2.11.7"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation")
 
@@ -28,8 +26,8 @@ libraryDependencies ++= {
   val cascadingVsn  = "2.6.3"
   val morphVsn      = "1.3-SNAPSHOT"
   Seq(
-    "io.suggest" %% "common"       % "0.0.0-SNAPSHOT",
-    "io.suggest" %% "logs-macro"   % "0.0.0-SNAPSHOT",
+    Common.ORG  %% "common"       % "0.0.0-SNAPSHOT",
+    Common.ORG  %% "logs-macro"   % "0.0.0-SNAPSHOT",
     "org.slf4j" % "slf4j-api" % slf4jVsn,
     "org.slf4j" % "slf4j-log4j12" % slf4jVsn,
     "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.+",
