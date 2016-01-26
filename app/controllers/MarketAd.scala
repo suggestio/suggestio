@@ -348,46 +348,64 @@ class MarketAd @Inject() (
 
           trace(s"${logPrefix}Updating ad[$adId] with sinkSls = [${ssls.mkString(", ")}]; prodSinks = [${prodSinks.mkString(",")}] sl=$sl prodId=${request.producerId}")
 
-          for {
-            _ <- MNode.tryUpdate(request.mad) { mad =>
-              // Пробуем обновить инстанс карточки.
+          val saveFut = MNode.tryUpdate(request.mad) { mad =>
+            // Извлекаем текущее ребро данного ресивера
+            val e0Opt = mad
+              .edges
+              .withNodePred(producerId, MPredicates.Receiver)
+              .toStream
+              .headOption
+
+            val e0 = e0Opt.getOrElse {
+              MEdge(MPredicates.Receiver, producerId)
+            }
+
+            val sls0 = e0.info.sls
+            val sls1 = if (isLevelEnabled)
+              sls0 -- ssls
+            else
+              sls0 ++ ssls
+
+            val mapOpt: Option[NodeEdgesMap_t] = if (sls1.isEmpty) {
+              // Пустой список sls: значит нужно удалить ресивера.
+              for (_ <- e0Opt) yield {
+                // Исходный эдж существует. Удалить его из исходной карты эджей.
+                MNodeEdges.edgesToMap1(
+                  mad.edges.withoutNodePred(producerId, MPredicates.Receiver)
+                )
+              }
+              // None будет означать, что ничего обновлять не надо, и нужно вернуть null из фунцкии.
+
+            } else if (sls0 == sls1) {
+              // Есть новые список уровней есть, но он не изменился относительно текущего. Не обновлять ничего.
+              LOGGER.trace(logPrefix + "sls not changed, nothing to update")
+              None
+
+            } else {
+              // Есть новый и изменившийся список уровней. Выставить ресивера в карту эджей.
+              val e1 = e0.copy(
+                info = e0.info.copy(sls = sls1)
+              )
+              val map1 = mad.edges.out ++ MNodeEdges.edgesToMap(e1)
+              Some(map1)
+            }
+
+            mapOpt.fold [MNode] {
+              // Ничего менять не требуется -- вернуть null наверх
+              LOGGER.trace(logPrefix + "nothing for tryUpdate()")
+              null
+            } { eout2 =>
+              // Сохранить новую карту эджей в исходный инстанс
               mad.copy(
                 edges = mad.edges.copy(
-                  out = {
-                    // Найти существующий эдж продьюсера-ресивера.
-                    mad.edges
-                      .withNodePred(producerId, MPredicates.Receiver)
-                      .toStream
-                      .headOption
-                      .flatMap { e =>
-                        val sls1 = if (isLevelEnabled)
-                          e.info.sls -- ssls
-                        else
-                          e.info.sls ++ ssls
-                        if (sls1.isEmpty) {
-                          None
-                        } else {
-                          Some(
-                            e.copy(
-                              info = e.info.copy(sls = sls1)
-                            )
-                          )
-                        }
-                      }
-                      .fold[NodeEdgesMap_t] {
-                        // None значит нужно удалить ресивера.
-                        MNodeEdges.edgesToMap1(
-                          mad.edges.withoutNodePred(producerId, MPredicates.Receiver)
-                        )
-                      } { e =>
-                        // Обновляем/выставляем ресивера.
-                        mad.edges.out ++ MNodeEdges.edgesToMap(e)
-                      }
-                  }
+                  out = eout2
                 )
               )
             }
-          } yield {
+          }
+
+          // Отрендерить результат по завершению апдейта.
+          for (_ <- saveFut) yield {
             Ok("Done")
           }
         }   // producerId
@@ -411,12 +429,13 @@ class MarketAd @Inject() (
   }
 
 
-  /** Рендер нового блока редактора для ввода текста.
-    * @param offerN номер оффера
-    * @param height текущая высота карточки. Нужно для того, чтобы новый блок не оказался где-то не там.
-    * @param width Текущая ширина карточки.
-    * @return 200 ok с инлайновым рендером нового текстового поля формы редактора карточек.
-    */
+  /**
+   * Рендер нового блока редактора для ввода текста.
+   * @param offerN номер оффера
+   * @param height текущая высота карточки. Нужно для того, чтобы новый блок не оказался где-то не там.
+   * @param width Текущая ширина карточки.
+   * @return 200 ok с инлайновым рендером нового текстового поля формы редактора карточек.
+   */
   def newTextField(offerN: Int, height: Int, width: Int) = IsAuth { implicit request =>
     val bfText = ListBlock.mkBfText(offerNopt = Some(offerN))
     // Чтобы залить в форму необходимые данные, надо сгенерить экземпляр рекламной карточки.
