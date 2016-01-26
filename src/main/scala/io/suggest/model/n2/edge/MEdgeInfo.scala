@@ -52,7 +52,7 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
     (__ \ SLS_FN).formatNullable[Set[SinkShowLevel]]
       .inmap [Set[SinkShowLevel]] (
         { _ getOrElse Set.empty },
-        { ssls => if (ssls.isEmpty) Some(ssls) else None }
+        { ssls => if (ssls.nonEmpty) Some(ssls) else None }
       ) and
     (__ \ DATE_NI_FN).formatNullable[DateTime] and
     (__ \ COMMENT_NI_FN).formatNullable[String] and
