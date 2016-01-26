@@ -13,28 +13,27 @@ import org.scalajs.dom.raw.{HTMLElement, HTMLInputElement}
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 30.12.15 19:36
- * Description: Контейнер всех [[NgBodiesCity]] во всех городах.
+ * Description: Контейнер всех [[CityNgs]] во всех городах.
  */
-object NgCities extends FindDiv {
-  override type T     = NgCities
+object CitiesNgs extends FindDiv {
+  override type T     = CitiesNgs
   override def DOM_ID = AdvDirectFormConstants.NGRPS_CONT_ID
 }
 
 
-import io.suggest.lk.adv.direct.vm.nbar.ngroups.NgCities.Dom_t
+import CitiesNgs.Dom_t
 
 
-trait NgCitiesT extends OnMouseClickT with IInitLayoutFsm {
+trait CitiesNgsT extends OnMouseClickT with IInitLayoutFsm {
 
   override type T = Dom_t
 
-  def cities: Iterator[NgBodiesCity] = {
+  def cities: Iterator[CityNgs] = {
     for (el <- DomListIterator( _underlying.children )) yield {
-      val el1 = el.asInstanceOf[ NgBodiesCity.Dom_t ]
-      NgBodiesCity(el1)
+      val el1 = el.asInstanceOf[ CityNgs.Dom_t ]
+      CityNgs(el1)
     }
   }
-
 
 
   override def initLayout(fsm: SjsFsm): Unit = {
@@ -55,5 +54,5 @@ trait NgCitiesT extends OnMouseClickT with IInitLayoutFsm {
 }
 
 
-case class NgCities(override val _underlying: Dom_t)
-  extends NgCitiesT
+case class CitiesNgs(override val _underlying: Dom_t)
+  extends CitiesNgsT

@@ -3,6 +3,7 @@ package io.suggest.lk.adv.direct.vm.nbar.nodes
 import io.suggest.adv.direct.AdvDirectFormConstants
 import io.suggest.sjs.common.vm.find.FindElDynIdT
 import io.suggest.sjs.common.vm.input.{CheckBoxVmT, CheckBoxVmStaticT}
+import org.scalajs.dom.raw.HTMLElement
 
 /**
  * Suggest.io
@@ -18,6 +19,13 @@ object NodeCheckBox extends FindElDynIdT with CheckBoxVmStaticT {
   override def getDomId(nodeId: DomIdArg_t): String = {
     AdvDirectFormConstants.NODE_CHECK_BOX_ID(nodeId)
   }
+
+  override def _isWantedHtmlEl(el: HTMLElement): Boolean = {
+    super._isWantedHtmlEl(el) && {
+      el.id.startsWith( AdvDirectFormConstants.NODE_CHECK_BOX_ID_PREFIX )
+    }
+  }
+
 }
 
 

@@ -1,6 +1,6 @@
 package io.suggest.lk.adv.direct.m
 
-import io.suggest.lk.adv.direct.vm.nbar.ngroups.NgHead
+import io.suggest.lk.adv.direct.vm.nbar.tabs.CityCatTab
 import io.suggest.sjs.common.fsm.IFsmMsg
 import org.scalajs.dom.Event
 
@@ -12,6 +12,6 @@ import org.scalajs.dom.Event
  */
 case class NgClick(
   event   : Event,
-  ngHead  : NgHead
+  ngHead  : CityCatTab
 )
   extends IFsmMsg

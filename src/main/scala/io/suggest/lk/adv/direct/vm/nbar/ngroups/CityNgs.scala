@@ -11,13 +11,13 @@ import org.scalajs.dom.raw.HTMLDivElement
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 30.12.15 19:19
- * Description: Контейнер всех [[NgBody]] в рамках города.
+ * Description: Контейнер всех [[CityCatNg]] в рамках города.
  */
-object NgBodiesCity extends FindElDynIdT {
+object CityNgs extends FindElDynIdT {
 
   override type DomIdArg_t  = String
   override type Dom_t       = HTMLDivElement
-  override type T           = NgBodiesCity
+  override type T           = CityNgs
 
   override def getDomId(arg: DomIdArg_t): String = {
     AdvDirectFormConstants.NGRPS_CITY_CONT_ID(arg)
@@ -26,24 +26,24 @@ object NgBodiesCity extends FindElDynIdT {
 }
 
 
-import NgBodiesCity.Dom_t
+import CityNgs.Dom_t
 
 
-trait NgCityBodiesT extends CityIdT with ShowHideDisplayT {
+trait CityNgsT extends CityIdT with ShowHideDisplayT {
 
   override type T = Dom_t
 
-  def ngs: Iterator[NgBody] = {
+  def ngs: Iterator[CityCatNg] = {
     for {
       ngEl <- DomListIterator( _underlying.children )
     } yield {
-      val ngEl1 = ngEl.asInstanceOf[ NgBody.Dom_t ]
-      NgBody(ngEl1)
+      val ngEl1 = ngEl.asInstanceOf[ CityCatNg.Dom_t ]
+      CityCatNg(ngEl1)
     }
   }
 
 }
 
 
-case class NgBodiesCity(override val _underlying: Dom_t)
-  extends NgCityBodiesT
+case class CityNgs(override val _underlying: Dom_t)
+  extends CityNgsT

@@ -15,11 +15,11 @@ import org.scalajs.dom.raw.{HTMLDivElement, HTMLInputElement}
  * Created: 30.12.15 17:57
  * Description: vm'ка тела одной группы нод.
  */
-object NgBody extends FindElDynIdT {
+object CityCatNg extends FindElDynIdT {
 
   override type DomIdArg_t  = NgBodyId
   override type Dom_t       = HTMLDivElement
-  override type T           = NgBody
+  override type T           = CityCatNg
 
   override def getDomId(cityCat: DomIdArg_t): String = {
     AdvDirectFormConstants.CITY_NODES_TAB_BODY_ID(cityCat.cityId, catId = cityCat.ngId)
@@ -28,10 +28,10 @@ object NgBody extends FindElDynIdT {
 }
 
 
-import NgBody.Dom_t
+import CityCatNg.Dom_t
 
 
-trait NgBodyT
+trait CityCatNgT
   extends CityIdT
   with NgIdT
   with ShowHideDisplayT
@@ -56,5 +56,5 @@ trait NgBodyT
 }
 
 
-case class NgBody(override val _underlying: Dom_t)
-  extends NgBodyT
+case class CityCatNg(override val _underlying: Dom_t)
+  extends CityCatNgT

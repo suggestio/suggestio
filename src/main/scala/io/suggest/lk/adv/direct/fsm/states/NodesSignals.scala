@@ -2,10 +2,10 @@ package io.suggest.lk.adv.direct.fsm.states
 
 import io.suggest.lk.adv.direct.fsm.FsmStubT
 import io.suggest.lk.adv.direct.m.{NgBodyId, CityTabHeadClick, NgClick}
-import io.suggest.lk.adv.direct.vm.nbar.cities.{CitiesHeads, CityBodies, CurrCityTitle}
-import io.suggest.lk.adv.direct.vm.nbar.ngroups.{NgBodiesCity, NgBody, NgCities}
-import io.suggest.sjs.common.vm.input.CheckBoxVm
-import org.scalajs.dom.raw.{HTMLElement, HTMLInputElement}
+import io.suggest.lk.adv.direct.vm.nbar.cities.{CitiesHeads, CurrCityTitle}
+import io.suggest.lk.adv.direct.vm.nbar.ngroups.{CityNgs, CityCatNg, CitiesNgs}
+import io.suggest.lk.adv.direct.vm.nbar.nodes.NodeCheckBox
+import io.suggest.lk.adv.direct.vm.nbar.tabs.CitiesTabs
 
 /**
  * Suggest.io
@@ -30,7 +30,8 @@ trait NodesSignals extends FsmStubT {
 
     /**
      * Реакция на клик по табу города.
-     * @param cthc Сигнал клика по заголовку таба города.
+      *
+      * @param cthc Сигнал клика по заголовку таба города.
      */
     protected[this] def _cityTabHeadClick(cthc: CityTabHeadClick): Unit = {
       val sd0 = _stateData
@@ -51,14 +52,14 @@ trait NodesSignals extends FsmStubT {
 
         // TODO Скрыть вообще все группы узлов, т.к. они остались в предыдущем городе.
         for {
-          ngCities <- NgCities.find()
+          ngCities <- CitiesNgs.find()
           ngCity   <- ngCities.cities
         } {
           ngCity.hide()
         }
 
         // Переключиться на отображение узлов интересующего города, скрыв остальные группы узлов с экрана.
-        for (cBodies <- CityBodies.find()) {
+        for (cBodies <- CitiesTabs.find()) {
           cBodies.hide()
           for (cityBody <- cBodies.bodies) {
             val isShown = cityBody.cityId.contains(cityId)
@@ -88,7 +89,7 @@ trait NodesSignals extends FsmStubT {
       for {
         cityId <- ngCl.ngHead.cityId
         if sd0.currCityId.contains(cityId)
-        ngsCityCont <- NgBodiesCity.find(cityId)
+        ngsCityCont <- CityNgs.find(cityId)
       } {
 
         if (!sd0.currNgId.contains(ngIdOpt)) {
@@ -113,16 +114,15 @@ trait NodesSignals extends FsmStubT {
         }
 
         // Если клик был по галочке, то расставить галочки внутри, сменить состояние на запрос цены.
-        val tgEl = ngCl.event.target.asInstanceOf[HTMLElement]
-        if (tgEl.tagName.equalsIgnoreCase("input") && tgEl.asInstanceOf[HTMLInputElement].`type` == "checkbox") {   // TODO Заюзать CheckBoxT.of()
-          val ngCb = CheckBoxVm(tgEl.asInstanceOf[HTMLInputElement])
+        for (ngCb <- NodeCheckBox.ofEventTarget(ngCl.event.target) ) {
           val isCheckedNow = ngCb.isChecked
 
-          val iter = ngIdOpt.fold [Iterator[NgBody]] {
+          val iter = ngIdOpt.fold [Iterator[CityCatNg]] {
             // TODO Выставить все галочки в NgHeads
             ngsCityCont.ngs
           } { ngId =>
-            NgBody.find(NgBodyId(cityId, ngId = ngId)).iterator
+            CityCatNg.find(NgBodyId(cityId, ngId = ngId))
+              .iterator
           }
 
           for (ng <- iter; cb <- ng.checkBoxes) {
