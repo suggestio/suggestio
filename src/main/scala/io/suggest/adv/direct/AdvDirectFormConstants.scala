@@ -26,7 +26,7 @@ object AdvDirectFormConstants {
   def CITIES_BODIES_CONT_ID   = NODES_BAR_ID + "CB"
 
   /** Префикс id таба города. */
-  def CITY_TAB_BODY_PREFIX    = CITIES_HEADS_CONT_ID + "b"
+  def CITY_TAB_BODY_PREFIX    = CITIES_HEADS_CONT_ID + "b."
 
   /** Класс-пометка о том, что данный элемент является "кнопкой" города. */
   def CITY_TAB_HEAD_CLASS     = "adv-management_city-i"
@@ -38,7 +38,7 @@ object AdvDirectFormConstants {
   def CITY_TAB_HEAD_ID(cityId: String) = CITIES_HEADS_CONT_ID + "." + cityId
 
   /** сборка id тела данных по одному городу. */
-  def CITY_TAB_BODY_ID(cityId: String) = CITY_TAB_BODY_PREFIX + "." + cityId
+  def CITY_TAB_BODY_ID(cityId: String) = CITY_TAB_BODY_PREFIX + cityId
 
   def ATTR_CITY_ID            = ATTR_NODE_ID
   def ATTR_CAT_ID             = ATTR_PREFIX + "ci"
@@ -49,9 +49,13 @@ object AdvDirectFormConstants {
   /** Контейнер всех групп нод из всех городов. */
   def NGRPS_CONT_ID           = NODES_BAR_ID + "Ngc"
 
+
+  /** Префикс id'шников заголовков табов групп узлов. */
+  def CITY_NODES_TAB_HEAD_ID_PREFIX = CITIES_HEADS_CONT_ID + "Ns."
+
   /** Сборка id контейнеров заголовков табов нод в рамках города. */
   def CITY_NODES_TAB_HEAD_ID(cityId: String, catId: Option[String] = None): String = {
-    val id0 = CITY_TAB_HEAD_ID(cityId) + ".Ns"
+    val id0 = CITY_NODES_TAB_HEAD_ID_PREFIX + cityId
     catId.fold(id0)(id0 + "." + _)
   }
 
@@ -65,13 +69,17 @@ object AdvDirectFormConstants {
     NGRPS_CONT_ID + "." + cityId
   }
 
+  def NODE_ROW_ID_PREFIX = PREFIX + "O."
+
   /** id контейнера одного узла в списке узлов. */
   def NODE_ROW_ID(nodeId: String): String = {
-    PREFIX + "O." + nodeId
+    NODE_ROW_ID_PREFIX + nodeId
   }
 
+  def NODE_CHECK_BOX_ID_PREFIX = NODE_ROW_ID_PREFIX + ".cb."
+
   def NODE_CHECK_BOX_ID(nodeId: String): String = {
-    NODE_ROW_ID(nodeId) + ".cb"
+    NODE_CHECK_BOX_ID_PREFIX + nodeId
   }
 
 }
