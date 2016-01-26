@@ -337,16 +337,7 @@ class MarketAd @Inject() (
           NotFound(msg)
 
         } { producerId =>
-
-          // Маппим уровни отображения на sink-уровни отображения, доступные узлу-продьюсеру.
-          // Нет смысла делить на wi-fi и geo, т.к. вектор идёт на геолокации, и wifi становится вторичным.
-          val prodSinks = request.producer
-            .extras.adn
-            .fold(Set.empty[AdnSink])(_.sinks) + AdnSinks.SINK_GEO
-          val ssls = prodSinks
-            .map { SinkShowLevels.withArgs(_, sl) }
-
-          trace(s"${logPrefix}Updating ad[$adId] with sinkSls = [${ssls.mkString(", ")}]; prodSinks = [${prodSinks.mkString(",")}] sl=$sl prodId=${request.producerId}")
+          trace(s"${logPrefix}Updating ad[$adId] with sl=$sl/$isLevelEnabled prodId=${request.producerId}")
 
           val saveFut = MNode.tryUpdate(request.mad) { mad =>
             // Извлекаем текущее ребро данного ресивера
@@ -361,10 +352,19 @@ class MarketAd @Inject() (
             }
 
             val sls0 = e0.info.sls
-            val sls1 = if (isLevelEnabled)
-              sls0 -- ssls
-            else
-              sls0 ++ ssls
+
+            def _mkSlss(src: TraversableOnce[AdnSink]) = src.toIterator.map { SinkShowLevels.withArgs(_, sl) }
+            val sls1 = if (isLevelEnabled) {
+              // Маппим уровни отображения на sink-уровни отображения, доступные узлу-продьюсеру.
+              // Нет смысла делить на wi-fi и geo, т.к. вектор идёт на геолокации, и wifi становится вторичным.
+              val prodSinks = request.producer
+                .extras.adn
+                .fold(Set.empty[AdnSink])(_.sinks) + AdnSinks.SINK_GEO
+              sls0 ++ _mkSlss(prodSinks)
+
+            } else {
+              sls0 -- _mkSlss(AdnSinks.valuesT)
+            }
 
             val mapOpt: Option[NodeEdgesMap_t] = if (sls1.isEmpty) {
               // Пустой список sls: значит нужно удалить ресивера.
@@ -378,7 +378,7 @@ class MarketAd @Inject() (
 
             } else if (sls0 == sls1) {
               // Есть новые список уровней есть, но он не изменился относительно текущего. Не обновлять ничего.
-              LOGGER.trace(logPrefix + "sls not changed, nothing to update")
+              LOGGER.trace(s"$logPrefix SLS not changed, nothing to update: $sls0")
               None
 
             } else {
