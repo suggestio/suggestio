@@ -330,85 +330,79 @@ class MarketAd @Inject() (
         NotAcceptable("Request body invalid.")
       },
       {case (sl, isLevelEnabled) =>
-        // Если у карточки нет ресивера, то этот экшен невозможно. TODO Вынести на уровень ActionBuilder'а.
-        n2NodesUtil.madProducerId(request.mad).fold[Future[Result]] {
-          val msg = "No producer exists for node " + adId
-          debug(msg)
-          NotFound(msg)
+        val producerId = request.producerId
 
-        } { producerId =>
-          trace(s"${logPrefix}Updating ad[$adId] with sl=$sl/$isLevelEnabled prodId=${request.producerId}")
+        trace(s"${logPrefix}Updating ad[$adId] with sl=$sl/$isLevelEnabled prodId=${request.producerId}")
 
-          val saveFut = MNode.tryUpdate(request.mad) { mad =>
-            // Извлекаем текущее ребро данного ресивера
-            val e0Opt = mad
-              .edges
-              .withNodePred(producerId, MPredicates.Receiver)
-              .toStream
-              .headOption
+        val saveFut = MNode.tryUpdate(request.mad) { mad =>
+          // Извлекаем текущее ребро данного ресивера
+          val e0Opt = mad
+            .edges
+            .withNodePred(producerId, MPredicates.Receiver)
+            .toStream
+            .headOption
 
-            val e0 = e0Opt.getOrElse {
-              MEdge(MPredicates.Receiver, producerId)
-            }
-
-            val sls0 = e0.info.sls
-
-            def _mkSlss(src: TraversableOnce[AdnSink]) = src.toIterator.map { SinkShowLevels.withArgs(_, sl) }
-            val sls1 = if (isLevelEnabled) {
-              // Маппим уровни отображения на sink-уровни отображения, доступные узлу-продьюсеру.
-              // Нет смысла делить на wi-fi и geo, т.к. вектор идёт на геолокации, и wifi становится вторичным.
-              val prodSinks = request.producer
-                .extras.adn
-                .fold(Set.empty[AdnSink])(_.sinks) + AdnSinks.SINK_GEO
-              sls0 ++ _mkSlss(prodSinks)
-
-            } else {
-              sls0 -- _mkSlss(AdnSinks.valuesT)
-            }
-
-            val mapOpt: Option[NodeEdgesMap_t] = if (sls1.isEmpty) {
-              // Пустой список sls: значит нужно удалить ресивера.
-              for (_ <- e0Opt) yield {
-                // Исходный эдж существует. Удалить его из исходной карты эджей.
-                MNodeEdges.edgesToMap1(
-                  mad.edges.withoutNodePred(producerId, MPredicates.Receiver)
-                )
-              }
-              // None будет означать, что ничего обновлять не надо, и нужно вернуть null из фунцкии.
-
-            } else if (sls0 == sls1) {
-              // Есть новые список уровней есть, но он не изменился относительно текущего. Не обновлять ничего.
-              LOGGER.trace(s"$logPrefix SLS not changed, nothing to update: $sls0")
-              None
-
-            } else {
-              // Есть новый и изменившийся список уровней. Выставить ресивера в карту эджей.
-              val e1 = e0.copy(
-                info = e0.info.copy(sls = sls1)
-              )
-              val map1 = mad.edges.out ++ MNodeEdges.edgesToMap(e1)
-              Some(map1)
-            }
-
-            mapOpt.fold [MNode] {
-              // Ничего менять не требуется -- вернуть null наверх
-              LOGGER.trace(logPrefix + "nothing for tryUpdate()")
-              null
-            } { eout2 =>
-              // Сохранить новую карту эджей в исходный инстанс
-              mad.copy(
-                edges = mad.edges.copy(
-                  out = eout2
-                )
-              )
-            }
+          val e0 = e0Opt.getOrElse {
+            MEdge(MPredicates.Receiver, producerId)
           }
 
-          // Отрендерить результат по завершению апдейта.
-          for (_ <- saveFut) yield {
-            Ok("Done")
+          val sls0 = e0.info.sls
+
+          def _mkSlss(src: TraversableOnce[AdnSink]) = src.toIterator.map { SinkShowLevels.withArgs(_, sl) }
+          val sls1 = if (isLevelEnabled) {
+            // Маппим уровни отображения на sink-уровни отображения, доступные узлу-продьюсеру.
+            // Нет смысла делить на wi-fi и geo, т.к. вектор идёт на геолокации, и wifi становится вторичным.
+            val prodSinks = request.producer
+              .extras.adn
+              .fold(Set.empty[AdnSink])(_.sinks) + AdnSinks.SINK_GEO
+            sls0 ++ _mkSlss(prodSinks)
+
+          } else {
+            sls0 -- _mkSlss(AdnSinks.valuesT)
           }
-        }   // producerId
+
+          val mapOpt: Option[NodeEdgesMap_t] = if (sls1.isEmpty) {
+            // Пустой список sls: значит нужно удалить ресивера.
+            for (_ <- e0Opt) yield {
+              // Исходный эдж существует. Удалить его из исходной карты эджей.
+              MNodeEdges.edgesToMap1(
+                mad.edges.withoutNodePred(producerId, MPredicates.Receiver)
+              )
+            }
+            // None будет означать, что ничего обновлять не надо, и нужно вернуть null из фунцкии.
+
+          } else if (sls0 == sls1) {
+            // Есть новые список уровней есть, но он не изменился относительно текущего. Не обновлять ничего.
+            LOGGER.trace(s"$logPrefix SLS not changed, nothing to update: $sls0")
+            None
+
+          } else {
+            // Есть новый и изменившийся список уровней. Выставить ресивера в карту эджей.
+            val e1 = e0.copy(
+              info = e0.info.copy(sls = sls1)
+            )
+            val map1 = mad.edges.out ++ MNodeEdges.edgesToMap(e1)
+            Some(map1)
+          }
+
+          mapOpt.fold [MNode] {
+            // Ничего менять не требуется -- вернуть null наверх
+            LOGGER.trace(logPrefix + "nothing for tryUpdate()")
+            null
+          } { eout2 =>
+            // Сохранить новую карту эджей в исходный инстанс
+            mad.copy(
+              edges = mad.edges.copy(
+                out = eout2
+              )
+            )
+          }
+        }
+
+        // Отрендерить результат по завершению апдейта.
+        for (_ <- saveFut) yield {
+          Ok("Done")
+        }
       }     // form.fold() right
     )       // form.fold()
   }
