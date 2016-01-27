@@ -18,4 +18,8 @@ trait FsmStubT
   override type State_t = FsmState
   override type SD = MStateData
 
+
+  /** Инстанс состояния обновления цены. */
+  protected def _updatePriceState: State_t
+
 }

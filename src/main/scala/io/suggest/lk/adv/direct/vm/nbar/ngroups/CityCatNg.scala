@@ -6,8 +6,9 @@ import io.suggest.lk.adv.direct.vm.nbar.cities.CityIdT
 import io.suggest.lk.adv.direct.vm.nbar.nodes.NodeCheckBox
 import io.suggest.sjs.common.model.dom.DomListIterator
 import io.suggest.sjs.common.vm.find.FindElDynIdT
+import io.suggest.sjs.common.vm.of.OfDiv
 import io.suggest.sjs.common.vm.style.{SetIsShown, ShowHideDisplayT}
-import org.scalajs.dom.raw.{HTMLDivElement, HTMLInputElement}
+import org.scalajs.dom.raw.{HTMLElement, HTMLDivElement, HTMLInputElement}
 
 /**
  * Suggest.io
@@ -15,7 +16,7 @@ import org.scalajs.dom.raw.{HTMLDivElement, HTMLInputElement}
  * Created: 30.12.15 17:57
  * Description: vm'ка тела одной группы нод.
  */
-object CityCatNg extends FindElDynIdT {
+object CityCatNg extends FindElDynIdT with OfDiv {
 
   override type DomIdArg_t  = NgBodyId
   override type Dom_t       = HTMLDivElement
@@ -23,6 +24,12 @@ object CityCatNg extends FindElDynIdT {
 
   override def getDomId(cityCat: DomIdArg_t): String = {
     AdvDirectFormConstants.CITY_NODES_TAB_BODY_ID(cityCat.cityId, catId = cityCat.ngId)
+  }
+
+  override def _isWantedHtmlEl(el: HTMLElement): Boolean = {
+    super._isWantedHtmlEl(el) && {
+      el.id.startsWith( AdvDirectFormConstants.CITY_CAT_NODES_ID_PREFIX )
+    }
   }
 
 }

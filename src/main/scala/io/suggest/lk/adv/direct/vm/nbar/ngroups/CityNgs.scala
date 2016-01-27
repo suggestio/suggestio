@@ -4,8 +4,9 @@ import io.suggest.adv.direct.AdvDirectFormConstants
 import io.suggest.lk.adv.direct.vm.nbar.cities.CityIdT
 import io.suggest.sjs.common.model.dom.DomListIterator
 import io.suggest.sjs.common.vm.find.FindElDynIdT
+import io.suggest.sjs.common.vm.of.{OfDiv, OfElement, ChildrenVms}
 import io.suggest.sjs.common.vm.style.ShowHideDisplayT
-import org.scalajs.dom.raw.HTMLDivElement
+import org.scalajs.dom.raw.{HTMLElement, HTMLDivElement}
 
 /**
  * Suggest.io
@@ -13,7 +14,7 @@ import org.scalajs.dom.raw.HTMLDivElement
  * Created: 30.12.15 19:19
  * Description: Контейнер всех [[CityCatNg]] в рамках города.
  */
-object CityNgs extends FindElDynIdT {
+object CityNgs extends FindElDynIdT with OfDiv {
 
   override type DomIdArg_t  = String
   override type Dom_t       = HTMLDivElement
@@ -23,24 +24,26 @@ object CityNgs extends FindElDynIdT {
     AdvDirectFormConstants.NGRPS_CITY_CONT_ID(arg)
   }
 
+  override def _isWantedHtmlEl(el: HTMLElement): Boolean = {
+    super._isWantedHtmlEl(el) && {
+      el.id.startsWith( AdvDirectFormConstants.NGRPS_CITY_CONT_ID_PREFIX )
+    }
+  }
+
 }
 
 
 import CityNgs.Dom_t
 
 
-trait CityNgsT extends CityIdT with ShowHideDisplayT {
+trait CityNgsT extends CityIdT with ShowHideDisplayT with ChildrenVms {
 
   override type T = Dom_t
+  override type ChildVm_t = CityCatNg
 
-  def ngs: Iterator[CityCatNg] = {
-    for {
-      ngEl <- DomListIterator( _underlying.children )
-    } yield {
-      val ngEl1 = ngEl.asInstanceOf[ CityCatNg.Dom_t ]
-      CityCatNg(ngEl1)
-    }
-  }
+  override protected def _childVmStatic = CityCatNg
+
+  def nodeGroups  = _childrenVms
 
 }
 

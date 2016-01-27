@@ -1,6 +1,7 @@
 package io.suggest.lk.adv.direct.vm.nbar.tabs
 
 import io.suggest.adv.direct.AdvDirectFormConstants
+import io.suggest.lk.adv.direct.m.CityNgIdOpt
 import io.suggest.lk.adv.direct.vm.nbar.cities.CityIdT
 import io.suggest.lk.adv.direct.vm.nbar.ngroups.NgIdT
 import io.suggest.sjs.common.vm.IVm
@@ -18,12 +19,11 @@ object CityCatTab extends FindElDynIdT with OfDiv {
 
   override type Dom_t       = HTMLDivElement
   override type T           = CityCatTab
-  override type DomIdArg_t  = (String, Option[String])    // cityId, Option(catId)
+  override type DomIdArg_t  = CityNgIdOpt
 
-  override def getDomId(cityCat: DomIdArg_t): String = {
-    AdvDirectFormConstants.CITY_NODES_TAB_HEAD_ID(cityCat._1, cityCat._2)
+  override def getDomId(cityNgIdOpt: DomIdArg_t): String = {
+    AdvDirectFormConstants.CITY_NODES_TAB_HEAD_ID(cityNgIdOpt.cityId, cityNgIdOpt.ngIdOpt)
   }
-
 
   override def _isWantedHtmlEl(el: HTMLElement): Boolean = {
     super._isWantedHtmlEl(el) && {
@@ -38,7 +38,16 @@ import CityCatTab.Dom_t
 
 
 trait CityCatTabT extends IVm with CityIdT with NgIdT {
+
   override type T = Dom_t
+
+  def checkBox = {
+    cityId.flatMap { _cityId =>
+      val arg = CityNgIdOpt(cityId.get, ngId)
+      TabCheckBox.find( arg )
+    }
+  }
+
 }
 
 

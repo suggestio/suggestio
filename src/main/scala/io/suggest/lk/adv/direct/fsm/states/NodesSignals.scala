@@ -1,11 +1,11 @@
 package io.suggest.lk.adv.direct.fsm.states
 
 import io.suggest.lk.adv.direct.fsm.FsmStubT
-import io.suggest.lk.adv.direct.m.{NgBodyId, CityTabHeadClick, NgClick}
+import io.suggest.lk.adv.direct.m._
 import io.suggest.lk.adv.direct.vm.nbar.cities.{CitiesHeads, CurrCityTitle}
 import io.suggest.lk.adv.direct.vm.nbar.ngroups.{CityNgs, CityCatNg, CitiesNgs}
-import io.suggest.lk.adv.direct.vm.nbar.nodes.NodeCheckBox
-import io.suggest.lk.adv.direct.vm.nbar.tabs.CitiesTabs
+import io.suggest.lk.adv.direct.vm.nbar.tabs.{CityTabs, TabCheckBox, CitiesTabs}
+import io.suggest.sjs.common.vm.input.Checked
 
 /**
  * Suggest.io
@@ -19,21 +19,25 @@ trait NodesSignals extends FsmStubT {
 
     /** Ресивер сигналов от формы нод. */
     override def receiverPart: Receive = super.receiverPart orElse {
-      // Клик по названию города.
-      case cthc: CityTabHeadClick =>
-        _cityTabHeadClick(cthc)
+      // Клик по конкретному узлу в списке узлов.
+      case nc: NodeChecked =>
+        _nodeChecked(nc)
+
       // Клик по галочке возле вкладки категории узлов.
       case ngCl: NgClick =>
         _ngrpClick(ngCl)
+
+      // Клик по названию города.
+      case cthc: CityTabHeadClick =>
+        _cityTabHeadClick(cthc)
     }
 
 
     /**
      * Реакция на клик по табу города.
-      *
-      * @param cthc Сигнал клика по заголовку таба города.
+     * @param cthc Сигнал клика по заголовку таба города.
      */
-    protected[this] def _cityTabHeadClick(cthc: CityTabHeadClick): Unit = {
+    def _cityTabHeadClick(cthc: CityTabHeadClick): Unit = {
       val sd0 = _stateData
 
       // Скрыть список городов
@@ -80,7 +84,7 @@ trait NodesSignals extends FsmStubT {
      * Реакция на клик по заголовку вкладки группы узлов.
      * @param ngCl Входящий сигнал о клике.
      */
-    protected[this] def _ngrpClick(ngCl: NgClick): Unit = {
+    def _ngrpClick(ngCl: NgClick): Unit = {
       val sd0 = _stateData
 
       // ngId может быть пустым, значит выбрана вкладка "Все места"
@@ -92,18 +96,19 @@ trait NodesSignals extends FsmStubT {
         ngsCityCont <- CityNgs.find(cityId)
       } {
 
+        // Если сменился текущий таб...
         if (!sd0.currNgId.contains(ngIdOpt)) {
           // Отобразить контейнер групп узлов текущего города.
           ngsCityCont.show()
 
           ngIdOpt.fold {
             // Выбрана вкладка "Все места". Нужно все группы в городе найти и отобразить.
-            for (ng <- ngsCityCont.ngs) {
+            for (ng <- ngsCityCont.nodeGroups) {
               ng.show()
             }
           } { ngId =>
             // Выбрана вкладка конкретной категории узлов. Отобразить её, другие скрыть
-            for (ng <- ngsCityCont.ngs) {
+            for (ng <- ngsCityCont.nodeGroups) {
               ng.setIsShown(ng.ngId.contains(ngId))
             }
           }
@@ -113,24 +118,58 @@ trait NodesSignals extends FsmStubT {
           )
         }
 
-        // Если клик был по галочке, то расставить галочки внутри, сменить состояние на запрос цены.
-        for (ngCb <- NodeCheckBox.ofEventTarget(ngCl.event.target) ) {
+        // Если клик был по галочке таба, то найти обновить зависимые галочки.
+        for (ngCb <- TabCheckBox.ofEventTarget(ngCl.event.target) ) {
           val isCheckedNow = ngCb.isChecked
+          // Дедубликация кода выставления галочки в Checked VM.
+          def _setCheckedNow(cb: Checked) = cb.setChecked(isCheckedNow)
 
+          // Итератор галочек, которые необходимо выставить вслед за галочкой текущего таба.
           val iter = ngIdOpt.fold [Iterator[CityCatNg]] {
-            // TODO Выставить все галочки в NgHeads
-            ngsCityCont.ngs
+            // Выбраны вообще все места в городе: выставить все галочки во всех заголовках.
+            for {
+              cityTabs <- CityTabs.find(cityId).iterator
+              tabHead  <- cityTabs.tabHeads
+              if tabHead.ngId != ngIdOpt
+              cb       <- tabHead.checkBox
+              if cb.isChecked != isCheckedNow
+            } {
+              _setCheckedNow(cb)
+            }
+            // Вернуть все группы узлов
+            ngsCityCont.nodeGroups
+
           } { ngId =>
-            CityCatNg.find(NgBodyId(cityId, ngId = ngId))
+            // Если снята галочка на группе, то убрать галочку на "все узлы"
+            if (!isCheckedNow) {
+              for {
+                allCb <- TabCheckBox.find( CityNgIdOpt(cityId, None) )
+                if allCb.isChecked
+              } {
+                _setCheckedNow(allCb)
+              }
+            }
+            // Выставить галочки только для группы узлов в рамках текущего города и категории узлов
+            val arg = NgBodyId(cityId, ngId = ngId)
+            CityCatNg.find(arg)
               .iterator
           }
 
           for (ng <- iter; cb <- ng.checkBoxes) {
-            cb.setChecked(isCheckedNow)
+            _setCheckedNow(cb)
           }
+
+          // Запустить пересёт цены.
+          become(_updatePriceState)
         }
       }
 
+    }
+
+
+    /** Реакция на переключение по конкретных узлов в списке узлов. */
+    def _nodeChecked(nc: NodeChecked): Unit = {
+      become(_updatePriceState)
     }
 
   }

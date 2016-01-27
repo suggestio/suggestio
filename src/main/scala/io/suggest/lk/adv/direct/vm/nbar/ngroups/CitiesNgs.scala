@@ -1,13 +1,15 @@
 package io.suggest.lk.adv.direct.vm.nbar.ngroups
 
 import io.suggest.adv.direct.AdvDirectFormConstants
+import io.suggest.lk.adv.direct.fsm.AdvDirectFormFsm
+import io.suggest.lk.adv.direct.m.NodeChecked
+import io.suggest.lk.adv.direct.vm.nbar.nodes.NodeCheckBox
 import io.suggest.sjs.common.fsm.{IInitLayoutFsm, SjsFsm}
-import io.suggest.sjs.common.model.dom.DomListIterator
 import io.suggest.sjs.common.vm.evtg.OnMouseClickT
 import io.suggest.sjs.common.vm.find.FindDiv
-import io.suggest.sjs.common.vm.input.CheckBoxVm
+import io.suggest.sjs.common.vm.of.{ChildrenVms, OfDiv}
 import org.scalajs.dom.Event
-import org.scalajs.dom.raw.{HTMLElement, HTMLInputElement}
+import org.scalajs.dom.raw.HTMLElement
 
 /**
  * Suggest.io
@@ -15,37 +17,38 @@ import org.scalajs.dom.raw.{HTMLElement, HTMLInputElement}
  * Created: 30.12.15 19:36
  * Description: Контейнер всех [[CityNgs]] во всех городах.
  */
-object CitiesNgs extends FindDiv {
+object CitiesNgs extends FindDiv with OfDiv {
   override type T     = CitiesNgs
   override def DOM_ID = AdvDirectFormConstants.NGRPS_CONT_ID
+
+  override def _isWantedHtmlEl(el: HTMLElement): Boolean = {
+    super._isWantedHtmlEl(el) && {
+      el.id == DOM_ID
+    }
+  }
 }
 
 
 import CitiesNgs.Dom_t
 
 
-trait CitiesNgsT extends OnMouseClickT with IInitLayoutFsm {
+trait CitiesNgsT extends OnMouseClickT with IInitLayoutFsm with ChildrenVms {
 
   override type T = Dom_t
+  override type ChildVm_t = CityNgs
+  override protected def _childVmStatic = CityNgs
 
-  def cities: Iterator[CityNgs] = {
-    for (el <- DomListIterator( _underlying.children )) yield {
-      val el1 = el.asInstanceOf[ CityNgs.Dom_t ]
-      CityNgs(el1)
-    }
-  }
-
+  def cities = _childrenVms
 
   override def initLayout(fsm: SjsFsm): Unit = {
-    onClick { event: Event =>
-      // Нужно, чтобы чекбоксы выставляли себе value при смене isChecked!
-      // TODO Тут экстренный говнокод, нужно разрулить это через vm'ки, по-красивому.
-      val el = event.target.asInstanceOf[HTMLElement]
-      if (el.tagName.equalsIgnoreCase("INPUT")) {
-        val el2 = el.asInstanceOf[HTMLInputElement]
-        if (el2.`type`.equalsIgnoreCase("CHECKBOX")) {
-          val vm2 = CheckBoxVm(el2)
-          vm2._underlying.value = vm2.isChecked.toString
+    addEventListener("change") { event: Event =>
+      // Нужно, чтобы все чекбоксы внутри контейнера выставляли себе value="BOOL" при смене isChecked
+      // TODO value наверное не надо обновлять, если сделать form mapping на сервере более гибким.
+      for (cb <- NodeCheckBox.ofEventTarget(event.target)) {
+        cb._underlying.value = cb.isChecked.toString
+        // Нужно уведомлять FSM о произошедшем
+        for (ncb <- NodeCheckBox.ofEl(cb._underlying)) {
+          AdvDirectFormFsm !! NodeChecked(ncb, event)
         }
       }
     }

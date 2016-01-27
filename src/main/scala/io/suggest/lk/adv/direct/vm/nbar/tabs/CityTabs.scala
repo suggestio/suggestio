@@ -4,7 +4,7 @@ import io.suggest.adv.direct.AdvDirectFormConstants
 import io.suggest.lk.adv.direct.vm.nbar.cities.CityIdT
 import io.suggest.sjs.common.model.dom.DomListIterator
 import io.suggest.sjs.common.vm.find.FindElDynIdT
-import io.suggest.sjs.common.vm.of.OfDiv
+import io.suggest.sjs.common.vm.of.{OfElement, ChildrenVms, OfDiv}
 import io.suggest.sjs.common.vm.style.{SetIsShown, ShowHideDisplayT}
 import org.scalajs.dom.raw.{HTMLElement, HTMLDivElement}
 
@@ -36,16 +36,14 @@ object CityTabs extends FindElDynIdT with OfDiv {
 import CityTabs.Dom_t
 
 
-trait CityTabsT extends CityIdT with ShowHideDisplayT with SetIsShown {
+trait CityTabsT extends CityIdT with ShowHideDisplayT with SetIsShown with ChildrenVms {
 
   override type T = Dom_t
 
-  def ngHeads: Iterator[CityCatTab] = {
-    for (el <- DomListIterator( _underlying.children )) yield {
-      val el1 = el.asInstanceOf[CityCatTab.Dom_t]
-      CityCatTab(el1)
-    }
-  }
+  override type ChildVm_t = CityCatTab
+  override protected def _childVmStatic = CityCatTab
+
+  def tabHeads = _childrenVms
 
 }
 

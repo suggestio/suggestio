@@ -10,8 +10,8 @@ trait StandBy extends IntervalSignals with NodesSignals {
 
   /** Трейт для сборки состояния ожидания действию юзера без прочих особенностей. */
   protected[this] trait StandByStateT
-    extends PeriodSignalsStateT
-    with NodesSignalsStateT
+    extends NodesSignalsStateT
+    with PeriodSignalsStateT
   {
   }
 

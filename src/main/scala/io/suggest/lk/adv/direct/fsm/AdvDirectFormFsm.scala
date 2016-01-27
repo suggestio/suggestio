@@ -47,7 +47,10 @@ object AdvDirectFormFsm
 
   class StandByState extends StandByStateT {
     // TODO Обновлять состояние
-    override protected def _srvUpdateFormState: FsmState = this
+    override protected def _srvUpdateFormState: FsmState = _updatePriceState
   }
+
+  /** Инстанс состояния обновления цены. */
+  override protected def _updatePriceState: FsmState = _state // TODO
 
 }

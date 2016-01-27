@@ -29,6 +29,7 @@ trait EContainerT extends SetInnerHtml with InitOnClickToTagsEditFsmT {
 
   /** Пройтись по всем тегав этом контейнере. */
   def tagsIterator: Iterator[ETagCont] = {
+    // TODO Задействовать vm.of.ChildrenVms
     DomListIterator( _underlying.children )
       .flatMap { ETagCont.maybeApply }
   }
