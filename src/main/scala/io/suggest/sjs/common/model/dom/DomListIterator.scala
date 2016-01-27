@@ -8,34 +8,32 @@ import scala.collection.AbstractIterator
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 28.05.15 18:46
  * Description: Поддержка iterator-обхода sjs-коллекций DOMList.
+ * Сначала тут был статический apply() с анонимным классом внутри,
+ * теперь просто case-class для упрощения многоэтажности.
+ *
+ * Завернуть DOMList в стандартный scala Iterator.
+ * Считается, что DOMList не изменяется в длине по мере обхода этого списка.
+ *
+ * @param domList Экземпляр DOMList.
+ * @tparam T Тип элементов.
  */
-object DomListIterator {
+case class DomListIterator[T](domList: DOMList[T]) extends AbstractIterator[T] {
 
-  /**
-   * Завернуть DOMList в стандартный scala Iterator.
-   * Считается, что DOMList не изменяется в длине по мере обхода этого списка.
-   * @param d Экземпляр DOMList.
-   * @tparam T Тип элементов.
-   * @return Одноразовый итератор.
-   */
-  def apply[T](d: DOMList[T]): Iterator[T] = {
-    new AbstractIterator[T] {
-      /** На всякий случай кешируем длину.
-        * Вдруг ведь length() окажется больше O(1) или потребует переключения контекста. */
-      val l = d.length
-      /** Индекс следующего элемента. */
-      var i = 0
+  /** На всякий случай кешируем длину обрабатываемого списка.
+    * Вдруг ведь length() окажется больше O(1) или потребует переключения контекста. */
+  override val size = domList.length
 
-      override def hasNext: Boolean = {
-        i < l
-      }
+  /** Индекс следующего элемента. */
+  private var i = 0
 
-      override def next(): T = {
-        val res = d(i)
-        i += 1
-        res
-      }
-    }
+  override def hasNext: Boolean = {
+    i < size
+  }
+
+  override def next(): T = {
+    val res = domList(i)
+    i += 1
+    res
   }
 
 }
