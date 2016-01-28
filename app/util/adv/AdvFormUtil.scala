@@ -3,7 +3,7 @@ package util.adv
 import com.google.inject.Singleton
 import io.suggest.dt.interval.PeriodsConstants
 import models.{AdShowLevel, AdShowLevels}
-import models.adv.form.{DatePeriodOpt_t, QuickAdvPeriod, DatePeriod_t, QuickAdvPeriods}
+import models.adv.form._
 import org.joda.time.{LocalDate, Period}
 import org.joda.time.format.ISOPeriodFormat
 import play.api.data.Form
@@ -59,7 +59,7 @@ class AdvFormUtil {
 
 
   /** Маппинг для интервала дат размещения. Его точно нельзя заворачивать в val из-за LocalDate.now(). */
-  def advDatePeriodOptM: Mapping[DatePeriodOpt_t] = {
+  def advDatePeriodOptM: Mapping[Option[(LocalDate, LocalDate)]] = {
     // option используется, чтобы избежать ошибок маппинга, если галочка isAdv убрана для текущего ресивера, и дата не выставлена одновременно.
     // TODO Неправильно введённые даты надо заворачивать в None.
     val dateOptM = optional( jodaLocalDate("yyyy-MM-dd") )
@@ -110,18 +110,20 @@ class AdvFormUtil {
       // В зависимости от имеющихся значений полей выбираем реальный период.
       { case (Some(qap), _) =>
           val now = LocalDate.now()
-          now -> now.plus( qap.toPeriod.minusDays(1) )
+          MDatesPeriod(Some(qap), now, now.plus( qap.toPeriod.minusDays(1) ))
         case (_, dpo) =>
-          dpo.get
+          val (dstart, dend) = dpo.get
+          MDatesPeriod(None, dstart, dend)
       },
       // unapply(). Нужно попытаться притянуть имеющийся интервал дат на какой-то период из списка QuickAdvPeriod.
       // При неудаче вернуть кастомный период.
-      {case dp @ (dateStart, dateEnd) =>
+      {dsp =>
         // Угадываем период либо откатываемся на custom_period
-        val periodStr = new Period(dateStart, dateEnd).toString(ISOPeriodFormat.standard())
+        val periodStr = new Period(dsp.dateStart, dsp.dateEnd)
+          .toString(ISOPeriodFormat.standard())
         QuickAdvPeriods.maybeWithName(periodStr) match {
           case Some(qap)  =>  Some(qap) -> None
-          case None       =>  None -> Some(dp)
+          case None       =>  None -> Some((dsp.dateStart, dsp.dateEnd))
         }
       }
     )

@@ -34,12 +34,14 @@ object DateTimePrettyPrinter {
   // Потом следует по geoIP определять таймзону (нужно портировать из Alterrussia).
   private val peerTz = DateTimeZone.forID("Europe/Moscow")
 
+
+  // TODO i18n Нужна локализация тут через ctx.messages:
   /**
    * Генератор форматтеров для минут (минута, минуты, ...).
    * @param mSuffix окончание для слова "минут"
    * @return
    */
-  private def minutesFormatterRu(mSuffix:String, isFuture:Boolean) = {
+  private def minutesFormatterRu(mSuffix: String, isFuture: Boolean) = {
     val suffix = " минут" + mSuffix + " назад"
     new PeriodFormatterBuilder()
       .appendMinutes.appendSuffix(suffix)
@@ -48,6 +50,7 @@ object DateTimePrettyPrinter {
       .withLocale(locale)
   }
 
+  // TODO i18n Нужна локализация тут через ctx.messages:
   private def hoursFormatterRu(hSuffix:String, isFuture:Boolean) = {
     val builder = new PeriodFormatterBuilder()
     if (isFuture) {
@@ -67,13 +70,15 @@ object DateTimePrettyPrinter {
   private val hoursFutureFormatters   = hourFormatters(isFuture = true)
 
 
+  // TODO i18n Нужна локализация окончаний тут через ctx.messages:
   private def hourFormatters(isFuture:Boolean) : Formatters_t = {
-    val hf = hoursFormatterRu(_:String, isFuture)
+    val hf = hoursFormatterRu(_: String, isFuture)
     (hf(""), hf("а"), hf("ов"))
   }
 
+  // TODO i18n Нужна локализация окончаний тут через ctx.messages:
   private def minutesFormatters(isFuture:Boolean) : Formatters_t = {
-    val mf = minutesFormatterRu(_:String, isFuture)
+    val mf = minutesFormatterRu(_: String, isFuture)
     (mf("у"), mf("ы"), mf(""))
   }
 
@@ -117,30 +122,48 @@ object DateTimePrettyPrinter {
     .toFormatter
     .withLocale(locale)
 
+  private val dateFormatterFull = new DateTimeFormatterBuilder()
+    .appendDayOfMonth(1).appendLiteral(' ')
+    .appendMonthOfYearText().appendLiteral(' ')
+    .appendYear(4, 4)
+    .toFormatter
+    .withLocale(locale)
+
+  object MsgWords {
+
+    def SEVERAL_SECONDS   = "Several.seconds."
+    def LESS_THAN_MINUTE  = "Less.than.minute."
+    def LATER             = "later"
+    def AGO               = "ago"
+
+    def laterOrAgo(isFuture: Boolean): String = {
+      if (isFuture) LATER else AGO
+    }
+  }
+
   /**
-   * Выполнить форматирование
+   * Выполнить форматирование даты относительно "сейчас", опустив незначительные детали.
    * @param dt Указанное время
    * @return Человеческое время.
    */
-  def humanizeDt(dt:DateTime, isCapitalized:Boolean = true)(implicit ctx: Context) : String = {
+  def humanizeDt(dt: DateTime, isCapitalized: Boolean = true)(implicit ctx: Context) : String = {
+    import ctx.messages
+
     val now = ctx.now
     val isFuture = dt.isAfter(now)
     val d = if (isFuture)
       new Duration(now, dt)
     else
       new Duration(dt, now)
+
     // Сгенерить подходящую строку.
     val result = if (d.isShorterThan(dur_10sec)) {
-      if (isFuture)
-        "Через несколько секунд"
-      else
-        "Несколько секунд назад"
+      import MsgWords._
+      messages(SEVERAL_SECONDS + laterOrAgo(isFuture))
 
     } else if (d.isShorterThan(dur_minute)) {
-      if (isFuture)
-        "Менее чем через минуту"
-      else
-        "Меньше минуты назад"
+      import MsgWords._
+      messages(LESS_THAN_MINUTE + laterOrAgo(isFuture))
 
     } else if (d.isShorterThan(dur_hour)) {
       val period = d.toPeriodTo(now)
@@ -174,8 +197,15 @@ object DateTimePrettyPrinter {
   }
 
 
+  /** 21 янв 2015 */
+  // TODO выставить здесь LocalDate вместо DateTime.
   def formatDate(dt: DateTime)(implicit ctx: Context): String = {
     dtFormatterOld.print(dt)
+  }
+
+  /** 21 января 2015 */
+  def formatDateFull(d: LocalDate)(implicit ctx: Context): String = {
+    dateFormatterFull.print(d)
   }
 
   private val yyyyMMddFmt = new DateTimeFormatterBuilder()

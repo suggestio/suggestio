@@ -133,7 +133,14 @@
     @_minorTitleTpl() {
       @messages("Date.choosing")
     }
-    @_datesPeriodTpl( args.af("period"), args.advPeriodsAvail )
+
+    @* Инфа о текущем размещении. *@
+    @period._contTpl() {
+      @period._formTpl( args.af("period"), args.advPeriodsAvail )
+      @for(v <- args.af.value) {
+        @period._reportTpl(v.period)
+      }
+    }
 
   }
 

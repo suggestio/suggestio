@@ -4,12 +4,12 @@ import com.google.inject.Inject
 import controllers.ctag.NodeTagsEdit
 import io.suggest.model.geo.{CircleGs, Distance, GeoPoint}
 import models.GeoIp
+import models.adv.form.MDatesPeriod
 import models.adv.gtag.{GtForm_t, MAdvFormResult, MForAdTplArgs}
 import models.jsm.init.MTargets
 import models.maps.MapViewState
 import models.mproj.MCommonDi
 import org.elasticsearch.common.unit.DistanceUnit
-import org.joda.time.LocalDate
 import play.api.mvc.Result
 import util.PlayMacroLogsImpl
 import util.acl.{CanAdvertiseAd, CanAdvertiseAdUtil, RequestWithAdAndProducer}
@@ -44,6 +44,7 @@ class LkAdvGeoTag @Inject() (
 
   /**
    * Экшен рендера страницы размещения карточки в теге с географией.
+ *
    * @param adId id отрабатываемой карточки.
    */
   def forAd(adId: String) = CanAdvertiseAdGet(adId).async { implicit request =>
@@ -61,10 +62,7 @@ class LkAdvGeoTag @Inject() (
         tags      = Nil,
         mapState  = MapViewState(gp, zoom = 10),
         circle    = CircleGs(gp, radius = Distance(10000, DistanceUnit.METERS)),
-        period    = {
-          val ld = LocalDate.now()
-          (ld, ld.plusDays(3))
-        }
+        period = MDatesPeriod()
       )
 
       formEmpty.fill(res)
@@ -77,6 +75,7 @@ class LkAdvGeoTag @Inject() (
 
   /**
    * common-код экшенов GET'а и POST'а формы forAdTpl.
+   *
    * @param form Маппинг формы.
    * @param rs Статус ответа HTTP.
    * @return Фьючерс с ответом.
@@ -97,6 +96,7 @@ class LkAdvGeoTag @Inject() (
 
   /**
    * Экшен сабмита формы размещения карточки в теге с географией.
+   *
    * @param adId id размещаемой карточки.
    * @return 302 see other, 416 not acceptable.
    */

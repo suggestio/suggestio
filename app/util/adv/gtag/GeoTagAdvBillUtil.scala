@@ -46,8 +46,8 @@ class GeoTagAdvBillUtil @Inject() (
       status    = MItemStatuses.Draft,
       price     = price,
       adId      = advTargetId,
-      dateStart = res.period._1.toDateTimeAtStartOfDay,
-      dateEnd   = res.period._2.toDateTimeAtStartOfDay,
+      dateStart = res.period.dateStart.toDateTimeAtStartOfDay,
+      dateEnd   = res.period.dateEnd.toDateTimeAtStartOfDay,
       rcvrIdOpt = None
     )
 

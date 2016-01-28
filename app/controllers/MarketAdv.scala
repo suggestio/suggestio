@@ -4,6 +4,7 @@ import java.sql.SQLException
 
 import com.github.nscala_time.time.OrderingImplicits._
 import com.google.inject.Inject
+import io.suggest.adv.direct.AdvDirectFormConstants
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models._
 import models.adv._
@@ -12,6 +13,7 @@ import models.adv.tpl.{MAdvForAdTplArgs, MAdvHistoryTplArgs, MCurrentAdvsTplArgs
 import models.jsm.init.MTargets
 import models.mproj.MCommonDi
 import play.api.data._
+import play.api.libs.json.{JsString, Json}
 import play.api.mvc.{AnyContent, Result}
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
@@ -24,6 +26,7 @@ import util.n2u.N2NodesUtil
 import util.showcase.ShowcaseUtil
 import views.html.lk.adv._
 import views.html.lk.adv.direct._
+import views.html.lk.adv.widgets.period._reportTpl
 import views.html.lk.adv.widgets.price._
 
 import scala.concurrent.Future
@@ -64,7 +67,12 @@ class MarketAdv @Inject() (
 
   /** Страница управления размещением рекламной карточки. */
   def advForAd(adId: String) = CanAdvertiseAdGet(adId).async { implicit request =>
-    renderAdvForm(adId, directAdvFormUtil.advForm, Ok)
+    val form0 = directAdvFormUtil.advForm
+    // Залить в форму начальные данные.
+    val res = FormResult()
+    val formFilled = form0.fill(res)
+    // Запускаем остальной рендер
+    renderAdvForm(adId, formFilled, Ok)
   }
 
   /** Класс-контейнер для передачи результатов ряда операций с adv/bill-sql-моделями в renderAdvForm(). */
@@ -308,7 +316,8 @@ class MarketAdv @Inject() (
 
   /**
    * Рассчитать цену размещения. Сюда нужно сабмиттить форму также, как и в advFormSubmit().
-   * @param adId id размещаемой рекламной карточки.
+    *
+    * @param adId id размещаемой рекламной карточки.
    * @return Инлайновый рендер отображаемой цены.
    */
   def getAdvPriceSubmit(adId: String) = CanAdvertiseAdPost(adId).async { implicit request =>
@@ -318,8 +327,10 @@ class MarketAdv @Inject() (
         NotAcceptable("Cannot bind form.")
       },
       {formRes =>
+        // Подготовить данные для рассчета стоимости размещения.
         val allRcvrIdsFut = collectAllReceivers(request.producer)
           .map { _.iterator.flatMap(_.id).toSet }
+
         val adves = _formRes2adves(formRes)
         val adves2Fut = for {
           adves1      <- filterEntiesByBusyRcvrs(adId, adves)
@@ -327,8 +338,9 @@ class MarketAdv @Inject() (
         } yield {
           filterEntiesByPossibleRcvrs(adves1, allRcvrIds)
         }
+
         // Начинаем рассчитывать ценник.
-        for {
+        val priceValHtmlFut = for {
           adves2      <- adves2Fut
           advPricing  <- {
             if (adves2.isEmpty || maybeFreeAdv) {
@@ -338,7 +350,20 @@ class MarketAdv @Inject() (
             }
           }
         } yield {
-          Ok(_priceValTpl(advPricing))
+          val html = _priceValTpl(advPricing)
+          html: JsString
+        }
+
+        // Параллельно отрендерить отчет по датам размещения.
+        val periodReportHtml: JsString = _reportTpl(formRes.period)
+
+        // Отрендерить JSON-ответ
+        for (priceValHtml <- priceValHtmlFut) yield {
+          import AdvDirectFormConstants.PriceJson._
+          Ok(Json.obj(
+            PERIOD_REPORT_HTML_FN -> periodReportHtml,
+            PRICE_HTML_FN         -> priceValHtml
+          ))
         }
       }
     )
@@ -398,8 +423,8 @@ class MarketAdv @Inject() (
           adnId       = adnId,
           advertise   = isAdv,
           showLevels  = ssls,
-          dateStart   = formRes.period._1,
-          dateEnd     = formRes.period._2
+          dateStart   = formRes.period.dateStart,
+          dateEnd     = formRes.period.dateEnd
         )
         result :: acc
     }
@@ -485,6 +510,7 @@ class MarketAdv @Inject() (
 
 
   /** Запрос к рендеру окошка с полноразмерной превьюшкой карточки и специфичным для конкретной ситуации функционалом.
+    *
     * @param adId id рекламной карточки.
     * @param povAdnId Опциональный id узла, с точки зрения которого идёт просмотр карточки.
     * @param advId Опциональный id adv-реквеста, к которому относится запрос. Появился в связи с возможностями
@@ -695,10 +721,11 @@ class MarketAdv @Inject() (
 
 
   /**
-   * Рендер окошка рассмотрения рекламной карточки.
-   * @param advReqId id запроса на размещение.
-   * @return 404 если что-то не найдено, иначе 200.
-   */
+    * Рендер окошка рассмотрения рекламной карточки.
+    *
+    * @param advReqId id запроса на размещение.
+    * @return 404 если что-то не найдено, иначе 200.
+    */
   def _showAdvReq(advReqId: Int, r: Option[String]) = CanReceiveAdvReqGet(advReqId).async { implicit request =>
     _showAdvReq1(directAdvFormUtil.reqRefuseFormM, r)
       .map { _.fold(identity, Ok(_))}

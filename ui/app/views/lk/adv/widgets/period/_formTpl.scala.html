@@ -1,0 +1,56 @@
+@(pf: Field, advPeriodsAvail: TraversableOnce[String])(implicit ctx: Context)
+
+@* Тут виджет с версткой выбора двух дат: даты начала и даты окончания размещения. *@
+
+@import ctx.messages
+@import lk.lkProp
+@import lk.forms._
+@import io.suggest.dt.interval.DatesIntervalConstants._
+@import models.mdt.DtPickArgs
+@import io.suggest.dt.interval.PeriodsConstants.CUSTOM
+
+@__inputDatePick(suffix: String, id: String) = {
+  @defining( pf("date." + suffix) ) { field =>
+    <input type="text" id="@id" name="@field.name" value="@field.value"/>
+  }
+}
+
+
+
+<input type="hidden" id="@INIT_ARGS_INPUT_ID" value="@DtPickArgs.args()"/>
+
+<div id="@OPTIONS_CONT_ID" class="date-widget_options">
+  @defining( pf("period") ) { currPeriod =>
+
+    @lkProp( messages("Advertising.period") ) {
+      <div class="input __size-S" >
+        <select id="@PERIOD_SELECT_ID"
+                data-interval="true"
+                name="@currPeriod.name">
+          @advPeriodsAvail.map { v =>
+            <option value="@v"
+                    @if( currPeriod.value.exists(_.equalsIgnoreCase(v)) ) {selected="selected"}>
+              @messages("adv.period." + v)
+            </option>
+          }
+        </select>
+      </div>
+    }
+
+    <div id="@DATES_CONT_ID"
+         style="display: @if(currPeriod.value.contains(CUSTOM)) {block} else {none};">
+      @lkProp( messages("Date.start"), id = Some("advManagementDateStart") ) {
+        @_inputWrapTpl("S") {
+          @__inputDatePick("start", DATE_START_INPUT_ID)
+        }
+      }
+
+      @lkProp(messages("Date.end"), id = Some("advManagementDateEnd")) {
+        @_inputWrapTpl("S") {
+          @__inputDatePick("start", DATE_END_INPUT_ID)
+        }
+      }
+    </div>
+
+  }
+</div>

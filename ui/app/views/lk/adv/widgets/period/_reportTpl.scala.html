@@ -1,0 +1,19 @@
+@(dates: mdt.IDateStartEnd)(implicit ctx: Context)
+
+@* Итог по датам размещения. *@
+
+@import util.DateTimePrettyPrinter.formatDateFull
+@import ctx.messages
+@import io.suggest.dt.interval.DatesIntervalConstants._
+
+<div id="@INFO_CONT_ID" class="date-widget_result">
+
+  <div class="block __margin-S">
+    @messages("Your.ad.will.adv")
+  </div>
+
+  <div class="date-widget_result-value">
+    @messages("from._date")&nbsp;@formatDateFull(dates.dateStart)&nbsp;@messages("till._date")&nbsp;@formatDateFull(dates.dateEnd)
+  </div>
+
+</div>

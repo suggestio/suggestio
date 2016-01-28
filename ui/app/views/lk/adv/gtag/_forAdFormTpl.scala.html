@@ -29,7 +29,11 @@
   }
 
   @_barTpl(MHands.Right) {
-    @_datesPeriodTpl(args.form("period"), args.advPeriodsAvail)
+    @period._contTpl() {
+      @period._formTpl(args.form("period"), args.advPeriodsAvail)
+
+      TODO period._reportTpl()
+    }
   }
 
   @* Для сохранения и восстановления состояния карты при POST нужны hidden-поля в рамках формы. *@
