@@ -33,4 +33,7 @@ object WarnMsgs extends MsgsStaticT {
 
   def RAD_MAP_NO_START_STATE    = E(10)
 
+
+  def DT_PICKER_ARGS_MISSING    = E(11)
+
 }

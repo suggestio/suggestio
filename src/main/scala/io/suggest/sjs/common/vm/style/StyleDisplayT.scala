@@ -54,7 +54,7 @@ trait ShowHideDisplayT extends StyleDisplayT with IShowHide {
 
 
 /** Выставить скрытость или отображенность на основе флага. */
-trait SetIsShown { this: IShowHide =>
+trait SetIsShown extends IShowHide {
 
   /**
    * Вызвать show или hide в зависимости от значения флага.

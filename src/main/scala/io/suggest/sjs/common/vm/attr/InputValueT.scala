@@ -3,6 +3,9 @@ package io.suggest.sjs.common.vm.attr
 import io.suggest.sjs.common.vm.IVm
 import org.scalajs.dom.raw.HTMLInputElement
 
+import scala.scalajs.js
+import scala.scalajs.js.JSON
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -41,4 +44,29 @@ trait IntInputValueT extends InputValueT[Int] {
   override protected def _parseInputValue(v: String): Int = {
     v.toInt
   }
+}
+
+
+trait StringInputValueT extends InputValueT[String] {
+  override protected def _parseInputValue(v: String): String = {
+    v
+  }
+}
+
+
+/** Расширение [[StringInputValueT]] для поддержки парсинга JSON. */
+trait JsonStringInputValueT extends StringInputValueT {
+
+  /** Тип возвращаемого значения из JSON.parse(). Например js.Object. */
+  type JsonVal_t <: js.Any
+
+  /** Прочитать и распарсить строковое значение.
+    * Если парсинг не удался, то будет исключение. */
+  def valueJson: Option[JsonVal_t] = {
+    for (v <- value) yield {
+      JSON.parse(v)
+        .asInstanceOf[JsonVal_t]
+    }
+  }
+
 }
