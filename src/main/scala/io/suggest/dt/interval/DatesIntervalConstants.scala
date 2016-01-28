@@ -35,4 +35,8 @@ object DatesIntervalConstants {
   /** id контейнера с инфой по выбранному периоду. */
   def INFO_CONT_ID        = CONT_ID + "I"
 
+
+  /** id input-элемента, хранящего в value json-строку с параметрами инициализации. */
+  def INIT_ARGS_INPUT_ID  = "ias" + ID_PREFIX
+
 }

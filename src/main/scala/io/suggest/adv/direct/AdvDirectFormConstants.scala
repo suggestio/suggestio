@@ -10,6 +10,8 @@ import io.suggest.common.html.HtmlConstants._
  */
 object AdvDirectFormConstants {
 
+  // TODO Какая-то свалка получилась. Сгруппировать бы это по inner-объектам...
+
   /** Разделитель кусков составных id. */
   def ID_DELIM                = "."
 
@@ -97,5 +99,18 @@ object AdvDirectFormConstants {
   def NODE_CHECK_BOX_ID(nodeId: String): String = {
     NODE_CHECK_BOX_ID_PREFIX + nodeId
   }
+
+
+  /** Константы JSON-ответов сервера на запросы рассчета стоимости размещения. */
+  object PriceJson {
+
+    /** Имя поля в JSON-ответе цены, содержащее отрендеренную цену. */
+    def PRICE_HTML_FN          = "a"
+
+    /** Имя поля в JSON-ответе цены, содержащее отрендеренную инфу по периоду размещения. */
+    def PERIOD_REPORT_HTML_FN  = "b"
+
+  }
+
 
 }
