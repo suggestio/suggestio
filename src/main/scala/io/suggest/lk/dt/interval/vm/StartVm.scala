@@ -15,7 +15,7 @@ object StartVm extends DateStaticVmT {
 }
 
 
-import io.suggest.lk.dt.interval.vm.StartVm.Dom_t
+import StartVm.Dom_t
 
 
 case class StartVm(override val _underlying: Dom_t) extends DateVmT {

@@ -31,8 +31,18 @@ trait ContainerT extends IVm with IInitLayoutFsm {
 
   override def initLayout(fsm: SjsFsm): Unit = {
     val f = IInitLayoutFsm.f(fsm)
-    datesCont.foreach(f)
-    period.foreach(f)
+
+    val _datesCont = datesCont
+    _datesCont.foreach(f)
+
+    val _period = period
+    _period.foreach(f)
+
+    // Скрыть/отобразить даты в зависимости от текущего выставленного значения периода
+    for (p <- _period; dc <- _datesCont) {
+      val isShown = p.isoPeriodOpt.isEmpty
+      dc.setIsShown(isShown)
+    }
   }
 
   /**

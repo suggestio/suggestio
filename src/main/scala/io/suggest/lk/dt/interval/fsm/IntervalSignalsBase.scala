@@ -51,11 +51,16 @@ trait IntervalSignalsBase
       val sd0 = _stateData
       val select = pce.vm
 
+      val datesContOpt = DatesContainer.find()
+
       // Понять, изменился ли период. И если изменился, то обновить состояние FSM.
       val newPeriodOpt = select
         .isoPeriodOpt
         .fold [Option[PeriodEith_t]] {
           // Теперь кастомный период. А был до этого какой?
+          for (dc <- datesContOpt) {
+            dc.show()
+          }
           for {
             oldPeriod     <- _sdGetPeriod(sd0).right.toOption
             result        <- _getDatesPeriodEithOpt
@@ -65,6 +70,9 @@ trait IntervalSignalsBase
 
         } { isoPeriod =>
           // Включен какой-то период-презет.
+          for (dc <- datesContOpt) {
+            dc.hide()
+          }
           val p = _sdGetPeriod(sd0)
           if (p.isLeft || p.right.exists(_ != isoPeriod)) {
             Some(Right(isoPeriod))
