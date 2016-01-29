@@ -14,8 +14,12 @@ trait ReplaceWith extends IVm {
   override type T <: Node
 
   def replaceWith(newVm: IVm { type T <: Node }): Unit = {
+    replaceWith(newVm._underlying)
+  }
+
+  def replaceWith[T <: Node](newUnderlying: Node): Unit = {
     val parent = _underlying.parentNode
-    parent.replaceChild(newVm._underlying, _underlying)
+    parent.replaceChild(newUnderlying, _underlying)
   }
 
 }

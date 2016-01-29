@@ -35,4 +35,9 @@ object ErrorMsgs extends MsgsStaticT {
   def CANT_ADD_TAG_SERVER_ERROR  = E(12)
 
   def TAGS_SEARCH_REQ_FAILED     = E(13)
+
+  def ADV_DIRECT_FORM_PRICE_URL_METHOD_MISS = E(14)
+
+  def ADV_DIRECT_FORM_PRICE_FAIL = E(15)
+
 }

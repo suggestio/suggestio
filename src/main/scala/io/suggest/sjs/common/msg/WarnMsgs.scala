@@ -36,4 +36,7 @@ object WarnMsgs extends MsgsStaticT {
 
   def DT_PICKER_ARGS_MISSING    = E(11)
 
+
+  def ADV_DIRECT_XHR_TS_DROP    = E(12)
+
 }
