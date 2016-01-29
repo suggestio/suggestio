@@ -3,10 +3,11 @@ package util.billing
 import com.google.inject.Inject
 import models.adv.MAdvReq
 import models.mcron.{MCronTask, ICronTask}
+import models.mproj.ICommonDi
 import org.joda.time.Period
 import play.api.db.Database
 import play.api.{Application, Configuration}
-import util.ICronTasksProvider
+import util.{PlayMacroLogsImpl, ICronTasksProvider}
 import util.async.AsyncUtil
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -26,12 +27,14 @@ class MmpCronTasks @Inject() (
   mmpDailyBilling         : MmpDailyBilling,
   aoaFac                  : AdvertiseOfflineAdvsFactory,
   deaFac                  : DepublishExpiredAdvsFactory,
-  configuration           : Configuration,
-  db                      : Database,
-  implicit val ec         : ExecutionContext
+  mCommonDi               : ICommonDi
 )
   extends ICronTasksProvider
+  with PlayMacroLogsImpl
 {
+
+  import LOGGER._
+  import mCommonDi._
 
   /** Включен ли биллинг по крону? Будет выполнятся публикация карточек, их сокрытие и т.д. */
   def CRON_BILLING_CHECK_ENABLED: Boolean = {
@@ -50,7 +53,9 @@ class MmpCronTasks @Inject() (
   val AUTO_ACCEPT_REQS_AFTER_HOURS = configuration.getInt("mmp.daily.accept.auto.after.hours") getOrElse 16
 
   override def cronTasks(app: Application): TraversableOnce[ICronTask] = {
-    if (CRON_BILLING_CHECK_ENABLED) {
+    val enabled = CRON_BILLING_CHECK_ENABLED
+    info("enabled = " + enabled)
+    if (enabled) {
       val every = CHECK_ADVS_OK_DURATION
 
       val applyOldReqs = MCronTask(

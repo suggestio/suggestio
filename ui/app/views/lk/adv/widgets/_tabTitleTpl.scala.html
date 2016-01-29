@@ -1,4 +1,4 @@
-@(title: String, cityId: String, catId: Option[String] = None, withCounter: Boolean = false, withCheckBox: Boolean = true)
+@(title: String, cityId: String, catId: Option[String] = None, withCounter: Boolean = false)(content: Html)
 
 @* Верстка заголовка таба, используемого в форме. *@
 
@@ -9,9 +9,7 @@
      @ATTR_CITY_ID="@cityId"
      @if(catId) {@ATTR_CAT_ID="@catId"} >
 
-  @if(withCheckBox) {
-    @_checkBoxTpl(false)
-  }
+  @content
 
   <span class="select-tab_i-title">@title</span>
 

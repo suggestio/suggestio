@@ -1,6 +1,6 @@
 package models.adv.direct
 
-import org.joda.time.LocalDate
+import models.adv.form.MDatesPeriod
 
 /**
  * Suggest.io
@@ -9,6 +9,6 @@ import org.joda.time.LocalDate
  * Description: Результат маппинга формы adv direct.
  */
 case class FormResult(
-  nodes     : List[OneNodeInfo],
-  period    : (LocalDate, LocalDate)
+  nodes     : List[OneNodeInfo]   = Nil,
+  period    : MDatesPeriod        = MDatesPeriod()
 )

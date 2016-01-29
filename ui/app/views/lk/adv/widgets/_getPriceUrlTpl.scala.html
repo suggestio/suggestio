@@ -4,8 +4,10 @@
 
 @import helper._
 @import ctx.request
-@import io.suggest.adv.AdvConstants._
+@import io.suggest.adv.direct.AdvDirectFormConstants.PriceJson
 
 <input type="hidden"
        value="@CSRF(call)"
-       id="@GET_PRICE_URL_INPUT_ID" />
+       id="@PriceJson.GET_PRICE_URL_INPUT_ID"
+       @(PriceJson.ATTR_METHOD)="@call.method"
+/>

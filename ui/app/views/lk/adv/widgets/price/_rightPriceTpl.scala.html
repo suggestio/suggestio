@@ -3,6 +3,7 @@
 @* Виджет на самой правой панели с данными по размещению. *@
 
 @import ctx.messages
+@import io.suggest.adv.AdvConstants.Price._
 
 <div class="right-bar-price-widget">
   <div class="right-bar-price-widget_cnt">
@@ -11,7 +12,7 @@
       @messages("Total.amount._money")
     </h2>
 
-    <p class="right-bar-price-widget_price-value js-pre-price">
+    <p id="@PRICE_INFO_CONT_ID" class="right-bar-price-widget_price-value">
       @_priceValTpl(price)
     </p>
 

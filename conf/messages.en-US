@@ -681,3 +681,30 @@ Adv.in.geo.tags=Advertising in geotags
 No.enought.deposit=Not enought money on deposit
 City.place.choose=City/place choose
 
+Month.N.1=January
+Month.N.2=Febrary
+Month.N.3=March
+Month.N.4=April
+Month.N.5=May
+Month.N.6=June
+Month.N.7=July
+Month.N.8=August
+Month.N.9=September
+Month.N.10=October
+Month.N.11=November
+Month.N.12=December
+
+DayOfW.N.1=Mo
+DayOfW.N.2=Tu
+DayOfW.N.3=We
+DayOfW.N.4=Th
+DayOfW.N.5=Fr
+DayOfW.N.6=Sa
+DayOfW.N.7=Su
+
+Several.seconds.later=Several seconds later
+Several.seconds.ago=Several seconds ago
+
+Less.than.minute.later=Less than a minute later
+Less.than.minute.ago=Less than a minute ago
+

@@ -67,15 +67,21 @@
           @_tabTitleTpl(
             title   = messages("All.places"),
             cityId  = cityId
-          )
+          ) {
+            @_checkBoxTpl( "id" -> CITY_NODES_TAB_HEAD_CHECKBOX_ID(cityId) )
+          }
 
           @for(cat <- city.cats) {
-            @_tabTitleTpl(
-              title       = cat.name,
-              cityId      = cityId,
-              catId       = Some(cat.id),
-              withCounter = true
-            )
+            @defining( Some(cat.id) ) { someCatId =>
+              @_tabTitleTpl(
+                title       = cat.name,
+                cityId      = cityId,
+                catId       = someCatId,
+                withCounter = true
+              ) {
+                @_checkBoxTpl( "id" -> CITY_NODES_TAB_HEAD_CHECKBOX_ID(cityId, someCatId) )
+              }
+            }
           }   @* for cat *@
 
         }     @* cityTabs *@
@@ -92,21 +98,22 @@
                 @_slideBlkTitleTpl(isOpen = false, id = Some(NODE_ROW_ID(nodeId)), jsSlide = false) {
                   @if( args.busyAdvs.get(nodeId).isEmpty ) {
                     @defining( args.adnId2formIndex.get(nodeId) ) { midOpt =>
-                      @_checkBoxTpl(
-                        isStyled = false,
-                        "id"      -> NODE_CHECK_BOX_ID(nodeId),
-                        "name"    -> s"node[${midOpt.get}].advertise",
-                        "value"   -> false.toString
-                      )
+                      <label>
+                        @_checkBoxTpl(
+                          "id"      -> NODE_CHECK_BOX_ID(nodeId),
+                          "name"    -> s"node[${midOpt.get}].advertise",
+                          "value"   -> false.toString
+                        )
+                        @_checkBoxTitleTpl() {
+                          @an.node.meta.basic.name
+                        }
+                      </label>
                       <input type="hidden" name="node[@midOpt].adnId" value="@nodeId"/>
-                      @_checkBoxTitleTpl() {
-                        @an.node.meta.basic.name
-                      }
                       <a class="slide-block_info-btn js-btn" href="@routes.MarketLkBilling._renderNodeMbmdsWindow(nodeId)">i</a>
                     } @* midOpt *@
                   } else {
                     @_checkBoxTitleTpl() {
-                      <a href="#" class="link">@an.node.meta.basic.name</a>
+                      @an.node.meta.basic.name
                     }
                     <span class="ft-S light-gray"> (@messages("advertised"))</span>
                   }
@@ -121,13 +128,21 @@
   } @* adv-management_left-bar *@
 
 
+  @* Правая колонка содержит виджет работы с датами. *@
   @_barTpl(MHands.Right) {
 
     @* Даты (период) размещения. *@
     @_minorTitleTpl() {
       @messages("Date.choosing")
     }
-    @_datesPeriodTpl( args.af("period"), args.advPeriodsAvail )
+
+    @* Инфа о текущем размещении. *@
+    @period._contTpl() {
+      @period._formTpl( args.af("period"), args.advPeriodsAvail )
+      @for(v <- args.af.value) {
+        @period._reportTpl(v.period)
+      }
+    }
 
   }
 

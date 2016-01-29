@@ -1,7 +1,5 @@
 package models.adv
 
-import org.joda.time.LocalDate
-
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -9,9 +7,9 @@ import org.joda.time.LocalDate
  */
 package object form {
 
-  type DatePeriod_t = (LocalDate, LocalDate)
+  type DatePeriod_t         = MDatesPeriod
 
-  type DatePeriodOpt_t = Option[DatePeriod_t]
+  type DatePeriodOpt_t      = Option[DatePeriod_t]
 
   type QuickAdvPeriod       = QuickAdvPeriods.T
 

@@ -1,13 +1,13 @@
 package util.adv
 
 import com.google.inject.Singleton
+import io.suggest.adv.AdvConstants.Su
 import io.suggest.dt.interval.PeriodsConstants
+import models.adv.form._
 import models.{AdShowLevel, AdShowLevels}
-import models.adv.form.{DatePeriodOpt_t, QuickAdvPeriod, DatePeriod_t, QuickAdvPeriods}
-import org.joda.time.{LocalDate, Period}
-import org.joda.time.format.ISOPeriodFormat
-import play.api.data.Form
-import play.api.data._, Forms._
+import org.joda.time.LocalDate
+import play.api.data.Forms._
+import play.api.data.{Form, _}
 
 /**
  * Suggest.io
@@ -21,7 +21,7 @@ class AdvFormUtil {
   /** Отдельный маппинг для adv-формы, который парсит исходные данные по бесплатному размещению. */
   def freeAdvFormM: Form[Option[Boolean]] = {
     Form(
-      "freeAdv" -> optional(boolean)
+      Su.ADV_FOR_FREE_NAME -> optional(boolean)
     )
   }
 
@@ -59,7 +59,7 @@ class AdvFormUtil {
 
 
   /** Маппинг для интервала дат размещения. Его точно нельзя заворачивать в val из-за LocalDate.now(). */
-  def advDatePeriodOptM: Mapping[DatePeriodOpt_t] = {
+  def advDatePeriodOptM: Mapping[Option[(LocalDate, LocalDate)]] = {
     // option используется, чтобы избежать ошибок маппинга, если галочка isAdv убрана для текущего ресивера, и дата не выставлена одновременно.
     // TODO Неправильно введённые даты надо заворачивать в None.
     val dateOptM = optional( jodaLocalDate("yyyy-MM-dd") )
@@ -73,9 +73,9 @@ class AdvFormUtil {
     )
     .transform [Option[(LocalDate, LocalDate)]] (
       {case (Some(dateStart), Some(dateEnd))  =>  Some(dateStart -> dateEnd)
-       case _  =>  None },
-      {case Some((dateStart, dateEnd))  =>  Some(dateStart) -> Some(dateEnd)
-       case None  =>  None -> None }
+       case _                                 =>  None },
+      {case Some((dateStart, dateEnd))        =>  Some(dateStart) -> Some(dateEnd)
+       case None                              =>  None -> None }
     )
   }
 
@@ -98,7 +98,7 @@ class AdvFormUtil {
     .verifying("error.required", { m => m match {
       case (periodOpt, datesOpt)  =>  periodOpt.isDefined || datesOpt.isDefined
     }})
-      // Проверяем даты у тех, у кого выставлены галочки. end должна быть не позднее start.
+    // Проверяем даты у тех, у кого выставлены галочки. end должна быть не позднее start.
     .verifying("error.date.end.before.start", { m => m match {
        // Если даты имеют смысл, то они заданы, и их проверяем.
        case (None, Some((dateStart, dateEnd)))    => !(dateStart isAfter dateEnd)
@@ -109,19 +109,20 @@ class AdvFormUtil {
     .transform [DatePeriod_t] (
       // В зависимости от имеющихся значений полей выбираем реальный период.
       { case (Some(qap), _) =>
-          val now = LocalDate.now()
-          now -> now.plus( qap.toPeriod.minusDays(1) )
+          MDatesPeriod(qap)
         case (_, dpo) =>
-          dpo.get
+          val (dstart, dend) = dpo.get
+          MDatesPeriod(None, dstart, dend)
       },
       // unapply(). Нужно попытаться притянуть имеющийся интервал дат на какой-то период из списка QuickAdvPeriod.
       // При неудаче вернуть кастомный период.
-      {case dp @ (dateStart, dateEnd) =>
-        // Угадываем период либо откатываемся на custom_period
-        val periodStr = new Period(dateStart, dateEnd).toString(ISOPeriodFormat.standard())
-        QuickAdvPeriods.maybeWithName(periodStr) match {
-          case Some(qap)  =>  Some(qap) -> None
-          case None       =>  None -> Some(dp)
+      {dsp =>
+        dsp.period match {
+          case Some(qap)  =>
+            val mdp = MDatesPeriod(qap)
+            Some(qap) -> Some( (mdp.dateStart, mdp.dateEnd) )
+          case None =>
+            None -> Some((dsp.dateStart, dsp.dateEnd))
         }
       }
     )
