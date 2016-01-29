@@ -37,16 +37,12 @@ object CityCatTab extends FindElDynIdT with OfDiv {
 import CityCatTab.Dom_t
 
 
-trait CityCatTabT extends IVm with CityIdT with NgIdT {
+trait CityCatTabT extends IVm with WithCityNgIdOpt {
 
   override type T = Dom_t
 
-  def checkBox = {
-    cityId.flatMap { _cityId =>
-      val arg = CityNgIdOpt(cityId.get, ngId)
-      TabCheckBox.find( arg )
-    }
-  }
+  def checkBox = _findByCityNgIdOpt(TabCheckBox)
+  def counter  = _findByCityNgIdOpt(TabCounter)
 
 }
 

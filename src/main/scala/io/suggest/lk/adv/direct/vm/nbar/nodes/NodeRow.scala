@@ -1,7 +1,8 @@
 package io.suggest.lk.adv.direct.vm.nbar.nodes
 
 import io.suggest.adv.direct.AdvDirectFormConstants
-import io.suggest.sjs.common.vm.IVm
+import io.suggest.lk.adv.direct.vm.nbar.ngroups.CityCatNg
+import io.suggest.sjs.common.vm.attr.AttrVmT
 import io.suggest.sjs.common.vm.find.FindElDynIdT
 import io.suggest.sjs.common.vm.of.OfDiv
 import org.scalajs.dom.raw.{HTMLElement, HTMLDivElement}
@@ -34,8 +35,19 @@ object NodeRow extends FindElDynIdT with OfDiv {
 import NodeRow.Dom_t
 
 
-trait NodeRowT extends IVm {
+trait NodeRowT extends AttrVmT {
+
   override type T = Dom_t
+
+  /** id узла, записанный в аттрибуте ряда. */
+  def nodeId    = getAttribute( AdvDirectFormConstants.Nodes.ATTR_NODE_ID )
+
+  /** Найти основной чекбокс этого узла, если он есть. */
+  def checkBox  = nodeId.flatMap(NodeCheckBox.find)
+
+  /** Найти контейнер группы узлов для текушего узла или его элемента. */
+  def nodeGroup = CityCatNg.ofNodeUp(_underlying.parentNode)
+
 }
 
 

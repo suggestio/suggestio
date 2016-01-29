@@ -35,4 +35,9 @@ import TabCheckBox.Dom_t
 
 case class TabCheckBox(override val _underlying: Dom_t)
   extends CheckBoxVmT
+{
+
+  def tabHead = CityCatTab.ofNodeUp(_underlying.parentNode)
+
+}
 
