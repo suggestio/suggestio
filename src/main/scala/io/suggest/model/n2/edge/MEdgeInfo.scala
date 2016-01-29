@@ -49,7 +49,11 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
   /** Поддержка JSON. */
   implicit val FORMAT: Format[MEdgeInfo] = (
     (__ \ DYN_IMG_ARGS_FN).formatNullable[String] and
-    (__ \ SLS_FN).format[Set[SinkShowLevel]] and
+    (__ \ SLS_FN).formatNullable[Set[SinkShowLevel]]
+      .inmap [Set[SinkShowLevel]] (
+        { _ getOrElse Set.empty },
+        { ssls => if (ssls.nonEmpty) Some(ssls) else None }
+      ) and
     (__ \ DATE_NI_FN).formatNullable[DateTime] and
     (__ \ COMMENT_NI_FN).formatNullable[String] and
     (__ \ FLAG_FN).formatNullable[Boolean] and
