@@ -1,6 +1,7 @@
 package util.adv
 
 import com.google.inject.Singleton
+import io.suggest.adv.AdvConstants.Su
 import io.suggest.dt.interval.PeriodsConstants
 import models.adv.form._
 import models.{AdShowLevel, AdShowLevels}
@@ -20,7 +21,7 @@ class AdvFormUtil {
   /** Отдельный маппинг для adv-формы, который парсит исходные данные по бесплатному размещению. */
   def freeAdvFormM: Form[Option[Boolean]] = {
     Form(
-      "freeAdv" -> optional(boolean)
+      Su.ADV_FOR_FREE_NAME -> optional(boolean)
     )
   }
 
