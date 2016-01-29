@@ -1,14 +1,19 @@
 package io.suggest.adv
 
 /**
- * Suggest.io
- * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 29.12.15 22:55
- * Description: common-константы adv-подсистем.
- */
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 29.01.16 14:34
+  * Description: Констатны, общие для разных ADV-форм.
+  */
 object AdvConstants {
 
-  /** id инпута, который содержит URL для сабмита формы для рассчета цены и прочего. */
-  def GET_PRICE_URL_INPUT_ID = "advsPriceUpdateUrl"
+  object Price {
+
+    /** id элемента-контейнера, в котором отображается рассчитанная цена размещния.
+      * Изначально это был тэг P. */
+    def PRICE_INFO_CONT_ID = "apic"
+
+  }
 
 }
