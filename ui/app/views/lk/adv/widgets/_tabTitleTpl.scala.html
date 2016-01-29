@@ -1,4 +1,4 @@
-@(title: String, cityId: String, catId: Option[String] = None, withCounter: Boolean = false)(content: Html)
+@(title: String, cityId: String, catId: Option[String] = None, withCounter: Option[Int] = None)(content: Html)
 
 @* Верстка заголовка таба, используемого в форме. *@
 
@@ -13,8 +13,9 @@
 
   <span class="select-tab_i-title">@title</span>
 
-  @if(withCounter) {
-    <span class="js-active-nodes-count"></span>
+  @for(totalAvail <- withCounter) {
+    <span id="@Tabs.COUNTER_ID(cityId, catId)"
+          @(Tabs.TOTAL_AVAIL_ATTR)="@totalAvail"></span>
   }
 
 </div>
