@@ -1,6 +1,6 @@
 package io.suggest.adv.direct
 
-import io.suggest.common.html.HtmlConstants._
+import io.suggest.common.html.HtmlConstants
 import io.suggest.sc.ScConstants
 
 /**
@@ -46,8 +46,8 @@ object AdvDirectFormConstants {
   /** сборка id тела данных по одному городу. */
   def CITY_TAB_BODY_ID(cityId: String) = CITY_TAB_BODY_PREFIX + cityId
 
-  def ATTR_CITY_ID            = ATTR_NODE_ID
-  def ATTR_CAT_ID             = ATTR_PREFIX + "ci"
+  def ATTR_CITY_ID            = HtmlConstants.ATTR_NODE_ID
+  def ATTR_CAT_ID             = HtmlConstants.ATTR_PREFIX + "ci"
 
   /** Класс заголовка вкладки группы (категории) узлов. */
   def NGRP_TAB_HEAD_CLASS     = "select-tab_i"
@@ -62,7 +62,7 @@ object AdvDirectFormConstants {
   /** Сборка id контейнеров заголовков табов нод в рамках города. */
   def CITY_NODES_TAB_HEAD_ID(cityId: String, catId: Option[String] = None): String = {
     val id0 = CITY_NODES_TAB_HEAD_ID_PREFIX + cityId
-    catId.fold(id0)(id0 + ID_DELIM + _)
+    _maySuffixed(id0, catId)
   }
 
 
@@ -71,7 +71,30 @@ object AdvDirectFormConstants {
   /** Сборка id'шников чекбоксов на уровне табов. */
   def CITY_NODES_TAB_HEAD_CHECKBOX_ID(cityId: String, catId: Option[String] = None): String = {
     val id0 = CITY_NODES_TAB_HEAD_CHECKBOX_ID_PREFIX + cityId
-    catId.fold(id0)(id0 + ID_DELIM + _)
+    _maySuffixed(id0, catId)
+  }
+
+
+  /** Константы для табов, т.е. заголовков групп узлов. */
+  object Tabs {
+
+    /** Префикс id'шников контейнеров counter'ов, т.е. счетчиков выбранных. */
+    def COUNTER_ID_PREFIX = "uctr" + CITY_NODES_TAB_HEAD_ID_PREFIX
+
+    /** Сборка id'шников контейнеров counter'ов на вкладках. */
+    def COUNTER_ID(cityId: String, catId: Option[String] = None): String = {
+      val id0 = COUNTER_ID_PREFIX + cityId
+      _maySuffixed(id0, catId)
+    }
+
+    /** В аттрибут тега сохраняется кол-во доступных для подсчета элементов. */
+    def TOTAL_AVAIL_ATTR = ScConstants.CUSTOM_ATTR_PREFIX + "ta"
+
+  }
+
+
+  private def _maySuffixed(prefix: String, suffixOpt: Option[String]): String = {
+    suffixOpt.fold(prefix)(prefix + ID_DELIM + _)
   }
 
   def CITY_CAT_NODES_ID_PREFIX = "Ccn" + CITY_TAB_BODY_PREFIX + ID_DELIM
@@ -99,6 +122,14 @@ object AdvDirectFormConstants {
 
   def NODE_CHECK_BOX_ID(nodeId: String): String = {
     NODE_CHECK_BOX_ID_PREFIX + nodeId
+  }
+
+
+  /** Контейнер для констант узлов. */
+  object Nodes {
+
+    def ATTR_NODE_ID            = HtmlConstants.ATTR_NODE_ID
+
   }
 
 
