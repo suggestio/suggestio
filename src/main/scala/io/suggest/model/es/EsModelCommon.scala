@@ -588,30 +588,40 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
   /**
    * Попытаться обновить экземпляр модели с помощью указанной функции.
    * Метод является надстройкой над save, чтобы отрабатывать VersionConflict.
-   * @param retry Попытка
-   * @param updateF Функция для апдейта.
+   * @param retry Счетчик попыток.
+   * @param updateF Функция для апдейта. Может возвращать null для внезапного отказа от апдейта.
    * @return Тоже самое, что и save().
+   *         Если updateF запретила апдейт (вернула null), то будет Future.successfull(null).
    */
   def tryUpdate(inst0: T, retry: Int = 0)(updateF: T => T)
                (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
-    updateF(inst0)
-      .save
-      .recoverWith {
-        case ex: VersionConflictEngineException =>
-          lazy val logPrefix = s"tryUpdate(${inst0.id}, try=$retry): "
-          if (retry < UPDATE_RETRIES_MAX) {
-            val n1 = retry + 1
-            LOGGER.warn(s"${logPrefix}Version conflict while trying to save. Retrying ($n1/$UPDATE_RETRIES_MAX)...")
-            reget(inst0) flatMap {
-              case Some(inst) =>
-                tryUpdate(inst, n1)(updateF)
-              case None =>
-                throw new IllegalStateException(s"${logPrefix}Looks like instance has been deleted during update. last try was $retry", ex)
+    lazy val logPrefix = s"tryUpdate(${Option(inst0).flatMap(_.id).orNull}, $retry):"
+
+    val inst1 = updateF(inst0)
+
+    if (inst1 == null) {
+      LOGGER.debug(logPrefix + " updateF() returned `null`, leaving update of inst")
+      Future.successful(null)
+
+    } else {
+      inst1
+        .save
+        .recoverWith {
+          case ex: VersionConflictEngineException =>
+            if (retry < UPDATE_RETRIES_MAX) {
+              val n1 = retry + 1
+              LOGGER.warn(s"$logPrefix Version conflict while tryUpdate(). Retry ($n1/$UPDATE_RETRIES_MAX)...")
+              reget(inst0).flatMap {
+                case Some(inst) =>
+                  tryUpdate(inst, n1)(updateF)
+                case None =>
+                  throw new IllegalStateException(s"$logPrefix Looks like instance has been deleted during update. last try was $retry", ex)
+              }
+            } else {
+              throw new RuntimeException(s"$logPrefix Too many save-update retries failed: $retry", ex)
             }
-          } else {
-            throw new RuntimeException(logPrefix + "Too many save-update retries failed: " + retry, ex)
-          }
-      }
+        }
+    }
   }
 
 }

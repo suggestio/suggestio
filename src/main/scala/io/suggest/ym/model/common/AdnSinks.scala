@@ -4,6 +4,8 @@ import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.model.menum.EnumJsonReadsValT
 import io.suggest.model.sc.common.SlNameTokenStr
 
+import scala.collection.immutable.SortedSet
+
 /** Выходы узла для отображения рекламных карточек. */
 object AdnSinks extends EnumMaybeWithName with EnumJsonReadsValT {
 
@@ -29,11 +31,14 @@ object AdnSinks extends EnumMaybeWithName with EnumJsonReadsValT {
       .sortBy(_.longName)
   }
 
-  def default = SINK_WIFI
+  def default = SINK_GEO
 
   def maybeWithLongName(ln: String): Option[T] = {
     values
       .find(_.longName == ln)
       .asInstanceOf[Option[T]]
   }
+
+  def valuesT = values.asInstanceOf[SortedSet[T]]
+
 }
