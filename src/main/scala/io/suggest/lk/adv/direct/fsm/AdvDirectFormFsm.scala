@@ -1,6 +1,6 @@
 package io.suggest.lk.adv.direct.fsm
 
-import io.suggest.lk.adv.direct.fsm.states.StandBy
+import io.suggest.lk.adv.direct.fsm.states.{GetData, StandBy}
 import io.suggest.lk.adv.direct.m.MStateData
 import io.suggest.lk.dt.interval.vm.Container
 import io.suggest.sjs.common.util.SjsLogger
@@ -14,6 +14,7 @@ import io.suggest.sjs.common.util.SjsLogger
 
 object AdvDirectFormFsm
   extends StandBy
+  with GetData
   with SjsLogger
 {
 
@@ -45,12 +46,8 @@ object AdvDirectFormFsm
 
   /*-------------- states -------------------*/
 
-  class StandByState extends StandByStateT {
-    // TODO Обновлять состояние
-    override protected def _srvUpdateFormState: FsmState = _updatePriceState
-  }
-
-  /** Инстанс состояния обновления цены. */
-  override protected def _updatePriceState: FsmState = _state // TODO
+  class StandByState
+    extends StandByStateT
+    with GetDataStateT
 
 }

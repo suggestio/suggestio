@@ -22,4 +22,12 @@ trait IntervalSignals extends FsmStubT with IntervalSignalsBase {
     )
   }
 
+  protected trait PeriodSignalsStateT extends super.PeriodSignalsStateT {
+
+    /** Состояние запроса к серверу за инфой (цена, отчет по датам размещения, etc). */
+    override protected def _periodChanged(): Unit = {
+      _needUpdateData()
+    }
+  }
+
 }

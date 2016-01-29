@@ -114,13 +114,13 @@ trait IntervalSignalsBase
     protected def _handleNewPeriodOpt(newPeriodOpt: Option[PeriodEith_t], sd0: SD = _stateData): Unit = {
       for (newPeriod <- newPeriodOpt) {
         // Необходимо обновить состояние FSM.
-        val sd1 = _sdSetPeriod(newPeriod, sd0)
-        become(_srvUpdateFormState, sd1)
+        _stateData = _sdSetPeriod(newPeriod, sd0)
+        _periodChanged()
       }
     }
 
     /** Состояние запроса к серверу за инфой (цена, отчет по датам размещения, etc). */
-    protected def _srvUpdateFormState: State_t
+    protected def _periodChanged()
 
   }
 

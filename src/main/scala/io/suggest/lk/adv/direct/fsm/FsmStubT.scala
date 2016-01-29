@@ -20,6 +20,6 @@ trait FsmStubT
 
 
   /** Инстанс состояния обновления цены. */
-  protected def _updatePriceState: State_t
+  protected def _needUpdateData(): Unit
 
 }

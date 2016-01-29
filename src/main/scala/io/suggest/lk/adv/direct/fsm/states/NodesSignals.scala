@@ -34,9 +34,10 @@ trait NodesSignals extends FsmStubT {
 
 
     /**
-     * Реакция на клик по табу города.
-     * @param cthc Сигнал клика по заголовку таба города.
-     */
+      * Реакция на клик по табу города.
+      *
+      * @param cthc Сигнал клика по заголовку таба города.
+      */
     def _cityTabHeadClick(cthc: CityTabHeadClick): Unit = {
       val sd0 = _stateData
 
@@ -81,9 +82,10 @@ trait NodesSignals extends FsmStubT {
 
 
     /**
-     * Реакция на клик по заголовку вкладки группы узлов.
-     * @param ngCl Входящий сигнал о клике.
-     */
+      * Реакция на клик по заголовку вкладки группы узлов.
+      *
+      * @param ngCl Входящий сигнал о клике.
+      */
     def _ngrpClick(ngCl: NgClick): Unit = {
       val sd0 = _stateData
 
@@ -160,7 +162,7 @@ trait NodesSignals extends FsmStubT {
           }
 
           // Запустить пересёт цены.
-          become(_updatePriceState)
+          _needUpdateData()
         }
       }
 
@@ -169,7 +171,7 @@ trait NodesSignals extends FsmStubT {
 
     /** Реакция на переключение по конкретных узлов в списке узлов. */
     def _nodeChecked(nc: NodeChecked): Unit = {
-      become(_updatePriceState)
+      _needUpdateData()
     }
 
   }

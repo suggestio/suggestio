@@ -1,8 +1,10 @@
 package io.suggest.lk.dt.interval.vm
 
 import io.suggest.dt.interval.DatesIntervalConstants
-import io.suggest.sjs.common.vm.content.SetInnerHtml
+import io.suggest.sjs.common.vm.content.{ReplaceWith, SetInnerHtml}
 import io.suggest.sjs.common.vm.find.FindDiv
+import io.suggest.sjs.common.vm.of.{OfDiv, OfNodeHtmlEl, OfHtml, OfHtmlElement}
+import org.scalajs.dom.raw.HTMLElement
 
 /**
  * Suggest.io
@@ -12,18 +14,26 @@ import io.suggest.sjs.common.vm.find.FindDiv
  * В новой (этой) архитектуре оно всегда рендерится на сервере.
  * В mx_cof оно кое-как рендерилось на клиенте.
  */
-object InfoContainer extends FindDiv {
+object InfoContainer extends FindDiv with OfDiv with OfHtml {
 
   override type T     = InfoContainer
   override def DOM_ID = DatesIntervalConstants.INFO_CONT_ID
+
+  /** Тестирование на пригодность к заворачиванию в инстанс этой VM. */
+  override def _isWantedHtmlEl(el: HTMLElement): Boolean = {
+    super._isWantedHtmlEl(el) && el.id == DOM_ID
+  }
+
 }
 
 
 import InfoContainer.Dom_t
 
 
-trait InfoContainerT extends SetInnerHtml {
+trait InfoContainerT extends SetInnerHtml with ReplaceWith {
+
   override type T = Dom_t
+
 }
 
 

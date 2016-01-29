@@ -17,12 +17,16 @@ trait IStateData {
   /** id текущего города или None, если город не выбран. */
   def currCityId  : Option[String]
 
-  /** id текущей группы узлов.
+  /**
+    * id текущей группы узлов.
     * @return None -- нет текущей вкладки.
     *         Some(None) -- выбраны все места.
     *         Some(Some(id)) -- выбрана указанная категория.
     */
   def currNgId    : Option[Option[String]]
+
+  /** Если послан запрос к серверу, то сюда сохранен timestamp для защиты от race conditions. */
+  def getPriceTs  : Option[Long]
 
 }
 
@@ -31,6 +35,7 @@ trait IStateData {
 case class MStateData(
   override val period         : PeriodEith_t,
   override val currCityId     : Option[String]              = None,
-  override val currNgId       : Option[Option[String]]      = None
+  override val currNgId       : Option[Option[String]]      = None,
+  override val getPriceTs      : Option[Long]                = None
 )
   extends IStateData
