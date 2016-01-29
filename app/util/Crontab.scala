@@ -34,7 +34,7 @@ class Crontab @Inject() (
   import LOGGER._
 
   /** Список классов, которые являются поставщиками периодических задач при старте. */
-  def TASK_PROVIDERS = List[ICronTasksProvider](
+  def TASK_PROVIDERS = Iterator[ICronTasksProvider](
     billing, mmpCronTasks, ipGeoBaseImport, MLocalImg, geoParentsHealth
   )
 
@@ -53,20 +53,24 @@ class Crontab @Inject() (
 
   def startTimers(app: Application): List[Cancellable] = {
     val _sched = sched
-    TASK_PROVIDERS
-      .iterator
-      .flatMap { clazz =>
-        clazz.cronTasks(app).toIterator.map { cronTask =>
-          _sched.schedule(cronTask.startDelay, cronTask.every) {
-            try {
-              cronTask.run()
-            } catch {
-              case ex: Throwable => error(s"Cron task ${clazz.getClass.getSimpleName}/'${cronTask.displayName}' failed to complete", ex)
-            }
-          }
+
+    val iter = for {
+      clazz <- TASK_PROVIDERS
+      task  <- clazz.cronTasks(app)
+    } yield {
+      trace(s"Adding cron task ${clazz.getClass.getSimpleName}/${task.displayName}: delay=${task.startDelay}, every=${task.every}")
+      _sched.schedule(task.startDelay, task.every) {
+        try {
+          trace(s"Executing task ${task.displayName}...")
+          task.run()
+        } catch {
+          case ex: Throwable =>
+            error(s"Cron task ${clazz.getClass.getSimpleName}/'${task.displayName}' failed to complete", ex)
         }
       }
-      .toList
+    }
+
+    iter.toList
   }
 
   def stopTimers(timers: Seq[Cancellable]) {
