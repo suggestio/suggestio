@@ -315,11 +315,10 @@ class MarketAdv @Inject() (
   }
 
   /**
-   * Рассчитать цену размещения. Сюда нужно сабмиттить форму также, как и в advFormSubmit().
-    *
+    * Рассчитать цену размещения. Сюда нужно сабмиттить форму также, как и в advFormSubmit().
     * @param adId id размещаемой рекламной карточки.
-   * @return Инлайновый рендер отображаемой цены.
-   */
+    * @return Инлайновый рендер отображаемой цены.
+    */
   def getAdvPriceSubmit(adId: String) = CanAdvertiseAdPost(adId).async { implicit request =>
     directAdvFormUtil.advForm.bindFromRequest().fold(
       {formWithErrors =>
@@ -360,6 +359,7 @@ class MarketAdv @Inject() (
         // Отрендерить JSON-ответ
         for (priceValHtml <- priceValHtmlFut) yield {
           import AdvDirectFormConstants.PriceJson._
+          // TODO Вынести это дело отсюда в отдельную модель?
           Ok(Json.obj(
             PERIOD_REPORT_HTML_FN -> periodReportHtml,
             PRICE_HTML_FN         -> priceValHtml

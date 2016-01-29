@@ -112,7 +112,7 @@
                     } @* midOpt *@
                   } else {
                     @_checkBoxTitleTpl() {
-                      <a href="#" class="link">@an.node.meta.basic.name</a>
+                      @an.node.meta.basic.name
                     }
                     <span class="ft-S light-gray"> (@messages("advertised"))</span>
                   }
@@ -127,6 +127,7 @@
   } @* adv-management_left-bar *@
 
 
+  @* Правая колонка содержит виджет работы с датами. *@
   @_barTpl(MHands.Right) {
 
     @* Даты (период) размещения. *@

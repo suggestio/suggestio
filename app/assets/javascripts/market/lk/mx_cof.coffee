@@ -774,16 +774,6 @@ market =
   ## Размещение рекламной карточки
   ################################
   adv_form :
-    update_price : () ->
-      $.ajax
-        url : $('#advsPriceUpdateUrl').val()
-        method : 'post'
-        data : $('#advsFormBlock form').serialize()
-        success : ( data ) ->
-          $('.js-pre-price').html data
-
-      #this.tabs.refine_counters()
-
     tabs :
       init : () ->
         ## табы с разными типами нод
@@ -812,17 +802,10 @@ market =
             mt_tab_counter_c.hide()
             mt_tab_counter.html 0
 
-
-    submit : () ->
-      $('#advsFormBlock form').submit()
-
     init : () ->
 
       this.tabs.init()
 
-      $ document
-      .on 'change', '#advsFormBlock select, #advsFormBlock input:text', (e)->
-        setTimeout market.adv_form.update_price, 100
 
   ##############################
   ## Редактор рекламной карточки

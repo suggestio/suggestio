@@ -1,7 +1,7 @@
 package util
 
 import models.Context
-import org.joda.time.format.{PeriodFormatter, DateTimeFormatterBuilder, PeriodFormatterBuilder}
+import org.joda.time.format.{DateTimeFormatter, PeriodFormatter, DateTimeFormatterBuilder, PeriodFormatterBuilder}
 import org.joda.time._
 import java.util.Locale
 
@@ -129,6 +129,13 @@ object DateTimePrettyPrinter {
     .toFormatter
     .withLocale(locale)
 
+  /** "пятница". */
+  val dayOfWeekFmt = {
+    new DateTimeFormatterBuilder()
+      .appendDayOfWeekText()
+      .toFormatter
+  }
+
   object MsgWords {
 
     def SEVERAL_SECONDS   = "Several.seconds."
@@ -186,6 +193,7 @@ object DateTimePrettyPrinter {
       dtFormatterRecent.print(dt.withZone(peerTz))
 
     } else {
+      // TODO Opt Большинство отображаемых дат в далёком прошлом, может эту ветку else вынести в начало if? Или if вывернуть наизнанку?
       dtFormatterOld.print(dt.withZone(peerTz))
     }
     // Обработать параметр капитализации.
@@ -200,12 +208,30 @@ object DateTimePrettyPrinter {
   /** 21 янв 2015 */
   // TODO выставить здесь LocalDate вместо DateTime.
   def formatDate(dt: DateTime)(implicit ctx: Context): String = {
-    dtFormatterOld.print(dt)
+    _prepareFormatter(dtFormatterOld)
+      .print(dt)
+  }
+  def formatDate(dt: ReadablePartial)(implicit ctx: Context): String = {
+    _formatPartialWith(dt, dtFormatterOld)
   }
 
   /** 21 января 2015 */
   def formatDateFull(d: LocalDate)(implicit ctx: Context): String = {
-    dateFormatterFull.print(d)
+    _formatPartialWith(d, dateFormatterFull)
+  }
+
+  /** пятница, friday. */
+  def dayOfWeek(d: LocalDate)(implicit ctx: Context): String = {
+    _formatPartialWith(d, dayOfWeekFmt)
+  }
+
+  private def _prepareFormatter(fmt: DateTimeFormatter)(implicit ctx: Context): DateTimeFormatter = {
+    fmt.withLocale( ctx.messages.lang.toLocale )
+  }
+  /** Дедубликация кода использования DT-formatter'а. */
+  private def _formatPartialWith(rp: ReadablePartial, fmt: DateTimeFormatter)(implicit ctx: Context): String = {
+    _prepareFormatter(fmt)
+      .print(rp)
   }
 
   private val yyyyMMddFmt = new DateTimeFormatterBuilder()

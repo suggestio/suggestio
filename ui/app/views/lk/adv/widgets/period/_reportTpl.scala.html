@@ -2,9 +2,14 @@
 
 @* Итог по датам размещения. *@
 
-@import util.DateTimePrettyPrinter.formatDateFull
+@import util.DateTimePrettyPrinter.{formatDateFull, dayOfWeek}
 @import ctx.messages
 @import io.suggest.dt.interval.DatesIntervalConstants._
+
+@__date(i18nPrefix: String, date: org.joda.time.LocalDate) = {
+  @messages(i18nPrefix + "._date")
+  <span title="@dayOfWeek(date)">@formatDateFull(date)</span>
+}
 
 <div id="@INFO_CONT_ID" class="date-widget_result">
 
@@ -13,7 +18,8 @@
   </div>
 
   <div class="date-widget_result-value">
-    @messages("from._date")&nbsp;@formatDateFull(dates.dateStart)&nbsp;@messages("till._date")&nbsp;@formatDateFull(dates.dateEnd)
+    @__date("from", dates.dateStart)
+    @__date("till", dates.dateEnd)
   </div>
 
 </div>

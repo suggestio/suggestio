@@ -12,18 +12,12 @@ import org.joda.time.LocalDate
 
 object MDatesPeriod {
 
-  def apply(): MDatesPeriod = {
-    apply(
-      period    = QuickAdvPeriods.default,
-      dateStart = LocalDate.now().plusDays(1)
-    )
-  }
-
-  def apply(period: QuickAdvPeriod, dateStart: LocalDate): MDatesPeriod = {
+  def apply(period: QuickAdvPeriod = QuickAdvPeriods.default,
+            dateStart: LocalDate = LocalDate.now().plusDays(1)): MDatesPeriod = {
     apply(
       period    = Some(period),
       dateStart = dateStart,
-      dateEnd   = dateStart.plus(period.toPeriod)
+      dateEnd   = dateStart.plus( period.toPeriod.minusDays(1) )
     )
   }
 

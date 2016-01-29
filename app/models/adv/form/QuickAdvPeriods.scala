@@ -26,7 +26,7 @@ object QuickAdvPeriods extends EnumMaybeWithName with QuickAdvPeriodsT {
   override val P1M: T = new Val(P_1MONTH)
 
 
-  def default = P1W
+  def default = P3D
 
   def valuesT = values.asInstanceOf[collection.Set[T]]
 

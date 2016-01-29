@@ -9,6 +9,6 @@ import models.adv.form.MDatesPeriod
  * Description: Результат маппинга формы adv direct.
  */
 case class FormResult(
-  nodes     : List[OneNodeInfo] = Nil,
-  period    : MDatesPeriod       = MDatesPeriod()
+  nodes     : List[OneNodeInfo]   = Nil,
+  period    : MDatesPeriod        = MDatesPeriod()
 )
