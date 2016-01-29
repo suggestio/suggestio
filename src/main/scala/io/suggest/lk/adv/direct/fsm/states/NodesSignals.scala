@@ -30,6 +30,10 @@ trait NodesSignals extends FsmStubT {
       // Клик по названию города.
       case cthc: CityTabHeadClick =>
         _cityTabHeadClick(cthc)
+
+      // Изменение галочки привелегированного бесплатного безлимитного размещения.
+      case _: Adv4FreeChanged =>
+        _needUpdateData()
     }
 
 
