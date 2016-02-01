@@ -1,8 +1,8 @@
-@(isOpen: Boolean, id: Option[String] = None, jsSlide: Boolean = true)(content: Html)
+@(isOpen: Boolean, jsSlide: Boolean, attrs: (String, Any)*)(content: Html)
 
 @* Контейнер заголовка slide-блока. *@
 
-<div @if(id){id="@id"}
-     class="slide-block_title @if(jsSlide){js-slide-title} @if(isOpen){ __js-open }">
+<div class="slide-block_title @if(jsSlide){js-slide-title} @if(isOpen){ __js-open }"
+     @for((k,v) <- attrs){ @k="@v"}>
   @content
 </div>

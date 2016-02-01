@@ -1,16 +1,8 @@
-@(attrs: (String, String)*)
+@(attrs: (String, Any)*)
 
 @* Чекбокс для adv-формы. *@
 
-@defining(false) { isStyled =>
-  @if(isStyled) {
-    <label>
-  }
-
+<label>
   <input type="checkbox" @attrs.map{ case (k,v) => @k="@v"}/>
-
-  @if(isStyled) {
-      <span class="styled-checkbox"></span>
-    </label>
-  }
-}
+  <span class="styled-checkbox"></span>
+</label>

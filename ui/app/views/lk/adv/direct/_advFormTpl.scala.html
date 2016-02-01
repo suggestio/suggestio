@@ -77,7 +77,7 @@
                 title       = cat.name,
                 cityId      = cityId,
                 catId       = someCatId,
-                withCounter = true
+                withCounter = args.totalAvailOptCat(cat)
               ) {
                 @_checkBoxTpl( "id" -> CITY_NODES_TAB_HEAD_CHECKBOX_ID(cityId, someCatId) )
               }
@@ -95,14 +95,20 @@
           @for(cat <- city.cats) {
             @_nodesTabContTpl(cat.name, cityId, catId = cat.id) {
               @for(an <- cat.nodes; nodeId <- an.node.id) {
-                @_slideBlkTitleTpl(isOpen = false, id = Some(NODE_ROW_ID(nodeId)), jsSlide = false) {
+
+                @_slideBlkTitleTpl(
+                  isOpen  = false,
+                  jsSlide = false,
+                  "id" -> NODE_ROW_ID(nodeId),
+                  Nodes.ATTR_NODE_ID -> nodeId
+                ) {
                   @if( args.busyAdvs.get(nodeId).isEmpty ) {
                     @defining( args.adnId2formIndex.get(nodeId) ) { midOpt =>
                       <label>
                         @_checkBoxTpl(
                           "id"      -> NODE_CHECK_BOX_ID(nodeId),
                           "name"    -> s"node[${midOpt.get}].advertise",
-                          "value"   -> false.toString
+                          "value"   -> false
                         )
                         @_checkBoxTitleTpl() {
                           @an.node.meta.basic.name
@@ -118,6 +124,7 @@
                     <span class="ft-S light-gray"> (@messages("advertised"))</span>
                   }
                 } @* slideBlkTitleTpl *@
+
               }   @* for an in nodes *@
             }     @* _nodesTabTpl *@
           }       @* cat in cats *@
