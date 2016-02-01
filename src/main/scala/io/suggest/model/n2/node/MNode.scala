@@ -267,7 +267,7 @@ case class MNode(
 
   /**
    * Сохранить экземпляр в хранилище модели.
-   * При успехе будет отправлено событие [[MNodeSaved]] в шину событий.
+   * При успехе будет отправлено событие [[io.suggest.model.n2.node.event.MNodeSaved]] в шину событий.
    * @return Фьючерс с новым/текущим id.
    */
   override def save(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
