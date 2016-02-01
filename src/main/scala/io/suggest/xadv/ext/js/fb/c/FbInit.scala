@@ -105,7 +105,7 @@ class FbInit(implicit val actx: IActionContext) extends LazyPermsInit {
 
   /** Сборка кастомного контекста. */
   def customCtx = {
-    hasPerms2Fut map { hasPerms =>
+    for (hasPerms <- hasPerms2Fut) yield {
       FbCtx(hasPerms = hasPerms)
     }
   }

@@ -93,7 +93,7 @@ class VkInit(implicit val actx: IActionContext) extends LazyPermsInit {
     val tgtsFut = newTargetsFut
     val lsFut = loginStatusFut
     for {
-      //_     <- hasPerms2Fut
+      _     <- hasPerms2Fut
       tgts  <- tgtsFut
       lsOpt <- lsFut
     } yield {
