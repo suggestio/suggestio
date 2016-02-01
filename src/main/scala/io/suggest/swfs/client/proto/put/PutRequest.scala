@@ -29,7 +29,7 @@ trait IPutRequest extends IFileRequest {
 
 object PutRequest {
 
-  /** Враппер над apply(), где часть аргументов заменена на [[io.suggest.fio.IWriteRequest]]. */
+  /** Враппер над apply(), где часть аргументов заменена на IWriteRequest. */
   def fromRr(volUrl: String, fid: String, rr: IWriteRequest, proto: String = IFileRequest.PROTO_DFLT): PutRequest = {
     apply(
       volUrl        = volUrl,
