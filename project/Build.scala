@@ -69,11 +69,41 @@ object SiobixBuild extends Build {
   /** 
    * Расширенный pg-драйвер для slick-based моделей в подпроектах.
    * Из-за проблем с classLoader'ами в play и slick, этот подпроект живёт изолировано.
-   * @see [[]]
    */
   lazy val commonSlickDriver = {
     val name = "common-slick-driver"
     Project(id = name, base = file(name))
+  }
+
+  /** Scala.js API для доступа к jquery.datetimepicker.js от xdsoft. */
+  lazy val dateTimePickerSjs = {
+    val name = "datetimepicker-scalajs"
+    Project(id = name, base = file(name))
+      .enablePlugins(ScalaJSPlay)
+  }
+
+  /** всякая мелочь, специфчная только для личного кабинета, но используется в нескольких модулях. */
+  lazy val lkCommonSjs = {
+    val name = "lk-common-sjs"
+    Project(id = name, base = file(name))
+      .enablePlugins(ScalaJSPlay)
+      .dependsOn(commonSjs)
+  }
+
+  /** Утиль поддержки виджета задания периода дат. Расшарена между несколькими lk-модулями. */
+  lazy val lkDtPeriodSjs = {
+    val name = "lk-dt-period-sjs"
+    Project(id = name, base = file(name))
+      .enablePlugins(ScalaJSPlay)
+      .dependsOn(commonSjs, dateTimePickerSjs)
+  }
+
+  /** Поддержка формы прямого размещения на узлах. */
+  lazy val lkAdvDirectSjs = {
+    val name = "lk-adv-direct-sjs"
+    Project(id = name, base = file(name))
+      .enablePlugins(ScalaJSPlay)
+      .dependsOn(lkCommonSjs, lkDtPeriodSjs)
   }
 
   /** Модели биллинга второго поколения. */
@@ -96,12 +126,12 @@ object SiobixBuild extends Build {
       .dependsOn(commonSjs, leafletSjs)
   }
 
-  /** Все мелкие скрипты кроме выдачи (т.е. весь my.suggest.io + буклет и т.д) объеденены в одном большом js. */
+  /** Всякие мелкие скрипты ЛК объеденены в этом scala-js. */
   lazy val lkSjs = {
     val name = "lk-sjs"
     Project(id = name, base = file(name))
       .enablePlugins(ScalaJSPlay)
-      .dependsOn(commonSjs, lkAdvExtSjs, mapRadSjs)
+      .dependsOn(commonSjs, lkAdvExtSjs, mapRadSjs, lkAdvDirectSjs)
   }
 
   /** Выдача suggest.io, написанная с помощью scala.js. */
@@ -130,7 +160,8 @@ object SiobixBuild extends Build {
   lazy val root = {
     Project(id = "root", base = file("."))
       .settings(Common.settingsOrg: _*)
-      .aggregate(common, lkAdvExtSjs, leafletSjs, mapRadSjs, lkSjs, util, swfs, n2, securesocial, scSjs, web21, svgUtil)
+      .aggregate(common, lkAdvExtSjs, leafletSjs, mapRadSjs, lkSjs, util, swfs, n2, securesocial, scSjs, web21,
+        svgUtil, lkAdvDirectSjs, dateTimePickerSjs, lkDtPeriodSjs)
   }
 
   // Активация offline-режима резолва зависимостей.
