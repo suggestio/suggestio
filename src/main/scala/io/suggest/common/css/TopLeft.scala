@@ -30,7 +30,12 @@ trait ILeftPc extends ILeft with CssSzImplicits {
 
 
 trait ITopLeft extends ITop with ILeft {
+  /** Инлайновый рендер стилей. */
   def inlineStyle: Boolean
+  /** Используется wide-отображение для элементов карточки?
+    * Это поле по смыслу немного отличается от brArgs.isWide, т.к. wide может быть
+    * false даже если фон рендерится как wide. */
+  def wide: Boolean
 }
 
 
@@ -39,10 +44,12 @@ object FocusedTopLeft extends ITopLeft with ITopPx with ILeftPc {
   override def topPx  = 50
   override def leftPc = 50
   override def inlineStyle = false
+  override def wide = true
 }
 
 /** Координаты wide-отображения блока для onlyOneAd-режима. */
 case class OnlyOneAdTopLeft(leftPx: Int) extends ITopLeft with ILeftPx with ITopPx {
   override def topPx  = 0
   override def inlineStyle = true
+  override def wide = false
 }
