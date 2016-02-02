@@ -292,7 +292,7 @@ class MarketLkAdn @Inject() (
               Future successful None
             }
             // Для обновления полей MMart требуется доступ к personId. Дожидаемся сохранения юзера...
-            newPersonIdOptFut flatMap { personIdOpt =>
+            newPersonIdOptFut.flatMap { personIdOpt =>
               val personId = (personIdOpt orElse request.user.personIdOpt).get
               val nodeOwnedByPersonId = {
                 mnode.edges
@@ -311,7 +311,8 @@ class MarketLkAdn @Inject() (
               } else {
                 Future successful Unit
               }
-              nodeUpdateFut.map { _adnId =>
+
+              for (_ <- nodeUpdateFut) yield {
                 billing.maybeInitializeNodeBilling(adnId)
                 Redirect(routes.MarketLkAdn.showNodeAds(adnId))
                   .flashing(FLASH.SUCCESS -> "Signup.finished")

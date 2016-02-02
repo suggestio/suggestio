@@ -166,7 +166,7 @@ class SysMdr @Inject() (
   private def _someNow = Some( DateTime.now )
 
   /** Код обновления эджа модерации живёт здесь. */
-  private def _updMdrEdge(info: MEdgeInfo)(implicit request: IAdReq[_]): Future[String] = {
+  private def _updMdrEdge(info: MEdgeInfo)(implicit request: IAdReq[_]): Future[MNode] = {
     // Сгенерить обновлённые данные модерации.
     val mdr2 = MEdge(
       nodeId    = request.user.personIdOpt.get,

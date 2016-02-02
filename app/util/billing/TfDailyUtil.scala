@@ -103,9 +103,9 @@ class TfDailyUtil @Inject()(
    * Апдейт тарифа в узле.
    * @param mnode0 Исходный узел.
    * @param newTf Обновлённый тариф или None.
-   * @return Фьючерс из tryUpdate().
+   * @return Фьючерс с обновлённым узлом внутри.
    */
-  def updateNodeTf(mnode0: MNode, newTf: Option[MDailyTf]) = {
+  def updateNodeTf(mnode0: MNode, newTf: Option[MDailyTf]): Future[MNode] = {
     // Запускаем апдейт узла.
     val fut = MNode.tryUpdate(mnode0) { mnode =>
       mnode.copy(
@@ -131,6 +131,8 @@ class TfDailyUtil @Inject()(
 
 }
 
+
+/** Интерфейс для доступа к DI-полю с экземпляром [[TfDailyUtil]]. */
 trait ITfDailyUtilDi {
   /** DI-инстанс утили формы для daily-тарифов. */
   def tfDailyUtil: TfDailyUtil

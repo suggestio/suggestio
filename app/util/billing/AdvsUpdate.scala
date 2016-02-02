@@ -59,15 +59,20 @@ sealed abstract class AdvsUpdate
         val madUpdFut = madFut flatMap {
           case Some(mad0) =>
             // Запускаем полный пересчет карты ресиверов.
-            advUtil.calculateReceiversFor(mad0) flatMap { rcvrs1 =>
+            for {
+              rcvrs1 <- advUtil.calculateReceiversFor(mad0)
               // Новая карта ресиверов готова. Заливаем её в карточку и сохраняем последнюю.
-              MNode.tryUpdate(mad0) { mad1 =>
-                mad1.copy(
-                  edges = mad1.edges.copy(
-                    out = mad1.edges.out ++ rcvrs1
+              _ <- {
+                MNode.tryUpdate(mad0) { mad1 =>
+                  mad1.copy(
+                    edges = mad1.edges.copy(
+                      out = mad1.edges.out ++ rcvrs1
+                    )
                   )
-                )
+                }
               }
+            } yield {
+              adId
             }
 
           // Карточка внезапно не найдена. Наверное она была удалена, а инфа в базе почему-то осталась. В любом случае, нужно удалить все adv.

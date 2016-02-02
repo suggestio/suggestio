@@ -240,7 +240,7 @@ class MarketAd @Inject() (
         // Произвести действия по сохранению карточки.
         val saveFut = for {
           imgsSaved <- saveImgsFut
-          _adId     <- MNode.tryUpdate(request.mad) { mad0 =>
+          mnode2    <- MNode.tryUpdate(request.mad) { mad0 =>
             mad0.copy(
               meta = mad0.meta.copy(
                 colors = r.mad.meta.colors,
@@ -265,7 +265,7 @@ class MarketAd @Inject() (
           }
         } yield {
           // Просто надо что-нибудь вернуть...
-          _adId
+          mnode2
         }
         // HTTP-ответ.
         for (_ <- saveFut) yield {

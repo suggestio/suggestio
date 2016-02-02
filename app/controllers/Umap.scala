@@ -263,8 +263,8 @@ class Umap @Inject() (
         }
       }
 
-      for (nodeIds <- updAllFut) yield {
-        LOGGER.trace(s"$logPrefix Updated ${nodeIds.size} nodes.")
+      for (nodes <- updAllFut) yield {
+        LOGGER.trace(s"$logPrefix Updated ${nodes.size} nodes.")
         val resp = layerJson(ngl)
         Ok(resp)
       }

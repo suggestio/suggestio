@@ -119,14 +119,15 @@ class SysMarketInvReq @Inject() (
         nodeEditBody(mir, NotAcceptable)
       },
       {adnNode2 =>
-        mInviteRequest.tryUpdate(mir) { mir0 =>
+        val updFut = mInviteRequest.tryUpdate(mir) { mir0 =>
           val adnNode3 = mir0.adnNode.fold [MNode] (adnNode2) { adnNodeEith =>
             sysMarketUtil.updateAdnNode(adnNodeEith.left.get, adnNode2)
           }
           mir0.copy(
             adnNode = Some(Left(adnNode3))
           )
-        } map { _ =>
+        }
+        for (_ <- updFut) yield {
           rdrToIr(mirId, "Шаблон узла сохранён.")
         }
       }
@@ -166,7 +167,7 @@ class SysMarketInvReq @Inject() (
             MNode.deleteById(adnId)
           }
         }
-        updateFut map { _ =>
+        for (_ <- updateFut) yield {
           rdrToIr(mirId, "Рекламный узел добавлен в систему.")
         }
       }
@@ -191,7 +192,7 @@ class SysMarketInvReq @Inject() (
               adnNode.save
               warn(s"nodeUnistallSubmit($mirId): rollbacking node[$adnId] deinstallation due to exception.", ex)
             }
-            updateFut map { _ =>
+            for (_ <- updateFut) yield {
               rdrToIr(mirId, "Рекламный узел деинсталлирован назад в шаблон узла. Это может нарушить ссылочную целостность.")
             }
           case false =>
@@ -237,7 +238,7 @@ class SysMarketInvReq @Inject() (
                 warn(s"eactInstallSubmit($mirId): Rollbacking save of eact[$eaId] due to exception.", ex)
               }
             }
-            updFut map { _ =>
+            for (_ <- updFut) yield {
               rdrToIr(mirId, s"Сохранён запрос на активацию. Письмо отправлено на ${ea1.email}.")
             }
           }

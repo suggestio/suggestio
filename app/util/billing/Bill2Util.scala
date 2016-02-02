@@ -49,13 +49,16 @@ class Bill2Util @Inject() (
   }
 
 
+  sealed case class EnsuredNodeContract(mc: MContract, mnode: MNode)
+
   /**
    * Найти и вернуть контракт для указанного id.
    * Если контракт не найден или не сущесвует, то он будет создан.
-   * @param mnode Узел.
+    *
+    * @param mnode Узел.
    * @return Фьючерс с экземпляром MContract.
    */
-  def ensureNodeContract(mnode: MNode): Future[MContract] = {
+  def ensureNodeContract(mnode: MNode): Future[EnsuredNodeContract] = {
     lazy val logPrefix = s"ensureNodeContract(${mnode.idOrNull}):"
 
     // Поискать связанный контракт, если есть.
@@ -71,21 +74,25 @@ class Bill2Util @Inject() (
       fut
     }
 
-    // Отработать случай, когда контракта нет.
-    mcOptFut
-      .map(_.get)
-      .recoverWith { case _: NoSuchElementException =>
+    // Если контракт есть, то собрать контейнер результат метода:
+    val res0Fut = for (mc0 <- mcOptFut) yield {
+      EnsuredNodeContract(mc0.get, mnode)
+    }
 
-        // Контракт не найден, значит нужно создать новый и вернуть.
-        val mc = MContract()
-        val resFut = dbConfig.db.run {
-          mContracts.insertOne(mc)
+    // Отработать случай, когда контракта нет.
+    res0Fut.recoverWith { case _: NoSuchElementException =>
+      // Контракт не найден, значит нужно создать новый, сохранить везде и вернуть.
+      for {
+        // Создать новый контракт в БД биллинга
+        mc2 <- {
+          val mc = MContract()
+          dbConfig.db.run {
+            mContracts.insertOne(mc)
+          }
         }
 
         // Сохранить id свежесозданного контракта в текущую ноду
-        resFut.flatMap { mc2 =>
-
-          // Запустить обновление текущего узла.
+        mnode2 <- {
           val updFut = MNode.tryUpdate(mnode) { mnode0 =>
             mnode0.copy(
               billing = mnode0.billing.copy(
@@ -109,18 +116,20 @@ class Bill2Util @Inject() (
               LOGGER.error(s"$logPrefix Rollback contact[${mc2.id}] init, because unable to update MNode.")
           }
 
-          // Вернуть созданный контракт
-          updFut.flatMap { _ =>
-            resFut
-          }
+          updFut
         }
+
+      } yield {
+        EnsuredNodeContract(mc2, mnode2)
       }
+    }
   }
 
 
   /**
    * Убедиться, что для контракта существует ордер-корзина для покупок.
-   * @param contractId Номер договора.
+    *
+    * @param contractId Номер договора.
    * @return Фьючерс с ордером корзины.
    */
   def ensureNodeCart(contractId: Gid_t): Future[MOrder] = {

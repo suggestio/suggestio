@@ -357,9 +357,7 @@ class SysAdnGeo @Inject() (
             )
           )
         }
-        for {
-          _ <- saveFut
-        } yield {
+        for (_ <- saveFut) yield {
           Redirect( routes.SysAdnGeo.forNode(adnId) )
             .flashing(FLASH.SUCCESS -> "Создан круг.")
         }
@@ -398,9 +396,7 @@ class SysAdnGeo @Inject() (
               geo = mnode0.geo.updateShape(mgs2)
             )
           }
-          for {
-            _ <- updFut
-          } yield {
+          for (_ <- updFut) yield {
             Redirect( routes.SysAdnGeo.forNode(g.nodeId) )
               .flashing(FLASH.SUCCESS -> "Changes.saved")
           }
@@ -559,44 +555,52 @@ class SysAdnGeo @Inject() (
         _editAdnNodeGeodata(formWithErrors, NotAcceptable)
       },
       {case (pointOpt, parentNodeIdOpt) =>
-        // Нужно собрать значение для поля allParentIds, пройдясь по все родительским узлам.
-        parentNodeIdOpt.fold {
-          Future successful Set.empty[String]
-        } { parentNodeId =>
-          for {
-            Some(parentNode) <- mNodeCache.getById(parentNodeId)
-          } yield {
-            parentNode.edges
-              .withPredicateIterIds( MPredicates.GeoParent )
-              .toSet
+        for {
+          // Нужно собрать значение для поля allParentIds, пройдясь по все родительским узлам.
+          parentParentIds0 <- {
+            parentNodeIdOpt.fold {
+              Future successful Set.empty[String]
+            } { parentNodeId =>
+              for {
+                Some(parentNode) <- mNodeCache.getById(parentNodeId)
+              } yield {
+                parentNode.edges
+                  .withPredicateIterIds( MPredicates.GeoParent )
+                  .toSet
+              }
+
+            }
+          }
+          // Подготовить данные, обновить узел.
+          mnode2 <- {
+            val allParentIds = parentParentIds0 ++ parentNodeIdOpt
+            val parentEdges = {
+              val p = MPredicates.GeoParent
+              allParentIds.iterator
+                .map { parentId => MEdge(p, parentId) }
+                .toStream
+            }
+            // Запуск апдейта новыми геоданными
+            MNode.tryUpdate(request.mnode) { mnode =>
+              mnode.copy(
+                geo = mnode.geo.copy(
+                  point = pointOpt
+                ),
+                edges = mnode.edges.copy(
+                  out = {
+                    val iter = mnode.edges.withoutPredicateIter( MPredicates.GeoParent ) ++
+                      parentEdges.iterator ++
+                      parentNodeIdOpt.iterator.map( MEdge(MPredicates.GeoParent.Direct, _) )
+                    MNodeEdges.edgesToMap1( iter )
+                  }
+                )
+              )
+            }
           }
 
-        }.flatMap { parentParentIds0 =>
-          val allParentIds = parentParentIds0 ++ parentNodeIdOpt
-          val parentEdges = {
-            val p = MPredicates.GeoParent
-            allParentIds.iterator
-              .map { parentId => MEdge(p, parentId) }
-              .toStream
-          }
-          MNode.tryUpdate(request.mnode) { mnode =>
-            mnode.copy(
-              geo = mnode.geo.copy(
-                point = pointOpt
-              ),
-              edges = mnode.edges.copy(
-                out = {
-                  val iter = mnode.edges.withoutPredicateIter( MPredicates.GeoParent ) ++
-                    parentEdges.iterator ++
-                    parentNodeIdOpt.iterator.map( MEdge(MPredicates.GeoParent.Direct, _) )
-                  MNodeEdges.edgesToMap1( iter )
-                }
-              )
-            )
-          }.map { _adnId =>
-            Redirect( routes.SysAdnGeo.forNode(_adnId) )
-              .flashing(FLASH.SUCCESS -> "Геоданные узла обновлены.")
-          }
+        } yield {
+          Redirect( routes.SysAdnGeo.forNode(adnId) )
+            .flashing(FLASH.SUCCESS -> "Геоданные узла обновлены.")
         }
       }
     )

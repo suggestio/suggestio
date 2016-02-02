@@ -7,22 +7,25 @@
 @import ctx.{request, messages}
 
 @sys1.bill.base(
-  title = "Редактировать посуточный тариф"
+  title = "Редактировать посуточный тариф",
+  nodeOpt = Some(args.mnode)
 ) {
+  @for(mnodeId <- args.mnode.id) {
 
-  @* Рендер кнопки удаления/сброса тарифа, если возможно. *@
-  @if( args.mnode.billing.tariffs.daily ) {
-    @_deleteSmthFormBtnTpl(
-      call    = CSRF( routes.SysBilling.deleteNodeTfDaily( args.mnode.id.get ) ),
-      btnText = Some( "Сбросить на общесистемный тариф" )
+    @* Рендер кнопки удаления/сброса тарифа, если возможно. *@
+    @if( args.mnode.billing.tariffs.daily ) {
+      @_deleteSmthFormBtnTpl(
+        call    = CSRF( routes.SysBilling.deleteNodeTfDaily( mnodeId ) ),
+        btnText = Some( "Сбросить на общесистемный тариф" )
+      )
+    }
+
+    @* Рендер формы редактирования тарифа. *@
+    @_tfDailyFormTpl(
+      args        = args,
+      submitCall  = routes.SysBilling.editNodeTfDailySubmit( mnodeId ),
+      btnText     = messages("Save")
     )
+
   }
-
-  @* Рендер формы редактирования тарифа. *@
-  @_tfDailyFormTpl(
-    args        = args,
-    submitCall  = routes.SysBilling.editNodeTfDailySubmit( args.mnode.id.get ),
-    btnText     = messages("Save")
-  )
-
 }

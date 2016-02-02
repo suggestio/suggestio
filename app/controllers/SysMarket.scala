@@ -753,7 +753,7 @@ class SysMarket @Inject() (
       newRcvrs <- advUtil.calculateReceiversFor(request.mad)
 
       // Запустить обновление ресиверов в карте.
-      _adId    <- {
+      _        <- {
         MNode.tryUpdate(request.mad) { mad =>
           mad.copy(
             edges = mad.edges.copy(
@@ -781,21 +781,20 @@ class SysMarket @Inject() (
   /** Очистить полностью таблицу ресиверов. Бывает нужно для временного сокрытия карточки везде.
     * Это действие можно откатить через resetReceivers. */
   def cleanReceivers(adId: String, r: Option[String]) = IsSuperuserMadPost(adId).async { implicit request =>
-    for {
-      _adId <- {
-        MNode.tryUpdate(request.mad) { mad =>
-          mad.copy(
-            edges = mad.edges.copy(
-              out = {
-                val iter = mad.edges
-                  .withoutPredicateIter( MPredicates.Receiver )
-                MNodeEdges.edgesToMap1(iter)
-              }
-            )
-          )
-        }
-      }
-    } yield {
+
+    val saveFut = MNode.tryUpdate(request.mad) { mad =>
+      mad.copy(
+        edges = mad.edges.copy(
+          out = {
+            val iter = mad.edges
+              .withoutPredicateIter( MPredicates.Receiver )
+            MNodeEdges.edgesToMap1(iter)
+          }
+        )
+      )
+    }
+
+    for (_ <- saveFut) yield {
       RdrBackOr(r) {
         routes.SysMarket.analyzeAdRcvrs(adId)
       }

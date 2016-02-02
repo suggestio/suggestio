@@ -44,10 +44,9 @@ class LkAdvGeoTag @Inject() (
   import mCommonDi._
 
   /**
-   * Экшен рендера страницы размещения карточки в теге с географией.
- *
-   * @param adId id отрабатываемой карточки.
-   */
+    * Экшен рендера страницы размещения карточки в теге с географией.
+    * @param adId id отрабатываемой карточки.
+    */
   def forAd(adId: String) = CanAdvertiseAdGet(adId, U.Lk).async { implicit request =>
     val ipLocFut = GeoIp.geoSearchInfoOpt
     val formEmpty = geoTagsFormUtil.advForm

@@ -192,6 +192,9 @@ trait SbNodeContract
         val act2 = mContracts.insertOne( request.mcontract )
         val reInsFut = dbConfig.db.run(act2)
         LOGGER.error(s"$logPrefix Re-inserting deleted contract after node update failure: ${request.mcontract}", ex)
+        reInsFut.onFailure { case ex2 =>
+          LOGGER.error(s"$logPrefix Unable to re-insert $act2", ex2)
+        }
       }
     }
 
@@ -202,7 +205,7 @@ trait SbNodeContract
       val res = Redirect( routes.SysBilling.forNode(nodeId) )
       val flash = rowsDeleted match {
         case 1 =>
-          FLASH.SUCCESS -> "Контракт удалён безвозравтно."
+          FLASH.SUCCESS -> "Контракт удалён безвозратно."
         case 0 =>
           FLASH.ERROR   -> "Кажется, контракт уже был удалён."
       }

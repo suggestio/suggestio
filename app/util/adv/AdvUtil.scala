@@ -160,7 +160,7 @@ class AdvUtil @Inject() (
     // Надо убрать указанного ресиверов из списка ресиверов
     val isOkFut = madOptFut flatMap {
       case Some(mad) =>
-        MNode.tryUpdate(mad) { mad1 =>
+        val updFut = MNode.tryUpdate(mad) { mad1 =>
           mad1.copy(
             edges = mad1.edges.copy(
               out = {
@@ -179,7 +179,10 @@ class AdvUtil @Inject() (
             )
           )
         }
-          .map { _ => true}
+        for (_ <- updFut) yield {
+          true
+        }
+
       case None =>
         warn(logPrefix + "MAd not found: " + adId)
         Future successful false
@@ -308,7 +311,7 @@ final class AdvUtilJmx @Inject() (
       case Some(mad) =>
         for {
           rcvrs1 <- advUtil.calculateReceiversFor(mad)
-          s      <- {
+          _      <- {
             MNode.tryUpdate(mad) { mad0 =>
               mad0.copy(
                 edges = mad0.edges.copy(
@@ -318,7 +321,7 @@ final class AdvUtilJmx @Inject() (
             }
           }
         } yield {
-          "Successfully reset receivers: " + s + "\n\n" + rcvrs1
+          "Successfully reset receivers: " + adId + "\n\n" + rcvrs1
         }
     }
     awaitString(s)
