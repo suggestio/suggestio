@@ -1,7 +1,7 @@
 package models.msys
 
 import models.adv.MAdvI
-import models.{blk, AdFreqs_t, AdSearch, MNode}
+import models.{blk, AdSearch, MNode}
 
 /**
   * Suggest.io
@@ -16,9 +16,6 @@ trait IShowNodeAdsTplArgs {
 
   /** Узел, если просмотр в рамках одного узла. */
   def nodeOpt: Option[MNode]
-
-  /** Какие-то частоты карточек. */
-  def adFreqs: AdFreqs_t
 
   /** Карта с ресиверами по id. */
   def rcvrsMap: Map[String, Seq[MNode]]
@@ -36,7 +33,6 @@ trait IShowNodeAdsTplArgs {
 case class MShowNodeAdsTplArgs(
   override val mads         : Seq[blk.IRenderArgs],
   override val nodeOpt      : Option[MNode],
-  override val adFreqs      : AdFreqs_t,
   override val rcvrsMap     : Map[String, Seq[MNode]],
   override val a            : AdSearch,
   override val ad2advMap    : Map[String, Traversable[MAdvI]]

@@ -1,8 +1,8 @@
-@(tl: io.suggest.common.css.ITopLeft, isWide: Boolean)
+@(tl: io.suggest.common.css.ITopLeft)
 position: absolute;
 top: @tl.top;
 left: @tl.left;
-@if(isWide) {
+@if(tl.wide) {
   @defining("""transform: translate3d(-50%,0,0);""") { t3d =>
     @t3d -webkit-@t3d -moz-@t3d
   }

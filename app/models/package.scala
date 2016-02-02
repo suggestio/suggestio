@@ -58,7 +58,6 @@ package object models {
 
   val  MAdStat              = ym.model.stat.MAdStat
   type MAdStat              = ym.model.stat.MAdStat
-  type AdFreqs_t            = MAdStat.AdFreqs_t
 
   type BTariffType          = BTariffTypes.BTariffType
 
