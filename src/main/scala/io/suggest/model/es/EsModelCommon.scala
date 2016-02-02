@@ -588,24 +588,26 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
   /**
    * Попытаться обновить экземпляр модели с помощью указанной функции.
    * Метод является надстройкой над save, чтобы отрабатывать VersionConflict.
+   * @param inst0 Исходный инстанс, который необходимо обновить.
    * @param retry Счетчик попыток.
    * @param updateF Функция для апдейта. Может возвращать null для внезапного отказа от апдейта.
    * @return Тоже самое, что и save().
-   *         Если updateF запретила апдейт (вернула null), то будет Future.successfull(null).
+   *         Если updateF запретила апдейт (вернула null), то будет Future.successfull(inst0).
    */
   def tryUpdate(inst0: T, retry: Int = 0)(updateF: T => T)
-               (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
+               (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[T] = {
     lazy val logPrefix = s"tryUpdate(${Option(inst0).flatMap(_.id).orNull}, $retry):"
 
     val inst1 = updateF(inst0)
 
     if (inst1 == null) {
       LOGGER.debug(logPrefix + " updateF() returned `null`, leaving update of inst")
-      Future.successful(null)
+      Future.successful(inst0)
 
     } else {
       inst1
         .save
+        .map { _ => inst1 }
         .recoverWith {
           case ex: VersionConflictEngineException =>
             if (retry < UPDATE_RETRIES_MAX) {
