@@ -493,13 +493,6 @@ class SysMarket @Inject() (
         }
     }
 
-    // Узнаём статистику по просмотрам/кликам. TODO Оно актуально тут ещё?
-    val adFreqsFut: Future[AdFreqs_t] = adnNodeIdOpt
-      .fold [Future[MAdStat.AdFreqs_t]] {
-        Future successful Map.empty
-      } {
-        MAdStat.findAdByActionFreqs
-      }
     val adnNodeOptFut = FutureUtil.optFut2futOpt(adnNodeIdOpt)( mNodeCache.getById )
 
     // Собираем карту размещений рекламных карточек.
@@ -577,13 +570,12 @@ class SysMarket @Inject() (
 
     // Планируем рендер страницы-результата, когда все данные будут собраны.
     for {
-      adFreqs       <- adFreqsFut
       brArgss       <- brArgssFut
       adnNodeOpt    <- adnNodeOptFut
       rcvrs         <- rcvrsFut
       ad2advMap     <- ad2advMapFut
     } yield {
-      val rargs = MShowNodeAdsTplArgs(brArgss, adnNodeOpt, adFreqs, rcvrs, a, ad2advMap)
+      val rargs = MShowNodeAdsTplArgs(brArgss, adnNodeOpt, rcvrs, a, ad2advMap)
       Ok( showAdnNodeAdsTpl(rargs) )
     }
   }

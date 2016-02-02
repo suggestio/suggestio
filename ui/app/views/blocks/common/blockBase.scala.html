@@ -14,14 +14,18 @@
        @MAD_ID_ATTR="@mad.id"
        @if(args.apiVsn.serverSideBlockIds) {
          id="@mad.id@ID_DELIM@(if (args.isFocused) FAd.BLOCK_ID_SUFFIX else ID_SUFFIX)"
-         @args.indexOpt.map { index => @BLK_INDEX_ATTR="@index" }
+         @for(index <- args.indexOpt) {
+           @BLK_INDEX_ATTR="@index"
+         }
        }
      }
-     @mad.ad.blockMeta.map { bm =>
+     @for(bm <- mad.ad.blockMeta) {
        @WIDTH_ATTR="@szMulted(bm.width, args.szMult)"
        @HEIGHT_ATTR="@szMulted(bm.height, args.szMult)"
      }
      data-wide-bg="@args.wideBg.isDefined"
-     @args.topLeft.filter(_.inlineStyle).map { tl =>style="@_focTopLeftCss(tl, args.wideBg)"}>
+     @for(tl <- args.topLeft if tl.inlineStyle) {
+       style="@_focTopLeftCss(tl)"
+     }>
   @content
 </div>
