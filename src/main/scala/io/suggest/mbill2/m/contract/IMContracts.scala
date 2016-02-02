@@ -4,7 +4,7 @@ package io.suggest.mbill2.m.contract
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 24.12.15 23:14
-  * Description:
+  * Description: Интерфейс для DI-поля со статической slick-моделью MContracts.
   */
 trait IMContracts {
   def mContracts: MContracts
