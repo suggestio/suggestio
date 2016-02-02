@@ -85,35 +85,6 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
 
   def adOwnerQuery(adOwnerId: String) = QueryBuilders.termQuery(ON_NODE_ID_ESFN, adOwnerId)
 
-  /**
-   * Аггрегат, порождающий карту из id реклам и их статистик по action'ам.
-   * @param adOwnerId id владельца рекламных карточек.
-   * @return Карту [adId -> stats], где stats - это карта [AdStatAction -> freq:Long].
-   */
-  def findAdByActionFreqs(adOwnerId: String)(implicit ec: ExecutionContext, client: Client): Future[AdFreqs_t] = {
-    val aggName = "aggIdAction"
-    prepareSearch
-      .setQuery(adOwnerQuery(adOwnerId))
-      .setSize(0)
-      .addAggregation(
-        AggregationBuilders.terms(aggName)
-          .script("doc['adId'].value + '.' + doc['action'].value")
-      )
-      .execute()
-      .map { searchResp =>
-        searchResp.getAggregations
-          .get[Terms](aggName)
-          .getBuckets
-          .foldLeft[List[(String, (String, Long))]] (Nil) { (acc, bucket) =>
-            val Array(adId, statActionRaw) = bucket.getKey.split('.')
-            val e1 = (adId, (statActionRaw, bucket.getDocCount))
-            e1 :: acc
-          }
-          .groupBy(_._1)
-          .mapValues { _.map(_._2).toMap }
-      }
-  }
-
 
   /**
    * Генерим данные для date-гистограммы. Данные эти можно обратить в столбчатую диаграмму или соответствующий график.
