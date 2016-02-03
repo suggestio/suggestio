@@ -3,13 +3,11 @@ package util.adv.gtag
 import com.google.inject.Inject
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.MItemStatuses
-import io.suggest.mbill2.m.item.tags.{MItemTag, MItemTags}
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import models.MPrice
-import models.adv.gtag.MAdvFormResult
+import models.adv.gtag.IAdvGeoTagsInfo
 import models.mproj.ICommonDi
-import slick.dbio.DBIOAction
 import util.billing.Bill2Util
 
 import scala.concurrent.Future
@@ -23,52 +21,51 @@ import scala.concurrent.Future
 class GeoTagAdvBillUtil @Inject() (
   bill2Util                           : Bill2Util,
   mItems                              : MItems,
-  mItemTags                           : MItemTags,
   mCommonDi                           : ICommonDi
 ) {
 
   import mCommonDi._
   import dbConfig.driver.api._
 
-  /**
-   * Закинуть в корзину bill-v2
-   * @param orderId id-ордера-корзины, т.е. текущего заказа. Туда надо добавить возможную покупку.
-   *                Например, выхлоп [[util.billing.Bill2Util.ensureNodeCart()]].
-   * @param adId id узла-цели размещения тегов, обычно рекламная карточка.
-   * @param res Данные по размещаемым тегам.
-   * @return Фьючерс c результатом.
-   */
-  def addToOrder(orderId: Gid_t, producerId: String, adId: String, price: MPrice, res: MAdvFormResult): Future[_] = {
-    // Собираем инстанс нового товара в корзине: пачка тегов.
-    val mitem0 = MItem(
-      orderId       = orderId,
-      iType         = MItemTypes.GeoTag,
-      status        = MItemStatuses.Draft,
-      price         = price,
-      adId          = adId,
-      prodId        = producerId,
-      dtIntervalOpt = Some(res.interval),
-      rcvrIdOpt     = None
-    )
 
-    // Собираем экшен для внесения item'а с заказанными тегами в БД.
-    val slkAction = for {
-      mitem2    <- mItems.insertOne(mitem0)
-      mItemTags <- {
-        // Сгенерить и сохранить tag_item'ы для тегов в res.
-        val itemId = mitem2.id.get
-        val mItemTagActs = for (tb <- res.tags) yield {
-          val mItemTag = MItemTag(itemId, face = tb.face, nodeId = tb.nodeId)
-          mItemTags.insertOne(mItemTag)
-        }
-        DBIOAction.seq(mItemTagActs: _*)
-      }
-    } yield {
-      mitem2
+  /** Посчитать стоимость размещения. */
+  def computePrice(res: IAdvGeoTagsInfo): Future[MPrice] = {
+    // TODO Запилить систему подсчета стоимости размещения.
+    val p = bill2Util.zeroPrice
+    Future.successful(p)
+  }
+
+  /**
+    * Закинуть в корзину bill-v2.
+    *
+    * @param orderId id-ордера-корзины, т.е. текущего заказа. Туда надо добавить возможную покупку.
+    *                Например, выхлоп [[util.billing.Bill2Util.ensureCart()]].
+    * @param adId    id узла-цели размещения тегов, обычно рекламная карточка.
+    * @param res     Данные по размещаемым тегам.
+    * @return Фьючерс c результатом.
+    */
+  def addToOrder(orderId: Gid_t, producerId: String, adId: String, price: MPrice, res: IAdvGeoTagsInfo): Future[Seq[MItem]] = {
+    // Собираем экшен заливки item'ов. Один тег -- один item.
+    val mitemsActs = for (tag <- res.tags.toSeq) yield {
+      val itm0 = MItem(
+        orderId       = orderId,
+        iType         = MItemTypes.GeoTag,
+        status        = MItemStatuses.Draft,
+        price         = price,
+        adId          = adId,
+        prodId        = producerId,
+        dtIntervalOpt = Some(res.interval),
+        rcvrIdOpt     = tag.nodeId,
+        tagFaceOpt    = Some(tag.face),
+        geoShape      = Some(res.circle)
+      )
+      mItems.insertOne(itm0)
     }
 
+    val dbioAction = DBIO.sequence(mitemsActs)
+
     // Запустить сохранение нового item'а.
-    dbConfig.db.run(slkAction.transactionally)
+    dbConfig.db.run(dbioAction.transactionally)
   }
 
 }

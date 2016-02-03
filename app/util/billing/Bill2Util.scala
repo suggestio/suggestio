@@ -6,6 +6,7 @@ import com.google.inject.{Inject, Singleton}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.contract.{MContract, MContracts}
 import io.suggest.mbill2.m.gid.Gid_t
+import io.suggest.mbill2.m.item.{MItems, MItem}
 import io.suggest.mbill2.m.order.{MOrder, MOrderStatuses, MOrders}
 import models.adv.tpl.MAdvPricing
 import models.mproj.ICommonDi
@@ -26,6 +27,7 @@ import scala.util.{Failure, Success}
 class Bill2Util @Inject() (
   mOrders                         : MOrders,
   mContracts                      : MContracts,
+  mItems                          : MItems,
   mCommonDi                       : ICommonDi
 )
   extends PlayMacroLogsImpl
@@ -51,13 +53,40 @@ class Bill2Util @Inject() (
 
   sealed case class EnsuredNodeContract(mc: MContract, mnode: MNode)
 
+
   /**
-   * Найти и вернуть контракт для указанного id.
-   * Если контракт не найден или не сущесвует, то он будет создан.
+    * Вернуть контракт для узла. Если нет контракта, то создать и вернуть обновлённый узел.
+    *
+    * @param mnode Исходный узел, обычно person.
+    * @param mcOptFut Фьючерс с подсказкой контракта.
+    * @return
+    */
+  def ensureNodeContract(mnode: MNode, mcOptFut: Future[Option[MContract]]): Future[EnsuredNodeContract] = {
+    mcOptFut
+      .map(_.get)
+      // Проверить, является ли контракт-подсказка связанным с узлом.
+      .filter { mc =>
+        val ncIdOpt = mnode.billing.contractId
+        val res = ncIdOpt == mc.id
+        if (!res)
+          LOGGER.warn(s"ensureNodeContract(): Unrelated contract[${mc.id}] passed as hint for node[${mnode.idOrNull}]. Expected node's contract is [$ncIdOpt].")
+        res
+      }
+      .map { mc =>
+        EnsuredNodeContract(mc, mnode)
+      }
+      .recoverWith { case ex: NoSuchElementException =>
+        ensureNodeContract(mnode)
+      }
+  }
+
+  /**
+    * Найти и вернуть контракт для указанного id.
+    * Если контракт не найден или не сущесвует, то он будет создан.
     *
     * @param mnode Узел.
-   * @return Фьючерс с экземпляром MContract.
-   */
+    * @return Фьючерс с экземпляром MContract.
+    */
   def ensureNodeContract(mnode: MNode): Future[EnsuredNodeContract] = {
     lazy val logPrefix = s"ensureNodeContract(${mnode.idOrNull}):"
 
@@ -125,17 +154,22 @@ class Bill2Util @Inject() (
     }
   }
 
-
-  /**
-   * Убедиться, что для контракта существует ордер-корзина для покупок.
-    *
-    * @param contractId Номер договора.
-   * @return Фьючерс с ордером корзины.
-   */
-  def ensureNodeCart(contractId: Gid_t): Future[MOrder] = {
-    val ocOptFut = dbConfig.db.run {
+  /** Найти ордер-корзину. */
+  def getCart(contractId: Gid_t): Future[Option[MOrder]] = {
+    dbConfig.db.run {
       mOrders.getCartOrder(contractId)
     }
+  }
+
+  /**
+    * Убедиться, что для контракта существует ордер-корзина для покупок.
+    *
+    * @param contractId Номер договора.
+    * @return Фьючерс с ордером корзины.
+    */
+  def ensureCart(contractId: Gid_t): Future[MOrder] = {
+    // Возможно, надо объединить поиск ордера и создания в одну транзакцию, хз...
+    val ocOptFut = getCart(contractId)
     ocOptFut
       .map(_.get)
       .recoverWith { case ex: NoSuchElementException =>
@@ -160,6 +194,12 @@ class Bill2Util @Inject() (
   def zeroPricing: MAdvPricing = {
     val prices = Seq(zeroPrice)
     MAdvPricing(prices, hasEnoughtMoney = true)
+  }
+
+  def orderItems(orderId: Gid_t): Future[Seq[MItem]] = {
+    dbConfig.db.run {
+      mItems.findByOrderId(orderId)
+    }
   }
 
 }

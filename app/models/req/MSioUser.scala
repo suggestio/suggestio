@@ -14,7 +14,7 @@ import models.event.search.MEventsSearchArgs
 import models.usr.MSuperUsers
 import org.elasticsearch.client.Client
 import play.api.db.slick.DatabaseConfigProvider
-import util.PlayMacroLogsImpl
+import util.{PlayMacroLogsDyn, PlayMacroLogsImpl}
 import util.di.ISlickDbConfig
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -46,6 +46,9 @@ trait ISioUser {
     * В реализациях инстанса может быть как lazy val, так и val, или другие подходящие варианты. */
   def personNodeOptFut: Future[Option[MNode]]
 
+  /** @return MNode || NoSuchElementException. */
+  def personNodeFut: Future[MNode]
+
   /** Является ли текущий юзер суперпользователем? */
   def isSuper: Boolean
 
@@ -59,7 +62,8 @@ trait ISioUser {
    * Остатки по балансов текущего юзера.
    * Реализуется через lazy val, val или что-то подобное.
    * Часто используется в личном кабинете, поэтому живёт прямо здесь.
-   * @return Фьючерс со списком остатков на балансах в различных валютах.
+    *
+    * @return Фьючерс со списком остатков на балансах в различных валютах.
    */
   def mBalancesFut: Future[Seq[MBalance]]
 
@@ -88,13 +92,16 @@ class MSioUserEmpty extends ISioUser {
   override def isAuth               = false
   override def jsiTgs               = Nil
   override def mBalancesFut         = Future.successful(Nil)
+  override def personNodeFut: Future[MNode] = {
+    Future.failed( new NoSuchElementException("personIdOpt is empty") )
+  }
 
   override implicit def lkCtxData   = Future.successful(CtxData.empty)
 }
 
 
 /** Частичная реализация [[ISioUser]] для дальнейших ижектируемых реализаций. */
-trait ISioUserT extends ISioUser {
+trait ISioUserT extends ISioUser with PlayMacroLogsDyn {
 
   // DI-инжектируемые контейнер со статическими моделями.
   protected val msuStatics: MsuStatic
@@ -111,8 +118,18 @@ trait ISioUserT extends ISioUser {
 
   override def personNodeOptFut: Future[Option[MNode]] = {
     FutureUtil.optFut2futOpt( personIdOpt ) { personId =>
-      mNodeCache.getByIdType(personId, MNodeTypes.Person)
+      val optFut0 = mNodeCache.getByIdType(personId, MNodeTypes.Person)
+      optFut0.onSuccess { case None =>
+        // should never happen
+        LOGGER.warn(s"personNodeOptFut(): Person[$personId] doesn't exist, but it should!")
+      }
+      optFut0
     }
+  }
+
+  override def personNodeFut: Future[MNode] = {
+    personNodeOptFut
+      .map(_.get)
   }
 
   override def contractIdOptFut: Future[Option[Long]] = {
@@ -169,10 +186,11 @@ trait ISioUserT extends ISioUser {
 /** Guice factory для быстрой сборки экземпляров [[MSioUserLazy]]. */
 trait MSioUserLazyFactory {
   /**
-   * factory-метод для сборки инстансов [[MSioUserLazy]].
-   * @param personIdOpt id текущего юзера, если есть.
-   * @param jsiTgs js init targets, выставленные ActionBuilder'ом, если есть.
-   */
+    * factory-метод для сборки инстансов [[MSioUserLazy]].
+    *
+    * @param personIdOpt id текущего юзера, если есть.
+    * @param jsiTgs js init targets, выставленные ActionBuilder'ом, если есть.
+    */
   def apply(personIdOpt: Option[String],
             jsiTgs: List[MTarget]): MSioUserLazy
 }
@@ -194,7 +212,8 @@ class MsuStatic @Inject()(
 
 /**
  * Реализация модели [[ISioUser]], где все future-поля реализованы как lazy val.
- * @param personIdOpt id текущего юзера.
+  *
+  * @param personIdOpt id текущего юзера.
  * @param jsiTgs Список целей js-инициализации.
  * @param msuStatics Статические модели, необходимые для успешной работы ленивых полей инстанса.
  */
@@ -233,11 +252,12 @@ class MSioUsers @Inject() (
   val empty = new MSioUserEmpty
 
   /**
-   * factory-метод с дефолтовыми значениями некоторых аргументов.
-   * @param personIdOpt Опционалньый id юзера. Экстрактиться из сессии с помощью SessionUtil.
-   * @param jsiTgs Список целей js-инициализации [Nil].
-   * @return Инстанс какой-то реализации [[ISioUser]].
-   */
+    * factory-метод с дефолтовыми значениями некоторых аргументов.
+    *
+    * @param personIdOpt Опционалньый id юзера. Экстрактиться из сессии с помощью SessionUtil.
+    * @param jsiTgs Список целей js-инициализации [Nil].
+    * @return Инстанс какой-то реализации [[ISioUser]].
+    */
   def apply(personIdOpt: Option[String], jsiTgs: List[MTarget] = Nil): ISioUser = {
     // Частые анонимные запросы можно огулять одним общим инстансом ISioUser.
     if (personIdOpt.isEmpty && jsiTgs.isEmpty) {

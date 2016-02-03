@@ -11,10 +11,12 @@ import models.mproj.ICommonDi
 import models.req.IAdProdReq
 import models.GeoIp
 import org.elasticsearch.common.unit.DistanceUnit
+import play.api.i18n.Messages
 import play.api.mvc.Result
 import util.PlayMacroLogsImpl
 import util.acl.{CanAdvertiseAd, CanAdvertiseAdUtil}
 import util.adv.AdvFormUtil
+import util.adv.gtag.GeoTagAdvBillUtil
 import util.billing.Bill2Util
 import util.tags.{GeoTagsFormUtil, TagsEditFormUtil}
 import views.html.lk.adv.gtag._
@@ -29,6 +31,7 @@ import scala.concurrent.Future
   */
 class LkAdvGeoTag @Inject() (
   geoTagsFormUtil                 : GeoTagsFormUtil,
+  geoTagAdvBillUtil               : GeoTagAdvBillUtil,
   advFormUtil                     : AdvFormUtil,
   bill2Util                       : Bill2Util,
   override val tagsEditFormUtil   : TagsEditFormUtil,
@@ -45,6 +48,7 @@ class LkAdvGeoTag @Inject() (
 
   /**
     * Экшен рендера страницы размещения карточки в теге с географией.
+    *
     * @param adId id отрабатываемой карточки.
     */
   def forAd(adId: String) = CanAdvertiseAdGet(adId, U.Lk).async { implicit request =>
@@ -106,7 +110,7 @@ class LkAdvGeoTag @Inject() (
    * @param adId id размещаемой карточки.
    * @return 302 see other, 416 not acceptable.
    */
-  def forAdSubmit(adId: String) = CanAdvertiseAdPost(adId).async { implicit request =>
+  def forAdSubmit(adId: String) = CanAdvertiseAdPost(adId, U.Lk, U.PersonNode).async { implicit request =>
     geoTagsFormUtil.advForm.bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug(s"forAdSubmit($adId): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
@@ -115,11 +119,34 @@ class LkAdvGeoTag @Inject() (
       {result =>
         LOGGER.trace("Binded: " + result)
         // TODO Прикрутить free adv для суперпользователей.
-        // TODO Прикрутить рассчет цены, оплату. Тут пока что всё бесплатно.
+        // TODO Прикрутить рассчет цены
 
-        // Найти корзину (ЧЬЮ? УЗЛА? ЮЗЕРА?), добавить покупку в корзину.
-        // TODO bill2Util.ensureNodeContract(request.)
-        ???
+        val producerId = request.producer.id.get
+
+        // Найти корзину юзера и добавить туда покупки.
+        for {
+          // Прочитать узел юзера
+          personNode0 <- request.user.personNodeFut
+          // Узнать контракт юзера
+          e           <- bill2Util.ensureNodeContract(personNode0, request.user.mContractOptFut)
+          // Найти/создать корзину
+          cart        <- bill2Util.ensureCart(e.mc.id.get)
+          // Рассчитать цену.
+          price       <- geoTagAdvBillUtil.computePrice(result)
+          // Закинуть заказ в корзину юзера.
+          addRes      <- geoTagAdvBillUtil.addToOrder(
+            orderId     = cart.id.get,
+            producerId  = producerId,
+            adId        = adId,
+            price       = price,
+            res         = result
+          )
+        } yield {
+          implicit val messages = implicitly[Messages]
+          // Пора вернуть результат работы юзеру: отредиректить в корзину-заказ для оплаты.
+          Redirect( routes.LkBill2.cart(producerId, r = Some(routes.LkAdvGeoTag.forAd(adId).url)) )
+            .flashing( FLASH.SUCCESS -> messages("Added.n.items.to.cart", addRes.size) )
+        }
       }
     )
   }
