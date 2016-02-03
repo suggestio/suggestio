@@ -3,6 +3,7 @@ package controllers
 import com.google.inject.Inject
 import models.mproj.MCommonDi
 import util.acl.IsSuperuser
+import util.adv.AdvUtil
 import util.health.AdnGeoParentsHealth
 import views.html.sys1.debug._
 
@@ -14,6 +15,7 @@ import views.html.sys1.debug._
  */
 class SysDebug @Inject() (
   geoParentsHealth              : AdnGeoParentsHealth,
+  advUtil                       : AdvUtil,
   override val mCommonDi        : MCommonDi
 )
   extends SioController
@@ -23,15 +25,16 @@ class SysDebug @Inject() (
   import mCommonDi._
 
   /** Экшен для отображения индексной страницы. */
-  def index = IsSuperuser { implicit request =>
+  def index = IsSuperuserGet { implicit request =>
     Ok( indexTpl() )
   }
 
   /**
-   * Запуск теста geo-связности geo-узлов через geo.parents-поля.
-   * @return 200 Ок со страницей-отчетом.
-   */
-  def testNodesAllGeoParents = IsSuperuser.async { implicit request =>
+    * Запуск теста geo-связности geo-узлов через geo.parents-поля.
+    *
+    * @return 200 Ок со страницей-отчетом.
+    */
+  def testNodesAllGeoParents = IsSuperuserPost.async { implicit request =>
     // Организуем тестирование
     val testResultsFut = geoParentsHealth.testAll()
 
@@ -39,6 +42,14 @@ class SysDebug @Inject() (
     testResultsFut.map { testResults =>
       val render = geo.parent.resultsTpl(testResults)
       Ok(render)
+    }
+  }
+
+
+  /** Запуск поиска и ремонта неправильных ресиверов в карточках. */
+  def resetAllRcvrs = IsSuperuserPost.async { implicit request =>
+    for (count <- advUtil.resetAllReceivers()) yield {
+      Ok(count + " ads updated.")
     }
   }
 

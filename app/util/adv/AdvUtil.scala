@@ -8,10 +8,9 @@ import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.util.JMXBase
 import models._
 import models.adv.{MAdvReq, MAdvOk}
+import models.mproj.ICommonDi
 import org.elasticsearch.client.Client
 import org.joda.time.DateTime
-import play.api.Configuration
-import play.api.db.Database
 import util.PlayMacroLogsImpl
 import util.async.AsyncUtil
 import util.billing.MmpDailyBilling
@@ -27,21 +26,17 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 @Singleton
 class AdvUtil @Inject() (
-  mNodeCache              : MNodeCache,
   mmpDailyBilling         : MmpDailyBilling,
-  configuration           : Configuration,
-  db                      : Database,
   advTownCoverageRcvrs    : AdvTownCoverageRcvrs,
   advFreeGeoParentRcvrs   : AdvFreeGeoParentRcvrs,
   n2NodesUtil             : N2NodesUtil,
-  implicit val ec         : ExecutionContext,
-  implicit val esClient   : Client,
-  implicit val sn         : SioNotifierStaticClientI
+  mCommonDi               : ICommonDi
 )
   extends PlayMacroLogsImpl
 {
 
   import LOGGER._
+  import mCommonDi._
 
   /** Текущие активные аддоны, участвующие в генерации списка ресиверов. */
   val EXTRA_RCVRS_CALCS: List[AdvExtraRcvrsCalculator] = {
@@ -60,11 +55,12 @@ class AdvUtil @Inject() (
   info(s"Enabled extra-rcvrs generators: " + EXTRA_RCVRS_CALCS.iterator.map(_.getClass.getSimpleName).mkString(", "))
 
   /**
-   * Пересчет текущих размещений рекламной карточки на основе данных других моделей.
-   * Данные по саморазмещению мигрируют из исходных данных размещения.
-   * @param mad Исходная рекламная карточка или её интерфейс.
-   * @param producerOpt Экземпляр продьюсера
-   */
+    * Пересчет текущих размещений рекламной карточки на основе данных других моделей.
+    * Данные по саморазмещению мигрируют из исходных данных размещения.
+    *
+    * @param mad Исходная рекламная карточка или её интерфейс.
+    * @param producerOpt Экземпляр продьюсера
+    */
   def calculateReceiversFor(mad: MNode, producerOpt: Option[MNode] = None): Future[Receivers_t] = {
     val prodIdOpt = n2NodesUtil.madProducerId(mad)
 
@@ -141,11 +137,12 @@ class AdvUtil @Inject() (
 
 
   /**
-   * Убрать указанную рекламную карточку из выдачи указанного ресивера или всех ресиверов.
-   * @param adId id рекламной карточки.
-   * @param rcvrIdOpt id ресивера. Если пусто, то все ресиверы вообще.
-   * @return Boolean, который обычно не имеет смысла.
-   */
+    * Убрать указанную рекламную карточку из выдачи указанного ресивера или всех ресиверов.
+    *
+    * @param adId id рекламной карточки.
+    * @param rcvrIdOpt id ресивера. Если пусто, то все ресиверы вообще.
+    * @return Boolean, который обычно не имеет смысла.
+    */
   def removeAdRcvr(adId: String, rcvrIdOpt: Option[String]): Future[Boolean] = {
     lazy val logPrefix = s"removeAdRcvr(ad[$adId]${rcvrIdOpt.fold("")(", rcvr[" + _ + "]")}): "
     val madOptFut = MNode.getByIdType(adId, MNodeTypes.Ad)
@@ -216,9 +213,96 @@ class AdvUtil @Inject() (
         }
       }
     }(AsyncUtil.jdbcExecutionContext)
+
     dbUpdFut flatMap { _ =>
       isOkFut
     }
+  }
+
+
+  /**
+    * Выполнить всеобщий пересчёт карт ресиверов.
+    *
+    * @return Фьючерс с кол-вом обновлённых карточек.
+    */
+  def resetAllReceivers(): Future[Int] = {
+    val search = new MNodeSearchDfltImpl {
+      override def nodeTypes = Seq( MNodeTypes.Ad )
+    }
+    MNode.updateAll(queryOpt = search.toEsQueryOpt) { mad0 =>
+      val newRcvrsFut = calculateReceiversFor(mad0)
+      val rcvrsMap = n2NodesUtil.receiversMap(mad0)
+      for (newRcvrs <- newRcvrsFut) yield {
+        if (isRcvrsMapEquals(rcvrsMap, newRcvrs)) {
+          null
+        } else {
+          updateReceivers(mad0, newRcvrs)
+        }
+      }
+    }
+  }
+
+  def isRcvrsMapEquals(map1: Receivers_t, map2: Receivers_t): Boolean = {
+    map1 == map2
+  }
+
+  // TODO Из-за расхождений между ветками нужно выставить в DEV тип возвращаемого значения в методах ниже.
+
+  /**
+    * Удалить ресиверов для узла-карточки.
+    *
+    * @param mad0 Исходная карточка.
+    * @return Новый экземпляр карточки.
+    */
+  def cleanReceiverFor(mad0: MNode) = {
+    MNode.tryUpdate(mad0) { mad =>
+      mad.copy(
+        edges = mad.edges.copy(
+          out = {
+            val iter = mad.edges
+              .withoutPredicateIter( MPredicates.Receiver )
+            MNodeEdges.edgesToMap1(iter)
+          }
+        )
+      )
+    }
+  }
+
+  /**
+    * Вычислить заново ресиверов для узла-карточки.
+    *
+    * @param mad0
+    * @return
+    */
+  def resetReceiversFor(mad0: MNode) = {
+    for {
+      // Вычислить ресиверов согласно биллингу и прочему.
+      newRcvrs <- calculateReceiversFor(mad0)
+
+      // Запустить обновление ресиверов в карте.
+      res      <- {
+        MNode.tryUpdate(mad0) { mad =>
+          updateReceivers(mad, newRcvrs)
+        }
+      }
+
+    } yield {
+      res
+    }
+  }
+
+  /** Заменить ресиверов в узле без сохранения. */
+  def updateReceivers(mad: MNode, rcvrs1: Receivers_t): MNode = {
+    mad.copy(
+      edges = mad.edges.copy(
+        out = {
+          val oldEdgesIter = mad.edges
+            .withoutPredicateIter( MPredicates.Receiver )
+          val newRcvrEdges = rcvrs1.valuesIterator
+          MNodeEdges.edgesToMap1( oldEdgesIter ++ newRcvrEdges )
+        }
+      )
+    )
   }
 
 }
@@ -231,12 +315,14 @@ trait AdvExtraRcvrsCalculator {
   def isEnabled: Boolean
 
   /**
-   * Рассчет доп.ресиверов на основе карты прямых (непосредственных) ресиверов карточки.
-   * @param allDirectRcvrs Карта непосредственных ресиверов.
-   * @param producerIdOpt id продьюсера.
-   * @return Фьючерс с картой extra-ресиверов.
-   */
+    * Рассчет доп.ресиверов на основе карты прямых (непосредственных) ресиверов карточки.
+    *
+    * @param allDirectRcvrs Карта непосредственных ресиверов.
+    * @param producerIdOpt id продьюсера.
+    * @return Фьючерс с картой extra-ресиверов.
+    */
   def calcForDirectRcvrs(allDirectRcvrs: Receivers_t, producerIdOpt: Option[String]): Future[Receivers_t]
+
 }
 
 
@@ -249,22 +335,25 @@ trait AdvUtilJmxMBean {
   def resetAllReceivers(): String
 
   /**
-   * Пересчитать ресиверов для карточки и сохранить в карточку.
-   * @param adId id карточки.
-   */
+    * Пересчитать ресиверов для карточки и сохранить в карточку.
+    *
+    * @param adId id карточки.
+    */
   def resetReceiversForAd(adId: String): String
 
   /**
-   * Депубликация указанной рекламной карточки отовсюду.
-   * @param adId id рекламной карточки.
-   */
+    * Депубликация указанной рекламной карточки отовсюду.
+    *
+    * @param adId id рекламной карточки.
+    */
   def depublishAd(adId: String): String
 
   /**
-   * Депубликация рекламной карточки на указанном узле.
-   * @param adId id рекламной карточки.
-   * @param rcvrId id ресивера.
-   */
+    * Депубликация рекламной карточки на указанном узле.
+    *
+    * @param adId id рекламной карточки.
+    * @param rcvrId id ресивера.
+    */
   def depublishAdAt(adId: String, rcvrId: String): String
 }
 
@@ -272,68 +361,51 @@ trait AdvUtilJmxMBean {
 /** Реализация MBean'а для прямого взаимодействия с AdvUtil. */
 final class AdvUtilJmx @Inject() (
   advUtil                 : AdvUtil,
-  implicit val ec         : ExecutionContext,
-  implicit val esClient   : Client,
-  implicit val sn         : SioNotifierStaticClientI
+  mCommonDi               : ICommonDi
 )
   extends AdvUtilJmxMBean
   with JMXBase
 {
 
+  import mCommonDi._
+
   override def jmxName = "io.suggest:type=util,name=" + getClass.getSimpleName.replace("Jmx", "")
 
   override def resetAllReceivers(): String = {
-    val search = new MNodeSearchDfltImpl {
-      override def nodeTypes = Seq( MNodeTypes.Ad )
-    }
-    val cntFut = MNode.updateAll(queryOpt = search.toEsQueryOpt) { mad0 =>
-      advUtil.calculateReceiversFor(mad0) map { rcvrs1 =>
-        mad0.copy(
-          edges = mad0.edges.copy(
-            out = mad0.edges.out ++ rcvrs1
-          )
-        )
-      }
-    }
-    val s = cntFut map { cnt =>
+    val countFut = advUtil.resetAllReceivers()
+    val fut = for (cnt <- countFut) yield {
       "Total updated: " + cnt
     }
-    awaitString(s)
+    awaitString(fut)
   }
 
   override def resetReceiversForAd(adId: String): String = {
-    val s = MNode.getById(adId) flatMap {
-      case None =>
-        Future successful s"Not found ad: $adId"
+    val s = MNode.getById(adId).flatMap {
       case Some(mad) =>
-        for {
-          rcvrs1 <- advUtil.calculateReceiversFor(mad)
-          s      <- {
-            MNode.tryUpdate(mad) { mad0 =>
-              mad0.copy(
-                edges = mad0.edges.copy(
-                  out = mad0.edges.out ++ rcvrs1
-                )
-              )
-            }
-          }
-        } yield {
-          "Successfully reset receivers: " + s + "\n\n" + rcvrs1
+        for (_ <- advUtil.resetReceiversFor(mad)) yield {
+          "Successfully reset receivers for " + adId
         }
+      case None =>
+        val msg = "Not found ad: " + adId
+        Future.successful( msg )
     }
     awaitString(s)
   }
 
   override def depublishAd(adId: String): String = {
-    val s = advUtil.removeAdRcvr(adId, rcvrIdOpt = None)
-      .map { isOk => "Result: " + isOk }
-    awaitString(s)
+    _depublishAd(adId, None)
   }
 
   override def depublishAdAt(adId: String, rcvrId: String): String = {
-    val s = advUtil.removeAdRcvr(adId, rcvrIdOpt = Some(rcvrId))
-      .map { isOk => "Result: " + isOk }
-    awaitString(s)
+    _depublishAd(adId, Some(rcvrId))
+  }
+
+  private def _depublishAd(adId: String, rcvrIdOpt: Option[String]): String = {
+    val rmFut = advUtil.removeAdRcvr(adId, rcvrIdOpt)
+    val fut = for (isOk <- rmFut) yield {
+      "Result: " + isOk
+    }
+    awaitString(fut)
   }
 
 }
