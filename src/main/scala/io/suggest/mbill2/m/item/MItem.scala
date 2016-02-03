@@ -5,13 +5,16 @@ import io.suggest.common.m.sql.ITableName
 import io.suggest.common.slick.driver.ExPgSlickDriverT
 import io.suggest.mbill2.m.common.InsertOneReturning
 import io.suggest.mbill2.m.dt._
+import io.suggest.mbill2.m.geo.shape.{IGeoShapeOpt, GeoShapeOptSlick}
 import io.suggest.mbill2.m.gid._
 import io.suggest.mbill2.m.item.cols._
 import io.suggest.mbill2.m.item.status.{ItemStatusSlick, MItemStatus, IMItemStatus}
 import io.suggest.mbill2.m.item.typ.{MItemTypeSlick, MItemType, IMItemType}
-import io.suggest.mbill2.m.order.{OrderIdInxSlick, IOrderId, MOrders, OrderIdFkSlick}
+import io.suggest.mbill2.m.order._
 import io.suggest.mbill2.m.price._
+import io.suggest.mbill2.m.tags.{TagFaceOptSlick, ITagFaceOpt}
 import io.suggest.mbill2.util.PgaNamesMaker
+import io.suggest.model.geo.GeoShape
 import io.suggest.model.sc.common.SinkShowLevel
 import org.joda.time.Interval
 import slick.lifted.ProvenShape
@@ -35,6 +38,7 @@ class MItems @Inject() (
   with AmountSlick
   with ITableName
   with OrderIdFkSlick with OrderIdInxSlick
+  with FindByOrderId
   with ItemStatusSlick
   with MItemTypeSlick
   with IntervalSlick
@@ -45,6 +49,8 @@ class MItems @Inject() (
   with GetById
   with InsertOneReturning
   with DeleteById
+  with GeoShapeOptSlick
+  with TagFaceOptSlick
 {
 
   override val TABLE_NAME = "item"
@@ -54,7 +60,7 @@ class MItems @Inject() (
   override type Table_t = MItemsTable
   override type El_t    = MItem
 
-  def PROD_ID_FN        = "prodId"
+  def PROD_ID_FN        = "prod_id"
   def PROD_ID_INX       = PgaNamesMaker.inx(TABLE_NAME, PROD_ID_FN)
 
   /** Реализация абстрактной slick-таблицы item'ов. */
@@ -73,13 +79,15 @@ class MItems @Inject() (
     with ReasonOptColumn
     with RcvrIdOptColumn
     with SlsColumn
+    with GeoShapeOptColumn
+    with TagFaceOptColumn
   {
 
     def prodId          = column[String](PROD_ID_FN)
     def prodIdInx       = index(PROD_ID_INX, prodId)
 
     override def * : ProvenShape[MItem] = {
-      (orderId, iType, status, price, adId, prodId, dtIntervalOpt, rcvrIdOpt, sls, reasonOpt, id.?) <> (
+      (orderId, iType, status, price, adId, prodId, dtIntervalOpt, rcvrIdOpt, sls, reasonOpt, geoShapeOpt, tagFaceOpt, id.?) <> (
         MItem.tupled, MItem.unapply
       )
     }
@@ -108,6 +116,8 @@ trait IItem
   with IReasonOpt
   with IRcvrIdOpt
   with ISls
+  with IGeoShapeOpt
+  with ITagFaceOpt
 {
   def prodId          : String
 }
@@ -124,6 +134,8 @@ case class MItem(
   override val rcvrIdOpt      : Option[String],
   override val sls            : Set[SinkShowLevel]  = Set.empty,
   override val reasonOpt      : Option[String]      = None,
+  override val geoShape       : Option[GeoShape]    = None,
+  override val tagFaceOpt     : Option[String]      = None,
   override val id             : Option[Gid_t]       = None
 )
   extends IItem
