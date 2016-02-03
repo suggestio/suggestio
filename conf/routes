@@ -308,6 +308,7 @@ POST /sys/bill/contract/delete/:nodeId   @controllers.SysBilling.deleteContractS
 ## sys/debug
 GET  /sys/debug                          @controllers.SysDebug.index
 POST /sys/debug/geo/parent/execute       @controllers.SysDebug.testNodesAllGeoParents
+POST /sys/debug/adv/rcvrs/reset          @controllers.SysDebug.resetAllRcvrs
 
 
 ## ident: логины/логауты

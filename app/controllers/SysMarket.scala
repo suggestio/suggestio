@@ -711,7 +711,7 @@ class SysMarket @Inject() (
 
     val rcvrsMap = n2NodesUtil.receiversMap(mad)
 
-    // Достаём из кеша узлы.
+    // Достаём из кэша узлы.
     val nodesMapFut: Future[Map[String, MNode]] = {
       def _nodeIds(rcvrs: Receivers_t) = rcvrs.keysIterator.map(_._2).toSet
       val adnIds1 = _nodeIds(rcvrsMap)
@@ -731,7 +731,7 @@ class SysMarket @Inject() (
 
     // Узнать, совпадает ли рассчетная карта ресиверов с текущей.
     val rcvrsMapOkFut = for (newRcvrsMap <- newRcvrsMapFut) yield {
-      newRcvrsMap == rcvrsMap
+      advUtil.isRcvrsMapEquals(newRcvrsMap, rcvrsMap)
     }
 
     for {
@@ -749,31 +749,11 @@ class SysMarket @Inject() (
   /** Пересчитать и сохранить ресиверы для указанной рекламной карточки. */
   def resetReceivers(adId: String, r: Option[String]) = IsSuperuserMadPost(adId).async { implicit request =>
     for {
-      // Вычислить ресиверов согласно биллингу и прочему.
-      newRcvrs <- advUtil.calculateReceiversFor(request.mad)
-
-      // Запустить обновление ресиверов в карте.
-      _        <- {
-        MNode.tryUpdate(request.mad) { mad =>
-          mad.copy(
-            edges = mad.edges.copy(
-              out = {
-                val oldEdgesIter = mad.edges
-                  .withoutPredicateIter( MPredicates.Receiver )
-                val newRcvrEdges = newRcvrs.valuesIterator
-                MNodeEdges.edgesToMap1( oldEdgesIter ++ newRcvrEdges )
-              }
-            )
-          )
-        }
-      }
-
+      _ <- advUtil.resetReceiversFor(request.mad)
     } yield {
       // Когда всё будет сделано, отредиректить юзера назад на страницу ресиверов.
-      RdrBackOr(r) {
-        routes.SysMarket.analyzeAdRcvrs(adId)
-      }
-        .flashing(FLASH.SUCCESS -> s"Произведён сброс ресиверов узла. Теперь ${newRcvrs.size} ресиверов.")
+      RdrBackOr(r) { routes.SysMarket.analyzeAdRcvrs(adId) }
+        .flashing(FLASH.SUCCESS -> s"Произведён сброс ресиверов узла-карточки.")
     }
   }
 
@@ -781,23 +761,10 @@ class SysMarket @Inject() (
   /** Очистить полностью таблицу ресиверов. Бывает нужно для временного сокрытия карточки везде.
     * Это действие можно откатить через resetReceivers. */
   def cleanReceivers(adId: String, r: Option[String]) = IsSuperuserMadPost(adId).async { implicit request =>
-
-    val saveFut = MNode.tryUpdate(request.mad) { mad =>
-      mad.copy(
-        edges = mad.edges.copy(
-          out = {
-            val iter = mad.edges
-              .withoutPredicateIter( MPredicates.Receiver )
-            MNodeEdges.edgesToMap1(iter)
-          }
-        )
-      )
-    }
-
-    for (_ <- saveFut) yield {
-      RdrBackOr(r) {
-        routes.SysMarket.analyzeAdRcvrs(adId)
-      }
+    for {
+      _ <- advUtil.cleanReceiverFor(request.mad)
+    } yield {
+      RdrBackOr(r) { routes.SysMarket.analyzeAdRcvrs(adId) }
         .flashing(FLASH.SUCCESS -> "Из узла вычищены все ребра ресиверов. Биллинг не затрагивался.")
     }
   }
