@@ -237,39 +237,51 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
   def updateAll(resultsPerScroll: Int = SCROLL_SIZE_DFLT, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT,
                 bulkActions: Int = BULK_PROCESSOR_BULK_SIZE_DFLT, queryOpt: Option[QueryBuilder] = None)
                (f: T => Future[T])(implicit ec: ExecutionContext, client: Client): Future[Int] = {
-    val logPrefix = s"update(${System.currentTimeMillis}): "
+
+    val logPrefix = s"update(${System.currentTimeMillis}):"
+
     val listener = new BulkProcessor.Listener {
       /** Перед отправкой каждого bulk-реквеста. */
       override def beforeBulk(executionId: Long, request: BulkRequest): Unit = {
-        LOGGER.trace(s"${logPrefix}Going to execute bulk req with ${request.numberOfActions()} actions.")
+        LOGGER.trace(s"$logPrefix Going to execute bulk req with ${request.numberOfActions()} actions.")
       }
 
       /** Данные успешно отправлены в индекс. */
       override def afterBulk(executionId: Long, request: BulkRequest, response: BulkResponse): Unit = {
-        LOGGER.trace(s"$logPrefix")
+        LOGGER.trace(s"$logPrefix ")
       }
 
       /** Ошибка индексации. */
       override def afterBulk(executionId: Long, request: BulkRequest, failure: Throwable): Unit = {
-        LOGGER.error(s"${logPrefix}Failed to execute bulk req with ${request.numberOfActions} actions!", failure)
+        LOGGER.error(s"$logPrefix Failed to execute bulk req with ${request.numberOfActions} actions!", failure)
       }
     }
+
     val bp = BulkProcessor.builder(client, listener)
       .setName(logPrefix)
       .setBulkActions(100)
       .build()
+
     // Создаём атомный счетчик, который будет инкрементится из разных потоков одновременно.
     // Можно счетчик гнать через аккамулятор, но это будет порождать много бессмысленного мусора.
     val counter = new AtomicInteger(0)
-    // Аккамулятор фиксирован (не используется).
-    foldLeftAsync(None, resultsPerScroll, keepAliveMs, queryOpt) {
+
+    // Выполнить обход модели. Аккамулятор фиксирован (не используется).
+    val foldFut = foldLeftAsync(None, resultsPerScroll, keepAliveMs, queryOpt) {
       (accFut, v) =>
-        f(v) flatMap { v1 =>
-          bp add v1.prepareIndex.request
-          counter.incrementAndGet()
-          accFut
+        f(v).flatMap {
+          case null =>
+            LOGGER.trace(s"$logPrefix Skipped update of [${v.idOrNull}], f() returned null")
+            accFut
+          case v1 =>
+            bp.add( v1.prepareIndex.request )
+            counter.incrementAndGet()
+            accFut
         }
-    } map { _ =>
+    }
+
+    // Вернуть результат
+    for (_ <- foldFut) yield {
       bp.close()
       counter.get
     }
