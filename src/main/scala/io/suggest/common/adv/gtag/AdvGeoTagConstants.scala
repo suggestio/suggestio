@@ -8,4 +8,7 @@ package io.suggest.common.adv.gtag
  */
 object AdvGeoTagConstants {
 
+  /** id формы размещения геотегов. */
+  def FORM_ID = "agtf"
+
 }

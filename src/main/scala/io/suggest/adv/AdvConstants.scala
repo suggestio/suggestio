@@ -8,16 +8,6 @@ package io.suggest.adv
   */
 object AdvConstants {
 
-  /** Константы для ценника. */
-  object Price {
-
-    /** id элемента-контейнера, в котором отображается рассчитанная цена размещния.
-      * Изначально это был тэг P. */
-    def PRICE_INFO_CONT_ID = "apic"
-
-  }
-
-
   /** Константы adv-форм для суперюзеров s.io. */
   object Su {
 
