@@ -187,7 +187,8 @@ trait ScSiteGeo
   def geoSite(maybeJsState: ScJsState, siteArgs: SiteQsArgs) = MaybeAuth.async { implicit request =>
     if (maybeJsState.nonEmpty) {
       // Было раньше MovedPermanently, но почему-то оно может сбойнуть и закешироваться на CDN.
-      LOGGER.trace("Qs js state is nonEmpty, redirecting... " + maybeJsState)
+      // 2016.02.04 Логгирование тут усилено для отлова memleak'а с зацикливанием здесь.
+      LOGGER.trace(s"geoSite($siteArgs): Qs js state is nonEmpty, redirecting from ${request.path} [${request.remoteAddress}]")
       Redirect {
         routes.MarketShowcase.geoSite(x = siteArgs).url + "#!?" + maybeJsState.toQs()
       }
