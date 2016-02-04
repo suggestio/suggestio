@@ -1,6 +1,6 @@
 package io.suggest.lk.price.vm
 
-import io.suggest.adv.AdvConstants.Price
+import io.suggest.common.price.PriceConstants.Widget
 import io.suggest.sjs.common.vm.content.SetInnerHtml
 import io.suggest.sjs.common.vm.find.FindElT
 import org.scalajs.dom.raw.HTMLElement
@@ -14,7 +14,7 @@ import org.scalajs.dom.raw.HTMLElement
 object PriceVal extends FindElT {
   override type T       = PriceVal
   override type Dom_t   = HTMLElement
-  override def DOM_ID   = Price.PRICE_INFO_CONT_ID
+  override def DOM_ID   = Widget.PRICE_INFO_CONT_ID
 }
 
 
