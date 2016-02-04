@@ -26,7 +26,6 @@ import scala.concurrent.Future
 class AdvUtil @Inject() (
   mmpDailyBilling         : MmpDailyBilling,
   advTownCoverageRcvrs    : AdvTownCoverageRcvrs,
-  advFreeGeoParentRcvrs   : AdvFreeGeoParentRcvrs,
   n2NodesUtil             : N2NodesUtil,
   mCommonDi               : ICommonDi
 )
@@ -36,10 +35,10 @@ class AdvUtil @Inject() (
   import LOGGER._
   import mCommonDi._
 
-  /** Текущие активные аддоны, участвующие в генерации списка ресиверов. */
+  /** Текущие активные аддоны, участвующие в генерации списка ресиверов.
+    * Обязательно List, это упрощает кое-какой код внутри основного метода. */
   val EXTRA_RCVRS_CALCS: List[AdvExtraRcvrsCalculator] = {
     List(
-      advFreeGeoParentRcvrs,
       advTownCoverageRcvrs
     )
     .filter(_.isEnabled)
@@ -61,6 +60,8 @@ class AdvUtil @Inject() (
     */
   def calculateReceiversFor(mad: MNode, producerOpt: Option[MNode] = None): Future[Receivers_t] = {
     val prodIdOpt = n2NodesUtil.madProducerId(mad)
+
+    lazy val logPrefix = s"calculateReceiversFor([${mad.idOrNull}]):"
 
     val rcvrEdgeOpt = prodIdOpt.flatMap { prodId =>
       mad.edges
@@ -93,12 +94,14 @@ class AdvUtil @Inject() (
             // Выкинуть sink-уровни продьюсера, которые не соответствуют доступным синкам и
             // уровням отображения, которые записаны в политике исходящих размещений
             .filter { ssl =>
-            producer.extras.adn.exists { adn =>
-              adn.isReceiver &&
-                adn.sinks.contains( ssl.adnSink ) &&
-                adn.outSls.get( ssl.sl ).exists(_.limit > 0)
+              val res = producer.extras.adn.exists { adn =>
+                adn.isReceiver &&
+                  adn.outSls.get( ssl.sl ).exists(_.limit > 0)
+              }
+              if (!res)
+                debug(s"$logPrefix Dropping sink show level[$ssl] because producer[${prodIdOpt.orNull}] has only levels=[${producer.extras.adn.iterator.flatMap(_.out4render).map(_.sl).mkString(",")}]")
+              res
             }
-          }
           receiversMmpFut.map { receiversMmp =>
             if (psls2.isEmpty) {
               // Удаляем саморесивер, т.к. уровни пусты.
@@ -121,7 +124,7 @@ class AdvUtil @Inject() (
     val resultFut: Future[Receivers_t] = prodResultFut
       .flatMap { prodResults =>
         // Запускаем сборку данных по доп.ресиверами. Получающиеся карты ресиверов объединяем асинхронно.
-        val extrasFuts = EXTRA_RCVRS_CALCS.map { src =>
+        val extrasFuts = for (src <- EXTRA_RCVRS_CALCS) yield {
           src.calcForDirectRcvrs(prodResults, prodIdOpt)
         }
         Future.reduce(prodResultFut :: extrasFuts) {

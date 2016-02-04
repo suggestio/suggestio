@@ -4,7 +4,9 @@
 @* Базовый шаблон для adv-раздела ЛК. *@
 
 @rightBar1 = {
-  @mad.id.map(madId => _rightNavTpl(madId, Some(rightLink)))
+  @for(madId <- mad.id) {
+    @_rightNavTpl(madId, Some(rightLink))
+  }
   @rightAfter
 }
 
