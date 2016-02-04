@@ -1,9 +1,9 @@
-@(price: adv.tpl.IAdvPricing)(implicit ctx: Context)
+@(price: adv.tpl.IAdvPricing, formId: String)(implicit ctx: Context)
 
 @* Виджет на самой правой панели с данными по размещению. *@
 
 @import ctx.messages
-@import io.suggest.adv.AdvConstants.Price._
+@import io.suggest.common.price.PriceConstants.Widget._
 
 <div class="right-bar-price-widget">
   <div class="right-bar-price-widget_cnt">
@@ -16,7 +16,7 @@
       @_priceValTpl(price)
     </p>
 
-    <button class="right-bar-price-widget_request-btn btn __major __size-L js-submit-btn" data-for="#advsForm">
+    <button class="right-bar-price-widget_request-btn btn __major __size-L js-submit-btn" data-for="#@formId">
       @messages("Send.request")
     </button>
 

@@ -155,7 +155,7 @@ class Bill2Util @Inject() (
   }
 
   /** Найти ордер-корзину. */
-  def getCart(contractId: Gid_t): Future[Option[MOrder]] = {
+  def getCartOrder(contractId: Gid_t): Future[Option[MOrder]] = {
     dbConfig.db.run {
       mOrders.getCartOrder(contractId)
     }
@@ -169,7 +169,7 @@ class Bill2Util @Inject() (
     */
   def ensureCart(contractId: Gid_t): Future[MOrder] = {
     // Возможно, надо объединить поиск ордера и создания в одну транзакцию, хз...
-    val ocOptFut = getCart(contractId)
+    val ocOptFut = getCartOrder(contractId)
     ocOptFut
       .map(_.get)
       .recoverWith { case ex: NoSuchElementException =>
@@ -196,9 +196,25 @@ class Bill2Util @Inject() (
     MAdvPricing(prices, hasEnoughtMoney = true)
   }
 
+  /** Найти все item'ы указанного ордера. */
   def orderItems(orderId: Gid_t): Future[Seq[MItem]] = {
     dbConfig.db.run {
       mItems.findByOrderId(orderId)
+    }
+  }
+
+
+  sealed case class PrepareCartTxnRes(order: MOrder, mitems: Seq[MItem])
+
+  /** Подготовится к транзакции внутри корзины. */
+  def prepareCartTxn(contractId: Gid_t) = {
+    for {
+      cartOrderOpt  <- mOrders.getCartOrder(contractId)
+      order         = cartOrderOpt.get
+      orderId       = order.id.get
+      mitems        <- mItems.findByOrderId(orderId)
+    } yield {
+      PrepareCartTxnRes(order, mitems)
     }
   }
 

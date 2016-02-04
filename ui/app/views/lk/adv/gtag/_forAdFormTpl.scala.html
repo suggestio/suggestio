@@ -10,6 +10,7 @@
 @import stuff.geo._
 @import lk.tag.edit._
 @import lk.adv.widgets._
+@import io.suggest.common.adv.gtag.AdvGeoTagConstants._
 
 @_barTpl(MHands.Left) {
   @* js-форма добавления тегов. *@
@@ -19,7 +20,7 @@
   @_addBtnTpl()
 }
 
-@form( CSRF(routes.LkAdvGeoTag.forAdSubmit(args.mad.id.get)), 'id->"advsForm") {
+@form( CSRF(routes.LkAdvGeoTag.forAdSubmit(args.mad.id.get)), 'id-> FORM_ID) {
 
   @_barTpl(MHands.Left) {
     @* Рендер сохранённых тегов. *@

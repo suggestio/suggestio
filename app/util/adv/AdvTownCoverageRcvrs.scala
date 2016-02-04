@@ -68,16 +68,18 @@ class AdvTownCoverageRcvrs @Inject() (
     } yield {
        nodes.iterator
         .filter { _.extras.adn.flatMap(_.shownTypeIdOpt).contains(AdnShownTypes.TOWN.name) }
+        .filter { _.extras.adn.exists(_.sinks contains AdnSinks.SINK_GEO) }
         .flatMap { node => node.id.map(_ -> node) }
         .toMap
     }
 
     // Карта реальных городов и их районов размещений, на которых есть размещения.
-    val townDistrictIdsMapFut = townDistrictsRcvrsMapFut flatMap { tdMap =>
-      val tdIdsMap = tdMap.mapValues { _.flatMap(_.id) }
-      for (tMap <- townsMapFut) yield {
-        tdIdsMap.filterKeys { tMap.contains }
-      }
+    val townDistrictIdsMapFut = for {
+      tdMap     <- townDistrictsRcvrsMapFut
+      tdIdsMap  = tdMap.mapValues { _.flatMap(_.id) }
+      tMap      <- townsMapFut
+    } yield {
+      tdIdsMap.filterKeys { tMap.contains }
     }
 
     // Запустить поиск всех районов во всех найденных городах

@@ -7,20 +7,18 @@
 @import sys1.stuff.ntable._
 @import util.TplDataFormatUtil.formatPrice
 @import views.html.sc._adNormalTpl
+@import lk.lkwdgts.price._
+@import helper._
+@import io.suggest.common.cart.CartConstants._
 
 @billingBaseTpl(
   title       = messages("Cart"),
   mnode       = args.mnode,
-  rightCurrEl = BillingRightPanelLinks.RPL_CART
+  rightCurrEl = BillingRightPanelLinks.RPL_CART,
+  rightAfter  = args.items
+    .headOption
+    .map { _ => _rightPriceTpl(args.totalPricing, formId = FORM_ID) }
 ) {
-
-  @* TODO Вынести totalPrice в right panel и кнопку оплатить туда же. *@
-  <div>
-    Общая стоимость:
-    @for((_, mprice) <- args.totalPrices) {
-      @formatPrice(mprice)
-    }
-  </div>
 
   @for(r <- args.r) {
     <a href="@r">Вернутся назад</a>
@@ -28,37 +26,50 @@
 
   @_ntable() {
 
-    @_td("L") {
+    @_th("S") {
+    }
+    @_th("M") {
       @messages("Item")
     }
-    @_td("S") {
+    @_th("S") {
       @messages("Price")
     }
 
   } {
 
     @* TODO Дедублицировать рендер карточки *@
-    @for(itm <- args.items; mitem <- itm.mitems) {
+    @for(itm <- args.items) {
 
-      @* Нарисовать тут маленькую рекламную карточку *@
-      @_td("S") {
-        @_adNormalTpl(itm.brArgs)
-      }
+      @_tr() {
+        @* Нарисовать тут маленькую рекламную карточку *@
+        @_td("S") {
+          @_adNormalTpl(itm.brArgs)
+        }
 
-      @* Суть оффера. Инфа по заказанным тегам например. *@
-      @_td("M") {
-        @for(tag <- mitem.tagFaceOpt) {
-          <span>#@tag</span>
+        @* Суть оффера. Инфа по заказанным тегам например. *@
+        @_td("M") {
+          @for(mitem <- itm.mitems; tag <- mitem.tagFaceOpt) {
+            <span>#@tag</span>
+            <br/>
+          }
+        }
+
+        @* Рендер стоимости item'а *@
+        @_td("S") {
+          @for(mitem <- itm.mitems) {
+            @formatPrice(mitem.price)
+            <br/>
+          }
         }
       }
 
-      @* Рендер стоимости item'а *@
-      @_td("S") {
-        @formatPrice(mitem.price)
-      }
+    } @* for itm *@
 
-    } @* for itm, mitem *@
+  }
 
+
+  @* Форма для возможности сабмита. *@
+  @form( routes.LkBill2.cartSubmit(args.mnode.id.get) ) {
   }
 
 }

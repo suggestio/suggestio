@@ -6,15 +6,16 @@
 @import ctx._
 @import lk.adv._
 @import lk.adv.widgets._
-@import lk.adv.widgets.price._
+@import lk.lkwdgts.price._
 @import static.date.picker._
+@import io.suggest.adv.direct.AdvDirectFormConstants.FORM_ID
 
 @advBase(
   title         = messages("Geo.adv"),
   mad           = args.mad,
   producer      = args.producer,
   rightLink     = LkAdvRightLinks.LARL_GEO,
-  rightAfter    = Some( _rightPriceTpl(args.price) ),
+  rightAfter    = Some( _rightPriceTpl(args.price, formId = FORM_ID) ),
   headAfter     = Some( _jqDatePickCssTpl() )
 ) {
 

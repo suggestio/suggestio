@@ -3,7 +3,7 @@ package controllers
 import com.google.inject.Inject
 import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.item.MItem
-import io.suggest.mbill2.m.price.MPrice
+import models.adv.tpl.MAdvPricing
 import models.blk.{RenderArgs, IRenderArgs}
 import models.im.make.Makers
 import models.mctx.Context
@@ -34,7 +34,7 @@ class LkBill2 @Inject() (
 
   import mCommonDi._
 
-  private def ADS_SZ_MULT = 0.5F
+  private def ADS_SZ_MULT = 0.25F
 
   /**
     * Рендер страницы с корзиной покупок юзера в рамках личного кабинета узла.
@@ -43,7 +43,7 @@ class LkBill2 @Inject() (
     * @param r Куда производить возврат из корзины.
     * @return 200 ОК с html страницей корзины.
     */
-  def cart(onNodeId: String, r: Option[String]) = IsAdnNodeAdmin(onNodeId, U.Lk, U.ContractId).async { implicit request =>
+  def cart(onNodeId: String, r: Option[String]) = IsAdnNodeAdminGet(onNodeId, U.Lk, U.ContractId).async { implicit request =>
 
     // Узнать id контракта юзера. Сам контракт не важен.
     val mcIdOptFut = request.user.contractIdOptFut
@@ -51,7 +51,7 @@ class LkBill2 @Inject() (
     // Найти ордер-корзину юзера в базе биллинга:
     val cartOptFut = mcIdOptFut.flatMap { mcIdOpt =>
       FutureUtil.optFut2futOpt(mcIdOpt) { mcId =>
-        bill2Util.getCart(mcId)
+        bill2Util.getCartOrder(mcId)
       }
     }
 
@@ -126,37 +126,75 @@ class LkBill2 @Inject() (
     }
 
     // Рассчет общей стоимости корзины
-    val totalPricesFut: Future[Map[String, MPrice]] = for {
+    val totalPricingFut = for {
       mitems <- mitemsFut
     } yield {
-      mitems.iterator
-        .map { _.price }
-        .toSeq
-        .groupBy(_.currency.getCurrencyCode)
-        .mapValues { prices =>
-          prices.head.copy(
-            amount = prices.iterator.map(_.amount).sum
-          )
-        }
+      MAdvPricing(
+        prices = {
+          mitems.iterator
+            .map { _.price }
+            .toSeq
+            .groupBy(_.currency.getCurrencyCode)
+            .valuesIterator
+            .map { prices =>
+              prices.head.copy(
+                amount = prices.iterator.map(_.amount).sum
+              )
+            }
+            .toIterable
+        },
+        // true тут выставлено просто потому что в новом биллинге всегда доплачивается через внешнюю кассу.
+        hasEnoughtMoney = true
+      )
     }
 
     // Рендер и возврат ответа
     for {
       ctx           <- ctxFut
       cartItems     <- cartItemsFut
-      totalPrices   <- totalPricesFut
+      totalPricing  <- totalPricingFut
     } yield {
       // Сборка аргументов для вызова шаблона
       val args = MCartTplArgs(
         mnode         = request.mnode,
         items         = cartItems,
         r             = r,
-        totalPrices   = totalPrices
+        totalPricing  = totalPricing
       )
 
       // Рендер результата
       val html = cartTpl(args)(ctx)
       Ok(html)
+    }
+  }
+
+
+  /**
+    * Сабмит формы подтверждения корзины.
+    * @param onNodeId На каком узле сейчас находимся?
+    * @return Редирект или страница оплаты.
+    */
+  def cartSubmit(onNodeId: String) = IsAdnNodeAdminPost(onNodeId, U.PersonNode, U.Contract).async { implicit request =>
+    // Если цена нулевая, то контракт оформить как выполненный. Иначе -- заняться оплатой.
+    // Чтение ордера, item'ов, кошелька, etc и их возможную модификацию надо проводить внутри одной транзакции.
+    for {
+      personNode <- request.user.personNodeFut
+      enc  <- bill2Util.ensureNodeContract(personNode, request.user.mContractOptFut)
+      // Дальше надо бы делать транзакцию
+      mcId = enc.mc.id.get
+      txn <- {
+        // Собрать логику SQL-запросов.
+        for {
+          cart0 <- bill2Util.prepareCartTxn(mcId)
+        } yield {
+          ???
+        }
+        // Отправить собранный DB-экшен на исполнение, вернув фьючерс.
+        ???
+      }
+    } yield {
+      // Вернуть результат юзеру
+      ???
     }
   }
 

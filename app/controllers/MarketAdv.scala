@@ -29,7 +29,7 @@ import util.showcase.ShowcaseUtil
 import views.html.lk.adv._
 import views.html.lk.adv.direct._
 import views.html.lk.adv.widgets.period._reportTpl
-import views.html.lk.adv.widgets.price._
+import views.html.lk.lkwdgts.price._
 
 import scala.concurrent.Future
 

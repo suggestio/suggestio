@@ -6,13 +6,14 @@
 @import helper._
 @import stuff.geo.radmap._
 @import lk.adv.widgets._
-@import lk.adv.widgets.price._
+@import lk.lkwdgts.price._
+@import io.suggest.common.adv.gtag.AdvGeoTagConstants.FORM_ID
 
 @agtBase(
   title       = messages("Adv.in.geo.tags"),
   mnode       = args.producer,
   mad         = args.mad,
-  rightAfter  = Some( _rightPriceTpl(args.price) )
+  rightAfter  = Some( _rightPriceTpl(args.price, formId = FORM_ID) )
 ) {
 
   @* При добавлении тегов запросы add-tag-формы отправляются сюда. *@

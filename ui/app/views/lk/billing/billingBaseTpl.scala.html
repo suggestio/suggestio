@@ -1,4 +1,5 @@
-@(title: String, mnode: MNode, rightCurrEl: BillingRightPanelLink)(content: Html)(implicit ctx: Context)
+@(title: String, mnode: MNode, rightCurrEl: BillingRightPanelLink, rightAfter: Option[Html] = None
+)(content: Html)(implicit ctx: Context)
 
 @* Базовый шаблон для шаблонов биллинга в личном кабинете. *@
 
@@ -29,8 +30,16 @@
         css   = classesAct(rightCurrEl == RPL_REQUISITES, "__requisites")
       )
 
+      @_navItemTpl(
+        title = messages("Cart"),
+        href  = Some( routes.LkBill2.cart(adnId, r = ctx.r) ),
+        css   = classesAct(rightCurrEl == RPL_CART)
+      )
+
     }
   }
+
+  @rightAfter
 }
 
 @headAfter1 = {

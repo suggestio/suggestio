@@ -3,6 +3,7 @@ package models.mlk.bill
 import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.price.MPrice
 import models.MNode
+import models.adv.tpl.IAdvPricing
 import models.blk.IRenderArgs
 
 /**
@@ -22,17 +23,18 @@ trait ICartTplArgs {
   /** return path для возврата из корзины. */
   def r: Option[String]
 
-  /** Общая стоимость заказа по валютам. Map(RUB -> MPrice(100.0, RUB))  */
-  def totalPrices: Map[String, MPrice]
+  /** Итоговая стоимость заказа. */
+  def totalPricing: IAdvPricing
+
 
 }
 
-
+/** Дефолтовая реализация модели [[ICartTplArgs]]. */
 case class MCartTplArgs(
   override val mnode        : MNode,
   override val items        : Seq[MCartItem],
   override val r            : Option[String],
-  override val totalPrices  : Map[String, MPrice]
+  override val totalPricing : IAdvPricing
 )
   extends ICartTplArgs
 
