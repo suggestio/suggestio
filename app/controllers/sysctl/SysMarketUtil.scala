@@ -11,7 +11,6 @@ import play.api.i18n.Messages
 import play.api.mvc.AnyContent
 import util.FormUtil._
 import io.suggest.ym.model.common.ShowLevelLimits.LvlMap_t
-import io.suggest.ym.model.common.ShowLevelLimits
 import util.PlayMacroLogsDyn
 import util.acl.AbstractRequestWithPwOpt
 import util.mail.IMailerWrapperDi
@@ -25,7 +24,7 @@ import util.mail.IMailerWrapperDi
 class SysMarketUtil extends PlayMacroLogsDyn {
 
   /** Форма для маппинг метаданных произвольного узла ADN. */
-  def adnNodeMetaM: Mapping[MMeta] = mapping(
+  private def adnNodeMetaM: Mapping[MMeta] = mapping(
     "name"          -> nameM,
     "nameShort"     -> optional(text(maxLength = 25))
       .transform [Option[String]] (emptyStrOptToNone, identity),
@@ -70,7 +69,7 @@ class SysMarketUtil extends PlayMacroLogsDyn {
     ))
   }
 
-  def adnRightsM: Mapping[Set[AdnRight]] = {
+  private def adnRightsM: Mapping[Set[AdnRight]] = {
     import AdnRights._
     mapping(
       PRODUCER.longName -> boolean,
@@ -89,12 +88,12 @@ class SysMarketUtil extends PlayMacroLogsDyn {
     }
   }
 
-  def lvlMapOrEmpty: Mapping[LvlMap_t] = {
+  private def lvlMapOrEmpty: Mapping[LvlMap_t] = {
     default(slsStrM, Map.empty)
   }
 
   /** Маппинг карты доступных ShowLevels для узлов N2. */
-  def mSlInfoMapM: Mapping[Map[AdShowLevel, MSlInfo]] = {
+  private def mSlInfoMapM: Mapping[Map[AdShowLevel, MSlInfo]] = {
     // TODO Тут из одной карты делается другая. Может стоит реализовать напрямую?
     lvlMapOrEmpty
       .transform[Map[AdShowLevel,MSlInfo]](
@@ -116,28 +115,7 @@ class SysMarketUtil extends PlayMacroLogsDyn {
       )
   }
 
-  /** Доступная узлу пути рекламной выдачи. */
-  def adnSinksM: Mapping[Set[AdnSink]] = {
-    mapping(
-      AdnSinks.SINK_WIFI.longName -> boolean,
-      AdnSinks.SINK_GEO.longName  -> boolean
-    )
-    {(isWifi, isGeo) =>
-      var acc = List.empty[AdnSink]
-      if (isWifi)
-        acc ::= AdnSinks.SINK_WIFI
-      if (isGeo)
-        acc ::= AdnSinks.SINK_GEO
-      acc.toSet
-    }
-    {sinks =>
-      val isWifi = sinks contains AdnSinks.SINK_WIFI
-      val isGeo  = sinks contains AdnSinks.SINK_GEO
-      Some((isWifi, isGeo))
-    }
-  }
-
-  def nodeCommonM: Mapping[MNodeCommon] = {
+  private def nodeCommonM: Mapping[MNodeCommon] = {
     mapping(
       "isEnabled"     -> boolean,
       "isDependent"   -> boolean
@@ -155,29 +133,27 @@ class SysMarketUtil extends PlayMacroLogsDyn {
   }
 
   /** Маппинг для adn-полей формы adn-узла. */
-  def adnExtraM: Mapping[MAdnExtra] = mapping(
+  private def adnExtraM: Mapping[MAdnExtra] = mapping(
     "shownTypeIdOpt" -> adnShownTypeIdOptM,
     "rights"        -> adnRightsM,
     "sls"           -> mSlInfoMapM,
     "testNode"      -> boolean,
     "isUser"        -> boolean,
-    "sink"          -> adnSinksM,
     "showInScNl"    -> boolean
   )
-  {(shownTypeIdOpt, rights, sls, isTestNode, isUser, sinks, showInScNl) =>
+  {(shownTypeIdOpt, rights, sls, isTestNode, isUser, showInScNl) =>
     MAdnExtra(
       rights          = rights,
       shownTypeIdOpt  = shownTypeIdOpt,
       outSls          = sls,
       testNode        = isTestNode,
       isUser          = isUser,
-      sinks           = sinks,
       showInScNl      = showInScNl
     )
   }
   {mae =>
     import mae._
-    Some((shownTypeIdOpt, rights, outSls, testNode, isUser, sinks, showInScNl))
+    Some((shownTypeIdOpt, rights, outSls, testNode, isUser, showInScNl))
   }
 
 

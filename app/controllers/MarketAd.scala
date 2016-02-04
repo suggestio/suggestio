@@ -348,6 +348,7 @@ class MarketAd @Inject() (
 
           val sls0 = e0.info.sls
 
+          // TODO Удалить поддержку sink'ов, когда будет выпилен старый биллинг.
           def _mkSlss(src: TraversableOnce[AdnSink]) = src.toIterator.map { SinkShowLevels.withArgs(_, sl) }
           val sls1 = if (isLevelEnabled) {
             // Маппим уровни отображения на sink-уровни отображения, доступные узлу-продьюсеру.

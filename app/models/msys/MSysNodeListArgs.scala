@@ -17,7 +17,8 @@ object MSysNodeListArgs {
   def LIMIT_FN      = "l"
   def OFFSET_FN     = "o"
 
-  def LIMIT_DFLT    = 100
+  // TODO Выставлено 1000 пока нет нормального поиска нод в списке
+  def LIMIT_DFLT    = 1000
   def OFFSET_DFLT   = 0
 
   implicit def qsb(implicit
