@@ -3,7 +3,7 @@ package io.suggest.model.n2.extra
 import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.model.sc.common.AdShowLevel
-import io.suggest.ym.model.common.{AdnRights, AdnRight, AdnSink}
+import io.suggest.ym.model.common.{AdnRights, AdnRight}
 import io.suggest.common.empty.EmptyUtil._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -31,7 +31,6 @@ object MAdnExtra extends IGenEsMappingProps {
     val IS_TEST             = new Val("t")
     /** Outgoing show levels. */
     val OUT_SLS             = new Val("l")
-    val SINKS               = new Val("i")
     val SHOW_IN_SC_NL       = new Val("n")
 
   }
@@ -60,11 +59,6 @@ object MAdnExtra extends IGenEsMappingProps {
         _.iterator.flatMap(identity).map(sli => sli.sl -> sli).toMap,
         { slmap => if (slmap.isEmpty) None else Some(slmap.values) }
       ) and
-    (__ \ Fields.SINKS.fn).formatNullable[Set[AdnSink]]
-      .inmap [Set[AdnSink]] (
-        _ getOrElse Set.empty,
-        { sinks => if (sinks.isEmpty) None else Some(sinks) }
-      ) and
     (__ \ Fields.SHOW_IN_SC_NL.fn).formatNullable[Boolean]
       .inmap [Boolean] (
         _ getOrElse true,
@@ -85,7 +79,6 @@ object MAdnExtra extends IGenEsMappingProps {
       FieldBoolean(IS_TEST.fn, index = not_analyzed, include_in_all = false),
       // раньше это лежало в EMAdnMPubSettings, но потом было перемещено сюда, т.к. по сути это разделение было некорректно.
       FieldNestedObject(OUT_SLS.fn, enabled = true, properties = MSlInfo.generateMappingProps),
-      FieldString(SINKS.fn, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
       FieldBoolean(SHOW_IN_SC_NL.fn, index = not_analyzed, include_in_all = false)
     )
   }
@@ -101,7 +94,6 @@ object MAdnExtra extends IGenEsMappingProps {
   * @param testNode Отметка о тестовом характере существования этого узла.
   *                 Он не должен отображаться для обычных участников сети, а только для других тестовых узлов.
   * @param outSls Контейнер с инфой об уровнях отображения.
-  * @param sinks Выходы выдачи: wifi, geoloc.
   * @param showInScNl Можно ли узел отображать в списке узлов выдачи?
   */
 case class MAdnExtra(
@@ -110,7 +102,6 @@ case class MAdnExtra(
   shownTypeIdOpt        : Option[String]            = None,
   testNode              : Boolean                   = false,
   outSls                : Map[AdShowLevel, MSlInfo] = Map.empty,
-  sinks                 : Set[AdnSink]              = Set.empty,
   showInScNl            : Boolean                   = true
 ) {
 
