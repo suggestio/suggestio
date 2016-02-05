@@ -46,7 +46,6 @@ object MNodeFields {
     override protected def _PARENT_FN = EXTRAS_FN
 
     def ADN_IS_TEST_FN          = _fullFn( MNodeExtras.Fields.Adn.IS_TEST_FN )
-    def ADN_SINKS_FN            = _fullFn( MNodeExtras.Fields.Adn.SINKS_FN )
     def ADN_RIGHTS_FN           = _fullFn( MNodeExtras.Fields.Adn.RIGHTS_FN )
     def ADN_SHOWN_TYPE_FN       = _fullFn( MNodeExtras.Fields.Adn.SHOWN_TYPE_FN )
     def ADN_SHOW_IN_SC_NL_FN    = _fullFn( MNodeExtras.Fields.Adn.SHOW_IN_SC_NL_FN )

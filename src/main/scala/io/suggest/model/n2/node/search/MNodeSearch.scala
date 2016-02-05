@@ -23,7 +23,6 @@ trait MNodeSearch
   with ShownTypeId
   with AdnRights
   with AdnIsTest
-  with AdnSinks
   with FaceTextQuery
   with NodeTypes
   with WithoutIds
@@ -52,7 +51,6 @@ trait MNodeSearchDflt
   with ShownTypeIdDflt
   with AdnRightsDflt
   with AdnIsTestDflt
-  with AdnSinksDflt
   with FaceTextQueryDflt
   with NodeTypesDflt
   with WithoutIdsDflt
@@ -84,7 +82,6 @@ trait MNodeSearchWrap
   with ShownTypeIdWrap
   with AdnRightsWrap
   with AdnIsTestWrap
-  with AdnSinksWrap
   with FaceTextQueryWrap
   with NodeTypesWrap
   with WithoutIdsWrap

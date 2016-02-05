@@ -2,7 +2,7 @@ package io.suggest.model.n2.extra
 
 import io.suggest.model.PlayJsonTestUtil
 import io.suggest.model.sc.common.AdShowLevels
-import io.suggest.ym.model.common.{AdnSinks, AdnRights}
+import io.suggest.ym.model.common.AdnRights
 import org.scalatest.FlatSpec
 
 /**
@@ -31,7 +31,6 @@ class MAdnExtraSpec extends FlatSpec with PlayJsonTestUtil {
           val sli = MSlInfo(AdShowLevels.LVL_START_PAGE, 10)
           Map(sli.sl -> sli)
         },
-        sinks = Set( AdnSinks.SINK_WIFI, AdnSinks.SINK_GEO ),
         showInScNl = true
       )
     }

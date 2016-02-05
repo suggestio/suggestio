@@ -39,7 +39,6 @@ object MNodeExtras extends IGenEsMappingProps with IEmpty {
       val ADN_FN = "a"
       override protected def _PARENT_FN = ADN_FN
       def IS_TEST_FN          = _fullFn( MAdnExtra.Fields.IS_TEST.fn )
-      def SINKS_FN            = _fullFn( MAdnExtra.Fields.SINKS.fn )
       def RIGHTS_FN           = _fullFn( MAdnExtra.Fields.RIGHTS.fn )
       def SHOWN_TYPE_FN       = _fullFn( MAdnExtra.Fields.SHOWN_TYPE.fn )
       def SHOW_IN_SC_NL_FN    = _fullFn( MAdnExtra.Fields.SHOW_IN_SC_NL.fn )
