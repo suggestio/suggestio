@@ -68,7 +68,6 @@ class AdvTownCoverageRcvrs @Inject() (
     } yield {
        nodes.iterator
         .filter { _.extras.adn.flatMap(_.shownTypeIdOpt).contains(AdnShownTypes.TOWN.name) }
-        .filter { _.extras.adn.exists(_.sinks contains AdnSinks.SINK_GEO) }
         .flatMap { node => node.id.map(_ -> node) }
         .toMap
     }
@@ -95,7 +94,6 @@ class AdvTownCoverageRcvrs @Inject() (
             }
             override def limit            = 70    // Наврядли в городе больше указанного кол-ва узлов. // TODO Брать число из другого места...
             override def shownTypeIds     = districtTypeNames
-            override def onlyWithSinks    = Seq(AdnSinks.SINK_GEO)
           }
           for(allTownDistrictsIds <- MNode.dynSearchIds(sargs2)) yield {
             townAdnId -> allTownDistrictsIds.toSet

@@ -131,8 +131,6 @@ class ScStatUtil @Inject() (
       }
     }
 
-    def scSinkOpt: Option[AdnSink] = None
-
     def screenOpt: Option[DevScreen] = adSearchOpt.flatMap(_.screen)
 
     def adnNodeOptFut = mNodeCache.maybeGetByIdCached(onNodeIdOpt)
@@ -189,7 +187,6 @@ class ScStatUtil @Inject() (
             viewportDecl = screenOpt
               .map(_.toString),
             reqUri = reqPath,
-            scSink = scSinkOpt,
             ttl    = if(isLocalClient) Some(LOCAL_STAT_TTL) else None
           )
           // Отправляем на сохранение через соотв.подсистему.
@@ -259,13 +256,11 @@ class ScStatUtil @Inject() (
   /**
    * Записывалка статистики по обращению к разным showcase/index. Такая статистика позволяет отследить
    * перемещение юзера по узлам.
-   * @param scSinkOpt sink выдачи, если известен.
    * @param gsiFut Асинхронный поиск геоданых по текущему запросу.
    * @param screenOpt данные по экрану.
    * @param request Текущий HTTP-реквест.
    */
   case class IndexStat(
-    override val scSinkOpt: Option[AdnSink],
     gsiFut: Future[Option[GeoSearchInfo]],
     override val screenOpt: Option[DevScreen],
     nodeOpt: Option[MNode]
@@ -278,19 +273,16 @@ class ScStatUtil @Inject() (
 
   /**
    * Записывалка статистики для обращения к demoWebSite-производным.
-   * @param scSink Запрашиваемый синк выдачи.
    * @param nodeOpt Узел, если есть.
    * @param request HTTP-реквест.
    */
   case class SiteStat(
-    scSink: AdnSink,
     nodeOpt: Option[MNode] = None
   )(implicit val request: IReqHdr)
     extends StatT with NodeStatT with NoAdsStatT
   {
     override def gsiFut = GeoIp.geoSearchInfoOpt
     override def statAction = ScStatActions.Site
-    override def scSinkOpt = Some(scSink)
   }
 
 

@@ -214,7 +214,7 @@ trait ScSiteGeo
   /** Фоновый сбор статистики. Можно переназначать. */
   protected def _geoSiteStats(implicit request: IReq[_]): Future[_] = {
     val fut = Future {
-      scStatUtil.SiteStat(AdnSinks.SINK_GEO)
+      scStatUtil.SiteStat()
     }.flatMap {
       _.saveStats
     }
@@ -267,7 +267,7 @@ trait ScSiteNode
     if (nodeEnabled && isReceiver) {
       // Собираем статистику. Тут скорее всего wifi
       Future {
-        scStatUtil.SiteStat(AdnSinks.SINK_WIFI, Some(mnode))
+        scStatUtil.SiteStat(Some(request.mnode))
           .saveStats
           .onFailure {
             case ex => LOGGER.warn(s"demoWebSite($adnId): Failed to save stats", ex)

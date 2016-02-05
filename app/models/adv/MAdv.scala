@@ -297,6 +297,4 @@ trait SinkShowLevelsFilters {
   /** Встречается ли указанный showLevel в списке sinkShowLevel'ов? */
   def hasOnAdSl(sl: AdShowLevel): Boolean = showLevels.exists(_.sl == sl)
 
-  /** Встречается ли указанный sink в списке sinkShowLevel'ов? */
-  def hasOnSink(sink: AdnSink): Boolean = showLevels.exists(_.adnSink == sink)
 }

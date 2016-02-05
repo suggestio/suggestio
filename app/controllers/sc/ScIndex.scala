@@ -373,7 +373,6 @@ trait ScIndexNode
 
     // собираем статистику, пока идёт подготовка результата
     val stat = scStatUtil.IndexStat(
-      scSinkOpt = None,
       gsiFut    = args.geo.geoSearchInfoOpt,
       screenOpt = helper.ctx.deviceScreenOpt,
       nodeOpt   = Some(request.mnode)

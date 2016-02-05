@@ -359,11 +359,7 @@ class MarketAd @Inject() (
           // TODO Удалить поддержку sink'ов, когда будет выпилен старый биллинг.
           def _mkSlss(src: TraversableOnce[AdnSink]) = src.toIterator.map { SinkShowLevels.withArgs(_, sl) }
           val sls1 = if (isLevelEnabled) {
-            // Маппим уровни отображения на sink-уровни отображения, доступные узлу-продьюсеру.
-            // Нет смысла делить на wi-fi и geo, т.к. вектор идёт на геолокации, и wifi становится вторичным.
-            val prodSinks = request.producer
-              .extras.adn
-              .fold(Set.empty[AdnSink])(_.sinks) + AdnSinks.SINK_GEO
+            val prodSinks = Set(AdnSinks.SINK_GEO)
             sls0 ++ _mkSlss(prodSinks)
 
           } else {
