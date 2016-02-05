@@ -7,7 +7,6 @@ import io.suggest.model._
 import io.suggest.model.es._
 import EsModelUtil._
 import io.suggest.model.geo.GeoPoint
-import io.suggest.ym.model.common.{AdnSink, AdnSinks}
 import org.elasticsearch.action.deletebyquery.DeleteByQueryResponse
 import org.elasticsearch.action.index.IndexRequestBuilder
 import org.elasticsearch.search.sort.SortOrder
@@ -72,7 +71,6 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
   val SCREEN_RES_CHOOSEN_ESFN   = "scrResChoosen"
   val PX_RATIO_CHOOSEN_ESFN     = "pxRatioChoosen"
   val VIEWPORT_DECLARED_ESFN    = "viewportDecl"
-  val SHOWCASE_SINK_ESFN        = "scSink"
 
   val REQUEST_URI_ESFN          = "uri"
 
@@ -219,7 +217,6 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
       scrResChoosen   = m.get(SCREEN_RES_CHOOSEN_ESFN).map(stringParser),
       pxRatioChoosen  = m.get(PX_RATIO_CHOOSEN_ESFN).map(intParser).map(v => v.toFloat / 10F),
       viewportDecl    = m.get(VIEWPORT_DECLARED_ESFN).map(stringParser),
-      scSink          = m.get(SHOWCASE_SINK_ESFN).map(stringParser).flatMap(AdnSinks.maybeWithLongName),
       reqUri          = m.get(REQUEST_URI_ESFN).map(stringParser),
       id              = id
     )
@@ -266,7 +263,6 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
       FieldString(SCREEN_RES_CHOOSEN_ESFN, index = not_analyzed, include_in_all = true),
       FieldNumber(PX_RATIO_CHOOSEN_ESFN, index = not_analyzed, include_in_all = false, fieldType = DocFieldTypes.integer),
       FieldString(VIEWPORT_DECLARED_ESFN, index = no, include_in_all = false),
-      FieldString(SHOWCASE_SINK_ESFN, index = not_analyzed, include_in_all = true),
       FieldString(REQUEST_URI_ESFN, index = no, include_in_all = false)
     )
   }
@@ -304,7 +300,6 @@ final class MAdStat(
   val scrResChoosen       : Option[String]    = None,   // Выбранное s.io сервером разрешение экрана (viewport'а)
   val pxRatioChoosen      : Option[Float]     = None,   // Выбранный s.io сервером pixel ratio
   val viewportDecl        : Option[String]    = None,   // заявленные размеры экрана (через ?a.screen=[WxH,dpr])
-  val scSink              : Option[AdnSink]   = None,   // sink выдачи: wifi, geo
   val reqUri              : Option[String]    = None,   // Исходный путь запроса вместе с qs (для отладки и др.)
   val id                  : Option[String]    = None,
   val ttl                 : Option[FiniteDuration] = None    // Макс.жизни экземпляра в хранилище.
@@ -369,8 +364,6 @@ final class MAdStat(
       acc1 ::= VIEWPORT_DECLARED_ESFN -> JsString(viewportDecl.get)
     if (reqUri.isDefined)
       acc1 ::= REQUEST_URI_ESFN -> JsString(reqUri.get)
-    if (scSink.isDefined)
-      acc1 ::= SHOWCASE_SINK_ESFN -> JsString(scSink.get.longName)
     acc1
   }
 
