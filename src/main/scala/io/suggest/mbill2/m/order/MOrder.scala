@@ -5,7 +5,7 @@ import io.suggest.common.m.sql.ITableName
 import io.suggest.common.slick.driver.ExPgSlickDriverT
 import io.suggest.mbill2.m.common.InsertOneReturning
 import io.suggest.mbill2.m.contract.{ContractIdSlickIdx, ContractIdSlickFk, MContracts}
-import io.suggest.mbill2.m.dt.DateCreatedSlick
+import io.suggest.mbill2.m.dt.{DateStatusSlick, DateCreatedSlick}
 import io.suggest.mbill2.m.gid.{DeleteById, GetById, Gid_t, GidSlick}
 import io.suggest.mbill2.util.PgaNamesMaker
 import org.joda.time.DateTime
@@ -30,6 +30,7 @@ class MOrders @Inject() (
   with GetById
   with InsertOneReturning
   with DeleteById
+  with DateStatusSlick
 {
 
   import driver.api._
@@ -42,8 +43,6 @@ class MOrders @Inject() (
   override def CONTRACT_ID_INX = PgaNamesMaker.fkInx(TABLE_NAME, CONTRACT_ID_FN)
 
   def STATUS_FN             = "status"
-  def DATE_STATUS_FN        = "date_status"
-
   def STATUS_INX            = s"${TABLE_NAME}_${STATUS_FN}_idx"
 
   /** Slick-описание таблицы заказов. */
@@ -52,14 +51,12 @@ class MOrders @Inject() (
     with GidColumn
     with DateCreated
     with ContractIdFk with ContractIdIdx
+    with DateStatusColumn
   {
 
     def statusStr     = column[String](STATUS_FN)
-    def dateStatus    = column[DateTime](DATE_STATUS_FN)
-
+    def status        = statusStr <> (MOrderStatuses.withNameT, MOrderStatuses.unapply)
     def statusStrInx  = index(STATUS_INX, statusStr)
-
-    def status = statusStr <> (MOrderStatuses.withNameT, MOrderStatuses.unapply)
 
     override def * : ProvenShape[MOrder] = {
       (status, contractId, dateCreated, dateStatus, id.?) <> (
@@ -77,13 +74,34 @@ class MOrders @Inject() (
     el.copy(id = Some(id))
   }
 
-  /** Поиск ордера-корзины для контракта. */
-  def getCartOrder(contractId: Gid_t) = {
+  def getCartOrderAction(contractId: Gid_t) = {
     query.filter(q => q.contractId === contractId && q.statusStr === MOrderStatuses.Draft.strId)
       .sortBy(_.id.desc.nullsLast)
       .take(1)
+  }
+  /** Поиск ордера-корзины для контракта. */
+  def getCartOrder(contractId: Gid_t) = {
+    getCartOrderAction(contractId)
       .result
       .headOption
+  }
+
+
+  def saveStatus(morder2: MOrder) = {
+    saveStatus1(morder2.id.get, morder2.status)
+  }
+  /**
+    * Обновить статус ордера вместе с датой статуса.
+    *
+    * @param id id обновляемого ордера.
+    * @param status новый статус ордера.
+    * @return Экшен update, возвращающий кол-во обновлённых рядов.
+    */
+  def saveStatus1(id: Gid_t, status: MOrderStatus) = {
+    query
+      .filter { _.id === id }
+      .map { o => (o.status, o.dateStatus) }
+      .update { (status, DateTime.now()) }
   }
 
 }
@@ -95,4 +113,13 @@ case class MOrder(
   dateCreated   : DateTime      = DateTime.now,
   dateStatus    : DateTime      = DateTime.now,
   id            : Option[Gid_t] = None
-)
+) {
+
+  def withStatus(status1: MOrderStatus): MOrder = {
+    copy(
+      status      = status1,
+      dateStatus  = DateTime.now()
+    )
+  }
+
+}

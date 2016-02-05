@@ -17,7 +17,11 @@ object MItemStatuses extends EnumMaybeWithName with EnumApply {
   override type T = Val
 
   /** Item лежит в корзине, т.е. в черновике заказа. */
-  val Draft: T = new Val("a")
+  val Draft               : T = new Val("a")
+
+  /** Item оплачен. Ожидается какая-то автоматическая реакция suggest.io.
+    * Например, юзер оплатил размещение карточки. Sio должен разместить карточку и обновить статус. */
+  val AwaitingSioAuto     : T = new Val("b")
 
 }
 

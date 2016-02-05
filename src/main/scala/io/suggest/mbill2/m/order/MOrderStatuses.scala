@@ -31,10 +31,7 @@ object MOrderStatuses extends EnumMaybeWithName with EnumApply {
     override def userCanChangeItems = true
   }
 
-  /** Оплата прошла, пошло исполнение подзаказов (item'ов). */
-  val AwaitItemStatuses = new Val("c")
-
-  /** Заказ завершён. */
+  /** Оплата заказа проведена. Дальше всё происходит на уровне item'ов заказа. */
   val Closed = new Val("d")
 
 }

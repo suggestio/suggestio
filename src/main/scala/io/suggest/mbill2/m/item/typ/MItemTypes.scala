@@ -1,6 +1,7 @@
 package io.suggest.mbill2.m.item.typ
 
 import io.suggest.common.menum.{EnumApply, EnumMaybeWithName}
+import io.suggest.mbill2.m.item.status.{MItemStatuses, MItemStatus}
 
 /**
  * Suggest.io
@@ -14,6 +15,11 @@ object MItemTypes extends EnumMaybeWithName with EnumApply {
   protected[this] class Val(override val strId: String)
     extends super.Val(strId)
     with ValT
+  {
+    /** Новый статус item'а после оплаты заказа. */
+    // TODO Вынести значение статуса на уровень val'ов, т.к. может варьироваться в разных типах item'ов.
+    def orderClosedStatus: MItemStatus = MItemStatuses.AwaitingSioAuto
+  }
 
   override type T = Val
 

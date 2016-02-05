@@ -16,7 +16,7 @@ import io.suggest.mbill2.m.tags.{TagFaceOptSlick, ITagFaceOpt}
 import io.suggest.mbill2.util.PgaNamesMaker
 import io.suggest.model.geo.GeoShape
 import io.suggest.model.sc.common.SinkShowLevel
-import org.joda.time.Interval
+import org.joda.time.{DateTime, Interval}
 import slick.lifted.ProvenShape
 
 /**
@@ -51,6 +51,7 @@ class MItems @Inject() (
   with DeleteById
   with GeoShapeOptSlick
   with TagFaceOptSlick
+  with DateStatusSlick
 {
 
   override val TABLE_NAME = "item"
@@ -81,13 +82,15 @@ class MItems @Inject() (
     with SlsColumn
     with GeoShapeOptColumn
     with TagFaceOptColumn
+    with DateStatusColumn
   {
 
     def prodId          = column[String](PROD_ID_FN)
     def prodIdInx       = index(PROD_ID_INX, prodId)
 
     override def * : ProvenShape[MItem] = {
-      (orderId, iType, status, price, adId, prodId, dtIntervalOpt, rcvrIdOpt, sls, reasonOpt, geoShapeOpt, tagFaceOpt, id.?) <> (
+      (orderId, iType, status, price, adId, prodId, dtIntervalOpt, rcvrIdOpt, sls, reasonOpt, geoShapeOpt, tagFaceOpt,
+        dateStatus, id.?) <> (
         MItem.tupled, MItem.unapply
       )
     }
@@ -99,6 +102,22 @@ class MItems @Inject() (
   /** Апдейт значения экземпляра модели новым id. */
   override protected def _withId(el: MItem, id: Gid_t): MItem = {
     el.copy(id = Some(id))
+  }
+
+
+  /**
+    * Выставить статус для указанного item'а.
+    * @param itm2 Обновлённый инстанс item'а.
+    * @return Экшен UPDATE.
+    */
+  def saveStatus(itm2: MItem) = {
+    saveStatus1(itm2.id.get, itm2.status)
+  }
+  def saveStatus1(id: Gid_t, status: MItemStatus) = {
+    query
+      .filter { _.id === id }
+      .map { i => (i.status, i.dateStatus) }
+      .update( (status, DateTime.now()) )
   }
 
 }
@@ -118,6 +137,7 @@ trait IItem
   with ISls
   with IGeoShapeOpt
   with ITagFaceOpt
+  with IDateStatus
 {
   def prodId          : String
 }
@@ -136,7 +156,18 @@ case class MItem(
   override val reasonOpt      : Option[String]      = None,
   override val geoShape       : Option[GeoShape]    = None,
   override val tagFaceOpt     : Option[String]      = None,
+  override val dateStatus     : DateTime            = DateTime.now(),
   override val id             : Option[Gid_t]       = None
 )
   extends IItem
+{
 
+  /** @return Инстанс [[MItem]] с новым статусом и датой обновления оного. */
+  def withStatus(status1: MItemStatus): MItem = {
+    copy(
+      status      = iType.orderClosedStatus,
+      dateStatus  = DateTime.now()
+    )
+  }
+
+}
