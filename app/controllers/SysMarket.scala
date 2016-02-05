@@ -288,7 +288,7 @@ class SysMarket @Inject() (
   private def createAdnNodeRender(nodeFormM: Form[MNode], ncpForm: Form[NodeCreateParams])
                                  (implicit request: AbstractRequestWithPwOpt[_]): Future[Html] = {
     val html = createAdnNodeFormTpl(nodeFormM, ncpForm)
-    Future successful html
+    Future.successful( html )
   }
 
   private def nodeCreateParamsFormM = Form(NodeCreateParams.mappingM)

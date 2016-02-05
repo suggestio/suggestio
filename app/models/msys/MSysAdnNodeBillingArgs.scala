@@ -12,7 +12,6 @@ trait ISysAdnNodeBillingArgs {
   def feeTariffsMap     : collection.Map[Int, Seq[MTariffFee]]
   def statTariffsMap    : collection.Map[Int, Seq[MTariffStat]]
   def dailyMmpsMap      : collection.Map[Int, Seq[MTariffDaily]]
-  def sinkComissionMap  : collection.Map[Int, Seq[MSinkComission]]
 }
 
 
@@ -22,7 +21,6 @@ case class MSysAdnNodeBillingArgs(
   override val txns              : Seq[MTxn],
   override val feeTariffsMap     : collection.Map[Int, Seq[MTariffFee]],
   override val statTariffsMap    : collection.Map[Int, Seq[MTariffStat]],
-  override val dailyMmpsMap      : collection.Map[Int, Seq[MTariffDaily]],
-  override val sinkComissionMap  : collection.Map[Int, Seq[MSinkComission]]
+  override val dailyMmpsMap      : collection.Map[Int, Seq[MTariffDaily]]
 )
   extends ISysAdnNodeBillingArgs

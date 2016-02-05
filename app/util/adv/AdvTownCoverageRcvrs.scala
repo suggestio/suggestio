@@ -93,7 +93,6 @@ class AdvTownCoverageRcvrs @Inject() (
             }
             override def limit            = 70    // Наврядли в городе больше указанного кол-ва узлов. // TODO Брать число из другого места...
             override def shownTypeIds     = districtTypeNames
-            override def onlyWithSinks    = Seq(AdnSinks.SINK_GEO)
           }
           for(allTownDistrictsIds <- MNode.dynSearchIds(sargs2)) yield {
             townAdnId -> allTownDistrictsIds.toSet

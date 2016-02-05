@@ -82,46 +82,6 @@
 
 
           @* Рендер тарификаций за используемую выдачу. *@
-          <div>
-            @defining(sinkComissionMap.getOrElse(contract.id.get, Nil)) { mscs =>
-              @* Рендерим плашку, сообщающую о неисправности узла в связи с отсутствием ожидаемого тарифа. *@
-              @if( mnode.extras.adn.exists(_.isReceiver) ) {
-                @defining( mnode.extras.adn.fold( Set.empty[AdnSink] )(a => a.sinks -- mscs.map(_.sink)) ) { missingSinks =>
-                  @missingSinks.map { sink =>
-                    <p class="error">Необходимо <a href="@routes.SysMarketBilling.createSinkCom(contract.id.get)">добавить тариф</a> на выдачи: @messages("adn.sink." + sink.longName)!<p/>
-                  }
-                }
-              }
-              @if( mscs.nonEmpty ) {
-                <h4>Тарифные планы выдач</h4>
-                <table>
-                  <tr>
-                    <th>#</th>
-                    <th>sink</th>
-                    <th>Комиссия s.io</th>
-                    <th>Другое</th>
-                  </tr>
-                  @mscs.map { msc =>
-                    <tr>
-                      <td>@msc.id</td>
-                      <td>@messages("adn.sink." + msc.sink.longName)</td>
-                      <td>@msc.sioComission</td>
-                      <td>
-                        <a href="@routes.SysMarketBilling.editSinkCom(msc.id.get)">@messages("Edit")</a>
-                        @if( !mnode.extras.adn.exists(_.sinks.contains(msc.sink)) ) {
-                          Это тариф НЕ используется: узел не имеет доступа к @messages("adn.sink." + msc.sink.longName).
-                        }
-                      </td>
-                    </tr>
-                  }
-                </table>
-              }
-            }
-          </div>
-          <a href="@routes.SysMarketBilling.createSinkCom(contract.id.get)">Создать новый тариф поисковой выдачи...</a>
-
-          <br/><br/>
-
 
           @defining(feeTariffsMap.get(contract.id.get).getOrElse(Nil)) { tariffs =>
             @if( !tariffs.isEmpty ) {

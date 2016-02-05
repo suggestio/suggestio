@@ -100,15 +100,6 @@
   </table>
 
   <table class="input-w __size-L">
-    @AdnSinks.ordered.map { sink =>
-      @checkbox(
-        af("adn.sink." + sink.longName),
-        '_label -> messages("adn.sink." + sink.longName)
-      )
-    }
-  </table>
-
-  <table class="input-w __size-L">
     @checkbox(
       af("adn.showInScNl"),
       '_label -> "Отображать в списке узлов выдачи?"

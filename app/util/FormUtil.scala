@@ -638,18 +638,6 @@ object FormUtil {
   }
 
 
-  /** Маппер для поля, содержащего имя AdnSink. */
-  def sinkM: Mapping[AdnSink] = {
-    nonEmptyText(minLength = 1, maxLength = 1)
-      .transform [Option[AdnSink]] (
-        { AdnSinks.maybeWithName },
-        { _.getOrElse(AdnSinks.default).name }
-      )
-      .verifying("error.required", _.isDefined)
-      .transform [AdnSink] (_.get, Some.apply)
-  }
-
-
   def slsStrM: Mapping[LvlMap_t] = {
     text(maxLength = 256)
       .transform[LvlMap_t](

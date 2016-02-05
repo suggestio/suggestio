@@ -52,7 +52,6 @@ trait ScIndexGeo
     // Собираем статистику асинхронно
     resultFut onSuccess { case logRes =>
       scStatUtil.IndexStat(
-        Some(AdnSinks.SINK_GEO),
         logic.gsiOptFut,
         logRes.helper.ctx.deviceScreenOpt,
         logRes.nodeOpt
