@@ -4,12 +4,14 @@ import java.util.Currency
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.common.fut.FutureUtil
+import io.suggest.mbill2.m.balance.MBalances
 import io.suggest.mbill2.m.contract.{MContract, MContracts}
 import io.suggest.mbill2.m.gid.Gid_t
-import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
+import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{IItem, MItems, MItem}
 import io.suggest.mbill2.m.order._
 import models.adv.tpl.MAdvPricing
+import models.mbill.MCartIdeas
 import models.mproj.ICommonDi
 import models.{IPrice, CurrencyCodeOpt, MNode, MPrice}
 import util.PlayMacroLogsImpl
@@ -29,6 +31,7 @@ class Bill2Util @Inject() (
   mOrders                         : MOrders,
   mContracts                      : MContracts,
   mItems                          : MItems,
+  mBalances                       : MBalances,
   val mCommonDi                   : ICommonDi
 )
   extends PlayMacroLogsImpl
@@ -218,6 +221,7 @@ class Bill2Util @Inject() (
         .result
         .forUpdate
     } yield {
+      LOGGER.trace(s"prepareCartTxn($contractId): cart order[$orderId] contains ${mitems.size} items.")
       MOrderWithItems(order, mitems)
     }
   }
@@ -273,7 +277,7 @@ class Bill2Util @Inject() (
     * @param order Обрабатываемый ордер вместе с наполнением.
     * @return DBIO-экшен, с какими-то данными или без них.
     */
-  def executeOrderAction(order: IOrderWithItems) = {
+  def closeOrder(order: IOrderWithItems) = {
     for {
       // Обновляем статус ордера.
       morder3 <- {
@@ -296,6 +300,69 @@ class Bill2Util @Inject() (
     } yield {
       // Собрать возвращаемый результат экшена
       MOrderWithItems(morder3, mitems3)
+    }
+  }
+
+
+
+  /**
+    * slick-экшен для выполнения анализа открытого ордера (товарной корзины) и принятия дальнейшего решения.
+    * Решения описаны в TxnResults.
+    *
+    * @param order Результат prepareCartTxn().
+    */
+  def maybeExecuteOrder(order: IOrderWithItems) = {
+    lazy val logPrefix = s"processOrder(${order.morder.id.orNull}/${order.mitems.size}items):"
+    if (order.mitems.isEmpty) {
+      // Корзина пуста. Should not happen.
+      LOGGER.trace(logPrefix + " no items in the cart")
+      DBIO.successful( MCartIdeas.NothingToDo )
+
+    } else if ( !itemsHasPrice(order.mitems) ) {
+      // Итемы есть, но всё бесплатно. Исполнить весь этот контракт прямо тут.
+      LOGGER.trace(logPrefix + " Only FREE items in cart.")
+      for (_ <- closeOrder(order)) yield {
+        MCartIdeas.OrderClosed(order)
+      }
+
+    } else {
+      // Товары есть, и они не бесплатны.
+      LOGGER.trace(logPrefix + "There are priceful items in cart.")
+
+      for {
+        // Узнаём текущее финансовое состояние юзера...
+        balances    <- mBalances.findByContractId( order.morder.contractId )
+      } yield {
+        // Построить карту балансов юзера
+        val balancesMap = balances
+          .iterator
+          .map { b => b.price.currencyCode -> b }
+          .toMap
+
+        // Считаем полную стоимость заказа-корзины.
+        val totalPrices = items2pricesIter(order.mitems).toSeq
+
+        // Пройтись по ценам, узнать достаточно ли бабла у юзера по всем валютам заказа
+        val isEnought = totalPrices.forall { totalPrice =>
+          balancesMap
+            .get(totalPrice.currencyCode)
+            .exists { b => b.price.amount >= totalPrice.amount }
+        }
+        ???
+      }
+    }
+  }
+
+
+  def processCart(contractId: Gid_t) = {
+    for {
+      // Прочитать текущую корзину
+      cart0   <- prepareCartTxn( contractId )
+      // На основе наполнения корзины нужно выбрать дальнейший путь развития событий:
+      txnRes  <-  maybeExecuteOrder(cart0)
+    } yield {
+      // Сформировать результат работы экшена
+      txnRes
     }
   }
 

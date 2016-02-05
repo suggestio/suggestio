@@ -3,10 +3,11 @@ package controllers.cbill
 import controllers.{routes, SioController}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.item.{ItemStatusChanged, MItem}
-import io.suggest.mbill2.m.order.{OrderStatusChanged, IOrderWithItems}
+import io.suggest.mbill2.m.order.OrderStatusChanged
 import models.adv.tpl.MAdvPricing
 import models.blk.{IRenderArgs, RenderArgs}
 import models.im.make.Makers
+import models.mbill.MCartIdeas
 import models.mctx.Context
 import models.mlk.bill.{MCartItem, MCartTplArgs}
 import util.PlayMacroLogsI
@@ -31,7 +32,6 @@ trait LkBill2Cart
 {
 
   import mCommonDi._
-  import dbConfig.driver.api.DBIO
 
   /** Отображение карточек в таком вот размере. */
   private def ADS_SZ_MULT = 0.25F
@@ -157,17 +157,6 @@ trait LkBill2Cart
   }
 
 
-  protected object TxnResults {
-
-    sealed trait TxnRes
-
-    /** Ничего делать не требуется. */
-    case object NothingToDo extends TxnRes
-
-    /** Ордер был проведён.  */
-    sealed case class OrderClosed(cart: IOrderWithItems) extends TxnRes
-
-  }
 
   /**
     * Сабмит формы подтверждения корзины.
@@ -184,63 +173,26 @@ trait LkBill2Cart
 
       // Дальше надо бы делать транзакцию
       res <- {
-        lazy val logPrefix = s"cartSubmit($onNodeId):"
-        val contractId = enc.mc.id.get
-
-        // Собрать логику SQL-запросов.
-        val dbAction = for {
-          // Прочитать текущую корзину
-          cart0 <- bill2Util.prepareCartTxn( contractId )
-
-          // На основе наполнения корзины нужно выбрать дальнейший путь развития событий:
-          (txnRes: TxnResults.TxnRes) <- {
-            LOGGER.trace(s"$logPrefix Contract[$contractId]: User's[${request.user.personIdOpt.orNull}] cart order[${cart0.morder.id.orNull}]. ${cart0.mitems.size} items in cart.")
-            if (cart0.mitems.isEmpty) {
-              // Корзина пуста. Should not happen.
-              LOGGER.trace(logPrefix + " no items in the cart")
-              DBIO.successful( TxnResults.NothingToDo )
-
-            } else if ( !bill2Util.itemsHasPrice(cart0.mitems) ) {
-              // Итемы есть, но всё бесплатно. Исполнить весь этот контракт прямо тут.
-              LOGGER.trace(logPrefix + " Only FREE items in cart.")
-              for (_ <- bill2Util.executeOrderAction(cart0)) yield {
-                TxnResults.OrderClosed(cart0)
-              }
-
-            } else {
-              // Товары есть, и они не бесплатны.
-              LOGGER.trace(logPrefix + "There are unpaid items in cart.")
-
-              // Считаем полную стоимость заказа-корзины.
-              val totalPrices = bill2Util.items2pricesIter(cart0.mitems).toSeq
-              // TODO Прочитать баланс, списать с баланса, проведя ордер. Или отправить в платежную систему для оплаты недостающего.
-              // Узнаём текущее финансовое состояние юзера...
-              ???
-            }
-          }
-        } yield {
-          // Сформировать результат работы экшена
-          txnRes
-        }
-
-        // Отправить собранный DB-экшен на исполнение как транзакцию:
+        // Произвести чтение, анализ и обработку товарной корзины:
         import dbConfig.driver.api._
-        dbConfig.db.run( dbAction.transactionally )
+        dbConfig.db.run {
+          bill2Util.processCart(enc.mc.id.get)
+            .transactionally
+        }
       }
     } yield {
 
-      // Вернуть результат юзеру
+      // Начать сборку результата для юзера
       implicit val ctx = implicitly[Context]
 
-      // TODO Породить события SioNotifier, если необходимо
       res match {
         // У юзера оказалась пустая корзина. Отредиректить в корзину с ошибкой.
-        case TxnResults.NothingToDo =>
+        case MCartIdeas.NothingToDo =>
           Redirect( routes.LkBill2.cart(onNodeId) )
             .flashing( FLASH.ERROR -> ctx.messages("Cart.is.empty.No.items") )
 
         // Ордер был исполнен вместе с его наполнением.
-        case TxnResults.OrderClosed(order2) =>
+        case MCartIdeas.OrderClosed(order2) =>
           // Уведомить об ордере.
           sn.publish( OrderStatusChanged(order2.morder) )
           // Уведомить об item'ах.
@@ -249,6 +201,8 @@ trait LkBill2Cart
           }
           // Отправить юзера на страницу "Спасибо за покупку"
           Redirect( routes.LkBill2.thanksForBuy(onNodeId) )
+
+        // TODO Добавить сюда поддержку редиректа юзера на оплату, реализовав перед этим подготовку к оплате.
       }
     }
   }
