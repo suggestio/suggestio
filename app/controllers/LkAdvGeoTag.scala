@@ -66,7 +66,7 @@ class LkAdvGeoTag @Inject() (
         tags      = Nil,
         mapState  = MapViewState(gp, zoom = 10),
         circle    = CircleGs(gp, radius = Distance(10000, DistanceUnit.METERS)),
-        period = MDatesPeriod()
+        period    = MDatesPeriod()
       )
 
       formEmpty.fill(res)

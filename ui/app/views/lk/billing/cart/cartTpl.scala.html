@@ -3,7 +3,7 @@
 @* Шаблон с корзиной. *@
 
 @import lk.billing.billingBaseTpl
-@import ctx.messages
+@import ctx.{request, messages}
 @import sys1.stuff.ntable._
 @import util.TplDataFormatUtil.formatPrice
 @import views.html.sc._adNormalTpl
@@ -69,7 +69,7 @@
 
 
   @* Форма для возможности сабмита. *@
-  @form( routes.LkBill2.cartSubmit(args.mnode.id.get) ) {
+  @form( CSRF(routes.LkBill2.cartSubmit(args.mnode.id.get)), 'id -> FORM_ID ) {
   }
 
 }

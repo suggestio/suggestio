@@ -1,7 +1,7 @@
 package util.di
 
+import io.suggest.common.slick.driver.ExPgSlickDriverT
 import play.api.db.slick.DatabaseConfigProvider
-import slick.driver.JdbcProfile
 
 /**
  * Suggest.io
@@ -17,7 +17,7 @@ trait ISlickDbConfigProvider {
 
 trait ISlickDbConfig extends ISlickDbConfigProvider {
 
-  val dbConfig = dbConfigProvider.get[JdbcProfile]
+  val dbConfig = dbConfigProvider.get[ExPgSlickDriverT]
 
 }
 

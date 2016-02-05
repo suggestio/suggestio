@@ -86,6 +86,7 @@ GET  /lk/bill/pricing/wnd/:adnId        @controllers.MarketLkBilling._renderNode
 ## lk.bill2
 GET  /lk/cart/:nodeId                   @controllers.LkBill2.cart(nodeId, r: Option[String] ?= None)
 POST /lk/cart/:nodeId                   @controllers.LkBill2.cartSubmit(nodeId)
+GET  /lk/pay/thanks                     @controllers.LkBill2.thanksForBuy(onNodeId: String)
 
 ## Принятие приглашения на управления узлом.
 GET  /lk/node/eact/:adnId/:eaId         @controllers.MarketLkAdn.nodeOwnerInviteAcceptForm(adnId, eaId)
