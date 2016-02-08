@@ -87,7 +87,7 @@ class LkAdvGeoTag @Inject() (
   private def _forAd(form: GtForm_t, rs: Status)
                     (implicit request: IAdProdReq[_]): Future[Result] = {
     for {
-      ctxData0 <- request.user.lkCtxData
+      ctxData0 <- request.user.lkCtxDataFut
     } yield {
       implicit val ctxData = ctxData0.copy(
         jsiTgs = Seq(MTargets.AdvGtagForm)

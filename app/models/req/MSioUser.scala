@@ -5,10 +5,11 @@ import com.google.inject.assistedinject.Assisted
 import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.balance.{MBalances, MBalance}
 import io.suggest.mbill2.m.contract.{MContracts, MContract}
+import io.suggest.mbill2.m.price.MPrice
 import io.suggest.model.n2.node.MNodeTypes
 import models.jsm.init.MTarget
 import models.mctx.CtxData
-import models.{MNodeCache, MNode}
+import models.{CurrencyCodeDflt, MNodeCache, MNode}
 import models.event.MEvent
 import models.event.search.MEventsSearchArgs
 import models.usr.MSuperUsers
@@ -74,7 +75,7 @@ trait ISioUser {
   def jsiTgs: List[MTarget]
 
   /** Частый экземпяр CtxData для нужд ЛК. */
-  implicit def lkCtxData: Future[CtxData]
+  def lkCtxDataFut: Future[CtxData]
 
 }
 
@@ -96,7 +97,7 @@ class MSioUserEmpty extends ISioUser {
     Future.failed( new NoSuchElementException("personIdOpt is empty") )
   }
 
-  override implicit def lkCtxData   = Future.successful(CtxData.empty)
+  override implicit def lkCtxDataFut = Future.successful(CtxData.empty)
 }
 
 
@@ -159,15 +160,25 @@ trait ISioUserT extends ISioUser with PlayMacroLogsDyn {
 
   override def mBalancesFut: Future[Seq[MBalance]] = {
     // Мысленный эксперимент показал, что кеш здесь практически НЕ нужен. Работаем без кеша, заодно и проблем меньше.
-    contractIdOptFut.flatMap { contractIdOpt =>
+    val fut = contractIdOptFut.flatMap { contractIdOpt =>
       contractIdOpt.fold [Future[Seq[MBalance]]] (Future.successful(Nil)) { contractId =>
         val action = mBalances.findByContractId(contractId)
         dbConfig.db.run(action)
       }
     }
+    // Если баланса не найдено, то надо его сочинить в уме. Реальный баланс будет создан во время фактической оплаты.
+    for (balances <- fut) yield {
+      if (balances.nonEmpty) {
+        balances
+      } else {
+        // Вернуть эфемерный баланс, пригодный для отображения в шаблонах.
+        val mb = MBalance(-1L, MPrice(0.0, CurrencyCodeDflt.currency))
+        Seq(mb)
+      }
+    }
   }
 
-  override implicit def lkCtxData: Future[CtxData] = {
+  override def lkCtxDataFut: Future[CtxData] = {
     val _evtsCountFut = evtsCountFut
     for {
       mBalances <- mBalancesFut
@@ -232,7 +243,7 @@ case class MSioUserLazy @Inject() (
   override lazy val isSuper           = super.isSuper
   override lazy val evtsCountFut      = super.evtsCountFut
 
-  override implicit lazy val lkCtxData = super.lkCtxData
+  override lazy val lkCtxDataFut = super.lkCtxDataFut
 
 }
 

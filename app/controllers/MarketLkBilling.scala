@@ -50,7 +50,7 @@ class MarketLkBilling @Inject() (
     mbcsFut.flatMap { mbcs =>
       mbcs.headOption match {
         case Some(mbc) =>
-          request.user.lkCtxData.map { implicit ctxData =>
+          request.user.lkCtxDataFut.map { implicit ctxData =>
             Ok(billPaymentBankTpl(request.mnode, mbc))
           }
 
@@ -64,6 +64,7 @@ class MarketLkBilling @Inject() (
 
   /**
    * Рендер страницы, содержащей общую биллинговую информацию для узла.
+   *
    * @param adnId id узла.
    */
   def showAdnNodeBilling(adnId: String) = IsAdnNodeAdmin(adnId, U.Lk).async { implicit request =>
@@ -87,7 +88,7 @@ class MarketLkBilling @Inject() (
 
     billInfoOptFut flatMap {
       case Some((mbc, mbmds)) =>
-        request.user.lkCtxData.map { implicit ctxData =>
+        request.user.lkCtxDataFut.map { implicit ctxData =>
           val html = showAdnNodeBillingTpl(request.mnode, mbmds, mbc)
           Ok(html)
         }
@@ -113,7 +114,7 @@ class MarketLkBilling @Inject() (
     }(AsyncUtil.jdbcExecutionContext)
 
     for {
-      ctxData0  <- request.user.lkCtxData
+      ctxData0  <- request.user.lkCtxDataFut
       txns      <- txnsFut
     } yield {
       implicit val ctxData = ctxData0.copy(
@@ -135,6 +136,7 @@ class MarketLkBilling @Inject() (
   /**
    * Одинаковые куски [[_renderNodeMbmdsWindow()]] вынесены в эту функцию.
    * Она собирает данные для рендера шаблонов, относящихся к этим экшенам и дергает фунцию рендера, когда всё готово.
+   *
    * @param mnode Текущий узел N2.
    * @return Фьючерс с Some и аргументами рендера. Если нет узла, то None
    */
@@ -169,6 +171,7 @@ class MarketLkBilling @Inject() (
   /**
    * Тоже самое, что и _renderNodeMbmds(), но ещё обрамляет всё дело в окно, пригодное для отображения юзеру
    * в плавающей форме.
+   *
    * @param adnId id просматриваемого узла.
    */
   def _renderNodeMbmdsWindow(adnId: String) = IsAuthNode(adnId).async { implicit request =>

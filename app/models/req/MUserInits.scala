@@ -64,7 +64,7 @@ object MUserInits extends TypeT {
   /** Инициализация обыденного личного кабинета: баланс, счетчик новых событий, возможно ещё что-то. */
   object Lk extends ValT {
     override def initUser(user: ISioUser): Unit = {
-      user.lkCtxData
+      user.lkCtxDataFut
     }
   }
 

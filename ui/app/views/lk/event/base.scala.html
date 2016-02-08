@@ -5,6 +5,5 @@
 @lk.lkBaseLayout(
   title         = title,
   nodeOpt       = nodeOpt,
-  backHref      = nodeOpt.flatMap(_.id).map(routes.MarketLkAdn.showAdnNode(_).url),
   leftCurrEl    = Some(LkLeftPanelLinks.LPL_EVENTS)
 )(content)

@@ -552,7 +552,7 @@ class MarketAdv @Inject() (
     }
 
     // Инициализация контекста с учётом данных состояния.
-    val ctxFut = request.user.lkCtxData.map { implicit ctxData =>
+    val ctxFut = request.user.lkCtxDataFut.map { implicit ctxData =>
       implicitly[Context]
     }
 

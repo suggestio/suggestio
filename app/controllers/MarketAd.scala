@@ -163,7 +163,7 @@ class MarketAd @Inject() (
   private def _renderPage(af: AdFormM, rs: Status)(f: Context => Html)
                          (implicit request: IReq[_]): Future[Result] = {
     for {
-      ctxData0      <- request.user.lkCtxData
+      ctxData0      <- request.user.lkCtxDataFut
     } yield {
       implicit val ctxData = ctxData0.copy(
         jsiTgs        = Seq(MTargets.AdForm)

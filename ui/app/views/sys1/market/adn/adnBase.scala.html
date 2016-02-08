@@ -14,7 +14,7 @@
     / <a class="blue-link"
          href="@routes.SysMarket.showAdnNode(mnode.id.get)"
          title="@messages( AdnShownTypes.node2val(mnode).singular) / @mnode.meta.address.town">
-        @mnode.meta.basic.name
+        @mnode.guessDisplayNameOrId
       </a>
   }
   @hPathAfter.getOrElse {

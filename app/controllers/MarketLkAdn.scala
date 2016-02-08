@@ -79,7 +79,7 @@ class MarketLkAdn @Inject() (
     }
     val mnodesFut = MNode.dynSearch(msearch)
     for {
-      ctxData     <- request.user.lkCtxData
+      ctxData     <- request.user.lkCtxDataFut
       mnodes      <- mnodesFut
     } yield {
       implicit val ctxData1 = ctxData
@@ -90,6 +90,7 @@ class MarketLkAdn @Inject() (
 
   /**
    * Отрендерить страницу ЛК какого-то узла рекламной сети. Экшен различает свои и чужие узлы.
+   *
    * @param nodeId id узла.
    */
   def showAdnNode(nodeId: String) = IsAdnNodeAdminGet(nodeId, U.Lk).async { implicit request =>
@@ -97,7 +98,7 @@ class MarketLkAdn @Inject() (
     val logoOptFut = logoUtil.getLogoOfNode(mnode)
     val galleryFut = galleryUtil.galleryImgs( mnode )
     for {
-      ctxData   <- request.user.lkCtxData
+      ctxData   <- request.user.lkCtxDataFut
       logoOpt   <- logoOptFut
       gallery   <- galleryFut
     } yield {
@@ -121,6 +122,7 @@ class MarketLkAdn @Inject() (
 
   /**
    * Рендер страницы ЛК с рекламными карточками узла.
+   *
    * @param adnId id узла.
    * @param mode Режим фильтрации карточек.
    * @param newAdIdOpt Костыль: если была добавлена рекламная карточка, то она должна отобразится сразу,
@@ -195,7 +197,7 @@ class MarketLkAdn @Inject() (
         }
       }
 
-      val ctxFut = request.user.lkCtxData.map { implicit ctxData =>
+      val ctxFut = request.user.lkCtxDataFut.map { implicit ctxData =>
         implicitly[Context]
       }
 
@@ -333,7 +335,7 @@ class MarketLkAdn @Inject() (
 
   private def _userProfileEdit(form: Form[(String, String)], r: Option[String], rs: Status)
                               (implicit request: INodeReq[_]): Future[Result] = {
-    request.user.lkCtxData.map { implicit ctxData =>
+    request.user.lkCtxDataFut.map { implicit ctxData =>
       val html = userProfileEditTpl(
         mnode = request.mnode,
         pf    = form,

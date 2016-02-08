@@ -65,7 +65,7 @@ class LkEvents @Inject() (
     )
     val eventsFut = MEvent.dynSearch(eventsSearch)
 
-    val ctxFut = request.user.lkCtxData.map { implicit ctxData =>
+    val ctxFut = request.user.lkCtxDataFut.map { implicit ctxData =>
       implicitly[Context]
     }
 

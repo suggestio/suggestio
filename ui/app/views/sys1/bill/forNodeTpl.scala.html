@@ -108,12 +108,12 @@
   } @* lkBlock плательщики *@
 
 
-  @if( args.mBalances.nonEmpty ) {
 
-    @lkBlock("Депозиты") {
-      @_minorTitleTpl() {
-        Остатки на балансах
-      }
+  @lkBlock("Остатки на балансах") {
+    @if( args.mBalances.isEmpty )  {
+      Пока нет кошельков. Балансы можно считать нулевыми.
+
+    } else {
       @defining("L") { sz =>
         @_ntable() {
           @_th(sz, title = Some("Уникальный id кошелька в БД")) {
@@ -154,7 +154,7 @@
         } @* ntable body *@
       }   @* defining sz *@
 
-    }     @* lkBlock депозиты *@
-  }       @* if mBalances *@
+    }     @* if mBalances *@
+  }       @* lkBlock депозиты *@
 
 }

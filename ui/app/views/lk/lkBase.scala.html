@@ -30,7 +30,7 @@
 </head>
 
 <body class="lk" @_initRouterAttrsTpl()>
-@defining( nodeOpt.flatMap(_.id) ) { adnIdOpt =>
+@defining( nodeOpt.flatMap(_.id) ) { nodeIdOpt =>
 
   <header class="header">
     <a class="header_logo-link" href="@routes.MarketLkAdn.lkList(fromNode = nodeOpt.flatMap(_.id))">
@@ -47,14 +47,17 @@
         }
       }
 
-      @adnIdOpt.map { adnId =>
-        @* Виджет для отображения денег на счете и доступа к финансовым функциям. Только в контексте узла. *@
-        @billing._billBallanceWidgetTpl(adnId)
+      @* Виджет для отображения денег на счете юзера и ссылка на биллинг. *@
+      @nodeIdOpt.map { nodeId =>
+        @billing._billBallanceWidgetTpl(nodeId)
       }
     </div>
 
-    <a class="lang-widget" title="Switch language@if(messages.lang.language != "en") { | @messages("Switch.lang")}"
-       href="@routes.LkLang.showLangSwitcher(r = ctx.r)">@ctx.messages.lang.language</a>
+    <a class="lang-widget"
+       title="Switch language@if(messages.lang.language != "en") { | @messages("Switch.lang")}"
+       href="@routes.LkLang.showLangSwitcher(r = ctx.r)">
+      @ctx.messages.lang.language
+    </a>
 
     @if(showSwitchNodeBtn && ctx.user.isAuth) {
       <a class="btn __size-M __major header_change-node"
@@ -70,7 +73,7 @@
 
     @_flashMsgTpl()
 
-    @_nodeLeftBarTpl(adnIdOpt, leftCurrEl)
+    @_nodeLeftBarTpl(nodeIdOpt, leftCurrEl)
 
     @content
 

@@ -257,7 +257,7 @@ class MarketLkAdnEdit @Inject() (
     val jsiTgs1 = Seq(MTargets.LkNodeEditForm)
 
     for {
-      ctxData0  <- request.user.lkCtxData
+      ctxData0  <- request.user.lkCtxDataFut
     } yield {
       implicit val ctxData = ctxData0.copy(
         jsiTgs        = jsiTgs1

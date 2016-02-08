@@ -48,7 +48,7 @@
         }
       }
 
-      @mnodes1.sortBy(_.meta.basic.name).map { mnode =>
+      @mnodes1.map { mnode =>
         @_tr() {
           @_td(sz) {
               <a class="blue-link" href="@routes.SysMarket.showAdnNode(mnode.id.get)">
@@ -64,6 +64,9 @@
               @if(adn.testNode) {<span title="Тестовый узел. Он скрыт от нетестовых узлов.">⚗</span>}
               @if(adn.isReceiver) {<span title="Приёмник рекламных карточек (receiver).">®</span>}
               @if(adn.isUser) {<span title="Этот узел создан пользователем, НЕ администратором.">&#x2692;</span>}
+            }
+            @if( ctx.user.personIdOpt == mnode.id ) {
+              <strong>(Я)</strong>
             }
           }
           @if( withAdnDelims || withNtype ) {

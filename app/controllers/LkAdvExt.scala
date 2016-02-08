@@ -84,6 +84,7 @@ class LkAdvExt @Inject() (
 
   /**
    * Запрос страницы с инфой по размещению указанной карточки в соц.сетях.
+   *
    * @param adId id рекламной карточки.
    * @return 200 Ок + страница с данными по размещениям на внешних сервисах.
    */
@@ -103,8 +104,8 @@ class LkAdvExt @Inject() (
     }
 
     for {
-      ctxData0      <- request.user.lkCtxData
-      targets       <- targetsFut
+      ctxData0      <- request.user.lkCtxDataFut
+      targets <- targetsFut
     } yield {
       val args = MForAdTplArgs(
         mad         = request.mad,
@@ -126,6 +127,7 @@ class LkAdvExt @Inject() (
    * - отрендерить страницу с системой взаимодействия с JS API указанных сервисов:
    * -- Нужно подготовить websocket url, передав в него всё состояние, полученное из текущего реквеста.
    * -- Ссылка должна иметь ttl и цифровую подпись для защиты от несанкционированного доступа.
+   *
    * @param adId id размещаемой рекламной карточки.
    * @return 200 Ok со страницей деятельности по размещению.
    */
@@ -149,6 +151,7 @@ class LkAdvExt @Inject() (
 
   /**
    * Рендер страницы с runner'ом.
+   *
    * @param adId id размещаемой рекламной карточки.
    * @param wsArgsOpt Аргументы из сабмита.
    *                  Если не заданы, то будет редирект на форму размещения.
@@ -157,7 +160,7 @@ class LkAdvExt @Inject() (
   def runner(adId: String, wsArgsOpt: Option[MExtAdvQs]) = CanAdvertiseAdPost(adId, U.Lk).async { implicit request =>
     wsArgsOpt match {
       case Some(wsArgs) =>
-        request.user.lkCtxData.map { ctxData0 =>
+        request.user.lkCtxDataFut.map { ctxData0 =>
           implicit val ctxData = ctxData0.copy(
             jsiTgs = Seq(MTargets.AdvExtRunner)
           )
@@ -184,6 +187,7 @@ class LkAdvExt @Inject() (
 
   /**
    * Открытие websocket'а, запускающее также процессы размещения, акторы и т.д.
+   *
    * @param qsArgs Подписанные параметры размещения.
    * @return 101 Upgrade.
    */
@@ -253,6 +257,7 @@ class LkAdvExt @Inject() (
 
   /**
    * Запрос формы создания/редактирования цели для внешнего размещения рекламы.
+   *
    * @param adnId id узла.
    * @return 200 Ok с отрендеренной формой.
    */
@@ -266,6 +271,7 @@ class LkAdvExt @Inject() (
 
   /**
    * Сабмит формы создания/обновления цели внешнего размещения рекламной карточки.
+ *
    * @param adnId id узла, к которому привязывается цель.
    * @return 200 Ok если цель создана.
    *         406 NotAcceptable если форма заполнена с ошибками. body содержит рендер формы с ошибками.
@@ -290,6 +296,7 @@ class LkAdvExt @Inject() (
 
   /**
    * Сабмит удаления цели.
+   *
    * @param tgId id цели.
    * @return 204 No content, если удаление удалось.
    *         404 если не найдена запрошенная цель.
@@ -310,6 +317,7 @@ class LkAdvExt @Inject() (
   /**
    * Возвращение юзера после oauth1-авторизации, запрошенной указанным актором.
    * Всё действо происходит внутри попапа.
+   *
    * @param adnId id узла. Используется для ACL.
    * @param actorInfoQs Инфа по актору для связи с ним.
    * @return Что актор пожелает.

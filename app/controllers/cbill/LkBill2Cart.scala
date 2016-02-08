@@ -70,7 +70,7 @@ trait LkBill2Cart
 
     // Параллельно собираем контекст рендера
     val ctxFut = for {
-      lkCtxData <- request.user.lkCtxData
+      lkCtxData <- request.user.lkCtxDataFut
     } yield {
       implicit val ctxData = lkCtxData
       implicitly[Context]

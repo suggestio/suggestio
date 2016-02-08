@@ -98,7 +98,7 @@ class MarketLkSupport @Inject() (
 
   private def _supportForm2(nodeOpt: Option[MNode], form: Form[MLkSupportRequest], r: Option[String], rs: Status)
                            (implicit request: IReqHdr): Future[Result] = {
-    request.user.lkCtxData.map { implicit ctxData =>
+    request.user.lkCtxDataFut.map { implicit ctxData =>
       rs( supportFormTpl(nodeOpt, form, r) )
     }
   }

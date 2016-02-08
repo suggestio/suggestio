@@ -13,7 +13,6 @@
 @lk.lkBaseLayout(
   title         = title,
   nodeOpt       = Some(producer),
-  backHref      = ctx.api.n2NodesUtil.madProducerId(mad).map( routes.MarketLkAdn.showNodeAds(_).url ),
   rightBar      = Some(rightBar1),
   leftCurrEl    = Some(LkLeftPanelLinks.LPL_ADS),
   headAfter     = headAfter

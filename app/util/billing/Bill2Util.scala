@@ -453,28 +453,28 @@ class Bill2Util @Inject() (
 
   /** Логика заливки на баланс денег. Обычно используется для нужд валютных кошельков CBCA.
     *
-    * @param orderIdOpt Связанный с транзакций ордер.
+    * @param orderIdOpt Связанный с транзакций ордер, если есть.
     * @param rcvrContractId id контракта получателя денег (обычно CBCA).
     * @param balancesMap Карта текущих балансов получателя денег.
-    * @param totalPrice Общая цена пополнения в валюте.
+    * @param price Общая цена пополнения в валюте.
     * @return DBIOAction создания/обновления кошелька узла.
     */
   def increaseBalance(orderIdOpt: Option[Gid_t], rcvrContractId: Gid_t, balancesMap: Map[String, MBalance],
-                      totalPrice: MPrice): DBIOAction[MTxn, NoStream, Effect.Write] = {
-    lazy val logPrefix = s"increaseCbcaBalance($orderIdOpt->$rcvrContractId,$totalPrice):"
+                      price: MPrice): DBIOAction[MTxn, NoStream, Effect.Write] = {
+    lazy val logPrefix = s"increaseCbcaBalance($orderIdOpt->$rcvrContractId,$price):"
     // Залить средства на баланс CBCA.
     val cbcaBalanceAction = balancesMap
-      .get( totalPrice.currencyCode )
+      .get( price.currencyCode )
       .fold [DBIOAction[MBalance, NoStream, Effect.Write]] {
         LOGGER.trace(logPrefix + "Initializing new CBCA balance for this currency...")
-        val cb0 = MBalance(rcvrContractId, totalPrice)
+        val cb0 = MBalance(rcvrContractId, price)
         mBalances.insertOne(cb0)
 
       } { cb0 =>
         LOGGER.trace(logPrefix + "Increasing CBCA balance...")
         val cb1 = cb0.copy(
           price = cb0.price.copy(
-            amount = cb0.price.amount + totalPrice.amount
+            amount = cb0.price.amount + price.amount
           )
         )
         for {
@@ -491,7 +491,7 @@ class Bill2Util @Inject() (
       ctxn2         <- {
         val ctxn0 = MTxn(
           balanceId  = cbcaBalance2.id.get,
-          amount     = totalPrice.amount,
+          amount     = price.amount,
           orderIdOpt = orderIdOpt
         )
         mTxns.insertOne(ctxn0)
