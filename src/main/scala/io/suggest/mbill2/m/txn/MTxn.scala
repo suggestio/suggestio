@@ -5,7 +5,7 @@ import io.suggest.common.slick.driver.ExPgSlickDriverT
 import io.suggest.mbill2.m.balance.{MBalances, BalanceIdInxSlick, BalanceIdFkSlick}
 import io.suggest.mbill2.m.common.InsertOneReturning
 import io.suggest.mbill2.m.gid.{GetById, Gid_t, GidSlick}
-import io.suggest.mbill2.m.item._
+import io.suggest.mbill2.m.order.{MOrders, OrderIdOptInxSlick, OrderIdOptFkSlick, OrderIdOptSlick}
 import io.suggest.mbill2.m.price.{Amount_t, AmountSlick}
 import io.suggest.mbill2.m.txn.comis._
 import io.suggest.mbill2.util.PgaNamesMaker
@@ -23,7 +23,7 @@ import slick.lifted.ProvenShape
 class MTxns @Inject() (
   override protected val driver     : ExPgSlickDriverT,
   override val mBalances            : MBalances,
-  override val mItems               : MItems
+  override val mOrders              : MOrders
 )
   extends GidSlick
   with AmountSlick
@@ -31,7 +31,7 @@ class MTxns @Inject() (
   with InsertOneReturning
   with GetById
   with ComissionOptSlick with ComissionBalanceIdOptFkSlick with ComissionBalanceIdOptInxSlick
-  with ItemIdOptSlick with ItemIdOptFkSlick with ItemIdOptInxSlick
+  with OrderIdOptSlick with OrderIdOptFkSlick with OrderIdOptInxSlick
 {
 
   import driver.api._
@@ -54,7 +54,7 @@ class MTxns @Inject() (
     with BalanceIdColumn with BalanceIdInx
     with AmountColumn
     with ComissionOpt with ComissionBalanceIdOptFk with ComissionBalanceIdOptInx
-    with ItemIdOpt with ItemIdOptFk with ItemIdOptInx
+    with OrderIdOpt with OrderIdOptFk with OrderIdOptInx
   {
 
     def datePaidOpt     = column[Option[DateTime]](DATE_PAID_FN)
@@ -65,7 +65,7 @@ class MTxns @Inject() (
     def psTxnUidKey     = index(PgaNamesMaker.uniq(TABLE_NAME, PS_TXN_UID_FN), psTxnUidOpt)
 
     override def * : ProvenShape[MTxn] = {
-      (balanceId, amount, itemIdOpt, paymentComment, psTxnUidOpt, comissionOpt, datePaidOpt, dateProcessed, id.?) <> (
+      (balanceId, amount, orderIdOpt, paymentComment, psTxnUidOpt, comissionOpt, datePaidOpt, dateProcessed, id.?) <> (
         MTxn.tupled, MTxn.unapply
       )
     }
@@ -84,9 +84,9 @@ class MTxns @Inject() (
 case class MTxn(
   balanceId         : Gid_t,
   amount            : Amount_t,
-  itemIdOpt         : Option[Gid_t],
-  paymentComment    : Option[String],
-  psTxnUidOpt       : Option[String],
+  orderIdOpt        : Option[Gid_t],
+  paymentComment    : Option[String]      = None,
+  psTxnUidOpt       : Option[String]      = None,
   comissionOpt      : Option[MComission]  = None,
   datePaid          : Option[DateTime]    = None,
   dateProcessed     : DateTime            = DateTime.now(),

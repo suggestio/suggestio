@@ -76,6 +76,23 @@ class MBalances @Inject() (
 
   override val query = TableQuery[MBalancesTable]
 
+
+  /** Обновить кол-во денег на балансе. */
+  def updateAmount(mbalance2: MBalance) = {
+    query
+      .filter { _.id === mbalance2.id.get }
+      .map { _.amount }
+      .update(mbalance2.price.amount)
+  }
+
+  /** Приведение списка балансов к карте оных по валютам. */
+  def balances2curMap(balances: TraversableOnce[MBalance]): Map[String, MBalance] = {
+    balances
+      .toIterator
+      .map { b => b.price.currencyCode -> b }
+      .toMap
+  }
+
 }
 
 
@@ -83,11 +100,11 @@ class MBalances @Inject() (
 case class MBalance(
   contractId  : Gid_t,
   price       : MPrice,
-  blocked     : Amount_t,
-  lowOpt      : Option[Amount_t],
-  id          : Option[Gid_t]
+  blocked     : Amount_t          = 0.0,
+  lowOpt      : Option[Amount_t]  = None,
+  id          : Option[Gid_t]     = None
 ) {
 
-  def low = lowOpt getOrElse 0.0
+  def low = lowOpt.getOrElse( 0.0 )
 
 }
