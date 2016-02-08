@@ -21,50 +21,62 @@
 ) {
 
   @for(r <- args.r) {
-    <a href="@r">Вернутся назад</a>
+    <a href="@r">@messages("Go.back")</a>
   }
 
-  @_ntable() {
 
-    @_th("S") {
-    }
-    @_th("M") {
-      @messages("Item")
-    }
-    @_th("S") {
-      @messages("Price")
+  @if( args.items.isEmpty ) {
+    <h2>@messages("Your.cart.is.empty").</h2>
+    @for( mnodeId <- args.mnode.id ) {
+      <a href="@routes.MarketLkAdn.showNodeAds(mnodeId)">
+        @messages("Return.to.my.ads")
+      </a>
     }
 
-  } {
+  } else {
 
-    @* TODO Дедублицировать рендер карточки *@
-    @for(itm <- args.items) {
+    @_ntable() {
 
-      @_tr() {
-        @* Нарисовать тут маленькую рекламную карточку *@
-        @_td("S") {
-          @_adNormalTpl(itm.brArgs)
-        }
-
-        @* Суть оффера. Инфа по заказанным тегам например. *@
-        @_td("M") {
-          @for(mitem <- itm.mitems; tag <- mitem.tagFaceOpt) {
-            <span>#@tag</span>
-            <br/>
-          }
-        }
-
-        @* Рендер стоимости item'а *@
-        @_td("S") {
-          @for(mitem <- itm.mitems) {
-            @formatPrice(mitem.price)
-            <br/>
-          }
-        }
+      @_th("S") {
+      }
+      @_th("M") {
+        @messages("Item")
+      }
+      @_th("S") {
+        @messages("Price")
       }
 
-    } @* for itm *@
+    } {
 
+      @* TODO Дедублицировать рендер карточки *@
+      @for(itm <- args.items) {
+
+        @_tr() {
+          @* Нарисовать тут маленькую рекламную карточку *@
+          @_td("S") {
+            @_adNormalTpl(itm.brArgs)
+          }
+
+          @* Суть оффера. Инфа по заказанным тегам например. *@
+          @_td("M") {
+            @for(mitem <- itm.mitems; tag <- mitem.tagFaceOpt) {
+              <span>#@tag</span>
+              <br/>
+            }
+          }
+
+          @* Рендер стоимости item'а *@
+          @_td("S") {
+            @for(mitem <- itm.mitems) {
+              @formatPrice(mitem.price)
+              <br/>
+            }
+          }
+        }
+
+      } @* for itm *@
+
+    }
   }
 
 

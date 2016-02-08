@@ -1,6 +1,8 @@
 package models.mbill
 
 import io.suggest.mbill2.m.order.IOrderWithItems
+import io.suggest.mbill2.m.balance.{MBalance => MBalance2}
+import models.MPrice
 
 /**
   * Suggest.io
@@ -16,7 +18,10 @@ object MCartIdeas {
   /** Ничего делать не требуется. */
   case object NothingToDo extends Idea
 
-  /** Ордер был проведён.  */
-  sealed case class OrderClosed(cart: IOrderWithItems) extends Idea
+  /** Ордер был проведён, всё оплачено или бесплатно.  */
+  final case class OrderClosed(cart: IOrderWithItems, newBalances: Seq[MBalance2]) extends Idea
+
+  /** Недостаточно бабла для проведения платежа в корзине. */
+  final case class NeedMoney(howMany: Seq[MPrice]) extends Idea
 
 }

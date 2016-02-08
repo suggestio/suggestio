@@ -174,35 +174,38 @@ trait LkBill2Cart
       // Дальше надо бы делать транзакцию
       res <- {
         // Произвести чтение, анализ и обработку товарной корзины:
-        import dbConfig.driver.api._
         dbConfig.db.run {
           bill2Util.processCart(enc.mc.id.get)
-            .transactionally
         }
       }
+
     } yield {
 
-      // Начать сборку результата для юзера
+      // Начать сборку http-ответа для юзера
       implicit val ctx = implicitly[Context]
 
       res match {
-        // У юзера оказалась пустая корзина. Отредиректить в корзину с ошибкой.
-        case MCartIdeas.NothingToDo =>
-          Redirect( routes.LkBill2.cart(onNodeId) )
-            .flashing( FLASH.ERROR -> ctx.messages("Cart.is.empty.No.items") )
 
+        // Недостаточно бабла на балансах юзера в sio, это нормально. Отправить в платежную систему...
+        case r: MCartIdeas.NeedMoney =>
+          ???
+
+        // Хватило денег на балансах или они не потребовались. Такое бывает в т.ч. после возврата юзера из платежной системы.
         // Ордер был исполнен вместе с его наполнением.
-        case MCartIdeas.OrderClosed(order2) =>
+        case oc: MCartIdeas.OrderClosed =>
           // Уведомить об ордере.
-          sn.publish( OrderStatusChanged(order2.morder) )
+          sn.publish( OrderStatusChanged(oc.cart.morder) )
           // Уведомить об item'ах.
-          for (mitem <- order2.mitems) {
+          for (mitem <- oc.cart.mitems) {
             sn.publish( ItemStatusChanged(mitem) )
           }
           // Отправить юзера на страницу "Спасибо за покупку"
           Redirect( routes.LkBill2.thanksForBuy(onNodeId) )
 
-        // TODO Добавить сюда поддержку редиректа юзера на оплату, реализовав перед этим подготовку к оплате.
+        // У юзера оказалась пустая корзина. Отредиректить в корзину с ошибкой.
+        case MCartIdeas.NothingToDo =>
+          Redirect( routes.LkBill2.cart(onNodeId) )
+            .flashing( FLASH.ERROR -> ctx.messages("Your.cart.is.empty") )
       }
     }
   }
