@@ -10,10 +10,16 @@ import java.util.Currency
  */
 
 trait IPrice {
+
   def amount    : Amount_t
   def currency  : Currency
 
   def currencyCode = currency.getCurrencyCode
+
+  override def toString: String = {
+    amount + " " + currencyCode
+  }
+
 }
 
 
@@ -23,3 +29,6 @@ case class MPrice(
   override val currency  : Currency
 )
   extends IPrice
+{
+  override def toString  = super.toString
+}

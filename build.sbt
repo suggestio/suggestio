@@ -13,13 +13,11 @@ resolvers ++= Seq(
 
 
 libraryDependencies ++= {
-  val slickVsn      = "3.1.0"
-  val slickPgVsn    = "0.10.1"
   Seq(
     "com.google.inject"     %  "guice"                % "4.0",
     "joda-time"             %  "joda-time"            % "2.8.+",
     Common.ORG              %% "common"               % "0.0.0-SNAPSHOT",
-    Common.ORG              %% "common-slick-driver"  % "0.1.0-SNAPSHOT",
+    Common.ORG              %% "common-slick-driver"  % "0.2.0-SNAPSHOT",
     Common.ORG              %% "util"                 % "2.0.1-SNAPSHOT"
       exclude("org.jruby", "jruby-complete")
       exclude("org.slf4j", "slf4j-log4j12")

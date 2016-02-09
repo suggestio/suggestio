@@ -10,6 +10,8 @@ import io.suggest.mbill2.m.price._
 import io.suggest.mbill2.util.PgaNamesMaker
 import slick.lifted.ProvenShape
 
+import scala.concurrent.ExecutionContext
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -20,7 +22,8 @@ import slick.lifted.ProvenShape
 @Singleton
 class MBalances @Inject() (
   override protected val driver       : ExPgSlickDriverT,
-  override protected val mContracts   : MContracts
+  override protected val mContracts   : MContracts,
+  implicit private val ec             : ExecutionContext
 )
   extends GidSlick
   with PriceSlick
@@ -76,13 +79,62 @@ class MBalances @Inject() (
 
   override val query = TableQuery[MBalancesTable]
 
+  /** Атомарный инкремент баланса и декремент blocked по id ряда.
+    *
+    * @return Новый баланс и иновый blocked. None если ряд не найден.
+    */
+  def incrAmountAndBlockedBy(id: Gid_t, delta: Amount_t): DBIOAction[Option[(Amount_t, Amount_t)], NoStream, Effect.Write] = {
+    sql"UPDATE #$TABLE_NAME SET #$BLOCKED_FN = #$BLOCKED_FN - $delta, #$AMOUNT_FN = #$AMOUNT_FN + $delta WHERE #${GidSlick.ID_FN} = $id RETURNING #$AMOUNT_FN, #$BLOCKED_FN"
+      .as[(Amount_t, Amount_t)]
+      .map { _.headOption }
+  }
+  /** Атомарное обновления колонок баланса и blocked.
+    * amount будет увеличена на delta, а blocked -- уменьшена на delta.
+    *
+    * @param balance0 Исходный инстанс баланса.
+    * @param delta На сколько единиц валюты увеличить баланс и уменьшить blocked?
+    * @return Some([[MBalance]]) с обновлёнными балансами.
+    *         Или None, если баланс не найден в таблице.
+    */
+  def incrAmountAndBlockedBy(balance0: MBalance, delta: Amount_t): DBIOAction[Option[MBalance], NoStream, Effect.Write] = {
+    incrAmountAndBlockedBy(balance0.id.get, delta)
+      .map { resOpt =>
+        resOpt.map { case (amount2, blocked2) =>
+          balance0.copy(
+            blocked = blocked2,
+            price   = balance0.price.copy(
+              amount = amount2
+            )
+          )
+        }
+      }
+  }
 
-  /** Обновить кол-во денег на балансе. */
-  def updateAmount(mbalance2: MBalance) = {
-    query
-      .filter { _.id === mbalance2.id.get }
-      .map { _.amount }
-      .update(mbalance2.price.amount)
+
+  def incrAmountBy(id: Gid_t, delta: Amount_t): DBIOAction[Option[Amount_t], NoStream, Effect.Write] = {
+    sql"UPDATE #$TABLE_NAME SET #$AMOUNT_FN = #$AMOUNT_FN + $delta WHERE #${GidSlick.ID_FN} = $id RETURNING #$AMOUNT_FN"
+      .as[Amount_t]
+      .map { _.headOption }
+  }
+  /** Атомарное обновление баланса.
+    * amount будет увеличена на delta.
+    *
+    * @param balance0 Исходный баланс.
+    * @param delta На сколько увеличить amount?
+    * @return Some([[MBalance]]) если всё ок.
+    *         None, если в таблице нет указанного баланса.
+    */
+  def incrAmountBy(balance0: MBalance, delta: Amount_t): DBIOAction[Option[MBalance], NoStream, Effect.Write] = {
+    incrAmountBy(balance0.id.get, delta)
+      .map { resOpt =>
+        resOpt.map { case amount2 =>
+          balance0.copy(
+            price   = balance0.price.copy(
+              amount = amount2
+            )
+          )
+        }
+      }
   }
 
   /** Приведение списка балансов к карте оных по валютам. */

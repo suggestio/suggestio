@@ -15,12 +15,12 @@ trait FindByOrderId extends ModelContainer { that: OrderIdSlick =>
 
   override type Table_t <: Table[El_t] with OrderId
 
-  def findByOrderIdAction(orderId: Gid_t) = {
+  def findByOrderIdBuilder(orderId: Gid_t) = {
     query.filter(_.orderId === orderId)
   }
 
-  def findByOrderId(orderId: Gid_t) = {
-    findByOrderIdAction(orderId).result
+  def findByOrderId(orderId: Gid_t): DBIOAction[Seq[El_t], NoStream, Effect.Read] = {
+    findByOrderIdBuilder(orderId).result
   }
 
 }

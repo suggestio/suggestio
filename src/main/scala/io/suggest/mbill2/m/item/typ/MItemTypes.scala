@@ -17,18 +17,24 @@ object MItemTypes extends EnumMaybeWithName with EnumApply {
     with ValT
   {
     /** Новый статус item'а после оплаты заказа. */
-    // TODO Вынести значение статуса на уровень val'ов, т.к. может варьироваться в разных типах item'ов.
-    def orderClosedStatus: MItemStatus = MItemStatuses.AwaitingSioAuto
+    def orderClosedStatus   : MItemStatus = MItemStatuses.AwaitingSioAuto
+
+    /** Какой статус выставлять item'у после получения оплаты? */
+    def sioApprovedStatus   : MItemStatus = MItemStatuses.Offline
+
   }
 
   override type T = Val
 
   /** Прямое размещение карточки на каком-то узле.
     * Это было самый первый тип размещения в suggest.io. */
-  val AdvDirect: T = new Val("a")
+  val AdvDirect         : T = new Val("a")
 
   /** Заказ геотеггинга для карточки. */
-  val GeoTag: T = new Val("b")
+  val GeoTag            : T = new Val("t")
+
+  /** Покупка доступа к внешнему размещению. */
+  val AdvExt            : T = new Val("e")
 
 }
 
