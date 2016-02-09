@@ -29,4 +29,7 @@ object Common {
   /** Версия bouncy castle. */
   val bcVsn           = "1.52"
 
+  /** Версия typesafe slick. */
+  val slickVsn        = "3.1.1"
+
 }
