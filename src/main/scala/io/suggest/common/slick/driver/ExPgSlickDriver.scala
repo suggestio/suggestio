@@ -31,7 +31,7 @@ trait ExPgSlickDriverT
 
     /** Костыль-поддержка, связанный с [[https://github.com/slick/slick/issues/92]]. */
     // TODO Когда в slick наконец реализуют поддержку FOR-LOCK clauses, нужно его удалить.
-    implicit class SelectForExtensionMethods[E <: Effect.Read, R, S <: NoStream](val a: SqlAction[R, S, E]) {
+    implicit class SelectForExtensionMethods[R, S <: NoStream, E <: Effect.Read](val a: SqlAction[R, S, E]) {
 
       /** Заблокировать выбранные ряды  */
       def forUpdate = {
