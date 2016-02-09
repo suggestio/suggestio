@@ -43,7 +43,14 @@
     <a class="siom-ac-btn __color-1 __size-M __ft-XM f-left" href="@routes.SysMarket.createAdnNode()">
       Создать узел...
     </a>
+
+    @for(personId <- ctx.user.personIdOpt) {
+      <a class="siom-ac-btn __color-3 __size-S __ft-XM f-right" href="@routes.SysMarket.showAdnNode(personId)">
+        @messages("I")...
+      </a>
+    }
   </div>
+
 
 
   @_simple3pTpl(

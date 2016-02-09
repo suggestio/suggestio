@@ -1,3 +1,4 @@
+I=I
 All=All
 Add=Add
 Companies=Companies
@@ -67,6 +68,7 @@ Signup.confirmation=Signup confirmation
 Signup.finished=Signup finished.
 Predicate=Predicate
 Edited=Edited
+Currency=Currency
 
 requisites=Payment details for withdrawal
 
@@ -477,6 +479,8 @@ Color.of.text.and.icons=Color of{0} text and{0} icons
 Color.of.bg.and.caption=Color of{0} background{0} and caption
 Use.contrast.colors.hint=For maximum readability of your content{0} you should use contrast colors.
 
+Payment=Payment
+Payment.comment=Payment comment
 Bill.account.and.tariffs=Account and tariffs
 Transactions.history=Transactions history
 Add.funds=Add funds
@@ -715,4 +719,5 @@ Your.cart.is.empty=Your cart is empty
 Thanks.for.buy=Thank you for your purchase!
 Your.order.is.being.processed=Your order is being processed by Suggest.io. Please be patient.
 Return.to.my.ads=Return to my ads
+Payment.for.order.N=Payment for order #{0}
 

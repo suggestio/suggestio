@@ -78,8 +78,6 @@ GET  /ws/lk/mad/:wsId                   @controllers.MarketAd.ws(wsId: String)
 GET  /lk/mad/new/field/text/:offerN     @controllers.MarketAd.newTextField(offerN: Int, h: Int, w: Int)
 ## lk.billing
 GET  /lk/bill/brief/:adnId              @controllers.MarketLkBilling.showAdnNodeBilling(adnId)
-GET  /lk/bill/txns/:adnId               @controllers.MarketLkBilling.txnsList(adnId, page: Int ?= 0, inline: Boolean ?= false)
-GET  /lk/bill/pay/bank/for/:adnId       @controllers.MarketLkBilling.paymentRequsites(adnId)
 ## lk.billing: рендер списка тарифных сеток MBillMmpDaily для указанного узла
 GET  /lk/bill/pricing/wnd/:adnId        @controllers.MarketLkBilling._renderNodeMbmdsWindow(adnId)
 
@@ -87,6 +85,7 @@ GET  /lk/bill/pricing/wnd/:adnId        @controllers.MarketLkBilling._renderNode
 GET  /lk/cart/:nodeId                   @controllers.LkBill2.cart(nodeId, r: Option[String] ?= None)
 POST /lk/cart/:nodeId                   @controllers.LkBill2.cartSubmit(nodeId)
 GET  /lk/pay/thanks                     @controllers.LkBill2.thanksForBuy(onNodeId: String)
+GET  /lk/bill/txns/:nodeId              @controllers.LkBill2.txnsList(nodeId, page: Int ?= 0, inline: Boolean ?= false)
 
 ## Принятие приглашения на управления узлом.
 GET  /lk/node/eact/:adnId/:eaId         @controllers.MarketLkAdn.nodeOwnerInviteAcceptForm(adnId, eaId)
@@ -301,6 +300,9 @@ POST /sys/bill/contract/new/:nodeId      @controllers.SysBilling.createContractS
 GET  /sys/bill/contract/edit/:nodeId     @controllers.SysBilling.editContract(nodeId)
 POST /sys/bill/contract/edit/:nodeId     @controllers.SysBilling.editContractSubmit(nodeId)
 POST /sys/bill/contract/delete/:nodeId   @controllers.SysBilling.deleteContractSubmit(nodeId)
+## Балансы v2
+GET  /sys/bill/payment/:nodeId           @controllers.SysBilling.payment(nodeId)
+POST /sys/bill/payment/:nodeId           @controllers.SysBilling.paymentSubmit(nodeId)
 
 
 ## sys/debug

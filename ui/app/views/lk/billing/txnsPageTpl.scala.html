@@ -1,4 +1,4 @@
-@(mnode: MNode, txns: Seq[mbill.MTxn], currPage: Int, txnsPerPage: Int)(implicit ctx: Context)
+@(args: mbill.ILkTxnsPageTplArgs)(implicit ctx: Context)
 
 @* Страница с историей транзакций. *@
 
@@ -9,47 +9,49 @@
 
 @billingBaseTpl(
   title         = messages("Transactions.history"),
-  mnode         = mnode,
+  mnode         = args.mnode,
   rightCurrEl   = BillingRightPanelLinks.RPL_TRANSACTIONS
 ) {
 
-  @if(txns.size > 0) {
-    <table class="table __width-XL" id="@TXNS_CONTAINER_ID">
-      <tr>
-        <td class="td __gray __size-M __radial-first">
-          @messages("Bill.id")
-        </td>
-        <td class="td __gray __size-M">
-          @messages("Bill.details")
-        </td>
-        <td class="td __gray __size-M">
-          @messages("Date")
-        </td>
-        <td class="td __gray __size-M __radial-last">
-          @messages("Amount._money")
-        </td>
-      </tr>
+  @defining( args.txns.size ) { txnsCount =>
+    @if(txnsCount > 0) {
+      <table class="table __width-XL" id="@TXNS_CONTAINER_ID">
+        <tr>
+          <td class="td __gray __size-M __radial-first">
+            @messages("Bill.id")
+          </td>
+          <td class="td __gray __size-M">
+            @messages("Bill.details")
+          </td>
+          <td class="td __gray __size-M">
+            @messages("Date")
+          </td>
+          <td class="td __gray __size-M __radial-last">
+            @messages("Amount._money")
+          </td>
+        </tr>
 
-      @_txnsListTpl(txns)
+        @_txnsListTpl(args)
 
-    </table>
+      </table>
 
-    @if(txns.size >= txnsPerPage) {
-      <div class="btn-w __size-M">
-        <a class="btn __size-S __radial-major" id="@GET_MORE_TXNS_BTN_ID"
-           href="@routes.MarketLkBilling.txnsList(mnode.id.get, page = currPage + 1, inline = true)">@messages("Show.more")</a>
-      </div>
+      @if(txnsCount >= args.txnsPerPage) {
+        <div class="btn-w __size-M">
+          <a class="btn __size-S __radial-major" id="@GET_MORE_TXNS_BTN_ID"
+             href="@routes.LkBill2.txnsList(args.mnode.id.get, page = args.currPage + 1, inline = true)">@messages("Show.more")</a>
+        </div>
+      }
+
+    } else {
+      @messages("No.records").
     }
-
-  } else {
-    @messages("No.records").
   }
 
-  <input type="hidden" id="@ADN_ID_INPUT_ID" value="@mnode.id"/>
-  <input type="hidden" id="@CURR_PAGE_NUM_INPUT_ID" value="@currPage"/>
+  <input type="hidden" id="@ADN_ID_INPUT_ID" value="@args.mnode.id"/>
+  <input type="hidden" id="@CURR_PAGE_NUM_INPUT_ID" value="@args.currPage"/>
 
   @helper.javascriptRouter("jsRoutes")(
-    routes.javascript.MarketLkBilling.txnsList
+    routes.javascript.LkBill2.txnsList
   )
 
 }

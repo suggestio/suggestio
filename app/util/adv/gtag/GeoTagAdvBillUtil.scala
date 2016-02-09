@@ -31,7 +31,7 @@ class GeoTagAdvBillUtil @Inject() (
   /** Посчитать стоимость размещения. */
   def computePrice(res: IAdvGeoTagsInfo): Future[MPrice] = {
     // TODO Запилить систему подсчета стоимости размещения.
-    val p = bill2Util.zeroPrice
+    val p = bill2Util.zeroPrice.copy(amount = 1.0)
     Future.successful(p)
   }
 

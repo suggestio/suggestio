@@ -1,3 +1,4 @@
+I=Я
 All=Все
 Add=Добавить
 Companies=Компании
@@ -67,6 +68,7 @@ Signup.confirmation=Подтверждение регистрации
 Signup.finished=Регистрация завершена.
 Predicate=Предикат
 Edited=Редактировалось
+Currency=Валюта
 
 
 requisites=Платёжные реквизиты для вывода средств
@@ -486,7 +488,8 @@ Color.of.text.and.icons=Цвет текста{0} и иконок
 Color.of.bg.and.caption=Цвет фона{0} и шапки
 Use.contrast.colors.hint=Для более высокой читабельности вашего контента{0} выбирайте цвета контрастные друг от друга.
 
-
+Payment=Платеж
+Payment.comment=Комментарий к платежу
 Bill.account.and.tariffs=Счет и тарифные планы
 Transactions.history=История операций
 Add.funds=Пополнить баланс
@@ -729,4 +732,5 @@ Your.cart.is.empty=Ваша корзина пуста
 Thanks.for.buy=Спасибо за покупку!
 Your.order.is.being.processed=Ваш заказ обрабатывается системой Suggest.io.
 Return.to.my.ads=Назад к рекламным карточкам
+Payment.for.order.N=Оплата заказа №{0}
 

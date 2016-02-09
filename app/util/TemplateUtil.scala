@@ -100,6 +100,9 @@ object TplDataFormatUtil extends TplFormatUtilT {
   def formatPrice(price: Double, currency: Currency)(implicit ctx: Context): String = {
     formatPrice( MPrice(price, currency) )
   }
+  def formatPrice(price: Double, currencyCode: String)(implicit ctx: Context): String = {
+    formatPrice(price, Currency.getInstance(currencyCode))
+  }
 
   /** Рендер целого числа. */
   def formatInt(number: Int)(implicit ctx: Context): String = {

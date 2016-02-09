@@ -61,7 +61,8 @@ object MUserInits extends TypeT {
   }
   object EvtsCount extends EvtsCountT
 
-  /** Инициализация обыденного личного кабинета: баланс, счетчик новых событий, возможно ещё что-то. */
+  /** Инициализация обыденного личного кабинета: баланс, счетчик новых событий, возможно ещё что-то.
+    * @see [[models.req.ISioUserT.lkCtxDataFut]] */
   object Lk extends ValT {
     override def initUser(user: ISioUser): Unit = {
       user.lkCtxDataFut

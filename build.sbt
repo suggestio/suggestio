@@ -22,7 +22,9 @@ libraryDependencies ++= {
   "com.typesafe.play" %% "anorm" % "2.4.0",
   cache,
   json,
-  "com.typesafe.play" %% "play-slick" % Common.playSlickVsn,
+  "com.typesafe.play"   %% "play-slick" % Common.playSlickVsn,
+  // slick повторно инклюдится здесь, т.к. что-то свежая версия не цеплялась через common-slick-driver
+  "com.typesafe.slick"  %% "slick"      % Common.slickVsn,
   ws exclude("commons-logging", "commons-logging"),
   "com.typesafe.play" %% "play-mailer" % "3.0.0",
   "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.

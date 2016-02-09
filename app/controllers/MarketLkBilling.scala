@@ -36,31 +36,6 @@ class MarketLkBilling @Inject() (
   import LOGGER._
   import mCommonDi._
 
-  private val TXNS_PER_PAGE: Int = configuration.getInt("market.billing.txns.page.size") getOrElse 10
-
-
-  /** Отобразить какую-то страницу с реквизитами для платежа. */
-  def paymentRequsites(adnId: String) = IsAdnNodeAdmin(adnId, U.Lk).async { implicit request =>
-    val mbcsFut = Future {
-      db.withConnection { implicit c =>
-        MContract.findForAdn(adnId, isActive = Some(true))
-      }
-    }(AsyncUtil.jdbcExecutionContext)
-
-    mbcsFut.flatMap { mbcs =>
-      mbcs.headOption match {
-        case Some(mbc) =>
-          request.user.lkCtxDataFut.map { implicit ctxData =>
-            Ok(billPaymentBankTpl(request.mnode, mbc))
-          }
-
-        case None =>
-          // Нет заключенных договоров, оплата невозможна.
-          errorHandler.http404Fut
-      }
-    }
-  }
-
 
   /**
    * Рендер страницы, содержащей общую биллинговую информацию для узла.
@@ -96,39 +71,6 @@ class MarketLkBilling @Inject() (
       case None =>
         warn(s"showAdnNodeBilling($adnId): No active contracts found for node, but billing page requested by user ${request.user.personIdOpt} ref=${request.headers.get("Referer")}")
         errorHandler.http404Fut
-    }
-  }
-
-
-  /** Подгрузка страницы из списка транзакций. */
-  def txnsList(adnId: String, page: Int, inline: Boolean) = IsAdnNodeAdmin(adnId, U.Lk).async { implicit request =>
-    val tpp = TXNS_PER_PAGE
-    val offset = page * tpp
-
-    val txnsFut = Future {
-      db.withConnection { implicit c =>
-        val mbcs = MContract.findForAdn(adnId, isActive = None)
-        val mbcIds = mbcs.flatMap(_.id).toSet
-        MTxn.findForContracts(mbcIds, limit = tpp, offset = offset)
-      }
-    }(AsyncUtil.jdbcExecutionContext)
-
-    for {
-      ctxData0  <- request.user.lkCtxDataFut
-      txns      <- txnsFut
-    } yield {
-      implicit val ctxData = ctxData0.copy(
-        jsiTgs = Seq(MTargets.BillTxnsList)
-      )
-      val render: Html = if (inline) {
-        _txnsListTpl(txns)
-      } else {
-        txnsPageTpl(request.mnode, txns, currPage = page, txnsPerPage = tpp)
-      }
-      Ok(render)
-        .withHeaders(
-          TxnsListConstants.HAS_MORE_TXNS_HTTP_HDR -> (txns.size >= tpp).toString
-        )
     }
   }
 

@@ -221,7 +221,7 @@ class Bill2Util @Inject() (
       cartOrderOpt  <- mOrders.getCartOrder(contractId).forUpdate
       order         = cartOrderOpt.get
       orderId       = order.id.get
-      mitems        <- mItems.findByOrderIdAction(orderId)
+      mitems        <- mItems.findByOrderIdBuilder(orderId)
         .filter(_.statusStr === MItemStatuses.Draft.strId)
         .result
         .forUpdate
@@ -316,7 +316,7 @@ class Bill2Util @Inject() (
     *
     * @param order Результат prepareCartTxn().
     */
-  def maybeExecuteOrder(order: IOrderWithItems): DBIOAction[MCartIdeas.Idea, NoStream, RW] = {
+  def maybeExecuteCart(order: IOrderWithItems): DBIOAction[MCartIdeas.Idea, NoStream, RW] = {
 
     lazy val logPrefix = s"processOrder(${order.morder.id.orNull}/${order.mitems.size}items;${System.currentTimeMillis}):"
 
@@ -333,8 +333,6 @@ class Bill2Util @Inject() (
       }
 
     } else {
-      // Запустить поиск узла CBCA, чтобы на него зачислять деньги на баланс.
-      val cbcaNodeOptFut = mNodeCache.getById( CBCA_NODE_ID )
 
       // Товары есть, и они не бесплатны.
       LOGGER.trace(logPrefix + "There are priceful items in cart.")
@@ -343,11 +341,23 @@ class Bill2Util @Inject() (
         // Узнаём текущее финансовое состояние юзера...
         balances     <- mBalances.findByContractId( order.morder.contractId ).forUpdate
 
+        /*
+        // Запустить поиск узла CBCA, чтобы на него зачислять деньги на баланс.
+        val cbcaNodeOptFut = mNodeCache.getById( CBCA_NODE_ID )
+
         // Собрать карту балансов CBCA, чтобы туда зачислять бабло, сграбленное у юзера.
         cbcaNodeOpt  <- DBIO.from(cbcaNodeOptFut)
         cbcaBalances <- getCbcaBalances( cbcaNodeOpt )
         // id контракта CBCA для зачисления денег:
         cbcaContractIdOpt = cbcaNodeOpt.flatMap(_.billing.contractId)
+
+        // Залить средства на баланс CBCA, чтобы деньги не списывались с баланса юзера безвозвратно.
+        _ <- cbcaContractIdOpt.fold [DBIOAction[_, NoStream, Effect.Write]] {
+          DBIO.successful(0)
+        } { cbcaContractId =>
+          increaseBalance(order.morder.id, cbcaContractId, cbcaBalances, totalPrice)
+        }
+        */
 
         // Строим карту полученных балансов юзера для удобства работы:
         balancesMap = mBalances.balances2curMap(balances)
@@ -379,41 +389,30 @@ class Bill2Util @Inject() (
 
                 } else if (notEnough0.nonEmpty) {
                   // Нет смысла собирать экшен обновления кошелька, если уже не хватило денег в какой-то другой валюте
-                  LOGGER.trace(s"$logPrefix Skip building balance action, because of notEnounghtAcc.nonEmpty")
+                  LOGGER.trace(s"$logPrefix Skip building balance action, because of notEnounghAcc.nonEmpty")
                   acc0
 
                 } else {
                   // Баблишка на балансе хватает для оплаты покупок в текущей валюте.
+                  LOGGER.trace(s"$logPrefix Enought money on balance[${balance0.id.orNull}] for totalPrice=$totalPrice.")
+
                   // Собрать DB-экшен обновления баланса и закинуть в аккамулятор:
-                  val mbalance2 = balance0.copy(
-                    price = balance0.price.copy(
-                      amount = balAmount2
-                    )
-                  )
-                  LOGGER.trace(s"$logPrefix Enought money on balance[${balance0.id.orNull}] for totalPrice=$totalPrice. New balance = ${mbalance2.price}")
+                  val withdrawAmount = -totalPrice.amount
                   val dbAction = for {
                     // Записать новый баланс юзера
-                    rowsUpdated <- mBalances.updateAmount(mbalance2)
-                    if rowsUpdated == 1
+                    mbalance2Opt  <- mBalances.incrAmountAndBlockedBy(balance0, withdrawAmount)
+                    mbalance2     = mbalance2Opt.get
 
                     // Добавить транзакцию списания денег с баланса юзера
-                    usrTxn <- {
-                      val utxn = MTxn(
+                    usrTxn <- mTxns.insertOne {
+                      MTxn(
                         balanceId   = mbalance2.id.get,
-                        amount      = -totalPrice.amount,
+                        amount      = withdrawAmount,
                         orderIdOpt  = order.morder.id
                       )
-                      mTxns.insertOne(utxn)
                     }
-
-                    // Залить средства на баланс CBCA, чтобы деньги не списывались с баланса юзера безвозвратно.
-                    _ <- cbcaContractIdOpt.fold [DBIOAction[_, NoStream, Effect.Write]] {
-                      DBIO.successful(0)
-                    } { cbcaContractId =>
-                      increaseBalance(order.morder.id, cbcaContractId, cbcaBalances, totalPrice)
-                    }
-
                   } yield {
+                    LOGGER.trace(s"$logPrefix Blocked $totalPrice, updated balance is $balAmount2.")
                     mbalance2
                   }
                   // Закинуть DB-экшен обновления баланса в аккамулятор DB-экшенов
@@ -450,6 +449,22 @@ class Bill2Util @Inject() (
     }
   }
 
+  def increaseBalanceSimple(contractId: Gid_t, price: MPrice): DBIOAction[MTxn, NoStream, RWT] = {
+    val dba = for {
+      balances    <- mBalances.findByContractId(contractId)
+      balancesMap =  mBalances.balances2curMap(balances)
+      txn         <- increaseBalance(
+        orderIdOpt      = None,
+        rcvrContractId  = contractId,
+        balancesMap     = balancesMap,
+        price           = price
+      )
+    } yield {
+      LOGGER.trace(s"increaseBalanceSimple($contractId,$price): ok")
+      txn
+    }
+    dba.transactionally
+  }
 
   /** Логика заливки на баланс денег. Обычно используется для нужд валютных кошельков CBCA.
     *
@@ -461,25 +476,20 @@ class Bill2Util @Inject() (
     */
   def increaseBalance(orderIdOpt: Option[Gid_t], rcvrContractId: Gid_t, balancesMap: Map[String, MBalance],
                       price: MPrice): DBIOAction[MTxn, NoStream, Effect.Write] = {
-    lazy val logPrefix = s"increaseCbcaBalance($orderIdOpt->$rcvrContractId,$price):"
+    lazy val logPrefix = s"increaseBalance($orderIdOpt->$rcvrContractId,$price): "
     // Залить средства на баланс CBCA.
     val cbcaBalanceAction = balancesMap
       .get( price.currencyCode )
       .fold [DBIOAction[MBalance, NoStream, Effect.Write]] {
-        LOGGER.trace(logPrefix + "Initializing new CBCA balance for this currency...")
         val cb0 = MBalance(rcvrContractId, price)
+        LOGGER.trace(logPrefix + "Initializing new balance for this currency: " + cb0)
         mBalances.insertOne(cb0)
 
       } { cb0 =>
-        LOGGER.trace(logPrefix + "Increasing CBCA balance...")
-        val cb1 = cb0.copy(
-          price = cb0.price.copy(
-            amount = cb0.price.amount + price.amount
-          )
-        )
+        LOGGER.trace(logPrefix + "Updating existing balance " + cb0)
         for {
-          rowsUpdated <- mBalances.updateAmount(cb1)
-          if rowsUpdated == 1
+          cb1Opt <- mBalances.incrAmountBy(cb0, price.amount)
+          cb1 = cb1Opt.get
         } yield {
           cb1
         }
@@ -487,13 +497,15 @@ class Bill2Util @Inject() (
 
     for {
       cbcaBalance2  <- cbcaBalanceAction
+
       // Записать транзакцию по зачислению на баланс CBCA
       ctxn2         <- {
         val ctxn0 = MTxn(
-          balanceId  = cbcaBalance2.id.get,
-          amount     = price.amount,
-          orderIdOpt = orderIdOpt
+          balanceId   = cbcaBalance2.id.get,
+          amount      = price.amount,
+          orderIdOpt  = orderIdOpt
         )
+        LOGGER.trace(logPrefix + "Inserting txn for balance #" + cbcaBalance2.id.orNull)
         mTxns.insertOne(ctxn0)
       }
     } yield {
@@ -542,7 +554,7 @@ class Bill2Util @Inject() (
       // Прочитать текущую корзину
       cart0   <- prepareCartTxn( contractId )
       // На основе наполнения корзины нужно выбрать дальнейший путь развития событий:
-      txnRes  <- maybeExecuteOrder(cart0)
+      txnRes  <- maybeExecuteCart(cart0)
     } yield {
       // Сформировать результат работы экшена
       txnRes

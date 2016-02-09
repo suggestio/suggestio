@@ -20,14 +20,8 @@
 
       @_navItemTpl(
         title = messages("Transactions.history"),
-        href  = Some( routes.MarketLkBilling.txnsList(adnId, inline = false) ),
+        href  = Some( routes.LkBill2.txnsList(adnId, inline = false) ),
         css   = classesAct(rightCurrEl == RPL_TRANSACTIONS, "__transactions-history")
-      )
-
-      @_navItemTpl(
-        title = messages("Add.funds"),
-        href  = Some( routes.MarketLkBilling.paymentRequsites(adnId) ),
-        css   = classesAct(rightCurrEl == RPL_REQUISITES, "__requisites")
       )
 
       @_navItemTpl(

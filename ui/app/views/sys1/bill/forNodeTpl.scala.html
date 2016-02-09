@@ -108,53 +108,61 @@
   } @* lkBlock плательщики *@
 
 
+  @* Когда есть заключенный контракт, то есть и кошельки (балансы). *@
+  @for(mc <- args.mContractOpt) {
+    @lkBlock("Остатки на балансах") {
+      @if( args.mBalances.isEmpty )  {
+        Пока нет кошельков. Балансы можно считать нулевыми.
 
-  @lkBlock("Остатки на балансах") {
-    @if( args.mBalances.isEmpty )  {
-      Пока нет кошельков. Балансы можно считать нулевыми.
-
-    } else {
-      @defining("L") { sz =>
-        @_ntable() {
-          @_th(sz, title = Some("Уникальный id кошелька в БД")) {
-            #
-          }
-          @_th(sz) {
-            Валюта
-          }
-          @_th(sz) {
-            Доступно
-          }
-          @_th(sz) {
-            Заблокировано
-          }
-          @_th(sz) {
-            Овердрафт
-          }
-        } {
-          @for(mb <- args.mBalances) {
-            @_tr() {
-              @_td(sz) {
-                @mb.id
-              }
-              @_td(sz) {
-                @mb.price.currencyCode
-              }
-              @_td(sz) {
-                @mb.price.amount
-              }
-              @_td(sz) {
-                @mb.blocked
-              }
-              @_td(sz) {
-                @mb.low
+      } else {
+        @defining("L") { sz =>
+          @_ntable() {
+            @_th(sz, title = Some("Уникальный id кошелька в БД")) {
+              #
+            }
+            @_th(sz) {
+              Валюта
+            }
+            @_th(sz) {
+              Доступно
+            }
+            @_th(sz) {
+              Заблокировано
+            }
+            @_th(sz) {
+              Овердрафт
+            }
+          } {
+            @for(mb <- args.mBalances) {
+              @_tr() {
+                @_td(sz) {
+                  @mb.id
+                }
+                @_td(sz) {
+                  @mb.price.currencyCode
+                }
+                @_td(sz) {
+                  @mb.price.amount
+                }
+                @_td(sz) {
+                  @mb.blocked
+                }
+                @_td(sz) {
+                  @mb.low
+                }
               }
             }
-          }
-        } @* ntable body *@
-      }   @* defining sz *@
+          } @* ntable body *@
+        }   @* defining sz *@
 
-    }     @* if mBalances *@
-  }       @* lkBlock депозиты *@
+      }     @* if mBalances *@
+
+      @* На узле с контрактом доступны внутренние платежи. *@
+      @for(nodeId <- args.mnode.id) {
+        <a href="@routes.SysBilling.payment(nodeId)">Провести платеж...</a>
+      }
+
+    }       @* lkBlock балансы *@
+  }         @* for mc *@
 
 }

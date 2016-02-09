@@ -1,30 +1,44 @@
-@(txns: Seq[mbill.MTxn])(implicit ctx: Context)
+@(args: mbill.ILkTxnsListTplArgs)(implicit ctx: Context)
 
 @* Верстка списка истории транзакций *@
 
 @import ctx._
 @import util.TplDataFormatUtil._
-@import datetime._
+@import datetime._prettyDate
 
-@txns.zipWithIndex.map { case (txn , i) =>
+@args.txns.zipWithIndex.map { case (txn , i) =>
   <tr>
     <td class="td __delimiter" colspan="4"></td>
   </tr>
   <tr>
     <td class="td __white __size-M __radial-first ft-M dark-gray">
-      <span class="transactions-history_contract" title="@txn.txnUid">@txn.txnUid</span>
+      <span class="transactions-history_contract" title="@txn.id">@txn.id</span>
     </td>
+
     <td class="td __white __size-M transactions-history_descr">
-      @highlightFirstWordEsc(txn.paymentComment, start = """<span class="ft-M dark-gray">""", end = "</span>")
+      @for(orderId <- txn.orderIdOpt) {
+        @* TODO Нужна ссылка для просмотра заказа. *@
+        @messages("Payment.for.order.N", orderId)
+      }
+      @for(c <- txn.paymentComment) {
+        @highlightFirstWordEsc(c, start = """<span class="ft-M dark-gray">""", end = "</span>")
+      }
     </td>
+
     <td class="td __white __size-M">
-      <span title="@_prettyDate(txn.datePaid).toString.trim">
-        <span class="ft-M dark-gray">@numericDate(txn.datePaid)</span><br/>
-          @numericTime(txn.datePaid)
+      <span title="@_prettyDate(txn.dateProcessed).toString.trim">
+        <span class="ft-M dark-gray">@numericDate(txn.dateProcessed)</span>
+        <br/>
+        @numericTime(txn.dateProcessed)
       </span>
     </td>
+
     <td class="td __white __size-M __radial-last">
-      <span class="ft-M @if(txn.amount < 0) {red} else {green}">@formatPrice(txn.amount, txn.currency)</span>
+      <span class="ft-M @if(txn.amount < 0) {red} else {green}">
+        @for(balance <- args.balances.get(txn.balanceId)) {
+          @formatPrice(txn.amount, balance.price.currency)
+        }
+      </span>
     </td>
   </tr>
 }

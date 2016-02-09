@@ -1,0 +1,16 @@
+@(args: msys.bill.IPaymentTplArgs)(implicit ctx: Context)
+
+@* Шаблон страницы для осуществления произвольного внутреннего платежа. *@
+
+@import sys1.bill.contract.base
+@import ctx.messages
+
+@base(
+  title         = messages("Payment"),
+  nodeOpt       = Some(args.mnode),
+  mContractOpt  = Some(args.mcontract)
+) {
+
+  @_paymentFormTpl(args)
+
+}
