@@ -42,6 +42,10 @@ object EmptyUtil {
     { Some.apply }
   }
 
+  def getF[T]: Option[T] => T = {
+    { _.get }
+  }
+
 
   def implEmpty2Opt[T <: IIsEmpty](v: T): Option[T] = {
     if (v.isEmpty) None else Some(v)
