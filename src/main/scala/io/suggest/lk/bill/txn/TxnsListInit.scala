@@ -57,7 +57,7 @@ sealed class TxnList extends IInit with SjsLogger {
         .toInt
       val nextPage = currPage + 1
       // Узнаем ссылку для ajax-запроса.
-      val route = jsRoutes.controllers.MarketLkBilling.txnsList(adnId, nextPage, inline = true)
+      val route = jsRoutes.controllers.LkBill2.txnsList(adnId, nextPage, inline = true)
 
       // Собрать и запустить ajax-запрос:
       val ajaxSettingsJson = Dictionary[Any](

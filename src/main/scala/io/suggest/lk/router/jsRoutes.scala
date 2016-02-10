@@ -25,7 +25,7 @@ object jsRoutes extends js.Object {
 @js.native
 sealed trait Controllers extends js.Object {
 
-  def MarketLkBilling: TxnLkBillingCtl = js.native
+  def LkBill2: TxnLkBillingCtl = js.native
 
   def MarketAd: MarketAdFormCtl = js.native
 
