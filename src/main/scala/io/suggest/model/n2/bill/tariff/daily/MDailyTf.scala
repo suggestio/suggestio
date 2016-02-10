@@ -1,5 +1,7 @@
 package io.suggest.model.n2.bill.tariff.daily
 
+import java.util.Currency
+
 import io.suggest.model.es.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -44,6 +46,7 @@ object MDailyTf extends IGenEsMappingProps {
 
 /**
  * Экземпляр тарифа посуточного размещения на узле.
+ *
  * @param currencyCode Валюта тарифа.
  * @param clauses Описание дней и их тарификации.
  *                Должна быть хотя бы одна кляуза без календаря, т.е. дефолтовая.
@@ -71,5 +74,7 @@ case class MDailyTf(
   override def toString: String = {
     s"$currencyCode(${clauses.valuesIterator.map(_.amount).mkString(";")})-${comissionPc.fold("")(_ + "%%")}"
   }
+
+  def currency = Currency.getInstance(currencyCode)
 
 }
