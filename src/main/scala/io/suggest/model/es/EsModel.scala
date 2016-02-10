@@ -101,7 +101,8 @@ trait EsModelStaticT extends EsModelCommonStaticT {
   def multiGetRev(ids: TraversableOnce[String], acc0: List[T] = Nil, options: IGetOpts = _getArgsDflt)
                  (implicit ec: ExecutionContext, client: Client): Future[List[T]] = {
     if (ids.isEmpty) {
-      Future successful acc0
+      Future.successful(acc0)
+
     } else {
       val req = client.prepareMultiGet()
         .setRealtime(true)
