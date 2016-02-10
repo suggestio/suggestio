@@ -20,6 +20,8 @@ trait IForNodeTplArgs {
   /** Валютные депозиты узла в рамках контракта. */
   def mBalances: Seq[MBalance]
 
+  /** id узла CBCA, который используется как источник тарифа по-умолчанию. */
+  def cbcaNodeOpt: Option[MNode]
 }
 
 
@@ -27,7 +29,8 @@ trait IForNodeTplArgs {
 case class MForNodeTplArgs(
   override val mnode        : MNode,
   override val mContractOpt : Option[MContract],
-  override val mBalances    : Seq[MBalance]
+  override val mBalances    : Seq[MBalance],
+  override val cbcaNodeOpt  : Option[MNode]
 )
   extends IForNodeTplArgs
 

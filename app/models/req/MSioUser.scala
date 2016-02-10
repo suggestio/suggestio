@@ -243,7 +243,7 @@ case class MSioUserLazy @Inject() (
   override lazy val isSuper           = super.isSuper
   override lazy val evtsCountFut      = super.evtsCountFut
 
-  override lazy val lkCtxDataFut = super.lkCtxDataFut
+  override lazy val lkCtxDataFut      = super.lkCtxDataFut
 
 }
 

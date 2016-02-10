@@ -1,4 +1,4 @@
-package models
+package models.mcal
 
 import functional.OneAppPerSuiteNoGlobalStart
 import org.scalatestplus.play.PlaySpec

@@ -1,22 +1,19 @@
 package models.mbill
 
 import models.im.MImgT
-import models.MNode
+import models.{MDailyTf, MNode}
+import models.mcal.MCalendar
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 26.10.15 15:46
  * Description: Модель аргументов для шаблонов с инфой о daily-тарификации размещения узла.
+ *
+ * @see [[views.html.lk.billing._rcvrInfoTpl]]
  */
 
-trait IDailyMmpsTplArgs {
-
-  /** daily-тарифы. */
-  def tariffs   : List[MTariffDaily]
-
-  /** Узел. */
-  def mnode     : MNode
+trait IRcvrInfoTplArgs extends IDailyTfTplArgs {
 
   /** Галлерея узла. */
   def gallery   : Seq[MImgT]
@@ -24,9 +21,10 @@ trait IDailyMmpsTplArgs {
 }
 
 
-case class MDailyMmpsTplArgs(
-  override val tariffs   : List[MTariffDaily],
-  override val mnode   : MNode,
-  override val gallery   : Seq[MImgT]
+case class MRcvrInfoTplArgs(
+  override val mnode      : MNode,
+  override val dailyTf    : MDailyTf,
+  override val calsMap    : Map[String, MCalendar],
+  override val gallery    : Seq[MImgT]
 )
-  extends IDailyMmpsTplArgs
+  extends IRcvrInfoTplArgs

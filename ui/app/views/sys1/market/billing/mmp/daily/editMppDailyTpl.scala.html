@@ -1,4 +1,5 @@
-@(mbmd: mbill.MTariffDaily, mbc: mbill.MContract, mdf: Form[mbill.MTariffDaily], nodeOpt: Option[MNode], mcals: Seq[MCalendar])(implicit ctx: Context)
+@(mbmd: mbill.MTariffDaily, mbc: mbill.MContract, mdf: Form[mbill.MTariffDaily], nodeOpt: Option[MNode],
+  mcals: Seq[mcal.MCalendar])(implicit ctx: Context)
 
 @* Страница с формой редактирования посуточного mmp-тарификатора. *@
 @import ctx._

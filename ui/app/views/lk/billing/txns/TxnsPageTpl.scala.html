@@ -6,6 +6,7 @@
 @import util.TplDataFormatUtil._
 @import datetime._
 @import io.suggest.bill.TxnsListConstants._
+@import lk.billing.billingBaseTpl
 
 @billingBaseTpl(
   title         = messages("Transactions.history"),
@@ -17,21 +18,21 @@
     @if(txnsCount > 0) {
       <table class="table __width-XL" id="@TXNS_CONTAINER_ID">
         <tr>
-          <td class="td __gray __size-M __radial-first">
+          @_Td(true, "_radial-first") {
             @messages("Bill.id")
-          </td>
-          <td class="td __gray __size-M">
+          }
+          @_Td(true) {
             @messages("Bill.details")
-          </td>
-          <td class="td __gray __size-M">
+          }
+          @_Td(true) {
             @messages("Date")
-          </td>
-          <td class="td __gray __size-M __radial-last">
+          }
+          @_Td(true, "_radial-last") {
             @messages("Amount._money")
-          </td>
+          }
         </tr>
 
-        @_txnsListTpl(args)
+        @_TxnsListTpl(args)
 
       </table>
 

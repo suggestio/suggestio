@@ -1,4 +1,4 @@
-@(args: mbill.IDailyMmpsTplArgs)(implicit ctx: Context)
+@(args: mbill.IRcvrInfoTplArgs)(implicit ctx: Context)
 
 @* Рендер списка тарифных сеток (посуточная mmp-тарификация). *@
 
@@ -15,9 +15,7 @@
   </div>
 }
 
-@args.tariffs.map { mbmd =>
-  @_dailyMmpTariffPlanTpl(mbmd, args.mnode)
-}
+@_dailyTfTpl(args)
 
 <div class="ovh">
 

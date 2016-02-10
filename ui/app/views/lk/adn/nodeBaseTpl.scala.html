@@ -10,42 +10,40 @@
 @import util.tpl.CssFormat._
 
 
-@rightBarBody(adnId: String) = {
-
-  @_navItemTpl(
-    title = messages("Profile"),
-    href  = Some( routes.MarketLkAdn.showAdnNode(adnId) ),
-    css   = classesAct(rightCurrEl == RPL_NODE, "__show-profile")
-  )
-
-  @_navItemTpl(
-    title = messages("Edit.profile"),
-    href  = Some( routes.MarketLkAdnEdit.editAdnNode(adnId) ),
-    css   = classesAct(rightCurrEl == RPL_NODE_EDIT, "__edit-profile")
-  )
-
-  @_navItemTpl(
-    title = messages("Password.change"),
-    href  = Some( routes.MarketLkAdn.userProfileEdit(adnId, r = ctx.r) ),
-    css   = classesAct(rightCurrEl == RPL_USER_EDIT, "__change-pass")
-  )
-
-  @if( mnode.extras.adn.exists(_.isReceiver) ) {
-    @_navItemTpl(
-      title = messages("Advertisers"),
-      href  = Some( routes.MarketAdv.showNodeAdvs(adnId) ),
-      css   = classesAct(rightCurrEl == RPL_ADVERTISERS)
-    )
-  }
-
-}
-
-
 @* Билдим содержимое правой панели. *@
 @rightBar1 = {
-  @mnode.id.map { adnId =>
-    @_navTpl( Some(routes.SysMarket.showAdnNode(adnId)) ) {
-      @rightBarBody(adnId)
+  @_navTpl() {
+    @for(nodeId <- mnode.id) {
+
+      @_navItemTpl(
+        title = messages("Profile"),
+        href  = Some( routes.MarketLkAdn.showAdnNode(nodeId) ),
+        css   = classesAct(rightCurrEl == RPL_NODE, "__show-profile")
+      )
+
+      @_navItemTpl(
+        title = messages("Edit.profile"),
+        href  = Some( routes.MarketLkAdnEdit.editAdnNode(nodeId) ),
+        css   = classesAct(rightCurrEl == RPL_NODE_EDIT, "__edit-profile")
+      )
+
+      @_navItemTpl(
+        title = messages("Password.change"),
+        href  = Some( routes.MarketLkAdn.userProfileEdit(nodeId, r = ctx.r) ),
+        css   = classesAct(rightCurrEl == RPL_USER_EDIT, "__change-pass")
+      )
+
+      @if( mnode.extras.adn.exists(_.isReceiver) ) {
+        @_navItemTpl(
+          title = messages("Advertisers"),
+          href  = Some( routes.MarketAdv.showNodeAdvs(nodeId) ),
+          css   = classesAct(rightCurrEl == RPL_ADVERTISERS)
+        )
+      }
+
+      @_navSysTpl(
+        call  = routes.SysMarket.showAdnNode(nodeId)
+      )
     }
   }
 

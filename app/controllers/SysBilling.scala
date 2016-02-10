@@ -4,7 +4,7 @@ import com.google.inject.Inject
 import controllers.sysctl.bill.{SbPayment, SbNodeContract, SbNodeTfDaily, SbNode}
 import io.suggest.mbill2.m.balance.MBalances
 import io.suggest.mbill2.m.contract.MContracts
-import models.MCalendars
+import models.mcal.MCalendars
 import models.mproj.ICommonDi
 import util.PlayMacroLogsImpl
 import util.billing.{Bill2Util, ContractUtil, TfDailyUtil}

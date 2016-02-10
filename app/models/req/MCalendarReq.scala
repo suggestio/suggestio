@@ -1,6 +1,6 @@
 package models.req
 
-import models.MCalendar
+import models.mcal.MCalendar
 import play.api.mvc.Request
 
 /**

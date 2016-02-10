@@ -1,4 +1,4 @@
-@(mnode: MNode, mmpDailyTariffs: Seq[mbill.MTariffDaily], mbc: mbill.MContract)(implicit ctx: Context)
+@(args: mbill.ILkBillNodeTplArgs)(implicit ctx: Context)
 
 @* Страница с информацией по биллингу для узла рекламной сети. *@
 @import ctx._
@@ -9,7 +9,7 @@
 
 @billingBaseTpl(
   title         = messages("Billing"),
-  mnode         = mnode,
+  mnode         = args.mnode,
   rightCurrEl   = BillingRightPanelLinks.RPL_BILLING
 ) {
 
@@ -30,8 +30,8 @@
 
   }
 
-  @* Посуточная mmp-тарифная сетка этого узла-ресивера. Если не ресивер, то в шаблон придёт пустой список. *@
-  @if(!mmpDailyTariffs.isEmpty) {
+  @* Посуточная тарифная сетка текущего узла-ресивера. Если не ресивер, то в шаблон придёт пустой список. *@
+  @for(dailyTfArgs <- args.dailyTfArgs) {
 
     @_minorTitleTpl() {
       @messages("My.node.tariff.rate")
@@ -39,10 +39,8 @@
 
     @_delimTpl()
 
-    @mmpDailyTariffs.map { mbmd =>
-      @_tariffCntTpl() {
-        @_dailyMmpTariffPlanTpl(mbmd, mnode)
-      }
+    @_tariffCntTpl() {
+      @_dailyTfTpl(dailyTfArgs)
     }
   }
 

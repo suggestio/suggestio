@@ -5,7 +5,7 @@
 @import lk.right._
 @import util.tpl.CssFormat._
 
-@_navTpl( Some(routes.SysMarket.showAd(madId)) ) {
+@_navTpl() {
 
   @_navItemTpl(
     title = messages("Adv.in.ext.services"),
@@ -29,6 +29,10 @@
     title = messages("Adv.history"),
     href  = Some( routes.MarketAdv.advHistory(madId) ),
     css   = classesAct(curr contains LARL_HISTORY, "__history")
+  )
+
+  @_navSysTpl(
+    call  = routes.SysMarket.showAd(madId)
   )
 
 }

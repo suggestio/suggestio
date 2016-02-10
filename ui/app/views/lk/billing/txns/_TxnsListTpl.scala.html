@@ -6,16 +6,18 @@
 @import util.TplDataFormatUtil._
 @import datetime._prettyDate
 
-@args.txns.zipWithIndex.map { case (txn , i) =>
+@for(txn <- args.txns) {
   <tr>
     <td class="td __delimiter" colspan="4"></td>
   </tr>
-  <tr>
-    <td class="td __white __size-M __radial-first ft-M dark-gray">
-      <span class="transactions-history_contract" title="@txn.id">@txn.id</span>
-    </td>
 
-    <td class="td __white __size-M transactions-history_descr">
+  <tr>
+
+    @_Td(false, "__radial-first", "ft-M", "dark-gray") {
+      <span class="transactions-history_contract" title="@txn.id">@txn.id</span>
+    }
+
+    @_Td(false, "transactions-history_descr") {
       @for(orderId <- txn.orderIdOpt) {
         @* TODO Нужна ссылка для просмотра заказа. *@
         @messages("Payment.for.order.N", orderId)
@@ -23,23 +25,24 @@
       @for(c <- txn.paymentComment) {
         @highlightFirstWordEsc(c, start = """<span class="ft-M dark-gray">""", end = "</span>")
       }
-    </td>
+    }
 
-    <td class="td __white __size-M">
+    @_Td(false) {
       <span title="@_prettyDate(txn.dateProcessed).toString.trim">
         <span class="ft-M dark-gray">@numericDate(txn.dateProcessed)</span>
         <br/>
         @numericTime(txn.dateProcessed)
       </span>
-    </td>
+    }
 
-    <td class="td __white __size-M __radial-last">
+    @_Td(false, "__radial-last") {
       <span class="ft-M @if(txn.amount < 0) {red} else {green}">
         @for(balance <- args.balances.get(txn.balanceId)) {
           @formatPrice(txn.amount, balance.price.currency)
         }
       </span>
-    </td>
+    }
+
   </tr>
 }
 

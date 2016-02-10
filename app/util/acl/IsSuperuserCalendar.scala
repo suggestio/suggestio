@@ -1,6 +1,6 @@
 package util.acl
 
-import models.IMCalendars
+import models.mcal.IMCalendars
 import models.req.{MReq, MCalendarReq}
 import play.api.mvc.{Result, Request, ActionBuilder}
 

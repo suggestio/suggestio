@@ -8,6 +8,7 @@ import io.suggest.ym.model.stat._
 import models.adv.MExtTargetJmx
 import models.ai.MAiMadJmx
 import models.event.MEventJmx
+import models.mcal.MCalendarJmx
 import models.merr.MRemoteErrorJmx
 import models.mproj.ICommonDi
 import models.usr.{MExtIdentJmx, EmailActivationJmx, EmailPwIdentJmx}

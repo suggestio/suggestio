@@ -76,16 +76,14 @@ GET  /lk/mad/delete/:adId               @controllers.MarketAd.deleteWnd(adId)
 POST /lk/mad/delete/:adId               @controllers.MarketAd.deleteSubmit(adId)
 GET  /ws/lk/mad/:wsId                   @controllers.MarketAd.ws(wsId: String)
 GET  /lk/mad/new/field/text/:offerN     @controllers.MarketAd.newTextField(offerN: Int, h: Int, w: Int)
-## lk.billing
-GET  /lk/bill/brief/:adnId              @controllers.MarketLkBilling.showAdnNodeBilling(adnId)
-## lk.billing: рендер списка тарифных сеток MBillMmpDaily для указанного узла
-GET  /lk/bill/pricing/wnd/:adnId        @controllers.MarketLkBilling._renderNodeMbmdsWindow(adnId)
 
 ## lk.bill2
 GET  /lk/cart/:nodeId                   @controllers.LkBill2.cart(nodeId, r: Option[String] ?= None)
 POST /lk/cart/:nodeId                   @controllers.LkBill2.cartSubmit(nodeId)
 GET  /lk/pay/thanks                     @controllers.LkBill2.thanksForBuy(onNodeId: String)
 GET  /lk/bill/txns/:nodeId              @controllers.LkBill2.txnsList(nodeId, page: Int ?= 0, inline: Boolean ?= false)
+GET  /lk/bill/:nodeId                   @controllers.LkBill2.onNode(nodeId)
+GET  /lk/bill/pricing/wnd/:nodeId       @controllers.LkBill2._rcvrInfoWnd(nodeId)
 
 ## Принятие приглашения на управления узлом.
 GET  /lk/node/eact/:adnId/:eaId         @controllers.MarketLkAdn.nodeOwnerInviteAcceptForm(adnId, eaId)

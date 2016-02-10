@@ -23,6 +23,9 @@
 
     @args.mnode.billing.tariffs.daily.fold {
       по умолчанию
+      @for(cbca <- args.cbcaNodeOpt; cbcaNodeId <- cbca.id) {
+        (как у <a href="@routes.SysBilling.forNode(cbcaNodeId)">@cbca.guessDisplayNameOrId</a>)
+      }
     } { tf =>
       <strong>другой: @tf</strong>
     }

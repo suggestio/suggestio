@@ -61,6 +61,7 @@ class Bill2Util @Inject() (
       }
   }
 
+  def cbcaNodeOptFut = mNodeCache.getById(CBCA_NODE_ID)
 
   sealed case class EnsuredNodeContract(mc: MContract, mnode: MNode)
 
@@ -517,13 +518,13 @@ class Bill2Util @Inject() (
   /**
     * При оплате с балансов юзеров списываются деньги, но списываются они на счёт CBCA.
     *
-    * @param cbcaNodeOpt Узел CBCA, если есть.
+    * @param nodeOpt Узел CBCA, если есть.
     * @return DB-экшен, возвращающий карту балансов.
     */
-  def getCbcaBalances(cbcaNodeOpt: Option[MNode]): DBIOAction[Map[String,MBalance], NoStream, Effect.Read] = {
-    def logMsg(msg: String) = "getCbcaBalances(): " + msg + " Money income will be lost."
+  private def getBalances(nodeOpt: Option[MNode]): DBIOAction[Map[String,MBalance], NoStream, Effect.Read] = {
+    def logMsg(msg: String) = s"getBalances(${nodeOpt.flatMap(_.id).orNull}): $msg Money income will be lost."
 
-    cbcaNodeOpt
+    nodeOpt
       .flatMap(_.billing.contractId)
       // map + getOrElse вместо fold чтобы не писать тип возвращаемого значения второй раз.
       .map { contractId =>
@@ -535,7 +536,7 @@ class Bill2Util @Inject() (
       }
       // Should never happen, отработка когда нет CBCA-ноды.
       .getOrElse {
-        LOGGER.warn( logMsg(s"CBCA node[$CBCA_NODE_ID] OR it's contractId is missing: $cbcaNodeOpt") )
+        LOGGER.warn( logMsg(s"Node OR it's contractId is missing: $nodeOpt") )
         DBIO.successful {
           Map.empty
         }

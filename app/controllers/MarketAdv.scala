@@ -67,7 +67,7 @@ class MarketAdv @Inject() (
 
 
   /** Страница управления размещением рекламной карточки. */
-  def advForAd(adId: String) = CanAdvertiseAdGet(adId).async { implicit request =>
+  def advForAd(adId: String) = CanAdvertiseAdGet(adId, U.Lk).async { implicit request =>
     val form0 = directAdvFormUtil.advForm
     // Залить в форму начальные данные.
     val res = FormResult()
@@ -171,8 +171,12 @@ class MarketAdv @Inject() (
     }
 
     // Кешируем определённый язык юзера прямо тут. Это нужно для обращения к Messages().
-    implicit val ctx = {
-      implicit val jsiTgs = Seq( MTargets.AdvDirectForm )
+    val ctxFut = for {
+      lkCtxData <- request.user.lkCtxDataFut
+    } yield {
+      implicit val ctxData = lkCtxData.copy(
+        jsiTgs = Seq( MTargets.AdvDirectForm )
+      )
       implicitly[Context]
     }
 
@@ -180,6 +184,7 @@ class MarketAdv @Inject() (
     val citiesFut: Future[Seq[MAdvFormCity]] = for {
       rcvrs     <- rcvrsReadyFut
       rcvrsMap  <- allRcvrsMapFut
+      ctx       <- ctxFut
     } yield {
       rcvrs
         .groupBy { rcvr =>
@@ -252,6 +257,7 @@ class MarketAdv @Inject() (
 
     // Когда всё станет готово - рендерим результат.
     for {
+      ctx           <- ctxFut
       formArgs      <- advFormTplArgsFut
     } yield {
       // Запускаем рендер шаблона, собрав аргументы в соотв. группы.

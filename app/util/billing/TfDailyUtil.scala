@@ -1,6 +1,7 @@
 package util.billing
 
 import com.google.inject.{Inject, Singleton}
+import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.model.n2.bill.tariff.daily.{MDayClause, MDailyTf}
 import models.{MNode, CurrencyCodeDflt}
@@ -80,11 +81,24 @@ class TfDailyUtil @Inject()(
   }
 
 
+  /** Вернуть тариф только если узел является ресивером. */
+  def rcvrNodeTf(mnode: MNode): Future[Option[MDailyTf]] = {
+    if (mnode.extras.adn.exists(_.isReceiver)) {
+      nodeTf(mnode)
+        .map(EmptyUtil.someF)
+    } else {
+      Future.successful(None)
+    }
+  }
+
+  /** Вернуть тариф размещения для узла. */
   def nodeTf(mnode: MNode): Future[MDailyTf] = {
     nodeTf( mnode.billing.tariffs.daily )
   }
+
   /**
    * Узнать тариф для узла. Если у узла нет тарифа, то будет взят тариф cbca.
+   *
    * @param nodeTfOpt Тариф узла, если есть.
    * @return Фьючерс с тарифом.
    */
@@ -101,6 +115,7 @@ class TfDailyUtil @Inject()(
 
   /**
    * Апдейт тарифа в узле.
+   *
    * @param mnode0 Исходный узел.
    * @param newTf Обновлённый тариф или None.
    * @return Фьючерс с обновлённым узлом внутри.

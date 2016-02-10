@@ -1,4 +1,4 @@
-@(cals: Seq[MCalendar], cf: Form[_])(implicit ctx: Context)
+@(cals: Seq[mcal.MCalendar], cf: Form[_])(implicit ctx: Context)
 
 @* Системная страница работы с календарями.
    cf: Маппинг формы. Можно создавать календари на базе локальных календарей из списка. *@
@@ -6,9 +6,10 @@
 @import helper._
 @import de.jollyday.HolidayCalendar.{values => hcs}
 @import ctx.messages
+@import lk.dsl._
 
 @calBase(
-  title = cals.size match {case 0 => ""; case n => s" ($n)"}
+  title = messages("All") + " (" + cals.size + ")"
 ) {
   <ul>
     @cals.map { cal =>
@@ -18,7 +19,11 @@
     }
   </ul>
 
-  <h2>Создать новый календарь</h2>
+  <br/><br/>
+
+  <strong>
+    Создать новый календарь
+  </strong>
   @form(routes.SysCalendar.newCalendarFromTemplateSubmit) {
     @select(
       cf("tplId"),

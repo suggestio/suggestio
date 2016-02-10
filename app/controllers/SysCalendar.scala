@@ -5,15 +5,16 @@ import java.io.{ByteArrayInputStream, StringWriter}
 import com.google.inject.Inject
 import de.jollyday.util.XMLUtil
 import de.jollyday.{HolidayCalendar, HolidayManager}
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models._
 import models.mbill.{MContract, MTariffDaily}
+import models.mcal.{MCalTypes, MCalendars, MCalendar}
 import models.mproj.ICommonDi
 import models.req.ICalendarReq
 import org.apache.commons.io.IOUtils
 import play.api.data.Forms._
 import play.api.data._
 import play.api.mvc._
-import play.twirl.api.Html
 import util.FormUtil._
 import util.acl._
 import util.PlayMacroLogsImpl
@@ -26,6 +27,7 @@ import scala.concurrent.Future
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 30.05.14 18:33
  * Description: Работа с календаре в формате jollyday в /sys/. Можно генерить календари,
+ *
  * @see [[http://jollyday.sourceforge.net/index.html]]
  */
 class SysCalendar @Inject() (
@@ -62,8 +64,8 @@ class SysCalendar @Inject() (
   /** Форма создания/редактирования спеки календаря. */
   private def calFormM = Form(mapping(
     "name" -> nonEmptyText(minLength = 5, maxLength = 256)
-      .transform(strTrimSanitizeF, strIdentityF)
-    ,
+      .transform(strTrimSanitizeF, strIdentityF),
+    "type" -> MCalTypes.calTypeM,
     "data" -> nonEmptyText(maxLength = 20000)
       .verifying { data =>
         try {
@@ -83,15 +85,16 @@ class SysCalendar @Inject() (
         }
     }
   )
-  {(name, data) =>
+  {(name, calType, data) =>
     MCalendar(
-      name = name,
-      data = data,
+      name      = name,
+      data      = data,
+      calType   = calType,
       companion = mCalendars
     )
   }
   {mcal =>
-    Some((mcal.name, mcal.data))
+    Some((mcal.name, mcal.calType, mcal.data))
   })
 
 
@@ -125,8 +128,9 @@ class SysCalendar @Inject() (
               IOUtils.copy(stream, sw)
               val data = sw.toString
               val stub = MCalendar(
-                name = "",
-                data = data,
+                name      = "",
+                data      = data,
+                calType   = MCalTypes.default,
                 companion = mCalendars
               )
               val newFormBinded = calFormM.fill( stub )
@@ -159,48 +163,36 @@ class SysCalendar @Inject() (
 
   /**
    * Редактировать календарь.
+   *
    * @param calId id календаря.
    */
   def editCalendar(calId: String) = IsSuperuserCalendarGet(calId).async { implicit request =>
     val cf = calFormM fill request.mcal
-    editCalendarRespBody(calId, cf)
-      .map(Ok(_))
+    editCalendarRespBody(calId, cf, Ok)
   }
 
   /** Общий код экшенов, рендерящих страницу редактирования. */
-  private def editCalendarRespBody(calId: String, cf: Form[MCalendar])
-                                  (implicit request: ICalendarReq[AnyContent]): Future[Html] = {
-    val calMbcs = db.withConnection { implicit c =>
-      val calMbmds = MTariffDaily.findForCalId(calId)
-      if (calMbmds.isEmpty) {
-        Nil
-      } else {
-        val contractIds = calMbmds.map(_.contractId)
-        MContract.multigetByIds(contractIds)
-      }
-    }
-    val calUsersAdnIds = calMbcs.map(_.adnId)
-    val calUsersFut = MNode.multiGetRev(calUsersAdnIds)
-    calUsersFut map { calUsers =>
-      editCalFormTpl(request.mcal, cf, calUsers)
-    }
+  private def editCalendarRespBody(calId: String, cf: Form[MCalendar], rs: Status)
+                                  (implicit request: ICalendarReq[AnyContent]): Future[Result] = {
+    rs( editCalFormTpl(request.mcal, cf) )
   }
 
   /**
-   * Сабмит формы редактирования календаря.
-   * @param calId id календаря.
-   */
+    * Сабмит формы редактирования календаря.
+    *
+    * @param calId id календаря.
+    */
   def editCalendarSubmit(calId: String) = IsSuperuserCalendarPost(calId).async { implicit request =>
     calFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"editCalendarSubmit($calId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
-        editCalendarRespBody(calId, formWithErrors)
-          .map(NotAcceptable(_))
+        editCalendarRespBody(calId, formWithErrors, NotAcceptable)
       },
       {mcal2 =>
         val mcal3 = request.mcal.copy(
-          name = mcal2.name,
-          data = mcal2.data
+          name    = mcal2.name,
+          data    = mcal2.data,
+          calType = mcal2.calType
         )
         mcal3.save map { _ =>
           HolidayManager.clearManagerCache()
@@ -215,6 +207,7 @@ class SysCalendar @Inject() (
   /**
    * Раздача xml-контента календаря. Это нужно для передачи календаря в HolidayManager через URL и кеширования в нём.
    * Проверка прав тут отсутствует.
+   *
    * @param calId id календаря.
    * @return xml-содержимое календаря текстом.
    */

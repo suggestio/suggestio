@@ -1,4 +1,4 @@
-@(args: mbill.MDailyMmpsTplArgs)(implicit ctx: Context)
+@(args: mbill.IRcvrInfoTplArgs)(implicit ctx: Context)
 
 @* Рендер окошка, которое должно бы отображаться при щелчке на имени узла в форме размещения рекламной карточки. *@
 @import ctx._
@@ -15,14 +15,14 @@
   <h2 class="minor-title">
     @messages("Tariff.rate")
     @args.mnode.meta.basic.name
-    @args.mnode.meta.address.town.map { town =>
+    @for( town <- args.mnode.meta.address.town ) {
       / @town
     }
   </h2>
 
   @* [Макс] Этот класс используется, чтобы нормально рендерилась информация о тарифе. *@
   <div class="tariff __in-popup">
-    @_dailyMmpTariffPlansTpl(args)
+    @_rcvrInfoTpl(args)
   </div>
 
 </div>

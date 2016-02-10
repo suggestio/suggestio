@@ -6,7 +6,7 @@ import models.jsm.init.MTargets
 import models.mbill.{MLkTxnsPageTplArgs, MLkTxnsListTplArgs}
 import play.twirl.api.Html
 import util.acl.IsAdnNodeAdmin
-import views.html.lk.billing.{_txnsListTpl, txnsPageTpl}
+import views.html.lk.billing.txns._
 
 import scala.concurrent.Future
 
@@ -77,12 +77,12 @@ trait LkBillTxns
       val render: Html = if (inline) {
         // Запрошен рендер только одного куска списка, без всей остальной страницы (js-подгрузка).
         val args = MLkTxnsListTplArgs(txns, balancesMap)
-        _txnsListTpl(args)
+        _TxnsListTpl(args)
 
       } else {
         // Запрошен рендер всей страницы.
         val args = MLkTxnsPageTplArgs(request.mnode, txns, balancesMap, currPage = page, txnsPerPage = tpp)
-        txnsPageTpl(args)
+        TxnsPageTpl(args)
       }
 
       // Вернуть http-ответ

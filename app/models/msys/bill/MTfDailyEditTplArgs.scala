@@ -1,6 +1,7 @@
 package models.msys.bill
 
-import models.{MCalendar, MDailyTf, MNode}
+import models.mcal.MCalendar
+import models.{MDailyTf, MNode}
 import play.api.data.Form
 
 /**

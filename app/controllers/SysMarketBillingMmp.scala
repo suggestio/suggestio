@@ -3,6 +3,7 @@ package controllers
 import com.google.inject.Inject
 import models._
 import models.mbill.{MContract, MTariffDaily}
+import models.mcal.MCalendars
 import models.mproj.ICommonDi
 import models.req.{IReq, IContract1Req}
 import play.api.data.Forms._
@@ -77,6 +78,7 @@ class SysMarketBillingMmp @Inject() (
 
   /**
    * Рендер страницы создания нового посуточного mmp-тарификтора.
+ *
    * @param contractId номер договора.
    */
   def createMmpDaily(contractId: Int) = IsSuperuserContract(contractId).async { implicit request =>
@@ -97,6 +99,7 @@ class SysMarketBillingMmp @Inject() (
 
   /**
    * Сабмит формы создания нового посуточного mmp-тарифного плана.
+ *
    * @param contractId номер договора.
    */
   def createMmpDailySubmit(contractId: Int) = IsSuperuserContract(contractId).async { implicit request =>
@@ -120,6 +123,7 @@ class SysMarketBillingMmp @Inject() (
 
   /**
    * Рендер страницы с формой редактирования посуточного mmp-тарифного плана.
+ *
    * @param mmpdId id mmp-тарифного плана.
    */
   def editMmpDaily(mmpdId: Int) = IsSuperuser.async { implicit request =>
@@ -147,6 +151,7 @@ class SysMarketBillingMmp @Inject() (
 
   /**
    * Сабмит формы редактирования mmp-тарифного плана.
+ *
    * @param mmpdId id mmp-тарифного плана.
    */
   def editMmpDailySubmit(mmpdId: Int) = IsSuperuser.async { implicit request =>
@@ -209,6 +214,7 @@ class SysMarketBillingMmp @Inject() (
 
   /**
    * Бывает, что нужно очень массово отредактировать тарифы узлов.
+ *
    * @return Страница с формой массового редактирования mmp-тарифа.
    */
   def updateAllForm = IsSuperuser.async { implicit request =>
@@ -217,6 +223,7 @@ class SysMarketBillingMmp @Inject() (
 
   /**
    * Рендер страницы с формой массового редактирования тарифов.
+ *
    * @param formM Маппинг формы для рендера.
    * @return HTML страницы формы редактирования.
     */
@@ -233,6 +240,7 @@ class SysMarketBillingMmp @Inject() (
 
   /**
    * Сабмит формы массового обновления daily-тарифов.
+ *
    * @return Редирект, либо форму с ошибкой маппинга.
    */
   def updateAllSubmit = IsSuperuser.async { implicit request =>
