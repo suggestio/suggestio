@@ -1,7 +1,6 @@
 package models
 
 import java.util.Currency
-import io.suggest.common.menum.EnumMaybeWithName
 import models.mctx.Context
 import play.api.mvc.{RequestHeader, Call}
 import _root_.util.PlayLazyMacroLogsImpl
@@ -49,18 +48,6 @@ object CurrencyCodeDflt extends CurrencyCode {
 
 
 
-/** Размеры аудиторий. */
-object AudienceSizes extends EnumMaybeWithName {
-
-  override type T = Value
-
-  val LessThan20 = Value("lt20")
-  val LessThan50 = Value("lt50")
-  val Greater50  = Value("gt50")
-
-}
-
-
 /** Экземпляр запроса помощи через обратную связь в ЛК. */
 case class MLkSupportRequest(
   name        : Option[String],
@@ -80,7 +67,7 @@ object NodeRightPanelLinks extends Enumeration {
 /** Enum для задания параметра подсветки текущей ссылки на правой панели в разделе биллинга узла. */
 object BillingRightPanelLinks extends Enumeration {
   type T = Value
-  val RPL_BILLING, RPL_TRANSACTIONS, RPL_REQUISITES, RPL_CART = Value : T
+  val RPL_BILLING, RPL_TRANSACTIONS, RPL_CART = Value : T
 }
 
 /** Enum для задания параметра подсветки текущей ссылки на левой панели ЛК.*/

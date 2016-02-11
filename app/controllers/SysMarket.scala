@@ -357,19 +357,14 @@ class SysMarket @Inject() (
             Future successful None
           }
         }
-        val billFut = f(ncp.billInit, s"$logPrefix Failed to initialize billing") {
-          nodesUtil.createUserNodeBilling(adnId)
-        }
         val etgsFut = f(ncp.extTgsInit, s"$logPrefix Failed to create default targets") {
           nodesUtil.createExtDfltTargets(adnId)(messages)
         }
         val madsFut = f(ncp.withDfltMads, s"$logPrefix Failed to install default mads") {
           nodesUtil.installDfltMads(adnId)(messages)
         }
-        billFut flatMap { _ =>
-          etgsFut flatMap { _ =>
-            madsFut
-          }
+        etgsFut.flatMap { _ =>
+          madsFut
         }
       case None =>
         warn(s"$logPrefix Failed to bind ${NodeCreateParams.getClass.getSimpleName} form:\n ${formatFormErrors(ncpForm)}")

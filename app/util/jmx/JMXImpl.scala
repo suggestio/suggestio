@@ -31,7 +31,6 @@ class JMXImpl @Inject() (
   siowebEsModelJmx              : SiowebEsModelJmx,
   advUtilJmx                    : AdvUtilJmx,
   mCalendarJmx                  : MCalendarJmx,
-  mInviteRequestJmx             : MInviteRequestJmx,
   mNodeJmx                      : MNodeJmx,
   mCommonDi                     : ICommonDi
 )
@@ -52,7 +51,6 @@ class JMXImpl @Inject() (
       new MExtIdentJmx,
       new MCompanyJmx,
       mCalendarJmx,
-      mInviteRequestJmx,
       siowebEsModelJmx,
       new MRemoteErrorJmx,
       new MAiMadJmx,

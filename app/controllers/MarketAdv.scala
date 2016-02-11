@@ -51,8 +51,6 @@ class MarketAdv @Inject() (
   import LOGGER._
   import mCommonDi._
 
-  val ADVS_MODE_SELECT_LIMIT = configuration.getInt("adv.short.limit") getOrElse 2
-
 
   /** Страница управления размещением рекламной карточки. */
   def advForAd(adId: String) = CanAdvertiseAdGet(adId, U.Lk).async { implicit request =>

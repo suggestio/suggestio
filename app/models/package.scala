@@ -85,8 +85,6 @@ package object models {
   type TextAlign            = io.suggest.model.n2.ad.ent.text.TextAlign
 
   type MAdvMode             = MAdvModes.T
-  type AudienceSize         = AudienceSizes.T
-  type InviteReqType        = InviteReqTypes.T
 
   type AdnShownType         = AdnShownTypes.T
 

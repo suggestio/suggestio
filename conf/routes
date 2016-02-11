@@ -17,11 +17,6 @@ GET  /                                  @controllers.MarketShowcase.geoSite(a: m
 GET  /captcha/get/:captchaId            @controllers.Captcha.getCaptcha(captchaId, cp: String)
 GET  /captcha/digital/:captchaId        @controllers.Captcha.getDigitalCaptcha(captchaId, cp: String)
 
-## Разные заманушные статические странички.
-GET  /market/about                      @controllers.Market.aboutMarket
-GET  /market/about-for-ad-makers        @controllers.Market.aboutForAdMakers
-GET  /market/booklet                    @controllers.Market.marketBooklet
-
 ## Входы в личные кабинеты
 GET  /lk/nodes                          @controllers.MarketLkAdn.lkList(fromNode: Option[String] ?= None)
 GET  /lk/node/create                    @controllers.MarketLkAdn.createNode
@@ -131,11 +126,6 @@ GET  /market/geo/syncsite               @controllers.MarketShowcase.syncGeoSite(
 POST /error/occured/in/showcase         @controllers.MarketShowcase.handleScError
 
 
-# market+join: Присоединение к sio-market.
-GET  /market/join/xadv                  @controllers.MarketJoin.joinAdvRequest
-GET  /market/join/callback              @controllers.MarketJoin.callbackRequest
-POST /market/join/callback              @controllers.MarketJoin.callbackRequestSubmit
-
 # sys
 GET  /sys                               @controllers.SysMarket.sysIndex
 # sys.market
@@ -174,16 +164,6 @@ POST /sys/cal/new                        @controllers.SysCalendar.createCalendar
 GET  /sys/cal/edit/:calId                @controllers.SysCalendar.editCalendar(calId)
 POST /sys/cal/edit/:calId                @controllers.SysCalendar.editCalendarSubmit(calId)
 GET  /sys/cal/get/:calId                 @controllers.SysCalendar.getCalendarXml(calId)
-
-## sys: invreq - обработка входящих реквестов на подключение.
-GET  /sys/ir                             @controllers.SysMarketInvReq.index
-GET  /sys/ir/show/:mirId                 @controllers.SysMarketInvReq.showIR(mirId)
-POST /sys/ir/delete/:mirId               @controllers.SysMarketInvReq.deleteIR(mirId)
-GET  /sys/ir/edit/:mirId/node            @controllers.SysMarketInvReq.nodeEdit(mirId)
-POST /sys/ir/edit/:mirId/node            @controllers.SysMarketInvReq.nodeEditFormSubmit(mirId)
-POST /sys/ir/install/:mirId/node         @controllers.SysMarketInvReq.nodeInstallSubmit(mirId)
-POST /sys/ir/uninstall/:mirId/node       @controllers.SysMarketInvReq.nodeUninstallSubmit(mirId)
-POST /sys/ir/install/:mirId/eact         @controllers.SysMarketInvReq.eactInstallSubmit(mirId)
 
 ## sys: mdr - модерация контента
 GET  /sys/mdr                            @controllers.SysMdr.index
@@ -316,14 +296,6 @@ GET  /sitemap.xml                       @controllers.Static.siteMapXml
 GET  /app/session/keepalive             @controllers.Static.keepAliveSession
 ## compat
 ## Раньше был пункт меню "О проекте". Теперь редирект на буклет маркета.
-GET     /about                          @controllers.Static.about
-GET     /showcase                       @controllers.Static.showcase
-## help редиректит на буклет.
-GET     /help                           @controllers.Static.help
-GET     /help/:page                     @controllers.Static.helpPage(page)
-## удаление blog'а наступило давно, но в поисковиках до сих фигурируют ссылки на эти страницы.
-GET     /blog                           @controllers.Static.blogIndex
-GET     /blog/:path                     @controllers.Static.blogPage(path)
 GET     /privacy                        @controllers.Static.privacyPolicy
 GET     /st/popup/check                 @controllers.Static.popupCheckContent
 

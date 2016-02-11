@@ -14,14 +14,12 @@ import util.showcase.ScSitemapsXml
  */
 
 class SiteMapUtil @Inject() (
-  scSitemapsXml     : ScSitemapsXml,
-  marketSiteMapXml  : MarketSiteMapXml
+  scSitemapsXml     : ScSitemapsXml
 ) {
 
   /** Источники для наполнения sitemap.xml */
   def SITEMAP_SOURCES: Seq[SiteMapXmlCtl] = Seq(
-    scSitemapsXml,
-    marketSiteMapXml
+    scSitemapsXml
   )
 
 }

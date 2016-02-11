@@ -2,26 +2,23 @@ package util.adn
 
 import com.google.inject.{Inject, Singleton}
 import controllers.routes
-import io.suggest.model.n2.edge.{MEdgeInfo, MNodeEdges}
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
-import io.suggest.model.n2.extra.{MSlInfo, MAdnExtra, MNodeExtras}
+import io.suggest.model.n2.edge.{MEdgeInfo, MNodeEdges}
+import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras, MSlInfo}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
 import io.suggest.model.n2.node.meta.colors.{MColorData, MColors}
 import models._
 import models.adv.MExtTarget
 import models.madn.{MNodeRegSuccess, NodeDfltColors}
-import models.mbill.{MContract, MBalance}
 import models.mext.MExtServices
 import models.mproj.ICommonDi
 import org.joda.time.DateTime
 import play.api.i18n.Messages
 import play.api.mvc.Call
 import util.PlayMacroLogsImpl
-import util.async.AsyncUtil
 
 import scala.concurrent.Future
-
 import scala.util.Random
 
 /**
@@ -126,23 +123,6 @@ class NodesUtil @Inject() (
   }
 
   /**
-   * Инициализировать биллинг для пользовательского узла.
-   * @param adnId id узла.
-   * @return Фьючерс для синхронизации.
-   */
-  def createUserNodeBilling(adnId: String): Future[_] = {
-    Future {
-      db.withTransaction { implicit c =>
-        MContract(adnId = adnId).save
-        MBalance(adnId = adnId, amount = BILL_START_BALLANCE).save
-        // 2015.feb.18: Не надо создавать новый пользовательский узел как платный ресивер.
-        //val mmp0 = MBillMmpDaily(contractId = mbc.id.get).save
-        // Можно возвращать все эти экземпляры в результате работы. Сейчас это не требуется, поэтому они висят так.
-      }
-    }(AsyncUtil.jdbcExecutionContext)
-  }
-
-  /**
    * Создать дефолтовые таргеты для размещения в соц.сетях.
    * @param adnId id узла.
    * @return Фьючерс для синхронизации.
@@ -163,15 +143,13 @@ class NodesUtil @Inject() (
   def createUserNode(name: String, personId: String)(implicit lang: Messages): Future[MNode] = {
     val inst = userNodeInstance(name = name, personId = personId)
     val nodeSaveFut = inst.save
-    nodeSaveFut flatMap { adnId =>
-      val billSaveFut = createUserNodeBilling(adnId)
-      val madsCreateFut = installDfltMads(adnId)
+    nodeSaveFut.flatMap { nodeId =>
+      val madsCreateFut = installDfltMads(nodeId)
       for {
-        _ <- createExtDfltTargets(adnId)
-        _ <- billSaveFut
+        _ <- createExtDfltTargets(nodeId)
         _ <- madsCreateFut
       } yield {
-        inst.copy(id = Some(adnId))
+        inst.copy(id = Some(nodeId))
       }
     }
   }
