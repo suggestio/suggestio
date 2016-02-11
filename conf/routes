@@ -172,35 +172,6 @@ POST /sys/mad/:adId/rcvrs/clean         @controllers.SysMarket.cleanReceivers(ad
 GET  /sys/mad/:adId/one/render/:rvar    @controllers.SysMarket.showOneAdForm(adId, rvar: msc.OneAdRenderVariant)
 POST /sys/mad/:adId/one/render/:rvar    @controllers.SysMarket.oneAdFormSubmit(adId, rvar: msc.OneAdRenderVariant)
 
-# sys.market.billing
-GET  /sys/market/billing                @controllers.SysMarketBilling.index
-GET  /sys/market/b/show/:adnId          @controllers.SysMarketBilling.billingFor(adnId)
-GET  /sys/market/b/contract/new/:adnId  @controllers.SysMarketBilling.createContractForm(adnId)
-POST /sys/market/b/contract/new/:adnId  @controllers.SysMarketBilling.createContractFormSubmit(adnId)
-GET  /sys/market/b/contract/edit/:cId   @controllers.SysMarketBilling.editContractForm(cId: Int)
-POST /sys/market/b/contract/edit/:cId   @controllers.SysMarketBilling.editContractFormSubmit(cId: Int)
-## Платежи обрабатываются вне контекста узлов, ибо при входящем платеже никто не знает, к кому он относится.
-GET  /sys/market/b/payment/new          @controllers.SysMarketBilling.incomingPaymentForm
-POST /sys/market/b/payment/new          @controllers.SysMarketBilling.incomingPaymentFormSubmit
-POST /sys/market/b/payment/new/confirm  @controllers.SysMarketBilling.confirmIncomingPaymentSubmit
-
-## Тарифы: абонплата
-GET  /sys/market/btf/new/:contractId     @controllers.SysMarketBillingTariff.addFeeTariffForm(contractId: Int)
-POST /sys/market/btf/new/:contractId     @controllers.SysMarketBillingTariff.addFeeTariffFormSubmit(contractId: Int)
-GET  /sys/market/btf/edit/:tariffId      @controllers.SysMarketBillingTariff.editFeeTariffForm(tariffId: Int)
-POST /sys/market/btf/edit/:tariffId      @controllers.SysMarketBillingTariff.editFeeTariffFormSubmit(tariffId: Int)
-POST /sys/market/btf/delete/:tariffId    @controllers.SysMarketBillingTariff.deleteFeeTariffSubmit(tariffId: Int)
-
-## Тарифы: посуточные mmp
-GET  /sys/bill/mmp/new/:mbcId             @controllers.SysMarketBillingMmp.createMmpDaily(mbcId: Int)
-POST /sys/bill/mmp/new/:mbcId             @controllers.SysMarketBillingMmp.createMmpDailySubmit(mbcId: Int)
-GET  /sys/bill/mmp/edit/:mbmdId           @controllers.SysMarketBillingMmp.editMmpDaily(mbmdId: Int)
-POST /sys/bill/mmp/edit/:mbmdId           @controllers.SysMarketBillingMmp.editMmpDailySubmit(mbmdId: Int)
-POST /sys/bill/mmp/delete/:mmpId          @controllers.SysMarketBillingMmp.deleteMmpDailySubmit(mmpId: Int)
-## Массовое обновление (сброс) mmp-тарифов
-GET  /sys/bill/mmp/update/all             @controllers.SysMarketBillingMmp.updateAllForm
-POST /sys/bill/mmp/update/all             @controllers.SysMarketBillingMmp.updateAllSubmit
-
 ## sys: Календари
 GET  /sys/cal                            @controllers.SysCalendar.showCalendars
 POST /sys/cal/new/tpl                    @controllers.SysCalendar.newCalendarFromTemplateSubmit
