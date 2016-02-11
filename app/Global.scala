@@ -5,7 +5,6 @@ import models.usr.MSuperUsers
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.mapper.MapperException
 import util.event.SiowebNotifier
-import util.radius.RadiusServerImpl
 import util.secure.PgpUtil
 import util.showcase.ScStatSaver
 import scala.concurrent.{Await, Future}
@@ -84,7 +83,6 @@ object Global extends GlobalSettings {
     synchronized {
       cronTimers = crontab(app).startTimers(app)
     }
-    RadiusServerImpl.start(true, true)
   }
 
 
@@ -145,8 +143,6 @@ object Global extends GlobalSettings {
       crontab(app).stopTimers(cronTimers)
       cronTimers = null
     }
-    // Останавливаем RADIUS-сервер.
-    RadiusServerImpl.stop()
 
     // Дожидаемся завершения асинхронных задач.
     Await.ready(esCloseFut, 20.seconds)
