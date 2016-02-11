@@ -45,6 +45,7 @@ object AdShowLevels extends EnumMaybeWithName with EnumJsonReadsValT {
   }
 
   /** Отображать в каталоге продьюсеров. */
+  @deprecated("Categories are totally removed. Remove cats support.", "~2015.nov")
   val LVL_CATS: T = new Val(ID_CATS) {
     override def visualPrio = 200
     override def checkboxCssClass = "common-catalog"

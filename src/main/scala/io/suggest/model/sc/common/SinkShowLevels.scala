@@ -47,6 +47,7 @@ object SinkShowLevels extends EnumMaybeWithName with MacroLogsImplLazy with Enum
   val GEO_START_PAGE_SL   : T = new Val( args2name(SINK_GEO, LVL_START_PAGE) ) with _Geo {
     override def sl = LVL_START_PAGE
   }
+  @deprecated("Categories support is removed", "2015.nov")
   val GEO_CATS_SL         : T = new Val( args2name(SINK_GEO, LVL_CATS) ) with _Geo {
     override def sl = LVL_CATS
   }
@@ -56,15 +57,19 @@ object SinkShowLevels extends EnumMaybeWithName with MacroLogsImplLazy with Enum
 
 
   // wifi-уровни отображения.
+  @deprecated("wifi routers support is removed", "2016")
   private trait _Wifi extends Val {
     override def adnSink = SINK_WIFI
   }
+  @deprecated("wifi routers support is removed", "2016")
   val WIFI_START_PAGE_SL  : T = new Val( args2name(SINK_WIFI, LVL_START_PAGE) ) with _Wifi {
     override def sl = LVL_START_PAGE
   }
+  @deprecated("wifi routers support is removed", "2016")
   val WIFI_CATS_SL        : T = new Val( args2name(SINK_WIFI, LVL_CATS) ) with _Wifi {
     override def sl = LVL_CATS
   }
+  @deprecated("wifi routers support is removed", "2016")
   val WIFI_PRODUCER_SL    : T = new Val( args2name(SINK_WIFI, LVL_PRODUCER) ) with _Wifi {
     override def sl = LVL_PRODUCER
   }
