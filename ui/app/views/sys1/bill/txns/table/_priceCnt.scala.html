@@ -1,0 +1,7 @@
+@(isPositive: Boolean)(content: Html)(implicit ctx: Context)
+
+@* Контейнер цены транзакции. *@
+
+<strong class="color-@if(isPositive) {success} else {error}">
+  @content
+</strong>

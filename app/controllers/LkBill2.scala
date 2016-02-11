@@ -26,8 +26,8 @@ class LkBill2 @Inject() (
   mCalendars                  : MCalendars,
   galleryUtil                 : GalleryUtil,
   override val bill2Util      : Bill2Util,
-  override val mCommonDi      : ICommonDi,
-  override val mTxns          : MTxns
+  override val mTxns          : MTxns,
+  override val mCommonDi      : ICommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
@@ -121,7 +121,7 @@ class LkBill2 @Inject() (
       gallery         <- galleryFut
     } yield {
       val args = MRcvrInfoTplArgs(
-        mnode = request.mnode,
+        mnode   = request.mnode,
         dailyTf = dailyTfArgs.dailyTf,
         calsMap = dailyTfArgs.calsMap,
         gallery = gallery

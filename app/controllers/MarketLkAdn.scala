@@ -184,17 +184,10 @@ class MarketLkAdn @Inject() (
 
       }
 
-      // Надо ли отображать кнопку "управление" под карточками? Да, если есть баланс и контракт.
+      // Надо ли отображать кнопку "управление" под карточками? Да, если узел продьюсер.
       val canAdvFut: Future[Boolean] = {
-        if (mnode.extras.adn.exists(_.isProducer)) {
-          Future {
-            db.withConnection { implicit c =>
-              MContract.hasActiveForNode(adnId)  &&  MBalance.hasForNode(adnId)
-            }
-          }(AsyncUtil.jdbcExecutionContext)
-        } else {
-          Future successful false
-        }
+        val canAdv = mnode.extras.adn.exists(_.isProducer)
+        Future.successful( canAdv )
       }
 
       val ctxFut = request.user.lkCtxDataFut.map { implicit ctxData =>

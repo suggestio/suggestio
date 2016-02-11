@@ -7,7 +7,7 @@ import models.MNode
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 10.02.16 12:08
   * Description: Контейнер для аргументы вызова шаблона биллинга узла в личном кабинете.
-  * [[views.html.lk.billing.showAdnNodeBillingTpl]].
+  * @see [[views.html.lk.billing.nodeBillingTpl]].
   */
 trait ILkBillNodeTplArgs {
 

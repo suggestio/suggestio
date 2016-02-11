@@ -1,0 +1,7 @@
+@(size: String)(content: Html)(implicit ctx: Context)
+
+@* Контейер выравнивания внутри ячейки таблицы. *@
+
+<div class="siom-cell-cnt __size-@size">
+  @content
+</div>

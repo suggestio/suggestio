@@ -69,7 +69,7 @@
             </td>
             <td class="siom-table_vertical-cnt">
               <div class="siom-cell-cnt __size-L">
-                <strong class="@if(txn.amount < 0) {color-error} else {color-success}">
+                <strong class="color-@if(txn.amount < 0) {error} else {success}">
                   @txn.amount @txn.currencyCodeOpt
                 </strong>
               </div>

@@ -1,0 +1,7 @@
+@(vertical: Boolean)(implicit ctx: Context)
+
+@import io.suggest.vlines.VLines
+
+@* Горизонтальная линия под ячейками. *@
+
+<div class="border-line @if(vertical) {__vertical @VLines.JSVL_CLASS}"></div>

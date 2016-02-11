@@ -1,0 +1,22 @@
+@(args: msys.bill.IBillOverviewTplArgs)(implicit ctx: Context)
+
+@* Шаблон обзорной вне-узловой страницы биллинга s.io. *@
+
+@import lk.lkBlock
+@import txns._txnsListTpl
+
+@base("Биллинг") {
+
+  @lkBlock("Последние платежи") {
+
+    @if(args.txns.isEmpty) {
+      <p class="color-light-strong">
+        Пока не было ни одного платежа.
+      </p>
+
+    } else {
+      @_txnsListTpl(args)
+    }
+  }
+
+}

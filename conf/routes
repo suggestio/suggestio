@@ -301,6 +301,8 @@ POST /sys/bill/contract/delete/:nodeId   @controllers.SysBilling.deleteContractS
 ## Балансы v2
 GET  /sys/bill/payment/:nodeId           @controllers.SysBilling.payment(nodeId)
 POST /sys/bill/payment/:nodeId           @controllers.SysBilling.paymentSubmit(nodeId)
+## Обзор системы балансов v2
+GET  /sys/bill                           @controllers.SysBilling.overview
 
 
 ## sys/debug

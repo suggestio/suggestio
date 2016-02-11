@@ -1,9 +1,11 @@
 package controllers
 
 import com.google.inject.Inject
-import controllers.sysctl.bill.{SbPayment, SbNodeContract, SbNodeTfDaily, SbNode}
+import controllers.sysctl.bill._
 import io.suggest.mbill2.m.balance.MBalances
 import io.suggest.mbill2.m.contract.MContracts
+import io.suggest.mbill2.m.gid.GidUtil
+import io.suggest.mbill2.m.txn.MTxns
 import models.mcal.MCalendars
 import models.mproj.ICommonDi
 import util.PlayMacroLogsImpl
@@ -21,8 +23,10 @@ class SysBilling @Inject() (
   override val mCalendars           : MCalendars,
   override val mContracts           : MContracts,
   override val mBalances            : MBalances,
+  override val mTxns                : MTxns,
   override val contractUtil         : ContractUtil,
   override val bill2Util            : Bill2Util,
+  override val gidUtil              : GidUtil,
   override val mCommonDi            : ICommonDi
 )
   extends SioControllerImpl
@@ -31,3 +35,4 @@ class SysBilling @Inject() (
   with SbNodeTfDaily
   with SbNodeContract
   with SbPayment
+  with SbOverview
