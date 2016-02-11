@@ -42,8 +42,6 @@ POST /lk/own/pwchange/:adnId            @controllers.MarketLkAdn.changePasswordS
 GET  /lk/xadv/geo/for/:adId             @controllers.MarketAdv.advForAd(adId)
 POST /lk/xadv/geo/for/:adId             @controllers.MarketAdv.advFormSubmit(adId)
 POST /lk/xadv/geo/price/for/:adId       @controllers.MarketAdv.getAdvPriceSubmit(adId)
-## Размещение рекламы: обработка запросов размещения.
-GET  /lk/xadv/history/:adId             @controllers.MarketAdv.advHistory(adId)
 
 ## Размещение рекламы на внешних сервисах
 GET  /lk/xadv/ext/tg/write/:adnId       @controllers.LkAdvExt.writeTarget(adnId)

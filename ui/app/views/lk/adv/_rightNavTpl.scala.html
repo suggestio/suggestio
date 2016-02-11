@@ -24,13 +24,7 @@
     href  = Some( routes.LkAdvGeoTag.forAd(madId) ),
     css   = classesAct(curr contains TAGS_GEO, "__geotag")
   )
-
-  @_navItemTpl(
-    title = messages("Adv.history"),
-    href  = Some( routes.MarketAdv.advHistory(madId) ),
-    css   = classesAct(curr contains LARL_HISTORY, "__history")
-  )
-
+  
   @_navSysTpl(
     call  = routes.SysMarket.showAd(madId)
   )

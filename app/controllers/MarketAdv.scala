@@ -2,31 +2,24 @@ package controllers
 
 import java.sql.SQLException
 
-import com.github.nscala_time.time.OrderingImplicits._
 import com.google.inject.Inject
 import io.suggest.adv.direct.AdvDirectFormConstants
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models._
 import models.adv._
 import models.adv.direct._
-import models.adv.tpl.{MAdvForAdTplArgs, MAdvHistoryTplArgs, MCurrentAdvsTplArgs}
+import models.adv.tpl.MAdvForAdTplArgs
+import models.jsm.init.MTargets
 import models.mctx.Context
 import models.mproj.ICommonDi
-import models.req.{IAdProdReq, INodeAdvReqReq, IReq}
-import models.jsm.init.MTargets
-import play.api.data._
+import models.req.{IAdProdReq, IReq}
 import play.api.libs.json.{JsString, Json}
 import play.api.mvc.{AnyContent, Result}
-import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 import util.acl._
 import util.adv.{AdvFormUtil, CtlGeoAdvUtil, DirectAdvFormUtil}
 import util.async.AsyncUtil
 import util.billing.{Bill2Util, MmpDailyBilling}
-import util.lk.LkAdUtil
-import util.n2u.N2NodesUtil
-import util.showcase.ShowcaseUtil
-import views.html.lk.adv._
 import views.html.lk.adv.direct._
 import views.html.lk.adv.widgets.period._reportTpl
 import views.html.lk.lkwdgts.price._
@@ -44,19 +37,15 @@ import scala.concurrent.Future
 class MarketAdv @Inject() (
   override val canAdvAdUtil       : CanAdvertiseAdUtil,
   mmpDailyBilling                 : MmpDailyBilling,
-  lkAdUtil                        : LkAdUtil,
-  scUtil                          : ShowcaseUtil,
   ctlGeoAdvUtil                   : CtlGeoAdvUtil,
   directAdvFormUtil               : DirectAdvFormUtil,
   advFormUtil                     : AdvFormUtil,
   bill2Util                       : Bill2Util,
-  n2NodesUtil                     : N2NodesUtil,
   override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
   with CanAdvertiseAd
-  with IsAdnNodeAdmin
 {
 
   import LOGGER._
@@ -98,14 +87,6 @@ class MarketAdv @Inject() (
     } yield {
       AdAdvInfoResult(advsOk, advsReq, advsRefused)
     }
-  }
-
-  private def toAdvswArgs(adAdvInfo: AdAdvInfoResult, rcvrs: Seq[MNode]): MCurrentAdvsTplArgs = {
-    import adAdvInfo._
-    val advs = (advsReq ++ advsRefused ++ advsOk).sortBy(_.dateCreated)
-    val adv2adnIds = mkAdv2adnIds(advsReq, advsRefused, advsOk)
-    val adv2adnMap = mkAdv2adnMap(adv2adnIds, rcvrs)
-    MCurrentAdvsTplArgs(advs, adv2adnMap)
   }
 
   /**
@@ -292,24 +273,6 @@ class MarketAdv @Inject() (
     } else {
       None
     }
-  }
-
-  private def mkAdv2adnMap(adv2adnIds: Map[Int, String], rcvrs: Seq[MNode]): Map[Int, MNode] = {
-    val rcvrsMap = rcvrs.map { rcvr => rcvr.id.get -> rcvr }.toMap
-    // Собираем карту adv.id -> rcvr.
-    adv2adnIds.flatMap { case (advId, adnId) =>
-      rcvrsMap.get(adnId)
-        .fold { List.empty[(Int, MNode)] }  { rcvr => List(advId -> rcvr) }
-    }
-  }
-
-
-  private def mkAdv2adnIds(advss: List[MAdvI] *): Map[Int, String] = {
-    advss.foldLeft [List[(Int, String)]] (Nil) { (acc1, advs) =>
-      advs.foldLeft(acc1) { (acc2, e) =>
-        e.id.get -> e.rcvrAdnId  ::  acc2
-      }
-    }.toMap
   }
 
   private def maybeFreeAdv(implicit request: IReq[_]): Boolean = {
@@ -521,26 +484,6 @@ class MarketAdv @Inject() (
     isFreeOpt.exists { _ && request.user.isSuper }
   }
 
-
-  /**
-   * Отображение страницы истории размещений.
-   * @param adId id рекламной карточки, для которой рендерим страницу.
-   * @return 200 Ок со страницей.
-   */
-  def advHistory(adId: String) = CanAdvertiseAdGet(adId).async { implicit request =>
-    val rcvrsAllFut = collectAllReceivers(request.producer)
-    for {
-      adAdvInfo <- getAdAdvInfo(adId)
-      rcvrs     <- rcvrsAllFut
-    } yield {
-      val rargs = MAdvHistoryTplArgs(
-        mad           = request.mad,
-        producer      = request.producer,
-        currAdvsArgs  = toAdvswArgs(adAdvInfo, rcvrs)
-      )
-      Ok( advHistoryTpl(rargs) )
-    }
-  }
 
 }
 
