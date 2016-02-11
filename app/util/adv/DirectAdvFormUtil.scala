@@ -48,11 +48,4 @@ class DirectAdvFormUtil @Inject() (
   }
 
 
-  /** Маппинг формы отказа от размещения рекламной карточки. Указывать причину надо. */
-  def reqRefuseFormM = {
-    Form(
-      "reason" -> nonEmptyText(minLength = 2, maxLength = 256)
-    )
-  }
-
 }

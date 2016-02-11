@@ -74,7 +74,7 @@ case class MLkSupportRequest(
 /** Enum для задания параметра подсветки текущей ссылки на правой панели личного кабинета узла. */
 object NodeRightPanelLinks extends Enumeration {
   type T = Value
-  val RPL_NODE, RPL_NODE_EDIT, RPL_USER_EDIT, RPL_ADVERTISERS = Value : T
+  val RPL_NODE, RPL_NODE_EDIT, RPL_USER_EDIT = Value : T
 }
 
 /** Enum для задания параметра подсветки текущей ссылки на правой панели в разделе биллинга узла. */

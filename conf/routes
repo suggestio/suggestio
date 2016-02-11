@@ -42,10 +42,7 @@ POST /lk/own/pwchange/:adnId            @controllers.MarketLkAdn.changePasswordS
 GET  /lk/xadv/geo/for/:adId             @controllers.MarketAdv.advForAd(adId)
 POST /lk/xadv/geo/for/:adId             @controllers.MarketAdv.advFormSubmit(adId)
 POST /lk/xadv/geo/price/for/:adId       @controllers.MarketAdv.getAdvPriceSubmit(adId)
-GET  /lk/xadv/geo/for/parent/:adnId     @controllers.MarketAdv.showNodeAdvs(adnId)
 ## Размещение рекламы: обработка запросов размещения.
-POST /lk/xadv/geo/req/refuse/:advReqId  @controllers.MarketAdv.advReqRefuseSubmit(advReqId: Int, r: Option[String] ?= None)
-POST /lk/xadv/geo/req/accept/:advReqId  @controllers.MarketAdv.advReqAcceptSubmit(advReqId: Int, r: Option[String] ?= None)
 GET  /lk/xadv/history/:adId             @controllers.MarketAdv.advHistory(adId)
 
 ## Размещение рекламы на внешних сервисах

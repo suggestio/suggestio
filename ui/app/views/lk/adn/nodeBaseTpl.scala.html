@@ -33,14 +33,6 @@
         css   = classesAct(rightCurrEl == RPL_USER_EDIT, "__change-pass")
       )
 
-      @if( mnode.extras.adn.exists(_.isReceiver) ) {
-        @_navItemTpl(
-          title = messages("Advertisers"),
-          href  = Some( routes.MarketAdv.showNodeAdvs(nodeId) ),
-          css   = classesAct(rightCurrEl == RPL_ADVERTISERS)
-        )
-      }
-
       @_navSysTpl(
         call  = routes.SysMarket.showAdnNode(nodeId)
       )
