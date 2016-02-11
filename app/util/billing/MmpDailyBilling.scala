@@ -3,7 +3,6 @@ package util.billing
 import java.{time => jat}
 
 import com.google.inject.{Inject, Singleton}
-import de.jollyday.parameter.UrlManagerParameter
 import io.suggest.common.fut.FutureUtil
 import io.suggest.model.n2.edge.{MNodeEdges, MEdgeInfo}
 import io.suggest.model.sc.common.AdShowLevels
@@ -18,14 +17,12 @@ import models.mproj.ICommonDi
 import org.joda.time.{DateTime, LocalDate}
 import org.joda.time.DateTimeConstants._
 import util.async.AsyncUtil
+import util.cal.CalendarUtil
 import util.n2u.N2NodesUtil
 import scala.annotation.tailrec
 import util.PlayMacroLogsImpl
 import io.suggest.ym.parsers.Price
 import java.sql.Connection
-import de.jollyday.HolidayManager
-import java.net.URL
-import controllers.routes
 import scala.collection.JavaConversions._
 import scala.concurrent.Future
 
@@ -38,6 +35,7 @@ import scala.concurrent.Future
 @Singleton
 class MmpDailyBilling @Inject() (
   n2NodesUtil             : N2NodesUtil,
+  calendarUtil            : CalendarUtil,
   mCommonDi               : ICommonDi
 )
   extends PlayMacroLogsImpl
@@ -46,37 +44,17 @@ class MmpDailyBilling @Inject() (
   import LOGGER._
   import mCommonDi._
 
-  val MYSELF_URL_PREFIX: String = configuration.getString("mmp.daily.localhost.url.prefix") getOrElse {
-    val myPort = Option(System.getProperty("http.port")).fold(9000)(_.toInt)
-    s"http://localhost:$myPort"
-  }
-
-  /** Если внезапно необходимо создать контракт, то сделать его с таким суффиксом. */
-  private def CONTRACT_SUFFIX_DFLT = MContract.CONTRACT_SUFFIX_DFLT
-
   /** Дни недели, относящиеся к выходным. Задаются списком чисел от 1 (пн) до 7 (вс), согласно DateTimeConstants. */
-  val WEEKEND_DAYS: Set[Int] = configuration.getIntList("mmp.daily.weekend.days").map(_.map(_.intValue).toSet) getOrElse Set(FRIDAY, SATURDAY, SUNDAY)
-
-
-
-  /** Сгенерить localhost-ссылку на xml-текст календаря. */
-  // Часть блокировок подавляет кеш на стороне jollyday.
-  private def getUrlCalAsync(calId: String): Future[HolidayManager] = {
-    // 2015.dec.25: Усилены асинхронность и кеширование, т.к. под высоко-параллельной тут возникал deadlock,
-    // а jollyday-кеш (v0.4.x) это не ловил это, а блокировал всё.
-    import scala.concurrent.duration._
-    cacheApiUtil.getOrElseFut(calId + ".holyman", expiration = 2.minute) {
-      val calUrl = new URL(MYSELF_URL_PREFIX + routes.SysCalendar.getCalendarXml(calId))
-      val args = new UrlManagerParameter(calUrl, null)
-      Future {
-        HolidayManager.getInstance(args)
-      }(AsyncUtil.singleThreadCpuContext)
-    }
+  private val WEEKEND_DAYS: Set[Int] = {
+    configuration.getIntList("mmp.daily.weekend.days")
+      .map(_.map(_.intValue).toSet)
+      .getOrElse( Set(FRIDAY, SATURDAY, SUNDAY) )
   }
 
   /**
    * Рассчитать ценник размещения рекламной карточки.
    * Цена блока рассчитывается по площади, тарифам размещения узла-получателя и исходя из будней-праздников.
+   *
    * @return
    */
   def calculateAdvPrice(blockModulesCount: Int, rcvrPricing: MTariffDaily, advTerms: IAdvTerms, mcalCtx: MCals1Ctx): Price = {
@@ -141,6 +119,7 @@ class MmpDailyBilling @Inject() (
   /**
    * Высокоуровневый рассчет цены размещения рекламной карточки. Вычисляет кол-во рекламных модулей и дергает
    * другой одноимённый метод.
+   *
    * @param mad Рекламная карточка или иная реализация блочного документа.
    * @return Площадь карточки.
    */
@@ -166,6 +145,7 @@ class MmpDailyBilling @Inject() (
 
   /**
    * Посчитать цену размещения рекламной карточки согласно переданной спеке.
+   *
    * @param mad Размещаемая рекламная карточка.
    * @param adves2 Требования по размещению карточки на узлах.
    */
@@ -197,9 +177,10 @@ class MmpDailyBilling @Inject() (
           }(AsyncUtil.jdbcExecutionContext)
         }
         mcalCtx <- {
+          val primeFut = calendarUtil.getCalMgr(mmp.primeCalId)
           for {
-            weekend <- getUrlCalAsync(mmp.weekendCalId)
-            prime   <- getUrlCalAsync(mmp.primeCalId)
+            weekend <- calendarUtil.getCalMgr(mmp.weekendCalId)
+            prime   <- primeFut
           } yield {
             MCals1Ctx(weekend = weekend, prime = prime)
           }
@@ -254,6 +235,7 @@ class MmpDailyBilling @Inject() (
 
   /**
    * Сохранить в БД реквесты размещения рекламных карточек.
+   *
    * @param mad рекламная карточка.
    * @param advs Список запросов на размещение.
    */
@@ -292,7 +274,7 @@ class MmpDailyBilling @Inject() (
         }
         .toSet
       Future.traverse(calIds) { calId =>
-        for (calMan <- getUrlCalAsync(calId)) yield {
+        for (calMan <- calendarUtil.getCalMgr(calId)) yield {
           calId -> calMan
         }
       } map {
@@ -358,6 +340,7 @@ class MmpDailyBilling @Inject() (
 
   /**
    * Стрёмная функция для получения активного контракта. Создаёт такой контракт, если его нет.
+   *
    * @param adnId id узла, с которым нужен контракт.
    * @return Экземпляр MContract.
    */
@@ -374,6 +357,7 @@ class MmpDailyBilling @Inject() (
   /**
    * Провести по БД прямую инжекцию рекламной карточки в выдачи.
    * А потом проверялка оффлайновых карточек отправит их в выдачу.
+   *
    * @param mad Рекламные карточки.
    * @param advs Список размещений.
    */
@@ -405,6 +389,7 @@ class MmpDailyBilling @Inject() (
 
   /**
    * Провести MAdvReq в MAdvOk, списав и зачислив все необходимые деньги.
+   *
    * @param advReq Одобряемый реквест размещения.
    * @param isAuto Пользователь одобряет или система?
    * @return Сохранённый экземпляр MAdvOk.
@@ -470,6 +455,7 @@ class MmpDailyBilling @Inject() (
 
   /**
    * Процессинг отказа в запросе размещения рекламной карточки.
+   *
    * @param advReq Запрос размещения.
    * @return Экземпляр сохранённого MAdvRefuse.
    */
@@ -492,6 +478,7 @@ class MmpDailyBilling @Inject() (
 
   /**
    * Пересчёт текущих размещений указанной рекламной карточки на основе данных MAdvOk online.
+   *
    * @param adId id рекламной карточки.
    * @return Карта ресиверов.
    */
