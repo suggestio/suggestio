@@ -27,8 +27,12 @@ trait FindByBalanceId extends BalanceIdSlick with GidModelContainer {
 
 
   def findByBalanceIdsBuilder(balanceIds: Traversable[Gid_t]) = {
-    query
-      .filter(_.balanceId inSet balanceIds)
+    if (balanceIds.isEmpty) {
+      query
+    } else {
+      query
+        .filter(_.balanceId inSet balanceIds)
+    }
   }
 
   /** Найти все ряды, у которых id кошелька находится в множестве указанных. */

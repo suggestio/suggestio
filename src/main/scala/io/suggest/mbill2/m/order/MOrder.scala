@@ -6,7 +6,7 @@ import io.suggest.common.slick.driver.ExPgSlickDriverT
 import io.suggest.mbill2.m.common.InsertOneReturning
 import io.suggest.mbill2.m.contract.{ContractIdSlickIdx, ContractIdSlickFk, MContracts}
 import io.suggest.mbill2.m.dt.{DateStatusSlick, DateCreatedSlick}
-import io.suggest.mbill2.m.gid.{DeleteById, GetById, Gid_t, GidSlick}
+import io.suggest.mbill2.m.gid._
 import io.suggest.mbill2.util.PgaNamesMaker
 import org.joda.time.DateTime
 import slick.lifted.ProvenShape
@@ -28,6 +28,7 @@ class MOrders @Inject() (
   with ContractIdSlickFk with ContractIdSlickIdx
   with ITableName
   with GetById
+  with MultiGetById
   with InsertOneReturning
   with DeleteById
   with DateStatusSlick
@@ -113,7 +114,9 @@ case class MOrder(
   dateCreated   : DateTime      = DateTime.now,
   dateStatus    : DateTime      = DateTime.now,
   id            : Option[Gid_t] = None
-) {
+)
+  extends IGid
+{
 
   def withStatus(status1: MOrderStatus): MOrder = {
     copy(

@@ -4,7 +4,7 @@ import com.google.inject.{Inject, Singleton}
 import io.suggest.common.slick.driver.ExPgSlickDriverT
 import io.suggest.mbill2.m.balance.{FindByBalanceId, MBalances, BalanceIdInxSlick, BalanceIdFkSlick}
 import io.suggest.mbill2.m.common.InsertOneReturning
-import io.suggest.mbill2.m.gid.{GetById, Gid_t, GidSlick}
+import io.suggest.mbill2.m.gid.{IGid, GetById, Gid_t, GidSlick}
 import io.suggest.mbill2.m.order.{MOrders, OrderIdOptInxSlick, OrderIdOptFkSlick, OrderIdOptSlick}
 import io.suggest.mbill2.m.price.{Amount_t, AmountSlick}
 import io.suggest.mbill2.util.PgaNamesMaker
@@ -84,7 +84,7 @@ class MTxns @Inject() (
     * @param offset Абсолютный сдвиг в результатах.
     * @return DBIOAction со списком транзакций.
     */
-  def findLatestTxns(balanceIds: Traversable[Gid_t], limit: Int, offset: Int) = {
+  def findLatestTxns(balanceIds: Traversable[Gid_t] = Nil, limit: Int, offset: Int = 0) = {
     findByBalanceIdsBuilder(balanceIds)
       .drop(offset)
       .take(limit)
@@ -105,3 +105,4 @@ case class MTxn(
   dateProcessed     : DateTime            = DateTime.now(),
   id                : Option[Gid_t]       = None
 )
+  extends IGid

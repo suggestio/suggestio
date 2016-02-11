@@ -47,6 +47,7 @@ class MItems @Inject() (
   with RcvrIdOptSlick
   with SlsOptSlick
   with GetById
+  with MultiGetById
   with InsertOneReturning
   with DeleteById
   with GeoShapeOptSlick

@@ -5,7 +5,7 @@ import io.suggest.common.m.sql.ITableName
 import io.suggest.common.slick.driver.ExPgSlickDriverT
 import io.suggest.mbill2.m.common.InsertOneReturning
 import io.suggest.mbill2.m.contract.{FindByContractId, MContracts, ContractIdSlickIdx, ContractIdSlickFk}
-import io.suggest.mbill2.m.gid.{GetById, Gid_t, GidSlick}
+import io.suggest.mbill2.m.gid._
 import io.suggest.mbill2.m.price._
 import io.suggest.mbill2.util.PgaNamesMaker
 import slick.lifted.ProvenShape
@@ -32,6 +32,7 @@ class MBalances @Inject() (
   with ContractIdSlickFk with ContractIdSlickIdx
   with ITableName
   with GetById
+  with MultiGetById
   with InsertOneReturning
   with FindByContractId
 {
@@ -84,7 +85,7 @@ class MBalances @Inject() (
     * @return Новый баланс и иновый blocked. None если ряд не найден.
     */
   def incrAmountAndBlockedBy(id: Gid_t, delta: Amount_t): DBIOAction[Option[(Amount_t, Amount_t)], NoStream, Effect.Write] = {
-    sql"UPDATE #$TABLE_NAME SET #$BLOCKED_FN = #$BLOCKED_FN - $delta, #$AMOUNT_FN = #$AMOUNT_FN + $delta WHERE #${GidSlick.ID_FN} = $id RETURNING #$AMOUNT_FN, #$BLOCKED_FN"
+    sql"UPDATE #$TABLE_NAME SET #$BLOCKED_FN = #$BLOCKED_FN - $delta, #$AMOUNT_FN = #$AMOUNT_FN + $delta WHERE #$ID_FN = $id RETURNING #$AMOUNT_FN, #$BLOCKED_FN"
       .as[(Amount_t, Amount_t)]
       .map { _.headOption }
   }
@@ -112,7 +113,7 @@ class MBalances @Inject() (
 
 
   def incrAmountBy(id: Gid_t, delta: Amount_t): DBIOAction[Option[Amount_t], NoStream, Effect.Write] = {
-    sql"UPDATE #$TABLE_NAME SET #$AMOUNT_FN = #$AMOUNT_FN + $delta WHERE #${GidSlick.ID_FN} = $id RETURNING #$AMOUNT_FN"
+    sql"UPDATE #$TABLE_NAME SET #$AMOUNT_FN = #$AMOUNT_FN + $delta WHERE #$ID_FN = $id RETURNING #$AMOUNT_FN"
       .as[Amount_t]
       .map { _.headOption }
   }
@@ -155,7 +156,9 @@ case class MBalance(
   blocked     : Amount_t          = 0.0,
   lowOpt      : Option[Amount_t]  = None,
   id          : Option[Gid_t]     = None
-) {
+)
+  extends IGid
+{
 
   def low = lowOpt.getOrElse( 0.0 )
 
