@@ -37,7 +37,7 @@ trait PriceSlick extends IDriver {
     def amount: Rep[Amount_t]
 
     def price = {
-      (amount, currency) <> (MPrice.tupled, MPrice.unapply)
+      (amount, currency) <> ((MPrice.apply _).tupled, MPrice.unapply)
     }
 
   }

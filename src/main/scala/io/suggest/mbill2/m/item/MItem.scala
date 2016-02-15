@@ -3,7 +3,7 @@ package io.suggest.mbill2.m.item
 import com.google.inject.{Inject, Singleton}
 import io.suggest.common.m.sql.ITableName
 import io.suggest.common.slick.driver.ExPgSlickDriverT
-import io.suggest.mbill2.m.common.InsertOneReturning
+import io.suggest.mbill2.m.common.{InsertManyReturning, InsertOneReturning}
 import io.suggest.mbill2.m.dt._
 import io.suggest.mbill2.m.geo.shape.{IGeoShapeOpt, GeoShapeOptSlick}
 import io.suggest.mbill2.m.gid._
@@ -48,7 +48,7 @@ class MItems @Inject() (
   with SlsOptSlick
   with GetById
   with MultiGetById
-  with InsertOneReturning
+  with InsertOneReturning with InsertManyReturning
   with DeleteById
   with GeoShapeOptSlick
   with TagFaceOptSlick
@@ -108,15 +108,19 @@ class MItems @Inject() (
 
   /**
     * Выставить статус для указанного item'а.
+    *
     * @param itm2 Обновлённый инстанс item'а.
     * @return Экшен UPDATE.
     */
   def saveStatus(itm2: MItem) = {
-    saveStatus1(itm2.id.get, itm2.status)
+    saveStatus1(itm2.status, itm2.id.get)
   }
-  def saveStatus1(id: Gid_t, status: MItemStatus) = {
+  def saveStatus1(status: MItemStatus, ids: Gid_t*) = {
+    saveStatus2(status, ids)
+  }
+  def saveStatus2(status: MItemStatus, ids: Traversable[Gid_t]) = {
     query
-      .filter { _.id === id }
+      .filter { _.id inSet ids }
       .map { i => (i.status, i.dateStatus) }
       .update( (status, DateTime.now()) )
   }
