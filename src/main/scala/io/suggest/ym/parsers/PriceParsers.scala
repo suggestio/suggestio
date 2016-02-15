@@ -1,8 +1,10 @@
 package io.suggest.ym.parsers
 
 import scala.util.parsing.combinator.JavaTokenParsers
-import java.util.Currency
 import scala.util.matching.Regex
+
+// TODO 12 feb 2016 Выпихнуть цены и утиль для них в отдельный пакет вместе с моделью mbill2 MPrice.
+// Рабочие form mapping'и для цен были удалены из web21:FormUtil после 8e3432fbf693
 
 /**
  * Suggest.io
@@ -11,17 +13,18 @@ import scala.util.matching.Regex
  * Description: Парсер цен из строк.
  */
 
-object PriceParsers extends JavaTokenParsers with CommonParsers {
+trait PriceParsers extends JavaTokenParsers with CommonParsers {
 
-  type PriceP_t = Parser[Price]
+  type PriceP_t = Parser[ParsedPrice]
 
   override protected val whiteSpace: Regex = "(?U)\\s+".r
 
-  // TODO Надо бы по-сильнее отделить валюты от парсеров цен.
-  val currRUBc = Currency.getInstance("RUB")
+  def RUB_CC = "RUB"
+  def USD_CC = "USD"
+  def EUR_CC = "EUR"
 
   /** Парсер цен в российских рублях. */
-  val priceRUBp: PriceP_t = {
+  def priceRUBp: PriceP_t = {
     val rubl: Parser[_] = "(?iu)[рp]([уy][б6](л[а-я]*)?)?\\.?".r
     val rub: Parser[_] = "(?i)RU[BR]".r
     val rouble = "(?i)r(ou|u|uo)b(le?s?)?|".r | rub
@@ -30,49 +33,51 @@ object PriceParsers extends JavaTokenParsers with CommonParsers {
     val floatGroupedRe = """(?U)-?(\d[\d\s]*([.,]+\d*)?|\d*[.,]+\d+)""".r
     val floatGroupedP: Parser[Float] = floatGroupedRe ^^ { rawFloatStr =>
       val floatStr = rawFloatStr.replaceAll("(?U)\\s+", "")
-      ParserUtil.str2FloatF(floatStr)
+      ParserUtil.str2Float(floatStr)
     }
     val postfixPrice = floatGroupedP <~ currRUBp
     val prefixPrice = rub ~> floatGroupedP
-    (postfixPrice | prefixPrice) ^^ { price => Price(price, currRUBc) }
+    (postfixPrice | prefixPrice) ^^ { price => ParsedPrice(price, RUB_CC) }
   }
 
 
-  val currUSDc = Currency.getInstance("USD")
-
   /** Парсер цен в долларах США. */
-  val priceUSDp: PriceP_t = {
+  def priceUSDp: PriceP_t = {
     val dsign: Parser[_] = "$"
     val usd: Parser[_] = "(?i)USD".r
     val dollar: Parser[_] = "(?iu)(д[оo]лл?[аaоo][рpr]|[б6][aа][kк]+[cс])[а-я]{0,3}".r
     // TODO Вместо floatP надо задействовать парсер американских цифр вида "123,456,768.23".
-    val prefixPrice = (dsign | usd) ~> floatP
-    val postfixPrice = floatP <~ (dsign | usd | dollar)
-    (prefixPrice | postfixPrice) ^^ { floatPrice => Price(floatPrice, currUSDc) }
+    val _doubleP = doubleP
+    val prefixPrice = (dsign | usd) ~> _doubleP
+    val postfixPrice = _doubleP <~ (dsign | usd | dollar)
+    (prefixPrice | postfixPrice) ^^ { floatPrice => ParsedPrice(floatPrice, USD_CC) }
   }
 
 
-  val currEURc = Currency.getInstance("EUR")
-
   /** Парсер цен в евро. */
-  val priceEURp: PriceP_t = {
+  def priceEURp: PriceP_t = {
     val esign: Parser[_] = "€"
     val eur: Parser[_] = "(?i)EURo?".r
     val evro: Parser[_] = "(?iu)(й?[еэe])[вуuv][рr][оo]".r
-    val prefixPrice = (eur | esign) ~> floatP
-    val postixPrice = floatP <~ (eur | evro | esign)
-    (prefixPrice | postixPrice) ^^ { price => Price(price, currEURc) }
+    val _doubleP = doubleP
+    val prefixPrice = (eur | esign) ~> _doubleP
+    val postixPrice = _doubleP <~ (eur | evro | esign)
+    (prefixPrice | postixPrice) ^^ { price => ParsedPrice(price, EUR_CC) }
   }
 
 
   /** Парсер произвольной строки с ценой в России.
     * Цена должна содержать валюту, и точки-запятые в качестве разделей десятичной части. */
-  val currPriceParser: PriceP_t = {
+  def currPriceParser: PriceP_t = {
     priceRUBp | priceUSDp | priceEURp
   }
 
 
 }
 
-case class Price(price: Float, currency: Currency = PriceParsers.currRUBc)
+/** Дефолтовая реализация [[PriceParsers]]. */
+class PriceParsersImpl extends PriceParsers
+
+/** Модель распарсенной цена с указанием кода валюты. */
+case class ParsedPrice(price: Float, currencyCode: String)
 

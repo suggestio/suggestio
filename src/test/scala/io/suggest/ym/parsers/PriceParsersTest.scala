@@ -1,7 +1,6 @@
 package io.suggest.ym.parsers
 
 import org.scalatest._
-import java.util.Currency
 
 /**
  * Suggest.io
@@ -11,10 +10,10 @@ import java.util.Currency
  */
 class PriceParsersTest extends FlatSpec with Matchers {
 
-  import PriceParsers._
+  private lazy val pp = new PriceParsersImpl
 
   "PriceParsers" should "parse RUB prices" in {
-    val rp = rpF(priceRUBp, currRUBc)
+    val rp = rpF(pp.priceRUBp, pp.RUB_CC)
     // русский
     rp("10 руб.", 10F)
     rp("10.5 руб", 10.5F)
@@ -33,7 +32,7 @@ class PriceParsersTest extends FlatSpec with Matchers {
   }
 
   it should "parse USD prices" in {
-    val dp = rpF(priceUSDp, currUSDc)
+    val dp = rpF(pp.priceUSDp, pp.USD_CC)
     dp("$1", 1F)
     dp("$ 1", 1F)
     dp("1$", 1F)
@@ -48,7 +47,7 @@ class PriceParsersTest extends FlatSpec with Matchers {
   }
 
   it should "parse EUR prices" in {
-    val ep = rpF(priceEURp, currEURc)
+    val ep = rpF(pp.priceEURp, pp.EUR_CC)
     ep("€5.40", 5.40F)
     ep("5,5€", 5.5F)
     ep("6.66 EUR", 6.66F)
@@ -62,16 +61,16 @@ class PriceParsersTest extends FlatSpec with Matchers {
 
   /** Генератор функций тестирования.
     * @param p парсер денег.
-    * @param curr правильная валюта результата.
+    * @param currencyCode Код правильной валюта результата.
     * @param lag допустимая точность float.
     * @return Функция тестирования, принимающая исходную строку и результат.
     */
-  private def rpF(p: PriceP_t, curr: Currency, lag: Float = 0.02F) = {
+  private def rpF(p: pp.PriceP_t, currencyCode: String, lag: Double = 0.02) = {
     (s: String, result: Float) =>
-      val pres = parse(p, s: String)
+      val pres = pp.parse(p, s: String)
       pres.successful shouldBe true
-      val Price(price, curr) = pres.get
-      curr shouldBe curr
-      price shouldBe result +- 0.02F
+      val ParsedPrice(price2, currencyCode2) = pres.get
+      currencyCode2 shouldBe currencyCode
+      price2 shouldBe result +- 0.02F
   }
 }

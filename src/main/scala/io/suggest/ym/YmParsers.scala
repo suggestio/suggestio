@@ -6,7 +6,7 @@ import model._
 import HotelMealTypes.HotelMealType
 import HotelStarsLevels.HotelStarsLevel
 import YmParsers.PeriodUnits.PeriodUnit
-import parsers.ParserUtil.{str2FloatF, str2IntF}
+import parsers.ParserUtil.{str2Float, str2IntF}
 
 /**
  * Suggest.io
@@ -20,7 +20,7 @@ object YmParsers extends JavaTokenParsers {
   /** Парсер измерений (размерности) товара в формате "длина/ширина/высота". */
   val DIMENSIONS_PARSER = {
     val sepParser: Parser[String] = "[/xх*]".r
-    val dn = decimalNumber ^^ str2FloatF
+    val dn = decimalNumber ^^ str2Float
     dn ~ (sepParser ~> dn) ~ (sepParser ~> dn) ^^ {
       case ls~ws~hs => Dimensions(ls, ws, hs)
     }
