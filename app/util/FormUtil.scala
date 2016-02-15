@@ -74,8 +74,6 @@ object FormUtil {
     s.filter(!_.isEmpty)
   }
 
-  private def allowedProtocolRE = "(?i)https?".r
-
   def isValidUrl(urlStr: String): Boolean = {
     try {
       !urlStr.isEmpty && {
@@ -163,15 +161,6 @@ object FormUtil {
     nonEmptyText(maxLength = 10)
       .transform[Option[AdnShownType]]( AdnShownTypes.maybeWithName, _.fold("")(_.toString) )
   }
-  def adnShownTypeM: Mapping[AdnShownType] = {
-    adnShownTypeOptM
-      .verifying("error.required", _.isDefined)
-      .transform[AdnShownType](_.get, Some.apply)
-  }
-  def adnShownTypeIdM: Mapping[String] = {
-    adnShownTypeM
-      .transform[String](_.toString, AdnShownTypes.withName)
-  }
   def adnShownTypeIdOptM: Mapping[Option[String]] = {
     adnShownTypeOptM
       .transform[Option[String]](_.map(_.toString), _.flatMap(AdnShownTypes.maybeWithName))
@@ -238,21 +227,16 @@ object FormUtil {
   }
 
 
-  /** Возвращение проверенного пароля как Some(). */
-  def passwordWithConfirmSomeM = toStrOptM(passwordWithConfirmM)
-
-
   val nameM = nonEmptyText(maxLength = 64)
     .transform(strTrimSanitizeUnescapeF, strIdentityF)
   def nameOptM = optional(nameM)
-  def companyNameM = nameM
 
 
   /** Маппер для поля, содержащего код цвета. */
   private val colorCheckRE = "(?i)[a-f0-9]{6}".r
-  val colorM = nonEmptyText(minLength = 6, maxLength = 6)
+  def colorM = nonEmptyText(minLength = 6, maxLength = 6)
     .verifying("error.color.invalid", colorCheckRE.pattern.matcher(_).matches)
-  val colorOptM = optional(colorM)
+  def colorOptM = optional(colorM)
     .transform [Option[String]] (emptyStrOptToNone, identity)
   def colorSomeM = toSomeStrM(colorM)
 
@@ -285,32 +269,20 @@ object FormUtil {
   def addressSomeM = toSomeStrM(addressM)
 
 
-  /** id категорий. */
-  def adCatIdsM: Mapping[Set[String]] = {
-    list(esIdM).transform [Set[String]] (
-      {_.iterator
-        .flatMap { v =>
-          val v1 = strTrimSanitizeF(v)
-          if (v1.isEmpty) Seq.empty else Seq(v1)
-        }
-        .toSet
-      },
-      { _.toList }
-    )
-  }
-  def adCatIdsNonEmptyM = adCatIdsM.verifying("error.required", _.nonEmpty)
-
   // TODO Нужен нормальный валидатор телефонов.
   def phoneM = nonEmptyText(minLength = 5, maxLength = 50)
     .transform(strTrimSanitizeUnescapeF, strIdentityF)
   def phoneOptM = optional(phoneM)
     .transform [Option[String]] (emptyStrOptToNone, identity)
-  def phoneSomeM = toSomeStrM(phoneM)
+  //def phoneSomeM = toSomeStrM(phoneM)
 
   /** Маппер для человеческого траффика, заданного числом. */
   def humanTrafficAvgM = number(min = 10)
 
-  val text2048M = text(maxLength = 2048).transform(strTrimSanitizeF, strIdentityF)
+  def text2048M: Mapping[String] = {
+    text(maxLength = 2048)
+      .transform(strTrimSanitizeF, strIdentityF)
+  }
   def audienceDescrM = text2048M
 
   // Трансформеры для optional-списков.
@@ -375,24 +347,6 @@ object FormUtil {
       .transform[URL] (_.get, Some.apply)
   }
 
-  /** Проверить ссылку на возможность добавления сайта в индексацию. */
-  def urlAllowedMapper = urlM
-    .verifying("mappers.url.only_http_https_allowed", { url =>
-      allowedProtocolRE.pattern.matcher(url.getProtocol).matches()
-    })
-    .verifying("mappers.url.hostname_prohibited", { url =>
-      UrlUtil.isHostnameValid(url.getHost)
-    })
-
-
-  // Маппер домена. Формат ввода тут пока не проверяется.
-  def domainMapper = nonEmptyText(minLength = 4, maxLength = 128)
-    .transform(strTrimSanitizeLowerF, strIdentityF)
-    .verifying("mappers.url.hostname_prohibited", UrlUtil.isHostnameValid(_))
-
-  // Маппер домена с конвертором в dkey.
-  def domain2dkeyMapper = domainMapper
-    .transform [String] (UrlUtil.normalizeHostname, IDNA.toUnicode)
 
   // Маппер для float-значений.
   val floatRe = "[-+]?\\d{0,8}([,.]\\d{0,7})?".r
@@ -450,156 +404,11 @@ object FormUtil {
       .transform [NodeGeoLevel] (_.get, Some.apply)
   }
 
-
-  // Ценовые значения
-
-  import io.suggest.ym.parsers.Price
-  import UserInputParsers._
+  // До web21:8e3432fbf693 включительно здесь жили маппинги цены.
 
 
-  /** Макс.длина текста в поле цены. */
-  val PRICE_M_MAX_STRLEN = 40
-
-  /** Нестрогий маппинг цены. Ошибка будет только если слишком много букв. */
-  def priceM: Mapping[(String, Option[Price])] = {
-    text
-      .transform[(String, Option[Price])](
-        {raw =>
-          val raw0 = TplDataFormatUtil.strLimitLen(raw, PRICE_M_MAX_STRLEN)
-          val raw1 = strTrimSanitizeF(raw0)
-          raw1 -> parsePrice(raw1) },
-        { case (raw, None) => raw
-          case (raw, Some(_)) if !raw.isEmpty => raw
-          case (_, Some(price)) =>
-            val p = price.price
-            price.currency.getCurrencyCode match {
-              case "RUB" => p.toString
-              case "USD" => "$" + p
-              case cCode => p + " " + cCode
-          }
-        }
-      )
-  }
-
-  /** Маппер типа тарифа. */
-  def bTariffTypeM: Mapping[BTariffType] = {
-    nonEmptyText(maxLength = 1)
-      .transform[Option[BTariffType]](
-        { BTariffTypes.maybeWithName },
-        { case Some(tt) => tt.toString
-          case None => "" }
-      )
-      .verifying("error.invalid", _.isDefined)
-      .transform({ _.get }, Some.apply)
-  }
-
-  def pgIntervalPretty(pgi: PGInterval) = pgi.toString.replaceAll("0([.,]0+)?\\s+[a-z]+", "").trim
-
-  def pgIntervalM: Mapping[PGInterval] = {
-    nonEmptyText(minLength = 3, maxLength = 256)
-      .transform[Option[PGInterval]](
-        {str =>
-          try {
-            Some(new PGInterval(str))
-          } catch {
-            case ex: SQLException => None
-          }
-        },
-        { case Some(pgi) => pgIntervalPretty(pgi)
-          case None      => "" }
-      )
-      .verifying("error.invalid", _.isDefined)
-      .transform(_.get, Some.apply)
-  }
-
-  def pgIntervalStrM: Mapping[String] = {
-    pgIntervalM.transform[String](
-      _.toString,
-      {str => new PGInterval(str) }
-    )
-  }
-
-
-  /** Маппинг для задания цены. Либо цена, либо ошибка. Тащим исходное значение с собой
-    * для возможности быстрого доступа к нему из маппинга без помощи локали клиента и т.д. */
-  def priceStrictM: Mapping[(String, Price)] = {
-    priceM
-      .verifying("error.required", _._2.isDefined)
-      .transform[(String, Price)](
-        {case (raw, pOpt) => raw -> pOpt.get},
-        {case (raw, p) => raw -> Some(p)}
-      )
-      .verifying("error.price.mustbe.nonneg", { _._2.price >= 0F })
-      .verifying("error.price.too.much", { _._2.price < 100000000F })
-  }
-
-  /** price, но без исходного raw-значения. */
-  def priceStrictNoraw: Mapping[Price] = {
-    priceStrictM.transform[Price](
-      { case (raw, price) => price },
-      { price => "" -> price }
-    )
-  }
-
-
-  def adhocPercentFmt(pc: Float) = TplDataFormatUtil.formatPercentRaw(pc) + "%"
-
-  /** Макс.длина текста в полях price/percent. Используется в маппинге и в input-шаблонах редактора блоков. */
-  val PERCENT_M_CHARLEN_MAX = 32
-
-  // Процентные значения
-  /** Нестрогий маппер процентов. Крэшится только если слишком много букв. */
-  def percentM = {
-    text.transform[(String, Option[Float])](
-      {raw =>
-        val raw0 = if (raw.length > PERCENT_M_CHARLEN_MAX)
-          raw.substring(0, PERCENT_M_CHARLEN_MAX)
-        else
-          raw
-        val raw1 = strTrimSanitizeF(raw0)
-        raw1 -> parsePercents(raw1)
-      },
-      { case (raw, opt) if !raw.isEmpty || opt.isEmpty => raw
-        case (raw, Some(pc)) => adhocPercentFmt(pc) }
-    )
-  }
-
-  /** Маппинг со строгой проверкой на проценты. */
-  def getStrictDiscountPercentM(min: Float, max: Float): Mapping[Float] = {
-    percentM
-      .verifying("error.required", _._2.isDefined)
-      .verifying("error.discount.too.large", { _._2.get >= min })
-      .verifying("error.discount.too.small", { _._2.get <= max })
-      .transform[Float](
-        _._2.get,
-        {pc => adhocPercentFmt(pc) -> Some(pc)}
-      )
-  }
-
-  /** Маппинг, толерантный к значениям, выходящим за пределы диапазона. */
-  def getTolerantDiscountPercentM(min: Float, max: Float, dflt: Float): Mapping[Float] = {
-    percentM.transform[Float](
-      {case (raw, pcOpt) =>
-        pcOpt
-          .map { pcf => Math.min(max, Math.max(min, pcf)) }
-          .getOrElse(dflt)
-      },
-      {pcf =>
-        val raw = TplDataFormatUtil.formatPercentRaw(pcf) + "%"
-        raw -> Some(pcf)
-      }
-    )
-  }
-
-
-  /** Маппинг для задания причины при сокрытии сущности. */
-  def hideEntityReasonM = nonEmptyText(maxLength = 512)
-    .transform(strTrimSanitizeUnescapeF, strIdentityF)
-
-
-  def adStatActionM: Mapping[ScStatAction] = {
-    nonEmptyText(maxLength = 1)
-      .transform[ScStatAction](ScStatActions.withName, _.toString)
+  def pgIntervalPretty(pgi: PGInterval) = {
+    pgi.toString.replaceAll("0([.,]0+)?\\s+[a-z]+", "").trim
   }
 
   def currencyCodeM: Mapping[String] = {
@@ -620,7 +429,7 @@ object FormUtil {
 
 
   /** Маппер для lat-lon координат, заданных в двух полях формы. */
-  val geoPointM: Mapping[GeoPoint] = {
+  def geoPointM: Mapping[GeoPoint] = {
     mapping(
       "lat" -> doubleM,
       "lon" -> doubleM

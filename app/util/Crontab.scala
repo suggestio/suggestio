@@ -7,9 +7,10 @@ import play.api.Play.current
 import akka.actor.{Scheduler, Cancellable}
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.concurrent.Akka
+import util.adv.direct.AdvDirectCronTasks
 import util.geo.IpGeoBaseImport
 import play.api.Application
-import util.billing.{MmpCronTasks, Billing}
+import util.billing.Billing
 import util.health.AdnGeoParentsHealth
 
 /**
@@ -26,7 +27,7 @@ class Crontab @Inject() (
   geoParentsHealth              : AdnGeoParentsHealth,
   ipGeoBaseImport               : IpGeoBaseImport,
   billing                       : Billing,
-  mmpCronTasks                  : MmpCronTasks
+  mmpCronTasks                  : AdvDirectCronTasks
 )
   extends PlayLazyMacroLogsImpl
 {

@@ -19,8 +19,7 @@ class DirectAdvFormUtil @Inject() (
   def nodeM: Mapping[OneNodeInfo] = {
     mapping(
       "adnId"         -> esIdM,
-      "advertise"     -> boolean,
-      "showLevel"     -> advFormUtil.adSlsM
+      "advertise"     -> boolean
     )
     { OneNodeInfo.apply }
     { OneNodeInfo.unapply }

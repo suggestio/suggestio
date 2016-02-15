@@ -11,6 +11,7 @@ import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{IItem, MItems, MItem}
 import io.suggest.mbill2.m.order._
 import io.suggest.mbill2.m.txn.{MTxns, MTxn}
+import io.suggest.mbill2.util.effect._
 import models.adv.tpl.MAdvPricing
 import models.mbill.MCartIdeas
 import models.mproj.ICommonDi
@@ -41,10 +42,6 @@ class Bill2Util @Inject() (
 
   import mCommonDi._
   import dbConfig.driver.api._
-
-  // Короткие алиасы для типов составных эффектов DBIOAction
-  type RW   = Effect.Read with Effect.Write
-  type RWT  = RW with Effect.Transactional
 
   /** id узла, на который должна сыпаться комиссия с этого биллинга. */
   val CBCA_NODE_ID: String = {
@@ -167,10 +164,8 @@ class Bill2Util @Inject() (
   }
 
   /** Найти ордер-корзину. */
-  def getCartOrder(contractId: Gid_t): Future[Option[MOrder]] = {
-    dbConfig.db.run {
-      mOrders.getCartOrder(contractId)
-    }
+  def getCartOrder(contractId: Gid_t): DBIOAction[Option[MOrder], NoStream, Effect.Read] = {
+    mOrders.getCartOrder(contractId)
   }
 
   /**
@@ -179,21 +174,18 @@ class Bill2Util @Inject() (
     * @param contractId Номер договора.
     * @return Фьючерс с ордером корзины.
     */
-  def ensureCart(contractId: Gid_t): Future[MOrder] = {
-    // Возможно, надо объединить поиск ордера и создания в одну транзакцию, хз...
-    val ocOptFut = getCartOrder(contractId)
-    ocOptFut
-      .map(_.get)
-      .recoverWith { case ex: NoSuchElementException =>
+  def ensureCart(contractId: Gid_t): DBIOAction[MOrder, NoStream, RW] = {
+    getCartOrder(contractId).flatMap {
+      case None =>
         val cartOrderStub = MOrder(MOrderStatuses.Draft, contractId)
-        val fut = dbConfig.db.run {
-          mOrders.insertOne(cartOrderStub)
+        val orderAct = mOrders.insertOne(cartOrderStub)
+        orderAct.map { order2 =>
+          LOGGER.debug(s"ensureNodeCart($contractId): Initialized new cart order[${order2.id.orNull}]")
+          order2
         }
-        fut.onSuccess { case cartOrder =>
-          LOGGER.debug(s"ensureNodeCart($contractId): Initialized new cart order[${cartOrder.id}]")
-        }
-        fut
-      }
+      case Some(order) =>
+        DBIO.successful(order)
+    }
   }
 
   /** Нулевая цена. */

@@ -119,7 +119,6 @@ class LkAdvGeoTag @Inject() (
       {result =>
         LOGGER.trace("Binded: " + result)
         // TODO Прикрутить free adv для суперпользователей.
-        // TODO Прикрутить рассчет цены
 
         val producerId = request.producer.id.get
 
@@ -127,25 +126,36 @@ class LkAdvGeoTag @Inject() (
         for {
           // Прочитать узел юзера
           personNode0 <- request.user.personNodeFut
+
           // Узнать контракт юзера
           e           <- bill2Util.ensureNodeContract(personNode0, request.user.mContractOptFut)
-          // Найти/создать корзину
-          cart        <- bill2Util.ensureCart(e.mc.id.get)
-          // Рассчитать цену.
-          price       <- geoTagAdvBillUtil.computePrice(result)
-          // Закинуть заказ в корзину юзера.
-          addRes      <- geoTagAdvBillUtil.addToOrder(
-            orderId     = cart.id.get,
-            producerId  = producerId,
-            adId        = adId,
-            price       = price,
-            res         = result
-          )
+
+          // Произвести добавление товаров в корзину.
+          itemsAdded <- {
+            // Надо определиться, правильно ли инициализацию корзины запихивать внутрь транзакции?
+            val dbAction = for {
+              // Найти/создать корзину
+              cart    <- bill2Util.ensureCart(e.mc.id.get)
+              // Закинуть заказ в корзину юзера. Там же и рассчет цены будет.
+              addRes  <- geoTagAdvBillUtil.addToOrder(
+                orderId     = cart.id.get,
+                producerId  = producerId,
+                adId        = adId,
+                res         = result
+              )
+            } yield {
+              addRes
+            }
+            // Запустить экшен добавления в корзину на исполнение.
+            import dbConfig.driver.api._
+            dbConfig.db.run( dbAction.transactionally )
+          }
+
         } yield {
           implicit val messages = implicitly[Messages]
           // Пора вернуть результат работы юзеру: отредиректить в корзину-заказ для оплаты.
           Redirect( routes.LkBill2.cart(producerId, r = Some(routes.LkAdvGeoTag.forAd(adId).url)) )
-            .flashing( FLASH.SUCCESS -> messages("Added.n.items.to.cart", addRes.size) )
+            .flashing( FLASH.SUCCESS -> messages("Added.n.items.to.cart", itemsAdded.size) )
         }
       }
     )

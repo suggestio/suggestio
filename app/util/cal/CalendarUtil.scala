@@ -6,6 +6,7 @@ import com.google.inject.{Inject, Singleton}
 import controllers.routes
 import de.jollyday.HolidayManager
 import de.jollyday.parameter.UrlManagerParameter
+import models.mcal.{MCalendars, MCalCtx, MCalsCtx}
 import models.mproj.ICommonDi
 import util.async.AsyncUtil
 
@@ -20,6 +21,7 @@ import scala.concurrent.Future
   */
 @Singleton
 class CalendarUtil @Inject() (
+  mCalendars              : MCalendars,
   mCommonDi               : ICommonDi
 ) {
 
@@ -41,6 +43,7 @@ class CalendarUtil @Inject() (
   def getCalMgr(calId: String): Future[HolidayManager] = {
     // 2015.dec.25: Усилены асинхронность и кеширование, т.к. под высоко-параллельной тут возникал deadlock,
     // а jollyday-кеш (v0.4.x) это не ловил это, а блокировал всё.
+    // TODO Нужно зарегать свой протокол для URL, который возвращает тексты календарей. Замудрёная архитектура jollyday мешает сделать какую-нить упрощенку здесь.
     import scala.concurrent.duration._
     cacheApiUtil.getOrElseFut(calId + ".holyman", expiration = 2.minute) {
       val calUrl = new URL(MYSELF_URL_PREFIX + routes.SysCalendar.getCalendarXml(calId))
@@ -48,6 +51,30 @@ class CalendarUtil @Inject() (
       Future {
         HolidayManager.getInstance(args)
       }(AsyncUtil.singleThreadCpuContext)
+    }
+  }
+
+
+  /** Сборка контекста календарей цен размещения.
+    *
+    * @param calIds id календарей, из которых требуется сформировать контекст.
+    * @return Фьючерс с инстансом контекста.
+    */
+  def getCalsCtx(calIds: Traversable[String]): Future[MCalsCtx] = {
+    // TODO Opt Кеш ОЧЕНЬ нужен для multiGet на стороне MCalendar. Вообще лучше эту модель запилить внутрь MNod и заюзать mNodeCache
+    val mcalsFut = mCalendars.multiGetMap(calIds)
+    // TODO Получать по multiGet календари пачкой из MCalendars, заворачивать их в HolydayManager'ы.
+    val calsFut = Future.traverse( calIds.toSeq ) { calId =>
+      for {
+        mgr   <- getCalMgr(calId)
+        mcals <- mcalsFut
+      } yield {
+        calId -> MCalCtx(calId, mcals(calId), mgr)
+      }
+    }
+
+    for (cals <- calsFut) yield {
+      MCalsCtx( cals.toMap )
     }
   }
 

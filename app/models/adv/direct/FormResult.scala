@@ -11,4 +11,9 @@ import models.adv.form.MDatesPeriod
 case class FormResult(
   nodes     : List[OneNodeInfo]   = Nil,
   period    : MDatesPeriod        = MDatesPeriod()
-)
+) {
+
+
+  def nodeIdsIter = nodes.iterator.map(_.adnId)
+
+}

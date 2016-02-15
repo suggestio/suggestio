@@ -66,10 +66,6 @@ libraryDependencies ++= {
   //"com.sanoma.cda" %% "maxmind-geoip2-scala" % "1.3.5",
   // statistics
   "net.sf.uadetector" % "uadetector-resources" % "2014.+",
-  // radius
-  "org.tinyradius" % "tinyradius" % "1.0.3"
-    exclude("commons-logging", "commons-logging")
-  ,
   // scalasti - это простой гибкий динамический шаблонизатор строк. Нужен для генерации динамических карточек.
   "org.clapper" %% "scalasti" % "2.+",
   // bouncy castle используется для шифрования. pg используется для стойкого шифрования с подписью.

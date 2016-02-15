@@ -1,16 +1,16 @@
-package util.billing
+package util.adv.direct
 
 import com.google.inject.Inject
 import models.adv.MAdvReq
-import models.mcron.{MCronTask, ICronTask}
+import models.mcron.{ICronTask, MCronTask}
 import models.mproj.ICommonDi
 import org.joda.time.Period
-import play.api.db.Database
-import play.api.{Application, Configuration}
-import util.{PlayMacroLogsImpl, ICronTasksProvider}
+import play.api.Application
 import util.async.AsyncUtil
+import util.billing.{AdvertiseOfflineAdvsFactory, DepublishExpiredAdvsFactory}
+import util.{ICronTasksProvider, PlayMacroLogsImpl}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 import scala.concurrent.duration._
 
 /**
@@ -20,11 +20,11 @@ import scala.concurrent.duration._
  * Description: Провайдер задач для Cron'а. Задачи связаны с обслуживанием биллинга на
  * посуточных тарифах размещения.
  *
- * Поддержка высокоуровневых периодических задач вынесена из [[MmpDailyBilling]], чтобы
- * решить проблемы с циклическими зависямостями между [[MmpDailyBilling]] и [[util.adv.AdvUtil]].
+ * Поддержка высокоуровневых периодических задач вынесена из [[AdvDirectBilling]], чтобы
+ * решить проблемы с циклическими зависямостями между [[AdvDirectBilling]] и [[util.adv.AdvUtil]].
  */
-class MmpCronTasks @Inject() (
-  mmpDailyBilling         : MmpDailyBilling,
+class AdvDirectCronTasks @Inject()(
+  advDirectBilling        : AdvDirectBilling,
   aoaFac                  : AdvertiseOfflineAdvsFactory,
   deaFac                  : DepublishExpiredAdvsFactory,
   mCommonDi               : ICommonDi
@@ -100,7 +100,7 @@ class MmpCronTasks @Inject() (
     // Обработать найденные запросы размещения.
     for (advsReq <- advsReqFut) {
       for (mar <- advsReq) {
-        mmpDailyBilling.acceptAdvReq(mar, isAuto = true)
+        advDirectBilling.acceptAdvReq(mar, isAuto = true)
       }
     }
   }

@@ -26,6 +26,9 @@ object MCalTypes extends EnumMaybeWithName with EnumJsonReadsT {
     /** Опциональное код дня окончания периода. */
     def dayEnd: Option[String]
 
+    /** Костыль к jollyday для weekend-календарей, которые не могут описывать все выходные в году как праздники. */
+    def maybeWeekend(dow: Int, weekEndDays: Set[Int]): Boolean = false
+
   }
 
   override type T = Val
@@ -42,6 +45,10 @@ object MCalTypes extends EnumMaybeWithName with EnumJsonReadsT {
     override def name     = "Weekend"
     override def dayStart = Some("fr")
     override def dayEnd   = Some("su")
+
+    override def maybeWeekend(dow: Int, weekEndDays: Set[Int]): Boolean = {
+      weekEndDays.contains(dow)
+    }
   }
 
   /** Прайм-тайм шоппинга. */

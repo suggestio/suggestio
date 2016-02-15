@@ -8,9 +8,8 @@ import io.suggest.mbill2.m.item.{MItem, MItems}
 import models.MPrice
 import models.adv.gtag.IAdvGeoTagsInfo
 import models.mproj.ICommonDi
+import models.mtag.MTagBinded
 import util.billing.Bill2Util
-
-import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -21,7 +20,7 @@ import scala.concurrent.Future
 class GeoTagAdvBillUtil @Inject() (
   bill2Util                           : Bill2Util,
   mItems                              : MItems,
-  mCommonDi                           : ICommonDi
+  val mCommonDi                       : ICommonDi
 ) {
 
   import mCommonDi._
@@ -29,10 +28,9 @@ class GeoTagAdvBillUtil @Inject() (
 
 
   /** Посчитать стоимость размещения. */
-  def computePrice(res: IAdvGeoTagsInfo): Future[MPrice] = {
+  def computePriceOne(tag: MTagBinded, res: IAdvGeoTagsInfo): MPrice = {
     // TODO Запилить систему подсчета стоимости размещения.
-    val p = bill2Util.zeroPrice.copy(amount = 1.0)
-    Future.successful(p)
+    bill2Util.zeroPrice.copy(amount = 1.0)
   }
 
   /**
@@ -44,14 +42,14 @@ class GeoTagAdvBillUtil @Inject() (
     * @param res     Данные по размещаемым тегам.
     * @return Фьючерс c результатом.
     */
-  def addToOrder(orderId: Gid_t, producerId: String, adId: String, price: MPrice, res: IAdvGeoTagsInfo): Future[Seq[MItem]] = {
+  def addToOrder(orderId: Gid_t, producerId: String, adId: String, res: IAdvGeoTagsInfo): DBIOAction[Seq[MItem], NoStream, Effect.Write] = {
     // Собираем экшен заливки item'ов. Один тег -- один item.
     val mitemsActs = for (tag <- res.tags.toSeq) yield {
       val itm0 = MItem(
         orderId       = orderId,
         iType         = MItemTypes.GeoTag,
         status        = MItemStatuses.Draft,
-        price         = price,
+        price         = computePriceOne(tag, res),
         adId          = adId,
         prodId        = producerId,
         dtIntervalOpt = Some(res.interval),
@@ -62,10 +60,7 @@ class GeoTagAdvBillUtil @Inject() (
       mItems.insertOne(itm0)
     }
 
-    val dbioAction = DBIO.sequence(mitemsActs)
-
-    // Запустить сохранение нового item'а.
-    dbConfig.db.run(dbioAction.transactionally)
+    DBIO.sequence(mitemsActs)
   }
 
 }

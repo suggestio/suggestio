@@ -29,8 +29,10 @@ class TfDailyUtil @Inject()(
 
   import mCommonDi._
 
-  def VERY_DEFAULT = {
-    val clause = MDayClause("Будни", 1.0)
+  def VERY_DEFAULT_WEEKDAY_CLAUSE = MDayClause("Будни", 1.0)
+
+  def VERY_DEFAULT_FT = {
+    val clause = VERY_DEFAULT_WEEKDAY_CLAUSE
     MDailyTf(
       currencyCode  = CurrencyCodeDflt.currencyCode,
       clauses       = Map(
@@ -81,14 +83,26 @@ class TfDailyUtil @Inject()(
   }
 
 
-  /** Вернуть тариф только если узел является ресивером. */
-  def rcvrNodeTf(mnode: MNode): Future[Option[MDailyTf]] = {
-    if (mnode.extras.adn.exists(_.isReceiver)) {
-      nodeTf(mnode)
-        .map(EmptyUtil.someF)
-    } else {
-      Future.successful(None)
+  /** Собрать карту тарифов для узлов. */
+  def getNodesTfsMap(nodes: TraversableOnce[MNode]): Future[Map[String, MDailyTf]] = {
+    for {
+      dailyTfsOpts  <- Future.traverse(nodes) { mnode =>
+        for (tf <- nodeTf(mnode)) yield {
+          mnode.id.get -> tf
+        }
+      }
+    } yield {
+      dailyTfsOpts
+        .toIterator
+        .toMap
     }
+  }
+
+  def tfsMap2calIds(tfsMap: Map[String, MDailyTf]): Set[String] = {
+    tfsMap
+      .valuesIterator
+      .flatMap(_.calIdsIter)
+      .toSet
   }
 
   /** Вернуть тариф размещения для узла. */
@@ -108,7 +122,7 @@ class TfDailyUtil @Inject()(
       for (cbcaNodeOpt <- mNodeCache.getById( bill2Util.CBCA_NODE_ID )) yield {
         cbcaNodeOpt
           .flatMap(_.billing.tariffs.daily)
-          .getOrElse( VERY_DEFAULT )
+          .getOrElse( VERY_DEFAULT_FT )
       }
     }
   }

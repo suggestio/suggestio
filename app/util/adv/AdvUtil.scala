@@ -10,8 +10,8 @@ import models.adv.{MAdvReq, MAdvOk}
 import models.mproj.ICommonDi
 import org.joda.time.DateTime
 import util.PlayMacroLogsImpl
+import util.adv.direct.AdvDirectBilling
 import util.async.AsyncUtil
-import util.billing.MmpDailyBilling
 import util.n2u.N2NodesUtil
 
 import scala.concurrent.Future
@@ -24,10 +24,10 @@ import scala.concurrent.Future
  */
 @Singleton
 class AdvUtil @Inject() (
-  mmpDailyBilling         : MmpDailyBilling,
-  advTownCoverageRcvrs    : AdvTownCoverageRcvrs,
-  n2NodesUtil             : N2NodesUtil,
-  mCommonDi               : ICommonDi
+                          mmpDailyBilling         : AdvDirectBilling,
+                          advTownCoverageRcvrs    : AdvTownCoverageRcvrs,
+                          n2NodesUtil             : N2NodesUtil,
+                          mCommonDi               : ICommonDi
 )
   extends PlayMacroLogsImpl
 {

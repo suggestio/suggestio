@@ -19,7 +19,8 @@ import scala.concurrent.Future
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 03.02.16 19:17
-  * Description: Контроллер биллинга поколения биллинга в личном кабинете.
+  * Description: Контроллер биллинга второго поколения в личном кабинете.
+  * Прошлый контроллер назывался MarketLkBilling.
   */
 class LkBill2 @Inject() (
   tfDailyUtil                 : TfDailyUtil,
@@ -39,30 +40,23 @@ class LkBill2 @Inject() (
   import mCommonDi._
 
   private def _dailyTfArgsFut(mnode: MNode): Future[Option[MDailyTfTplArgs]] = {
-    val dailyTfArgsOrExFut = for {
-      // Получить данные по тарифу.
-      dailyTfOpt <- tfDailyUtil.rcvrNodeTf( mnode )
-      dailyTf = dailyTfOpt.get
-      // Прочитать календари, относящиеся к тарифу.
-      calsMap <- {
-        val calIds = dailyTf
-          .clauses.valuesIterator
-          .flatMap(_.calId)
-          .toSet
-
-        mCalendars.multiGetMap(calIds)
+    if (mnode.extras.adn.exists(_.isReceiver)) {
+      for {
+        // Получить данные по тарифу.
+        dailyTf   <- tfDailyUtil.nodeTf( mnode )
+        // Прочитать календари, относящиеся к тарифу.
+        calsMap   <- mCalendars.multiGetMap( dailyTf.calIds )
+      } yield {
+        val args1 = MDailyTfTplArgs(
+          mnode   = mnode,
+          dailyTf = dailyTf,
+          calsMap = calsMap
+        )
+        Some(args1)
       }
-    } yield {
-      val args1 = MDailyTfTplArgs(
-        mnode   = mnode,
-        dailyTf = dailyTf,
-        calsMap = calsMap
-      )
-      Some(args1)
-    }
-    dailyTfArgsOrExFut.recover {
-      case _: NoSuchElementException =>
-        None
+
+    } else {
+      Future.successful(None)
     }
   }
 

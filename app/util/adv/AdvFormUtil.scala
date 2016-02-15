@@ -35,29 +35,6 @@ class AdvFormUtil {
   }
 
 
-  /** Маппинг для вертикальных уровней отображения. */
-  def adSlsM: Mapping[Set[AdShowLevel]] = {
-    val b = boolean
-    mapping(
-      "onStartPage" -> b,
-      "onRcvrCat"   -> b
-    )
-    {(onStartPage, onRcvrCat) =>
-      var acc = List[AdShowLevel](AdShowLevels.LVL_PRODUCER, AdShowLevels.LVL_START_PAGE)
-      if (onStartPage)
-        acc ::= AdShowLevels.LVL_START_PAGE
-      if (onRcvrCat)
-        acc ::= AdShowLevels.LVL_CATS
-      acc.toSet
-    }
-    {adSls =>
-      val onStartPage = adSls contains AdShowLevels.LVL_START_PAGE
-      val onRcvrCat = adSls contains AdShowLevels.LVL_CATS
-      Some((onStartPage, onRcvrCat))
-    }
-  }
-
-
   /** Маппинг для интервала дат размещения. Его точно нельзя заворачивать в val из-за LocalDate.now(). */
   def advDatePeriodOptM: Mapping[Option[(LocalDate, LocalDate)]] = {
     // option используется, чтобы избежать ошибок маппинга, если галочка isAdv убрана для текущего ресивера, и дата не выставлена одновременно.

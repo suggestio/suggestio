@@ -51,7 +51,9 @@ trait LkBill2Cart
     // Найти ордер-корзину юзера в базе биллинга:
     val cartOptFut = mcIdOptFut.flatMap { mcIdOpt =>
       FutureUtil.optFut2futOpt(mcIdOpt) { mcId =>
-        bill2Util.getCartOrder(mcId)
+        dbConfig.db.run {
+          bill2Util.getCartOrder(mcId)
+        }
       }
     }
 

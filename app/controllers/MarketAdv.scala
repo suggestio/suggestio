@@ -1,9 +1,11 @@
 package controllers
 
-import java.sql.SQLException
-
 import com.google.inject.Inject
 import io.suggest.adv.direct.AdvDirectFormConstants
+import io.suggest.mbill2.m.item.MItems
+import io.suggest.mbill2.m.item.status.MItemStatuses
+import io.suggest.mbill2.m.order.MOrderWithItems
+import io.suggest.model.common.OptId
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models._
 import models.adv._
@@ -17,9 +19,11 @@ import play.api.libs.json.{JsString, Json}
 import play.api.mvc.{AnyContent, Result}
 import util.PlayMacroLogsImpl
 import util.acl._
+import util.adv.direct.AdvDirectBilling
 import util.adv.{AdvFormUtil, CtlGeoAdvUtil, DirectAdvFormUtil}
 import util.async.AsyncUtil
-import util.billing.{Bill2Util, MmpDailyBilling}
+import util.billing.{TfDailyUtil, Bill2Util}
+import util.cal.CalendarUtil
 import views.html.lk.adv.direct._
 import views.html.lk.adv.widgets.period._reportTpl
 import views.html.lk.lkwdgts.price._
@@ -36,11 +40,14 @@ import scala.concurrent.Future
  */
 class MarketAdv @Inject() (
   override val canAdvAdUtil       : CanAdvertiseAdUtil,
-  mmpDailyBilling                 : MmpDailyBilling,
+  advDirectBilling                : AdvDirectBilling,
   ctlGeoAdvUtil                   : CtlGeoAdvUtil,
   directAdvFormUtil               : DirectAdvFormUtil,
   advFormUtil                     : AdvFormUtil,
   bill2Util                       : Bill2Util,
+  mItems                          : MItems,
+  tfDailyUtil                     : TfDailyUtil,
+  calendarUtil                    : CalendarUtil,
   override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
@@ -59,7 +66,7 @@ class MarketAdv @Inject() (
     val res = FormResult()
     val formFilled = form0.fill(res)
     // Запускаем остальной рендер
-    renderAdvForm(adId, formFilled, Ok)
+    renderAdvForm(formFilled, Ok)
   }
 
   /** Класс-контейнер для передачи результатов ряда операций с adv/bill-sql-моделями в renderAdvForm(). */
@@ -71,7 +78,8 @@ class MarketAdv @Inject() (
 
   /**
    * Очень асинхронно прочитать инфу по текущим размещениям карточки, вернув контейнер результатов.
-   * @param adId id рекламной карточки.
+    *
+    * @param adId id рекламной карточки.
    * @param limit Необязательный лимит.
    * @return Фьючерс с контейнером результатов.
    */
@@ -89,12 +97,12 @@ class MarketAdv @Inject() (
 
   /**
    * Рендер страницы с формой размещения. Сбор и подготовка данных для рендера идёт очень параллельно.
-   * @param adId id рекламной карточки.
+   *
    * @param form Форма размещения рекламной карточки.
    * @param rcvrsAllFutOpt Опционально: асинхронный список ресиверов. Экшен контроллера может передавать его сюда.
    * @return Отрендеренная страница управления карточкой с формой размещения.
    */
-  private def renderAdvForm(adId: String, form: DirectAdvFormM_t, rs: Status, rcvrsAllFutOpt: Option[Future[Seq[MNode]]] = None)
+  private def renderAdvForm(form: DirectAdvFormM_t, rs: Status, rcvrsAllFutOpt: Option[Future[Seq[MNode]]] = None)
                            (implicit request: IAdProdReq[AnyContent]): Future[Result] = {
     // Если поиск ресиверов ещё не запущен, то сделать это.
     val rcvrsAllFut = rcvrsAllFutOpt.getOrElse {
@@ -106,6 +114,8 @@ class MarketAdv @Inject() (
         .map { rcvr  =>  rcvr.id.get -> rcvr }
         .toMap
     }
+
+    val adId = request.mad.id.get
 
     // Для сокрытия узлов, которые не имеют тарифного плана, надо получить список тех, у кого он есть.
     val adnIdsReadyFut = ctlGeoAdvUtil.findAdnIdsMmpReady()
@@ -273,7 +283,7 @@ class MarketAdv @Inject() (
     }
   }
 
-  private def maybeFreeAdv(implicit request: IReq[_]): Boolean = {
+  private def maybeFreeAdv()(implicit request: IReq[_]): Boolean = {
     // Раньше было ограничение на размещение с завтрашнего дня, теперь оно снято.
     val isFreeOpt = advFormUtil.freeAdvFormM
       .bindFromRequest()
@@ -283,10 +293,11 @@ class MarketAdv @Inject() (
 
   /**
     * Рассчитать цену размещения. Сюда нужно сабмиттить форму также, как и в advFormSubmit().
+    *
     * @param adId id размещаемой рекламной карточки.
     * @return Инлайновый рендер отображаемой цены.
     */
-  def getAdvPriceSubmit(adId: String) = CanAdvertiseAdPost(adId).async { implicit request =>
+  def getAdvPriceSubmit(adId: String) = CanAdvertiseAdPost(adId, U.Balance).async { implicit request =>
     directAdvFormUtil.advForm.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"getAdvPriceSubmit($adId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
@@ -294,8 +305,11 @@ class MarketAdv @Inject() (
       },
       {formRes =>
         // Подготовить данные для рассчета стоимости размещения.
-        val allRcvrIdsFut = collectAllReceivers(request.producer)
-          .map { _.iterator.flatMap(_.id).toSet }
+        val allRcvrIdsFut = for (rcvrs <- collectAllReceivers(request.producer)) yield {
+          rcvrs.iterator
+            .flatMap(_.id)
+            .toSet
+        }
 
         val adves = _formRes2adves(formRes)
         val adves2Fut = for {
@@ -305,17 +319,26 @@ class MarketAdv @Inject() (
           filterEntiesByPossibleRcvrs(adves1, allRcvrIds)
         }
 
+        // Убедиться, что чтение балансов текущего юзера точно уже процессе (U.Balance)
+        val userBalancesFut = request.user.mBalancesFut
+
         // Начинаем рассчитывать ценник.
         val priceValHtmlFut = for {
-          adves2      <- adves2Fut
-          advPricing  <- {
-            if (adves2.isEmpty || maybeFreeAdv) {
-              Future.successful( bill2Util.zeroPricing )
+          adves2  <- adves2Fut
+          prices  <- {
+            if (adves2.isEmpty || maybeFreeAdv()) {
+              Future.successful( Seq.empty )
             } else {
-              mmpDailyBilling.getAdvPrices(request.mad, adves2)
+              for {
+                allPrices <- advDirectBilling.getAdvPrices(request.mad, adves2)
+              } yield {
+                MPrice.sumPricesByCurrency(allPrices).toSeq
+              }
             }
           }
+          userBalances <- userBalancesFut
         } yield {
+          val advPricing = advDirectBilling.getAdvPricing(prices, userBalances)
           val html = _priceValTpl(advPricing)
           html: JsString
         }
@@ -338,6 +361,7 @@ class MarketAdv @Inject() (
 
 
   /** Фильтрация присланного списка запросов на публикацию по уже размещённым adv.
+    *
     * @param adId id размещаемой рекламной карточки.
     * @param adves Результат сабмита формы advFormM.
     * @return Новый adves, который НЕ содержит уже размещаемые карточки.
@@ -382,13 +406,13 @@ class MarketAdv @Inject() (
     * Это наследие, надо будет его удалить, используя FormResult напрямую. */
   private def _formRes2adves(formRes: FormResult): List[AdvFormEntry] = {
     formRes.nodes.foldLeft(List.empty[AdvFormEntry]) {
-      case (acc, OneNodeInfo(adnId, isAdv, adSls) ) =>
-        val ssls = for(sl <- adSls) yield {
+      case (acc, oni) =>
+        val ssls = for(sl <- oni.sls) yield {
           SinkShowLevels.withArgs(AdnSinks.SINK_GEO, sl)
         }
         val result = AdvFormEntry(
-          adnId       = adnId,
-          advertise   = isAdv,
+          adnId       = oni.adnId,
+          advertise   = oni.isAdv,
           showLevels  = ssls,
           dateStart   = formRes.period.dateStart,
           dateEnd     = formRes.period.dateEnd
@@ -398,61 +422,84 @@ class MarketAdv @Inject() (
   }
 
   /** Сабмит формы размещения рекламной карточки. */
-  def advFormSubmit(adId: String) = CanAdvertiseAdPost(adId).async { implicit request =>
+  def advFormSubmit(adId: String) = CanAdvertiseAdPost(adId, U.Contract, U.PersonNode).async { implicit request =>
     lazy val logPrefix = s"advFormSubmit($adId): "
     val formBinded = directAdvFormUtil.advForm.bindFromRequest()
     formBinded.fold(
       {formWithErrors =>
         debug(s"${logPrefix}form bind failed:\n${formatFormErrors(formWithErrors)}")
-        renderAdvForm(adId, formWithErrors, NotAcceptable)
+        renderAdvForm(formWithErrors, NotAcceptable)
       },
       {formRes =>
         val adves = _formRes2adves(formRes)
+        val adves2Fut = filterEntiesByBusyRcvrs(adId, adves)
 
-        trace(logPrefix + "adves entries submitted: " + adves)
         // Перед сохранением надо проверить возможности публикации на каждый узел.
         // Получаем в фоне все возможные узлы-ресиверы.
-        val allRcvrsFut = collectAllReceivers(request.producer)
-        val advs2Fut = for {
-          advs1     <- filterEntiesByBusyRcvrs(adId, adves)
-          allRcvrs  <- allRcvrsFut
-        } yield {
-          val allRcvrIds = allRcvrs.iterator.map(_.id.get).toSet
-          filterEntiesByPossibleRcvrs(advs1, allRcvrIds)
+        val rcvrsFut = {
+          val ids = formRes.nodeIdsIter
+            .filter { id => !request.producer.id.contains(id) }
+          collectRcvrsFromIds(ids)
         }
-        advs2Fut.flatMap { advs2 =>
+
+        trace(logPrefix + "adves entries submitted: " + adves)
+
+        val adves3Fut = for {
+          adves2    <- adves2Fut
+          rcvrs     <- rcvrsFut
+        } yield {
+          val allRcvrIds = OptId.els2idsSet(rcvrs)
+          filterEntiesByPossibleRcvrs(adves2, allRcvrIds)
+        }
+
+        adves3Fut.flatMap { advs2 =>
           // Пора сохранять новые реквесты на размещение в базу.
           if (advs2.nonEmpty) {
-            val isFree = maybeFreeAdv
-            try {
-              // В зависимости от настроек размещения
-              val successMsgFut: Future[String] = {
-                if (isFree) {
-                  mmpDailyBilling.mkAdvsOk(request.mad, advs2)
-                    .map { _ => "Ads.were.adv" }
-                } else {
-                  mmpDailyBilling.mkAdvReqs(request.mad, advs2)
-                    .map { _ => "Adv.reqs.sent" }
-                }
-              }
-              successMsgFut map { successMsg =>
-                Redirect(routes.MarketAdv.advForAd(adId))
-                  .flashing(FLASH.SUCCESS -> successMsg)
-              }
-
-            } catch {
-              case ex: SQLException =>
-                warn(s"advFormSumbit($adId): Failed to commit adv transaction for advs:\n " + advs2, ex)
-                // Для бесплатной инжекции: сгенерить экзепшен, чтобы привелегированному юзеру код ошибки отобразился на экране.
-                if (isFree) throw ex
-                val formWithErrors = formBinded.withGlobalError("error.no.money")
-                renderAdvForm(adId, formWithErrors, NotAcceptable, Some(allRcvrsFut))
+            val isFree = maybeFreeAdv()
+            val (status, successMsg) = if (isFree) {
+              (MItemStatuses.Offline, "Ads.were.adv")
+            } else {
+              (MItemStatuses.Draft, "Adv.reqs.sent")
             }
+
+            val personContractFut = request.user.personNodeFut.flatMap { personNode =>
+              bill2Util.ensureNodeContract(personNode, request.user.mContractOptFut)
+            }
+
+            for {
+              rcvrs     <- rcvrsFut
+              // Подготовить данные для рассчета стоимостей item'ов
+              tfsMap    <- tfDailyUtil.getNodesTfsMap(rcvrs)
+              mcalsCtx  <- {
+                val calIds = tfDailyUtil.tfsMap2calIds(tfsMap)
+                calendarUtil.getCalsCtx(calIds)
+              }
+              // Собрать данные для биллинга, которые должны бы собраться уже
+              personContract    <- personContractFut
+              // Залезть наконец в базу биллинга, сохранив в корзинк добавленные размещения...
+              billRes <- {
+                val dbAction = for {
+                  cartOrder <- bill2Util.ensureCart( personContract.mc.id.get )
+                  itemsSaved <- {
+                    val items0 = advDirectBilling.mkAdvReqItems(cartOrder.id.get, request.mad, advs2, status, tfsMap, mcalsCtx)
+                    mItems.insertMany(items0)
+                  }
+                } yield {
+                  MOrderWithItems(cartOrder, itemsSaved)
+                }
+                import dbConfig.driver.api._
+                dbConfig.db.run( dbAction.transactionally )
+              }
+            } yield {
+              Redirect(routes.MarketAdv.advForAd(adId))
+                .flashing(FLASH.SUCCESS -> successMsg)
+            }
+
           } else {
             Redirect(routes.MarketAdv.advForAd(adId))
               .flashing(FLASH.SUCCESS -> "No.changes")
           }
-        }(AsyncUtil.jdbcExecutionContext)
+        }
       }
     )
   }
@@ -460,7 +507,8 @@ class MarketAdv @Inject() (
 
   /** Собрать все узлы сети, пригодные для размещения рекламной карточки. */
   private def collectAllReceivers(producer: MNode): Future[Seq[MNode]] = {
-    // TODO Этот запрос возвращает огромный список нод, которые рендерятся в огромный список. Надо переверстать эти шаблоны.
+    // TODO Этот запрос возвращает огромный список нод, которые рендерятся в огромный список.
+    // Надо переверстать эти шаблоны, искать ноды по ajax в рамках гео-регионов и категорий/тегов этих нод.
     val isTestOpt = producer.extras.adn.map(_.testNode)
     if ( isTestOpt.contains(true) )
       LOGGER.debug(s"collectAllReceivers(${producer.id.get}): Searching for isolated nodes with isTest = true")
@@ -473,6 +521,23 @@ class MarketAdv @Inject() (
       override def nodeTypes      = Seq( MNodeTypes.AdnNode )
     }
     MNode.dynSearch( msearch )
+  }
+
+
+  private def collectRcvrsFromIds(ids: TraversableOnce[String]): Future[Seq[MNode]] = {
+    for (mnodes <- mNodeCache.multiGet(ids)) yield {
+      collectRcvrsFromNodes(mnodes)
+    }
+  }
+
+  private def collectRcvrsFromNodes(mnodes: TraversableOnce[MNode]): Seq[MNode] = {
+    mnodes
+      .toIterator
+      .filter { mnode =>
+        mnode.extras.adn.exists(_.rights.contains(AdnRights.RECEIVER)) &&
+          mnode.common.ntype == MNodeTypes.AdnNode
+      }
+      .toSeq
   }
 
 

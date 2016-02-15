@@ -1,6 +1,6 @@
 package models.adv
 
-import org.joda.time.LocalDate
+import org.joda.time.{Interval, LocalDate}
 
 /**
  * Suggest.io
@@ -11,6 +11,13 @@ import org.joda.time.LocalDate
 trait IAdvTerms extends SinkShowLevelsFilters {
   def dateStart: LocalDate
   def dateEnd: LocalDate
+
+  def dtStart = dateStart.toDateTimeAtStartOfDay
+  // TODO Как-то так получилось, что на обе даты размещается включительно
+  def dtEnd   = dateEnd.plusDays(1).toDateTimeAtStartOfDay.minusSeconds(1)
+
+  def dtInterval = new Interval(dtStart, dtEnd)
+
 }
 
 
