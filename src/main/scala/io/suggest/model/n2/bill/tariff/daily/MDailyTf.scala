@@ -77,4 +77,13 @@ case class MDailyTf(
 
   def currency = Currency.getInstance(currencyCode)
 
+  def calIdsIter: Iterator[String] = {
+    clauses
+      .valuesIterator
+      .flatMap(_.calId)
+  }
+  def calIds: Set[String] = {
+    calIdsIter.toSet
+  }
+
 }
