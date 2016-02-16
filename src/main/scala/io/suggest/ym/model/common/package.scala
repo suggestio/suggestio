@@ -1,5 +1,7 @@
 package io.suggest.ym.model
 
+import io.suggest.model.sc.common.AdShowLevel
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>

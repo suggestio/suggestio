@@ -6,7 +6,6 @@ import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.util.SioConstants._
 import io.suggest.util.SioEsUtil._
 import io.suggest.util._
-import io.suggest.ym.model._
 import io.suggest.ym.model.stat._
 import org.elasticsearch.action.get.GetResponse
 import org.elasticsearch.action.search.SearchResponse
@@ -37,7 +36,7 @@ object EsModelUtil extends MacroLogsImpl {
 
   /** Список ES-моделей. Нужен для удобства массовых maintance-операций. Расширяется по мере роста числа ES-моделей. */
   def ES_MODELS = List[EsModelCommonStaticT] (
-    MCompany, MAdStat
+    MAdStat
   )
 
 
@@ -108,8 +107,6 @@ object EsModelUtil extends MacroLogsImpl {
 
 
   // Имена полей в разных хранилищах. НЕЛЬЗЯ менять их значения.
-  val NAME_ESFN         = "name"
-  val PARENT_ID_ESFN    = "parentId"
   val PERSON_ID_ESFN    = "personId"
   val KEY_ESFN          = "key"
   val VALUE_ESFN        = "value"
@@ -144,41 +141,49 @@ object EsModelUtil extends MacroLogsImpl {
       .mkString("[",  ",\n",  "]")
   }
 
+  private def _parseEx(as: String, v: Any = null) = {
+    throw new IllegalArgumentException(s"unable to parse '$v' as $as.")
+  }
 
   // ES-выхлопы страдают динамической типизацией, поэтому нужна коллекция парсеров для примитивных типов.
   // Следует помнить, что любое поле может быть списком значений.
   val intParser: PartialFunction[Any, Int] = {
-    case null => ???
+    case n @ null => _parseEx("int")
     case is: jl.Iterable[_] =>
       intParser(is.head.asInstanceOf[AnyRef])
     case i: Integer => i.intValue()
   }
   val longParser: PartialFunction[Any, Long] = {
-    case null => ???
+    case n @ null =>
+      _parseEx("long")
     case ls: jl.Iterable[_] =>
       longParser(ls.head.asInstanceOf[AnyRef])
     case l: jl.Number => l.longValue()
   }
   val floatParser: PartialFunction[Any, Float] = {
-    case null               => ???
+    case null =>
+      _parseEx("float")
     case fs: jl.Iterable[_] =>
       floatParser(fs.head.asInstanceOf[AnyRef])
     case f: jl.Number => f.floatValue()
   }
   val doubleParser: PartialFunction[Any, Double] = {
-    case null               => ???
+    case n @ null =>
+      _parseEx("double", n)
     case fs: jl.Iterable[_] =>
       doubleParser(fs.head.asInstanceOf[AnyRef])
     case f: jl.Number => f.doubleValue()
   }
   val stringParser: PartialFunction[Any, String] = {
-    case null => null
+    case null =>
+      _parseEx("string")
     case strings: jl.Iterable[_] =>
       stringParser(strings.head.asInstanceOf[AnyRef])
     case s: String  => s
   }
   val booleanParser: PartialFunction[Any, Boolean] = {
-    case null => ???
+    case null =>
+      _parseEx("bool")
     case bs: jl.Iterable[_] =>
       booleanParser(bs.head.asInstanceOf[AnyRef])
     case b: jl.Boolean => b.booleanValue()

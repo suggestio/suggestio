@@ -11,4 +11,6 @@ package object common {
 
   type AdShowLevel   = AdShowLevels.T
 
+  type LvlMap_t = Map[AdShowLevel, Int]
+
 }

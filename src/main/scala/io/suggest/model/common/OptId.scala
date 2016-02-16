@@ -9,8 +9,10 @@ package io.suggest.model.common
   */
 
 trait OptId[Id_t] {
+
   /** id текущего инстанса модели. */
   def id: Option[Id_t]
+
 }
 
 
@@ -27,9 +29,32 @@ object OptId {
       .flatMap(_.id)
   }
 
+  /** Приведение коллекции инстансов ко множеству id'шников. */
   def els2idsSet[Id_t](els: TraversableOnce[OptId[Id_t]]): Set[Id_t] = {
     els2ids(els)
       .toSet
+  }
+
+
+  /**
+    * Приведение списка элементов к карте по id.
+    * Типы, скорее всего, придётся описывать вручную при каждом вызове.
+    *
+    * @param els Исходный список элементов.
+    * @tparam Id_t Тип используемого в коллекции id.
+    * @tparam T Тип элемента.
+    * @return Карта элементов, где ключ -- это id.
+    *         Если id был пуст, то элемент будет отсутствовать в карте.
+    */
+  def els2idMap[Id_t, T <: OptId[Id_t]](els: TraversableOnce[T]): Map[Id_t, T] = {
+    els
+      .toIterator
+      .flatMap { el =>
+        for (id <- el.id) yield {
+          id -> el
+        }
+      }
+      .toMap
   }
 
 }
