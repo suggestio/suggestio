@@ -1,29 +1,26 @@
 package util
 
+import java.net.{MalformedURLException, URL}
+import java.util.Currency
+
 import io.suggest.common.menum.{EnumMaybeWithId, EnumMaybeWithName, EnumValue2Val}
 import io.suggest.model.geo.{CircleGs, Distance}
 import io.suggest.model.n2.node.meta.colors.MColorData
-import io.suggest.ym.model.common.ShowLevelLimits.LvlMap_t
+import io.suggest.model.sc.common.LvlMap_t
+import io.suggest.util.{DateParseUtil, UrlUtil, UuidUtil}
+import io.suggest.ym.YmParsers
 import io.suggest.ym.model.common.MImgSizeT
+import models._
 import models.blk.SzMult_t
-import models.mbill.BTariffTypes
-import models.stat.{ScStatActions, ScStatAction}
 import org.apache.commons.lang3.StringEscapeUtils
 import org.elasticsearch.common.unit.DistanceUnit
-import play.api.data.Forms._
-import java.net.{MalformedURLException, URL}
-import io.suggest.util.{UuidUtil, DateParseUtil, UrlUtil}
-import gnu.inet.encoding.IDNA
-import HtmlSanitizer._
-import play.api.data.Mapping
-import org.joda.time.{DateTimeZone, Period, LocalDate}
-import io.suggest.ym.YmParsers
 import org.joda.time.format.ISOPeriodFormat
-import models._
+import org.joda.time.{DateTimeZone, LocalDate, Period}
 import org.postgresql.util.PGInterval
-import java.sql.SQLException
+import play.api.data.Forms._
+import play.api.data.Mapping
 import play.api.i18n.Lang
-import java.util.Currency
+import util.HtmlSanitizer._
 
 /**
  * Suggest.io
@@ -379,7 +376,7 @@ object FormUtil {
 
   /** ISO-период в виде стандартной строки P1Y3M... */
   def isoPeriodM: Mapping[Period] = {
-    import YmParsers.{parse, ISO_PERIOD_PARSER}
+    import YmParsers.{ISO_PERIOD_PARSER, parse}
     val formatter = ISOPeriodFormat.standard()
     text(minLength = 3, maxLength = 64)
       .transform[Option[Period]](

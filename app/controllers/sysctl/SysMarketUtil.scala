@@ -4,6 +4,7 @@ import controllers.SioController
 import io.suggest.model.n2.extra.{MNodeExtras, MSlInfo, MAdnExtra}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBusinessInfo, MAddress, MBasicMeta}
+import io.suggest.model.sc.common.LvlMap_t
 import models._
 import models.mctx.Context
 import models.req.IReqHdr
@@ -11,7 +12,6 @@ import models.usr.EmailActivation
 import play.api.data._, Forms._
 import play.api.i18n.Messages
 import util.FormUtil._
-import io.suggest.ym.model.common.ShowLevelLimits.LvlMap_t
 import util.PlayMacroLogsDyn
 import util.mail.IMailerWrapperDi
 

@@ -17,12 +17,6 @@ import play.api.data.Form
 
 package object models {
 
-  type MCompany             = ym.model.MCompany
-  val  MCompany             = ym.model.MCompany
-
-  type MCompanyMeta         = ym.model.common.MCompanyMeta
-  val  MCompanyMeta         = ym.model.common.MCompanyMeta
-
   type AdShowLevel          = io.suggest.model.sc.common.AdShowLevel
   val  AdShowLevels         = io.suggest.model.sc.common.AdShowLevels
 

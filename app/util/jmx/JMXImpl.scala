@@ -49,7 +49,6 @@ class JMXImpl @Inject() (
       new EmailActivationJmx,
       new EmailPwIdentJmx,
       new MExtIdentJmx,
-      new MCompanyJmx,
       mCalendarJmx,
       siowebEsModelJmx,
       new MRemoteErrorJmx,

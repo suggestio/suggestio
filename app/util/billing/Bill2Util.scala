@@ -508,35 +508,6 @@ class Bill2Util @Inject() (
 
 
   /**
-    * При оплате с балансов юзеров списываются деньги, но списываются они на счёт CBCA.
-    *
-    * @param nodeOpt Узел CBCA, если есть.
-    * @return DB-экшен, возвращающий карту балансов.
-    */
-  private def getBalances(nodeOpt: Option[MNode]): DBIOAction[Map[String,MBalance], NoStream, Effect.Read] = {
-    def logMsg(msg: String) = s"getBalances(${nodeOpt.flatMap(_.id).orNull}): $msg Money income will be lost."
-
-    nodeOpt
-      .flatMap(_.billing.contractId)
-      // map + getOrElse вместо fold чтобы не писать тип возвращаемого значения второй раз.
-      .map { contractId =>
-        for {
-          balances     <- mBalances.findByContractId( contractId ).forUpdate
-        } yield {
-          mBalances.balances2curMap(balances)
-        }
-      }
-      // Should never happen, отработка когда нет CBCA-ноды.
-      .getOrElse {
-        LOGGER.warn( logMsg(s"Node OR it's contractId is missing: $nodeOpt") )
-        DBIO.successful {
-          Map.empty
-        }
-      }
-  }
-
-
-  /**
     * Обработать корзину, т.е. прочитать её и принять какое-то решение, вернув инфу о принятом решении.
     *
     * @param contractId id контракта, на котором висит корзина.

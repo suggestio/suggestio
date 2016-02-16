@@ -110,9 +110,7 @@ class MarketAdv @Inject() (
     }
     // В фоне строим карту ресиверов, чтобы по ней быстро ориентироваться.
     val allRcvrsMapFut = for (rcvrs <- rcvrsAllFut) yield {
-      rcvrs.iterator
-        .map { rcvr  =>  rcvr.id.get -> rcvr }
-        .toMap
+      OptId.els2idMap[String, MNode]( rcvrs )
     }
 
     val adId = request.mad.id.get
@@ -136,12 +134,14 @@ class MarketAdv @Inject() (
     }
 
     // Нужно заодно собрать карту (adnId -> Int), которая отражает целочисленные id узлов в list-маппинге.
-    val adnId2indexMapFut: Future[Map[String, Int]] = for (rcvrs <- rcvrsReadyFut) yield {
+    val adnId2indexMapFut: Future[Map[String, Int]] = for {
+      rcvrs <- rcvrsReadyFut
+    } yield {
       // Карта строится на основе данных из исходной формы и дополняется недостающими adn_id.
       val formIndex2adnIdMap0 = form("node").indexes
         .flatMap { fi => form(s"node[$fi].adnId").value.map(fi -> _) }
         .toMap
-      val missingRcvrIds = rcvrs.flatMap(_.id).toSet -- formIndex2adnIdMap0.valuesIterator
+      val missingRcvrIds = OptId.els2idsSet(rcvrs) -- formIndex2adnIdMap0.valuesIterator
       // Делаем источник допустимых index'ов, которые могут быть в list-mapping'е.
       val indexesIter = (1 to Int.MaxValue)   // TODO с нуля начинать надо отсчет или с единицы?
         .iterator
@@ -207,7 +207,9 @@ class MarketAdv @Inject() (
           (cityNode, cats)
         }
         .zipWithIndex
-        .map { case ((cityNode, cats), i)  =>  MAdvFormCity(cityNode, cats, i) }
+        .map { case ((cityNode, cats), i) =>
+          MAdvFormCity(cityNode, cats, i)
+        }
         .toSeq
         .sortBy(_.node.meta.basic.name)
       }
@@ -306,9 +308,7 @@ class MarketAdv @Inject() (
       {formRes =>
         // Подготовить данные для рассчета стоимости размещения.
         val allRcvrIdsFut = for (rcvrs <- collectAllReceivers(request.producer)) yield {
-          rcvrs.iterator
-            .flatMap(_.id)
-            .toSet
+          OptId.els2idsSet( rcvrs )
         }
 
         val adves = _formRes2adves(formRes)
@@ -452,53 +452,73 @@ class MarketAdv @Inject() (
           filterEntiesByPossibleRcvrs(adves2, allRcvrIds)
         }
 
-        adves3Fut.flatMap { advs2 =>
-          // Пора сохранять новые реквесты на размещение в базу.
-          if (advs2.nonEmpty) {
-            val isFree = maybeFreeAdv()
-            val (status, successMsg) = if (isFree) {
-              (MItemStatuses.Offline, "Ads.were.adv")
-            } else {
-              (MItemStatuses.Draft, "Adv.reqs.sent")
-            }
+        // Начинаем двигаться в сторону сборки ответа...
+        val respFut = for {
+          adves3 <- adves3Fut
+          // С пустым списком размещения ковыряться смысла нет. Исключение будет перехвачено в recover:
+          if adves3.nonEmpty
 
-            val personContractFut = request.user.personNodeFut.flatMap { personNode =>
-              bill2Util.ensureNodeContract(personNode, request.user.mContractOptFut)
-            }
-
-            for {
-              rcvrs     <- rcvrsFut
-              // Подготовить данные для рассчета стоимостей item'ов
-              tfsMap    <- tfDailyUtil.getNodesTfsMap(rcvrs)
-              mcalsCtx  <- {
-                val calIds = tfDailyUtil.tfsMap2calIds(tfsMap)
-                calendarUtil.getCalsCtx(calIds)
+          // Запустить подготовку контракта текущего юзера.
+          personContractFut = {
+            request.user
+              .personNodeFut
+              .flatMap { personNode =>
+                bill2Util.ensureNodeContract(personNode, request.user.mContractOptFut)
               }
-              // Собрать данные для биллинга, которые должны бы собраться уже
-              personContract    <- personContractFut
-              // Залезть наконец в базу биллинга, сохранив в корзинк добавленные размещения...
-              billRes <- {
-                val dbAction = for {
-                  cartOrder <- bill2Util.ensureCart( personContract.mc.id.get )
-                  itemsSaved <- {
-                    val items0 = advDirectBilling.mkAdvReqItems(cartOrder.id.get, request.mad, advs2, status, tfsMap, mcalsCtx)
-                    mItems.insertMany(items0)
-                  }
-                } yield {
-                  MOrderWithItems(cartOrder, itemsSaved)
-                }
-                import dbConfig.driver.api._
-                dbConfig.db.run( dbAction.transactionally )
+          }
+
+          // Синхронно проанализировать состояние галочки бесплатного размещения.
+          isFree = maybeFreeAdv()
+          (status, successMsg) = if (isFree) {
+            (MItemStatuses.Offline, "Ads.were.adv")
+          } else {
+            (MItemStatuses.Draft, "Adv.reqs.sent")
+          }
+
+          rcvrs     <- rcvrsFut
+
+          // Подготовить данные для рассчета стоимостей item'ов
+          tfsMap    <- tfDailyUtil.getNodesTfsMap(rcvrs)
+          mcalsCtx  <- {
+            val calIds = tfDailyUtil.tfsMap2calIds(tfsMap)
+            calendarUtil.getCalsCtx(calIds)
+          }
+
+          // Собрать данные для биллинга, которые должны бы собраться уже
+          personContract    <- personContractFut
+
+          // Залезть наконец в базу биллинга, сохранив в корзинк добавленные размещения...
+          billRes <- {
+            val dbAction = for {
+              cartOrder <- bill2Util.ensureCart( personContract.mc.id.get )
+              itemsSaved <- {
+                val items0 = advDirectBilling.mkAdvReqItems(cartOrder.id.get, request.mad, adves3, status, tfsMap, mcalsCtx)
+                mItems.insertMany(items0)
               }
             } yield {
-              Redirect(routes.MarketAdv.advForAd(adId))
-                .flashing(FLASH.SUCCESS -> successMsg)
+              MOrderWithItems(cartOrder, itemsSaved)
             }
-
-          } else {
-            Redirect(routes.MarketAdv.advForAd(adId))
-              .flashing(FLASH.SUCCESS -> "No.changes")
+            import dbConfig.driver.api._
+            dbConfig.db.run( dbAction.transactionally )
           }
+
+        } yield {
+          // Всё сделано, отредиректить юзера
+          val rdrCall = if (!isFree) {
+            // Обычные юзеры отправляются в корзину.
+            routes.LkBill2.cart(request.producer.id.get, r = Some(routes.LkAdvGeoTag.forAd(adId).url))
+          } else {
+            // Суперюзеры sio отправляются на эту же страницу для дальнейшей возни
+            routes.MarketAdv.advForAd(adId)
+          }
+          Redirect( rdrCall )
+            .flashing(FLASH.SUCCESS -> successMsg)
+        }
+
+        // Если список размещения пуст, то надо вернуть форму.
+        respFut.recover { case ex: NoSuchElementException =>
+          Redirect(routes.MarketAdv.advForAd(adId))
+            .flashing(FLASH.SUCCESS -> "No.changes")
         }
       }
     )

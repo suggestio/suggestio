@@ -11,11 +11,11 @@ import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.model.n2.edge.{MEdgeInfo, MNodeEdges}
 import models._
+import models.mbill.{MBalance => MBalance1, MContract => MContract1, MTxn => MTxn1}
 import models.adv.direct.AdvFormEntry
 import models.adv.tpl.MAdvPricing
 import models.adv.{IAdvTerms, MAdvOk, MAdvRefuse, MAdvReq}
 import models.blk.{BlockHeights, BlockWidths}
-import models.mbill.{MContract => MContract1, _}
 import models.mcal.{ICalsCtx, MCalendars}
 import models.mproj.ICommonDi
 import org.joda.time.DateTimeConstants._
@@ -264,7 +264,7 @@ class AdvDirectBilling @Inject()(
    * @return Сохранённый экземпляр MAdvOk.
    */
   def acceptAdvReq(advReq: MAdvReq, isAuto: Boolean): MAdvOk = {
-    // TODO Переписать на billing v2
+    // TODO Удалить в ходе окончательного переезда cron-задач на billing v2.
     // Надо провести платёж, запилить транзакции для prod и rcvr и т.д.
     val advReqId = advReq.id.get
     lazy val logPrefix = s"acceptAdvReq($advReqId): "
@@ -281,14 +281,14 @@ class AdvDirectBilling @Inject()(
       val amount0 = advReq.amount
 
       // Списать заблокированную сумму:
-      val oldProdMbbOpt = MBalance.getByAdnId(prodAdnId)
+      val oldProdMbbOpt = MBalance1.getByAdnId(prodAdnId)
       assert(oldProdMbbOpt.exists(_.currencyCode == advReq.currencyCode), "producer balance currency does not match to adv request")
-      val prodMbbUpdated = MBalance.updateBlocked(prodAdnId, -amount0)
+      val prodMbbUpdated = MBalance1.updateBlocked(prodAdnId, -amount0)
       assert(prodMbbUpdated == 1, "Failed to debit blocked amount for producer " + prodAdnId)
 
       val now = DateTime.now
       // Запилить единственную транзакцию списания для продьюсера
-      val prodTxn = MTxn(
+      val prodTxn = MTxn1(
         contractId      = prodContract.id.get,
         amount          = -amount0,
         datePaid        = advReq.dateCreated,
@@ -306,7 +306,7 @@ class AdvDirectBilling @Inject()(
       assert(advSsl.valuesIterator.map(_.map(_.sl)).toSet.size == 1, "Different sls for different sinks not yet implemented.")
       // Раньше тут было начисление sc sink comission
       val rcvrTxns = advSsl
-        .foldLeft( List.empty[MTxn] ) { case (acc, (sink, sinkShowLevels)) =>
+        .foldLeft( List.empty[MTxn1] ) { case (acc, (sink, sinkShowLevels)) =>
           acc
         }
       // Сохранить подтверждённое размещение с инфой о платежах.
@@ -335,7 +335,7 @@ class AdvDirectBilling @Inject()(
     val advr = advRefused.save
     // Разблокировать средства на счёте.
     // TODO Нужно ли округлять, чтобы blocked в минус не уходило из-за неточностей float/double?
-    MBalance.blockAmount(advr.prodAdnId, -advr.amount)
+    MBalance1.blockAmount(advr.prodAdnId, -advr.amount)
   }
 
 
