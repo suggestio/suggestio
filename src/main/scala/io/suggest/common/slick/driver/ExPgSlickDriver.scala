@@ -20,8 +20,9 @@ trait ExPgSlickDriverT
   /** Реализация API расширенного slick-pg-драйвера. */
   trait ExPgApiT
     extends API
-    with ArrayImplicits
-    with JodaDateTimeImplicits
+    // slick-pg: Plain-импорты для sql-интерполятора, просто import'ы для lifted api.
+    with ArrayImplicits with SimpleArrayPlainImplicits
+    with JodaDateTimeImplicits with JodaDateTimePlainImplicits
   {
 
     protected val _strArrayTypeMapper = new SimpleArrayJdbcType[String]("text")

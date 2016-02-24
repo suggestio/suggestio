@@ -2,7 +2,7 @@ Common.settingsOrg
 
 name := "common-slick-driver"
 
-version := "0.2.0-SNAPSHOT"
+version := Common.sioSlickDrvVsn
 
 scalacOptions ++= Seq("-unchecked", "-deprecation")
 
