@@ -3,8 +3,6 @@ import io.suggest.model.geo
 import io.suggest.model.n2
 
 import io.suggest.ym
-import models.adv.MAdvModes
-import models.mbill.BTariffTypes
 import models.usr.EmailPwConfirmInfo
 import play.api.data.Form
 
@@ -53,8 +51,6 @@ package object models {
   val  MAdStat              = ym.model.stat.MAdStat
   type MAdStat              = ym.model.stat.MAdStat
 
-  type BTariffType          = BTariffTypes.BTariffType
-
   type SelectPolicy         = SelectPolicies.T
 
   val  BlocksConf           = util.blocks.BlocksConf
@@ -77,8 +73,6 @@ package object models {
 
   val  TextAligns           = io.suggest.model.n2.ad.ent.text.TextAligns
   type TextAlign            = io.suggest.model.n2.ad.ent.text.TextAlign
-
-  type MAdvMode             = MAdvModes.T
 
   type AdnShownType         = AdnShownTypes.T
 

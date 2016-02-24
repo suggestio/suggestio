@@ -3,16 +3,12 @@ package util.event
 import com.google.inject.Inject
 import io.suggest.model.es.{EsModelStaticT, EsModelT}
 import models._
-import models.adv.{MAdvI, MAdvStaticT}
 import models.event._
 import models.event.search.MEventsSearchArgs
 import models.mctx.Context
 import models.mproj.ICommonDi
 import org.joda.time.DateTime
-import play.api.db.DB
 import play.twirl.api.Html
-import util.PlayMacroLogsDyn
-import util.async.AsyncUtil
 
 import scala.concurrent.Future
 
@@ -24,9 +20,7 @@ import scala.concurrent.Future
  */
 class LkEventsUtil @Inject() (
   mCommonDi: ICommonDi
-)
-  extends PlayMacroLogsDyn
-{
+) {
 
   import mCommonDi._
 
@@ -69,40 +63,6 @@ class LkEventsUtil @Inject() (
       case _ => None
     }
     Future successful res
-  }
-
-  /**
-   * MultiGet-чтение одной из adv-моделей в карту (id -> [[MAdvI]]+).
-   * Из модели извлечь только необходимые id'шники.
-   * @param mevents Коллекция событий.
-   * @param model Модель [[models.adv.MAdvStaticT]].
-   * @param getIdF Функция для извлечения id из коллекции.
-   * @tparam T1 Тип экземпляров модели, с которой работаем.
-   * @return Фьючерс с результатами.
-   */
-  def readAdvModel[T1 <: MAdvI](mevents: Iterable[IEvent], model: MAdvStaticT {type T = T1})
-                               (getIdF: IEvent => TraversableOnce[Int]): Future[Map[Int, T1]] = {
-    val allAdvIdsIter = mevents
-      .iterator
-      .flatMap(getIdF)
-    if (allAdvIdsIter.nonEmpty) {
-      // Есть размещения, связанные с исходной коллекцией событий. Прочитать их из БД.
-      val allAdvIds = allAdvIdsIter.toSet.toSeq
-      val resFut = Future {
-        DB.withConnection { implicit c =>
-          model.multigetByIds(allAdvIds)
-        }
-      }(AsyncUtil.jdbcExecutionContext)
-      // Завернуть результаты в карту:
-      resFut.map {
-        _.iterator
-          .map { adv => adv.id.get -> adv }
-          .toMap
-      }
-    } else {
-      // Нечего искать.
-      Future successful Map.empty
-    }
   }
 
 

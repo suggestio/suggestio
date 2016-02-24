@@ -1,5 +1,6 @@
-package models.adv
+package models.adv.direct
 
+import models.SinkShowLevel
 import org.joda.time.{Interval, LocalDate}
 
 /**
@@ -8,7 +9,9 @@ import org.joda.time.{Interval, LocalDate}
  * Created: 02.11.15 16:15
  * Description: Условия размещения с точки зрения юзера.
  */
-trait IAdvTerms extends SinkShowLevelsFilters {
+trait IAdvTerms {
+
+  def showLevels: Set[SinkShowLevel]
   def dateStart: LocalDate
   def dateEnd: LocalDate
 
@@ -19,13 +22,3 @@ trait IAdvTerms extends SinkShowLevelsFilters {
   def dtInterval = new Interval(dtStart, dtEnd)
 
 }
-
-
-trait AdvTermsWrapper extends IAdvTerms {
-  def underlying: IAdvTerms
-
-  override def dateStart = underlying.dateStart
-  override def dateEnd = underlying.dateEnd
-  override def showLevels = underlying.showLevels
-}
-

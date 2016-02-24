@@ -9,8 +9,7 @@ import io.suggest.mbill2.m.item.status.{MItemStatuses, MItemStatus}
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import models._
-import models.adv.IAdvTerms
-import models.adv.direct.{FormResult, AdvFormEntry}
+import models.adv.direct.{IAdvTerms, FormResult, AdvFormEntry}
 import models.adv.tpl.MAdvPricing
 import models.blk.{BlockHeights, BlockWidths}
 import models.mcal.{ICalsCtx, MCalendars}
@@ -56,32 +55,47 @@ class AdvDirectBilling @Inject() (
       .getOrElse( Set(FRIDAY, SATURDAY, SUNDAY) )
   }
 
-
-  /** Поиск занятых ресиверов для карточки среди запрошенных. */
-  def findBusyRcvrs(adId: String, fr: FormResult): DBIOAction[Set[String], NoStream, Effect.Read] = {
-    // Подготовить значения аргументов для вызова экшена
-    val statuses = {
-      import MItemStatuses._
-      Iterator(Online, Offline, AwaitingSioAuto)
-        .map(_.strId)
-        .toSeq
+  /** Довольно грубый метод поиска уже занятых карточкой ресиверов.
+    * Нужно переписать форму, чтобы можно было размещать в незанятые даты. */
+  def findBusyRcvrsMap(adId: String): DBIOAction[Map[String, MItem], NoStream, Effect.Read] = {
+    for {
+      items <- sqlForAd(adId).result
+    } yield {
+      val iter = for {
+        mitem <- items
+        rcvrId <- mitem.rcvrIdOpt
+      } yield {
+        rcvrId -> mitem
+      }
+      iter.toMap
     }
+  }
+
+  private def sqlForAd(adId: String) = {
+    mItems
+      .query
+      .filter { i =>
+        (i.adId === adId) &&
+          (i.iTypeStr === MItemTypes.AdvDirect.strId) &&
+          (i.statusStr inSet MItemStatuses.advBusyIds.toSeq)
+      }
+  }
+
+  /** Поиск занятых ресиверов для карточки среди запрошенных для размещения. */
+  def findBusyRcvrsExact(adId: String, fr: FormResult): DBIOAction[Set[String], NoStream, Effect.Read] = {
+    // Подготовить значения аргументов для вызова экшена
     val dtStart = fr.period.dateStart.toDateTimeAtStartOfDay
     val dtEnd   = fr.period.dateEnd.toDateTimeAtStartOfDay().plusDays(1).minusSeconds(1)
 
     // Сборка логики db-экшена
-    val dbAction = mItems
-      .query
+    val dbAction = sqlForAd(adId)
       .filter { i =>
         // Интересуют только ряды, которые относятся к прямому размещению текущей карточки...
-        (i.adId === adId) &&
-          (i.rcvrIdOpt inSet fr.nodeIdsIter.toSet) &&
-          (i.iTypeStr === MItemTypes.AdvDirect.strId) &&
-          (i.statusStr inSet statuses) && (
-            // Хотя бы одна из дат (start, end) должна попадать в уже занятый период размещения.
-            (i.dateStartOpt <= dtStart && i.dateEndOpt >= dtStart) ||
-            (i.dateStartOpt <= dtEnd   && i.dateEndOpt >= dtEnd)
-          )
+        (i.rcvrIdOpt inSet fr.nodeIdsIter.toSet) && (
+          // Хотя бы одна из дат (start, end) должна попадать в уже занятый период размещения.
+          (i.dateStartOpt <= dtStart && i.dateEndOpt >= dtStart) ||
+          (i.dateStartOpt <= dtEnd   && i.dateEndOpt >= dtEnd)
+        )
       }
       .map { i =>
         i.rcvrIdOpt

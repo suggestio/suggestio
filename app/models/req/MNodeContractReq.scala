@@ -15,7 +15,7 @@ trait INodeContractReq[A]
   with INodeReq[A]
 
 
-/** Реализация модели [[INodeContract1Req]], т.е. реквеста с контрактом и узлом внутри. */
+/** Реализация модели [[INodeContractReq]], т.е. реквеста с контрактом и узлом внутри. */
 case class MNodeContractReq[A](
   override val mnode       : MNode,
   override val mcontract   : MContract,

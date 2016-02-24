@@ -5,9 +5,6 @@ import java.io.{ByteArrayInputStream, StringWriter}
 import com.google.inject.Inject
 import de.jollyday.util.XMLUtil
 import de.jollyday.{HolidayCalendar, HolidayManager}
-import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
-import models._
-import models.mbill.{MContract, MTariffDaily}
 import models.mcal.{MCalTypes, MCalendars, MCalendar}
 import models.mproj.ICommonDi
 import models.req.ICalendarReq

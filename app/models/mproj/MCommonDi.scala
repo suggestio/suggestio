@@ -12,7 +12,6 @@ import models.MNodeCache
 import org.elasticsearch.client.Client
 import play.api.Application
 import play.api.cache.CacheApi
-import play.api.db.Database
 import play.api.db.slick.DatabaseConfigProvider
 import play.api.i18n.MessagesApi
 import util.di._
@@ -39,7 +38,7 @@ trait ICommonDi
   with IActorSystem
   with ICacheApi
   with ICacheApiUtil
-  with IDb
+  //with IDb
   with ISlickDbConfig
   with INodeCache
 {
@@ -54,7 +53,7 @@ trait ICommonDi
   override val actorSystem        : ActorSystem
   override val cache              : CacheApi
   override val cacheApiUtil       : CacheApiUtil
-  override val db                 : Database
+  //override val db                 : Database
   override val mNodeCache         : MNodeCache
   override val _dbConfigProvider   : DatabaseConfigProvider
   override implicit val current   : Application
@@ -73,7 +72,7 @@ class MCommonDi @Inject() (
   override val mNodeCache         : MNodeCache,
   override val sessionUtil        : SessionUtil,
   override val mSioUsers          : MSioUsers,
-  override val db                 : Database, // Anorm, спилить потом.
+  //override val db                 : Database, // Anorm, спилить потом.
   override val _dbConfigProvider   : DatabaseConfigProvider,
   override implicit val current   : Application,
   override implicit val ec        : ExecutionContext,

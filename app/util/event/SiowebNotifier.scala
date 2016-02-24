@@ -1,7 +1,6 @@
 package util.event
 
 import io.suggest.event._
-import models.mbill.DelContractsWhenNodeDeleted
 import util._
 import akka.actor.{Props, ActorRef, ActorRefFactory}
 import akka.util.Timeout
@@ -51,7 +50,6 @@ object SiowebNotifier
     List(
       // TODO inject
       _inj[MNodeCache],
-      _inj[DelContractsWhenNodeDeleted],
       _inj[AdnNodeEvents]
     )
   }

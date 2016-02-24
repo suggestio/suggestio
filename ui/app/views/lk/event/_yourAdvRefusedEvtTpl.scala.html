@@ -14,13 +14,13 @@
   </div>
 
   @messages("refused.adv").
-  @rargs.advRefuseOpt.map { advRef =>
+  @*rargs.advRefuseOpt.map { advRef =>
     <span class="event_err-text">
       @advRef.reason
       /
       @_prettyDate(advRef.dateStatus)
     </span>
-  }
+  }*@
 
   <div class="event_ad-preview">
     @_advAdFrameTpl(rargs)

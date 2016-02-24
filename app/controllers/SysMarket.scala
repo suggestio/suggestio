@@ -9,7 +9,6 @@ import io.suggest.model.n2.edge.MNodeEdges
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models._
-import models.adv.{MAdvI, MAdvOk, MAdvReq}
 import models.mctx.Context
 import models.mproj.ICommonDi
 import models.im.MImgs3
@@ -25,7 +24,6 @@ import util.PlayMacroLogsImpl
 import util.acl._
 import util.adn.NodesUtil
 import util.adv.AdvUtil
-import util.async.AsyncUtil
 import util.lk.LkAdUtil
 import util.mail.IMailerWrapper
 import util.n2u.N2NodesUtil
@@ -502,9 +500,7 @@ class SysMarket @Inject() (
           import dbConfig.driver.api._
           lazy val adIds = mads.flatMap(_.id)
           val q0 = {
-            val statuses = Iterator(MItemStatuses.Online, MItemStatuses.Offline, MItemStatuses.AwaitingSioAuto)
-              .map(_.strId)
-              .toSeq
+            val statuses = MItemStatuses.advBusyIds.toSeq
             mItems.query
               .filter { i =>
                 (i.adId inSet adIds) && (i.statusStr inSet statuses)

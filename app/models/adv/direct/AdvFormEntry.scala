@@ -1,7 +1,6 @@
 package models.adv.direct
 
 import models.SinkShowLevel
-import models.adv.IAdvTerms
 import org.joda.time.LocalDate
 
 /**

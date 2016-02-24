@@ -1,6 +1,6 @@
 package models.adv.direct
 
-import models.adv.MAdvI
+import io.suggest.mbill2.m.item.MItem
 
 
 /** Интерфейс контейнера аргументов для формы размещения на узлах. */
@@ -13,7 +13,7 @@ trait IAdvFormTplArgs {
   def af                : DirectAdvFormM_t
 
   /** Карта уже занятых нод. */
-  def busyAdvs          : Map[String, MAdvI]
+  def busyAdvs          : Map[String, MItem]
 
   /** Модели городов, содержат категории и узлы в оных. */
   def cities            : Seq[MAdvFormCity]
@@ -48,7 +48,7 @@ trait IAdvFormTplArgs {
 case class MAdvFormTplArgs(
   override val adId              : String,
   override val af                : DirectAdvFormM_t,
-  override val busyAdvs          : Map[String, MAdvI],
+  override val busyAdvs          : Map[String, MItem],
   override val cities            : Seq[MAdvFormCity],
   override val adnId2formIndex   : Map[String, Int],
   override val advPeriodsAvail   : Seq[String]

@@ -21,9 +21,9 @@
 
   @messages( "_x.asking.for.adv" )
 
-  @rargs.advReqOpt.map { advReq =>
+  @*rargs.advReqOpt.map { advReq =>
     @_prettyDate(advReq.dateStatus)
-  }
+  }*@
 
   <div class="event_ad-preview">
     @_advAdFrameTpl(rargs)

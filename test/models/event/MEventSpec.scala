@@ -20,10 +20,7 @@ class MEventSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
         argsInfo = ArgsInfo(
           adnIdOpt    = Some("asdasdasd1234"),
           advExtTgIds = Seq("asdasd", "asd3asgasgsadg"),
-          adIdOpt     = Some("asdadsdasdasd42t24t"),
-          advOkIdOpt  = Some(123),
-          advReqIdOpt = Some(666),
-          advRefuseIdOpt = Some(777)
+          adIdOpt     = Some("asdadsdasdasd42t24t")
         ),
         isCloseable = !MEvent.isCloseableDflt,
         isUnseen    = true,

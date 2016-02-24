@@ -2,13 +2,12 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.adv.direct.AdvDirectFormConstants
-import io.suggest.mbill2.m.item.MItems
+import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.order.MOrderWithItems
 import io.suggest.model.common.OptId
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models._
-import models.adv._
 import models.adv.direct._
 import models.adv.tpl.MAdvForAdTplArgs
 import models.jsm.init.MTargets
@@ -20,7 +19,7 @@ import play.api.mvc.{AnyContent, Result}
 import util.PlayMacroLogsImpl
 import util.acl._
 import util.adv.direct.AdvDirectBilling
-import util.adv.{AdvFormUtil, CtlGeoAdvUtil, DirectAdvFormUtil}
+import util.adv.{AdvFormUtil, DirectAdvFormUtil}
 import util.billing.{TfDailyUtil, Bill2Util}
 import util.cal.CalendarUtil
 import views.html.lk.adv.direct._
@@ -40,7 +39,6 @@ import scala.concurrent.Future
 class MarketAdv @Inject() (
   override val canAdvAdUtil       : CanAdvertiseAdUtil,
   advDirectBilling                : AdvDirectBilling,
-  ctlGeoAdvUtil                   : CtlGeoAdvUtil,
   directAdvFormUtil               : DirectAdvFormUtil,
   advFormUtil                     : AdvFormUtil,
   bill2Util                       : Bill2Util,
@@ -68,31 +66,6 @@ class MarketAdv @Inject() (
     renderAdvForm(formFilled, Ok)
   }
 
-  /** Класс-контейнер для передачи результатов ряда операций с adv/bill-sql-моделями в renderAdvForm(). */
-  private case class AdAdvInfoResult(
-    advsOk      : List[MAdvOk],
-    advsReq     : List[MAdvReq],
-    advsRefused : List[MAdvRefuse]
-  )
-
-  /**
-   * Очень асинхронно прочитать инфу по текущим размещениям карточки, вернув контейнер результатов.
-    *
-    * @param adId id рекламной карточки.
-   * @param limit Необязательный лимит.
-   * @return Фьючерс с контейнером результатов.
-   */
-  private def getAdAdvInfo(adId: String, limit: Int = ctlGeoAdvUtil.LIMIT_DFLT): Future[AdAdvInfoResult] = {
-    val advsOkFut  = ctlGeoAdvUtil.advFindNonExpiredByAdId(MAdvOk, adId, limit)
-    val advsReqFut = ctlGeoAdvUtil.advFindByAdId(MAdvReq, adId, limit)
-    for {
-      advsRefused     <- ctlGeoAdvUtil.advFindByAdId(MAdvRefuse, adId, limit)
-      advsOk          <- advsOkFut
-      advsReq         <- advsReqFut
-    } yield {
-      AdAdvInfoResult(advsOk, advsReq, advsRefused)
-    }
-  }
 
   /**
    * Рендер страницы с формой размещения. Сбор и подготовка данных для рендера идёт очень параллельно.
@@ -114,27 +87,9 @@ class MarketAdv @Inject() (
 
     val adId = request.mad.id.get
 
-    // Для сокрытия узлов, которые не имеют тарифного плана, надо получить список тех, у кого он есть.
-    val adnIdsReadyFut = ctlGeoAdvUtil.findAdnIdsMmpReady()
-
-    // Работа с синхронными моделями: собрать инфу обо всех размещениях текущей рекламной карточки.
-    val adAdvInfoFut = getAdAdvInfo(adId)
-
-    // Сразу запускаем в фоне генерацию старого формата передачи ресиверов в шаблон.
-    val rcvrsReadyFut = for {
-      adnIdsReady <- adnIdsReadyFut
-      rcvrs       <- rcvrsAllFut
-    } yield {
-      val adnIdsReadySet = adnIdsReady.toSet
-      // Выкинуть узлы, у которых нет своего тарифного плана.
-      rcvrs.filter { node =>
-        adnIdsReadySet.contains( node.id.get )
-      }
-    }
-
     // Нужно заодно собрать карту (adnId -> Int), которая отражает целочисленные id узлов в list-маппинге.
     val adnId2indexMapFut: Future[Map[String, Int]] = for {
-      rcvrs <- rcvrsReadyFut
+      rcvrs <- rcvrsAllFut
     } yield {
       // Карта строится на основе данных из исходной формы и дополняется недостающими adn_id.
       val formIndex2adnIdMap0 = form("node").indexes
@@ -169,7 +124,7 @@ class MarketAdv @Inject() (
 
     // Строим набор городов и их узлов, сгруппированных по категориям.
     val citiesFut: Future[Seq[MAdvFormCity]] = for {
-      rcvrs     <- rcvrsReadyFut
+      rcvrs     <- rcvrsAllFut
       rcvrsMap  <- allRcvrsMapFut
       ctx       <- ctxFut
     } yield {
@@ -214,12 +169,9 @@ class MarketAdv @Inject() (
       }
 
     // Строим карту уже занятых какими-то размещением узлы.
-    val busyAdvsFut: Future[Map[String, MAdvI]] = {
-      for (adAdvInfo <- adAdvInfoFut) yield {
-        import adAdvInfo._
-        val adnAdvsReq = advsReq.map { advReq  =>  advReq.rcvrAdnId -> advReq }
-        val adnAdvsOk = advsOk.map { advOk => advOk.rcvrAdnId -> advOk }
-        (adnAdvsOk ++ adnAdvsReq).toMap
+    val busyAdvsFut: Future[Map[String, MItem]] = {
+      dbConfig.db.run {
+        advDirectBilling.findBusyRcvrsMap(adId)
       }
     }
 
@@ -372,7 +324,7 @@ class MarketAdv @Inject() (
 
     // Собрать id конфликтующих ресиверов в засабмиченной форме и в существующем биллинге.
     val busyRcvrIdsFut = dbConfig.db.run {
-      advDirectBilling.findBusyRcvrs(adId, fr)
+      advDirectBilling.findBusyRcvrsExact(adId, fr)
     }
     for (busyRcvrsIds <- busyRcvrIdsFut) {
       if (busyRcvrsIds.nonEmpty)

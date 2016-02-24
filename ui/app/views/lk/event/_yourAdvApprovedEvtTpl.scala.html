@@ -15,9 +15,9 @@
   </div>
 
   @messages("approved.adv").
-  @rargs.advOkOpt.map { advOk =>
+  @*rargs.advOkOpt.map { advOk =>
     @_prettyDate(advOk.dateStatus)
-  }
+  }*@
 
   <div class="event_ad-preview">
     @_advAdFrameTpl(rargs)

@@ -3,7 +3,7 @@ package controllers
 import com.github.nscala_time.time.OrderingImplicits._
 import com.google.inject.Inject
 import models._
-import models.adv.{MAdvOk, MAdvRefuse, MAdvReq, MExtTarget}
+import models.adv.MExtTarget
 import models.event.MEvent
 import models.event.search.MEventsSearchArgs
 import models.mctx.Context
@@ -88,11 +88,6 @@ class LkEvents @Inject() (
         val madsMapFut = lkEventsUtil.readEsModel(mevents, MNode)(_.argsInfo.adIdOpt)
         val advExtTgsMapFut = lkEventsUtil.readEsModel(mevents, MExtTarget)(_.argsInfo.advExtTgIds)
 
-        // Параллельно собираем карты размещений из всех adv-моделей.
-        val advsReqMapFut = lkEventsUtil.readAdvModel(mevents, MAdvReq)(_.argsInfo.advReqIdOpt)
-        val advsOkMapFut = lkEventsUtil.readAdvModel(mevents, MAdvOk)(_.argsInfo.advOkIdOpt)
-        val advsRefuseMapFut = lkEventsUtil.readAdvModel(mevents, MAdvRefuse)(_.argsInfo.advRefuseIdOpt)
-
         // Если передается карточка, то следует сразу передать и block RenderArgs для отображения превьюшки.
         val brArgsMapFut = madsMapFut.flatMap { madsMap =>
           val dsOpt = ctx.deviceScreenOpt
@@ -128,9 +123,6 @@ class LkEvents @Inject() (
           madsMap       <- madsMapFut
           nodesMap      <- nodesMapFut
           advExtTgsMap  <- advExtTgsMapFut
-          advsReqMap    <- advsReqMapFut
-          advsOkMap     <- advsOkMapFut
-          advsRefuseMap <- advsRefuseMapFut
           brArgsMap     <- brArgsMapFut
           // Параллельный рендер всех событий
           events <- Future.traverse(mevents) { case mevent =>
@@ -142,9 +134,6 @@ class LkEvents @Inject() (
                 adnNodeOpt = ai.adnIdOpt.flatMap(nodesMap.get),
                 advExtTgs = ai.advExtTgIds.flatMap(advExtTgsMap.get),
                 madOpt = ai.adIdOpt.flatMap(madsMap.get),
-                advReqOpt = ai.advReqIdOpt.flatMap(advsReqMap.get),
-                advOkOpt = ai.advOkIdOpt.flatMap(advsOkMap.get),
-                advRefuseOpt = ai.advRefuseIdOpt.flatMap(advsRefuseMap.get),
                 brArgs = ai.adIdOpt.flatMap(brArgsMap.get)
               )
               mevent.etype.render(rArgs)(ctx) -> mevent.dateCreated
