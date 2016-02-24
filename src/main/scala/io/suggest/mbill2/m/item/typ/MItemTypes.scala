@@ -22,6 +22,10 @@ object MItemTypes extends EnumMaybeWithName with EnumApply {
     /** Какой статус выставлять item'у после получения оплаты? */
     def sioApprovedStatus   : MItemStatus = MItemStatuses.Offline
 
+    /** Название по каталогу локализованных названий. */
+    def nameI18n: String = {
+      "Item.type." + strId
+    }
   }
 
   override type T = Val

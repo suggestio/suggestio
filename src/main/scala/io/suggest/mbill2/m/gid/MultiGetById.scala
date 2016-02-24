@@ -10,7 +10,7 @@ trait MultiGetById extends GidModelContainer {
 
   import driver.api._
 
-  def multiGetByIds(ids: Traversable[Gid_t]) = {
+  def getByIds(ids: Traversable[Gid_t]) = {
     query
       .filter(_.id inSet ids)
       .result

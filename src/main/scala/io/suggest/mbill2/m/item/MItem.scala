@@ -53,6 +53,7 @@ class MItems @Inject() (
   with GeoShapeOptSlick
   with TagFaceOptSlick
   with DateStatusSlick
+  with MAdItemIdsSlick
 {
 
   override val TABLE_NAME = "item"
@@ -112,17 +113,42 @@ class MItems @Inject() (
     * @param itm2 Обновлённый инстанс item'а.
     * @return Экшен UPDATE.
     */
-  def saveStatus(itm2: MItem) = {
-    saveStatus1(itm2.status, itm2.id.get)
+  def updateStatus(itm2: MItem) = {
+    updateStatus1(itm2.status, itm2.id.get)
   }
-  def saveStatus1(status: MItemStatus, ids: Gid_t*) = {
-    saveStatus2(status, ids)
+  def updateStatus1(status: MItemStatus, ids: Gid_t*) = {
+    updateStatus2(status, ids)
   }
-  def saveStatus2(status: MItemStatus, ids: Traversable[Gid_t]) = {
-    query
-      .filter { _.id inSet ids }
-      .map { i => (i.status, i.dateStatus) }
-      .update( (status, DateTime.now()) )
+  def updateStatus2(status: MItemStatus, ids: Traversable[Gid_t]) = {
+    if (ids.isEmpty) {
+      throw new IllegalArgumentException("ids must be non-empty")
+    } else {
+      query
+        .filter { _.id inSet ids }
+        .map { i => (i.status, i.dateStatus) }
+        .update((status, DateTime.now()))
+    }
+  }
+
+  /** Поиск рядов, относящихся как-то текущей дате. */
+  def findCurrent(now: DateTime = DateTime.now) = {
+    query.filter { mitem =>
+      mitem.dateStartOpt >= now &&
+      mitem.dateEndOpt < now
+    }
+  }
+
+
+  /** Поиск id текущих размещений по ad_id.
+    *
+    * @param status Статус оных.
+    * @return Список ad_id -> Seq[id].
+    */
+  def findCurrentForStatus(status: MItemStatus) = {
+    // TODO В slick никак не осилят custom aggregate functions. https://github.com/slick/slick/pull/796
+    // Поэтому тот plain SQL вместо использования lifted API.
+    sql"SELECT #$AD_ID_FN, array_agg(#$ID_FN) FROM #$TABLE_NAME WHERE #$STATUS_FN = ${status.strId} AND #$DATE_START_FN >= now() AND #$DATE_END_FN < now() GROUP BY #$AD_ID_FN"
+      .as[MAdItemIds]
   }
 
 }
