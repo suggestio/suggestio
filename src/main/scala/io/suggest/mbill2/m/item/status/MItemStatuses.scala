@@ -22,12 +22,24 @@ object MItemStatuses extends EnumMaybeWithName with EnumApply {
 
     /** Деньги ушли от байера к селлеру и заблокированы на балансе селлера? */
     def isMoneyBlockedOnSeller  : Boolean = false
+
+    /** Является ли рекламная карточка на rcvr-узле "занятой", если размещение в данном статусе?
+      * Да для ожидающих модерации, одобренных к размещению и размещенных. */
+    def isAdvBusy               : Boolean = true
+
+  }
+
+  /** Укороченное выставление флага isBusy = false. */
+  sealed protected[this] trait NotBusy extends Val {
+    /** Использованные размещения, отклонённые и ещё неоплаченные не являются занятыми. */
+    override def isAdvBusy = false
   }
 
   override type T = Val
 
+
   /** Item лежит в корзине, т.е. в черновике заказа. */
-  val Draft               : T = new Val("a") {
+  val Draft               : T = new Val("a") with NotBusy {
     /** Пока товар в корзине, ничего никуда не списано. */
     override def isMoneyWithdrawed      = false
   }
@@ -40,7 +52,7 @@ object MItemStatuses extends EnumMaybeWithName with EnumApply {
   }
 
   /** Отказано продавцом или поставщиком услуги. Например, размещение не прошло модерацию. */
-  val CancelledBySeller   : T = new Val("c") {
+  val CancelledBySeller   : T = new Val("c") with NotBusy {
     /** Деньги уже возвращены на счет счет покупателя. */
     override def isMoneyWithdrawed      = false
   }
@@ -53,10 +65,13 @@ object MItemStatuses extends EnumMaybeWithName with EnumApply {
   val Online              : T = new Val("o")
 
   /** Завершена обработка item'а. Например, оплаченная услуга истекла. */
-  val Finished            : T = new Val("z")
+  val Finished            : T = new Val("z") with NotBusy
 
+
+  /** Статусы, обозначающие занятость карточки для прямого размещения. */
+  def advBusy = values.iterator.filter(_.isAdvBusy)
+
+  /** Только id'шники, идентефицирующие занятость карточки. */
+  def advBusyIds = advBusy.map(_.strId)
 
 }
-
-
-
