@@ -32,4 +32,8 @@ object Common {
   /** Версия typesafe slick. */
   val slickVsn        = "3.1.1"
 
+  /** Версия драйвера common-slick-driver.
+   * Он идёт как бинарная зависимость, поэтому зависимые подпроекты. */
+  val sioSlickDrvVsn  = "0.3.0-SNAPSHOT"
+
 }
