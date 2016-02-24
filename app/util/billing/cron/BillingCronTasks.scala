@@ -1,32 +1,25 @@
-package util.adv.direct
+package util.billing.cron
 
 import com.google.inject.Inject
-import models.adv.MAdvReq
 import models.mcron.{ICronTask, MCronTask}
 import models.mproj.ICommonDi
-import org.joda.time.Period
 import play.api.Application
-import util.async.AsyncUtil
-import util.billing.{AdvertiseOfflineAdvsFactory, DepublishExpiredAdvsFactory}
+import util.adv.direct.AdvDirectBilling
 import util.{ICronTasksProvider, PlayMacroLogsImpl}
 
-import scala.concurrent.Future
 import scala.concurrent.duration._
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 03.11.15 11:16
- * Description: Провайдер задач для Cron'а. Задачи связаны с обслуживанием биллинга на
- * посуточных тарифах размещения.
- *
- * Поддержка высокоуровневых периодических задач вынесена из [[AdvDirectBilling]], чтобы
- * решить проблемы с циклическими зависямостями между [[AdvDirectBilling]] и [[util.adv.AdvUtil]].
+ * Description: Провайдер задач Биллинга v2+ для Cron'а.
+ * Т.к. все товары и услуги были унифицированы через MItem, то их обслуживание так-же потребовало унификации.
  */
-class AdvDirectCronTasks @Inject()(
+class BillingCronTasks @Inject()(
   advDirectBilling        : AdvDirectBilling,
-  aoaFac                  : AdvertiseOfflineAdvsFactory,
-  deaFac                  : DepublishExpiredAdvsFactory,
+  aoaFac                  : ActivateOfflineAdvsFactory,
+  deaFac                  : DisableExpiredAdvsFactory,
   mCommonDi               : ICommonDi
 )
   extends ICronTasksProvider
@@ -58,13 +51,13 @@ class AdvDirectCronTasks @Inject()(
     if (enabled) {
       val every = CHECK_ADVS_OK_DURATION
 
-      val applyOldReqs = MCronTask(
+      /*val applyOldReqs = MCronTask(
         startDelay = 3.seconds,
         every = every,
-        displayName = "autoApplyOldAdvReqs()"
+        displayName = "enableOfflineAdvs()"
       ) {
-        autoApplyOldAdvReqs()
-      }
+        enableOfflineAdvs()
+      }*/
 
       val depubExpired = MCronTask(
         startDelay = 10.seconds,
@@ -81,15 +74,16 @@ class AdvDirectCronTasks @Inject()(
       ) {
         aoaFac.create().run()
       }
-      List(applyOldReqs, depubExpired, advOfflineAdvs)
+      List(depubExpired, advOfflineAdvs)
 
     } else {
       Nil
     }
   }
 
-  /** Цикл автоматического накатывания MAdvReq в MAdvOk. Нужно найти висячие MAdvReq и заапрувить их. */
-  def autoApplyOldAdvReqs() {
+  /** Цикл автоматического накатывания MAdvReq в MAdvOk.
+    * Нужно найти висячие MAdvReq и заапрувить их не проверяя. */
+  /*def enableOfflineAdvs() {
     val period = new Period(AUTO_ACCEPT_REQS_AFTER_HOURS, 0, 0, 0)
     // Найти запросы размещения, чей срок уже пришел
     val advsReqFut = Future {
@@ -97,12 +91,13 @@ class AdvDirectCronTasks @Inject()(
         MAdvReq.findCreatedLast(period)
       }
     }(AsyncUtil.jdbcExecutionContext)
+
     // Обработать найденные запросы размещения.
     for (advsReq <- advsReqFut) {
       for (mar <- advsReq) {
         advDirectBilling.acceptAdvReq(mar, isAuto = true)
       }
     }
-  }
+  }*/
 
 }

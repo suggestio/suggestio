@@ -11,13 +11,13 @@ import play.api.db.slick.DatabaseConfigProvider
  */
 trait ISlickDbConfigProvider {
 
-  def dbConfigProvider: DatabaseConfigProvider
+  def _dbConfigProvider: DatabaseConfigProvider
 
 }
 
 trait ISlickDbConfig extends ISlickDbConfigProvider {
 
-  val dbConfig = dbConfigProvider.get[ExPgSlickDriverT]
+  val dbConfig = _dbConfigProvider.get[ExPgSlickDriverT]
 
 }
 

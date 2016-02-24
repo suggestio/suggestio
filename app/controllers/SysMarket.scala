@@ -3,6 +3,8 @@ package controllers
 import com.google.inject.Inject
 import controllers.sysctl._
 import io.suggest.common.fut.FutureUtil
+import io.suggest.mbill2.m.item.status.MItemStatuses
+import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.model.n2.edge.MNodeEdges
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
@@ -50,8 +52,9 @@ class SysMarket @Inject() (
   override val n2NodesUtil        : N2NodesUtil,
   override val sysAdRenderUtil    : SysAdRenderUtil,
   mPerson                         : MPerson,
-  override val mCommonDi          : ICommonDi,
-  mImgs3                          : MImgs3
+  mItems                          : MItems,
+  mImgs3                          : MImgs3,
+  override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
@@ -175,6 +178,7 @@ class SysMarket @Inject() (
 
   /**
    * Страница отображения узла сети.
+   *
    * @param nodeId id узла
    */
   def showAdnNode(nodeId: String) = IsSuNode(nodeId).async { implicit request =>
@@ -462,7 +466,7 @@ class SysMarket @Inject() (
     // Ищем все рекламные карточки, подходящие под запрос.
     // TODO Нужна устойчивая сортировка.
     val madsFut = MNode.dynSearch(a)
-    val brArgssFut = madsFut flatMap { mads =>
+    val brArgssFut = madsFut.flatMap { mads =>
       Future.traverse(mads) { mad =>
         lkAdUtil.tiledAdBrArgs(mad)
       }
@@ -491,33 +495,37 @@ class SysMarket @Inject() (
     val adnNodeOptFut = FutureUtil.optFut2futOpt(adnNodeIdOpt)( mNodeCache.getById )
 
     // Собираем карту размещений рекламных карточек.
-    val ad2advMapFut: Future[Map[String, Seq[MAdvI]]] = {
+    val ad2advMapFut: Future[Map[String, Seq[MItem]]] = {
       for {
         mads <- madsFut
         advs <- {
+          import dbConfig.driver.api._
           lazy val adIds = mads.flatMap(_.id)
-          val _advs: Future[Seq[MAdvI]] = if (rcvrIds.nonEmpty) {
-            // Ищем все размещения имеющихся карточек у запрошенных ресиверов.
-            Future {
-              db.withConnection { implicit c =>
-                MAdvOk.findByAdIdsAndRcvrs(adIds, rcvrIds = rcvrIds) ++
-                  MAdvReq.findByAdIdsAndRcvrs(adIds, rcvrIds = rcvrIds)
+          val q0 = {
+            val statuses = Iterator(MItemStatuses.Online, MItemStatuses.Offline, MItemStatuses.AwaitingSioAuto)
+              .map(_.strId)
+              .toSeq
+            mItems.query
+              .filter { i =>
+                (i.adId inSet adIds) && (i.statusStr inSet statuses)
               }
-            }(AsyncUtil.jdbcExecutionContext)
+          }
+          val items: Future[Seq[MItem]] = if (rcvrIds.nonEmpty) {
+            // Ищем все размещения имеющихся карточек у запрошенных ресиверов.
+            dbConfig.db.run {
+              q0.filter(_.rcvrIdOpt inSet rcvrIds).result
+            }
 
           } else if (producerIds.nonEmpty) {
             // Ищем размещения карточек для продьюсера.
-            Future {
-              db.withConnection { implicit c =>
-                MAdvOk.findByAdIdsAndProducersOnline(adIds, prodIds = producerIds, isOnline = true) ++
-                  MAdvReq.findByAdIdsAndProducers(adIds, prodIds = producerIds)
-              }
-            }(AsyncUtil.jdbcExecutionContext)
+            dbConfig.db.run {
+              q0.result
+            }
 
           } else {
             Future successful Nil
           }
-          _advs
+          items
         }
       } yield {
         advs.groupBy(_.adId)
@@ -543,21 +551,26 @@ class SysMarket @Inject() (
       for {
         ad2advsMap  <- ad2advMapFut
         allRcvrs    <- {
-          val allRcvrIds = ad2advsMap.foldLeft(List.empty[String]) {
-            case (acc0, (_, advs)) =>
-              advs.foldLeft(acc0) {
-                (acc1, adv) => adv.rcvrAdnId :: acc1
-              }
-          }
-          mNodeCache.multiGet(allRcvrIds.toSet)
+          val allRcvrIdsSet = ad2advsMap.valuesIterator
+            .flatMap(identity)
+            .flatMap(_.rcvrIdOpt)
+            .toSet
+          mNodeCache.multiGet(allRcvrIdsSet)
         }
+
       } yield {
         // Список ресиверов конвертим в карту ресиверов.
-        val rcvrsMap = allRcvrs.map { rcvr => rcvr.id.get -> rcvr }.toMap
+        val rcvrsMap = allRcvrs
+          .iterator
+          .map { rcvr =>
+            rcvr.id.get -> rcvr
+          }
+          .toMap
         // Заменяем в исходной карте ad2advs списки adv на списки ресиверов.
         ad2advsMap.mapValues { advs =>
           advs.flatMap { adv =>
-            rcvrsMap.get( adv.rcvrAdnId )
+            adv.rcvrIdOpt
+              .flatMap(rcvrsMap.get)
           }
         }
       }
@@ -580,7 +593,7 @@ class SysMarket @Inject() (
   def removeAdRcvr(adId: String, rcvrIdOpt: Option[String], r: Option[String]) = {
     IsSuperuserMadPost(adId).async { implicit request =>
       // Запускаем спиливание ресивера для указанной рекламной карточки.
-      val isOkFut = advUtil.removeAdRcvr(adId, rcvrIdOpt = rcvrIdOpt)
+      val madSavedFut = advUtil.depublishAdOn(request.mad, rcvrIdOpt)
 
       lazy val logPrefix = s"removeAdRcvr(ad[$adId]${rcvrIdOpt.fold("")(", rcvr[" + _ + "]")}): "
       // Радуемся в лог.
@@ -606,15 +619,10 @@ class SysMarket @Inject() (
       // Дождаться завершения всех операций.
       for {
         rdr  <- rdrToFut
-        isOk <- isOkFut
+        mad2 <- madSavedFut
       } yield {
         // Вернуть редирект с результатом работы.
-        val flasher = if (isOk) {
-          FLASH.SUCCESS -> "Карточка убрана из выдачи."
-        } else {
-          FLASH.ERROR   -> "Карточка не найдена."
-        }
-        rdr.flashing(flasher)
+        rdr.flashing( FLASH.SUCCESS -> "Карточка убрана из выдачи." )
       }
     }
   }
@@ -659,6 +667,7 @@ class SysMarket @Inject() (
 
   /**
    * Выдать sys-страницу относительно указанной карточки.
+   *
    * @param adId id рекламной карточки.
    */
   def showAd(adId: String) = IsSuperuserMad(adId).async { implicit request =>
@@ -701,8 +710,14 @@ class SysMarket @Inject() (
     import request.mad
     val producerId = n2NodesUtil.madProducerId(mad).get
     val producerOptFut = mNodeCache.getById(producerId)
-    val newRcvrsMapFut = producerOptFut
-      .flatMap { advUtil.calculateReceiversFor(mad, _) }
+
+    val newRcvrsMapFut = for {
+      producerOpt <- producerOptFut
+      acc2 <- advUtil.calculateReceiversFor(mad, producerOpt)
+    } yield {
+      // Нужна только карта ресиверов. Дроп всей остальной инфы...
+      acc2.mad.edges.out
+    }
 
     val rcvrsMap = n2NodesUtil.receiversMap(mad)
 

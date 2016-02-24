@@ -9,7 +9,6 @@ import io.suggest.model.n2.node.meta.MBasicMeta
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models._
-import models.mbill.{MBalance, MContract}
 import models.mctx.Context
 import models.mlk.{MNodeAdsTplArgs, MNodeShowArgs}
 import models.mproj.ICommonDi
@@ -23,8 +22,6 @@ import play.api.mvc.Result
 import util.FormUtil._
 import util.acl._
 import util.adn.NodesUtil
-import util.async.AsyncUtil
-import util.billing.Billing
 import util.ident.IdentUtil
 import util.img.{GalleryUtil, LogoUtil}
 import util.lk.LkAdUtil
@@ -48,7 +45,6 @@ class MarketLkAdn @Inject() (
   scUtil                              : ShowcaseUtil,
   override val identUtil              : IdentUtil,
   logoUtil                            : LogoUtil,
-  billing                             : Billing,
   galleryUtil                         : GalleryUtil,
   override val mCommonDi              : ICommonDi
 )
@@ -308,7 +304,6 @@ class MarketLkAdn @Inject() (
               }
 
               for (_ <- nodeUpdateFut) yield {
-                billing.maybeInitializeNodeBilling(adnId)
                 Redirect(routes.MarketLkAdn.showNodeAds(adnId))
                   .flashing(FLASH.SUCCESS -> "Signup.finished")
                   .withSession(Keys.PersonId.name -> personId)

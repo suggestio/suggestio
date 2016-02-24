@@ -21,7 +21,6 @@ import util.PlayMacroLogsImpl
 import util.acl._
 import util.adv.direct.AdvDirectBilling
 import util.adv.{AdvFormUtil, CtlGeoAdvUtil, DirectAdvFormUtil}
-import util.async.AsyncUtil
 import util.billing.{TfDailyUtil, Bill2Util}
 import util.cal.CalendarUtil
 import views.html.lk.adv.direct._
@@ -300,20 +299,22 @@ class MarketAdv @Inject() (
     * @return Инлайновый рендер отображаемой цены.
     */
   def getAdvPriceSubmit(adId: String) = CanAdvertiseAdPost(adId, U.Balance).async { implicit request =>
+    lazy val logPrefix = s"getAdvPriceSubmit($adId)#${System.currentTimeMillis}:"
     directAdvFormUtil.advForm.bindFromRequest().fold(
       {formWithErrors =>
-        debug(s"getAdvPriceSubmit($adId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
+        debug(s"$logPrefix Failed to bind form:\n${formatFormErrors(formWithErrors)}")
         NotAcceptable("Cannot bind form.")
       },
+
+      // Всё ок. Надо рассчитать цену и вернуть результат.
       {formRes =>
         // Подготовить данные для рассчета стоимости размещения.
         val allRcvrIdsFut = for (rcvrs <- collectAllReceivers(request.producer)) yield {
           OptId.els2idsSet( rcvrs )
         }
 
-        val adves = _formRes2adves(formRes)
         val adves2Fut = for {
-          adves1      <- filterEntiesByBusyRcvrs(adId, adves)
+          adves1      <- prepareFromEntries(adId, formRes)
           allRcvrIds  <- allRcvrIdsFut
         } yield {
           filterEntiesByPossibleRcvrs(adves1, allRcvrIds)
@@ -363,30 +364,28 @@ class MarketAdv @Inject() (
   /** Фильтрация присланного списка запросов на публикацию по уже размещённым adv.
     *
     * @param adId id размещаемой рекламной карточки.
-    * @param adves Результат сабмита формы advFormM.
+    * @param fr Результат сабмита формы advFormM.
     * @return Новый adves, который НЕ содержит уже размещаемые карточки.
     */
-  private def filterEntiesByBusyRcvrs(adId: String, adves: List[AdvFormEntry]): Future[List[AdvFormEntry]] = {
-    val advsResultFut = Future {
-      db.withConnection { implicit c =>
-        val advsOk = MAdvOk.findNotExpiredByAdId(adId)
-        val advsReq = MAdvReq.findByAdId(adId)
-        (advsOk, advsReq)
-      }
-    }(AsyncUtil.jdbcExecutionContext)
-    advsResultFut.map { syncResult1 =>
-      val (advsOk, advsReq) = syncResult1
-      val busyAdnIds = {
-        // Нано-оптимизация: использовать fold для накопления adnId из обоих списков и общую функцию для обоих fold'ов.
-        val foldF = { (acc: List[String], e: MAdvI)  =>  e.rcvrAdnId :: acc }
-        val acc1 = advsOk.foldLeft(List.empty[String])(foldF)
-        advsReq.foldLeft(acc1)(foldF)
-          .toSet
-      }
+  private def prepareFromEntries(adId: String, fr: FormResult): Future[List[AdvFormEntry]] = {
+    lazy val logPrefix = s"filterEnties($adId)"
+
+    // Собрать id конфликтующих ресиверов в засабмиченной форме и в существующем биллинге.
+    val busyRcvrIdsFut = dbConfig.db.run {
+      advDirectBilling.findBusyRcvrs(adId, fr)
+    }
+    for (busyRcvrsIds <- busyRcvrIdsFut) {
+      if (busyRcvrsIds.nonEmpty)
+        warn(s"$logPrefix Conflicting receivers will be dropped: ${busyRcvrsIds.mkString(", ")}\n Form res: $fr")
+    }
+
+    val adves = _formRes2adves(fr)
+
+    for (busyRcvrIds <- busyRcvrIdsFut) yield {
       adves.filter { advEntry =>
-        val result = !(busyAdnIds contains advEntry.adnId)
+        val result = !(busyRcvrIds contains advEntry.adnId)
         if (!result)
-          warn(s"filterEntriesByBusyRcvrs($adId): Dropping submit entry rcvrId=${advEntry.adnId} : Node already is busy by other adv by this adId.")
+          warn(s"$logPrefix Dropping submit entry rcvrId=${advEntry.adnId} : Node already is busy by other adv by this adId.")
         result
       }
     }
@@ -407,7 +406,7 @@ class MarketAdv @Inject() (
   private def _formRes2adves(formRes: FormResult): List[AdvFormEntry] = {
     formRes.nodes.foldLeft(List.empty[AdvFormEntry]) {
       case (acc, oni) =>
-        val ssls = for(sl <- oni.sls) yield {
+        val ssls = for (sl <- oni.sls) yield {
           SinkShowLevels.withArgs(AdnSinks.SINK_GEO, sl)
         }
         val result = AdvFormEntry(
@@ -431,8 +430,9 @@ class MarketAdv @Inject() (
         renderAdvForm(formWithErrors, NotAcceptable)
       },
       {formRes =>
-        val adves = _formRes2adves(formRes)
-        val adves2Fut = filterEntiesByBusyRcvrs(adId, adves)
+        trace(logPrefix + "Starting with: " + formRes)
+
+        val adves2Fut = prepareFromEntries(adId, formRes)
 
         // Перед сохранением надо проверить возможности публикации на каждый узел.
         // Получаем в фоне все возможные узлы-ресиверы.
@@ -441,8 +441,6 @@ class MarketAdv @Inject() (
             .filter { id => !request.producer.id.contains(id) }
           collectRcvrsFromIds(ids)
         }
-
-        trace(logPrefix + "adves entries submitted: " + adves)
 
         val adves3Fut = for {
           adves2    <- adves2Fut

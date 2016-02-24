@@ -289,7 +289,7 @@ class Bill2Util @Inject() (
       mitems3 <- {
         val actions = for (itm <- order.mitems) yield {
           val itm2 = itm.withStatus( itm.iType.orderClosedStatus )
-          mItems.saveStatus(itm2)
+          mItems.updateStatus(itm2)
             .filter { _ == 1 }
             .map { _ => itm2 }
         }

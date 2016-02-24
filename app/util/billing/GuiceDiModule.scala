@@ -2,6 +2,7 @@ package util.billing
 
 import com.google.inject.AbstractModule
 import com.google.inject.assistedinject.FactoryModuleBuilder
+import util.billing.cron.{DisableExpiredAdvsFactory, ActivateOfflineAdvsFactory}
 
 /**
  * Suggest.io
@@ -14,12 +15,12 @@ class GuiceDiModule extends AbstractModule {
   override def configure(): Unit = {
     install(
       new FactoryModuleBuilder()
-        .build( classOf[AdvertiseOfflineAdvsFactory] )
+        .build( classOf[ActivateOfflineAdvsFactory] )
     )
 
     install(
       new FactoryModuleBuilder()
-        .build( classOf[DepublishExpiredAdvsFactory] )
+        .build( classOf[DisableExpiredAdvsFactory] )
     )
 
   }

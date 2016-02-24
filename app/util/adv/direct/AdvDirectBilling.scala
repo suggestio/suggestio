@@ -1,27 +1,23 @@
 package util.adv.direct
 
-import java.sql.Connection
 import java.{time => jat}
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.mbill2.m.balance.{MBalance => MBalance2, MBalances}
 import io.suggest.mbill2.m.gid.Gid_t
-import io.suggest.mbill2.m.item.status.MItemStatus
+import io.suggest.mbill2.m.item.status.{MItemStatuses, MItemStatus}
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
-import io.suggest.model.n2.edge.{MEdgeInfo, MNodeEdges}
 import models._
-import models.mbill.{MBalance => MBalance1, MContract => MContract1, MTxn => MTxn1}
-import models.adv.direct.AdvFormEntry
+import models.adv.IAdvTerms
+import models.adv.direct.{FormResult, AdvFormEntry}
 import models.adv.tpl.MAdvPricing
-import models.adv.{IAdvTerms, MAdvOk, MAdvRefuse, MAdvReq}
 import models.blk.{BlockHeights, BlockWidths}
 import models.mcal.{ICalsCtx, MCalendars}
 import models.mproj.ICommonDi
 import org.joda.time.DateTimeConstants._
-import org.joda.time.{DateTime, LocalDate}
+import org.joda.time.LocalDate
 import util.PlayMacroLogsImpl
-import util.async.AsyncUtil
 import util.billing.TfDailyUtil
 import util.cal.CalendarUtil
 import util.n2u.N2NodesUtil
@@ -37,27 +33,69 @@ import scala.concurrent.Future
  * Description: Утиль для работы с биллингом, где имеют вес площади и расценки получателя рекламы.
  */
 @Singleton
-class AdvDirectBilling @Inject()(
+class AdvDirectBilling @Inject() (
   n2NodesUtil             : N2NodesUtil,
   tfDailyUtil             : TfDailyUtil,
   calendarUtil            : CalendarUtil,
   mCalendars              : MCalendars,
   mBalances               : MBalances,
   mItems                  : MItems,
-  mCommonDi               : ICommonDi
+  val mCommonDi           : ICommonDi
 )
   extends PlayMacroLogsImpl
 {
 
   import LOGGER._
   import mCommonDi._
+  import dbConfig.driver.api._
 
   /** Дни недели, относящиеся к выходным. Задаются списком чисел от 1 (пн) до 7 (вс), согласно DateTimeConstants. */
   private val WEEKEND_DAYS: Set[Int] = {
-    configuration.getIntList("mmp.daily.weekend.days")
+    configuration.getIntList("weekend.days")
       .map(_.map(_.intValue).toSet)
       .getOrElse( Set(FRIDAY, SATURDAY, SUNDAY) )
   }
+
+
+  /** Поиск занятых ресиверов для карточки среди запрошенных. */
+  def findBusyRcvrs(adId: String, fr: FormResult): DBIOAction[Set[String], NoStream, Effect.Read] = {
+    // Подготовить значения аргументов для вызова экшена
+    val statuses = {
+      import MItemStatuses._
+      Iterator(Online, Offline, AwaitingSioAuto)
+        .map(_.strId)
+        .toSeq
+    }
+    val dtStart = fr.period.dateStart.toDateTimeAtStartOfDay
+    val dtEnd   = fr.period.dateEnd.toDateTimeAtStartOfDay().plusDays(1).minusSeconds(1)
+
+    // Сборка логики db-экшена
+    val dbAction = mItems
+      .query
+      .filter { i =>
+        // Интересуют только ряды, которые относятся к прямому размещению текущей карточки...
+        (i.adId === adId) &&
+          (i.rcvrIdOpt inSet fr.nodeIdsIter.toSet) &&
+          (i.iTypeStr === MItemTypes.AdvDirect.strId) &&
+          (i.statusStr inSet statuses) && (
+            // Хотя бы одна из дат (start, end) должна попадать в уже занятый период размещения.
+            (i.dateStartOpt <= dtStart && i.dateEndOpt >= dtStart) ||
+            (i.dateStartOpt <= dtEnd   && i.dateEndOpt >= dtEnd)
+          )
+      }
+      .map { i =>
+        i.rcvrIdOpt
+      }
+      .result
+
+    // Отмаппить результат экшена прямо в экшене, т.к. он слишком некрасивый.
+    for (seqOpts <- dbAction) yield {
+      seqOpts.iterator
+        .flatten
+        .toSet
+    }
+  }
+
 
   /**
    * Рассчитать ценник размещения рекламной карточки.
@@ -162,12 +200,6 @@ class AdvDirectBilling @Inject()(
   }
 
 
-  private def assertAdvsReqRowsDeleted(rowsDeleted: Int, mustBe: Int, advReqId: Int) {
-    if (rowsDeleted != mustBe)
-      throw new IllegalStateException(s"Adv request $advReqId not deleted. Rows deleted = $rowsDeleted, but 1 expected.")
-  }
-
-
   /**
    * Посчитать цену размещения рекламной карточки согласно переданной спеке.
    *
@@ -231,7 +263,6 @@ class AdvDirectBilling @Inject()(
     * @param rcvrTfs Карта тарифов ресиверов, ключ -- это id узла-ресивера.
     *                См. [[util.billing.TfDailyUtil.getNodesTfsMap()]].
     * @param mcalsCtx Контекст календарей.
-    *
     * @return db-экшен, добавляющий запросы размещения в корзину.
     */
   def mkAdvReqItems(orderId: Gid_t, mad: MNode, advs: TraversableOnce[AdvFormEntry], status: MItemStatus,
@@ -247,134 +278,10 @@ class AdvDirectBilling @Inject()(
         price         = calculateAdvPrice(bmc, rcvrTfs(adv.adnId), adv, mcalsCtx),
         adId          = mad.id.get,
         prodId        = producerId,
+        sls           = adv.showLevels,
         dtIntervalOpt = Some(adv.dtInterval),
         rcvrIdOpt     = Some(adv.adnId)
       )
-    }
-  }
-
-  def date2DtAtEndOfDay(ld: LocalDate) = ld.toDateTimeAtStartOfDay.plusDays(1).minusSeconds(1)
-
-
-  /**
-   * Провести MAdvReq в MAdvOk, списав и зачислив все необходимые деньги.
-   *
-   * @param advReq Одобряемый реквест размещения.
-   * @param isAuto Пользователь одобряет или система?
-   * @return Сохранённый экземпляр MAdvOk.
-   */
-  def acceptAdvReq(advReq: MAdvReq, isAuto: Boolean): MAdvOk = {
-    // TODO Удалить в ходе окончательного переезда cron-задач на billing v2.
-    // Надо провести платёж, запилить транзакции для prod и rcvr и т.д.
-    val advReqId = advReq.id.get
-    lazy val logPrefix = s"acceptAdvReq($advReqId): "
-    trace(s"${logPrefix}Starting. isAuto=$isAuto advReq=$advReq")
-    db.withTransaction { implicit c =>
-      // Удалить исходный реквест размещения
-      val reqsDeleted = advReq.delete
-      assertAdvsReqRowsDeleted(reqsDeleted, 1, advReqId)
-      // Провести все денежные операции.
-      val prodAdnId = advReq.prodAdnId
-      val prodContractOpt = MContract1.findForAdn(prodAdnId, isActive = Some(true)).headOption
-      assert(prodContractOpt.exists(_.id.contains(advReq.prodContractId)), "Producer contract not found or changed since request creation.")
-      val prodContract = prodContractOpt.get
-      val amount0 = advReq.amount
-
-      // Списать заблокированную сумму:
-      val oldProdMbbOpt = MBalance1.getByAdnId(prodAdnId)
-      assert(oldProdMbbOpt.exists(_.currencyCode == advReq.currencyCode), "producer balance currency does not match to adv request")
-      val prodMbbUpdated = MBalance1.updateBlocked(prodAdnId, -amount0)
-      assert(prodMbbUpdated == 1, "Failed to debit blocked amount for producer " + prodAdnId)
-
-      val now = DateTime.now
-      // Запилить единственную транзакцию списания для продьюсера
-      val prodTxn = MTxn1(
-        contractId      = prodContract.id.get,
-        amount          = -amount0,
-        datePaid        = advReq.dateCreated,
-        txnUid          = s"${prodContract.id.get}-$advReqId",
-        paymentComment  = "Debit for advertise",
-        dateProcessed   = now,
-        currencyCodeOpt = Option(advReq.currencyCode)
-      ).save
-      trace(s"${logPrefix}Debited producer[$prodAdnId] for ${prodTxn.amount} ${prodTxn.currencyCode}. txnId=${prodTxn.id.get} contractId=${prodContract.id.get}")
-
-      // Нужно провести транзакции, разделив уровни отображения по используемому sink'у.
-      val advSsl = advReq.showLevels.groupBy(_.adnSink)
-      // Все sink'и имеют одинаковый тариф. И в рамках одного реквеста одинаковый набор sl для каждого sink'а.
-      // Чтобы не пересчитывать цену, можно просто поделить ей на кол-во используемых sink'ов
-      assert(advSsl.valuesIterator.map(_.map(_.sl)).toSet.size == 1, "Different sls for different sinks not yet implemented.")
-      // Раньше тут было начисление sc sink comission
-      val rcvrTxns = advSsl
-        .foldLeft( List.empty[MTxn1] ) { case (acc, (sink, sinkShowLevels)) =>
-          acc
-        }
-      // Сохранить подтверждённое размещение с инфой о платежах.
-      MAdvOk(
-        advReq,
-        dateStatus1 = now,
-        prodTxnId   = prodTxn.id,
-        rcvrTxnIds  = rcvrTxns.flatMap(_.id),
-        isOnline    = false,
-        isPartner   = false,
-        isAuto      = isAuto
-      ).save
-    }
-  }
-
-
-  /**
-   * Процессинг отказа в запросе размещения рекламной карточки.
-   *
-   * @param advReq Запрос размещения.
-   * @return Экземпляр сохранённого MAdvRefuse.
-   */
-  def refuseAdvReqTxn(advReq: MAdvReq, advRefused: MAdvRefuse)(implicit c: Connection): Unit = {
-    val rowsDeleted = advReq.delete
-    assertAdvsReqRowsDeleted(rowsDeleted, 1, advReq.id.get)
-    val advr = advRefused.save
-    // Разблокировать средства на счёте.
-    // TODO Нужно ли округлять, чтобы blocked в минус не уходило из-за неточностей float/double?
-    MBalance1.blockAmount(advr.prodAdnId, -advr.amount)
-  }
-
-
-  /**
-   * Пересчёт текущих размещений указанной рекламной карточки на основе данных MAdvOk online.
-   *
-   * @param adId id рекламной карточки.
-   * @return Карта ресиверов.
-   */
-  def calcualteReceiversMapForAd(adId: String): Future[Receivers_t] = {
-    // Прочесть из БД текущие размещения карточки.
-    val advsOkFut = Future {
-      db.withConnection { implicit c =>
-        MAdvOk.findOnlineFor(adId, isOnline = true)
-      }
-    }(AsyncUtil.jdbcExecutionContext)
-    // Привести найденные размещения карточки к карте ресиверов.
-    for (advsOk <- advsOkFut) yield {
-      val eIter = advsOk
-        .map { advOk =>
-          MEdge(
-            predicate = MPredicates.Receiver,
-            nodeId    = advOk.rcvrAdnId,
-            info      = MEdgeInfo(sls = advOk.showLevels)
-          )
-        }
-        // Размещение одной карточки на одном узле на разных уровнях может быть проведено через разные размещения.
-        .groupBy(_.nodeId)
-        .valuesIterator
-        .map {
-          _.reduceLeft[MEdge] { (prev, next) =>
-            next.copy(
-              info = next.info.copy(
-                sls = next.info.sls ++ prev.info.sls
-              )
-            )
-          }
-        }
-      MNodeEdges.edgesToMap1( eIter )
     }
   }
 

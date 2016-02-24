@@ -209,25 +209,25 @@ trait MSioUserLazyFactory {
 /** Контейнер со статическими моделями для инстансов [[MSioUserLazy]]. */
 @Singleton
 class MsuStatic @Inject()(
-  val mSuperUsers               : MSuperUsers,
-  val mContracts                : MContracts,
-  val mBalances                 : MBalances,
-  // Не следует тут юзать MCommonDi, т.к. тут живёт слишком фундаментальный для проекта компонент.
-  val mNodeCache                : MNodeCache,
-  override val dbConfigProvider : DatabaseConfigProvider,
-  implicit val ec               : ExecutionContext,
-  implicit val esClient         : Client
+                           val mSuperUsers               : MSuperUsers,
+                           val mContracts                : MContracts,
+                           val mBalances                 : MBalances,
+                           // Не следует тут юзать MCommonDi, т.к. тут живёт слишком фундаментальный для проекта компонент.
+                           val mNodeCache                : MNodeCache,
+                           override val _dbConfigProvider : DatabaseConfigProvider,
+                           implicit val ec               : ExecutionContext,
+                           implicit val esClient         : Client
 )
   extends ISlickDbConfig
 
 
 /**
- * Реализация модели [[ISioUser]], где все future-поля реализованы как lazy val.
+  * Реализация модели [[ISioUser]], где все future-поля реализованы как lazy val.
   *
   * @param personIdOpt id текущего юзера.
- * @param jsiTgs Список целей js-инициализации.
- * @param msuStatics Статические модели, необходимые для успешной работы ленивых полей инстанса.
- */
+  * @param jsiTgs Список целей js-инициализации.
+  * @param msuStatics Статические модели, необходимые для успешной работы ленивых полей инстанса.
+  */
 case class MSioUserLazy @Inject() (
   @Assisted override val personIdOpt  : Option[String],
   @Assisted override val jsiTgs       : List[MTarget],

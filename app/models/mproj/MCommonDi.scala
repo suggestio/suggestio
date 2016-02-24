@@ -56,7 +56,7 @@ trait ICommonDi
   override val cacheApiUtil       : CacheApiUtil
   override val db                 : Database
   override val mNodeCache         : MNodeCache
-  override val dbConfigProvider   : DatabaseConfigProvider
+  override val _dbConfigProvider   : DatabaseConfigProvider
   override implicit val current   : Application
 }
 
@@ -74,7 +74,7 @@ class MCommonDi @Inject() (
   override val sessionUtil        : SessionUtil,
   override val mSioUsers          : MSioUsers,
   override val db                 : Database, // Anorm, спилить потом.
-  override val dbConfigProvider   : DatabaseConfigProvider,
+  override val _dbConfigProvider   : DatabaseConfigProvider,
   override implicit val current   : Application,
   override implicit val ec        : ExecutionContext,
   override implicit val esClient  : Client,

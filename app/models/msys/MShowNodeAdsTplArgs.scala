@@ -1,6 +1,6 @@
 package models.msys
 
-import models.adv.MAdvI
+import io.suggest.mbill2.m.item.MItem
 import models.{blk, AdSearch, MNode}
 
 /**
@@ -24,7 +24,7 @@ trait IShowNodeAdsTplArgs {
   def a: AdSearch
 
   /** Карта данных по размещениям карточек. */
-  def ad2advMap: Map[String, Traversable[MAdvI]]
+  def ad2advMap: Map[String, Traversable[MItem]]
 
 }
 
@@ -35,6 +35,6 @@ case class MShowNodeAdsTplArgs(
   override val nodeOpt      : Option[MNode],
   override val rcvrsMap     : Map[String, Seq[MNode]],
   override val a            : AdSearch,
-  override val ad2advMap    : Map[String, Traversable[MAdvI]]
+  override val ad2advMap    : Map[String, Traversable[MItem]]
 )
   extends IShowNodeAdsTplArgs

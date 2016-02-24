@@ -2,6 +2,7 @@ package util.adv
 
 import com.google.inject.AbstractModule
 import com.google.inject.assistedinject.FactoryModuleBuilder
+import util.adv.build.{AdvBuilder, IAdvBuilder, AdvBuilderFactory}
 
 /**
  * Suggest.io
@@ -15,6 +16,12 @@ class GuiceDiModule extends AbstractModule {
     install(
       new FactoryModuleBuilder()
         .build( classOf[ExtAdvWsActorFactory] )
+    )
+
+    install(
+      new FactoryModuleBuilder()
+        .implement( classOf[IAdvBuilder], classOf[AdvBuilder] )
+        .build( classOf[AdvBuilderFactory] )
     )
   }
 

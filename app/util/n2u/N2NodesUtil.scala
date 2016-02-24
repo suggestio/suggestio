@@ -23,6 +23,18 @@ class N2NodesUtil {
       .headOption
   }
 
+  /**
+    * Выдать эджи карточки (узла), отфитльтровав всех внешних ресиверов.
+    * @param mad Исходная рекламная карточка.
+    * @return Итератор эджей, содержащий исходные эджи включая локального ресивера, если таковой был.
+    */
+  def withoutExtReceivers(mad: MNode): Iterator[MEdge] = {
+    val producerIdOpt = madProducerId(mad)
+    mad.edges.iterator.filter { e =>
+      e.predicate != MPredicates.Receiver || producerIdOpt.contains( e.nodeId )
+    }
+  }
+
   /** Попытаться узлать ресиверов узла. */
   def receiverIds(mad: MNode): Iterator[String] = {
     mad.edges

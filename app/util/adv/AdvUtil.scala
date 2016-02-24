@@ -2,16 +2,18 @@ package util.adv
 
 import com.google.inject.{Singleton, Inject}
 import io.suggest.common.fut.FutureUtil
+import io.suggest.mbill2.m.item.MItems
+import io.suggest.mbill2.m.item.status.MItemStatuses
+import io.suggest.model.es.EsModelUtil
 import io.suggest.model.n2.edge.MNodeEdges
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.util.JMXBase
 import models._
-import models.adv.{MAdvReq, MAdvOk}
+import models.adv.build.{TryUpdateBuilder, Acc}
 import models.mproj.ICommonDi
-import org.joda.time.DateTime
 import util.PlayMacroLogsImpl
+import util.adv.build.AdvBuilderFactory
 import util.adv.direct.AdvDirectBilling
-import util.async.AsyncUtil
 import util.n2u.N2NodesUtil
 
 import scala.concurrent.Future
@@ -24,44 +26,38 @@ import scala.concurrent.Future
  */
 @Singleton
 class AdvUtil @Inject() (
-                          mmpDailyBilling         : AdvDirectBilling,
-                          advTownCoverageRcvrs    : AdvTownCoverageRcvrs,
-                          n2NodesUtil             : N2NodesUtil,
-                          mCommonDi               : ICommonDi
+  mItems                  : MItems,
+  advDirectBilling        : AdvDirectBilling,
+  advBuilderFactory       : AdvBuilderFactory,
+  n2NodesUtil             : N2NodesUtil,
+  mCommonDi               : ICommonDi
 )
   extends PlayMacroLogsImpl
 {
 
   import LOGGER._
   import mCommonDi._
-
-  /** Текущие активные аддоны, участвующие в генерации списка ресиверов.
-    * Обязательно List, это упрощает кое-какой код внутри основного метода. */
-  val EXTRA_RCVRS_CALCS: List[AdvExtraRcvrsCalculator] = {
-    List(
-      advTownCoverageRcvrs
-    )
-    .filter(_.isEnabled)
-  }
+  import dbConfig.driver.api._
 
   /** Причина hard-отказа в размещении со стороны suggest.io, а не узла.
     * Потом надо это заменить на нечто иное: чтобы суперюзер s.io вводил причину. */
-  def SIOM_REFUSE_REASON = configuration.getString("sys.m.ad.hard.refuse.reason") getOrElse "Refused by suggest.io."
-
-  
-  info(s"Enabled extra-rcvrs generators: " + EXTRA_RCVRS_CALCS.iterator.map(_.getClass.getSimpleName).mkString(", "))
+  private def SIOM_REFUSE_REASON = configuration.getString("sys.m.ad.hard.refuse.reason") getOrElse "Refused by suggest.io."
 
   /**
     * Пересчет текущих размещений рекламной карточки на основе данных других моделей.
     * Данные по саморазмещению мигрируют из исходных данных размещения.
     *
+    * Сайд-эффекты есть в виде создания недостающих узлов-тегов, но это терпимо.
+    * Сама изменившаяся карточка не сохраняется, и транзакций никаких не происходит.
+    *
     * @param mad Исходная рекламная карточка или её интерфейс.
     * @param producerOpt Экземпляр продьюсера
     */
-  def calculateReceiversFor(mad: MNode, producerOpt: Option[MNode] = None): Future[Receivers_t] = {
+  def calculateReceiversFor(mad: MNode, producerOpt: Option[MNode] = None): Future[Acc] = {
     val prodIdOpt = n2NodesUtil.madProducerId(mad)
 
-    lazy val logPrefix = s"calculateReceiversFor([${mad.idOrNull}]):"
+    val madId = mad.id.get
+    lazy val logPrefix = s"calculateReceiversFor(mad[$madId]):"
 
     val rcvrEdgeOpt = prodIdOpt.flatMap { prodId =>
       mad.edges
@@ -76,65 +72,100 @@ class AdvUtil @Inject() (
         // самоконтроль: резать переданного продьюсера, если он не является продьюсером данной карточки.
         .filter { _.id == prodIdOpt }
       FutureUtil.opt2future(_prodOpt) {
-        mNodeCache.maybeGetByIdCached(prodIdOpt).map(_.get)
+        mNodeCache.maybeGetByIdCached(prodIdOpt)
+          .map(_.get)
       }
     } else {
       Future successful producerOpt.orNull
     }
 
-    // Считаем непосредственных ресиверов через mmp-billing, т.е. платные размещения по времени.
-    val receiversMmpFut = mmpDailyBilling.calcualteReceiversMapForAd(mad.id.get)
+    // Заготавливаем билдер, нужно это заранее сделать для выборки item'ов только поддерживаемых типов.
+    val acc0 = Acc(mad)
+    val b0 = advBuilderFactory
+      .builder( Future.successful(acc0) )
+      .clearAd()  // С чистого листа, т.к. у нас полный пересчёт
+
+    // TODO Opt Тут без stream(), т.к. я пока не осилил. А надо бы...
+    val adItemsFut = dbConfig.db.run {
+      val itypes = b0.supportedItemTypesStrSet
+      mItems.query
+        .filter { i =>
+          (i.adId === madId) &&
+            (i.statusStr === MItemStatuses.Online.strId) &&
+            (i.iTypeStr inSet itypes)
+        }
+        .result
+    }
+
+    // Безопасное (optimistic locking) обновление карточки на стороне ES.
+    val bAcc2Fut = for {
+      // Дождаться получения непустого объема данных по item'ам.
+      adItems <- adItemsFut
+      if adItems.nonEmpty
+
+      // Пересчитать всех ресиверов
+      acc2 <- {
+        // Накатить все проплаченные размещения на текущую карточку.
+        val b2 = adItems.foldLeft(b0)(_.install(_))
+        b2.accFut
+      }
+    } yield {
+      acc2
+    }
+
+    val bAcc3Fut = bAcc2Fut.recover { case ex: NoSuchElementException =>
+      LOGGER.trace(s"$logPrefix No adv items found for $madId")
+      acc0
+    }
 
     // Чистим саморазмещение и добавляем в карту прямых ресиверов.
-    val prodResultFut: Future[Receivers_t] = {
-      rcvrEdgeOpt.fold(receiversMmpFut) { rcvrEdge =>
-        producerFut.flatMap { producer =>
-          // Оставляем только уровни отображения, которые доступны ресиверу.
-          val psls2 = rcvrEdge.info.sls
-            // Выкинуть sink-уровни продьюсера, которые не соответствуют доступным синкам и
-            // уровням отображения, которые записаны в политике исходящих размещений
-            .filter { ssl =>
-              val res = producer.extras.adn.exists { adn =>
-                adn.isReceiver &&
-                  adn.outSls.get( ssl.sl ).exists(_.limit > 0)
-              }
-              if (!res)
-                debug(s"$logPrefix Dropping sink show level[$ssl] because producer[${prodIdOpt.orNull}] has only levels=[${producer.extras.adn.iterator.flatMap(_.out4render).map(_.sl).mkString(",")}]")
-              res
+    rcvrEdgeOpt.fold(bAcc3Fut) { rcvrEdge =>
+      for {
+        producer <- producerFut
+
+        // Оставляем только уровни отображения, которые доступны ресиверу.
+        psls2 = rcvrEdge.info
+          .sls
+          // Выкинуть sink-уровни продьюсера, которые не соответствуют доступным синкам и
+          // уровням отображения, которые записаны в политике исходящих размещений
+          .filter { ssl =>
+            val res = producer.extras.adn.exists { adn =>
+              adn.isReceiver &&
+                adn.outSls.get( ssl.sl ).exists(_.limit > 0)
             }
-          receiversMmpFut.map { receiversMmp =>
-            if (psls2.isEmpty) {
-              // Удаляем саморесивер, т.к. уровни пусты.
-              receiversMmp
-            } else {
-              // Добавляем собственный ресивер с обновлёнными уровнями отображениям.
-              val edge2 = rcvrEdge.copy(
-                info = rcvrEdge.info.copy(
-                  sls = psls2
-                )
-              )
-              receiversMmp ++ MNodeEdges.edgesToMapIter(edge2)
-            }
+            if (!res)
+              debug(s"$logPrefix Dropping sink show level[$ssl] because producer[${prodIdOpt.orNull}] has only levels=[${producer.extras.adn.iterator.flatMap(_.out4render).map(_.sl).mkString(",")}]")
+            res
           }
+
+        acc3 <- bAcc3Fut
+
+      } yield {
+        if (psls2.isEmpty) {
+          // Уровни пусты, саморесивер не нужен.
+          acc3
+
+        } else {
+          // Добавляем собственный ресивер с обновлёнными уровнями отображениям.
+          val edge2 = rcvrEdge.copy(
+            info = rcvrEdge.info.copy(
+              sls = psls2
+            )
+          )
+          acc3.copy(
+            mad = acc3.mad.copy(
+              edges = acc3.mad.edges.copy(
+                out = {
+                  acc3.mad.edges.out ++ MNodeEdges.edgesToMapIter(edge2)
+                }
+              )
+            )
+          )
         }
       }
     }
-
-    // На чищенную карту ресиверов запускаем поиск экстра-ресиверов на основе списка непосредственных.
-    val resultFut: Future[Receivers_t] = prodResultFut
-      .flatMap { prodResults =>
-        // Запускаем сборку данных по доп.ресиверами. Получающиеся карты ресиверов объединяем асинхронно.
-        val extrasFuts = for (src <- EXTRA_RCVRS_CALCS) yield {
-          src.calcForDirectRcvrs(prodResults, prodIdOpt)
-        }
-        Future.reduce(prodResultFut :: extrasFuts) {
-          (rm1, rm2) =>
-            rm1 ++ rm2
-        }
-      }
-
-    resultFut
   }
+
 
 
   /**
@@ -144,83 +175,77 @@ class AdvUtil @Inject() (
     * @param rcvrIdOpt id ресивера. Если пусто, то все ресиверы вообще.
     * @return Boolean, который обычно не имеет смысла.
     */
-  def removeAdRcvr(adId: String, rcvrIdOpt: Option[String]): Future[Boolean] = {
-    lazy val logPrefix = s"removeAdRcvr(ad[$adId]${rcvrIdOpt.fold("")(", rcvr[" + _ + "]")}): "
-    val madOptFut = MNode.getByIdType(adId, MNodeTypes.Ad)
-    // Радуемся в лог.
-    rcvrIdOpt match {
-      case Some(rcvrId) =>
-        info(logPrefix + "Starting removing for single rcvr...")
-      case None =>
-        warn(logPrefix + "Starting removing ALL rcvrs...")
+  def depublishAdOn(adId: String, rcvrIdOpt: Option[String]): Future[MNode] = {
+    mNodeCache.getByIdType(adId, MNodeTypes.Ad)
+      .map(_.get)
+      .flatMap(depublishAdOn(_, rcvrIdOpt))
+  }
+
+  /**
+    * Удаление размещений карточки из каких-то ресиверов.
+    *
+    * @param mad Карточка.
+    * @param rcvrIds id удаляемых из карточки ресиверов.
+    * @return Фьючерс с обновлённой сохраненной карточкой.
+    */
+  def depublishAdOn(mad: MNode, rcvrIds: Traversable[String]): Future[MNode] = {
+    val adId = mad.id.get
+    lazy val logPrefix = s"removeAdRcvr(ad[$adId],${if (rcvrIds.isEmpty) "*" else "[" + rcvrIds.size + "]"}):"
+
+    // Радуемся в логи
+    if (rcvrIds.isEmpty) {
+      warn(logPrefix + "Starting removing ALL advs...")
+    } else {
+      info(logPrefix + "Starting removing advs with rcvrs: " + rcvrIds.mkString(", "))
     }
 
-    // Надо убрать указанного ресиверов из списка ресиверов
-    val isOkFut = madOptFut flatMap {
-      case Some(mad) =>
-        val updFut = MNode.tryUpdate(mad) { mad1 =>
-          mad1.copy(
-            edges = mad1.edges.copy(
-              out = {
-                val p = MPredicates.Receiver
-                val fIter = if (rcvrIdOpt.isEmpty) {
-                  mad1.edges.withoutPredicateIter(p)
-                } else {
-                  mad1.edges.out
-                    .valuesIterator
-                    .filterNot { e =>
-                      e.predicate == p && e.nodeId == rcvrIdOpt.get
-                    }
-                }
-                MNodeEdges.edgesToMap1( fIter )
-              }
-            )
-          )
-        }
-        for (_ <- updFut) yield {
-          true
-        }
+    val acc0 = Acc(mad)
+    val b0 = advBuilderFactory.builder( Future.successful(acc0) )
 
-      case None =>
-        warn(logPrefix + "MAd not found: " + adId)
-        Future successful false
+    // Собрать db-эшен для получения списка затрагиваемых размещений:
+    val mitemsAction = {
+      val itypes = b0.supportedItemTypesStrSet
+      var act = mItems.query
+        .filter { i =>
+          (i.adId === adId) &&
+            (i.iTypeStr inSet itypes) &&
+            (i.statusStr === MItemStatuses.Online.strId)
+        }
+      if (rcvrIds.nonEmpty)
+        act = act.filter(_.rcvrIdOpt inSet rcvrIds)
+      act.result
     }
 
-    // Надо убрать карточку из текущего размещения на узле, если есть: из advOk и из advReq.
-    val dbUpdFut = Future {
-      db.withTransaction { implicit c =>
-        // Резать как online, так и в очереди на публикацию.
-        val sepo = SelectPolicies.UPDATE
-        val advsOk = if (rcvrIdOpt.isDefined) {
-          MAdvOk.findNotExpiredByAdIdAndRcvr(adId, rcvrId = rcvrIdOpt.get, policy = sepo)
-        } else {
-          MAdvOk.findNotExpiredByAdId(adId, policy = sepo)
-        }
-        advsOk
-          .foreach { advOk =>
-            info(s"${logPrefix}offlining advOk[${advOk.id.get}]")
-            advOk.copy(dateEnd = DateTime.now, isOnline = false)
-              .saveUpdate
+    // Собираем логику грядущей транзакции:
+    val txnLogic = for {
+      // Получить список размещений для обработки. Список может быть пустой.
+      mitems <- mitemsAction.forUpdate
+
+      // Деинсталлировать всех [указанных] ресиверов из карточки
+      tuData2 <- {
+        // Накатить все проплаченные размещения на текущую карточку.
+        val refuseReason = Some(SIOM_REFUSE_REASON)
+        val tuDataFut = EsModelUtil.tryUpdate[MNode, TryUpdateBuilder]( TryUpdateBuilder(acc0) ) { tuData0 =>
+          // Выполнить нормальную деинсталляцию всех размещений, если они есть.
+          // TODO Указать refuse reason. Почему-то в текущем uninstall'ере забыл заимплементить это...
+          var b1 = mitems.foldLeft(b0)( _.uninstall(_, refuseReason) )
+          // Если жесткое удаление всех ресиверов, то имеет смысл грубо вычистить карточку.
+          b1 = if (rcvrIds.isEmpty)  b1.clearAd()  else  b1
+          for (acc2 <- b1.accFut) yield {
+            TryUpdateBuilder(acc2)
           }
-        // Запросы размещения переколбашивать в refused с возвратом бабла.
-        val advsReq = if (rcvrIdOpt.isDefined) {
-          MAdvReq.findByAdIdAndRcvr(adId, rcvrId = rcvrIdOpt.get, policy = sepo)
-        } else {
-          MAdvReq.findByAdId(adId, policy = sepo)
         }
-        // Расставляем сообщения о депубликации для всех запросов размещения.
-        val msg = SIOM_REFUSE_REASON
-        advsReq.foreach { madvReq =>
-          trace(s"${logPrefix}refusing advReq[${madvReq.id.get}]...")
-          // TODO Нужно как-то управлять причиной выпиливания. Этот action работает через POST, поэтому можно замутить форму какую-то.
-          mmpDailyBilling.refuseAdvReqTxn(madvReq, madvReq.toRefuse(msg))
-        }
+        DBIO.from( tuDataFut )
       }
-    }(AsyncUtil.jdbcExecutionContext)
 
-    dbUpdFut flatMap { _ =>
-      isOkFut
+      _ <- DBIO.seq( tuData2.acc.dbActions: _* )
+
+    } yield {
+      tuData2.acc.mad
     }
+
+    // Запуск транзакции на исполнение
+    dbConfig.db.run( txnLogic.transactionally )
   }
 
 
@@ -230,18 +255,26 @@ class AdvUtil @Inject() (
     * @return Фьючерс с кол-вом обновлённых карточек.
     */
   def resetAllReceivers(): Future[Int] = {
+    lazy val logPrefix = s"resetAllReceivers()/${System.currentTimeMillis}:"
     val search = new MNodeSearchDfltImpl {
       override def nodeTypes = Seq( MNodeTypes.Ad )
     }
-    MNode.updateAll(queryOpt = search.toEsQueryOpt) { mad0 =>
-      val newRcvrsFut = calculateReceiversFor(mad0)
-      val rcvrsMap = n2NodesUtil.receiversMap(mad0)
-      for (newRcvrs <- newRcvrsFut) yield {
-        if (isRcvrsMapEquals(rcvrsMap, newRcvrs)) {
-          null
-        } else {
-          updateReceivers(mad0, newRcvrs)
+    MNode.foldLeftAsync(acc0 = 0, queryOpt = search.toEsQueryOpt) { (counterFut, mnode0) =>
+      // Запустить пересчет ресиверов с сохранением.
+      val tub2Fut = EsModelUtil.tryUpdate[MNode, TryUpdateBuilder]( TryUpdateBuilder(Acc(mnode0)) ) { tub0 =>
+        for {
+          acc1 <- calculateReceiversFor(tub0.acc.mad)
+        } yield {
+          tub0.copy(acc1)
         }
+      }
+      for {
+        tub2    <- tub2Fut
+        counter <- counterFut
+      } yield {
+        val counter2 = counter + 1
+        trace(s"$logPrefix [$counter2] Re-saved ${mnode0.idOrNull}")
+        counter2
       }
     }
   }
@@ -278,19 +311,13 @@ class AdvUtil @Inject() (
     * @return
     */
   def resetReceiversFor(mad0: MNode): Future[MNode] = {
-    for {
-      // Вычислить ресиверов согласно биллингу и прочему.
-      newRcvrs <- calculateReceiversFor(mad0)
-
-      // Запустить обновление ресиверов в карте.
-      res      <- {
-        MNode.tryUpdate(mad0) { mad =>
-          updateReceivers(mad, newRcvrs)
-        }
+    val fut = EsModelUtil.tryUpdate[MNode, TryUpdateBuilder]( TryUpdateBuilder(Acc(mad0)) ) { tub0 =>
+      for (acc2 <- calculateReceiversFor(tub0.acc.mad)) yield {
+        tub0.copy(acc2)
       }
-
-    } yield {
-      res
+    }
+    for (tub2 <- fut) yield {
+      tub2.acc.mad
     }
   }
 
@@ -404,7 +431,7 @@ final class AdvUtilJmx @Inject() (
   }
 
   private def _depublishAd(adId: String, rcvrIdOpt: Option[String]): String = {
-    val rmFut = advUtil.removeAdRcvr(adId, rcvrIdOpt)
+    val rmFut = advUtil.depublishAdOn(adId, rcvrIdOpt)
     val fut = for (isOk <- rmFut) yield {
       "Result: " + isOk
     }

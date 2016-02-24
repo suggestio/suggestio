@@ -33,7 +33,7 @@
         Редактор карточки
       </a>
 
-      @ctx.api.n2NodesUtil.madProducerId(mad).map { producerId =>
+      @for(producerId <- ctx.api.n2NodesUtil.madProducerId(mad)) {
         <a class="siom-link-btn __color-3 __size-XL __ft-XM __list-vertical" href="@routes.MarketLkAdn.showAdnNode(producerId)">
           ЛК создателя карточки
         </a>
@@ -63,24 +63,18 @@
         <p>Саморазмещение</p>
       }
 
-      @for( advs <- args.ad2advMap.get(madId)) {
-        @advs.map { adv =>
-          <p>
-            @messages("adv.mode." + adv.mode)
-            @adv.maybeOk.map { advOk =>
-              @if(advOk.isAuto) {авто}
-            }размещение
-            c [@_prettyDate(adv.dateStart, withSpan = true)]
-            по [@_prettyDate(adv.dateEnd, withSpan = true)]
-            <a class="blue-link" href="@routes.SysMarket.showAdnNode(adv.prodAdnId)">узел</a>
-            =&gt;
-            <a class="blue-link" href="@routes.SysMarket.showAdnNode(adv.rcvrAdnId)">узел</a>
-            @adv.maybeOk.map { advOk =>
-              @if(advOk.isPartner) {по-партнёрски}
-            }
-            за @formatPrice(adv.amount, adv.currency)
-          </p>
-        }
+      @for( advs <- args.ad2advMap.get(madId).toSeq;  adv <- advs) {
+        <p>
+          @messages( adv.iType.nameI18n )
+          @for(dti <- adv.dtIntervalOpt) {
+            c [@_prettyDate(dti.getStart, withSpan = true)]
+            по [@_prettyDate(dti.getEnd, withSpan = true)]
+          }
+          @for(rcvrId <- adv.rcvrIdOpt) {
+            <a class="blue-link" href="@routes.SysMarket.showAdnNode(rcvrId)">сюда</a>
+          }
+          за @formatPrice(adv.price)
+        </p>
       }
       <a href="@routes.SysMarket.analyzeAdRcvrs(madId)">Карта ресиверов...</a>
       <a href="@routes.SysMarket.showAd(madId)">sys-страница карточки</a>

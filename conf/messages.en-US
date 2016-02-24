@@ -725,3 +725,7 @@ Your.order.is.being.processed=Your order is being processed by Suggest.io. Pleas
 Return.to.my.ads=Return to my ads
 Payment.for.order.N=Payment for order #{0}
 
+Item.type.a=Direct advertisement
+Item.type.t=Geo-tag advertisement
+Item.type.e=External deployment
+
