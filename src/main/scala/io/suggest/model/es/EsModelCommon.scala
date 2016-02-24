@@ -14,7 +14,6 @@ import org.elasticsearch.action.index.IndexRequestBuilder
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.unit.TimeValue
-import org.elasticsearch.index.engine.VersionConflictEngineException
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import org.elasticsearch.search.SearchHit
 
@@ -597,6 +596,39 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
    */
   def reget(inst0: T)(implicit ec: ExecutionContext, client: Client): Future[Option[T]]
 
+
+  // TODO Ужаснейший говнокод ниже: распиливание tryUpdate и последующая дедубликация породили ещё больший объем кода.
+  // Это из-за того, что исторически есть два типа T: в static и в инстансе модели.
+  // TODO Надо залить ITryUpdateData в EsModelCommonT или сделать что-то, чтобы не было так страшно здесь.
+
+  /** Абстрактный класс контейнера для вызова [[EsModelUtil]].tryUpdate(). */
+  abstract class TryUpdateDataAbstract[TU <: TryUpdateDataAbstract[TU]] extends ITryUpdateData[T, TU] {
+    implicit def ec: ExecutionContext
+    implicit def client: Client
+
+    protected def _instance(m: T): TU
+    /** Данные для сохранения потеряли актуальность, собрать новый аккамулятор. */
+    override def _reget: Future[TU] = {
+      for (opt <- reget(_saveable)) yield {
+        _instance(opt.get)
+      }
+    }
+  }
+
+  /** Реализация контейнера для вызова [[EsModelUtil]].tryUpdate() для es-моделей. */
+  class TryUpdateData(override val _saveable: T)
+                     (override implicit val ec: ExecutionContext,
+                      override implicit val client: Client)
+    extends TryUpdateDataAbstract[TryUpdateData]
+  {
+    override protected def _instance(m: T) = new TryUpdateData(m)
+  }
+
+  /** Вместо TryUpdateData.apply(). */
+  def tryUpdateData(inst: T)(implicit ec: ExecutionContext, client: Client) = {
+    new TryUpdateData(inst)
+  }
+
   /**
    * Попытаться обновить экземпляр модели с помощью указанной функции.
    * Метод является надстройкой над save, чтобы отрабатывать VersionConflict.
@@ -608,33 +640,16 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
    */
   def tryUpdate(inst0: T, retry: Int = 0)(updateF: T => T)
                (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[T] = {
-    lazy val logPrefix = s"tryUpdate(${Option(inst0).flatMap(_.id).orNull}, $retry):"
-
-    val inst1 = updateF(inst0)
-
-    if (inst1 == null) {
-      LOGGER.debug(logPrefix + " updateF() returned `null`, leaving update of inst")
-      Future.successful(inst0)
-
-    } else {
-      inst1
-        .save
-        .map { _ => inst1 }
-        .recoverWith {
-          case ex: VersionConflictEngineException =>
-            if (retry < UPDATE_RETRIES_MAX) {
-              val n1 = retry + 1
-              LOGGER.warn(s"$logPrefix Version conflict while tryUpdate(). Retry ($n1/$UPDATE_RETRIES_MAX)...")
-              reget(inst0).flatMap {
-                case Some(inst) =>
-                  tryUpdate(inst, n1)(updateF)
-                case None =>
-                  throw new IllegalStateException(s"$logPrefix Looks like instance has been deleted during update. last try was $retry", ex)
-              }
-            } else {
-              throw new RuntimeException(s"$logPrefix Too many save-update retries failed: $retry", ex)
-            }
-        }
+    // 2015.feb.20: Код переехал в EsModelUtil, а тут остались только wrapper для вызова этого кода.
+    val data0 = tryUpdateData(inst0)
+    val data2Fut = EsModelUtil.tryUpdate[T, TryUpdateData](data0, UPDATE_RETRIES_MAX) { data =>
+      val data1 = tryUpdateData(
+        updateF(data._saveable)
+      )
+      Future.successful(data1)
+    }
+    for (data2 <- data2Fut) yield {
+      data2._saveable
     }
   }
 
@@ -691,6 +706,7 @@ trait EsModelCommonT extends OptStrId with EraseResources with TypeT {
 
   /**
    * Сохранить экземпляр в хранилище ES.
+ *
    * @return Фьючерс с новым/текущим id
    *         VersionConflictException если транзакция в текущем состоянии невозможна.
    */
@@ -708,6 +724,7 @@ trait EsModelCommonT extends OptStrId with EraseResources with TypeT {
 
   /**
    * Удалить текущий ряд из таблицы. Если ключ не выставлен, то сразу будет экзепшен.
+ *
    * @return true - всё ок, false - документ не найден.
    */
   def delete(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {

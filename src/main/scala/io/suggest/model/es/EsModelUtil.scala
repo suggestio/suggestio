@@ -13,6 +13,7 @@ import org.elasticsearch.client.Client
 import org.elasticsearch.cluster.metadata.{IndexMetaData, MappingMetaData}
 import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.common.xcontent.{ToXContent, XContentFactory}
+import org.elasticsearch.index.engine.VersionConflictEngineException
 import org.elasticsearch.search.SearchHits
 import org.joda.time.format.ISODateTimeFormat
 import org.joda.time.{DateTime, DateTimeZone, ReadableInstant}
@@ -246,10 +247,11 @@ object EsModelUtil extends MacroLogsImpl {
 
 
   /**
-   * Убедиться, что индекс существует.
-   * @return Фьючерс для синхронизации работы. Если true, то новый индекс был создан.
-   *         Если индекс уже существует, то false.
-   */
+    * Убедиться, что индекс существует.
+    *
+    * @return Фьючерс для синхронизации работы. Если true, то новый индекс был создан.
+    *         Если индекс уже существует, то false.
+    */
   def ensureIndex(indexName: String, shards: Int = 5, replicas: Int = 1)
                  (implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
     val adm = client.admin().indices()
@@ -280,6 +282,7 @@ object EsModelUtil extends MacroLogsImpl {
 
   /**
    * Узнать метаданные индекса.
+   *
    * @param indexName Название индекса.
    * @return Фьючерс с опциональными метаданными индекса.
    */
@@ -298,6 +301,7 @@ object EsModelUtil extends MacroLogsImpl {
 
   /**
    * Прочитать метаданные маппинга.
+   *
    * @param indexName Название индекса.
    * @param typeName Название типа.
    * @return Фьючерс с опциональными метаданными маппинга.
@@ -314,6 +318,7 @@ object EsModelUtil extends MacroLogsImpl {
   /**
    * Существует ли указанный маппинг в хранилище? Используется, когда модель хочет проверить наличие маппинга
    * внутри общего индекса.
+   *
    * @param typeName Имя типа.
    * @return Да/нет.
    */
@@ -341,6 +346,7 @@ object EsModelUtil extends MacroLogsImpl {
 
   /**
    * Собрать указанные значения id'шников в аккамулятор-множество.
+   *
    * @param searchResp Экземпляр searchResponse.
    * @param acc0 Начальный акк.
    * @param keepAliveMs keepAlive для курсоров на стороне сервера ES в миллисекундах.
@@ -388,6 +394,7 @@ object EsModelUtil extends MacroLogsImpl {
   /** Рекурсивная асинхронная сверстка скролл-поиска в ES.
     * Перед вызовом функции надо выпонить начальный поисковый запрос, вызвав с setScroll() и,
     * по возможности, включив SCAN.
+    *
     * @param searchResp Результат выполненного поиского запроса с активным scroll'ом.
     * @param acc0 Исходное значение аккамулятора.
     * @param firstReq Флаг первого запроса. По умолчанию = true.
@@ -467,11 +474,71 @@ object EsModelUtil extends MacroLogsImpl {
     }
   }
 
+  /**
+    * Обновление какого-то элемента с использованием es save и es optimistic locking.
+    * В отличии от оригинального [[EsModelStaticT]].tryUpdate(), здесь обновляемые данные не обязательно
+    * являются элементами той же модели, а являются контейнером для них..
+    *
+    * @param data0 Обновляемые данные.
+    * @param maxRetries Максимальное кол-во попыток [5].
+    * @param updateF Обновление
+    * @tparam T Тип обновляемых данных.
+    * @return Удачно-сохраненный экземпляр data: T.
+    */
+  def tryUpdate[X <: EsModelCommonT, T <: ITryUpdateData[X, T]]
+               (data0: T, maxRetries: Int = 5)
+               (updateF: T => Future[T])
+               (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[T] = {
+    lazy val logPrefix = s"tryUpdate(${System.currentTimeMillis}):"
+
+    val data1Fut = updateF(data0)
+
+    if (data1Fut == null) {
+      LOGGER.debug(logPrefix + " updateF() returned `null`, leaving update")
+      Future.successful(data0)
+
+    } else {
+      data1Fut.flatMap { data1 =>
+        data1
+          ._saveable
+          .save
+          .map { _ => data1 }
+          .recoverWith {
+            case exVsn: VersionConflictEngineException =>
+              if (maxRetries > 0) {
+                val n1 = maxRetries - 1
+                LOGGER.warn(s"$logPrefix Version conflict while tryUpdate(). Retry ($n1)...")
+                data1._reget.flatMap { data2 =>
+                  tryUpdate[X,T](data2, n1)(updateF)
+                }
+              } else {
+                val ex2 = new RuntimeException(s"$logPrefix Too many save-update retries failed", exVsn)
+                Future.failed(ex2)
+              }
+          }
+      }
+    }
+  }
+
+}
+
+
+/** Интерфейс контейнера данных для вызова [[EsModelUtil.tryUpdate()]]. */
+trait ITryUpdateData[X <: EsModelCommonT, TU <: ITryUpdateData[X, TU]] {
+
+  /** Экземпляр, пригодный для сохранения. */
+  def _saveable: X
+
+  /** Данные для сохранения вызвали конфликт и возможно потеряли актуальность,
+    * подготовить новые данные для сохранени. */
+  def _reget: Future[TU]
+
 }
 
 
 /**
  * Результаты работы метода Model.copyContent() возвращаются в этом контейнере.
+ *
  * @param success Кол-во успешных документов, т.е. для которых выполнена чтене и запись.
  * @param failed Кол-во обломов.
  */
