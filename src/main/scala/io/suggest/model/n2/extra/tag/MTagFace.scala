@@ -63,7 +63,10 @@ object MTagFace extends IGenEsMappingProps {
 
 
 
-  def faces2map(faces: TraversableOnce[MTagFace]): TagFacesMap = {
+  def faces2map(faces: MTagFace*): TagFacesMap = {
+    faces2map1(faces)
+  }
+  def faces2map1(faces: TraversableOnce[MTagFace]): TagFacesMap = {
     faces.toIterator
       .map { face => face.name -> face }
       .toMap

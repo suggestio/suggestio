@@ -51,9 +51,9 @@ class MNodeSpec extends FlatSpec {
         ),
         extras = MNodeExtras(
           tag = Some(MTagExtra(
-            faces = MTagFace.faces2map(Seq(
+            faces = MTagFace.faces2map(
               MTagFace("один"), MTagFace("два"), MTagFace("три")
-            ))
+            )
           )),
           adn = Some(MAdnExtra(
             rights = Set(AdnRights.PRODUCER)

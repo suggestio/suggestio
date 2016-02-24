@@ -23,9 +23,10 @@ class MNodeExtrasSpec extends FlatSpec with PlayJsonTestUtil {
     jsonTest {
       MNodeExtras(
         tag = Some(MTagExtra(
-          faces = MTagFace.faces2map(Seq(
-            MTagFace("ягоды"), MTagFace("грибы")
-          ))
+          faces = MTagFace.faces2map(
+            MTagFace("ягоды"),
+            MTagFace("грибы")
+          )
         )),
         adn = Some(MAdnExtra(
           testNode  = true,

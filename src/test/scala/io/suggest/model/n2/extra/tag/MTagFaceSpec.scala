@@ -28,7 +28,7 @@ class MTagFaceSpec extends FlatSpec {
     val _mtf1 = mtf1
     val _mtf2 = mtf2
     val mtfs = Seq(_mtf1, _mtf2)
-    val facesMap = MTagFace.faces2map(mtfs)
+    val facesMap = MTagFace.faces2map1(mtfs)
     val jsVal = Json.toJson(facesMap)
     val mapped = jsVal.validate[TagFacesMap]
 

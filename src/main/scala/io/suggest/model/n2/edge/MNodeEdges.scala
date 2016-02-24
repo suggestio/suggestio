@@ -106,7 +106,7 @@ object MNodeEdges extends IGenEsMappingProps with IEmpty {
 
   /**
     * Узнать следующий номер для order id.
- *
+    *
     * @param edges Эджи.
     * @return Значение Order id, пригодное для сборки нового [[IEdge]].
     */
@@ -127,8 +127,10 @@ case class MNodeEdges(
   extends EmptyProduct
 {
 
+  def iterator = out.valuesIterator
+
   def withPredicateIter(preds: MPredicate*): Iterator[MEdge] = {
-    out.valuesIterator
+    iterator
       .filter { medge =>
         preds.exists { p =>
           medge.predicate ==>> p
@@ -137,7 +139,7 @@ case class MNodeEdges(
   }
 
   def withoutPredicateIter(preds: MPredicate*): Iterator[MEdge] = {
-    out.valuesIterator
+    iterator
       .filter { e =>
         !preds.exists { p =>
           e.predicate ==>> p
@@ -151,21 +153,21 @@ case class MNodeEdges(
   }
 
   def withNodeId(nodeIds: String*): Iterator[MEdge] = {
-    out.valuesIterator
+    iterator
       .filter { medge =>
         nodeIds contains medge.nodeId
       }
   }
 
   def withNodePred(nodeId: String, predicate: MPredicate): Iterator[MEdge] = {
-    out.valuesIterator
+    iterator
       .filter { medge =>
         medge.nodeId == nodeId && medge.predicate == predicate
       }
   }
 
   def withoutNodePred(nodeId: String, predicate: MPredicate): Iterator[MEdge] = {
-    out.valuesIterator
+    iterator
       .filterNot { medge =>
         medge.nodeId == nodeId && medge.predicate == predicate
       }

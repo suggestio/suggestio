@@ -40,6 +40,7 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
     val COMMENT_NI_FN     = "coni"
     val FLAG_FN           = "flag"
     val GEO_SHAPE_FN      = "gs"
+    val BILL_GIDS_FN      = "bgid"
 
   }
 
@@ -57,14 +58,19 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
     (__ \ DATE_NI_FN).formatNullable[DateTime] and
     (__ \ COMMENT_NI_FN).formatNullable[String] and
     (__ \ FLAG_FN).formatNullable[Boolean] and
-    (__ \ GEO_SHAPE_FN).formatNullable[GeoShape]
+    (__ \ GEO_SHAPE_FN).formatNullable[GeoShape] and
+    (__ \ BILL_GIDS_FN).formatNullable[Set[Long]]
+      .inmap [Set[Long]] (
+        { _ getOrElse Set.empty },
+        { bgs => if (bgs.nonEmpty) Some(bgs) else None }
+      )
   )(apply, unlift(unapply))
 
 
 
 
   import io.suggest.util.SioEsUtil._
-  
+
   /** Сборка полей ES-маппинга. */
   override def generateMappingProps: List[DocField] = {
     List(
@@ -98,6 +104,14 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
       FieldGeoShape(
         id              = GEO_SHAPE_FN,
         precision       = "50m"
+      ),
+      FieldNumber(
+        id              = BILL_GIDS_FN,
+        fieldType       = DocFieldTypes.long,
+        // Изначально было not_analyzed, но как-то не удалось придумать ни одной ситуации, когда оно пригодится.
+        // Ибо весь биллинг самодостаточен и живёт в postgresql, здесь просто подсказка для обратной связи с MItems.
+        index           = FieldIndexingVariants.no,
+        include_in_all  = false
       )
     )
   }
@@ -126,6 +140,9 @@ trait IEdgeInfo extends IIsNonEmpty {
   /** Геошейп, связанный с этим ребром. */
   def geoShape     : Option[GeoShape]
 
+  /** global ids связанных с данным ребром элементов биллинга. */
+  def billGids     : Set[Long]
+
 }
 
 
@@ -135,7 +152,8 @@ case class MEdgeInfo(
   override val dateNi       : Option[DateTime]      = None,
   override val commentNi    : Option[String]        = None,
   override val flag         : Option[Boolean]       = None,
-  override val geoShape     : Option[GeoShape]      = None
+  override val geoShape     : Option[GeoShape]      = None,
+  override val billGids     : Set[Long]             = Set.empty
 )
   extends EmptyProduct
   with IEdgeInfo
@@ -152,8 +170,10 @@ case class MEdgeInfo(
       }
       if (sls.nonEmpty) {
         sb.append("sls=")
-          .append( sls.mkString(",") )
-          .append(' ')
+        for (sl <- sls) {
+          sb.append(sl).append(',')
+        }
+        sb.append(' ')
       }
       if (dateNi.nonEmpty) {
         sb.append("dateNi=")
@@ -169,6 +189,13 @@ case class MEdgeInfo(
         sb.append("gs=")
           .append(gs)
       }
+      if (billGids.nonEmpty) {
+        sb.append("billGids=")
+        for (bgid <- billGids) {
+          sb.append(bgid).append(',')
+        }
+        sb.append(' ')
+      }
       sb.toString()
 
     } else {
@@ -178,7 +205,7 @@ case class MEdgeInfo(
 
 
   def _extraKeyData: EdgeXKey_t = {
-    EdgeXKeyEmpty
+    billGids.toList
   }
 
 }
