@@ -30,7 +30,7 @@ trait ICriteria extends IIsNonEmpty {
   /**
    * Вместо should clause будет использована must или mustNot для true или false соответственно.
    * Т.е. тут можно управлять семантикой объединения нескольких критериев, как если бы [OR, AND, NAND].
- *
+   *
    * @return None для should. Хотя бы один из should-clause всегда должен быть истинным.
    *         Some(true) -- обязательный clause, должна обязательно быть истинной.
    *         Some(false) -- негативный clause, т.е. срабатывания выкидываются из выборки результатов.
@@ -42,7 +42,52 @@ trait ICriteria extends IIsNonEmpty {
 
 
   override def toString: String = {
-    getClass.getSimpleName + "(" + nodeIds + "," + predicates + "," + sls + "," + anySl + ")"
+    val sb = new StringBuilder(32, getClass.getSimpleName)
+    sb.append('(')
+
+    sb.append {
+      must match {
+        case None         => "should"
+        case Some(true)   => "must"
+        case Some(false)  => "mustNot"
+      }
+    }
+
+    val _preds = predicates
+    if (_preds.nonEmpty) {
+      sb.append( ",p=[" )
+        .append( _preds.mkString(",") )
+        .append( ']')
+    }
+
+    val _nodeIds = nodeIds
+    if (_nodeIds.nonEmpty) {
+      sb.append(",nodes=[")
+      for (nodeId <- _nodeIds) {
+        sb.append(nodeId).append(',')
+      }
+      sb.append(']')
+    }
+
+    val _sls = sls
+    if (_sls.nonEmpty) {
+      sb.append( ",sls=[" )
+        .append( _sls.mkString(",") )
+        .append( ']' )
+    }
+
+    for (_anySl <- anySl) {
+      sb.append(",anySl=")
+        .append(_anySl)
+    }
+
+    for (_flag <- flag) {
+      sb.append(",flag=")
+        .append( _flag )
+    }
+
+    sb.append(')')
+      .toString()
   }
 
 }
@@ -59,4 +104,6 @@ case class Criteria(
 )
   extends ICriteria
   with EmptyProduct
-
+{
+  override def toString: String = super.toString
+}

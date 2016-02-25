@@ -115,7 +115,8 @@ trait OutEdges extends DynSearchArgs with MacroLogsI {
         }
         .toStream
 
-      val qb2: QueryBuilder = if (clauses.size > 1) {
+      // Если критериев много или же единственный критерий содержит mustNot, можно только через bool query.
+      val qb2: QueryBuilder = if (clauses.size > 1 || clauses.exists(_._1.must.contains(false)) ) {
         // Возврат значения происходит через закидывание сгенеренной query в BoolQuery.
         var shouldClauses = 0
         val nq = QueryBuilders.boolQuery()
