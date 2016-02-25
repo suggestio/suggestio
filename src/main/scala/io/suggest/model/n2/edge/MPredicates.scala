@@ -193,9 +193,20 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
   }
 
   /** Предикат для ресивера. Изначально, ресивером был узел (с ЛК), а объектом предиката -- рекламная карточка. */
-  val Receiver: T = new Val("k") {
+  val Receiver = new Val("k") { r =>
     override def fromTypeValid(ntype: MNodeType)  = true
     override def toTypeValid(ntype: MNodeType)    = true
+
+    /** Дочерний предикат, обозначающий саморазмещение, т.е. ресивера, указывающего на продьюсера. */
+    val Self: T = new Val("ks") {
+      override def parent: Option[T] = Some(r)
+      override def fromTypeValid(ntype: MNodeType) = r.fromTypeValid(ntype)
+      override def toTypeValid(ntype: MNodeType)   = r.toTypeValid(ntype)
+    }
+
+    override def children: List[T] = {
+      Self :: super.children
+    }
   }
 
   /** Предикат указания на тег. */

@@ -41,6 +41,11 @@ trait ICriteria extends IIsNonEmpty {
   def flag        : Option[Boolean]
 
 
+  /** Тест на наличие предиката или его дочерних предикатов в списке предикатов. */
+  def containsPredicate(pred: MPredicate): Boolean = {
+    predicates.exists(_.eqOrHasParent(pred))
+  }
+
   override def toString: String = {
     val sb = new StringBuilder(32, getClass.getSimpleName)
     sb.append('(')
