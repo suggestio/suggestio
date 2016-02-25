@@ -118,7 +118,7 @@ class ScStatUtil @Inject() (
           a.outEdges
             .iterator
             .filter { cr =>
-              cr.predicates.contains(MPredicates.Receiver) && cr.nodeIds.nonEmpty
+              cr.containsPredicate(MPredicates.Receiver) && cr.nodeIds.nonEmpty
             }
             .toStream
         }

@@ -112,7 +112,7 @@ class SysMdr @Inject() (
   }
 
   /** Страница для модерации одной карточки. */
-  def freeAdvMdr(adId: String) = IsSuperuserMad(adId).async { implicit request =>
+  def freeAdvMdr(adId: String) = IsSuperuserMadGet(adId).async { implicit request =>
     freeAdvMdrBody(banFreeAdvFormM, Ok)
   }
 
@@ -143,7 +143,7 @@ class SysMdr @Inject() (
 
   /** Сабмит одобрения пост-модерации бесплатного размещения.
     * Нужно выставить в карточку данные о модерации. */
-  def freeAdvMdrAccept(adId: String) = IsSuperuserMad(adId).async { implicit request =>
+  def freeAdvMdrAccept(adId: String) = IsSuperuserMadPost(adId).async { implicit request =>
     // Запускаем сохранение данных модерации.
     val updFut = _updMdrEdge {
       MEdgeInfo(
@@ -173,20 +173,25 @@ class SysMdr @Inject() (
       predicate = MPredicates.ModeratedBy,
       info      = info
     )
-    val mdr2map = MNodeEdges.edgesToMap(mdr2)
+
+    LOGGER.trace(s"_updMdrEdge() Mdr mad[${request.mad.idOrNull}] with mdr-edge $mdr2")
 
     // Запускаем сохранение данных модерации.
     MNode.tryUpdate(request.mad) { mad0 =>
       mad0.copy(
         edges = mad0.edges.copy(
-          out = mad0.edges.out ++ mdr2map
+          out = {
+            val iter0 = mad0.edges.withoutPredicateIter( MPredicates.ModeratedBy )
+            val iter2 = Iterator(mdr2)
+            MNodeEdges.edgesToMap1(iter0 ++ iter2)
+          }
         )
       )
     }
   }
 
   /** Сабмит формы блокирования бесплатного размещения рекламной карточки. */
-  def freeAdvMdrBan(adId: String) = IsSuperuserMad(adId).async { implicit request =>
+  def freeAdvMdrBan(adId: String) = IsSuperuserMadPost(adId).async { implicit request =>
     banFreeAdvFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"freeAdvMdrBan($adId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")

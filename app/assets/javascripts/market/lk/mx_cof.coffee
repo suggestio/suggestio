@@ -333,11 +333,11 @@ PersonalCabinet =
       .on event, '.js-btn', (e)->
         e.preventDefault()
         $this = $ this
-        href = $this.attr 'href'
-
 
         if $this.closest('.js-slide-title').size()
           e.stopPropagation()
+
+        href = $this.attr 'href'
 
         if !href
           return false
@@ -357,7 +357,8 @@ PersonalCabinet =
               .remove()
 
               $ '#popupsContainer'
-              .append data
+              .append(data)
+              .show()
 
               cbca.popup.showPopup '#'+popupId
               cbca.pc.common.photoSlider()

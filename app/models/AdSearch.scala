@@ -143,7 +143,7 @@ object AdSearch extends CommaDelimitedStringSeq {
         // Вычисляем id продьюсера.
         val _prodIdOpt = value.outEdges
             .iterator
-            .filter { _.predicates.contains( MPredicates.OwnedBy ) }
+            .filter { _.containsPredicate( MPredicates.OwnedBy ) }
             .flatMap { _.nodeIds }
             .toStream
             // TODO Разбиндивать на весь список producers сразу надо?
@@ -152,7 +152,7 @@ object AdSearch extends CommaDelimitedStringSeq {
         val (_rcvrIdOpt, _rcvrSlOpt) = {
           val v = value.outEdges
             .iterator
-            .filter { _.predicates.contains( MPredicates.Receiver ) }
+            .filter { _.containsPredicate( MPredicates.Receiver ) }
             .toStream
             // TODO Разбиндивать на весь список receivers сразу надо?
             .headOption

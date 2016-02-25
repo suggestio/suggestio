@@ -103,7 +103,7 @@ trait ScAdsTileBase
                   val p = MPredicates.Receiver
                   super.outEdges
                     .iterator
-                    .filter { e => !e.predicates.contains(p) }
+                    .filter { e => !e.containsPredicate(p) }
                     .++( Iterator(Criteria(adnNode.id.toSeq, Seq(p))) )
                     .toSeq
                 }

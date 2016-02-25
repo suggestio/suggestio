@@ -351,7 +351,7 @@ class MarketAd @Inject() (
             .headOption
 
           val e0 = e0Opt.getOrElse {
-            MEdge(MPredicates.Receiver, producerId)
+            MEdge(MPredicates.Receiver.Self, producerId)
           }
 
           val sls0 = e0.info.sls

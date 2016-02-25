@@ -2,8 +2,8 @@ package models.mdr
 
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
+import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
-import play.api.Play.{configuration, current}
 import play.api.mvc.QueryStringBindable
 import util.qsb.QsbKey1T
 
@@ -14,10 +14,6 @@ import util.qsb.QsbKey1T
  * Description: Модель для представления данных запроса поиска карточек в контексте s.io-пост-модерации.
  */
 object MdrSearchArgs {
-
-  // TODO Убрать отсюда размер страницы куда-нить в контроллер/настройки.
-  /** Сколько карточек на одну страницу модерации. */
-  val FREE_ADVS_PAGE_SZ: Int = configuration.getInt("mdr.freeAdvs.page.size") getOrElse 10
 
   def PRODUCER_ID_FN          = "prodId"
   def OFFSET_FN               = "o"
@@ -53,7 +49,7 @@ object MdrSearchArgs {
             MdrSearchArgs(
               offsetOpt         = offsetOpt,
               producerId        = prodIdOpt,
-              isAllowed  = freeAdvIsAllowed,
+              isAllowed         = freeAdvIsAllowed,
               hideAdIdOpt       = hideAdIdOpt
             )
           }
@@ -81,9 +77,6 @@ object MdrSearchArgs {
 }
 
 
-import models.mdr.MdrSearchArgs._
-
-
 case class MdrSearchArgs(
   offsetOpt             : Option[Int]       = None,
   producerId            : Option[String]    = None,
@@ -93,30 +86,48 @@ case class MdrSearchArgs(
 { that =>
 
   def offset  = offsetOpt getOrElse 0
-  def limit   = FREE_ADVS_PAGE_SZ
+  def limit   = 12      // 3 ряда по 4 карточки.
+
+  /** Реализация класса аргументов поиска карточек. */
+  protected class MdrNodeSearchArgs extends MNodeSearchDfltImpl {
+
+    /** Интересуют только карточки. */
+    override def nodeTypes = Seq( MNodeTypes.Ad )
+
+    override def offset  = that.offset
+    override def limit   = that.limit
+
+    override def outEdges: Seq[ICriteria] = {
+      // Собираем self-receiver predicate, поиск бесплатных размещений начинается с этого
+      val srp = Criteria(
+        predicates  = Seq( MPredicates.Receiver.Self ),
+        must        = Some(true)
+      )
+
+      // Любое состояние эджа модерации является значимым и определяет результат.
+      val isAllowedCr = Criteria(
+        predicates  = Seq( MPredicates.ModeratedBy ),
+        flag        = isAllowed,
+        must        = Some(isAllowed.isDefined)
+      )
+
+      var crs = List[Criteria](srp, isAllowedCr)
+
+      // Если задан продьюсер, то закинуть и его в общую кучу.
+      for (prodId <- producerId) {
+        crs ::= Criteria(
+          predicates  = Seq( MPredicates.OwnedBy ),
+          nodeIds     = Seq( prodId ),
+          must        = Some(true)
+        )
+      }
+
+      crs
+    }
+  }
 
   def toNodeSearch: MNodeSearch = {
-    new MNodeSearchDfltImpl {
-      override def offset  = that.offset
-      override def limit   = that.limit
-      override def outEdges: Seq[ICriteria] = {
-        val prodCrOpt = for (prodId <- producerId) yield {
-          Criteria(
-            nodeIds     = Seq( prodId ),
-            predicates  = Seq( MPredicates.OwnedBy ),
-            must        = Some(true)
-          )
-        }
-        // Любое состояние поля freeAdvIsAllowed является значимым и определяет результат.
-        val isAllowedCr = Criteria(
-          predicates  = Seq( MPredicates.ModeratedBy ),
-          flag        = isAllowed,
-          must        = Some(isAllowed.isDefined)
-        )
-        // Объеденить два критерия.
-        isAllowedCr :: prodCrOpt.toList
-      }
-    }
+    new MdrNodeSearchArgs
   }
 
 }

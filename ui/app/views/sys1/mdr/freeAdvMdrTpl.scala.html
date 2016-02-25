@@ -3,12 +3,11 @@
 @* Страница отображает карточку в полный рост для полномасштабной визуальной оценки,
    и содержит формы для одобрения и бана бесплатного размещения. *@
 
-@import ctx._
 @import views.html.sc.foc._
 @import helper._
 @import util.FC.divFc
 @import lk.popup._
-@import ctx.messages
+@import ctx.{messages, request}
 
 @defining( args.brArgs.mad ) { mad =>
 @_popupTpl(id = Some("advReqWind"), hidden = false, jsPopup = false) {
@@ -24,7 +23,7 @@
 
     @* Отрендерить управление модерацией в одной колонке. *@
     @* Одобрить размещение: *@
-    @form(routes.SysMdr.freeAdvMdrAccept(mad.id.get), 'id -> "advReqAccept") {
+    @form( CSRF(routes.SysMdr.freeAdvMdrAccept(mad.id.get)), 'id -> "advReqAccept") {
 
       <div class="btn-w __size-S">
 
@@ -38,7 +37,7 @@
     }
 
     @* Запретить размещение с указание причины. *@
-    @form(routes.SysMdr.freeAdvMdrBan(mad.id.get), 'id -> "advReqRefuse", 'class -> "js-hidden") {
+    @form( CSRF(routes.SysMdr.freeAdvMdrBan(mad.id.get)), 'id -> "advReqRefuse", 'class -> "js-hidden") {
 
       @textarea(args.banFormM("reason"), '_label -> "", 'placeholder -> messages("Write.refuse.reason") )
 

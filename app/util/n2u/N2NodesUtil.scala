@@ -31,7 +31,7 @@ class N2NodesUtil {
   def withoutExtReceivers(mad: MNode): Iterator[MEdge] = {
     val producerIdOpt = madProducerId(mad)
     mad.edges.iterator.filter { e =>
-      e.predicate != MPredicates.Receiver || producerIdOpt.contains( e.nodeId )
+      e.predicate.eqOrHasParent(MPredicates.Receiver) || producerIdOpt.contains( e.nodeId )
     }
   }
 
@@ -44,7 +44,7 @@ class N2NodesUtil {
   /** Попытаться узнать ресиверов в поисковых критериях эджей. */
   def receiverIds(crs: TraversableOnce[ICriteria]): Iterator[String] = {
     crs.toIterator
-      .filter { _.predicates.contains(MPredicates.Receiver) }
+      .filter { _.containsPredicate(MPredicates.Receiver) }
       .flatMap( _.nodeIds )
   }
 
