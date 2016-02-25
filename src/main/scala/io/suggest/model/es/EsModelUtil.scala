@@ -499,23 +499,27 @@ object EsModelUtil extends MacroLogsImpl {
 
     } else {
       data1Fut.flatMap { data1 =>
-        data1
-          ._saveable
-          .save
-          .map { _ => data1 }
-          .recoverWith {
-            case exVsn: VersionConflictEngineException =>
-              if (maxRetries > 0) {
-                val n1 = maxRetries - 1
-                LOGGER.warn(s"$logPrefix Version conflict while tryUpdate(). Retry ($n1)...")
-                data1._reget.flatMap { data2 =>
-                  tryUpdate[X,T](data2, n1)(updateF)
+        val m2 = data1._saveable
+        if (m2 == null) {
+          LOGGER.debug(logPrefix + " updateF() data with `null`-saveable, leaving update")
+          Future.successful(data1)
+        } else {
+          m2.save
+            .map { _ => data1 }
+            .recoverWith {
+              case exVsn: VersionConflictEngineException =>
+                if (maxRetries > 0) {
+                  val n1 = maxRetries - 1
+                  LOGGER.warn(s"$logPrefix Version conflict while tryUpdate(). Retry ($n1)...")
+                  data1._reget.flatMap { data2 =>
+                    tryUpdate[X, T](data2, n1)(updateF)
+                  }
+                } else {
+                  val ex2 = new RuntimeException(s"$logPrefix Too many save-update retries failed", exVsn)
+                  Future.failed(ex2)
                 }
-              } else {
-                val ex2 = new RuntimeException(s"$logPrefix Too many save-update retries failed", exVsn)
-                Future.failed(ex2)
-              }
-          }
+            }
+        }
       }
     }
   }
