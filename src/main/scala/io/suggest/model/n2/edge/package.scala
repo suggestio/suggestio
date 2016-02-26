@@ -7,7 +7,7 @@ package io.suggest.model.n2
  */
 package object edge {
 
-  type MPredicate = MPredicates.T
+  type MPredicate         = MPredicates.T
 
   /** Ключ эджа в карте помимо node id и predicate может содержать произвольные доп.данные в этом формате. */
   type EdgeXKey_t         = List[Any]
