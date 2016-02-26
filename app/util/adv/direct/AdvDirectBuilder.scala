@@ -117,8 +117,8 @@ trait AdvDirectBuilder extends IAdvBuilder {
       val dateEnd2 = dateStart2.plus( mitem.dtIntervalOpt.get.toPeriod )
       mItems.query
         .filter { _.id === mitemId }
-        .map { i => (i.statusStr, i.dateStartOpt, i.dateEndOpt, i.dateStatus) }
-        .update( (MItemStatuses.Online.strId, Some(dateStart2), Some(dateEnd2), dateStart2) )
+        .map { i => (i.status, i.dateStartOpt, i.dateEndOpt, i.dateStatus) }
+        .update( (MItemStatuses.Online, Some(dateStart2), Some(dateEnd2), dateStart2) )
         .filter(_ == 1)
     }
 
@@ -186,8 +186,8 @@ trait AdvDirectBuilder extends IAdvBuilder {
       val now = DateTime.now()
       mItems.query
         .filter { _.id === mitem.id.get }
-        .map { i => (i.statusStr, i.dateEndOpt, i.dateStatus, i.reasonOpt) }
-        .update( (MItemStatuses.Finished.strId, Some(now), now, reasonOpt) )
+        .map { i => (i.status, i.dateEndOpt, i.dateStatus, i.reasonOpt) }
+        .update( (MItemStatuses.Finished, Some(now), now, reasonOpt) )
     }
 
     acc0.copy(

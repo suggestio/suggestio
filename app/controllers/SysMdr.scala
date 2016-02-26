@@ -6,6 +6,7 @@ import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.{ItemStatusChanged, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.MItemTypes
+import io.suggest.mbill2.m.txn.{MTxnTypes, MTxn}
 import io.suggest.model.n2.edge.{MEdgeInfo, MNodeEdges}
 import models._
 import models.mctx.Context
@@ -18,6 +19,7 @@ import play.api.data.Form
 import play.api.mvc.Result
 import util.PlayMacroLogsImpl
 import util.acl.{IsSuItem, IsSuperuser, IsSuperuserMad}
+import util.billing.Bill2Util
 import util.lk.LkAdUtil
 import util.n2u.N2NodesUtil
 import util.showcase.ShowcaseUtil
@@ -36,6 +38,7 @@ class SysMdr @Inject() (
   scUtil                            : ShowcaseUtil,
   n2NodesUtil                       : N2NodesUtil,
   override val mItems               : MItems,
+  bill2Util                         : Bill2Util,
   override val mCommonDi            : ICommonDi
 )
   extends SioControllerImpl
@@ -335,45 +338,55 @@ class SysMdr @Inject() (
 
   /** Модератор подтверждает оплаченный item. */
   def approveItem(itemId: Gid_t) = IsSuperuserPost.async { implicit request =>
-    // Сборка апдейта модели MItems.
-    val dbAction = for {
-      // Запустить обновление полностью на стороне БД.
-      rowsUpdated <- {
-        mItems.query
-          .filter { i =>
-            (i.id === itemId) && (i.statusStr === MItemStatuses.AwaitingSioAuto.strId)
-          }
-          .map { i =>
-            (i.status, i.dateStatus)
-          }
-          .update((MItemStatuses.Offline, DateTime.now))
-      }
-      if rowsUpdated == 1
-
-      // Прочитать обновлённый MItem.
-      // TODO Slick не умеет update returning, а он был бы здесь предпочтительнее.
-      mitemOpt <- mItems.getById(itemId)
-
-    } yield {
-      mitemOpt.get
+    // Запуск обновления MItems.
+    val saveFut = dbConfig.db.run {
+      bill2Util.approveItemAction(itemId)
+        .transactionally
     }
 
-    // Запуск обновления MItems.
-    val saveFut = dbConfig.db.run( dbAction.transactionally )
-
     for {
-      mitem <- saveFut
+      res <- saveFut
     } yield {
-      sn.publish( ItemStatusChanged(mitem) )
-      Redirect( routes.SysMdr.forAd(mitem.adId) )
-        .flashing(FLASH.SUCCESS -> s"Размещение #$itemId подтверждено.")
+      // Обрадовать другие компоненты системы новым событием
+      sn.publish( ItemStatusChanged(res.mitem) )
+
+      // Отредиректить юзера для продолжения модерации
+      Redirect( routes.SysMdr.forAd(res.mitem.adId) )
+        .flashing(FLASH.SUCCESS -> s"Размещение #$itemId одобрено.")
     }
   }
 
 
   /** Модератор отвергает оплаченный item с указанием причины отказа. */
   def refuseItem(itemId: Gid_t) = IsSuItemPost(itemId).async { implicit request =>
-    ???
+    lazy val logPrefix = s"refuseItem($itemId):"
+    banFreeAdvFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        LOGGER.debug(s"$logPrefix Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
+        Redirect( routes.SysMdr.forAd(request.mitem.adId) )
+          .flashing(FLASH.ERROR -> "Ошибка в запросе отказа, проверьте причину.")
+      },
+
+      {reason =>
+        // Запустить транзакцию отката оплаченного размещения в кошелек юзера.
+        val saveFut = dbConfig.db.run {
+          bill2Util.refuseItemAction(itemId, Some(reason))
+            .transactionally
+        }
+
+        // Когда всё будет выполнено, надо отредиректить юзера на карточку.
+        for {
+          res <- saveFut
+        } yield {
+          // Уведомить всех об изменении в статусе item'а
+          sn.publish( ItemStatusChanged(res.mitem) )
+
+          // Отредиректить клиента на модерацию карточки.
+          Redirect( routes.SysMdr.forAd(request.mitem.adId) )
+            .flashing(FLASH.SUCCESS -> s"Отказано в размещении #$itemId.")
+        }
+      }
+    )
   }
 
 }

@@ -10,12 +10,13 @@ import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{IItem, MItems, MItem}
 import io.suggest.mbill2.m.order._
-import io.suggest.mbill2.m.txn.{MTxns, MTxn}
+import io.suggest.mbill2.m.txn.{MTxnTypes, MTxns, MTxn}
 import io.suggest.mbill2.util.effect._
 import models.adv.tpl.MAdvPricing
 import models.mbill.MCartIdeas
 import models.mproj.ICommonDi
 import models.{IPrice, CurrencyCodeOpt, MNode, MPrice}
+import org.joda.time.DateTime
 import util.PlayMacroLogsImpl
 import play.api.Play.isProd
 
@@ -401,6 +402,7 @@ class Bill2Util @Inject() (
                       MTxn(
                         balanceId   = mbalance2.id.get,
                         amount      = withdrawAmount,
+                        txType      = MTxnTypes.Payment,
                         orderIdOpt  = order.morder.id
                       )
                     }
@@ -496,6 +498,7 @@ class Bill2Util @Inject() (
         val ctxn0 = MTxn(
           balanceId   = cbcaBalance2.id.get,
           amount      = price.amount,
+          txType      = MTxnTypes.Income,
           orderIdOpt  = orderIdOpt
         )
         LOGGER.trace(logPrefix + "Inserting txn for balance #" + cbcaBalance2.id.orNull)
@@ -526,6 +529,143 @@ class Bill2Util @Inject() (
 
     // Форсировать весь этот экшен в транзакции:
     dbAction.transactionally
+  }
+
+
+  /** Общий код доступа к модерируемому item'у и требующему последующего обновления. */
+  private def _prepareAwaitingItem(itemId: Gid_t) = {
+    for {
+      mitemOpt0 <- {
+        mItems
+          .getByIdStatusAction(itemId, MItemStatuses.AwaitingSioAuto)
+          .forUpdate
+      }
+    } yield {
+      // Если нет обновляемого итема, пусть будет ошибка. Так и надо.
+      mitemOpt0.get
+    }
+  }
+
+
+  /** Получить доступ к кошель юзера, купившего указанный item. */
+  private def _item2balance(mitem: IItem) = {
+    for {
+      // Узнать id контракта, по которому проходит данный item.
+      contractIdOpt <- mOrders.getContractId(mitem.orderId)
+      contractId = contractIdOpt.get
+
+      // Прочитать текущий баланс
+      balanceOpt0 <- {
+        mBalances
+          .getByContractCurrency(contractId, mitem.price.currencyCode)
+          .forUpdate
+      }
+    } yield {
+      balanceOpt0.get
+    }
+  }
+
+
+  /** Контейнер результата экшена аппрува item'а. */
+  sealed case class ApproveItemResult(mitem: MItem)
+
+  /**
+    * Аппрув модерация item'а.
+    * Происходит списание заблокированных денег из кошелька юзера, зачисление средств в пользу CBCA,
+    * обновление item'a.
+    *
+    * @param itemId
+    * @return Экшен с результатом работы.
+    */
+  def approveItemAction(itemId: Gid_t): DBIOAction[ApproveItemResult, NoStream, RW] = {
+    for {
+      // Получить и заблокировать обрабатываемый item.
+      mitem0 <- _prepareAwaitingItem(itemId)
+
+      // Получить и заблокировать баланс покупателя
+      balance0 <- _item2balance(mitem0)
+
+      // Списать blocked amount с баланса покупателя
+      usrAmtBlocked2 <- mBalances.incrBlockedBy(balance0.id.get, -mitem0.price.amount)
+
+      // TODO Найти баланс CBCA, залить на баланс деньги с item'а, провести транзакцию для cbca.
+
+      // Запустить обновление полностью на стороне БД.
+      mitem2 <- {
+        val mi2 = mitem0.copy(
+          status = MItemStatuses.Offline,
+          dateStatus = DateTime.now()
+        )
+        mItems.query
+          .filter(_.id === itemId)
+          .map { i =>
+            (i.status, i.dateStatus)
+          }
+          .update((mi2.status, mi2.dateStatus))
+          .filter(_ == 1)
+          .map(_ => mi2)
+      }
+
+    } yield {
+      ApproveItemResult( mitem2 )
+    }
+  }
+
+  /** Результат исполнения экшена refuseItemAction(). */
+  sealed case class RefuseItemResult(mitem: MItem, mtxn: MTxn)
+
+  /**
+    * Item не прошел модерацию или продавец/поставщик отказал по какой-то [уважительной] причине.
+    * Необходимо не забывать заворачивать в транзакцию весь этот код.
+    *
+    * @param itemId id итема, от которого отказывается продавец.
+    * @param reasonOpt причина отказа, если есть.
+    * @return
+    */
+  def refuseItemAction(itemId: Gid_t, reasonOpt: Option[String]): DBIOAction[RefuseItemResult, NoStream, RW] = {
+    for {
+      // Получить и заблокировать текущий item.
+      mitem0 <- _prepareAwaitingItem(itemId)
+
+      // Получить и заблокировать баланс юзера
+      balance0 <- _item2balance(mitem0)
+
+      // Разблокировать на балансе сумму с этого item'а
+      amount2 <- mBalances.incrAmountAndBlockedBy(balance0, mitem0.price.amount)
+
+      // Отметить item как отказанный в размещении
+      mitem2 <- {
+        // Чтобы вернуть новый item, не считывая его из таблицы повторно, имитируем его прямо тут...
+        val mi2 = mitem0.copy(
+          status      = MItemStatuses.Refused,
+          dateStatus  = DateTime.now(),
+          reasonOpt   = reasonOpt
+        )
+        mItems.query
+          .filter(_.id === itemId)
+          .map { i =>
+            (i.status, i.dateStatus, i.reasonOpt)
+          }
+          .update((mi2.status, mi2.dateStatus, mi2.reasonOpt))
+          .filter(_ == 1)
+          .map(_ => mi2)
+      }
+
+      // Провести транзакцию по движению на счете
+      mtxn2 <- {
+        val mtxn0 = MTxn(
+          balanceId  = balance0.id.get,
+          amount     = mitem0.price.amount,
+          txType     = MTxnTypes.Rollback,
+          itemId     = Some(itemId)
+        )
+        mTxns.insertOne(mtxn0)
+      }
+
+    } yield {
+      // Собрать итог работы экшена...
+      RefuseItemResult(mitem2, mtxn2)
+    }
   }
 
 }

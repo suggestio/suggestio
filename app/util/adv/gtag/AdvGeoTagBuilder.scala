@@ -145,8 +145,8 @@ trait AdvGeoTagBuilder extends IAdvBuilder {
         LOGGER.trace(s"$logPrefix Update item[$mitemId] dates to: $dateStart2 -> $dateEnd2 ")
         mItems.query
           .filter { _.id === mitemId }
-          .map { i => (i.statusStr, i.rcvrIdOpt, i.dateStartOpt, i.dateEndOpt, i.dateStatus) }
-          .update( (MItemStatuses.Online.strId, tagNode.id, Some(dateStart2), Some(dateEnd2), dateStart2) )
+          .map { i => (i.status, i.rcvrIdOpt, i.dateStartOpt, i.dateEndOpt, i.dateStatus) }
+          .update( (MItemStatuses.Online, tagNode.id, Some(dateStart2), Some(dateEnd2), dateStart2) )
           .filter(_ == 1)
       }
 

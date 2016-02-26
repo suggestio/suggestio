@@ -116,9 +116,9 @@ trait IAdvBuilder
             (i.iTypeStr inSet supItmTypesStr)
         }
         .map { i =>
-          (i.statusStr, i.dateEndOpt, i.dateStatus)
+          (i.status, i.dateEndOpt, i.dateStatus)
         }
-        .update( (MItemStatuses.Finished.strId, Some(now), now) )
+        .update( (MItemStatuses.Finished, Some(now), now) )
       acc0.copy(
         dbActions = dbAction :: acc0.dbActions
       )
