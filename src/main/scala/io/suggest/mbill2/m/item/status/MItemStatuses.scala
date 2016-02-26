@@ -52,7 +52,7 @@ object MItemStatuses extends EnumMaybeWithName with EnumApply {
   }
 
   /** Отказано продавцом или поставщиком услуги. Например, размещение не прошло модерацию. */
-  val CancelledBySeller   : T = new Val("c") with NotBusy {
+  val Refused   : T = new Val("c") with NotBusy {
     /** Деньги уже возвращены на счет счет покупателя. */
     override def isMoneyWithdrawed      = false
   }

@@ -9,6 +9,7 @@ import io.suggest.mbill2.m.gid._
 import io.suggest.mbill2.m.price._
 import io.suggest.mbill2.util.PgaNamesMaker
 import slick.lifted.ProvenShape
+import slick.profile.SqlAction
 
 import scala.concurrent.ExecutionContext
 
@@ -111,12 +112,18 @@ class MBalances @Inject() (
       }
   }
 
+  /** Изменить значение blocked для указанного баланса. */
+  def incrBlockedBy(id: Gid_t, delta: Amount_t) = _incrColBy(id, BLOCKED_FN, delta)
 
-  def incrAmountBy(id: Gid_t, delta: Amount_t): DBIOAction[Option[Amount_t], NoStream, Effect.Write] = {
-    sql"UPDATE #$TABLE_NAME SET #$AMOUNT_FN = #$AMOUNT_FN + $delta WHERE #$ID_FN = $id RETURNING #$AMOUNT_FN"
+  /** Изменить значение amount для указанного баланса. */
+  def incrAmountBy(id: Gid_t, delta: Amount_t) = _incrColBy(id, AMOUNT_FN, delta)
+
+  private def _incrColBy(id: Gid_t, fn: String, delta: Amount_t): DBIOAction[Option[Amount_t], NoStream, Effect.Write] = {
+    sql"UPDATE #$TABLE_NAME SET #$fn = #$fn + $delta WHERE #$ID_FN = $id RETURNING #$fn"
       .as[Amount_t]
       .map { _.headOption }
   }
+
   /** Атомарное обновление баланса.
     * amount будет увеличена на delta.
     *
@@ -144,6 +151,24 @@ class MBalances @Inject() (
       .toIterator
       .map { b => b.price.currencyCode -> b }
       .toMap
+  }
+
+
+  /**
+    * Поиск по id контракта и валюте.
+    * Эта комбинация является уникальным ключом в рамках таблицы, поэтому максимум один результат.
+    *
+    * @param contractId id контракта.
+    * @param currencyCode Код валюты.
+    * @return Опциональных [[MBalance]].
+    */
+  def getByContractCurrency(contractId: Gid_t, currencyCode: String): SqlAction[Option[MBalance], NoStream, Effect.Read] = {
+    query
+      .filter { b =>
+        (b.contractId === contractId) && (b.currencyCode === currencyCode)
+      }
+      .result
+      .headOption
   }
 
 }

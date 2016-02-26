@@ -8,7 +8,7 @@ import io.suggest.mbill2.m.dt._
 import io.suggest.mbill2.m.geo.shape.{IGeoShapeOpt, GeoShapeOptSlick}
 import io.suggest.mbill2.m.gid._
 import io.suggest.mbill2.m.item.cols._
-import io.suggest.mbill2.m.item.status.{ItemStatusSlick, MItemStatus, IMItemStatus}
+import io.suggest.mbill2.m.item.status.{MItemStatuses, ItemStatusSlick, MItemStatus, IMItemStatus}
 import io.suggest.mbill2.m.item.typ.{MItemTypeSlick, MItemType, IMItemType}
 import io.suggest.mbill2.m.order._
 import io.suggest.mbill2.m.price._
@@ -17,7 +17,9 @@ import io.suggest.mbill2.util.PgaNamesMaker
 import io.suggest.model.geo.GeoShape
 import io.suggest.model.sc.common.SinkShowLevel
 import org.joda.time.{DateTime, Interval}
+import slick.jdbc.SQLActionBuilder
 import slick.lifted.ProvenShape
+import slick.profile.SqlAction
 
 /**
  * Suggest.io
@@ -150,6 +152,23 @@ class MItems @Inject() (
     // Поэтому тот plain SQL вместо использования lifted API.
     sql"SELECT #$AD_ID_FN, array_agg(#$ID_FN) FROM #$TABLE_NAME WHERE #$STATUS_FN = ${status.strId} AND now() >= #$dtFn GROUP BY #$AD_ID_FN"
       .as[MAdItemIds]
+  }
+
+
+  /** Экшен считывания ожидающего item'а с целью его обновления, который 100% существует.
+    * Метод используется внутри транзакций модерации item'ов.
+    *
+    * @param itemId id запрашиваемого item'а.
+    * @return Опциональный экземляр [[MItem]].
+    */
+  def getByIdStatusAction(itemId: Gid_t, status: MItemStatus): SqlAction[Option[MItem], NoStream, Effect.Read] = {
+    query
+      // Явно запрещаем получать item без ожидаемого статуса
+      .filter { i =>
+        (i.id === itemId) && (i.statusStr === status.strId)
+      }
+      .result
+      .headOption
   }
 
 }

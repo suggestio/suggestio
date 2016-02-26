@@ -5,6 +5,7 @@ import io.suggest.common.slick.driver.ExPgSlickDriverT
 import io.suggest.mbill2.m.balance.{FindByBalanceId, MBalances, BalanceIdInxSlick, BalanceIdFkSlick}
 import io.suggest.mbill2.m.common.InsertOneReturning
 import io.suggest.mbill2.m.gid.{IGid, GetById, Gid_t, GidSlick}
+import io.suggest.mbill2.m.item.{MItems, ItemIdOptInxSlick, ItemIdOptFkSlick, ItemIdOptSlick}
 import io.suggest.mbill2.m.order.{MOrders, OrderIdOptInxSlick, OrderIdOptFkSlick, OrderIdOptSlick}
 import io.suggest.mbill2.m.price.{Amount_t, AmountSlick}
 import io.suggest.mbill2.util.PgaNamesMaker
@@ -22,7 +23,8 @@ import slick.lifted.ProvenShape
 class MTxns @Inject() (
   override protected val driver     : ExPgSlickDriverT,
   override val mBalances            : MBalances,
-  override val mOrders              : MOrders
+  override val mOrders              : MOrders,
+  override val mItems               : MItems
 )
   extends GidSlick
   with AmountSlick
@@ -31,6 +33,7 @@ class MTxns @Inject() (
   with GetById
   with OrderIdOptSlick with OrderIdOptFkSlick with OrderIdOptInxSlick
   with FindByBalanceId
+  with ItemIdOptSlick with ItemIdOptFkSlick with ItemIdOptInxSlick
 {
 
   import driver.api._
@@ -44,6 +47,7 @@ class MTxns @Inject() (
   def DATE_PROCESSED_FN   = "date_processed"
   def PAYMENT_COMMENT_FN  = "comment"
   def PS_TXN_UID_FN       = "ps_txn_uid"
+  def TX_TYPE_FN          = "txtype"
 
   override def BALANCE_ID_INX   = PgaNamesMaker.fkInx(TABLE_NAME, BALANCE_ID_FN)
 
@@ -53,6 +57,7 @@ class MTxns @Inject() (
     with BalanceIdColumn with BalanceIdInx
     with AmountColumn
     with OrderIdOpt with OrderIdOptFk with OrderIdOptInx
+    with ItemIdOpt with ItemIdOptFk with ItemIdOptInx
   {
 
     def datePaidOpt     = column[Option[DateTime]](DATE_PAID_FN)
@@ -62,8 +67,11 @@ class MTxns @Inject() (
     def psTxnUidOpt     = column[Option[String]](PS_TXN_UID_FN)
     def psTxnUidKey     = index(PgaNamesMaker.uniq(TABLE_NAME, PS_TXN_UID_FN), psTxnUidOpt, unique = true)
 
+    def txTypeStr       = column[String](TX_TYPE_FN)
+    def txType          = txTypeStr <> (MTxnTypes.withNameT, MTxnTypes.unapply)
+
     override def * : ProvenShape[MTxn] = {
-      (balanceId, amount, orderIdOpt, paymentComment, psTxnUidOpt, datePaidOpt, dateProcessed, id.?) <> (
+      (balanceId, amount, txType, orderIdOpt, itemIdOpt, paymentComment, psTxnUidOpt, datePaidOpt, dateProcessed, id.?) <> (
         MTxn.tupled, MTxn.unapply
       )
     }
@@ -98,7 +106,9 @@ class MTxns @Inject() (
 case class MTxn(
   balanceId         : Gid_t,
   amount            : Amount_t,
-  orderIdOpt        : Option[Gid_t],
+  txType            : MTxnType,
+  orderIdOpt        : Option[Gid_t]       = None,
+  itemId            : Option[Gid_t]       = None,
   paymentComment    : Option[String]      = None,
   psTxnUidOpt       : Option[String]      = None,
   datePaid          : Option[DateTime]    = None,

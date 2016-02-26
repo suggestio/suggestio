@@ -105,6 +105,19 @@ class MOrders @Inject() (
       .update { (status, DateTime.now()) }
   }
 
+  /**
+    * Часто читать весь ордер не нужно, а надо только contract_id узнать по id ордера.
+    * @param orderId id ордера.
+    * @return Опциональный id контракта.
+    */
+  def getContractId(orderId: Gid_t): DBIOAction[Option[Gid_t], NoStream, Effect.Read] = {
+    query
+      .filter(_.id === orderId)
+      .map(_.contractId)
+      .result
+      .headOption
+  }
+
 }
 
 
