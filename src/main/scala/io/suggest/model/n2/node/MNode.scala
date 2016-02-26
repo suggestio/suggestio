@@ -265,6 +265,10 @@ case class MNode(
       .orElse { id }
   }
 
+  def guessDisplayNameOrIdOrEmpty: String = {
+    guessDisplayNameOrId.getOrElse("")
+  }
+
   /**
    * Сохранить экземпляр в хранилище модели.
    * При успехе будет отправлено событие [[io.suggest.model.n2.node.event.MNodeSaved]] в шину событий.
