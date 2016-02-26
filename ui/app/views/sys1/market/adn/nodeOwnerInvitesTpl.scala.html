@@ -4,6 +4,7 @@
 
 @import helper._
 @import sys1.market.adn._
+@import sys1.stuff.hpath._
 @import util.FC.tdFc
 @import ctx._
 @import lk.lkBlock
@@ -45,7 +46,9 @@
   @lkBlock("Новый инвайт") {
 
     Для отправки приглашения на управление ТЦ
-    <a class="blue-link" href="@routes.SysMarket.showAdnNode(mnode.id.get)">@mnode.meta.basic.name</a>
+    @_blueLink( routes.SysMarket.showAdnNode(mnode.id.get) ) {
+      @mnode.meta.basic.name
+    }
     введите email получателя прав в нижеуказанном поле.
 
     @* Форма инвайта прямо тут, т.к. не с кем её шарить. *@
@@ -59,10 +62,10 @@
   }
 
   @lkBlock("Отладка") {
-
     Отобразить тело invite-письма:
-    <a class="blue-link" href="@routes.SysMarket.showNodeOwnerEmailInvite(mnode.id.get)">HTML</a>
-
+    @_blueLink( routes.SysMarket.showNodeOwnerEmailInvite(mnode.id.get) ) {
+      HTML
+    }
   }
 
 }

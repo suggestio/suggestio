@@ -3,9 +3,13 @@
 @* Базовый шаблон для /sys/ai раздела. *@
 
 @import sys1._
+@import sys1.stuff.hpath._
 
 @hPathAfter1 = {
-  / <a class="blue-link" href="@routes.SysAi.index()">AI</a>
+  /
+  @_blueLink( routes.SysAi.index() ) {
+    AI
+  }
   @if(hPathAfter.isEmpty) {/ @title} else {@hPathAfter}
 }
 

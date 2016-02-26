@@ -3,9 +3,14 @@
 @* Базовый шаблон для /sys/ai/mad раздела админки. *@
 
 @import sys1.ai._
+@import sys1.stuff.hpath._
 
 @hPathAfter1 = {
-  / <a class="blue-link" href="@routes.SysAi.madIndex()">MAd</a>
+  /
+  @_blueLink( routes.SysAi.madIndex() ) {
+    MAd
+  }
+
   @if(hPathAfter.isEmpty) {/ @title} else {@hPathAfter}
 }
 

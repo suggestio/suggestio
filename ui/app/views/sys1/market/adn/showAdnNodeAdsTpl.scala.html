@@ -9,6 +9,7 @@
 @import views.html.lk.ad._
 @import datetime._
 @import sys1.stuff.pager._
+@import sys1.stuff.hpath._
 
 @hPathAfter1 = {
   / Реклама
@@ -40,7 +41,9 @@
       }
 
       <p>Отобразить email-сообщение о деактивации:
-        <a class="blue-link" href="@routes.SysMarket.showShopEmailAdDisableMsg(madId)">HTML</a>
+        @_blueLink( routes.SysMarket.showShopEmailAdDisableMsg(madId) ) {
+          HTML
+        }
       </p>
 
       @for( rcvrs <- args.rcvrsMap.get(madId) ) {
@@ -71,7 +74,9 @@
             по [@_prettyDate(dti.getEnd, withSpan = true)]
           }
           @for(rcvrId <- adv.rcvrIdOpt) {
-            <a class="blue-link" href="@routes.SysMarket.showAdnNode(rcvrId)">сюда</a>
+            @_blueLink( routes.SysMarket.showAdnNode(rcvrId) ) {
+              сюда
+            }
           }
           за @formatPrice(adv.price)
         </p>

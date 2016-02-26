@@ -5,6 +5,7 @@
 @import ctx._
 @import helper._
 @import io.suggest.popup.PopupConstants
+@import sys1.stuff.hpath._
 
 @* base-шаблон для системной панели suggest.io. *@
 <!DOCTYPE html>
@@ -38,7 +39,10 @@
 
         <div class="page-title">
           <div class="page-title_cnt">
-            <a class="blue-link" href="@routes.SysMarket.sysIndex()">sys</a> @hPathAfter
+            @_blueLink( routes.SysMarket.sysIndex() ) {
+              sys
+            }
+            @hPathAfter
           </div>
         </div>
 

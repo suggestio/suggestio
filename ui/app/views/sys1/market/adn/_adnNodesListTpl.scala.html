@@ -4,6 +4,7 @@
 
 @import ctx._
 @import sys1.stuff.ntable._
+@import sys1.stuff.hpath._
 @import msys._
 
 @if(mnodes.nonEmpty) {
@@ -35,13 +36,17 @@
           @_td(sz) {
             -------------
           }
+
           @_td(sz) {
-            <a class="blue-link" href="@routes.SysMarket.adnNodesList( MSysNodeListArgs(mnodes.headOption.map(_.common.ntype), astOpt) )">
-              @astOpt.map { ast =>
+            @for(ast <- astOpt) {
+              @_blueLink(
+                href = routes.SysMarket.adnNodesList( MSysNodeListArgs(mnodes.headOption.map(_.common.ntype), astOpt) )
+              ) {
                 @messages( ast.singular )
               }
-            </a>
+            }
           }
+
           @_td(sz) {
             -------------
           }
@@ -50,6 +55,7 @@
 
       @mnodes1.map { mnode =>
         @_tr() {
+
           @_td(sz) {
               <a class="blue-link" href="@routes.SysMarket.showAdnNode(mnode.id.get)">
                 @mnode.guessDisplayName.fold {
@@ -69,6 +75,7 @@
               <strong>(Я)</strong>
             }
           }
+
           @if( withAdnDelims || withNtype ) {
             @_td(sz) {
               @if( withNtype ) {
@@ -80,6 +87,7 @@
               }
             }
           }
+
           @_td(sz) {
             @mnode.meta.address.town
           }

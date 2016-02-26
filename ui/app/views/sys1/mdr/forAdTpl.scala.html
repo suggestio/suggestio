@@ -1,0 +1,12 @@
+@(args: mdr.ISysMdrForAdTplArgs)(implicit ctx: Context)
+
+@* Страница с модерацией одной рекламной карточки. *@
+
+@mdrBase(
+  title     = args.brArgs.mad.guessDisplayNameOrIdOrEmpty,
+  mnodeOpt  = args.producerIdOpt.flatMap( args.mnodesMap.get )
+) {
+
+
+
+}

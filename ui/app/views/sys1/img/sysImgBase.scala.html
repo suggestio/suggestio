@@ -1,14 +1,24 @@
-@(title: String, mimgOpt: Option[im.MImgT] = None, hPathAfter: Option[Html] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+@(title: String, mimgOpt: Option[im.MImgT] = None, hPathAfter: Option[Html] = None,
+  headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
 
 @* Базовый шаблон для шаблонов img-раздела системной админки. *@
 
 @import sys1._
+@import sys1.stuff.hpath._
 
 @hPathAfter1 = {
-  / <a class="blue-link" href="@routes.SysImg.index()">img</a>
-  @mimgOpt.map { mimg =>
-    / <a href="@routes.SysImg.showOne(mimg)">@mimg.rowKeyStr</a>
+  /
+  @_blueLink( routes.SysImg.index() ) {
+    img
   }
+
+  @for(mimg <- mimgOpt) {
+    /
+    @_blueLink( routes.SysImg.showOne(mimg) ) {
+      @mimg.rowKeyStr
+    }
+  }
+
   @if(hPathAfter.isEmpty) {/ @title} else {@hPathAfter}
 }
 

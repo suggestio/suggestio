@@ -2,6 +2,9 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.common.fut.FutureUtil
+import io.suggest.mbill2.m.item.MItems
+import io.suggest.mbill2.m.item.status.MItemStatuses
+import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.model.n2.edge.{MEdgeInfo, MNodeEdges}
 import models._
 import models.mctx.Context
@@ -31,6 +34,7 @@ class SysMdr @Inject() (
   lkAdUtil                          : LkAdUtil,
   scUtil                            : ShowcaseUtil,
   n2NodesUtil                       : N2NodesUtil,
+  mItems                            : MItems,
   override val mCommonDi            : ICommonDi
 )
   extends SioControllerImpl
@@ -48,6 +52,7 @@ class SysMdr @Inject() (
   }
 
   /** Страница с бесплатно-размещёнными рекламными карточками, подлежащими модерации s.io.
+    *
     * @param args Аргументы для поиска (QSB).
     */
   def freeAdvs(args: MdrSearchArgs) = IsSuperuser.async { implicit request =>
@@ -216,6 +221,97 @@ class SysMdr @Inject() (
         }
       }
     )
+  }
+
+
+  import dbConfig.driver.api._
+
+
+  /**
+    * Обработка запроса страницы модерации одной рекламной карточки.
+    * Модерация v2 подразумевает также обработку карточек.
+    *
+    * @param nodeId id карточки.
+    * @return Страница
+    */
+  def forAd(nodeId: String) = IsSuperuserMadGet(nodeId).async { implicit request =>
+
+    // Нужно запустить сборку списков item'ов на модерацию.
+    val mitemsFut = dbConfig.db.run {
+      mItems.query
+        .filter { i =>
+          (i.adId === nodeId) &&
+            (i.statusStr === MItemStatuses.AwaitingSioAuto.strId)
+        }
+        // На всякий случай ограничиваем кол-во запрашиваемых item'ов. Нет никакого смысла вываливать слишком много данных на экран.
+        .take(50)
+        .result
+    }
+
+    // Найти бесплатные размещения, подлежащие модерации
+    val rcvrsSelf: Seq[MEdge] = {
+      val es = request.mad.edges
+      // Поиска self-receiver среди эджей:
+      es.withPredicateIter( MPredicates.Receiver.Self )
+        .filter { selfE =>
+          // Если какой-то модератор уже сделал модерацию карточки, то не требуется модерировать бесплатное размещение:
+          es.withPredicateIter( MPredicates.ModeratedBy ).isEmpty
+        }
+        .toSeq
+    }
+
+    // Для рендера карточки необходим подготовить brArgs
+    // TODO Необходимо делать focused-рендер, чтобы можно было видеть карточку во весь рост на половине экрана.
+    val brArgsFut = lkAdUtil.tiledAdBrArgs(request.mad)
+
+    // Узнать id продьюсера текущей, чтобы шаблон мог им воспользоваться.
+    val producerIdOpt = n2NodesUtil.madProducerId( request.mad )
+
+    for {
+      // Дождаться получения необходимых для модерации item'ов
+      mitems <- mitemsFut
+
+      // Для рендера инфы по узлам надо получить карту инстансов этих узлов.
+      mnodesMap <- {
+        // Собрать карту узлов, чтобы их можно было рендерить
+        val nodeIdsSetB = Set.newBuilder[String]
+
+        // Закинуть в карту id продьюсера.
+        nodeIdsSetB ++= producerIdOpt
+
+        // Закинуть в карту саморесивера. Он по идее совпадает с id продьюсера, но на всякий случай закидываем...
+        nodeIdsSetB ++= rcvrsSelf.iterator
+          .map(_.nodeId)
+
+        // Закинуть в список необходимых узлов те, что в mitems.
+        nodeIdsSetB ++= mitems.iterator
+          .filter(_.iType == MItemTypes.AdvDirect)
+          .flatMap(_.rcvrIdOpt)
+
+        val nodeIdsSet = nodeIdsSetB.result()
+
+        // Запустить запрос карты узлов
+        mNodeCache.multiGetMap( nodeIdsSet )
+      }
+
+      // Аргументы рендера.
+      brArgs <- brArgsFut
+
+    } yield {
+
+      // Собрать аргументы рендера шаблона
+      val rargs = MSysMdrForAdTplArgs(
+        brArgs        = brArgs,
+        mnodesMap     = mnodesMap,
+        mitems        = mitems,
+        freeAdvs      = rcvrsSelf,
+        producerIdOpt = producerIdOpt
+      )
+
+      // Отрендерить и вернуть ответ клиенту
+      val html = forAdTpl(rargs)
+      Ok(html)
+    }
   }
 
 }

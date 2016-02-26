@@ -9,6 +9,7 @@
 @import sys1.person.parts._personLinkTpl
 @import models.mdr._
 @import args.mnode
+@import sys1.stuff.hpath._
 
 
 @* Подшаблон генерации квадратной кнопки. *@
@@ -169,7 +170,9 @@
 
     <p class="color-light-strong">
       Отобразить email-письмо инвайта:
-      <a class="blue-link" href="@routes.SysMarket.showEmailInviteMsg(mnode.id.get)">HTML</a>
+      @_blueLink( routes.SysMarket.showEmailInviteMsg(mnode.id.get) ) {
+        HTML
+      }
     </p>
 
   }

@@ -2,8 +2,14 @@
 
 @* Подложка для шаблонов системной админки магазинной части. *@
 
+@import sys1.stuff.hpath._
+
 @hPathAfter1 = {
-  / <a class="blue-link" href="@routes.SysMarket.index()">market</a>
+  /
+  @_blueLink( routes.SysMarket.index() ) {
+    Маркет
+  }
+
   @if(hPathAfter.isEmpty) {/ @title} else {@hPathAfter}
 }
 

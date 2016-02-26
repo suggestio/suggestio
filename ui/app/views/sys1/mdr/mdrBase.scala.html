@@ -4,14 +4,21 @@
 @* Базовый шаблон для модерации. *@
 
 @import sys1.market._
+@import ctx.messages
+@import sys1.stuff.hpath._
 
 @hPathAfter1 = {
-  / <a class="blue-link" href="@routes.SysMdr.index()">Moder</a>
+
+  /
+  @_blueLink( routes.SysMdr.index() ) {
+    @messages("Moderation")
+  }
+
   @mnodeOpt.map { mnode =>
     /
-    <a class="blue-link" href="@routes.SysMarket.showAdnNode(mnode.id.get)">
+    @_blueLink( routes.SysMarket.showAdnNode(mnode.id.get) ) {
       @mnode.meta.basic.name
-    </a>
+    }
   }
   @hPathAfter.getOrElse { / @title }
 

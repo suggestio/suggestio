@@ -1,22 +1,29 @@
 @(title: String, hPathAfter:Option[Html] = None, nodeOpt: Option[MNode] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
 
 @* Подложка для страниц, работающих с унифицированными adn-узлами. *@
+
 @import sys1.market._
 @import ctx._
+@import sys1.stuff.hpath._
 
 @hPathAfter1 = {
   /
-  <a class="blue-link"
-     href="@routes.SysMarket.adnNodesList( msys.MSysNodeListArgs(ntypeOpt = Some(MNodeTypes.AdnNode)) )">
-    ADN
-  </a>
-  @nodeOpt.map { mnode =>
-    / <a class="blue-link"
-         href="@routes.SysMarket.showAdnNode(mnode.id.get)"
-         title="@messages( AdnShownTypes.node2val(mnode).singular) / @mnode.meta.address.town">
-        @mnode.guessDisplayNameOrId
-      </a>
+  @_blueLink(
+    href = routes.SysMarket.adnNodesList( msys.MSysNodeListArgs(ntypeOpt = Some(MNodeTypes.AdnNode)) )
+  ) {
+    Сеть
   }
+
+  @for(mnode <- nodeOpt) {
+    /
+    @_blueLink(
+      href    = routes.SysMarket.showAdnNode(mnode.id.get),
+      "title" -> s"$messages( AdnShownTypes.node2val(mnode).singular) / ${mnode.meta.address.town}"
+    ) {
+      @mnode.guessDisplayNameOrId
+    }
+  }
+
   @hPathAfter.getOrElse {
     / @title
   }
