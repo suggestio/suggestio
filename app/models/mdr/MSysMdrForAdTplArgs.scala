@@ -1,7 +1,9 @@
 package models.mdr
 
 import io.suggest.mbill2.m.item.MItem
+import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.model.n2.node.MNode
+import models.msc.IAdBodyTplArgs
 import models.{MEdge, blk}
 
 /**
@@ -12,7 +14,10 @@ import models.{MEdge, blk}
   *
   * @see [[views.html.sys1.mdr.forAdTpl]]
   */
-trait ISysMdrForAdTplArgs {
+trait ISysMdrForAdTplArgs extends IAdBodyTplArgs {
+
+  /** id модерируемой рекламной карточки. */
+  def adId: String = brArgs.mad.id.get
 
   /** Параметры рендера текущей рекламной карточки. */
   def brArgs: blk.RenderArgs
@@ -21,13 +26,10 @@ trait ISysMdrForAdTplArgs {
   def mnodesMap: Map[String, MNode]
 
   /** Модерируемы товары/узлуги. */
-  def mitems: Seq[MItem]
+  def mitemsGrouped: Seq[(MItemType, Seq[MItem])]
 
   /** Данные по бесплатным размещениям карточки */
   def freeAdvs: Seq[MEdge]
-
-  /** id продьюсера текущей рекламной карточки, если есть. */
-  def producerIdOpt: Option[String]
 
 }
 
@@ -36,8 +38,18 @@ trait ISysMdrForAdTplArgs {
 case class MSysMdrForAdTplArgs(
   override val brArgs         : blk.RenderArgs,
   override val mnodesMap      : Map[String, MNode],
-  override val mitems         : Seq[MItem],
+  override val mitemsGrouped  : Seq[(MItemType, Seq[MItem])],
   override val freeAdvs       : Seq[MEdge],
-  override val producerIdOpt  : Option[String]
+  override val producer       : MNode
 )
   extends ISysMdrForAdTplArgs
+{
+
+  override val adId = super.adId
+
+  override def adsCount   = 1
+  override def index      = 1
+  override def is3rdParty = false
+
+}
+

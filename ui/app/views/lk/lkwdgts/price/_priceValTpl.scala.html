@@ -4,7 +4,7 @@
 @import ctx.messages
 @import util.TplDataFormatUtil.formatPrice
 
-@advPricing.prices.map { price =>
+@for(price <- advPricing.prices) {
   @formatPrice(price)
 }
 

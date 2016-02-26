@@ -2,7 +2,8 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.common.fut.FutureUtil
-import io.suggest.mbill2.m.item.MItems
+import io.suggest.mbill2.m.gid.Gid_t
+import io.suggest.mbill2.m.item.{ItemStatusChanged, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.model.n2.edge.{MEdgeInfo, MNodeEdges}
@@ -16,7 +17,7 @@ import org.joda.time.DateTime
 import play.api.data.Form
 import play.api.mvc.Result
 import util.PlayMacroLogsImpl
-import util.acl.{IsSuperuser, IsSuperuserMad}
+import util.acl.{IsSuItem, IsSuperuser, IsSuperuserMad}
 import util.lk.LkAdUtil
 import util.n2u.N2NodesUtil
 import util.showcase.ShowcaseUtil
@@ -34,13 +35,14 @@ class SysMdr @Inject() (
   lkAdUtil                          : LkAdUtil,
   scUtil                            : ShowcaseUtil,
   n2NodesUtil                       : N2NodesUtil,
-  mItems                            : MItems,
+  override val mItems               : MItems,
   override val mCommonDi            : ICommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
   with IsSuperuser
   with IsSuperuserMad
+  with IsSuItem
 {
 
   import LOGGER._
@@ -260,9 +262,10 @@ class SysMdr @Inject() (
         .toSeq
     }
 
+    implicit val ctx = implicitly[Context]
+
     // Для рендера карточки необходим подготовить brArgs
-    // TODO Необходимо делать focused-рендер, чтобы можно было видеть карточку во весь рост на половине экрана.
-    val brArgsFut = lkAdUtil.tiledAdBrArgs(request.mad)
+    val brArgsFut = scUtil.focusedBrArgsFor(request.mad)(ctx)
 
     // Узнать id продьюсера текущей, чтобы шаблон мог им воспользоваться.
     val producerIdOpt = n2NodesUtil.madProducerId( request.mad )
@@ -272,7 +275,7 @@ class SysMdr @Inject() (
       mitems <- mitemsFut
 
       // Для рендера инфы по узлам надо получить карту инстансов этих узлов.
-      mnodesMap <- {
+      mnodesMapFut = {
         // Собрать карту узлов, чтобы их можно было рендерить
         val nodeIdsSetB = Set.newBuilder[String]
 
@@ -294,7 +297,17 @@ class SysMdr @Inject() (
         mNodeCache.multiGetMap( nodeIdsSet )
       }
 
-      // Аргументы рендера.
+      // Нужно выводить item'ы сгруппированными по смыслу.
+      mitemsGrouped = {
+        mitems
+          .groupBy(_.iType)
+          .toSeq
+          .sortBy(_._1.strId)
+      }
+
+      // Дождаться карты узлов
+      mnodesMap <- mnodesMapFut
+      // Дождаться аргументов рендера.
       brArgs <- brArgsFut
 
     } yield {
@@ -303,15 +316,64 @@ class SysMdr @Inject() (
       val rargs = MSysMdrForAdTplArgs(
         brArgs        = brArgs,
         mnodesMap     = mnodesMap,
-        mitems        = mitems,
+        mitemsGrouped = mitemsGrouped,
         freeAdvs      = rcvrsSelf,
-        producerIdOpt = producerIdOpt
+        producer      = producerIdOpt
+          .flatMap(mnodesMap.get)
+          .getOrElse {
+            LOGGER.warn(s"forAd($nodeId): Producer not found/not exists, using self as producer node.")
+            request.mad
+          }
       )
 
       // Отрендерить и вернуть ответ клиенту
-      val html = forAdTpl(rargs)
+      val html = forAdTpl(rargs)(ctx)
       Ok(html)
     }
+  }
+
+
+  /** Модератор подтверждает оплаченный item. */
+  def approveItem(itemId: Gid_t) = IsSuperuserPost.async { implicit request =>
+    // Сборка апдейта модели MItems.
+    val dbAction = for {
+      // Запустить обновление полностью на стороне БД.
+      rowsUpdated <- {
+        mItems.query
+          .filter { i =>
+            (i.id === itemId) && (i.statusStr === MItemStatuses.AwaitingSioAuto.strId)
+          }
+          .map { i =>
+            (i.status, i.dateStatus)
+          }
+          .update((MItemStatuses.Offline, DateTime.now))
+      }
+      if rowsUpdated == 1
+
+      // Прочитать обновлённый MItem.
+      // TODO Slick не умеет update returning, а он был бы здесь предпочтительнее.
+      mitemOpt <- mItems.getById(itemId)
+
+    } yield {
+      mitemOpt.get
+    }
+
+    // Запуск обновления MItems.
+    val saveFut = dbConfig.db.run( dbAction.transactionally )
+
+    for {
+      mitem <- saveFut
+    } yield {
+      sn.publish( ItemStatusChanged(mitem) )
+      Redirect( routes.SysMdr.forAd(mitem.adId) )
+        .flashing(FLASH.SUCCESS -> s"Размещение #$itemId подтверждено.")
+    }
+  }
+
+
+  /** Модератор отвергает оплаченный item с указанием причины отказа. */
+  def refuseItem(itemId: Gid_t) = IsSuItemPost(itemId).async { implicit request =>
+    ???
   }
 
 }

@@ -30,21 +30,22 @@ class BillingCronTasks @Inject()(
   import mCommonDi._
 
   /** Включен ли биллинг по крону? Будет выполнятся публикация карточек, их сокрытие и т.д. */
-  def CRON_BILLING_CHECK_ENABLED: Boolean = {
+  private def CRON_BILLING_CHECK_ENABLED: Boolean = {
     configuration.getBoolean("mmp.daily.check.enabled")
       .getOrElse(true)
   }
 
   /** Как часто надо проверять таблицу advsOK на предмет необходимости изменений в выдаче. */
-  def CHECK_ADVS_OK_DURATION: FiniteDuration = {
+  private def CHECK_ADVS_OK_DURATION: FiniteDuration = {
     configuration.getInt("mmp.daily.check.advs.ok.every.seconds")
-      .getOrElse(120)
+      .getOrElse(60)
       .seconds
   }
 
   /** Не раньше какого времени можно запускать auto-accept. */
-  val AUTO_ACCEPT_REQS_AFTER_HOURS = configuration.getInt("mmp.daily.accept.auto.after.hours") getOrElse 16
+  //private val AUTO_ACCEPT_REQS_AFTER_HOURS = configuration.getInt("mmp.daily.accept.auto.after.hours") getOrElse 16
 
+  /** Сборщик спеки периодических задач биллинга. */
   override def cronTasks(app: Application): TraversableOnce[ICronTask] = {
     val enabled = CRON_BILLING_CHECK_ENABLED
     info("enabled = " + enabled)
@@ -60,7 +61,7 @@ class BillingCronTasks @Inject()(
       }*/
 
       val depubExpired = MCronTask(
-        startDelay = 10.seconds,
+        startDelay = 5.seconds,
         every = every,
         displayName = "depublishExpiredAdvs()"
       ) {
@@ -68,7 +69,7 @@ class BillingCronTasks @Inject()(
       }
 
       val advOfflineAdvs = MCronTask(
-        startDelay = 30.seconds,
+        startDelay = 15.seconds,
         every = every,
         displayName = "advertiseOfflineAds()"
       ) {

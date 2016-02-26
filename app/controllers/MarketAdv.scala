@@ -280,7 +280,7 @@ class MarketAdv @Inject() (
           adves2  <- adves2Fut
           prices  <- {
             if (adves2.isEmpty || maybeFreeAdv()) {
-              Future.successful( Seq.empty )
+              Future.successful(Nil: Seq[MPrice])
             } else {
               for {
                 allPrices <- advDirectBilling.getAdvPrices(request.mad, adves2)
@@ -291,7 +291,11 @@ class MarketAdv @Inject() (
           }
           userBalances <- userBalancesFut
         } yield {
-          val advPricing = advDirectBilling.getAdvPricing(prices, userBalances)
+          val advPricing = if (prices.nonEmpty) {
+            advDirectBilling.getAdvPricing(prices, userBalances)
+          } else {
+            bill2Util.zeroPricing
+          }
           val html = _priceValTpl(advPricing)
           html: JsString
         }
@@ -419,10 +423,10 @@ class MarketAdv @Inject() (
 
           // Синхронно проанализировать состояние галочки бесплатного размещения.
           isFree = maybeFreeAdv()
-          (status, successMsg) = if (isFree) {
-            (MItemStatuses.Offline, "Ads.were.adv")
+          status = if (isFree) {
+            MItemStatuses.Offline
           } else {
-            (MItemStatuses.Draft, "Adv.reqs.sent")
+            MItemStatuses.Draft
           }
 
           rcvrs     <- rcvrsFut
@@ -437,7 +441,7 @@ class MarketAdv @Inject() (
           // Собрать данные для биллинга, которые должны бы собраться уже
           personContract    <- personContractFut
 
-          // Залезть наконец в базу биллинга, сохранив в корзинк добавленные размещения...
+          // Залезть наконец в базу биллинга, сохранив в корзину добавленные размещения...
           billRes <- {
             val dbAction = for {
               cartOrder <- bill2Util.ensureCart( personContract.mc.id.get )
@@ -454,15 +458,15 @@ class MarketAdv @Inject() (
 
         } yield {
           // Всё сделано, отредиректить юзера
-          val rdrCall = if (!isFree) {
+          if (!isFree) {
             // Обычные юзеры отправляются в корзину.
-            routes.LkBill2.cart(request.producer.id.get, r = Some(routes.LkAdvGeoTag.forAd(adId).url))
+            val call = routes.LkBill2.cart(request.producer.id.get, r = Some(routes.LkAdvGeoTag.forAd(adId).url))
+            Redirect(call)
           } else {
             // Суперюзеры sio отправляются на эту же страницу для дальнейшей возни
-            routes.MarketAdv.advForAd(adId)
+            Redirect( routes.MarketAdv.advForAd(adId) )
+              .flashing(FLASH.SUCCESS -> "Ads.were.adv")
           }
-          Redirect( rdrCall )
-            .flashing(FLASH.SUCCESS -> successMsg)
         }
 
         // Если список размещения пуст, то надо вернуть форму.

@@ -93,9 +93,12 @@ class ShowcaseUtil @Inject() (
    * @return Аргументы для рендера.
    */
   def focusedBrArgsFor(mad: MNode)(implicit ctx: Context): Future[blk.RenderArgs] = {
+    focusedBrArgsFor(mad, ctx.deviceScreenOpt)
+  }
+  def focusedBrArgsFor(mad: MNode, deviceScreenOpt: Option[DevScreen] = None): Future[blk.RenderArgs] = {
     val szMult: SzMult_t = {
       val dscrSz = for {
-        dscr <- ctx.deviceScreenOpt
+        dscr <- deviceScreenOpt
         bm   <- mad.ad.blockMeta
       } yield {
         fitBlockToScreen(bm, dscr)
@@ -108,7 +111,7 @@ class ShowcaseUtil @Inject() (
     val bc = BlocksConf.applyOrDefault( mad )
 
     // Нужно получить данные для рендера широкой карточки.
-    for (bgImgOpt <- focWideBgImgArgs(mad, szMult)) yield {
+    for (bgImgOpt <- focWideBgImgArgs(mad, szMult, deviceScreenOpt)) yield {
       blk.RenderArgs(
         mad       = mad,
         bc        = bc,
@@ -129,6 +132,9 @@ class ShowcaseUtil @Inject() (
    * @return None если нет фоновой картинки. Иначе Some() с данными рендера фоновой wide-картинки.
    */
   def focWideBgImgArgs(mad: MNode, szMult: SzMult_t)(implicit ctx: Context): Future[Option[MakeResult]] = {
+    focWideBgImgArgs(mad, szMult, ctx.deviceScreenOpt)
+  }
+  def focWideBgImgArgs(mad: MNode, szMult: SzMult_t, devScrOpt: Option[DevScreen]): Future[Option[MakeResult]] = {
     val optFut = for {
       mimg <- BgImg.getBgImg(mad)
       bm   <- mad.ad.blockMeta
@@ -137,7 +143,7 @@ class ShowcaseUtil @Inject() (
         img           = mimg,
         blockMeta     = bm,
         szMult        = szMult,
-        devScreenOpt  = ctx.deviceScreenOpt
+        devScreenOpt  = devScrOpt
       )
       Makers.forFocusedBg(bm.wide)
         .icompile(wArgs)

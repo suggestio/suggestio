@@ -270,20 +270,26 @@ class SysMarket @Inject() (
 
 
   /** Безвозвратное удаление узла рекламной сети. */
-  def deleteAdnNodeSubmit(adnId: String) = {
-    val ab = IsSuNodePost(adnId)
+  def deleteAdnNodeSubmit(nodeId: String) = {
+    val ab = IsSuNodePost(nodeId)
     ab.async { implicit request =>
       import request.mnode
+      lazy val logPrefix = s"deleteAdnNodeSubmit($nodeId):"
+      LOGGER.info(s"$logPrefix by user[${request.user.personIdOpt}] request. Deleting...")
       mnode
         .delete
         .filter(identity)
         .map { _ =>
-          Redirect( routes.SysMarket.adnNodesList() )
-            .flashing(FLASH.SUCCESS -> "Узел ADN удалён.")
+          // Нужно перебрасывать на вкладку с узлами того же типа, что и удалённый.
+          val args = MSysNodeListArgs(
+            ntypeOpt = Some(mnode.common.ntype)
+          )
+          Redirect( routes.SysMarket.adnNodesList(args) )
+            .flashing(FLASH.SUCCESS -> s"""Узел "${mnode.guessDisplayNameOrIdOrEmpty}" удалён.""")
         }
         .recoverWith {
           case nse: NoSuchElementException =>
-            warn(s"deleteAdnNodeSubmit($adnId): Node not found. Anyway, resources re-erased.")
+            warn(s"deleteAdnNodeSubmit($nodeId): Node not found. Anyway, resources re-erased.")
             ab.nodeNotFound(request)
         }
     }

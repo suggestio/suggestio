@@ -29,7 +29,7 @@ abstract class AdvsUpdate
   import mCommonDi._
   import dbConfig.driver.api._
 
-  /** Экшен поточнго поиск id item'ов для обработки, сгруппированы по adId. */
+  /** Поиск данных для обработки. */
   // TODO Хотеть DBIOAction[_, Streamable, Effect.Read], но голый SQL-запрос в модели мешает этому.
   def findItemsForProcessing: DBIOAction[Traversable[MAdItemIds], NoStream, Effect.Read]
 
@@ -54,7 +54,6 @@ abstract class AdvsUpdate
 
   /** Запуск обработки item'ов для одной рекламной карточки. */
   def runForAd(d: MAdItemIds): Unit = {
-
     val madOptFut = mNodeCache.getById(d.adId)
 
     lazy val logPrefix = s"runForAd(${d.adId}/${System.currentTimeMillis}):"

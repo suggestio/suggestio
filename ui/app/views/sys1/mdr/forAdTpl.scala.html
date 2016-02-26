@@ -2,11 +2,94 @@
 
 @* Страница с модерацией одной рекламной карточки. *@
 
+@import lk.adv.widgets._
+@import views.html.sc.foc._adFullTpl
+@import ctx.{messages, request}
+@import helper._
+@import args.adId
+
+@__approveBtn(call: Call) = {
+  @form( CSRF(call) ) {
+    <input class="fast-approve-ibtn" type="submit" value="[+]" title="@messages("Approve")" />
+  }
+}
+
 @mdrBase(
   title     = args.brArgs.mad.guessDisplayNameOrIdOrEmpty,
-  mnodeOpt  = args.producerIdOpt.flatMap( args.mnodesMap.get )
+  mnodeOpt  = Some(args.producer)
 ) {
 
+  @* Колонка содержит item'ы, требующие модерации. *@
+  <div class="mdr node-mdr_left-bar">
 
+    @if(!args.freeAdvs && !args.mitemsGrouped) {
+      Карточка не нуждается в модерации.
+    }
+
+
+    @* Отображаем бесплатные пост-модерируемые размещения. *@
+    @if(args.freeAdvs) {
+      <h2>Непроверенные бесплатные размещения:</h2>
+      @for(medge <- args.freeAdvs) {
+
+        @__approveBtn( routes.SysMdr.freeAdvMdrAccept(adId) )
+
+        @messages(medge.predicate.singular)
+
+        @for(mnode <- args.mnodesMap.get(medge.nodeId); nodeId <- mnode.id) {
+          <a href="@routes.SysMarket.showAdnNode(nodeId)">
+            @mnode.guessDisplayNameOrId
+          </a>
+        }
+        <a class="js-btn" href="@routes.SysMdr.freeAdvMdr(adId)">...</a>
+      }
+      <hr/>
+    }
+
+
+    @* Рисуем список платных премодерируемых размещений. *@
+    @if(args.mitemsGrouped) {
+      <h2>Запрошеные платные размещения:</h2>
+      @for((itype, mitems) <- args.mitemsGrouped) {
+        <div class="mdr-item-group">
+          <h3>@messages( itype.nameI18n )</h3>
+          @for(mitem <- mitems; itemId <- mitem.id) {
+            <div class="mdr-item">
+              @__approveBtn( routes.SysMdr.approveItem(itemId) )
+
+              @* Для тега вывести название тега, завернув его в ссылку, если возможно... *@
+              @for(rcvrId <- mitem.rcvrIdOpt) {
+                <a href="@routes.SysMarket.showAdnNode(rcvrId)">
+              }
+
+              @mitem.tagFaceOpt.map { tagFace =>
+                #@tagFace
+              }.getOrElse {
+                @for(rcvr <- mitem.rcvrIdOpt.flatMap(args.mnodesMap.get)) {
+                  @rcvr.guessDisplayNameOrId
+                }
+              }
+
+              @if(mitem.rcvrIdOpt) {
+                </a>
+              }
+            </div>
+          }
+        </div>
+      }
+      <hr/>
+    }
+
+  </div> @* bar-left *@
+
+
+  <div class="node-mdr_right-bar">
+    @* TODO Надо focused ad сюда... *@
+    <div class="ad-full-preview">
+      <div class="sio-mart-showcase __relative">
+        @_adFullTpl( args )
+      </div>
+    </div>
+  </div>
 
 }

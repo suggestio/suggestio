@@ -6,6 +6,7 @@
 @import helper._
 @import io.suggest.popup.PopupConstants
 @import sys1.stuff.hpath._
+@import views.html.stuff._
 
 @* base-шаблон для системной панели suggest.io. *@
 <!DOCTYPE html>
@@ -60,6 +61,7 @@
 
     <script src="@routes.Assets.versioned("javascripts/market/lk/mx_cof.js")"></script>
 
+    @_sjsScript("lk-sjs", withLauncherJs = true)
   </body>
 
 </html>

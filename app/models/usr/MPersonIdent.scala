@@ -4,7 +4,6 @@ import com.lambdaworks.crypto.SCryptUtil
 import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.model.es.{EsModelPlayJsonT, EsModelT, EsModelStaticT, EsModelUtil}
 import EsModelUtil._
-import io.suggest.model._
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.xcontent.XContentBuilder
@@ -13,7 +12,6 @@ import play.api.Play.current
 import play.api.libs.json.{JsBoolean, JsString}
 import util.PlayMacroLogsImpl
 
-import scala.collection.JavaConversions._
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -43,7 +41,7 @@ object MPersonIdent extends PlayMacroLogsImpl {
       }
       .getOrElse(Seq(
         "konstantin.nikiforov@cbca.ru",
-        "ilya@shuma.ru",
+        //"ilya@shuma.ru",
         "sasha@cbca.ru",
         "alexander.pestrikov@cbca.ru"
       ))

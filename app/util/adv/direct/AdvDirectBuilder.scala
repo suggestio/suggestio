@@ -118,7 +118,7 @@ trait AdvDirectBuilder extends IAdvBuilder {
       mItems.query
         .filter { _.id === mitemId }
         .map { i => (i.statusStr, i.dateStartOpt, i.dateEndOpt, i.dateStatus) }
-        .update( (MItemStatuses.Finished.strId, Some(dateStart2), Some(dateEnd2), dateStart2) )
+        .update( (MItemStatuses.Online.strId, Some(dateStart2), Some(dateEnd2), dateStart2) )
         .filter(_ == 1)
     }
 

@@ -22,7 +22,7 @@ class DisableExpiredAdvs @Inject() (
   extends AdvsUpdate
 {
 
-  override def findItemsForProcessing = mItems.findCurrentForStatus( MItemStatuses.Online )
+  override def findItemsForProcessing = mItems.findCurrentForStatus( MItemStatuses.Online, expired = true )
 
   override protected def _buildAction(b: IAdvBuilder, mitem: MItem): IAdvBuilder = {
     b.uninstall(mitem)

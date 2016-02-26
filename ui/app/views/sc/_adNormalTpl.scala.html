@@ -10,7 +10,7 @@
 <div
   @if( isWithAction && (!args.bc.hrefBlock || !mad.meta.business.siteUrl.nonEmpty) ) {
     class="js-shop-link"
-    @ctx.api.n2NodesUtil.madProducerId(mad).map { producerId =>
+    @for(producerId <- ctx.api.n2NodesUtil.madProducerId(mad)) {
       data-producer-id="@producerId"
     }
     data-ad-id="@mad.id"

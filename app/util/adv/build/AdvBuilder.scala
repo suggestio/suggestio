@@ -52,15 +52,20 @@ class AdvBuilderUtil extends PlayMacroLogsDyn {
     */
   def uninstallEdge(edges: NodeEdgesMap_t, mitem: MItem, pred: MPredicate): NodeEdgesMap_t = {
     val mitemId = mitem.id.get
+    lazy val logPrefix = s"_uninstallEdgeFrom(item[$mitemId]):"
     val iter = edges
       .valuesIterator
       .filter { e =>
         val isRemove = e.info.billGids.contains( mitemId )
+
+        // Записать в логи грядущее стирание эджа.
+        if (isRemove)
+          LOGGER.trace(s"$logPrefix uninstalling edge: $e")
+
         // Для самоконтроля: проверяем остальные поля удаляемого эджа по данным биллинга
-        if (isRemove && !(e.predicate == pred && mitem.rcvrIdOpt.contains( e.nodeId ))) {
-          // should never happen
+        if (isRemove && !(e.predicate == pred && mitem.rcvrIdOpt.contains( e.nodeId )))
           LOGGER.error(s"_uninstallEdgeFrom(item[$mitemId]): Erasing unexpected edge using info.billGid: $e, rcvrId must == ${mitem.rcvrIdOpt}, pred == $pred")
-        }
+
         !isRemove
       }
     MNodeEdges.edgesToMap1( iter )

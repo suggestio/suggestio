@@ -22,8 +22,7 @@ class ActivateOfflineAdvs @Inject() (
   extends AdvsUpdate
 {
 
-  /** Экшен поточнго поиск id item'ов для обработки, сгруппированы по adId. */
-  override def findItemsForProcessing = mItems.findCurrentForStatus( MItemStatuses.Offline )
+  override def findItemsForProcessing = mItems.findCurrentForStatus( MItemStatuses.Offline, expired = false )
 
   override protected def _buildAction(b: IAdvBuilder, mitem: MItem): IAdvBuilder = {
     b.install(mitem)
