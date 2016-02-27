@@ -446,6 +446,7 @@ class Bill2Util @Inject() (
 
   def increaseBalanceSimple(contractId: Gid_t, price: MPrice): DBIOAction[MTxn, NoStream, RWT] = {
     val dba = for {
+      // TODO Можно сразу находить баланс в нужной валюте или же создавать его...
       balances    <- mBalances.findByContractId(contractId)
       balancesMap =  mBalances.balances2curMap(balances)
       txn         <- increaseBalance(
@@ -566,6 +567,30 @@ class Bill2Util @Inject() (
   }
 
 
+  /**
+    * Подготовить получателя денег к эксплуатации.
+    *
+    * @param nodeId id узла-получателя денег.
+    * @return Future с итогом работы.
+    *         Если Future(None), то нет возможности получить данные по ресиверу.
+    */
+  def prepareMoneyReceiver(nodeId: String): Future[Option[EnsuredNodeContract]] = {
+    // Организовать сборку данных по контракту получателя.
+    val fut0 = for {
+      rcvrNodeOpt <- mNodeCache.getById( nodeId )
+      rcvrNode    =  rcvrNodeOpt.get
+      enc         <- ensureNodeContract(rcvrNode)
+    } yield {
+      Some(enc)
+    }
+    // Ресивер денег может быть не готов к профиту, но это невероятная ситуация.
+    fut0.recover { case _: NoSuchElementException =>
+      LOGGER.warn(s"prepareMoneyReceiver($nodeId): Receiver node not found/not exists.")
+      None
+    }
+  }
+
+
   /** Контейнер результата экшена аппрува item'а. */
   sealed case class ApproveItemResult(mitem: MItem)
 
@@ -574,21 +599,39 @@ class Bill2Util @Inject() (
     * Происходит списание заблокированных денег из кошелька юзера, зачисление средств в пользу CBCA,
     * обновление item'a.
     *
-    * @param itemId
+    * @param itemId id обрабатываемого item'а.
     * @return Экшен с результатом работы.
     */
   def approveItemAction(itemId: Gid_t): DBIOAction[ApproveItemResult, NoStream, RW] = {
+    lazy val logPrefix = s"approveItemAction($itemId):"
+
     for {
       // Получить и заблокировать обрабатываемый item.
       mitem0 <- _prepareAwaitingItem(itemId)
+
+      // Запустить В ФОНЕ вне транзакции сбор базовой инфы о получателе денег. "mr" означает "Money Receiver".
+      mrInfoOptFut: Future[Option[EnsuredNodeContract]] = {
+        if (mitem0.price.amount <= 0.0) {
+          Future.successful( None )
+        } else {
+          val mrNodeId = if (mitem0.iType.moneyRcvrIsCbca) {
+            CBCA_NODE_ID
+          } else {
+            mitem0.rcvrIdOpt.getOrElse {
+              val cbcaNodeId = CBCA_NODE_ID
+              LOGGER.warn(s"$logPrefix Item has itype=${mitem0.iType}, rcvr is NOT cbca, but item.rcvrIdOpt is empty! Money receiver will be CBCA $cbcaNodeId")
+              cbcaNodeId
+            }
+          }
+          prepareMoneyReceiver(mrNodeId)
+        }
+      }
 
       // Получить и заблокировать баланс покупателя
       balance0 <- _item2balance(mitem0)
 
       // Списать blocked amount с баланса покупателя
       usrAmtBlocked2 <- mBalances.incrBlockedBy(balance0.id.get, -mitem0.price.amount)
-
-      // TODO Найти баланс CBCA, залить на баланс деньги с item'а, провести транзакцию для cbca.
 
       // Запустить обновление полностью на стороне БД.
       mitem2 <- {
@@ -606,10 +649,69 @@ class Bill2Util @Inject() (
           .map(_ => mi2)
       }
 
+      // Залить деньги получателю денег, если возможно.
+      mrInfoOpt <- DBIO.from( mrInfoOptFut )
+      _ <- {
+        mrInfoOpt.fold [DBIOAction[_,_,RW]] {
+          LOGGER.warn(s"$logPrefix Money income skipped, so they are lost.")
+          DBIO.successful(None)
+
+        } { mrInfo =>
+          // Есть получатель финансов, зачислить ему на необходимый баланс.
+          val price = mitem2.price
+          for {
+            // Найти/создать кошелек получателя денег
+            mrBalance0 <- ensureBalanceFor(mrInfo.mc.id.get, price.currency)
+            // Зачислить деньги как заблокированные, ведь клиент может быть не доволен оказанной услугой.
+            mrBlockedAmount2Opt <- mBalances.incrBlockedBy(mrBalance0.id.get, price.amount)
+            // Транзакцию не проводить, т.к. транзакция идёт по текущему счёту, а не по заблокированным средствам,
+            // которые могут быть списаны назад при проблемах...
+          } yield {
+            val mrBlockedAmount2 = mrBlockedAmount2Opt.get
+            LOGGER.debug(s"$logPrefix Money receiver balance[${mrBalance0.id.orNull}] blocked updated: ${mrBalance0.blocked} + ${price.amount} => $mrBlockedAmount2 ${mrBalance0.price.currencyCode}")
+            mrBalance0.copy(
+              blocked = mrBlockedAmount2
+            )
+          }
+        }
+      }
+
     } yield {
       ApproveItemResult( mitem2 )
     }
   }
+
+
+  /**
+    * Найти/создать баланс для указанного контракта и валюты.
+    *
+    * @param contractId id контракта.
+    * @param currency Валюта баланса.
+    * @return Экшен, возвращающий баланс, готовый к обновлению.
+    */
+  def ensureBalanceFor(contractId: Gid_t, currency: Currency): DBIOAction[MBalance, NoStream, RW] = {
+    val currencyCode = currency.getCurrencyCode
+    lazy val logPrefix = s"ensureBalanceFor($contractId,$currencyCode):"
+    for {
+      // Считать баланс получателя...
+      balanceOpt <- {
+        mBalances.getByContractCurrency(contractId, currencyCode)
+          .forUpdate
+      }
+
+      // Если баланс отсутствует, то инициализировать
+      balance0 <- {
+        balanceOpt.fold [DBIOAction[MBalance, NoStream, RW]] {
+          LOGGER.trace(s"$logPrefix Initializing money receiver's balance for $contractId/${}...")
+          mBalances.initByContractCurrency(contractId, currency)
+        } { DBIO.successful }
+      }
+
+    } yield {
+      balance0
+    }
+  }
+
 
   /** Результат исполнения экшена refuseItemAction(). */
   sealed case class RefuseItemResult(mitem: MItem, mtxn: MTxn)
