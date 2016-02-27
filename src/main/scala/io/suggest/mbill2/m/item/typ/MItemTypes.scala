@@ -26,6 +26,13 @@ object MItemTypes extends EnumMaybeWithName with EnumApply {
     def nameI18n: String = {
       "Item.type." + strId
     }
+
+    /** Является ли ресивером денег CBCA?
+      * Для рекламных размещений внутри suggest.io -- она.
+      * Для прочих возможных сделок -- нужно анализировать содержимое MItem.rcvrIdOpt.
+      */
+    def moneyRcvrIsCbca: Boolean = true
+
   }
 
   override type T = Val

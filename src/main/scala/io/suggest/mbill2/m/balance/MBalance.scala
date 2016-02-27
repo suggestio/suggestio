@@ -1,5 +1,7 @@
 package io.suggest.mbill2.m.balance
 
+import java.util.Currency
+
 import com.google.inject.{Inject, Singleton}
 import io.suggest.common.m.sql.ITableName
 import io.suggest.common.slick.driver.ExPgSlickDriverT
@@ -169,6 +171,21 @@ class MBalances @Inject() (
       }
       .result
       .headOption
+  }
+
+  /**
+    * Инициализировать пустой кошелек для указанной валюты и контракта.
+    *
+    * @param contractId id контракта.
+    * @param currency валюта кошелька.
+    * @return DBIOAction, возвращающий экземпляр созданного кошелька.
+    */
+  def initByContractCurrency(contractId: Gid_t, currency: Currency): DBIOAction[MBalance, NoStream, Effect.Write] = {
+    val mb = MBalance(
+      contractId = contractId,
+      price = MPrice(0.0, currency)
+    )
+    insertOne(mb)
   }
 
 }
