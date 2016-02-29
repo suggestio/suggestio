@@ -27,4 +27,7 @@ object MTxnTypes extends EnumMaybeWithName with EnumApply {
   /** Входящий профит. К продавку. */
   val Income   = new Val("i")
 
+  /** Возмещение денег за некачественно-оказанные услуги. */
+  //val Refund   = new Val("e")
+
 }

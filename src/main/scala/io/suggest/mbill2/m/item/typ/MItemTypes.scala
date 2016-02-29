@@ -44,8 +44,13 @@ object MItemTypes extends EnumMaybeWithName with EnumApply {
   /** Заказ геотеггинга для карточки. */
   val GeoTag            : T = new Val("t")
 
-  /** Покупка доступа к внешнему размещению. */
-  val AdvExt            : T = new Val("e")
+  /** Покупка срочного доступа к внешнему размещению (разовая абонплата). */
+  val AdvExtFee         : T = new Val("e")
+
+
+  /** Типы, относящиеся к рекламным размещениям. */
+  val onlyAdvTypes    = Set(AdvDirect, GeoTag)
+  def onlyAdvTypesIds = onlyAdvTypes.map(_.strId)
 
 }
 

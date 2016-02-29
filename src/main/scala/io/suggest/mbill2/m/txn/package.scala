@@ -7,6 +7,6 @@ package io.suggest.mbill2.m
   */
 package object txn {
 
-   type MTxnType = MTxnTypes.T
+  type MTxnType     = MTxnTypes.T
 
 }
