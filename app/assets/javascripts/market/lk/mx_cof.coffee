@@ -544,6 +544,7 @@ CbcaPopup =
 
     $ document
     .on event, '.js-remove-popup', (e)->
+      e.preventDefault()
       $this = $ this
       $popup = $this.closest '.js-popup'
       popupId = $popup.attr 'id'

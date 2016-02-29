@@ -1,20 +1,31 @@
-@(imgId:String, width: Int, height: Int, imeta: ISize2di, id: String, cropOpt: Option[ImgCrop])(implicit ctx: Context)
+@(imgId: String, width: Int, height: Int, imeta: ISize2di, id: String, cropOpt: Option[ImgCrop])(implicit ctx: Context)
 
 @import ctx._
 @import helper._
 @import ctx.api.dynImgUtil
 @import io.suggest.popup.PopupConstants
 @import io.suggest.img.ImgConstants
+@import lk.popup._
+@import lk.dsl._
 
-<div class="@PopupConstants.POPUP_CLASS __size-M @PopupConstants.JS_POPUP_CLASS" id="@id" data-width="@width" data-height="@height">
+@_popupTpl(
+  css   = Seq( "__size-M" ),
+  attrs = Seq(
+    "id"          -> id,
+    "data-width"  -> width,
+    "data-height" -> height
+  )
+) {
 
-  <div class="popup_header">
-    <a class="close f-right @PopupConstants.REMOVE_CSS_CLASS"></a>
-  </div>
+  @_popupHdrTpl() {
+    @_popupCloseBtnTpl(PopupConstants.REMOVE_CSS_CLASS)
+  }
 
-  <h2 class="minor-title">Редактирование изображения</h2>
+  @_minorTitleTpl() {
+    @messages("Picture.editing")
+  }
 
-  <div class="popup_cnt">
+  @_popupCntTpl() {
 
     <div class="market-crop-tool__container js-crop-container" style="width: @width; height: @height;">
 
@@ -47,9 +58,8 @@
         <button class="btn __major __size-M __list" type="submit">@messages("Save")</button>
       </div>
 
+    }
 
-  </div>
+  } @* popupCnt *@
 
-  }
-
-</div>
+}

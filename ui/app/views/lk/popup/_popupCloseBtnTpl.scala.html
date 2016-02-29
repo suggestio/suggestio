@@ -1,0 +1,5 @@
+@(cssClass: String = io.suggest.popup.PopupConstants.CLOSE_CSS_CLASS, href: Option[String] = None)
+
+@* Шаблон настраиваемой кнопки закрытия попапа. *@
+
+<a class="close f-right @cssClass" href="@href.getOrElse("#")"></a>

@@ -8,52 +8,49 @@
 @import util.FC.divFc
 @import lk.popup._
 @import ctx.{messages, request}
-
-@defining( args.brArgs.mad ) { mad =>
-@_popupTpl(id = Some("advReqWind"), hidden = false, jsPopup = false) {
-  <div class="popup_cnt">
-
-    @* Отобразить карточку целиком (задействовать другую колонку) *@
-    <div class="ad-full-preview">
-      <div class="sio-mart-showcase __relative">
-        @_adFullTpl(args)
-      </div>
-    </div>
+@import args.brArgs.mad
 
 
-    @* Отрендерить управление модерацией в одной колонке. *@
-    @* Одобрить размещение: *@
-    @form( CSRF(routes.SysMdr.freeAdvMdrAccept(mad.id.get)), 'id -> "advReqAccept") {
+@* Верстка управляющих кнопок очень похожа, дедублицируем... *@
+@__btn(color: Int, float: MHand, cls: String)(content: Html) = {
+  <a class="siom-ac-btn __color-@color __size-M __ft-XM f-@float.name @cls" href="#">
+    @content
+  </a>
+}
 
-      <div class="btn-w __size-S">
+@_popupTpl(
+  hidden  = false,
+  jsPopup = false,
+  attrs   = Seq("id" -> "advReqWind")
+) {
 
-        <a class="siom-ac-btn __color-4 __size-M __ft-XM f-left js-adv-req-forms">
-          Отменить размещение
-        </a>
+  @_popupHdrTpl() {
+    @_popupCloseBtnTpl()
+  }
 
-        <a class="siom-ac-btn __color-1 __size-M __ft-XM js-submit-btn f-right">Одобрить</a>
-
-      </div>
-    }
+  @_popupCntTpl() {
 
     @* Запретить размещение с указание причины. *@
-    @form( CSRF(routes.SysMdr.freeAdvMdrBan(mad.id.get)), 'id -> "advReqRefuse", 'class -> "js-hidden") {
+    @form( CSRF(routes.SysMdr.freeAdvMdrBan(mad.id.get)), 'id -> "advReqRefuse") {
 
-      @textarea(args.banFormM("reason"), '_label -> "", 'placeholder -> messages("Write.refuse.reason") )
+      @textarea(
+        args.banFormM("reason"),
+        '_label       -> "",
+        'placeholder  -> messages("Write.refuse.reason")
+      )
 
       <div class="btn-w __size-S">
 
-        <a class="siom-ac-btn __color-3 __size-M __ft-XM f-left js-adv-req-forms">
-          Отменить
-        </a>
+        @__btn(3, MHands.Left, "js-adv-req-forms") {
+          @messages("Cancel")
+        }
 
-        <a class="siom-ac-btn __color-4 __size-M __ft-XM f-right js-submit-btn">
-          Отклонить
-        </a>
+        @__btn(4, MHands.Right, "js-submit-btn") {
+          @messages("Refuse")
+        }
 
       </div>
     }
 
-  </div>
-}
+  }
 }

@@ -72,6 +72,7 @@ Signup.finished=Регистрация завершена.
 Predicate=Предикат
 Edited=Редактировалось
 Currency=Валюта
+Refuse=Отказать
 
 
 requisites=Платёжные реквизиты для вывода средств
@@ -744,4 +745,4 @@ Item.type.t=Размещение в геотеге
 Item.type.e=Внешнее размещение
 
 Moderation=Модерация
-
+Picture.editing=Редактирование изображения

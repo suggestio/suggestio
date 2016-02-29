@@ -1,5 +1,6 @@
 package models.mdr
 
+import models.blk.IRenderArgs
 import models.msc.IAdBodyTplArgs
 import models.{MNode, blk}
 import play.api.data.Form
@@ -15,9 +16,13 @@ trait IFreeAdvMdrRArgs extends IAdBodyTplArgs {
 
   def banFormM: Form[String]
 
+  override val brArgs: IRenderArgs
+  override val producer: MNode
+
   override def index    = 0
   override def adsCount = 0
   override def is3rdParty = false
+
 }
 
 

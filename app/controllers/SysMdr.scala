@@ -6,14 +6,14 @@ import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.{ItemStatusChanged, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.MItemTypes
-import io.suggest.mbill2.m.txn.{MTxnTypes, MTxn}
+import io.suggest.model.common.OptId
 import io.suggest.model.n2.edge.{MEdgeInfo, MNodeEdges}
 import models._
 import models.mctx.Context
 import models.mdr._
 import models.mproj.ICommonDi
 import models.msys.MSysMdrFreeAdvsTplArgs
-import models.req.IAdReq
+import models.req.{IReq, IAdReq}
 import org.joda.time.DateTime
 import play.api.data.Form
 import play.api.mvc.Result
@@ -61,36 +61,41 @@ class SysMdr @Inject() (
     * @param args Аргументы для поиска (QSB).
     */
   def freeAdvs(args: MdrSearchArgs) = IsSuperuser.async { implicit request =>
-    var madsFut: Future[Seq[MNode]] = {
-      MNode.dynSearch( args.toNodeSearch )
-    }
-    for (hai <- args.hideAdIdOpt) {
-      madsFut = madsFut.map { mads0 =>
+    // Необходимо искать карточки, требующие модерации/обработки.
+    val madsFut = MNode.dynSearch( args.toNodeSearch )
+    _adsPage(madsFut, args)
+  }
+
+  private def _adsPage(madsFut0: Future[Seq[MNode]], args: MdrSearchArgs)(implicit request: IReq[_]): Future[Result] = {
+    val madsFut = args.hideAdIdOpt.fold(madsFut0) { hai =>
+      for (mads0 <- madsFut0) yield {
         mads0.filter(_.id.get != hai)
       }
     }
-    val producersFut = madsFut flatMap { mads =>
-      // Сгребаем всех продьюсеров карточек + добавляем запрошенных продьюсеров, дедублицируем список.
-      val prodIds = mads.iterator
-        .flatMap { n2NodesUtil.madProducerId }
-        .++( args.producerId )
-        .toSet
-      mNodeCache.multiGet( prodIds )
-    }
-    val prodsMapFut = producersFut map { prods =>
-      prods
-        .map { p => p.id.get -> p }
-        .toMap
+
+    val prodsMapFut = for {
+      mads  <- madsFut
+      prods <- {
+        // Сгребаем всех продьюсеров карточек + добавляем запрошенных продьюсеров, дедублицируем список.
+        val prodIds = mads
+          .iterator
+          .flatMap { n2NodesUtil.madProducerId }
+          .++( args.producerId )
+          .toSet
+        mNodeCache.multiGet( prodIds )
+      }
+    } yield {
+      OptId.els2idMap[String, MNode](prods)
     }
 
-    val brArgssFut = madsFut flatMap { mads =>
+    val brArgssFut = madsFut.flatMap { mads =>
       Future.traverse(mads) { mad =>
         lkAdUtil.tiledAdBrArgs(mad)
       }
     }
 
     val prodOptFut = FutureUtil.optFut2futOpt( args.producerId ) { prodId =>
-      prodsMapFut map { prodsMap =>
+      for (prodsMap <- prodsMapFut) yield {
         prodsMap.get(prodId)
       }
     }
@@ -101,13 +106,43 @@ class SysMdr @Inject() (
       mnodeOpt  <- prodOptFut
     } yield {
       val rargs = MSysMdrFreeAdvsTplArgs(
-        args0     = args,
-        mads      = brArgss,
-        prodsMap  = prodsMap,
-        producerOpt  = mnodeOpt
+        args0         = args,
+        mads          = brArgss,
+        prodsMap      = prodsMap,
+        producerOpt   = mnodeOpt
       )
       Ok( freeAdvsTpl(rargs) )
     }
+  }
+
+  /**
+    * Вывод страницы со списком карточек для модерации проплаченных размещений.
+    *
+    * @param args Аргументы поиска модерируемых карточек.
+    * @return Страница с плиткой карточек, которые нужно модерировать по-платному направлению.
+    */
+  def paidAdvs(args: MdrSearchArgs) = IsSuperuser.async { implicit request =>
+    val dbAction = {
+      import dbConfig.driver.api._
+      // Залезть в items, найти там размещения, ожидающие подтверждения.
+      mItems.query
+        .filter { i =>
+          (i.iTypeStr inSet MItemTypes.onlyAdvTypesIds) &&
+            (i.statusStr === MItemStatuses.AwaitingSioAuto.strId)
+        }
+        .sortBy(_.id.asc)
+        .map(_.adId)
+        .distinct
+        .take( args.limit )
+        .drop( args.offset )
+        .result
+    }
+    dbConfig.db
+      .run( dbAction )
+      .flatMap { madIds =>
+        val madsFut = mNodeCache.multiGet( madIds )
+        _adsPage(madsFut, args)
+      }
   }
 
 

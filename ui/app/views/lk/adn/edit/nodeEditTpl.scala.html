@@ -9,13 +9,24 @@
 
   @* Этот попап появляется при щелчке на знак вопроса где-то внизу формы редактора.
      Его контент надо вынести на отдельную страницу. *@
-  @_popupTpl(id = Some("editHelp")) {
-    <h2 class="colors-help_t">@Html( messages("Info.about.D0.choosing.color.solution", "<br/>") )</h2>
+  @_popupTpl(attrs = Seq("id" -> "editHelp")) {
+    @_popupHdrTpl() {
+      @_popupCloseBtnTpl( href = Some(ctx.request.path) )
+    }
+    <h2 class="colors-help_t">
+      @Html( messages("Info.about.D0.choosing.color.solution", "<br/>") )
+    </h2>
     <div class="colors-help_cnt">
-      <span class="colors-help_icons-text">@Html( messages("Color.of.text.and.icons", "<br/>") )</span>
-      <span class="colors-help_background-text">@Html( messages("Color.of.bg.and.caption", "<br/>") )</span>
+      <span class="colors-help_icons-text">
+        @Html( messages("Color.of.text.and.icons", "<br/>") )
+      </span>
+      <span class="colors-help_background-text">
+        @Html( messages("Color.of.bg.and.caption", "<br/>") )
+      </span>
     </div>
-    <p class="colors-help_descr">@Html( messages("Use.contrast.colors.hint", "<br/>") )</p>
+    <p class="colors-help_descr">
+      @Html( messages("Use.contrast.colors.hint", "<br/>") )
+    </p>
   }
 
 }

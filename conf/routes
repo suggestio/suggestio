@@ -167,13 +167,14 @@ GET  /sys/cal/get/:calId                 @controllers.SysCalendar.getCalendarXml
 
 ## sys: mdr - модерация контента
 GET  /sys/mdr                            @controllers.SysMdr.index
-GET  /sys/mdr/freeAdvs                   @controllers.SysMdr.freeAdvs(a: mdr.MdrSearchArgs ?= mdr.MdrSearchArgs.default)
-GET  /sys/mdr/freeAdv/:adId              @controllers.SysMdr.freeAdvMdr(adId)
-POST /sys/mdr/freeAdv/:adId/accept       @controllers.SysMdr.freeAdvMdrAccept(adId)
-POST /sys/mdr/freeAdv/:adId/ban          @controllers.SysMdr.freeAdvMdrBan(adId)
+GET  /sys/mdr/free/list                  @controllers.SysMdr.freeAdvs(a: mdr.MdrSearchArgs ?= mdr.MdrSearchArgs.default)
+GET  /sys/mdr/refuse/:adId               @controllers.SysMdr.freeAdvMdr(adId)
+POST /sys/mdr/free/accept/:adId          @controllers.SysMdr.freeAdvMdrAccept(adId)
+POST /sys/mdr/free/refuse/:adId          @controllers.SysMdr.freeAdvMdrBan(adId)
 GET  /sys/mdr/node/:nodeId               @controllers.SysMdr.forAd(nodeId)
 POST /sys/mdr/item/approve/:itemId       @controllers.SysMdr.approveItem(itemId: Long)
 POST /sys/mdr/item/refuse/:itemId        @controllers.SysMdr.refuseItem(itemId: Long)
+GET  /sys/mdr/list/paid                  @controllers.SysMdr.paidAdvs(a: mdr.MdrSearchArgs ?= mdr.MdrSearchArgs.default)
 
 ## sys node geo
 GET  /sys/adn/geo/all/:nodeId            @controllers.SysAdnGeo.forNode(nodeId)

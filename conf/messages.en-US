@@ -72,6 +72,7 @@ Signup.finished=Signup finished.
 Predicate=Predicate
 Edited=Edited
 Currency=Currency
+Refuse=Refuse
 
 requisites=Payment details for withdrawal
 
@@ -730,4 +731,5 @@ Item.type.t=Geo-tag advertisement
 Item.type.e=External deployment
 
 Moderation=Moderation
+Picture.editing=Picture editing
 

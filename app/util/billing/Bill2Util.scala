@@ -661,13 +661,15 @@ class Bill2Util @Inject() (
           val price = mitem2.price
           for {
             // Найти/создать кошелек получателя денег
-            mrBalance0 <- ensureBalanceFor(mrInfo.mc.id.get, price.currency)
-            // Зачислить деньги как заблокированные, ведь клиент может быть не доволен оказанной услугой.
-            mrBlockedAmount2Opt <- mBalances.incrBlockedBy(mrBalance0.id.get, price.amount)
-            // Транзакцию не проводить, т.к. транзакция идёт по текущему счёту, а не по заблокированным средствам,
-            // которые могут быть списаны назад при проблемах...
+            mrBalance0    <- ensureBalanceFor(mrInfo.mc.id.get, price.currency)
+            // Зачислить деньги на баланс.
+            // TODO В будущем, когда будет нормальная торговля между юзерами, надо будет проводить какие-то транзакции на стороне seller'а.
+            // TODO И по идее надо будет зачислять селлеру как blocked, т.к. продавца надо держать на поводке.
+            mrAmount2Opt  <- mBalances.incrAmountBy(mrBalance0.id.get, price.amount)
+            // seller-транзакцию не создаём, т.к. она на раннем этапе не нужна: будет куча ненужного мусора в txn-таблице.
+            // Возможно, транзакции потом будут храниться в elasticsearch, в т.ч. для статистики.
           } yield {
-            val mrBlockedAmount2 = mrBlockedAmount2Opt.get
+            val mrBlockedAmount2 = mrAmount2Opt.get
             LOGGER.debug(s"$logPrefix Money receiver balance[${mrBalance0.id.orNull}] blocked updated: ${mrBalance0.blocked} + ${price.amount} => $mrBlockedAmount2 ${mrBalance0.price.currencyCode}")
             mrBalance0.copy(
               blocked = mrBlockedAmount2
@@ -702,7 +704,7 @@ class Bill2Util @Inject() (
       // Если баланс отсутствует, то инициализировать
       balance0 <- {
         balanceOpt.fold [DBIOAction[MBalance, NoStream, RW]] {
-          LOGGER.trace(s"$logPrefix Initializing money receiver's balance for $contractId/${}...")
+          LOGGER.trace(s"$logPrefix Initializing new money receiver's balance...")
           mBalances.initByContractCurrency(contractId, currency)
         } { DBIO.successful }
       }
