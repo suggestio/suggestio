@@ -7,7 +7,7 @@ import io.suggest.model.n2.media.storage.swfs.SwfsStorages
 import io.suggest.util.SioEsUtil.DocField
 import play.api.libs.json._
 
-import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -56,22 +56,22 @@ trait IMediaStorage {
    * Асинхронное поточное чтение хранимого файла.
    * @return Енумератор данных блоба.
    */
-  def read(implicit ec: ExecutionContext): Future[IReadResponse]
+  def read(): Future[IReadResponse]
 
   /**
    * Запустить асинхронное стирание контента в backend-хранилище.
    * @return Фьючерс для синхронизации.
    */
-  def delete(implicit ex: ExecutionContext): Future[_]
+  def delete(): Future[_]
 
   /**
    * Выполнить сохранение (стриминг) блоба в хранилище.
    * @param data Асинхронный поток данных.
    * @return Фьючерс для синхронизации.
    */
-  def write(data: IWriteRequest)(implicit ec: ExecutionContext): Future[_]
+  def write(data: IWriteRequest): Future[_]
 
   /** Есть ли в хранилище текущий файл? */
-  def isExist(implicit ec: ExecutionContext): Future[Boolean]
+  def isExist: Future[Boolean]
 
 }

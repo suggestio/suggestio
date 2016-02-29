@@ -5,11 +5,14 @@ import io.suggest.fio.IWriteRequest
 import io.suggest.model.n2.media.storage.MStorages.STYPE_FN_FORMAT
 import io.suggest.model.n2.media.storage._
 import io.suggest.swfs.client.ISwfsClient
+import io.suggest.swfs.client.proto.Replication
+import io.suggest.swfs.client.proto.assign.AssignRequest
 import io.suggest.swfs.client.proto.delete.{IDeleteResponse, DeleteRequest}
 import io.suggest.swfs.client.proto.fid.Fid
 import io.suggest.swfs.client.proto.get.{IGetResponse, GetRequest}
 import io.suggest.swfs.client.proto.put.{IPutResponse, PutRequest}
 import io.suggest.util.MacroLogsImpl
+import play.api.Configuration
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -20,18 +23,35 @@ import scala.concurrent.{ExecutionContext, Future}
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 29.09.15 20:55
  * Description: Поддержка хранилища SeaWeedFS.
+ *
  * @see [[https://github.com/chrislusf/seaweedfs]]
  */
 @Singleton
-class SwfsStorages @Inject()(
+class SwfsStorages @Inject() (
   val volCache          : SwfsVolumeCache,
-  implicit val client   : ISwfsClient
+  configuration         : Configuration,
+  implicit val client   : ISwfsClient,
+  implicit val ec       : ExecutionContext
 )
   extends MacroLogsImpl
 {
 
+  /** JSON-маппер для поля file id. */
   val FID_FORMAT = (__ \ MStorFns.FID.fn).format[Fid]
 
+  /** Инстанс с дефолтовыми настройками репликации. */
+  val REPLICATION_DFLT: Replication = {
+    configuration.getString("swfs.assign.replication")
+      .map { Replication.apply }
+      .getOrElse( Replication() )
+  }
+
+  /** Дефолтовые настройки дата-центра в assign-request. */
+  val DATA_CENTER_DFLT: Option[String] = configuration.getString("swfs.assign.dc")
+
+  LOGGER.info(s"Assign settings: dc = $DATA_CENTER_DFLT, replication = $REPLICATION_DFLT")
+
+  // Поддержка JSON сериализации/десериализации.
   val READS: Reads[SwfsStorage] = (
     STYPE_FN_FORMAT.filter { _ == MStorages.SeaWeedFs } and
     FID_FORMAT
@@ -53,8 +73,11 @@ class SwfsStorages @Inject()(
   }
 
   /** Получить у swfs-мастера координаты для сохранения нового файла. */
-  def assingNew()(implicit ec: ExecutionContext): Future[SwfsStorage] = {
-    for( resp <- client.assign() ) yield {
+  def assingNew(): Future[SwfsStorage] = {
+    val areq = AssignRequest(DATA_CENTER_DFLT, Some(REPLICATION_DFLT))
+    for {
+      resp <- client.assign(areq)
+    } yield {
       apply(resp.fidParsed)
     }
   }
@@ -74,7 +97,7 @@ case class SwfsStorage(fid: Fid, companion: SwfsStorages)
 
   lazy val _vlocsFut = companion.volCache.getLocations(fid.volumeId)
   
-  override def read(implicit ec: ExecutionContext): Future[IGetResponse] = {
+  override def read(): Future[IGetResponse] = {
     for {
       vlocs   <- _vlocsFut
       getResp <- {
@@ -89,7 +112,7 @@ case class SwfsStorage(fid: Fid, companion: SwfsStorages)
     }
   }
 
-  override def delete(implicit ex: ExecutionContext): Future[Option[IDeleteResponse]] = {
+  override def delete(): Future[Option[IDeleteResponse]] = {
     for {
       vlocs   <- _vlocsFut
       delResp <- {
@@ -105,7 +128,7 @@ case class SwfsStorage(fid: Fid, companion: SwfsStorages)
     }
   }
 
-  override def write(data: IWriteRequest)(implicit ec: ExecutionContext): Future[IPutResponse] = {
+  override def write(data: IWriteRequest): Future[IPutResponse] = {
     for {
       vlocs     <- _vlocsFut
       putResp   <- {
@@ -121,7 +144,7 @@ case class SwfsStorage(fid: Fid, companion: SwfsStorages)
     }
   }
 
-  override def isExist(implicit ec: ExecutionContext): Future[Boolean] = {
+  override def isExist: Future[Boolean] = {
     _vlocsFut flatMap { vlocs =>
       val getReq = GetRequest(
         volUrl = vlocs.head.url,
