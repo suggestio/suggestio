@@ -145,7 +145,7 @@ abstract class MImg3T extends MImgT {
   override protected def _getImgBytes2: Enumerator[Array[Byte]] = {
     val enumFut = for {
       mm <- _mediaFut
-      rr <- mm.storage.read
+      rr <- mm.storage.read()
     } yield {
       rr.data
     }
@@ -298,7 +298,7 @@ abstract class MImg3T extends MImgT {
     _mediaOptFut flatMap {
       case Some(mm) =>
         for {
-          _ <- mm.storage.delete
+          _ <- mm.storage.delete()
           _ <- mm.delete
         } yield {
           true
@@ -335,8 +335,6 @@ case class MImg3(
 
 /** Использовать seaweedfs для сохранения новых картинок. */
 trait I3SeaWeedFs extends MImg3T {
-
-  import companion.mCommonDi._
 
   override protected def _newMediaStorage = {
     companion.swfsStorages.assingNew()
