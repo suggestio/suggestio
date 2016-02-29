@@ -6,6 +6,8 @@ import io.suggest.util.{MacroLogsI, MacroLogsImpl}
 import play.api.Configuration
 import play.api.libs.ws.WSClient
 
+import scala.concurrent.ExecutionContext
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -33,10 +35,10 @@ import SwfsClientWs._
 trait ISwfsClientWs extends ISwfsClient with MacroLogsI {
 
   /** play.ws-клиента (http-клиент).  */
-  implicit def ws    : WSClient
+  implicit protected def ws: WSClient
 
   /** Конфиг play application. */
-  def conf  : Configuration
+  protected def conf: Configuration
 
   def MASTERS: List[String]
 
@@ -49,7 +51,8 @@ trait ISwfsClientWs extends ISwfsClient with MacroLogsI {
 @Singleton
 class SwfsClientWs @Inject() (
   override val conf         : Configuration,
-  override implicit val ws  : WSClient
+  override implicit val ws  : WSClient,
+  override implicit val ec  : ExecutionContext
 )
   extends MacroLogsImpl
   with Assign
@@ -62,6 +65,7 @@ class SwfsClientWs @Inject() (
 
   /**
    * Список weed-мастеров.
+   *
    * @return ["localhost:9333", "127.5.5.5:9334"]
    */
   val MASTERS: List[String] = {

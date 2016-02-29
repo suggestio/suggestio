@@ -32,7 +32,7 @@ trait Put extends ISwfsClientWs {
   }
 
 
-  override def put(req: IPutRequest)(implicit ec: ExecutionContext): Future[PutResponse] = {
+  override def put(req: IPutRequest): Future[PutResponse] = {
     val uplArgs = Uploader.uploadArgsSimple(
       file = req.file,
       ct   = req.contentType,

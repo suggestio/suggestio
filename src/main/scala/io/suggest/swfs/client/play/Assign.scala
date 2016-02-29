@@ -15,7 +15,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 trait Assign extends ISwfsClientWs { that =>
 
-  override def assign(args: IAssignRequest)(implicit ec: ExecutionContext): Future[AssignResponse] = {
+  override def assign(args: IAssignRequest): Future[AssignResponse] = {
     val req = new OneMasterRequest {
       override type Args_t  = IAssignRequest
       override type Res_t   = AssignResponse

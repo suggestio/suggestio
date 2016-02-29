@@ -13,7 +13,7 @@ import scala.concurrent.{Future, ExecutionContext}
  */
 trait Delete extends ISwfsClientWs {
 
-  override def delete(args: IDeleteRequest)(implicit ec: ExecutionContext): Future[Option[DeleteResponse]] = {
+  override def delete(args: IDeleteRequest): Future[Option[DeleteResponse]] = {
     val url = args.toUrl
     val method = "DELETE"
     for {

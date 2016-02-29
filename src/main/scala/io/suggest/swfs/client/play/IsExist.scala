@@ -12,7 +12,7 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 trait IsExist extends ISwfsClientWs {
 
-  override def isExist(args: IGetRequest)(implicit ec: ExecutionContext): Future[Boolean] = {
+  override def isExist(args: IGetRequest): Future[Boolean] = {
     val url = args.toUrl
     for {
       wsResp  <- ws.url(url).head()

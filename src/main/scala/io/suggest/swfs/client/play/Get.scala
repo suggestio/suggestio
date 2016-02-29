@@ -13,7 +13,7 @@ import scala.concurrent.{Future, ExecutionContext}
  */
 trait Get extends ISwfsClientWs {
 
-  override def get(args: IGetRequest)(implicit ec: ExecutionContext): Future[Option[GetResponse]] = {
+  override def get(args: IGetRequest): Future[Option[GetResponse]] = {
     val url = args.toUrl
     for {
       (headers, enumerator)  <-  ws.url( url ).getStream()

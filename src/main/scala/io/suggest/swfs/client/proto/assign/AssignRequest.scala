@@ -9,13 +9,6 @@ import io.suggest.swfs.client.proto.{IToQs, Replication}
  * Description: Модель параметров assign-запроса.
  */
 
-object AssignRequest {
-
-  val empty = AssignRequest()
-
-}
-
-
 trait IAssignRequest extends IToQs {
 
   def dataCenter    : Option[String]

@@ -16,7 +16,7 @@ import scala.concurrent.{Future, ExecutionContext}
  */
 trait Lookup extends ISwfsClientWs { that =>
 
-  override def lookup(args: ILookupRequest)(implicit ec: ExecutionContext): Future[Either[LookupError, LookupResponse]] = {
+  override def lookup(args: ILookupRequest): Future[Either[LookupError, LookupResponse]] = {
     val req = new OneMasterRequest {
       override type Args_t          = ILookupRequest
       override type Res_t           = Either[LookupError, LookupResponse]
