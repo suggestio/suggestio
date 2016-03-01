@@ -7,6 +7,8 @@
   @* Ничего не отображаем, т.к. корневая ссылка из base-шаблона полностью устраивает. *@
 }
 
+
+@* Верстка одной кнопки-ссылки. *@
 @__btn(color: Int, href: Call)(content: Html) = {
   <a class="siom-ac-btn __color-@color __size-M __ft-XM __list f-left"
      href="@href">
@@ -15,13 +17,35 @@
 }
 
 
+@* Контейнер кнопок модерации. *@
+@__btnsCont(content: Html) = {
+  <div class="submit-w __size-M">
+    @content
+  </div>
+}
+
+
 @mdrBase("Модерация", hPathAfter = Some(hPathAfter)) {
+
+  @_sysTitleTpl() {
+    Быстрый переход
+  }
+  @__btnsCont {
+    @__btn(1, routes.SysMdr.rdrToNextAd()) {
+      <strong>
+        Начать модерацию карточек...
+      </strong>
+    }
+  }
+
+  <br/>
+
 
   @_sysTitleTpl() {
     Модерация бесплатного размещения рекламных карточек
   }
 
-  <div class="submit-w __size-M">
+  @__btnsCont {
     @__btn(2, routes.SysMdr.freeAdvs()) {
       Очередь на модерацию
     }
@@ -31,7 +55,7 @@
     @__btn(4, routes.SysMdr.freeAdvs( MdrSearchArgs(isAllowed = Some(false)) )) {
       Отклонённые
     }
-  </div>
+  }
 
   <br/>
 
@@ -40,10 +64,10 @@
     Обработка платных размещений
   }
 
-  <div class="submit-w __size-M">
+  @__btnsCont {
     @__btn(2, routes.SysMdr.paidAdvs()) {
       Ожидают подтверждения
     }
-  </div>
+  }
 
 }

@@ -51,7 +51,6 @@ class GeoTagAdvBillUtil @Inject() (
         status        = MItemStatuses.Draft,
         price         = computePriceOne(tag, res),
         adId          = adId,
-        prodId        = producerId,
         dtIntervalOpt = Some(res.interval),
         rcvrIdOpt     = tag.nodeId,
         tagFaceOpt    = Some(tag.face),

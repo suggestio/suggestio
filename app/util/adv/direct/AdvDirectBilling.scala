@@ -291,7 +291,6 @@ class AdvDirectBilling @Inject() (
         status        = status,
         price         = calculateAdvPrice(bmc, rcvrTfs(adv.adnId), adv, mcalsCtx),
         adId          = mad.id.get,
-        prodId        = producerId,
         sls           = adv.showLevels,
         dtIntervalOpt = Some(adv.dtInterval),
         rcvrIdOpt     = Some(adv.adnId)
