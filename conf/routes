@@ -176,6 +176,7 @@ GET  /sys/mdr/item/refuse/:itemId        @controllers.SysMdr.refuseItemPopup(ite
 POST /sys/mdr/item/approve/:itemId       @controllers.SysMdr.approveItemSubmit(itemId: Gid_t)
 POST /sys/mdr/item/refuse/:itemId        @controllers.SysMdr.refuseItemSubmit(itemId: Gid_t)
 GET  /sys/mdr/list/paid                  @controllers.SysMdr.paidAdvs(a: mdr.MdrSearchArgs ?= mdr.MdrSearchArgs.default)
+GET  /sys/mdr/next                       @controllers.SysMdr.rdrToNextAd(a: mdr.MdrSearchArgs ?= mdr.MdrSearchArgs.default)
 
 ## sys node geo
 GET  /sys/adn/geo/all/:nodeId            @controllers.SysAdnGeo.forNode(nodeId)

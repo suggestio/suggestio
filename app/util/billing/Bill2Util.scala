@@ -312,16 +312,18 @@ class Bill2Util @Inject() (
     */
   def maybeExecuteCart(order: IOrderWithItems): DBIOAction[MCartIdeas.Idea, NoStream, RW] = {
 
-    lazy val logPrefix = s"processOrder(${order.morder.id.orNull}/${order.mitems.size}items;${System.currentTimeMillis}):"
+    lazy val logPrefix = s"maybeExecuteCart(${order.morder.id.orNull} ${System.currentTimeMillis}):"
+
+    LOGGER.trace(s"$logPrefix There are ${order.mitems.size} items: ${order.mitems.iterator.flatMap(_.id).mkString(", ")}")
 
     if (order.mitems.isEmpty) {
       // Корзина пуста. Should not happen.
-      LOGGER.trace(logPrefix + " no items in the cart")
+      LOGGER.trace(s"$logPrefix no items in the cart")
       DBIO.successful( MCartIdeas.NothingToDo )
 
     } else if ( !itemsHasPrice(order.mitems) ) {
       // Итемы есть, но всё бесплатно. Исполнить весь этот контракт прямо тут.
-      LOGGER.trace(logPrefix + " Only FREE items in cart.")
+      LOGGER.trace(s"$logPrefix Only FREE items in cart.")
       for (_ <- closeOrder(order)) yield {
         MCartIdeas.OrderClosed(order, Nil)
       }
@@ -329,29 +331,11 @@ class Bill2Util @Inject() (
     } else {
 
       // Товары есть, и они не бесплатны.
-      LOGGER.trace(logPrefix + "There are priceful items in cart.")
+      LOGGER.trace(s"$logPrefix There are priceful items in cart.")
 
       for {
         // Узнаём текущее финансовое состояние юзера...
         balances     <- mBalances.findByContractId( order.morder.contractId ).forUpdate
-
-        /*
-        // Запустить поиск узла CBCA, чтобы на него зачислять деньги на баланс.
-        val cbcaNodeOptFut = mNodeCache.getById( CBCA_NODE_ID )
-
-        // Собрать карту балансов CBCA, чтобы туда зачислять бабло, сграбленное у юзера.
-        cbcaNodeOpt  <- DBIO.from(cbcaNodeOptFut)
-        cbcaBalances <- getCbcaBalances( cbcaNodeOpt )
-        // id контракта CBCA для зачисления денег:
-        cbcaContractIdOpt = cbcaNodeOpt.flatMap(_.billing.contractId)
-
-        // Залить средства на баланс CBCA, чтобы деньги не списывались с баланса юзера безвозвратно.
-        _ <- cbcaContractIdOpt.fold [DBIOAction[_, NoStream, Effect.Write]] {
-          DBIO.successful(0)
-        } { cbcaContractId =>
-          increaseBalance(order.morder.id, cbcaContractId, cbcaBalances, totalPrice)
-        }
-        */
 
         // Строим карту полученных балансов юзера для удобства работы:
         balancesMap = mBalances.balances2curMap(balances)
@@ -616,6 +600,7 @@ class Bill2Util @Inject() (
         } else {
           val mrNodeId = if (mitem0.iType.moneyRcvrIsCbca) {
             CBCA_NODE_ID
+
           } else {
             mitem0.rcvrIdOpt.getOrElse {
               val cbcaNodeId = CBCA_NODE_ID
@@ -623,6 +608,7 @@ class Bill2Util @Inject() (
               cbcaNodeId
             }
           }
+          LOGGER.trace(s"$logPrefix Money receiver => $mrNodeId")
           prepareMoneyReceiver(mrNodeId)
         }
       }
@@ -635,7 +621,8 @@ class Bill2Util @Inject() (
 
       // Запустить обновление полностью на стороне БД.
       mitem2 <- {
-        val mi2 = mitem0.copy(
+        LOGGER.debug(s"$logPrefix Buyer blocked balance[${balance0.id.orNull}] freed ${mitem0.price.amount}: ${balance0.blocked} => ${usrAmtBlocked2.orNull} ${balance0.price.currencyCode}")
+        val mitem1 = mitem0.copy(
           status = MItemStatuses.Offline,
           dateStatus = DateTime.now()
         )
@@ -644,15 +631,17 @@ class Bill2Util @Inject() (
           .map { i =>
             (i.status, i.dateStatus)
           }
-          .update((mi2.status, mi2.dateStatus))
+          .update((mitem1.status, mitem1.dateStatus))
           .filter(_ == 1)
-          .map(_ => mi2)
+          .map(_ => mitem1)
       }
 
       // Залить деньги получателю денег, если возможно.
       mrInfoOpt <- DBIO.from( mrInfoOptFut )
-      _ <- {
-        mrInfoOpt.fold [DBIOAction[_,_,RW]] {
+      mrBalances2Opt <- {
+        LOGGER.trace(s"$logPrefix item[${mitem2.id.orNull}] status: ${mitem0.status} => ${mitem2.status}")
+
+        mrInfoOpt.fold [DBIOAction[Option[MBalance], NoStream, RW]] {
           LOGGER.warn(s"$logPrefix Money income skipped, so they are lost.")
           DBIO.successful(None)
 
@@ -669,11 +658,14 @@ class Bill2Util @Inject() (
             // seller-транзакцию не создаём, т.к. она на раннем этапе не нужна: будет куча ненужного мусора в txn-таблице.
             // Возможно, транзакции потом будут храниться в elasticsearch, в т.ч. для статистики.
           } yield {
-            val mrBlockedAmount2 = mrAmount2Opt.get
-            LOGGER.debug(s"$logPrefix Money receiver balance[${mrBalance0.id.orNull}] blocked updated: ${mrBalance0.blocked} + ${price.amount} => $mrBlockedAmount2 ${mrBalance0.price.currencyCode}")
-            mrBalance0.copy(
-              blocked = mrBlockedAmount2
+            val mrAmount2 = mrAmount2Opt.get
+            LOGGER.debug(s"$logPrefix Money receiver[${mrInfo.mnode.id.orNull}] contract[${mrInfo.mc.id.orNull}] balance[${mrBalance0.id.orNull}] updated: ${mrBalance0.blocked} + ${price.amount} => $mrAmount2 ${mrBalance0.price.currencyCode}")
+            val mrBalance1 = mrBalance0.copy(
+              price = mrBalance0.price.copy(
+                amount = mrAmount2
+              )
             )
+            Some(mrBalance1)
           }
         }
       }
@@ -727,6 +719,7 @@ class Bill2Util @Inject() (
     * @return
     */
   def refuseItemAction(itemId: Gid_t, reasonOpt: Option[String]): DBIOAction[RefuseItemResult, NoStream, RW] = {
+    lazy val logPrefix = s"refuseItemAction($itemId):"
     for {
       // Получить и заблокировать текущий item.
       mitem0 <- _prepareAwaitingItem(itemId)
@@ -739,6 +732,8 @@ class Bill2Util @Inject() (
 
       // Отметить item как отказанный в размещении
       mitem2 <- {
+        LOGGER.debug(s"$logPrefix Unlocked user balance[${balance0.id.orNull}] amount ${mitem0.price.amount}: ${balance0.price.amount} => ${amount2} ${balance0.price.currencyCode}")
+
         // Чтобы вернуть новый item, не считывая его из таблицы повторно, имитируем его прямо тут...
         val mi2 = mitem0.copy(
           status      = MItemStatuses.Refused,
@@ -757,6 +752,7 @@ class Bill2Util @Inject() (
 
       // Провести транзакцию по движению на счете
       mtxn2 <- {
+        LOGGER.trace(s"$logPrefix Refused item, status ${mitem0.status} => ${mitem2.status}, reason = $reasonOpt")
         val mtxn0 = MTxn(
           balanceId  = balance0.id.get,
           amount     = mitem0.price.amount,
@@ -767,6 +763,7 @@ class Bill2Util @Inject() (
       }
 
     } yield {
+      LOGGER.trace(s"$logPrefix Saved MTxn[${mtxn2.id.orNull}]")
       // Собрать итог работы экшена...
       RefuseItemResult(mitem2, mtxn2)
     }

@@ -4,6 +4,7 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
+import io.suggest.model.search.{IOffset, ILimit}
 import play.api.mvc.QueryStringBindable
 import util.qsb.QsbKey1T
 
@@ -81,12 +82,16 @@ case class MdrSearchArgs(
   offsetOpt             : Option[Int]       = None,
   producerId            : Option[String]    = None,
   isAllowed             : Option[Boolean]   = None,
-  hideAdIdOpt           : Option[String]    = None
+  hideAdIdOpt           : Option[String]    = None,
+  // limit не задаваем через qs, не было такой необходимости.
+  limitOpt              : Option[Int]       = None
 )
+  extends ILimit
+  with IOffset
 { that =>
 
-  def offset  = offsetOpt getOrElse 0
-  def limit   = 12      // 3 ряда по 4 карточки.
+  override def offset  = offsetOpt.getOrElse(0)
+  override def limit   = limitOpt.getOrElse(12)      // 3 ряда по 4 карточки.
 
   /** Реализация класса аргументов поиска карточек. */
   protected class MdrNodeSearchArgs extends MNodeSearchDfltImpl {
@@ -124,6 +129,8 @@ case class MdrSearchArgs(
 
       crs
     }
+
+    override def withoutIds = hideAdIdOpt.toSeq
   }
 
   def toNodeSearch: MNodeSearch = {

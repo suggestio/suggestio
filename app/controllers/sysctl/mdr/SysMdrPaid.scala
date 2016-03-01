@@ -33,6 +33,29 @@ trait SysMdrPaid
   import mCommonDi._
   import dbConfig.driver.api._
 
+  /** SQL для экшена поиска id карточек, нуждающихся в модерации. */
+  protected[this] def _findPaidAdIds4MdrAction(args: MdrSearchArgs) = {
+    val b0 = mItems
+      .query
+      .filter { i =>
+        (i.iTypeStr inSet MItemTypes.onlyAdvTypesIds) &&
+          (i.statusStr === MItemStatuses.AwaitingSioAuto.strId)
+      }
+
+    val b1 = args.hideAdIdOpt.fold(b0) { hideAdId =>
+      b0.filter { i =>
+        i.adId =!= hideAdId
+      }
+    }
+
+    b1.map(_.adId)
+      //.sortBy(_.id.asc)   // TODO Нужно подумать над сортировкой возвращаемого множества adId
+      .distinct
+      .take( args.limit )
+      .drop( args.offset )
+      .result
+  }
+
   /**
     * Вывод страницы со списком карточек для модерации проплаченных размещений.
     *
@@ -41,19 +64,7 @@ trait SysMdrPaid
     */
   def paidAdvs(args: MdrSearchArgs) = IsSuperuser.async { implicit request =>
     // Залезть в items, найти там размещения, ожидающие подтверждения.
-    val dbAction = {
-      mItems.query
-        .filter { i =>
-          (i.iTypeStr inSet MItemTypes.onlyAdvTypesIds) &&
-            (i.statusStr === MItemStatuses.AwaitingSioAuto.strId)
-        }
-        //.sortBy(_.id.asc)   // TODO Нужно подумать над сортировкой возвращаемого множества adId
-        .map(_.adId)
-        .distinct
-        .take( args.limit )
-        .drop( args.offset )
-        .result
-    }
+    val dbAction = _findPaidAdIds4MdrAction(args)
 
     // Запустить поиск id карточек по биллингу, а затем и поиск самих карточек.
     val madsFut = dbConfig.db

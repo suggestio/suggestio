@@ -51,10 +51,11 @@ object Context extends MyHostsT {
   override val LK_URL_PREFIX = LK_PROTO + "://" + LK_HOST_PORT
 
   /** Дефолтовый хост и порт. Используется, когда по стечению обстоятельств, нет подходящего значения для хоста. */
-  override val DFLT_HOST_PORT = configuration.getString("sio.hostport.dflt") getOrElse "suggest.io"
+  val DFLT_HOST_PORT = configuration.getString("sio.hostport.dflt") getOrElse "suggest.io"
+
   /** Протокол, используемый при генерации ссылок на suggest.io. Обычно на локалхостах нет https вообще, в
     * то же время, на мастере только https. */
-  override val DFLT_PROTO: String = configuration.getString("sio.proto.dflt") getOrElse "http"
+  val DFLT_PROTO: String = configuration.getString("sio.proto.dflt") getOrElse "http"
 
   /** Регэксп для поиска в query string параметра, который хранит параметры клиентского экрана. */
   val SCREEN_ARG_NAME_RE = "a\\.screen".r
@@ -89,8 +90,6 @@ trait MyHostsT {
   def LK_PROTO: String
   def LK_URL_PREFIX: String
 
-  def DFLT_HOST_PORT: String
-  def DFLT_PROTO: String
 }
 
 
@@ -250,8 +249,6 @@ trait Context extends MyHostsT {
   override def LK_HOST_PORT   = Context.LK_HOST_PORT
   override def LK_PROTO       = Context.LK_PROTO
   override def LK_URL_PREFIX  = Context.LK_URL_PREFIX
-  override def DFLT_HOST_PORT = Context.DFLT_HOST_PORT
-  override def DFLT_PROTO     = Context.DFLT_PROTO
 
   /**
    * Текущий контроллер, если вызывается. (fqcn)
