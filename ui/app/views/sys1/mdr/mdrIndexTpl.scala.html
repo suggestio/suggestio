@@ -1,29 +1,49 @@
 @()(implicit ctx: Context)
 
 @import models.mdr._
+@import sys1.stuff.dsl._
 
 @hPathAfter = {
   @* Ничего не отображаем, т.к. корневая ссылка из base-шаблона полностью устраивает. *@
 }
 
+@__btn(color: Int, href: Call)(content: Html) = {
+  <a class="siom-ac-btn __color-@color __size-M __ft-XM __list f-left"
+     href="@href">
+    @content
+  </a>
+}
+
+
 @mdrBase("Модерация", hPathAfter = Some(hPathAfter)) {
 
-  <div class="sys_t">
+  @_sysTitleTpl() {
     Модерация бесплатного размещения рекламных карточек
-  </div
+  }
+
   <div class="submit-w __size-M">
-    <a class="siom-ac-btn __color-2 __size-M __ft-XM __list f-left"
-       href="@routes.SysMdr.freeAdvs()">
+    @__btn(2, routes.SysMdr.freeAdvs()) {
       Очередь на модерацию
-    </a>
-    <a class="siom-ac-btn __color-1 __size-M __ft-XM __list f-left"
-       href="@routes.SysMdr.freeAdvs( MdrSearchArgs(isAllowed = Some(true)) )">
+    }
+    @__btn(1, routes.SysMdr.freeAdvs( MdrSearchArgs(isAllowed = Some(true)) )) {
       Одобренные
-    </a>
-    <a class="siom-ac-btn __color-4 __size-M __ft-XM __list f-left"
-       href="@routes.SysMdr.freeAdvs( MdrSearchArgs(isAllowed = Some(false)) )">
+    }
+    @__btn(4, routes.SysMdr.freeAdvs( MdrSearchArgs(isAllowed = Some(false)) )) {
       Отклонённые
-    </a>
+    }
+  </div>
+
+  <br/>
+
+
+  @_sysTitleTpl() {
+    Обработка платных размещений
+  }
+
+  <div class="submit-w __size-M">
+    @__btn(2, routes.SysMdr.paidAdvs()) {
+      Ожидают подтверждения
+    }
   </div>
 
 }

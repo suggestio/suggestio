@@ -66,3 +66,8 @@ class LkAdUtil @Inject() (
   }
 
 }
+
+
+trait ILkAdUtilDi {
+  def lkAdUtil: LkAdUtil
+}

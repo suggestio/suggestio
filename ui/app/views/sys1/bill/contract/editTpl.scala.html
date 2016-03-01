@@ -5,6 +5,7 @@
 @import ctx._
 @import stuff._
 @import helper._
+@import sys1.stuff.dsl._
 
 @base(
   title         = "Новый контракт",
@@ -12,9 +13,9 @@
   mContractOpt  = Some(mContract)
 ) {
 
-  <div class="sys_t">
+  @_sysTitleTpl() {
     Редактирование контракта @mContract.legalContractId
-  </div>
+  }
 
   @_deleteSmthFormBtnTpl( CSRF(routes.SysBilling.deleteContractSubmit(mnode.id.get)) )
 

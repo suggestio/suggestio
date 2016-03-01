@@ -1,14 +1,12 @@
-@(args: mdr.IFreeAdvMdrRArgs)(implicit ctx: Context)
+@(args: mdr.ISysMdrRefusePopupTplArgs)(implicit ctx: Context)
 
 @* Страница отображает карточку в полный рост для полномасштабной визуальной оценки,
    и содержит формы для одобрения и бана бесплатного размещения. *@
 
-@import views.html.sc.foc._
 @import helper._
 @import util.FC.divFc
 @import lk.popup._
 @import ctx.{messages, request}
-@import args.brArgs.mad
 
 
 @* Верстка управляющих кнопок очень похожа, дедублицируем... *@
@@ -31,10 +29,10 @@
   @_popupCntTpl() {
 
     @* Запретить размещение с указание причины. *@
-    @form( CSRF(routes.SysMdr.freeAdvMdrBan(mad.id.get)), 'id -> "advReqRefuse") {
+    @form( CSRF(args.submitCall), 'id -> "advReqRefuse") {
 
       @textarea(
-        args.banFormM("reason"),
+        args.refuseFormM("reason"),
         '_label       -> "",
         'placeholder  -> messages("Write.refuse.reason")
       )

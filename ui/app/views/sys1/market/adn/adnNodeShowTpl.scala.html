@@ -10,6 +10,7 @@
 @import models.mdr._
 @import args.mnode
 @import sys1.stuff.hpath._
+@import sys1.stuff.dsl._
 
 
 @* Подшаблон генерации квадратной кнопки. *@
@@ -47,7 +48,7 @@
   nodeOpt     = Some(mnode)
 ) {
 
-  <div class="sys_t">
+  @_sysTitleTpl() {
     @messages( mnode.common.ntype.singular )
     @AdnShownTypes.node2valOpt(mnode).map { ast =>
       (@messages( ast.singular ))
@@ -59,7 +60,7 @@
     <a class="edit-btn __color-1 __ft-XS" href="@routes.SysMarket.editAdnNode(mnode.id.get)">
       @messages("Edit")
     </a>
-  </div>
+  }
 
   @for(nodeId <- mnode.id) {
     <div class="i-list">

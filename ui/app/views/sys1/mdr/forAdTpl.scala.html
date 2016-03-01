@@ -14,6 +14,14 @@
   }
 }
 
+
+@__refuseBtn(call: Call) = {
+  <a class="js-btn" href="@CSRF(call)">
+    &lt;!&gt;
+  </a>
+}
+
+
 @mdrBase(
   title     = args.brArgs.mad.guessDisplayNameOrIdOrEmpty,
   mnodeOpt  = Some(args.producer)
@@ -21,6 +29,15 @@
 
   @* Колонка содержит item'ы, требующие модерации. *@
   <div class="mdr node-mdr_left-bar">
+
+    <div>
+      <a href="@routes.SysMarket.showAdnNode(args.producer.id.get)">
+        [Продьюсер]
+      </a>
+      <a href="@routes.MarketAd.editAd(args.brArgs.mad.id.get)">
+        [Редактор]
+      </a>
+    </div>
 
     @if(!args.freeAdvs && !args.mitemsGrouped) {
       Карточка не нуждается в модерации.
@@ -41,7 +58,8 @@
             @mnode.guessDisplayNameOrId
           </a>
         }
-        <a class="js-btn" href="@routes.SysMdr.freeAdvMdr(adId)">...</a>
+
+        @__refuseBtn( routes.SysMdr.refuseFreeAdvPopup(adId) )
       }
       <hr/>
     }
@@ -55,7 +73,7 @@
           <h3>@messages( itype.nameI18n )</h3>
           @for(mitem <- mitems; itemId <- mitem.id) {
             <div class="mdr-item">
-              @__approveBtn( routes.SysMdr.approveItem(itemId) )
+              @__approveBtn( routes.SysMdr.approveItemSubmit(itemId) )
 
               @* Для тега вывести название тега, завернув его в ссылку, если возможно... *@
               @for(rcvrId <- mitem.rcvrIdOpt) {
@@ -73,6 +91,7 @@
               @if(mitem.rcvrIdOpt) {
                 </a>
               }
+              @__refuseBtn( routes.SysMdr.refuseItemPopup(itemId) )
             </div>
           }
         </div>
@@ -90,6 +109,7 @@
         @_adFullTpl( args )
       </div>
     </div>
+
   </div>
 
 }
