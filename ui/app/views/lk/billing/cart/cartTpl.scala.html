@@ -38,6 +38,7 @@
     @_ntable() {
 
       @_th("S") {
+        &nbsp;
       }
       @_th("M") {
         @messages("Item")
@@ -82,6 +83,7 @@
 
   @* Форма для возможности сабмита. *@
   @form( CSRF(routes.LkBill2.cartSubmit(args.mnode.id.get)), 'id -> FORM_ID ) {
+    &nbsp;
   }
 
 }
