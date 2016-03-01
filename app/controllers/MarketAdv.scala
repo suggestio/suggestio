@@ -151,9 +151,9 @@ class MarketAdv @Inject() (
               val ast = AdnShownTypes.shownTypeId2val(shownTypeId)
               MAdvFormCityCat(
                 shownType = ast,
-                nodes = catNodes.map(MAdvFormNode.apply),
-                name = ctx.messages(ast.pluralNoTown),
-                i = i
+                nodes     = catNodes.map(MAdvFormNode.apply),
+                name      = ctx.messages(ast.pluralNoTown),
+                i         = i
               )
             }
             .toSeq
@@ -166,7 +166,7 @@ class MarketAdv @Inject() (
         }
         .toSeq
         .sortBy(_.node.meta.basic.name)
-      }
+    }
 
     // Строим карту уже занятых какими-то размещением узлы.
     val busyAdvsFut: Future[Map[String, MItem]] = {

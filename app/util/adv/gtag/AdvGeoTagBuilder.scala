@@ -76,7 +76,7 @@ trait AdvGeoTagBuilder extends IAdvBuilder {
   private def _installGeoTag(mitem: MItem): IAdvBuilder = {
 
     val mitemId = mitem.id.get
-    lazy val logPrefix = s"_installGeoTag($mitemId/${System.currentTimeMillis}):"
+    lazy val logPrefix = s"_installGeoTag($mitemId ${System.currentTimeMillis}):"
     LOGGER.trace(s"$logPrefix $mitem")
 
     val acc2Fut = for {
@@ -142,10 +142,13 @@ trait AdvGeoTagBuilder extends IAdvBuilder {
       dbAction = {
         val dateStart2 = DateTime.now()
         val dateEnd2   = dateStart2.plus( mitem.dtIntervalOpt.get.toPeriod )
-        LOGGER.trace(s"$logPrefix Update item[$mitemId] dates to: $dateStart2 -> $dateEnd2 ")
         mItems.query
           .filter { _.id === mitemId }
-          .map { i => (i.status, i.rcvrIdOpt, i.dateStartOpt, i.dateEndOpt, i.dateStatus) }
+          .map { i =>
+            // Логгер вызывается тут, чтобы не писать ничего, пока не началась реальная запись в БД.
+            LOGGER.trace(s"$logPrefix Updating item[$mitemId] dates to: $dateStart2 -> $dateEnd2 ")
+            (i.status, i.rcvrIdOpt, i.dateStartOpt, i.dateEndOpt, i.dateStatus)
+          }
           .update( (MItemStatuses.Online, tagNode.id, Some(dateStart2), Some(dateEnd2), dateStart2) )
           .filter(_ == 1)
       }
@@ -195,7 +198,7 @@ trait AdvGeoTagBuilder extends IAdvBuilder {
   private def _uninstallGeoTag(mitem: MItem, reasonOpt: Option[String]): IAdvBuilder = {
     val mitemId = mitem.id.get
 
-    lazy val logPrefix = s"_uninstallGeoTag(${mitem.id.orNull}/${System.currentTimeMillis}):"
+    lazy val logPrefix = s"_uninstallGeoTag(${mitem.id.orNull} ${System.currentTimeMillis}):"
     LOGGER.trace(s"$logPrefix Unistalling $mitem")
 
     withAccUpdated { acc0 =>

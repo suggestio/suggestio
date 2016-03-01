@@ -66,7 +66,7 @@ trait AdvDirectBuilder extends IAdvBuilder {
   /** Логика установки прямого размещения для карточки. */
   private def _installDirect(mitem: MItem, acc0: Acc): Acc = {
     val mitemId = mitem.id.get
-    lazy val logPrefix = s"_installDirect($mitemId/${System.currentTimeMillis}):"
+    lazy val logPrefix = s"_installDirect($mitemId ${System.currentTimeMillis}):"
 
     // Это инсталляция услуги прямого размещения на [оплаченном] узле.
     LOGGER.trace(s"$logPrefix on ad[${acc0.mad.idOrNull}]: $mitem")
@@ -133,7 +133,7 @@ trait AdvDirectBuilder extends IAdvBuilder {
   def _uninstallDirect(mitem: MItem, reasonOpt: Option[String], acc0: Acc): Acc= {
     val mitemId = mitem.id.get
 
-    lazy val logPrefix = s"_uninstallDirect($mitemId/${System.currentTimeMillis}):"
+    lazy val logPrefix = s"_uninstallDirect($mitemId ${System.currentTimeMillis}):"
     LOGGER.trace(s"$logPrefix on ad[${acc0.mad.idOrNull}]: $mitem")
 
     val p = _PRED

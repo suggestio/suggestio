@@ -60,7 +60,7 @@
     @* Отображаем бесплатные пост-модерируемые размещения. *@
     @if(args.freeAdvs) {
       @__leftFrame {
-        <h2>Непроверенные бесплатные размещения:</h2>
+        <h2 title="Размещение у самого себя является бесплатным.">Бесплатные</h2>
         @for(medge <- args.freeAdvs) {
 
           @__approveBtn( routes.SysMdr.freeAdvMdrAccept(adId) )
@@ -82,7 +82,7 @@
     @* Рисуем список платных премодерируемых размещений. *@
     @if(args.mitemsGrouped) {
       @__leftFrame {
-        <h2>Запрошеные платные размещения:</h2>
+        <h2 title="Платные размещения данной карточки.">Платные</h2>
         @for((itype, mitems) <- args.mitemsGrouped) {
           <div class="mdr-item-group">
             <h3>@messages( itype.nameI18n )</h3>

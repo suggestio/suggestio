@@ -466,7 +466,7 @@ class MarketAd @Inject() (
       )         // MNodeAd
     )         // MAd
     val formData = AdFormResult(madStub, Map.empty)
-    val af = adFormM fill formData
+    val af = adFormM.fill( formData )
     val nameBase = s"$OFFER_K.$OFFER_K[$offerN].${bfText.name}"
     val bc = BlocksConf.DEFAULT
     val render = bfText.renderEditorField(nameBase, af, bc)(ctx)

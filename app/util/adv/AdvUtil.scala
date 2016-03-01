@@ -255,7 +255,7 @@ class AdvUtil @Inject() (
     * @return Фьючерс с кол-вом обновлённых карточек.
     */
   def resetAllReceivers(): Future[Int] = {
-    lazy val logPrefix = s"resetAllReceivers()/${System.currentTimeMillis}:"
+    lazy val logPrefix = s"resetAllReceivers(${System.currentTimeMillis}):"
     val search = new MNodeSearchDfltImpl {
       override def nodeTypes = Seq( MNodeTypes.Ad )
     }
