@@ -31,13 +31,13 @@ class BillingCronTasks @Inject()(
 
   /** Включен ли биллинг по крону? Будет выполнятся публикация карточек, их сокрытие и т.д. */
   private def CRON_BILLING_CHECK_ENABLED: Boolean = {
-    configuration.getBoolean("mmp.daily.check.enabled")
+    configuration.getBoolean("bill.cron.enabled")
       .getOrElse(true)
   }
 
   /** Как часто надо проверять таблицу advsOK на предмет необходимости изменений в выдаче. */
   private def CHECK_ADVS_OK_DURATION: FiniteDuration = {
-    configuration.getInt("mmp.daily.check.advs.ok.every.seconds")
+    configuration.getInt("bill.cron.check.every.seconds")
       .getOrElse(60)
       .seconds
   }
