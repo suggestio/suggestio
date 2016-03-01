@@ -26,7 +26,7 @@ libraryDependencies ++= {
   // slick повторно инклюдится здесь, т.к. что-то свежая версия не цеплялась через common-slick-driver
   "com.typesafe.slick"  %% "slick"      % Common.slickVsn,
   ws exclude("commons-logging", "commons-logging"),
-  "com.typesafe.play" %% "play-mailer" % "3.0.0",
+  "com.typesafe.play" %% "play-mailer" % "3.0.1",
   "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
   "com.mohiva" %% "play-html-compressor" % "0.5-SNAPSHOT",  // https://github.com/mohiva/play-html-compressor
   //"com.yahoo.platform.yui" % "yuicompressor" % "2.4.+",
@@ -74,7 +74,7 @@ libraryDependencies ++= {
   "org.bouncycastle" % "bcprov-jdk15on" % Common.bcVsn,
   "io.trbl.bcpg" % "bcpg-simple-jdk15on" % "1.51.0",
   // Логин через соц.сети
-  Common.ORG %% "securesocial" % "3.4.0-SNAPSHOT"
+  Common.ORG %% "securesocial" % "3.4.0sio-SNAPSHOT"
     exclude("commons-logging", "commons-logging")
     exclude("org.w3c.css", "sac")
   ,
