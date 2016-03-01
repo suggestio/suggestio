@@ -65,9 +65,6 @@ class MItems @Inject() (
   override type Table_t = MItemsTable
   override type El_t    = MItem
 
-  def PROD_ID_FN        = "prod_id"
-  def PROD_ID_INX       = PgaNamesMaker.inx(TABLE_NAME, PROD_ID_FN)
-
   /** Реализация абстрактной slick-таблицы item'ов. */
   class MItemsTable(tag: Tag)
     extends Table[MItem](tag, TABLE_NAME)
@@ -89,11 +86,8 @@ class MItems @Inject() (
     with DateStatusColumn
   {
 
-    def prodId          = column[String](PROD_ID_FN)
-    def prodIdInx       = index(PROD_ID_INX, prodId)
-
     override def * : ProvenShape[MItem] = {
-      (orderId, iType, status, price, adId, prodId, dtIntervalOpt, rcvrIdOpt, sls, reasonOpt, geoShapeOpt, tagFaceOpt,
+      (orderId, iType, status, price, adId, dtIntervalOpt, rcvrIdOpt, sls, reasonOpt, geoShapeOpt, tagFaceOpt,
         dateStatus, id.?) <> (
         MItem.tupled, MItem.unapply
       )
@@ -189,9 +183,7 @@ trait IItem
   with IGeoShapeOpt
   with ITagFaceOpt
   with IDateStatus
-{
-  def prodId          : String
-}
+
 
 /** Экземпляр модели (ряда абстрактной таблицы item'ов). */
 case class MItem(
@@ -200,7 +192,6 @@ case class MItem(
   override val status         : MItemStatus,
   override val price          : MPrice,
   override val adId           : String,
-  override val prodId         : String,
   override val dtIntervalOpt  : Option[Interval],
   override val rcvrIdOpt      : Option[String],
   override val sls            : Set[SinkShowLevel]  = Set.empty,
