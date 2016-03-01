@@ -40,10 +40,9 @@ class SwfsStorages @Inject() (
   val FID_FORMAT = (__ \ MStorFns.FID.fn).format[Fid]
 
   /** Инстанс с дефолтовыми настройками репликации. */
-  val REPLICATION_DFLT: Replication = {
+  val REPLICATION_DFLT: Option[Replication] = {
     configuration.getString("swfs.assign.replication")
       .map { Replication.apply }
-      .getOrElse( Replication() )
   }
 
   /** Дефолтовые настройки дата-центра в assign-request. */
@@ -74,7 +73,7 @@ class SwfsStorages @Inject() (
 
   /** Получить у swfs-мастера координаты для сохранения нового файла. */
   def assingNew(): Future[SwfsStorage] = {
-    val areq = AssignRequest(DATA_CENTER_DFLT, Some(REPLICATION_DFLT))
+    val areq = AssignRequest(DATA_CENTER_DFLT, REPLICATION_DFLT)
     for {
       resp <- client.assign(areq)
     } yield {
