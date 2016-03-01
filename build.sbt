@@ -2,7 +2,7 @@ Common.settingsOrg
 
 name := "securesocial"
 
-version := "3.4.0-SNAPSHOT"
+version := "3.4.0sio-SNAPSHOT"
 
 
 //generateRefReverseRouter := false
@@ -10,7 +10,7 @@ version := "3.4.0-SNAPSHOT"
 libraryDependencies ++= Seq(
   cache,
   ws,
-  "com.typesafe.play" %% "play-mailer" % "3.0.0",
+  "com.typesafe.play" %% "play-mailer" % "3.0.1",
   "com.typesafe.play" %% "filters-helpers" % Common.playVsn,
   "org.mindrot" % "jbcrypt" % "0.3m",
   "org.specs2" %% "specs2" % "2.3.12" % "test",
