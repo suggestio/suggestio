@@ -1,7 +1,6 @@
 BEGIN;
 
 
-
 CREATE TABLE sio2.gid
 (
   id bigserial NOT NULL
@@ -42,6 +41,39 @@ CREATE INDEX contract_crand_idx
   USING btree
   (crand);
 
+
+CREATE TABLE sio2.balance
+(
+-- Унаследована from table sio2.gid:  id bigint NOT NULL DEFAULT nextval('sio2.gid_id_seq'::regclass), -- ключ для списка транзакций по остаткам на счете
+  contract_id bigint NOT NULL, -- id контракта
+  amount double precision NOT NULL,
+  currency_code character varying(3) NOT NULL,
+  blocked double precision NOT NULL DEFAULT 0,
+  low double precision, -- Нижний кредитный лимит, NULL значит 0. Проверяется на клиенте, когда это необходимо.
+  CONSTRAINT balance_pkey PRIMARY KEY (id),
+  CONSTRAINT balance_contract_id_fkey FOREIGN KEY (contract_id)
+      REFERENCES sio2.contract (id) MATCH SIMPLE
+      ON UPDATE RESTRICT ON DELETE RESTRICT,
+  CONSTRAINT balance_contract_id_currency_code_key UNIQUE (contract_id, currency_code),
+  CONSTRAINT balance_blocked_check CHECK (blocked >= 0::double precision),
+  CONSTRAINT balance_check CHECK (amount >= COALESCE(low, 0::double precision))
+)
+INHERITS (sio2.gid)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE sio2.balance
+  OWNER TO sio2;
+COMMENT ON TABLE sio2.balance
+  IS 'Балансы на счетах/депозитах v2. Привязана к контракту.';
+COMMENT ON COLUMN sio2.balance.id IS 'ключ для списка транзакций по остаткам на счете';
+COMMENT ON COLUMN sio2.balance.contract_id IS 'id контракта';
+COMMENT ON COLUMN sio2.balance.low IS 'Нижний кредитный лимит, NULL значит 0. Проверяется на клиенте, когда это необходимо.';
+
+CREATE INDEX balance_contract_id_idx
+  ON sio2.balance
+  USING btree
+  (contract_id);
 
 
 CREATE TABLE sio2."order"
@@ -189,3 +221,4 @@ CREATE INDEX fki_txn_order_id_fkey
 
 
 COMMIT;
+
