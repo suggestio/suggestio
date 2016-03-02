@@ -2,6 +2,8 @@ package io.suggest.common.menum
 
 import io.suggest.primo.TypeT
 
+import scala.collection.immutable.SortedSet
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -17,6 +19,9 @@ trait EnumValue2Val extends Enumeration with TypeT {
   override type T <: Value
 
   implicit def value2val(x: Value): T = x.asInstanceOf[T]
+
+  def valuesT = values.asInstanceOf[SortedSet[T]]
+
 }
 
 
