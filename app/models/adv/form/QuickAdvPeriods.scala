@@ -28,8 +28,6 @@ object QuickAdvPeriods extends EnumMaybeWithName with QuickAdvPeriodsT {
 
   def default = P3D
 
-  def valuesT = values.asInstanceOf[collection.Set[T]]
-
   def ordered: Iterable[T] = {
     valuesT
   }

@@ -27,8 +27,8 @@
   nodeOpt     = args.nodeOpt
 ) {
   <div class="ovh">
-    @_adsListTpl(args.mads, coverDisableReason = false, startIndex = 0, itemsInLine = 4) { mad =>
-    @for(madId <- mad.id) {
+    @for((brArgs, i) <- args.mads.iterator.zipWithIndex; mad = brArgs.mad; madId <- mad.id) {
+    @_adInListTpl(brArgs, i) {
 
       <a class="siom-ac-btn __color-2 __size-XL __ft-XM __list-vertical" href="@routes.MarketAd.editAd(madId)">
         Редактор карточки

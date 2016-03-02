@@ -3,6 +3,8 @@ package controllers
 import com.google.inject.Inject
 import controllers.ident._
 import io.suggest.common.fut.FutureUtil
+import io.suggest.mbill2.m.item.MItems
+import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
@@ -10,7 +12,7 @@ import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models._
 import models.mctx.Context
-import models.mlk.{MNodeAdsTplArgs, MNodeShowArgs}
+import models.mlk.{MNodeAdInfo, MNodeAdsTplArgs, MNodeShowArgs}
 import models.mproj.ICommonDi
 import models.msession.Keys
 import models.req.INodeReq
@@ -43,6 +45,7 @@ class MarketLkAdn @Inject() (
   nodesUtil                           : NodesUtil,
   lkAdUtil                            : LkAdUtil,
   scUtil                              : ShowcaseUtil,
+  mItems                              : MItems,
   override val identUtil              : IdentUtil,
   logoUtil                            : LogoUtil,
   galleryUtil                         : GalleryUtil,
@@ -180,6 +183,24 @@ class MarketLkAdn @Inject() (
 
       }
 
+      // Нужно бегло собрать инфу о текущих размещениях карточек в базе без подробностей.
+      val itemsInfosFut = for {
+        mads <- madsFut
+        itemsInfos <- {
+          dbConfig.db.run {
+            mItems.findStatusesForAds(
+              adIds     = mads.flatMap(_.id),
+              statuses  = MNodeAdInfo.statusesSupported.toSeq
+            )
+          }
+        }
+      } yield {
+        itemsInfos
+          .iterator
+          .map { i => (i.adId, i) }
+          .toMap
+      }
+
       // Надо ли отображать кнопку "управление" под карточками? Да, если узел продьюсер.
       val canAdvFut: Future[Boolean] = {
         val canAdv = mnode.extras.adn.exists(_.isProducer)
@@ -190,30 +211,39 @@ class MarketLkAdn @Inject() (
         implicitly[Context]
       }
 
-      // 2015.apr.20: Вместо списка рекламных карточек надо передавать данные для рендера.
-      val brArgssFut = for {
+      val mnaisFut = for {
         mads <- madsFut
         ctx  <- ctxFut
+        // Собираем данные для рендера карточек
         res  <- {
           val dsOpt = ctx.deviceScreenOpt
           Future.traverse(mads) { mad =>
             lkAdUtil.tiledAdBrArgs(mad, dsOpt)
           }
         }
+        itemsInfos <- itemsInfosFut
       } yield {
-        res
+        // Заворачиваем данные для рендера и по размещениям в контейнеры.
+        for (brArgs <- res) yield {
+          val iiOpt = brArgs.mad.id
+            .flatMap(itemsInfos.get)
+          val iStatuses = iiOpt
+            .map(_.statuses)
+            .getOrElse(Set.empty)
+          MNodeAdInfo(brArgs, iStatuses)
+        }
       }
 
       // Рендер результата, когда все карточки будут собраны.
       for {
-        brArgss   <- brArgssFut
+        mnais     <- mnaisFut
         canAdv    <- canAdvFut
         ctx       <- ctxFut
       } yield {
         val args = MNodeAdsTplArgs(
-          mnode       = mnode,
-          mads        = brArgss,
-          canAdv      = canAdv
+          mnode   = mnode,
+          mads    = mnais,
+          canAdv  = canAdv
         )
         val render = nodeAdsTpl(args)(ctx)
         Ok(render)

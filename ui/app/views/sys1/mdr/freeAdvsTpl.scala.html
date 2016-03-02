@@ -25,11 +25,13 @@
   @* Рендерим список рекламных карточек. *@
   <div class="ads-list">
 
-    @_adsListTpl(args.mads, coverDisableReason = true, startIndex = 0, itemsInLine = 4) { mad =>
-      <div class="clear"></div>
-      <a class="siom-ac-btn __color-2 __size-XL __ft-XM __list-vertical" href="@routes.SysMdr.forAd(mad.id.get)">
-        Модерировать
-      </a>
+    @for( (brArgs, i) <- args.mads.iterator.zipWithIndex) {
+      @_adInListTpl(brArgs, i) {
+        <div class="clear"></div>
+        <a class="siom-ac-btn __color-2 __size-XL __ft-XM __list-vertical" href="@routes.SysMdr.forAd(brArgs.mad.id.get)">
+          Модерировать
+        </a>
+      }
     }
 
   </div>

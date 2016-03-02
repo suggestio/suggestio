@@ -68,8 +68,6 @@ object MCalTypes extends EnumMaybeWithName with EnumJsonReadsT {
 
   def default: T = All
 
-  def valuesT = values.asInstanceOf[Set[T]]
-
   import play.api.data.Forms._
 
   /** Опциональный маппинг для формы. */
