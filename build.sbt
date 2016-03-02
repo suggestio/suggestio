@@ -57,9 +57,9 @@ libraryDependencies ++= {
   // Календарь праздников
   "de.jollyday" % "jollyday" % "0.5.+",
   "com.google.code.kaptcha" % "kaptcha" % "2.3" classifier "jdk15",
-  // Драйвер postgresql, 1201 потому что см. https://github.com/tminglei/slick-pg/issues/220#issuecomment-162137786
-  // Нужно выпилить joda-time из проекта, перейти на java 8 datetime api, и можно будет обновляться.
-  "org.postgresql" % "postgresql" % "9.4.1208",
+  // Драйвер postgresql 1201 потому что см. https://github.com/tminglei/slick-pg/issues/220#issuecomment-162137786
+  // Нужно выпилить joda-time из проекта, перейти на java 8 datetime api, дождаться когда починят драйвер jdbc и можно будет обновляться.
+  "org.postgresql" % "postgresql" % "9.4-1201-jdbc41",
   // webjars
   // geo
   "com.spatial4j" % "spatial4j" % "0.4.+",
