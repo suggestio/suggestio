@@ -2,14 +2,15 @@ package controllers.sysctl.mdr
 
 import controllers.routes
 import io.suggest.mbill2.m.gid.Gid_t
-import io.suggest.mbill2.m.item.{MItem, IMItem, ItemStatusChanged}
+import io.suggest.mbill2.m.item.{MItem, MItems, IMItem, ItemStatusChanged}
 import io.suggest.mbill2.m.item.status.MItemStatuses
-import io.suggest.mbill2.m.item.typ.MItemTypes
+import io.suggest.mbill2.m.item.typ.{MItemType, MItemTypes}
 import io.suggest.mbill2.util.effect.RW
 import models._
 import models.mctx.Context
 import models.mdr._
-import play.api.mvc.Result
+import models.req.IReq
+import play.api.mvc.{Call, Result}
 import util.acl.{IsSuItem, IsSuItemAd, IsSuperuser, IsSuperuserMad}
 import util.billing.{Bill2Util, IBill2UtilDi}
 import util.di.IScUtil
@@ -36,8 +37,9 @@ trait SysMdrPaid
 
   import mCommonDi._
   import slick.driver.api._
+
   override val bill2Util: Bill2Util
-  import bill2Util.{ApproveItemResult, RefuseItemResult}
+  override val mItems: MItems
 
   /** SQL для экшена поиска id карточек, нуждающихся в модерации. */
   protected[this] def _findPaidAdIds4MdrAction(args: MdrSearchArgs) = {
@@ -218,7 +220,10 @@ trait SysMdrPaid
     * @return Редирект на модерацию следующей карточки.
     */
   def approveAllItemsSubmit(nodeId: String) = IsSuperuserMadPost(nodeId).async { implicit request =>
-    _processItemsForAd(nodeId)(bill2Util.approveItemAction)
+    _processItemsForAd(
+      nodeId  = nodeId,
+      q       = _itemsQuery(nodeId)
+    )(bill2Util.approveItemAction)
   }
 
 
@@ -238,7 +243,8 @@ trait SysMdrPaid
   }
 
   /** Обработка пачек item'ов унифицирована. */
-  private def _processItemsForAd[Res_t <: IMItem](nodeId: String)(f: Gid_t => DBIOAction[Res_t, NoStream, RW]): Future[Result] = {
+  private def _processItemsForAd[Res_t <: IMItem](nodeId: String, q: Query[mItems.MItemsTable, MItem, Seq])
+                                                 (f: Gid_t => DBIOAction[Res_t, NoStream, RW]): Future[Result] = {
     // TODO Opt Тут можно db.stream применять
     val itemIdsFut = slick.db.run {
       _itemsQuery(nodeId)
@@ -297,15 +303,19 @@ trait SysMdrPaid
     }
   }
 
-
-  /** Запрос попапам с формой отказа в размещение item'а. */
-  def refuseItemPopup(itemId: Gid_t) = IsSuItemAdGet(itemId).async { implicit request =>
+  private def _refusePopup(call: Call, form: RefuseForm_t = refuseFormM)
+                          (implicit request: IReq[_]): Future[Result] = {
     val args = MSysMdrRefusePopupTplArgs(
-      refuseFormM = refuseFormM,
-      submitCall  = routes.SysMdr.refuseItemSubmit(itemId)
+      refuseFormM = form,
+      submitCall  = call
     )
     val render = _refusePopupTpl(args)
     Ok(render)
+  }
+
+  /** Запрос попапам с формой отказа в размещение item'а. */
+  def refuseItemPopup(itemId: Gid_t) = IsSuItemAdGet(itemId).async { implicit request =>
+    _refusePopup(routes.SysMdr.refuseItemSubmit(itemId))
   }
 
 
@@ -343,12 +353,7 @@ trait SysMdrPaid
     * @return HTML попапа с формой отказа в размещении.
     */
   def refuseAllItems(nodeId: String) = IsSuperuserMadGet(nodeId).async { implicit request =>
-    val args = MSysMdrRefusePopupTplArgs(
-      refuseFormM = refuseFormM,
-      submitCall  = routes.SysMdr.refuseAllItemsSubmit(nodeId)
-    )
-    val render = _refusePopupTpl(args)
-    Ok(render)
+    _refusePopup( routes.SysMdr.refuseAllItemsSubmit(nodeId) )
   }
 
   /**
@@ -358,7 +363,7 @@ trait SysMdrPaid
     * @return
     */
   def refuseAllItemsSubmit(nodeId: String) = IsSuperuserMadPost(nodeId).async { implicit request =>
-    lazy val logPrefix = s"refuseAllItems($nodeId):"
+    lazy val logPrefix = s"refuseAllItemsSubmit($nodeId):"
     refuseFormM.bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug(s"$logPrefix Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
@@ -369,7 +374,49 @@ trait SysMdrPaid
       {reason =>
         val someReason = Some(reason)
         // Запустить транзакцию отката оплаченного размещения в кошелек юзера.
-        _processItemsForAd(nodeId)(bill2Util.refuseItemAction(_, someReason))
+        _processItemsForAd(
+          nodeId = nodeId,
+          q      = _itemsQuery(nodeId)
+        )(bill2Util.refuseItemAction(_, someReason))
+      }
+    )
+  }
+
+
+  /**
+    * Массовый аппрув item'ов, относящихся к какой-то группе item'ов.
+    *
+    * @param nodeId id узла-карточки.
+    * @param itype id типа item'ов.
+    * @return Редирект на текущую карточку.
+    */
+  def approveAllItemsTypeSubmit(nodeId: String, itype: MItemType) = IsSuperuserMadPost(nodeId).async { implicit request =>
+    _processItemsForAd(
+      nodeId = nodeId,
+      q = _itemsQuery(nodeId)
+        .filter(_.iTypeStr === itype.strId)
+    )(bill2Util.approveItemAction)
+  }
+
+  def refuseAllItemsType(nodeId: String, itype: MItemType) = IsSuperuserMadGet(nodeId).async { implicit request =>
+    _refusePopup( routes.SysMdr.refuseAllItemsTypeSubmit(nodeId, itype) )
+  }
+
+  def refuseAllItemsTypeSubmit(nodeId: String, itype: MItemType) = IsSuperuserMadPost(nodeId).async { implicit request =>
+    lazy val logPrefix = s"refuseAllItemsTypeSubmit($nodeId, $itype):"
+    refuseFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        LOGGER.debug(s"$logPrefix Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
+        Redirect( routes.SysMdr.forAd(nodeId) )
+          .flashing(FLASH.ERROR -> "Ошибка в запросе отказа, проверьте причину.")
+      },
+      {reason =>
+        val someReason = Some(reason)
+        _processItemsForAd(
+          nodeId = nodeId,
+          q = _itemsQuery(nodeId)
+            .filter(_.iTypeStr === itype.strId)
+        )(bill2Util.refuseItemAction(_, someReason))
       }
     )
   }

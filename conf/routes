@@ -180,6 +180,9 @@ GET  /sys/mdr/next                       @controllers.SysMdr.rdrToNextAd(a: mdr.
 POST /sys/mdr/items/approve/:adId        @controllers.SysMdr.approveAllItemsSubmit(adId)
 GET  /sys/mdr/items/refuse/:adId         @controllers.SysMdr.refuseAllItems(adId)
 POST /sys/mdr/items/refuse/:adId         @controllers.SysMdr.refuseAllItemsSubmit(adId)
+POST /sys/mdr/itemstype/approve/:adId    @controllers.SysMdr.approveAllItemsTypeSubmit(adId, itype: MItemType)
+GET  /sys/mdr/itemstype/refuse/:adId     @controllers.SysMdr.refuseAllItemsType(adId, itype: MItemType)
+POST /sys/mdr/itemstype/refuse/:adId     @controllers.SysMdr.refuseAllItemsTypeSubmit(adId, itype: MItemType)
 
 ## sys node geo
 GET  /sys/adn/geo/all/:nodeId            @controllers.SysAdnGeo.forNode(nodeId)

@@ -31,11 +31,14 @@
   </div>
 }
 
-
-@__mdrItemCont(content: Html) = {
-  <div class="mdr-item">
+@__div(cls: String)(content: Html) = {
+  <div class="@cls">
     @content
   </div>
+}
+
+@__mdrItemCont(content: Html) = {
+  @__div("mdr-item")(content)
 }
 
 
@@ -94,32 +97,44 @@
           (<strong>@args.itemsCount</strong>)
           @__refuseBtn( routes.SysMdr.refuseAllItems(args.adId) )
         </h2>
+
         @for((itype, mitems) <- args.mitemsGrouped) {
-          <div class="mdr-item-group">
-            <h3>@messages( itype.nameI18n )</h3>
-            @for(mitem <- mitems; itemId <- mitem.id) {
-              @__mdrItemCont {
-                @__approveBtn( routes.SysMdr.approveItemSubmit(itemId) )
+          <div class="mdr_item-group ml2px">
+            @* Заголовок группы тоже содержит управление модерацией для всей группы. *@
+            @__mdrItemCont {
+              <h3>
+                @__approveBtn( routes.SysMdr.approveAllItemsTypeSubmit(args.adId, itype) )
+                @messages( itype.nameI18n )
+                @__refuseBtn( routes.SysMdr.refuseAllItemsType(args.adId, itype) )
+              </h3>
+            }
 
-                @* Для тега вывести название тега, завернув его в ссылку, если возможно... *@
-                @for(rcvrId <- mitem.rcvrIdOpt) {
-                  <a href="@routes.SysMarket.showAdnNode(rcvrId)">
-                }
+            <div class="ml2px">
+              @* Содержимое группы -- это модерация уровня item'ов. *@
+              @for(mitem <- mitems; itemId <- mitem.id) {
+                @__mdrItemCont {
+                  @__approveBtn( routes.SysMdr.approveItemSubmit(itemId) )
 
-                @mitem.tagFaceOpt.map { tagFace =>
-                  #@tagFace
-                }.getOrElse {
-                  @for(rcvr <- mitem.rcvrIdOpt.flatMap(args.mnodesMap.get)) {
-                    @rcvr.guessDisplayNameOrId
+                  @* Для тега вывести название тега, завернув его в ссылку, если возможно... *@
+                  @for(rcvrId <- mitem.rcvrIdOpt) {
+                    <a href="@routes.SysMarket.showAdnNode(rcvrId)">
                   }
-                }
 
-                @if(mitem.rcvrIdOpt) {
-                  </a>
-                }
-                @__refuseBtn( routes.SysMdr.refuseItemPopup(itemId) )
-              } @* mdrItemCont *@
-            }   @* for mitem *@
+                  @mitem.tagFaceOpt.map { tagFace =>
+                    #@tagFace
+                  }.getOrElse {
+                    @for(rcvr <- mitem.rcvrIdOpt.flatMap(args.mnodesMap.get)) {
+                      @rcvr.guessDisplayNameOrId
+                    }
+                  }
+
+                  @if(mitem.rcvrIdOpt) {
+                    </a>
+                  }
+                  @__refuseBtn( routes.SysMdr.refuseItemPopup(itemId) )
+                } @* mdrItemCont *@
+              }   @* for mitem *@
+            </div>
           </div>
         }
 
