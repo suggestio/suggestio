@@ -233,3 +233,9 @@ case class MItem(
   }
 
 }
+
+
+/** Интерфейс для поля, содержащего [[MItem]]. */
+trait IMItem {
+  def mitem: MItem
+}
