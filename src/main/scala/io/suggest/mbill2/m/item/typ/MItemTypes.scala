@@ -2,6 +2,7 @@ package io.suggest.mbill2.m.item.typ
 
 import io.suggest.common.menum.{EnumApply, EnumMaybeWithName}
 import io.suggest.mbill2.m.item.status.{MItemStatuses, MItemStatus}
+import play.api.mvc.QueryStringBindable
 
 /**
  * Suggest.io
@@ -51,6 +52,27 @@ object MItemTypes extends EnumMaybeWithName with EnumApply {
   /** Типы, относящиеся к рекламным размещениям. */
   val onlyAdvTypes    = Set(AdvDirect, GeoTag)
   def onlyAdvTypesIds = onlyAdvTypes.map(_.strId)
+
+
+  /** Поддержка маппинга для play router. */
+  implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[T] = {
+    new QueryStringBindable[T] {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, T]] = {
+        for {
+          maybeStrId <- strB.bind(key, params)
+        } yield {
+          maybeStrId.right
+            .flatMap { strId =>
+              maybeWithName(strId)
+                .toRight("error.invalid")
+            }
+        }
+      }
+      override def unbind(key: String, value: T): String = {
+        strB.unbind(key, value.strId)
+      }
+    }
+  }
 
 }
 
