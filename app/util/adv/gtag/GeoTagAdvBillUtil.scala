@@ -24,7 +24,7 @@ class GeoTagAdvBillUtil @Inject() (
 ) {
 
   import mCommonDi._
-  import dbConfig.driver.api._
+  import slick.driver.api._
 
 
   /** Посчитать стоимость размещения. */

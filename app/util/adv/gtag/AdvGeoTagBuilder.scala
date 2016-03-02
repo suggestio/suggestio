@@ -25,7 +25,7 @@ trait AdvGeoTagBuilder extends IAdvBuilder {
 
   import di._
   import mCommonDi._
-  import dbConfig.driver.api._
+  import slick.driver.api._
 
   private def _PRED   = MPredicates.TaggedBy
   private def _ITYPE  = MItemTypes.GeoTag

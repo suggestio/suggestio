@@ -147,8 +147,8 @@ class LkAdvGeoTag @Inject() (
               addRes
             }
             // Запустить экшен добавления в корзину на исполнение.
-            import dbConfig.driver.api._
-            dbConfig.db.run( dbAction.transactionally )
+            import slick.driver.api._
+            slick.db.run( dbAction.transactionally )
           }
 
         } yield {

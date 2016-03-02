@@ -30,7 +30,7 @@ trait SbOverview
     */
   def overview = IsSuperuser.async { implicit request =>
     // Поиск последних финансовых транзакций для отображения таблицы оных.
-    val txnsBalancesFut = dbConfig.db.run {
+    val txnsBalancesFut = slick.db.run {
       for {
         txns      <- mTxns.findLatestTxns(limit = 10)
         if txns.nonEmpty

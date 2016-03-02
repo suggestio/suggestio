@@ -38,7 +38,7 @@ trait IsSuContract
       def reqErr = MReq(request, user)
 
       if (user.isSuper) {
-        val mcOptFut = dbConfig.db.run {
+        val mcOptFut = slick.db.run {
           mContracts.getById(contractId)
         }
 

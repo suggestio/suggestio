@@ -44,7 +44,7 @@ trait LkBillTxns
     // Прочитать из базы список транзакций по балансам юзера.
     val txnsFut: Future[Seq[MTxn]] = {
       balanceIdsFut.flatMap { balanceIds =>
-        dbConfig.db.run {
+        slick.db.run {
           mTxns.findLatestTxns(balanceIds, limit = tpp, offset = offset)
         }
       }

@@ -2,7 +2,6 @@
 
 @* Страница с модерацией одной рекламной карточки. *@
 
-@import lk.adv.widgets._
 @import views.html.sc.foc._adFullTpl
 @import ctx.{messages, request}
 @import helper._
@@ -19,7 +18,7 @@
 
 @* Верстка кнопки отказа в размещении. *@
 @__refuseBtn(call: Call) = {
-  <a class="js-btn" href="@CSRF(call)">
+  <a class="js-btn" title="@messages("Refuse")" href="@CSRF(call)">
     &lt;!&gt;
   </a>
 }
@@ -28,6 +27,13 @@
 @* Верстка контейнера куска содержимого левой колонки. *@
 @__leftFrame(content: Html) = {
   <div class="node-mdr_left-bar_frame">
+    @content
+  </div>
+}
+
+
+@__mdrItemCont(content: Html) = {
+  <div class="mdr-item">
     @content
   </div>
 }
@@ -82,12 +88,17 @@
     @* Рисуем список платных премодерируемых размещений. *@
     @if(args.mitemsGrouped) {
       @__leftFrame {
-        <h2 title="Платные размещения данной карточки.">Платные</h2>
+        <h2 title="Платные размещения данной карточки.">
+          @__approveBtn( routes.SysMdr.approveAllItemsSubmit(args.adId) )
+          Платные
+          (<strong>@args.itemsCount</strong>)
+          @__refuseBtn( routes.SysMdr.refuseAllItems(args.adId) )
+        </h2>
         @for((itype, mitems) <- args.mitemsGrouped) {
           <div class="mdr-item-group">
             <h3>@messages( itype.nameI18n )</h3>
             @for(mitem <- mitems; itemId <- mitem.id) {
-              <div class="mdr-item">
+              @__mdrItemCont {
                 @__approveBtn( routes.SysMdr.approveItemSubmit(itemId) )
 
                 @* Для тега вывести название тега, завернув его в ссылку, если возможно... *@
@@ -107,9 +118,18 @@
                   </a>
                 }
                 @__refuseBtn( routes.SysMdr.refuseItemPopup(itemId) )
-              </div>
-            }
+              } @* mdrItemCont *@
+            }   @* for mitem *@
           </div>
+        }
+
+        @* Если item'ов слишком много, то отобразить многоточие. *@
+        @if(args.tooManyItems) {
+          @__mdrItemCont {
+            <span title="Отображены не все элементы, т.к. их слишком много (@args.itemsCount).">
+              ...
+            </span>
+          }
         }
       }
     }

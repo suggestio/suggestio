@@ -143,7 +143,7 @@ trait ISioUserT extends ISioUser with PlayMacroLogsDyn {
     contractIdOptFut.flatMap { contractIdOpt =>
       FutureUtil.optFut2futOpt( contractIdOpt ) { contractId =>
         val action = mContracts.getById(contractId)
-        dbConfig.db.run(action)
+        slick.db.run(action)
       }
     }
   }
@@ -163,7 +163,7 @@ trait ISioUserT extends ISioUser with PlayMacroLogsDyn {
     val fut = contractIdOptFut.flatMap { contractIdOpt =>
       contractIdOpt.fold [Future[Seq[MBalance]]] (Future.successful(Nil)) { contractId =>
         val action = mBalances.findByContractId(contractId)
-        dbConfig.db.run(action)
+        slick.db.run(action)
       }
     }
     // Если баланса не найдено, то надо его сочинить в уме. Реальный баланс будет создан во время фактической оплаты.
@@ -214,7 +214,7 @@ class MsuStatic @Inject()(
                            val mBalances                 : MBalances,
                            // Не следует тут юзать MCommonDi, т.к. тут живёт слишком фундаментальный для проекта компонент.
                            val mNodeCache                : MNodeCache,
-                           override val _dbConfigProvider : DatabaseConfigProvider,
+                           override val _slickConfigProvider : DatabaseConfigProvider,
                            implicit val ec               : ExecutionContext,
                            implicit val esClient         : Client
 )

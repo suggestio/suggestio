@@ -51,7 +51,7 @@ trait LkBill2Cart
     // Найти ордер-корзину юзера в базе биллинга:
     val cartOptFut = mcIdOptFut.flatMap { mcIdOpt =>
       FutureUtil.optFut2futOpt(mcIdOpt) { mcId =>
-        dbConfig.db.run {
+        slick.db.run {
           bill2Util.getCartOrder(mcId)
         }
       }
@@ -176,7 +176,7 @@ trait LkBill2Cart
       // Дальше надо бы делать транзакцию
       res <- {
         // Произвести чтение, анализ и обработку товарной корзины:
-        dbConfig.db.run {
+        slick.db.run {
           bill2Util.processCart(enc.mc.id.get)
         }
       }

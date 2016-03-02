@@ -20,7 +20,7 @@ trait AdvDirectBuilder extends IAdvBuilder {
 
   import di._
   import mCommonDi._
-  import dbConfig.driver.api._
+  import slick.driver.api._
 
   private def _PRED   = MPredicates.Receiver
   private def _ITYPE  = MItemTypes.AdvDirect

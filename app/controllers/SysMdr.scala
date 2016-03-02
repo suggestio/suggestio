@@ -56,7 +56,7 @@ class SysMdr @Inject() (
       limitOpt = Some(1)
     )
 
-    dbConfig.db
+    slick.db
       // Ищем следующую карточку через биллинг и очередь на модерацию.
       .run {
         _findPaidAdIds4MdrAction(args1)

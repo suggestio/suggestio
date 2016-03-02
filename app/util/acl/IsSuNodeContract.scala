@@ -43,7 +43,7 @@ trait IsSuNodeContract
           case Some(mnode) =>
             val mcOptFut = FutureUtil.optFut2futOpt( mnode.billing.contractId ) { contractId =>
               val act = mContracts.getById(contractId)
-              dbConfig.db.run(act)
+              slick.db.run(act)
             }
             mcOptFut.flatMap {
               case Some(mc) =>

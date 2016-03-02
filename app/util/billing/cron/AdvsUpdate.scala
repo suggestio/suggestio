@@ -27,7 +27,7 @@ abstract class AdvsUpdate
 
   import LOGGER._
   import mCommonDi._
-  import dbConfig.driver.api._
+  import slick.driver.api._
 
   /** Поиск данных для обработки. */
   // TODO Хотеть DBIOAction[_, Streamable, Effect.Read], но голый SQL-запрос в модели мешает этому.
@@ -44,7 +44,7 @@ abstract class AdvsUpdate
       .foreach(runForAd)
     */
     for {
-      datas <- dbConfig.db.run( findItemsForProcessing )
+      datas <- slick.db.run( findItemsForProcessing )
     } yield {
       datas.foreach(runForAd)
     }
@@ -107,7 +107,7 @@ abstract class AdvsUpdate
     }
 
     // Сохранить изменения в БД биллинга, вернув итоговый фьючерс.
-    dbConfig.db.run( updateAction.transactionally )
+    slick.db.run( updateAction.transactionally )
   }
 
 }

@@ -35,7 +35,7 @@ trait IsSuItem
       val personIdOpt = sessionUtil.getPersonId(request)
       val user = mSioUsers(personIdOpt)
       if (user.isSuper) {
-        val mitemOptFut = dbConfig.db.run {
+        val mitemOptFut = slick.db.run {
           mItems.getById(itemId)
         }
         mitemOptFut.flatMap {

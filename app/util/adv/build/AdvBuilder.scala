@@ -87,7 +87,7 @@ trait IAdvBuilder
 
   import di._
   import mCommonDi._
-  import dbConfig.driver.api._
+  import slick.driver.api._
 
   val accFut: Future[Acc]
 

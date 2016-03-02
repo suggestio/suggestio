@@ -31,6 +31,12 @@ trait ISysMdrForAdTplArgs extends IAdBodyTplArgs {
   /** Данные по бесплатным размещениям карточки */
   def freeAdvs: Seq[MEdge]
 
+  /** true означает, что на экране отображаются не все платные размещения: их слишком много. */
+  def tooManyItems: Boolean
+
+  /** Общее кол-во item'ов для модерации для данной карточки. */
+  def itemsCount: Int
+
 }
 
 
@@ -40,7 +46,9 @@ case class MSysMdrForAdTplArgs(
   override val mnodesMap      : Map[String, MNode],
   override val mitemsGrouped  : Seq[(MItemType, Seq[MItem])],
   override val freeAdvs       : Seq[MEdge],
-  override val producer       : MNode
+  override val producer       : MNode,
+  override val tooManyItems   : Boolean,
+  override val itemsCount     : Int
 )
   extends ISysMdrForAdTplArgs
 {

@@ -503,7 +503,7 @@ class SysMarket @Inject() (
       for {
         mads <- madsFut
         advs <- {
-          import dbConfig.driver.api._
+          import slick.driver.api._
           lazy val adIds = mads.flatMap(_.id)
           val q0 = {
             val statuses = MItemStatuses.advBusyIds.toSeq
@@ -514,13 +514,13 @@ class SysMarket @Inject() (
           }
           val items: Future[Seq[MItem]] = if (rcvrIds.nonEmpty) {
             // Ищем все размещения имеющихся карточек у запрошенных ресиверов.
-            dbConfig.db.run {
+            slick.db.run {
               q0.filter(_.rcvrIdOpt inSet rcvrIds).result
             }
 
           } else if (producerIds.nonEmpty) {
             // Ищем размещения карточек для продьюсера.
-            dbConfig.db.run {
+            slick.db.run {
               q0.result
             }
 

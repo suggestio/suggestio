@@ -55,7 +55,7 @@ trait ICommonDi
   override val cacheApiUtil       : CacheApiUtil
   //override val db                 : Database
   override val mNodeCache         : MNodeCache
-  override val _dbConfigProvider   : DatabaseConfigProvider
+  override val _slickConfigProvider   : DatabaseConfigProvider
   override implicit val current   : Application
 }
 
@@ -63,21 +63,21 @@ trait ICommonDi
 /** Дефолтовая реализация модели common-компонентов. */
 @Singleton
 class MCommonDi @Inject() (
-  override val errorHandler       : ErrorHandler,
-  override val contextFactory     : Context2Factory,
-  override val messagesApi        : MessagesApi,
-  override val actorSystem        : ActorSystem,
-  override val cache              : CacheApi,
-  override val cacheApiUtil       : CacheApiUtil,
-  override val mNodeCache         : MNodeCache,
-  override val sessionUtil        : SessionUtil,
-  override val mSioUsers          : MSioUsers,
-  //override val db                 : Database, // Anorm, спилить потом.
-  override val _dbConfigProvider   : DatabaseConfigProvider,
-  override implicit val current   : Application,
-  override implicit val ec        : ExecutionContext,
-  override implicit val esClient  : Client,
-  override implicit val sn        : SioNotifierStaticClientI
+                            override val errorHandler       : ErrorHandler,
+                            override val contextFactory     : Context2Factory,
+                            override val messagesApi        : MessagesApi,
+                            override val actorSystem        : ActorSystem,
+                            override val cache              : CacheApi,
+                            override val cacheApiUtil       : CacheApiUtil,
+                            override val mNodeCache         : MNodeCache,
+                            override val sessionUtil        : SessionUtil,
+                            override val mSioUsers          : MSioUsers,
+                            //override val db                 : Database, // Anorm, спилить потом.
+                            override val _slickConfigProvider   : DatabaseConfigProvider,
+                            override implicit val current   : Application,
+                            override implicit val ec        : ExecutionContext,
+                            override implicit val esClient  : Client,
+                            override implicit val sn        : SioNotifierStaticClientI
 )
   extends ICommonDi
 

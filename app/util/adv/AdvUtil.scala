@@ -37,7 +37,7 @@ class AdvUtil @Inject() (
 
   import LOGGER._
   import mCommonDi._
-  import dbConfig.driver.api._
+  import slick.driver.api._
 
   /** Причина hard-отказа в размещении со стороны suggest.io, а не узла.
     * Потом надо это заменить на нечто иное: чтобы суперюзер s.io вводил причину. */
@@ -86,7 +86,7 @@ class AdvUtil @Inject() (
       .clearAd()  // С чистого листа, т.к. у нас полный пересчёт
 
     // TODO Opt Тут без stream(), т.к. я пока не осилил. А надо бы...
-    val adItemsFut = dbConfig.db.run {
+    val adItemsFut = slick.db.run {
       val itypes = b0.supportedItemTypesStrSet
       mItems.query
         .filter { i =>
@@ -245,7 +245,7 @@ class AdvUtil @Inject() (
     }
 
     // Запуск транзакции на исполнение
-    dbConfig.db.run( txnLogic.transactionally )
+    slick.db.run( txnLogic.transactionally )
   }
 
 

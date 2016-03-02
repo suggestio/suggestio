@@ -170,7 +170,7 @@ class MarketAdv @Inject() (
 
     // Строим карту уже занятых какими-то размещением узлы.
     val busyAdvsFut: Future[Map[String, MItem]] = {
-      dbConfig.db.run {
+      slick.db.run {
         advDirectBilling.findBusyRcvrsMap(adId)
       }
     }
@@ -327,7 +327,7 @@ class MarketAdv @Inject() (
     lazy val logPrefix = s"filterEnties($adId)"
 
     // Собрать id конфликтующих ресиверов в засабмиченной форме и в существующем биллинге.
-    val busyRcvrIdsFut = dbConfig.db.run {
+    val busyRcvrIdsFut = slick.db.run {
       advDirectBilling.findBusyRcvrsExact(adId, fr)
     }
     for (busyRcvrsIds <- busyRcvrIdsFut) {
@@ -452,8 +452,8 @@ class MarketAdv @Inject() (
             } yield {
               MOrderWithItems(cartOrder, itemsSaved)
             }
-            import dbConfig.driver.api._
-            dbConfig.db.run( dbAction.transactionally )
+            import slick.driver.api._
+            slick.db.run( dbAction.transactionally )
           }
 
         } yield {

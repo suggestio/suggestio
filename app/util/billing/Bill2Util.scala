@@ -8,7 +8,7 @@ import io.suggest.mbill2.m.balance.{MBalance, MBalances}
 import io.suggest.mbill2.m.contract.{MContract, MContracts}
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.MItemStatuses
-import io.suggest.mbill2.m.item.{IItem, MItems, MItem}
+import io.suggest.mbill2.m.item.{IMItem, IItem, MItems, MItem}
 import io.suggest.mbill2.m.order._
 import io.suggest.mbill2.m.txn.{MTxnTypes, MTxns, MTxn}
 import io.suggest.mbill2.util.effect._
@@ -42,7 +42,7 @@ class Bill2Util @Inject() (
 {
 
   import mCommonDi._
-  import dbConfig.driver.api._
+  import slick.driver.api._
 
   /** id узла, на который должна сыпаться комиссия с этого биллинга. */
   val CBCA_NODE_ID: String = {
@@ -103,7 +103,7 @@ class Bill2Util @Inject() (
     // Поискать связанный контракт, если есть.
     val mcOptFut = FutureUtil.optFut2futOpt( mnode.billing.contractId ) { contractId =>
       // Запрашиваем сохраненный контракт узла из модели.
-      val fut = dbConfig.db.run {
+      val fut = slick.db.run {
         mContracts.getById(contractId)
       }
       fut.onSuccess { case None =>
@@ -125,7 +125,7 @@ class Bill2Util @Inject() (
         // Создать новый контракт в БД биллинга
         mc2 <- {
           val mc = MContract()
-          dbConfig.db.run {
+          slick.db.run {
             mContracts.insertOne(mc)
           }
         }
@@ -148,7 +148,7 @@ class Bill2Util @Inject() (
             // Не удалось сохранить contract_id в ноду, откатить свежесозданный ордер
             case Failure(ex) =>
               for (id <- mc2.id) {
-                dbConfig.db.run {
+                slick.db.run {
                   mOrders.deleteById(id)
                 }
               }
@@ -203,7 +203,7 @@ class Bill2Util @Inject() (
 
   /** Найти все item'ы указанного ордера. */
   def orderItems(orderId: Gid_t): Future[Seq[MItem]] = {
-    dbConfig.db.run {
+    slick.db.run {
       mItems.findByOrderId(orderId)
     }
   }
@@ -576,7 +576,8 @@ class Bill2Util @Inject() (
 
 
   /** Контейнер результата экшена аппрува item'а. */
-  sealed case class ApproveItemResult(mitem: MItem)
+  sealed case class ApproveItemResult(override val mitem: MItem)
+    extends IMItem
 
   /**
     * Аппрув модерация item'а.
@@ -708,7 +709,8 @@ class Bill2Util @Inject() (
 
 
   /** Результат исполнения экшена refuseItemAction(). */
-  sealed case class RefuseItemResult(mitem: MItem, mtxn: MTxn)
+  sealed case class RefuseItemResult(override val mitem: MItem, mtxn: MTxn)
+    extends IMItem
 
   /**
     * Item не прошел модерацию или продавец/поставщик отказал по какой-то [уважительной] причине.

@@ -33,6 +33,7 @@ trait SbNodeContract
 
   /**
    * Рендер страницы с формой создания контракта.
+ *
    * @param nodeId id узла, для которого создаётся контракт.
    */
   def createContract(nodeId: String) = IsSuNodeNoContractGet(nodeId).async { implicit request =>
@@ -56,6 +57,7 @@ trait SbNodeContract
 
   /**
    * Сабмит формы создания контракта.
+ *
    * @param nodeId id узла, для которого создаётся контракт.
    */
   def createContractSubmit(nodeId: String) = IsSuNodeNoContractPost(nodeId).async { implicit request =>
@@ -68,7 +70,7 @@ trait SbNodeContract
       {mc =>
         LOGGER.trace(s"Creating new contract for node $nodeId...")
         val mcAct = mContracts.insertOne(mc)
-        val mcSaveFut = dbConfig.db.run(mcAct)
+        val mcSaveFut = slick.db.run(mcAct)
 
         // Запустить сохранение нового id контракта в узел.
         val nodeSaveFut = mcSaveFut.flatMap { mc =>
@@ -87,7 +89,7 @@ trait SbNodeContract
           nodeSaveFut.onFailure { case ex: Throwable =>
             val contractId = mc2.id.get
             val deleteAct = mContracts.deleteById(contractId)
-            val deleteFut = dbConfig.db.run(deleteAct)
+            val deleteFut = slick.db.run(deleteAct)
             LOGGER.warn("Rollbacking contract save because of node save error", ex)
             if (LOGGER.underlying.isTraceEnabled) {
               deleteFut.onComplete { case result =>
@@ -114,6 +116,7 @@ trait SbNodeContract
 
   /**
    * Экшен рендера страницы редактирования контракта узла.
+ *
    * @param nodeId id изменяемого узла.
    */
   def editContract(nodeId: String) = IsSuNodeContractGet(nodeId).async { implicit request =>
@@ -129,6 +132,7 @@ trait SbNodeContract
 
   /**
    * Сабмит формы редактирования контракта.
+ *
    * @param nodeId id узла.
    */
   def editContractSubmit(nodeId: String) = IsSuNodeContractPost(nodeId).async { implicit request =>
@@ -144,7 +148,7 @@ trait SbNodeContract
           hiddenInfo  = mc1.hiddenInfo,
           suffix      = mc1.suffix
         )
-        val updFut = dbConfig.db.run(
+        val updFut = slick.db.run(
           mContracts.updateOne(mc2)
         )
 
@@ -164,13 +168,14 @@ trait SbNodeContract
 
   /**
    * Сабмит удаления контракта.
+ *
    * @param nodeId id узла.
    * @return Редирект на forNode().
    */
   def deleteContractSubmit(nodeId: String) = IsSuNodeContractPost(nodeId).async { implicit request =>
     val contractId = request.mcontract.id.get
     val act = mContracts.deleteById(contractId)
-    val deleteFut = dbConfig.db.run(act)
+    val deleteFut = slick.db.run(act)
 
     lazy val logPrefix = s"deleteContractSubmit($nodeId):"
 
@@ -190,7 +195,7 @@ trait SbNodeContract
     deleteFut.onSuccess { case _ =>
       nodeSaveFut.onFailure { case ex: Throwable =>
         val act2 = mContracts.insertOne( request.mcontract )
-        val reInsFut = dbConfig.db.run(act2)
+        val reInsFut = slick.db.run(act2)
         LOGGER.error(s"$logPrefix Re-inserting deleted contract after node update failure: ${request.mcontract}", ex)
         reInsFut.onFailure { case ex2 =>
           LOGGER.error(s"$logPrefix Unable to re-insert $act2", ex2)

@@ -46,7 +46,7 @@ class AdvDirectBilling @Inject() (
 
   import LOGGER._
   import mCommonDi._
-  import dbConfig.driver.api._
+  import slick.driver.api._
 
   /** Дни недели, относящиеся к выходным. Задаются списком чисел от 1 (пн) до 7 (вс), согласно DateTimeConstants. */
   private val WEEKEND_DAYS: Set[Int] = {

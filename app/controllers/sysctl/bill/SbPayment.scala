@@ -82,7 +82,7 @@ trait SbPayment
       {res =>
         val mcId = request.mcontract.id.get
         val price = res.price
-        val txnFut = dbConfig.db.run {
+        val txnFut = slick.db.run {
           bill2Util.increaseBalanceSimple(mcId, price)
         }
         for (txn <- txnFut) yield {

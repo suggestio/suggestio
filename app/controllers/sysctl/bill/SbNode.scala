@@ -37,14 +37,14 @@ trait SbNode
 
     val mContractOptFut = FutureUtil.optFut2futOpt(contractIdOpt) { contractId =>
       val mContractOptAction = mContracts.getById(contractId)
-      dbConfig.db.run(mContractOptAction)
+      slick.db.run(mContractOptAction)
     }
 
     val mBalancesFut = contractIdOpt.fold[Future[Seq[MBalance]]] {
       Future.successful(Nil)
     } { contractId =>
       val mBalancesAction = mBalances.findByContractId(contractId)
-      dbConfig.db.run(mBalancesAction)
+      slick.db.run(mBalancesAction)
     }
 
     // Получить узел CBCA для доступа к дефолтовому тарифу, если требуется.

@@ -41,7 +41,7 @@ trait IsSuItemAd
       def req1 = MReq(request, user)
 
       if (user.isSuper) {
-        val mitemOptFut = dbConfig.db.run {
+        val mitemOptFut = slick.db.run {
           mItems.getById(itemId)
         }
         mitemOptFut.flatMap {

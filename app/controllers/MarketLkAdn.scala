@@ -187,7 +187,7 @@ class MarketLkAdn @Inject() (
       val itemsInfosFut = for {
         mads <- madsFut
         itemsInfos <- {
-          dbConfig.db.run {
+          slick.db.run {
             mItems.findStatusesForAds(
               adIds     = mads.flatMap(_.id),
               statuses  = MNodeAdInfo.statusesSupported.toSeq

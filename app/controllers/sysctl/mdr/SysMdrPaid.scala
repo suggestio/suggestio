@@ -2,16 +2,20 @@ package controllers.sysctl.mdr
 
 import controllers.routes
 import io.suggest.mbill2.m.gid.Gid_t
-import io.suggest.mbill2.m.item.ItemStatusChanged
+import io.suggest.mbill2.m.item.{MItem, IMItem, ItemStatusChanged}
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.MItemTypes
+import io.suggest.mbill2.util.effect.RW
 import models._
 import models.mctx.Context
 import models.mdr._
+import play.api.mvc.Result
 import util.acl.{IsSuItem, IsSuItemAd, IsSuperuser, IsSuperuserMad}
-import util.billing.IBill2UtilDi
+import util.billing.{Bill2Util, IBill2UtilDi}
 import util.di.IScUtil
 import views.html.sys1.mdr._
+
+import scala.concurrent.Future
 
 
 /**
@@ -31,7 +35,9 @@ trait SysMdrPaid
 {
 
   import mCommonDi._
-  import dbConfig.driver.api._
+  import slick.driver.api._
+  override val bill2Util: Bill2Util
+  import bill2Util.{ApproveItemResult, RefuseItemResult}
 
   /** SQL для экшена поиска id карточек, нуждающихся в модерации. */
   protected[this] def _findPaidAdIds4MdrAction(args: MdrSearchArgs) = {
@@ -67,7 +73,7 @@ trait SysMdrPaid
     val dbAction = _findPaidAdIds4MdrAction(args)
 
     // Запустить поиск id карточек по биллингу, а затем и поиск самих карточек.
-    val madsFut = dbConfig.db
+    val madsFut = slick.db
       .run( dbAction )
       .flatMap { madIds =>
         mNodeCache.multiGet( madIds )
@@ -77,6 +83,14 @@ trait SysMdrPaid
     _adsPage(madsFut, args)
   }
 
+  // Общий код сборки всех SQL queries для сборки items модерации карточки
+  private def _itemsQuery(nodeId: String) = {
+    mItems.query
+      .filter { i =>
+        (i.adId === nodeId) &&
+          (i.statusStr === MItemStatuses.AwaitingSioAuto.strId)
+      }
+  }
 
 
   /**
@@ -87,16 +101,25 @@ trait SysMdrPaid
     * @return Страница
     */
   def forAd(nodeId: String) = IsSuperuserMadGet(nodeId).async { implicit request =>
+    // Константа лимита отображаемых модератору mitems
+    val ITEMS_LIMIT = 20
+
+    // Используем один и тот же query-билдер несколько раз.
+    val itemsQuery = _itemsQuery(nodeId)
 
     // Нужно запустить сборку списков item'ов на модерацию.
-    val mitemsFut = dbConfig.db.run {
-      mItems.query
-        .filter { i =>
-          (i.adId === nodeId) &&
-            (i.statusStr === MItemStatuses.AwaitingSioAuto.strId)
-        }
-        // На всякий случай ограничиваем кол-во запрашиваемых item'ов. Нет никакого смысла вываливать слишком много данных на экран.
-        .take(50)
+    val mitemsFut = slick.db.run {
+      itemsQuery
+        // Ограничиваем кол-во запрашиваемых item'ов. Нет никакого смысла вываливать слишком много данных на экран.
+        .take(ITEMS_LIMIT)
+        // Тяжелая сортировка тут скорее всего не важна, поэтому опускаем её.
+        .result
+    }
+
+    // Узнать общее кол-во item'ов для карточки, которые нужно отмодерировать.
+    val itemsCountFut = slick.db.run {
+      itemsQuery
+        .length
         .result
     }
 
@@ -155,10 +178,13 @@ trait SysMdrPaid
           .sortBy(_._1.strId)
       }
 
-      // Дождаться карты узлов
-      mnodesMap <- mnodesMapFut
-      // Дождаться аргументов рендера.
-      brArgs <- brArgsFut
+      // Посчитать, кол-во item'ов для рендера уже на пределе, или нет.
+      tooManyItems = mitems.size == ITEMS_LIMIT
+
+      // Дождаться оставльных асинхронных данных
+      mnodesMap   <- mnodesMapFut
+      brArgs      <- brArgsFut
+      itemsCount  <- itemsCountFut
 
     } yield {
 
@@ -173,7 +199,9 @@ trait SysMdrPaid
           .getOrElse {
             LOGGER.warn(s"forAd($nodeId): Producer not found/not exists, using self as producer node.")
             request.mad
-          }
+          },
+        tooManyItems  = tooManyItems,
+        itemsCount    = itemsCount
       )
 
       // Отрендерить и вернуть ответ клиенту
@@ -183,20 +211,86 @@ trait SysMdrPaid
   }
 
 
-  /** Модератор подтверждает оплаченный item. */
-  def approveItemSubmit(itemId: Gid_t) = IsSuperuserPost.async { implicit request =>
+  /**
+    * Модератор решил утвердить все оплаченные модерации сразу.
+    *
+    * @param nodeId id узла-карточки.
+    * @return Редирект на модерацию следующей карточки.
+    */
+  def approveAllItemsSubmit(nodeId: String) = IsSuperuserMadPost(nodeId).async { implicit request =>
+    _processItemsForAd(nodeId)(bill2Util.approveItemAction)
+  }
+
+
+  /** Логика поштучной обработки item'ов. */
+  private def _processOneItem[Res_t <: IMItem](dbAction: DBIOAction[Res_t, NoStream, RW]): Future[Res_t] = {
     // Запуск обновления MItems.
-    val saveFut = dbConfig.db.run {
-      bill2Util.approveItemAction(itemId)
-        .transactionally
+    val saveFut = slick.db.run {
+      dbAction.transactionally
     }
 
-    for {
-      res <- saveFut
-    } yield {
-      // Обрадовать другие компоненты системы новым событием
+    // Обрадовать другие компоненты системы новым событием
+    saveFut.onSuccess { case res =>
       sn.publish( ItemStatusChanged(res.mitem) )
+    }
 
+    saveFut
+  }
+
+  /** Обработка пачек item'ов унифицирована. */
+  private def _processItemsForAd[Res_t <: IMItem](nodeId: String)(f: Gid_t => DBIOAction[Res_t, NoStream, RW]): Future[Result] = {
+    // TODO Opt Тут можно db.stream применять
+    val itemIdsFut = slick.db.run {
+      _itemsQuery(nodeId)
+        .map(_.id)
+        .result
+    }
+
+    lazy val logPrefix = s"_processItemsForAd($nodeId ${System.currentTimeMillis}):"
+    LOGGER.trace(s"$logPrefix Bulk approve items, $f")
+
+    for {
+      itemIds     <- itemIdsFut
+      saveFut     = Future.traverse(itemIds) { itemId =>
+        _processOneItem( f(itemId) )
+          // Следует мягко разруливать ситуации, когда несколько модераторов одновременно аппрувят item'ы одновременно.
+          .map { _ => true }
+          .recover {
+            // Вероятно, race conditions двух модераторов.
+            case _: NoSuchElementException =>
+              LOGGER.warn(s"$logPrefix Possibly conficting mdr MItem UPDATE. Suppressed.")
+              false
+            case ex: Throwable =>
+              LOGGER.error(s"$logPrefix Unknown error occured while approving item $itemId", ex)
+              true
+          }
+      }
+      itemsCount  = itemIds.size
+      saveRes     <- saveFut
+
+    } yield {
+      val countOk = saveRes.count(identity)
+      val countFail = saveRes.count(!_)
+
+      if (countFail == 0) {
+        LOGGER.debug(s"$logPrefix Success with $itemsCount items")
+        val rdrArgs = MdrSearchArgs(hideAdIdOpt = Some(nodeId))
+        Redirect( routes.SysMdr.rdrToNextAd(rdrArgs) )
+          .flashing(FLASH.SUCCESS -> s"Одобрено ${itemIds.size} размещений.")
+      } else {
+        LOGGER.warn(s"$logPrefix Done with errors, $countOk ok with $countFail failed items.")
+        Redirect( routes.SysMdr.forAd(nodeId) )
+          .flashing(FLASH.ERROR -> s"$countOk размещений подтверждено, $countFail с ошибками.")
+      }
+    }
+  }
+
+  /** Модератор подтверждает оплаченный item. */
+  def approveItemSubmit(itemId: Gid_t) = IsSuperuserPost.async { implicit request =>
+    val dbAction = bill2Util.approveItemAction(itemId)
+    for {
+      res <- _processOneItem(dbAction)
+    } yield {
       // Отредиректить юзера для продолжения модерации
       Redirect( routes.SysMdr.forAd(res.mitem.adId) )
         .flashing(FLASH.SUCCESS -> s"Размещение #$itemId одобрено.")
@@ -207,7 +301,7 @@ trait SysMdrPaid
   /** Запрос попапам с формой отказа в размещение item'а. */
   def refuseItemPopup(itemId: Gid_t) = IsSuItemAdGet(itemId).async { implicit request =>
     val args = MSysMdrRefusePopupTplArgs(
-      refuseFormM    = refuseFormM,
+      refuseFormM = refuseFormM,
       submitCall  = routes.SysMdr.refuseItemSubmit(itemId)
     )
     val render = _refusePopupTpl(args)
@@ -227,18 +321,13 @@ trait SysMdrPaid
 
       {reason =>
         // Запустить транзакцию отката оплаченного размещения в кошелек юзера.
-        val saveFut = dbConfig.db.run {
-          bill2Util.refuseItemAction(itemId, Some(reason))
-            .transactionally
-        }
+        val dbAction  = bill2Util.refuseItemAction(itemId, Some(reason))
+        val saveFut   = _processOneItem(dbAction)
 
         // Когда всё будет выполнено, надо отредиректить юзера на карточку.
         for {
           res <- saveFut
         } yield {
-          // Уведомить всех об изменении в статусе item'а
-          sn.publish( ItemStatusChanged(res.mitem) )
-
           // Отредиректить клиента на модерацию карточки.
           Redirect( routes.SysMdr.forAd(request.mitem.adId) )
             .flashing(FLASH.SUCCESS -> s"Отказано в размещении #$itemId.")
@@ -247,5 +336,42 @@ trait SysMdrPaid
     )
   }
 
+  /**
+    * Рендер попапа для указания причины отсева множества item'ов для указанной карточки.
+    *
+    * @param nodeId id узла-карточки, которая модерируется в данный момент.
+    * @return HTML попапа с формой отказа в размещении.
+    */
+  def refuseAllItems(nodeId: String) = IsSuperuserMadGet(nodeId).async { implicit request =>
+    val args = MSysMdrRefusePopupTplArgs(
+      refuseFormM = refuseFormM,
+      submitCall  = routes.SysMdr.refuseAllItemsSubmit(nodeId)
+    )
+    val render = _refusePopupTpl(args)
+    Ok(render)
+  }
+
+  /**
+    * Множенственный refuse всех модерируемых item'ов, относящихся к указанной карточке.
+    *
+    * @param nodeId id узла.
+    * @return
+    */
+  def refuseAllItemsSubmit(nodeId: String) = IsSuperuserMadPost(nodeId).async { implicit request =>
+    lazy val logPrefix = s"refuseAllItems($nodeId):"
+    refuseFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        LOGGER.debug(s"$logPrefix Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
+        Redirect( routes.SysMdr.forAd(nodeId) )
+          .flashing(FLASH.ERROR -> "Ошибка в запросе отказа, проверьте причину.")
+      },
+
+      {reason =>
+        val someReason = Some(reason)
+        // Запустить транзакцию отката оплаченного размещения в кошелек юзера.
+        _processItemsForAd(nodeId)(bill2Util.refuseItemAction(_, someReason))
+      }
+    )
+  }
 
 }
