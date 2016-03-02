@@ -13,11 +13,9 @@ import io.suggest.mbill2.m.item.typ.{MItemTypeSlick, MItemType, IMItemType}
 import io.suggest.mbill2.m.order._
 import io.suggest.mbill2.m.price._
 import io.suggest.mbill2.m.tags.{TagFaceOptSlick, ITagFaceOpt}
-import io.suggest.mbill2.util.PgaNamesMaker
 import io.suggest.model.geo.GeoShape
 import io.suggest.model.sc.common.SinkShowLevel
 import org.joda.time.{DateTime, Interval}
-import slick.jdbc.SQLActionBuilder
 import slick.lifted.ProvenShape
 import slick.profile.SqlAction
 
@@ -56,6 +54,7 @@ class MItems @Inject() (
   with TagFaceOptSlick
   with DateStatusSlick
   with MAdItemIdsSlick
+  with MAdItemStatusesSlick
 {
 
   override val TABLE_NAME = "item"
@@ -163,6 +162,27 @@ class MItems @Inject() (
       }
       .result
       .headOption
+  }
+
+  /** Concat списка элементов в строку, содержащую sql-список строк для отправки в IN (...). */
+  private def _mkSqlInString(es: TraversableOnce[Any]): String = {
+    es.mkString("'", "','", "'")
+  }
+
+  /**
+    * Для списка перечисленных карточек найти вернуть статусы из множества интересующих.
+    *
+    * @param adIds Интересующие карточки.
+    * @param statuses Интересующие статусы item'ов или все возможные.
+    * @return Пары adId -> Set([[MItemStatus]]).
+    */
+  def findStatusesForAds(adIds: Traversable[String], statuses: Traversable[MItemStatus] = MItemStatuses.valuesT) = {
+    // TODO Sec Возможность SQL injection, нужно передавать список через args, но slick sql не умеет IN (...) синтаксис.
+    // Возможно, стоит попробовать эту пионерскую поделку https://github.com/tarao/slick-jdbc-extension-scala
+    val adIdsStr = _mkSqlInString( adIds )
+    val statusesStr = _mkSqlInString( statuses.toIterator.map(_.strId) )
+    sql"SELECT #$AD_ID_FN, array_agg(DISTINCT #$STATUS_FN) FROM #$TABLE_NAME WHERE ad_id IN (#$adIdsStr) AND #$STATUS_FN IN (#$statusesStr) GROUP BY ad_id"
+      .as[MAdItemStatuses]
   }
 
 }

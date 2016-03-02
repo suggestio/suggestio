@@ -69,7 +69,7 @@ object MItemStatuses extends EnumMaybeWithName with EnumApply {
 
 
   /** Статусы, обозначающие занятость карточки для прямого размещения. */
-  def advBusy = values.iterator.filter(_.isAdvBusy)
+  def advBusy = values.iterator.map(value2val).filter(_.isAdvBusy)
 
   /** Только id'шники, идентефицирующие занятость карточки. */
   def advBusyIds = advBusy.map(_.strId)
