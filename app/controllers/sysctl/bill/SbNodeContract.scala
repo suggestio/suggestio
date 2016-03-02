@@ -102,7 +102,7 @@ trait SbNodeContract
           mc  <- mcSaveFut
         } yield {
           Redirect( routes.SysBilling.forNode(nodeId) )
-            .flashing(FLASH.SUCCESS -> s"Создан контракт ${mc.legalContractId} для узла $nodeId")
+            .flashing(FLASH.SUCCESS -> s"Создан контракт ${mc.legalContractId} для узла ${request.mnode.guessDisplayNameOrIdOrEmpty}")
         }
       }
     )
