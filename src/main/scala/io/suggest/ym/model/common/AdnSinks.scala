@@ -39,6 +39,4 @@ object AdnSinks extends EnumMaybeWithName with EnumJsonReadsValT {
       .asInstanceOf[Option[T]]
   }
 
-  def valuesT = values.asInstanceOf[SortedSet[T]]
-
 }
