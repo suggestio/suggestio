@@ -1,5 +1,6 @@
 package io.suggest.model.search
 
+import io.suggest.model.common.OptId
 import io.suggest.model.es.EsModelStaticT
 import io.suggest.util.MacroLogsI
 import io.suggest.util.SioEsUtil.laFuture2sFuture
@@ -23,12 +24,14 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with MacroLog
   def dynSearchReqBuilder(dsa: A)(implicit client: Client): SearchRequestBuilder = {
     // Запускаем собранный запрос.
     val result = dsa.prepareSearchRequest(prepareSearch)
-    LOGGER.trace(s"dynSearchReqBuilder($dsa): Compiled request = \n${result.toString}")
+    // Логгируем всё вместе с es-индексом и типом, чтобы облегчить curl-отладку на основе залоггированного.
+    LOGGER.trace(s"dynSearchReqBuilder($dsa): $ES_INDEX_NAME/$ES_TYPE_NAME Compiled request = \n${result.toString}")
     result
   }
 
   /**
    * Поиск карточек в ТЦ по критериям.
+   *
    * @return Список рекламных карточек, подходящих под требования.
    */
   def dynSearch(dsa: A)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
@@ -39,22 +42,19 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with MacroLog
 
   /**
    * Поиск и сборка карты результатов в id в качестве ключа.
+   *
    * @param dsa Поисковые критерии.
    * @return Карта с найденными элементами в неопределённом порядке.
    */
   def dynSearchMap(dsa: A)(implicit ec: ExecutionContext, client: Client): Future[Map[String, T]] = {
     for (res <- dynSearch(dsa)) yield {
-      res.iterator
-        .flatMap { r =>
-          r.id
-            .map { _ -> r }
-        }
-        .toMap
+      OptId.els2idMap[String, T](res)
     }
   }
 
   /**
    * Разновидность dynSearch для максимум одного результата. Вместо коллекции возвращается Option[T].
+   *
    * @param dsa Аргументы поиска.
    * @return Фьючерс с Option[T] внутри.
    */
@@ -65,6 +65,7 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with MacroLog
 
   /**
    * Аналог dynSearch, но возвращаются только id документов.
+   *
    * @param dsa Поисковый запрос.
    * @return Список id, подходящих под запрос, в неопределённом порядке.
    */
@@ -78,6 +79,7 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with MacroLog
 
   /**
    * Посчитать кол-во рекламных карточек, подходящих под запрос.
+   *
    * @param dsa Экземпляр, описывающий критерии поискового запроса.
    * @return Фьючерс с кол-вом совпадений.
    */
@@ -118,6 +120,7 @@ trait DynSearchArgs {
   /**
    * Сборка search-реквеста. Можно переопределить чтобы добавить в реквест какие-то дополнительные вещи,
    * кастомную сортировку например.
+   *
    * @param srb Поисковый реквест, пришедший из модели.
    * @return SearchRequestBuilder, наполненный данными по поисковому запросу.
    */
