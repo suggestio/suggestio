@@ -1,11 +1,13 @@
 package controllers.sysctl.mdr
 
 import controllers.routes
+import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.model.n2.edge.MEdgeInfo
 import models._
 import models.mdr._
-import org.joda.time.DateTime
 import util.acl.{IsSuperuser, IsSuperuserMad}
+import util.billing.IBill2UtilDi
+import util.mdr.SysMdrUtil
 import views.html.sys1.mdr._
 
 /**
@@ -18,10 +20,12 @@ trait SysMdrFree
   extends SysMdrBase
   with IsSuperuser
   with IsSuperuserMad
+  with IBill2UtilDi
 {
 
   import mCommonDi._
 
+  override val sysMdrUtil: SysMdrUtil
 
   /**
     * Страница с бесплатно-размещёнными рекламными карточками, подлежащими модерации s.io.
@@ -43,7 +47,8 @@ trait SysMdrFree
   def refuseFreeAdvPopup(adId: String) = IsSuperuserMadGet(adId).apply { implicit request =>
     val args = MSysMdrRefusePopupTplArgs(
       refuseFormM = sysMdrUtil.refuseFormM,
-      submitCall  = routes.SysMdr.freeAdvMdrBan(adId)
+      submitCall  = routes.SysMdr.freeAdvMdrBan(adId),
+      withModes   = true
     )
     val render = _refusePopupTpl(args)
     Ok(render)
@@ -77,19 +82,49 @@ trait SysMdrFree
         Redirect( routes.SysMdr.forAd(adId) )
           .flashing(FLASH.ERROR -> "Возникли проблемы. см application.log")
       },
-      {reason =>
-        // Сохранить отказ в модерации.
-        val saveFut = sysMdrUtil.updMdrEdge {
+      {res =>
+        val someReason = Some(res.reason)
+
+        // Сохранить отказ в бесплатной модерации.
+        val saveFreeFut = sysMdrUtil.updMdrEdge {
           MEdgeInfo(
             dateNi    = sysMdrUtil.someNow,
-            commentNi = Some(reason),
+            commentNi = someReason,
             flag      = Some(false)
           )
         }
 
+        // Если задан режим, то произвести какие-то дополнительные действия.
+        val saveFut = res.mode match {
+          // Только обновить эдж
+          case MRefuseModes.OnlyThis =>
+            saveFreeFut
+
+          case other =>
+            val q1: sysMdrUtil.Q_t = other match {
+              // и отказать в остальных реквестах
+              case MRefuseModes.WithReqs =>
+                sysMdrUtil.itemsQueryAwaiting(adId)
+              // и резануть все текущие item'ы резануть
+              case MRefuseModes.WithAll =>
+                val statuses = MItemStatuses.advBusy.toSeq
+                sysMdrUtil.onlyStatuses(
+                  sysMdrUtil.itemsQuery(adId),
+                  statuses
+                )
+            }
+            saveFreeFut.flatMap { _ =>
+              sysMdrUtil._processItemsForAd(
+                nodeId  = adId,
+                q       = q1
+              )(bill2Util.refuseItemAction(_, someReason))
+            }
+        }
+
+        // Дождаться итогов, вернуть модератору результат.
         for (_ <- saveFut) yield {
           Redirect( routes.SysMdr.forAd(adId) )
-            .flashing(FLASH.SUCCESS -> "Карточка убрана из бесплатной выдачи.")
+            .flashing(FLASH.SUCCESS -> "Отказано.")
         }
       }
     )

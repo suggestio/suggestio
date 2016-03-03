@@ -17,13 +17,24 @@ trait ISysMdrRefusePopupTplArgs {
   /** Адресок для сабмита refuse-формы. */
   def submitCall: Call
 
+  /** Рендерить также поле modes? */
+  def withModes: Boolean
+
+  def modes: Iterable[MRefuseMode] = {
+    if (withModes)
+      Nil
+    else
+      MRefuseModes.valuesT
+  }
+
 }
 
 
 /** Дефолтовая реализация [[ISysMdrRefusePopupTplArgs]]. */
 case class MSysMdrRefusePopupTplArgs(
   override val submitCall   : Call,
-  override val refuseFormM  : RefuseForm_t
+  override val refuseFormM  : RefuseForm_t,
+  override val withModes    : Boolean       = false
 )
   extends ISysMdrRefusePopupTplArgs
 

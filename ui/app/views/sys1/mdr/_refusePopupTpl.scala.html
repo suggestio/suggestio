@@ -3,18 +3,7 @@
 @* Страница отображает карточку в полный рост для полномасштабной визуальной оценки,
    и содержит формы для одобрения и бана бесплатного размещения. *@
 
-@import helper._
-@import util.FC.divFc
 @import lk.popup._
-@import ctx.{messages, request}
-
-
-@* Верстка управляющих кнопок очень похожа, дедублицируем... *@
-@__btn(color: Int, float: MHand, cls: String)(content: Html) = {
-  <a class="siom-ac-btn __color-@color __size-M __ft-XM f-@float.name @cls" href="#">
-    @content
-  </a>
-}
 
 @_popupTpl(
   hidden  = false,
@@ -27,28 +16,7 @@
   }
 
   @_popupCntTpl() {
-
-    @* Запретить размещение с указание причины. *@
-    @form( CSRF(args.submitCall), 'id -> "advReqRefuse") {
-
-      @textarea(
-        args.refuseFormM("reason"),
-        '_label       -> "",
-        'placeholder  -> messages("Write.refuse.reason")
-      )
-
-      <div class="btn-w __size-S">
-
-        @__btn(3, MHands.Left, "js-close-popup") {
-          @messages("Cancel")
-        }
-
-        @__btn(4, MHands.Right, "js-submit-btn") {
-          @messages("Refuse")
-        }
-
-      </div>
-    }
-
+    @_refuseFormTpl(args)
   }
+
 }

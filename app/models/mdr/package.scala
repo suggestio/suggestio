@@ -9,6 +9,8 @@ import play.api.data.Form
   */
 package object mdr {
 
-  type RefuseForm_t = Form[String]
+  type MRefuseMode  = MRefuseModes.T
+
+  type RefuseForm_t = Form[MRefuseFormRes]
 
 }
