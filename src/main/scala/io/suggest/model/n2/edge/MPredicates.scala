@@ -136,7 +136,7 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
    * from -- узел, входящие запросы на который будут обрабатываться узлом-делегатом
    * to   -- узел-делегат, который видит у себя запросы на размещение от других узлов.
    */
-  val AdvMdrDgTo: T = new Val("c") with _FromAdnNode with _ToAdnNode
+  //val AdvMdrDgTo: T = new Val("c") with _FromAdnNode with _ToAdnNode
 
 
   /**
