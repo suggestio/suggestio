@@ -10,6 +10,7 @@ import util.PlayMacroLogsImpl
 import util.acl.IsSuperuser
 import util.billing.Bill2Util
 import util.lk.LkAdUtil
+import util.mdr.SysMdrUtil
 import util.n2u.N2NodesUtil
 import util.showcase.ShowcaseUtil
 import views.html.sys1.mdr._
@@ -28,6 +29,7 @@ class SysMdr @Inject() (
   override val n2NodesUtil          : N2NodesUtil,
   override val mItems               : MItems,
   override val bill2Util            : Bill2Util,
+  override val sysMdrUtil           : SysMdrUtil,
   override val mCommonDi            : ICommonDi
 )
   extends SioControllerImpl

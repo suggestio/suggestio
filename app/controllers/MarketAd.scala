@@ -25,6 +25,7 @@ import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 import util.acl._
 import util.blocks.{BgImg, ListBlock, LkEditorWsActor}
+import util.mdr.SysMdrUtil
 import util.n2u.N2NodesUtil
 import views.html.lk.ad._
 
@@ -39,6 +40,7 @@ import scala.concurrent.Future
 class MarketAd @Inject() (
   tempImgSupport                  : TempImgSupport,
   mImgs3                          : MImgs3,
+  sysMdrUtil                      : SysMdrUtil,
   override val n2NodesUtil        : N2NodesUtil,
   override val mCommonDi          : ICommonDi
 )
@@ -73,11 +75,12 @@ class MarketAd @Inject() (
   private def bgImgFullK = OFFER_K + "." + BgImg.BG_IMG_FN
 
 
-  /**
-   * Запуск детектирования палитры картинки в фоне.
-   * @param form Маппинг формы со всеми данными.
-   * @param ctx Контекст рендера.
-   */
+   /**
+    * Запуск детектирования палитры картинки в фоне.
+    *
+    * @param form Маппинг формы со всеми данными.
+    * @param ctx Контекст рендера.
+    */
   private def detectMainColorBg(form: AdFormM)(implicit ctx: Context): Unit = {
     val vOpt = form(bgImgFullK).value
     try {
@@ -92,10 +95,11 @@ class MarketAd @Inject() (
   }
 
 
-  /**
-   * Рендер унифицированной страницы добаления рекламной карточки.
-   * @param adnId id узла рекламной сети.
-   */
+   /**
+    * Рендер унифицированной страницы добаления рекламной карточки.
+    *
+    * @param adnId id узла рекламной сети.
+    */
   def createAd(adnId: String) = IsAdnNodeAdminGet(adnId, U.Balance).async { implicit request =>
     _renderCreateFormWith(
       af      = adFormM,
@@ -112,10 +116,11 @@ class MarketAd @Inject() (
     }
   }
 
-  /**
-   * Сабмит формы добавления рекламной карточки товара/скидки.
-   * @param adnId id магазина.
-   */
+   /**
+    * Сабмит формы добавления рекламной карточки товара/скидки.
+    *
+    * @param adnId id магазина.
+    */
   def createAdSubmit(adnId: String) = IsAdnNodeAdminPost(adnId).async(parse.urlFormEncoded) { implicit request =>
     import request.mnode
     lazy val logPrefix = s"createAdSubmit($adnId): "
@@ -138,9 +143,12 @@ class MarketAd @Inject() (
                 out = {
                   val currEdges = r.mad.edges.out
                   val prodE = MEdge(MPredicates.OwnedBy, adnId)
-                  MNodeEdges.edgesToMap1(
-                    currEdges.valuesIterator ++ savedImgs ++ Seq(prodE)
-                  )
+                  var iter  = currEdges.valuesIterator ++ savedImgs ++ Seq(prodE)
+                  // Добавить эдж модератора, если карточка создаётся модератором.
+                  if (request.user.isSuper)
+                    iter ++= Seq( sysMdrUtil.mdrEdge() )
+                  // Сгенерить и вернуть итоговую карту эджей.
+                  MNodeEdges.edgesToMap1(iter)
                 }
               )
             ).save
@@ -176,9 +184,10 @@ class MarketAd @Inject() (
 
 
   /**
-   * Рендер страницы с формой редактирования рекламной карточки магазина.
-   * @param adId id рекламной карточки.
-   */
+    * Рендер страницы с формой редактирования рекламной карточки магазина.
+    *
+    * @param adId id рекламной карточки.
+    */
   def editAd(adId: String) = CanEditAdGet(adId, U.Lk).async { implicit request =>
     import request.mad
     val bc = n2NodesUtil.bc(mad)
@@ -213,6 +222,7 @@ class MarketAd @Inject() (
 
 
   /** Сабмит формы рендера страницы редактирования рекламной карточки.
+    *
     * @param adId id рекламной карточки.
     */
   def editAdSubmit(adId: String) = CanEditAdPost(adId).async(parse.urlFormEncoded) { implicit request =>
@@ -222,8 +232,9 @@ class MarketAd @Inject() (
         debug(logPrefix + "Failed to bind form: " + formWithErrors.errors)
         _renderEditFormWith(formWithErrors, NotAcceptable)
       },
-      {r => //case (mad2, bim) =>
+      {r =>
         val bc = n2NodesUtil.bc(request.mad)
+
         // TODO Надо отделить удаление врЕменных и былых картинок от сохранения новых. И вызывать эти две фунции отдельно.
         // Сейчас возможна ситуация, что при поздней ошибке сохранения теряется старая картинка, а новая сохраняется вникуда.
         val _imgPreds = bc.imgKeys
@@ -233,10 +244,12 @@ class MarketAd @Inject() (
             .withPredicateIter(_imgPreds: _*)
             .toList
         )
-        // Подготовить синхронные данные для фильтрации
-        val predsFiltered: Seq[MPredicate] = {
+
+        // Какие предикаты нужно удалить перед заливкой обновлённых?
+        val predsFilteredOut: List[MPredicate] = {
           MPredicates.ModeratedBy :: _imgPreds
         }
+
         // Произвести действия по сохранению карточки.
         val saveFut = for {
           imgsSaved <- saveImgsFut
@@ -255,9 +268,11 @@ class MarketAd @Inject() (
               edges = r.mad.edges.copy(
                 out = {
                   // Нужно залить новые картинки, сбросить данные по модерации.
-                  val iter = mad0.edges
-                    .withoutPredicateIter(predsFiltered : _*)
+                  var iter = mad0.edges
+                    .withoutPredicateIter(predsFilteredOut : _*)
                     .++( imgsSaved )
+                  if (request.user.isSuper)
+                    iter ++= Seq( sysMdrUtil.mdrEdge() )
                   MNodeEdges.edgesToMap1( iter )
                 }
               )
@@ -275,6 +290,7 @@ class MarketAd @Inject() (
       }
     )
   }
+
 
   /** Безопасная сборка call для редиректа. Маловероятна (но возможна ситуация), когда у редактируемой
     * карточки нет продьюсера. Если так, то надо будет вернуть lkList(). */
@@ -295,7 +311,8 @@ class MarketAd @Inject() (
 
   /**
    * POST для удаления рекламной карточки.
-   * @param adId id рекламы.
+    *
+    * @param adId id рекламы.
    * @return Редирект в магазин или ТЦ.
    */
   def deleteSubmit(adId: String) = CanEditAdPost(adId).async { implicit request =>
@@ -357,7 +374,12 @@ class MarketAd @Inject() (
           val sls0 = e0.info.sls
 
           // TODO Удалить поддержку sink'ов, когда будет выпилен старый биллинг.
-          def _mkSlss(src: TraversableOnce[AdnSink]) = src.toIterator.map { SinkShowLevels.withArgs(_, sl) }
+          def _mkSlss(src: TraversableOnce[AdnSink]) = {
+            for (sink <- src.toIterator) yield {
+              SinkShowLevels.withArgs(sink, sl)
+            }
+          }
+
           val sls1 = if (isLevelEnabled) {
             val prodSinks = Set(AdnSinks.SINK_GEO)
             sls0 ++ _mkSlss(prodSinks)
@@ -430,12 +452,13 @@ class MarketAd @Inject() (
 
 
   /**
-   * Рендер нового блока редактора для ввода текста.
-   * @param offerN номер оффера
-   * @param height текущая высота карточки. Нужно для того, чтобы новый блок не оказался где-то не там.
-   * @param width Текущая ширина карточки.
-   * @return 200 ok с инлайновым рендером нового текстового поля формы редактора карточек.
-   */
+    * Рендер нового блока редактора для ввода текста.
+    *
+    * @param offerN номер оффера
+    * @param height текущая высота карточки. Нужно для того, чтобы новый блок не оказался где-то не там.
+    * @param width Текущая ширина карточки.
+    * @return 200 ok с инлайновым рендером нового текстового поля формы редактора карточек.
+    */
   def newTextField(offerN: Int, height: Int, width: Int) = IsAuth { implicit request =>
     val bfText = ListBlock.mkBfText(offerNopt = Some(offerN))
     // Чтобы залить в форму необходимые данные, надо сгенерить экземпляр рекламной карточки.

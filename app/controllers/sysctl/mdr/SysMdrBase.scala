@@ -10,6 +10,7 @@ import models.req.IReq
 import play.api.mvc.Result
 import util.PlayMacroLogsI
 import util.lk.ILkAdUtilDi
+import util.mdr.ISysMdrUtilDi
 import util.n2u.IN2NodesUtilDi
 import views.html.sys1.mdr._
 
@@ -26,21 +27,10 @@ trait SysMdrBase
   with PlayMacroLogsI
   with IN2NodesUtilDi
   with ILkAdUtilDi
+  with ISysMdrUtilDi
 {
 
   import mCommonDi._
-
-
-  /** Маппинг refuse-формы. */
-  protected[this] def refuseFormM: RefuseForm_t = {
-    import play.api.data._
-    import Forms._
-    import util.FormUtil._
-    Form(
-      "reason" -> nonEmptyText(minLength = 4, maxLength = 1024)
-        .transform(strTrimSanitizeF, strIdentityF)
-    )
-  }
 
 
   /** Общий код отработки запроса страницы с карточками, нуждающимися в модерации, вынесен сюда. */

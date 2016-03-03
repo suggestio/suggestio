@@ -247,8 +247,7 @@ trait SysMdrPaid
                                                  (f: Gid_t => DBIOAction[Res_t, NoStream, RW]): Future[Result] = {
     // TODO Opt Тут можно db.stream применять
     val itemIdsFut = slick.db.run {
-      _itemsQuery(nodeId)
-        .map(_.id)
+      q .map(_.id)
         .result
     }
 
@@ -303,7 +302,7 @@ trait SysMdrPaid
     }
   }
 
-  private def _refusePopup(call: Call, form: RefuseForm_t = refuseFormM)
+  private def _refusePopup(call: Call, form: RefuseForm_t = sysMdrUtil.refuseFormM)
                           (implicit request: IReq[_]): Future[Result] = {
     val args = MSysMdrRefusePopupTplArgs(
       refuseFormM = form,
@@ -322,7 +321,7 @@ trait SysMdrPaid
   /** Модератор отвергает оплаченный item с указанием причины отказа. */
   def refuseItemSubmit(itemId: Gid_t) = IsSuItemPost(itemId).async { implicit request =>
     lazy val logPrefix = s"refuseItem($itemId):"
-    refuseFormM.bindFromRequest().fold(
+    sysMdrUtil.refuseFormM.bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug(s"$logPrefix Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
         Redirect( routes.SysMdr.forAd(request.mitem.adId) )
@@ -364,7 +363,7 @@ trait SysMdrPaid
     */
   def refuseAllItemsSubmit(nodeId: String) = IsSuperuserMadPost(nodeId).async { implicit request =>
     lazy val logPrefix = s"refuseAllItemsSubmit($nodeId):"
-    refuseFormM.bindFromRequest().fold(
+    sysMdrUtil.refuseFormM.bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug(s"$logPrefix Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
         Redirect( routes.SysMdr.forAd(nodeId) )
@@ -404,7 +403,7 @@ trait SysMdrPaid
 
   def refuseAllItemsTypeSubmit(nodeId: String, itype: MItemType) = IsSuperuserMadPost(nodeId).async { implicit request =>
     lazy val logPrefix = s"refuseAllItemsTypeSubmit($nodeId, $itype):"
-    refuseFormM.bindFromRequest().fold(
+    sysMdrUtil.refuseFormM.bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug(s"$logPrefix Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
         Redirect( routes.SysMdr.forAd(nodeId) )
