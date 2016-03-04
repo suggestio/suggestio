@@ -82,9 +82,10 @@ trait SysMdrFree
 
   /** Сабмит формы блокирования бесплатного размещения рекламной карточки. */
   def freeAdvMdrBan(adId: String) = IsSuperuserMadPost(adId).async { implicit request =>
+    lazy val logPrefix = s"freeAdvMdrBan($adId u:${request.user.personIdOpt.orNull}):"
     sysMdrUtil.refuseFormM.bindFromRequest().fold(
       {formWithErrors =>
-        LOGGER.debug(s"freeAdvMdrBan($adId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
+        LOGGER.debug(s"$logPrefix Failed to bind form:\n${formatFormErrors(formWithErrors)}")
         Redirect( routes.SysMdr.forAd(adId) )
           .flashing(FLASH.ERROR -> "Возникли проблемы. см application.log")
       },
@@ -101,36 +102,49 @@ trait SysMdrFree
         }
 
         // Если задан режим, то произвести какие-то дополнительные действия.
-        val saveFut = res.mode match {
+        res.mode match {
           // Только обновить эдж
           case MRefuseModes.OnlyThis =>
-            saveFreeFut
+            LOGGER.trace(s"$logPrefix Refusing only free advs.")
+            for (_ <- saveFreeFut) yield {
+              Redirect( routes.SysMdr.forAd(adId) )
+                .flashing(FLASH.SUCCESS -> "Отказано в бесплатном размещении.")
+            }
 
           case other =>
             val q1: sysMdrUtil.Q_t = other match {
               // и отказать в остальных реквестах
               case MRefuseModes.WithReqs =>
+                LOGGER.debug(s"$logPrefix Also refusing all unconfirmed advs.")
                 sysMdrUtil.itemsQueryAwaiting(adId)
               // и резануть все текущие item'ы резануть
               case MRefuseModes.WithAll =>
+                LOGGER.debug(s"$logPrefix Also refusing ALL ADVS!")
                 val statuses = MItemStatuses.advBusy.toSeq
                 sysMdrUtil.onlyStatuses(
                   sysMdrUtil.itemsQuery(adId),
                   statuses
                 )
             }
-            saveFreeFut.flatMap { _ =>
+            // Запустить необходимый отказ.
+            val saveFut = saveFreeFut.flatMap { _ =>
               sysMdrUtil._processItemsForAd(
                 nodeId  = adId,
                 q       = q1
               )(bill2Util.refuseItemAction(_, someReason))
             }
-        }
-
-        // Дождаться итогов, вернуть модератору результат.
-        for (_ <- saveFut) yield {
-          Redirect( routes.SysMdr.forAd(adId) )
-            .flashing(FLASH.SUCCESS -> "Отказано.")
+            // Дождаться итогов, вернуть модератору результат.
+            for (res <- saveFut) yield {
+              val rdrArgs = MdrSearchArgs(hideAdIdOpt = Some(adId))
+              val msg = other match {
+                case MRefuseModes.WithReqs =>
+                  s"Отказано в бесплатном и всех запрошенных размещениях (${res.itemsCount})."
+                case MRefuseModes.WithAll =>
+                  s"Отказано во всех размещениях, в т.ч. уже подтвержденных (${res.itemsCount})."
+              }
+              Redirect( routes.SysMdr.rdrToNextAd( rdrArgs ) )
+                .flashing(FLASH.SUCCESS -> msg)
+            }
         }
       }
     )
