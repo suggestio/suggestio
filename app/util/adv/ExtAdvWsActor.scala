@@ -26,7 +26,7 @@ import scala.util.{Random, Failure, Success}
  * Created: 26.12.14 16:24
  * Description: Утиль и код актора, который занимается общением с js api размещения рекламных карточек на клиенте.
  */
-class ExtAdvWsActor_ @Inject() (
+class ExtAdvWsActors @Inject() (
   factory: ExtAdvWsActorFactory
 ) {
 

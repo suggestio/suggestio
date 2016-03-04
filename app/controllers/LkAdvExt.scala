@@ -1,6 +1,7 @@
 package controllers
 
 import com.google.inject.Inject
+import io.suggest.common.empty.EmptyUtil
 import models._
 import models.adv._
 import models.adv.ext.act.{ActorPathQs, OAuthVerifier}
@@ -19,7 +20,7 @@ import play.api.mvc.{Result, WebSocket}
 import util.FormUtil._
 import util.PlayMacroLogsImpl
 import util.acl._
-import util.adv.{ExtAdvWsActor_, ExtUtil}
+import util.adv.{ExtAdvWsActors, ExtUtil}
 import views.html.lk.adv.ext._
 import views.html.static.popups.closingPopupTpl
 
@@ -35,7 +36,7 @@ import scala.concurrent.Future
  */
 class LkAdvExt @Inject() (
   override val canAdvAdUtil       : CanAdvertiseAdUtil,
-  extAdvWsActor                   : ExtAdvWsActor_,
+  extAdvWsActors                  : ExtAdvWsActors,
   override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
@@ -50,7 +51,9 @@ class LkAdvExt @Inject() (
   import mCommonDi._
 
   /** Сколько секунд с момента генерации ссылки можно попытаться запустить процесс работы, в секундах. */
-  val WS_BEST_BEFORE_SECONDS = configuration.getInt("adv.ext.ws.api.best.before.seconds") getOrElse 30
+  private val WS_BEST_BEFORE_SECONDS = configuration
+    .getInt("adv.ext.ws.api.best.before.seconds")
+    .getOrElse(30)
 
   /** Маппинг одной выбранной цели. */
   private def advM: Mapping[Option[MExtTargetInfo]] = {
@@ -65,10 +68,11 @@ class LkAdvExt @Inject() (
       { case Some(info) => (info.targetId, Some(info.returnTo))
         case _ => ("", None) }
     )
-    optional(t).transform[Option[MExtTargetInfo]] (
-      _.flatten,
-      {v => if (v.isDefined) Some(v) else None }
-    )
+    optional(t)
+      .transform [Option[MExtTargetInfo]] (
+        _.flatten,
+        _.map( EmptyUtil.someF )
+      )
   }
 
 
@@ -104,8 +108,8 @@ class LkAdvExt @Inject() (
     }
 
     for {
-      ctxData0      <- request.user.lkCtxDataFut
-      targets <- targetsFut
+      ctxData0  <- request.user.lkCtxDataFut
+      targets   <- targetsFut
     } yield {
       val args = MForAdTplArgs(
         mad         = request.mad,
@@ -158,28 +162,27 @@ class LkAdvExt @Inject() (
    * @return Страница с системой размещения.
    */
   def runner(adId: String, wsArgsOpt: Option[MExtAdvQs]) = CanAdvertiseAdPost(adId, U.Lk).async { implicit request =>
-    wsArgsOpt match {
-      case Some(wsArgs) =>
-        request.user.lkCtxDataFut.map { ctxData0 =>
-          implicit val ctxData = ctxData0.copy(
-            jsiTgs = Seq(MTargets.AdvExtRunner)
-          )
-          implicit val ctx = implicitly[Context]
-          val wsArgs2 = wsArgs.copy(
-            wsId = ctx.ctxIdStr,
-            adId = adId
-          )
-          val rargs = MAdvRunnerTplArgs(
-            wsCallArgs  = wsArgs2,
-            mad         = request.mad,
-            mnode       = request.producer
-          )
-          Ok( advRunnerTpl(rargs)(ctx) )
-        }
-
+    wsArgsOpt.fold [Future[Result]] {
       // Аргументы не заданы. Такое бывает, когда юзер обратился к runner'у, но изменился ключ сервера или истекла сессия.
-      case None =>
-        Redirect(routes.LkAdvExt.forAd(adId))
+      Redirect(routes.LkAdvExt.forAd(adId))
+
+    } { wsArgs =>
+      for (ctxData0 <- request.user.lkCtxDataFut) yield {
+        implicit val ctxData = ctxData0.copy(
+          jsiTgs = Seq(MTargets.AdvExtRunner)
+        )
+        implicit val ctx = implicitly[Context]
+        val wsArgs2 = wsArgs.copy(
+          wsId = ctx.ctxIdStr,
+          adId = adId
+        )
+        val rargs = MAdvRunnerTplArgs(
+          wsCallArgs  = wsArgs2,
+          mad         = request.mad,
+          mnode       = request.producer
+        )
+        Ok( advRunnerTpl(rargs)(ctx) )
+      }
     }
   }
 
@@ -192,61 +195,72 @@ class LkAdvExt @Inject() (
    * @return 101 Upgrade.
    */
   def wsRun(qsArgs: MExtAdvQs) = WebSocket.tryAcceptWithActor[JsValue, JsValue] { implicit requestHeader =>
-
-    // Сначала нужно проверить права доступа всякие.
-    val fut0 = if (qsArgs.bestBeforeSec <= BestBefore.nowSec) {
-      Future successful None
-    } else {
-      val res = RequestTimeout("Request expired. Return back, refresh page and try again.")
-      Future failed ExceptionWithResult(res)
-    }
-
-    // Если купон валиден, то сразу запускаем в фоне чтение данных по целям размещения...
-    val targetsFut: Future[ActorTargets_t] = fut0.flatMap { _ =>
-      val ids = qsArgs.targets.iterator.map(_.targetId)
-      val _targetsFut = MExtTarget.multiGetRev(ids)
-      val targetsMap = qsArgs.targets
-        .iterator
-        .map { info => info.targetId -> info }
-        .toMap
-      _targetsFut map { targets =>
-        targets.iterator
-          .flatMap { target =>
-            target.id
-              .flatMap(targetsMap.get)
-              .map { info => MExtTargetInfoFull(target, info.returnTo) }
-          }
-          .toList
+    val resFut = for {
+      // Сначала нужно синхронно проверить права доступа всякие.
+      _ <- {
+        if (qsArgs.bestBeforeSec <= BestBefore.nowSec) {
+          Future successful None
+        } else {
+          val res = RequestTimeout("Request expired. Return back, refresh page and try again.")
+          Future.failed( ExceptionWithResult(res) )
+        }
       }
-    }
 
-    // Одновременно запускаем сбор инфы по карточке и проверку прав на неё.
-    fut0.flatMap { _ =>
-      val madFut = MNode.getById(qsArgs.adId)
+      // Запустить поиск списка целей размещения
+      targetsFut: Future[ActorTargets_t] = {
+        val ids = qsArgs.targets.iterator.map(_.targetId)
+        val _targetsFut = MExtTarget.multiGetRev(ids)
+        val targetsMap = qsArgs.targets
+          .iterator
+          .map { info => info.targetId -> info }
+          .toMap
+        _targetsFut map { targets =>
+          targets.iterator
+            .flatMap { target =>
+              target.id
+                .flatMap(targetsMap.get)
+                .map { info => MExtTargetInfoFull(target, info.returnTo) }
+            }
+            .toList
+        }
+      }
+
+      // Запустить получение текущей рекламной карточки
+      madFut = MNode.getById(qsArgs.adId)
         .map(_.get)
         .recoverWith { case ex: NoSuchElementException =>
-          Future failed ExceptionWithResult(NotFound("Ad not found: " + qsArgs.adId))
-        }
-      val personIdOpt = sessionUtil.getPersonId(requestHeader)
-      val user = mSioUsers(personIdOpt)
-      madFut
-        .flatMap { mad =>
-          val req1 = MReqNoBody(requestHeader, user) // RequestHeaderAsRequest(requestHeader)
-          canAdvAdUtil.maybeAllowed(mad, req1)
-        }
-        .map(_.get)
-        .recoverWith { case ex: NoSuchElementException =>
-          val ex = ExceptionWithResult(Forbidden("Login session expired. Return back and press F5."))
-          Future.failed(ex)
+          val ex2 = ExceptionWithResult(NotFound("Ad not found: " + qsArgs.adId))
+          Future.failed(ex2)
         }
 
-    }.map { implicit req1 =>
+      // Собрать кое-какие синхронные данные.
+      personIdOpt = sessionUtil.getPersonId(requestHeader)
+      user = mSioUsers(personIdOpt)
+
+      // Дождаться получения рекламной картоки
+      mad <- madFut
+      //
+      adProdReq <- {
+        val req1 = MReqNoBody(requestHeader, user) // RequestHeaderAsRequest(requestHeader)
+        canAdvAdUtil.maybeAllowed(mad, req1)
+          .map(_.get)
+          .recoverWith { case _: NoSuchElementException =>
+            val ex2 = ExceptionWithResult(Forbidden("Login session expired. Return back and press F5."))
+            Future.failed(ex2)
+          }
+      }
+
+    } yield {
+
+      implicit val req1 = adProdReq
+
       // Всё ок, запускаем актора, который будет вести переговоры с этим websocket'ом.
       val eaArgs = MExtWsActorArgs(qsArgs, req1, targetsFut)
-      val hp: HandlerProps = extAdvWsActor.props(_, eaArgs)
+      val hp: HandlerProps = extAdvWsActors.props(_, eaArgs)
       Right(hp)
+    }
 
-    }.recover {
+    resFut.recover {
       case ExceptionWithResult(res) =>
         Left(res)
       case ex: Exception =>
@@ -271,7 +285,7 @@ class LkAdvExt @Inject() (
 
   /**
    * Сабмит формы создания/обновления цели внешнего размещения рекламной карточки.
- *
+   *
    * @param adnId id узла, к которому привязывается цель.
    * @return 200 Ok если цель создана.
    *         406 NotAcceptable если форма заполнена с ошибками. body содержит рендер формы с ошибками.
