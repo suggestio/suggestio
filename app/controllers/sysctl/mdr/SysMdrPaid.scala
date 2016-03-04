@@ -94,22 +94,26 @@ trait SysMdrPaid
         .result
     }
 
-    // Найти бесплатные размещения, подлежащие модерации
-    val rcvrsSelf: Seq[MEdge] = {
-      val es = request.mad.edges
-      // Поиска self-receiver среди эджей:
-      es.withPredicateIter( MPredicates.Receiver.Self )
-        .filter { selfE =>
-          // Если какой-то модератор уже сделал модерацию карточки, то не требуется модерировать бесплатное размещение:
-          es.withPredicateIter( MPredicates.ModeratedBy ).isEmpty
-        }
-        .toSeq
-    }
-
     implicit val ctx = implicitly[Context]
 
     // Для рендера карточки необходим подготовить brArgs
     val brArgsFut = scUtil.focusedBrArgsFor(request.mad)(ctx)
+
+    val edges = request.mad.edges
+
+    // Узнать, кто модерировал карточку ранее.
+    val freeMdrs = {
+       edges
+        .withPredicateIter(MPredicates.ModeratedBy)
+        .toSeq
+    }
+
+    // Найти бесплатные размещения карточки.
+    val rcvrsSelf = {
+      edges
+        .withPredicateIter( MPredicates.Receiver.Self )
+        .toSeq
+    }
 
     // Узнать id продьюсера текущей, чтобы шаблон мог им воспользоваться.
     val producerIdOpt = n2NodesUtil.madProducerId( request.mad )
@@ -125,6 +129,9 @@ trait SysMdrPaid
 
         // Закинуть в карту id продьюсера.
         nodeIdsSetB ++= producerIdOpt
+
+        // Закинуть id модерарировших в общую кучу
+        nodeIdsSetB ++= freeMdrs.iterator.map(_.nodeId)
 
         // Закинуть в карту саморесивера. Он по идее совпадает с id продьюсера, но на всякий случай закидываем...
         nodeIdsSetB ++= rcvrsSelf.iterator
@@ -172,7 +179,8 @@ trait SysMdrPaid
             request.mad
           },
         tooManyItems  = tooManyItems,
-        itemsCount    = itemsCount
+        itemsCount    = itemsCount,
+        freeMdrs      = freeMdrs
       )
 
       // Отрендерить и вернуть ответ клиенту

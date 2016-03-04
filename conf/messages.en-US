@@ -734,3 +734,6 @@ Item.type.e=External deployment
 Moderation=Moderation
 Picture.editing=Picture editing
 
+Refuse.mode.i=Only this adv
+Refuse.mode.req=This and any requested advs
+Refuse.mode.all=All current and requested advs

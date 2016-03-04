@@ -7,6 +7,7 @@
 @import helper._
 @import args.adId
 @import mdr.MdrSearchArgs
+@import datetime._
 
 @* Верста кнопки подтверждения размещения. *@
 @__approveBtn(call: Call) = {
@@ -41,6 +42,15 @@
   @__div("mdr-item")(content)
 }
 
+@__nodeLink(nodeId: String) = {
+  <a href="@routes.SysMarket.showAdnNode(nodeId)">
+    @args.mnodesMap.get(nodeId).fold {
+      <strong title="Узел не найден: @nodeId">???</strong>
+    } { mnode =>
+      @mnode.guessDisplayNameOrId
+    }
+  </a>
+}
 
 @mdrBase(
   title     = args.brArgs.mad.guessDisplayNameOrIdOrEmpty,
@@ -66,25 +76,32 @@
     }
 
 
-    @* Отображаем бесплатные пост-модерируемые размещения. *@
-    @if(args.freeAdvs) {
-      @__leftFrame {
-        <h2 title="Размещение у самого себя является бесплатным.">Бесплатные</h2>
-        @for(medge <- args.freeAdvs) {
+    @* Отображаем hi-level управление карточкой и бесплатные размещения. Она всегда на экране. *@
+    @__leftFrame {
 
-          @__approveBtn( routes.SysMdr.freeAdvMdrAccept(adId) )
+      @* Если карточка ещё не модерировалась положительно, нарисовать кнопку аппрува. *@
+      @if( !args.hasPositiveMdr ) {
+        @__approveBtn( routes.SysMdr.freeAdvMdrAccept(adId) )
+      }
 
-          @messages(medge.predicate.singular)
-
-          @for(mnode <- args.mnodesMap.get(medge.nodeId); nodeId <- mnode.id) {
-            <a href="@routes.SysMarket.showAdnNode(nodeId)">
-              @mnode.guessDisplayNameOrId
-            </a>
+      @* Если карточку уже хоть кто-то модерировал, то отобразить инфу по модераторам. *@
+      @for(firstMdr <- args.freeMdrs.headOption) {
+        @messages(firstMdr.predicate.singular)
+        @for( mdr <- args.freeMdrs ) {
+          @__nodeLink(mdr.nodeId)
+          @for(dt <- mdr.info.dateNi) {
+            @_prettyDate(dt)
           }
-
-          @__refuseBtn( routes.SysMdr.refuseFreeAdvPopup(adId) )
         }
       }
+
+      @for(medge <- args.freeAdvs) {
+        @messages(medge.predicate.singular)
+        @__nodeLink(medge.nodeId)
+      }
+
+      @* Кнопка бана с расширенным окном доступна всегда. *@
+      @__refuseBtn( routes.SysMdr.refuseFreeAdvPopup(adId) )
     }
 
 

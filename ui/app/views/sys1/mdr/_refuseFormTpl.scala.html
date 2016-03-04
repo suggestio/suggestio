@@ -3,7 +3,9 @@
 @* Шаблон отказа в размещении. *@
 
 @import helper._
-@import util.FC.divFc
+@* От макса не видать нормальных FieldConstructor'ов. checkboxFc лучший из худших.
+   Изначально был divFc, но он не умеет радио-кнопки. *@
+@import util.FC.checkboxFc
 @import ctx.{messages, request}
 
 @* Верстка управляющих кнопок очень похожа, дедублицируем... *@
@@ -22,7 +24,7 @@
   )
 
   @* Бывает нужно рендерить список режимов. *@
-  @if(args.withModes) {
+  @if(args.modes.nonEmpty) {
     @inputRadioGroup(
       args.refuseFormM("mode"),
       options = args.modes.iterator.map(m => m.strId -> messages(m.nameI18n)).toSeq,

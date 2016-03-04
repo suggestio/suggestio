@@ -37,6 +37,17 @@ trait ISysMdrForAdTplArgs extends IAdBodyTplArgs {
   /** Общее кол-во item'ов для модерации для данной карточки. */
   def itemsCount: Int
 
+  /** Данные об уже произведенных модерациях в отношении текущей версии карточки. */
+  def freeMdrs: Seq[MEdge]
+
+
+  /** Есть ли хоть один положительный отзыв модератора? */
+  def hasPositiveMdr: Boolean = {
+    freeMdrs
+      .flatMap(_.info.flag)
+      .contains(true)
+  }
+
 }
 
 
@@ -48,7 +59,8 @@ case class MSysMdrForAdTplArgs(
   override val freeAdvs       : Seq[MEdge],
   override val producer       : MNode,
   override val tooManyItems   : Boolean,
-  override val itemsCount     : Int
+  override val itemsCount     : Int,
+  override val freeMdrs       : Seq[MEdge]
 )
   extends ISysMdrForAdTplArgs
 {

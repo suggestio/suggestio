@@ -45,10 +45,16 @@ trait SysMdrFree
 
   /** Страница для модерации одной карточки. */
   def refuseFreeAdvPopup(adId: String) = IsSuperuserMadGet(adId).apply { implicit request =>
+    val form = sysMdrUtil.refuseFormM.fill(
+      MRefuseFormRes(
+        reason  = "",
+        modeOpt = Some( MRefuseModes.OnlyThis )
+      )
+    )
     val args = MSysMdrRefusePopupTplArgs(
-      refuseFormM = sysMdrUtil.refuseFormM,
+      refuseFormM = form,
       submitCall  = routes.SysMdr.freeAdvMdrBan(adId),
-      withModes   = true
+      modes       = MRefuseModes.valuesT
     )
     val render = _refusePopupTpl(args)
     Ok(render)
