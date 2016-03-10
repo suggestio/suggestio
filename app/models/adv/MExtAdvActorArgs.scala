@@ -41,10 +41,13 @@ trait IExtWsActorArgs extends IExtActorArgs {
 /** Аргументы запуска актора, разговаривающего с ws. Этот актор будет выступать посредником (медиатором) между
   * ws и акторами, исполняющими конкретные задачи. */
 case class MExtWsActorArgs(
-  qs        : MExtAdvQs,
-  request   : IAdProdReq[_],
-  targetsFut: Future[ActorTargets_t]
-)(implicit val ctx: Context) extends IExtWsActorArgs
+  override val qs         : MExtAdvQs,
+  override val request    : IAdProdReq[_],
+  override val targetsFut : Future[ActorTargets_t]
+)(
+  implicit val ctx: Context
+)
+  extends IExtWsActorArgs
 
 
 /** Враппер над [[IExtActorArgs]]. */
@@ -97,6 +100,17 @@ trait IOAuth1AdvTargetActorArgs extends IExtAdvTargetActorArgs {
   /** Токен для доступа. */
   def accessToken: RequestToken
 }
+
+/** Реализация модели [[IOAuth1AdvTargetActorArgs]]. */
+case class MOAuth1AdvTargetActorArgs(
+  override val mctx0              : MJsCtx,
+  override val target             : MExtTargetInfoFull,
+  override val _eaArgsUnderlying  : IExtActorArgs,
+  override val wsMediatorRef      : ActorRef,
+  override val accessToken        : RequestToken
+)
+  extends IOAuth1AdvTargetActorArgs
+  with IExtAdvArgsWrapperT
 
 
 /** Подчинённый актор уведомляет медиатора, что нужно подрядить к работе указанных акторов. */

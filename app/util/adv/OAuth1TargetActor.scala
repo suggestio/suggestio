@@ -2,20 +2,22 @@ package util.adv
 
 import java.io.File
 
-import akka.actor.Props
+import com.google.inject.Inject
+import com.google.inject.assistedinject.Assisted
 import io.suggest.ahc.upload.IMpUploadArgs
 import models.adv.ext.act.EtaCustomArgsBase
 import models.adv.js.ctx.JsErrorInfo
 import models.adv.IOAuth1AdvTargetActorArgs
 import models.blk.OneAdQsArgs
 import models.mext._
-import play.api.libs.ws.WSResponse
+import play.api.libs.ws.{WSClient, WSResponse}
 import util.PlayMacroLogsImpl
+import util.adv.ext.AeFormUtil
 import util.adv.ut.ExtTargetActorUtil
 import util.async.FsmActor
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import ut._
 
+import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
 /**
@@ -27,22 +29,24 @@ import scala.util.{Failure, Success}
  * Ссылки API берутся из service.oauth1Support.
  */
 
-object OAuth1TargetActor {
-
-  def props(args: IOAuth1AdvTargetActorArgs): Props = {
-    Props(OAuth1TargetActor(args))
-  }
-
+/** Интерфейс для Guice DI factory для сборки инжектируемых инстансов актора [[OAuth1TargetActor]]. */
+trait OAuth1TargetActorFactory {
+  /** Вернуть инстанс класса актора для указанных аргументов. */
+  def apply(args: IOAuth1AdvTargetActorArgs): OAuth1TargetActor
 }
 
 
-case class OAuth1TargetActor(args: IOAuth1AdvTargetActorArgs)
+class OAuth1TargetActor @Inject() (
+  @Assisted override val args   : IOAuth1AdvTargetActorArgs,
+  override val aeFormUtil       : AeFormUtil,
+  implicit val ec               : ExecutionContext,
+  implicit val wsClient         : WSClient
+)
   extends FsmActor
   with ExtTargetActorUtil
   with ReplyTo
   with MediatorSendCommand
   with PlayMacroLogsImpl
-  with CompatWsClient    // TODO
   with RenderAd2ImgRender
   with S2sMpUploadRender
   with EtaCustomArgsBase

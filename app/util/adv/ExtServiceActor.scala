@@ -1,11 +1,15 @@
 package util.adv
 
+import akka.actor.Props
+import com.google.inject.Inject
+import com.google.inject.assistedinject.Assisted
 import io.suggest.util.UrlUtil
 import models.adv._
 import models.adv.ext.act.ExtServiceActorEnv
 import models.adv.js._
 import models.mws.AnswerStatuses
 import util.PlayMacroLogsImpl
+import util.adv.ext.AeFormUtil
 import util.async.FsmActor
 import ut._
 
@@ -17,9 +21,6 @@ import ut._
  * Появился, когда возникла необходимость изолированной инициализации в рамках одного сервиса.
  * Когда инициализация сервиса завершена, супервизор получает список целей, готовых к дальнейшей обработке.
  */
-
-object ExtServiceActor extends IServiceActorCompanion
-
 
 /** Очень базовая логика service-актора. Вынесена из актора, чтобы была возможность заюзать эту логику
   * ещё в каком-нибудь акторе. */
@@ -82,7 +83,15 @@ trait ExtServiceActorLogic
 }
 
 
-case class ExtServiceActor(args: IExtAdvServiceActorArgs)
+/** Guice-factory для сборки инстансов [[ExtServiceActor]]. */
+trait ExtServiceActorFactory
+  extends IApplyServiceActor[ExtServiceActor]
+
+class ExtServiceActor @Inject() (
+  @Assisted override val args : IExtAdvServiceActorArgs,
+  aeTgJsAdpActorFactory       : AeTgJsAdpActorFactory,
+  override val aeFormUtil     : AeFormUtil
+)
   extends ExtServiceActorLogic
   with ExtServiceActorEnv
   with ReplyTo
@@ -142,7 +151,7 @@ case class ExtServiceActor(args: IExtAdvServiceActorArgs)
               override def _eaArgsUnderlying = args
               override def wsMediatorRef = args.wsMediatorRef
             }
-            val props = ExtTargetActor.props(actorArgs)
+            val props = Props( aeTgJsAdpActorFactory(actorArgs) )
             Seq(props)
 
           // Возможна невероятная ситуация, когда пришел неправильный id и это дропнуто. Нужно сообщить об этом в логи и юзеру.

@@ -2,7 +2,8 @@ package util.adv
 
 import java.io.File
 
-import akka.actor.Props
+import com.google.inject.{Singleton, Inject}
+import com.google.inject.assistedinject.Assisted
 import io.suggest.ahc.upload.{UploadRefusedException, IMpUploadArgs}
 import io.suggest.common.geom.d2.INamedSize2di
 import models.adv.ext.act._
@@ -10,50 +11,52 @@ import models.adv.js._
 import models.adv._
 import models.adv.js.ctx._
 import models.mws.AnswerStatuses
-import play.api.libs.ws.WSResponse
-import play.api.Play.{current, configuration}
+import play.api.Configuration
+import play.api.libs.ws.{WSClient, WSResponse}
 import util.PlayMacroLogsImpl
+import util.adv.ext.AeFormUtil
 import util.adv.ut.ExtTargetActorUtil
 import util.async.FsmActor
 import ut._
 
 /**
- * Suggest.io
- * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 22.01.15 14:35
- * Description: ext adv API v2: Актор, занимающийся одной целью и только.
- * Пришел на смену ExtServiceActor, который перебирал цели в рамках одного сервиса.
- * Этот актор взаимодействует с сервисами через JS API и браузер пользователя.
- */
-object ExtTargetActor {
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 22.01.15 14:35
+  * Description: Файл содержит webSocket-актора для adv-ext для обслуживания одной конкретной цели размещения
+  * с унифицирующим JS-адаптером на клиенте (lk-adv-ext-sjs).
+  */
 
-  def props(args: IExtAdvTargetActorArgs): Props = {
-    Props(ExtTargetActor(args))
-  }
-
-  /** Макс.число попыток fillCtx. Нужно чтобы избегать ситуаций бесконечного заполнения контекста. */
-  val MAX_FILL_CTX_TRIES = configuration.getInt("adv.ext.target.fillCtx.try.max") getOrElse 2
+trait AeTgJsAdpActorFactory {
+  def apply(args: IExtAdvTargetActorArgs): ExtTargetActor
 }
 
 
-import ExtTargetActor._
-
-
-case class ExtTargetActor(args: IExtAdvTargetActorArgs)
+/** WebSocket-актор, занимающийся одной целью ext adv с js-api в браузере.
+  * Этот актор взаимодействует с сервисами через JS API и браузер пользователя.
+  *
+  * @param args Аргументы для выполнения задач обработки таргета.
+  */
+class ExtTargetActor @Inject() (
+  @Assisted override val args   : IExtAdvTargetActorArgs,
+  aeTgJsAdpActorUtil            : AeTgJsAdpActorUtil,
+  override val aeFormUtil       : AeFormUtil,
+  implicit val wsClient         : WSClient
+)
   extends FsmActor
   with ExtTargetActorUtil
   with ReplyTo
   with MediatorSendCommand
   with PlayMacroLogsImpl
   with EtaCustomArgsBase
-  with CompatWsClient    // TODO
   with RenderAd2ImgRender
   with S2sMpUploadRender
 {
 
-  override type State_t = FsmState
-
   import LOGGER._
+  import aeTgJsAdpActorUtil._
+
+  override type State_t = FsmState
 
   override protected var _state: FsmState = new DummyState
 
@@ -124,12 +127,13 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
     }
 
     /** Ресивер состояния. До сюда выполнение пока не доходит.
-        Раздельная логика оставлена на случай появления асинхрона в afterBecome(). */
+        *Раздельная логика оставлена на случай появления асинхрона в afterBecome(). */
     override def receiverPart: Receive = PartialFunction.empty
   }
 
   /**
    * Это главное состояние актора. В нём актор взаимодействует с JS-подсистемой.
+   *
    * @param mctx0 Исходный context.
    */
   class HandleTargetState(mctx0: MJsCtx) extends FsmState {
@@ -239,6 +243,7 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
 
   /**
    * Произвести заливку картинки на удалённый сервис с помощью ссылки.
+   *
    * @param uploadCtx Данные для s2s-загрузки.
    */
   class S2sRenderAd2ImgState(mctx0: MJsCtx, madId: String, uploadCtx: S2sPictureUpload) extends RenderAd2ImgStateT {
@@ -320,3 +325,19 @@ case class ExtTargetActor(args: IExtAdvTargetActorArgs)
   }
 
 }
+
+
+/** Shared-утиль для акторов [[ExtTargetActor]]. */
+@Singleton
+class AeTgJsAdpActorUtil @Inject()(
+  configuration: Configuration
+) {
+
+  /** Макс.число попыток fillCtx. Нужно чтобы избегать ситуаций бесконечного заполнения контекста. */
+  val MAX_FILL_CTX_TRIES = {
+    configuration.getInt("adv.ext.target.fillCtx.try.max")
+      .getOrElse(2)
+  }
+
+}
+

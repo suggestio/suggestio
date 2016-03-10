@@ -4,9 +4,9 @@ import io.suggest.ahc.upload.{UploadRefusedException, IMpUploadArgs}
 import models.adv.ext.act.ExtActorEnv
 import models.event.{MEventTypes, ErrorInfo}
 import play.api.libs.ws.WSResponse
-import util.adv.IWsClient
 import util.async.FsmActor
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import util.di.IWsClient
 
 import scala.concurrent.Future
 import scala.util.{Try, Failure, Success}

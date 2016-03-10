@@ -1,21 +1,22 @@
-package util.adv
+package util.adv.ext
 
 import java.net.URL
+
 import io.suggest.adv.ext.view.RunnerPage
 import models.adv._
 import models.mext.{MExtService, MExtServices}
-import play.api.data._, Forms._
-import play.api.libs.ws.WSClient
-import util.FormUtil
-import util.FormUtil.{urlM, esIdM}
+import play.api.data.Forms._
+import play.api.data._
+import util.FormUtil.{esIdM, nameM, toStrOptM, urlM}
 
 /**
- * Suggest.io
- * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 23.01.15 18:58
- * Description: Утиль для поддержки внешнего размещения.
- */
-object ExtUtil {
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 23.01.15 18:58
+  * Description: Adv Ext Form Util
+  * Утиль для поддержки форм внешнего размещения.
+  */
+class AeFormUtil {
 
   /** id div'а в который надо рендерить события размещения. */
   // Сделать его deprecated?
@@ -45,7 +46,7 @@ object ExtUtil {
 
   def URL_FN = "url"
   def urlKM  = URL_FN -> tgFullUrlM
-  def nameKM = "name" -> FormUtil.toStrOptM(FormUtil.nameM)
+  def nameKM = "name" -> toStrOptM(nameM)
   def idKM   = "id"   -> optional(esIdM)
 
   /** Маппинг для данных одного target'а. */
@@ -97,16 +98,7 @@ object ExtUtil {
 }
 
 
-/** Клиент web-services. */
-trait IWsClient {
-  implicit def wsClient: WSClient
+/** Интерфейс для DI-поля, содержащего инстанс [[AeFormUtil]]. */
+trait IAeFormUtilDi {
+  def aeFormUtil    : AeFormUtil
 }
-
-/** Пока акторы работают без guice, тут код получения инстанса WS-клиента. */
-// TODO WSClient должен приходить прямо в конструктор актора через dependency injection.
-trait CompatWsClient extends IWsClient {
-  import play.api.Play.current
-
-  override implicit lazy val wsClient: WSClient = current.injector.instanceOf[WSClient]
-}
-

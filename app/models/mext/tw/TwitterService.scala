@@ -1,6 +1,6 @@
 package models.mext.tw
 
-import _root_.util.adv.OAuth1ServiceActor
+import util.adv.{OAuth1ServiceActorFactory, IServiceActorCompanion, OAuth1ServiceActor}
 import controllers.routes
 import models.adv.ext.Mad2ImgUrlCalc
 import models.im.OutImgFmts
@@ -12,6 +12,7 @@ import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.reflect.ClassTag
 
 /**
  * Suggest.io
@@ -47,7 +48,7 @@ trait TwitterService
   def confPrefix = "securesocial.twitter"
 
   /** twitter работает через OAuth1. */
-  override def extAdvServiceActor = OAuth1ServiceActor
+  override def extAdvServiceActorFactoryCt = ClassTag( classOf[OAuth1ServiceActorFactory] )
 
   /** Поддержка OAuth1 на текущем сервисе. None означает, что нет поддержки. */
   override def oauth1Support = Some(this)
@@ -57,7 +58,8 @@ trait TwitterService
 
   /**
    * Генератор HTML-мета-тегов для описания рекламной карточки.
-   * @param mad1 Экземпляр рекламной карточки.
+    *
+    * @param mad1 Экземпляр рекламной карточки.
    * @return экземпляры моделй, готовых для запуска рендера.
    */
   override def adMetaTagsRender(mad1: MNode)(implicit ec: ExecutionContext): Future[List[IRenderable]] = {
@@ -77,7 +79,7 @@ trait TwitterService
         val pca = PhotoCardArgs(
           imgUrl = routes.MarketShowcase.onlyOneAdAsImage( calc.adRenderArgs ).url,
           url    = Some(ctx.request.uri),
-          title  = Some("TODO"),                // TODO Брать из карточки.
+          title  = mad1.guessDisplayName,                // TODO Брать из карточки.
           imgWh  = Some(calc.madRenderInfo)
         )
         pca.render()

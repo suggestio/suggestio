@@ -5,7 +5,7 @@ import java.net.URL
 import io.suggest.adv.ext.model.im.VkWallImgSizesScalaEnumT
 import io.suggest.common.geom.d2.INamedSize2di
 import models.im.{OutImgFmts, OutImgFmt}
-import models.mext.IExtService
+import models.mext.{IJsActorExtService, IExtService}
 import util.PlayMacroLogsImpl
 import util.adv.ExtServiceActor
 
@@ -15,7 +15,7 @@ import util.adv.ExtServiceActor
  * Created: 10.04.15 19:24
  * Description: Абстрактная реализация внешнего сервиса vk.com.
  */
-trait VkService extends IExtService with VkMpUpload with VkLoginProvider with PlayMacroLogsImpl {
+trait VkService extends IJsActorExtService with VkMpUpload with VkLoginProvider with PlayMacroLogsImpl {
 
   /** URL главной страницы сервиса. */
   override def mainPageUrl: String = "https://vk.com/"
@@ -54,9 +54,6 @@ trait VkService extends IExtService with VkMpUpload with VkLoginProvider with Pl
   override def postImgSzWithName(n: String): Option[INamedSize2di] = {
     VkImgSizes.maybeWithName(n)
   }
-
-  /** VK работает через openapi.js. */
-  override def extAdvServiceActor = ExtServiceActor
 
   override def maybeMpUpload = Some(this)
 

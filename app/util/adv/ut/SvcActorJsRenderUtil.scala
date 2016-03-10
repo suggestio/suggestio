@@ -4,7 +4,7 @@ import models.adv.{JsExtTarget, MExtTargetInfoFull, IExtAdvServiceActorArgs}
 import models.adv.js.JsCmd
 import models.event.{MEventTypes, MEventTmp, RenderArgs, IErrorInfo}
 import play.api.libs.json.JsString
-import util.adv.ExtUtil
+import util.adv.ext.IAeFormUtilDi
 import util.jsa.JsAppendById
 
 /**
@@ -13,7 +13,10 @@ import util.jsa.JsAppendById
  * Created: 14.04.15 13:22
  * Description: поддержка рендера на экран юзеру разных сообщений от service-актора.
  */
-trait SvcActorJsRenderUtil extends ISendCommand {
+trait SvcActorJsRenderUtil
+  extends ISendCommand
+  with IAeFormUtilDi
+{
 
   /** Аргументы service-актора, переданные ему при запуске. */
   def args: IExtAdvServiceActorArgs
@@ -37,7 +40,7 @@ trait SvcActorJsRenderUtil extends ISendCommand {
     )
     val html = rargs.mevent.etype.render(rargs)(args.ctx)
     val htmlStr = JsString(html.body) // TODO Вызывать для рендера туже бадягу, что и контроллер вызывает.
-    val jsa = JsAppendById(ExtUtil.RUNNER_EVENTS_DIV_ID, htmlStr)
+    val jsa = JsAppendById(aeFormUtil.RUNNER_EVENTS_DIV_ID, htmlStr)
     val jsCmd = JsCmd(
       jsCode = jsa.renderToString()
     )

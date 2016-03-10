@@ -3,6 +3,9 @@ package util.adv
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.TimeoutException
 
+import akka.actor.Props
+import com.google.inject.{Singleton, Inject}
+import com.google.inject.assistedinject.Assisted
 import controllers.routes
 import models.adv._
 import models.adv.ext.act.{ExtServiceActorEnv, OAuthVerifier, ActorPathQs}
@@ -12,13 +15,16 @@ import models.event.ErrorInfo
 import models.jsm.DomWindowSpecs
 import models.ls.LsOAuth1Info
 import models.mctx.Context
+import models.mproj.ICommonDi
 import models.sec.MAsymKey
 import oauth.signpost.exception.OAuthException
 import org.apache.commons.io.IOUtils
 import org.joda.time.DateTime
 import play.api.libs.json.Json
 import play.api.libs.oauth.RequestToken
+import play.api.libs.ws.WSClient
 import util.PlayMacroLogsImpl
+import util.adv.ext.AeFormUtil
 import util.adv.ut._
 import util.async.{AsyncUtil, FsmActor}
 import util.jsa.JsWindowOpen
@@ -27,50 +33,47 @@ import util.secure.PgpUtil
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.{Success, Failure}
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.SiowebEsUtil.{client => esClient}
 
 /**
- * Suggest.io
- * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 03.04.15 21:23
- * Description: service-level actor для подготовки OAuth1 к работе в рамках одного oauth1-сервиса.
- * Актор занимается инициализацией состояния OAuth1-контекста, а именно получением access_token'а.
- * TODO Ранее полученный токен хранится в куках у клиента, но нужно производить проверку его.
- *
- * @see [[https://www.playframework.com/documentation/2.4.x/ScalaOAuth]]
- */
-object OAuth1ServiceActor extends IServiceActorCompanion {
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 03.04.15 21:23
+  * Description: Файл содержит подчиненный WebSocket-актор и
+  * смежную утиль для подготовки работы сервиса OAuth1.
+  */
 
-  /** Таймаут спрашивания у юзера ранее сохраненных данных по access-token'у. */
-  def LS_STORED_TOKEN_ASK_TIMEOUT_SEC = 3
-
-  /** Время жизни токена, после которого надо сделать верификацию. */
-  def VERIFY_TTL_SECONDS = 600
-
-  /** Наступила ли пора для ревалидации токена? */
-  def isStoredTokenNeedReverify(lsOAuth1Info: LsOAuth1Info): Boolean = {
-    val now = DateTime.now()
-    val lastVerified = lsOAuth1Info.verified getOrElse lsOAuth1Info.created
-    now.minusSeconds(VERIFY_TTL_SECONDS) isAfter lastVerified
-  }
-
-}
+/** Guice-factory для сборки инстансов акторов. */
+trait OAuth1ServiceActorFactory
+  extends IApplyServiceActor[OAuth1ServiceActor]
 
 
-import OAuth1ServiceActor._
-
-
-case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
+/**
+  * service-level actor для подготовки OAuth1 к работе в рамках одного oauth1-сервиса.
+  * Актор занимается инициализацией состояния OAuth1-контекста, а именно получением access_token'а.
+  * TODO Ранее полученный токен хранится в куках у клиента, но нужно производить проверку его.
+  *
+  * @param args Аргументы для актора.
+  * @see [[https://www.playframework.com/documentation/2.4.x/ScalaOAuth]]
+  */
+class OAuth1ServiceActor @Inject() (
+  @Assisted override val args : IExtAdvServiceActorArgs,
+  oa1TgActorFactory           : OAuth1TargetActorFactory,
+  mCommonDi                   : ICommonDi,
+  oa1SvcActorUtil             : Oa1SvcActorUtil,
+  override val aeFormUtil     : AeFormUtil,
+  implicit val wsClient       : WSClient
+)
   extends FsmActor
   with ReplyTo
   with ExtServiceActorEnv
   with MediatorSendCommand
   with PlayMacroLogsImpl
   with SvcActorJsRenderUtil
-  with CompatWsClient    // TODO
 {
+
   import LOGGER._
+  import mCommonDi.{ec, esClient}
+  import oa1SvcActorUtil._
 
   override type State_t = FsmState
 
@@ -78,17 +81,17 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
 
   override def receive: Receive = allStatesReceiver
 
-  val oa1Support = service.oauth1Support.get
-  
+  private val oa1Support = service.oauth1Support.get
+
   /** OAuth1-клиент сервиса. */
-  val client = oa1Support.client
+  private val oa1client = oa1Support.client
 
   /** Ключ шифрования-дешифрования для хранения данных в localStorage. */
   lazy val lsCryptoKey = {
     val keyId = PgpUtil.LOCAL_STOR_KEY_ID
     val fut = MAsymKey.getById(keyId)
       .map(_.get)
-    fut onFailure {
+    fut.onFailure {
       case _: NoSuchElementException =>
         warn("Server normal PGP key not yet created! I cannot store access tokens!")
       case ex: Throwable =>
@@ -127,6 +130,7 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
 
   /**
    * Рендер ошибки, возникшей в ходе инициализации сервиса.
+   *
    * @param ex Исключение. Как правило, это экземпляр OAuthException.
    */
   protected def renderInitFailed(ex: Throwable): Unit = {
@@ -255,7 +259,8 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
           }
 
         case None =>
-          Future failed new NoSuchElementException("cctx contains no or unrelated value")
+          val ex = new NoSuchElementException("cctx contains no or unrelated value")
+          Future.failed( ex )
       }
       fut onComplete {
         // Успешно получен ранее сохраненный токен от клиента.
@@ -293,7 +298,7 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
   }
 
 
-  /** Состоянии верификации access_token'а силами twitter'а. */
+  /** Состоянии верификации access_token'а силами удалённого сервиса. */
   class VerifyStoredAccessToken(oa1Info: LsOAuth1Info) extends FsmState {
     // Нужно запустить обращение к системе верификации access-токена.
     override def afterBecome(): Unit = {
@@ -345,7 +350,7 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
         val urlPrefix = Context.devReplaceLocalHostW127001( args.ctx.LK_URL_PREFIX )
         // Заставить клиента открыть всплывающее окно для авторизации на твиттере.
         val returnUrl = urlPrefix + returnCall.url
-        client.retrieveRequestToken(returnUrl)
+        oa1client.retrieveRequestToken(returnUrl)
       }
     }
 
@@ -358,7 +363,7 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
 
       case Failure(ex) =>
         error("Failed to ask request token", ex)
-        // Отрендерить ошибку инициализации twitter-сервиса по ws.
+        // Отрендерить ошибку инициализации сервиса по ws.
         renderInitFailed(ex)
         // Пока возможностей типа "попробовать снова" нет, поэтому сразу завершаемся.
         harakiri()
@@ -368,6 +373,7 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
 
   /**
    * Состояние отправки юзера на авторизацию в сервис и возврата назад.
+   *
    * @param reqTok Полученный токен.
    */
   class RemoteUserAuthorizeState(reqTok: RequestToken, userHaveInvalTok: Boolean) extends FsmState {
@@ -378,7 +384,7 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
       val wndSz = oa1Support.popupWndSz
       val someFalse = Some(false)
       val jsa = JsWindowOpen(
-        url = client.redirectUrl(reqTok.token),
+        url = oa1client.redirectUrl(reqTok.token),
         target = domWndTargetName,
         specs = DomWindowSpecs(
           width       = wndSz.width,
@@ -426,7 +432,7 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
     override def afterBecome(): Unit = {
       super.afterBecome()
       askToken {
-        client.retrieveAccessToken(reqTok, verifier)
+        oa1client.retrieveAccessToken(reqTok, verifier)
       }
     }
 
@@ -457,18 +463,19 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
       val tgActors = args.targets.map { tg =>
         trace("Creating oauth1-target-actor for tg = " + tg)
         val mctx3 = args.mctx0.copy(
-          svcTargets = Nil,
-          status = None,
-          target = Some( tg2jsTg(tg) )
+          svcTargets  = Nil,
+          status      = None,
+          target      = Some( tg2jsTg(tg) )
         )
-        val actorArgs = new IOAuth1AdvTargetActorArgs with IExtAdvArgsWrapperT {
-          override def mctx0              = mctx3
-          override def target             = tg
-          override def _eaArgsUnderlying  = args
-          override def wsMediatorRef      = args.wsMediatorRef
-          override def accessToken        = acTok
-        }
-        OAuth1TargetActor.props(actorArgs)
+        // Сборка финального актора и его аргументов.
+        val actorArgs = MOAuth1AdvTargetActorArgs(
+          mctx0               = mctx3,
+          target              = tg,
+          _eaArgsUnderlying   = args,
+          wsMediatorRef       = args.wsMediatorRef,
+          accessToken         = acTok
+        )
+        Props( oa1TgActorFactory(actorArgs) )
       }
       args.wsMediatorRef ! AddActors(tgActors)
       // Дело сделано, на этом наверное всё...
@@ -481,3 +488,26 @@ case class OAuth1ServiceActor(args: IExtAdvServiceActorArgs)
   /** Статически-типизированный контейнер токена-результата вместо Success(). */
   protected[this] case class SuccessToken(token: RequestToken)
 }
+
+
+/** Всякая shared-утиль для акторов [[OAuth1ServiceActor]] сбрасывается сюда. */
+@Singleton
+class Oa1SvcActorUtil {
+
+  /** Таймаут спрашивания у юзера ранее сохраненных данных по access-token'у. */
+  def LS_STORED_TOKEN_ASK_TIMEOUT_SEC = 3
+
+  /** Время жизни токена, после которого надо сделать верификацию. */
+  def VERIFY_TTL_SECONDS = 600
+
+  /** Наступила ли пора для ревалидации токена? */
+  def isStoredTokenNeedReverify(lsOAuth1Info: LsOAuth1Info): Boolean = {
+    val lastVerified = lsOAuth1Info.verified
+      .getOrElse( lsOAuth1Info.created )
+    DateTime.now
+      .minusSeconds(VERIFY_TTL_SECONDS)
+      .isAfter( lastVerified )
+  }
+
+}
+

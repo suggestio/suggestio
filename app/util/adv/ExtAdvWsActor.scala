@@ -1,6 +1,7 @@
 package util.adv
 
 import _root_.util.PlayMacroLogsImpl
+import _root_.util.adv.ext.AeFormUtil
 import _root_.util.async.FsmActor
 import _root_.util.jsa.JsAppendById
 import _root_.util.ws.SubscribeToWsDispatcher
@@ -12,12 +13,13 @@ import models.adv.js.ctx.MJsCtx
 import models.adv.js._
 import models.event.{MEventTypes, RenderArgs, MEventTmp}
 import models.mws.AnswerStatuses
+import play.api.inject.Injector
 import play.api.libs.json._
-import ExtUtil.RUNNER_EVENTS_DIV_ID
 
 import scala.annotation.tailrec
 import scala.collection.immutable.Queue
 import scala.concurrent.ExecutionContext
+import scala.reflect.ClassTag
 import scala.util.{Random, Failure, Success}
 
 /**
@@ -49,6 +51,8 @@ trait ExtAdvWsActorFactory {
 case class ExtAdvWsActor @Inject() (
   @Assisted out     : ActorRef,
   @Assisted eactx   : IExtWsActorArgs,
+  injector          : Injector,
+  aeFormUtil        : AeFormUtil,
   implicit val ec   : ExecutionContext
 )
   extends FsmActor
@@ -133,7 +137,7 @@ case class ExtAdvWsActor @Inject() (
     import eactx.ctx
     val html = rargs.mevent.etype.render(rargs)
     val htmlStr = JsString(html.body)     // TODO Вызывать для рендера туже бадягу, что и контроллер вызывает.
-    val jsa = JsAppendById(RUNNER_EVENTS_DIV_ID, htmlStr)
+    val jsa = JsAppendById( aeFormUtil.RUNNER_EVENTS_DIV_ID, htmlStr)
     val cmd = JsCmd(
       jsCode = jsa.renderToString()
     )
@@ -211,23 +215,36 @@ case class ExtAdvWsActor @Inject() (
         }
         if (targets.isEmpty) {
           throw new IllegalStateException("No targets found in storage, but it should.")
+
         } else {
           trace(s"$name waiting finished. Found ${targets.size} targets.")
           val mctx1 = mctx0.copy(status = None, action = None)
+          val tgsGrouped = targets.groupBy(_.target.service)
+
           // Сгруппировать таргеты по сервисам, запустить service-акторов, которые занимаются инициализацией клиентов сервисов.
-          targets.groupBy(_.target.service).foreach {
-            case (_service, _srvTgs) =>
-              trace(s"Starting service ${_service} actor with ${_srvTgs.size} targets...")
-              val actorArgs = new IExtAdvServiceActorArgs with IExtAdvArgsWrapperT {
-                override def service            = _service
-                override def targets            = _srvTgs
-                override def _eaArgsUnderlying  = eactx
-                override def wsMediatorRef      = self
-                override def mctx0              = mctx1
-              }
-              val aprops = _service.extAdvServiceActor.props(actorArgs)
-              context.actorOf(aprops, name = guessChildName())
+          for ((_service, _srvTgs) <- tgsGrouped) {
+            trace(s"Starting service ${_service} actor with ${_srvTgs.size} targets...")
+
+            val ctag = _service.extAdvServiceActorFactoryCt
+            // Кешировать инстансы полученных guice factories не требуется, т.к. каждый сервис дергаётся лишь один раз.
+            trace(s"Service factory for ${_service} is $ctag")
+            val factory = injector.instanceOf( ctag )
+
+            // Подготовить аргументы актора для текущего сервиса.
+            val actorArgs = new IExtAdvServiceActorArgs with IExtAdvArgsWrapperT {
+              override def service            = _service
+              override def targets            = _srvTgs
+              override def _eaArgsUnderlying  = eactx
+              override def wsMediatorRef      = self
+              override def mctx0              = mctx1
             }
+
+            // Запустить актора для сервиса.
+            val aprops  = Props( factory(actorArgs) )
+            context.actorOf(aprops, name = guessChildName())
+          }
+
+          // Перейти к следующему состоянию. Данные по запущенным дочерним акторам неинтересны.
           become(new SuperviseServiceActorsState)
         }
 
@@ -290,11 +307,20 @@ case class ExtAdvWsActor @Inject() (
 }
 
 
+trait IApplyServiceActor[T <: Actor] {
+  def apply(args: IExtAdvServiceActorArgs): T
+}
+
 /** Трейт для service-компаниона. */
 trait IServiceActorCompanion {
-  def apply(args: IExtAdvServiceActorArgs): Actor
+  def props(args: IExtAdvServiceActorArgs): Props
+}
 
-  def props(args: IExtAdvServiceActorArgs): Props = {
+abstract class IServiceActorCompanionOld[T <: Actor: ClassTag]
+  extends IServiceActorCompanion
+  with IApplyServiceActor[T]
+{
+  override def props(args: IExtAdvServiceActorArgs): Props = {
     Props(apply(args))
   }
 }

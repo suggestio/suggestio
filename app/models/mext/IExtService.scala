@@ -2,7 +2,8 @@ package models.mext
 
 import java.net.URL
 
-import _root_.util.adv.IServiceActorCompanion
+import akka.actor.Actor
+import util.adv.{ExtServiceActor, ExtServiceActorFactory, IApplyServiceActor, IServiceActorCompanion}
 import io.suggest.common.geom.d2.INamedSize2di
 import io.suggest.util.UrlUtil
 import models.blk.{OneAdWideQsArgs, SzMult_t, szMulted}
@@ -11,6 +12,7 @@ import models.{IRenderable, MNode}
 import play.api.Play._
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.reflect.ClassTag
 
 /**
  * Suggest.io
@@ -49,14 +51,16 @@ trait IExtService {
 
   /**
    * Клиент прислал upload-ссылку. Нужно её проверить на валидность.
-   * @param url Ссылка.
+    *
+    * @param url Ссылка.
    * @return true если upload-ссылка корректная. Иначе false.
    */
   def checkImgUploadUrl(url: String): Boolean = false
 
   /**
    * Максимальные размеры картинки при постинге в соц.сеть в css-пикселях.
-   * @return None если нет размеров, и нужно постить исходную карточку без трансформации.
+    *
+    * @return None если нет размеров, и нужно постить исходную карточку без трансформации.
    */
   def advPostMaxSz(tgUrl: String): INamedSize2di
 
@@ -65,7 +69,8 @@ trait IExtService {
 
   /**
    * Мультипликатор размера для экспортируемых на сервис карточек.
-   * @return SzMult_t.
+    *
+    * @return SzMult_t.
    */
   def szMult: SzMult_t = configuration.getDouble(s"ext.adv.$strId.szMult")
     .fold(szMultDflt)(_.toFloat)
@@ -103,14 +108,15 @@ trait IExtService {
   /** Поддержка OAuth1 на текущем сервисе. None означает, что нет поддержки. */
   def oauth1Support: Option[IOAuth1Support] = None
 
-  /** Какой ext-adv-service-актор надо использовать для взаимодействия с данным сервисом? */
-  def extAdvServiceActor: IServiceActorCompanion
+  /** Class tag для доступа к классу необходимой factory, собирающей service-акторы. */
+  def extAdvServiceActorFactoryCt: ClassTag[IApplyServiceActor[Actor]]
 
   /** Человекочитабельный юзернейм (id страницы) suggest.io на стороне сервиса. */
   def myUserName: Option[String] = None
 
   /**
    * Генератор HTML-мета-тегов для описания рекламной карточки.
+   *
    * @param mad Экземпляр рекламной карточки.
    * @return экземпляры моделй, готовых для запуска рендера.
    */
@@ -120,15 +126,22 @@ trait IExtService {
 
   /**
    * Вернуть поддержку multipart, если есть.
-   * @return Some(), если сервис поддерживает multi-part upload.
+    *
+    * @return Some(), если сервис поддерживает multi-part upload.
    *         None, если сервис не поддерживает загрузку по multipart.
    */
   def maybeMpUpload: Option[IExtMpUploadSupport] = None
 
   /**
    * Если логин через этот сервис поддерживается, то тут API.
-   * @return Some() если логин на suggest.io возможен через указанный сервис.
+    *
+    * @return Some() если логин на suggest.io возможен через указанный сервис.
    */
   def loginProvider: Option[ILoginProvider] = None
 
+}
+
+
+trait IJsActorExtService extends IExtService {
+  override def extAdvServiceActorFactoryCt  = ClassTag( classOf[ExtServiceActorFactory] )
 }

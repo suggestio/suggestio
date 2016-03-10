@@ -1,13 +1,15 @@
 package models.mext.fb
 
-import _root_.util.adv.ExtServiceActor
+import util.adv.{ExtServiceActorFactory, IApplyServiceActor, ExtServiceActor}
 import io.suggest.adv.ext.model.im.FbWallImgSizesScalaEnumT
 import io.suggest.common.geom.d2.INamedSize2di
 import models.MNode
 import models.blk.SzMult_t
 import models.im.OutImgFmts
-import models.mext.IExtService
+import models.mext.{IJsActorExtService, IExtService}
 import util.PlayMacroLogsImpl
+
+import scala.reflect.ClassTag
 
 /**
  * Suggest.io
@@ -15,7 +17,7 @@ import util.PlayMacroLogsImpl
  * Created: 10.04.15 19:21
  * Description: Абстрактная реализация facebook-сервиса.
  */
-trait FacebookService extends IExtService with FbLoginProvider with PlayMacroLogsImpl {
+trait FacebookService extends IJsActorExtService with FbLoginProvider with PlayMacroLogsImpl {
 
   /** URL главной страницы сервиса. */
   override def mainPageUrl: String = "https://facebook.com/"
@@ -46,9 +48,6 @@ trait FacebookService extends IExtService with FbLoginProvider with PlayMacroLog
 
   /** Дефолтовое значение szMult, если в конфиге не задано. */
   override def szMultDflt: SzMult_t = 1.0F
-
-  /** FB работает через js API. */
-  override def extAdvServiceActor = ExtServiceActor
 
   /** Поддержка логина через facebook. */
   override def loginProvider = Some(this)

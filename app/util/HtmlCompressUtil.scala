@@ -7,7 +7,7 @@ import com.googlecode.htmlcompressor.compressor.HtmlCompressor
 import com.mohiva.play.htmlcompressor.HTMLCompressorFilter
 import play.api.Play, Play.{current, configuration}
 import play.api.http.{MimeTypes, HttpProtocol, HeaderNames}
-import play.api.libs.iteratee.{Enumerator, Iteratee, Enumeratee}
+import play.api.libs.iteratee.{Enumerator, Iteratee}
 import play.api.mvc.{Result, RequestHeader, Filter}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.twirl.api.{Html, HtmlFormat}

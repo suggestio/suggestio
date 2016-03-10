@@ -4,7 +4,7 @@ import models.adv._
 import models.req.{ISioUser, MNodeExtTgSubmitReq, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result}
 import util.PlayMacroLogsDyn
-import util.adv.ExtUtil
+import util.adv.ext.IAeFormUtilDi
 
 import scala.concurrent.Future
 
@@ -23,6 +23,7 @@ trait CanSubmitExtTargetForNode
   extends OnUnauthNodeCtl
   with IsAdnNodeAdminUtilCtl
   with Csrf
+  with IAeFormUtilDi
 {
 
   import mCommonDi._
@@ -44,7 +45,8 @@ trait CanSubmitExtTargetForNode
       val user = mSioUsers(personIdOpt)
 
       val isAdnNodeAdmFut = isAdnNodeAdmin(nodeId, user)
-      val formBinded = ExtUtil.oneTargetFullFormM(nodeId).bindFromRequest()(request)
+      val formBinded = aeFormUtil.oneTargetFullFormM(nodeId).bindFromRequest()(request)
+
       // Запускаем сразу в фоне поиск уже сохранённой цели.
       val tgIdOpt = formBinded.apply("id").value
       val tgOptFut = tgIdOpt match {
@@ -53,7 +55,8 @@ trait CanSubmitExtTargetForNode
         case None =>
           Future successful Option.empty[MExtTarget]
       }
-      isAdnNodeAdmFut flatMap {
+
+      isAdnNodeAdmFut.flatMap {
         // Юзер является админом текущего узла. Нужно проверить права на цель.
         case Some(mnode) =>
           // Всё ок может быть в разных случаях, Общий код вынесен сюда.

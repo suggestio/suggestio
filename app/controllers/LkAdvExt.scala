@@ -20,7 +20,8 @@ import play.api.mvc.{Result, WebSocket}
 import util.FormUtil._
 import util.PlayMacroLogsImpl
 import util.acl._
-import util.adv.{ExtAdvWsActors, ExtUtil}
+import util.adv.ExtAdvWsActors
+import util.adv.ext.AeFormUtil
 import views.html.lk.adv.ext._
 import views.html.static.popups.closingPopupTpl
 
@@ -37,6 +38,7 @@ import scala.concurrent.Future
 class LkAdvExt @Inject() (
   override val canAdvAdUtil       : CanAdvertiseAdUtil,
   extAdvWsActors                  : ExtAdvWsActors,
+  override val aeFormUtil         : AeFormUtil,
   override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
@@ -116,7 +118,7 @@ class LkAdvExt @Inject() (
         producer    = request.producer,
         targets     = targets,
         advForm     = form,
-        oneTgForm   = ExtUtil.formForTarget
+        oneTgForm   = aeFormUtil.formForTarget
       )
       implicit val ctxData = ctxData0.copy(
         jsiTgs = Seq(MTargets.LkAdvExtForm)
@@ -277,7 +279,7 @@ class LkAdvExt @Inject() (
    */
   def writeTarget(adnId: String) = IsAdnNodeAdminGet(adnId) { implicit request =>
     val ctx = implicitly[Context]
-    val form0 = ExtUtil.oneRawTargetFullFormM(adnId)
+    val form0 = aeFormUtil.oneRawTargetFullFormM(adnId)
       .fill( ("", Some(ctx.messages("New.target")), None) )
     Ok( _createTargetTpl(adnId, form0)(ctx) )
   }
