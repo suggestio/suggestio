@@ -10,14 +10,15 @@ import models.adv.js.ctx.JsErrorInfo
 import models.adv.IOAuth1AdvTargetActorArgs
 import models.blk.OneAdQsArgs
 import models.mext._
+import models.mproj.ICommonDi
 import play.api.libs.ws.{WSClient, WSResponse}
 import util.PlayMacroLogsImpl
 import util.adv.ext.AeFormUtil
 import util.adv.ut.ExtTargetActorUtil
 import util.async.FsmActor
 import ut._
+import util.img.AdRenderUtil
 
-import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
 /**
@@ -39,8 +40,9 @@ trait OAuth1TargetActorFactory {
 class OAuth1TargetActor @Inject() (
   @Assisted override val args   : IOAuth1AdvTargetActorArgs,
   override val aeFormUtil       : AeFormUtil,
-  implicit val ec               : ExecutionContext,
-  implicit val wsClient         : WSClient
+  override val adRenderUtil     : AdRenderUtil,
+  implicit val wsClient         : WSClient,
+  override val mCommonDi        : ICommonDi
 )
   extends FsmActor
   with ExtTargetActorUtil
@@ -51,7 +53,9 @@ class OAuth1TargetActor @Inject() (
   with S2sMpUploadRender
   with EtaCustomArgsBase
 {
+
   import LOGGER._
+  import mCommonDi.ec
 
   override type State_t = FsmState
 

@@ -5,7 +5,7 @@ import controllers.sc._
 import models.mproj.{ICommonDi, MProjectInfo}
 import util._
 import util.cdn.CdnUtil
-import util.img.{LogoUtil, WelcomeUtil}
+import util.img.{AdRenderUtil, LogoUtil, WelcomeUtil}
 import util.n2u.N2NodesUtil
 import util.showcase.{ScStatUtil, ShowcaseNodeListUtil, ShowcaseUtil}
 import util.stat.StatUtil
@@ -25,6 +25,7 @@ class MarketShowcase @Inject() (
   override val statUtil           : StatUtil,
   override val scNlUtil           : ShowcaseNodeListUtil,
   override val scUtil             : ShowcaseUtil,
+  override val adRenderUtil       : AdRenderUtil,
   override val cdnUtil            : CdnUtil,
   override val n2NodesUtil        : N2NodesUtil,
   override val mCommonDi          : ICommonDi,

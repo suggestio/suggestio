@@ -95,8 +95,9 @@ trait SysImgMake
   /** Рендер страницы с формой параметров make. */
   private def _makeFormRender(img: MImgT, form: SysForm_t, rs: Status)
                              (implicit ctx: Context): Future[Result] = {
-    val html = makeFormTpl(img, form)(ctx)
-    Future.successful( rs(html) )
+    val makers = Makers.valuesT
+    val html = makeFormTpl(img, form, makers)(ctx)
+    rs(html)
   }
 
   /**

@@ -60,6 +60,7 @@ class OAuth1ServiceActor @Inject() (
   oa1TgActorFactory           : OAuth1TargetActorFactory,
   mCommonDi                   : ICommonDi,
   oa1SvcActorUtil             : Oa1SvcActorUtil,
+  pgpUtil                     : PgpUtil,
   override val aeFormUtil     : AeFormUtil,
   implicit val wsClient       : WSClient
 )
@@ -88,7 +89,7 @@ class OAuth1ServiceActor @Inject() (
 
   /** Ключ шифрования-дешифрования для хранения данных в localStorage. */
   lazy val lsCryptoKey = {
-    val keyId = PgpUtil.LOCAL_STOR_KEY_ID
+    val keyId = pgpUtil.LOCAL_STOR_KEY_ID
     val fut = MAsymKey.getById(keyId)
       .map(_.get)
     fut.onFailure {
@@ -163,7 +164,7 @@ class OAuth1ServiceActor @Inject() (
     // Зашифровать всё с помощью PGP.
     val baos = new ByteArrayOutputStream(1024)
     pgpKeyFut map { pgpKey =>
-      PgpUtil.encryptForSelf(
+      pgpUtil.encryptForSelf(
         data = IOUtils.toInputStream(json),
         key  = pgpKey,
         out  = baos
@@ -239,7 +240,7 @@ class OAuth1ServiceActor @Inject() (
           } yield {
             val input = cctxOpt.get
             val baos = new ByteArrayOutputStream(256)
-            PgpUtil.decryptFromSelf(
+            pgpUtil.decryptFromSelf(
               data = IOUtils.toInputStream( input ),
               key  = mkey,
               out  = baos

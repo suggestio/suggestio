@@ -2,6 +2,7 @@ package util.img
 
 import java.io.File
 
+import com.google.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.common.fut.FutureUtil
 import io.suggest.ym.model.common.MImgInfoMeta
@@ -9,11 +10,10 @@ import models.MNode
 import models.blk.{OneAdQsArgs, szMulted}
 import models.im._
 import models.im.make.{MakeArgs, MakeResult, Makers}
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.blocks.BgImg
-import util.xplay.PlayUtil.httpPort
+import util.xplay.PlayUtil
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -21,20 +21,26 @@ import scala.concurrent.Future
  * Created: 11.03.15 16:52
  * Description: Содержимое этого модуля выросло внутри WkHtmlUtil.
  */
-object AdRenderUtil {
+@Singleton
+class AdRenderUtil @Inject() (
+  playUtil                  : PlayUtil,
+  implicit private val ec   : ExecutionContext
+) {
 
   /**
    * Генерации абсолютной ссылки на отрендеренную в картинку рекламную карточку.
+   *
    * @param adArgs Параметры рендера.
    * @return Строка с абсолютной ссылкой на локалхост.
    */
   def adImgLocalUrl(adArgs: OneAdQsArgs): String = {
-    "http://localhost:" + httpPort + routes.MarketShowcase.onlyOneAd(adArgs).url
+    "http://localhost:" + playUtil.httpPort + routes.MarketShowcase.onlyOneAd(adArgs).url
   }
 
 
   /**
    * Сгенерить данные для рендера фоновой картинки для рендера одинокой карточки.
+   *
    * @param mad Карточка.
    * @param args Переданные через qs параметры рендера.
    * @return Future None, если у карточки нет фоновой картинки.
@@ -76,6 +82,7 @@ object AdRenderUtil {
 
   /**
    * Рендер указанной рекламной карточки
+   *
    * @param adArgs Данные по рендеру.
    * @param mad карточка для рендера.
    * @return Фьючерс с байтами картинки.
@@ -105,4 +112,10 @@ object AdRenderUtil {
   }
 
 
+}
+
+
+/** Интерфейс для поля с DI-инстансом [[AdRenderUtil]]. */
+trait IAdRenderUtilDi {
+  def adRenderUtil: AdRenderUtil
 }

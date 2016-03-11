@@ -14,13 +14,16 @@ import util.showcase.ScWideMaker
  * Каждый экземпляр модели -- это контроллер, занимающийся принятием решений по рендеру картинки на основе
  * исходных данных и внутреннего алгоритма.
  */
-object Makers extends Enumeration with EnumMaybeWithName with StrEnumFormMappings {
+object Makers extends EnumMaybeWithName with StrEnumFormMappings {
 
   /**
    * Абстрактный экземпляр этой модели.
    * @param strId Ключ модели и глобальный строковой идентификатор.
    */
-  abstract protected sealed class Val(val strId: String) extends super.Val(strId) with IMaker {
+  abstract protected sealed class Val(val strId: String)
+    extends super.Val(strId)
+    with IMaker
+  {
     override def toString() = strId
     /** Длинное имя, отображаемое юзеру. */
     def longName: String
@@ -60,9 +63,9 @@ object Makers extends Enumeration with EnumMaybeWithName with StrEnumFormMapping
    */
   def forFocusedBg(isWide: Boolean): T = {
     if (isWide)
-      Makers.ScWide
+      ScWide
     else
-      Makers.Block
+      Block
   }
 
 }

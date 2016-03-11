@@ -1,15 +1,12 @@
 package models.mext.fb
 
-import util.adv.{ExtServiceActorFactory, IApplyServiceActor, ExtServiceActor}
 import io.suggest.adv.ext.model.im.FbWallImgSizesScalaEnumT
 import io.suggest.common.geom.d2.INamedSize2di
 import models.MNode
 import models.blk.SzMult_t
 import models.im.OutImgFmts
-import models.mext.{IJsActorExtService, IExtService}
+import models.mext.IJsActorExtService
 import util.PlayMacroLogsImpl
-
-import scala.reflect.ClassTag
 
 /**
  * Suggest.io

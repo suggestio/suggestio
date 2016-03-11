@@ -2,7 +2,7 @@ package models.mext.fb
 
 import models.mext.ILoginProvider
 import securesocial.core.AuthenticationMethod
-import securesocial.core.providers.{FacebookProvider, ProviderCompanion}
+import securesocial.core.providers.FacebookProvider
 
 /**
  * Suggest.io

@@ -56,7 +56,7 @@ object BgImg extends PlayLazyMacroLogsImpl {
    */
   def maybeMakeBgImgWith(mad: MNode, maker: IMaker, szMult: SzMult_t, devScreenOpt: Option[DevScreen])
                         (implicit ec: ExecutionContext): Future[Option[MakeResult]] = {
-    FutureUtil.optFut2futOpt( BgImg.getBgImg(mad) ) { bgImg =>
+    FutureUtil.optFut2futOpt( getBgImg(mad) ) { bgImg =>
       val iArgs = MakeArgs(bgImg, mad.ad.blockMeta.get, szMult = szMult, devScreenOpt)
       maker.icompile(iArgs)
         .map { Some.apply }
@@ -65,10 +65,7 @@ object BgImg extends PlayLazyMacroLogsImpl {
 
   def maybeMakeBgImg(mad: MNode, szMult: SzMult_t, devScreenOpt: Option[DevScreen])
                     (implicit ec: ExecutionContext): Future[Option[MakeResult]] = {
-    val maker = if (mad.ad.blockMeta.exists(_.wide))
-      Makers.ScWide
-    else
-      Makers.Block
+    val maker = Makers.forFocusedBg( mad.ad.blockMeta.exists(_.wide) )
     maybeMakeBgImgWith(mad, maker, szMult, devScreenOpt)
   }
 

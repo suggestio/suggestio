@@ -22,7 +22,7 @@ object MExtServices extends MServicesT with PlayLazyMacroLogsImpl with EnumJsonR
   override type T = Val
 
   /** Экземпляр модели. */
-  protected[this] abstract class Val(strId: String)
+  protected[this] abstract class Val(override val strId: String)
     extends super.Val(strId)
     with IExtService
   {

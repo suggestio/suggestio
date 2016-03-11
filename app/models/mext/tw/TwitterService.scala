@@ -1,6 +1,5 @@
 package models.mext.tw
 
-import util.adv.{OAuth1ServiceActorFactory, IServiceActorCompanion, OAuth1ServiceActor}
 import controllers.routes
 import models.adv.ext.Mad2ImgUrlCalc
 import models.im.OutImgFmts
@@ -10,6 +9,7 @@ import models.mext.{IExtService, MExtServices}
 import models.{IRenderable, MNode}
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
+import util.adv.OAuth1ServiceActorFactory
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.ClassTag
@@ -57,11 +57,11 @@ trait TwitterService
   override def myUserName = Some("@suggest_io")
 
   /**
-   * Генератор HTML-мета-тегов для описания рекламной карточки.
+    * Генератор HTML-мета-тегов для описания рекламной карточки.
     *
     * @param mad1 Экземпляр рекламной карточки.
-   * @return экземпляры моделй, готовых для запуска рендера.
-   */
+    * @return экземпляры моделй, готовых для запуска рендера.
+    */
   override def adMetaTagsRender(mad1: MNode)(implicit ec: ExecutionContext): Future[List[IRenderable]] = {
     val acc0Fut = super.adMetaTagsRender(mad1)
     // Собираем через враппер, т.к. для генерации метаданных нужен доступ к Context.

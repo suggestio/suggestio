@@ -10,6 +10,7 @@ import models.adv.ext.act._
 import models.adv.js._
 import models.adv._
 import models.adv.js.ctx._
+import models.mproj.ICommonDi
 import models.mws.AnswerStatuses
 import play.api.Configuration
 import play.api.libs.ws.{WSClient, WSResponse}
@@ -18,6 +19,7 @@ import util.adv.ext.AeFormUtil
 import util.adv.ut.ExtTargetActorUtil
 import util.async.FsmActor
 import ut._
+import util.img.AdRenderUtil
 
 /**
   * Suggest.io
@@ -40,8 +42,10 @@ trait AeTgJsAdpActorFactory {
 class ExtTargetActor @Inject() (
   @Assisted override val args   : IExtAdvTargetActorArgs,
   aeTgJsAdpActorUtil            : AeTgJsAdpActorUtil,
+  override val adRenderUtil     : AdRenderUtil,
   override val aeFormUtil       : AeFormUtil,
-  implicit val wsClient         : WSClient
+  implicit val wsClient         : WSClient,
+  override val mCommonDi        : ICommonDi
 )
   extends FsmActor
   with ExtTargetActorUtil

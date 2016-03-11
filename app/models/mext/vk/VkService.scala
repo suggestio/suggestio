@@ -4,10 +4,9 @@ import java.net.URL
 
 import io.suggest.adv.ext.model.im.VkWallImgSizesScalaEnumT
 import io.suggest.common.geom.d2.INamedSize2di
-import models.im.{OutImgFmts, OutImgFmt}
-import models.mext.{IJsActorExtService, IExtService}
+import models.im.{OutImgFmt, OutImgFmts}
+import models.mext.IJsActorExtService
 import util.PlayMacroLogsImpl
-import util.adv.ExtServiceActor
 
 /**
  * Suggest.io

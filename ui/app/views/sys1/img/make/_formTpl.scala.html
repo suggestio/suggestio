@@ -1,10 +1,9 @@
-@(submitCall: Call, mf: im.make.SysForm_t)(implicit ctx: Context)
+@(submitCall: Call, mf: im.make.SysForm_t, makers: Iterable[im.make.Maker])(implicit ctx: Context)
 
 @* Верстка формы для вызова кастомного make. *@
 
 @import helper._
 @import ctx._
-@import im.make.Makers
 @import blk.{BlockWidths, BlockHeights}
 
 @form( CSRF(submitCall) ) {
@@ -12,7 +11,7 @@
   @* Выбор maker'а из списка допустимых. *@
   @select(
     mf("maker"),
-    options = Makers.values.iterator.map(m => m.strId -> m.longName).toSeq,
+    options = makers.iterator.map(m => m.strId -> m.longName).toSeq,
     'title -> "Какой image-maker использовать?"
   )
 

@@ -68,7 +68,7 @@ object Global extends GlobalSettings {
 
     // Инициализировать связку ключей, если необходимо.
     esClientFut onSuccess { case esClient =>
-      PgpUtil.maybeInit()(esClient)
+      pgpUtil(app).maybeInit()
     }
 
     jmxImpl(app).registerAll()
@@ -123,6 +123,7 @@ object Global extends GlobalSettings {
   private def jmxImpl(app: Application)         = _inject[JMXImpl](app)
   private def siowebEsModel(app: Application)   = _inject[SiowebEsModel](app)
   private def scStatSaver(app: Application)     = _inject[ScStatSaver](app)
+  private def pgpUtil(app: Application)         = _inject[PgpUtil](app)
 
   /**
    * При остановке системы (например, при обновлении исходников), нужно выполнить все нижеперечисленные действия.

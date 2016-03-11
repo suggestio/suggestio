@@ -6,7 +6,7 @@ import models._
 import models.blk.{OneAdQsArgs, szMulted}
 import util.PlayMacroLogsI
 import util.acl.GetAnyAd
-import util.img.AdRenderUtil
+import util.img.IAdRenderUtilDi
 import views.html.blocks.common.standaloneTpl
 import views.html.sc._adTpl
 
@@ -20,18 +20,20 @@ trait ScOnlyOneAd
   extends SioController
   with PlayMacroLogsI
   with GetAnyAd
+  with IAdRenderUtilDi
 {
 
   import mCommonDi._
 
   /**
    * Отрендерить одну указанную карточку как веб-страницу.
+   *
    * @param args Настройки выборки и отображения результата.
    * @return 200 Ок с отрендеренной страницей-карточкой.
    */
   def onlyOneAd(args: OneAdQsArgs) = GetAnyAd(args.adId).async { implicit request =>
     import request.mad
-    val bgImgOptFut = AdRenderUtil.getBgImgOpt(mad, args)
+    val bgImgOptFut = adRenderUtil.getBgImgOpt(mad, args)
     val bc = BlocksConf.applyOrDefault( request.mad )
     // Рендер, когда асинхронные операции будут завершены.
     for (bgImgOpt <- bgImgOptFut) yield {
@@ -67,12 +69,13 @@ trait ScOnlyOneAd
   /**
    * Рендер одной указанной карточки в виде картинки.
    * Для рендера используется внешняя утилита wkhtml2image, которая обращается к соответсвующему html-экшену.
+   *
    * @param adArgs Настройки выборки и отображения результата.
    * @return 200 Ok с картинкой.
    */
   def onlyOneAdAsImage(adArgs: OneAdQsArgs) = GetAnyAd(adArgs.adId).async { implicit request =>
     for {
-      imgFile <- AdRenderUtil.renderAd2img(adArgs, request.mad)
+      imgFile <- adRenderUtil.renderAd2img(adArgs, request.mad)
     } yield {
       Ok.sendFile(imgFile,  inline = true,  onClose = {() => imgFile.delete()})
         .withHeaders(

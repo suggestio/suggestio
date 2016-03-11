@@ -15,11 +15,15 @@ import scala.language.implicitConversions
  */
 object ILoginProvider {
 
-  /** Обратиться к модели [[MExtServices]] и узнать там провайдера по имени. */
-  def maybeWithName(n: String): Option[ILoginProvider] = {
+  def valuesIter: Iterator[ILoginProvider] = {
     MExtServices.values
       .iterator
       .flatMap { _.loginProvider }
+  }
+
+  /** Обратиться к модели [[MExtServices]] и узнать там провайдера по имени. */
+  def maybeWithName(n: String): Option[ILoginProvider] = {
+    valuesIter
       .find { _.ssProvName == n }
   }
 
