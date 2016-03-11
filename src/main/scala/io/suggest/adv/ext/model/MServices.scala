@@ -21,6 +21,7 @@ object MServices {
 
 
 trait MServicesBaseT extends ILightEnumeration {
+
   protected trait ValT extends super.ValT {
     val strId: String
     override def toString = strId
@@ -37,6 +38,7 @@ trait MServicesBaseT extends ILightEnumeration {
 
   /** Экземпляр сервиса twitter. */
   val TWITTER: T
+
 }
 
 
