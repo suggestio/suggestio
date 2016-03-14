@@ -14,7 +14,10 @@ import scala.scalajs.js
 @js.native
 sealed trait LkAdvGeoTagCtl extends js.Object {
 
-  /** Экшен поста добавления нового тега. */
+  /** Роута постинга добавления нового тега. */
   def tagEditorAddTag(): Route = js.native
+
+  /** Роута запроса рассчета стоимости текущего размещения. */
+  def getPriceSubmit(adId: String): Route = js.native
 
 }
