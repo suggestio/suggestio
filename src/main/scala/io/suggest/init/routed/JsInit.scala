@@ -44,6 +44,8 @@ object JsInitConstants {
   def ADV_GTAG_FORM               = "m"
   /** id таргета инициализации формы прямого размещения карточки на узлах сети. */
   def ADV_DIRECT_FORM             = "n"
+  /** id таргета инициализации формы размещения карточки в месте. */
+  def ADV_GEO_PLACE_FORM          = "o"
 
 }
 
@@ -108,6 +110,9 @@ trait MInitTargetsBaseT extends ILightEnumeration {
   /** Цель инициализации формы прямого размещения карточки на узлах. */
   val AdvDirectForm: T = instance(ADV_DIRECT_FORM)
 
+  /** Форма размещения в месте на карте. */
+  val AdvGeoPlaceForm: T = instance(ADV_GEO_PLACE_FORM)
+
 }
 
 
@@ -150,6 +155,7 @@ trait MJsInitTargetsLigthT extends MInitTargetsBaseT with LightEnumeration {
       case BillTxnsList.strId         => Some(BillTxnsList)
       case AdvGtagForm.strId          => Some(AdvGtagForm)
       case AdvDirectForm.strId        => Some(AdvDirectForm)
+      case AdvGeoPlaceForm.strId      => Some(AdvGeoPlaceForm)
       case _                          => None
     }
   }

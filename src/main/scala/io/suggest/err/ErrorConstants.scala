@@ -13,4 +13,15 @@ object ErrorConstants {
 
   def ERROR_MSG_CLASS = "error-msg"
 
+  /** Ошибки, возвращаемые через JSON. */
+  object Json {
+
+    /** Имя JSON-поля с кодом ошибки. */
+    def CODE_FN  = "c"
+
+    /** Имя JSON-поля с сообещнием об ошибке, пригодным для отображения юзера. */
+    def MSG_FN   = "m"
+
+  }
+
 }
