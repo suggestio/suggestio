@@ -11,7 +11,7 @@ import models.adv.build.Acc
 import models.mproj.{ICommonDi, IMCommonDi}
 import org.joda.time.DateTime
 import util.adv.direct.AdvDirectBuilder
-import util.adv.gtag.AdvGeoTagBuilder
+import util.adv.geo.tag.AdvGeoTagBuilder
 import util.{PlayMacroLogsDyn, PlayMacroLogsImpl, PlayMacroLogsI}
 import util.n2u.{IN2NodesUtilDi, N2NodesUtil}
 

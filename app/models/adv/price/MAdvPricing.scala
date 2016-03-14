@@ -1,4 +1,4 @@
-package models.adv.tpl
+package models.adv.price
 
 import models.{IPrice, MPrice}
 
@@ -17,6 +17,6 @@ trait IAdvPricing {
 
 case class MAdvPricing(
   prices          : Iterable[MPrice],
-  hasEnoughtMoney : Boolean
+  hasEnoughtMoney : Boolean = true
 )
   extends IAdvPricing

@@ -1,4 +1,4 @@
-package util.adv.gtag
+package util.adv.geo.tag
 
 import com.google.inject.Inject
 import io.suggest.mbill2.m.gid.Gid_t
@@ -6,10 +6,13 @@ import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import models.MPrice
-import models.adv.gtag.IAdvGeoTagsInfo
+import models.adv.geo.tag.IAdvGeoTagsInfo
+import models.adv.price.MAdvPricing
 import models.mproj.ICommonDi
 import models.mtag.MTagBinded
 import util.billing.Bill2Util
+
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -60,6 +63,37 @@ class GeoTagAdvBillUtil @Inject() (
     }
 
     DBIO.sequence(mitemsActs)
+  }
+
+
+  /**
+    * Рассчет стоимости для результата маппинга формы.
+    * @param res Запрашиваемое юзером размещение.
+    * @return
+    */
+  def computePrice(res: IAdvGeoTagsInfo): Future[MAdvPricing] = {
+    val daysCount = Math.max(1, res.period.period.getDays)
+    // Посчитать цены размещения для каждого тега.
+    val prices1 = res
+      .tags
+      .iterator
+      .map { t =>
+        computePriceOne(t, res)
+      }
+      .toSeq
+
+    // Сгруппировать цены по валютам.
+    val prices2 = MPrice.sumPricesByCurrency(prices1)
+      // Домножить на кол-во дней
+      .map { price =>
+        price.copy(
+          amount = price.amount * daysCount
+        )
+      }
+      .toSeq
+
+    val result = MAdvPricing(prices2)
+    Future.successful(result)
   }
 
 }

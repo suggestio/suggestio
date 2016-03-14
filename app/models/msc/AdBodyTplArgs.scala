@@ -1,5 +1,6 @@
 package models.msc
 
+import models.mbase.{IProducerWrapper, IProducer}
 import models.{blk, MNode}
 
 /**

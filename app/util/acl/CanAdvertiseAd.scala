@@ -104,11 +104,16 @@ trait CanAdvertiseAd
       val personIdOpt = sessionUtil.getPersonId(request)
       val madFut = mNodeCache.getByIdType(adId, MNodeTypes.Ad)
       val user = mSioUsers(personIdOpt)
+
+      // Оптимистично запустить сбор запрошенных данных MSioUser.
       maybeInitUser(user)
+
+      // Продолжить дальше работу асинхронно...
       val reqBlank = MReq(request, user)
       madFut.flatMap {
+        // Карточка найден, проверить доступ...
         case Some(mad) =>
-          canAdvAdUtil.maybeAllowed(mad, reqBlank) flatMap {
+          canAdvAdUtil.maybeAllowed(mad, reqBlank).flatMap {
             case Some(req1) =>
               block(req1)
             case None =>
@@ -116,6 +121,7 @@ trait CanAdvertiseAd
               onUnauthNode(reqBlank)
           }
 
+        // Нет запрашиваем карточки, отработать и этот вариант.
         case None =>
           LOGGER.debug("invokeBlock(): MAd not found: " + adId)
           onUnauthNode(reqBlank)

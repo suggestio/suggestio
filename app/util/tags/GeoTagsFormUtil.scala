@@ -2,7 +2,8 @@ package util.tags
 
 import com.google.inject.{Singleton, Inject}
 import io.suggest.model.geo.{Distance, CircleGs}
-import models.adv.gtag.{GtForm_t, MAdvFormResult}
+import models.adv.geo.tag.MAdvFormResult
+import models.adv.geo.tag.GtForm_t
 import models.maps.MapViewState
 import org.elasticsearch.common.unit.DistanceUnit
 import play.api.data.{Mapping, Form}

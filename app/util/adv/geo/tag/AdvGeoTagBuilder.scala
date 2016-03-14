@@ -1,12 +1,12 @@
-package util.adv.gtag
+package util.adv.geo.tag
 
 import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.{MItemType, MItemTypes}
-import io.suggest.model.n2.edge.{MNodeEdges, MEdgeInfo, MPredicates, MEdge}
+import io.suggest.model.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
 import io.suggest.model.n2.extra.MNodeExtras
-import io.suggest.model.n2.extra.tag.{MTagFace, MTagExtra}
-import io.suggest.model.n2.extra.tag.search.{MTagFaceCriteria, ITagFaceCriteria}
+import io.suggest.model.n2.extra.tag.search.{ITagFaceCriteria, MTagFaceCriteria}
+import io.suggest.model.n2.extra.tag.{MTagExtra, MTagFace}
 import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}

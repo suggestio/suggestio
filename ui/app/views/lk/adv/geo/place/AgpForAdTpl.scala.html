@@ -1,31 +1,29 @@
-@(args: adv.gtag.IForAdTplArgs)(implicit ctx: Context)
+@(args: adv.geo.place.IAgpForAdTplArgs)(implicit ctx: Context)
 
-@* Страница со формой размещения рекламной карточки на внешних сервисах. *@
+@* Adv Geo Place forAd Tpl
+   Шаблон страницы с формой размещения карточки в произвольной области на карте. *@
 
 @import ctx.{messages, request}
 @import helper._
 @import stuff.geo.radmap._
+@import lk.adv.geo.agBase
 @import lk.adv.widgets._
 @import lk.lkwdgts.price._
 @import io.suggest.common.adv.gtag.AdvGeoTagConstants.FORM_ID
+@import adv.tpl._
 
-@agtBase(
+@agBase(
   title       = messages("Adv.in.geo.tags"),
   mnode       = args.producer,
   mad         = args.mad,
+  rightLink   = LkAdvRightLinks.GEO_PLACE,
   rightAfter  = Some( _rightPriceTpl(args.price, formId = FORM_ID) )
 ) {
-
-  @* При добавлении тегов запросы add-tag-формы отправляются сюда. *@
-  @helper.javascriptRouter("jsRoutes")(
-    routes.javascript.LkAdvGeoTag.tagEditorAddTag,
-    routes.javascript.Assets.at
-  )
 
   @_advFormBlockTpl() {
 
     @* Рендер самой формы здесь. *@
-    @_forAdFormTpl(args) {
+    @_AgpFormTpl(args) {
       @* Контейнер карты. *@
       <br/>
       @_mapContTpl()
@@ -34,3 +32,5 @@
   }
 
 }
+
+

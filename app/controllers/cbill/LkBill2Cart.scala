@@ -4,7 +4,7 @@ import controllers.{routes, SioController}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.item.{ItemStatusChanged, MItem}
 import io.suggest.mbill2.m.order.OrderStatusChanged
-import models.adv.tpl.MAdvPricing
+import models.adv.price.MAdvPricing
 import models.blk.{IRenderArgs, RenderArgs}
 import models.im.make.Makers
 import models.mbill.MCartIdeas

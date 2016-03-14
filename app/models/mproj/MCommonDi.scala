@@ -43,20 +43,20 @@ trait ICommonDi
   with INodeCache
 {
   // Для возможно оптимизации, всё объявляем как val, т.к. по сути так оно и есть.
-  val mSioUsers                   : MSioUsers
-  val sessionUtil                 : SessionUtil
-  val contextFactory              : Context2Factory
-  val messagesApi                 : MessagesApi
-  override implicit val esClient  : Client
-  override val errorHandler       : ErrorHandler
-  override implicit val ec        : ExecutionContext
-  override val actorSystem        : ActorSystem
-  override val cache              : CacheApi
-  override val cacheApiUtil       : CacheApiUtil
-  //override val db                 : Database
-  override val mNodeCache         : MNodeCache
+  val mSioUsers                       : MSioUsers
+  val sessionUtil                     : SessionUtil
+  val contextFactory                  : Context2Factory
+  val messagesApi                     : MessagesApi
+  override implicit val esClient      : Client
+  override val errorHandler           : ErrorHandler
+  override implicit val ec            : ExecutionContext
+  override val actorSystem            : ActorSystem
+  override val cache                  : CacheApi
+  override val cacheApiUtil           : CacheApiUtil
+  //override val db                   : Database
+  override val mNodeCache             : MNodeCache
   override val _slickConfigProvider   : DatabaseConfigProvider
-  override implicit val current   : Application
+  override implicit val current       : Application
 }
 
 

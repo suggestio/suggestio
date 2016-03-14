@@ -1,4 +1,4 @@
-@(args: adv.gtag.IForAdTplArgs)(middle: Html)(implicit ctx: Context)
+@(args: adv.geo.tag.IForAdTplArgs)(middle: Html)(implicit ctx: Context)
 
 @* Шаблон формы размещения карточки в тегах с географией. *@
 
@@ -20,7 +20,7 @@
   @_addBtnTpl()
 }
 
-@form( CSRF(routes.LkAdvGeoTag.forAdSubmit(args.mad.id.get)), 'id-> FORM_ID) {
+@form( CSRF(routes.LkAdvGeoTag.forAdSubmit(args.mad.id.get)), 'id -> FORM_ID) {
 
   @_barTpl(MHands.Left) {
     @* Рендер сохранённых тегов. *@

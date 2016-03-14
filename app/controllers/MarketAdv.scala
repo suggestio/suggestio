@@ -1,7 +1,6 @@
 package controllers
 
 import com.google.inject.Inject
-import io.suggest.adv.direct.AdvDirectFormConstants
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.order.MOrderWithItems
@@ -9,12 +8,12 @@ import io.suggest.model.common.OptId
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models._
 import models.adv.direct._
-import models.adv.tpl.MAdvForAdTplArgs
+import models.adv.price.GetPriceResp
 import models.jsm.init.MTargets
 import models.mctx.Context
 import models.mproj.ICommonDi
 import models.req.{IAdProdReq, IReq}
-import play.api.libs.json.{JsString, Json}
+import play.api.libs.json.Json
 import play.api.mvc.{AnyContent, Result}
 import util.PlayMacroLogsImpl
 import util.acl._
@@ -297,20 +296,19 @@ class MarketAdv @Inject() (
             bill2Util.zeroPricing
           }
           val html = _priceValTpl(advPricing)
-          html: JsString
+          html2str4json(html)
         }
 
         // Параллельно отрендерить отчет по датам размещения.
-        val periodReportHtml: JsString = _reportTpl(formRes.period)
+        val periodReportHtml = html2str4json( _reportTpl(formRes.period) )
 
         // Отрендерить JSON-ответ
         for (priceValHtml <- priceValHtmlFut) yield {
-          import AdvDirectFormConstants.PriceJson._
-          // TODO Вынести это дело отсюда в отдельную модель?
-          Ok(Json.obj(
-            PERIOD_REPORT_HTML_FN -> periodReportHtml,
-            PRICE_HTML_FN         -> priceValHtml
-          ))
+          val resp = GetPriceResp(
+            periodReportHtml  = periodReportHtml,
+            priceHtml         = priceValHtml
+          )
+          Ok( Json.toJson(resp) )
         }
       }
     )

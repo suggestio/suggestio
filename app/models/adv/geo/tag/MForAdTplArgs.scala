@@ -1,7 +1,8 @@
-package models.adv.gtag
+package models.adv.geo.tag
 
 import models.MNode
-import models.adv.tpl.IAdvPricing
+import models.adv.IAdvForAdCommonTplArgs
+import models.adv.price.IAdvPricing
 
 /**
   * Suggest.io
@@ -9,22 +10,13 @@ import models.adv.tpl.IAdvPricing
   * Created: 18.11.15 15:05
   * Description: Модель аргументов шаблона [[views.html.lk.adv.gtag.forAdTpl]].
   */
-trait IForAdTplArgs {
-
-  /** Размещаяемая рекламная карточка. */
-  def mad       : MNode
-
-  /** Продьюсер карточки. */
-  def producer  : MNode
+trait IForAdTplArgs extends IAdvForAdCommonTplArgs {
 
   /** Экземпляр маппинга формы размещения карточки в теге с географией. */
   def form      : GtForm_t
 
   /** Доступные для рендера периоды. */
   def advPeriodsAvail: Seq[String]
-
-  /** Начальная отображаемая цена. */
-  def price: IAdvPricing
 
 }
 

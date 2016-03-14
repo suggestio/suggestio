@@ -10,6 +10,6 @@ object LkAdvRightLinks extends Enumeration {
 
   type T = Value
 
-  val LARL_GEO, LARL_EXT, TAGS_GEO = Value : T
+  val LARL_GEO, LARL_EXT, TAGS_GEO, GEO_PLACE = Value : T
 
 }

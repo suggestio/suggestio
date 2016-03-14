@@ -94,7 +94,7 @@ class AdvFormUtil {
       // unapply(). Нужно попытаться притянуть имеющийся интервал дат на какой-то период из списка QuickAdvPeriod.
       // При неудаче вернуть кастомный период.
       {dsp =>
-        dsp.period match {
+        dsp.quickPeriod match {
           case Some(qap)  =>
             val mdp = MDatesPeriod(qap)
             Some(qap) -> Some( (mdp.dateStart, mdp.dateEnd) )

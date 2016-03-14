@@ -1,4 +1,4 @@
-package models.adv.gtag
+package models.adv.geo.tag
 
 import io.suggest.model.geo.CircleGs
 import models.adv.form.MDatesPeriod

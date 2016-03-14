@@ -10,13 +10,7 @@ import play.api.data.Form
  * Created: 26.10.15 11:27
  * Description: Модель контейнера аргументов шаблона adv.ext.forAdTpl.
  */
-trait IForAdTplArgs {
-
-  /** Текущая рекламная карточка. */
-  def mad         : MNode
-
-  /** Узел-продьюсер. */
-  def producer    : MNode
+trait IForAdTplArgs extends IAdvFreeForAdCommonTplArgs {
 
   /** Список текущих целей для внешнего размещения. */
   def targets     : Seq[MExtTarget]

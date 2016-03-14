@@ -10,7 +10,7 @@ import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import models._
 import models.adv.direct.{IAdvTerms, FormResult, AdvFormEntry}
-import models.adv.tpl.MAdvPricing
+import models.adv.price.MAdvPricing
 import models.blk.{BlockHeights, BlockWidths}
 import models.mcal.{ICalsCtx, MCalendars}
 import models.mproj.ICommonDi

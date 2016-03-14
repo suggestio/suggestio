@@ -12,7 +12,7 @@ import io.suggest.mbill2.m.item.{IMItem, IItem, MItems, MItem}
 import io.suggest.mbill2.m.order._
 import io.suggest.mbill2.m.txn.{MTxnTypes, MTxns, MTxn}
 import io.suggest.mbill2.util.effect._
-import models.adv.tpl.MAdvPricing
+import models.adv.price.MAdvPricing
 import models.mbill.MCartIdeas
 import models.mproj.ICommonDi
 import models.{IPrice, CurrencyCodeOpt, MNode, MPrice}

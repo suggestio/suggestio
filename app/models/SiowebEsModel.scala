@@ -33,7 +33,7 @@ class SiowebEsModel @Inject() (
 
   /**
    * Список моделей, которые должны быть проинициалированы при старте.
- *
+   *
    * @return Список EsModelMinimalStaticT.
    */
   def ES_MODELS: Seq[EsModelCommonStaticT] = {
@@ -107,7 +107,10 @@ trait SiowebEsModelJmxMBean {
 }
 
 /** Реализация jmx-бина, открывающая доступ к функциям [[SiowebEsModel]]. */
-final class SiowebEsModelJmx @Inject() (siowebEsModel: SiowebEsModel, implicit val ec: ExecutionContext)
+final class SiowebEsModelJmx @Inject() (
+  siowebEsModel           : SiowebEsModel,
+  implicit private val ec : ExecutionContext
+)
   extends JMXBase
   with SiowebEsModelJmxMBean
   with PlayLazyMacroLogsImpl

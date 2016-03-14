@@ -1,0 +1,33 @@
+@(title: String, mnode: MNode, mad: MNode, rightLink: adv.tpl.LkAdvRightLink, headAfter: Option[Html] = None,
+  rightAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@* Базовый шаблон Adv Geo Base нужен для шаблонов страниц, содержащих osm-карту rad map. *@
+
+@import views.html.stuff.leaflet._
+@import static.date.picker._
+
+
+@headAfter1 = {
+  @_leafletCssTpl()
+  @_locateControlCssTpl()
+  @_jqDatePickCssTpl()
+  @headAfter
+}
+
+
+@lk.adv.advBase(
+  title       = title,
+  mad         = mad,
+  producer    = mnode,
+  rightLink   = rightLink,
+  headAfter   = Some(headAfter1),
+  rightAfter  = rightAfter
+) {
+
+  @content
+
+  @_leafletScriptTpl()
+  @_locateControlScriptTpl()
+  @_jqDatePickJsTpl()
+
+}

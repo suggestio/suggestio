@@ -3,7 +3,7 @@ package models.mlk.bill
 import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.price.MPrice
 import models.MNode
-import models.adv.tpl.IAdvPricing
+import models.adv.price.IAdvPricing
 import models.blk.IRenderArgs
 
 /**

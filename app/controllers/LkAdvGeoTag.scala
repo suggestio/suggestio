@@ -4,22 +4,27 @@ import com.google.inject.Inject
 import controllers.ctag.NodeTagsEdit
 import io.suggest.model.geo.{CircleGs, Distance, GeoPoint}
 import models.adv.form.MDatesPeriod
-import models.adv.gtag.{GtForm_t, MAdvFormResult, MForAdTplArgs}
+import models.adv.geo.tag.{MForAdTplArgs, MAdvFormResult, GtForm_t}
+import models.adv.price.GetPriceResp
 import models.jsm.init.MTargets
 import models.maps.MapViewState
+import models.merr.MError
 import models.mproj.ICommonDi
 import models.req.IAdProdReq
 import models.GeoIp
 import org.elasticsearch.common.unit.DistanceUnit
 import play.api.i18n.Messages
+import play.api.libs.json.Json
 import play.api.mvc.Result
 import util.PlayMacroLogsImpl
 import util.acl.{CanAdvertiseAd, CanAdvertiseAdUtil}
 import util.adv.AdvFormUtil
-import util.adv.gtag.GeoTagAdvBillUtil
+import util.adv.geo.tag.GeoTagAdvBillUtil
 import util.billing.Bill2Util
 import util.tags.{GeoTagsFormUtil, TagsEditFormUtil}
-import views.html.lk.adv.gtag._
+import views.html.lk.adv.geo.tag._
+import views.html.lk.adv.widgets.period._reportTpl
+import views.html.lk.lkwdgts.price._priceValTpl
 
 import scala.concurrent.Future
 
@@ -99,7 +104,7 @@ class LkAdvGeoTag @Inject() (
         advPeriodsAvail = advFormUtil.advPeriodsAvailable,
         price     = bill2Util.zeroPricing
       )
-      Ok(forAdTpl(rargs))
+      rs(AgtForAdTpl(rargs))
     }
   }
 
@@ -156,6 +161,47 @@ class LkAdvGeoTag @Inject() (
           // Пора вернуть результат работы юзеру: отредиректить в корзину-заказ для оплаты.
           Redirect( routes.LkBill2.cart(producerId, r = Some(routes.LkAdvGeoTag.forAd(adId).url)) )
             .flashing( FLASH.SUCCESS -> messages("Added.n.items.to.cart", itemsAdded.size) )
+        }
+      }
+    )
+  }
+
+
+  /**
+    * Экшн рассчета стоимости текущего размещения.
+    *
+    * @param adId id рекламной карточки.
+    * @return 200 / 416 + JSON
+    */
+  def getPriceSubmit(adId: String) = CanAdvertiseAdPost(adId).async { implicit request =>
+    geoTagsFormUtil.advForm.bindFromRequest().fold(
+      {formWithErrors =>
+        LOGGER.debug(s"getPriceSubmit($adId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
+        val err = MError(
+          msg = Some("Failed to bind form")
+        )
+        NotAcceptable( Json.toJson(err) )
+      },
+      {result =>
+        // Запустить рассчет стоимости размещаемого
+        val pricingFut = for {
+          advPricing <- geoTagAdvBillUtil.computePrice(result)
+        } yield {
+          val html = _priceValTpl(advPricing)
+          html2str4json(html)
+        }
+
+        // Отрендерить данные по периоду размещения
+        val periodReportHtml = html2str4json( _reportTpl(result.period) )
+
+        for {
+          pricingHtml <- pricingFut
+        } yield {
+          val resp = GetPriceResp(
+            periodReportHtml  = periodReportHtml,
+            priceHtml         = pricingHtml
+          )
+          Ok( Json.toJson(resp) )
         }
       }
     )

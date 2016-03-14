@@ -1,4 +1,4 @@
-package models.msc
+package models.mbase
 
 import io.suggest.primo.IUnderlying
 import models.MNode
