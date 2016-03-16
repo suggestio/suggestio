@@ -185,6 +185,18 @@ class MItems @Inject() (
       .as[MAdItemStatuses]
   }
 
+  /**
+    * Безвозвратно стереть все item'ы для указанного id заказа.
+    *
+    * @param orderId Номер заказа.
+    * @return Кол-во удалённых рядов.
+    */
+  def deleteByOrderId(orderId: Gid_t): DBIOAction[Int, NoStream, Effect.Write] = {
+    query
+      .filter(_.orderId === orderId)
+      .delete
+  }
+
 }
 
 
