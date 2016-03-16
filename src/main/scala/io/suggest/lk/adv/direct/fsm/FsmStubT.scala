@@ -2,6 +2,7 @@ package io.suggest.lk.adv.direct.fsm
 
 import io.suggest.fsm.StateData
 import io.suggest.lk.adv.direct.m.MStateData
+import io.suggest.lk.adv.fsm.IUpdatePriceDataStart
 import io.suggest.sjs.common.fsm.SjsFsm
 
 /**
@@ -13,13 +14,10 @@ import io.suggest.sjs.common.fsm.SjsFsm
 trait FsmStubT
  extends SjsFsm
  with StateData
+ with IUpdatePriceDataStart
 {
 
   override type State_t = FsmState
   override type SD = MStateData
-
-
-  /** Инстанс состояния обновления цены. */
-  protected def _needUpdateData(): Unit
 
 }

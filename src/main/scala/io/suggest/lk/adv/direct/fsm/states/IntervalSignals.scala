@@ -26,7 +26,7 @@ trait IntervalSignals extends FsmStubT with IntervalSignalsBase {
 
     /** Состояние запроса к серверу за инфой (цена, отчет по датам размещения, etc). */
     override protected def _periodChanged(): Unit = {
-      _needUpdateData()
+      _upStart()
     }
   }
 

@@ -34,7 +34,7 @@ trait NodesSignals extends FsmStubT {
 
       // Изменение галочки привелегированного бесплатного безлимитного размещения.
       case _: Adv4FreeChanged =>
-        _needUpdateData()
+        _upStart()
     }
 
 
@@ -194,7 +194,7 @@ trait NodesSignals extends FsmStubT {
           }
 
           // Запустить пересёт цены.
-          _needUpdateData()
+          _upStart()
         }
       }
 
@@ -204,7 +204,7 @@ trait NodesSignals extends FsmStubT {
     /** Реакция на переключение по конкретных узлов в списке узлов. */
     def _nodeChecked(nc: NodeChecked): Unit = {
       // Изменился состав узлов: пора пересчитать ценник.
-      _needUpdateData()
+      _upStart()
 
       // TODO Надо обновить счетчик на вкладке узла и, возможно, галочку на вкладке/вкладках
       for {

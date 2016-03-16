@@ -16,9 +16,7 @@ testFrameworks += new TestFramework("utest.runner.Framework")
 scalacOptions += "-feature"
 
 libraryDependencies ++= Seq(
-    Common.ORG      %%% "lk-common-sjs"           % "0.0.0-SNAPSHOT",
-    Common.ORG      %%% "lk-dt-period-sjs"        % "0.0.0-SNAPSHOT",
-    "org.scala-js"  %%% "scalajs-dom"             % "0.8.2",
+    Common.ORG      %%% "lk-adv-common-sjs"       % "0.0.0-SNAPSHOT",
     "com.lihaoyi"   %%% "utest"                   % "0.3.1"  % "test"
 )
 

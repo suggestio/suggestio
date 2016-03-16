@@ -48,6 +48,6 @@ object AdvDirectFormFsm
 
   class StandByState
     extends StandByStateT
-    with GetDataStateT
+    with GetPriceStateT
 
 }
