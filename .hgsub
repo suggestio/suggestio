@@ -18,3 +18,6 @@ lk-common-sjs           = lk-common-sjs
 lk-dt-period-sjs        = lk-dt-period-sjs
 datetimepicker-scalajs  = datetimepicker-scalajs
 lk-adv-direct-sjs       = lk-adv-direct-sjs
+lk-adv-common-sjs       = lk-adv-common-sjs
+lk-tags-edit-sjs	= lk-tags-edit-sjs
+lk-adv-geo-tags-sjs	= lk-adv-geo-tags-sjs

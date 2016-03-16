@@ -9,7 +9,7 @@ import Keys._
 
 object Common {
 
-  val SCALA_VSN = "2.11.7"
+  val SCALA_VSN = "2.11.8"
 
   val ORG = "io.suggest"
 

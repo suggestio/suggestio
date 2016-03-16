@@ -98,12 +98,28 @@ object SiobixBuild extends Build {
       .dependsOn(commonSjs, dateTimePickerSjs)
   }
 
+  /** lk-adv-common sjs. */
+  lazy val lkAdvCommonSjs = {
+    val name = "lk-adv-common-sjs"
+    Project(id = name, base = file(name))
+      .enablePlugins(ScalaJSPlay)
+      .dependsOn(lkCommonSjs, lkDtPeriodSjs)
+  }
+
   /** Поддержка формы прямого размещения на узлах. */
   lazy val lkAdvDirectSjs = {
     val name = "lk-adv-direct-sjs"
     Project(id = name, base = file(name))
       .enablePlugins(ScalaJSPlay)
-      .dependsOn(lkCommonSjs, lkDtPeriodSjs)
+      .dependsOn(lkAdvCommonSjs)
+  }
+
+  /** Sjs-модуль для поддержки подсистемы размещения в гео-тегах. */
+  lazy val lkAdvGeoTagsSjs = {
+    val name = "lk-adv-geo-tags-sjs"
+    Project(id = name, base = file(name))
+      .enablePlugins(ScalaJSPlay)
+      .dependsOn(lkAdvCommonSjs, lkTagsEditSjs, mapRadSjs)
   }
 
   /** Модели биллинга второго поколения. */
@@ -125,13 +141,21 @@ object SiobixBuild extends Build {
       .enablePlugins(ScalaJSPlay)
       .dependsOn(commonSjs, leafletSjs)
   }
+  
+  /** Sjs-модуль редактора тегов. */
+  lazy val lkTagsEditSjs = {
+    val name = "lk-tags-edit-sjs"
+    Project(id = name, base = file(name))
+      .enablePlugins(ScalaJSPlay)
+      .dependsOn(lkCommonSjs)
+  }
 
   /** Всякие мелкие скрипты ЛК объеденены в этом scala-js. */
   lazy val lkSjs = {
     val name = "lk-sjs"
     Project(id = name, base = file(name))
       .enablePlugins(ScalaJSPlay)
-      .dependsOn(commonSjs, lkAdvExtSjs, mapRadSjs, lkAdvDirectSjs)
+      .dependsOn(lkAdvExtSjs, lkAdvDirectSjs, lkAdvGeoTagsSjs)
   }
 
   /** Выдача suggest.io, написанная с помощью scala.js. */
