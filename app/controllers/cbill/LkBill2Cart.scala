@@ -212,4 +212,44 @@ trait LkBill2Cart
     }
   }
 
+
+  /**
+    * Очистить корзину покупателя.
+    *
+    * @param onNodeId На какой ноде в ЛК происходит действие очистки.
+    * @param r Адрес страницы для возвращения юзера.
+    *          Если пусто, то юзер будет отправлен на страницу своей пустой корзины.
+    * @return Редирект.
+    */
+  def cartClear(onNodeId: String, r: Option[String]) = IsAdnNodeAdminPost(onNodeId, U.ContractId).async { implicit request =>
+    lazy val logPrefix = s"cartClear($onNodeId):"
+
+    request.user
+      .contractIdOptFut
+      // Выполнить необходимые операции в БД биллинга.
+      .flatMap { contractIdOpt =>
+        // Если корзина не существует, то делать ничего не надо.
+        val contractId = contractIdOpt.get
+
+        // Запускаем без transaction на случай невозможности удаления ордера корзины.
+        slick.db.run {
+          bill2Util.clearCart(contractId)
+        }
+      }
+      // Подавить и залоггировать возможные ошибки.
+      .recover { case ex: Exception =>
+        ex match {
+          case ex1: NoSuchElementException =>
+            LOGGER.trace(s"$logPrefix Unable to clear cart, because contract or cart order does NOT exists")
+          case _ =>
+            LOGGER.warn(s"$logPrefix Cart clear failed", ex)
+        }
+        0
+      }
+      // Независимо от исхода, вернуть редирект куда надо.
+      .map { itemsDeleted =>
+        RdrBackOr(r)(routes.LkBill2.cart(onNodeId))
+      }
+  }
+
 }

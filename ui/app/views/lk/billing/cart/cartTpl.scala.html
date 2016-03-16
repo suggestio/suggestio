@@ -27,6 +27,7 @@
 
   @if( args.items.isEmpty ) {
     <h2>@messages("Your.cart.is.empty").</h2>
+
     @for( mnodeId <- args.mnode.id ) {
       <a href="@routes.MarketLkAdn.showNodeAds(mnodeId)">
         @messages("Return.to.my.ads")
@@ -77,6 +78,12 @@
 
       } @* for itm *@
 
+    }
+
+    @for( mnodeId <- args.mnode.id ) {
+      @form( CSRF(routes.LkBill2.cartClear(mnodeId)) ) {
+        <input type="submit" value="@messages("Delete.all")"/>
+      }
     }
   }
 

@@ -169,6 +169,37 @@ class Bill2Util @Inject() (
     mOrders.getCartOrder(contractId)
   }
 
+  /** Попытаться удалить ордер, если есть id. */
+  def maybeDeleteOrder(orderIdOpt: Option[Gid_t]): DBIOAction[Int, NoStream, Effect.Write] = {
+    orderIdOpt.fold [DBIOAction[Int, NoStream, Effect.Write]] {
+      LOGGER.trace("maybeClearCart(): orderId is empty, skipping")
+      DBIO.successful(0)
+    } { deleteOrder }
+  }
+  /** Удалить ордер вместе с item'ами. Такое можно сделать только если не было транзакций по ордеру/item'ам. */
+  def deleteOrder(orderId: Gid_t): DBIOAction[Int, NoStream, Effect.Write] = {
+    for {
+      // Удаляем все item'ы в корзине разом.
+      itemsDeleted  <- mItems.deleteByOrderId(orderId)
+      // Удаляем ордер корзины, транзакций по ней быть не должно, а больше зависимостей и нет.
+      ordersDeleted <- mOrders.deleteById(orderId)
+    } yield {
+      LOGGER.debug(s"clearCart($orderId) cartOrderId[$orderId] cleared $itemsDeleted items with $ordersDeleted order.")
+      itemsDeleted
+    }
+  }
+
+  /** Найти корзину и очистить её. */
+  def clearCart(contractId: Gid_t): DBIOAction[Int, NoStream, RW] = {
+    for {
+      cartOrderOpt    <- getCartOrder(contractId)
+      cartOrderIdOpt  = cartOrderOpt.flatMap(_.id)
+      itemsDeleted    <- maybeDeleteOrder( cartOrderIdOpt )
+    } yield {
+      itemsDeleted
+    }
+  }
+
   /**
     * Убедиться, что для контракта существует ордер-корзина для покупок.
     *
