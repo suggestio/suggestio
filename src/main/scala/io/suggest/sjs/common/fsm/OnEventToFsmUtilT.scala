@@ -24,3 +24,13 @@ trait OnEventToFsmUtilT extends EventTargetVmT with SendEventToFsmUtil {
   }
 
 }
+
+
+/** Бывает, что fsm передаётся в init как аргумент. */
+trait OnEventToArgFsmUtilT extends EventTargetVmT {
+
+  protected def _addToFsmEventListener[Event_t <: Event](fsm: SjsFsm, eventType: String, model: IFsmMsgCompanion[Event_t]): Unit = {
+    val f = SendEventToFsmUtil.f[Event_t](fsm, model)
+    addEventListener(eventType)(f)
+  }
+}

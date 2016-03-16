@@ -86,6 +86,11 @@ trait SjsFsm extends AbstractFsm with ISjsLogger {
     _sendEventSync(e)
   }
 
+  /** Отправка сообщения с асинхронной отработкой. Управление возвращается назад немедленно. */
+  final def !(e: FsmMsg_t): Unit = {
+    _sendEvent(e)
+  }
+
   /** Внутренняя асинхронная отправка сообщения.
     * Оно может быть любого типа для самоуведомления состояний. */
   protected[this] def _sendEvent(e: Any): Unit = {
