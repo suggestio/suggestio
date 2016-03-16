@@ -54,10 +54,10 @@ class AgtFormInit extends IInit {
 
     // Инициализировать FSM редактора тегов.
     val tagsFsm = new TagsEditFsm {
-      override protected def _addTagRoute: Route = {
+      override def _addTagRoute: Route = {
         jsRoutes.controllers.LkAdvGeoTag.tagEditorAddTag()
       }
-      override protected def _tagsChanged(): Unit = {
+      override def _tagsChanged(): Unit = {
         super._tagsChanged()
         // Когда что-то изменяется в наборе тегов, необходимо асинхронно уведомлять основной FSM.
         mainFsm ! TagsChanged
