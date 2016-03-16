@@ -132,23 +132,4 @@ object AdvDirectFormConstants {
 
   }
 
-
-  /** Константы JSON-ответов сервера на запросы рассчета стоимости размещения. */
-  object PriceJson {
-
-    /** id инпута, который содержит URL для сабмита формы для рассчета цены и прочего. */
-    def GET_PRICE_URL_INPUT_ID = "gpui" + PREFIX
-
-    /** Имя аттрибута, который содержит HTTP-метод для обращения к URL. */
-    def ATTR_METHOD = ScConstants.CUSTOM_ATTR_PREFIX + "method"
-
-    /** Имя поля в JSON-ответе цены, содержащее отрендеренную цену. */
-    def PRICE_HTML_FN          = "a"
-
-    /** Имя поля в JSON-ответе цены, содержащее отрендеренную инфу по периоду размещения. */
-    def PERIOD_REPORT_HTML_FN  = "b"
-
-  }
-
-
 }
