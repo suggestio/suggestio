@@ -43,9 +43,20 @@ object Distance {
 
 /** Описание дистанции. */
 case class Distance(distance: Double, units: DistanceUnit) {
+
   override def toString = units.toString(distance)
 
   def toEsDistance = new EsDistance(distance, units)
+
+  /** Вернуть значение distance в указанных единицах измерения. */
+  def distanceIn(units2: DistanceUnit) = DistanceUnit.convert(distance, units, units2)
+
+  /** Вернуть значение distance в метрах. */
+  def meters      = distanceIn( DistanceUnit.METERS )
+
+  /** Вернуть значение distance в километрах. */
+  def kiloMeters  = distanceIn( DistanceUnit.KILOMETERS )
+
 }
 
 
