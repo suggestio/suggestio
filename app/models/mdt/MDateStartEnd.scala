@@ -1,6 +1,6 @@
 package models.mdt
 
-import org.joda.time.LocalDate
+import org.joda.time.{Interval, LocalDate}
 
 /**
  * Suggest.io
@@ -13,8 +13,16 @@ trait IDateStartEnd {
   /** Дата начала. */
   def dateStart: LocalDate
 
+  def dtStart = dateStart.toDateTimeAtStartOfDay
+
+
   /** Дата окончания. */
   def dateEnd: LocalDate
+
+  def dtEnd = dateEnd.toDateTimeAtStartOfDay
+
+
+  def interval = new Interval(dtStart, dtEnd)
 
 }
 

@@ -249,7 +249,7 @@ class MarketAdv @Inject() (
     * @param adId id размещаемой рекламной карточки.
     * @return Инлайновый рендер отображаемой цены.
     */
-  def getAdvPriceSubmit(adId: String) = CanAdvertiseAdPost(adId, U.Balance).async { implicit request =>
+  def getAdvPriceSubmit(adId: String) = CanAdvertiseAdPost(adId).async { implicit request =>
     lazy val logPrefix = s"getAdvPriceSubmit($adId)#${System.currentTimeMillis}:"
     directAdvFormUtil.advForm.bindFromRequest().fold(
       {formWithErrors =>
@@ -271,9 +271,6 @@ class MarketAdv @Inject() (
           filterEntiesByPossibleRcvrs(adves1, allRcvrIds)
         }
 
-        // Убедиться, что чтение балансов текущего юзера точно уже процессе (U.Balance)
-        val userBalancesFut = request.user.mBalancesFut
-
         // Начинаем рассчитывать ценник.
         val priceValHtmlFut = for {
           adves2  <- adves2Fut
@@ -288,13 +285,8 @@ class MarketAdv @Inject() (
               }
             }
           }
-          userBalances <- userBalancesFut
         } yield {
-          val advPricing = if (prices.nonEmpty) {
-            advDirectBilling.getAdvPricing(prices, userBalances)
-          } else {
-            bill2Util.zeroPricing
-          }
+          val advPricing = bill2Util.getAdvPricing(prices)
           val html = _priceValTpl(advPricing)
           html2str4json(html)
         }

@@ -201,6 +201,17 @@ class Bill2Util @Inject() (
     MAdvPricing(prices, hasEnoughtMoney = true)
   }
 
+
+  def getAdvPricing(prices: Seq[MPrice]): MAdvPricing = {
+    // Если есть разные валюты, то операция уже невозможна.
+    if (prices.nonEmpty) {
+      MAdvPricing(prices, hasEnoughtMoney = true)
+    } else {
+      zeroPricing
+    }
+  }
+
+
   /** Найти все item'ы указанного ордера. */
   def orderItems(orderId: Gid_t): Future[Seq[MItem]] = {
     slick.db.run {

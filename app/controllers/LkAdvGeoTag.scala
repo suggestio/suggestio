@@ -71,7 +71,7 @@ class LkAdvGeoTag @Inject() (
         tags      = Nil,
         mapState  = MapViewState(gp, zoom = 10),
         circle    = CircleGs(gp, radius = Distance(10000, DistanceUnit.METERS)),
-        period    = MDatesPeriod()
+        dates    = MDatesPeriod()
       )
 
       formEmpty.fill(res)
@@ -185,14 +185,14 @@ class LkAdvGeoTag @Inject() (
       {result =>
         // Запустить рассчет стоимости размещаемого
         val pricingFut = for {
-          advPricing <- geoTagAdvBillUtil.computePrice(result)
+          advPricing <- geoTagAdvBillUtil.computePricing(result)
         } yield {
           val html = _priceValTpl(advPricing)
           html2str4json(html)
         }
 
         // Отрендерить данные по периоду размещения
-        val periodReportHtml = html2str4json( _reportTpl(result.period) )
+        val periodReportHtml = html2str4json( _reportTpl(result.dates) )
 
         for {
           pricingHtml <- pricingFut

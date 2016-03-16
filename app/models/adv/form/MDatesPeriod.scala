@@ -1,7 +1,7 @@
 package models.adv.form
 
 import models.mdt.IDateStartEnd
-import org.joda.time.{Period, LocalDate}
+import org.joda.time.{Interval, Period, LocalDate}
 
 /**
  * Suggest.io
@@ -15,9 +15,9 @@ object MDatesPeriod {
   def apply(period: QuickAdvPeriod = QuickAdvPeriods.default,
             dateStart: LocalDate = LocalDate.now()): MDatesPeriod = {
     apply(
-      quickPeriod    = Some(period),
-      dateStart = dateStart,
-      dateEnd   = dateStart.plus( period.toPeriod.minusDays(1) )
+      quickPeriod     = Some(period),
+      dateStart       = dateStart,
+      dateEnd         = dateStart.plus( period.toPeriod.minusDays(1) )
     )
   }
 
@@ -30,9 +30,3 @@ case class MDatesPeriod(
   override val dateEnd    : LocalDate
 )
   extends IDateStartEnd
-{
-
-  /** Вернуть инстанс Joda-period. */
-  def period = new Period(dateStart, dateEnd)
-
-}

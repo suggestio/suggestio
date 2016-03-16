@@ -33,7 +33,6 @@ import scala.concurrent.Future
  */
 @Singleton
 class AdvDirectBilling @Inject() (
-  n2NodesUtil             : N2NodesUtil,
   tfDailyUtil             : TfDailyUtil,
   calendarUtil            : CalendarUtil,
   mCalendars              : MCalendars,
@@ -256,18 +255,6 @@ class AdvDirectBilling @Inject() (
     }
   }
 
-  def getAdvPricing(prices: Seq[MPrice], balances: Seq[MBalance2]): MAdvPricing = {
-    // Если есть разные валюты, то операция уже невозможна.
-    // TODO Наверное, этот параметр надо будет удалить, т.к. будет отправка юзера на оплату в ПС.
-    val hasEnoughtMoney = true
-    /*prices.size <= 1 && {
-      prices.headOption.exists { price =>
-        price.currency.getCurrencyCode == mbb.currencyCode && price.amount <= mbb.amount.toDouble
-      }
-    }*/
-    MAdvPricing(prices, hasEnoughtMoney)
-  }
-
   /**
     * Сохранить в БД реквесты размещения рекламных карточек.
     *
@@ -281,7 +268,6 @@ class AdvDirectBilling @Inject() (
     */
   def mkAdvReqItems(orderId: Gid_t, mad: MNode, advs: TraversableOnce[AdvFormEntry], status: MItemStatus,
                     rcvrTfs: Map[String, MDailyTf], mcalsCtx: ICalsCtx): Iterator[MItem] = {
-    val producerId = n2NodesUtil.madProducerId(mad).get
     val bmc = getAdModulesCount(mad)
 
     for (adv <- advs.toIterator if adv.advertise) yield {

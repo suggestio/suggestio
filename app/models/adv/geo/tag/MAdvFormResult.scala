@@ -4,7 +4,6 @@ import io.suggest.model.geo.CircleGs
 import models.adv.form.MDatesPeriod
 import models.maps.MapViewState
 import models.mtag.MTagBinded
-import org.joda.time.Interval
 
 /**
  * Suggest.io
@@ -21,11 +20,7 @@ trait IAdvGeoTagsInfo {
   def circle    : CircleGs
 
   /** Период размещения. */
-  def period    : MDatesPeriod
-
-
-  /** Приведение периода размещения в понятиях формы к периоду размещения в датах. */
-  def interval = new Interval(period.dateStart.toDateTimeAtStartOfDay, period.dateEnd.toDateTimeAtStartOfDay)
+  def dates     : MDatesPeriod
 
 }
 
@@ -39,9 +34,9 @@ trait IAdvFormResult extends IAdvGeoTagsInfo {
 
 
 case class MAdvFormResult(
-  tags      : List[MTagBinded],
-  mapState  : MapViewState,
-  circle    : CircleGs,
-  period    : MDatesPeriod
+  override val tags       : List[MTagBinded],
+  override val mapState   : MapViewState,
+  override val circle     : CircleGs,
+  override val dates      : MDatesPeriod
 )
   extends IAdvFormResult

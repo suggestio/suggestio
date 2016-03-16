@@ -10,6 +10,7 @@ import models.adv.geo.tag.IAdvGeoTagsInfo
 import models.adv.price.MAdvPricing
 import models.mproj.ICommonDi
 import models.mtag.MTagBinded
+import util.PlayMacroLogsImpl
 import util.billing.Bill2Util
 
 import scala.concurrent.Future
@@ -24,7 +25,9 @@ class GeoTagAdvBillUtil @Inject() (
   bill2Util                           : Bill2Util,
   mItems                              : MItems,
   val mCommonDi                       : ICommonDi
-) {
+)
+  extends PlayMacroLogsImpl
+{
 
   import mCommonDi._
   import slick.driver.api._
@@ -54,7 +57,7 @@ class GeoTagAdvBillUtil @Inject() (
         status        = MItemStatuses.Draft,
         price         = computePriceOne(tag, res),
         adId          = adId,
-        dtIntervalOpt = Some(res.interval),
+        dtIntervalOpt = Some(res.dates.interval),
         rcvrIdOpt     = tag.nodeId,
         tagFaceOpt    = Some(tag.face),
         geoShape      = Some(res.circle)
@@ -68,13 +71,14 @@ class GeoTagAdvBillUtil @Inject() (
 
   /**
     * Рассчет стоимости для результата маппинга формы.
+    *
     * @param res Запрашиваемое юзером размещение.
     * @return
     */
-  def computePrice(res: IAdvGeoTagsInfo): Future[MAdvPricing] = {
+  def computePricing(res: IAdvGeoTagsInfo): Future[MAdvPricing] = {
     // TODO Учитывать радиус размещения.
 
-    val daysCount = Math.max(1, res.period.period.getDays) + 1
+    val daysCount = Math.max(1, res.dates.interval.toDuration.getStandardDays) + 1
     // Посчитать цены размещения для каждого тега.
     val prices1 = res
       .tags
@@ -84,17 +88,23 @@ class GeoTagAdvBillUtil @Inject() (
       }
       .toSeq
 
+    // Привести радиус на карте к множителю цены
+    val radKm = res.circle.radius.kiloMeters
+    val radMult = radKm / 1.5
+
     // Сгруппировать цены по валютам.
     val prices2 = MPrice.sumPricesByCurrency(prices1)
-      // Домножить на кол-во дней
+      // Домножить на кол-во дней и радиус
       .map { price =>
         price.copy(
-          amount = price.amount * daysCount
+          amount = price.amount * daysCount * radMult
         )
       }
       .toSeq
 
-    val result = MAdvPricing(prices2)
+    LOGGER.trace(s"computePricing(): $res => days=$daysCount radKm=$radKm => $prices2")
+
+    val result = bill2Util.getAdvPricing( prices2 )
     Future.successful(result)
   }
 
