@@ -17,7 +17,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
  * Created: 09.09.15 16:16
  * Description: FSM-аддон для сборки состояний процесса добавления тега.
  */
-trait Add extends TagsEditFsmStub {
+trait Add extends TagsEditFsmStub { fsm =>
 
   /** Роута для добавления тега. */
   protected def _addTagRoute: Route
@@ -60,14 +60,33 @@ trait Add extends TagsEditFsmStub {
 
     /** Ресивер входящих сигналов. */
     override def receiverPart: Receive = super.receiverPart orElse {
+      // Сервер доволен, просит обновить форму
       case ue: IUpdateExisting =>
         _updateExistingTags(ue)
+
+      // Сервер негодует.
       case afe: AddFormError =>
         _handleAddFormError(afe)
+
+      // Очень маловероятные ошибки:
       case ur: UnexpectedResponse =>
         _handleUnexpectedResponse(ur)
       case Failure(ex) =>
         _handleRequestError(ex)
+    }
+
+    /** Общий код обновления верстки формы добавляемого имени тега. */
+    private def _updateAddCont(ue: IAddFormHtml): Unit = {
+      for {
+        aCont <- AContainer.find()
+        aCont2 <- ue.addFormVm
+      } {
+        aCont.replaceWith(aCont2)
+        aCont2.initLayout(fsm)
+        for (input <- aCont2.nameInput) {
+          input.focus()
+        }
+      }
     }
 
     /** Реакция на запрос обновления текущих тегов. */
@@ -75,14 +94,14 @@ trait Add extends TagsEditFsmStub {
       for (eCont <- EContainer.find()) {
         eCont.setContent( ue.existingHtml )
       }
-      AContainer.overWriteFromHtml( ue.addFormHtml )
+      _updateAddCont(ue)
       _tagsChanged()
       become(_allDoneState)
     }
 
     /** Реакция на получение ошибочной формы добавления. */
     protected def _handleAddFormError(afe: AddFormError): Unit = {
-      AContainer.overWriteFromHtml( afe.addFormHtml )
+      _updateAddCont(afe)
       become(_allDoneState)
     }
 

@@ -1,6 +1,6 @@
 package io.suggest.lk.tags.edit.vm
 
-import io.suggest.lk.tags.edit.vm.add.AContainer
+import io.suggest.lk.tags.edit.vm.add.{AddBtn, AContainer}
 import io.suggest.lk.tags.edit.vm.exist.EContainer
 import io.suggest.sjs.common.fsm.{SjsFsm, IInitLayoutFsm}
 
@@ -16,9 +16,12 @@ object TVm extends IInitLayoutFsm {
 
   def addContainer = AContainer.find()
 
+  def addBtn = AddBtn.find()
+
   override def initLayout(fsm: SjsFsm): Unit = {
     val initF = IInitLayoutFsm.f(fsm)
     addContainer.foreach(initF)
+    addBtn.foreach(initF)
     existContainer.foreach(initF)
   }
 

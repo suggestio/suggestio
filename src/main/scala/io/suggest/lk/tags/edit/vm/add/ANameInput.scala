@@ -4,10 +4,14 @@ import io.suggest.common.tags.edit.TagsEditConstants.ADD_NAME_INPUT_ID
 import io.suggest.lk.tags.edit.m.signals._
 import io.suggest.sjs.common.fsm.{SendEventToFsmUtil, IInitLayoutFsm, OnEventToArgFsmUtilT, SjsFsm}
 import io.suggest.sjs.common.vm.IVm
+import io.suggest.sjs.common.vm.attr.StringInputValueT
+import io.suggest.sjs.common.vm.content.ReplaceWith
 import io.suggest.sjs.common.vm.find.FindElT
+import io.suggest.sjs.common.vm.of.OfEventTargetNode
+import io.suggest.sjs.common.vm.walk.Focus
 import org.scalajs.dom.KeyboardEvent
 import org.scalajs.dom.ext.KeyCode
-import org.scalajs.dom.raw.HTMLInputElement
+import org.scalajs.dom.raw.{HTMLElement, HTMLInputElement}
 
 /**
  * Suggest.io
@@ -16,14 +20,20 @@ import org.scalajs.dom.raw.HTMLInputElement
  * Description: VM'ка для работы с полем ввода имени тега.
  * Далее происходит поиск и добавление тега.
  */
-object ANameInput extends FindElT {
+object ANameInput extends FindElT with OfEventTargetNode {
+
   override type Dom_t = HTMLInputElement
   override type T     = ANameInput
   override def DOM_ID = ADD_NAME_INPUT_ID
+
+  override def _isWantedHtmlEl(el: HTMLElement): Boolean = {
+    el.id == DOM_ID
+  }
+
 }
 
 
-trait ANameInputT extends IVm with IInitLayoutFsm with OnEventToArgFsmUtilT {
+trait ANameInputT extends IInitLayoutFsm with OnEventToArgFsmUtilT with Focus with StringInputValueT {
 
   override type T = HTMLInputElement
 

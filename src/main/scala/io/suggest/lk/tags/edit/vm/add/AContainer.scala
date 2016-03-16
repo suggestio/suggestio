@@ -2,10 +2,13 @@ package io.suggest.lk.tags.edit.vm.add
 
 import io.suggest.common.tags.edit.TagsEditConstants.ADD_FORM_ID
 import io.suggest.sjs.common.fsm.{IInitLayoutFsm, SjsFsm}
+import io.suggest.sjs.common.model.dom.DomListIterator
 import io.suggest.sjs.common.vm.IVm
 import io.suggest.sjs.common.vm.content.{ApplyFromOuterHtml, ReplaceWith}
 import io.suggest.sjs.common.vm.find.FindDiv
-import org.scalajs.dom.raw.HTMLDivElement
+import io.suggest.sjs.common.vm.of.{OfEventTargetNode, OfHtml}
+import org.scalajs.dom.Node
+import org.scalajs.dom.raw.{HTMLElement, HTMLDivElement}
 
 /**
  * Suggest.io
@@ -13,21 +16,13 @@ import org.scalajs.dom.raw.HTMLDivElement
  * Created: 08.09.15 12:26
  * Description: Контейнер элементов формы добавления тега.
  */
-object AContainer extends FindDiv with ApplyFromOuterHtml {
+object AContainer extends FindDiv with OfHtml with OfEventTargetNode {
 
   override type T     = AContainer
   override def DOM_ID = ADD_FORM_ID
 
-  /**
-   * Замена контента вместе с контейнером с помощью переданной верстки outerHTML.
-    *
-    * @param html Верстка (с сервера).
-   */
-  def overWriteFromHtml(html: String): Unit = {
-    for (aCont <- find()) {
-      val cont2 = apply( html )
-      aCont.replaceWith( cont2 )
-    }
+  override def _isWantedHtmlEl(el: HTMLElement): Boolean = {
+    el.id == DOM_ID
   }
 
 }
@@ -40,14 +35,9 @@ trait AContainerT extends IVm with IInitLayoutFsm with ReplaceWith {
   /** Поиск input'а ввода имени тега. */
   def nameInput = ANameInput.find()
 
-  /** Поиск кнопки добавления тега. */
-  def addBtn    = AddBtn.find()
-
   override def initLayout(fsm: SjsFsm): Unit = {
-    // Инициализация дочерних элементов.
     val f = IInitLayoutFsm.f(fsm)
     nameInput.foreach(f)
-    addBtn.foreach(f)
   }
 
 }

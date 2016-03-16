@@ -1,5 +1,6 @@
 package io.suggest.lk.tags.edit.m.madd
 
+import io.suggest.lk.tags.edit.vm.add.AContainer
 import org.scalajs.dom.XMLHttpRequest
 
 /**
@@ -12,6 +13,8 @@ trait IAddResult
 
 trait IAddFormHtml extends IAddResult {
   def addFormHtml: String
+
+  def addFormVm = AContainer.ofHtml(addFormHtml)
 }
 
 /** Возникла проблема при биндинге формы. */

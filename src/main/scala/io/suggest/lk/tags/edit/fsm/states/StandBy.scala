@@ -41,10 +41,21 @@ trait StandBy extends TagsEditFsmStub {
 
     /** Реакция на клик по кнопке удаления тега. */
     protected def _tagDeleteClick(event: Event): Unit = {
+      // Найти элементы, связанные с удаляемым тегом...
       for {
         edel    <- EDelete.ofEventTarget( event.target )
         etCont  <- edel.tagContainer
       } {
+        // Залить текущее значение удаляемого тега в tag name input
+        for {
+          eti   <- etCont.input
+          tname <- eti.value
+          tni   <- ANameInput.find()
+        } yield {
+          tni.value = tname
+        }
+
+        // Стереть тег из формы.
         etCont.hideAndRemove()
         _tagsChanged()
       }
@@ -70,7 +81,6 @@ trait StandBy extends TagsEditFsmStub {
 
     /** Реакция на попадание фокуса в инпут ввода имени. */
     protected def _onNameInput(event: Event): Unit = {
-      println(event)
       val sd0 = _stateData
 
       // Отменить старый таймер запуска запроса, если есть.

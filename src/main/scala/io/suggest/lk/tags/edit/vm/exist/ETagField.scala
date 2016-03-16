@@ -1,6 +1,7 @@
 package io.suggest.lk.tags.edit.vm.exist
 
 import io.suggest.common.tags.edit.TagsEditConstants
+import io.suggest.sjs.common.vm.attr.StringInputValueT
 import io.suggest.sjs.common.vm.{Vm, IVm}
 import io.suggest.sjs.common.vm.find.IApplyEl
 import io.suggest.sjs.common.vm.of.OfEventTargetNode
@@ -31,7 +32,7 @@ object ETagField extends IApplyEl with OfEventTargetNode {
 }
 
 
-trait ETagFieldT extends IVm {
+trait ETagFieldT extends StringInputValueT {
 
   override type T = HTMLInputElement
 
