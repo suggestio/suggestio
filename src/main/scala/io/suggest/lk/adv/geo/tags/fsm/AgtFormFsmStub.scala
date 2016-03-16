@@ -18,6 +18,5 @@ trait AgtFormFsmStub
 {
 
   override type SD = MAgtStateData
-  override protected var _stateData: SD = MAgtStateData()
 
 }

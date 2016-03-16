@@ -1,9 +1,10 @@
 package io.suggest.lk.adv.geo.tags.vm
 
 import io.suggest.adv.geo.tag.AgtFormConsts
-import io.suggest.sjs.common.fsm.IInitLayoutFsm
+import io.suggest.sjs.common.fsm.{SjsFsm, IInitLayoutFsm}
 import io.suggest.sjs.common.vm.find.FindElT
 import io.suggest.sjs.common.vm.input.FormDataVmT
+import io.suggest.sjs.dt.period.vm.Container
 import org.scalajs.dom.raw.HTMLFormElement
 
 /**
@@ -21,8 +22,20 @@ object AgtForm extends FindElT {
 
 import AgtForm.Dom_t
 
-trait AgtFormT extends FormDataVmT {
+trait AgtFormT
+  extends FormDataVmT
+  with IInitLayoutFsm
+{
+
   override type T = Dom_t
+
+  def intervalCont  = Container.find()
+
+  override def initLayout(fsm: SjsFsm): Unit = {
+    val f = IInitLayoutFsm.f(fsm)
+    intervalCont.foreach(f)
+  }
+
 }
 
 

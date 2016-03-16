@@ -1,6 +1,8 @@
 package io.suggest.lk.adv.geo.tags.fsm
 
+import io.suggest.lk.adv.geo.tags.m.MAgtStateData
 import io.suggest.sjs.common.util.SjsLogger
+import io.suggest.sjs.dt.period.vm.Container
 
 /**
   * Suggest.io
@@ -11,11 +13,24 @@ import io.suggest.sjs.common.util.SjsLogger
 class AgtFormFsm
   extends states.StandBy
   with states.UpdatePriceData
+  with states.PeriodSignals
   with SjsLogger
 {
 
   override type State_t = FsmState
   override protected var _state: State_t = new DummyState
+
+  override protected var _stateData: SD = {
+    val sdOpt = for {
+      cont    <- Container.find()
+      period  <- cont.getCurrPeriod
+    } yield {
+      MAgtStateData(
+        period = period
+      )
+    }
+    sdOpt.get
+  }
 
   private class DummyState extends FsmEmptyReceiverState
 
@@ -30,5 +45,6 @@ class AgtFormFsm
   class StandByState
     extends StandByStateT
     with GetPriceStateT
+    with PeriodSignalsStateT
 
 }

@@ -12,3 +12,10 @@ trait IFormChanged extends IFsmMsg
 
 /** Сигнал изменения в наборе тегов. */
 case object TagsChanged extends IFormChanged
+
+
+/** Сигнал изменений каких-то данных, задаваемых на карте. */
+trait IMapDataChanged extends IFormChanged
+
+/** Сигнал об изменении радиуса на карте. */
+case object RadiusChanged extends IMapDataChanged
