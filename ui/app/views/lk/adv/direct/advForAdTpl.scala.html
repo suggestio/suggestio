@@ -19,6 +19,11 @@
   headAfter     = Some( _jqDatePickCssTpl() )
 ) {
 
+  @* URL для рассчета стоимости размещения. *@
+  @for( adId <- args.mad.id ) {
+    @_getPriceUrlTpl( routes.MarketAdv.getAdvPriceSubmit(adId) )
+  }
+
   @_advFormBlockTpl(id = Some("advsFormBlock")) {
     @_advFormTpl(args.formArgs)
   }

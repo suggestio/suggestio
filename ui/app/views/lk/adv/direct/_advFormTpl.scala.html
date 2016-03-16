@@ -25,10 +25,6 @@
       'id     -> FORM_ID,
       'class  -> "adv-management_main-form") {
 
-  @* URL для рассчета стоимости размещения. *@
-  @_getPriceUrlTpl( routes.MarketAdv.getAdvPriceSubmit(adId) )
-
-
   @* Суперюзерам доступно беплатное размещение на любом узле. *@
   @if(ctx.user.isSuper) {
     @_advSuTpl()

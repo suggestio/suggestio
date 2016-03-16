@@ -10,7 +10,7 @@
 @import stuff.geo._
 @import lk.tag.edit._
 @import lk.adv.widgets._
-@import io.suggest.common.adv.gtag.AdvGeoTagConstants._
+@import io.suggest.adv.geo.tag.AgtFormConsts._
 
 @_barTpl(MHands.Left) {
   @* js-форма добавления тегов. *@
@@ -32,8 +32,9 @@
   @_barTpl(MHands.Right) {
     @period._contTpl() {
       @period._formTpl(args.form("period"), args.advPeriodsAvail)
-
-      TODO period._reportTpl()
+      @for(v <- args.form.value) {
+        @period._reportTpl(v.period)
+      }
     }
   }
 

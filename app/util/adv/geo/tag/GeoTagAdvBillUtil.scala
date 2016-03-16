@@ -72,7 +72,9 @@ class GeoTagAdvBillUtil @Inject() (
     * @return
     */
   def computePrice(res: IAdvGeoTagsInfo): Future[MAdvPricing] = {
-    val daysCount = Math.max(1, res.period.period.getDays)
+    // TODO Учитывать радиус размещения.
+
+    val daysCount = Math.max(1, res.period.period.getDays) + 1
     // Посчитать цены размещения для каждого тега.
     val prices1 = res
       .tags
