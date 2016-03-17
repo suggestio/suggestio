@@ -75,6 +75,7 @@ Currency=Валюта
 Refuse=Отказать
 Approve=Одобрить
 Delete.all=Удалить все
+Something.gone.wrong=Что-то пошло не так
 
 
 requisites=Платёжные реквизиты для вывода средств

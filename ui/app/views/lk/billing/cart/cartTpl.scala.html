@@ -71,6 +71,14 @@
           @_td("S") {
             @for(mitem <- itm.mitems) {
               @formatPrice(mitem.price)
+              @* Кнопка-ссылка удаления этого элемента. *@
+              @for(itemId <- mitem.id) {
+                @form( CSRF(routes.LkBill2.cartDeleteItem(itemId, r = ctx.request.path)), 'class -> "f-right" ) {
+                  <a class="btn __negative js-submit-btn" title="@messages("Delete")" href="#">
+                    &cross;
+                  </a>
+                }
+              }
               <br/>
             }
           }

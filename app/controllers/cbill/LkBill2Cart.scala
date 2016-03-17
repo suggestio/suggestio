@@ -2,6 +2,7 @@ package controllers.cbill
 
 import controllers.{routes, SioController}
 import io.suggest.common.fut.FutureUtil
+import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.{ItemStatusChanged, MItem}
 import io.suggest.mbill2.m.order.OrderStatusChanged
 import models.adv.price.MAdvPricing
@@ -11,7 +12,7 @@ import models.mbill.MCartIdeas
 import models.mctx.Context
 import models.mlk.bill.{MCartItem, MCartTplArgs}
 import util.PlayMacroLogsI
-import util.acl.IsAdnNodeAdmin
+import util.acl.{CanAccessItem, IsAdnNodeAdmin}
 import util.billing.IBill2UtilDi
 import util.blocks.{BgImg, BlocksConf}
 import views.html.lk.billing.cart._
@@ -29,6 +30,7 @@ trait LkBill2Cart
   with IBill2UtilDi
   with PlayMacroLogsI
   with IsAdnNodeAdmin
+  with CanAccessItem
 {
 
   import mCommonDi._
@@ -132,9 +134,7 @@ trait LkBill2Cart
       mitems <- mitemsFut
     } yield {
       MAdvPricing(
-        prices = bill2Util.items2pricesIter(mitems).toIterable,
-        // true тут выставлено просто потому что в новом биллинге всегда доплачивается через внешнюю кассу.
-        hasEnoughtMoney = true
+        prices = bill2Util.items2pricesIter(mitems).toIterable
       )
     }
 
@@ -250,6 +250,40 @@ trait LkBill2Cart
       .map { itemsDeleted =>
         RdrBackOr(r)(routes.LkBill2.cart(onNodeId))
       }
+  }
+
+
+  /**
+    * Удалить item из корзины, вернувшись затем на указанную страницу.
+    *
+    * @param itemId id удаляемого item'а.
+    * @param r Обязательный адрес для возврата по итогам действа.
+    * @return Редирект в r.
+    */
+  def cartDeleteItem(itemId: Gid_t, r: String) = CanAccessItemPost(itemId, edit = true).async { implicit request =>
+    // Права уже проверены, item уже получен. Нужно просто удалить его.
+    val delFut0 = slick.db.run {
+      mItems.deleteById(itemId)
+    }
+
+    lazy val logPrefix = s"cartDeleteItem($itemId):"
+
+    // Подавить возможные ошибки удаления.
+    val delFut = delFut0.recover { case ex: Throwable =>
+      LOGGER.error(s"$logPrefix Item delete failed", ex)
+      0
+    }
+
+    implicit val ctx = implicitly[Context]
+    for (rowsDeleted <- delFut) yield {
+      val resp0 = Redirect(r)
+      if (rowsDeleted == 1) {
+        resp0
+      } else {
+        LOGGER.warn(s"$logPrefix MItems.deleteById() returned invalid deleted rows count: $rowsDeleted")
+        resp0.flashing(FLASH.ERROR -> ctx.messages("Something.gone.wrong"))
+      }
+    }
   }
 
 }

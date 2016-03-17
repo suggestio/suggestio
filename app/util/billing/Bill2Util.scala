@@ -813,6 +813,28 @@ class Bill2Util @Inject() (
     }
   }
 
+
+  /**
+    * Максимально быстрый поиск id контракта для указанного item'а.
+    * @param itemId id итема.
+    * @return DB-экшен с опциональным id контракта.
+    */
+  def getItemContractId(itemId: Gid_t): DBIOAction[Option[Gid_t], NoStream, Effect.Read] = {
+    // Для ускорения организуем вложенный запрос:
+    // http://slick.typesafe.com/doc/3.1.0/sql-to-slick.html#subquery
+    // Найти orderId указанного item'а.
+    val itemOrderIdsQ = mItems.query
+      .filter(_.id === itemId)
+      .map(_.orderId)
+
+    // Найти contractId указанного ордера.
+    mOrders.query
+      .filter(_.id in itemOrderIdsQ)
+      .map(_.contractId)
+      .result
+      .headOption
+  }
+
 }
 
 

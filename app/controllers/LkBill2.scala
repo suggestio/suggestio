@@ -2,6 +2,8 @@ package controllers
 
 import com.google.inject.Inject
 import controllers.cbill.{LkBillTxns, LkBill2Cart}
+import io.suggest.mbill2.m.item.MItems
+import io.suggest.mbill2.m.order.MOrders
 import io.suggest.mbill2.m.txn.MTxns
 import models.MNode
 import models.mbill.{MRcvrInfoTplArgs, MDailyTfTplArgs, MLkBillNodeTplArgs}
@@ -26,6 +28,8 @@ class LkBill2 @Inject() (
   tfDailyUtil                 : TfDailyUtil,
   mCalendars                  : MCalendars,
   galleryUtil                 : GalleryUtil,
+  override val mItems         : MItems,
+  override val mOrders        : MOrders,
   override val bill2Util      : Bill2Util,
   override val mTxns          : MTxns,
   override val mCommonDi      : ICommonDi

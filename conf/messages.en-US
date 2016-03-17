@@ -75,6 +75,7 @@ Currency=Currency
 Refuse=Refuse
 Approve=Approve
 Delete.all=Delete all
+Something.gone.wrong=Something gone wrong
 
 requisites=Payment details for withdrawal
 

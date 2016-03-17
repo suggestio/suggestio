@@ -43,6 +43,8 @@ trait ISioUser {
   /** Является ли текущий клиент залогиненным юзером? */
   def isAuth: Boolean
 
+  def isAnon = !isAuth
+
   /** Инстанс узла юзера в модели MNode. Не меняется при многократных запросах.
     * В реализациях инстанса может быть как lazy val, так и val, или другие подходящие варианты. */
   def personNodeOptFut: Future[Option[MNode]]

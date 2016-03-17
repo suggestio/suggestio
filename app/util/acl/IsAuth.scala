@@ -19,8 +19,8 @@ trait OnUnauthUtilCtl extends SioController {
     def obeyReturnPath: Boolean = true
 
     def onUnauthBase(request: RequestHeader): Result = {
-      val r = if (obeyReturnPath) Some(request.path) else None
-      Redirect( routes.Ident.emailPwLoginForm(r = r) )
+      val rOpt = if (obeyReturnPath) Some(request.path) else None
+      Redirect( routes.Ident.emailPwLoginForm(r = rOpt) )
     }
 
     /** Что делать, когда юзер не авторизован? */

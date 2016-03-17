@@ -39,10 +39,11 @@ trait CanUpdateSls
 
       def reqErr = MReq(request, user)
 
-      personIdOpt.fold {
+      if (user.isAnon) {
         LOGGER.trace("invokeBlock(): Anonymous access prohibited to " + adId)
         onUnauthNode(reqErr)
-      } { personId =>
+
+      } else {
         madOptFut flatMap {
           // Найдена запрошенная рекламная карточка
           case Some(mad) =>
