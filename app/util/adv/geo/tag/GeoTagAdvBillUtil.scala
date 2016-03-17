@@ -32,11 +32,15 @@ class GeoTagAdvBillUtil @Inject() (
   import mCommonDi._
   import slick.driver.api._
 
+  private def _oneTag1dayPrice: MPrice = bill2Util.zeroPrice.copy(amount = 1.0)
 
-  /** Посчитать стоимость размещения. */
-  def computePriceOne(tag: MTagBinded, res: IAdvGeoTagsInfo): MPrice = {
-    // TODO Запилить систему подсчета стоимости размещения.
-    bill2Util.zeroPrice.copy(amount = 1.0)
+  private def _oneTagPrice(res: IAdvGeoTagsInfo): MPrice = {
+    val priceMult = _getPriceMult(res)
+
+    val oneTag1dPrice = _oneTag1dayPrice
+    oneTag1dPrice.copy(
+      amount = oneTag1dPrice.amount * priceMult
+    )
   }
 
   /**
@@ -50,12 +54,14 @@ class GeoTagAdvBillUtil @Inject() (
     */
   def addToOrder(orderId: Gid_t, producerId: String, adId: String, res: IAdvGeoTagsInfo): DBIOAction[Seq[MItem], NoStream, Effect.Write] = {
     // Собираем экшен заливки item'ов. Один тег -- один item.
+    val p = _oneTagPrice(res)
+
     val mitemsActs = for (tag <- res.tags.toSeq) yield {
       val itm0 = MItem(
         orderId       = orderId,
         iType         = MItemTypes.GeoTag,
         status        = MItemStatuses.Draft,
-        price         = computePriceOne(tag, res),
+        price         = p,
         adId          = adId,
         dtIntervalOpt = Some(res.dates.interval),
         rcvrIdOpt     = tag.nodeId,
@@ -68,43 +74,34 @@ class GeoTagAdvBillUtil @Inject() (
     DBIO.sequence(mitemsActs)
   }
 
-
-  /**
-    * Рассчет стоимости для результата маппинга формы.
-    *
-    * @param res Запрашиваемое юзером размещение.
-    * @return
-    */
-  def computePricing(res: IAdvGeoTagsInfo): Future[MAdvPricing] = {
-    // TODO Учитывать радиус размещения.
-
+  /** Рассчет общего мультипликатора цены для каждого из тегов. */
+  private def _getPriceMult(res: IAdvGeoTagsInfo): Double = {
     val daysCount = Math.max(1, res.dates.interval.toDuration.getStandardDays) + 1
-    // Посчитать цены размещения для каждого тега.
-    val prices1 = res
-      .tags
-      .iterator
-      .map { t =>
-        computePriceOne(t, res)
-      }
-      .toSeq
 
     // Привести радиус на карте к множителю цены
     val radKm = res.circle.radius.kiloMeters
     val radMult = radKm / 1.5
 
-    // Сгруппировать цены по валютам.
-    val prices2 = MPrice.sumPricesByCurrency(prices1)
-      // Домножить на кол-во дней и радиус
-      .map { price =>
-        price.copy(
-          amount = price.amount * daysCount * radMult
-        )
-      }
-      .toSeq
+    radMult * daysCount
+  }
 
-    LOGGER.trace(s"computePricing(): $res => days=$daysCount radKm=$radKm => $prices2")
+  /**
+    * Рассчет общей стоимости для результата маппинга формы.
+    *
+    * @param res Запрашиваемое юзером размещение.
+    * @return
+    */
+  def computePricing(res: IAdvGeoTagsInfo): Future[MAdvPricing] = {
+    val p1 = _oneTagPrice(res)
 
-    val result = bill2Util.getAdvPricing( prices2 )
+    // Посчитать цены размещения для каждого тега.
+    val prices1 = Seq( p1.copy(
+      amount = p1.amount * res.tags.size
+    ))
+
+    LOGGER.trace(s"computePricing(): $res => $prices1")
+
+    val result = bill2Util.getAdvPricing( prices1 )
     Future.successful(result)
   }
 
