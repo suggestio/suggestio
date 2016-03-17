@@ -6,10 +6,9 @@ import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import models.MPrice
-import models.adv.geo.tag.IAdvGeoTagsInfo
+import models.adv.geo.tag.IAgtFormResult
 import models.adv.price.MAdvPricing
 import models.mproj.ICommonDi
-import models.mtag.MTagBinded
 import util.PlayMacroLogsImpl
 import util.billing.Bill2Util
 
@@ -21,7 +20,7 @@ import scala.concurrent.Future
  * Created: 04.12.15 13:43
  * Description: Утиль для биллинга размещений в тегах.
  */
-class GeoTagAdvBillUtil @Inject() (
+class AgtBillUtil @Inject()(
   bill2Util                           : Bill2Util,
   mItems                              : MItems,
   val mCommonDi                       : ICommonDi
@@ -34,7 +33,7 @@ class GeoTagAdvBillUtil @Inject() (
 
   private def _oneTag1dayPrice: MPrice = bill2Util.zeroPrice.copy(amount = 1.0)
 
-  private def _oneTagPrice(res: IAdvGeoTagsInfo): MPrice = {
+  private def _oneTagPrice(res: IAgtFormResult): MPrice = {
     val priceMult = _getPriceMult(res)
 
     val oneTag1dPrice = _oneTag1dayPrice
@@ -52,7 +51,7 @@ class GeoTagAdvBillUtil @Inject() (
     * @param res     Данные по размещаемым тегам.
     * @return Фьючерс c результатом.
     */
-  def addToOrder(orderId: Gid_t, producerId: String, adId: String, res: IAdvGeoTagsInfo): DBIOAction[Seq[MItem], NoStream, Effect.Write] = {
+  def addToOrder(orderId: Gid_t, producerId: String, adId: String, res: IAgtFormResult): DBIOAction[Seq[MItem], NoStream, Effect.Write] = {
     // Собираем экшен заливки item'ов. Один тег -- один item.
     val p = _oneTagPrice(res)
 
@@ -66,7 +65,7 @@ class GeoTagAdvBillUtil @Inject() (
         dtIntervalOpt = Some(res.dates.interval),
         rcvrIdOpt     = tag.nodeId,
         tagFaceOpt    = Some(tag.face),
-        geoShape      = Some(res.circle)
+        geoShape      = Some(res.radMapVal.circle)
       )
       mItems.insertOne(itm0)
     }
@@ -75,11 +74,11 @@ class GeoTagAdvBillUtil @Inject() (
   }
 
   /** Рассчет общего мультипликатора цены для каждого из тегов. */
-  private def _getPriceMult(res: IAdvGeoTagsInfo): Double = {
+  private def _getPriceMult(res: IAgtFormResult): Double = {
     val daysCount = Math.max(1, res.dates.interval.toDuration.getStandardDays) + 1
 
     // Привести радиус на карте к множителю цены
-    val radKm = res.circle.radius.kiloMeters
+    val radKm = res.radMapVal.circle.radius.kiloMeters
     val radMult = radKm / 1.5
 
     radMult * daysCount
@@ -91,7 +90,7 @@ class GeoTagAdvBillUtil @Inject() (
     * @param res Запрашиваемое юзером размещение.
     * @return
     */
-  def computePricing(res: IAdvGeoTagsInfo): Future[MAdvPricing] = {
+  def computePricing(res: IAgtFormResult): Future[MAdvPricing] = {
     val p1 = _oneTagPrice(res)
 
     // Посчитать цены размещения для каждого тега.

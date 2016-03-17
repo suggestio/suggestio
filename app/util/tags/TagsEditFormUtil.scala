@@ -91,14 +91,18 @@ class TagsEditFormUtil {
     list(existTagM)
   }
 
+  def existingNonEmptyM: Mapping[List[MTagBinded]] = {
+    existingsM
+      .verifying("error.required", _.nonEmpty)
+  }
 
-  def addedKm     = ADD_TAGS_FN   -> addedM
-  def existingKm  = EXIST_TAGS_FN -> existingsM
+
+  private def addedKm     = ADD_TAGS_FN   -> addedM
 
   def addTagsFormM: Mapping[MTagsAddFormBinded] = {
     mapping(
       addedKm,
-      existingKm
+      EXIST_TAGS_FN -> existingsM
     )
     { MTagsAddFormBinded.apply }
     { MTagsAddFormBinded.unapply }

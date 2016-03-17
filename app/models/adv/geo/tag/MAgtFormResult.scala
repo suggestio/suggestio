@@ -1,8 +1,7 @@
 package models.adv.geo.tag
 
-import io.suggest.model.geo.CircleGs
 import models.adv.form.MDatesPeriod
-import models.maps.MapViewState
+import models.maps.RadMapValue
 import models.mtag.MTagBinded
 
 /**
@@ -11,32 +10,23 @@ import models.mtag.MTagBinded
  * Created: 19.11.15 22:35
  * Description: Результат маппинга формы размещения.
  */
-trait IAdvGeoTagsInfo {
+trait IAgtFormResult {
 
   /** Теги, заданные юзером. */
   def tags      : List[MTagBinded]
 
-  /** Гео-круг размещения, заданный юзером на карте. */
-  def circle    : CircleGs
-
   /** Период размещения. */
   def dates     : MDatesPeriod
 
-}
-
-
-trait IAdvFormResult extends IAdvGeoTagsInfo {
-
-  /** Состояние карты, используется при unbind(). */
-  def mapState  : MapViewState
+  /** Данные карты. */
+  def radMapVal : RadMapValue
 
 }
 
 
-case class MAdvFormResult(
+case class MAgtFormResult(
   override val tags       : List[MTagBinded],
-  override val mapState   : MapViewState,
-  override val circle     : CircleGs,
+  override val radMapVal  : RadMapValue,
   override val dates      : MDatesPeriod
 )
-  extends IAdvFormResult
+  extends IAgtFormResult

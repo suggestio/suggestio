@@ -271,6 +271,8 @@ class MarketAdv @Inject() (
           filterEntiesByPossibleRcvrs(adves1, allRcvrIds)
         }
 
+        implicit val ctx = implicitly[Context]
+
         // Начинаем рассчитывать ценник.
         val priceValHtmlFut = for {
           adves2  <- adves2Fut
@@ -287,12 +289,14 @@ class MarketAdv @Inject() (
           }
         } yield {
           val advPricing = bill2Util.getAdvPricing(prices)
-          val html = _priceValTpl(advPricing)
+          val html = _priceValTpl(advPricing)(ctx)
           html2str4json(html)
         }
 
         // Параллельно отрендерить отчет по датам размещения.
-        val periodReportHtml = html2str4json( _reportTpl(formRes.period) )
+        val periodReportHtml = html2str4json {
+          _reportTpl(formRes.period)(ctx)
+        }
 
         // Отрендерить JSON-ответ
         for (priceValHtml <- priceValHtmlFut) yield {

@@ -435,9 +435,6 @@ object FormUtil {
     { GeoPoint.unapply }
   }
 
-  /** Маппинг значения зума карты. */
-  def mapZoomM: Mapping[Int] = number(min = 0, max = 20)
-
   /** Опциональный маппер для lat-lon координат. */
   def geoPointOptM: Mapping[Option[GeoPoint]] = {
     optional(geoPointM)

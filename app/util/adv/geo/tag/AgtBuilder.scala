@@ -21,7 +21,7 @@ import util.adv.build.IAdvBuilder
   * Created: 19.02.16 15:15
   * Description: Трейт поддержки adv-билдинга для геотеггов.
   */
-trait AdvGeoTagBuilder extends IAdvBuilder {
+trait AgtBuilder extends IAdvBuilder {
 
   import di._
   import mCommonDi._

@@ -1,6 +1,7 @@
 package controllers
 
 import com.google.inject.Inject
+import models.GeoIp
 import models.jsm.init.MTargets
 import models.mproj.ICommonDi
 import models.req.IAdProdReq
@@ -34,6 +35,7 @@ class LkAdvGeoPlace @Inject() (
     * @return 200 OK + страница с формой размещения.
     */
   def forAd(nodeId: String) = CanAdvertiseAdGet(nodeId, U.Lk).async { implicit request =>
+    val ipLocFut = GeoIp.geoSearchInfoOpt
     ???
   }
 

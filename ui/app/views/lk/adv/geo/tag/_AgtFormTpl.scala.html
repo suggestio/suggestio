@@ -38,36 +38,39 @@
     }
   }
 
+
   @* Для сохранения и восстановления состояния карты при POST нужны hidden-поля в рамках формы. *@
+
   @defining( args.form("map") ) { mf =>
 
-    @_hiddenLatLonTpl(
-      f = mf("center"),
-      latId = Some(INPUT_ID_LAT),
-      lonId = Some(INPUT_ID_LON)
-    )
+    @defining( mf("state") ) { sf =>
+      @_hiddenLatLonTpl(
+        f = sf("center"),
+        latId = Some(INPUT_ID_LAT),
+        lonId = Some(INPUT_ID_LON)
+      )
 
-    @* Состояние зума карты. *@
-    @_inputHiddenTpl(
-      mf("zoom"),
-      id = Some(INPUT_ID_ZOOM)
-    )
+      @* Состояние зума карты. *@
+      @_inputHiddenTpl(
+        sf("zoom"),
+        id = Some(INPUT_ID_ZOOM)
+      )
+    }
+
+    @* Сохранение данных круга на карте (области) присходит здесь. *@
+    @defining( mf("circle") ) { cf =>
+      @_hiddenLatLonTpl(
+        cf("center"),
+        latId = Some(INPUT_ID_CIRCLE_LAT),
+        lonId = Some(INPUT_ID_CIRCLE_LON)
+      )
+      @_inputHiddenTpl(
+        cf("radius"),
+        id = Some(INPUT_ID_CIRCLE_RADIUS)
+      )
+    }
   }
 
-  @* Сохранение данных круга на карте (области) присходит здесь. *@
-  @defining( args.form("circle") ) { cf =>
-
-    @_hiddenLatLonTpl(
-      cf("center"),
-      latId = Some(INPUT_ID_CIRCLE_LAT),
-      lonId = Some(INPUT_ID_CIRCLE_LON)
-    )
-    @_inputHiddenTpl(
-      cf("radius"),
-      id = Some(INPUT_ID_CIRCLE_RADIUS)
-    )
-
-  }
 
   @* Какой-то контент внутри формы после тегов. Карта например. *@
   @middle

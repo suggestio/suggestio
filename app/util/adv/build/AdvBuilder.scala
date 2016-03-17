@@ -11,7 +11,7 @@ import models.adv.build.Acc
 import models.mproj.{ICommonDi, IMCommonDi}
 import org.joda.time.DateTime
 import util.adv.direct.AdvDirectBuilder
-import util.adv.geo.tag.AdvGeoTagBuilder
+import util.adv.geo.tag.AgtBuilder
 import util.{PlayMacroLogsDyn, PlayMacroLogsImpl, PlayMacroLogsI}
 import util.n2u.{IN2NodesUtilDi, N2NodesUtil}
 
@@ -172,7 +172,7 @@ case class AdvBuilder @Inject() (
   override val di                 : AdvBuilderDi
 )
   extends AdvDirectBuilder
-  with AdvGeoTagBuilder
+  with AgtBuilder
   with PlayMacroLogsImpl
 {
 
