@@ -40,18 +40,10 @@ class NodesUtil @Inject() (
   import mCommonDi._
 
   /** Дефолтовый лимит на размещение у самого себя на главной. */
-  val SL_START_PAGE_LIMIT_DFLT: Int = configuration.getInt("user.node.adn.sl.out.statpage.limit.dflt") getOrElse 50
-
-  /** Стартовый баланс узла. */
-  val BILL_START_BALLANCE: Float = {
-    configuration.getDouble("user.node.bill.balance.dflt") match {
-      case Some(d) => d.toFloat
-      case None    => 0F
-    }
-  }
+  private val SL_START_PAGE_LIMIT_DFLT: Int = configuration.getInt("user.node.adn.sl.out.statpage.limit.dflt") getOrElse 50
 
   /** Через сколько секунд отправлять юзера в ЛК ноды после завершения реги юзера. */
-  val NODE_CREATED_SUCCESS_RDR_AFTER: Int = configuration.getInt("user.node.created.success.redirect.after.sec") getOrElse 5
+  private val NODE_CREATED_SUCCESS_RDR_AFTER: Int = configuration.getInt("user.node.created.success.redirect.after.sec") getOrElse 5
 
   // Для новосозданного узла надо создавать новые карточки, испортируя их из указанного узла в указанном кол-ве.
   /** id узла, который содержит дефолтовые карточки. Задается явно в конфиге. */
@@ -115,7 +107,10 @@ class NodesUtil @Inject() (
       ),
       edges = MNodeEdges(
         out = {
-          val medge = MEdge(MPredicates.OwnedBy, personId)
+          val medge = MEdge(
+            predicate = MPredicates.OwnedBy,
+            nodeIdOpt = Some(personId)
+          )
           MNodeEdges.edgesToMap(medge)
         }
       )
@@ -208,8 +203,14 @@ class NodesUtil @Inject() (
               out = {
                 val pp = MPredicates.OwnedBy
                 val rp = MPredicates.Receiver
-                val prodE = MEdge(pp, adnId)
-                val selfRcvrE = MEdge(rp, adnId,
+                val someAdnId = Some(adnId)
+                val prodE = MEdge(
+                  predicate = pp,
+                  nodeIdOpt = someAdnId
+                )
+                val selfRcvrE = MEdge(
+                  predicate = rp,
+                  nodeIdOpt = someAdnId,
                   info = MEdgeInfo(sls = Set(SinkShowLevels.GEO_START_PAGE_SL))
                 )
                 MNodeEdges.edgesToMap1 {

@@ -131,11 +131,12 @@ trait SysMdrPaid
         nodeIdsSetB ++= producerIdOpt
 
         // Закинуть id модерарировших в общую кучу
-        nodeIdsSetB ++= freeMdrs.iterator.map(_.nodeId)
+        nodeIdsSetB ++= freeMdrs.iterator
+          .flatMap(_.nodeIdOpt)
 
         // Закинуть в карту саморесивера. Он по идее совпадает с id продьюсера, но на всякий случай закидываем...
         nodeIdsSetB ++= rcvrsSelf.iterator
-          .map(_.nodeId)
+          .flatMap(_.nodeIdOpt)
 
         // Закинуть в список необходимых узлов те, что в mitems.
         nodeIdsSetB ++= mitems.iterator

@@ -160,7 +160,7 @@ trait AgtBuilder extends IAdvBuilder {
       // Залить ресивера в карточку.
       val tEdge = MEdge(
         predicate = _PRED,
-        nodeId    = tnId,
+        nodeIdOpt = Some(tnId),
         info      = MEdgeInfo(
           geoShape  = mitem.geoShape,
           billGids   = Set(mitemId)

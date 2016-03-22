@@ -50,9 +50,9 @@ trait ISaveImgs {
         .iterator
         .map { case (pred, mimg) =>
           MEdge(
-            nodeId = mimg.rowKeyStr,
+            nodeIdOpt = Some(mimg.rowKeyStr),
             predicate = pred,
-            info = MEdgeInfo(
+            info      = MEdgeInfo(
               dynImgArgs = mimg.qOpt
             )
           )
@@ -99,9 +99,13 @@ object SaveImgUtil extends MergeBindAcc[BlockImgMap] {
 
       val imgInfoOptFut = saveBgImgFut.map { savedBgImg =>
         savedBgImg.map { mimg =>
-          MEdge(fn, mimg.rowKeyStr, info = MEdgeInfo(
-            dynImgArgs = mimg.qOpt
-          ))
+          MEdge(
+            predicate = fn,
+            nodeIdOpt = Some(mimg.rowKeyStr),
+            info = MEdgeInfo(
+              dynImgArgs = mimg.qOpt
+            )
+          )
         }
       }
 

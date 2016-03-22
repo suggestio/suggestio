@@ -46,9 +46,13 @@ class WelcomeUtil @Inject() (
     // Сохранить картинку, вернуть эдж. Нет картинки -- нет эджа.
     FutureUtil.optFut2futOpt(newWelcomeImgOpt) { fgMimg =>
       for (_ <- fgMimg.saveToPermanent) yield {
-        val e = MEdge(MPredicates.WcLogo, fgMimg.rowKeyStr, info = MEdgeInfo(
-          dynImgArgs = fgMimg.qOpt
-        ))
+        val e = MEdge(
+          predicate = MPredicates.WcLogo,
+          nodeIdOpt = Some(fgMimg.rowKeyStr),
+          info = MEdgeInfo(
+            dynImgArgs = fgMimg.qOpt
+          )
+        )
         Some(e)
       }
     }

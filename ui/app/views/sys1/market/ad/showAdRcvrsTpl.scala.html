@@ -21,16 +21,18 @@
         @rcvrs.valuesIterator.map { ri =>
           <tr>
             <td>
-              <a href="@routes.SysMarket.showAdnNode(ri.nodeId)">
-                @args.nodesMap.get(ri.nodeId).fold {
-                  @ri.nodeId
-                } { rcvrNode =>
-                  @rcvrNode.meta.basic.name
-                  <span title="@rcvrNode.meta.address.address">
-                    / @rcvrNode.meta.address.town
-                  </span>
-                }
-              </a>
+              @for(nodeId <- ri.nodeIdOpt) {
+                <a href="@routes.SysMarket.showAdnNode(nodeId)">
+                  @args.nodesMap.get(nodeId).fold {
+                    @nodeId
+                  } { rcvrNode =>
+                    @rcvrNode.meta.basic.name
+                    <span title="@rcvrNode.meta.address.address">
+                      / @rcvrNode.meta.address.town
+                    </span>
+                  }
+                </a>
+              }
             </td>
             <td>
               @ri.info.sls.iterator.map { ssl =>

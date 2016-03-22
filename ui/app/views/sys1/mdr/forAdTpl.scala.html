@@ -88,7 +88,9 @@
       @for(firstMdr <- args.freeMdrs.headOption) {
         @messages(firstMdr.predicate.singular)
         @for( mdr <- args.freeMdrs ) {
-          @__nodeLink(mdr.nodeId)
+          @for(nodeId <- mdr.nodeIdOpt) {
+            @__nodeLink(nodeId)
+          }
           @for(dt <- mdr.info.dateNi) {
             @_prettyDate(dt)
           }:
@@ -97,7 +99,9 @@
 
       @for(medge <- args.freeAdvs) {
         @messages(medge.predicate.singular)
-        @__nodeLink(medge.nodeId)
+        @for(nodeId <- medge.nodeIdOpt) {
+          @__nodeLink(nodeId)
+        }
       }
 
       @* Кнопка бана с расширенным окном доступна всегда. *@

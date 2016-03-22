@@ -199,14 +199,13 @@ class SysMarket @Inject() (
       MNode.multiGetMap {
         mnode.edges.out
           .valuesIterator
-          .map(_.nodeId)
+          .flatMap(_.nodeIdOpt)
       } map { nmap =>
         val iter = mnode.edges.out
           .valuesIterator
           .map { medge =>
-            val nodeId = medge.nodeId
-            val mnodeOpt = nmap.get(nodeId)
-            val mnodeEith = mnodeOpt.toRight( nodeId )
+            val mnodeOpt = medge.nodeIdOpt.flatMap(nmap.get)
+            val mnodeEith = mnodeOpt.toRight( medge.nodeIdOpt.getOrElse("--UNKNOWN--") )
             MNodeEdgeInfo(medge, mnodeEith)
           }
         _prepareEdgeInfos(iter)
@@ -331,7 +330,10 @@ class SysMarket @Inject() (
         val mnode1 = mnode0.copy(
           edges = mnode0.edges.copy(
             out = {
-              val ownEdge = MEdge(MPredicates.OwnedBy, request.user.personIdOpt.get)
+              val ownEdge = MEdge(
+                predicate = MPredicates.OwnedBy,
+                nodeIdOpt = request.user.personIdOpt
+              )
               MNodeEdges.edgesToMap(ownEdge)
             }
           )
@@ -725,7 +727,7 @@ class SysMarket @Inject() (
 
     // Достаём из кэша узлы.
     val nodesMapFut: Future[Map[String, MNode]] = {
-      def _nodeIds(rcvrs: Receivers_t) = rcvrs.keysIterator.map(_._2).toSet
+      def _nodeIds(rcvrs: Receivers_t) = rcvrs.valuesIterator.flatMap(_.nodeIdOpt).toSet
       val adnIds1 = _nodeIds(rcvrsMap)
       for {
         adns1       <- mNodeCache.multiGet(adnIds1)

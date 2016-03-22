@@ -289,7 +289,7 @@ class MarketLkAdnEdit @Inject() (
           newGallery = fmr.gallery,
           oldGallery = mnode.edges
             .withPredicateIter( MPredicates.GalleryItem )
-            .map { _.nodeId }
+            .flatMap { _.nodeIdOpt }
             .toSeq
         )
         for {
@@ -347,7 +347,10 @@ class MarketLkAdnEdit @Inject() (
         }
         // Отрабатываем логотип
         for (newLogo <- newLogoOpt) {
-          val logoEdge = MEdge(Logo, newLogo.rowKeyStr)
+          val logoEdge = MEdge(
+            predicate = Logo,
+            nodeIdOpt = Some(newLogo.rowKeyStr)
+          )
           edgesIter ++= Iterator(logoEdge)
         }
         // Отрабатываем галлерею
@@ -357,10 +360,10 @@ class MarketLkAdnEdit @Inject() (
             .zipWithIndex
             .map { case (img, i) =>
               MEdge(
-                GalleryItem,
-                img.rowKeyStr,
-                order = Some(i),
-                info  = MEdgeInfo(
+                predicate = GalleryItem,
+                nodeIdOpt = Some(img.rowKeyStr),
+                order     = Some(i),
+                info      = MEdgeInfo(
                   dynImgArgs = img.qOpt
                 ))
             }

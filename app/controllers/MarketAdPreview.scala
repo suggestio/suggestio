@@ -54,9 +54,13 @@ trait MarketAdPreview
             val mad = r.mad.copy(
               edges = r.mad.edges.copy(
                 out = MNodeEdges.edgesToMap1 {
+                  val ownEdge = MEdge(
+                    predicate = MPredicates.OwnedBy,
+                    nodeIdOpt = request.mnode.id
+                  )
                   r.mad.edges.out.valuesIterator ++
                     imgs ++
-                    Seq( MEdge(MPredicates.OwnedBy, adnId) )
+                    Seq( ownEdge )
                 }
               )
             )

@@ -217,7 +217,7 @@ class MarketAdv @Inject() (
     // Поднимаемся наверх по иерархии гео-родительства.
     val iter = node.edges
       .withPredicateIter( MPredicates.GeoParent.Direct )
-      .map { _.nodeId }
+      .flatMap { _.nodeIdOpt }
       .flatMap(nodes.get)
       .flatMap { parentNode =>
         if (parentNode.extras.adn.flatMap(_.shownTypeIdOpt).contains( parentShowType.name) ) {

@@ -4,7 +4,6 @@ import com.google.inject.Inject
 import controllers.ident._
 import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.item.MItems
-import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
@@ -318,10 +317,13 @@ class MarketLkAdn @Inject() (
               val nodeOwnedByPersonId = {
                 mnode.edges
                   .withPredicateIter( MPredicates.OwnedBy )
-                  .exists(_.nodeId == personId)
+                  .exists(_.nodeIdOpt.contains(personId))
               }
               val nodeUpdateFut: Future[_] = if (!nodeOwnedByPersonId) {
-                val ownEdge = MEdge(MPredicates.OwnedBy, personId)
+                val ownEdge = MEdge(
+                  predicate = MPredicates.OwnedBy,
+                  nodeIdOpt = Some(personId)
+                )
                 MNode.tryUpdate(mnode) { mnode0 =>
                   mnode0.copy(
                     edges = mnode0.edges.copy(

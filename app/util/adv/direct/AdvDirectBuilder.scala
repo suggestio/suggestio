@@ -83,7 +83,7 @@ trait AdvDirectBuilder extends IAdvBuilder {
         // Создаём новый эдж
         MEdge(
           predicate = p,
-          nodeId    = mitem.rcvrIdOpt.get,
+          nodeIdOpt = mitem.rcvrIdOpt,
           info      = MEdgeInfo(
             sls     = mitem.sls,
             billGids = Set(mitemId)

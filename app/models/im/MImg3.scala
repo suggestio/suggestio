@@ -65,7 +65,9 @@ class MImgs3 @Inject()(
     apply(img.rowKeyStr, dynOps2.getOrElse(img.dynImgOps))
   }
 
-  /** Экстракция указателя на картинку из эджа узла N2. */
+  /** Экстракция указателя на картинку из эджа узла N2.
+    * @throws java.util.NoSuchElementException когда id узла-картинки не задан.
+    */
   def apply(medge: IEdge): MImg3 = {
     val dops = {
       medge.info
@@ -78,7 +80,7 @@ class MImgs3 @Inject()(
           }
       }
     }
-    apply(medge.nodeId, dops)
+    apply(medge.nodeIdOpt.get, dops)
   }
 
   def apply(rowKeyStr: String, dynImgOps: Seq[ImOp], userFileName: Option[String] = None): MImg3 = {

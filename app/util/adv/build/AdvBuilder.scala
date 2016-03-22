@@ -63,7 +63,7 @@ class AdvBuilderUtil extends PlayMacroLogsDyn {
           LOGGER.trace(s"$logPrefix uninstalling edge: $e")
 
         // Для самоконтроля: проверяем остальные поля удаляемого эджа по данным биллинга
-        if (isRemove && !(e.predicate == pred && mitem.rcvrIdOpt.contains( e.nodeId )))
+        if (isRemove && !(e.predicate == pred && mitem.rcvrIdOpt.exists(_ => mitem.rcvrIdOpt == e.nodeIdOpt)))
           LOGGER.error(s"_uninstallEdgeFrom(item[$mitemId]): Erasing unexpected edge using info.billGid: $e, rcvrId must == ${mitem.rcvrIdOpt}, pred == $pred")
 
         !isRemove

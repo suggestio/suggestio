@@ -577,7 +577,12 @@ class SysAdnGeo @Inject() (
             val parentEdges = {
               val p = MPredicates.GeoParent
               allParentIds.iterator
-                .map { parentId => MEdge(p, parentId) }
+                .map { parentId =>
+                  MEdge(
+                    predicate = p,
+                    nodeIdOpt = Some(parentId)
+                  )
+                }
                 .toStream
             }
             // Запуск апдейта новыми геоданными
@@ -588,9 +593,14 @@ class SysAdnGeo @Inject() (
                 ),
                 edges = mnode.edges.copy(
                   out = {
+                    val parenNodeEdgesIter = parentNodeIdOpt
+                      .iterator
+                      .map { parentNodeId =>
+                        MEdge(MPredicates.GeoParent.Direct, parentNodeIdOpt)
+                      }
                     val iter = mnode.edges.withoutPredicateIter( MPredicates.GeoParent ) ++
                       parentEdges.iterator ++
-                      parentNodeIdOpt.iterator.map( MEdge(MPredicates.GeoParent.Direct, _) )
+                      parenNodeEdgesIter
                     MNodeEdges.edgesToMap1( iter )
                   }
                 )

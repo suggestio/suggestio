@@ -52,8 +52,8 @@ class SysMdrUtil @Inject() (
   /** Сборка эджа текущего модератора с указанной инфой по модерации. */
   def mdrEdgeI(einfo: MEdgeInfo)(implicit request: IReqHdr): MEdge = {
     MEdge(
-      nodeId    = request.user.personIdOpt.get,
       predicate = MPredicates.ModeratedBy,
+      nodeIdOpt = request.user.personIdOpt,
       info      = einfo
     )
   }
