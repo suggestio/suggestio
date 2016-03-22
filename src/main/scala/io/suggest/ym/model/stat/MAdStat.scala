@@ -3,11 +3,9 @@ package io.suggest.ym.model.stat
 import java.text.SimpleDateFormat
 
 import com.sun.org.glassfish.gmbal.{Description, Impact, ManagedOperation}
-import io.suggest.model._
 import io.suggest.model.es._
 import EsModelUtil._
 import io.suggest.model.geo.GeoPoint
-import org.elasticsearch.action.deletebyquery.DeleteByQueryResponse
 import org.elasticsearch.action.index.IndexRequestBuilder
 import org.elasticsearch.search.sort.SortOrder
 import org.joda.time.{DateTimeZone, DateTime}
@@ -21,7 +19,6 @@ import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.{QueryBuilder, FilterBuilders, QueryBuilders}
 import org.elasticsearch.search.aggregations.AggregationBuilders
 import scala.collection.JavaConversions._
-import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogram
 import io.suggest.event.SioNotifierStaticClientI
 import play.api.libs.json.{JsBoolean, JsNumber, JsArray, JsString}
@@ -384,17 +381,19 @@ final class MAdStat(
 
 /** JMX MBean интерфейс */
 trait MAdStatJmxMBean extends EsModelJMXMBeanI {
+
   @ManagedOperation(impact = Impact.ACTION)
-  @Description("Remove all occurencies BEFORE following timestamp in format: dd.MM.yyyy HH:mm:ss")
+  @Description("Remove all occurencies BEFORE following timestamp in format: yyyy.MM.dd HH:mm:ss")
   def deleteBefore(dt: String): String
 
   @ManagedOperation(impact = Impact.INFO)
-  @Description("Count all occurencies BEFORE following timestamp in format: dd.MM.yyyy HH:mm:ss")
+  @Description("Count all occurencies BEFORE following timestamp in format: yyyy.MM.dd HH:mm:ss")
   def countBefore(dt: String): String
 
   @ManagedOperation(impact = Impact.INFO)
-  @Description("Find all occurenciec BEFORE following timestamp in format: dd.MM.yyyy HH:mm:ss. Second argument sets maxResults returned.")
+  @Description("Find all occurenciec BEFORE following timestamp in format: yyyy.MM.dd HH:mm:ss. Second argument sets maxResults returned.")
   def findBefore(dt: String, maxResults: Int): String
+
 }
 
 /** JMX MBean реализация. */
