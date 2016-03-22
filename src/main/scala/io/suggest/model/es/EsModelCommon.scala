@@ -145,6 +145,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
       }
 
     for (total <- totalFut) yield {
+      bp.close()
       LOGGER.debug(s"$logPrefix $total DEL reqs sent, now deleted ${counter.get()} docs.")
       total
     }

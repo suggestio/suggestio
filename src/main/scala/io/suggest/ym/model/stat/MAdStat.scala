@@ -405,7 +405,7 @@ final class MAdStatJmx(implicit val ec: ExecutionContext, val client: Client, va
   def companion = MAdStat
 
   protected def dtParse(dtStr: String): DateTime = {
-    val sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss")
+    val sdf = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss")
     val d = sdf.parse(dtStr)
     new DateTime(d)
       .withZone(DateTimeZone.forID("Europe/Moscow"))
