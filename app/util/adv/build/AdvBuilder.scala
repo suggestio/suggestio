@@ -56,7 +56,7 @@ class AdvBuilderUtil extends PlayMacroLogsDyn {
     val iter = edges
       .valuesIterator
       .filter { e =>
-        val isRemove = e.info.billGids.contains( mitemId )
+        val isRemove = e.info.itemIds.contains( mitemId )
 
         // Записать в логи грядущее стирание эджа.
         if (isRemove)

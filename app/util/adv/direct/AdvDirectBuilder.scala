@@ -86,7 +86,7 @@ trait AdvDirectBuilder extends IAdvBuilder {
           nodeIdOpt = mitem.rcvrIdOpt,
           info      = MEdgeInfo(
             sls     = mitem.sls,
-            billGids = Set(mitemId)
+            itemIds = Set(mitemId)
           )
         )
       } { medge0 =>
@@ -95,7 +95,7 @@ trait AdvDirectBuilder extends IAdvBuilder {
         medge0.copy(
           info = medge0.info.copy(
             sls       = medge0.info.sls ++ mitem.sls,
-            billGids  = medge0.info.billGids + mitemId
+            itemIds  = medge0.info.itemIds + mitemId
           )
         )
       }
@@ -143,7 +143,7 @@ trait AdvDirectBuilder extends IAdvBuilder {
       .edges
       // Ищем по mitemId
       .iterator
-      .find( _.info.billGids.contains(mitemId) )
+      .find( _.info.itemIds.contains(mitemId) )
       .fold[MNode] {
         LOGGER.warn(s"$logPrefix receiver[$rcvrId] not found in mad, but expected. Already deleted?")
         // Нет эджа, хотя должен бы быть
@@ -168,7 +168,7 @@ trait AdvDirectBuilder extends IAdvBuilder {
           val medge1 = medge0.copy(
             info = medge0.info.copy(
               sls = sls2,
-              billGids = medge0.info.billGids - mitemId
+              itemIds = medge0.info.itemIds - mitemId
             )
           )
           acc0.mad.edges.out ++ MNodeEdges.edgesToMapIter(medge1)

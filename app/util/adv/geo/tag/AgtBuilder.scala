@@ -163,7 +163,7 @@ trait AgtBuilder extends IAdvBuilder {
         nodeIdOpt = Some(tnId),
         info      = MEdgeInfo(
           geoShape  = mitem.geoShape,
-          billGids   = Set(mitemId)
+          itemIds   = Set(mitemId)
         )
       )
       LOGGER.trace(s"$logPrefix new edge for ad[${acc0.mad.idOrNull}]: $tEdge")
