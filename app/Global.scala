@@ -51,23 +51,25 @@ object Global extends GlobalSettings {
     val esClientFut = esNodeFut map {
       _.client()
     }
-    val fut = esClientFut flatMap { implicit esClient =>
-      initializeEsModels(app) map { _ => esClient }
-    } flatMap { esClient =>
-      // Если в конфиге явно не включена поддержка проверки суперюзеров в БД, то не делать этого.
-      // Это также нужно было при миграции с MPerson на MNode, чтобы не произошло повторного создания новых
-      // юзеров в MNode, при наличии уже существующих в MPerson.
-      val ck = "start.ensure.superusers"
-      val createIfMissing = app.configuration.getBoolean(ck).getOrElse(false)
-      val mSuperUsers = _inject[MSuperUsers](app)
-      val fut = mSuperUsers.resetSuperuserIds(createIfMissing)
-      if (!createIfMissing)
-        debug("Does not ensuring superusers in permanent models: " + ck + " != true")
-      fut.map { _ => esClient }
-    }
+    val fut = esClientFut
+      .flatMap { implicit esClient =>
+        initializeEsModels(app)
+          .map { _ => esClient }
+      }.flatMap { esClient =>
+        // Если в конфиге явно не включена поддержка проверки суперюзеров в БД, то не делать этого.
+        // Это также нужно было при миграции с MPerson на MNode, чтобы не произошло повторного создания новых
+        // юзеров в MNode, при наличии уже существующих в MPerson.
+        val ck = "start.ensure.superusers"
+        val createIfMissing = app.configuration.getBoolean(ck).getOrElse(false)
+        val mSuperUsers = _inject[MSuperUsers](app)
+        val fut = mSuperUsers.resetSuperuserIds(createIfMissing)
+        if (!createIfMissing)
+          debug("Does not ensuring superusers in permanent models: " + ck + " != true")
+        fut.map { _ => esClient }
+      }
 
     // Инициализировать связку ключей, если необходимо.
-    esClientFut onSuccess { case esClient =>
+    esClientFut.onSuccess { case esClient =>
       pgpUtil(app).maybeInit()
     }
 

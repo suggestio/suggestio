@@ -85,7 +85,7 @@ class MSuperUsers @Inject()(
       case Success(suPersonIdOpts) =>
         val suPersonIds = suPersonIdOpts.flatten
         SU_IDS = suPersonIds.toSet
-        trace(logPrefix + suPersonIds.length + " superusers installed successfully")
+        info(s"$logPrefix SU person ids := ${suPersonIds.mkString(", ")}")
 
       case Failure(ex) =>
         error(logPrefix + "Failed to install superusers", ex)
