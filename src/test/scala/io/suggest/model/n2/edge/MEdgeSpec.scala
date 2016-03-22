@@ -17,7 +17,7 @@ class MEdgeSpec extends FlatSpec with PlayJsonTestUtil {
     jsonTest {
       MEdge(
         predicate = MPredicates.OwnedBy,
-        nodeId    = "ADFa3498fj39845j324f"
+        nodeIdOpt = Some("ADFa3498fj39845j324f")
       )
     }
   }
@@ -26,7 +26,7 @@ class MEdgeSpec extends FlatSpec with PlayJsonTestUtil {
     jsonTest {
       MEdge(
         predicate = MPredicates.GeoParent.Direct,
-        nodeId    = "avf90fk43a90fk34af34f",
+        nodeIdOpt = Some("avf90fk43a90fk34af34f"),
         order     = Some(5),
         info      = MEdgeInfo(
           dynImgArgs = Some("arfaew4rfaw4fwa443af34ff")

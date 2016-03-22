@@ -10,12 +10,13 @@ import play.api.libs.functional.syntax._
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 02.10.15 11:09
- * Description: Один эдж, хранимый внутри N2-узла.
- * В задумке это был исходящий эдж к контексте узла-источкника.
- * Но в самом коде эта ассиметрия не отражена, чтобы можно было использовать модель и для входящего эджа.
+ * Description: Модель эджа, карта которых хранится внутри N2-узла [[io.suggest.model.n2.node.MNode]].
  *
- * Ранее (до sio2:eb2e628b9061) модель MEdge была отдельно от [[io.suggest.model.n2.node.MNode]],
- * это вызовало ряд проблем и скорую денормализацию.
+ * Изначально, этот эдж был направленным ребром N2-графа. При этом сама направленность нигде не использовалась.
+ * Потом, появилась параметризация эджа каким-то дополнительным payload'ом.
+ * Затем, nodeId стал необязательным, и эдж стал некоей совсем абстрактной перечисляемой единицей данных,
+ * которая в частном случае является ребром графа N2.
+ * Теперь основная суть MEdge: описывать отношения узла с остальным миром (в широком смысле).
  */
 object MEdge extends IGenEsMappingProps {
 
@@ -42,7 +43,7 @@ object MEdge extends IGenEsMappingProps {
   /** Поддержка JSON. */
   implicit val FORMAT: Format[MEdge] = (
     (__ \ PREDICATE_FN).format(MPredicates.PARENTAL_OR_DIRECT_FORMAT) and
-    (__ \ NODE_ID_FN).format[String] and
+    (__ \ NODE_ID_FN).formatNullable[String] and
     (__ \ ORDER_FN).formatNullable[Int] and
     (__ \ INFO_FN).formatNullable[MEdgeInfo]
       .inmap [MEdgeInfo] (
@@ -74,8 +75,8 @@ trait IEdge {
   /** Предикат. */
   def predicate : MPredicate
 
-  /** id ноды на дальнем конце эджа. Это скорее всего toId, в рамках модели это не важно. */
-  def nodeId    : String
+  /** id ноды на дальнем конце эджа, если есть. */
+  def nodeIdOpt : Option[String]
 
   /** Для поддержкания порядка эджей можно использовать это опциональное поле.
     * Можно также использовать для некоего внутреннего доп.идентификатора. */
@@ -92,14 +93,18 @@ trait IEdge {
 
   /** Сконвертить в инстанс ключа карты эджей. */
   def toEmapKey: NodeEdgesMapKey_t = {
-    (predicate, nodeId, _extraKeyData)
+    (predicate, nodeIdOpt, _extraKeyData)
   }
 
   override def toString: String = {
     val sb = new StringBuilder(64)
+      .append("E(")
     sb.append(predicate.strId)
-      .append('/')
-      .append(nodeId)
+      .append(':')
+    for (nodeId <- nodeIdOpt) {
+      sb.append(nodeId)
+        .append(',')
+    }
     for (ord <- order) {
       sb.append(':').append(ord)
     }
@@ -108,7 +113,8 @@ trait IEdge {
         .append(info)
         .append('}')
     }
-    sb.toString()
+    sb.append(',')
+      .toString()
   }
 
 }
@@ -117,7 +123,8 @@ trait IEdge {
 /** Реализация node edge-модели. */
 case class MEdge(
   override val predicate : MPredicate,
-  override val nodeId    : String,
+  // Обычно nodeId задан, поэтому без default тут для защиты от возможных ошибок.
+  override val nodeIdOpt : Option[String],
   override val order     : Option[Int] = None,
   override val info      : MEdgeInfo   = MEdgeInfo.empty
 )

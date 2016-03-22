@@ -149,27 +149,27 @@ case class MNodeEdges(
 
   def withPredicateIterIds(pred: MPredicate*): Iterator[String] = {
     withPredicateIter(pred: _*)
-      .map { _.nodeId }
+      .flatMap { _.nodeIdOpt }
   }
 
   def withNodeId(nodeIds: String*): Iterator[MEdge] = {
     iterator
       .filter { medge =>
-        nodeIds.contains( medge.nodeId )
+        medge.nodeIdOpt.exists(nodeIds.contains)
       }
   }
 
   def withNodePred(nodeId: String, predicate: MPredicate): Iterator[MEdge] = {
     iterator
       .filter { medge =>
-        medge.nodeId == nodeId && medge.predicate ==>> predicate
+        medge.nodeIdOpt.contains(nodeId)  &&  medge.predicate ==>> predicate
       }
   }
 
   def withoutNodePred(nodeId: String, predicate: MPredicate): Iterator[MEdge] = {
     iterator
       .filterNot { medge =>
-        medge.nodeId == nodeId && medge.predicate ==>> predicate
+        medge.nodeIdOpt.contains(nodeId)  &&  medge.predicate ==>> predicate
       }
   }
 

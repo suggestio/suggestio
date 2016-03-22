@@ -62,7 +62,10 @@ class MNodeSpec extends FlatSpec {
         edges = MNodeEdges(
           out = {
             MNodeEdges.edgesToMap(
-              MEdge(MPredicates.Logo, "fa4f493wfr3420f3904__4")
+              MEdge(
+                predicate = MPredicates.Logo,
+                nodeIdOpt = Some("fa4f493wfr3420f3904__4")
+              )
             )
           }
         ),

@@ -22,11 +22,11 @@ class MNodeEdgesSpec extends FlatSpec with PlayJsonTestUtil {
     jsonTest {
       val edge1 = MEdge(
         predicate = MPredicates.OwnedBy,
-        nodeId    = "afe432980faj3489ifvase"
+        nodeIdOpt = Some("afe432980faj3489ifvase")
       )
       val edge2 = MEdge(
         predicate = MPredicates.Receiver,
-        nodeId    = "f394gfkjs4e5jgis984r5g54",
+        nodeIdOpt = Some("f394gfkjs4e5jgis984r5g54"),
         order     = Some(5)
       )
       MNodeEdges(
