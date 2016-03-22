@@ -31,7 +31,7 @@ class MEdgeInfoSpec extends FlatSpec with PlayJsonTestUtil {
         commentNi   = Some("test test 2"),
         flag        = Some(true),
         geoShape    = Some( CircleGs(GeoPoint(10.1, 11.2), Distance(10.55, DistanceUnit.KILOMETERS)) ),
-        billGids    = Set(13242134L)
+        itemIds     = Set(13242134L)
       )
     }
   }

@@ -40,7 +40,7 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
     val COMMENT_NI_FN     = "coni"
     val FLAG_FN           = "flag"
     val GEO_SHAPE_FN      = "gs"
-    val BILL_GIDS_FN      = "bgid"
+    val ITEM_IDS_FN       = "bgid"
 
   }
 
@@ -59,7 +59,7 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
     (__ \ COMMENT_NI_FN).formatNullable[String] and
     (__ \ FLAG_FN).formatNullable[Boolean] and
     (__ \ GEO_SHAPE_FN).formatNullable[GeoShape] and
-    (__ \ BILL_GIDS_FN).formatNullable[Set[Long]]
+    (__ \ ITEM_IDS_FN).formatNullable[Set[Long]]
       .inmap [Set[Long]] (
         { _ getOrElse Set.empty },
         { bgs => if (bgs.nonEmpty) Some(bgs) else None }
@@ -106,7 +106,7 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
         precision       = "50m"
       ),
       FieldNumber(
-        id              = BILL_GIDS_FN,
+        id              = ITEM_IDS_FN,
         fieldType       = DocFieldTypes.long,
         // Изначально было not_analyzed, но как-то не удалось придумать ни одной ситуации, когда оно пригодится.
         // Ибо весь биллинг самодостаточен и живёт в postgresql, здесь просто подсказка для обратной связи с MItems.
@@ -140,8 +140,16 @@ trait IEdgeInfo extends IIsNonEmpty {
   /** Геошейп, связанный с этим ребром. */
   def geoShape     : Option[GeoShape]
 
-  /** global ids связанных с данным ребром элементов биллинга. */
-  def billGids     : Set[Long]
+  /**
+   * item ids, напрямую связанные с данным эджем.
+   * НЕ надо сюда запихивать эджи, которые живут внутри карты гео-шейпов. Т.е. например размещения в гео-тегах.
+   * Теоретически например, некое размещение direct adv в несколько параллельных заходов на одном и том же узле.
+   * В норме здесь не более одного id.
+   * Поле не индексируется: нет смысла, всё уже проиндексировано в биллинге. И не возникалов нужды.
+   * Поле используется только как подсказка для самоконтроля или некий вспомогательный инструмент.
+   * НЕ надо переделывать в Option[Long] -- от этого ушли ещё в начале 2016.
+   */
+  def itemIds       : Set[Long]
 
 }
 
@@ -153,7 +161,7 @@ case class MEdgeInfo(
   override val commentNi    : Option[String]        = None,
   override val flag         : Option[Boolean]       = None,
   override val geoShape     : Option[GeoShape]      = None,
-  override val billGids     : Set[Long]             = Set.empty
+  override val itemIds      : Set[Long]             = Set.empty
 )
   extends EmptyProduct
   with IEdgeInfo
@@ -189,9 +197,9 @@ case class MEdgeInfo(
         sb.append("gs=")
           .append(gs)
       }
-      if (billGids.nonEmpty) {
-        sb.append("billGids=")
-        for (bgid <- billGids) {
+      if (itemIds.nonEmpty) {
+        sb.append("itemIds=")
+        for (bgid <- itemIds) {
           sb.append(bgid).append(',')
         }
         sb.append(' ')
@@ -205,7 +213,7 @@ case class MEdgeInfo(
 
 
   def _extraKeyData: EdgeXKey_t = {
-    billGids.toList
+    itemIds.toList
   }
 
 }
