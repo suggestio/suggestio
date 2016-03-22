@@ -171,10 +171,12 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
   }
 
   /** Удалить все данные до указанной даты. */
-  def deleteBefore(dt: DateTime)(implicit ec: ExecutionContext, client: Client): Future[DeleteByQueryResponse] = {
-    prepareDeleteByQuery
-      .setQuery( beforeDtQuery(dt) )
-      .execute()
+  def deleteBefore(dt: DateTime)(implicit ec: ExecutionContext, client: Client): Future[Int] = {
+    val scroller = startScroll(
+      queryOpt          = Some(beforeDtQuery(dt)),
+      resultsPerScroll  = BULK_DELETE_QUEUE_LEN / 2
+    )
+    deleteByQuery(scroller)
   }
 
 
@@ -414,9 +416,10 @@ final class MAdStatJmx(implicit val ec: ExecutionContext, val client: Client, va
     // Нужно распарсить дату-время из указанных админом.
     try {
       val dt = dtParse(dtStr)
-      companion.deleteBefore(dt) map { dbqResp =>
-         "OK: HTTP " + dbqResp.status().getStatus + " count=" + dbqResp.iterator().size
+      val fut = for (countDeleted <- companion.deleteBefore(dt)) yield {
+        "OK: count=" + countDeleted
       }
+      awaitString(fut)
     } catch {
       case ex: Throwable =>
         error("Unable to parse user-typed date-time: " + dtStr, ex)
@@ -428,9 +431,11 @@ final class MAdStatJmx(implicit val ec: ExecutionContext, val client: Client, va
     trace(s"countBefore($dtStr)")
     try {
       val dt = dtParse(dtStr)
-      companion.countBefore(dt) map { count =>
+      val fut = for (count <- companion.countBefore(dt)) yield {
         count + " items before " + dt
       }
+      awaitString(fut)
+
     } catch {
       case ex: Throwable =>
         error("Unable to count items for user-typed dt-str: " + dtStr, ex)
@@ -442,10 +447,12 @@ final class MAdStatJmx(implicit val ec: ExecutionContext, val client: Client, va
     trace(s"findBefore($dtStr, $maxResults)")
     try {
       val dt = dtParse(dtStr)
-      companion.findBefore(dt, maxResults) map { results =>
+      val fut = for (results <- companion.findBefore(dt, maxResults)) yield {
         // Отрендерить результаты в json
         EsModelUtil.toEsJsonDocs(results)
       }
+      awaitString(fut)
+
     } catch {
       case ex: Throwable =>
         error(s"Failed to findBefore($dtStr, $maxResults)", ex)

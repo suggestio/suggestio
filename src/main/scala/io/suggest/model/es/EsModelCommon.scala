@@ -84,10 +84,75 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
     req
   }
 
-  def prepareDeleteByQuery(implicit client: Client) = {
-    client.prepareDeleteByQuery(ES_INDEX_NAME)
-      .setTypes(ES_TYPE_NAME)
+  /**
+    * В es 2.0 удалили поддержку delete by Query.
+    * Тут реализация этого недостающего функционала.
+    *
+    * @param scroller выхлоп startScroll.
+    * @return Фьючерс с результатами.
+    */
+  def deleteByQuery(scroller: SearchRequestBuilder)(implicit ec: ExecutionContext, client: Client): Future[Int] = {
+    lazy val logPrefix = s"deleteByQuery(${System.currentTimeMillis}):"
+    LOGGER.trace(s"$logPrefix Starting...")
+
+    val counter = new AtomicInteger(0)
+
+    val listener = new BulkProcessor.Listener {
+      /** Перед отправкой каждого bulk-реквеста... */
+      override def beforeBulk(executionId: Long, request: BulkRequest): Unit = {
+        LOGGER.trace(s"$logPrefix $executionId Before bulk delete ${request.numberOfActions()} documents...")
+      }
+
+      /** Документы в очереди успешно удалены. */
+      override def afterBulk(executionId: Long, request: BulkRequest, response: BulkResponse): Unit = {
+        val countDeleted = response.getItems.length
+        LOGGER.trace(s"$logPrefix $executionId Successfully deleted $countDeleted, ${response.buildFailureMessage()}")
+        counter.addAndGet(countDeleted)
+      }
+
+      /** Ошибка bulk-удаления. */
+      override def afterBulk(executionId: Long, request: BulkRequest, failure: Throwable): Unit = {
+        LOGGER.error(s"$logPrefix Failed to execute bulk req with ${request.numberOfActions} actions!", failure)
+      }
+    }
+
+    // Собираем асинхронный bulk-процессор, т.к. элементов может быть ну очень много.
+    val bp = BulkProcessor
+      .builder(client, listener)
+      .setName(logPrefix)
+      .setBulkActions(BULK_DELETE_QUEUE_LEN)
+      .build()
+
+    // Интересуют только id документов
+    val totalFut = scroller
+      .setFetchSource(false)
+      .execute()
+      .flatMap { searchResp =>
+        EsModelUtil.foldSearchScroll(searchResp, acc0 = 0, firstReq = true, keepAliveMs = SCROLL_KEEPALIVE_MS_DFLT) {
+          (acc01, hits) =>
+            hits
+              .iterator()
+              .foreach { hit =>
+                val req = client.prepareDelete(hit.getIndex, hit.getType, hit.getId)
+                  .request()
+                bp.add(req)
+              }
+            val docsDeletedNow = hits.getHits.length
+            val acc02 = acc01 + docsDeletedNow
+            LOGGER.trace(s"$logPrefix $docsDeletedNow docs queued for deletion, total queued now: $acc02 docs.")
+            Future.successful(acc02)
+        }
+      }
+
+    for (total <- totalFut) yield {
+      LOGGER.debug(s"$logPrefix $total DEL reqs sent, now deleted ${counter.get()} docs.")
+      total
+    }
   }
+
+  /** Кол-во item'ов в очереди на удаление. */
+  def BULK_DELETE_QUEUE_LEN = 200
+
 
   def prepareScroll(keepAlive: TimeValue = SCROLL_KEEPALIVE_DFLT)(implicit client: Client): SearchRequestBuilder = {
     prepareScrollFor(prepareSearch, keepAlive)
@@ -138,29 +203,31 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
    */
   def startScroll(queryOpt: Option[QueryBuilder] = None, resultsPerScroll: Int = SCROLL_SIZE_DFLT,
                   keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)
-                 (implicit ec: ExecutionContext, client: Client): Future[SearchResponse] = {
-    val query = queryOpt getOrElse QueryBuilders.matchAllQuery()
+                 (implicit ec: ExecutionContext, client: Client): SearchRequestBuilder = {
+    val query = queryOpt.getOrElse {
+      QueryBuilders.matchAllQuery()
+    }
     val req = prepareScroll(new TimeValue(keepAliveMs))
       .setQuery(query)
       .setSize(resultsPerScroll)
       .setFetchSource(true)
     LOGGER.trace(s"startScroll($queryOpt, rps=$resultsPerScroll, kaMs=$keepAliveMs): query = $query")
-    req.execute()
+    req
   }
 
   /**
    * Пройтись асинхронно по всем документам модели.
    * @param acc0 Начальный аккамулятор.
-   * @param resultsPerScroll Кол-во результатов на итерацию [10].
    * @param keepAliveMs Таймаут курсора на стороне ES.
    * @param f Асинхронная функция обхода.
    * @tparam A Тип аккамулятора.
    * @return Финальный аккамулятор.
    */
-  def foldLeft[A](acc0: A, resultsPerScroll: Int = SCROLL_SIZE_DFLT, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT,
-                  queryOpt: Option[QueryBuilder] = None)(f: (A, T) => A)
+  def foldLeft[A](acc0: A, scroller: SearchRequestBuilder, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)
+                 (f: (A, T) => A)
                  (implicit ec: ExecutionContext, client: Client): Future[A] = {
-    startScroll(resultsPerScroll = resultsPerScroll, keepAliveMs = keepAliveMs, queryOpt = queryOpt)
+    scroller
+      .execute()
       .flatMap { searchResp =>
         EsModelUtil.foldSearchScroll(searchResp, acc0, firstReq = true, keepAliveMs) {
           (acc01, hits) =>
@@ -182,10 +249,20 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
    * @tparam A Тип значения аккамулятора (без Future[]).
    * @return Фьючерс с результирующим аккамулятором.
    */
+  // TODO Удалить эту прослойку.
   def foldLeftAsync[A](acc0: A, resultsPerScroll: Int = SCROLL_SIZE_DFLT, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT,
-                       queryOpt: Option[QueryBuilder] = None)(f: (Future[A], T) => Future[A])
+                       queryOpt: Option[QueryBuilder] = None)
+                      (f: (Future[A], T) => Future[A])
                       (implicit ec: ExecutionContext, client: Client): Future[A] = {
-    startScroll(resultsPerScroll = resultsPerScroll, keepAliveMs = keepAliveMs, queryOpt = queryOpt)
+    val scroller = startScroll(resultsPerScroll = resultsPerScroll, keepAliveMs = keepAliveMs, queryOpt = queryOpt)
+    foldLeftAsync1(acc0, scroller, keepAliveMs)(f)
+  }
+
+  def foldLeftAsync1[A](acc0: A, scroller: SearchRequestBuilder, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)
+                      (f: (Future[A], T) => Future[A])
+                      (implicit ec: ExecutionContext, client: Client): Future[A] = {
+    scroller
+      .execute()
       .flatMap { searchResp =>
         EsModelUtil.foldSearchScroll(searchResp, acc0, firstReq = true, keepAliveMs) {
           (acc01, hits) =>
@@ -195,7 +272,6 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
         }
       }
   }
-
 
   // !!! map() с сохранением реализован в методе updateAll() !!!
 
@@ -210,7 +286,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
   def foreach[U](resultsPerScroll: Int = SCROLL_SIZE_DFLT, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)
                 (f: T => U)(implicit ec: ExecutionContext, client: Client): Future[Long] = {
     // Оборачиваем foldLeft(), просто фиксируя аккамулятор.
-    foldLeft(0L, resultsPerScroll, keepAliveMs) {
+    val scroller = startScroll(resultsPerScroll = resultsPerScroll, keepAliveMs = keepAliveMs)
+    foldLeft(0L, scroller, keepAliveMs = keepAliveMs) {
       (acc, inst) =>
         f(inst)
         acc + 1L
@@ -247,7 +324,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
 
       /** Данные успешно отправлены в индекс. */
       override def afterBulk(executionId: Long, request: BulkRequest, response: BulkResponse): Unit = {
-        LOGGER.trace(s"$logPrefix ")
+        LOGGER.trace(s"$logPrefix afterBulk OK with resp $response")
       }
 
       /** Ошибка индексации. */
