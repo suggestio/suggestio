@@ -4,7 +4,7 @@ import com.google.inject.{Singleton, Inject}
 import io.suggest.model.n2.edge.MPredicates
 import models.MNode
 import models.mcron.{ICronTask, MCronTask}
-import models.usr.MPersonIdent
+import models.usr.MSuperUsers
 import models.AdnShownTypes
 import models.msys.NodeProblem
 import org.elasticsearch.client.Client
@@ -31,6 +31,7 @@ class AdnGeoParentsHealth @Inject() (
   configuration         : Configuration,
   mailer                : IMailerWrapper,
   messagesApi           : MessagesApi,
+  mSuperUsers           : MSuperUsers,
   scNlUtil              : ShowcaseNodeListUtil,
   implicit val ec       : ExecutionContext,
   implicit val esClient : Client
@@ -43,7 +44,7 @@ class AdnGeoParentsHealth @Inject() (
   import LOGGER._
 
   /** Включено ли автоматическое тестирование узлов? */
-  val GEO_PARENTS_AUTO = configuration.getBoolean("health.tests.adn.geo.parent.periodical") getOrElse false
+  private val GEO_PARENTS_AUTO = configuration.getBoolean("health.tests.adn.geo.parent.periodical") getOrElse false
 
 
   /** Список задач, которые надо вызывать по таймеру. */
@@ -74,6 +75,7 @@ class AdnGeoParentsHealth @Inject() (
   /**
    * Запуск тестирования узлов, имеющих direct geo parents.
    * Тест проверяет возможность узла на рендер внутри списка узлов.
+ *
    * @return Фьючерс со списком обнаруженных проблем.
    */
   def testAll(): Future[List[NodeProblem]] = {
@@ -124,7 +126,7 @@ class AdnGeoParentsHealth @Inject() (
         warn("Selt-test problems detected: " + tryRes)
         mailer.instance
           .setFrom("health@suggest.io")
-          .setRecipients(MPersonIdent.SU_EMAILS : _*)
+          .setRecipients(mSuperUsers.SU_EMAILS : _*)
           .setSubject("Suggest.io: Обнаружены проблемы геосвязности узлов")
           .setHtml( suProblemsEmailTpl(tryRes) )
           .send()

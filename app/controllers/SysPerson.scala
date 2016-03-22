@@ -28,6 +28,7 @@ import scala.concurrent.Future
 // TODO Замержить куски контроллера в отображение узла N2. Сейчас этот контроллер рисует неактуальные данные.
 class SysPerson @Inject() (
   mPerson                   : MPerson,
+  mSuperUsers               : MSuperUsers,
   override val mCommonDi    : ICommonDi
 )
   extends SioControllerImpl
@@ -54,7 +55,7 @@ class SysPerson @Inject() (
     }
     val epwIdsCntFut = EmailPwIdent.countAll
     val extIdsCntFut = MExtIdent.countAll
-    val suCnt        = MPersonIdent.SU_EMAILS.size
+    val suCnt        = mSuperUsers.SU_EMAILS.size
     for {
       personsCnt <- personsCntFut
       epwIdsCnt  <- epwIdsCntFut

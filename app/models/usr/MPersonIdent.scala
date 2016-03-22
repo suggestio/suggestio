@@ -27,26 +27,6 @@ object MPersonIdent extends PlayMacroLogsImpl {
 
   import LOGGER._
 
-  /** Список емейлов админов suggest.io. */
-  def SU_EMAILS: Seq[String] = {
-    // id'шники суперюзеров sio можно указыват через конфиг, но мыльники должны быть в известных доменах.
-    current.configuration.getStringSeq("sio.superuser.emails")
-      .map {
-        _.view.filter { email =>
-          val result = email.endsWith("@cbca.ru") || email.endsWith("@shuma.ru")
-          if (!result)
-            warn("SU_EMAILS(): Superuser email ignored: " + email + " : Invalid domain or other problem.")
-          result
-        }
-      }
-      .getOrElse(Seq(
-        "konstantin.nikiforov@cbca.ru",
-        //"ilya@shuma.ru",
-        "sasha@cbca.ru",
-        "alexander.pestrikov@cbca.ru"
-      ))
-  }
-
   // TODO Нужно дедублицировать код между разными find*() методами.
 
   /**

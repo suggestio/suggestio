@@ -27,6 +27,17 @@ class MSuperUsers @Inject()(
   import LOGGER._
   import mCommonDi._
 
+  /** Список емейлов админов suggest.io.
+    * Раньше жил в конфигах, что вызывало больше неудобств, чем пользы. */
+  def SU_EMAILS: Seq[String] = {
+    Seq(
+      "konstantin.nikiforov@cbca.ru",
+      //"ilya@shuma.ru",
+      "sasha@cbca.ru",
+      "alexander.pestrikov@cbca.ru"
+    )
+  }
+
   /** PersonId суперпользователей sio. */
   private var SU_IDS: Set[String] = Set.empty
 
@@ -44,7 +55,7 @@ class MSuperUsers @Inject()(
     * существуют. Затем, сохранить в глобальную переменную в MPerson этот списочек. */
   def resetSuperuserIds(createIfMissing: Boolean): Future[_] = {
     val logPrefix = s"resetSuperuserIds(create=$createIfMissing): "
-    val se = MPersonIdent.SU_EMAILS
+    val se = SU_EMAILS
     debug(s"${logPrefix}Let's do it. There are ${se.size} superuser emails: [${se.mkString(", ")}]")
     Future.traverse(se) { email =>
       EmailPwIdent.getById(email) flatMap {
