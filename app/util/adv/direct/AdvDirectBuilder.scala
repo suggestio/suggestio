@@ -7,7 +7,6 @@ import io.suggest.model.n2.edge._
 import io.suggest.model.sc.common.SinkShowLevel
 import models.MNode
 import models.adv.build.Acc
-import org.joda.time.DateTime
 import util.adv.build.IAdvBuilder
 
 /**
@@ -30,17 +29,30 @@ trait AdvDirectBuilder extends IAdvBuilder {
   }
 
   /** Очистить все прямые размещения карточки по биллингу.
-    * Используется для рассчета состояния с нуля, вместо обновления существующего состояния. */
-  override def clearAd(): IAdvBuilder = {
+    * Используется для рассчета состояния с нуля, вместо обновления существующего состояния.
+    *
+    * @param full true -- Вычистить всех ресиверов в т.ч. саморазмещение.
+    *             false -- Вычистить только платных ресиверов.
+    */
+  override def clearAd(full: Boolean): IAdvBuilder = {
     val accFut2 = for {
-      acc0 <- super.clearAd().accFut
+      acc0 <- super.clearAd(full).accFut
     } yield {
       acc0.copy(
         mad = acc0.mad.copy(
           edges = acc0.mad.edges.copy(
             out = {
               // Выкидываем всех ресиверов без разбору.
-              val iter = acc0.mad.edges.withoutPredicateIter( _PRED )
+              val p = _PRED
+              val iter: Iterator[MEdge] = if (full) {
+                // Спилить вообще всех ресиверов, в т.ч. Receiver.Self.
+                acc0.mad.edges.withoutPredicateIter(p)
+              } else {
+                // Оставляем все не-ресиверы + self.ресиверы. Т.е. фильтруем, намеренно игноря наследование предикатов.
+                acc0.mad.edges.out.valuesIterator.filter { e =>
+                  e.predicate != p
+                }
+              }
               MNodeEdges.edgesToMap1( iter )
             }
           )
@@ -113,7 +125,7 @@ trait AdvDirectBuilder extends IAdvBuilder {
 
     // Готовим апдейт полей текущего item'а.
     val dbAction = {
-      val dateStart2 = DateTime.now()
+      val dateStart2 = now
       val dateEnd2 = dateStart2.plus( mitem.dtIntervalOpt.get.toPeriod )
       mItems.query
         .filter { _.id === mitemId }
@@ -183,11 +195,11 @@ trait AdvDirectBuilder extends IAdvBuilder {
 
     // Сборка экшена обновления item'а.
     val dbAction = {
-      val now = DateTime.now()
+      val _now = now
       mItems.query
         .filter { _.id === mitem.id.get }
         .map { i => (i.status, i.dateEndOpt, i.dateStatus, i.reasonOpt) }
-        .update( (MItemStatuses.Finished, Some(now), now, reasonOpt) )
+        .update( (MItemStatuses.Finished, Some(_now), _now, reasonOpt) )
     }
 
     acc0.copy(

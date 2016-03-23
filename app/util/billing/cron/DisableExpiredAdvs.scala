@@ -2,9 +2,16 @@ package util.billing.cron
 
 import com.google.inject.Inject
 import io.suggest.mbill2.m.item.status.MItemStatuses
+import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{MItem, MItems}
+import models.adv.build.{Acc, TryUpdateBuilder}
 import models.mproj.ICommonDi
-import util.adv.build.{AdvBuilderFactory, IAdvBuilder}
+import org.joda.time.Interval
+import slick.dbio.Effect.Read
+import slick.profile.SqlAction
+import util.adv.build.AdvBuilderFactory
+
+import scala.concurrent.Future
 
 /**
   * Suggest.io
@@ -22,15 +29,97 @@ class DisableExpiredAdvs @Inject() (
   extends AdvsUpdate
 {
 
-  override def findItemsForProcessing = mItems.findCurrentForStatus( MItemStatuses.Online, expired = true )
+  import LOGGER._
+  import mCommonDi._
+  import slick.driver.api._
 
-  override protected def _buildAction(b: IAdvBuilder, mitem: MItem): IAdvBuilder = {
-    b.uninstall(mitem)
+
+  override def findAdIds: StreamingDBIO[Traversable[String], String] = {
+    mItems.query
+      .filter { i =>
+        (i.statusStr === MItemStatuses.Online.strId) &&
+          (i.dateEndOpt <= now)
+      }
+      .map(_.adId)
+      .distinct
+      // Избегаем скачка слишком резкой нагрузки, ограничивая кол-во обрабатываемых карточек.
+      .take(MAX_ADS_PER_RUN)
+      .result
+  }
+
+
+  override def hasItemsForProcessing(mitems: Iterable[MItem]): Boolean = {
+    super.hasItemsForProcessing(mitems) && {
+      // Если есть хотя бы один item с истекшей dateEnd, то можно продолжать обработку.
+      // TODO Есть ложные срабатывания. Возможно, есть проблема с десериализацией прямо в joda.interval.
+      val res = mitems
+        .flatMap(_.dtIntervalOpt)
+        .exists(_isExpired)
+      trace(s"hasItemsForProcessing(${mitems.size}): $res")
+      res
+    }
+  }
+
+
+  private def _isExpired(ivl: Interval): Boolean = {
+    // используем !isAfter вместо isBefore, т.к. при тестировании как-то удалось попасть пальцем в небо.
+    !ivl.getEnd.isAfter(now)
+  }
+
+  override def findItemsForAdId(adId: String, itypes: List[MItemType]): SqlAction[Iterable[MItem], NoStream, Read] = {
+    // Собираем все item'ы: и истекшие, и ещё нет. Это нужно для ребилда карточки без каких-то item'ов.
+    mItems.query
+      .filter { i =>
+        // Ищем item'ы для картоки в online-состоянии.
+        (i.adId === adId) &&
+          (i.statusStr === MItemStatuses.Online.strId) &&
+          (i.iTypeStr inSet itypes.map(_.strId))
+      }
+      .result
+  }
+
+
+  override def tryUpdateAd(tuData0: TryUpdateBuilder, mitems: Iterable[MItem]): Future[TryUpdateBuilder] = {
+    // mitems содержит одновременно разные по сути item'ы: истекшие и ещё нет.
+    // На основе истекших надо собрать SQL для обновления биллинга.
+    // На основе остальных (не истекших) -- пересобрать размещения в карточке и сохранить карточку.
+    // Поэтому нужно два билдера-аккамулятора.
+    val acc00Fut = Future.successful(tuData0.acc)
+
+    val b0 = advBuilderFactory.builder(acc00Fut, now)
+
+    // Для пересборки размещений карточки нужно сначала очистить текущие размещения карточки:
+    val bAd0 = b0.clearAd(full = false)
+
+    // Проходим билдерами по mitems, вызывая ту или иную логику в зависимости от того, истёк item или же нет.
+    val (bSql2, bAd2) = mitems.foldLeft((b0, bAd0)) {
+      case ((bSql, bAd), mitem) =>
+        if (mitem.dtIntervalOpt.exists(_isExpired)) {
+          // Размещение истекло, деинсталлировать для получения SQL.
+          bSql.uninstall(mitem) -> bAd
+        } else {
+          // Другое активное размещение, отправляем на пересборку карточки.
+          bSql -> bAd.install(mitem)
+        }
+    }
+
+    // Объеденить два аккамулятора в финальный акк, возвращаемый наверх.
+    for {
+      accSql <- bSql2.accFut
+      accAd  <- bAd2.accFut
+    } yield {
+      val acc2 = Acc(
+        mad       = accAd.mad,
+        dbActions = accSql.dbActions
+      )
+      TryUpdateBuilder(acc2)
+    }
   }
 
 }
 
 
+/** Интерфейс Guice-factory, возвращающая инстансы [[DisableExpiredAdvs]]. */
 trait DisableExpiredAdvsFactory {
   def create(): DisableExpiredAdvs
 }

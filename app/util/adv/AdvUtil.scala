@@ -11,6 +11,7 @@ import io.suggest.util.JMXBase
 import models._
 import models.adv.build.{TryUpdateBuilder, Acc}
 import models.mproj.ICommonDi
+import org.joda.time.DateTime
 import util.PlayMacroLogsImpl
 import util.adv.build.AdvBuilderFactory
 import util.adv.direct.AdvDirectBilling
@@ -82,8 +83,8 @@ class AdvUtil @Inject() (
     // Заготавливаем билдер, нужно это заранее сделать для выборки item'ов только поддерживаемых типов.
     val acc0 = Acc(mad)
     val b0 = advBuilderFactory
-      .builder( Future.successful(acc0) )
-      .clearAd()  // С чистого листа, т.к. у нас полный пересчёт
+      .builder( Future.successful(acc0), DateTime.now )
+      .clearAd(full = true)  // С чистого листа, т.к. у нас полный пересчёт
 
     // TODO Opt Тут без stream(), т.к. я пока не осилил. А надо бы...
     val adItemsFut = slick.db.run {
@@ -200,7 +201,8 @@ class AdvUtil @Inject() (
     }
 
     val acc0 = Acc(mad)
-    val b0 = advBuilderFactory.builder( Future.successful(acc0) )
+    val now = DateTime.now
+    val b0 = advBuilderFactory.builder( Future.successful(acc0), now )
 
     // Собрать db-эшен для получения списка затрагиваемых размещений:
     val mitemsAction = {
@@ -230,7 +232,7 @@ class AdvUtil @Inject() (
           // TODO Указать refuse reason. Почему-то в текущем uninstall'ере забыл заимплементить это...
           var b1 = mitems.foldLeft(b0)( _.uninstall(_, refuseReason) )
           // Если жесткое удаление всех ресиверов, то имеет смысл грубо вычистить карточку.
-          b1 = if (rcvrIds.isEmpty)  b1.clearAd()  else  b1
+          b1 = if (rcvrIds.isEmpty)  b1.clearAd(full = true)  else  b1
           for (acc2 <- b1.accFut) yield {
             TryUpdateBuilder(acc2)
           }

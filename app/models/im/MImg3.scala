@@ -297,7 +297,7 @@ abstract class MImg3T extends MImgT {
   }
 
   override def delete: Future[_] = {
-    _mediaOptFut flatMap {
+    _mediaOptFut.flatMap {
       case Some(mm) =>
         for {
           _ <- mm.storage.delete()

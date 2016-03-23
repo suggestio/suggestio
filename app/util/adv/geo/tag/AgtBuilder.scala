@@ -35,11 +35,13 @@ trait AgtBuilder extends IAdvBuilder {
     _ITYPE :: super.supportedItemTypes
   }
 
-  /** Спиливание всех тегов, привязанных через биллинг. */
-  override def clearAd(): IAdvBuilder = {
+  /** Спиливание всех тегов, привязанных через биллинг.
+    * @param full ignored.
+    */
+  override def clearAd(full: Boolean): IAdvBuilder = {
     // Вычистить теги из эджей карточки
     val acc2Fut = for {
-      acc0 <- super.clearAd().accFut
+      acc0 <- super.clearAd(full).accFut
     } yield {
       val mad2 = acc0.mad.copy(
         edges = acc0.mad.edges.copy(
@@ -140,7 +142,7 @@ trait AgtBuilder extends IAdvBuilder {
       // Синхронно собираем db-экшен для грядущей транзакции...
       tnId = tagNode.id.get
       dbAction = {
-        val dateStart2 = DateTime.now()
+        val dateStart2 = now
         val dateEnd2   = dateStart2.plus( mitem.dtIntervalOpt.get.toPeriod )
         mItems.query
           .filter { _.id === mitemId }
@@ -211,12 +213,12 @@ trait AgtBuilder extends IAdvBuilder {
 
       // Собрать изменения для БД
       val dbAction = {
-        val now = DateTime.now()
+        val _now = now
         mItems.query
           .filter { _.id === mitemId }
           .map { i => (i.status, i.dateEndOpt, i.dateStatus, i.reasonOpt) }
           // TODO Лучше задействовать тут SQL now() function
-          .update((MItemStatuses.Finished, Some(now), now, reasonOpt))
+          .update((MItemStatuses.Finished, Some(_now), _now, reasonOpt))
           .filter(_ == 1)
       }
 

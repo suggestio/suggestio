@@ -31,7 +31,7 @@ import scala.concurrent.Future
 /** Трейт для guice-фабрики инстансов [[IAdvBuilder]]. */
 trait AdvBuilderFactory {
   /** Вернуть инстанс билдера, готового к работе. */
-  def builder(acc0Fut: Future[Acc]): IAdvBuilder
+  def builder(acc0Fut: Future[Acc], now: DateTime): IAdvBuilder
 }
 
 /** Интерфейс для DI-поля с инстансом [[AdvBuilderFactory]]. */
@@ -92,10 +92,16 @@ trait IAdvBuilder
   val accFut: Future[Acc]
 
   /** Очистить исходное состояние текущих услуг карточки.
-    * Используется для рассчета состояния с нуля, вместо обновления существующего состояния. */
-  def clearAd(): IAdvBuilder = {
+    * Используется для рассчета состояния с нуля, вместо обновления существующего состояния.
+    * @param full true Полная очистка, размещений.
+    *             false Очищение строго в рамках полномочий того или иного билдера.
+    */
+  def clearAd(full: Boolean): IAdvBuilder = {
     this
   }
+
+  /** Текущее время. Для унификации выставляемых дат. */
+  def now: DateTime
 
   /** Сюда закидываются типы item'ов, поддерживаемых этим билдером,
     * в любом порядке, желательно через "::" . */
@@ -106,9 +112,15 @@ trait IAdvBuilder
   /** Финализировать все размещения карточки по базе биллинга. */
   def finalizeBilling(statuses: MItemStatus*): IAdvBuilder = {
     withAccUpdated { acc0 =>
-      val now = DateTime.now()
-      val supItmTypesStr = supportedItemTypes.iterator.map(_.strId).toSet
-      val statusesStr = statuses.iterator.map(_.strId).toSet
+      val _now = now
+      val supItmTypesStr = supportedItemTypes
+        .iterator
+        .map(_.strId)
+        .toSet
+      val statusesStr = statuses
+        .iterator
+        .map(_.strId)
+        .toSet
       val dbAction = mItems.query
         .filter { i =>
           (i.adId === acc0.mad.id.get) &&
@@ -118,7 +130,7 @@ trait IAdvBuilder
         .map { i =>
           (i.status, i.dateEndOpt, i.dateStatus)
         }
-        .update( (MItemStatuses.Finished, Some(now), now) )
+        .update( (MItemStatuses.Finished, Some(_now), _now) )
       acc0.copy(
         dbActions = dbAction :: acc0.dbActions
       )
@@ -169,6 +181,7 @@ class AdvBuilderDi @Inject() (
 /** Финальная реализация [[IAdvBuilder]]. */
 case class AdvBuilder @Inject() (
   @Assisted override val accFut   : Future[Acc],
+  @Assisted override val now      : DateTime,
   override val di                 : AdvBuilderDi
 )
   extends AdvDirectBuilder
