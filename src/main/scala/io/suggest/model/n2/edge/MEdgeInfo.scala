@@ -16,7 +16,6 @@ import io.suggest.model.es.EsModelUtil.Implicits.jodaDateTimeFormat
  * Created: 05.10.15 12:47
  * Description: У рёбер [[io.suggest.model.n2.edge.MEdge]] могут быть дополнительные данные.
  * Здесь модель для этих опциональных данных.
- * Основное требование тут -- стараться избегать nested-объектов, т.к. тут уже nested-документ.
  *
  * Это неявно-пустая модель, т.е. все поля модели могут быть пустыми.
  */
@@ -154,6 +153,7 @@ trait IEdgeInfo extends IIsNonEmpty {
 }
 
 
+/** Класс экземпляров модели [[IEdgeInfo]]. */
 case class MEdgeInfo(
   override val dynImgArgs   : Option[String]        = None,
   override val sls          : Set[SinkShowLevel]    = Set.empty,

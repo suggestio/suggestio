@@ -136,10 +136,10 @@ case class MMedia(
 trait MMediaJmxMBean extends EsModelJMXMBeanI
 
 final class MMediaJmx @Inject() (
-                                  mMedia      : MMedias,
-                                  val ec      : ExecutionContext,
-                                  val client  : Client,
-                                  val sn      : SioNotifierStaticClientI
+  mMedia      : MMedias,
+  val ec      : ExecutionContext,
+  val client  : Client,
+  val sn      : SioNotifierStaticClientI
 )
   extends EsModelJMXBase
   with MMediaJmxMBean
