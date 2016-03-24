@@ -134,20 +134,6 @@ class MItems @Inject() (
   }
 
 
-  /** Поиск id текущих размещений по ad_id.
-    *
-    * @param status Статус оных.
-    * @return Список ad_id -> Seq[id].
-    */
-  def findCurrentForStatus(status: MItemStatus, expired: Boolean) = {
-    // TODO В slick никак не осилят custom aggregate functions. https://github.com/slick/slick/pull/796
-    val dtFn = if (!expired) DATE_START_FN else DATE_END_FN
-    // Поэтому тот plain SQL вместо использования lifted API.
-    sql"SELECT #$AD_ID_FN, array_agg(#$ID_FN) FROM #$TABLE_NAME WHERE #$STATUS_FN = ${status.strId} AND now() >= #$dtFn GROUP BY #$AD_ID_FN"
-      .as[MAdItemIds]
-  }
-
-
   /** Экшен считывания ожидающего item'а с целью его обновления, который 100% существует.
     * Метод используется внутри транзакций модерации item'ов.
     *
