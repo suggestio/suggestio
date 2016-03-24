@@ -18,7 +18,7 @@
   }
 
   <div class="shops-list_row @_mayOdd(i) @ROW_DIV_CLASS" @ATTR_NODE_ID="@mnode.id">
-    @mnode.extras.tag.get.faces.head._2.name
+    @mnode.edges.iterator.flatMap(_.info.tags).toStream.headOption
   </div>
 
   @if(syncRender && syncRender.get.jsStateOpt) {

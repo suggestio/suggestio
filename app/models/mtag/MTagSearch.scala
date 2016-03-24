@@ -1,8 +1,8 @@
 package models.mtag
 
 import io.suggest.common.text.StringUtil
-import io.suggest.model.n2.extra.tag.search.{ITagFaceCriteria, MTagFaceCriteria}
-import io.suggest.model.n2.node.{MNodeTypes, MNodeType}
+import io.suggest.model.n2.edge.MPredicates
+import io.suggest.model.n2.edge.search.{Criteria, TagCriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import play.api.mvc.QueryStringBindable
 import util.qsb.QsbKey1T
@@ -18,10 +18,10 @@ import views.js.tags.m.mtSearchJsUnbindTpl
  */
 object MTagSearch {
 
-  def LIMIT_DFLT    = 10
-  def LIMIT_MAX     = 50
-  def OFFSET_MAX    = 500
-  def QUERY_MAXLEN  = 64
+  private def LIMIT_DFLT    = 10
+  private def LIMIT_MAX     = 50
+  private def OFFSET_MAX    = 500
+  private def QUERY_MAXLEN  = 64
 
   /** Поддержка интеграции с play-роутером в области URL Query string. */
   implicit def qsb(implicit
@@ -43,19 +43,22 @@ object MTagSearch {
             _limitOpt         <- eLimit.right
             _offsetOpt        <- eOffset.right
           } yield {
-            val _ftsQueryOpt2 = _ftsQueryOpt.map { q =>
+
+            val tcrOpt = for (q <- _ftsQueryOpt) yield {
               val q1 = StringUtil.trimLeft(q)
-              if (q1.length > QUERY_MAXLEN)
+              val q2 = if (q1.length > QUERY_MAXLEN)
                 q1.substring(0, QUERY_MAXLEN)
               else
                 q1
+
+              TagCriteria(q2, isPrefix = true)
             }
-            val crs = _ftsQueryOpt2
-              .iterator
-              .map { face =>
-                MTagFaceCriteria(face, isPrefix = true)
-              }
-              .toSeq
+
+            val ecr = Criteria(
+              predicates  = Seq( MPredicates.TaggedBy ),
+              tags        = tcrOpt
+            )
+
             val _limit = _limitOpt
               .fold(LIMIT_DFLT) { l =>
                 Math.max(0,
@@ -67,7 +70,7 @@ object MTagSearch {
                   Math.min(OFFSET_MAX, o))
               }
             new MTagSearch {
-              override def tagFaces: Seq[ITagFaceCriteria] = crs
+              override def outEdges  = Seq(ecr)
               override def limit     = _limit
               override def offset    = _offset
             }
@@ -78,8 +81,14 @@ object MTagSearch {
       /** Разбиндивание значения [[MTagSearch]] в URL qs. */
       override def unbind(key: String, value: MTagSearch): String = {
         val k = key1F(key)
+        val tfOpt = value.outEdges
+          .iterator
+          .flatMap(_.tags)
+          .map(_.face)
+          .toStream
+          .headOption
         Iterator(
-          strOptB.unbind  (k(FACE_FTS_QUERY_FN),  value.tagFaces.headOption.map(_.face)),
+          strOptB.unbind  (k(FACE_FTS_QUERY_FN),  tfOpt),
           intOptB.unbind  (k(LIMIT_FN),           Some(value.limit)),
           intOptB.unbind  (k(OFFSET_FN),          Some(value.offset))
         )
@@ -101,8 +110,5 @@ class MTagSearch extends MNodeSearchDfltImpl {
 
   override def limit = MTagSearch.LIMIT_DFLT
 
-  override def nodeTypes: Seq[MNodeType] = {
-    Seq( MNodeTypes.Tag )
-  }
-
+  // Не фильтруем по типу, т.к. теги-узлы ушли в прошлое.
 }
