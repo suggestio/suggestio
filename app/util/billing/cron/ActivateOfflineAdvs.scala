@@ -68,9 +68,13 @@ class ActivateOfflineAdvs @Inject() (
   override def tryUpdateAd(tuData0: TryUpdateBuilder, mitems: Iterable[MItem]): Future[TryUpdateBuilder] = {
     // Инкрементальный install всех необходимых item'ов на карточку.
     val acc00Fut = Future.successful(tuData0.acc)
-    val b00 = advBuilderFactory.builder(acc00Fut, now)
+    val b00 = advBuilderFactory
+      .builder(acc00Fut, now)
+      .prepareInstallNew(mitems)
     val b2 = mitems.foldLeft(b00)(_.install(_))
-    for (acc2 <- b2.accFut) yield {
+    for {
+      acc2 <- b2.accFut
+    } yield {
       TryUpdateBuilder(acc2)
     }
   }

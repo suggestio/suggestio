@@ -3,16 +3,8 @@ package util.adv.geo.tag
 import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.{MItemType, MItemTypes}
-import io.suggest.model.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
-import io.suggest.model.n2.extra.MNodeExtras
-import io.suggest.model.n2.extra.tag.search.{ITagFaceCriteria, MTagFaceCriteria}
-import io.suggest.model.n2.extra.tag.{MTagExtra, MTagFace}
-import io.suggest.model.n2.node.MNodeTypes
-import io.suggest.model.n2.node.common.MNodeCommon
-import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
-import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
-import models.MNode
-import org.joda.time.DateTime
+import io.suggest.model.n2.edge._
+import io.suggest.ym.model.NodeGeoLevels
 import util.adv.build.IAdvBuilder
 
 /**
@@ -27,7 +19,7 @@ trait AgtBuilder extends IAdvBuilder {
   import mCommonDi._
   import slick.driver.api._
 
-  private def _PRED   = MPredicates.TaggedBy
+  private def _PRED   = MPredicates.TaggedBy.Agt
   private def _ITYPE  = MItemTypes.GeoTag
 
 
@@ -36,6 +28,7 @@ trait AgtBuilder extends IAdvBuilder {
   }
 
   /** Спиливание всех тегов, привязанных через биллинг.
+    *
     * @param full ignored.
     */
   override def clearAd(full: Boolean): IAdvBuilder = {
@@ -64,6 +57,79 @@ trait AgtBuilder extends IAdvBuilder {
     withAcc( acc2Fut )
   }
 
+  // Код закомменчен, т.к. оказался не нужен, но в будущем возможно пригодится.
+  /*override def prepareInstallNew(mitems: Iterable[MItem]): Future[IAdvBuilder] = {
+    val b0Fut = super.prepareInstallNew(mitems)
+    if (!di.AGT_CREATE_TAG_NODES) {
+      b0Fut
+
+    } else {
+      for {
+        b0    <- b0Fut
+        acc1  <- b0.accFut
+        acc2Fut = {
+          // Нужно узнать, какие теги требуются в mitems, сгруппировав как-то.
+          lazy val logPrefix = s"prepareInstallNew(${System.currentTimeMillis}):"
+          // Бывает, что тег был на момент создания, и в mitem сохранена подсказка с id узла.
+          val tnFut0 = for {
+            tagNodeOpt0 <- mNodeCache.maybeGetByIdCached( mitem.rcvrIdOpt )
+            tagNode0    = tagNodeOpt0.get
+            if tagNode0.common.ntype == MNodeTypes.Tag
+          } yield {
+            LOGGER.trace(s"$logPrefix Found pre-existed tagNode[${tagNode0.idOrNull}], returning...")
+            tagNode0
+          }
+
+          val tagFace = mitem.tagFaceOpt.get
+
+          // Может быть узел-тег уже существует, но не существовал в момент заказа
+          val tnFut1 = tnFut0.recoverWith { case _: NoSuchElementException =>
+            val msearch = new MNodeSearchDfltImpl {
+              override def tagFaces: Seq[ITagFaceCriteria] = {
+                val cr = MTagFaceCriteria(
+                  face      = tagFace,
+                  isPrefix  = false
+                )
+                Seq(cr)
+              }
+            }
+            val tnSearchOptFut = MNode.dynSearchOne(msearch)
+            LOGGER.trace(s"$logPrefix Trying to find existing tag node by tag-face: $tagFace")
+            tnSearchOptFut
+              .map(_.get)
+          }
+
+          // Если не найдено готового узла-тега, то значит пора его создать...
+          tnFut1.recoverWith { case _: NoSuchElementException =>
+            // Собрать и схоронить новый узел-тег.
+            val tn = MNode(
+              common = MNodeCommon(
+                ntype       = MNodeTypes.Tag,
+                // Неиспользуемый тег должен быть подобран сборщиком мусорных узлов:
+                isDependent = true
+              ),
+              meta = MMeta(
+                basic = MBasicMeta()
+              ),
+              extras = MNodeExtras(
+                tag = Some(MTagExtra(
+                  faces = MTagFace.faces2map( MTagFace(mitem.tagFaceOpt.get) )
+                ))
+              )
+            )
+            for (tnId <- tn.save) yield {
+              LOGGER.debug(s"$logPrefix Created new tag node[$tnId] with face: $tagFace")
+              tn.copy(id = Some(tnId))
+            }
+          }
+          ???
+        }
+      } yield {
+        withAcc(acc2Fut)
+      }
+    }
+  }
+  */
 
   /** Установка услуги в карточку. */
   override def install(mitem: MItem): IAdvBuilder = {
@@ -81,98 +147,77 @@ trait AgtBuilder extends IAdvBuilder {
     lazy val logPrefix = s"_installGeoTag($mitemId ${System.currentTimeMillis}):"
     LOGGER.trace(s"$logPrefix $mitem")
 
+    val tnIdOpt = None //tagNode.id
+
+    // Синхронно собираем db-экшен для грядущей транзакции...
+    val dbAction = {
+      val dateStart2 = now
+      val dateEnd2   = dateStart2.plus( mitem.dtIntervalOpt.get.toPeriod )
+      mItems.query
+        .filter { _.id === mitemId }
+        .map { i =>
+          // Логгер вызывается тут, чтобы не писать ничего, пока не началась реальная запись в БД.
+          LOGGER.trace(s"$logPrefix Updating item[$mitemId] dates to: $dateStart2 -> $dateEnd2 ")
+          (i.status, i.rcvrIdOpt, i.dateStartOpt, i.dateEndOpt, i.dateStatus)
+        }
+        .update( (MItemStatuses.Online, tnIdOpt, Some(dateStart2), Some(dateEnd2), dateStart2) )
+        .filter(_ == 1)
+    }
+
     val acc2Fut = for {
-      // нужно найти/создать тег, добавить ресивера в карточку
-      tagNode: MNode <- {
-
-        // Бывает, что тег был на момент создания, и в mitem сохранена подсказка с id узла.
-        val tnFut0 = for {
-          tagNodeOpt0 <- mNodeCache.maybeGetByIdCached( mitem.rcvrIdOpt )
-          tagNode0    = tagNodeOpt0.get
-          if tagNode0.common.ntype == MNodeTypes.Tag
-        } yield {
-          LOGGER.trace(s"$logPrefix Found pre-existed tagNode[${tagNode0.idOrNull}], returning...")
-          tagNode0
-        }
-
-        val tagFace = mitem.tagFaceOpt.get
-
-        // Может быть узел-тег уже существует, но не существовал в момент заказа
-        val tnFut1 = tnFut0.recoverWith { case _: NoSuchElementException =>
-          val msearch = new MNodeSearchDfltImpl {
-            override def tagFaces: Seq[ITagFaceCriteria] = {
-              val cr = MTagFaceCriteria(
-                face      = tagFace,
-                isPrefix  = false
-              )
-              Seq(cr)
-            }
-          }
-          val tnSearchOptFut = MNode.dynSearchOne(msearch)
-          LOGGER.trace(s"$logPrefix Trying to find existing tag node by tag-face: $tagFace")
-          tnSearchOptFut
-            .map(_.get)
-        }
-
-        // Если не найдено готового узла-тега, то значит пора его создать...
-        tnFut1.recoverWith { case _: NoSuchElementException =>
-          // Собрать и схоронить новый узел-тег.
-          val tn = MNode(
-            common = MNodeCommon(
-              ntype       = MNodeTypes.Tag,
-              // Неиспользуемый тег должен быть подобран сборщиком мусорных узлов:
-              isDependent = true
-            ),
-            meta = MMeta(
-              basic = MBasicMeta()
-            ),
-            extras = MNodeExtras(
-              tag = Some(MTagExtra(
-                faces = MTagFace.faces2map( MTagFace(mitem.tagFaceOpt.get) )
-              ))
-            )
-          )
-          for (tnId <- tn.save) yield {
-            LOGGER.debug(s"$logPrefix Created new tag node[$tnId] with face: $tagFace")
-            tn.copy(id = Some(tnId))
-          }
-        }
-      }
-
-      // Синхронно собираем db-экшен для грядущей транзакции...
-      tnId = tagNode.id.get
-      dbAction = {
-        val dateStart2 = now
-        val dateEnd2   = dateStart2.plus( mitem.dtIntervalOpt.get.toPeriod )
-        mItems.query
-          .filter { _.id === mitemId }
-          .map { i =>
-            // Логгер вызывается тут, чтобы не писать ничего, пока не началась реальная запись в БД.
-            LOGGER.trace(s"$logPrefix Updating item[$mitemId] dates to: $dateStart2 -> $dateEnd2 ")
-            (i.status, i.rcvrIdOpt, i.dateStartOpt, i.dateEndOpt, i.dateStatus)
-          }
-          .update( (MItemStatuses.Online, tagNode.id, Some(dateStart2), Some(dateEnd2), dateStart2) )
-          .filter(_ == 1)
-      }
-
       // Осталось дождаться готовности аккамулятора с предыдущего шага, и можно собирать результат:
       acc0 <- accFut
-
     } yield {
-      // Залить ресивера в карточку.
-      val tEdge = MEdge(
-        predicate = _PRED,
-        nodeIdOpt = Some(tnId),
-        info      = MEdgeInfo(
-          geoShape  = mitem.geoShape,
-          itemIds   = Set(mitemId)
-        )
+      val p = _PRED
+      val tagFace = mitem.tagFaceOpt.get
+
+      // Добавляемый гео-шейп:
+      val egs = MEdgeGeoShape(
+        glevel  = NodeGeoLevels.NGL_TOWN_DISTRICT,
+        shape   = mitem.geoShape.get
       )
-      LOGGER.trace(s"$logPrefix new edge for ad[${acc0.mad.idOrNull}]: $tEdge")
+
+      // Собираем новый эдж или обновляем существующий.
+      val edges0 = acc0.mad.edges
+      val edges1iter = edges0
+        .withPredicateIter(p)
+        .find(_.info.tags.contains(tagFace))
+        .fold [TraversableOnce[MEdge]] {
+          // Добавить новый эдж в общую кучу
+          val ne = MEdge(
+            predicate = _PRED,
+            nodeIdOpt = tnIdOpt,
+            info      = MEdgeInfo(
+              tags      = Set(tagFace),
+              geoShapes = List(egs)
+            )
+          )
+          LOGGER.trace(s"$logPrefix new edge for ad[${acc0.mad.idOrNull}]: $ne")
+          edges0.iterator ++ Iterator(ne)
+
+        } { medge0 =>
+          // Модифицировать существующий эдж
+          LOGGER.trace(s"$logPrefix updating exising edge: $medge0")
+          edges0
+            .iterator
+            .map {
+              case e0 if e0 eq medge0 =>
+                e0.copy(
+                  info = e0.info.copy(
+                    tags      = e0.info.tags + tagFace,
+                    geoShapes = egs :: e0.info.geoShapes
+                  )
+                )
+
+              case e1 => e1
+            }
+        }
+
+      // Залить ресивера в карточку.
 
       val mad2 = acc0.mad.copy(
         edges = acc0.mad.edges.copy(
-          out = acc0.mad.edges.out ++ MNodeEdges.edgesToMapIter(tEdge)
+          out = MNodeEdges.edgesToMap1(edges1iter)
         )
       )
 
@@ -204,12 +249,8 @@ trait AgtBuilder extends IAdvBuilder {
     LOGGER.trace(s"$logPrefix Unistalling $mitem")
 
     withAccUpdated { acc0 =>
-      // Спилить из карточки уходящий тег
-      val mad2 = acc0.mad.copy(
-        edges = acc0.mad.edges.copy(
-          out = util.uninstallEdge(acc0.mad.edges.out, mitem, _PRED)
-        )
-      )
+
+      // 2016.mar.24: Обновление самой карточки удалено отсюда, т.к. при uninstall карточка теперь ребилдится.
 
       // Собрать изменения для БД
       val dbAction = {
@@ -224,7 +265,6 @@ trait AgtBuilder extends IAdvBuilder {
 
       // Собрать новый акк.
       acc0.copy(
-        mad       = mad2,
         dbActions = dbAction :: acc0.dbActions
       )
     }

@@ -4,8 +4,6 @@ import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.{MItemType, MItemTypes}
 import io.suggest.model.n2.edge._
-import io.suggest.model.sc.common.SinkShowLevel
-import models.MNode
 import models.adv.build.Acc
 import util.adv.build.IAdvBuilder
 
@@ -21,7 +19,7 @@ trait AdvDirectBuilder extends IAdvBuilder {
   import mCommonDi._
   import slick.driver.api._
 
-  private def _PRED   = MPredicates.Receiver
+  private def _PRED   = MPredicates.Receiver.AdvDirect
   private def _ITYPE  = MItemTypes.AdvDirect
 
   override def supportedItemTypes: List[MItemType] = {
@@ -42,18 +40,13 @@ trait AdvDirectBuilder extends IAdvBuilder {
         mad = acc0.mad.copy(
           edges = acc0.mad.edges.copy(
             out = {
-              // Выкидываем всех ресиверов без разбору.
-              val p = _PRED
-              val iter: Iterator[MEdge] = if (full) {
-                // Спилить вообще всех ресиверов, в т.ч. Receiver.Self.
-                acc0.mad.edges.withoutPredicateIter(p)
-              } else {
-                // Оставляем все не-ресиверы + self.ресиверы. Т.е. фильтруем, намеренно игноря наследование предикатов.
-                acc0.mad.edges.out.valuesIterator.filter { e =>
-                  e.predicate != p
-                }
-              }
-              MNodeEdges.edgesToMap1( iter )
+              // Полная чистка удаляет всех ресиверов. Обычная -- касается только AdvDirect.
+              val p = if (full) MPredicates.Receiver else _PRED
+              // Собрать новую карту эджей.
+              MNodeEdges.edgesToMap1(
+                acc0.mad.edges
+                  .withoutPredicateIter(p)
+              )
             }
           )
         )
@@ -86,40 +79,41 @@ trait AdvDirectBuilder extends IAdvBuilder {
     val rcvrId = mitem.rcvrIdOpt.get
 
     // Найти эдж, связанный с покупаемым узлом-ресивером:
-    val medge1 = acc0.mad
-      .edges
+    val edges0 = acc0.mad.edges
+    val edges2iter = edges0
       .withNodePred(rcvrId, p)
       .toSeq
       .headOption
-      .fold {
+      .fold [Iterator[MEdge]] {
         // Создаём новый эдж
-        MEdge(
+        val e = MEdge(
           predicate = p,
           nodeIdOpt = mitem.rcvrIdOpt,
           info      = MEdgeInfo(
             sls     = mitem.sls,
-            itemIds = Set(mitemId)
+            itemIds = Set(mitemId)    // TODO Подсказка для возможной отладки процесса, потом удалить полностью.
           )
         )
+        // Дописать новый эдж к общей куче.
+        edges0.iterator ++ Iterator(e)
+
       } { medge0 =>
         // Обновляем существующий эдж.
         LOGGER.trace(s"$logPrefix Patching existing edge: $medge0")
-        medge0.copy(
+        val e = medge0.copy(
           info = medge0.info.copy(
             sls       = medge0.info.sls ++ mitem.sls,
-            itemIds  = medge0.info.itemIds + mitemId
+            itemIds   = medge0.info.itemIds + mitemId   // TODO Подсказка для возможной отладки процесса, потом удалить полностью.
           )
         )
+        // Отфильтровать старый эдж, добавить новый.
+        edges0.withoutNodePred(rcvrId, p) ++ Iterator(e)
       }
 
     // Заливаем новый эдж в исходную карточку:
     val mad2 = acc0.mad.copy(
-      edges = acc0.mad.edges.copy(
-        out = {
-          val iter1 = acc0.mad.edges.withoutNodePred(rcvrId, p)
-          val iter2 = Iterator(medge1)
-          MNodeEdges.edgesToMap1( iter1 ++ iter2 )
-        }
+      edges = edges0.copy(
+        out = MNodeEdges.edgesToMap1( edges2iter )
       )
     )
 
@@ -148,62 +142,18 @@ trait AdvDirectBuilder extends IAdvBuilder {
     lazy val logPrefix = s"_uninstallDirect($mitemId ${System.currentTimeMillis}):"
     LOGGER.trace(s"$logPrefix on ad[${acc0.mad.idOrNull}]: $mitem")
 
-    val p = _PRED
-    val rcvrId = mitem.rcvrIdOpt.get
-
-    val mad2 = acc0.mad
-      .edges
-      // Ищем по mitemId
-      .iterator
-      .find( _.info.itemIds.contains(mitemId) )
-      .fold[MNode] {
-        LOGGER.warn(s"$logPrefix receiver[$rcvrId] not found in mad, but expected. Already deleted?")
-        // Нет эджа, хотя должен бы быть
-        acc0.mad
-
-      } { medge0 =>
-        // Старый эдж на месте, чистим его...
-        val sls2: Set[SinkShowLevel] = if (mitem.sls.isEmpty) {
-          LOGGER.debug(s"$logPrefix mitem.sls is empty, uninstalling receiver totally")
-          Set.empty
-        } else {
-          medge0.info.sls -- mitem.sls
-        }
-
-        val edges2: NodeEdgesMap_t = if (sls2.isEmpty) {
-          LOGGER.trace(s"$logPrefix removing rcvr[$rcvrId], because sls now empty")
-          val iter = acc0.mad.edges.withoutNodePred(rcvrId, p)
-          MNodeEdges.edgesToMap1(iter)
-
-        } else {
-          LOGGER.trace(s"$logPrefix updating rcvr[$rcvrId] with sls=${sls2.mkString(",")}")
-          val medge1 = medge0.copy(
-            info = medge0.info.copy(
-              sls = sls2,
-              itemIds = medge0.info.itemIds - mitemId
-            )
-          )
-          acc0.mad.edges.out ++ MNodeEdges.edgesToMapIter(medge1)
-        }
-
-        acc0.mad.copy(
-          edges = acc0.mad.edges.copy(
-            out = edges2
-          )
-        )
-      }
+    // 2016.mar.24: Удалёна поддержка обновления mad отсюда, т.к. теперь при uninstall карточка пересобирается с помощью install.
 
     // Сборка экшена обновления item'а.
     val dbAction = {
       val _now = now
       mItems.query
-        .filter { _.id === mitem.id.get }
+        .filter { _.id === mitemId }
         .map { i => (i.status, i.dateEndOpt, i.dateStatus, i.reasonOpt) }
         .update( (MItemStatuses.Finished, Some(_now), _now, reasonOpt) )
     }
 
     acc0.copy(
-      mad         = mad2,
       dbActions   = dbAction :: acc0.dbActions
     )
   }

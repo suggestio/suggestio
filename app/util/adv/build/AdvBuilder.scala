@@ -1,19 +1,17 @@
 package util.adv.build
 
-import com.google.inject.{Inject, Singleton, ImplementedBy}
 import com.google.inject.assistedinject.Assisted
+import com.google.inject.{ImplementedBy, Inject, Singleton}
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.MItemType
-import io.suggest.mbill2.m.item.{MItems, IMItems, IItem, MItem}
-import io.suggest.model.n2.edge.{NodeEdgesMap_t, MNodeEdges}
-import models.MPredicate
+import io.suggest.mbill2.m.item.{IItem, IMItems, MItem, MItems}
 import models.adv.build.Acc
 import models.mproj.{ICommonDi, IMCommonDi}
 import org.joda.time.DateTime
 import util.adv.direct.AdvDirectBuilder
 import util.adv.geo.tag.AgtBuilder
-import util.{PlayMacroLogsDyn, PlayMacroLogsImpl, PlayMacroLogsI}
 import util.n2u.{IN2NodesUtilDi, N2NodesUtil}
+import util.{PlayMacroLogsI, PlayMacroLogsImpl}
 
 import scala.concurrent.Future
 
@@ -37,44 +35,6 @@ trait AdvBuilderFactory {
 /** Интерфейс для DI-поля с инстансом [[AdvBuilderFactory]]. */
 trait AdvBuilderFactoryDi {
   def advBuilderFactory: AdvBuilderFactory
-}
-
-
-class AdvBuilderUtil extends PlayMacroLogsDyn {
-
-  /**
-    * Вспомогательный метод для удаления эджа из карты эджей на основе данных биллинга.
-    *
-    * @param edges Исходная карта эджей.
-    * @param mitem Текущий item биллинга.
-    * @param pred Ожидаемый предикат эджа.
-    * @return Пропатченная карточка.
-    */
-  def uninstallEdge(edges: NodeEdgesMap_t, mitem: MItem, pred: MPredicate): NodeEdgesMap_t = {
-    val mitemId = mitem.id.get
-    lazy val logPrefix = s"_uninstallEdgeFrom(item[$mitemId]):"
-    val iter = edges
-      .valuesIterator
-      .filter { e =>
-        val isRemove = e.info.itemIds.contains( mitemId )
-
-        // Записать в логи грядущее стирание эджа.
-        if (isRemove)
-          LOGGER.trace(s"$logPrefix uninstalling edge: $e")
-
-        // Для самоконтроля: проверяем остальные поля удаляемого эджа по данным биллинга
-        if (isRemove && !(e.predicate == pred && mitem.rcvrIdOpt.exists(_ => mitem.rcvrIdOpt == e.nodeIdOpt)))
-          LOGGER.error(s"_uninstallEdgeFrom(item[$mitemId]): Erasing unexpected edge using info.billGid: $e, rcvrId must == ${mitem.rcvrIdOpt}, pred == $pred")
-
-        !isRemove
-      }
-    MNodeEdges.edgesToMap1( iter )
-  }
-
-  def throwUnsupported(mitem: IItem) = {
-    throw new UnsupportedOperationException(s"${mitem.iType} is not supported by this builder")
-  }
-
 }
 
 
@@ -139,14 +99,31 @@ trait IAdvBuilder
 
   protected[this] def _thisFut = Future.successful(this)
 
+  protected[this] def throwUnsupported(mitem: IItem) = {
+    throw new UnsupportedOperationException(s"${mitem.iType} is not supported by this builder")
+  }
+
+
+  /** Подготовка к развертыванию новых adv-item'ов.
+    * Новых -- т.е. НЕ reinstall, а именно новых.
+    * Так, гео-теги требуют заранее создать для них почву в виде узлов-тегов.
+    *
+    * @param mitems
+    * @return
+    */
+  def prepareInstallNew(mitems: Iterable[MItem]): IAdvBuilder = {
+    this
+  }
+
   /** Установка услуги в карточку. */
+  // TODO Нужно разбить install на sql-install и mad-install части. Так, при регулярно-используемом reinstall дропается sql-часть.
   def install(mitem: MItem): IAdvBuilder = {
-    util.throwUnsupported(mitem)
+    throwUnsupported(mitem)
   }
 
   /** Деинсталляция услуги из карточки. */
   def uninstall(mitem: MItem, reasonOpt: Option[String] = None): IAdvBuilder = {
-    util.throwUnsupported(mitem)
+    throwUnsupported(mitem)
   }
 
   /** Доступ к copy() с новым инстансом madFut. */
@@ -170,12 +147,21 @@ trait IAdvBuilder
 class AdvBuilderDi @Inject() (
   override val n2NodesUtil        : N2NodesUtil,
   override val mItems             : MItems,
-  val util                        : AdvBuilderUtil,
   override val mCommonDi          : ICommonDi
 )
   extends IN2NodesUtilDi
   with IMCommonDi
   with IMItems
+{
+
+  import mCommonDi.configuration
+
+  /** Создавать ли узлы-теги для геотегов?
+    * Изначально они создавались, но особо были нужны.
+    */
+  val AGT_CREATE_TAG_NODES: Boolean = configuration.getBoolean("adv.geo.tag.create.nodes").getOrElse(false)
+
+}
 
 
 /** Финальная реализация [[IAdvBuilder]]. */
