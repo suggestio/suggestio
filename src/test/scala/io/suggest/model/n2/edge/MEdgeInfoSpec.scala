@@ -3,6 +3,7 @@ package io.suggest.model.n2.edge
 import io.suggest.model.PlayJsonTestUtil
 import io.suggest.model.geo.{Distance, GeoPoint, CircleGs}
 import io.suggest.model.sc.common.SinkShowLevels
+import io.suggest.ym.model.NodeGeoLevels
 import org.elasticsearch.common.unit.DistanceUnit
 import org.joda.time.DateTime
 import org.scalatest.FlatSpec
@@ -30,8 +31,17 @@ class MEdgeInfoSpec extends FlatSpec with PlayJsonTestUtil {
         dateNi      = Some(DateTime.now().minusDays(3)),
         commentNi   = Some("test test 2"),
         flag        = Some(true),
-        geoShape    = Some( CircleGs(GeoPoint(10.1, 11.2), Distance(10.55, DistanceUnit.KILOMETERS)) ),
-        itemIds     = Set(13242134L)
+        itemIds     = Set(13242134L),
+        tags        = Set("test", "vasya", "123"),
+        geoShapes   = List(
+          MEdgeGeoShape(
+            glevel = NodeGeoLevels.NGL_BUILDING,
+            shape  = CircleGs(
+              center = GeoPoint(10.1, 11.2),
+              radius = Distance(10.55, DistanceUnit.KILOMETERS)
+            )
+          )
+        )
       )
     }
   }

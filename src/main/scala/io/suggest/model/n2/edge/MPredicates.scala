@@ -25,6 +25,7 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
     def toTypeValid(ntype: MNodeType): Boolean
 
     def singular = "edge.predicate." + strId
+
   }
 
 
@@ -32,7 +33,7 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
   protected[this] abstract sealed class Val(override val strId: String)
     extends super.Val(strId)
     with ValT
-  {
+  { that =>
 
     /** Дочерние предикаты, если есть. */
     override def children: List[T] = Nil
@@ -40,6 +41,12 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
     /** Родительский предикат, если есть. */
     override def parent: Option[T] = None
 
+    /** Трейт для дочерних элементов. Они обычно наследуют черты родителей. */
+    protected trait _Child { child: ValT =>
+      override def parent: Option[T] = Some(that)
+      override def fromTypeValid(ntype: MNodeType)  = that.fromTypeValid(ntype)
+      override def toTypeValid(ntype: MNodeType)    = that.toTypeValid(ntype)
+    }
   }
 
   override type T = Val
@@ -160,19 +167,16 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
 
   /** Ребро указывает на родительский узел в географическом смысле.
     * Не обязательно это прямой гео-родитель. */
-  val GeoParent = new Val("f") with _FromAdnNode with _ToAdnNode { geoParent =>
-
-    protected sealed trait _Parent extends ValT { that: T =>
-      override def parent: Option[T] = Some(geoParent)
-    }
+  val GeoParent = new Val("f") with _FromAdnNode with _ToAdnNode {
 
     /** Предикат прямого гео-родителя. */
-    val Direct: T = new Val("g") with _FromAdnNode with _ToAdnNode with _Parent
+    val Direct: T = new Val("g") with _Child
 
     override def children: List[T] = {
       Direct :: super.children
     }
   }
+
 
   /** Предикат, указывающий на логотип карточки приветствия.
     *
@@ -182,8 +186,10 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
     */
   val WcLogo: T = new Val("h") with _FromAdnNode with _ToImg
 
+
   /** Предикат, направляемый в сторону картинки или иного объекта, являющегося предметом галлереи. */
   val GalleryItem: T = new Val("i") with _FromAdnNode with _ToImg
+
 
   /** Предикат на юзера, выполнившего модерацию текущего узла.
     * Такой эдж модерации должен содержать инфу о результате модерации. */
@@ -192,33 +198,48 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
     override def toTypeValid(ntype: MNodeType)    = _isPerson(ntype)
   }
 
+
   /** Предикат для ресивера. Изначально, ресивером был узел (с ЛК), а объектом предиката -- рекламная карточка. */
   val Receiver = new Val("k") { r =>
     override def fromTypeValid(ntype: MNodeType)  = true
     override def toTypeValid(ntype: MNodeType)    = true
 
-    /** Дочерний предикат, обозначающий саморазмещение, т.е. ресивера, указывающего на продьюсера. */
-    val Self: T = new Val("ks") {
-      override def parent: Option[T] = Some(r)
-      override def fromTypeValid(ntype: MNodeType) = r.fromTypeValid(ntype)
-      override def toTypeValid(ntype: MNodeType)   = r.toTypeValid(ntype)
-    }
+    /** Саморазмещение, т.е. ресивера, указывающего на продьюсера той же (текущей) карточки. */
+    val Self: T = new Val("ks") with _Child
+
+    /** Проплаченный узел-ресивер, купленный через подсистемы adv. */
+    val AdvDirect: T = new Val("ka") with _Child
+
+    // TODO Наверное здесь будет тривиальный ресивер карточки в bluetooth-маячке, который является узлом.
 
     override def children: List[T] = {
-      Self :: super.children
+      Self :: AdvDirect :: super.children
     }
   }
 
+
   /** Предикат указания на тег. */
-  val TaggedBy: T = new Val("l") {
+  val TaggedBy = new Val("l") { _parent =>
+
     override def fromTypeValid(ntype: MNodeType) = !_isTag(ntype)
     override def toTypeValid(ntype: MNodeType)   = _isTag(ntype)
+
+    /** Adv geo tags: платное размещение в гео-тегах. */
+    val Agt: T = new Val("lg") with _Child
+
+    // TODO Запихать сюда ещё предикат для размещения всего узла-здания в теге? А в нём ещё и основного тега (категории).
+
+    override def children: List[T] = {
+      Agt :: super.children
+    }
   }
+
 
   /** Фоновый объект по отношению к текущему объекту. */
   val Bg: T = new Val("m") with _ToImg {
     override def fromTypeValid(ntype: MNodeType)  = true
   }
+
 
 
   /** Поддержка биндинга из routes. */

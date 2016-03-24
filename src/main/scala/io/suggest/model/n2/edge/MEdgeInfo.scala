@@ -2,7 +2,6 @@ package io.suggest.model.n2.edge
 
 import io.suggest.common.empty.{IEmpty, EmptyProduct, IIsNonEmpty}
 import io.suggest.model.es.IGenEsMappingProps
-import io.suggest.model.geo.GeoShape
 import io.suggest.model.sc.common.SinkShowLevel
 import io.suggest.util.SioConstants
 import org.joda.time.DateTime
@@ -38,8 +37,9 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
     val DATE_NI_FN        = "dtni"
     val COMMENT_NI_FN     = "coni"
     val FLAG_FN           = "flag"
-    val GEO_SHAPE_FN      = "gs"
+    val GEO_SHAPES_FN     = "gss"
     val ITEM_IDS_FN       = "bgid"
+    val TAGS_FN           = "tag"
 
   }
 
@@ -51,17 +51,26 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
     (__ \ DYN_IMG_ARGS_FN).formatNullable[String] and
     (__ \ SLS_FN).formatNullable[Set[SinkShowLevel]]
       .inmap [Set[SinkShowLevel]] (
-        { _ getOrElse Set.empty },
+        _.getOrElse(Set.empty),
         { ssls => if (ssls.nonEmpty) Some(ssls) else None }
       ) and
     (__ \ DATE_NI_FN).formatNullable[DateTime] and
     (__ \ COMMENT_NI_FN).formatNullable[String] and
     (__ \ FLAG_FN).formatNullable[Boolean] and
-    (__ \ GEO_SHAPE_FN).formatNullable[GeoShape] and
     (__ \ ITEM_IDS_FN).formatNullable[Set[Long]]
       .inmap [Set[Long]] (
-        { _ getOrElse Set.empty },
+        _.getOrElse( Set.empty ),
         { bgs => if (bgs.nonEmpty) Some(bgs) else None }
+      ) and
+    (__ \ TAGS_FN).formatNullable[Set[String]]
+      .inmap [Set[String]] (
+        _.getOrElse(Set.empty),
+        { tags => if (tags.nonEmpty) Some(tags) else None }
+      ) and
+    (__ \ GEO_SHAPES_FN).formatNullable[ List[MEdgeGeoShape] ]
+      .inmap [List[MEdgeGeoShape]] (
+        _.getOrElse(Nil),
+        { geos => if (geos.nonEmpty) Some(geos) else None }
       )
   )(apply, unlift(unapply))
 
@@ -100,10 +109,6 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
         index           = FieldIndexingVariants.not_analyzed,
         include_in_all  = false
       ),
-      FieldGeoShape(
-        id              = GEO_SHAPE_FN,
-        precision       = "50m"
-      ),
       FieldNumber(
         id              = ITEM_IDS_FN,
         fieldType       = DocFieldTypes.long,
@@ -111,6 +116,20 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
         // Ибо весь биллинг самодостаточен и живёт в postgresql, здесь просто подсказка для обратной связи с MItems.
         index           = FieldIndexingVariants.no,
         include_in_all  = false
+      ),
+      // 2016.mar.24 Теперь теги живут внутри эджей.
+      FieldString(
+        id              = TAGS_FN,
+        index           = FieldIndexingVariants.analyzed,
+        include_in_all  = true,
+        index_analyzer  = SioConstants.ENGRAM_AN_1,
+        search_analyzer = SioConstants.DFLT_AN
+      ),
+      // Список геошейпов идёт как nested object, чтобы расширить возможности индексации (ценой усложнения запросов).
+      FieldNestedObject(
+        id              = GEO_SHAPES_FN,
+        enabled         = true,
+        properties      = MEdgeGeoShape.generateMappingProps
       )
     )
   }
@@ -136,8 +155,9 @@ trait IEdgeInfo extends IIsNonEmpty {
   /** Индексируемое значение некоторого флага. */
   def flag         : Option[Boolean]
 
-  /** Геошейп, связанный с этим ребром. */
-  def geoShape     : Option[GeoShape]
+  /** Список геошейпов, которые связаны с данным эджем.
+    * Изначально было Seq, но из-за частой пошаговой пересборки этого лучше подходит List. */
+  def geoShapes    : List[MEdgeGeoShape]
 
   /**
    * item ids, напрямую связанные с данным эджем.
@@ -150,6 +170,79 @@ trait IEdgeInfo extends IIsNonEmpty {
    */
   def itemIds       : Set[Long]
 
+  /** Названия тегов, которые индексируются для полноценного поиска по тегам. */
+  def tags          : Set[String]
+
+
+    /** Форматирование для вывода в шаблонах. */
+  override def toString: String = {
+    if (nonEmpty) {
+      val sb = new StringBuilder(32)
+
+      for (dia <- dynImgArgs) {
+        sb.append("dynImg=")
+          .append(dia)
+          .append(' ')
+      }
+
+      val _sls = sls
+      if (_sls.nonEmpty) {
+        sb.append("sls=")
+        for (sl <- _sls) {
+          sb.append(sl)
+            .append(',')
+        }
+        sb.append(' ')
+      }
+
+      for (dt <- dateNi) {
+        sb.append("dateNi=")
+          .append(dt)
+          .append(' ')
+      }
+
+      for (comment <- commentNi) {
+        sb.append("commentNi=")
+          .append(comment)
+          .append(' ')
+      }
+
+      val _itemIds = itemIds
+      if (_itemIds.nonEmpty) {
+        sb.append("itemIds=")
+        for (bgid <- _itemIds) {
+          sb.append(bgid).append(',')
+        }
+        sb.append(' ')
+      }
+
+      val _tags = tags
+      if (_tags.nonEmpty) {
+        sb.append("tags=")
+        for (tag <- _tags) {
+          sb.append(tag).append(',')
+        }
+        sb.append(' ')
+      }
+
+      val _geoShapes = geoShapes
+      if (_geoShapes.nonEmpty) {
+        sb.append(_geoShapes.size)
+          .append("gss,")
+      }
+
+      sb.toString()
+
+    } else {
+      super.toString
+    }
+  }
+
+
+  def _extraKeyData: EdgeXKey_t = {
+    itemIds.toList
+  }
+
 }
 
 
@@ -160,60 +253,14 @@ case class MEdgeInfo(
   override val dateNi       : Option[DateTime]      = None,
   override val commentNi    : Option[String]        = None,
   override val flag         : Option[Boolean]       = None,
-  override val geoShape     : Option[GeoShape]      = None,
-  override val itemIds      : Set[Long]             = Set.empty
+  override val itemIds      : Set[Long]             = Set.empty,
+  override val tags         : Set[String]           = Set.empty,
+  override val geoShapes    : List[MEdgeGeoShape]   = Nil
 )
   extends EmptyProduct
   with IEdgeInfo
 {
 
-  /** Форматирование для вывода в шаблонах. */
-  override def toString: String = {
-    if (nonEmpty) {
-      val sb = new StringBuilder(32)
-      dynImgArgs.foreach { dia =>
-        sb.append("dynImg=")
-          .append(dia)
-          .append(' ')
-      }
-      if (sls.nonEmpty) {
-        sb.append("sls=")
-        for (sl <- sls) {
-          sb.append(sl).append(',')
-        }
-        sb.append(' ')
-      }
-      if (dateNi.nonEmpty) {
-        sb.append("dateNi=")
-          .append(dateNi.get)
-          .append(' ')
-      }
-      if (commentNi.nonEmpty) {
-        sb.append("commentNi=")
-          .append(commentNi.get)
-          .append(' ')
-      }
-      for (gs <- geoShape) {
-        sb.append("gs=")
-          .append(gs)
-      }
-      if (itemIds.nonEmpty) {
-        sb.append("itemIds=")
-        for (bgid <- itemIds) {
-          sb.append(bgid).append(',')
-        }
-        sb.append(' ')
-      }
-      sb.toString()
-
-    } else {
-      ""
-    }
-  }
-
-
-  def _extraKeyData: EdgeXKey_t = {
-    itemIds.toList
-  }
+  override def toString = super.toString
 
 }
