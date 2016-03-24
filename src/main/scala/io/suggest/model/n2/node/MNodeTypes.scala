@@ -78,9 +78,11 @@ object MNodeTypes extends EnumMaybeWithName with EnumJsonReadsValT with EnumTree
   /** Теги/ключевые слова. */
   val Tag: T      = new ValNoSub("t") {
     override def guessNodeDisplayName(mnode: MNode): Option[String] = {
-      mnode.extras.tag
-        .flatMap(_.faces.headOption)
-        .map(_._2.name)
+      mnode.edges
+        .iterator
+        .flatMap(_.info.tags)
+        .toStream
+        .headOption
         .orElse { super.guessNodeDisplayName(mnode) }
     }
   }

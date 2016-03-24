@@ -3,7 +3,7 @@ package io.suggest.model.n2.edge.search
 import io.suggest.model.n2.node.MNodeFields.Edges._
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import io.suggest.util.MacroLogsI
-import org.elasticsearch.index.query.{QueryBuilders, FilterBuilders, QueryBuilder}
+import org.elasticsearch.index.query.{MatchQueryBuilder, QueryBuilders, FilterBuilders, QueryBuilder}
 
 /**
  * Suggest.io
@@ -35,22 +35,51 @@ trait OutEdges extends DynSearchArgs with MacroLogsI {
       val clauses = _outEdgesIter
         .flatMap { oe =>
 
+          var _qOpt: Option[QueryBuilder] = None
+
+          // В первую очередь ищем по fts. А именно: по тегам с match-query наперевес
+          if (oe.tags.nonEmpty) {
+            val fn = OUT_INFO_TAGS_FN
+
+            // TODO По идее надо бы тут список критериев, но это пока не нужно и усложняет многое, поэтому пока пропущено.
+            // Готовую реализацию можно подсмотреть в io.suggest.model.n2.extra.tag.search.FaceTextQuery <= 9f2bfd249a83
+            val tcr = oe.tags.get
+
+            val tq = QueryBuilders.matchQuery(fn, tcr.face)
+              // TODO Надо ведь 100% по идее, но не ясно, насколько это ок.
+              .minimumShouldMatch( "90%" )
+              .operator( MatchQueryBuilder.Operator.AND )
+              .`type` {
+                if (tcr.isPrefix)
+                  MatchQueryBuilder.Type.PHRASE_PREFIX
+                else
+                  MatchQueryBuilder.Type.PHRASE
+              }
+              .zeroTermsQuery( MatchQueryBuilder.ZeroTermsQuery.ALL )
+
+            _qOpt = Some(tq)
+          }
+
           // Поиск по id узлов, на которые указывают эджи.
-          var _qOpt: Option[QueryBuilder] = if (oe.nodeIds.nonEmpty) {
-            val __q = QueryBuilders.termsQuery(EDGE_OUT_NODE_ID_FULL_FN, oe.nodeIds: _*)
-            Some(__q)
-          } else {
-            None
+          if (oe.nodeIds.nonEmpty) {
+            val fn = EDGE_OUT_NODE_ID_FULL_FN
+            _qOpt = _qOpt.map { _q =>
+              val nodeIdsFilter = FilterBuilders.termsFilter(fn, oe.nodeIds: _*)
+              QueryBuilders.filteredQuery(_q, nodeIdsFilter)
+            }.orElse {
+              val __q = QueryBuilders.termsQuery(fn, oe.nodeIds: _*)
+              Some(__q)
+            }
           }
 
           // Предикаты рёбер добавить через фильтр либо query.
           if (oe.predicates.nonEmpty) {
             val fn = EDGE_OUT_PREDICATE_FULL_FN
             val predIds = oe.predicates.map(_.strId)
-            _qOpt = _qOpt map { _q =>
+            _qOpt = _qOpt.map { _q =>
               val predf = FilterBuilders.termsFilter(fn, predIds: _*)
               QueryBuilders.filteredQuery(_q, predf)
-            } orElse {
+            }.orElse {
               val _q = QueryBuilders.termsQuery(fn, predIds: _*)
               Some(_q)
             }

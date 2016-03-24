@@ -27,6 +27,9 @@ trait ICriteria extends IIsNonEmpty {
   /** Флаг наличия любого уровня или отсутствия всех уровней отображения. */
   def anySl       : Option[Boolean]
 
+  /** Критерий для поиска по тегу. */
+  def tags        : Option[ITagCriteria]
+
   /**
    * Вместо should clause будет использована must или mustNot для true или false соответственно.
    * Т.е. тут можно управлять семантикой объединения нескольких критериев, как если бы [OR, AND, NAND].
@@ -91,6 +94,11 @@ trait ICriteria extends IIsNonEmpty {
         .append( _flag )
     }
 
+    for (_tag <- tags) {
+      sb.append(",tag=")
+        .append(_tag)
+    }
+
     sb.append(')')
       .toString()
   }
@@ -105,7 +113,8 @@ case class Criteria(
   override val sls         : Seq[SlNameTokenStr]  = Nil,
   override val anySl       : Option[Boolean]      = None,
   override val must        : Option[Boolean]      = None,
-  override val flag        : Option[Boolean]      = None
+  override val flag        : Option[Boolean]      = None,
+  override val tags        : Option[ITagCriteria] = None
 )
   extends ICriteria
   with EmptyProduct

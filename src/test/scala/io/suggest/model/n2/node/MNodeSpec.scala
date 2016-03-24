@@ -4,7 +4,6 @@ import io.suggest.model.geo.GeoPoint
 import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.ad.blk.BlockMeta
 import io.suggest.model.n2.edge.{MPredicates, MEdge, MNodeEdges}
-import io.suggest.model.n2.extra.tag.{MTagExtra, MTagFace}
 import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
 import io.suggest.model.n2.geo.MNodeGeo
 import io.suggest.model.n2.node.common.MNodeCommon
@@ -50,11 +49,6 @@ class MNodeSpec extends FlatSpec {
           )
         ),
         extras = MNodeExtras(
-          tag = Some(MTagExtra(
-            faces = MTagFace.faces2map(
-              MTagFace("один"), MTagFace("два"), MTagFace("три")
-            )
-          )),
           adn = Some(MAdnExtra(
             rights = Set(AdnRights.PRODUCER)
           ))

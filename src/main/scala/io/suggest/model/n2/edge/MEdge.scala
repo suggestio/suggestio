@@ -33,6 +33,7 @@ object MEdge extends IGenEsMappingProps {
 
       def INFO_SLS_FN   = _fullFn( MEdgeInfo.Fields.SLS_FN )
       def FLAG_FN       = _fullFn( MEdgeInfo.Fields.FLAG_FN )
+      def TAGS_FN       = _fullFn( MEdgeInfo.Fields.TAGS_FN )
     }
 
   }

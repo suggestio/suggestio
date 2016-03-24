@@ -2,7 +2,6 @@ package io.suggest.model.n2.node.search
 
 import io.suggest.model.n2.edge.search._
 import io.suggest.model.n2.extra.search._
-import io.suggest.model.n2.extra.tag.search.{FaceTextQueryWrap, FaceTextQueryDflt, FaceTextQuery}
 import io.suggest.model.n2.geo.search._
 import io.suggest.model.n2.node.common.search._
 import io.suggest.model.n2.node.meta.search._
@@ -23,7 +22,6 @@ trait MNodeSearch
   with ShownTypeId
   with AdnRights
   with AdnIsTest
-  with FaceTextQuery
   with NodeTypes
   with WithoutIds
   with ShowInScNl
@@ -51,7 +49,6 @@ trait MNodeSearchDflt
   with ShownTypeIdDflt
   with AdnRightsDflt
   with AdnIsTestDflt
-  with FaceTextQueryDflt
   with NodeTypesDflt
   with WithoutIdsDflt
   with ShowInScNlDflt
@@ -82,7 +79,6 @@ trait MNodeSearchWrap
   with ShownTypeIdWrap
   with AdnRightsWrap
   with AdnIsTestWrap
-  with FaceTextQueryWrap
   with NodeTypesWrap
   with WithoutIdsWrap
   with ShowInScNlWrap

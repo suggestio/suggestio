@@ -3,7 +3,6 @@ package io.suggest.model.n2.extra
 import io.suggest.common.empty.{IEmpty, EmptyProduct}
 import io.suggest.model.PrefixedFn
 import io.suggest.model.es.IGenEsMappingProps
-import io.suggest.model.n2.extra.tag.MTagExtra
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{OFormat, _}
 
@@ -28,13 +27,6 @@ object MNodeExtras extends IGenEsMappingProps with IEmpty {
   /** Статическая модель полей модели [[MNodeExtras]]. */
   object Fields {
 
-    object Tag extends PrefixedFn {
-      val TAG_FN = "t"
-      override protected def _PARENT_FN = TAG_FN
-      def FACES_FN     = _fullFn( MTagExtra.Fields.Faces.FACES_FN )
-      def FACE_NAME_FN = _fullFn( MTagExtra.Fields.Faces.FACE_NAME_FN )
-    }
-
     object Adn extends PrefixedFn {
       val ADN_FN = "a"
       override protected def _PARENT_FN = ADN_FN
@@ -48,13 +40,15 @@ object MNodeExtras extends IGenEsMappingProps with IEmpty {
 
 
   import Fields.Adn.ADN_FN
-  import Fields.Tag.TAG_FN
 
   /** Поддержка JSON для растущей модели [[MNodeExtras]]. */
-  implicit val FORMAT: OFormat[MNodeExtras] = (
-    (__ \ TAG_FN).formatNullable[MTagExtra] and
+  implicit val FORMAT: OFormat[MNodeExtras] = {
     (__ \ ADN_FN).formatNullable[MAdnExtra]
-  )(apply, unlift(unapply))
+      .inmap [MNodeExtras] (
+        { adnExtraOpt => MNodeExtras(adn = adnExtraOpt) },
+        { mne => mne.adn }
+      )
+  }
 
 
   import io.suggest.util.SioEsUtil._
@@ -64,7 +58,6 @@ object MNodeExtras extends IGenEsMappingProps with IEmpty {
   }
   override def generateMappingProps: List[DocField] = {
     List(
-      _obj(TAG_FN, MTagExtra),
       _obj(ADN_FN, MAdnExtra)
     )
   }
@@ -74,8 +67,7 @@ object MNodeExtras extends IGenEsMappingProps with IEmpty {
 
 /** Класс-контейнер-реализация модели. */
 case class MNodeExtras(
-  tag: Option[MTagExtra] = None,
   adn: Option[MAdnExtra]  = None
-  // модерация была вынесена отсюда в эджи.
+  // модерация и теги были вынесены в эджи.
 )
   extends EmptyProduct

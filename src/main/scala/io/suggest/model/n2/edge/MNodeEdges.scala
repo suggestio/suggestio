@@ -41,6 +41,8 @@ object MNodeEdges extends IGenEsMappingProps with IEmpty {
       def OUT_ORDER_FN      = _fullFn( ORDER_FN )
       def OUT_INFO_SLS_FN   = _fullFn( Info.INFO_SLS_FN )
       def OUT_INFO_FLAG_FN  = _fullFn( Info.FLAG_FN )
+
+      def INFO_TAGS_FN      = _fullFn( Info.TAGS_FN )
     }
 
   }

@@ -2,35 +2,26 @@ package io.suggest.model.n2.edge
 
 import io.suggest.common.menum.{EnumTree, EnumMaybeWithName}
 import io.suggest.model.menum.EnumJsonReadsValT
-import io.suggest.model.n2.node.{MNodeTypes, MNodeType}
 import play.api.libs.json._
 import play.api.mvc.QueryStringBindable
 
 /**
- * Suggest.io
- * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 23.09.15 10:32
- * Description: Статическая синхронная модель предикатов, т.е. "типов" ребер графа N2.
- * Создана по мотивам модели zotonic m_predicate.
- */
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 23.09.15 10:32
+  * Description: Статическая синхронная модель предикатов, т.е. "типов" ребер графа N2.
+  * Создана по мотивам модели zotonic m_predicate, но сильно ушла от неё уже.
+  */
 object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTree {
 
   /** Трейт элемента модели. */
   protected sealed trait ValT extends super.ValT { that: T =>
-
-    /** Типы узлов, которые могут выступать субъектом данного предиката. */
-    def fromTypeValid(ntype: MNodeType): Boolean
-
-    /** Типы узлов, которые могут выступать объектами данного предиката. */
-    def toTypeValid(ntype: MNodeType): Boolean
-
     def singular = "edge.predicate." + strId
-
   }
 
 
   /** Класс одного элемента модели. */
-  protected[this] abstract sealed class Val(override val strId: String)
+  protected[this] sealed class Val(override val strId: String)
     extends super.Val(strId)
     with ValT
   { that =>
@@ -44,47 +35,10 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
     /** Трейт для дочерних элементов. Они обычно наследуют черты родителей. */
     protected trait _Child { child: ValT =>
       override def parent: Option[T] = Some(that)
-      override def fromTypeValid(ntype: MNodeType)  = that.fromTypeValid(ntype)
-      override def toTypeValid(ntype: MNodeType)    = that.toTypeValid(ntype)
     }
   }
 
   override type T = Val
-
-
-  // Короткие врапперы для определения принадлежности типов друг к другу.
-  private def _isAdnNode(ntype: MNodeType): Boolean = {
-    ntype ==>> MNodeTypes.AdnNode
-  }
-  private def _isPerson(ntype: MNodeType): Boolean = {
-    ntype ==>> MNodeTypes.Person
-  }
-  private def _isAd(ntype: MNodeType): Boolean = {
-    ntype ==>> MNodeTypes.Ad
-  }
-  private def _isImage(ntype: MNodeType): Boolean = {
-    ntype ==>> MNodeTypes.Media.Image
-  }
-  private def _isTag(ntype: MNodeType): Boolean = {
-    ntype ==>> MNodeTypes.Tag
-  }
-
-  protected sealed trait _FromAdnNode extends ValT { that: T =>
-    override def fromTypeValid(ntype: MNodeType): Boolean = {
-      _isAdnNode(ntype)
-    }
-  }
-  protected sealed trait _ToAdnNode extends ValT { that: T =>
-    override def toTypeValid(ntype: MNodeType): Boolean = {
-      _isAdnNode(ntype)
-    }
-  }
-
-  protected sealed trait _ToImg extends ValT { that: T =>
-    override def toTypeValid(ntype: MNodeType): Boolean = {
-      _isImage(ntype)
-    }
-  }
 
 
   /** Сериализация в JSON, первый элемент -- текущий, второй и последующие -- родительские. */
@@ -132,10 +86,7 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
   // ------------------------------------------------------------------------
 
   /** Субъект имеет право владения субъектом. */
-  val OwnedBy: T = new Val("a") {
-    override def fromTypeValid(ntype: MNodeType) = !_isPerson(ntype)
-    override def toTypeValid(ntype: MNodeType)   = true
-  }
+  val OwnedBy: T = new Val("a")
 
 
   /**
@@ -151,23 +102,16 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
    * from -- юзер.
    * to   -- любой узел, например карточка или магазин.
    */
-  val CreatorOf: T = new Val("d") {
-    override def fromTypeValid(ntype: MNodeType): Boolean = {
-      _isPerson(ntype)
-    }
-    override def toTypeValid(ntype: MNodeType): Boolean = {
-      true
-    }
-  }
+  val CreatorOf: T = new Val("d")
 
 
   /** Указание на картинку-логотип узла-учреждения.  */
-  val Logo: T = new Val("e") with _FromAdnNode with _ToImg
+  val Logo: T = new Val("e")
 
 
   /** Ребро указывает на родительский узел в географическом смысле.
     * Не обязательно это прямой гео-родитель. */
-  val GeoParent = new Val("f") with _FromAdnNode with _ToAdnNode {
+  val GeoParent = new Val("f") {
 
     /** Предикат прямого гео-родителя. */
     val Direct: T = new Val("g") with _Child
@@ -184,25 +128,20 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
     * После ветки root:mad-to-n2 предикат стал использоваться для указания на логотип приветствия.
     * а неудавшаяся модель карточки приветствия окончательно отмерла.
     */
-  val WcLogo: T = new Val("h") with _FromAdnNode with _ToImg
+  val WcLogo: T = new Val("h")
 
 
   /** Предикат, направляемый в сторону картинки или иного объекта, являющегося предметом галлереи. */
-  val GalleryItem: T = new Val("i") with _FromAdnNode with _ToImg
+  val GalleryItem: T = new Val("i")
 
 
   /** Предикат на юзера, выполнившего модерацию текущего узла.
     * Такой эдж модерации должен содержать инфу о результате модерации. */
-  val ModeratedBy: T = new Val("j") {
-    override def fromTypeValid(ntype: MNodeType)  = true
-    override def toTypeValid(ntype: MNodeType)    = _isPerson(ntype)
-  }
+  val ModeratedBy: T = new Val("j")
 
 
   /** Предикат для ресивера. Изначально, ресивером был узел (с ЛК), а объектом предиката -- рекламная карточка. */
-  val Receiver = new Val("k") { r =>
-    override def fromTypeValid(ntype: MNodeType)  = true
-    override def toTypeValid(ntype: MNodeType)    = true
+  val Receiver = new Val("k") {
 
     /** Саморазмещение, т.е. ресивера, указывающего на продьюсера той же (текущей) карточки. */
     val Self: T = new Val("ks") with _Child
@@ -219,10 +158,7 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
 
 
   /** Предикат указания на тег. */
-  val TaggedBy = new Val("l") { _parent =>
-
-    override def fromTypeValid(ntype: MNodeType) = !_isTag(ntype)
-    override def toTypeValid(ntype: MNodeType)   = _isTag(ntype)
+  val TaggedBy = new Val("l") {
 
     /** Adv geo tags: платное размещение в гео-тегах. */
     val Agt: T = new Val("lg") with _Child
@@ -236,9 +172,7 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
 
 
   /** Фоновый объект по отношению к текущему объекту. */
-  val Bg: T = new Val("m") with _ToImg {
-    override def fromTypeValid(ntype: MNodeType)  = true
-  }
+  val Bg: T = new Val("m")
 
 
 

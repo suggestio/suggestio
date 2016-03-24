@@ -50,8 +50,6 @@ object MNodeFields {
     def ADN_SHOWN_TYPE_FN       = _fullFn( MNodeExtras.Fields.Adn.SHOWN_TYPE_FN )
     def ADN_SHOW_IN_SC_NL_FN    = _fullFn( MNodeExtras.Fields.Adn.SHOW_IN_SC_NL_FN )
 
-    def TAG_FACE_NAME_FN        = _fullFn( MNodeExtras.Fields.Tag.FACE_NAME_FN )
-    def TAG_FACES_FN            = _fullFn( MNodeExtras.Fields.Tag.FACES_FN )
   }
 
   /** Абсолютные имена ES-полей в .edges */
@@ -70,6 +68,8 @@ object MNodeFields {
     def EDGE_OUT_ORDER_FULL_FN     = _fullFn( OUT_ORDER_FN )
     def EDGE_OUT_INFO_SLS_FN       = _fullFn( OUT_INFO_SLS_FN )
     def EDGE_OUT_INFO_FLAG_FN      = _fullFn( OUT_INFO_FLAG_FN )
+
+    def OUT_INFO_TAGS_FN           = _fullFn( INFO_TAGS_FN )
   }
 
   /** Абсолютные названия географических полей.*/

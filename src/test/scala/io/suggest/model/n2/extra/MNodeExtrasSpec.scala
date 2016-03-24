@@ -1,7 +1,6 @@
 package io.suggest.model.n2.extra
 
 import io.suggest.model.PlayJsonTestUtil
-import io.suggest.model.n2.extra.tag.{MTagExtra, MTagFace}
 import org.scalatest.FlatSpec
 
 /**
@@ -22,12 +21,6 @@ class MNodeExtrasSpec extends FlatSpec with PlayJsonTestUtil {
   it should "support full-filled model" in {
     jsonTest {
       MNodeExtras(
-        tag = Some(MTagExtra(
-          faces = MTagFace.faces2map(
-            MTagFace("ягоды"),
-            MTagFace("грибы")
-          )
-        )),
         adn = Some(MAdnExtra(
           testNode  = true,
           isUser    = true
