@@ -38,7 +38,7 @@ getSessionStatus = ()->
   SESSION_END    = 'Кажется, ваша сессия истекла'
   CONNECTION_ERR = 'Нет свзяи с сервером!'
 
-  jsRoutes.controllers.Application.keepAliveSession().ajax
+  jsRoutes.controllers.Static.keepAliveSession().ajax
     type: 'post'
     success: (data, textStatus, xhr)->
       connectionErr = false

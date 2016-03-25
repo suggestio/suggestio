@@ -76,6 +76,7 @@ Refuse=Refuse
 Approve=Approve
 Delete.all=Delete all
 Something.gone.wrong=Something gone wrong
+Center=Center
 
 requisites=Payment details for withdrawal
 
@@ -739,3 +740,5 @@ Picture.editing=Picture editing
 Refuse.mode.i=Only this adv
 Refuse.mode.req=This and any requested advs
 Refuse.mode.all=All current and requested advs
+
+Map.settings.save.unsupported=Saving of map settings not implemented by now.

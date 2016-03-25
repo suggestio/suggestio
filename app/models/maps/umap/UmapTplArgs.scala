@@ -1,5 +1,6 @@
-package models
+package models.maps.umap
 
+import models._
 import play.api.i18n.Messages
 import play.api.libs.json._
 
@@ -43,7 +44,8 @@ trait IUmapTplArgs {
 
 /**
  * Набор аргументов для рендера шаблоны с картой Umap.
- * @param nodesMap Карта узлов по категориям. Если пусто, то значит работа идёт в рамках одного узла.
+  *
+  * @param nodesMap Карта узлов по категориям. Если пусто, то значит работа идёт в рамках одного узла.
  * @param dlUpdateUrl Заготовка ссылки, которая будет делать сабмит для сохранения слоя.
  *                    На месте вставки id слоя надо использовать шаблон "{pk}".
  */

@@ -8,6 +8,7 @@ import com.google.inject.Inject
 import io.suggest.model.geo.{GsTypes, PointGs}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models._
+import models.maps.umap._
 import models.mproj.ICommonDi
 import models.req.IReq
 import play.api.i18n.Messages
@@ -38,33 +39,43 @@ class Umap @Inject() (
   import mCommonDi._
 
   /** Разрешено ли редактирование глобальной карты всех узлов? */
-  val GLOBAL_MAP_EDIT_ALLOWED: Boolean = configuration.getBoolean("umap.global.map.edit.allowed") getOrElse false
+  val GLOBAL_MAP_EDIT_ALLOWED: Boolean = {
+    configuration
+      .getBoolean("umap.global.map.edit.allowed")
+      .getOrElse(false)
+  }
 
 
   /** Рендер статической карты для всех узлов, которая запросит и отобразит географию узлов. */
   def getAdnNodesMap = IsSuperuserGet.async { implicit request =>
     // Скачиваем все узлы из базы. TODO Закачать через кэш?
-    val allNodesMapFut: Future[Map[AdnShownType, Seq[MNode]]] = {
-      val msearch = new MNodeSearchDfltImpl {
-        override def withAdnRights  = Seq(AdnRights.RECEIVER)
-        override def limit          = 500
-        override def nodeTypes      = Seq( MNodeTypes.AdnNode )
-      }
-      MNode.dynSearch( msearch )
-    } map { allNodes =>
-      allNodes
-        .groupBy { node =>
-          node.extras.adn
-            .flatMap( _.shownTypeIdOpt )
-            .flatMap( AdnShownTypes.maybeWithName )
-            .getOrElse( AdnShownTypes.default )
+    for {
+      allNodes <- {
+        val msearch = new MNodeSearchDfltImpl {
+          override def withAdnRights  = Seq(AdnRights.RECEIVER)
+          override def limit          = 500
+          override def nodeTypes      = Seq( MNodeTypes.AdnNode )
         }
-        .mapValues { _.sortBy(_.meta.basic.name) }
-    }
-    allNodesMapFut map { nodesMap =>
+        MNode.dynSearch( msearch )
+      }
+
+      nodesMap = {
+        allNodes
+          .groupBy { node =>
+            node.extras.adn
+              .flatMap( _.shownTypeIdOpt )
+              .flatMap( AdnShownTypes.maybeWithName )
+              .getOrElse( AdnShownTypes.default )
+          }
+          .mapValues { _.sortBy(_.meta.basic.name) }
+      }
+
+    } yield {
+
+      // TODO Нужно задействовать reverse-роутер.
       val dlUrl = "/sys/umap/nodes/datalayer?ngl={pk}"
       val args = UmapTplArgs(
-        dlUpdateUrl   = dlUrl, // TODO Нужно задействовать reverse-роутер.
+        dlUpdateUrl   = dlUrl,
         dlGetUrl      = dlUrl,
         nodesMap      = nodesMap,
         editAllowed   = GLOBAL_MAP_EDIT_ALLOWED,
@@ -78,10 +89,12 @@ class Umap @Inject() (
 
   /**
    * Редактирование карты в рамках одного узла.
+   *
    * @param adnId id узла.
    * @return 200 OK и страница с картой.
    */
   def getAdnNodeMap(adnId: String) = IsSuNodeGet(adnId) { implicit request =>
+    // TODO Нужно задействовать reverse-роутер.
     val dlUrl = s"/sys/umap/node/$adnId/datalayer?ngl={pk}"
     val args = UmapTplArgs(
       dlUpdateUrl   = dlUrl, // TODO Нужно задействовать reverse-роутер.
@@ -116,50 +129,55 @@ class Umap @Inject() (
     }
   }
 
+
   /** Общий код экшенов, занимающихся рендером слоёв в geojson-представление, пригодное для фронтенда. */
   private def _getDataLayerGeoJson(adnIdOpt: Option[String], ngl: NodeGeoLevel, nodes: Seq[MNode])
                                   (implicit request: RequestHeader): Result = {
-    // TODO Вынести json в отдельную модель.
-    val features: Seq[JsObject] = {
+    val msgs = implicitly[Messages]
+    val centerMsg = msgs("Center")
+
+    val features: Seq[Feature] = {
+
       val shapeFeaturesIter = for {
         mnode <- umapUtil.prepareDataLayerGeos(nodes.iterator)
         shape <- mnode.geo.shapes if shape.shape.shapeType.isGeoJsonCompatible
       } yield {
-        JsObject(Seq(
-          "type"        -> JsString("Feature"),
-          "geometry"    -> shape.shape.toPlayJson(geoJsonCompatible = true),
-          "properties"  -> JsObject(Seq(
-            "name" -> JsString( mnode.guessDisplayNameOrId.get ),
-            "description" -> JsString(
-              routes.SysMarket.showAdnNode(mnode.id.get).absoluteURL()
-            )
-          ))
-        ))
+        Feature(
+          geometry = shape.shape,
+          properties = FeatureProperties(
+            name        = mnode.guessDisplayNameOrIdOrEmpty,
+            description = routes.SysMarket.showAdnNode(mnode.id.get).absoluteURL()
+          )
+        )
       }
+
       val centersFeaturesIter = nodes
         .iterator
         .flatMap { mnode =>
           mnode.geo.point.map { pt =>
-            JsObject(Seq(
-              "type" -> JsString("Feature"),
-              "geometry"   -> PointGs(pt).toPlayJson(geoJsonCompatible = true),
-              "properties" -> JsObject(Seq(
-                "name"        -> JsString( mnode.meta.basic.name + " (центр)" ),
-                "description" -> JsString( routes.SysMarket.showAdnNode(mnode.id.get).absoluteURL() )
-              ))
-            ))
+            Feature(
+              geometry = PointGs(pt),
+              properties = FeatureProperties(
+                name        = s"${mnode.meta.basic.name} ($centerMsg)",
+                description = routes.SysMarket.showAdnNode(mnode.id.get).absoluteURL()
+              )
+            )
           }
         }
+
+      // Собрать итоговое значение features
       (centersFeaturesIter ++ shapeFeaturesIter)
         .toSeq
     }
-    val resp = JsObject(Seq(
-      "type"      -> JsString("FeatureCollection"),
-      "_storage"  -> layerJson(ngl),
-      "features"  -> JsArray(features)
-    ))
-    Ok(resp)
+
+    val fc = FeatureCollection(
+      storage   = layerJson2(ngl),
+      features  = features
+    )
+
+    Ok( Json.toJson(fc) )
   }
+
 
   /** Получение геослоя в рамках карты одного узла. */
   def getDataLayerNodeGeoJson(adnId: String, ngl: NodeGeoLevel) = IsSuNode(adnId).async { implicit request =>
@@ -169,16 +187,19 @@ class Umap @Inject() (
   }
 
 
-  /** Сохранение сеттингов карты. */
+  /** Обработка запроса сохранения сеттингов карты.
+    * Само сохранение не реализовано, поэтому тут просто ответ 200 OK.
+    */
   def saveMapSettingsSubmit = IsSuperuser(parse.multipartFormData) { implicit request =>
-    // TODO Stub
-    val resp = JsObject(Seq(
-      "url"  -> JsString( routes.Umap.getAdnNodesMap().url ),
-      "info" -> JsString( "Settings ignored" ),
-      "id"   -> JsNumber( 16717 )
-    ))
-    Ok(resp)
+    val msgs = implicitly[Messages]
+    val resp = MapSettingsSaved(
+      url  = routes.Umap.getAdnNodesMap().url,
+      info = msgs("Map.settings.save.unsupported"),
+      id   = 16717    // цифра с потолка
+    )
+    Ok( Json.toJson(resp) )
   }
+
 
   /** Сабмит одного слоя на глобальной карте. */
   def saveMapDataLayer(ngl: NodeGeoLevel) = IsSuperuserPost.async(parse.multipartFormData) { implicit request =>
@@ -189,12 +210,14 @@ class Umap @Inject() (
     _saveMapDataLayer(ngl, None)(_.adnIdOpt.get)
   }
 
+
   /** Сабмит одного слоя на карте узла. */
   def saveNodeDataLayer(adnId: String, ngl: NodeGeoLevel) = {
     IsSuNodePost(adnId).async(parse.multipartFormData) { implicit request =>
       _saveMapDataLayer(ngl, request.mnode.id){ _ => adnId }
     }
   }
+
 
   /** Общий код экшенов, занимающихся сохранением геослоёв. */
   private def _saveMapDataLayer(ngl: NodeGeoLevel, adnIdOpt: Option[String])(getAdnIdF: UmapFeature => String)
@@ -263,27 +286,28 @@ class Umap @Inject() (
         }
       }
 
+      implicit val msgs = implicitly[Messages]
+
       for (nodes <- updAllFut) yield {
         LOGGER.trace(s"$logPrefix Updated ${nodes.size} nodes.")
-        val resp = layerJson(ngl)
-        Ok(resp)
+        val layer = layerJson2(ngl)(msgs)
+        Ok( Json.toJson(layer) )
       }
     }
   }
+
 
   def createMapDataLayer = IsSuperuser(parse.multipartFormData) { implicit request =>
     Ok("asdasd")
   }
 
 
-  /** Рендер json'а, описывающего геослой. */
-  private def layerJson(ngl: NodeGeoLevel)(implicit messages: Messages): JsObject = {
-    // TODO Нужна отдельная модель с play.json
-    JsObject(Seq(
-      "name"          -> JsString( messages("ngls." + ngl.esfn) ),
-      "id"            -> JsNumber(ngl.id),
-      "displayOnLoad" -> JsBoolean(true)
-    ))
+  private def layerJson2(ngl: NodeGeoLevel)(implicit messages: Messages): Layer = {
+    Layer(
+      name          = messages("ngls." + ngl.esfn),
+      id            = ngl.id,
+      displayOnLoad = true
+    )
   }
 
 }

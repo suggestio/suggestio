@@ -33,7 +33,7 @@ class UmapUtil @Inject() (
   /** 2014.09.23: Umap не поддерживает тип фигур MultiPolygon. Можно их сплиттить на полигоны. */
   val SPLIT_MULTIPOLYGON: Boolean = configuration.getBoolean("umap.mpoly.split") getOrElse true
 
-  // TODO Нужен play json парсер и InputStream.
+  // TODO Нужно вкрутить здесь play json парсер и InputStream. Модели -- Feature, FeatureCollection.
 
   /**
    * Десериализация json-выхлопа, присланного фронтендом.
