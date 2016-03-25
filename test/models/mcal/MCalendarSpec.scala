@@ -20,6 +20,7 @@ class MCalendarSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
         name        = "RUSSIAN prime",
         data        = """asdasd\n\asddasd\53535\t\n\sdfasdf """,
         id          = Some("aADw4312rqefasef"),
+        calType     = MCalTypes.WeekDay,
         versionOpt  = Some(1),
         companion   = mCalendar
       )
@@ -33,6 +34,7 @@ class MCalendarSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
         name        = "RUSSIAN prime календарррррь",
         data        = """ asdasd\n\asddasd\53535\t\n\sdf$$##asdf\n#\n\n\n\t\rasdasd  """,
         id          = None,
+        calType     = MCalTypes.WeekDay,
         versionOpt  = None,
         companion   = mCalendar
       )

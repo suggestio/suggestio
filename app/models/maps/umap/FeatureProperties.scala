@@ -21,4 +21,9 @@ object FeatureProperties {
 case class FeatureProperties(
   name        : String,
   description : String
-)
+) {
+
+  /** Передача id узлов происходит внутри description. */
+  def nodeId = description
+
+}

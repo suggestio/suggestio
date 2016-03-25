@@ -1,7 +1,7 @@
 package util.showcase
 
 import functional.OneAppPerSuiteNoGlobalStart
-import io.suggest.ym.model.common.BlockMeta
+import io.suggest.model.n2.ad.blk.BlockMeta
 import models.blk.SzMult_t
 import models.im.{DevScreen, DevPixelRatios}
 import models.msc.TileArgs

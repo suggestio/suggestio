@@ -1,6 +1,6 @@
 package controllers
 
-import java.nio.file.Files
+import java.io.FileInputStream
 
 import _root_.util.acl._
 import _root_.util.geo.umap._
@@ -180,7 +180,7 @@ class Umap @Inject() (
     if (!GLOBAL_MAP_EDIT_ALLOWED)
       throw new IllegalAccessException("Global map editing is not allowed.")
     // Продолжаем веселье.
-    _saveMapDataLayer(ngl, None)(_.adnIdOpt.get)
+    _saveMapDataLayer(ngl, None)(_.properties.nodeId)
   }
 
 
@@ -193,7 +193,7 @@ class Umap @Inject() (
 
 
   /** Общий код экшенов, занимающихся сохранением геослоёв. */
-  private def _saveMapDataLayer(ngl: NodeGeoLevel, adnIdOpt: Option[String])(getAdnIdF: UmapFeature => String)
+  private def _saveMapDataLayer(ngl: NodeGeoLevel, adnIdOpt: Option[String])(getAdnIdF: Feature => String)
                                (implicit request: IReq[MultipartFormData[TemporaryFile]]): Future[Result] = {
     // Готовимся к сохранению присланных данных.
     val logPrefix = s"saveMapDataLayer($ngl): "
@@ -202,19 +202,20 @@ class Umap @Inject() (
       NotAcceptable("geojson not found in response")
 
     } { tempFile =>
-      // TODO Надо бы задействовать InputStream или что-то ещё для парсинга.
-      val jsonBytes = try {
-        Files.readAllBytes(tempFile.ref.file.toPath)
+      // Парсим json в потоке с помощью play.json:
+      val is = new FileInputStream( tempFile.ref.file )
+      val playJson = try {
+        Json.parse(is)
       } finally {
+        is.close()
         tempFile.ref.file.delete()
       }
-      val layerData = umapUtil.deserializeFromBytes(jsonBytes).get
+
+      val layerData = playJson.validate[FeatureCollection].get
 
       // Собираем запрос в карту, где ключ -- это nodeId.
       val nodeFeatures = layerData
         .features
-        .iterator
-        .toSeq
         .groupBy(getAdnIdF)
 
       // Собираем карту узлов.

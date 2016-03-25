@@ -1,4 +1,4 @@
-package util.acl
+package models.req
 
 import org.scalatestplus.play._
 
@@ -8,9 +8,9 @@ import org.scalatestplus.play._
  * Created: 15.12.14 17:46
  * Description:
  */
-class SioRequestHeaderSpec extends PlaySpec {
+class ExtReqHdrSpec extends PlaySpec {
 
-  import SioRequestHeader._
+  import ExtReqHdr._
 
   "firstForwarded()" must {
     "extract real client ip from X-Forwarded-For: 213.108.35.158, 91.231.236.6, 91.231.236.8" in {
