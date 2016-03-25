@@ -32,9 +32,9 @@ trait IGsCriteria {
 
 /** Дефолтовая реализация модели [[IGsCriteria]]. */
 case class GsCriteria(
-  override val levels             : Seq[NodeGeoLevel],
-  override val shapes             : Seq[IToEsQueryFn],
-  override val gjsonCompat        : Option[Boolean]
+  override val levels             : Seq[NodeGeoLevel]   = Nil,
+  override val shapes             : Seq[IToEsQueryFn]   = Nil,
+  override val gjsonCompat        : Option[Boolean]     = None
 )
   extends IGsCriteria
 {

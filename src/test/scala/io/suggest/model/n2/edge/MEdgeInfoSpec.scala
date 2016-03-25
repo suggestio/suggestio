@@ -35,6 +35,7 @@ class MEdgeInfoSpec extends FlatSpec with PlayJsonTestUtil {
         tags        = Set("test", "vasya", "123"),
         geoShapes   = List(
           MEdgeGeoShape(
+            id     = 5,
             glevel = NodeGeoLevels.NGL_BUILDING,
             shape  = CircleGs(
               center = GeoPoint(10.1, 11.2),

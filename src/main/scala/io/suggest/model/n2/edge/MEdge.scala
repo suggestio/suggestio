@@ -139,8 +139,8 @@ trait IEdge {
 case class MEdge(
   override val predicate : MPredicate,
   // Обычно nodeId задан, поэтому без default тут для защиты от возможных ошибок.
-  override val nodeIdOpt : Option[String],
-  override val order     : Option[Int] = None,
-  override val info      : MEdgeInfo   = MEdgeInfo.empty
+  override val nodeIdOpt : Option[String] = None,
+  override val order     : Option[Int]    = None,
+  override val info      : MEdgeInfo      = MEdgeInfo.empty
 )
   extends IEdge

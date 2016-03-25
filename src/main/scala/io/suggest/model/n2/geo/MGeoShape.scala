@@ -2,6 +2,7 @@ package io.suggest.model.n2.geo
 
 import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.model.geo.GeoShape
+import io.suggest.model.n2.edge.MEdgeGeoShape
 import io.suggest.ym.model.{NodeGeoLevels, NodeGeoLevel}
 import org.joda.time.DateTime
 import play.api.data.validation.ValidationError
@@ -114,6 +115,7 @@ object MGeoShape extends IGenEsMappingProps {
 
 /**
  * Класс для экземпляров модели.
+ *
  * @param id численный id для различения элементов внутри списка.
  * @param glevel Гео-уровень.
  * @param shape Шейп для данного уровня.
@@ -126,4 +128,17 @@ case class MGeoShape(
   shape         : GeoShape,
   fromUrl       : Option[String]  = None,
   dateEdited    : DateTime        = DateTime.now()
-)
+) {
+
+  def toEdgeGs = {
+    MEdgeGeoShape(
+      glevel      = glevel,
+      shape       = shape,
+      fromUrl     = fromUrl,
+      dateEdited  = Some(dateEdited),
+      id          = id
+    )
+  }
+
+}
+

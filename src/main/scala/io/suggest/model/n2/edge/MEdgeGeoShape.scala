@@ -47,7 +47,7 @@ object MEdgeGeoShape extends IGenEsMappingProps {
     val GJC_FORMAT          = (__ \ GJSON_COMPAT_FN).format[Boolean]
     val FROM_URL_FORMAT     = (__ \ FROM_URL_FN).formatNullable[String]
     val DATE_EDITED_FORMAT  = (__ \ DATE_EDITED_FN).formatNullable[DateTime]
-    val ID_FORMAT           = (__ \ ID_FN).formatNullable[Int]
+    val ID_FORMAT           = (__ \ ID_FN).format[Int]
 
     def _shapeFormat(ngl: NodeGeoLevel): OFormat[GeoShape] = {
       (__ \ SHAPE_FN(ngl)).format[GeoShape]
@@ -120,20 +120,36 @@ object MEdgeGeoShape extends IGenEsMappingProps {
       nglFields
   }
 
+
+  /** Предложить новый id. */
+  def nextShapeId(shapes: TraversableOnce[MEdgeGeoShape]): Int = {
+    if (shapes.isEmpty) {
+      1
+    } else {
+      shapes
+        .toIterator
+        .map(_.id)
+        .max
+    }
+  }
+
 }
 
 
 /**
   * Экземпляр модели гео-шейпов в рамках эджа.
+  *
+  * @param id Уникальный номер этого внутри списка шейпов.
+  *           Попытка сделать его опциональным была ошибочной -- он нужен, и точка!
   * @param glevel Гео-уровень шейпа (масштаб).
   * @param shape Шейп.
   * @param fromUrl URL-источкик, если есть.
   * @param dateEdited Дата редактирования, если требуется.
   */
 case class MEdgeGeoShape(
+  id            : Int,
   glevel        : NodeGeoLevel,
   shape         : GeoShape,
   fromUrl       : Option[String]    = None,
-  dateEdited    : Option[DateTime]  = None,
-  id            : Option[Int]       = None
+  dateEdited    : Option[DateTime]  = None
 )

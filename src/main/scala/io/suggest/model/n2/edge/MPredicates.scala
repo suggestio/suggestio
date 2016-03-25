@@ -175,6 +175,11 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
   val Bg: T = new Val("m")
 
 
+  /** Недо-эдж, обозначающий некое указание на связь узла с областью какой-то на карте.
+    * Раньше было mnode.geo.shapes, но они были перенесены внутрь эджей.
+    * Узла, на который указывает эдж, обычно нет и не существует (edge.nodeId = None). */
+  val NodeLocation: T = new Val("n")
+
 
   /** Поддержка биндинга из routes. */
   implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[T] = {

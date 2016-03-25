@@ -23,13 +23,7 @@ class MNodeGeoSpec extends FlatSpec with PlayJsonTestUtil {
   it should "handle full-filled model" in {
     jsonTest {
       MNodeGeo(
-        point = Some( GeoPoint(22.22222, -44.44444) ),
-        shapes = Seq(MGeoShape(
-          id      = 0,
-          glevel  = NodeGeoLevels.NGL_BUILDING,
-          shape   = PointGs( GeoPoint(10, 20) ),
-          fromUrl = None
-        ))
+        point = Some( GeoPoint(22.22222, -44.44444) )
       )
     }
   }
