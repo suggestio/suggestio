@@ -203,8 +203,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
    * @return Фьючерс, подлежащий дальнейшей обработке.
    */
   def startScroll(queryOpt: Option[QueryBuilder] = None, resultsPerScroll: Int = SCROLL_SIZE_DFLT,
-                  keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)
-                 (implicit ec: ExecutionContext, client: Client): SearchRequestBuilder = {
+                  keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)(implicit client: Client): SearchRequestBuilder = {
     val query = queryOpt.getOrElse {
       QueryBuilders.matchAllQuery()
     }
@@ -304,15 +303,12 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
    * Внутри метода используется BulkProcessor, который асинхронно, по мере наполнения очереди индексации,
    * отправляет реквесты на индексацию.
    * Метод полезен для обновления модели, которое затрагивает внутреннюю структуру данных.
-   * @param resultsPerScroll Кол-во результатов на каждой итерации. [10]
-   * @param keepAliveMs Таймаут scroll-курсора на стороне ES.
    * @param bulkActions Макс.кол-во запросов в очереди на bulk-индексацию. После пробоя этого значения,
    *                    вся очередь реквестов будет отправлена на индексацию.
    * @param f Функция-маппер, которая порождает фьючерс с новым обновлённым экземпляром модели.
    * @return Фьючес с кол-вом обработанных экземпляров модели.
    */
-  def updateAll(resultsPerScroll: Int = SCROLL_SIZE_DFLT, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT,
-                bulkActions: Int = BULK_PROCESSOR_BULK_SIZE_DFLT, queryOpt: Option[QueryBuilder] = None)
+  def updateAll(scroller: SearchRequestBuilder, bulkActions: Int = BULK_PROCESSOR_BULK_SIZE_DFLT)
                (f: T => Future[T])(implicit ec: ExecutionContext, client: Client): Future[Int] = {
 
     val logPrefix = s"update(${System.currentTimeMillis}):"
@@ -344,7 +340,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
     val counter = new AtomicInteger(0)
 
     // Выполнить обход модели. Аккамулятор фиксирован (не используется).
-    val foldFut = foldLeftAsync(None, resultsPerScroll, keepAliveMs, queryOpt) {
+    val foldFut = foldLeftAsync1(None, scroller) {
       (accFut, v) =>
         f(v).flatMap {
           case null =>
@@ -784,7 +780,7 @@ trait EsModelCommonT extends OptStrId with EraseResources with TypeT {
 
   /**
    * Сохранить экземпляр в хранилище ES.
- *
+   *
    * @return Фьючерс с новым/текущим id
    *         VersionConflictException если транзакция в текущем состоянии невозможна.
    */
@@ -802,7 +798,7 @@ trait EsModelCommonT extends OptStrId with EraseResources with TypeT {
 
   /**
    * Удалить текущий ряд из таблицы. Если ключ не выставлен, то сразу будет экзепшен.
- *
+   *
    * @return true - всё ок, false - документ не найден.
    */
   def delete(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {

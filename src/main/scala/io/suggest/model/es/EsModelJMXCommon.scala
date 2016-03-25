@@ -2,7 +2,6 @@ package io.suggest.model.es
 
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.util.{MacroLogsImplLazy, JMXBase, JacksonWrapper}
-import org.elasticsearch.action.bulk.BulkResponse
 import org.elasticsearch.client.Client
 
 import scala.concurrent.ExecutionContext
