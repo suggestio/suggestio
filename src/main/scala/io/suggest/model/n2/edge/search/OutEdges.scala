@@ -1,8 +1,10 @@
 package io.suggest.model.n2.edge.search
 
+import io.suggest.model.n2.node.MNodeFields
 import io.suggest.model.n2.node.MNodeFields.Edges._
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import io.suggest.util.MacroLogsI
+import io.suggest.ym.model.{NodeGeoLevel, NodeGeoLevels}
 import org.elasticsearch.index.query.{MatchQueryBuilder, QueryBuilders, FilterBuilders, QueryBuilder}
 
 /**
@@ -37,9 +39,9 @@ trait OutEdges extends DynSearchArgs with MacroLogsI {
 
           var _qOpt: Option[QueryBuilder] = None
 
-          // В первую очередь ищем по fts. А именно: по тегам с match-query наперевес
+          // В первую очередь ищем по fts в рамках текущего nested edge. А именно: по тегам с match-query наперевес. match filter вроде не особо работает.
           if (oe.tags.nonEmpty) {
-            val fn = OUT_INFO_TAGS_FN
+            val fn = E_OUT_INFO_TAGS_FN
 
             // TODO По идее надо бы тут список критериев, но это пока не нужно и усложняет многое, поэтому пока пропущено.
             // Готовую реализацию можно подсмотреть в io.suggest.model.n2.extra.tag.search.FaceTextQuery <= 9f2bfd249a83
@@ -59,6 +61,71 @@ trait OutEdges extends DynSearchArgs with MacroLogsI {
 
             _qOpt = Some(tq)
           }
+
+
+          // Отрабатываем гео-шейпы, там тоже очень желательны query вместо filter.
+          // Явно работать с Option API, чтобы избежать скрытых логических ошибок при смене Option на Seq.
+          if (oe.gsIntersect.isDefined) {
+            val gsi = oe.gsIntersect.get
+
+            /** Добавить в query фильтр по флагу */
+            def _withGjsCompatFilter(qb0: QueryBuilder): QueryBuilder = {
+              gsi.gjsonCompat.fold(qb0) { gjsCompat =>
+                val gjsFr = FilterBuilders.termFilter(MNodeFields.Edges.E_OUT_INFO_GS_GJSON_COMPAT_FN, gjsCompat)
+                QueryBuilders.filteredQuery(qb0, gjsFr)
+              }
+            }
+
+            // Есть какие-то критерии поиска. Сразу пытаемся искать по шейпам...
+            val nq: QueryBuilder = if (gsi.shapes.nonEmpty) {
+              val levels1: Iterable[NodeGeoLevel] = if (gsi.levels.isEmpty)
+                NodeGeoLevels.valuesT
+              else
+                gsi.levels
+              val queriesIter = for {
+                shape   <- gsi.shapes.iterator
+                glevel  <- levels1.iterator
+              } yield {
+                val shapeFn = MNodeFields.Edges.E_OUT_INFO_GS_SHAPE_FN( glevel )
+                val qb0 = shape.toEsQuery(shapeFn)
+                _withGjsCompatFilter(qb0)
+              }
+              // Объединяем сгенеренные queries в одну.
+              val queries = queriesIter.toStream
+              if (queries.tail.isEmpty) {
+                queries.head
+              } else {
+                val bq = QueryBuilders.boolQuery()
+                for (q <- queries) {
+                  bq.should(q)
+                }
+                bq.minimumNumberShouldMatch(1)
+                bq
+              }
+
+            } else if (gsi.levels.nonEmpty) {
+              // Нет шейпов, это значит есть уровни.
+              val fn = MNodeFields.Edges.E_OUT_INFO_GS_GLEVEL_FN
+              val qb0 = QueryBuilders.termsQuery(fn, gsi.levels.map(_.esfn): _*)
+              _withGjsCompatFilter(qb0)
+
+            } else {
+              // Нужно искать по флагу совместимости с GeoJSON.
+              val gjsCompat = gsi.gjsonCompat.get
+              QueryBuilders.termQuery(MNodeFields.Edges.E_OUT_INFO_GS_GJSON_COMPAT_FN, gjsCompat)
+            }
+
+            // Завернуть собранную инфу в nested-запрос и накатить на исходную query.
+            val fn = MNodeFields.Edges.E_OUT_INFO_GS_FN
+            _qOpt = _qOpt.map { qb0 =>
+              val gqNf = FilterBuilders.nestedFilter(fn, nq)
+              QueryBuilders.filteredQuery(qb0, gqNf)
+            }.orElse {
+              val qb2 = QueryBuilders.nestedQuery(fn, nq)
+              Some(qb2)
+            }
+          }
+
 
           // Поиск по id узлов, на которые указывают эджи.
           if (oe.nodeIds.nonEmpty) {

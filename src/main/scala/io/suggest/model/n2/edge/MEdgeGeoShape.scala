@@ -25,13 +25,13 @@ object MEdgeGeoShape extends IGenEsMappingProps {
   object Fields {
 
     val GLEVEL_FN                   = "l"
-    val GEO_JSON_COMPATIBLE_FN      = "gjc"
+    val GJSON_COMPAT_FN             = "gjc"
     val FROM_URL_FN                 = "url"
     val DATE_EDITED_FN              = "dt"
     val ID_FN                       = "id"
 
     /** Название поля на стороне ES для самого шейпа в каком-то масштабе индексации. */
-    def shapeFn(ngl: NodeGeoLevel)  = ngl.esfn
+    def SHAPE_FN(ngl: NodeGeoLevel)  = ngl.esfn
 
   }
 
@@ -44,13 +44,13 @@ object MEdgeGeoShape extends IGenEsMappingProps {
     import Fields._
 
     val GLEVEL_FORMAT       = (__ \ GLEVEL_FN).format[NodeGeoLevel]
-    val GJC_FORMAT          = (__ \ GEO_JSON_COMPATIBLE_FN).format[Boolean]
+    val GJC_FORMAT          = (__ \ GJSON_COMPAT_FN).format[Boolean]
     val FROM_URL_FORMAT     = (__ \ FROM_URL_FN).formatNullable[String]
     val DATE_EDITED_FORMAT  = (__ \ DATE_EDITED_FN).formatNullable[DateTime]
     val ID_FORMAT           = (__ \ ID_FN).formatNullable[Int]
 
     def _shapeFormat(ngl: NodeGeoLevel): OFormat[GeoShape] = {
-      (__ \ shapeFn(ngl)).format[GeoShape]
+      (__ \ SHAPE_FN(ngl)).format[GeoShape]
     }
 
     // Десериализация.
@@ -80,7 +80,7 @@ object MEdgeGeoShape extends IGenEsMappingProps {
     val WRITES = Writes[MEdgeGeoShape] { mgs =>
       // Собираем промежуточный JSON-врайтер.
       val write1: Writes[MEdgeGeoShape] = (
-        (__ \ shapeFn(mgs.glevel)).write[GeoShape] and
+        (__ \ SHAPE_FN(mgs.glevel)).write[GeoShape] and
           GLEVEL_FORMAT and
           GJC_FORMAT and
           FROM_URL_FORMAT and
@@ -110,10 +110,10 @@ object MEdgeGeoShape extends IGenEsMappingProps {
       .foldLeft( List.empty[DocField] ) {
         (acc, nglv)  =>
           val ngl: NodeGeoLevel = nglv
-          FieldGeoShape( Fields.shapeFn(ngl), precision = ngl.precision)  ::  acc
+          FieldGeoShape( Fields.SHAPE_FN(ngl), precision = ngl.precision)  ::  acc
       }
     FieldString(Fields.GLEVEL_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = false, store = true) ::
-      FieldBoolean(Fields.GEO_JSON_COMPATIBLE_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = false, store = false) ::
+      FieldBoolean(Fields.GJSON_COMPAT_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = false, store = false) ::
       FieldString(Fields.FROM_URL_FN, index = FieldIndexingVariants.no, include_in_all = false) ::
       FieldDate(Fields.DATE_EDITED_FN, index = FieldIndexingVariants.no, include_in_all = false) ::
       FieldNumber(Fields.ID_FN, fieldType = DocFieldTypes.integer, index = FieldIndexingVariants.no, include_in_all = false) ::

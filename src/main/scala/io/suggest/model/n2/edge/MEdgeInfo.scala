@@ -1,9 +1,11 @@
 package io.suggest.model.n2.edge
 
 import io.suggest.common.empty.{IEmpty, EmptyProduct, IIsNonEmpty}
+import io.suggest.model.PrefixedFn
 import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.model.sc.common.SinkShowLevel
 import io.suggest.util.SioConstants
+import io.suggest.ym.model.NodeGeoLevel
 import org.joda.time.DateTime
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -30,6 +32,7 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
   }
 
 
+  /** Модель названий полей модели [[MEdgeInfo]]. */
   object Fields {
 
     val DYN_IMG_ARGS_FN   = "di"
@@ -40,6 +43,19 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
     val GEO_SHAPES_FN     = "gss"
     val ITEM_IDS_FN       = "bgid"
     val TAGS_FN           = "tag"
+
+    /** Модель названий полей, проброшенных сюда из [[MEdgeGeoShape.Fields]]. */
+    object GeoShapes extends PrefixedFn {
+
+      override protected def _PARENT_FN = GEO_SHAPES_FN
+
+      import MEdgeGeoShape.{Fields => Fs}
+
+      def GS_GLEVEL_FN                    = _fullFn( Fs.GLEVEL_FN )
+      def GS_GJSON_COMPAT_FN              = _fullFn( Fs.GJSON_COMPAT_FN )
+      def GS_SHAPE_FN(ngl: NodeGeoLevel)  = _fullFn( Fs.SHAPE_FN(ngl) )
+
+    }
 
   }
 

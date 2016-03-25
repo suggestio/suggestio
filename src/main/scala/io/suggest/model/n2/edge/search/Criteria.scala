@@ -43,6 +43,9 @@ trait ICriteria extends IIsNonEmpty {
   /** Состояние дополнительного флага в контейнера info. */
   def flag        : Option[Boolean]
 
+  /** Данные для поиска по гео-шейпам. */
+  def gsIntersect : Option[IGsCriteria]
+
 
   /** Тест на наличие предиката или его дочерних предикатов в списке предикатов. */
   def containsPredicate(pred: MPredicate): Boolean = {
@@ -99,6 +102,11 @@ trait ICriteria extends IIsNonEmpty {
         .append(_tag)
     }
 
+    for (_gsCr <- gsIntersect) {
+      sb.append(",gs=")
+        .append(_gsCr)
+    }
+
     sb.append(')')
       .toString()
   }
@@ -114,7 +122,8 @@ case class Criteria(
   override val anySl       : Option[Boolean]      = None,
   override val must        : Option[Boolean]      = None,
   override val flag        : Option[Boolean]      = None,
-  override val tags        : Option[ITagCriteria] = None
+  override val tags        : Option[ITagCriteria] = None,
+  override val gsIntersect    : Option[IGsCriteria]  = None
 )
   extends ICriteria
   with EmptyProduct

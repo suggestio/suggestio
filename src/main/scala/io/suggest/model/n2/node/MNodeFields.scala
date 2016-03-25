@@ -61,15 +61,23 @@ object MNodeFields {
     /** Адрес nested-объектов, хранящих данные по эджам. */
     def EDGES_OUT_FULL_FN = _fullFn( MNodeEdges.Fields.OUT_FN )
 
-    import MNodeEdges.Fields.Out._
+    import MNodeEdges.Fields.Out
 
-    def EDGE_OUT_PREDICATE_FULL_FN = _fullFn( OUT_PREDICATE_FN )
-    def EDGE_OUT_NODE_ID_FULL_FN   = _fullFn( OUT_NODE_ID_FN )
-    def EDGE_OUT_ORDER_FULL_FN     = _fullFn( OUT_ORDER_FN )
-    def EDGE_OUT_INFO_SLS_FN       = _fullFn( OUT_INFO_SLS_FN )
-    def EDGE_OUT_INFO_FLAG_FN      = _fullFn( OUT_INFO_FLAG_FN )
+    def EDGE_OUT_PREDICATE_FULL_FN = _fullFn( Out.OUT_PREDICATE_FN )
+    def EDGE_OUT_NODE_ID_FULL_FN   = _fullFn( Out.OUT_NODE_ID_FN )
+    def EDGE_OUT_ORDER_FULL_FN     = _fullFn( Out.OUT_ORDER_FN )
+    def EDGE_OUT_INFO_SLS_FN       = _fullFn( Out.OUT_INFO_SLS_FN )
+    def EDGE_OUT_INFO_FLAG_FN      = _fullFn( Out.OUT_INFO_FLAG_FN )
 
-    def OUT_INFO_TAGS_FN           = _fullFn( INFO_TAGS_FN )
+    // Теги
+    def E_OUT_INFO_TAGS_FN         = _fullFn( Out.OUT_INFO_TAGS_FN )
+
+    // Гео-шейпы
+    def E_OUT_INFO_GS_FN                          = _fullFn( Out.OUT_INFO_GS_FN )
+    def E_OUT_INFO_GS_GLEVEL_FN                   = _fullFn( Out.OUT_INFO_GS_GLEVEL_FN )
+    def E_OUT_INFO_GS_GJSON_COMPAT_FN             = _fullFn( Out.OUT_INFO_GS_GJSON_COMPAT_FN )
+    def E_OUT_INFO_GS_SHAPE_FN(ngl: NodeGeoLevel) = _fullFn( Out.OUT_INFO_GS_SHAPE_FN(ngl) )
+
   }
 
   /** Абсолютные названия географических полей.*/

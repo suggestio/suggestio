@@ -3,6 +3,7 @@ package io.suggest.model.n2.edge
 import io.suggest.model.PrefixedFn
 import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.common.empty.EmptyUtil._
+import io.suggest.ym.model.NodeGeoLevel
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -28,12 +29,25 @@ object MEdge extends IGenEsMappingProps {
     val ORDER_FN      = "o"
     val INFO_FN       = "n"
 
+    /** Модель названий полей, проброшенных сюда из под-моделей. */
     object Info extends PrefixedFn {
+
       override protected def _PARENT_FN = INFO_FN
 
       def INFO_SLS_FN   = _fullFn( MEdgeInfo.Fields.SLS_FN )
       def FLAG_FN       = _fullFn( MEdgeInfo.Fields.FLAG_FN )
+
+      // Теги
       def TAGS_FN       = _fullFn( MEdgeInfo.Fields.TAGS_FN )
+
+      // Гео-шейпы
+      def INFO_GS_FN                            = _fullFn( MEdgeInfo.Fields.GEO_SHAPES_FN )
+
+      import MEdgeInfo.Fields.{GeoShapes => Gs}
+      def INFO_GS_GLEVEL_FN                     = _fullFn( Gs.GS_GLEVEL_FN )
+      def INFO_GS_GJSON_COMPAT_FN               = _fullFn( Gs.GS_GJSON_COMPAT_FN )
+      def INFO_GS_SHAPE_FN(ngl: NodeGeoLevel)   = _fullFn( Gs.GS_SHAPE_FN(ngl) )
+
     }
 
   }

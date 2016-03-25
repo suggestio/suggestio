@@ -4,6 +4,7 @@ import io.suggest.common.empty.{IEmpty, EmptyProduct}
 import io.suggest.model.PrefixedFn
 import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.common.empty.EmptyUtil._
+import io.suggest.ym.model.NodeGeoLevel
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -42,7 +43,15 @@ object MNodeEdges extends IGenEsMappingProps with IEmpty {
       def OUT_INFO_SLS_FN   = _fullFn( Info.INFO_SLS_FN )
       def OUT_INFO_FLAG_FN  = _fullFn( Info.FLAG_FN )
 
-      def INFO_TAGS_FN      = _fullFn( Info.TAGS_FN )
+      // Теги
+      def OUT_INFO_TAGS_FN  = _fullFn( Info.TAGS_FN )
+
+      // Гео-шейпы
+      def OUT_INFO_GS_FN                = _fullFn( Info.INFO_GS_FN )
+      def OUT_INFO_GS_GLEVEL_FN         = _fullFn( Info.INFO_GS_GLEVEL_FN )
+      def OUT_INFO_GS_GJSON_COMPAT_FN   = _fullFn( Info.INFO_GS_GJSON_COMPAT_FN )
+      def OUT_INFO_GS_SHAPE_FN(ngl: NodeGeoLevel) = _fullFn( Info.INFO_GS_SHAPE_FN(ngl) )
+
     }
 
   }
