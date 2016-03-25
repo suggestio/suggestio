@@ -59,10 +59,20 @@ object GeoShape extends MacroLogsDyn {
   }
 
   val WRITES = Writes[GeoShape] { gs =>
-    gs.toPlayJson()
+    gs.toPlayJson(false)
   }
 
   implicit val FORMAT = Format(READS, WRITES)
+
+  def WRITES_GJSON_COMPAT: OWrites[GeoShape] = {
+    OWrites { v =>
+      v.toPlayJson(true)
+    }
+  }
+
+  def FORMAT_GJSON_COMPAT: OFormat[GeoShape] = {
+    OFormat(READS, WRITES_GJSON_COMPAT)
+  }
 
 }
 
@@ -107,7 +117,8 @@ trait GeoShapeQuerable extends GeoShape with IToEsQueryFn {
 
   /**
    * Отрендерить в изменяемый ShapeBuilder для построения ES-запросов.
-   * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html]]
+    *
+    * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html]]
    */
   def toEsShapeBuilder: ShapeBuilder
 
