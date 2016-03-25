@@ -47,43 +47,17 @@ class Umap @Inject() (
 
 
   /** Рендер статической карты для всех узлов, которая запросит и отобразит географию узлов. */
-  def getAdnNodesMap = IsSuperuserGet.async { implicit request =>
-    // Скачиваем все узлы из базы. TODO Закачать через кэш?
-    for {
-      allNodes <- {
-        val msearch = new MNodeSearchDfltImpl {
-          override def withAdnRights  = Seq(AdnRights.RECEIVER)
-          override def limit          = 500
-          override def nodeTypes      = Seq( MNodeTypes.AdnNode )
-        }
-        MNode.dynSearch( msearch )
-      }
-
-      nodesMap = {
-        allNodes
-          .groupBy { node =>
-            node.extras.adn
-              .flatMap( _.shownTypeIdOpt )
-              .flatMap( AdnShownTypes.maybeWithName )
-              .getOrElse( AdnShownTypes.default )
-          }
-          .mapValues { _.sortBy(_.meta.basic.name) }
-      }
-
-    } yield {
-
-      // TODO Нужно задействовать reverse-роутер.
-      val dlUrl = "/sys/umap/nodes/datalayer?ngl={pk}"
-      val args = UmapTplArgs(
-        dlUpdateUrl   = dlUrl,
-        dlGetUrl      = dlUrl,
-        nodesMap      = nodesMap,
-        editAllowed   = GLOBAL_MAP_EDIT_ALLOWED,
-        title         = "Сводная карта всех узлов",
-        ngls          = NodeGeoLevels.valuesNgl.toSeq.sortBy(_.id)
-      )
-      Ok( mapBaseTpl(args) )
-    }
+  def getAdnNodesMap = IsSuperuserGet.apply { implicit request =>
+    // TODO Нужно задействовать reverse-роутер.
+    val dlUrl = "/sys/umap/nodes/datalayer?ngl={pk}"
+    val args = UmapTplArgs(
+      dlUpdateUrl   = dlUrl,
+      dlGetUrl      = dlUrl,
+      editAllowed   = GLOBAL_MAP_EDIT_ALLOWED,
+      title         = "Сводная карта всех узлов",
+      ngls          = NodeGeoLevels.valuesNgl.toSeq.sortBy(_.id)
+    )
+    Ok( mapBaseTpl(args) )
   }
 
 
@@ -99,7 +73,6 @@ class Umap @Inject() (
     val args = UmapTplArgs(
       dlUpdateUrl   = dlUrl, // TODO Нужно задействовать reverse-роутер.
       dlGetUrl      = dlUrl,
-      nodesMap      = Map.empty,
       editAllowed   = true,
       title         = "Карта: " +
         request.mnode.meta.basic.name +

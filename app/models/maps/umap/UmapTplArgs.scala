@@ -30,9 +30,12 @@ object UmapTplArgs {
 /** Интерфейс модели аргументов рендера карты. */
 trait IUmapTplArgs {
 
+  /**
+    * Заготовка ссылки, которая будет делать сабмит для сохранения слоя.
+    * На месте вставки id слоя надо использовать шаблон "{pk}".
+    */
   def dlUpdateUrl : String
   def dlGetUrl    : String
-  def nodesMap    : Map[AdnShownType, Seq[MNode]]
   def editAllowed : Boolean
   def title       : String
   def ngls        : Seq[NodeGeoLevel]
@@ -42,17 +45,11 @@ trait IUmapTplArgs {
 }
 
 
-/**
- * Набор аргументов для рендера шаблоны с картой Umap.
-  *
-  * @param nodesMap Карта узлов по категориям. Если пусто, то значит работа идёт в рамках одного узла.
- * @param dlUpdateUrl Заготовка ссылки, которая будет делать сабмит для сохранения слоя.
- *                    На месте вставки id слоя надо использовать шаблон "{pk}".
- */
+/** Набор аргументов для рендера шаблоны с картой Umap.
+  * Дефолтовая реализация [[IUmapTplArgs]]. */
 case class UmapTplArgs(
   override val dlUpdateUrl : String,
   override val dlGetUrl    : String,
-  override val nodesMap    : Map[AdnShownType, Seq[MNode]],
   override val editAllowed : Boolean = true,
   override val title       : String,
   override val ngls        : Seq[NodeGeoLevel]

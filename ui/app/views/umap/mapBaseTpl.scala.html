@@ -30,32 +30,10 @@
   <div id="storage-alert-container"></div>
   <div id="storage-tooltip-container"></div>
   <div id="map"></div>
+
   @helper.javascriptRouter("jsRoutes")(
     routes.javascript.Static.keepAliveSession
   )
-
-  @* Если карты узлов нет, значит идёт редактирование в рамках известного узла. *@
-  @if(args.nodesMap.nonEmpty) {
-    <div class="custom-ui">
-      <div class="custom-ui_btn-lst js-select-label">
-        @args.nodesMap.keysIterator.map { ast =>
-          <button class="custom-ui_btn @if(ast.id == 0){js-act}" data-label="@ast.id">
-            @messages( ast.plural )
-          </button>
-        }
-      </div>
-
-      @args.nodesMap.iterator.map { case (ast, nodes) =>
-        <select class="js-select-id" data-label="@ast.id">
-          <option value="0">Выберите @messages( ast.singular )</option>
-          @nodes.iterator.zipWithIndex.map { case (mnode, i) =>
-            <option value="@mnode.id">@mnode.meta.basic.name / @mnode.meta.address.town</option>
-          }
-        </select>
-      }
-    </div>
-  }
-
 
     <script type="text/javascript">
         var MAP = new L.Storage.Map("map", {
