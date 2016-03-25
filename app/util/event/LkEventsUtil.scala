@@ -95,7 +95,10 @@ class LkEventsUtil @Inject() (
       ownerId = Some(adnId),
       onlyUnseen = true
     )
-    MEvent.updateAll(queryOpt = searchArgs.toEsQueryOpt) { mevent0 =>
+    val scroller = MEvent.startScroll(
+      queryOpt = searchArgs.toEsQueryOpt
+    )
+    MEvent.updateAll(scroller) { mevent0 =>
       val res = mevent0.copy(
         isUnseen = false,
         ttlDays = Some(MEvent.TTL_DAYS_SEEN)

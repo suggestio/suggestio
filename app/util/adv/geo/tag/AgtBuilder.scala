@@ -173,6 +173,7 @@ trait AgtBuilder extends IAdvBuilder {
 
       // Добавляемый гео-шейп:
       val egs = MEdgeGeoShape(
+        id      = 1,
         glevel  = NodeGeoLevels.NGL_TOWN_DISTRICT,
         shape   = mitem.geoShape.get
       )
@@ -202,10 +203,14 @@ trait AgtBuilder extends IAdvBuilder {
             .iterator
             .map {
               case e0 if e0 eq medge0 =>
+                val shapes0 = e0.info.geoShapes
+                val egs2 = egs.copy(
+                  id = MEdgeGeoShape.nextShapeId(shapes0)
+                )
                 e0.copy(
                   info = e0.info.copy(
                     tags      = e0.info.tags + tagFace,
-                    geoShapes = egs :: e0.info.geoShapes
+                    geoShapes = egs2 :: e0.info.geoShapes
                   )
                 )
 

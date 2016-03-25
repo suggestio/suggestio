@@ -6,14 +6,16 @@ import _root_.util.acl._
 import _root_.util.geo.umap._
 import com.google.inject.Inject
 import io.suggest.model.geo.{GsTypes, PointGs}
+import io.suggest.model.n2.edge.{MNodeEdges, MEdgeInfo, MEdgeGeoShape}
+import io.suggest.model.n2.edge.search.{GsCriteria, Criteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models._
 import models.maps.umap._
 import models.mproj.ICommonDi
-import models.req.IReq
+import models.req.{IReqHdr, IReq}
 import play.api.i18n.Messages
 import play.api.libs.Files.TemporaryFile
-import play.api.mvc.{MultipartFormData, RequestHeader, Result}
+import play.api.mvc.{MultipartFormData, Result}
 import util.PlayMacroLogsImpl
 import play.api.libs.json._
 import views.html.umap._
@@ -64,12 +66,12 @@ class Umap @Inject() (
   /**
    * Редактирование карты в рамках одного узла.
    *
-   * @param adnId id узла.
+   * @param nodeId id узла.
    * @return 200 OK и страница с картой.
    */
-  def getAdnNodeMap(adnId: String) = IsSuNodeGet(adnId) { implicit request =>
+  def getAdnNodeMap(nodeId: String) = IsSuNodeGet(nodeId) { implicit request =>
     // TODO Нужно задействовать reverse-роутер.
-    val dlUrl = s"/sys/umap/node/$adnId/datalayer?ngl={pk}"
+    val dlUrl = s"/sys/umap/node/$nodeId/datalayer?ngl={pk}"
     val args = UmapTplArgs(
       dlUpdateUrl   = dlUrl, // TODO Нужно задействовать reverse-роутер.
       dlGetUrl      = dlUrl,
@@ -91,8 +93,18 @@ class Umap @Inject() (
   /** Рендер одного слоя, перечисленного в карте слоёв. */
   def getDataLayerGeoJson(ngl: NodeGeoLevel) = IsSuperuser.async { implicit request =>
     val msearch = new MNodeSearchDfltImpl {
-      override def gsGeoJsonCompatible  = Some(true)
-      override def gsLevels             = Seq(ngl)
+      override def outEdges: Seq[ICriteria] = {
+        // Ищем только с node-location'ами на текущем уровне.
+        val cr = Criteria(
+          predicates  = Seq( MPredicates.NodeLocation ),
+          gsIntersect = Some(GsCriteria(
+            levels      = Seq(ngl),
+            gjsonCompat = Some(true)
+          ))
+        )
+        Seq(cr)
+      }
+
       override def limit                = 600
     }
     for {
@@ -105,15 +117,17 @@ class Umap @Inject() (
 
   /** Общий код экшенов, занимающихся рендером слоёв в geojson-представление, пригодное для фронтенда. */
   private def _getDataLayerGeoJson(adnIdOpt: Option[String], ngl: NodeGeoLevel, nodes: Seq[MNode])
-                                  (implicit request: RequestHeader): Result = {
+                                  (implicit request: IReqHdr): Result = {
     val msgs = implicitly[Messages]
     val centerMsg = msgs("Center")
 
     val features: Seq[Feature] = {
 
       val shapeFeaturesIter = for {
-        mnode <- umapUtil.prepareDataLayerGeos(nodes.iterator)
-        shape <- mnode.geo.shapes if shape.shape.shapeType.isGeoJsonCompatible
+        mnode     <- umapUtil.prepareDataLayerGeos(nodes.iterator)
+        locEdge   <- mnode.edges.withPredicateIter( MPredicates.NodeLocation)
+        shape     <- locEdge.info.geoShapes
+        if shape.shape.shapeType.isGeoJsonCompatible
       } yield {
         Feature(
           geometry = shape.shape,
@@ -153,7 +167,7 @@ class Umap @Inject() (
 
 
   /** Получение геослоя в рамках карты одного узла. */
-  def getDataLayerNodeGeoJson(adnId: String, ngl: NodeGeoLevel) = IsSuNode(adnId).async { implicit request =>
+  def getDataLayerNodeGeoJson(nodeId: String, ngl: NodeGeoLevel) = IsSuNode(nodeId).async { implicit request =>
     val adnIdOpt = request.mnode.id
     val nodes = Seq(request.mnode)
     _getDataLayerGeoJson(adnIdOpt, ngl, nodes)
@@ -224,20 +238,30 @@ class Umap @Inject() (
       val updAllFut = mnodesMapFut.flatMap { mnodesMap =>
         // Для каждого узла произвести персональное обновление.
         Future.traverse( nodeFeatures ) { case (adnId, features) =>
+
           // Собираем шейпы для узла
           val shapes = features
             .iterator
             .filter { _.geometry.shapeType == GsTypes.polygon }
             .zipWithIndex
             .map { case (poly, i) =>
-              MGeoShape(
+              MEdgeGeoShape(
                 id      = i,
                 shape   = poly.geometry,
                 glevel  = ngl
               )
             }
-            .toSeq
-          // Узнаём центр.
+            .toList
+
+          // Собираем новый эдж сразу, старый будет удалён без суд и следствия.
+          val locEdge = MEdge(
+            predicate = MPredicates.NodeLocation,
+            info = MEdgeInfo(
+              geoShapes = shapes
+            )
+          )
+
+          // Узнаём точку-центр, если есть.
           val centerOpt = features
             .iterator
             .flatMap { f =>
@@ -248,11 +272,18 @@ class Umap @Inject() (
             }
             .toStream
             .headOption
+
           // Пытаемся сохранить новые геоданные в узел.
           MNode.tryUpdate( mnodesMap(adnId) ) { mnode0 =>
             mnode0.copy(
+              edges = mnode0.edges.copy(
+                out = {
+                  val keepIter = mnode0.edges.withoutPredicateIter( MPredicates.NodeLocation )
+                  val newIter = Iterator( locEdge )
+                  MNodeEdges.edgesToMap1( keepIter ++ newIter )
+                }
+              ),
               geo = mnode0.geo.copy(
-                shapes  = shapes,
                 point   = centerOpt
               )
             )

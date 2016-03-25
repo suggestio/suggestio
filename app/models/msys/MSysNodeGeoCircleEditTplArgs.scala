@@ -1,7 +1,8 @@
 package models.msys
 
+import io.suggest.model.n2.edge.MEdgeGeoShape
+import models.MNode
 import models.mgeo.MGsPtr
-import models.{MGeoShape, MNode}
 import play.api.data.Form
 
 /**
@@ -11,7 +12,7 @@ import play.api.data.Form
  * Description: Модель аргументов для шаблона [[views.html.sys1.market.adn.geo.editCircleTpl]].
  */
 trait ISysNodeGeoCircleEditTplArgs {
-  def geo     : MGeoShape
+  def geo     : MEdgeGeoShape
   def cf      : Form[_]
   def mnode   : MNode
   def args0   : MGsPtr
@@ -19,7 +20,7 @@ trait ISysNodeGeoCircleEditTplArgs {
 
 
 case class MSysNodeGeoCircleEditTplArgs(
-  override val geo     : MGeoShape,
+  override val geo     : MEdgeGeoShape,
   override val cf      : Form[_],
   override val mnode   : MNode,
   override val args0   : MGsPtr

@@ -1,7 +1,8 @@
 package models.msys
 
+import io.suggest.model.n2.edge.MEdgeGeoShape
 import models.mgeo.MGsPtr
-import models.{MNode, MGeoShape}
+import models.MNode
 import play.api.data.Form
 
 /**
@@ -12,7 +13,7 @@ import play.api.data.Form
  * [[views.html.sys1.market.adn.geo.editAdnGeoOsmTpl]].
  */
 trait ISysNodeGeoOsmEditTplArgs {
-  def geo     : MGeoShape
+  def geo     : MEdgeGeoShape
   def gf      : Form[_]
   def mnode   : MNode
   def mGsPtr  : MGsPtr
@@ -20,7 +21,7 @@ trait ISysNodeGeoOsmEditTplArgs {
 
 
 case class MSysNodeGeoOsmEditTplArgs(
-  override val geo     : MGeoShape,
+  override val geo     : MEdgeGeoShape,
   override val gf      : Form[_],
   override val mnode   : MNode,
   override val mGsPtr  : MGsPtr

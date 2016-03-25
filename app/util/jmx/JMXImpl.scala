@@ -3,7 +3,6 @@ package util.jmx
 import com.google.inject.Inject
 import io.suggest.model.n2.media.MMediaJmx
 import io.suggest.model.n2.node.MNodeJmx
-import io.suggest.ym.model._
 import io.suggest.ym.model.stat._
 import models.adv.MExtTargetJmx
 import models.ai.MAiMadJmx
@@ -18,6 +17,7 @@ import io.suggest.util.JMXBase
 import models._
 import util.PlayLazyMacroLogsImpl
 import io.suggest.util.JMXHelpers._
+import util.compat.NodeGeoShapes2EdgesJmx
 
 /**
  * Suggest.io
@@ -32,6 +32,7 @@ class JMXImpl @Inject() (
   advUtilJmx                    : AdvUtilJmx,
   mCalendarJmx                  : MCalendarJmx,
   mNodeJmx                      : MNodeJmx,
+  ngs2eJmx                      : NodeGeoShapes2EdgesJmx,
   mCommonDi                     : ICommonDi
 )
   extends PlayLazyMacroLogsImpl
@@ -57,6 +58,7 @@ class JMXImpl @Inject() (
       new MEventJmx,
       new MExtTargetJmx,
       mNodeJmx,
+      ngs2eJmx,
       mMediaJmx
     )
   }
