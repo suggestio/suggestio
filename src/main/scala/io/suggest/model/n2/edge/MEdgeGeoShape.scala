@@ -1,5 +1,6 @@
 package io.suggest.model.n2.edge
 
+import io.suggest.common.empty.EmptyUtil
 import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.model.geo.GeoShape
 import io.suggest.model.es.EsModelUtil.Implicits.jodaDateTimeFormat
@@ -8,6 +9,8 @@ import org.joda.time.DateTime
 import play.api.data.validation.ValidationError
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+
+import scala.util.Random
 
 /**
   * Suggest.io
@@ -47,7 +50,13 @@ object MEdgeGeoShape extends IGenEsMappingProps {
     val GJC_FORMAT          = (__ \ GJSON_COMPAT_FN).format[Boolean]
     val FROM_URL_FORMAT     = (__ \ FROM_URL_FN).formatNullable[String]
     val DATE_EDITED_FORMAT  = (__ \ DATE_EDITED_FN).formatNullable[DateTime]
-    val ID_FORMAT           = (__ \ ID_FN).format[Int]
+    val ID_FORMAT           = (__ \ ID_FN).formatNullable[Int]
+      // TODO Возникла проблема во время запиливания, id стал опционален, потом снова обязательным, это вызвало проблемы.
+      // Удалять Nullable можно сразу после обновления мастера (с апреля 2016).
+      .inmap [Int] (
+        EmptyUtil.opt2ImplEmpty1F( Math.abs( new Random().nextInt ) ),
+        EmptyUtil.someF
+      )
 
     def _shapeFormat(ngl: NodeGeoLevel): OFormat[GeoShape] = {
       (__ \ SHAPE_FN(ngl)).format[GeoShape]

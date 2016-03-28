@@ -184,4 +184,30 @@ case class MNodeEdges(
       }
   }
 
+  /**
+    * Найти и обновить с помощью функции эдж, который соответствует предикату.
+    * @param findF Поиск производить этим предикатом.
+    * @param updateF Обновлять эдж этой фунцией.
+    * @return Обновлённый экземпляр [[MNodeEdges]].
+    */
+  def updateFirst(findF: MEdge => Boolean)(updateF: MEdge => Option[MEdge]): MNodeEdges = {
+    val (k0, v0) = out
+      .iterator
+      .find { case (k, v) =>
+        findF(v)
+      }
+      .get
+    val v1Opt = updateF(v0)
+
+    val out1 = v1Opt.fold [NodeEdgesMap_t] {
+      out - k0
+    } { v1 =>
+      out.updated(k0, v1)
+    }
+
+    copy(
+      out = out1
+    )
+  }
+
 }

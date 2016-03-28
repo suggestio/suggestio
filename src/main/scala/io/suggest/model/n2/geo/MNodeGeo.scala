@@ -1,10 +1,8 @@
 package io.suggest.model.n2.geo
 
 import io.suggest.common.empty.{IEmpty, EmptyProduct}
-import io.suggest.model.PrefixedFn
 import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.model.geo.GeoPoint
-import io.suggest.ym.model.NodeGeoLevel
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -21,18 +19,8 @@ object MNodeGeo extends IGenEsMappingProps with IEmpty {
   object Fields {
 
     val POINT_FN = "p"
+    val SHAPE_FN = "sh"
 
-    object Shape extends PrefixedFn {
-      val SHAPE_FN = "sh"
-      override protected def _PARENT_FN: String = SHAPE_FN
-
-      def geoShapeFullFn(ngl: NodeGeoLevel): String = {
-        _fullFn( MGeoShape.Fields.shapeFn(ngl) )
-      }
-      def SHAPE_GLEVEL_FN = _fullFn( MGeoShape.Fields.GLEVEL_FN )
-      
-      def GEO_JSON_COMPATIBLE_FN = _fullFn( MGeoShape.Fields.GEO_JSON_COMPATIBLE_FN )
-    }
   }
 
   override val empty: MNodeGeo = {
@@ -44,7 +32,7 @@ object MNodeGeo extends IGenEsMappingProps with IEmpty {
 
   implicit val FORMAT: Format[MNodeGeo] = (
     (__ \ Fields.POINT_FN).formatNullable[GeoPoint] and
-    (__ \ Fields.Shape.SHAPE_FN).formatNullable[Seq[MGeoShape]]
+    (__ \ Fields.SHAPE_FN).formatNullable[Seq[MGeoShape]]
       .inmap [Seq[MGeoShape]] (
         _.getOrElse(Nil),
         { gss => if (gss.isEmpty) None else Some(gss) }
@@ -64,7 +52,7 @@ object MNodeGeo extends IGenEsMappingProps with IEmpty {
         geohashPrecision  = "8",
         fieldData         = GeoPointFieldData(format = GeoPointFieldDataFormats.compressed, precision = "3m")
       ),
-      FieldNestedObject(Fields.Shape.SHAPE_FN, enabled = true, properties = MGeoShape.generateMappingProps)
+      FieldNestedObject(Fields.SHAPE_FN, enabled = true, properties = MGeoShape.generateMappingProps)
     )
   }
 
@@ -82,7 +70,9 @@ case class MNodeGeo(
     if (shapes.isEmpty) {
       0
     } else {
-      shapes.iterator.map(_.id).max + 1
+      shapes.iterator
+        .map(_.id)
+        .max + 1
     }
   }
 
