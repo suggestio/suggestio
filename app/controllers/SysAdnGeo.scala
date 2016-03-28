@@ -1,7 +1,9 @@
 package controllers
 
 import com.google.inject.Inject
+import io.suggest.model.common.OptId
 import io.suggest.model.geo.{GeoShapeQuerable, Distance, CircleGs}
+import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.edge.{MEdgeInfo, MEdgeGeoShape, MNodeEdges}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.mgeo.MGsPtr
@@ -142,9 +144,8 @@ class SysAdnGeo @Inject() (
           // Попытаться сохранить новый шейп в документ узла N2.
           _  <- {
             // Есть объект osm. Нужно залить его в шейпы узла.
+            val p = MPredicates.NodeLocation
             MNode.tryUpdate(request.mnode) { mnode0 =>
-              val p = MPredicates.NodeLocation
-
               // Найти текущий эдж, если есть.
               val locEdgeOpt = mnode0.edges
                 .iterator
@@ -353,33 +354,8 @@ class SysAdnGeo @Inject() (
             mgs2 <- adnGeo2Fut
 
             // Обновляем ноду...
-            _    <- {
-              val p = MPredicates.NodeLocation
-
-              MNode.tryUpdate( request.mnode ) { mnode0 =>
-                // Выбрать эдж, содержащий обновляемый шейп...
-                val e0 = mnode0.edges
-                  .withPredicateIter(MPredicates.NodeLocation)
-                  .find(_.info.geoShapes.exists(_.id == g.gsId))
-                  .get
-
-                // Обновить эдж новым шейпом.
-                val e1 = e0.copy(
-                  info = e0.info.copy(
-                    geoShapes = mgs2 :: e0.info.geoShapes.filterNot(_.id == g.gsId)
-                  )
-                )
-
-                // Собрать новый узел, считая что не может быть более одного эджа для локейшена.
-                mnode0.copy(
-                  edges = mnode0.edges.copy(
-                    out = {
-                      val eKeepIter = mnode0.edges.withoutPredicateIter(p)
-                      MNodeEdges.edgesToMap1( eKeepIter ++ Iterator(e1) )
-                    }
-                  )
-                )
-              }
+            mnode1 <- MNode.tryUpdate( request.mnode ) { mnode0 =>
+              _nodeUpdateGeoShape(mnode0, mgs2)
             }
 
           } yield {
@@ -391,6 +367,28 @@ class SysAdnGeo @Inject() (
         }
       )
     }
+  }
+
+
+  /** Обновления ноды новым одного гео-шейпом. */
+  private def _nodeUpdateGeoShape(mnode0: MNode, gs: MEdgeGeoShape): MNode = {
+    mnode0.copy(
+      edges = {
+        val pf = { e: MEdgeGeoShape =>
+          e.id == gs.id
+        }
+        val p = MPredicates.NodeLocation
+        mnode0.edges.updateFirst { e =>
+          e.predicate == p  &&  e.info.geoShapes.exists(pf)
+        } { e0 =>
+          Some(e0.copy(
+            info = e0.info.copy(
+              geoShapes = gs :: e0.info.geoShapes.filterNot(pf)
+            )
+          ))
+        }
+      }
+    )
   }
 
 
@@ -486,13 +484,20 @@ class SysAdnGeo @Inject() (
   }
 
 
+
   /** Рендер страницы с формой редактирования geo-круга. */
   def editCircle(g: MGsPtr) = IsSuNodeGet(g.nodeId).async { implicit request =>
     _withNodeShape(g.gsId)() { mgs =>
       val formBinded = circleFormM.fill(mgs)
-      val rargs = MSysNodeGeoCircleEditTplArgs(mgs, formBinded, request.mnode, g)
-      Ok( editCircleTpl(rargs) )
+      _editCircleResp(g, formBinded, mgs, Ok)
     }
+  }
+
+  /** Рендер формы редактирования круга. */
+  private def _editCircleResp(g: MGsPtr, form: Form[MEdgeGeoShape], mgs: MEdgeGeoShape, rs: Status)
+                             (implicit req: INodeReq[_]): Future[Result] = {
+    val rargs = MSysNodeGeoCircleEditTplArgs(mgs, form, req.mnode, g)
+    rs( editCircleTpl(rargs) )
   }
 
   /** Сабмит формы редактирования круга. */
@@ -502,8 +507,7 @@ class SysAdnGeo @Inject() (
       circleFormM.bindFromRequest().fold(
         {formWithErrors =>
           debug(logPrefix + "Failed to bind form:\n" + formatFormErrors(formWithErrors))
-          val rargs = MSysNodeGeoCircleEditTplArgs(mgs, formWithErrors, request.mnode, g)
-          NotAcceptable( editCircleTpl(rargs) )
+          _editCircleResp(g, formWithErrors, mgs, NotAcceptable)
         },
 
         {geoStub =>
@@ -515,29 +519,8 @@ class SysAdnGeo @Inject() (
           )
 
           // Обновить шейпы узла
-          val p = MPredicates.NodeLocation
           val updFut = MNode.tryUpdate( request.mnode ) { mnode0 =>
-            // Найти обновляемый эдж
-            val edge0 = mnode0.edges
-              .withPredicateIter(p)
-              .find(_.info.geoShapes.exists(_.id == g.gsId))
-              .get
-
-            // Обновить эдж
-            val edge1 = edge0.copy(
-              info = edge0.info.copy(
-                geoShapes = mgs2 :: edge0.info.geoShapes.filterNot(_.id == g.gsId)
-              )
-            )
-            // Собрать обновлённый MNode.
-            mnode0.copy(
-              edges = mnode0.edges.copy(
-                out = {
-                  val keepIter = mnode0.edges.withoutPredicateIter(p)
-                  MNodeEdges.edgesToMap1( keepIter ++ Iterator(edge1) )
-                }
-              )
-            )
+            _nodeUpdateGeoShape(mnode0, mgs2)
           }
 
           for (_ <- updFut) yield {
@@ -570,15 +553,25 @@ class SysAdnGeo @Inject() (
 
   /** Список узлов в карту (adnId -> adnNode). */
   private def nodes2nodesMap(nodes: Iterable[MNode]): Map[String, MNode] = {
-    nodes.iterator.map { parent => parent.id.get -> parent }.toMap
+    OptId.els2idMap[String, MNode](nodes)
   }
 
   /** Сбор узлов, находящихся на указанных уровнях. TODO: Нужен радиус обнаружения или сортировка по близости к какой-то точке. */
   private def collectNodesOnLevels(glevels: Seq[NodeGeoLevel]): Future[Seq[MNode]] = {
+    // Собрать настройки поиска узлов:
     val msearch = new MNodeSearchDfltImpl {
-      override def gsLevels = glevels
+      override def outEdges: Seq[ICriteria] = {
+        val cr = Criteria(
+          predicates = Seq( MPredicates.NodeLocation ),
+          gsIntersect = Some(GsCriteria(
+            levels = glevels
+          ))
+        )
+        Seq(cr)
+      }
       override def limit    = 100
     }
+
     for {
       nodeIds <- MNode.dynSearchIds(msearch)
       nodes   <- mNodeCache.multiGet( nodeIds.toSet )
@@ -587,12 +580,13 @@ class SysAdnGeo @Inject() (
     }
   }
 
+
   /**
-   * Рендер страницы с предложением по заполнению геоданными geo-поле узла.
+    * Рендер страницы с предложением по заполнению геоданными geo-поле узла.
     *
     * @param adnId id узла.
-   * @return 200 ок + страница с формой редактирования geo-поля узла.
-   */
+    * @return 200 ок + страница с формой редактирования geo-поля узла.
+    */
   def editAdnNodeGeodataPropose(adnId: String) = IsSuNodeGet(adnId).async { implicit request =>
     // Запускаем поиск всех шейпов текущего узла.
     val shapes = request.mnode
@@ -611,8 +605,18 @@ class SysAdnGeo @Inject() (
           val shapeq = geo.shape.asInstanceOf[GeoShapeQuerable]
           val msearch = new MNodeSearchDfltImpl {
             override def limit = 1
-            override def gsShapes = Seq(shapeq)
-            override def gsLevels = geo.glevel.upper.toSeq
+
+            override def outEdges: Seq[ICriteria] = {
+              val gsCr = GsCriteria(
+                levels = geo.glevel.upper.toSeq,
+                shapes = Seq(shapeq)
+              )
+              val cr = Criteria(
+                predicates  = Seq( MPredicates.NodeLocation ),
+                gsIntersect = Some(gsCr)
+              )
+              Seq(cr)
+            }
           }
           MNode.dynSearchIds(msearch)
         }

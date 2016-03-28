@@ -32,35 +32,39 @@ class LkEventsUtil @Inject() (
    * @return Фьючерс, если есть чего рендерить.
    */
   def getGeoWelcome(mnode: MNode)(implicit ctx: Context): Future[Option[(Html, DateTime)]] = {
-    val res = mnode.geo.shapes.size match {
+    val nodeHasGss = mnode.edges
+      .withPredicateIter( MPredicates.NodeLocation )
+      .flatMap(_.info.geoShapes)
+      .nonEmpty
+    val res = if (!nodeHasGss) {
       // Нет гео-шейпов у этого ресивера. Нужно отрендерить сообщение об этой проблеме. TODO Отсеивать просто-точки из подсчёта?
-      case 0 =>
-        val etype = MEventTypes.NodeGeoWelcome
-        // Дата создания события формируется на основе даты создания узла.
-        // Нужно также, чтобы это событие не было первым в списке событий, связанных с созданием узла.
-        val dt = mnode.meta.basic
-          .dateCreated
-          .plusSeconds(10)
-        val nodeId = mnode.id.get
-        val mevt = MEventTmp(
-          etype       = etype,
-          ownerId     = nodeId,
-          argsInfo    = ArgsInfo(adnIdOpt = Some(nodeId)),
-          isCloseable = false,
-          isUnseen    = true,
-          id          = Some(nodeId),
-          dateCreated = dt
-        )
-        val rargs = event.RenderArgs(
-          mevent        = mevt,
-          withContainer = true,
-          adnNodeOpt    = Some(mnode)
-        )
-        val html = etype.render(rargs)(ctx)
-        Some(html -> dt)
+      val etype = MEventTypes.NodeGeoWelcome
+      // Дата создания события формируется на основе даты создания узла.
+      // Нужно также, чтобы это событие не было первым в списке событий, связанных с созданием узла.
+      val dt = mnode.meta.basic
+        .dateCreated
+        .plusSeconds(10)
+      val nodeId = mnode.id.get
+      val mevt = MEventTmp(
+        etype       = etype,
+        ownerId     = nodeId,
+        argsInfo    = ArgsInfo(adnIdOpt = Some(nodeId)),
+        isCloseable = false,
+        isUnseen    = true,
+        id          = Some(nodeId),
+        dateCreated = dt
+      )
+      val rargs = event.RenderArgs(
+        mevent        = mevt,
+        withContainer = true,
+        adnNodeOpt    = Some(mnode)
+      )
+      val html = etype.render(rargs)(ctx)
+      Some(html -> dt)
 
       // Есть геошейпы для узла. Ничего рендерить не надо.
-      case _ => None
+    } else {
+      None
     }
     Future successful res
   }

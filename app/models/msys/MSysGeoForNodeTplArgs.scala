@@ -1,5 +1,6 @@
 package models.msys
 
+import io.suggest.model.n2.edge.{MEdgeGeoShape, MPredicates}
 import models.MNode
 
 /**
@@ -16,13 +17,17 @@ trait ISysGeoForNodeTplArgs {
 
   def mapStateHash  : Option[String]
 
-  def shapes = mnode.geo.shapes
+  def shapes: Iterator[MEdgeGeoShape] = {
+    mnode.edges
+      .withPredicateIter( MPredicates.NodeLocation )
+      .flatMap(_.info.geoShapes)
+  }
 
   def countGeoJsonCompat: Int = {
     shapes
-      .iterator
       .count( _.shape.shapeType.isGeoJsonCompatible )
   }
+
 }
 
 

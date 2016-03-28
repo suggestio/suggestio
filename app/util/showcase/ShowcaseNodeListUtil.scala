@@ -2,8 +2,7 @@ package util.showcase
 
 import com.google.inject.{Singleton, Inject}
 import io.suggest.common.fut.FutureUtil
-import io.suggest.model.geo.GeoDistanceQuery
-import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
+import io.suggest.model.n2.edge.search.{GsCriteria, Criteria, ICriteria}
 import io.suggest.model.n2.node.search.{MNodeSearchDfltImpl, MNodeSearch}
 import io.suggest.ym.model.NodeGeoLevels
 import models.msc.{GeoNodesLayer, GeoDetectResult}
@@ -48,6 +47,7 @@ class ShowcaseNodeListUtil @Inject() (
   /**
    * Запуск детектора текущей ноды и её геоуровня. Асинхронно возвращает (lvl, node) или экзепшен.
    * Экзепшен означает, что переключение нод отключено или не удалось найти текущую ноду.
+   *
    * @param geoMode Текущий георежим.
    * @param gsiOptFut Фьючерс с геоинфой.
    * @param searchF Используемая для поиска, которая возвращает список результатов произвольного типа.
@@ -60,27 +60,34 @@ class ShowcaseNodeListUtil @Inject() (
       gsiOptFut.map { gsiOpt =>
         new MNodeSearchDfltImpl {
           override def limit = 1
+
           override def withGeoDistanceSort: Option[GeoPoint] = {
             // 2015.jun.30 Стараемся всегда искать с учетом всех возможных опорных геоточек.
             geoMode.exactGeodata
               .orElse { gsiOpt.map(_.geoPoint) }
           }
 
-          override def gsLevels = Seq(lvl)
-
-          override def gsShapes: Seq[GeoDistanceQuery] = {
-            gsiOpt
-              .map { _.geoDistanceQuery }
-              .toSeq
+          override def outEdges: Seq[ICriteria] = {
+            val gsCr = GsCriteria(
+              levels = Seq(lvl),
+              shapes = gsiOpt
+                .map { _.geoDistanceQuery }
+                .toSeq
+            )
+            val cr = Criteria(
+              predicates = Seq( MPredicates.NodeLocation ),
+              gsIntersect = Some(gsCr)
+            )
+            Seq(cr)
           }
         }
-
-      } flatMap { sargs =>
+      }.flatMap { sargs =>
         searchF(sargs)
-      } map {
+      }.map {
         (lvl, _, prio)
       }
-    } map { results =>
+
+    }.map { results =>
       val filtered = results
         .filter(_._2.nonEmpty)
       if (filtered.nonEmpty) {
@@ -94,15 +101,16 @@ class ShowcaseNodeListUtil @Inject() (
       } else {
         None
       }
-    } filter {
+    }.filter {
       _.nonEmpty
-    } map {
+    }.map {
       _.get
     }
   }
 
   /**
    * Запуск поиска экземпляра текущей ноды. По сути враппер над detectCurrentNodeUsing().
+ *
    * @param geoMode Текущий geo-режим работы.
    * @param gsiOptFut Фоново-собираемые данные о географии.
    * @return Фьючерс с GeoDetectResult.
@@ -114,6 +122,7 @@ class ShowcaseNodeListUtil @Inject() (
 
   /**
    * Последовательное объединение функционала двух методов детектирования.
+ *
    * @param geoMode Режим геолокации.
    * @param gsiOptFut Результат получаения геоинфы по реквесту.
    * @param currAdnIdOpt Возможные данные по текущему узлу.
@@ -129,6 +138,7 @@ class ShowcaseNodeListUtil @Inject() (
 
   /**
    * Всегда можно найти узел, к которому отнести выдачу.
+ *
    * @param gsiOptFut Фьючерс с данными по географии реквеста.
    * @param currAdnIdOpt Возможная инфа об узле.
    * @param detectFut Запущенный процесс детектирования узла.
@@ -169,6 +179,7 @@ class ShowcaseNodeListUtil @Inject() (
 
   /**
    * Найти узел города для узла.
+ *
    * @param mnode Текущий ADN-узел.
    * @return Фьючерс с найденным городом или текущий узел, если он и есть город.
    *         NoSuchElementException если нода болтается в воздухе.
@@ -240,6 +251,7 @@ class ShowcaseNodeListUtil @Inject() (
 
   /**
    * Узнаём уровень, на котором находится текущая нода.
+ *
    * @param detectFut результат detectCurrentNode().
    * @param currNodeFut результат detectRecoverGuessCurrentNode().
    * @return Фьючерс, по формату совпадающий с detectRecoverGuessCurrentNode().
@@ -249,14 +261,18 @@ class ShowcaseNodeListUtil @Inject() (
       .recoverWith {
         case ex: NoSuchElementException =>
           for (mnode <- currNodeFut) yield {
-            val glevel = mnode.geo.shapes
+            val glevel = mnode.edges
+              .withPredicateIter( MPredicates.NodeLocation )
+              .flatMap(_.info.geoShapes)
+              .toSeq
               .headOption
               .map(_.glevel)
               .orElse {
                 AdnShownTypes.node2valOpt(mnode)
                   .flatMap(_.ngls.headOption)
-              } getOrElse {
-                NodeGeoLevels.default    // should never happen
+              }.getOrElse {
+                // should never happen
+                NodeGeoLevels.default
               }
             GeoDetectResult(glevel, mnode)
           }
@@ -266,6 +282,7 @@ class ShowcaseNodeListUtil @Inject() (
 
   /**
    * Найти районы для города.
+ *
    * @param townNodeId id узла-города.
    * @return Список узлов-районов.
    */
@@ -308,6 +325,7 @@ class ShowcaseNodeListUtil @Inject() (
 
   /**
    * Собрать здания в рамках района.
+ *
    * @param districtAdnId id района.
    * @return Список узлов на раёне в алфавитном порядке.
    */
@@ -327,6 +345,7 @@ class ShowcaseNodeListUtil @Inject() (
 
   /**
    * Получение нод и сборка слоёв для зданий района.
+ *
    * @param districtAdnId id узла района.
    * @param expandOnNode Если слой содержит узел с указанным id, то развернуть выставить expanded = true.
    * @return Фьючерс со списком слоёв с узлами.
@@ -368,6 +387,7 @@ class ShowcaseNodeListUtil @Inject() (
 
   /**
    * Сбор стопки слоёв в одну кучу.
+ *
    * @param geoMode Текущий режим геолокации.
    * @param currNode Текущий узел.
    * @param currNodeLayer Уровень, на котором находится текущий узел.

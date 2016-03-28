@@ -353,18 +353,22 @@ trait ScIndexNode
 
   /** Базовая выдача для rcvr-узла sio-market. */
   def showcase(adnId: String, args: ScReqArgs) = AdnNodeMaybeAuth(adnId).async { implicit request =>
-    val _adnNodeFut = Future successful request.mnode
+    val _adnNodeFut = Future.successful( request.mnode )
 
     val helper = new ScIndexNodeSimpleHelper {
-      override val geoListGoBackFut: Future[Option[Boolean]] = {
+      override def geoListGoBackFut: Future[Option[Boolean]] = {
         for (mnode <- adnNodeFut) yield {
-          mnode.geo.shapes
-            .headOption.map(_.glevel.isLowest)
+          // TODO Что за задумка у этого кода, понять так и не получилось. Гео-шейп наугад имеет isLowest -> значит нужно Some(true).
+          mnode.edges
+            .withPredicateIter( MPredicates.NodeLocation )
+            .flatMap(_.info.geoShapes)
+            .toSeq.headOption
+            .map(_.glevel.isLowest)
         }
       }
       override def _reqArgs = args
       override def adnNodeFut = _adnNodeFut
-      override lazy val currAdnIdFut = Future successful Some(adnId)
+      override lazy val currAdnIdFut = Future.successful( Some(adnId) )
       override def isGeo = false
       override implicit def _request = request
     }
