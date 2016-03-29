@@ -4,16 +4,18 @@
 
 @import io.suggest.adv.AdvConstants.Su._
 
-<div class="adv-su-inputs-wrap">
-  <label>
-    @_checkBoxTpl(
-      "id"      -> ADV_FOR_FREE_ID,
-      "name"    -> ADV_FOR_FREE_NAME,
-      "value"   -> "true",
-      "checked" -> "checked"
-    )
-    @_checkBoxTitleTpl() {
-      Размещать бесплатно, без подтверждения?
-    }
-  </label>
-</div>
+@if(ctx.user.isSuper) {
+  <div class="adv-su-inputs-wrap">
+    <label>
+      @_checkBoxTpl(
+        "id"      -> ADV_FOR_FREE_ID,
+        "name"    -> ADV_FOR_FREE_NAME,
+        "value"   -> "true",
+        "checked" -> "checked"
+      )
+      @_checkBoxTitleTpl() {
+        Размещать бесплатно, без подтверждения?
+      }
+    </label>
+  </div>
+}

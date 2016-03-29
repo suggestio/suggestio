@@ -22,6 +22,8 @@
 
 @form( CSRF(routes.LkAdvGeoTag.forAdSubmit(args.mad.id.get)), 'id -> FORM_ID) {
 
+  @_advSuTpl()
+
   @_barTpl(MHands.Left) {
     @* Рендер сохранённых тегов. *@
     @_existTagsContTpl() {

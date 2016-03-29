@@ -25,10 +25,8 @@
       'id     -> FORM_ID,
       'class  -> "adv-management_main-form") {
 
-  @* Суперюзерам доступно беплатное размещение на любом узле. *@
-  @if(ctx.user.isSuper) {
-    @_advSuTpl()
-  }
+  @* Опциональный рендер инструментов суперюзеров. *@
+  @_advSuTpl()
 
 
   @_barTpl(MHands.Left, id = Some(NODES_BAR_ID)) {

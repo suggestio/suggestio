@@ -12,7 +12,7 @@ import models.adv.price.GetPriceResp
 import models.jsm.init.MTargets
 import models.mctx.Context
 import models.mproj.ICommonDi
-import models.req.{IAdProdReq, IReq}
+import models.req.IAdProdReq
 import play.api.libs.json.Json
 import play.api.mvc.{AnyContent, Result}
 import util.PlayMacroLogsImpl
@@ -235,13 +235,6 @@ class MarketAdv @Inject() (
     }
   }
 
-  private def maybeFreeAdv()(implicit request: IReq[_]): Boolean = {
-    // Раньше было ограничение на размещение с завтрашнего дня, теперь оно снято.
-    val isFreeOpt = advFormUtil.freeAdvFormM
-      .bindFromRequest()
-      .fold({_ => None}, identity)
-    isFreeAdv( isFreeOpt )
-  }
 
   /**
     * Рассчитать цену размещения. Сюда нужно сабмиттить форму также, как и в advFormSubmit().
@@ -277,7 +270,7 @@ class MarketAdv @Inject() (
         val priceValHtmlFut = for {
           adves2  <- adves2Fut
           prices  <- {
-            if (adves2.isEmpty || maybeFreeAdv()) {
+            if (adves2.isEmpty || advFormUtil.maybeFreeAdv()) {
               Future.successful(Nil: Seq[MPrice])
             } else {
               for {
@@ -416,12 +409,8 @@ class MarketAdv @Inject() (
           }
 
           // Синхронно проанализировать состояние галочки бесплатного размещения.
-          isFree = maybeFreeAdv()
-          status = if (isFree) {
-            MItemStatuses.Offline
-          } else {
-            MItemStatuses.Draft
-          }
+          isSuFree = advFormUtil.maybeFreeAdv()
+          status   = advFormUtil.suFree2newItemStatus(isSuFree)
 
           rcvrs     <- rcvrsFut
 
@@ -452,9 +441,12 @@ class MarketAdv @Inject() (
 
         } yield {
           // Всё сделано, отредиректить юзера
-          if (!isFree) {
+          if (!isSuFree) {
             // Обычные юзеры отправляются в корзину.
-            val call = routes.LkBill2.cart(request.producer.id.get, r = Some(routes.LkAdvGeoTag.forAd(adId).url))
+            val call = routes.LkBill2.cart(
+              nodeId  = request.producer.id.get,
+              r       = Some(routes.MarketAdv.advForAd(adId).url)
+            )
             Redirect(call)
           } else {
             // Суперюзеры sio отправляются на эту же страницу для дальнейшей возни
@@ -507,14 +499,6 @@ class MarketAdv @Inject() (
       }
       .toSeq
   }
-
-
-  /** На основе маппинга формы и сессии суперюзера определить, как размещать рекламу:
-    * бесплатно инжектить или за деньги размещать. */
-  private def isFreeAdv(isFreeOpt: Option[Boolean])(implicit request: IReq[_]): Boolean = {
-    isFreeOpt.exists { _ && request.user.isSuper }
-  }
-
 
 }
 

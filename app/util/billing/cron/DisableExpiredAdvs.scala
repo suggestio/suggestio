@@ -86,32 +86,23 @@ class DisableExpiredAdvs @Inject() (
     // Поэтому нужно два билдера-аккамулятора.
     val acc00Fut = Future.successful(tuData0.acc)
 
-    val b0 = advBuilderFactory.builder(acc00Fut, now)
-
-    // Для пересборки размещений карточки нужно сначала очистить текущие размещения карточки:
-    val bAd0 = b0.clearAd(full = false)
-
     // Проходим билдерами по mitems, вызывая ту или иную логику в зависимости от того, истёк item или же нет.
-    val (bSql2, bAd2) = mitems.foldLeft((b0, bAd0)) {
-      case ((bSql, bAd), mitem) =>
-        if (mitem.dtIntervalOpt.exists(_isExpired)) {
-          // Размещение истекло, деинсталлировать для получения SQL.
-          bSql.uninstall(mitem) -> bAd
-        } else {
-          // Другое активное размещение, отправляем на пересборку карточки.
-          bSql -> bAd.install(mitem)
-        }
+    val (expired, rest) = mitems.partition { i =>
+      i.dtIntervalOpt.exists(_isExpired)
     }
+
+    val b2 = advBuilderFactory
+      .builder(acc00Fut, now)
+      // Подготовить SQL для деинсталляции
+      .unInstallSql(expired)
+      // Для пересборки размещений карточки нужно сначала очистить текущие размещения карточки:
+      .clearAd()
+      .installNode(rest)
 
     // Объеденить два аккамулятора в финальный акк, возвращаемый наверх.
     for {
-      accSql <- bSql2.accFut
-      accAd  <- bAd2.accFut
+      acc2 <- b2.accFut
     } yield {
-      val acc2 = Acc(
-        mad       = accAd.mad,
-        dbActions = accSql.dbActions
-      )
       TryUpdateBuilder(acc2)
     }
   }

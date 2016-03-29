@@ -138,6 +138,9 @@ class LkAdvGeoTag @Inject() (
         LOGGER.trace("Binded: " + result)
         // TODO Прикрутить free adv для суперпользователей.
 
+        val isSuFree = advFormUtil.maybeFreeAdv()
+        val status   = advFormUtil.suFree2newItemStatus(isSuFree)
+
         val producerId = request.producer.id.get
 
         // Найти корзину юзера и добавить туда покупки.
@@ -159,7 +162,8 @@ class LkAdvGeoTag @Inject() (
                 orderId     = cart.id.get,
                 producerId  = producerId,
                 adId        = adId,
-                res         = result
+                res         = result,
+                status      = status
               )
             } yield {
               addRes
@@ -170,10 +174,17 @@ class LkAdvGeoTag @Inject() (
           }
 
         } yield {
-          implicit val messages = implicitly[Messages]
-          // Пора вернуть результат работы юзеру: отредиректить в корзину-заказ для оплаты.
-          Redirect( routes.LkBill2.cart(producerId, r = Some(routes.LkAdvGeoTag.forAd(adId).url)) )
-            .flashing( FLASH.SUCCESS -> messages("Added.n.items.to.cart", itemsAdded.size) )
+          if (!isSuFree) {
+            implicit val messages = implicitly[Messages]
+            // Пора вернуть результат работы юзеру: отредиректить в корзину-заказ для оплаты.
+            Redirect(routes.LkBill2.cart(producerId, r = Some(routes.LkAdvGeoTag.forAd(adId).url)))
+              .flashing(FLASH.SUCCESS -> messages("Added.n.items.to.cart", itemsAdded.size))
+
+          } else {
+            // Суперюзеры отправляются назад в эту же форму для дальнейшего размещения.
+            Redirect( routes.LkAdvGeoTag.forAd(adId) )
+              .flashing(FLASH.SUCCESS -> "Ads.were.adv")
+          }
         }
       }
     )
@@ -187,16 +198,23 @@ class LkAdvGeoTag @Inject() (
     * @return 200 / 416 + JSON
     */
   def getPriceSubmit(adId: String) = CanAdvertiseAdPost(adId).async { implicit request =>
+    lazy val logPrefix = s"getPriceSubmit($adId):"
     agtFormUtil.agtFormTolerant.bindFromRequest().fold(
       {formWithErrors =>
-        LOGGER.debug(s"getPriceSubmit($adId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
+        LOGGER.debug(s"$logPrefix Failed to bind form:\n${formatFormErrors(formWithErrors)}")
         val err = MError(
           msg = Some("Failed to bind form")
         )
         NotAcceptable( Json.toJson(err) )
       },
+
       {result =>
-        val advPricingFut = agtBillUtil.computePricing(result)
+        val isSuFree = advFormUtil.maybeFreeAdv()
+        val advPricingFut = if (isSuFree) {
+          Future.successful( bill2Util.zeroPricing )
+        } else {
+          agtBillUtil.computePricing(result)
+        }
 
         implicit val ctx = implicitly[Context]
 
@@ -204,6 +222,7 @@ class LkAdvGeoTag @Inject() (
         val pricingFut = for {
           advPricing <- advPricingFut
         } yield {
+          LOGGER.trace(s"$logPrefix pricing => $advPricing, isSuFree = $isSuFree")
           val html = _priceValTpl(advPricing)(ctx)
           html2str4json(html)
         }

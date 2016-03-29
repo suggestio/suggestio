@@ -9,6 +9,6 @@ package models.mtag
  */
 case class MTagBinded(
   face    : String,
-  nodeId  : Option[String]
+  nodeId  : Option[String] = None
 )
 

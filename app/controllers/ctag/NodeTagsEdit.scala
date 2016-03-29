@@ -1,7 +1,7 @@
 package controllers.ctag
 
 import controllers.SioController
-import models.mtag.{MAddTagReplyOk, MTagsAddFormBinded}
+import models.mtag.{MTagBinded, MAddTagReplyOk, MTagsAddFormBinded}
 import play.api.libs.json.Json
 import util.PlayMacroLogsI
 import util.acl.IsAuth
@@ -37,17 +37,24 @@ trait NodeTagsEdit
       },
 
       {r =>
-        // До 3cd247458540 включительно здесь был поиск узлов-тегов.
-        // Потом оказалось, что узлы-теги не нужны, а теги стали жить внутри MEdgeInfo.
-
-        // Собрать новый маппинг формы для рендера.
-        val tf2 = {
-          val r2 = MTagsAddFormBinded(
-            added     = Nil,
-            existing  = r.existing
-          )
-          formBinded.fill(r2)
+        // Собрать новый набор добавленных тегов.
+        val existing2 = {
+          val existingAcc = List.newBuilder[MTagBinded]
+          existingAcc ++= r.existing
+          existingAcc ++= {
+            for (tf <- r.added.iterator) yield {
+              MTagBinded(tf)
+            }
+          }
+          existingAcc.result()
         }
+
+        // Собрать обновлённый маппинг формы:
+        val r2 = MTagsAddFormBinded(
+          added     = Nil,
+          existing  = existing2
+        )
+        val tf2 = formBinded.fill(r2)
 
         // Собрать JSON-ответ и вернуть.
         val resp = MAddTagReplyOk(

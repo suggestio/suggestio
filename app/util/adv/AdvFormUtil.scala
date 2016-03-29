@@ -3,8 +3,9 @@ package util.adv
 import com.google.inject.Singleton
 import io.suggest.adv.AdvConstants.Su
 import io.suggest.dt.interval.PeriodsConstants
+import io.suggest.mbill2.m.item.status.{MItemStatuses, MItemStatus}
 import models.adv.form._
-import models.{AdShowLevel, AdShowLevels}
+import models.req.{IReqHdr, IReq}
 import org.joda.time.LocalDate
 import play.api.data.Forms._
 import play.api.data.{Form, _}
@@ -103,6 +104,32 @@ class AdvFormUtil {
         }
       }
     )
+  }
+
+
+  def maybeFreeAdv()(implicit request: IReq[_]): Boolean = {
+    // Раньше было ограничение на размещение с завтрашнего дня, теперь оно снято.
+    val isFreeOpt = freeAdvFormM
+      .bindFromRequest()
+      .fold({_ => None}, identity)
+    isFreeAdv( isFreeOpt )
+  }
+
+  /** На основе маппинга формы и сессии суперюзера определить, как размещать рекламу:
+    * бесплатно инжектить или за деньги размещать. */
+  def isFreeAdv(isFreeOpt: Option[Boolean])(implicit request: IReqHdr): Boolean = {
+    isFreeOpt.exists { _ && request.user.isSuper }
+  }
+
+  /** Значение флага бесплатного размещения суперюзером сконвертить в начальный статус item'а. */
+  def suFree2newItemStatus(isFree: Boolean): MItemStatus = {
+    if (isFree) {
+      // Размещения суперюзеров проходят без участия корзины.
+      MItemStatuses.Offline
+    } else {
+      // Остальные размещения улетают в корзину.
+      MItemStatuses.Draft
+    }
   }
 
 }

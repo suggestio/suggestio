@@ -597,7 +597,7 @@ class SysMarket @Inject() (
   def removeAdRcvr(adId: String, rcvrIdOpt: Option[String], r: Option[String]) = {
     IsSuperuserMadPost(adId).async { implicit request =>
       // Запускаем спиливание ресивера для указанной рекламной карточки.
-      val madSavedFut = advUtil.depublishAdOn(request.mad, rcvrIdOpt)
+      val madSavedFut = advUtil.depublishAdOn(request.mad, rcvrIdOpt.toSet)
 
       lazy val logPrefix = s"removeAdRcvr(ad[$adId]${rcvrIdOpt.fold("")(", rcvr[" + _ + "]")}): "
       // Радуемся в лог.

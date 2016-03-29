@@ -4,7 +4,7 @@ import com.google.inject.assistedinject.Assisted
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.MItemType
-import io.suggest.mbill2.m.item.{IItem, IMItems, MItem, MItems}
+import io.suggest.mbill2.m.item.{IMItems, MItem, MItems}
 import models.adv.build.Acc
 import models.mproj.{ICommonDi, IMCommonDi}
 import org.joda.time.DateTime
@@ -49,14 +49,18 @@ trait IAdvBuilder
   import mCommonDi._
   import slick.driver.api._
 
+  /** Аккамулятор результатов.
+    * Используется для доступа к результатам работы билдера.
+    */
   val accFut: Future[Acc]
 
   /** Очистить исходное состояние текущих услуг карточки.
     * Используется для рассчета состояния с нуля, вместо обновления существующего состояния.
+    *
     * @param full true Полная очистка, размещений.
     *             false Очищение строго в рамках полномочий того или иного билдера.
     */
-  def clearAd(full: Boolean): IAdvBuilder = {
+  def clearAd(full: Boolean = false): IAdvBuilder = {
     this
   }
 
@@ -97,46 +101,117 @@ trait IAdvBuilder
     }
   }
 
-  protected[this] def _thisFut = Future.successful(this)
-
-  protected[this] def throwUnsupported(mitem: IItem) = {
-    throw new UnsupportedOperationException(s"${mitem.iType} is not supported by this builder")
-  }
-
-
-  /** Подготовка к развертыванию новых adv-item'ов.
-    * Новых -- т.е. НЕ reinstall, а именно новых.
-    * Так, гео-теги требуют заранее создать для них почву в виде узлов-тегов.
-    *
-    * @param mitems
-    * @return
-    */
-  def prepareInstallNew(mitems: Iterable[MItem]): IAdvBuilder = {
-    this
-  }
-
-  /** Установка услуги в карточку. */
-  // TODO Нужно разбить install на sql-install и mad-install части. Так, при регулярно-используемом reinstall дропается sql-часть.
-  def install(mitem: MItem): IAdvBuilder = {
-    throwUnsupported(mitem)
-  }
-
-  /** Деинсталляция услуги из карточки. */
-  def uninstall(mitem: MItem, reasonOpt: Option[String] = None): IAdvBuilder = {
-    throwUnsupported(mitem)
-  }
 
   /** Доступ к copy() с новым инстансом madFut. */
   def withAcc(accFut2: Future[Acc]): IAdvBuilder
 
-  protected[this] def withAccUpdated(f: Acc => Acc): IAdvBuilder = {
+  def withAccUpdated(f: Acc => Acc): IAdvBuilder = {
     val acc2Fut = accFut.map(f)
     withAcc(acc2Fut)
   }
 
-  protected[this] def withAccUpdatedFut(f: Acc => Future[Acc]): IAdvBuilder = {
+  def withAccUpdatedFut(f: Acc => Future[Acc]): IAdvBuilder = {
     val acc2Fut = accFut.flatMap(f)
     withAcc(acc2Fut)
+  }
+
+
+  // API v2
+  // Теперь install разделен на sql- и mad-части, а API на вход принимает item'ы оптом, а не поштучно.
+  // Да и основной API теперь внезапно стало синхронным. Для подготовки каких-то асинхронных данных теперь нужно
+  // запиливать beforeInstall/beforeUnistall. Просто по итогда API v1 необходимость в этом отпала сама собой.
+
+  def installSql(items: Iterable[MItem]): IAdvBuilder = {
+
+    val itypes = supportedItemTypes
+    val (ditems, others) = items.partition { i =>
+      itypes.contains(i.iType)
+    }
+
+    lazy val logPrefix = s"installSql(${items.size}):"
+
+    // Если есть неизвестные item'ы, то ругаемся в логи и пропускаем их.
+    if (others.nonEmpty)
+      _logUnsupportedItems(logPrefix, others)
+
+    // Собираем db-экшены для инсталляции
+    if (ditems.nonEmpty) {
+      LOGGER.trace(s"$logPrefix There are ${ditems.size} for install...")
+      withAccUpdated { acc0 =>
+        val dbas1 = ditems.foldLeft(acc0.dbActions) { (dbas0, mitem) =>
+          val dbAction = {
+            val dateStart2 = now
+            val dateEnd2 = dateStart2.plus( mitem.dtIntervalOpt.get.toPeriod )
+            val mitemId = mitem.id.get
+            mItems.query
+              .filter { _.id === mitemId }
+              .map { i => (i.status, i.dateStartOpt, i.dateEndOpt, i.dateStatus) }
+              .update( (MItemStatuses.Online, Some(dateStart2), Some(dateEnd2), dateStart2) )
+              .filter { rowsUpdated =>
+                LOGGER.trace(s"$logPrefix Updated item[$mitemId]: dateEnd => $dateEnd2")
+                rowsUpdated == 1
+              }
+          }
+          dbAction :: dbas0
+        }
+        acc0.copy(
+          dbActions = dbas1
+        )
+      }
+
+    } else {
+      this
+    }
+  }
+
+  def installNode(items: Iterable[MItem]): IAdvBuilder = {
+    _logUnsupportedItems("installNode()", items)
+    this
+  }
+
+  private def _logUnsupportedItems(logPrefix: String, items: Traversable[MItem]): Unit = {
+    LOGGER.error(s"$logPrefix ${items.size} items have unsupported types, they are skipped:${items.mkString("\n", ",\n", "")}")
+  }
+
+  def unInstallSql(items: Iterable[MItem], reasonOpt: Option[String] = None): IAdvBuilder = {
+    val itypes = supportedItemTypes
+    val (tagItems, others) = items.partition { i =>
+      itypes.contains( i.iType )
+    }
+
+    lazy val logPrefix = s"uninstallSql(${items.size}):"
+    if (others.nonEmpty)
+      _logUnsupportedItems(logPrefix, others)
+
+    // Собрать изменения для БД
+    if (tagItems.nonEmpty) {
+      val _now = now
+      val itemIds = tagItems.iterator.flatMap(_.id).toSet
+      LOGGER.trace(s"$logPrefix Generating unInstall SQL for ${itemIds.size} items: ${itemIds.mkString(",")}, now = ${_now}")
+      val dbAction = mItems.query
+        .filter(_.id inSet itemIds)
+        .map { i =>
+          (i.status, i.dateEndOpt, i.dateStatus, i.reasonOpt)
+        }
+        .update((MItemStatuses.Finished, Some(_now), _now, reasonOpt))
+        .filter { rowsUpdated =>
+          val itemIdsLen = itemIds.size
+          val r = rowsUpdated == itemIdsLen
+          if (!r)
+            LOGGER.warn(s"$logPrefix Unexpected rows deleted: $rowsUpdated, expected $itemIdsLen")
+          r
+        }
+
+      // Собрать новый акк.
+      withAccUpdated { acc0 =>
+        acc0.copy(
+          dbActions = dbAction :: acc0.dbActions
+        )
+      }
+
+    } else {
+      this
+    }
   }
 
 }

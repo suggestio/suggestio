@@ -7,7 +7,7 @@ package models.mtag
  * Description: Модель результата маппинга формы добавления тегов.
  */
 case class MTagsAddFormBinded(
-  added     : Seq[String],
+  added     : List[String],
   existing  : List[MTagBinded]
 )
 

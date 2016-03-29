@@ -2,7 +2,7 @@ package util.adv
 
 import com.google.inject.{Singleton, Inject}
 import io.suggest.common.fut.FutureUtil
-import io.suggest.mbill2.m.item.MItems
+import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.model.es.EsModelUtil
 import io.suggest.model.n2.edge.MNodeEdges
@@ -104,12 +104,8 @@ class AdvUtil @Inject() (
       adItems <- adItemsFut
       if adItems.nonEmpty
 
-      // Пересчитать всех ресиверов
-      acc2 <- {
-        // Накатить все проплаченные размещения на текущую карточку.
-        val b2 = adItems.foldLeft(b0)(_.install(_))
-        b2.accFut
-      }
+      // Накатить все проплаченные размещения на текущую карточку.
+      acc2 <- b0.installNode(adItems).accFut
     } yield {
       acc2
     }
@@ -179,7 +175,7 @@ class AdvUtil @Inject() (
   def depublishAdOn(adId: String, rcvrIdOpt: Option[String]): Future[MNode] = {
     mNodeCache.getByIdType(adId, MNodeTypes.Ad)
       .map(_.get)
-      .flatMap(depublishAdOn(_, rcvrIdOpt))
+      .flatMap(depublishAdOn(_, rcvrIdOpt.toSet))
   }
 
   /**
@@ -189,7 +185,7 @@ class AdvUtil @Inject() (
     * @param rcvrIds id удаляемых из карточки ресиверов.
     * @return Фьючерс с обновлённой сохраненной карточкой.
     */
-  def depublishAdOn(mad: MNode, rcvrIds: Traversable[String]): Future[MNode] = {
+  def depublishAdOn(mad: MNode, rcvrIds: Set[String]): Future[MNode] = {
     val adId = mad.id.get
     lazy val logPrefix = s"removeAdRcvr(ad[$adId],${if (rcvrIds.isEmpty) "*" else "[" + rcvrIds.size + "]"}):"
 
@@ -205,42 +201,61 @@ class AdvUtil @Inject() (
     val b0 = advBuilderFactory.builder( Future.successful(acc0), now )
 
     // Собрать db-эшен для получения списка затрагиваемых размещений:
-    val mitemsAction = {
-      val itypes = b0.supportedItemTypesStrSet
-      var act = mItems.query
-        .filter { i =>
-          (i.adId === adId) &&
-            (i.iTypeStr inSet itypes) &&
-            (i.statusStr === MItemStatuses.Online.strId)
-        }
-      if (rcvrIds.nonEmpty)
-        act = act.filter(_.rcvrIdOpt inSet rcvrIds)
-      act.result
-    }
+    val onlineItemsAction = mItems.query
+      .filter { i =>
+        (i.adId === adId) &&
+          (i.iTypeStr inSet b0.supportedItemTypesStrSet) &&
+          (i.statusStr === MItemStatuses.Online.strId)
+      }
+      .result
 
     // Собираем логику грядущей транзакции:
     val txnLogic = for {
       // Получить список размещений для обработки. Список может быть пустой.
-      mitems <- mitemsAction.forUpdate
+      // TODO Opt через forUpdate помечаются все ряды, даже те которые обновлять пока не планируется.
+      allMitems <- onlineItemsAction.forUpdate
 
-      // Деинсталлировать всех [указанных] ресиверов из карточки
+      (forUnInstall, keepOnline) = if (rcvrIds.isEmpty) {
+        (allMitems, Nil: Seq[MItem])
+      } else {
+        allMitems.partition { i =>
+          i.rcvrIdOpt.exists( rcvrIds.contains )
+        }
+      }
+
+      // Деинсталлировать в биллинге всех/некоторых ресиверов для карточки.
+      unInstSql <- {
+        if (forUnInstall.isEmpty) {
+          DBIO.successful(0)
+        } else {
+          for {
+            // Собрать SQL для деинсталляции.
+            acc11 <- {
+              val reasonOpt = Some(SIOM_REFUSE_REASON)
+              val b1 = b0.unInstallSql(forUnInstall, reasonOpt)
+              DBIO.from( b1.accFut )
+            }
+            _     <- DBIO.seq( acc11.dbActions: _* )
+          } yield {
+            forUnInstall.size
+          }
+        }
+      }
+
+      // Собрать оставшиеся online-итемы, перенакатить их всех на карточку.
       tuData2 <- {
-        // Накатить все проплаченные размещения на текущую карточку.
-        val refuseReason = Some(SIOM_REFUSE_REASON)
         val tuDataFut = EsModelUtil.tryUpdate[MNode, TryUpdateBuilder]( TryUpdateBuilder(acc0) ) { tuData0 =>
-          // Выполнить нормальную деинсталляцию всех размещений, если они есть.
-          // TODO Указать refuse reason. Почему-то в текущем uninstall'ере забыл заимплементить это...
-          var b1 = mitems.foldLeft(b0)( _.uninstall(_, refuseReason) )
-          // Если жесткое удаление всех ресиверов, то имеет смысл грубо вычистить карточку.
-          b1 = if (rcvrIds.isEmpty)  b1.clearAd(full = true)  else  b1
+          val b1 = b0
+            .withAcc( Future.successful(tuData0.acc) )
+            .clearAd(full = rcvrIds.isEmpty)
+            .installNode(keepOnline)
+
           for (acc2 <- b1.accFut) yield {
             TryUpdateBuilder(acc2)
           }
         }
         DBIO.from( tuDataFut )
       }
-
-      _ <- DBIO.seq( tuData2.acc.dbActions: _* )
 
     } yield {
       tuData2.acc.mad

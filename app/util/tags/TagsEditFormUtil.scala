@@ -57,9 +57,9 @@ class TagsEditFormUtil {
 
 
   /** Маппинг для строки, в которой может быть задано сразу несколько тегов. */
-  def addedM: Mapping[Seq[String]] = {
+  def addedM: Mapping[List[String]] = {
     nonEmptyText(minLength = TAG_LEN_MIN, maxLength = 256)
-      .transform [Seq[String]] (
+      .transform [List[String]] (
         {allRaw =>
           val lenMin = TAG_LEN_MIN
           val lenMax = TAG_LEN_MAX
@@ -68,7 +68,7 @@ class TagsEditFormUtil {
             .map { _tagNamePrepare }
             .filter(_.length >= lenMin)
             .filter(_.length <= lenMax)
-            .toSeq
+            .toList
         },
         _.mkString(", ")
       )

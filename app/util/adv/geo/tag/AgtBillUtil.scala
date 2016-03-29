@@ -2,7 +2,7 @@ package util.adv.geo.tag
 
 import com.google.inject.Inject
 import io.suggest.mbill2.m.gid.Gid_t
-import io.suggest.mbill2.m.item.status.MItemStatuses
+import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import models.MPrice
@@ -51,7 +51,7 @@ class AgtBillUtil @Inject()(
     * @param res     Данные по размещаемым тегам.
     * @return Фьючерс c результатом.
     */
-  def addToOrder(orderId: Gid_t, producerId: String, adId: String, res: IAgtFormResult): DBIOAction[Seq[MItem], NoStream, Effect.Write] = {
+  def addToOrder(orderId: Gid_t, producerId: String, adId: String, res: IAgtFormResult, status: MItemStatus): DBIOAction[Seq[MItem], NoStream, Effect.Write] = {
     // Собираем экшен заливки item'ов. Один тег -- один item.
     val p = _oneTagPrice(res)
 
@@ -59,7 +59,7 @@ class AgtBillUtil @Inject()(
       val itm0 = MItem(
         orderId       = orderId,
         iType         = MItemTypes.GeoTag,
-        status        = MItemStatuses.Draft,
+        status        = status,
         price         = p,
         adId          = adId,
         dtIntervalOpt = Some(res.dates.interval),

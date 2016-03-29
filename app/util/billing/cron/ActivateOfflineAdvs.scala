@@ -18,7 +18,7 @@ import scala.concurrent.Future
   * Created: 16.02.16 14:18
   * Description: Система активации item'ов, стоящих в очереди на размещение.
   *
-  * Используется инкрементальный метод, т.е. на карточку просто до-устанавливаются без очистки и прочего.
+  * Используется reinstall-метод, т.е. карточка сбрасывается и эджи компилятся и сохраняются заново.
   */
 
 class ActivateOfflineAdvs @Inject() (
@@ -36,17 +36,15 @@ class ActivateOfflineAdvs @Inject() (
   /** Окно обработки можно увеличить, т.к. тут инкрементальный апдейт и мало mitem'ов запрашивается. */
   override def MAX_ADS_PER_RUN = 20
 
-  private def _findItems = {
-    mItems.query
-      .filter { i =>
-        (i.statusStr === MItemStatuses.Offline.strId) &&
-          (i.dateStartOpt <= now)
-      }
+  private def _offlineItemsSql(i: mItems.MItemsTable) = {
+    (i.statusStr === MItemStatuses.Offline.strId) &&
+      (i.dateStartOpt <= now)
   }
 
   override def findAdIds: StreamingDBIO[Traversable[String], String] = {
     // Ищем только карточки, у которых есть offline ads с dateStart < now
-    _findItems
+    mItems.query
+      .filter(_offlineItemsSql)
       .map(_.adId)
       .distinct
       .result
@@ -54,24 +52,31 @@ class ActivateOfflineAdvs @Inject() (
 
 
   override def findItemsForAdId(adId: String, itypes: List[MItemType]): SqlAction[Iterable[MItem], NoStream, Read] = {
+    // TODO Искать все item'ы: и начавшиеся оффлайн, и уже в онлайне которые.
     // Нужно искать те же item'ы, что и в findAdIds, т.е. только оффлайновые и созревшие. Только в рамках карточки.
-    _findItems
+    mItems.query
       .filter { i =>
-        // TODO Opt не ясно, догадается ли оптимизатор постгреса искать по adId, если adId только во втором filter объявлен.
         (i.adId === adId) &&
-          (i.iTypeStr inSet itypes.map(_.strId))
+        (i.iTypeStr inSet itypes.map(_.strId)) && (
+          _offlineItemsSql(i) || i.statusStr === MItemStatuses.Online.strId
+        )
       }
       .result
   }
 
 
   override def tryUpdateAd(tuData0: TryUpdateBuilder, mitems: Iterable[MItem]): Future[TryUpdateBuilder] = {
+    // Разделить item'ы на уже онлайновые и ещё пока оффлайновые.
+    val offline = mitems.filter(_.status == MItemStatuses.Offline)
+
     // Инкрементальный install всех необходимых item'ов на карточку.
-    val acc00Fut = Future.successful(tuData0.acc)
-    val b00 = advBuilderFactory
-      .builder(acc00Fut, now)
-      .prepareInstallNew(mitems)
-    val b2 = mitems.foldLeft(b00)(_.install(_))
+    val acc0Fut = Future.successful(tuData0.acc)
+    val b2 = advBuilderFactory
+      .builder(acc0Fut, now)
+      .installSql(offline)
+      .clearAd()
+      .installNode(mitems)
+
     for {
       acc2 <- b2.accFut
     } yield {
