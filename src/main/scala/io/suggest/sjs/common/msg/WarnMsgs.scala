@@ -39,4 +39,6 @@ object WarnMsgs extends MsgsStaticT {
 
   def ADV_DIRECT_XHR_TS_DROP    = E(12)
 
+  def XHR_RESP_ERROR_STATUS     = E(13)
+
 }

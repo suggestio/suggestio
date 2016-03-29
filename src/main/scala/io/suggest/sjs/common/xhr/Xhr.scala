@@ -6,9 +6,11 @@ import io.suggest.sjs.common.xhr.ex._
 import org.scalajs.dom.raw.ErrorEvent
 import org.scalajs.dom.{Event, XMLHttpRequest}
 
-import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.concurrent.{Future, Promise}
 import scala.scalajs.js
 import scala.scalajs.js.JSON
+
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 /**
  * Suggest.io
@@ -28,6 +30,7 @@ object Xhr extends SjsLogger {
 
   /**
    * Отправка асинхронного запроса силами голого js.
+   *
    * @see [[http://stackoverflow.com/a/8567149 StackOverflow]]
    * @param method HTTP-метод.
    * @param url Ссылка.
@@ -81,35 +84,57 @@ object Xhr extends SjsLogger {
 
   /**
    * Фильтровать результат по http-статусу ответа сервера.
+   *
    * @param httpStatuses Допустимые http-статусы.
-   * @param reqFut Фьючерс реквеста, собранного в send().
+   * @param xhrFut Выполненяемый XHR, собранный в send().
    * @return Future, где success наступает только при указанных статусах.
    *         [[io.suggest.sjs.common.xhr.ex.XhrUnexpectedRespStatusException]] когда статус ответа не подпадает под критерий.
    */
-  def successWithStatus(httpStatuses: Int*)(reqFut: Future[XMLHttpRequest])(implicit ec: ExecutionContext): Future[XMLHttpRequest] = {
-    reqFut.flatMap { xhr =>
-      if (httpStatuses contains xhr.status) {
-        Future successful xhr
+  def successIfStatus(httpStatuses: Int*)(xhrFut: Future[XMLHttpRequest]): Future[XMLHttpRequest] = {
+    for (xhr <- xhrFut) yield {
+      if (httpStatuses.contains(xhr.status)) {
+        xhr
       } else {
-        Future failed XhrUnexpectedRespStatusException(xhr)
+        val ex = XhrUnexpectedRespStatusException(xhr)
+        throw ex
       }
     }
   }
 
+
+  def someIfStatus(httpStatuses: Int*)(xhrFut: Future[XMLHttpRequest]): Future[Option[XMLHttpRequest]] = {
+    for (xhr <- xhrFut) yield {
+      if (httpStatuses.contains(xhr.status)) {
+        Some(xhr)
+      } else {
+        None
+      }
+    }
+  }
+
+
+  def askJson(route: Route): Future[XMLHttpRequest] = {
+    send(
+      method  = route.method,
+      url     = route.url,
+      headers = Seq(HDR_ACCEPT -> MIME_JSON)
+    )
+  }
+
   /**
    * HTTP-запрос через js-роутер и ожидание HTTP 200 Ok ответа.
+   *
    * @param route Маршрут jsrouter'а. Он содержит данные по URL и METHOD для запроса.
    * @return Фьючерс с десериализованным JSON.
    */
-  def getJson(route: Route)(implicit ec: ExecutionContext): Future[js.Dynamic] = {
-    successWithStatus(200) {
-      send(
-        method  = route.method,
-        url     = route.url,
-        headers = Seq(HDR_ACCEPT -> MIME_JSON)
-      )
-    } map { xhr =>
-      JSON.parse(xhr.responseText)
+  def getJson(route: Route): Future[js.Dynamic] = {
+    val xhrFut = successIfStatus( HttpStatuses.OK ) {
+      askJson(route)
+    }
+    for (xhr <- xhrFut) yield {
+      JSON.parse {
+        xhr.responseText
+      }
     }
   }
 
