@@ -41,7 +41,14 @@ case class NameInputEvent(event: Event)
 object NameInputEvent
   extends IFsmEventMsgCompanion
 
+/** Сигнал о вводе с клавиатуры имени тега. */
+case class TagNameTyping(event: KeyboardEvent)
+  extends ITagsEditFsmSignal
+object TagNameTyping
+  extends IFsmMsgCompanion[KeyboardEvent]
 
+
+/** Сабмит имени тега. */
 case class NameInputSubmit(event: KeyboardEvent)
   extends ITagsEditFsmSignal
 object NameInputSubmit
@@ -49,7 +56,7 @@ object NameInputSubmit
 
 
 /** Сработал таймер для начала запроса поиска тегов по имени. */
-case object StartSearchTimer
+case class StartSearchTimer(ts: Long)
   extends ITagsEditFsmSignal
 
 

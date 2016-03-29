@@ -1,16 +1,17 @@
 package io.suggest.lk.tags.edit.m
 
 /**
- * Suggest.io
- * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 07.09.15 16:36
- * Description: Контейнер данных состояния tags edit fsm.
- * @param lastName Последние отработанное и почищенное название тега из input'а.
- * @param startSearchTimerId id таймера запуска запроса поиска тегов по имени.
- */
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 07.09.15 16:36
+  * Description: Контейнер данных состояния tags edit fsm.
+  * @param startSearchTimerId id таймера запуска запроса поиска тегов по имени.
+  * @param lastSearchReqTs таймптамп свежайшего поискового запроса к серверу.
+  */
 case class MStateData(
-  lastName              : String        = "",
-  startSearchTimerId    : Option[Int]   = None
+  startSearchTimerId    : Option[Int]   = None,
+  startSearchTimerTs    : Option[Long]  = None,
+  lastSearchReqTs       : Option[Long]  = None
 ) {
 
   def clearTimerId(): MStateData = {

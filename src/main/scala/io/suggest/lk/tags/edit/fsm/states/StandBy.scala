@@ -3,10 +3,16 @@ package io.suggest.lk.tags.edit.fsm.states
 import io.suggest.common.tags.edit.TagsEditConstants
 import io.suggest.lk.tags.edit.fsm.TagsEditFsmStub
 import io.suggest.lk.tags.edit.m.signals._
-import io.suggest.lk.tags.edit.vm.add.ANameInput
+import io.suggest.lk.tags.edit.vm.add.{AFoundTagsCont, ANameInput}
 import io.suggest.lk.tags.edit.vm.exist.EDelete
+import io.suggest.sjs.common.model.Route
+import io.suggest.sjs.common.msg.WarnMsgs
+import io.suggest.sjs.common.tags.search.{MTagSearchRespTs, MTagsSearch, MTagSearchArgs, ITagSearchArgs}
 import org.scalajs.dom
 import org.scalajs.dom.Event
+
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+import scala.util.{Failure, Success}
 
 /**
  * Suggest.io
@@ -16,10 +22,25 @@ import org.scalajs.dom.Event
  */
 trait StandBy extends TagsEditFsmStub {
 
+  /** js-роута для поиска тегов. */
+  def tagsSearchRoute(args: ITagSearchArgs): Route
+
   /** Упрощенное состояние ожидания.*/
   protected trait SimpleStandByStateT extends FsmEmptyReceiverState {
 
     override def receiverPart: Receive = super.receiverPart orElse {
+
+      // Сигнал ввода названия тега с клавиатуры.
+      case TagNameTyping(event) =>
+        _tagNameTyping(event)
+      // Сигнал для начала поиска тега по имени.
+      case StartSearchTimer(ts) =>
+        if (_stateData.startSearchTimerTs.contains(ts))
+          _onStartTagSearchTimer()
+      // Сигнал о завершении поискового запроса к серверу.
+      case respTs: MTagSearchRespTs =>
+        _handleTagSearchResp(respTs)
+
       // Клик по кнопке добавления тега.
       case AddBtnClick(event) =>
         _addBtnClicked()
@@ -38,6 +59,7 @@ trait StandBy extends TagsEditFsmStub {
 
     /** Состояние, на которое надо переключаться, после клика по кнопке добавления. */
     protected def _addBtnClickedState: FsmState
+
 
     /** Реакция на клик по кнопке удаления тега. */
     protected def _tagDeleteClick(event: Event): Unit = {
@@ -61,60 +83,86 @@ trait StandBy extends TagsEditFsmStub {
       }
     }
 
-  }
 
+    /** Моментальная реакция на ввод текста в поле имени тега. */
+    protected def _tagNameTyping(e: Event): Unit = {
+      val sd0 = _stateData.maybeClearTimerId()
+      _stateData = sd0
 
-  /** Трейт состояния, когда ничего не делается. */
-  // TODO UNUSED !!! потому что планировалось поиск сделать.
-  protected trait StandByStateT extends FsmEmptyReceiverState {
+      for {
+        tnInput <- ANameInput.find()
+        tagName <- tnInput.value
+        if tagName.trim.length > 0
+      } {
 
-    override def receiverPart: Receive = super.receiverPart orElse {
-      // Сигнал ввода текста в поле имени.
-      case NameInputEvent(event) =>
-        _onNameInput(event)
-
-      // Сигнал для начала поиска тега по имени.
-      case StartSearchTimer =>
-        _onStartSearchTimer()
-    }
-
-
-    /** Реакция на попадание фокуса в инпут ввода имени. */
-    protected def _onNameInput(event: Event): Unit = {
-      val sd0 = _stateData
-
-      // Отменить старый таймер запуска запроса, если есть.
-      for (oldTimerId <- sd0.startSearchTimerId) {
-        dom.clearTimeout(oldTimerId)
-      }
-
-      val nameInput = ANameInput( event.target.asInstanceOf[ANameInput.Dom_t] )
-
-      // Если текущий текст не пустой, то надо запустить таймер запуска поискового запроса.
-      val namePart = nameInput._underlying.value
-      if (!namePart.trim.isEmpty) {
-        // Перейти на состояние ожидания таймера перед запросом поиска тегов.
+        val ts = System.currentTimeMillis()
         val timerId = dom.setTimeout(
-          { () => _sendEventSyncSafe(StartSearchTimer) },
+          { () => _sendEventSyncSafe(StartSearchTimer(ts)) },
           TagsEditConstants.START_SEARCH_TIMER_MS
         )
         _stateData = sd0.copy(
-          startSearchTimerId = Some(timerId)
+          startSearchTimerId = Some(timerId),
+          startSearchTimerTs = Some(ts)
         )
-
-      } else {
-        _stateData = sd0.maybeClearTimerId()
       }
     }
 
-    /** Реакция на срабатывание таймера запуска поиска. */
-    protected def _onStartSearchTimer(): Unit = {
-      val sd1 = _stateData.maybeClearTimerId()
-      become(_startWaitSearchRequestState, sd1)
+
+    /** Срабатывания таймаута ожидания ввода тега. */
+    protected def _onStartTagSearchTimer(): Unit = {
+      for {
+        tnInput <- ANameInput.find()
+        tagName <- tnInput.value
+        if tagName.trim.length > 0
+      } {
+        // Собираем и запускаем запрос к серверу
+        val tagSearchArgs = MTagSearchArgs(
+          faceFts = Some(tagName),
+          limit   = Some(5)
+        )
+        val searchFut = MTagsSearch.search(
+          route = tagsSearchRoute(tagSearchArgs)
+        )
+        val searchTstamp = _sendFutResBackTimestamped(searchFut, MTagSearchRespTs)
+
+        _stateData = _stateData.copy(
+          startSearchTimerId  = None,
+          startSearchTimerTs  = None,
+          lastSearchReqTs     = Some(searchTstamp)
+        )
+      }
     }
 
-    /** Состояние запуска и ожидания ответа с поиского запроса. Вместе с ожиданием возможного инпута. */
-    protected def _startWaitSearchRequestState: FsmState
+
+    /** Отрабатывание полученного ответа сервера по найденным тегам. */
+    protected def _handleTagSearchResp(respTs: MTagSearchRespTs): Unit = {
+      val sd0 = _stateData
+      if (sd0.lastSearchReqTs.contains( respTs.timestamp )) {
+
+        for {
+          cont    <- AFoundTagsCont.find()
+        } {
+          respTs.result match {
+            case Success(resp) =>
+              for {
+                render <- resp.render
+              } {
+                cont.setContent(render)
+                cont.show()
+              }
+
+
+            case Failure(ex) =>
+              cont.hide()
+              log( WarnMsgs.XHR_RESP_ERROR_STATUS + " " + ex )
+          }
+        }
+
+        _stateData = sd0.copy(
+          lastSearchReqTs = None
+        )
+      }
+    }
 
   }
 

@@ -3,9 +3,7 @@ package io.suggest.lk.tags.edit.vm.add
 import io.suggest.common.tags.edit.TagsEditConstants.ADD_NAME_INPUT_ID
 import io.suggest.lk.tags.edit.m.signals._
 import io.suggest.sjs.common.fsm.{SendEventToFsmUtil, IInitLayoutFsm, OnEventToArgFsmUtilT, SjsFsm}
-import io.suggest.sjs.common.vm.IVm
 import io.suggest.sjs.common.vm.attr.StringInputValueT
-import io.suggest.sjs.common.vm.content.ReplaceWith
 import io.suggest.sjs.common.vm.find.FindElT
 import io.suggest.sjs.common.vm.of.OfEventTargetNode
 import io.suggest.sjs.common.vm.walk.Focus
@@ -39,9 +37,10 @@ trait ANameInputT extends IInitLayoutFsm with OnEventToArgFsmUtilT with Focus wi
 
   override def initLayout(fsm: SjsFsm): Unit = {
     // Вешаем проброску событий ввода и фокуса в FSM.
-    _addToFsmEventListener(fsm, "focus", NameInputFocus)
-    _addToFsmEventListener(fsm, "blur",  NameInputBlur)
-    _addToFsmEventListener(fsm, "input", NameInputEvent)
+    //_addToFsmEventListener(fsm, "focus", NameInputFocus)
+    //_addToFsmEventListener(fsm, "blur",  NameInputBlur)
+    //_addToFsmEventListener(fsm, "input", NameInputEvent)
+    _addToFsmEventListener(fsm, "keyup", TagNameTyping)
 
     // Нужно реагировать на некоторые клавиши, как на сабмит.
     val f = SendEventToFsmUtil.f(fsm, NameInputSubmit)
