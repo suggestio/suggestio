@@ -3,6 +3,7 @@ package controllers
 import com.google.inject.Inject
 import controllers.ctag.NodeTagsEdit
 import io.suggest.model.geo.{CircleGs, Distance, GeoPoint}
+import io.suggest.model.n2.tag.TagSearchUtil
 import models.adv.form.MDatesPeriod
 import models.adv.geo.tag.{MForAdTplArgs, MAgtFormResult, AgtForm_t}
 import models.adv.price.GetPriceResp
@@ -40,6 +41,7 @@ class LkAdvGeoTag @Inject() (
   agtBillUtil                     : AgtBillUtil,
   advFormUtil                     : AdvFormUtil,
   bill2Util                       : Bill2Util,
+  override val tagSearchUtil      : TagSearchUtil,
   override val tagsEditFormUtil   : TagsEditFormUtil,
   override val canAdvAdUtil       : CanAdvertiseAdUtil,
   override val mCommonDi          : ICommonDi

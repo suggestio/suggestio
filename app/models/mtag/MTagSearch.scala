@@ -20,7 +20,7 @@ object MTagSearch {
 
   private def LIMIT_DFLT    = 10
   private def LIMIT_MAX     = 50
-  private def OFFSET_MAX    = 500
+  private def OFFSET_MAX    = 200
   private def QUERY_MAXLEN  = 64
 
   /** Поддержка интеграции с play-роутером в области URL Query string. */

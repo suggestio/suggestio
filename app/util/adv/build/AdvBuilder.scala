@@ -165,7 +165,8 @@ trait IAdvBuilder
   }
 
   def installNode(items: Iterable[MItem]): IAdvBuilder = {
-    _logUnsupportedItems("installNode()", items)
+    if (items.nonEmpty)
+      _logUnsupportedItems("installNode()", items)
     this
   }
 

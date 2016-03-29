@@ -1,7 +1,8 @@
 package controllers.ctag
 
 import controllers.SioController
-import models.mtag.{MTagBinded, MAddTagReplyOk, MTagsAddFormBinded}
+import io.suggest.model.n2.tag.ITagSearchUtilDi
+import models.mtag._
 import play.api.libs.json.Json
 import util.PlayMacroLogsI
 import util.acl.IsAuth
@@ -20,7 +21,10 @@ trait NodeTagsEdit
   with PlayMacroLogsI
   with IsAuth
   with ITagsEditFormUtilDi
+  with ITagSearchUtilDi
 {
+
+  import mCommonDi._
 
   /**
    * Добавление тега в редактор тегов.
@@ -67,6 +71,27 @@ trait NodeTagsEdit
           .withHeaders(CACHE_CONTROL -> "no-cache")
       }
     )
+  }
+
+
+  /** Экшен поиска похожих тегов во время набора названия.
+    *
+    * @return JSON с inline-версткой для отображения в качестве выпадающего списка.
+    */
+  def tagsSearch(tsearch: MTagSearch) = IsAuth.async { implicit request =>
+    for {
+      found <-  tagSearchUtil.searchAgg( tsearch )
+    } yield {
+      if (found.tags.isEmpty) {
+        NoContent
+      } else {
+        val resp = MTagSearchResp(
+          rendered    = Some(_tagsHintTpl(found)),
+          foundCount  = found.tags.size
+        )
+        Ok( Json.toJson(resp) )
+      }
+    }
   }
 
 }

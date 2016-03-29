@@ -54,6 +54,7 @@ GET  /lk/xadv/geo/tag/for/:adId         @controllers.LkAdvGeoTag.forAd(adId)
 POST /lk/xadv/geo/tag/for/:adId         @controllers.LkAdvGeoTag.forAdSubmit(adId)
 POST /lk/xadv/geo/tag/add               @controllers.LkAdvGeoTag.tagEditorAddTag()
 POST /lk/xadv/geo/tag/price/:adId       @controllers.LkAdvGeoTag.getPriceSubmit(adId)
+GET  /lk/xadv/geo/tag/tags              @controllers.LkAdvGeoTag.tagsSearch(s: mtag.MTagSearch)
 
 ## ЛК: Рекламные карточки
 GET  /lk/mad/new/:adnId                 @controllers.MarketAd.createAd(adnId)

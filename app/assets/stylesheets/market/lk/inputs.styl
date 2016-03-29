@@ -171,3 +171,34 @@
     &:focus
       color         white
       border-color  white
+
+
+/* Контейнер для выпадающих подсказок. top/left необходимо задавать через style. */
+.hint-list
+  &_container
+    display	      none
+
+  &_outer
+    position          absolute
+    box-shadow        0px 5px 15px -5px rgba(0, 0, 0, 0.506)
+    background        #FFFFFF
+    border-bottom     1px solid #BBBBBB
+    border-left       1px solid #CCCCCC
+    border-right      1px solid #CCCCCC
+    border-top        1px solid #CCCCCC
+    color             #333333
+    font-family       "Helvetica Neue", "Helvetica", "Arial", sans-serif
+    padding           8px
+    padding-left      0px
+    padding-top       2px
+    position          absolute
+    z-index           9999
+    -moz-box-sizing   border-box
+    box-sizing        border-box
+    display           none
+
+  &_content
+    margin-left	    8px
+    float           left
+    width           224px
+
