@@ -9,6 +9,7 @@ import io.suggest.maps.rad.init.RadMapInit
 import io.suggest.sjs.common.controller.{IInit, InitRouter}
 import io.suggest.sjs.common.fsm.IInitLayoutFsm
 import io.suggest.sjs.common.model.Route
+import io.suggest.sjs.common.tags.search.ITagSearchArgs
 import io.suggest.sjs.leaflet.event.Event
 import io.suggest.sjs.leaflet.path.circle.Circle
 
@@ -56,6 +57,9 @@ class AgtFormInit extends IInit {
     val tagsFsm = new TagsEditFsm {
       override def _addTagRoute: Route = {
         jsRoutes.controllers.LkAdvGeoTag.tagEditorAddTag()
+      }
+      override def tagsSearchRoute(args: ITagSearchArgs): Route = {
+        jsRoutes.controllers.LkAdvGeoTag.tagsSearch(args.toJson)
       }
       override def _tagsChanged(): Unit = {
         super._tagsChanged()
