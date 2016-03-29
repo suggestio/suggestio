@@ -2,6 +2,7 @@ package io.suggest.lk.adv.geo.tags.fsm.states
 
 import io.suggest.lk.adv.geo.tags.fsm.AgtFormFsmStub
 import io.suggest.lk.adv.geo.tags.m.signal.IFormChanged
+import io.suggest.lk.adv.m.Adv4FreeChanged
 
 /**
   * Suggest.io
@@ -13,8 +14,12 @@ trait StandBy extends AgtFormFsmStub {
 
   trait StandByStateT extends FsmEmptyReceiverState {
     override def receiverPart: Receive = super.receiverPart orElse {
+      // Какие-то изменения в содержимом формы.
       case _: IFormChanged =>
-        // Необходимо запустить обовления ценника.
+        _upStart()
+
+      // Сигнал об изменении флага adv4free для суперюзеров
+      case _: Adv4FreeChanged =>
         _upStart()
     }
   }
