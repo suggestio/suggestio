@@ -31,7 +31,7 @@ trait OutEdges extends DynSearchArgs with MacroLogsI {
 
     } else {
 
-      val nestPath = EDGES_OUT_FULL_FN
+      val nestPath = E_OUT_FN
 
       // Сборка nested queries.
       val clauses = _outEdgesIter

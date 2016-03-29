@@ -39,6 +39,7 @@ object MEdge extends IGenEsMappingProps {
 
       // Теги
       def TAGS_FN       = _fullFn( MEdgeInfo.Fields.TAGS_FN )
+      def TAGS_RAW_FN   = _fullFn( MEdgeInfo.Fields.Tags.TAGS_RAW_FN )
 
       // Гео-шейпы
       def INFO_GS_FN                            = _fullFn( MEdgeInfo.Fields.GEO_SHAPES_FN )

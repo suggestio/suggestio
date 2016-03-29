@@ -42,7 +42,19 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
     val FLAG_FN           = "flag"
     val GEO_SHAPES_FN     = "gss"
     val ITEM_IDS_FN       = "bgid"
-    val TAGS_FN           = "tag"
+    val TAGS_FN           = "tags"
+
+    /** Поле тегов внутри является multi-field. Это нужно для аггрегации, например. */
+    object Tags extends PrefixedFn {
+
+      override protected def _PARENT_FN: String = TAGS_FN
+
+      /** Имя raw-подполя, индексирующего всё без анализа. */
+      def RAW_FN = "raw"
+
+      def TAGS_RAW_FN = _fullFn(RAW_FN)
+
+    }
 
     /** Модель названий полей, проброшенных сюда из [[MEdgeGeoShape.Fields]]. */
     object GeoShapes extends PrefixedFn {
@@ -139,7 +151,16 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
         index           = FieldIndexingVariants.analyzed,
         include_in_all  = true,
         index_analyzer  = SioConstants.ENGRAM_AN_1,
-        search_analyzer = SioConstants.DFLT_AN
+        search_analyzer = SioConstants.DFLT_AN,
+        fields = Seq(
+          // Для аггрегации нужны ненормированные термы. Они позволят получать необрезанные слова.
+          FieldString(
+            id              = Tags.RAW_FN,
+            include_in_all  = false,
+            index           = FieldIndexingVariants.analyzed,
+            analyzer        = SioConstants.KW_LC_AN
+          )
+        )
       ),
       // Список геошейпов идёт как nested object, чтобы расширить возможности индексации (ценой усложнения запросов).
       FieldNestedObject(
@@ -190,68 +211,63 @@ trait IEdgeInfo extends IIsNonEmpty {
   def tags          : Set[String]
 
 
-    /** Форматирование для вывода в шаблонах. */
+  /** Форматирование для вывода в шаблонах. */
   override def toString: String = {
-    if (nonEmpty) {
-      val sb = new StringBuilder(32)
+    val sb = new StringBuilder(32)
 
-      for (dia <- dynImgArgs) {
-        sb.append("dynImg=")
-          .append(dia)
-          .append(' ')
-      }
-
-      val _sls = sls
-      if (_sls.nonEmpty) {
-        sb.append("sls=")
-        for (sl <- _sls) {
-          sb.append(sl)
-            .append(',')
-        }
-        sb.append(' ')
-      }
-
-      for (dt <- dateNi) {
-        sb.append("dateNi=")
-          .append(dt)
-          .append(' ')
-      }
-
-      for (comment <- commentNi) {
-        sb.append("commentNi=")
-          .append(comment)
-          .append(' ')
-      }
-
-      val _itemIds = itemIds
-      if (_itemIds.nonEmpty) {
-        sb.append("itemIds=")
-        for (bgid <- _itemIds) {
-          sb.append(bgid).append(',')
-        }
-        sb.append(' ')
-      }
-
-      val _tags = tags
-      if (_tags.nonEmpty) {
-        sb.append("tags=")
-        for (tag <- _tags) {
-          sb.append(tag).append(',')
-        }
-        sb.append(' ')
-      }
-
-      val _geoShapes = geoShapes
-      if (_geoShapes.nonEmpty) {
-        sb.append(_geoShapes.size)
-          .append("gss,")
-      }
-
-      sb.toString()
-
-    } else {
-      super.toString
+    for (dia <- dynImgArgs) {
+      sb.append("dynImg=")
+        .append(dia)
+        .append(' ')
     }
+
+    val _sls = sls
+    if (_sls.nonEmpty) {
+      sb.append("sls=")
+      for (sl <- _sls) {
+        sb.append(sl)
+          .append(',')
+      }
+      sb.append(' ')
+    }
+
+    for (dt <- dateNi) {
+      sb.append("dateNi=")
+        .append(dt)
+        .append(' ')
+    }
+
+    for (comment <- commentNi) {
+      sb.append("commentNi=")
+        .append(comment)
+        .append(' ')
+    }
+
+    val _itemIds = itemIds
+    if (_itemIds.nonEmpty) {
+      sb.append("itemIds=")
+      for (bgid <- _itemIds) {
+        sb.append(bgid).append(',')
+      }
+      sb.append(' ')
+    }
+
+    val _tags = tags
+    if (_tags.nonEmpty) {
+      sb.append("tags=")
+      for (tag <- _tags) {
+        sb.append(tag).append(',')
+      }
+      sb.append(' ')
+    }
+
+    val _geoShapes = geoShapes
+    if (_geoShapes.nonEmpty) {
+      sb.append(_geoShapes.size)
+        .append("gss,")
+    }
+
+    sb.toString()
   }
 
 

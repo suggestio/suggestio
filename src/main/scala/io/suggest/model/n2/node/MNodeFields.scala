@@ -59,7 +59,7 @@ object MNodeFields {
     override protected def _PARENT_FN = EDGES_FN
 
     /** Адрес nested-объектов, хранящих данные по эджам. */
-    def EDGES_OUT_FULL_FN = _fullFn( MNodeEdges.Fields.OUT_FN )
+    def E_OUT_FN                   = _fullFn( MNodeEdges.Fields.OUT_FN )
 
     import MNodeEdges.Fields.Out
 
@@ -71,6 +71,7 @@ object MNodeFields {
 
     // Теги
     def E_OUT_INFO_TAGS_FN         = _fullFn( Out.OUT_INFO_TAGS_FN )
+    def E_OUT_INFO_TAGS_RAW_FN     = _fullFn( Out.OUT_INFO_TAGS_RAW_FN )
 
     // Гео-шейпы
     def E_OUT_INFO_GS_FN                          = _fullFn( Out.OUT_INFO_GS_FN )

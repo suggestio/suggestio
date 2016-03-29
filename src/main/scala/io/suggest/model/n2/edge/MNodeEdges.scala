@@ -44,7 +44,8 @@ object MNodeEdges extends IGenEsMappingProps with IEmpty {
       def OUT_INFO_FLAG_FN  = _fullFn( Info.FLAG_FN )
 
       // Теги
-      def OUT_INFO_TAGS_FN  = _fullFn( Info.TAGS_FN )
+      def OUT_INFO_TAGS_FN        = _fullFn( Info.TAGS_FN )
+      def OUT_INFO_TAGS_RAW_FN    = _fullFn( Info.TAGS_RAW_FN )
 
       // Гео-шейпы
       def OUT_INFO_GS_FN                = _fullFn( Info.INFO_GS_FN )
