@@ -256,7 +256,7 @@ trait IEdgeInfo extends IIsNonEmpty {
 
 
   def _extraKeyData: EdgeXKey_t = {
-    itemIds.toList
+    geoShapes.hashCode() :: tags.toList
   }
 
 }

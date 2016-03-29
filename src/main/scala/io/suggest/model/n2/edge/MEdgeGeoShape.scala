@@ -133,7 +133,7 @@ object MEdgeGeoShape extends IGenEsMappingProps {
   /** Предложить новый id. */
   def nextShapeId(shapes: TraversableOnce[MEdgeGeoShape]): Int = {
     if (shapes.isEmpty) {
-      1
+      SHAPE_ID_START
     } else {
       shapes
         .toIterator
@@ -141,6 +141,8 @@ object MEdgeGeoShape extends IGenEsMappingProps {
         .max
     }
   }
+
+  def SHAPE_ID_START = 1
 
 }
 
