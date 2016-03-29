@@ -20,7 +20,7 @@ object MFindNodes {
    */
   def findNodes(args: MFindNodesArgs)(implicit ec: ExecutionContext): Future[MFindNodesResp] = {
     val route = routes.controllers.MarketShowcase.findNodes( args.toJson )
-    Xhr.getJson(route) map { json1 =>
+    for (json1 <- Xhr.getJson(route)) yield {
       val json2 = MFindAdsRespJson(json1)
       MFindNodesResp(json2)
     }

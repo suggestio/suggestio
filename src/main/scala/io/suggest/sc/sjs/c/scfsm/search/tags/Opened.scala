@@ -2,10 +2,11 @@ package io.suggest.sc.sjs.c.scfsm.search.tags
 
 import io.suggest.sc.sjs.c.scfsm.search.Base
 import io.suggest.sc.sjs.m.msearch.{TagRowClick, MTabs}
-import io.suggest.sc.sjs.m.msrv.tags.find.{MftResp, MftRespTs, MftArgs, MFindTags}
+import io.suggest.sc.sjs.util.router.srv.routes
 import io.suggest.sc.sjs.vm.search.fts.SInput
 import io.suggest.sc.sjs.vm.search.tabs.htag.{StListRow, StList}
 import io.suggest.sjs.common.msg.{WarnMsgs, ErrorMsgs}
+import io.suggest.sjs.common.tags.search.{MTagsSearch, MTagSearchRespTs, MTagSearchResp, MTagSearchArgs}
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 import scala.util.{Failure, Success}
@@ -27,13 +28,16 @@ trait Opened extends Base {
     override protected def _ftsLetsStartRequest(): Unit = {
       val sd0 = _stateData
       for (sinput <- SInput.find(); ftsState0 <- sd0.search.ftsSearch) {
-        val args = MftArgs(
+        val args = MTagSearchArgs(
           faceFts = sinput.getTextOpt,
           limit   = Some(20),
           offset  = Some(ftsState0.offset)
         )
-        val fut = MFindTags.search(args)
-        val lastTstamp = _sendFutResBackTimestamped(fut, MftRespTs)
+        val fut = MTagsSearch.search(
+          route = routes.controllers.MarketShowcase.tagsSearch( args.toJson )
+        )
+        val lastTstamp = _sendFutResBackTimestamped(fut, MTagSearchRespTs)
+        // Видимо timestamp сохранять не надо. В состоянии предусмотрено только сохранение последнего ПОЛУЧЕННОГО timestamp.
       }
     }
 
@@ -46,7 +50,7 @@ trait Opened extends Base {
 
     override def receiverPart: Receive = super.receiverPart orElse {
       // Сообщение о получение ответа от сервера по поисковому запросу тегов.
-      case MftRespTs(tryResp, tstamp) =>
+      case MTagSearchRespTs(tryResp, tstamp) =>
         tryResp match {
           case Success(resp) =>
             _handleSearchRespTs(resp, tstamp)
@@ -61,7 +65,7 @@ trait Opened extends Base {
     }
 
     /** Реакция на получение ответа сервера по вопросу поиска тегов. */
-    protected def _handleSearchRespTs(resp: MftResp, tstamp: Long): Unit = {
+    protected def _handleSearchRespTs(resp: MTagSearchResp, tstamp: Long): Unit = {
       val sd0 = _stateData
       for {
         ftsState0 <- sd0.search.ftsSearch
@@ -87,7 +91,8 @@ trait Opened extends Base {
 
     /**
      * Реакция на клик по тегу в списке тегов.
-     * @param row Ряд тега в списке.
+      *
+      * @param row Ряд тега в списке.
      */
     protected def _tagRowClicked(row: StListRow): Unit = {
       // TODO
