@@ -3,6 +3,7 @@ package io.suggest.lk.router
 import io.suggest.sjs.common.model.Route
 
 import scala.scalajs.js
+import scala.scalajs.js.{Dictionary, Any}
 
 /**
   * Suggest.io
@@ -19,5 +20,8 @@ sealed trait LkAdvGeoTagCtl extends js.Object {
 
   /** Роута запроса рассчета стоимости текущего размещения. */
   def getPriceSubmit(adId: String): Route = js.native
+
+  /** Роута для поиска тегов. */
+  def tagsSearch(args: Dictionary[Any]): Route = js.native
 
 }
