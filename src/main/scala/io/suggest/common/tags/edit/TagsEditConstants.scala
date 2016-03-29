@@ -32,6 +32,9 @@ object TagsEditConstants {
   /** id кнопки добавления нового тега. */
   def ADD_BTN_ID                  = "tagAddBtn"
 
+  /** id контейнера для списка найденных тегов. */
+  def ADD_FOUND_TAGS_CONT_ID      = "tagAddFoundCont"
+
   /** На сколько миллисекунд откладывать запуск поискового запроса тегов. */
   def START_SEARCH_TIMER_MS       = 400
 
