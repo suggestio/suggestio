@@ -13,22 +13,23 @@
 @import adv.tpl._
 
 @agBase(
-  title       = messages("Adv.in.geo.tags"),
+  title       = messages("Adv.in.geo.place"),
   mnode       = args.producer,
   mad         = args.mad,
   rightLink   = LkAdvRightLinks.GEO_PLACE,
   rightAfter  = Some( _rightPriceTpl(args.price, formId = FORM_ID) )
 ) {
 
+  @_getPriceUrlTpl( routes.LkAdvGeoPlace.getPriceSubmit(args.adId) )
+
   @_advFormBlockTpl() {
 
     @* Рендер самой формы здесь. *@
-    @_AgpFormTpl(args) {
-      @* Контейнер карты. *@
-      <br/>
-      @_mapContTpl()
-    }
+    @_AgpFormTpl(args)
 
+    @* Контейнер карты. *@
+    <br/>
+    @_mapContTpl()
   }
 
 }

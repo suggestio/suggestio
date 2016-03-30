@@ -231,6 +231,7 @@ class Bill2Util @Inject() (
     val prices = Seq(zeroPrice)
     MAdvPricing(prices, hasEnoughtMoney = true)
   }
+  def zeroPricingFut = Future.successful( zeroPricing )
 
 
   def getAdvPricing(prices: Seq[MPrice]): MAdvPricing = {

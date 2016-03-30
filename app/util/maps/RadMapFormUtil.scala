@@ -4,6 +4,7 @@ import com.google.inject.Singleton
 import io.suggest.model.geo.{CircleGs, Distance}
 import models.maps.{RadMapValue, MapViewState}
 import org.elasticsearch.common.unit.DistanceUnit
+import io.suggest.common.maps.rad.RadMapConstants._
 import play.api.data.Forms._
 import play.api.data.Mapping
 import util.FormUtil
@@ -20,13 +21,13 @@ class RadMapFormUtil {
   // TODO В ожидании DI.
   private def formUtil = FormUtil
 
-  private val centerKM  = "center"  -> formUtil.geoPointM
+  private val centerKM  = CENTER_FN  -> formUtil.geoPointM
 
   /** Маппинг состояния карты. Надо вынести его отсюда куда-нибудь. */
   def mapStateM: Mapping[MapViewState] = {
     mapping(
       centerKM,
-      "zoom"    -> mapZoomM
+      ZOOM_FN    -> mapZoomM
     )
     { MapViewState.apply }
     { MapViewState.unapply }
@@ -51,7 +52,7 @@ class RadMapFormUtil {
   def circleM: Mapping[CircleGs] = {
     mapping(
       centerKM,
-      "radius"  -> radiusM
+      RADIUS_FN  -> radiusM
     )
     { CircleGs.apply }
     { CircleGs.unapply }
@@ -60,8 +61,8 @@ class RadMapFormUtil {
   /** Общий состояния карты и её полезной нагрузки. */
   def radMapValM: Mapping[RadMapValue] = {
     mapping(
-      "state"   -> mapStateM,
-      "circle"  -> circleM
+      STATE_FN   -> mapStateM,
+      CIRCLE_FN  -> circleM
     )
     { RadMapValue.apply }
     { RadMapValue.unapply }

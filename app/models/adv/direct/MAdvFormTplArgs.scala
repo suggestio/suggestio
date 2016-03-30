@@ -1,10 +1,11 @@
 package models.adv.direct
 
 import io.suggest.mbill2.m.item.MItem
+import models.adv.form.IAdvForAdFormCommonTplArgs
 
 
 /** Интерфейс контейнера аргументов для формы размещения на узлах. */
-trait IAdvFormTplArgs {
+trait IAdvFormTplArgs extends IAdvForAdFormCommonTplArgs {
 
   /** id размещаемой рекламной карточки. */
   def adId              : String
@@ -20,9 +21,6 @@ trait IAdvFormTplArgs {
 
   /** Карта int-индексов для узлов. Нужна, потому что list-маппинг формы мыслит числовыми id, а нужны строковые. */
   def adnId2formIndex   : Map[String, Int]
-
-  /** Доступные периоды размещения. */
-  def advPeriodsAvail   : Seq[String]
 
 
   // Вспомогательное API

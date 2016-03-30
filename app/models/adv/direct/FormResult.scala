@@ -1,6 +1,6 @@
 package models.adv.direct
 
-import models.adv.form.MDatesPeriod
+import models.adv.form.{IAdvFormResult, MDatesPeriod}
 
 /**
  * Suggest.io
@@ -9,10 +9,11 @@ import models.adv.form.MDatesPeriod
  * Description: Результат маппинга формы adv direct.
  */
 case class FormResult(
-  nodes     : List[OneNodeInfo]   = Nil,
-  period    : MDatesPeriod        = MDatesPeriod()
-) {
-
+  nodes                   : List[OneNodeInfo]   = Nil,
+  override val period     : MDatesPeriod        = MDatesPeriod()
+)
+  extends IAdvFormResult
+{
 
   def nodeIdsIter = nodes.iterator.map(_.adnId)
 

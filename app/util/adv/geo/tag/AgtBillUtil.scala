@@ -2,7 +2,7 @@ package util.adv.geo.tag
 
 import com.google.inject.Inject
 import io.suggest.mbill2.m.gid.Gid_t
-import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
+import io.suggest.mbill2.m.item.status.MItemStatus
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import models.MPrice
@@ -10,6 +10,7 @@ import models.adv.geo.tag.IAgtFormResult
 import models.adv.price.MAdvPricing
 import models.mproj.ICommonDi
 import util.PlayMacroLogsImpl
+import util.adv.geo.AdvGeoBillUtil
 import util.billing.Bill2Util
 
 import scala.concurrent.Future
@@ -23,6 +24,7 @@ import scala.concurrent.Future
 class AgtBillUtil @Inject()(
   bill2Util                           : Bill2Util,
   mItems                              : MItems,
+  advGeoBillUtil                      : AdvGeoBillUtil,
   val mCommonDi                       : ICommonDi
 )
   extends PlayMacroLogsImpl
@@ -34,7 +36,7 @@ class AgtBillUtil @Inject()(
   private def _oneTag1dayPrice: MPrice = bill2Util.zeroPrice.copy(amount = 1.0)
 
   private def _oneTagPrice(res: IAgtFormResult): MPrice = {
-    val priceMult = _getPriceMult(res)
+    val priceMult = advGeoBillUtil.getPriceMult(res)
 
     val oneTag1dPrice = _oneTag1dayPrice
     oneTag1dPrice.copy(
@@ -62,7 +64,7 @@ class AgtBillUtil @Inject()(
         status        = status,
         price         = p,
         adId          = adId,
-        dtIntervalOpt = Some(res.dates.interval),
+        dtIntervalOpt = Some(res.period.interval),
         rcvrIdOpt     = tag.nodeId,
         tagFaceOpt    = Some(tag.face),
         geoShape      = Some(res.radMapVal.circle)
@@ -71,17 +73,6 @@ class AgtBillUtil @Inject()(
     }
 
     DBIO.sequence(mitemsActs)
-  }
-
-  /** Рассчет общего мультипликатора цены для каждого из тегов. */
-  private def _getPriceMult(res: IAgtFormResult): Double = {
-    val daysCount = Math.max(1, res.dates.interval.toDuration.getStandardDays) + 1
-
-    // Привести радиус на карте к множителю цены
-    val radKm = res.radMapVal.circle.radius.kiloMeters
-    val radMult = radKm / 1.5
-
-    radMult * daysCount
   }
 
   /**
@@ -102,6 +93,22 @@ class AgtBillUtil @Inject()(
 
     val result = bill2Util.getAdvPricing( prices1 )
     Future.successful(result)
+  }
+
+
+  def getPricing(res: IAgtFormResult, forceFree: Boolean): Future[MAdvPricing] = {
+    if (forceFree)
+      bill2Util.zeroPricingFut
+    else
+      computePricing(res)
+  }
+
+  def getPricing(resOpt: Option[IAgtFormResult], forceFree: Boolean): Future[MAdvPricing] = {
+    resOpt.fold {
+      bill2Util.zeroPricingFut
+    } { res =>
+      getPricing(res, forceFree)
+    }
   }
 
 }

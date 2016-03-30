@@ -17,6 +17,9 @@ import models.mbase.{IProducer, IMad}
 trait IAdvFreeForAdCommonTplArgs
   extends IMad
   with IProducer
+{
+  def adId = mad.id.get
+}
 
 
 /** Аргументы forAd-шаблона платного размещения реализуют этот общий интерфейс. */

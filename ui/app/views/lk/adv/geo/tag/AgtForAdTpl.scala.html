@@ -20,19 +20,16 @@
 ) {
 
   @* URL для рассчета стоимости размещения. *@
-  @for( adId <- args.mad.id ) {
-    @_getPriceUrlTpl( routes.LkAdvGeoTag.getPriceSubmit(adId) )
-  }
+  @_getPriceUrlTpl( routes.LkAdvGeoTag.getPriceSubmit(args.adId) )
 
   @_advFormBlockTpl() {
 
     @* Рендер самой формы здесь. *@
-    @_AgtFormTpl(args) {
-      @* Контейнер карты. *@
-      <br/>
-      @_mapContTpl()
-    }
+    @_AgtFormTpl(args)
 
+    @* Контейнер карты. *@
+    <br/>
+    @_mapContTpl()
   }
 
   @* При добавлении тегов запросы add-tag-формы отправляются сюда. *@

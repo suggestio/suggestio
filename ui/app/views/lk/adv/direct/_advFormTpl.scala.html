@@ -13,6 +13,7 @@
 @import lk.dsl._
 @import lk.adv.widgets._
 @import io.suggest.adv.direct.AdvDirectFormConstants._
+@import io.suggest.adv.AdvConstants.Period.PERIOD_FN
 @import lk.lkwdgts._
 
 
@@ -139,7 +140,7 @@
 
     @* Инфа о текущем размещении. *@
     @period._contTpl() {
-      @period._formTpl( args.af("period"), args.advPeriodsAvail )
+      @period._formTpl( args.af(PERIOD_FN), args.advPeriodsAvail )
       @for(v <- args.af.value) {
         @period._reportTpl(v.period)
       }

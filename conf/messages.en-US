@@ -639,6 +639,7 @@ e.sz.mult.too.low=Size multiplifier is too low.
 e.sz.mult.too.high=Size multiplifier is too high.
 
 Tags=Tags
+Tags.choosing=Tags choosing
 e.tag.len.min=Tag too short.
 e.tag.len.max=Tag too long.
 Add.tags=Add tags
@@ -693,6 +694,8 @@ Type.digits.from.picture=Please type digits from the picture.
 Adv.in.geo.tags=Advertising in geotags
 No.enought.deposit=Not enought money on deposit
 City.place.choose=City/place choose
+
+Adv.in.geo.place=Advertising on the map
 
 Month.N.1=January
 Month.N.2=Febrary

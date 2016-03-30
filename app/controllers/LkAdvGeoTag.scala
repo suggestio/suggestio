@@ -2,6 +2,7 @@ package controllers
 
 import com.google.inject.Inject
 import controllers.ctag.NodeTagsEdit
+import io.suggest.common.fut.FutureUtil
 import io.suggest.model.geo.{CircleGs, Distance, GeoPoint}
 import io.suggest.model.n2.tag.TagSearchUtil
 import models.adv.form.MDatesPeriod
@@ -60,25 +61,18 @@ class LkAdvGeoTag @Inject() (
     * @param adId id отрабатываемой карточки.
     */
   def forAd(adId: String) = CanAdvertiseAdGet(adId, U.Lk).async { implicit request =>
-    val ipLocFut = GeoIp.geoSearchInfoOpt
+    val gp0Fut = advFormUtil.geoPoint0()
     val formEmpty = agtFormUtil.agtFormStrict
 
-    val formFut = for {
-      ipLocOpt <- ipLocFut
-    } yield {
-      val gp = ipLocOpt
-        .flatMap(_.ipGeopoint)
-        .getOrElse( GeoPoint(59.93769, 30.30887) )    // Штаб ВМФ СПб, который в центре СПб
+    val formFut = for (gp0 <- gp0Fut) yield {
 
-      val radMapVal = RadMapValue(
-        state = MapViewState(gp, zoom = 10),
-        circle = CircleGs(gp, radius = Distance(10000, DistanceUnit.METERS))
-      )
+      val radMapVal = advFormUtil.radMapValue0(gp0)
 
+      // Залить начальные данные в маппинг формы.
       val res = MAgtFormResult(
         tags      = Nil,
         radMapVal = radMapVal,
-        dates     = MDatesPeriod()
+        period    = MDatesPeriod()
       )
 
       formEmpty.fill(res)
@@ -98,8 +92,14 @@ class LkAdvGeoTag @Inject() (
    */
   private def _forAd(form: AgtForm_t, rs: Status)
                     (implicit request: IAdProdReq[_]): Future[Result] = {
+    val ctxData0Fut = request.user.lkCtxDataFut
+
+    val isSuFree = advFormUtil.maybeFreeAdv()
+    val advPricingFut = agtBillUtil.getPricing(form.value, isSuFree)
+
     for {
-      ctxData0 <- request.user.lkCtxDataFut
+      ctxData0    <- ctxData0Fut
+      advPricing  <- advPricingFut
     } yield {
       implicit val ctxData = ctxData0.copy(
         jsiTgs = Seq(MTargets.AdvGtagForm)
@@ -108,8 +108,7 @@ class LkAdvGeoTag @Inject() (
         mad       = request.mad,
         producer  = request.producer,
         form      = form,
-        advPeriodsAvail = advFormUtil.advPeriodsAvailable,
-        price     = bill2Util.zeroPricing
+        price     = advPricing
       )
       rs(AgtForAdTpl(rargs))
     }
@@ -136,6 +135,7 @@ class LkAdvGeoTag @Inject() (
           )
         _forAd(formWithErrors1, NotAcceptable)
       },
+
       {result =>
         LOGGER.trace("Binded: " + result)
         // TODO Прикрутить free adv для суперпользователей.
@@ -212,11 +212,7 @@ class LkAdvGeoTag @Inject() (
 
       {result =>
         val isSuFree = advFormUtil.maybeFreeAdv()
-        val advPricingFut = if (isSuFree) {
-          Future.successful( bill2Util.zeroPricing )
-        } else {
-          agtBillUtil.computePricing(result)
-        }
+        val advPricingFut = agtBillUtil.getPricing(result, isSuFree)
 
         implicit val ctx = implicitly[Context]
 
@@ -231,7 +227,7 @@ class LkAdvGeoTag @Inject() (
 
         // Отрендерить данные по периоду размещения
         val periodReportHtml = html2str4json {
-          _reportTpl(result.dates)(ctx)
+          _reportTpl(result.period)(ctx)
         }
 
         for {

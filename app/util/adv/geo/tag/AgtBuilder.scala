@@ -30,29 +30,10 @@ trait AgtBuilder extends IAdvBuilder {
     * @param full ignored.
     */
   override def clearAd(full: Boolean): IAdvBuilder = {
-    // Вычистить теги из эджей карточки
-    val acc2Fut = for {
-      acc0 <- super.clearAd(full).accFut
-    } yield {
-      val mad2 = acc0.mad.copy(
-        edges = acc0.mad.edges.copy(
-          out = {
-            val p = _PRED
-            val iter = acc0.mad
-              .edges
-              .iterator
-              // Все теги и геотеги идут через биллинг. Чистка равносильна стиранию всех эджей TaggedBy.
-              .filter( _.predicate != p )
-            MNodeEdges.edgesToMap1( iter )
-          }
-        )
-      )
-      // Сохранить почищенную карточку в возвращаемый акк.
-      acc0.copy(
-        mad = mad2
-      )
-    }
-    withAcc( acc2Fut )
+    di.advBuilderUtil.clearByPredicate(
+      b0    = super.clearAd(full),
+      pred  = _PRED
+    )
   }
 
 

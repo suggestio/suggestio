@@ -2,6 +2,8 @@ package util.adv.geo.tag
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.common.tags.edit.TagsEditConstants.EXIST_TAGS_FN
+import io.suggest.adv.AdvConstants.Period.PERIOD_FN
+import io.suggest.adv.AdvConstants.RadMap.RADMAP_FN
 import models.adv.geo.tag.{AgtForm_t, MAgtFormResult}
 import models.mtag.MTagBinded
 import play.api.data.{Mapping, Form}
@@ -26,8 +28,8 @@ class AgtFormUtil @Inject()(
   private def _agtFormM(tagsM: Mapping[List[MTagBinded]]): Mapping[MAgtFormResult] = {
     mapping(
       EXIST_TAGS_FN   -> tagsM,
-      "map"           -> radMapFormUtil.radMapValM,
-      "period"        -> advFormUtil.advPeriodM
+      RADMAP_FN       -> radMapFormUtil.radMapValM,
+      PERIOD_FN       -> advFormUtil.advPeriodM
     )
     { MAgtFormResult.apply }
     { MAgtFormResult.unapply }

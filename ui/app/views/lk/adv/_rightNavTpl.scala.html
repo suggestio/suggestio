@@ -10,21 +10,27 @@
   @_navItemTpl(
     title = messages("Adv.in.ext.services"),
     href  = Some( routes.LkAdvExt.forAd(madId) ),
-    css   = classesAct(curr contains LARL_EXT, "__social")
+    css   = classesAct(curr.contains(LARL_EXT), "__social")
   )
 
   @_navItemTpl(
     title = messages("Adv.in.geo.node"),
     href  = Some( routes.MarketAdv.advForAd(madId) ),
-    css   = classesAct(curr contains LARL_GEO, "__geo")
+    css   = classesAct(curr.contains(LARL_GEO), "__geo")
   )
 
   @_navItemTpl(
     title = messages("Adv.in.geo.tags"),
     href  = Some( routes.LkAdvGeoTag.forAd(madId) ),
-    css   = classesAct(curr contains TAGS_GEO, "__geotag")
+    css   = classesAct(curr.contains(TAGS_GEO), "__geotag")
   )
-  
+
+  @_navItemTpl(
+    title = messages("Adv.in.geo.place"),
+    href  = Some( routes.LkAdvGeoPlace.forAd(madId) ),
+    css   = classesAct(curr.contains(GEO_PLACE), "__geoplace")
+  )
+
   @_navSysTpl(
     call  = routes.SysMarket.showAd(madId)
   )

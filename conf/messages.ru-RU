@@ -652,6 +652,7 @@ Background=Фон
 Foreground=Передний план
 
 Tags=Теги
+Tags.choosing=Выбор тегов
 e.tag.len.min=Слишком короткий тег.
 e.tag.len.max=Слишком длинный тег.
 Add.tags=Добавить теги
@@ -707,6 +708,8 @@ Type.digits.from.picture=Введите цифры с картинки.
 Adv.in.geo.tags=Размещение в геотегах
 No.enought.deposit=Недостаточно средств на счете
 City.place.choose=Выбор города/ места
+
+Adv.in.geo.place=Размещение на карте
 
 Month.N.1=Январь
 Month.N.2=Февраль

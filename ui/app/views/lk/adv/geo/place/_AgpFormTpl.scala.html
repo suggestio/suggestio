@@ -1,18 +1,37 @@
-@(args: adv.geo.place.IAgpForAdFormTplArgs)(content: Html)(implicit ctx: Context)
+@(args: adv.geo.place.IAgpForAdTplArgs)(implicit ctx: Context)
 
 @* Форма размещения карточки в произвольной области на карте. *@
 
 @import helper._
 @import ctx.{messages, request}
+@import io.suggest.adv.geo.place.AgpFormConsts._
+@import lk.adv.widgets._
+@import lk.dsl._
+@import io.suggest.adv.AdvConstants.Period.PERIOD_FN
+@import io.suggest.adv.AdvConstants.RadMap.RADMAP_FN
 
 
-@form( CSRF(???) ) {
+@form( CSRF(routes.LkAdvGeoPlace.forAdSubmit(args.adId)), 'id -> FORM_ID ) {
 
-  TODO
+  @_barTpl(MHands.Left) {
+    @_advSuTpl()
+  }
 
-  @content
+  @* Даты (период) размещения. *@
+  @_barTpl(MHands.Right) {
+    @_minorTitleTpl() {
+      @messages("Date.choosing")
+    }
+
+    @period._contTpl() {
+      @period._formTpl(args.form(PERIOD_FN), args.advPeriodsAvail)
+      @for(v <- args.form.value) {
+        @period._reportTpl(v.period)
+      }
+    }
+  }
+
+  @* Для сохранения и восстановления состояния карты при POST нужны hidden-поля в рамках формы. *@
+  @_radMapInputsTpl( args.form(RADMAP_FN) )
 
 }
-
-
-

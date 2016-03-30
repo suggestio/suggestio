@@ -5,10 +5,12 @@ import com.google.inject.{ImplementedBy, Inject, Singleton}
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{IMItems, MItem, MItems}
+import io.suggest.model.n2.edge.{MNodeEdges, MPredicate}
 import models.adv.build.Acc
 import models.mproj.{ICommonDi, IMCommonDi}
 import org.joda.time.DateTime
 import util.adv.direct.AdvDirectBuilder
+import util.adv.geo.place.AgpBuilder
 import util.adv.geo.tag.AgtBuilder
 import util.n2u.{IN2NodesUtilDi, N2NodesUtil}
 import util.{PlayMacroLogsI, PlayMacroLogsImpl}
@@ -35,6 +37,39 @@ trait AdvBuilderFactory {
 /** Интерфейс для DI-поля с инстансом [[AdvBuilderFactory]]. */
 trait AdvBuilderFactoryDi {
   def advBuilderFactory: AdvBuilderFactory
+}
+
+
+class AdvBuilderUtil @Inject() (
+  mCommonDi: ICommonDi
+) {
+
+  import mCommonDi._
+
+  def clearByPredicate(b0: IAdvBuilder, pred: MPredicate): IAdvBuilder = {
+    // Вычистить теги из эджей карточки
+    val acc2Fut = for {
+      acc0 <- b0.accFut
+    } yield {
+      val mad2 = acc0.mad.copy(
+        edges = acc0.mad.edges.copy(
+          out = {
+            val iter = acc0.mad
+              .edges
+              // Все теги и геотеги идут через биллинг. Чистка равносильна стиранию всех эджей TaggedBy.
+              .withoutPredicateIter( pred )
+            MNodeEdges.edgesToMap1( iter )
+          }
+        )
+      )
+      // Сохранить почищенную карточку в возвращаемый акк.
+      acc0.copy(
+        mad = mad2
+      )
+    }
+    b0.withAcc( acc2Fut )
+  }
+
 }
 
 
@@ -223,6 +258,7 @@ trait IAdvBuilder
 class AdvBuilderDi @Inject() (
   override val n2NodesUtil        : N2NodesUtil,
   override val mItems             : MItems,
+  val advBuilderUtil              : AdvBuilderUtil,
   override val mCommonDi          : ICommonDi
 )
   extends IN2NodesUtilDi
@@ -248,6 +284,7 @@ case class AdvBuilder @Inject() (
 )
   extends AdvDirectBuilder
   with AgtBuilder
+  with AgpBuilder
   with PlayMacroLogsImpl
 {
 

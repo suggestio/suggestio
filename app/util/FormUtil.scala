@@ -425,8 +425,9 @@ object FormUtil {
   }
 
 
-  /** Маппер для lat-lon координат, заданных в двух полях формы. */
-  def geoPointM: Mapping[GeoPoint] = {
+  /** Маппер для lat-lon координат, заданных в двух полях формы.
+    * val потому что некоторые XFormUtil юзают это как val. */
+  val geoPointM: Mapping[GeoPoint] = {
     mapping(
       "lat" -> doubleM,
       "lon" -> doubleM

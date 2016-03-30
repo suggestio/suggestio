@@ -1,18 +1,22 @@
-@(args: adv.geo.tag.IForAdTplArgs)(middle: Html)(implicit ctx: Context)
+@(args: adv.geo.tag.IForAdTplArgs)(implicit ctx: Context)
 
 @* Шаблон формы размещения карточки в тегах с географией. *@
 
 @import ctx.{messages, request}
 @import helper._
 @import util.FC.tdRadialFc
-@import io.suggest.common.maps.rad.RadMapConstants._
-@import stuff._inputHiddenTpl
-@import stuff.geo._
 @import lk.tag.edit._
 @import lk.adv.widgets._
 @import io.suggest.adv.geo.tag.AgtFormConsts._
+@import io.suggest.adv.AdvConstants.Period.PERIOD_FN
+@import io.suggest.adv.AdvConstants.RadMap.RADMAP_FN
+@import lk.dsl._
 
 @_barTpl(MHands.Left) {
+  @_minorTitleTpl() {
+    @messages("Tags.choosing")
+  }
+
   @* js-форма добавления тегов. *@
   @_addFormTpl(args.form)
 
@@ -24,6 +28,7 @@
 
   @_advSuTpl()
 
+  @* Теги *@
   @_barTpl(MHands.Left) {
     @* Рендер сохранённых тегов. *@
     @_existTagsContTpl() {
@@ -31,50 +36,23 @@
     }
   }
 
+
+  @* Даты (период) размещения. *@
   @_barTpl(MHands.Right) {
+    @_minorTitleTpl() {
+      @messages("Date.choosing")
+    }
+
     @period._contTpl() {
-      @period._formTpl(args.form("period"), args.advPeriodsAvail)
+      @period._formTpl(args.form(PERIOD_FN), args.advPeriodsAvail)
       @for(v <- args.form.value) {
-        @period._reportTpl(v.dates)
+        @period._reportTpl(v.period)
       }
     }
   }
 
 
   @* Для сохранения и восстановления состояния карты при POST нужны hidden-поля в рамках формы. *@
-
-  @defining( args.form("map") ) { mf =>
-
-    @defining( mf("state") ) { sf =>
-      @_hiddenLatLonTpl(
-        f = sf("center"),
-        latId = Some(INPUT_ID_LAT),
-        lonId = Some(INPUT_ID_LON)
-      )
-
-      @* Состояние зума карты. *@
-      @_inputHiddenTpl(
-        sf("zoom"),
-        id = Some(INPUT_ID_ZOOM)
-      )
-    }
-
-    @* Сохранение данных круга на карте (области) присходит здесь. *@
-    @defining( mf("circle") ) { cf =>
-      @_hiddenLatLonTpl(
-        cf("center"),
-        latId = Some(INPUT_ID_CIRCLE_LAT),
-        lonId = Some(INPUT_ID_CIRCLE_LON)
-      )
-      @_inputHiddenTpl(
-        cf("radius"),
-        id = Some(INPUT_ID_CIRCLE_RADIUS)
-      )
-    }
-  }
-
-
-  @* Какой-то контент внутри формы после тегов. Карта например. *@
-  @middle
+  @_radMapInputsTpl( args.form(RADMAP_FN) )
 
 }

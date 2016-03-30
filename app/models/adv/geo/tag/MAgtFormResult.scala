@@ -1,6 +1,7 @@
 package models.adv.geo.tag
 
 import models.adv.form.MDatesPeriod
+import models.adv.geo.IAdvGeoFormResult
 import models.maps.RadMapValue
 import models.mtag.MTagBinded
 
@@ -10,23 +11,23 @@ import models.mtag.MTagBinded
  * Created: 19.11.15 22:35
  * Description: Результат маппинга формы размещения.
  */
-trait IAgtFormResult {
+trait IAgtFormResult
+  extends IAdvGeoFormResult
+  with IFormTags
+
+
+/** Интерфейс для поля тегов. */
+trait IFormTags {
 
   /** Теги, заданные юзером. */
   def tags      : List[MTagBinded]
-
-  /** Период размещения. */
-  def dates     : MDatesPeriod
-
-  /** Данные карты. */
-  def radMapVal : RadMapValue
 
 }
 
 
 case class MAgtFormResult(
-  override val tags       : List[MTagBinded],
-  override val radMapVal  : RadMapValue,
-  override val dates      : MDatesPeriod
+  override val tags         : List[MTagBinded],
+  override val radMapVal    : RadMapValue,
+  override val period       : MDatesPeriod
 )
   extends IAgtFormResult
