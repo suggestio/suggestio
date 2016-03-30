@@ -18,8 +18,8 @@ sealed trait LkAdvGeoTagCtl extends js.Object {
   /** Роута постинга добавления нового тега. */
   def tagEditorAddTag(): Route = js.native
 
-  /** Роута запроса рассчета стоимости текущего размещения. */
-  def getPriceSubmit(adId: String): Route = js.native
+  /* Роута запроса рассчета стоимости текущего размещения. */
+  //def getPriceSubmit(adId: String): Route = js.native
 
   /** Роута для поиска тегов. */
   def tagsSearch(args: Dictionary[Any]): Route = js.native
