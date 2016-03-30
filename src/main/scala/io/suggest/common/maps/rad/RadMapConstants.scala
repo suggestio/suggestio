@@ -39,4 +39,14 @@ object RadMapConstants {
   def ATTR_IMG_ANCHOR_X     = ATTR_PREFIX + "x"
   def ATTR_IMG_ANCHOR_Y     = ATTR_PREFIX + "y"
 
+
+  // Константы HTML-форм, содержащий rad-map.
+  def STATE_FN  = "state"
+
+  def ZOOM_FN   = "zoom"
+
+  def CIRCLE_FN = "circle"
+  def CENTER_FN = "center"
+  def RADIUS_FN = "radius"
+
 }
