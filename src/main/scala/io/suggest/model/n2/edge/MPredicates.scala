@@ -181,6 +181,11 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
   val NodeLocation: T = new Val("n")
 
 
+  /** Предикат для эджей, описывающих размещение карточек просто в шейпе на карте.
+    * По идее, его можно сгруппировать с NodeLocation в рамках некоего общего Geo-предиката. */
+  val AdvGeoPlace: T = new Val("o")
+
+
   /** Поддержка биндинга из routes. */
   implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[T] = {
     new QueryStringBindable[T] {
