@@ -5,7 +5,7 @@ import io.suggest.lk.adv.vm.{Adv4FreeInside, Adv4Free}
 import io.suggest.sjs.common.fsm.{SjsFsm, IInitLayoutFsm}
 import io.suggest.sjs.common.vm.find.FindElT
 import io.suggest.sjs.common.vm.input.FormDataVmT
-import io.suggest.sjs.dt.period.vm.Container
+import io.suggest.sjs.dt.period.vm.{IContainerField, Container}
 import org.scalajs.dom.raw.HTMLFormElement
 
 /**
@@ -26,11 +26,10 @@ import AgtForm.Dom_t
 trait AgtFormT
   extends FormDataVmT
   with Adv4FreeInside
+  with IContainerField
 {
 
   override type T = Dom_t
-
-  def intervalCont  = Container.find()
 
   override def initLayout(fsm: SjsFsm): Unit = {
     super.initLayout(fsm)

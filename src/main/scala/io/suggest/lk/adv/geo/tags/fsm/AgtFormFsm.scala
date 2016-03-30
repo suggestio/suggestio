@@ -1,5 +1,6 @@
 package io.suggest.lk.adv.geo.tags.fsm
 
+import io.suggest.lk.adv.fsm.AdvFormChangedReceiver
 import io.suggest.lk.adv.geo.tags.m.MAgtStateData
 import io.suggest.sjs.common.util.SjsLogger
 import io.suggest.sjs.dt.period.vm.Container
@@ -11,10 +12,10 @@ import io.suggest.sjs.dt.period.vm.Container
   * Description: FSM, обслуживающий страницу/форму размещения карточки в гео-тегах.
   */
 class AgtFormFsm
-  extends states.StandBy
-  with states.UpdatePriceData
+  extends states.UpdatePriceData
   with states.PeriodSignals
   with SjsLogger
+  with AdvFormChangedReceiver
 {
 
   override type State_t = FsmState
@@ -43,7 +44,7 @@ class AgtFormFsm
   // -- states --
 
   class StandByState
-    extends StandByStateT
+    extends AdvFormChangedReceiverStateT
     with GetPriceStateT
     with PeriodSignalsStateT
 
