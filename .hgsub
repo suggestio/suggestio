@@ -21,3 +21,4 @@ lk-adv-direct-sjs       = lk-adv-direct-sjs
 lk-adv-common-sjs       = lk-adv-common-sjs
 lk-tags-edit-sjs	= lk-tags-edit-sjs
 lk-adv-geo-tags-sjs	= lk-adv-geo-tags-sjs
+lk-adv-geo-place-sjs	= lk-adv-geo-place-sjs

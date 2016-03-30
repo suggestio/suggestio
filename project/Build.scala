@@ -122,6 +122,14 @@ object SiobixBuild extends Build {
       .dependsOn(lkAdvCommonSjs, lkTagsEditSjs, mapRadSjs)
   }
 
+  /** Sjs-модуль для поддержки подсистемы размещения в месте на гео.карте. */
+  lazy val lkAdvGeoPlaceSjs = {
+    val name = "lk-adv-geo-place-sjs"
+    Project(id = name, base = file(name))
+      .enablePlugins(ScalaJSPlay)
+      .dependsOn(lkAdvCommonSjs, mapRadSjs)
+  }
+
   /** Модели биллинга второго поколения. */
   lazy val mbill2 = project
     .dependsOn(logsMacro, common, util)
@@ -155,7 +163,7 @@ object SiobixBuild extends Build {
     val name = "lk-sjs"
     Project(id = name, base = file(name))
       .enablePlugins(ScalaJSPlay)
-      .dependsOn(lkAdvExtSjs, lkAdvDirectSjs, lkAdvGeoTagsSjs)
+      .dependsOn(lkAdvExtSjs, lkAdvDirectSjs, lkAdvGeoTagsSjs, lkAdvGeoPlaceSjs)
   }
 
   /** Выдача suggest.io, написанная с помощью scala.js. */
