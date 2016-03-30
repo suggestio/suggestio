@@ -47,7 +47,7 @@ trait ContainerT extends IVm with IInitLayoutFsm {
 
   /**
    * Прочитать текущее значение периода.
- *
+   *
    * @return None чтение невозможно
    *         Some(Left) период из дат.
    *         Some(Right) период-презет.
@@ -73,3 +73,10 @@ trait ContainerT extends IVm with IInitLayoutFsm {
 
 case class Container(override val _underlying: Dom_t)
   extends ContainerT
+
+
+
+trait IContainerField {
+
+  def intervalCont  = Container.find()
+}
