@@ -41,4 +41,6 @@ object WarnMsgs extends MsgsStaticT {
 
   def XHR_RESP_ERROR_STATUS     = E(13)
 
+  def TAG_SEARCH_XHR_TS_DROP    = E(14)
+
 }
