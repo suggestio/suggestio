@@ -161,6 +161,9 @@ trait StandBy extends TagsEditFsmStub {
         _stateData = sd0.copy(
           lastSearchReqTs = None
         )
+
+      } else {
+        log( WarnMsgs.TAG_SEARCH_XHR_TS_DROP + " " + sd0.lastSearchReqTs + " " + respTs.timestamp)
       }
     }
 
