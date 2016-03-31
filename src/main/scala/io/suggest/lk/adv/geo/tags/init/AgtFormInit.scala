@@ -56,10 +56,10 @@ class AgtFormInit extends IInit {
     // Инициализировать FSM редактора тегов.
     val tagsFsm = new TagsEditFsm {
       override def _addTagRoute: Route = {
-        jsRoutes.controllers.LkAdvGeoTag.tagEditorAddTag()
+        jsRoutes.controllers.LkAdvGeo.tagEditorAddTag()
       }
       override def tagsSearchRoute(args: ITagSearchArgs): Route = {
-        jsRoutes.controllers.LkAdvGeoTag.tagsSearch(args.toJson)
+        jsRoutes.controllers.LkAdvGeo.tagsSearch(args.toJson)
       }
       override def _tagsChanged(): Unit = {
         super._tagsChanged()

@@ -2,6 +2,8 @@ package io.suggest.lk.adv.geo.tags.m.signal
 
 import io.suggest.lk.adv.m.IAdvFormChanged
 import io.suggest.maps.rad.m.signal.IRadMapChanged
+import io.suggest.sjs.common.fsm.IFsmEventMsgCompanion
+import org.scalajs.dom.Event
 
 /**
   * Suggest.io
@@ -20,3 +22,7 @@ trait IMapDataChanged extends IAgtFormChanged with IRadMapChanged
 
 /** Сигнал об изменении радиуса на карте. */
 case object RadiusChanged extends IMapDataChanged
+
+
+case class OnMainScreenChanged(event: Event) extends IAgtFormChanged
+object OnMainScreenChanged extends IFsmEventMsgCompanion
