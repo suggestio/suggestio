@@ -41,12 +41,13 @@ class ActivateOfflineAdvs @Inject() (
       (i.dateStartOpt <= now)
   }
 
-  override def findAdIds: StreamingDBIO[Traversable[String], String] = {
+  override def findAdIds(max: Int): StreamingDBIO[Traversable[String], String] = {
     // Ищем только карточки, у которых есть offline ads с dateStart < now
     mItems.query
       .filter(_offlineItemsSql)
       .map(_.adId)
       .distinct
+      .take(max)
       .result
   }
 

@@ -56,7 +56,7 @@ object MTagSearch {
 
             val ecr = Criteria(
               predicates  = Seq( MPredicates.TaggedBy ),
-              tags        = tcrOpt
+              tags        = tcrOpt.toSeq
             )
 
             val _limit = _limitOpt

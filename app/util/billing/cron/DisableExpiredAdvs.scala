@@ -4,7 +4,7 @@ import com.google.inject.Inject
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{MItem, MItems}
-import models.adv.build.{Acc, TryUpdateBuilder}
+import models.adv.build.TryUpdateBuilder
 import models.mproj.ICommonDi
 import org.joda.time.Interval
 import slick.dbio.Effect.Read
@@ -34,7 +34,7 @@ class DisableExpiredAdvs @Inject() (
   import slick.driver.api._
 
 
-  override def findAdIds: StreamingDBIO[Traversable[String], String] = {
+  override def findAdIds(max: Int): StreamingDBIO[Traversable[String], String] = {
     mItems.query
       .filter { i =>
         (i.statusStr === MItemStatuses.Online.strId) &&
@@ -43,7 +43,7 @@ class DisableExpiredAdvs @Inject() (
       .map(_.adId)
       .distinct
       // Избегаем скачка слишком резкой нагрузки, ограничивая кол-во обрабатываемых карточек.
-      .take(MAX_ADS_PER_RUN)
+      .take(max)
       .result
   }
 

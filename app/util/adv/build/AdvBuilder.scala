@@ -40,39 +40,6 @@ trait AdvBuilderFactoryDi {
 }
 
 
-class AdvBuilderUtil @Inject() (
-  mCommonDi: ICommonDi
-) {
-
-  import mCommonDi._
-
-  def clearByPredicate(b0: IAdvBuilder, pred: MPredicate): IAdvBuilder = {
-    // Вычистить теги из эджей карточки
-    val acc2Fut = for {
-      acc0 <- b0.accFut
-    } yield {
-      val mad2 = acc0.mad.copy(
-        edges = acc0.mad.edges.copy(
-          out = {
-            val iter = acc0.mad
-              .edges
-              // Все теги и геотеги идут через биллинг. Чистка равносильна стиранию всех эджей TaggedBy.
-              .withoutPredicateIter( pred )
-            MNodeEdges.edgesToMap1( iter )
-          }
-        )
-      )
-      // Сохранить почищенную карточку в возвращаемый акк.
-      acc0.copy(
-        mad = mad2
-      )
-    }
-    b0.withAcc( acc2Fut )
-  }
-
-}
-
-
 /** Интерфейс adv-билдеров. Они все очень похожи. */
 @ImplementedBy( classOf[AdvBuilder] )
 trait IAdvBuilder
@@ -150,6 +117,17 @@ trait IAdvBuilder
     withAcc(acc2Fut)
   }
 
+
+  /**
+    * Подготовка к изменениям в системе (установке нового, деинсталляция старья).
+    *
+    * @param isInstall true -- установка нового.
+    *                  false -- деинсталляция существующего.
+    * @return Инстанс [[IAdvBuilder]].
+    */
+  def prepare4changes(isInstall: Boolean): IAdvBuilder = {
+    this
+  }
 
   // API v2
   // Теперь install разделен на sql- и mad-части, а API на вход принимает item'ы оптом, а не поштучно.
@@ -258,12 +236,13 @@ trait IAdvBuilder
 class AdvBuilderDi @Inject() (
   override val n2NodesUtil        : N2NodesUtil,
   override val mItems             : MItems,
-  val advBuilderUtil              : AdvBuilderUtil,
+  override val advBuilderUtil     : AdvBuilderUtil,
   override val mCommonDi          : ICommonDi
 )
   extends IN2NodesUtilDi
   with IMCommonDi
   with IMItems
+  with IAdvBuilderUtilDi
 {
 
   import mCommonDi.configuration

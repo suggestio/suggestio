@@ -54,7 +54,7 @@ abstract class AdvsUpdate
     * Запрос идёт вне транзакций, race-conditions будут учтены в последующем коде.
     * Главное требование: чтобы adId не повторялись в рамках одного потока. Проблем по идее быть не должно, но всё же.
     */
-  def findAdIds: StreamingDBIO[Traversable[String], String]
+  def findAdIds(max: Int = MAX_ADS_PER_RUN): StreamingDBIO[Traversable[String], String]
 
   val now = DateTime.now
 
@@ -81,7 +81,7 @@ abstract class AdvsUpdate
   }
 
   /** 1. Запуск поиска id карточек, требующих обновления.
-    * Фунция также старается следить за расходование ресурсов системы, сглаживая возможную резкую нагрузку.
+    * Функция также старается следить за расходование ресурсов системы, сглаживая возможную резкую нагрузку.
     *
     * @param counter Счетчик уже пройденных карточек.
     * @return Фьючерс с кол-вом отработанных карточек
@@ -94,8 +94,10 @@ abstract class AdvsUpdate
       Future.successful(counter)
 
     } else {
+      // TODO Здесь необходимо запустить асинхронную подготовку общего контекста
+
       for {
-        adIds <- slick.db.run( findAdIds )
+        adIds <- slick.db.run( findAdIds(MAX_ADS_PER_RUN) )
 
         ress  <- {
           Future.traverse(adIds) { adId =>
