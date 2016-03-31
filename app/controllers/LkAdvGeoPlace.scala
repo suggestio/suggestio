@@ -73,7 +73,7 @@ class LkAdvGeoPlace @Inject() (
   private def _forAd(form: Form[MAgpFormResult], rs: Status)(implicit request: IAdProdReq[_]): Future[Result] = {
     val ctxData0Fut = request.user.lkCtxDataFut
 
-    val isSuFree    = advFormUtil.maybeFreeAdv()
+    val isSuFree    = request.user.isSuper
     val pricingFut  = agpBillUtil.getPricing(form.value, isSuFree)
 
     for {
