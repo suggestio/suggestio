@@ -30,13 +30,15 @@ object Stopwords {
    * @param lang id языка. Для snowball - "russian", "english". Для не-snowball - "ca", "fa", etc
    * @return immutable set.
    */
-  protected def getStops(lang:String) : Set[String] = {
+  protected def getStops(lang: String) : Set[String] = {
     // В зависимости от длины id языка используем тот или иной тип парсера stopwords.txt.
     val (fileSuffix : String, swParser:StopwordsParser) = if (lang.length == 2)
       (lang + "/stopwords.txt", new SimpleStopwordsParser)
     else if (lang.length > 4)
       ("snowball/" + lang + "_stop.txt", new SnowballStopwordsParser)
-    else ???
+    else
+      throw new UnsupportedOperationException("Unsupported language: " + lang)
+
     val filePath = FILE_PREFIX + fileSuffix
     val stream = getClass.getClassLoader.getResourceAsStream(filePath)
     val reader = IOUtils.getDecodingReader(stream, StandardCharsets.UTF_8)

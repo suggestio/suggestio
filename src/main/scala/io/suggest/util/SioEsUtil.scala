@@ -52,6 +52,14 @@ object SioEsUtil extends MacroLogsImpl {
   def DEEP_NGRAM_TN = "deepNgramTn"
 
   /**
+    * Версия документов, только что добавленных в elasticsearch.
+    *
+    * @see [[https://www.elastic.co/blog/elasticsearch-versioning-support]]
+    *      That version number is a positive number between 1 and 2^63-1 (inclusive).
+    */
+  def DOC_VSN_0     = 1L
+
+  /**
    * Создать параллельно пачку одинаковых индексов.
    * @param indices Имена индексов.
    * @param shardsPerIndex Шардинг
