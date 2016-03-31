@@ -1,6 +1,7 @@
 package io.suggest.lk.router
 
-import io.suggest.sjs.common.model.Route
+import
+io.suggest.sjs.common.model.Route
 
 import scala.scalajs.js
 import scala.scalajs.js.{Dictionary, Any}
@@ -13,7 +14,7 @@ import scala.scalajs.js.{Dictionary, Any}
   */
 
 @js.native
-sealed trait LkAdvGeoTagCtl extends js.Object {
+sealed trait LkAdvGeoCtl extends js.Object {
 
   /** Роута постинга добавления нового тега. */
   def tagEditorAddTag(): Route = js.native

@@ -25,6 +25,6 @@ sealed trait Controllers extends js.Object {
 
   def MarketAd: MarketAdFormCtl = js.native
 
-  def LkAdvGeoTag: LkAdvGeoTagCtl = js.native
+  def LkAdvGeo: LkAdvGeoCtl = js.native
 
 }
