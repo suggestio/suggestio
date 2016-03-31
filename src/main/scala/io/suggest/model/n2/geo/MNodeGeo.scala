@@ -19,7 +19,6 @@ object MNodeGeo extends IGenEsMappingProps with IEmpty {
   object Fields {
 
     val POINT_FN = "p"
-    val SHAPE_FN = "sh"
 
   }
 
@@ -29,15 +28,12 @@ object MNodeGeo extends IGenEsMappingProps with IEmpty {
     }
   }
 
-
-  implicit val FORMAT: Format[MNodeGeo] = (
-    (__ \ Fields.POINT_FN).formatNullable[GeoPoint] and
-    (__ \ Fields.SHAPE_FN).formatNullable[Seq[MGeoShape]]
-      .inmap [Seq[MGeoShape]] (
-        _.getOrElse(Nil),
-        { gss => if (gss.isEmpty) None else Some(gss) }
+  implicit val FORMAT: Format[MNodeGeo] = {
+    (__ \ Fields.POINT_FN).formatNullable[GeoPoint]
+      .inmap [MNodeGeo] (
+        apply, _.point
       )
-  )(apply, unlift(unapply))
+  }
 
 
   import io.suggest.util.SioEsUtil._
@@ -51,8 +47,7 @@ object MNodeGeo extends IGenEsMappingProps with IEmpty {
         geohashPrefix     = true,
         geohashPrecision  = "8",
         fieldData         = GeoPointFieldData(format = GeoPointFieldDataFormats.compressed, precision = "3m")
-      ),
-      FieldNestedObject(Fields.SHAPE_FN, enabled = true, properties = MGeoShape.generateMappingProps)
+      )
     )
   }
 
@@ -60,38 +55,6 @@ object MNodeGeo extends IGenEsMappingProps with IEmpty {
 
 
 case class MNodeGeo(
-  point     : Option[GeoPoint]  = None,
-  shapes    : Seq[MGeoShape]    = Nil
+  point     : Option[GeoPoint]  = None
 )
   extends EmptyProduct
-{
-
-  def nextShapeId: Int = {
-    if (shapes.isEmpty) {
-      0
-    } else {
-      shapes.iterator
-        .map(_.id)
-        .max + 1
-    }
-  }
-
-  def updateShapeSeq(mgs2: MGeoShape): Seq[MGeoShape] = {
-    shapes
-      .iterator
-      .filter { _.id != mgs2.id }
-      .++( Iterator(mgs2) )
-      .toSeq
-  }
-
-  def updateShape(mgs2: MGeoShape): MNodeGeo = {
-    copy(
-      shapes = updateShapeSeq(mgs2)
-    )
-  }
-
-  def findShape(gsId: Int): Option[MGeoShape] = {
-    shapes.find(_.id == gsId)
-  }
-
-}
