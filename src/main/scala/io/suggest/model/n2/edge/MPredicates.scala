@@ -163,10 +163,15 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
     /** Adv geo tags: платное размещение в гео-тегах. */
     val Agt: T = new Val("lg") with _Child
 
+    /** Узел сам-себе тег. В этом эдже лежит его tag payload: tag face'ы, гео-шейпы.
+      * Все tag face'ы со всех узлов храняться в одном индексе, в т.ч. и этот.
+      * В этом же эдже должна лежать пачка гео-шейпов со всех размещенных карточек. */
+    val Self: T = new Val("ls") with _Child
+
     // TODO Запихать сюда ещё предикат для размещения всего узла-здания в теге? А в нём ещё и основного тега (категории).
 
     override def children: List[T] = {
-      Agt :: super.children
+      Agt :: Self :: super.children
     }
   }
 

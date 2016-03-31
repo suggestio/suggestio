@@ -1,5 +1,6 @@
 package io.suggest.model.n2.edge.search
 
+import io.suggest.model.es.QueryUtil
 import io.suggest.model.n2.node.MNodeFields
 import io.suggest.model.n2.node.MNodeFields.Edges._
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
@@ -37,28 +38,31 @@ trait OutEdges extends DynSearchArgs with MacroLogsI {
       val clauses = _outEdgesIter
         .flatMap { oe =>
 
+          // Сюда будет аккамулироваться финальный поисковый запрос:
           var _qOpt: Option[QueryBuilder] = None
 
           // В первую очередь ищем по fts в рамках текущего nested edge. А именно: по тегам с match-query наперевес. match filter вроде не особо работает.
           if (oe.tags.nonEmpty) {
-            val fn = E_OUT_INFO_TAGS_FN
+            val tQueries = for (tcr <- oe.tags) yield {
+              // Узнаём имя поля для матчинга тега.
+              val fn = if (tcr.exact)
+                E_OUT_INFO_TAGS_RAW_FN
+              else
+                E_OUT_INFO_TAGS_FN
+              // Узнать желаемый тип запроса
+              val qmType = if (tcr.isPrefix)
+                MatchQueryBuilder.Type.PHRASE_PREFIX
+              else
+                MatchQueryBuilder.Type.PHRASE
+              // Собрать match query
+              val tq = QueryBuilders.matchQuery(fn, tcr.face)
+                .`type`(qmType)
+                .zeroTermsQuery( MatchQueryBuilder.ZeroTermsQuery.ALL )
+              tcr -> tq
+            }
 
-            // TODO По идее надо бы тут список критериев, но это пока не нужно и усложняет многое, поэтому пока пропущено.
-            // Готовую реализацию можно подсмотреть в io.suggest.model.n2.extra.tag.search.FaceTextQuery <= 9f2bfd249a83
-            val tcr = oe.tags.get
-
-            val tq = QueryBuilders.matchQuery(fn, tcr.face)
-              // TODO Надо ведь 100% по идее, но не ясно, насколько это ок.
-              .minimumShouldMatch( "90%" )
-              .operator( MatchQueryBuilder.Operator.AND )
-              .`type` {
-                if (tcr.isPrefix)
-                  MatchQueryBuilder.Type.PHRASE_PREFIX
-                else
-                  MatchQueryBuilder.Type.PHRASE
-              }
-              .zeroTermsQuery( MatchQueryBuilder.ZeroTermsQuery.ALL )
-
+            val tq = QueryUtil.maybeWrapToBool(tQueries)
+            // Первый в списке if, поэтому сразу как Some().
             _qOpt = Some(tq)
           }
 
@@ -211,32 +215,8 @@ trait OutEdges extends DynSearchArgs with MacroLogsI {
         }
         .toStream
 
-      // Если критериев много или же единственный критерий содержит mustNot, можно только через bool query.
-      val qb2: QueryBuilder = if (clauses.size > 1 || clauses.exists(_._1.must.contains(false)) ) {
-        // Возврат значения происходит через закидывание сгенеренной query в BoolQuery.
-        var shouldClauses = 0
-        val nq = QueryBuilders.boolQuery()
-
-        for ((oe, _q) <- clauses) {
-          // Клиент может настраивать запрос с помощью must/should/mustNot.
-          oe.must match {
-            case None =>
-              nq.should(_q)
-              shouldClauses += 1
-            case Some(true) =>
-              nq.must(_q)
-            case _ =>
-              nq.mustNot(_q)
-          }
-        }
-        // Если should-clause'ы отсутствуют, то minimum should match 0. Иначе 1.
-        nq.minimumNumberShouldMatch(
-          Math.min(1, shouldClauses)
-        )
-
-      } else {
-        clauses.head._2
-      }
+      // Объеденить запросы в единый запрос.
+      val qb2 = QueryUtil.maybeWrapToBool(clauses)
 
       // Сборка основной query
       qbOpt0.map { qb0 =>
