@@ -7,10 +7,10 @@
 @import util.FC.tdRadialFc
 @import lk.tag.edit._
 @import lk.adv.widgets._
-@import io.suggest.adv.geo.tag.AgtFormConsts._
-@import io.suggest.adv.AdvConstants.Period.PERIOD_FN
-@import io.suggest.adv.AdvConstants.RadMap.RADMAP_FN
+@import io.suggest.adv.geo.AdvGeoConstants._
+@import io.suggest.adv.AdvConstants._
 @import lk.dsl._
+@import views.html.stuff._labelTpl
 
 @_barTpl(MHands.Left) {
   @_minorTitleTpl() {
@@ -24,7 +24,7 @@
   @_addBtnTpl()
 }
 
-@form( CSRF(routes.LkAdvGeoTag.forAdSubmit(args.mad.id.get)), 'id -> FORM_ID) {
+@form( CSRF(routes.LkAdvGeo.forAdSubmit(args.mad.id.get)), 'id -> FORM_ID) {
 
   @_advSuTpl()
 
@@ -33,6 +33,15 @@
     @* Рендер сохранённых тегов. *@
     @_existTagsContTpl() {
       @_tagsExistTpl(args.form)
+    }
+
+    @* Отдельная галочка для размещения на главном экране. *@
+    @defining(args.form(OnMainScreen.FN)) { omsf =>
+      @_labelTpl() {
+        <input type="checkbox" id="@OnMainScreen.ID" name="@omsf.name" value="true" @if(omsf.value.nonEmpty){checked="checked"}/>
+        <span class="styled-checkbox"></span>
+        @messages("Adv.on.main.screen")
+      }
     }
   }
 

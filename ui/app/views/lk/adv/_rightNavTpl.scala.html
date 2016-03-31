@@ -21,14 +21,8 @@
 
   @_navItemTpl(
     title = messages("Adv.in.geo.tags"),
-    href  = Some( routes.LkAdvGeoTag.forAd(madId) ),
+    href  = Some( routes.LkAdvGeo.forAd(madId) ),
     css   = classesAct(curr.contains(TAGS_GEO), "__geotag")
-  )
-
-  @_navItemTpl(
-    title = messages("Adv.in.geo.place"),
-    href  = Some( routes.LkAdvGeoPlace.forAd(madId) ),
-    css   = classesAct(curr.contains(GEO_PLACE), "__geoplace")
   )
 
   @_navSysTpl(

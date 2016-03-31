@@ -2,30 +2,25 @@ package controllers
 
 import com.google.inject.Inject
 import controllers.ctag.NodeTagsEdit
-import io.suggest.common.fut.FutureUtil
-import io.suggest.model.geo.{CircleGs, Distance, GeoPoint}
 import io.suggest.model.n2.tag.TagSearchUtil
 import models.adv.form.MDatesPeriod
-import models.adv.geo.tag.{MForAdTplArgs, MAgtFormResult, AgtForm_t}
+import models.adv.geo.tag.{AgtForm_t, MAgtFormResult, MForAdTplArgs}
 import models.adv.price.GetPriceResp
 import models.jsm.init.MTargets
-import models.maps.{RadMapValue, MapViewState}
 import models.mctx.Context
 import models.merr.MError
 import models.mproj.ICommonDi
 import models.req.IAdProdReq
-import models.GeoIp
-import org.elasticsearch.common.unit.DistanceUnit
 import play.api.i18n.Messages
 import play.api.libs.json.Json
 import play.api.mvc.Result
 import util.PlayMacroLogsImpl
 import util.acl.{CanAdvertiseAd, CanAdvertiseAdUtil}
 import util.adv.AdvFormUtil
-import util.adv.geo.tag.{AgtFormUtil, AgtBillUtil}
+import util.adv.geo.{AdvGeoBillUtil, AdvGeoFormUtil}
 import util.billing.Bill2Util
 import util.tags.TagsEditFormUtil
-import views.html.lk.adv.geo.tag._
+import views.html.lk.adv.geo._
 import views.html.lk.adv.widgets.period._reportTpl
 import views.html.lk.lkwdgts.price._priceValTpl
 
@@ -37,9 +32,9 @@ import scala.concurrent.Future
   * Created: 18.11.15 14:51
   * Description: Контроллер размещения в гео-тегах.
   */
-class LkAdvGeoTag @Inject() (
-  agtFormUtil                     : AgtFormUtil,
-  agtBillUtil                     : AgtBillUtil,
+class LkAdvGeo @Inject()(
+  advGeoFormUtil                  : AdvGeoFormUtil,
+  advGeoBillUtil                  : AdvGeoBillUtil,
   advFormUtil                     : AdvFormUtil,
   bill2Util                       : Bill2Util,
   override val tagSearchUtil      : TagSearchUtil,
@@ -62,7 +57,7 @@ class LkAdvGeoTag @Inject() (
     */
   def forAd(adId: String) = CanAdvertiseAdGet(adId, U.Lk).async { implicit request =>
     val gp0Fut = advFormUtil.geoPoint0()
-    val formEmpty = agtFormUtil.agtFormStrict
+    val formEmpty = advGeoFormUtil.agtFormStrict
 
     val formFut = for (gp0 <- gp0Fut) yield {
 
@@ -70,9 +65,10 @@ class LkAdvGeoTag @Inject() (
 
       // Залить начальные данные в маппинг формы.
       val res = MAgtFormResult(
-        tags      = Nil,
-        radMapVal = radMapVal,
-        period    = MDatesPeriod()
+        tags          = Nil,
+        radMapVal     = radMapVal,
+        period        = MDatesPeriod(),
+        onMainScreen  = true
       )
 
       formEmpty.fill(res)
@@ -95,7 +91,7 @@ class LkAdvGeoTag @Inject() (
     val ctxData0Fut = request.user.lkCtxDataFut
 
     val isSuFree = advFormUtil.maybeFreeAdv()
-    val advPricingFut = agtBillUtil.getPricing(form.value, isSuFree)
+    val advPricingFut = advGeoBillUtil.getPricing(form.value, isSuFree)
 
     for {
       ctxData0    <- ctxData0Fut
@@ -110,7 +106,7 @@ class LkAdvGeoTag @Inject() (
         form      = form,
         price     = advPricing
       )
-      rs(AgtForAdTpl(rargs))
+      rs(AdvGeoForAdTpl(rargs))
     }
   }
 
@@ -122,13 +118,13 @@ class LkAdvGeoTag @Inject() (
    * @return 302 see other, 416 not acceptable.
    */
   def forAdSubmit(adId: String) = CanAdvertiseAdPost(adId, U.Lk, U.PersonNode).async { implicit request =>
-    agtFormUtil.agtFormStrict.bindFromRequest().fold(
+    advGeoFormUtil.agtFormStrict.bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug(s"forAdSubmit($adId): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
         // Повторный биндинг с NoStrict-формой -- костыль для решения проблем с рендером локализованных
         // дат размещения. Даты форматируются через form.value.dates, а не через form("dates").value, поэтому
         // при ошибке биндинга возникает ситуация, когда form.value не определена, и появляется дырка на странице.
-        val formWithErrors1 = agtFormUtil.agtFormTolerant
+        val formWithErrors1 = advGeoFormUtil.agtFormTolerant
           .bindFromRequest()
           .copy(
             errors = formWithErrors.errors
@@ -160,7 +156,7 @@ class LkAdvGeoTag @Inject() (
               // Найти/создать корзину
               cart    <- bill2Util.ensureCart(e.mc.id.get)
               // Закинуть заказ в корзину юзера. Там же и рассчет цены будет.
-              addRes  <- agtBillUtil.addToOrder(
+              addRes  <- advGeoBillUtil.addToOrder(
                 orderId     = cart.id.get,
                 producerId  = producerId,
                 adId        = adId,
@@ -179,12 +175,12 @@ class LkAdvGeoTag @Inject() (
           if (!isSuFree) {
             implicit val messages = implicitly[Messages]
             // Пора вернуть результат работы юзеру: отредиректить в корзину-заказ для оплаты.
-            Redirect(routes.LkBill2.cart(producerId, r = Some(routes.LkAdvGeoTag.forAd(adId).url)))
+            Redirect(routes.LkBill2.cart(producerId, r = Some(routes.LkAdvGeo.forAd(adId).url)))
               .flashing(FLASH.SUCCESS -> messages("Added.n.items.to.cart", itemsAdded.size))
 
           } else {
             // Суперюзеры отправляются назад в эту же форму для дальнейшего размещения.
-            Redirect( routes.LkAdvGeoTag.forAd(adId) )
+            Redirect( routes.LkAdvGeo.forAd(adId) )
               .flashing(FLASH.SUCCESS -> "Ads.were.adv")
           }
         }
@@ -201,7 +197,7 @@ class LkAdvGeoTag @Inject() (
     */
   def getPriceSubmit(adId: String) = CanAdvertiseAdPost(adId).async { implicit request =>
     lazy val logPrefix = s"getPriceSubmit($adId):"
-    agtFormUtil.agtFormTolerant.bindFromRequest().fold(
+    advGeoFormUtil.agtFormTolerant.bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug(s"$logPrefix Failed to bind form:\n${formatFormErrors(formWithErrors)}")
         val err = MError(
@@ -212,7 +208,7 @@ class LkAdvGeoTag @Inject() (
 
       {result =>
         val isSuFree = advFormUtil.maybeFreeAdv()
-        val advPricingFut = agtBillUtil.getPricing(result, isSuFree)
+        val advPricingFut = advGeoBillUtil.getPricing(result, isSuFree)
 
         implicit val ctx = implicitly[Context]
 

@@ -709,8 +709,6 @@ Adv.in.geo.tags=Размещение в геотегах
 No.enought.deposit=Недостаточно средств на счете
 City.place.choose=Выбор города/ места
 
-Adv.in.geo.place=Размещение на карте
-
 Month.N.1=Январь
 Month.N.2=Февраль
 Month.N.3=Март
@@ -750,6 +748,7 @@ Payment.for.order.N=Оплата заказа №{0}
 Item.type.a=Прямое размещение
 Item.type.t=Размещение в геотеге
 Item.type.e=Внешнее размещение
+Item.type.g=Размещение на карте
 
 Moderation=Модерация
 Picture.editing=Редактирование изображения

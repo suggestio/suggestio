@@ -14,6 +14,12 @@ import models.mtag.MTagBinded
 trait IAgtFormResult
   extends IAdvGeoFormResult
   with IFormTags
+{
+
+  /** Также разместить вне тегов на главном экране выдачи в указанном месте. */
+  def onMainScreen: Boolean
+
+}
 
 
 /** Интерфейс для поля тегов. */
@@ -28,6 +34,7 @@ trait IFormTags {
 case class MAgtFormResult(
   override val tags         : List[MTagBinded],
   override val radMapVal    : RadMapValue,
-  override val period       : MDatesPeriod
+  override val period       : MDatesPeriod,
+  override val onMainScreen : Boolean
 )
   extends IAgtFormResult

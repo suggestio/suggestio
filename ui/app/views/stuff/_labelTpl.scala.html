@@ -1,0 +1,5 @@
+@(attrs: (Symbol, Any)*)(content: Html)(implicit ctx: Context)
+
+<label @toHtmlArgs(attrs.toMap)>
+  @content
+</label>

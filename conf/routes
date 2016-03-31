@@ -50,16 +50,11 @@ GET  /lk/xadv/ext/oauth1/ret/:adnId     @controllers.LkAdvExt.oauth1PopupReturnG
 POST /lk/xadv/ext/oauth1/ret/:adnId     @controllers.LkAdvExt.oauth1PopupReturnPost(adnId, actorInfoQs: adv.ext.act.ActorPathQs)
 
 ## Размещение в теге с учетом географии.
-GET  /lk/xadv/geo/tag/for/:adId         @controllers.LkAdvGeoTag.forAd(adId)
-POST /lk/xadv/geo/tag/for/:adId         @controllers.LkAdvGeoTag.forAdSubmit(adId)
-POST /lk/xadv/geo/tag/price/:adId       @controllers.LkAdvGeoTag.getPriceSubmit(adId)
-POST /lk/xadv/geo/tag/add               @controllers.LkAdvGeoTag.tagEditorAddTag()
-GET  /lk/xadv/geo/tag/tags              @controllers.LkAdvGeoTag.tagsSearch(s: mtag.MTagSearch)
-
-## Размещение карточки просто на карте мира.
-GET  /lk/xadv/geo/map/for/:adId         @controllers.LkAdvGeoPlace.forAd(adId)
-POST /lk/xadv/geo/map/for/:adId         @controllers.LkAdvGeoPlace.forAdSubmit(adId)
-POST /lk/xadv/geo/map/price/:adId       @controllers.LkAdvGeoPlace.getPriceSubmit(adId)
+GET  /lk/xadv/geo/tag/for/:adId         @controllers.LkAdvGeo.forAd(adId)
+POST /lk/xadv/geo/tag/for/:adId         @controllers.LkAdvGeo.forAdSubmit(adId)
+POST /lk/xadv/geo/tag/price/:adId       @controllers.LkAdvGeo.getPriceSubmit(adId)
+POST /lk/xadv/geo/tag/add               @controllers.LkAdvGeo.tagEditorAddTag()
+GET  /lk/xadv/geo/tag/tags              @controllers.LkAdvGeo.tagsSearch(s: mtag.MTagSearch)
 
 ## ЛК: Рекламные карточки
 GET  /lk/mad/new/:adnId                 @controllers.MarketAd.createAd(adnId)

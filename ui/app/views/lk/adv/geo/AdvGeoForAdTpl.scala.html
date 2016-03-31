@@ -8,7 +8,7 @@
 @import lk.adv.geo.agBase
 @import lk.adv.widgets._
 @import lk.lkwdgts.price._
-@import io.suggest.adv.geo.tag.AgtFormConsts._
+@import io.suggest.adv.geo.AdvGeoConstants._
 @import adv.tpl._
 
 @agBase(
@@ -20,12 +20,12 @@
 ) {
 
   @* URL для рассчета стоимости размещения. *@
-  @_getPriceUrlTpl( routes.LkAdvGeoTag.getPriceSubmit(args.adId) )
+  @_getPriceUrlTpl( routes.LkAdvGeo.getPriceSubmit(args.adId) )
 
   @_advFormBlockTpl() {
 
     @* Рендер самой формы здесь. *@
-    @_AgtFormTpl(args)
+    @_AdvGeoFormTpl(args)
 
     @* Контейнер карты. *@
     <br/>
@@ -34,8 +34,8 @@
 
   @* При добавлении тегов запросы add-tag-формы отправляются сюда. *@
   @javascriptRouter("jsRoutes")(
-    routes.javascript.LkAdvGeoTag.tagEditorAddTag,
-    routes.javascript.LkAdvGeoTag.tagsSearch
+    routes.javascript.LkAdvGeo.tagEditorAddTag,
+    routes.javascript.LkAdvGeo.tagsSearch
   )
 
 }

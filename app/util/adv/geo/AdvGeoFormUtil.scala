@@ -1,13 +1,13 @@
-package util.adv.geo.tag
+package util.adv.geo
 
 import com.google.inject.{Inject, Singleton}
+import io.suggest.adv.AdvConstants.{PERIOD_FN, RADMAP_FN}
+import io.suggest.adv.geo.AdvGeoConstants.OnMainScreen
 import io.suggest.common.tags.edit.TagsEditConstants.EXIST_TAGS_FN
-import io.suggest.adv.AdvConstants.Period.PERIOD_FN
-import io.suggest.adv.AdvConstants.RadMap.RADMAP_FN
 import models.adv.geo.tag.{AgtForm_t, MAgtFormResult}
 import models.mtag.MTagBinded
-import play.api.data.{Mapping, Form}
 import play.api.data.Forms._
+import play.api.data.{Form, Mapping}
 import util.adv.AdvFormUtil
 import util.maps.RadMapFormUtil
 import util.tags.TagsEditFormUtil
@@ -19,7 +19,7 @@ import util.tags.TagsEditFormUtil
  * Description: Утиль для формы размещения карточки в геотегах.
  */
 @Singleton
-class AgtFormUtil @Inject()(
+class AdvGeoFormUtil @Inject()(
   tagsEditFormUtil  : TagsEditFormUtil,
   advFormUtil       : AdvFormUtil,
   radMapFormUtil    : RadMapFormUtil
@@ -27,9 +27,10 @@ class AgtFormUtil @Inject()(
 
   private def _agtFormM(tagsM: Mapping[List[MTagBinded]]): Mapping[MAgtFormResult] = {
     mapping(
-      EXIST_TAGS_FN   -> tagsM,
-      RADMAP_FN       -> radMapFormUtil.radMapValM,
-      PERIOD_FN       -> advFormUtil.advPeriodM
+      EXIST_TAGS_FN       -> tagsM,
+      RADMAP_FN           -> radMapFormUtil.radMapValM,
+      PERIOD_FN           -> advFormUtil.advPeriodM,
+      OnMainScreen.FN     -> boolean
     )
     { MAgtFormResult.apply }
     { MAgtFormResult.unapply }
