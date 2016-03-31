@@ -164,6 +164,7 @@ object SiobixBuild extends Build {
     Project(id = name, base = file(name))
       .enablePlugins(ScalaJSPlay)
       .dependsOn(lkAdvExtSjs, lkAdvDirectSjs, lkAdvGeoTagsSjs, lkAdvGeoPlaceSjs)
+      .aggregate(lkAdvExtSjs, lkAdvDirectSjs, lkAdvGeoTagsSjs, lkAdvGeoPlaceSjs, lkAdvCommonSjs, lkCommonSjs)
   }
 
   /** Выдача suggest.io, написанная с помощью scala.js. */
@@ -182,7 +183,7 @@ object SiobixBuild extends Build {
   lazy val web21 = project
     .dependsOn(common, util, securesocial, n2, mbill2, svgUtil)
     .settings(
-      scalaJSProjects := Seq(lkSjs, commonSjs, scSjs, mapRadSjs, leafletSjs),
+      scalaJSProjects := Seq(lkSjs, scSjs),
       pipelineStages += scalaJSProd
     )
     .enablePlugins(PlayScala, SbtWeb, PlayScalaJS)
@@ -192,8 +193,12 @@ object SiobixBuild extends Build {
   lazy val root = {
     Project(id = "root", base = file("."))
       .settings(Common.settingsOrg: _*)
-      .aggregate(common, lkAdvExtSjs, leafletSjs, mapRadSjs, lkSjs, util, swfs, n2, securesocial, scSjs, web21,
-        svgUtil, lkAdvDirectSjs, dateTimePickerSjs, lkDtPeriodSjs)
+      .aggregate(
+        common, logsMacro,
+        commonSjs, leafletSjs, mapRadSjs, lkSjs, scSjs, dateTimePickerSjs, lkDtPeriodSjs,
+        util, swfs, n2, securesocial,
+        web21, mbill2,  svgUtil
+      )
   }
 
   // Активация offline-режима резолва зависимостей.
