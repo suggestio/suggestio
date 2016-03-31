@@ -14,10 +14,19 @@ trait IsExist extends ISwfsClientWs {
 
   override def isExist(args: IGetRequest): Future[Boolean] = {
     val url = args.toUrl
-    for {
+
+    val startMs = System.currentTimeMillis()
+    lazy val logPrefix = s"isExists($startMs):"
+    LOGGER.trace(s"$logPrefix starting, args = $args, url = $url")
+
+    // Make and handle request.
+    val fut = for {
       wsResp  <- ws.url(url).head()
     } yield {
-      wsResp.status match {
+      val s = wsResp.status
+      LOGGER.trace(s"$logPrefix success, took ${System.currentTimeMillis() - startMs} ms\n ${wsResp.body}")
+
+      s match {
         case 200 =>
           true
         case 404 =>
@@ -26,6 +35,13 @@ trait IsExist extends ISwfsClientWs {
           throw new IllegalStateException(s"Unexpected HTTP $other returned from weed volume")
       }
     }
+
+    // Log possible errors.
+    fut.onFailure { case ex: Throwable =>
+      LOGGER.error(s"$logPrefix Failed to make request for $args, HEAD $url ", ex)
+    }
+
+    fut
   }
 
 }

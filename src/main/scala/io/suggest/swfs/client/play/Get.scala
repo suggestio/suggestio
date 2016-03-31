@@ -15,9 +15,24 @@ trait Get extends ISwfsClientWs {
 
   override def get(args: IGetRequest): Future[Option[GetResponse]] = {
     val url = args.toUrl
+
+    val startMs = System.currentTimeMillis()
+    lazy val logPrefix = s"get($startMs):"
+    LOGGER.trace(s"$logPrefix Starting GET $url\n $args")
+
+    val streamFut = ws.url( url ).getStream()
+
+    streamFut.onFailure { case ex: Throwable =>
+      LOGGER.error(s"$logPrefix Req failed: GET $url\n $args", ex)
+    }
+
     for {
-      (headers, enumerator)  <-  ws.url( url ).getStream()
+      (headers, enumerator)  <-  streamFut
     } yield {
+
+      val s = headers.status
+      LOGGER.trace(s"$logPrefix Streaming GET resp, status = $s, took ${System.currentTimeMillis - startMs} ms")
+
       if ( SwfsClientWs.isStatus2xx(headers.status) ) {
         Some( GetResponse(headers, enumerator) )
       } else if (headers.status == 404) {

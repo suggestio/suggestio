@@ -17,6 +17,12 @@ import scala.concurrent.{Future, ExecutionContext}
 trait Lookup extends ISwfsClientWs { that =>
 
   override def lookup(args: ILookupRequest): Future[Either[LookupError, LookupResponse]] = {
+    // Готовим логгирование.
+    val startMs = System.currentTimeMillis()
+    lazy val logPrefix = s"lookup($startMs):"
+    LOGGER.trace(s"$logPrefix Starting, args = $args")
+
+    // Собираем и запускаем запрос...
     val req = new OneMasterRequest {
       override type Args_t          = ILookupRequest
       override type Res_t           = Either[LookupError, LookupResponse]
@@ -29,13 +35,16 @@ trait Lookup extends ISwfsClientWs { that =>
         MASTER_PROTO + "://" + master + "/dir/lookup" + args.toQs
       }
       override def _handleResp(url: String, fut: Future[WSResponse]): Future[Res_t] = {
-        fut map { wsResp =>
+        for (wsResp <- fut) yield {
           val s = wsResp.status
+          LOGGER.trace(s"$logPrefix Received answer from $url: HTTP $s, took = ${System.currentTimeMillis() - startMs} ms.\n ${wsResp.body}")
+
           if ( SwfsClientWs.isStatus2xx(s) ) {
-            Right( wsResp.json.validate[LookupResponse].get )
+            Right( wsResp.json.as[LookupResponse] )
           } else if (s == 404) {
-            Left( wsResp.json.validate[LookupError].get )
+            Left( wsResp.json.as[LookupError] )
           } else {
+            LOGGER.error(s"$logPrefix Unexpected answer ($s) from $url: $wsResp")
             throw FileOpUnknownResponseException(_method, url, s, Some(wsResp.body))
           }
         }

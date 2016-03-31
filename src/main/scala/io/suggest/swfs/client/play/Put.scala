@@ -39,12 +39,24 @@ trait Put extends ISwfsClientWs {
       url  = Some( req.toUrl ),
       fileName = req.getFileName
     )
+    val startMs = System.currentTimeMillis()
+    val putFut = Uploader.mpUpload(uplArgs)
+
+    lazy val logPrefix = s"put($startMs):"
+    LOGGER.trace(s"$logPrefix Started PUT file for $req, file size = ${req.file.length()} bytes.")
+
+    // Залоггировать ошибки
+    putFut.onFailure { case ex: Throwable =>
+      LOGGER.error(s"$logPrefix Failed to PUT: $req", ex)
+    }
+
+    // Десериализовать успешный ответ.
     for {
-      wsResp <- Uploader.mpUpload(uplArgs)
+      wsResp <- putFut
     } yield {
+      LOGGER.trace(s"$logPrefix Success, took ${System.currentTimeMillis() - startMs} ms\n ${wsResp.body}")
       wsResp.json
-        .validate[PutResponse]
-        .get
+        .as[PutResponse]
     }
   }
 

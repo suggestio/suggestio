@@ -40,11 +40,11 @@ trait OneMasterRequestT extends MacroLogsI {
       val restMasters2 = restMasters.tail
 
       if (restMasters2.nonEmpty) {
-        fut1 = fut1 recoverWith { case ex: Throwable =>
+        fut1 = fut1.recoverWith { case ex: Throwable =>
           mkOp(restMasters2)
         }
       }
-      fut1 onFailure { case ex: Throwable =>
+      fut1.onFailure { case ex: Throwable =>
         val msg = s"mkOp($master) failed, args was = ${_args}"
         if (ex.isInstanceOf[NoSuchElementException])
           LOGGER.warn(msg)
@@ -72,6 +72,8 @@ trait OneMasterRequestT extends MacroLogsI {
         LOGGER.trace(s"${_method} $url =>\n ${resp.body}")
       }(_ec)
     }
+
+    // Отправляем реквест на итоговую обработку.
     val resFut = _handleResp(url, fut)
     resFut
   }

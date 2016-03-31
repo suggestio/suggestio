@@ -16,10 +16,24 @@ trait Delete extends ISwfsClientWs {
   override def delete(args: IDeleteRequest): Future[Option[DeleteResponse]] = {
     val url = args.toUrl
     val method = "DELETE"
+
+    val startMs = System.currentTimeMillis()
+    lazy val logPrefix = s"delete($startMs):"
+    LOGGER.trace(s"$logPrefix $method $url\n $args")
+
+    val reqFut = ws.url(url).execute(method)
+
+    reqFut.onFailure { case ex: Throwable =>
+      LOGGER.error(s"$logPrefix Failed $method $url\n $args", ex)
+    }
+
     for {
-      wsResp <- ws.url(url).execute(method)
+      wsResp <- reqFut
     } yield {
+
       val s = wsResp.status
+      LOGGER.trace(s"$logPrefix $method $url => $s, took ${System.currentTimeMillis - startMs} ms,\n ${wsResp.body}")
+
       if ( SwfsClientWs.isStatus2xx(s) ) {
         wsResp.json
           .validate[DeleteResponse]

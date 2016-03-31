@@ -16,6 +16,11 @@ import scala.concurrent.{ExecutionContext, Future}
 trait Assign extends ISwfsClientWs { that =>
 
   override def assign(args: IAssignRequest): Future[AssignResponse] = {
+
+    val startMs = System.currentTimeMillis()
+    lazy val logPrefix = s"assign($startMs):"
+    LOGGER.trace(s"$logPrefix Starting, args = $args")
+
     val req = new OneMasterRequest {
       override type Args_t  = IAssignRequest
       override type Res_t   = AssignResponse
@@ -29,7 +34,7 @@ trait Assign extends ISwfsClientWs { that =>
       }
       override def _handleResp(url: String, fut: Future[WSResponse]): Future[AssignResponse] = {
         fut.filter { resp =>
-          LOGGER.trace(s"${_method} $url replied HTTP ${resp.status} ${resp.statusText}\n ${resp.body}")
+          LOGGER.trace(s"${_method} $url replied HTTP ${resp.status} ${resp.statusText}\n ${resp.body}, took = ${System.currentTimeMillis() - startMs}\n ${resp.body}")
           _isStatusValid( resp.status )
         }
         .map { resp =>
