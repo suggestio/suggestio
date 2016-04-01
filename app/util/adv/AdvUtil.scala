@@ -63,7 +63,7 @@ class AdvUtil @Inject() (
     val rcvrEdgeOpt = prodIdOpt.flatMap { prodId =>
       mad.edges
         .withPredicateIter(MPredicates.Receiver)
-        .find( _.nodeIdOpt.contains(prodId) )
+        .find( _.nodeIds.contains(prodId) )
     }
     val needProducer = rcvrEdgeOpt.isDefined
 

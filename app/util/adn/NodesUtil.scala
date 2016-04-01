@@ -69,6 +69,7 @@ class NodesUtil @Inject() (
 
   /**
    * Создать новый инстанс узла для юзера без сохранения узла в хранилище.
+ *
    * @param name название узла.
    * @param personId id юзера-владельца.
    * @return Экземпляр узла без id.
@@ -109,7 +110,7 @@ class NodesUtil @Inject() (
         out = {
           val medge = MEdge(
             predicate = MPredicates.OwnedBy,
-            nodeIdOpt = Some(personId)
+            nodeIds   = Set(personId)
           )
           MNodeEdges.edgesToMap(medge)
         }
@@ -119,6 +120,7 @@ class NodesUtil @Inject() (
 
   /**
    * Создать дефолтовые таргеты для размещения в соц.сетях.
+ *
    * @param adnId id узла.
    * @return Фьючерс для синхронизации.
    */
@@ -131,6 +133,7 @@ class NodesUtil @Inject() (
 
   /**
    * Создание нового узла для юзера. Узел должен быть готов к финансовой работе.
+ *
    * @param name Название узла.
    * @param personId id юзера-владельца.
    * @return Фьючерс с готовым инстансом нового существующего узла.
@@ -203,14 +206,14 @@ class NodesUtil @Inject() (
               out = {
                 val pp = MPredicates.OwnedBy
                 val rp = MPredicates.Receiver
-                val someAdnId = Some(adnId)
+                val nodeIdSet = Set(adnId)
                 val prodE = MEdge(
                   predicate = pp,
-                  nodeIdOpt = someAdnId
+                  nodeIds   = nodeIdSet
                 )
                 val selfRcvrE = MEdge(
                   predicate = rp,
-                  nodeIdOpt = someAdnId,
+                  nodeIds   = nodeIdSet,
                   info = MEdgeInfo(sls = Set(SinkShowLevels.GEO_START_PAGE_SL))
                 )
                 MNodeEdges.edgesToMap1 {

@@ -144,7 +144,7 @@ class MarketAd @Inject() (
                   val currEdges = r.mad.edges.out
                   val prodE = MEdge(
                     predicate = MPredicates.OwnedBy,
-                    nodeIdOpt = mnode.id
+                    nodeIds   = mnode.id.toSet
                   )
                   var iter  = currEdges.valuesIterator ++ savedImgs ++ Seq(prodE)
                   // Добавить эдж модератора, если карточка создаётся модератором.
@@ -373,7 +373,7 @@ class MarketAd @Inject() (
           val e0 = e0Opt.getOrElse {
             MEdge(
               predicate = MPredicates.Receiver.Self,
-              nodeIdOpt = request.producer.id
+              nodeIds   = request.producer.id.toSet
             )
           }
 

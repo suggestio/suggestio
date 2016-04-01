@@ -24,7 +24,7 @@ class LogoUtil @Inject() (
 
   /** Приведение ребра графа к метаданным изображения логотипа. */
   def edge2logoImg(medge: IEdge): MImgT = {
-    mImgs3(medge.nodeIdOpt.get, Nil)
+    mImgs3(medge.nodeIds.head, Nil)
   }
 
   // TODO Допилить этот метод, привязать его к контроллеру, разобраться с MImg.deleteAllFor(UUID), обновить маппинги форм.

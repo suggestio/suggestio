@@ -289,7 +289,7 @@ class MarketLkAdnEdit @Inject() (
           newGallery = fmr.gallery,
           oldGallery = mnode.edges
             .withPredicateIter( MPredicates.GalleryItem )
-            .flatMap { _.nodeIdOpt }
+            .flatMap { _.nodeIds}
             .toSeq
         )
         for {
@@ -349,7 +349,7 @@ class MarketLkAdnEdit @Inject() (
         for (newLogo <- newLogoOpt) {
           val logoEdge = MEdge(
             predicate = Logo,
-            nodeIdOpt = Some(newLogo.rowKeyStr)
+            nodeIds   = Set(newLogo.rowKeyStr)
           )
           edgesIter ++= Iterator(logoEdge)
         }
@@ -361,7 +361,7 @@ class MarketLkAdnEdit @Inject() (
             .map { case (img, i) =>
               MEdge(
                 predicate = GalleryItem,
-                nodeIdOpt = Some(img.rowKeyStr),
+                nodeIds   = Set(img.rowKeyStr),
                 order     = Some(i),
                 info      = MEdgeInfo(
                   dynImgArgs = img.qOpt
@@ -385,6 +385,7 @@ class MarketLkAdnEdit @Inject() (
   /**
    * Экшен загрузки картинки для логотипа магазина.
    * Права на доступ к магазину проверяем для защиты от несанкциронированного доступа к lossless-компрессиям.
+ *
    * @return Тот же формат ответа, что и для просто temp-картинок.
    */
   def handleTempLogo = _imgUploadBase { implicit request =>
@@ -399,6 +400,7 @@ class MarketLkAdnEdit @Inject() (
 
   /**
    * Экшен для загрузки картинки приветствия.
+ *
    * @return JSON с тем же форматом ответа, что и для других img upload'ов.
    */
   def uploadWelcomeImg = _imgUpload { (imgId, ctx) =>
@@ -428,6 +430,7 @@ class MarketLkAdnEdit @Inject() (
 
   /**
    * Общий код загрузки картинок для узла.
+ *
    * @param ovlRrr Функция-рендерер html оверлея картинки.
    * @return Action.
    */

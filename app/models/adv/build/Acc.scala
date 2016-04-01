@@ -4,7 +4,7 @@ import models._
 import org.elasticsearch.client.Client
 import slick.dbio.{DBIOAction, Effect, NoStream}
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{Future, ExecutionContext}
 
 /** Аккамулятор результатов асинхронного билдера размещения.
   *
@@ -13,7 +13,8 @@ import scala.concurrent.ExecutionContext
   */
 case class Acc(
   mad         : MNode,
-  dbActions   : List[DBIOAction[_, NoStream, Effect.Write]] = Nil
+  dbActions   : List[DBIOAction[_, NoStream, Effect.Write]] = Nil,
+  ctxOuterFut : Future[MCtxOuter] = MCtxOuter.emptyFut
 )
 
 

@@ -28,7 +28,7 @@
     }
 
   } {
-    @eis.map { ei =>
+    @for(ei <- eis) {
       @_tr() {
 
         @_td(sz) {
@@ -44,16 +44,19 @@
         }
 
         @_td(sz) {
-          @ei.mnodeEith.right.toOption.map { mnode =>
-            <a href="@routes.SysMarket.showAdnNode( mnode.id.get )">
-              @mnode.guessDisplayName.fold {
-                @mnode.id
-              } { name =>
-                <strong>@name</strong>
-              }
-            </a>
+          @for(eith <- ei.mnodeEiths) {
+            @eith.right.toOption.map { mnode =>
+              <a href="@routes.SysMarket.showAdnNode( mnode.id.get )">
+                @mnode.guessDisplayName.fold {
+                  @mnode.id
+                } { name =>
+                  <strong>@name</strong>
+                }
+              </a>
+            }
+            @eith.left.toOption
+            <br/>
           }
-          @ei.mnodeEith.left.toOption
         }
 
         @_td(sz) {

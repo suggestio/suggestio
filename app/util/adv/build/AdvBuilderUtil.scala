@@ -1,7 +1,6 @@
 package util.adv.build
 
 import com.google.inject.{Inject, Singleton}
-import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.model.n2.edge.MNodeEdges
 import models.MPredicate
@@ -27,50 +26,43 @@ class AdvBuilderUtil @Inject() (
 {
 
   import mCommonDi._
-  import slick.driver.api._
-  import LOGGER._
+  import slick.driver.api.Query
 
 
   /**
     * Подготовка данных и внешнего контекста для билдера, который будет содержать дополнительные данные,
     * необходимые для работы внутри самого билдера.
     *
-    * @param itemQuery0 Заготовка запроса поиска
-    * @return
+    * @param itemsSql Заготовка запроса поиска
+    * @return Фьючерс с outer-контекстом для дальнейшей передачи его в билдер.
     */
-  def prepareInstallNew(itemQuery0: Query[MItems#MItemsTable, MItem, Seq]): Future[MCtxOuter] = {
-    lazy val logPrefix = s"prepareInstallNew(${System.currentTimeMillis}):"
+  def prepareInstallNew(itemsSql: Query[MItems#MItemsTable, MItem, Seq]): Future[MCtxOuter] = {
+    geoTagsUtil.prepareInstallNew(itemsSql)
+  }
 
-    for {
-      // Найти все теги, которые затрагиваются грядующим инсталлом.
-      tagFacesOpts <- slick.db.run {
-        itemQuery0
-          .filter(_.iTypeStr === MItemTypes.GeoTag.strId)
-          .map(_.tagFaceOpt)
-          .distinct
-          .result
-      }
 
-      // Создать множество недублирующихся тегов.
-      tagFaces = {
-        val r = tagFacesOpts
-          .iterator
-          .flatMap(_.iterator)
-          .toSet
-        trace(s"$logPrefix Found ${r.size} tag faces")
-        r
-      }
+  /**
+    * Окончание инсталляции новых item'ов.
+    * @param ctxOuterFut Результат prepareInstallNew().
+    * @return Фьючер без полезных данных внутри.
+    */
+  def afterInstallNew(ctxOuterFut: Future[MCtxOuter]): Future[_] = {
+    geoTagsUtil.afterInstallNew(ctxOuterFut)
+  }
 
-      // Собрать карту узлов-тегов, создав при необходимости какие-то новые узлы-теги.
-      gtMap <- geoTagsUtil.ensureTags(tagFaces)
 
-    } yield {
-      trace(s"$logPrefix Have Map[tagFace,node] with ${gtMap.size} keys.")
-      // Собрать и вернуть результат.
-      MCtxOuter(
-        tagFacesNodesMap = gtMap
-      )
-    }
+  /**
+    * Подготовка outer-контекста к деинсталляции item'ов, требующих дополнительных действий.
+    *
+    * @param itemsSql Выборка item'ов, которые будут деинсталлированы.
+    * @return Фьючерс с готовым outer-контекстом.
+    */
+  def prepareUnInstall(itemsSql: Query[MItems#MItemsTable, MItem, Seq]): Future[MCtxOuter] = {
+    geoTagsUtil.prepareUnInstall(itemsSql)
+  }
+
+  def afterUnInstall(ctxOuterFut: Future[MCtxOuter]): Future[_] = {
+    geoTagsUtil.afterUnInstall(ctxOuterFut)
   }
 
 

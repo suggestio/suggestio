@@ -53,7 +53,7 @@ class SysMdrUtil @Inject() (
   def mdrEdgeI(einfo: MEdgeInfo)(implicit request: IReqHdr): MEdge = {
     MEdge(
       predicate = MPredicates.ModeratedBy,
-      nodeIdOpt = request.user.personIdOpt,
+      nodeIds   = request.user.personIdOpt.toSet,
       info      = einfo
     )
   }

@@ -17,6 +17,7 @@ import io.suggest.util.JMXBase
 import models._
 import util.PlayLazyMacroLogsImpl
 import io.suggest.util.JMXHelpers._
+import util.adv.geo.tag.GeoTagsUtilJmx
 
 /**
  * Suggest.io
@@ -31,6 +32,7 @@ class JMXImpl @Inject() (
   advUtilJmx                    : AdvUtilJmx,
   mCalendarJmx                  : MCalendarJmx,
   mNodeJmx                      : MNodeJmx,
+  geoTagsUtilJmx                : GeoTagsUtilJmx,
   mCommonDi                     : ICommonDi
 )
   extends PlayLazyMacroLogsImpl
@@ -56,6 +58,7 @@ class JMXImpl @Inject() (
       new MEventJmx,
       new MExtTargetJmx,
       mNodeJmx,
+      geoTagsUtilJmx,
       mMediaJmx
     )
   }

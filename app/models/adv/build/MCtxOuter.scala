@@ -2,6 +2,8 @@ package models.adv.build
 
 import models.MNode
 
+import scala.concurrent.Future
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -10,8 +12,10 @@ import models.MNode
   */
 trait ICtxOuter {
 
-  /** Карта узловв-тегов: tagFace -> MNode. */
-  def tagFacesNodesMap: Map[String, MNode]
+  /** Карта узловв-тегов: (tagFace|id) -> MNode.
+    * Смысл ключа зависит от контекста исполнения
+    */
+  def tagNodesMap: Map[String, MNode]
 
 }
 
@@ -19,10 +23,12 @@ object MCtxOuter {
 
   def empty = apply()
 
+  def emptyFut = Future.successful(empty)
+
 }
 
 /** Дефолтовая реализация модели [[ICtxOuter]]. */
 case class MCtxOuter(
-  override val tagFacesNodesMap: Map[String, MNode] = Map.empty
+  override val tagNodesMap: Map[String, MNode] = Map.empty
 )
   extends ICtxOuter

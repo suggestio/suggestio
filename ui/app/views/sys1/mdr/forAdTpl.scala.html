@@ -88,7 +88,7 @@
       @for(firstMdr <- args.freeMdrs.headOption) {
         @messages(firstMdr.predicate.singular)
         @for( mdr <- args.freeMdrs ) {
-          @for(nodeId <- mdr.nodeIdOpt) {
+          @for(nodeId <- mdr.nodeIds) {
             @__nodeLink(nodeId)
           }
           @for(dt <- mdr.info.dateNi) {
@@ -99,7 +99,7 @@
 
       @for(medge <- args.freeAdvs) {
         @messages(medge.predicate.singular)
-        @for(nodeId <- medge.nodeIdOpt) {
+        @for(nodeId <- medge.nodeIds) {
           @__nodeLink(nodeId)
         }
       }

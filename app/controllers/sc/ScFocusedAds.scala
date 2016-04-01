@@ -153,7 +153,7 @@ trait ScFocusedAdsBase
           // TODO В теории тут может выскочить person, который узлом-продьюсером не является.
           // Такое возможно, если пользователи будут напрямую владеть карточками.
           if e.predicate == MPredicates.OwnedBy
-          nodeId <- e.nodeIdOpt
+          nodeId <- e.nodeIds
         } yield {
           nodeId
         }

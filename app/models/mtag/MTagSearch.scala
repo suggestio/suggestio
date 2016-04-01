@@ -3,10 +3,11 @@ package models.mtag
 import io.suggest.common.text.StringUtil
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, TagCriteria}
+import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.sc.TagSearchConstants.Req._
 import play.api.mvc.QueryStringBindable
 import util.qsb.QsbKey1T
-import io.suggest.sc.TagSearchConstants.Req._
 import views.js.tags.m.mtSearchJsUnbindTpl
 
 /**
@@ -55,7 +56,7 @@ object MTagSearch {
             }
 
             val ecr = Criteria(
-              predicates  = Seq( MPredicates.TaggedBy ),
+              predicates  = Seq( MPredicates.TaggedBy.Self ),
               tags        = tcrOpt.toSeq
             )
 
@@ -73,6 +74,7 @@ object MTagSearch {
               override def outEdges  = Seq(ecr)
               override def limit     = _limit
               override def offset    = _offset
+              override def nodeTypes = Seq( MNodeTypes.Tag )
             }
           }
         }

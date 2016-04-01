@@ -56,7 +56,7 @@ trait MarketAdPreview
                 out = MNodeEdges.edgesToMap1 {
                   val ownEdge = MEdge(
                     predicate = MPredicates.OwnedBy,
-                    nodeIdOpt = request.mnode.id
+                    nodeIds   = request.mnode.id.toSet
                   )
                   r.mad.edges.out.valuesIterator ++
                     imgs ++

@@ -4,11 +4,12 @@ import com.google.inject.Inject
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{MItem, MItems}
-import models.adv.build.TryUpdateBuilder
+import models.adv.build.{MCtxOuter, TryUpdateBuilder}
 import models.mproj.ICommonDi
 import slick.dbio.Effect.Read
 import slick.profile.SqlAction
-import util.adv.build.AdvBuilderFactory
+import util.adv.build.{AdvBuilderUtil, AdvBuilderFactory}
+import util.adv.geo.tag.GeoTagsUtil
 
 import scala.concurrent.Future
 
@@ -22,6 +23,8 @@ import scala.concurrent.Future
   */
 
 class ActivateOfflineAdvs @Inject() (
+  advBuilderUtil                  : AdvBuilderUtil,
+  geoTagsUtil                     : GeoTagsUtil,
   override val mItems             : MItems,
   override val advBuilderFactory  : AdvBuilderFactory,
   override val mCommonDi          : ICommonDi
@@ -49,6 +52,14 @@ class ActivateOfflineAdvs @Inject() (
       .distinct
       .take(max)
       .result
+  }
+
+
+  /** Фьючерс внешнего контекста для adv-билдера. */
+  override def builderCtxOuterFut: Future[MCtxOuter] = {
+    val sql = mItems.query
+      .filter(_offlineItemsSql)
+    advBuilderUtil.prepareInstallNew(sql)
   }
 
 
@@ -83,6 +94,17 @@ class ActivateOfflineAdvs @Inject() (
     } yield {
       TryUpdateBuilder(acc2)
     }
+  }
+
+
+  override def run(): Future[Int] = {
+    val runFut = super.run()
+    // Необходимо произвести изменения, связанные с общими данными.
+    for (_ <- runFut) {
+      advBuilderUtil.afterInstallNew(_builderCtxOuterFut)
+    }
+    // Вернуть всё-таки исходный фьючерс, т.к. в ребилд тегов может идти какое-то время.
+    runFut
   }
 
 }

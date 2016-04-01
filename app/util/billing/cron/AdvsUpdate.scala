@@ -4,7 +4,7 @@ import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{IMItems, MItem}
 import io.suggest.model.es.EsModelUtil
 import models.MNode
-import models.adv.build.{Acc, TryUpdateBuilder}
+import models.adv.build.{MCtxOuter, Acc, TryUpdateBuilder}
 import models.mproj.IMCommonDi
 import org.joda.time.DateTime
 import slick.profile.SqlAction
@@ -12,6 +12,7 @@ import util.PlayMacroLogsImpl
 import util.adv.build.AdvBuilderFactoryDi
 
 import scala.concurrent.Future
+import scala.util.{Success, Failure}
 
 /**
   * Suggest.io
@@ -69,7 +70,7 @@ abstract class AdvsUpdate
     * Если уперлись в этот лимит, то продолжение будет только после вызова run() извне.
     * Нужно в основном для защиты от нештатных ситуаций (бесконечный цикл, сильная долгая нагрузка на сеть/СУБД).
     */
-  def MAX_ADS_PER_RUNS: Int = 200
+  def MAX_ADS_PER_RUNS: Int = 500
 
 
   /** Основная метод запуска всего модуля на исполнение.
@@ -94,7 +95,8 @@ abstract class AdvsUpdate
       Future.successful(counter)
 
     } else {
-      // TODO Здесь необходимо запустить асинхронную подготовку общего контекста
+      // запустить асинхронную подготовку общего контекста
+      _builderCtxOuterFut
 
       for {
         adIds <- slick.db.run( findAdIds(MAX_ADS_PER_RUN) )
@@ -132,6 +134,10 @@ abstract class AdvsUpdate
 
     }
   }
+
+  /** Фьючерс внешнего контекста для adv-билдера. */
+  def builderCtxOuterFut: Future[MCtxOuter]
+  final lazy val _builderCtxOuterFut = builderCtxOuterFut
 
 
   /** Есть ли item'ы для апдейта?
@@ -183,7 +189,10 @@ abstract class AdvsUpdate
 
     // Нужны только item'ы, которые поддерживаются adv-билдерами
     val acc0Fut = for (madOpt <- madOptFut) yield {
-      Acc(madOpt.get)
+      Acc(
+        mad         = madOpt.get,
+        ctxOuterFut = _builderCtxOuterFut
+      )
     }
     val b0 = advBuilderFactory.builder(acc0Fut, now)
 

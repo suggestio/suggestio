@@ -5,6 +5,7 @@ import controllers.sysctl._
 import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{MItem, MItems}
+import io.suggest.model.common.OptId
 import io.suggest.model.n2.edge.MNodeEdges
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
@@ -186,8 +187,11 @@ class SysMarket @Inject() (
       eis.toSeq
         .sortBy { ei =>
           // Собрать ключ для сортировки
-          val nodeName = ei.mnodeEith
-            .fold [String] (identity, _.guessDisplayNameOrId.getOrElse(""))
+          val nodeName = ei.mnodeEiths
+             .iterator
+            .map { _.fold [String] (identity, _.guessDisplayNameOrId.getOrElse("")) }
+            .toStream
+            .head
           (ei.medge.predicate.strId,
             ei.medge.order.getOrElse(Int.MaxValue),
             nodeName)
@@ -196,18 +200,22 @@ class SysMarket @Inject() (
 
     // Узнаём исходящие ребра.
     val outEdgesFut: Future[Seq[MNodeEdgeInfo]] = {
-      MNode.multiGetMap {
+      val mnodesMapFut = mNodeCache.multiGetMap {
         mnode.edges.out
           .valuesIterator
-          .flatMap(_.nodeIdOpt)
-      } map { nmap =>
-        val iter = mnode.edges.out
-          .valuesIterator
-          .map { medge =>
-            val mnodeOpt = medge.nodeIdOpt.flatMap(nmap.get)
-            val mnodeEith = mnodeOpt.toRight( medge.nodeIdOpt.getOrElse("--UNKNOWN--") )
-            MNodeEdgeInfo(medge, mnodeEith)
-          }
+          .flatMap(_.nodeIds)
+      }
+      for (nmap <- mnodesMapFut) yield {
+        val iter = for (medge <- mnode.edges.out.valuesIterator) yield {
+          val mnEiths = medge.nodeIds
+            .iterator
+            .map { nodeId =>
+              nmap.get(nodeId)
+                .toRight(nodeId)
+            }
+            .toSeq
+          MNodeEdgeInfo(medge, mnEiths)
+        }
         _prepareEdgeInfos(iter)
       }
     }
@@ -229,7 +237,7 @@ class SysMarket @Inject() (
             mnode.edges
               .withNodeId( nodeId )
               .map { medge =>
-                MNodeEdgeInfo(medge, Right(mnode))
+                MNodeEdgeInfo(medge, Seq(Right(mnode)))
               }
           }
         _prepareEdgeInfos(iter)
@@ -241,12 +249,11 @@ class SysMarket @Inject() (
       val ownerIds = mnode.edges
         .withPredicateIterIds( MPredicates.OwnedBy )
       Future.traverse( ownerIds ) { personId =>
-        mPerson.findUsernameCached(personId)
-          .map { nameOpt =>
-            val name = nameOpt.getOrElse(personId)
-            personId -> name
-          }
-      } map {
+        for (nameOpt <- mPerson.findUsernameCached(personId)) yield {
+          val name = nameOpt.getOrElse(personId)
+          personId -> name
+        }
+      }.map {
         _.toMap
       }
     }
@@ -332,7 +339,7 @@ class SysMarket @Inject() (
             out = {
               val ownEdge = MEdge(
                 predicate = MPredicates.OwnedBy,
-                nodeIdOpt = request.user.personIdOpt
+                nodeIds   = request.user.personIdOpt.toSet
               )
               MNodeEdges.edgesToMap(ownEdge)
             }
@@ -724,7 +731,11 @@ class SysMarket @Inject() (
 
     // Достаём из кэша узлы.
     val nodesMapFut: Future[Map[String, MNode]] = {
-      def _nodeIds(rcvrs: Receivers_t) = rcvrs.valuesIterator.flatMap(_.nodeIdOpt).toSet
+      def _nodeIds(rcvrs: Receivers_t) = {
+        rcvrs.valuesIterator
+          .map(_.nodeIds)
+          .reduceLeft(_ ++ _)
+      }
       val adnIds1 = _nodeIds(rcvrsMap)
       for {
         adns1       <- mNodeCache.multiGet(adnIds1)
@@ -734,9 +745,8 @@ class SysMarket @Inject() (
           mNodeCache.multiGet(newRcvrIds -- adnIds1)
         }
       } yield {
-        (adns1.iterator ++ newAdns.iterator)
-          .map { adnNode => adnNode.id.get -> adnNode }
-          .toMap
+        val iter = adns1.iterator ++ newAdns.iterator
+        OptId.els2idMap[String, MNode](iter)
       }
     }
 

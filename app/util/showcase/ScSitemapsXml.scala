@@ -109,7 +109,7 @@ class ScSitemapsXml @Inject() (
         mad.edges
           .withPredicateIter(MPredicates.Receiver)
           .filter { e =>
-            e.nodeIdOpt.nonEmpty && !e.nodeIdOpt.contains(producerId) &&  e.info.sls.nonEmpty
+            e.nodeIds.nonEmpty && !e.nodeIds.contains(producerId) &&  e.info.sls.nonEmpty
           }
           .toStream
           .headOption
@@ -118,7 +118,7 @@ class ScSitemapsXml @Inject() (
     } yield {
       // Собрать данные для sitemap-ссылки на карточку.
       val jsState = ScJsState(
-        adnId           = extRcvrEdge.nodeIdOpt,
+        adnId           = extRcvrEdge.nodeIds.headOption,   // TODO headOption -- нужно понять, безопасно ли это тут. edge.nodeIds стало коллекцией внезапно.
         fadOpenedIdOpt  = mad.id,
         generationOpt   = None // Всем юзерам поисковиков будет выдаваться одна ссылка, но всегда на рандомную выдачу.
       )

@@ -80,7 +80,7 @@ class MImgs3 @Inject()(
           }
       }
     }
-    apply(medge.nodeIdOpt.get, dops)
+    apply(medge.nodeIds.head, dops)
   }
 
   def apply(rowKeyStr: String, dynImgOps: Seq[ImOp], userFileName: Option[String] = None): MImg3 = {

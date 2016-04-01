@@ -21,7 +21,7 @@
         @rcvrs.valuesIterator.map { ri =>
           <tr>
             <td>
-              @for(nodeId <- ri.nodeIdOpt) {
+              @for(nodeId <- ri.nodeIds) {
                 <a href="@routes.SysMarket.showAdnNode(nodeId)">
                   @args.nodesMap.get(nodeId).fold {
                     @nodeId

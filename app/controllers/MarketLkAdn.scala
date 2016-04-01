@@ -317,12 +317,12 @@ class MarketLkAdn @Inject() (
               val nodeOwnedByPersonId = {
                 mnode.edges
                   .withPredicateIter( MPredicates.OwnedBy )
-                  .exists(_.nodeIdOpt.contains(personId))
+                  .exists(_.nodeIds.contains(personId))
               }
               val nodeUpdateFut: Future[_] = if (!nodeOwnedByPersonId) {
                 val ownEdge = MEdge(
                   predicate = MPredicates.OwnedBy,
-                  nodeIdOpt = Some(personId)
+                  nodeIds   = Set(personId)
                 )
                 MNode.tryUpdate(mnode) { mnode0 =>
                   mnode0.copy(

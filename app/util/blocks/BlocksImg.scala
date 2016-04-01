@@ -20,6 +20,7 @@ trait ISaveImgs {
 
   /**
    * Метод для обновления карты картинок. Дергает _saveImgs() и подметает потом за ним.
+   *
    * @param newImgs Новая карта картинок.
    * @param oldImgs Старая карта картинок.
    * @return Новое значение для поля imgs карточки.
@@ -50,7 +51,7 @@ trait ISaveImgs {
         .iterator
         .map { case (pred, mimg) =>
           MEdge(
-            nodeIdOpt = Some(mimg.rowKeyStr),
+            nodeIds   = Set(mimg.rowKeyStr),
             predicate = pred,
             info      = MEdgeInfo(
               dynImgArgs = mimg.qOpt
@@ -101,7 +102,7 @@ object SaveImgUtil extends MergeBindAcc[BlockImgMap] {
         savedBgImg.map { mimg =>
           MEdge(
             predicate = fn,
-            nodeIdOpt = Some(mimg.rowKeyStr),
+            nodeIds   = Set(mimg.rowKeyStr),
             info = MEdgeInfo(
               dynImgArgs = mimg.qOpt
             )

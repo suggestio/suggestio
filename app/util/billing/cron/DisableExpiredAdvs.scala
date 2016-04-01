@@ -4,12 +4,12 @@ import com.google.inject.Inject
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{MItem, MItems}
-import models.adv.build.TryUpdateBuilder
+import models.adv.build.{MCtxOuter, TryUpdateBuilder}
 import models.mproj.ICommonDi
 import org.joda.time.Interval
 import slick.dbio.Effect.Read
 import slick.profile.SqlAction
-import util.adv.build.AdvBuilderFactory
+import util.adv.build.{AdvBuilderUtil, AdvBuilderFactory}
 
 import scala.concurrent.Future
 
@@ -22,6 +22,7 @@ import scala.concurrent.Future
   */
 
 class DisableExpiredAdvs @Inject() (
+  advBuilderUtil                  : AdvBuilderUtil,
   override val mCommonDi          : ICommonDi,
   override val advBuilderFactory  : AdvBuilderFactory,
   override val mItems             : MItems
@@ -33,13 +34,14 @@ class DisableExpiredAdvs @Inject() (
   import mCommonDi._
   import slick.driver.api._
 
+  private def _expiredItemsSql(i: mItems.MItemsTable) = {
+    (i.statusStr === MItemStatuses.Online.strId) &&
+      (i.dateEndOpt <= now)
+  }
 
   override def findAdIds(max: Int): StreamingDBIO[Traversable[String], String] = {
     mItems.query
-      .filter { i =>
-        (i.statusStr === MItemStatuses.Online.strId) &&
-          (i.dateEndOpt <= now)
-      }
+      .filter(_expiredItemsSql)
       .map(_.adId)
       .distinct
       // Избегаем скачка слишком резкой нагрузки, ограничивая кол-во обрабатываемых карточек.
@@ -61,13 +63,22 @@ class DisableExpiredAdvs @Inject() (
   }
 
 
+  override def builderCtxOuterFut: Future[MCtxOuter] = {
+    advBuilderUtil.prepareUnInstall {
+      mItems.query
+        .filter(_expiredItemsSql)
+    }
+  }
+
+
   private def _isExpired(ivl: Interval): Boolean = {
     // используем !isAfter вместо isBefore, т.к. при тестировании как-то удалось попасть пальцем в небо.
     !ivl.getEnd.isAfter(now)
   }
 
   override def findItemsForAdId(adId: String, itypes: List[MItemType]): SqlAction[Iterable[MItem], NoStream, Read] = {
-    // Собираем все item'ы: и истекшие, и ещё нет. Это нужно для ребилда карточки без каких-то item'ов.
+    // Собираем ВСЕ online-item'ы: и истекшие, и ещё нет.
+    // Все нужны для ребилда самой карточки. Истекшие нужны для проведения истчения в биллинге.
     mItems.query
       .filter { i =>
         // Ищем item'ы для картоки в online-состоянии.
@@ -107,6 +118,16 @@ class DisableExpiredAdvs @Inject() (
     }
   }
 
+
+  override def run(): Future[Int] = {
+    val runFut = super.run()
+    // Необходимо отребилдить теги, затронутые изменениями в item'ах.
+    for (_ <- runFut) {
+      advBuilderUtil.afterUnInstall(_builderCtxOuterFut)
+    }
+    // Вернуть исходный фьючерс, т.к. ребилд может длиться долго и закончится крэшем.
+    runFut
+  }
 }
 
 

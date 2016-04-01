@@ -2,7 +2,6 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.mbill2.m.item.{MItem, MItems}
-import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.order.MOrderWithItems
 import io.suggest.model.common.OptId
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
@@ -217,7 +216,7 @@ class MarketAdv @Inject() (
     // Поднимаемся наверх по иерархии гео-родительства.
     val iter = node.edges
       .withPredicateIter( MPredicates.GeoParent.Direct )
-      .flatMap { _.nodeIdOpt }
+      .flatMap { _.nodeIds }
       .flatMap(nodes.get)
       .flatMap { parentNode =>
         if (parentNode.extras.adn.flatMap(_.shownTypeIdOpt).contains( parentShowType.name) ) {

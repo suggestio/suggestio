@@ -735,7 +735,7 @@ class SysAdnGeo @Inject() (
                 .map { parentId =>
                   MEdge(
                     predicate = p,
-                    nodeIdOpt = Some(parentId)
+                    nodeIds   = Set(parentId)
                   )
                 }
                 .toStream
@@ -751,7 +751,10 @@ class SysAdnGeo @Inject() (
                     val parenNodeEdgesIter = parentNodeIdOpt
                       .iterator
                       .map { parentNodeId =>
-                        MEdge(MPredicates.GeoParent.Direct, parentNodeIdOpt)
+                        MEdge(
+                          predicate = MPredicates.GeoParent.Direct,
+                          nodeIds   = parentNodeIdOpt.toSet
+                        )
                       }
                     val iter = mnode.edges.withoutPredicateIter( MPredicates.GeoParent ) ++
                       parentEdges.iterator ++

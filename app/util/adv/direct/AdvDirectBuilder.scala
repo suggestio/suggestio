@@ -72,7 +72,7 @@ trait AdvDirectBuilder extends IAdvBuilder {
         .map { mitem =>
           MEdge(
             predicate = MPredicates.Receiver.AdvDirect,
-            nodeIdOpt = mitem.rcvrIdOpt,
+            nodeIds   = mitem.rcvrIdOpt.toSet,
             info = MEdgeInfo(
               sls = mitem.sls
             )
