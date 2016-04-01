@@ -56,10 +56,32 @@ object MEdge extends IGenEsMappingProps {
 
   import Fields._
 
+  /** JSON-маппер для поля nodeIds.
+    * 2016.apr.1 nodeIds был Option[String], стал Set[String]. Поэтому тут reads с compat-костылём.
+    */
+  private val NODE_IDS_FORMAT = {
+    val path = __ \ NODE_ID_FN
+
+    val reads = path
+      .readNullable[Set[String]]
+      .map { _.getOrElse(Set.empty) }
+      .orElse {
+        path.readNullable[String]
+          .map { _.toSet }
+      }
+
+    val writes = path.writeNullable[Set[String]]
+      .contramap[Set[String]] { nodeIds =>
+        if (nodeIds.isEmpty) None else Some(nodeIds)
+      }
+
+    OFormat(reads, writes)
+  }
+
   /** Поддержка JSON. */
   implicit val FORMAT: Format[MEdge] = (
     (__ \ PREDICATE_FN).format(MPredicates.PARENTAL_OR_DIRECT_FORMAT) and
-    (__ \ NODE_ID_FN).formatNullable[String] and
+    NODE_IDS_FORMAT and
     (__ \ ORDER_FN).formatNullable[Int] and
     (__ \ INFO_FN).formatNullable[MEdgeInfo]
       .inmap [MEdgeInfo] (
@@ -92,7 +114,7 @@ trait IEdge {
   def predicate : MPredicate
 
   /** id ноды на дальнем конце эджа, если есть. */
-  def nodeIdOpt : Option[String]
+  def nodeIds   : Set[String]
 
   /** Для поддержкания порядка эджей можно использовать это опциональное поле.
     * Можно также использовать для некоего внутреннего доп.идентификатора. */
@@ -109,7 +131,7 @@ trait IEdge {
 
   /** Сконвертить в инстанс ключа карты эджей. */
   def toEmapKey: NodeEdgesMapKey_t = {
-    (predicate, nodeIdOpt, _extraKeyData)
+    (predicate, nodeIds, _extraKeyData)
   }
 
   override def toString: String = {
@@ -117,7 +139,7 @@ trait IEdge {
       .append("E(")
     sb.append(predicate.strId)
       .append(':')
-    for (nodeId <- nodeIdOpt) {
+    for (nodeId <- nodeIds) {
       sb.append(nodeId)
         .append(',')
     }
@@ -138,10 +160,10 @@ trait IEdge {
 
 /** Реализация node edge-модели. */
 case class MEdge(
-  override val predicate : MPredicate,
+  override val predicate  : MPredicate,
   // Обычно nodeId задан, поэтому без default тут для защиты от возможных ошибок.
-  override val nodeIdOpt : Option[String] = None,
-  override val order     : Option[Int]    = None,
-  override val info      : MEdgeInfo      = MEdgeInfo.empty
+  override val nodeIds    : Set[String]    = Set.empty,
+  override val order      : Option[Int]    = None,
+  override val info       : MEdgeInfo      = MEdgeInfo.empty
 )
   extends IEdge

@@ -16,7 +16,7 @@ package object edge {
   def EdgeXKeyEmpty       = Nil
 
   /** Тип ключа карты эджей. */
-  type NodeEdgesMapKey_t  = (MPredicate, Option[String], EdgeXKey_t)
+  type NodeEdgesMapKey_t  = (MPredicate, Set[String], EdgeXKey_t)
 
   /** Тип карты inline-эджей. */
   type NodeEdgesMap_t     = Map[NodeEdgesMapKey_t, MEdge]

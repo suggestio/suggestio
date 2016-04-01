@@ -161,32 +161,33 @@ case class MNodeEdges(
 
   def withPredicateIterIds(pred: MPredicate*): Iterator[String] = {
     withPredicateIter(pred: _*)
-      .flatMap { _.nodeIdOpt }
+      .flatMap { _.nodeIds}
   }
 
   def withNodeId(nodeIds: String*): Iterator[MEdge] = {
     iterator
       .filter { medge =>
-        medge.nodeIdOpt.exists(nodeIds.contains)
+        medge.nodeIds.exists(nodeIds.contains)
       }
   }
 
   def withNodePred(nodeId: String, predicate: MPredicate): Iterator[MEdge] = {
     iterator
       .filter { medge =>
-        medge.nodeIdOpt.contains(nodeId)  &&  medge.predicate ==>> predicate
+        medge.nodeIds.contains(nodeId)  &&  medge.predicate ==>> predicate
       }
   }
 
   def withoutNodePred(nodeId: String, predicate: MPredicate): Iterator[MEdge] = {
     iterator
       .filterNot { medge =>
-        medge.nodeIdOpt.contains(nodeId)  &&  medge.predicate ==>> predicate
+        medge.nodeIds.contains(nodeId)  &&  medge.predicate ==>> predicate
       }
   }
 
   /**
     * Найти и обновить с помощью функции эдж, который соответствует предикату.
+ *
     * @param findF Поиск производить этим предикатом.
     * @param updateF Обновлять эдж этой фунцией.
     * @return Обновлённый экземпляр [[MNodeEdges]].
