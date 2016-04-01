@@ -76,11 +76,7 @@ object MNode
 
   /** Почти-собранный play.json.Format. */
   val DATA_FORMAT: OFormat[MNode] = (
-    (__ \ Fields.Common.COMMON_FN).formatNullable(MNodeCommon.FORMAT)
-      .inmap[MNodeCommon](
-        opt2ImplEmpty1F( MNodeCommon(MNodeTypes.Tag, isDependent = true) ),
-        someF
-      ) and
+    (__ \ Fields.Common.COMMON_FN).format[MNodeCommon] and
     (__ \ Fields.Meta.META_FN).format[MMeta] and
     (__ \ Fields.Extras.EXTRAS_FN).formatNullable[MNodeExtras]
       .inmap [MNodeExtras] (
@@ -276,7 +272,7 @@ case class MNode(
    */
   override def save(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
     val saveFut = super.save
-    saveFut onSuccess { case adnId =>
+    saveFut.onSuccess { case adnId =>
       val mnode2 = copy(id = Option(adnId))
       val evt = MNodeSaved(mnode2, isCreated = id.isEmpty)
       sn.publish(evt)

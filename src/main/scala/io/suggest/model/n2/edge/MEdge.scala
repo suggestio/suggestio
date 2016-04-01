@@ -72,7 +72,7 @@ object MEdge extends IGenEsMappingProps {
 
     val writes = path.writeNullable[Set[String]]
       .contramap[Set[String]] { nodeIds =>
-        if (nodeIds.isEmpty) None else Some(nodeIds)
+        if (nodeIds.nonEmpty) Some(nodeIds) else None
       }
 
     OFormat(reads, writes)
