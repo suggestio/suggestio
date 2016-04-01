@@ -115,6 +115,9 @@ object NodeGeoLevels extends Enumeration(1) with EnumMaybeWithName with EnumMayb
   def default = NGL_BUILDING
 
 
+  /** Layer, относящийся к гео-тегам. */
+  def geoTag = NGL_TOWN_DISTRICT
+
   /** Вывести множество значений этого enum'а, но выставив текущий тип значения вместо Value. */
   def valuesNgl: Set[T] = values.asInstanceOf[Set[T]]
 

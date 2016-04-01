@@ -47,14 +47,32 @@ object OptId {
     *         Если id был пуст, то элемент будет отсутствовать в карте.
     */
   def els2idMap[Id_t, T <: OptId[Id_t]](els: TraversableOnce[T]): Map[Id_t, T] = {
-    els
-      .toIterator
-      .flatMap { el =>
-        for (id <- el.id) yield {
-          id -> el
+    if (els.isEmpty) {
+      Map.empty
+    } else {
+      els
+        .toIterator
+        .flatMap { el =>
+          for (id <- el.id) yield {
+            id -> el
+          }
         }
-      }
-      .toMap
+        .toMap
+    }
+  }
+
+
+  /**
+    * Входящий набор опциональных id'шников в итератор из просто id'шников.
+    *
+    * @param optIds Входящий набор Option[Id].
+    * @tparam Id_t Тип id.
+    * @return Итератор элементов типа Id_t.
+    */
+  def optIds2ids[Id_t](optIds: TraversableOnce[Option[Id_t]]): Iterator[Id_t] = {
+    optIds
+      .toIterator
+      .flatMap(_.iterator)
   }
 
 }

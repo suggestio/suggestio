@@ -767,8 +767,11 @@ trait EsModelCommonT extends OptStrId with EraseResources with TypeT {
   def isFieldsValid: Boolean = true
 
   def indexRequestBuilder(implicit client: Client): IndexRequestBuilder = {
-    client.prepareIndex(esIndexName, esTypeName, idOrNull)
-      .setSource(toJson)
+    val json = toJson
+    LOGGER.trace(s"indexRequestBuilder($esIndexName/$esTypeName/$idOrNull): $json")
+    client
+      .prepareIndex(esIndexName, esTypeName, idOrNull)
+      .setSource(json)
   }
 
   def prepareIndex(implicit client: Client): IndexRequestBuilder = {

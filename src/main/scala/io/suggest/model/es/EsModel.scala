@@ -2,6 +2,7 @@ package io.suggest.model.es
 
 import io.suggest.common.fut.FutureUtil
 import io.suggest.event.SioNotifierStaticClientI
+import io.suggest.model.common.OptId
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.action.delete.DeleteRequestBuilder
 import org.elasticsearch.action.get.MultiGetRequest.Item
@@ -34,6 +35,7 @@ trait EsModelStaticT extends EsModelCommonStaticT {
 
   /**
    * Существует ли указанный документ в хранилище?
+   *
    * @param id id магазина.
    * @return true/false
    */
@@ -49,6 +51,7 @@ trait EsModelStaticT extends EsModelCommonStaticT {
 
   /**
    * Выбрать ряд из таблицы по id.
+   *
    * @param id Ключ документа.
    * @return Экземпляр сабжа, если такой существует.
    */
@@ -72,6 +75,7 @@ trait EsModelStaticT extends EsModelCommonStaticT {
 
   /**
    * Выбрать документ из хранилища без парсинга. Вернуть сырое тело документа (его контент).
+   *
    * @param id id документа.
    * @return Строка json с содержимым документа или None.
    */
@@ -83,6 +87,7 @@ trait EsModelStaticT extends EsModelCommonStaticT {
 
   /**
    * Прочитать документ как бы всырую.
+   *
    * @param id id документа.
    * @return Строка json с документом полностью или None.
    */
@@ -94,6 +99,7 @@ trait EsModelStaticT extends EsModelCommonStaticT {
 
   /**
    * Прочитать из базы все перечисленные id разом.
+   *
    * @param ids id документов этой модели. Можно передавать как коллекцию, так и свеженький итератор оной.
    * @param acc0 Начальный аккамулятор.
    * @return Список результатов в неопределённом порядке.
@@ -130,6 +136,7 @@ trait EsModelStaticT extends EsModelCommonStaticT {
   /**
    * Пакетно вернуть инстансы модели с указанными id'шниками, но в виде карты (id -> T).
    * Враппер над multiget, но ещё вызывает resultsToMap над результатами.
+   *
    * @param ids Коллекция или итератор необходимых id'шников.
    * @param acc0 Необязательный начальный акк. полезен, когда некоторые инстансы уже есть на руках.
    * @return Фьючерс с картой результатов.
@@ -144,26 +151,13 @@ trait EsModelStaticT extends EsModelCommonStaticT {
 
   /** Сконвертить распарсенные результаты в карту. */
   def resultsToMap(results: TraversableOnce[T]): Map[String, T] = {
-    if (results.isEmpty) {
-      Map.empty
-    } else {
-      results
-        .toIterator
-        .flatMap { v =>
-          if (v.id.nonEmpty) {
-            List(v.id.get -> v)
-          } else {
-            LOGGER.warn("multiGetMap(): This should never occur! Dropping model instance because no .id value present:\n  " + v)
-            Nil
-          }
-        }
-        .toMap
-    }
+    OptId.els2idMap[String, T](results)
   }
 
 
   /**
    * Генератор delete-реквеста. Используется при bulk-request'ах.
+   *
    * @param id adId
    * @return Новый экземпляр DeleteRequestBuilder.
    */
@@ -177,6 +171,7 @@ trait EsModelStaticT extends EsModelCommonStaticT {
 
   /**
    * Удалить документ по id.
+   *
    * @param id id документа.
    * @return true, если документ найден и удалён. Если не найден, то false
    */

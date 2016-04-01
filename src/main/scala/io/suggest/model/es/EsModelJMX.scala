@@ -77,42 +77,51 @@ trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
   }
 
   override def deleteById(id: String): Boolean = {
-    warn(s"deleteById($id)")
-    companion.deleteById(id)
+    val id1 = id.trim
+    warn(s"deleteById($id1)")
+    companion.deleteById(id1)
   }
 
   override def getById(id: String): String = {
-    trace(s"getById($id)")
-    val fut = companion.getById(id) map {
-      _.fold("not found")(_.toJsonPretty)
+    val id1 = id.trim
+    trace(s"getById($id1)")
+    val fut = for (res <- companion.getById(id1)) yield {
+      res.fold("not found")(_.toJsonPretty)
     }
     awaitString(fut)
   }
 
   override def getRawById(id: String): String = {
-    trace(s"getRawById($id)")
-    val fut = companion.getRawById(id)
-      .map { _.fold("not found")(JacksonWrapper.prettify) }
+    val id1 = id.trim
+    trace(s"getRawById($id1)")
+    val fut = for (res <- companion.getRawById(id1)) yield {
+      res.fold("not found")(JacksonWrapper.prettify)
+    }
     awaitString(fut)
   }
 
   override def getRawContentById(id: String): String = {
-    trace(s"getRawContentById($id)")
-    val fut = companion.getRawContentById(id)
-      .map { _.fold("not found")(JacksonWrapper.prettify) }
+    val id1 = id.trim
+    trace(s"getRawContentById($id1)")
+    val fut = for (res <- companion.getRawContentById(id1)) yield {
+      res.fold("not found")(JacksonWrapper.prettify)
+    }
     awaitString(fut)
   }
 
   override def putOne(id: String, data: String): String = {
-    info(s"putOne(id=$id): $data")
-    val idOpt = Option(id.trim).filter(!_.isEmpty)
+    val id1 = id.trim
+    val logPrefix = s"putOne($id1):"
+    info(s"$logPrefix $data")
+    val idOpt = Option(id1)
+      .filter(!_.isEmpty)
     val b = data.getBytes
     try {
       val dataMap = SourceLookup.sourceAsMap(b, 0, b.length)
       _saveOne(idOpt, dataMap)
     } catch {
       case ex: Throwable =>
-        _formatEx(s"putOne($id): ", data, ex)
+        _formatEx(s"$logPrefix: ", data, ex)
     }
   }
 

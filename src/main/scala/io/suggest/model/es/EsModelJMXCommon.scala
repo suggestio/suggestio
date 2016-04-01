@@ -140,6 +140,7 @@ trait EsModelCommonJMXBase extends JMXBase with EsModelJMXMBeanCommonI with Macr
 
   override def getRoutingKey(idOrNull: String): String = {
     trace(s"getRoutingKey($idOrNull)")
+    val idOrNull2 = if (idOrNull == null) idOrNull else idOrNull.trim
     companion.getRoutingKey(idOrNull).toString
   }
 
