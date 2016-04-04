@@ -1,6 +1,6 @@
 package io.suggest.lk.tags.edit.vm.add
 
-import io.suggest.common.tags.edit.TagsEditConstants
+import io.suggest.common.tags.edit.TagsEditConstants.Search
 import io.suggest.sjs.common.vm.content.{ClearT, SetInnerHtml}
 import io.suggest.sjs.common.vm.find.FindDiv
 import io.suggest.sjs.common.vm.style.{StyleTop, StyleLeft, ShowHideDisplayT}
@@ -13,7 +13,7 @@ import io.suggest.sjs.common.vm.style.{StyleTop, StyleLeft, ShowHideDisplayT}
   */
 object AFoundTagsCont extends FindDiv {
   override type T     = AFoundTagsCont
-  override def DOM_ID = TagsEditConstants.ADD_FOUND_TAGS_CONT_ID
+  override def DOM_ID = Search.FOUND_TAGS_CONT_ID
 }
 
 

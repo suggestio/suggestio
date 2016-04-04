@@ -1,6 +1,6 @@
 package io.suggest.lk.tags.edit.fsm.states
 
-import io.suggest.common.tags.edit.TagsEditConstants
+import io.suggest.common.tags.edit.TagsEditConstants.Search.START_SEARCH_TIMER_MS
 import io.suggest.lk.tags.edit.fsm.TagsEditFsmStub
 import io.suggest.lk.tags.edit.m.signals._
 import io.suggest.lk.tags.edit.vm.add.{AFoundTagsCont, ANameInput}
@@ -98,7 +98,7 @@ trait StandBy extends TagsEditFsmStub {
         val ts = System.currentTimeMillis()
         val timerId = dom.setTimeout(
           { () => _sendEventSyncSafe(StartSearchTimer(ts)) },
-          TagsEditConstants.START_SEARCH_TIMER_MS
+          START_SEARCH_TIMER_MS
         )
         _stateData = sd0.copy(
           startSearchTimerId = Some(timerId),

@@ -20,6 +20,7 @@ object TVm extends IInitLayoutFsm {
 
   def addBtn = AddBtn.find()
 
+
   override def initLayout(fsm: SjsFsm): Unit = {
     val initF = IInitLayoutFsm.f(fsm)
     addContainer.foreach(initF)
