@@ -32,12 +32,6 @@ object TagsEditConstants {
   /** id кнопки добавления нового тега. */
   def ADD_BTN_ID                  = "tagAddBtn"
 
-  /** id контейнера для списка найденных тегов. */
-  def ADD_FOUND_TAGS_CONT_ID      = "tagAddFoundCont"
-
-  /** На сколько миллисекунд откладывать запуск поискового запроса тегов. */
-  def START_SEARCH_TIMER_MS       = 400
-
   /** Класс-пометка для div'ов тегов в редакторе тегов. */
   def ONE_EXISTING_CONT_CLASS     = "js-tag-editable"
 
@@ -53,6 +47,26 @@ object TagsEditConstants {
 
     /** Имя поля с новым отрендеренным списком тегов. */
     def EXIST_TAGS_FN   = "e"
+
+  }
+
+
+  /** Константы поиска тегов в редакторе. */
+  object Search {
+
+    /** id контейнера для списка найденных тегов. */
+    def FOUND_TAGS_CONT_ID          = "tagAddFoundCont"
+
+    /** На сколько миллисекунд откладывать запуск поискового запроса тегов. */
+    def START_SEARCH_TIMER_MS       = 400
+
+    /** Константы выпадающих подсказок поиска тегов в редакторе. */
+    object Hints {
+
+      /** Контейнер одного ряда-подсказки в списке рядов  */
+      def HINT_ROW_CLASS = "js-shrow"
+
+    }
 
   }
 
