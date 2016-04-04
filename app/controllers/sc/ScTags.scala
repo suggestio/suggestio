@@ -25,7 +25,7 @@ trait ScTags
    * @return Рендер куска списка тегов, который раньше был списком узлов.
    */
   def tagsSearch(mts: MTagSearch) = MaybeAuth().async { implicit request =>
-    val foundFut = MNode.dynSearch(mts)
+    val foundFut = MNode.dynSearch(mts.toEsSearch)
     for {
       found <- foundFut
     } yield {

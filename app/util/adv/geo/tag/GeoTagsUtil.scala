@@ -281,15 +281,16 @@ class GeoTagsUtil @Inject() (
             e :: acc
           }
 
-        debug {
-          // Т.к. список в обратном порядке, то последний List.head.id равен кол-ву элементов - 1.
-          val shapesCount = tagShapes
-            .headOption
-            .fold(0)(_.id)
-          s"$logPrefix Found $shapesCount different shapes."
-        }
+        // Т.к. список в обратном порядке, то последний List.head.id равен кол-ву элементов - 1.
+        val shapesCount = tagShapes
+          .headOption
+          .fold(0)(_.id)
+
+        debug(s"$logPrefix Found $shapesCount different shapes.")
 
         val p = _PRED
+        val someShapesCount = Some(shapesCount)
+
         MNode.tryUpdate(mnode) { mnode0 =>
           // Собрать единый эдж само-тега для всех геошейпов.
           val e0 = mnode0.edges
@@ -298,6 +299,7 @@ class GeoTagsUtil @Inject() (
             .head
 
           val e1 = e0.copy(
+            order = someShapesCount,
             info = e0.info.copy(
               geoShapes = tagShapes
             )

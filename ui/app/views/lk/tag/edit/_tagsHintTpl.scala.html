@@ -1,19 +1,26 @@
-@(tagsInfo: io.suggest.model.n2.tag.TagsAggResult)(implicit ctx: Context)
+@(tagsInfo: io.suggest.model.n2.tag.TagsSearchResult)(implicit ctx: Context)
 
 @* Верстка выпадающей подсказки с тегами, подходящими под запрос. *@
+
+@import io.suggest.common.tags.edit.TagsEditConstants.Search.Hints._
 
 <div class="hint-list_outer">
 
   <div class="hint-list_content">
 
-    <table>
-      @for(t <- tagsInfo.tags) {
-        <tr>
-          <td>@t.face</td>
-          <td>(@t.count)</td>
-        </tr>
-      }
-    </table>
+    @for(t <- tagsInfo.tags) {
+      <div class="@HINT_ROW_CLASS">
+        <div class="name">
+          <span class="prefix">#</span>
+          @t.face
+        </div>
+
+        <div class="value">
+          @t.count
+        </div>
+      </div>
+    }
+
   </div>
 
 </div>

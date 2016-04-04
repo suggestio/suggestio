@@ -1,10 +1,11 @@
 package models.mtag
 
+import io.suggest.common.empty.EmptyProduct
 import io.suggest.common.text.StringUtil
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, TagCriteria}
 import io.suggest.model.n2.node.MNodeTypes
-import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.search.{MNodeSearchDfltImpl, MNodeSearch}
 import io.suggest.sc.TagSearchConstants.Req._
 import play.api.mvc.QueryStringBindable
 import util.qsb.QsbKey1T
@@ -45,37 +46,29 @@ object MTagSearch {
             _offsetOpt        <- eOffset.right
           } yield {
 
-            val tcrOpt = for (q <- _ftsQueryOpt) yield {
-              val q1 = StringUtil.trimLeft(q)
-              val q2 = if (q1.length > QUERY_MAXLEN)
-                q1.substring(0, QUERY_MAXLEN)
-              else
-                q1
-
-              TagCriteria(q2, isPrefix = true)
+            val tags: Seq[String] = {
+              val opt = for (_ftsQuery <- _ftsQueryOpt) yield {
+                val q1 = StringUtil.trimLeft( _ftsQuery )
+                val q2 = if (q1.length > QUERY_MAXLEN)
+                  q1.substring(0, QUERY_MAXLEN)
+                else
+                  q1
+                q2.split("[,;\\s#]")
+                  .iterator
+                  .filter { _.length <= QUERY_MAXLEN}
+                  .toSeq
+              }
+              opt.getOrElse(Nil)
             }
 
-            val ecr = Criteria(
-              predicates  = Seq( MPredicates.TaggedBy.Self ),
-              tags        = tcrOpt.toSeq
+            val limitOpt  = _limitOpt.filter(_ <= LIMIT_MAX)
+            val offsetOpt = _offsetOpt.filter(_ <= OFFSET_MAX)
+
+            MTagSearch(
+              tags      = tags,
+              limitOpt  = limitOpt,
+              offsetOpt = offsetOpt
             )
-
-            val _limit = _limitOpt
-              .fold(LIMIT_DFLT) { l =>
-                Math.max(0,
-                  Math.min(LIMIT_MAX, l))
-              }
-            val _offset = _offsetOpt
-              .fold(0) { o =>
-                Math.max(0,
-                  Math.min(OFFSET_MAX, o))
-              }
-            new MTagSearch {
-              override def outEdges  = Seq(ecr)
-              override def limit     = _limit
-              override def offset    = _offset
-              override def nodeTypes = Seq( MNodeTypes.Tag )
-            }
           }
         }
       }
@@ -83,14 +76,11 @@ object MTagSearch {
       /** Разбиндивание значения [[MTagSearch]] в URL qs. */
       override def unbind(key: String, value: MTagSearch): String = {
         val k = key1F(key)
-        val tfOpt = value.outEdges
-          .iterator
-          .flatMap(_.tags)
-          .map(_.face)
-          .toStream
-          .headOption
+        val tagsOpt = for (_ <- value.tags.headOption) yield {
+          value.tags.mkString("#", ", #", "")
+        }
         Iterator(
-          strOptB.unbind  (k(FACE_FTS_QUERY_FN),  tfOpt),
+          strOptB.unbind  (k(FACE_FTS_QUERY_FN),  tagsOpt),
           intOptB.unbind  (k(LIMIT_FN),           Some(value.limit)),
           intOptB.unbind  (k(OFFSET_FN),          Some(value.offset))
         )
@@ -108,9 +98,36 @@ object MTagSearch {
 
 
 /** Дефолтовая реализация модели аргументов поиска тегов. */
-class MTagSearch extends MNodeSearchDfltImpl {
+case class MTagSearch(
+  tags        : Seq[String] = Nil,
+  limitOpt    : Option[Int] = None,
+  offsetOpt   : Option[Int] = None
+)
+  extends EmptyProduct
+{ that =>
 
-  override def limit = MTagSearch.LIMIT_DFLT
+  def limit = limitOpt.getOrElse( MTagSearch.LIMIT_DFLT )
+  def offset = offsetOpt.getOrElse( 0 )
 
-  // Не фильтруем по типу, т.к. теги-узлы ушли в прошлое.
+  def searchTagOpt = tags.lastOption
+
+  def edgeSearchCriteria: Criteria = {
+    val tcrOpt = for (q <- searchTagOpt) yield {
+      TagCriteria(q, isPrefix = true)
+    }
+    Criteria(
+      predicates  = Seq( MPredicates.TaggedBy.Self ),
+      tags        = tcrOpt.toSeq
+    )
+  }
+
+  def toEsSearch: MNodeSearch = {
+    new MNodeSearchDfltImpl {
+      override def outEdges  = Seq(that.edgeSearchCriteria)
+      override def limit     = that.limit
+      override def offset    = that.offset
+      override def nodeTypes = Seq( MNodeTypes.Tag )
+    }
+  }
+
 }

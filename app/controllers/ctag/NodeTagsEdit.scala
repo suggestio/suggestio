@@ -73,14 +73,13 @@ trait NodeTagsEdit
     )
   }
 
-
   /** Экшен поиска похожих тегов во время набора названия.
     *
     * @return JSON с inline-версткой для отображения в качестве выпадающего списка.
     */
   def tagsSearch(tsearch: MTagSearch) = IsAuth.async { implicit request =>
     for {
-      found <-  tagSearchUtil.searchAgg( tsearch )
+      found <-  tagSearchUtil.liveSearchTagByName( tsearch.toEsSearch )
     } yield {
       if (found.tags.isEmpty) {
         NoContent
