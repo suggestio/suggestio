@@ -1,9 +1,11 @@
 package io.suggest.sc.sjs.vm.nav.nodelist.glay
 
-import io.suggest.sc.ScConstants.NavPane.{SCREEN_OFFSET, GNL_DOM_HEIGHT, GNL_BODY_HIDDEN_CSS_CLASS}
+import io.suggest.sc.ScConstants.NavPane.{GNL_BODY_CSS_CLASS, GNL_BODY_HIDDEN_CSS_CLASS, GNL_DOM_HEIGHT, SCREEN_OFFSET}
 import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sjs.common.model.browser.IBrowser
 import io.suggest.sjs.common.view.VUtil
+import io.suggest.sjs.common.vm.child.OfMyCssClass
+import io.suggest.sjs.common.vm.of.OfDiv
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -13,15 +15,22 @@ import org.scalajs.dom.raw.HTMLDivElement
  * Description: vm тела гео-слоя в гео-списке узлов.
  */
 
-object GlayRoot extends GlayDivStaticT {
+object GlayRoot extends GlayDivStaticT with OfDiv with OfMyCssClass {
+
   override type Dom_t = HTMLDivElement
   override type T     = GlayRoot
+
+  override def VM_CSS_CLASS = GNL_BODY_CSS_CLASS
+
 }
+
+
+import GlayRoot.Dom_t
 
 
 trait GlayRootT extends GlayT with LayerIndex with GlayContainerT {
 
-  override type T = HTMLDivElement
+  override type T = Dom_t
 
   override protected def _subtagCompanion = GlayWrapper
   override type SubTagVm_t = GlayWrapper
@@ -74,7 +83,7 @@ trait GlayRootT extends GlayT with LayerIndex with GlayContainerT {
 
 
 case class GlayRoot(
-  override val _underlying: HTMLDivElement
+  override val _underlying: Dom_t
 ) extends GlayRootT {
 
   override lazy val layerIndex = super.layerIndex

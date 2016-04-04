@@ -3,11 +3,10 @@ package io.suggest.sc.sjs.vm.nav.nodelist
 import io.suggest.sc.sjs.m.mnav.NodeListClick
 import io.suggest.sc.sjs.vm.util.InitOnClickToScFsmT
 import io.suggest.sc.sjs.vm.nav.nodelist.glay.GlayRoot
-import io.suggest.sc.ScConstants.NavPane.{GN_CONTAINER_ID, GNL_BODY_CSS_CLASS, GN_ATTR_LAYERS_COUNT}
-import io.suggest.sjs.common.model.dom.DomListIterator
+import io.suggest.sc.ScConstants.NavPane.{GN_ATTR_LAYERS_COUNT, GN_CONTAINER_ID}
 import io.suggest.sjs.common.vm.VmT
+import io.suggest.sjs.common.vm.child.ChildsByClassName
 import io.suggest.sjs.common.vm.find.FindDiv
-import org.scalajs.dom.NodeList
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -23,22 +22,11 @@ object NlContainer extends FindDiv {
 }
 
 
-trait NlContainerT extends VmT with InitOnClickToScFsmT {
+trait NlContainerT extends VmT with InitOnClickToScFsmT with ChildsByClassName {
 
   override type T = HTMLDivElement
 
-  /** Выдать все html-теги с телами GNL-тегов. */
-  def allGnlTags: NodeList = {
-    // TODO Opt А можно ведь искать(фильтровать) только child-элементы, а не гулять по всему поддереву.
-    _underlying.getElementsByClassName(GNL_BODY_CSS_CLASS)
-  }
-  
-  def gnLayerBodiesIter = {
-    DomListIterator(allGnlTags)
-      .map { node =>
-        GlayRoot( node.asInstanceOf[HTMLDivElement] )
-      }
-  }
+  def gnLayerBodiesIter = _findChildsByClass(GlayRoot)
 
   /** Поиск первого развернутого геослоя. */
   def findFirstExpanded: Option[GlayRoot] = {
@@ -64,6 +52,5 @@ case class NlContainer(
 )
   extends NlContainerT
 {
-  override lazy val allGnlTags = super.allGnlTags
   override lazy val layersCount = super.layersCount
 }
