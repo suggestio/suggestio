@@ -1,5 +1,7 @@
 package io.suggest.common.tags.edit
 
+import io.suggest.common.html.HtmlConstants
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -65,6 +67,8 @@ object TagsEditConstants {
 
       /** Контейнер одного ряда-подсказки в списке рядов  */
       def HINT_ROW_CLASS = "js-shrow"
+
+      def ATTR_TAG_FACE  = HtmlConstants.ATTR_PREFIX + HINT_ROW_CLASS
 
     }
 

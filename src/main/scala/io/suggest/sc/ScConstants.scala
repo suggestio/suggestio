@@ -1,5 +1,7 @@
 package io.suggest.sc
 
+import io.suggest.common.html.HtmlConstants
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -20,7 +22,7 @@ object ScConstants {
   /** Имя css-класс с will-change для подготовки к translate3d. */
   def CLASS_WILL_TRANSLATE3D = "will-translate3d"
 
-  def CUSTOM_ATTR_PREFIX = "data-"
+  def CUSTOM_ATTR_PREFIX = HtmlConstants.ATTR_PREFIX
 
   /** Название аттрибута с длиной. */
   def WIDTH_ATTR    = CUSTOM_ATTR_PREFIX + "width"
@@ -154,7 +156,7 @@ object ScConstants {
     def PREV_NODE_BTN_ID   = "smNodePrevious"
 
     /** Название data-аттрибута с id узла. */
-    def ATTR_ADN_ID    = "data-adn-id"
+    def ATTR_ADN_ID    = CUSTOM_ATTR_PREFIX + "adn-id"
   }
 
 
@@ -210,9 +212,9 @@ object ScConstants {
   object Block {
 
     /** Имя аттрибута с порядковым номером в плитке от нуля. */
-    def BLK_INDEX_ATTR    = "data-index"
+    def BLK_INDEX_ATTR    = CUSTOM_ATTR_PREFIX + "index"
     /** Имя аттрибута с id текущей рекламной карточки. */
-    def MAD_ID_ATTR       = "data-mad-id"
+    def MAD_ID_ATTR       = CUSTOM_ATTR_PREFIX + "mad-id"
 
     def ID_DELIM          = ":"
     /** id grid-блока формируется как-то так: "...madId..." + ID_SUFFIX. */
@@ -253,7 +255,7 @@ object ScConstants {
     def GNL_ACTIVE_CSS_CLASS      = ACTIVE_CLASS
 
     /** Для связывания caption'а слоя и его содержимого используются динамические id. */
-    def GNL_ATTR_LAYER_ID_INDEX   = "data-index"
+    def GNL_ATTR_LAYER_ID_INDEX   = CUSTOM_ATTR_PREFIX + "index"
 
     /** Класс для тела (подсписка) одного слоя узлов. */
     def GNL_BODY_CSS_CLASS        = "geo-nodes-list_rows"
@@ -267,10 +269,10 @@ object ScConstants {
     def GN_NODE_CSS_CLASS         = "js-geo-node"
 
     /** Название аттрибута с id узла в контенере узла в списке узлов. */
-    def GN_ATTR_NODE_ID           = "data-id"
+    def GN_ATTR_NODE_ID           = CUSTOM_ATTR_PREFIX + "id"
 
     /** Название аттрибута контейнера, содержащий общее кол-во слоёв. */
-    def GN_ATTR_LAYERS_COUNT      = "data-layers-count"
+    def GN_ATTR_LAYERS_COUNT      = CUSTOM_ATTR_PREFIX + "layers-count"
 
     /** css-класс, указывающий на скрытость указанного слоя. */
     def GNL_BODY_HIDDEN_CSS_CLASS = "__hidden"
@@ -383,10 +385,10 @@ object ScConstants {
       def ONE_CAT_LINK_CSS_CLASS = "js-cat-link"
 
       /** Название аттрибута, которое содержит id категории. */
-      def ATTR_CAT_ID = "data-cat-id"
+      def ATTR_CAT_ID = CUSTOM_ATTR_PREFIX + "cat-id"
 
       /** css-класс категории. Для выставления в header. */
-      def ATTR_CAT_CLASS = "data-cat-class"
+      def ATTR_CAT_CLASS = CUSTOM_ATTR_PREFIX + "cat-class"
     }
 
     /** Сюда сгруппированы id, относящиеся к списку магазинов. */
@@ -404,7 +406,7 @@ object ScConstants {
       def ROW_DIV_CLASS = "js-shop-link"
 
       /** Имя аттрибута, содержащее id узла графа N2. */
-      def ATTR_NODE_ID = "data-producer-id"
+      def ATTR_NODE_ID = CUSTOM_ATTR_PREFIX + "producer-id"
     }
 
   }
