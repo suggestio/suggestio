@@ -47,8 +47,8 @@ object MExtTarget
   val NAME_ESFN         = "name"
   /** Имя поля с id узла, к которому привязан данный интанс. */
   val ADN_ID_ESFN       = "adnId"
-  /** Поле даты создания. Было добавлено только 2014.mar.05, из-за необходимости сортировки. */
-  val DATE_CREATED_ESFN = "dc"
+  /** Поле даты создания. */
+  val DATE_CREATED_ESFN = "dci"
 
 
   override def generateMappingStaticFields: List[Field] = {
@@ -64,7 +64,8 @@ object MExtTarget
       FieldString(SERVICE_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
       FieldString(NAME_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
       FieldString(ADN_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-      FieldDate(DATE_CREATED_ESFN, index = null, include_in_all = false)
+      // Для сортировке по дате требуется индексация.
+      FieldDate(DATE_CREATED_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = false)
     )
   }
 
@@ -79,6 +80,7 @@ object MExtTarget
       name        = m.get(NAME_ESFN)
         .map(stringParser),
       dateCreated = m.get(DATE_CREATED_ESFN)
+        .orElse(m.get("dc"))    // TODO 5.apr.2016: Удалить старый dc после апдейта схемы модели.
         .fold(DateTime.now)(EsModelUtil.dateTimeParser)
     )
   }
@@ -89,8 +91,12 @@ object MExtTarget
     (__ \ SERVICE_ID_ESFN).read[MExtService] and
     (__ \ ADN_ID_ESFN).read[String] and
     (__ \ NAME_ESFN).readNullable[String] and
-    (__ \ DATE_CREATED_ESFN).readNullable[DateTime]
-      .map { _ getOrElse DateTime.now }
+    (__ \ DATE_CREATED_ESFN).read[DateTime]
+      // TODO 5.apr.2016: Удалить старый dc после апдейта схемы модели.
+      .orElse {
+        (__ \ "dc").readNullable[DateTime]
+          .map { _ getOrElse DateTime.now }
+      }
   }
 
   /** JSON deserializer. */

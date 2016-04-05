@@ -3,7 +3,6 @@ package models.merr
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.es._
 import EsModelUtil.FieldsJsonAcc
-import io.suggest.model._
 import io.suggest.util.SioEsUtil._
 import models._
 import org.elasticsearch.client.Client

@@ -65,7 +65,7 @@ object MPersonIdent extends PlayMacroLogsImpl {
   
   def generateMappingStaticFields: List[Field] = {
     // Для надежной защиты от двойных добавлений.
-    FieldId(path = KEY_ESFN) :: generateMappingStaticFieldsMin
+    generateMappingStaticFieldsMin
   }
 
   def generateMappingStaticFieldsMin: List[Field] = List(
