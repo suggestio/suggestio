@@ -16,4 +16,8 @@ object Events {
 
   def DRAG_END   = "dragend"
 
+  def ON_LOCATION_FOUND = "locationfound"
+
+  def ON_LOCATION_ERROR = "locationerror"
+
 }

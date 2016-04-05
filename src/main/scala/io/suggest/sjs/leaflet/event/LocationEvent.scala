@@ -1,8 +1,9 @@
 package io.suggest.sjs.leaflet.event
 
-import io.suggest.sjs.leaflet.map.{LatLngBounds, LatLng}
+import io.suggest.sjs.leaflet.map.{LatLng, LatLngBounds}
 
 import scala.scalajs.js
+import scala.scalajs.js.annotation.JSName
 
 /**
  * Suggest.io
@@ -14,6 +15,7 @@ import scala.scalajs.js
 @js.native
 class LocationEvent extends Event {
 
+  @JSName("latlng")
   var latLng: LatLng = js.native
 
   var bounds: LatLngBounds = js.native

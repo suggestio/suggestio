@@ -19,4 +19,6 @@ class LocateControl extends js.Object {
 
   def start(): LocateControl = js.native
 
+  def _stopFollowing(): Unit = js.native
+
 }
