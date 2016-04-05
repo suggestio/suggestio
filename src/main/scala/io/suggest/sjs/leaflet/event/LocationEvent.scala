@@ -3,6 +3,7 @@ package io.suggest.sjs.leaflet.event
 import io.suggest.sjs.leaflet.map.{LatLng, LatLngBounds}
 
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
 import scala.scalajs.js.annotation.JSName
 
 /**
@@ -22,9 +23,9 @@ class LocationEvent extends Event {
 
   var accuracy: Double = js.native
 
-  var altitude: Double = js.native
+  var altitude: UndefOr[Double] = js.native
 
-  var altitudeAccuracy: Double = js.native
+  var altitudeAccuracy: UndefOr[Double] = js.native
 
   var heading: Double = js.native
 
