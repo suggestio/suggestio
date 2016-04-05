@@ -39,12 +39,13 @@ trait Add extends TagsEditFsmStub { fsm =>
         fd.append(input._underlying.name, input._underlying.value)
 
         // Залить имена текущих тегов:
-        econt.tagsIterator
-          .flatMap { _.input }
-          .foreach { input =>
-            val u = input._underlying
-            fd.append(u.name, u.value)
-          }
+        for {
+          tagVm <- econt.tagsIterator
+          input <- tagVm.input
+        } {
+          val u = input._underlying
+          fd.append(u.name, u.value)
+        }
 
         // Засабмиттить форму через XHR.
         val fut = MTagAdd.add(_addTagRoute, fd)
