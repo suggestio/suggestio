@@ -12,28 +12,13 @@
 @import lk.dsl._
 @import views.html.stuff._labelTpl
 
-@_barTpl(MHands.Left) {
-  @_minorTitleTpl() {
-    @messages("Tags.choosing")
-  }
-
-  @* js-форма добавления тегов. *@
-  @_addFormTpl(args.form)
-
-  @* Кнопка добавления тега. Вне формы, т.к. форма перезаписывается после сабмитов. *@
-  @_addBtnTpl()
-}
-
 @form( CSRF(routes.LkAdvGeo.forAdSubmit(args.mad.id.get)), 'id -> FORM_ID) {
 
   @_advSuTpl()
 
-  @* Теги *@
+
+  @* Левая колонка. *@
   @_barTpl(MHands.Left) {
-    @* Рендер сохранённых тегов. *@
-    @_existTagsContTpl() {
-      @_tagsExistTpl(args.form)
-    }
 
     @* Отдельная галочка для размещения на главном экране. *@
     @defining(args.form(OnMainScreen.FN)) { omsf =>
@@ -43,6 +28,24 @@
         @messages("Adv.on.main.screen")
       }
     }
+    <br/><br/>
+
+    @* Теги *@
+    @_minorTitleTpl() {
+      @messages("Tags.choosing")
+    }
+
+    @* js-форма добавления тегов. *@
+    @_addFormTpl(args.form)
+
+    @* Кнопка добавления тега. Вне формы, т.к. форма перезаписывается после сабмитов. *@
+    @_addBtnTpl()
+
+    @* Рендер сохранённых тегов. *@
+    @_existTagsContTpl() {
+      @_tagsExistTpl(args.form)
+    }
+
   }
 
 
