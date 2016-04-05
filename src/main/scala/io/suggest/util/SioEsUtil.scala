@@ -55,7 +55,7 @@ object SioEsUtil extends MacroLogsImpl {
     * Версия документов, только что добавленных в elasticsearch.
     *
     * @see [[https://www.elastic.co/blog/elasticsearch-versioning-support]]
-    *      That version number is a positive number between 1 and 2^63-1 (inclusive).
+    *      That version number is a positive number between 1 and 2**63-1 (inclusive).
     */
   def DOC_VSN_0     = 1L
 
@@ -1111,9 +1111,8 @@ case class FieldAll(
 
 case class FieldId(
   index: FieldIndexingVariant = null,
-  store: Boolean = false,
-  path: String = null
-) extends FieldStoreable with FieldIndexable with FieldWithPath {
+  store: Boolean = false
+) extends FieldStoreable with FieldIndexable {
   override def id = FIELD_ID
 }
 
