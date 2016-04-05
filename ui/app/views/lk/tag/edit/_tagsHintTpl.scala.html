@@ -9,7 +9,7 @@
   <div class="hint-list_content">
 
     @for(t <- tagsInfo.tags) {
-      <div class="@HINT_ROW_CLASS">
+      <div class="row @HINT_ROW_CLASS" @(ATTR_TAG_FACE)="@t.face">
         <div class="name">
           <span class="prefix">#</span>
           @t.face
