@@ -1,6 +1,7 @@
 package io.suggest.lk.tags.edit.vm.add
 
 import io.suggest.common.tags.edit.TagsEditConstants.ADD_FORM_ID
+import io.suggest.lk.tags.edit.vm.search.hints.SContainer
 import io.suggest.sjs.common.fsm.{IInitLayoutFsm, SjsFsm}
 import io.suggest.sjs.common.model.dom.DomListIterator
 import io.suggest.sjs.common.vm.IVm
@@ -8,7 +9,7 @@ import io.suggest.sjs.common.vm.content.{ApplyFromOuterHtml, ReplaceWith}
 import io.suggest.sjs.common.vm.find.FindDiv
 import io.suggest.sjs.common.vm.of.{OfEventTargetNode, OfHtml}
 import org.scalajs.dom.Node
-import org.scalajs.dom.raw.{HTMLElement, HTMLDivElement}
+import org.scalajs.dom.raw.{HTMLDivElement, HTMLElement}
 
 /**
  * Suggest.io
@@ -35,9 +36,12 @@ trait AContainerT extends IVm with IInitLayoutFsm with ReplaceWith {
   /** Поиск input'а ввода имени тега. */
   def nameInput = ANameInput.find()
 
+  def foundTagsCont = SContainer.find()
+
   override def initLayout(fsm: SjsFsm): Unit = {
     val f = IInitLayoutFsm.f(fsm)
     nameInput.foreach(f)
+    foundTagsCont.foreach(f)
   }
 
 }

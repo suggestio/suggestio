@@ -1,7 +1,8 @@
 package io.suggest.lk.tags.edit.m.signals
 
-import io.suggest.sjs.common.fsm.{IFsmMsgCompanion, IFsmEventMsgCompanion, IFsmMsg}
-import org.scalajs.dom.{KeyboardEvent, FocusEvent, Event}
+import io.suggest.lk.tags.edit.vm.search.hints.SRow
+import io.suggest.sjs.common.fsm.{IFsmEventMsgCompanion, IFsmMsg, IFsmMsgCompanion}
+import org.scalajs.dom.{Event, FocusEvent, KeyboardEvent}
 
 /**
  * Suggest.io
@@ -65,3 +66,8 @@ case class DeleteClick(event: Event)
   extends ITagsEditFsmSignal
 object DeleteClick
   extends IFsmEventMsgCompanion
+
+
+/** Юзер выбрал в списке найденных тегов какую-то строку. */
+case class TagFoundClick(srow: SRow, event: Event)
+  extends ITagsEditFsmSignal

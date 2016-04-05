@@ -1,7 +1,7 @@
 package io.suggest.lk.tags.edit.vm.search.hints
 
-import io.suggest.common.tags.edit.TagsEditConstants.Search.Hints.HINT_ROW_CLASS
-import io.suggest.sjs.common.vm.IVm
+import io.suggest.common.tags.edit.TagsEditConstants.Search.Hints._
+import io.suggest.sjs.common.vm.attr.AttrVmT
 import io.suggest.sjs.common.vm.child.OfMyCssClass
 import io.suggest.sjs.common.vm.find.IApplyEl
 import io.suggest.sjs.common.vm.of.{OfDiv, OfEventTargetNode}
@@ -25,8 +25,12 @@ object SRow extends IApplyEl with OfEventTargetNode with OfDiv with OfMyCssClass
 
 import SRow.Dom_t
 
-trait SRowT extends IVm {
+trait SRowT extends AttrVmT {
+
   override type T = Dom_t
+
+  def tagFace = getAttribute( ATTR_TAG_FACE )
+
 }
 
 

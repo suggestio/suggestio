@@ -3,11 +3,12 @@ package io.suggest.lk.tags.edit.fsm.states
 import io.suggest.common.tags.edit.TagsEditConstants.Search.START_SEARCH_TIMER_MS
 import io.suggest.lk.tags.edit.fsm.TagsEditFsmStub
 import io.suggest.lk.tags.edit.m.signals._
-import io.suggest.lk.tags.edit.vm.add.{AFoundTagsCont, ANameInput}
+import io.suggest.lk.tags.edit.vm.add.ANameInput
 import io.suggest.lk.tags.edit.vm.exist.EDelete
+import io.suggest.lk.tags.edit.vm.search.hints.SContainer
 import io.suggest.sjs.common.model.Route
 import io.suggest.sjs.common.msg.WarnMsgs
-import io.suggest.sjs.common.tags.search.{MTagSearchRespTs, MTagsSearch, MTagSearchArgs, ITagSearchArgs}
+import io.suggest.sjs.common.tags.search.{ITagSearchArgs, MTagSearchArgs, MTagSearchRespTs, MTagsSearch}
 import org.scalajs.dom
 import org.scalajs.dom.Event
 
@@ -33,6 +34,9 @@ trait StandBy extends TagsEditFsmStub {
       // Сигнал ввода названия тега с клавиатуры.
       case TagNameTyping(event) =>
         _tagNameTyping(event)
+      // Сигнал о том, что юзер выбрал тег в списке тегов-подсказок.
+      case tfc: TagFoundClick =>
+        _tagFoundClick(tfc)
       // Сигнал для начала поиска тега по имени.
       case StartSearchTimer(ts) =>
         if (_stateData.startSearchTimerTs.contains(ts))
@@ -140,7 +144,7 @@ trait StandBy extends TagsEditFsmStub {
       if (sd0.lastSearchReqTs.contains( respTs.timestamp )) {
 
         for {
-          cont    <- AFoundTagsCont.find()
+          cont    <- SContainer.find()
         } {
           respTs.result match {
             case Success(resp) =>
@@ -164,6 +168,19 @@ trait StandBy extends TagsEditFsmStub {
 
       } else {
         log( WarnMsgs.TAG_SEARCH_XHR_TS_DROP + " " + sd0.lastSearchReqTs + " " + respTs.timestamp)
+      }
+    }
+
+
+    /** Реакция на выбор найденного тега в списке. */
+    protected def _tagFoundClick(tfc: TagFoundClick): Unit = {
+      // Нужно залить содержимое выбранного тега в input и сымитировать на клик по add-кнопке.
+      for {
+        tface   <- tfc.srow.tagFace
+        tnInput <- ANameInput.find()
+      } {
+        tnInput.value = tface
+        _addBtnClicked()
       }
     }
 

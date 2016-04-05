@@ -1,8 +1,9 @@
 package io.suggest.lk.tags.edit.vm
 
-import io.suggest.lk.tags.edit.vm.add.{AFoundTagsCont, AddBtn, AContainer}
+import io.suggest.lk.tags.edit.vm.add.{AContainer, AddBtn}
 import io.suggest.lk.tags.edit.vm.exist.EContainer
-import io.suggest.sjs.common.fsm.{SjsFsm, IInitLayoutFsm}
+import io.suggest.lk.tags.edit.vm.search.hints.SContainer
+import io.suggest.sjs.common.fsm.{IInitLayoutFsm, SjsFsm}
 
 /**
  * Suggest.io
@@ -15,8 +16,6 @@ object TVm extends IInitLayoutFsm {
   def existContainer = EContainer.find()
 
   def addContainer = AContainer.find()
-
-  def foundTagsCont = AFoundTagsCont.find()
 
   def addBtn = AddBtn.find()
 
