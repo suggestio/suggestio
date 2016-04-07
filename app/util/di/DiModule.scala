@@ -5,6 +5,7 @@ import org.elasticsearch.client.Client
 import play.api.inject._
 import play.api.{Configuration, Environment}
 import util.SiowebEsUtil
+import util.event.SiowebNotifier
 
 /**
  * Suggest.io
@@ -16,10 +17,11 @@ class DiModule extends Module {
 
   override def bindings(environment: Environment, configuration: Configuration): Seq[Binding[_]] = {
     Seq(
-      bind[Client]
-        .to( SiowebEsUtil.client ),
+      // Инжектить SiowebEsUtil опережая события, чтобы тот мог инициализировать ES Client.
+      bind( classOf[Client] )
+        .toProvider( classOf[SiowebEsUtil]),
       bind[SioNotifierStaticClientI]
-        .to( util.event.SiowebNotifier.Implicts.sn )
+        .to( classOf[SiowebNotifier] )
     )
   }
 

@@ -9,9 +9,10 @@ import play.api.mvc.Result
 import util.DateTimeUtil
 import util.acl.AdnNodeMaybeAuth
 import util.cdn.ICdnUtilDi
-import util.xplay.CacheUtil
 import views.html.lk.adn.node._installScriptTpl
 import views.txt.sc._
+
+import scala.concurrent.duration._
 
 /**
  * Suggest.io
@@ -76,7 +77,7 @@ trait ScNodeInfo
       NotModified
     } else {
       val ck = nodeIconJsCacheKey(adnId)
-      CacheUtil.getOrElse [Result] (ck, NODE_ICON_JS_CACHE_TTL_SECONDS) {
+      cacheApiUtil.getOrElseFut [Result] (ck, NODE_ICON_JS_CACHE_TTL_SECONDS.seconds) {
         val logoFut = logoUtil.getLogoOfNode( request.mnode )
         var cacheHeaders: List[(String, String)] = List(
           LAST_MODIFIED -> DateTimeUtil.rfcDtFmt.print(mProjectInfo.PROJECT_CODE_LAST_MODIFIED),

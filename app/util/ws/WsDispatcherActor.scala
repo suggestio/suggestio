@@ -3,14 +3,13 @@ package util.ws
 import akka.actor._
 import akka.pattern.ask
 import akka.util.Timeout
-import play.libs.Akka
+import com.google.inject.{Inject, Singleton}
+import models.mproj.ICommonDi
 import util.{PlayMacroLogsImpl, SiowebSup}
 
 import scala.collection.mutable
 import scala.concurrent.Future
 import scala.concurrent.duration._
-
-import play.api.Play.current
 
 /**
  * Suggest.io
@@ -18,7 +17,10 @@ import play.api.Play.current
  * Created: 05.11.14 19:16
  * Description: Актор, поддерживающий карту wsId -> actorRef.
  */
-object WsDispatcherActor {
+@Singleton
+class WsDispatcherActors @Inject() (mCommonDi: ICommonDi) {
+
+  import mCommonDi._
 
   val ACTOR_NAME = "wsd"
 
@@ -27,7 +29,7 @@ object WsDispatcherActor {
   private val siowebSup = current.injector.instanceOf[SiowebSup]
   val ACTOR_PATH = siowebSup.actorPath / ACTOR_NAME
 
-  def actorSelection = Akka.system.actorSelection(ACTOR_PATH)
+  def actorSelection = actorSystem.actorSelection(ACTOR_PATH)
 
   def startLink(arf: ActorRefFactory): ActorRef = {
     arf.actorOf(Props[WsDispatcherActor], name=ACTOR_NAME)
@@ -38,6 +40,12 @@ object WsDispatcherActor {
       .asInstanceOf[Future[Option[ActorRef]]]
   }
 
+}
+
+/** Интерфейс DI-поля с инстансом [[WsDispatcherActors]]. */
+trait IWsDispatcherActorsDi {
+  /** Инстанс [[WsDispatcherActors]]. */
+  def wsDispatcherActors: WsDispatcherActors
 }
 
 

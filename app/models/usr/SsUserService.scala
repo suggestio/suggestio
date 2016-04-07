@@ -1,15 +1,15 @@
 package models.usr
 
-import models.{MPersonMeta, MNode}
+import com.google.inject.Inject
+import models.{MNode, MPersonMeta}
 import models.mext.ILoginProvider
+import models.mproj.ICommonDi
 import securesocial.core.{IProfile, PasswordInfo}
 import securesocial.core.providers.MailToken
 import securesocial.core.services.{SaveMode, UserService}
+import util.PlayMacroLogsImpl
 
 import scala.concurrent.Future
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.SiowebEsUtil.client
-import util.event.SiowebNotifier.Implicts.sn
 
 /**
  * Suggest.io
@@ -17,7 +17,13 @@ import util.event.SiowebNotifier.Implicts.sn
  * Created: 02.02.15 14:56
  * Description: Реализация над-модели прослойки между suggest.io и secure-social.
  */
-class SsUserService extends UserService[SsUser] {
+class SsUserService @Inject() (mCommonDi: ICommonDi)
+  extends UserService[SsUser]
+  with PlayMacroLogsImpl
+{
+
+  import mCommonDi._
+  import LOGGER._
 
   /**
    * Finds a SocialUser that maches the specified id
@@ -39,7 +45,7 @@ class SsUserService extends UserService[SsUser] {
    * @return an optional profile
    */
   override def findByEmailAndProvider(email: String, providerId: String): Future[Option[IProfile]] = {
-    throw new UnsupportedOperationException("Not implemented: email_pw login is in separate module")
+    _unsupported(s"findByEmailAndProvider($email, $providerId)")
   }
 
   /**
@@ -51,7 +57,8 @@ class SsUserService extends UserService[SsUser] {
    * @param uuid the token id
    */
   override def deleteToken(uuid: String): Future[Option[MailToken]] = {
-    Future successful None
+    debug(s"deleteToken($uuid): unsupported, ignored.")
+    Future.successful(None)
   }
 
   /**
@@ -61,7 +68,8 @@ class SsUserService extends UserService[SsUser] {
    * @return returns an optional PasswordInfo
    */
   override def passwordInfoFor(user: SsUser): Future[Option[PasswordInfo]] = {
-    Future successful None
+    warn(s"passwordInfoFor($user): unsupported, returning None.")
+    Future.successful( None )
   }
 
   /**
@@ -72,6 +80,7 @@ class SsUserService extends UserService[SsUser] {
    * @param mode a mode that tells you why the save method was called
    */
   override def save(profile: IProfile, mode: SaveMode): Future[SsUser] = {
+    trace(s"save($profile, $mode): Starting...")
     // TODO Скорее всего этот метод никогда не вызвается, т.к. его логика заинлайнилась в ExternalLogin.handleAuth1().
     if (mode is SaveMode.SignUp) {
       // Зарегать нового юзера
@@ -108,13 +117,17 @@ class SsUserService extends UserService[SsUser] {
     }
   }
 
+  private def _unsupported(what: String) = throw new UnsupportedOperationException("This method unsupported: " + what)
+
   /**
    * Links the current user to another profile
    *
    * @param current The current user instance
    * @param to the profile that needs to be linked to
    */
-  override def link(current: SsUser, to: IProfile): Future[SsUser] = ???
+  override def link(current: SsUser, to: IProfile): Future[SsUser] = {
+    _unsupported(s"link($current, $to)")
+  }
 
   /**
    * Finds a token
@@ -125,7 +138,10 @@ class SsUserService extends UserService[SsUser] {
    * @param token the token id
    * @return
    */
-  override def findToken(token: String): Future[Option[MailToken]] = ???
+  override def findToken(token: String): Future[Option[MailToken]] = {
+    _unsupported("findToken(" + token + ")")
+  }
+
 
   /**
    * Deletes all expired tokens
@@ -134,7 +150,9 @@ class SsUserService extends UserService[SsUser] {
    * implementation
    *
    */
-  override def deleteExpiredTokens(): Unit = ???
+  override def deleteExpiredTokens(): Unit = {
+    debug("deleteExpiredTokens(): Unsupported, ignored.")
+  }
 
   /**
    * Updates the PasswordInfo for a given user
@@ -143,7 +161,9 @@ class SsUserService extends UserService[SsUser] {
    * @param info the password info
    * @return
    */
-  override def updatePasswordInfo(user: SsUser, info: PasswordInfo): Future[Option[IProfile]] = ???
+  override def updatePasswordInfo(user: SsUser, info: PasswordInfo): Future[Option[IProfile]] = {
+    _unsupported(s"updatePasswordInfo($user, $info)")
+  }
 
   /**
    * Saves a mail token.  This is needed for users that
@@ -154,5 +174,8 @@ class SsUserService extends UserService[SsUser] {
    *
    * @param token The token to save
    */
-  override def saveToken(token: MailToken): Future[MailToken] = ???
+  override def saveToken(token: MailToken): Future[MailToken] = {
+    _unsupported(s"saveToken($token)")
+  }
+
 }

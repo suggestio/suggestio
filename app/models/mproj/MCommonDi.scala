@@ -6,7 +6,7 @@ import com.google.inject.{ImplementedBy, Inject, Singleton}
 import controllers.ErrorHandler
 import io.suggest.di.{IActorSystem, ICacheApiUtil, IEsClient, IExecutionContext}
 import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.playx.{CacheApiUtil, ICurrentConf}
+import io.suggest.playx.{CacheApiUtil, ICurrentAppHelpers, ICurrentConf}
 import models.mctx.Context2Factory
 import models.req.MSioUsers
 import models.MNodeCache
@@ -34,7 +34,7 @@ import scala.concurrent.ExecutionContext
 @ImplementedBy( classOf[MCommonDi] )
 trait ICommonDi
   extends IErrorHandler
-  with ICurrentConf
+  with ICurrentConf with ICurrentAppHelpers
   with IExecutionContext
   with IEsClient
   with ISioNotifier
@@ -67,11 +67,6 @@ trait ICommonDi
   override val _slickConfigProvider   : DatabaseConfigProvider
   implicit val mat                    : Materializer
   override implicit val current       : Application
-
-  /** Вспомогательные хелперы, т.к. необходимые (current.isProd) почему-то приватны. */
-  def isDev   = current.mode == Mode.Dev
-  def isProd  = current.mode == Mode.Prod
-  def isTest  = current.mode == Mode.Test
 
 }
 

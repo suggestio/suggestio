@@ -2,16 +2,15 @@ package util.event
 
 import io.suggest.event._
 import util._
-import akka.actor.{Props, ActorRef, ActorRefFactory}
+import akka.actor.{ActorRef, ActorRefFactory, ActorSystem, Props}
 import akka.util.Timeout
-import scala.concurrent.duration._
-import play.api.Play.current
-import play.api.libs.concurrent.Akka
-import scala.concurrent.Future
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import models._
+import com.google.inject.{Inject, Singleton}
+import models.MNodeCache
 
-import scala.reflect.ClassTag
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext
+import play.api.Configuration
+import play.api.inject.Injector
 
 /**
  * Suggest.io
@@ -20,66 +19,53 @@ import scala.reflect.ClassTag
  * Description: Поддержка SioNotifier с уклоном на текущий проект.
  * Полностью статический клиент + реализация, подписывающая всех вокруг на события.
  */
-object SiowebNotifier
+@Singleton
+class SiowebNotifier @Inject() (
+  factory       : ISiowebNotifierActorsFactory,
+  injector      : Injector,
+  siowebSup     : SiowebSup,
+  configuration : Configuration,
+  actorSystem   : ActorSystem
+)
   extends SioNotifierStaticActorSelection
   with SNStaticSubscriptionManager
 {
 
-  object Implicts {
-    implicit def sn = SiowebNotifier
-  }
-
   implicit val SN_ASK_TIMEOUT: Timeout = {
-    val ms = current.configuration.getInt("sn.ask.timeout_ms") getOrElse 5000
+    val ms = configuration.getInt("sn.ask.timeout_ms") getOrElse 5000
     Timeout( ms.milliseconds )
   }
 
-  // TODO Сделать нормальную инжекцию.
-  private lazy val siowebSup = current.injector.instanceOf[SiowebSup]
   def supPath = siowebSup.actorPath
 
-  protected def getSystem = Akka.system
+  protected def getSystem = actorSystem
 
-  private def _inj[X <: SNStaticSubscriber : ClassTag]: X = {
-    current.injector.instanceOf[X]
-  }
 
   /** Набор модулей, которые необходимо статически подписать на события. */
   // TODO Вынести это отсюда?
   protected def getStaticSubscribers: Seq[SNStaticSubscriber] = {
     List(
-      // TODO inject
-      _inj[MNodeCache],
-      _inj[AdnNodeEvents]
+      injector.instanceOf[MNodeCache],
+      injector.instanceOf[AdnNodeEvents]
     )
   }
 
   /** SiowebSup собирается запустить сие. */
   def startLink(arf: ActorRefFactory): ActorRef = {
-    arf.actorOf(Props[SiowebNotifier], name = actorName)
-  }
-
-  /** Сабжевый актор стартанул. Надо выполнить асинхронно какие-то действия.
-   * Вызывается из preStart() актора.
-   */
-  private def snAfterStartAsync = {
-    Future {
-      staticSubscribeAllSync()
-    }
+    val ref = arf.actorOf(Props(factory.create()), name = actorName)
+    staticSubscribeAllSync()
+    ref
   }
 
 }
 
 
-class SiowebNotifier extends SioNotifier with SioutilLogs {
-
-  override def ec = defaultContext
-
-  // После запуска надо подписаться на статические события проекта.
-  override def preStart(): Unit = {
-    trace(s"preStart(): my actor path = " + self.path)
-    super.preStart()
-    SiowebNotifier.snAfterStartAsync
-  }
-
+trait ISiowebNotifierActorsFactory {
+  def create(): SiowebNotifierActor
 }
+
+class SiowebNotifierActor @Inject() (
+  override val ec: ExecutionContext
+)
+  extends SioNotifier
+    with SioutilLogs

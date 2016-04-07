@@ -1,6 +1,8 @@
 package util.blocks
 
 import akka.actor.{ActorRef, Props}
+import com.google.inject.Inject
+import com.google.inject.assistedinject.Assisted
 import util.PlayLazyMacroLogsImpl
 import util.ws._
 
@@ -10,10 +12,20 @@ import util.ws._
  * Created: 05.11.14 18:32
  * Description: Актор, обслуживающий WebSocket-интерфейс редактора блоков.
  */
-object LkEditorWsActor {
-  
-  def props(out: ActorRef, wsId: String) = Props(LkEditorWsActor(out, wsId))
+class LkEditorWsActors @Inject() (
+  factory: ILkEditorWsActorFactory
+) {
 
+  def props(out: ActorRef, wsId: String) = {
+    Props( factory.create(out, wsId) )
+  }
+
+}
+
+
+/** Интерфейс Guice-сборщика инстансов [[LkEditorWsActor]]. */
+trait ILkEditorWsActorFactory {
+  def create(out: ActorRef, wsId: String): LkEditorWsActor
 }
 
 
@@ -22,11 +34,16 @@ object LkEditorWsActor {
  * @param out ActorRef, который отражает собой исходящий канал ws-сокета.
  * @param wsId id ws-сокета, генерируемый в шаблоне при необходимости.
  */
-case class LkEditorWsActor(out: ActorRef, wsId: String)
+case class LkEditorWsActor @Inject() (
+  @Assisted out                   : ActorRef,
+  @Assisted wsId                  : String,
+  override val wsDispatcherActors : WsDispatcherActors
+)
   extends WsActorDummy
   with SubscribeToWsDispatcher
   with ColorDetectedWsNotifyActor
-  with PlayLazyMacroLogsImpl {
+  with PlayLazyMacroLogsImpl
+{
 
   import LOGGER._
 

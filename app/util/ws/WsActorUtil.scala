@@ -18,18 +18,23 @@ trait WsActorDummy extends Actor {
 
 
 /** WS акторы обычно подписываются на диспатчер, чтобы получить связь с внешним миром через wsId. */
-trait SubscribeToWsDispatcher extends Actor {
+trait SubscribeToWsDispatcher extends Actor with IWsDispatcherActorsDi {
 
   def wsId: String
 
   override def preStart(): Unit = {
     super.preStart()
-    WsDispatcherActor.actorSelection ! WsActStarted(wsId)
+    _send( WsActStarted(wsId) )
   }
 
   override def postStop(): Unit = {
     super.postStop()
-    WsDispatcherActor.actorSelection ! WsActStopped(wsId)
+    _send( WsActStopped(wsId) )
+  }
+
+
+  private def _send(msg: WsActMsg): Unit = {
+    wsDispatcherActors.actorSelection ! msg
   }
 
 }

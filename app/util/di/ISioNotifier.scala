@@ -9,5 +9,5 @@ import io.suggest.event.SioNotifierStaticClientI
  * Description: Дефолтовая реализация для DI-поля SioNotifier на время переходного периода.
  */
 trait ISioNotifier extends io.suggest.di.ISioNotifier {
-   implicit def sn: SioNotifierStaticClientI = util.event.SiowebNotifier.Implicts.sn
+   implicit def sn: SioNotifierStaticClientI
  }

@@ -1,9 +1,10 @@
 package util
 
-import com.google.inject.{Singleton, Inject}
+import com.google.inject.{Inject, Singleton}
 import akka.actor._
 import play.api.Application
-import util.ws.WsDispatcherActor
+import util.ws.WsDispatcherActors
+
 import scala.concurrent.duration._
 import akka.actor.SupervisorStrategy._
 import akka.util.Timeout
@@ -17,6 +18,18 @@ import util.event.SiowebNotifier
  * Description: Супервизор процессов sioweb таких как менеджер процессов проверки qi, менеджер процессов валидации и т.д.
  * Когда запускается, также запускает дочерние вышеуказанные процессы.
  */
+
+object SiowebSupActor {
+  // TODO Вынести эту статику в модели. А сам актор в какую-нить поддиректорию затолкать.
+
+  // Тип возвращаемого значения getChildRef.
+  type GetChildRefReply_t = Option[ActorRef]
+
+  // Сообщение запроса дочернего процесса
+  sealed case class GetChildRef(childName: String)
+
+}
+
 
 // Статический клиент к актору. Запускает всё дерево супервизора.
 @Singleton
@@ -39,34 +52,24 @@ class SiowebSup @Inject() (
     current.actorSystem.actorOf(actorProps, name = actorName)
   }
 
-  type GetChildRefReply_t = Option[ActorRef]
-
-  // Тип возвращаемого значения getChildRef.
-
-  // Сообщение запроса дочернего процесса
-  sealed case class GetChildRef(childName: String)
-
 }
 
 
 class SiowebSupActor @Inject() (
-  companion: SiowebSup
+  wsDispatcherActors  : WsDispatcherActors,
+  siowebNotifier      : SiowebNotifier
 ) extends Actor with Logs {
 
-  import companion.{GetChildRef, GetChildRefReply_t}
+  import SiowebSupActor.{GetChildRef, GetChildRefReply_t}
 
   /**
    * Нужно запустить все дочерние процессы.
    */
   override def preStart() {
     super.preStart()
-    // Убедится, что статический actor-путь до этого супервизора стабилен и корректен.
-    if (self.path != companion.actorPath) {
-      throw new Exception(s"self.path==${self.path} but it must be equal to val ${companion.getClass.getSimpleName}.actorPath = ${companion.actorPath}")
-    }
     // Запускаем все дочерние процессы.
-    SiowebNotifier.startLink(context)
-    WsDispatcherActor.startLink(context)
+    siowebNotifier.startLink(context)
+    wsDispatcherActors.startLink(context)
   }
 
 

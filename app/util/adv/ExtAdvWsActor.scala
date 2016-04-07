@@ -5,13 +5,14 @@ import _root_.util.adv.ext.AeFormUtil
 import _root_.util.async.FsmActor
 import _root_.util.jsa.JsAppendById
 import _root_.util.ws.SubscribeToWsDispatcher
-import akka.actor.{SupervisorStrategy, Actor, ActorRef, Props}
+import _root_.util.ws.WsDispatcherActors
+import akka.actor.{Actor, ActorRef, Props, SupervisorStrategy}
 import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
 import models.adv._
 import models.adv.js.ctx.MJsCtx
 import models.adv.js._
-import models.event.{MEventTypes, RenderArgs, MEventTmp}
+import models.event.{MEventTmp, MEventTypes, RenderArgs}
 import models.mws.AnswerStatuses
 import play.api.inject.Injector
 import play.api.libs.json._
@@ -20,7 +21,7 @@ import scala.annotation.tailrec
 import scala.collection.immutable.Queue
 import scala.concurrent.ExecutionContext
 import scala.reflect.ClassTag
-import scala.util.{Random, Failure, Success}
+import scala.util.{Failure, Random, Success}
 
 /**
  * Suggest.io
@@ -51,6 +52,7 @@ trait ExtAdvWsActorFactory {
 case class ExtAdvWsActor @Inject() (
   @Assisted out     : ActorRef,
   @Assisted eactx   : IExtWsActorArgs,
+  override val wsDispatcherActors: WsDispatcherActors,
   injector          : Injector,
   aeFormUtil        : AeFormUtil,
   implicit val ec   : ExecutionContext

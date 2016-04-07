@@ -10,7 +10,7 @@ import models.merr.MRemoteError
 import models.mproj.ICommonDi
 import models.usr.{MExtIdent, EmailActivation, EmailPwIdent}
 import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
-import util.{PlayMacroLogsDyn, PlayLazyMacroLogsImpl, SiowebEsUtil}
+import util.{PlayMacroLogsDyn, PlayLazyMacroLogsImpl}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 import scala.concurrent.duration._
@@ -75,10 +75,10 @@ class SiowebEsModel @Inject() (
         logger.error(s"Failed to create transport client: addrs=$addrs", ex)
         throw ex
     }
-    val toClient = SiowebEsUtil.client
+    val toClient = mCommonDi.esClient
     val resultFut = Future.traverse(esModels) { esModel =>
       val copyResultFut = esModel.copyContent(fromClient, toClient)
-      copyResultFut onComplete {
+      copyResultFut.onComplete {
         case Success(result) =>
           logger.info(s"$logPrefix Copy finished for model ${esModel.getClass.getSimpleName}. Total success=${result.success} failed=${result.failed}")
         case Failure(ex) =>

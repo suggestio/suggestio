@@ -28,6 +28,7 @@ import util.acl._
 import util.di.{IDynImgUtil, IMImg3Di}
 import util.img.detect.main.MainColorDetector
 import util.img.{ImgCtlUtil, _}
+import util.ws.WsDispatcherActors
 import views.html.img._
 
 import scala.concurrent.Future
@@ -47,6 +48,7 @@ class Img @Inject() (
   override val mImgs3             : MImgs3,
   override val dynImgUtil         : DynImgUtil,
   override val imgCtlUtil         : ImgCtlUtil,
+  override val wsDispatcherActors : WsDispatcherActors,
   override val mCommonDi          : ICommonDi
 )
   extends SioController

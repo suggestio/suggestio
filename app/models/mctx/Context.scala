@@ -6,12 +6,14 @@ import _root_.models.im.DevScreen
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.{Inject, Singleton}
 import controllers.routes
+import io.suggest.playx.ICurrentAppHelpers
 import io.suggest.util.UuidUtil
 import models.mproj.IMCommonDi
 import models.req.ExtReqHdr.{firstForwarded, lastForwarded}
 import models.req.IReqHdr
 import models.usr.MSuperUsers
 import org.joda.time.DateTime
+import play.api.Application
 import play.api.Play.{configuration, current, isDev}
 import play.api.http.HeaderNames._
 import play.api.i18n.Messages
@@ -285,8 +287,10 @@ class ContextApi @Inject() (
   val cdn                 : CdnUtil,
   val dynImgUtil          : DynImgUtil,
   val n2NodesUtil         : N2NodesUtil,
-  val mSuperUsers         : MSuperUsers
+  val mSuperUsers         : MSuperUsers,
+  override implicit val current: Application
 )
+  extends ICurrentAppHelpers
 
 
 /** Guice factory для сборки контекстов с использованием DI.
@@ -304,10 +308,10 @@ trait Context2Factory {
 
 /** Основная реализация контекста, с которой работают sio-контроллеры автоматически. */
 case class Context2 @Inject() (
-                                override val api                          : ContextApi,
-                                @Assisted override val data               : CtxData,
-                                @Assisted implicit override val request   : IReqHdr,
-                                @Assisted implicit override val messages  : Messages
+  override val api                          : ContextApi,
+  @Assisted override val data               : CtxData,
+  @Assisted implicit override val request   : IReqHdr,
+  @Assisted implicit override val messages  : Messages
 )
   extends Context
 {

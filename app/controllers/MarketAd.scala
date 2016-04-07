@@ -24,7 +24,7 @@ import play.core.parsers.Multipart
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 import util.acl._
-import util.blocks.{BgImg, ListBlock, LkEditorWsActor}
+import util.blocks.{BgImg, ListBlock, LkEditorWsActors}
 import util.mdr.SysMdrUtil
 import util.n2u.N2NodesUtil
 import views.html.lk.ad._
@@ -41,6 +41,7 @@ class MarketAd @Inject() (
   tempImgSupport                  : TempImgSupport,
   mImgs3                          : MImgs3,
   sysMdrUtil                      : SysMdrUtil,
+  lkEditorWsActors                : LkEditorWsActors,
   override val n2NodesUtil        : N2NodesUtil,
   override val mCommonDi          : ICommonDi
 )
@@ -448,7 +449,7 @@ class MarketAd @Inject() (
     val auth = personIdOpt.isDefined
     Future.successful(
       if (auth) {
-        Right(LkEditorWsActor.props(_, wsId))
+        Right(lkEditorWsActors.props(_, wsId))
       } else {
         val result = Forbidden("Unathorized")
         Left(result)

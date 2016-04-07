@@ -7,7 +7,7 @@ import play.api.i18n.{I18nSupport, Lang}
 import play.api.mvc._
 import util._
 import util.jsa.init.CtlJsInitT
-import util.ws.WsDispatcherActor
+import util.ws.IWsDispatcherActorsDi
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -122,7 +122,7 @@ trait MyConfName {
 
 
 /** Утиль для связи с акторами, обрабатывающими ws-соединения. */
-trait NotifyWs extends SioController with PlayMacroLogsI with MyConfName {
+trait NotifyWs extends SioController with PlayMacroLogsI with MyConfName with IWsDispatcherActorsDi {
 
   import mCommonDi._
 
@@ -137,7 +137,7 @@ trait NotifyWs extends SioController with PlayMacroLogsI with MyConfName {
   /** Послать сообщение ws-актору с указанным wsId. Если WS-актор ещё не появился, то нужно подождать его
     * некоторое время. Если WS-актор так и не появился, то выразить соболезнования в логи. */
   def _notifyWs(wsId: String, msg: Any, counter: Int = 0): Unit = {
-    WsDispatcherActor.getForWsId(wsId)
+    wsDispatcherActors.getForWsId(wsId)
       .onComplete {
         case Success(Some(wsActorRef)) =>
           wsActorRef ! msg

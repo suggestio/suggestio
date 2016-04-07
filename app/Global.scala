@@ -31,7 +31,6 @@ object Global extends GlobalSettings {
   import Logger._
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  implicit private def sioNotifier = SiowebNotifier
 
   private var cronTimers : List[Cancellable] = null
 
@@ -41,8 +40,10 @@ object Global extends GlobalSettings {
    */
   override def onStart(app: Application) {
     super.onStart(app)
+    implicit val sioNotifier = _inject[SiowebNotifier](app)
+    // TODO Инициализация ES-клиента уже вынесена на уровень DI: DiModule + SiowebEsUtil.
     val esNodeFut = Future {
-      SiowebEsUtil.ensureNode()
+      sioWebEsUtil(app).ensureNode()
     }
     ensureScryptNoJni()
     // Запускаем супервизора вместе с деревом остальных акторов.
@@ -126,6 +127,7 @@ object Global extends GlobalSettings {
   private def siowebEsModel(app: Application)   = _inject[SiowebEsModel](app)
   private def scStatSaver(app: Application)     = _inject[ScStatSaver](app)
   private def pgpUtil(app: Application)         = _inject[PgpUtil](app)
+  private def sioWebEsUtil(app: Application)    = _inject[SiowebEsUtil](app)
 
   /**
    * При остановке системы (например, при обновлении исходников), нужно выполнить все нижеперечисленные действия.
@@ -135,9 +137,6 @@ object Global extends GlobalSettings {
     scStatSaver(app).BACKEND.close()
     // Была одна ошибка после проблемы в DI после onStart(). JMXImpl должен останавливаться перед elasticsearch.
     jmxImpl(app).unregisterAll()
-    val esCloseFut = Future {
-      SiowebEsUtil.stopNode()
-    }
 
     // В текущем потоке: Исполняем синхронные задачи завершения работы...
     super.onStop(app)
@@ -146,9 +145,6 @@ object Global extends GlobalSettings {
       crontab(app).stopTimers(cronTimers)
       cronTimers = null
     }
-
-    // Дожидаемся завершения асинхронных задач.
-    Await.ready(esCloseFut, 20.seconds)
   }
 
 
