@@ -13,6 +13,7 @@ import io.suggest.svg.SvgUtil
 import io.suggest.ym.model.common.MImgInfoMeta
 import models.im._
 import models.mctx.Context
+import models.mfs.FileUtil
 import models.mproj.ICommonDi
 import models.req.IReq
 import net.sf.jmimemagic.{Magic, MagicMatch}
@@ -76,25 +77,21 @@ class Img @Inject() (
 
   private def serveImgFromFile(file: File, cacheSeconds: Int, modelInstant: ReadableInstant): Result = {
     // Enumerator.fromFile() вроде как асинхронный, поэтому запускаем его тут как можно раньше.
-    val iteeResult = Ok.sendFile(file, inline = true)
+    val resultRaw = Ok.sendFile(file, inline = true)
     trace(s"serveImgFromFile(${file.getParentFile.getName}/${file.getName}): 200 OK, file size = ${file.length} bytes.")
-    serveImg(
-      resultRaw     = iteeResult,
-      mm            = Magic.getMagicMatch(file, false, true),
-      cacheSeconds  = cacheSeconds,
-      modelInstant  = modelInstant
-    )
-  }
+    val mmOpt = FileUtil.getMimeMatch(file)
 
-  private def serveImg(resultRaw: Result, mm: MagicMatch, cacheSeconds: Int, modelInstant: ReadableInstant): Result = {
-    val ct = Option(mm)
+    val ct = mmOpt
       .flatMap { mm => Option(mm.getMimeType) }
       // 2014.sep.26: В случае svg, jmimemagic не определяет правильно content-type, поэтому нужно ему помочь:
       .map {
         case textCt if SvgUtil.maybeSvgMime(textCt) => "image/svg+xml"
         case other => other
       }
-      .getOrElse("image/unknown")   // Should never happen
+      .getOrElse{
+        LOGGER.warn(s"serveImg(): No MIME match found")
+        "image/unknown"
+      }   // Should never happen
     resultRaw
       .as(ct)
       .withHeaders(
