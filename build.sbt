@@ -19,16 +19,16 @@ JsEngineKeys.engineType := JsEngineKeys.EngineType.Node
 libraryDependencies ++= {
  Seq(
   jdbc exclude("com.h2database", "h2"),
-  "com.typesafe.play" %% "anorm" % "2.4.0",
+  "com.typesafe.play" %% "anorm" % "2.5.0",
   cache,
   json,
   "com.typesafe.play"   %% "play-slick" % Common.playSlickVsn,
   // slick повторно инклюдится здесь, т.к. что-то свежая версия не цеплялась через common-slick-driver
   "com.typesafe.slick"  %% "slick"      % Common.slickVsn,
   ws exclude("commons-logging", "commons-logging"),
-  "com.typesafe.play" %% "play-mailer" % "3.0.1",
+  "com.typesafe.play" %% "play-mailer" % Common.playMailerVsn,
   "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
-  "com.mohiva" %% "play-html-compressor" % "0.5-SNAPSHOT",  // https://github.com/mohiva/play-html-compressor
+  "com.mohiva" %% "play-html-compressor" % "0.6.1",  // https://github.com/mohiva/play-html-compressor
   //"com.yahoo.platform.yui" % "yuicompressor" % "2.4.+",
   // io.suggest stuff
   Common.ORG %% "mbill2" % "0.0.0-SNAPSHOT",
@@ -48,7 +48,7 @@ libraryDependencies ++= {
     exclude("log4j",    "log4j")
     exclude("commons-logging", "commons-logging")
   ,
-  "com.ning" % "async-http-client" % "1.9.+",
+  //"com.ning" % "async-http-client" % "1.9.+",   // 2.5 migration, ahc -> 2.0.x. Удалить, если не понадобится возвращать.
   "org.slf4j" % "log4j-over-slf4j" % "1.+",
   // coffeescript-компилятор используем свой заместо компилятора play по ряду причин (последний прибит гвоздями к sbt-plugin, например).
   "org.jcoffeescript" % "jcoffeescript" % "1.6.2-SNAPSHOT",
@@ -106,7 +106,7 @@ libraryDependencies ++= {
     exclude("org.w3c.css", "sac")
   ,
   // play-2.3+:
-  "org.scalatestplus" %% "play" % "1.4.0-SNAPSHOT" % "test"
+  "org.scalatestplus" %% "play" % "1.5.1" % "test"
     exclude("commons-logging", "commons-logging")
     exclude("org.w3c.css", "sac")
 )}
@@ -175,81 +175,9 @@ unmanagedJars in Compile ~= {uj =>
   Seq(Attributed.blank(file(System.getProperty("java.home").dropRight(3)+"lib/tools.jar"))) ++ uj
 }
 
-// proguard: защита скомпиленного кода от реверса.
-proguardSettings
+// До web21:1fe8de97fc81 включительно здесь жил конфиг для sbt-proguard. Но он так и не был доделан до рабочего состояния.
+// Скорее всего, необходимо compile-time DI сначала отладить, и потом только можно будет возвращаться к этой работе.
 
-ProguardKeys.proguardVersion in Proguard := "5.2"
-
-ProguardKeys.options in Proguard ++= Seq(
-  // https://gist.github.com/cessationoftime/4029263
-  "-keep class * implements java.sql.Driver",
-  "-keep class scala.concurrent.stm.ccstm.CCSTM { *; }",
-  "-keep class akka.remote.RemoteActorRefProvider { *; }",
-  "-keep class akka.event.Logging$DefaultLogger { *; }",
-  "-keep class akka.event.Logging$LogExt { *; }",
-  "-keep class akka.event.slf4j.Slf4jEventHandler { *; }",
-  "-keep class akka.remote.netty.NettyRemoteTransport { *; }",
-  "-keep class akka.serialization.JavaSerializer { *; }",
-  "-keep class akka.serialization.ProtobufSerializer { *; }",
-  "-keep class com.google.protobuf.* { *; }" ,
-  // etc
-  "-keep class * extends javax.xml.parsers.SAXParserFactory",
-  "-keep public class org.apache.xerces.**",
-  "-keep public class play.api.**",
-  "-keep public class ch.qos.logback.**",
-  "-keepnames class * implements org.xml.sax.EntityResolver",
-  """-keepclasseswithmembers public class * {
-      public static void main(java.lang.String[]);
-  }""",
-  """-keepclassmembers class * {
-      ** MODULE$;
-  }""",
-  """-keepclassmembernames class scala.concurrent.forkjoin.ForkJoinPool {
-      long eventCount;
-      int  workerCounts;
-      int  runControl;
-      scala.concurrent.forkjoin.ForkJoinPool$WaitQueueNode syncStack;
-      scala.concurrent.forkjoin.ForkJoinPool$WaitQueueNode spareStack;
-  }""",
-  """-keepclassmembernames class scala.concurrent.forkjoin.ForkJoinWorkerThread {
-      int base;
-      int sp;
-      int runState;
-  }""",
-  """-keepclassmembernames class scala.concurrent.forkjoin.ForkJoinTask {
-      int status;
-  }""",
-  """-keepclassmembernames class scala.concurrent.forkjoin.LinkedTransferQueue {
-      scala.concurrent.forkjoin.LinkedTransferQueue$PaddedAtomicReference head;
-      scala.concurrent.forkjoin.LinkedTransferQueue$PaddedAtomicReference tail;
-      scala.concurrent.forkjoin.LinkedTransferQueue$PaddedAtomicReference cleanMe;
-  }""",
-  "-keep class * implements models.ai.ContentHandlerResult",
-  "-keepattributes *Annotation*,Signature",
-  // http://stackoverflow.com/a/10311980
-  "-keep class com.google.inject.Binder",
-  "-keep public class com.google.inject.Inject",
-  // keeps all fields and Constructors with @Inject
-  """-keepclassmembers,allowoptimization,allowobfuscation class * {
-    @com.google.inject.Inject <fields>;
-    @com.google.inject.Inject <init>(...);
-  }""",
-  """-keepclassmembers,allowobfuscation,allowoptimization class * {
-    @com.google.inject.Provides <methods>;
-  }""",
-  // TODO заценить описалово из http://stackoverflow.com/a/5843875
-  "-optimizations !method/inlining/*",
-  "-dontoptimize",
-  "-dontobfuscate",
-  //"-ignorewarnings",
-  "-verbose",
-  "-dontnote",
-  "-dontwarn"
-)
-
-ProguardKeys.options in Proguard += ProguardOptions.keepMain("play.core.server.NettyServer")
-
-javaOptions in (Proguard, proguard) := Seq("-Xms512M", "-Xmx4G")
 
 // play-2.4: нужно устранить всякие import controllers... из шаблонов и иных мест.
 routesGenerator := InjectedRoutesGenerator
