@@ -22,7 +22,7 @@ trait IsSuperuserMad
 
   import mCommonDi._
 
-  sealed trait IsSuperuserMadBase
+  sealed trait IsSuMadBase
     extends ActionBuilder[MAdReq]
     with IsSuperuserUtil
   {
@@ -57,24 +57,24 @@ trait IsSuperuserMad
   }
 
 
-  abstract class IsSuperuserMadAbstract
-    extends IsSuperuserMadBase
+  abstract class IsSuMadAbstract
+    extends IsSuMadBase
     with ExpireSession[MAdReq]
 
 
   /** ACL action builder на действия с указанной рекламной карточкой. */
-  case class IsSuperuserMad(override val adId: String)
-    extends IsSuperuserMadAbstract
+  case class IsSuMad(override val adId: String)
+    extends IsSuMadAbstract
 
   /** ACL action builder на действия с указанной рекламной карточкой. + CSRF выставление токена в сессию. */
-  case class IsSuperuserMadGet(override val adId: String)
-    extends IsSuperuserMadAbstract
+  case class IsSuMadGet(override val adId: String)
+    extends IsSuMadAbstract
     with CsrfGet[MAdReq]
 
 
   /** ACL action builder на действия с указанной рекламной карточкой. + Проверка CSRF-токена. */
-  case class IsSuperuserMadPost(override val adId: String)
-    extends IsSuperuserMadAbstract
+  case class IsSuMadPost(override val adId: String)
+    extends IsSuMadAbstract
     with CsrfPost[MAdReq]
 
 }

@@ -243,7 +243,7 @@
               "map_create": "/ru/map/create/",
               "logout": "@CSRF(routes.Ident.logout())",
               "routing": "http://map.project-osrm.org/?loc={lat},{lng}&hl={locale}",
-              "datalayer_create": "@routes.Umap.createMapDataLayer()",
+              "datalayer_create": "@CSRF(routes.Umap.createMapDataLayer())",
               "map_clone": "/ru/map/{map_id}/update/clone/",
               "login_popup_end": "/ru/login/popup/end/",
               "login": "/ru/login/",

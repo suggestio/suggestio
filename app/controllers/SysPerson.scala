@@ -45,7 +45,7 @@ class SysPerson @Inject() (
     id    = Some("IdIdIdIdId888")
   )
 
-  def index = IsSuperuser.async { implicit request =>
+  def index = IsSuGet.async { implicit request =>
     val personsCntFut: Future[Long] = {
       val psearch = new MNodeSearchDfltImpl {
         override def nodeTypes  = Seq(MNodeTypes.Person)
@@ -71,17 +71,17 @@ class SysPerson @Inject() (
   }
 
   /** Отрендерить на экран email-сообщение регистрации юзера. */
-  def showRegEmail = IsSuperuser { implicit request =>
+  def showRegEmail = IsSu { implicit request =>
     Ok(emailRegMsgTpl(dummyEa))
   }
 
   /** Отрендерить email-сообщение восстановления пароля. */
-  def showRecoverEmail = IsSuperuser { implicit request =>
+  def showRecoverEmail = IsSu { implicit request =>
     Ok(emailPwRecoverTpl(dummyEa))
   }
 
   /** Отрендерить страницу, которая будет содержать таблицу со всеми email+pw идентами. */
-  def allEpws(offset: Int) = IsSuperuser.async { implicit request =>
+  def allEpws(offset: Int) = IsSu.async { implicit request =>
     val limit = 20
     val epwsFut = EmailPwIdent.getAll(limit, offset = offset)
     for {
@@ -96,7 +96,7 @@ class SysPerson @Inject() (
   }
 
   /** Отрендерить страницу с листингом внешних идентов. */
-  def allExtIdents(offset: Int) = IsSuperuser.async { implicit request =>
+  def allExtIdents(offset: Int) = IsSu.async { implicit request =>
     val limit = 20
     val extIdentsFut = MExtIdent.getAll(limit, offset = offset)
     for {
@@ -112,10 +112,11 @@ class SysPerson @Inject() (
 
   /**
    * Показать страницу с инфой по юзеру.
+   *
    * @param personId id просматриваемого юзера.
    * @return Страница с кучей ссылок на ресурсы, относящиеся к юзеру.
    */
-  def showPerson(personId: String) = IsSuperuserPerson(personId).async { implicit request =>
+  def showPerson(personId: String) = IsSuPersonGet(personId).async { implicit request =>
     // Сразу запускаем поиск узлов: он самый тяжелый тут.
     val msearch = new MNodeSearchDfltImpl {
       override def outEdges  = {

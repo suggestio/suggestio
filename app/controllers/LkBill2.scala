@@ -71,7 +71,7 @@ class LkBill2 @Inject() (
     * @param nodeId id узла.
     * @return 200 Ок со страницей биллинга узла.
     */
-  def onNode(nodeId: String) = IsAdnNodeAdmin(nodeId, U.Lk).async { implicit request =>
+  def onNode(nodeId: String) = IsAdnNodeAdminGet(nodeId, U.Lk).async { implicit request =>
     val dailyTfArgsFut = _dailyTfArgsFut(request.mnode)
 
     // Отрендерить результаты, когда всё получено:
@@ -96,7 +96,7 @@ class LkBill2 @Inject() (
     * @param onNodeId В рамках ЛК какой ноды происходит движуха.
     * @return Страница "спасибо за покупку".
     */
-  def thanksForBuy(onNodeId: String) = IsAdnNodeAdmin(onNodeId, U.Lk).async { implicit request =>
+  def thanksForBuy(onNodeId: String) = IsAdnNodeAdminGet(onNodeId, U.Lk).async { implicit request =>
     request.user.lkCtxDataFut.flatMap { implicit ctxData =>
       Ok(ThanksForBuyTpl(request.mnode))
     }

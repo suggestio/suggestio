@@ -3,9 +3,9 @@
 @* Шаблон с формой поиска картинки по ссылке или иным данным. *@
 
 @import helper._
-@import ctx.messages
+@import ctx.{messages, request}
 
-@form( routes.SysImg.searchFormSubmit() ) {
+@form( CSRF(routes.SysImg.searchFormSubmit()) ) {
 
   @inputText(
     uf("qstr"),

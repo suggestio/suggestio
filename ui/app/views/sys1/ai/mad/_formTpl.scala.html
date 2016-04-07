@@ -5,7 +5,7 @@
 @import helper._
 @import ctx._
 
-@form(submitCall) {
+@form(CSRF(submitCall)) {
 
   @inputText(mf("name"), '_label -> messages("Name"))
 

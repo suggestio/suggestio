@@ -16,7 +16,7 @@ trait IsSuperuserOr404Ctl
 {
   import mCommonDi._
 
-  trait IsSuperuserOr404Base extends IsSuperuserBase with ExpireSession[MReq] {
+  trait IsSuOr404Base extends IsSuBase with ExpireSession[MReq] {
 
     override def supOnUnauthResult(req: IReqHdr): Future[Result] = {
       errorHandler.http404Fut(req)
@@ -28,7 +28,10 @@ trait IsSuperuserOr404Ctl
 
 trait IsSuperuserOr404 extends IsSuperuserOr404Ctl {
 
-  object IsSuperuserOr404 extends IsSuperuserOr404Base
+  abstract class IsSuOr404Abstract extends IsSuOr404Base with ExpireSession[MReq]
+  object IsSuOr404 extends IsSuOr404Abstract
+  object IsSuOr404Get extends IsSuOr404Abstract with CsrfGet[MReq]
+  object IsSuOr404Post extends IsSuOr404Abstract with CsrfPost[MReq]
 
 }
 
@@ -38,12 +41,11 @@ trait IsSuperuserOrDevelOr404 extends IsSuperuserOr404Ctl {
   import mCommonDi._
 
   /** Разрешить не-админам и анонимам доступ в devel-режиме. */
-  object IsSuperuserOrDevelOr404 extends IsSuperuserOr404Base {
+  object IsSuOrDevelOr404 extends IsSuOr404Base {
 
     override protected def isAllowed(user: ISioUser): Boolean = {
       super.isAllowed(user) || isDev
     }
-
   }
 
 }

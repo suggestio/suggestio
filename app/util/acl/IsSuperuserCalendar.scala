@@ -54,11 +54,11 @@ trait IsSuperuserCalendar
     extends IsSuperuserCalendarBase
     with ExpireSession[MCalendarReq]
 
-  case class IsSuperuserCalendarGet(override val calId: String)
+  case class IsSuCalendarGet(override val calId: String)
     extends IsSuperuserCalendarAbstract
     with CsrfGet[MCalendarReq]
 
-  case class IsSuperuserCalendarPost(override val calId: String)
+  case class IsSuCalendarPost(override val calId: String)
     extends IsSuperuserCalendarAbstract
     with CsrfPost[MCalendarReq]
 

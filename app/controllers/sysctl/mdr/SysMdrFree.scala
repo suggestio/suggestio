@@ -36,7 +36,7 @@ trait SysMdrFree
     *
     * @param args Аргументы для поиска (QSB).
     */
-  def freeAdvs(args: MdrSearchArgs) = IsSuperuser.async { implicit request =>
+  def freeAdvs(args: MdrSearchArgs) = IsSu.async { implicit request =>
     // Необходимо искать карточки, требующие модерации/обработки.
     val madsFut = MNode.dynSearch( args.toNodeSearch )
     _adsPage(madsFut, args)
@@ -44,7 +44,7 @@ trait SysMdrFree
 
 
   /** Страница для модерации одной карточки. */
-  def refuseFreeAdvPopup(adId: String) = IsSuperuserMadGet(adId).apply { implicit request =>
+  def refuseFreeAdvPopup(adId: String) = IsSuMadGet(adId).apply { implicit request =>
     val form = sysMdrUtil.refuseFormM.fill(
       MRefuseFormRes(
         reason  = "",
@@ -63,7 +63,7 @@ trait SysMdrFree
 
   /** Сабмит одобрения пост-модерации бесплатного размещения.
     * Нужно выставить в карточку данные о модерации. */
-  def freeAdvMdrAccept(adId: String) = IsSuperuserMadPost(adId).async { implicit request =>
+  def freeAdvMdrAccept(adId: String) = IsSuMadPost(adId).async { implicit request =>
     // Запускаем сохранение данных модерации.
     val updFut = sysMdrUtil.updMdrEdge {
       MEdgeInfo(
@@ -81,7 +81,7 @@ trait SysMdrFree
 
 
   /** Сабмит формы блокирования бесплатного размещения рекламной карточки. */
-  def freeAdvMdrBan(adId: String) = IsSuperuserMadPost(adId).async { implicit request =>
+  def freeAdvMdrBan(adId: String) = IsSuMadPost(adId).async { implicit request =>
     lazy val logPrefix = s"freeAdvMdrBan($adId u:${request.user.personIdOpt.orNull}):"
     sysMdrUtil.refuseFormM.bindFromRequest().fold(
       {formWithErrors =>

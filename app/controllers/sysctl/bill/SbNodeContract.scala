@@ -33,7 +33,7 @@ trait SbNodeContract
 
   /**
    * Рендер страницы с формой создания контракта.
- *
+   *
    * @param nodeId id узла, для которого создаётся контракт.
    */
   def createContract(nodeId: String) = IsSuNodeNoContractGet(nodeId).async { implicit request =>
@@ -49,15 +49,16 @@ trait SbNodeContract
   }
 
   private def _createContract(cf: Form[MContract], rs: Status)(implicit request: INodeReq[_]): Future[Result] = {
-    Ok(createTpl(
+    val html = createTpl(
       mnode = request.mnode,
       cf    = cf
-    ))
+    )
+    rs(html)
   }
 
   /**
    * Сабмит формы создания контракта.
- *
+   *
    * @param nodeId id узла, для которого создаётся контракт.
    */
   def createContractSubmit(nodeId: String) = IsSuNodeNoContractPost(nodeId).async { implicit request =>
@@ -116,7 +117,7 @@ trait SbNodeContract
 
   /**
    * Экшен рендера страницы редактирования контракта узла.
- *
+   *
    * @param nodeId id изменяемого узла.
    */
   def editContract(nodeId: String) = IsSuNodeContractGet(nodeId).async { implicit request =>
@@ -132,7 +133,7 @@ trait SbNodeContract
 
   /**
    * Сабмит формы редактирования контракта.
- *
+   *
    * @param nodeId id узла.
    */
   def editContractSubmit(nodeId: String) = IsSuNodeContractPost(nodeId).async { implicit request =>
@@ -168,7 +169,7 @@ trait SbNodeContract
 
   /**
    * Сабмит удаления контракта.
- *
+   *
    * @param nodeId id узла.
    * @return Редирект на forNode().
    */

@@ -18,11 +18,12 @@ import scala.concurrent.Future
 trait IsSuperuserPerson
   extends SioController
   with IsSuperuserUtilCtl
+  with Csrf
 {
 
   import mCommonDi._
 
-  trait IsSuperuserPersonBase
+  trait IsSuPersonBase
     extends ActionBuilder[MPersonReq]
     with IsSuperuserUtil
   {
@@ -67,9 +68,20 @@ trait IsSuperuserPerson
   }
 
 
-  /** Дефолтовая реализация [[IsSuperuserPersonBase]]. */
-  case class IsSuperuserPerson(personId: String)
-    extends IsSuperuserPersonBase
+  abstract class IsSuPersonAbstract
+    extends IsSuPersonBase
     with ExpireSession[MPersonReq]
+
+  /** Дефолтовая реализация [[IsSuPersonBase]]. */
+  case class IsSuPerson(override val personId: String)
+    extends IsSuPersonAbstract
+
+  case class IsSuPersonGet(override val personId: String)
+    extends IsSuPersonAbstract
+    with CsrfGet[MPersonReq]
+
+  case class IsSuPersonPost(override val personId: String)
+    extends IsSuPersonAbstract
+    with CsrfPost[MPersonReq]
 
 }

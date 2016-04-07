@@ -32,7 +32,7 @@ trait SbNodeTfDaily
 
   /**
    * Страница редактирования посуточного тарифа узла.
- *
+   *
    * @param nodeId id узла, для которого редактируется тариф.
    */
   def editNodeTfDaily(nodeId: String) = IsSuNodeGet(nodeId).async { implicit request =>
@@ -69,7 +69,7 @@ trait SbNodeTfDaily
 
   /**
    * Сабмит формы редактирования тарифа узла.
- *
+   *
    * @param nodeId id редактируемого узла.
    * @return редирект на forNode().
    */
@@ -94,7 +94,7 @@ trait SbNodeTfDaily
 
   /**
    * Удаление текущего тарифа узла.
- *
+   *
    * @param nodeId id редактируемого узла.
    * @return Редирект на forNode().
    */

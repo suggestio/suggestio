@@ -69,7 +69,7 @@ class SysAdnGeo @Inject() (
 
 
   /** Выдать страницу с географиями по узлам. */
-  def forNode(adnId: String) = IsSuNode(adnId).async { implicit request =>
+  def forNode(adnId: String) = IsSuNodeGet(adnId).async { implicit request =>
     // Сборка карты данных по родительским узлам.
     val parentsMapFut = {
       val parentIdsIter = request.mnode

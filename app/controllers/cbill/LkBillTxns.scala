@@ -27,7 +27,7 @@ trait LkBillTxns
 
 
   /** Подгрузка страницы из списка транзакций. */
-  def txnsList(adnId: String, page: Int, inline: Boolean) = IsAdnNodeAdmin(adnId, U.Lk).async { implicit request =>
+  def txnsList(adnId: String, page: Int, inline: Boolean) = IsAdnNodeAdminGet(adnId, U.Lk).async { implicit request =>
     // Получить доступ к списку балансов юзера, который уже должен бы запрашиваться в фоне.
     val balancesFut = request.user.mBalancesFut
 

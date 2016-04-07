@@ -38,7 +38,7 @@ trait IsSuperuser
 
   import mCommonDi._
 
-  trait IsSuperuserBase
+  trait IsSuBase
     extends ActionBuilder[MReq]
     with IsSuperuserUtil
   {
@@ -63,20 +63,20 @@ trait IsSuperuser
   }
 
 
-  sealed abstract class IsSuperuserAbstract
-    extends IsSuperuserBase
+  sealed abstract class IsSuAbstract
+    extends IsSuBase
     with ExpireSession[MReq]
     with CookieCleanup[MReq]
 
-  object IsSuperuser
-    extends IsSuperuserAbstract
+  object IsSu
+    extends IsSuAbstract
 
-  object IsSuperuserGet
-    extends IsSuperuserAbstract
+  object IsSuGet
+    extends IsSuAbstract
     with CsrfGet[MReq]
 
-  object IsSuperuserPost
-    extends IsSuperuserAbstract
+  object IsSuPost
+    extends IsSuAbstract
     with CsrfPost[MReq]
 
 }

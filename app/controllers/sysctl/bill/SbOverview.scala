@@ -28,7 +28,7 @@ trait SbOverview
     *
     * @return 200 Ok со страницей инфы по биллингу.
     */
-  def overview = IsSuperuser.async { implicit request =>
+  def overview = IsSuGet.async { implicit request =>
     // Поиск последних финансовых транзакций для отображения таблицы оных.
     val txnsBalancesFut = slick.db.run {
       for {

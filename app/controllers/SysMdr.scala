@@ -43,7 +43,7 @@ class SysMdr @Inject() (
 
 
   /** Отобразить начальную страницу раздела модерации рекламных карточек. */
-  def index = IsSuperuser { implicit request =>
+  def index = IsSuGet { implicit request =>
     Ok( mdrIndexTpl() )
   }
 
@@ -52,7 +52,7 @@ class SysMdr @Inject() (
     *
     * @return Редирект на страницу модерации какой-то карточки, требующей модерации.
     */
-  def rdrToNextAd(args: MdrSearchArgs) = IsSuperuser.async { implicit request =>
+  def rdrToNextAd(args: MdrSearchArgs) = IsSu.async { implicit request =>
     // Выставляем в аргументы limit = 1, т.к. нам нужна только одна карточка.
     val args1 = args.copy(
       limitOpt = Some(1)

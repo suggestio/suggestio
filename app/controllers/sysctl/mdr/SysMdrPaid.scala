@@ -48,7 +48,7 @@ trait SysMdrPaid
     * @param args Аргументы поиска модерируемых карточек.
     * @return Страница с плиткой карточек, которые нужно модерировать по-платному направлению.
     */
-  def paidAdvs(args: MdrSearchArgs) = IsSuperuser.async { implicit request =>
+  def paidAdvs(args: MdrSearchArgs) = IsSu.async { implicit request =>
     // Залезть в items, найти там размещения, ожидающие подтверждения.
     val dbAction = sysMdrUtil._findPaidAdIds4MdrAction(args)
 
@@ -71,7 +71,7 @@ trait SysMdrPaid
     * @param nodeId id карточки.
     * @return Страница
     */
-  def forAd(nodeId: String) = IsSuperuserMadGet(nodeId).async { implicit request =>
+  def forAd(nodeId: String) = IsSuMadGet(nodeId).async { implicit request =>
     // Константа лимита отображаемых модератору mitems
     val ITEMS_LIMIT = 20
 
@@ -197,7 +197,7 @@ trait SysMdrPaid
     * @param nodeId id узла-карточки.
     * @return Редирект на модерацию следующей карточки.
     */
-  def approveAllItemsSubmit(nodeId: String) = IsSuperuserMadPost(nodeId).async { implicit request =>
+  def approveAllItemsSubmit(nodeId: String) = IsSuMadPost(nodeId).async { implicit request =>
     _processItemsForAd(
       nodeId  = nodeId,
       q       = sysMdrUtil.itemsQueryAwaiting(nodeId)
@@ -229,7 +229,7 @@ trait SysMdrPaid
   }
 
   /** Модератор подтверждает оплаченный item. */
-  def approveItemSubmit(itemId: Gid_t) = IsSuperuserPost.async { implicit request =>
+  def approveItemSubmit(itemId: Gid_t) = IsSuPost.async { implicit request =>
     val dbAction = bill2Util.approveItemAction(itemId)
     for {
       res <- sysMdrUtil._processOneItem(dbAction)
@@ -288,7 +288,7 @@ trait SysMdrPaid
     * @param nodeId id узла-карточки, которая модерируется в данный момент.
     * @return HTML попапа с формой отказа в размещении.
     */
-  def refuseAllItems(nodeId: String) = IsSuperuserMadGet(nodeId).async { implicit request =>
+  def refuseAllItems(nodeId: String) = IsSuMadGet(nodeId).async { implicit request =>
     _refusePopup( routes.SysMdr.refuseAllItemsSubmit(nodeId) )
   }
 
@@ -298,7 +298,7 @@ trait SysMdrPaid
     * @param nodeId id узла.
     * @return
     */
-  def refuseAllItemsSubmit(nodeId: String) = IsSuperuserMadPost(nodeId).async { implicit request =>
+  def refuseAllItemsSubmit(nodeId: String) = IsSuMadPost(nodeId).async { implicit request =>
     lazy val logPrefix = s"refuseAllItemsSubmit($nodeId):"
     sysMdrUtil.refuseFormM.bindFromRequest().fold(
       {formWithErrors =>
@@ -326,18 +326,18 @@ trait SysMdrPaid
     * @param itype id типа item'ов.
     * @return Редирект на текущую карточку.
     */
-  def approveAllItemsTypeSubmit(nodeId: String, itype: MItemType) = IsSuperuserMadPost(nodeId).async { implicit request =>
+  def approveAllItemsTypeSubmit(nodeId: String, itype: MItemType) = IsSuMadPost(nodeId).async { implicit request =>
     _processItemsForAd(
       nodeId = nodeId,
       q = sysMdrUtil.onlyItype( sysMdrUtil.itemsQueryAwaiting(nodeId), itype )
     )(bill2Util.approveItemAction)
   }
 
-  def refuseAllItemsType(nodeId: String, itype: MItemType) = IsSuperuserMadGet(nodeId).async { implicit request =>
+  def refuseAllItemsType(nodeId: String, itype: MItemType) = IsSuMadGet(nodeId).async { implicit request =>
     _refusePopup( routes.SysMdr.refuseAllItemsTypeSubmit(nodeId, itype) )
   }
 
-  def refuseAllItemsTypeSubmit(nodeId: String, itype: MItemType) = IsSuperuserMadPost(nodeId).async { implicit request =>
+  def refuseAllItemsTypeSubmit(nodeId: String, itype: MItemType) = IsSuMadPost(nodeId).async { implicit request =>
     lazy val logPrefix = s"refuseAllItemsTypeSubmit($nodeId, $itype):"
     sysMdrUtil.refuseFormM.bindFromRequest().fold(
       {formWithErrors =>

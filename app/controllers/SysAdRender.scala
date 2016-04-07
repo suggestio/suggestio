@@ -62,13 +62,14 @@ trait SysAdRender
 
   /**
    * Рендер страницы с формой забивания значений [[models.blk.OneAdQsArgs]].
+ *
    * @param madId id текущей рекламной карточки.
    * @param rvar Интересующий render variant.
    * @return 200: Страница с формой.
    *         Редиректы в остальных случаях.
    *         404 если указанная карточка не найдена.
    */
-  def showOneAdForm(madId: String, rvar: OneAdRenderVariant) = IsSuperuserMadGet(madId).async { implicit request =>
+  def showOneAdForm(madId: String, rvar: OneAdRenderVariant) = IsSuMadGet(madId).async { implicit request =>
     // Забиндить форму дефолтовыми данными для отправки в шаблон.
     val formArgs = OneAdQsArgs(
       adId    = madId,
@@ -102,11 +103,12 @@ trait SysAdRender
 
   /**
    * Сабмит формы запроса рендера карточки.
+ *
    * @param madId id карточки.
    * @param rvar Интересующий render variant.
    * @return Редирект на результат рендера карточки согласно переданным параметрам.
    */
-  def oneAdFormSubmit(madId: String, rvar: OneAdRenderVariant) = IsSuperuserMadPost(madId).async { implicit request =>
+  def oneAdFormSubmit(madId: String, rvar: OneAdRenderVariant) = IsSuMadPost(madId).async { implicit request =>
     oneAdQsArgsFormM(madId).bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug(s"oneAdFormSubmit($madId, ${rvar.nameI18n}): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")

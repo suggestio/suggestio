@@ -39,13 +39,13 @@ class SysAi @Inject() (
 
 
   /** Раздача страницы с оглавлением по ai-подсистемам. */
-  def index = IsSuperuser { implicit request =>
+  def index = IsSuGet { implicit request =>
     Ok(indexTpl())
   }
 
 
   /** Заглавная страница генераторов рекламных карточек. */
-  def madIndex = IsSuperuser.async { implicit request =>
+  def madIndex = IsSuGet.async { implicit request =>
     val aisFut = MAiMad.getAll()
     aisFut map { ais =>
       Ok(madIndexTpl(ais))
@@ -148,12 +148,12 @@ class SysAi @Inject() (
 
 
   /** Запрос страницы с формой создания генератора рекламных карточек. */
-  def createMadAi = IsSuperuser { implicit request =>
+  def createMadAi = IsSuGet { implicit request =>
     Ok(createTpl(formM))
   }
 
   /** Сабмит формы создания генерата рекламнах карточек. */
-  def createMadAiSubmit = IsSuperuser.async { implicit request =>
+  def createMadAiSubmit = IsSuPost.async { implicit request =>
     val formBinded = formM.bindFromRequest()
     lazy val logPrefix = "createMadAiSubmit(): "
     formBinded.fold(
@@ -181,14 +181,14 @@ class SysAi @Inject() (
   }
 
   /** Запрос страницы редактирования ранее сохранённого [[models.ai.MAiMad]]. */
-  def editMadAi(aiMadId: String) = IsSuperuserAiMad(aiMadId) { implicit request =>
+  def editMadAi(aiMadId: String) = IsSuAiMadGet(aiMadId) { implicit request =>
     import request.aiMad
     val form = formM.fill(aiMad)
     Ok(editTpl(aiMad, form))
   }
 
   /** Сабмит формы редактирования существующей [[models.ai.MAiMad]]. */
-  def editMadAiSubmit(aiMadId: String) = IsSuperuserAiMad(aiMadId).async { implicit request =>
+  def editMadAiSubmit(aiMadId: String) = IsSuAiMadPost(aiMadId).async { implicit request =>
     import request.aiMad
     val formBinded = formM.bindFromRequest()
     lazy val logPrefix = s"editMadAiSubmit($aiMadId): "
@@ -226,7 +226,7 @@ class SysAi @Inject() (
   }
 
   /** Запуск одного [[models.ai.MAiMad]] на исполнение. Результат запроса содержит инфу о проблеме. */
-  def runMadAi(aiMadId: String) = IsSuperuserAiMad(aiMadId).async { implicit request =>
+  def runMadAi(aiMadId: String) = IsSuAiMad(aiMadId).async { implicit request =>
     trace(s"runMadAi($aiMadId): Starting by user ${request.user.personIdOpt}")
     madAiUtil.run(request.aiMad)
       // Рендерим результаты работы:
@@ -244,7 +244,7 @@ class SysAi @Inject() (
 
 
   /** Сабмит удаления [[models.ai.MAiMad]]. */
-  def deleteMadAi(aiMadId: String) = IsSuperuserAiMad(aiMadId).async { implicit request =>
+  def deleteMadAi(aiMadId: String) = IsSuAiMadPost(aiMadId).async { implicit request =>
     trace(s"deleteMadAi($aiMadId): Called by superuser ${request.user.personIdOpt}")
     request.aiMad
       .delete

@@ -7,6 +7,7 @@
 @import stuff._
 @import ctx.api.dynImgUtil
 @import sys1.stuff.proptable._
+@import helper._
 
 @sysImgBase(
   title = "(" + (if(img.isOriginal) "оригинал" else "дериватив") + ")",
@@ -60,6 +61,6 @@
   <img src="@dynImgUtil.imgCall(img)" alt="Текущая картинка" />
 
   @* Отрендерить кнопку удаления. *@
-  @_deleteSmthFormBtnTpl( routes.SysImg.deleteOneSubmit(img) )
+  @_deleteSmthFormBtnTpl( CSRF(routes.SysImg.deleteOneSubmit(img)) )
 
 }

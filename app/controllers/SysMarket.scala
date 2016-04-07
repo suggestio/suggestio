@@ -76,17 +76,17 @@ class SysMarket @Inject() (
    * Изначально оно жило в ctl.Sys, который был замёржен в ctl.Application,
    * который тоже был упразднён 2015.dec.17.
    */
-  def sysIndex = IsSuperuserOr404 { implicit request =>
+  def sysIndex = IsSuOr404Get { implicit request =>
     Ok( views.html.sys1.indexTpl() )
   }
 
   /** Корень /sys/marker/. Тут ссылки на дальнейшие страницы в рамках market. */
-  def index = IsSuperuser { implicit request =>
+  def index = IsSuGet { implicit request =>
     Ok(marketIndexTpl())
   }
 
   /** Страница с унифицированным списком узлов рекламной сети в алфавитном порядке с делёжкой по memberType. */
-  def adnNodesList(args: MSysNodeListArgs) = IsSuperuser.async { implicit request =>
+  def adnNodesList(args: MSysNodeListArgs) = IsSuGet.async { implicit request =>
     // Запустить сбор статистики по типам N2-узлов:
     val ntypeStatsFut = MNode.ntypeStats()
 
@@ -180,7 +180,7 @@ class SysMarket @Inject() (
    *
    * @param nodeId id узла
    */
-  def showAdnNode(nodeId: String) = IsSuNode(nodeId).async { implicit request =>
+  def showAdnNode(nodeId: String) = IsSuNodeGet(nodeId).async { implicit request =>
     import request.mnode
 
     def _prepareEdgeInfos(eis: TraversableOnce[MNodeEdgeInfo]): Seq[MNodeEdgeInfo] = {
@@ -188,10 +188,11 @@ class SysMarket @Inject() (
         .sortBy { ei =>
           // Собрать ключ для сортировки
           val nodeName = ei.mnodeEiths
-             .iterator
+            .iterator
             .map { _.fold [String] (identity, _.guessDisplayNameOrId.getOrElse("")) }
             .toStream
-            .head
+            .headOption
+            .getOrElse("???")
           (ei.medge.predicate.strId,
             ei.medge.order.getOrElse(Int.MaxValue),
             nodeName)
@@ -302,36 +303,33 @@ class SysMarket @Inject() (
   }
 
 
-  private def createAdnNodeRender(nodeFormM: Form[MNode], ncpForm: Form[NodeCreateParams])
-                                 (implicit request: IReq[_]): Future[Html] = {
+  private def createAdnNodeRender(nodeFormM: Form[MNode], ncpForm: Form[NodeCreateParams], rs: Status)
+                                 (implicit request: IReq[_]): Future[Result] = {
     val html = createAdnNodeFormTpl(nodeFormM, ncpForm)
-    Future.successful( html )
+    Future.successful( rs(html) )
   }
 
   private def nodeCreateParamsFormM = Form(NodeCreateParams.mappingM)
 
   /** Страница с формой создания нового узла. */
-  def createAdnNode() = IsSuperuser.async { implicit request =>
+  def createAdnNode() = IsSuGet.async { implicit request =>
     // Генерим stub и втыкаем его в форму, чтобы меньше галочек ставить.
     // 2015.oct.21: Используем nodesUtil для сборки дефолтового инстанса.
     val dfltFormM = adnNodeFormM.fill(
       nodesUtil.userNodeInstance("", personId = request.user.personIdOpt.get)
     )
-    val ncpForm = nodeCreateParamsFormM fill NodeCreateParams()
-    createAdnNodeRender(dfltFormM, ncpForm)
-      .map { Ok(_) }
+    val ncpForm = nodeCreateParamsFormM.fill( NodeCreateParams() )
+    createAdnNodeRender(dfltFormM, ncpForm, Ok)
   }
 
   /** Сабмит формы создания нового узла. */
-  def createAdnNodeSubmit() = IsSuperuser.async { implicit request =>
+  def createAdnNodeSubmit() = IsSuPost.async { implicit request =>
     val ncpForm = nodeCreateParamsFormM.bindFromRequest()
     adnNodeFormM.bindFromRequest().fold(
       {formWithErrors =>
-        val renderFut = createAdnNodeRender(formWithErrors, ncpForm)
+        val renderFut = createAdnNodeRender(formWithErrors, ncpForm, NotAcceptable)
         debug("createAdnNodeSubmit(): Failed to bind form: \n" + formatFormErrors(formWithErrors))
-        renderFut map {
-          NotAcceptable(_)
-        }
+        renderFut
       },
       {mnode0 =>
         val mnode1 = mnode0.copy(
@@ -394,14 +392,13 @@ class SysMarket @Inject() (
   def editAdnNode(adnId: String) = IsSuNodeGet(adnId).async { implicit request =>
     import request.mnode
     val formFilled = adnNodeFormM.fill(mnode)
-    editAdnNodeBody(adnId, formFilled)
-      .map { Ok(_) }
+    editAdnNodeBody(adnId, formFilled, Ok)
   }
 
-  private def editAdnNodeBody(adnId: String, form: Form[MNode])
-                             (implicit request: INodeReq[AnyContent]): Future[Html] = {
+  private def editAdnNodeBody(adnId: String, form: Form[MNode], rs: Status)
+                             (implicit request: INodeReq[AnyContent]): Future[Result] = {
     val res = editAdnNodeFormTpl(request.mnode, form)
-    Future successful res
+    Future.successful( rs(res) )
   }
 
   /** Самбит формы редактирования узла. */
@@ -411,8 +408,7 @@ class SysMarket @Inject() (
     formBinded.fold(
       {formWithErrors =>
         debug(s"editAdnNodeSubmit($adnId): Failed to bind form: ${formatFormErrors(formWithErrors)}")
-        editAdnNodeBody(adnId, formWithErrors)
-          .map(NotAcceptable(_))
+        editAdnNodeBody(adnId, formWithErrors, NotAcceptable)
       },
       {adnNode2 =>
         for {
@@ -474,7 +470,7 @@ class SysMarket @Inject() (
 
 
   /** Отобразить технический список рекламных карточек узла. */
-  def showAdnNodeAds(a: AdSearch) = IsSuperuserGet.async { implicit request =>
+  def showAdnNodeAds(a: AdSearch) = IsSuGet.async { implicit request =>
 
     // Ищем все рекламные карточки, подходящие под запрос.
     // TODO Нужна устойчивая сортировка.
@@ -602,7 +598,7 @@ class SysMarket @Inject() (
 
   /** Убрать указанную рекламную карточку из выдачи указанного ресивера. */
   def removeAdRcvr(adId: String, rcvrIdOpt: Option[String], r: Option[String]) = {
-    IsSuperuserMadPost(adId).async { implicit request =>
+    IsSuMadPost(adId).async { implicit request =>
       // Запускаем спиливание ресивера для указанной рекламной карточки.
       val madSavedFut = advUtil.depublishAdOn(request.mad, rcvrIdOpt.toSet)
 
@@ -640,7 +636,7 @@ class SysMarket @Inject() (
 
 
   /** Отобразить email-уведомление об отключении указанной рекламы. */
-  def showShopEmailAdDisableMsg(adId: String) = IsSuperuserMad(adId).async { implicit request =>
+  def showShopEmailAdDisableMsg(adId: String) = IsSuMad(adId).async { implicit request =>
     import request.mad
 
     // Получить ТЦ.
@@ -681,7 +677,7 @@ class SysMarket @Inject() (
    *
    * @param adId id рекламной карточки.
    */
-  def showAd(adId: String) = IsSuperuserMad(adId).async { implicit request =>
+  def showAd(adId: String) = IsSuMad(adId).async { implicit request =>
     import request.mad
 
     // Определить узла-продьюсера
@@ -714,7 +710,7 @@ class SysMarket @Inject() (
 
 
   /** Вывести результат анализа ресиверов рекламной карточки. */
-  def analyzeAdRcvrs(adId: String) = IsSuperuserMadGet(adId).async { implicit request =>
+  def analyzeAdRcvrs(adId: String) = IsSuMadGet(adId).async { implicit request =>
     import request.mad
     val producerId = n2NodesUtil.madProducerId(mad).get
     val producerOptFut = mNodeCache.getById(producerId)
@@ -768,7 +764,7 @@ class SysMarket @Inject() (
 
 
   /** Пересчитать и сохранить ресиверы для указанной рекламной карточки. */
-  def resetReceivers(adId: String, r: Option[String]) = IsSuperuserMadPost(adId).async { implicit request =>
+  def resetReceivers(adId: String, r: Option[String]) = IsSuMadPost(adId).async { implicit request =>
     for {
       _ <- advUtil.resetReceiversFor(request.mad)
     } yield {
@@ -781,7 +777,7 @@ class SysMarket @Inject() (
 
   /** Очистить полностью таблицу ресиверов. Бывает нужно для временного сокрытия карточки везде.
     * Это действие можно откатить через resetReceivers. */
-  def cleanReceivers(adId: String, r: Option[String]) = IsSuperuserMadPost(adId).async { implicit request =>
+  def cleanReceivers(adId: String, r: Option[String]) = IsSuMadPost(adId).async { implicit request =>
     for {
       _ <- advUtil.cleanReceiverFor(request.mad)
     } yield {

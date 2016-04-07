@@ -68,7 +68,7 @@ class Static @Inject() (
    * @param asset filename.
    * @return Экшен раздачи ассетов с сильно урезанным кешированием на клиенте.
    */
-  def vassetsSudo(path: String, asset: Assets.Asset) = IsSuperuserOrDevelOr404.async { implicit request =>
+  def vassetsSudo(path: String, asset: Assets.Asset) = IsSuOrDevelOr404.async { implicit request =>
     // TODO Запретить раздачу привелигированных ассетов через CDN в продакшене? Чтобы отладка главной страницы шла только по vpn.
     val resFut = Assets.versioned(path, asset)(request)
     // Для привелегированных ассетов нужно запретить промежуточные кеширования.

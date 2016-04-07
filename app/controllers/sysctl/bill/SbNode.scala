@@ -32,7 +32,7 @@ trait SbNode
    *
    * @param nodeId id просматриваемого узла.
    */
-  def forNode(nodeId: String) = IsSuNode(nodeId).async { implicit request =>
+  def forNode(nodeId: String) = IsSuNodeGet(nodeId).async { implicit request =>
     val contractIdOpt = request.mnode.billing.contractId
 
     val mContractOptFut = FutureUtil.optFut2futOpt(contractIdOpt) { contractId =>

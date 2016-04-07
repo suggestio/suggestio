@@ -96,7 +96,7 @@ class SysCalendar @Inject() (
 
 
   /** Отобразить список всех сохранённых календарей. */
-  def showCalendars = IsSuperuser.async { implicit request =>
+  def showCalendars = IsSuGet.async { implicit request =>
     val createFormM = newCalTplFormM fill HolidayCalendar.RUSSIA
     mCalendars.getAll(maxResults = 500).map { cals =>
       Ok(listCalsTpl(cals, createFormM))
@@ -105,7 +105,7 @@ class SysCalendar @Inject() (
 
   /** Рендер страницы с заполненной формой нового календаря на основе шаблона. На странице можно выбрать шаблон.
     * Ничего никуда не сохраняется. */
-  def newCalendarFromTemplateSubmit = IsSuperuser.async { implicit request =>
+  def newCalendarFromTemplateSubmit = IsSuGet.async { implicit request =>
     newCalTplFormM.bindFromRequest().fold(
       {formWithErrors =>
         val calsFut = mCalendars.getAll(maxResults = 500)
@@ -142,7 +142,7 @@ class SysCalendar @Inject() (
 
 
   /** Сохранять в базу новый календарь. */
-  def createCalendarSubmit = IsSuperuser.async { implicit request =>
+  def createCalendarSubmit = IsSuPost.async { implicit request =>
     calFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug("createCalendarSubmit(): Failed to bind form: " + formatFormErrors(formWithErrors))
@@ -163,7 +163,7 @@ class SysCalendar @Inject() (
    *
    * @param calId id календаря.
    */
-  def editCalendar(calId: String) = IsSuperuserCalendarGet(calId).async { implicit request =>
+  def editCalendar(calId: String) = IsSuCalendarGet(calId).async { implicit request =>
     val cf = calFormM fill request.mcal
     editCalendarRespBody(calId, cf, Ok)
   }
@@ -179,7 +179,7 @@ class SysCalendar @Inject() (
     *
     * @param calId id календаря.
     */
-  def editCalendarSubmit(calId: String) = IsSuperuserCalendarPost(calId).async { implicit request =>
+  def editCalendarSubmit(calId: String) = IsSuCalendarPost(calId).async { implicit request =>
     calFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"editCalendarSubmit($calId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")

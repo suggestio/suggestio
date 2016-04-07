@@ -25,7 +25,7 @@ class SysDebug @Inject() (
   import mCommonDi._
 
   /** Экшен для отображения индексной страницы. */
-  def index = IsSuperuserGet { implicit request =>
+  def index = IsSuGet { implicit request =>
     Ok( indexTpl() )
   }
 
@@ -34,7 +34,7 @@ class SysDebug @Inject() (
     *
     * @return 200 Ок со страницей-отчетом.
     */
-  def testNodesAllGeoParents = IsSuperuserPost.async { implicit request =>
+  def testNodesAllGeoParents = IsSuPost.async { implicit request =>
     // Организуем тестирование
     val testResultsFut = geoParentsHealth.testAll()
 
@@ -47,7 +47,7 @@ class SysDebug @Inject() (
 
 
   /** Запуск поиска и ремонта неправильных ресиверов в карточках. */
-  def resetAllRcvrs = IsSuperuserPost.async { implicit request =>
+  def resetAllRcvrs = IsSuPost.async { implicit request =>
     for (count <- advUtil.resetAllReceivers()) yield {
       Ok(count + " ads updated.")
     }

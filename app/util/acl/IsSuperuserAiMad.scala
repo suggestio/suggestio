@@ -15,12 +15,13 @@ import play.api.mvc.{Request, ActionBuilder, Result}
 trait IsSuperuserAiMad
   extends SioController
   with IsSuperuserUtilCtl
+  with Csrf
 {
 
   import mCommonDi._
 
   /** IsSuperuser + доступ к указанному MAiMad. */
-  trait IsSuperuserAiMadBase
+  trait IsSuAiMadBase
     extends ActionBuilder[MAiMadReq]
     with IsSuperuserUtil
   {
@@ -54,8 +55,20 @@ trait IsSuperuserAiMad
   }
 
 
-  case class IsSuperuserAiMad(override val aiMadId: String)
-    extends IsSuperuserAiMadBase
+  abstract class IsSuAiMadAbstract
+    extends IsSuAiMadBase
     with ExpireSession[MAiMadReq]
+
+
+  case class IsSuAiMad(override val aiMadId: String)
+    extends IsSuAiMadAbstract
+
+  case class IsSuAiMadGet(override val aiMadId: String)
+    extends IsSuAiMadAbstract
+    with CsrfGet[MAiMadReq]
+
+  case class IsSuAiMadPost(override val aiMadId: String)
+    extends IsSuAiMadAbstract
+    with CsrfPost[MAiMadReq]
 
 }

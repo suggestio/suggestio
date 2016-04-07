@@ -69,7 +69,7 @@ trait SysImgMake
    * @param bmDflt Необязательные дефолтовые данные полей block-meta. Заливаются в начальную форму.
    * @return 200 ok со страницей с формой описания img make-задачи.
    */
-  def makeForm(img: MImgT, bmDflt: Option[BlockMeta]) = IsSuperuserGet.async { implicit request =>
+  def makeForm(img: MImgT, bmDflt: Option[BlockMeta]) = IsSuGet.async { implicit request =>
     implicit val ctx = implicitly[Context]
     // Забиндить дефолтовые данные в форму
     val form = sysImgMakeUtil.makeFormM(img).fill((
@@ -105,7 +105,7 @@ trait SysImgMake
    * @param img Обрабатываемая картинка.
    * @return Получившаяся картинка.
    */
-  def makeFormSubmit(img: MImgT) = IsSuperuserPost.async { implicit request =>
+  def makeFormSubmit(img: MImgT) = IsSuPost.async { implicit request =>
     sysImgMakeUtil.makeFormM(img).bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug(s"makeFormSubmit(${img.rowKeyStr}): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")

@@ -4,10 +4,11 @@
 
 @import ctx._
 @import stuff._
+@import helper._
 
 @madAiBase("Редактировать генератор " + mai.name) {
 
-  @_deleteSmthFormBtnTpl( routes.SysAi.deleteMadAi(mai.id.get) )
+  @_deleteSmthFormBtnTpl( CSRF(routes.SysAi.deleteMadAi(mai.id.get)) )
 
   @_formTpl(
     mf          = mf,
