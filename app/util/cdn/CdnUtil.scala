@@ -21,6 +21,7 @@ import scala.collection.JavaConversions._
 class CdnUtil @Inject() (
   dynImgUtil      : DynImgUtil,
   configuration   : Configuration,
+  corsUtil        : CorsUtil,
   mImgs3          : MImgs3
 )
   extends PlayMacroLogsImpl
@@ -46,7 +47,7 @@ class CdnUtil @Inject() (
   /** Раздавать ли шрифты через CDN? Дергается из шаблонов. Если Cors отключен, то этот параметр тоже отключается. */
   val FONTS_ENABLED: Boolean = {
     configuration.getBoolean("cdn.fonts.enabled")
-      .exists(_ && CorsUtil.IS_ENABLED)
+      .exists(_ && corsUtil.IS_ENABLED)
   }
 
   /** Отключено использование CDN на хостах: */

@@ -2,15 +2,13 @@ package util.cdn
 
 import akka.stream.Materializer
 import com.google.inject.Inject
+import play.api.Configuration
 import play.api.mvc.{Filter, RequestHeader, Result}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import play.api.http.HeaderNames._
-import play.api.Play.{configuration, current}
 
 import scala.collection.JavaConversions._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-
 import scala.util.matching.Regex
 
 /**
@@ -21,19 +19,13 @@ import scala.util.matching.Regex
  * @see [[https://gist.github.com/jeantil/7214962]]
  * @see [[http://ru.wikipedia.org/wiki/Cross-origin_resource_sharing]]
  */
-object CorsUtil {
+class CorsUtil @Inject() (configuration: Configuration) {
 
   /** Активен ли механизм CORS вообще? */
-  val IS_ENABLED = configuration.getBoolean("cors.enabled") getOrElse true
+  val IS_ENABLED = configuration.getBoolean("cors.enabled").getOrElse(true)
 
   /** Включен ли доступ к preflight-запросам? */
-  val CORS_PREFLIGHT_ALLOWED: Boolean = configuration.getBoolean("cors.preflight.allowed") getOrElse true
-
-}
-
-
-/** Статическая утиль, которая инициализируется только в случае [[CorsUtil]].IS_ENABLED. */
-object CorsUtil2 {
+  val CORS_PREFLIGHT_ALLOWED: Boolean = configuration.getBoolean("cors.preflight.allowed").getOrElse(true)
 
   val allowOrigins: String = {
     // Макс один домен. Чтобы не трахаться с доменами, обычно достаточно "*".
@@ -94,15 +86,22 @@ object CorsUtil2 {
 }
 
 
+trait ICorsUtilDi {
+  def corsUtil: CorsUtil
+}
+
+
 /** Фильтр. Должен без проблем инициализироваться, когда application not started. */
 class CorsFilter @Inject() (
-  override implicit val mat: Materializer
+  corsUtil                  : CorsUtil,
+  implicit val ec           : ExecutionContext,
+  override implicit val mat : Materializer
 ) extends Filter {
 
   override def apply(f: (RequestHeader) => Future[Result])(rh: RequestHeader): Future[Result] = {
     var fut = f(rh)
     // Добавить CORS-заголовки, если необходимо.
-    if ( CorsUtil.IS_ENABLED && CorsUtil2.isAppendAllowHdrsForRequest(rh) ) {
+    if ( corsUtil.IS_ENABLED && corsUtil.isAppendAllowHdrsForRequest(rh) ) {
       // Делаем замыкание независимым от окружающего тела apply(). scalac-2.12 оптимизатор сможет заменить такое синглтоном.
       fut = fut.map { resp =>
         val st = resp.header.status
@@ -111,7 +110,7 @@ class CorsFilter @Inject() (
           resp
         } else {
           // Успешный подходящий запрос, навешиваем хидеры.
-          resp.withHeaders(CorsUtil2.SIMPLE_CORS_HEADERS: _*)
+          resp.withHeaders(corsUtil.SIMPLE_CORS_HEADERS: _*)
         }
       }
     }

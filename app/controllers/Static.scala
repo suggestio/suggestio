@@ -4,6 +4,7 @@ import com.google.inject.Inject
 import controllers.cstatic.{CorsPreflight, RobotsTxt, SiteMapsXml}
 import models.mproj.ICommonDi
 import util.acl.{IsAuth, IsSuperuserOrDevelOr404, MaybeAuth}
+import util.cdn.CorsUtil
 import util.seo.SiteMapUtil
 import util.xplay.SecHeadersFilter
 import views.html.static._
@@ -17,6 +18,7 @@ import views.html.static._
  */
 
 class Static @Inject() (
+  override val corsUtil           : CorsUtil,
   override val siteMapUtil        : SiteMapUtil,
   override val mCommonDi          : ICommonDi
 )

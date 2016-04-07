@@ -10,7 +10,7 @@ import util.cdn.{CorsFilter, DumpXffHeaders}
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 23.10.15 22:50
- * Description:
+ * Description: Инжектор фильтров.
  */
 class Filters @Inject() (
   htmlCompress: HtmlCompressFilter,
@@ -20,8 +20,10 @@ class Filters @Inject() (
 )
   extends HttpFilters
 {
+
   override val filters: Seq[EssentialFilter] = {
     // TODO Выкинуть неактивные фильтры из списка. Для этого нужно isEnabled засунуть в них же.
     Seq(htmlCompress, dumpXffHdrs, secHeaders, cors)
   }
+
 }
