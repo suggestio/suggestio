@@ -20,14 +20,13 @@ object Common {
   )
 
   /** Версия play. */
-  val playVsn         = "2.4.6"
+  val playVsn         = "2.5.1"
 
   /** Версия play-slick прослойки. */
-  // TODO play-2.5+: синхронизировать с версией play.
-  val playSlickVsn    = "1.1.1"
+  val playSlickVsn    = "2.0.0"
 
   /** Версия bouncy castle. */
-  val bcVsn           = "1.52"
+  val bcVsn           = "1.54"
 
   /** Версия typesafe slick. */
   val slickVsn        = "3.1.1"
@@ -35,5 +34,11 @@ object Common {
   /** Версия драйвера common-slick-driver.
    * Он идёт как бинарная зависимость, поэтому зависимые подпроекты. */
   val sioSlickDrvVsn  = "0.3.0-SNAPSHOT"
+
+  /** Версия scalatest+play. */
+  val scalaTestPlusPlayVsn = "1.5.1"
+
+  /** Версия используемого плагина play-mailer. */
+  val playMailerVsn        = "5.0.0-SNAPSHOT"
 
 }
