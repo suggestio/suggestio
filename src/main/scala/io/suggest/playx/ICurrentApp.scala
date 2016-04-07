@@ -1,6 +1,6 @@
 package io.suggest.playx
 
-import play.api.{Configuration, Application}
+import play.api.{Application, Configuration, Mode}
 
 /**
  * Suggest.io
@@ -12,6 +12,15 @@ trait ICurrentApp {
 
   /** Экземпляр Application, вброшенный в класс через DI. */
   implicit def current: Application
+
+}
+
+
+trait ICurrentAppHelpers extends ICurrentApp {
+
+  def isDev   = current.mode == Mode.Dev
+  def isProd  = current.mode == Mode.Prod
+  def isTest  = current.mode == Mode.Test
 
 }
 

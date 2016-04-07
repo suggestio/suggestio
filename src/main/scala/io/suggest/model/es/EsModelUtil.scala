@@ -527,7 +527,7 @@ object EsModelUtil extends MacroLogsImpl {
 }
 
 
-/** Интерфейс контейнера данных для вызова [[EsModelUtil.tryUpdate()]]. */
+/** Интерфейс контейнера данных для вызова [[EsModelUtil]].tryUpdate(). */
 trait ITryUpdateData[X <: EsModelCommonT, TU <: ITryUpdateData[X, TU]] {
 
   /** Экземпляр, пригодный для сохранения. */

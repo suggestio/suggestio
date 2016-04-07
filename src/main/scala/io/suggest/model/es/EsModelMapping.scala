@@ -42,8 +42,7 @@ trait EsModelStaticMappingGenerators extends IGenEsMappingProps {
 }
 
 
-/** Трейт содержит статические хелперы для работы с маппингами.
-  * Однажды был вынесен из [[EsModelStaticMutAkvT]]. */
+/** Трейт содержит статические хелперы для работы с маппингами. */
 trait EsModelStaticMapping extends EsModelStaticMappingGenerators with MacroLogsI {
 
   def ES_INDEX_NAME   = EsModelUtil.DFLT_INDEX

@@ -61,7 +61,8 @@ object SioEsUtil extends MacroLogsImpl {
 
   /**
    * Создать параллельно пачку одинаковых индексов.
-   * @param indices Имена индексов.
+    *
+    * @param indices Имена индексов.
    * @param shardsPerIndex Шардинг
    * @param replicasPerIndex Репликация
    * @return Список результатов (список isAcknowledged()).
@@ -74,12 +75,13 @@ object SioEsUtil extends MacroLogsImpl {
   }
 
   /**
-   * Убедиться, что есть такой индекс
-   * @param indexName имя индекса
-   * @param shards кол-во шард. По дефолту = 1
-   * @param replicas кол-во реплик. По дефолту = 1
-   * @return true, если индекс принят.
-   */
+    * Убедиться, что есть такой индекс
+    *
+    * @param indexName имя индекса
+    * @param shards кол-во шард. По дефолту = 1
+    * @param replicas кол-во реплик. По дефолту = 1
+    * @return true, если индекс принят.
+    */
   def createIndex(indexName: String, shards: Int = 1, replicas: Int = 1)
                  (implicit client: Client, ec: ExecutionContext): Future[Boolean] = {
     client.admin()
@@ -92,12 +94,13 @@ object SioEsUtil extends MacroLogsImpl {
 
 
   /**
-   * Отправить маппинг в индекс. Маппинги обычно генеряться в методах get*Mapping() этого модуля.
-   * @param indexName имя индекса, в который записать маппинг.
-   * @param typeName имя типа для маппинга.
-   * @param mapping маппинг.
-   * @return true, если маппинг принят кластером.
-   */
+    * Отправить маппинг в индекс. Маппинги обычно генеряться в методах get*Mapping() этого модуля.
+    *
+    * @param indexName имя индекса, в который записать маппинг.
+    * @param typeName имя типа для маппинга.
+    * @param mapping маппинг.
+    * @return true, если маппинг принят кластером.
+    */
   def putMapping(indexName: String, typeName: String, mapping: XContentBuilder)
                 (implicit client: Client, ec: ExecutionContext): Future[Boolean] = {
     client.admin()
@@ -110,10 +113,11 @@ object SioEsUtil extends MacroLogsImpl {
   }
 
   /**
-   * Асинхронное определение наличия указанного индекса/указанных индексов в кластере.
-   * @param indexNames список индексов
-   * @return true, если все перечисленные индексы существуют.
-   */
+    * Асинхронное определение наличия указанного индекса/указанных индексов в кластере.
+    *
+    * @param indexNames список индексов
+    * @return true, если все перечисленные индексы существуют.
+    */
   def isIndexExist(indexNames: String *)(implicit client: Client, ec: ExecutionContext): Future[Boolean] = {
     client.admin()
       .indices()
@@ -123,10 +127,11 @@ object SioEsUtil extends MacroLogsImpl {
   }
 
   /**
-   * Существует ли указанный индекс/индексы? Синхронный блокирующий запрос.
-   * @param indexNames Имена индексов.
-   * @return true, если индексы с такими именами существуют.
-   */
+    * Существует ли указанный индекс/индексы? Синхронный блокирующий запрос.
+    *
+    * @param indexNames Имена индексов.
+    * @return true, если индексы с такими именами существуют.
+    */
   @deprecated("Please use non-blocking isIndexExist()", "2013.07.05")
   def isIndexExistSync(indexNames: String*)(implicit client: Client) : Boolean = {
     client.admin()
@@ -138,9 +143,10 @@ object SioEsUtil extends MacroLogsImpl {
 
 
   /**
-   * Закрыть индекс указанный
-   * @param indexName имя индекса.
-   */
+    * Закрыть индекс указанный
+    *
+    * @param indexName имя индекса.
+    */
   def closeIndex(indexName: String)(implicit client: Client, ec: ExecutionContext): Future[Boolean] = {
     lazy val logPrefix = s"closeIndex($indexName): "
     trace(logPrefix + "Starting close index ...")
@@ -152,10 +158,11 @@ object SioEsUtil extends MacroLogsImpl {
   }
 
   /**
-   * Послать запрос на открытие индекса. Это загружает данные индекса в память соотвтествующих нод, если индекс был ранее закрыт.
-   * @param indexName Имя открываемого индекса.
-   * @return true, если всё нормально
-   */
+    * Послать запрос на открытие индекса. Это загружает данные индекса в память соотвтествующих нод, если индекс был ранее закрыт.
+    *
+    * @param indexName Имя открываемого индекса.
+    * @return true, если всё нормально
+    */
   def openIndex(indexName: String)(implicit client: Client, ec: ExecutionContext): Future[Boolean] = {
     lazy val logPrefix = s"openIndex($indexName): "
     trace(logPrefix + "Sending open request...")
@@ -171,11 +178,12 @@ object SioEsUtil extends MacroLogsImpl {
 
 
   /**
-   * Собрать новый transport client для прозрачной связи с внешним es-кластером.
-   * @param addrs Адреса узлов.
-   * @param clusterName Название удалённого кластера. Если None, то клиент будет игнорить проверку имени кластера.
-   * @return TransportClient
-   */
+    * Собрать новый transport client для прозрачной связи с внешним es-кластером.
+    *
+    * @param addrs Адреса узлов.
+    * @param clusterName Название удалённого кластера. Если None, то клиент будет игнорить проверку имени кластера.
+    * @return TransportClient
+    */
   def newTransportClient(addrs: Seq[TransportAddress], clusterName: Option[String]): TransportClient = {
     val settingsBuilder = ImmutableSettings.settingsBuilder()
       .classLoader(classOf[Settings].getClassLoader)
@@ -193,10 +201,11 @@ object SioEsUtil extends MacroLogsImpl {
 
 
   /**
-   * Метод для вызова генератора json'а.
-   * @param f Функция заполнения json-объекта данными.
-   * @return Билдер с уже выстроенной структурой.
-   */
+    * Метод для вызова генератора json'а.
+    *
+    * @param f Функция заполнения json-объекта данными.
+    * @return Билдер с уже выстроенной структурой.
+    */
   def jsonGenerator(f: XContentBuilder => JsonObject) : XContentBuilder = {
     val b = jsonBuilder().startObject()
     f(b).builder(b).endObject()
@@ -313,7 +322,8 @@ object SioEsUtil extends MacroLogsImpl {
   /**
    * Сборка индекса по архитектуре второго поколения: без повсеместного edgeNgram, который жрёт как не в себя.
    * v2.1 добавляет кое-какой ngram analyzer для очень узконаправленных нужд.
-   * @param shards Кол-во шард.
+    *
+    * @param shards Кол-во шард.
    * @param replicas Кол-во реплик.
    * @return XCB с сеттингами.
    */
@@ -410,7 +420,8 @@ object SioEsUtil extends MacroLogsImpl {
 
   /**
    * Обновление сеттингов индекса.
-   * @param indexName Название обновляемого индекса.
+    *
+    * @param indexName Название обновляемого индекса.
    * @param settings Генератор обновленных сеттингов.
    * @return Фьючерс.
    */
@@ -471,7 +482,8 @@ object SioEsUtil extends MacroLogsImpl {
 
   /**
    * Маппинг для страниц, подлежащих индексированию.
-   * @return
+    *
+    * @return
    */
   def getPageMapping(typeName: String, compressSource: Boolean = true) = {
     jsonGenerator { implicit b =>
@@ -527,7 +539,8 @@ object SioEsUtil extends MacroLogsImpl {
 
   /**
    * Неявный конвертов вызова execute() в scala-future.
-   * @param laf результат execute(), т.е. ListenableActionFuture.
+    *
+    * @param laf результат execute(), т.е. ListenableActionFuture.
    * @tparam T Тип, с которым работаем.
    * @return Фьючерс типа T.
    */
@@ -602,7 +615,8 @@ case class IndexSettings(
 
   /**
    * Опционально отрендерить список объектов _renderable.
-   * @param list List[_renderable]
+    *
+    * @param list List[_renderable]
    * @param name Название возможного объекта.
    * @param b XContentBuilder
    * @return
@@ -723,7 +737,8 @@ case class NGramTokenizer(
 
 /**
  * Keyword tokenizer, т.е. отсутствие токенизации как таковой.
- * @see [[https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-keyword-tokenizer.html]]
+  *
+  * @see [[https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-keyword-tokenizer.html]]
  */
 case class KeyWordTokenizer(
   id          : String,
@@ -1080,6 +1095,7 @@ trait TextField extends Field {
 }
 
 /** Задание времени жизни документов в маппинге.
+  *
   * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-ttl-field.html]] */
 case class FieldTtl(
   enabled: Boolean = false,
@@ -1184,6 +1200,7 @@ trait FieldWithProperties extends Field {
 }
 
 /** Dynamic templates - механизм задания автоматики при автоматическом добавлении новых полей в маппинг.
+  *
   * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-root-object-type.html#_dynamic_templates]]
   */
 case class DynTemplate(id: String, nameMatch: String, matchMappingType: String = "{dynamic_type}", mapping: String)
@@ -1245,6 +1262,7 @@ case class FieldNestedObject(
 
 
 /** lat_lon флаг позволяет управлять отдельной индексацией широты и долготы.
+  *
   * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html#_indexed_fields]] */
 trait LatLon extends Field {
   def latLon: Boolean
@@ -1256,6 +1274,7 @@ trait LatLon extends Field {
 }
 
 /** geohash -- система кодирования координат в географические регионы.
+  *
   * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html#_geohashes]]
  */
 trait Geohash extends Field {
@@ -1360,6 +1379,7 @@ trait GeoPointFieldDataField extends Field {
 
 
 /** Маппинг для географической точки на земле. Точка выражается через координаты либо геохеш оных.
+  *
   * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html]] */
 case class FieldGeoPoint(
   id            : String,
@@ -1455,9 +1475,11 @@ trait SioEsClient {
 
   /** Остановить клиентскую ноду, если запущена. */
   def stopNode() {
-    if (_node != null) {
-      _node.close()
-      _node = null
+    synchronized {
+      if (_node != null) {
+        _node.close()
+        _node = null
+      }
     }
   }
 
@@ -1476,11 +1498,12 @@ trait SioEsClient {
 
 
 /**
- * ES-листенер, отражающий результат работы ListenableActionFuture[T] на Promise[T].
- * @param promise Пустой объект обещания.
- * @tparam T Тип будущего значения.
- * @return ActionListener[T] пригодный для навешивания на ListenableActionFuture.
- */
+  * ES-листенер, отражающий результат работы ListenableActionFuture[T] на Promise[T].
+  *
+  * @param promise Пустой объект обещания.
+  * @tparam T Тип будущего значения.
+  * @return ActionListener[T] пригодный для навешивания на ListenableActionFuture.
+  */
 class EsAction2Promise[T](promise: Promise[T]) extends ActionListener[T] {
   override def onResponse(response: T) {
     promise success response

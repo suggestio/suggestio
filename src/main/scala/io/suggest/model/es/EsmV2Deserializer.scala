@@ -6,9 +6,8 @@ import play.api.libs.json.{Reads, Json}
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 16.10.15 17:23
- * Description:
- * Аддон для воплощения immutable-десериализации на базе play.json и тайпклассов.
- * Эта десериализация идёт на смену изначальной горбатой mutable-десериализации через [[EsModelStaticMutAkvT]]. */
+ * Description: Аддон для воплощения immutable-десериализации на базе play.json и тайпклассов.
+ */
 trait EsmV2Deserializer extends EsModelCommonStaticT {
 
   /**
