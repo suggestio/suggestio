@@ -19,6 +19,9 @@ object TagSearchConstants {
     /** Абсолютный сдвиг в результатах поиска. */
     def OFFSET_FN         = "o"
 
+    /** Данные геолокации, если есть. */
+    def GEO_LOC_FN        = "g"
+
   }
 
 

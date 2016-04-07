@@ -22,4 +22,8 @@ trait EnumApply extends EnumValue2Val with IVeryLightEnumeration {
     Some(x.strId)
   }
 
+  def onlyIds(input: TraversableOnce[ValT]): Iterator[String] = {
+    input.toIterator.map(_.strId)
+  }
+
 }
