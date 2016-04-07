@@ -5,7 +5,7 @@ import io.suggest.swfs.client.proto.put.{PutResponse, IPutRequest}
 import io.suggest.util.MacroLogsImpl
 import play.api.libs.ws.WSResponse
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
