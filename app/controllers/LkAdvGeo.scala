@@ -74,38 +74,50 @@ class LkAdvGeo @Inject()(
       formEmpty.fill(res)
     }
 
-    formFut.flatMap { form =>
-      _forAd(form, Ok)
-    }
+    _forAd(formFut, Ok)
   }
 
   /**
    * common-код экшенов GET'а и POST'а формы forAdTpl.
    *
-   * @param form Маппинг формы.
+   * @param formFut Маппинг формы.
    * @param rs Статус ответа HTTP.
    * @return Фьючерс с ответом.
    */
-  private def _forAd(form: AgtForm_t, rs: Status)
+  private def _forAd(formFut: Future[AgtForm_t], rs: Status)
                     (implicit request: IAdProdReq[_]): Future[Result] = {
+    // TODO Собрать данные о текущих гео-размещениях карточки, чтобы их отобразить юзеру на карте.
+    // TODO Заюзать akka steams тут для приведения item'ов к json.
+    /*val currentAdvsFut = slick.db.run {
+      advGeoBillUtil.getCurrentForAd(request.mad.id.get)
+    }*/
+
     val ctxData0Fut = request.user.lkCtxDataFut
 
     val isSuFree = advFormUtil.maybeFreeAdv()
-    val advPricingFut = advGeoBillUtil.getPricing(form.value, isSuFree)
+    val advPricingFut = formFut.flatMap { form =>
+      advGeoBillUtil.getPricing(form.value, isSuFree)
+    }
 
     for {
       ctxData0    <- ctxData0Fut
       advPricing  <- advPricingFut
+      form        <- formFut
+      //currentAdvs <- currentAdvsFut
     } yield {
+
       implicit val ctxData = ctxData0.copy(
         jsiTgs = Seq(MTargets.AdvGtagForm)
       )
+
       val rargs = MForAdTplArgs(
-        mad       = request.mad,
-        producer  = request.producer,
-        form      = form,
-        price     = advPricing
+        mad           = request.mad,
+        producer      = request.producer,
+        form          = form,
+        price         = advPricing
+        //currentAdvs   = currentAdvs
       )
+
       rs(AdvGeoForAdTpl(rargs))
     }
   }
@@ -129,7 +141,8 @@ class LkAdvGeo @Inject()(
           .copy(
             errors = formWithErrors.errors
           )
-        _forAd(formWithErrors1, NotAcceptable)
+        val fweFut = Future.successful(formWithErrors1)
+        _forAd(fweFut, NotAcceptable)
       },
 
       {result =>

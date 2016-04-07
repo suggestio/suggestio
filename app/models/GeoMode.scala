@@ -69,7 +69,8 @@ object GeoMode extends PlayLazyMacroLogsImpl with JavaTokenParsers {
 
   /** Распарсить опциональное сырое значение qs-параметра a.geo=. */
   def apply(raw: Option[String]): GeoMode = {
-    maybeApply(raw) getOrElse GeoNone
+    maybeApply(raw)
+      .getOrElse(GeoNone)
   }
 
   /** Биндер для набега на GeoMode, сериализованный в qs. */
@@ -232,9 +233,9 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
       val ipAddr = InetAddress getByName ip
       AsyncUtil.jdbcAsync { implicit c =>
         IpGeoBaseRange.findForIp(ipAddr)
-      } map {
+      }.map {
         _.headOption
-      } flatMap {
+      }.flatMap {
         case Some(range) =>
           AsyncUtil.jdbcAsync { implicit c =>
             range.cityOpt
@@ -244,7 +245,7 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
             }
           }
         case None =>
-          Future successful None
+          Future.successful( None )
       }
     }
   }
@@ -279,7 +280,7 @@ final case class GeoLocation(geoPoint: GeoPoint, accuracyMeters: Option[Double] 
 
   override def geoSearchInfoOpt(implicit request: ExtReqHdr): Future[Option[GeoSearchInfo]] = {
     val ra = GeoIp.getRemoteAddr
-    GeoIp.ip2rangeCity(ra) map { _ipGeoLoc =>
+    for ( _ipGeoLoc <- GeoIp.ip2rangeCity(ra)) yield {
       val res = new GeoSearchInfo {
         override def geoPoint: geo.GeoPoint = gl.geoPoint
         override def geoDistanceQuery = GeoDistanceQuery(
@@ -289,7 +290,9 @@ final case class GeoLocation(geoPoint: GeoPoint, accuracyMeters: Option[Double] 
         override def exactGeopoint = Some(gl.geoPoint)
 
         override def ipGeopoint: Option[geo.GeoPoint] = {
-          _ipGeoLoc map { _.city.geoPoint }
+          for (l <- _ipGeoLoc) yield {
+            l.city.geoPoint
+          }
         }
         override def cityName = _ipGeoLoc.map(_.city.cityName)
         override def countryIso2 = _ipGeoLoc.map(_.range.countryIso2)

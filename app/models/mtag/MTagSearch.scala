@@ -5,8 +5,9 @@ import io.suggest.common.text.StringUtil
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, TagCriteria}
 import io.suggest.model.n2.node.MNodeTypes
-import io.suggest.model.n2.node.search.{MNodeSearchDfltImpl, MNodeSearch}
+import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.sc.TagSearchConstants.Req._
+import models.{GeoMode, GeoNone}
 import play.api.mvc.QueryStringBindable
 import util.qsb.QsbKey1T
 import views.js.tags.m.mtSearchJsUnbindTpl
@@ -28,7 +29,8 @@ object MTagSearch {
   /** Поддержка интеграции с play-роутером в области URL Query string. */
   implicit def qsb(implicit
                    strOptB    : QueryStringBindable[Option[String]],
-                   intOptB    : QueryStringBindable[Option[Int]]
+                   intOptB    : QueryStringBindable[Option[Int]],
+                   geoLocB    : QueryStringBindable[GeoMode]
                   ): QueryStringBindable[MTagSearch] = {
     new QueryStringBindable[MTagSearch] with QsbKey1T {
       /** Биндинг значения [[MTagSearch]] из URL qs. */
@@ -38,12 +40,14 @@ object MTagSearch {
           eFtsQueryOpt        <- strOptB.bind (k(FACE_FTS_QUERY_FN),  params)
           eLimit              <- intOptB.bind (k(LIMIT_FN),           params)
           eOffset             <- intOptB.bind (k(OFFSET_FN),          params)
+          eGeoLoc             <- geoLocB.bind (k(GEO_LOC_FN),         params)
         } yield {
           // TODO Нужно избегать пустого критерия поиска, т.е. возвращать None, когда нет параметров для поиска.
           for {
             _ftsQueryOpt      <- eFtsQueryOpt.right
             _limitOpt         <- eLimit.right
             _offsetOpt        <- eOffset.right
+            _geoLoc           <- eGeoLoc.right
           } yield {
 
             val tags: Seq[String] = {
@@ -67,7 +71,8 @@ object MTagSearch {
             MTagSearch(
               tags      = tags,
               limitOpt  = limitOpt,
-              offsetOpt = offsetOpt
+              offsetOpt = offsetOpt,
+              geoLoc    = _geoLoc
             )
           }
         }
@@ -80,9 +85,10 @@ object MTagSearch {
           value.tags.mkString("#", ", #", "")
         }
         Iterator(
-          strOptB.unbind  (k(FACE_FTS_QUERY_FN),  tagsOpt),
-          intOptB.unbind  (k(LIMIT_FN),           Some(value.limit)),
-          intOptB.unbind  (k(OFFSET_FN),          Some(value.offset))
+          strOptB.unbind(k(FACE_FTS_QUERY_FN),  tagsOpt),
+          intOptB.unbind(k(LIMIT_FN),           Some(value.limit)),
+          intOptB.unbind(k(OFFSET_FN),          Some(value.offset)),
+          geoLocB.unbind(k(GEO_LOC_FN),         value.geoLoc)
         )
           .filter { !_.isEmpty }
           .mkString("&")
@@ -101,7 +107,8 @@ object MTagSearch {
 case class MTagSearch(
   tags        : Seq[String] = Nil,
   limitOpt    : Option[Int] = None,
-  offsetOpt   : Option[Int] = None
+  offsetOpt   : Option[Int] = None,
+  geoLoc      : GeoMode     = GeoNone
 )
   extends EmptyProduct
 { that =>
@@ -120,6 +127,8 @@ case class MTagSearch(
       tags        = tcrOpt.toSeq
     )
   }
+
+
 
   def toEsSearch: MNodeSearch = {
     new MNodeSearchDfltImpl {

@@ -14,7 +14,10 @@ import models.adv.price.IAdvPricing
 trait IForAdTplArgs extends IAdvForAdCommonTplArgs with IAdvForAdFormCommonTplArgs {
 
   /** Экземпляр маппинга формы размещения карточки в теге с географией. */
-  def form      : AgtForm_t
+  def form          : AgtForm_t
+
+  /** Текущие размещения карточки. */
+  //def currentAdvs   : Seq[MItem]
 
 }
 
@@ -24,5 +27,6 @@ case class MForAdTplArgs(
   override val producer         : MNode,
   override val form             : AgtForm_t,
   override val price            : IAdvPricing
+  //override val currentAdvs      : Seq[MItem]
 )
   extends IForAdTplArgs

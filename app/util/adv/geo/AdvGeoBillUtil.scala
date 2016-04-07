@@ -2,7 +2,7 @@ package util.adv.geo
 
 import com.google.inject.Inject
 import io.suggest.mbill2.m.gid.Gid_t
-import io.suggest.mbill2.m.item.status.MItemStatus
+import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import models.MPrice
@@ -168,5 +168,22 @@ class AdvGeoBillUtil @Inject()(
   }
 
 
+  /**
+    * Поиск текущих размещений для указанной карточки.
+    *
+    * @param adId id рекламной карточки.
+    * @return DBIO-экшен, возвращающий MItem'ы.
+    */
+  def getCurrentForAd(adId: String, limit: Int = 200): DBIOAction[Seq[MItem], Streaming[MItem], Effect.Read] = {
+    mItems.query
+      .filter { i =>
+        (i.adId === adId) &&
+          (i.statusStr inSet MItemStatuses.advActualIds.toSeq) &&
+          (i.iTypeStr inSet MItemTypes.onlyAdvGeoTypeIds.toSeq)
+      }
+      .take(limit)
+      // Сортировка пока не требуется, но возможно потребуется.
+      .result
+  }
 
 }
