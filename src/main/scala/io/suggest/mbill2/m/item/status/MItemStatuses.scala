@@ -27,12 +27,20 @@ object MItemStatuses extends EnumMaybeWithName with EnumApply {
       * Да для ожидающих модерации, одобренных к размещению и размещенных. */
     def isAdvBusy               : Boolean = true
 
+    /** Актуальный статус для размещения, это когда item ещё не прошел свой жизненный цикл. */
+    def isAdvActual             : Boolean = true
+
   }
 
   /** Укороченное выставление флага isBusy = false. */
   sealed protected[this] trait NotBusy extends Val {
     /** Использованные размещения, отклонённые и ещё неоплаченные не являются занятыми. */
     override def isAdvBusy = false
+  }
+
+  /** Трейт подмешивается для статусов, неактуальных в плане рекламного размещения, т.к. окончательных. */
+  sealed protected[this] trait AdvInactual extends Val {
+    override def isAdvActual = false
   }
 
   override type T = Val
@@ -52,7 +60,7 @@ object MItemStatuses extends EnumMaybeWithName with EnumApply {
   }
 
   /** Отказано продавцом или поставщиком услуги. Например, размещение не прошло модерацию. */
-  val Refused   : T = new Val("c") with NotBusy {
+  val Refused   : T = new Val("c") with NotBusy with AdvInactual {
     /** Деньги уже возвращены на счет счет покупателя. */
     override def isMoneyWithdrawed      = false
   }
@@ -65,13 +73,18 @@ object MItemStatuses extends EnumMaybeWithName with EnumApply {
   val Online              : T = new Val("o")
 
   /** Завершена обработка item'а. Например, оплаченная услуга истекла. */
-  val Finished            : T = new Val("z") with NotBusy
+  val Finished            : T = new Val("z") with NotBusy with AdvInactual
 
 
   /** Статусы, обозначающие занятость карточки для прямого размещения. */
-  def advBusy = values.iterator.map(value2val).filter(_.isAdvBusy)
-
+  def advBusy = valuesT.iterator.filter(_.isAdvBusy)
   /** Только id'шники, идентефицирующие занятость карточки. */
-  def advBusyIds = advBusy.map(_.strId)
+  def advBusyIds = onlyIds(advBusy)
+
+
+  /** Статусы, обозначающие текущую актуальность adv-item'а, т.е. незаконченность его ЖЦ. */
+  def advActual = valuesT.iterator.filter(_.isAdvActual)
+  /** id статусов, обозначающих текущую актуальность adv-item'а. */
+  def advActualIds = onlyIds(advBusy)
 
 }

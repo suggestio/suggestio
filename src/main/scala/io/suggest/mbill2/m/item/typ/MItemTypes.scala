@@ -53,8 +53,12 @@ object MItemTypes extends EnumMaybeWithName with EnumApply {
 
 
   /** Типы, относящиеся к рекламным размещениям. */
-  val onlyAdvTypes    = Set(AdvDirect, GeoTag, GeoPlace)
-  def onlyAdvTypesIds = onlyAdvTypes.map(_.strId)
+  def onlyAdvTypes        = AdvDirect :: onlyAdvGeoTypes
+  def onlyAdvTypesIds     = onlyIds( onlyAdvTypes )
+
+  /** Только типы item'ов, относящиеся к гео-размещениям. */
+  def onlyAdvGeoTypes     = List(GeoTag, GeoPlace)
+  def onlyAdvGeoTypeIds   = onlyIds( onlyAdvGeoTypes )
 
 
   /** Поддержка маппинга для play router. */
