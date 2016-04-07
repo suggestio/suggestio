@@ -3,16 +3,14 @@ package util
 import java.io.File
 import java.nio.file.Files
 
+import akka.stream.Materializer
+import com.google.inject.{Inject, Singleton}
 import com.googlecode.htmlcompressor.compressor.HtmlCompressor
 import com.mohiva.play.htmlcompressor.HTMLCompressorFilter
-import play.api.Play, Play.{current, configuration}
-import play.api.http.{MimeTypes, HttpProtocol, HeaderNames}
-import play.api.libs.iteratee.{Enumerator, Iteratee}
-import play.api.mvc.{Result, RequestHeader, Filter}
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.twirl.api.{Html, HtmlFormat}
-
-import scala.concurrent.Future
+import play.api.libs.json.JsString
+import play.api.mvc.Filter
+import play.api.{Configuration, Environment, Mode}
+import play.twirl.api.{Html, Txt}
 
 /**
  * Suggest.io
@@ -20,10 +18,14 @@ import scala.concurrent.Future
  * Created: 20.03.14 10:18
  * Description: Утиль для сжатия HTML-ответов.
  */
-object HtmlCompressUtil {
+@Singleton
+class HtmlCompressUtil @Inject() (configuration: Configuration, env: Environment) { outer =>
 
-  val PRESERVE_LINE_BREAKS_DFLT   = getBool("html.compress.global.preserve.line.breaks", Play.isDev)
-  val REMOVE_COMMENTS_DFLT        = getBool("html.compress.global.remove.comments", Play.isProd)
+  private def _isProd = env.mode == Mode.Prod
+  private def _isDev  = env.mode == Mode.Dev
+
+  val PRESERVE_LINE_BREAKS_DFLT   = getBool("html.compress.global.preserve.line.breaks", _isDev)
+  val REMOVE_COMMENTS_DFLT        = getBool("html.compress.global.remove.comments", _isProd)
   val REMOVE_INTERTAG_SPACES_DFLT = getBool("html.compress.global.remove.spaces.intertag", true)
   val STRIP_HTTP_PROTO            = getBool("html.compress.global.remove.proto.http", false)
   val STRIP_HTTPS_PROTO           = getBool("html.compress.global.remove.proto.https", false)
@@ -45,8 +47,8 @@ object HtmlCompressUtil {
       _.toLowerCase match {
         case "true"  | "1" | "+" | "yes" | "on" => true
         case "false" | "0" | "-" | "no" | "off" => false
-        case "isprod" | "is_prod" => Play.isProd
-        case "isdev" | "is_dev"   => Play.isDev
+        case "isprod" | "is_prod"               => _isProd
+        case "isdev" | "is_dev"                 => _isDev
       }
     } getOrElse {
       dflt
@@ -64,9 +66,6 @@ object HtmlCompressUtil {
     compressor
   }
 
-  def compressForJson(html: HtmlFormat.Appendable) = html4jsonCompressor.compress(html.body)
-
-
 
   /** Почта редкая, поэтому проще собирать компрессор каждый раз заново. */
   private def html4emailCompressor = {
@@ -79,9 +78,6 @@ object HtmlCompressUtil {
     compressor.setPreserveLineBreaks(false)
     compressor
   }
-
-  def compressForEmail(html: HtmlFormat.Appendable) = html4emailCompressor.compress(html.body)
-
 
 
   /** SVG изредка сохраняются, поэтому выгоднее просто пересобирать компрессор каждый раз заново. */
@@ -114,62 +110,32 @@ object HtmlCompressUtil {
    */
   def compressSvgText(svgText: String): String = html4svgCompressor.compress(svgText)
 
+  def html2str4json(html: Html): String = {
+    html4jsonCompressor.compress(html.body)
+  }
+
+  def html4email(html: Html): String = {
+    html4emailCompressor.compress(html.body)
+  }
+
+  def html2jsStr(html: Html): JsString = {
+    JsString( html2str4json(html) )
+  }
+
+  def txt2str(txt: Txt): String = txt.body.trim
+  def txt2jsStr(txt: Txt): JsString = JsString( txt2str(txt) )
+
 }
 
 
 /** Реализация отключабельного play-фильтра. */
-class HtmlCompressFilter
-  extends HTMLCompressorFilter(HtmlCompressUtil.getForGlobalUsing)
+class HtmlCompressFilter @Inject() (
+  hcu                         : HtmlCompressUtil,
+  override val configuration  : Configuration,
+  override val mat            : Materializer
+)
+  extends HTMLCompressorFilter
   with Filter
-
-
-/** Легковесный стрипатель пустот в начале текстов. Потом, может быть, вырастет в нечто бОльшее. */
-// TODO Не заработал. Почему-то после подсчета длины результата внезапно начал резать текст в конце, а не в начале. Чудо.
-class LightTextCompressFilter extends Filter {
-
-  /** Статическая проверка на сжимабельность тела. */
-  def isCompressable(result: Result): Boolean = {
-    val hdrs = result.header.headers
-    hdrs.get(HeaderNames.CONTENT_TYPE).exists(_ startsWith MimeTypes.HTML) &&
-      !hdrs.get(HeaderNames.TRANSFER_ENCODING).exists(_ == HttpProtocol.CHUNKED) &&
-      manifest[Enumerator[Html]].runtimeClass.isInstance(result.body)
-  }
-
-  override def apply(f: (RequestHeader) => Future[Result])(rh: RequestHeader): Future[Result] = {
-    f(rh).flatMap { result =>
-      if (isCompressable(result)) {
-        // TODO var надо заменить аккамулятором функции. Только не очень-то ясно, как делать map+fold для enumerator'а.
-        var isOnStart = true
-        val body1 = result.body.map { bodyPart =>
-          if (isOnStart) {
-            // Можно и нужно быстро удалить пустые строки в начале. http://stackoverflow.com/a/14349083
-            isOnStart = false
-            // Использовать быстрый стрип whitespace'ов из http://stackoverflow.com/a/7668864
-            var st = 0
-            val l = bodyPart.length
-            while(bodyPart(st) <= ' ' && st < l) {
-              st += 1
-            }
-            java.util.Arrays.copyOfRange(bodyPart, st, l)
-          } else {
-            bodyPart
-          }
-        }
-        // Нужно выставить новый content-lenght
-        val cl = body1 |>>> Iteratee.fold[Array[Byte], Int](0) { (counter, bytes) =>
-          counter + bytes.length
-        }
-        cl map { cl1 =>
-          result.copy(
-            body = body1,
-            header = result.header.copy(
-              headers = result.header.headers + (HeaderNames.CONTENT_LENGTH -> cl1.toString)
-            )
-          )
-        }
-      } else {
-        Future successful result
-      }
-    }
-  }
+{
+  override val compressor = hcu.getForGlobalUsing
 }

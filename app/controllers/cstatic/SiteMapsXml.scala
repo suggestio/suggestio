@@ -1,7 +1,6 @@
 package controllers.cstatic
 
 import models.mctx.Context
-import play.api.Play
 import play.api.libs.iteratee.Enumerator
 import util.acl.IgnoreAuth
 import util.seo.SiteMapUtil
@@ -22,7 +21,7 @@ trait SiteMapsXml extends IgnoreAuth {
   /** Время кеширования /sitemap.xml ответа на клиенте. */
   private val SITEMAP_XML_CACHE_TTL_SECONDS: Int = {
     configuration.getInt("sitemap.xml.cache.ttl.seconds") getOrElse {
-      if (Play.isDev) 1 else 60
+      if (isDev) 1 else 60
     }
   }
 
@@ -43,8 +42,8 @@ trait SiteMapsXml extends IgnoreAuth {
       .andThen( Enumerator(1) map {_ => afterUrlsTpl()(ctx)} )  // Форсируем отложенный рендер футера через map()
       .andThen( Enumerator.eof )
     Ok.feed(respBody)
+      .as("text/xml")
       .withHeaders(
-        CONTENT_TYPE  -> "text/xml",
         CACHE_CONTROL -> s"public, max-age=$SITEMAP_XML_CACHE_TTL_SECONDS"
       )
   }

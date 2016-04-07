@@ -1,7 +1,6 @@
 package util.acl
 
 import models.req.{IReqHdr, ISioUser, MReq}
-import play.api.Play.isDev
 import play.api.mvc.Result
 
 import scala.concurrent.Future

@@ -78,9 +78,7 @@ trait ScOnlyOneAd
       imgFile <- adRenderUtil.renderAd2img(adArgs, request.mad)
     } yield {
       Ok.sendFile(imgFile,  inline = true,  onClose = {() => imgFile.delete()})
-        .withHeaders(
-          CONTENT_TYPE -> adArgs.imgFmt.mime
-        )
+        .as(adArgs.imgFmt.mime)
     }
   }
 

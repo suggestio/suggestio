@@ -1,11 +1,14 @@
 package util.cdn
 
-import play.api.mvc.{Filter, Result, RequestHeader}
+import akka.stream.Materializer
+import com.google.inject.Inject
+import play.api.mvc.{Filter, RequestHeader, Result}
 import util.PlayMacroLogsImpl
-import play.api.Play.{current, configuration}
+import play.api.Play.{configuration, current}
 
 import scala.concurrent.Future
 import play.api.http.HeaderNames._
+
 import scala.collection.JavaConversions._
 
 /**
@@ -17,7 +20,12 @@ import scala.collection.JavaConversions._
  * активность trace-логгинга в данном модуле.
  */
 
-class DumpXffHeaders extends Filter with PlayMacroLogsImpl {
+class DumpXffHeaders @Inject() (
+  override implicit val mat: Materializer
+)
+  extends Filter
+    with PlayMacroLogsImpl
+{
 
   /** Какие заголовки дампить? Если фильтр отключён, то эта настройка всё равно прочитается. */
   lazy val DUMP_HEADER_NAMES: Seq[String] = {

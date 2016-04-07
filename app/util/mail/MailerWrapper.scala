@@ -2,10 +2,10 @@ package util.mail
 
 import javax.mail.Authenticator
 
-import com.google.inject.{ImplementedBy, Singleton, Inject}
-import org.apache.commons.mail.{SimpleEmail, HtmlEmail, DefaultAuthenticator}
-import play.api.Play.{current, configuration}
-import play.api.libs.mailer.{MailerClient, Email}
+import com.google.inject.{ImplementedBy, Inject, Singleton}
+import org.apache.commons.mail.{DefaultAuthenticator, HtmlEmail, SimpleEmail}
+import play.api.Configuration
+import play.api.libs.mailer.{Email, MailerClient}
 import util.PlayLazyMacroLogsImpl
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.async.AsyncUtil
@@ -147,7 +147,7 @@ trait IMailerWrapper {
 }
 
 @Singleton
-class MailerWrapper @Inject() (client: MailerClient) extends IMailerWrapper {
+class MailerWrapper @Inject() (client: MailerClient, configuration: Configuration) extends IMailerWrapper {
 
   /** Использовать ли play mailer для отправки электронной почты? */
   val USE_PLAY_MAILER = configuration.getBoolean("email.use.play.mailer") getOrElse true

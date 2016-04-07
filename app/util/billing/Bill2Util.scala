@@ -18,7 +18,6 @@ import models.mproj.ICommonDi
 import models.{IPrice, CurrencyCodeOpt, MNode, MPrice}
 import org.joda.time.DateTime
 import util.PlayMacroLogsImpl
-import play.api.Play.isProd
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
@@ -777,7 +776,7 @@ class Bill2Util @Inject() (
 
       // Отметить item как отказанный в размещении
       mitem2 <- {
-        LOGGER.debug(s"$logPrefix Unlocked user balance[${balance0.id.orNull}] amount ${mitem0.price.amount}: ${balance0.price.amount} => ${amount2} ${balance0.price.currencyCode}")
+        LOGGER.debug(s"$logPrefix Unlocked user balance[${balance0.id.orNull}] amount ${mitem0.price.amount}: ${balance0.price.amount} => $amount2 ${balance0.price.currencyCode}")
 
         // Чтобы вернуть новый item, не считывая его из таблицы повторно, имитируем его прямо тут...
         val mi2 = mitem0.copy(

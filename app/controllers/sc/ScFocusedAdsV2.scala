@@ -50,12 +50,12 @@ trait ScFocusedAdsV2
       val fullArgsFut = focAdsRenderArgsFor(args)
 
       val bodyFut = renderBlockHtml(args)
-        .map { html2str4json }
+        .map { htmlCompressUtil.html2str4json }
 
       val controlsFut = for {
         fullArgs <- fullArgsFut
       } yield {
-        html2str4json(
+        htmlCompressUtil.html2str4json(
           _controlsTpl(fullArgs)
         )
       }
@@ -79,7 +79,10 @@ trait ScFocusedAdsV2
     /** Сборка HTTP-ответа APIv2. */
     override def resultFut: Future[Result] = {
       val _blockHtmlsFut = blocksHtmlsFut
+
       val _stylesFut = jsAdsCssFut
+        .map(htmlCompressUtil.txt2str)
+
       for {
         madsCount   <- madsCountIntFut
         blockHtmls  <- _blockHtmlsFut

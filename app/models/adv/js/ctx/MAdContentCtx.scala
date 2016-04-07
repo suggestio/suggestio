@@ -3,7 +3,6 @@ package models.adv.js.ctx
 import _root_.util.{FormUtil, TplDataFormatUtil}
 import io.suggest.adv.ext.model.ctx.MAdContentCtx._
 import models.MNode
-import play.api.Play.{configuration, current}
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -17,7 +16,7 @@ import play.api.libs.json._
 object MAdContentCtx {
 
   /** Желаемая длина дескрипшена, отправляемого в контекст. */
-  val FROM_AD_DESCR_LEN = configuration.getInt("adv.ext.ad.content.descr.len") getOrElse 192
+  def FROM_AD_DESCR_LEN = 192
 
   /** Делаем из инстанса рекламной карточки класс, пригодный для js-контекста.
     * @param mad Рекламная карточка.

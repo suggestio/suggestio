@@ -1,19 +1,22 @@
 package models.mproj
 
 import akka.actor.ActorSystem
-import com.google.inject.{Singleton, ImplementedBy, Inject}
+import akka.stream.Materializer
+import com.google.inject.{ImplementedBy, Inject, Singleton}
 import controllers.ErrorHandler
-import io.suggest.di.{ICacheApiUtil, IActorSystem, IEsClient, IExecutionContext}
+import io.suggest.di.{IActorSystem, ICacheApiUtil, IEsClient, IExecutionContext}
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.playx.{CacheApiUtil, ICurrentConf}
 import models.mctx.Context2Factory
 import models.req.MSioUsers
 import models.MNodeCache
 import org.elasticsearch.client.Client
-import play.api.Application
+import play.api.{Application, Mode}
 import play.api.cache.CacheApi
 import play.api.db.slick.DatabaseConfigProvider
-import play.api.i18n.MessagesApi
+import play.api.i18n.{Langs, MessagesApi}
+import play.filters.csrf.{CSRFAddToken, CSRFCheck}
+import util.HtmlCompressUtil
 import util.di._
 import util.secure.SessionUtil
 import util.xplay.ICacheApi
@@ -47,6 +50,12 @@ trait ICommonDi
   val sessionUtil                     : SessionUtil
   val contextFactory                  : Context2Factory
   val messagesApi                     : MessagesApi
+  val htmlCompressUtil                : HtmlCompressUtil
+  // DI-модель языков Langs необходима внутри SioController (и следовательно почти везде):
+  val langs                           : Langs
+  // play-2.5: Это нужно инжектить иначе deprecation warning.
+  val csrfAddToken                    : CSRFAddToken
+  val csrfCheck                       : CSRFCheck
   override implicit val esClient      : Client
   override val errorHandler           : ErrorHandler
   override implicit val ec            : ExecutionContext
@@ -56,28 +65,40 @@ trait ICommonDi
   //override val db                   : Database
   override val mNodeCache             : MNodeCache
   override val _slickConfigProvider   : DatabaseConfigProvider
+  implicit val mat                    : Materializer
   override implicit val current       : Application
+
+  /** Вспомогательные хелперы, т.к. необходимые (current.isProd) почему-то приватны. */
+  def isDev   = current.mode == Mode.Dev
+  def isProd  = current.mode == Mode.Prod
+  def isTest  = current.mode == Mode.Test
+
 }
 
 
 /** Дефолтовая реализация модели common-компонентов. */
 @Singleton
-class MCommonDi @Inject() (
-                            override val errorHandler       : ErrorHandler,
-                            override val contextFactory     : Context2Factory,
-                            override val messagesApi        : MessagesApi,
-                            override val actorSystem        : ActorSystem,
-                            override val cache              : CacheApi,
-                            override val cacheApiUtil       : CacheApiUtil,
-                            override val mNodeCache         : MNodeCache,
-                            override val sessionUtil        : SessionUtil,
-                            override val mSioUsers          : MSioUsers,
-                            //override val db                 : Database, // Anorm, спилить потом.
-                            override val _slickConfigProvider   : DatabaseConfigProvider,
-                            override implicit val current   : Application,
-                            override implicit val ec        : ExecutionContext,
-                            override implicit val esClient  : Client,
-                            override implicit val sn        : SioNotifierStaticClientI
+final class MCommonDi @Inject() (
+  override val errorHandler       : ErrorHandler,
+  override val contextFactory     : Context2Factory,
+  override val messagesApi        : MessagesApi,
+  override val htmlCompressUtil   : HtmlCompressUtil,
+  override val langs              : Langs,
+  override val csrfAddToken       : CSRFAddToken,
+  override val csrfCheck          : CSRFCheck,
+  override val actorSystem        : ActorSystem,
+  override val cache              : CacheApi,
+  override val cacheApiUtil       : CacheApiUtil,
+  override val mNodeCache         : MNodeCache,
+  override val sessionUtil        : SessionUtil,
+  override val mSioUsers          : MSioUsers,
+  //override val db                 : Database, // Anorm, спилить потом.
+  override val _slickConfigProvider   : DatabaseConfigProvider,
+  override implicit val mat       : Materializer,
+  override implicit val current   : Application,
+  override implicit val ec        : ExecutionContext,
+  override implicit val esClient  : Client,
+  override implicit val sn        : SioNotifierStaticClientI
 )
   extends ICommonDi
 

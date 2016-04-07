@@ -281,12 +281,13 @@ class MarketAdv @Inject() (
           }
         } yield {
           val advPricing = bill2Util.getAdvPricing(prices)
-          val html = _priceValTpl(advPricing)(ctx)
-          html2str4json(html)
+          htmlCompressUtil.html2str4json {
+            _priceValTpl(advPricing)(ctx)
+          }
         }
 
         // Параллельно отрендерить отчет по датам размещения.
-        val periodReportHtml = html2str4json {
+        val periodReportHtml = htmlCompressUtil.html2str4json {
           _reportTpl(formRes.period)(ctx)
         }
 

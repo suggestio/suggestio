@@ -49,9 +49,9 @@ class LkLang @Inject() (
   }
 
   private def _showLangSwitcher(langForm: Form[Lang], r: Option[String], rs: Status)(implicit ctx: Context): Future[Result] = {
-    val langs = Lang.availables
+    val langCodes = langs.availables
       .sortBy(_.code)
-    val englishLang = langs
+    val englishLang = langCodes
       .filter(_.language == "en")
       .sortBy(_.country == "US")
       .headOption
@@ -62,7 +62,7 @@ class LkLang @Inject() (
       english = english,
       lf      = langForm,
       isNowEnglish = ctx.messages.lang.language == "en",
-      langs   = langs,
+      langs   = langCodes,
       nodeOpt = nodeOpt,
       rr      = r
     )(ctx)

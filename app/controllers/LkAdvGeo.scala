@@ -231,11 +231,11 @@ class LkAdvGeo @Inject()(
         } yield {
           LOGGER.trace(s"$logPrefix pricing => $advPricing, isSuFree = $isSuFree")
           val html = _priceValTpl(advPricing)(ctx)
-          html2str4json(html)
+          htmlCompressUtil.html2str4json(html)
         }
 
         // Отрендерить данные по периоду размещения
-        val periodReportHtml = html2str4json {
+        val periodReportHtml = htmlCompressUtil.html2str4json {
           _reportTpl(result.period)(ctx)
         }
 

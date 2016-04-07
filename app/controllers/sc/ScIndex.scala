@@ -13,7 +13,6 @@ import models.req.IReq
 import play.twirl.api.Html
 import util.acl._
 import views.html.sc._
-import play.api.libs.json._
 import models._
 import scala.concurrent.Future
 import play.api.mvc._
@@ -86,7 +85,7 @@ trait ScIndexCommon
         indexTpl(renderArgs)(ctx)
       }
     }
-    def respHtmlJsFut = respHtmlFut.map(JsString(_))
+    def respHtmlJsFut = respHtmlFut.map( htmlCompressUtil.html2jsStr )
 
 
     def hBtnArgsFut: Future[HBtnArgs] = {

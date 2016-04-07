@@ -21,7 +21,8 @@ trait ScTags
 
   /**
    * Поиск тегов по названиям.
-   * @param mts Аргументы поиска, сформированные на клиенте.
+    *
+    * @param mts Аргументы поиска, сформированные на клиенте.
    * @return Рендер куска списка тегов, который раньше был списком узлов.
    */
   def tagsSearch(mts: MTagSearch) = MaybeAuth().async { implicit request =>
@@ -29,8 +30,15 @@ trait ScTags
     for {
       found <- foundFut
     } yield {
+      val htmlOpt = if (found.nonEmpty) {
+        val htmlRaw = _listElsTpl(found)
+        Some( htmlCompressUtil.html2str4json(htmlRaw) )
+      } else {
+        None
+      }
+
       val resp = MTagSearchResp(
-        rendered    = if (found.nonEmpty)  Some( _listElsTpl(found) )  else  None,
+        rendered    = htmlOpt,
         foundCount  = found.size
       )
       Ok( Json.toJson(resp) )

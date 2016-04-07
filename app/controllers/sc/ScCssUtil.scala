@@ -122,7 +122,7 @@ trait ScCssUtil
     def jsAppendAdsCssFut: Future[JsAction] = {
       jsAdsCssFut map { jsAdsCss =>
         val html = List(Txt("<style>"), jsAdsCss, Txt("</style>"))
-        val data = JsString( new Txt(html) )
+        val data = htmlCompressUtil.txt2jsStr( new Txt(html) )
         jsAppendCssAction(data)
       }
     }

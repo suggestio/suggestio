@@ -2,16 +2,17 @@ package util
 
 import java.text.{DecimalFormat, NumberFormat}
 import java.util.Currency
+
 import io.suggest.common.text.StringUtil
-import io.suggest.mbill2.m.price.{MPrice, IPrice}
+import io.suggest.mbill2.m.price.{IPrice, MPrice}
 import models.mctx.Context
-import org.joda.time.{ReadableInstant, ReadablePartial}
 import org.joda.time.format.DateTimeFormat
-import play.api.libs.json.JsString
-import play.twirl.api.{Txt, HtmlFormat, Html}
-import scala.annotation.tailrec
+import org.joda.time.{ReadableInstant, ReadablePartial}
+import play.twirl.api.{Html, HtmlFormat}
 import views.html.fc._
 import views.html.helper.FieldConstructor
+
+import scala.annotation.tailrec
 
 /**
  * Suggest.io
@@ -19,7 +20,7 @@ import views.html.helper.FieldConstructor
  * Created: 26.03.14 15:33
  * Description: Разная мелкая утиль для шаблонов.
  */
-object TplDataFormatUtil extends TplFormatUtilT {
+object TplDataFormatUtil {
 
   val ELLIPSIS = "…"
 
@@ -39,9 +40,9 @@ object TplDataFormatUtil extends TplFormatUtilT {
 
   final def colorRgb2Hsl(rgb: List[Int]): List[Int] = {
 
-    val r:Float = rgb(0).toFloat / 255
-    val g:Float = rgb(1).toFloat / 255
-    val b:Float = rgb(2).toFloat / 255
+    val r: Float = rgb(0).toFloat / 255
+    val g: Float = rgb(1).toFloat / 255
+    val b: Float = rgb(2).toFloat / 255
 
     val rgbSorted = List(r,g,b).sortWith(_ < _)
 
@@ -276,27 +277,3 @@ object FC {
   implicit def langSelectFc = FieldConstructor(langSelectFcTpl.f)
 
 }
-
-/** Приведение разных текстовых форматов к минифицированным строкам. */
-trait TplFormatUtilT {
-
-  import scala.language.implicitConversions
-
-  implicit def html4email(html: Html): String = {
-    HtmlCompressUtil.compressForEmail(html)
-  }
-
-  implicit def html2jsStr(html: Html): JsString = {
-    JsString( html2str4json(html) )
-  }
-
-  def html2str4json(html: Html): String = {
-    HtmlCompressUtil.compressForJson(html)
-  }
-
-  implicit def txt2str(txt: Txt): String = txt.body.trim
-
-  implicit def txt2jsStr(txt: Txt): JsString = JsString(txt)
-
-}
-

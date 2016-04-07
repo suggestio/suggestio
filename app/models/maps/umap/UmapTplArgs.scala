@@ -3,6 +3,7 @@ package models.maps.umap
 import models._
 import play.api.i18n.Messages
 import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
  * Suggest.io
@@ -13,15 +14,17 @@ import play.api.libs.json._
 
 object UmapTplArgs {
 
-  def nodeGeoLevelsJson(ngls: Seq[NodeGeoLevel])(implicit lang: Messages): JsArray = {
-    val lvls = ngls.map { ngl =>
-      JsObject(Seq(
-        "displayOnLoad" -> JsBoolean(true),
-        "name"          -> JsString( Messages("ngls." + ngl.esfn) ),
-        "id"            -> JsNumber(ngl.id)
-      ))
-    }
-    JsArray(lvls)
+
+  def nodeGeoLevelsJson(ngls: Seq[NodeGeoLevel])(implicit messages: Messages): JsArray = {
+
+    implicit val nglWrites: OWrites[NodeGeoLevel] = (
+      (__ \ "displayOnLoad").write[Boolean] and
+      (__ \ "name").write[String] and
+      (__ \ "id").write[Int]
+    )(ngl => (true, messages(ngl.l10nPlural), ngl.id))
+
+    Json.toJson(ngls)
+      .asInstanceOf[JsArray]
   }
 
 }

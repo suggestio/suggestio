@@ -112,17 +112,17 @@ object MExtTarget
    * Создавать ли экземпляр этой модели для новых узлов?
    * @param svc Сервис.
    * @param adnId id узла.
-   * @param lang язык. Для связи с Messages().
+   * @param messages язык. Для связи с Messages().
    * @return Some с экземпляром [[MExtTarget]].
    *         None, если по дефолту таргет создавать не надо.
    */
-  def dfltTarget(svc: MExtService, adnId: String)(implicit lang: Messages): Option[MExtTarget] = {
+  def dfltTarget(svc: MExtService, adnId: String)(implicit messages: Messages): Option[MExtTarget] = {
     svc.dfltTargetUrl.map { url =>
       MExtTarget(
         url     = url,
         adnId   = adnId,
         service = svc,
-        name    = Some( Messages(svc.iAtServiceI18N) )
+        name    = Some( messages(svc.iAtServiceI18N) )
       )
     }
   }

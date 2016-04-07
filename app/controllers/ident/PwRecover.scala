@@ -1,11 +1,12 @@
 package controllers.ident
 
 import controllers._
+import io.suggest.common.fut.FutureUtil
 import models.jsm.init.MTargets
-import models.mctx.{CtxData, Context}
+import models.mctx.{Context, CtxData}
 import models.msession.Keys
 import models.req.{IRecoverPwReq, IReq}
-import models.usr.{MPersonIdent, EmailActivation, EmailPwIdent}
+import models.usr.{EmailActivation, EmailPwIdent, MPersonIdent}
 import play.api.data._
 import play.twirl.api.Html
 import util.PlayMacroLogsI
@@ -16,9 +17,9 @@ import util.xplay.SetLangCookieUtil
 import views.html.helper.CSRF
 import views.html.ident.mySioStartTpl
 import views.html.ident.recover._
+
 import scala.concurrent.Future
 import models._
-import play.api.i18n.Messages
 import util.FormUtil.passwordWithConfirmM
 
 /**
@@ -34,6 +35,7 @@ trait SendPwRecoverEmail
   extends SioController
   with IMailerWrapperDi
   with MaybeAuth
+  with PlayMacroLogsI
 {
 
   import mCommonDi._
@@ -45,45 +47,66 @@ trait SendPwRecoverEmail
    * @return Фьючерс для синхронизации.
    */
   protected def sendRecoverMail(email1: String)(implicit request: IReq[_]): Future[_] = {
-    // Надо найти юзера в базах PersonIdent, и если есть, то отправить письмецо.
-    MPersonIdent.findIdentsByEmail(email1) flatMap { idents =>
-      if (idents.nonEmpty) {
-        val emailIdentFut: Future[EmailPwIdent] = idents
+    lazy val logPrefix = s"sendRecoverMail($email1):"
+
+    val fut = for {
+      // Надо найти юзера в базах PersonIdent, и если есть, то отправить письмецо.
+      idents <- MPersonIdent.findIdentsByEmail(email1)
+      if idents.nonEmpty
+
+      epwIdent <- {
+        val epwOpt0 = idents
           .foldLeft[List[EmailPwIdent]](Nil) {
             case (acc, epw: EmailPwIdent) => epw :: acc
             case (acc, _) => acc
           }
           .headOption
-          .map { Future.successful }
-          .getOrElse {
-            // берём personId из moz persona. Там в списке только один элемент, т.к. email является уникальным в рамках ident-модели.
-            val personId = idents.map(_.personId).head
-            val epw = EmailPwIdent(email = email1, personId = personId, pwHash = "", isVerified = false)
-            epw.save
-              .map { _ => epw}
-          }
-        emailIdentFut flatMap { epwIdent =>
-          // Нужно сгенерить ключ для восстановления пароля. И ссылку к нему.
-          val eact = EmailActivation(email = email1, key = epwIdent.personId)
-          eact.save.map { eaId =>
-            val eact2 = eact.copy(
-              id = Some(eaId)
-            )
-            // Можно отправлять письмецо на ящик.
-            val msg = mailer.instance
-            msg.setFrom("no-reply@suggest.io")
-            msg.setRecipients(email1)
-            val ctx = implicitly[Context]
-            msg.setSubject("Suggest.io | " + Messages("Password.recovery")(ctx.messages))
-            msg.setHtml( emailPwRecoverTpl(eact2)(ctx) )
-            msg.send()
+
+        FutureUtil.opt2future(epwOpt0) {
+          val personId = idents.map(_.personId).head
+          LOGGER.info(s"$logPrefix No ident exists, initializing new one for person[$personId]")
+          val epw = EmailPwIdent(
+            email       = email1,
+            personId    = personId,
+            pwHash      = "",
+            isVerified  = false
+          )
+          for (_ <- epw.save) yield {
+            epw
           }
         }
-      } else {
-        // TODO Если юзера нет, то создать его и тоже отправить письмецо с активацией? или что-то иное вывести?
-        Future successful None // None вместо Unit(), чтобы 2.11 компилятор не ругался.
       }
+
+      eact = EmailActivation(email = email1, key = epwIdent.personId)
+      eaId <- eact.save
+
+    } yield {
+
+      val eact2 = eact.copy(
+        id = Some(eaId)
+      )
+      // Можно отправлять письмецо на ящик.
+      val msg = mailer.instance
+      msg.setFrom("no-reply@suggest.io")
+      msg.setRecipients(email1)
+      val ctx = implicitly[Context]
+      msg.setSubject("Suggest.io | " + ctx.messages("Password.recovery"))
+      msg.setHtml {
+        htmlCompressUtil.html4email {
+          emailPwRecoverTpl(eact2)(ctx)
+        }
+      }
+      msg.send()
     }
+
+    // Отрабатываем ситуацию, когда юзера нет совсем.
+    fut.recover { case ex: NoSuchElementException =>
+      // TODO Если юзера нет, то создать его и тоже отправить письмецо с активацией? или что-то иное вывести?
+      LOGGER.warn(s"$logPrefix No email idents found for recovery")
+      // None вместо Unit(), чтобы 2.11 компилятор не ругался.
+      None
+    }
+
   }
 
 }
@@ -112,7 +135,7 @@ trait PwRecover
   // TODO Сделать это шаблоном!
   protected def _outer(html: Html)(implicit ctx: Context): Html = {
     mySioStartTpl(
-      title     = Messages("Password.recovery")(ctx.messages),
+      title     = ctx.messages("Password.recovery"),
       columns   = Seq(html)
     )(ctx)
   }

@@ -2,7 +2,6 @@ package controllers.sc
 
 import util.acl.MaybeAuth
 import views.js.sc.jsRouterTpl
-import play.api.Play
 
 /**
  * Suggest.io
@@ -24,10 +23,11 @@ trait ScJsRouter
   def scJsRouter = MaybeAuth() { implicit request =>
     // TODO Нужно получать параметры кеширования через qs на клиенте и выдавать соответствующие заголовки кеширования.
     // TODO Выставлять заголовки ETag, Last-Modified.
-    val cacheSeconds = if (Play.isDev) 1 else 100
-    Ok(jsRouterTpl()).withHeaders(
-      CACHE_CONTROL -> ("public, max-age=" + cacheSeconds)
-    )
+    val cacheSeconds = if (isDev) 1 else 100
+    Ok(jsRouterTpl())
+      .withHeaders(
+        CACHE_CONTROL -> ("public, max-age=" + cacheSeconds)
+      )
   }
 
 }

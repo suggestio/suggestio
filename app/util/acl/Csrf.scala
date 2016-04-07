@@ -2,7 +2,6 @@ package util.acl
 
 import models.mproj.IMCommonDi
 import play.api.http.HeaderNames
-import play.filters.csrf.{CSRFCheck, CSRFAddToken}
 import play.api.mvc._
 import scala.concurrent.Future
 import scala.language.higherKinds
@@ -34,7 +33,7 @@ import CsrfUtil._
 
 trait Csrf extends IMCommonDi {
 
-  import mCommonDi.ec
+  import mCommonDi.{ec, csrfAddToken, csrfCheck}
 
   /** Аддон для action-builder'ов, добавляющий выставление CSRF-токена в сессию. */
   trait CsrfGet[R[_]] extends ActionBuilder[R] {
@@ -45,7 +44,7 @@ trait Csrf extends IMCommonDi {
     }
 
     override protected def composeAction[A](action: Action[A]): Action[A] = {
-      CSRFAddToken(super.composeAction(action))
+      csrfAddToken(super.composeAction(action))
     }
   }
 
@@ -59,7 +58,7 @@ trait Csrf extends IMCommonDi {
     }
 
     override protected def composeAction[A](action: Action[A]): Action[A] = {
-      CSRFCheck(super.composeAction(action))
+      csrfCheck(super.composeAction(action))
     }
   }
 

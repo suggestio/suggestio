@@ -1,9 +1,13 @@
 package util.cdn
 
-import play.api.mvc.{Result, RequestHeader, Filter}
+import akka.stream.Materializer
+import com.google.inject.Inject
+import play.api.mvc.{Filter, RequestHeader, Result}
+
 import scala.concurrent.Future
 import play.api.http.HeaderNames._
-import play.api.Play.{current, configuration}
+import play.api.Play.{configuration, current}
+
 import scala.collection.JavaConversions._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
@@ -91,7 +95,9 @@ object CorsUtil2 {
 
 
 /** Фильтр. Должен без проблем инициализироваться, когда application not started. */
-class CorsFilter extends Filter {
+class CorsFilter @Inject() (
+  override implicit val mat: Materializer
+) extends Filter {
 
   override def apply(f: (RequestHeader) => Future[Result])(rh: RequestHeader): Future[Result] = {
     var fut = f(rh)

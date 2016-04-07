@@ -69,7 +69,7 @@ trait SysNodeInstall
     for {
       srcNodes <- mNodeCache.multiGet(nodesUtil.ADN_IDS_INIT_ADS_SOURCE)
     } yield {
-      val allLangs = Lang.availables.sortBy(_.code)
+      val allLangs = langs.availables.sortBy(_.code)
       val html = installDfltMadsTpl(allLangs, request.mnode, form, srcNodes)(ctx)
       rs(html)
     }

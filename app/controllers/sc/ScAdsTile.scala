@@ -283,8 +283,9 @@ trait ScAdsTile
     }
 
     override def renderMadAsync(brArgs: blk.RenderArgs): Future[T] = {
-      renderMad2htmlAsync(brArgs)
-        .map { html2jsStr }
+      for (html <- renderMad2htmlAsync(brArgs)) yield {
+        htmlCompressUtil.html2jsStr(html)
+      }
     }
 
     /** Сборка http-ответа для coffeescript-выдачи. Там использовался голый js. */
@@ -320,8 +321,10 @@ trait ScAdsTile
     override type T = MFoundAd
 
     override def renderMadAsync(brArgs: RenderArgs): Future[T] = {
-      renderMad2htmlAsync(brArgs).map { html =>
-        MFoundAd(html)
+      for ( html <- renderMad2htmlAsync(brArgs) ) yield {
+        MFoundAd(
+          htmlCompressUtil.html2str4json(html)
+        )
       }
     }
 

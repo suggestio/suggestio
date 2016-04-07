@@ -75,7 +75,11 @@ trait EmailPwReg
     msg.setFrom("no-reply@suggest.io")
     msg.setRecipients(ea.email)
     msg.setSubject("Suggest.io | " + ctx.messages("reg.emailpw.email.subj"))
-    msg.setHtml( emailRegMsgTpl(ea)(ctx) )
+    msg.setHtml {
+      htmlCompressUtil.html4email {
+        emailRegMsgTpl(ea)(ctx)
+      }
+    }
     msg.send()
   }
 
@@ -88,19 +92,21 @@ trait EmailPwReg
   }
 
   /**
-   * Страница с колонкой регистрации по email'у.
-   * @return 200 OK со страницей начала регистрации по email.
-   */
+    * Страница с колонкой регистрации по email'у.
+    *
+    * @return 200 OK со страницей начала регистрации по email.
+    */
   def emailReg = IsAnonGet { implicit request =>
     Ok(_epwRender(emailRegFormM))
   }
 
   /**
-   * Сабмит формы регистрации по email.
-   * Нужно отправить письмо на указанный ящик и отредиректить юзера на страницу с инфой.
-   * @return emailRegFormBindFailed() при проблеме с маппингом формы.
-   *         emailRequestOk() когда сообщение отправлено почтой.
-   */
+    * Сабмит формы регистрации по email.
+    * Нужно отправить письмо на указанный ящик и отредиректить юзера на страницу с инфой.
+    *
+    * @return emailRegFormBindFailed() при проблеме с маппингом формы.
+    *         emailRequestOk() когда сообщение отправлено почтой.
+    */
   def emailRegSubmit = IsAnonPost.async { implicit request =>
     val form1 = checkCaptcha( emailRegFormM.bindFromRequest() )
     form1.fold(

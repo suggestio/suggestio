@@ -2,6 +2,7 @@ package controllers.ctag
 
 import controllers.SioController
 import io.suggest.model.n2.tag.ITagSearchUtilDi
+import models.mctx.Context
 import models.mtag._
 import play.api.libs.json.Json
 import util.PlayMacroLogsI
@@ -53,6 +54,8 @@ trait NodeTagsEdit
           existingAcc.result()
         }
 
+        implicit val ctx = implicitly[Context]
+
         // Собрать обновлённый маппинг формы:
         val r2 = MTagsAddFormBinded(
           added     = Nil,
@@ -62,8 +65,8 @@ trait NodeTagsEdit
 
         // Собрать JSON-ответ и вернуть.
         val resp = MAddTagReplyOk(
-          addFormHtml = _addFormTpl  (tf2),
-          existHtml   = _tagsExistTpl(tf2)
+          addFormHtml = htmlCompressUtil.html2str4json( _addFormTpl(tf2)(ctx) ),
+          existHtml   = htmlCompressUtil.html2str4json( _tagsExistTpl(tf2)(ctx) )
         )
 
         // Отрендерить и вернуть результат.
@@ -85,7 +88,7 @@ trait NodeTagsEdit
         NoContent
       } else {
         val resp = MTagSearchResp(
-          rendered    = Some(_tagsHintTpl(found)),
+          rendered    = Some( htmlCompressUtil.html2str4json(_tagsHintTpl(found)) ),
           foundCount  = found.tags.size
         )
         Ok( Json.toJson(resp) )

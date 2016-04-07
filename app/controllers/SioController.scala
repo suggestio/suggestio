@@ -8,11 +8,12 @@ import play.api.mvc._
 import util._
 import util.jsa.init.CtlJsInitT
 import util.ws.WsDispatcherActor
+
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import play.api.data.Form
-import models._
 import play.api.mvc.Result
+
 import scala.language.implicitConversions
 import io.suggest.flash.FlashConstants
 
@@ -27,7 +28,6 @@ import scala.util.{Failure, Success}
 trait SioController
   extends Controller
   with ContextT
-  with TplFormatUtilT
   with I18nSupport
   with CtlJsInitT
   with IMCommonDi
@@ -73,7 +73,7 @@ trait SioController
 
   /** Бывает нужно просто впендюрить кеш для результата, но только когда продакшен. */
   def cacheControlShort(r: Result): Result = {
-    val v = if (play.api.Play.isProd) {
+    val v = if (isProd) {
       "public, max-age=600"
     } else {
       "no-cache"
@@ -96,7 +96,7 @@ trait SioController
       lang0
     } else {
       // Нужно трансформировать язык к локаль исходя из доступных messages-локалей
-      val avails = Lang.availables
+      val avails = langs.availables
       avails
         .find { _.language == lang0.language }
         .orElse { Lang.get("en-US") }

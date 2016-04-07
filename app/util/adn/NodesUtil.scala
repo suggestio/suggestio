@@ -68,12 +68,12 @@ class NodesUtil @Inject() (
   }
 
   /**
-   * Создать новый инстанс узла для юзера без сохранения узла в хранилище.
- *
-   * @param name название узла.
-   * @param personId id юзера-владельца.
-   * @return Экземпляр узла без id.
-   */
+    * Создать новый инстанс узла для юзера без сохранения узла в хранилище.
+    *
+    * @param name название узла.
+    * @param personId id юзера-владельца.
+    * @return Экземпляр узла без id.
+    */
   def userNodeInstance(name: String, personId: String): MNode = {
     MNode(
       common = MNodeCommon(
@@ -119,12 +119,12 @@ class NodesUtil @Inject() (
   }
 
   /**
-   * Создать дефолтовые таргеты для размещения в соц.сетях.
- *
-   * @param adnId id узла.
-   * @return Фьючерс для синхронизации.
-   */
-  def createExtDfltTargets(adnId: String)(implicit lang: Messages): Future[_] = {
+    * Создать дефолтовые таргеты для размещения в соц.сетях.
+    *
+    * @param adnId id узла.
+    * @return Фьючерс для синхронизации.
+    */
+  def createExtDfltTargets(adnId: String)(implicit messages: Messages): Future[_] = {
     val tgtsIter = MExtServices.values
       .iterator
       .flatMap { svc => MExtTarget.dfltTarget(svc, adnId) }
@@ -132,13 +132,13 @@ class NodesUtil @Inject() (
   }
 
   /**
-   * Создание нового узла для юзера. Узел должен быть готов к финансовой работе.
- *
-   * @param name Название узла.
-   * @param personId id юзера-владельца.
-   * @return Фьючерс с готовым инстансом нового существующего узла.
-   */
-  def createUserNode(name: String, personId: String)(implicit lang: Messages): Future[MNode] = {
+    * Создание нового узла для юзера. Узел должен быть готов к финансовой работе.
+    *
+    * @param name Название узла.
+    * @param personId id юзера-владельца.
+    * @return Фьючерс с готовым инстансом нового существующего узла.
+    */
+  def createUserNode(name: String, personId: String)(implicit messages: Messages): Future[MNode] = {
     val inst = userNodeInstance(name = name, personId = personId)
     val nodeSaveFut = inst.save
     nodeSaveFut.flatMap { nodeId =>
@@ -154,7 +154,7 @@ class NodesUtil @Inject() (
 
 
   /** Установить дефолтовые карточки. */
-  def installDfltMads(adnId: String, count: Int = INIT_ADS_COUNT)(implicit lang: Messages): Future[Seq[String]] = {
+  def installDfltMads(adnId: String, count: Int = INIT_ADS_COUNT)(implicit messages: Messages): Future[Seq[String]] = {
     lazy val logPrefix = s"installDfltMads($adnId):"
     (Future successful ADN_IDS_INIT_ADS_SOURCE)
       // Если нет продьюсеров, значит функция отключена. Это будет перехвачено в recover()
@@ -229,7 +229,7 @@ class NodesUtil @Inject() (
                   ent.copy(
                     text = ent.text.map { aosf =>
                       aosf.copy(
-                        value = Messages(aosf.value)
+                        value = messages(aosf.value)
                       )
                     }
                   )

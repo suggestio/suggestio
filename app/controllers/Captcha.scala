@@ -54,8 +54,8 @@ trait CaptchaGeneratorBase
   protected def _getCaptchaImg(captchaId: String, ctext: String, cookiePath: String)(implicit request: RequestHeader): Result = {
     val ctextCrypt = captchaUtil.encryptPrintable(ctext, ivMaterial = captchaUtil.ivMaterial(captchaId))
     Ok(createCaptchaImg(ctext))
+      .as("image/" + captchaUtil.CAPTCHA_FMT_LC)
       .withHeaders(
-        CONTENT_TYPE  -> ("image/" + captchaUtil.CAPTCHA_FMT_LC),
         EXPIRES       -> "0",
         PRAGMA        -> "no-cache",
         CACHE_CONTROL -> "no-store, no-cache, must-revalidate"

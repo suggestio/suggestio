@@ -3,7 +3,6 @@ package controllers
 import com.google.inject.Inject
 import controllers.cstatic.{CorsPreflight, RobotsTxt, SiteMapsXml}
 import models.mproj.ICommonDi
-import play.api.Play.isProd
 import util.acl.{IsAuth, IsSuperuserOrDevelOr404, MaybeAuth}
 import util.seo.SiteMapUtil
 import util.xplay.SecHeadersFilter

@@ -1,9 +1,8 @@
-import play.Play.autoImport._
+//import play.Play.autoImport._
 import PlayKeys._
 import play.twirl.sbt.Import._
 import play.twirl.sbt.SbtTwirl
 import com.typesafe.sbt.web._
-import com.typesafe.sbt.SbtProguard.ProguardKeys._
 import com.tuplejump.sbt.yeoman.Yeoman
 
 Common.settingsOrg
@@ -83,30 +82,7 @@ libraryDependencies ++= {
   //"net.codingwell" %% "scala-guice" % "4.0.0",
   "commons-io" % "commons-io" % "2.4",
   // test
-  // play-2.3.x: Устарел selenium
-  // org.w3c.css#sac конфликтует xml-apis-ext
-  "org.fluentlenium" % "fluentlenium-festassert" % "0.10.2" % "test"
-    exclude("commons-logging", "commons-logging")
-    exclude("org.w3c.css", "sac")
-  ,
-  "org.fluentlenium" % "fluentlenium-core" % "0.10.2" % "test"
-    exclude("commons-logging", "commons-logging")
-    exclude("org.w3c.css", "sac")
-  ,
-  "org.seleniumhq.selenium" % "selenium-java" % "2.45.0" % "test"
-    exclude("commons-logging", "commons-logging")
-    exclude("org.w3c.css", "sac")
-  ,
-  "net.sourceforge.htmlunit" % "htmlunit-core-js" % "2.15" % "test"
-    exclude("commons-logging", "commons-logging")
-    exclude("org.w3c.css", "sac")
-  ,
-  "net.sourceforge.htmlunit" % "htmlunit" % "2.15" % "test"
-    exclude("commons-logging", "commons-logging")
-    exclude("org.w3c.css", "sac")
-  ,
-  // play-2.3+:
-  "org.scalatestplus" %% "play" % "1.5.1" % "test"
+  "org.scalatestplus" %% "play" % Common.scalaTestPlusPlayVsn % "test"
     exclude("commons-logging", "commons-logging")
     exclude("org.w3c.css", "sac")
 )}

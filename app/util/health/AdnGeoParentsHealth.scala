@@ -1,23 +1,22 @@
 package util.health
 
-import com.google.inject.{Singleton, Inject}
+import com.google.inject.{Inject, Singleton}
 import io.suggest.model.n2.edge.MPredicates
-import models.MNode
+import models.{AdnShownTypes, MNode}
 import models.mcron.{ICronTask, MCronTask}
-import models.usr.MSuperUsers
-import models.AdnShownTypes
+import models.mproj.ICommonDi
 import models.msys.NodeProblem
-import org.elasticsearch.client.Client
-import org.joda.time.{DateTimeZone, DateTime}
-import play.api.{Configuration, Application}
-import play.api.i18n.{Lang, MessagesApi}
+import models.usr.MSuperUsers
+import org.joda.time.{DateTime, DateTimeZone}
+import play.api.Application
+import play.api.i18n.Lang
 import util.mail.IMailerWrapper
-import util.{PlayMacroLogsImpl, TplFormatUtilT, ICronTasksProvider}
 import util.showcase.ShowcaseNodeListUtil
-import scala.concurrent.duration._
+import util.{ICronTasksProvider, PlayMacroLogsImpl}
 import views.html.sys1.debug.geo.parent._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
+import scala.concurrent.duration._
 import scala.util.Success
 
 /**
@@ -28,23 +27,20 @@ import scala.util.Success
  */
 @Singleton
 class AdnGeoParentsHealth @Inject() (
-  configuration         : Configuration,
   mailer                : IMailerWrapper,
-  messagesApi           : MessagesApi,
   mSuperUsers           : MSuperUsers,
   scNlUtil              : ShowcaseNodeListUtil,
-  implicit val ec       : ExecutionContext,
-  implicit val esClient : Client
+  mCommonDi             : ICommonDi
 )
   extends ICronTasksProvider
   with PlayMacroLogsImpl
-  with TplFormatUtilT
 {
 
   import LOGGER._
+  import mCommonDi._
 
   /** Включено ли автоматическое тестирование узлов? */
-  private val GEO_PARENTS_AUTO = configuration.getBoolean("health.tests.adn.geo.parent.periodical") getOrElse false
+  private val GEO_PARENTS_AUTO = configuration.getBoolean("health.tests.adn.geo.parent.periodical").getOrElse(false)
 
 
   /** Список задач, которые надо вызывать по таймеру. */
@@ -75,7 +71,7 @@ class AdnGeoParentsHealth @Inject() (
   /**
    * Запуск тестирования узлов, имеющих direct geo parents.
    * Тест проверяет возможность узла на рендер внутри списка узлов.
- *
+   *
    * @return Фьючерс со списком обнаруженных проблем.
    */
   def testAll(): Future[List[NodeProblem]] = {
@@ -124,11 +120,16 @@ class AdnGeoParentsHealth @Inject() (
       // Или есть проблемы, или возникла ошибка при тесте. В обоих случаях надо уведомить.
       case tryRes =>
         warn("Selt-test problems detected: " + tryRes)
+
         mailer.instance
           .setFrom("health@suggest.io")
           .setRecipients(mSuperUsers.SU_EMAILS : _*)
           .setSubject("Suggest.io: Обнаружены проблемы геосвязности узлов")
-          .setHtml( suProblemsEmailTpl(tryRes) )
+          .setHtml {
+            htmlCompressUtil.html4email {
+              suProblemsEmailTpl(tryRes)
+            }
+          }
           .send()
     }
   }

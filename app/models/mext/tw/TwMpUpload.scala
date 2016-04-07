@@ -1,8 +1,8 @@
 package models.mext.tw
 
-import com.ning.http.client.AsyncHttpClient
 import io.suggest.ahc.upload.{IMpUploadArgs, MpUploadSupportDflt}
 import models.mext._
+import org.asynchttpclient.AsyncHttpClient
 import play.api.libs.oauth.OAuthCalculator
 import play.api.libs.ws.WSResponse
 
@@ -33,7 +33,7 @@ trait TwMpUpload
   }
 
   /** Создание экземпляра нового реквеста. */
-  override def newRequest(args: IMpUploadArgs, client: AsyncHttpClient): AsyncHttpClient#BoundRequestBuilder = {
+  override def newRequest(args: IMpUploadArgs, client: AsyncHttpClient) = {
     super.newRequest(args, client)
       .setSignatureCalculator( new OAuthCalculator(consumerKey, args.oa1AcTok.get) )
   }

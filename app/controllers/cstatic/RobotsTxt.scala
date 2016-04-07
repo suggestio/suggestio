@@ -1,6 +1,5 @@
 package controllers.cstatic
 
-import play.api.Play
 import util.acl.IgnoreAuth
 import views.txt.static.robotsTxtTpl
 
@@ -17,7 +16,7 @@ trait RobotsTxt extends IgnoreAuth {
   /** Время кеширования /robots.txt ответа на клиенте. */
   private val ROBOTS_TXT_CACHE_TTL_SECONDS: Int = {
     configuration.getInt("robots.txt.cache.ttl.seconds") getOrElse {
-      if (Play.isDev) 5 else 120
+      if (isDev) 5 else 120
     }
   }
 
@@ -25,7 +24,7 @@ trait RobotsTxt extends IgnoreAuth {
   def robotsTxt = IgnoreAuth { implicit request =>
     Ok( robotsTxtTpl() )
       .withHeaders(
-        CONTENT_TYPE  -> "text/plain; charset=utf-8",
+        //CONTENT_TYPE  -> "text/plain; charset=utf-8",
         CACHE_CONTROL -> s"public, max-age=$ROBOTS_TXT_CACHE_TTL_SECONDS"
       )
   }

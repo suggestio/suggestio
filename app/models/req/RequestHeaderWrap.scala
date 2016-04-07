@@ -21,7 +21,7 @@ trait RequestHeaderWrap extends RequestHeader {
   override def path           = request.path
   override def version        = request.version
   override def tags           = request.tags
-
+  override def clientCertificateChain = request.clientCertificateChain
 }
 
 

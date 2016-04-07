@@ -5,8 +5,6 @@ import io.suggest.event.subscriber.SnFunSubscriber
 import io.suggest.model.n2.node.event.MNodeSaved
 import models.jsm.NodeDataResp
 import models.mproj.IMProjectInfo
-import play.api.Play
-import play.api.cache.Cache
 import play.api.mvc.Result
 import util.DateTimeUtil
 import util.acl.AdnNodeMaybeAuth
@@ -40,7 +38,7 @@ trait ScNodeInfo
     configuration
       .getInt("market.node.icon.js.cache.control.max.age")
       .getOrElse {
-        if (Play.isProd)  60  else  6
+        if (isProd)  60  else  6
       }
   }
 
@@ -49,7 +47,7 @@ trait ScNodeInfo
     subscriber = SnFunSubscriber {
       case anse: MNodeSaved =>
         val ck = nodeIconJsCacheKey(anse.nodeId)
-        Cache.remove(ck)
+        cache.remove(ck)
     },
     classifier = MNodeSaved.getClassifier(isCreated = Some(false))
   )
@@ -81,7 +79,6 @@ trait ScNodeInfo
       CacheUtil.getOrElse [Result] (ck, NODE_ICON_JS_CACHE_TTL_SECONDS) {
         val logoFut = logoUtil.getLogoOfNode( request.mnode )
         var cacheHeaders: List[(String, String)] = List(
-          CONTENT_TYPE  -> "text/javascript; charset=utf-8",
           LAST_MODIFIED -> DateTimeUtil.rfcDtFmt.print(mProjectInfo.PROJECT_CODE_LAST_MODIFIED),
           CACHE_CONTROL -> ("public, max-age=" + NODE_ICON_JS_CACHE_CONTROL_MAX_AGE)
         )
@@ -93,6 +90,7 @@ trait ScNodeInfo
           // TODO Добавить поддержку gzip надо бы.
           // TODO Кешировать отрендеренные результаты на HDD, а не в RAM.
           Ok(nodeIconJsTpl(request.mnode, logoOpt))
+            .as("text/javascript; charset=utf-8")
             .withHeaders(cacheHeaders : _*)
         }
       }
@@ -125,8 +123,8 @@ trait ScNodeInfo
   /** Рендер скрипта выдачи для указанного узла. */
   def nodeSiteScript(adnId: String) = AdnNodeMaybeAuth(adnId).apply { implicit request =>
     Ok(_installScriptTpl(request.mnode.id, mkPermanent = true))
+      .as("text/javascript; charset=utf-8")
       .withHeaders(
-        CONTENT_TYPE  -> "text/javascript; charset=utf-8",
         CACHE_CONTROL -> "public, max-age=36000"
       )
   }

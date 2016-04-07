@@ -62,7 +62,8 @@ class MarketLkSupport @Inject() (
 
   /**
    * Отрендерить форму с запросом помощи с узла.
-   * @return 200 Ок и страница с формой.
+    *
+    * @return 200 Ок и страница с формой.
    */
   def supportFormNode(adnId: String, r: Option[String]) = IsAdnNodeAdminGet(adnId, U.Lk).async { implicit request =>
     val mnodeOpt = Some(request.mnode)
@@ -71,7 +72,8 @@ class MarketLkSupport @Inject() (
 
   /**
    * Отрендерить форму запроса помощи вне узла.
-   * @param r Адрес для возврата.
+    *
+    * @param r Адрес для возврата.
    * @return 200 Ok и страница с формой.
    */
   def supportForm(r: Option[String]) = IsAuth.async { implicit request =>
@@ -133,7 +135,11 @@ class MarketLkSupport @Inject() (
         userEmailsFut.map { ues =>
           val username = ues.headOption getOrElse personId
           msg.setSubject("S.io Market: Вопрос от пользователя " + lsr.name.orElse(ues.headOption).getOrElse(""))
-          msg.setText( views.txt.lk.support.emailSupportRequestedTpl(username, lsr, adnIdOpt, r = r) )
+          msg.setText {
+            htmlCompressUtil.txt2str {
+              views.txt.lk.support.emailSupportRequestedTpl(username, lsr, adnIdOpt, r = r)
+            }
+          }
           msg.send()
         } flatMap { _ =>
           // Письмо админам отправлено. Нужно куда-то перенаправить юзера.
@@ -184,7 +190,11 @@ class MarketLkSupport @Inject() (
           val emailOpt = emails.headOption
           if (emailOpt.isDefined)
             msg.setReplyTo(emailOpt.get)
-          msg.setHtml( views.html.lk.support.emailGeoNodeRequestTpl(emails, mnode, text) )
+          msg.setHtml {
+            htmlCompressUtil.html4email {
+              views.html.lk.support.emailGeoNodeRequestTpl(emails, mnode, text)
+            }
+          }
           msg.send()
         } flatMap { _ =>
           // Письмо отправлено админам. Нужно куда-то перенаправить юзера.

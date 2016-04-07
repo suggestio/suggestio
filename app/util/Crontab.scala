@@ -3,10 +3,8 @@ package util
 import com.google.inject.Inject
 import models.im.MLocalImg
 import models.mcron.ICronTask
-import play.api.Play.current
-import akka.actor.{Scheduler, Cancellable}
-import play.api.libs.concurrent.Execution.Implicits._
-import play.api.libs.concurrent.Akka
+import akka.actor.{Cancellable, Scheduler}
+import models.mproj.ICommonDi
 import util.billing.cron.BillingCronTasks
 import util.geo.IpGeoBaseImport
 import play.api.Application
@@ -25,12 +23,14 @@ import util.health.AdnGeoParentsHealth
 class Crontab @Inject() (
   geoParentsHealth              : AdnGeoParentsHealth,
   ipGeoBaseImport               : IpGeoBaseImport,
-  billingCronTasks              : BillingCronTasks
+  billingCronTasks              : BillingCronTasks,
+  mCommonDi                     : ICommonDi
 )
   extends PlayLazyMacroLogsImpl
 {
 
   import LOGGER._
+  import mCommonDi._
 
   /** Список классов, которые являются поставщиками периодических задач при старте. */
   def TASK_PROVIDERS = Iterator[ICronTasksProvider](
@@ -39,7 +39,7 @@ class Crontab @Inject() (
 
   def sched: Scheduler = {
     try
-      Akka.system.scheduler
+      actorSystem.scheduler
     catch {
       // There is no started application
       case e: RuntimeException =>

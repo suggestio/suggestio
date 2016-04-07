@@ -30,27 +30,34 @@ trait BruteForceProtectBase
   import mCommonDi._
 
   /** Шаг задержки. Добавляемая задержка ответа будет кратна этому лагу. */
-  val BRUTEFORCE_LAG_MS = configuration.getInt(s"bfp.$MY_CONF_NAME.lag_ms") getOrElse BRUTEFORCE_ATTACK_LAG_MS_DFLT
+  val BRUTEFORCE_LAG_MS = configuration.getInt(s"bfp.$MY_CONF_NAME.lag_ms")
+    .getOrElse(BRUTEFORCE_ATTACK_LAG_MS_DFLT)
   def BRUTEFORCE_LAG_MS_DFLT = 222
 
   /** Префикс в кеше для ip-адреса. */
-  val BRUTEFORCE_CACHE_PREFIX = configuration.getInt(s"bfp.$MY_CONF_NAME.cache.prefix") getOrElse BRUTEFORCE_CACHE_PREFIX_DFLT
+  val BRUTEFORCE_CACHE_PREFIX = configuration.getInt(s"bfp.$MY_CONF_NAME.cache.prefix")
+    .getOrElse(BRUTEFORCE_CACHE_PREFIX_DFLT)
   def BRUTEFORCE_CACHE_PREFIX_DFLT = "bfp:"
 
   /** Какой лаг уже считается лагом текущей атаки? (в миллисекундах) */
-  val BRUTEFORCE_ATTACK_LAG_MS = configuration.getInt(s"bfp.$MY_CONF_NAME.attack.lag.ms") getOrElse BRUTEFORCE_ATTACK_LAG_MS_DFLT
+  val BRUTEFORCE_ATTACK_LAG_MS = configuration.getInt(s"bfp.$MY_CONF_NAME.attack.lag.ms")
+    .getOrElse(BRUTEFORCE_ATTACK_LAG_MS_DFLT)
   def BRUTEFORCE_ATTACK_LAG_MS_DFLT = 2000
 
   /** Нормализация кол-ва попыток происходит по этому целому числу. */
-  val BRUTEFORCE_TRY_COUNT_DIVISOR = configuration.getInt(s"bfp.$MY_CONF_NAME.try.count.divisor") getOrElse BRUTEFORCE_TRY_COUNT_DEADLINE_DFLT
+  val BRUTEFORCE_TRY_COUNT_DIVISOR = configuration.getInt(s"bfp.$MY_CONF_NAME.try.count.divisor")
+    .getOrElse(BRUTEFORCE_TRY_COUNT_DEADLINE_DFLT)
   def BRUTEFORCE_TRY_COUNT_DIVISOR_DFLT = 2
 
   /** Время хранения в кеше инфы о попытках для ip-адреса. */
-  val BRUTEFORCE_CACHE_TTL = configuration.getInt(s"bfp.$MY_CONF_NAME.cache.ttl").getOrElse(BRUTEFORCE_CACHE_TTL_SECONDS_DFLT).seconds
+  val BRUTEFORCE_CACHE_TTL = configuration.getInt(s"bfp.$MY_CONF_NAME.cache.ttl")
+    .getOrElse(BRUTEFORCE_CACHE_TTL_SECONDS_DFLT)
+    .seconds
   def BRUTEFORCE_CACHE_TTL_SECONDS_DFLT = 30
 
   /** Макс кол-во попыток, после которого запросы будут отправляться в помойку. */
-  val BRUTEFORCE_TRY_COUNT_DEADLINE = configuration.getInt(s"bfp.$MY_CONF_NAME.cache.ttl") getOrElse BRUTEFORCE_TRY_COUNT_DEADLINE_DFLT
+  val BRUTEFORCE_TRY_COUNT_DEADLINE = configuration.getInt(s"bfp.$MY_CONF_NAME.cache.ttl")
+    .getOrElse(BRUTEFORCE_TRY_COUNT_DEADLINE_DFLT)
   def BRUTEFORCE_TRY_COUNT_DEADLINE_DFLT = 40
 
   def bruteForceLogPrefix(implicit request: RequestHeader): String = {
@@ -132,14 +139,6 @@ trait BruteForceProtectBase
 /** Для использования на уровне контроллера, можно юзать этот трейт. */
 trait BruteForceProtectCtl extends BruteForceProtectBase with SioController {
   override def bruteForceRequestDrop: Future[Result] = {
-    TooManyRequest("Too many requests. Do not want.")
+    TooManyRequests("Too many requests. Do not want.")
   }
 }
-
-/** С минимумом зависимостей. */
-trait BruteForceProtectSimple extends BruteForceProtectBase with SioController {
-  override def bruteForceRequestDrop: Future[Result] = {
-    Future successful TooManyRequest("Too many requests. Do not want.")
-  }
-}
-

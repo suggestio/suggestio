@@ -18,7 +18,6 @@ import models.req.IReq
 import net.sf.jmimemagic.{Magic, MagicMatch}
 import org.apache.commons.io.FileUtils
 import org.joda.time.{DateTime, ReadableInstant}
-import play.api.Play
 import play.api.data.Forms._
 import play.api.data._
 import play.api.libs.Files.TemporaryFile
@@ -63,7 +62,7 @@ class Img @Inject() (
   /** Сколько времени можно кешировать на клиенте оригинал картинки. */
   val CACHE_ORIG_CLIENT_SECONDS = {
     val cacheDuration = configuration.getInt("img.orig.cache.client.hours").map(_.hours) getOrElse {
-      if (Play.isProd) {
+      if (isProd) {
         2.days
       } else {
         30.seconds
@@ -97,8 +96,8 @@ class Img @Inject() (
       }
       .getOrElse("image/unknown")   // Should never happen
     resultRaw
+      .as(ct)
       .withHeaders(
-        CONTENT_TYPE  -> ct,
         LAST_MODIFIED -> DateTimeUtil.rfcDtFmt.print(modelInstant),
         CACHE_CONTROL -> ("public, max-age=" + cacheSeconds)
       )
@@ -317,7 +316,7 @@ trait TempImgSupport
           // Это svg?
           if (SvgUtil isSvgFileValid srcFile) {
             // Это svg. Надо его сжать и переместить в tmp-хранилище.
-            val newSvg = HtmlCompressUtil.compressSvgFromFile(srcFile)
+            val newSvg = htmlCompressUtil.compressSvgFromFile(srcFile)
             FileUtils.writeStringToFile(mptmp.file, newSvg)
             Ok( jsonTempOk(mptmp.fileName, routes.Img.dynImg(mptmp.toWrappedImg), ovlOpt) )
           } else {

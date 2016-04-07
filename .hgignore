@@ -36,4 +36,4 @@ ui/.sass-cache
 ui/bower_components
 ui/twirl
 app-2.11/
-conf/logger.xml
+conf/log*.xml

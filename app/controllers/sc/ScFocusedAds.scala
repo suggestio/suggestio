@@ -568,7 +568,7 @@ trait ScFocusedAds
     /** Рендерим в html, минифицируем, заворачиваем в js-строку. */
     override def renderOuterBlock(args: AdBodyTplArgs): Future[OBT] = {
       renderBlockHtml(args)
-        .map(html2jsStr)
+        .map(htmlCompressUtil.html2jsStr)
     }
 
     override def apiVsn = MScApiVsns.Coffee
@@ -583,7 +583,7 @@ trait ScFocusedAds
     /** Отдельно отфокусированную карточку тоже нужно минифицировать и завернуть в JsString. */
     def focAdHtmlJsStrOptFut: Future[Option[JsString]] = {
       focAdHtmlOptFut
-        .map(_.map(html2jsStr))
+        .map(_.map(htmlCompressUtil.html2jsStr))
     }
 
     def producerAdsRespFut: Future[ProducerAdsResp] = {

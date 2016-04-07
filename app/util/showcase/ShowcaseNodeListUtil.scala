@@ -45,14 +45,14 @@ class ShowcaseNodeListUtil @Inject() (
 
 
   /**
-   * Запуск детектора текущей ноды и её геоуровня. Асинхронно возвращает (lvl, node) или экзепшен.
-   * Экзепшен означает, что переключение нод отключено или не удалось найти текущую ноду.
-   *
-   * @param geoMode Текущий георежим.
-   * @param gsiOptFut Фьючерс с геоинфой.
-   * @param searchF Используемая для поиска, которая возвращает список результатов произвольного типа.
-   * @return Фьючерс с результатом детектирования. Если не удалось, то будет exception.
-   */
+    * Запуск детектора текущей ноды и её геоуровня. Асинхронно возвращает (lvl, node) или экзепшен.
+    * Экзепшен означает, что переключение нод отключено или не удалось найти текущую ноду.
+    *
+    * @param geoMode Текущий георежим.
+    * @param gsiOptFut Фьючерс с геоинфой.
+    * @param searchF Используемая для поиска, которая возвращает список результатов произвольного типа.
+    * @return Фьючерс с результатом детектирования. Если не удалось, то будет exception.
+    */
   def detectCurrentNodeUsing[T](geoMode: GeoMode, gsiOptFut: Future[Option[GeoSearchInfo]])
                                (searchF: MNodeSearch => Future[Seq[T]]): Future[(NodeGeoLevel, T)] = {
     val detectLevels = geoMode.nodeDetectLevels.iterator.zipWithIndex
@@ -109,25 +109,25 @@ class ShowcaseNodeListUtil @Inject() (
   }
 
   /**
-   * Запуск поиска экземпляра текущей ноды. По сути враппер над detectCurrentNodeUsing().
- *
-   * @param geoMode Текущий geo-режим работы.
-   * @param gsiOptFut Фоново-собираемые данные о географии.
-   * @return Фьючерс с GeoDetectResult.
-   */
+    * Запуск поиска экземпляра текущей ноды. По сути враппер над detectCurrentNodeUsing().
+    *
+    * @param geoMode Текущий geo-режим работы.
+    * @param gsiOptFut Фоново-собираемые данные о географии.
+    * @return Фьючерс с GeoDetectResult.
+    */
   def detectCurrentNode(geoMode: GeoMode, gsiOptFut: Future[Option[GeoSearchInfo]]): Future[GeoDetectResult] = {
     detectCurrentNodeUsing(geoMode, gsiOptFut)(MNode.dynSearch)
       .map { case (lvl, node) => GeoDetectResult(lvl, node) }
   }
 
   /**
-   * Последовательное объединение функционала двух методов детектирования.
- *
-   * @param geoMode Режим геолокации.
-   * @param gsiOptFut Результат получаения геоинфы по реквесту.
-   * @param currAdnIdOpt Возможные данные по текущему узлу.
-   * @return Опциональный результат с узлом, на котором сейчас находимся.
-   */
+    * Последовательное объединение функционала двух методов детектирования.
+    *
+    * @param geoMode Режим геолокации.
+    * @param gsiOptFut Результат получаения геоинфы по реквесту.
+    * @param currAdnIdOpt Возможные данные по текущему узлу.
+    * @return Опциональный результат с узлом, на котором сейчас находимся.
+    */
   private def detectOrGuessCurrentNode(geoMode: GeoMode, gsiOptFut: Future[Option[GeoSearchInfo]],
                                        currAdnIdOpt: Option[String]) : Future[MNode] = {
     detectRecoverGuessCurrentNode(gsiOptFut, currAdnIdOpt) {
@@ -137,13 +137,13 @@ class ShowcaseNodeListUtil @Inject() (
 
 
   /**
-   * Всегда можно найти узел, к которому отнести выдачу.
- *
-   * @param gsiOptFut Фьючерс с данными по географии реквеста.
-   * @param currAdnIdOpt Возможная инфа об узле.
-   * @param detectFut Запущенный процесс детектирования узла.
-   * @return Фьючерс с узлом. Если в базе нет продакшен-ресиверов вообще, то будет экзепшен.
-   */
+    * Всегда можно найти узел, к которому отнести выдачу.
+    *
+    * @param gsiOptFut Фьючерс с данными по географии реквеста.
+    * @param currAdnIdOpt Возможная инфа об узле.
+    * @param detectFut Запущенный процесс детектирования узла.
+    * @return Фьючерс с узлом. Если в базе нет продакшен-ресиверов вообще, то будет экзепшен.
+    */
   def detectRecoverGuessCurrentNode(gsiOptFut: Future[Option[GeoSearchInfo]], currAdnIdOpt: Option[String])
                                    (detectFut: Future[GeoDetectResult]): Future[MNode] = {
     detectFut
@@ -178,12 +178,12 @@ class ShowcaseNodeListUtil @Inject() (
     extends NodeDetectArgsT
 
   /**
-   * Найти узел города для узла.
- *
-   * @param mnode Текущий ADN-узел.
-   * @return Фьючерс с найденным городом или текущий узел, если он и есть город.
-   *         NoSuchElementException если нода болтается в воздухе.
-   */
+    * Найти узел города для узла.
+    *
+    * @param mnode Текущий ADN-узел.
+    * @return Фьючерс с найденным городом или текущий узел, если он и есть город.
+    *         NoSuchElementException если нода болтается в воздухе.
+    */
   def getTownOfNode(mnode: MNode): Future[MNode] = {
     val ast: AdnShownType = mnode.extras.adn
       .flatMap(_.shownTypeIdOpt)
@@ -212,7 +212,7 @@ class ShowcaseNodeListUtil @Inject() (
     }
   }
 
-  def getTownLayerOfNode(node: MNode)(implicit lang: Messages): Future[GeoNodesLayer] = {
+  def getTownLayerOfNode(node: MNode)(implicit messages: Messages): Future[GeoNodesLayer] = {
     getTownOfNode(node)
       .map { town2layer(_) }
   }
@@ -234,7 +234,7 @@ class ShowcaseNodeListUtil @Inject() (
   }
 
   /** Обернуть список городов в гео-слой. */
-  def townsToLayer(townNodes: Seq[MNode], expanded: Boolean)(implicit lang: Messages): GeoNodesLayer = {
+  def townsToLayer(townNodes: Seq[MNode], expanded: Boolean)(implicit messages: Messages): GeoNodesLayer = {
     if (townNodes.isEmpty) {
       GeoNodesLayer(Seq.empty, NodeGeoLevels.NGL_TOWN, expanded = expanded)
     } else if (townNodes.size == 1) {
@@ -243,19 +243,19 @@ class ShowcaseNodeListUtil @Inject() (
       GeoNodesLayer(
         nodes     = townNodes,
         ngl       = NodeGeoLevels.NGL_TOWN,
-        nameOpt   = Some( Messages(NodeGeoLevels.NGL_TOWN.l10nPluralShort)),
+        nameOpt   = Some( messages(NodeGeoLevels.NGL_TOWN.l10nPluralShort)),
         expanded  = expanded
       )
     }
   }
 
   /**
-   * Узнаём уровень, на котором находится текущая нода.
- *
-   * @param detectFut результат detectCurrentNode().
-   * @param currNodeFut результат detectRecoverGuessCurrentNode().
-   * @return Фьючерс, по формату совпадающий с detectRecoverGuessCurrentNode().
-   */
+    * Узнаём уровень, на котором находится текущая нода.
+    *
+    * @param detectFut результат detectCurrentNode().
+    * @param currNodeFut результат detectRecoverGuessCurrentNode().
+    * @return Фьючерс, по формату совпадающий с detectRecoverGuessCurrentNode().
+    */
   def nextNodeWithLvlOptFut(detectFut: Future[GeoDetectResult], currNodeFut: Future[MNode]): Future[GeoDetectResult] = {
     detectFut
       .recoverWith {
@@ -281,11 +281,11 @@ class ShowcaseNodeListUtil @Inject() (
 
 
   /**
-   * Найти районы для города.
- *
-   * @param townNodeId id узла-города.
-   * @return Список узлов-районов.
-   */
+    * Найти районы для города.
+    *
+    * @param townNodeId id узла-города.
+    * @return Список узлов-районов.
+    */
   def getDistrictsForTown(townNodeId: String, gravity: Option[GeoPoint]): Future[Seq[MNode]] = {
     val sargs = new SmNodesSearchArgsT {
       override def limit = 20
@@ -302,7 +302,7 @@ class ShowcaseNodeListUtil @Inject() (
   }
 
   def getDistrictsLayerForTown(townNode: MNode, gravity: Option[GeoPoint], expanded: Boolean = false)
-                              (implicit lang: Messages): Future[GeoNodesLayer] = {
+                              (implicit messages: Messages): Future[GeoNodesLayer] = {
     val townNodeId = townNode.id.get
     getDistrictsForTown(townNodeId, gravity)
       .map { districtNodes =>
@@ -316,7 +316,7 @@ class ShowcaseNodeListUtil @Inject() (
         GeoNodesLayer(
           nodes   = districtNodes,
           ngl     = NodeGeoLevels.NGL_TOWN_DISTRICT,
-          nameOpt = Some( Messages(nameL10n) ),
+          nameOpt = Some( messages(nameL10n) ),
           expanded = expanded
         )
       }
@@ -324,11 +324,11 @@ class ShowcaseNodeListUtil @Inject() (
 
 
   /**
-   * Собрать здания в рамках района.
- *
-   * @param districtAdnId id района.
-   * @return Список узлов на раёне в алфавитном порядке.
-   */
+    * Собрать здания в рамках района.
+    *
+    * @param districtAdnId id района.
+    * @return Список узлов на раёне в алфавитном порядке.
+    */
   def getBuildingsOfDistrict(districtAdnId: String, gravity: Option[GeoPoint]): Future[Seq[MNode]] = {
     val sargs = new SmNodesSearchArgsT {
       override def limit = 30
@@ -344,14 +344,14 @@ class ShowcaseNodeListUtil @Inject() (
   }
 
   /**
-   * Получение нод и сборка слоёв для зданий района.
- *
-   * @param districtAdnId id узла района.
-   * @param expandOnNode Если слой содержит узел с указанным id, то развернуть выставить expanded = true.
-   * @return Фьючерс со списком слоёв с узлами.
-   */
+    * Получение нод и сборка слоёв для зданий района.
+    *
+    * @param districtAdnId id узла района.
+    * @param expandOnNode Если слой содержит узел с указанным id, то развернуть выставить expanded = true.
+    * @return Фьючерс со списком слоёв с узлами.
+    */
   def getBuildingsLayersOfDistrict(districtAdnId: String, gravity: Option[GeoPoint], expandOnNode: Option[String] = None)
-                                  (implicit lang: Messages): Future[List[GeoNodesLayer]] = {
+                                  (implicit messages: Messages): Future[List[GeoNodesLayer]] = {
     getBuildingsOfDistrict(districtAdnId, gravity)
       .map { nodes =>
         nodes
@@ -377,7 +377,7 @@ class ShowcaseNodeListUtil @Inject() (
                 .flatMap(_.id)
                 .contains(currAdnId)
             }
-            GeoNodesLayer(lsSorted, NodeGeoLevels.NGL_BUILDING, Some(Messages(ast.pluralNoTown)), expanded = expanded)
+            GeoNodesLayer(lsSorted, NodeGeoLevels.NGL_BUILDING, Some(messages(ast.pluralNoTown)), expanded = expanded)
           }
           .toList
           .sortBy(_.nameOpt.getOrElse(""))
@@ -386,15 +386,15 @@ class ShowcaseNodeListUtil @Inject() (
 
 
   /**
-   * Сбор стопки слоёв в одну кучу.
- *
-   * @param geoMode Текущий режим геолокации.
-   * @param currNode Текущий узел.
-   * @param currNodeLayer Уровень, на котором находится текущий узел.
-   * @return Фьючерс со слоями в порядке рендера (город внизу).
-   */
+    * Сбор стопки слоёв в одну кучу.
+    *
+    * @param geoMode Текущий режим геолокации.
+    * @param currNode Текущий узел.
+    * @param currNodeLayer Уровень, на котором находится текущий узел.
+    * @return Фьючерс со слоями в порядке рендера (город внизу).
+    */
   def collectLayers(geoMode: Option[GeoMode], currNode: MNode, currNodeLayer: NodeGeoLevel)
-                   (implicit lang: Messages): Future[Seq[GeoNodesLayer]] = {
+                   (implicit messages: Messages): Future[Seq[GeoNodesLayer]] = {
     // Задаём опорные геоточки для гео-сортировки и гео-поиска.
     val (gravity0, gravity1) = if (DISTANCE_SORT && geoMode.isDefined) {
       val gm = geoMode.get

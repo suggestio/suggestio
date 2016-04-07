@@ -1,6 +1,7 @@
 package controllers.sc
 
 import java.util.NoSuchElementException
+
 import _root_.util.di.{IScNlUtil, IScStatUtil}
 import _root_.util.jsa.{Js, SmRcvResp}
 import models.jsm.NodeListResp
@@ -13,8 +14,8 @@ import util.acl._
 import views.html.sc._
 import play.api.libs.json._
 import models._
+
 import scala.concurrent.Future
-import play.api.Play
 
 /**
  * Suggest.io
@@ -124,9 +125,11 @@ trait ScNodesList
 
   /** Кеш ответа findNodes() на клиенте. Это существенно ускоряет навигацию. */
   protected val FIND_NODES_CACHE_SECONDS: Int = {
-    configuration.getInt("market.showcase.nodes.find.result.cache.seconds") getOrElse {
-      if (Play.isProd)  120  else  10
-    }
+    configuration
+      .getInt("market.showcase.nodes.find.result.cache.seconds")
+      .getOrElse {
+        if (isProd)  120  else  10
+      }
   }
 
 
@@ -173,7 +176,7 @@ trait ScNodesList
     /** Отрендеренный в HTML список узлов, минифицированый и готовый к сериализации внутри JSON. */
     def nodeListHtmlJsStrFut: Future[JsString] = {
       nodesListRenderedFut
-        .map { r => JsString(r()) }
+        .map { r => htmlCompressUtil.html2jsStr( r() ) }
     }
 
     /** Получение ответа, пригодного для сериализации в JSON. */
