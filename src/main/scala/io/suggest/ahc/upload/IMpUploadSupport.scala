@@ -2,10 +2,10 @@ package io.suggest.ahc.upload
 
 import java.io.File
 
-import com.ning.http.client.AsyncHttpClient
-import com.ning.http.client.multipart.{FilePart, Part}
 import io.suggest.ahc.util.NingUtil.ningFut2wsScalaFut
 import io.suggest.util.MacroLogsI
+import org.asynchttpclient.AsyncHttpClient
+import org.asynchttpclient.request.body.multipart.{FilePart, Part}
 import play.api.http.HeaderNames
 import play.api.libs.oauth.RequestToken
 import play.api.libs.ws.{WSClient, WSResponse}
@@ -19,6 +19,9 @@ import scala.concurrent.{ExecutionContext, Future}
  * Description: Если сервис поддерживает загрузку данных (картинок карточек, например), то
  * тут описывается поддержка этого дела.
  */
+
+
+// TODO Play 2.5 использовать play.api.ws MultiPart вместо прямого дерганья http-клиента.
 
 trait IMpUploadSupport {
 
@@ -89,7 +92,7 @@ trait MpUploadSupportDflt extends IMpUploadSupport with MacroLogsI {
   override def mpUpload(args: IMpUploadArgs)(implicit ec: ExecutionContext, ws: WSClient): Future[WSResponse] = {
     try {
       val reqFut = mkRequest(args)
-      reqFut flatMap { resp =>
+      reqFut.flatMap { resp =>
         processResponse(args, resp)
       }
     } catch {

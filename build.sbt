@@ -21,7 +21,7 @@ resolvers ++= Seq(
 libraryDependencies ++= {
   val slf4jVsn      = "1.7.+"
   val esVsn         = "1.7.2"
-  val akkaVsn       = "2.3.12"
+  val akkaVsn       = "2.4.+"
   val tikaVsn       = "1.7"
   val cascadingVsn  = "2.6.3"
   val morphVsn      = "1.3-SNAPSHOT"
@@ -36,8 +36,8 @@ libraryDependencies ++= {
     "org.apache.commons" % "commons-lang3" % "3.+",
     "org.im4java" % "im4java" % "1.+",
     // JSON
-    "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.5.1",
-    "com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % "2.5.2",
+    "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.7.+",
+    "com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % "2.7.+",
     "org.json4s" %% "json4s-native" % "3.+",
     PlayImport.json,
     PlayImport.ws,
@@ -57,6 +57,9 @@ libraryDependencies ++= {
     ,
     // Для разбора csv от яндекс-маркета используем сий простой парсер, т.к. tika смотрит на всё, как на веб-страницу.
     "com.github.tototoshi" %% "scala-csv" % "1.0.0",
+    // play 2.5.1: AHC-2.0 там кривой RC16, https://github.com/AsyncHttpClient/async-http-client/issues/1123
+    // TODO После 2.5.2 или 2.6.0 можно удалить, т.к. в git уже -RC19 проставлен.
+    "org.asynchttpclient" % "async-http-client" % "2.0.0-RC19",
     // akka
     "com.typesafe.akka" %% "akka-actor"  % akkaVsn,
     "com.typesafe.akka" %% "akka-remote" % akkaVsn,

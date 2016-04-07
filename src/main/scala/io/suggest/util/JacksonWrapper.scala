@@ -23,7 +23,7 @@ object JacksonWrapper {
   }
 
   // 2.5: надо заменить на .writer[ObjectWriter]()
-  def prettyWriter = mapper.writer[ObjectWriter]().withDefaultPrettyPrinter()
+  def prettyWriter = mapper.writer().withDefaultPrettyPrinter()
 
 
   def serialize(value: Any): String = {

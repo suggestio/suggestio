@@ -2,9 +2,9 @@ package io.suggest.ahc.util
 
 import java.util.concurrent.Executor
 
-import com.ning.http.client.{Response => AHCResponse, ListenableFuture}
 import io.suggest.util.SioFutureUtil.RunnableListenableFutureWrapper
-import play.api.libs.ws.ning.NingWSResponse
+import org.asynchttpclient.{ListenableFuture, Response => AHCResponse}
+import play.api.libs.ws.ahc.AhcWSResponse
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
@@ -43,9 +43,9 @@ object NingUtil {
    * @return Фьючерс с ответом.
    */
   implicit def ningFut2wsScalaFut(nfut: ListenableFuture[AHCResponse])
-                                 (implicit ec: ExecutionContext): Future[NingWSResponse] = {
+                                 (implicit ec: ExecutionContext): Future[AhcWSResponse] = {
     ningFut2scalaFut(nfut)
-      .map { NingWSResponse.apply }
+      .map { AhcWSResponse.apply }
   }
 
 }
