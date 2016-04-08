@@ -6,7 +6,9 @@ import org.elasticsearch.common.geo.builders.ShapeBuilder
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import java.{util => ju}
+
 import GeoShape.COORDS_ESFN
+import play.extras.geojson.{LatLng, Point}
 
 /**
  * Suggest.io
@@ -57,5 +59,11 @@ case class CircleGs(center: GeoPoint, radius: Distance) extends GeoShapeQuerable
   }
 
   override def firstPoint = center
+
+  /** Circle представляется точкой, т.к. GeoJSON не поддерживает Circle. */
+  override def toPlayGeoJsonGeom: Point[LatLng] = {
+    PointGs(center).toPlayGeoJsonGeom
+  }
+
 }
 

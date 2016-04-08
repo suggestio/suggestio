@@ -4,9 +4,11 @@ import io.suggest.model.es.EsModelUtil
 import EsModelUtil.FieldsJsonAcc
 import org.elasticsearch.common.geo.builders.ShapeBuilder
 import java.{util => ju}
+
 import GeoShape._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.extras.geojson.{LatLng, Point}
 
 /**
  * Suggest.io
@@ -48,6 +50,11 @@ case class PointGs(coord: GeoPoint) extends GeoShapeQuerable {
   }
 
   override def firstPoint = coord
+
+  override def toPlayGeoJsonGeom: Point[LatLng] = {
+    Point( coord.toLatLng )
+  }
+
 }
 
 

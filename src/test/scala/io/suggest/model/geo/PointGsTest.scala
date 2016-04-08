@@ -1,9 +1,7 @@
 package io.suggest.model.geo
 
-import io.suggest.util.JacksonWrapper
 import org.scalatest._
 import play.api.libs.json.Json
-import java.{util => ju}
 
 /**
  * Suggest.io
@@ -15,16 +13,6 @@ class PointGsTest extends FlatSpec with Matchers with LatLonRnd[PointGs] {
 
   override protected def mkInstance = PointGs(GeoPoint(lat = newLat, lon = newLon))
 
-
-  "Jackson JSON" should "serialize/deserialize" in {
-    mkTests { pgs =>
-      val jsonStr = Json.stringify( pgs.toPlayJson() )
-      // TODO Надо тестить через XContentHelpers
-      val jacksonJson = JacksonWrapper.deserialize [ju.HashMap[Any, Any]] (jsonStr)
-      PointGs.deserialize(jacksonJson)  shouldBe  Some(pgs)
-      pgs.toEsShapeBuilder  should not equal null
-    }
-  }
 
   /**
    * @see [[https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-shape-type.html#_ulink_url_http_geojson_org_geojson_spec_html_id2_point_ulink]]

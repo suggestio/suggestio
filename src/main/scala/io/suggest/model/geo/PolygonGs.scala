@@ -6,7 +6,10 @@ import org.elasticsearch.common.geo.builders.{BasePolygonBuilder, ShapeBuilder}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import GeoShape.COORDS_ESFN
-import java.{util => ju, lang => jl}
+import java.{lang => jl, util => ju}
+
+import play.extras.geojson.{LatLng, Polygon}
+
 import scala.collection.JavaConversions._
 
 /**
@@ -109,4 +112,11 @@ case class PolygonGs(outer: LineStringGs, holes: List[LineStringGs] = Nil) exten
   override def firstPoint = outer.firstPoint
 
   def toMpGss = (outer :: holes).map(_.coords)
+
+  override def toPlayGeoJsonGeom: Polygon[LatLng] = {
+    Polygon(
+      coordinates = outer.toPlayGeoJsonGeom.coordinates :: holes.map(_.toPlayGeoJsonGeom.coordinates)
+    )
+  }
+
 }

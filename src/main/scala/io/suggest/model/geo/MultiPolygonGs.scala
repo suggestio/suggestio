@@ -6,7 +6,10 @@ import org.elasticsearch.common.geo.builders.{MultiPolygonBuilder, ShapeBuilder}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import GeoShape.COORDS_ESFN
-import java.{util => ju, lang => jl}
+import java.{lang => jl, util => ju}
+
+import play.extras.geojson.{LatLng, MultiPolygon}
+
 import scala.collection.JavaConversions._
 
 /**
@@ -67,6 +70,7 @@ case class MultiPolygonGs(polygons: Seq[PolygonGs]) extends GeoShapeQuerable {
   }
 
   /** Отрендерить в изменяемый ShapeBuilder для построения ES-запросов.
+    *
     * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html]]*/
   override def toEsShapeBuilder: MultiPolygonBuilder = {
     polygons.foldLeft(ShapeBuilder.newMultiPolygon) {
@@ -78,6 +82,15 @@ case class MultiPolygonGs(polygons: Seq[PolygonGs]) extends GeoShapeQuerable {
   }
 
   override def firstPoint = polygons.head.firstPoint
+
+  override def toPlayGeoJsonGeom: MultiPolygon[LatLng] = {
+    MultiPolygon(
+      coordinates = polygons
+        .iterator
+        .map { _.toPlayGeoJsonGeom.coordinates }
+        .toStream
+    )
+  }
 
 }
 

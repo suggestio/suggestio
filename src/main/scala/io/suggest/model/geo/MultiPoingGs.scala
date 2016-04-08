@@ -8,6 +8,7 @@ import java.{util => ju}
 
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.extras.geojson.{LatLng, MultiPoint}
 
 /**
  * Suggest.io
@@ -28,6 +29,13 @@ case class MultiPoingGs(coords: Seq[GeoPoint]) extends MultiPointShape {
   override protected def shapeBuilder: Shape_t = {
     ShapeBuilder.newMultiPoint()
   }
+
+  override def toPlayGeoJsonGeom: MultiPoint[LatLng] = {
+    MultiPoint(
+      coordinates = coords.iterator.map(_.toLatLng).toStream
+    )
+  }
+
 }
 
 
@@ -83,4 +91,5 @@ trait MultiPointShape extends GeoShapeQuerable {
   override def shapeType: GsType = GsTypes.multipoint
 
   override def firstPoint = coords.head
+
 }

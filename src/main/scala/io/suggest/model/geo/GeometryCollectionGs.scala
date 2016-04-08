@@ -4,7 +4,10 @@ import io.suggest.model.es.EsModelUtil
 import EsModelUtil.FieldsJsonAcc
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import java.{util => ju, lang => jl}
+import java.{lang => jl, util => ju}
+
+import play.extras.geojson.{GeometryCollection, LatLng}
+
 import scala.collection.JavaConversions._
 
 /**
@@ -61,4 +64,11 @@ case class GeometryCollectionGs(geoms: Seq[GeoShape]) extends GeoShape {
   }
 
   override def firstPoint = geoms.head.firstPoint
+
+  override def toPlayGeoJsonGeom: GeometryCollection[LatLng] = {
+    GeometryCollection(
+      geoms.iterator.map(_.toPlayGeoJsonGeom).toStream
+    )
+  }
+
 }

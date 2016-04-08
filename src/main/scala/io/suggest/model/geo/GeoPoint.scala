@@ -10,6 +10,7 @@ import org.elasticsearch.common.geo.{GeoHashUtils, GeoPoint => EsGeoPoint}
 import play.api.data.validation.ValidationError
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.extras.geojson.{LatLng, LngLat}
 
 import scala.collection.JavaConversions._
 
@@ -196,6 +197,14 @@ case class GeoPoint(lat: Double, lon: Double) extends IGeoPoint {
       "lat" -> JsNumber(lat),
       "lon" -> JsNumber(lon)
     ))
+  }
+
+  def toLatLng: LatLng = {
+    LatLng(lat = lat, lng = lon)
+  }
+
+  def toLngLat: LngLat = {
+    LngLat(lng = lon, lat = lat)
   }
 
 }

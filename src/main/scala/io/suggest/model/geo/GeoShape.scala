@@ -7,25 +7,30 @@ import io.suggest.model.es.EsModelUtil
 import io.suggest.model.menum.EnumJsonReadsValT
 import io.suggest.util.MacroLogsDyn
 import org.elasticsearch.common.geo.builders.ShapeBuilder
-import org.elasticsearch.index.query.{QueryBuilders, QueryBuilder}
+import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import play.api.data.validation.ValidationError
 import play.api.libs.json._
 import java.{util => ju}
 
+import play.extras.geojson.{Geometry, LatLng}
+
 /**
- * Suggest.io
- * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 22.08.14 9:43
- * Description: GeoShape - система задания 'ов, которые могут быть различными геометрическими фиругами.
- * В функциях модуля избегаем использования jts из-за возможных проблем с XYZ-координатами в будущем.
- */
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 22.08.14 9:43
+  * Description: GeoShape - система задания'ов, которые могут быть различными геометрическими фиругами.
+  * В функциях модуля избегаем использования jts из-за возможных проблем с XYZ-координатами в будущем.
+  *
+  * Эта модель служит цели
+  */
 
 object GeoShape extends MacroLogsDyn {
 
   val COORDS_ESFN = "coordinates"
   val TYPE_ESFN   = "type"
 
-  val deserialize: PartialFunction[Any, Option[GeoShape]] = {
+  // TODO Удалить, но отдельным коммитом! вроде этот старый код уже не используется.
+  def deserialize: PartialFunction[Any, Option[GeoShape]] = {
     case jmap: ju.Map[_,_] =>
       Option(jmap get TYPE_ESFN)
         .map(EsModelUtil.stringParser)
@@ -109,6 +114,12 @@ trait GeoShape {
       .getOrElse( getClass.getSimpleName )
   }
 
+  /** Конвертация в play.extras.geojson.Geomenty.
+    * Circle конвертится в точку!
+    * ES envelope -- пока не поддерживается, но можно представить прямоугольным полигоном.
+    */
+  def toPlayGeoJsonGeom: Geometry[LatLng]
+
 }
 
 
@@ -116,10 +127,10 @@ trait GeoShape {
 trait GeoShapeQuerable extends GeoShape with IToEsQueryFn {
 
   /**
-   * Отрендерить в изменяемый ShapeBuilder для построения ES-запросов.
+    * Отрендерить в изменяемый ShapeBuilder для построения ES-запросов.
     *
     * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html]]
-   */
+    */
   def toEsShapeBuilder: ShapeBuilder
 
   override def toEsQuery(fn: String): QueryBuilder = {

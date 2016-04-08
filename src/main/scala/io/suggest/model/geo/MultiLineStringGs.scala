@@ -6,7 +6,10 @@ import org.elasticsearch.common.geo.builders.{MultiLineStringBuilder, ShapeBuild
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import GeoShape.COORDS_ESFN
-import java.{util => ju, lang => jl}
+import java.{lang => jl, util => ju}
+
+import play.extras.geojson.{LatLng, MultiLineString}
+
 import scala.collection.JavaConversions._
 
 /**
@@ -63,6 +66,7 @@ case class MultiLineStringGs(lines: Seq[LineStringGs]) extends GeoShapeQuerable 
   }
 
   /** Отрендерить в изменяемый ShapeBuilder для построения ES-запросов.
+    *
     * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html]]*/
   override def toEsShapeBuilder: MultiLineStringBuilder = {
     // Заливаем линии
@@ -76,4 +80,11 @@ case class MultiLineStringGs(lines: Seq[LineStringGs]) extends GeoShapeQuerable 
   }
 
   override def firstPoint = lines.head.firstPoint
+
+  override def toPlayGeoJsonGeom: MultiLineString[LatLng] = {
+    MultiLineString(
+      coordinates = lines.iterator.map(_.toPlayGeoJsonGeom.coordinates).toStream
+    )
+  }
+
 }

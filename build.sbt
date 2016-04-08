@@ -55,6 +55,8 @@ libraryDependencies ++= {
       exclude("commons-logging", "commons-logging")
       exclude("de.l3s.boilerpipe", "boilerpipe")
     ,
+    // Полу-официальная поддержка GeoJSON для play:
+    "com.typesafe.play.extras" %% "play-geojson" % "1.4.+",
     // Для разбора csv от яндекс-маркета используем сий простой парсер, т.к. tika смотрит на всё, как на веб-страницу.
     "com.github.tototoshi" %% "scala-csv" % "1.0.0",
     // play 2.5.1: AHC-2.0 там кривой RC16, https://github.com/AsyncHttpClient/async-http-client/issues/1123
