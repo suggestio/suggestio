@@ -1,7 +1,6 @@
 package io.suggest.util
 
 import com.typesafe.config._
-import scala.Some
 import scala.util.control.NonFatal
 import scala.collection.JavaConverters._
 

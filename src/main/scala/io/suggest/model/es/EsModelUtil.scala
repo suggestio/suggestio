@@ -113,15 +113,15 @@ object EsModelUtil extends MacroLogsImpl {
   val VALUE_ESFN        = "value"
   val IS_VERIFIED_ESFN  = "isVerified"
 
-  val MAX_RESULTS_DFLT = 100
-  val OFFSET_DFLT = 0
-  val SCROLL_KEEPALIVE_MS_DFLT = 60000L
+  def MAX_RESULTS_DFLT = 100
+  def OFFSET_DFLT = 0
+  def SCROLL_KEEPALIVE_MS_DFLT = 60000L
 
   /** Дефолтовый размер скролла, т.е. макс. кол-во получаемых за раз документов. */
-  val SCROLL_SIZE_DFLT = 10
+  def SCROLL_SIZE_DFLT = 10
 
   /** number of actions, после которого bulk processor делает flush. */
-  val BULK_PROCESSOR_BULK_SIZE_DFLT = 100
+  def BULK_PROCESSOR_BULK_SIZE_DFLT = 100
 
   /** Тип аккамулятора, который используется во [[EsModelPlayJsonT]].writeJsonFields(). */
   type FieldsJsonAcc = List[(String, JsValue)]
@@ -148,48 +148,48 @@ object EsModelUtil extends MacroLogsImpl {
 
   // ES-выхлопы страдают динамической типизацией, поэтому нужна коллекция парсеров для примитивных типов.
   // Следует помнить, что любое поле может быть списком значений.
-  val intParser: PartialFunction[Any, Int] = {
+  def intParser: PartialFunction[Any, Int] = {
     case n @ null => _parseEx("int")
     case is: jl.Iterable[_] =>
       intParser(is.head.asInstanceOf[AnyRef])
     case i: Integer => i.intValue()
   }
-  val longParser: PartialFunction[Any, Long] = {
+  def longParser: PartialFunction[Any, Long] = {
     case n @ null =>
       _parseEx("long")
     case ls: jl.Iterable[_] =>
       longParser(ls.head.asInstanceOf[AnyRef])
     case l: jl.Number => l.longValue()
   }
-  val floatParser: PartialFunction[Any, Float] = {
+  def floatParser: PartialFunction[Any, Float] = {
     case null =>
       _parseEx("float")
     case fs: jl.Iterable[_] =>
       floatParser(fs.head.asInstanceOf[AnyRef])
     case f: jl.Number => f.floatValue()
   }
-  val doubleParser: PartialFunction[Any, Double] = {
+  def doubleParser: PartialFunction[Any, Double] = {
     case n @ null =>
       _parseEx("double", n)
     case fs: jl.Iterable[_] =>
       doubleParser(fs.head.asInstanceOf[AnyRef])
     case f: jl.Number => f.doubleValue()
   }
-  val stringParser: PartialFunction[Any, String] = {
+  def stringParser: PartialFunction[Any, String] = {
     case null =>
       _parseEx("string")
     case strings: jl.Iterable[_] =>
       stringParser(strings.head.asInstanceOf[AnyRef])
     case s: String  => s
   }
-  val booleanParser: PartialFunction[Any, Boolean] = {
+  def booleanParser: PartialFunction[Any, Boolean] = {
     case null =>
       _parseEx("bool")
     case bs: jl.Iterable[_] =>
       booleanParser(bs.head.asInstanceOf[AnyRef])
     case b: jl.Boolean => b.booleanValue()
   }
-  val dateTimeParser: PartialFunction[Any, DateTime] = {
+  def dateTimeParser: PartialFunction[Any, DateTime] = {
     case null => null
     case dates: jl.Iterable[_] =>
       dateTimeParser(dates.head.asInstanceOf[AnyRef])
@@ -225,7 +225,7 @@ object EsModelUtil extends MacroLogsImpl {
 
 
   /** Парсер json-массивов. */
-  val iteratorParser: PartialFunction[Any, Iterator[Any]] = {
+  def iteratorParser: PartialFunction[Any, Iterator[Any]] = {
     case null =>
       Iterator.empty
     case l: jl.Iterable[_] =>
@@ -233,7 +233,7 @@ object EsModelUtil extends MacroLogsImpl {
   }
 
   /** Парсер список строк. */
-  val strListParser: PartialFunction[Any, List[String]] = {
+  def strListParser: PartialFunction[Any, List[String]] = {
     iteratorParser andThen { iter =>
       iter.foldLeft( List.empty[String] ) {
         (acc,e) => EsModelUtil.stringParser(e) :: acc
