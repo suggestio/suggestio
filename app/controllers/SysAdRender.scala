@@ -62,7 +62,7 @@ trait SysAdRender
 
   /**
    * Рендер страницы с формой забивания значений [[models.blk.OneAdQsArgs]].
- *
+   *
    * @param madId id текущей рекламной карточки.
    * @param rvar Интересующий render variant.
    * @return 200: Страница с формой.
@@ -103,7 +103,7 @@ trait SysAdRender
 
   /**
    * Сабмит формы запроса рендера карточки.
- *
+   *
    * @param madId id карточки.
    * @param rvar Интересующий render variant.
    * @return Редирект на результат рендера карточки согласно переданным параметрам.

@@ -20,7 +20,6 @@ import org.elasticsearch.search.sort.SortOrder
 import play.api.data._
 import play.api.i18n.Messages
 import play.api.mvc.{AnyContent, Call, Result}
-import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 import util.acl._
 import util.adn.NodesUtil
@@ -677,7 +676,7 @@ class SysMarket @Inject() (
    *
    * @param adId id рекламной карточки.
    */
-  def showAd(adId: String) = IsSuMad(adId).async { implicit request =>
+  def showAd(adId: String) = IsSuMadGet(adId).async { implicit request =>
     import request.mad
 
     // Определить узла-продьюсера
