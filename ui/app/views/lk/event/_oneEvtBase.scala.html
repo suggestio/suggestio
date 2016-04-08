@@ -2,7 +2,7 @@
 
 @* Очень-очень базовый и минимальный шаблон для абсолютно любой нотификации в системе. *@
 @import helper._
-@import ctx.messages
+@import ctx.{messages, request}
 
 @if(rargs.withContainer) {
   <div id="@rargs.mevent.id">
@@ -13,8 +13,8 @@
   @* Рендерить крестик в углу для событий, которые разрешают их сокрытие *@
   @if(rargs.mevent.isCloseable) {
     @* Если есть id, значит можно удалить событие на сервере. *@
-    @if( rargs.mevent.id ) {
-      <form action="@routes.LkEvents.nodeEventDelete(rargs.mevent.id.get)" method="POST">
+    @for(eId <- rargs.mevent.id) {
+      <form action="@CSRF(routes.LkEvents.nodeEventDelete(eId))" method="POST">
     }
       <input class="event_close close" type="submit" value="" title="@messages("Hide.event")" />
     @if(rargs.mevent.id) {

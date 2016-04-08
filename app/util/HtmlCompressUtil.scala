@@ -7,9 +7,10 @@ import akka.stream.Materializer
 import com.google.inject.{Inject, Singleton}
 import com.googlecode.htmlcompressor.compressor.HtmlCompressor
 import com.mohiva.play.htmlcompressor.HTMLCompressorFilter
+import io.suggest.playx.IsAppModes
 import play.api.libs.json.JsString
 import play.api.mvc.Filter
-import play.api.{Configuration, Environment, Mode}
+import play.api.{Configuration, Environment}
 import play.twirl.api.{Html, Txt}
 
 /**
@@ -19,13 +20,14 @@ import play.twirl.api.{Html, Txt}
  * Description: Утиль для сжатия HTML-ответов.
  */
 @Singleton
-class HtmlCompressUtil @Inject() (configuration: Configuration, env: Environment) { outer =>
+class HtmlCompressUtil @Inject() (configuration: Configuration, env: Environment)
+  extends IsAppModes
+{ outer =>
 
-  private def _isProd = env.mode == Mode.Prod
-  private def _isDev  = env.mode == Mode.Dev
+  override protected def appMode = env.mode
 
-  val PRESERVE_LINE_BREAKS_DFLT   = getBool("html.compress.global.preserve.line.breaks", _isDev)
-  val REMOVE_COMMENTS_DFLT        = getBool("html.compress.global.remove.comments", _isProd)
+  val PRESERVE_LINE_BREAKS_DFLT   = getBool("html.compress.global.preserve.line.breaks", isDev)
+  val REMOVE_COMMENTS_DFLT        = getBool("html.compress.global.remove.comments", isProd)
   val REMOVE_INTERTAG_SPACES_DFLT = getBool("html.compress.global.remove.spaces.intertag", true)
   val STRIP_HTTP_PROTO            = getBool("html.compress.global.remove.proto.http", false)
   val STRIP_HTTPS_PROTO           = getBool("html.compress.global.remove.proto.https", false)
@@ -47,8 +49,8 @@ class HtmlCompressUtil @Inject() (configuration: Configuration, env: Environment
       _.toLowerCase match {
         case "true"  | "1" | "+" | "yes" | "on" => true
         case "false" | "0" | "-" | "no" | "off" => false
-        case "isprod" | "is_prod"               => _isProd
-        case "isdev" | "is_dev"                 => _isDev
+        case "isprod" | "is_prod"               => isProd
+        case "isdev" | "is_dev"                 => isDev
       }
     } getOrElse {
       dflt
@@ -94,6 +96,7 @@ class HtmlCompressUtil @Inject() (configuration: Configuration, env: Environment
 
   /**
    * Прочитать svg из файла и сжать.
+   *
    * @param f файл.
    * @return Сжатое содержимое.
    */
@@ -105,6 +108,7 @@ class HtmlCompressUtil @Inject() (configuration: Configuration, env: Environment
 
   /**
    * Сжать svg-текст.
+   *
    * @param svgText Текст svg xml.
    * @return Сжатый svg-текст.
    */

@@ -16,6 +16,7 @@ import scala.concurrent.Future
 trait HasNodeEventAccess
   extends OnUnauthNodeCtl
   with IsAdnNodeAdminUtilCtl
+  with Csrf
 {
 
   import mCommonDi._
@@ -81,13 +82,33 @@ trait HasNodeEventAccess
     }
   }
 
+  abstract class HasNodeEventAccessAbstract
+    extends HasNodeEventAccessBase
+    with ExpireSession[MNodeEventReq]
+
+
   case class HasNodeEventAccess(
     override val eventId          : String,
     override val onlyCloseable    : Boolean,
     override val userInits        : MUserInit*
   )
-    extends HasNodeEventAccessBase
-    with ExpireSession[MNodeEventReq]
+    extends HasNodeEventAccessAbstract
+
+  case class HasNodeEventAccessGet(
+    override val eventId          : String,
+    override val onlyCloseable    : Boolean,
+    override val userInits        : MUserInit*
+  )
+    extends HasNodeEventAccessAbstract
+    with CsrfGet[MNodeEventReq]
+
+  case class HasNodeEventAccessPost(
+    override val eventId          : String,
+    override val onlyCloseable    : Boolean,
+    override val userInits        : MUserInit*
+  )
+    extends HasNodeEventAccessAbstract
+    with CsrfPost[MNodeEventReq]
 
 }
 

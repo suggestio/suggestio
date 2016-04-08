@@ -52,7 +52,7 @@ class LkEvents @Inject() (
    * @param inline Инлайновый рендер ответа, вместо страницы? Для ajax-вызовов.
    * @return 200 OK + страница со списком уведомлений.
    */
-  def nodeIndex(adnId: String, limit0: Int, offset0: Int, inline: Boolean) = IsAdnNodeAdmin(adnId, U.Lk).async { implicit request =>
+  def nodeIndex(adnId: String, limit0: Int, offset0: Int, inline: Boolean) = IsAdnNodeAdminGet(adnId, U.Lk).async { implicit request =>
     val limit = Math.min(LIMIT_MAX, limit0)
     val offset = Math.min(OFFSET_MAX, offset0)
     // Запустить фетчинг событий из хранилища.
@@ -186,7 +186,7 @@ class LkEvents @Inject() (
    * @param eventId id события.
    * @return 2хх если всё ок. Иначе 4xx.
    */
-  def nodeEventDelete(eventId: String) = HasNodeEventAccess(eventId, onlyCloseable = true).async {
+  def nodeEventDelete(eventId: String) = HasNodeEventAccessPost(eventId, onlyCloseable = true).async {
     implicit request =>
       request.mevent.delete.map {
         case true =>
