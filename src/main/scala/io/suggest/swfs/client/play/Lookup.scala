@@ -6,7 +6,7 @@ import io.suggest.swfs.client.proto.master.OneMasterRequest
 import play.api.http.HttpVerbs
 import play.api.libs.ws.WSResponse
 
-import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -14,7 +14,7 @@ import scala.concurrent.{Future, ExecutionContext}
  * Created: 09.10.15 14:51
  * Description: Поддержка Lookup в swfs-клиенте.
  */
-trait Lookup extends ISwfsClientWs { that =>
+trait Lookup extends ISwfsClientWs with OneMasterRequest { that =>
 
   override def lookup(args: ILookupRequest): Future[Either[LookupError, LookupResponse]] = {
     // Готовим логгирование.
@@ -23,14 +23,11 @@ trait Lookup extends ISwfsClientWs { that =>
     LOGGER.trace(s"$logPrefix Starting, args = $args")
 
     // Собираем и запускаем запрос...
-    val req = new OneMasterRequest {
+    val req = new OneMasterRequestImpl {
       override type Args_t          = ILookupRequest
       override type Res_t           = Either[LookupError, LookupResponse]
       override def _args            = args
       override def _method          = HttpVerbs.GET
-      override def _ws              = ws
-      override def _ec              = ec
-      override def LOGGER           = that.LOGGER
       override def _mkUrl(master: String): String = {
         MASTER_PROTO + "://" + master + "/dir/lookup" + args.toQs
       }

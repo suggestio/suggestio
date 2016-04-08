@@ -34,7 +34,6 @@ import SwfsClientWs._
 @ImplementedBy( classOf[SwfsClientWs] )
 trait ISwfsClientWs extends ISwfsClient with MacroLogsI {
 
-  /** play.ws-клиента (http-клиент).  */
   implicit protected def ws: WSClient
 
   /** Конфиг play application. */
