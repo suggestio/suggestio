@@ -30,6 +30,12 @@ object MItemStatuses extends EnumMaybeWithName with EnumApply {
     /** Актуальный статус для размещения, это когда item ещё не прошел свой жизненный цикл. */
     def isAdvActual             : Boolean = true
 
+    /** Является ли карточка заапрувленной к размещению в настоящем/будущем времени?
+      * @return true для Online и Offline.
+      *         false -- остальные.
+      */
+    def isAdvBusyApproved       : Boolean = false
+
   }
 
   /** Укороченное выставление флага isBusy = false. */
@@ -42,6 +48,12 @@ object MItemStatuses extends EnumMaybeWithName with EnumApply {
   sealed protected[this] trait AdvInactual extends Val {
     override def isAdvActual = false
   }
+
+  /** Трейт для выставления флага isAdvBusyApproved в true. */
+  sealed protected[this] trait AdvBusyApproved extends Val {
+    override def isAdvBusyApproved = true
+  }
+
 
   override type T = Val
 
@@ -67,10 +79,10 @@ object MItemStatuses extends EnumMaybeWithName with EnumApply {
 
 
   /** Купленная услуга пока в оффлайне. */
-  val Offline             : T = new Val("f")
+  val Offline             : T = new Val("f") with AdvBusyApproved
 
   /** Оплаченная услуга сейчас в онлайне. */
-  val Online              : T = new Val("o")
+  val Online              : T = new Val("o") with AdvBusyApproved
 
   /** Завершена обработка item'а. Например, оплаченная услуга истекла. */
   val Finished            : T = new Val("z") with NotBusy with AdvInactual
