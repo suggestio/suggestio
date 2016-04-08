@@ -4,6 +4,7 @@ import models.MNode
 import models.adv.IAdvForAdCommonTplArgs
 import models.adv.form.IAdvForAdFormCommonTplArgs
 import models.adv.price.IAdvPricing
+import play.api.libs.json.JsValue
 
 /**
   * Suggest.io
@@ -17,7 +18,7 @@ trait IForAdTplArgs extends IAdvForAdCommonTplArgs with IAdvForAdFormCommonTplAr
   def form          : AgtForm_t
 
   /** Текущие размещения карточки. */
-  //def currentAdvs   : Seq[MItem]
+  def currAdvsJson  : JsValue
 
 }
 
@@ -26,7 +27,7 @@ case class MForAdTplArgs(
   override val mad              : MNode,
   override val producer         : MNode,
   override val form             : AgtForm_t,
-  override val price            : IAdvPricing
-  //override val currentAdvs      : Seq[MItem]
+  override val price            : IAdvPricing,
+  override val currAdvsJson      : JsValue
 )
   extends IForAdTplArgs

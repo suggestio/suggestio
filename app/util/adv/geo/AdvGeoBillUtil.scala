@@ -168,21 +168,44 @@ class AdvGeoBillUtil @Inject()(
   }
 
 
+  private def _findForAdQuery(adId: String) = {
+    mItems.query
+      .filter { i =>
+        (i.adId === adId) &&
+        (i.iTypeStr inSet MItemTypes.onlyAdvGeoTypeIds.toSeq)
+      }
+  }
+
   /**
-    * Поиск текущих размещений для указанной карточки.
+    * Поиск уже текущих размещений для указанной карточки.
     *
     * @param adId id рекламной карточки.
     * @return DBIO-экшен, возвращающий MItem'ы.
     */
-  def getCurrentForAd(adId: String, limit: Int = 200): DBIOAction[Seq[MItem], Streaming[MItem], Effect.Read] = {
-    mItems.query
+  def findCurrentForAd(adId: String, limit: Int = 200): DBIOAction[Seq[MItem], Streaming[MItem], Effect.Read] = {
+    _findForAdQuery(adId)
       .filter { i =>
-        (i.adId === adId) &&
-          (i.statusStr inSet MItemStatuses.advActualIds.toSeq) &&
-          (i.iTypeStr inSet MItemTypes.onlyAdvGeoTypeIds.toSeq)
+        i.statusStr inSet MItemStatuses.advBusyIds.toSeq
       }
       .take(limit)
       // Сортировка пока не требуется, но возможно потребуется.
+      .result
+  }
+
+
+  /**
+    * Поиск черновых размещений для указанной карточки.
+    *
+    * @param adId id рекламной карточки.
+    * @param limit макс. кол-во результатов.
+    * @return DB-Экшен
+    */
+  def findDraftsForAd(adId: String, limit: Int = 100): DBIOAction[Seq[MItem], Streaming[MItem], Effect.Read] = {
+    _findForAdQuery(adId)
+      .filter { i =>
+        i.statusStr === MItemStatuses.Draft.strId
+      }
+      .take(limit)
       .result
   }
 

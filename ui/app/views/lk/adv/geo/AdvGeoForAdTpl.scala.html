@@ -32,6 +32,9 @@
     @_mapContTpl()
   }
 
+  @* Рендер скрытой инфы по текущим размещения. *@
+  <input id="@CurrShapes.DATA_CONTAINER_ID" value="@args.currAdvsJson"/>
+
   @* При добавлении тегов запросы add-tag-формы отправляются сюда. *@
   @javascriptRouter("jsRoutes")(
     routes.javascript.LkAdvGeo.tagEditorAddTag,

@@ -1,0 +1,22 @@
+@(args: adv.geo.cur.IGsPopupTplArgs)(implicit ctx: Context)
+
+@* Шаблон содержимого одного попапа, вылетающего над шейпом карты, который описывает какие-то георазмещения. *@
+
+@import lk.adv.widgets.period._reportBodyTpl
+@import ctx.messages
+
+<ul>
+  @for(row <- args.rows) {
+    <li>
+      @for(ivl <- row.intervalOpt) {
+        @_reportBodyTpl(ivl)
+      }
+      @for(oms <- row.onMainScreen) {
+        @messages("Main.screen")@if(oms.isOnlineNow){&checkmark;}@if(row.tags.nonEmpty){, }
+      }
+      @for(tagInfo <- row.tags) {
+        &#35;@tagInfo.tag@if(tagInfo.isOnlineNow){&checkmark;},
+      }
+    </li>
+  }
+</ul>

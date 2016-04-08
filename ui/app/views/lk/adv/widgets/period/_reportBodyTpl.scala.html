@@ -1,0 +1,6 @@
+@(dates: mdt.IDateStartEnd)(implicit ctx: Context)
+
+@* Верстка тела отчета по периоду размещения. *@
+
+@__dateTpl("from", dates.dateStart)
+@__dateTpl("till", dates.dateEnd)

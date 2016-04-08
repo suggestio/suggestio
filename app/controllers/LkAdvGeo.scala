@@ -86,39 +86,52 @@ class LkAdvGeo @Inject()(
    */
   private def _forAd(formFut: Future[AgtForm_t], rs: Status)
                     (implicit request: IAdProdReq[_]): Future[Result] = {
-    // TODO Собрать данные о текущих гео-размещениях карточки, чтобы их отобразить юзеру на карте.
-    // TODO Заюзать akka steams тут для приведения item'ов к json.
-    /*val currentAdvsFut = slick.db.run {
-      advGeoBillUtil.getCurrentForAd(request.mad.id.get)
-    }*/
+    lazy val logPrefix = s"_forAd(${request.mad.idOrNull} ${System.currentTimeMillis}):"
 
-    val ctxData0Fut = request.user.lkCtxDataFut
+    // Собрать данные о текущих гео-размещениях карточки, чтобы их отобразить юзеру на карте.
+    val currAdvsFut = slick.db.run {
+      advGeoBillUtil.findCurrentForAd(request.mad.id.get)
+    }
+
+    val ctxFut = for (ctxData0 <- request.user.lkCtxDataFut) yield {
+      implicit val ctxData = ctxData0.copy(
+        jsiTgs = Seq(MTargets.AdvGtagForm)
+      )
+      implicitly[Context]
+    }
 
     val isSuFree = advFormUtil.maybeFreeAdv()
     val advPricingFut = formFut.flatMap { form =>
       advGeoBillUtil.getPricing(form.value, isSuFree)
     }
 
-    for {
-      ctxData0    <- ctxData0Fut
-      advPricing  <- advPricingFut
-      form        <- formFut
-      //currentAdvs <- currentAdvsFut
+    // Заварить JSON-кашу из текущих размещений. Они будут скрыто отрендерены в шаблоне.
+    val currAdvsJsonFut = for {
+      ctx       <- ctxFut
+      currAdvs  <- currAdvsFut
     } yield {
+      LOGGER.trace(s"$logPrefix Found ${currAdvs.size} current advs")
+      val fcoll = advGeoFormUtil.items2geoJson(currAdvs)(ctx)
+      Json.toJson(fcoll)
+    }
 
-      implicit val ctxData = ctxData0.copy(
-        jsiTgs = Seq(MTargets.AdvGtagForm)
-      )
+    for {
+      ctx           <- ctxFut
+      advPricing    <- advPricingFut
+      form          <- formFut
+      currAdvsJson  <- currAdvsJsonFut
+    } yield {
 
       val rargs = MForAdTplArgs(
         mad           = request.mad,
         producer      = request.producer,
         form          = form,
-        price         = advPricing
-        //currentAdvs   = currentAdvs
+        price         = advPricing,
+        currAdvsJson  = currAdvsJson
       )
 
-      rs(AdvGeoForAdTpl(rargs))
+      val html = AdvGeoForAdTpl(rargs)(ctx)
+      rs(html)
     }
   }
 
