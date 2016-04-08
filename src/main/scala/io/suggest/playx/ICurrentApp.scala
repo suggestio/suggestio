@@ -1,5 +1,6 @@
 package io.suggest.playx
 
+import play.api.Mode.Mode
 import play.api.{Application, Configuration, Mode}
 
 /**
@@ -16,12 +17,17 @@ trait ICurrentApp {
 }
 
 
-trait ICurrentAppHelpers extends ICurrentApp {
+trait IsAppModes {
 
-  def isDev   = current.mode == Mode.Dev
-  def isProd  = current.mode == Mode.Prod
-  def isTest  = current.mode == Mode.Test
+  protected def appMode: Mode
 
+  def isDev   = appMode == Mode.Dev
+  def isProd  = appMode == Mode.Prod
+  def isTest  = appMode == Mode.Test
+}
+
+trait ICurrentAppHelpers extends ICurrentApp with IsAppModes {
+  override protected def appMode = current.mode
 }
 
 
