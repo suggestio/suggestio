@@ -3,7 +3,7 @@ package io.suggest.sjs.common.util
 import org.scalajs.dom
 import org.scalajs.dom.Window
 import scala.scalajs.js
-import scala.scalajs.js.{UndefOr, Object}
+import scala.scalajs.js.UndefOr
 
 /**
  * Suggest.io
@@ -17,7 +17,7 @@ object TouchUtil {
     TouchElementStub(dom.window).ontouchstart.isDefined && {
       // Для файрфокса есть проблема: если юзер хоть раз включал responsive mode в firefox dev tools, то у него будет
       // светиться ontouchstart из-за внезапной активации dom.w3c_touch_events.enabled = 1
-      val ua = dom.navigator.userAgent
+      val ua = dom.window.navigator.userAgent
       // Юзер-агенты файрфокса https://developer.mozilla.org/en-US/docs/Web/HTTP/Gecko_user_agent_string_reference
       !ua.contains("Firefox") || {
         // Это файрфокс, и hasTouch == true. Нужно проверить, мобильник ли это.

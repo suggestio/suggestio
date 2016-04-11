@@ -40,4 +40,9 @@ object ErrorMsgs extends MsgsStaticT {
 
   def ADV_DIRECT_FORM_PRICE_FAIL = E(15)
 
+  def JSON_PARSE_ERROR           = E(16)
+
+
+  def NOT_A_GEO_JSON_FEATURE_GROUP = E(17)
+
 }

@@ -1,5 +1,7 @@
 package io.suggest.sjs.common.vm.attr
 
+import io.suggest.sjs.common.msg.ErrorMsgs
+import io.suggest.sjs.common.util.SjsLogger
 import io.suggest.sjs.common.vm.IVm
 import org.scalajs.dom.raw.HTMLInputElement
 
@@ -55,7 +57,7 @@ trait StringInputValueT extends InputValueT[String] {
 
 
 /** Расширение [[StringInputValueT]] для поддержки парсинга JSON. */
-trait JsonStringInputValueT extends StringInputValueT {
+trait JsonStringInputValueT extends StringInputValueT with SjsLogger {
 
   /** Тип возвращаемого значения из JSON.parse(). Например js.Object. */
   type JsonVal_t <: js.Any
@@ -63,9 +65,15 @@ trait JsonStringInputValueT extends StringInputValueT {
   /** Прочитать и распарсить строковое значение.
     * Если парсинг не удался, то будет исключение. */
   def valueJson: Option[JsonVal_t] = {
-    for (v <- value) yield {
-      JSON.parse(v)
-        .asInstanceOf[JsonVal_t]
+    try {
+      for (v <- value) yield {
+        JSON.parse(v)
+          .asInstanceOf[JsonVal_t]
+      }
+    } catch {
+      case ex: Throwable =>
+        error(ErrorMsgs.JSON_PARSE_ERROR, ex)
+        None
     }
   }
 

@@ -5,9 +5,9 @@ name := "common-sjs"
 version := "0.0.0-SNAPSHOT"
 
 libraryDependencies ++= Seq(
-  "org.scala-js"        %%% "scalajs-dom"         % "0.8.2",
+  "org.scala-js"        %%% "scalajs-dom"         % Common.sjsDomVsn,
   Common.ORG            %%  "common"              % "0.0.0-SNAPSHOT",
-  "be.doeraene"         %%% "scalajs-jquery"      % "0.8.1",
+  "be.doeraene"         %%% "scalajs-jquery"      % Common.sjsJqueryVsn,
   "org.monifu"          %%% "minitest"            % "0.12"            % "test"
 )
 
