@@ -17,8 +17,8 @@ persistLauncher in Test := false
 scalacOptions += "-feature"
 
 libraryDependencies ++= Seq(
-    "org.scala-js"  %%% "scalajs-dom"       % "0.8.2",
-    "be.doeraene"   %%% "scalajs-jquery"    % "0.8.1"
+    "org.scala-js"  %%% "scalajs-dom"       % Common.sjsDomVsn,
+    "be.doeraene"   %%% "scalajs-jquery"    % Common.sjsJqueryVsn
     //"com.lihaoyi"   %%% "utest"            % "0.3.1"  % "test"
 )
 
