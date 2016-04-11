@@ -96,7 +96,7 @@ trait AsyncInitAdp extends IAdapter {
     }
     // Среагировать на слишком долгую загрузку скрипта таймаутом.
     val t = SCRIPT_LOAD_TIMEOUT_MS
-    dom.setTimeout(
+    dom.window.setTimeout(
       {() =>
         if (!scriptLoadP.isCompleted) {
           p failure UrlLoadTimeoutException(SCRIPT_URL, t)

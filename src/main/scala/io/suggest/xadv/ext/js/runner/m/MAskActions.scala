@@ -72,7 +72,7 @@ object MAskActions extends MAskActionLightBaseT {
   override val StorageGet: T = new Val(STORAGE_GET) with AdHocAction {
     override def processAction(actx: IActionContext): Future[MJsCtxT] = {
       val msk = MStorageKvCtx.fromJson( actx.mctx0.custom.get )
-      val stor = dom.localStorage
+      val stor = dom.window.localStorage
       val msk1 = msk.copy(
         value = Option( stor.getItem(msk.key) )
       )
@@ -88,7 +88,7 @@ object MAskActions extends MAskActionLightBaseT {
   override val StorageSet: T = new Val(STORAGE_SET) with AdHocAction {
     override def processAction(actx: IActionContext): Future[MJsCtxT] = {
       val msk = MStorageKvCtx.fromJson( actx.mctx0.custom.get )
-      val stor = dom.localStorage
+      val stor = dom.window.localStorage
       msk.value match {
         case Some(v)  => stor.setItem(msk.key, v)
         case None     => stor.removeItem(msk.key)

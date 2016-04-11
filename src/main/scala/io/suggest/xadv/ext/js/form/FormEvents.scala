@@ -106,7 +106,7 @@ class FormEvents {
             Dictionary[T](
               "204" -> onSuccess1,
               "404" -> onSuccess1,
-              "403" -> {() => dom.alert("Please try again (error http 403).") }
+              "403" -> {() => dom.window.alert("Please try again (error http 403).") }
             )
           }
         )
@@ -177,11 +177,10 @@ class FormEvents {
       val newTags = jQuery("#" + ID_ALL_TARGETS_LIST)
         .find("." + CLASS_ONE_TARGET_CONTAINER)
         // Формы с галочками превратить в input-теги.
-        .map { (indexRaw: Any, oneTgDiv: Element) =>
+        .map { (index: Int, oneTgDiv: Element) =>
           val oneTg = jQuery(oneTgDiv)
           val retInputs = oneTg.find("input[name=return]:checked")
           if (retInputs.length > 0) {
-            val index = indexRaw.asInstanceOf[Int]
             val namePrefix = "adv[" + index + "]."
             // Собрать тег return
             val retInput = retInputs(0)
@@ -199,7 +198,7 @@ class FormEvents {
 
           } else {
             // Пропускаем текущую форму, т.к. галочки не выставлены.
-            null
+            Array()
           }
         }
       // Когда теги готовы, то безвозвратно добавить их в форму, у которой происходит сабмит.
