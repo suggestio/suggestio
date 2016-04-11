@@ -41,4 +41,14 @@ object Common {
   /** Версия используемого плагина play-mailer. */
   val playMailerVsn        = "5.0.0-M1"
 
+
+  /** Версия jquery-фасада для scalajs.
+   * @see [[https://github.com/scala-js/scala-js-jquery]]
+   */
+  val sjsJqueryVsn     = "0.9.0"
+
+  /** Версия scalajs-dom.
+   * @see [[https://github.com/scala-js/scala-js-dom]]
+   */
+  val sjsDomVsn        = "0.9.0"
 }
