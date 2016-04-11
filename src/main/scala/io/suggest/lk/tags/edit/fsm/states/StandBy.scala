@@ -100,7 +100,7 @@ trait StandBy extends TagsEditFsmStub {
       } {
 
         val ts = System.currentTimeMillis()
-        val timerId = dom.setTimeout(
+        val timerId = dom.window.setTimeout(
           { () => _sendEventSyncSafe(StartSearchTimer(ts)) },
           START_SEARCH_TIMER_MS
         )
