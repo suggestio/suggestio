@@ -2,6 +2,7 @@ package controllers
 
 import com.google.inject.Inject
 import controllers.ctag.NodeTagsEdit
+import io.suggest.mbill2.m.order.MOrderStatuses
 import io.suggest.model.n2.tag.TagSearchUtil
 import models.adv.form.MDatesPeriod
 import models.adv.geo.tag.{AgtForm_t, MAgtFormResult, MForAdTplArgs}
@@ -56,6 +57,9 @@ class LkAdvGeo @Inject()(
     * @param adId id отрабатываемой карточки.
     */
   def forAd(adId: String) = CanAdvertiseAdGet(adId, U.Lk).async { implicit request =>
+    // TODO Попытаться заполнить форму с помощью данных из черновиков, если они есть.
+    //val draftItemsFut = advGeoBillUtil.findDraftsForAd(adId)
+
     val gp0Fut = advFormUtil.geoPoint0()
     val formEmpty = advGeoFormUtil.agtFormStrict
 
@@ -180,7 +184,11 @@ class LkAdvGeo @Inject()(
             // Надо определиться, правильно ли инициализацию корзины запихивать внутрь транзакции?
             val dbAction = for {
               // Найти/создать корзину
-              cart    <- bill2Util.ensureCart(e.mc.id.get)
+              cart      <- bill2Util.ensureCart(
+                contractId = e.mc.id.get,
+                status0    = MOrderStatuses.cartStatusForAdvSuperUser(isSuFree)
+              )
+
               // Закинуть заказ в корзину юзера. Там же и рассчет цены будет.
               addRes  <- advGeoBillUtil.addToOrder(
                 orderId     = cart.id.get,

@@ -8,26 +8,34 @@ import io.suggest.mbill2.m.balance.{MBalance, MBalances}
 import io.suggest.mbill2.m.contract.{MContract, MContracts}
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.MItemStatuses
-import io.suggest.mbill2.m.item.{IMItem, IItem, MItems, MItem}
+import io.suggest.mbill2.m.item.{IItem, IMItem, MItem, MItems}
 import io.suggest.mbill2.m.order._
-import io.suggest.mbill2.m.txn.{MTxnTypes, MTxns, MTxn}
+import io.suggest.mbill2.m.txn.{MTxn, MTxnTypes, MTxns}
 import io.suggest.mbill2.util.effect._
 import models.adv.price.MAdvPricing
 import models.mbill.MCartIdeas
 import models.mproj.ICommonDi
-import models.{IPrice, CurrencyCodeOpt, MNode, MPrice}
+import models.{CurrencyCodeOpt, IPrice, MNode, MPrice}
 import org.joda.time.DateTime
+import slick.profile.SqlAction
 import util.PlayMacroLogsImpl
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 /**
- * Suggest.io
- * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 04.12.15 13:49
- * Description: Утиль для биллинга второго поколения, с ордерами и корзинами.
- */
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 04.12.15 13:49
+  * Description: Утиль для биллинга второго поколения, с ордерами и корзинами.
+  *
+  * В терминах этого билллинга, корзина -- это черновой ордер (Draft). Возможно, ещё не созданный,
+  * или уже созданный, или даже с привязанными item'ами.
+  *
+  * Есть ещё корзина суперюзера: всегда закрытый ордер у суперюзера, к которому по мере добавления su-бесплатных
+  * операций подцепляются всё новые и новые не-Draft item'ы. Никакого смысла такая корзина не несёт,
+  * и обычно скрыта от глаз. Использованные item'ы такого ордера стирать без проблем.
+  */
 @Singleton
 class Bill2Util @Inject() (
   mOrders                         : MOrders,
@@ -163,10 +171,19 @@ class Bill2Util @Inject() (
     }
   }
 
-  /** Найти ордер-корзину. */
-  def getCartOrder(contractId: Gid_t): DBIOAction[Option[MOrder], NoStream, Effect.Read] = {
-    mOrders.getCartOrder(contractId)
+
+  /** Поиск последнего ордера указанного контракта и с указанным статусом. */
+  def getLastOrder(contractId: Gid_t, status: MOrderStatus): SqlAction[Option[MOrder], NoStream, Effect.Read] = {
+    mOrders.query
+      .filter { q =>
+        (q.contractId === contractId) && (q.statusStr === status.strId)
+      }
+      .sortBy(_.id.desc.nullsLast)
+      .take(1)
+      .result
+      .headOption
   }
+
 
   /** Попытаться удалить ордер, если есть id. */
   def maybeDeleteOrder(orderIdOpt: Option[Gid_t]): DBIOAction[Int, NoStream, Effect.Write] = {
@@ -191,11 +208,17 @@ class Bill2Util @Inject() (
   /** Найти корзину и очистить её. */
   def clearCart(contractId: Gid_t): DBIOAction[Int, NoStream, RW] = {
     for {
-      cartOrderOpt    <- getCartOrder(contractId)
+      cartOrderOpt    <- getLastOrder(contractId, MOrderStatuses.Draft)
       cartOrderIdOpt  = cartOrderOpt.flatMap(_.id)
       itemsDeleted    <- maybeDeleteOrder( cartOrderIdOpt )
     } yield {
       itemsDeleted
+    }
+  }
+
+  def ensureCart(contractId: Gid_t, status0: MOrderStatus = MOrderStatuses.Draft): DBIOAction[MOrder, NoStream, RW] = {
+    getLastOrder(contractId, status0).flatMap { orderOpt =>
+      ensureCartOrder(orderOpt, contractId, status0)
     }
   }
 
@@ -205,18 +228,15 @@ class Bill2Util @Inject() (
     * @param contractId Номер договора.
     * @return Фьючерс с ордером корзины.
     */
-  def ensureCart(contractId: Gid_t): DBIOAction[MOrder, NoStream, RW] = {
-    getCartOrder(contractId).flatMap {
-      case None =>
-        val cartOrderStub = MOrder(MOrderStatuses.Draft, contractId)
-        val orderAct = mOrders.insertOne(cartOrderStub)
-        orderAct.map { order2 =>
-          LOGGER.debug(s"ensureNodeCart($contractId): Initialized new cart order[${order2.id.orNull}]")
-          order2
-        }
-      case Some(order) =>
-        DBIO.successful(order)
-    }
+  def ensureCartOrder(orderOpt: Option[MOrder], contractId: Gid_t, status0: MOrderStatus): DBIOAction[MOrder, NoStream, RW] = {
+    orderOpt.fold {
+      val cartOrderStub = MOrder(status0, contractId)
+      val orderAct = mOrders.insertOne(cartOrderStub)
+      orderAct.map { order2 =>
+        LOGGER.debug(s"ensureNodeCart($contractId): Initialized new cart order[${order2.id.orNull}]")
+        order2
+      }
+    } { DBIO.successful }
   }
 
   /** Нулевая цена. */
@@ -254,7 +274,7 @@ class Bill2Util @Inject() (
   /** Подготовится к транзакции внутри корзины. */
   def prepareCartTxn(contractId: Gid_t): DBIOAction[MOrderWithItems, NoStream, Effect.Read] = {
     for {
-      cartOrderOpt  <- mOrders.getCartOrder(contractId).forUpdate
+      cartOrderOpt  <- getLastOrder(contractId, MOrderStatuses.Draft).forUpdate
       order         = cartOrderOpt.get
       orderId       = order.id.get
       mitems        <- mItems.findByOrderIdBuilder(orderId)

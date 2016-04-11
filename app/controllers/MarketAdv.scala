@@ -2,7 +2,7 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.mbill2.m.item.{MItem, MItems}
-import io.suggest.mbill2.m.order.MOrderWithItems
+import io.suggest.mbill2.m.order.{MOrderStatuses, MOrderWithItems}
 import io.suggest.model.common.OptId
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models._
@@ -16,9 +16,9 @@ import play.api.libs.json.Json
 import play.api.mvc.{AnyContent, Result}
 import util.PlayMacroLogsImpl
 import util.acl._
-import util.adv.direct.{DirectAdvFormUtil, AdvDirectBilling}
+import util.adv.direct.{AdvDirectBilling, DirectAdvFormUtil}
 import util.adv.AdvFormUtil
-import util.billing.{TfDailyUtil, Bill2Util}
+import util.billing.{Bill2Util, TfDailyUtil}
 import util.cal.CalendarUtil
 import views.html.lk.adv.direct._
 import views.html.lk.adv.widgets.period._reportTpl
@@ -427,7 +427,11 @@ class MarketAdv @Inject() (
           // Залезть наконец в базу биллинга, сохранив в корзину добавленные размещения...
           billRes <- {
             val dbAction = for {
-              cartOrder <- bill2Util.ensureCart( personContract.mc.id.get )
+              cartOrder  <- bill2Util.ensureCart(
+                contractId  = personContract.mc.id.get,
+                status0     = MOrderStatuses.cartStatusForAdvSuperUser(isSuFree)
+              )
+
               itemsSaved <- {
                 val items0 = advDirectBilling.mkAdvReqItems(cartOrder.id.get, request.mad, adves3, status, tfsMap, mcalsCtx)
                 mItems.insertMany(items0)

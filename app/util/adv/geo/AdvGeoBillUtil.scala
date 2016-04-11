@@ -63,7 +63,7 @@ class AdvGeoBillUtil @Inject()(
     * Закинуть в корзину bill-v2.
     *
     * @param orderId id-ордера-корзины, т.е. текущего заказа. Туда надо добавить возможную покупку.
-    *                Например, выхлоп [[util.billing.Bill2Util.ensureCart()]].
+    *                Например, выхлоп [[util.billing.Bill2Util.ensureCartOrder()]].
     * @param adId    id узла-цели размещения тегов, обычно рекламная карточка.
     * @param res     Данные по размещаемым тегам.
     * @return Фьючерс c результатом.
