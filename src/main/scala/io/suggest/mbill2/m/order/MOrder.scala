@@ -75,18 +75,6 @@ class MOrders @Inject() (
     el.copy(id = Some(id))
   }
 
-  def getCartOrderAction(contractId: Gid_t) = {
-    query.filter(q => q.contractId === contractId && q.statusStr === MOrderStatuses.Draft.strId)
-      .sortBy(_.id.desc.nullsLast)
-      .take(1)
-  }
-  /** Поиск ордера-корзины для контракта. */
-  def getCartOrder(contractId: Gid_t) = {
-    getCartOrderAction(contractId)
-      .result
-      .headOption
-  }
-
 
   def saveStatus(morder2: MOrder) = {
     saveStatus1(morder2.id.get, morder2.status)
