@@ -18,7 +18,7 @@ object DocumentCtl {
   }
 
   def onTouchEnd(e: TouchEvent): Unit = {
-    dom.setTimeout(
+    dom.window.setTimeout(
       { () => MTouchLock(false) },
       100
     )

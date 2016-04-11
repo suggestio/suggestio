@@ -144,7 +144,7 @@ trait OnFocusBase extends MouseMoving {
           val sd1 = sd0.withNodeSwitch( Some(adnId) )
           become(_onNodeSwitchState, sd1)
           // Скрыть текущую focused-выдачу в фоне. Глубокая чистка не требуется, т.к. layout будет полностью пересоздан.
-          dom.setTimeout(
+          dom.window.setTimeout(
             { () => fRoot.disappearTransition() },
             10
           )

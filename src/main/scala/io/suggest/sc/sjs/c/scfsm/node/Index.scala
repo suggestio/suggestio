@@ -139,7 +139,7 @@ trait Index extends ScFsmStub with FindAdsUtil {
         wcRoot.initLayout(screen)
         wcRoot.willAnimate()
         // Запустить таймер сокрытия
-        dom.setTimeout(
+        dom.window.setTimeout(
           { () => _sendEventSyncSafe( WcTimeout ) },
           Welcome.HIDE_TIMEOUT_MS
         )

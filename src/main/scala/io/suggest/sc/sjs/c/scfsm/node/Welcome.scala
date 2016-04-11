@@ -48,7 +48,7 @@ trait Welcome extends ScFsmStub {
       val wcRootOpt = WcRoot.find()
       val hideTimerIdOpt = for (wcRoot <- wcRootOpt) yield {
         wcRoot.fadeOut()
-        dom.setTimeout(
+        dom.window.setTimeout(
           { () => _sendEventSyncSafe(WcTimeout) },
           Welcome.FADEOUT_TRANSITION_MS
         )

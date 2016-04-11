@@ -159,10 +159,10 @@ trait Base extends OnGrid with ISjsLogger {
         if (state0.q != q2) {
           // то надо запустить таймера запуска поискового запроса, отменив предыдущий таймер.
           for (timerId <- state0.reqTimerId) {
-            dom.clearTimeout(timerId)
+            dom.window.clearTimeout(timerId)
           }
           val gen2 = MFtsFsmState.getGeneration
-          val newTimerId = dom.setTimeout(
+          val newTimerId = dom.window.setTimeout(
             { () => _sendEvent( FtsStartRequestTimeout(gen2)) },
             START_TIMEOUT_MS
           )

@@ -216,12 +216,12 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
 
     override def afterBecome(): Unit = {
       super.afterBecome()
-      dom.setTimeout(
+      dom.window.setTimeout(
         {() =>
           for (fRoot <- FRoot.find()) {
             fRoot.appearTransition()
           }
-          dom.setTimeout(
+          dom.window.setTimeout(
             {() => _sendEvent(FocRootAppeared) },
             SLIDE_ANIMATE_MS
           )

@@ -51,7 +51,7 @@ trait SimpleShift extends MouseMoving {
             fControls.setContent(nextFad.controlsHtml)
           }
 
-          dom.setTimeout(
+          dom.window.setTimeout(
             {() => _sendEvent(ShiftAnimationFinished) },
             SLIDE_ANIMATE_MS
           )

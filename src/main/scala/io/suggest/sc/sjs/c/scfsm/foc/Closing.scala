@@ -23,10 +23,10 @@ trait Closing extends MouseMoving {
       super.afterBecome()
       for (froot <- FRoot.find()) {
         froot.willAnimate()
-        dom.setTimeout(
+        dom.window.setTimeout(
           {() =>
             froot.disappearTransition()
-            dom.setTimeout(
+            dom.window.setTimeout(
               { () => _sendEvent(FocRootDisappeared) },
               SLIDE_ANIMATE_MS
             )
@@ -44,7 +44,7 @@ trait Closing extends MouseMoving {
     /** Логика реакции на наступления сокрытости focused-выдачи. */
     protected def _disappeared(): Unit = {
       // В фоне надо очистить focused-верстку от мусора и освежить базовый каркас focused-выдачи.
-      dom.setTimeout(
+      dom.window.setTimeout(
         {() =>
           FRoot.find() foreach IReset.f
           FocusedRes.find() foreach ClearT.f

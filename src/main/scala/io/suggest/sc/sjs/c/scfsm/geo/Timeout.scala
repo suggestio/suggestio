@@ -22,7 +22,7 @@ trait Timeout extends ScFsmStub with Index {
     override def afterBecome(): Unit = {
       super.afterBecome()
       // Запустить таймер
-      val timerId = dom.setTimeout(
+      val timerId = dom.window.setTimeout(
         {() => _sendEventSyncSafe( GeoTimeout ) },
         GEO_TIMEOUT_MS
       )

@@ -66,7 +66,7 @@ trait IStData {
   /** Попробовать отменить сохраненный в состоянии таймер, если он есть. */
   def maybeCancelTimer(): Unit = {
     for (_timerId <- timerId) {
-      dom.clearTimeout( _timerId )
+      dom.window.clearTimeout( _timerId )
     }
   }
 
