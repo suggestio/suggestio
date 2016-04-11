@@ -74,7 +74,7 @@ object Popup extends SjsLogger {
   }
   /** Центровка всех переданных попапов. */
   def resetPosition(popups: JQuery): Unit = {
-    popups.each { (index: Any, el: Element) =>
+    popups.each { (index: Int, el: Element) =>
       val popup = jQuery(el)
       val pheight = popup.height()
       val cheight = container.height()
@@ -220,7 +220,7 @@ object Popup extends SjsLogger {
     // Если после перезагрузки страницы в попапе есть поля с ошибками, нужно его отобразить
     allPopups(cont)
       .has("." + ErrorConstants.FORM_CSS_CLASS + ", ." + ErrorConstants.ERROR_MSG_CLASS)
-      .each { (index: Any, el: Element) =>
+      .each { (index: Int, el: Element) =>
         val jqel = jQuery(el)
         val popup = jqel.parent("." + POPUP_CLASS)
         showPopups(popup)
@@ -250,7 +250,7 @@ object Popup extends SjsLogger {
           wnd.scrollTop(0)
         }
       }
-      dom.setTimeout(listener, 100)
+      dom.window.setTimeout(listener, 100)
     })
   }
 

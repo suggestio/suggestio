@@ -66,7 +66,7 @@ class FlashInit extends SafeSyncVoid with SjsLogger {
           }
         }
       // Разом удалить все уведомления из dom вместе с листенерами и т.д. для высвобождения ресурсов.
-      allFut onComplete { case _ =>
+      allFut.onComplete { case _ =>
         containers.remove()
       }
     } // if (containers)
@@ -83,17 +83,17 @@ class FlashInit extends SafeSyncVoid with SjsLogger {
       if (!closedP.isCompleted) {
         _closeBar(bar)
         // Анимации требуется некоторое время, чтобы завершиться, поэтому запускаем исполнения Promise'а в очередь.
-        dom.setTimeout(
+        dom.window.setTimeout(
           {() => closedP success None},
           SLIDE_DURATION_MS
         )
       }
     }
     // Сворачивать при таймауте.
-    val timeoutId = dom.setTimeout(doClose, SHOW_TIMEOUT_MS)
+    val timeoutId = dom.window.setTimeout(doClose, SHOW_TIMEOUT_MS)
     // Сворачивать при клике.
     bar.click { (e: JQueryEventObject) =>
-      dom.clearTimeout(timeoutId)
+      dom.window.clearTimeout(timeoutId)
       doClose()
     }
     // Вернуть новый фьючерс как аккамулятор

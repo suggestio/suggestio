@@ -78,7 +78,7 @@ sealed class TxnList extends IInit with SjsLogger {
             // Больше нет транзакций на сервере, кнопка больше не нужна.
             val durationMs = 333
             btn.hide(durationMs)
-            dom.setTimeout(
+            dom.window.setTimeout(
               {() => btn.remove()},
               durationMs + 100
             )
