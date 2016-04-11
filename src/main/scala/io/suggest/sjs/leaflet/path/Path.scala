@@ -22,7 +22,7 @@ class Path extends LEventTarget {
 
   def addTo(lmap: LMap): this.type = js.native
 
-  def bindPopup(html: String | HTMLElement | Popup,  options: PopupOptions): this.type = js.native
+  def bindPopup(html: String | HTMLElement | Popup,  options: PopupOptions = js.native): this.type = js.native
 
   def unbindPopup(): this.type = js.native
 

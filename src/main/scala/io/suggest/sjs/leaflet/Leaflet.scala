@@ -1,12 +1,13 @@
 package io.suggest.sjs.leaflet
 
 import io.suggest.sjs.leaflet.control.LControl
+import io.suggest.sjs.leaflet.geojson.{GeoJson, GjOptions, GjOptions$}
 import io.suggest.sjs.leaflet.layer.group.{FeatureGroup, LayerGroup}
 import io.suggest.sjs.leaflet.map._
 import io.suggest.sjs.leaflet.marker.icon.{Icon, IconOptions}
 import io.suggest.sjs.leaflet.marker.{Marker, MarkerOptions}
 import io.suggest.sjs.leaflet.path.PathOptions
-import io.suggest.sjs.leaflet.path.circle.{PathOptionsRadius, CircleMarker, Circle}
+import io.suggest.sjs.leaflet.path.circle.{Circle, CircleMarker, PathOptionsRadius}
 import io.suggest.sjs.leaflet.path.poly._
 import io.suggest.sjs.leaflet.popup.{Popup, PopupOptions}
 import io.suggest.sjs.leaflet.tilelayer.{TileLayer, TlOptions}
@@ -66,5 +67,8 @@ object Leaflet extends js.Object {
 
   /** Instantiate new feature group. */
   def featureGroup(layers: js.Array[ILayer] = js.native): FeatureGroup = js.native
+
+  /** Instantiate GeoJSON layers builder. */
+  def geoJson(data: js.Any = js.native, options: GjOptions = js.native): GeoJson = js.native
 
 }

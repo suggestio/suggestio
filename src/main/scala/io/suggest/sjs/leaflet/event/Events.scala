@@ -14,10 +14,17 @@ object Events {
 
   def DRAG       = "drag"
 
+  /** User finished to drag the map. */
   def DRAG_END   = "dragend"
 
-  def ON_LOCATION_FOUND = "locationfound"
+  /** Current user location found. */
+  def LOCATION_FOUND = "locationfound"
 
-  def ON_LOCATION_ERROR = "locationerror"
+  /** Unable to locate user position coordinates.. */
+  def LOCATION_ERROR = "locationerror"
+
+  /** Started to following user corrdinates on the map. */
+  def START_FOLLOWING = "startfollowing"
+  def STOP_FOLLOWING  = "stopfollowing"
 
 }
