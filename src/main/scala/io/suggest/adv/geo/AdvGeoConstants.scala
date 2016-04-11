@@ -56,7 +56,7 @@ object AdvGeoConstants {
     def OK_COLOR  = "#1ABC8A"
 
     /** Прозрачность заливки info-шейпов. */
-    def OPACITY   = 0.81F
+    def OPACITY   = 0.5F
 
   }
 
