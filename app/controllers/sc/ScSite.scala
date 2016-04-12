@@ -54,8 +54,8 @@ trait ScSiteBase
     }
 
     /** Добавки к тегу head в siteTpl. */
-    def headAfterFut: Future[Traversable[Html]] = {
-      MNode.maybeGetById( _siteArgs.povAdId )
+    def headAfterFut: Future[List[Html]] = {
+      mNodeCache.maybeGetByIdCached( _siteArgs.povAdId )
         .map { _.get }
         .filter { mad =>
           mad.edges
@@ -71,12 +71,12 @@ trait ScSiteBase
             }}
           Future
             .fold[Iterator[Html], Iterator[Html]] (futs) (Iterator.empty) (_ ++ _)
-            .map { _.toSeq }
+            .map { _.toList }
         }
         .recover { case ex: Throwable =>
           if (!ex.isInstanceOf[NoSuchElementException])
             LOGGER.warn("Failed to collect meta-tags for ad " + _siteArgs.povAdId, ex)
-          Seq.empty[Html]
+          List.empty[Html]
         }
     }
 
@@ -134,26 +134,29 @@ trait ScSiteBase
     /** Ссылка на вызов выдачи. */
     def _indexCall: Call
 
-    /** Какой шаблон скрипта надо рендерить для переданной в _siteArgs версии API? */
-    def _scriptTplForApiVsn = _siteArgs.apiVsn.scriptTpl
-
-    def scriptRenderArgsFut: Future[IScScriptRenderArgs] = {
-      val res = ScScriptRenderArgs(
+    lazy val scriptRenderArgs: IScScriptRenderArgs = {
+      ScScriptRenderArgs(
         withGeo   = _withGeo,
         indexCall = _indexCall,
         adnIdOpt  = adnIdOpt
       )
-      Future successful res
+    }
+
+    /** Добавки к тегу head в siteTpl. */
+    override def headAfterFut: Future[List[Html]] = {
+      val fut0 = super.headAfterFut
+      val htmlOpt = for (tpl <- _siteArgs.apiVsn.headAfterHtmlOpt) yield {
+        tpl.render(scriptRenderArgs, ctx)
+      }
+      for (htmls0 <- fut0) yield {
+        htmlOpt.fold(htmls0)(_ :: htmls0)
+      }
     }
 
     override def scriptHtmlFut: Future[Html] = {
-      val argsFut = scriptRenderArgsFut
-      val tpl = _scriptTplForApiVsn
-      for {
-        args <- argsFut
-      } yield {
-        tpl.render(args, ctx)
-      }
+      val tpl = _siteArgs.apiVsn.scriptTpl
+      val html = tpl.render(scriptRenderArgs, ctx)
+      Future.successful(html)
     }
 
   }

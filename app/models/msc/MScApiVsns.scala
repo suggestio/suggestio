@@ -43,6 +43,10 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImp
 
     /** Тут возможность отключения рендера DOCTYPE в sc/siteTpl. */
     def withScSiteDoctype: Boolean = true
+
+    /** Можно добавки в head затолкать. */
+    def headAfterHtmlOpt: Option[Template2[IScScriptRenderArgs, Context, Html]] = None
+
   }
 
   override type T = Val
@@ -74,8 +78,9 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImp
     override def nodeListLayersServerSideExpand = true
     /** sc-sjs требует ранние контейнеры для focused ads и прочее. */
     override def withEarlyFocAdsRootContainers = true
-    /** У v2-выдачи несколько скриптов. */
+    /** У v2-выдачи своя особая магия. */
     override def scriptTpl = _scriptV2Tpl
+    override def headAfterHtmlOpt = Some( _headAfterV2Tpl )
   }
 
 

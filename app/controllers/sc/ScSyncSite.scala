@@ -309,16 +309,18 @@ trait ScSyncSiteGeo
     def madsLogics: Seq[AdCssRenderArgs] = Seq(tileLogic) ++ maybeFocusedLogic
 
     /** Рендер илайнового css'а блоков, если возможно. */
-    def adsCssExtFut: Future[Seq[Html]] = {
-      Future.traverse(madsLogics) { ml =>
-        ml.adsCssExternalFut
-      } map { mls =>
+    def adsCssExtFut: Future[Option[Html]] = {
+      for {
+        mls <- Future.traverse(madsLogics) { ml =>
+          ml.adsCssExternalFut
+        }
+      } yield {
         if (mls.isEmpty) {
-          Nil
+          None
         } else {
           val args = mls.flatten
           val html = htmlAdsCssLink(args)(ctx)
-          Seq(html)
+          Some(html)
         }
       }
     }
@@ -332,16 +334,16 @@ trait ScSyncSiteGeo
       override def nodeOptFut         = that.adnNodeReqFut
 
       // TODO Этот код метода был написан спустя много времени после остальной реализации. Нужно протестить всё.
-      override def headAfterFut: Future[Traversable[Html]] = {
+      override def headAfterFut: Future[List[Html]] = {
         val supFut = super.headAfterFut
-        for (headAfter <- that.adsCssExtFut;  headAfter0 <- supFut) yield {
-          headAfter ++ headAfter0
+        for (headAfterOpt <- that.adsCssExtFut;  headAfter0 <- supFut) yield {
+          headAfterOpt.fold(headAfter0)(_ :: headAfter0)
         }
       }
 
       /** Скрипт выдачи не нужен вообще. */
       override def scriptHtmlFut: Future[Html] = {
-        Future successful HtmlFormat.empty
+        Future.successful(HtmlFormat.empty)
       }
 
       /** Подмешиваем необходимые для sync-render данные в аргументы рендера сайта. */

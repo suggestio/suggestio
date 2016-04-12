@@ -3,6 +3,7 @@
 @* HTML для подключения скрипта второй версии выдачи (sc-sjs). *@
 
 @import views.html.stuff._
+@import views.html.stuff.mapbox._
 @import ctx.api.cdn
 @import io.suggest.sc.ScConstants.JsRouter.DOM_ID
 
@@ -11,3 +12,6 @@
 </script>
 
 @_sjsScript("sc-sjs", withLauncherJs = true)
+
+@* Подгрузить JS карт. *@
+@_mapBoxGlJsTpl()
