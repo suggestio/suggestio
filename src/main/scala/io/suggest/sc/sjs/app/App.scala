@@ -17,7 +17,10 @@ object App extends JSApp with SjsLogger {
 
   @JSExport
   override def main(): Unit = {
+    // Запуск основного FSM
     ScFsm.start()
+
+    // Фоновый запуск карты
     MbFsm.start()
   }
 

@@ -3,6 +3,7 @@ package io.suggest.sc.sjs.vm.maps
 import io.suggest.common.maps.mapbox.MapBoxConstants
 import io.suggest.sjs.common.vm.attr.StringInputValueT
 import io.suggest.sjs.common.vm.find.FindElT
+import io.suggest.sjs.common.vm.rm.SelfRemoveT
 import org.scalajs.dom.raw.HTMLInputElement
 
 /**
@@ -20,7 +21,7 @@ object MpglAcTok extends FindElT {
 
 import MpglAcTok.Dom_t
 
-trait MpglAcTokT extends StringInputValueT {
+trait MpglAcTokT extends StringInputValueT with SelfRemoveT {
   override type T = Dom_t
 }
 

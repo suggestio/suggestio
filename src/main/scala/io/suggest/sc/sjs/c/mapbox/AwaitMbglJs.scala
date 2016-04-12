@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.c.mapbox
 
+import io.suggest.sc.sjs.m.mmap.EnsureMap
 import io.suggest.sc.sjs.vm.maps.MpglAcTok
 import io.suggest.sjs.common.fsm.IFsmMsg
 import io.suggest.sjs.common.msg.WarnMsgs
@@ -40,8 +41,15 @@ trait AwaitMbglJs extends MbFsmStub {
     }
 
     override def receiverPart: Receive = {
+      // Пора попробовать инициализировать повторно.
       case AwaitTimeout =>
         become(this)
+
+      // ScFsm требует инициализацию карты раньше времени
+      case em: EnsureMap =>
+        _stateData = _stateData.copy(
+          ensure = Some(em)
+        )
     }
 
     /** Действия, когда js отсутствует на странице. */
@@ -61,6 +69,8 @@ trait AwaitMbglJs extends MbFsmStub {
         acTok <- input.value
       } {
         mapboxgl.accessToken = acTok
+        // Этот input более не нужен, токен извлечен и перенесён в состояние.
+        input.remove()
       }
 
       // Переключиться на след.состояние.

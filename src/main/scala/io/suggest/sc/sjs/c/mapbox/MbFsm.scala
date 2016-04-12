@@ -14,6 +14,7 @@ import io.suggest.sjs.common.util.SjsLogger
   */
 object MbFsm
   extends AwaitMbglJs
+  with MbgljsReady
   with SjsLogger
 {
 
@@ -23,6 +24,7 @@ object MbFsm
   private class DummyState extends FsmEmptyReceiverState
 
 
+  /** Запуск этого FSM на исполнение. */
   def start(): Unit = {
     become(new AwaitMbglJsState)
   }
@@ -35,6 +37,6 @@ object MbFsm
   }
 
   // Карта инициализирована.
-  class StandByState extends FsmEmptyReceiverState
+  class StandByState extends MbgljsReadyStateT
 
 }

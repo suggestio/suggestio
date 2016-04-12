@@ -1,8 +1,10 @@
 package io.suggest.sc.sjs.c.scfsm.node
 
 import io.suggest.sc.ScConstants.Welcome
+import io.suggest.sc.sjs.c.mapbox.MbFsm
 import io.suggest.sc.sjs.c.scfsm.{FindAdsUtil, ScFsmStub}
 import io.suggest.sc.sjs.m.mgrid.MGridState
+import io.suggest.sc.sjs.m.mmap.EnsureMap
 import io.suggest.sc.sjs.m.msrv.index.{MNodeIndex, MScIndexArgs}
 import io.suggest.sc.sjs.m.mwc.WcTimeout
 import io.suggest.sc.sjs.vm.layout.LayRootVm
@@ -14,7 +16,7 @@ import org.scalajs.dom
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
-import scala.util.{Success, Try, Failure}
+import scala.util.{Failure, Success, Try}
 
 /**
  * Suggest.io
@@ -190,6 +192,9 @@ trait Index extends ScFsmStub with FindAdsUtil {
         timerId = wcHideTimerOpt
       )
       become( nextState, sd2 )
+
+      // Запустить в фоне ensure'инг карты
+      MbFsm ! EnsureMap()
     }
 
 
