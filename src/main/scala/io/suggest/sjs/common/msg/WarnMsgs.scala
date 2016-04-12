@@ -43,4 +43,6 @@ object WarnMsgs extends MsgsStaticT {
 
   def TAG_SEARCH_XHR_TS_DROP    = E(14)
 
+  def MAPBOXLG_JS_NOT_FOUND     = E(15)
+
 }
