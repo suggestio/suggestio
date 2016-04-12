@@ -134,6 +134,14 @@ object SiobixBuild extends Build {
       .dependsOn(commonSjs)
   }
 
+  /** mapbox-gl API. */
+  lazy val mapBoxGlSjs = {
+    val name = "scalajs-mapboxgl"
+    Project(id = name, base = file(name))
+      .enablePlugins(ScalaJSPlay)
+      .dependsOn(commonSjs)
+  }
+
   /** Модуль поддержки карты. */
   lazy val mapRadSjs = {
     val name = "map-rad-sjs"
@@ -164,7 +172,7 @@ object SiobixBuild extends Build {
     val name = "sc-sjs"
     Project(id = name, base = file(name))
       .enablePlugins(ScalaJSPlay)
-      .dependsOn(commonSjs)
+      .dependsOn(commonSjs, mapBoxGlSjs)
   }
 
   /** Внутренний форк securesocial. */
@@ -187,7 +195,7 @@ object SiobixBuild extends Build {
       .settings(Common.settingsOrg: _*)
       .aggregate(
         common, logsMacro,
-        commonSjs, leafletSjs, mapRadSjs, lkSjs, scSjs, dateTimePickerSjs, lkDtPeriodSjs,
+        commonSjs, leafletSjs, mapBoxGlSjs, mapRadSjs, lkSjs, scSjs, dateTimePickerSjs, lkDtPeriodSjs,
         util, swfs, n2, securesocial,
         web21, mbill2,  svgUtil
       )
