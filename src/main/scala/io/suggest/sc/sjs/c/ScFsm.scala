@@ -32,7 +32,7 @@ object ScFsm
   /** Ресивер для всех состояний. */
   override protected val allStatesReceiver = super.allStatesReceiver
 
-  def firstStart(): Unit = {
+  def start(): Unit = {
     become( _initPhaseEnter1st )
   }
 

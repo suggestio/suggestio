@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.app
 
 import io.suggest.sc.sjs.c.ScFsm
+import io.suggest.sc.sjs.c.mapbox.MbFsm
 import io.suggest.sjs.common.util.SjsLogger
 
 import scala.scalajs.js.JSApp
@@ -16,7 +17,8 @@ object App extends JSApp with SjsLogger {
 
   @JSExport
   override def main(): Unit = {
-    ScFsm.firstStart()
+    ScFsm.start()
+    MbFsm.start()
   }
 
 }
