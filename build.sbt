@@ -23,7 +23,8 @@ libraryDependencies ++= Seq(
 )
 
 jsDependencies ++= Seq(
-  RuntimeDOM % "test",
-  "org.webjars" % "leaflet" % "0.7.5" / "0.7.5/leaflet.js"
+  "org.webjars" % "leaflet"               % "0.7.7"   / "0.7.7/leaflet.js",
+  "org.webjars" % "leaflet-locatecontrol" % "0.40.0"  / "0.40.0/L.Control.Locate.js",
+  RuntimeDOM    % "test"
 )
 
