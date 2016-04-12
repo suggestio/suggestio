@@ -8,7 +8,7 @@ package io.suggest.mbill2.m.order
  */
 trait IMOrders {
 
-  /** DI-Инстанс [[MOrder]]. */
+  /** DI-Инстанс [[io.suggest.mbill2.m.order.MOrder]]. */
   def mOrders: MOrders
 
 }
