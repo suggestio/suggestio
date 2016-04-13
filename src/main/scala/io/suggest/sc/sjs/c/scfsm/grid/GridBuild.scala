@@ -77,7 +77,8 @@ trait GridBuild {
       )
       val _addedBlocks = GContainer.find()
         .iterator
-        .flatMap { _.blocksIterator }
+        .flatMap(_.fragmentsIterator)
+        .flatMap(_.blocksIterator)
         .toList
       GridBuilder(grid, browser, _addedBlocks)
     }

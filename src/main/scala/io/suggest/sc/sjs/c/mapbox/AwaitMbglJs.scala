@@ -1,9 +1,8 @@
 package io.suggest.sc.sjs.c.mapbox
 
-import io.suggest.sc.sjs.m.mmap.EnsureMap
 import io.suggest.sc.sjs.vm.maps.MpglAcTok
 import io.suggest.sjs.common.fsm.IFsmMsg
-import io.suggest.sjs.common.msg.WarnMsgs
+import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.mapbox.gl.mapboxgl
 import io.suggest.sjs.mapbox.gl.window.IMbglWindow
 import org.scalajs.dom
@@ -46,10 +45,16 @@ trait AwaitMbglJs extends MbFsmStub {
         become(this)
 
       // ScFsm требует инициализацию карты раньше времени
-      case em: EnsureMap =>
-        _stateData = _stateData.copy(
-          ensure = Some(em)
-        )
+      case msg: IFsmMsg =>
+        val sd0 = _stateData
+        // Ограничиваем макс.длину аккамулятора непринятых сообщений.
+        if (sd0.early.size < 5) {
+          _stateData = sd0.copy(
+            early = msg :: sd0.early
+          )
+        } else {
+          error( ErrorMsgs.QUEUE_OVERLOADED + msg )
+        }
     }
 
     /** Действия, когда js отсутствует на странице. */

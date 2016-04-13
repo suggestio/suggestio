@@ -77,11 +77,7 @@ trait Plain extends OnGrid {
       for (fsl <- fslOpt) {
         fsl.show()
       }
-      val btnOpt = Option( event.currentTarget )
-        // TODO Нужно обезопаситься от неожиданного элемента в currentTarget.
-        .map { el =>
-          HNodePrev( el.asInstanceOf[HNodePrev.Dom_t] )
-        }
+      val btnOpt = HNodePrev.ofEventTarget( event.currentTarget )
         .orElse {
           HNodePrev.find()
         }

@@ -1,16 +1,17 @@
 package io.suggest.sc.sjs.vm.grid
 
 import io.suggest.common.css.CssSzImplicits
-import io.suggest.sc.ScConstants._
 import io.suggest.sc.ScConstants.Block._
+import io.suggest.sc.ScConstants._
 import io.suggest.sc.sjs.m.mgrid.{GridBlockClick, IBlockInfo}
 import io.suggest.sc.sjs.vm.util.InitOnClickToScFsmT
-import io.suggest.sjs.common.vm.find.{FindElPrefixedIdT, IApplyEl}
-import io.suggest.sjs.common.vm.style.StyleDisplayT
-import io.suggest.sjs.common.vm.walk.{PrevNextSiblingCousinUtilT, PrevNextSiblingsVmT}
 import io.suggest.sjs.common.util.DataUtil
 import io.suggest.sjs.common.vm.VmT
-import org.scalajs.dom.Node
+import io.suggest.sjs.common.vm.find.{FindElPrefixedIdT, IApplyEl}
+import io.suggest.sjs.common.vm.of.OfDiv
+import io.suggest.sjs.common.vm.style.StyleDisplayT
+import io.suggest.sjs.common.vm.util.OfHtmlElDomIdRelated
+import io.suggest.sjs.common.vm.walk.{PrevNextSiblingCousinUtilT, PrevNextSiblingsVmT}
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -19,7 +20,7 @@ import org.scalajs.dom.raw.HTMLDivElement
  * Created: 24.06.15 18:13
  * Description: Модель для блока плитки.
  */
-object GBlock extends FindElPrefixedIdT with IApplyEl {
+object GBlock extends FindElPrefixedIdT with IApplyEl with OfDiv with OfHtmlElDomIdRelated {
 
   override def DOM_ID = ID_DELIM + ID_SUFFIX
   override type Dom_t = HTMLDivElement
@@ -27,6 +28,7 @@ object GBlock extends FindElPrefixedIdT with IApplyEl {
 
   /**
    * Внести поправку в указанную абсолютную координату с помощью строковых данных по имеющейся относительной.
+   *
    * @param src Исходная строка, содержащая абсолютную координату.
    * @param abs Целевая абсолютная координата.
    * @return Новая относительная координата на основе abs и возможного значения из src.
@@ -36,26 +38,22 @@ object GBlock extends FindElPrefixedIdT with IApplyEl {
       .fold(abs)(abs - _)
   }
 
-  /**
-   * Есть узел DOM, который должен быть блоком. Попытаться завернуть в модель.
-   * @param node Узел DOM.
-   * @return Some(GBlock).
-   */
-  def fromNode(node: Node): Option[GBlock] = {
-    // TODO Проверять, что элемент является необходимым div'ом и возвращать None.
-    val ediv = node.asInstanceOf[HTMLDivElement]
-    Some( GBlock(ediv) )
-  }
-
 }
 
 
-import GBlock._
+import GBlock.{Dom_t, fixRelCoord}
 
 
-trait GBlockT extends VmT with StyleDisplayT with CssSzImplicits with IBlockInfo with InitOnClickToScFsmT with PrevNextSiblingsVmT {
+trait GBlockT
+  extends VmT
+    with StyleDisplayT
+    with CssSzImplicits
+    with IBlockInfo
+    with InitOnClickToScFsmT
+    with PrevNextSiblingsVmT
+{
 
-  override type T = HTMLDivElement
+  override type T = Dom_t
   override type Self_t <: GBlockT
 
   // Быстрый доступ к кое-каким аттрибутам.
@@ -103,15 +101,14 @@ trait GBlockT extends VmT with StyleDisplayT with CssSzImplicits with IBlockInfo
   override protected[this] def _clickMsgModel = GridBlockClick
 
   def parentFragment: Option[GContainerFragment] = {
-    Option( _underlying.parentElement.asInstanceOf[GContainerFragment.Dom_t] )
-      .map { GContainerFragment.apply }
+    GContainerFragment.ofHtmlEl( _underlying.parentElement )
   }
 
 }
 
 
 /** Дефолтовая реализация экземпляра модели [[GBlockT]]. */
-case class GBlock(override val _underlying: HTMLDivElement)
+case class GBlock(override val _underlying: Dom_t)
   extends GBlockT with PrevNextSiblingCousinUtilT {
 
   override type Self_t = GBlock

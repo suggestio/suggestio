@@ -8,6 +8,7 @@ import io.suggest.sjs.common.model.dom.DomListIterator
 import io.suggest.sjs.common.vm.content.ClearT
 import io.suggest.sjs.common.vm.child.ContentElT
 import io.suggest.sjs.common.vm.find.FindDiv
+import io.suggest.sjs.common.vm.of.{ChildrenVms, OfElement}
 import io.suggest.sjs.common.vm.style.StyleHeight
 import org.scalajs.dom.raw.HTMLDivElement
 
@@ -18,13 +19,19 @@ import org.scalajs.dom.raw.HTMLDivElement
  * Description: Модель контейнера карточек (блоков) плитки.
  */
 object GContainer extends FindDiv {
-  override type T = GContainer
+  override type T     = GContainer
   override def DOM_ID = Grid.CONTAINER_DIV_ID
 }
 
 
 /** Логика модели вынесена в отдельный трейт. */
-trait GContainerT extends ContentElT with CssSzImplicits with ClearT with StyleHeight {
+trait GContainerT
+  extends ContentElT
+    with CssSzImplicits
+    with ClearT
+    with StyleHeight
+    with ChildrenVms
+{
 
   override type T = HTMLDivElement
 
@@ -38,6 +45,7 @@ trait GContainerT extends ContentElT with CssSzImplicits with ClearT with StyleH
 
   /**
    * Посчитать высоту контейнера на основе данных сетки и выставить её.
+   *
    * @param grid Источних данных сетки.
    */
   def resetHeightUsing(grid: IGridData): Unit = {
@@ -54,6 +62,7 @@ trait GContainerT extends ContentElT with CssSzImplicits with ClearT with StyleH
 
   /**
    * Залить переданные сервером карточки в контейнер отображения.
+   *
    * @param mads Рекламные карточки.
    * @return Контейнер с этой пачкой карточек.
    */
@@ -74,15 +83,10 @@ trait GContainerT extends ContentElT with CssSzImplicits with ClearT with StyleH
   }
 
 
-  def fragmentsIterator: Iterator[GContainerFragment] = {
-    DomListIterator( _underlying.children )
-      .map { el => GContainerFragment( el.asInstanceOf[HTMLDivElement] ) }
-  }
+  override type ChildVm_t = GContainerFragment
+  override protected def _childVmStatic = GContainerFragment
 
-  def blocksIterator: Iterator[GBlock] = {
-    fragmentsIterator
-      .flatMap( _.blocksIterator )
-  }
+  def fragmentsIterator = _childrenVms
 
 }
 

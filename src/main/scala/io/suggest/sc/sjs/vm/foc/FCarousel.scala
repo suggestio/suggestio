@@ -2,25 +2,24 @@ package io.suggest.sc.sjs.vm.foc
 
 import io.suggest.common.css.CssSzImplicits
 import io.suggest.primo.IReset
+import io.suggest.sc.ScConstants.Focused._
 import io.suggest.sc.sjs.c.ScFsm
 import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.m.mfoc.MouseClick
 import io.suggest.sc.sjs.m.mfsm.touch.{TouchCancel, TouchEnd, TouchStart}
-import io.suggest.sc.sjs.vm.foc.fad.{FAdRootT, FAdRoot}
+import io.suggest.sc.sjs.vm.foc.fad.{FAdRoot, FAdRootT}
 import io.suggest.sc.sjs.vm.util._
 import io.suggest.sjs.common.model.browser.IBrowser
-import io.suggest.sjs.common.model.dom.DomListIterator
 import io.suggest.sjs.common.util.TouchUtil
-import io.suggest.sc.ScConstants.Focused._
 import io.suggest.sjs.common.vm.VmT
 import io.suggest.sjs.common.vm.content.ClearT
 import io.suggest.sjs.common.vm.evtg.OnMouseClickT
 import io.suggest.sjs.common.vm.find.FindDiv
-import io.suggest.sjs.common.vm.style.{StyleWidth, StyleLeft}
+import io.suggest.sjs.common.vm.of.ChildrenVms
+import io.suggest.sjs.common.vm.style.{StyleLeft, StyleWidth}
 import io.suggest.sjs.common.vm.util.IInitLayout
 import io.suggest.sjs.common.vm.will.WillTranslate3d
-import org.scalajs.dom.{TouchEvent, MouseEvent}
-import org.scalajs.dom.raw.HTMLDivElement
+import org.scalajs.dom.{MouseEvent, TouchEvent}
 
 /**
  * Suggest.io
@@ -49,14 +48,15 @@ object FCarousel extends FindDiv {
 }
 
 
-import FCarousel.indexToLeftPx
+import FCarousel.{indexToLeftPx, Dom_t}
 
 
 /** Логика работы карусели живёт в этом трейте. */
 trait FCarouselT extends VmT with CssSzImplicits with StyleWidth with StyleLeft with ClearT
-with IInitLayout with WillTranslate3d with OnMouseClickT with OnEventToScFsmUtilT with IReset {
+with IInitLayout with WillTranslate3d with OnMouseClickT with OnEventToScFsmUtilT with IReset
+with ChildrenVms {
 
-  override type T = HTMLDivElement
+  override type T = Dom_t
 
   def isEmpty: Boolean = {
     _underlying.firstChild == null
@@ -110,11 +110,12 @@ with IInitLayout with WillTranslate3d with OnMouseClickT with OnEventToScFsmUtil
     animateToX(x, browser)
   }
 
+
+  override type ChildVm_t = FAdRoot
+  override protected def _childVmStatic = FAdRoot
+
   /** Итератор уже имеющихся ячеек карусели. */
-  def cellsIter: Iterator[FAdRoot] = {
-    DomListIterator( _underlying.children )
-      .map { v => FAdRoot( v.asInstanceOf[HTMLDivElement] ) }
-  }
+  def cellsIter = _childrenVms
 
   override def initLayout(): Unit = {
     // Вешаем mouse-события, если это не-TOUCH девайс. Иначе тыканье на touch-девайсе в focused-выдаче будет превращаться в клики.
@@ -134,6 +135,6 @@ with IInitLayout with WillTranslate3d with OnMouseClickT with OnEventToScFsmUtil
 
 /** Дефолтовая реалиция vm карусели. */
 case class FCarousel(
-  override val _underlying: HTMLDivElement
+  override val _underlying: Dom_t
 )
   extends FCarouselT

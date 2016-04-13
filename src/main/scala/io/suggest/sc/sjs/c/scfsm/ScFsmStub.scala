@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.c.scfsm
 
 import io.suggest.fsm.StateData
+import io.suggest.sc.sjs.c.mapbox.MbFsm
 import io.suggest.sc.sjs.m.mfsm.signals.KbdKeyUp
 import io.suggest.sc.sjs.m.mgeo.{IGeoErrorSignal, IGeoLocSignal}
 import io.suggest.sc.sjs.m.msc.fsm.MStData
@@ -27,7 +28,12 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm {
     def _onKbdKeyUp(event: KeyboardEvent): Unit = {}
 
     /** Реакция на получение данных геолокации. */
-    def _geoLocReceived(gs: IGeoLocSignal): Unit = {}
+    def _geoLocReceived(gs: IGeoLocSignal): Unit = {
+      // Отправить в MbFsm уведомление о наличии геолокации.
+      // TODO Не отправлять сигнал, если в состоянии уже такая геопозиция, и сигнал не несёт для системы какой-либо полезной нагрузки.
+      MbFsm ! gs
+    }
+
     /** Реакция на получение ошибки получения геолокация. */
     def _geoLocErrorReceived(ge: IGeoErrorSignal): Unit = {
       val e = ge.error

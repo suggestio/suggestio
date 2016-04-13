@@ -6,8 +6,10 @@ import io.suggest.sjs.common.model.browser.IBrowser
 import io.suggest.sjs.common.vm.content.{ApplyFromOuterHtml, GetInnerHtml, OuterHtml}
 import io.suggest.sjs.common.vm.VmT
 import io.suggest.sjs.common.vm.find.FindElIndexedIdT
-import io.suggest.sjs.common.vm.style.{StyleWidth, StyleLeft, StylePosition}
-import org.scalajs.dom.raw.HTMLDivElement
+import io.suggest.sjs.common.vm.of.OfDiv
+import io.suggest.sjs.common.vm.style.{StyleLeft, StylePosition, StyleWidth}
+import io.suggest.sjs.common.vm.util.OfHtmlElDomIdRelated
+import org.scalajs.dom.raw.{HTMLDivElement, HTMLElement}
 
 /**
  * Suggest.io
@@ -18,7 +20,7 @@ import org.scalajs.dom.raw.HTMLDivElement
  * Создаётся как контейнер, позиционируется, заполняется контентом, прицепляется к focused-карусели.
  */
 
-object FAdRoot extends FindElIndexedIdT with FAdStatic with ApplyFromOuterHtml {
+object FAdRoot extends FindElIndexedIdT with FAdStatic with ApplyFromOuterHtml with OfDiv with OfHtmlElDomIdRelated {
 
   override type T = FAdRoot
 

@@ -106,6 +106,7 @@ trait GeoInit extends ScFsmStub {
     /** Реакция на получение данных геолокации: нужно перейти в состояние ожидания готовности js-роутера. */
     override def _geoLocReceived(gs: IGeoLocSignal): Unit = {
       super._geoLocReceived(gs)
+      // перейти в состояние ожидания готовности js-роутера, сохранив геолокацию в состояние.
       val sd0 = _stateData
       val sd1 = sd0.copy(
         geo = sd0.geo.copy(

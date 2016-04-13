@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.m.mmap
 
+import io.suggest.sjs.common.fsm.IFsmMsg
 import io.suggest.sjs.mapbox.gl.map.GlMap
 
 /**
@@ -8,10 +9,10 @@ import io.suggest.sjs.mapbox.gl.map.GlMap
   * Created: 12.04.16 19:13
   * Description: Модель состояния FSM, обслуживающего карту выдачи.
   * @param glmap Инстанс мапы.
-  * @param ensure Если требование инициализации карты пришло слишком рано или совсем невовремя, то оно попадает сюда
-  *               для дальнейшей обработки в последующих состояниях.
+  * @param early Аккамулятор сообщений, пришедших невовремя И которые должны быть отработаны
+  *              следующим состоянием.
   */
 case class MbFsmSd(
   glmap   : Option[GlMap]       = None,
-  ensure  : Option[EnsureMap]   = None
+  early   : List[IFsmMsg]       = Nil
 )
