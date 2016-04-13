@@ -14,7 +14,6 @@ import org.apache.lucene.analysis.util.CharArraySet
 import java.util
 import scala.collection.JavaConversions._
 import scala.util.parsing.combinator.JavaTokenParsers
-import parsers._
 import io.suggest.an.ReplaceMischarsAnalyzer
 import io.suggest.util.MyConfig.CONFIG
 
@@ -69,16 +68,6 @@ object YmStringsAnalyzer extends JavaTokenParsers {
 
 
 import YmStringsAnalyzer._
-
-/** thread-local class для маломусорной lucene-нормализации коротких строчек. */
-class YmStringsAnalyzer
-extends Analyzer(Analyzer.GLOBAL_REUSE_STRATEGY)
-// статически-вкомпиленные плагины добавляются тут:
-with TextNormalizerAn
-with NormTokensOutAn
-with ParamNameParserAn
-with MassUnitParserAn
-with YmStringAnalyzerT
 
 
 /** Трейт с переопределяемыми методами сборки привычного YmString-анализатора. */

@@ -20,7 +20,7 @@ resolvers ++= Seq(
 
 libraryDependencies ++= {
   val slf4jVsn      = "1.7.+"
-  val esVsn         = "1.7.2"
+  val esVsn         = "1.7.2"  // TODO "2.0.2"
   val akkaVsn       = "2.4.+"
   val tikaVsn       = "1.7"
   val cascadingVsn  = "2.6.3"

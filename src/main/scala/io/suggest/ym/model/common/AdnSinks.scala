@@ -4,8 +4,6 @@ import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.model.menum.EnumJsonReadsValT
 import io.suggest.model.sc.common.SlNameTokenStr
 
-import scala.collection.immutable.SortedSet
-
 /** Выходы узла для отображения рекламных карточек. */
 object AdnSinks extends EnumMaybeWithName with EnumJsonReadsValT {
 

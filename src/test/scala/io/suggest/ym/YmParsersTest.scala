@@ -1,9 +1,7 @@
 package io.suggest.ym
 
 import org.scalatest._
-import YmParsers._
 import org.joda.time._
-import model._
 
 /**
  * Suggest.io
@@ -13,16 +11,11 @@ import model._
  */
 class YmParsersTest extends FlatSpec with Matchers {
 
-  private def getF[T](p: Parser[T]): String => T = {s: String => parseAll(p, s).get }
+  private lazy val parsers = new YmParsers
 
-  "DIMENSIONS_PARSER" should "parse different dimensions" in {
-    val f = getF(DIMENSIONS_PARSER)
-    f("207/23/54")          shouldBe Dimensions(207.0F, 23.0F, 54.0F)
-    f("2000/100/200")       shouldBe Dimensions(2000, 100, 200)
-    f("20000/1500/600")     shouldBe Dimensions(20000, 1500, 600)
-    f("\t\t200/150/150 ")   shouldBe Dimensions(200, 150, 150)
-    f(" 200 / 150 / 150 ")  shouldBe Dimensions(200, 150, 150)
-  }
+  import parsers._
+
+  private def getF[T](p: Parser[T]): String => T = {s: String => parseAll(p, s).get }
 
 
   "ISO_PERIOD_DATE_PARSER" should "parse ISO 8601 period date parts" in {
@@ -85,13 +78,6 @@ class YmParsersTest extends FlatSpec with Matchers {
     f("ДА")         shouldBe true
   }
 
-  "WARRANTY_PARSER" should "parse warranty value in different formats" in {
-    val f = getF(WARRANTY_PARSER)
-    f("true")  shouldBe WarrantyNoPeriod
-    f("FALSE") shouldBe NoWarranty
-    f("P2Y")   shouldBe HasWarranty(new Period().withYears(2))
-  }
-
   "NUMERIC_DATE_PARSER" should "parse dates in different formats" in {
     val f = getF(NUMERIC_DATE_PARSER)
     f("2014/10/10") shouldBe new LocalDate(2014, 10, 10)
@@ -116,69 +102,6 @@ class YmParsersTest extends FlatSpec with Matchers {
     f("20130225T120314")     shouldBe new DateTime(2013, 2, 25, 12, 3, 14, 0)
     // TODO Сравниваем через toString: Почему-то DateTime не совпадают 1:1 при указании любой timezone. Возможно, где-то есть скрытая ошибка.
     f("2013-02-25 12:03:14+04:00").toString() shouldBe new DateTime(2013, 2, 25, 12, 3, 14, 0, DateTimeZone.forOffsetHours(4)).toString()
-  }
-
-  "RECORDING_LEN_PARSER" should "parse mm.ss duration" in {
-    val f = getF(RECORDING_LEN_PARSER)
-    f("60.00") shouldBe new Period().withMinutes(60)
-    f("90.15") shouldBe new Period().withMinutes(90).withSeconds(15)
-  }
-
-
-  "MEAL_TYPE_PARSER" should "parse hotel meal types in different formats" in {
-    val f = getF(HOTEL_MEAL_PARSER)
-    import HotelMealTypes._
-    f("HB+")                  shouldEqual ExHB
-    f("all inclusive ultra")  shouldEqual UAI
-    f("all inclusive")        shouldEqual AI
-    f("UAL")                  shouldEqual UAI
-    f("HCAI")                 shouldEqual HCAL
-    f("ALL INCLUDED ULTRO")   shouldEqual UAI
-    f("RO")                   shouldEqual OB
-    f("OB")                   shouldEqual OB
-    f("FB+")                  shouldEqual ExFB
-    f("ALL included HI- CLASs") shouldEqual HCAL
-    f("ExtFB")                shouldEqual ExFB
-    f("ExFB")                 shouldEqual ExFB
-    f("FB extended")          shouldEqual ExFB
-    f("FB")                   shouldEqual FB
-    f("full board")           shouldEqual FB
-    f("bad & breakfast")      shouldEqual BB
-    f("miniAI")               shouldEqual MiniAI
-    f("miniALL")              shouldEqual MiniAI
-    f("ALL mini")             shouldEqual MiniAI
-    f("mini ALL included")    shouldEqual MiniAI
-    f("всё включено")         shouldEqual AI
-    f("ALL INCLUDED")         shouldEqual AI
-    f("ALL IN")               shouldEqual AI
-    f("ALL-IN")               shouldEqual AI
-    f("ALL-IN ULTRA")         shouldEqual UAI
-    f("All")                  shouldEqual AI
-    f("AI")                   shouldEqual AI
-  }
-
-
-  "HOTEL_ROOM_PARSER" should "parse hotel room specs of different configurations" in {
-    val f = getF(HOTEL_ROOM_PARSER)
-    import HotelRoomTypes._
-    f("SGL")                  shouldEqual HotelRoomInfo(SGL)
-    f("Dbl+2CHild")           shouldEqual HotelRoomInfo(DBL, childrenCnt = 2)
-    f("DBL + 2Chld")          shouldEqual HotelRoomInfo(DBL, childrenCnt = 2)
-    f("Double + 2 children")  shouldEqual HotelRoomInfo(DBL, childrenCnt = 2)
-    f("Triple + ExBed")       shouldEqual HotelRoomInfo(TRPL, exBedCnt = 1)
-    f("QDPL+Chld")            shouldEqual HotelRoomInfo(QDPL, childrenCnt = 1)
-  }
-
-
-  "HOTEL_STARS_PARSER" should "parse hotel starring" in {
-    val f = getF(HOTEL_STARS_PARSER)
-    import HotelStarsLevels._
-    f("***")  shouldEqual S3
-    f("hv-1") shouldEqual HV1
-    f("HV2")  shouldEqual HV2
-    f("*1")   shouldEqual S1
-    f("1*")   shouldEqual S1
-    f("4 *")  shouldEqual S4
   }
 
 }
