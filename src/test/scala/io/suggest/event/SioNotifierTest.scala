@@ -7,7 +7,7 @@ import SioNotifier._
 import akka.pattern.ask
 import scala.concurrent.duration._
 import akka.util.Timeout
-import scala.concurrent.{ExecutionContext, Await}
+import scala.concurrent.Await
 import io.suggest.util.Logs
 import io.suggest.event.subscriber.SnActorRefSubscriber
 import scala.concurrent.ExecutionContext.global
@@ -34,7 +34,7 @@ class SioNotifierTest extends FlatSpec with ShouldMatchers with Logs {
     implicit val asys = ActorSystem.create("SioNotifierTestSys")
     val snClient = new SioNotifierStaticActorSelection {
       def supPath: ActorPath = (asys / actorName).parent
-      implicit def SN_ASK_TIMEOUT: Timeout = 1 seconds
+      implicit def SN_ASK_TIMEOUT: Timeout = 1.seconds
       protected def getSystem: ActorSystem = asys
 
       def startLink(arf: ActorRefFactory): ActorRef = {
@@ -151,7 +151,7 @@ class SioNotifierTest extends FlatSpec with ShouldMatchers with Logs {
 
     } finally {
       // Остановить всех акторов после тестов
-      fixture.asys.shutdown()
+      fixture.asys.terminate()
     }
   }
 

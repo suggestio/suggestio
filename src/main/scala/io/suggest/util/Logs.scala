@@ -1,9 +1,6 @@
 package io.suggest.util
 
 import org.slf4j.LoggerFactory
-import cascading.operation.{OperationCall, Operation}
-import cascading.flow.FlowProcess
-import com.typesafe.scalalogging.slf4j.{Logger => MacroLogger}
 
 /**
  * Suggest.io
@@ -125,19 +122,3 @@ class LogsImpl(className: String) extends LogsAbstract {
   def isWarnEnabled  = _LOGGER.isWarnEnabled
   def isErrorEnabled = _LOGGER.isErrorEnabled
 }
-
-
-/** Если нужно добавить MacroLogger в Cascading Operation, то можно использовать этот трейт. */
-trait CascadingMacroLoggerOp[Context] extends Operation[Context] {
-  var LOGGER: MacroLogger = null
-
-  abstract override def prepare(flowProcess: FlowProcess[_], operationCall: OperationCall[Context]) {
-    super.prepare(flowProcess, operationCall)
-    synchronized {
-      if (LOGGER == null) {
-        LOGGER = MacroLogger(LoggerFactory.getLogger(getClass))
-      }
-    }
-  }
-}
-
