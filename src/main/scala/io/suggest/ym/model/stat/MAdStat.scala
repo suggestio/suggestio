@@ -1,29 +1,30 @@
 package io.suggest.ym.model.stat
 
 import java.text.SimpleDateFormat
-
-import com.sun.org.glassfish.gmbal.{Description, Impact, ManagedOperation}
-import io.suggest.model.es._
-import EsModelUtil._
-import io.suggest.model.geo.GeoPoint
-import org.elasticsearch.action.index.IndexRequestBuilder
-import org.elasticsearch.search.sort.SortOrder
-import org.joda.time.{DateTimeZone, DateTime}
-import org.elasticsearch.common.joda.time.{DateTime => EsDateTime}
-import com.fasterxml.jackson.annotation.JsonIgnore
-import io.suggest.util.SioEsUtil._
-import io.suggest.util.MyConfig.CONFIG
-import scala.concurrent.duration.FiniteDuration
-import scala.concurrent.{Future, ExecutionContext}
-import org.elasticsearch.client.Client
-import org.elasticsearch.index.query.{QueryBuilder, FilterBuilders, QueryBuilders}
-import org.elasticsearch.search.aggregations.AggregationBuilders
-import scala.collection.JavaConversions._
-import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogram
-import io.suggest.event.SioNotifierStaticClientI
-import play.api.libs.json.{JsBoolean, JsNumber, JsArray, JsString}
-import io.suggest.util.MacroLogsImpl
 import java.{lang => jl}
+
+import com.fasterxml.jackson.annotation.JsonIgnore
+import com.sun.org.glassfish.gmbal.{Description, Impact, ManagedOperation}
+import io.suggest.event.SioNotifierStaticClientI
+import io.suggest.model.es.EsModelUtil._
+import io.suggest.model.es._
+import io.suggest.model.geo.GeoPoint
+import io.suggest.util.MacroLogsImpl
+import io.suggest.util.MyConfig.CONFIG
+import io.suggest.util.SioEsUtil._
+import org.elasticsearch.action.index.IndexRequestBuilder
+import org.elasticsearch.client.Client
+import org.elasticsearch.common.joda.time.{DateTime => EsDateTime}
+import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
+import org.elasticsearch.search.aggregations.AggregationBuilders
+import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogram
+import org.elasticsearch.search.sort.SortOrder
+import org.joda.time.{DateTime, DateTimeZone}
+import play.api.libs.json._
+
+import scala.collection.JavaConversions._
+import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -83,7 +84,8 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
 
   /**
    * Генерим данные для date-гистограммы. Данные эти можно обратить в столбчатую диаграмму или соответствующий график.
-   * @param adOwnerIdOpt Возможный id владельца рекламных карточек.
+    *
+    * @param adOwnerIdOpt Возможный id владельца рекламных карточек.
    * @param interval Интервал значений дат.
    * @param actionOpt Возможный id stat-экшена.
    * @param withZeroes Возвращать ли нулевые столбцы? По умолчанию - да.
@@ -179,7 +181,8 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
 
   /**
    * Десериализация одного элементам модели.
-   * @param id id документа.
+    *
+    * @param id id документа.
    * @param m Карта, распарсенное json-тело документа.
    * @return Экземпляр модели.
    */
@@ -232,7 +235,9 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
 
   /** Маппинги для типа этой модели. */
   override def generateMappingProps: List[DocField] = {
-    import FieldIndexingVariants._, GeoPointFieldDataFormats._, DocFieldTypes._
+    import DocFieldTypes._
+    import FieldIndexingVariants._
+    import GeoPointFieldDataFormats._
     List(
       FieldString(CLIENT_ADDR_ESFN, index = analyzed, include_in_all = true),
       FieldString(ACTION_ESFN, index = not_analyzed, include_in_all = false),
@@ -269,7 +274,7 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
 }
 
 
-import MAdStat._
+import io.suggest.ym.model.stat.MAdStat._
 
 
 final class MAdStat(

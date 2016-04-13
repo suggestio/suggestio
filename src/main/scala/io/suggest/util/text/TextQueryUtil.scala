@@ -13,8 +13,8 @@ import org.elasticsearch.common.unit.Fuzziness
 object TextQueryUtil {
 
   // Регэксп разбиения строки перед последним словом.
-  val splitLastWordRe = "\\s+(?=\\S*+$)".r
-  val endsWithSpace = "\\s$".r.pattern
+  def splitLastWordRe = "\\s+(?=\\S*+$)".r
+  def endsWithSpace = "\\s$".r.pattern
 
 
   def splitQueryStr(queryStr:String) : Option[(String, String)] = {
