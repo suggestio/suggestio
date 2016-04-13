@@ -16,6 +16,7 @@ JsEngineKeys.engineType := JsEngineKeys.EngineType.Node
 //updateOptions := updateOptions.value.withCachedResolution(true)
 
 libraryDependencies ++= {
+ val tikaVsn       = "1.12"
  Seq(
   jdbc exclude("com.h2database", "h2"),
   "com.typesafe.play" %% "anorm" % "2.5.0",
@@ -77,6 +78,17 @@ libraryDependencies ++= {
   Common.ORG %% "securesocial" % "3.4.0sio-SNAPSHOT"
     exclude("commons-logging", "commons-logging")
     exclude("org.w3c.css", "sac")
+  ,
+  // Parsers
+  "org.apache.tika" % "tika-core" % tikaVsn,
+  "org.apache.tika" % "tika-parsers" % tikaVsn
+    exclude("xerces", "xercesImpl")
+    exclude("org.bouncycastle", "bcmail-jdk15") // не нужно нам вскрывать зашифрованные архивы и pdf'ки.
+    exclude("org.bouncycastle", "bcprov-jdk15")
+    exclude("org.ow2.asm", "asm-debug-all")
+    exclude("edu.ucar", "netcdf")
+    exclude("commons-logging", "commons-logging")
+    exclude("de.l3s.boilerpipe", "boilerpipe")
   ,
   // спаривание guice и акторов требует танцев вприсядку
   //"net.codingwell" %% "scala-guice" % "4.0.0",
