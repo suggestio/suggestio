@@ -1,8 +1,8 @@
 package io.suggest.sjs.mapbox.gl.style
 
 import io.suggest.sjs.common.model.FromDict
-import io.suggest.sjs.mapbox.gl.layer.ILayer
-import io.suggest.sjs.mapbox.gl.style.source.Source
+import io.suggest.sjs.mapbox.gl.layer.Layer
+import io.suggest.sjs.mapbox.gl.source.{SourceDescr, SourceDescr$}
 import io.suggest.sjs.mapbox.gl.{Bearing_t, Pitch_t, Zoom_t}
 
 import scala.scalajs.js
@@ -14,6 +14,7 @@ import scala.scalajs.js.annotation.JSName
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 12.04.16 14:00
   * Description: MapBox style model API.
+ *
   * @see [[https://www.mapbox.com/mapbox-gl-style-spec]]
   */
 object Style extends FromDict {
@@ -36,7 +37,7 @@ trait Style extends js.Object {
 
   var pitch: UndefOr[Pitch_t] = js.native
 
-  var sources: js.Dictionary[Source] = js.native
+  var sources: js.Dictionary[SourceDescr] = js.native
 
   var sprite: UndefOr[String] = js.native
 
@@ -44,6 +45,6 @@ trait Style extends js.Object {
 
   var transition: UndefOr[Transition] = js.native
 
-  var layers: UndefOr[js.Array[ILayer]] = js.native
+  var layers: UndefOr[js.Array[Layer]] = js.native
 
 }

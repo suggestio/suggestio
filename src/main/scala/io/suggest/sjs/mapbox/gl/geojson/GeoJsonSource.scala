@@ -1,21 +1,24 @@
 package io.suggest.sjs.mapbox.gl.geojson
 
-import io.suggest.sjs.mapbox.gl.style.source.Source
+import io.suggest.sjs.common.geo.json.GjType
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSName
-import scala.scalajs.js.|
 
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
-  * Created: 12.04.16 15:49
-  * Description:
+  * Created: 13.04.16 22:17
+  * Description: GeoJSON source APIs.
   */
+
 @js.native
 @JSName("mapboxgl.GeoJSONSource")
-class GeoJSONSource(options: GjOptions) extends Source {
+class GeoJsonSource(options: GeoJsonSourceDescr) extends js.Object {
 
-  def setData(data: js.Object | String): this.type = js.native
+  def setData(data: GjType): this.type = js.native
 
 }
+
+
+

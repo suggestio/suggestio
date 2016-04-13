@@ -13,6 +13,6 @@ import scala.scalajs.js
 @js.native
 class LayerFeature extends GjFeature {
 
-  var layer: ILayer = js.native
+  var layer: Layer = js.native
 
 }

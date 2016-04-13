@@ -1,6 +1,7 @@
 package io.suggest.sjs.mapbox.gl.style
 
 import io.suggest.sjs.mapbox.gl.Zoom_t
+import io.suggest.sjs.mapbox.gl.source.SourceDescr
 
 import scala.scalajs.js
 

@@ -14,4 +14,6 @@ package object gl {
 
   type Pitch_t   = Double
 
+  type Color_t   = String
+
 }

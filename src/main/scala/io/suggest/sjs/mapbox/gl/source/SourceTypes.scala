@@ -1,4 +1,4 @@
-package io.suggest.sjs.mapbox.gl.style.source
+package io.suggest.sjs.mapbox.gl.source
 
 /**
   * Suggest.io
