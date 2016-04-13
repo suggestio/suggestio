@@ -376,11 +376,12 @@ object FormUtil {
 
   /** ISO-период в виде стандартной строки P1Y3M... */
   def isoPeriodM: Mapping[Period] = {
-    import YmParsers.{ISO_PERIOD_PARSER, parse}
+    val parsers = new YmParsers
+    val p = parsers.ISO_PERIOD_PARSER
     val formatter = ISOPeriodFormat.standard()
     text(minLength = 3, maxLength = 64)
       .transform[Option[Period]](
-        { str => Option(parse(ISO_PERIOD_PARSER, str).getOrElse(null)) },
+        { str => Option(parsers.parse(p, str).getOrElse(null)) },
         { case Some(period) => period.toString(formatter)
           case None => "" }
       )
