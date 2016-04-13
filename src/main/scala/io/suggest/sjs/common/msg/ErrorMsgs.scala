@@ -45,4 +45,6 @@ object ErrorMsgs extends MsgsStaticT {
 
   def NOT_A_GEO_JSON_FEATURE_GROUP = E(17)
 
+  def QUEUE_OVERLOADED             = E(18)
+
 }
