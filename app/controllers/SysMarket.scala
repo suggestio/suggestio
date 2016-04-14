@@ -726,10 +726,14 @@ class SysMarket @Inject() (
 
     // Достаём из кэша узлы.
     val nodesMapFut: Future[Map[String, MNode]] = {
-      def _nodeIds(rcvrs: Receivers_t) = {
-        rcvrs.valuesIterator
-          .map(_.nodeIds)
-          .reduceLeft(_ ++ _)
+      def _nodeIds(rcvrs: Receivers_t): Set[String] = {
+        if (rcvrs.nonEmpty) {
+          rcvrs.valuesIterator
+            .map(_.nodeIds)
+            .reduceLeft(_ ++ _)
+        } else {
+          Set.empty
+        }
       }
       val adnIds1 = _nodeIds(rcvrsMap)
       for {
