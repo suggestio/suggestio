@@ -2,6 +2,7 @@ package io.suggest.sc.sjs.m.mgeo
 
 import io.suggest.geo.IGeoPoint
 import io.suggest.sjs.common.geo.json.{GjGeometry, GjTypes}
+import io.suggest.sjs.mapbox.gl.ll.LngLat
 import org.scalajs.dom.Coordinates
 
 import scala.scalajs.js
@@ -19,6 +20,13 @@ object MGeoPoint {
     apply(
       lat = domCoords.latitude,
       lon = domCoords.longitude
+    )
+  }
+
+  def apply(lngLat: LngLat): MGeoPoint = {
+    apply(
+      lat = lngLat.lat,
+      lon = lngLat.lng
     )
   }
 

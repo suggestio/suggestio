@@ -2,6 +2,7 @@ package io.suggest.sc.sjs.c.mapbox
 
 import io.suggest.sc.sjs.m.mgeo.IGeoLocSignal
 import io.suggest.sc.sjs.vm.mapbox.GlMapVm
+import io.suggest.sjs.mapbox.gl.event.IMapMoveSignal
 
 /**
   * Suggest.io
@@ -11,8 +12,7 @@ import io.suggest.sc.sjs.vm.mapbox.GlMapVm
   */
 trait MapReady extends StoreUserGeoLoc {
 
-  /** Трейт состояния готовности к работе. */
-  trait MapReadyStateT extends StoreUserGeoLocStateT {
+  trait StoreUpdateUserGeoLocStateT extends StoreUserGeoLocStateT {
 
     /** Реакция на получение данных геолокации текущего юзера. */
     override def _handleUserGeoLoc(userGeoLoc: IGeoLocSignal): Unit = {
@@ -23,6 +23,19 @@ trait MapReady extends StoreUserGeoLoc {
           .setUserGeoLoc(userGeoLoc.data)
       }
     }
+
+  }
+
+
+  /** Трейт состояния готовности к работе. */
+  trait MapReadyStateT extends StoreUpdateUserGeoLocStateT {
+
+    override def receiverPart: Receive = super.receiverPart.orElse {
+      case mapDragSignal: IMapMoveSignal =>
+        become(mapDraggingState)
+    }
+
+    def mapDraggingState: FsmState
 
   }
 

@@ -14,9 +14,10 @@ import io.suggest.sjs.common.util.SjsLogger
   */
 object MbFsm
   extends AwaitMbglJs
-  with MbgljsReady
+  with JsInitializing
   with MapInitializing
   with MapReady
+  with OnMove
   with SjsLogger
 {
 
@@ -35,11 +36,11 @@ object MbFsm
   // -- states impl
   /** Состояние ожидания и начальной инициализации карты. */
   class AwaitMbglJsState extends AwaitMbglJsStateT {
-    override def jsReadyState = new MbgljsReadyState
+    override def jsReadyState = new JsInitializingState
   }
 
   /** Статическая js-поддержка карты инициализирована. */
-  class MbgljsReadyState extends MbgljsReadyStateT {
+  class JsInitializingState extends JsInitializingStateT {
     override def _mapInitializingState = new MapInitializingState
   }
 
@@ -49,6 +50,14 @@ object MbFsm
   }
 
   /** Карта инициализирована. */
-  class MapReadyState extends MapReadyStateT
+  class MapReadyState extends MapReadyStateT {
+    override def mapDraggingState = new OnDragState
+  }
+
+  /** Юзер таскает карту. */
+  class OnDragState extends OnDragStateT {
+    // TODO Нужно состояние подтверждения переключения в новую локацию?
+    override def moveEndState = new MapReadyState
+  }
 
 }

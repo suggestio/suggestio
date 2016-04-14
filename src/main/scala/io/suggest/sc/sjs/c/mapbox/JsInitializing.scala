@@ -9,15 +9,13 @@ import io.suggest.sjs.common.msg.WarnMsgs
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 12.04.16 22:12
-  * Description: FSM-аддон для состояния готовности js к работе.
+  * Description: FSM-аддон для состояния оценки готовности mapbox-gl.js к работе.
   */
 
-// TODO Распилить состояние на несколько: js ужеготов, карта инициализируется, карта инициализирована.
-
-trait MbgljsReady extends StoreUserGeoLoc {
+trait JsInitializing extends StoreUserGeoLoc {
 
   /** Трейт для сборки состояния готовности mapbox-gl.js к работе на странице. */
-  trait MbgljsReadyStateT extends StoreUserGeoLocStateT {
+  trait JsInitializingStateT extends StoreUserGeoLocStateT {
 
     override def afterBecome(): Unit = {
       super.afterBecome()

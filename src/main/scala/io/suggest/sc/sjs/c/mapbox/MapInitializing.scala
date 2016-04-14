@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.c.mapbox
 
 import io.suggest.sc.sjs.vm.mapbox.GlMapVm
-import io.suggest.sjs.mapbox.gl.event.MapEventsTypes
+import io.suggest.sjs.mapbox.gl.event._
 
 /**
   * Suggest.io
@@ -14,24 +14,31 @@ trait MapInitializing extends StoreUserGeoLoc {
   /** Трейт для сборки состояния ожидания инициализации карты. */
   trait MapInitializingStateT extends StoreUserGeoLocStateT {
 
-    case object MapInitDone
+    /** Внутренний сигнал самому себе о завершении инициализации карты. */
+
+    private lazy val vm = GlMapVm( _stateData.glmap.get )
 
     override def afterBecome(): Unit = {
       super.afterBecome()
       // Повесить событие ожидания инициализации карты.
-      val glmap = GlMapVm( _stateData.glmap.get )
-      glmap.on( MapEventsTypes.STYLE_LOADED ) { ed =>
-        _sendEventSync(MapInitDone)
-      }
+      vm.on( MapEventsTypes.STYLE_LOADED )(_mapSignalCallbackF(MapInitDone))
     }
 
     override def receiverPart: Receive = super.receiverPart.orElse {
-      case MapInitDone =>
+      case _: MapInitDone =>
         _handleMapInitDone()
     }
 
     /** Реакция на окончание инициализации на стороне карты. */
     def _handleMapInitDone(): Unit = {
+      vm.glMap.off(MapEventsTypes.STYLE_LOADED)
+
+      // Надо повесить listener'ы событий на карту
+      vm.on( MapEventsTypes.MOVE_START )(_mapSignalCallbackF(MoveStart))
+      vm.on( MapEventsTypes.MOVE )(_mapSignalCallbackF(Moving))
+      vm.on( MapEventsTypes.MOVE_END )(_mapSignalCallbackF(MoveEnd))
+
+      // Переключить состояния
       become(mapReadyState)
     }
 
