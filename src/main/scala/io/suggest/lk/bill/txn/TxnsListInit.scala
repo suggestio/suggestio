@@ -1,9 +1,8 @@
 package io.suggest.lk.bill.txn
 
 import io.suggest.lk.router.jsRoutes
-import org.scalajs.dom
 import io.suggest.bill.TxnsListConstants._
-import io.suggest.sjs.common.controller.{IInit, InitRouter}
+import io.suggest.sjs.common.controller.{DomQuick, IInit, InitRouter}
 import io.suggest.sjs.common.util.SjsLogger
 import org.scalajs.jquery.{JQueryAjaxSettings, JQueryEventObject, JQueryXHR, jQuery}
 
@@ -78,10 +77,9 @@ sealed class TxnList extends IInit with SjsLogger {
             // Больше нет транзакций на сервере, кнопка больше не нужна.
             val durationMs = 333
             btn.hide(durationMs)
-            dom.window.setTimeout(
-              {() => btn.remove()},
-              durationMs + 100
-            )
+            DomQuick.setTimeout(durationMs + 100) { () =>
+              btn.remove()
+            }
           }
         },
         "error" -> {(jqXHR: JQueryXHR, textStatus: String, errorThrow: String) =>

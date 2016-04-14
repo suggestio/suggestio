@@ -1,13 +1,13 @@
 package io.suggest.lk.flash
 
-import io.suggest.sjs.common.controller.InitRouter
-import io.suggest.sjs.common.util.{SjsLogger, SafeSyncVoid}
+import io.suggest.sjs.common.controller.{DomQuick, InitRouter}
+import io.suggest.sjs.common.util.{SafeSyncVoid, SjsLogger}
 import org.scalajs.dom
 import org.scalajs.dom.Element
 import org.scalajs.jquery._
 import io.suggest.flash.FlashConstants._
 
-import scala.concurrent.{Promise, Future}
+import scala.concurrent.{Future, Promise}
 // Используем queue для перемешивания функций асихронного отображения уведомлений.
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
@@ -83,14 +83,13 @@ class FlashInit extends SafeSyncVoid with SjsLogger {
       if (!closedP.isCompleted) {
         _closeBar(bar)
         // Анимации требуется некоторое время, чтобы завершиться, поэтому запускаем исполнения Promise'а в очередь.
-        dom.window.setTimeout(
-          {() => closedP success None},
-          SLIDE_DURATION_MS
-        )
+        DomQuick.setTimeout(SLIDE_DURATION_MS) { () =>
+          closedP.success(None)
+        }
       }
     }
     // Сворачивать при таймауте.
-    val timeoutId = dom.window.setTimeout(doClose, SHOW_TIMEOUT_MS)
+    val timeoutId = DomQuick.setTimeout(SHOW_TIMEOUT_MS)(doClose)
     // Сворачивать при клике.
     bar.click { (e: JQueryEventObject) =>
       dom.window.clearTimeout(timeoutId)

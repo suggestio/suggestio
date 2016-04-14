@@ -1,17 +1,17 @@
 package io.suggest.lk.popup
 
 import io.suggest.err.ErrorConstants
-import io.suggest.sjs.common.controller.InitRouter
+import io.suggest.sjs.common.controller.{DomQuick, InitRouter}
 import io.suggest.sjs.common.controller.jshidden.JsHidden
 import io.suggest.sjs.common.controller.vlines.VerticalLines
-import io.suggest.sjs.common.util.{TouchUtil, SjsLogger}
+import io.suggest.sjs.common.util.{SjsLogger, TouchUtil}
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import org.scalajs.dom
 import org.scalajs.dom.Element
-import org.scalajs.jquery.{JQueryEventObject, JQuery, jQuery}
+import org.scalajs.jquery.{JQuery, JQueryEventObject, jQuery}
 import io.suggest.popup.PopupConstants._
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 import scala.concurrent.Future
 import scala.scalajs.js.Any
 
@@ -250,7 +250,7 @@ object Popup extends SjsLogger {
           wnd.scrollTop(0)
         }
       }
-      dom.window.setTimeout(listener, 100)
+      DomQuick.setTimeout(100)(listener)
     })
   }
 
