@@ -6,6 +6,7 @@ import io.suggest.lk.tags.edit.m.signals._
 import io.suggest.lk.tags.edit.vm.add.ANameInput
 import io.suggest.lk.tags.edit.vm.exist.EDelete
 import io.suggest.lk.tags.edit.vm.search.hints.SContainer
+import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.model.Route
 import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.tags.search.{ITagSearchArgs, MTagSearchArgs, MTagSearchRespTs, MTagsSearch}
@@ -100,10 +101,9 @@ trait StandBy extends TagsEditFsmStub {
       } {
 
         val ts = System.currentTimeMillis()
-        val timerId = dom.window.setTimeout(
-          { () => _sendEventSyncSafe(StartSearchTimer(ts)) },
-          START_SEARCH_TIMER_MS
-        )
+        val timerId = DomQuick.setTimeout( START_SEARCH_TIMER_MS ) { () =>
+          _sendEventSyncSafe(StartSearchTimer(ts))
+        }
         _stateData = sd0.copy(
           startSearchTimerId = Some(timerId),
           startSearchTimerTs = Some(ts)
