@@ -23,7 +23,7 @@ object LngLat extends js.Object {
 
 @js.native
 @JSName("mapboxgl.LngLat")
-class LngLat(lng: Double, lat: Double) extends js.Object {
+class LngLat(val lng: Double, val lat: Double) extends js.Object {
 
   def toArray(): js.Array[Double] = js.native
 

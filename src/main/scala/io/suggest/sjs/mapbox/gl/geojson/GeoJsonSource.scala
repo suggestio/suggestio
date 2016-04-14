@@ -1,6 +1,6 @@
 package io.suggest.sjs.mapbox.gl.geojson
 
-import io.suggest.sjs.common.geo.json.GjType
+import io.suggest.sjs.common.geo.json.{GjFeature, GjType}
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSName
@@ -11,6 +11,25 @@ import scala.scalajs.js.annotation.JSName
   * Created: 13.04.16 22:17
   * Description: GeoJSON source APIs.
   */
+
+object GeoJsonSource {
+
+  /**
+    * Сборка тривиального инстанса слоя.
+    *
+    * @param data GeoJSON.
+    * @return [[GeoJsonSource]].
+    */
+  def gjSrc(data: GjType): GeoJsonSource = {
+    new GeoJsonSource(
+      GeoJsonSourceDescr(
+        data = data
+      )
+    )
+  }
+
+}
+
 
 @js.native
 @JSName("mapboxgl.GeoJSONSource")

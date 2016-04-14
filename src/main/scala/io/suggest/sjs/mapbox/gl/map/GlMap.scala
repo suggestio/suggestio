@@ -9,7 +9,6 @@ import io.suggest.sjs.mapbox.gl.event.{EventData, Evented}
 import io.suggest.sjs.mapbox.gl.layer.{Layer, LayerFeature}
 import io.suggest.sjs.mapbox.gl.ll.{LlbFitOptions, LngLat, LngLatBounds}
 import io.suggest.sjs.mapbox.gl.style.{Style, StyleBatch, StyleOptions}
-import io.suggest.sjs.mapbox.gl.source.SourceDescr$
 import org.scalajs.dom.raw.{HTMLCanvasElement, HTMLElement}
 
 import scala.scalajs.js
@@ -53,14 +52,14 @@ class GlMap(options: GlMapOptions) extends StyleBatch with Evented {
   def getContainer(): HTMLElement = js.native
 
   def getFilter(layerId: String): js.Array[js.Object] = js.native
-  def getLayer(layerId: String): Layer = js.native
-  def getLayoutProperty(layerId: String, propName: String, klass: String = js.native): js.Any = js.native
-  def getPaintProperty(layerId: String, propName: String, klass: String = js.native): js.Any = js.native
+  def getLayer(layerId: String): UndefOr[Layer] = js.native
+  def getLayoutProperty(layerId: String, propName: String, klass: String = js.native): UndefOr[js.Any] = js.native
+  def getPaintProperty(layerId: String, propName: String, klass: String = js.native): UndefOr[js.Any] = js.native
 
   def getPitch(): Pitch_t = js.native
 
   def getSource(id: String): UndefOr[js.Object] = js.native
-  def getStyle(): Style = js.native
+  def getStyle(): UndefOr[Style] = js.native
 
   def getZoom(): Zoom_t = js.native
 
