@@ -1,13 +1,14 @@
 package io.suggest.xadv.ext.js.runner.c.adp
 
+import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import io.suggest.xadv.ext.js.runner.c.IActionContext
-import io.suggest.xadv.ext.js.runner.m.ex.{UrlLoadTimeoutException, DomUpdateException, ApiInitException}
-import io.suggest.xadv.ext.js.runner.m.{MJsCtxT, IAdapter}
+import io.suggest.xadv.ext.js.runner.m.ex.{ApiInitException, DomUpdateException, UrlLoadTimeoutException}
+import io.suggest.xadv.ext.js.runner.m.{IAdapter, MJsCtxT}
 import org.scalajs.dom
 import org.scalajs.dom.Element
 
-import scala.concurrent.{ExecutionContext, Promise, Future}
+import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.scalajs.concurrent.JSExecutionContext.runNow
 
 /**
@@ -96,15 +97,12 @@ trait AsyncInitAdp extends IAdapter {
     }
     // Среагировать на слишком долгую загрузку скрипта таймаутом.
     val t = SCRIPT_LOAD_TIMEOUT_MS
-    dom.window.setTimeout(
-      {() =>
-        if (!scriptLoadP.isCompleted) {
-          p failure UrlLoadTimeoutException(SCRIPT_URL, t)
-          dom.console.error(getClass.getSimpleName + ": timeout %s ms occured during ensureReady() script inject", t)
-        }
-      },
-      t
-    )
+    DomQuick.setTimeout(SCRIPT_LOAD_TIMEOUT_MS) { () =>
+      if (!scriptLoadP.isCompleted) {
+        p failure UrlLoadTimeoutException(SCRIPT_URL, t)
+        dom.console.error(getClass.getSimpleName + ": timeout %s ms occured during ensureReady() script inject", t)
+      }
+    }
     p.future
   }
 
