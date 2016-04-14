@@ -1,9 +1,9 @@
 package io.suggest.sc.sjs.c.scfsm.foc
 
 import io.suggest.sc.sjs.c.scfsm.node.Index
-import io.suggest.sc.sjs.c.scfsm.{FindNearAdIds, FindAdsUtil}
-import io.suggest.sc.sjs.m.mfoc.{FAdShown, MFocSd, FocRootAppeared}
-import io.suggest.sc.sjs.m.msrv.foc.find.{MFocAd, MFocAds, MFocAdSearchEmpty}
+import io.suggest.sc.sjs.c.scfsm.{FindAdsUtil, FindNearAdIds}
+import io.suggest.sc.sjs.m.mfoc.{FAdShown, FocRootAppeared, MFocSd}
+import io.suggest.sc.sjs.m.msrv.foc.find.{MFocAd, MFocAdSearchEmpty, MFocAds}
 import io.suggest.sc.sjs.m.msrv.index.MNodeIndex
 import io.suggest.sc.sjs.vm.layout.FsLoader
 import io.suggest.sc.sjs.vm.res.FocusedRes
@@ -12,9 +12,11 @@ import io.suggest.sc.sjs.vm.foc.{FCarousel, FControls, FRoot}
 import io.suggest.sc.sjs.vm.grid.GBlock
 import io.suggest.sjs.common.msg.ErrorMsgs
 import org.scalajs.dom
+
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.util.Failure
 import io.suggest.sc.ScConstants.Focused.SLIDE_ANIMATE_MS
+import io.suggest.sjs.common.controller.DomQuick
 
 /**
  * Suggest.io
@@ -216,18 +218,14 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
 
     override def afterBecome(): Unit = {
       super.afterBecome()
-      dom.window.setTimeout(
-        {() =>
-          for (fRoot <- FRoot.find()) {
-            fRoot.appearTransition()
-          }
-          dom.window.setTimeout(
-            {() => _sendEvent(FocRootAppeared) },
-            SLIDE_ANIMATE_MS
-          )
-        },
-        20
-      )
+      DomQuick.setTimeout(20) { () =>
+        for (fRoot <- FRoot.find()) {
+          fRoot.appearTransition()
+        }
+        DomQuick.setTimeout(SLIDE_ANIMATE_MS) { () =>
+          _sendEvent(FocRootAppeared)
+        }
+      }
     }
 
     override def receiverPart: Receive = {

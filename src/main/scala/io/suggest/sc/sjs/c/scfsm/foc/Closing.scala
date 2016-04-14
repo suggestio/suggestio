@@ -5,6 +5,7 @@ import io.suggest.sc.sjs.m.mfoc.FocRootDisappeared
 import io.suggest.sc.sjs.vm.foc.FRoot
 import io.suggest.sc.ScConstants.Focused.SLIDE_ANIMATE_MS
 import io.suggest.sc.sjs.vm.res.FocusedRes
+import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.vm.content.ClearT
 import org.scalajs.dom
 
@@ -23,16 +24,14 @@ trait Closing extends MouseMoving {
       super.afterBecome()
       for (froot <- FRoot.find()) {
         froot.willAnimate()
-        dom.window.setTimeout(
-          {() =>
-            froot.disappearTransition()
-            dom.window.setTimeout(
-              { () => _sendEvent(FocRootDisappeared) },
-              SLIDE_ANIMATE_MS
-            )
-          },
-          5
-        )
+        // TODO timeout=5 заменить на Future{} или requestAnimationFrame?
+        DomQuick.setTimeout(5) { () =>
+          froot.disappearTransition()
+          dom.window.setTimeout(
+            { () => _sendEvent(FocRootDisappeared) },
+            SLIDE_ANIMATE_MS
+          )
+        }
       }
     }
 
@@ -44,13 +43,11 @@ trait Closing extends MouseMoving {
     /** Логика реакции на наступления сокрытости focused-выдачи. */
     protected def _disappeared(): Unit = {
       // В фоне надо очистить focused-верстку от мусора и освежить базовый каркас focused-выдачи.
-      dom.window.setTimeout(
-        {() =>
-          FRoot.find() foreach IReset.f
-          FocusedRes.find() foreach ClearT.f
-        },
-        10
-      )
+      DomQuick.setTimeout(10) { () =>
+        FRoot.find().foreach(IReset.f)
+        FocusedRes.find().foreach(ClearT.f)
+      }
+
       val sd1 = _stateData.copy(
         focused = None
       )

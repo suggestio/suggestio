@@ -4,13 +4,13 @@ import io.suggest.sc.sjs.m.mfoc._
 import io.suggest.sc.sjs.m.mfsm.touch.TouchStart
 import io.suggest.sc.sjs.m.mv.MTouchLock
 import io.suggest.sc.sjs.vm.foc.{FCarousel, FRoot}
-import io.suggest.sc.sjs.vm.foc.fad.{FAdWrapper, FArrow, FAdRoot}
+import io.suggest.sc.sjs.vm.foc.fad.{FAdRoot, FAdWrapper, FArrow}
 import io.suggest.sjs.common.geom.Coord2dD
 import io.suggest.sjs.common.model.{MHand, MHands}
 import io.suggest.sc.ScConstants.Focused.FAd.KBD_SCROLL_STEP_PX
+import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.util.TouchUtil
-import org.scalajs.dom
-import org.scalajs.dom.{TouchEvent, MouseEvent, KeyboardEvent}
+import org.scalajs.dom.{KeyboardEvent, MouseEvent, TouchEvent}
 import org.scalajs.dom.ext.KeyCode
 
 /**
@@ -144,10 +144,9 @@ trait OnFocusBase extends MouseMoving {
           val sd1 = sd0.withNodeSwitch( Some(adnId) )
           become(_onNodeSwitchState, sd1)
           // Скрыть текущую focused-выдачу в фоне. Глубокая чистка не требуется, т.к. layout будет полностью пересоздан.
-          dom.window.setTimeout(
-            { () => fRoot.disappearTransition() },
-            10
-          )
+          DomQuick.setTimeout(10) { () =>
+            fRoot.disappearTransition()
+          }
         }
       }
     }

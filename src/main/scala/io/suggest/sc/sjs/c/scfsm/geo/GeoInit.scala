@@ -34,7 +34,7 @@ trait GeoInit extends ScFsmStub {
     def isHighAccuracy: Boolean
 
     /** Сборщик положительных сигналов геолокации. */
-    def geoLocCompanion: IFsmMsgCompanion[Position]
+    def geoLocCompanion: IFsmMsgCompanion[MGeoLoc]
     /** Сборщик сигналов-ошибок геолокции. */
     def geoErrCompanion: IFsmMsgCompanion[PositionError]
 
@@ -72,7 +72,10 @@ trait GeoInit extends ScFsmStub {
         gl  <- nav.geolocation
       } yield {
         gl.watchPosition(
-          _signalCallbackF( geoLocCompanion ),
+          { pos: Position =>
+            // Сразу же заворачиваем данные из Position в неизменяемый объект, который можно спокойно хранить и передавать.
+            _sendEventSyncSafe( geoLocCompanion( MGeoLoc(pos) ) )
+          },
           _signalCallbackF( geoErrCompanion ),
           _posOptions
         )

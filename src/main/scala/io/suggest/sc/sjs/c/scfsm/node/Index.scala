@@ -11,6 +11,7 @@ import io.suggest.sc.sjs.vm.layout.LayRootVm
 import io.suggest.sc.sjs.vm.nav.nodelist.NlRoot
 import io.suggest.sc.sjs.vm.res.CommonRes
 import io.suggest.sc.sjs.vm.{SafeBody, SafeWnd}
+import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.msg.ErrorMsgs
 import org.scalajs.dom
 
@@ -140,11 +141,11 @@ trait Index extends ScFsmStub with FindAdsUtil {
         // Подготовить отображение карточки.
         wcRoot.initLayout(screen)
         wcRoot.willAnimate()
+
         // Запустить таймер сокрытия
-        dom.window.setTimeout(
-          { () => _sendEventSyncSafe( WcTimeout ) },
-          Welcome.HIDE_TIMEOUT_MS
-        )
+        DomQuick.setTimeout(Welcome.HIDE_TIMEOUT_MS) { () =>
+          _sendEventSyncSafe( WcTimeout )
+        }
       }
 
       for (lc <- lcOpt;  groot <- lc.grid) {

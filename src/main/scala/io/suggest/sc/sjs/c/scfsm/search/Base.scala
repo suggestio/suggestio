@@ -7,6 +7,7 @@ import io.suggest.sc.sjs.m.msearch._
 import io.suggest.sc.sjs.vm.hdr.HRoot
 import io.suggest.sc.sjs.vm.search.SRoot
 import io.suggest.sc.sjs.vm.search.fts.{SInput, SInputContainer}
+import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.util.ISjsLogger
 import org.scalajs.dom
@@ -162,10 +163,9 @@ trait Base extends OnGrid with ISjsLogger {
             dom.window.clearTimeout(timerId)
           }
           val gen2 = MFtsFsmState.getGeneration
-          val newTimerId = dom.window.setTimeout(
-            { () => _sendEvent( FtsStartRequestTimeout(gen2)) },
-            START_TIMEOUT_MS
-          )
+          val newTimerId = DomQuick.setTimeout(START_TIMEOUT_MS) { () =>
+            _sendEvent( FtsStartRequestTimeout(gen2))
+          }
 
           // Залить результаты работы в состояние FSM.
           val state2 = state0.copy(

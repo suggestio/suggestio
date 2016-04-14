@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.c
 
 import io.suggest.sc.sjs.m.mv.MTouchLock
+import io.suggest.sjs.common.controller.DomQuick
 import org.scalajs.dom
 import org.scalajs.dom.TouchEvent
 
@@ -18,10 +19,9 @@ object DocumentCtl {
   }
 
   def onTouchEnd(e: TouchEvent): Unit = {
-    dom.window.setTimeout(
-      { () => MTouchLock(false) },
-      100
-    )
+    DomQuick.setTimeout(100) { () =>
+      MTouchLock(false)
+    }
   }
 
   def onTouchCancel(e: TouchEvent): Unit = {

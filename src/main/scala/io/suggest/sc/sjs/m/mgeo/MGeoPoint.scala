@@ -1,7 +1,10 @@
 package io.suggest.sc.sjs.m.mgeo
 
 import io.suggest.geo.IGeoPoint
+import io.suggest.sjs.common.geo.json.{GjGeometry, GjTypes}
 import org.scalajs.dom.Coordinates
+
+import scala.scalajs.js
 
 /**
  * Suggest.io
@@ -26,3 +29,13 @@ case class MGeoPoint(
   override val lon: Double
 )
   extends IGeoPoint
+{
+
+  def toJsArray = js.Array[js.Any](lon, lat)
+
+  def toGjPoint = GjGeometry(
+    gtype       = GjTypes.Geom.POINT,
+    coordinates = toJsArray
+  )
+
+}

@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.c.scfsm.geo
 import io.suggest.sc.sjs.c.scfsm.ScFsmStub
 import io.suggest.sc.sjs.c.scfsm.node.Index
 import io.suggest.sc.sjs.m.mgeo.GeoTimeout
-import org.scalajs.dom
+import io.suggest.sjs.common.controller.DomQuick
 
 /**
  * Suggest.io
@@ -21,11 +21,12 @@ trait Timeout extends ScFsmStub with Index {
 
     override def afterBecome(): Unit = {
       super.afterBecome()
+
       // Запустить таймер
-      val timerId = dom.window.setTimeout(
-        {() => _sendEventSyncSafe( GeoTimeout ) },
-        GEO_TIMEOUT_MS
-      )
+      val timerId = DomQuick.setTimeout(GEO_TIMEOUT_MS) { () =>
+        _sendEventSyncSafe( GeoTimeout )
+
+      }
       // Сохранить id таймера в состояние.
       val sd0 = _stateData
       _stateData = sd0.copy(

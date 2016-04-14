@@ -21,6 +21,7 @@ case class MGeoLoc(
   timestamp   : Long
 )
 
+
 object MGeoLoc {
 
   def apply(pos: Position): MGeoLoc = {

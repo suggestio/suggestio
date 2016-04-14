@@ -1,7 +1,6 @@
 package io.suggest.sc.sjs.m.mgeo
 
-import io.suggest.sc.sjs.m.msrv.index.{MNodeIndex, MNodeIndexTimestamped}
-import org.scalajs.dom.Position
+import io.suggest.sc.sjs.m.msrv.index.MNodeIndex
 
 /**
  * Suggest.io
@@ -16,7 +15,7 @@ import org.scalajs.dom.Position
  */
 case class MGeoLocSd(
   bssWid        : Option[Int]         = None,
-  lastBssPos    : Option[Position]    = None,
+  lastBssPos    : Option[MGeoLoc]     = None,
   inxReqTstamp  : Option[Long]        = None,
   lastInx       : Option[MNodeIndex]  = None,
   timer         : Option[Int]         = None
@@ -26,7 +25,7 @@ case class MGeoLocSd(
     * Полученное значение используется для сборки запросов к серверу, связанных с геолокацией. */
   def currGeoMode: IMGeoMode = {
     lastBssPos
-      .fold[IMGeoMode] (MGeoModeIp) (pos => MGeoModeLoc(MGeoLoc(pos)))
+      .fold[IMGeoMode](MGeoModeIp)(MGeoModeLoc.apply)
   }
 
 }

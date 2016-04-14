@@ -1,10 +1,10 @@
 package io.suggest.sc.sjs.c.scfsm.foc
 
 import io.suggest.sc.sjs.m.mfoc.IFocSd
-import io.suggest.sc.sjs.vm.foc.{FControls, FCarousel}
+import io.suggest.sc.sjs.vm.foc.{FCarousel, FControls}
 import io.suggest.sc.ScConstants.Focused.SLIDE_ANIMATE_MS
+import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.fsm.IFsmMsg
-import org.scalajs.dom
 
 /**
  * Suggest.io
@@ -51,10 +51,10 @@ trait SimpleShift extends MouseMoving {
             fControls.setContent(nextFad.controlsHtml)
           }
 
-          dom.window.setTimeout(
-            {() => _sendEvent(ShiftAnimationFinished) },
-            SLIDE_ANIMATE_MS
-          )
+          DomQuick.setTimeout(SLIDE_ANIMATE_MS) {() =>
+            _sendEvent(ShiftAnimationFinished)
+          }
+
           // Залить новый текущий индекс в состояние.
           _stateData = sd0.copy(
             focused = Some(fState.copy(

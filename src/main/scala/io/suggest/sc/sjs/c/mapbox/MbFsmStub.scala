@@ -11,6 +11,8 @@ import io.suggest.sjs.common.fsm.SjsFsm
   * Description: Черновик для сборки кусков и состояний MapBox FSM.
   */
 trait MbFsmStub extends SjsFsm with StateData {
+
   override type State_t = FsmState
   override type SD = MbFsmSd
+
 }

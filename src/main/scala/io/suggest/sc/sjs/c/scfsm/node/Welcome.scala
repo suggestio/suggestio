@@ -4,7 +4,7 @@ import io.suggest.sc.ScConstants.Welcome
 import io.suggest.sc.sjs.c.scfsm.ScFsmStub
 import io.suggest.sc.sjs.m.mwc.{IWcStepSignal, WcTimeout}
 import io.suggest.sc.sjs.vm.wc.WcRoot
-import org.scalajs.dom
+import io.suggest.sjs.common.controller.DomQuick
 
 /**
  * Suggest.io
@@ -48,10 +48,9 @@ trait Welcome extends ScFsmStub {
       val wcRootOpt = WcRoot.find()
       val hideTimerIdOpt = for (wcRoot <- wcRootOpt) yield {
         wcRoot.fadeOut()
-        dom.window.setTimeout(
-          { () => _sendEventSyncSafe(WcTimeout) },
-          Welcome.FADEOUT_TRANSITION_MS
-        )
+        DomQuick.setTimeout( Welcome.FADEOUT_TRANSITION_MS ) { () =>
+          _sendEventSyncSafe(WcTimeout)
+        }
       }
       val nextState = wcRootOpt.fold[FsmState] (_welcomeFinishedState) (_ => _welcomeHidingState)
       val sd2 = _stateData.copy(

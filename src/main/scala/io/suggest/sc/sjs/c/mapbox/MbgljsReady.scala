@@ -89,11 +89,9 @@ trait MbgljsReady extends MbFsmStub {
       val glmap = sd0.glmap.get
 
       val srcId = MapBoxConstants.Layers.MY_GEOLOC_LAYER_ID
-      val coords = gs.data.coords
-      val myPoint = GjGeometry(
-        gtype = GjTypes.Geom.POINT,
-        coordinates = js.Array(coords.longitude, coords.latitude)
-      )
+      val coords = gs.data
+      val myPoint = coords.point.toGjPoint
+
       Option( glmap.getSource(srcId) ).fold[Unit] {
         // Пока нет ни слоя, ни source. Создать их
         // Сборка source

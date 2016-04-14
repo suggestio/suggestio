@@ -1,8 +1,8 @@
 package io.suggest.sc.sjs.m.mgeo
 
-import io.suggest.sjs.common.fsm.{IFsmMsgCompanion, IFsmMsg}
+import io.suggest.sjs.common.fsm.{IFsmMsg, IFsmMsgCompanion}
 import io.suggest.sjs.common.geo.{BssAccuracy, IHighAccuracy}
-import org.scalajs.dom.{PositionError, Position}
+import org.scalajs.dom.PositionError
 
 /**
  * Suggest.io
@@ -14,15 +14,15 @@ trait IGeoSignal extends IFsmMsg
 
 /** Интерфейс для сигналов с полученными данными геолокации. */
 trait IGeoLocSignal extends IGeoSignal with IHighAccuracy {
-  def data: Position
+  def data: MGeoLoc
 }
 
 /** Получены данные по неточной геолокации. */
-case class BssGeoLocSignal(override val data: Position)
+case class BssGeoLocSignal(override val data: MGeoLoc)
   extends IGeoLocSignal
   with BssAccuracy
 object BssGeoLocSignal
-  extends IFsmMsgCompanion[Position]
+  extends IFsmMsgCompanion[MGeoLoc]
 
 
 

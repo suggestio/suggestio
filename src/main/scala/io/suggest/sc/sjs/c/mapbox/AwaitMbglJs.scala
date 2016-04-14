@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.c.mapbox
 
 import io.suggest.sc.sjs.vm.maps.MpglAcTok
+import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.fsm.IFsmMsg
 import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.mapbox.gl.mapboxgl
@@ -14,13 +15,13 @@ import org.scalajs.dom
   * Description: Аддон поддержки состояний ожидания mapboxgl.js.
   * Считается, что необходимых тег скрипта уже есть в шаблоне.
   */
-trait AwaitMbglJs extends MbFsmStub {
+trait AwaitMbglJs extends StoreUserGeoLoc {
 
   /** Сколько миллисекунд ожидать появление скрипта на странице перед попыткой проверки. */
   def AWAIT_MPGLJS_MS = 250
 
   /** Трейт для сборки состояния ожидания появления mapboxgl в рантайме. */
-  trait AwaitMbglJsStateT extends FsmState {
+  trait AwaitMbglJsStateT extends StoreUserGeoLocStateT {
 
     /** Сообщение об окончании ожидания скрипта. */
     case object AwaitTimeout extends IFsmMsg
@@ -39,7 +40,7 @@ trait AwaitMbglJs extends MbFsmStub {
       }
     }
 
-    override def receiverPart: Receive = {
+    override def receiverPart: Receive = super.receiverPart.orElse {
       // Пора попробовать инициализировать повторно.
       case AwaitTimeout =>
         become(this)
@@ -57,12 +58,12 @@ trait AwaitMbglJs extends MbFsmStub {
         }
     }
 
+
     /** Действия, когда js отсутствует на странице. */
     def onJsMissing(): Unit = {
-      dom.window.setTimeout(
-        {() => _sendEventSync(AwaitTimeout) },
-        AWAIT_MPGLJS_MS
-      )
+      DomQuick.setTimeout(AWAIT_MPGLJS_MS) { () =>
+        _sendEventSync(AwaitTimeout)
+      }
       log( WarnMsgs.MAPBOXLG_JS_NOT_FOUND )
     }
 

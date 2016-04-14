@@ -21,7 +21,7 @@ object MbFsm
   override protected var _stateData: SD = MbFsmSd()
   override protected var _state: State_t = new DummyState
 
-  private class DummyState extends FsmEmptyReceiverState
+  private class DummyState extends FsmState with FsmEmptyReceiverState
 
 
   /** Запуск этого FSM на исполнение. */
