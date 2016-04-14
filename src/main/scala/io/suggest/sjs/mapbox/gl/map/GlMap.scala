@@ -59,7 +59,7 @@ class GlMap(options: GlMapOptions) extends StyleBatch with Evented {
 
   def getPitch(): Pitch_t = js.native
 
-  def getSource(id: String): js.Object = js.native
+  def getSource(id: String): UndefOr[js.Object] = js.native
   def getStyle(): Style = js.native
 
   def getZoom(): Zoom_t = js.native

@@ -58,4 +58,8 @@ sealed trait GlMapOptions extends SupportedOptions {
 
   var doubleClickZoom: Boolean = js.native
 
+  var center: js.Array[Double] = js.native
+
+  var zoom: Zoom_t = js.native
+
 }

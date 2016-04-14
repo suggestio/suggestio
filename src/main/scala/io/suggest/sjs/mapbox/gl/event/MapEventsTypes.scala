@@ -1,4 +1,4 @@
-package io.suggest.sjs.mapbox.gl.map
+package io.suggest.sjs.mapbox.gl.event
 
 import io.suggest.common.event._
 
@@ -8,7 +8,7 @@ import io.suggest.common.event._
   * Created: 12.04.16 12:09
   * Description: Constant event names for a map.
   */
-object MapEvents
+object MapEventsTypes
   extends Touch
     with Mouse
     with Drag
@@ -19,3 +19,13 @@ object MapEvents
     with Load
     with WebGlContext
     with BoxZoom
+{
+
+  def STYLE_PREFIX = "style"
+
+  def PREFIX_DELIM = "."
+
+  /** style.load событие готовности карты. */
+  def STYLE_LOADED = STYLE_PREFIX + PREFIX_DELIM + LOAD
+
+}
