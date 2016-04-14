@@ -16,17 +16,6 @@ object MapBoxConstants {
   /** Обыденные названия слоёв разных. */
   object Layers {
 
-    def MY_GEOLOC_LAYER_ID = "a"
-
-    object MyGeoLoc {
-
-      def INNER_RADIUS_PX = 5
-
-      def INNER_COLOR     = "#007cbf"
-
-    }
-
-
     object Circle {
 
       object Paint {
@@ -43,6 +32,30 @@ object MapBoxConstants {
       }
 
     }
+
+  }
+
+
+  /** Константы пользовательской геолокации. */
+  object UserGeoLoc {
+
+    def LAYER_ID = "a"
+    def SRC_ID   = LAYER_ID
+
+    def CENTER_RADIUS_PX = 5
+    def CENTER_COLOR     = "#007cbf"
+
+  }
+
+
+  /** Константы ручного наведения точки для геолокации. */
+  object TargetPoint {
+
+    def LAYER_ID  = "t"
+    def SRC_ID    = LAYER_ID
+
+    def CENTER_RADIUS_PX = 3
+    def CENTER_COLOR     = "#454545"
 
   }
 
