@@ -31,7 +31,8 @@ case class MGeoPoint(
   extends IGeoPoint
 {
 
-  def toJsArray = js.Array[js.Any](lon, lat)
+  def toArray = js.Array[Double](lon, lat)
+  def toJsArray = toArray.asInstanceOf[ js.Array[js.Any] ]
 
   def toGjPoint = GjGeometry(
     gtype       = GjTypes.Geom.POINT,

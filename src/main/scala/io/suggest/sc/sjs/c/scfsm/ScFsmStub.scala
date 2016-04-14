@@ -80,9 +80,9 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm {
   }
 
   // Раскомментить override become() для логгирования переключения состояний:
-  override protected def become(nextState: FsmState): Unit = {
+  /*override protected def become(nextState: FsmState): Unit = {
     log(_state + " -> " + nextState)
     super.become(nextState)
-  }
+  }*/
 
 }

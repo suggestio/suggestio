@@ -15,6 +15,8 @@ import io.suggest.sjs.common.util.SjsLogger
 object MbFsm
   extends AwaitMbglJs
   with MbgljsReady
+  with MapInitializing
+  with MapReady
   with SjsLogger
 {
 
@@ -31,12 +33,22 @@ object MbFsm
 
 
   // -- states impl
-  // Состояние ожидания и начальной инициализации карты
+  /** Состояние ожидания и начальной инициализации карты. */
   class AwaitMbglJsState extends AwaitMbglJsStateT {
-    override def jsReadyState: State_t = new StandByState
+    override def jsReadyState = new MbgljsReadyState
   }
 
-  // Карта инициализирована.
-  class StandByState extends MbgljsReadyStateT
+  /** Статическая js-поддержка карты инициализирована. */
+  class MbgljsReadyState extends MbgljsReadyStateT {
+    override def _mapInitializingState = new MapInitializingState
+  }
+
+  /** Динамическая часть карты в процессе инициализации. */
+  class MapInitializingState extends MapInitializingStateT {
+    override def mapReadyState = new MapReadyState
+  }
+
+  /** Карта инициализирована. */
+  class MapReadyState extends MapReadyStateT
 
 }
