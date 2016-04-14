@@ -28,6 +28,7 @@ object GjFeature extends FromDict {
 }
 
 
+@js.native
 class GjFeature extends GjType {
 
   var properties: UndefOr[ Dictionary[Any] ] = js.native
