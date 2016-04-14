@@ -1,10 +1,10 @@
 package io.suggest.sjs.common.fsm
 
-import io.suggest.fsm.{AbstractFsmUtil, AbstractFsm}
+import io.suggest.fsm.{AbstractFsm, AbstractFsmUtil}
+import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.model.TimestampedCompanion
-import io.suggest.sjs.common.msg.{WarnMsgs, ErrorMsgs}
+import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.common.util.ISjsLogger
-import org.scalajs.dom
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
@@ -122,20 +122,19 @@ trait SjsFsm extends AbstractFsm with ISjsLogger {
 
 
   protected def _retry(afterMs: Long)(f: => State_t): Unit = {
-    dom.window.setTimeout(
-      { () => become(f) },
-      afterMs
-    )
+    DomQuick.setTimeout(afterMs) { () =>
+      become(f)
+    }
   }
 
 
   /** Генератор анонимных фунций-коллбеков, использующий wrapper-модель, заданную модель-компаньоном.
-    * Завёрнутый результат отправляется в ScFsm.
+    * Завёрнутый результат отправляется в Fsm.
     * @param model Компаньон модели, в которую надо заворачивать исходные данные функции.
     */
   protected def _signalCallbackF[T](model: IFsmMsgCompanion[T]): (T => _) = {
     {arg: T =>
-      _sendEvent( model(arg) )
+      _sendEventSyncSafe( model(arg) )
     }
   }
 
