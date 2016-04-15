@@ -8,7 +8,6 @@ import io.suggest.util.SioEsUtil._
 import io.suggest.util.StringUtil
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.QueryBuilders
-import play.api.Play.current
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.api.mvc.QueryStringBindable
@@ -31,13 +30,13 @@ object EmailActivation extends EsModelStaticIdentT with PlayMacroLogsImpl with E
 
   override type T = EmailActivation
 
-  val ES_TYPE_NAME: String = "mpiEmailAct"
+  override def ES_TYPE_NAME: String = "mpiEmailAct"
 
   /** Длина генерируемых ключей для активации. */
-  val KEY_LEN = current.configuration.getInt("ident.email.act.key.len") getOrElse 16
+  val KEY_LEN = 16  // current.configuration.getInt("ident.email.act.key.len") getOrElse 16
 
   /** Период ttl, если иное не указано в документе. Записывается в маппинг. */
-  val TTL_DFLT = current.configuration.getString("ident.email.act.ttl.period") getOrElse "2d"
+  val TTL_DFLT = "2d" // current.configuration.getString("ident.email.act.ttl.period") getOrElse "2d"
 
 
   @deprecated("Delete id, replaced by deserializeOne2()", "2015.sep.07")
@@ -96,10 +95,8 @@ final case class EmailActivation(
   key       : String = EmailActivation.randomActivationKey,
   id        : Option[String] = None
 ) extends MPersonIdent with IEaEmailId {
-  override type T = EmailActivation
 
   override def personId = email
-  override def companion = EmailActivation
   override def writeVerifyInfo = false
   override def idType = IdTypes.EMAIL_ACT
   override def isVerified = true
@@ -115,6 +112,7 @@ final class EmailActivationJmx(implicit val ec: ExecutionContext, val client: Cl
   with EmailActivationJmxMBean
 {
   override def companion = EmailActivation
+  override type X = EmailActivation
 }
 
 

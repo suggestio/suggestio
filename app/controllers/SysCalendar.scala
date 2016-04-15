@@ -86,8 +86,7 @@ class SysCalendar @Inject() (
     MCalendar(
       name      = name,
       data      = data,
-      calType   = calType,
-      companion = mCalendars
+      calType   = calType
     )
   }
   {mcal =>
@@ -127,8 +126,7 @@ class SysCalendar @Inject() (
               val stub = MCalendar(
                 name      = "",
                 data      = data,
-                calType   = MCalTypes.default,
-                companion = mCalendars
+                calType   = MCalTypes.default
               )
               val newFormBinded = calFormM.fill( stub )
               Ok(createCalFormTpl(newFormBinded))

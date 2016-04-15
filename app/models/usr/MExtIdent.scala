@@ -85,6 +85,12 @@ object MExtIdent extends MPersonIdentSubmodelStatic with PlayMacroLogsImpl with 
     }
   }
 
+  /** Сериализация json-экземпляра. */
+  override def writeJsonFields(m: T, acc: FieldsJsonAcc): FieldsJsonAcc = {
+    PROVIDER_ID_ESFN -> JsString(m.provider.ssProvName) ::
+      super.writeJsonFields(m, acc)
+  }
+
 }
 
 
@@ -97,10 +103,11 @@ case class MExtIdent(
   userId              : String,
   override val email  : Option[String] = None,
   versionOpt          : Option[Long] = None
-) extends MPersonIdent with IProfileDflt {
+)
+  extends MPersonIdent
+    with IProfileDflt
+{
 
-  override type T         = MExtIdent
-  override def companion  = MExtIdent
   override def idType     = IdTypes.EXT_ID
 
   /** Ключём модели является userId. */
@@ -113,12 +120,6 @@ case class MExtIdent(
   /** isVerified писать в хранилище не нужно, потому мы не управляем проверкой юзера. */
   override def writeVerifyInfo = false
   override def isVerified = true
-
-  /** Сериализация json-экземпляра. */
-  override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
-    PROVIDER_ID_ESFN -> JsString(provider.ssProvName) ::
-    super.writeJsonFields(acc)
-  }
 
   /** Реализация IProfile. */
   override def providerId = provider.ssProvName
@@ -134,6 +135,7 @@ final class MExtIdentJmx(implicit val ec: ExecutionContext, val client: Client, 
   with MExtIdentJmxMBean
 {
   override def companion = MExtIdent
+  override type X = MExtIdent
 }
 
 

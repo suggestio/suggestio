@@ -30,7 +30,7 @@ import scala.concurrent.ExecutionContext
  * сообщения прочитаны (а таких большинство, и искать по этому значение не требуется).
  */
 object MEvent extends EsModelStaticT with PlayMacroLogsImpl with EsDynSearchStatic[IEventsSearchArgs]
-with EsmV2Deserializer {
+with EsmV2Deserializer with EsModelPlayJsonStaticT {
 
   override type T = MEvent
   override val ES_TYPE_NAME = "ntf"
@@ -135,29 +135,10 @@ with EsmV2Deserializer {
     irb
   }
 
-}
 
+  override def writeJsonFields(m: T, acc: FieldsJsonAcc): FieldsJsonAcc = {
+    import m._
 
-import MEvent._
-
-
-/** Класс-экземпляр одной нотификации. */
-case class MEvent(
-  etype         : MEventType,
-  ownerId       : String,
-  argsInfo      : ArgsInfo        = MEvent.argsDflt,
-  dateCreated   : DateTime        = MEvent.dateCreatedDflt,
-  isCloseable   : Boolean         = MEvent.isCloseableDflt,
-  isUnseen      : Boolean         = true,
-  ttlDays       : Option[Int]     = Some(MEvent.TTL_DAYS_UNSEEN),
-  id            : Option[String]  = None,
-  versionOpt    : Option[Long]    = None
-) extends EsModelT with EsModelPlayJsonT with IMEvent {
-
-  override def companion = MEvent
-  override type T = MEvent
-
-  override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     var acc: FieldsJsonAcc = List(
       EVT_TYPE_ESFN     -> JsString(etype.strId),
       OWNER_ID_ESFN     -> JsString(ownerId),
@@ -172,7 +153,24 @@ case class MEvent(
     acc
   }
 
+
 }
+
+
+/** Класс-экземпляр одной нотификации. */
+case class MEvent(
+  etype         : MEventType,
+  ownerId       : String,
+  argsInfo      : ArgsInfo        = MEvent.argsDflt,
+  dateCreated   : DateTime        = MEvent.dateCreatedDflt,
+  isCloseable   : Boolean         = MEvent.isCloseableDflt,
+  isUnseen      : Boolean         = true,
+  ttlDays       : Option[Int]     = Some(MEvent.TTL_DAYS_UNSEEN),
+  id            : Option[String]  = None,
+  versionOpt    : Option[Long]    = None
+)
+  extends EsModelT
+    with IMEvent
 
 
 trait MEventJmxMBean extends EsModelJMXMBeanI
@@ -181,6 +179,7 @@ final class MEventJmx(implicit val ec: ExecutionContext, val client: Client, val
   with MEventJmxMBean
 {
   override def companion = MEvent
+  override type X = MEvent
 }
 
 

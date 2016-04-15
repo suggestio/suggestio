@@ -12,7 +12,6 @@ import util.PlayMacroLogsImpl
 import util.adv.build.AdvBuilderFactoryDi
 
 import scala.concurrent.Future
-import scala.util.{Success, Failure}
 
 /**
   * Suggest.io
@@ -208,7 +207,7 @@ abstract class AdvsUpdate
         val fut = for {
           acc0 <- acc0Fut
           // Это сложная операция: выстраивание набора изменений, наложение его на карточку, сохранение карточки, выстраивание экшенов SQL-транзакции:
-          tuData1 <- EsModelUtil.tryUpdate[MNode, TryUpdateBuilder]( TryUpdateBuilder(acc0) ) { tuData =>
+          tuData1 <- EsModelUtil.tryUpdate[MNode, TryUpdateBuilder]( MNode, TryUpdateBuilder(acc0) ) { tuData =>
             tryUpdateAd(tuData, mitems)
           }
         } yield {

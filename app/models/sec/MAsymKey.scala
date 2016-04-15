@@ -3,7 +3,6 @@ package models.sec
 import io.suggest.model.es._
 import util.PlayMacroLogsImpl
 import EsModelUtil.FieldsJsonAcc
-import io.suggest.model._
 import io.suggest.util.SioEsUtil._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -19,7 +18,7 @@ import scala.collection.Map
  * Любая возможная защита секретного ключа происходит на стороне контроллера.
  * Потом эту модель можно аккуратненько расширить пользовательской поддержкой.
  */
-object MAsymKey extends EsModelStaticT with PlayMacroLogsImpl with EsmV2Deserializer {
+object MAsymKey extends EsModelStaticT with PlayMacroLogsImpl with EsmV2Deserializer with EsModelPlayJsonStaticT {
 
   override type T = MAsymKey
 
@@ -73,24 +72,9 @@ object MAsymKey extends EsModelStaticT with PlayMacroLogsImpl with EsmV2Deserial
     }
   }
 
-}
 
-
-import MAsymKey._
-
-
-case class MAsymKey(
-  pubKey        : String,
-  secKey        : Option[String],
-  id            : Option[String],
-  versionOpt    : Option[Long] = None
-) extends EsModelT with EsModelPlayJsonT with IAsymKey {
-
-  override def companion = MAsymKey
-
-  override type T = MAsymKey
-
-  override def writeJsonFields(acc0: FieldsJsonAcc): FieldsJsonAcc = {
+  override def writeJsonFields(m: T, acc0: FieldsJsonAcc): FieldsJsonAcc = {
+    import m._
     var acc: FieldsJsonAcc = PUB_KEY_FN -> JsString(pubKey) :: acc0
     if (secKey.isDefined)
       acc ::= SEC_KEY_FN -> JsString(secKey.get)
@@ -98,6 +82,18 @@ case class MAsymKey(
   }
 
 }
+
+
+
+case class MAsymKey(
+  pubKey        : String,
+  secKey        : Option[String],
+  id            : Option[String],
+  versionOpt    : Option[Long] = None
+)
+  extends EsModelT
+    with IAsymKey
+
 
 /** Интерфейс для экземпляра-контейнера ассиметричного ключа. */
 trait IAsymKey {

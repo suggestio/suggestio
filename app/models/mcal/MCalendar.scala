@@ -24,6 +24,7 @@ class MCalendars
   extends EsModelStaticT
   with PlayMacroLogsImpl
   with EsmV2Deserializer
+  with EsModelPlayJsonStaticT
 {
 
   override type T = MCalendar
@@ -61,7 +62,6 @@ class MCalendars
         .map(EsModelUtil.stringParser)
         .flatMap(MCalTypes.maybeWithName)
         .getOrElse( _dfltCalType(id) ),
-      companion   = this,
       data        = EsModelUtil.stringParser( m(DATA_FN) ),
       versionOpt  = version
     )
@@ -93,11 +93,19 @@ class MCalendars
           name        = name,
           data        = data,
           calType     = calTypeOpt.getOrElse(_dfltCalType(meta.id)),
-          companion   = this,
           id          = meta.id,
           versionOpt  = meta.version
         )
     }
+  }
+
+
+  override def writeJsonFields(m: T, acc: FieldsJsonAcc): FieldsJsonAcc = {
+    import Fields._, m._
+    NAME_FN       -> JsString(name) ::
+      DATA_FN     -> JsString(data) ::
+      CAL_TYPE_FN -> JsString(calType.strId) ::
+      acc
   }
 
 }
@@ -107,24 +115,11 @@ case class MCalendar(
   name                    : String,
   data                    : String,
   calType                 : MCalType,
-  override val companion  : MCalendars,
   id                      : Option[String]  = None,
   versionOpt              : Option[Long]    = None
 )
-  extends EsModelPlayJsonT
-  with EsModelT
-{
+  extends EsModelT
 
-  override type T = MCalendar
-
-  override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
-    import companion.Fields._
-    NAME_FN       -> JsString(name) ::
-      DATA_FN     -> JsString(data) ::
-      CAL_TYPE_FN -> JsString(calType.strId) ::
-      acc
-  }
-}
 
 
 // Поддержка JMX.
@@ -138,6 +133,9 @@ class MCalendarJmx @Inject() (
 )
   extends EsModelJMXBase
   with MCalendarJmxMBean
+{
+  override type X = MCalendar
+}
 
 
 /** Интерфейс для DI-поля MCalendars. */

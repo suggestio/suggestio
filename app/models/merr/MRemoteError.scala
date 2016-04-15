@@ -21,7 +21,7 @@ import scala.concurrent.ExecutionContext
  * Created: 14.10.14 18:55
  * Description: Модель для хранения ошибок на клиентах. Информация имеет TTL, настраив
  */
-object MRemoteError extends EsModelStaticT with PlayMacroLogsImpl with EsmV2Deserializer {
+object MRemoteError extends EsModelStaticT with PlayMacroLogsImpl with EsmV2Deserializer with EsModelPlayJsonStaticT {
 
   override type T = MRemoteError
 
@@ -136,10 +136,35 @@ object MRemoteError extends EsModelStaticT with PlayMacroLogsImpl with EsmV2Dese
     }
   }
 
+
+  override def writeJsonFields(m: T, acc0: FieldsJsonAcc): FieldsJsonAcc = {
+    import m._
+    var acc: FieldsJsonAcc =
+      ERROR_TYPE_FN   -> JsString(errorType.toString) ::
+      MESSAGE_FN          -> JsString(msg) ::
+      TIMESTAMP_FN    -> EsModelUtil.date2JsStr(timestamp) ::
+      CLIENT_ADDR_FN  -> JsString(clientAddr) ::
+      acc0
+    if (ua.isDefined)
+      acc ::= UA_FN -> JsString(ua.get)
+    if (url.isDefined)
+      acc ::= URL_FN -> JsString(url.get)
+    if (clIpGeo.isDefined)
+      acc ::= CLIENT_IP_GEO_FN -> clIpGeo.get.toPlayGeoJson
+    if (clTown.isDefined)
+      acc ::= CLIENT_TOWN_FN -> JsString(clTown.get)
+    if (country.isDefined)
+      acc ::= COUNTRY_FN -> JsString(country.get)
+    if (isLocalCl.isDefined)
+      acc ::= IS_LOCAL_CLIENT_FN -> JsBoolean(isLocalCl.get)
+    if (state.isDefined)
+      acc ::= STATE_FN -> JsString(state.get)
+    acc
+  }
+
+
 }
 
-
-import models.merr.MRemoteError._
 
 
 /**
@@ -167,38 +192,10 @@ case class MRemoteError(
   isLocalCl   : Option[Boolean]   = None,
   state       : Option[String]    = None,
   id          : Option[String]    = None
-) extends EsModelT with EsModelPlayJsonT {
-
-  override type T = MRemoteError
-
-  override def companion = MRemoteError
-
-  override def writeJsonFields(acc0: FieldsJsonAcc): FieldsJsonAcc = {
-    var acc: FieldsJsonAcc =
-      ERROR_TYPE_FN   -> JsString(errorType.toString) ::
-      MESSAGE_FN          -> JsString(msg) ::
-      TIMESTAMP_FN    -> EsModelUtil.date2JsStr(timestamp) ::
-      CLIENT_ADDR_FN  -> JsString(clientAddr) ::
-      acc0
-    if (ua.isDefined)
-      acc ::= UA_FN -> JsString(ua.get)
-    if (url.isDefined)
-      acc ::= URL_FN -> JsString(url.get)
-    if (clIpGeo.isDefined)
-      acc ::= CLIENT_IP_GEO_FN -> clIpGeo.get.toPlayGeoJson
-    if (clTown.isDefined)
-      acc ::= CLIENT_TOWN_FN -> JsString(clTown.get)
-    if (country.isDefined)
-      acc ::= COUNTRY_FN -> JsString(country.get)
-    if (isLocalCl.isDefined)
-      acc ::= IS_LOCAL_CLIENT_FN -> JsBoolean(isLocalCl.get)
-    if (state.isDefined)
-      acc ::= STATE_FN -> JsString(state.get)
-    acc
-  }
+) extends EsModelT {
 
   /** Версия тут не нужна, т.к. модель write-only, и читается через kibana. */
-  override def versionOpt: Option[Long] = None
+  override def versionOpt = None
 }
 
 
@@ -210,5 +207,6 @@ final class MRemoteErrorJmx(implicit val ec: ExecutionContext, val client: Clien
   extends EsModelJMXBase with MRemoteErrorJmxMBean {
 
   override def companion = MRemoteError
+  override type X = MRemoteError
 }
 

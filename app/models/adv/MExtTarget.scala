@@ -33,6 +33,7 @@ object MExtTarget
   with PlayMacroLogsImpl
   with EsDynSearchStatic[IExtTargetSearchArgs]
   with EsmV2Deserializer
+  with EsModelPlayJsonStaticT
 {
 
   override type T = MExtTarget
@@ -92,11 +93,6 @@ object MExtTarget
     (__ \ ADN_ID_ESFN).read[String] and
     (__ \ NAME_ESFN).readNullable[String] and
     (__ \ DATE_CREATED_ESFN).read[DateTime]
-      // TODO 5.apr.2016: Удалить старый dc после апдейта схемы модели.
-      .orElse {
-        (__ \ "dc").readNullable[DateTime]
-          .map { _ getOrElse DateTime.now }
-      }
   }
 
   /** JSON deserializer. */
@@ -127,6 +123,14 @@ object MExtTarget
     }
   }
 
+  override def writeJsonFields(m: T, acc: FieldsJsonAcc): FieldsJsonAcc = {
+    import m._
+    SERVICE_ID_ESFN   -> JsString(service.strId) ::
+    ADN_ID_ESFN       -> JsString(adnId) ::
+    DATE_CREATED_ESFN -> EsModelUtil.date2JsStr(dateCreated) ::
+    toJsTargetPlayJsonFields
+  }
+
 }
 
 
@@ -141,19 +145,9 @@ case class MExtTarget(
   dateCreated   : DateTime          = DateTime.now,
   versionOpt    : Option[Long]      = None,
   id            : Option[String]    = None
-) extends EsModelT with EsModelPlayJsonT with IExtTarget {
-
-  override type T = MExtTarget
-  override def companion = MExtTarget
-
-  override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
-    SERVICE_ID_ESFN   -> JsString(service.strId) ::
-    ADN_ID_ESFN       -> JsString(adnId) ::
-    DATE_CREATED_ESFN -> EsModelUtil.date2JsStr(dateCreated) ::
-    toJsTargetPlayJsonFields
-  }
-
-}
+)
+  extends EsModelT
+    with IExtTarget
 
 
 // Поддержка JMX для ES-модели.
@@ -163,6 +157,7 @@ final class MExtTargetJmx(implicit val ec: ExecutionContext, val client: Client,
   with MExtTargetJmxMBean
 {
   override def companion = MExtTarget
+  override type X = MExtTarget
 }
 
 
@@ -203,23 +198,13 @@ trait IExtTargetWrapper extends IExtTarget {
 
 object JsExtTarget extends MExtTargetT {
 
-  /** mapper из JSON. */
-  implicit def reads: Reads[JsExtTarget] = (
-    (__ \ ID_FN).read[String] and
-    (__ \ URL_FN).read[String] and
-    (__ \ ON_CLICK_URL_FN).read[String] and
-    (__ \ NAME_FN).readNullable[String] and
-    (__ \ CUSTOM_FN).readNullable[JsValue]
-  )(apply _)
-
-  /** unmapper в JSON. */
-  implicit def writes: Writes[JsExtTarget] = (
-    (__ \ ID_FN).write[String] and
-    (__ \ URL_FN).write[String] and
-    (__ \ ON_CLICK_URL_FN).write[String] and
-    (__ \ NAME_FN).writeNullable[String] and
-    (__ \ CUSTOM_FN).writeNullable[JsValue]
-  )(unlift(unapply))
+  implicit def FORMAT: OFormat[JsExtTarget] = (
+    (__ \ ID_FN).format[String] and
+    (__ \ URL_FN).format[String] and
+    (__ \ ON_CLICK_URL_FN).format[String] and
+    (__ \ NAME_FN).formatNullable[String] and
+    (__ \ CUSTOM_FN).formatNullable[JsValue]
+  )(apply _, unlift(unapply))
 
 }
 

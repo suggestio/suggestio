@@ -237,8 +237,7 @@ abstract class MImg3T extends MImgT {
             sha1        = Some(sha1)
           ),
           picture = whOpt.map(MPictureMeta.apply),
-          storage = stor,
-          companion = mMedias
+          storage = stor
         )
       }
     }

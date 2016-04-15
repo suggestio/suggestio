@@ -2,13 +2,12 @@ package models.usr
 
 import com.lambdaworks.crypto.SCryptUtil
 import io.suggest.common.menum.EnumMaybeWithName
-import io.suggest.model.es.{EsModelPlayJsonT, EsModelT, EsModelStaticT, EsModelUtil}
+import io.suggest.model.es.{EsModelPlayJsonStaticT, EsModelStaticT, EsModelT, EsModelUtil}
 import EsModelUtil._
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.index.query.QueryBuilders
-import play.api.Play.current
 import play.api.libs.json.{JsBoolean, JsString}
 import util.PlayMacroLogsImpl
 
@@ -120,11 +119,11 @@ object MPersonIdent extends PlayMacroLogsImpl {
   // с уже сохранёнными. Размер потребляемой памяти можно рассчитать Size = (128 * COMPLEXITY * RAM_BLOCKSIZE) bytes.
   // По дефолту жрём 16 метров с запретом параллелизации.
   /** Cложность хеша scrypt. */
-  val SCRYPT_COMPLEXITY     = current.configuration.getInt("ident.pw.scrypt.complexity") getOrElse 16384
+  val SCRYPT_COMPLEXITY     = 16384 //current.configuration.getInt("ident.pw.scrypt.complexity") getOrElse
   /** Размер блока памяти. */
-  val SCRYPT_RAM_BLOCKSIZE  = current.configuration.getInt("ident.pw.scrypt.ram.blocksize") getOrElse 8
+  val SCRYPT_RAM_BLOCKSIZE  = 8 //current.configuration.getInt("ident.pw.scrypt.ram.blocksize") getOrElse 8
   /** Параллелизация. Позволяет ускорить вычисление функции. */
-  val SCRYPT_PARALLEL       = current.configuration.getInt("ident.pw.scrypt.parallel") getOrElse 1
+  val SCRYPT_PARALLEL       = 1 //current.configuration.getInt("ident.pw.scrypt.parallel") getOrElse 1
 
   /** Генерировать новый хеш с указанными выше дефолтовыми параметрами.
     * @param password Пароль, который надо захешировать.
@@ -148,8 +147,7 @@ object MPersonIdent extends PlayMacroLogsImpl {
 
 
 /** Трейт, который реализуют все экземпляры идентов. */
-trait MPersonIdent extends EsModelPlayJsonT with EsModelT {
-  override type T <: MPersonIdent
+trait MPersonIdent extends EsModelT {
 
   /** id юзера в системе. */
   def personId: String
@@ -171,8 +169,15 @@ trait MPersonIdent extends EsModelPlayJsonT with EsModelT {
   /** Определяется реализацией: надо ли записывать в хранилище значение isVerified. */
   def writeVerifyInfo: Boolean
 
+}
+
+
+trait EsModelStaticIdentT extends EsModelStaticT with EsModelPlayJsonStaticT {
+  override type T <: MPersonIdent
+
   /** Сериализация json-экземпляра. */
-  def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
+  override def writeJsonFields(m: T, acc: FieldsJsonAcc): FieldsJsonAcc = {
+    import m._
     var acc1: FieldsJsonAcc = PERSON_ID_ESFN -> JsString(personId) ::
       KEY_ESFN -> JsString(key) ::
       acc
@@ -184,12 +189,7 @@ trait MPersonIdent extends EsModelPlayJsonT with EsModelT {
   }
 
 }
-
-
-trait EsModelStaticIdentT extends EsModelStaticT {
-  override type T <: MPersonIdent
-}
-trait MPersonIdentSubmodelStatic extends EsModelStaticIdentT {
+trait MPersonIdentSubmodelStatic extends EsModelStaticIdentT  {
 
   import MPersonIdent.personIdQuery
 
@@ -217,6 +217,7 @@ trait MPersonIdentSubmodelStatic extends EsModelStaticIdentT {
       .execute()
       .map { _.getCount }
   }
+
 }
 
 trait MPIWithEmail {

@@ -244,7 +244,7 @@ class AdvUtil @Inject() (
 
       // Собрать оставшиеся online-итемы, перенакатить их всех на карточку.
       tuData2 <- {
-        val tuDataFut = EsModelUtil.tryUpdate[MNode, TryUpdateBuilder]( TryUpdateBuilder(acc0) ) { tuData0 =>
+        val tuDataFut = EsModelUtil.tryUpdate[MNode, TryUpdateBuilder](MNode, TryUpdateBuilder(acc0) ) { tuData0 =>
           val b1 = b0
             .withAcc( Future.successful(tuData0.acc) )
             .clearAd(full = rcvrIds.isEmpty)
@@ -278,7 +278,7 @@ class AdvUtil @Inject() (
     }
     MNode.foldLeftAsync(acc0 = 0, queryOpt = search.toEsQueryOpt) { (counterFut, mnode0) =>
       // Запустить пересчет ресиверов с сохранением.
-      val tub2Fut = EsModelUtil.tryUpdate[MNode, TryUpdateBuilder]( TryUpdateBuilder(Acc(mnode0)) ) { tub0 =>
+      val tub2Fut = EsModelUtil.tryUpdate[MNode, TryUpdateBuilder](MNode, TryUpdateBuilder(Acc(mnode0)) ) { tub0 =>
         for {
           acc1 <- calculateReceiversFor(tub0.acc.mad)
         } yield {
@@ -328,7 +328,7 @@ class AdvUtil @Inject() (
     * @return
     */
   def resetReceiversFor(mad0: MNode): Future[MNode] = {
-    val fut = EsModelUtil.tryUpdate[MNode, TryUpdateBuilder]( TryUpdateBuilder(Acc(mad0)) ) { tub0 =>
+    val fut = EsModelUtil.tryUpdate[MNode, TryUpdateBuilder](MNode, TryUpdateBuilder(Acc(mad0)) ) { tub0 =>
       for (acc2 <- calculateReceiversFor(tub0.acc.mad)) yield {
         tub0.copy(acc2)
       }

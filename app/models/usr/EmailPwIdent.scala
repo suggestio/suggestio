@@ -83,12 +83,10 @@ final case class EmailPwIdent(
   pwHash    : String,
   isVerified: Boolean = EmailPwIdent.IS_VERIFIED_DFLT
 ) extends MPersonIdent with MPIWithEmail {
-  override type T = EmailPwIdent
 
   override def id: Option[String] = Some(email)
   override def idType: MPersonIdentType = IdTypes.EMAIL_PW
   override def key: String = email
-  override def companion = EmailPwIdent
   override def writeVerifyInfo = true
   override def value: Option[String] = Some(pwHash)
   override def versionOpt = None
@@ -104,6 +102,7 @@ final class EmailPwIdentJmx(implicit val ec: ExecutionContext, val client: Clien
   with EmailPwIdentJmxMBean
 {
   override def companion = EmailPwIdent
+  override type X = EmailPwIdent
 }
 
 
