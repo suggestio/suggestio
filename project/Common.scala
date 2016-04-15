@@ -36,7 +36,7 @@ object Common {
   val sioSlickDrvVsn  = "0.3.0-SNAPSHOT"
 
   /** Версия scalatest+play. */
-  val scalaTestPlusPlayVsn = "1.5.0-SNAP1"
+  val scalaTestPlusPlayVsn = "1.5.0"
 
   /** Версия используемого плагина play-mailer. */
   val playMailerVsn        = "5.0.0-M1"
