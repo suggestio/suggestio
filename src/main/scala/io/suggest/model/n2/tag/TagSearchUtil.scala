@@ -4,14 +4,9 @@ import javax.inject.Inject
 
 import com.google.inject.Singleton
 import io.suggest.model.n2.edge.MPredicates
+import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.search.MNodeSearch
-import io.suggest.model.n2.node.{MNode, MNodeFields}
-import io.suggest.util.SioEsUtil.laFuture2sFuture
 import org.elasticsearch.client.Client
-import org.elasticsearch.search.aggregations.AggregationBuilders
-import org.elasticsearch.search.aggregations.bucket.nested.Nested
-import org.elasticsearch.search.aggregations.bucket.terms.Terms
-import scala.collection.JavaConversions._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -22,7 +17,7 @@ import scala.concurrent.{ExecutionContext, Future}
   * Description: Утиль для взаимодействия с тегами, живующими внутри эджей.
   */
 @Singleton
-class TagSearchUtil @Inject() (implicit ec: ExecutionContext, client: Client) {
+class TagSearchUtil @Inject() (mNodes: MNodes, implicit val ec: ExecutionContext, implicit val client: Client) {
 
   /**
     * Поиск тегов по имени.
@@ -31,7 +26,7 @@ class TagSearchUtil @Inject() (implicit ec: ExecutionContext, client: Client) {
     * @return
     */
   def liveSearchTagByName(nodeSearch: MNodeSearch): Future[TagsSearchResult] = {
-    for (found <- MNode.dynSearch(nodeSearch)) yield {
+    for (found <- mNodes.dynSearch(nodeSearch)) yield {
       val infos = for {
         tn      <- found
         tagEdge <- tn.edges

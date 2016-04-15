@@ -1,6 +1,6 @@
 package io.suggest.model.n2.node
 
-import com.google.inject.Inject
+import com.google.inject.{Inject, Singleton}
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.es._
 import io.suggest.model.n2.ad.MNodeAd
@@ -43,7 +43,8 @@ import scala.concurrent.{ExecutionContext, Future}
  * Подмодель каждого поля реализуется где-то в другом файле.
  */
 
-object MNode
+@Singleton
+class MNodes
   extends EsModelStaticT
   with EsmV2Deserializer
   with MacroLogsImpl
@@ -272,6 +273,7 @@ case class MNode(
 
 trait MNodeJmxMBean extends EsModelJMXMBeanI
 final class MNodeJmx @Inject() (
+  override val companion: MNodes,
   implicit val ec     : ExecutionContext,
   implicit val client : Client,
   implicit val sn     : SioNotifierStaticClientI
@@ -279,6 +281,10 @@ final class MNodeJmx @Inject() (
   extends EsModelJMXBase
   with MNodeJmxMBean
 {
-  override def companion = MNode
   override type X = MNode
+}
+
+/** Интерфейс для DI-поля, содержащего инстанс MNodes. */
+trait IMNodes {
+  val mNodes: MNodes
 }
