@@ -65,7 +65,9 @@ trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
 
   import LOGGER._
 
-  override def companion: EsModelStaticT
+  override type X <: EsModelT
+
+  override def companion: EsModelStaticT { type T = X }
 
   override def resave(id: String): String = {
     trace(s"resave($id): jmx")
@@ -86,7 +88,7 @@ trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
     val id1 = id.trim
     trace(s"getById($id1)")
     val fut = for (res <- companion.getById(id1)) yield {
-      res.fold("not found")(_.toJsonPretty)
+      res.fold("not found")(companion.toJsonPretty)
     }
     awaitString(fut)
   }
@@ -131,7 +133,7 @@ trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
       val raws = JacksonWrapper.deserialize[List[Map[String, AnyRef]]](all)
       val idsFut = Future.traverse(raws) { tmap =>
         val idOpt = tmap.get( SioConstants.FIELD_ID ).map(_.toString.trim)
-        val sourceStr = JacksonWrapper.serialize(tmap get SioConstants.FIELD_SOURCE)
+        val sourceStr = JacksonWrapper.serialize(tmap.get(SioConstants.FIELD_SOURCE))
         val b = sourceStr.getBytes
         val dataMap = SourceLookup.sourceAsMap(b, 0, b.length)
         _saveOne(idOpt, dataMap)
@@ -156,10 +158,7 @@ trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
     val inst = companion
       // TODO Придумать что-то, использующее deserializeOne2()
       .deserializeOne(idOpt, dataMap, version = None)
-    inst
-      // TODO Спилить companion
-      .companion
-      .save(inst.thisT)
+    companion.save(inst)
   }
 
 }

@@ -184,7 +184,7 @@ trait EsModelStaticT extends EsModelCommonStaticT {
 
 
   def resave(id: String)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Option[String]] = {
-    EsModelUtil.resaveBase( getById(id) )
+    resaveBase( getById(id) )
   }
 
   def reget(inst0: T)(implicit ec: ExecutionContext, client: Client): Future[Option[T]] = {
@@ -208,10 +208,5 @@ trait EsModelStaticT extends EsModelCommonStaticT {
 /** Шаблон для динамических частей ES-моделей.
  * В минимальной редакции механизм десериализации полностью абстрактен. */
 trait EsModelT extends EsModelCommonT {
-
-  override type T <: EsModelT
-
-  override def companion: EsModelStaticT { type T = T1 }
-
 }
 

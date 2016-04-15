@@ -83,8 +83,9 @@ trait EsChildModelStaticT extends EsModelCommonStaticT {
   }
 
   def resave(id: String, parentId: String)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Option[String]] = {
-    EsModelUtil.resaveBase( get(id, parentId) )
+    resaveBase( get(id, parentId) )
   }
+
 
   def reget(inst0: T)(implicit ec: ExecutionContext, client: Client): Future[Option[T]] = {
     get(inst0.id.get, inst0.parentId)
@@ -101,9 +102,6 @@ trait EsChildModelStaticT extends EsModelCommonStaticT {
 /** Динамическая сторона child-модели. */
 trait EsChildModelT extends EsModelCommonT {
 
-  override type T <: EsChildModelT
-
   def parentId: String
-  override def companion: EsChildModelStaticT { type T = T1 }
 
 }

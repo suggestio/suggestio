@@ -54,28 +54,6 @@ object IEsDoc {
   }
 
 
-  /** Mock-адаптер для тестирования сериализации-десериализации моделей на базе play.json.
-    * На вход он получает просто экземпляры классов моделей. */
-  implicit def mockPlayDocRespEv = new IEsDoc[EsModelCommonT] {
-    override def id(v: EsModelCommonT): Option[String] = {
-      v.id
-    }
-    override def version(v: EsModelCommonT): Option[Long] = {
-      v.versionOpt
-    }
-    override def rawVersion(v: EsModelCommonT): Long = {
-      v.versionOpt.getOrElse(-1)
-    }
-    override def bodyAsScalaMap(v: EsModelCommonT): collection.Map[String, AnyRef] = {
-      JacksonWrapper.convert[collection.Map[String, AnyRef]]( v.toJson )
-    }
-    override def bodyAsString(v: EsModelCommonT): String = {
-      v.toJson
-    }
-    override def idOrNull(v: EsModelCommonT): String = {
-      v.idOrNull
-    }
-  }
 
 }
 

@@ -1,7 +1,8 @@
 package io.suggest.model.es
 
 import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.util.{MacroLogsImplLazy, JMXBase, JacksonWrapper}
+import io.suggest.primo.TypeT
+import io.suggest.util.{JMXBase, JacksonWrapper, MacroLogsImplLazy}
 import org.elasticsearch.client.Client
 
 import scala.concurrent.ExecutionContext
@@ -58,7 +59,9 @@ trait EsModelCommonJMXBase extends JMXBase with EsModelJMXMBeanCommonI with Macr
 
   import LOGGER._
 
-  def companion: EsModelCommonStaticT
+  type X <: EsModelCommonT
+
+  def companion: EsModelCommonStaticT { type T = X }
 
   override def jmxName = "io.suggest:type=elasticsearch,name=" + getClass.getSimpleName.replace("Jmx", "")
 
@@ -125,7 +128,7 @@ trait EsModelCommonJMXBase extends JMXBase with EsModelJMXMBeanCommonI with Macr
     trace(s"getAll(maxResults = $maxResults)")
     val fut = companion.getAll(maxResults, withVsn = true)
       .map { r =>
-        val resultNonPretty = EsModelUtil.toEsJsonDocs(r)
+        val resultNonPretty = companion.toEsJsonDocs(r)
         JacksonWrapper.prettify(resultNonPretty)
       }
     awaitString(fut)

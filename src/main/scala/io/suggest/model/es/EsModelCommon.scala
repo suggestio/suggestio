@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.common.OptStrId
 import io.suggest.primo.TypeT
+import io.suggest.util.JacksonWrapper
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.action.bulk.{BulkProcessor, BulkRequest, BulkResponse}
 import org.elasticsearch.action.get.{GetResponse, MultiGetResponse}
@@ -669,7 +670,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
                (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[T] = {
     // 2015.feb.20: Код переехал в EsModelUtil, а тут остались только wrapper для вызова этого кода.
     val data0 = tryUpdateData(inst0)
-    val data2Fut = EsModelUtil.tryUpdate[T, TryUpdateData](data0, UPDATE_RETRIES_MAX) { data =>
+    val data2Fut = EsModelUtil.tryUpdate[T, TryUpdateData](this, data0, UPDATE_RETRIES_MAX) { data =>
       val data1 = tryUpdateData(
         updateF(data._saveable)
       )
@@ -688,7 +689,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
     val indexName = esIndexName(m)
     val typeName = esTypeName(m)
     val idOrNull = m.idOrNull
-    val json = m.toJson
+    val json = toJson(m)
     LOGGER.trace(s"indexRequestBuilder($indexName/$typeName/$idOrNull): $json")
     client
       .prepareIndex(indexName, typeName, idOrNull)
@@ -716,34 +717,72 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
       .map { _.getId }
   }
 
+  def toJsonPretty(m: T): String = toJson(m)
+  def toJson(m: T): String
+
+  /** Общий код моделей, которые занимаются resave'ом. */
+  def resaveBase( getFut: Future[Option[T]] )
+                (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Option[String]] = {
+    getFut.flatMap {
+      case Some(e) =>
+        save(e)
+          .map { Some.apply }
+      case None =>
+        Future.successful(None)
+    }
+  }
+
+
+  /** Отрендерить экземпляр модели в JSON, обёрнутый в некоторое подобие метаданных ES (без _index и без _type). */
+  def toEsJsonDoc(e: T): String = {
+    import io.suggest.util.SioConstants._
+     var kvs = List[String] (s""" "$FIELD_SOURCE": ${toJson(e)}""")
+    if (e.versionOpt.isDefined)
+      kvs ::= s""" "$FIELD_VERSION": ${e.versionOpt.get}"""
+    if (e.id.isDefined)
+      kvs ::= s""" "$FIELD_ID": "${e.id.get}" """
+    kvs.mkString("{",  ",",  "}")
+  }
+
+  /** Отрендерить экземпляры моделей в JSON. */
+  def toEsJsonDocs(e: TraversableOnce[T]): String = {
+    e.toIterator
+      .map { toEsJsonDoc }
+      .mkString("[",  ",\n",  "]")
+  }
+
+
+  /** Mock-адаптер для тестирования сериализации-десериализации моделей на базе play.json.
+    * На вход он получает просто экземпляры классов моделей. */
+  implicit def mockPlayDocRespEv = new IEsDoc[T] {
+    override def id(v: T): Option[String] = {
+      v.id
+    }
+    override def version(v: T): Option[Long] = {
+      v.versionOpt
+    }
+    override def rawVersion(v: T): Long = {
+      v.versionOpt.getOrElse(-1)
+    }
+    override def bodyAsScalaMap(v: T): collection.Map[String, AnyRef] = {
+      JacksonWrapper.convert[collection.Map[String, AnyRef]]( toJson(v) )
+    }
+    override def bodyAsString(v: T): String = {
+      toJson(v)
+    }
+    override def idOrNull(v: T): String = {
+      v.idOrNull
+    }
+  }
+
 }
 
 
 /** Общий код динамических частей модели, независимо от child-модели или обычной. */
-trait EsModelCommonT extends OptStrId with TypeT {
-
-  /** Тип T это -- this.type конечной реализации, но связать его с this.type компилятор не позволяет. */
-  override type T <: EsModelCommonT
-
-  /**
-   * Тип T1 -- это алиас для типа T.
-   * Бывает нужно произвести сравнение типа с другим типом T в другом классе.
-   * {{{
-   *   def x : SomeClass { type T = T1 }
-   * }}}
-   */
-  protected[this] type T1 = T
-
-  /** Доступ к this как к реализации типа T. По задумке типа T, это должно быть безопасно. */
-  def thisT: T = this.asInstanceOf[T]
+trait EsModelCommonT extends OptStrId {
 
   /** Модели, желающие версионизации, должны перезаписать это поле. */
   def versionOpt: Option[Long]
-
-  def companion: EsModelCommonStaticT { type T = T1 }
-
-  def toJson: String
-  def toJsonPretty: String = toJson
 
   def idOrNull: String = id.orNull
 

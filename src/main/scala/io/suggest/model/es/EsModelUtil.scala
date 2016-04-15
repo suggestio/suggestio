@@ -3,7 +3,6 @@ package io.suggest.model.es
 import java.{lang => jl, util => ju}
 
 import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.util.SioConstants._
 import io.suggest.util.SioEsUtil._
 import io.suggest.util._
 import io.suggest.ym.model.stat._
@@ -123,24 +122,8 @@ object EsModelUtil extends MacroLogsImpl {
   /** number of actions, после которого bulk processor делает flush. */
   def BULK_PROCESSOR_BULK_SIZE_DFLT = 100
 
-  /** Тип аккамулятора, который используется во [[EsModelPlayJsonT]].writeJsonFields(). */
+  /** Тип аккамулятора, который используется во EsModelPlayJsonT.writeJsonFields(). */
   type FieldsJsonAcc = List[(String, JsValue)]
-
-  /** Отрендерить экземпляр модели в JSON, обёрнутый в некоторое подобие метаданных ES (без _index и без _type). */
-  def toEsJsonDoc(e: EsModelCommonT): String = {
-     var kvs = List[String] (s""" "$FIELD_SOURCE": ${e.toJson}""")
-    if (e.versionOpt.isDefined)
-      kvs ::= s""" "$FIELD_VERSION": ${e.versionOpt.get}"""
-    if (e.id.isDefined)
-      kvs ::= s""" "$FIELD_ID": "${e.id.get}" """
-    kvs.mkString("{",  ",",  "}")
-  }
-
-  /** Отрендерить экземпляры моделей в JSON. */
-  def toEsJsonDocs(e: Traversable[EsModelCommonT]): String = {
-    e.map { toEsJsonDoc }
-      .mkString("[",  ",\n",  "]")
-  }
 
   private def _parseEx(as: String, v: Any = null) = {
     throw new IllegalArgumentException(s"unable to parse '$v' as $as.")
@@ -462,21 +445,6 @@ object EsModelUtil extends MacroLogsImpl {
     }
   }
 
-
-  /** Общий код моделей, которые занимаются resave'ом. */
-  def resaveBase(getFut: Future[Option[EsModelCommonT]])
-                (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Option[String]] = {
-    getFut.flatMap {
-      case Some(e) =>
-        // TODO Спилить обращение к companion, принимать статическую модель в аргументах
-        e.companion
-          .save(e.thisT)
-          .map { Some.apply }
-      case None =>
-        Future.successful(None)
-    }
-  }
-
   /**
     * Обновление какого-то элемента с использованием es save и es optimistic locking.
     * В отличии от оригинального [[EsModelStaticT]].tryUpdate(), здесь обновляемые данные не обязательно
@@ -485,13 +453,13 @@ object EsModelUtil extends MacroLogsImpl {
     * @param data0 Обновляемые данные.
     * @param maxRetries Максимальное кол-во попыток [5].
     * @param updateF Обновление
-    * @tparam T Тип обновляемых данных.
+    * @tparam D Тип обновляемых данных.
     * @return Удачно-сохраненный экземпляр data: T.
     */
-  def tryUpdate[X <: EsModelCommonT, T <: ITryUpdateData[X, T]]
-               (data0: T, maxRetries: Int = 5)
-               (updateF: T => Future[T])
-               (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[T] = {
+  def tryUpdate[X <: EsModelCommonT, D <: ITryUpdateData[X, D]]
+               (companion: EsModelCommonStaticT { type T = X }, data0: D, maxRetries: Int = 5)
+               (updateF: D => Future[D])
+               (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[D] = {
     lazy val logPrefix = s"tryUpdate(${System.currentTimeMillis}):"
 
     val data1Fut = updateF(data0)
@@ -508,8 +476,8 @@ object EsModelUtil extends MacroLogsImpl {
           Future.successful(data1)
         } else {
           // TODO Спилить обращение к companion, принимать статическую модель в аргументах
-          m2.companion
-            .save(m2.thisT)
+          companion
+            .save(m2)
             .map { _ => data1 }
             .recoverWith {
               case exVsn: VersionConflictEngineException =>
@@ -517,7 +485,7 @@ object EsModelUtil extends MacroLogsImpl {
                   val n1 = maxRetries - 1
                   LOGGER.warn(s"$logPrefix Version conflict while tryUpdate(). Retry ($n1)...")
                   data1._reget.flatMap { data2 =>
-                    tryUpdate[X, T](data2, n1)(updateF)
+                    tryUpdate[X, D](companion, data2, n1)(updateF)
                   }
                 } else {
                   val ex2 = new RuntimeException(s"$logPrefix Too many save-update retries failed", exVsn)

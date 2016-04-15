@@ -3,7 +3,6 @@ package io.suggest.ym.model.stat
 import java.text.SimpleDateFormat
 import java.{lang => jl}
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import com.sun.org.glassfish.gmbal.{Description, Impact, ManagedOperation}
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.es.EsModelUtil._
@@ -32,7 +31,7 @@ import scala.concurrent.{ExecutionContext, Future}
  * Created: 31.03.14 15:57
  * Description: Для накопления статистики по рекламным карточкам используется эта модель.
  */
-object MAdStat extends EsModelStaticT with MacroLogsImpl {
+object MAdStat extends EsModelStaticT with MacroLogsImpl with EsModelPlayJsonStaticT {
 
   override type T = MAdStat
 
@@ -278,50 +277,8 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
     irb
   }
 
-}
-
-
-import io.suggest.ym.model.stat.MAdStat._
-
-
-final class MAdStat(
-  val clientAddr          : String,
-  val action              : String,
-  val adIds               : Seq[String],
-  val adsRendered         : Int,
-  val isLocalCl           : Boolean,
-  val onNodeIdOpt         : Option[String],
-  val ua                  : Option[String],
-  val nodeName            : Option[String]    = None,
-  val personId            : Option[String]    = None,
-  val timestamp           : DateTime          = new DateTime,
-  val clIpGeo             : Option[GeoPoint]  = None,
-  val clTown              : Option[String]    = None,
-  val clGeoLoc            : Option[GeoPoint]  = None,
-  val clCountry           : Option[String]    = None,
-  val clOSFamily          : Option[String]    = None,
-  val clAgent             : Option[String]    = None,
-  val clDevice            : Option[String]    = None,
-  val clLocAccur          : Option[Int]       = None,
-  val clickedAdIds        : Seq[String]       = Nil,
-  val generation          : Option[Long]      = None,   // запрошенный generation выдачи.
-  val clOsVsn             : Option[String]    = None,   // версия OS девайса клиента.
-  val clUid               : Option[String]    = None,   // UID клиента, выставленное через transient cookie.
-  val scrOrient           : Option[String]    = None,   // Ориентация экрана.
-  val scrResChoosen       : Option[String]    = None,   // Выбранное s.io сервером разрешение экрана (viewport'а)
-  val pxRatioChoosen      : Option[Float]     = None,   // Выбранный s.io сервером pixel ratio
-  val viewportDecl        : Option[String]    = None,   // заявленные размеры экрана (через ?a.screen=[WxH,dpr])
-  val reqUri              : Option[String]    = None,   // Исходный путь запроса вместе с qs (для отладки и др.)
-  val id                  : Option[String]    = None,
-  val ttl                 : Option[FiniteDuration] = None    // Макс.жизни экземпляра в хранилище.
-) extends EsModelPlayJsonT with EsModelT {
-
-  override type T = MAdStat
-
-  @JsonIgnore
-  override def companion = MAdStat
-
-  def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
+  override def writeJsonFields(m: T, acc: FieldsJsonAcc): FieldsJsonAcc = {
+    import m._
     var acc1: FieldsJsonAcc =
       CLIENT_ADDR_ESFN      -> JsString(clientAddr) ::
       ACTION_ESFN           -> JsString(action.toString) ::
@@ -378,6 +335,45 @@ final class MAdStat(
     acc1
   }
 
+}
+
+
+import io.suggest.ym.model.stat.MAdStat._
+
+
+final class MAdStat(
+  val clientAddr          : String,
+  val action              : String,
+  val adIds               : Seq[String],
+  val adsRendered         : Int,
+  val isLocalCl           : Boolean,
+  val onNodeIdOpt         : Option[String],
+  val ua                  : Option[String],
+  val nodeName            : Option[String]    = None,
+  val personId            : Option[String]    = None,
+  val timestamp           : DateTime          = new DateTime,
+  val clIpGeo             : Option[GeoPoint]  = None,
+  val clTown              : Option[String]    = None,
+  val clGeoLoc            : Option[GeoPoint]  = None,
+  val clCountry           : Option[String]    = None,
+  val clOSFamily          : Option[String]    = None,
+  val clAgent             : Option[String]    = None,
+  val clDevice            : Option[String]    = None,
+  val clLocAccur          : Option[Int]       = None,
+  val clickedAdIds        : Seq[String]       = Nil,
+  val generation          : Option[Long]      = None,   // запрошенный generation выдачи.
+  val clOsVsn             : Option[String]    = None,   // версия OS девайса клиента.
+  val clUid               : Option[String]    = None,   // UID клиента, выставленное через transient cookie.
+  val scrOrient           : Option[String]    = None,   // Ориентация экрана.
+  val scrResChoosen       : Option[String]    = None,   // Выбранное s.io сервером разрешение экрана (viewport'а)
+  val pxRatioChoosen      : Option[Float]     = None,   // Выбранный s.io сервером pixel ratio
+  val viewportDecl        : Option[String]    = None,   // заявленные размеры экрана (через ?a.screen=[WxH,dpr])
+  val reqUri              : Option[String]    = None,   // Исходный путь запроса вместе с qs (для отладки и др.)
+  val id                  : Option[String]    = None,
+  val ttl                 : Option[FiniteDuration] = None    // Макс.жизни экземпляра в хранилище.
+)
+  extends EsModelT
+{
   override def versionOpt = None
 }
 
@@ -407,6 +403,7 @@ final class MAdStatJmx(implicit val ec: ExecutionContext, val client: Client, va
   import LOGGER._
 
   def companion = MAdStat
+  override type X = MAdStat
 
   protected def dtParse(dtStr: String): DateTime = {
     val sdf = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss")
@@ -453,7 +450,7 @@ final class MAdStatJmx(implicit val ec: ExecutionContext, val client: Client, va
       val dt = dtParse(dtStr)
       val fut = for (results <- companion.findBefore(dt, maxResults)) yield {
         // Отрендерить результаты в json
-        EsModelUtil.toEsJsonDocs(results)
+        companion.toEsJsonDocs(results)
       }
       awaitString(fut)
 

@@ -10,40 +10,27 @@ import play.api.libs.json.{Json, JsString, JsObject}
  * Description: Трейты для реализации десериализации через низкоуровневую аккамуляцию play-json полей.
  */
 
-/** Интерфейс с методом сериализации в play.Json экземпляра модели данных. */
-trait ToPlayJsonObj {
-  def toPlayJsonAcc: FieldsJsonAcc
-  /** Сериализовать экземпляр модели данных в промежуточное представление play.Json. */
-  def toPlayJson = JsObject(toPlayJsonAcc)
-  def toPlayJsonWithId: JsObject
-}
+trait EsModelPlayJsonStaticT extends EsModelCommonStaticT {
 
+  def writeJsonFields(m: T, acc: FieldsJsonAcc): FieldsJsonAcc
 
-/** Шаблон для динамических частей ES-моделей, которые очень хорошо реализуют toJson() через play.json. */
-trait EsModelPlayJsonT extends EsModelCommonT with ToPlayJsonObj {
-  override type T <: EsModelPlayJsonT
-
-  override def toPlayJsonAcc = writeJsonFields(Nil)
-  override def toPlayJsonWithId: JsObject = {
-    var acc = toPlayJsonAcc
-    val _id = id
+  def toPlayJson(m: T) = JsObject(toPlayJsonAcc(m))
+  def toPlayJsonAcc(m: T) = writeJsonFields(m, Nil)
+  def toPlayJsonWithId(m: T): JsObject = {
+    var acc = toPlayJsonAcc(m)
+    val _id = m.id
     if (_id.isDefined)
       acc ::= "id" -> JsString(_id.get)
     JsObject(acc)
   }
 
-  override def toJson = toPlayJson.toString()
-  override def toJsonPretty: String = Json.prettyPrint(toPlayJson)
+  override def toJson(m: T) = toPlayJson(m).toString()
+  override def toJsonPretty(m: T): String = Json.prettyPrint(toPlayJson(m))
 
-  def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc
 }
 
 
-/** Трейт базовой реализации экземпляра модели. Вынесен из неё из-за особенностей stackable trait pattern.
-  * Он содержит stackable-методы, реализованные пустышками. */
-trait EsModelPlayJsonEmpty extends EsModelPlayJsonT {
-  def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
-    acc
-  }
+/** Шаблон для динамических частей ES-моделей, которые очень хорошо реализуют toJson() через play.json. */
+@deprecated("", "")
+trait EsModelPlayJsonT extends EsModelCommonT {
 }
-

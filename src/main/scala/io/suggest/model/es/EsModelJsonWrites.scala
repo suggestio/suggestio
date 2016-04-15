@@ -11,18 +11,14 @@ import play.api.libs.json.Writes
  */
 
 /** Интерфейс для доступа к play.json-сериализатору модели. */
-trait IEsDocJsonWrites extends EsModelCommonStaticT {
+trait EsModelJsonWrites extends EsModelCommonStaticT {
+
   def esDocWrites: Writes[T]
-}
 
-/** Аддон для сериализации через play.json.Writes, доступного в компаньоне. */
-trait EsModelJsonWrites extends EsModelCommonT {
-
-  override def companion: IEsDocJsonWrites { type T = T1 }
-
-  override def toJson: String = {
-    companion.esDocWrites
-      .writes(thisT)
+  override def toJson(m: T): String = {
+    esDocWrites
+      .writes(m)
       .toString()
   }
+
 }
