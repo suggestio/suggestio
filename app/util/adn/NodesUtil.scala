@@ -5,6 +5,7 @@ import controllers.routes
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.edge.{MEdgeInfo, MNodeEdges}
 import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras, MSlInfo}
+import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
 import io.suggest.model.n2.node.meta.colors.{MColorData, MColors}
@@ -31,6 +32,7 @@ import scala.util.Random
  */
 @Singleton
 class NodesUtil @Inject() (
+  mNodes                  : MNodes,
   mCommonDi               : ICommonDi
 )
   extends PlayMacroLogsImpl
@@ -141,7 +143,7 @@ class NodesUtil @Inject() (
   def createUserNode(name: String, personId: String)(implicit messages: Messages): Future[MNode] = {
     val inst = userNodeInstance(name = name, personId = personId)
     for {
-      nodeId        <- MNode.save(inst)
+      nodeId        <- mNodes.save(inst)
       madsCreateFut = installDfltMads(nodeId)
       _             <- createExtDfltTargets(nodeId)
       _             <- madsCreateFut
@@ -172,7 +174,7 @@ class NodesUtil @Inject() (
           override def limit  = _limit
           override def offset = 0
         }
-        MNode.dynSearchIds(dsa0)
+        mNodes.dynSearchIds(dsa0)
       }
 
       // Случайно выбрать из списка id карточек только указанное кол-во карточек.
@@ -182,7 +184,7 @@ class NodesUtil @Inject() (
         val madIds2 = (0 until Math.min(count, count))
           .iterator
           .map { _ =>  madIds( rnd.nextInt(count) ) }
-        MNode.multiGetRev(madIds2)
+        mNodes.multiGetRev(madIds2)
       }
 
       // Обновить карточки
@@ -237,7 +239,7 @@ class NodesUtil @Inject() (
           )
 
           // Запустить сохранение сгенеренной карточки.
-          MNode.save(mad1)
+          mNodes.save(mad1)
         }
       }
 

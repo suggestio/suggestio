@@ -1,9 +1,10 @@
 package controllers.ident
 
 import controllers.SioController
+import io.suggest.model.n2.node.IMNodes
 import models.req.IReq
-import models.{MNode, MNodeTypes}
-import models.msession.{Ttl, ShortTtl, LongTtl, Keys}
+import models.MNodeTypes
+import models.msession.{Keys, LongTtl, ShortTtl, Ttl}
 import models.usr._
 import play.api.data._
 import play.api.data.Forms._
@@ -13,6 +14,7 @@ import play.api.mvc._
 import util.di.IIdentUtil
 import util.xplay.SetLangCookieUtil
 import views.html.ident.login.epw._
+
 import scala.concurrent.Future
 import util.FormUtil.passwordM
 
@@ -30,6 +32,7 @@ trait EmailPwSubmit
   with SetLangCookieUtil
   with IsAnon
   with IIdentUtil
+  with IMNodes
 {
 
   import mCommonDi._
@@ -87,7 +90,7 @@ trait EmailPwSubmit
             if (epwOpt.exists(_.checkPassword(binded.password))) {
               // Логин удался.
               val personId = epwOpt.get.personId
-              val mpersonOptFut = MNode.getByIdType(personId, MNodeTypes.Person)
+              val mpersonOptFut = mNodes.getByIdType(personId, MNodeTypes.Person)
               val rdrFut = RdrBackOrFut(r) { emailSubmitOkCall(personId) }
               var addToSession: List[(String, String)] = List(
                 Keys.PersonId.name -> personId

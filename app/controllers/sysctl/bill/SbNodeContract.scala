@@ -2,7 +2,7 @@ package controllers.sysctl.bill
 
 import controllers.routes
 import io.suggest.mbill2.m.contract.{IMContracts, MContract}
-import io.suggest.model.n2.node.MNode
+import io.suggest.model.n2.node.IMNodes
 import models.req.{INodeContractReq, INodeReq}
 import play.api.data.Form
 import play.api.mvc.Result
@@ -25,6 +25,7 @@ trait SbNodeContract
   with PlayMacroLogsI
   with IContractUtilDi
   with IMContracts
+  with IMNodes
 {
 
   import mCommonDi._
@@ -75,7 +76,7 @@ trait SbNodeContract
 
         // Запустить сохранение нового id контракта в узел.
         val nodeSaveFut = mcSaveFut.flatMap { mc =>
-          MNode.tryUpdate(request.mnode) { mnode =>
+          mNodes.tryUpdate(request.mnode) { mnode =>
             assert(mnode.billing.contractId.isEmpty)
             mnode.copy(
               billing = mnode.billing.copy(
@@ -183,7 +184,7 @@ trait SbNodeContract
     LOGGER.debug(s"$logPrefix Erasing #${request.mcontract.legalContractId}")
 
     val nodeSaveFut = deleteFut.flatMap { _ =>
-      MNode.tryUpdate(request.mnode) { mnode =>
+      mNodes.tryUpdate(request.mnode) { mnode =>
         mnode.copy(
           billing = mnode.billing.copy(
             contractId = None

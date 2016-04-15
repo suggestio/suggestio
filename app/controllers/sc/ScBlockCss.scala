@@ -1,8 +1,9 @@
 package controllers.sc
 
 import controllers.SioController
+import io.suggest.model.n2.node.IMNodes
 import models.msc.AdCssArgs
-import models.{blk, MNode}
+import models.blk
 import play.api.mvc.Action
 import play.twirl.api.Txt
 import util.PlayMacroLogsI
@@ -23,6 +24,7 @@ trait ScBlockCss
   extends SioController
   with PlayMacroLogsI
   with IN2NodesUtilDi
+  with IMNodes
 {
 
   import mCommonDi._
@@ -34,7 +36,7 @@ trait ScBlockCss
    */
   def serveBlockCss(args: Seq[AdCssArgs]) = Action.async { implicit request =>
     // TODO Надо переписать это дело через асинхронные enumerator'ы
-    val madsFut = MNode.multiGetRev( args.iterator.map(_.adId) )
+    val madsFut = mNodes.multiGetRev( args.iterator.map(_.adId) )
     val argsMap = args.iterator
       .map(arg => arg.adId -> arg)
       .toMap

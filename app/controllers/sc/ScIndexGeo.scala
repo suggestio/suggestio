@@ -3,13 +3,15 @@ package controllers.sc
 import java.util.NoSuchElementException
 
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
+import io.suggest.model.n2.node.IMNodes
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.msc._
 import models.req.IReq
 import play.twirl.api.Html
-import util.di.{IScUtil, IScNlUtil, IScStatUtil}
+import util.di.{IScNlUtil, IScStatUtil, IScUtil}
 import util.acl._
 import models._
+
 import scala.concurrent.Future
 import play.api.mvc._
 
@@ -32,6 +34,7 @@ trait ScIndexGeo
   with IScNlUtil
   with IScUtil
   with MaybeAuth
+  with IMNodes
 { that =>
 
   import mCommonDi._
@@ -158,7 +161,7 @@ trait ScIndexGeo
               override def limit = 1
               // TODO Фильтровать по наличию geoshape'ов
             }
-            MNode.dynCount( msearch )
+            mNodes.dynCount( msearch )
           }
         } yield {
           geoChilderCount <= 0L

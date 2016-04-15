@@ -5,6 +5,7 @@ import controllers.routes
 import io.suggest.model.es.EsModelUtil
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
+import io.suggest.model.n2.node.MNodes
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 import models.crawl.{ChangeFreqs, SiteMapUrl, SiteMapUrlT}
 import models.mctx.Context
@@ -32,6 +33,7 @@ import scala.concurrent.ExecutionContext
 */
 class ScSitemapsXml @Inject() (
   n2NodesUtil                   : N2NodesUtil,
+  mNodes                        : MNodes,
   implicit private val ec       : ExecutionContext,
   implicit private val client   : Client
 )
@@ -54,8 +56,8 @@ class ScSitemapsXml @Inject() (
         Seq(cr)
       }
     }
-    var reqb = MNode.dynSearchReqBuilder(adSearch)
-    reqb = MNode.prepareScrollFor(reqb)
+    var reqb = mNodes.dynSearchReqBuilder(adSearch)
+    reqb = mNodes.prepareScrollFor(reqb)
 
     // Готовим неизменяемые потоко-безопасные константы, которые будут использованы для ускорения последующих шагов.
     val today = LocalDate.now()
@@ -76,7 +78,7 @@ class ScSitemapsXml @Inject() (
                 .execute()
               None
             } else {
-              Some(scrollId, MNode.searchResp2list(sr))
+              Some(scrollId, mNodes.searchResp2list(sr))
             }
           }
       }.flatMap { mads =>

@@ -2,6 +2,7 @@ package controllers
 
 import com.github.nscala_time.time.OrderingImplicits._
 import com.google.inject.Inject
+import io.suggest.model.n2.node.MNodes
 import models._
 import models.adv.MExtTarget
 import models.event.MEvent
@@ -30,6 +31,7 @@ import scala.util.{Failure, Success}
 class LkEvents @Inject() (
   lkEventsUtil                    : LkEventsUtil,
   lkAdUtil                        : LkAdUtil,
+  mNodes                          : MNodes,
   override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
@@ -41,8 +43,8 @@ class LkEvents @Inject() (
   import LOGGER._
   import mCommonDi._
 
-  private val LIMIT_MAX  = configuration.getInt("lk.events.nodeIndex.limit.max") getOrElse 10
-  private val OFFSET_MAX = configuration.getInt("lk.events.nodeIndex.offset.max") getOrElse 300
+  private val LIMIT_MAX  = configuration.getInt("lk.events.nodeIndex.limit.max").getOrElse(10)
+  private val OFFSET_MAX = configuration.getInt("lk.events.nodeIndex.offset.max").getOrElse(300)
 
   /**
    * Рендер страницы текущих нотификаций.
@@ -86,7 +88,7 @@ class LkEvents @Inject() (
       ctx       <- ctxFut
       evtsRndr  <- {
         // В фоне пакетно отфетчить рекламные карточки и ext-таргеты в виде карт:
-        val madsMapFut = lkEventsUtil.readEsModel(mevents, MNode)(_.argsInfo.adIdOpt)
+        val madsMapFut = lkEventsUtil.readEsModel(mevents, mNodes)(_.argsInfo.adIdOpt)
         val advExtTgsMapFut = lkEventsUtil.readEsModel(mevents, MExtTarget)(_.argsInfo.advExtTgIds)
 
         // Если передается карточка, то следует сразу передать и block RenderArgs для отображения превьюшки.

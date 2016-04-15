@@ -1,7 +1,8 @@
 package models.usr
 
 import com.google.inject.Inject
-import models.{MNode, MPersonMeta}
+import io.suggest.model.n2.node.MNodes
+import models.MPersonMeta
 import models.mext.ILoginProvider
 import models.mproj.ICommonDi
 import securesocial.core.{IProfile, PasswordInfo}
@@ -17,7 +18,10 @@ import scala.concurrent.Future
  * Created: 02.02.15 14:56
  * Description: Реализация над-модели прослойки между suggest.io и secure-social.
  */
-class SsUserService @Inject() (mCommonDi: ICommonDi)
+class SsUserService @Inject() (
+  mNodes: MNodes,
+  mCommonDi: ICommonDi
+)
   extends UserService[SsUser]
   with PlayMacroLogsImpl
 {
@@ -84,7 +88,7 @@ class SsUserService @Inject() (mCommonDi: ICommonDi)
     // TODO Скорее всего этот метод никогда не вызвается, т.к. его логика заинлайнилась в ExternalLogin.handleAuth1().
     if (mode is SaveMode.SignUp) {
       // Зарегать нового юзера
-      val mnode = MNode.applyPerson(
+      val mnode = mNodes.applyPerson(
         lang    = "ru",   // TODO Определять язык надо бы. Из сессии например, которая здесь пока недоступна.
         nameOpt = profile.fullName,
         mpm     = MPersonMeta(
@@ -94,7 +98,7 @@ class SsUserService @Inject() (mCommonDi: ICommonDi)
         )
       )
       for {
-        personId <- MNode.save(mnode)
+        personId <- mNodes.save(mnode)
         mei = MExtIdent(
           personId  = personId,
           provider  = ILoginProvider.maybeWithName(profile.providerId).get,

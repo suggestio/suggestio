@@ -3,6 +3,7 @@ package models
 import com.google.inject.Inject
 import io.suggest.model.es.{CopyContentResult, EsModelCommonStaticT, EsModelUtil}
 import io.suggest.model.n2.media.MMedias
+import io.suggest.model.n2.node.MNodes
 import io.suggest.util.{JMXBase, SioEsUtil}
 import io.suggest.ym.model.stat.MAdStats
 import models.ai.MAiMad
@@ -24,6 +25,7 @@ import scala.concurrent.duration._
  * Description: Дополнительная утиль для ES-моделей.
  */
 class SiowebEsModel @Inject() (
+  mNodes              : MNodes,
   mMedias             : MMedias,
   mCalendars          : MCalendars,
   mCommonDi           : ICommonDi,
@@ -40,7 +42,7 @@ class SiowebEsModel @Inject() (
    * @return Список EsModelMinimalStaticT.
    */
   def ES_MODELS = Seq[EsModelCommonStaticT](
-    MNode,
+    mNodes,
     EmailPwIdent, EmailActivation, MExtIdent, mCalendars,
     MRemoteError, MAiMad,
     adv.MExtTarget,

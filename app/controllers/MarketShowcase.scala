@@ -2,6 +2,7 @@ package controllers
 
 import com.google.inject.Inject
 import controllers.sc._
+import io.suggest.model.n2.node.MNodes
 import models.mproj.{ICommonDi, MProjectInfo}
 import util._
 import util.cdn.CdnUtil
@@ -23,6 +24,7 @@ class MarketShowcase @Inject() (
   override val welcomeUtil        : WelcomeUtil,
   override val scStatUtil         : ScStatUtil,
   override val statUtil           : StatUtil,
+  override val mNodes             : MNodes,
   override val scNlUtil           : ShowcaseNodeListUtil,
   override val scUtil             : ShowcaseUtil,
   override val adRenderUtil       : AdRenderUtil,

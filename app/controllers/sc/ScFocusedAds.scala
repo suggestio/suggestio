@@ -1,10 +1,11 @@
 package controllers.sc
 
-import _root_.util.di.{IScUtil, IScStatUtil}
-import _root_.util.jsa.{JsAppendById, JsAction, SmRcvResp, Js}
+import _root_.util.di.{IScStatUtil, IScUtil}
+import _root_.util.jsa.{Js, JsAction, JsAppendById, SmRcvResp}
 import _root_.util.n2u.IN2NodesUtilDi
 import io.suggest.common.css.FocusedTopLeft
 import io.suggest.common.fut.FutureUtil
+import io.suggest.model.n2.node.IMNodes
 import io.suggest.util.Lists
 import models.im.MImgT
 import models.im.logo.LogoOpt_t
@@ -19,6 +20,7 @@ import util.acl._
 import views.html.sc.foc._
 import play.api.libs.json._
 import models._
+
 import scala.collection.immutable
 import scala.concurrent.Future
 
@@ -34,6 +36,7 @@ trait ScFocusedAdsBase
   with IScUtil
   with ScCssUtil
   with IN2NodesUtilDi
+  with IMNodes
 {
 
   import mCommonDi._
@@ -66,7 +69,7 @@ trait ScFocusedAdsBase
             override def withoutIds         = adSearch0.firstIds
           }
         }
-        MNode.dynSearch(adSearch2)
+        mNodes.dynSearch(adSearch2)
 
       } else {
         // Все firstIds перечислены, возвращаемый размер не подразумевает отдельного поиска.
@@ -85,7 +88,7 @@ trait ScFocusedAdsBase
 
     /** В countAds() можно отправлять и обычный adSearch: forceFirstIds там игнорируется. */
     def madsCountFut: Future[Long] = {
-      MNode.dynCount(_adSearch)
+      mNodes.dynCount(_adSearch)
     }
     lazy val madsCountIntFut = madsCountFut.map(_.toInt)
 
@@ -121,8 +124,8 @@ trait ScFocusedAdsBase
     lazy val firstAdsFut: Future[Seq[MNode]] = {
       if (fetchFirstAds) {
         val ids = _adSearch.firstIds
-        val fut = MNode.multiGet(ids)
-        fut onSuccess { case mads =>
+        val fut = mNodes.multiGet(ids)
+        fut.onSuccess { case mads =>
           logMissingFirstIds(mads, ids)
         }
         fut

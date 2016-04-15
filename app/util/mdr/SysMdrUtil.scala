@@ -2,15 +2,16 @@ package util.mdr
 
 import com.google.inject.Inject
 import io.suggest.mbill2.m.gid.Gid_t
-import io.suggest.mbill2.m.item.typ.{MItemTypes, MItemType}
-import io.suggest.mbill2.m.item.{ItemStatusChanged, IMItem, MItem, MItems}
+import io.suggest.mbill2.m.item.typ.{MItemType, MItemTypes}
+import io.suggest.mbill2.m.item.{IMItem, ItemStatusChanged, MItem, MItems}
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.util.effect.RW
-import io.suggest.model.n2.edge.{MPredicates, MEdgeInfo, MEdge, MNodeEdges}
+import io.suggest.model.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
+import io.suggest.model.n2.node.MNodes
 import models.MNode
-import models.mdr.{MdrSearchArgs, RefuseForm_t, MRefuseFormRes, MRefuseModes}
+import models.mdr.{MRefuseFormRes, MRefuseModes, MdrSearchArgs, RefuseForm_t}
 import models.mproj.ICommonDi
-import models.req.{IReqHdr, IAdReq}
+import models.req.{IAdReq, IReqHdr}
 import org.joda.time.DateTime
 import util.PlayMacroLogsImpl
 
@@ -24,6 +25,7 @@ import scala.concurrent.Future
   */
 class SysMdrUtil @Inject() (
   val mItems        : MItems,
+  mNodes            : MNodes,
   val mCommonDi     : ICommonDi
 )
   extends PlayMacroLogsImpl
@@ -66,7 +68,7 @@ class SysMdrUtil @Inject() (
     LOGGER.trace(s"_updMdrEdge() Mdr mad[${request.mad.idOrNull}] with mdr-edge $mdr2")
 
     // Запускаем сохранение данных модерации.
-    MNode.tryUpdate(request.mad) { mad0 =>
+    mNodes.tryUpdate(request.mad) { mad0 =>
       mad0.copy(
         edges = mad0.edges.copy(
           out = {

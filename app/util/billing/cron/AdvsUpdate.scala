@@ -4,7 +4,7 @@ import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{IMItems, MItem}
 import io.suggest.model.es.EsModelUtil
 import models.MNode
-import models.adv.build.{MCtxOuter, Acc, TryUpdateBuilder}
+import models.adv.build.{Acc, AdvMNodesTryUpdateBuilderT, MCtxOuter}
 import models.mproj.IMCommonDi
 import org.joda.time.DateTime
 import slick.profile.SqlAction
@@ -43,6 +43,7 @@ abstract class AdvsUpdate
   with IMCommonDi
   with AdvBuilderFactoryDi
   with IMItems
+  with AdvMNodesTryUpdateBuilderT
 {
 
   import LOGGER._
@@ -207,7 +208,7 @@ abstract class AdvsUpdate
         val fut = for {
           acc0 <- acc0Fut
           // Это сложная операция: выстраивание набора изменений, наложение его на карточку, сохранение карточки, выстраивание экшенов SQL-транзакции:
-          tuData1 <- EsModelUtil.tryUpdate[MNode, TryUpdateBuilder]( MNode, TryUpdateBuilder(acc0) ) { tuData =>
+          tuData1 <- EsModelUtil.tryUpdate[MNode, TryUpdateBuilder]( mNodes, TryUpdateBuilder(acc0) ) { tuData =>
             tryUpdateAd(tuData, mitems)
           }
         } yield {

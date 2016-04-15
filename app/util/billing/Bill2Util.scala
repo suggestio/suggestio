@@ -12,6 +12,7 @@ import io.suggest.mbill2.m.item.{IItem, IMItem, MItem, MItems}
 import io.suggest.mbill2.m.order._
 import io.suggest.mbill2.m.txn.{MTxn, MTxnTypes, MTxns}
 import io.suggest.mbill2.util.effect._
+import io.suggest.model.n2.node.MNodes
 import models.adv.price.MAdvPricing
 import models.mbill.MCartIdeas
 import models.mproj.ICommonDi
@@ -43,6 +44,7 @@ class Bill2Util @Inject() (
   mItems                          : MItems,
   mBalances                       : MBalances,
   mTxns                           : MTxns,
+  mNodes                          : MNodes,
   val mCommonDi                   : ICommonDi
 )
   extends PlayMacroLogsImpl
@@ -139,7 +141,7 @@ class Bill2Util @Inject() (
 
         // Сохранить id свежесозданного контракта в текущую ноду
         mnode2 <- {
-          val updFut = MNode.tryUpdate(mnode) { mnode0 =>
+          val updFut = mNodes.tryUpdate(mnode) { mnode0 =>
             mnode0.copy(
               billing = mnode0.billing.copy(
                 contractId = mc2.id

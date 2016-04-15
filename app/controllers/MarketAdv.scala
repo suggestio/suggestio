@@ -4,6 +4,7 @@ import com.google.inject.Inject
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.order.{MOrderStatuses, MOrderWithItems}
 import io.suggest.model.common.OptId
+import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models._
 import models.adv.direct._
@@ -41,6 +42,7 @@ class MarketAdv @Inject() (
   advFormUtil                     : AdvFormUtil,
   bill2Util                       : Bill2Util,
   mItems                          : MItems,
+  mNodes                          : MNodes,
   tfDailyUtil                     : TfDailyUtil,
   calendarUtil                    : CalendarUtil,
   override val mCommonDi          : ICommonDi
@@ -484,7 +486,7 @@ class MarketAdv @Inject() (
       override def withoutIds     = producer.id.toSeq
       override def nodeTypes      = Seq( MNodeTypes.AdnNode )
     }
-    MNode.dynSearch( msearch )
+    mNodes.dynSearch( msearch )
   }
 
 

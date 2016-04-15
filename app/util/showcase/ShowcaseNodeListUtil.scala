@@ -1,19 +1,19 @@
 package util.showcase
 
-import com.google.inject.{Singleton, Inject}
+import com.google.inject.{Inject, Singleton}
 import io.suggest.common.fut.FutureUtil
-import io.suggest.model.n2.edge.search.{GsCriteria, Criteria, ICriteria}
-import io.suggest.model.n2.node.search.{MNodeSearchDfltImpl, MNodeSearch}
+import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
+import io.suggest.model.n2.node.MNodes
+import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.ym.model.NodeGeoLevels
-import models.msc.{GeoNodesLayer, GeoDetectResult}
-import org.elasticsearch.client.Client
+import models.msc.{GeoDetectResult, GeoNodesLayer}
 import org.elasticsearch.search.sort.SortOrder
-import play.api.Configuration
 import play.api.i18n.Messages
 import util.PlayMacroLogsImpl
 import models._
+import models.mproj.ICommonDi
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -24,15 +24,14 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class ShowcaseNodeListUtil @Inject() (
-  mNodeCache              : MNodeCache,
-  configuration           : Configuration,
-  implicit val ec         : ExecutionContext,
-  implicit val esClient   : Client
+  mNodes                  : MNodes,
+  mCommonDi               : ICommonDi
 )
   extends PlayMacroLogsImpl
 {
 
   import LOGGER._
+  import mCommonDi._
 
   /** Показывать все города в выдаче или только текущий? */
   val SHOW_ALL_TOWNS: Boolean = configuration.getBoolean("showcase.nodes.towns.show.all") getOrElse false
@@ -116,7 +115,7 @@ class ShowcaseNodeListUtil @Inject() (
     * @return Фьючерс с GeoDetectResult.
     */
   def detectCurrentNode(geoMode: GeoMode, gsiOptFut: Future[Option[GeoSearchInfo]]): Future[GeoDetectResult] = {
-    detectCurrentNodeUsing(geoMode, gsiOptFut)(MNode.dynSearch)
+    detectCurrentNodeUsing(geoMode, gsiOptFut)(mNodes.dynSearch)
       .map { case (lvl, node) => GeoDetectResult(lvl, node) }
   }
 
@@ -164,7 +163,7 @@ class ShowcaseNodeListUtil @Inject() (
               override val withGeoDistanceSort = gsiOpt.map(_.geoPoint)
               override val shownTypeIds = Seq(AdnShownTypes.TOWN.name)
             }
-            MNode.dynSearch(sargs)
+            mNodes.dynSearch(sargs)
               .map(_.head)
           }
       }
@@ -196,14 +195,14 @@ class ShowcaseNodeListUtil @Inject() (
         .withPredicateIterIds( MPredicates.GeoParent )
         .toSeq
       val sargs1 = NodeSearchByIdShownType(allParentIds, shownTypeIds = Seq(AdnShownTypes.TOWN.name))
-      MNode.dynSearch( sargs1 )
+      mNodes.dynSearch( sargs1 )
         .map(_.head)
         // 2015.jun.18 Была выявлена проблема в head, когда город отсутствует. Пытаемся найти район, а из него город уже.
         .recoverWith { case ex: NoSuchElementException if ast.isBuilding =>
           error("getTownOfNode() geo-inconsistent linked node: id=" + mnode.id, ex)
           val districtTypeNames = AdnShownTypes.districtNames
           val sargs2 = NodeSearchByIdShownType(allParentIds, shownTypeIds = districtTypeNames)
-          MNode.dynSearch(sargs2)
+          mNodes.dynSearch(sargs2)
             .map { _.head }
             .flatMap { districtNode =>
               getTownOfNode(districtNode)
@@ -230,7 +229,7 @@ class ShowcaseNodeListUtil @Inject() (
       override def limit        = MAX_TOWNS
       override def withGeoDistanceSort = currGeoPoint
     }
-    MNode.dynSearch(sargs)
+    mNodes.dynSearch(sargs)
   }
 
   /** Обернуть список городов в гео-слой. */
@@ -298,7 +297,7 @@ class ShowcaseNodeListUtil @Inject() (
       override def withNameSort = if (gravity.isEmpty) Some(SortOrder.ASC) else None
       override def withGeoDistanceSort = gravity
     }
-    MNode.dynSearch(sargs)
+    mNodes.dynSearch(sargs)
   }
 
   def getDistrictsLayerForTown(townNode: MNode, gravity: Option[GeoPoint], expanded: Boolean = false)
@@ -340,7 +339,7 @@ class ShowcaseNodeListUtil @Inject() (
       override def withGeoDistanceSort = gravity
       override def withNameSort = if (gravity.isEmpty)  Some(SortOrder.ASC)  else  None
     }
-    MNode.dynSearch(sargs)
+    mNodes.dynSearch(sargs)
   }
 
   /**

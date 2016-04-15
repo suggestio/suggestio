@@ -5,6 +5,7 @@ import controllers.ad.MarketAdFormUtil._
 import io.suggest.ad.form.AdFormConstants._
 import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.edge.{MNodeEdges, NodeEdgesMap_t}
+import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
 import models._
@@ -40,6 +41,7 @@ import scala.concurrent.Future
 class MarketAd @Inject() (
   tempImgSupport                  : TempImgSupport,
   mImgs3                          : MImgs3,
+  mNodes                          : MNodes,
   sysMdrUtil                      : SysMdrUtil,
   lkEditorWsActors                : LkEditorWsActors,
   override val n2NodesUtil        : N2NodesUtil,
@@ -156,7 +158,7 @@ class MarketAd @Inject() (
                 }
               )
             )
-            MNode.save(mad2)
+            mNodes.save(mad2)
           }
         } yield {
           adId
@@ -258,7 +260,7 @@ class MarketAd @Inject() (
         // Произвести действия по сохранению карточки.
         val saveFut = for {
           imgsSaved <- saveImgsFut
-          mnode2    <- MNode.tryUpdate(request.mad) { mad0 =>
+          mnode2    <- mNodes.tryUpdate(request.mad) { mad0 =>
             mad0.copy(
               meta = mad0.meta.copy(
                 colors = r.mad.meta.colors,
@@ -322,7 +324,7 @@ class MarketAd @Inject() (
    */
   def deleteSubmit(adId: String) = CanEditAdPost(adId).async { implicit request =>
     for {
-      isDeleted <- MNode.deleteById(adId)
+      isDeleted <- mNodes.deleteById(adId)
     } yield {
       Redirect( _routeToMadProducerOrLkList(request.mad) )
         .flashing(FLASH.SUCCESS -> "Ad.deleted")
@@ -364,7 +366,7 @@ class MarketAd @Inject() (
 
         trace(s"${logPrefix}Updating ad[$adId] with sl=$sl/$isLevelEnabled prodId=$producerId")
 
-        val saveFut = MNode.tryUpdate(request.mad) { mad =>
+        val saveFut = mNodes.tryUpdate(request.mad) { mad =>
           // Извлекаем текущее ребро данного ресивера
           val e0Opt = mad
             .edges

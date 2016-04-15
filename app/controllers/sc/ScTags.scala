@@ -1,7 +1,7 @@
 package controllers.sc
 
-import models.MNode
-import models.mtag.{MTagSearchResp, MTagSearch}
+import io.suggest.model.n2.node.IMNodes
+import models.mtag.{MTagSearch, MTagSearchResp}
 import play.api.libs.json.Json
 import util.acl.MaybeAuth
 import views.html.sc.tags._
@@ -15,6 +15,7 @@ import views.html.sc.tags._
 trait ScTags
   extends ScController
   with MaybeAuth
+  with IMNodes
 {
 
   import mCommonDi._
@@ -26,7 +27,7 @@ trait ScTags
    * @return Рендер куска списка тегов, который раньше был списком узлов.
    */
   def tagsSearch(mts: MTagSearch) = MaybeAuth().async { implicit request =>
-    val foundFut = MNode.dynSearch(mts.toEsSearch)
+    val foundFut = mNodes.dynSearch(mts.toEsSearch)
     for {
       found <- foundFut
     } yield {

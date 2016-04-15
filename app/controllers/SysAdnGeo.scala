@@ -2,9 +2,9 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.model.common.OptId
-import io.suggest.model.geo.{GeoShapeQuerable, Distance, CircleGs}
+import io.suggest.model.geo.{CircleGs, Distance, GeoShapeQuerable}
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
-import io.suggest.model.n2.edge.{MEdgeInfo, MEdgeGeoShape, MNodeEdges}
+import io.suggest.model.n2.edge.{MEdgeGeoShape, MEdgeInfo, MNodeEdges}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.mgeo.MGsPtr
 import models.mproj.ICommonDi
@@ -12,14 +12,17 @@ import models.msys._
 import models.req.INodeReq
 import org.elasticsearch.common.unit.DistanceUnit
 import org.joda.time.DateTime
-import play.api.data._, Forms._
+import play.api.data._
+import Forms._
+import io.suggest.model.n2.node.MNodes
 import play.api.mvc.Result
 import util.PlayLazyMacroLogsImpl
 import util.FormUtil._
 import util.acl._
-import util.geo.osm.{OsmClientStatusCodeInvalidException, OsmClient}
+import util.geo.osm.{OsmClient, OsmClientStatusCodeInvalidException}
 import views.html.sys1.market.adn.geo._
 import models._
+
 import scala.concurrent.Future
 
 /**
@@ -32,6 +35,7 @@ import scala.concurrent.Future
  */
 class SysAdnGeo @Inject() (
   implicit private val osmClient    : OsmClient,
+  mNodes                            : MNodes,
   override val mCommonDi            : ICommonDi
 )
   extends SioControllerImpl
@@ -145,7 +149,7 @@ class SysAdnGeo @Inject() (
           _  <- {
             // Есть объект osm. Нужно залить его в шейпы узла.
             val p = MPredicates.NodeLocation
-            MNode.tryUpdate(request.mnode) { mnode0 =>
+            mNodes.tryUpdate(request.mnode) { mnode0 =>
               // Найти текущий эдж, если есть.
               val locEdgeOpt = mnode0.edges
                 .iterator
@@ -228,7 +232,7 @@ class SysAdnGeo @Inject() (
   /** Сабмит запроса на удаление элемента. */
   def deleteSubmit(g: MGsPtr) = IsSuNodePost(g.nodeId).async { implicit request =>
     // Запустить обновление узла.
-    val updFut = MNode.tryUpdate(request.mnode) { mnode0 =>
+    val updFut = mNodes.tryUpdate(request.mnode) { mnode0 =>
       val p = MPredicates.NodeLocation
 
       val hasGs = mnode0.edges
@@ -354,7 +358,7 @@ class SysAdnGeo @Inject() (
             mgs2 <- adnGeo2Fut
 
             // Обновляем ноду...
-            mnode1 <- MNode.tryUpdate( request.mnode ) { mnode0 =>
+            mnode1 <- mNodes.tryUpdate( request.mnode ) { mnode0 =>
               _nodeUpdateGeoShape(mnode0, mgs2)
             }
 
@@ -440,7 +444,7 @@ class SysAdnGeo @Inject() (
         NotAcceptable(createCircleTpl(formWithErrors, request.mnode))
       },
       {circle0 =>
-        val saveFut = MNode.tryUpdate(request.mnode) { mnode0 =>
+        val saveFut = mNodes.tryUpdate(request.mnode) { mnode0 =>
           val p = MPredicates.NodeLocation
           // Собрать новый эдж на базе возможно существующего.
           val edge0 = mnode0.edges
@@ -519,7 +523,7 @@ class SysAdnGeo @Inject() (
           )
 
           // Обновить шейпы узла
-          val updFut = MNode.tryUpdate( request.mnode ) { mnode0 =>
+          val updFut = mNodes.tryUpdate( request.mnode ) { mnode0 =>
             _nodeUpdateGeoShape(mnode0, mgs2)
           }
 
@@ -573,7 +577,7 @@ class SysAdnGeo @Inject() (
     }
 
     for {
-      nodeIds <- MNode.dynSearchIds(msearch)
+      nodeIds <- mNodes.dynSearchIds(msearch)
       nodes   <- mNodeCache.multiGet( nodeIds.toSet )
     } yield {
       nodes
@@ -618,7 +622,7 @@ class SysAdnGeo @Inject() (
               Seq(cr)
             }
           }
-          MNode.dynSearchIds(msearch)
+          mNodes.dynSearchIds(msearch)
         }
     }
 
@@ -741,7 +745,7 @@ class SysAdnGeo @Inject() (
                 .toStream
             }
             // Запуск апдейта новыми геоданными
-            MNode.tryUpdate(request.mnode) { mnode =>
+            mNodes.tryUpdate(request.mnode) { mnode =>
               mnode.copy(
                 geo = mnode.geo.copy(
                   point = pointOpt

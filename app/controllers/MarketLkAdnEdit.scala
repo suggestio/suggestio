@@ -4,11 +4,12 @@ import com.google.inject.Inject
 import io.suggest.js.UploadConstants
 import io.suggest.model.n2.edge.MEdgeInfo
 import io.suggest.model.n2.extra.MAdnExtra
+import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.model.n2.node.meta.{MAddress, MBasicMeta, MBusinessInfo}
 import models._
 import models.im.logo.LogoOpt_t
-import models.im.{MImgs3, MImgT}
+import models.im.{MImgT, MImgs3}
 import models.jsm.init.MTargets
 import models.madn.EditConstants._
 import models.mctx.Context
@@ -43,6 +44,7 @@ class MarketLkAdnEdit @Inject() (
   welcomeUtil                     : WelcomeUtil,
   logoUtil                        : LogoUtil,
   mImgs3                          : MImgs3,
+  mNodes                          : MNodes,
   tempImgSupport                  : TempImgSupport,
   galleryUtil                     : GalleryUtil,
   override val mCommonDi          : ICommonDi
@@ -296,7 +298,7 @@ class MarketLkAdnEdit @Inject() (
           savedLogo   <- savedLogoFut
           waFgEdgeOpt <- waFgEdgeOptFut
           gallery     <- galleryUpdFut
-          _           <- MNode.tryUpdate(mnode) {
+          _           <- mNodes.tryUpdate(mnode) {
             applyNodeChanges(_, fmr.meta, savedLogo, waFgEdgeOpt, gallery)
           }
         } yield {

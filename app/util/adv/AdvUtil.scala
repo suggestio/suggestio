@@ -1,15 +1,16 @@
 package util.adv
 
-import com.google.inject.{Singleton, Inject}
+import com.google.inject.{Inject, Singleton}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.model.es.EsModelUtil
 import io.suggest.model.n2.edge.MNodeEdges
+import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.util.JMXBase
 import models._
-import models.adv.build.{TryUpdateBuilder, Acc}
+import models.adv.build.{Acc, AdvMNodesTryUpdateBuilderT}
 import models.mproj.ICommonDi
 import org.joda.time.DateTime
 import util.PlayMacroLogsImpl
@@ -28,12 +29,14 @@ import scala.concurrent.Future
 @Singleton
 class AdvUtil @Inject() (
   mItems                  : MItems,
+  override val mNodes     : MNodes,
   advDirectBilling        : AdvDirectBilling,
   advBuilderFactory       : AdvBuilderFactory,
   n2NodesUtil             : N2NodesUtil,
   mCommonDi               : ICommonDi
 )
   extends PlayMacroLogsImpl
+  with AdvMNodesTryUpdateBuilderT
 {
 
   import LOGGER._
@@ -244,7 +247,7 @@ class AdvUtil @Inject() (
 
       // Собрать оставшиеся online-итемы, перенакатить их всех на карточку.
       tuData2 <- {
-        val tuDataFut = EsModelUtil.tryUpdate[MNode, TryUpdateBuilder](MNode, TryUpdateBuilder(acc0) ) { tuData0 =>
+        val tuDataFut = EsModelUtil.tryUpdate[MNode, TryUpdateBuilder](mNodes, TryUpdateBuilder(acc0) ) { tuData0 =>
           val b1 = b0
             .withAcc( Future.successful(tuData0.acc) )
             .clearAd(full = rcvrIds.isEmpty)
@@ -276,9 +279,9 @@ class AdvUtil @Inject() (
     val search = new MNodeSearchDfltImpl {
       override def nodeTypes = Seq( MNodeTypes.Ad )
     }
-    MNode.foldLeftAsync(acc0 = 0, queryOpt = search.toEsQueryOpt) { (counterFut, mnode0) =>
+    mNodes.foldLeftAsync(acc0 = 0, queryOpt = search.toEsQueryOpt) { (counterFut, mnode0) =>
       // Запустить пересчет ресиверов с сохранением.
-      val tub2Fut = EsModelUtil.tryUpdate[MNode, TryUpdateBuilder](MNode, TryUpdateBuilder(Acc(mnode0)) ) { tub0 =>
+      val tub2Fut = EsModelUtil.tryUpdate[MNode, TryUpdateBuilder](mNodes, TryUpdateBuilder(Acc(mnode0)) ) { tub0 =>
         for {
           acc1 <- calculateReceiversFor(tub0.acc.mad)
         } yield {
@@ -308,7 +311,7 @@ class AdvUtil @Inject() (
     * @return Новый экземпляр карточки.
     */
   def cleanReceiverFor(mad0: MNode): Future[MNode] = {
-    MNode.tryUpdate(mad0) { mad =>
+    mNodes.tryUpdate(mad0) { mad =>
       mad.copy(
         edges = mad.edges.copy(
           out = {
@@ -328,7 +331,7 @@ class AdvUtil @Inject() (
     * @return
     */
   def resetReceiversFor(mad0: MNode): Future[MNode] = {
-    val fut = EsModelUtil.tryUpdate[MNode, TryUpdateBuilder](MNode, TryUpdateBuilder(Acc(mad0)) ) { tub0 =>
+    val fut = EsModelUtil.tryUpdate[MNode, TryUpdateBuilder](mNodes, TryUpdateBuilder(Acc(mad0)) ) { tub0 =>
       for (acc2 <- calculateReceiversFor(tub0.acc.mad)) yield {
         tub0.copy(acc2)
       }
@@ -427,7 +430,7 @@ final class AdvUtilJmx @Inject() (
   }
 
   override def resetReceiversForAd(adId: String): String = {
-    val s = MNode.getById(adId).flatMap {
+    val s = mNodeCache.getById(adId).flatMap {
       case Some(mad) =>
         for (_ <- advUtil.resetReceiversFor(mad)) yield {
           "Successfully reset receivers for " + adId

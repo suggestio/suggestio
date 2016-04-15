@@ -6,9 +6,9 @@ import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.model.common.OptId
 import io.suggest.model.n2.edge._
-import io.suggest.model.n2.edge.search.{TagCriteria, Criteria, ICriteria}
+import io.suggest.model.n2.edge.search.{Criteria, ICriteria, TagCriteria}
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
-import io.suggest.model.n2.node.{MNodeTypes, MNode}
+import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.util.{JMXBase, SioEsUtil}
@@ -32,8 +32,9 @@ import scala.util.{Failure, Success}
   * Сброс хлама в теги необходим для поиска тегов.
   */
 class GeoTagsUtil @Inject() (
-  mCommonDi     : ICommonDi,
-  mItems        : MItems
+  mNodes        : MNodes,
+  mItems        : MItems,
+  mCommonDi     : ICommonDi
 )
   extends PlayMacroLogsImpl
 {
@@ -103,7 +104,7 @@ class GeoTagsUtil @Inject() (
       override def limit = 2
     }
 
-    for (tagNodes <- MNode.dynSearch(msearch)) yield {
+    for (tagNodes <- mNodes.dynSearch(msearch)) yield {
       if (tagNodes.size > 1)
         warn(s"$logPrefix Too many tag-nodes found for single-tag request: ${tagNodes.mkString(", ")}, ...")
       // TODO Нужно запускать тут мерж tag-узлов при выявлении коллизии: 2+ узлов относяться к одному и тому же тегу.
@@ -150,7 +151,7 @@ class GeoTagsUtil @Inject() (
         trace(s"$logPrefix Tag not exists, creating new one: $tagNode0")
 
         // Запустить сохранение нового узла.
-        val saveFut = MNode.save(tagNode0)
+        val saveFut = mNodes.save(tagNode0)
 
         saveFut.onComplete {
           case Success(nodeId) => info(s"$logPrefix Created NEW node[$nodeId] for tag")
@@ -291,7 +292,7 @@ class GeoTagsUtil @Inject() (
         val p = _PRED
         val someShapesCount = Some(shapesCount)
 
-        MNode.tryUpdate(mnode) { mnode0 =>
+        mNodes.tryUpdate(mnode) { mnode0 =>
           // Собрать единый эдж само-тега для всех геошейпов.
           val e0 = mnode0.edges
             .withPredicateIter(p)
@@ -432,8 +433,8 @@ class GeoTagsUtil @Inject() (
     val msearch = new MNodeSearchDfltImpl {
       override def nodeTypes = Seq( MNodeTypes.Tag )
     }
-    val scroller = MNode.startScroll( msearch.toEsQueryOpt )
-    MNode.deleteByQuery(scroller)
+    val scroller = mNodes.startScroll( msearch.toEsQueryOpt )
+    mNodes.deleteByQuery(scroller)
   }
 
 }

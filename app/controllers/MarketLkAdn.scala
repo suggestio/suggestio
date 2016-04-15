@@ -5,6 +5,7 @@ import controllers.ident._
 import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.item.MItems
 import io.suggest.model.n2.edge.search.Criteria
+import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
 import io.suggest.model.n2.node.meta.colors.MColorData
@@ -45,6 +46,7 @@ class MarketLkAdn @Inject() (
   lkAdUtil                            : LkAdUtil,
   scUtil                              : ShowcaseUtil,
   mItems                              : MItems,
+  mNodes                              : MNodes,
   override val identUtil              : IdentUtil,
   logoUtil                            : LogoUtil,
   galleryUtil                         : GalleryUtil,
@@ -75,7 +77,7 @@ class MarketLkAdn @Inject() (
       )
       override def limit      = 100
     }
-    val mnodesFut = MNode.dynSearch(msearch)
+    val mnodesFut = mNodes.dynSearch(msearch)
     for {
       ctxData     <- request.user.lkCtxDataFut
       mnodes      <- mnodesFut
@@ -148,12 +150,12 @@ class MarketLkAdn @Inject() (
           override def withDateCreatedSort = Some(SortOrder.ASC)
         }
         // Это свой узел. Нужно в реалтайме найти рекламные карточки и проверить newAdIdOpt.
-        val prodAdsFut = MNode.dynSearchRt(adsSearch0)
+        val prodAdsFut = mNodes.dynSearchRt(adsSearch0)
 
         // Бывает, что добавлена новая карточка (но индекс ещё не сделал refresh). Нужно её найти и отобразить:
         val extAdOptFut = FutureUtil.optFut2futOpt(newAdIdOpt) { newAdId =>
           for {
-            newAdOpt <- MNode.getByIdType(newAdId, MNodeTypes.Ad)
+            newAdOpt <- mNodes.getByIdType(newAdId, MNodeTypes.Ad)
             if newAdOpt.exists { newAd =>
               newAd.edges
                 .withNodePred(adnId, MPredicates.OwnedBy)
@@ -309,7 +311,7 @@ class MarketLkAdn @Inject() (
 
                 // Сохранение данных.
                 for {
-                  personId        <- MNode.save(mperson0)
+                  personId        <- mNodes.save(mperson0)
                   emailPwIdentId  <- {
                     val epw = EmailPwIdent.applyWithPw(email = eact.email, personId = personId, password = passwordOpt.get, isVerified = true)
                     EmailPwIdent.save(epw)
@@ -335,7 +337,7 @@ class MarketLkAdn @Inject() (
                   predicate = MPredicates.OwnedBy,
                   nodeIds   = Set(personId)
                 )
-                MNode.tryUpdate(mnode) { mnode0 =>
+                mNodes.tryUpdate(mnode) { mnode0 =>
                   mnode0.copy(
                     edges = mnode0.edges.copy(
                       out = mnode0.edges.out + (ownEdge.toEmapKey -> ownEdge)

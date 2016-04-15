@@ -4,11 +4,12 @@ import com.google.inject.Inject
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{MItem, MItems}
-import models.adv.build.{MCtxOuter, TryUpdateBuilder}
+import io.suggest.model.n2.node.MNodes
+import models.adv.build.MCtxOuter
 import models.mproj.ICommonDi
 import slick.dbio.Effect.Read
 import slick.profile.SqlAction
-import util.adv.build.{AdvBuilderUtil, AdvBuilderFactory}
+import util.adv.build.{AdvBuilderFactory, AdvBuilderUtil}
 import util.adv.geo.tag.GeoTagsUtil
 
 import scala.concurrent.Future
@@ -25,6 +26,7 @@ import scala.concurrent.Future
 class ActivateOfflineAdvs @Inject() (
   advBuilderUtil                  : AdvBuilderUtil,
   geoTagsUtil                     : GeoTagsUtil,
+  override val mNodes             : MNodes,
   override val mItems             : MItems,
   override val advBuilderFactory  : AdvBuilderFactory,
   override val mCommonDi          : ICommonDi

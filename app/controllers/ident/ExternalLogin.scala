@@ -190,7 +190,7 @@ trait ExternalLogin
                     // Ссылку на страничку юзера в соц.сети можно генерить на ходу через ident'ы и костыли самописные.
                   )
                 )
-                val mpersonSaveFut = MNode.save(mperson0)
+                val mpersonSaveFut = mNodes.save(mperson0)
                 val meiFut = mpersonSaveFut.flatMap { personId =>
                   // Сохранить данные идентификации через соц.сеть.
                   val mei = MExtIdent(
@@ -222,7 +222,7 @@ trait ExternalLogin
               // Можно перенести внутрь match всю эту логику. Т.к. она очень предсказуема. Но это наверное ещё добавит сложности кода.
               val mpersonOptFut = newMpersonOpt match {
                 case None =>
-                  MNode.getByIdType(ident.personId, MNodeTypes.Person)
+                  mNodes.getByIdType(ident.personId, MNodeTypes.Person)
                 case some =>
                   Future successful some
               }

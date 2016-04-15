@@ -4,6 +4,7 @@ import java.io.FileInputStream
 
 import com.google.inject.Inject
 import io.suggest.event.SioNotifierStaticClientI
+import io.suggest.model.n2.node.MNodes
 import models.MNode
 import models.ai._
 import org.apache.tika.metadata.{Metadata, TikaMetadataKeys}
@@ -23,6 +24,7 @@ import scala.concurrent.{ExecutionContext, Future}
  * Description: Утиль для обеспечения работоспособности автогенератора рекламных карточек.
  */
 class MadAiUtil @Inject() (
+  mNodes                  : MNodes,
   implicit val ws1        : WSClient,
   implicit val ec         : ExecutionContext,
   implicit val esClient   : Client,
@@ -135,9 +137,9 @@ class MadAiUtil @Inject() (
     }
 
     // Запустить в фоне получение шаблонной карточки
-    val tplMadFut = MNode.getById(madAi.tplAdId)
+    val tplMadFut = mNodes.getById(madAi.tplAdId)
       .map(_.get)
-    val targetAdsFut = MNode.multiGetRev(madAi.targetAdIds)
+    val targetAdsFut = mNodes.multiGetRev(madAi.targetAdIds)
       .filter { mads => mads.size == madAi.targetAdIds.size}
 
     // Отрендерить шаблонную карточку с помощью цепочки рендереров.
@@ -160,7 +162,7 @@ class MadAiUtil @Inject() (
   def run(madAi: MAiMad): Future[_] = {
     // Сохранить целевые карточки
     dryRun(madAi).flatMap { madsRendered =>
-      Future.traverse(madsRendered)(MNode.save)
+      Future.traverse(madsRendered)(mNodes.save)
     }
   }
 

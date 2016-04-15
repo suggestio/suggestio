@@ -2,7 +2,8 @@ package util.health
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.model.n2.edge.MPredicates
-import models.{AdnShownTypes, MNode}
+import io.suggest.model.n2.node.MNodes
+import models.AdnShownTypes
 import models.mcron.{ICronTask, MCronTask}
 import models.mproj.ICommonDi
 import models.msys.NodeProblem
@@ -29,6 +30,7 @@ import scala.util.Success
 class AdnGeoParentsHealth @Inject() (
   mailer                : IMailerWrapper,
   mSuperUsers           : MSuperUsers,
+  mNodes                : MNodes,
   scNlUtil              : ShowcaseNodeListUtil,
   mCommonDi             : ICommonDi
 )
@@ -77,7 +79,7 @@ class AdnGeoParentsHealth @Inject() (
   def testAll(): Future[List[NodeProblem]] = {
     implicit val msgs = messagesApi.preferred( Seq(Lang.defaultLang) )
     // TODO Фильтровать узлы по наличию directGeoParent. Сейчас фильтрация идёт через if внутри тела функции-предиката.
-    MNode.foldLeftAsync(acc0 = List.empty[NodeProblem]) { (acc0Fut, mnode) =>
+    mNodes.foldLeftAsync(acc0 = List.empty[NodeProblem]) { (acc0Fut, mnode) =>
       val directParentsIter = mnode.edges
         .withPredicateIter( MPredicates.GeoParent.Direct )
       if (directParentsIter.isEmpty) {

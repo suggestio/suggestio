@@ -8,6 +8,7 @@ import io.suggest.model.img.{IImgMeta, ImgSzDated}
 import io.suggest.model.n2.media.storage.IMediaStorage
 import io.suggest.model.n2.media.storage.swfs.SwfsStorages
 import io.suggest.model.n2.media.{MFileMeta, MMedias, MPictureMeta}
+import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
 import io.suggest.util.UuidUtil
@@ -32,6 +33,7 @@ import scala.concurrent.Future
 class MImgs3 @Inject()(
   val swfsStorages          : SwfsStorages,
   val mMedias               : MMedias,
+  val mNodes                : MNodes,
   val mCommonDi             : ICommonDi
 )
   extends IMImgCompanion
@@ -194,7 +196,7 @@ abstract class MImg3T extends MImgT {
     // Запустить сохранение, вернуть экземпляр MNode.
     for {
       mnode <- mnodeFut
-      _     <- MNode.save(mnode)
+      _     <- companion.mNodes.save(mnode)
     } yield {
       mnode
     }

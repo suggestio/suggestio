@@ -1,13 +1,14 @@
 package util.billing
 
 import com.google.inject.{Inject, Singleton}
-import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.fut.FutureUtil
-import io.suggest.model.n2.bill.tariff.daily.{MDayClause, MDailyTf}
-import models.{MNode, CurrencyCodeDflt}
+import io.suggest.model.n2.bill.tariff.daily.{MDailyTf, MDayClause}
+import models.{CurrencyCodeDflt, MNode}
 import models.mproj.ICommonDi
-import play.api.data._, Forms._
-import util.FormUtil.{doubleM, esIdM, currencyCodeM}
+import play.api.data._
+import Forms._
+import io.suggest.model.n2.node.MNodes
+import util.FormUtil.{currencyCodeM, doubleM, esIdM}
 import util.PlayMacroLogsImpl
 
 import scala.concurrent.Future
@@ -21,8 +22,9 @@ import scala.util.{Failure, Success}
  */
 @Singleton
 class TfDailyUtil @Inject()(
-  mCommonDi: ICommonDi,
-  bill2Util: Bill2Util
+  bill2Util: Bill2Util,
+  mNodes   : MNodes,
+  mCommonDi: ICommonDi
 )
   extends PlayMacroLogsImpl
 {
@@ -136,7 +138,7 @@ class TfDailyUtil @Inject()(
    */
   def updateNodeTf(mnode0: MNode, newTf: Option[MDailyTf]): Future[MNode] = {
     // Запускаем апдейт узла.
-    val fut = MNode.tryUpdate(mnode0) { mnode =>
+    val fut = mNodes.tryUpdate(mnode0) { mnode =>
       mnode.copy(
         billing = mnode.billing.copy(
           tariffs = mnode.billing.tariffs.copy(

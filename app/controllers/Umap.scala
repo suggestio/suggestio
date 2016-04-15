@@ -6,13 +6,14 @@ import _root_.util.acl._
 import _root_.util.geo.umap._
 import com.google.inject.Inject
 import io.suggest.model.geo.{GsTypes, PointGs}
-import io.suggest.model.n2.edge.{MNodeEdges, MEdgeInfo, MEdgeGeoShape}
-import io.suggest.model.n2.edge.search.{GsCriteria, Criteria, ICriteria}
+import io.suggest.model.n2.edge.{MEdgeGeoShape, MEdgeInfo, MNodeEdges}
+import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
+import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models._
 import models.maps.umap._
 import models.mproj.ICommonDi
-import models.req.{IReqHdr, IReq}
+import models.req.{IReq, IReqHdr}
 import play.api.i18n.Messages
 import play.api.libs.Files.TemporaryFile
 import play.api.mvc.{MultipartFormData, Result}
@@ -30,6 +31,7 @@ import scala.concurrent.Future
  */
 class Umap @Inject() (
   umapUtil                        : UmapUtil,
+  mNodes                          : MNodes,
   override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
@@ -108,7 +110,7 @@ class Umap @Inject() (
       override def limit                = 600
     }
     for {
-      mnodes <- MNode.dynSearch(msearch)
+      mnodes <- mNodes.dynSearch(msearch)
     } yield {
       _getDataLayerGeoJson(None, ngl, mnodes)
     }
@@ -274,7 +276,7 @@ class Umap @Inject() (
             .headOption
 
           // Пытаемся сохранить новые геоданные в узел.
-          MNode.tryUpdate( mnodesMap(adnId) ) { mnode0 =>
+          mNodes.tryUpdate( mnodesMap(adnId) ) { mnode0 =>
             mnode0.copy(
               edges = mnode0.edges.copy(
                 out = {

@@ -2,9 +2,10 @@ package controllers
 
 import com.google.inject.Inject
 import controllers.ident._
+import io.suggest.model.n2.node.MNodes
 import models._
 import models.jsm.init.{MTarget, MTargets}
-import models.mctx.{CtxData, Context}
+import models.mctx.{Context, CtxData}
 import models.mproj.ICommonDi
 import models.msession.Keys
 import models.req.IReqHdr
@@ -29,6 +30,7 @@ import views.html.ident.reg.email._regColumnTpl
  */
 
 class Ident @Inject() (
+  override val mNodes               : MNodes,
   override val mailer               : IMailerWrapper,
   override val identUtil            : IdentUtil,
   override val nodesUtil            : NodesUtil,

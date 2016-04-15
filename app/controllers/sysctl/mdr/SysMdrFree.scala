@@ -3,7 +3,7 @@ package controllers.sysctl.mdr
 import controllers.routes
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.model.n2.edge.MEdgeInfo
-import models._
+import io.suggest.model.n2.node.IMNodes
 import models.mdr._
 import util.acl.{IsSuperuser, IsSuperuserMad}
 import util.billing.IBill2UtilDi
@@ -21,6 +21,7 @@ trait SysMdrFree
   with IsSuperuser
   with IsSuperuserMad
   with IBill2UtilDi
+  with IMNodes
 {
 
   import mCommonDi._
@@ -38,7 +39,7 @@ trait SysMdrFree
     */
   def freeAdvs(args: MdrSearchArgs) = IsSu.async { implicit request =>
     // Необходимо искать карточки, требующие модерации/обработки.
-    val madsFut = MNode.dynSearch( args.toNodeSearch )
+    val madsFut = mNodes.dynSearch( args.toNodeSearch )
     _adsPage(madsFut, args)
   }
 

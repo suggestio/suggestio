@@ -3,7 +3,7 @@ package controllers
 import com.google.inject.Inject
 import controllers.sysctl.mdr.{SysMdrFree, SysMdrPaid}
 import io.suggest.mbill2.m.item.MItems
-import io.suggest.model.n2.node.MNode
+import io.suggest.model.n2.node.MNodes
 import models.mdr.MdrSearchArgs
 import models.mproj.ICommonDi
 import util.PlayMacroLogsImpl
@@ -25,6 +25,7 @@ import views.html.sys1.mdr._
 
 class SysMdr @Inject() (
   override val lkAdUtil             : LkAdUtil,
+  override val mNodes               : MNodes,
   override val scUtil               : ShowcaseUtil,
   override val n2NodesUtil          : N2NodesUtil,
   override val mItems               : MItems,
@@ -67,7 +68,7 @@ class SysMdr @Inject() (
       // Ищем след. карточку через бесплатные размещения.
       .recoverWith { case _: NoSuchElementException =>
         // Если нет paid-модерируемых карточек, то поискать бесплатные размещения.
-        val fut = MNode.dynSearchIds( args1.toNodeSearch )
+        val fut = mNodes.dynSearchIds( args1.toNodeSearch )
         LOGGER.trace(s"rdrToNextAd(): No more paid advs, looking for free advs...\n $args")
         fut.map(_.head)
       }

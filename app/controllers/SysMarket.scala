@@ -8,6 +8,7 @@ import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.model.common.OptId
 import io.suggest.model.n2.edge.MNodeEdges
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
+import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models._
 import models.mctx.Context
@@ -52,6 +53,7 @@ class SysMarket @Inject() (
   mPerson                         : MPerson,
   mItems                          : MItems,
   mImgs3                          : MImgs3,
+  mNodes                          : MNodes,
   override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
@@ -87,7 +89,7 @@ class SysMarket @Inject() (
   /** Страница с унифицированным списком узлов рекламной сети в алфавитном порядке с делёжкой по memberType. */
   def adnNodesList(args: MSysNodeListArgs) = IsSuGet.async { implicit request =>
     // Запустить сбор статистики по типам N2-узлов:
-    val ntypeStatsFut = MNode.ntypeStats()
+    val ntypeStatsFut = mNodes.ntypeStats()
 
     // Собрать es-запрос согласно запросу, описанному в URL.
     val msearch = new MNodeSearchDfltImpl {
@@ -99,7 +101,7 @@ class SysMarket @Inject() (
     }
 
     // Запустить поиск узлов для рендера:
-    val mnodesFut = MNode.dynSearch(msearch)
+    val mnodesFut = mNodes.dynSearch(msearch)
 
     // Кол-во вообще всех узлов.
     val allCountFut = for {
@@ -230,7 +232,7 @@ class SysMarket @Inject() (
         override def limit = 200
       }
       for {
-        mnodes <- MNode.dynSearch( msearch )
+        mnodes <- mNodes.dynSearch( msearch )
       } yield {
         val iter = mnodes.iterator
           .flatMap { mnode =>
@@ -282,7 +284,7 @@ class SysMarket @Inject() (
       import request.mnode
       lazy val logPrefix = s"deleteAdnNodeSubmit($nodeId):"
       LOGGER.info(s"$logPrefix by user[${request.user.personIdOpt}] request. Deleting...")
-      MNode.deleteById(nodeId)
+      mNodes.deleteById(nodeId)
         .filter(identity)
         .map { _ =>
           // Нужно перебрасывать на вкладку с узлами того же типа, что и удалённый.
@@ -341,7 +343,7 @@ class SysMarket @Inject() (
             }
           )
         )
-        for (adnId <- MNode.save(mnode1)) yield {
+        for (adnId <- mNodes.save(mnode1)) yield {
           // Инициализировать новосозданный узел.
           maybeInitializeNode(ncpForm, adnId)
           // Отредиректить админа в созданный узел.
@@ -381,7 +383,7 @@ class SysMarket @Inject() (
         }
       case None =>
         warn(s"$logPrefix Failed to bind ${NodeCreateParams.getClass.getSimpleName} form:\n ${formatFormErrors(ncpForm)}")
-        Future successful None
+        Future.successful(None)
     }
   }
 
@@ -410,7 +412,7 @@ class SysMarket @Inject() (
       },
       {adnNode2 =>
         for {
-          _ <- MNode.tryUpdate(mnode) { updateAdnNode(_, adnNode2) }
+          _ <- mNodes.tryUpdate(mnode) { updateAdnNode(_, adnNode2) }
         } yield {
           Redirect(routes.SysMarket.showAdnNode(adnId))
             .flashing(FLASH.SUCCESS -> "Changes.saved")
@@ -472,7 +474,7 @@ class SysMarket @Inject() (
 
     // Ищем все рекламные карточки, подходящие под запрос.
     // TODO Нужна устойчивая сортировка.
-    val madsFut = MNode.dynSearch(a)
+    val madsFut = mNodes.dynSearch(a)
     val brArgssFut = madsFut.flatMap { mads =>
       Future.traverse(mads) { mad =>
         lkAdUtil.tiledAdBrArgs(mad)
@@ -528,7 +530,7 @@ class SysMarket @Inject() (
             }
 
           } else {
-            Future successful Nil
+            Future.successful(Nil)
           }
           items
         }
@@ -644,7 +646,7 @@ class SysMarket @Inject() (
       .headOption
       .fold [Future[Option[MNode]]] {
         // Тут хрень какая-то. Наугад выбирается случайный узел.
-        MNode.dynSearchOne {
+        mNodes.dynSearchOne {
           new MNodeSearchDfltImpl {
             override def nodeTypes = Seq( MNodeTypes.AdnNode )
             override def withAdnRights = Seq( AdnRights.RECEIVER )
@@ -652,7 +654,7 @@ class SysMarket @Inject() (
           }
         }
       } {
-        MNode.getById(_)
+        mNodes.getById(_)
       }
 
     for {

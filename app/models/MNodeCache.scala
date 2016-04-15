@@ -1,11 +1,10 @@
 package models
 
-import com.google.inject.{Singleton, Inject}
-import io.suggest.model.n2.node.INodeId
+import com.google.inject.{Inject, Singleton}
+import io.suggest.model.n2.node.{INodeId, MNodes}
 import io.suggest.model.n2.node.event.{MNodeDeleted, MNodeSaved}
 import org.elasticsearch.client.Client
 import play.api.Configuration
-import io.suggest.event._
 import io.suggest.event.SioNotifier.Event
 import play.api.cache.CacheApi
 
@@ -24,6 +23,7 @@ import scala.concurrent.duration._
 class MNodeCache @Inject() (
   // Тут нельзя инжектить MCommonDi, т.к. будет circular dep.
   configuration                   : Configuration,
+  mNodes                          : MNodes,
   override val cache              : CacheApi,
   override implicit val ec        : ExecutionContext,
   override implicit val esClient  : Client
@@ -50,8 +50,8 @@ class MNodeCache @Inject() (
     )
   }
 
-  override type StaticModel_t = MNode.type
-  override def companion: StaticModel_t = MNode
+  override type StaticModel_t = MNodes
+  override def companion: StaticModel_t = mNodes
 
   /** Извлекаем adnId из события. */
   override def event2id(event: Event): String = {

@@ -1,7 +1,7 @@
 package models.usr
 
 import com.google.inject.{Inject, Singleton}
-import io.suggest.model.n2.node.MNodeTypes
+import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import models.MNode
@@ -19,6 +19,7 @@ import scala.util.{Failure, Success}
  */
 @Singleton
 class MSuperUsers @Inject()(
+  mNodes          : MNodes,
   mCommonDi       : ICommonDi
 )
   extends PlayMacroLogsImpl
@@ -78,7 +79,7 @@ class MSuperUsers @Inject()(
             )
 
             for {
-              personId <- MNode.save(mperson0)
+              personId <- mNodes.save(mperson0)
               mpiId <- {
                 val pwHash = MPersonIdent.mkHash(email)
                 val epw = EmailPwIdent(email=email, personId=personId, pwHash = pwHash)

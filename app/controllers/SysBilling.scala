@@ -6,6 +6,7 @@ import io.suggest.mbill2.m.balance.MBalances
 import io.suggest.mbill2.m.contract.MContracts
 import io.suggest.mbill2.m.gid.GidUtil
 import io.suggest.mbill2.m.txn.MTxns
+import io.suggest.model.n2.node.MNodes
 import models.mcal.MCalendars
 import models.mproj.ICommonDi
 import util.PlayMacroLogsImpl
@@ -20,6 +21,7 @@ import util.billing.{Bill2Util, ContractUtil, TfDailyUtil}
  */
 class SysBilling @Inject() (
   override val tfDailyUtil          : TfDailyUtil,
+  override val mNodes               : MNodes,
   override val mCalendars           : MCalendars,
   override val mContracts           : MContracts,
   override val mBalances            : MBalances,

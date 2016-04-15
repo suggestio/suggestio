@@ -2,7 +2,8 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.common.fut.FutureUtil
-import io.suggest.model.n2.node.MNode
+import io.suggest.model.n2.node.MNodes
+import models.MNode
 import models.mctx.Context
 import models.mproj.ICommonDi
 import play.api.data.Form
@@ -23,6 +24,7 @@ import scala.concurrent.Future
  * Относится к ЛК, т.к. форма переключения языков сверстана именно там.
  */
 class LkLang @Inject() (
+  mNodes                          : MNodes,
   override val mCommonDi          : ICommonDi
 )
   extends SioController
@@ -87,7 +89,7 @@ class LkLang @Inject() (
               personNode = {
                 personNodeOpt.fold [MNode] {
                   warn("User logged in, but not found in MPerson. Creating...")
-                  MNode.applyPerson(
+                  mNodes.applyPerson(
                     lang = newLangCode,
                     id = Some(personId)
                   )
@@ -102,7 +104,7 @@ class LkLang @Inject() (
                 }
               }
 
-              id <- MNode.save(personNode)
+              id <- mNodes.save(personNode)
 
             } yield {
               Some(id)

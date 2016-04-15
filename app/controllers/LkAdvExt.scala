@@ -2,7 +2,7 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.common.empty.EmptyUtil
-import models._
+import io.suggest.model.n2.node.MNodes
 import models.adv._
 import models.adv.ext.act.{ActorPathQs, OAuthVerifier}
 import models.adv.ext.{MAdvRunnerTplArgs, MForAdTplArgs}
@@ -10,7 +10,7 @@ import models.adv.search.etg.ExtTargetSearchArgs
 import models.jsm.init.MTargets
 import models.mctx.Context
 import models.mproj.ICommonDi
-import models.req.{MReqNoBody, IAdProdReq}
+import models.req.{IAdProdReq, MReqNoBody}
 import org.elasticsearch.search.sort.SortOrder
 import play.api.data.Forms._
 import play.api.data._
@@ -37,6 +37,7 @@ import scala.concurrent.Future
  */
 class LkAdvExt @Inject() (
   override val canAdvAdUtil       : CanAdvertiseAdUtil,
+  mNodes                          : MNodes,
   extAdvWsActors                  : ExtAdvWsActors,
   override val aeFormUtil         : AeFormUtil,
   override val mCommonDi          : ICommonDi
@@ -228,7 +229,7 @@ class LkAdvExt @Inject() (
       }
 
       // Запустить получение текущей рекламной карточки
-      madFut = MNode.getById(qsArgs.adId)
+      madFut = mNodes.getById(qsArgs.adId)
         .map(_.get)
         .recoverWith { case ex: NoSuchElementException =>
           val ex2 = ExceptionWithResult(NotFound("Ad not found: " + qsArgs.adId))

@@ -1,11 +1,12 @@
 package controllers.ident
 
 import controllers.{CaptchaValidator, SioController}
+import io.suggest.model.n2.node.IMNodes
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
 import models._
 import models.jsm.init.MTargets
-import models.mctx.{CtxData, Context}
+import models.mctx.{Context, CtxData}
 import models.msession.Keys
 import models.req.IReq
 import models.usr._
@@ -66,6 +67,7 @@ trait EmailPwReg
   with CanConfirmEmailPwRegCtl
   with INodesUtil
   with EmailPwRegUtil
+  with IMNodes
 {
 
   import mCommonDi._
@@ -185,7 +187,7 @@ trait EmailPwReg
 
         for {
           // Сохранить узел самого юзера.
-          personId <- MNode.save(mperson0)
+          personId <- mNodes.save(mperson0)
 
           // Развернуть узел-магазин для юзера
           mnodeFut = nodesUtil.createUserNode(name = data.adnName, personId = personId)

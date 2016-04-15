@@ -3,8 +3,8 @@ package util.acl
 import controllers.SioController
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
+import io.suggest.model.n2.node.IMNodes
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
-import models.MNode
 import models.req.MReq
 import models.usr.MExtIdent
 import play.api.mvc.{ActionBuilder, Request, Result}
@@ -25,6 +25,7 @@ trait CanConfirmIdpReg
   with IIdentUtil
   with OnUnauthUtilCtl
   with Csrf
+  with IMNodes
 {
 
   import mCommonDi._
@@ -56,7 +57,7 @@ trait CanConfirmIdpReg
             }
             override def limit = 5
           }
-          val pcntFut = MNode.dynCount(msearch)
+          val pcntFut = mNodes.dynCount(msearch)
           // Запустить поиск имеющихся внешних идентов
           val hasExtIdent = MExtIdent.countByPersonId(personId)
             .map(_ > 0L)

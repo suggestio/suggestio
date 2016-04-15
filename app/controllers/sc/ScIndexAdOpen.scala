@@ -1,10 +1,11 @@
 package controllers.sc
 
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
+import io.suggest.model.n2.node.IMNodes
 import models.req.IReq
-import models.{MNode, AdSearchImpl, AdShowLevels}
+import models.{AdSearchImpl, AdShowLevels, MNode}
 import models.im.DevScreen
-import models.msc.{MScApiVsn, ScReqArgsDflt, ScReqArgs}
+import models.msc.{MScApiVsn, ScReqArgs, ScReqArgsDflt}
 import play.api.mvc.Result
 import util.n2u.IN2NodesUtilDi
 
@@ -21,6 +22,7 @@ trait ScIndexAdOpen
   extends ScFocusedAds
   with ScIndexNodeCommon
   with IN2NodesUtilDi
+  with IMNodes
 {
   import mCommonDi._
 
@@ -29,7 +31,7 @@ trait ScIndexAdOpen
   override protected def _focusedAds(logic: FocusedAdsLogicHttp)
                                     (implicit request: IReq[_]): Future[Result] = {
     val resFut = for {
-      madOpt <- MNode.maybeGetById( logic._adSearch.openIndexAdId )
+      madOpt <- mNodes.maybeGetById( logic._adSearch.openIndexAdId )
 
       // .get приведут к NSEE, это нормально.
       producerId <- {
@@ -54,7 +56,7 @@ trait ScIndexAdOpen
             }
             override def limit        = 2
           }
-          MNode.dynCount(args)
+          mNodes.dynCount(args)
         }
 
         val prodFut = mNodeCache.getById(producerId)

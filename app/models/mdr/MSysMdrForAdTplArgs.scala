@@ -2,9 +2,8 @@ package models.mdr
 
 import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.item.typ.MItemType
-import io.suggest.model.n2.node.MNode
 import models.msc.IAdBodyTplArgs
-import models.{MEdge, blk}
+import models.{MEdge, blk, MNode}
 
 /**
   * Suggest.io

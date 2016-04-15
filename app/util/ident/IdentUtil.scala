@@ -4,8 +4,8 @@ import com.google.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
+import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
-import models.MNode
 import models.mproj.ICommonDi
 import models.usr.{MExtIdent, MSuperUsers}
 import play.api.mvc._
@@ -20,6 +20,7 @@ import scala.concurrent.Future
  */
 @Singleton
 class IdentUtil @Inject() (
+  mNodes        : MNodes,
   mSuperUsers   : MSuperUsers,
   mCommonDi     : ICommonDi
 ) {
@@ -39,7 +40,7 @@ class IdentUtil @Inject() (
     }
 
     for {
-      mnodes <- MNode.dynSearch(msearch)
+      mnodes <- mNodes.dynSearch(msearch)
 
     } yield {
 

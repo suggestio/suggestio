@@ -3,9 +3,10 @@ package controllers.sc
 import java.util.NoSuchElementException
 
 import _root_.util.blocks.BgImg
-import _root_.util.di.{IScUtil, IScNlUtil, IScStatUtil}
-import _root_.util.jsa.{JsAppendById, JsAction, SmRcvResp, Js}
+import _root_.util.di.{IScNlUtil, IScStatUtil, IScUtil}
+import _root_.util.jsa.{Js, JsAction, JsAppendById, SmRcvResp}
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
+import io.suggest.model.n2.node.IMNodes
 import models.im.make.{MakeResult, Makers}
 import models.mctx.Context
 import models.msc._
@@ -19,6 +20,7 @@ import util._
 import util.acl._
 import views.html.sc._
 import play.api.libs.json._
+
 import scala.collection.immutable
 import scala.concurrent.Future
 import models._
@@ -35,6 +37,7 @@ trait ScAdsTileBase
   with IScNlUtil
   with IScUtil
   with ScCssUtil
+  with IMNodes
 {
 
   import mCommonDi._
@@ -127,7 +130,7 @@ trait ScAdsTileBase
 
     lazy val madsFut: Future[Seq[MNode]] = {
       adSearch2Fut flatMap { adSearch2 =>
-        MNode.dynSearch(adSearch2)
+        mNodes.dynSearch(adSearch2)
       }
     }
 

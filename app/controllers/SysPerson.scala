@@ -3,12 +3,11 @@ package controllers
 import com.google.inject.Inject
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
-import io.suggest.model.n2.node.MNodeTypes
+import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.mctx.Context
 import models.mproj.ICommonDi
 import models.usr._
-import models.MNode
 import org.elasticsearch.search.sort.SortOrder
 import util.acl.{IsSuperuser, IsSuperuserPerson}
 import views.html.ident.recover.emailPwRecoverTpl
@@ -28,6 +27,7 @@ import scala.concurrent.Future
 // TODO Замержить куски контроллера в отображение узла N2. Сейчас этот контроллер рисует неактуальные данные.
 class SysPerson @Inject() (
   mPerson                   : MPerson,
+  mNodes                    : MNodes,
   mSuperUsers               : MSuperUsers,
   override val mCommonDi    : ICommonDi
 )
@@ -51,7 +51,7 @@ class SysPerson @Inject() (
         override def nodeTypes  = Seq(MNodeTypes.Person)
         override def limit      = Int.MaxValue    // TODO Надо ли оно тут вообще?
       }
-      MNode.dynCount(psearch)
+      mNodes.dynCount(psearch)
     }
     val epwIdsCntFut = EmailPwIdent.countAll
     val extIdsCntFut = MExtIdent.countAll
@@ -126,7 +126,7 @@ class SysPerson @Inject() (
       }
       override def withNameSort = Some(SortOrder.ASC)
     }
-    val nodesFut = MNode.dynSearch( msearch )
+    val nodesFut = mNodes.dynSearch( msearch )
     // Запускаем поиски ident'ов. Сортируем результаты.
     val epwIdentsFut = EmailPwIdent.findByPersonId(personId)
       .map { _.sortBy(_.email) }
