@@ -74,17 +74,13 @@ trait EsChildModelStaticT extends EsModelCommonStaticT {
    * Удалить документ по id.
    * @param id id документа.
    * @param parentId id родительского документа, чтобы es мог вычислить шарду.
-   * @param ignoreResources Не пытаться удалять ресурсы модели. true, если ресурсы уже удалены.
    * @return true, если документ найден и удалён. Если не найден, то false
    */
-  def delete(id: String, parentId: String, ignoreResources: Boolean = false)
+  def delete(id: String, parentId: String)
             (implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
-    val delResFut = maybeEraseResources(ignoreResources, get(id, parentId))
-    delResFut flatMap { _ =>
-      prepareDelete(id, parentId)
-        .execute()
-        .map { _.isFound }
-    }
+    prepareDelete(id, parentId)
+      .execute()
+      .map { _.isFound }
   }
 
   def resave(id: String, parentId: String)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Option[String]] = {
@@ -114,10 +110,4 @@ trait EsChildModelT extends EsModelCommonT {
     super.indexRequestBuilder.setParent(parentId)
   }
 
-  override def companionDelete(_id: String, ignoreResources: Boolean)
-                              (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
-    companion.delete(_id, parentId, ignoreResources)
-  }
-
-  override def prepareDelete(implicit client: Client) = companion.prepareDelete(id.get, parentId)
 }

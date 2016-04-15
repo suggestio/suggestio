@@ -19,22 +19,14 @@ trait EsModelJMXMBeanCommonI {
   /** Асинхронно вызвать переиндексацию всех данных в модели. */
   def resaveMany(maxResults: Int): String
 
-  def remapMany(maxResults: Int): String
-
   /**
    * Существует ли указанный маппинг сейчас?
    * @return true, если маппинг сейчас существует.
    */
   def isMappingExists: Boolean
 
-  /** Асинхронно сбросить маппинг. */
-  def resetMapping(): String
-
   /** Асинхронно отправить маппинг в ES. */
-  def putMapping(ignoreConflicts: Boolean): String
-
-  /** Асинхронно удалить маппинг вместе со всеми данными. */
-  def deleteMapping(): String
+  def putMapping(): String
 
   def generateMapping(): String
   def readCurrentMapping(): String
@@ -90,38 +82,16 @@ trait EsModelCommonJMXBase extends JMXBase with EsModelJMXMBeanCommonI with Macr
   }
 
 
-  override def remapMany(maxResults: Int): String = {
-    warn(s"remapMany(maxResults = $maxResults)")
-    companion.remapMany(maxResults)
-      .map { total => s"Remapped ok $total items." }
-      .recover { case ex: Throwable => _formatEx(s"remapMany($maxResults)", "...", ex) }
-  }
-
-
   override def isMappingExists: Boolean = {
     trace(s"isMappingExists()")
     companion.isMappingExists
   }
 
-  override def resetMapping(): String = {
-    warn("resetMapping()")
-    companion.resetMapping
-      .map { _.toString }
-      .recover { case ex: Throwable =>  _formatEx("resetMapping()", "", ex) }
-  }
-
-  override def putMapping(ignoreConflicts: Boolean): String = {
-    warn(s"putMapping($ignoreConflicts)")
-    companion.putMapping(ignoreConflicts = ignoreConflicts)
+  override def putMapping(): String = {
+    warn(s"putMapping()")
+    companion.putMapping()
       .map(_.toString)
-      .recover { case ex: Throwable => _formatEx(s"putMapping($ignoreConflicts)", "", ex) }
-  }
-
-  override def deleteMapping(): String = {
-    warn("deleteMapping()")
-    val fut = companion.deleteMapping
-      .map { _ => "Deleted." }
-    awaitString(fut)
+      .recover { case ex: Throwable => _formatEx(s"putMapping()", "", ex) }
   }
 
   override def generateMapping(): String = {
@@ -141,7 +111,7 @@ trait EsModelCommonJMXBase extends JMXBase with EsModelJMXMBeanCommonI with Macr
   override def getRoutingKey(idOrNull: String): String = {
     trace(s"getRoutingKey($idOrNull)")
     val idOrNull2 = if (idOrNull == null) idOrNull else idOrNull.trim
-    companion.getRoutingKey(idOrNull).toString
+    companion.getRoutingKey(idOrNull2).toString
   }
 
   override def getAllIds(maxResults: Int): String = {

@@ -2,13 +2,11 @@ package io.suggest.model.es
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.common.OptStrId
 import io.suggest.primo.TypeT
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.action.bulk.{BulkProcessor, BulkRequest, BulkResponse}
-import org.elasticsearch.action.delete.DeleteRequestBuilder
 import org.elasticsearch.action.get.{GetResponse, MultiGetResponse}
 import org.elasticsearch.action.index.IndexRequestBuilder
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
@@ -174,25 +172,6 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
   /** Прочитать маппинг текущей ES-модели из ES. */
   def getCurrentMapping(implicit ec: ExecutionContext, client: Client) = {
     EsModelUtil.getCurrentMapping(ES_INDEX_NAME, typeName = ES_TYPE_NAME)
-  }
-
-  /**
-   * При удаление инстанса модели бывает нужно стирать связанные ресурсы (связанные модели).
-   * Тут общий код логики необязательного стирания ресурсов.
-   * @param ignoreResources Флаг запрета каких-либо стираний. Полезно, если всё уже стёрто.
-   * @param getF Функция получения фьючерса с возможным инстансом модели.
-   * @return Фьючерс для синхронизации.
-   */
-  def maybeEraseResources(ignoreResources: Boolean, getF: => Future[Option[EsModelCommonT]])
-                         (implicit client: Client, ec: ExecutionContext, sn: SioNotifierStaticClientI): Future[_] = {
-    if (!ignoreResources && HAS_RESOURCES) {
-      getF flatMap {
-        case Some(mInts) => mInts.eraseResources
-        case None        => Future successful None
-      }
-    } else {
-      Future successful None
-    }
   }
 
   /**
@@ -405,11 +384,6 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
     countByQuery(QueryBuilders.matchAllQuery())
   }
 
-  /** Пересоздать маппинг удаляется и создаётся заново. */
-  def resetMapping(implicit ec: ExecutionContext, client: Client): Future[Boolean] = {
-    deleteMapping flatMap { _ => putMapping() }
-  }
-
   // TODO Нужно проверять, что текущий маппинг не устарел, и обновлять его.
   def isMappingExists(implicit ec:ExecutionContext, client: Client) = {
     EsModelUtil.isMappingExists(indexName=ES_INDEX_NAME, typeName=ES_TYPE_NAME)
@@ -579,44 +553,6 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
 
 
   /**
-   * Прочитать в RAM n документов, пересоздать маппинг, отправить документы назад в индекс.
-   * Крайне опасно дергать эту функцию в продакшене, т.к. она скорее всего приведёт к потере данных.
-   * Функция не экономит память и сильно грузит кластер при сохранении, т.к. не использует bulk request.
-   * @param maxResults Макс. число результатов для прочтения из хранилища модели.
-   * @return
-   */
-  def remapMany(maxResults: Int = -1)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Int] = {
-    val logPrefix = s"remapMany($maxResults): "
-    LOGGER.warn(logPrefix + "Starting model data remapping...")
-    // TODO Надо бы сохранять данные маппинга в файл, считывая их через SCAN и курсоры.
-    val startedAt = System.currentTimeMillis()
-    val atMostFut: Future[Int] = if (maxResults <= 0) {
-      countAll.map(_.toInt + 10)
-    } else {
-      Future successful maxResults
-    }
-    // [withVsn = false] из-за проблем с версионизацией на стёртых маппингах VersionConflictEngineException version conflict, current [-1], provided [3]
-    atMostFut flatMap { atMost =>
-      getAll(atMost, withVsn = false) flatMap { results =>
-        val resultFut = for {
-          _ <- deleteMapping
-          _ <- putMapping(ignoreConflicts = false)
-          _ <- Future.traverse(results) { e => tryUpdate(e)(identity) }
-          _ <- refreshIndex
-        } yield {
-          LOGGER.info(s"${logPrefix}Model's data remapping finished after ${System.currentTimeMillis - startedAt} ms.")
-          results.size
-        }
-        resultFut onFailure { case ex =>
-          LOGGER.error(logPrefix + "Failed to make remap. Lost data is:\n" + EsModelUtil.toEsJsonDocs(results))
-        }
-        resultFut
-      }
-    }
-  }
-
-
-  /**
    * Запустить пакетное копирование данных модели из одного ES-клиента в другой.
    * @param fromClient Откуда брать данные?
    * @param toClient Куда записывать данные?
@@ -731,7 +667,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
 
 
 /** Общий код динамических частей модели, независимо от child-модели или обычной. */
-trait EsModelCommonT extends OptStrId with EraseResources with TypeT {
+trait EsModelCommonT extends OptStrId with TypeT {
 
   /** Тип T это -- this.type конечной реализации, но связать его с this.type компилятор не позволяет. */
   override type T <: EsModelCommonT
@@ -759,11 +695,9 @@ trait EsModelCommonT extends OptStrId with EraseResources with TypeT {
   def toJson: String
   def toJsonPretty: String = toJson
 
-  @JsonIgnore
   def idOrNull: String = id.orNull
 
   /** Перед сохранением можно проверять состояние экземпляра. */
-  @JsonIgnore
   def isFieldsValid: Boolean = true
 
   def indexRequestBuilder(implicit client: Client): IndexRequestBuilder = {
@@ -796,24 +730,6 @@ trait EsModelCommonT extends OptStrId with EraseResources with TypeT {
       throw new IllegalStateException("Some or all important fields have invalid values: " + this)
     }
   }
-
-  def companionDelete(_id: String, ignoreResources: Boolean)(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean]
-
-  /**
-   * Удалить текущий ряд из таблицы. Если ключ не выставлен, то сразу будет экзепшен.
-   *
-   * @return true - всё ок, false - документ не найден.
-   */
-  def delete(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
-    eraseResources flatMap { _ =>
-      id match {
-        case Some(_id)  => companionDelete(_id, ignoreResources = true)
-        case None       => Future failed new IllegalStateException("id is not set")
-      }
-    }
-  }
-
-  def prepareDelete(implicit client: Client): DeleteRequestBuilder
 
   def prepareUpdate(implicit client: Client) = {
     val req = client.prepareUpdate(esIndexName, esTypeName, id.get)

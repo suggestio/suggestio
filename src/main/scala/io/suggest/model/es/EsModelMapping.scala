@@ -11,7 +11,7 @@ import scala.concurrent.{ExecutionContext, Future}
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 16.10.15 18:35
- * Description:
+ * Description: Трейты для ES-моделей, связанные с маппингами типов.
  */
 
 
@@ -52,28 +52,15 @@ trait EsModelStaticMapping extends EsModelStaticMappingGenerators with MacroLogs
 
   def generateMapping: XContentBuilder = generateMappingFor(ES_TYPE_NAME)
 
-  /** Флаг, который можно перезаписать в реализации static-модели чтобы проигнорить конфликты при апдейте маппинга. */
-  protected def mappingIgnoreConflicts: Boolean = false
-
   /** Отправить маппинг в elasticsearch. */
-  def putMapping(ignoreConflicts: Boolean = mappingIgnoreConflicts)(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
+  def putMapping()(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
     LOGGER.debug(s"putMapping(): $ES_INDEX_NAME/$ES_TYPE_NAME")
     client.admin().indices()
       .preparePutMapping(ES_INDEX_NAME)
       .setType(ES_TYPE_NAME)
       .setSource(generateMapping)
-      .setIgnoreConflicts(ignoreConflicts)
       .execute()
       .map { _.isAcknowledged }
-  }
-
-  /** Удалить маппинг из elasticsearch. */
-  def deleteMapping(implicit client: Client): Future[_] = {
-    LOGGER.warn(s"deleteMapping(): $ES_INDEX_NAME/$ES_TYPE_NAME")
-    client.admin().indices()
-      .prepareDeleteMapping(ES_INDEX_NAME)
-      .setType(ES_TYPE_NAME)
-      .execute()
   }
 
   def ensureIndex(implicit ec:ExecutionContext, client: Client) = {

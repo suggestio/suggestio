@@ -73,14 +73,14 @@ object EsModelUtil extends MacroLogsImpl {
     Future.traverse(models) { esModelStatic =>
       val logPrefix = esModelStatic.getClass.getSimpleName + ".putMapping(): "
       val imeFut = if (ignoreExists) {
-        Future successful false
+        Future.successful(false)
       } else {
         esModelStatic.isMappingExists
       }
       imeFut flatMap {
         case false =>
           trace(logPrefix + "Trying to push mapping for model...")
-          val fut = esModelStatic.putMapping(ignoreExists)
+          val fut = esModelStatic.putMapping()
           fut onComplete {
             case Success(true)  => trace(logPrefix + "-> OK" )
             case Success(false) => warn(logPrefix  + "NOT ACK!!! Possibly out-of-sync.")
@@ -547,21 +547,3 @@ trait ITryUpdateData[X <: EsModelCommonT, TU <: ITryUpdateData[X, TU]] {
  * @param failed Кол-во обломов.
  */
 case class CopyContentResult(success: Long, failed: Long)
-
-
-
-/** Интерфейс для стирания данных, относящихся только к текущему экземпляру модели, но хранящимися в других моделях. */
-trait EraseResources {
-
-  /** Вызывалка стирания ресурсов. Позволяет переопределить логику вызова doEraseResources(). */
-  def eraseResources(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
-    doEraseResources
-  }
-  
-  /** Логика стирания ресурсов, относящихся к этой модели. Например, картинок, на которые ссылкаются поля этой модели. */
-  protected def doEraseResources(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
-    Future successful None
-  }
-
-}
-

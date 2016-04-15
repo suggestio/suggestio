@@ -175,14 +175,11 @@ trait EsModelStaticT extends EsModelCommonStaticT {
    * @param id id документа.
    * @return true, если документ найден и удалён. Если не найден, то false
    */
-  def deleteById(id: String, ignoreResources: Boolean = false)
+  def deleteById(id: String)
                 (implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
-    val delResFut = maybeEraseResources(ignoreResources, getById(id))
-    delResFut flatMap { _ =>
-      deleteRequestBuilder(id)
-        .execute()
-        .map { _.isFound }
-    }
+    deleteRequestBuilder(id)
+      .execute()
+      .map { _.isFound }
   }
 
 
@@ -217,11 +214,5 @@ trait EsModelT extends EsModelCommonT {
   /** Узнать routing key для текущего экземпляра. */
   def getRoutingKey = companion.getRoutingKey(idOrNull)
 
-  override def companionDelete(_id: String, ignoreResources: Boolean)
-                              (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
-    companion.deleteById(_id, ignoreResources)
-  }
-
-  override def prepareDelete(implicit client: Client) = companion.prepareDelete(id.get)
 }
 
