@@ -2,7 +2,6 @@ package io.suggest.model.n2.node
 
 import com.google.inject.Inject
 import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.model.es.EsModelUtil.FieldsJsonAcc
 import io.suggest.model.es._
 import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.bill.MNodeBilling
@@ -49,7 +48,7 @@ object MNode
   with EsmV2Deserializer
   with MacroLogsImpl
   with IGenEsMappingProps
-  with IEsDocJsonWrites
+  with EsModelJsonWrites
   with EsDynSearchStatic[MNodeSearch]
 {
 
@@ -243,26 +242,13 @@ case class MNode(
   override val versionOpt     : Option[Long]    = None
 )
   extends EsModelT
-  with EsModelJsonWrites
-  with EsModelPlayJsonT   // compat с некоторым API MAdnNode типа MInviteRequest. Потом можно удалить.
 {
 
-  override type T = MNode
-  override def companion = MNode
-
-  def withDocMeta(dmeta: IEsDocMeta): T = {
+  def withDocMeta(dmeta: IEsDocMeta): MNode = {
     copy(
       id = dmeta.id,
       versionOpt = dmeta.version
     )
-  }
-
-  // это compat для EsModelPlayJsonT. По факту оно не нужно, и должно быть выпилено.
-  override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
-    companion.esDocWrites
-      .writes(this)
-      .fields
-      .toList
   }
 
   lazy val guessDisplayName: Option[String] = {
@@ -294,4 +280,5 @@ final class MNodeJmx @Inject() (
   with MNodeJmxMBean
 {
   override def companion = MNode
+  override type X = MNode
 }

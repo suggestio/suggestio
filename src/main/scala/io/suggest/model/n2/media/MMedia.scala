@@ -29,7 +29,7 @@ class MMedias @Inject()(
   extends EsModelStaticT
   with EsmV2Deserializer
   with MacroLogsImpl
-  with IEsDocJsonWrites
+  with EsModelJsonWrites
 { that =>
 
   import iMediaStorages.FORMAT
@@ -61,8 +61,7 @@ class MMedias @Inject()(
         file      = fileMeta,
         storage   = storage,
         picture   = pictureMetaOpt,
-        id        = None,
-        companion = that
+        id        = None
       )
     },
     {mmedia =>
@@ -116,16 +115,12 @@ case class MMedia(
   storage                   : IMediaStorage,
   override val id           : Option[String],
   picture                   : Option[MPictureMeta]  = None,
-  override val versionOpt   : Option[Long]          = None,
-  override val companion    : MMedias
+  override val versionOpt   : Option[Long]          = None
 )
   extends EsModelT
-  with EsModelJsonWrites
 {
 
-  override type T = MMedia
-
-  def withDocMeta(dmeta: IEsDocMeta): T = {
+  def withDocMeta(dmeta: IEsDocMeta): MMedia = {
     copy(id = dmeta.id, versionOpt = dmeta.version)
   }
 
@@ -136,7 +131,7 @@ case class MMedia(
 trait MMediaJmxMBean extends EsModelJMXMBeanI
 
 final class MMediaJmx @Inject() (
-  mMedia      : MMedias,
+  override val companion: MMedias,
   val ec      : ExecutionContext,
   val client  : Client,
   val sn      : SioNotifierStaticClientI
@@ -144,5 +139,5 @@ final class MMediaJmx @Inject() (
   extends EsModelJMXBase
   with MMediaJmxMBean
 {
-  override def companion = mMedia
+  override type X = MMedia
 }
