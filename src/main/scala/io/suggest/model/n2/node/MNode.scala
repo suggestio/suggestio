@@ -212,6 +212,21 @@ object MNode
     delFut
   }
 
+  /**
+   * Сохранить экземпляр в хранилище модели.
+   * При успехе будет отправлено событие [[io.suggest.model.n2.node.event.MNodeSaved]] в шину событий.
+   * @return Фьючерс с новым/текущим id.
+   */
+  override def save(m: T)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
+    val saveFut = super.save(m)
+    saveFut.onSuccess { case adnId =>
+      val mnode2 = m.copy(id = Option(adnId))
+      val evt = MNodeSaved(mnode2, isCreated = m.id.isEmpty)
+      sn.publish(evt)
+    }
+    saveFut
+  }
+
 }
 
 
@@ -263,21 +278,6 @@ case class MNode(
 
   def guessDisplayNameOrIdOrEmpty: String = {
     guessDisplayNameOrId.getOrElse("")
-  }
-
-  /**
-   * Сохранить экземпляр в хранилище модели.
-   * При успехе будет отправлено событие [[io.suggest.model.n2.node.event.MNodeSaved]] в шину событий.
-   * @return Фьючерс с новым/текущим id.
-   */
-  override def save(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
-    val saveFut = super.save
-    saveFut.onSuccess { case adnId =>
-      val mnode2 = copy(id = Option(adnId))
-      val evt = MNodeSaved(mnode2, isCreated = id.isEmpty)
-      sn.publish(evt)
-    }
-    saveFut
   }
 
 }
