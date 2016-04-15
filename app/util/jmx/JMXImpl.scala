@@ -33,6 +33,7 @@ class JMXImpl @Inject() (
   mCalendarJmx                  : MCalendarJmx,
   mNodeJmx                      : MNodeJmx,
   geoTagsUtilJmx                : GeoTagsUtilJmx,
+  mAdStatJmx                    : MAdStatJmx,
   mCommonDi                     : ICommonDi
 )
   extends PlayLazyMacroLogsImpl
@@ -44,9 +45,7 @@ class JMXImpl @Inject() (
   private val JMX_MODELS = {
     import mCommonDi._
     List[JMXBase](
-      // compat
-      // elasticsearch
-      new MAdStatJmx,
+      mAdStatJmx,
       new EmailActivationJmx,
       new EmailPwIdentJmx,
       new MExtIdentJmx,

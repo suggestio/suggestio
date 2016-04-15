@@ -30,30 +30,17 @@ trait HtmlUnitCustomBrowserFactory extends BrowserFactory {
   }
 }
 
-/** Имитация IE8. */
-trait HtmlUnitIE8Factory extends HtmlUnitCustomBrowserFactory {
-  override def huBrowserVersion = BrowserVersion.INTERNET_EXPLORER_8
-}
-
-/** Имитация IE9. */
-trait HtmlUnitIE9Factory extends HtmlUnitCustomBrowserFactory {
-  override def huBrowserVersion = BrowserVersion.INTERNET_EXPLORER_9
-}
 
 /** Имитация IE11. */
 trait HtmlUnitIE11Factory extends HtmlUnitCustomBrowserFactory {
-  override def huBrowserVersion = BrowserVersion.INTERNET_EXPLORER_11
+  override def huBrowserVersion = BrowserVersion.INTERNET_EXPLORER
 }
 
 /** Имитация Firefox 24 ESR. */
 trait HtmlUnitFF24Factory extends HtmlUnitCustomBrowserFactory {
-  override def huBrowserVersion = BrowserVersion.FIREFOX_24
+  override def huBrowserVersion = BrowserVersion.FIREFOX_38
 }
 
-/** Имитация Firefox 17 ESR. */
-trait HtmlUnitFF17Factory extends HtmlUnitCustomBrowserFactory {
-  override def huBrowserVersion = BrowserVersion.FIREFOX_17
-}
 
 /** Имитация более-менее свежего хрома. */
 trait HtmlUnitChromeFactory extends HtmlUnitCustomBrowserFactory {

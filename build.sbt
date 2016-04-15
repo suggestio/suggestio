@@ -94,7 +94,7 @@ libraryDependencies ++= {
   //"net.codingwell" %% "scala-guice" % "4.0.0",
   "commons-io" % "commons-io" % "2.4",
   // test
-  "org.scalatestplus" %% "play" % Common.scalaTestPlusPlayVsn % "test"
+  "org.scalatestplus.play" %% "scalatestplus-play" % Common.scalaTestPlusPlayVsn % "test"
     exclude("commons-logging", "commons-logging")
     exclude("org.w3c.css", "sac")
 )}

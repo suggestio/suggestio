@@ -18,18 +18,23 @@ class QsbSignerSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
     val signer = new QsbSigner("secretKey1", signKeyName)
     val signedQsString = signer.mkSigned(key, unSignedQsString)
     signedQsString must include (unSignedQsString)
+
     if (paramsMap.nonEmpty)
       signedQsString must include ("&")
+
     signedQsString must include (s"$signKeyName=")
+
     // Имитируем обращение к сгенеренной ссылке
     val qsParams = FormUrlEncodedParser.parse(signedQsString)
     val signCheckResult = signer.bind(key, qsParams)
     signCheckResult mustBe defined
     signCheckResult mustBe Some(Right(paramsMap))
+
     // Имитируем подстановку ссылки без сигнатуры
     val sigMissParams = FormUrlEncodedParser.parse(unSignedQsString)
     val sigMissCheckResult = signer.bind(key, sigMissParams)
     sigMissCheckResult.filter(_.isLeft) mustBe None
+
     // Имитируем подстановку неверной сигнатуры
     val sigInvalidParams = sigMissParams + (signKeyName -> Seq("9e32295f8225803bb6d5fdfcc0674616a4413c1b"))
     val sigInvalidResult = signer.bind(key, sigInvalidParams)

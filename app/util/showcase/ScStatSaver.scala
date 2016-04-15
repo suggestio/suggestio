@@ -1,18 +1,17 @@
 package util.showcase
 
-import com.google.inject.{Singleton, Inject}
+import com.google.inject.{Inject, Singleton}
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.playx.ICurrentConf
-import io.suggest.ym.model.stat.MAdStat
-import org.elasticsearch.action.bulk.{BulkResponse, BulkRequest, BulkProcessor}
+import io.suggest.ym.model.stat.{MAdStat, MAdStats}
+import org.elasticsearch.action.bulk.{BulkProcessor, BulkRequest, BulkResponse}
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.unit.{ByteSizeValue, TimeValue}
-import play.api.{Configuration, Application}
-import util.async.{EcParInfo, AsyncUtil}
+import play.api.{Application, Configuration}
+import util.async.{AsyncUtil, EcParInfo}
 import util.{PlayMacroLogsDyn, PlayMacroLogsImpl}
 
 import scala.concurrent.{ExecutionContext, Future}
-
 import scala.reflect.ClassTag
 
 /**
@@ -98,6 +97,7 @@ class DummySaverBackend extends ScStatSaverBackend {
 
 /** Plain backend вызывает save() для всех элементов очереди. */
 class PlainSaverBackend @Inject() (
+  mAdStats                      : MAdStats,
   implicit private val ec       : ExecutionContext,
   implicit private val esClient : Client,
   implicit private val sn       : SioNotifierStaticClientI
@@ -105,7 +105,7 @@ class PlainSaverBackend @Inject() (
   extends ScStatSaverBackend
 {
   override def save(stat: MAdStat): Future[_] = {
-    MAdStat.save(stat)
+    mAdStats.save(stat)
   }
   override def flush(): Unit = {}
   override def close(): Unit = {}
@@ -115,6 +115,7 @@ class PlainSaverBackend @Inject() (
 /** BulkProcessor backend накапливает очередь и отправляет всё индексацию разом. */
 @Singleton
 class BulkProcessorSaveBackend @Inject() (
+  mAdStats                : MAdStats,
   configuration           : Configuration,
   implicit val esClient   : Client
 )
@@ -160,7 +161,7 @@ class BulkProcessorSaveBackend @Inject() (
   override def save(stat: MAdStat): Future[_] = {
     // Подавляем блокировку синхронизации в bp через отдельный execution context с очередью задач.
     Future {
-      val irb = MAdStat.prepareIndex(stat).request()
+      val irb = mAdStats.prepareIndex(stat).request()
       bp.add(irb)
     }(AsyncUtil.singleThreadCpuContext)
   }

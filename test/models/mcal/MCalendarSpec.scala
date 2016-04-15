@@ -11,7 +11,9 @@ import org.scalatestplus.play.PlaySpec
  */
 class MCalendarSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
 
-  lazy val mCalendar = app.injector.instanceOf[MCalendars]
+  private lazy val mCalendars = app.injector.instanceOf[MCalendars]
+
+  import mCalendars.mockPlayDocRespEv
 
   "MCalendar JSON" must {
 
@@ -21,11 +23,10 @@ class MCalendarSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
         data        = """asdasd\n\asddasd\53535\t\n\sdfasdf """,
         id          = Some("aADw4312rqefasef"),
         calType     = MCalTypes.WeekDay,
-        versionOpt  = Some(1),
-        companion   = mCalendar
+        versionOpt  = Some(1)
       )
 
-      mCalendar.deserializeOne2(mcal) mustBe mcal
+      mCalendars.deserializeOne2(mcal) mustBe mcal
     }
 
 
@@ -35,11 +36,10 @@ class MCalendarSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
         data        = """ asdasd\n\asddasd\53535\t\n\sdf$$##asdf\n#\n\n\n\t\rasdasd  """,
         id          = None,
         calType     = MCalTypes.WeekDay,
-        versionOpt  = None,
-        companion   = mCalendar
+        versionOpt  = None
       )
 
-      mCalendar.deserializeOne2(mcal) mustBe mcal
+      mCalendars.deserializeOne2(mcal) mustBe mcal
     }
 
   }

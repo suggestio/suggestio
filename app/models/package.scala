@@ -48,9 +48,6 @@ package object models {
   val  MImgInfoMeta         = ym.model.common.MImgInfoMeta
   type MImgInfoMeta         = ym.model.common.MImgInfoMeta
 
-  val  MAdStat              = ym.model.stat.MAdStat
-  type MAdStat              = ym.model.stat.MAdStat
-
   type SelectPolicy         = SelectPolicies.T
 
   val  BlocksConf           = util.blocks.BlocksConf

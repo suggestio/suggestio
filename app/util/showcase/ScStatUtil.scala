@@ -2,6 +2,7 @@ package util.showcase
 
 import com.google.inject.Inject
 import io.suggest.util.UuidUtil
+import io.suggest.ym.model.stat.MAdStat
 import models.im.DevScreen
 import models.msc.MScNodeSearchArgs
 import models.req.IReqHdr

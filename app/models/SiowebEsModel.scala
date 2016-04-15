@@ -4,13 +4,15 @@ import com.google.inject.Inject
 import io.suggest.model.es.{CopyContentResult, EsModelCommonStaticT, EsModelUtil}
 import io.suggest.model.n2.media.MMedias
 import io.suggest.util.{JMXBase, SioEsUtil}
+import io.suggest.ym.model.stat.MAdStats
 import models.ai.MAiMad
 import models.mcal.MCalendars
 import models.merr.MRemoteError
 import models.mproj.ICommonDi
-import models.usr.{MExtIdent, EmailActivation, EmailPwIdent}
+import models.usr.{EmailActivation, EmailPwIdent, MExtIdent}
 import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
-import util.{PlayMacroLogsDyn, PlayLazyMacroLogsImpl}
+import util.{PlayLazyMacroLogsImpl, PlayMacroLogsDyn}
+
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 import scala.concurrent.duration._
@@ -24,7 +26,8 @@ import scala.concurrent.duration._
 class SiowebEsModel @Inject() (
   mMedias             : MMedias,
   mCalendars          : MCalendars,
-  mCommonDi           : ICommonDi
+  mCommonDi           : ICommonDi,
+  mAdStats            : MAdStats
 )
   extends PlayMacroLogsDyn
 {
@@ -36,16 +39,15 @@ class SiowebEsModel @Inject() (
    *
    * @return Список EsModelMinimalStaticT.
    */
-  def ES_MODELS: Seq[EsModelCommonStaticT] = {
-    EsModelUtil.ES_MODELS ++ Seq[EsModelCommonStaticT](
-      MNode,
-      EmailPwIdent, EmailActivation, MExtIdent, mCalendars,
-      MRemoteError, MAiMad,
-      adv.MExtTarget,
-      event.MEvent, sec.MAsymKey,
-      mMedias
-    )
-  }
+  def ES_MODELS = Seq[EsModelCommonStaticT](
+    MNode,
+    EmailPwIdent, EmailActivation, MExtIdent, mCalendars,
+    MRemoteError, MAiMad,
+    adv.MExtTarget,
+    event.MEvent, sec.MAsymKey,
+    mMedias,
+    mAdStats
+  )
 
   /** Вернуть экзепшен, если есть какие-то проблемы при обработке ES-моделей. */
   def maybeErrorIfIncorrectModels() {
