@@ -466,11 +466,14 @@ object EsModelUtil extends MacroLogsImpl {
   /** Общий код моделей, которые занимаются resave'ом. */
   def resaveBase(getFut: Future[Option[EsModelCommonT]])
                 (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Option[String]] = {
-    getFut flatMap {
+    getFut.flatMap {
       case Some(e) =>
-        e.save map { Some.apply }
+        // TODO Спилить обращение к companion, принимать статическую модель в аргументах
+        e.companion
+          .save(e.thisT)
+          .map { Some.apply }
       case None =>
-        Future successful None
+        Future.successful(None)
     }
   }
 
@@ -504,7 +507,9 @@ object EsModelUtil extends MacroLogsImpl {
           LOGGER.debug(logPrefix + " updateF() data with `null`-saveable, leaving update")
           Future.successful(data1)
         } else {
-          m2.save
+          // TODO Спилить обращение к companion, принимать статическую модель в аргументах
+          m2.companion
+            .save(m2.thisT)
             .map { _ => data1 }
             .recoverWith {
               case exVsn: VersionConflictEngineException =>

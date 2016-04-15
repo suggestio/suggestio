@@ -680,12 +680,18 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
     }
   }
 
+  def esTypeName(m: T) = ES_TYPE_NAME
+  def esIndexName(m: T) = ES_INDEX_NAME
+
 
   def prepareIndexNoVsn(m: T)(implicit client: Client): IndexRequestBuilder = {
+    val indexName = esIndexName(m)
+    val typeName = esTypeName(m)
+    val idOrNull = m.idOrNull
     val json = m.toJson
-    LOGGER.trace(s"indexRequestBuilder(${m.esIndexName}/${m.esTypeName}/${m.idOrNull}): $json")
+    LOGGER.trace(s"indexRequestBuilder($indexName/$typeName/$idOrNull): $json")
     client
-      .prepareIndex(m.esIndexName, m.esTypeName, m.idOrNull)
+      .prepareIndex(indexName, typeName, idOrNull)
       .setSource(json)
   }
 
@@ -695,6 +701,19 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
     if (m.versionOpt.isDefined)
       irb.setVersion(m.versionOpt.get)
     irb
+  }
+
+
+  /**
+   * Сохранить экземпляр в хранилище ES.
+   *
+   * @return Фьючерс с новым/текущим id
+   *         VersionConflictException если транзакция в текущем состоянии невозможна.
+   */
+  def save(m: T)(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
+    prepareIndex(m)
+      .execute()
+      .map { _.getId }
   }
 
 }
@@ -723,32 +742,10 @@ trait EsModelCommonT extends OptStrId with TypeT {
 
   def companion: EsModelCommonStaticT { type T = T1 }
 
-  def esTypeName = companion.ES_TYPE_NAME
-  def esIndexName = companion.ES_INDEX_NAME
-
   def toJson: String
   def toJsonPretty: String = toJson
 
   def idOrNull: String = id.orNull
-
-  /** Перед сохранением можно проверять состояние экземпляра. */
-  def isFieldsValid: Boolean = true
-
-  /**
-   * Сохранить экземпляр в хранилище ES.
-   *
-   * @return Фьючерс с новым/текущим id
-   *         VersionConflictException если транзакция в текущем состоянии невозможна.
-   */
-  def save(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
-    if (isFieldsValid) {
-      companion.prepareIndex(thisT)
-        .execute()
-        .map { _.getId }
-    } else {
-      throw new IllegalStateException("Some or all important fields have invalid values: " + this)
-    }
-  }
 
 }
 
