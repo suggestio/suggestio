@@ -271,6 +271,13 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
     )
   }
 
+  override def prepareIndex(m: T)(implicit client: Client): IndexRequestBuilder = {
+    val irb = super.prepareIndex(m)
+    if (m.ttl.isDefined)
+      irb.setTTL(m.ttl.get.toMillis)
+    irb
+  }
+
 }
 
 
@@ -369,13 +376,6 @@ final class MAdStat(
     if (reqUri.isDefined)
       acc1 ::= REQUEST_URI_ESFN -> JsString(reqUri.get)
     acc1
-  }
-
-  override def prepareIndex(implicit client: Client): IndexRequestBuilder = {
-    val irb = super.indexRequestBuilder
-    if (ttl.isDefined)
-      irb.setTTL(ttl.get.toMillis)
-    irb
   }
 
   override def versionOpt = None

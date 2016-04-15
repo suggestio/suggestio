@@ -2,7 +2,6 @@ package io.suggest.model.es
 
 import io.suggest.event.SioNotifierStaticClientI
 import org.elasticsearch.action.index.IndexRequestBuilder
-import org.elasticsearch.action.update.UpdateRequestBuilder
 import org.elasticsearch.client.Client
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 
@@ -91,6 +90,11 @@ trait EsChildModelStaticT extends EsModelCommonStaticT {
     get(inst0.id.get, inst0.parentId)
   }
 
+  override def prepareIndexNoVsn(m: T)(implicit client: Client): IndexRequestBuilder = {
+    super.prepareIndexNoVsn(m)
+      .setParent(m.parentId)
+  }
+
 }
 
 
@@ -100,14 +104,6 @@ trait EsChildModelT extends EsModelCommonT {
   override type T <: EsChildModelT
 
   def parentId: String
-  override def companion: EsChildModelStaticT
-
-  override def prepareUpdate(implicit client: Client): UpdateRequestBuilder = {
-    super.prepareUpdate.setParent(parentId)
-  }
-
-  override def indexRequestBuilder(implicit client: Client): IndexRequestBuilder = {
-    super.indexRequestBuilder.setParent(parentId)
-  }
+  override def companion: EsChildModelStaticT { type T = T1 }
 
 }

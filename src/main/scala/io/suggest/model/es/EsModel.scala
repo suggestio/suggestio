@@ -191,6 +191,17 @@ trait EsModelStaticT extends EsModelCommonStaticT {
     getById(inst0.id.get)
   }
 
+  /** Генератор indexRequestBuilder'ов. Помогает при построении bulk-реквестов. */
+  override def prepareIndexNoVsn(m: T)(implicit client: Client): IndexRequestBuilder = {
+    val irb = super.prepareIndexNoVsn(m)
+
+    val rkOpt = getRoutingKey(m.idOrNull)
+    if (rkOpt.isDefined)
+      irb.setRouting(rkOpt.get)
+
+    irb
+  }
+
 }
 
 
@@ -200,19 +211,7 @@ trait EsModelT extends EsModelCommonT {
 
   override type T <: EsModelT
 
-  override def companion: EsModelStaticT
-
-  /** Генератор indexRequestBuilder'ов. Помогает при построении bulk-реквестов. */
-  override def indexRequestBuilder(implicit client: Client): IndexRequestBuilder = {
-    val irb = super.indexRequestBuilder
-    val rkOpt = getRoutingKey
-    if (rkOpt.isDefined)
-      irb.setRouting(rkOpt.get)
-    irb
-  }
-
-  /** Узнать routing key для текущего экземпляра. */
-  def getRoutingKey = companion.getRoutingKey(idOrNull)
+  override def companion: EsModelStaticT { type T = T1 }
 
 }
 

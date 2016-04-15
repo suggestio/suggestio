@@ -41,6 +41,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
   def HAS_RESOURCES: Boolean = false
 
   /** Если модели требуется выставлять routing для ключа, то можно делать это через эту функцию.
+   *
     * @param idOrNull id или null, если id отсутствует.
     * @return None если routing не требуется, иначе Some(String).
     */
@@ -176,6 +177,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
 
   /**
    * Метод для краткого запуска скроллинга над моделью.
+   *
    * @param queryOpt Поисковый запрос, по которому скроллим. Если None, то будет matchAll().
    * @param resultsPerScroll Кол-во результатов за каждую итерацию скролла.
    * @param keepAliveMs TTL scroll-курсора на стороне ES.
@@ -196,6 +198,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
 
   /**
    * Пройтись асинхронно по всем документам модели.
+   *
    * @param acc0 Начальный аккамулятор.
    * @param keepAliveMs Таймаут курсора на стороне ES.
    * @param f Асинхронная функция обхода.
@@ -221,6 +224,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
 
   /**
    * Аналог foldLeft, но с асинхронным аккамулированием. Полезно, если функция совершает какие-то сайд-эффекты.
+   *
    * @param acc0 Начальный акк.
    * @param resultsPerScroll Кол-во результатов с каждой шарды за одну scroll-итерацию [10].
    * @param keepAliveMs TTL scroll-курсора на стороне ES.
@@ -256,6 +260,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
 
   /**
    * foreach для асинхронного обхода всех документов модели.
+   *
    * @param resultsPerScroll По сколько документов скроллить?
    * @param keepAliveMs Время жизни scroll-курсора на стороне es.
    * @param f Функция обработки одного результата.
@@ -282,6 +287,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
    * Внутри метода используется BulkProcessor, который асинхронно, по мере наполнения очереди индексации,
    * отправляет реквесты на индексацию.
    * Метод полезен для обновления модели, которое затрагивает внутреннюю структуру данных.
+   *
    * @param bulkActions Макс.кол-во запросов в очереди на bulk-индексацию. После пробоя этого значения,
    *                    вся очередь реквестов будет отправлена на индексацию.
    * @param f Функция-маппер, которая порождает фьючерс с новым обновлённым экземпляром модели.
@@ -326,7 +332,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
             LOGGER.trace(s"$logPrefix Skipped update of [${v.idOrNull}], f() returned null")
             accFut
           case v1 =>
-            bp.add( v1.prepareIndex.request )
+            bp.add( prepareIndex(v1).request )
             counter.incrementAndGet()
             accFut
         }
@@ -342,6 +348,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
 
   /**
    * Сервисная функция для получения списка всех id.
+   *
    * @return Список всех id в неопределённом порядке.
    */
   def getAllIds(maxResults: Int, maxPerStep: Int = MAX_RESULTS_DFLT)
@@ -366,6 +373,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
 
   /**
    * Примитив для рассчета кол-ва документов, удовлетворяющих указанному запросу.
+   *
    * @param query Произвольный поисковый запрос.
    * @return Кол-во найденных документов.
    */
@@ -378,6 +386,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
 
   /**
    * Посчитать кол-во документов в текущей модели.
+   *
    * @return Неотрицательное целое.
    */
   def countAll(implicit ec: ExecutionContext, client: Client): Future[Long] = {
@@ -391,6 +400,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
 
   /**
    * Десериализация одного элементам модели.
+   *
    * @param id id документа.
    * @param m Карта, распарсенное json-тело документа.
    * @return Экземпляр модели.
@@ -398,6 +408,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
   def deserializeOne(id: Option[String], m: collection.Map[String, AnyRef], version: Option[Long]): T
 
   /** Десериализация по новому API: документ передается напрямую, а данные извлекаются через статический typeclass.
+    *
     * @param doc Документ, т.е. GetResponse или SearchHit или же ещё что-то...
     * @param ev Неявный typeclass, обеспечивающий унифицированный интерфейс к doc.
     * @tparam D Класс переданного документа.
@@ -441,6 +452,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
 
   /** Для ряда задач бывает необходимо задействовать multiGet вместо обычного поиска, который не успевает за refresh.
     * Этот метод позволяет сконвертить поисковые результаты в результаты multiget.
+   *
     * @return Результат - что-то неопределённом порядке. */
   def searchResp2RtMultiget(searchResp: SearchResponse, acc0: List[T] = Nil)
                            (implicit ex: ExecutionContext, client: Client): Future[List[T]] = {
@@ -497,6 +509,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
 
   /**
    * Выдать все магазины. Метод подходит только для административных задач.
+   *
    * @param maxResults Макс. размер выдачи.
    * @param offset Абсолютный сдвиг в выдаче.
    * @param withVsn Возвращать ли версии?
@@ -526,6 +539,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
 
   /**
    * Пересохранение всех данных модели. По сути getAll + all.map(_.save). Нужно при ломании схемы.
+   *
    * @return
    */
   def resaveMany(maxResults: Int = MAX_RESULTS_DFLT)
@@ -534,7 +548,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
     val br = client.prepareBulk()
     allFut.flatMap { results =>
       for (r <- results) {
-        br.add( r.indexRequestBuilder )
+        br.add( prepareIndexNoVsn(r) )
       }
       br.execute()
     }
@@ -554,6 +568,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
 
   /**
    * Запустить пакетное копирование данных модели из одного ES-клиента в другой.
+   *
    * @param fromClient Откуда брать данные?
    * @param toClient Куда записывать данные?
    * @param reqSize Размер реквеста. По умолчанию 50.
@@ -577,7 +592,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
               val bulk = toClient.prepareBulk()
               iter.foreach { hit =>
                 val model = deserializeSearchHit(hit)
-                bulk.add( model.indexRequestBuilder(toClient) )
+                bulk.add( prepareIndexNoVsn(model)(toClient) )
               }
               bulk.execute().map { bulkResult =>
                 if (bulkResult.hasFailures)
@@ -601,6 +616,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
   /**
    * Перечитывание из хранилища указанного документа, используя реквизиты текущего документа.
    * Нужно для parent-child случаев, когда одного _id уже мало.
+   *
    * @param inst0 Исходный (устаревший) инстанс.
    * @return тоже самое, что и getById()
    */
@@ -642,6 +658,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
   /**
    * Попытаться обновить экземпляр модели с помощью указанной функции.
    * Метод является надстройкой над save, чтобы отрабатывать VersionConflict.
+   *
    * @param inst0 Исходный инстанс, который необходимо обновить.
    * @param retry Счетчик попыток.
    * @param updateF Функция для апдейта. Может возвращать null для внезапного отказа от апдейта.
@@ -661,6 +678,23 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
     for (data2 <- data2Fut) yield {
       data2._saveable
     }
+  }
+
+
+  def prepareIndexNoVsn(m: T)(implicit client: Client): IndexRequestBuilder = {
+    val json = m.toJson
+    LOGGER.trace(s"indexRequestBuilder(${m.esIndexName}/${m.esTypeName}/${m.idOrNull}): $json")
+    client
+      .prepareIndex(m.esIndexName, m.esTypeName, m.idOrNull)
+      .setSource(json)
+  }
+
+
+  def prepareIndex(m: T)(implicit client: Client): IndexRequestBuilder = {
+    val irb = prepareIndexNoVsn(m)
+    if (m.versionOpt.isDefined)
+      irb.setVersion(m.versionOpt.get)
+    irb
   }
 
 }
@@ -687,7 +721,7 @@ trait EsModelCommonT extends OptStrId with TypeT {
   /** Модели, желающие версионизации, должны перезаписать это поле. */
   def versionOpt: Option[Long]
 
-  def companion: EsModelCommonStaticT
+  def companion: EsModelCommonStaticT { type T = T1 }
 
   def esTypeName = companion.ES_TYPE_NAME
   def esIndexName = companion.ES_INDEX_NAME
@@ -700,21 +734,6 @@ trait EsModelCommonT extends OptStrId with TypeT {
   /** Перед сохранением можно проверять состояние экземпляра. */
   def isFieldsValid: Boolean = true
 
-  def indexRequestBuilder(implicit client: Client): IndexRequestBuilder = {
-    val json = toJson
-    LOGGER.trace(s"indexRequestBuilder($esIndexName/$esTypeName/$idOrNull): $json")
-    client
-      .prepareIndex(esIndexName, esTypeName, idOrNull)
-      .setSource(json)
-  }
-
-  def prepareIndex(implicit client: Client): IndexRequestBuilder = {
-    val irb = indexRequestBuilder
-    if (versionOpt.isDefined)
-      irb.setVersion(versionOpt.get)
-    irb
-  }
-
   /**
    * Сохранить экземпляр в хранилище ES.
    *
@@ -723,19 +742,12 @@ trait EsModelCommonT extends OptStrId with TypeT {
    */
   def save(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
     if (isFieldsValid) {
-      prepareIndex
+      companion.prepareIndex(thisT)
         .execute()
         .map { _.getId }
     } else {
       throw new IllegalStateException("Some or all important fields have invalid values: " + this)
     }
-  }
-
-  def prepareUpdate(implicit client: Client) = {
-    val req = client.prepareUpdate(esIndexName, esTypeName, id.get)
-    if (versionOpt.isDefined)
-      req.setVersion(versionOpt.get)
-    req
   }
 
 }
