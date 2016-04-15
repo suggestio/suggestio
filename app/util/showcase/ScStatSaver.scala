@@ -105,7 +105,7 @@ class PlainSaverBackend @Inject() (
   extends ScStatSaverBackend
 {
   override def save(stat: MAdStat): Future[_] = {
-    stat.save
+    MAdStat.save(stat)
   }
   override def flush(): Unit = {}
   override def close(): Unit = {}

@@ -76,23 +76,29 @@ class MSuperUsers @Inject()(
                 )
               )
             )
-            mperson0.save.flatMap { personId =>
-              val pwHash = MPersonIdent.mkHash(email)
-              EmailPwIdent(email=email, personId=personId, pwHash = pwHash).save.map { mpiId =>
-                info(s"$logPrefix1 New superuser installed as $personId. mpi=$mpiId")
-                Some(personId)
+
+            for {
+              personId <- MNode.save(mperson0)
+              mpiId <- {
+                val pwHash = MPersonIdent.mkHash(email)
+                val epw = EmailPwIdent(email=email, personId=personId, pwHash = pwHash)
+                EmailPwIdent.save(epw)
               }
+            } yield {
+              info(s"$logPrefix1 New superuser installed as $personId. mpi=$mpiId")
+              Some(personId)
             }
+
           } else {
             warn(logPrefix1 + "Skipping installing missing superuser, because !createIfMissing.")
-            Future successful None
+            Future.successful(None)
           }
 
         // Суперюзер уже существует. Просто возвращаем его id.
         case Some(mpi) =>
-          Future successful Some(mpi.personId)
+          Future.successful(Some(mpi.personId))
       }
-    } andThen {
+    }.andThen {
       case Success(suPersonIdOpts) =>
         val suPersonIds = suPersonIdOpts.flatten
         SU_IDS = suPersonIds.toSet

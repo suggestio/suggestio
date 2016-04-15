@@ -85,7 +85,8 @@ class PgpUtil @Inject() (
     val fut = MAsymKey.getById(LOCAL_STOR_KEY_ID)
       .filter { _.isDefined }
       .recoverWith { case ex: NoSuchElementException =>
-        genNewNormalKey().save
+        val k = genNewNormalKey()
+        MAsymKey.save(k)
       }
     fut.onFailure {
       case ex: Throwable =>

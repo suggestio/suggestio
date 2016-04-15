@@ -81,9 +81,17 @@ class LkLang @Inject() (
         val saveUserLangFut: Future[_] = {
           FutureUtil.optFut2futOpt( request.user.personIdOpt ) { personId =>
             val newLangCode = newLang.code
-            request.user.personNodeOptFut
-              .map {
-                case Some(mperson0) =>
+            for {
+              personNodeOpt <- request.user.personNodeOptFut
+
+              personNode = {
+                personNodeOpt.fold [MNode] {
+                  warn("User logged in, but not found in MPerson. Creating...")
+                  MNode.applyPerson(
+                    lang = newLangCode,
+                    id = Some(personId)
+                  )
+                } { mperson0 =>
                   mperson0.copy(
                     meta = mperson0.meta.copy(
                       basic = mperson0.meta.basic.copy(
@@ -91,20 +99,22 @@ class LkLang @Inject() (
                       )
                     )
                   )
-                case None =>
-                  warn("User logged in, but not found in MPerson. Creating...")
-                  MNode.applyPerson(
-                    lang = newLangCode,
-                    id = Some(personId)
-                  )
+                }
               }
-              .flatMap { _.save }
-              .map { Some.apply }
+
+              id <- MNode.save(personNode)
+
+            } yield {
+              Some(id)
+            }
           }
         }
+
+        // Залоггировать ошибки.
         saveUserLangFut onFailure {
           case ex: Throwable  =>  error("Failed to save lang for mperson", ex)
         }
+
         // Сразу возвращаем результат ничего не дожидаясь. Сохранение может занять время, а необходимости ждать его нет.
         RdrBackOr(r)(routes.Ident.rdrUserSomewhere())
           .withLang(newLang)

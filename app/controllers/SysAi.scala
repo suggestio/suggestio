@@ -6,7 +6,6 @@ import models.mproj.ICommonDi
 import play.api.data.Forms._
 import play.api.data._
 import play.api.libs.ws.WSClient
-import play.api.mvc.Result
 import util.FormUtil._
 import util.PlayLazyMacroLogsImpl
 import util.acl.{IsSuperuser, IsSuperuserAiMad}
@@ -163,19 +162,21 @@ class SysAi @Inject() (
       },
       {maimad =>
         // Запускаем асинхронные проверки полученных данных: проверяем, что все указанные карточки существуют:
-        madAiUtil.dryRun(maimad)
-          .flatMap[Result] { _ =>
-            maimad.save map { savedId =>
-              Redirect( routes.SysAi.madIndex() )
-                .flashing(FLASH.SUCCESS -> "Создано. Обновите страницу.")
-            }
-          }
-          .recover {
-            case ex: Exception =>
-              debug(logPrefix + "dryRun() failed.", ex)
-              val fwe = formBinded.withGlobalError(s"${ex.getClass.getSimpleName}: ${ex.getMessage}")
-              NotAcceptable(createTpl(fwe))
-          }
+        val fut = for {
+          _ <- madAiUtil.dryRun(maimad)
+          savedId <- MAiMad.save(maimad)
+        } yield {
+          Redirect( routes.SysAi.madIndex() )
+            .flashing(FLASH.SUCCESS -> "Создано. Обновите страницу.")
+        }
+
+        // Перехватить невалидный MAdAi
+        fut.recover {
+          case ex: Exception =>
+            debug(logPrefix + "dryRun() failed.", ex)
+            val fwe = formBinded.withGlobalError(s"${ex.getClass.getSimpleName}: ${ex.getMessage}")
+            NotAcceptable(createTpl(fwe))
+        }
       }
     )
   }
@@ -207,20 +208,22 @@ class SysAi @Inject() (
           targetAdIds = aim1.targetAdIds,
           descr       = aim1.descr
         )
+
         // Запускаем асинхронные проверки полученных данных: проверяем, что все указанные карточки существуют:
-        madAiUtil.dryRun(aim2)
-          .flatMap[Result] { _ =>
-            aim2.save map { savedId =>
-              Redirect( routes.SysAi.madIndex() )
-                .flashing(FLASH.SUCCESS -> "Сохранено. Обновите страницу.")
-            }
-          }
-          .recover {
-            case ex: Exception =>
-              debug(logPrefix + "dryRun() failed.", ex)
-              val fwe = formBinded.withGlobalError(s"${ex.getClass.getSimpleName}: ${ex.getMessage}")
-              NotAcceptable(editTpl(aiMad, fwe))
-          }
+        val resFut = for {
+          _         <- madAiUtil.dryRun(aim2)
+          savedId   <- MAiMad.save(aim2)
+        } yield {
+          Redirect( routes.SysAi.madIndex() )
+            .flashing(FLASH.SUCCESS -> "Сохранено. Обновите страницу.")
+        }
+
+        resFut.recover {
+          case ex: Exception =>
+            debug(logPrefix + "dryRun() failed.", ex)
+            val fwe = formBinded.withGlobalError(s"${ex.getClass.getSimpleName}: ${ex.getMessage}")
+            NotAcceptable(editTpl(aiMad, fwe))
+        }
       }
     )
   }

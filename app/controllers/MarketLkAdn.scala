@@ -306,10 +306,16 @@ class MarketLkAdn @Inject() (
                     )
                   )
                 )
-                mperson0.save flatMap { personId =>
-                  EmailPwIdent.applyWithPw(email = eact.email, personId = personId, password = passwordOpt.get, isVerified = true)
-                    .save
-                    .map { emailPwIdentId => Some(personId) }
+
+                // Сохранение данных.
+                for {
+                  personId        <- MNode.save(mperson0)
+                  emailPwIdentId  <- {
+                    val epw = EmailPwIdent.applyWithPw(email = eact.email, personId = personId, password = passwordOpt.get, isVerified = true)
+                    EmailPwIdent.save(epw)
+                  }
+                } yield {
+                  Some(personId)
                 }
               } else {
                 Future successful None

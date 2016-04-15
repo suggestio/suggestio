@@ -124,13 +124,14 @@ trait EmailPwReg
               email = email1,
               key = CanConfirmEmailPwReg.EPW_ACT_KEY
             )
-            ea0.save.flatMap { eaId =>
-              // отправить письмо на указанную почту
-              val ea1 = ea0.copy(id = Some(eaId))
-              sendEmailAct(ea1)
-              // Вернуть ответ юзеру
-              emailRequestOk(Some(ea1))
-            }
+            EmailActivation.save(ea0)
+              .flatMap { eaId =>
+                // отправить письмо на указанную почту
+                val ea1 = ea0.copy(id = Some(eaId))
+                sendEmailAct(ea1)
+                // Вернуть ответ юзеру
+                emailRequestOk(Some(ea1))
+              }
 
           // Уже есть такой email в базе. Выслать восстановление пароля.
           case idents =>
@@ -184,19 +185,20 @@ trait EmailPwReg
 
         for {
           // Сохранить узел самого юзера.
-          personId <- mperson0.save
+          personId <- MNode.save(mperson0)
 
           // Развернуть узел-магазин для юзера
           mnodeFut = nodesUtil.createUserNode(name = data.adnName, personId = personId)
 
           // Запустить сохранение ident'а юзера.
           identIdFut = {
-            EmailPwIdent(
+            val epw0 = EmailPwIdent(
               email       = eaInfo.email,
               personId    = personId,
               pwHash      = MPersonIdent.mkHash(data.password),
               isVerified  = true
-            ).save
+            )
+            EmailPwIdent.save(epw0)
           }
 
           // Дождаться ident'а

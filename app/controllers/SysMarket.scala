@@ -341,7 +341,7 @@ class SysMarket @Inject() (
             }
           )
         )
-        for (adnId <- mnode1.save) yield {
+        for (adnId <- MNode.save(mnode1)) yield {
           // Инициализировать новосозданный узел.
           maybeInitializeNode(ncpForm, adnId)
           // Отредиректить админа в созданный узел.
@@ -442,7 +442,7 @@ class SysMarket @Inject() (
       },
       {email1 =>
         val eAct = EmailActivation(email=email1, key = adnId)
-        eAct.save.map { eActId =>
+        for (eActId <- EmailActivation.save(eAct)) yield {
           val eact2 = eAct.copy(
             id = Some(eActId)
           )

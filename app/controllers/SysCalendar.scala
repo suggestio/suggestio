@@ -149,7 +149,7 @@ class SysCalendar @Inject() (
         NotAcceptable(createCalFormTpl(formWithErrors))
       },
       {mcal =>
-        mcal.save.map { mcalId =>
+        for (mcalId <- mCalendars.save(mcal)) yield {
           Redirect(routes.SysCalendar.showCalendars())
             .flashing(FLASH.SUCCESS -> "Создан новый календарь.")
         }
@@ -191,7 +191,7 @@ class SysCalendar @Inject() (
           data    = mcal2.data,
           calType = mcal2.calType
         )
-        mcal3.save map { _ =>
+        for (_ <- mCalendars.save(mcal3)) yield {
           HolidayManager.clearManagerCache()
           Redirect(routes.SysCalendar.showCalendars())
             .flashing(FLASH.SUCCESS -> "Изменения в календаре сохранены.")

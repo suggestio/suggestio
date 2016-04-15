@@ -299,7 +299,7 @@ class LkAdvExt @Inject() (
         NotAcceptable(_targetFormTpl(adnId, formWithErrors, request.tgExisting))
       },
       {case (tg, ret) =>
-        tg.save.map { tgId =>
+        for (tgId <- MExtTarget.save(tg)) yield {
           // Вернуть форму с выставленным id.
           val tg2 = tg.copy(id = Some(tgId))
           val form = request.newTgForm fill (tg2, ret)

@@ -190,7 +190,7 @@ trait ExternalLogin
                     // Ссылку на страничку юзера в соц.сети можно генерить на ходу через ident'ы и костыли самописные.
                   )
                 )
-                val mpersonSaveFut = mperson0.save
+                val mpersonSaveFut = MNode.save(mperson0)
                 val meiFut = mpersonSaveFut.flatMap { personId =>
                   // Сохранить данные идентификации через соц.сеть.
                   val mei = MExtIdent(
@@ -199,7 +199,7 @@ trait ExternalLogin
                     userId    = profile.userId,
                     email     = profile.email
                   )
-                  val save2Fut = mei.save
+                  val save2Fut = MExtIdent.save(mei)
                   LOGGER.debug(s"$logPrefix Registered new user $personId from ext.login service, remote user_id = ${profile.userId}")
                   save2Fut.map { savedId => mei }
                 }

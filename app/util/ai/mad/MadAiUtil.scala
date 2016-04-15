@@ -159,8 +159,8 @@ class MadAiUtil @Inject() (
    */
   def run(madAi: MAiMad): Future[_] = {
     // Сохранить целевые карточки
-    dryRun(madAi) flatMap { madsRendered =>
-      Future.traverse(madsRendered)(_.save)
+    dryRun(madAi).flatMap { madsRendered =>
+      Future.traverse(madsRendered)(MNode.save)
     }
   }
 

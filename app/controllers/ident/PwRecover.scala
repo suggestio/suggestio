@@ -71,14 +71,14 @@ trait SendPwRecoverEmail
             pwHash      = "",
             isVerified  = false
           )
-          for (_ <- epw.save) yield {
+          for (_ <- EmailPwIdent.save(epw)) yield {
             epw
           }
         }
       }
 
       eact = EmailActivation(email = email1, key = epwIdent.personId)
-      eaId <- eact.save
+      eaId <- EmailActivation.save(eact)
 
     } yield {
 
@@ -212,7 +212,7 @@ trait PwRecover
         val epw2 = request.epw.copy(pwHash = pwHash2, isVerified = true)
         for {
           // Сохранение новых данных по паролю
-          _         <- epw2.save
+          _         <- EmailPwIdent.save(epw2)
 
           // Запуск удаления eact
           updateFut = EmailActivation.deleteById(eActId)

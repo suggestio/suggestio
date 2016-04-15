@@ -66,7 +66,7 @@ class AdnNodeEvents @Inject() (
       isCloseable = true,
       isUnseen    = true
     )
-    val fut = evt.save
+    val fut = MEvent.save(evt)
     fut.onFailure {
       case ex =>
         error("Failed to save welcome event: " + evt, ex)

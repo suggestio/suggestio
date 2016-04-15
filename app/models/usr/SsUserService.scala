@@ -93,16 +93,17 @@ class SsUserService @Inject() (mCommonDi: ICommonDi)
           extAvaUrls  = profile.avatarUrl.toList
         )
       )
-      mnode.save.flatMap { personId =>
-        // Сохранить данные идентификации через соц.сеть.
-        val mei = MExtIdent(
+      for {
+        personId <- MNode.save(mnode)
+        mei = MExtIdent(
           personId  = personId,
           provider  = ILoginProvider.maybeWithName(profile.providerId).get,
           userId    = profile.userId,
           email     = profile.email
         )
-        mei.save
-          .map { savedId => mei }
+        savedId <- MExtIdent.save(mei)
+      } yield {
+        mei
       }
 
     } else if (mode is SaveMode.LoggedIn) {

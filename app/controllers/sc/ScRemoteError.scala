@@ -88,7 +88,7 @@ trait ScRemoteError
                 country     = gsiOpt.flatMap(_.countryIso2),
                 isLocalCl   = gsiOpt.map(_.isLocalClient)
               )
-              merr1.save.map { merrId =>
+              for (merrId <- MRemoteError.save(merr1)) yield {
                 NoContent
               }
             }

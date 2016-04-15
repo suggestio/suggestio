@@ -150,7 +150,7 @@ class GeoTagsUtil @Inject() (
         trace(s"$logPrefix Tag not exists, creating new one: $tagNode0")
 
         // Запустить сохранение нового узла.
-        val saveFut = tagNode0.save
+        val saveFut = MNode.save(tagNode0)
 
         saveFut.onComplete {
           case Success(nodeId) => info(s"$logPrefix Created NEW node[$nodeId] for tag")

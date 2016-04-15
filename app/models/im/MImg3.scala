@@ -194,7 +194,7 @@ abstract class MImg3T extends MImgT {
     // Запустить сохранение, вернуть экземпляр MNode.
     for {
       mnode <- mnodeFut
-      _     <- mnode.save
+      _     <- MNode.save(mnode)
     } yield {
       mnode
     }
@@ -246,7 +246,7 @@ abstract class MImg3T extends MImgT {
     val mediaSavedFut = media0Fut.recoverWith { case ex: Throwable =>
       for {
         mmedia      <- mediaFut
-        _mmediaId   <- mmedia.save
+        _mmediaId   <- mMedias.save(mmedia)
       } yield {
         mmedia
       }

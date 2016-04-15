@@ -139,7 +139,7 @@ class MarketAd @Inject() (
         val adIdFut = for {
           savedImgs <- saveImgsFut
           adId      <- {
-            r.mad.copy(
+            val mad2 = r.mad.copy(
               edges = r.mad.edges.copy(
                 out = {
                   val currEdges = r.mad.edges.out
@@ -155,7 +155,8 @@ class MarketAd @Inject() (
                   MNodeEdges.edgesToMap1(iter)
                 }
               )
-            ).save
+            )
+            MNode.save(mad2)
           }
         } yield {
           adId

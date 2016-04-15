@@ -128,7 +128,7 @@ class NodesUtil @Inject() (
     val tgtsIter = MExtServices.values
       .iterator
       .flatMap { svc => MExtTarget.dfltTarget(svc, adnId) }
-    Future.traverse(tgtsIter)(_.save)
+    Future.traverse(tgtsIter)(MExtTarget.save)
   }
 
   /**
@@ -140,15 +140,13 @@ class NodesUtil @Inject() (
     */
   def createUserNode(name: String, personId: String)(implicit messages: Messages): Future[MNode] = {
     val inst = userNodeInstance(name = name, personId = personId)
-    val nodeSaveFut = inst.save
-    nodeSaveFut.flatMap { nodeId =>
-      val madsCreateFut = installDfltMads(nodeId)
-      for {
-        _ <- createExtDfltTargets(nodeId)
-        _ <- madsCreateFut
-      } yield {
-        inst.copy(id = Some(nodeId))
-      }
+    for {
+      nodeId        <- MNode.save(inst)
+      madsCreateFut = installDfltMads(nodeId)
+      _             <- createExtDfltTargets(nodeId)
+      _             <- madsCreateFut
+    } yield {
+      inst.copy(id = Some(nodeId))
     }
   }
 
@@ -239,7 +237,7 @@ class NodesUtil @Inject() (
           )
 
           // Запустить сохранение сгенеренной карточки.
-          mad1.save
+          MNode.save(mad1)
         }
       }
 

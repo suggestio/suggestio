@@ -92,7 +92,7 @@ trait ChangePwAction
               } else {
                 Future.traverse(emails) { email =>
                   val epw = EmailPwIdent(email = email, personId = personId, pwHash = MPersonIdent.mkHash(newPw), isVerified = true)
-                  val fut = epw.save
+                  val fut = EmailPwIdent.save(epw)
                   fut onSuccess {
                     case epwId =>
                       LOGGER.info(s"${logPrefix}Created new epw-ident $epwId for non-pw email $email")
@@ -109,7 +109,9 @@ trait ChangePwAction
               .map { _.copy(pwHash = MPersonIdent.mkHash(newPw)) }
             result match {
               case Some(epw) =>
-                epw.save.map { Seq(_) }
+                for (epwId <- EmailPwIdent.save(epw)) yield {
+                  Seq(epwId)
+                }
               case None =>
                 LOGGER.warn(logPrefix + "No idents with email found for user " + personId)
                 Future successful Seq.empty[String]
