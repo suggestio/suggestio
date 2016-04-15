@@ -301,7 +301,7 @@ abstract class MImg3T extends MImgT {
       case Some(mm) =>
         for {
           _ <- mm.storage.delete()
-          _ <- mm.delete
+          _ <- mMedias.deleteById(mm.id.get)
         } yield {
           true
         }

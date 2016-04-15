@@ -15,7 +15,7 @@ import models.mlk.{MNodeAdInfo, MNodeAdsTplArgs, MNodeShowArgs}
 import models.mproj.ICommonDi
 import models.msession.Keys
 import models.req.INodeReq
-import models.usr.EmailPwIdent
+import models.usr.{EmailActivation, EmailPwIdent}
 import org.elasticsearch.search.sort.SortOrder
 import play.api.data.Form
 import play.api.data.Forms._
@@ -286,40 +286,45 @@ class MarketLkAdn @Inject() (
 
         } else {
           // Сначала удаляем запись об активации, убедившись что она не была удалена асинхронно.
-          eact.delete.flatMap { isDeleted =>
-            val newPersonIdOptFut: Future[Option[String]] = if (!isAuth) {
-              val mperson0 = MNode(
-                common = MNodeCommon(
-                  ntype = MNodeTypes.Person,
-                  isDependent = false
-                ),
-                meta = MMeta(
-                  basic = MBasicMeta(
-                    nameOpt = Some(eact.email),
-                    langs = List( request2lang.code )
+          for {
+            isDeleted <- EmailActivation.deleteById(eActId)
+
+            personIdOpt <- {
+              if (!isAuth) {
+                val mperson0 = MNode(
+                  common = MNodeCommon(
+                    ntype = MNodeTypes.Person,
+                    isDependent = false
                   ),
-                  person = MPersonMeta(
-                    emails = List(eact.email)
+                  meta = MMeta(
+                    basic = MBasicMeta(
+                      nameOpt = Some(eact.email),
+                      langs = List( request2lang.code )
+                    ),
+                    person = MPersonMeta(
+                      emails = List(eact.email)
+                    )
                   )
                 )
-              )
-              mperson0.save flatMap { personId =>
-                EmailPwIdent.applyWithPw(email = eact.email, personId = personId, password = passwordOpt.get, isVerified = true)
-                  .save
-                  .map { emailPwIdentId => Some(personId) }
+                mperson0.save flatMap { personId =>
+                  EmailPwIdent.applyWithPw(email = eact.email, personId = personId, password = passwordOpt.get, isVerified = true)
+                    .save
+                    .map { emailPwIdentId => Some(personId) }
+                }
+              } else {
+                Future successful None
               }
-            } else {
-              Future successful None
             }
-            // Для обновления полей MMart требуется доступ к personId. Дожидаемся сохранения юзера...
-            newPersonIdOptFut.flatMap { personIdOpt =>
-              val personId = (personIdOpt orElse request.user.personIdOpt).get
+
+            personId = personIdOpt.orElse(request.user.personIdOpt).get
+
+            _ <- {
               val nodeOwnedByPersonId = {
                 mnode.edges
                   .withPredicateIter( MPredicates.OwnedBy )
                   .exists(_.nodeIds.contains(personId))
               }
-              val nodeUpdateFut: Future[_] = if (!nodeOwnedByPersonId) {
+              if (!nodeOwnedByPersonId) {
                 val ownEdge = MEdge(
                   predicate = MPredicates.OwnedBy,
                   nodeIds   = Set(personId)
@@ -332,15 +337,14 @@ class MarketLkAdn @Inject() (
                   )
                 }
               } else {
-                Future successful Unit
-              }
-
-              for (_ <- nodeUpdateFut) yield {
-                Redirect(routes.MarketLkAdn.showNodeAds(adnId))
-                  .flashing(FLASH.SUCCESS -> "Signup.finished")
-                  .withSession(Keys.PersonId.name -> personId)
+                Future.successful(Unit)
               }
             }
+
+          } yield {
+            Redirect(routes.MarketLkAdn.showNodeAds(adnId))
+              .flashing(FLASH.SUCCESS -> "Signup.finished")
+              .withSession(Keys.PersonId.name -> personId)
           }
         }
       }

@@ -47,7 +47,8 @@ class LkEvents @Inject() (
   /**
    * Рендер страницы текущих нотификаций.
    * Рендер происходит в несколько шагов с использованием сильного распараллеливания.
-   * @param adnId id узла.
+    *
+    * @param adnId id узла.
    * @param offset0 Сдвиг результатов. Нужен для постраничного вывода.
    * @param inline Инлайновый рендер ответа, вместо страницы? Для ajax-вызовов.
    * @return 200 OK + страница со списком уведомлений.
@@ -182,18 +183,20 @@ class LkEvents @Inject() (
 
 
   /**
-   * Юзер нажал на кнопку выпиливания события.
-   * @param eventId id события.
-   * @return 2хх если всё ок. Иначе 4xx.
-   */
-  def nodeEventDelete(eventId: String) = HasNodeEventAccessPost(eventId, onlyCloseable = true).async {
-    implicit request =>
-      request.mevent.delete.map {
-        case true =>
-          NoContent
-        case false =>
-          NotFound(Messages("e.event.not.found"))
-      }
+    * Юзер нажал на кнопку выпиливания события.
+    *
+    * @param eventId id события.
+    * @return 2хх если всё ок. Иначе 4xx.
+    */
+  def nodeEventDelete(eventId: String) = HasNodeEventAccessPost(eventId, onlyCloseable = true).async { implicit request =>
+    for {
+      isDeleted <- MEvent.deleteById(eventId)
+    } yield {
+      if (isDeleted)
+        NoContent
+      else
+        NotFound(Messages("e.event.not.found"))
+    }
   }
 
 }

@@ -320,12 +320,15 @@ class LkAdvExt @Inject() (
    *         Редирект, если сессия истекла.
    */
   def deleteTargetSubmit(tgId: String) = CanAccessExtTarget(tgId).async { implicit request =>
-    request.extTarget.delete.map {
-      case true =>
+    for {
+      isDeleted <- MExtTarget.deleteById( tgId )
+    } yield {
+      if (isDeleted) {
         NoContent
-      case false =>
+      } else {
         warn(s"deleteTargetSubmit($tgId): Target not exists, already deleted in parallel request?")
         NotFound
+      }
     }
   }
 

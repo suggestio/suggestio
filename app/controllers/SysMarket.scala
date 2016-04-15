@@ -282,8 +282,7 @@ class SysMarket @Inject() (
       import request.mnode
       lazy val logPrefix = s"deleteAdnNodeSubmit($nodeId):"
       LOGGER.info(s"$logPrefix by user[${request.user.personIdOpt}] request. Deleting...")
-      mnode
-        .delete
+      MNode.deleteById(nodeId)
         .filter(identity)
         .map { _ =>
           // Нужно перебрасывать на вкладку с узлами того же типа, что и удалённый.

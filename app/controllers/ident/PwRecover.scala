@@ -201,7 +201,7 @@ trait PwRecover
 
   /** Юзер сабмиттит форму с новым паролем. Нужно его залогинить, сохранить новый пароль в базу,
     * удалить запись из EmailActivation и отредиректить куда-нибудь. */
-  def pwResetSubmit(eActId: String) = CanRecoverPwPost(eActId).async { implicit request =>
+  def pwResetSubmit(eActId: String) = CanRecoverPwPost(eActId, U.PersonNode).async { implicit request =>
     pwResetFormM.bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug(s"pwResetSubmit($eActId): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
@@ -210,19 +210,28 @@ trait PwRecover
       {newPw =>
         val pwHash2 = MPersonIdent.mkHash(newPw)
         val epw2 = request.epw.copy(pwHash = pwHash2, isVerified = true)
-        // Запускаем сохранение новых данных по паролю
-        val updateFut = epw2.save flatMap { _ =>
-          request.eact.delete
-        }
-        // Генерить ответ как только появляется возможность.
-        val resFut = identUtil.redirectUserSomewhere(epw2.personId) map { rdr =>
-          rdr.addingToSession(Keys.PersonId.name -> epw2.personId)
-            .flashing(FLASH.SUCCESS -> "New.password.saved")
-        }
-        val res2Fut = setLangCookie1(resFut, epw2.personId)
-        // Дожидаемся завершения всех асинхронных операций и возвращаем результат.
-        updateFut flatMap { _ =>
-          res2Fut
+        for {
+          // Сохранение новых данных по паролю
+          _         <- epw2.save
+
+          // Запуск удаления eact
+          updateFut = EmailActivation.deleteById(eActId)
+
+          // Подготовить редирект
+          rdr       <- identUtil.redirectUserSomewhere(epw2.personId)
+
+          // Генерить ответ как только появляется возможность.
+          res1      <- {
+            val res0 = rdr
+              .addingToSession(Keys.PersonId.name -> epw2.personId)
+              .flashing(FLASH.SUCCESS -> "New.password.saved")
+            setLangCookie2(res0, request.user.personNodeOptFut)
+          }
+
+          // Дожидаться успешного завершения асинхронных операций
+          _         <- updateFut
+        } yield {
+          res1
         }
       }
     )

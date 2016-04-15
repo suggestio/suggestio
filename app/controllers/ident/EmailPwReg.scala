@@ -181,31 +181,40 @@ trait EmailPwReg
             )
           )
         )
-        mperson0.save flatMap { personId =>
-          // Развернуть узел для юзера
-          val adnNodeFut = nodesUtil.createUserNode(name = data.adnName, personId = personId)
-          // Сохранить новый epw-ident
-          val idSaveFut = EmailPwIdent(
-            email       = eaInfo.email,
-            personId    = personId,
-            pwHash      = MPersonIdent.mkHash(data.password),
-            isVerified  = true
-          ).save
-          // Рендерим результат запроса сразу как только нода будет готова к использованию.
-          val resFut = adnNodeFut map { mnode =>
-            val args = nodesUtil.nodeRegSuccessArgs(mnode)
-            Ok( regSuccessTpl(args) )
-              .addingToSession(Keys.PersonId.name -> personId)
-              .withLang(lang)
+
+        for {
+          // Сохранить узел самого юзера.
+          personId <- mperson0.save
+
+          // Развернуть узел-магазин для юзера
+          mnodeFut = nodesUtil.createUserNode(name = data.adnName, personId = personId)
+
+          // Запустить сохранение ident'а юзера.
+          identIdFut = {
+            EmailPwIdent(
+              email       = eaInfo.email,
+              personId    = personId,
+              pwHash      = MPersonIdent.mkHash(data.password),
+              isVerified  = true
+            ).save
           }
-          // Дожидаемся завершения всех операций и возвращаем результат.
-          request.eact.delete flatMap { _ =>
-            idSaveFut flatMap { _ =>
-              resFut
-            }
-          }
-        }  // Mperson.save
-      }
+
+          // Дождаться ident'а
+          identId <- identIdFut
+
+          // Удалить email activation
+          _ <- EmailActivation.deleteById( request.eact.id.get )
+
+          // Дождаться готовности магазина юзера
+          mnode <- mnodeFut
+
+        } yield {
+          val args = nodesUtil.nodeRegSuccessArgs(mnode)
+          Ok( regSuccessTpl(args) )
+            .addingToSession(Keys.PersonId.name -> personId)
+            .withLang(lang)
+        }
+      } // Form.fold right
     )   // Form.fold
   }
 

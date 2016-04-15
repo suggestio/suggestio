@@ -1,11 +1,12 @@
 package util.acl
 
 import controllers.SioController
-import models.req.{IReq, MReq, MRecoverPwReq}
+import models.req.{IReq, MRecoverPwReq, MReq, MUserInit}
 import models.usr.{EmailActivation, EmailPwIdent}
 import play.api.mvc._
 import util.di.IIdentUtil
 import views.html.ident.recover._
+
 import scala.concurrent.Future
 
 /**
@@ -29,7 +30,7 @@ trait CanRecoverPw
   import mCommonDi._
 
   /** Трейт с базовой логикой action-builder'а CanRecoverPw. */
-  trait CanRecoverPwBase extends ActionBuilder[MRecoverPwReq] {
+  trait CanRecoverPwBase extends ActionBuilder[MRecoverPwReq] with InitUserCmds {
 
     def eActId: String
 
@@ -55,7 +56,9 @@ trait CanRecoverPw
         eaOptFut.flatMap {
           // Юзер обращается по корректной активационной записи.
           case Some(eAct) =>
-            EmailPwIdent.getById(eAct.email) flatMap {
+            val epwIdentFut = EmailPwIdent.getById(eAct.email)
+            maybeInitUser(user)
+            epwIdentFut.flatMap {
               case Some(epw) if epw.personId == eAct.key =>
                 // Можно отрендерить блок
                 LOGGER.debug(logPrefix + "ok: " + request.path)
@@ -72,7 +75,9 @@ trait CanRecoverPw
           case result if user.isSuper =>
             val personId = personIdOpt.get
             LOGGER.trace("Superuser mocking activation...")
-            val epwFut = EmailPwIdent.findByPersonId(personId)
+            val epwOptFut = EmailPwIdent.findByPersonId(personId)
+            maybeInitUser(user)
+            val epwFut = epwOptFut
               .map(_.head)
               .recover {
                 // should never occur
@@ -106,13 +111,13 @@ trait CanRecoverPw
   }
 
   /** Реализация [[CanRecoverPwBase]] с выставлением CSRF-токена. */
-  case class CanRecoverPwGet(eActId: String)
+  case class CanRecoverPwGet(override val eActId: String, override val userInits: MUserInit*)
     extends CanRecoverPwBase
     with CsrfGet[MRecoverPwReq]
     with ExpireSession[MRecoverPwReq]
 
   /** Реализация [[CanRecoverPwBase]] с проверкой CSRF-токена. */
-  case class CanRecoverPwPost(eActId: String)
+  case class CanRecoverPwPost(override val eActId: String, override val userInits: MUserInit*)
     extends CanRecoverPwBase
     with CsrfPost[MRecoverPwReq]
     with ExpireSession[MRecoverPwReq]

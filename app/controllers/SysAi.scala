@@ -245,18 +245,17 @@ class SysAi @Inject() (
 
   /** Сабмит удаления [[models.ai.MAiMad]]. */
   def deleteMadAi(aiMadId: String) = IsSuAiMadPost(aiMadId).async { implicit request =>
+    val deleteFut = MAiMad.deleteById(aiMadId)
     trace(s"deleteMadAi($aiMadId): Called by superuser ${request.user.personIdOpt}")
-    request.aiMad
-      .delete
-      .map { isDeleted =>
-        val flash = if (isDeleted) {
-          FLASH.SUCCESS -> "Удалено успешно. Обновите страницу."
-        } else {
-          FLASH.ERROR   -> "Не удалось удалить элемент."
-        }
-        Redirect(routes.SysAi.madIndex())
-          .flashing(flash)
+    for (isDeleted <- deleteFut) yield {
+      val flash = if (isDeleted) {
+        FLASH.SUCCESS -> "Удалено успешно. Обновите страницу."
+      } else {
+        FLASH.ERROR   -> "Не удалось удалить элемент."
       }
+      Redirect(routes.SysAi.madIndex())
+        .flashing(flash)
+    }
   }
 
 }

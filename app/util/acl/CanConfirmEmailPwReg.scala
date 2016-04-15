@@ -80,12 +80,12 @@ trait CanConfirmEmailPwRegCtl
 
 
   /** Реализация [[CanConfirmEmailPwRegBase]] c выставлением CSRF-token'а. */
-  case class CanConfirmEmailPwRegGet(eaInfo: IEaEmailId)
+  case class CanConfirmEmailPwRegGet(override val eaInfo: IEaEmailId)
     extends CanConfirmEmailPwRegBase
     with CsrfGet[MEmailActivationReq]
 
   /** Реализация [[CanConfirmEmailPwRegBase]] с проверкой выставленного ранее CSRF-токена. */
-  case class CanConfirmEmailPwRegPost(eaInfo: IEaEmailId)
+  case class CanConfirmEmailPwRegPost(override val eaInfo: IEaEmailId)
     extends CanConfirmEmailPwRegBase
     with CsrfPost[MEmailActivationReq]
 
