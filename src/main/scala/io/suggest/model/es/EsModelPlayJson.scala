@@ -28,9 +28,3 @@ trait EsModelPlayJsonStaticT extends EsModelCommonStaticT {
   override def toJsonPretty(m: T): String = Json.prettyPrint(toPlayJson(m))
 
 }
-
-
-/** Шаблон для динамических частей ES-моделей, которые очень хорошо реализуют toJson() через play.json. */
-@deprecated("", "")
-trait EsModelPlayJsonT extends EsModelCommonT {
-}

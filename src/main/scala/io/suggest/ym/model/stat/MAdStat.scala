@@ -3,13 +3,13 @@ package io.suggest.ym.model.stat
 import java.text.SimpleDateFormat
 import java.{lang => jl}
 
+import com.google.inject.{Inject, Singleton}
 import com.sun.org.glassfish.gmbal.{Description, Impact, ManagedOperation}
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.es.EsModelUtil._
 import io.suggest.model.es._
 import io.suggest.model.geo.GeoPoint
 import io.suggest.util.MacroLogsImpl
-import io.suggest.util.MyConfig.CONFIG
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.action.index.IndexRequestBuilder
 import org.elasticsearch.client.Client
@@ -19,6 +19,7 @@ import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogram
 import org.elasticsearch.search.sort.SortOrder
 import org.joda.time.{DateTime, DateTimeZone}
+import play.api.Configuration
 import play.api.libs.json._
 
 import scala.collection.JavaConversions._
@@ -31,7 +32,11 @@ import scala.concurrent.{ExecutionContext, Future}
  * Created: 31.03.14 15:57
  * Description: Для накопления статистики по рекламным карточкам используется эта модель.
  */
-object MAdStat extends EsModelStaticT with MacroLogsImpl with EsModelPlayJsonStaticT {
+@Singleton
+class MAdStats @Inject() (configuration: Configuration)
+  extends EsModelStaticT
+    with MacroLogsImpl
+    with EsModelPlayJsonStaticT {
 
   override type T = MAdStat
 
@@ -73,7 +78,7 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl with EsModelPlayJsonSta
 
 
   /** Через сколько времени удалять записи статистики. */
-  val TTL_DAYS_DFLT = CONFIG.getInt("ad.stat.ttl.period.days") getOrElse 100
+  val TTL_DAYS_DFLT = configuration.getInt("ad.stat.ttl.period.days").getOrElse(100)
 
   type AdFreqs_t = Map[String, Map[String, Long]]
   type DateHistAds_t = Seq[(EsDateTime, Long)]
@@ -338,8 +343,6 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl with EsModelPlayJsonSta
 }
 
 
-import io.suggest.ym.model.stat.MAdStat._
-
 
 final class MAdStat(
   val clientAddr          : String,
@@ -398,11 +401,17 @@ trait MAdStatJmxMBean extends EsModelJMXMBeanI {
 }
 
 /** JMX MBean реализация. */
-final class MAdStatJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
-  extends EsModelJMXBase with MAdStatJmxMBean {
+final class MAdStatJmx @Inject() (
+  override val companion: MAdStats,
+  implicit val ec       : ExecutionContext,
+  implicit val client   : Client,
+  implicit val sn       : SioNotifierStaticClientI
+)
+  extends EsModelJMXBase
+    with MAdStatJmxMBean
+{
   import LOGGER._
 
-  def companion = MAdStat
   override type X = MAdStat
 
   protected def dtParse(dtStr: String): DateTime = {

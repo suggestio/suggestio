@@ -1,6 +1,5 @@
 package io.suggest.model.es
 
-import io.suggest.util.JacksonWrapper
 import org.elasticsearch.action.get.GetResponse
 import org.elasticsearch.search.SearchHit
 

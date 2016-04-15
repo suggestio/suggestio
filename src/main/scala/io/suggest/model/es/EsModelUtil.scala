@@ -34,11 +34,6 @@ object EsModelUtil extends MacroLogsImpl {
 
   import LOGGER._
 
-  /** Список ES-моделей. Нужен для удобства массовых maintance-операций. Расширяется по мере роста числа ES-моделей. */
-  def ES_MODELS = List[EsModelCommonStaticT] (
-    MAdStat
-  )
-
 
   private def esModelId(esModel: EsModelCommonStaticT): String = {
     s"${esModel.ES_INDEX_NAME}/${esModel.ES_TYPE_NAME}"
@@ -67,7 +62,7 @@ object EsModelUtil extends MacroLogsImpl {
 
 
   /** Отправить маппинги всех моделей в ES. */
-  def putAllMappings(models: Seq[EsModelCommonStaticT] = ES_MODELS, ignoreExists: Boolean = false)
+  def putAllMappings(models: Seq[EsModelCommonStaticT], ignoreExists: Boolean = false)
                     (implicit ec: ExecutionContext, client: Client): Future[Boolean] = {
     Future.traverse(models) { esModelStatic =>
       val logPrefix = esModelStatic.getClass.getSimpleName + ".putMapping(): "
@@ -252,7 +247,7 @@ object EsModelUtil extends MacroLogsImpl {
   }
 
   /** Пройтись по всем ES_MODELS и проверить, что всех ихние индексы существуют. */
-  def ensureEsModelsIndices(models: Seq[EsModelCommonStaticT] = ES_MODELS)
+  def ensureEsModelsIndices(models: Seq[EsModelCommonStaticT])
                            (implicit ec:ExecutionContext, client: Client): Future[_] = {
     val indices = models.map { esModel =>
       esModel.ES_INDEX_NAME -> (esModel.SHARDS_COUNT, esModel.REPLICAS_COUNT)
