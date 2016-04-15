@@ -99,7 +99,7 @@ case class MExtIdent(
   versionOpt          : Option[Long] = None
 ) extends MPersonIdent with IProfileDflt {
 
-  override type T         = this.type
+  override type T         = MExtIdent
   override def companion  = MExtIdent
   override def idType     = IdTypes.EXT_ID
 

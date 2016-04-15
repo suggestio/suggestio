@@ -160,7 +160,8 @@ class BulkProcessorSaveBackend @Inject() (
   override def save(stat: MAdStat): Future[_] = {
     // Подавляем блокировку синхронизации в bp через отдельный execution context с очередью задач.
     Future {
-      bp add stat.prepareIndex.request()
+      val irb = MAdStat.prepareIndex(stat).request()
+      bp.add(irb)
     }(AsyncUtil.singleThreadCpuContext)
   }
 

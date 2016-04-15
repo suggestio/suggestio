@@ -98,7 +98,7 @@ case class MAiMad(
   versionOpt      : Option[Long] = None
 ) extends EsModelT with EsModelPlayJsonT with MAiCtx {
 
-  override type T = this.type
+  override type T = MAiMad
   override def companion = MAiMad
 
   override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {

@@ -143,7 +143,7 @@ case class MExtTarget(
   id            : Option[String]    = None
 ) extends EsModelT with EsModelPlayJsonT with IExtTarget {
 
-  override type T = this.type
+  override type T = MExtTarget
   override def companion = MExtTarget
 
   override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {

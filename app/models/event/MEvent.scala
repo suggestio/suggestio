@@ -7,7 +7,6 @@ import search.IEventsSearchArgs
 import io.suggest.event.SioNotifier.{Classifier, Event}
 import io.suggest.event.SioNotifierStaticClientI
 import EsModelUtil.{FieldsJsonAcc, stringParser}
-import io.suggest.model._
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.action.index.IndexRequestBuilder
 import org.elasticsearch.client.Client
@@ -128,6 +127,14 @@ with EsmV2Deserializer {
     }
   }
 
+  /** Генератор indexRequestBuilder'ов. Помогает при построении bulk-реквестов. */
+  override def prepareIndexNoVsn(m: T)(implicit client: Client): IndexRequestBuilder = {
+    val irb = super.prepareIndexNoVsn(m)
+    if (m.ttlDays.isDefined)
+      irb.setTTL( m.ttlDays.get.days.toMillis )
+    irb
+  }
+
 }
 
 
@@ -148,7 +155,7 @@ case class MEvent(
 ) extends EsModelT with EsModelPlayJsonT with IMEvent {
 
   override def companion = MEvent
-  override type T = this.type
+  override type T = MEvent
 
   override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     var acc: FieldsJsonAcc = List(
@@ -163,14 +170,6 @@ case class MEvent(
     if (isCloseable != isCloseableDflt)
       acc ::= IS_CLOSEABLE_ESFN -> JsBoolean(isCloseable)
     acc
-  }
-
-  /** Генератор indexRequestBuilder'ов. Помогает при построении bulk-реквестов. */
-  override def indexRequestBuilder(implicit client: Client): IndexRequestBuilder = {
-    val irb = super.indexRequestBuilder
-    if (ttlDays.isDefined)
-      irb.setTTL( ttlDays.get.days.toMillis )
-    irb
   }
 
 }
