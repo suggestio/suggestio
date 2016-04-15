@@ -17,6 +17,7 @@ class MMediaSpec extends PlaySpec with OneAppPerSuite {
   private lazy val swfsStorage = app.injector.instanceOf[SwfsStorages]
 
   private def t(mn: MMedia): Unit = {
+    import mMedias.mockPlayDocRespEv
     mMedias.deserializeOne2(mn)  shouldBe  mn
   }
 
@@ -35,8 +36,7 @@ class MMediaSpec extends PlaySpec with OneAppPerSuite {
           volumeId = 22,
           fileId = "asdf4390tf34gfs?sd.sdtr4390w=124sf24f"
         )
-      ),
-      companion = mMedias
+      )
     )
   }
 
