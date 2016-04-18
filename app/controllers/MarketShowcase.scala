@@ -3,6 +3,7 @@ package controllers
 import com.google.inject.Inject
 import controllers.sc._
 import io.suggest.model.n2.node.MNodes
+import models.merr.MRemoteErrors
 import models.mproj.{ICommonDi, MProjectInfo}
 import util._
 import util.cdn.CdnUtil
@@ -30,6 +31,7 @@ class MarketShowcase @Inject() (
   override val adRenderUtil       : AdRenderUtil,
   override val cdnUtil            : CdnUtil,
   override val n2NodesUtil        : N2NodesUtil,
+  override val mRemoteErrors      : MRemoteErrors,
   override val mCommonDi          : ICommonDi,
   override val mProjectInfo       : MProjectInfo
 )

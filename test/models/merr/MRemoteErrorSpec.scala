@@ -12,7 +12,11 @@ import org.scalatestplus.play.PlaySpec
  */
 class MRemoteErrorSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
 
+  private lazy val mRemoteErrors = app.injector.instanceOf[MRemoteErrors]
+
   "MRemoteError JSON" must {
+
+    import mRemoteErrors.mockPlayDocRespEv
 
     "handle partially-filled model" in {
       val merr = MRemoteError(
@@ -21,7 +25,7 @@ class MRemoteErrorSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
         clientAddr  = "127.0.0.1"
       )
 
-      MRemoteError.deserializeOne2(merr)  mustBe  merr
+      mRemoteErrors.deserializeOne2(merr)  mustBe  merr
     }
 
 
@@ -40,7 +44,7 @@ class MRemoteErrorSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
         id          = Some("ASDAWDAWD3252535")
       )
 
-      MRemoteError.deserializeOne2(merr)  mustBe  merr
+      mRemoteErrors.deserializeOne2(merr)  mustBe  merr
     }
 
   }

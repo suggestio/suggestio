@@ -2,7 +2,7 @@ package controllers.sc
 
 import controllers.SioController
 import models.GeoIp
-import models.merr.{MRemoteError, MRemoteErrorTypes}
+import models.merr.{IMRemoteErrors, MRemoteError, MRemoteErrorTypes}
 import play.api.data.Forms._
 import play.api.data._
 import util.FormUtil._
@@ -21,6 +21,7 @@ trait ScRemoteError
   with PlayMacroLogsImpl
   with BruteForceProtectCtl
   with MaybeAuth
+  with IMRemoteErrors
 {
 
   import mCommonDi._
@@ -88,7 +89,7 @@ trait ScRemoteError
                 country     = gsiOpt.flatMap(_.countryIso2),
                 isLocalCl   = gsiOpt.map(_.isLocalClient)
               )
-              for (merrId <- MRemoteError.save(merr1)) yield {
+              for (merrId <- mRemoteErrors.save(merr1)) yield {
                 NoContent
               }
             }

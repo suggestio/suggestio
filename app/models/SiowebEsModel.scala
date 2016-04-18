@@ -10,7 +10,7 @@ import models.adv.MExtTargets
 import models.ai.MAiMad
 import models.event.MEvents
 import models.mcal.MCalendars
-import models.merr.MRemoteError
+import models.merr.{MRemoteError, MRemoteErrors}
 import models.mproj.ICommonDi
 import models.usr.{EmailActivation, EmailPwIdent, MExtIdent}
 import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
@@ -32,6 +32,7 @@ class SiowebEsModel @Inject() (
   mCalendars          : MCalendars,
   mEvents             : MEvents,
   mExtTargets         : MExtTargets,
+  mRemoteErrors       : MRemoteErrors,
   mAdStats            : MAdStats,
   mCommonDi           : ICommonDi
 )
@@ -48,7 +49,7 @@ class SiowebEsModel @Inject() (
   def ES_MODELS = Seq[EsModelCommonStaticT](
     mNodes,
     EmailPwIdent, EmailActivation, MExtIdent, mCalendars,
-    MRemoteError, MAiMad,
+    mRemoteErrors, MAiMad,
     mExtTargets,
     mEvents, sec.MAsymKey,
     mMedias,

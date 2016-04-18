@@ -8,7 +8,7 @@ import models.adv.MExtTargetsJmx
 import models.ai.MAiMadJmx
 import models.event.MEventsJmx
 import models.mcal.MCalendarJmx
-import models.merr.MRemoteErrorJmx
+import models.merr.MRemoteErrorsJmx
 import models.mproj.ICommonDi
 import models.usr.{MExtIdentJmx, EmailActivationJmx, EmailPwIdentJmx}
 import util.adv.AdvUtilJmx
@@ -36,6 +36,7 @@ class JMXImpl @Inject() (
   mAdStatJmx                    : MAdStatJmx,
   mExtTargetsJmx                : MExtTargetsJmx,
   mEventsJmx                    : MEventsJmx,
+  mRemoteErrorsJmx              : MRemoteErrorsJmx,
   mCommonDi                     : ICommonDi
 )
   extends PlayLazyMacroLogsImpl
@@ -53,7 +54,7 @@ class JMXImpl @Inject() (
       new MExtIdentJmx,
       mCalendarJmx,
       siowebEsModelJmx,
-      new MRemoteErrorJmx,
+      mRemoteErrorsJmx,
       new MAiMadJmx,
       advUtilJmx,
       mEventsJmx,

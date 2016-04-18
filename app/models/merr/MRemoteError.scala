@@ -3,6 +3,7 @@ package models.merr
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.es._
 import EsModelUtil.FieldsJsonAcc
+import com.google.inject.{Inject, Singleton}
 import io.suggest.util.SioEsUtil._
 import models._
 import org.elasticsearch.client.Client
@@ -20,11 +21,17 @@ import scala.concurrent.ExecutionContext
  * Created: 14.10.14 18:55
  * Description: Модель для хранения ошибок на клиентах. Информация имеет TTL, настраив
  */
-object MRemoteError extends EsModelStaticT with PlayMacroLogsImpl with EsmV2Deserializer with EsModelPlayJsonStaticT {
+@Singleton
+class MRemoteErrors
+  extends EsModelStaticT
+    with PlayMacroLogsImpl
+    with EsmV2Deserializer
+    with EsModelPlayJsonStaticT
+{
 
   override type T = MRemoteError
 
-  override val ES_INDEX_NAME = EsModelUtil.GARBAGE_INDEX
+  override def ES_INDEX_NAME = EsModelUtil.GARBAGE_INDEX
   override val ES_TYPE_NAME = "rerr"
 
   // Имена полей. По возможности должны совпадать с названиями в MAdStat.
@@ -56,6 +63,7 @@ object MRemoteError extends EsModelStaticT with PlayMacroLogsImpl with EsmV2Dese
   /**
    * Индексируем всё, т.к. модель ориентирована на быстрое исправление ошибок.
    * Мусор из индекса будет вычищен по TTL.
+   *
    * @return
    */
   override def generateMappingProps: List[DocField] = {
@@ -77,6 +85,7 @@ object MRemoteError extends EsModelStaticT with PlayMacroLogsImpl with EsmV2Dese
 
   /**
    * Десериализация одного элементам модели.
+   *
    * @param id id документа.
    * @param m Карта, распарсенное json-тело документа.
    * @return Экземпляр модели.
@@ -131,7 +140,7 @@ object MRemoteError extends EsModelStaticT with PlayMacroLogsImpl with EsmV2Dese
   override protected def esDocReads(meta: IEsDocMeta): Reads[MRemoteError] = {
     _reads0 {
       (errTyp, msg, clAddr, ua, tstamp, url, clIpGeo, clTown, country, isLocalCl, state) =>
-        apply(errTyp, msg, clAddr, ua, tstamp, url, clIpGeo, clTown, country = country, isLocalCl, state, meta.id)
+        MRemoteError(errTyp, msg, clAddr, ua, tstamp, url, clIpGeo, clTown, country = country, isLocalCl, state, meta.id)
     }
   }
 
@@ -164,10 +173,16 @@ object MRemoteError extends EsModelStaticT with PlayMacroLogsImpl with EsmV2Dese
 
 }
 
+/** Интерфейс для поля с DI-инстансом [[MRemoteErrors]]. */
+trait IMRemoteErrors {
+  def mRemoteErrors: MRemoteErrors
+}
+
 
 
 /**
  * Экземпляр модели.
+ *
  * @param msg Сообщение об ошибке.
  * @param url Ссылка, относящаяся к ошибке.
  * @param clientAddr ip-адрес клиента.
@@ -191,21 +206,29 @@ case class MRemoteError(
   isLocalCl   : Option[Boolean]   = None,
   state       : Option[String]    = None,
   id          : Option[String]    = None
-) extends EsModelT {
+)
+  extends EsModelT
+{
 
   /** Версия тут не нужна, т.к. модель write-only, и читается через kibana. */
   override def versionOpt = None
+
 }
 
 
 
 // JMX-утиль
 
-trait MRemoteErrorJmxMBean extends EsModelJMXMBeanI
-final class MRemoteErrorJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
-  extends EsModelJMXBase with MRemoteErrorJmxMBean {
-
-  override def companion = MRemoteError
+trait MRemoteErrorsJmxMBean extends EsModelJMXMBeanI
+final class MRemoteErrorsJmx @Inject() (
+  override val companion: MRemoteErrors,
+  implicit val ec       : ExecutionContext,
+  implicit val client   : Client,
+  implicit val sn       : SioNotifierStaticClientI
+)
+  extends EsModelJMXBase
+    with MRemoteErrorsJmxMBean
+{
   override type X = MRemoteError
 }
 
