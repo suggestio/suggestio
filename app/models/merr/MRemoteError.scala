@@ -221,10 +221,10 @@ case class MRemoteError(
 
 trait MRemoteErrorsJmxMBean extends EsModelJMXMBeanI
 final class MRemoteErrorsJmx @Inject() (
-  override val companion: MRemoteErrors,
-  implicit val ec       : ExecutionContext,
-  implicit val client   : Client,
-  implicit val sn       : SioNotifierStaticClientI
+  override val companion  : MRemoteErrors,
+  implicit val ec         : ExecutionContext,
+  implicit val client     : Client,
+  implicit val sn         : SioNotifierStaticClientI
 )
   extends EsModelJMXBase
     with MRemoteErrorsJmxMBean

@@ -195,15 +195,14 @@ case class MEvent(
 
 trait MEventsJmxMBean extends EsModelJMXMBeanI
 final class MEventsJmx @Inject() (
-  mEvents             : MEvents,
-  implicit val ec     : ExecutionContext,
-  implicit val client : Client,
-  implicit val sn     : SioNotifierStaticClientI
+  override val companion  : MEvents,
+  implicit val ec         : ExecutionContext,
+  implicit val client     : Client,
+  implicit val sn         : SioNotifierStaticClientI
 )
   extends EsModelJMXBase
   with MEventsJmxMBean
 {
-  override def companion = mEvents
   override type X = MEvent
 }
 

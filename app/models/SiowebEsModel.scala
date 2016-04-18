@@ -7,10 +7,10 @@ import io.suggest.model.n2.node.MNodes
 import io.suggest.util.{JMXBase, SioEsUtil}
 import io.suggest.ym.model.stat.MAdStats
 import models.adv.MExtTargets
-import models.ai.MAiMad
+import models.ai.MAiMads
 import models.event.MEvents
 import models.mcal.MCalendars
-import models.merr.{MRemoteError, MRemoteErrors}
+import models.merr.MRemoteErrors
 import models.mproj.ICommonDi
 import models.usr.{EmailActivation, EmailPwIdent, MExtIdent}
 import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
@@ -33,6 +33,7 @@ class SiowebEsModel @Inject() (
   mEvents             : MEvents,
   mExtTargets         : MExtTargets,
   mRemoteErrors       : MRemoteErrors,
+  mAiMads             : MAiMads,
   mAdStats            : MAdStats,
   mCommonDi           : ICommonDi
 )
@@ -49,7 +50,8 @@ class SiowebEsModel @Inject() (
   def ES_MODELS = Seq[EsModelCommonStaticT](
     mNodes,
     EmailPwIdent, EmailActivation, MExtIdent, mCalendars,
-    mRemoteErrors, MAiMad,
+    mRemoteErrors,
+    mAiMads,
     mExtTargets,
     mEvents, sec.MAsymKey,
     mMedias,

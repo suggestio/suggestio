@@ -24,6 +24,7 @@ import scala.util.matching.Regex
  */
 class SysAi @Inject() (
   madAiUtil                       : MadAiUtil,
+  override val mAiMads            : MAiMads,
   override val mCommonDi          : ICommonDi,
   implicit private val ws         : WSClient
 )
@@ -45,7 +46,7 @@ class SysAi @Inject() (
 
   /** Заглавная страница генераторов рекламных карточек. */
   def madIndex = IsSuGet.async { implicit request =>
-    val aisFut = MAiMad.getAll()
+    val aisFut = mAiMads.getAll()
     aisFut map { ais =>
       Ok(madIndexTpl(ais))
     }
@@ -164,7 +165,7 @@ class SysAi @Inject() (
         // Запускаем асинхронные проверки полученных данных: проверяем, что все указанные карточки существуют:
         val fut = for {
           _ <- madAiUtil.dryRun(maimad)
-          savedId <- MAiMad.save(maimad)
+          savedId <- mAiMads.save(maimad)
         } yield {
           Redirect( routes.SysAi.madIndex() )
             .flashing(FLASH.SUCCESS -> "Создано. Обновите страницу.")
@@ -212,7 +213,7 @@ class SysAi @Inject() (
         // Запускаем асинхронные проверки полученных данных: проверяем, что все указанные карточки существуют:
         val resFut = for {
           _         <- madAiUtil.dryRun(aim2)
-          savedId   <- MAiMad.save(aim2)
+          savedId   <- mAiMads.save(aim2)
         } yield {
           Redirect( routes.SysAi.madIndex() )
             .flashing(FLASH.SUCCESS -> "Сохранено. Обновите страницу.")
@@ -248,7 +249,7 @@ class SysAi @Inject() (
 
   /** Сабмит удаления [[models.ai.MAiMad]]. */
   def deleteMadAi(aiMadId: String) = IsSuAiMadPost(aiMadId).async { implicit request =>
-    val deleteFut = MAiMad.deleteById(aiMadId)
+    val deleteFut = mAiMads.deleteById(aiMadId)
     trace(s"deleteMadAi($aiMadId): Called by superuser ${request.user.personIdOpt}")
     for (isDeleted <- deleteFut) yield {
       val flash = if (isDeleted) {

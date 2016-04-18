@@ -37,6 +37,7 @@ class JMXImpl @Inject() (
   mExtTargetsJmx                : MExtTargetsJmx,
   mEventsJmx                    : MEventsJmx,
   mRemoteErrorsJmx              : MRemoteErrorsJmx,
+  mAiMadJmx                     : MAiMadJmx,
   mCommonDi                     : ICommonDi
 )
   extends PlayLazyMacroLogsImpl
@@ -55,7 +56,7 @@ class JMXImpl @Inject() (
       mCalendarJmx,
       siowebEsModelJmx,
       mRemoteErrorsJmx,
-      new MAiMadJmx,
+      mAiMadJmx,
       advUtilJmx,
       mEventsJmx,
       mExtTargetsJmx,

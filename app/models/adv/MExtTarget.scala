@@ -167,15 +167,14 @@ case class MExtTarget(
 // Поддержка JMX для ES-модели.
 trait MExtTargetsJmxMBean extends EsModelJMXMBeanI
 final class MExtTargetsJmx @Inject()(
-  mExtTargets: MExtTargets,
-  implicit val ec: ExecutionContext,
-  implicit val client: Client,
-  implicit val sn: SioNotifierStaticClientI
+  override val companion  : MExtTargets,
+  implicit val ec         : ExecutionContext,
+  implicit val client     : Client,
+  implicit val sn         : SioNotifierStaticClientI
 )
   extends EsModelJMXBase
   with MExtTargetsJmxMBean
 {
-  override def companion = mExtTargets
   override type X = MExtTarget
 }
 

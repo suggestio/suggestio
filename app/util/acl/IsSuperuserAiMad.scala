@@ -1,10 +1,11 @@
 package util.acl
 
 import controllers.SioController
-import models.ai.MAiMad
-import models.req.{MReq, MAiMadReq}
+import models.ai.IMAiMads
+import models.req.{MAiMadReq, MReq}
+
 import scala.concurrent.Future
-import play.api.mvc.{Request, ActionBuilder, Result}
+import play.api.mvc.{ActionBuilder, Request, Result}
 
 /**
  * Suggest.io
@@ -16,6 +17,7 @@ trait IsSuperuserAiMad
   extends SioController
   with IsSuperuserUtilCtl
   with Csrf
+  with IMAiMads
 {
 
   import mCommonDi._
@@ -30,11 +32,11 @@ trait IsSuperuserAiMad
     def aiMadId: String
 
     override def invokeBlock[A](request: Request[A], block: (MAiMadReq[A]) => Future[Result]): Future[Result] = {
-      val madAiFut = MAiMad.getById(aiMadId)
+      val madAiFut = mAiMads.getById(aiMadId)
       val personIdOpt = sessionUtil.getPersonId(request)
       val user = mSioUsers(personIdOpt)
       if (user.isSuper) {
-        madAiFut flatMap {
+        madAiFut.flatMap {
           case Some(madAi) =>
             val req1 = MAiMadReq(madAi, request, user)
             block(req1)

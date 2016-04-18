@@ -4,6 +4,7 @@ import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.common.OptStrId
 import io.suggest.model.es._
 import EsModelUtil.FieldsJsonAcc
+import com.google.inject.{Inject, Singleton}
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.client.Client
 import org.joda.time.DateTimeZone
@@ -19,7 +20,15 @@ import scala.concurrent.ExecutionContext
  * Created: 28.11.14 11:03
  * Description: Описание для будущих рекламных карточек.
  */
-object MAiMad extends EsModelStaticT with PlayMacroLogsImpl with EsModelPlayJsonStaticT {
+
+// TODO Объеденить модель с MNodes, когда дойдут до AiMad руки.
+
+@Singleton
+class MAiMads
+  extends EsModelStaticT
+    with PlayMacroLogsImpl
+    with EsModelPlayJsonStaticT
+{
 
   override type T = MAiMad
 
@@ -48,7 +57,7 @@ object MAiMad extends EsModelStaticT with PlayMacroLogsImpl with EsModelPlayJson
       FieldString(DESCR_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
       FieldString(RENDERERS_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
       FieldString(TIMEZONE_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
-      FieldObject(MAiMad.SOURCES_ESFN, enabled = true, properties = AiSource.generateMappingProps)
+      FieldObject(SOURCES_ESFN, enabled = true, properties = AiSource.generateMappingProps)
     )
   }
 
@@ -97,6 +106,10 @@ object MAiMad extends EsModelStaticT with PlayMacroLogsImpl with EsModelPlayJson
   }
 
 }
+/** Интерфейс к полю с DI-инстансом [[MAiMads]]. */
+trait IMAiMads {
+  def mAiMads: MAiMads
+}
 
 
 case class MAiMad(
@@ -117,9 +130,15 @@ case class MAiMad(
 /** JMX MBean для модели [[MAiMad]]. */
 trait MAiMadJmxMBean extends EsModelJMXMBeanI
 /** Реализация JMX MBean для модели [[MAiMad]]. */
-final class MAiMadJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
-  extends EsModelJMXBase with MAiMadJmxMBean {
-  override def companion = MAiMad
+final class MAiMadJmx @Inject() (
+  override val companion  : MAiMads,
+  implicit val ec         : ExecutionContext,
+  implicit val client     : Client,
+  implicit val sn         : SioNotifierStaticClientI
+)
+  extends EsModelJMXBase
+    with MAiMadJmxMBean
+{
   override type X = MAiMad
 }
 
