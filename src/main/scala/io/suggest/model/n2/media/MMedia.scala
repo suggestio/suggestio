@@ -78,6 +78,7 @@ class MMedias @Inject()(
 
   /**
    * Сборка id'шников для экземпляров модели.
+ *
    * @param imgNodeId id ноды картинки.
    * @param qOpt Опциональный qualifier. Обычно None, если это файл-оригинал.
    *             Some() если хранится дериватив.
@@ -128,16 +129,16 @@ case class MMedia(
 
 
 // Поддержка JMX.
-trait MMediaJmxMBean extends EsModelJMXMBeanI
+trait MMediasJmxMBean extends EsModelJMXMBeanI
 
-final class MMediaJmx @Inject() (
+final class MMediasJmx @Inject()(
   override val companion: MMedias,
   val ec      : ExecutionContext,
   val client  : Client,
   val sn      : SioNotifierStaticClientI
 )
   extends EsModelJMXBase
-  with MMediaJmxMBean
+  with MMediasJmxMBean
 {
   override type X = MMedia
 }
