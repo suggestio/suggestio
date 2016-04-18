@@ -8,6 +8,7 @@ import io.suggest.util.{JMXBase, SioEsUtil}
 import io.suggest.ym.model.stat.MAdStats
 import models.adv.MExtTargets
 import models.ai.MAiMad
+import models.event.MEvents
 import models.mcal.MCalendars
 import models.merr.MRemoteError
 import models.mproj.ICommonDi
@@ -29,6 +30,7 @@ class SiowebEsModel @Inject() (
   mNodes              : MNodes,
   mMedias             : MMedias,
   mCalendars          : MCalendars,
+  mEvents             : MEvents,
   mExtTargets         : MExtTargets,
   mAdStats            : MAdStats,
   mCommonDi           : ICommonDi
@@ -48,7 +50,7 @@ class SiowebEsModel @Inject() (
     EmailPwIdent, EmailActivation, MExtIdent, mCalendars,
     MRemoteError, MAiMad,
     mExtTargets,
-    event.MEvent, sec.MAsymKey,
+    mEvents, sec.MAsymKey,
     mMedias,
     mAdStats
   )

@@ -6,7 +6,7 @@ import io.suggest.event.SNStaticSubscriber
 import io.suggest.event.SioNotifier.{Classifier, Event, Subscriber}
 import io.suggest.event.subscriber.SnClassSubscriber
 import io.suggest.model.n2.node.event.MNodeSaved
-import models.event.{MEvent, MEventType, MEventTypes}
+import models.event.{MEvent, MEventType, MEventTypes, MEvents}
 import models.mproj.ICommonDi
 import util.PlayMacroLogsImpl
 
@@ -21,6 +21,7 @@ import scala.concurrent.Future
  *
  */
 class AdnNodeEvents @Inject() (
+  mEvents               : MEvents,
   mCommonDi             : ICommonDi
 )
   extends SNStaticSubscriber
@@ -66,7 +67,7 @@ class AdnNodeEvents @Inject() (
       isCloseable = true,
       isUnseen    = true
     )
-    val fut = MEvent.save(evt)
+    val fut = mEvents.save(evt)
     fut.onFailure {
       case ex =>
         error("Failed to save welcome event: " + evt, ex)

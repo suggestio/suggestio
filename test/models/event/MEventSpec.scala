@@ -11,7 +11,11 @@ import org.scalatestplus.play.PlaySpec
  */
 class MEventSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
 
+  private lazy val mEvents = app.injector.instanceOf[MEvents]
+
   "MEvent JSON" must {
+
+    import mEvents.mockPlayDocRespEv
 
     "handle fully-filled model" in {
       val mevent = MEvent(
@@ -28,7 +32,7 @@ class MEventSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
         versionOpt  = Some(1)
       )
 
-      MEvent.deserializeOne2(mevent)  mustBe  mevent
+      mEvents.deserializeOne2(mevent)  mustBe  mevent
     }
 
 
@@ -38,7 +42,7 @@ class MEventSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
         ownerId = "asd"
       )
 
-      MEvent.deserializeOne2(mevent)  mustBe  mevent
+      mEvents.deserializeOne2(mevent)  mustBe  mevent
     }
 
   }

@@ -11,12 +11,12 @@ import io.suggest.util.SioEsUtil._
 import org.elasticsearch.action.index.IndexRequestBuilder
 import org.elasticsearch.client.Client
 import org.joda.time.DateTime
-import play.api.Play.{current, configuration}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import _root_.util.PlayMacroLogsImpl
-import scala.concurrent.duration._
+import com.google.inject.{Inject, Singleton}
 
+import scala.concurrent.duration._
 import scala.collection.Map
 import scala.concurrent.ExecutionContext
 
@@ -29,11 +29,7 @@ import scala.concurrent.ExecutionContext
  * 2015.feb.12: Поле isUnseen работает по значениям: true или missing. Это позволяет разгружать индекс поля, когда
  * сообщения прочитаны (а таких большинство, и искать по этому значение не требуется).
  */
-object MEvent extends EsModelStaticT with PlayMacroLogsImpl with EsDynSearchStatic[IEventsSearchArgs]
-with EsmV2Deserializer with EsModelPlayJsonStaticT {
-
-  override type T = MEvent
-  override val ES_TYPE_NAME = "ntf"
+object MEvent {
 
   val EVT_TYPE_ESFN     = "et"
   val OWNER_ID_ESFN     = "ownerId"     // Такая же, как в MMartCategory
@@ -42,12 +38,45 @@ with EsmV2Deserializer with EsModelPlayJsonStaticT {
   val IS_CLOSEABLE_ESFN = "ic"
   val IS_UNSEEN_ESFN    = "iu"
 
-  val TTL_DAYS_UNSEEN = configuration.getInt("mevent.ttl.days.unseen") getOrElse 90
-  val TTL_DAYS_SEEN   = configuration.getInt("mevent.ttl.days.seen")   getOrElse 30
-  
+  def TTL_DAYS_UNSEEN = 90
+  def TTL_DAYS_SEEN   = 30
+
   def isCloseableDflt = true
   def dateCreatedDflt = DateTime.now()
   def argsDflt        = EmptyArgsInfo
+
+
+  /**
+   * Сборка event classifier для простоты взаимодействия с SioNotifier.
+   *
+   * @param etype Тип события, если нужен.
+   * @param ownerId id владельца, если требуется.
+   * @param argsInfo Экземпляр [[ArgsInfo]], если есть.
+   * @return Classifier.
+   */
+  def getClassifier(etype: Option[MEventType], ownerId: Option[String], argsInfo: ArgsInfo = EmptyArgsInfo): Classifier = {
+    Some(classOf[MEvent].getSimpleName) ::
+      etype ::
+      ownerId ::
+      argsInfo.getClassifier
+  }
+
+}
+
+
+@Singleton
+class MEvents
+  extends EsModelStaticT
+    with PlayMacroLogsImpl
+    with EsDynSearchStatic[IEventsSearchArgs]
+    with EsmV2Deserializer
+    with EsModelPlayJsonStaticT
+{
+
+  import MEvent._
+
+  override type T = MEvent
+  override val ES_TYPE_NAME = "ntf"
 
 
   override def generateMappingStaticFields: List[Field] = {
@@ -91,39 +120,25 @@ with EsmV2Deserializer with EsModelPlayJsonStaticT {
     )
   }
 
-  /**
-   * Сборка event classifier для простоты взаимодействия с SioNotifier.
-   * @param etype Тип события, если нужен.
-   * @param ownerId id владельца, если требуется.
-   * @param argsInfo Экземпляр [[ArgsInfo]], если есть.
-   * @return Classifier.
-   */
-  def getClassifier(etype: Option[MEventType], ownerId: Option[String], argsInfo: ArgsInfo = EmptyArgsInfo): Classifier = {
-    Some(classOf[T].getSimpleName) ::
-      etype ::
-      ownerId ::
-      argsInfo.getClassifier
-  }
-
   /** Кешируем почти-собранный инстанс десериализатора экземпляров модели. */
   private val _reads0 = {
     (__ \ EVT_TYPE_ESFN).read[MEventType] and
     (__ \ OWNER_ID_ESFN).read[String] and
     (__ \ ARGS_ESFN).readNullable[ArgsInfo]
-      .map(_ getOrElse EmptyArgsInfo) and
+      .map(_.getOrElse(EmptyArgsInfo)) and
     (__ \ DATE_CREATED_ESFN).readNullable[DateTime]
-      .map(_ getOrElse DateTime.now) and
+      .map(_.getOrElse(DateTime.now)) and
     (__ \ IS_CLOSEABLE_ESFN).readNullable[Boolean]
       .map(_ getOrElse isCloseableDflt) and
     (__ \ IS_UNSEEN_ESFN).readNullable[Boolean]
-      .map(_ getOrElse true)
+      .map(_.getOrElse(true))
   }
 
   /** Вернуть JSON reads для десериализации тела документа с имеющимися метаданными. */
   override protected def esDocReads(meta: IEsDocMeta): Reads[MEvent] = {
     _reads0 {
       (etype, ownerId, argsInfo, dateCreated, isCloseable, isUnseen) =>
-        apply(etype, ownerId, argsInfo, dateCreated, isCloseable, isUnseen, id = meta.id, versionOpt = meta.version)
+        MEvent(etype, ownerId, argsInfo, dateCreated, isCloseable, isUnseen, id = meta.id, versionOpt = meta.version)
     }
   }
 
@@ -156,6 +171,11 @@ with EsmV2Deserializer with EsModelPlayJsonStaticT {
 
 }
 
+/** Интерфейс к полю MEvents, инстанс которого приходит через DI. */
+trait IMEvents {
+  def mEvents: MEvents
+}
+
 
 /** Класс-экземпляр одной нотификации. */
 case class MEvent(
@@ -173,12 +193,17 @@ case class MEvent(
     with IMEvent
 
 
-trait MEventJmxMBean extends EsModelJMXMBeanI
-final class MEventJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+trait MEventsJmxMBean extends EsModelJMXMBeanI
+final class MEventsJmx @Inject() (
+  mEvents             : MEvents,
+  implicit val ec     : ExecutionContext,
+  implicit val client : Client,
+  implicit val sn     : SioNotifierStaticClientI
+)
   extends EsModelJMXBase
-  with MEventJmxMBean
+  with MEventsJmxMBean
 {
-  override def companion = MEvent
+  override def companion = mEvents
   override type X = MEvent
 }
 
@@ -197,13 +222,14 @@ trait IEvent extends OptStrId with Event {
 /** Частичная реализация [[IEvent]] с реализацией getClassifier() в рамках текущей модели. */
 trait IMEvent extends IEvent {
   override def getClassifier: Classifier = {
-    MEvent.getClassifier(Some(etype), Some(ownerId), argsInfo)
+    MEvent.getClassifier(etype = Some(etype), ownerId = Some(ownerId), argsInfo = argsInfo)
   }
 }
 
 
 /**
  * Реализация [[IEvent]] для нехранимого события, т.е. когда что-то нужно отрендерить в режиме БЫСТРАБЛДЖАД!
+ *
  * @param etype Тип события.
  * @param ownerId id owner'а.
  * @param argsInfo Необязательная инфа по параметрам [[EmptyArgsInfo]].

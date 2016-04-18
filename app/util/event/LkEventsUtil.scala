@@ -19,7 +19,8 @@ import scala.concurrent.Future
  * Description: Утиль для контроллера LkEvents, который изрядно разжирел в первые дни разработки.
  */
 class LkEventsUtil @Inject() (
-  mCommonDi: ICommonDi
+  mEvents   : MEvents,
+  mCommonDi : ICommonDi
 ) {
 
   import mCommonDi._
@@ -99,15 +100,15 @@ class LkEventsUtil @Inject() (
       ownerId = Some(adnId),
       onlyUnseen = true
     )
-    val scroller = MEvent.startScroll(
+    val scroller = mEvents.startScroll(
       queryOpt = searchArgs.toEsQueryOpt
     )
-    MEvent.updateAll(scroller) { mevent0 =>
+    mEvents.updateAll(scroller) { mevent0 =>
       val res = mevent0.copy(
         isUnseen = false,
         ttlDays = Some(MEvent.TTL_DAYS_SEEN)
       )
-      Future successful res
+      Future.successful(res)
     }
   }
 

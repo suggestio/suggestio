@@ -1,7 +1,7 @@
 package util.acl
 
-import models.event.MEvent
-import models.req.{MUserInit, IReq, MNodeEventReq, MReq}
+import models.event.IMEvents
+import models.req.{IReq, MNodeEventReq, MReq, MUserInit}
 import play.api.mvc.{ActionBuilder, Request, Result}
 
 import scala.concurrent.Future
@@ -17,6 +17,7 @@ trait HasNodeEventAccess
   extends OnUnauthNodeCtl
   with IsAdnNodeAdminUtilCtl
   with Csrf
+  with IMEvents
 {
 
   import mCommonDi._
@@ -34,7 +35,7 @@ trait HasNodeEventAccess
     def onlyCloseable: Boolean
 
     override def invokeBlock[A](request: Request[A], block: (MNodeEventReq[A]) => Future[Result]): Future[Result] = {
-      val eventOptFut = MEvent.getById(eventId)
+      val eventOptFut = mEvents.getById(eventId)
 
       val personIdOpt = sessionUtil.getPersonId(request)
       val user = mSioUsers(personIdOpt)

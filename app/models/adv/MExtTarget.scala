@@ -15,7 +15,7 @@ import util.PlayMacroLogsImpl
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import EsModelUtil.stringParser
-import com.google.inject.Inject
+import com.google.inject.{Inject, Singleton}
 
 import scala.collection.Map
 import scala.concurrent.ExecutionContext
@@ -46,6 +46,7 @@ object MExtTargetFields {
 }
 
 
+@Singleton
 class MExtTargets
   extends EsModelStaticT
   with PlayMacroLogsImpl
@@ -116,7 +117,7 @@ class MExtTargets
 
   /**
    * Создавать ли экземпляр этой модели для новых узлов?
- *
+   *
    * @param svc Сервис.
    * @param adnId id узла.
    * @param messages язык. Для связи с Messages().

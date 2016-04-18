@@ -5,7 +5,7 @@ import com.google.inject.Inject
 import io.suggest.model.n2.node.MNodes
 import models._
 import models.adv.MExtTargets
-import models.event.MEvent
+import models.event.MEvents
 import models.event.search.MEventsSearchArgs
 import models.mctx.Context
 import models.mproj.ICommonDi
@@ -33,6 +33,7 @@ class LkEvents @Inject() (
   lkAdUtil                        : LkAdUtil,
   mNodes                          : MNodes,
   mExtTargets                     : MExtTargets,
+  override val mEvents            : MEvents,
   override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
@@ -67,7 +68,7 @@ class LkEvents @Inject() (
       limit         = limit,
       offset        = offset
     )
-    val eventsFut = MEvent.dynSearch(eventsSearch)
+    val eventsFut = mEvents.dynSearch(eventsSearch)
 
     val ctxFut = request.user.lkCtxDataFut.map { implicit ctxData =>
       implicitly[Context]
@@ -193,7 +194,7 @@ class LkEvents @Inject() (
     */
   def nodeEventDelete(eventId: String) = HasNodeEventAccessPost(eventId, onlyCloseable = true).async { implicit request =>
     for {
-      isDeleted <- MEvent.deleteById(eventId)
+      isDeleted <- mEvents.deleteById(eventId)
     } yield {
       if (isDeleted)
         NoContent

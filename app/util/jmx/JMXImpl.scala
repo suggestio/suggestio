@@ -6,7 +6,7 @@ import io.suggest.model.n2.node.MNodesJmx
 import io.suggest.ym.model.stat._
 import models.adv.MExtTargetsJmx
 import models.ai.MAiMadJmx
-import models.event.MEventJmx
+import models.event.MEventsJmx
 import models.mcal.MCalendarJmx
 import models.merr.MRemoteErrorJmx
 import models.mproj.ICommonDi
@@ -27,7 +27,7 @@ import util.adv.geo.tag.GeoTagsUtilJmx
  */
 
 class JMXImpl @Inject() (
-  mMediasJmx                     : MMediasJmx,
+  mMediasJmx                    : MMediasJmx,
   siowebEsModelJmx              : SiowebEsModelJmx,
   advUtilJmx                    : AdvUtilJmx,
   mCalendarJmx                  : MCalendarJmx,
@@ -35,6 +35,7 @@ class JMXImpl @Inject() (
   geoTagsUtilJmx                : GeoTagsUtilJmx,
   mAdStatJmx                    : MAdStatJmx,
   mExtTargetsJmx                : MExtTargetsJmx,
+  mEventsJmx                    : MEventsJmx,
   mCommonDi                     : ICommonDi
 )
   extends PlayLazyMacroLogsImpl
@@ -55,7 +56,7 @@ class JMXImpl @Inject() (
       new MRemoteErrorJmx,
       new MAiMadJmx,
       advUtilJmx,
-      new MEventJmx,
+      mEventsJmx,
       mExtTargetsJmx,
       mNodesJmx,
       geoTagsUtilJmx,

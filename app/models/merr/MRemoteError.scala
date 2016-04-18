@@ -7,7 +7,6 @@ import io.suggest.util.SioEsUtil._
 import models._
 import org.elasticsearch.client.Client
 import org.joda.time.DateTime
-import play.api.Play.{configuration, current}
 import util.PlayMacroLogsImpl
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -44,7 +43,7 @@ object MRemoteError extends EsModelStaticT with PlayMacroLogsImpl with EsmV2Dese
   def STATE_FN                  = "state"
 
   /** Время хранения данных в модели. */
-  val TTL_DAYS = configuration.getInt("model.remote.error.store.ttl.days") getOrElse 30
+  def TTL_DAYS = 30
 
   override def generateMappingStaticFields: List[Field] = {
     List(
