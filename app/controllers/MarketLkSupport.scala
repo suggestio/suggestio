@@ -3,8 +3,8 @@ package controllers
 import com.google.inject.Inject
 import models._
 import models.mproj.ICommonDi
-import models.req.{IReqHdr, IReq}
-import models.usr.MPersonIdent
+import models.req.{IReq, IReqHdr}
+import models.usr.MPersonIdents
 import play.api.data.Forms._
 import play.api.data._
 import play.api.mvc.Result
@@ -27,6 +27,7 @@ import scala.concurrent.Future
 class MarketLkSupport @Inject() (
   override val mailer             : IMailerWrapper,
   override val identUtil          : IdentUtil,
+  mPersonIdents                   : MPersonIdents,
   supportUtil                     : SupportUtil,
   override val mCommonDi          : ICommonDi
 )
@@ -87,7 +88,7 @@ class MarketLkSupport @Inject() (
       .fold [Future[Seq[String]]] {
         Future successful Nil
       } { personId =>
-        MPersonIdent.findAllEmails(personId)
+        mPersonIdents.findAllEmails(personId)
       }
     emailsDfltFut.flatMap { emailsDflt =>
       val emailDflt = emailsDflt.headOption getOrElse ""
@@ -126,7 +127,7 @@ class MarketLkSupport @Inject() (
       },
       {lsr =>
         val personId = request.user.personIdOpt.get
-        val userEmailsFut = MPersonIdent.findAllEmails(personId)
+        val userEmailsFut = mPersonIdents.findAllEmails(personId)
         trace(logPrefix + "Processing from ip=" + request.remoteAddress)
         val msg = mailer.instance
         msg.setReplyTo(lsr.replyEmail)
@@ -174,7 +175,7 @@ class MarketLkSupport @Inject() (
       },
       {text =>
         val personId = request.user.personIdOpt.get
-        val emailsFut = MPersonIdent.findAllEmails(personId)
+        val emailsFut = mPersonIdents.findAllEmails(personId)
         trace(logPrefix + "Processing from ip=" + request.remoteAddress)
         // собираем письмо админам s.io
         val msg = mailer.instance

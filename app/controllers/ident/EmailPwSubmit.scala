@@ -58,10 +58,11 @@ trait EmailPwSubmit
     // Пытаемся извлечь email из сессии.
     val emailFut: Future[String] = request.session.get(Keys.PersonId.name) match {
       case Some(personId) =>
-        EmailPwIdent.findByPersonId(personId)
-          .map { _.headOption.fold("")(_.email) }
+        for (epwIdents <- EmailPwIdent.findByPersonId(personId)) yield {
+          epwIdents.headOption.fold("")(_.email)
+        }
       case None =>
-        Future successful ""
+        Future.successful("")
     }
     val ttl = Ttl(request.session)
     emailFut map { email1 =>
@@ -86,8 +87,8 @@ trait EmailPwSubmit
           emailSubmitError(formWithErrors, r)
         },
         {binded =>
-          EmailPwIdent.getByEmail(binded.email) flatMap { epwOpt =>
-            if (epwOpt.exists(_.checkPassword(binded.password))) {
+          EmailPwIdent.getByEmail(binded.email).flatMap { epwOpt =>
+            if (epwOpt.exists(pwIdent => EmailPwIdent.checkHash(binded.password, pwIdent.pwHash))) {
               // Логин удался.
               val personId = epwOpt.get.personId
               val mpersonOptFut = mNodes.getByIdType(personId, MNodeTypes.Person)

@@ -22,15 +22,17 @@ import scala.concurrent.duration._
 
 // Статическая часть модели.
 class MPerson @Inject() (
-  mCommonDi: ICommonDi
+  mPersonIdents : MPersonIdents,
+  mCommonDi     : ICommonDi
 ) extends PlayMacroLogsImpl {
 
   import mCommonDi._
 
   /** Асинхронно найти подходящее имя юзера в хранилищах и подмоделях. */
   def findUsername(personId: String): Future[Option[String]] = {
-    MPersonIdent.findAllEmails(personId)
-      .map(_.headOption)
+    for (emails <- mPersonIdents.findAllEmails(personId)) yield {
+      emails.headOption
+    }
   }
 
   /** Ключ в кеше для юзернейма. */

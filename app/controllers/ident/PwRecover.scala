@@ -6,7 +6,7 @@ import models.jsm.init.MTargets
 import models.mctx.{Context, CtxData}
 import models.msession.Keys
 import models.req.{IRecoverPwReq, IReq}
-import models.usr.{EmailActivation, EmailPwIdent, MPersonIdent}
+import models.usr.{EmailActivation, EmailPwIdent, IMPersonIdents}
 import play.api.data._
 import play.twirl.api.Html
 import util.PlayMacroLogsI
@@ -36,6 +36,7 @@ trait SendPwRecoverEmail
   with IMailerWrapperDi
   with MaybeAuth
   with PlayMacroLogsI
+  with IMPersonIdents
 {
 
   import mCommonDi._
@@ -51,7 +52,7 @@ trait SendPwRecoverEmail
 
     val fut = for {
       // Надо найти юзера в базах PersonIdent, и если есть, то отправить письмецо.
-      idents <- MPersonIdent.findIdentsByEmail(email1)
+      idents <- mPersonIdents.findIdentsByEmail(email1)
       if idents.nonEmpty
 
       epwIdent <- {
@@ -208,7 +209,7 @@ trait PwRecover
         NotAcceptable(_pwReset(formWithErrors))
       },
       {newPw =>
-        val pwHash2 = MPersonIdent.mkHash(newPw)
+        val pwHash2 = EmailPwIdent.mkHash(newPw)
         val epw2 = request.epw.copy(pwHash = pwHash2, isVerified = true)
         for {
           // Сохранение новых данных по паролю

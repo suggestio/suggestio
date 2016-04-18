@@ -16,7 +16,7 @@ import models.mlk.{MNodeAdInfo, MNodeAdsTplArgs, MNodeShowArgs}
 import models.mproj.ICommonDi
 import models.msession.Keys
 import models.req.INodeReq
-import models.usr.{EmailActivation, EmailPwIdent}
+import models.usr.{EmailActivation, EmailPwIdent, MPersonIdents}
 import org.elasticsearch.search.sort.SortOrder
 import play.api.data.Form
 import play.api.data.Forms._
@@ -48,6 +48,7 @@ class MarketLkAdn @Inject() (
   mItems                              : MItems,
   mNodes                              : MNodes,
   override val identUtil              : IdentUtil,
+  override val mPersonIdents          : MPersonIdents,
   logoUtil                            : LogoUtil,
   galleryUtil                         : GalleryUtil,
   override val mCommonDi              : ICommonDi

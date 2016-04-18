@@ -2,13 +2,14 @@ package controllers.ident
 
 import controllers.SioController
 import models.req.IReq
-import models.usr.{MPersonIdent, EmailPwIdent}
+import models.usr.{EmailPwIdent, IMPersonIdents}
 import play.api.data._
 import play.api.data.Forms._
 import util.acl._
 import util._
 import play.api.mvc._
 import util.di.IIdentUtil
+
 import scala.concurrent.Future
 import FormUtil.{passwordM, passwordWithConfirmM}
 import views.html.ident.changePasswordTpl
@@ -60,6 +61,7 @@ trait ChangePwAction
   extends SioController
   with PlayMacroLogsI
   with IIdentUtil
+  with IMPersonIdents
 {
 
   import mCommonDi._
@@ -85,13 +87,13 @@ trait ChangePwAction
         val savedIds: Future[Seq[String]] = EmailPwIdent.findByPersonId(personId).flatMap { epws =>
           if (epws.isEmpty) {
             // Юзер меняет пароль, но залогинен через внешние сервисы. Нужно вычислить email и создать EmailPwIdent.
-            MPersonIdent.findAllEmails(personId) flatMap { emails =>
+            mPersonIdents.findAllEmails(personId) flatMap { emails =>
               if (emails.isEmpty) {
                 LOGGER.warn("Unknown user session: " + personId)
                 Future successful Seq.empty[String]
               } else {
                 Future.traverse(emails) { email =>
-                  val epw = EmailPwIdent(email = email, personId = personId, pwHash = MPersonIdent.mkHash(newPw), isVerified = true)
+                  val epw = EmailPwIdent(email = email, personId = personId, pwHash = EmailPwIdent.mkHash(newPw), isVerified = true)
                   val fut = EmailPwIdent.save(epw)
                   fut onSuccess {
                     case epwId =>
@@ -105,16 +107,18 @@ trait ChangePwAction
           } else {
             // Юзер меняет пароль, но у него уже есть EmailPw-логины на s.io.
             val result = epws
-              .find { _.checkPassword(oldPw) }
-              .map { _.copy(pwHash = MPersonIdent.mkHash(newPw)) }
+              .find { pwIdent =>
+                EmailPwIdent.checkHash(oldPw, hash = pwIdent.pwHash)
+              }
+              .map { _.copy(pwHash = EmailPwIdent.mkHash(newPw)) }
             result match {
               case Some(epw) =>
                 for (epwId <- EmailPwIdent.save(epw)) yield {
-                  Seq(epwId)
+                  List(epwId)
                 }
               case None =>
                 LOGGER.warn(logPrefix + "No idents with email found for user " + personId)
-                Future successful Seq.empty[String]
+                Future.successful( List.empty[String] )
             }
           }
         }

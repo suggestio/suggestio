@@ -68,6 +68,7 @@ trait EmailPwReg
   with INodesUtil
   with EmailPwRegUtil
   with IMNodes
+  with IMPersonIdents
 {
 
   import mCommonDi._
@@ -118,7 +119,7 @@ trait EmailPwReg
       },
       {email1 =>
         // Почта уже зарегана может?
-        MPersonIdent.findIdentsByEmail(email1) flatMap {
+        mPersonIdents.findIdentsByEmail(email1).flatMap {
           // Нет такого email. Собираем активацию.
           case nil if nil.isEmpty =>    // Используем isEmpty во избежания скрытых изменений в API в будущем
             // Сохранить новый eact
@@ -197,7 +198,7 @@ trait EmailPwReg
             val epw0 = EmailPwIdent(
               email       = eaInfo.email,
               personId    = personId,
-              pwHash      = MPersonIdent.mkHash(data.password),
+              pwHash      = EmailPwIdent.mkHash(data.password),
               isVerified  = true
             )
             EmailPwIdent.save(epw0)

@@ -1,12 +1,11 @@
 package models.usr
 
-import com.lambdaworks.crypto.SCryptUtil
 import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.model.es.{EsModelPlayJsonStaticT, EsModelStaticT, EsModelT, EsModelUtil}
 import EsModelUtil._
+import com.google.inject.{Inject, Singleton}
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.client.Client
-import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.index.query.QueryBuilders
 import play.api.libs.json.{JsBoolean, JsString}
 import util.PlayMacroLogsImpl
@@ -22,9 +21,15 @@ import scala.concurrent.{ExecutionContext, Future}
  * В suggest.io исторически была только persona, которая жила прямо в MPerson.
  * Все PersonIdent имеют общий формат, однако хранятся в разных типах в рамках одного индекса.
  */
-object MPersonIdent extends PlayMacroLogsImpl {
+@Singleton
+class MPersonIdents @Inject() ()
+  extends PlayMacroLogsImpl
+{
 
   import LOGGER._
+
+  def IDENT_MODELS = List[EsModelStaticIdentT](EmailPwIdent, MExtIdent)
+  def MODELS: List[EsModelStaticIdentT] = EmailActivation :: IDENT_MODELS
 
   // TODO Нужно дедублицировать код между разными find*() методами.
 
@@ -34,10 +39,10 @@ object MPersonIdent extends PlayMacroLogsImpl {
    * @return Список абстрактных результатов в неопределённом порядке.
    */
   def findIdentsByEmail(email: String)(implicit ec: ExecutionContext, client: Client): Future[List[MPersonIdent]] = {
-    val identModels = IdTypes.onlyIdents
-    val identModelTypes = identModels.map(_.companion.ES_TYPE_NAME)
+    val identModels = IDENT_MODELS
+    val identModelTypes = identModels.map(_.ES_TYPE_NAME)
     val iq = QueryBuilders.idsQuery(identModelTypes : _*).addIds(email)
-    val indices = identModels.map(_.companion.ES_INDEX_NAME).distinct
+    val indices = identModels.map(_.ES_INDEX_NAME).distinct
     client.prepareSearch(indices : _*)
       .setQuery(iq)
       .execute()
@@ -45,10 +50,9 @@ object MPersonIdent extends PlayMacroLogsImpl {
         searchResp.getHits.getHits.foldLeft[List[MPersonIdent]] (Nil) { (acc, hit) =>
           // Выбрать десериализатор исходя из типа.
           val result1Opt = identModels
-            .find(_.companion.ES_TYPE_NAME == hit.getType)
+            .find(_.ES_TYPE_NAME == hit.getType)
             .map {
-             _.companion
-              .deserializeOne2(hit)
+             _.deserializeOne2(hit)
             }
           result1Opt match {
             case Some(result1) =>
@@ -62,30 +66,7 @@ object MPersonIdent extends PlayMacroLogsImpl {
       }
   }
   
-  def generateMappingStaticFields: List[Field] = {
-    // Для надежной защиты от двойных добавлений.
-    generateMappingStaticFieldsMin
-  }
 
-  def generateMappingStaticFieldsMin: List[Field] = List(
-    FieldSource(enabled = true),
-    FieldAll(enabled = false)
-  )
-
-  def generateMappingProps: List[DocField] = List(
-    FieldString(PERSON_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-    FieldString(KEY_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
-    FieldString(VALUE_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
-    FieldBoolean(IS_VERIFIED_ESFN, index = FieldIndexingVariants.no, include_in_all = false)
-  )
-
-  def generateMapping(typ: String, withStaticFields: Seq[Field] = Nil): XContentBuilder = jsonGenerator { implicit b =>
-    IndexMapping(
-      typ = typ,
-      staticFields = withStaticFields ++ generateMappingStaticFields,
-      properties = generateMappingProps
-    )
-  }
 
   /** Собрать все мыльники указанного юзера во всех подмоделях.
     * @param personId id юзера
@@ -93,9 +74,9 @@ object MPersonIdent extends PlayMacroLogsImpl {
     */
   def findAllEmails(personId: String)(implicit ec: ExecutionContext, client: Client): Future[Seq[String]] = {
     val personIdQuery = QueryBuilders.termQuery(PERSON_ID_ESFN, personId)
-    val identModels = IdTypes.onlyIdents
-    val identTypes = identModels.map(_.companion.ES_TYPE_NAME)
-    val indices = identModels.map(_.companion.ES_INDEX_NAME).distinct
+    val identModels = IDENT_MODELS
+    val identTypes = identModels.map(_.ES_TYPE_NAME)
+    val indices = identModels.map(_.ES_INDEX_NAME).distinct
     client.prepareSearch(indices : _*)
       .setTypes(identTypes : _*)
       .setQuery(personIdQuery)
@@ -114,35 +95,10 @@ object MPersonIdent extends PlayMacroLogsImpl {
       }
   }
 
-
-  // Настройки генерации хешей. Используется scrypt. Это влияет только на новые создаваемые хеши, не ломая совместимость
-  // с уже сохранёнными. Размер потребляемой памяти можно рассчитать Size = (128 * COMPLEXITY * RAM_BLOCKSIZE) bytes.
-  // По дефолту жрём 16 метров с запретом параллелизации.
-  /** Cложность хеша scrypt. */
-  val SCRYPT_COMPLEXITY     = 16384 //current.configuration.getInt("ident.pw.scrypt.complexity") getOrElse
-  /** Размер блока памяти. */
-  val SCRYPT_RAM_BLOCKSIZE  = 8 //current.configuration.getInt("ident.pw.scrypt.ram.blocksize") getOrElse 8
-  /** Параллелизация. Позволяет ускорить вычисление функции. */
-  val SCRYPT_PARALLEL       = 1 //current.configuration.getInt("ident.pw.scrypt.parallel") getOrElse 1
-
-  /** Генерировать новый хеш с указанными выше дефолтовыми параметрами.
-    * @param password Пароль, который надо захешировать.
-    * @return Текстовый хеш в стандартном формате \$s0\$params\$salt\$key.
-    */
-  def mkHash(password: String): String = {
-    SCryptUtil.scrypt(password, SCRYPT_COMPLEXITY, SCRYPT_RAM_BLOCKSIZE, SCRYPT_PARALLEL)
-  }
-
-  /** Проверить хеш scrypt с помощью переданного пароля.
-    * @param password Проверяемый пароль.
-    * @param hash Уже готовый хеш.
-    * @return true, если пароль ок. Иначе false.
-    */
-  def checkHash(password: String, hash: String): Boolean = {
-    SCryptUtil.check(password, hash)
-  }
-
-  def personIdQuery(personId: String) = QueryBuilders.termQuery(PERSON_ID_ESFN, personId)
+}
+/** Интерфейс для поля с DI-инстансом над-модели [[MPersonIdents]]. */
+trait IMPersonIdents {
+  def mPersonIdents: MPersonIdents
 }
 
 
@@ -188,13 +144,29 @@ trait EsModelStaticIdentT extends EsModelStaticT with EsModelPlayJsonStaticT {
     acc1
   }
 
+
+  def generateMappingStaticFields: List[Field] = {
+    List(
+      FieldSource(enabled = true),
+      FieldAll(enabled = false)
+    )
+  }
+
+
+  def generateMappingProps: List[DocField] = {
+    List(
+      FieldString(PERSON_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+      FieldString(KEY_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
+      FieldString(VALUE_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
+      FieldBoolean(IS_VERIFIED_ESFN, index = FieldIndexingVariants.no, include_in_all = false)
+    )
+  }
+
 }
 trait MPersonIdentSubmodelStatic extends EsModelStaticIdentT  {
 
-  import MPersonIdent.personIdQuery
+  def personIdQuery(personId: String) = QueryBuilders.termQuery(PERSON_ID_ESFN, personId)
 
-  def generateMappingProps: List[DocField] = MPersonIdent.generateMappingProps
-  def generateMappingStaticFields: List[Field] = MPersonIdent.generateMappingStaticFields
   def getByEmail(email: String)(implicit ec: ExecutionContext, client: Client) = {
     getById(email)
   }
@@ -229,37 +201,17 @@ trait MPIWithEmail {
 object IdTypes extends Enumeration with EnumMaybeWithName {
 
   /** Абстрактный экземпляр модели. */
-  protected[this] sealed abstract class Val extends super.Val {
-    def companion: EsModelStaticIdentT
-    def isIdent: Boolean
+  protected[this] class Val extends super.Val {
   }
 
   override type T = Val
 
-  val EMAIL_PW: T = new Val{
-    override def companion  = EmailPwIdent
-    override def isIdent    = true
-  }
+  val EMAIL_PW: T = new Val
 
-  val EMAIL_ACT: T = new Val{
-    override def companion  = EmailActivation
-    override def isIdent    = false
-  }
+  val EMAIL_ACT: T = new Val
 
-  val EXT_ID: T = new Val {
-    override def companion  = MExtIdent
-    override def isIdent    = true
-  }
+  val EXT_ID: T = new Val
 
-  def onlyIdents: List[T] = {
-    values.foldLeft (List.empty[T]) {
-      (acc, e) =>
-        if (e.isIdent)
-          e :: acc
-        else
-          acc
-    }
-  }
 }
 
 

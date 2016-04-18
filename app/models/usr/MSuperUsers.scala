@@ -81,7 +81,7 @@ class MSuperUsers @Inject()(
             for {
               personId <- mNodes.save(mperson0)
               mpiId <- {
-                val pwHash = MPersonIdent.mkHash(email)
+                val pwHash = EmailPwIdent.mkHash(email)
                 val epw = EmailPwIdent(email=email, personId=personId, pwHash = pwHash)
                 EmailPwIdent.save(epw)
               }

@@ -66,11 +66,10 @@ object EmailActivation extends EsModelStaticIdentT with PlayMacroLogsImpl with E
     */
   def randomActivationKey = StringUtil.randomId(len = KEY_LEN)
 
-  override def generateMappingProps: List[DocField] = MPersonIdent.generateMappingProps
-
   /** Сборка static-полей маппинга. В этом маппинге должен быть ttl, чтобы старые записи автоматически выпиливались. */
   override def generateMappingStaticFields: List[Field] = {
-    FieldTtl(enabled = true, default = TTL_DFLT) :: MPersonIdent.generateMappingStaticFieldsMin
+    FieldTtl(enabled = true, default = TTL_DFLT) ::
+      super.generateMappingStaticFields
   }
 
   /** Найти элементы по ключу. */

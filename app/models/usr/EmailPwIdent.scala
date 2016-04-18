@@ -3,6 +3,7 @@ package models.usr
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.es._
 import EsModelUtil._
+import com.lambdaworks.crypto.SCryptUtil
 import org.elasticsearch.client.Client
 import util.PlayMacroLogsImpl
 import play.api.libs.json._
@@ -18,7 +19,12 @@ import scala.concurrent.ExecutionContext
  */
 
 /** Статическая под-модель для хранения юзеров, живущих вне mozilla persona. */
-object EmailPwIdent extends MPersonIdentSubmodelStatic with PlayMacroLogsImpl with EsmV2Deserializer {
+object EmailPwIdent
+  extends MPersonIdentSubmodelStatic
+    with PlayMacroLogsImpl
+    with EsmV2Deserializer
+    with EsModelJsonWrites
+{
 
   override type T = EmailPwIdent
 
@@ -29,7 +35,8 @@ object EmailPwIdent extends MPersonIdentSubmodelStatic with PlayMacroLogsImpl wi
     EmailPwIdent(
       email       = stringParser( m(KEY_ESFN) ),
       pwHash      = stringParser( m(VALUE_ESFN) ),
-      isVerified  = m.get(IS_VERIFIED_ESFN).fold(false)(booleanParser),
+      isVerified  = m.get(IS_VERIFIED_ESFN)
+        .fold(false)(booleanParser),
       personId    = stringParser( m(PERSON_ID_ESFN) )
     )
   }
@@ -39,6 +46,7 @@ object EmailPwIdent extends MPersonIdentSubmodelStatic with PlayMacroLogsImpl wi
 
   /**
    * Собрать экземпляр [[EmailPwIdent]].
+   *
    * @param email Электропочта.
    * @param personId id юзера.
    * @param password Пароль как он есть.
@@ -47,24 +55,59 @@ object EmailPwIdent extends MPersonIdentSubmodelStatic with PlayMacroLogsImpl wi
    */
   def applyWithPw(email: String, personId:String, password:String, isVerified:Boolean = IS_VERIFIED_DFLT): EmailPwIdent = {
     EmailPwIdent(
-      email = email,
-      personId = personId,
-      pwHash = MPersonIdent.mkHash(password),
-      isVerified = isVerified
+      email       = email,
+      personId    = personId,
+      pwHash      = EmailPwIdent.mkHash(password),
+      isVerified  = isVerified
     )
   }
 
   /** JSON-десериализатор модели. */
-  private val _reads0 = (
-    (__ \ KEY_ESFN).read[String] and
-    (__ \ PERSON_ID_ESFN).read[String] and
-    (__ \ VALUE_ESFN).read[String] and
-    (__ \ IS_VERIFIED_ESFN).readNullable[Boolean]
-      .map { _ getOrElse IS_VERIFIED_DFLT }
-  )(apply _)
+  implicit val FORMAT = (
+    (__ \ KEY_ESFN).format[String] and
+    (__ \ PERSON_ID_ESFN).format[String] and
+    (__ \ VALUE_ESFN).format[String] and
+    (__ \ IS_VERIFIED_ESFN).formatNullable[Boolean]
+      .inmap [Boolean] (
+        { _.getOrElse(IS_VERIFIED_DFLT) },
+        { b => if (b) Some(b) else None }
+      )
+  )(apply _, unlift(unapply))
 
   override protected def esDocReads(meta: IEsDocMeta): Reads[EmailPwIdent] = {
-    _reads0
+    FORMAT
+  }
+  override def esDocWrites: Writes[EmailPwIdent] = FORMAT
+
+
+
+  // TODO Вынести scrypt-хеш из моделей в отдельную утиль.
+
+  // Настройки генерации хешей. Используется scrypt. Это влияет только на новые создаваемые хеши, не ломая совместимость
+  // с уже сохранёнными. Размер потребляемой памяти можно рассчитать Size = (128 * COMPLEXITY * RAM_BLOCKSIZE) bytes.
+  // По дефолту жрём 16 метров с запретом параллелизации.
+  /** Cложность хеша scrypt. */
+  def SCRYPT_COMPLEXITY     = 16384 //current.configuration.getInt("ident.pw.scrypt.complexity") getOrElse
+  /** Размер блока памяти. */
+  def SCRYPT_RAM_BLOCKSIZE  = 8 //current.configuration.getInt("ident.pw.scrypt.ram.blocksize") getOrElse 8
+  /** Параллелизация. Позволяет ускорить вычисление функции. */
+  def SCRYPT_PARALLEL       = 1 //current.configuration.getInt("ident.pw.scrypt.parallel") getOrElse 1
+
+  /** Генерировать новый хеш с указанными выше дефолтовыми параметрами.
+    * @param password Пароль, который надо захешировать.
+    * @return Текстовый хеш в стандартном формате \$s0\$params\$salt\$key.
+    */
+  def mkHash(password: String): String = {
+    SCryptUtil.scrypt(password, SCRYPT_COMPLEXITY, SCRYPT_RAM_BLOCKSIZE, SCRYPT_PARALLEL)
+  }
+
+  /** Проверить хеш scrypt с помощью переданного пароля.
+    * @param password Проверяемый пароль.
+    * @param hash Уже готовый хеш.
+    * @return true, если пароль ок. Иначе false.
+    */
+  def checkHash(password: String, hash: String): Boolean = {
+    SCryptUtil.check(password, hash)
   }
 
 }
@@ -90,8 +133,6 @@ final case class EmailPwIdent(
   override def writeVerifyInfo = true
   override def value: Option[String] = Some(pwHash)
   override def versionOpt = None
-
-  def checkPassword(password: String) = MPersonIdent.checkHash(password, pwHash)
 }
 
 
