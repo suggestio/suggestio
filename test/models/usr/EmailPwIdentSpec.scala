@@ -11,17 +11,21 @@ import org.scalatestplus.play.PlaySpec
  */
 class EmailPwIdentSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
 
+  private lazy val emailPwIdents = app.injector.instanceOf[EmailPwIdents]
+
   "EmailPwIdent JSON" must {
+
+    import emailPwIdents.mockPlayDocRespEv
 
     "handle fully-filled model" in {
       val epw = EmailPwIdent(
         email       = "asdasd893.ghserger@53tsdfsd.opr",
         personId    = "Aasdfa9sr3dka390dka3",
-        pwHash      = EmailPwIdent.mkHash("ad8q39djq38djq23dq23q2g89gu5gj34g"),
+        pwHash      = emailPwIdents.mkHash("ad8q39djq38djq23dq23q2g89gu5gj34g"),
         isVerified  = !EmailPwIdent.IS_VERIFIED_DFLT
       )
 
-      EmailPwIdent.deserializeOne2(epw)  mustBe  epw
+      emailPwIdents.deserializeOne2(epw)  mustBe  epw
     }
 
   }

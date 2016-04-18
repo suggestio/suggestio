@@ -9,7 +9,7 @@ import models.mctx.{Context, CtxData}
 import models.mproj.ICommonDi
 import models.msession.Keys
 import models.req.IReqHdr
-import models.usr.MPersonIdents
+import models.usr.{EmailPwIdents, MPersonIdents}
 import play.api.mvc._
 import util._
 import util.acl._
@@ -37,6 +37,7 @@ class Ident @Inject() (
   override val nodesUtil            : NodesUtil,
   override val captchaUtil          : CaptchaUtil,
   override val mPersonIdents        : MPersonIdents,
+  override val emailPwIdents        : EmailPwIdents,
   override val mCommonDi            : ICommonDi
 )
   extends SioController

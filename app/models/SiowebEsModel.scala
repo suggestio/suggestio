@@ -12,7 +12,7 @@ import models.event.MEvents
 import models.mcal.MCalendars
 import models.merr.MRemoteErrors
 import models.mproj.ICommonDi
-import models.usr.{EmailActivation, EmailPwIdent, MExtIdent}
+import models.usr.{EmailActivation, EmailPwIdents, MExtIdent}
 import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
 import util.{PlayLazyMacroLogsImpl, PlayMacroLogsDyn}
 
@@ -35,6 +35,7 @@ class SiowebEsModel @Inject() (
   mRemoteErrors       : MRemoteErrors,
   mAiMads             : MAiMads,
   mAdStats            : MAdStats,
+  emailPwIdents       : EmailPwIdents,
   mCommonDi           : ICommonDi
 )
   extends PlayMacroLogsDyn
@@ -49,7 +50,8 @@ class SiowebEsModel @Inject() (
    */
   def ES_MODELS = Seq[EsModelCommonStaticT](
     mNodes,
-    EmailPwIdent, EmailActivation, MExtIdent, mCalendars,
+    emailPwIdents, EmailActivation, MExtIdent,
+    mCalendars,
     mRemoteErrors,
     mAiMads,
     mExtTargets,

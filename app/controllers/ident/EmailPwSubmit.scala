@@ -33,6 +33,7 @@ trait EmailPwSubmit
   with IsAnon
   with IIdentUtil
   with IMNodes
+  with IEmailPwIdentsDi
 {
 
   import mCommonDi._
@@ -58,7 +59,7 @@ trait EmailPwSubmit
     // Пытаемся извлечь email из сессии.
     val emailFut: Future[String] = request.session.get(Keys.PersonId.name) match {
       case Some(personId) =>
-        for (epwIdents <- EmailPwIdent.findByPersonId(personId)) yield {
+        for (epwIdents <- emailPwIdents.findByPersonId(personId)) yield {
           epwIdents.headOption.fold("")(_.email)
         }
       case None =>
@@ -87,8 +88,8 @@ trait EmailPwSubmit
           emailSubmitError(formWithErrors, r)
         },
         {binded =>
-          EmailPwIdent.getByEmail(binded.email).flatMap { epwOpt =>
-            if (epwOpt.exists(pwIdent => EmailPwIdent.checkHash(binded.password, pwIdent.pwHash))) {
+          emailPwIdents.getByEmail(binded.email).flatMap { epwOpt =>
+            if (epwOpt.exists(pwIdent => emailPwIdents.checkHash(binded.password, pwIdent.pwHash))) {
               // Логин удался.
               val personId = epwOpt.get.personId
               val mpersonOptFut = mNodes.getByIdType(personId, MNodeTypes.Person)

@@ -1,9 +1,9 @@
 package util.acl
 
 import controllers.SioController
-import models.req.{MReq, MNodeEactReq}
-import models.usr.{EmailPwIdent, EmailActivation}
-import play.api.mvc.{Result, ActionBuilder, Request}
+import models.req.{MNodeEactReq, MReq}
+import models.usr.{EmailActivation, IEmailPwIdentsDi}
+import play.api.mvc.{ActionBuilder, Request, Result}
 import util.PlayMacroLogsI
 import views.html.lk.adn.invite.inviteInvalidTpl
 
@@ -21,6 +21,7 @@ trait NodeEact
   with PlayMacroLogsI
   with OnUnauthUtilCtl
   with Csrf
+  with IEmailPwIdentsDi
 {
 
   import mCommonDi._
@@ -53,8 +54,8 @@ trait NodeEact
 
       eaOptFut.flatMap {
         case Some(ea) if ea.key == nodeId =>
-          val epwIdOptFut = EmailPwIdent.getByEmail(ea.email)
-          nodeOptFut flatMap {
+          val epwIdOptFut = emailPwIdents.getByEmail(ea.email)
+          nodeOptFut.flatMap {
 
             case Some(mnode) =>
               epwIdOptFut.flatMap {

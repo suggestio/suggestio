@@ -2,7 +2,7 @@ package controllers.ident
 
 import controllers.SioController
 import models.req.IReq
-import models.usr.{EmailPwIdent, IMPersonIdents}
+import models.usr.{EmailPwIdent, IEmailPwIdentsDi, IMPersonIdents}
 import play.api.data._
 import play.api.data.Forms._
 import util.acl._
@@ -62,6 +62,7 @@ trait ChangePwAction
   with PlayMacroLogsI
   with IIdentUtil
   with IMPersonIdents
+  with IEmailPwIdentsDi
 {
 
   import mCommonDi._
@@ -84,7 +85,7 @@ trait ChangePwAction
       },
       {case (oldPw, newPw) =>
         // Нужно проверить старый пароль, если юзер есть в базе.
-        val savedIds: Future[Seq[String]] = EmailPwIdent.findByPersonId(personId).flatMap { epws =>
+        val savedIds: Future[Seq[String]] = emailPwIdents.findByPersonId(personId).flatMap { epws =>
           if (epws.isEmpty) {
             // Юзер меняет пароль, но залогинен через внешние сервисы. Нужно вычислить email и создать EmailPwIdent.
             mPersonIdents.findAllEmails(personId) flatMap { emails =>
@@ -93,9 +94,9 @@ trait ChangePwAction
                 Future successful Seq.empty[String]
               } else {
                 Future.traverse(emails) { email =>
-                  val epw = EmailPwIdent(email = email, personId = personId, pwHash = EmailPwIdent.mkHash(newPw), isVerified = true)
-                  val fut = EmailPwIdent.save(epw)
-                  fut onSuccess {
+                  val epw = EmailPwIdent(email = email, personId = personId, pwHash = emailPwIdents.mkHash(newPw), isVerified = true)
+                  val fut = emailPwIdents.save(epw)
+                  fut.onSuccess {
                     case epwId =>
                       LOGGER.info(s"${logPrefix}Created new epw-ident $epwId for non-pw email $email")
                   }
@@ -108,12 +109,12 @@ trait ChangePwAction
             // Юзер меняет пароль, но у него уже есть EmailPw-логины на s.io.
             val result = epws
               .find { pwIdent =>
-                EmailPwIdent.checkHash(oldPw, hash = pwIdent.pwHash)
+                emailPwIdents.checkHash(oldPw, hash = pwIdent.pwHash)
               }
-              .map { _.copy(pwHash = EmailPwIdent.mkHash(newPw)) }
+              .map { _.copy(pwHash = emailPwIdents.mkHash(newPw)) }
             result match {
               case Some(epw) =>
-                for (epwId <- EmailPwIdent.save(epw)) yield {
+                for (epwId <- emailPwIdents.save(epw)) yield {
                   List(epwId)
                 }
               case None =>

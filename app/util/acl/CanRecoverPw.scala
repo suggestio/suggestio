@@ -2,7 +2,7 @@ package util.acl
 
 import controllers.SioController
 import models.req.{IReq, MRecoverPwReq, MReq, MUserInit}
-import models.usr.{EmailActivation, EmailPwIdent}
+import models.usr.{EmailActivation, EmailPwIdent, IEmailPwIdentsDi}
 import play.api.mvc._
 import util.di.IIdentUtil
 import views.html.ident.recover._
@@ -25,6 +25,7 @@ trait CanRecoverPw
   with BruteForceProtectBase
   with IIdentUtil
   with Csrf
+  with IEmailPwIdentsDi
 {
 
   import mCommonDi._
@@ -32,6 +33,7 @@ trait CanRecoverPw
   /** Трейт с базовой логикой action-builder'а CanRecoverPw. */
   trait CanRecoverPwBase extends ActionBuilder[MRecoverPwReq] with InitUserCmds {
 
+    /** id активатора. */
     def eActId: String
 
     protected def keyNotFound(implicit req: IReq[_]): Future[Result] = {
@@ -56,7 +58,7 @@ trait CanRecoverPw
         eaOptFut.flatMap {
           // Юзер обращается по корректной активационной записи.
           case Some(eAct) =>
-            val epwIdentFut = EmailPwIdent.getById(eAct.email)
+            val epwIdentFut = emailPwIdents.getById(eAct.email)
             maybeInitUser(user)
             epwIdentFut.flatMap {
               case Some(epw) if epw.personId == eAct.key =>
@@ -75,7 +77,7 @@ trait CanRecoverPw
           case result if user.isSuper =>
             val personId = personIdOpt.get
             LOGGER.trace("Superuser mocking activation...")
-            val epwOptFut = EmailPwIdent.findByPersonId(personId)
+            val epwOptFut = emailPwIdents.findByPersonId(personId)
             maybeInitUser(user)
             val epwFut = epwOptFut
               .map(_.head)
@@ -89,7 +91,7 @@ trait CanRecoverPw
               LOGGER.debug("Superuser requested form with invalid/inexisting activation: " + result)
               EmailActivation("mocked@suggest.io", key = "keykeykeykeykey", id = Some("idididididididid"))
             }
-            epwFut flatMap { epw =>
+            epwFut.flatMap { epw =>
               runF(ea, epw)
                 .map { _.flashing("error" -> "Using mocked activation.") }
             }

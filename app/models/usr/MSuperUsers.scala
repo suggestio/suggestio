@@ -19,6 +19,7 @@ import scala.util.{Failure, Success}
  */
 @Singleton
 class MSuperUsers @Inject()(
+  emailPwIdents   : EmailPwIdents,
   mNodes          : MNodes,
   mCommonDi       : ICommonDi
 )
@@ -59,7 +60,7 @@ class MSuperUsers @Inject()(
     val se = SU_EMAILS
     debug(s"${logPrefix}Let's do it. There are ${se.size} superuser emails: [${se.mkString(", ")}]")
     Future.traverse(se) { email =>
-      EmailPwIdent.getById(email) flatMap {
+      emailPwIdents.getById(email) flatMap {
         // Суперюзер ещё не сделан, _id неизвестен. Создать person MNode и MPersonIden для текущего email.
         case None =>
           val logPrefix1 = s"$logPrefix[$email] "
@@ -81,9 +82,9 @@ class MSuperUsers @Inject()(
             for {
               personId <- mNodes.save(mperson0)
               mpiId <- {
-                val pwHash = EmailPwIdent.mkHash(email)
+                val pwHash = emailPwIdents.mkHash(email)
                 val epw = EmailPwIdent(email=email, personId=personId, pwHash = pwHash)
-                EmailPwIdent.save(epw)
+                emailPwIdents.save(epw)
               }
             } yield {
               info(s"$logPrefix1 New superuser installed as $personId. mpi=$mpiId")

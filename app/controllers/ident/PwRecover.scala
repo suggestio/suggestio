@@ -6,7 +6,7 @@ import models.jsm.init.MTargets
 import models.mctx.{Context, CtxData}
 import models.msession.Keys
 import models.req.{IRecoverPwReq, IReq}
-import models.usr.{EmailActivation, EmailPwIdent, IMPersonIdents}
+import models.usr.{EmailActivation, EmailPwIdent, IEmailPwIdentsDi, IMPersonIdents}
 import play.api.data._
 import play.twirl.api.Html
 import util.PlayMacroLogsI
@@ -37,6 +37,7 @@ trait SendPwRecoverEmail
   with MaybeAuth
   with PlayMacroLogsI
   with IMPersonIdents
+  with IEmailPwIdentsDi
 {
 
   import mCommonDi._
@@ -72,7 +73,7 @@ trait SendPwRecoverEmail
             pwHash      = "",
             isVerified  = false
           )
-          for (_ <- EmailPwIdent.save(epw)) yield {
+          for (_ <- emailPwIdents.save(epw)) yield {
             epw
           }
         }
@@ -123,6 +124,7 @@ trait PwRecover
   with IsAnon
   with IIdentUtil
   with EmailPwRegUtil
+  with IEmailPwIdentsDi
 {
 
   import mCommonDi._
@@ -209,11 +211,11 @@ trait PwRecover
         NotAcceptable(_pwReset(formWithErrors))
       },
       {newPw =>
-        val pwHash2 = EmailPwIdent.mkHash(newPw)
+        val pwHash2 = emailPwIdents.mkHash(newPw)
         val epw2 = request.epw.copy(pwHash = pwHash2, isVerified = true)
         for {
           // Сохранение новых данных по паролю
-          _         <- EmailPwIdent.save(epw2)
+          _         <- emailPwIdents.save(epw2)
 
           // Запуск удаления eact
           updateFut = EmailActivation.deleteById(eActId)

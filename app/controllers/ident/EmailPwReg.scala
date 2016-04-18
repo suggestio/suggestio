@@ -69,6 +69,7 @@ trait EmailPwReg
   with EmailPwRegUtil
   with IMNodes
   with IMPersonIdents
+  with IEmailPwIdentsDi
 {
 
   import mCommonDi._
@@ -198,10 +199,10 @@ trait EmailPwReg
             val epw0 = EmailPwIdent(
               email       = eaInfo.email,
               personId    = personId,
-              pwHash      = EmailPwIdent.mkHash(data.password),
+              pwHash      = emailPwIdents.mkHash(data.password),
               isVerified  = true
             )
-            EmailPwIdent.save(epw0)
+            emailPwIdents.save(epw0)
           }
 
           // Дождаться ident'а

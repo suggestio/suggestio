@@ -3,6 +3,7 @@ package models.usr
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.es._
 import EsModelUtil._
+import com.google.inject.{Inject, Singleton}
 import com.lambdaworks.crypto.SCryptUtil
 import org.elasticsearch.client.Client
 import util.PlayMacroLogsImpl
@@ -19,7 +20,8 @@ import scala.concurrent.ExecutionContext
  */
 
 /** Статическая под-модель для хранения юзеров, живущих вне mozilla persona. */
-object EmailPwIdent
+@Singleton
+class EmailPwIdents @Inject() ()
   extends MPersonIdentSubmodelStatic
     with PlayMacroLogsImpl
     with EsmV2Deserializer
@@ -41,8 +43,26 @@ object EmailPwIdent
     )
   }
 
-  /** По дефолту email'ы считать проверенными или нет? */
-  def IS_VERIFIED_DFLT = false
+
+  override protected def esDocReads(meta: IEsDocMeta): Reads[EmailPwIdent] = {
+    FORMAT
+  }
+  override def esDocWrites: Writes[EmailPwIdent] = FORMAT
+
+
+  /** JSON-десериализатор модели. */
+  implicit val FORMAT = (
+    (__ \ KEY_ESFN).format[String] and
+    (__ \ PERSON_ID_ESFN).format[String] and
+    (__ \ VALUE_ESFN).format[String] and
+    (__ \ IS_VERIFIED_ESFN).formatNullable[Boolean]
+      .inmap [Boolean] (
+        { _.getOrElse(EmailPwIdent.IS_VERIFIED_DFLT) },
+        { b => if (b) Some(b) else None }
+      )
+  )(EmailPwIdent.apply, unlift(EmailPwIdent.unapply))
+
+
 
   /**
    * Собрать экземпляр [[EmailPwIdent]].
@@ -53,35 +73,18 @@ object EmailPwIdent
    * @param isVerified Флаг проверенности пароля.
    * @return Экземпляр [[EmailPwIdent]] с захешированным паролем.
    */
-  def applyWithPw(email: String, personId:String, password:String, isVerified:Boolean = IS_VERIFIED_DFLT): EmailPwIdent = {
+  def applyWithPw(email: String, personId:String, password:String, isVerified: Boolean = EmailPwIdent.IS_VERIFIED_DFLT): EmailPwIdent = {
     EmailPwIdent(
       email       = email,
       personId    = personId,
-      pwHash      = EmailPwIdent.mkHash(password),
+      pwHash      = mkHash(password),
       isVerified  = isVerified
     )
   }
 
-  /** JSON-десериализатор модели. */
-  implicit val FORMAT = (
-    (__ \ KEY_ESFN).format[String] and
-    (__ \ PERSON_ID_ESFN).format[String] and
-    (__ \ VALUE_ESFN).format[String] and
-    (__ \ IS_VERIFIED_ESFN).formatNullable[Boolean]
-      .inmap [Boolean] (
-        { _.getOrElse(IS_VERIFIED_DFLT) },
-        { b => if (b) Some(b) else None }
-      )
-  )(apply _, unlift(unapply))
-
-  override protected def esDocReads(meta: IEsDocMeta): Reads[EmailPwIdent] = {
-    FORMAT
-  }
-  override def esDocWrites: Writes[EmailPwIdent] = FORMAT
 
 
-
-  // TODO Вынести scrypt-хеш из моделей в отдельную утиль.
+  // TODO Вынести scrypt-хеш из моделей в отдельную утиль?
 
   // Настройки генерации хешей. Используется scrypt. Это влияет только на новые создаваемые хеши, не ломая совместимость
   // с уже сохранёнными. Размер потребляемой памяти можно рассчитать Size = (128 * COMPLEXITY * RAM_BLOCKSIZE) bytes.
@@ -94,6 +97,7 @@ object EmailPwIdent
   def SCRYPT_PARALLEL       = 1 //current.configuration.getInt("ident.pw.scrypt.parallel") getOrElse 1
 
   /** Генерировать новый хеш с указанными выше дефолтовыми параметрами.
+ *
     * @param password Пароль, который надо захешировать.
     * @return Текстовый хеш в стандартном формате \$s0\$params\$salt\$key.
     */
@@ -102,6 +106,7 @@ object EmailPwIdent
   }
 
   /** Проверить хеш scrypt с помощью переданного пароля.
+ *
     * @param password Проверяемый пароль.
     * @param hash Уже готовый хеш.
     * @return true, если пароль ок. Иначе false.
@@ -112,9 +117,21 @@ object EmailPwIdent
 
 }
 
+/** Интерфейс для поле с DI-инстансами [[EmailPwIdents]]. */
+trait IEmailPwIdentsDi {
+  def emailPwIdents: EmailPwIdents
+}
+
+
+object EmailPwIdent {
+  /** По дефолту email'ы считать проверенными или нет? */
+  def IS_VERIFIED_DFLT = false
+}
+
 
 /**
  * Идентификация по email и паролю.
+ *
  * @param email Электропочта.
  * @param personId id юзера.
  * @param pwHash Хеш от пароля.
@@ -125,8 +142,10 @@ final case class EmailPwIdent(
   personId  : String,
   pwHash    : String,
   isVerified: Boolean = EmailPwIdent.IS_VERIFIED_DFLT
-) extends MPersonIdent with MPIWithEmail {
-
+)
+  extends MPersonIdent
+    with MPIWithEmail
+{
   override def id: Option[String] = Some(email)
   override def idType: MPersonIdentType = IdTypes.EMAIL_PW
   override def key: String = email
@@ -137,12 +156,16 @@ final case class EmailPwIdent(
 
 
 // JMX
-trait EmailPwIdentJmxMBean extends EsModelJMXMBeanI
-final class EmailPwIdentJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+trait EmailPwIdentsJmxMBean extends EsModelJMXMBeanI
+final class EmailPwIdentsJmx @Inject()(
+  override val companion  : EmailPwIdents,
+  implicit val ec         : ExecutionContext,
+  implicit val client     : Client,
+  implicit val sn         : SioNotifierStaticClientI
+)
   extends EsModelJMXBase
-  with EmailPwIdentJmxMBean
+    with EmailPwIdentsJmxMBean
 {
-  override def companion = EmailPwIdent
   override type X = EmailPwIdent
 }
 

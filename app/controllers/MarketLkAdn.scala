@@ -16,7 +16,7 @@ import models.mlk.{MNodeAdInfo, MNodeAdsTplArgs, MNodeShowArgs}
 import models.mproj.ICommonDi
 import models.msession.Keys
 import models.req.INodeReq
-import models.usr.{EmailActivation, EmailPwIdent, MPersonIdents}
+import models.usr.{EmailActivation, EmailPwIdents, MPersonIdents}
 import org.elasticsearch.search.sort.SortOrder
 import play.api.data.Form
 import play.api.data.Forms._
@@ -48,6 +48,7 @@ class MarketLkAdn @Inject() (
   mItems                              : MItems,
   mNodes                              : MNodes,
   override val identUtil              : IdentUtil,
+  override val emailPwIdents          : EmailPwIdents,
   override val mPersonIdents          : MPersonIdents,
   logoUtil                            : LogoUtil,
   galleryUtil                         : GalleryUtil,
@@ -314,8 +315,8 @@ class MarketLkAdn @Inject() (
                 for {
                   personId        <- mNodes.save(mperson0)
                   emailPwIdentId  <- {
-                    val epw = EmailPwIdent.applyWithPw(email = eact.email, personId = personId, password = passwordOpt.get, isVerified = true)
-                    EmailPwIdent.save(epw)
+                    val epw = emailPwIdents.applyWithPw(email = eact.email, personId = personId, password = passwordOpt.get, isVerified = true)
+                    emailPwIdents.save(epw)
                   }
                 } yield {
                   Some(personId)

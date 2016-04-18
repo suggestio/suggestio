@@ -22,13 +22,15 @@ import scala.concurrent.{ExecutionContext, Future}
  * Все PersonIdent имеют общий формат, однако хранятся в разных типах в рамках одного индекса.
  */
 @Singleton
-class MPersonIdents @Inject() ()
+class MPersonIdents @Inject() (
+  emailPwIdents: EmailPwIdents
+)
   extends PlayMacroLogsImpl
 {
 
   import LOGGER._
 
-  def IDENT_MODELS = List[EsModelStaticIdentT](EmailPwIdent, MExtIdent)
+  def IDENT_MODELS = List[EsModelStaticIdentT](emailPwIdents, MExtIdent)
   def MODELS: List[EsModelStaticIdentT] = EmailActivation :: IDENT_MODELS
 
   // TODO Нужно дедублицировать код между разными find*() методами.
@@ -85,8 +87,8 @@ class MPersonIdents @Inject() ()
       .map { searchResp =>
         searchResp.getHits.getHits.flatMap { hit =>
           hit.getType match {
-            case EmailPwIdent.ES_TYPE_NAME =>
-              val email = EmailPwIdent.deserializeOne2(hit).email
+            case emailPwIdents.ES_TYPE_NAME =>
+              val email = emailPwIdents.deserializeOne2(hit).email
               Seq(email)
             case MExtIdent.ES_TYPE_NAME =>
               MExtIdent.deserializeOne2(hit).email

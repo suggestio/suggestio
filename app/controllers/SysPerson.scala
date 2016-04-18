@@ -29,6 +29,7 @@ class SysPerson @Inject() (
   mPerson                   : MPerson,
   mNodes                    : MNodes,
   mSuperUsers               : MSuperUsers,
+  emailPwIdents             : EmailPwIdents,
   override val mCommonDi    : ICommonDi
 )
   extends SioControllerImpl
@@ -53,7 +54,7 @@ class SysPerson @Inject() (
       }
       mNodes.dynCount(psearch)
     }
-    val epwIdsCntFut = EmailPwIdent.countAll
+    val epwIdsCntFut = emailPwIdents.countAll
     val extIdsCntFut = MExtIdent.countAll
     val suCnt        = mSuperUsers.SU_EMAILS.size
     for {
@@ -83,7 +84,7 @@ class SysPerson @Inject() (
   /** Отрендерить страницу, которая будет содержать таблицу со всеми email+pw идентами. */
   def allEpws(offset: Int) = IsSu.async { implicit request =>
     val limit = 20
-    val epwsFut = EmailPwIdent.getAll(limit, offset = offset)
+    val epwsFut = emailPwIdents.getAll(limit, offset = offset)
     for {
       epws <- epwsFut
     } yield {
@@ -128,7 +129,7 @@ class SysPerson @Inject() (
     }
     val nodesFut = mNodes.dynSearch( msearch )
     // Запускаем поиски ident'ов. Сортируем результаты.
-    val epwIdentsFut = EmailPwIdent.findByPersonId(personId)
+    val epwIdentsFut = emailPwIdents.findByPersonId(personId)
       .map { _.sortBy(_.email) }
     val extIdentsFut = MExtIdent.findByPersonId(personId)
       .map { _.sortBy { ei => ei.providerId + "." + ei.userId } }
