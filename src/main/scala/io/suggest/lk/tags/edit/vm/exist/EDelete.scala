@@ -25,7 +25,7 @@ object EDelete extends IApplyEl with OfEventTargetNode {
 }
 
 
-import io.suggest.lk.tags.edit.vm.exist.EDelete.Dom_t
+import EDelete.Dom_t
 
 
 trait EDeleteT extends IVm {

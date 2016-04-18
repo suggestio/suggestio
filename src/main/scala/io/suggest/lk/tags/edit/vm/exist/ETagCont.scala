@@ -25,9 +25,13 @@ object ETagCont extends IApplyEl with OfEventTargetNode {
 
 }
 
+
+import ETagCont.Dom_t
+
+
 trait ETagContT extends VmT  {
 
-  override type T = HTMLDivElement
+  override type T = Dom_t
 
   /** Найти и вернуть input hidden. */
   def input: Option[ETagField] = {
@@ -47,6 +51,6 @@ trait ETagContT extends VmT  {
 
 
 case class ETagCont(
-  override val _underlying: HTMLDivElement
+  override val _underlying: Dom_t
 )
   extends ETagContT

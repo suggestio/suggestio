@@ -3,13 +3,11 @@ package io.suggest.lk.tags.edit.vm.add
 import io.suggest.common.tags.edit.TagsEditConstants.ADD_FORM_ID
 import io.suggest.lk.tags.edit.vm.search.hints.SContainer
 import io.suggest.sjs.common.fsm.{IInitLayoutFsm, SjsFsm}
-import io.suggest.sjs.common.model.dom.DomListIterator
 import io.suggest.sjs.common.vm.IVm
-import io.suggest.sjs.common.vm.content.{ApplyFromOuterHtml, ReplaceWith}
+import io.suggest.sjs.common.vm.content.ReplaceWith
 import io.suggest.sjs.common.vm.find.FindDiv
-import io.suggest.sjs.common.vm.of.{OfEventTargetNode, OfHtml}
-import org.scalajs.dom.Node
-import org.scalajs.dom.raw.{HTMLDivElement, HTMLElement}
+import io.suggest.sjs.common.vm.of.{OfDiv, OfEventTargetNode, OfHtml}
+import io.suggest.sjs.common.vm.util.OfHtmlElDomIdRelated
 
 /**
  * Suggest.io
@@ -17,21 +15,19 @@ import org.scalajs.dom.raw.{HTMLDivElement, HTMLElement}
  * Created: 08.09.15 12:26
  * Description: Контейнер элементов формы добавления тега.
  */
-object AContainer extends FindDiv with OfHtml with OfEventTargetNode {
+object AContainer extends FindDiv with OfHtml with OfDiv with OfEventTargetNode with OfHtmlElDomIdRelated {
 
   override type T     = AContainer
   override def DOM_ID = ADD_FORM_ID
 
-  override def _isWantedHtmlEl(el: HTMLElement): Boolean = {
-    el.id == DOM_ID
-  }
-
 }
+
+import AContainer.Dom_t
 
 
 trait AContainerT extends IVm with IInitLayoutFsm with ReplaceWith {
 
-  override type T = HTMLDivElement
+  override type T = Dom_t
 
   /** Поиск input'а ввода имени тега. */
   def nameInput = ANameInput.find()
@@ -48,6 +44,6 @@ trait AContainerT extends IVm with IInitLayoutFsm with ReplaceWith {
 
 
 case class AContainer(
-  override val _underlying: HTMLDivElement
+  override val _underlying: Dom_t
 )
   extends AContainerT

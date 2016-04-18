@@ -2,9 +2,9 @@ package io.suggest.lk.tags.edit.vm.exist
 
 import io.suggest.common.tags.edit.TagsEditConstants
 import io.suggest.sjs.common.vm.attr.StringInputValueT
-import io.suggest.sjs.common.vm.{Vm, IVm}
+import io.suggest.sjs.common.vm.Vm
 import io.suggest.sjs.common.vm.find.IApplyEl
-import io.suggest.sjs.common.vm.of.OfEventTargetNode
+import io.suggest.sjs.common.vm.of.{OfEventTargetNode, OfInput}
 import org.scalajs.dom.raw.{HTMLElement, HTMLInputElement}
 
 /**
@@ -13,13 +13,13 @@ import org.scalajs.dom.raw.{HTMLElement, HTMLInputElement}
  * Created: 10.09.15 15:30
  * Description: vm одного тега для элемента input type=hidden.
  */
-object ETagField extends IApplyEl with OfEventTargetNode {
+object ETagField extends IApplyEl with OfEventTargetNode with OfInput {
 
   override type T = ETagField
   override type Dom_t = HTMLInputElement
 
   override def _isWantedHtmlEl(el: HTMLElement): Boolean = {
-    el.tagName.equalsIgnoreCase("INPUT") && {
+    super._isWantedHtmlEl(el) && {
       Vm(el)
         .getAttribute("name")
         .exists { n =>
