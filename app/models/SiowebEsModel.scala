@@ -6,6 +6,7 @@ import io.suggest.model.n2.media.MMedias
 import io.suggest.model.n2.node.MNodes
 import io.suggest.util.{JMXBase, SioEsUtil}
 import io.suggest.ym.model.stat.MAdStats
+import models.adv.MExtTargets
 import models.ai.MAiMad
 import models.mcal.MCalendars
 import models.merr.MRemoteError
@@ -28,8 +29,9 @@ class SiowebEsModel @Inject() (
   mNodes              : MNodes,
   mMedias             : MMedias,
   mCalendars          : MCalendars,
-  mCommonDi           : ICommonDi,
-  mAdStats            : MAdStats
+  mExtTargets         : MExtTargets,
+  mAdStats            : MAdStats,
+  mCommonDi           : ICommonDi
 )
   extends PlayMacroLogsDyn
 {
@@ -45,7 +47,7 @@ class SiowebEsModel @Inject() (
     mNodes,
     EmailPwIdent, EmailActivation, MExtIdent, mCalendars,
     MRemoteError, MAiMad,
-    adv.MExtTarget,
+    mExtTargets,
     event.MEvent, sec.MAsymKey,
     mMedias,
     mAdStats

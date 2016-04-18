@@ -3,9 +3,10 @@ package models.adv.ext.act
 import io.suggest.util.UrlUtil
 import models.adv._
 import models.mext.MExtService
+import models.mproj.IMCommonDi
 import util.PlayMacroLogsI
 import play.api.Play.current
-import util.n2u.N2NodesUtil
+import util.n2u.{IN2NodesUtilDi, N2NodesUtil}
 
 /**
  * Suggest.io
@@ -44,9 +45,7 @@ trait ExtServiceActorEnv extends ExtActorEnv {
  * Базовое описание окружения актора [[util.adv.ExtTargetActor]].
  * Нужно для описания внутренних моделей, имеющие доступ к этому окружению.
  */
-trait ExtTargetActorEnv extends ExtActorEnv {
-
-  protected val n2NodesUtil = current.injector.instanceOf[N2NodesUtil]
+trait ExtTargetActorEnv extends ExtActorEnv with IN2NodesUtilDi {
 
   /** Параметры вызова этого актора. */
   def args: IExtAdvTargetActorArgs

@@ -12,7 +12,11 @@ import org.scalatestplus.play._
  */
 class MExtTargetSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
 
+  private lazy val mExtTargets = app.injector.instanceOf[MExtTargets]
+
   "MExtTarget JSON" must {
+
+    import mExtTargets.mockPlayDocRespEv
 
     "handle fully-filled model" in {
       val mes = MExtTarget(
@@ -23,7 +27,7 @@ class MExtTargetSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
         versionOpt  = Some(123L)
       )
 
-      MExtTarget.deserializeOne2(mes) mustBe mes
+      mExtTargets.deserializeOne2(mes) mustBe mes
     }
 
     "handle minimally-filled model" in {
@@ -33,7 +37,7 @@ class MExtTargetSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
         adnId   = "asdasdjauiwdjaw1234234"
       )
 
-      MExtTarget.deserializeOne2(mes)  mustBe  mes
+      mExtTargets.deserializeOne2(mes)  mustBe  mes
     }
 
   }

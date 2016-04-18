@@ -1,6 +1,6 @@
 package util.acl
 
-import models.adv.MExtTarget
+import models.adv.IMExtTargets
 import models.req.{MExtTargetNodeReq, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result}
 import util.PlayMacroLogsDyn
@@ -17,6 +17,7 @@ import scala.concurrent.Future
 trait CanAccessExtTarget
   extends OnUnauthNodeCtl
   with IsAdnNodeAdminUtilCtl
+  with IMExtTargets
 {
 
   import mCommonDi._
@@ -33,11 +34,11 @@ trait CanAccessExtTarget
     def tgId: String
 
     override def invokeBlock[A](request: Request[A], block: (MExtTargetNodeReq[A]) => Future[Result]): Future[Result] = {
-      val tgOptFut = MExtTarget.getById(tgId)
+      val tgOptFut = mExtTargets.getById(tgId)
 
       val personIdOpt = sessionUtil.getPersonId(request)
 
-      tgOptFut flatMap {
+      tgOptFut.flatMap {
         // Запрошенная цель существует. Нужно проверить права на её узел.
         case Some(tg) =>
           val user = mSioUsers(personIdOpt)

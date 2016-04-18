@@ -1,8 +1,8 @@
 package models.adv.search.etg
 
 import io.suggest.model.es.EsModelUtil
-import io.suggest.model.search.{Limit, Offset, DynSearchArgs}
-import models.adv.MExtTarget
+import io.suggest.model.search.{DynSearchArgs, Limit, Offset}
+import models.adv.MExtTargetFields
 import org.elasticsearch.action.search.SearchRequestBuilder
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
 import org.elasticsearch.search.sort.SortOrder
@@ -43,11 +43,11 @@ sealed trait AdnId extends DynSearchArgs {
       val _adnId = _adnIdOpt.get
       val qb1 = acc0.map { qb =>
         // Фильтровать результаты по adnId
-        val filter = FilterBuilders.termFilter(MExtTarget.ADN_ID_ESFN, _adnId)
+        val filter = FilterBuilders.termFilter(MExtTargetFields.ADN_ID_ESFN, _adnId)
         QueryBuilders.filteredQuery(qb, filter)
       }
       .getOrElse {
-        QueryBuilders.termQuery(MExtTarget.ADN_ID_ESFN, _adnId)
+        QueryBuilders.termQuery(MExtTargetFields.ADN_ID_ESFN, _adnId)
       }
       Some(qb1)
     }
@@ -67,7 +67,7 @@ sealed trait SortByDateCreated extends DynSearchArgs {
   override def prepareSearchRequest(srb: SearchRequestBuilder): SearchRequestBuilder = {
     val srb1 = super.prepareSearchRequest(srb)
     sortByDate.fold(srb1) { sortOrder =>
-      srb1.addSort(MExtTarget.DATE_CREATED_ESFN, sortOrder)
+      srb1.addSort(MExtTargetFields.DATE_CREATED_ESFN, sortOrder)
     }
   }
 

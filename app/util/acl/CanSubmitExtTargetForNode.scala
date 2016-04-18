@@ -24,6 +24,7 @@ trait CanSubmitExtTargetForNode
   with IsAdnNodeAdminUtilCtl
   with Csrf
   with IAeFormUtilDi
+  with IMExtTargets
 {
 
   import mCommonDi._
@@ -51,7 +52,7 @@ trait CanSubmitExtTargetForNode
       val tgIdOpt = formBinded.apply("id").value
       val tgOptFut = tgIdOpt match {
         case Some(tgId) =>
-          MExtTarget.getById(tgId)
+          mExtTargets.getById(tgId)
         case None =>
           Future successful Option.empty[MExtTarget]
       }
@@ -64,7 +65,7 @@ trait CanSubmitExtTargetForNode
             val req1 = MNodeExtTgSubmitReq(mnode, formBinded, tgOpt, request, user)
             block(req1)
           }
-          tgOptFut flatMap {
+          tgOptFut.flatMap {
             // Цель не существует...
             case None =>
               if (tgIdOpt.isDefined)

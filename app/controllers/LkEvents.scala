@@ -4,7 +4,7 @@ import com.github.nscala_time.time.OrderingImplicits._
 import com.google.inject.Inject
 import io.suggest.model.n2.node.MNodes
 import models._
-import models.adv.MExtTarget
+import models.adv.MExtTargets
 import models.event.MEvent
 import models.event.search.MEventsSearchArgs
 import models.mctx.Context
@@ -32,6 +32,7 @@ class LkEvents @Inject() (
   lkEventsUtil                    : LkEventsUtil,
   lkAdUtil                        : LkAdUtil,
   mNodes                          : MNodes,
+  mExtTargets                     : MExtTargets,
   override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
@@ -89,7 +90,7 @@ class LkEvents @Inject() (
       evtsRndr  <- {
         // В фоне пакетно отфетчить рекламные карточки и ext-таргеты в виде карт:
         val madsMapFut = lkEventsUtil.readEsModel(mevents, mNodes)(_.argsInfo.adIdOpt)
-        val advExtTgsMapFut = lkEventsUtil.readEsModel(mevents, MExtTarget)(_.argsInfo.advExtTgIds)
+        val advExtTgsMapFut = lkEventsUtil.readEsModel(mevents, mExtTargets)(_.argsInfo.advExtTgIds)
 
         // Если передается карточка, то следует сразу передать и block RenderArgs для отображения превьюшки.
         val brArgsMapFut = madsMapFut.flatMap { madsMap =>

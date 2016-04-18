@@ -39,6 +39,7 @@ class LkAdvExt @Inject() (
   override val canAdvAdUtil       : CanAdvertiseAdUtil,
   mNodes                          : MNodes,
   extAdvWsActors                  : ExtAdvWsActors,
+  override val mExtTargets        : MExtTargets,
   override val aeFormUtil         : AeFormUtil,
   override val mCommonDi          : ICommonDi
 )
@@ -107,7 +108,7 @@ class LkAdvExt @Inject() (
         sortByDate  = Some(SortOrder.ASC),
         limit       = 100
       )
-      MExtTarget.dynSearch(args)
+      mExtTargets.dynSearch(args)
     }
 
     for {
@@ -212,7 +213,7 @@ class LkAdvExt @Inject() (
       // Запустить поиск списка целей размещения
       targetsFut: Future[ActorTargets_t] = {
         val ids = qsArgs.targets.iterator.map(_.targetId)
-        val _targetsFut = MExtTarget.multiGetRev(ids)
+        val _targetsFut = mExtTargets.multiGetRev(ids)
         val targetsMap = qsArgs.targets
           .iterator
           .map { info => info.targetId -> info }
@@ -300,7 +301,7 @@ class LkAdvExt @Inject() (
         NotAcceptable(_targetFormTpl(adnId, formWithErrors, request.tgExisting))
       },
       {case (tg, ret) =>
-        for (tgId <- MExtTarget.save(tg)) yield {
+        for (tgId <- mExtTargets.save(tg)) yield {
           // Вернуть форму с выставленным id.
           val tg2 = tg.copy(id = Some(tgId))
           val form = request.newTgForm fill (tg2, ret)
@@ -322,7 +323,7 @@ class LkAdvExt @Inject() (
    */
   def deleteTargetSubmit(tgId: String) = CanAccessExtTarget(tgId).async { implicit request =>
     for {
-      isDeleted <- MExtTarget.deleteById( tgId )
+      isDeleted <- mExtTargets.deleteById( tgId )
     } yield {
       if (isDeleted) {
         NoContent

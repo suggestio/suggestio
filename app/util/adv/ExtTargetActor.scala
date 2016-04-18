@@ -2,9 +2,9 @@ package util.adv
 
 import java.io.File
 
-import com.google.inject.{Singleton, Inject}
+import com.google.inject.{Inject, Singleton}
 import com.google.inject.assistedinject.Assisted
-import io.suggest.ahc.upload.{UploadRefusedException, IMpUploadArgs}
+import io.suggest.ahc.upload.{IMpUploadArgs, UploadRefusedException}
 import io.suggest.common.geom.d2.INamedSize2di
 import models.adv.ext.act._
 import models.adv.js._
@@ -20,6 +20,7 @@ import util.adv.ut.ExtTargetActorUtil
 import util.async.FsmActor
 import ut._
 import util.img.AdRenderUtil
+import util.n2u.N2NodesUtil
 
 /**
   * Suggest.io
@@ -42,6 +43,7 @@ trait AeTgJsAdpActorFactory {
 class ExtTargetActor @Inject() (
   @Assisted override val args   : IExtAdvTargetActorArgs,
   aeTgJsAdpActorUtil            : AeTgJsAdpActorUtil,
+  override val n2NodesUtil      : N2NodesUtil,
   override val adRenderUtil     : AdRenderUtil,
   override val aeFormUtil       : AeFormUtil,
   implicit val wsClient         : WSClient,

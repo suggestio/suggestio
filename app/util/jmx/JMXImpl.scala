@@ -1,10 +1,10 @@
 package util.jmx
 
 import com.google.inject.Inject
-import io.suggest.model.n2.media.MMediaJmx
-import io.suggest.model.n2.node.MNodeJmx
+import io.suggest.model.n2.media.MMediasJmx
+import io.suggest.model.n2.node.MNodesJmx
 import io.suggest.ym.model.stat._
-import models.adv.MExtTargetJmx
+import models.adv.MExtTargetsJmx
 import models.ai.MAiMadJmx
 import models.event.MEventJmx
 import models.mcal.MCalendarJmx
@@ -27,13 +27,14 @@ import util.adv.geo.tag.GeoTagsUtilJmx
  */
 
 class JMXImpl @Inject() (
-  mMediaJmx                     : MMediaJmx,
+  mMediasJmx                     : MMediasJmx,
   siowebEsModelJmx              : SiowebEsModelJmx,
   advUtilJmx                    : AdvUtilJmx,
   mCalendarJmx                  : MCalendarJmx,
-  mNodeJmx                      : MNodeJmx,
+  mNodesJmx                     : MNodesJmx,
   geoTagsUtilJmx                : GeoTagsUtilJmx,
   mAdStatJmx                    : MAdStatJmx,
+  mExtTargetsJmx                : MExtTargetsJmx,
   mCommonDi                     : ICommonDi
 )
   extends PlayLazyMacroLogsImpl
@@ -55,10 +56,10 @@ class JMXImpl @Inject() (
       new MAiMadJmx,
       advUtilJmx,
       new MEventJmx,
-      new MExtTargetJmx,
-      mNodeJmx,
+      mExtTargetsJmx,
+      mNodesJmx,
       geoTagsUtilJmx,
-      mMediaJmx
+      mMediasJmx
     )
   }
 

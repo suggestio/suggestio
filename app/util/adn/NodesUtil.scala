@@ -10,7 +10,7 @@ import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
 import io.suggest.model.n2.node.meta.colors.{MColorData, MColors}
 import models._
-import models.adv.MExtTarget
+import models.adv.MExtTargets
 import models.madn.{MNodeRegSuccess, NodeDfltColors}
 import models.mext.MExtServices
 import models.mproj.ICommonDi
@@ -33,6 +33,7 @@ import scala.util.Random
 @Singleton
 class NodesUtil @Inject() (
   mNodes                  : MNodes,
+  mExtTargets             : MExtTargets,
   mCommonDi               : ICommonDi
 )
   extends PlayMacroLogsImpl
@@ -129,8 +130,8 @@ class NodesUtil @Inject() (
   def createExtDfltTargets(adnId: String)(implicit messages: Messages): Future[_] = {
     val tgtsIter = MExtServices.values
       .iterator
-      .flatMap { svc => MExtTarget.dfltTarget(svc, adnId) }
-    Future.traverse(tgtsIter)(MExtTarget.save)
+      .flatMap { svc => mExtTargets.dfltTarget(svc, adnId) }
+    Future.traverse(tgtsIter)(mExtTargets.save)
   }
 
   /**

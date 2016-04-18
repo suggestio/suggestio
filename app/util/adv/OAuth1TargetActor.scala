@@ -18,6 +18,7 @@ import util.adv.ut.ExtTargetActorUtil
 import util.async.FsmActor
 import ut._
 import util.img.AdRenderUtil
+import util.n2u.N2NodesUtil
 
 import scala.util.{Failure, Success}
 
@@ -39,6 +40,7 @@ trait OAuth1TargetActorFactory {
 
 class OAuth1TargetActor @Inject() (
   @Assisted override val args   : IOAuth1AdvTargetActorArgs,
+  override val n2NodesUtil      : N2NodesUtil,
   override val aeFormUtil       : AeFormUtil,
   override val adRenderUtil     : AdRenderUtil,
   implicit val wsClient         : WSClient,

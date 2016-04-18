@@ -7,7 +7,7 @@ import EsModelUtil.FieldsJsonAcc
 import io.suggest.model.search.EsDynSearchStatic
 import io.suggest.util.SioEsUtil._
 import models.adv.search.etg.IExtTargetSearchArgs
-import models.mext.{MExtServices, MExtService}
+import models.mext.{MExtService, MExtServices}
 import org.elasticsearch.client.Client
 import org.joda.time.DateTime
 import play.api.i18n.Messages
@@ -15,9 +15,9 @@ import util.PlayMacroLogsImpl
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import EsModelUtil.stringParser
+import com.google.inject.Inject
 
 import scala.collection.Map
-
 import scala.concurrent.ExecutionContext
 
 /**
@@ -28,17 +28,9 @@ import scala.concurrent.ExecutionContext
  * Он содержит целевую ссылку, id обнаруженного сервиса, дату добавление и прочее.
  */
 
-object MExtTarget
-  extends EsModelStaticT
-  with PlayMacroLogsImpl
-  with EsDynSearchStatic[IExtTargetSearchArgs]
-  with EsmV2Deserializer
-  with EsModelPlayJsonStaticT
-{
+// TODO Модель следует объеденить с MNode. JsExtTarget вынести в отдельную модель.
 
-  override type T = MExtTarget
-
-  override val ES_TYPE_NAME: String = "aet"
+object MExtTargetFields {
 
   /** Имя поле со ссылкой на цель. */
   val URL_ESFN          = "url"
@@ -51,6 +43,21 @@ object MExtTarget
   /** Поле даты создания. */
   val DATE_CREATED_ESFN = "dci"
 
+}
+
+
+class MExtTargets
+  extends EsModelStaticT
+  with PlayMacroLogsImpl
+  with EsDynSearchStatic[IExtTargetSearchArgs]
+  with EsmV2Deserializer
+  with EsModelPlayJsonStaticT
+{
+
+  override type T = MExtTarget
+
+  override def ES_TYPE_NAME: String = "aet"
+
 
   override def generateMappingStaticFields: List[Field] = {
     List(
@@ -58,6 +65,9 @@ object MExtTarget
       FieldAll(enabled = true)
     )
   }
+
+
+  import MExtTargetFields._
 
   override def generateMappingProps: List[DocField] = {
     List(
@@ -106,6 +116,7 @@ object MExtTarget
 
   /**
    * Создавать ли экземпляр этой модели для новых узлов?
+ *
    * @param svc Сервис.
    * @param adnId id узла.
    * @param messages язык. Для связи с Messages().
@@ -133,8 +144,10 @@ object MExtTarget
 
 }
 
-
-import MExtTarget._
+/** Интерфейс для инжектируемых полей [[MExtTargets]]. */
+trait IMExtTargets {
+  def mExtTargets: MExtTargets
+}
 
 
 case class MExtTarget(
@@ -151,12 +164,17 @@ case class MExtTarget(
 
 
 // Поддержка JMX для ES-модели.
-trait MExtTargetJmxMBean extends EsModelJMXMBeanI
-final class MExtTargetJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+trait MExtTargetsJmxMBean extends EsModelJMXMBeanI
+final class MExtTargetsJmx @Inject()(
+  mExtTargets: MExtTargets,
+  implicit val ec: ExecutionContext,
+  implicit val client: Client,
+  implicit val sn: SioNotifierStaticClientI
+)
   extends EsModelJMXBase
-  with MExtTargetJmxMBean
+  with MExtTargetsJmxMBean
 {
-  override def companion = MExtTarget
+  override def companion = mExtTargets
   override type X = MExtTarget
 }
 
@@ -175,6 +193,7 @@ trait IExtTarget {
 
   /** Генерация JSON-тела на основе имеющихся данных. */
   def toJsTargetPlayJsonFields: FieldsJsonAcc = {
+    import MExtTargetFields._
     var acc: FieldsJsonAcc = List(
       URL_ESFN            -> JsString(url)
     )
