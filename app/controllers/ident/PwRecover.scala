@@ -6,7 +6,7 @@ import models.jsm.init.MTargets
 import models.mctx.{Context, CtxData}
 import models.msession.Keys
 import models.req.{IRecoverPwReq, IReq}
-import models.usr.{EmailActivation, EmailPwIdent, IEmailPwIdentsDi, IMPersonIdents}
+import models.usr._
 import play.api.data._
 import play.twirl.api.Html
 import util.PlayMacroLogsI
@@ -38,6 +38,7 @@ trait SendPwRecoverEmail
   with PlayMacroLogsI
   with IMPersonIdents
   with IEmailPwIdentsDi
+  with IEmailActivationsDi
 {
 
   import mCommonDi._
@@ -80,7 +81,7 @@ trait SendPwRecoverEmail
       }
 
       eact = EmailActivation(email = email1, key = epwIdent.personId)
-      eaId <- EmailActivation.save(eact)
+      eaId <- emailActivations.save(eact)
 
     } yield {
 
@@ -218,7 +219,7 @@ trait PwRecover
           _         <- emailPwIdents.save(epw2)
 
           // Запуск удаления eact
-          updateFut = EmailActivation.deleteById(eActId)
+          updateFut = emailActivations.deleteById(eActId)
 
           // Подготовить редирект
           rdr       <- identUtil.redirectUserSomewhere(epw2.personId)

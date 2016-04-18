@@ -2,7 +2,7 @@ package util.acl
 
 import controllers.SioController
 import models.req.MEmailActivationReq
-import models.usr.{EmailActivation, IEaEmailId}
+import models.usr.{IEaEmailId, IEmailActivationsDi}
 import play.api.mvc.{ActionBuilder, Request, Result}
 import util.PlayMacroLogsDyn
 import util.di.IIdentUtil
@@ -31,6 +31,7 @@ trait CanConfirmEmailPwRegCtl
   with IIdentUtil
   with OnUnauthUtilCtl
   with Csrf
+  with IEmailActivationsDi
 {
 
   import mCommonDi._
@@ -46,12 +47,12 @@ trait CanConfirmEmailPwRegCtl
     def eaInfo: IEaEmailId
 
     override def invokeBlock[A](request: Request[A], block: (MEmailActivationReq[A]) => Future[Result]): Future[Result] = {
-      val eaFut = EmailActivation.maybeGetById(eaInfo.id)
+      val eaFut = emailActivations.maybeGetById(eaInfo.id)
 
       val personIdOpt = sessionUtil.getPersonId(request)
       val user = mSioUsers(personIdOpt)
 
-      eaFut flatMap {
+      eaFut.flatMap {
         // Всё срослось.
         case Some(ea) if ea.email == eaInfo.email && ea.key == EPW_ACT_KEY =>
           val req1 = MEmailActivationReq(ea, request, user)

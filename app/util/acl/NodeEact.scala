@@ -2,7 +2,7 @@ package util.acl
 
 import controllers.SioController
 import models.req.{MNodeEactReq, MReq}
-import models.usr.{EmailActivation, IEmailPwIdentsDi}
+import models.usr.{IEmailActivationsDi, IEmailPwIdentsDi}
 import play.api.mvc.{ActionBuilder, Request, Result}
 import util.PlayMacroLogsI
 import views.html.lk.adn.invite.inviteInvalidTpl
@@ -22,6 +22,7 @@ trait NodeEact
   with OnUnauthUtilCtl
   with Csrf
   with IEmailPwIdentsDi
+  with IEmailActivationsDi
 {
 
   import mCommonDi._
@@ -40,7 +41,7 @@ trait NodeEact
 
     /** Запуск логики экшена. */
     override def invokeBlock[A](request: Request[A], block: (MNodeEactReq[A]) => Future[Result]): Future[Result] = {
-      val eaOptFut = EmailActivation.getById(eaId)
+      val eaOptFut = emailActivations.getById(eaId)
       val nodeOptFut = mNodeCache.getById(nodeId)
 
       val personIdOpt = sessionUtil.getPersonId(request)

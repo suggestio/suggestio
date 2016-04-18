@@ -70,6 +70,7 @@ trait EmailPwReg
   with IMNodes
   with IMPersonIdents
   with IEmailPwIdentsDi
+  with IEmailActivationsDi
 {
 
   import mCommonDi._
@@ -128,7 +129,7 @@ trait EmailPwReg
               email = email1,
               key = CanConfirmEmailPwReg.EPW_ACT_KEY
             )
-            EmailActivation.save(ea0)
+            emailActivations.save(ea0)
               .flatMap { eaId =>
                 // отправить письмо на указанную почту
                 val ea1 = ea0.copy(id = Some(eaId))
@@ -209,7 +210,7 @@ trait EmailPwReg
           identId <- identIdFut
 
           // Удалить email activation
-          _ <- EmailActivation.deleteById( request.eact.id.get )
+          _ <- emailActivations.deleteById( request.eact.id.get )
 
           // Дождаться готовности магазина юзера
           mnode <- mnodeFut

@@ -2,7 +2,7 @@ package util.acl
 
 import controllers.SioController
 import models.req.{IReq, MRecoverPwReq, MReq, MUserInit}
-import models.usr.{EmailActivation, EmailPwIdent, IEmailPwIdentsDi}
+import models.usr.{EmailActivation, EmailPwIdent, IEmailActivationsDi, IEmailPwIdentsDi}
 import play.api.mvc._
 import util.di.IIdentUtil
 import views.html.ident.recover._
@@ -26,6 +26,7 @@ trait CanRecoverPw
   with IIdentUtil
   with Csrf
   with IEmailPwIdentsDi
+  with IEmailActivationsDi
 {
 
   import mCommonDi._
@@ -49,7 +50,7 @@ trait CanRecoverPw
       val wrappedReq = MReq(request, user)
 
       bruteForceProtectedNoimpl(wrappedReq) {
-        val eaOptFut = EmailActivation.getById(eActId)
+        val eaOptFut = emailActivations.getById(eActId)
         def runF(eAct: EmailActivation, epw: EmailPwIdent): Future[Result] = {
           val req1 = MRecoverPwReq(epw, eAct, request, user)
           block(req1)

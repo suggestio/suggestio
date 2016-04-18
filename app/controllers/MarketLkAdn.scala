@@ -16,7 +16,7 @@ import models.mlk.{MNodeAdInfo, MNodeAdsTplArgs, MNodeShowArgs}
 import models.mproj.ICommonDi
 import models.msession.Keys
 import models.req.INodeReq
-import models.usr.{EmailActivation, EmailPwIdents, MPersonIdents}
+import models.usr.{EmailActivations, EmailPwIdents, MPersonIdents}
 import org.elasticsearch.search.sort.SortOrder
 import play.api.data.Form
 import play.api.data.Forms._
@@ -50,6 +50,7 @@ class MarketLkAdn @Inject() (
   override val identUtil              : IdentUtil,
   override val emailPwIdents          : EmailPwIdents,
   override val mPersonIdents          : MPersonIdents,
+  override val emailActivations       : EmailActivations,
   logoUtil                            : LogoUtil,
   galleryUtil                         : GalleryUtil,
   override val mCommonDi              : ICommonDi
@@ -291,7 +292,7 @@ class MarketLkAdn @Inject() (
         } else {
           // Сначала удаляем запись об активации, убедившись что она не была удалена асинхронно.
           for {
-            isDeleted <- EmailActivation.deleteById(eActId)
+            isDeleted <- emailActivations.deleteById(eActId)
 
             personIdOpt <- {
               if (!isAuth) {

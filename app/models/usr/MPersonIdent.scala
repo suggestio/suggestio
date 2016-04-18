@@ -23,7 +23,8 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 @Singleton
 class MPersonIdents @Inject() (
-  emailPwIdents: EmailPwIdents
+  emailPwIdents     : EmailPwIdents,
+  emailActivations  : EmailActivations
 )
   extends PlayMacroLogsImpl
 {
@@ -31,7 +32,7 @@ class MPersonIdents @Inject() (
   import LOGGER._
 
   def IDENT_MODELS = List[EsModelStaticIdentT](emailPwIdents, MExtIdent)
-  def MODELS: List[EsModelStaticIdentT] = EmailActivation :: IDENT_MODELS
+  def MODELS: List[EsModelStaticIdentT] = emailActivations :: IDENT_MODELS
 
   // TODO Нужно дедублицировать код между разными find*() методами.
 

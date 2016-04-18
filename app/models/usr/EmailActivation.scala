@@ -12,6 +12,7 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.api.mvc.QueryStringBindable
 import _root_.util.PlayMacroLogsImpl
+import com.google.inject.{Inject, Singleton}
 
 import scala.collection.Map
 import scala.concurrent.{ExecutionContext, Future}
@@ -26,27 +27,27 @@ import scala.concurrent.{ExecutionContext, Future}
 
 /** Статическая часть модели [[EmailActivation]].
   * Модель нужна для хранения ключей для проверки/активации почтовых ящиков. */
-object EmailActivation extends EsModelStaticIdentT with PlayMacroLogsImpl with EsmV2Deserializer {
+@Singleton
+class EmailActivations
+  extends EsModelStaticIdentT
+    with PlayMacroLogsImpl
+    with EsmV2Deserializer
+{
 
   override type T = EmailActivation
 
   override def ES_TYPE_NAME: String = "mpiEmailAct"
 
-  /** Длина генерируемых ключей для активации. */
-  val KEY_LEN = 16  // current.configuration.getInt("ident.email.act.key.len") getOrElse 16
-
-  /** Период ttl, если иное не указано в документе. Записывается в маппинг. */
-  val TTL_DFLT = "2d" // current.configuration.getString("ident.email.act.ttl.period") getOrElse "2d"
-
 
   @deprecated("Delete id, replaced by deserializeOne2()", "2015.sep.07")
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
     EmailActivation(
-      id = id,
-      key = stringParser(m(KEY_ESFN)),
+      id    = id,
+      key   = stringParser(m(KEY_ESFN)),
       email = stringParser(m(PERSON_ID_ESFN))
     )
   }
+
 
   // Кешируем промежуточный недособранный неизменяемый Reads-десериализатор.
   private val _reads0 = {
@@ -56,19 +57,14 @@ object EmailActivation extends EsModelStaticIdentT with PlayMacroLogsImpl with E
   override protected def esDocReads(meta: IEsDocMeta): Reads[EmailActivation] = {
     _reads0 {
       (key, personId) =>
-        apply(email = personId, key = key, id = meta.id)
+        EmailActivation.apply(email = personId, key = key, id = meta.id)
     }
   }
 
 
-  /** Сгенерить новый рандомный ключ активации.
-    * @return Строка из символов [a-zA-Z0-9].
-    */
-  def randomActivationKey = StringUtil.randomId(len = KEY_LEN)
-
   /** Сборка static-полей маппинга. В этом маппинге должен быть ttl, чтобы старые записи автоматически выпиливались. */
   override def generateMappingStaticFields: List[Field] = {
-    FieldTtl(enabled = true, default = TTL_DFLT) ::
+    FieldTtl(enabled = true, default = EmailActivation.TTL_DFLT) ::
       super.generateMappingStaticFields
   }
 
@@ -84,9 +80,32 @@ object EmailActivation extends EsModelStaticIdentT with PlayMacroLogsImpl with E
 
 }
 
+/** Интерфейс для поля с DI-инстансом [[EmailActivations]]. */
+trait IEmailActivationsDi {
+  def emailActivations: EmailActivations
+}
+
+
+object EmailActivation {
+
+  /** Длина генерируемых ключей для активации. */
+  def KEY_LEN = 16  // current.configuration.getInt("ident.email.act.key.len") getOrElse 16
+
+  /** Период ttl, если иное не указано в документе. Записывается в маппинг. */
+  def TTL_DFLT = "2d" // current.configuration.getString("ident.email.act.ttl.period") getOrElse "2d"
+
+  /** Сгенерить новый рандомный ключ активации.
+    *
+    * @return Строка из символов [a-zA-Z0-9].
+    */
+  def randomActivationKey = StringUtil.randomId(len = KEY_LEN)
+
+}
+
 /**
  * Запись об активации почты.
- * @param email Почта.
+  *
+  * @param email Почта.
  * @param key Ключ содержит какие-то данные, необходимые для активации. Например, id магазина.
  */
 final case class EmailActivation(
@@ -105,12 +124,16 @@ final case class EmailActivation(
 
 
 // JMX
-trait EmailActivationJmxMBean extends EsModelJMXMBeanI
-final class EmailActivationJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+trait EmailActivationsJmxMBean extends EsModelJMXMBeanI
+final class EmailActivationsJmx @Inject() (
+  override val companion  : EmailActivations,
+  implicit val ec         : ExecutionContext,
+  implicit val client     : Client,
+  implicit val sn         : SioNotifierStaticClientI
+)
   extends EsModelJMXBase
-  with EmailActivationJmxMBean
+    with EmailActivationsJmxMBean
 {
-  override def companion = EmailActivation
   override type X = EmailActivation
 }
 
@@ -157,6 +180,5 @@ object IEaEmailId {
 case class EaEmailId(
   email : String,
   id    : Option[String]
-) extends IEaEmailId
-
-
+)
+  extends IEaEmailId

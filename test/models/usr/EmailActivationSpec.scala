@@ -11,7 +11,11 @@ import org.scalatestplus.play.PlaySpec
  */
 class EmailActivationSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
 
+  private lazy val emailActivations = app.injector.instanceOf[EmailActivations]
+
   "EmailActivation JSON" must {
+
+    import emailActivations.mockPlayDocRespEv
 
     "handle fully-filled model" in {
       val mea = EmailActivation(
@@ -20,7 +24,7 @@ class EmailActivationSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
         id    = Some("asdasd89asd89asdijas")
       )
 
-      EmailActivation.deserializeOne2(mea)  mustBe  mea
+      emailActivations.deserializeOne2(mea)  mustBe  mea
     }
 
   }

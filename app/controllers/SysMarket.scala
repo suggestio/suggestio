@@ -15,8 +15,8 @@ import models.mctx.Context
 import models.mproj.ICommonDi
 import models.im.MImgs3
 import models.msys._
-import models.req.{INodeReq, IReq}
-import models.usr.{EmailActivation, MPerson}
+import models.req.{INodeReq, IReq, MNodeReq}
+import models.usr.{EmailActivation, EmailActivations, MPerson}
 import org.elasticsearch.search.sort.SortOrder
 import play.api.data._
 import play.api.i18n.Messages
@@ -50,6 +50,7 @@ class SysMarket @Inject() (
   override val mailer             : IMailerWrapper,
   override val n2NodesUtil        : N2NodesUtil,
   override val sysAdRenderUtil    : SysAdRenderUtil,
+  emailActivations                : EmailActivations,
   mPerson                         : MPerson,
   mItems                          : MItems,
   mImgs3                          : MImgs3,
@@ -426,9 +427,14 @@ class SysMarket @Inject() (
 
   /** Рендер страницы с формой инвайта (передачи прав на управление ТЦ). */
   def nodeOwnerInviteForm(adnId: String) = IsSuNodeGet(adnId).async { implicit request =>
-    val eActsFut = EmailActivation.findByKey(adnId)
-    eActsFut map { eActs =>
-      Ok(nodeOwnerInvitesTpl(request.mnode, nodeOwnerInviteFormM, eActs))
+    _nodeOwnerInviteFormSubmit(nodeOwnerInviteFormM, Ok)
+  }
+
+  private def _nodeOwnerInviteFormSubmit(form: Form[String], rs: Status)(implicit request: MNodeReq[_]): Future[Result] = {
+    val eActsFut = emailActivations.findByKey( request.mnode.id.get )
+    for (eActs <- eActsFut) yield {
+      val html = nodeOwnerInvitesTpl(request.mnode, nodeOwnerInviteFormM, eActs)
+      rs(html)
     }
   }
 
@@ -438,13 +444,11 @@ class SysMarket @Inject() (
     nodeOwnerInviteFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"martInviteFormSubmit($adnId): Failed to bind form: ${formWithErrors.errors}")
-        EmailActivation.findByKey(adnId) map { eActs =>
-          NotAcceptable(nodeOwnerInvitesTpl(mnode, formWithErrors, eActs))
-        }
+        _nodeOwnerInviteFormSubmit(formWithErrors, NotAcceptable)
       },
       {email1 =>
         val eAct = EmailActivation(email=email1, key = adnId)
-        for (eActId <- EmailActivation.save(eAct)) yield {
+        for (eActId <- emailActivations.save(eAct)) yield {
           val eact2 = eAct.copy(
             id = Some(eActId)
           )
