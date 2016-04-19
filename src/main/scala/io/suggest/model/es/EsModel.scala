@@ -20,6 +20,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 /** Базовый шаблон для статических частей ES-моделей, НЕ имеющих _parent'ов. Применяется в связке с [[EsModelT]].
   * Здесь десериализация полностью выделена в отдельную функцию. */
+
 trait EsModelStaticT extends EsModelCommonStaticT {
 
   override type T <: EsModelT
@@ -203,6 +204,9 @@ trait EsModelStaticT extends EsModelCommonStaticT {
   }
 
 }
+
+/** Реализация трейта [[EsModelStaticT]] для уменьшения работы компилятору. */
+abstract class EsModelStatic extends EsModelStaticT
 
 
 /** Шаблон для динамических частей ES-моделей.

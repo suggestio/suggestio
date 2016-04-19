@@ -34,7 +34,7 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 @Singleton
 class MAdStats @Inject() (configuration: Configuration)
-  extends EsModelStaticT
+  extends EsModelStatic
     with MacroLogsImpl
     with EsModelPlayJsonStaticT {
 
