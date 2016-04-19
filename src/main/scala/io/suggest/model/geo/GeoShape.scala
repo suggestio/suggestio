@@ -3,14 +3,12 @@ package io.suggest.model.geo
 import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.model.es.EsModelUtil
 import EsModelUtil.FieldsJsonAcc
-import io.suggest.model.es.EsModelUtil
 import io.suggest.model.menum.EnumJsonReadsValT
 import io.suggest.util.MacroLogsDyn
 import org.elasticsearch.common.geo.builders.ShapeBuilder
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import play.api.data.validation.ValidationError
 import play.api.libs.json._
-import java.{util => ju}
 
 import play.extras.geojson.{Geometry, LatLng}
 
@@ -28,27 +26,6 @@ object GeoShape extends MacroLogsDyn {
 
   val COORDS_ESFN = "coordinates"
   val TYPE_ESFN   = "type"
-
-  // TODO Удалить, но отдельным коммитом! вроде этот старый код уже не используется.
-  def deserialize: PartialFunction[Any, Option[GeoShape]] = {
-    case jmap: ju.Map[_,_] =>
-      Option(jmap get TYPE_ESFN)
-        .map(EsModelUtil.stringParser)
-        .flatMap { GsTypes.maybeWithName }
-        .flatMap {
-          case GsTypes.point              => PointGs.deserialize(jmap)
-          case GsTypes.circle             => CircleGs.deserialize(jmap)
-          case GsTypes.polygon            => PolygonGs.deserialize(jmap)
-          case GsTypes.linestring         => LineStringGs.deserialize(jmap)
-          case GsTypes.multipoint         => MultiPoingGs.deserialize(jmap)
-          case GsTypes.multilinestring    => MultiLineStringGs.deserialize(jmap)
-          case GsTypes.multipolygon       => MultiPolygonGs.deserialize(jmap)
-          case GsTypes.geometrycollection => GeometryCollectionGs.deserialize(jmap)
-          case other =>
-            LOGGER.error("deserialize(): Unsupported geo shape type: " + other + "\n data was: " + jmap)
-            None
-        }
-  }
 
   val TYPE_FORMAT = (__ \ TYPE_ESFN).format[GsType]
 

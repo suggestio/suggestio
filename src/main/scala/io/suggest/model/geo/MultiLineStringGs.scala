@@ -6,11 +6,9 @@ import org.elasticsearch.common.geo.builders.{MultiLineStringBuilder, ShapeBuild
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import GeoShape.COORDS_ESFN
-import java.{lang => jl, util => ju}
 
 import play.extras.geojson.{LatLng, MultiLineString}
 
-import scala.collection.JavaConversions._
 
 /**
  * Suggest.io
@@ -22,26 +20,6 @@ import scala.collection.JavaConversions._
 object MultiLineStringGs extends GsStatic {
 
   override type Shape_t = MultiLineStringGs
-
-  def deserialize(jmap: ju.Map[_,_]): Option[MultiLineStringGs] = {
-    Option(jmap get COORDS_ESFN)
-      .map { fromCoordLines }
-  }
-
-
-  def fromCoordLines(coordLines: Any): MultiLineStringGs = {
-    coordLines match {
-      case allCoordLines: TraversableOnce[_] =>
-        MultiLineStringGs(
-          lines = allCoordLines
-            .map(LineStringGs.parseCoords)
-            .map(LineStringGs.apply)
-            .toSeq
-        )
-      case allCoordLines: jl.Iterable[_] =>
-        fromCoordLines( allCoordLines.toIterator )
-    }
-  }
 
   override def DATA_FORMAT: Format[MultiLineStringGs] = {
     (__ \ COORDS_ESFN).format[Seq[Seq[GeoPoint]]]

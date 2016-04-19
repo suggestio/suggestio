@@ -5,7 +5,6 @@ import EsModelUtil.FieldsJsonAcc
 import org.elasticsearch.common.geo.builders.ShapeBuilder
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import java.{util => ju}
 
 import GeoShape.COORDS_ESFN
 import play.extras.geojson.{LatLng, Point}
@@ -21,14 +20,6 @@ object CircleGs extends GsStatic  {
   override type Shape_t = CircleGs
 
   val RADIUS_ESFN = "radius"
-
-  def deserialize(jmap: ju.Map[_,_]): Option[CircleGs] = {
-    Option(jmap get COORDS_ESFN).flatMap(GeoPoint.deserializeOpt).flatMap { gp =>
-      Option(jmap get RADIUS_ESFN).map(Distance.parseDistance).map { dst =>
-        CircleGs(center = gp, radius = dst)
-      }
-    }
-  }
 
   override def DATA_FORMAT: OFormat[CircleGs] = (
     (__ \ COORDS_ESFN).format[GeoPoint] and

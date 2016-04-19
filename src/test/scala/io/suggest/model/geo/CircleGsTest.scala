@@ -1,10 +1,8 @@
 package io.suggest.model.geo
 
-import io.suggest.util.JacksonWrapper
 import org.scalatest._
 import org.elasticsearch.common.unit.DistanceUnit
 import play.api.libs.json.Json
-import java.{util => ju}
 
 /**
  * Suggest.io
@@ -26,17 +24,6 @@ class CircleGsTest extends FlatSpec with Matchers with CoordRnd {
         val cgs = CircleGs(gp, distance)
         f(cgs)
       }
-    }
-  }
-
-
-  "Jackson JSON" should "serialize/deserialize to/from ES JSON" in {
-    mkTests { cgs =>
-      val jsonStr = Json.stringify( cgs.toPlayJson() )
-      val jacksonJson = JacksonWrapper.deserialize [ju.HashMap[Any, Any]] (jsonStr)
-      CircleGs.deserialize(jacksonJson)  shouldBe  Some(cgs)
-      val esShape = cgs.toEsShapeBuilder
-      esShape  should not equal null
     }
   }
 

@@ -4,11 +4,8 @@ import io.suggest.model.es.EsModelUtil
 import EsModelUtil.FieldsJsonAcc
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import java.{lang => jl, util => ju}
 
 import play.extras.geojson.{GeometryCollection, LatLng}
-
-import scala.collection.JavaConversions._
 
 /**
  * Suggest.io
@@ -21,24 +18,6 @@ object GeometryCollectionGs extends GsStatic {
   val GEOMETRIES_ESFN = "geometries"
 
   override type Shape_t = GeometryCollectionGs
-
-  def deserialize(jmap: ju.Map[_,_]): Option[GeometryCollectionGs] = {
-    Option(jmap get GEOMETRIES_ESFN) map { geomsRaw =>
-      GeometryCollectionGs(
-        geoms = deserializeGeoms( geomsRaw )
-      )
-    }
-  }
-
-  val deserializeGeoms: PartialFunction[Any, Seq[GeoShape]] = {
-    case geomsRaw: TraversableOnce[_] =>
-      geomsRaw
-        .map(GeoShape.deserialize)
-        .flatMap(_.toList)
-        .toList
-    case geomsRaw: jl.Iterable[_] =>
-      deserializeGeoms( geomsRaw.iterator : TraversableOnce[_] )
-  }
 
   override def DATA_FORMAT: Format[Shape_t] = {
     (__ \ GEOMETRIES_ESFN).format[Seq[GeoShape]]

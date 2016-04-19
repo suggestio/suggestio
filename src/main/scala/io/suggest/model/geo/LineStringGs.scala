@@ -3,9 +3,6 @@ package io.suggest.model.geo
 import org.elasticsearch.common.geo.builders.{LineStringBuilder, ShapeBuilder}
 import play.api.libs.json.JsArray
 
-import scala.collection.JavaConversions._
-import java.{lang => jl}
-
 import play.extras.geojson.{LatLng, LineString}
 
 /**
@@ -18,14 +15,6 @@ import play.extras.geojson.{LatLng, LineString}
 object LineStringGs extends MultiPointShapeStatic {
 
   override type Shape_t = LineStringGs
-
-  def parseCoords: PartialFunction[Any, Seq[GeoPoint]] = {
-    case tr: TraversableOnce[_] =>
-      tr.flatMap { gpRaw => GeoPoint.deserializeOpt(gpRaw) }
-        .toSeq
-    case l: jl.Iterable[_] =>
-      parseCoords(l.iterator().toIterator)
-  }
 
   def coords2playJson(coords: Seq[GeoPoint]): JsArray = {
     val coordsJson = coords map { _.toPlayGeoJson }

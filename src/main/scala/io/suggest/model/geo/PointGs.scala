@@ -3,7 +3,6 @@ package io.suggest.model.geo
 import io.suggest.model.es.EsModelUtil
 import EsModelUtil.FieldsJsonAcc
 import org.elasticsearch.common.geo.builders.ShapeBuilder
-import java.{util => ju}
 
 import GeoShape._
 import play.api.libs.json._
@@ -20,12 +19,6 @@ import play.extras.geojson.{LatLng, Point}
 object PointGs extends GsStatic {
 
   override type Shape_t = PointGs
-
-  def deserialize(jmap: ju.Map[_,_]): Option[PointGs] = {
-    Option(jmap.get(COORDS_ESFN))
-      .flatMap { GeoPoint.deserializeOpt }
-      .map { PointGs.apply }
-  }
 
   /** play-json deserializer. */
   override def DATA_FORMAT: Format[PointGs] = {

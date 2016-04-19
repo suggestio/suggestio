@@ -6,11 +6,8 @@ import org.elasticsearch.common.geo.builders.{MultiPolygonBuilder, ShapeBuilder}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import GeoShape.COORDS_ESFN
-import java.{lang => jl, util => ju}
 
 import play.extras.geojson.{LatLng, MultiPolygon}
-
-import scala.collection.JavaConversions._
 
 /**
  * Suggest.io
@@ -21,23 +18,6 @@ import scala.collection.JavaConversions._
 object MultiPolygonGs extends GsStatic {
 
   override type Shape_t = MultiPolygonGs
-
-  def deserialize(jmap: ju.Map[_,_]): Option[MultiPolygonGs] = {
-    Option(jmap get COORDS_ESFN)
-      .map { fromCoordPolys }
-  }
-
-  def fromCoordPolys(coords: Any): MultiPolygonGs = {
-    coords match {
-      case l: TraversableOnce[_] =>
-        MultiPolygonGs(
-          polygons = l.toIterator.map(PolygonGs.fromCoordLines).toSeq
-        )
-
-      case l: jl.Iterable[_] =>
-        fromCoordPolys(l.iterator() : TraversableOnce[_])
-    }
-  }
 
   override def DATA_FORMAT: Format[MultiPolygonGs] = {
     (__ \ COORDS_ESFN).format[Seq[List[Seq[GeoPoint]]]]

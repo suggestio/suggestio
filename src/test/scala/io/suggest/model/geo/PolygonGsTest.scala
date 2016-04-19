@@ -1,9 +1,7 @@
 package io.suggest.model.geo
 
-import io.suggest.util.JacksonWrapper
 import org.scalatest._
 import play.api.libs.json.Json
-import java.{util => ju}
 
 /**
  * Suggest.io
@@ -12,25 +10,6 @@ import java.{util => ju}
  * Description: Тест для полигонов, которые используются для описания площадей узлов.
  */
 class PolygonGsTest extends FlatSpec with Matchers with CoordLineRnd {
-
-  protected val testsPerTry = 100
-
-  protected def mkTestsNoHoles[T](f: PolygonGs => T): Unit = {
-    for (i <- 0 to testsPerTry) {
-      val coords = rndCoordRow
-      f(PolygonGs(LineStringGs(coords)))
-    }
-  }
-
-  
-  "PolygonGs" should "serialize/deserialize to/from ES JSON" in {
-    mkTestsNoHoles { pgs =>
-      val jsonStr = Json.stringify( pgs.toPlayJson() )
-      val jacksonJson = JacksonWrapper.deserialize [ju.HashMap[Any, Any]] (jsonStr)
-      PolygonGs.deserialize(jacksonJson)  shouldBe  Some(pgs)
-      pgs.toEsShapeBuilder  should not be  null
-    }
-  }
 
   /**
    * @see [[https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-shape-type.html#_ulink_url_http_www_geojson_org_geojson_spec_html_id4_polygon_ulink]]

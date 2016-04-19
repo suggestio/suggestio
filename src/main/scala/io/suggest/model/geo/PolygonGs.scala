@@ -6,11 +6,8 @@ import org.elasticsearch.common.geo.builders.{BasePolygonBuilder, ShapeBuilder}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import GeoShape.COORDS_ESFN
-import java.{lang => jl, util => ju}
 
 import play.extras.geojson.{LatLng, Polygon}
-
-import scala.collection.JavaConversions._
 
 /**
  * Suggest.io
@@ -22,41 +19,6 @@ import scala.collection.JavaConversions._
 object PolygonGs extends GsStatic {
 
   override type Shape_t = PolygonGs
-
-  def deserialize(jmap: ju.Map[_,_]): Option[PolygonGs] = {
-    Option(jmap get COORDS_ESFN)
-      .map { fromCoordLines }
-  }
-
-  def fromCoordLines(coordLines: Any): PolygonGs = {
-    coordLines match {
-      case allCoords: Traversable[_] =>
-        PolygonGs(
-          outer = LineStringGs(
-            allCoords
-              .headOption
-              .fold [Seq[GeoPoint]] (Nil) (LineStringGs.parseCoords)
-          ),
-          holes = {
-            val iter = allCoords.toIterator
-            if (iter.nonEmpty) {
-              iter.next() // типа вызов .tail()
-              iter
-                .map { ptsRaw =>
-                  LineStringGs(LineStringGs.parseCoords(ptsRaw))
-                }
-                .toList
-            } else {
-              Nil
-            }
-          }
-        )
-
-      case allCoords: jl.Iterable[_] =>
-        val allCoordsSeq: Traversable[_] = allCoords
-        fromCoordLines(allCoordsSeq)
-    }
-  }
 
   override def DATA_FORMAT: Format[PolygonGs] = {
     (__ \ COORDS_ESFN).format[List[Seq[GeoPoint]]]
