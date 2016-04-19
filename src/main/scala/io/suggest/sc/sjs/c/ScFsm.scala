@@ -119,7 +119,7 @@ object ScFsm
   protected def _searchTab2state(sd1: IStData): FsmState = {
     sd1.search.currTab match {
       case MTabs.Geo      => new OnSearchGeoState
-      case MTabs.Tags => new OnSearchTagsState
+      case MTabs.Tags     => new OnSearchTagsState
     }
   }
 

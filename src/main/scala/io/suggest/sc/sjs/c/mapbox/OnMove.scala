@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.c.mapbox
 
 import io.suggest.sc.sjs.vm.mapbox.GlMapVm
-import io.suggest.sjs.mapbox.gl.event.{MoveEnd, Moving}
+import io.suggest.sjs.mapbox.gl.event.{MoveEnd, MoveStart, Moving}
 
 /**
   * Suggest.io
@@ -32,7 +32,11 @@ trait OnMove extends MapReady {
 
         // Сигнал окончания таскания карты.
         case dge: MoveEnd =>
-          become(moveEndState)
+          _moveEnd(dge)
+
+        // Во время незаконченного драга/скролла происходит ещё скролл, это нормально, игнорим.
+        case _: MoveStart =>
+          // do nothing
       }
       r.orElse( super.receiverPart )
     }
@@ -47,6 +51,11 @@ trait OnMove extends MapReady {
     /** Реакция на таскание карты. */
     def _moving(dgg: Moving): Unit = {
       _setCenterCurrent()
+    }
+
+    /** Реакция на окончание движения на карте. */
+    def _moveEnd(dge: MoveEnd): Unit = {
+      become(moveEndState)
     }
 
     /** Переключение на какое состояние после окончания move? */
