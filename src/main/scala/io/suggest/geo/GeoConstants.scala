@@ -11,4 +11,16 @@ object GeoConstants {
   /** id режима геолокации  */
   def GEO_MODE_IP = "ip"
 
+  object Qs {
+
+    def DELIM             = "."
+
+    def LAT_FN            = "a"
+    def LON_FN            = "o"
+
+    def TOP_LEFT_FN       = "t"
+    def BOTTOM_RIGHT_FN   = "b"
+
+  }
+
 }
