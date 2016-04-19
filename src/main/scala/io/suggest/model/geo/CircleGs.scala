@@ -15,7 +15,7 @@ import play.extras.geojson.{LatLng, Point}
  * Created: 22.08.14 12:29
  * Description: Круг в двумерном пространстве.
  */
-object CircleGs extends GsStatic  {
+object CircleGs extends GsStatic {
 
   override type Shape_t = CircleGs
 

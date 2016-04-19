@@ -1,6 +1,7 @@
 package io.suggest.model.geo
 
 import org.scalatest._
+import org.scalatest.Matchers._
 import org.elasticsearch.common.unit.DistanceUnit
 import play.api.libs.json.Json
 
@@ -10,23 +11,7 @@ import play.api.libs.json.Json
  * Created: 22.08.14 15:22
  * Description: Тесты для CircleGs.
  */
-class CircleGsTest extends FlatSpec with Matchers with CoordRnd {
-
-  protected def distanceValRnd = rnd.nextDouble() * 500
-
-  protected val tryPerUnit = 100
-
-  protected def mkTests(f: CircleGs => Unit): Unit = {
-    DistanceUnit.values().foreach { du =>
-      (0 to tryPerUnit).foreach { i =>
-        val distance = Distance(distanceValRnd, du)
-        val gp = GeoPoint(lat = newLat, lon = newLon)
-        val cgs = CircleGs(gp, distance)
-        f(cgs)
-      }
-    }
-  }
-
+class CircleGsTest extends FlatSpec with CoordRnd {
 
   /**
    * @see [[https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-shape-type.html#_circle]]

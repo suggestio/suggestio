@@ -176,7 +176,9 @@ object GsTypes extends Enumeration with EnumMaybeWithName with EnumJsonReadsValT
     override def companion    = GeometryCollectionGs
   }
 
-  //val envelope            : T = new Val("envelope")
+  val envelope            : T = new Val("envelope") {
+    override def companion    = EnvelopeGs
+  }
 
   override def maybeWithName(n: String): Option[T] = {
     values

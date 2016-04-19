@@ -5,6 +5,7 @@ import java.{lang => jl, util => ju}
 import io.suggest.geo.IGeoPoint
 import io.suggest.model.es.EsModelUtil
 import EsModelUtil.doubleParser
+import com.vividsolutions.jts.geom.Coordinate
 import io.suggest.util.{JacksonWrapper, MacroLogsImpl}
 import org.elasticsearch.common.geo.{GeoHashUtils, GeoPoint => EsGeoPoint}
 import play.api.data.validation.ValidationError
@@ -206,5 +207,8 @@ case class GeoPoint(lat: Double, lon: Double) extends IGeoPoint {
   def toLngLat: LngLat = {
     LngLat(lng = lon, lat = lat)
   }
+
+  /** Пространственная координата в терминах JTS. */
+  def toJstCoordinate = new Coordinate(lon, lat)
 
 }

@@ -27,7 +27,7 @@ object GeometryCollectionGs extends GsStatic {
 }
 
 
-import io.suggest.model.geo.GeometryCollectionGs._
+import GeometryCollectionGs._
 
 
 case class GeometryCollectionGs(geoms: Seq[GeoShape]) extends GeoShape {

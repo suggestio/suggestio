@@ -1,6 +1,7 @@
 package io.suggest.model.geo
 
 import org.scalatest._
+import org.scalatest.Matchers._
 import play.api.libs.json.Json
 /**
  * Suggest.io
@@ -8,7 +9,7 @@ import play.api.libs.json.Json
  * Created: 29.08.14 18:45
  * Description: Тесты для геошейпа MultiLineStringGs.
  */
-class MultiLineStringGsTest extends FlatSpec with Matchers with CoordLineRnd {
+class MultiLineStringGsTest extends FlatSpec with CoordLineRnd {
 
   /**
    * @see [[https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-shape-type.html#_ulink_url_http_www_geojson_org_geojson_spec_html_id6_multilinestring_ulink]]
