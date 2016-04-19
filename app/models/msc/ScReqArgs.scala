@@ -1,10 +1,10 @@
 package models.msc
 
+import io.suggest.model.play.qsb.QsbKey1T
 import models._
 import models.im.DevScreen
 import play.api.mvc.QueryStringBindable
 import play.twirl.api.Html
-import util.qsb.QsbKey1T
 import util.qsb.QsbUtil._
 import io.suggest.sc.ScConstants.ReqArgs._
 import views.js.sc.m.scReqArgsJsUnbindTpl

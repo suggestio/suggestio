@@ -3,8 +3,8 @@ package models.msc
 import models._
 import play.api.mvc.QueryStringBindable
 import io.suggest.ad.search.AdSearchConstants._
+import io.suggest.model.play.qsb.QsbKey1T
 import util.PlayMacroLogsDyn
-import util.qsb.QsbKey1T
 import views.js.sc.m._
 
 /**

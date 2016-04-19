@@ -4,9 +4,9 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
-import io.suggest.model.search.{IOffset, ILimit}
+import io.suggest.model.play.qsb.QsbKey1T
+import io.suggest.model.search.{ILimit, IOffset}
 import play.api.mvc.QueryStringBindable
-import util.qsb.QsbKey1T
 
 /**
  * Suggest.io

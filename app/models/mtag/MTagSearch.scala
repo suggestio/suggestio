@@ -6,10 +6,10 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, TagCriteria}
 import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
+import io.suggest.model.play.qsb.QsbKey1T
 import io.suggest.sc.TagSearchConstants.Req._
 import models.{GeoMode, GeoNone}
 import play.api.mvc.QueryStringBindable
-import util.qsb.QsbKey1T
 import views.js.tags.m.mtSearchJsUnbindTpl
 
 /**

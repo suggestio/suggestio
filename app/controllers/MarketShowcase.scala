@@ -5,7 +5,8 @@ import controllers.sc._
 import io.suggest.model.n2.node.MNodes
 import models.merr.MRemoteErrors
 import models.mproj.{ICommonDi, MProjectInfo}
-import util._
+import models.msc.map.MMapNodes
+import util.PlayMacroLogsImpl
 import util.cdn.CdnUtil
 import util.img.{AdRenderUtil, LogoUtil, WelcomeUtil}
 import util.n2u.N2NodesUtil
@@ -32,6 +33,7 @@ class MarketShowcase @Inject() (
   override val cdnUtil            : CdnUtil,
   override val n2NodesUtil        : N2NodesUtil,
   override val mRemoteErrors      : MRemoteErrors,
+  override val mMapNodes          : MMapNodes,
   override val mCommonDi          : ICommonDi,
   override val mProjectInfo       : MProjectInfo
 )
@@ -52,3 +54,4 @@ class MarketShowcase @Inject() (
   with ScJsRouter
   with ScTags
   with ScRemoteError
+  with ScMap

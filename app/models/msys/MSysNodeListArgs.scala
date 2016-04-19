@@ -1,8 +1,8 @@
 package models.msys
 
+import io.suggest.model.play.qsb.QsbKey1T
 import models.{AdnShownType, MNodeType}
 import play.api.mvc.QueryStringBindable
-import util.qsb.QsbKey1T
 
 /**
  * Suggest.io

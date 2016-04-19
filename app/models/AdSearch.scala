@@ -3,12 +3,14 @@ package models
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.search._
 import models.im.DevScreen
-import models.msc.{MScApiVsns, MScApiVsn}
+import models.msc.{MScApiVsn, MScApiVsns}
 import play.api.mvc.QueryStringBindable
 import util.PlayMacroLogsDyn
-import util.qsb.{CommaDelimitedStringSeq, QsbKey1T}
+import util.qsb.CommaDelimitedStringSeq
 import io.suggest.ad.search.AdSearchConstants._
+import io.suggest.model.play.qsb.QsbKey1T
 import views.js.stuff.m.adSearchJsUnbindTpl
+
 import scala.language.implicitConversions
 import io.suggest.sc.ScConstants.ReqArgs.VSN
 

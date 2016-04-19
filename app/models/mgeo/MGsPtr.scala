@@ -1,7 +1,7 @@
 package models.mgeo
 
+import io.suggest.model.play.qsb.QsbKey1T
 import play.api.mvc.QueryStringBindable
-import util.qsb.QsbKey1T
 
 /**
  * Suggest.io

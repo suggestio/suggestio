@@ -1,9 +1,9 @@
 package models.msc
 
+import io.suggest.model.play.qsb.QsbKey1T
 import models._
 import play.api.Play.{configuration, current}
 import play.api.mvc.QueryStringBindable
-import util.qsb.QsbKey1T
 import util.qsb.QsbUtil._
 import io.suggest.sc.NodeSearchConstants._
 import io.suggest.sc.ScConstants.ReqArgs.VSN

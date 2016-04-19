@@ -1,7 +1,8 @@
 package models.msc
 
+import io.suggest.model.play.qsb.QsbKey1T
 import play.api.mvc.QueryStringBindable
-import util.qsb.QsbKey1T
+
 import scala.language.implicitConversions
 
 /**

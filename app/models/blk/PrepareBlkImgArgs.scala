@@ -1,9 +1,9 @@
 package models.blk
 
+import io.suggest.model.play.qsb.QsbKey1T
 import models.BlockConf
 import models.blk.ed.BimKey_t
 import play.api.mvc.QueryStringBindable
-import util.qsb.QsbKey1T
 
 /**
   * Suggest.io
