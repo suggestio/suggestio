@@ -1,9 +1,8 @@
 package models.ai
 
-import io.suggest.model._
 import io.suggest.model.es.EsModelUtil
 import io.suggest.util.SioEsUtil._
-import play.api.libs.json.{JsObject, JsArray, JsString}
+import _root_.play.api.libs.json.{JsObject, JsArray, JsString}
 import java.{util => ju}
 
 /**
