@@ -6,11 +6,14 @@ import io.suggest.geo.IGeoPoint
 import io.suggest.model.es.EsModelUtil
 import EsModelUtil.doubleParser
 import com.vividsolutions.jts.geom.Coordinate
+import io.suggest.geo.GeoConstants.Qs
+import io.suggest.model.play.qsb.QsbKey1T
 import io.suggest.util.{JacksonWrapper, MacroLogsImpl}
 import org.elasticsearch.common.geo.{GeoHashUtils, GeoPoint => EsGeoPoint}
 import play.api.data.validation.ValidationError
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.api.mvc.QueryStringBindable
 import play.extras.geojson.{LatLng, LngLat}
 
 import scala.collection.JavaConversions._
@@ -160,6 +163,42 @@ object GeoPoint extends MacroLogsImpl {
     * но сериализации в JSON object с полями lat и lon. */
   implicit val FORMAT_ANY_TO_ARRAY: Format[GeoPoint] = {
     Format[GeoPoint](READS_ANY, FORMAT_GEO_ARRAY)
+  }
+
+
+  /** Поддержка биндинга из/в Query string в play router. */
+  implicit def qsb(implicit doubleB: QueryStringBindable[Double]): QueryStringBindable[GeoPoint] = {
+    new QueryStringBindable[GeoPoint] with QsbKey1T {
+
+      override def KEY_DELIM = Qs.DELIM
+
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, GeoPoint]] = {
+        val k = key1F(key)
+        for {
+          lonEith <- doubleB.bind( k(Qs.LON_FN), params )
+          latEith <- doubleB.bind( k(Qs.LAT_FN), params )
+        } yield {
+          for {
+            lon <- lonEith.right
+            lat <- latEith.right
+          } yield {
+            GeoPoint(
+              lat = lat,
+              lon = lon
+            )
+          }
+        }
+      }
+
+      override def unbind(key: String, value: GeoPoint): String = {
+        val k = key1F(key)
+        Seq(
+          doubleB.unbind(k(Qs.LON_FN), value.lon),
+          doubleB.unbind(k(Qs.LAT_FN), value.lat)
+        )
+          .mkString("&")
+      }
+    }
   }
 
 }

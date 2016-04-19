@@ -1,9 +1,12 @@
 package io.suggest.model.geo
 
+import io.suggest.geo.GeoConstants.Qs
 import io.suggest.model.es.EsModelUtil.FieldsJsonAcc
+import io.suggest.model.play.qsb.QsbKey1T
 import org.elasticsearch.common.geo.builders.ShapeBuilder
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.api.mvc.QueryStringBindable
 import play.extras.geojson.{Geometry, LatLng, Polygon}
 
 /**
@@ -32,6 +35,42 @@ object EnvelopeGs extends GsStatic {
           Seq(egs.topLeft, egs.bottomRight)
         }
       )
+  }
+
+
+  /** Поддержка биндинга этой простой фигуры в play router. */
+  implicit def qsb(implicit geoPointB: QueryStringBindable[GeoPoint]): QueryStringBindable[EnvelopeGs] = {
+    new QueryStringBindable[EnvelopeGs] with QsbKey1T {
+
+      override def KEY_DELIM = Qs.DELIM
+
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, EnvelopeGs]] = {
+        val k = key1F(key)
+        for {
+          topLeftEith     <- geoPointB.bind ( k(Qs.TOP_LEFT_FN),      params )
+          bottomRightEith <- geoPointB.bind ( k(Qs.BOTTOM_RIGHT_FN),  params )
+        } yield {
+          for {
+            topLeft       <- topLeftEith.right
+            bottomRight   <- bottomRightEith.right
+          } yield {
+            EnvelopeGs(
+              topLeft     = topLeft,
+              bottomRight = bottomRight
+            )
+          }
+        }
+      }
+
+      override def unbind(key: String, value: EnvelopeGs): String = {
+        val k = key1F(key)
+        List(
+          geoPointB.unbind( k(Qs.TOP_LEFT_FN),      value.topLeft ),
+          geoPointB.unbind( k(Qs.BOTTOM_RIGHT_FN),  value.bottomRight )
+        )
+          .mkString("&")
+      }
+    }
   }
 
 }
