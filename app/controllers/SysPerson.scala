@@ -30,6 +30,7 @@ class SysPerson @Inject() (
   mNodes                    : MNodes,
   mSuperUsers               : MSuperUsers,
   emailPwIdents             : EmailPwIdents,
+  mExtIdents                : MExtIdents,
   override val mCommonDi    : ICommonDi
 )
   extends SioControllerImpl
@@ -55,7 +56,7 @@ class SysPerson @Inject() (
       mNodes.dynCount(psearch)
     }
     val epwIdsCntFut = emailPwIdents.countAll
-    val extIdsCntFut = MExtIdent.countAll
+    val extIdsCntFut = mExtIdents.countAll
     val suCnt        = mSuperUsers.SU_EMAILS.size
     for {
       personsCnt <- personsCntFut
@@ -99,7 +100,7 @@ class SysPerson @Inject() (
   /** Отрендерить страницу с листингом внешних идентов. */
   def allExtIdents(offset: Int) = IsSu.async { implicit request =>
     val limit = 20
-    val extIdentsFut = MExtIdent.getAll(limit, offset = offset)
+    val extIdentsFut = mExtIdents.getAll(limit, offset = offset)
     for {
       extIdents <- extIdentsFut
     } yield {
@@ -131,7 +132,7 @@ class SysPerson @Inject() (
     // Запускаем поиски ident'ов. Сортируем результаты.
     val epwIdentsFut = emailPwIdents.findByPersonId(personId)
       .map { _.sortBy(_.email) }
-    val extIdentsFut = MExtIdent.findByPersonId(personId)
+    val extIdentsFut = mExtIdents.findByPersonId(personId)
       .map { _.sortBy { ei => ei.providerId + "." + ei.userId } }
 
     // Определить имя юзера, если возможно.

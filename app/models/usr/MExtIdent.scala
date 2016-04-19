@@ -10,12 +10,12 @@ import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders}
 import securesocial.core.IProfileDflt
 import _root_.util.PlayMacroLogsImpl
 import EsModelUtil.stringParser
-
+import com.google.inject.{Inject, Singleton}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
 import scala.collection.Map
-import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -24,16 +24,18 @@ import scala.concurrent.{Future, ExecutionContext}
  * Description: ExternalIdent - это ident-модель для хранения данных логина из соц.сетей или от иных провайдеров
  * идентификации пользователей.
  */
-object MExtIdent extends MPersonIdentSubmodelStatic with PlayMacroLogsImpl with EsmV2Deserializer {
-
-  val PERSON_ID_ESFN    = "personId"
-  val USER_ID_ESFN      = "key"
-  val EMAIL_ESFN        = "value"
-  val PROVIDER_ID_ESFN  = "prov"
+@Singleton
+class MExtIdents
+  extends MPersonIdentSubmodelStatic
+    with PlayMacroLogsImpl
+    with EsmV2Deserializer
+{
 
   override val ES_TYPE_NAME = "exid"
 
   override type T = MExtIdent
+
+  import MExtIdent._
 
   override def generateMappingProps: List[DocField] = {
     FieldString(PROVIDER_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true) ::
@@ -53,12 +55,6 @@ object MExtIdent extends MPersonIdentSubmodelStatic with PlayMacroLogsImpl with 
 
   def userIdQuery(userId: String) = QueryBuilders.termQuery(USER_ID_ESFN, userId)
   def providerIdFilter(prov: ILoginProvider) = FilterBuilders.termFilter(PROVIDER_ID_ESFN, prov.ssProvName)
-
-  /** Генерация id модели. */
-  def genId(prov: ILoginProvider, userId: String): String = {
-    // TODO Может надо делать toLowerCase?
-    s"$prov~$userId"
-  }
 
   /**
    * Поиск документа по userId и провайдеру.
@@ -81,7 +77,7 @@ object MExtIdent extends MPersonIdentSubmodelStatic with PlayMacroLogsImpl with 
   override protected def esDocReads(meta: IEsDocMeta): Reads[T] = {
     _reads0 {
       (personId, provider, userId, email) =>
-        apply(personId, provider, userId, email, meta.version)
+        MExtIdent(personId, provider, userId, email, meta.version)
     }
   }
 
@@ -93,8 +89,27 @@ object MExtIdent extends MPersonIdentSubmodelStatic with PlayMacroLogsImpl with 
 
 }
 
+/** Интерфейс для полей с DI-инстансами [[MExtIdents]]. */
+trait IMExtIdentsDi {
+  def mExtIdents: MExtIdents
+}
 
-import MExtIdent._
+
+object MExtIdent {
+
+  val PERSON_ID_ESFN    = "personId"
+  val USER_ID_ESFN      = "key"
+  val EMAIL_ESFN        = "value"
+  val PROVIDER_ID_ESFN  = "prov"
+
+
+  /** Генерация id модели. */
+  def genId(prov: ILoginProvider, userId: String): String = {
+    // TODO Может надо делать toLowerCase?
+    s"$prov~$userId"
+  }
+
+}
 
 
 case class MExtIdent(
@@ -115,7 +130,7 @@ case class MExtIdent(
   override def value = email
 
   /** Форсируем уникальность в рамках одного провайдера */
-  override def id: Option[String] = Some(genId(provider, userId))
+  override def id: Option[String] = Some(MExtIdent.genId(provider, userId))
 
   /** isVerified писать в хранилище не нужно, потому мы не управляем проверкой юзера. */
   override def writeVerifyInfo = false
@@ -130,11 +145,15 @@ case class MExtIdent(
 
 // Поддержка JMX.
 trait MExtIdentJmxMBean extends EsModelJMXMBeanI
-final class MExtIdentJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+final class MExtIdentJmx @Inject() (
+  override val companion  : MExtIdents,
+  implicit val ec         : ExecutionContext,
+  implicit val client     : Client,
+  implicit val sn         : SioNotifierStaticClientI
+)
   extends EsModelJMXBase
   with MExtIdentJmxMBean
 {
-  override def companion = MExtIdent
   override type X = MExtIdent
 }
 

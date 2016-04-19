@@ -19,8 +19,9 @@ import scala.concurrent.Future
  * Description: Реализация над-модели прослойки между suggest.io и secure-social.
  */
 class SsUserService @Inject() (
-  mNodes: MNodes,
-  mCommonDi: ICommonDi
+  mNodes      : MNodes,
+  mExtIdents  : MExtIdents,
+  mCommonDi   : ICommonDi
 )
   extends UserService[SsUser]
   with PlayMacroLogsImpl
@@ -38,7 +39,7 @@ class SsUserService @Inject() (
    */
   override def find(providerId: String, userId: String): Future[Option[MExtIdent]] = {
     val prov = ILoginProvider.maybeWithName(providerId).get
-    MExtIdent.getByUserIdProv(prov, userId)
+    mExtIdents.getByUserIdProv(prov, userId)
   }
 
   /**
@@ -94,7 +95,7 @@ class SsUserService @Inject() (
         mpm     = MPersonMeta(
           nameFirst     = profile.firstName,
           nameLast      = profile.lastName,
-          extAvaUrls  = profile.avatarUrl.toList
+          extAvaUrls    = profile.avatarUrl.toList
         )
       )
       for {
@@ -105,7 +106,7 @@ class SsUserService @Inject() (
           userId    = profile.userId,
           email     = profile.email
         )
-        savedId <- MExtIdent.save(mei)
+        savedId <- mExtIdents.save(mei)
       } yield {
         mei
       }

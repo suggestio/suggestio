@@ -7,7 +7,7 @@ import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.mproj.ICommonDi
-import models.usr.{MExtIdent, MSuperUsers}
+import models.usr.{MExtIdents, MSuperUsers}
 import play.api.mvc._
 
 import scala.concurrent.Future
@@ -22,6 +22,7 @@ import scala.concurrent.Future
 class IdentUtil @Inject() (
   mNodes        : MNodes,
   mSuperUsers   : MSuperUsers,
+  mExtIdents    : MExtIdents,
   mCommonDi     : ICommonDi
 ) {
 
@@ -73,20 +74,21 @@ class IdentUtil @Inject() (
     getMarketRdrCallFor(personId) flatMap {
       // Уже ясно куда редиректить юзера
       case Some(rdr) =>
-        Future successful rdr
+        Future.successful(rdr)
 
       // У юзера нет узлов
       case None =>
         // TODO Отправить на форму регистрации, если логин через внешнего id прова.
-        val idpIdsCntFut = MExtIdent.countByPersonId(personId)
-        idpIdsCntFut map {
-          // Есть идентификации через соц.сети. Вероятно, юзер не закончил регистрацию.
-          case n if n > 0L =>
+        for {
+          n <- mExtIdents.countByPersonId(personId)
+        } yield {
+          if (n > 0L) {
+            // Есть идентификации через соц.сети. Вероятно, юзер не закончил регистрацию.
             routes.Ident.idpConfirm()
-
-          // Нет узлов, залогинился через emailPW, отправить в lkList, там есть кнопка добавления узла.
-          case _ =>
+          } else {
+            // Нет узлов, залогинился через emailPW, отправить в lkList, там есть кнопка добавления узла.
             routes.MarketLkAdn.lkList()
+          }
         }
     }
   }

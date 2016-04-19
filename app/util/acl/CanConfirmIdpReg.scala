@@ -6,7 +6,7 @@ import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.req.MReq
-import models.usr.MExtIdent
+import models.usr.IMExtIdentsDi
 import play.api.mvc.{ActionBuilder, Request, Result}
 import util.di.IIdentUtil
 import util.{PlayMacroLogsDyn, PlayMacroLogsI}
@@ -26,6 +26,7 @@ trait CanConfirmIdpReg
   with OnUnauthUtilCtl
   with Csrf
   with IMNodes
+  with IMExtIdentsDi
 {
 
   import mCommonDi._
@@ -59,13 +60,13 @@ trait CanConfirmIdpReg
           }
           val pcntFut = mNodes.dynCount(msearch)
           // Запустить поиск имеющихся внешних идентов
-          val hasExtIdent = MExtIdent.countByPersonId(personId)
+          val hasExtIdent = mExtIdents.countByPersonId(personId)
             .map(_ > 0L)
           // Дождаться результата поиска узлов.
           pcntFut flatMap { pcnt =>
             if (pcnt > 0L) {
               LOGGER.debug(s"User[$personId] already have $pcnt or more nodes. Refusing reg.confirmation.")
-              Future successful false
+              Future.successful(false)
             } else {
               // Юзер пока не имеет узлов. Проверить наличие идентов.
               hasExtIdent.filter(identity).onFailure {

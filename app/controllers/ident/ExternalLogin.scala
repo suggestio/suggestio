@@ -119,6 +119,7 @@ trait ExternalLogin
   with CanConfirmIdpReg
   with INodesUtil
   with MaybeAuth
+  with IMExtIdentsDi
 {
 
   import mCommonDi._
@@ -166,7 +167,7 @@ trait ExternalLogin
         case authenticated: AuthenticationResult.Authenticated =>
           // TODO Отрабатывать случаи, когда юзер уже залогинен под другим person_id.
           val profile = authenticated.profile
-          MExtIdent.getByUserIdProv(provider, profile.userId).flatMap { maybeExisting =>
+          mExtIdents.getByUserIdProv(provider, profile.userId).flatMap { maybeExisting =>
             // Сохраняем, если требуется. В результате приходит также новосохранный person MNode.
             val saveFut: Future[(MExtIdent, Option[MNode])] = maybeExisting match {
               case None =>
@@ -199,7 +200,7 @@ trait ExternalLogin
                     userId    = profile.userId,
                     email     = profile.email
                   )
-                  val save2Fut = MExtIdent.save(mei)
+                  val save2Fut = mExtIdents.save(mei)
                   LOGGER.debug(s"$logPrefix Registered new user $personId from ext.login service, remote user_id = ${profile.userId}")
                   save2Fut.map { savedId => mei }
                 }

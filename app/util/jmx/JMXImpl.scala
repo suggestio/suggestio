@@ -40,6 +40,7 @@ class JMXImpl @Inject() (
   mAiMadJmx                     : MAiMadJmx,
   emailPwIdentsJmx              : EmailPwIdentsJmx,
   emailActivationsJmx           : EmailActivationsJmx,
+  mExtIdentJmx                  : MExtIdentJmx,
   mCommonDi                     : ICommonDi
 )
   extends PlayLazyMacroLogsImpl
@@ -49,12 +50,11 @@ class JMXImpl @Inject() (
 
   /** Список моделей, отправляемых в MBeanServer. private для защиты от возможных воздействий извне. */
   private val JMX_MODELS = {
-    import mCommonDi._
     List[JMXBase](
       mAdStatJmx,
       emailActivationsJmx,
       emailPwIdentsJmx,
-      new MExtIdentJmx,
+      mExtIdentJmx,
       mCalendarJmx,
       siowebEsModelJmx,
       mRemoteErrorsJmx,

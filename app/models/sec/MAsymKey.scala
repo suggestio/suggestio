@@ -3,6 +3,7 @@ package models.sec
 import io.suggest.model.es._
 import util.PlayMacroLogsImpl
 import EsModelUtil.FieldsJsonAcc
+import com.google.inject.Singleton
 import io.suggest.util.SioEsUtil._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -18,6 +19,7 @@ import scala.collection.Map
  * Любая возможная защита секретного ключа происходит на стороне контроллера.
  * Потом эту модель можно аккуратненько расширить пользовательской поддержкой.
  */
+@Singleton
 class MAsymKeys
   extends EsModelStaticT
     with PlayMacroLogsImpl

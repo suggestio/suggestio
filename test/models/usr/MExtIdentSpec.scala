@@ -12,7 +12,11 @@ import org.scalatestplus.play.PlaySpec
  */
 class MExtIdentSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
 
+  private lazy val mExtIdents = app.injector.instanceOf[MExtIdents]
+
   "MExtIdent JSON" must {
+
+    import mExtIdents.mockPlayDocRespEv
 
     "handle fully-filled model" in {
       val meid = MExtIdent(
@@ -23,7 +27,7 @@ class MExtIdentSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
         versionOpt = Some(1)
       )
 
-      MExtIdent.deserializeOne2(meid)  mustBe  meid
+      mExtIdents.deserializeOne2(meid)  mustBe  meid
     }
 
   }
