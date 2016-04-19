@@ -26,7 +26,7 @@ import scala.concurrent.ExecutionContext
 class MMedias @Inject()(
   iMediaStorages: IMediaStorages
 )
-  extends EsModelStaticT
+  extends EsModelStatic
   with EsmV2Deserializer
   with MacroLogsImpl
   with EsModelJsonWrites

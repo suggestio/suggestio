@@ -45,7 +45,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class MNodes
-  extends EsModelStaticT
+  extends EsModelStatic
   with EsmV2Deserializer
   with MacroLogsImpl
   with IGenEsMappingProps
@@ -156,7 +156,7 @@ class MNodes
 
   /**
    * Сбор статистики по кол-ву N2-узлов различных типов.
- *
+   *
    * @param dsa Критерий выборки, если требуется.
    * @return Карта, где ключ -- тип узла, а значение -- кол-во результатов в индексе.
    */
@@ -200,7 +200,7 @@ class MNodes
 
   /**
    * Удалить документ по id.
- *
+   *
    * @param id id документа.
    * @return true, если документ найден и удалён. Если не найден, то false
    */
@@ -217,7 +217,7 @@ class MNodes
   /**
    * Сохранить экземпляр в хранилище модели.
    * При успехе будет отправлено событие [[io.suggest.model.n2.node.event.MNodeSaved]] в шину событий.
- *
+   *
    * @return Фьючерс с новым/текущим id.
    */
   override def save(m: T)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
