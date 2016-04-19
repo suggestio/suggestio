@@ -32,6 +32,7 @@ trait MNodeSearch
   with Limit
   with Offset
   with DateCreatedSort
+  with HasGeoPoint
 
 /** Реализация [[MNodeSearch]] для упрошения жизни компилятору. */
 abstract class MNodeSearchImpl
@@ -58,6 +59,7 @@ trait MNodeSearchDflt
   with LimitDflt
   with OffsetDflt
   with DateCreatedSortDflt
+  with HasGeoPointDflt
 
 /** Дефолтовая реализация [[MNodeSearchDflt]].
   * Упрощает жизнь компилятору при сборке недефолтовых классов-реализаций. */
@@ -87,6 +89,7 @@ trait MNodeSearchWrap
   with LimitWrap
   with OffsetWrap
   with DateCreatedSortWrap
+  with HasGeoPointWrap
 {
   override type WT <: MNodeSearch
 }
