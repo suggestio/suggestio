@@ -66,7 +66,7 @@ object MEvent {
 
 @Singleton
 class MEvents
-  extends EsModelStaticT
+  extends EsModelStatic
     with PlayMacroLogsImpl
     with EsDynSearchStatic[IEventsSearchArgs]
     with EsmV2Deserializer

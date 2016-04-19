@@ -21,7 +21,7 @@ import scala.collection.Map
  */
 @Singleton
 class MAsymKeys
-  extends EsModelStaticT
+  extends EsModelStatic
     with PlayMacroLogsImpl
     with EsmV2Deserializer
     with EsModelPlayJsonStaticT
