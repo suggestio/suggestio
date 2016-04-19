@@ -13,7 +13,11 @@ class MAsymKeySpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
 
   private val KEY = "ASDASDASDawef0awefawfu89a3ufa3jf3ajfajdfasrfAWEF awefawefawef a90wer902348r23r/sd/fsdf3"
 
+  private lazy val mAsymKeys = app.injector.instanceOf[MAsymKeys]
+
   "MAsymKey JSON" must {
+
+    import mAsymKeys.mockPlayDocRespEv
 
     "handle minimally-filled model" in {
       val masc = MAsymKey(
@@ -22,7 +26,7 @@ class MAsymKeySpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
         id     = None
       )
 
-      MAsymKey.deserializeOne2(masc)  mustBe  masc
+      mAsymKeys.deserializeOne2(masc)  mustBe  masc
     }
 
     "handle fully-filled model" in {
@@ -33,7 +37,7 @@ class MAsymKeySpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
         versionOpt  = Some(2)
       )
 
-      MAsymKey.deserializeOne2(masc)  mustBe  masc
+      mAsymKeys.deserializeOne2(masc)  mustBe  masc
     }
 
   }

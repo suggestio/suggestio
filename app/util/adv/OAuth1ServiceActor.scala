@@ -4,11 +4,11 @@ import java.io.ByteArrayOutputStream
 import java.util.concurrent.TimeoutException
 
 import akka.actor.Props
-import com.google.inject.{Singleton, Inject}
+import com.google.inject.{Inject, Singleton}
 import com.google.inject.assistedinject.Assisted
 import controllers.routes
 import models.adv._
-import models.adv.ext.act.{ExtServiceActorEnv, OAuthVerifier, ActorPathQs}
+import models.adv.ext.act.{ActorPathQs, ExtServiceActorEnv, OAuthVerifier}
 import models.adv.js.ctx.MStorageKvCtx
 import models.adv.js._
 import models.event.ErrorInfo
@@ -16,7 +16,7 @@ import models.jsm.DomWindowSpecs
 import models.ls.LsOAuth1Info
 import models.mctx.Context
 import models.mproj.ICommonDi
-import models.sec.MAsymKey
+import models.sec.{MAsymKey, MAsymKeys}
 import oauth.signpost.exception.OAuthException
 import org.apache.commons.io.IOUtils
 import org.joda.time.DateTime
@@ -32,7 +32,7 @@ import util.secure.PgpUtil
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util.{Success, Failure}
+import scala.util.{Failure, Success}
 
 /**
   * Suggest.io
@@ -61,6 +61,7 @@ class OAuth1ServiceActor @Inject() (
   mCommonDi                   : ICommonDi,
   oa1SvcActorUtil             : Oa1SvcActorUtil,
   pgpUtil                     : PgpUtil,
+  mAsymKeys                   : MAsymKeys,
   override val aeFormUtil     : AeFormUtil,
   implicit val wsClient       : WSClient
 )
@@ -88,9 +89,9 @@ class OAuth1ServiceActor @Inject() (
   private val oa1client = oa1Support.client
 
   /** Ключ шифрования-дешифрования для хранения данных в localStorage. */
-  lazy val lsCryptoKey = {
+  lazy val lsCryptoKey: Future[MAsymKey] = {
     val keyId = pgpUtil.LOCAL_STOR_KEY_ID
-    val fut = MAsymKey.getById(keyId)
+    val fut = mAsymKeys.getById(keyId)
       .map(_.get)
     fut.onFailure {
       case _: NoSuchElementException =>

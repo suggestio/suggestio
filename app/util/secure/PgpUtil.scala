@@ -1,11 +1,11 @@
 package util.secure
 
-import java.io.{OutputStream, InputStream}
+import java.io.{InputStream, OutputStream}
 
 import com.google.inject.{Inject, Singleton}
-import io.trbl.bcpg.{SecretKey, KeyFactory, KeyFactoryFactory}
+import io.trbl.bcpg.{KeyFactory, KeyFactoryFactory, SecretKey}
 import models.mproj.ICommonDi
-import models.sec.{IAsymKey, MAsymKey}
+import models.sec.{IAsymKey, MAsymKey, MAsymKeys}
 import util.PlayMacroLogsDyn
 
 import scala.concurrent.Future
@@ -28,6 +28,7 @@ import scala.concurrent.Future
  */
 @Singleton
 class PgpUtil @Inject() (
+  mAsymKeys   : MAsymKeys,
   mCommonDi   : ICommonDi
 )
   extends PlayMacroLogsDyn
@@ -69,7 +70,7 @@ class PgpUtil @Inject() (
     if ( configuration.getBoolean(cfk).getOrElse(false) ) {
       Some(init())
     } else {
-      MAsymKey.getById(LOCAL_STOR_KEY_ID)
+      mAsymKeys.getById(LOCAL_STOR_KEY_ID)
         // TODO проверять, что пароль соответствует ключу. Нужно пытаться зашифровать какие-то простые данные.
         .filter { _.isDefined }
         .onFailure {
@@ -82,11 +83,11 @@ class PgpUtil @Inject() (
 
   /** Запустить инициализацию необходимых ключей. */
   def init(): Future[_] = {
-    val fut = MAsymKey.getById(LOCAL_STOR_KEY_ID)
+    val fut = mAsymKeys.getById(LOCAL_STOR_KEY_ID)
       .filter { _.isDefined }
       .recoverWith { case ex: NoSuchElementException =>
         val k = genNewNormalKey()
-        MAsymKey.save(k)
+        mAsymKeys.save(k)
       }
     fut.onFailure {
       case ex: Throwable =>

@@ -18,7 +18,12 @@ import scala.collection.Map
  * Любая возможная защита секретного ключа происходит на стороне контроллера.
  * Потом эту модель можно аккуратненько расширить пользовательской поддержкой.
  */
-object MAsymKey extends EsModelStaticT with PlayMacroLogsImpl with EsmV2Deserializer with EsModelPlayJsonStaticT {
+class MAsymKeys
+  extends EsModelStaticT
+    with PlayMacroLogsImpl
+    with EsmV2Deserializer
+    with EsModelPlayJsonStaticT
+{
 
   override type T = MAsymKey
 
@@ -68,7 +73,7 @@ object MAsymKey extends EsModelStaticT with PlayMacroLogsImpl with EsmV2Deserial
   override protected def esDocReads(meta: IEsDocMeta): Reads[T] = {
     _reads0 {
       (pubKey, secKeyOpt) =>
-        apply(pubKey, secKeyOpt, meta.id, meta.version)
+        MAsymKey(pubKey, secKeyOpt, meta.id, meta.version)
     }
   }
 
