@@ -15,7 +15,7 @@ object GjFeatureCollection extends FromDict {
 
   override type T = GjFeatureCollection
 
-  def apply(features: js.Array[GjFeature]): GjFeatureCollection = {
+  def apply(features: js.Array[GjFeature] = js.Array()): GjFeatureCollection = {
     val fc = empty
     fc.`type` = GjTypes.FEATURE_COLLECTION
     fc.features = features
