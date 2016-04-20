@@ -4,6 +4,7 @@ import io.suggest.sjs.common.geo.json.{GjFeatureCollection, GjType}
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.|
 
 /**
   * Suggest.io
@@ -20,7 +21,7 @@ object GeoJsonSource {
     * @param data GeoJSON.
     * @return [[GeoJsonSource]].
     */
-  def gjSrc(data: GjType): GeoJsonSource = {
+  def gjSrc(data: GjType | String): GeoJsonSource = {
     new GeoJsonSource(
       GeoJsonSourceDescr(
         data = data
