@@ -14,10 +14,45 @@ object ScMapConstants {
     /** Имя поля в Feature.props с числом, описывающим кол-во узлов в заданной области. */
     def COUNT_FN  = "c"
 
+    /** Имя поля, содержащего массив слоёв, подлежащих рендеру. */
+    final val SOURCES_FN = "s"
 
+    /** Имя сорса для mapbox, унифицированное на клиенте и сервере. */
+    final val SRC_NAME_FN     = "n"
+
+    /** Название поля со значением флага кластеризованности слоя. */
+    final val IS_CLUSTERED_FN = "u"
+
+    /** Название поля GeoJSON-фич слоя. */
+    final val SRC_DATA_FN     = "g"
+
+
+    /** Названия сорсов mapbox. */
+    object Sources {
+
+      private def PREFIX = SOURCES_FN + "-"
+
+      /** Source точек узлов. */
+      def POINTS    = PREFIX + "pt"
+
+      /** Source кластеров узлов. */
+      def CLUSTERS  = PREFIX + "cl"
+
+      def ALL_SOURCES = Seq(POINTS, CLUSTERS)
+
+      /** Имя layer'а для отображения надписей. */
+      def CLUSTER_LABELS = CLUSTERS + "-lbl"
+
+      def FILL_COLOR = "#FFFFFF"
+      def POINT_RADIUS_PX   = 3
+      def CLUSTER_RADIUS_PX = 10
+
+    }
 
   }
 
+
+  /** Константы запроса запрос карты узлов. */
   object Mqs {
 
     /** Название поля с описанием области карты. */
@@ -25,6 +60,7 @@ object ScMapConstants {
 
     /** Названием поля зума области карты (m.z). */
     def ZOOM_FN       = "z"
+
     /** Название поля с описанием отображаемого участка карты (m.e). */
     def ENVELOPE_FN   = "e"
 
@@ -33,14 +69,15 @@ object ScMapConstants {
       import io.suggest.geo.GeoConstants.Qs._
 
       def MAP_DELIM = DELIM
-      def AREA_ENVELOPE = AREA_INFO_FN + MAP_DELIM + ENVELOPE_FN
-      def AREA_ENVELOPE_TOP_LEFT = AREA_ENVELOPE + MAP_DELIM + TOP_LEFT_FN
-      def AREA_ENVELOPE_TOP_LEFT_LON = AREA_ENVELOPE_TOP_LEFT + MAP_DELIM + LON_FN
-      def AREA_ENVELOPE_TOP_LEFT_LAT = AREA_ENVELOPE_TOP_LEFT + MAP_DELIM + LAT_FN
-      def AREA_ENVELOPE_BOTTOM_RIGHT = AREA_ENVELOPE + MAP_DELIM + BOTTOM_RIGHT_FN
-      def AREA_ENVELOPE_BOTTOM_RIGHT_LON = AREA_ENVELOPE_BOTTOM_RIGHT + MAP_DELIM + LON_FN
-      def AREA_ENVELOPE_BOTTOM_RIGHT_LAT = AREA_ENVELOPE_BOTTOM_RIGHT + MAP_DELIM + LAT_FN
-      def AREA_ZOOM = AREA_INFO_FN + MAP_DELIM + ZOOM_FN
+
+      def ENVELOPE_TOP_LEFT         = ENVELOPE_FN + MAP_DELIM + TOP_LEFT_FN
+      def ENVELOPE_TOP_LEFT_LON     = ENVELOPE_TOP_LEFT + MAP_DELIM + LON_FN
+      def ENVELOPE_TOP_LEFT_LAT     = ENVELOPE_TOP_LEFT + MAP_DELIM + LAT_FN
+
+      def ENVELOPE_BOTTOM_RIGHT     = ENVELOPE_FN + MAP_DELIM + BOTTOM_RIGHT_FN
+      def ENVELOPE_BOTTOM_RIGHT_LON = ENVELOPE_BOTTOM_RIGHT + MAP_DELIM + LON_FN
+      def ENVELOPE_BOTTOM_RIGHT_LAT = ENVELOPE_BOTTOM_RIGHT + MAP_DELIM + LAT_FN
+
     }
 
   }
