@@ -6,12 +6,13 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.model.n2.node.{MNodeFields, MNodeTypes, MNodes}
+import io.suggest.sc.map.ScMapConstants.Nodes.Sources
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 import io.suggest.ym.model.NodeGeoLevels
 import models.mproj.ICommonDi
 import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.bucket.geogrid.GeoHashGrid
-import play.extras.geojson.{Feature, LatLng}
+import play.extras.geojson.{Feature, FeatureCollection, LatLng, Point}
 
 import scala.concurrent.Future
 import scala.collection.JavaConversions._
@@ -31,7 +32,7 @@ class MMapNodes @Inject() (
   import mCommonDi._
 
   def isClusteredZoom(zoom: Double): Boolean = {
-    zoom >= 9
+    zoom <= 9
   }
 
   /**
@@ -67,16 +68,52 @@ class MMapNodes @Inject() (
     }
   }
 
+  /** Приведение зума карты к precision.
+    *
+    * TODO Написать/найти формулу рассчета точности геохеша для зума mapbox карты.
+    *
+    * Функция будет иметь резкийграфик вида:
+    * {{{
+    *    ^ geohash precision
+    *   8|               *
+    *   7|               *
+    *   6|              *
+    *   5|              *
+    *   4|             *
+    *   3| ************
+    *   2|*
+    *   1|
+    *   0+------------------->  mapbox zoom
+    *    0 1 2 3 4 5 6 7 8 9
+    * }}}
+    *
+    */
+  def mapBoxZoom2geoHashPrecision(zoom: Double): Int = {
+    if (zoom <= 0.3) {
+      2
+    } else if (zoom <= 7) {
+      3
+    } else if (zoom <= 8) {
+      5
+    } else {
+      6
+    }
+  }
+
 
   /**
     * Поиск кластеров узлов под указанные критерии поиска.
+    *
+    * @param mapZoom Зум карты.
     * @param msearch Поисковые критерии.
     * @return Неизменяемая коллекция из GeoJSON Features, готовых к сериализации и отправки в слой карты.
     */
-  def findClusters(msearch: MNodeSearch): Future[Stream[Feature[LatLng]]] = {
+  def findClusteredSource(mapZoom: Double, msearch: MNodeSearch): Future[List[MNodesSource]] = {
     val aggName = "gpClust"
+
     val agg = AggregationBuilders.geohashGrid(aggName)
-      .precision(6)
+      .field( MNodeFields.Geo.POINT_FN )
+      .precision( mapBoxZoom2geoHashPrecision(mapZoom) )
       .size(20)
 
     // Требуется аггрегация, собрать agg, затолкать в запрос и исполнить.
@@ -87,31 +124,91 @@ class MMapNodes @Inject() (
 
     // Результаты отмаппить как GeoJSON точки с данными в props для рендера круговых маркетов.
     for (resp <- reqFut) yield {
-      resp.getAggregations
+      val buckets = resp.getAggregations
         .get[GeoHashGrid](aggName)
         .getBuckets
-        .iterator()
-        .toIterator
-        // Завернуть каждый багет в GeoJSON Feature.
-        .map { b =>
-          val gp = GeoPoint( b.getKeyAsGeoPoint )
-          val mProps = MNodesClusterProps(b.getDocCount)
-          Feature(
-            properties  = Some( MNodesClusterProps.FORMAT.writes(mProps) ),
-            geometry    = PointGs(gp).toPlayGeoJsonGeom
+
+      // Собрать данные кластеров
+      val srcs0 = {
+        val clustersIter = buckets.iterator()
+          .filter(_.getDocCount > 1L)
+        if (clustersIter.nonEmpty) {
+          val gjClusters = clustersIter
+            .map(formatCluster)
+            .toStream
+          val src = MNodesSource(
+            srcName   = Sources.CLUSTERS,
+            clustered = true,
+            features  = FeatureCollection(gjClusters)
           )
+          List(src)
+        } else {
+          // Нет кластеров
+          Nil
         }
-        .toStream
+      }
+
+      // Скомпилить одноточечные кластеры в точки
+      val srcs1 = {
+        val pointsIter = buckets.iterator()
+          .filter(_.getDocCount == 1L)
+        if (pointsIter.nonEmpty) {
+          val pts = pointsIter
+            .map { b =>
+              Feature(
+                geometry = formatEsPointGeom(b)
+              )
+            }
+            .toStream
+          val src = MNodesSource(
+            srcName = Sources.POINTS,
+            clustered = false,
+            features = FeatureCollection(pts)
+          )
+          src :: srcs0
+
+        } else {
+          srcs0
+        }
+      }
+
+      // Вернуть список итоговых сорсов
+      srcs1
     }
+  }
+
+
+  def formatEsPointGeom(b: GeoHashGrid.Bucket): Point[LatLng] = {
+    formatEsPointGeom(b.getKeyAsGeoPoint)
+  }
+  def formatEsPointGeom(p: org.elasticsearch.common.geo.GeoPoint): Point[LatLng] = {
+    val gp = GeoPoint(p)
+    PointGs(gp).toPlayGeoJsonGeom
+  }
+
+  /** Заворачивание одного багета кластера в GeoJSON Feature. */
+  def formatCluster(b: GeoHashGrid.Bucket): Feature[LatLng] = {
+    val mProps = MNodesClusterProps(b.getDocCount)
+    Feature(
+      properties  = Some( MNodesClusterProps.FORMAT.writes(mProps) ),
+      geometry    = formatEsPointGeom(b)
+    )
+  }
+
+  def formatPoint(gp: GeoPoint): Feature[LatLng] = {
+    Feature(
+      geometry    = PointGs(gp).toPlayGeoJsonGeom
+    )
   }
 
 
   /**
     * Поиск точек узлов для непосредственного отображения оных.
+    *
     * @param msearch Критерии поиска точек.
     * @return Фьючерс с потоком GeoJSON Features.
     */
-  def findNodePoints(msearch: MNodeSearch): Future[Stream[Feature[LatLng]]] = {
+  def getPointsSource(msearch: MNodeSearch): Future[List[MNodesSource]] = {
     // По идее требуется только значение geoPoint, весь узел считывать смысла нет.
     val fn = MNodeFields.Geo.POINT_FN
     mNodes.dynSearchReqBuilder(msearch)
@@ -119,11 +216,30 @@ class MMapNodes @Inject() (
       .addFields(fn)
       .execute()
       .map { resp =>
-        resp.getHits
+        // Собрать gj-фичи
+        val feats = resp.getHits
           .getHits
           .iterator
-          .flatMap(_.field(fn).getValues)
-        ???
+          .flatMap { h =>
+            // формат данных здесь примерно такой: { "g.p": [30.23424234, -5.56756756] }
+            GeoPoint.deserializeOpt( h.field(fn).getValues )
+          }
+          .map { formatPoint }
+          .toStream
+
+        if (feats.nonEmpty) {
+          // Собрать описание сорса
+          val src = MNodesSource(
+            srcName = Sources.POINTS,
+            clustered = false,
+            features = FeatureCollection(feats)
+          )
+          // Вернуть источники.
+          List(src)
+
+        } else {
+          Nil
+        }
       }
   }
 

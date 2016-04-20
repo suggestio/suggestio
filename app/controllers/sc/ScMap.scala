@@ -1,9 +1,8 @@
 package controllers.sc
 
 import io.suggest.model.n2.node.IMNodes
-import models.msc.map.{IMMapNodesDi, MMapAreaInfo}
+import models.msc.map.{IMMapNodesDi, MMapAreaInfo, MNodesSource, MNodesSources}
 import play.api.libs.json.Json
-import play.extras.geojson.{Feature, FeatureCollection, LatLng}
 import util.acl.MaybeAuth
 
 import scala.collection.immutable.{Seq => ISeq}
@@ -41,19 +40,21 @@ trait ScMap
     val msearch = mMapNodes.mapNodesQuery(needCluster, mapInfo)
 
     // Дальше в зависимости от needCluster логика сильно разделяется.
-    val gjFeaturesFut: Future[ISeq[Feature[LatLng]]] = {
+    val sourcesFut: Future[ISeq[MNodesSource]] = {
       if (needCluster) {
-        mMapNodes.findClusters(msearch)
+        mMapNodes.findClusteredSource(mapInfo.zoom, msearch)
       } else {
-        mMapNodes.findNodePoints(msearch)
+        mMapNodes.getPointsSource(msearch)
       }
     }
 
     // Собираем итоговый ответ сервера.
     for {
-      gjFeatures <- gjFeaturesFut
+      sources <- sourcesFut
     } yield {
-      val fc = FeatureCollection(gjFeatures)
+      val fc = MNodesSources(
+        sources = sources
+      )
       Ok( Json.toJson(fc) )
     }
   }
