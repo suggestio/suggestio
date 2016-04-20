@@ -1,6 +1,6 @@
 package io.suggest.sjs.mapbox.gl.geojson
 
-import io.suggest.sjs.common.geo.json.{GjFeature, GjType}
+import io.suggest.sjs.common.geo.json.{GjFeatureCollection, GjType}
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSName
@@ -27,6 +27,9 @@ object GeoJsonSource {
       )
     )
   }
+
+
+  def empty = gjSrc(GjFeatureCollection())
 
 }
 
