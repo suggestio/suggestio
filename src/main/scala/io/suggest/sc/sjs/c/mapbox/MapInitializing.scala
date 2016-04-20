@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.c.mapbox
 
-import io.suggest.sc.sjs.vm.mapbox.GlMapVm
+import io.suggest.sc.sjs.vm.mapbox.{AllNodesUrl, GlMapVm}
 import io.suggest.sjs.mapbox.gl.event._
 
 /**
@@ -38,8 +38,13 @@ trait MapInitializing extends StoreUserGeoLoc {
         .on( MapEventsTypes.MOVE )(_mapSignalCallbackF(Moving))
         .on( MapEventsTypes.MOVE_END )(_mapSignalCallbackF(MoveEnd))
 
-      // Запустить в фоне начальный рендер карты.
-      _needUpdateNodesMap()
+      // Добавить карту узлов.
+      for {
+        urlVm <- AllNodesUrl.find()
+        url   <- urlVm.value
+      } {
+        vm.addAllNodes(url)
+      }
 
       // Переключить состояния
       become(mapReadyState)

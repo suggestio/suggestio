@@ -55,7 +55,6 @@ trait OnMove extends MapReady {
 
     /** Реакция на окончание движения на карте. */
     def _moveEnd(dge: MoveEnd): Unit = {
-      _needUpdateNodesMap()
       become(moveEndState)
     }
 

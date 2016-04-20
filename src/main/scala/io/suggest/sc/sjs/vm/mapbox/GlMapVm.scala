@@ -8,7 +8,7 @@ import io.suggest.sc.sjs.m.mmap.MapNodesSource
 import io.suggest.sjs.common.geo.json.GjType
 import io.suggest.sjs.common.vm.IVm
 import io.suggest.sjs.mapbox.gl.event.EventData
-import io.suggest.sjs.mapbox.gl.geojson.GeoJsonSource
+import io.suggest.sjs.mapbox.gl.geojson.{GeoJsonSource, GeoJsonSourceDescr}
 import io.suggest.sjs.mapbox.gl.layer.circle.CirclePaintProps
 import io.suggest.sjs.mapbox.gl.layer.symbol.SymbolLayoutProps
 import io.suggest.sjs.mapbox.gl.layer.{Layer, LayerTypes}
@@ -253,6 +253,30 @@ case class GlMapVm(glMap: GlMap) {
         srcApi.init(newData.data)
       }
     }
+  }
+
+
+  def addAllNodes(fromUrl: String): Unit = {
+    val srcDesc = GeoJsonSourceDescr.empty
+    srcDesc.data = fromUrl
+    srcDesc.cluster = true
+    val src = new GeoJsonSource(srcDesc)
+    val srcId = ScMapConstants.Nodes.ALL_NODES_SRC_ID
+    glMap.addSource(srcId, src)
+
+    // Собрать слой кружков
+    val layC = Layer.empty
+    layC.id = srcId
+    layC.`type` = LayerTypes.CIRCLE
+    layC.source = srcId
+    layC.paint = {
+      val paint = CirclePaintProps.empty
+      paint.circleRadius = Sources.POINT_RADIUS_PX
+      paint.circleColor  = Sources.FILL_COLOR
+      paint
+    }
+    glMap.addLayer(layC)
+
   }
 
 }
