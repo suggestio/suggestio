@@ -7,6 +7,7 @@ import util.acl.MaybeAuth
 
 import scala.collection.immutable.{Seq => ISeq}
 import scala.concurrent.Future
+import scala.concurrent.duration._
 
 /**
   * Suggest.io
@@ -37,14 +38,17 @@ trait ScMap
     val needCluster = mMapNodes.isClusteredZoom(mapInfo.zoom)
 
     // Начать собирать запрос поиска отображаемых на карте узлов
-    val msearch = mMapNodes.mapNodesQuery(needCluster, mapInfo)
+    val msearch = mMapNodes.mapNodesQuery(needCluster, Some(mapInfo.envelope))
 
     // Дальше в зависимости от needCluster логика сильно разделяется.
     val sourcesFut: Future[ISeq[MNodesSource]] = {
       if (needCluster) {
         mMapNodes.findClusteredSource(mapInfo.zoom, msearch)
       } else {
-        mMapNodes.getPointsSource(msearch)
+        for (ptsFc <- mMapNodes.getPoints(msearch)) yield {
+          mMapNodes.points2NodeSources(ptsFc)
+            .toList
+        }
       }
     }
 
@@ -56,6 +60,28 @@ trait ScMap
         sources = sources
       )
       Ok( Json.toJson(fc) )
+    }
+  }
+
+
+  /**
+    * Рендер вообще всех точек узлов без кластеризации, которые необходимо отобразить на карте узлов.
+    * Рендер идёт максимально примитивно, чтобы mapbox мог самостоятельно получить и обработать данные
+    * в фоновом service-воркере, который произведёт послойную кластеризацию.
+    *
+    * Желательно, чтобы запрос этот проходил через CDN.
+    *
+    * @return GeoJSON.
+    */
+  def renderMapNodesAll = MaybeAuth().async { implicit request =>
+    // Начать собирать запрос поиска отображаемых на карте узлов
+    // Кешируем кратковременно всё, т.к. экшен тяжеловат по RAM и CPU.
+    cacheApiUtil.getOrElseFut("sc.map.nodes.all", expiration = 10.seconds) {
+      val msearch = mMapNodes.mapNodesQuery(isClustered = false)
+      for (ptsFc <- mMapNodes.getPoints(msearch)) yield {
+        Ok( Json.toJson(ptsFc) )
+          .withHeaders(CACHE_CONTROL -> "public, max-age=30")
+      }
     }
   }
 

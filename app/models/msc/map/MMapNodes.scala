@@ -1,7 +1,7 @@
 package models.msc.map
 
 import com.google.inject.Inject
-import io.suggest.model.geo.{GeoPoint, PointGs}
+import io.suggest.model.geo.{GeoPoint, GeoShapeQuerable, PointGs}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
@@ -35,19 +35,21 @@ class MMapNodes @Inject() (
     zoom <= 9
   }
 
+  def MAX_POINTS = 1000
+
   /**
     * Сборка критериев поискового запроса узлов, отображаемых на карте.
     *
     * @param isClustered Поиск ожидается с кластеризовацией?
-    * @param mapInfo Описание видимой области карты.
+    * @param areaOpt Описание видимой области карты, если требуется вывести только указанную область.
     * @return Инстанс MNodeSearch.
     */
-  def mapNodesQuery(isClustered: Boolean, mapInfo: MMapAreaInfo): MNodeSearch = {
+  def mapNodesQuery(isClustered: Boolean, areaOpt: Option[GeoShapeQuerable] = None): MNodeSearch = {
     new MNodeSearchDfltImpl {
       override def nodeTypes    = Seq( MNodeTypes.AdnNode )
       override def testNode     = Some(false)
       // Смысла заваливать экран точками нет обычно. Возвращать узлы тоже смысла нет если произойдёт аггрегация.
-      override def limit        = if (isClustered) 0 else 100
+      override def limit        = if (isClustered) 0 else MAX_POINTS
       override def hasGeoPoint  = Some(true)
 
       // Эджи должны ориентироваться на предикат NodeLocation.
@@ -55,7 +57,7 @@ class MMapNodes @Inject() (
         // Сборка геопоискового критерия.
         val gsCr = GsCriteria(
           levels = Seq( NodeGeoLevels.NGL_BUILDING ),
-          shapes = Seq( mapInfo.envelope )
+          shapes = areaOpt.toSeq
         )
         // Сборка edge-критерия.
         val cr = Criteria(
@@ -89,7 +91,9 @@ class MMapNodes @Inject() (
     *
     */
   def mapBoxZoom2geoHashPrecision(zoom: Double): Int = {
-    if (zoom <= 0.3) {
+    if (zoom <= 0.1) {
+      1
+    } else if (zoom <= 0.8) {
       2
     } else if (zoom <= 7) {
       3
@@ -114,7 +118,7 @@ class MMapNodes @Inject() (
     val agg = AggregationBuilders.geohashGrid(aggName)
       .field( MNodeFields.Geo.POINT_FN )
       .precision( mapBoxZoom2geoHashPrecision(mapZoom) )
-      .size(20)
+      .size(MAX_POINTS)
 
     // Требуется аггрегация, собрать agg, затолкать в запрос и исполнить.
     val reqFut = mNodes
@@ -203,12 +207,34 @@ class MMapNodes @Inject() (
 
 
   /**
-    * Поиск точек узлов для непосредственного отображения оных.
+    * Заворачивание отрендеренных точек в data-контейнеры данных для слоёв.
     *
-    * @param msearch Критерии поиска точек.
-    * @return Фьючерс с потоком GeoJSON Features.
+    * @param featsColl GeoJSON FeatureCollection.
+    * @return Опциональный MNodesSource.
     */
-  def getPointsSource(msearch: MNodeSearch): Future[List[MNodesSource]] = {
+  def points2NodeSources(featsColl: FeatureCollection[LatLng]): Option[MNodesSource] = {
+    if (featsColl.features.nonEmpty) {
+      // Собрать описание сорса
+      val src = MNodesSource(
+        srcName   = Sources.POINTS,
+        clustered = false,
+        features  = featsColl
+      )
+      // Вернуть источники.
+      Some(src)
+
+    } else {
+      None
+    }
+  }
+
+  /**
+    * Просто вернуть точки все в рамках указанного запроса.
+    *
+    * @param msearch Поисковый запрос точек.
+    * @return Фьючерс с FeatureCollection внутри.
+    */
+  def getPoints(msearch: MNodeSearch): Future[FeatureCollection[LatLng]] = {
     // По идее требуется только значение geoPoint, весь узел считывать смысла нет.
     val fn = MNodeFields.Geo.POINT_FN
     mNodes.dynSearchReqBuilder(msearch)
@@ -222,24 +248,13 @@ class MMapNodes @Inject() (
           .iterator
           .flatMap { h =>
             // формат данных здесь примерно такой: { "g.p": [30.23424234, -5.56756756] }
-            GeoPoint.deserializeOpt( h.field(fn).getValues )
+            val lonLatArr = h.field(fn).getValues
+            GeoPoint.deserializeOpt(lonLatArr)
           }
-          .map { formatPoint }
+          .map(formatPoint)
           .toStream
 
-        if (feats.nonEmpty) {
-          // Собрать описание сорса
-          val src = MNodesSource(
-            srcName = Sources.POINTS,
-            clustered = false,
-            features = FeatureCollection(feats)
-          )
-          // Вернуть источники.
-          List(src)
-
-        } else {
-          Nil
-        }
+        FeatureCollection(feats)
       }
   }
 

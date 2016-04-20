@@ -122,6 +122,7 @@ GET  /market/ad/one/img                 @controllers.MarketShowcase.onlyOneAdAsI
 GET  /sc/router.js                      @controllers.MarketShowcase.scJsRouter
 GET  /sc/tags/search                    @controllers.MarketShowcase.tagsSearch(t: mtag.MTagSearch)
 GET  /sc/map/nodes/layer                @controllers.MarketShowcase.renderMapNodesLayer(m: msc.map.MMapAreaInfo)
+GET  /sc/map/nodes/all                  @controllers.MarketShowcase.renderMapNodesAll
 
 ## Поиск по узлам
 GET  /market/nodes/search               @controllers.MarketShowcase.findNodes(a: msc.MScNodeSearchArgs)
