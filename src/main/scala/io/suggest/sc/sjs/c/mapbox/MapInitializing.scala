@@ -35,8 +35,11 @@ trait MapInitializing extends StoreUserGeoLoc {
 
       // Надо повесить listener'ы событий на карту
       vm.on( MapEventsTypes.MOVE_START )(_mapSignalCallbackF(MoveStart))
-      vm.on( MapEventsTypes.MOVE )(_mapSignalCallbackF(Moving))
-      vm.on( MapEventsTypes.MOVE_END )(_mapSignalCallbackF(MoveEnd))
+        .on( MapEventsTypes.MOVE )(_mapSignalCallbackF(Moving))
+        .on( MapEventsTypes.MOVE_END )(_mapSignalCallbackF(MoveEnd))
+
+      // Запустить в фоне начальный рендер карты.
+      _needUpdateNodesMap()
 
       // Переключить состояния
       become(mapReadyState)

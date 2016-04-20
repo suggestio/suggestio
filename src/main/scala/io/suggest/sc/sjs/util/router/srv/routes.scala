@@ -56,4 +56,7 @@ sealed trait ScCtl extends js.Object {
   /** Роута поиска тегов. */
   def tagsSearch(args: Dictionary[Any]): Route = js.native
 
+  /** Роута к экшену заполнения карты точками/кластерами узлов. */
+  def renderMapNodesLayer(args: Dictionary[Any]): Route = js.native
+
 }

@@ -13,9 +13,11 @@ import io.suggest.sjs.mapbox.gl.map.GlMap
   * @param lastUserLoc Последняя полученная геолокация юзера.
   * @param early Аккамулятор необработанных сообщений, пришедших невовремя.
   *              Они должны быть отработаны одним из следующих состояний.
+  * @param nodesRespTs timestamp последнего обработанного запроса поиска узлов.
   */
 case class MbFsmSd(
   glmap         : Option[GlMap]       = None,
   lastUserLoc   : Option[MGeoLoc]     = None,
-  early         : List[IFsmMsg]       = Nil
+  early         : List[IFsmMsg]       = Nil,
+  nodesRespTs   : Option[Long]        = None
 )
