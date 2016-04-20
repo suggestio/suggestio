@@ -41,7 +41,7 @@ object GeoPoint extends MacroLogsImpl {
     }
   }
 
-  implicit def apply(esgp: EsGeoPoint): GeoPoint = {
+  def apply(esgp: EsGeoPoint): GeoPoint = {
     GeoPoint(lat = esgp.lat,  lon = esgp.lon)
   }
 
@@ -59,8 +59,7 @@ object GeoPoint extends MacroLogsImpl {
   val ES_LON_FN = "lon"
 
 
-  /** Десериализатор гео-точки из представления ES, распарсенного через Jackson. */
-  // TODO Надо задействовать play-json десериализаторы, они более православны, чем этот велосипед.
+  /** Десериализатор гео-точки из представления ES или чего-то такого. */
   val deserializeOpt: PartialFunction[Any, Option[GeoPoint]] = {
     // Массив GeoJson в формате [LON, lat]: [12.53245, -44.43553] -- http://geojson.org/
     case l: jl.Iterable[_] =>
@@ -91,8 +90,8 @@ object GeoPoint extends MacroLogsImpl {
       }
     // {"lat": 12.123, "lon": -41.542}
     case jm: ju.Map[_,_] =>
-      Option(jm get ES_LAT_FN) flatMap { latRaw =>
-        Option(jm get ES_LON_FN) flatMap { lonRaw =>
+      Option(jm.get(ES_LAT_FN)) flatMap { latRaw =>
+        Option(jm.get(ES_LON_FN)) flatMap { lonRaw =>
           try {
             val lat = doubleParser(latRaw)
             val lon = doubleParser(lonRaw)
@@ -105,6 +104,9 @@ object GeoPoint extends MacroLogsImpl {
           }
         }
       }
+
+    case null =>
+      None
   }
 
   private def getCommaIndex(str: String) = str indexOf ','
@@ -112,14 +114,17 @@ object GeoPoint extends MacroLogsImpl {
   private def fromLatLonComma(latLon: String, commaIndex: Int) = {
     val lat = jl.Double.parseDouble(latLon.substring(0, commaIndex).trim)
     val lon = jl.Double.parseDouble(latLon.substring(commaIndex + 1).trim)
-    GeoPoint(lat = lat, lon = lon)
+    GeoPoint(
+      lat = fixLat(lat),
+      lon = fixLon(lon)
+    )
   }
 
   val READS_GEO_ARRAY = Reads[GeoPoint] {
     case JsArray(Seq(lonV, latV)) =>
       val gp = GeoPoint(
-        lat = latV.as[Double],
-        lon = lonV.as[Double]
+        lat = fixLat( latV.as[Double] ),
+        lon = fixLon( lonV.as[Double] )
       )
       JsSuccess(gp)
     case other =>
@@ -166,6 +171,21 @@ object GeoPoint extends MacroLogsImpl {
   }
 
 
+  def fixLon(lon: Double): Double = {
+    _forceBetween(-180d, lon, 180d)
+  }
+
+  def fixLat(lat: Double): Double = {
+    _forceBetween(-90d, lat, 90)
+  }
+
+  private def _forceBetween(min: Double, value: Double, max: Double): Double = {
+    Math.min(max,
+      Math.max(min, value)
+    )
+  }
+
+
   /** Поддержка биндинга из/в Query string в play router. */
   implicit def qsb(implicit doubleB: QueryStringBindable[Double]): QueryStringBindable[GeoPoint] = {
     new QueryStringBindable[GeoPoint] with QsbKey1T {
@@ -183,8 +203,8 @@ object GeoPoint extends MacroLogsImpl {
             lat <- latEith.right
           } yield {
             GeoPoint(
-              lat = lat,
-              lon = lon
+              lat = fixLat(lat),
+              lon = fixLon(lon)
             )
           }
         }
