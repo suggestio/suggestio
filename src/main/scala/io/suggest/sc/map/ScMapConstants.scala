@@ -11,6 +11,10 @@ object ScMapConstants {
   /** Константы для отображения узлов на карте или их кластеризованных аналогов. */
   object Nodes {
 
+    /** id инпута, по которому доступна вся карта узлов системы в GeoJSON. */
+    def ALL_URL_INPUT_ID = "allscnm"
+    def ALL_NODES_SRC_ID = ALL_URL_INPUT_ID
+
     /** Имя поля в Feature.props с числом, описывающим кол-во узлов в заданной области. */
     def COUNT_FN  = "c"
 
