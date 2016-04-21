@@ -140,7 +140,7 @@ case class GlMapVm(glMap: GlMap) {
     val srcDesc = GeoJsonSourceDescr.empty
     srcDesc.data = fromUrl
     srcDesc.cluster = true
-    srcDesc.clusterMaxZoom = 11
+    srcDesc.clusterMaxZoom = 9
     srcDesc.clusterRadius = 50
     val src = new GeoJsonSource(srcDesc)
     val srcId = ScMapConstants.Nodes.ALL_NODES_SRC_ID
