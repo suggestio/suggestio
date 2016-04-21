@@ -4,6 +4,7 @@ import io.suggest.sjs.common.model.FromDict
 import io.suggest.sjs.mapbox.gl.layer.LayoutProps
 
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
 import scala.scalajs.js.annotation.JSName
 
 /**
@@ -21,6 +22,9 @@ object SymbolLayoutProps extends FromDict {
 trait SymbolLayoutProps extends LayoutProps {
 
   @JSName("text-field")
-  var textField: String = js.native
+  var textField: UndefOr[String] = js.native
+
+  @JSName("text-size")
+  var textSize: UndefOr[Int] = js.native
 
 }

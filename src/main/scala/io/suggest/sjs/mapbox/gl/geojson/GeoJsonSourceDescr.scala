@@ -20,8 +20,13 @@ object GeoJsonSourceDescr extends FromDict {
 
   def apply(data: GjType | String): GeoJsonSourceDescr = {
     val gjsd = empty
-    gjsd.`type` = SourceTypes.GEOJSON
     gjsd.data = data
+    gjsd
+  }
+
+  override def empty: GeoJsonSourceDescr = {
+    val gjsd = super.empty
+    gjsd.`type` = SourceTypes.GEOJSON
     gjsd
   }
 

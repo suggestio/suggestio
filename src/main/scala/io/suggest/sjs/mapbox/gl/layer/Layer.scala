@@ -1,7 +1,7 @@
 package io.suggest.sjs.mapbox.gl.layer
 
 import io.suggest.sjs.common.model.FromDict
-import io.suggest.sjs.mapbox.gl.Zoom_t
+import io.suggest.sjs.mapbox.gl.{Filter_t, Zoom_t}
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
@@ -41,7 +41,11 @@ trait Layer extends js.Object {
 
   var interactive: UndefOr[Boolean] = js.native
 
-  var filter: UndefOr[js.Object] = js.native
+  /**
+    * @see [[Filters]]
+    * @see [[Clusters]]
+    */
+  var filter: UndefOr[Filter_t] = js.native
 
   // https://www.mapbox.com/mapbox-gl-style-spec/#layers-background
   var layout: UndefOr[LayoutProps] = js.native
