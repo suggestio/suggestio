@@ -4,16 +4,17 @@ import io.suggest.common.maps.mapbox.MapBoxConstants.{TargetPoint, UserGeoLoc}
 import io.suggest.sc.map.ScMapConstants
 import io.suggest.sc.map.ScMapConstants.Nodes.Sources
 import io.suggest.sc.sjs.m.mgeo.{MGeoLoc, MGeoPoint}
-import io.suggest.sc.sjs.m.mmap.MapNodesSource
-import io.suggest.sjs.common.geo.json.GjType
 import io.suggest.sjs.common.vm.IVm
+import io.suggest.sjs.mapbox.gl.Filter_t
 import io.suggest.sjs.mapbox.gl.event.EventData
 import io.suggest.sjs.mapbox.gl.geojson.{GeoJsonSource, GeoJsonSourceDescr}
 import io.suggest.sjs.mapbox.gl.layer.circle.CirclePaintProps
 import io.suggest.sjs.mapbox.gl.layer.symbol.SymbolLayoutProps
-import io.suggest.sjs.mapbox.gl.layer.{Layer, LayerTypes}
+import io.suggest.sjs.mapbox.gl.layer.{Clusters, Filters, Layer, LayerTypes}
 import io.suggest.sjs.mapbox.gl.map.{GlMap, GlMapOptions}
 import org.scalajs.dom.Element
+
+import scala.scalajs.js
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -134,149 +135,86 @@ case class GlMapVm(glMap: GlMap) {
   }
 
 
-  /** API для упрощенного управления слоями и сорсами. */
-  trait SrcApi {
-    def name: String
-    def init(data: GjType): Unit
-    def uninit(): Unit
-  }
-
-  /** API для управления src и layer'ами в  */
-  object PointsSrcApi extends SrcApi {
-    override def name = Sources.POINTS
-
-    override def init(data: GjType): Unit = {
-      // Точки узлов: собираем сорс.
-      val pointsSn = name
-      glMap.getSource(pointsSn).fold [Unit] {
-        val src = GeoJsonSource.gjSrc(data)
-        glMap.addSource(pointsSn, src)
-
-        // Собираем слой точек узлов.
-        val lay = Layer.empty
-        lay.id = pointsSn
-        lay.`type` = LayerTypes.CIRCLE
-        lay.source = pointsSn
-        lay.paint = {
-          val paint = CirclePaintProps.empty
-          paint.circleRadius = Sources.POINT_RADIUS_PX
-          paint.circleColor  = Sources.FILL_COLOR
-          paint
-        }
-        glMap.addLayer(lay)
-      } { srcRaw =>
-        val src = srcRaw.asInstanceOf[GeoJsonSource]
-        src.setData(data)
-      }
-    }
-
-    override def uninit(): Unit = {
-      val srcId = name
-      for (_ <- glMap.getSource(srcId)) {
-        glMap.removeLayer(srcId)
-          .removeSource(srcId)
-      }
-    }
-  }
-
-  /** Управление src и layer'ами для кластеров узлов. */
-  object ClustersSrcApi extends SrcApi {
-    override def name = Sources.CLUSTERS
-
-    override def init(data: GjType): Unit = {
-      // Собрать модель
-      val clustersSn = name
-      glMap.getSource(clustersSn).fold [Unit] {
-        val src = GeoJsonSource.gjSrc(data)
-        glMap.addSource(clustersSn, src)
-
-        // Собрать слой кружков
-        val layC = Layer.empty
-        layC.id = clustersSn
-        layC.`type` = LayerTypes.CIRCLE
-        layC.source = clustersSn
-        layC.paint = {
-          val paint = CirclePaintProps.empty
-          paint.circleRadius = Sources.CLUSTER_RADIUS_PX
-          paint.circleColor  = Sources.FILL_COLOR
-          paint
-        }
-        glMap.addLayer(layC)
-
-        // Собрать слой надписей на кружках
-        val layL = Layer.empty
-        layL.id = Sources.CLUSTER_LABELS
-        layL.`type` = LayerTypes.SYMBOL
-        layL.source = clustersSn
-        layL.layout = {
-          val lp = SymbolLayoutProps.empty
-          lp.textField = "{" + ScMapConstants.Nodes.COUNT_FN + "}"
-          lp
-        }
-        glMap.addLayer(layL)
-
-      } { srcRaw =>
-        val src = srcRaw.asInstanceOf[GeoJsonSource]
-        src.setData(data)
-      }
-    }
-
-    override def uninit(): Unit = {
-      val srcId = Sources.CLUSTERS
-      for (_ <- glMap.getSource(srcId)) {
-        glMap.removeLayer(srcId)
-          .removeLayer(Sources.CLUSTER_LABELS)
-          .removeSource(srcId)
-      }
-    }
-  }
-
-  /** Все доступные API для карты узлов. */
-  def nodesSrcApis = Seq[SrcApi](PointsSrcApi, ClustersSrcApi)
-
-  /**
-    * Обновить все слои карты узлов на основе нового объема данных.
-    *
-    * @param layers Новые данные по ВСЕМ слоям.
-    *               Если искомого слоя там нет, то считаем, что пусто.
-    * @return this.
-    */
-  def updateNodesMapLayers(layers: Seq[MapNodesSource]): Unit = {
-    for {
-      srcApi <- nodesSrcApis
-    } {
-      layers.find(_.name == srcApi.name).fold [Unit] {
-        // Нет данных по слою, надо удалить его.
-        srcApi.uninit()
-      } { newData =>
-        // Есть новые данные по слою.
-        srcApi.init(newData.data)
-      }
-    }
-  }
-
-
-  def addAllNodes(fromUrl: String): Unit = {
+  /** Инициализировать слой  */
+  def initAllNodes(fromUrl: String): Unit = {
     val srcDesc = GeoJsonSourceDescr.empty
     srcDesc.data = fromUrl
     srcDesc.cluster = true
+    srcDesc.clusterMaxZoom = 11
+    srcDesc.clusterRadius = 50
     val src = new GeoJsonSource(srcDesc)
     val srcId = ScMapConstants.Nodes.ALL_NODES_SRC_ID
     glMap.addSource(srcId, src)
 
-    // Собрать слой кружков
-    val layC = Layer.empty
-    layC.id = srcId
-    layC.`type` = LayerTypes.CIRCLE
-    layC.source = srcId
-    layC.paint = {
-      val paint = CirclePaintProps.empty
-      paint.circleRadius = Sources.POINT_RADIUS_PX
-      paint.circleColor  = Sources.FILL_COLOR
-      paint
-    }
-    glMap.addLayer(layC)
+    val L = ScMapConstants.Nodes.Layers
 
+    // Собрать слой просто точек. Он будет внизу.
+    glMap.addLayer {
+      val layP = Layer.empty
+      layP.id = L.NON_CLUSTERED_LAYER_ID
+      layP.`type` = LayerTypes.CIRCLE
+      layP.source = srcId
+      layP.paint = {
+        val paint = CirclePaintProps.empty
+        paint.circleRadius = Sources.POINT_RADIUS_PX
+        paint.circleColor  = Sources.FILL_COLOR
+        paint
+      }
+      layP
+    }
+
+    // Спека для слоёв. Скопирована из https://www.mapbox.com/mapbox-gl-js/example/cluster/
+    val layers = Seq(
+      150 -> "#f28cb1",
+      20  -> "#f1f075",
+      0   -> "#51bbd6"
+    )
+
+    val pcFn = Clusters.POINT_COUNT
+
+    // Проходим спецификацию слоёв, создавая различные слои.
+    layers.iterator.zipWithIndex.foldLeft(Option.empty[Int]) {
+      case (prevMinCountOpt, ((minCount, color), i)) =>
+        glMap.addLayer {
+          val layC = Layer.empty
+          layC.id = L.clusterLayerId(i)
+          layC.`type` = LayerTypes.CIRCLE
+          layC.source = srcId
+          layC.paint = {
+            val cpp = CirclePaintProps.empty
+            cpp.circleColor   = color
+            cpp.circleRadius  = 18
+            cpp
+          }
+          layC.filter = {
+            val f0: Filter_t = js.Array(Filters.>=, pcFn, minCount)
+            prevMinCountOpt.fold [Filter_t] {
+              f0
+            } { prevMinCount =>
+              js.Array(Filters.all,
+                f0,
+                js.Array(Filters.<, pcFn, prevMinCount)
+              )
+            }
+          }
+          layC
+        }
+        Some(minCount)
+    }
+
+    // Собрать слой cо счетчиком кол-ва узлов.
+    glMap.addLayer {
+      val layU = Layer.empty
+      layU.id     = L.COUNT_LABELS_LAYER_ID
+      layU.`type` = LayerTypes.SYMBOL
+      layU.source = srcId
+      layU.layout = {
+        val slp = SymbolLayoutProps.empty
+        slp.textField = "{" + pcFn + "}"
+        slp
+      }
+      layU
+    }
   }
 
 }

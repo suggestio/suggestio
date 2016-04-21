@@ -43,7 +43,7 @@ trait MapInitializing extends StoreUserGeoLoc {
         urlVm <- AllNodesUrl.find()
         url   <- urlVm.value
       } {
-        vm.addAllNodes(url)
+        vm.initAllNodes(url)
       }
 
       // Переключить состояния
