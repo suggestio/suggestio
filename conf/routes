@@ -121,7 +121,6 @@ GET  /market/ad/one/img                 @controllers.MarketShowcase.onlyOneAdAsI
 ## Этот path к js-роутеру захардкожен в сорцах sc-sjs SrvRouter, и его лучше не менять никогда вообще.
 GET  /sc/router.js                      @controllers.MarketShowcase.scJsRouter
 GET  /sc/tags/search                    @controllers.MarketShowcase.tagsSearch(t: mtag.MTagSearch)
-GET  /sc/map/nodes/layer                @controllers.MarketShowcase.renderMapNodesLayer(m: msc.map.MMapAreaInfo)
 GET  /sc/map/nodes/all                  @controllers.MarketShowcase.renderMapNodesAll
 
 ## Поиск по узлам

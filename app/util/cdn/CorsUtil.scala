@@ -1,7 +1,8 @@
 package util.cdn
 
 import akka.stream.Materializer
-import com.google.inject.Inject
+import com.google.inject.{Inject, Singleton}
+import controllers.routes
 import play.api.Configuration
 import play.api.mvc.{Filter, RequestHeader, Result}
 
@@ -16,9 +17,11 @@ import scala.util.matching.Regex
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 16.10.14 17:33
  * Description: Поддержка HTTP CORS для межсайтовых ресурсов.
- * @see [[https://gist.github.com/jeantil/7214962]]
+  *
+  * @see [[https://gist.github.com/jeantil/7214962]]
  * @see [[http://ru.wikipedia.org/wiki/Cross-origin_resource_sharing]]
  */
+@Singleton
 class CorsUtil @Inject() (configuration: Configuration) {
 
   /** Активен ли механизм CORS вообще? */
@@ -78,9 +81,13 @@ class CorsUtil @Inject() (configuration: Configuration) {
       .r
   }
 
+  /** Проверка хидеров на необходимость добавления CORS в ответ. */
   def isAppendAllowHdrsForRequest(rh: RequestHeader): Boolean = {
-    SIMPLE_CORS_HEADERS.nonEmpty &&
-      ADD_HEADERS_URL_RE.pattern.matcher(rh.uri).find
+    SIMPLE_CORS_HEADERS.nonEmpty && {
+      val uri = rh.uri
+      ADD_HEADERS_URL_RE.pattern.matcher(uri).find ||
+        uri.startsWith(routes.MarketShowcase.renderMapNodesAll().url)
+    }
   }
 
 }
@@ -96,7 +103,9 @@ class CorsFilter @Inject() (
   corsUtil                  : CorsUtil,
   implicit val ec           : ExecutionContext,
   override implicit val mat : Materializer
-) extends Filter {
+)
+  extends Filter
+{
 
   override def apply(f: (RequestHeader) => Future[Result])(rh: RequestHeader): Future[Result] = {
     var fut = f(rh)
