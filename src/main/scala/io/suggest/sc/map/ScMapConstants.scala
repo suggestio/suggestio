@@ -12,75 +12,38 @@ object ScMapConstants {
   object Nodes {
 
     /** id инпута, по которому доступна вся карта узлов системы в GeoJSON. */
-    def ALL_URL_INPUT_ID = "allscnm"
-    def ALL_NODES_SRC_ID = ALL_URL_INPUT_ID
+    def ALL_URL_INPUT_ID          = "allscnm"
 
-    /** Имя поля в Feature.props с числом, описывающим кол-во узлов в заданной области. */
-    def COUNT_FN  = "c"
+    /** id сорса, в который заливается карта вообще всех узлов. */
+    def ALL_NODES_SRC_ID          = "ans"
 
-    /** Имя поля, содержащего массив слоёв, подлежащих рендеру. */
-    final val SOURCES_FN = "s"
+    object Layers {
 
-    /** Имя сорса для mapbox, унифицированное на клиенте и сервере. */
-    final val SRC_NAME_FN     = "n"
+      /** Префикс слоя. */
+      private def ID_PREFIX         = "nl"
 
-    /** Название поля со значением флага кластеризованности слоя. */
-    final val IS_CLUSTERED_FN = "u"
+      /** Имя слоя, где отображаются некластеризованные точки. */
+      def NON_CLUSTERED_LAYER_ID    = "n" + ID_PREFIX
 
-    /** Название поля GeoJSON-фич слоя. */
-    final val SRC_DATA_FN     = "g"
+      /** Префикс названий слоёв,  */
+      def CLUSTERED_LAYER_ID_PREFIX = "c" + ID_PREFIX
+
+      /** Сборка имени слоя с учетом индекса. */
+      def clusterLayerId(i: Int): String = {
+        CLUSTERED_LAYER_ID_PREFIX + i
+      }
+
+      /** Слой с цифрами-количествами. */
+      def COUNT_LABELS_LAYER_ID     = "r" + ID_PREFIX
+
+    }
 
 
     /** Названия сорсов mapbox. */
     object Sources {
 
-      private def PREFIX = SOURCES_FN + "-"
-
-      /** Source точек узлов. */
-      def POINTS    = PREFIX + "pt"
-
-      /** Source кластеров узлов. */
-      def CLUSTERS  = PREFIX + "cl"
-
-      def ALL_SOURCES = Seq(POINTS, CLUSTERS)
-
-      /** Имя layer'а для отображения надписей. */
-      def CLUSTER_LABELS = CLUSTERS + "-lbl"
-
       def FILL_COLOR = "#FFFFFF"
       def POINT_RADIUS_PX   = 3
-      def CLUSTER_RADIUS_PX = 10
-
-    }
-
-  }
-
-
-  /** Константы запроса запрос карты узлов. */
-  object Mqs {
-
-    /** Название поля с описанием области карты. */
-    def AREA_INFO_FN  = "m"
-
-    /** Названием поля зума области карты (m.z). */
-    def ZOOM_FN       = "z"
-
-    /** Название поля с описанием отображаемого участка карты (m.e). */
-    def ENVELOPE_FN   = "e"
-
-    /** Генераторы полных имён qs-параметров, т.к. jsRouter сам этого делать не умеет, равно как и sc-sjs. */
-    object Full {
-      import io.suggest.geo.GeoConstants.Qs._
-
-      def MAP_DELIM = DELIM
-
-      def ENVELOPE_TOP_LEFT         = ENVELOPE_FN + MAP_DELIM + TOP_LEFT_FN
-      def ENVELOPE_TOP_LEFT_LON     = ENVELOPE_TOP_LEFT + MAP_DELIM + LON_FN
-      def ENVELOPE_TOP_LEFT_LAT     = ENVELOPE_TOP_LEFT + MAP_DELIM + LAT_FN
-
-      def ENVELOPE_BOTTOM_RIGHT     = ENVELOPE_FN + MAP_DELIM + BOTTOM_RIGHT_FN
-      def ENVELOPE_BOTTOM_RIGHT_LON = ENVELOPE_BOTTOM_RIGHT + MAP_DELIM + LON_FN
-      def ENVELOPE_BOTTOM_RIGHT_LAT = ENVELOPE_BOTTOM_RIGHT + MAP_DELIM + LAT_FN
 
     }
 
