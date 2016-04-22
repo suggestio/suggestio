@@ -14,7 +14,7 @@ object ErrorMsgs extends MsgsStaticT {
 
   def SET_ATTR_NOT_FOUND         = E(2)
 
-  def BSS_GEO_LOC_FAILED         = E(3)
+  def GEO_LOC_FAILED         = E(3)
 
   def GET_NODE_INDEX_FAILED      = E(4)
 
@@ -46,5 +46,7 @@ object ErrorMsgs extends MsgsStaticT {
   def NOT_A_GEO_JSON_FEATURE_GROUP = E(17)
 
   def QUEUE_OVERLOADED             = E(18)
+
+  def GEO_WATCH_TYPE_UNSUPPORTED   = E(19)
 
 }

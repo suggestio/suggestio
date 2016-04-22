@@ -16,4 +16,8 @@ object DomQuick {
     dom.window.setTimeout(f, time)
   }
 
+  def clearTimeout(timer: Int): Unit = {
+    dom.window.clearTimeout(timer)
+  }
+
 }

@@ -46,4 +46,6 @@ object WarnMsgs extends MsgsStaticT {
   def MAPBOXLG_JS_NOT_FOUND     = E(15)
   def MAPBOXLG_ALREADY_INIT     = E(16)
 
+  def GEO_UNEXPECTED_WATCHER_TYPE = E(17)
+
 }
