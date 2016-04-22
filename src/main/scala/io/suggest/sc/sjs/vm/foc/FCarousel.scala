@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.vm.foc
 import io.suggest.common.css.CssSzImplicits
 import io.suggest.primo.IReset
 import io.suggest.sc.ScConstants.Focused._
-import io.suggest.sc.sjs.c.ScFsm
+import io.suggest.sc.sjs.c.scfsm.ScFsm
 import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.m.mfoc.MouseClick
 import io.suggest.sc.sjs.m.mfsm.touch.{TouchCancel, TouchEnd, TouchStart}

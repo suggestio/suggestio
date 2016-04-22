@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.c.scfsm.foc
 
-import io.suggest.sc.sjs.c.ScFsm
+import io.suggest.sc.sjs.c.scfsm.ScFsm
 
 /**
  * Suggest.io

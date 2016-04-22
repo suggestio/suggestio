@@ -1,7 +1,6 @@
 package io.suggest.sc.sjs.m.mgeo
 
-import io.suggest.sjs.common.fsm.{IFsmMsg, IFsmMsgCompanion}
-import io.suggest.sjs.common.geo.{BssAccuracy, IHighAccuracy}
+import io.suggest.sjs.common.fsm.{IFsmMsg, IFsmMsgCompanion, SjsFsm}
 import org.scalajs.dom.PositionError
 
 /**
@@ -10,37 +9,68 @@ import org.scalajs.dom.PositionError
  * Created: 24.08.15 16:03
  * Description: Сигналы для FSM для передачи данных геолокации.
  */
-trait IGeoSignal extends IFsmMsg
-
-/** Интерфейс для сигналов с полученными данными геолокации. */
-trait IGeoLocSignal extends IGeoSignal with IHighAccuracy {
-  def data: MGeoLoc
+trait IGeoSignal extends IFsmMsg {
+  /** Тип геолокации, от которой исходит сигнал. */
+  def wtype: GlWatchType
+  /** Сообщение об успехе? */
+  def isSuccess: Boolean
 }
-
-/** Получены данные по неточной геолокации. */
-case class BssGeoLocSignal(override val data: MGeoLoc)
-  extends IGeoLocSignal
-  with BssAccuracy
-object BssGeoLocSignal
-  extends IFsmMsgCompanion[MGeoLoc]
-
-
-
-/** Интерфейс для сигналов с ошибками геолокации. */
-trait IGeoErrorSignal extends IGeoSignal with IHighAccuracy {
-  def error: PositionError
+trait IGeoSignalCompanion[X] {
+  def apply(t: X, wtype: GlWatchType): IGeoSignal
 }
 
 
-/** Ошибка получения данных геолокации. */
-case class BssGeoErrorSignal(override val error: PositionError)
-  extends IGeoErrorSignal
-  with BssAccuracy
-object BssGeoErrorSignal
-  extends IFsmMsgCompanion[PositionError]
-
-
-
-/** Сигнал от таймера геолокации. */
-case object GeoTimeout
+/** Сигнал о получении геолокации. */
+case class GlLocation(data: MGeoLoc, override val wtype: GlWatchType)
   extends IGeoSignal
+{
+  override def isSuccess = true
+}
+object GlLocation extends IGeoSignalCompanion[MGeoLoc]
+
+
+/** Сигнал об ошибке геолокации. */
+case class GlError(error: PositionError, override val wtype: GlWatchType)
+  extends IGeoSignal
+{
+  override def isSuccess = false
+}
+object GlError extends IGeoSignalCompanion[PositionError]
+
+
+/** Сигнал от таймера ожидания геолокации. */
+case object GeoTimeout
+  extends IFsmMsg
+
+
+
+/** Другие акторы уведомляют GeoLocFsm о необходимости уведомлять или перестать уведомлять их.
+  *
+  * @param receiver FSM, который необходимо уведомлять.
+  * @param notifyZero Слать ли нулевое уведомление? Если true, то уже полученная геолокация будет послана.
+  * @param data Параметры уведомлений.
+  */
+case class Subscribe(
+  receiver    : SjsFsm,
+  notifyZero  : Boolean,
+  data        : SubscriberData = SubscriberData()
+)
+  extends IFsmMsg
+
+/** Отказ от подписки на уведомления. */
+case class UnSubscribe(
+  receiver    : SjsFsm
+)
+  extends IFsmMsg
+
+
+/** Сигнал для GeoLocFsm о резкой необходимости вернуть любой ответ с инфой по геолокации. */
+case class GetAnyGl(to: SjsFsm) extends IFsmMsg
+
+/** Сигнал об отсутствии геолокации. Испускается GeoLocFsm всем вопрошающим. */
+case object GlUnknown extends IFsmMsg
+
+
+/** Сигнал таймаута подавления "слабых" типов геолокации. */
+case class SuppressTimeout(generation: Long) extends IFsmMsg
+object SuppressTimeout extends IFsmMsgCompanion[Long]

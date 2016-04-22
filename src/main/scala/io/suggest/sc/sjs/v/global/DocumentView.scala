@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.v.global
 
-import io.suggest.sc.sjs.c.{ScFsm, DocumentCtl}
+import io.suggest.sc.sjs.c.DocumentCtl
+import io.suggest.sc.sjs.c.scfsm.ScFsm
 import io.suggest.sc.sjs.m.mfsm.signals.KbdKeyUp
 import io.suggest.sc.sjs.vm.SafeDoc
 import org.scalajs.dom.TouchEvent

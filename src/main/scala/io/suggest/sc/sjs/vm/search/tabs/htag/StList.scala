@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.vm.search.tabs.htag
 
 import io.suggest.sc.ScConstants.Search.Nodes._
-import io.suggest.sc.sjs.c.ScFsm
+import io.suggest.sc.sjs.c.scfsm.ScFsm
 import io.suggest.sc.sjs.m.msearch.TagRowClick
 import io.suggest.sc.sjs.vm.util.OnClick
 import io.suggest.sjs.common.view.VUtil
@@ -9,7 +9,7 @@ import io.suggest.sjs.common.vm.content.ClearT
 import io.suggest.sjs.common.vm.Vm
 import io.suggest.sjs.common.vm.find.FindDiv
 import io.suggest.sjs.common.vm.util.IInitLayout
-import org.scalajs.dom.{Node, Event}
+import org.scalajs.dom.{Event, Node}
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**

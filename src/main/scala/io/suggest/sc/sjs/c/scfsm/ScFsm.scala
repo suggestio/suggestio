@@ -1,6 +1,5 @@
-package io.suggest.sc.sjs.c
+package io.suggest.sc.sjs.c.scfsm
 
-import io.suggest.sc.sjs.c.scfsm._
 import io.suggest.sc.sjs.m.msc.fsm.{IStData, MStData}
 import io.suggest.sc.sjs.m.msearch.MTabs
 import io.suggest.sjs.common.util.SjsLogger

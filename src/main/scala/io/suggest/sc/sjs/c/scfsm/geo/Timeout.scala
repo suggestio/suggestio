@@ -25,7 +25,6 @@ trait Timeout extends ScFsmStub with Index {
       // Запустить таймер
       val timerId = DomQuick.setTimeout(GEO_TIMEOUT_MS) { () =>
         _sendEventSyncSafe( GeoTimeout )
-
       }
       // Сохранить id таймера в состояние.
       val sd0 = _stateData
@@ -48,7 +47,7 @@ trait Timeout extends ScFsmStub with Index {
   /** Аддон для сборки состояния ожидания геотаймера. */
   trait ListenGeoTimerStateT extends FsmEmptyReceiverState with IGeoTimeout with ProcessIndexReceivedUtil {
 
-    override def receiverPart: Receive = super.receiverPart orElse {
+    override def receiverPart: Receive = super.receiverPart.orElse {
       case GeoTimeout =>
         val sd0 = _stateData
         val sd1 = sd0.copy(

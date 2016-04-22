@@ -1,8 +1,8 @@
 package io.suggest.sc.sjs.vm.util
 
-import io.suggest.sc.sjs.c.ScFsm
+import io.suggest.sc.sjs.c.scfsm.ScFsm
 import io.suggest.sc.sjs.m.mv.MTouchLock
-import io.suggest.sjs.common.fsm.{OnEventToFsmUtilT, InitOnClickToFsmT, SendEventToFsmUtil}
+import io.suggest.sjs.common.fsm.{InitOnClickToFsmT, OnEventToFsmUtilT, SendEventToFsmUtil}
 import io.suggest.sjs.common.vm.evtg.OnClickT
 
 /**

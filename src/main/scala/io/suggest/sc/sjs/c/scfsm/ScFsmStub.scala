@@ -37,7 +37,7 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm {
     /** Реакция на получение ошибки получения геолокация. */
     def _geoLocErrorReceived(ge: IGeoErrorSignal): Unit = {
       val e = ge.error
-      warn(ErrorMsgs.BSS_GEO_LOC_FAILED + " [" + e.code + "] " + e.message)
+      warn(ErrorMsgs.GEO_LOC_FAILED + " [" + e.code + "] " + e.message)
     }
   }
 
@@ -65,7 +65,8 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm {
 
   /** Ресивер для всех состояний. */
   override protected def allStatesReceiver: Receive = {
-    _allStatesReceiver orElse super.allStatesReceiver
+    _allStatesReceiver
+      .orElse( super.allStatesReceiver )
   }
 
 

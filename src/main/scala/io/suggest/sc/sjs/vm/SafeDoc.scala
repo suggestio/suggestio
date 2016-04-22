@@ -20,8 +20,11 @@ object SafeDoc
   extends DocumentVm()
 
 
-object SafeWnd
-  extends WindowVm()
+object SafeWnd extends WindowVm() {
+
+  def geolocation = navigator.flatMap(_.geolocation)
+
+}
 
 
 object SafeBody extends VmT with OverflowT with EraseBg {

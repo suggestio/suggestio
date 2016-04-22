@@ -1,11 +1,11 @@
 package io.suggest.sc.sjs.vm.grid
 
 import io.suggest.sc.ScConstants.Grid
-import io.suggest.sc.sjs.c.ScFsm
-import io.suggest.sc.sjs.m.mgrid.{MGridParams, GridScroll}
+import io.suggest.sc.sjs.c.scfsm.ScFsm
+import io.suggest.sc.sjs.m.mgrid.{GridScroll, MGridParams}
 import io.suggest.sc.sjs.m.msc.fsm.IStData
 import io.suggest.sjs.common.vm.VmT
-import io.suggest.sjs.common.vm.child.{WrapperChildContent, SubTagFind}
+import io.suggest.sjs.common.vm.child.{SubTagFind, WrapperChildContent}
 import io.suggest.sjs.common.vm.find.FindDiv
 import org.scalajs.dom.Event
 import org.scalajs.dom.raw.HTMLDivElement

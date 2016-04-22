@@ -165,8 +165,8 @@ case class GlMapVm(glMap: GlMap) {
 
     // Спека для слоёв. Скопирована из https://www.mapbox.com/mapbox-gl-js/example/cluster/
     val layers = Seq(
-      150 -> "#f28cb1",
-      20  -> "#f1f075",
+      40  -> "#f28cb1",
+      10  -> "#f1f075",
       0   -> "#51bbd6"
     )
 
