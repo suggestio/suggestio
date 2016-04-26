@@ -6,7 +6,7 @@ import io.suggest.sc.sjs.m.msc.fsm.MStData
 import io.suggest.sc.sjs.m.msrv.ads.find.{MFindAds, MFindAdsReqDflt, MFindAdsReqEmpty}
 import io.suggest.sc.sjs.vm.grid.GBlock
 
-import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.{ExecutionContext, Future}
 
 /** Утиль для аддонов ScFsm для поиска карточек на сервере. */
 trait FindAdsUtil {
@@ -19,7 +19,7 @@ trait FindAdsUtil {
     override def generation: Option[Long] = Some(_sd.generation)
     override def receiverId               = _sd.adnIdOpt
     override def levelId: Option[String]  = Some(ID_START_PAGE)
-    override def geo: Option[IMGeoMode]   = Some( _sd.geo.currGeoMode )
+    override def geo: Option[IMGeoMode]   = Some( IMGeoMode(_sd.geo.lastGeoLoc) )
   }
 
   /** Дефолтовая реализация аргументов поиска. */

@@ -90,6 +90,7 @@ trait Watching extends GeoLocFsmStub {
 
     /** Реакция на получение исзвестной геолокации. */
     def _handleLocation(loc: GlLocation): Unit = {
+      println(loc)
       val sd0 = _stateData
       // TODO Проверять, изменились ли координаты. Десктопный Firefox шлёт одинаковые сообщения геолокации как по таймеру.
 
@@ -174,10 +175,25 @@ trait Watching extends GeoLocFsmStub {
       _notifySubscribers(err)
     }
 
+
+    override def _beforeOffline(): Unit = {
+      super._beforeOffline()
+      // Наверное suppress больше не важен, отменить его TTL
+      val sd0 = _stateData
+      for (s <- sd0.suppressor) {
+        DomQuick.clearTimeout( s.timerId )
+        _stateData = sd0.copy(
+          suppressor = None
+        )
+      }
+    }
+
     /** Реакция на изменение видимости текущей страницы. Если страница сокрыта -- пора спать. */
     def _handleVisibilityChanged(): Unit = {
-      if (dom.document.hidden)
+      if (dom.document.hidden) {
+        _beforeOffline()
         become(_sleepingState)
+      }
     }
 
     /** Реакция на срабатывания таймера подавления неточной геолокации. */

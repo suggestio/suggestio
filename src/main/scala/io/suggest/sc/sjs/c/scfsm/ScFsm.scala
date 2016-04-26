@@ -2,6 +2,7 @@ package io.suggest.sc.sjs.c.scfsm
 
 import io.suggest.sc.sjs.m.msc.fsm.{IStData, MStData}
 import io.suggest.sc.sjs.m.msearch.MTabs
+import io.suggest.sjs.common.fsm.LogBecome
 import io.suggest.sjs.common.util.SjsLogger
 
 /**
@@ -19,6 +20,7 @@ object ScFsm
   with search.OnGeo
   with search.tags.Opened
   with foc.Phase
+  //with LogBecome
 {
 
   // Инициализируем базовые внутренние переменные.

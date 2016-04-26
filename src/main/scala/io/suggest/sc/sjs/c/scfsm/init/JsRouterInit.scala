@@ -20,7 +20,7 @@ trait JsRouterInit extends ScFsmStub {
     
     override def afterBecome(): Unit = {
       super.afterBecome()
-      val jsRouterFut = SrvRouter.getRouter
+      val jsRouterFut = SrvRouter.getRouter()
       jsRouterFut onComplete { case tryRes =>
         val msg = tryRes match {
           case _: Success[_]  => JsRouterReady

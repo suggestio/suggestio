@@ -3,6 +3,8 @@ package io.suggest.sc.sjs.m.mgeo
 import io.suggest.common.menum.LightEnumeration
 import org.scalajs.dom.PositionOptions
 
+import scala.scalajs.js
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -12,10 +14,7 @@ import org.scalajs.dom.PositionOptions
 object GlWatchTypes extends LightEnumeration {
 
   /** Класс элементов модели. */
-  sealed abstract class Val extends ValT {
-
-    /** Строковой id элемента модели. */
-    def strId: String
+  sealed abstract class Val(val strId: String) extends ValT {
 
     override def toString = strId
 
@@ -37,7 +36,8 @@ object GlWatchTypes extends LightEnumeration {
 
     /** Выдать объект position options. */
     def posOpts: PositionOptions = {
-      val po = new PositionOptions
+      val po = js.Dictionary.empty[js.Any]
+        .asInstanceOf[PositionOptions]
       po.enableHighAccuracy = highAccuracy
       po
     }
@@ -54,8 +54,7 @@ object GlWatchTypes extends LightEnumeration {
   override type T = Val
 
   /** Неточная быстрая геолокация по вышкам. */
-  val Bss = new Val {
-    override def strId            = "b"
+  val Bss = new Val("b") {
     override def precision        = 20
     override def highAccuracy     = false
     override def previous         = None
@@ -63,8 +62,7 @@ object GlWatchTypes extends LightEnumeration {
   }
 
   /** Точная медленная геолокация по спутникам. */
-  val Gps = new Val {
-    override def strId            = "g"
+  val Gps = new Val("g") {
     override def precision        = 50
     override def highAccuracy     = true
     override def previous         = Some(Bss)

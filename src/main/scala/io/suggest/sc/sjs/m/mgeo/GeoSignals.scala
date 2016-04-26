@@ -10,19 +10,29 @@ import org.scalajs.dom.PositionError
  * Description: Сигналы для FSM для передачи данных геолокации.
  */
 trait IGeoSignal extends IFsmMsg {
+
   /** Тип геолокации, от которой исходит сигнал. */
   def wtype: GlWatchType
+
   /** Сообщение об успехе? */
   def isSuccess: Boolean
+
 }
+
+/** Интерфейс компаньона геосигналов. */
 trait IGeoSignalCompanion[X] {
   def apply(t: X, wtype: GlWatchType): IGeoSignal
 }
 
+trait IGeoLocSignal {
+  def data: MGeoLoc
+}
+
 
 /** Сигнал о получении геолокации. */
-case class GlLocation(data: MGeoLoc, override val wtype: GlWatchType)
+case class GlLocation(override val data: MGeoLoc, override val wtype: GlWatchType)
   extends IGeoSignal
+  with IGeoLocSignal
 {
   override def isSuccess = true
 }

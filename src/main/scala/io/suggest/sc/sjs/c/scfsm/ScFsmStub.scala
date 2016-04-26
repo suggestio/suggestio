@@ -1,12 +1,9 @@
 package io.suggest.sc.sjs.c.scfsm
 
 import io.suggest.fsm.StateData
-import io.suggest.sc.sjs.c.mapbox.MbFsm
 import io.suggest.sc.sjs.m.mfsm.signals.KbdKeyUp
-import io.suggest.sc.sjs.m.mgeo.{IGeoErrorSignal, IGeoLocSignal}
 import io.suggest.sc.sjs.m.msc.fsm.MStData
 import io.suggest.sjs.common.fsm._
-import io.suggest.sjs.common.msg.ErrorMsgs
 import org.scalajs.dom.KeyboardEvent
 
 /**
@@ -26,19 +23,6 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm {
     /** Переопределяемый метод для обработки событий клавиатуры.
       * По дефолту -- игнорировать все события клавиатуры. */
     def _onKbdKeyUp(event: KeyboardEvent): Unit = {}
-
-    /** Реакция на получение данных геолокации. */
-    def _geoLocReceived(gs: IGeoLocSignal): Unit = {
-      // Отправить в MbFsm уведомление о наличии геолокации.
-      // TODO Не отправлять сигнал, если в состоянии уже такая геопозиция, и сигнал не несёт для системы какой-либо полезной нагрузки.
-      MbFsm ! gs
-    }
-
-    /** Реакция на получение ошибки получения геолокация. */
-    def _geoLocErrorReceived(ge: IGeoErrorSignal): Unit = {
-      val e = ge.error
-      warn(ErrorMsgs.GEO_LOC_FAILED + " [" + e.code + "] " + e.message)
-    }
   }
 
   /**
@@ -56,11 +40,6 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm {
     // Реакция на события клавиатуры.
     case KbdKeyUp(event) =>
       _state._onKbdKeyUp(event)
-    // Данные по геолокации от браузера могут приходить когда угодно.
-    case gs: IGeoLocSignal =>
-      _state._geoLocReceived(gs)
-    case ge: IGeoErrorSignal =>
-      _state._geoLocErrorReceived(ge)
   }
 
   /** Ресивер для всех состояний. */

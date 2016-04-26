@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.c.scfsm.init
 
-import io.suggest.sc.sjs.c.scfsm.geo.GeoInit
+import io.suggest.sc.sjs.c.scfsm.ScFsmStub
 import io.suggest.sc.sjs.m.magent.MScreen
 import io.suggest.sjs.common.vsz.ViewportSz
 import io.suggest.sc.sjs.v.global.DocumentView
@@ -13,7 +13,7 @@ import io.suggest.sjs.common.msg.WarnMsgs
  * Description: Поддержка состояний инициализации выдачи.
  * Это обычно синхронные состояния, которые решают на какое состояние переключаться при запуске.
  */
-trait Init extends JsRouterInit with GeoInit {
+trait Init extends ScFsmStub {
 
   /** Трейт для сборки состояния самой первой инициализации.
     * Тут происходит normal-init, но дополнительно может быть строго одноразовая логика.
@@ -43,9 +43,8 @@ trait Init extends JsRouterInit with GeoInit {
         screen = vszOpt.map( MScreen.apply )
       )
       // TODO Десериализовывать состояние из URL и выбирать состояние.
-      val nextState = _geoAskState
       // Сразу переключаемся на новое состояние.
-      become(nextState, sd1)
+      become(_geoAskState, sd1)
     }
 
     /** Состояние инициализации решает, что необходимо запросить геолокацию у браузера.

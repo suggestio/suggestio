@@ -3,6 +3,7 @@ package io.suggest.sc.sjs.c.scfsm.node
 import io.suggest.sc.ScConstants.Welcome
 import io.suggest.sc.sjs.c.mapbox.MbFsm
 import io.suggest.sc.sjs.c.scfsm.{FindAdsUtil, ScFsmStub}
+import io.suggest.sc.sjs.m.mgeo.IMGeoMode
 import io.suggest.sc.sjs.m.mgrid.MGridState
 import io.suggest.sc.sjs.m.mmap.EnsureMap
 import io.suggest.sc.sjs.m.msrv.index.{MNodeIndex, MScIndexArgs}
@@ -13,7 +14,6 @@ import io.suggest.sc.sjs.vm.res.CommonRes
 import io.suggest.sc.sjs.vm.{SafeBody, SafeWnd}
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.msg.ErrorMsgs
-import org.scalajs.dom
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
@@ -34,7 +34,7 @@ trait Index extends ScFsmStub with FindAdsUtil {
     protected def _getIndex(sd0: SD = _stateData): Future[MNodeIndex] = {
       val inxArgs = MScIndexArgs(
         adnIdOpt  = sd0.adnIdOpt,
-        geoMode   = Some( sd0.geo.currGeoMode ),
+        geoMode   = Some( IMGeoMode(sd0.geo.lastGeoLoc) ),
         screen    = sd0.screen
       )
       MNodeIndex.getIndex(inxArgs)

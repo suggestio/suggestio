@@ -22,13 +22,13 @@ object SrvRouter {
    * Получить роутер: со страницы или запросить с сервера асинхронно, если на странице отсутствует.
    * @return Фьючерс с роутером.
    */
-  def getRouter: Future[routes.type] = {
+  def getRouter(): Future[routes.type] = {
     val wnd = dom.window : WindowWithRouterSafe
     val routerUndef = UndefOr.undefOr2ops( wnd.jsRoutes )
 
     if (routerUndef.nonEmpty) {
       // Роутер уже на странице и готов к работе. Такое возможно, если скрипт роутера был загружен до начала исполнения этого модуля.
-      Future successful routerUndef.get
+      Future.successful( routerUndef.get )
 
     } else {
       // Нет готового js-роутера. Нужно запросить его с сервера.
@@ -38,20 +38,18 @@ object SrvRouter {
 
       /** Функция для исполнения фьючерса. */
       def pSuccessF(): Unit = {
-        p success wnd.jsRoutes.get
+        p.success( wnd.jsRoutes.get )
       }
 
-      val fun: js.Function0[_] = if (asyncInitOpt.isEmpty) {
+      val fun: js.Function0[_] = asyncInitOpt.fold[js.Function0[_]] {
         // Вернуть callback для скрипта роутера в текущем потоке:
         {() =>
           pSuccessF()
           // Callback-функция инициализации больше не требуется. Освободить память браузера от нее.
           wnd.sioScJsRoutesAsyncInit = js.undefined
         }
-
-      } else {
+      } { prevFun =>
         // Уже кто-то ожидает инициализации. Добавлять script-тег не требуется, т.к. он должен быть уже добавлен.
-        val prevFun = { asyncInitOpt.get }
         {() =>
           pSuccessF()
           prevFun()

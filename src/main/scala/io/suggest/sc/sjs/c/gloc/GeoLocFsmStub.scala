@@ -92,14 +92,19 @@ trait GeoLocFsmStub extends SjsFsm with StateData {
   }
 
 
+  trait IBeforeOffline {
+    def _beforeOffline(): Unit = {}
+  }
+
   /** Аддон для состояний для отключения от работы когда нет больше подписчиков. */
-  trait OffWhenNoSubscribersStateT extends FsmState {
+  trait OffWhenNoSubscribersStateT extends FsmState with IBeforeOffline {
 
     /** Отказ от подписки на события геолокации. */
     override def _handleUnSubscribe(s: UnSubscribe): Unit = {
       super._handleUnSubscribe(s)
       if (_stateData.subscribers.isEmpty) {
         // Никому больше неинтересна геолокация. Уйти в отключку.
+        _beforeOffline()
         become(_offState)
       }
     }

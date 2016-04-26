@@ -8,6 +8,16 @@ import io.suggest.geo.GeoConstants
  * Created: 20.05.15 16:08
  * Description: Режимы геолокации для передачи на сервер suggest.io.
  */
+object IMGeoMode {
+
+  def apply(mglOpt: Option[MGeoLoc]): IMGeoMode = {
+    mglOpt
+      .fold[IMGeoMode](MGeoModeIp)(MGeoModeLoc.apply)
+  }
+
+}
+
+
 trait IMGeoMode {
   def toQsStr: String
 }

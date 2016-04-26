@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.c.mapbox
 
-import io.suggest.sc.sjs.m.mgeo.IGeoLocSignal
+import io.suggest.sc.sjs.m.mgeo.GlLocation
 import io.suggest.sc.sjs.vm.mapbox.GlMapVm
 import io.suggest.sjs.mapbox.gl.event.IMapMoveSignal
 
@@ -15,7 +15,7 @@ trait MapReady extends StoreUserGeoLoc {
   trait StoreUpdateUserGeoLocStateT extends StoreUserGeoLocStateT {
 
     /** Реакция на получение данных геолокации текущего юзера. */
-    override def _handleUserGeoLoc(userGeoLoc: IGeoLocSignal): Unit = {
+    override def _handleUserGeoLoc(userGeoLoc: GlLocation): Unit = {
       super._handleUserGeoLoc(userGeoLoc)
       val sd0 = _stateData
       for (glmap <- sd0.glmap) {

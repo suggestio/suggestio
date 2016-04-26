@@ -3,6 +3,7 @@ package io.suggest.sc.sjs.c.gloc
 import io.suggest.sc.sjs.m.magent.VisibilityChange
 import io.suggest.sc.sjs.m.mgeo.MGeoFsmSd
 import io.suggest.sc.sjs.vm.SafeDoc
+import io.suggest.sjs.common.fsm.LogBecome
 import io.suggest.sjs.common.util.SjsLogger
 
 /**
@@ -22,16 +23,21 @@ object GeoLocFsm
   extends SjsLogger
     with Off
     with Watching
+    //with LogBecome
 {
 
-  override protected var _stateData = MGeoFsmSd()
-  override protected var _state = new OffState
+  override protected var _stateData: SD   = MGeoFsmSd()
+  override protected var _state: State_t  = new DummyState
 
   /** Запуск данного FSM. Вызывается только один раз. */
   def start(): Unit = {
+    become(new OffState)
     // Подписаться FSM на события изменения видимости текущей вкладки.
     SafeDoc.addEventListener("visibilitychange")( _signalCallbackF(VisibilityChange) )
   }
+
+  /** Затычка начального состояния. */
+  private class DummyState extends FsmState with FsmEmptyReceiverState
 
   /** Состояние отключённости от системы. */
   class OffState extends OffStateT {

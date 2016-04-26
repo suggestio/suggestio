@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.c.mapbox
 
-import io.suggest.sc.sjs.m.mgeo.IGeoLocSignal
+import io.suggest.sc.sjs.m.mgeo.GlLocation
 
 /**
   * Suggest.io
@@ -14,12 +14,12 @@ trait StoreUserGeoLoc extends MbFsmStub {
   trait StoreUserGeoLocStateT extends FsmState with FsmEmptyReceiverState {
 
     override def receiverPart: Receive = super.receiverPart.orElse {
-      case userGeoLoc: IGeoLocSignal =>
+      case userGeoLoc: GlLocation =>
         _handleUserGeoLoc(userGeoLoc)
     }
 
     /** Реакция на получение данных геолокации текущего юзера. */
-    def _handleUserGeoLoc(userGeoLoc: IGeoLocSignal): Unit = {
+    def _handleUserGeoLoc(userGeoLoc: GlLocation): Unit = {
       _stateData = _stateData.copy(
         lastUserLoc = Some(userGeoLoc.data)
       )

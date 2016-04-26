@@ -43,13 +43,24 @@ trait Off extends GeoLocFsmStub {
   }
 
 
+  trait IHandleVisibilityChange extends FsmEmptyReceiverState {
+    override def receiverPart: Receive = super.receiverPart.orElse {
+      case vc: VisibilityChange =>
+        _handleVisibilityChanged()
+    }
+
+    /** Реакция на изменение состояния visibility страницы. */
+    def _handleVisibilityChanged(): Unit
+  }
+
+
   /** Трейт для сборки off state и sleeping state. */
   trait StandByStateT
     extends FsmState
       with FsmEmptyReceiverState
       with UnwatchAfterBecomeT
       with IWatchingState
-
+      with IHandleVisibilityChange
 
   /**
     * Трейт состояния отключенности от работы.
@@ -63,6 +74,10 @@ trait Off extends GeoLocFsmStub {
       _switchToWatchingState()
     }
 
+    override def _handleVisibilityChanged(): Unit = {
+      // в off-состоянии плевать на изменение видимости страницы текущей.
+    }
+
   }
 
 
@@ -72,18 +87,12 @@ trait Off extends GeoLocFsmStub {
     */
   trait SleepingStateT extends StandByStateT {
 
-    override def receiverPart: Receive = super.receiverPart.orElse {
-      case vc: VisibilityChange =>
-        _handleVisibilityChanged()
-    }
-
     /** Реакция на изменение состояния visibility страницы. */
-    def _handleVisibilityChanged(): Unit = {
+    override def _handleVisibilityChanged(): Unit = {
       if (!dom.document.hidden)
         _switchToWatchingState()
     }
 
   }
-
 
 }
