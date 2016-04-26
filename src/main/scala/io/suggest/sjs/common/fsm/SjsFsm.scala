@@ -171,6 +171,10 @@ trait SjsFsm extends AbstractFsm with ISjsLogger {
 
 }
 
+/** Реализация [[SjsFsm]] в виде абстрактного класса. В надежде на уменьшение скомпиленного размера.
+  * Со scalajs-0.6.x профита это никакого не дало. Может потом будет лучше... */
+abstract class SjsFsmImpl extends SjsFsm
+
 
 /** Добавление поддержки логгирования переключения состояний. */
 trait LogBecome extends SjsFsm {
