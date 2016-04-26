@@ -1,20 +1,20 @@
 package util.showcase
 
-import com.google.inject.{Singleton, Inject}
+import com.google.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.common.fut.FutureUtil
 import io.suggest.sc.tile.ColumnsCountT
 import models._
 import models.blk._
 import models.im._
-import models.im.make.{MakeResult, MakeArgs, Makers}
+import models.im.make.{MakeArgs, MakeResult, Makers}
 import models.mctx.Context
+import models.mproj.ICommonDi
 import models.msc.{IScSiteColors, ScSiteColors, TileArgs}
-import org.elasticsearch.client.Client
-import play.api.Configuration
 import util.blocks.BgImg
+
 import scala.annotation.tailrec
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -24,36 +24,31 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 @Singleton
 class ShowcaseUtil @Inject() (
-  configuration             : Configuration,
-  implicit val ec           : ExecutionContext,
-  implicit val esClient     : Client
+  mCommonDi : ICommonDi
 )
   extends ColumnsCountT
 {
 
+  import mCommonDi._
+
   /** Дефолтовое имя ноды. */
-  val SITE_NAME_GEO = configuration.getString("market.showcase.nodeName.dflt") getOrElse "Suggest.io"
+  val SITE_NAME_GEO = configuration.getString("market.showcase.nodeName.dflt").getOrElse("Suggest.io")
 
   /** Дефолтовый цвет выдачи, если нет ничего. */
-  val SITE_BGCOLOR_DFLT = configuration.getString("market.showcase.color.bg.dflt") getOrElse "333333"
+  val SITE_BGCOLOR_DFLT = configuration.getString("market.showcase.color.bg.dflt").getOrElse("333333")
 
-  val SITE_BGCOLOR_GEO = configuration.getString("market.showcase.color.bg.geo") getOrElse SITE_BGCOLOR_DFLT
+  val SITE_BGCOLOR_GEO = configuration.getString("market.showcase.color.bg.geo").getOrElse(SITE_BGCOLOR_DFLT)
 
 
   /** Дефолтовый цвет элементов переднего плана. */
-  val SITE_FGCOLOR_DFLT = configuration.getString("market.showcase.color.fg.dflt") getOrElse "FFFFFF"
+  val SITE_FGCOLOR_DFLT = configuration.getString("market.showcase.color.fg.dflt").getOrElse("FFFFFF")
 
   /** Цвет для выдачи, которая вне узла. */
-  val SITE_FGCOLOR_GEO = configuration.getString("market.showcase.color.fg.geo") getOrElse SITE_FGCOLOR_DFLT
-
-  /** Отображать ли пустые категории? */
-  val SHOW_EMPTY_CATS = configuration.getBoolean("market.frontend.cats.empty.show") getOrElse true
+  val SITE_FGCOLOR_GEO = configuration.getString("market.showcase.color.fg.geo").getOrElse(SITE_FGCOLOR_DFLT)
 
   /** Фон под рекламными карточками заполняется на основе цвета с добавление прозрачности от фона. */
-  val TILES_BG_FILL_ALPHA: Float = configuration.getDouble("showcase.tiles.bg.fill.ratio") match {
-    case Some(alpha) => alpha.toFloat
-    case None        => 0.8F
-  }
+  val TILES_BG_FILL_ALPHA: Float = configuration.getDouble("showcase.tiles.bg.fill.ratio")
+    .fold(0.8F)(_.toFloat)
 
   /**
    * Сгруппировать "узкие" карточки, чтобы они были вместе.
@@ -145,7 +140,9 @@ class ShowcaseUtil @Inject() (
         szMult        = szMult,
         devScreenOpt  = devScrOpt
       )
-      Makers.forFocusedBg(bm.wide)
+      val maker = Makers.forFocusedBg(bm.wide)
+      current.injector
+        .instanceOf( maker.makerClass )
         .icompile(wArgs)
         .map(Some.apply)
     }
@@ -171,11 +168,11 @@ class ShowcaseUtil @Inject() (
   override def TILE_PADDING_CSSPX = super.TILE_PADDING_CSSPX
 
   /** Сколько пикселей минимум оставлять по краям раскрытых карточек. */
-  val FOCUSED_PADDING_CSSPX = configuration.getInt("sc.focused.padding.hsides.csspx") getOrElse 10
+  val FOCUSED_PADDING_CSSPX = configuration.getInt("sc.focused.padding.hsides.csspx").getOrElse(10)
 
   /** Макс. кол-во вертикальных колонок. */
-  override val TILE_MAX_COLUMNS = configuration.getInt("sc.tiles.columns.max") getOrElse 4
-  override val TILE_MIN_COLUMNS = configuration.getInt("sc.tiles.columns.min") getOrElse super.TILE_MIN_COLUMNS
+  override val TILE_MAX_COLUMNS = configuration.getInt("sc.tiles.columns.max").getOrElse(4)
+  override val TILE_MIN_COLUMNS = configuration.getInt("sc.tiles.columns.min").getOrElse( super.TILE_MIN_COLUMNS )
 
   def MIN_W1 = -1F
 

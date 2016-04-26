@@ -6,14 +6,17 @@ import util.blocks.BlkImgMaker
 import util.img.StrictWideMaker
 import util.showcase.ScWideMaker
 
+import scala.reflect.ClassTag
+
 /**
- * Suggest.io
- * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 17.04.15 12:14
- * Description: Модель image maker'ов.
- * Каждый экземпляр модели -- это контроллер, занимающийся принятием решений по рендеру картинки на основе
- * исходных данных и внутреннего алгоритма.
- */
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 17.04.15 12:14
+  * Description: Статическая модель, описывающая известные системе image maker'ы.
+  *
+  * Каждый экземпляр модели -- это мета-инфа по одному image-maker'у.
+  * С помощью инжектора, клиенты модели могут получить доступ к инстансам мэйкеров.
+  */
 object Makers extends EnumMaybeWithName with StrEnumFormMappings {
 
   /**
@@ -22,11 +25,14 @@ object Makers extends EnumMaybeWithName with StrEnumFormMappings {
    */
   abstract protected sealed class Val(val strId: String)
     extends super.Val(strId)
-    with IMaker
   {
     override def toString() = strId
     /** Длинное имя, отображаемое юзеру. */
     def longName: String
+
+    /** Инфа для инжекции инстанса maker'а. */
+    def makerClass: ClassTag[IMaker]
+
   }
 
   /** Экспортируемый тип модели. */
@@ -35,22 +41,22 @@ object Makers extends EnumMaybeWithName with StrEnumFormMappings {
 
   /** Рендер wide-картинки для выдачи (showcase).
     * Используется квантование ширины по линейке размеров, т.е. картинка может быть больше запрошенных размеров. */
-  val ScWide = new Val("scw") with IMakerWrapper {
-    override def _underlying = ScWideMaker
-    override def longName = "Showcase wide"
+  val ScWide = new Val("scw") {
+    override def longName   = "Showcase wide"
+    override def makerClass = ClassTag( classOf[ScWideMaker] )
   }
 
   /** Рендерер картинки, вписывающий её точно в параметры блока. Рендерер опирается на параметры кропа,
     * заданные в редакторе карточек. */
-  val Block = new Val("blk") with IMakerWrapper {
-    override def _underlying = BlkImgMaker
-    override def longName = "Block-sized"
+  val Block = new Val("blk") {
+    override def longName   = "Block-sized"
+    override def makerClass = ClassTag( classOf[BlkImgMaker] )
   }
 
   /** Жесткий wide-рендер под обязательно заданный экран. */
-  val StrictWide = new Val("strw") with IMakerWrapper {
-    override def _underlying = StrictWideMaker
-    override def longName = "Strict wide"
+  val StrictWide = new Val("strw") {
+    override def longName   = "Strict wide"
+    override def makerClass = ClassTag( classOf[StrictWideMaker] )
   }
 
   override protected def _idMaxLen: Int = 6

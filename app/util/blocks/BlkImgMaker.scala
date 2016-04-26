@@ -1,12 +1,15 @@
 package util.blocks
 
+import com.google.inject.{Inject, Singleton}
 import models.blk.{SzMult_t, szMulted}
 import models.im._
+
 import scala.annotation.tailrec
 import models._
-import models.im.make.{MakeResult, IMakeArgs, IMaker}
+import models.im.make.{IMakeArgs, IMaker, MakeResult}
+import models.mproj.ICommonDi
 
-import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -15,7 +18,14 @@ import scala.concurrent.{Future, ExecutionContext}
  * Description: Движок генерации картинок строго под фон и размер блока.
  * Обычно за основу картинки берется кроп фона, заданный в редакторе.
  */
-object BlkImgMaker extends IMaker {
+@Singleton
+class BlkImgMaker @Inject() (
+  mCommonDi: ICommonDi
+)
+  extends IMaker
+{
+
+  import mCommonDi._
 
   /**
    * Вычислить размер картинки для рендера на основе размера блока и параметрах экрана.
@@ -120,11 +130,16 @@ object BlkImgMaker extends IMaker {
    * @param args Контейнер с данными для вызова.
    * @return Фьючерс с экземпляром MakeResult.
    */
-  override def icompile(args: IMakeArgs)(implicit ec: ExecutionContext): Future[MakeResult] = {
+  override def icompile(args: IMakeArgs): Future[MakeResult] = {
     // Раз системе надо асинхронно, значит делаем асинхронно в принудительном порядке:
     Future {
       icompileSync(args)
     }
   }
 
+}
+
+/** Интерфейс для поля с DI-инстансом maker'а [[BlkImgMaker]]. */
+trait IBlkImgMakerDI {
+  def blkImgMaker: IMaker
 }

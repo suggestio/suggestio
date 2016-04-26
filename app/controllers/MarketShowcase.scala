@@ -1,8 +1,10 @@
 package controllers
 
 import com.google.inject.Inject
+import com.google.inject.name.Named
 import controllers.sc._
 import io.suggest.model.n2.node.MNodes
+import models.im.make.IMaker
 import models.merr.MRemoteErrors
 import models.mproj.{ICommonDi, MProjectInfo}
 import models.msc.map.MMapNodes
@@ -32,6 +34,7 @@ class MarketShowcase @Inject() (
   override val adRenderUtil       : AdRenderUtil,
   override val cdnUtil            : CdnUtil,
   override val n2NodesUtil        : N2NodesUtil,
+  @Named("blk") override val blkImgMaker  : IMaker,
   override val mRemoteErrors      : MRemoteErrors,
   override val mMapNodes          : MMapNodes,
   override val mCommonDi          : ICommonDi,

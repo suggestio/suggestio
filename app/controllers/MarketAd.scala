@@ -1,6 +1,7 @@
 package controllers
 
 import com.google.inject.Inject
+import com.google.inject.name.Named
 import controllers.ad.MarketAdFormUtil._
 import io.suggest.ad.form.AdFormConstants._
 import io.suggest.model.n2.ad.MNodeAd
@@ -12,6 +13,7 @@ import models._
 import models.blk.PrepareBlkImgArgs
 import models.blk.ed.{AdFormM, AdFormResult, BlockImgMap}
 import models.im.MImgs3
+import models.im.make.IMaker
 import models.jsm.init.MTargets
 import models.mctx.Context
 import models.mproj.ICommonDi
@@ -39,13 +41,14 @@ import scala.concurrent.Future
  * Description: Контроллер для работы с рекламным фунционалом.
  */
 class MarketAd @Inject() (
-  tempImgSupport                  : TempImgSupport,
-  mImgs3                          : MImgs3,
-  mNodes                          : MNodes,
-  sysMdrUtil                      : SysMdrUtil,
-  lkEditorWsActors                : LkEditorWsActors,
-  override val n2NodesUtil        : N2NodesUtil,
-  override val mCommonDi          : ICommonDi
+  tempImgSupport                          : TempImgSupport,
+  mImgs3                                  : MImgs3,
+  mNodes                                  : MNodes,
+  sysMdrUtil                              : SysMdrUtil,
+  lkEditorWsActors                        : LkEditorWsActors,
+  @Named("blk") override val blkImgMaker  : IMaker,
+  override val n2NodesUtil                : N2NodesUtil,
+  override val mCommonDi                  : ICommonDi
 )
   extends SioController
   with PlayMacroLogsImpl

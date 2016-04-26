@@ -34,13 +34,15 @@ class ShowcaseNodeListUtil @Inject() (
   import mCommonDi._
 
   /** Показывать все города в выдаче или только текущий? */
-  val SHOW_ALL_TOWNS: Boolean = configuration.getBoolean("showcase.nodes.towns.show.all") getOrElse false
+  private val SHOW_ALL_TOWNS: Boolean = configuration.getBoolean("showcase.nodes.towns.show.all")
+    .contains(true)   // .getOrElse(false)
 
   /** Если включён вывод списка городов, то надо определить макс.длину этого списка. */
-  val MAX_TOWNS: Int = configuration.getInt("showcase.nodes.towns.max") getOrElse 10
+  private val MAX_TOWNS: Int = configuration.getInt("showcase.nodes.towns.max").getOrElse(10)
 
   /** Использовать сортировку не по имени, а по расстоянию до узлов. */
-  val DISTANCE_SORT: Boolean = configuration.getBoolean("showcase.nodes.sort.distance") getOrElse false
+  private val DISTANCE_SORT: Boolean = configuration.getBoolean("showcase.nodes.sort.distance")
+    .contains(true)   // .getOrElse(false)
 
 
   /**
@@ -54,39 +56,48 @@ class ShowcaseNodeListUtil @Inject() (
     */
   def detectCurrentNodeUsing[T](geoMode: GeoMode, gsiOptFut: Future[Option[GeoSearchInfo]])
                                (searchF: MNodeSearch => Future[Seq[T]]): Future[(NodeGeoLevel, T)] = {
-    val detectLevels = geoMode.nodeDetectLevels.iterator.zipWithIndex
-    Future.traverse(detectLevels) { case (lvl, prio) =>
-      gsiOptFut.map { gsiOpt =>
-        new MNodeSearchDfltImpl {
-          override def limit = 1
+    for {
+      gsiOpt <- gsiOptFut
 
-          override def withGeoDistanceSort: Option[GeoPoint] = {
-            // 2015.jun.30 Стараемся всегда искать с учетом всех возможных опорных геоточек.
-            geoMode.exactGeodata
-              .orElse { gsiOpt.map(_.geoPoint) }
-          }
-
-          override def outEdges: Seq[ICriteria] = {
-            val gsCr = GsCriteria(
-              levels = Seq(lvl),
-              shapes = gsiOpt
-                .map { _.geoDistanceQuery }
-                .toSeq
-            )
-            val cr = Criteria(
-              predicates = Seq( MPredicates.NodeLocation ),
-              gsIntersect = Some(gsCr)
-            )
-            Seq(cr)
+      results <- {
+        val detectLevelsIter = geoMode.nodeDetectLevels.iterator.zipWithIndex
+        Future.traverse(detectLevelsIter) { case (lvl, prio) =>
+          for {
+            found  <- {
+              val msearch = new MNodeSearchDfltImpl {
+                override def limit = 1
+                override def withGeoDistanceSort: Option[GeoPoint] = {
+                  // 2015.jun.30 Стараемся всегда искать с учетом всех возможных опорных геоточек.
+                  geoMode.exactGeodata
+                    .orElse {
+                      gsiOpt.map(_.geoPoint)
+                    }
+                }
+                override def outEdges: Seq[ICriteria] = {
+                  val gsCr = GsCriteria(
+                    levels = Seq(lvl),
+                    shapes = gsiOpt
+                      .map {
+                        _.geoDistanceQuery
+                      }
+                      .toSeq
+                  )
+                  val cr = Criteria(
+                    predicates = Seq(MPredicates.NodeLocation),
+                    gsIntersect = Some(gsCr)
+                  )
+                  Seq(cr)
+                }
+              }
+              searchF(msearch)
+            }
+          } yield {
+            (lvl, found, prio)
           }
         }
-      }.flatMap { sargs =>
-        searchF(sargs)
-      }.map {
-        (lvl, _, prio)
       }
 
-    }.map { results =>
+    } yield {
       val filtered = results
         .filter(_._2.nonEmpty)
       if (filtered.nonEmpty) {
@@ -96,14 +107,10 @@ class ShowcaseNodeListUtil @Inject() (
               (_lvl, _nodes.head, _prio)
           }
           .minBy(_._3)
-        Some((lvl, node))
+        (lvl, node)
       } else {
-        None
+        throw new NoSuchElementException("no nodes found for Sc NL")
       }
-    }.filter {
-      _.nonEmpty
-    }.map {
-      _.get
     }
   }
 
@@ -184,17 +191,21 @@ class ShowcaseNodeListUtil @Inject() (
     *         NoSuchElementException если нода болтается в воздухе.
     */
   def getTownOfNode(mnode: MNode): Future[MNode] = {
+
     val ast: AdnShownType = mnode.extras.adn
       .flatMap(_.shownTypeIdOpt)
       .flatMap(AdnShownTypes.maybeWithName)
       .getOrElse( AdnShownTypes.default )
+
     if (ast == AdnShownTypes.TOWN) {
       Future successful mnode
     } else {
       val allParentIds = mnode.edges
         .withPredicateIterIds( MPredicates.GeoParent )
         .toSeq
+
       val sargs1 = NodeSearchByIdShownType(allParentIds, shownTypeIds = Seq(AdnShownTypes.TOWN.name))
+
       mNodes.dynSearch( sargs1 )
         .map(_.head)
         // 2015.jun.18 Была выявлена проблема в head, когда город отсутствует. Пытаемся найти район, а из него город уже.

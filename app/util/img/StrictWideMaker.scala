@@ -1,13 +1,15 @@
 package util.img
 
+import com.google.inject.{Inject, Singleton}
 import models.ImgCrop
 import io.suggest.ym.model.common.MImgInfoMeta
 import models.blk._
-import models.im.make.{MakeResult, IMakeArgs, IMaker}
+import models.im.make.{IMakeArgs, IMaker, MakeResult}
 import models.im._
+import models.mproj.ICommonDi
 import util.PlayLazyMacroLogsImpl
 
-import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -25,7 +27,15 @@ import scala.concurrent.{Future, ExecutionContext}
  *    но совпадающей по высоте с целевой высотой: FillArea
  * 2. Gravity = center, и берётся кроп целевых размеров, упирающийся в результат (1) по высоте или ширине.
  */
-object StrictWideMaker extends IMaker with PlayLazyMacroLogsImpl {
+@Singleton
+class StrictWideMaker @Inject() (
+  mCommonDi: ICommonDi
+)
+  extends IMaker
+    with PlayLazyMacroLogsImpl
+{
+
+  import mCommonDi._
 
   /** Синхронная компиляция аргументов в картинку. */
   def icompileSync(args: IMakeArgs): MakeResult = {
@@ -80,7 +90,7 @@ object StrictWideMaker extends IMaker with PlayLazyMacroLogsImpl {
    * @param args Контейнер с аргументами вызова.
    * @return Фьючерс с экземпляром [[models.im.make.IMakeResult]].
    */
-  override def icompile(args: IMakeArgs)(implicit ec: ExecutionContext): Future[MakeResult] = {
+  override def icompile(args: IMakeArgs): Future[MakeResult] = {
     // TODO Возможно, следует использовать Future.successful()? Вычисление в целом легковесное.
     Future {
       icompileSync(args)

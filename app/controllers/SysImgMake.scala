@@ -112,7 +112,8 @@ trait SysImgMake
         _makeFormRender(img, formWithErrors, NotAcceptable)
       },
       {case (maker, makeArgs) =>
-        for (makeRes <- maker.icompile(makeArgs)) yield {
+        val imaker = current.injector.instanceOf(maker.makerClass)
+        for (makeRes <- imaker.icompile(makeArgs)) yield {
           Redirect(makeRes.dynImgCall)
         }
       }

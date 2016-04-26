@@ -1,6 +1,6 @@
 package models.im.make
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -15,15 +15,6 @@ trait IMaker {
    * @param args Контейнер с данными для вызова.
    * @return Фьючерс с экземпляром MakeResult.
    */
-  def icompile(args: IMakeArgs)(implicit ec: ExecutionContext): Future[MakeResult]
+  def icompile(args: IMakeArgs): Future[MakeResult]
 
-}
-
-
-/** Враппер над экземпляром [[IMaker]]. */
-trait IMakerWrapper extends IMaker {
-  /** Заворачиваемый экземпляр [[IMaker]]. */
-  def _underlying: IMaker
-
-  override def icompile(args: IMakeArgs)(implicit ec: ExecutionContext) = _underlying.icompile(args)
 }

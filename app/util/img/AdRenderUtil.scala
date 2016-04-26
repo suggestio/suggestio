@@ -10,10 +10,11 @@ import models.MNode
 import models.blk.{OneAdQsArgs, szMulted}
 import models.im._
 import models.im.make.{MakeArgs, MakeResult, Makers}
+import models.mproj.ICommonDi
 import util.blocks.BgImg
 import util.xplay.PlayUtil
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -24,8 +25,10 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class AdRenderUtil @Inject() (
   playUtil                  : PlayUtil,
-  implicit private val ec   : ExecutionContext
+  mCommonDi                 : ICommonDi
 ) {
+
+  import mCommonDi._
 
   /**
    * Генерации абсолютной ссылки на отрендеренную в картинку рекламную карточку.
@@ -71,9 +74,12 @@ class AdRenderUtil @Inject() (
           (Makers.Block, dscr)
       }
 
+      val imaker = current.injector.instanceOf( maker.makerClass )
       val margs = MakeArgs(bgImg, bm, args.szMult, Some(dscr))
-      maker.icompile(margs)
-        .map { Some.apply }
+
+      for (res <- imaker.icompile(margs)) yield {
+        Some(res)
+      }
     }
 
     FutureUtil.optFut2futOpt(optFut)(identity)

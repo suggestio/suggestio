@@ -2,7 +2,6 @@ package controllers
 
 import io.suggest.model.n2.edge.MNodeEdges
 import models.blk.SzMult_t
-import models.im.make.Makers
 import models.mctx.Context
 import models.msc.AdBodyTplArgs
 import models.req.INodeReq
@@ -10,9 +9,10 @@ import play.twirl.api.Html
 import util.PlayMacroLogsI
 import models._
 import util.acl._
+
 import scala.concurrent.Future
 import controllers.ad.MarketAdFormUtil
-import util.blocks.BgImg
+import util.blocks.{BgImg, IBlkImgMakerDI}
 import views.html.sc._adNormalTpl
 import views.html.sc.foc._adFullTpl
 
@@ -29,6 +29,7 @@ trait MarketAdPreview
   extends SioController
   with PlayMacroLogsI
   with IsAdnNodeAdmin
+  with IBlkImgMakerDI
 {
 
   import mCommonDi._
@@ -81,8 +82,9 @@ trait MarketAdPreview
   private def renderFull(mad: MNode, bc: BlockConf)(implicit request: INodeReq[_], ctx: Context): Future[Html] = {
     val szMult: SzMult_t = 2.0F
     // Поддержка wideBg:
-    val bgOptFut = BgImg.maybeMakeBgImg(mad, szMult, ctx.deviceScreenOpt)
-    bgOptFut map { bgImgOpt =>
+    for {
+      bgImgOpt <- BgImg.maybeMakeBgImg(mad, szMult, ctx.deviceScreenOpt)
+    } yield {
       val _brArgs = blk.RenderArgs(
         mad           = mad,
         bc            = bc,
@@ -101,8 +103,10 @@ trait MarketAdPreview
   /** Рендер маленькой превьюшки, прямо в редакторе. */
   private def renderSmall(mad: MNode, bc: BlockConf)(implicit request: INodeReq[_], ctx: Context): Future[Html] = {
     val szMult: SzMult_t = 1.0F
-    val bgOptFut = BgImg.maybeMakeBgImgWith(mad, Makers.Block, szMult, ctx.deviceScreenOpt)
-    bgOptFut map { bgOpt =>
+
+    for {
+      bgOpt <- BgImg.maybeMakeBgImgWith(mad, blkImgMaker, szMult, ctx.deviceScreenOpt)
+    } yield {
       val args = blk.RenderArgs(
         mad           = mad,
         bc            = bc,

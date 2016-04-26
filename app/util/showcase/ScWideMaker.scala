@@ -1,12 +1,13 @@
 package util.showcase
 
+import com.google.inject.{Inject, Singleton}
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.ym.model.common.MImgInfoMeta
 import models.blk.{SzMult_t, szMulted, szMultedF, szRounded}
 import models.im._
 import models.im.make.{IMakeArgs, IMaker, MakeResult}
+import models.mproj.ICommonDi
 import models.{ImgCrop, MImgSizeT}
-import play.api.Play.{configuration, current}
 import util.PlayMacroLogsImpl
 
 import scala.annotation.tailrec
@@ -20,10 +21,16 @@ import scala.concurrent.{ExecutionContext, Future}
  * Этот функционал заточен под отображение карточек на всю ширину экрана, которая может вообще любой.
  * Фоновые изображения в таких случаях, как правило, уезжают за пределы wide-ширины из-за квантования ширин.
  */
-
-object ScWideMaker extends IMaker with PlayMacroLogsImpl {
+@Singleton
+class ScWideMaker @Inject() (
+  mCommonDi: ICommonDi
+)
+  extends IMaker
+    with PlayMacroLogsImpl
+{
 
   import LOGGER._
+  import mCommonDi._
 
   /** Желаемые ширИны широкого бэкграунда. */
   val WIDE_WIDTHS_PX: List[Int] = getConfSzsRow("widths",  List(350, 500, 650, 850, 950, 1100, 1250, 1600, 2048) )
@@ -36,7 +43,7 @@ object ScWideMaker extends IMaker with PlayMacroLogsImpl {
 
 
   /** Подобрать ширину фоновой картинки на основе списка допустимых вариантов. */
-  @tailrec def normWideBgSz(minWidth: Int,  acc: Int,  variants: Iterable[Int]): Int = {
+  @tailrec private def normWideBgSz(minWidth: Int,  acc: Int,  variants: Iterable[Int]): Int = {
     if (acc < minWidth && variants.nonEmpty) {
       normWideBgSz(minWidth, variants.head, variants.tail)
     } else {
@@ -147,7 +154,7 @@ object ScWideMaker extends IMaker with PlayMacroLogsImpl {
    * @param args Контейнер с аргументами вызова.
    * @return Фьючерс с результатом.
    */
-  override def icompile(args: IMakeArgs)(implicit ec: ExecutionContext): Future[MakeResult] = {
+  override def icompile(args: IMakeArgs): Future[MakeResult] = {
     import args._
     val iikOrig = img.original
     // Собираем хвост параметров сжатия.

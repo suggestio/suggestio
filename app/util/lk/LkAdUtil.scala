@@ -7,7 +7,8 @@ import models.blk.SzMult_t
 import models.im.DevScreen
 import models.im.make.{MakeArgs, Makers}
 import models.{MNode, blk}
-import util.blocks.{BlocksConf, BgImg}
+import play.api.inject.Injector
+import util.blocks.{BgImg, BlocksConf}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -18,6 +19,7 @@ import scala.concurrent.{ExecutionContext, Future}
  * Description: Утиль для работы с рекламными карточками в личном кабинете.
  */
 class LkAdUtil @Inject() (
+  injector: Injector,
   override implicit val ec: ExecutionContext
 )
   extends IExecutionContext
@@ -28,7 +30,8 @@ class LkAdUtil @Inject() (
 
   /**
    * Генерация параметров рендера рекламной карточки.
-   * @param mad Рекламная карточки.
+    *
+    * @param mad Рекламная карточки.
    * @param devScreenOpt Инфа по скрину.
    * @return Фьючерс с контейнером аргументов для рендера блока.
    */
@@ -45,8 +48,10 @@ class LkAdUtil @Inject() (
         szMult        = szMult,
         devScreenOpt  = devScreenOpt
       )
-      Makers.Block.icompile(wArgs)
-        .map(Some.apply)
+      val imaker = injector.instanceOf( Makers.Block.makerClass )
+      for (res <- imaker.icompile(wArgs)) yield {
+        Some(res)
+      }
     }
 
     val bgImgOptFut = FutureUtil.optFut2futOpt(bgImgFutOpt)(identity)

@@ -14,7 +14,7 @@ import models.mlk.bill.{MCartItem, MCartTplArgs}
 import util.PlayMacroLogsI
 import util.acl.{CanAccessItem, IsAdnNodeAdmin}
 import util.billing.IBill2UtilDi
-import util.blocks.{BgImg, BlocksConf}
+import util.blocks.{BgImg, BlocksConf, IBlkImgMakerDI}
 import views.html.lk.billing.cart._
 
 import scala.concurrent.Future
@@ -31,6 +31,7 @@ trait LkBill2Cart
   with PlayMacroLogsI
   with IsAdnNodeAdmin
   with CanAccessItem
+  with IBlkImgMakerDI
 {
 
   import mCommonDi._
@@ -90,7 +91,7 @@ trait LkBill2Cart
       brArgss <- {
         Future.traverse(mads) { mad =>
           for {
-            bgOpt <- BgImg.maybeMakeBgImgWith(mad, Makers.Block, szMult, ctx.deviceScreenOpt)
+            bgOpt <- BgImg.maybeMakeBgImgWith(mad, blkImgMaker, szMult, ctx.deviceScreenOpt)
           } yield {
             val ra = RenderArgs(
               mad           = mad,

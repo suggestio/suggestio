@@ -5,9 +5,10 @@ import java.util.NoSuchElementException
 import _root_.util.blocks.BgImg
 import _root_.util.di.{IScNlUtil, IScStatUtil, IScUtil}
 import _root_.util.jsa.{Js, JsAction, JsAppendById, SmRcvResp}
+import _root_.util.blocks.IBlkImgMakerDI
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.IMNodes
-import models.im.make.{MakeResult, Makers}
+import models.im.make.MakeResult
 import models.mctx.Context
 import models.msc._
 import models.req.IReq
@@ -38,6 +39,7 @@ trait ScAdsTileBase
   with IScUtil
   with ScCssUtil
   with IMNodes
+  with IBlkImgMakerDI
 {
 
   import mCommonDi._
@@ -140,7 +142,7 @@ trait ScAdsTileBase
         val _szMult = szMult
         val devScreenOpt = ctx.deviceScreenOpt
         Future.traverse(mads) { mad =>
-          val bgImgOptFut = BgImg.maybeMakeBgImgWith(mad, Makers.Block, _szMult, devScreenOpt)
+          val bgImgOptFut = BgImg.maybeMakeBgImgWith(mad, blkImgMaker, _szMult, devScreenOpt)
           bgImgOptFut map { bgImgOpt =>
             _brArgsFor(mad, bgImgOpt)
           }
@@ -195,7 +197,7 @@ trait ScAdsTileBase
         offsetFut flatMap { offset =>
 
           Future.traverse(madsIndexed) { case (mad, relIndex) =>
-            val bgImgOptFut = BgImg.maybeMakeBgImgWith(mad, Makers.Block, _szMult, devScreenOpt)
+            val bgImgOptFut = BgImg.maybeMakeBgImgWith(mad, blkImgMaker, _szMult, devScreenOpt)
             bgImgOptFut.flatMap { bgImgOpt =>
               val indexOpt = Some(offset + relIndex)
               val brArgs1 = _brArgsFor(mad, bgImgOpt, indexOpt)

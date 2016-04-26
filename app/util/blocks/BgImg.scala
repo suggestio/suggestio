@@ -66,7 +66,8 @@ object BgImg extends PlayLazyMacroLogsImpl {
   def maybeMakeBgImg(mad: MNode, szMult: SzMult_t, devScreenOpt: Option[DevScreen])
                     (implicit ec: ExecutionContext): Future[Option[MakeResult]] = {
     val maker = Makers.forFocusedBg( mad.ad.blockMeta.exists(_.wide) )
-    maybeMakeBgImgWith(mad, maker, szMult, devScreenOpt)
+    val imaker = current.injector.instanceOf(maker.makerClass)
+    maybeMakeBgImgWith(mad, imaker, szMult, devScreenOpt)
   }
 
 
