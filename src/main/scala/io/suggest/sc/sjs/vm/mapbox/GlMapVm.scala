@@ -11,6 +11,7 @@ import io.suggest.sjs.mapbox.gl.geojson.{GeoJsonSource, GeoJsonSourceDescr}
 import io.suggest.sjs.mapbox.gl.layer.circle.CirclePaintProps
 import io.suggest.sjs.mapbox.gl.layer.symbol.SymbolLayoutProps
 import io.suggest.sjs.mapbox.gl.layer.{Clusters, Filters, Layer, LayerTypes}
+import io.suggest.sjs.mapbox.gl.ll.LngLat
 import io.suggest.sjs.mapbox.gl.map.{GlMap, GlMapOptions}
 import org.scalajs.dom.Element
 
@@ -95,8 +96,13 @@ case class GlMapVm(glMap: GlMap) {
     this
   }
 
+  /** Прочитать центр карты в точку. */
   def center = MGeoPoint( glMap.getCenter() )
 
+  /** Выставить центр карты из точки. */
+  def center_=(mgp: MGeoPoint): Unit = {
+    glMap.setCenter( LngLat.convert(mgp.toJsArray) )
+  }
 
   /**
     * Выставить точку-прицел текущей позиции на карте.

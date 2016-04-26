@@ -1,6 +1,9 @@
 package io.suggest.sc.sjs.c.mapbox
 
+import io.suggest.sc.sjs.c.gloc.GeoLocFsm
+import io.suggest.sc.sjs.m.mgeo.{Subscribe, SubscriberData}
 import io.suggest.sc.sjs.m.mmap.MbFsmSd
+import io.suggest.sjs.common.fsm.SjsFsmImpl
 import io.suggest.sjs.common.util.SjsLogger
 
 /**
@@ -13,7 +16,8 @@ import io.suggest.sjs.common.util.SjsLogger
   * Скрипт mapbox грузиться асинхронно, поэтому его надо поджидать с использованием таймера.
   */
 object MbFsm
-  extends AwaitMbglJs
+  extends SjsFsmImpl
+  with AwaitMbglJs
   with JsInitializing
   with MapInitializing
   with MapReady
@@ -30,6 +34,15 @@ object MbFsm
   /** Запуск этого FSM на исполнение. */
   def start(): Unit = {
     become(new AwaitMbglJsState)
+
+    // Подписаться на события геолокации текущего юзера.
+    GeoLocFsm ! Subscribe(
+      receiver    = this,
+      notifyZero  = true,
+      data        = SubscriberData(
+        withErrors = false
+      )
+    )
   }
 
 
@@ -51,7 +64,7 @@ object MbFsm
 
   /** Карта инициализирована. */
   class MapReadyState extends MapReadyStateT {
-    override def mapDraggingState = new OnDragState
+    override def mapMovingState = new OnDragState
   }
 
   /** Юзер таскает карту. */

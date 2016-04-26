@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.c.scfsm
 
 import io.suggest.sc.sjs.m.msc.fsm.{IStData, MStData}
 import io.suggest.sc.sjs.m.msearch.MTabs
-import io.suggest.sjs.common.fsm.LogBecome
+import io.suggest.sjs.common.fsm.SjsFsmImpl
 import io.suggest.sjs.common.util.SjsLogger
 
 /**
@@ -12,7 +12,8 @@ import io.suggest.sjs.common.util.SjsLogger
  * Description: FSM-контроллер для всей выдачи. Собирается из кусков, которые закрывают ту или иную область.
  */
 object ScFsm
-  extends SjsLogger
+  extends SjsFsmImpl
+  with SjsLogger
   with init.Phase
   with node.States
   with grid.Append with grid.Plain with grid.LoadMore
@@ -66,6 +67,8 @@ object ScFsm
   class NodeInit_GetIndex_WaitIndex_State extends NodeInit_GetIndex_WaitIndex_StateT with ProcessIndexReceivedUtil {
     override protected def _onNodeIndexFailedState      = this
   }
+
+  // TODO Наверное объеденить это всё в одно состояние с цепочкой Futures внутри?
   class NodeInit_WelcomeShowing_GridAdsWait_State extends NodeInit_WelcomeShowing_GridAdsWait_StateT {
     override protected def _welcomeFinishedState        = new NodeInit_GridAdsWait_State
     override protected def _adsLoadedState              = new NodeInit_WelcomeShowing_State

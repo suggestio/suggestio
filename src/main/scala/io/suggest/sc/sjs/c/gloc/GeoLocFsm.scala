@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.c.gloc
 import io.suggest.sc.sjs.m.magent.VisibilityChange
 import io.suggest.sc.sjs.m.mgeo.MGeoFsmSd
 import io.suggest.sc.sjs.vm.SafeDoc
-import io.suggest.sjs.common.fsm.LogBecome
+import io.suggest.sjs.common.fsm.SjsFsmImpl
 import io.suggest.sjs.common.util.SjsLogger
 
 /**
@@ -20,7 +20,8 @@ import io.suggest.sjs.common.util.SjsLogger
   * 4. Методы геолокации должны включаться и отключаться на ходу.
   */
 object GeoLocFsm
-  extends SjsLogger
+  extends SjsFsmImpl
+    with SjsLogger
     with Off
     with Watching
     //with LogBecome

@@ -1,8 +1,9 @@
 package io.suggest.sc.sjs.c.mapbox
 
-import io.suggest.sc.sjs.m.mgeo.GlLocation
+import io.suggest.sc.sjs.m.mgeo.{GlLocation, MGeoLoc}
 import io.suggest.sc.sjs.vm.mapbox.GlMapVm
 import io.suggest.sjs.mapbox.gl.event.IMapMoveSignal
+import io.suggest.sjs.mapbox.gl.map.GlMap
 
 /**
   * Suggest.io
@@ -12,6 +13,7 @@ import io.suggest.sjs.mapbox.gl.event.IMapMoveSignal
   */
 trait MapReady extends StoreUserGeoLoc {
 
+  /** Сохранение геолокации юзера на какру. */
   trait StoreUpdateUserGeoLocStateT extends StoreUserGeoLocStateT {
 
     /** Реакция на получение данных геолокации текущего юзера. */
@@ -19,9 +21,15 @@ trait MapReady extends StoreUserGeoLoc {
       super._handleUserGeoLoc(userGeoLoc)
       val sd0 = _stateData
       for (glmap <- sd0.glmap) {
-        GlMapVm(sd0.glmap.get)
+        GlMapVm(glmap)
           .setUserGeoLoc(userGeoLoc.data)
       }
+    }
+
+    /** Выставление координат юзера на карту. */
+    def _setUserGeoLoc(geoLoc: MGeoLoc, glmap: GlMap): GlMapVm = {
+      GlMapVm(glmap)
+        .setUserGeoLoc(geoLoc)
     }
 
   }
@@ -31,11 +39,40 @@ trait MapReady extends StoreUserGeoLoc {
   trait MapReadyStateT extends StoreUpdateUserGeoLocStateT {
 
     override def receiverPart: Receive = super.receiverPart.orElse {
-      case mapDragSignal: IMapMoveSignal =>
-        become(mapDraggingState)
+      case mapMoveSignal: IMapMoveSignal =>
+        _handleMapMove(mapMoveSignal)
     }
 
-    def mapDraggingState: FsmState
+    /** Реагирование на начавшееся движение карты. */
+    def _handleMapMove(mapMoveSignal: IMapMoveSignal): Unit = {
+      // Раз уж началась движуха карты, то надо сбросить флаг map-follow-location.
+      val sd0 = _stateData
+      if (sd0.followCurrLoc) {
+        _stateData = sd0.copy(
+          followCurrLoc = false
+        )
+      }
+
+      // Теперь карта откреплена от локации юзера. Перейти на состояние двигательства карты.
+      become(mapMovingState)
+    }
+
+
+    /** Состояние таскания карты. */
+    def mapMovingState: FsmState
+
+    // При выставлении геолокации следует обновлять центровку карты, если карта следует за локацией юзера.
+    override def _setUserGeoLoc(geoLoc: MGeoLoc, glmap: GlMap): GlMapVm = {
+      val vm = super._setUserGeoLoc(geoLoc, glmap)
+
+      // Если карта должна следовать за локацией юзера, то так и сделать.
+      if (_stateData.followCurrLoc) {
+        // TODO Задействовать анимацию бы (panTo, easeTo, flyTo)
+        vm.center = geoLoc.point
+      }
+
+      vm
+    }
 
   }
 
