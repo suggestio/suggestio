@@ -14,7 +14,7 @@ object ErrorMsgs extends MsgsStaticT {
 
   def SET_ATTR_NOT_FOUND         = E(2)
 
-  def GEO_LOC_FAILED         = E(3)
+  def GEO_LOC_FAILED             = E(3)
 
   def GET_NODE_INDEX_FAILED      = E(4)
 

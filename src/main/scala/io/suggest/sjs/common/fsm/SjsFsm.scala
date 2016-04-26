@@ -170,3 +170,14 @@ trait SjsFsm extends AbstractFsm with ISjsLogger {
   }
 
 }
+
+
+/** Добавление поддержки логгирования переключения состояний. */
+trait LogBecome extends SjsFsm {
+
+  override protected def become(nextState: State_t): Unit = {
+    val oldStateName = _state.name
+    super.become(nextState)
+    log(oldStateName + " -> " + _state.name)
+  }
+}
