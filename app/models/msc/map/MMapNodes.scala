@@ -9,9 +9,8 @@ import io.suggest.model.n2.node.{MNodeFields, MNodeTypes, MNodes}
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 import io.suggest.ym.model.NodeGeoLevels
 import models.mproj.ICommonDi
-import org.elasticsearch.search.aggregations.bucket.geogrid.GeoHashGrid
 import play.api.libs.json.JsObject
-import play.extras.geojson.{Feature, FeatureCollection, LatLng, Point}
+import play.extras.geojson.{Feature, FeatureCollection, LatLng}
 
 import scala.concurrent.Future
 
@@ -64,14 +63,6 @@ class MMapNodes @Inject() (
     }
   }
 
-
-  def formatEsPointGeom(b: GeoHashGrid.Bucket): Point[LatLng] = {
-    formatEsPointGeom(b.getKeyAsGeoPoint)
-  }
-  def formatEsPointGeom(p: org.elasticsearch.common.geo.GeoPoint): Point[LatLng] = {
-    val gp = GeoPoint(p)
-    PointGs(gp).toPlayGeoJsonGeom
-  }
 
   def formatPoint(gp: GeoPoint): Feature[LatLng] = {
     Feature(
