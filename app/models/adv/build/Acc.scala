@@ -2,10 +2,9 @@ package models.adv.build
 
 import io.suggest.model.n2.node.IMNodes
 import models._
-import org.elasticsearch.client.Client
 import slick.dbio.{DBIOAction, Effect, NoStream}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /** Аккамулятор результатов асинхронного билдера размещения.
   *
@@ -26,8 +25,6 @@ trait AdvMNodesTryUpdateBuilderT extends IMNodes {
 
   /** Обёртнка для [[Acc]] для передачи в EsModelUtil.tryUpdate(). */
   case class TryUpdateBuilder(acc: Acc)
-                             (implicit override val ec: ExecutionContext,
-                              implicit override val client: Client)
     extends mNodes.TryUpdateDataAbstract[TryUpdateBuilder] {
     override def _saveable = acc.mad
 

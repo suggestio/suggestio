@@ -57,7 +57,7 @@ class ScSitemapsXml @Inject() (
       }
     }
     var reqb = mNodes.dynSearchReqBuilder(adSearch)
-    reqb = mNodes.prepareScrollFor(reqb)
+    reqb = mNodes.prepareScroll(srb = reqb)
 
     // Готовим неизменяемые потоко-безопасные константы, которые будут использованы для ускорения последующих шагов.
     val today = LocalDate.now()

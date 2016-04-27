@@ -1,12 +1,11 @@
 package models.ai
 
-import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.common.OptStrId
 import io.suggest.model.es._
 import EsModelUtil.FieldsJsonAcc
 import com.google.inject.{Inject, Singleton}
 import io.suggest.util.SioEsUtil._
-import org.elasticsearch.client.Client
+import models.mproj.ICommonDi
 import org.joda.time.DateTimeZone
 import play.api.libs.json.{JsArray, JsString}
 import util.PlayMacroLogsImpl
@@ -24,8 +23,10 @@ import scala.concurrent.ExecutionContext
 // TODO Объеденить модель с MNodes, когда дойдут до AiMad руки.
 
 @Singleton
-class MAiMads
-  extends EsModelStaticT
+class MAiMads @Inject() (
+  override val mCommonDi: ICommonDi
+)
+  extends EsModelStatic
     with PlayMacroLogsImpl
     with EsModelPlayJsonStaticT
 {
@@ -132,9 +133,7 @@ trait MAiMadJmxMBean extends EsModelJMXMBeanI
 /** Реализация JMX MBean для модели [[MAiMad]]. */
 final class MAiMadJmx @Inject() (
   override val companion  : MAiMads,
-  implicit val ec         : ExecutionContext,
-  implicit val client     : Client,
-  implicit val sn         : SioNotifierStaticClientI
+  override val ec         : ExecutionContext
 )
   extends EsModelJMXBase
     with MAiMadJmxMBean

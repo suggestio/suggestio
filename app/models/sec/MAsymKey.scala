@@ -3,8 +3,9 @@ package models.sec
 import io.suggest.model.es._
 import util.PlayMacroLogsImpl
 import EsModelUtil.FieldsJsonAcc
-import com.google.inject.Singleton
+import com.google.inject.{Inject, Singleton}
 import io.suggest.util.SioEsUtil._
+import models.mproj.ICommonDi
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -20,7 +21,9 @@ import scala.collection.Map
  * Потом эту модель можно аккуратненько расширить пользовательской поддержкой.
  */
 @Singleton
-class MAsymKeys
+class MAsymKeys @Inject() (
+  override val mCommonDi: ICommonDi
+)
   extends EsModelStatic
     with PlayMacroLogsImpl
     with EsmV2Deserializer

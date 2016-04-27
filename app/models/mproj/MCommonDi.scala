@@ -4,14 +4,15 @@ import akka.actor.ActorSystem
 import akka.stream.Materializer
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import controllers.ErrorHandler
-import io.suggest.di.{IActorSystem, ICacheApiUtil, IEsClient, IExecutionContext}
+import io.suggest.di.{IActorSystem, ICacheApiUtil}
 import io.suggest.event.SioNotifierStaticClientI
+import io.suggest.model.es.IEsModelDiVal
 import io.suggest.playx.{CacheApiUtil, ICurrentAppHelpers, ICurrentConf}
 import models.mctx.Context2Factory
 import models.req.MSioUsers
 import models.MNodeCache
 import org.elasticsearch.client.Client
-import play.api.{Application, Mode}
+import play.api.Application
 import play.api.cache.CacheApi
 import play.api.db.slick.DatabaseConfigProvider
 import play.api.i18n.{Langs, MessagesApi}
@@ -35,13 +36,10 @@ import scala.concurrent.ExecutionContext
 trait ICommonDi
   extends IErrorHandler
   with ICurrentConf with ICurrentAppHelpers
-  with IExecutionContext
-  with IEsClient
-  with ISioNotifier
+  with IEsModelDiVal
   with IActorSystem
   with ICacheApi
   with ICacheApiUtil
-  //with IDb
   with ISlickDbConfig
   with INodeCache
 {
@@ -62,7 +60,6 @@ trait ICommonDi
   override val actorSystem            : ActorSystem
   override val cache                  : CacheApi
   override val cacheApiUtil           : CacheApiUtil
-  //override val db                   : Database
   override val mNodeCache             : MNodeCache
   override val _slickConfigProvider   : DatabaseConfigProvider
   implicit val mat                    : Materializer
@@ -87,7 +84,6 @@ final class MCommonDi @Inject() (
   override val mNodeCache         : MNodeCache,
   override val sessionUtil        : SessionUtil,
   override val mSioUsers          : MSioUsers,
-  //override val db                 : Database, // Anorm, спилить потом.
   override val _slickConfigProvider   : DatabaseConfigProvider,
   override implicit val mat       : Materializer,
   override implicit val current   : Application,

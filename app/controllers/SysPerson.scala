@@ -55,8 +55,8 @@ class SysPerson @Inject() (
       }
       mNodes.dynCount(psearch)
     }
-    val epwIdsCntFut = emailPwIdents.countAll
-    val extIdsCntFut = mExtIdents.countAll
+    val epwIdsCntFut = emailPwIdents.countAll()
+    val extIdsCntFut = mExtIdents.countAll()
     val suCnt        = mSuperUsers.SU_EMAILS.size
     for {
       personsCnt <- personsCntFut

@@ -1,17 +1,17 @@
 package models.usr
 
-import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.es._
 import EsModelUtil._
 import com.google.inject.{Inject, Singleton}
 import com.lambdaworks.crypto.SCryptUtil
-import org.elasticsearch.client.Client
+import models.mproj.ICommonDi
 import util.PlayMacroLogsImpl
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
 import scala.collection.Map
 import scala.concurrent.ExecutionContext
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -21,7 +21,9 @@ import scala.concurrent.ExecutionContext
 
 /** Статическая под-модель для хранения юзеров, живущих вне mozilla persona. */
 @Singleton
-class EmailPwIdents @Inject() ()
+class EmailPwIdents @Inject() (
+  override val mCommonDi: ICommonDi
+)
   extends MPersonIdentSubmodelStatic
     with PlayMacroLogsImpl
     with EsmV2Deserializer
@@ -97,7 +99,7 @@ class EmailPwIdents @Inject() ()
   def SCRYPT_PARALLEL       = 1 //current.configuration.getInt("ident.pw.scrypt.parallel") getOrElse 1
 
   /** Генерировать новый хеш с указанными выше дефолтовыми параметрами.
- *
+    *
     * @param password Пароль, который надо захешировать.
     * @return Текстовый хеш в стандартном формате \$s0\$params\$salt\$key.
     */
@@ -106,7 +108,7 @@ class EmailPwIdents @Inject() ()
   }
 
   /** Проверить хеш scrypt с помощью переданного пароля.
- *
+    *
     * @param password Проверяемый пароль.
     * @param hash Уже готовый хеш.
     * @return true, если пароль ок. Иначе false.
@@ -159,9 +161,7 @@ final case class EmailPwIdent(
 trait EmailPwIdentsJmxMBean extends EsModelJMXMBeanI
 final class EmailPwIdentsJmx @Inject()(
   override val companion  : EmailPwIdents,
-  implicit val ec         : ExecutionContext,
-  implicit val client     : Client,
-  implicit val sn         : SioNotifierStaticClientI
+  override val ec         : ExecutionContext
 )
   extends EsModelJMXBase
     with EmailPwIdentsJmxMBean

@@ -1,11 +1,10 @@
 package models.mcal
 
 import com.google.inject.{Inject, Singleton}
-import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.es.EsModelUtil.FieldsJsonAcc
 import io.suggest.model.es._
 import io.suggest.util.SioEsUtil._
-import org.elasticsearch.client.Client
+import models.mproj.ICommonDi
 import play.api.libs.functional.syntax._
 import util.PlayMacroLogsImpl
 import play.api.libs.json._
@@ -20,8 +19,10 @@ import scala.concurrent.ExecutionContext
  * Description: Модель для хранения календарей в текстовых форматах.
  */
 @Singleton
-class MCalendars
-  extends EsModelStaticT
+class MCalendars @Inject() (
+  override val mCommonDi: ICommonDi
+)
+  extends EsModelStatic
   with PlayMacroLogsImpl
   with EsmV2Deserializer
   with EsModelPlayJsonStaticT
@@ -127,9 +128,7 @@ trait MCalendarJmxMBean extends EsModelJMXMBeanI
 
 class MCalendarJmx @Inject() (
   override val companion  : MCalendars,
-  override val ec         : ExecutionContext,
-  override val client     : Client,
-  override val sn         : SioNotifierStaticClientI
+  override val ec         : ExecutionContext
 )
   extends EsModelJMXBase
   with MCalendarJmxMBean

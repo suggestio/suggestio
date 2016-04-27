@@ -169,9 +169,11 @@ trait EsModelStaticIdentT extends EsModelStaticT with EsModelPlayJsonStaticT {
 }
 trait MPersonIdentSubmodelStatic extends EsModelStaticIdentT  {
 
+  import mCommonDi._
+
   def personIdQuery(personId: String) = QueryBuilders.termQuery(PERSON_ID_ESFN, personId)
 
-  def getByEmail(email: String)(implicit ec: ExecutionContext, client: Client) = {
+  def getByEmail(email: String) = {
     getById(email)
   }
 
@@ -180,15 +182,15 @@ trait MPersonIdentSubmodelStatic extends EsModelStaticIdentT  {
    * @param personId id юзера.
    * @return Список подходящих результатов в неопределённом порядке.
    */
-  def findByPersonId(personId: String)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
-    prepareSearch
+  def findByPersonId(personId: String): Future[Seq[T]] = {
+    prepareSearch()
       .setQuery( personIdQuery(personId) )
       .execute()
       .map { searchResp2list }
   }
 
-  def countByPersonId(personId: String)(implicit ec: ExecutionContext, client: Client): Future[Long] = {
-    prepareCount
+  def countByPersonId(personId: String): Future[Long] = {
+    prepareCount()
       .setQuery( personIdQuery(personId) )
       .execute()
       .map { _.getCount }

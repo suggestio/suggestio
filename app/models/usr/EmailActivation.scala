@@ -1,18 +1,17 @@
 package models.usr
 
-import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.common.OptStrId
 import io.suggest.model.es._
 import EsModelUtil._
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.StringUtil
-import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.QueryBuilders
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.api.mvc.QueryStringBindable
 import _root_.util.PlayMacroLogsImpl
 import com.google.inject.{Inject, Singleton}
+import models.mproj.ICommonDi
 
 import scala.collection.Map
 import scala.concurrent.{ExecutionContext, Future}
@@ -28,11 +27,14 @@ import scala.concurrent.{ExecutionContext, Future}
 /** Статическая часть модели [[EmailActivation]].
   * Модель нужна для хранения ключей для проверки/активации почтовых ящиков. */
 @Singleton
-class EmailActivations
+class EmailActivations @Inject() (
+  override val mCommonDi: ICommonDi
+)
   extends EsModelStaticIdentT
     with PlayMacroLogsImpl
     with EsmV2Deserializer
 {
+  import mCommonDi._
 
   override type T = EmailActivation
 
@@ -69,9 +71,9 @@ class EmailActivations
   }
 
   /** Найти элементы по ключу. */
-  def findByKey(key: String)(implicit ec: ExecutionContext, client: Client): Future[Seq[EmailActivation]] = {
+  def findByKey(key: String): Future[Seq[EmailActivation]] = {
     val keyQuery = QueryBuilders.termQuery(KEY_ESFN, key)
-    client.prepareSearch(ES_INDEX_NAME)
+    esClient.prepareSearch(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
       .setQuery(keyQuery)
       .execute()
@@ -127,9 +129,7 @@ final case class EmailActivation(
 trait EmailActivationsJmxMBean extends EsModelJMXMBeanI
 final class EmailActivationsJmx @Inject() (
   override val companion  : EmailActivations,
-  implicit val ec         : ExecutionContext,
-  implicit val client     : Client,
-  implicit val sn         : SioNotifierStaticClientI
+  override val ec         : ExecutionContext
 )
   extends EsModelJMXBase
     with EmailActivationsJmxMBean

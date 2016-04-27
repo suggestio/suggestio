@@ -27,6 +27,7 @@ object Makers extends EnumMaybeWithName with StrEnumFormMappings {
     extends super.Val(strId)
   {
     override def toString() = strId
+
     /** Длинное имя, отображаемое юзеру. */
     def longName: String
 

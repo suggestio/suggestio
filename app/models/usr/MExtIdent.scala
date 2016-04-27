@@ -1,16 +1,15 @@
 package models.usr
 
-import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.es._
 import EsModelUtil.FieldsJsonAcc
 import io.suggest.util.SioEsUtil._
 import models.mext.ILoginProvider
-import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders}
 import securesocial.core.IProfileDflt
 import _root_.util.PlayMacroLogsImpl
 import EsModelUtil.stringParser
 import com.google.inject.{Inject, Singleton}
+import models.mproj.ICommonDi
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -25,11 +24,15 @@ import scala.concurrent.{ExecutionContext, Future}
  * идентификации пользователей.
  */
 @Singleton
-class MExtIdents
+class MExtIdents @Inject() (
+  override val mCommonDi: ICommonDi
+)
   extends MPersonIdentSubmodelStatic
     with PlayMacroLogsImpl
     with EsmV2Deserializer
 {
+
+  import mCommonDi._
 
   override val ES_TYPE_NAME = "exid"
 
@@ -62,7 +65,7 @@ class MExtIdents
    * @param userId id юзера в рамках провайдера.
    * @return Результат, если есть.
    */
-  def getByUserIdProv(prov: ILoginProvider, userId: String)(implicit client: Client, ec: ExecutionContext): Future[Option[T]] = {
+  def getByUserIdProv(prov: ILoginProvider, userId: String): Future[Option[T]] = {
     val id = genId(prov, userId)
     getById(id)
   }
@@ -147,9 +150,7 @@ case class MExtIdent(
 trait MExtIdentJmxMBean extends EsModelJMXMBeanI
 final class MExtIdentJmx @Inject() (
   override val companion  : MExtIdents,
-  implicit val ec         : ExecutionContext,
-  implicit val client     : Client,
-  implicit val sn         : SioNotifierStaticClientI
+  override val ec         : ExecutionContext
 )
   extends EsModelJMXBase
   with MExtIdentJmxMBean

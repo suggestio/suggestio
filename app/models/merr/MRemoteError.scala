@@ -1,12 +1,11 @@
 package models.merr
 
-import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.es._
 import EsModelUtil.FieldsJsonAcc
 import com.google.inject.{Inject, Singleton}
 import io.suggest.util.SioEsUtil._
 import models._
-import org.elasticsearch.client.Client
+import models.mproj.ICommonDi
 import org.joda.time.DateTime
 import util.PlayMacroLogsImpl
 import play.api.libs.json._
@@ -22,8 +21,10 @@ import scala.concurrent.ExecutionContext
  * Description: Модель для хранения ошибок на клиентах. Информация имеет TTL, настраив
  */
 @Singleton
-class MRemoteErrors
-  extends EsModelStaticT
+class MRemoteErrors @Inject() (
+  override val mCommonDi: ICommonDi
+)
+  extends EsModelStatic
     with PlayMacroLogsImpl
     with EsmV2Deserializer
     with EsModelPlayJsonStaticT
@@ -222,9 +223,7 @@ case class MRemoteError(
 trait MRemoteErrorsJmxMBean extends EsModelJMXMBeanI
 final class MRemoteErrorsJmx @Inject() (
   override val companion  : MRemoteErrors,
-  implicit val ec         : ExecutionContext,
-  implicit val client     : Client,
-  implicit val sn         : SioNotifierStaticClientI
+  override val ec         : ExecutionContext
 )
   extends EsModelJMXBase
     with MRemoteErrorsJmxMBean

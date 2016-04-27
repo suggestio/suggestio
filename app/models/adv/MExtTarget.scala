@@ -1,14 +1,12 @@
 package models.adv
 
 import io.suggest.adv.ext.model.ctx.MExtTargetT
-import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.es._
 import EsModelUtil.FieldsJsonAcc
 import io.suggest.model.search.EsDynSearchStatic
 import io.suggest.util.SioEsUtil._
 import models.adv.search.etg.IExtTargetSearchArgs
 import models.mext.{MExtService, MExtServices}
-import org.elasticsearch.client.Client
 import org.joda.time.DateTime
 import play.api.i18n.Messages
 import util.PlayMacroLogsImpl
@@ -16,6 +14,7 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import EsModelUtil.stringParser
 import com.google.inject.{Inject, Singleton}
+import models.mproj.ICommonDi
 
 import scala.collection.Map
 import scala.concurrent.ExecutionContext
@@ -47,8 +46,10 @@ object MExtTargetFields {
 
 
 @Singleton
-class MExtTargets
-  extends EsModelStaticT
+class MExtTargets @Inject() (
+  override val mCommonDi: ICommonDi
+)
+  extends EsModelStatic
   with PlayMacroLogsImpl
   with EsDynSearchStatic[IExtTargetSearchArgs]
   with EsmV2Deserializer
@@ -168,9 +169,7 @@ case class MExtTarget(
 trait MExtTargetsJmxMBean extends EsModelJMXMBeanI
 final class MExtTargetsJmx @Inject()(
   override val companion  : MExtTargets,
-  implicit val ec         : ExecutionContext,
-  implicit val client     : Client,
-  implicit val sn         : SioNotifierStaticClientI
+  override val ec         : ExecutionContext
 )
   extends EsModelJMXBase
   with MExtTargetsJmxMBean

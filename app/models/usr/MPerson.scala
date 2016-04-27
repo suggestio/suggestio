@@ -24,7 +24,9 @@ import scala.concurrent.duration._
 class MPerson @Inject() (
   mPersonIdents : MPersonIdents,
   mCommonDi     : ICommonDi
-) extends PlayMacroLogsImpl {
+)
+  extends PlayMacroLogsImpl
+{
 
   import mCommonDi._
 

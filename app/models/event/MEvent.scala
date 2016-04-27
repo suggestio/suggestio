@@ -5,16 +5,15 @@ import io.suggest.model.es._
 import io.suggest.model.search.EsDynSearchStatic
 import search.IEventsSearchArgs
 import io.suggest.event.SioNotifier.{Classifier, Event}
-import io.suggest.event.SioNotifierStaticClientI
 import EsModelUtil.{FieldsJsonAcc, stringParser}
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.action.index.IndexRequestBuilder
-import org.elasticsearch.client.Client
 import org.joda.time.DateTime
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import _root_.util.PlayMacroLogsImpl
 import com.google.inject.{Inject, Singleton}
+import models.mproj.ICommonDi
 
 import scala.concurrent.duration._
 import scala.collection.Map
@@ -65,7 +64,9 @@ object MEvent {
 
 
 @Singleton
-class MEvents
+class MEvents @Inject() (
+  override val mCommonDi: ICommonDi
+)
   extends EsModelStatic
     with PlayMacroLogsImpl
     with EsDynSearchStatic[IEventsSearchArgs]
@@ -143,7 +144,7 @@ class MEvents
   }
 
   /** Генератор indexRequestBuilder'ов. Помогает при построении bulk-реквестов. */
-  override def prepareIndexNoVsn(m: T)(implicit client: Client): IndexRequestBuilder = {
+  override def prepareIndexNoVsn(m: T): IndexRequestBuilder = {
     val irb = super.prepareIndexNoVsn(m)
     if (m.ttlDays.isDefined)
       irb.setTTL( m.ttlDays.get.days.toMillis )
@@ -196,9 +197,7 @@ case class MEvent(
 trait MEventsJmxMBean extends EsModelJMXMBeanI
 final class MEventsJmx @Inject() (
   override val companion  : MEvents,
-  implicit val ec         : ExecutionContext,
-  implicit val client     : Client,
-  implicit val sn         : SioNotifierStaticClientI
+  override val ec         : ExecutionContext
 )
   extends EsModelJMXBase
   with MEventsJmxMBean
