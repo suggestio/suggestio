@@ -1,7 +1,8 @@
 package io.suggest.sjs.common.model.dom
 
 import org.scalajs.dom.raw.DOMList
-import scala.collection.AbstractIterator
+
+import scala.collection.{AbstractIterator, mutable}
 
 /**
  * Suggest.io
@@ -17,11 +18,17 @@ import scala.collection.AbstractIterator
  * @param domList Экземпляр DOMList.
  * @tparam T Тип элементов.
  */
-case class DomListIterator[T](domList: DOMList[T]) extends AbstractIterator[T] {
+
+case class DomListIterator[T](
+  override val domList: DOMList[T]
+)
+  extends AbstractIterator[T]
+    with DomListCollUtil[T]
+{
 
   /** На всякий случай кешируем длину обрабатываемого списка.
     * Вдруг ведь length() окажется больше O(1) или потребует переключения контекста. */
-  override val size = domList.length
+  override val size = super.size
 
   /** Индекс следующего элемента. */
   private var i = 0
@@ -37,3 +44,35 @@ case class DomListIterator[T](domList: DOMList[T]) extends AbstractIterator[T] {
   }
 
 }
+
+
+/** Реализация многоразовой iterable-коллекции на основе [[DomListIterator]]. */
+case class DomListSeq[T](
+  override val domList: DOMList[T]
+)
+  extends mutable.AbstractSeq[T]
+    with DomListCollUtil[T]
+{
+  override def iterator = DomListIterator(domList)
+  override def length   = size
+  override def apply(idx: Int): T = {
+    domList(idx)
+  }
+  override def update(idx: Int, elem: T): Unit = {
+    domList.update(idx, elem)
+  }
+}
+
+
+/** Утиль для scala-коллекций вокруг DOMList. */
+trait DomListCollUtil[T] extends TraversableOnce[T] {
+
+  /** Инстанс исходного DOMList'а. */
+  val domList: DOMList[T]
+
+  /** Существенная оптимизация подсчета длины коллекции на базе DOMList.
+    * Возможно даже до O(1), но это зависит реализации списка на стороне браузера. */
+  override def size = domList.length
+
+}
+
