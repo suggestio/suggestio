@@ -23,7 +23,7 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with MacroLog
   /** Билдер поискового запроса. */
   def dynSearchReqBuilder(dsa: A)(implicit client: Client): SearchRequestBuilder = {
     // Запускаем собранный запрос.
-    val result = dsa.prepareSearchRequest(prepareSearch)
+    val result = dsa.prepareSearchRequest( prepareSearch() )
     // Логгируем всё вместе с es-индексом и типом, чтобы облегчить curl-отладку на основе залоггированного.
     LOGGER.trace(s"dynSearchReqBuilder($dsa): $ES_INDEX_NAME/$ES_TYPE_NAME Compiled request = \n${result.toString}")
     result

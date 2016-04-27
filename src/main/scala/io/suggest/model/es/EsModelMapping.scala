@@ -2,10 +2,9 @@ package io.suggest.model.es
 
 import io.suggest.util.SioEsUtil._
 import io.suggest.util._
-import org.elasticsearch.client.Client
 import org.elasticsearch.common.xcontent.XContentBuilder
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -43,7 +42,9 @@ trait EsModelStaticMappingGenerators extends IGenEsMappingProps {
 
 
 /** Трейт содержит статические хелперы для работы с маппингами. */
-trait EsModelStaticMapping extends EsModelStaticMappingGenerators with MacroLogsI {
+trait EsModelStaticMapping extends EsModelStaticMappingGenerators with MacroLogsI with IEsModelDi {
+
+  import mCommonDi._
 
   def ES_INDEX_NAME   = EsModelUtil.DFLT_INDEX
   def ES_TYPE_NAME: String
@@ -53,9 +54,9 @@ trait EsModelStaticMapping extends EsModelStaticMappingGenerators with MacroLogs
   def generateMapping: XContentBuilder = generateMappingFor(ES_TYPE_NAME)
 
   /** Отправить маппинг в elasticsearch. */
-  def putMapping()(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
+  def putMapping(): Future[Boolean] = {
     LOGGER.debug(s"putMapping(): $ES_INDEX_NAME/$ES_TYPE_NAME")
-    client.admin().indices()
+    esClient.admin().indices()
       .preparePutMapping(ES_INDEX_NAME)
       .setType(ES_TYPE_NAME)
       .setSource(generateMapping)
@@ -63,7 +64,7 @@ trait EsModelStaticMapping extends EsModelStaticMappingGenerators with MacroLogs
       .map { _.isAcknowledged }
   }
 
-  def ensureIndex(implicit ec:ExecutionContext, client: Client) = {
+  def ensureIndex() = {
     EsModelUtil.ensureIndex(ES_INDEX_NAME, shards = SHARDS_COUNT, replicas = REPLICAS_COUNT)
   }
 }

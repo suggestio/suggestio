@@ -1,11 +1,9 @@
 package io.suggest.model.es
 
-import io.suggest.event.SioNotifierStaticClientI
 import org.elasticsearch.action.index.IndexRequestBuilder
-import org.elasticsearch.client.Client
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -18,10 +16,12 @@ trait EsChildModelStaticT extends EsModelCommonStaticT {
 
   override type T <: EsChildModelT
 
-  def prepareGet(id: String, parentId: String)(implicit client: Client) = prepareGetBase(id).setParent(parentId)
-  def prepareTermVector(id: String, parentId: String)(implicit client: Client) = prepareTermVectorBase(id).setParent(parentId)
-  def prepareUpdate(id: String, parentId: String)(implicit client: Client) = prepareUpdateBase(id).setParent(parentId)
-  def prepareDelete(id: String, parentId: String)(implicit client: Client) = prepareDeleteBase(id).setParent(parentId)
+  import mCommonDi._
+
+  def prepareGet(id: String, parentId: String) = prepareGetBase(id).setParent(parentId)
+  def prepareTermVector(id: String, parentId: String) = prepareTermVectorBase(id).setParent(parentId)
+  def prepareUpdate(id: String, parentId: String) = prepareUpdateBase(id).setParent(parentId)
+  def prepareDelete(id: String, parentId: String) = prepareDeleteBase(id).setParent(parentId)
 
   /**
    * Существует ли указанный магазин в хранилище?
@@ -29,7 +29,7 @@ trait EsChildModelStaticT extends EsModelCommonStaticT {
    * @param parentId id родительского элемента.
    * @return true/false
    */
-  def isExist(id: String, parentId: String)(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
+  def isExist(id: String, parentId: String): Future[Boolean] = {
     prepareGet(id, parentId)
       .setFields()
       .setFetchSource(false)
@@ -37,7 +37,7 @@ trait EsChildModelStaticT extends EsModelCommonStaticT {
       .map { _.isExists }
   }
 
-  def get(id: String, parentId: String)(implicit ec:ExecutionContext, client: Client): Future[Option[T]] = {
+  def get(id: String, parentId: String): Future[Option[T]] = {
     prepareGet(id, parentId)
       .execute()
       .map { v =>
@@ -52,7 +52,7 @@ trait EsChildModelStaticT extends EsModelCommonStaticT {
    * @param id id документа.
    * @return Строка json с содержимым документа или None.
    */
-  def getRawContent(id: String, parentId: String)(implicit ec:ExecutionContext, client: Client): Future[Option[String]] = {
+  def getRawContent(id: String, parentId: String): Future[Option[String]] = {
     prepareGet(id, parentId)
       .execute()
       .map { EsModelUtil.deserializeGetRespBodyRawStr }
@@ -63,7 +63,7 @@ trait EsChildModelStaticT extends EsModelCommonStaticT {
    * @param id id документа.
    * @return Строка json с документом полностью или None.
    */
-  def getRaw(id: String, parentId: String)(implicit ec:ExecutionContext, client: Client): Future[Option[String]] = {
+  def getRaw(id: String, parentId: String): Future[Option[String]] = {
     prepareGet(id, parentId)
       .execute()
       .map { EsModelUtil.deserializeGetRespFullRawStr }
@@ -75,23 +75,22 @@ trait EsChildModelStaticT extends EsModelCommonStaticT {
    * @param parentId id родительского документа, чтобы es мог вычислить шарду.
    * @return true, если документ найден и удалён. Если не найден, то false
    */
-  def delete(id: String, parentId: String)
-            (implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
+  def delete(id: String, parentId: String): Future[Boolean] = {
     prepareDelete(id, parentId)
       .execute()
       .map { _.isFound }
   }
 
-  def resave(id: String, parentId: String)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Option[String]] = {
+  def resave(id: String, parentId: String): Future[Option[String]] = {
     resaveBase( get(id, parentId) )
   }
 
 
-  def reget(inst0: T)(implicit ec: ExecutionContext, client: Client): Future[Option[T]] = {
+  def reget(inst0: T): Future[Option[T]] = {
     get(inst0.id.get, inst0.parentId)
   }
 
-  override def prepareIndexNoVsn(m: T)(implicit client: Client): IndexRequestBuilder = {
+  override def prepareIndexNoVsn(m: T): IndexRequestBuilder = {
     super.prepareIndexNoVsn(m)
       .setParent(m.parentId)
   }

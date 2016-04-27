@@ -1,7 +1,6 @@
 package io.suggest.model.es
 
 import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.primo.TypeT
 import io.suggest.util.{JMXBase, JacksonWrapper, MacroLogsImplLazy}
 import org.elasticsearch.client.Client
 
@@ -67,8 +66,6 @@ trait EsModelCommonJMXBase extends JMXBase with EsModelJMXMBeanCommonI with Macr
 
   // Контексты, зависимые от конкретного проекта.
   implicit def ec: ExecutionContext
-  implicit def client: Client
-  implicit def sn: SioNotifierStaticClientI
 
   /** Ругнутся в логи и вернуть строку для возврата клиенту. */
   protected def _formatEx(logPrefix: String, data: String, ex: Throwable): String = {
@@ -87,7 +84,7 @@ trait EsModelCommonJMXBase extends JMXBase with EsModelJMXMBeanCommonI with Macr
 
   override def isMappingExists: Boolean = {
     trace(s"isMappingExists()")
-    companion.isMappingExists
+    companion.isMappingExists()
   }
 
   override def putMapping(): String = {
@@ -105,8 +102,8 @@ trait EsModelCommonJMXBase extends JMXBase with EsModelJMXMBeanCommonI with Macr
 
   override def readCurrentMapping(): String = {
     trace("readCurrentMapping()")
-    val fut = companion.getCurrentMapping.map {
-      _.fold("Mapping not found.") { JacksonWrapper.prettify }
+    val fut = for (res <- companion.getCurrentMapping()) yield {
+      res.fold("Mapping not found.") { JacksonWrapper.prettify }
     }
     awaitString(fut)
   }
@@ -138,7 +135,7 @@ trait EsModelCommonJMXBase extends JMXBase with EsModelJMXMBeanCommonI with Macr
   override def esIndexName: String = companion.ES_INDEX_NAME
 
   override def countAll(): String = {
-    val fut = companion.countAll
+    val fut = companion.countAll()
       .map { _.toString }
     awaitString(fut)
   }

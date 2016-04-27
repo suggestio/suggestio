@@ -5,14 +5,12 @@ import java.{lang => jl}
 
 import com.google.inject.{Inject, Singleton}
 import com.sun.org.glassfish.gmbal.{Description, Impact, ManagedOperation}
-import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.es.EsModelUtil._
 import io.suggest.model.es._
 import io.suggest.model.geo.GeoPoint
 import io.suggest.util.MacroLogsImpl
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.action.index.IndexRequestBuilder
-import org.elasticsearch.client.Client
 import org.elasticsearch.common.joda.time.{DateTime => EsDateTime}
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
 import org.elasticsearch.search.aggregations.AggregationBuilders
@@ -33,10 +31,15 @@ import scala.concurrent.{ExecutionContext, Future}
  * Description: Для накопления статистики по рекламным карточкам используется эта модель.
  */
 @Singleton
-class MAdStats @Inject() (configuration: Configuration)
+class MAdStats @Inject() (
+  configuration           : Configuration,
+  override val mCommonDi  : IEsModelDiVal
+)
   extends EsModelStatic
     with MacroLogsImpl
-    with EsModelPlayJsonStaticT {
+    with EsModelPlayJsonStaticT
+{
+  import mCommonDi._
 
   override type T = MAdStat
 
@@ -98,8 +101,7 @@ class MAdStats @Inject() (configuration: Configuration)
    */
   def dateHistogramFor(adOwnerIdOpt: Option[String], interval: DateHistogram.Interval,
                        dateBoundsOpt: Option[(EsDateTime, EsDateTime)] = None,
-                       actionOpt: Option[String] = None, withZeroes: Boolean = false
-                      )(implicit ec: ExecutionContext, client: Client): Future[DateHistAds_t] = {
+                       actionOpt: Option[String] = None, withZeroes: Boolean = false): Future[DateHistAds_t] = {
     // Собираем поисковый запрос. Надо бы избавится от лишних типов и точек, но почему-то сразу всё становится красным.
     var query: QueryBuilder = adOwnerIdOpt.map[QueryBuilder] { adOwnerId =>
       adOwnerQuery(adOwnerId)
@@ -133,7 +135,7 @@ class MAdStats @Inject() (configuration: Configuration)
       val Some((ds, de)) = dateBoundsOpt
       agg.extendedBounds(ds, de)
     }
-    prepareSearch
+    prepareSearch()
       .setQuery(query)
       .setSize(0)
       .addAggregation(agg)
@@ -156,16 +158,16 @@ class MAdStats @Inject() (configuration: Configuration)
   }
 
   /** Подсчёт кол-ва вхождений до указанной даты. */
-  def countBefore(dt: DateTime)(implicit ec: ExecutionContext, client: Client): Future[Long] = {
-    prepareCount
+  def countBefore(dt: DateTime): Future[Long] = {
+    prepareCount()
       .setQuery( beforeDtQuery(dt) )
       .execute()
       .map { _.getCount }
   }
 
   /** Найти все вхождения до указанной даты. */
-  def findBefore(dt: DateTime, maxResults: Int = MAX_RESULTS_DFLT)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
-    prepareSearch
+  def findBefore(dt: DateTime, maxResults: Int = MAX_RESULTS_DFLT): Future[Seq[T]] = {
+    prepareSearch()
       .setQuery( beforeDtQuery(dt) )
       .setSize(maxResults)
       .addSort(TIMESTAMP_ESFN, SortOrder.ASC)
@@ -174,7 +176,7 @@ class MAdStats @Inject() (configuration: Configuration)
   }
 
   /** Удалить все данные до указанной даты. */
-  def deleteBefore(dt: DateTime)(implicit ec: ExecutionContext, client: Client): Future[Int] = {
+  def deleteBefore(dt: DateTime): Future[Int] = {
     val scroller = startScroll(
       queryOpt          = Some(beforeDtQuery(dt)),
       resultsPerScroll  = BULK_DELETE_QUEUE_LEN / 2
@@ -275,7 +277,7 @@ class MAdStats @Inject() (configuration: Configuration)
     )
   }
 
-  override def prepareIndex(m: T)(implicit client: Client): IndexRequestBuilder = {
+  override def prepareIndex(m: T): IndexRequestBuilder = {
     val irb = super.prepareIndex(m)
     if (m.ttl.isDefined)
       irb.setTTL(m.ttl.get.toMillis)
@@ -402,10 +404,8 @@ trait MAdStatJmxMBean extends EsModelJMXMBeanI {
 
 /** JMX MBean реализация. */
 final class MAdStatJmx @Inject() (
-  override val companion: MAdStats,
-  implicit val ec       : ExecutionContext,
-  implicit val client   : Client,
-  implicit val sn       : SioNotifierStaticClientI
+  override val companion    : MAdStats,
+  override implicit val ec  : ExecutionContext
 )
   extends EsModelJMXBase
     with MAdStatJmxMBean

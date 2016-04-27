@@ -69,7 +69,7 @@ object EsModelUtil extends MacroLogsImpl {
       val imeFut = if (ignoreExists) {
         Future.successful(false)
       } else {
-        esModelStatic.isMappingExists
+        esModelStatic.isMappingExists()
       }
       imeFut flatMap {
         case false =>

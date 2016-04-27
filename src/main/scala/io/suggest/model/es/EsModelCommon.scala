@@ -2,7 +2,6 @@ package io.suggest.model.es
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.common.OptStrId
 import io.suggest.primo.TypeT
 import io.suggest.util.JacksonWrapper
@@ -17,7 +16,7 @@ import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import org.elasticsearch.search.SearchHit
 
 import scala.collection.JavaConversions._
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -30,6 +29,8 @@ import scala.concurrent.{ExecutionContext, Future}
 trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
 
   override type T <: EsModelCommonT
+
+  import mCommonDi._
 
   // Кое-какие константы, которые можно переопределить в рамках конкретных моделей.
   def MAX_RESULTS_DFLT = EsModelUtil.MAX_RESULTS_DFLT
@@ -49,35 +50,40 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
   def getRoutingKey(idOrNull: String): Option[String] = None
 
   // Короткие враппер для типичных операций в рамках статической модели.
-  def prepareSearch(implicit client: Client) = client.prepareSearch(ES_INDEX_NAME).setTypes(ES_TYPE_NAME)
-  def prepareCount(implicit client: Client)  = client.prepareCount(ES_INDEX_NAME).setTypes(ES_TYPE_NAME)
 
-  def prepareTermVectorBase(id: String)(implicit client: Client) = {
-    val req = client.prepareTermVector(ES_INDEX_NAME, ES_TYPE_NAME, id)
+  def prepareSearch(): SearchRequestBuilder = prepareSearch(esClient)
+  def prepareSearch(client: Client): SearchRequestBuilder = {
+    client.prepareSearch(ES_INDEX_NAME).setTypes(ES_TYPE_NAME)
+  }
+
+  def prepareCount()  = esClient.prepareCount(ES_INDEX_NAME).setTypes(ES_TYPE_NAME)
+
+  def prepareTermVectorBase(id: String) = {
+    val req = esClient.prepareTermVector(ES_INDEX_NAME, ES_TYPE_NAME, id)
     val rk = getRoutingKey(id)
     if (rk.isDefined)
       req.setRouting(rk.get)
     req
   }
 
-  def prepareGetBase(id: String)(implicit client: Client) = {
-    val req = client.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
+  def prepareGetBase(id: String) = {
+    val req = esClient.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
     val rk = getRoutingKey(id)
     if (rk.isDefined)
       req.setRouting(rk.get)
     req
   }
 
-  def prepareUpdateBase(id: String)(implicit client: Client) = {
-    val req = client.prepareUpdate(ES_INDEX_NAME, ES_TYPE_NAME, id)
+  def prepareUpdateBase(id: String) = {
+    val req = esClient.prepareUpdate(ES_INDEX_NAME, ES_TYPE_NAME, id)
     val rk = getRoutingKey(id)
     if (rk.isDefined)
       req.setRouting(rk.get)
     req
   }
 
-  def prepareDeleteBase(id: String)(implicit client: Client) = {
-    val req = client.prepareDelete(ES_INDEX_NAME, ES_TYPE_NAME, id)
+  def prepareDeleteBase(id: String) = {
+    val req = esClient.prepareDelete(ES_INDEX_NAME, ES_TYPE_NAME, id)
     val rk = getRoutingKey(id)
     if (rk.isDefined)
       req.setRouting(rk.get)
@@ -91,7 +97,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
     * @param scroller выхлоп startScroll.
     * @return Фьючерс с результатами.
     */
-  def deleteByQuery(scroller: SearchRequestBuilder)(implicit ec: ExecutionContext, client: Client): Future[Int] = {
+  def deleteByQuery(scroller: SearchRequestBuilder): Future[Int] = {
     lazy val logPrefix = s"deleteByQuery(${System.currentTimeMillis}):"
     LOGGER.trace(s"$logPrefix Starting...")
 
@@ -118,7 +124,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
 
     // Собираем асинхронный bulk-процессор, т.к. элементов может быть ну очень много.
     val bp = BulkProcessor
-      .builder(client, listener)
+      .builder(esClient, listener)
       .setName(logPrefix)
       .setBulkActions(BULK_DELETE_QUEUE_LEN)
       .build()
@@ -133,7 +139,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
             hits
               .iterator()
               .foreach { hit =>
-                val req = client.prepareDelete(hit.getIndex, hit.getType, hit.getId)
+                val req = esClient.prepareDelete(hit.getIndex, hit.getType, hit.getId)
                   .request()
                 bp.add(req)
               }
@@ -155,11 +161,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
   def BULK_DELETE_QUEUE_LEN = 200
 
 
-  def prepareScroll(keepAlive: TimeValue = SCROLL_KEEPALIVE_DFLT)(implicit client: Client): SearchRequestBuilder = {
-    prepareScrollFor(prepareSearch, keepAlive)
-  }
-  /** Включить скролл для указанного собираемого запроса. */
-  def prepareScrollFor(srb: SearchRequestBuilder, keepAlive: TimeValue = SCROLL_KEEPALIVE_DFLT): SearchRequestBuilder = {
+  def prepareScroll(keepAlive: TimeValue = SCROLL_KEEPALIVE_DFLT, srb: SearchRequestBuilder = prepareSearch()): SearchRequestBuilder = {
     srb
       // Setting search_type to scan disables sorting and makes scrolling very efficient.
       .setSearchType(SearchType.SCAN)
@@ -167,12 +169,12 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
   }
 
   /** Запуск поискового запроса и парсинг результатов в представление этой модели. */
-  def runSearch(srb: SearchRequestBuilder)(implicit ec: ExecutionContext): Future[Seq[T]] = {
+  def runSearch(srb: SearchRequestBuilder): Future[Seq[T]] = {
     srb.execute().map { searchResp2list }
   }
 
   /** Прочитать маппинг текущей ES-модели из ES. */
-  def getCurrentMapping(implicit ec: ExecutionContext, client: Client) = {
+  def getCurrentMapping(): Future[Option[String]] = {
     EsModelUtil.getCurrentMapping(ES_INDEX_NAME, typeName = ES_TYPE_NAME)
   }
 
@@ -185,7 +187,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
    * @return Фьючерс, подлежащий дальнейшей обработке.
    */
   def startScroll(queryOpt: Option[QueryBuilder] = None, resultsPerScroll: Int = SCROLL_SIZE_DFLT,
-                  keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)(implicit client: Client): SearchRequestBuilder = {
+                  keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT): SearchRequestBuilder = {
     val query = queryOpt.getOrElse {
       QueryBuilders.matchAllQuery()
     }
@@ -207,8 +209,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
    * @return Финальный аккамулятор.
    */
   def foldLeft[A](acc0: A, scroller: SearchRequestBuilder, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)
-                 (f: (A, T) => A)
-                 (implicit ec: ExecutionContext, client: Client): Future[A] = {
+                 (f: (A, T) => A): Future[A] = {
     scroller
       .execute()
       .flatMap { searchResp =>
@@ -236,15 +237,13 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
   // TODO Удалить эту прослойку.
   def foldLeftAsync[A](acc0: A, resultsPerScroll: Int = SCROLL_SIZE_DFLT, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT,
                        queryOpt: Option[QueryBuilder] = None)
-                      (f: (Future[A], T) => Future[A])
-                      (implicit ec: ExecutionContext, client: Client): Future[A] = {
+                      (f: (Future[A], T) => Future[A]): Future[A] = {
     val scroller = startScroll(resultsPerScroll = resultsPerScroll, keepAliveMs = keepAliveMs, queryOpt = queryOpt)
     foldLeftAsync1(acc0, scroller, keepAliveMs)(f)
   }
 
   def foldLeftAsync1[A](acc0: A, scroller: SearchRequestBuilder, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)
-                      (f: (Future[A], T) => Future[A])
-                      (implicit ec: ExecutionContext, client: Client): Future[A] = {
+                       (f: (Future[A], T) => Future[A]): Future[A] = {
     scroller
       .execute()
       .flatMap { searchResp =>
@@ -269,7 +268,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
    *         Цифра внутри содержит кол-во пройденных результатов.
    */
   def foreach[U](resultsPerScroll: Int = SCROLL_SIZE_DFLT, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)
-                (f: T => U)(implicit ec: ExecutionContext, client: Client): Future[Long] = {
+                (f: T => U): Future[Long] = {
     // Оборачиваем foldLeft(), просто фиксируя аккамулятор.
     val scroller = startScroll(resultsPerScroll = resultsPerScroll, keepAliveMs = keepAliveMs)
     foldLeft(0L, scroller, keepAliveMs = keepAliveMs) {
@@ -295,7 +294,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
    * @return Фьючес с кол-вом обработанных экземпляров модели.
    */
   def updateAll(scroller: SearchRequestBuilder, bulkActions: Int = BULK_PROCESSOR_BULK_SIZE_DFLT)
-               (f: T => Future[T])(implicit ec: ExecutionContext, client: Client): Future[Int] = {
+               (f: T => Future[T]): Future[Int] = {
 
     val logPrefix = s"update(${System.currentTimeMillis}):"
 
@@ -316,7 +315,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
       }
     }
 
-    val bp = BulkProcessor.builder(client, listener)
+    val bp = BulkProcessor.builder(esClient, listener)
       .setName(logPrefix)
       .setBulkActions(100)
       .build()
@@ -352,9 +351,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
    *
    * @return Список всех id в неопределённом порядке.
    */
-  def getAllIds(maxResults: Int, maxPerStep: Int = MAX_RESULTS_DFLT)
-               (implicit ec: ExecutionContext, client: Client): Future[List[String]] = {
-    prepareSearch
+  def getAllIds(maxResults: Int, maxPerStep: Int = MAX_RESULTS_DFLT): Future[List[String]] = {
+    prepareSearch()
       .setSearchType(SearchType.SCAN)
       .setScroll(SCROLL_KEEPALIVE_DFLT)
       .setQuery( QueryBuilders.matchAllQuery() )
@@ -378,8 +376,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
    * @param query Произвольный поисковый запрос.
    * @return Кол-во найденных документов.
    */
-  def countByQuery(query: QueryBuilder)(implicit ec: ExecutionContext, client: Client): Future[Long] = {
-    prepareCount
+  def countByQuery(query: QueryBuilder): Future[Long] = {
+    prepareCount()
       .setQuery(query)
       .execute()
       .map { _.getCount }
@@ -390,13 +388,16 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
    *
    * @return Неотрицательное целое.
    */
-  def countAll(implicit ec: ExecutionContext, client: Client): Future[Long] = {
+  def countAll(): Future[Long] = {
     countByQuery(QueryBuilders.matchAllQuery())
   }
 
   // TODO Нужно проверять, что текущий маппинг не устарел, и обновлять его.
-  def isMappingExists(implicit ec:ExecutionContext, client: Client) = {
-    EsModelUtil.isMappingExists(indexName=ES_INDEX_NAME, typeName=ES_TYPE_NAME)
+  def isMappingExists(): Future[Boolean] = {
+    EsModelUtil.isMappingExists(
+      indexName = ES_INDEX_NAME,
+      typeName  = ES_TYPE_NAME
+    )
   }
 
   /**
@@ -453,15 +454,14 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
 
   /** Для ряда задач бывает необходимо задействовать multiGet вместо обычного поиска, который не успевает за refresh.
     * Этот метод позволяет сконвертить поисковые результаты в результаты multiget.
-   *
+    *
     * @return Результат - что-то неопределённом порядке. */
-  def searchResp2RtMultiget(searchResp: SearchResponse, acc0: List[T] = Nil)
-                           (implicit ex: ExecutionContext, client: Client): Future[List[T]] = {
+  def searchResp2RtMultiget(searchResp: SearchResponse, acc0: List[T] = Nil): Future[List[T]] = {
     val searchHits = searchResp.getHits.getHits
     if (searchHits.isEmpty) {
       Future successful acc0
     } else {
-      val mgetReq = client.prepareMultiGet()
+      val mgetReq = esClient.prepareMultiGet()
         .setRealtime(true)
       searchHits.foreach { hit =>
         mgetReq.add(hit.getIndex, hit.getType, hit.getId)
@@ -487,9 +487,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
 
 
   /** С помощью query найти результаты, но сами результаты прочитать с помощью realtime multi-get. */
-  def findQueryRt(query: QueryBuilder, maxResults: Int = 100, acc0: List[T] = Nil)
-                 (implicit ec: ExecutionContext, client: Client): Future[List[T]] = {
-    prepareSearch
+  def findQueryRt(query: QueryBuilder, maxResults: Int = 100, acc0: List[T] = Nil): Future[List[T]] = {
+    prepareSearch()
       .setQuery(query)
       .setFetchSource(false)
       .setNoFields()
@@ -499,14 +498,14 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
   }
 
   /** Генератор реквеста для генерации запроса для getAll(). */
-  def getAllReq(maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT, withVsn: Boolean = false)
-               (implicit client: Client): SearchRequestBuilder = {
-    prepareSearch
+  def getAllReq(maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT, withVsn: Boolean = false): SearchRequestBuilder = {
+    prepareSearch()
       .setQuery(QueryBuilders.matchAllQuery())
       .setSize(maxResults)
       .setFrom(offset)
       .setVersion(withVsn)
   }
+
 
   /**
    * Выдать все магазины. Метод подходит только для административных задач.
@@ -516,8 +515,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
    * @param withVsn Возвращать ли версии?
    * @return Список магазинов в порядке их создания.
    */
-  def getAll(maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT, withVsn: Boolean = false)
-            (implicit ec:ExecutionContext, client: Client): Future[Seq[T]] = {
+  def getAll(maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT, withVsn: Boolean = false): Future[Seq[T]] = {
     runSearch(
       getAllReq(
         maxResults = maxResults,
@@ -543,10 +541,9 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
    *
    * @return
    */
-  def resaveMany(maxResults: Int = MAX_RESULTS_DFLT)
-                (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[BulkResponse] = {
+  def resaveMany(maxResults: Int = MAX_RESULTS_DFLT): Future[BulkResponse] = {
     val allFut = getAll(maxResults, withVsn = true)
-    val br = client.prepareBulk()
+    val br = esClient.prepareBulk()
     allFut.flatMap { results =>
       for (r <- results) {
         br.add( prepareIndexNoVsn(r) )
@@ -557,8 +554,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
 
 
   /** Рефреш всего индекса, в котором живёт эта модель. */
-  def refreshIndex(implicit client: Client): Future[_] = {
-    client.admin().indices()
+  def refreshIndex(): Future[_] = {
+    esClient.admin().indices()
       .prepareRefresh(ES_INDEX_NAME)
       .execute()
   }
@@ -576,9 +573,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
    * @param keepAliveMs Время жизни scroll-курсора на стороне from-сервера.
    * @return Фьючерс для синхронизации.
    */
-  def copyContent(fromClient: Client, toClient: Client, reqSize: Int = 50, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)
-                 (implicit ec: ExecutionContext): Future[CopyContentResult] = {
-    prepareScroll( new TimeValue(keepAliveMs) )(fromClient)
+  def copyContent(fromClient: Client, toClient: Client, reqSize: Int = 50, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT): Future[CopyContentResult] = {
+    prepareScroll( new TimeValue(keepAliveMs), srb = prepareSearch(fromClient))
       .setSize(reqSize)
       .execute()
       .flatMap { searchResp =>
@@ -593,7 +589,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
               val bulk = toClient.prepareBulk()
               iter.foreach { hit =>
                 val model = deserializeSearchHit(hit)
-                bulk.add( prepareIndexNoVsn(model)(toClient) )
+                bulk.add( prepareIndexNoVsn(model, toClient) )
               }
               bulk.execute().map { bulkResult =>
                 if (bulkResult.hasFailures)
@@ -621,7 +617,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
    * @param inst0 Исходный (устаревший) инстанс.
    * @return тоже самое, что и getById()
    */
-  def reget(inst0: T)(implicit ec: ExecutionContext, client: Client): Future[Option[T]]
+  def reget(inst0: T): Future[Option[T]]
 
 
   // TODO Ужаснейший говнокод ниже: распиливание tryUpdate и последующая дедубликация породили ещё больший объем кода.
@@ -630,9 +626,6 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
 
   /** Абстрактный класс контейнера для вызова [[EsModelUtil]].tryUpdate(). */
   abstract class TryUpdateDataAbstract[TU <: TryUpdateDataAbstract[TU]] extends ITryUpdateData[T, TU] {
-    implicit def ec: ExecutionContext
-    implicit def client: Client
-
     protected def _instance(m: T): TU
     /** Данные для сохранения потеряли актуальность, собрать новый аккамулятор. */
     override def _reget: Future[TU] = {
@@ -644,15 +637,13 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
 
   /** Реализация контейнера для вызова [[EsModelUtil]].tryUpdate() для es-моделей. */
   class TryUpdateData(override val _saveable: T)
-                     (override implicit val ec: ExecutionContext,
-                      override implicit val client: Client)
     extends TryUpdateDataAbstract[TryUpdateData]
   {
     override protected def _instance(m: T) = new TryUpdateData(m)
   }
 
   /** Вместо TryUpdateData.apply(). */
-  def tryUpdateData(inst: T)(implicit ec: ExecutionContext, client: Client) = {
+  def tryUpdateData(inst: T) = {
     new TryUpdateData(inst)
   }
 
@@ -666,8 +657,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
    * @return Тоже самое, что и save().
    *         Если updateF запретила апдейт (вернула null), то будет Future.successfull(inst0).
    */
-  def tryUpdate(inst0: T, retry: Int = 0)(updateF: T => T)
-               (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[T] = {
+  def tryUpdate(inst0: T, retry: Int = 0)(updateF: T => T): Future[T] = {
     // 2015.feb.20: Код переехал в EsModelUtil, а тут остались только wrapper для вызова этого кода.
     val data0 = tryUpdateData(inst0)
     val data2Fut = EsModelUtil.tryUpdate[T, TryUpdateData](this, data0, UPDATE_RETRIES_MAX) { data =>
@@ -684,8 +674,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
   def esTypeName(m: T) = ES_TYPE_NAME
   def esIndexName(m: T) = ES_INDEX_NAME
 
-
-  def prepareIndexNoVsn(m: T)(implicit client: Client): IndexRequestBuilder = {
+  def prepareIndexNoVsn(m: T): IndexRequestBuilder = prepareIndexNoVsn(m, esClient)
+  def prepareIndexNoVsn(m: T, client: Client): IndexRequestBuilder = {
     val indexName = esIndexName(m)
     val typeName = esTypeName(m)
     val idOrNull = m.idOrNull
@@ -697,13 +687,12 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
   }
 
 
-  def prepareIndex(m: T)(implicit client: Client): IndexRequestBuilder = {
+  def prepareIndex(m: T): IndexRequestBuilder = {
     val irb = prepareIndexNoVsn(m)
     if (m.versionOpt.isDefined)
       irb.setVersion(m.versionOpt.get)
     irb
   }
-
 
   /**
    * Сохранить экземпляр в хранилище ES.
@@ -711,7 +700,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
    * @return Фьючерс с новым/текущим id
    *         VersionConflictException если транзакция в текущем состоянии невозможна.
    */
-  def save(m: T)(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
+  def save(m: T): Future[String] = {
     prepareIndex(m)
       .execute()
       .map { _.getId }
@@ -721,8 +710,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
   def toJson(m: T): String
 
   /** Общий код моделей, которые занимаются resave'ом. */
-  def resaveBase( getFut: Future[Option[T]] )
-                (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Option[String]] = {
+  def resaveBase( getFut: Future[Option[T]] ): Future[Option[String]] = {
     getFut.flatMap {
       case Some(e) =>
         save(e)
