@@ -4,8 +4,6 @@ import io.suggest.common.geom.d2.ISize2di
 import io.suggest.sc.sjs.vm.grid.GBlock
 import io.suggest.sc.tile.TileConstants
 
-import scala.collection.mutable.ListBuffer
-
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>

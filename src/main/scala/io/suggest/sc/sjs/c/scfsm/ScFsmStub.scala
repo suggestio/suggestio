@@ -1,9 +1,12 @@
 package io.suggest.sc.sjs.c.scfsm
 
 import io.suggest.fsm.StateData
+import io.suggest.sc.sjs.m.magent.{IVpSzChanged, MScreen}
 import io.suggest.sc.sjs.m.mfsm.signals.KbdKeyUp
 import io.suggest.sc.sjs.m.msc.fsm.MStData
 import io.suggest.sjs.common.fsm._
+import io.suggest.sjs.common.msg.WarnMsgs
+import io.suggest.sjs.common.vsz.ViewportSz
 import org.scalajs.dom.KeyboardEvent
 
 /**
@@ -15,15 +18,35 @@ import org.scalajs.dom.KeyboardEvent
 trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm {
 
   override type State_t = FsmState
+  override type SD      = MStData
 
-  override type SD = MStData
+
+  /** Трейт для реализации разных логик реакции на изменение размера окна в зависимости от текущего состояния. */
+  protected trait HandleViewPortChangedT {
+    /** Реакция на сигнал об изменении размеров окна или экрана устройства. */
+    def _viewPortChanged(): Unit = {
+      // Обновить данные состояния по текущему экрану.
+      val vszOpt = ViewportSz.getViewportSize
+      if (vszOpt.isEmpty)
+        warn( WarnMsgs.NO_SCREEN_VSZ_DETECTED )
+      _stateData = _stateData.copy(
+        screen = vszOpt.map( MScreen.apply )
+      )
+    }
+  }
+
 
   /** Добавление слушателя событий отпускания кнопок клавиатуры в состояние. */
-  protected trait FsmState extends super.FsmState with DirectDomEventHandlerDummy {
+  protected trait FsmState
+    extends super.FsmState
+      with DirectDomEventHandlerDummy
+      with HandleViewPortChangedT
+  {
     /** Переопределяемый метод для обработки событий клавиатуры.
       * По дефолту -- игнорировать все события клавиатуры. */
     def _onKbdKeyUp(event: KeyboardEvent): Unit = {}
   }
+
 
   /**
    * Если состояние не требует ресивера, то можно использовать этот трейт.
@@ -40,9 +63,11 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm {
     // Реакция на события клавиатуры.
     case KbdKeyUp(event) =>
       _state._onKbdKeyUp(event)
+    case _: IVpSzChanged =>
+      _state._viewPortChanged()
   }
 
-  /** Ресивер для всех состояний. */
+  /** Ресивер для всех состояний. Неизменен, поэтому [[ScFsm]] он помечен как val. */
   override protected def allStatesReceiver: Receive = {
     _allStatesReceiver
       .orElse( super.allStatesReceiver )

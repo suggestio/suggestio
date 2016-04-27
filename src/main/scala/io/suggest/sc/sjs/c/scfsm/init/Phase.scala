@@ -23,7 +23,7 @@ trait Phase
 
   /** Частичная реализация для NormalInitStateT в целях дедубликации кода. */
   protected trait NormalInitStateT extends super.NormalInitStateT {
-    override protected def _geoAskState = new GeoScInitState
+    override protected def _geoScInitState = new GeoScInitState
   }
 
   /** Частичная реализация ProcessIndexReceivedUtil в целях дедубликации кода. */

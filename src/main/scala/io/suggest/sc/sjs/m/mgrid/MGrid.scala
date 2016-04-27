@@ -21,9 +21,14 @@ trait IGridData extends MGridUtil {
   /** Опциональное состояние билдера, если есть. */
   def builderStateOpt: Option[MGridBuilderState]
 
+  /** При ресайзе здесь накапливается инфа по ресайзу. */
+  def resizeOpt: Option[MGridResizeState]
+
   /** Извлечь состояние билдера или вернуть новое, если готовое состояние отсутствует. */
   def builderState: MGridBuilderState = {
-    builderStateOpt  getOrElse  MGridBuilderState( state.newColsInfo() )
+    builderStateOpt.getOrElse {
+      MGridBuilderState( state.newColsInfo() )
+    }
   }
 
   override protected def grid = this
@@ -32,21 +37,12 @@ trait IGridData extends MGridUtil {
 
 /** Дефолтовая реализация контейнера состояний компонентов плитки. */
 case class MGridData(
-  override val params   : MGridParams = MGridParams(),
-  override val state    : MGridState  = MGridState(),
-  override val builderStateOpt : Option[MGridBuilderState] = None
+  override val params           : MGridParams                 = MGridParams(),
+  override val state            : MGridState                  = MGridState(),
+  override val builderStateOpt  : Option[MGridBuilderState]   = None,
+  override val resizeOpt        : Option[MGridResizeState]    = None
 )
   extends IGridData
-
-/** Враппер над какой-то реализацией IGridData. */
-trait IGridDataWrapper extends IGridData {
-
-  def _gridData: IGridData
-
-  override def params = _gridData.params
-  override def state  = _gridData.state
-  override def builderStateOpt = _gridData.builderStateOpt
-}
 
 
 /** Утиль для анализа данных в grid-моделях. */

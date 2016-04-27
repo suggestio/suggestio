@@ -116,7 +116,7 @@ object ScFsm
   }
   /** Трейт для поддержки переключения на состояния, исходящие из OnGridStateT  */
   protected trait OnGridStateT extends super.OnGridStateT with GridBlockClickStateT {
-    override def _loadModeState = new GridLoadModeState
+    override def _loadMoreState = new GridLoadMoreState
   }
 
   /** Превратить search-таб в соответствующее состояние. */
@@ -133,7 +133,7 @@ object ScFsm
     override protected def _navLoadListState = new OnGridNavLoadListState
   }
 
-  class GridLoadModeState extends OnGridLoadingMoreStateT with GridBlockClickStateT {
+  class GridLoadMoreState extends OnGridLoadingMoreStateT with GridBlockClickStateT {
     override protected def _adsLoadedState = new OnPlainGridState
     override protected def _findAdsFailedState = new OnPlainGridState
   }

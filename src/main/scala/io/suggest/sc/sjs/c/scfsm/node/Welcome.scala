@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.c.scfsm.node
 import io.suggest.sc.ScConstants.Welcome
 import io.suggest.sc.sjs.c.scfsm.ScFsmStub
 import io.suggest.sc.sjs.m.mwc.{IWcStepSignal, WcTimeout}
-import io.suggest.sc.sjs.vm.wc.WcRoot
+import io.suggest.sc.sjs.vm.wc.{WcBgImg, WcFgImg, WcRoot}
 import io.suggest.sjs.common.controller.DomQuick
 
 /**
@@ -57,6 +57,24 @@ trait Welcome extends ScFsmStub {
         timerId = hideTimerIdOpt
       )
       become(nextState, sd2)
+    }
+
+    /** Реакция на сигнал об изменении размеров окна или экрана устройства. */
+    override def _viewPortChanged(): Unit = {
+      super._viewPortChanged()
+
+      // Подогнать bg img под новые параметры экрана.
+      for {
+        mscreen <- _stateData.screen
+        wcBg    <- WcBgImg.find()
+      } {
+        wcBg.adjust(mscreen)
+      }
+
+      // Подогнать размеры fg img в связи с новыми параметрами экрана.
+      for (wcFg <- WcFgImg.find()) {
+        wcFg.adjust()
+      }
     }
 
   }

@@ -1,10 +1,10 @@
 package io.suggest.sc.sjs.c.scfsm.init
 
+import io.suggest.common.event.WndEvents
 import io.suggest.sc.sjs.c.scfsm.ScFsmStub
-import io.suggest.sc.sjs.m.magent.MScreen
-import io.suggest.sjs.common.vsz.ViewportSz
+import io.suggest.sc.sjs.m.magent.{OrientationChange, WndResize}
 import io.suggest.sc.sjs.v.global.DocumentView
-import io.suggest.sjs.common.msg.WarnMsgs
+import io.suggest.sc.sjs.vm.SafeWnd
 
 /**
  * Suggest.io
@@ -23,6 +23,14 @@ trait Init extends ScFsmStub {
       super.afterBecome()
       // TODO Это нужно вообще или нет?
       DocumentView.initDocEvents()
+
+      // Добавляем реакцию на изменение размера окна/экрана.
+      val w = SafeWnd
+      w.addEventListener(WndEvents.RESIZE)( _signalCallbackF(WndResize) )
+      w.addEventListener(WndEvents.ORIENTATION_CHANGE)( _signalCallbackF(OrientationChange) )
+
+      // Провоцируем сохранение в состояние FSM текущих параметров экрана.
+      _viewPortChanged()
     }
   }
 
@@ -35,21 +43,15 @@ trait Init extends ScFsmStub {
     /** Действия, которые вызываются, когда это состояние выставлено в актор. */
     override def afterBecome(): Unit = {
       super.afterBecome()
-      // Инициализировать состояние.
-      val vszOpt = ViewportSz.getViewportSize
-      if (vszOpt.isEmpty)
-        warn( WarnMsgs.NO_SCREEN_VSZ_DETECTED )
-      val sd1 = _stateData.copy(
-        screen = vszOpt.map( MScreen.apply )
-      )
       // TODO Десериализовывать состояние из URL и выбирать состояние.
       // Сразу переключаемся на новое состояние.
-      become(_geoAskState, sd1)
+      become(_geoScInitState)
     }
 
     /** Состояние инициализации решает, что необходимо запросить геолокацию у браузера.
       * Такое происходит, когда нет данных состояния в URL. */
-    protected def _geoAskState: FsmState
+    protected def _geoScInitState: FsmState
+
   }
 
 }
