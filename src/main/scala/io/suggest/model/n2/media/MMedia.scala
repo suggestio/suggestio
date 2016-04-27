@@ -1,11 +1,9 @@
 package io.suggest.model.n2.media
 
 import com.google.inject.{Singleton, Inject}
-import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.es._
 import io.suggest.model.n2.media.storage.{IMediaStorages, IMediaStorage}
 import io.suggest.util.MacroLogsImpl
-import org.elasticsearch.client.Client
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -23,8 +21,9 @@ import scala.concurrent.ExecutionContext
  * Поле _id должно формироваться клиентом и включать в себя значение поля nodeId.
  */
 @Singleton
-class MMedias @Inject()(
-  iMediaStorages: IMediaStorages
+class MMedias @Inject() (
+  iMediaStorages          : IMediaStorages,
+  override val mCommonDi  : IEsModelDiVal
 )
   extends EsModelStatic
   with EsmV2Deserializer
@@ -78,7 +77,7 @@ class MMedias @Inject()(
 
   /**
    * Сборка id'шников для экземпляров модели.
- *
+   *
    * @param imgNodeId id ноды картинки.
    * @param qOpt Опциональный qualifier. Обычно None, если это файл-оригинал.
    *             Some() если хранится дериватив.
@@ -132,10 +131,8 @@ case class MMedia(
 trait MMediasJmxMBean extends EsModelJMXMBeanI
 
 final class MMediasJmx @Inject()(
-  override val companion: MMedias,
-  val ec      : ExecutionContext,
-  val client  : Client,
-  val sn      : SioNotifierStaticClientI
+  override val companion  : MMedias,
+  override val ec         : ExecutionContext
 )
   extends EsModelJMXBase
   with MMediasJmxMBean

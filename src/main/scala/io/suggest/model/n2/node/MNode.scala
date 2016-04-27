@@ -1,7 +1,6 @@
 package io.suggest.model.n2.node
 
 import com.google.inject.{Inject, Singleton}
-import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.es._
 import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.bill.MNodeBilling
@@ -16,7 +15,6 @@ import io.suggest.model.search.EsDynSearchStatic
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.{MacroLogsImpl, SioConstants}
 import io.suggest.common.empty.EmptyUtil._
-import org.elasticsearch.client.Client
 import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import play.api.libs.functional.syntax._
@@ -44,7 +42,9 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 
 @Singleton
-class MNodes
+class MNodes @Inject() (
+  override val mCommonDi: MEsModelDiVal
+)
   extends EsModelStatic
   with EsmV2Deserializer
   with MacroLogsImpl
@@ -52,6 +52,7 @@ class MNodes
   with EsModelJsonWrites
   with EsDynSearchStatic[MNodeSearch]
 {
+  import mCommonDi._
 
   override type T = MNode
   override val ES_TYPE_NAME = "n2"
@@ -123,8 +124,7 @@ class MNodes
 
 
   /** Враппер над getById(), осуществляющий ещё и фильтрацию по типу узла. */
-  def getByIdType(id: String, ntype: MNodeType)
-                 (implicit ec: ExecutionContext, client: Client): Future[Option[T]] = {
+  def getByIdType(id: String, ntype: MNodeType): Future[Option[T]] = {
     // TODO Opt фильтрация идёт client-side. Надо бы сделать server-side БЕЗ серьезных потерь производительности и реалтайма.
     getById(id).map {
       _.filter {
@@ -160,8 +160,7 @@ class MNodes
    * @param dsa Критерий выборки, если требуется.
    * @return Карта, где ключ -- тип узла, а значение -- кол-во результатов в индексе.
    */
-  def ntypeStats(dsa: MNodeSearch = new MNodeSearchDfltImpl)
-                (implicit ec: ExecutionContext, client: Client): Future[Map[MNodeType, Long]] = {
+  def ntypeStats(dsa: MNodeSearch = new MNodeSearchDfltImpl): Future[Map[MNodeType, Long]] = {
     val aggName = "ntypeAgg"
     dynSearchReqBuilder(dsa)
       .addAggregation(
@@ -204,8 +203,7 @@ class MNodes
    * @param id id документа.
    * @return true, если документ найден и удалён. Если не найден, то false
    */
-  override def deleteById(id: String)
-                         (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
+  override def deleteById(id: String): Future[Boolean] = {
     val delFut = super.deleteById(id)
     delFut onSuccess { case isDeleted =>
       val evt = MNodeDeleted(id, isDeleted)
@@ -220,7 +218,7 @@ class MNodes
    *
    * @return Фьючерс с новым/текущим id.
    */
-  override def save(m: T)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
+  override def save(m: T): Future[String] = {
     val saveFut = super.save(m)
     saveFut.onSuccess { case adnId =>
       val mnode2 = m.copy(id = Option(adnId))
@@ -275,10 +273,8 @@ case class MNode(
 
 trait MNodesJmxMBean extends EsModelJMXMBeanI
 final class MNodesJmx @Inject() (
-  override val companion: MNodes,
-  implicit val ec     : ExecutionContext,
-  implicit val client : Client,
-  implicit val sn     : SioNotifierStaticClientI
+  override val companion  : MNodes,
+  override val ec         : ExecutionContext
 )
   extends EsModelJMXBase
     with MNodesJmxMBean
