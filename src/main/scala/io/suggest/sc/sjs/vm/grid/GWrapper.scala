@@ -8,7 +8,6 @@ import io.suggest.sjs.common.vm.VmT
 import io.suggest.sjs.common.vm.child.{SubTagFind, WrapperChildContent}
 import io.suggest.sjs.common.vm.find.FindDiv
 import org.scalajs.dom.Event
-import org.scalajs.dom.raw.HTMLDivElement
 
 /**
  * Suggest.io
@@ -17,16 +16,18 @@ import org.scalajs.dom.raw.HTMLDivElement
  * Description: Модель div-враппера grid'а.
  */
 object GWrapper extends FindDiv {
-
-  override type T = GWrapper
+  override type T     = GWrapper
   override def DOM_ID = Grid.WRAPPER_DIV_ID
-
 }
+
+
+import GWrapper.Dom_t
 
 
 /** Логика экземпляра модели. */
 trait GWrapperT extends VmT with SubTagFind with WrapperChildContent {
-  override type T = HTMLDivElement
+
+  override type T = Dom_t
 
   override protected type SubtagCompanion_t = GContent.type
   override type SubTagVm_t                  = GContent.T
@@ -57,7 +58,7 @@ trait GWrapperT extends VmT with SubTagFind with WrapperChildContent {
  * Реализация экземпляра модели враппера.
  * @param _underlying Соответствующий модели DOM-элемент.
  */
-case class GWrapper(override val _underlying: HTMLDivElement)
+case class GWrapper(override val _underlying: Dom_t)
   extends GWrapperT {
 
   override lazy val content = super.content

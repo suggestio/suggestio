@@ -6,6 +6,7 @@ import io.suggest.sc.sjs.vm.grid.GContent
 import io.suggest.sc.sjs.vm.res.CommonRes
 import io.suggest.sjs.common.msg.ErrorMsgs
 
+import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 import scala.util.Failure
 
@@ -17,21 +18,31 @@ import scala.util.Failure
  */
 trait Append extends ScFsmStub with FindAdsUtil {
 
-  /** Аддон для состояний для запуска запроса grid ads. */
+  /** Запустить поиск карточек для выдачи, прислать результат Future в FSM.
+    *
+    * @return Фьючерс, обычно бесполезен, т.к. результат прилетает назад в FSM как сообщение.
+    */
+  protected[this] def _startFindGridAds(sd: SD = _stateData): Future[MFindAds] = {
+    val fut = _findAds(sd)
+    _sendFutResBack(fut)
+    fut
+  }
+
+
+  /** Аддон для состояний для немедленного запуска запроса grid ads. */
   trait GetGridAdsStateT extends FsmState {
     override def afterBecome(): Unit = {
       super.afterBecome()
-      val fut = _findAds(_stateData)
-      _sendFutResBack(fut)
+      _startFindGridAds()
     }
   }
 
 
   /** Состояние ожидания результатов инициализация index'а узла. Паралельно идут две фоновые операции:
     * получение карточек и отображение welcome-экрана. */
-  protected trait GridAdsWaitStateBaseT extends FsmEmptyReceiverState {
+  trait GridAdsWaitStateBaseT extends FsmEmptyReceiverState {
 
-    override def receiverPart: Receive = super.receiverPart orElse {
+    override def receiverPart: Receive = super.receiverPart.orElse {
       case mfa: MFindAds =>
         _findAdsReady(mfa)
       case Failure(ex) =>
@@ -47,11 +58,13 @@ trait Append extends ScFsmStub with FindAdsUtil {
 
 
   /** Закинуть в выдачу полученные карточки. */
-  protected trait GridAdsWaitLoadStateT extends GridAdsWaitStateBaseT with GridBuild {
+  trait GridAdsWaitLoadStateT extends GridAdsWaitStateBaseT with GridBuild {
 
-    protected def _adsLoadedState: FsmState
-    
-    override protected def _findAdsReady(mfa: MFindAds): Unit = {
+    /** FSM-реакция на получение положительного ответа от сервера по поводу карточек сетки.
+      *
+      * @param mfa инстанс ответа MFindAds.
+      */
+    override def _findAdsReady(mfa: MFindAds): Unit = {
       val gcontent = GContent.find().get
       // Далее заинлайнен перепиленный вызов GridCtl.newAdsReceived(mfa, isAdd = isAdd, withAnim)
       val sd0  = _stateData
@@ -152,6 +165,10 @@ trait Append extends ScFsmStub with FindAdsUtil {
       become(_findAdsFailedState)
     }
 
+    /** Состояние, когда все карточки загружены. */
+    protected def _adsLoadedState: FsmState
+
+    /** Состояние, когда запрос карточек не удался. */
     protected def _findAdsFailedState: FsmState
 
   }

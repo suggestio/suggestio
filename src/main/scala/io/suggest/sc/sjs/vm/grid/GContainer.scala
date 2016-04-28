@@ -4,11 +4,10 @@ import io.suggest.common.css.CssSzImplicits
 import io.suggest.sc.ScConstants.Grid
 import io.suggest.sc.sjs.m.mgrid.IGridData
 import io.suggest.sc.sjs.m.msrv.ads.find.MFoundAdJson
-import io.suggest.sjs.common.model.dom.DomListIterator
 import io.suggest.sjs.common.vm.content.ClearT
 import io.suggest.sjs.common.vm.child.ContentElT
 import io.suggest.sjs.common.vm.find.FindDiv
-import io.suggest.sjs.common.vm.of.{ChildrenVms, OfElement}
+import io.suggest.sjs.common.vm.of.ChildrenVms
 import io.suggest.sjs.common.vm.style.StyleHeight
 import org.scalajs.dom.raw.HTMLDivElement
 

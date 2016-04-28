@@ -7,6 +7,7 @@ import io.suggest.sjs.common.vm.child.{ContentElT, SubTagFind}
 import io.suggest.sjs.common.vm.find.FindDiv
 import org.scalajs.dom.raw.HTMLDivElement
 import io.suggest.sc.ScConstants.Grid
+import io.suggest.sc.sjs.m.magent.IMScreen
 
 /**
  * Suggest.io
@@ -41,17 +42,19 @@ trait GRootT extends VmT with SubTagFind with SetHeight3Raw {
     content.flatMap(_.container)
   }
 
+  def reInitLayout(sd: IStData): Unit = {
+    for (mscreen <- sd.screen) {
+      val height = mscreen.height
+      _setHeight3(height, sd.browser)
+    }
+  }
+
   /** Раняя инициализация, которая должна проходить однократно.
     * Используется после создания нового layout'а. */
   def initLayout(sd: IStData): Unit = {
-    for (screen <- sd.screen) {
-      val height = screen.height
-      _setHeight3(height, sd.browser)
-
-      // Запустить инициализацию внутри wrapper'а.
-      for (gwrapper <- wrapper) {
-        gwrapper.initLayout(sd)
-      }
+    reInitLayout(sd)
+    for (gwrapper <- wrapper) {
+      gwrapper.initLayout(sd)
     }
   }
 
@@ -60,7 +63,8 @@ trait GRootT extends VmT with SubTagFind with SetHeight3Raw {
 
 /**
  * Экземпляр модели; дефолтовая реализация [[GRootT]].
- * @param _underlying Соответствующий этой модели DOM div.
+  *
+  * @param _underlying Соответствующий этой модели DOM div.
  */
 case class GRoot(
   override val _underlying: HTMLDivElement

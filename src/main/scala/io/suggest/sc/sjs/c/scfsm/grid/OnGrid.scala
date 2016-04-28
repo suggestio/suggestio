@@ -1,8 +1,10 @@
 package io.suggest.sc.sjs.c.scfsm.grid
 
-import io.suggest.sc.sjs.c.scfsm.ScFsmStub
+import io.suggest.sc.sjs.c.scfsm.grid
 import io.suggest.sc.sjs.m.mfoc.MFocSd
 import io.suggest.sc.sjs.m.mgrid._
+import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
+import io.suggest.sc.sjs.vm.grid.{GContainer, GRoot}
 import io.suggest.sjs.common.controller.DomQuick
 
 /**
@@ -11,21 +13,22 @@ import io.suggest.sjs.common.controller.DomQuick
  * Created: 05.08.15 10:13
  * Description: Аддон для поддержки сборки состояний выдачи, связанных с возможностями плитки карточек.
  */
-trait OnGrid extends ScFsmStub {
+trait OnGrid extends grid.Append {
 
-  /** Время ожидания окончания ресайза, после которого необходимо отресайзить плитку. */
+  /** Время ожидания окончания окна, после которого необходимо произвести изменения в плитке. */
   private def GRID_RESIZE_TIMEOUT_MS = 300
 
+  /** Поддержка реакции на клики по карточкам в выдаче. */
   trait GridBlockClickStateT extends FsmEmptyReceiverState {
 
-    override def receiverPart: Receive = super.receiverPart orElse {
+    override def receiverPart: Receive = super.receiverPart.orElse {
       // Клик по одной из карточек в сетке оных.
       case gbc: GridBlockClick =>
-        handleGridBlockClick( gbc )
+        _handleGridBlockClick( gbc )
     }
 
     /** Обработка кликов по карточкам в сетке. */
-    protected def handleGridBlockClick(gbc: IGridBlockClick): Unit = {
+    protected def _handleGridBlockClick(gbc: IGridBlockClick): Unit = {
       val gblock = gbc.gblock
       val sd0 = _stateData
       // Минимально инициализируем focused-состояние и переключаем логику на focused.
@@ -43,15 +46,18 @@ trait OnGrid extends ScFsmStub {
 
 
   /** Трейт для сборки состояний, в которых доступна сетка карточек, клики по ней и скроллинг. */
-  trait OnGridStateT extends GridBlockClickStateT {
+  trait OnGridStateT extends GridBlockClickStateT with GridAdsWaitLoadStateT {
 
     override def receiverPart: Receive = super.receiverPart.orElse {
       // Вертикальный скроллинг в плитке.
       case vs: GridScroll =>
         handleVScroll(vs)
-      case GridResizeTimeout(gen) if _stateData.grid.resizeOpt.exists(_.timerGen == gen) =>
-        _handleGridResizeTimeout()
+      // Сигнал завершения ресайза
+      case GridResizeTimeout(gen) =>
+        if ( _stateData.grid.resizeOpt.exists(_.timerGen == gen) )
+          _handleGridResizeTimeout()
     }
+
 
     /** Реакция на вертикальный скроллинг. Нужно запросить с сервера ещё карточек. */
     protected def handleVScroll(vs: GridScroll): Unit = {
@@ -59,6 +65,7 @@ trait OnGrid extends ScFsmStub {
         become(_loadMoreState)
       }
     }
+
 
     /** Реакция на сигнал об изменении размеров окна или экрана устройства. */
     override def _viewPortChanged(): Unit = {
@@ -68,6 +75,12 @@ trait OnGrid extends ScFsmStub {
       // сервер. Нужно дождаться окончания ресайза с помощью таймеров, затем загрузить новую плитку с сервера.
       val sd0 = _stateData
 
+      // Обновить параметры grid-контейнера.
+      for (groot <- GRoot.find()) {
+        groot.reInitLayout(sd0)
+      }
+
+      // TODO Opt Если нет изменений по горизонтали, то можно таймер не запускать?
       // Запуск нового таймера ресайза
       val timerGen = System.currentTimeMillis()
       val timerId  = DomQuick.setTimeout(GRID_RESIZE_TIMEOUT_MS) { () =>
@@ -99,11 +112,52 @@ trait OnGrid extends ScFsmStub {
     }
 
 
+    /** FSM-реакция на получение положительного ответа от сервера по поводу карточек сетки.
+      *
+      * @param mfa инстанс ответа MFindAds.
+      */
+    override def _findAdsReady(mfa: MFindAds): Unit = {
+      for (gc <- GContainer.find()) {
+        gc.clear()
+      }
+      val sd0 = _stateData
+      for (mscreen <- sd0.screen) {
+        _stateData = sd0.copy(
+          grid = sd0.grid.copy(
+            state = sd0.grid.state.nothingLoaded().copy(
+              adsPerLoad = MGridState.getAdsPerLoad(mscreen)
+            ),
+            builderStateOpt = None,
+            resizeOpt = None
+          )
+        )
+      }
+      super._findAdsReady(mfa)
+    }
+
     /** Реакция на наступление таймаута ожидания ресайза плитки. */
     def _handleGridResizeTimeout(): Unit = {
-      // TODO Необходимо оценить значимость изменений размера, перезагрузить плитку если требуется.
-      warn("TODO resize the grid")
+      // TODO Opt Если *существенное* изменение по горизонтали, то нужно перезагружать выдачу.
+      // TODO Opt Если существенное по горизонтали, но оно осталось ~кратно ячейкам, то просто перестроить выдачу: _rebuildGridOnPanelChange
+      // TODO Если НЕсущественное по горизонтали, то можно оставлять всё как есть.
+      val sd0 = _stateData
+      for (mscreen <- sd0.screen) {
+        val sd1 = sd0.copy(
+          grid = sd0.grid.copy(
+            state = MGridState(
+              adsPerLoad = MGridState.getAdsPerLoad(mscreen)
+            )
+          )
+        )
+        _startFindGridAds(sd1)
+      }
     }
+
+    /** Состояние, когда все карточки загружены. */
+    override final def _adsLoadedState: FsmState = null
+
+    /** Состояние, когда запрос карточек не удался. */
+    override final def _findAdsFailedState: FsmState = null
 
     /** Состояние подгрузки ещё карточек. */
     protected def _loadMoreState: FsmState
