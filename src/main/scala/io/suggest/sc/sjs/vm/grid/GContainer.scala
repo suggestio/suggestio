@@ -4,6 +4,7 @@ import io.suggest.common.css.CssSzImplicits
 import io.suggest.sc.ScConstants.Grid
 import io.suggest.sc.sjs.m.mgrid.IGridData
 import io.suggest.sc.sjs.m.msrv.ads.find.MFoundAdJson
+import io.suggest.sjs.common.util.DataUtil
 import io.suggest.sjs.common.vm.content.ClearT
 import io.suggest.sjs.common.vm.child.ContentElT
 import io.suggest.sjs.common.vm.find.FindDiv
@@ -33,6 +34,11 @@ trait GContainerT
 {
 
   override type T = HTMLDivElement
+
+  /** Прочитать и распарсить текущее значение style.width. */
+  def styleWidthPx: Option[Int] = {
+    DataUtil.extractInt(_underlying.style.width)
+  }
 
   /** Внутреннее межмодельное API для согласования параметров отображения div'ов. */
   protected[grid] def _setContainerSz(widthCss: String, cm: Int): Unit = {

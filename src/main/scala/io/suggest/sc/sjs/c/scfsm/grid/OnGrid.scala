@@ -4,7 +4,7 @@ import io.suggest.sc.sjs.c.scfsm.grid
 import io.suggest.sc.sjs.m.mfoc.MFocSd
 import io.suggest.sc.sjs.m.mgrid._
 import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
-import io.suggest.sc.sjs.vm.grid.{GContainer, GRoot}
+import io.suggest.sc.sjs.vm.grid.{GContainer, GContent, GRoot}
 import io.suggest.sjs.common.controller.DomQuick
 
 /**
@@ -80,36 +80,58 @@ trait OnGrid extends grid.Append {
         groot.reInitLayout(sd0)
       }
 
-      // TODO Opt Если нет изменений по горизонтали, то можно таймер не запускать?
-      // Запуск нового таймера ресайза
-      val timerGen = System.currentTimeMillis()
-      val timerId  = DomQuick.setTimeout(GRID_RESIZE_TIMEOUT_MS) { () =>
-        _sendEventSync( GridResizeTimeout(timerGen) )
+      // Отменить старый таймер. Изначально было внутри fold.
+      for (grSd0 <- sd0.grid.resizeOpt) {
+        DomQuick.clearTimeout(grSd0.timerId)
       }
 
-      // Собрать обновлённое состояние ресайза.
-      val grSd2 = sd0.grid.resizeOpt.fold [MGridResizeState] {
-        // Ресайз только что начался, инициализировать новое состояние ресайза.
-        MGridResizeState(
-          timerGen  = timerGen,
-          timerId   = timerId
-        )
-      } { grSd0 =>
-        // Отменить старый таймер
-        DomQuick.clearTimeout( grSd0.timerId )
-        grSd0.copy(
-          timerId   = timerId,
-          timerGen  = timerGen
-        )
+      // Посчитать новые размер контейнера. Используем Option как Boolean.
+      val needResizeOpt = for {
+        scr <- sd0.screen
+        // Прочитать текущее значение ширины в стиле. Она не изменяется до окончания ресайза.
+        gc  <- GContainer.find()
+        w   <- gc.styleWidthPx
+        // Посчитать размер контейнера.
+        cwCm = sd0.grid.getGridContainerSz(scr)
+        // Если ресайза маловато, то вернуть здесь None.
+        if Math.abs(cwCm.cw - w) >= 100
+      } yield {
+        // Значение не важно абсолютно
+        1
       }
+      val needResize = needResizeOpt.isDefined
 
-      // Сохранить обновлённое состояние FSM.
-      _stateData = sd0.copy(
-        grid = sd0.grid.copy(
-          resizeOpt = Some(grSd2)
+      // Если нет изменений по горизонтали, то можно таймер ресайза не запускать/не обновлять.
+      if (needResize) {
+        // Запуск нового таймера ресайза
+        val timerGen = System.currentTimeMillis()
+        val timerId = DomQuick.setTimeout(GRID_RESIZE_TIMEOUT_MS) { () =>
+          _sendEventSync(GridResizeTimeout(timerGen))
+        }
+
+        // Собрать обновлённое состояние ресайза.
+        // TODO Opt если не будет новых полей, то можно унифицировать apply и copy.
+        val grSd2 = sd0.grid.resizeOpt.fold[MGridResizeState] {
+          // Ресайз только что начался, инициализировать новое состояние ресайза.
+          MGridResizeState(
+            timerId = timerId,
+            timerGen = timerGen
+          )
+        } { grSd0 =>
+          grSd0.copy(
+            timerId = timerId,
+            timerGen = timerGen
+          )
+        }
+
+        // Сохранить обновлённое состояние FSM.
+        _stateData = sd0.copy(
+          grid = sd0.grid.copy(
+            resizeOpt = Some(grSd2)
+          )
         )
-      )
-    }
+      }   // if needResize
+    }     // _viewPortChanged()
 
 
     /** FSM-реакция на получение положительного ответа от сервера по поводу карточек сетки.

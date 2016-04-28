@@ -54,11 +54,11 @@ trait Index extends ScFsmStub with FindAdsUtil {
 
       // Дожидаясь ответа сервера, инициализировать кое-какие переменные, необходимые на следующем шаге.
       for (screen <- sd0.screen) {
-        val adsPerLoad = MGridState.getAdsPerLoad( screen )
+
         val sd1 = sd0.copy(
           grid = sd0.grid.copy(
             state = sd0.grid.state.copy(
-              adsPerLoad = adsPerLoad
+              adsPerLoad = MGridState.getAdsPerLoad( screen )
             )
           )
         )
