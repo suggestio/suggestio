@@ -46,7 +46,7 @@ libraryDependencies ++= {
     "com.typesafe.play.extras" %% "play-geojson" % "1.4.+",
     // play 2.5.1: AHC-2.0 там кривой RC16, https://github.com/AsyncHttpClient/async-http-client/issues/1123
     // TODO После 2.5.2 или 2.6.0 можно удалить, т.к. в git уже -RC19 проставлен.
-    "org.asynchttpclient" % "async-http-client" % "2.0.0-RC19",
+    "org.asynchttpclient" % "async-http-client" % "2.0.+",
     // akka
     "com.typesafe.akka" %% "akka-actor"  % akkaVsn,
     "com.typesafe.akka" %% "akka-remote" % akkaVsn,
