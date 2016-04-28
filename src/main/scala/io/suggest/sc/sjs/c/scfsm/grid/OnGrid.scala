@@ -4,7 +4,7 @@ import io.suggest.sc.sjs.c.scfsm.grid
 import io.suggest.sc.sjs.m.mfoc.MFocSd
 import io.suggest.sc.sjs.m.mgrid._
 import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
-import io.suggest.sc.sjs.vm.grid.{GContainer, GContent, GRoot}
+import io.suggest.sc.sjs.vm.grid.{GContainer, GRoot}
 import io.suggest.sjs.common.controller.DomQuick
 
 /**
@@ -52,7 +52,7 @@ trait OnGrid extends grid.Append {
       // Вертикальный скроллинг в плитке.
       case vs: GridScroll =>
         handleVScroll(vs)
-      // Сигнал завершения ресайза
+      // Сигнал таймера о необходимости исполнения ресайза плитки.
       case GridResizeTimeout(gen) =>
         if ( _stateData.grid.resizeOpt.exists(_.timerGen == gen) )
           _handleGridResizeTimeout()
@@ -75,7 +75,7 @@ trait OnGrid extends grid.Append {
       // сервер. Нужно дождаться окончания ресайза с помощью таймеров, затем загрузить новую плитку с сервера.
       val sd0 = _stateData
 
-      // Обновить параметры grid-контейнера.
+      // Обновить параметры grid-контейнера. Это позволяет исправить высоту контейнера.
       for (groot <- GRoot.find()) {
         groot.reInitLayout(sd0)
       }
@@ -159,11 +159,9 @@ trait OnGrid extends grid.Append {
 
     /** Реакция на наступление таймаута ожидания ресайза плитки. */
     def _handleGridResizeTimeout(): Unit = {
-      // TODO Opt Если *существенное* изменение по горизонтали, то нужно перезагружать выдачу.
-      // TODO Opt Если существенное по горизонтали, но оно осталось ~кратно ячейкам, то просто перестроить выдачу: _rebuildGridOnPanelChange
-      // TODO Если НЕсущественное по горизонтали, то можно оставлять всё как есть.
       val sd0 = _stateData
       for (mscreen <- sd0.screen) {
+        // TODO Opt Если существенное по горизонтали, но оно осталось ~кратно ячейкам, то просто перестроить выдачу: _rebuildGridOnPanelChange
         val sd1 = sd0.copy(
           grid = sd0.grid.copy(
             state = MGridState(

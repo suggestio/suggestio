@@ -53,7 +53,7 @@ trait OnGridNav extends OnGrid with ISjsLogger {
         for (showBtn <- HShowNavBtn.find()) {
           showBtn.show()
         }
-        val grid2 = _rebuildGridOnPanelChange(sd0, screen, nroot)
+        val grid2 = _rebuildGridOnPanelChange(sd0, screen, nroot, isOpen = false)
 
         for (hbtns <- HBtns.find()) {
           hbtns.show()
@@ -99,7 +99,7 @@ trait OnGridNav extends OnGrid with ISjsLogger {
         for (showBtn <- HShowNavBtn.find()) {
           showBtn.hide()
         }
-        val grid2 = _rebuildGridOnPanelChange(sd0, screen, nroot)
+        val grid2 = _rebuildGridOnPanelChange(sd0, screen, nroot, isOpen = false)
 
         val sd2 = sd0.copy(
           grid = grid2,
@@ -184,7 +184,8 @@ trait OnGridNav extends OnGrid with ISjsLogger {
     }
 
     override def receiverPart: Receive = {
-      _receiverPart orElse super.receiverPart
+      _receiverPart
+        .orElse(super.receiverPart)
     }
 
     protected def _navNodeListClick(event: Event): Unit = {
