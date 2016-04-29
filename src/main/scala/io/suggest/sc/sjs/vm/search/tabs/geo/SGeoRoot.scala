@@ -2,8 +2,8 @@ package io.suggest.sc.sjs.vm.search.tabs.geo
 
 import io.suggest.sc.sjs.vm.search.tabs.{TabRoot, TabRootCompanion}
 import io.suggest.sc.ScConstants.Search.Cats.ROOT_DIV_ID
+import io.suggest.sc.sjs.m.msearch.MTabs
 import io.suggest.sjs.common.vm.child.SubTagFind
-import io.suggest.sjs.common.vm.content.ClearT
 import org.scalajs.dom
 import org.scalajs.dom.raw.HTMLDivElement
 
@@ -14,17 +14,18 @@ import org.scalajs.dom.raw.HTMLDivElement
  * Description: vm'ка доступа к основному div'у вкладки географии узлов.
  */
 object SGeoRoot extends TabRootCompanion {
-  override type T = SGeoRoot
-  override def DOM_ID: String = ROOT_DIV_ID
+  override type T     = SGeoRoot
+  override def DOM_ID = ROOT_DIV_ID
 }
 
 
-trait SGeoRootT extends SubTagFind with TabRoot with ClearT {
+trait SGeoRootT extends SubTagFind with TabRoot {
 
   override protected type SubtagCompanion_t = SGeoWrapper.type
   override type SubTagVm_t                  = SGeoWrapper.T
   override protected def _subtagCompanion   = SGeoWrapper
   override protected type SubTagEl_t        = SGeoWrapper.Dom_t
+  override def mtab   = MTabs.Geo
 
   /** Инициализация текущей и подчиненных ViewModel'ей. */
   override def initLayout(): Unit = {

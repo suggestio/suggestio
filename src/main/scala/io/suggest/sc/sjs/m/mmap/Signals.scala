@@ -8,5 +8,9 @@ import io.suggest.sjs.common.fsm.IFsmMsg
   * Created: 12.04.16 22:20
   * Description: Сообщения между ScFsm и MbFsm.
   */
+
+/** Сигнал инициализации карты. */
 case class EnsureMap() extends IFsmMsg
 
+/** Сигнал о начале отображения карты на экране. */
+case object MapShowing extends IFsmMsg

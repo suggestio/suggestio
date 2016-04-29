@@ -6,10 +6,11 @@ import io.suggest.sjs.common.model.browser.IBrowser
 import io.suggest.sjs.common.vm.VmT
 import io.suggest.sjs.common.vm.child.{ContentElT, WrapperChildContent}
 import io.suggest.sjs.common.vm.find.FindDiv
-import io.suggest.sjs.common.vm.style.ShowHideDisplayT
+import io.suggest.sjs.common.vm.style.{SetIsShown, ShowHideDisplayT}
 import io.suggest.sjs.common.vm.util.IInitLayout
 import org.scalajs.dom.raw.HTMLDivElement
 import io.suggest.sc.ScConstants.Search.TAB_BTN_INACTIVE_CSS_CLASS
+import io.suggest.sc.sjs.m.msearch.MTab
 
 /**
  * Suggest.io
@@ -20,14 +21,12 @@ import io.suggest.sc.ScConstants.Search.TAB_BTN_INACTIVE_CSS_CLASS
 
 /** Трейт объекта-компаньона root-div табов. */
 trait TabRootCompanion extends FindDiv {
-
   override type T <: TabRoot
-
 }
 
 
 /** Трейт экземпляра модели div'а корневого таба поисковой вкладки. */
-trait TabRoot extends SetHeight3 with IInitLayout with ShowHideDisplayT {
+trait TabRoot extends SetHeight3 with IInitLayout with ShowHideDisplayT with SetIsShown {
 
   override type T = HTMLDivElement
   //override protected type SubtagCompanion_t <: TabWrapperCompanion
@@ -36,6 +35,8 @@ trait TabRoot extends SetHeight3 with IInitLayout with ShowHideDisplayT {
   def adjust(tabHeight: Int, browser: IBrowser): Unit = {
     _setHeight3(tabHeight, browser)
   }
+
+  def mtab: MTab
 
 }
 

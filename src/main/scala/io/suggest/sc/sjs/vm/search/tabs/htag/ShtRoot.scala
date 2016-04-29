@@ -5,6 +5,7 @@ import io.suggest.sjs.common.vm.child.SubTagFind
 import io.suggest.sjs.common.vm.util.IInitLayout
 import org.scalajs.dom.raw.HTMLDivElement
 import io.suggest.sc.ScConstants.Search.Nodes.ROOT_DIV_ID
+import io.suggest.sc.sjs.m.msearch.MTabs
 
 /**
  * Suggest.io
@@ -13,11 +14,8 @@ import io.suggest.sc.ScConstants.Search.Nodes.ROOT_DIV_ID
  * Description: VM корневого контейнера тела вкладки с поисковыми хеш-тегами.
  */
 object ShtRoot extends TabRootCompanion {
-
-  override type T = ShtRoot
-
+  override type T     = ShtRoot
   override def DOM_ID = ROOT_DIV_ID
-
 }
 
 
@@ -27,6 +25,7 @@ trait ShtRootT extends SubTagFind with TabRoot {
   override type SubTagVm_t                  = ShtWrapper.T
   override protected type SubTagEl_t        = ShtWrapper.Dom_t
   override protected def _subtagCompanion   = ShtWrapper
+  override def mtab   = MTabs.Tags
 
   override def initLayout(): Unit = {
     val f = IInitLayout.f

@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.c.mapbox
 
 import io.suggest.sc.sjs.m.mgeo.GlLocation
+import io.suggest.sc.sjs.m.mmap.MapShowing
 
 /**
   * Suggest.io
@@ -16,6 +17,8 @@ trait StoreUserGeoLoc extends MbFsmStub {
     override def receiverPart: Receive = super.receiverPart.orElse {
       case userGeoLoc: GlLocation =>
         _handleUserGeoLoc(userGeoLoc)
+      case MapShowing =>
+        _handleMapShowing()
     }
 
     /** Реакция на получение данных геолокации текущего юзера. */
@@ -24,6 +27,15 @@ trait StoreUserGeoLoc extends MbFsmStub {
         lastUserLoc = Some(userGeoLoc.data)
       )
     }
+
+    /** Реакция на начало отображения карты на экране. */
+    def _handleMapShowing(): Unit = {
+      for (glmap <- _stateData.glmap) {
+        // Почему-то карта ошибается с размером, но после ресайза определяет корректно.
+        glmap.resize()
+      }
+    }
+
   }
 
 }

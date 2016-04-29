@@ -4,6 +4,8 @@ import io.suggest.fsm.StateData
 import io.suggest.sc.sjs.m.magent.{IVpSzChanged, MScreen}
 import io.suggest.sc.sjs.m.mfsm.signals.KbdKeyUp
 import io.suggest.sc.sjs.m.msc.fsm.MStData
+import io.suggest.sc.sjs.vm.nav.nodelist.NlRoot
+import io.suggest.sc.sjs.vm.search.SRoot
 import io.suggest.sjs.common.fsm._
 import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.vsz.ViewportSz
@@ -29,9 +31,22 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm {
       val vszOpt = ViewportSz.getViewportSize
       if (vszOpt.isEmpty)
         warn( WarnMsgs.NO_SCREEN_VSZ_DETECTED )
-      _stateData = _stateData.copy(
-        screen = vszOpt.map( MScreen.apply )
+      val screenOpt = vszOpt.map( MScreen.apply )
+      val sd1 = _stateData.copy(
+        screen = screenOpt
       )
+      _stateData = sd1
+
+      // Выполнить какие-то общие для выдачи действия
+      // Подправить высоту левой панели...
+      for (nlRoot <- NlRoot.find()) {
+        nlRoot.reInitLayout(sd1)
+      }
+
+      // Подправить высоту правой панели.
+      for (mscreen <- screenOpt; sRoot <- SRoot.find()) {
+        sRoot.adjust(mscreen, sd1.browser)
+      }
     }
   }
 

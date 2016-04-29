@@ -53,20 +53,20 @@ trait Plain extends OnGrid {
     /** Состояние начала и ожидания загрузки списка узлов, если требуется. */
     protected def _navLoadListState: FsmState
 
-    private def _receiverPart: Receive = {
-      // Сигнал нажатия на кнопку открытия панели поиска.
-      case ShowSearchClick(event) =>
-        _showSearchClick(event)
-      // Сигнал нажатия на кнопку отображения панели навигации.
-      case ShowNavClick(event) =>
-        _showNavClick(event)
-      // Клик по кнопке возврата на выдачу предыдущего узла.
-      case PrevNodeBtnClick(event) =>
-        _goToPrevNodeClick(event)
-    }
 
     override def receiverPart: Receive = {
-      _receiverPart orElse super.receiverPart
+      val _receiverPart: Receive = {
+        // Сигнал нажатия на кнопку открытия панели поиска.
+        case ShowSearchClick(event) =>
+          _showSearchClick(event)
+        // Сигнал нажатия на кнопку отображения панели навигации.
+        case ShowNavClick(event) =>
+          _showNavClick(event)
+        // Клик по кнопке возврата на выдачу предыдущего узла.
+        case PrevNodeBtnClick(event) =>
+          _goToPrevNodeClick(event)
+      }
+      _receiverPart.orElse( super.receiverPart )
     }
 
 

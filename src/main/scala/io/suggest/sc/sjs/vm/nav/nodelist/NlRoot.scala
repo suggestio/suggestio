@@ -5,7 +5,6 @@ import io.suggest.sc.ScConstants.NavPane.NODE_LIST_ID
 import io.suggest.sjs.common.vm.height3.SetHeight3
 import io.suggest.sjs.common.vm.child.SubTagFind
 import io.suggest.sjs.common.vm.find.FindDiv
-import io.suggest.sjs.common.vm.util.IInitLayout
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -31,11 +30,17 @@ trait NlRootT extends SubTagFind with SetHeight3 {
   override type SubTagVm_t                = NlWrapper.T
   override protected def _subtagCompanion = NlWrapper
 
+  /** Первая инициализация внешности. */
   def initLayout(sd: IStData): Unit = {
     for (screen <- sd.screen) {
       val height = screen.height - NlRoot.NL_TOP_OFFSET
       _setHeight3(height, sd.browser)
     }
+  }
+
+  /** Повторная инициализация внешности, например после ресайза окна. */
+  def reInitLayout(sd: IStData): Unit = {
+    initLayout(sd)
   }
 
 }

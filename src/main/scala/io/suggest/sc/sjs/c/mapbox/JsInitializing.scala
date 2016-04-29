@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.c.mapbox
 
 import io.suggest.sc.sjs.m.mmap.EnsureMap
 import io.suggest.sc.sjs.vm.mapbox.GlMapVm
-import io.suggest.sc.sjs.vm.search.tabs.geo.SGeoRoot
+import io.suggest.sc.sjs.vm.search.tabs.geo.SGeoContent
 import io.suggest.sjs.common.msg.WarnMsgs
 
 /**
@@ -48,7 +48,7 @@ trait JsInitializing extends StoreUserGeoLoc {
         glmap.remove()
       }
 
-      for (cont <- SGeoRoot.find()) {
+      for (cont <- SGeoContent.find()) {
         // Пока div контейнера категорий содержит какой-то мусор внутри, надо его очищать перед использованием.
         cont.clear()
 

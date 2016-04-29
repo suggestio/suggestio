@@ -1,8 +1,10 @@
 package io.suggest.sc.sjs.c.scfsm.search
 
 import io.suggest.sc.ScConstants.Search.Fts.START_TIMEOUT_MS
+import io.suggest.sc.sjs.c.mapbox.MbFsm
 import io.suggest.sc.sjs.c.scfsm.grid.{OnGrid, PanelGridRebuilder}
 import io.suggest.sc.sjs.m.mhdr.{HideSearchClick, LogoClick, ShowIndexClick}
+import io.suggest.sc.sjs.m.mmap.MapShowing
 import io.suggest.sc.sjs.m.msearch._
 import io.suggest.sc.sjs.vm.hdr.HRoot
 import io.suggest.sc.sjs.vm.search.SRoot
@@ -109,31 +111,31 @@ trait Base extends OnGrid with ISjsLogger {
     /** На какое состояние надо переключаться при смене поисковой вкладки? */
     protected def _tabSwitchedFsmState: FsmState
 
-    private def _receiverPart: Receive = {
-      // Клик по кнопке сокрытия поисковой панели (справа).
-      case HideSearchClick(evt) =>
-        _hideSearch()
-      // Клик по кнопке отображения index (слева).
-      case ShowIndexClick(evt) =>
-        _hideSearch()
-      // Получение сигналов кликов по кнопкам вкладок.
-      case tabBtnClick: ITabClickSignal =>
-        _tabBtnClick(tabBtnClick)
-      case logoClick: LogoClick =>
-        _hideSearch()
-      // Получение сигналов от поля полнотекстового поиска.
-      case FtsFieldFocus(event) =>
-        _ftsFieldFocus(event)
-      case ffb: FtsFieldBlur =>
-        _ftsFieldBlur(ffb)
-      case ffku: FtsFieldKeyUp =>
-        _ftsKeyUp(ffku)
-      case FtsStartRequestTimeout(generation2) if _stateData.search.ftsSearch.exists(_.generation == generation2) =>
-        _ftsLetsStartRequest()
-    }
-
     override def receiverPart: Receive = {
-      _receiverPart orElse super.receiverPart
+      val _receiverPart: Receive = {
+        // Клик по кнопке сокрытия поисковой панели (справа).
+        case HideSearchClick(evt) =>
+          _hideSearch()
+        // Клик по кнопке отображения index (слева).
+        case ShowIndexClick(evt) =>
+          _hideSearch()
+        // Получение сигналов кликов по кнопкам вкладок.
+        case tabBtnClick: ITabClickSignal =>
+          _tabBtnClick(tabBtnClick)
+        case logoClick: LogoClick =>
+          _hideSearch()
+        // Получение сигналов от поля полнотекстового поиска.
+        case FtsFieldFocus(event) =>
+          _ftsFieldFocus(event)
+        case ffb: FtsFieldBlur =>
+          _ftsFieldBlur(ffb)
+        case ffku: FtsFieldKeyUp =>
+          _ftsKeyUp(ffku)
+        case FtsStartRequestTimeout(generation2) =>
+          if (_stateData.search.ftsSearch.exists(_.generation == generation2))
+            _ftsLetsStartRequest()
+      }
+      _receiverPart.orElse( super.receiverPart )
     }
 
     /** Сигнал появления фокуса в поле полнотекстового поиска. */
@@ -221,11 +223,18 @@ trait Base extends OnGrid with ISjsLogger {
 trait OnGeo extends Base {
   /** Заготовка состояния нахождения на вкладке панели поиска. */
   protected trait OnGridSearchGeoStateT extends OnSearchStateT {
+
+    override def afterBecome(): Unit = {
+      super.afterBecome()
+      MbFsm ! MapShowing
+    }
+
     override protected def _nowOnTab = MTabs.Geo
 
     override protected def _ftsLetsStartRequest(): Unit = {
       // TODO Искать "места" по названиям и другим вещам.
       warn( WarnMsgs.NOT_YET_IMPLEMENTED + " " + getClass.getSimpleName )
     }
+
   }
 }

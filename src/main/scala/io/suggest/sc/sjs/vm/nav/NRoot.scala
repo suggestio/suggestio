@@ -26,11 +26,13 @@ trait NRootT extends VmT with ShowHideDisplayT with GridOffsetCalc {
 
   // Поддержка калькулятора пересчета сетки для этой панели.
   override protected def gridOffsetMinWidthPx: Int = 280
+
   override def saveNewOffsetIntoGridState(mgs0: MGridState, newOff: Int): MGridState = {
     mgs0.copy(
       leftOffset = newOff
     )
   }
+
 }
 
 
