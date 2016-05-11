@@ -11,7 +11,6 @@ import io.suggest.sc.sjs.vm.foc.fad.FAdRoot
 import io.suggest.sc.sjs.vm.foc.{FCarousel, FControls, FRoot}
 import io.suggest.sc.sjs.vm.grid.GBlock
 import io.suggest.sjs.common.msg.ErrorMsgs
-import org.scalajs.dom
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.util.Failure
@@ -31,12 +30,18 @@ import io.suggest.sjs.common.controller.DomQuick
 
 trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
 
-  /** Трейт для состояния, когда focused-выдача отсутствует, скрыта вообще и ожидает активации.
-    * При появлении top-level ScFsm это событие исчезнет, и будет обрабатываться где-то в вышестоящем обработчике. */
+  /**
+    * Трейт для состояния, когда focused-выдача отсутствует, скрыта вообще и ожидает активации.
+    * При появлении top-level ScFsm это событие исчезнет, и будет обрабатываться где-то в вышестоящем обработчике.
+    */
   protected trait StartingForAdStateT extends FsmState with FindNearAdIds with ProcessIndexReceivedUtil {
+
+    private def _getGblock(fState: MFocSd): Option[GBlock] = {
+      fState.currAdId.flatMap(GBlock.find)
+    }
     
-    protected def _getCurrIndex(fState: MFocSd): Int = {
-      fState.gblock
+    protected def _getCurrIndex(fState: MFocSd, gblockOpt: Option[GBlock]): Int = {
+      gblockOpt
         .map { _.index }
         .orElse { fState.currIndex }
         .getOrElse(0)   // TODO Когда придёт время для восстановления состояния FSM из URL, надо будет сделать тут логику по-лучше.
@@ -44,6 +49,7 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
 
     override def afterBecome(): Unit = {
       super.afterBecome()
+      // Необходимо запустить focused ad реквест к серверу.
       val sd0 = _stateData
       for {
         screen  <- sd0.screen
@@ -51,15 +57,15 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
         fRoot   <- FRoot.find()
         car     <- fRoot.carousel
       } {
-        val gblockOpt   = fState0.gblock
-        val currIndex   = _getCurrIndex(fState0)
+        val gblockOpt   = _getGblock(fState0)
+        val currIndex   = _getCurrIndex(fState0, gblockOpt)
+
         // Собрать и запустить fads-реквест на основе запроса к карточкам плитки.
         // Флаг: запрашивать ли карточку, предшествующую запрошенной. Да, если запрошена ненулевая карточка.
         val withPrevAd  = currIndex > 0
-        val currMadIdOpt = fState0.currAdId
-          .orElse { gblockOpt.flatMap(_.madId) }
-        val firstMadIds = _nearAdIdsIter( gblockOpt orElse currMadIdOpt.flatMap(GBlock.find) )
-            .toSeq
+        val firstMadIds = _nearAdIdsIter( gblockOpt )
+          .toSeq
+
         // Поиск идёт с упором на multiGet по id карточек.
         val args = new MFocAdSearchEmpty with FindAdsArgsT {
           override def _sd        = sd0
@@ -68,7 +74,7 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
           override def offset     = Some( if (withPrevAd) currIndex - 1 else currIndex )
           override def limit      = Some( if (withPrevAd) 3 else 2 )
           // Для первой открываемой карточки допускается переход на index-выдачу узла вместо открытия focused-выдачи.
-          override def openIndexAdId = currMadIdOpt
+          override def openIndexAdId = fState0.currAdId
         }
         val fadsFut = MFocAds.findOrIndex(args)
 
@@ -109,6 +115,7 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
       for (styles <- mfa.styles; res <- FocusedRes.find()) {
         res.appendCss(styles)
       }
+
       // Залить в карусель полученные карточки.
       val sd0 = _stateData
       for {
@@ -117,7 +124,8 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
         fRoot     <- FRoot.find()
         car       <- fRoot.carousel
       } {
-        val currIndex   = _getCurrIndex(fState)
+        val currIndex   = _getCurrIndex(fState, _getGblock(fState))
+
         // Раскидать полученные карточки по аккамуляторам и карусели. Для ускорения закидываем в карусель только необходимую карточку.
         val (prevs2, firstAdOpt, nexts2) = {
           mfa.focusedAdsIter.foldLeft((fState.prevs, Option.empty[MFocAd], fState.nexts)) {

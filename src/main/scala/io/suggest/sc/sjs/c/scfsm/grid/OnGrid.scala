@@ -1,11 +1,11 @@
 package io.suggest.sc.sjs.c.scfsm.grid
 
-import io.suggest.sc.sjs.c.scfsm.grid
+import io.suggest.sc.sjs.c.scfsm.foc.OnFocusBase
+import io.suggest.sc.sjs.c.scfsm.{ResizeDelayed, grid}
 import io.suggest.sc.sjs.m.mfoc.MFocSd
 import io.suggest.sc.sjs.m.mgrid._
 import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
 import io.suggest.sc.sjs.vm.grid.{GContainer, GRoot}
-import io.suggest.sjs.common.controller.DomQuick
 
 /**
  * Suggest.io
@@ -13,13 +13,10 @@ import io.suggest.sjs.common.controller.DomQuick
  * Created: 05.08.15 10:13
  * Description: Аддон для поддержки сборки состояний выдачи, связанных с возможностями плитки карточек.
  */
-trait OnGrid extends grid.Append {
-
-  /** Время ожидания окончания окна, после которого необходимо произвести изменения в плитке. */
-  private def GRID_RESIZE_TIMEOUT_MS = 300
+trait OnGrid extends grid.Append with ResizeDelayed with OnFocusBase {
 
   /** Поддержка реакции на клики по карточкам в выдаче. */
-  trait GridBlockClickStateT extends FsmEmptyReceiverState {
+  trait GridBlockClickStateT extends FsmEmptyReceiverState with IStartFocusOnAdState {
 
     override def receiverPart: Receive = super.receiverPart.orElse {
       // Клик по одной из карточек в сетке оных.
@@ -34,28 +31,25 @@ trait OnGrid extends grid.Append {
       // Минимально инициализируем focused-состояние и переключаем логику на focused.
       val sd1 = sd0.copy(
         focused = Some(MFocSd(
-          gblock = Some(gblock)
+          currAdId = gblock.madId
         ))
       )
       become(_startFocusOnAdState, sd1)
     }
 
-    protected def _startFocusOnAdState: FsmState
-
   }
 
 
   /** Трейт для сборки состояний, в которых доступна сетка карточек, клики по ней и скроллинг. */
-  trait OnGridStateT extends GridBlockClickStateT with GridAdsWaitLoadStateT {
+  trait OnGridStateT
+    extends GridBlockClickStateT with GridAdsWaitLoadStateT
+      with DelayHorizResizeUsingGrid with HandleResizeDelayed
+  {
 
     override def receiverPart: Receive = super.receiverPart.orElse {
       // Вертикальный скроллинг в плитке.
       case vs: GridScroll =>
         handleVScroll(vs)
-      // Сигнал таймера о необходимости исполнения ресайза плитки.
-      case GridResizeTimeout(gen) =>
-        if ( _stateData.grid.resizeOpt.exists(_.timerGen == gen) )
-          _handleGridResizeTimeout()
     }
 
 
@@ -66,72 +60,17 @@ trait OnGrid extends grid.Append {
       }
     }
 
-
-    /** Реакция на сигнал об изменении размеров окна или экрана устройства. */
+    // С плиткой карточек есть кое-какие тонкости при ресайзе viewport'а: карточки под экран подгоняет
+    // сервер. Нужно дождаться окончания ресайза с помощью таймеров, затем загрузить новую плитку с сервера.
     override def _viewPortChanged(): Unit = {
-      super._viewPortChanged()
-
-      // С плиткой карточек есть кое-какие тонкости при ресайзе viewport'а: карточки под экран подгоняет
-      // сервер. Нужно дождаться окончания ресайза с помощью таймеров, затем загрузить новую плитку с сервера.
-      val sd0 = _stateData
 
       // Обновить параметры grid-контейнера. Это позволяет исправить высоту контейнера.
       for (groot <- GRoot.find()) {
-        groot.reInitLayout(sd0)
+        groot.reInitLayout(_stateData)
       }
 
-      // Отменить старый таймер. Изначально было внутри fold.
-      for (grSd0 <- sd0.grid.resizeOpt) {
-        DomQuick.clearTimeout(grSd0.timerId)
-      }
-
-      // Посчитать новые размер контейнера. Используем Option как Boolean.
-      val needResizeOpt = for {
-        scr <- sd0.screen
-        // Прочитать текущее значение ширины в стиле. Она не изменяется до окончания ресайза.
-        gc  <- GContainer.find()
-        w   <- gc.styleWidthPx
-        // Посчитать размер контейнера.
-        cwCm = sd0.grid.getGridContainerSz(scr)
-        // Если ресайза маловато, то вернуть здесь None.
-        if Math.abs(cwCm.cw - w) >= 100
-      } yield {
-        // Значение не важно абсолютно
-        1
-      }
-      val needResize = needResizeOpt.isDefined
-
-      // Если нет изменений по горизонтали, то можно таймер ресайза не запускать/не обновлять.
-      if (needResize) {
-        // Запуск нового таймера ресайза
-        val timerGen = System.currentTimeMillis()
-        val timerId = DomQuick.setTimeout(GRID_RESIZE_TIMEOUT_MS) { () =>
-          _sendEventSync(GridResizeTimeout(timerGen))
-        }
-
-        // Собрать обновлённое состояние ресайза.
-        // TODO Opt если не будет новых полей, то можно унифицировать apply и copy.
-        val grSd2 = sd0.grid.resizeOpt.fold[MGridResizeState] {
-          // Ресайз только что начался, инициализировать новое состояние ресайза.
-          MGridResizeState(
-            timerId = timerId,
-            timerGen = timerGen
-          )
-        } { grSd0 =>
-          grSd0.copy(
-            timerId = timerId,
-            timerGen = timerGen
-          )
-        }
-
-        // Сохранить обновлённое состояние FSM.
-        _stateData = sd0.copy(
-          grid = sd0.grid.copy(
-            resizeOpt = Some(grSd2)
-          )
-        )
-      }   // if needResize
-    }     // _viewPortChanged()
+      super._viewPortChanged()
+    }
 
 
     /** FSM-реакция на получение положительного ответа от сервера по поводу карточек сетки.
@@ -145,12 +84,12 @@ trait OnGrid extends grid.Append {
       val sd0 = _stateData
       for (mscreen <- sd0.screen) {
         _stateData = sd0.copy(
+          resizeOpt = None,
           grid = sd0.grid.copy(
             state = sd0.grid.state.nothingLoaded().copy(
               adsPerLoad = MGridState.getAdsPerLoad(mscreen)
             ),
-            builderStateOpt = None,
-            resizeOpt = None
+            builderStateOpt = None
           )
         )
       }
@@ -158,7 +97,7 @@ trait OnGrid extends grid.Append {
     }
 
     /** Реакция на наступление таймаута ожидания ресайза плитки. */
-    def _handleGridResizeTimeout(): Unit = {
+    override def _handleResizeDelayTimeout(): Unit = {
       val sd0 = _stateData
       for (mscreen <- sd0.screen) {
         // TODO Opt Если существенное по горизонтали, но оно осталось ~кратно ячейкам, то просто перестроить выдачу: _rebuildGridOnPanelChange

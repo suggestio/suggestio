@@ -19,6 +19,11 @@ trait Phase
 {
   that: ScFsm.type =>
 
+  /** Реализация трейта поддержки ресайза. */
+  protected trait IStartFocusOnAdState extends super.IStartFocusOnAdState {
+    override def _startFocusOnAdState = new FocStartingForAd
+  }
+
   /** Состояние сразу после клика по карточке в плитке. Отрабатывается запрос, происходит подготовка focused-выдачи. */
   class FocStartingForAd extends StartingForAdStateT with ProcessIndexReceivedUtil {
     override def _focOnAppearState = new FocAppearingState
@@ -35,7 +40,7 @@ trait Phase
     override def _closingState    = new FocClosingState
   }
   /** Состояние нахождения на какой-то focused-карточке в выдаче. */
-  class FocOnFocusState extends OnFocusStateT with OnFocusStateBaseT {
+  class FocOnFocusState extends OnFocusStateT with OnFocusStateBaseT with IStartFocusOnAdState {
     override def _leftPreLoadState  = new FocPreLoadLeftState
     override def _rightPreLoadState = new FocPreLoadRightState
     override def _onTouchStartState = new FocTouchStartState
@@ -63,7 +68,11 @@ trait Phase
   class FocShiftLeftState  extends ShiftLeftStateT with SimpleShiftStateT
 
   /** Общий код реализаций focused-preload-состояний. */
-  protected trait FocPreLoadingStateT extends super.FocPreLoadingStateT with OnFocusStateBaseT {
+  protected trait FocPreLoadingStateT
+    extends super.FocPreLoadingStateT
+      with OnFocusStateBaseT
+      with IStartFocusOnAdState
+  {
     override def _preloadDoneState = new FocOnFocusState
   }
   /** Состояние нахождения на крайней правой карточке среди уже подгруженных,

@@ -21,9 +21,6 @@ trait IGridData extends MGridUtil {
   /** Опциональное состояние билдера, если есть. */
   def builderStateOpt: Option[MGridBuilderState]
 
-  /** При ресайзе здесь накапливается инфа по ресайзу. */
-  def resizeOpt: Option[MGridResizeState]
-
   /** Извлечь состояние билдера или вернуть новое, если готовое состояние отсутствует. */
   def builderState: MGridBuilderState = {
     builderStateOpt.getOrElse {
@@ -39,8 +36,7 @@ trait IGridData extends MGridUtil {
 case class MGridData(
   override val params           : MGridParams                 = MGridParams(),
   override val state            : MGridState                  = MGridState(),
-  override val builderStateOpt  : Option[MGridBuilderState]   = None,
-  override val resizeOpt        : Option[MGridResizeState]    = None
+  override val builderStateOpt  : Option[MGridBuilderState]   = None
 )
   extends IGridData
 
@@ -53,7 +49,8 @@ trait MGridUtil {
   /**
    * Рассчет новых параметров контейнера.
    * Это pure-function, она не меняет состояние системы, а только считает.
-   * @param screen Данные по текущему экрану.
+    *
+    * @param screen Данные по текущему экрану.
    * @return Экземпляр с результатами рассчетов.
    */
   def getGridContainerSz(screen: ISize2di): MGetContStateResult = {

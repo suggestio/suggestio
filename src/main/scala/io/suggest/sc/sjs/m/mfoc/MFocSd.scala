@@ -15,9 +15,6 @@ trait IFocSd {
   /** id первой карточки, используются только при инициализации focused-выдачи. */
   def currAdId   : Option[String]
 
-  /** grid block, относящийся к текущей карточке. */
-  def gblock     : Option[GBlock]
-
   /** Кол-во уже загруженных карточек. */
   def loadedCount : Int
 
@@ -69,7 +66,6 @@ trait IFocSd {
 case class MFocSd(
   override val currIndex    : Option[Int]           = None,
   override val currAdId     : Option[String]        = None,
-  override val gblock       : Option[GBlock]        = None,
   override val loadedCount  : Int                   = 0,
   override val totalCount   : Option[Int]           = None,
   override val nexts        : FAdQueue              = Queue.empty,

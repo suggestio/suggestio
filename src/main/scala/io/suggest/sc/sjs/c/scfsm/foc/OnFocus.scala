@@ -8,6 +8,7 @@ import io.suggest.sc.sjs.vm.foc.fad.{FAdRoot, FAdWrapper, FArrow}
 import io.suggest.sjs.common.geom.Coord2dD
 import io.suggest.sjs.common.model.{MHand, MHands}
 import io.suggest.sc.ScConstants.Focused.FAd.KBD_SCROLL_STEP_PX
+import io.suggest.sc.sjs.c.scfsm.ResizeDelayed
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.util.TouchUtil
 import org.scalajs.dom.{KeyboardEvent, MouseEvent, TouchEvent}
@@ -20,19 +21,58 @@ import org.scalajs.dom.ext.KeyCode
  * Description: Аддон для сборки состояний нахождения "в фокусе", т.е. на УЖЕ открытой focused-карточки.
  * Base -- трейт с вещами, расшаренными между трейтами конкретных состояний.
  */
-trait OnFocusBase extends MouseMoving {
+trait OnFocusBase extends MouseMoving with ResizeDelayed {
 
+  /** Интерейс состояний шифтинга влево и вправо. */
   protected trait ISimpleShift {
+
     /** Состояние переключения на следующую карточку. */
     protected def _shiftRightState: FsmState
+
     /** Состояние переключения на предыдущую карточку. */
     protected def _shiftLeftState : FsmState
   }
 
 
+  /** Интерфейс для поля с инстансом FSM-состояния OnFocusDelayedResize. */
+  protected trait IStartFocusOnAdState {
+    protected def _startFocusOnAdState: FsmState
+  }
+
+
+  /** Поддержка отложенного ресайза focused-выдачи. */
+  protected trait OnFocusDelayedResize extends DelayHorizResizeUsingGrid with HandleResizeDelayed with IStartFocusOnAdState {
+
+    // TODO override def _viewPortChanged(): Unit
+    // Подгонять текущий focused div height контейнеры под изменяющийся экран.
+
+    override protected def RSZ_THRESHOLD_PX: Int = 30
+
+    // При наступлении необходимости ресайза надо скрыть текущие focused-карточки и
+    override def _handleResizeDelayTimeout(): Unit = {
+      // Обновить данные состояния в связи с наступающим ресайзом. Иначе будут проблемы с floation-стрелочками влево-вправо, текущей просмотраваемой карточкой и т.д.
+      val sd0 = _stateData
+      val currAdIdOpt = sd0.focused.flatMap(_.currAdId)
+      val sd1 = sd0.copy(
+        focused = Some(MFocSd(
+          //gblock = currAdIdOpt.flatMap(GBlock.find),
+          currAdId = currAdIdOpt
+        ))
+      )
+      become(_startFocusOnAdState, sd1)
+      // TODO Можно ещё подогнать высоту контейнеров нетекущих focused-карточек... Но надо ли?
+    }
+  }
+
+
   /** Заготовка для состояний, связанных с нахождением на карточке.
     * Тут реакция на события воздействия пользователя на focused-выдачу. */
-  protected trait OnFocusStateBaseT extends FsmEmptyReceiverState with FocMouseMovingStateT with INodeSwitchState with ISimpleShift {
+  protected trait OnFocusStateBaseT
+    extends OnFocusDelayedResize
+      with FocMouseMovingStateT
+      with INodeSwitchState
+      with ISimpleShift
+  {
 
     override def receiverPart: Receive = super.receiverPart orElse {
       case TouchStart(event) =>
@@ -64,6 +104,8 @@ trait OnFocusBase extends MouseMoving {
 
     override def _onKbdKeyUp(event: KeyboardEvent): Unit = {
       super._onKbdKeyUp(event)
+
+      // Узнать нажатую клавишу и среагировать на неё.
       val c = event.keyCode
       // ESC должен закрывать выдачу.
       if (c == KeyCode.Escape)
@@ -84,7 +126,9 @@ trait OnFocusBase extends MouseMoving {
         _kbdScroll( -screenH )
     }
 
-    private def screenH: Int = _stateData.screen.fold(480)(_.height)
+    private def screenH: Int = {
+      _stateData.screen.fold(480)(_.height)
+    }
 
     protected def _kbdScroll(delta: Int): Unit = {
       // Найти враппер текущей карточки и проскроллить его немного вниз.
@@ -184,7 +228,8 @@ trait OnFocusBase extends MouseMoving {
 }
 
 
-/** Аддон для [[io.suggest.sc.sjs.c.ScFsm]] с трейт-реализацией состояния спокойного нахождения в focused-выдаче. */
+/** Аддон для [[io.suggest.sc.sjs.c.scfsm.ScFsm]] с трейт-реализацией состояния
+  * спокойного нахождения в focused-выдаче. */
 trait OnFocus extends OnFocusBase {
 
   /** Состояние нахождения в фокусе одной карточки.

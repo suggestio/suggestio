@@ -202,7 +202,8 @@ trait Base extends OnGrid with ISjsLogger {
     protected def _ftsFieldBlur(ffb: IFtsFieldBlur): Unit = {
       // Если текста в поле нет, то деактивировать поле и сбросить поиск.
       for {
-        sinput    <- SInput.findUsing(ffb) if sinput.getNormalized.isEmpty
+        sinput    <- SInput.findUsing(ffb)
+        if sinput.getNormalized.isEmpty
         inputCont <- sinput.container
       } {
         inputCont.deactivate()

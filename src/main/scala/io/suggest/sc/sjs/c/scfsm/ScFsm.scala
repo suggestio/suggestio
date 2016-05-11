@@ -111,9 +111,9 @@ object ScFsm
   /*--------------------------------------------------------------------------------
    * Фаза состояний работы с сеткой карточек (grid).
    *--------------------------------------------------------------------------------*/
-  protected trait GridBlockClickStateT extends super.GridBlockClickStateT {
+  protected trait GridBlockClickStateT extends super.GridBlockClickStateT with IStartFocusOnAdState /*{
     override def _startFocusOnAdState = new FocStartingForAd
-  }
+  }*/
   /** Трейт для поддержки переключения на состояния, исходящие из OnGridStateT  */
   protected trait OnGridStateT extends super.OnGridStateT with GridBlockClickStateT {
     override def _loadMoreState = new GridLoadMoreState

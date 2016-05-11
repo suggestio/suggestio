@@ -70,8 +70,8 @@ trait OnTouch extends OnFocusBase {
       } {
         val coord2 = Coord2dD(touch)
 
-        val dx = touchSd.start deltaX coord2
-        val dy = touchSd.start deltaY coord2
+        val dx = touchSd.start.deltaX( coord2 )
+        val dy = touchSd.start.deltaY( coord2 )
 
         if ( !(dx == 0d && dy == 0d) ) {
           val (nextState, sd1): (FsmState, SD) = {
@@ -120,7 +120,7 @@ trait OnTouch extends OnFocusBase {
         touchSd.start.x
       }
       def _getX1(touchSd: MFocTouchSd): Double
-      val sd0 = _stateData
+      private val sd0 = _stateData
       def _touchSdUpdate(touchSd0: MFocTouchSd, lastDeltaX: Double, lastX: Double): MFocTouchSd
 
       def execute(): Unit = {
@@ -133,9 +133,11 @@ trait OnTouch extends OnFocusBase {
         } {
           // Текущая координата исходного положения карусели в пикселях.
           val carX = FCarousel.indexToLeftPx(currIndex, screen)
+
           // В lastX из Start-состояния передаётся координата, пригодная для рассчета начальной deltaX.
           val lastX = _getX1(touchSd)
           val deltaX = _getX0(touchSd) - lastX
+
           // Нужно подвинуть выдачу согласно deltaX
           val carX2 = carX - deltaX.toInt
           car.animateToX(carX2, sd0.browser)
@@ -210,7 +212,10 @@ trait OnTouch extends OnFocusBase {
         currIndex <- fState.currIndex
         car       <- FCarousel.find()
       } {
+        // Подготовить focused-карусель к анимации.
         car.enableTransition()
+
+        // Узнать следующее состояние FSM (долистывание в нужном направлении)
         val nextState: FsmState = touchSd.lastDeltaX
           .filter { _ != 0d }
           // Нормализовать значение delta до "право" / "лево".
@@ -233,7 +238,10 @@ trait OnTouch extends OnFocusBase {
             }
             _touchCancelledState
           }
-        become(nextState, _clearTouchSd(sd0))
+
+        // Выполнить переключение состояния FSM.
+        val sd1 = _clearTouchSd(sd0)
+        become(nextState, sd1)
       }
     }
 

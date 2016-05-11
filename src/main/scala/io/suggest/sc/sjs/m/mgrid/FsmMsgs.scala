@@ -29,8 +29,3 @@ object GridBlockClick extends IFsmEventMsgCompanion
 
 /** Событие вертикального скроллинга страницы с плиткой. */
 case class GridScroll(e: Event) extends IFsmMsg
-
-
-/** Сообщение от таймера о необходимости запуска ресайза. */
-case class GridResizeTimeout(gen: Long)
-  extends IFsmMsg

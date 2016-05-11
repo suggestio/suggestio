@@ -1,9 +1,9 @@
 package io.suggest.sc.sjs.m.msc.fsm
 
-import io.suggest.sc.sjs.m.magent.IMScreen
+import io.suggest.sc.sjs.m.magent.{IMScreen, MResizeDelay}
 import io.suggest.sc.sjs.m.mfoc.MFocSd
 import io.suggest.sc.sjs.m.mgeo._
-import io.suggest.sc.sjs.m.mgrid.{MGridState, MGridData}
+import io.suggest.sc.sjs.m.mgrid.{MGridData, MGridState}
 import io.suggest.sc.sjs.m.mnav.MNavState
 import io.suggest.sc.sjs.m.msearch.MSearchSd
 import io.suggest.sjs.common.model.browser.{IBrowser, MBrowser}
@@ -62,6 +62,8 @@ trait IStData {
   /** id таймера, который готовиться к срабатыванию в фоне. */
   def timerId     : Option[Int]
 
+  /** Состояние отложенной реакции на ресайз окна, если есть. */
+  def resizeOpt   : Option[MResizeDelay]  = None
 
   /** Попробовать отменить сохраненный в состоянии таймер, если он есть. */
   def maybeCancelTimer(): Unit = {
@@ -84,7 +86,8 @@ case class MStData(
   override val nav          : MNavState             = MNavState(),
   override val focused      : Option[MFocSd]        = None,
   override val geo          : MGeoLocSd             = MGeoLocSd(),
-  override val timerId      : Option[Int]           = None
+  override val timerId      : Option[Int]           = None,
+  override val resizeOpt    : Option[MResizeDelay]  = None
 )
   extends IStData
 {

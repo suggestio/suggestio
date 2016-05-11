@@ -7,12 +7,14 @@ import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.fsm.IFsmMsg
 
 /**
- * Suggest.io
- * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 19.08.15 17:11
- * Description: Аддон для ScFsm с трейтами для сборки состояний автоперехода между карточками.
- * Эта логика не подходит для touch-переключений -- там совсем другая логика работы.
- */
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 19.08.15 17:11
+  * Description: Аддон для ScFsm с трейтами для сборки состояний автоперехода между карточками.
+  *
+  * Эта же логика используется и в touch-перелистывании: автоматическое завершение
+  * перелистывания влево/вправо происходит с помощью этого же кода.
+  */
 trait SimpleShift extends MouseMoving {
 
   /** Трейт для сборки состояния автоматического перехода на следующую/предыдущую карточку. */
@@ -41,8 +43,9 @@ trait SimpleShift extends MouseMoving {
           car.animateToCell(nextIndex, screen, sd0.browser)
 
           // Залить новый заголовок в выдачу и состояние, если продьюсер новой карточки отличается от текущего.
+          val nextFadOpt = fState.shownFadWithIndex(nextIndex)
           for {
-            nextFad <- fState.shownFadWithIndex(nextIndex)
+            nextFad <- nextFadOpt
             if !(fState.shownFadWithIndex(currIndex) exists {
               _.producerId == nextFad.producerId
             })
@@ -58,6 +61,7 @@ trait SimpleShift extends MouseMoving {
           // Залить новый текущий индекс в состояние.
           _stateData = sd0.copy(
             focused = Some(fState.copy(
+              currAdId  = nextFadOpt.map(_.madId),
               currIndex = Some(nextIndex)
             ))
           )
