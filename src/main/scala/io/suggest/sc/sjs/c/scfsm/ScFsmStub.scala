@@ -25,8 +25,12 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm {
 
   /** Трейт для реализации разных логик реакции на изменение размера окна в зависимости от текущего состояния. */
   protected trait HandleViewPortChangedT {
-    /** Реакция на сигнал об изменении размеров окна или экрана устройства. */
-    def _viewPortChanged(): Unit = {
+
+    /** Самая раняя реакция на сигнал об изменении размеров окна/экрана.
+      * Появилась из-за невозможности нормально prepend'ить логику _viewPortChanged(),
+      * пока этот код жил там.
+      */
+    def _viewPortChangedEarly(): Unit = {
       // Обновить данные состояния по текущему экрану.
       val vszOpt = ViewportSz.getViewportSize
       if (vszOpt.isEmpty)
@@ -36,6 +40,11 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm {
         screen = screenOpt
       )
       _stateData = sd1
+    }
+
+    /** Реакция на сигнал об изменении размеров окна или экрана устройства. */
+    def _viewPortChanged(): Unit = {
+      val sd1 = _stateData
 
       // Выполнить какие-то общие для выдачи действия
       // Подправить высоту левой панели...
@@ -44,7 +53,7 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm {
       }
 
       // Подправить высоту правой панели.
-      for (mscreen <- screenOpt; sRoot <- SRoot.find()) {
+      for (mscreen <- sd1.screen; sRoot <- SRoot.find()) {
         sRoot.adjust(mscreen, sd1.browser)
       }
     }
@@ -79,6 +88,7 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm {
     case KbdKeyUp(event) =>
       _state._onKbdKeyUp(event)
     case _: IVpSzChanged =>
+      _state._viewPortChangedEarly()
       _state._viewPortChanged()
   }
 
