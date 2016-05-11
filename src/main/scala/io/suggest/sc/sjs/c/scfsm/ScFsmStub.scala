@@ -26,23 +26,27 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm {
   /** Трейт для реализации разных логик реакции на изменение размера окна в зависимости от текущего состояния. */
   protected trait HandleViewPortChangedT {
 
-    /** Самая раняя реакция на сигнал об изменении размеров окна/экрана.
+    /** Полная логика реакции на сигнал об изменении размеров окна/экрана.
       * Появилась из-за невозможности нормально prepend'ить логику _viewPortChanged(),
       * пока этот код жил там.
+      * Надо вызывать именно её.
       */
-    def _viewPortChangedEarly(): Unit = {
+    def _viewPortChangedFull(): Unit = {
       // Обновить данные состояния по текущему экрану.
       val vszOpt = ViewportSz.getViewportSize
       if (vszOpt.isEmpty)
         warn( WarnMsgs.NO_SCREEN_VSZ_DETECTED )
       val screenOpt = vszOpt.map( MScreen.apply )
-      val sd1 = _stateData.copy(
+      _stateData = _stateData.copy(
         screen = screenOpt
       )
-      _stateData = sd1
+
+      // Запуск основной переопределяемой логики обработки изменения viewport'а.
+      _viewPortChanged()
     }
 
-    /** Реакция на сигнал об изменении размеров окна или экрана устройства. */
+    /** Дополняемая и переопределяемая реакция на сигнал об изменении размеров окна или экрана устройства.
+      * Лучше не вызывать этот код напрямую, а использовать _viewPortChangedFull. */
     def _viewPortChanged(): Unit = {
       val sd1 = _stateData
 
@@ -88,8 +92,7 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm {
     case KbdKeyUp(event) =>
       _state._onKbdKeyUp(event)
     case _: IVpSzChanged =>
-      _state._viewPortChangedEarly()
-      _state._viewPortChanged()
+      _state._viewPortChangedFull()
   }
 
   /** Ресивер для всех состояний. Неизменен, поэтому [[ScFsm]] он помечен как val. */

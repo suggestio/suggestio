@@ -30,7 +30,7 @@ trait Init extends ScFsmStub {
       w.addEventListener(WndEvents.ORIENTATION_CHANGE)( _signalCallbackF(OrientationChange) )
 
       // Провоцируем сохранение в состояние FSM текущих параметров экрана.
-      _viewPortChanged()
+      _viewPortChangedFull()
     }
   }
 
