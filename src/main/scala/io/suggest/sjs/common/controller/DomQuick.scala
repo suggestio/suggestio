@@ -20,4 +20,9 @@ object DomQuick {
     dom.window.clearTimeout(timer)
   }
 
+  /** Краткий враппер над requestAnimationFrame(). */
+  def requestAnimationFrame[U](f: Double => U): Int = {
+    dom.window.requestAnimationFrame(f)
+  }
+
 }
