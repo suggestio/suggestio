@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.c.scfsm.grid
 
 import io.suggest.sc.sjs.c.scfsm.foc.IOnFocusBase
-import io.suggest.sc.sjs.c.scfsm.ResizeDelayed
+import io.suggest.sc.sjs.c.scfsm.{ResizeDelayed, ScFsmStub}
 import io.suggest.sc.sjs.m.mfoc.MFocSd
 import io.suggest.sc.sjs.m.mgrid._
 import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
@@ -13,7 +13,51 @@ import io.suggest.sc.sjs.vm.grid.{GContainer, GContent, GRoot}
  * Created: 05.08.15 10:13
  * Description: Аддоны для поддержки сборки состояний выдачи, связанных с возможностями плитки карточек.
  */
-trait OnGrid extends Append with ResizeDelayed with IOnFocusBase {
+trait OnGridBase extends ScFsmStub {
+
+  /** Трейт для подмешивания логики синхронной реакции на ресайз экрана. */
+  trait GridHandleViewPortChangedSync extends FsmState {
+    // С плиткой карточек есть кое-какие тонкости при ресайзе viewport'а: карточки под экран подгоняет
+    // сервер. Нужно дождаться окончания ресайза с помощью таймеров, затем загрузить новую плитку с сервера.
+    override def _viewPortChanged(): Unit = {
+      super._viewPortChanged()
+
+      // Обновить параметры grid-контейнера. Это позволяет исправить высоту контейнера.
+      for (groot <- GRoot.find()) {
+        groot.reInitLayout(_stateData)
+      }
+
+      // Заодно пересчитать сразу параметры контейнера сетки.
+      // Эти параметры не очень-то корректны, т.к. с сервера придут новые размеры ячеек сетки, и надо будет пересчитывать снова.
+      val sd0 = _stateData
+      val gContSzOpt = sd0.screen
+        .map( sd0.grid.getGridContainerSz )
+
+      // Обновить параметры контейнера сетки.
+      for {
+        gContSz   <- gContSzOpt
+        gcontent  <- GContent.find()
+      } {
+        // Обновить контейнер сетки.
+        gcontent.setContainerSz(gContSz)
+
+        // Сохранить новые данные контейнера в состояние.
+        _stateData = sd0.copy(
+          grid    = sd0.grid.copy(
+            state = sd0.grid.state.copy(
+              contSz = gContSzOpt
+            )
+          )
+        )
+      }
+    }
+  }
+
+}
+
+
+/** Утиль для сборка состояний сетки. */
+trait OnGrid extends Append with ResizeDelayed with IOnFocusBase with OnGridBase {
 
   /** Поддержка реакции на клики по карточкам в выдаче. */
   trait GridBlockClickStateT extends FsmEmptyReceiverState with IStartFocusOnAdState {
@@ -44,6 +88,7 @@ trait OnGrid extends Append with ResizeDelayed with IOnFocusBase {
   trait OnGridStateT
     extends GridBlockClickStateT with GridAdsWaitLoadStateT
       with DelayResize with HandleResizeDelayed
+      with GridHandleViewPortChangedSync
   {
 
     protected def RSZ_THRESHOLD_PX = 100
@@ -86,41 +131,6 @@ trait OnGrid extends Append with ResizeDelayed with IOnFocusBase {
       }
     }
 
-
-    // С плиткой карточек есть кое-какие тонкости при ресайзе viewport'а: карточки под экран подгоняет
-    // сервер. Нужно дождаться окончания ресайза с помощью таймеров, затем загрузить новую плитку с сервера.
-    override def _viewPortChanged(): Unit = {
-      super._viewPortChanged()
-
-      // Обновить параметры grid-контейнера. Это позволяет исправить высоту контейнера.
-      for (groot <- GRoot.find()) {
-        groot.reInitLayout(_stateData)
-      }
-
-      // Заодно пересчитать сразу параметры контейнера сетки.
-      // Эти параметры не очень-то корректны, т.к. с сервера придут новые размеры ячеек сетки, и надо будет пересчитывать снова.
-      val sd0 = _stateData
-      val gContSzOpt = sd0.screen
-        .map( sd0.grid.getGridContainerSz )
-
-      // Обновить параметры контейнера сетки.
-      for {
-        gContSz   <- gContSzOpt
-        gcontent  <- GContent.find()
-      } {
-        // Обновить контейнер сетки.
-        gcontent.setContainerSz(gContSz)
-
-        // Сохранить новые данные контейнера в состояние.
-        _stateData = sd0.copy(
-          grid    = sd0.grid.copy(
-            state = sd0.grid.state.copy(
-              contSz = gContSzOpt
-            )
-          )
-        )
-      }
-    }
 
 
     /** FSM-реакция на получение положительного ответа от сервера по поводу карточек сетки.
