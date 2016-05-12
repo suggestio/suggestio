@@ -40,7 +40,7 @@ trait Closing extends MouseMoving {
 
       val sd0 = _stateData
 
-      // Посчитать заново размер grid-контейнера и сравнить с тем, что сохранен в состоянии.
+      // Посчитать заново размер grid-контейнера и сравнить с тем, что сохранен в grid-состоянии.
       for {
         screen <- sd0.screen
         cwCm2 = sd0.grid.getGridContainerSz(screen)
@@ -51,7 +51,7 @@ trait Closing extends MouseMoving {
         _sendEvent( VpSzChanged )
       }
 
-      // Запускать в фоне анимацию сокрытия focused-выдачи...
+      // Затем запускать в фоне анимацию сокрытия focused-выдачи...
       for (froot <- fRootOpt) {
         // В фоне запланировать сокрытие focused-выдачи и прочие асинхронные действия.
         Future {
@@ -64,6 +64,7 @@ trait Closing extends MouseMoving {
         }
       }
 
+      // Выход из состояния закрытия не дожидаясь окончания анимации.
       val sd1 = sd0.copy(
         focused = None
       )

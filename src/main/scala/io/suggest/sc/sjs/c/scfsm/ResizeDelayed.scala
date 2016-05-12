@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.c.scfsm
 
-import io.suggest.sc.sjs.m.magent.{MResizeDelay, ResizeDelayTimeout}
+import io.suggest.sc.sjs.m.magent.{IVpSzChanged, MResizeDelay, ResizeDelayTimeout}
 import io.suggest.sjs.common.controller.DomQuick
 
 /**
@@ -19,12 +19,12 @@ trait ResizeDelayed extends ScFsmStub {
     protected def RESIZE_DELAY_MS = 300
 
     /** Реакция на сигнал об изменении размеров окна или экрана устройства. */
-    override def _viewPortChanged(): Unit = {
+    override def _viewPortChanged(e: IVpSzChanged): Unit = {
 
       // Храним ранний инстанс состояния, чтобы можно было ниже по коду получить исходный screen и grid cont sz.
       val sd00 = _stateData
 
-      super._viewPortChanged()
+      super._viewPortChanged(e)
 
       // С плиткой карточек есть кое-какие тонкости при ресайзе viewport'а: карточки под экран подгоняет
       // сервер. Нужно дождаться окончания ресайза с помощью таймеров, затем загрузить новую плитку с сервера.
@@ -37,8 +37,9 @@ trait ResizeDelayed extends ScFsmStub {
 
       // Если нет изменений по горизонтали, то можно таймер ресайза не запускать/не обновлять.
       // Запуск нового таймера ресайза
-      val timerGen = System.currentTimeMillis()
-      val timerId = DomQuick.setTimeout(RESIZE_DELAY_MS) { () =>
+      val timerGen  = System.currentTimeMillis()
+      val timeoutMs = if (e.delayAllowed) RESIZE_DELAY_MS else 0
+      val timerId   = DomQuick.setTimeout(timeoutMs) { () =>
         _sendEventSync(ResizeDelayTimeout(timerGen))
       }
 

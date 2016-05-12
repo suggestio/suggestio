@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.c.scfsm
 
 import io.suggest.fsm.StateData
-import io.suggest.sc.sjs.m.magent.{IVpSzChanged, MScreen}
+import io.suggest.sc.sjs.m.magent.{IVpSzChanged, MScreen, VpSzChanged}
 import io.suggest.sc.sjs.m.mfsm.signals.KbdKeyUp
 import io.suggest.sc.sjs.m.msc.fsm.MStData
 import io.suggest.sc.sjs.vm.nav.nodelist.NlRoot
@@ -26,8 +26,11 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm {
   /** Трейт для реализации разных логик реакции на изменение размера окна в зависимости от текущего состояния. */
   protected trait HandleViewPortChangedT {
 
-    /** Дополняемая/настраивамая реакция на сигнал об изменении размеров окна или экрана устройства. */
     def _viewPortChanged(): Unit = {
+      _viewPortChanged(VpSzChanged)
+    }
+    /** Дополняемая/настраивамая реакция на сигнал об изменении размеров окна или экрана устройства. */
+    def _viewPortChanged(e: IVpSzChanged): Unit = {
 
       // Обновить данные состояния по текущему экрану.
       val vszOpt = ViewportSz.getViewportSize
@@ -83,8 +86,8 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm {
     // Реакция на события клавиатуры.
     case KbdKeyUp(event) =>
       _state._onKbdKeyUp(event)
-    case _: IVpSzChanged =>
-      _state._viewPortChanged()
+    case e: IVpSzChanged =>
+      _state._viewPortChanged(e)
   }
 
   /** Ресивер для всех состояний. Неизменен, поэтому [[ScFsm]] он помечен как val. */

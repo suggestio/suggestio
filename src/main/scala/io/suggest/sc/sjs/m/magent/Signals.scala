@@ -17,7 +17,13 @@ object VisibilityChange
 
 
 /** Общий интерфейс сигналов, говорящих об изменении размеров viewport'а. */
-trait IVpSzChanged extends IFsmMsg
+trait IVpSzChanged extends IFsmMsg {
+
+  /** Разрешена ли отсрочка ресайза? */
+  def delayAllowed: Boolean = true
+
+}
+
 
 /** Сигнал об изменении размеров viewport'а. Исходит от window. */
 case class WndResize(event: Event)
@@ -34,4 +40,7 @@ object OrientationChange
 
 
 /** Дефолтовая реализация [[IVpSzChanged]]. */
-case object VpSzChanged extends IVpSzChanged
+case object VpSzChanged extends IVpSzChanged {
+  // Это служебный внутренний сигнал, в нём запрещена отсрочка ресайза.
+  override def delayAllowed = false
+}

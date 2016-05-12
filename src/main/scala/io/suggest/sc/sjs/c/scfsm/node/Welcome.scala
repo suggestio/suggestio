@@ -2,6 +2,7 @@ package io.suggest.sc.sjs.c.scfsm.node
 
 import io.suggest.sc.ScConstants.Welcome
 import io.suggest.sc.sjs.c.scfsm.ScFsmStub
+import io.suggest.sc.sjs.m.magent.IVpSzChanged
 import io.suggest.sc.sjs.m.mwc.{IWcStepSignal, WcTimeout}
 import io.suggest.sc.sjs.vm.wc.{WcBgImg, WcFgImg, WcRoot}
 import io.suggest.sjs.common.controller.DomQuick
@@ -60,8 +61,8 @@ trait Welcome extends ScFsmStub {
     }
 
     /** Реакция на сигнал об изменении размеров окна или экрана устройства. */
-    override def _viewPortChanged(): Unit = {
-      super._viewPortChanged()
+    override def _viewPortChanged(e: IVpSzChanged): Unit = {
+      super._viewPortChanged(e)
 
       // Подогнать bg img под новые параметры экрана.
       for {

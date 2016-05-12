@@ -2,6 +2,7 @@ package io.suggest.sc.sjs.c.scfsm.grid
 
 import io.suggest.sc.sjs.c.scfsm.foc.IOnFocusBase
 import io.suggest.sc.sjs.c.scfsm.{ResizeDelayed, ScFsmStub}
+import io.suggest.sc.sjs.m.magent.IVpSzChanged
 import io.suggest.sc.sjs.m.mfoc.MFocSd
 import io.suggest.sc.sjs.m.mgrid._
 import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
@@ -22,8 +23,8 @@ trait OnGridBase extends ScFsmStub {
 
     // С плиткой карточек есть кое-какие тонкости при ресайзе viewport'а: карточки под экран подгоняет
     // сервер. Нужно дождаться окончания ресайза с помощью таймеров, затем загрузить новую плитку с сервера.
-    override def _viewPortChanged(): Unit = {
-      super._viewPortChanged()
+    override def _viewPortChanged(e: IVpSzChanged): Unit = {
+      super._viewPortChanged(e)
 
       // Обновить параметры grid-контейнера. Это позволяет исправить высоту контейнера.
       for (groot <- GRoot.find()) {
