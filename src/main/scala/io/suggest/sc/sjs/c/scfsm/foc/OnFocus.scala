@@ -8,7 +8,7 @@ import io.suggest.sc.sjs.vm.foc.fad.{FAdRoot, FAdWrapper, FArrow}
 import io.suggest.sjs.common.geom.Coord2dD
 import io.suggest.sjs.common.model.{MHand, MHands}
 import io.suggest.sc.ScConstants.Focused.FAd.KBD_SCROLL_STEP_PX
-import io.suggest.sc.sjs.c.scfsm.ResizeDelayed
+import io.suggest.sc.sjs.c.scfsm.{ResizeDelayed, ScFsmStub}
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.util.TouchUtil
 import org.scalajs.dom.{KeyboardEvent, MouseEvent, TouchEvent}
@@ -18,10 +18,10 @@ import org.scalajs.dom.ext.KeyCode
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 17.08.15 18:44
- * Description: Аддон для сборки состояний нахождения "в фокусе", т.е. на УЖЕ открытой focused-карточки.
- * Base -- трейт с вещами, расшаренными между трейтами конкретных состояний.
  */
-trait OnFocusBase extends MouseMoving with ResizeDelayed {
+
+/** Контейнер трейтов-интерфейсов для разработки focused-состояний. */
+trait IOnFocusBase extends ScFsmStub {
 
   /** Интерейс состояний шифтинга влево и вправо. */
   protected trait ISimpleShift {
@@ -39,14 +39,23 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed {
     protected def _startFocusOnAdState: FsmState
   }
 
+}
+
+
+/**
+  * Аддон для сборки состояний нахождения "в фокусе", т.е. на УЖЕ открытой focused-карточки.
+  * Base -- трейт с вещами, расшаренными между трейтами конкретных состояний.
+  */
+trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase {
 
   /** Поддержка отложенного ресайза focused-выдачи. */
-  protected trait OnFocusDelayedResize extends DelayHorizResizeUsingGrid with HandleResizeDelayed with IStartFocusOnAdState {
+  protected trait OnFocusDelayedResize
+    extends DelayResize with HandleResizeDelayed
+      with IStartFocusOnAdState
+  {
 
     // TODO override def _viewPortChanged(): Unit
     // Подгонять текущий focused div height контейнеры под изменяющийся экран.
-
-    override protected def RSZ_THRESHOLD_PX: Int = 30
 
     // При наступлении необходимости ресайза надо скрыть текущие focused-карточки и
     override def _handleResizeDelayTimeout(): Unit = {

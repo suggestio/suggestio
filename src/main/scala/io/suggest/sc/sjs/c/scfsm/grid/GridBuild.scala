@@ -112,7 +112,7 @@ trait PanelGridRebuilder extends GridBuild {
   protected def _doRebuildGrid(mgd3: MGridData, forBrowser: IBrowser): MGridData = {
     // Обновить размер контейнера.
     for {
-      csz <- mgd3.state.contSz
+      csz      <- mgd3.state.contSz
       gcontent <- GContent.find()
     } {
       gcontent.setContainerSz( csz )

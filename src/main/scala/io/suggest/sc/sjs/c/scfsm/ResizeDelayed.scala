@@ -1,7 +1,6 @@
 package io.suggest.sc.sjs.c.scfsm
 
 import io.suggest.sc.sjs.m.magent.{MResizeDelay, ResizeDelayTimeout}
-import io.suggest.sc.sjs.vm.grid.GContainer
 import io.suggest.sjs.common.controller.DomQuick
 
 /**
@@ -19,11 +18,12 @@ trait ResizeDelayed extends ScFsmStub {
     /** Время ожидания окончания окна, после которого необходимо произвести изменения в плитке. */
     protected def RESIZE_DELAY_MS = 300
 
-    /** Определить быстро, требуется ли откладывание ресайза? [false] */
-    def _isNeedResizeDelayed(): Boolean = false
-
     /** Реакция на сигнал об изменении размеров окна или экрана устройства. */
     override def _viewPortChanged(): Unit = {
+
+      // Храним ранний инстанс состояния, чтобы можно было ниже по коду получить исходный screen и grid cont sz.
+      val sd00 = _stateData
+
       super._viewPortChanged()
 
       // С плиткой карточек есть кое-какие тонкости при ресайзе viewport'а: карточки под экран подгоняет
@@ -36,25 +36,34 @@ trait ResizeDelayed extends ScFsmStub {
       }
 
       // Если нет изменений по горизонтали, то можно таймер ресайза не запускать/не обновлять.
-      if (_isNeedResizeDelayed()) {
-        // Запуск нового таймера ресайза
-        val timerGen = System.currentTimeMillis()
-        val timerId = DomQuick.setTimeout(RESIZE_DELAY_MS) { () =>
-          _sendEventSync(ResizeDelayTimeout(timerGen))
-        }
+      // Запуск нового таймера ресайза
+      val timerGen = System.currentTimeMillis()
+      val timerId = DomQuick.setTimeout(RESIZE_DELAY_MS) { () =>
+        _sendEventSync(ResizeDelayTimeout(timerGen))
+      }
 
-        // Собрать обновлённое состояние ресайза.
-        // TODO Opt если не будет новых полей, то можно унифицировать apply и copy.
-        val grSd2 = MResizeDelay(
-          timerId = timerId,
-          timerGen = timerGen
+      // Собрать обновлённое состояние ресайза.
+      // TODO Opt если не будет новых полей, то можно унифицировать apply и copy.
+      val grSd2 = sd0.resizeOpt.fold[MResizeDelay] {
+        MResizeDelay(
+          timerId   = timerId,
+          timerGen  = timerGen,
+          // В начальное состояние ресайза пихаем самые начальные данные по viewport'у и начальному контейнеру сетки.
+          screen    = sd00.screen,
+          gContSz   = sd00.grid.state.contSz
         )
+      } { mrd0 =>
+        // Пробросить исходные данные по viewport'у в обновлённое состояние, выставив новый таймер.
+        mrd0.copy(
+          timerId   = timerId,
+          timerGen  = timerGen
+        )
+      }
 
-        // Сохранить обновлённое состояние FSM.
-        _stateData = sd0.copy(
-          resizeOpt = Some(grSd2)
-        )
-      }   // if needResize
+      // Сохранить обновлённое состояние FSM.
+      _stateData = sd0.copy(
+        resizeOpt = Some(grSd2)
+      )
     }     // _viewPortChanged()
   }
 
@@ -72,37 +81,6 @@ trait ResizeDelayed extends ScFsmStub {
     /** Реакция на отложенный ресайз. */
     def _handleResizeDelayTimeout(): Unit
 
-  }
-
-
-  /** Реализация детектирования необходимости запуска таймера в DelayResize на основе данных сетки. */
-  trait DelayHorizResizeUsingGrid extends DelayResize {
-
-    protected def RSZ_THRESHOLD_PX = 100
-
-    /** Требуется ли отложенный ресайз?
-      * Да, если по горизонтали контейнер изменился слишком сильно. */
-    override def _isNeedResizeDelayed(): Boolean = {
-      super._isNeedResizeDelayed() || {
-        // Посчитать новые размер контейнера. Используем Option как Boolean.
-        val sd0 = _stateData
-
-        val needResizeOpt = for {
-          scr <- sd0.screen
-          // Прочитать текущее значение ширины в стиле. Она не изменяется до окончания ресайза.
-          gc  <- GContainer.find()
-          w   <- gc.styleWidthPx
-          // Посчитать размер контейнера.
-          cwCm = sd0.grid.getGridContainerSz(scr)
-          // Если ресайза маловато, то вернуть здесь None.
-          if Math.abs(cwCm.cw - w) >= RSZ_THRESHOLD_PX
-        } yield {
-          // Значение не важно абсолютно
-          1
-        }
-        needResizeOpt.isDefined
-      }
-    }
   }
 
 }

@@ -47,31 +47,31 @@ trait MGridUtil {
   protected def grid: IGridData
 
   /**
-   * Рассчет новых параметров контейнера.
-   * Это pure-function, она не меняет состояние системы, а только считает.
+    * Рассчет новых параметров контейнера.
+    * Это pure-function, она не меняет состояние системы, а только считает.
     *
     * @param screen Данные по текущему экрану.
-   * @return Экземпляр с результатами рассчетов.
-   */
+    * @return Экземпляр с результатами рассчетов.
+    */
   def getGridContainerSz(screen: ISize2di): MGetContStateResult = {
     val colCount = grid.params.countColumns(screen)
 
     var cw = grid.params.margin(colCount)
     var cm = 0
-    var _margin = 0
+    var margin = 0
 
     val leftOff = grid.state.leftOffset
     if (leftOff > 0) {
-      _margin = grid.params.margin( leftOff )
-      cw = cw - _margin
-      cm = _margin
+      margin = grid.params.margin( leftOff )
+      cw = cw - margin
+      cm = margin
     }
 
     val rightOff = grid.state.rightOffset
     if (rightOff > 0) {
-      _margin = grid.params.margin( rightOff )
-      cw = cw - _margin
-      cm = -_margin
+      margin = grid.params.margin( rightOff )
+      cw = cw - margin
+      cm = -margin
     }
 
     MGetContStateResult(

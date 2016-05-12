@@ -26,29 +26,19 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm {
   /** Трейт для реализации разных логик реакции на изменение размера окна в зависимости от текущего состояния. */
   protected trait HandleViewPortChangedT {
 
-    /** Полная логика реакции на сигнал об изменении размеров окна/экрана.
-      * Появилась из-за невозможности нормально prepend'ить логику _viewPortChanged(),
-      * пока этот код жил там.
-      * Надо вызывать именно её.
-      */
-    def _viewPortChangedFull(): Unit = {
+    /** Дополняемая/настраивамая реакция на сигнал об изменении размеров окна или экрана устройства. */
+    def _viewPortChanged(): Unit = {
+
       // Обновить данные состояния по текущему экрану.
       val vszOpt = ViewportSz.getViewportSize
       if (vszOpt.isEmpty)
         warn( WarnMsgs.NO_SCREEN_VSZ_DETECTED )
       val screenOpt = vszOpt.map( MScreen.apply )
-      _stateData = _stateData.copy(
-        screen = screenOpt
+      val sd0 = _stateData
+      val sd1 = sd0.copy(
+        screen  = screenOpt
       )
 
-      // Запуск основной переопределяемой логики обработки изменения viewport'а.
-      _viewPortChanged()
-    }
-
-    /** Дополняемая и переопределяемая реакция на сигнал об изменении размеров окна или экрана устройства.
-      * Лучше не вызывать этот код напрямую, а использовать _viewPortChangedFull. */
-    def _viewPortChanged(): Unit = {
-      val sd1 = _stateData
 
       // Выполнить какие-то общие для выдачи действия
       // Подправить высоту левой панели...
@@ -60,7 +50,10 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm {
       for (mscreen <- sd1.screen; sRoot <- SRoot.find()) {
         sRoot.adjust(mscreen, sd1.browser)
       }
+
+      _stateData = sd1
     }
+
   }
 
 
@@ -92,7 +85,7 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm {
     case KbdKeyUp(event) =>
       _state._onKbdKeyUp(event)
     case _: IVpSzChanged =>
-      _state._viewPortChangedFull()
+      _state._viewPortChanged()
   }
 
   /** Ресивер для всех состояний. Неизменен, поэтому [[ScFsm]] он помечен как val. */

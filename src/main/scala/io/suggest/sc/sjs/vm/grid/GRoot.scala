@@ -7,7 +7,6 @@ import io.suggest.sjs.common.vm.child.{ContentElT, SubTagFind}
 import io.suggest.sjs.common.vm.find.FindDiv
 import org.scalajs.dom.raw.HTMLDivElement
 import io.suggest.sc.ScConstants.Grid
-import io.suggest.sc.sjs.m.magent.IMScreen
 
 /**
  * Suggest.io
