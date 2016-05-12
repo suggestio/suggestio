@@ -49,4 +49,6 @@ object ErrorMsgs extends MsgsStaticT {
 
   def GEO_WATCH_TYPE_UNSUPPORTED   = E(19)
 
+  def ENDLESS_LOOP_MAYBE           = E(20)
+
 }
