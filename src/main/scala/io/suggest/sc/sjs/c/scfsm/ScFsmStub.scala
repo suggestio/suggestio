@@ -39,7 +39,6 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm {
         screen  = screenOpt
       )
 
-
       // Выполнить какие-то общие для выдачи действия
       // Подправить высоту левой панели...
       for (nlRoot <- NlRoot.find()) {

@@ -17,7 +17,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 20.08.15 10:19
- * Description: Аддон для [[io.suggest.sc.sjs.c.ScFsm]], добавляющий поддержку сборки состояний,
+ * Description: Аддон для [[io.suggest.sc.sjs.c.scfsm.ScFsm]], добавляющий поддержку сборки состояний,
  * связанных с нахождением в focused-выдаче и фоновой подгрузкой карточек.
  *
  * Считаем, что состояния вызываются только когда 100% нужно получить правые/левые карточки с сервера.

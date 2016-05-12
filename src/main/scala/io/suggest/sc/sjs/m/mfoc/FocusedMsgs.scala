@@ -8,9 +8,6 @@ import org.scalajs.dom.MouseEvent
 /** Сигнал клика по кнопке скрытия focused-выдачи. */
 case object CloseBtnClick extends IFsmMsg
 
-/** Внутренний сигнал о завершении сокрытия focused-выдачи. */
-case object FocRootDisappeared extends IFsmMsg
-
 /** Сигнал по логотипу продьюсера focused-выдачи. */
 case object ProducerLogoClick extends IFsmMsg
 

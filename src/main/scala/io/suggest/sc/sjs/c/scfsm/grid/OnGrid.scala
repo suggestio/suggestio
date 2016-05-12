@@ -19,6 +19,7 @@ trait OnGridBase extends ScFsmStub {
 
   /** Трейт для подмешивания логики синхронной реакции на ресайз экрана. */
   trait GridHandleViewPortChangedSync extends FsmState {
+
     // С плиткой карточек есть кое-какие тонкости при ресайзе viewport'а: карточки под экран подгоняет
     // сервер. Нужно дождаться окончания ресайза с помощью таймеров, затем загрузить новую плитку с сервера.
     override def _viewPortChanged(): Unit = {
@@ -43,16 +44,19 @@ trait OnGridBase extends ScFsmStub {
         // Обновить контейнер сетки.
         gcontent.setContainerSz(gContSz)
 
-        // Сохранить новые данные контейнера в состояние.
-        _stateData = sd0.copy(
-          grid    = sd0.grid.copy(
-            state = sd0.grid.state.copy(
-              contSz = gContSzOpt
-            )
-          )
-        )
+        _haveGridContSz(gContSzOpt)
       }
     }
+
+    /** Опциональная реакция на наличие новых параметров grid-контейнера на руках.
+      *
+      * В grid-части происходит сохранение параметров контейнера в состояние.
+      *
+      * В focused-части этого не происходит, grid там не видна и не перестраивается.
+      * Старое значение cwCm проверяется при выходе из focused части для возможного провоциорвания
+      * пересчета сетки.
+      */
+    def _haveGridContSz(gContSzOpt: Option[ICwCm]): Unit = {}
   }
 
 }
@@ -174,6 +178,22 @@ trait OnGrid extends Append with ResizeDelayed with IOnFocusBase with OnGridBase
           _startFindGridAds(sd1)
         }
       }
+    }
+
+
+    // При наличии нового размера контейнера сетки обновить его в состоянии FSM.
+    override def _haveGridContSz(gContSzOpt: Option[ICwCm]): Unit = {
+      super._haveGridContSz(gContSzOpt)
+
+      // Сохранить новые данные контейнера в состояние.
+      val sd0 = _stateData
+      _stateData = sd0.copy(
+        grid    = sd0.grid.copy(
+          state = sd0.grid.state.copy(
+            contSz = gContSzOpt
+          )
+        )
+      )
     }
 
     /** Состояние, когда все карточки загружены. */

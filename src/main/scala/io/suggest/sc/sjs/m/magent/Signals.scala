@@ -17,9 +17,7 @@ object VisibilityChange
 
 
 /** Общий интерфейс сигналов, говорящих об изменении размеров viewport'а. */
-trait IVpSzChanged extends IFsmMsg {
-  def event: Event
-}
+trait IVpSzChanged extends IFsmMsg
 
 /** Сигнал об изменении размеров viewport'а. Исходит от window. */
 case class WndResize(event: Event)
@@ -33,3 +31,7 @@ case class OrientationChange(event: Event)
   extends IVpSzChanged
 object OrientationChange
   extends IFsmEventMsgCompanion
+
+
+/** Дефолтовая реализация [[IVpSzChanged]]. */
+case object VpSzChanged extends IVpSzChanged
