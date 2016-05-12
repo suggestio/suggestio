@@ -10,7 +10,6 @@ package io.suggest.sc.sjs.m.mgrid
 case class MGetContStateResult(
   cw            : Int,
   cm            : Int,
-  maxCellWidth  : Int,
   columnsCnt    : Int
 )
   extends ICwCm with IColsWidth
@@ -22,7 +21,6 @@ trait ICwCm {
 }
 
 trait IColsWidth {
-  def maxCellWidth  : Int
   def columnsCnt    : Int
 }
 

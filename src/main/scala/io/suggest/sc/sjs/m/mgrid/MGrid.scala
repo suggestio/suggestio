@@ -58,27 +58,39 @@ trait MGridUtil {
 
     var cw = grid.params.margin(colCount)
     var cm = 0
-    var margin = 0
+    // Есть несколько вариантов: экран узковат по ширине; экран большой.
+    // Если экран узковат, то нельзя вычитать из него боковые панели.
 
-    val leftOff = grid.state.leftOffset
-    if (leftOff > 0) {
-      margin = grid.params.margin( leftOff )
-      cw = cw - margin
-      cm = margin
+    val colCount2 = if (MGridState.isDesktopView(colCount)) {
+      // Колонок много, делим область экрана между плиткой и боковыми панелями.
+      var margin = 0
+
+      val leftOff = grid.state.leftOffset
+      if (leftOff > 0) {
+        margin = grid.params.margin( leftOff )
+        cw -= margin
+        cm = margin
+      }
+
+      val rightOff = grid.state.rightOffset
+      if (rightOff > 0) {
+        margin = grid.params.margin( rightOff )
+        cw -= margin
+        cm = -margin
+      }
+
+      colCount - leftOff - rightOff
+
+    } else {
+      // Колонок на экране острый дефицит. Grid будет отображена по всей ширине независимо от панели.
+      MGridState.MIN_CELL_COLUMNS
     }
 
-    val rightOff = grid.state.rightOffset
-    if (rightOff > 0) {
-      margin = grid.params.margin( rightOff )
-      cw = cw - margin
-      cm = -margin
-    }
-
+    // Собрать и вернуть результат рассчетов.
     MGetContStateResult(
       cw = cw,
       cm = cm,
-      maxCellWidth = colCount,
-      columnsCnt   = colCount - leftOff - rightOff
+      columnsCnt = colCount2
     )
   }
 

@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.c.scfsm.grid
 
 import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.m.mgrid.{IGridData, MGridData}
-import io.suggest.sc.sjs.m.msc.fsm.IStData
+import io.suggest.sc.sjs.m.msc.fsm.{IStData, MStData}
 import io.suggest.sc.sjs.util.grid.builder.V1Builder
 import io.suggest.sc.sjs.vm.grid.{GBlock, GContainer, GContent}
 import io.suggest.sc.sjs.vm.util.GridOffsetCalc
@@ -130,22 +130,24 @@ trait PanelGridRebuilder extends GridBuild {
     *
     * @param isOpen Сейчас происходит (true) открытие, или (false) сокрытие панели.
     */
-  protected def _rebuildGridOnPanelChange(sd0: IStData, screen: IMScreen, calc: GridOffsetCalc, isOpen: Boolean): MGridData = {
+  def _rebuildGridOnPanelChange(sd0: MStData, screen: IMScreen, calc: GridOffsetCalc, isOpen: Boolean): MGridData = {
     // Методом проб и ошибок выяснено, что при раскрытии панели не надо обновлять состояние.
     // А при сокрытии панели сначала надо сетку пересчитать, а только потом принимать решения.
     // Этот код надо перепилить, просто потому что непонятно почему он работает именно так.
     // Косяки скорее всего появились после появления поддержки resize, запиленой спустя больше полугода после основного кода sc (2016.apr.27-28).
 
-    val mgd1 = if (isOpen)
+    val mgd1 = if (isOpen) {
       sd0.grid
-    else
+    } else {
       _refreshGridData(sd0, screen, calc)
+    }
 
     if (mgd1.state.isDesktopView) {
-      val mgd2 = if (isOpen)
+      val mgd2 = if (isOpen) {
         _refreshGridData(sd0, screen, calc)
-      else
+      } else {
         mgd1
+      }
 
       _doRebuildGrid(mgd2, sd0.browser)
 

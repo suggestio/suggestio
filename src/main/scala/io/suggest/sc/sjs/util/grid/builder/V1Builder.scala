@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.util.grid.builder
 
 import io.suggest.sc.sjs.m.mgrid._
+import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.util.ISjsLogger
 
 import scala.annotation.tailrec
@@ -88,7 +89,8 @@ trait V1Builder extends ISjsLogger with MutableState {
   /**
    * Билдер вычислил координаты очередного блока и хочет реакции от вышестоящей системы
    * по перемещению блока в нужные координаты.
-   * @param leftPx Координата X.
+    *
+    * @param leftPx Координата X.
    * @param topPx Координата Y.
    * @param b Блок.
    */
@@ -115,8 +117,8 @@ trait V1Builder extends ISjsLogger with MutableState {
   // В оригинале был for-цикл с ограничением на 1000 итераций.
   @tailrec final def step(i: Int): Unit = {
     if (i >= 1000) {
-      // return -- слишком много итераций.
-      warn("Too many iterations: " + i)
+      // return -- слишком много итераций. Обычно это симптом зависона из-за ЛОГИЧЕСКОЙ ошибки в быдлокоде.
+      warn( ErrorMsgs.ENDLESS_LOOP_MAYBE + " " + i )
     } else if (currColumn >= colsCount) {
       // Конец текущей строки -- перейти на следующую строку.
       beforeStepNextLine()
@@ -166,7 +168,9 @@ trait V1Builder extends ISjsLogger with MutableState {
   }
 
   /** Запуск цикла перестроения сетки.
-    * @return Новое состояние билдера, которое нужно сохранить. */
+    *
+    * @return Новое состояние билдера, которое нужно сохранить.
+    */
   def execute(): MGridBuilderState = {
     step(0)
     exportState

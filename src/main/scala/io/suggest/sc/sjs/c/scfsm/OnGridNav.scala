@@ -99,7 +99,7 @@ trait OnGridNav extends OnGrid with ISjsLogger {
         for (showBtn <- HShowNavBtn.find()) {
           showBtn.hide()
         }
-        val grid2 = _rebuildGridOnPanelChange(sd0, screen, nroot, isOpen = false)
+        val grid2 = _rebuildGridOnPanelChange(sd0, screen, nroot, isOpen = true)
 
         val sd2 = sd0.copy(
           grid = grid2,

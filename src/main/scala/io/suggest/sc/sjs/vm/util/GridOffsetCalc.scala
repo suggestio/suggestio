@@ -45,7 +45,7 @@ trait GridOffsetCalc extends StyleDisplayT with StyleWidth {
     def screen: ISize2di = sd0.screen.get     // TODO Ошибки тут быть не должно, но выглядит это как-то некрасиво.
 
     /** Если mgs указывает на необходимость нулевого оффсета, то её следует послушать. */
-    def canNonZeroOffset: Boolean = mgs.canNonZeroOffset
+    //def canNonZeroOffset: Boolean = mgs.canNonZeroOffset
 
     /** Размер сдвига в ячейках сетки. */
     def cellOffset = 2
@@ -55,13 +55,12 @@ trait GridOffsetCalc extends StyleDisplayT with StyleWidth {
      * @return Пропатченный вариант IGridState.
      */
     def execute(): MGridState = {
-      val res = canNonZeroOffset && {
-        !isHidden && {
-          setWidthPx(_getWidthAdd + gridOffsetMinWidthPx)
-          true
-        }
+      val cellOff = if (isHidden) {
+        0
+      } else {
+        setWidthPx(_getWidthAdd + gridOffsetMinWidthPx)
+        cellOffset
       }
-      val cellOff = if (res) cellOffset else 0
       saveNewOffsetIntoGridState(mgs, cellOff)
     }
 

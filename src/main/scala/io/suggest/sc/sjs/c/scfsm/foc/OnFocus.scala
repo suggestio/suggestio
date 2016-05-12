@@ -216,7 +216,7 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
       * запустить листание в нужную сторону. */
     protected def _mouseClicked(event: MouseEvent): Unit = {
       val sd0 = _stateData
-      println( "touch: lock=" + MTouchLock() + " isTouchDev=" + TouchUtil.IS_TOUCH_DEVICE )
+      //println( "touch: lock=" + MTouchLock() + " isTouchDev=" + TouchUtil.IS_TOUCH_DEVICE )
       for (screen <- sd0.screen;  fState <- sd0.focused) {
         val mhand = _mouse2hand(event, screen)
         for (fArr <- FArrow.find()) {

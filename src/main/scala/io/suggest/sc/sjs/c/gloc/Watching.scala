@@ -90,7 +90,7 @@ trait Watching extends GeoLocFsmStub {
 
     /** Реакция на получение исзвестной геолокации. */
     def _handleLocation(loc: GlLocation): Unit = {
-      println(loc)
+      //println(loc)
       val sd0 = _stateData
       // TODO Проверять, изменились ли координаты. Десктопный Firefox шлёт одинаковые сообщения геолокации как по таймеру.
 
