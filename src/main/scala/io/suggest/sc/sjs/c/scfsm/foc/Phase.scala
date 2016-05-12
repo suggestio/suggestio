@@ -59,7 +59,7 @@ trait Phase
     }
   }
   // Переключение focused-карточек в выдаче.
-  protected trait SimpleShiftStateT extends super.SimpleShiftStateT {
+  protected trait SimpleShiftStateT extends super.SimpleShiftStateT with IStartFocusOnAdState {
     override def _shiftDoneState = new FocOnFocusState
   }
   /** Состояние перехода на одну карточку вправо. */
@@ -85,7 +85,10 @@ trait Phase
   }
 
   // Поддержка touch-состояний в focused-выдаче.
-  protected trait FocTouchCancelledT extends super.FocTouchCancelledT {
+  protected trait FocTouchCancelledT
+    extends super.FocTouchCancelledT
+      with IStartFocusOnAdState
+  {
     override def _touchCancelledState = new FocOnFocusState
   }
   class FocTouchStartState extends FocTouchCancelledT with FocOnTouchStartStateT {

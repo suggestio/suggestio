@@ -15,10 +15,10 @@ import io.suggest.sjs.common.fsm.IFsmMsg
   * Эта же логика используется и в touch-перелистывании: автоматическое завершение
   * перелистывания влево/вправо происходит с помощью этого же кода.
   */
-trait SimpleShift extends MouseMoving {
+trait SimpleShift extends MouseMoving with OnFocusBase {
 
   /** Трейт для сборки состояния автоматического перехода на следующую/предыдущую карточку. */
-  protected trait SimpleShiftStateT extends FocMouseMovingStateT {
+  protected trait SimpleShiftStateT extends FocMouseMovingStateT with OnFocusDelayedResize {
 
     /** Сообщение о завершении анимации переключения карточки. */
     protected case object ShiftAnimationFinished extends IFsmMsg

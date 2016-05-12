@@ -17,7 +17,7 @@ import io.suggest.common.geom.coord.CoordOps._
 trait OnTouch extends OnFocusBase {
 
   /** Интерфейс для метода, возвращающего экземпляр OnTouch-состояния. */
-  protected trait FocTouchCancelledT extends FsmEmptyReceiverState {
+  protected trait FocTouchCancelledT extends OnFocusDelayedResize {
 
     /** Новое состояние после резкого завершения касания. */
     protected def _touchCancelledState: FsmState
