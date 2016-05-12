@@ -44,7 +44,6 @@ trait ResizeDelayed extends ScFsmStub {
       }
 
       // Собрать обновлённое состояние ресайза.
-      // TODO Opt если не будет новых полей, то можно унифицировать apply и copy.
       val grSd2 = sd0.resizeOpt.fold[MResizeDelay] {
         MResizeDelay(
           timerId   = timerId,

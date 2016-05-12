@@ -18,6 +18,13 @@ import io.suggest.sc.sjs.vm.grid.{GContainer, GContent, GRoot}
 /** Контейнер очень базовых трейтов для сборки состояний, как-то связанных с сеткой. */
 trait OnGridBase extends ScFsmStub {
 
+  /** Интерфейс для поля, возвращающего инстанс состояния после возврата в/на плитку. */
+  trait IBackToGridState {
+    /** Состояние по "возвращению" на плитку. */
+    def _backToGridState: FsmState
+  }
+
+
   /** Трейт для подмешивания логики синхронной реакции на ресайз экрана. */
   trait GridHandleViewPortChangedSync extends FsmState {
 

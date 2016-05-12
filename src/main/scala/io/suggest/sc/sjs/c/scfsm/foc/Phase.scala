@@ -46,18 +46,9 @@ trait Phase
     override def _onTouchStartState = new FocTouchStartState
   }
   /** Состояние закрытия focused-выдачи с возвратом в плитку. */
-  class FocClosingState extends FocClosingStateT {
-    override def _afterDisappearState: FsmState = {
-      val sd0 = _stateData
-      if (sd0.nav.panelOpened) {
-        new OnGridNavReadyState
-      } else if (sd0.search.opened) {
-        _searchTab2state(sd0)
-      } else {
-        new OnPlainGridState
-      }
-    }
-  }
+  class FocClosingState extends FocClosingStateT with BackToGridState
+
+
   // Переключение focused-карточек в выдаче.
   protected trait SimpleShiftStateT extends super.SimpleShiftStateT with IStartFocusOnAdState {
     override def _shiftDoneState = new FocOnFocusState

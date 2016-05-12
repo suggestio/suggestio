@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.c.scfsm
 
 import io.suggest.sc.sjs.m.msc.fsm.{IStData, MStData}
 import io.suggest.sc.sjs.m.msearch.MTabs
-import io.suggest.sjs.common.fsm.SjsFsmImpl
+import io.suggest.sjs.common.fsm._
 import io.suggest.sjs.common.util.SjsLogger
 
 /**
@@ -21,7 +21,7 @@ object ScFsm
   with search.OnGeo
   with search.tags.Opened
   with foc.Phase
-  //with LogBecome
+  with LogBecome
 {
 
   // Инициализируем базовые внутренние переменные.
@@ -61,6 +61,20 @@ object ScFsm
   protected trait ProcessIndexReceivedUtil extends super.ProcessIndexReceivedUtil {
     override protected def _welcomeAndWaitGridAdsState  = new NodeInit_WelcomeShowing_GridAdsWait_State
     override protected def _waitGridAdsState            = new NodeInit_GridAdsWait_State
+  }
+
+  /** Реализация IBackToGridState: выбор состояния для возврата в зависимости от открытости боковых панелей. */
+  protected trait BackToGridState extends IBackToGridState {
+    override def _backToGridState: FsmState = {
+      val sd0 = _stateData
+      if (sd0.nav.panelOpened) {
+        new OnGridNavReadyState
+      } else if (sd0.search.opened) {
+        _searchTab2state(sd0)
+      } else {
+        new OnPlainGridState
+      }
+    }
   }
 
   /** Реализация состояния-получения-обработки индексной страницы. */
@@ -133,9 +147,9 @@ object ScFsm
     override protected def _navLoadListState = new OnGridNavLoadListState
   }
 
-  class GridLoadMoreState extends OnGridLoadingMoreStateT with GridBlockClickStateT {
-    override protected def _adsLoadedState = new OnPlainGridState
-    override protected def _findAdsFailedState = new OnPlainGridState
+  class GridLoadMoreState extends OnGridLoadingMoreStateT with GridBlockClickStateT with BackToGridState {
+    override protected def _adsLoadedState = _backToGridState
+    override protected def _findAdsFailedState = _backToGridState
   }
 
   /*--------------------------------------------------------------------------------
