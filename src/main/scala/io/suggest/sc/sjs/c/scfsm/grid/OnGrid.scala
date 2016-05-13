@@ -105,7 +105,7 @@ trait OnGrid extends Append with ResizeDelayed with IOnFocusBase with OnGridBase
       with GridHandleViewPortChangedSync
   {
 
-    protected def RSZ_THRESHOLD_PX = 100
+    protected def RSZ_THRESHOLD_PX = 50
 
     /** Требуется ли отложенный ресайз?
       * Да, если по горизонтали контейнер изменился слишком сильно. */
@@ -116,15 +116,12 @@ trait OnGrid extends Append with ResizeDelayed with IOnFocusBase with OnGridBase
       val needResizeOpt = for {
         rsz <- sd0.resizeOpt
         // Прочитать текущее значение ширины в стиле. Она не изменяется до окончания ресайза.
-        gc  <- GContainer.find()
-        w   <- gc.styleWidthPx
-        // Посчитать размер контейнера.
-        cwCm <- rsz.gContSz.orElse {
-          rsz.screen
-            .map( sd0.grid.getGridContainerSz )
-        }
+        screen1 <- sd0.screen
+        // При повороте телефонного экрана с открытой боковой панелью бывает, что ширина контейнера не меняется в отличие от ширины экрана.
+        // Такое было на one plus one, когда использовался rsz.gContSz, что ломало всё счастье из-за боковых отступов. Поэтому используем сравнение ширин экрана.
+        screen0 <- rsz.screen
         // Если ресайза маловато, то вернуть здесь None.
-        if Math.abs(cwCm.cw - w) >= RSZ_THRESHOLD_PX
+        if Math.abs(screen0.width - screen1.width) >= RSZ_THRESHOLD_PX
       } yield {
         // Значение не важно абсолютно
         1
