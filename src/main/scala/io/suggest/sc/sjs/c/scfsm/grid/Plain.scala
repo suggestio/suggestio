@@ -29,7 +29,7 @@ trait Plain extends OnGrid {
         }
 
         // Отребилдить плитку карточек, создав новое состояние выдачи.
-        val grid2 = _rebuildGridOnPanelChange(sd0, screen, sroot, isOpen = true)
+        val grid2 = RebuildGridOnPanelOpen(sd0, screen, sroot).execute()
 
         val sd1 = sd0.copy(
           search = sd0.search.copy(

@@ -91,70 +91,76 @@ trait GridBuild {
 /** Поддержка ребилда сетки при изменении состояния боковой панели. */
 trait PanelGridRebuilder extends GridBuild {
 
-  // TODO Это эталонный говнокод, нужно сделать нормальный пересчет сетки.
-  // Этот код по сути статический, может его просто вынести куда-нить?
+  // TODO Этот код по сути статический, может его просто вынести куда-нить?
 
-  /** Пересчет основных данных плитки под экран. */
-  protected def _refreshGridData(sd0: IStData, screen: IMScreen, calc: GridOffsetCalc): MGridData = {
-    // Внести поправки в состояние плитки.
-    val mgs2 = calc.GridOffsetter(sd0).execute()
-    val gData2 = sd0.grid.copy(
-      state = mgs2
-    )
-    val csz = gData2.getGridContainerSz(screen)
-    val mgs3 = mgs2.withContParams(csz)
-    sd0.grid.copy(
-      state = mgs3
-    )
-  }
 
-  /** Исполнить ребилдер сетки и обновить состояние сетки, вернув его. */
-  protected def _doRebuildGrid(mgd3: MGridData, forBrowser: IBrowser): MGridData = {
-    // Обновить размер контейнера.
-    for {
-      csz      <- mgd3.state.contSz
-      gcontent <- GContent.find()
-    } {
-      gcontent.setContainerSz( csz )
-    }
-    // Отребилдить сетку
-    val gBuilder = GridRebuilder(mgd3, forBrowser)
-    val gbState2 = gBuilder.execute()
-    // Собрать новые данные состояния FSM
-    mgd3.copy(
-      builderStateOpt = Some(gbState2)
-    )
-  }
+  // Методом проб и ошибок выяснено, что при раскрытии панели не надо обновлять состояние.
+  // А при сокрытии панели сначала надо сетку пересчитать, а только потом принимать решения.
+  // Этот код надо перепилить, просто потому что непонятно почему он работает именно так.
+  // Косяки скорее всего появились после появления поддержки resize, запиленой спустя больше полугода после основного кода sc (2016.apr.27-28).
 
-  /** Акт ребилда плитки карточек, когда изменилось состояние какой-то панели.
-    *
-    * @param isOpen Сейчас происходит (true) открытие, или (false) сокрытие панели.
-    */
-  def _rebuildGridOnPanelChange(sd0: MStData, screen: IMScreen, calc: GridOffsetCalc, isOpen: Boolean): MGridData = {
-    // Методом проб и ошибок выяснено, что при раскрытии панели не надо обновлять состояние.
-    // А при сокрытии панели сначала надо сетку пересчитать, а только потом принимать решения.
-    // Этот код надо перепилить, просто потому что непонятно почему он работает именно так.
-    // Косяки скорее всего появились после появления поддержки resize, запиленой спустя больше полугода после основного кода sc (2016.apr.27-28).
+  /** В целях нормализации говнокода тут API для  */
+  trait RebuildAfterPanelChangeT {
 
-    val mgd1 = if (isOpen) {
-      sd0.grid
-    } else {
-      _refreshGridData(sd0, screen, calc)
+    def sd0: MStData
+    def screen: IMScreen
+    def calc: GridOffsetCalc
+
+    /** Пересчет основных данных плитки под экран. */
+    def _refreshGridData(): MGridData = {
+      // Внести поправки в состояние плитки.
+      val mgs2 = calc.GridOffsetter(sd0).execute()
+      val gData2 = sd0.grid.copy(
+        state = mgs2
+      )
+      val csz = gData2.getGridContainerSz(screen)
+      sd0.grid.copy(
+        state = mgs2.withContParams(csz)
+      )
     }
 
-    if (mgd1.state.isDesktopView) {
-      val mgd2 = if (isOpen) {
-        _refreshGridData(sd0, screen, calc)
-      } else {
-        mgd1
+    /** Исполнить ребилдер сетки и обновить состояние сетки, вернув его. */
+    def _doRebuildGrid(mgd3: MGridData): MGridData = {
+      // Обновить размер контейнера.
+      for {
+        csz      <- mgd3.state.contSz
+        gcontent <- GContent.find()
+      } {
+        gcontent.setContainerSz( csz )
       }
 
-      _doRebuildGrid(mgd2, sd0.browser)
+      // Отребилдить сетку
+      val gBuilder = GridRebuilder(mgd3, sd0.browser)
+      val gbState2 = gBuilder.execute()
 
-    } else {
-      // Сетку не надо ребилдить на узких экранах.
-      mgd1
+      // Собрать новые данные состояния FSM
+      mgd3.copy(
+        builderStateOpt = Some(gbState2)
+      )
     }
+
+    /** Вернуть исходный инстанс MGridData. */
+    def _mgd0(mgdR: MGridData): MGridData
+
+    /** Запуск действа на исполнение. */
+    def execute(): MGridData = {
+      val mgdR = _refreshGridData()
+      if ( _mgd0(mgdR).state.isDesktopView ) {
+        _doRebuildGrid( mgdR )
+      } else {
+        mgdR
+      }
+    }
+  }
+
+  /** Логика действий про открытии панели. */
+  case class RebuildGridOnPanelOpen(sd0: MStData, screen: IMScreen, calc: GridOffsetCalc) extends RebuildAfterPanelChangeT {
+    override def _mgd0(mgdR: MGridData): MGridData = sd0.grid
+  }
+
+  /** Логика действий при закрытии панели. */
+  case class RebuildGridOnPanelClose(sd0: MStData, screen: IMScreen, calc: GridOffsetCalc) extends RebuildAfterPanelChangeT {
+    override def _mgd0(mgdR: MGridData): MGridData = mgdR
   }
 
 }

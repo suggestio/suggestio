@@ -49,7 +49,7 @@ trait Base extends OnGrid with ISjsLogger {
         }
 
         // Отребилдить плитку карточек, создав новое состояние выдачи.
-        val grid2 = _rebuildGridOnPanelChange(sd0, screen, sroot, isOpen = false)
+        val grid2 = RebuildGridOnPanelClose(sd0, screen, sroot).execute()
 
         val sd1 = sd0.copy(
           grid = grid2,
