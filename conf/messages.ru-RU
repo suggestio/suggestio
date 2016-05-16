@@ -758,6 +758,6 @@ Refuse.mode.i=Только это размещение
 Refuse.mode.req=Это и все неотмодерированные размещения
 Refuse.mode.all=Все запрошенные и текущие размещения
 
-Map.settings.save.unsupported=Сохранение настроек карты пока не реализовано.
+Map.settings.save.unsupported=Сохранено.
 Adv.in.place=Размещение в месте
 

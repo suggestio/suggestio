@@ -14,11 +14,13 @@ import models._
 import models.maps.umap._
 import models.mproj.ICommonDi
 import models.req.{IReq, IReqHdr}
+import play.api.http.HttpVerbs
 import play.api.i18n.Messages
 import play.api.libs.Files.TemporaryFile
-import play.api.mvc.{MultipartFormData, Result}
+import play.api.mvc.{Call, MultipartFormData, RequestHeader, Result}
 import util.PlayMacroLogsImpl
 import play.api.libs.json._
+import views.html.helper.CSRF
 import views.html.umap._
 
 import scala.concurrent.Future
@@ -52,16 +54,23 @@ class Umap @Inject() (
 
   /** Рендер статической карты для всех узлов, которая запросит и отобразит географию узлов. */
   def getAdnNodesMap = IsSuGet.apply { implicit request =>
-    // TODO Нужно задействовать reverse-роутер.
+    // TODO Нужно задействовать reverse-роутер
     val dlUrl = "/sys/umap/nodes/datalayer?ngl={pk}"
     val args = UmapTplArgs(
-      dlUpdateUrl   = dlUrl,
+      dlUpdateUrl   = _csrfUrlPart(dlUrl),
       dlGetUrl      = dlUrl,
       editAllowed   = GLOBAL_MAP_EDIT_ALLOWED,
       title         = "Сводная карта всех узлов",
       ngls          = NodeGeoLevels.valuesNgl.toSeq.sortBy(_.id)
     )
     Ok( mapBaseTpl(args) )
+  }
+
+  /** Кривая сборка шаблона ссылки сохранения с CSRF-токеном. */
+  // TODO Нужно задействовать reverse-роутер тут вместо ручной сборки Сall с ручной ссылкой.
+  private def _csrfUrlPart(url: String)(implicit request: RequestHeader): String = {
+    val c = new Call(HttpVerbs.POST, url)
+    CSRF(c).url
   }
 
 
@@ -75,7 +84,7 @@ class Umap @Inject() (
     // TODO Нужно задействовать reverse-роутер.
     val dlUrl = s"/sys/umap/node/$nodeId/datalayer?ngl={pk}"
     val args = UmapTplArgs(
-      dlUpdateUrl   = dlUrl, // TODO Нужно задействовать reverse-роутер.
+      dlUpdateUrl   = _csrfUrlPart(dlUrl),
       dlGetUrl      = dlUrl,
       editAllowed   = true,
       title         = "Карта: " +
