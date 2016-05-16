@@ -19,7 +19,6 @@ trait Phase
 
   /** Выход из фазы начальной инициализации и геолокации. */
   protected def _initPhaseExit_OnWelcomeGridWait_State: FsmState
-  protected def _initPhaseExit_OnGridWait_State: FsmState
 
   /** Частичная реализация для NormalInitStateT в целях дедубликации кода. */
   protected trait NormalInitStateT extends super.NormalInitStateT {
@@ -28,8 +27,7 @@ trait Phase
 
   /** Частичная реализация ProcessIndexReceivedUtil в целях дедубликации кода. */
   protected trait ProcessIndexReceivedUtil extends super.ProcessIndexReceivedUtil {
-    override protected def _welcomeAndWaitGridAdsState  = _initPhaseExit_OnWelcomeGridWait_State
-    override protected def _waitGridAdsState            = _initPhaseExit_OnGridWait_State
+    override protected def _nodeInitWelcomeState  = _initPhaseExit_OnWelcomeGridWait_State
   }
 
   /** Реализация состояния самой первой инициализации. */

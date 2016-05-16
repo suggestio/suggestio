@@ -46,10 +46,7 @@ object ScFsm
    *--------------------------------------------------------------------------------*/
 
   override protected def _initPhaseExit_OnWelcomeGridWait_State = {
-    new NodeInit_WelcomeShowing_GridAdsWait_State
-  }
-  override protected def _initPhaseExit_OnGridWait_State = {
-    new NodeInit_GridAdsWait_State
+    new NodeInit_Welcome_AdsWait_State
   }
 
 
@@ -59,8 +56,7 @@ object ScFsm
   // TODO может перекинуть классы-реализации внутрь node.States + добавить метод для выхода из фазы на OnPlainGrid?
 
   protected trait ProcessIndexReceivedUtil extends super.ProcessIndexReceivedUtil {
-    override protected def _welcomeAndWaitGridAdsState  = new NodeInit_WelcomeShowing_GridAdsWait_State
-    override protected def _waitGridAdsState            = new NodeInit_GridAdsWait_State
+    override protected def _nodeInitWelcomeState  = new NodeInit_Welcome_AdsWait_State
   }
 
   /** Реализация состояния-получения-обработки индексной страницы. */
@@ -68,52 +64,16 @@ object ScFsm
     override protected def _onNodeIndexFailedState      = this
   }
 
-  // TODO Наверное объеденить это всё в одно состояние с цепочкой Futures внутри?
-  class NodeInit_WelcomeShowing_GridAdsWait_State extends NodeInit_WelcomeShowing_GridAdsWait_StateT {
-    override protected def _welcomeFinishedState        = new NodeInit_GridAdsWait_State
-    override protected def _adsLoadedState              = new NodeInit_WelcomeShowing_State
-    override protected def _findAdsFailedState          = new NodeInit_WelcomeShowing_GridAdsFailed_State
-    override protected def _welcomeHidingState          = new NodeInit_WelcomeHiding_GridAdsWait_State
+  /** Состояние инициализации выдачи узла: приветствие + фоновая подгрузка карточек. */
+  class NodeInit_Welcome_AdsWait_State extends NodeInit_Welcome_AdsWait_StateT {
+    override def _nodeInitDoneState                     = new OnPlainGridState
   }
-  class NodeInit_WelcomeShowing_State extends NodeInit_WelcomeShowing_StateT {
-    override protected def _welcomeFinishedState        = new NodeInit_GridAdsWait_State
-    override protected def _welcomeHidingState          = new NodeInit_WelcomeHiding_State
-  }
-  class NodeInit_WelcomeHiding_GridAdsWait_State extends NodeInit_WelcomeHiding_GridAdsWait_StateT {
-    override protected def _welcomeFinishedState        = new NodeInit_GridAdsWait_State
-    override protected def _findAdsFailedState          = new NodeInit_WelcomeHiding_GridAdsFailed_State
-    override protected def _adsLoadedState              = new NodeInit_WelcomeHiding_State
-  }
-  class NodeInit_GridAdsWait_State extends NodeInit_GridAdsWait_StateT {
-    override protected def _adsLoadedState              = new OnPlainGridState
-    override protected def _findAdsFailedState          = new NodeInit_GridAdsFailed_State
-  }
-  class NodeInit_WelcomeHiding_State extends NodeInit_WelcomeHiding_StateT {
-    override protected def _welcomeFinishedState        = new OnPlainGridState
-  }
-  class NodeInit_WelcomeShowing_GridAdsFailed_State extends NodeInit_WelcomeShowing_GridAdsFailed_StateT {
-    override protected def _welcomeFinishedState        = new NodeInit_GridAdsWait_State
-    override protected def _welcomeHidingState          = new NodeInit_WelcomeHiding_GridAdsWait_State
-    override protected def _findAdsFailedState          = this
-    override protected def _adsLoadedState              = new NodeInit_WelcomeShowing_State
-  }
-  class NodeInit_WelcomeHiding_GridAdsFailed_State extends NodeInit_WelcomeHiding_GridAdsFailed_StateT {
-    override protected def _welcomeFinishedState        = new NodeInit_GridAdsWait_State
-    override protected def _findAdsFailedState          = this
-    override protected def _adsLoadedState              = new NodeInit_WelcomeHiding_State
-  }
-  class NodeInit_GridAdsFailed_State extends NodeInit_GridAdsFailed_StateT {
-    override protected def _adsLoadedState              = new OnPlainGridState
-    override protected def _findAdsFailedState          = this
-  }
-
 
   /*--------------------------------------------------------------------------------
    * Фаза состояний работы с сеткой карточек (grid).
    *--------------------------------------------------------------------------------*/
-  protected trait GridBlockClickStateT extends super.GridBlockClickStateT with IStartFocusOnAdState /*{
-    override def _startFocusOnAdState = new FocStartingForAd
-  }*/
+  protected trait GridBlockClickStateT extends super.GridBlockClickStateT with IStartFocusOnAdState
+
   /** Трейт для поддержки переключения на состояния, исходящие из OnGridStateT  */
   protected trait OnGridStateT extends super.OnGridStateT with GridBlockClickStateT {
     override def _loadMoreState = new GridLoadMoreState

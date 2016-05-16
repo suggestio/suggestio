@@ -29,15 +29,6 @@ trait Append extends ScFsmStub with FindAdsUtil {
   }
 
 
-  /** Аддон для состояний для немедленного запуска запроса grid ads. */
-  trait GetGridAdsStateT extends FsmState {
-    override def afterBecome(): Unit = {
-      super.afterBecome()
-      _startFindGridAds()
-    }
-  }
-
-
   /** Состояние ожидания результатов инициализация index'а узла. Паралельно идут две фоновые операции:
     * получение карточек и отображение welcome-экрана. */
   trait GridAdsWaitStateBaseT extends FsmEmptyReceiverState {

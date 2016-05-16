@@ -3,10 +3,12 @@ package io.suggest.sc.sjs.c.scfsm.node
 import io.suggest.sc.ScConstants.Welcome
 import io.suggest.sc.sjs.c.scfsm.grid
 import io.suggest.sc.sjs.m.magent.IVpSzChanged
-import io.suggest.sc.sjs.m.mwc.{IWcStepSignal, WcTimeout}
+import io.suggest.sc.sjs.m.mwc.{WcClick, WcTimeout}
 import io.suggest.sc.sjs.vm.wc.{WcBgImg, WcFgImg, WcRoot}
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.model.TimeoutPromise
+import io.suggest.sjs.common.msg.WarnMsgs
+
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 /**
@@ -22,50 +24,119 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
   */
 trait Welcome extends grid.Append {
 
-  /** Дедублицированный код опциональной отмены таймера, сохраненного в состоянии,
-    * в зависимости от полученного сигнала. */
-  private def _maybeCancelWcTimer(signal: IWcStepSignal): Unit = {
-    if (signal.isUser)
-      _stateData.maybeCancelTimer()
-  }
+  /** Трейт сборки состояния приветствия узла.
+    * Изначально, это был зоопарк NodeInit_* состояний, потом пришлось объединять для упрощения обработки screen resize.
+    *
+    * Обычно суть состояния в том, чтобы отобразить приветствие, и в это время подготовить плитку.
+    * Скрывать приветствие параллельно или по наступлению сигналов.
+    *
+    * Считается, что запрос findAds уже запущен где-то снаружи, что заметно ускоряет работу при инициализации плитки,
+    * но ущербно выглядит в целом. См. [[Index.ProcessIndexReceivedUtil]]#_nodeIndexReceived().
+    */
+  trait NodeInit_Welcome_AdsWait_StateT extends GridAdsWaitLoadStateT {
 
-  /** Интерфейс с методом, возвращающим выходное состояние (выход из welcome-фазы). */
-  trait IWelcomeFinished {
-    /** Состояние, когда welcome-карточка сокрыта и стёрта из DOM. */
-    protected def _welcomeFinishedState: FsmState
-  }
+    /** Класс, описывающий состояние текущего welcome'а, если он существует в DOM. */
+    private case class WcHideState(isHiding: Boolean, info: TimeoutPromise)
 
-  trait IWelcomeHiding {
-    /** Состояние, когда происходит плавное сокрытие welcome-карточки. */
-    protected def _welcomeHidingState: FsmState
-  }
+    /** Чтобы не заваливать основное состояние этим mutable-мусором,
+      * сохраняем прямо тут текущее внутреннее состояние сокрытия welcome'а. */
+    private var _wcHide: Option[WcHideState] = None
 
 
-  /** Трейт для сборки состояний нахождения на welcome-карточке. */
-  trait OnWelcomeShownStateT extends FsmEmptyReceiverState with IWelcomeFinished with IWelcomeHiding {
+    override def afterBecome(): Unit = {
+      super.afterBecome()
+      // Запускать запрос _findGridAds() не нужно, т.к. считается, что он был запущен где-то снаружи.
 
-    override def receiverPart: Receive = super.receiverPart orElse {
-      // Приём сигнала от таймера о необходимости начать сокрытие карточки приветствия. Либо юзер тыкает по welcome-карточке.
-      case signal: IWcStepSignal =>
-        _maybeCancelWcTimer(signal)
-        _letsHideWelcome()
-    }
+      WcRoot.find().fold[Unit] {
+        // Нет приветствия. Сразу перейти на состояние плитки. Оно же и отработает приём FindAds.
+        become(_nodeInitDoneState)
 
-    /** Необходимо запустить плавное сокрытие welcome-карточки. */
-    protected def _letsHideWelcome(): Unit = {
-      val wcRootOpt = WcRoot.find()
-      val hideTimerIdOpt = for (wcRoot <- wcRootOpt) yield {
-        wcRoot.fadeOut()
-        DomQuick.setTimeout( Welcome.FADEOUT_TRANSITION_MS ) { () =>
-          _sendEventSyncSafe(WcTimeout)
+      } { wcRoot =>
+        // Есть приветствие. Инициализировать его и организовать плавное сокрытие с задержкой.
+        val sd0 = _stateData
+        // Подготовить отображение карточки.
+        for (screen  <- sd0.screen) {
+          wcRoot.initLayout(screen)
+        }
+        wcRoot.willAnimate()
+
+        // Запустить таймер запуска сокрытия welcome-картинки.
+        val startHideTp = DomQuick.timeoutPromise( Welcome.HIDE_TIMEOUT_MS )
+        _wcHide = Some( WcHideState(isHiding = false, startHideTp) )
+
+        // Собрать и подписать future запуска сокрытия welcome'а.
+        val startHideFut = startHideTp.fut
+
+        // Запланировать дальнейшие действия с карточкой приветствия.
+        for {
+          // Когда таймер запуска сокрытия сработает...
+          _ <- startHideFut
+          // Запустить анимацию сокрытия, запустив таймер завершения этой самой анимации.
+          _ <- {
+            wcRoot.fadeOut()
+            val tp = DomQuick.timeoutPromise(Welcome.FADEOUT_TRANSITION_MS)
+            _wcHide = Some( WcHideState(isHiding = true, tp) )
+            // Контроллировтаь WcTimeout доп.параметрами (типа generation) не требуется, т.к. сообщения WcTimout носят уведомительный характер.
+            _sendEvent(WcTimeout)
+            tp.fut
+          }
+        } {
+          // Высвободить ресурсы из под welcome'а.
+          wcRoot.remove()
+          _wcHide = None
+          _sendEventSync(WcTimeout)
         }
       }
-      val nextState = wcRootOpt.fold[FsmState] (_welcomeFinishedState) (_ => _welcomeHidingState)
-      val sd2 = _stateData.copy(
-        timerId = hideTimerIdOpt
-      )
-      become(nextState, sd2)
     }
+
+
+    override def receiverPart: Receive = super.receiverPart.orElse {
+      // Сигнал таймаута стадии отображения приветствия.
+      case WcTimeout =>
+        _handleWcTimeout()
+      // Сигнал, что юзер кликнул по приветствию.
+      case wcc: WcClick =>
+        _handleWcClicked(wcc)
+    }
+
+
+    /** Реакция на сокрытие welcome или педалирование этого сокрытия юзером. */
+    def _handleWcTimeout(): Unit = {
+      // Если приветствие более не отображается на экране, выполнить переключение на следующее состояние.
+      if (_wcHide.isEmpty) {
+        become(_nodeInitDoneState)
+      }
+    }
+
+
+    /** Реакция на клик юзера по приветствию. */
+    def _handleWcClicked(wcc: WcClick): Unit = {
+      _wcHide.fold [Unit] {
+        // Should not happen: Юзер кликает по уже сокрытому и удалённом приветствию.
+        warn( WarnMsgs.NODE_WELCOME_MISSING + " " + _stateData.adnIdOpt )
+        become(_nodeInitDoneState)
+
+      } { wcInfo =>
+        // Не прерываем анимацию, только педалируем её запуск. Это также защищает от двойных/дублирующихся кликов.
+        if (!wcInfo.isHiding) {
+          // Педалируем завершения фьючерса не дожидаясь его таймера.
+          DomQuick.clearTimeout(wcInfo.info.timerId)
+          wcInfo.info.promise.trySuccess()
+        }
+      }
+    }
+
+
+    /** Опциональное переключение на новое состояние при завершении запроса рекламных карточек. */
+    private def _findAdsDoneState: FsmState = {
+      if (_wcHide.isEmpty) {
+        _nodeInitDoneState
+      } else {
+        // Ещё не закончилось сокрытие приветствия. Переключение состояния будет после его сокрытия.
+        null
+      }
+    }
+
 
     /** Реакция на сигнал об изменении размеров окна или экрана устройства. */
     override def _viewPortChanged(e: IVpSzChanged): Unit = {
@@ -83,100 +154,17 @@ trait Welcome extends grid.Append {
       for (wcFg <- WcFgImg.find()) {
         wcFg.adjust()
       }
+
+      // TODO Принять действия по поводу выдачи, иначе она будет кривая.
     }
 
-  }
 
+    override protected def _adsLoadedState: FsmState = _findAdsDoneState
+    override protected def _findAdsFailedState: FsmState = _findAdsDoneState
 
-  /** Трейт для сборки состояний, реагирующий на завершение плавного сокрытия welcome-карточки. */
-  trait OnWelcomeHidingState extends FsmEmptyReceiverState with IWelcomeFinished {
+    /** На какое состояние переключаться, когда финальная инициализация выдачи узла с приветствием закончены? */
+    def _nodeInitDoneState: FsmState
 
-    override def receiverPart: Receive = super.receiverPart orElse {
-      // Сработал таймер окончания анимированного сокрытия welcome. Или юзер тыкнул по welcome-карточке.
-      case signal: IWcStepSignal =>
-        _maybeCancelWcTimer(signal)
-        _letsFinishWelcome()
-    }
-
-    protected def _letsFinishWelcome(): Unit = {
-      for (wcRoot <- WcRoot.find()) {
-        wcRoot.remove()
-      }
-      val sd2 = _stateData.copy(
-        timerId = None
-      )
-      become(_welcomeFinishedState, sd2)
-    }
-
-  }
-
-
-
-  // TODO Описать тут новое состояние.
-
-  /** Трейт сборки состояния приветствия узла.
-    * Изначально, это был зоопарк NodeInit_* состояний, потом пришлось объединять для упрощения обработки screen resize.
-    *
-    * Обычно суть состояния в том, чтобы отобразить приветствие, и в это время подготовить плитку.
-    * Скрывать приветствие параллельно или по наступлению сигналов.
-    *
-    * Считается, что запрос findAds уже запущен где-то снаружи, что заметно ускоряет работу при инициализации плитки,
-    * но ущербно выглядит в целом. См. [[Index.ProcessIndexReceivedUtil]]#_nodeIndexReceived().
-    */
-  trait NodeInit_AdsWait_StateT extends GridAdsWaitLoadStateT {
-
-    /** Чтобы не заваливать основное состояние этим mutable-мусором,
-      * сохраняем прямо тут текущее состояние сокрытия welcome'а. */
-    private var _wcHideInfo: Option[TimeoutPromise] = None
-
-    override def afterBecome(): Unit = {
-      super.afterBecome()
-      // TODO Запустить отображение welcome-карточки и таймер запуска сокрытия оной.
-      // TODO Запустить запрос _findGridAds
-
-      val sd0 = _stateData
-
-      // Запустить инициализацию welcome layout'а.
-      for (wcRoot <- WcRoot.find()) {
-        // Подготовить отображение карточки.
-        for (screen  <- sd0.screen) {
-          wcRoot.initLayout(screen)
-        }
-        wcRoot.willAnimate()
-
-        // Запустить таймер запуска сокрытия welcome-картинки.
-        val startHideTp = DomQuick.timeoutPromise( Welcome.HIDE_TIMEOUT_MS )
-        _wcHideInfo = Some(startHideTp)
-
-        val startHideFut = startHideTp.promise.future
-
-        for (_ <- startHideFut) {
-
-        }
-
-        // Запланировать дальнейшие действия с карточкой приветствия.
-        for {
-          // Когда таймер запуска сокрытия сработает...
-          _ <- startHideFut
-          // Запустить анимацию сокрытия, запустив таймер завершения этой самой анимации.
-          _ <- {
-            wcRoot.fadeOut()
-            val tp = DomQuick.timeoutPromise(Welcome.FADEOUT_TRANSITION_MS)
-            _wcHideInfo = Some(tp)
-            tp.promise.future
-          }
-        } {
-          // Высвободить ресурсы из под welcome'а.
-          wcRoot.remove()
-          _wcHideInfo = None
-        }
-
-      }   // for wcRoot
-    }
-
-    override def receiverPart: Receive = super.receiverPart.orElse {
-      ???
-    }
   }
 
 }

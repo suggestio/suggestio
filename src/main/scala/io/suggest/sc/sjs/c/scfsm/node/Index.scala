@@ -181,30 +181,17 @@ trait Index extends ScFsmStub with FindAdsUtil {
 
       _sendFutResBack(findAdsFut)
 
-      // Переключаемся на следующее состояния (плитка), в трейте это состояние абстрактно.
-      val nextState: FsmState = {
-        if (wcHideTimerOpt.isDefined) {
-          _welcomeAndWaitGridAdsState
-        } else {
-          _waitGridAdsState
-        }
-      }
       val sd2 = sd1.copy(
         timerId = wcHideTimerOpt
       )
-      become( nextState, sd2 )
+      become( _nodeInitWelcomeState, sd2 )
 
       // Запустить в фоне ensure'инг карты
       MbFsm ! EnsureMap()
     }
 
-
-    /** На какое состояние переходить, когда инициализация index завершена, и мы находимся на welcome,
-      * ожидая grid ads. */
-    protected def _welcomeAndWaitGridAdsState: FsmState
-
-    /** Welcome-карточка отсутствует. На какое состояние переходить для просто ожидания grid-ads от сервера. */
-    protected def _waitGridAdsState: FsmState
+    /** Следующее состояние. */
+    protected def _nodeInitWelcomeState: FsmState
 
   }
 
