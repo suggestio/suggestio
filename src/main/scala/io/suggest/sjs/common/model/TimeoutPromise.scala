@@ -9,6 +9,10 @@ import scala.concurrent.Promise
   * Description: Контейнер для promise'а, который должен исполнится по таймауту.
   */
 case class TimeoutPromise(
-  promise : Promise[_],
+  promise : Promise[Any],
   timerId : Int
-)
+) {
+
+  lazy val fut = promise.future
+
+}

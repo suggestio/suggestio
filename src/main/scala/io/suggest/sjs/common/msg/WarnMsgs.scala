@@ -48,4 +48,6 @@ object WarnMsgs extends MsgsStaticT {
 
   def GEO_UNEXPECTED_WATCHER_TYPE = E(17)
 
+  def NODE_WELCOME_MISSING      = E(18)
+
 }

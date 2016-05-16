@@ -39,7 +39,7 @@ object DomQuick {
     * @return Контейнер с данными, касающиеся новоиспечённого Promise'а.
     */
   def timeoutPromise(timeMs: Double): TimeoutPromise = {
-    val p = Promise[Unit]()
+    val p = Promise[Any]()
     val timerId = setTimeout(timeMs) { () =>
       p.success(None)
     }
