@@ -9,7 +9,7 @@ object Feature {
 
   implicit def FORMAT: Format[Feature] = (
     (__ \ "geometry").format[GeoShape](GeoShape.FORMAT_GJSON_COMPAT) and
-    (__ \ "properties").format[FeatureProperties] and
+    (__ \ "properties").formatNullable[FeatureProperties] and
     (__ \ "type").format[FeatureType]
   )(apply, unlift(unapply))
 
@@ -18,6 +18,6 @@ object Feature {
 
 case class Feature(
   geometry    : GeoShape,
-  properties  : FeatureProperties,
+  properties  : Option[FeatureProperties] = None,
   ftype       : FeatureType = FeatureTypes.Feature
 )

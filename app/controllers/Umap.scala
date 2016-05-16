@@ -142,10 +142,10 @@ class Umap @Inject() (
       } yield {
         Feature(
           geometry = shape.shape,
-          properties = FeatureProperties(
-            name        = mnode.guessDisplayNameOrIdOrEmpty,
-            description = routes.SysMarket.showAdnNode(mnode.id.get).absoluteURL()
-          )
+          properties = Some(FeatureProperties(
+            name        = mnode.guessDisplayNameOrId,
+            description = Some( routes.SysMarket.showAdnNode(mnode.id.get).absoluteURL() )
+          ))
         )
       }
 
@@ -155,10 +155,10 @@ class Umap @Inject() (
           mnode.geo.point.map { pt =>
             Feature(
               geometry = PointGs(pt),
-              properties = FeatureProperties(
-                name        = s"${mnode.meta.basic.name} ($centerMsg)",
-                description = routes.SysMarket.showAdnNode(mnode.id.get).absoluteURL()
-              )
+              properties = Some(FeatureProperties(
+                name        = Some( s"${mnode.meta.basic.name} ($centerMsg)" ),
+                description = Some( routes.SysMarket.showAdnNode(mnode.id.get).absoluteURL() )
+              ))
             )
           }
         }
@@ -205,7 +205,11 @@ class Umap @Inject() (
     if (!GLOBAL_MAP_EDIT_ALLOWED)
       throw new IllegalAccessException("Global map editing is not allowed.")
     // Продолжаем веселье.
-    _saveMapDataLayer(ngl, None)(_.properties.nodeId)
+    _saveMapDataLayer(ngl, None){ feat =>
+      feat.properties
+        .flatMap(_.nodeId)
+        .getOrElse("???")
+    }
   }
 
 
@@ -236,6 +240,9 @@ class Umap @Inject() (
         tempFile.ref.file.delete()
       }
 
+      val maybeLayerData = playJson.validate[FeatureCollection]
+      if (maybeLayerData.isError)
+        LOGGER.error(s"$logPrefix Unable to parse request body: $maybeLayerData")
       val layerData = playJson.validate[FeatureCollection].get
 
       // Собираем запрос в карту, где ключ -- это nodeId.

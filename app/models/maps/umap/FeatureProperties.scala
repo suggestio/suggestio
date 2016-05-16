@@ -12,15 +12,17 @@ import play.api.libs.functional.syntax._
 object FeatureProperties {
 
   implicit val FORMAT: Format[FeatureProperties] = (
-    (__ \ "name").format[String] and
-    (__ \ "description").format[String]
+    (__ \ "name").formatNullable[String] and
+    (__ \ "description").formatNullable[String]
   )(apply, unlift(unapply))
+
+  def empty = FeatureProperties()
 
 }
 
 case class FeatureProperties(
-  name        : String,
-  description : String
+  name        : Option[String] = None,
+  description : Option[String] = None
 ) {
 
   /** Передача id узлов происходит внутри description. */
