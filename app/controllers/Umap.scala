@@ -205,7 +205,7 @@ class Umap @Inject() (
     if (!GLOBAL_MAP_EDIT_ALLOWED)
       throw new IllegalAccessException("Global map editing is not allowed.")
     // Продолжаем веселье.
-    _saveMapDataLayer(ngl, None){ feat =>
+    _saveMapDataLayer(ngl, None) { feat =>
       feat.properties
         .flatMap(_.nodeId)
         .getOrElse("???")
