@@ -1,19 +1,26 @@
 package io.suggest.sc.sjs.c.scfsm.node
 
 import io.suggest.sc.ScConstants.Welcome
-import io.suggest.sc.sjs.c.scfsm.ScFsmStub
+import io.suggest.sc.sjs.c.scfsm.grid
 import io.suggest.sc.sjs.m.magent.IVpSzChanged
 import io.suggest.sc.sjs.m.mwc.{IWcStepSignal, WcTimeout}
 import io.suggest.sc.sjs.vm.wc.{WcBgImg, WcFgImg, WcRoot}
 import io.suggest.sjs.common.controller.DomQuick
+import io.suggest.sjs.common.model.TimeoutPromise
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 /**
- * Suggest.io
- * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 25.08.15 15:41
- * Description: Аддон для ScFsm для сборки состояний, связанных с карточкой приветствия.
- */
-trait Welcome extends ScFsmStub {
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 25.08.15 15:41
+  * Description: Аддон для ScFsm для сборки состояний, связанных с карточкой приветствия.
+  *
+  * 2016.may.13: Производится объединение зоопарка состояний NodeInit_* (инициализации узла)
+  * в welcome-фазе, т.е. после шага получения index'а с сервера.
+  * Данный Welcome-контейнер трейтов получил более широкое назначение:
+  * welcome-фаза-состояние или трейты для его сборки.
+  */
+trait Welcome extends grid.Append {
 
   /** Дедублицированный код опциональной отмены таймера, сохраненного в состоянии,
     * в зависимости от полученного сигнала. */
@@ -103,5 +110,73 @@ trait Welcome extends ScFsmStub {
 
   }
 
+
+
+  // TODO Описать тут новое состояние.
+
+  /** Трейт сборки состояния приветствия узла.
+    * Изначально, это был зоопарк NodeInit_* состояний, потом пришлось объединять для упрощения обработки screen resize.
+    *
+    * Обычно суть состояния в том, чтобы отобразить приветствие, и в это время подготовить плитку.
+    * Скрывать приветствие параллельно или по наступлению сигналов.
+    *
+    * Считается, что запрос findAds уже запущен где-то снаружи, что заметно ускоряет работу при инициализации плитки,
+    * но ущербно выглядит в целом. См. [[Index.ProcessIndexReceivedUtil]]#_nodeIndexReceived().
+    */
+  trait NodeInit_AdsWait_StateT extends GridAdsWaitLoadStateT {
+
+    /** Чтобы не заваливать основное состояние этим mutable-мусором,
+      * сохраняем прямо тут текущее состояние сокрытия welcome'а. */
+    private var _wcHideInfo: Option[TimeoutPromise] = None
+
+    override def afterBecome(): Unit = {
+      super.afterBecome()
+      // TODO Запустить отображение welcome-карточки и таймер запуска сокрытия оной.
+      // TODO Запустить запрос _findGridAds
+
+      val sd0 = _stateData
+
+      // Запустить инициализацию welcome layout'а.
+      for (wcRoot <- WcRoot.find()) {
+        // Подготовить отображение карточки.
+        for (screen  <- sd0.screen) {
+          wcRoot.initLayout(screen)
+        }
+        wcRoot.willAnimate()
+
+        // Запустить таймер запуска сокрытия welcome-картинки.
+        val startHideTp = DomQuick.timeoutPromise( Welcome.HIDE_TIMEOUT_MS )
+        _wcHideInfo = Some(startHideTp)
+
+        val startHideFut = startHideTp.promise.future
+
+        for (_ <- startHideFut) {
+
+        }
+
+        // Запланировать дальнейшие действия с карточкой приветствия.
+        for {
+          // Когда таймер запуска сокрытия сработает...
+          _ <- startHideFut
+          // Запустить анимацию сокрытия, запустив таймер завершения этой самой анимации.
+          _ <- {
+            wcRoot.fadeOut()
+            val tp = DomQuick.timeoutPromise(Welcome.FADEOUT_TRANSITION_MS)
+            _wcHideInfo = Some(tp)
+            tp.promise.future
+          }
+        } {
+          // Высвободить ресурсы из под welcome'а.
+          wcRoot.remove()
+          _wcHideInfo = None
+        }
+
+      }   // for wcRoot
+    }
+
+    override def receiverPart: Receive = super.receiverPart.orElse {
+      ???
+    }
+  }
 
 }

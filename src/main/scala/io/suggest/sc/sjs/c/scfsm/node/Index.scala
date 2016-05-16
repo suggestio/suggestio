@@ -95,16 +95,15 @@ trait Index extends ScFsmStub with FindAdsUtil {
     override protected def _nodeIndexReceived(v: MNodeIndex): Unit = {
       // Заливаем в данные состояния полученные метаданные по текущему узлу.
       // TODO Это нужно только на первом шаге по факту (geo). Потом adnId обычно известен наперёд.
-      val sd1: SD = {
-        val sd0 = _stateData
-        if (sd0.adnIdOpt != v.adnIdOpt) {
-          sd0.copy(
-            adnIdOpt = v.adnIdOpt
-          )
-        } else {
-          sd0
-        }
+      val sd0 = _stateData
+      if (sd0.adnIdOpt != v.adnIdOpt) {
+        val _sd1 = sd0.copy(
+          adnIdOpt = v.adnIdOpt
+        )
+        _stateData = _sd1
       }
+
+      val sd1: SD = _stateData
 
       // Начинаем запрос карточек как можно скорее, чтобы распараллелить деятельность.
       val findAdsFut = _findAds(sd1)
@@ -166,13 +165,14 @@ trait Index extends ScFsmStub with FindAdsUtil {
         }
       }
 
-      for (scr <- _stateData.screen;  layContent <- layout.content) {
-        layContent.setWndClass(scr)
-      }
-
-      // Инициализация кнопок заголовка. Раньше было тут HeaderCtl.initLayout().
-      for (lc <- layout.content; hdr <- lc.header) {
-        hdr.initLayout()
+      for (lc <- layout.content) {
+        for (scr <- _stateData.screen) {
+          lc.setWndClass(scr)
+        }
+        // Инициализация кнопок заголовка. Раньше было тут HeaderCtl.initLayout().
+        for (hdr <- lc.header) {
+          hdr.initLayout()
+        }
       }
 
       // Очистить подложку фона выдачи.
@@ -209,8 +209,12 @@ trait Index extends ScFsmStub with FindAdsUtil {
   }
 
 
-  /** Поддержка реакции на получение MNodeIndex без конкретной логики обработки. */
-  trait WaitIndexStateBaseT extends FsmEmptyReceiverState with INodeIndexReceived with IGetNodeIndexFailed {
+  /** Трейт для состояния ожидания получения index с сервера. */
+  trait WaitIndexStateT
+    extends FsmEmptyReceiverState
+      with IGetNodeIndexFailed
+      with ProcessIndexReceivedUtil
+  {
 
     override def receiverPart: Receive = super.receiverPart orElse {
       case mni: MNodeIndex =>
@@ -219,12 +223,6 @@ trait Index extends ScFsmStub with FindAdsUtil {
         error("Failed to get node index: " + _stateData.adnIdOpt, ex)
         _getNodeIndexFailed(ex)
     }
-
-  }
-
-
-  /** Трейт для состояния ожидания получения index с сервера. */
-  trait WaitIndexStateT extends WaitIndexStateBaseT with ProcessIndexReceivedUtil {
 
     override protected def _getNodeIndexFailed(ex: Throwable): Unit = {
       error(ErrorMsgs.GET_NODE_INDEX_FAILED, ex)

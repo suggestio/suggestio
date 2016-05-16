@@ -63,20 +63,6 @@ object ScFsm
     override protected def _waitGridAdsState            = new NodeInit_GridAdsWait_State
   }
 
-  /** Реализация IBackToGridState: выбор состояния для возврата в зависимости от открытости боковых панелей. */
-  protected trait BackToGridState extends IBackToGridState {
-    override def _backToGridState: FsmState = {
-      val sd0 = _stateData
-      if (sd0.nav.panelOpened) {
-        new OnGridNavReadyState
-      } else if (sd0.search.opened) {
-        _searchTab2state(sd0)
-      } else {
-        new OnPlainGridState
-      }
-    }
-  }
-
   /** Реализация состояния-получения-обработки индексной страницы. */
   class NodeInit_GetIndex_WaitIndex_State extends NodeInit_GetIndex_WaitIndex_StateT with ProcessIndexReceivedUtil {
     override protected def _onNodeIndexFailedState      = this
@@ -147,6 +133,20 @@ object ScFsm
     override protected def _navLoadListState = new OnGridNavLoadListState
   }
 
+
+  /** Реализация IBackToGridState: выбор состояния для возврата в зависимости от открытости боковых панелей. */
+  protected trait BackToGridState extends IBackToGridState {
+    override def _backToGridState: FsmState = {
+      val sd0 = _stateData
+      if (sd0.nav.panelOpened) {
+        new OnGridNavReadyState
+      } else if (sd0.search.opened) {
+        _searchTab2state(sd0)
+      } else {
+        new OnPlainGridState
+      }
+    }
+  }
   class GridLoadMoreState extends OnGridLoadingMoreStateT with GridBlockClickStateT with BackToGridState {
     override protected def _adsLoadedState = _backToGridState
     override protected def _findAdsFailedState = _backToGridState

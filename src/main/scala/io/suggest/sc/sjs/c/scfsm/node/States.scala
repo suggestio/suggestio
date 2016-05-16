@@ -10,10 +10,14 @@ import io.suggest.sc.sjs.c.scfsm.grid.Append
  */
 trait States extends Index with Welcome with Append {
 
+
   /** Трейт состояния запуска запроса index и ожидания его исполнения. */
   trait NodeInit_GetIndex_WaitIndex_StateT
     extends GetIndexStateT
     with WaitIndexStateT
+
+
+  // TODO Объеденить все состояния в одно с цепочкой фьючерсов в afterBecome(). Текущий код как-то уродливо разросся и не в ту сторону совсем.
 
   /** Трейт состояния нахождения на ещё-нескрывающейся welcome-карточке с ожиданием ответа сервера по Grid ads. */
   trait NodeInit_WelcomeShowing_GridAdsWait_StateT
