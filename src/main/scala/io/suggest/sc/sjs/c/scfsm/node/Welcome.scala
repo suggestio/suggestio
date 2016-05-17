@@ -3,10 +3,10 @@ package io.suggest.sc.sjs.c.scfsm.node
 import io.suggest.sc.ScConstants.Welcome
 import io.suggest.sc.sjs.c.scfsm.grid
 import io.suggest.sc.sjs.m.magent.IVpSzChanged
-import io.suggest.sc.sjs.m.mwc.{WcClick, WcTimeout}
+import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
+import io.suggest.sc.sjs.m.mwc.{WcClick, WcHideState, WcTimeout}
 import io.suggest.sc.sjs.vm.wc.{WcBgImg, WcFgImg, WcRoot}
 import io.suggest.sjs.common.controller.DomQuick
-import io.suggest.sjs.common.model.TimeoutPromise
 import io.suggest.sjs.common.msg.WarnMsgs
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
@@ -22,7 +22,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
   * Данный Welcome-контейнер трейтов получил более широкое назначение:
   * welcome-фаза-состояние или трейты для его сборки.
   */
-trait Welcome extends grid.Append {
+trait Welcome extends grid.OnGrid {
 
   /** Трейт сборки состояния приветствия узла.
     * Изначально, это был зоопарк NodeInit_* состояний, потом пришлось объединять для упрощения обработки screen resize.
@@ -33,14 +33,20 @@ trait Welcome extends grid.Append {
     * Считается, что запрос findAds уже запущен где-то снаружи, что заметно ускоряет работу при инициализации плитки,
     * но ущербно выглядит в целом. См. [[Index.ProcessIndexReceivedUtil]]#_nodeIndexReceived().
     */
-  trait NodeInit_Welcome_AdsWait_StateT extends GridAdsWaitLoadStateT {
-
-    /** Класс, описывающий состояние текущего welcome'а, если он существует в DOM. */
-    private case class WcHideState(isHiding: Boolean, info: TimeoutPromise)
+  trait NodeInit_Welcome_AdsWait_StateT
+    extends OnGridStateT
+  {
 
     /** Чтобы не заваливать основное состояние этим mutable-мусором,
       * сохраняем прямо тут текущее внутреннее состояние сокрытия welcome'а. */
     private var _wcHide: Option[WcHideState] = None
+
+    /** Флаг уже-наличия сетки, готовой к использованию. Сетка вся отрабатывается асинхронно. */
+    private var _hasReadyGrid: Boolean = false
+
+    /** Флаг наличия отложенного ресайза плитки, т.е. окно ресайзилось, когда плитка была уже запрошена,
+      * но ещё не загружена. */
+    private var _hasDelayedGridResize: Boolean = false
 
 
     override def afterBecome(): Unit = {
@@ -71,6 +77,7 @@ trait Welcome extends grid.Append {
         for {
           // Когда таймер запуска сокрытия сработает...
           _ <- startHideFut
+
           // Запустить анимацию сокрытия, запустив таймер завершения этой самой анимации.
           _ <- {
             wcRoot.fadeOut()
@@ -80,6 +87,7 @@ trait Welcome extends grid.Append {
             _sendEvent(WcTimeout)
             tp.fut
           }
+
         } {
           // Высвободить ресурсы из под welcome'а.
           wcRoot.remove()
@@ -127,17 +135,6 @@ trait Welcome extends grid.Append {
     }
 
 
-    /** Опциональное переключение на новое состояние при завершении запроса рекламных карточек. */
-    private def _findAdsDoneState: FsmState = {
-      if (_wcHide.isEmpty) {
-        _nodeInitDoneState
-      } else {
-        // Ещё не закончилось сокрытие приветствия. Переключение состояния будет после его сокрытия.
-        null
-      }
-    }
-
-
     /** Реакция на сигнал об изменении размеров окна или экрана устройства. */
     override def _viewPortChanged(e: IVpSzChanged): Unit = {
       super._viewPortChanged(e)
@@ -154,16 +151,44 @@ trait Welcome extends grid.Append {
       for (wcFg <- WcFgImg.find()) {
         wcFg.adjust()
       }
-
-      // TODO Принять действия по поводу выдачи, иначе она будет кривая.
     }
 
 
-    override protected def _adsLoadedState: FsmState = _findAdsDoneState
-    override protected def _findAdsFailedState: FsmState = _findAdsDoneState
-
     /** На какое состояние переключаться, когда финальная инициализация выдачи узла с приветствием закончены? */
     def _nodeInitDoneState: FsmState
+
+
+
+    /** Реакция на наступление таймаута ожидания ресайза плитки. */
+    override def _handleResizeDelayTimeout(): Unit = {
+      if (_hasReadyGrid) {
+        // Сетка есть, можно отрабатывать ресайз.
+        super._handleResizeDelayTimeout()
+        _hasReadyGrid = false
+      } else {
+        // Если плитки с сервера всё ещё нет, то надо бы повторить этот сигнальчик попозже.
+        _hasDelayedGridResize = true
+      }
+    }
+
+    override def _findAdsReady(mfa: MFindAds): Unit = {
+      super._findAdsReady(mfa)
+      _hasReadyGrid = true
+
+      // Если был неотработанный ресайз плитки, то нужно вызвать логику отрабатывания этого ресайза.
+      if (_hasDelayedGridResize) {
+        _handleResizeDelayTimeout()
+        _hasDelayedGridResize = false
+      }
+    }
+
+    // Эти состояния недосягаемы из Welcome-состояний.
+    // Выдача в фоне, на экране не видна и недоступна для скроллинга, карточки недоступны для открытия.
+    // По хорошему вообще надо бы, чтобы этого всего здесь не было.
+    // Изначально планировалось использовать OnGridBase, но дробление OnGridStateT на трейты вызывает
+    // только усложнение кода и возможные скрытые дефекты. Поэтому наследуется целиковый OnGridStateT.
+    override protected final def _loadMoreState: FsmState = null
+    override protected final def _startFocusOnAdState: FsmState = null
 
   }
 

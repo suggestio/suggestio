@@ -16,7 +16,7 @@ import io.suggest.sc.sjs.vm.grid.{GContainer, GContent, GRoot}
  */
 
 /** Контейнер очень базовых трейтов для сборки состояний, как-то связанных с сеткой. */
-trait OnGridBase extends ScFsmStub {
+trait OnGridBase extends ScFsmStub with ResizeDelayed with Append {
 
   /** Интерфейс для поля, возвращающего инстанс состояния после возврата в/на плитку. */
   trait IBackToGridState {
@@ -52,7 +52,7 @@ trait OnGridBase extends ScFsmStub {
         // Обновить контейнер сетки.
         gcontent.setContainerSz(gContSz)
 
-        _haveGridContSz(gContSzOpt)
+        _handleNewGridContSz(gContSzOpt)
       }
     }
 
@@ -64,14 +64,63 @@ trait OnGridBase extends ScFsmStub {
       * Старое значение cwCm проверяется при выходе из focused части для возможного провоциорвания
       * пересчета сетки.
       */
-    def _haveGridContSz(gContSzOpt: Option[ICwCm]): Unit = {}
+    def _handleNewGridContSz(gContSzOpt: Option[ICwCm]): Unit = {}
+
+  }
+
+
+  /** Реализации поддержки отложенного ресайза плитки. */
+  trait GridHandleResizeDelayed extends HandleResizeDelayed {
+
+    protected def RSZ_THRESHOLD_PX = 50
+
+    /** Требуется ли отложенный ресайз?
+      * Да, если по горизонтали контейнер изменился слишком сильно. */
+    protected def _isGridNeedResizeDelayed(): Boolean = {
+      // Посчитать новые размер контейнера. Используем Option как Boolean.
+      val sd0 = _stateData
+
+      val needResizeOpt = for {
+        rsz <- sd0.resizeOpt
+        // Прочитать текущее значение ширины в стиле. Она не изменяется до окончания ресайза.
+        screen1 <- sd0.screen
+        // При повороте телефонного экрана с открытой боковой панелью бывает, что ширина контейнера не меняется в отличие от ширины экрана.
+        // Такое было на one plus one, когда использовался rsz.gContSz, что ломало всё счастье из-за боковых отступов. Поэтому используем сравнение ширин экрана.
+        screen0 <- rsz.screen
+        // Если ресайза маловато, то вернуть здесь None.
+        if Math.abs(screen0.width - screen1.width) >= RSZ_THRESHOLD_PX
+      } yield {
+        // Значение не важно абсолютно
+        1
+      }
+      needResizeOpt.isDefined
+    }
+
+    /** Реакция на наступление таймаута ожидания ресайза плитки. */
+    override def _handleResizeDelayTimeout(): Unit = {
+      if (_isGridNeedResizeDelayed()) {
+        val sd0 = _stateData
+        for (mscreen <- sd0.screen) {
+          // TODO Opt Если существенное по горизонтали, но оно осталось ~кратно ячейкам, то просто перестроить выдачу: _rebuildGridOnPanelChange
+          val sd1 = sd0.copy(
+            grid = sd0.grid.copy(
+              state = MGridState(
+                adsPerLoad = MGridState.getAdsPerLoad(mscreen)
+              )
+            )
+          )
+          _startFindGridAds(sd1)
+        }
+      }
+    }
+
   }
 
 }
 
 
 /** Утиль для сборка состояний сетки. */
-trait OnGrid extends Append with ResizeDelayed with IOnFocusBase with OnGridBase {
+trait OnGrid extends OnGridBase with IOnFocusBase {
 
   /** Поддержка реакции на клики по карточкам в выдаче. */
   trait GridBlockClickStateT extends FsmEmptyReceiverState with IStartFocusOnAdState {
@@ -101,33 +150,9 @@ trait OnGrid extends Append with ResizeDelayed with IOnFocusBase with OnGridBase
   /** Трейт для сборки состояний, в которых доступна сетка карточек, клики по ней и скроллинг. */
   trait OnGridStateT
     extends GridBlockClickStateT with GridAdsWaitLoadStateT
-      with DelayResize with HandleResizeDelayed
+      with DelayResize with GridHandleResizeDelayed
       with GridHandleViewPortChangedSync
   {
-
-    protected def RSZ_THRESHOLD_PX = 50
-
-    /** Требуется ли отложенный ресайз?
-      * Да, если по горизонтали контейнер изменился слишком сильно. */
-    private def _isNeedResizeDelayed(): Boolean = {
-      // Посчитать новые размер контейнера. Используем Option как Boolean.
-      val sd0 = _stateData
-
-      val needResizeOpt = for {
-        rsz <- sd0.resizeOpt
-        // Прочитать текущее значение ширины в стиле. Она не изменяется до окончания ресайза.
-        screen1 <- sd0.screen
-        // При повороте телефонного экрана с открытой боковой панелью бывает, что ширина контейнера не меняется в отличие от ширины экрана.
-        // Такое было на one plus one, когда использовался rsz.gContSz, что ломало всё счастье из-за боковых отступов. Поэтому используем сравнение ширин экрана.
-        screen0 <- rsz.screen
-        // Если ресайза маловато, то вернуть здесь None.
-        if Math.abs(screen0.width - screen1.width) >= RSZ_THRESHOLD_PX
-      } yield {
-        // Значение не важно абсолютно
-        1
-      }
-      needResizeOpt.isDefined
-    }
 
     override def receiverPart: Receive = super.receiverPart.orElse {
       // Вертикальный скроллинг в плитке.
@@ -141,7 +166,6 @@ trait OnGrid extends Append with ResizeDelayed with IOnFocusBase with OnGridBase
         become(_loadMoreState)
       }
     }
-
 
 
     /** FSM-реакция на получение положительного ответа от сервера по поводу карточек сетки.
@@ -167,28 +191,9 @@ trait OnGrid extends Append with ResizeDelayed with IOnFocusBase with OnGridBase
       super._findAdsReady(mfa)
     }
 
-    /** Реакция на наступление таймаута ожидания ресайза плитки. */
-    override def _handleResizeDelayTimeout(): Unit = {
-      if (_isNeedResizeDelayed()) {
-        val sd0 = _stateData
-        for (mscreen <- sd0.screen) {
-          // TODO Opt Если существенное по горизонтали, но оно осталось ~кратно ячейкам, то просто перестроить выдачу: _rebuildGridOnPanelChange
-          val sd1 = sd0.copy(
-            grid = sd0.grid.copy(
-              state = MGridState(
-                adsPerLoad = MGridState.getAdsPerLoad(mscreen)
-              )
-            )
-          )
-          _startFindGridAds(sd1)
-        }
-      }
-    }
-
-
     // При наличии нового размера контейнера сетки обновить его в состоянии FSM.
-    override def _haveGridContSz(gContSzOpt: Option[ICwCm]): Unit = {
-      super._haveGridContSz(gContSzOpt)
+    override def _handleNewGridContSz(gContSzOpt: Option[ICwCm]): Unit = {
+      super._handleNewGridContSz(gContSzOpt)
 
       // Сохранить новые данные контейнера в состояние.
       val sd0 = _stateData
