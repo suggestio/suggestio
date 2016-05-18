@@ -16,22 +16,9 @@ import scala.util.Random
  * Description: Контейнер js-состояния выдачи (какой узел сейчас, какие панели открыты и т.д.).
  */
 
-
 object ScJsState {
 
-  // Название qs-параметров, отражающих состояние выдачи.
-  // r = receiver, p = producer, s = search, n = navigation, f = focused ads, e = mEta
-  // 2014.jan.20: Переименованы некоторые поля, чтобы подогнать их под js, который пока некогда чинить.
-  val ADN_ID_FN               = "m.id"
-  val CAT_SCR_OPENED_FN       = "s.open"
-  val GEO_SCR_OPENED_FN       = "n.open"
-  val FADS_CURRENT_AD_ID_FN   = "f.cur.id"
-  val FADS_OFFSET_FN          = "f.off"
-  val GENERATION_FN           = "a.gen"
-  val SEARCH_TAB_FN           = "s.tab"
-  val PRODUCER_ADN_ID_FN      = "f.pr.id"
-  val TILES_CAT_ID_FN         = "t.cat"
-  val NAV_NGLS_STATE_MAP_FN   = "n.ngls"
+  import io.suggest.sc.ScConstants.ScJsState._
 
   def generationDflt: Option[Long] = {
     val l = new Random().nextLong()
@@ -99,8 +86,8 @@ object ScJsState {
           .filter(!_.isEmpty)
           .mkString("&")
       }
-    }
-  }
+    } // new QSB {}
+  }   // def qsb()
 
   /** Выдать пустой инстанс. Всегда немного разный, чтобы был эффект тасования. */
   def empty = ScJsState()

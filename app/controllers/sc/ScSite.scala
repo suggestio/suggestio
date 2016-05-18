@@ -194,9 +194,8 @@ trait ScSiteGeo
       // Было раньше MovedPermanently, но почему-то оно может сбойнуть и закешироваться на CDN.
       // 2016.02.04 Логгирование тут усилено для отлова memleak'а с зацикливанием здесь.
       LOGGER.trace(s"geoSite($siteArgs): Qs js state is nonEmpty, redirecting from ${request.path} [${request.remoteAddress}]")
-      Redirect {
-        routes.MarketShowcase.geoSite(x = siteArgs).url + "#!?" + maybeJsState.toQs()
-      }
+      val call = routes.MarketShowcase.geoSite(x = siteArgs).url + "#!?" + maybeJsState.toQs()
+      Redirect(call)
     } else {
       _geoSite(siteArgs)
     }
