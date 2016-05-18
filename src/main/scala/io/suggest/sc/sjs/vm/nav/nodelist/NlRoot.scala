@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.vm.nav.nodelist
 
-import io.suggest.sc.sjs.m.msc.fsm.IStData
 import io.suggest.sc.ScConstants.NavPane.NODE_LIST_ID
+import io.suggest.sc.sjs.m.msc.IScSd
 import io.suggest.sjs.common.vm.height3.SetHeight3
 import io.suggest.sjs.common.vm.child.SubTagFind
 import io.suggest.sjs.common.vm.find.FindDiv
@@ -31,7 +31,7 @@ trait NlRootT extends SubTagFind with SetHeight3 {
   override protected def _subtagCompanion = NlWrapper
 
   /** Первая инициализация внешности. */
-  def initLayout(sd: IStData): Unit = {
+  def initLayout(sd: IScSd): Unit = {
     for (screen <- sd.screen) {
       val height = screen.height - NlRoot.NL_TOP_OFFSET
       _setHeight3(height, sd.browser)
@@ -39,7 +39,7 @@ trait NlRootT extends SubTagFind with SetHeight3 {
   }
 
   /** Повторная инициализация внешности, например после ресайза окна. */
-  def reInitLayout(sd: IStData): Unit = {
+  def reInitLayout(sd: IScSd): Unit = {
     initLayout(sd)
   }
 

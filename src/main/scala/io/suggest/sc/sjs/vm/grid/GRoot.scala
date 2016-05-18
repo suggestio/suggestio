@@ -1,12 +1,12 @@
 package io.suggest.sc.sjs.vm.grid
 
-import io.suggest.sc.sjs.m.msc.fsm.IStData
 import io.suggest.sjs.common.vm.height3.SetHeight3Raw
 import io.suggest.sjs.common.vm.VmT
 import io.suggest.sjs.common.vm.child.{ContentElT, SubTagFind}
 import io.suggest.sjs.common.vm.find.FindDiv
 import org.scalajs.dom.raw.HTMLDivElement
 import io.suggest.sc.ScConstants.Grid
+import io.suggest.sc.sjs.m.msc.IScSd
 
 /**
  * Suggest.io
@@ -41,7 +41,7 @@ trait GRootT extends VmT with SubTagFind with SetHeight3Raw {
     content.flatMap(_.container)
   }
 
-  def reInitLayout(sd: IStData): Unit = {
+  def reInitLayout(sd: IScSd): Unit = {
     for (mscreen <- sd.screen) {
       val height = mscreen.height
       _setHeight3(height, sd.browser)
@@ -50,7 +50,7 @@ trait GRootT extends VmT with SubTagFind with SetHeight3Raw {
 
   /** Раняя инициализация, которая должна проходить однократно.
     * Используется после создания нового layout'а. */
-  def initLayout(sd: IStData): Unit = {
+  def initLayout(sd: IScSd): Unit = {
     reInitLayout(sd)
     for (gwrapper <- wrapper) {
       gwrapper.initLayout(sd)

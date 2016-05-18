@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.c.scfsm.grid
 
 import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.m.mgrid.{IGridData, MGridData}
-import io.suggest.sc.sjs.m.msc.fsm.{IStData, MStData}
+import io.suggest.sc.sjs.m.msc.{IScSd, MScSd}
 import io.suggest.sc.sjs.util.grid.builder.V1Builder
 import io.suggest.sc.sjs.vm.grid.{GBlock, GContainer, GContent}
 import io.suggest.sc.sjs.vm.util.GridOffsetCalc
@@ -58,7 +58,7 @@ trait GridBuild {
 
 
   /** Реализация grid builder'а для билда сетки через State Data. */
-  protected case class GridBuilderSd(sd: IStData,
+  protected case class GridBuilderSd(sd: IScSd,
                                      override val _addedBlocks: List[GBlock] = Nil) extends GridBuilderT {
     override def browser = sd.browser
     override def grid = sd.grid
@@ -102,7 +102,7 @@ trait PanelGridRebuilder extends GridBuild {
   /** В целях нормализации говнокода тут API для  */
   trait RebuildAfterPanelChangeT {
 
-    def sd0: MStData
+    def sd0: MScSd
     def screen: IMScreen
     def calc: GridOffsetCalc
 
@@ -154,12 +154,12 @@ trait PanelGridRebuilder extends GridBuild {
   }
 
   /** Логика действий про открытии панели. */
-  case class RebuildGridOnPanelOpen(sd0: MStData, screen: IMScreen, calc: GridOffsetCalc) extends RebuildAfterPanelChangeT {
+  case class RebuildGridOnPanelOpen(sd0: MScSd, screen: IMScreen, calc: GridOffsetCalc) extends RebuildAfterPanelChangeT {
     override def _mgd0(mgdR: MGridData): MGridData = sd0.grid
   }
 
   /** Логика действий при закрытии панели. */
-  case class RebuildGridOnPanelClose(sd0: MStData, screen: IMScreen, calc: GridOffsetCalc) extends RebuildAfterPanelChangeT {
+  case class RebuildGridOnPanelClose(sd0: MScSd, screen: IMScreen, calc: GridOffsetCalc) extends RebuildAfterPanelChangeT {
     override def _mgd0(mgdR: MGridData): MGridData = mgdR
   }
 

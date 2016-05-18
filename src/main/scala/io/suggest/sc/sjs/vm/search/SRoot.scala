@@ -2,12 +2,12 @@ package io.suggest.sc.sjs.vm.search
 
 import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.m.mgrid.MGridState
-import io.suggest.sc.sjs.m.msc.fsm.IStData
 import io.suggest.sc.sjs.vm.search.fts.{SInput, SInputContainer}
 import io.suggest.sc.sjs.vm.search.tabs.{STabsHeader, TabRootCompanion}
 import io.suggest.sc.sjs.vm.search.tabs.htag.ShtRoot
 import io.suggest.sc.sjs.vm.util.GridOffsetCalc
 import io.suggest.sc.ScConstants.Search.ROOT_DIV_ID
+import io.suggest.sc.sjs.m.msc.IScSd
 import io.suggest.sc.sjs.vm.search.tabs.geo.SGeoRoot
 import io.suggest.sjs.common.model.browser.IBrowser
 import io.suggest.sjs.common.vm.VmT
@@ -36,7 +36,7 @@ trait SRootT extends VmT with StyleDisplayT with GridOffsetCalc {
   override type T = HTMLDivElement
 
   /** Инициализация состояния силами FSM. */
-  def initLayout(sd: IStData): Unit = {
+  def initLayout(sd: IScSd): Unit = {
     for (screen <- sd.screen) {
       initLayout(screen, sd.browser)
     }

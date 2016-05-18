@@ -1,13 +1,12 @@
-package io.suggest.sc.sjs.m.msc.fsm
+package io.suggest.sc.sjs.m.msc
 
-import io.suggest.sc.sjs.m.magent.{IMScreen, MResizeDelay}
+import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.m.mfoc.MFocSd
 import io.suggest.sc.sjs.m.mgeo._
 import io.suggest.sc.sjs.m.mgrid.{MGridData, MGridState}
 import io.suggest.sc.sjs.m.mnav.MNavState
 import io.suggest.sc.sjs.m.msearch.MSearchSd
 import io.suggest.sjs.common.model.browser.{IBrowser, MBrowser}
-import org.scalajs.dom
 
 import scala.scalajs.js
 
@@ -17,7 +16,7 @@ import scala.scalajs.js
  * Created: 22.06.15 17:33
  * Description: Модель состояния конечного автомата интерфейса выдачи.
  */
-object MStData {
+object MScSd {
 
   /** Генератор дефолтовых значений для поля generation. */
   private def generationDflt = (js.Math.random() * 1000000000).toLong
@@ -29,7 +28,10 @@ object MStData {
 
 
 /** Интерфейс контейнера данный полного состояния выдачи. */
-trait IStData {
+trait IScSd {
+
+  /** Контейнер для общих полей resizeOpt, screen, browser и прочих. */
+  def common      : MScCommon
 
   /** Данные по окну, если есть. */
   def screen      : Option[IMScreen]
@@ -59,9 +61,6 @@ trait IStData {
   /** Контейнер с данными геолокации. Пришел на смену MGeoLocUtil. */
   def geo         : MGeoLocSd
 
-  /** Состояние отложенной реакции на ресайз окна, если есть. */
-  def resizeOpt   : Option[MResizeDelay]  = None
-
   /** @return true если открыта какая-то боковая панель.
     *         false -- ни одной панели не открыто. */
   def isAnySidePanelOpened: Boolean = {
@@ -72,27 +71,28 @@ trait IStData {
 
 
 /** Реализация immutable-контейнера для передачи данных Sc FSM между состояниями. */
-case class MStData(
+case class MScSd(
+  override val common       : MScCommon             = MScCommon.empty,
   override val screen       : Option[IMScreen]      = None,
   override val grid         : MGridData             = MGridData(),
-  override val generation   : Long                  = MStData.generationDflt,
+  override val generation   : Long                  = MScSd.generationDflt,
   override val adnIdOpt     : Option[String]        = None,
-  override val browser      : IBrowser              = MStData.browserDflt,
+  override val browser      : IBrowser              = MScSd.browserDflt,
   override val search       : MSearchSd             = MSearchSd(),
   override val nav          : MNavState             = MNavState(),
   override val focused      : Option[MFocSd]        = None,
-  override val geo          : MGeoLocSd             = MGeoLocSd(),
-  override val resizeOpt    : Option[MResizeDelay]  = None
+  override val geo          : MGeoLocSd             = MGeoLocSd()
 )
-  extends IStData
+  extends IScSd
 {
 
   /**
    * При переключении узла надо резко менять и чистить состояние. Тут логика этого обновления.
+   *
    * @param adnIdOpt2 Новый id текущего узла-ресивера.
    * @return Новый экземпляр состояния.
    */
-  def withNodeSwitch(adnIdOpt2: Option[String]): MStData = {
+  def withNodeSwitch(adnIdOpt2: Option[String]): MScSd = {
     copy(
       adnIdOpt  = adnIdOpt2,
       nav       = MNavState(),

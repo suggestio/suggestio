@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.c.scfsm
 
-import io.suggest.sc.sjs.m.msc.fsm.{IStData, MStData}
+import io.suggest.sc.sjs.m.msc.{IScSd, MScSd}
 import io.suggest.sc.sjs.m.msearch.MTabs
 import io.suggest.sjs.common.fsm._
 import io.suggest.sjs.common.util.SjsLogger
@@ -28,7 +28,7 @@ object ScFsm
   override protected var _state: FsmState = new DummyState
 
   /** Контейнер данных состояния. */
-  override protected var _stateData: SD = MStData()
+  override protected var _stateData: SD = MScSd()
 
 
   /** Ресивер для всех состояний. */
@@ -80,7 +80,7 @@ object ScFsm
   }
 
   /** Превратить search-таб в соответствующее состояние. */
-  protected def _searchTab2state(sd1: IStData): FsmState = {
+  protected def _searchTab2state(sd1: IScSd): FsmState = {
     sd1.search.currTab match {
       case MTabs.Geo      => new OnSearchGeoState
       case MTabs.Tags     => new OnSearchTagsState
@@ -89,7 +89,7 @@ object ScFsm
 
   /** Реализация состояния, где карточки уже загружены. */
   class OnPlainGridState extends OnPlainGridStateT with OnGridStateT with _NodeSwitchState {
-    override def _nextStateSearchPanelOpened(sd1: MStData) = _searchTab2state(sd1)
+    override def _nextStateSearchPanelOpened(sd1: MScSd) = _searchTab2state(sd1)
     override protected def _navLoadListState = new OnGridNavLoadListState
   }
 

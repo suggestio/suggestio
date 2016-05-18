@@ -2,8 +2,8 @@ package io.suggest.sc.sjs.vm.util
 
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.sc.sjs.m.mgrid.MGridState
-import io.suggest.sc.sjs.m.msc.fsm.IStData
-import io.suggest.sjs.common.vm.style.{StyleWidth, StyleDisplayT}
+import io.suggest.sc.sjs.m.msc.IScSd
+import io.suggest.sjs.common.vm.style.{StyleDisplayT, StyleWidth}
 import org.scalajs.dom.raw.HTMLElement
 
 /**
@@ -31,7 +31,7 @@ trait GridOffsetCalc extends StyleDisplayT with StyleWidth {
   protected trait GridOffsetterT {
 
     /** Текущие данные состояние FSM. */
-    def sd0: IStData
+    def sd0: IScSd
 
     /** Для дедубликации рассчетов дополнительной ширины формула вынесена сюда. */
     def _getWidthAdd: Int = {
@@ -52,7 +52,8 @@ trait GridOffsetCalc extends StyleDisplayT with StyleWidth {
 
     /**
      * Запустить логику подсчета и расставления параметров на исполнение.
-     * @return Пропатченный вариант IGridState.
+      *
+      * @return Пропатченный вариант IGridState.
      */
     def execute(): MGridState = {
       val cellOff = if (isHidden) {
@@ -69,10 +70,10 @@ trait GridOffsetCalc extends StyleDisplayT with StyleWidth {
   // TODO Подумать в сторону value-class реализации.
 
   /** Дефолтовая реализация калькулятора сетки в рамках текущей vm'ки. */
-  class GridOffsetter(override val sd0: IStData)
+  class GridOffsetter(override val sd0: IScSd)
     extends GridOffsetterT
 
-  def GridOffsetter(sd0: IStData): GridOffsetter = {
+  def GridOffsetter(sd0: IScSd): GridOffsetter = {
     new GridOffsetter(sd0)
   }
 

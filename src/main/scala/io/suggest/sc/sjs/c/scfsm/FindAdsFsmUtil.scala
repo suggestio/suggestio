@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.c.scfsm
 
 import io.suggest.sc.ScConstants.ShowLevels._
 import io.suggest.sc.sjs.m.mgeo.IMGeoMode
-import io.suggest.sc.sjs.m.msc.fsm.MStData
+import io.suggest.sc.sjs.m.msc.MScSd
 import io.suggest.sc.sjs.m.msrv.ads.find.{MFindAds, MFindAdsReqDflt, MFindAdsReqEmpty}
 import io.suggest.sc.sjs.vm.grid.GBlock
 
@@ -13,7 +13,7 @@ trait FindAdsUtil {
 
   /** Дефолтовые аргументы поиска. */
   protected trait FindAdsArgsT extends MFindAdsReqEmpty with MFindAdsReqDflt {
-    def _sd: MStData
+    def _sd: MScSd
     override def _mgs                     = _sd.grid.state
     override def screenInfo               = _sd.screen
     override def generation: Option[Long] = Some(_sd.generation)
@@ -23,10 +23,10 @@ trait FindAdsUtil {
   }
 
   /** Дефолтовая реализация аргументов поиска. */
-  protected class FindAdsArgs(val _sd: MStData) extends FindAdsArgsT
+  protected class FindAdsArgs(val _sd: MScSd) extends FindAdsArgsT
 
   /** Запуск поиска карточек. */
-  protected def _findAds(sd: MStData)(implicit ec: ExecutionContext): Future[MFindAds] = {
+  protected def _findAds(sd: MScSd)(implicit ec: ExecutionContext): Future[MFindAds] = {
     MFindAds.findAds(new FindAdsArgs(sd))
   }
 

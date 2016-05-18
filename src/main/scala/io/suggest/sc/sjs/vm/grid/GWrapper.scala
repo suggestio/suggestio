@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.vm.grid
 import io.suggest.sc.ScConstants.Grid
 import io.suggest.sc.sjs.c.scfsm.ScFsm
 import io.suggest.sc.sjs.m.mgrid.{GridScroll, MGridParams}
-import io.suggest.sc.sjs.m.msc.fsm.IStData
+import io.suggest.sc.sjs.m.msc.IScSd
 import io.suggest.sjs.common.vm.VmT
 import io.suggest.sjs.common.vm.child.{SubTagFind, WrapperChildContent}
 import io.suggest.sjs.common.vm.find.FindDiv
@@ -35,7 +35,7 @@ trait GWrapperT extends VmT with SubTagFind with WrapperChildContent {
   override protected def _subtagCompanion   = GContent
 
   /** Раняя инициализация враппера. */
-  def initLayout(stData: IStData): Unit = {
+  def initLayout(stData: IScSd): Unit = {
     // Повесить событие
     for (c <- content; scr <- stData.screen) {
       // Передаем найденные элементы внутрь функции, т.к. при пересоздании layout событие будет повешено повторно.
@@ -56,7 +56,8 @@ trait GWrapperT extends VmT with SubTagFind with WrapperChildContent {
 
 /**
  * Реализация экземпляра модели враппера.
- * @param _underlying Соответствующий модели DOM-элемент.
+  *
+  * @param _underlying Соответствующий модели DOM-элемент.
  */
 case class GWrapper(override val _underlying: Dom_t)
   extends GWrapperT {

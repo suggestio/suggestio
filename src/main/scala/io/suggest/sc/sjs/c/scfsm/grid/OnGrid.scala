@@ -81,7 +81,7 @@ trait OnGridBase extends ScFsmStub with ResizeDelayed with Append {
       val sd0 = _stateData
 
       val needResizeOpt = for {
-        rsz <- sd0.resizeOpt
+        rsz <- sd0.common.resizeOpt
         // Прочитать текущее значение ширины в стиле. Она не изменяется до окончания ресайза.
         screen1 <- sd0.screen
         // При повороте телефонного экрана с открытой боковой панелью бывает, что ширина контейнера не меняется в отличие от ширины экрана.
@@ -205,7 +205,9 @@ trait OnGrid extends OnGridBase with IOnFocusBase {
       val sd0 = _stateData
       for (mscreen <- sd0.screen) {
         _stateData = sd0.copy(
-          resizeOpt = None,
+          common = sd0.common.copy(
+            resizeOpt = None
+          ),
           grid = sd0.grid.copy(
             state = sd0.grid.state.nothingLoaded().copy(
               adsPerLoad = MGridState.getAdsPerLoad(mscreen)

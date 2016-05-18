@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.c.scfsm
 import io.suggest.fsm.StateData
 import io.suggest.sc.sjs.m.magent.{IVpSzChanged, MScreen, VpSzChanged}
 import io.suggest.sc.sjs.m.mfsm.signals.KbdKeyUp
-import io.suggest.sc.sjs.m.msc.fsm.MStData
+import io.suggest.sc.sjs.m.msc.MScSd
 import io.suggest.sc.sjs.vm.nav.nodelist.NlRoot
 import io.suggest.sc.sjs.vm.search.SRoot
 import io.suggest.sjs.common.fsm._
@@ -20,7 +20,7 @@ import org.scalajs.dom.KeyboardEvent
 trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm {
 
   override type State_t = FsmState
-  override type SD      = MStData
+  override type SD      = MScSd
 
 
   /** Трейт для реализации разных логик реакции на изменение размера окна в зависимости от текущего состояния. */

@@ -31,7 +31,7 @@ trait ResizeDelayed extends ScFsmStub {
       val sd0 = _stateData
 
       // Отменить старый таймер. Изначально было внутри fold.
-      for (grSd0 <- sd0.resizeOpt) {
+      for (grSd0 <- sd0.common.resizeOpt) {
         DomQuick.clearTimeout(grSd0.timerId)
       }
 
@@ -44,7 +44,7 @@ trait ResizeDelayed extends ScFsmStub {
       }
 
       // Собрать обновлённое состояние ресайза.
-      val grSd2 = sd0.resizeOpt.fold[MResizeDelay] {
+      val grSd2 = sd0.common.resizeOpt.fold[MResizeDelay] {
         MResizeDelay(
           timerId   = timerId,
           timerGen  = timerGen,
@@ -62,7 +62,9 @@ trait ResizeDelayed extends ScFsmStub {
 
       // Сохранить обновлённое состояние FSM.
       _stateData = sd0.copy(
-        resizeOpt = Some(grSd2)
+        common = sd0.common.copy(
+          resizeOpt = Some(grSd2)
+        )
       )
     }     // _viewPortChanged()
   }
@@ -74,7 +76,7 @@ trait ResizeDelayed extends ScFsmStub {
     override def receiverPart: Receive = super.receiverPart.orElse {
       // Сигнал таймера о необходимости исполнения ресайза плитки.
       case ResizeDelayTimeout(gen) =>
-        if ( _stateData.resizeOpt.exists(_.timerGen == gen) )
+        if ( _stateData.common.resizeOpt.exists(_.timerGen == gen) )
           _handleResizeDelayTimeout()
     }
 
