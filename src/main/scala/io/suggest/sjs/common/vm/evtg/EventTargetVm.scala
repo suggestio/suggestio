@@ -61,7 +61,7 @@ trait EventTargetVmT extends IVm {
    * @param listener Функция-обработчик события.
    * @tparam T Тип события, передаваемого в listener.
    */
-  def addEventListener[T <: Event](eventType: String)(listener: js.Function1[T, _]): Unit = {
+  def addEventListener[T <: Event](eventType: String)(listener: (T) => _): Unit = {
     EventTargetVm.FACADE
       .addEventListener(_underlying, eventType, listener)
   }

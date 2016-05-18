@@ -27,39 +27,22 @@ trait HistoryObjT extends IVm {
   override type T <: History
 
   /**
-   * Враппер для безопасного вызова pushState().
-   * @param state Добавляемые данные состояния.
-   * @param title Заголовок вкладки/окна.
-   * @param url Ссылка, если есть.
-   * @return true если всё ок.
-   *         false, если браузер не поддерживает этот метод HTML5 History API.
-   */
+    * Враппер для безопасного вызова pushState().
+    *
+    * @param state Добавляемые данные состояния.
+    * @param title Заголовок вкладки/окна.
+    * @param url Ссылка, если есть.
+    * @return true если всё ок.
+    *         false, если браузер не поддерживает этот метод HTML5 History API.
+    */
   def pushState(state: js.Any, title: String, url: Option[String] = None): Boolean = {
-    _writeState(state, title, url)(_.pushState)
-  }
-
-  /**
-   * Враппер для безопасного вызова window.history.replaceState().
-   * @param state Новые данные текущего состояния.
-   * @param title Заголовок вкладки/окна.
-   * @param url Ссылка, если есть.
-   * @return true если всё ок
-   *         false, если браузер не поддерживает это метод HTML5 History API.
-   */
-  def replaceState(state: js.Any, title: String, url: Option[String] = None): Boolean = {
-    _writeState(state, title, url)(_.replaceState)
-  }
-
-  /** Общий код логики записи состояния с помощью какой-то нативной функции вынесен сюда. */
-  private def _writeState(state: js.Any, title: String, url: Option[String])
-                         (howF: HistoryObjStub => UndefOr[WriteF_t]): Boolean = {
     val und = _underlying
-    val pushF = howF( HistoryObjStub(und) )
-    pushF.isDefined && {
-      // Почему-то вызов pushF.get.apply(...) приводит к Illegal invocation. Поэтому дергаем исходный pushState().
-      url match {
-        case Some(_url) => und.pushState(state, title, _url)
-        case None       => und.pushState(state, title)
+    HistoryObjStub(und).pushState.isDefined && {
+      // FIXME в API два раза объявлен этот pushState, что нелогично как-то.
+      url.fold {
+        und.pushState(state, title)
+      } { _url =>
+        und.pushState(state, title, _url)
       }
       true
     }
