@@ -39,7 +39,9 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm {
       val screenOpt = vszOpt.map( MScreen.apply )
       val sd0 = _stateData
       val sd1 = sd0.copy(
-        screen  = screenOpt
+        common = sd0.common.copy(
+          screen  = screenOpt
+        )
       )
 
       // Выполнить какие-то общие для выдачи действия
@@ -49,7 +51,7 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm {
       }
 
       // Подправить высоту правой панели.
-      for (mscreen <- sd1.screen; sRoot <- SRoot.find()) {
+      for (mscreen <- screenOpt; sRoot <- SRoot.find()) {
         sRoot.adjust(mscreen, sd1.common.browser)
       }
 

@@ -21,7 +21,7 @@ trait Plain extends OnGrid with UrlStateT {
     /** Реакция на запрос отображения поисковой панели. */
     protected def _showSearchClick(event: Event): Unit = {
       val sd0 = _stateData
-      for (sroot <- SRoot.find(); screen <- sd0.screen) {
+      for (sroot <- SRoot.find(); screen <- sd0.common.screen) {
         // Показать панель
         sroot.show()
         // Сменить набор кнопок в заголовке.

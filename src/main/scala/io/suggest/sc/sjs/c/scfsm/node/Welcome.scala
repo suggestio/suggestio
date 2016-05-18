@@ -61,7 +61,7 @@ trait Welcome extends grid.OnGrid with UrlStateT {
         // Есть приветствие. Инициализировать его и организовать плавное сокрытие с задержкой.
         val sd0 = _stateData
         // Подготовить отображение карточки.
-        for (screen  <- sd0.screen) {
+        for (screen  <- sd0.common.screen) {
           wcRoot.initLayout(screen)
         }
         wcRoot.willAnimate()
@@ -143,7 +143,7 @@ trait Welcome extends grid.OnGrid with UrlStateT {
 
       // Подогнать bg img под новые параметры экрана.
       for {
-        mscreen <- _stateData.screen
+        mscreen <- _stateData.common.screen
         wcBg    <- WcBgImg.find()
       } {
         wcBg.adjust(mscreen)

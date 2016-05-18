@@ -135,7 +135,7 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
     }
 
     private def screenH: Int = {
-      _stateData.screen.fold(480)(_.height)
+      _stateData.common.screen.fold(480)(_.height)
     }
 
     protected def _kbdScroll(delta: Int): Unit = {
@@ -216,7 +216,10 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
     protected def _mouseClicked(event: MouseEvent): Unit = {
       val sd0 = _stateData
       //println( "touch: lock=" + MTouchLock() + " isTouchDev=" + TouchUtil.IS_TOUCH_DEVICE )
-      for (screen <- sd0.screen;  fState <- sd0.focused) {
+      for {
+        screen <- sd0.common.screen
+        fState <- sd0.focused
+      } {
         val mhand = _mouse2hand(event, screen)
         for (fArr <- FArrow.find()) {
           _maybeUpdateArrDir(mhand, fArr, fState, sd0)
@@ -251,7 +254,7 @@ trait OnFocus extends OnFocusBase with UrlStateT {
       for {
         fState      <- sd0.focused
         currIndex   <- fState.currIndex
-        screen      <- sd0.screen
+        screen      <- sd0.common.screen
         car         <- FCarousel.find()
         totalCount  <- fState.totalCount
       } {

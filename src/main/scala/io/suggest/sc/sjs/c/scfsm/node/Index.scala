@@ -32,7 +32,7 @@ trait Index extends ScFsmStub with FindAdsUtil {
       val inxArgs = MScIndexArgs(
         adnIdOpt  = sd0.common.adnIdOpt,
         geoMode   = Some( IMGeoMode(sd0.geo.lastGeoLoc) ),
-        screen    = sd0.screen
+        screen    = sd0.common.screen
       )
       MNodeIndex.getIndex(inxArgs)
     }
@@ -50,7 +50,7 @@ trait Index extends ScFsmStub with FindAdsUtil {
       val inxFut = _getIndex(sd0)
 
       // Дожидаясь ответа сервера, инициализировать кое-какие переменные, необходимые на следующем шаге.
-      for (screen <- sd0.screen) {
+      for (screen <- sd0.common.screen) {
 
         val sd1 = sd0.copy(
           grid = sd0.grid.copy(
@@ -151,7 +151,7 @@ trait Index extends ScFsmStub with FindAdsUtil {
       }
 
       for (lc <- layout.content) {
-        for (scr <- _stateData.screen) {
+        for (scr <- _stateData.common.screen) {
           lc.setWndClass(scr)
         }
         // Инициализация кнопок заголовка. Раньше было тут HeaderCtl.initLayout().

@@ -42,7 +42,7 @@ trait GridOffsetCalc extends StyleDisplayT with StyleWidth {
     protected def mgs = sd0.grid.state
 
     /** Данные по экрану устройства. */
-    def screen: ISize2di = sd0.screen.get     // TODO Ошибки тут быть не должно, но выглядит это как-то некрасиво.
+    def screen: ISize2di = sd0.common.screen.get     // TODO Ошибки тут быть не должно, но выглядит это как-то некрасиво.
 
     /** Если mgs указывает на необходимость нулевого оффсета, то её следует послушать. */
     //def canNonZeroOffset: Boolean = mgs.canNonZeroOffset

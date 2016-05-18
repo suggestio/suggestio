@@ -41,7 +41,10 @@ trait Base extends OnGrid with ISjsLogger with UrlStateT {
     /** Метод содержит логику обработки клика по кнопке сокрытия поисковой панели. */
     protected def _hideSearch(): Unit = {
       val sd0 = _stateData
-      for (sroot <- SRoot.find(); screen <- sd0.screen) {
+      for {
+        sroot <- SRoot.find()
+        screen <- sd0.common.screen
+      } {
         // Показать панель
         sroot.hide()
         // Сменить набор кнопок в заголовке.

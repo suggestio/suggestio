@@ -35,9 +35,12 @@ trait GWrapperT extends VmT with SubTagFind with WrapperChildContent {
   override protected def _subtagCompanion   = GContent
 
   /** Раняя инициализация враппера. */
-  def initLayout(stData: IScSd): Unit = {
+  def initLayout(sd0: IScSd): Unit = {
     // Повесить событие
-    for (c <- content; scr <- stData.screen) {
+    for {
+      c <- content
+      scr <- sd0.common.screen
+    } {
       // Передаем найденные элементы внутрь функции, т.к. при пересоздании layout событие будет повешено повторно.
       addEventListener("scroll") { (e: Event) =>
         val wrappedScrollTop = _underlying.scrollTop

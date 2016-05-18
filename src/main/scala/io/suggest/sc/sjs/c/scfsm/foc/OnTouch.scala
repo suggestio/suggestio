@@ -127,7 +127,7 @@ trait OnTouch extends OnFocusBase {
         for {
           fState     <- sd0.focused
           currIndex  <- fState.currIndex
-          screen     <- sd0.screen
+          screen     <- sd0.common.screen
           touchSd    <- fState.touch
           car        <- FCarousel.find()
         } {
@@ -233,7 +233,7 @@ trait OnTouch extends OnFocusBase {
           }
           .getOrElse {
             // Сбросить сдвиг карусели на исходную.
-            for (screen <- sd0.screen) {
+            for (screen <- sd0.common.screen) {
               car.animateToCell(currIndex, screen, sd0.common.browser)
             }
             _touchCancelledState

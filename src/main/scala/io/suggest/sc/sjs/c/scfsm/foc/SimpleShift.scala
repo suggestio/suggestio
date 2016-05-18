@@ -32,7 +32,7 @@ trait SimpleShift extends MouseMoving with OnFocusBase {
         fState        <- sd0.focused
         car           <- FCarousel.find()
         currIndex     <- fState.currIndex
-        screen        <- sd0.screen
+        screen        <- sd0.common.screen
       } {
         val nextIndex = _nextIndex(currIndex, fState)
         if (nextIndex == currIndex) {

@@ -44,8 +44,8 @@ trait Closing extends MouseMoving with OnGridBase with UrlStateT {
 
       // Посчитать заново размер grid-контейнера и сравнить с тем, что сохранен в grid-состоянии.
       for {
-        screen <- sd0.screen
-        cwCm2 = sd0.grid.getGridContainerSz(screen)
+        screen <- sd0.common.screen
+        cwCm2   = sd0.grid.getGridContainerSz(screen)
         // Если параметры контейнера изменились...
         if !sd0.grid.state.contSz.contains(cwCm2)
       } {

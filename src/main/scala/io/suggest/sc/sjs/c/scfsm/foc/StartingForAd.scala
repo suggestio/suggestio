@@ -52,7 +52,7 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
       // Необходимо запустить focused ad реквест к серверу.
       val sd0 = _stateData
       for {
-        screen  <- sd0.screen
+        screen  <- sd0.common.screen
         fState0 <- sd0.focused
         fRoot   <- FRoot.find()
         car     <- fRoot.carousel
@@ -120,7 +120,7 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
       val sd0 = _stateData
       for {
         fState    <- sd0.focused
-        screen    <- sd0.screen
+        screen    <- sd0.common.screen
         fRoot     <- FRoot.find()
         car       <- fRoot.carousel
       } {

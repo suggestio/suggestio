@@ -42,7 +42,7 @@ trait GRootT extends VmT with SubTagFind with SetHeight3Raw {
   }
 
   def reInitLayout(sd: IScSd): Unit = {
-    for (mscreen <- sd.screen) {
+    for (mscreen <- sd.common.screen) {
       val height = mscreen.height
       _setHeight3(height, sd.common.browser)
     }

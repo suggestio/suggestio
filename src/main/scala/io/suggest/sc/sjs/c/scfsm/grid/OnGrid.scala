@@ -41,7 +41,7 @@ trait OnGridBase extends ScFsmStub with ResizeDelayed with Append {
       // Заодно пересчитать сразу параметры контейнера сетки.
       // Эти параметры не очень-то корректны, т.к. с сервера придут новые размеры ячеек сетки, и надо будет пересчитывать снова.
       val sd0 = _stateData
-      val gContSzOpt = sd0.screen
+      val gContSzOpt = sd0.common.screen
         .map( sd0.grid.getGridContainerSz )
 
       // Обновить параметры контейнера сетки.
@@ -83,7 +83,7 @@ trait OnGridBase extends ScFsmStub with ResizeDelayed with Append {
       val needResizeOpt = for {
         rsz <- sd0.common.resizeOpt
         // Прочитать текущее значение ширины в стиле. Она не изменяется до окончания ресайза.
-        screen1 <- sd0.screen
+        screen1 <- sd0.common.screen
         // При повороте телефонного экрана с открытой боковой панелью бывает, что ширина контейнера не меняется в отличие от ширины экрана.
         // Такое было на one plus one, когда использовался rsz.gContSz, что ломало всё счастье из-за боковых отступов. Поэтому используем сравнение ширин экрана.
         screen0 <- rsz.screen
@@ -100,7 +100,7 @@ trait OnGridBase extends ScFsmStub with ResizeDelayed with Append {
     override def _handleResizeDelayTimeout(): Unit = {
       val sd0 = _stateData
       if (_isGridNeedResizeDelayed()) {
-        for (mscreen <- sd0.screen) {
+        for (mscreen <- sd0.common.screen) {
           // TODO Opt Если существенное по горизонтали, но оно осталось ~кратно ячейкам, то просто перестроить выдачу: _rebuildGridOnPanelChange
           val sd1 = sd0.copy(
             grid = sd0.grid.copy(
@@ -203,7 +203,7 @@ trait OnGrid extends OnGridBase with IOnFocusBase {
         gc.clear()
       }
       val sd0 = _stateData
-      for (mscreen <- sd0.screen) {
+      for (mscreen <- sd0.common.screen) {
         _stateData = sd0.copy(
           common = sd0.common.copy(
             resizeOpt = None

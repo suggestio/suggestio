@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.m.msc
 
-import io.suggest.sc.sjs.m.magent.MResizeDelay
+import io.suggest.sc.sjs.m.magent.{IMScreen, MResizeDelay}
 import io.suggest.sjs.common.model.browser.{IBrowser, MBrowser}
 
 import scala.scalajs.js
@@ -32,6 +32,7 @@ object MScCommon {
   */
 case class MScCommon(
   adnIdOpt     : Option[String]        = None,
+  screen       : Option[IMScreen]      = None,
   browser      : IBrowser              = MScCommon.browserDflt,
   generation   : Long                  = MScCommon.generationDflt,
   resizeOpt    : Option[MResizeDelay]  = None

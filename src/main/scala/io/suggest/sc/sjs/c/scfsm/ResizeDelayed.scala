@@ -49,7 +49,7 @@ trait ResizeDelayed extends ScFsmStub {
           timerId   = timerId,
           timerGen  = timerGen,
           // В начальное состояние ресайза пихаем самые начальные данные по viewport'у и начальному контейнеру сетки.
-          screen    = sd00.screen,
+          screen    = sd00.common.screen,
           gContSz   = sd00.grid.state.contSz
         )
       } { mrd0 =>

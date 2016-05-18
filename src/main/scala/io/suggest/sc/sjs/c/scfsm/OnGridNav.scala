@@ -46,7 +46,7 @@ trait OnGridNav extends OnGrid with UrlStateT {
 
     protected def _hideNav(): Unit = {
       val sd0 = _stateData
-      for (nroot <- NRoot.find(); screen <- sd0.screen) {
+      for (nroot <- NRoot.find(); screen <- sd0.common.screen) {
         // Визуально отобразить панель
         nroot.hide()
 
@@ -98,7 +98,7 @@ trait OnGridNav extends OnGrid with UrlStateT {
         _sendFutResBack(fut)
       }
 
-      for (nroot <- NRoot.find(); screen <- sd0.screen) {
+      for (nroot <- NRoot.find(); screen <- sd0.common.screen) {
         // Визуально отобразить панель
         nroot.show()
         // Скрыть кнопку показа панели.
@@ -148,7 +148,7 @@ trait OnGridNav extends OnGrid with UrlStateT {
           nlContainer.initLayout()
           nlContainer.findFirstExpanded
         }
-        screen      <- _stateData.screen
+        screen      <- _stateData.common.screen
         layerIndex  <- {
           exp1.fixHeightExpanded(screen, nlContainer.layersCount, sd0.common.browser)
           exp1.layerIndexOpt
@@ -240,7 +240,7 @@ trait OnGridNav extends OnGrid with UrlStateT {
               layCaption.activate()
               for {
                 body    <- layCaption.body
-                screen  <- sd0.screen
+                screen  <- sd0.common.screen
               } {
                 body.show()
                 body.fixHeightExpanded(screen, layCaption.container.layersCount, sd0.common.browser)

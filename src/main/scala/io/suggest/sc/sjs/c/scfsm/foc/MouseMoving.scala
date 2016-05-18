@@ -23,7 +23,11 @@ trait MouseMoving extends ScFsmStub {
     override def onMouseMove(event: MouseEvent): Unit = {
       super.onMouseMove(event)
       val sd0 = _stateData
-      for (screen <- sd0.screen;  fState <- sd0.focused;  fArr <- FArrow.find()) {
+      for {
+        screen  <- sd0.common.screen
+        fState  <- sd0.focused
+        fArr    <- FArrow.find()
+      } {
         // Обновить направление стрелки и состояние FSM, если требуется.
         val mhand = _mouse2hand(event, screen)
         _maybeUpdateArrDir(mhand, fArr, fState, sd0)

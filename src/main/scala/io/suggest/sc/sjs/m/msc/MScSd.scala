@@ -1,6 +1,5 @@
 package io.suggest.sc.sjs.m.msc
 
-import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.m.mfoc.MFocSd
 import io.suggest.sc.sjs.m.mgeo._
 import io.suggest.sc.sjs.m.mgrid.{MGridData, MGridState}
@@ -19,9 +18,6 @@ trait IScSd {
 
   /** Контейнер для общих полей resizeOpt, screen, browser и прочих. */
   def common      : MScCommon
-
-  /** Данные по окну, если есть. */
-  def screen      : Option[IMScreen]
 
   /** Контейнер данных состояния плитки карточек. */
   def grid        : MGridData
@@ -51,7 +47,6 @@ trait IScSd {
 /** Реализация immutable-контейнера для передачи данных Sc FSM между состояниями. */
 case class MScSd(
   override val common       : MScCommon             = MScCommon.empty,
-  override val screen       : Option[IMScreen]      = None,
   override val grid         : MGridData             = MGridData(),
   override val search       : MSearchSd             = MSearchSd(),
   override val nav          : MNavState             = MNavState(),
