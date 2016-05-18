@@ -10,6 +10,7 @@ import io.suggest.sc.sjs.vm.hdr.btns.nav.HShowNavBtn
 import io.suggest.sc.sjs.vm.nav.NRoot
 import io.suggest.sc.sjs.vm.nav.nodelist.glay.{GlayCaption, GlayNode}
 import io.suggest.sc.sjs.vm.nav.nodelist.NlContent
+import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.util.ISjsLogger
 import io.suggest.sjs.common.vm.Vm
 import org.scalajs.dom.ext.KeyCode
@@ -168,7 +169,7 @@ trait OnGridNav extends OnGrid with ISjsLogger {
       * Надо перещелкнуть на новое состояние */
     protected def _findNodesFailed(ex: Throwable): Unit = {
       // В логах отмечаемся и на следующее состояние переключаемся.
-      error("E41", ex)
+      error(ErrorMsgs.FIND_ADS_REQ_FAILED, ex)
       become(_navPanelReadyState)
     }
 

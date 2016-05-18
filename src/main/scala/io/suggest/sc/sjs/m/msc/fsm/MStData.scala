@@ -72,6 +72,12 @@ trait IStData {
     }
   }
 
+  /** @return true если открыта какая-то боковая панель.
+    *         false -- ни одной панели не открыто. */
+  def isAnySidePanelOpened: Boolean = {
+    nav.panelOpened || search.opened
+  }
+
 }
 
 

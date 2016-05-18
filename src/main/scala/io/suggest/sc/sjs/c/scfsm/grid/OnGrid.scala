@@ -219,7 +219,8 @@ trait OnGrid extends OnGridBase with IOnFocusBase {
       super._findAdsReady(mfa)
 
       // Управление размывкой выдачи после ресайза.
-      if (_isNeedBlur())
+      val sd2 = _stateData
+      if (sd2.isAnySidePanelOpened && _isNeedBlur(sd2))
         _blurGrid()
       else
         _unBlurGrid()
