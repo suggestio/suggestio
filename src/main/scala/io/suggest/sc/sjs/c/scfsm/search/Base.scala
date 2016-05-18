@@ -2,6 +2,7 @@ package io.suggest.sc.sjs.c.scfsm.search
 
 import io.suggest.sc.ScConstants.Search.Fts.START_TIMEOUT_MS
 import io.suggest.sc.sjs.c.mapbox.MbFsm
+import io.suggest.sc.sjs.c.scfsm.UrlStateT
 import io.suggest.sc.sjs.c.scfsm.grid.{OnGrid, PanelGridRebuilder}
 import io.suggest.sc.sjs.m.mhdr.{HideSearchClick, LogoClick, ShowIndexClick}
 import io.suggest.sc.sjs.m.mmap.MapShowing
@@ -22,7 +23,7 @@ import org.scalajs.dom.{FocusEvent, KeyboardEvent}
  * Created: 06.08.15 13:52
  * Description: FSM-Аддон для добавления поддержки состояния выдачи, когда доступна плитка и открыта панель поиска.
  */
-trait Base extends OnGrid with ISjsLogger {
+trait Base extends OnGrid with ISjsLogger with UrlStateT {
 
   protected trait OnSearchStateT extends OnGridStateT with PanelGridRebuilder {
 
@@ -62,6 +63,8 @@ trait Base extends OnGrid with ISjsLogger {
 
         // Сменить состояние на то, где открыта панель поиска.
         become(_nextStateSearchPanelClosed, sd1)
+
+        UrlStates.pushCurrState()
       }
     }
 
@@ -106,6 +109,7 @@ trait Base extends OnGrid with ISjsLogger {
           )
         )
         become(_tabSwitchedFsmState, sd2)
+        UrlStates.pushCurrState()
       }
     }
 

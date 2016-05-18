@@ -9,7 +9,7 @@ import io.suggest.sjs.common.geom.Coord2dD
 import io.suggest.sjs.common.model.{MHand, MHands}
 import io.suggest.sc.ScConstants.Focused.FAd.KBD_SCROLL_STEP_PX
 import io.suggest.sc.sjs.c.scfsm.grid.OnGridBase
-import io.suggest.sc.sjs.c.scfsm.{ResizeDelayed, ScFsmStub}
+import io.suggest.sc.sjs.c.scfsm.{ResizeDelayed, ScFsmStub, UrlStateT}
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.util.TouchUtil
 import org.scalajs.dom.{KeyboardEvent, MouseEvent, TouchEvent}
@@ -152,6 +152,7 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
     }
 
     /** Реакция на переключение focused-карточек стрелками клавиатуры.
+ *
       * @param dir направление переключения.
       */
     protected def _kbdShifting(dir: MHand, nextState: FsmState): Unit = {
@@ -240,7 +241,7 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
 
 /** Аддон для [[io.suggest.sc.sjs.c.scfsm.ScFsm]] с трейт-реализацией состояния
   * спокойного нахождения в focused-выдаче. */
-trait OnFocus extends OnFocusBase {
+trait OnFocus extends OnFocusBase with UrlStateT {
 
   /** Состояние нахождения в фокусе одной карточки.
     * Помимо обработки сигналов это состояние готовит соседние карточки к отображению. */
@@ -351,6 +352,9 @@ trait OnFocus extends OnFocusBase {
         }   // nextMissingInCar else
 
       }     // for()
+
+      // Сохранить текущее состояние в URL.
+      UrlStates.pushCurrState()
     }       // afterBecome()
 
 

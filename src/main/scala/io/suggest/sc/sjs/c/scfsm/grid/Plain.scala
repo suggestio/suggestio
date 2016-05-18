@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.c.scfsm.grid
 
+import io.suggest.sc.sjs.c.scfsm.UrlStateT
 import io.suggest.sc.sjs.m.mhdr.{PrevNodeBtnClick, ShowNavClick, ShowSearchClick}
-import io.suggest.sc.sjs.vm.grid.GRoot
 import io.suggest.sc.sjs.vm.hdr.HRoot
 import io.suggest.sc.sjs.vm.hdr.btns.HNodePrev
 import io.suggest.sc.sjs.vm.layout.FsLoader
@@ -10,7 +10,7 @@ import io.suggest.sjs.common.msg.WarnMsgs
 import org.scalajs.dom.Event
 
 /** Аддон для поддержки состояния "голая плитка" без открытых панелей, карточек и прочего. */
-trait Plain extends OnGrid {
+trait Plain extends OnGrid with UrlStateT {
 
   /**
    * Состояние, когда на на экране уже отрендерена плитка карточек или её часть,
@@ -43,6 +43,7 @@ trait Plain extends OnGrid {
 
         // Сменить состояние на то, где открыта панель поиска.
         become(_nextStateSearchPanelOpened(sd1), sd1)
+        UrlStates.pushCurrState()
       }
     }
 

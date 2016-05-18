@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.c.scfsm.node
 
 import io.suggest.sc.ScConstants.Welcome
-import io.suggest.sc.sjs.c.scfsm.grid
+import io.suggest.sc.sjs.c.scfsm.{UrlStateT, grid}
 import io.suggest.sc.sjs.m.magent.IVpSzChanged
 import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
 import io.suggest.sc.sjs.m.mwc.{WcClick, WcHideState, WcTimeout}
@@ -22,7 +22,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
   * Данный Welcome-контейнер трейтов получил более широкое назначение:
   * welcome-фаза-состояние или трейты для его сборки.
   */
-trait Welcome extends grid.OnGrid {
+trait Welcome extends grid.OnGrid with UrlStateT {
 
   /** Трейт сборки состояния приветствия узла.
     * Изначально, это был зоопарк NodeInit_* состояний, потом пришлось объединять для упрощения обработки screen resize.
@@ -95,6 +95,8 @@ trait Welcome extends grid.OnGrid {
           _sendEventSync(WcTimeout)
         }
       }
+
+      UrlStates.pushCurrState()
     }
 
 

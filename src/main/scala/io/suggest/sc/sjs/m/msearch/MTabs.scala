@@ -16,12 +16,16 @@ object MTabs extends LightEnumeration {
 
   /** Интерфейс экземпляров модели. Можно вынести его за пределы [[MTabs]]. */
   protected[this] trait ValT extends super.ValT {
+
     /** Ключ экземпляра модели. Для сериализации-десериализации. */
     def id: String
     /** Объект-компаньон для тела таба. */
     def vmBodyCompanion: TabRootCompanion
     /** Объект-компаньон для кнопки таба. */
     def vmBtnCompanion: TabBtnCompanion
+
+    override def toString: String = id
+    
   }
 
   /** Абстрактый класс элементов модели. */

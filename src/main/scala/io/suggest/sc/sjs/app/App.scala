@@ -3,7 +3,6 @@ package io.suggest.sc.sjs.app
 import io.suggest.sc.sjs.c.gloc.GeoLocFsm
 import io.suggest.sc.sjs.c.mapbox.MbFsm
 import io.suggest.sc.sjs.c.scfsm.ScFsm
-import io.suggest.sjs.common.util.SjsLogger
 
 import scala.scalajs.js.JSApp
 import scala.scalajs.js.annotation.JSExport
@@ -14,7 +13,7 @@ import scala.scalajs.js.annotation.JSExport
  * Created: 15.05.15 15:13
  * Description: JSApp, который будет экспортироваться наружу для возможности запуска выдачи.
  */
-object App extends JSApp with SjsLogger {
+object App extends JSApp {
 
   @JSExport
   override def main(): Unit = {

@@ -4,14 +4,12 @@ import io.suggest.sc.sjs.c.scfsm.grid.{OnGrid, PanelGridRebuilder}
 import io.suggest.sc.sjs.m.mhdr.{HideNavClick, LogoClick}
 import io.suggest.sc.sjs.m.mnav.NodeListClick
 import io.suggest.sc.sjs.m.msrv.nodes.find.{MFindNodes, MFindNodesArgsDfltImpl, MFindNodesResp}
-import io.suggest.sc.sjs.vm.grid.GRoot
 import io.suggest.sc.sjs.vm.hdr.btns.HBtns
 import io.suggest.sc.sjs.vm.hdr.btns.nav.HShowNavBtn
 import io.suggest.sc.sjs.vm.nav.NRoot
 import io.suggest.sc.sjs.vm.nav.nodelist.glay.{GlayCaption, GlayNode}
 import io.suggest.sc.sjs.vm.nav.nodelist.NlContent
 import io.suggest.sjs.common.msg.ErrorMsgs
-import io.suggest.sjs.common.util.ISjsLogger
 import io.suggest.sjs.common.vm.Vm
 import org.scalajs.dom.ext.KeyCode
 import org.scalajs.dom.{Event, KeyboardEvent, Node}
@@ -25,7 +23,7 @@ import scala.util.Failure
  * Created: 10.08.15 15:54
  * Description: Аддон для состояний сетки с открытой панелью.
  */
-trait OnGridNav extends OnGrid with ISjsLogger {
+trait OnGridNav extends OnGrid with UrlStateT {
 
   protected trait _OnGridNav extends OnGridStateT with PanelGridRebuilder {
 
@@ -72,8 +70,9 @@ trait OnGridNav extends OnGrid with ISjsLogger {
             panelOpened = false
           )
         )
-
         become(_onHideNavState, sd1)
+
+        UrlStates.pushCurrState()
       }
     }
 
@@ -117,10 +116,9 @@ trait OnGridNav extends OnGrid with ISjsLogger {
             panelOpened = true
           )
         )
-
-        // TODO Обновить данные состояния выдачи.
-
         _stateData = sd2
+
+        UrlStates.pushCurrState()
       }
 
       for (hbtns <- HBtns.find()) {

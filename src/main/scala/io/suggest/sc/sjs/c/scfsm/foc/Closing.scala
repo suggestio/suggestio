@@ -2,6 +2,7 @@ package io.suggest.sc.sjs.c.scfsm.foc
 
 import io.suggest.sc.sjs.vm.foc.FRoot
 import io.suggest.sc.ScConstants.Focused.SLIDE_ANIMATE_MS
+import io.suggest.sc.sjs.c.scfsm.UrlStateT
 import io.suggest.sc.sjs.c.scfsm.grid.OnGridBase
 import io.suggest.sc.sjs.m.magent.VpSzChanged
 import io.suggest.sc.sjs.vm.res.FocusedRes
@@ -25,7 +26,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
   *
   * Т.е. всё состояние описывается кодом в afterBecome(), а само состояние начинается и заканчивается мгновенно.
   */
-trait Closing extends MouseMoving with OnGridBase {
+trait Closing extends MouseMoving with OnGridBase with UrlStateT {
 
   /** Трейт состояния закрытия focused-выдачи. */
   protected trait FocClosingStateT extends FsmEmptyReceiverState with FocMouseMovingStateT with IBackToGridState {
@@ -70,6 +71,9 @@ trait Closing extends MouseMoving with OnGridBase {
         focused = None
       )
       become(_backToGridState, sd1)
+
+      // Обновить текущее состояние в истории браузера.
+      UrlStates.pushCurrState()
     }
 
   }
