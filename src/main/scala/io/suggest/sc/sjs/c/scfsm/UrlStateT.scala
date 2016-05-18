@@ -27,7 +27,7 @@ trait UrlStateT extends ScFsmStub {
       val sd0 = _stateData
 
       // Пока пишем generation, но наверное это лучше отключить, чтобы в режиме iOS webapp не было повторов.
-      acc ::= GENERATION_FN -> sd0.generation
+      acc ::= GENERATION_FN -> sd0.common.generation
 
       // Отработка состояния левой панели.
       val npo = sd0.nav.panelOpened

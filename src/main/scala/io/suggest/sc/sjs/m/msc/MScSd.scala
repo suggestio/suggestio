@@ -8,8 +8,6 @@ import io.suggest.sc.sjs.m.mnav.MNavState
 import io.suggest.sc.sjs.m.msearch.MSearchSd
 import io.suggest.sjs.common.model.browser.{IBrowser, MBrowser}
 
-import scala.scalajs.js
-
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -17,9 +15,6 @@ import scala.scalajs.js
  * Description: Модель состояния конечного автомата интерфейса выдачи.
  */
 object MScSd {
-
-  /** Генератор дефолтовых значений для поля generation. */
-  private def generationDflt = (js.Math.random() * 1000000000).toLong
 
   /** Генератор дефолтовых значений для поля browser. */
   private def browserDflt    = MBrowser.detectBrowser
@@ -38,9 +33,6 @@ trait IScSd {
 
   /** Контейнер данных состояния плитки карточек. */
   def grid        : MGridData
-
-  /** Переменная для псевдослучайной сортировки выдачи. */
-  def generation  : Long
 
   /** id текущего узла, если есть. */
   def adnIdOpt    : Option[String]
@@ -75,7 +67,6 @@ case class MScSd(
   override val common       : MScCommon             = MScCommon.empty,
   override val screen       : Option[IMScreen]      = None,
   override val grid         : MGridData             = MGridData(),
-  override val generation   : Long                  = MScSd.generationDflt,
   override val adnIdOpt     : Option[String]        = None,
   override val browser      : IBrowser              = MScSd.browserDflt,
   override val search       : MSearchSd             = MSearchSd(),
