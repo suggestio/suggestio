@@ -206,6 +206,9 @@ object ScConstants {
     /** Блоки карточек рендерятся сюда. */
     def CONTAINER_DIV_ID  = ROOT_DIV_ID + DIV_CONTAINER_SUFFIX
 
+    /** Название CSS-класса для активации размывки ROOT. */
+    def BLURRED_CLASS     = "__blurred"
+
   }
 
   /** Константы для отрендеренных карточек. */
@@ -505,6 +508,34 @@ object ScConstants {
 
     /** relative-ссылка на скрипт js-роутера. */
     def URI = "/sc/router.js"
+
+  }
+
+
+  /**
+    * Константы имён полей, связанных с состоянием client-side выдачи.
+    * Они нужны для формирования и парсинга URL Hash'ей в выдаче,
+    * и для восприятия состояния выдачи на стороне сервера.
+    */
+  object ScJsState {
+
+    // Название qs-параметров, отражающих состояние выдачи. Не удалось их нормально с максом согласовать из-за
+    // какой-то неизвестной науке паталогии копипастинга идентификаторов из окошка джаббер-клиента в файл showcase2.coffee.
+
+    // Обозначены через val, потому что эти константы используют очень активно или не используют вообще.
+    val ADN_ID_FN               = "m.id"
+    val GENERATION_FN           = "a.gen"
+    val TILES_CAT_ID_FN         = "t.cat"
+
+    val CAT_SCR_OPENED_FN       = "s.open"
+    val SEARCH_TAB_FN           = "s.tab"
+
+    val FADS_CURRENT_AD_ID_FN   = "f.cur.id"
+    val FADS_OFFSET_FN          = "f.off"
+    val PRODUCER_ADN_ID_FN      = "f.pr.id"
+
+    val NAV_NGLS_STATE_MAP_FN   = "n.ngls"
+    val GEO_SCR_OPENED_FN       = "n.open"
 
   }
 
