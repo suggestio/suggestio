@@ -59,18 +59,8 @@ trait IStData {
   /** Контейнер с данными геолокации. Пришел на смену MGeoLocUtil. */
   def geo         : MGeoLocSd
 
-  /** id таймера, который готовиться к срабатыванию в фоне. */
-  def timerId     : Option[Int]
-
   /** Состояние отложенной реакции на ресайз окна, если есть. */
   def resizeOpt   : Option[MResizeDelay]  = None
-
-  /** Попробовать отменить сохраненный в состоянии таймер, если он есть. */
-  def maybeCancelTimer(): Unit = {
-    for (_timerId <- timerId) {
-      dom.window.clearTimeout( _timerId )
-    }
-  }
 
   /** @return true если открыта какая-то боковая панель.
     *         false -- ни одной панели не открыто. */
@@ -92,7 +82,6 @@ case class MStData(
   override val nav          : MNavState             = MNavState(),
   override val focused      : Option[MFocSd]        = None,
   override val geo          : MGeoLocSd             = MGeoLocSd(),
-  override val timerId      : Option[Int]           = None,
   override val resizeOpt    : Option[MResizeDelay]  = None
 )
   extends IStData

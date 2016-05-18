@@ -25,7 +25,7 @@ object MTabs extends LightEnumeration {
     def vmBtnCompanion: TabBtnCompanion
 
     override def toString: String = id
-    
+
   }
 
   /** Абстрактый класс элементов модели. */

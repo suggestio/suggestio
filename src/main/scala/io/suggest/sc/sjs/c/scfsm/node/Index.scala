@@ -1,18 +1,15 @@
 package io.suggest.sc.sjs.c.scfsm.node
 
-import io.suggest.sc.ScConstants.Welcome
 import io.suggest.sc.sjs.c.mapbox.MbFsm
 import io.suggest.sc.sjs.c.scfsm.{FindAdsUtil, ScFsmStub}
 import io.suggest.sc.sjs.m.mgeo.IMGeoMode
 import io.suggest.sc.sjs.m.mgrid.MGridState
 import io.suggest.sc.sjs.m.mmap.EnsureMap
 import io.suggest.sc.sjs.m.msrv.index.{MNodeIndex, MScIndexArgs}
-import io.suggest.sc.sjs.m.mwc.WcTimeout
 import io.suggest.sc.sjs.vm.layout.LayRootVm
 import io.suggest.sc.sjs.vm.nav.nodelist.NlRoot
 import io.suggest.sc.sjs.vm.res.CommonRes
 import io.suggest.sc.sjs.vm.{SafeBody, SafeWnd}
-import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.msg.ErrorMsgs
 
 import scala.concurrent.Future
@@ -131,21 +128,7 @@ trait Index extends ScFsmStub with FindAdsUtil {
       val body = SafeBody
       body.setOverflowHidden()
 
-      // Инициализация верстки welcome-карточки, если есть:
-      val wcHideTimerOpt = for {
-        lc      <- lcOpt
-        wcRoot  <- lc.welcome
-        screen  <- sd1.screen
-      } yield {
-        // Подготовить отображение карточки.
-        wcRoot.initLayout(screen)
-        wcRoot.willAnimate()
-
-        // Запустить таймер сокрытия
-        DomQuick.setTimeout(Welcome.HIDE_TIMEOUT_MS) { () =>
-          _sendEventSyncSafe( WcTimeout )
-        }
-      }
+      // Инициализация верстки welcome-карточки перенесена отсюда в отдельное состояние, см. Welcome
 
       for (lc <- lcOpt;  groot <- lc.grid) {
         groot.initLayout(sd1)
@@ -181,10 +164,7 @@ trait Index extends ScFsmStub with FindAdsUtil {
 
       _sendFutResBack(findAdsFut)
 
-      val sd2 = sd1.copy(
-        timerId = wcHideTimerOpt
-      )
-      become( _nodeInitWelcomeState, sd2 )
+      become( _nodeInitWelcomeState )
 
       // Запустить в фоне ensure'инг карты
       MbFsm ! EnsureMap()
