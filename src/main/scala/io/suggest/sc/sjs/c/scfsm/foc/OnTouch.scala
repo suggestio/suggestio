@@ -140,7 +140,7 @@ trait OnTouch extends OnFocusBase {
 
           // Нужно подвинуть выдачу согласно deltaX
           val carX2 = carX - deltaX.toInt
-          car.animateToX(carX2, sd0.browser)
+          car.animateToX(carX2, sd0.common.browser)
 
           // Залить в состояние данные по текущему направлению свайпа.
           _stateData = sd0.copy(
@@ -234,7 +234,7 @@ trait OnTouch extends OnFocusBase {
           .getOrElse {
             // Сбросить сдвиг карусели на исходную.
             for (screen <- sd0.screen) {
-              car.animateToCell(currIndex, screen, sd0.browser)
+              car.animateToCell(currIndex, screen, sd0.common.browser)
             }
             _touchCancelledState
           }

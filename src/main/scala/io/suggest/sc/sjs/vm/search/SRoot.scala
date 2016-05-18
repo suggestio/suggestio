@@ -38,7 +38,7 @@ trait SRootT extends VmT with StyleDisplayT with GridOffsetCalc {
   /** Инициализация состояния силами FSM. */
   def initLayout(sd: IScSd): Unit = {
     for (screen <- sd.screen) {
-      initLayout(screen, sd.browser)
+      initLayout(screen, sd.common.browser)
     }
     for (t <- tabs) {
       t.setIsShown( t.mtab == sd.search.currTab )

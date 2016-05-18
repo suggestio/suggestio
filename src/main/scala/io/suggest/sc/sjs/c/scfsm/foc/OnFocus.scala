@@ -2,7 +2,6 @@ package io.suggest.sc.sjs.c.scfsm.foc
 
 import io.suggest.sc.sjs.m.mfoc._
 import io.suggest.sc.sjs.m.mfsm.touch.TouchStart
-import io.suggest.sc.sjs.m.mv.MTouchLock
 import io.suggest.sc.sjs.vm.foc.{FCarousel, FRoot}
 import io.suggest.sc.sjs.vm.foc.fad.{FAdRoot, FAdWrapper, FArrow}
 import io.suggest.sjs.common.geom.Coord2dD
@@ -11,7 +10,6 @@ import io.suggest.sc.ScConstants.Focused.FAd.KBD_SCROLL_STEP_PX
 import io.suggest.sc.sjs.c.scfsm.grid.OnGridBase
 import io.suggest.sc.sjs.c.scfsm.{ResizeDelayed, ScFsmStub, UrlStateT}
 import io.suggest.sjs.common.controller.DomQuick
-import io.suggest.sjs.common.util.TouchUtil
 import org.scalajs.dom.{KeyboardEvent, MouseEvent, TouchEvent}
 import org.scalajs.dom.ext.KeyCode
 
@@ -275,7 +273,7 @@ trait OnFocus extends OnFocusBase with UrlStateT {
             val (_nextFad, _nexts3) = q0.dequeue
             // Приаттачить карточку в DOM.
             val fadRoot = FAdRoot( _nextFad.bodyHtml )
-            fadRoot.initLayout( screen, sd0.browser )
+            fadRoot.initLayout( screen, sd0.common.browser )
             fadRoot.setLeftPx( index * screen.width )
             pushCellF(fadRoot)
             //car.pushCellRight( fadRoot )

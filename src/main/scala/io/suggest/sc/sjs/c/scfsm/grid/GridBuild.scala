@@ -60,7 +60,7 @@ trait GridBuild {
   /** Реализация grid builder'а для билда сетки через State Data. */
   protected case class GridBuilderSd(sd: IScSd,
                                      override val _addedBlocks: List[GBlock] = Nil) extends GridBuilderT {
-    override def browser = sd.browser
+    override def browser = sd.common.browser
     override def grid = sd.grid
   }
 
@@ -130,7 +130,7 @@ trait PanelGridRebuilder extends GridBuild {
       }
 
       // Отребилдить сетку
-      val gBuilder = GridRebuilder(mgd3, sd0.browser)
+      val gBuilder = GridRebuilder(mgd3, sd0.common.browser)
       val gbState2 = gBuilder.execute()
 
       // Собрать новые данные состояния FSM

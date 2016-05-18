@@ -95,7 +95,7 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
         car.setCellWidth(currIndex, screen)
         // Начальный сдвиг карусели выставляем без анимации. Весь focused будет выезжать из-за экрана.
         car.disableTransition()
-        car.animateToCell(currIndex, screen, sd0.browser)
+        car.animateToCell(currIndex, screen, sd0.common.browser)
 
         // Подготовить контейнер для стилей.
         FocusedRes.ensureCreated()
@@ -146,13 +146,13 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
         // Индекс запрошенной карточки в массиве fads: она или первая крайняя, или вторая при наличии предыдущей.
         val firstAd = firstAdOpt.get      // TODO Отработать сценарий отсутствия запрошенной карточки.
         val fadRoot = FAdRoot( firstAd.bodyHtml )
-        fadRoot.initLayout( screen, sd0.browser )
+        fadRoot.initLayout( screen, sd0.common.browser )
         // Повесить запрошенную карточку на месте текущего индекса.
         fadRoot.setLeftPx( currIndex * cellWidth )
 
         // Прилинковываем запрошенную карточку справа и запускаем анимацию.
         car.pushCellRight(fadRoot)
-        car.animateToCell(currIndex, screen, sd0.browser)
+        car.animateToCell(currIndex, screen, sd0.common.browser)
 
         // Начата обработка тяжелого тела focused-карточки. Залить текущий заголовок focused-выдачи.
         for (fControls <- fRoot.controls) {

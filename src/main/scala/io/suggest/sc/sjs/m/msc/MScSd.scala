@@ -6,7 +6,6 @@ import io.suggest.sc.sjs.m.mgeo._
 import io.suggest.sc.sjs.m.mgrid.{MGridData, MGridState}
 import io.suggest.sc.sjs.m.mnav.MNavState
 import io.suggest.sc.sjs.m.msearch.MSearchSd
-import io.suggest.sjs.common.model.browser.{IBrowser, MBrowser}
 
 /**
  * Suggest.io
@@ -14,13 +13,6 @@ import io.suggest.sjs.common.model.browser.{IBrowser, MBrowser}
  * Created: 22.06.15 17:33
  * Description: Модель состояния конечного автомата интерфейса выдачи.
  */
-object MScSd {
-
-  /** Генератор дефолтовых значений для поля browser. */
-  private def browserDflt    = MBrowser.detectBrowser
-
-}
-
 
 /** Интерфейс контейнера данный полного состояния выдачи. */
 trait IScSd {
@@ -36,9 +28,6 @@ trait IScSd {
 
   /** id текущего узла, если есть. */
   def adnIdOpt    : Option[String]
-
-  /** Собранные данные по браузеру. */
-  def browser     : IBrowser
 
   /** Контейнер данных состояния поиска и поисковой панели. */
   def search      : MSearchSd
@@ -68,7 +57,6 @@ case class MScSd(
   override val screen       : Option[IMScreen]      = None,
   override val grid         : MGridData             = MGridData(),
   override val adnIdOpt     : Option[String]        = None,
-  override val browser      : IBrowser              = MScSd.browserDflt,
   override val search       : MSearchSd             = MSearchSd(),
   override val nav          : MNavState             = MNavState(),
   override val focused      : Option[MFocSd]        = None,

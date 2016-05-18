@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.m.msc
 
 import io.suggest.sc.sjs.m.magent.MResizeDelay
+import io.suggest.sjs.common.model.browser.{IBrowser, MBrowser}
 
 import scala.scalajs.js
 
@@ -20,6 +21,8 @@ object MScCommon {
   /** Генератор дефолтовых значений для поля generation. */
   def generationDflt = (js.Math.random() * 1000000000).toLong
 
+  /** Генератор дефолтовых значений для поля browser. */
+  def browserDflt    = MBrowser.detectBrowser
 }
 
 
@@ -28,6 +31,7 @@ object MScCommon {
   * @param resizeOpt Состояние отложенной реакции на ресайз окна, если есть.
   */
 case class MScCommon(
+  browser      : IBrowser              = MScCommon.browserDflt,
   generation   : Long                  = MScCommon.generationDflt,
   resizeOpt    : Option[MResizeDelay]  = None
 )

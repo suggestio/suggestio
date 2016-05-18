@@ -125,7 +125,7 @@ trait Append extends ScFsmStub with FindAdsUtil {
           state  = _mgs2
         )
         // Расположить все новые карточки на экране.
-        val gbuilder = GridBuilder(grid2, sd0.browser, frag.blocks)
+        val gbuilder = GridBuilder(grid2, sd0.common.browser, frag.blocks)
 
         val gbState2 = gbuilder.execute()
         val grid3 = grid2.copy(
