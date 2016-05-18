@@ -15,7 +15,7 @@ import io.suggest.sc.ScConstants.NavPane.ROOT_ID
  * Description: VM для Nav root, т.е. корневого div старой панели гео-навигации по сети suggest.io.
  */
 object NRoot extends FindDiv {
-  override type T = NRoot
+  override type T     = NRoot
   override def DOM_ID = ROOT_ID
 }
 

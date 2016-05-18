@@ -98,8 +98,8 @@ trait OnGridBase extends ScFsmStub with ResizeDelayed with Append {
 
     /** Реакция на наступление таймаута ожидания ресайза плитки. */
     override def _handleResizeDelayTimeout(): Unit = {
+      val sd0 = _stateData
       if (_isGridNeedResizeDelayed()) {
-        val sd0 = _stateData
         for (mscreen <- sd0.screen) {
           // TODO Opt Если существенное по горизонтали, но оно осталось ~кратно ячейкам, то просто перестроить выдачу: _rebuildGridOnPanelChange
           val sd1 = sd0.copy(
@@ -116,11 +116,37 @@ trait OnGridBase extends ScFsmStub with ResizeDelayed with Append {
 
   }
 
+
+  protected[this] def _isNeedBlur(sd0: SD = _stateData): Boolean = {
+    !sd0.grid.state.isDesktopView
+  }
+
+  /** Размыть плитку в фоне, если экран маловат.
+    * @return true, если blurring имел место быть. Иначе false. */
+  protected[this] def _maybeBlurGrid(sd0: SD = _stateData): Unit = {
+    val needBlur = _isNeedBlur(sd0)
+    if (needBlur) {
+      _blurGrid()
+    }
+  }
+  protected[this] def _blurGrid(): Unit = {
+    for (groot <- GRoot.find()) {
+      groot.blur()
+    }
+  }
+  /** Убрать размывку плитки, если она была, не проверяя размеры экрана на всякий случай. */
+  protected[this] def _unBlurGrid(): Unit = {
+    for (groot <- GRoot.find()) {
+      groot.unblur()
+    }
+  }
+
 }
 
 
 /** Утиль для сборка состояний сетки. */
 trait OnGrid extends OnGridBase with IOnFocusBase {
+
 
   /** Поддержка реакции на клики по карточкам в выдаче. */
   trait GridBlockClickStateT extends FsmEmptyReceiverState with IStartFocusOnAdState {
@@ -188,7 +214,15 @@ trait OnGrid extends OnGridBase with IOnFocusBase {
           )
         )
       }
+
+      // Запуск основной логики подхвата карточек плитки.
       super._findAdsReady(mfa)
+
+      // Управление размывкой выдачи после ресайза.
+      if (_isNeedBlur())
+        _blurGrid()
+      else
+        _unBlurGrid()
     }
 
     // При наличии нового размера контейнера сетки обновить его в состоянии FSM.

@@ -47,6 +47,7 @@ trait Base extends OnGrid with ISjsLogger {
         for (header <- HRoot.find()) {
           header.hideBackToIndexBtns()
         }
+        _unBlurGrid()
 
         // Отребилдить плитку карточек, создав новое состояние выдачи.
         val grid2 = RebuildGridOnPanelClose(sd0, screen, sroot).execute()

@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.c.scfsm.grid
 
 import io.suggest.sc.sjs.m.mhdr.{PrevNodeBtnClick, ShowNavClick, ShowSearchClick}
+import io.suggest.sc.sjs.vm.grid.GRoot
 import io.suggest.sc.sjs.vm.hdr.HRoot
 import io.suggest.sc.sjs.vm.hdr.btns.HNodePrev
 import io.suggest.sc.sjs.vm.layout.FsLoader
@@ -27,6 +28,8 @@ trait Plain extends OnGrid {
         for (header <- HRoot.find()) {
           header.showBackToIndexBtns()
         }
+        // Размыть фоновую плитку, если узкий экран.
+        _maybeBlurGrid(sd0)
 
         // Отребилдить плитку карточек, создав новое состояние выдачи.
         val grid2 = RebuildGridOnPanelOpen(sd0, screen, sroot).execute()

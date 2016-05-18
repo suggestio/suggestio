@@ -1,9 +1,10 @@
 package io.suggest.sc.sjs.c.scfsm
 
-import io.suggest.sc.sjs.c.scfsm.grid.{PanelGridRebuilder, OnGrid}
-import io.suggest.sc.sjs.m.mhdr.{LogoClick, HideNavClick}
+import io.suggest.sc.sjs.c.scfsm.grid.{OnGrid, PanelGridRebuilder}
+import io.suggest.sc.sjs.m.mhdr.{HideNavClick, LogoClick}
 import io.suggest.sc.sjs.m.mnav.NodeListClick
-import io.suggest.sc.sjs.m.msrv.nodes.find.{MFindNodesArgsDfltImpl, MFindNodesResp, MFindNodes}
+import io.suggest.sc.sjs.m.msrv.nodes.find.{MFindNodes, MFindNodesArgsDfltImpl, MFindNodesResp}
+import io.suggest.sc.sjs.vm.grid.GRoot
 import io.suggest.sc.sjs.vm.hdr.btns.HBtns
 import io.suggest.sc.sjs.vm.hdr.btns.nav.HShowNavBtn
 import io.suggest.sc.sjs.vm.nav.NRoot
@@ -12,9 +13,9 @@ import io.suggest.sc.sjs.vm.nav.nodelist.NlContent
 import io.suggest.sjs.common.util.ISjsLogger
 import io.suggest.sjs.common.vm.Vm
 import org.scalajs.dom.ext.KeyCode
-import org.scalajs.dom.{KeyboardEvent, Node, Event}
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+import org.scalajs.dom.{Event, KeyboardEvent, Node}
 
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 import scala.util.Failure
 
 /**
@@ -49,10 +50,15 @@ trait OnGridNav extends OnGrid with ISjsLogger {
       for (nroot <- NRoot.find(); screen <- sd0.screen) {
         // Визуально отобразить панель
         nroot.hide()
+
         // Скрыть кнопку показа панели.
         for (showBtn <- HShowNavBtn.find()) {
           showBtn.show()
         }
+
+        // Убрать размывку плитки, если она была, не проверяя размеры экрана на всякий случай.
+        _unBlurGrid()
+
         val grid2 = RebuildGridOnPanelClose(sd0, screen, nroot).execute()
 
         for (hbtns <- HBtns.find()) {
@@ -61,7 +67,7 @@ trait OnGridNav extends OnGrid with ISjsLogger {
 
         val sd1 = sd0.copy(
           grid = grid2,
-          nav  = sd0.nav.copy(
+          nav = sd0.nav.copy(
             panelOpened = false
           )
         )
@@ -100,6 +106,9 @@ trait OnGridNav extends OnGrid with ISjsLogger {
           showBtn.hide()
         }
         val grid2 = RebuildGridOnPanelOpen(sd0, screen, nroot).execute()
+
+        // Размыть плитку в фоне, если экран маловат.
+        _maybeBlurGrid(sd0)
 
         val sd2 = sd0.copy(
           grid = grid2,
