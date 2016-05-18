@@ -30,7 +30,7 @@ trait Index extends ScFsmStub with FindAdsUtil {
     /** Запустить запрос получения индекса с сервера на основе переданного состояния. */
     protected def _getIndex(sd0: SD = _stateData): Future[MNodeIndex] = {
       val inxArgs = MScIndexArgs(
-        adnIdOpt  = sd0.adnIdOpt,
+        adnIdOpt  = sd0.common.adnIdOpt,
         geoMode   = Some( IMGeoMode(sd0.geo.lastGeoLoc) ),
         screen    = sd0.screen
       )
@@ -93,9 +93,11 @@ trait Index extends ScFsmStub with FindAdsUtil {
       // Заливаем в данные состояния полученные метаданные по текущему узлу.
       // TODO Это нужно только на первом шаге по факту (geo). Потом adnId обычно известен наперёд.
       val sd0 = _stateData
-      if (sd0.adnIdOpt != v.adnIdOpt) {
+      if (sd0.common.adnIdOpt != v.adnIdOpt) {
         val _sd1 = sd0.copy(
-          adnIdOpt = v.adnIdOpt
+          common = sd0.common.copy(
+            adnIdOpt = v.adnIdOpt
+          )
         )
         _stateData = _sd1
       }
@@ -187,12 +189,11 @@ trait Index extends ScFsmStub with FindAdsUtil {
       case mni: MNodeIndex =>
         _nodeIndexReceived(mni)
       case Failure(ex) =>
-        error("Failed to get node index: " + _stateData.adnIdOpt, ex)
         _getNodeIndexFailed(ex)
     }
 
     override protected def _getNodeIndexFailed(ex: Throwable): Unit = {
-      error(ErrorMsgs.GET_NODE_INDEX_FAILED, ex)
+      error(ErrorMsgs.GET_NODE_INDEX_FAILED + " " + _stateData.common.adnIdOpt, ex)
       _retry(50)( _onNodeIndexFailedState )
     }
 

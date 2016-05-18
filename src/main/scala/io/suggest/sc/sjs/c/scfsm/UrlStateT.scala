@@ -49,7 +49,7 @@ trait UrlStateT extends ScFsmStub {
       }
 
       // Отработать id текущего узла.
-      for (nodeId <- sd0.adnIdOpt) {
+      for (nodeId <- sd0.common.adnIdOpt) {
         acc ::= ADN_ID_FN -> nodeId
       }
 

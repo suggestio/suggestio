@@ -31,6 +31,7 @@ object MScCommon {
   * @param resizeOpt Состояние отложенной реакции на ресайз окна, если есть.
   */
 case class MScCommon(
+  adnIdOpt     : Option[String]        = None,
   browser      : IBrowser              = MScCommon.browserDflt,
   generation   : Long                  = MScCommon.generationDflt,
   resizeOpt    : Option[MResizeDelay]  = None

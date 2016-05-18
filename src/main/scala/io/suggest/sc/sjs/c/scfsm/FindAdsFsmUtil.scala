@@ -17,7 +17,7 @@ trait FindAdsUtil {
     override def _mgs                     = _sd.grid.state
     override def screenInfo               = _sd.screen
     override def generation: Option[Long] = Some(_sd.common.generation)
-    override def receiverId               = _sd.adnIdOpt
+    override def receiverId               = _sd.common.adnIdOpt
     override def levelId: Option[String]  = Some(ID_START_PAGE)
     override def geo: Option[IMGeoMode]   = Some( IMGeoMode(_sd.geo.lastGeoLoc) )
   }

@@ -91,7 +91,7 @@ trait OnGridNav extends OnGrid with UrlStateT {
       for (nlContent <- nlContentOpt if nlContent.isEmpty) {
         // Запустить запрос к серверу на тему поиска узлов
         val searchNodesArgs = new MFindNodesArgsDfltImpl {
-          override def currAdnId = sd0.adnIdOpt
+          override def currAdnId = sd0.common.adnIdOpt
         }
         val fut = MFindNodes.findNodes(searchNodesArgs)
         // Когда запрос выполниться, надо залить данные в DOM
@@ -208,7 +208,7 @@ trait OnGridNav extends OnGrid with UrlStateT {
           // Юзер кликнул по узлу в списке узлов.
           val glayNode = adnNodeOpt.get
           val clickedAdnId = glayNode.adnIdOpt
-          if (clickedAdnId == sd0.adnIdOpt) {
+          if (clickedAdnId == sd0.common.adnIdOpt) {
             // Клик по текущему узлу. Нужно просто скрыть панель навигации.
             _hideNav()
           } else {

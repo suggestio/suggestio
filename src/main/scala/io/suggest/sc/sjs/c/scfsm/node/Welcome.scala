@@ -123,7 +123,7 @@ trait Welcome extends grid.OnGrid with UrlStateT {
     def _handleWcClicked(wcc: WcClick): Unit = {
       _wcHide.fold [Unit] {
         // Should not happen: Юзер кликает по уже сокрытому и удалённом приветствию.
-        warn( WarnMsgs.NODE_WELCOME_MISSING + " " + _stateData.adnIdOpt )
+        warn( WarnMsgs.NODE_WELCOME_MISSING + " " + _stateData.common.adnIdOpt )
         become(_nodeInitDoneState)
 
       } { wcInfo =>

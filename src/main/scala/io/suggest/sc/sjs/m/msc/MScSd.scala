@@ -26,9 +26,6 @@ trait IScSd {
   /** Контейнер данных состояния плитки карточек. */
   def grid        : MGridData
 
-  /** id текущего узла, если есть. */
-  def adnIdOpt    : Option[String]
-
   /** Контейнер данных состояния поиска и поисковой панели. */
   def search      : MSearchSd
 
@@ -56,7 +53,6 @@ case class MScSd(
   override val common       : MScCommon             = MScCommon.empty,
   override val screen       : Option[IMScreen]      = None,
   override val grid         : MGridData             = MGridData(),
-  override val adnIdOpt     : Option[String]        = None,
   override val search       : MSearchSd             = MSearchSd(),
   override val nav          : MNavState             = MNavState(),
   override val focused      : Option[MFocSd]        = None,
@@ -73,7 +69,9 @@ case class MScSd(
    */
   def withNodeSwitch(adnIdOpt2: Option[String]): MScSd = {
     copy(
-      adnIdOpt  = adnIdOpt2,
+      common = common.copy(
+        adnIdOpt = adnIdOpt2
+      ),
       nav       = MNavState(),
       search    = MSearchSd(),
       grid      = MGridData(

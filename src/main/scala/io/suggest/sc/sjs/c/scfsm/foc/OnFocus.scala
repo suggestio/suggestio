@@ -188,7 +188,7 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
           .find { _fad => _fad.index == currIndex }
       } {
         val adnId = _fad.producerId
-        if (sd0.adnIdOpt contains adnId) {
+        if ( sd0.common.adnIdOpt.contains(adnId) ) {
           // Возврат на плитку текуйщего узла отрабатывается соответствующим состоянием.
           become(_closingState)
 
