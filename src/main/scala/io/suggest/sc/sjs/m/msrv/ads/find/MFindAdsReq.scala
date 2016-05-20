@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.m.msrv.ads.find
 import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.m.mgeo.IMGeoMode
 import io.suggest.sc.sjs.m.mgrid.MGridState
-import io.suggest.sc.sjs.m.msrv.{ToJsonWithApiVsnT, MSrv}
+import io.suggest.sc.sjs.m.msrv.ToJsonWithApiVsnT
 
 import scala.scalajs.js.{Any, Dictionary}
 import io.suggest.ad.search.AdSearchConstants._
@@ -20,7 +20,6 @@ import scala.scalajs.js.JSConverters._
 trait MFindAdsReq extends ToJsonWithApiVsnT {
 
   def producerId  : Option[String]
-  def catId       : Option[String]
   def levelId     : Option[String]
   def ftsQuery    : Option[String]
   def limit       : Option[Int]
@@ -30,43 +29,44 @@ trait MFindAdsReq extends ToJsonWithApiVsnT {
   def generation  : Option[Long]
   def geo         : Option[IMGeoMode]
   def screenInfo  : Option[IMScreen]
+  def withoutId   : Option[String]
 
   /** Собрать итоговый json для передачи в router. */
   override def toJson: Dictionary[Any] = {
     val d = super.toJson
 
-    if (producerId.nonEmpty)
-      d(PRODUCER_ID_FN) = producerId.get
-    if (catId.nonEmpty)
-      d(CAT_ID_FN) = catId.get
-    if (levelId.nonEmpty)
-      d(LEVEL_ID_FN) = levelId.get
-    if (ftsQuery.nonEmpty)
-      d(FTS_QUERY_FN) = ftsQuery.get
-    if (limit.isDefined)
-      d(RESULTS_LIMIT_FN) = limit.get
-    if (offset.isDefined)
-      d(RESULTS_OFFSET_FN) = offset.get
-    if (receiverId.nonEmpty)
-      d(RECEIVER_ID_FN) = receiverId.get
+    for (prodId <- producerId)
+      d(PRODUCER_ID_FN) = prodId
+    for (_levelId <- levelId)
+      d(LEVEL_ID_FN) = _levelId
+    for (q <- ftsQuery)
+      d(FTS_QUERY_FN) = q
+    for (_limit <- limit)
+      d(RESULTS_LIMIT_FN) = _limit
+    for (off <- offset)
+      d(RESULTS_OFFSET_FN) = off
+    for (rcvrId <- receiverId)
+      d(RECEIVER_ID_FN) = rcvrId
     if (firstAdIds.nonEmpty)
       d(FIRST_AD_ID_FN) = firstAdIds.toJSArray
-    if (generation.nonEmpty)
-      d(GENERATION_FN) = generation.get
-    if (geo.nonEmpty)
-      d(GEO_MODE_FN) = geo.get.toQsStr
-    if (screenInfo.nonEmpty)
-      d(SCREEN_INFO_FN) = screenInfo.get.toQsValue
+    for (gen <- generation)
+      d(GENERATION_FN) = gen
+    for (_geo <- geo)
+      d(GEO_MODE_FN) = _geo.toQsStr
+    for (scrInfo <- screenInfo)
+      d(SCREEN_INFO_FN) = scrInfo.toQsValue
+    for (woId <- withoutId)
+      d(WITHOUT_IDS_FN) = woId
 
     d
   }
 
 }
 
+
 /** Задефолченная реализация [[MFindAdsReq]]. */
 trait MFindAdsReqEmpty extends MFindAdsReq {
   override def producerId  : Option[String]    = None
-  override def catId       : Option[String]    = None
   override def levelId     : Option[String]    = None
   override def ftsQuery    : Option[String]    = None
   override def limit       : Option[Int]       = None
@@ -76,14 +76,15 @@ trait MFindAdsReqEmpty extends MFindAdsReq {
   override def generation  : Option[Long]      = None
   override def geo         : Option[IMGeoMode] = None
   override def screenInfo  : Option[IMScreen]  = None
+  override def withoutId   : Option[String]    = None
 }
+
 
 /** Враппер для заворачивания другой реализации [[MFindAdsReq]]. */
 trait MFindAdsReqWrapper extends MFindAdsReq {
   def _underlying: MFindAdsReq
 
   override def producerId   = _underlying.producerId
-  override def catId        = _underlying.catId
   override def levelId      = _underlying.levelId
   override def ftsQuery     = _underlying.ftsQuery
   override def limit        = _underlying.limit
@@ -93,6 +94,7 @@ trait MFindAdsReqWrapper extends MFindAdsReq {
   override def generation   = _underlying.generation
   override def geo          = _underlying.geo
   override def screenInfo   = _underlying.screenInfo
+  override def withoutId    = _underlying.withoutId
 }
 
 

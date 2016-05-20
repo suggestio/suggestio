@@ -61,7 +61,9 @@ object ScFsm
     override def _onNodeIndexFailedState  : FsmState      = this
     override def _nodeInitWelcomeState    : FsmState      = {
       val sd0 = _stateData
-      if (sd0.nav.panelOpened) {
+      if (sd0.focused.nonEmpty) {
+        new NodeWelcome_AdsWait_Focused_State
+      } else if (sd0.nav.panelOpened) {
         new NodeWelcome_AdsWait_WithNav_State
       } else if (sd0.search.opened) {
         new NodeWelcome_AdsWait_WithSearch_State
@@ -75,6 +77,7 @@ object ScFsm
   class NodeWelcome_AdsWait_State extends NodeWelcome_AdsWait_StateT {
     override def _nodeInitDoneState: FsmState = _onPlainGridState
   }
+
   /** Welcoming node-выдачи с открытой панелью навигации. */
   class NodeWelcome_AdsWait_WithNav_State
     extends NodeWelcome_AdsWait_State
@@ -85,6 +88,7 @@ object ScFsm
     override def _onHideNavState                = null
     override def _nodeInitDoneState             = new OnGridNavReadyState
   }
+
   /** Welcome node-выдачи с открытой панелью поиска. */
   class NodeWelcome_AdsWait_WithSearch_State
     extends NodeWelcome_AdsWait_State
@@ -92,6 +96,15 @@ object ScFsm
   {
     override def _searchTabOpenedState = null
     override def _nodeInitDoneState    = _searchTab2state()
+  }
+
+  /** Welcome node выдачи с одновременной фокусировкой на какой-то карточке. */
+  class NodeWelcome_AdsWait_Focused_State
+    extends NodeWelcome_AdsWait_State
+    with StartingForAdStateT
+  {
+    override protected def _focOnAppearState = null
+    override def _nodeInitDoneState = new FocAppearingState
   }
 
 

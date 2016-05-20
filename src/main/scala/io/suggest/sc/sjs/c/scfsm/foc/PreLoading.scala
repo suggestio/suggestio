@@ -42,32 +42,39 @@ trait PreLoading extends OnFocusBase {
         val resultsLimit = _getLimit(fState, currIndex)
         assert(resultsLimit >= 0)
 
-        // Нужно попытаться собрать id недостающих карточек из текущей сетки. Данные по текущим карточкам живут прямо в самой плитке.
-        // Но плитки или необходимых данных в ней может и не быть (карточка отсутствует), это надо учитывать.
-        val maybeFirstAdIds = for (currBlock <- GBlock.find(currFAd.madId)) yield {
-          @tailrec def __collectBlocks(needCount: Int, lastBlock: GBlock, acc0: List[String]): (Int, List[String]) = {
-            val maybeNextBlockInfo = if (needCount > 0) {
-              for {
-                nextBlock <- _nextGBlock( lastBlock )
-                madId     <- nextBlock.madId
-              } yield {
-                madId -> nextBlock
-              }
-            } else {
-              None
-            }
-            maybeNextBlockInfo match {
-              case Some((madId, nextBlock)) =>
-                __collectBlocks(needCount - 1, nextBlock, madId :: acc0)
-              case None =>
-                (needCount, acc0)
-            }
-          }
-          __collectBlocks(resultsLimit, currBlock, Nil)
-        }
+        // Сборка значения firstAdIds.
+        val _firstAdIds: List[String] = if (fState.forceFirstAdIds.nonEmpty) {
+          // Ручное управление фокусировкой. Плитка может отсутствовать или быть неактуальной.
+          Nil
 
-        val _firstAdIds = maybeFirstAdIds.fold( List.empty[String] ) { res =>
-          _fixAdIdsAccOrder(res._2)
+        } else {
+          // Нужно попытаться собрать id недостающих карточек из текущей сетки. Данные по текущим карточкам живут прямо в самой плитке.
+          // Но плитки или необходимых данных в ней может и не быть (карточка отсутствует), это надо учитывать.
+          val maybeFirstAdIds = for (currBlock <- GBlock.find(currFAd.madId)) yield {
+            @tailrec def __collectBlocks(needCount: Int, lastBlock: GBlock, acc0: List[String]): (Int, List[String]) = {
+              val maybeNextBlockInfo = if (needCount > 0) {
+                for {
+                  nextBlock <- _nextGBlock( lastBlock )
+                  madId     <- nextBlock.madId
+                } yield {
+                  madId -> nextBlock
+                }
+              } else {
+                None
+              }
+              maybeNextBlockInfo match {
+                case Some((madId, nextBlock)) =>
+                  __collectBlocks(needCount - 1, nextBlock, madId :: acc0)
+                case None =>
+                  (needCount, acc0)
+              }
+            }
+            __collectBlocks(resultsLimit, currBlock, Nil)
+          }
+
+          maybeFirstAdIds.fold( List.empty[String] ) { res =>
+            _fixAdIdsAccOrder(res._2)
+          }
         }
 
         val _offset = _getOffset(currIndex, resultsLimit)
@@ -78,6 +85,7 @@ trait PreLoading extends OnFocusBase {
           // Выставляем под нужды focused-выдачи значения limit/offset.
           override def offset     = Some(_offset)
           override def limit      = Some(resultsLimit)
+          override def withoutId  = fState.forceFirstAdIds.headOption
         }
         val fadsFut = MFocAds.find(reqArgs)
 

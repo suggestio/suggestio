@@ -18,12 +18,18 @@ import io.suggest.sc.ScConstants.Focused.SLIDE_ANIMATE_MS
 import io.suggest.sjs.common.controller.DomQuick
 
 /**
- * Suggest.io
- * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 18.06.15 11:19
- * Description: FSM-аддон для добавления поддержки начальной focused-загрузки карточек.
- * Используется для нулевого шага в работе focused-выдачи: инициализация focused-выдачи и первых карточек.
- */
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 18.06.15 11:19
+  * Description: FSM-аддон для добавления поддержки начальной focused-загрузки карточек.
+  * Используется для нулевого шага в работе focused-выдачи: инициализация focused-выдачи и первых карточек.
+  *
+  * 2016.may.20: Сюда криво вписан режим прямой фокусировки по id карточки.
+  * появились if'ы в довольно неожиданных местах. По сути в одном коде живут два режима фокусировки:
+  * - v2, последовательный относительно плитки, при кликах в плитке.
+  * - Около-последовательный с ручной фокусировкой на первой карточке по её id. Он похож на v1-фокусировку.
+  * Аналогичные костыли в PreLoading.
+  */
 
 // TODO Тут stub только. Логика не написана.
 // Нужно реализовать состояния в подпакете scfsm, а этот файл удалить/переместить.
@@ -34,21 +40,30 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
     * Трейт для состояния, когда focused-выдача отсутствует, скрыта вообще и ожидает активации.
     * При появлении top-level ScFsm это событие исчезнет, и будет обрабатываться где-то в вышестоящем обработчике.
     */
-  protected trait StartingForAdStateT extends FsmState with FindNearAdIds with ProcessIndexReceivedUtil {
+  protected trait StartingForAdStateT extends FsmEmptyReceiverState with FindNearAdIds with ProcessIndexReceivedUtil {
 
     private def _getGblock(fState: MFocSd): Option[GBlock] = {
-      fState.currAdId.flatMap(GBlock.find)
+      if (fState.forceFirstAdIds.isEmpty) {
+        fState.currAdId.flatMap(GBlock.find)
+      } else {
+        // Активно ручное управление фокусировкой. Нет смысла искать блоки в плитке. См. зелёный коммент наверху.
+        None
+      }
     }
-    
-    protected def _getCurrIndex(fState: MFocSd, gblockOpt: Option[GBlock]): Int = {
+
+    /**
+      * Попытаться определить индекс интересующей focused-карточки.
+      * index может быть неизвестен, это бывает при запросе карточки по id с заведомо неизвесным индексом.
+      */
+    protected def _getCurrIndex(fState: MFocSd, gblockOpt: Option[GBlock]): Option[Int] = {
       gblockOpt
         .map { _.index }
         .orElse { fState.currIndex }
-        .getOrElse(0)   // TODO Когда придёт время для восстановления состояния FSM из URL, надо будет сделать тут логику по-лучше.
     }
 
     override def afterBecome(): Unit = {
       super.afterBecome()
+
       // Необходимо запустить focused ad реквест к серверу.
       val sd0 = _stateData
       for {
@@ -57,21 +72,31 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
         fRoot   <- FRoot.find()
         car     <- fRoot.carousel
       } {
-        val gblockOpt   = _getGblock(fState0)
-        val currIndex   = _getCurrIndex(fState0, gblockOpt)
+
+        val gblockOpt     = _getGblock(fState0)
+        val currIndexOpt  = _getCurrIndex(fState0, gblockOpt)
 
         // Собрать и запустить fads-реквест на основе запроса к карточкам плитки.
         // Флаг: запрашивать ли карточку, предшествующую запрошенной. Да, если запрошена ненулевая карточка.
-        val withPrevAd  = currIndex > 0
-        val firstMadIds = _nearAdIdsIter( gblockOpt )
-          .toSeq
+        val withPrevAd  = currIndexOpt.exists(_ > 0)
 
         // Поиск идёт с упором на multiGet по id карточек.
         val args = new MFocAdSearchEmpty with FindAdsArgsT {
           override def _sd        = sd0
-          override def firstAdIds = firstMadIds
+          override def firstAdIds = {
+            val ffais = fState0.forceFirstAdIds
+            if (ffais.isEmpty) {
+              currIndexOpt.fold(Nil: Seq[String]) { _ =>
+                _nearAdIdsIter(gblockOpt).toSeq
+              }
+            } else {
+              ffais
+            }
+          }
           // Выставляем под нужды focused-выдачи значения limit/offset.
-          override def offset     = Some( if (withPrevAd) currIndex - 1 else currIndex )
+          override def offset     = for (currIndex <- currIndexOpt) yield {
+            if (withPrevAd) currIndex - 1 else currIndex
+          }
           override def limit      = Some( if (withPrevAd) 3 else 2 )
           // Для первой открываемой карточки допускается переход на index-выдачу узла вместо открытия focused-выдачи.
           override def openIndexAdId = fState0.currAdId
@@ -92,10 +117,10 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
           car.clear()
         // Ширина ячейки в карусели эквивалентна пиксельной ширине экрана.
         // Начальная ширина карусели задаётся исходя из текущих ячеек. +1 -- Скорее всего будет как минимум одна карточка после текущей.
-        car.setCellWidth(currIndex, screen)
+        car.setCellWidth(currIndexOpt.getOrElse(1), screen)
         // Начальный сдвиг карусели выставляем без анимации. Весь focused будет выезжать из-за экрана.
         car.disableTransition()
-        car.animateToCell(currIndex, screen, sd0.common.browser)
+        car.animateToCell(currIndexOpt.getOrElse(0), screen, sd0.common.browser)
 
         // Подготовить контейнер для стилей.
         FocusedRes.ensureCreated()
@@ -124,10 +149,18 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
         fRoot     <- FRoot.find()
         car       <- fRoot.carousel
       } {
-        val currIndex   = _getCurrIndex(fState, _getGblock(fState))
+        val currIndexOpt  = _getCurrIndex(fState, _getGblock(fState))
 
         // Раскидать полученные карточки по аккамуляторам и карусели. Для ускорения закидываем в карусель только необходимую карточку.
-        val (prevs2, firstAdOpt, nexts2) = {
+        val (prevs2, firstAdOpt, nexts2) = currIndexOpt.fold {
+          // Нет индекса, значит идёт доступ напрямую по mad id. Закинуть всё в nexts кроме первой карточки.
+          val fads = mfa.focusedAdsIter.toStream
+          val nexts1 = fState.nexts
+          val nexts2 = if (fads.nonEmpty) nexts1.enqueue(fads.tail) else nexts1
+          (fState.prevs, fads.headOption, nexts2)
+
+        } { currIndex =>
+          // Есть индекс текущей карточки, значит идёт номальное функционирование. Дробим выдачу по числовым индексам.
           mfa.focusedAdsIter.foldLeft((fState.prevs, Option.empty[MFocAd], fState.nexts)) {
             case ((_prevs, _firstOpt, _nexts), _e) =>
               val i = _e.index
@@ -148,6 +181,7 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
         val fadRoot = FAdRoot( firstAd.bodyHtml )
         fadRoot.initLayout( screen, sd0.common.browser )
         // Повесить запрошенную карточку на месте текущего индекса.
+        val currIndex = currIndexOpt.getOrElse(0)
         fadRoot.setLeftPx( currIndex * cellWidth )
 
         // Прилинковываем запрошенную карточку справа и запускаем анимацию.
@@ -200,7 +234,7 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
       become(_backToGridState, sd1)
     }
 
-    override def receiverPart: Receive = {
+    override def receiverPart: Receive = super.receiverPart.orElse {
       case Right(mfa: MFocAds) =>
         _focAdsReceived(mfa)
       case Left(mni: MNodeIndex) =>

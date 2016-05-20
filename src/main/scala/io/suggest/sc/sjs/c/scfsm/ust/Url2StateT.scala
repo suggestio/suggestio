@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.c.scfsm.ust
 
 import io.suggest.sc.sjs.c.scfsm.ScFsm
+import io.suggest.sc.sjs.m.mfoc.MFocSd
 import io.suggest.sc.sjs.m.msc.{MScSd, MUrlUtil}
 import io.suggest.sc.sjs.m.msearch.MTabs
 import io.suggest.sc.sjs.util.router.srv.SrvRouter
@@ -122,6 +123,17 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
         }
     }
 
+    // Отрабатываем focused ad: просто залить id в состояние.
+    val focAdIdRawOpt = tokens.get(FADS_CURRENT_AD_ID_FN)
+    val mFocSdOpt = focAdIdRawOpt
+      .filter(_.nonEmpty)
+      .map { _ =>
+        MFocSd(
+          currAdId          = focAdIdRawOpt,
+          forceFirstAdIds   = focAdIdRawOpt.toSeq
+        )
+      }
+
     // Отрабатываем id узла из URL, если есть.
     val nodeIdOpt = tokens.get(ADN_ID_FN)
     nodeIdOpt.fold[Unit] {
@@ -129,7 +141,8 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
       val sd2c = sd0.copy(
         common = sd1Common,
         nav    = sd1Nav,
-        search = sd1Search
+        search = sd1Search,
+        focused = mFocSdOpt
       )
       become(new GeoScInitState, sd2c)
 
@@ -141,7 +154,8 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
             adnIdOpt = nodeIdOpt
           ),
           nav    = sd1Nav,
-          search = sd1Search
+          search = sd1Search,
+          focused = mFocSdOpt
         )
         val nextState = new NodeIndex_Get_Wait_State
         become(nextState, sd2c)

@@ -104,7 +104,7 @@ case class MFocAds(json: WrappedDictionary[Any]) extends IMFocAds {
   override def focusedAdsIter: Iterator[MFocAd] = {
     focusedAdsRaw
       .iterator 
-      .map { MFocAd.apply }
+      .map( MFocAd.apply )
   }
 
   override def fadsCount: Int = focusedAdsRaw.size
@@ -112,6 +112,14 @@ case class MFocAds(json: WrappedDictionary[Any]) extends IMFocAds {
   override def totalCount: Int = {
     json(TOTAL_COUNT_FN)
       .asInstanceOf[Int]
+  }
+
+  override def toString: String = {
+    getClass.getSimpleName + "(" +
+      focusedAdsIter.map(_.toString).mkString(",") +
+      ",s=" + styles.fold(0)(_.length) + "," +
+      fadsCount + "/" + totalCount +
+      ")"
   }
 
 }

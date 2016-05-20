@@ -24,10 +24,13 @@ trait Phase
     override def _startFocusOnAdState = new FocStartingForAd
   }
 
-  /** Состояние сразу после клика по карточке в плитке. Отрабатывается запрос, происходит подготовка focused-выдачи. */
-  class FocStartingForAd extends StartingForAdStateT with ProcessIndexReceivedUtil {
-    override def _focOnAppearState = new FocAppearingState
+  /** Частичная реализация StartingForAdStateT. */
+  protected trait StartingForAdStateT extends super.StartingForAdStateT with ProcessIndexReceivedUtil {
     override def _backToGridState  = new OnPlainGridState
+  }
+  /** Состояние сразу после клика по карточке в плитке. Отрабатывается запрос, происходит подготовка focused-выдачи. */
+  class FocStartingForAd extends StartingForAdStateT {
+    override def _focOnAppearState = new FocAppearingState
   }
   class FocAppearingState extends OnAppearStateT {
     override def _focReadyState = new FocOnFocusState

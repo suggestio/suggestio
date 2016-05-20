@@ -1,6 +1,5 @@
 package io.suggest.sc.sjs.m.mfoc
 
-import io.suggest.sc.sjs.vm.grid.GBlock
 import io.suggest.sjs.common.model.MHand
 
 import scala.collection.immutable.Queue
@@ -38,6 +37,9 @@ trait IFocSd {
   /** Опциональные данные состояния touch-навигации внутри focused-выдачи. */
   def touch: Option[MFocTouchSd]
 
+  /** Принудительные значения для firstAdIds. */
+  def forceFirstAdIds: Seq[String]
+
 
   def shownFadWithIndex(index: Int): Option[FAdShown] = {
     carState.find(_.index == index)
@@ -72,6 +74,7 @@ case class MFocSd(
   override val carState     : CarState              = Nil,
   override val prevs        : FAdQueue              = Queue.empty,
   override val arrDir       : Option[MHand]         = None,
-  override val touch        : Option[MFocTouchSd]   = None
+  override val touch        : Option[MFocTouchSd]   = None,
+  override val forceFirstAdIds  : Seq[String]       = Nil
 )
   extends IFocSd

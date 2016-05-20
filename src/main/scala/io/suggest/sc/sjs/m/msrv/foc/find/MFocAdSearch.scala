@@ -19,9 +19,8 @@ trait MFocAdSearch extends MFindAdsReq {
   override def toJson: Dictionary[Any] = {
     val acc = super.toJson
 
-    val _openIndexAdId = openIndexAdId
-    if (_openIndexAdId.nonEmpty)
-      acc(OPEN_INDEX_AD_ID_FN) = _openIndexAdId.get
+    for (_openIndexAdId <- openIndexAdId)
+      acc(OPEN_INDEX_AD_ID_FN) = _openIndexAdId
 
     acc
   }

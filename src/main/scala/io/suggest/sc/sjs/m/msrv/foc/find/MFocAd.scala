@@ -25,6 +25,8 @@ case class MFocAd(json: Dictionary[Any]) extends IFocAd {
   /** Порядковый номер, отображаемый юзеру. */
   def humanIndex            = _get[Int](HUMAN_INDEX_FN)
 
+  override def toString = super.toString
+
 }
 
 
@@ -39,6 +41,14 @@ trait IFocAdMeta {
 
   /** Порядковый номер. */
   def index: Int
+
+  override def toString: String = {
+    getClass.getSimpleName + "(" +
+      madId + "," +
+      producerId + "," +
+      index +
+      ")"
+  }
 
 }
 
@@ -77,4 +87,5 @@ case class MFocAdImpl(
   extends IFocAd
 {
   override def mFocAdImpl = this
+  override def toString = super.toString
 }
