@@ -2,9 +2,12 @@ package io.suggest.sc.sjs.c.scfsm.init
 
 import io.suggest.common.event.WndEvents
 import io.suggest.sc.sjs.c.scfsm.ScFsmStub
+import io.suggest.sc.sjs.c.scfsm.ust.IUrl2State
 import io.suggest.sc.sjs.m.magent.{OrientationChange, WndResize}
+import io.suggest.sc.sjs.util.router.srv.SrvRouter
 import io.suggest.sc.sjs.v.global.DocumentView
 import io.suggest.sc.sjs.vm.SafeWnd
+import org.scalajs.dom
 
 /**
  * Suggest.io
@@ -13,7 +16,7 @@ import io.suggest.sc.sjs.vm.SafeWnd
  * Description: Поддержка состояний инициализации выдачи.
  * Это обычно синхронные состояния, которые решают на какое состояние переключаться при запуске.
  */
-trait Init extends ScFsmStub {
+trait Init extends ScFsmStub with IUrl2State {
 
   /** Трейт для сборки состояния самой первой инициализации.
     * Тут происходит normal-init, но дополнительно может быть строго одноразовая логика.
@@ -21,6 +24,10 @@ trait Init extends ScFsmStub {
   protected trait FirstInitStateT extends FsmState {
     override def afterBecome(): Unit = {
       super.afterBecome()
+
+      // Запускаем инициализацию js-роутера в фоне.
+      SrvRouter.getRouter()
+
       // TODO Это нужно вообще или нет?
       DocumentView.initDocEvents()
 
@@ -43,14 +50,9 @@ trait Init extends ScFsmStub {
     /** Действия, которые вызываются, когда это состояние выставлено в актор. */
     override def afterBecome(): Unit = {
       super.afterBecome()
-      // TODO Десериализовывать состояние из URL и выбирать состояние.
-      // Сразу переключаемся на новое состояние.
-      become(_geoScInitState)
+      // Десериализовывать состояние из текущего URL и перейти к нему.
+      _initFromUrlHash( dom.window.location.hash )
     }
-
-    /** Состояние инициализации решает, что необходимо запросить геолокацию у браузера.
-      * Такое происходит, когда нет данных состояния в URL. */
-    protected def _geoScInitState: FsmState
 
   }
 

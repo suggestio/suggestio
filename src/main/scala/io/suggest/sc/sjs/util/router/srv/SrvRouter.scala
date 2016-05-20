@@ -6,7 +6,6 @@ import org.scalajs.dom
 
 import scala.concurrent.{Promise, Future}
 import scala.scalajs.js
-import scala.scalajs.js.UndefOr
 
 /**
  * Suggest.io
@@ -24,17 +23,16 @@ object SrvRouter {
    */
   def getRouter(): Future[routes.type] = {
     val wnd = dom.window : WindowWithRouterSafe
-    val routerUndef = UndefOr.undefOr2ops( wnd.jsRoutes )
 
-    if (routerUndef.nonEmpty) {
+    if (wnd.jsRoutes.nonEmpty) {
       // Роутер уже на странице и готов к работе. Такое возможно, если скрипт роутера был загружен до начала исполнения этого модуля.
-      Future.successful( routerUndef.get )
+      Future.successful( wnd.jsRoutes.get )
 
     } else {
       // Нет готового js-роутера. Нужно запросить его с сервера.
       val p = Promise[routes.type]()
       // Возможно, код уже запрашивается с сервера, и тогда routes AsyncInit функция будет уже выставлена.
-      val asyncInitOpt = UndefOr.undefOr2ops( wnd.sioScJsRoutesAsyncInit )
+      val asyncInitOpt = wnd.sioScJsRoutesAsyncInit
 
       /** Функция для исполнения фьючерса. */
       def pSuccessF(): Unit = {

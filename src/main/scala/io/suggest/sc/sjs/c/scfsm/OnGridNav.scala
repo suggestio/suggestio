@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.c.scfsm
 
 import io.suggest.sc.sjs.c.scfsm.grid.{OnGrid, PanelGridRebuilder}
+import io.suggest.sc.sjs.c.scfsm.ust.StateToUrlT
 import io.suggest.sc.sjs.m.mhdr.{HideNavClick, LogoClick}
 import io.suggest.sc.sjs.m.mnav.NodeListClick
 import io.suggest.sc.sjs.m.msrv.nodes.find.{MFindNodes, MFindNodesArgsDfltImpl, MFindNodesResp}
@@ -23,7 +24,7 @@ import scala.util.Failure
  * Created: 10.08.15 15:54
  * Description: Аддон для состояний сетки с открытой панелью.
  */
-trait OnGridNav extends OnGrid with UrlStateT {
+trait OnGridNav extends OnGrid with StateToUrlT {
 
   protected trait _OnGridNav extends OnGridStateT with PanelGridRebuilder {
 
@@ -72,7 +73,7 @@ trait OnGridNav extends OnGrid with UrlStateT {
         )
         become(_onHideNavState, sd1)
 
-        UrlStates.pushCurrState()
+        State2Url.pushCurrState()
       }
     }
 
@@ -105,6 +106,7 @@ trait OnGridNav extends OnGrid with UrlStateT {
         for (showBtn <- HShowNavBtn.find()) {
           showBtn.hide()
         }
+
         val grid2 = RebuildGridOnPanelOpen(sd0, screen, nroot).execute()
 
         // Размыть плитку в фоне, если экран маловат.
@@ -118,7 +120,7 @@ trait OnGridNav extends OnGrid with UrlStateT {
         )
         _stateData = sd2
 
-        UrlStates.pushCurrState()
+        State2Url.pushCurrState()
       }
 
       for (hbtns <- HBtns.find()) {
@@ -171,7 +173,7 @@ trait OnGridNav extends OnGrid with UrlStateT {
       become(_navPanelReadyState)
     }
 
-    override def receiverPart: Receive = super.receiverPart orElse {
+    override def receiverPart: Receive = super.receiverPart.orElse {
       // Положительный ответ от сервера со списком узлов.
       case resp: MFindNodesResp =>
         _findNodesResp(resp)

@@ -8,7 +8,8 @@ import io.suggest.sjs.common.geom.Coord2dD
 import io.suggest.sjs.common.model.{MHand, MHands}
 import io.suggest.sc.ScConstants.Focused.FAd.KBD_SCROLL_STEP_PX
 import io.suggest.sc.sjs.c.scfsm.grid.OnGridBase
-import io.suggest.sc.sjs.c.scfsm.{ResizeDelayed, ScFsmStub, UrlStateT}
+import io.suggest.sc.sjs.c.scfsm.ust.StateToUrlT
+import io.suggest.sc.sjs.c.scfsm.{ResizeDelayed, ScFsmStub}
 import io.suggest.sjs.common.controller.DomQuick
 import org.scalajs.dom.{KeyboardEvent, MouseEvent, TouchEvent}
 import org.scalajs.dom.ext.KeyCode
@@ -242,7 +243,7 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
 
 /** Аддон для [[io.suggest.sc.sjs.c.scfsm.ScFsm]] с трейт-реализацией состояния
   * спокойного нахождения в focused-выдаче. */
-trait OnFocus extends OnFocusBase with UrlStateT {
+trait OnFocus extends OnFocusBase with StateToUrlT {
 
   /** Состояние нахождения в фокусе одной карточки.
     * Помимо обработки сигналов это состояние готовит соседние карточки к отображению. */
@@ -355,7 +356,7 @@ trait OnFocus extends OnFocusBase with UrlStateT {
       }     // for()
 
       // Сохранить текущее состояние в URL.
-      UrlStates.pushCurrState()
+      State2Url.pushCurrState()
     }       // afterBecome()
 
 

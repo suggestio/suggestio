@@ -7,6 +7,7 @@ import io.suggest.sjs.common.vm.find.FindDiv
 import io.suggest.sjs.common.vm.style.ShowHideDisplayT
 import org.scalajs.dom.raw.HTMLDivElement
 import io.suggest.sc.ScConstants.NavPane.ROOT_ID
+import io.suggest.sc.sjs.util.logs.ScSjsLogger
 
 /**
  * Suggest.io
@@ -20,7 +21,7 @@ object NRoot extends FindDiv {
 }
 
 
-trait NRootT extends VmT with ShowHideDisplayT with GridOffsetCalc {
+trait NRootT extends VmT with ShowHideDisplayT with GridOffsetCalc with ScSjsLogger {
 
   override type T = HTMLDivElement
 

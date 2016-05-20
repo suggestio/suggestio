@@ -46,7 +46,7 @@ trait Phase
     override def _onTouchStartState = new FocTouchStartState
   }
   /** Состояние закрытия focused-выдачи с возвратом в плитку. */
-  class FocClosingState extends FocClosingStateT with BackToGridState
+  class FocClosingState extends FocClosingStateT with IBackToGridState
 
 
   // Переключение focused-карточек в выдаче.

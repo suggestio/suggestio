@@ -1,8 +1,9 @@
 package io.suggest.sc.sjs.vm.util
 
-import io.suggest.common.geom.d2.ISize2di
 import io.suggest.sc.sjs.m.mgrid.MGridState
 import io.suggest.sc.sjs.m.msc.IScSd
+import io.suggest.sjs.common.msg.WarnMsgs
+import io.suggest.sjs.common.util.ISjsLogger
 import io.suggest.sjs.common.vm.style.{StyleDisplayT, StyleWidth}
 import org.scalajs.dom.raw.HTMLElement
 
@@ -15,7 +16,7 @@ import org.scalajs.dom.raw.HTMLElement
  *
  * Трейт подмешивается в ModelView'ы панелей и вызывается из ScFsm для вычисления новых параметров плитки.
  */
-trait GridOffsetCalc extends StyleDisplayT with StyleWidth {
+trait GridOffsetCalc extends StyleDisplayT with StyleWidth with ISjsLogger {
 
   override type T <: HTMLElement
 
@@ -35,17 +36,17 @@ trait GridOffsetCalc extends StyleDisplayT with StyleWidth {
 
     /** Для дедубликации рассчетов дополнительной ширины формула вынесена сюда. */
     def _getWidthAdd: Int = {
-      (screen.width - mgs.contSz.get.cw) / 2
+      val widthAddOpt = for {
+        contSz  <- sd0.grid.state.contSz
+        scr     <- sd0.common.screen
+      } yield {
+        (scr.width - contSz.cw) / 2
+      }
+      widthAddOpt.getOrElse {
+        warn( WarnMsgs.GRID_CONT_SZ_MISSING )
+        0
+      }
     }
-
-    /** Состояние сетки, передаётся из состояния FSM. */
-    protected def mgs = sd0.grid.state
-
-    /** Данные по экрану устройства. */
-    def screen: ISize2di = sd0.common.screen.get     // TODO Ошибки тут быть не должно, но выглядит это как-то некрасиво.
-
-    /** Если mgs указывает на необходимость нулевого оффсета, то её следует послушать. */
-    //def canNonZeroOffset: Boolean = mgs.canNonZeroOffset
 
     /** Размер сдвига в ячейках сетки. */
     def cellOffset = 2
@@ -62,7 +63,7 @@ trait GridOffsetCalc extends StyleDisplayT with StyleWidth {
         setWidthPx(_getWidthAdd + gridOffsetMinWidthPx)
         cellOffset
       }
-      saveNewOffsetIntoGridState(mgs, cellOff)
+      saveNewOffsetIntoGridState(sd0.grid.state, cellOff)
     }
 
   }

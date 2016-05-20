@@ -1,7 +1,8 @@
 package io.suggest.sc.sjs.c.scfsm.node
 
 import io.suggest.sc.ScConstants.Welcome
-import io.suggest.sc.sjs.c.scfsm.{UrlStateT, grid}
+import io.suggest.sc.sjs.c.scfsm.grid
+import io.suggest.sc.sjs.c.scfsm.ust.StateToUrlT
 import io.suggest.sc.sjs.m.magent.IVpSzChanged
 import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
 import io.suggest.sc.sjs.m.mwc.{WcClick, WcHideState, WcTimeout}
@@ -22,7 +23,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
   * Данный Welcome-контейнер трейтов получил более широкое назначение:
   * welcome-фаза-состояние или трейты для его сборки.
   */
-trait Welcome extends grid.OnGrid with UrlStateT {
+trait Welcome extends grid.OnGrid with StateToUrlT {
 
   /** Трейт сборки состояния приветствия узла.
     * Изначально, это был зоопарк NodeInit_* состояний, потом пришлось объединять для упрощения обработки screen resize.
@@ -96,7 +97,7 @@ trait Welcome extends grid.OnGrid with UrlStateT {
         }
       }
 
-      UrlStates.pushCurrState()
+      State2Url.pushCurrState()
     }
 
 
@@ -189,8 +190,9 @@ trait Welcome extends grid.OnGrid with UrlStateT {
     // По хорошему вообще надо бы, чтобы этого всего здесь не было.
     // Изначально планировалось использовать OnGridBase, но дробление OnGridStateT на трейты вызывает
     // только усложнение кода и возможные скрытые дефекты. Поэтому наследуется целиковый OnGridStateT.
-    override protected final def _loadMoreState: FsmState = null
-    override protected final def _startFocusOnAdState: FsmState = null
+    // final были удалены, т.к. мешают активному использованию этого трейта.
+    override protected def _loadMoreState: FsmState = null
+    override protected def _startFocusOnAdState: FsmState = null
 
   }
 

@@ -4,10 +4,10 @@ import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.m.mgrid.{IGridData, MGridData}
 import io.suggest.sc.sjs.m.msc.{IScSd, MScSd}
 import io.suggest.sc.sjs.util.grid.builder.V1Builder
+import io.suggest.sc.sjs.util.logs.ScSjsLogger
 import io.suggest.sc.sjs.vm.grid.{GBlock, GContainer, GContent}
 import io.suggest.sc.sjs.vm.util.GridOffsetCalc
 import io.suggest.sjs.common.model.browser.IBrowser
-import io.suggest.sjs.common.util.SjsLogger
 
 /**
  * Suggest.io
@@ -22,7 +22,7 @@ trait GridBuild {
   protected def _gridAppendAnimated: Boolean = true
 
   /** Частичная реализация grid builder под нужды FSM-MVM-архитектуры. */
-  protected trait GridBuilderT extends V1Builder with SjsLogger {
+  protected trait GridBuilderT extends V1Builder with ScSjsLogger {
     override type BI = GBlock
     def browser: IBrowser
 

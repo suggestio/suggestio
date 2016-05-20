@@ -1,9 +1,10 @@
 package io.suggest.sc.sjs.c.scfsm
 
+import io.suggest.sc.sjs.c.scfsm.ust.Url2StateT
 import io.suggest.sc.sjs.m.msc.{IScSd, MScSd}
 import io.suggest.sc.sjs.m.msearch.MTabs
+import io.suggest.sc.sjs.util.logs.ScSjsLogger
 import io.suggest.sjs.common.fsm._
-import io.suggest.sjs.common.util.SjsLogger
 
 /**
  * Suggest.io
@@ -13,7 +14,7 @@ import io.suggest.sjs.common.util.SjsLogger
  */
 object ScFsm
   extends SjsFsmImpl
-  with SjsLogger
+  with ScSjsLogger
   with init.Phase
   with node.States
   with grid.Append with grid.Plain with grid.LoadMore
@@ -21,6 +22,7 @@ object ScFsm
   with search.OnGeo
   with search.tags.Opened
   with foc.Phase
+  with Url2StateT
   //with LogBecome
 {
 
@@ -55,18 +57,41 @@ object ScFsm
    *--------------------------------------------------------------------------------*/
   // TODO может перекинуть классы-реализации внутрь node.States + добавить метод для выхода из фазы на OnPlainGrid?
 
-  protected trait ProcessIndexReceivedUtil extends super.ProcessIndexReceivedUtil {
-    override protected def _nodeInitWelcomeState  = new NodeInit_Welcome_AdsWait_State
+  /** Реализация состояния-получения-обработки индексной страницы. */
+  class NodeInit_GetIndex_WaitIndex_State extends NodeInit_GetIndex_WaitIndex_StateT {
+    override def _onNodeIndexFailedState  : FsmState      = this
+    override def _nodeInitWelcomeState    : FsmState      = new NodeInit_Welcome_AdsWait_State
   }
 
-  /** Реализация состояния-получения-обработки индексной страницы. */
-  class NodeInit_GetIndex_WaitIndex_State extends NodeInit_GetIndex_WaitIndex_StateT with ProcessIndexReceivedUtil {
-    override protected def _onNodeIndexFailedState      = this
+
+  /** Инициализация node-выдачи с переходом на панель навигации. */
+  class NodeInit_GetIndex_WaitIndex_WithNav_State extends NodeInit_GetIndex_WaitIndex_State {
+    override def _nodeInitWelcomeState = new NodeInit_Welcome_AdsWait_WithNav_State
   }
+  /** Welcoming node-выдачи с открытой панелью навигации. */
+  class NodeInit_Welcome_AdsWait_WithNav_State
+    extends NodeInit_Welcome_AdsWait_State
+    with OnGridNavLoadListStateT
+    with OnGridStateT
+  {
+    override def _navPanelReadyState            = null
+    override def _onHideNavState                = null
+    override def _nodeInitDoneState             = new OnGridNavReadyState
+  }
+
 
   /** Состояние инициализации выдачи узла: приветствие + фоновая подгрузка карточек. */
   class NodeInit_Welcome_AdsWait_State extends NodeInit_Welcome_AdsWait_StateT {
-    override def _nodeInitDoneState                     = new OnPlainGridState
+    override def _nodeInitDoneState: FsmState = {
+      /*val sd0 = _stateData
+      if (sd0.nav.panelOpened) {
+        new OnGridNavLoadListState
+      } else if (sd0.search.opened) {
+        _searchTab2state(sd0)
+      } else {*/
+        new OnPlainGridState
+      //}
+    }
   }
 
   /*--------------------------------------------------------------------------------
@@ -95,7 +120,7 @@ object ScFsm
 
 
   /** Реализация IBackToGridState: выбор состояния для возврата в зависимости от открытости боковых панелей. */
-  protected trait BackToGridState extends IBackToGridState {
+  protected trait IBackToGridState extends super.IBackToGridState {
     override def _backToGridState: FsmState = {
       val sd0 = _stateData
       if (sd0.nav.panelOpened) {
@@ -107,7 +132,8 @@ object ScFsm
       }
     }
   }
-  class GridLoadMoreState extends OnGridLoadingMoreStateT with GridBlockClickStateT with BackToGridState {
+
+  class GridLoadMoreState extends OnGridLoadingMoreStateT with GridBlockClickStateT with IBackToGridState {
     override protected def _adsLoadedState = _backToGridState
     override protected def _findAdsFailedState = _backToGridState
   }
@@ -147,9 +173,5 @@ object ScFsm
   }
   class OnGridNavReadyState extends OnGridNavReadyStateT with _OnGridNav with _NodeSwitchState with OnGridStateT
 
-
-  /*--------------------------------------------------------------------------------
-   * Состояния focused-выдачи.
-   *--------------------------------------------------------------------------------*/
 
 }

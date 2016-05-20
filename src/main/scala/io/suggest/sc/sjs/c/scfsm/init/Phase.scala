@@ -20,10 +20,6 @@ trait Phase
   /** Выход из фазы начальной инициализации и геолокации. */
   protected def _initPhaseExit_OnWelcomeGridWait_State: FsmState
 
-  /** Частичная реализация для NormalInitStateT в целях дедубликации кода. */
-  protected trait NormalInitStateT extends super.NormalInitStateT {
-    override protected def _geoScInitState = new GeoScInitState
-  }
 
   /** Частичная реализация ProcessIndexReceivedUtil в целях дедубликации кода. */
   protected trait ProcessIndexReceivedUtil extends super.ProcessIndexReceivedUtil {

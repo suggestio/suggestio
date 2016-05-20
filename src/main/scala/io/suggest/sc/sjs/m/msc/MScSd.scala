@@ -5,6 +5,10 @@ import io.suggest.sc.sjs.m.mgeo._
 import io.suggest.sc.sjs.m.mgrid.{MGridData, MGridState}
 import io.suggest.sc.sjs.m.mnav.MNavState
 import io.suggest.sc.sjs.m.msearch.MSearchSd
+import io.suggest.sc.sjs.util.logs.ScSjsLogger
+import io.suggest.sjs.common.msg.WarnMsgs
+
+import scala.scalajs.js.URIUtils
 
 /**
  * Suggest.io
@@ -12,6 +16,98 @@ import io.suggest.sc.sjs.m.msearch.MSearchSd
  * Created: 22.06.15 17:33
  * Description: Модель состояния конечного автомата интерфейса выдачи.
  */
+
+object MScSd extends ScSjsLogger {
+
+  import io.suggest.sc.ScConstants.ScJsState._
+
+  type AccEl_t  = (String, Any)
+  type Acc_t    = List[AccEl_t]
+
+  /** Сериализация значимых частей состояния в список ключ-значение. */
+  def toUrlHashAcc(sd0: MScSd): Acc_t = {
+    var acc: List[(String, Any)] = Nil
+
+    // Пока пишем generation, но наверное это лучше отключить, чтобы в режиме iOS webapp не было повторов.
+    acc ::= GENERATION_FN -> sd0.common.generation
+
+    // Отработка состояния левой панели.
+    val npo = sd0.nav.panelOpened
+    if (npo) {
+      acc ::= GEO_SCR_OPENED_FN -> npo
+    }
+
+    // Отрабатываем состояние правой панели.
+    val spo = sd0.search.opened
+    if (spo) {
+      acc = CAT_SCR_OPENED_FN -> spo ::
+        SEARCH_TAB_FN -> sd0.search.currTab.id ::
+        acc
+    }
+
+    // Отработать focused-выдачу, если она активна.
+    for (focSd <- sd0.focused; focAdId <- focSd.currAdId) {
+      acc ::= FADS_CURRENT_AD_ID_FN -> focAdId
+    }
+
+    // Отработать id текущего узла.
+    for (nodeId <- sd0.common.adnIdOpt) {
+      acc ::= ADN_ID_FN -> nodeId
+    }
+
+    acc
+  }
+
+
+  /** Сериализация списк ключ-значение в строку для URL.
+    *
+    * @param acc Выхлоп toUrlHashAcc().
+    * @return Строка, пригодная для записи в URL.
+    */
+  def acc2Qs(acc: TraversableOnce[AccEl_t]): String = {
+    acc.toIterator
+      .map { kv =>
+        kv.productIterator
+          .map { s =>
+            URIUtils.encodeURIComponent(s.toString)
+          }
+          .mkString("=")
+      }
+      .mkString("&")
+  }
+
+
+  /** Парсинг Qs в строковые токены..
+    *
+    * @param qs Выхлоп acc2Qs().
+    * @return Распарсенные токены QS в прямом порядке.
+    */
+  def parseFromQs(qs: String): Map[String, String] = {
+    qs.split('&')
+      .iterator
+      .flatMap { kvStr =>
+        if (kvStr.isEmpty) {
+          Nil
+        } else {
+          kvStr.split('=') match {
+            case arr if arr.length == 2 =>
+              val arr2 = arr.iterator
+                .map(URIUtils.decodeURIComponent)
+              val k2 = arr2.next()
+              val v2 = arr2.next()
+              List(k2 -> v2)
+
+            case other =>
+              warn( WarnMsgs.MSC_STATE_URL_HASH_UNKNOWN_TOKEN + " " + other )
+              Iterator.empty
+          }
+        }
+      }
+      .toMap
+  }
+
+}
+
 
 /** Интерфейс контейнера данный полного состояния выдачи. */
 trait IScSd {
