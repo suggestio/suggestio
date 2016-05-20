@@ -1,6 +1,5 @@
 syntax: glob
 
-logs
 project/project
 project/target
 target
