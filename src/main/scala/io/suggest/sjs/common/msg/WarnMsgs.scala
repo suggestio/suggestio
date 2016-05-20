@@ -50,4 +50,12 @@ object WarnMsgs extends MsgsStaticT {
 
   def NODE_WELCOME_MISSING      = E(18)
 
+  def MSC_STATE_URL_HASH_UNKNOWN_TOKEN = E(19)
+
+  def GEN_NUMBER_PARSE_ERROR            = E(20)
+  def NAV_PANEL_OPENED_PARSE_ERROR      = E(21)
+  def SEARCH_PANEL_OPENED_PARSE_ERROR   = E(22)
+
+  def GRID_CONT_SZ_MISSING              = E(23)
+
 }
