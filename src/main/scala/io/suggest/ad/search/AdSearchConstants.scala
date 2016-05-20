@@ -9,8 +9,6 @@ package io.suggest.ad.search
 object AdSearchConstants {
 
   def PRODUCER_ID_FN     = "shopId"
-  @deprecated("categories has been replaced with tags", "2015")
-  def CAT_ID_FN          = "catId"
   def LEVEL_ID_FN        = "level"
   def FTS_QUERY_FN       = "q"
   def RESULTS_LIMIT_FN   = "size"
@@ -21,9 +19,10 @@ object AdSearchConstants {
   def GEO_MODE_FN        = "geo"
   def SCREEN_INFO_FN     = "screen"
   def LAST_PROD_ID_FN    = "lpi"
+  def WITHOUT_IDS_FN     = "woi"
 
   /** 2015.aug.26: Название опционального поля с флагом того, разрешено ли серверу возвращать
-    * index answert вместо focused ads. */
+    * index answer вместо focused ads. */
   def OPEN_INDEX_AD_ID_FN   = "n"
 
   /**
