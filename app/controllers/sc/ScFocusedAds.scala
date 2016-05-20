@@ -47,9 +47,6 @@ trait ScFocusedAdsBase
     /** Параллельный рендер блоков, находящихся за пределом экрана, должен будет возращать результат этого типа для каждого блока. */
     type OBT
 
-    // TODO Не искать вообще карточки, если firstIds.len >= adSearch.size
-    // TODO Выставлять offset для поиска с учётом firstIds?
-
     def _adSearch: FocusedAdsSearchArgs
     def _scStateOpt: Option[ScJsState]
     implicit def _request: IReq[_]
@@ -73,7 +70,7 @@ trait ScFocusedAdsBase
 
       } else {
         // Все firstIds перечислены, возвращаемый размер не подразумевает отдельного поиска.
-        Future successful Nil
+        Future.successful( Nil )
       }
     }
 
@@ -130,7 +127,7 @@ trait ScFocusedAdsBase
         }
         fut
       } else {
-        Future successful Nil
+        Future.successful( Nil )
       }
     }
 
@@ -148,19 +145,18 @@ trait ScFocusedAdsBase
       }
     }
 
-    def prodIdsFut: Future[Seq[String]] = {
+    def prodIdsFut: Future[Set[String]] = {
       for (mads2 <- mads2Fut) yield {
         val iter = for {
           mad <- mads2.iterator
-          e   <- mad.edges.out.valuesIterator
+          e   <- mad.edges.withPredicateIter(MPredicates.OwnedBy)
           // TODO В теории тут может выскочить person, который узлом-продьюсером не является.
           // Такое возможно, если пользователи будут напрямую владеть карточками.
-          if e.predicate == MPredicates.OwnedBy
           nodeId <- e.nodeIds
         } yield {
           nodeId
         }
-        iter.toSeq
+        iter.toSet
       }
     }
 
@@ -193,18 +189,17 @@ trait ScFocusedAdsBase
       val _mads2Fut = mads2Fut
       val _ctx = ctx
       val _withCssClasses = withCssClasses
-      _mads2Fut flatMap { mads =>
+      _mads2Fut.flatMap { mads =>
         Future.traverse(mads) { mad =>
-          scUtil.focusedBrArgsFor(mad)(_ctx)
-            .map { brArgs =>
-              brArgs.copy(
-                inlineStyles    = false,
-                cssClasses      = _withCssClasses,
-                // 2015.mar.06: FIXME Это значение сейчас перезаписывается таким же через showcase.js. // TODO Они должны быть в стилях, а не тут.
-                topLeft         = brArgs.wideBg.map(_ => FocusedTopLeft),
-                apiVsn          = apiVsn
-              )
-            }
+          for (brArgs <- scUtil.focusedBrArgsFor(mad)(_ctx)) yield {
+            brArgs.copy(
+              inlineStyles    = false,
+              cssClasses      = _withCssClasses,
+              // 2015.mar.06: FIXME Это значение сейчас перезаписывается таким же через showcase.js. // TODO Они должны быть в стилях, а не тут.
+              topLeft         = brArgs.wideBg.map(_ => FocusedTopLeft),
+              apiVsn          = apiVsn
+            )
+          }
         }
       }
     }

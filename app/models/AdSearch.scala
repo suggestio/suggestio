@@ -53,7 +53,9 @@ object AdSearch extends CommaDelimitedStringSeq {
                    devScreenB   : QueryStringBindable[Option[DevScreen]],
                    apiVsnB      : QueryStringBindable[MScApiVsn]
                   ): QueryStringBindable[AdSearch] = {
+
     val strSeqB = cdssQsb
+
     new QueryStringBindable[AdSearch] with QsbKey1T {
       /** Десериализация URL qs в экземпляр [[AdSearch]]. */
       def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, AdSearch]] = {
@@ -77,6 +79,7 @@ object AdSearch extends CommaDelimitedStringSeq {
           geoEith           <- geoModeB.bind     (f(GEO_MODE_FN),           params)
           screenEith        <- devScreenB.bind   (f(SCREEN_INFO_FN),        params)
           openInxAdIdEith   <- strOptB.bind      (f(OPEN_INDEX_AD_ID_FN),   params)
+          withoutIdOptEith  <- strOptB.bind      (f(WITHOUT_IDS_FN),        params)
 
         } yield {
           for {
@@ -92,7 +95,10 @@ object AdSearch extends CommaDelimitedStringSeq {
             _openInxAdId    <- openInxAdIdEith.right
             _limitOpt       <- limitOptEith.right
             _offsetOpt      <- offsetOptEith.right
+            _withoutIdOpt   <- withoutIdOptEith.right
+
           } yield {
+
             // Расчитываем значение эджей.
             val _outEdges: Seq[ICriteria] = {
               val someTrue = Some(true)
@@ -103,6 +109,7 @@ object AdSearch extends CommaDelimitedStringSeq {
                   must        = someTrue
                 )
               }
+
               val rcvrCrOpt = for (rcvrId <- _rcvrIdOpt) yield {
                 Criteria(
                   nodeIds     = Seq( rcvrId ),
@@ -114,6 +121,7 @@ object AdSearch extends CommaDelimitedStringSeq {
               }
               (prodCrOpt ++ rcvrCrOpt).toSeq
             }
+
             // Собираем результат.
             new AdSearchImpl {
               override def apiVsn         = _apiVsn
@@ -134,14 +142,17 @@ object AdSearch extends CommaDelimitedStringSeq {
               override def geo            = _geo
               override def screen         = _screen
               override def openIndexAdId  = _openInxAdId
+              override def withoutIds     = _withoutIdOpt.toSeq
             }
           }
         }
       }
 
+
       /** Сериализация экземпляра [[AdSearch]] в URL query string. */
       def unbind(key: String, value: AdSearch): String = {
         val f = key1F(key)
+
         // Вычисляем id продьюсера.
         val _prodIdOpt = value.outEdges
             .iterator
@@ -150,6 +161,7 @@ object AdSearch extends CommaDelimitedStringSeq {
             .toStream
             // TODO Разбиндивать на весь список producers сразу надо?
             .headOption
+
         // Вычисляем данные по ресиверу.
         val (_rcvrIdOpt, _rcvrSlOpt) = {
           val v = value.outEdges
@@ -161,6 +173,7 @@ object AdSearch extends CommaDelimitedStringSeq {
           (v.flatMap(_.nodeIds.headOption),
             v.flatMap(_.sls.headOption).map(_.name))
         }
+
         // Собираем аргументы для сборки query string.
         Iterator(
           apiVsnB.unbind      (f(VSN),               value.apiVsn),
@@ -174,7 +187,8 @@ object AdSearch extends CommaDelimitedStringSeq {
           longOptB.unbind     (f(GENERATION_FN),     value.randomSortSeed),
           strOptB.unbind      (f(GEO_MODE_FN),       value.geo.toQsStringOpt),
           devScreenB.unbind   (f(SCREEN_INFO_FN),    value.screen),
-          strOptB.unbind      (f(OPEN_INDEX_AD_ID_FN), value.openIndexAdId)
+          strOptB.unbind      (f(OPEN_INDEX_AD_ID_FN), value.openIndexAdId),
+          strOptB.unbind      (f(WITHOUT_IDS_FN),    value.withoutIds.headOption)
         )
           .filter(!_.isEmpty)
           .mkString("&")

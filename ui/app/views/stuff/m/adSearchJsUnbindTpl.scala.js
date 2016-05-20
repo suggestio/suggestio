@@ -17,6 +17,7 @@
     add("@GENERATION_FN");
     add("@GEO_MODE_FN");
     add("@SCREEN_INFO_FN");
+    add("@WITHOUT_IDS_FN");
     @after
     add("@VSN", true);
   }
