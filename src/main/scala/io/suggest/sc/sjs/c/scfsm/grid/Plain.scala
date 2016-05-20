@@ -2,10 +2,8 @@ package io.suggest.sc.sjs.c.scfsm.grid
 
 import io.suggest.sc.sjs.c.scfsm.ust.StateToUrlT
 import io.suggest.sc.sjs.m.mhdr.{PrevNodeBtnClick, ShowNavClick, ShowSearchClick}
-import io.suggest.sc.sjs.vm.hdr.HRoot
 import io.suggest.sc.sjs.vm.hdr.btns.HNodePrev
 import io.suggest.sc.sjs.vm.layout.FsLoader
-import io.suggest.sc.sjs.vm.search.SRoot
 import io.suggest.sjs.common.msg.WarnMsgs
 import org.scalajs.dom.Event
 
@@ -20,34 +18,10 @@ trait Plain extends OnGrid with StateToUrlT {
 
     /** Реакция на запрос отображения поисковой панели. */
     protected def _showSearchClick(event: Event): Unit = {
-      val sd0 = _stateData
-      for (sroot <- SRoot.find(); screen <- sd0.common.screen) {
-        // Показать панель
-        sroot.show()
-        // Сменить набор кнопок в заголовке.
-        for (header <- HRoot.find()) {
-          header.showBackToIndexBtns()
-        }
-        // Размыть фоновую плитку, если узкий экран.
-        _maybeBlurGrid(sd0)
-
-        // Отребилдить плитку карточек, создав новое состояние выдачи.
-        val grid2 = RebuildGridOnPanelOpen(sd0, screen, sroot).execute()
-
-        val sd1 = sd0.copy(
-          search = sd0.search.copy(
-            opened = true
-          ),
-          grid = grid2
-        )
-
-        // Сменить состояние на то, где открыта панель поиска.
-        become(_nextStateSearchPanelOpened(sd1), sd1)
-        State2Url.pushCurrState()
-      }
+      become(_searchPanelOpeningState)
     }
 
-    protected def _nextStateSearchPanelOpened(sd1: SD): FsmState
+    protected def _searchPanelOpeningState: FsmState
 
 
     protected def _showNavClick(event: Event): Unit = {

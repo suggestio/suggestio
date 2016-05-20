@@ -103,16 +103,14 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm {
   protected[this] class DummyState extends FsmEmptyReceiverState
 
 
+  /** Доступ к инстансу состояния нахождения на голой плитке. */
+  protected def _onPlainGridState: FsmState
+
+
   /** Интерфейс для метода, дающего состояние переключения на новый узел.
     * Используется для возможности подмешивания реализации в несколько состояний. */
   protected trait INodeSwitchState {
     protected def _onNodeSwitchState: FsmState
   }
-
-  // Раскомментить override become() для логгирования переключения состояний:
-  /*override protected def become(nextState: FsmState): Unit = {
-    log(_state + " -> " + nextState)
-    super.become(nextState)
-  }*/
 
 }

@@ -2,8 +2,10 @@ package io.suggest.sc.sjs.c.scfsm.ust
 
 import io.suggest.sc.sjs.c.scfsm.ScFsm
 import io.suggest.sc.sjs.m.msc.{MScSd, MUrlUtil}
+import io.suggest.sc.sjs.m.msearch.MTabs
 import io.suggest.sc.sjs.util.router.srv.SrvRouter
 import io.suggest.sjs.common.msg.WarnMsgs
+
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 /**
@@ -109,8 +111,13 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
           }
         }
         .fold(sd0Search) { flag =>
+          // Определить текущую открытую вкладку поиска.
+          val mtab = tokens.get(SEARCH_TAB_FN)
+            .flatMap(MTabs.maybeWithName)
+            .getOrElse(sd0Search.currTab)
           sd0Search.copy(
-            opened = flag
+            opened  = flag,
+            currTab = mtab
           )
         }
     }
@@ -136,11 +143,7 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
           nav    = sd1Nav,
           search = sd1Search
         )
-        val nextState = if (sd1Nav.panelOpened) {
-          new NodeInit_GetIndex_WaitIndex_WithNav_State
-        } else {
-          new NodeInit_GetIndex_WaitIndex_State
-        }
+        val nextState = new NodeIndex_Get_Wait_State
         become(nextState, sd2c)
       }
     }

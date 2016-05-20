@@ -34,7 +34,7 @@ trait Welcome extends grid.OnGrid with StateToUrlT {
     * Считается, что запрос findAds уже запущен где-то снаружи, что заметно ускоряет работу при инициализации плитки,
     * но ущербно выглядит в целом. См. [[Index.ProcessIndexReceivedUtil]]#_nodeIndexReceived().
     */
-  trait NodeInit_Welcome_AdsWait_StateT
+  trait NodeWelcome_AdsWait_StateT
     extends OnGridStateT
   {
 

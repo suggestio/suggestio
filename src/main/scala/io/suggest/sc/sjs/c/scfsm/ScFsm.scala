@@ -1,8 +1,8 @@
 package io.suggest.sc.sjs.c.scfsm
 
 import io.suggest.sc.sjs.c.scfsm.ust.Url2StateT
-import io.suggest.sc.sjs.m.msc.{IScSd, MScSd}
-import io.suggest.sc.sjs.m.msearch.MTabs
+import io.suggest.sc.sjs.m.msc.MScSd
+import io.suggest.sc.sjs.m.msearch.{MTab, MTabs}
 import io.suggest.sc.sjs.util.logs.ScSjsLogger
 import io.suggest.sjs.common.fsm._
 
@@ -19,8 +19,7 @@ object ScFsm
   with node.States
   with grid.Append with grid.Plain with grid.LoadMore
   with OnGridNav
-  with search.OnGeo
-  with search.tags.Opened
+  with search.Opening with search.geo.OnGeo with search.tags.Opened
   with foc.Phase
   with Url2StateT
   //with LogBecome
@@ -48,7 +47,7 @@ object ScFsm
    *--------------------------------------------------------------------------------*/
 
   override protected def _initPhaseExit_OnWelcomeGridWait_State = {
-    new NodeInit_Welcome_AdsWait_State
+    new NodeWelcome_AdsWait_State
   }
 
 
@@ -58,19 +57,27 @@ object ScFsm
   // TODO может перекинуть классы-реализации внутрь node.States + добавить метод для выхода из фазы на OnPlainGrid?
 
   /** Реализация состояния-получения-обработки индексной страницы. */
-  class NodeInit_GetIndex_WaitIndex_State extends NodeInit_GetIndex_WaitIndex_StateT {
+  class NodeIndex_Get_Wait_State extends NodeIndex_Get_Wait_StateT {
     override def _onNodeIndexFailedState  : FsmState      = this
-    override def _nodeInitWelcomeState    : FsmState      = new NodeInit_Welcome_AdsWait_State
+    override def _nodeInitWelcomeState    : FsmState      = {
+      val sd0 = _stateData
+      if (sd0.nav.panelOpened) {
+        new NodeWelcome_AdsWait_WithNav_State
+      } else if (sd0.search.opened) {
+        new NodeWelcome_AdsWait_WithSearch_State
+      } else {
+        new NodeWelcome_AdsWait_State
+      }
+    }
   }
 
-
-  /** Инициализация node-выдачи с переходом на панель навигации. */
-  class NodeInit_GetIndex_WaitIndex_WithNav_State extends NodeInit_GetIndex_WaitIndex_State {
-    override def _nodeInitWelcomeState = new NodeInit_Welcome_AdsWait_WithNav_State
+  /** Welcoming выдачи узла дефолтовый. */
+  class NodeWelcome_AdsWait_State extends NodeWelcome_AdsWait_StateT {
+    override def _nodeInitDoneState: FsmState = _onPlainGridState
   }
   /** Welcoming node-выдачи с открытой панелью навигации. */
-  class NodeInit_Welcome_AdsWait_WithNav_State
-    extends NodeInit_Welcome_AdsWait_State
+  class NodeWelcome_AdsWait_WithNav_State
+    extends NodeWelcome_AdsWait_State
     with OnGridNavLoadListStateT
     with OnGridStateT
   {
@@ -78,21 +85,15 @@ object ScFsm
     override def _onHideNavState                = null
     override def _nodeInitDoneState             = new OnGridNavReadyState
   }
-
-
-  /** Состояние инициализации выдачи узла: приветствие + фоновая подгрузка карточек. */
-  class NodeInit_Welcome_AdsWait_State extends NodeInit_Welcome_AdsWait_StateT {
-    override def _nodeInitDoneState: FsmState = {
-      /*val sd0 = _stateData
-      if (sd0.nav.panelOpened) {
-        new OnGridNavLoadListState
-      } else if (sd0.search.opened) {
-        _searchTab2state(sd0)
-      } else {*/
-        new OnPlainGridState
-      //}
-    }
+  /** Welcome node-выдачи с открытой панелью поиска. */
+  class NodeWelcome_AdsWait_WithSearch_State
+    extends NodeWelcome_AdsWait_State
+    with SearchPanelOpeningStateT
+  {
+    override def _searchTabOpenedState = null
+    override def _nodeInitDoneState    = _searchTab2state()
   }
+
 
   /*--------------------------------------------------------------------------------
    * Фаза состояний работы с сеткой карточек (grid).
@@ -104,18 +105,11 @@ object ScFsm
     override def _loadMoreState = new GridLoadMoreState
   }
 
-  /** Превратить search-таб в соответствующее состояние. */
-  protected def _searchTab2state(sd1: IScSd): FsmState = {
-    sd1.search.currTab match {
-      case MTabs.Geo      => new OnSearchGeoState
-      case MTabs.Tags     => new OnSearchTagsState
-    }
-  }
 
   /** Реализация состояния, где карточки уже загружены. */
   class OnPlainGridState extends OnPlainGridStateT with OnGridStateT with _NodeSwitchState {
-    override def _nextStateSearchPanelOpened(sd1: MScSd) = _searchTab2state(sd1)
     override protected def _navLoadListState = new OnGridNavLoadListState
+    override protected def _searchPanelOpeningState = new SearchPanelOpeningState
   }
 
 
@@ -126,9 +120,9 @@ object ScFsm
       if (sd0.nav.panelOpened) {
         new OnGridNavReadyState
       } else if (sd0.search.opened) {
-        _searchTab2state(sd0)
+        _searchTab2state()
       } else {
-        new OnPlainGridState
+        _onPlainGridState
       }
     }
   }
@@ -138,40 +132,59 @@ object ScFsm
     override protected def _findAdsFailedState = _backToGridState
   }
 
-  /*--------------------------------------------------------------------------------
-   * Состояния нахождения в сетке и на поисковой панели одновременно (grid + search).
-   *--------------------------------------------------------------------------------*/
-  /** Общий код для реакции на закрытие search-панели. */
-  protected[this] trait _SearchClose extends OnSearchStateT {
-    override def _nextStateSearchPanelClosed = new OnPlainGridState
-  }
 
-  /** Состояние, где и сетка есть, и поисковая панель отрыта на вкладке географии. */
-  class OnSearchGeoState extends OnGridSearchGeoStateT with _SearchClose with OnGridStateT {
-    override def _tabSwitchedFsmState = new OnSearchTagsState
-  }
-
-  /** Состояние, где открыта вкладка хеш-тегов на панели поиска. */
-  class OnSearchTagsState extends OnSearchTagsStateT with _SearchClose with OnGridStateT {
-    override def _tabSwitchedFsmState = new OnSearchGeoState
-  }
+  /** Доступ к инстансу состояния нахождения на голой плитке без открытых панелей/карточек. */
+  override protected def _onPlainGridState = new OnPlainGridState
 
 
   /*--------------------------------------------------------------------------------
    * Состояния нахождения в сетке и на панели навигации одновременно.
    *--------------------------------------------------------------------------------*/
+
   /** Вспомогательный трейт для сборки  */
   protected trait _OnGridNav extends super._OnGridNav {
-    override def _onHideNavState = new OnPlainGridState
+    override def _onHideNavState = _onPlainGridState
   }
   /** Состояние отображения панели навигации с текущей подгрузкой списка карточек. */
   class OnGridNavLoadListState extends OnGridNavLoadListStateT with _OnGridNav with OnGridStateT {
     override def _navPanelReadyState = new OnGridNavReadyState
   }
   protected trait _NodeSwitchState extends INodeSwitchState {
-    override def _onNodeSwitchState = new NodeInit_GetIndex_WaitIndex_State
+    override def _onNodeSwitchState = new NodeIndex_Get_Wait_State
   }
   class OnGridNavReadyState extends OnGridNavReadyStateT with _OnGridNav with _NodeSwitchState with OnGridStateT
 
+
+  /*--------------------------------------------------------------------------------
+  * Состояния нахождения на панели поиска.
+  *--------------------------------------------------------------------------------*/
+
+  /** Превратить search-таб в соответствующее состояние. */
+  protected def _searchTab2state(mtab: MTab = _stateData.search.currTab): FsmState = {
+    mtab match {
+      case MTabs.Geo      => new OnSearchGeoState
+      case MTabs.Tags     => new OnSearchTagsState
+    }
+  }
+
+  /** Реализация интерфейса ISearchTabOpenedState. */
+  trait ISearchTabOpenedState extends super.ISearchTabOpenedState {
+    override def _searchTabOpenedState: FsmState = _searchTab2state()
+  }
+
+  /** Состояние раскрытия поисковой панели. */
+  class SearchPanelOpeningState extends SearchPanelOpeningStateT with ISearchTabOpenedState
+  /** Общий код для реакции на закрытие search-панели. */
+  protected[this] trait _SearchClose extends OnSearchStateT {
+    override def _nextStateSearchPanelClosed = _onPlainGridState
+  }
+  /** Состояние, где и сетка есть, и поисковая панель отрыта на вкладке географии. */
+  class OnSearchGeoState extends OnGridSearchGeoStateT with _SearchClose with OnGridStateT {
+    override def _tabSwitchedFsmState = new OnSearchTagsState
+  }
+  /** Состояние, где открыта вкладка хеш-тегов на панели поиска. */
+  class OnSearchTagsState extends OnSearchTagsStateT with _SearchClose with OnGridStateT {
+    override def _tabSwitchedFsmState = new OnSearchGeoState
+  }
 
 }

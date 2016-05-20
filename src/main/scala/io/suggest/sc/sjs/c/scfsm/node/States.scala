@@ -10,9 +10,8 @@ import io.suggest.sc.sjs.c.scfsm.grid.Append
  */
 trait States extends Index with Welcome with Append {
 
-
   /** Трейт состояния запуска запроса index и ожидания его исполнения. */
-  trait NodeInit_GetIndex_WaitIndex_StateT
+  trait NodeIndex_Get_Wait_StateT
     extends GetIndexStateT
     with WaitIndexStateT
 
