@@ -424,16 +424,16 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
 
 
   /** Внутренний метод для укорачивания кода парсеров ES SearchResponse. */
-  def searchRespMap[A](searchResp: SearchResponse)(f: SearchHit => A): Seq[A] = {
+  def searchRespMap[A](searchResp: SearchResponse)(f: SearchHit => A): Iterator[A] = {
     searchResp.getHits
       .iterator()
       .map(f)
-      .toSeq
   }
 
   /** Список результатов с source внутри перегнать в распарсенный список. */
   def searchResp2list(searchResp: SearchResponse): Seq[T] = {
     searchRespMap(searchResp)(deserializeSearchHit)
+      .toSeq
   }
 
   def deserializeSearchHit(hit: SearchHit): T = {
@@ -441,14 +441,26 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
   }
 
   /** Список результатов в список id. */
-  def searchResp2idsList(searchResp: SearchResponse): Seq[String] = {
-    searchRespMap(searchResp)(_.getId)
+  def searchResp2idsList(searchResp: SearchResponse): IdsSearchRespT = {
+    val hitsArr = searchResp.getHits.getHits
+    new IdsSearchRespT {
+      override def total: Long = {
+        searchResp.getHits.getTotalHits
+      }
+      override def length: Int = {
+        hitsArr.length
+      }
+      override def apply(idx: Int): String = {
+        hitsArr(idx).getId
+      }
+    }
   }
 
   def searchResp2fnList[T](searchResp: SearchResponse, fn: String): Seq[T] = {
     searchRespMap(searchResp) { hit =>
       hit.field(fn).getValue[T]
     }
+      .toSeq
   }
 
 
