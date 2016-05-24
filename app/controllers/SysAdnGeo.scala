@@ -578,7 +578,7 @@ class SysAdnGeo @Inject() (
 
     for {
       nodeIds <- mNodes.dynSearchIds(msearch)
-      nodes   <- mNodeCache.multiGet( nodeIds.toSet )
+      nodes   <- mNodeCache.multiGet( nodeIds.iterator.toSet )
     } yield {
       nodes
     }
@@ -605,7 +605,7 @@ class SysAdnGeo @Inject() (
         .iterator
         .filter(_.glevel.upper.isDefined)
         .find(_.shape.isInstanceOf[GeoShapeQuerable])
-        .fold [Future[Seq[String]]] (Future successful Nil) { geo =>
+        .fold [Future[Seq[String]]] (Future.successful(Nil)) { geo =>
           val shapeq = geo.shape.asInstanceOf[GeoShapeQuerable]
           val msearch = new MNodeSearchDfltImpl {
             override def limit = 1
@@ -622,7 +622,9 @@ class SysAdnGeo @Inject() (
               Seq(cr)
             }
           }
-          mNodes.dynSearchIds(msearch)
+          for (res <- mNodes.dynSearchIds(msearch)) yield {
+            res.iterator.toSeq
+          }
         }
     }
 

@@ -70,7 +70,9 @@ class SysMdr @Inject() (
         // Если нет paid-модерируемых карточек, то поискать бесплатные размещения.
         val fut = mNodes.dynSearchIds( args1.toNodeSearch )
         LOGGER.trace(s"rdrToNextAd(): No more paid advs, looking for free advs...\n $args")
-        fut.map(_.head)
+        for (res <- fut) yield {
+          res.head
+        }
       }
       .map { adId =>
         Redirect( routes.SysMdr.forAd(adId) )

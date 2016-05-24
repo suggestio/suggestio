@@ -24,25 +24,17 @@ import io.suggest.sc.ScConstants.ReqArgs.VSN
 object AdSearch extends CommaDelimitedStringSeq {
 
   /** Максимальное число результатов в ответе на запрос (макс. результатов на странице). */
-  def MAX_RESULTS_PER_RESPONSE    = 50
+  private def MAX_RESULTS_PER_RESPONSE    = 50
 
   /** Кол-во результатов на страницу по дефолту. */
-  def MAX_RESULTS_DFLT            = 20
+  private def MAX_RESULTS_DFLT            = 20
 
   /** Макс.кол-во сдвигов в страницах. */
-  def MAX_PAGE_OFFSET             = 20
+  private def MAX_PAGE_OFFSET             = 20
 
   /** Максимальный абсолютный сдвиг в выдаче. */
-  val MAX_OFFSET: Int = MAX_PAGE_OFFSET * MAX_RESULTS_PER_RESPONSE
+  private def MAX_OFFSET = MAX_PAGE_OFFSET * MAX_RESULTS_PER_RESPONSE
 
-
-
-  private implicit def eitherOpt2list[T](e: Either[_, Option[T]]): List[T] = {
-    e match {
-      case Left(_)  => Nil
-      case Right(b) => b.toList
-    }
-  }
 
   /** QSB для экземпляра сабжа. Неявно дергается из routes. */
   implicit def qsb(implicit
@@ -78,7 +70,6 @@ object AdSearch extends CommaDelimitedStringSeq {
           }
           geoEith           <- geoModeB.bind     (f(GEO_MODE_FN),           params)
           screenEith        <- devScreenB.bind   (f(SCREEN_INFO_FN),        params)
-          openInxAdIdEith   <- strOptB.bind      (f(OPEN_INDEX_AD_ID_FN),   params)
           withoutIdOptEith  <- strOptB.bind      (f(WITHOUT_IDS_FN),        params)
 
         } yield {
@@ -92,7 +83,6 @@ object AdSearch extends CommaDelimitedStringSeq {
             _screen         <- screenEith.right
             _rndSeed        <- rndSeedEith.right
             _qOpt           <- qOptEith.right
-            _openInxAdId    <- openInxAdIdEith.right
             _limitOpt       <- limitOptEith.right
             _offsetOpt      <- offsetOptEith.right
             _withoutIdOpt   <- withoutIdOptEith.right
@@ -141,7 +131,6 @@ object AdSearch extends CommaDelimitedStringSeq {
               override def randomSortSeed = _rndSeed
               override def geo            = _geo
               override def screen         = _screen
-              override def openIndexAdId  = _openInxAdId
               override def withoutIds     = _withoutIdOpt.toSeq
             }
           }
@@ -187,7 +176,6 @@ object AdSearch extends CommaDelimitedStringSeq {
           longOptB.unbind     (f(GENERATION_FN),     value.randomSortSeed),
           strOptB.unbind      (f(GEO_MODE_FN),       value.geo.toQsStringOpt),
           devScreenB.unbind   (f(SCREEN_INFO_FN),    value.screen),
-          strOptB.unbind      (f(OPEN_INDEX_AD_ID_FN), value.openIndexAdId),
           strOptB.unbind      (f(WITHOUT_IDS_FN),    value.withoutIds.headOption)
         )
           .filter(!_.isEmpty)
@@ -204,13 +192,13 @@ object AdSearch extends CommaDelimitedStringSeq {
 
   /** Быстрая сборка экземпляра AdSearch для поиска по producerId без лишней конкретики.
     * Используется шаблонами для краткой сборки экземпляров. */
-  def byProducerId(producerIds: String*): AdSearch = {
+  def byProducerId(producerIds: String *): AdSearch = {
     _adSearchEdge(MPredicates.OwnedBy, producerIds)
   }
 
   /** Быстрая сборка экземпляра AdSearch для поиска по producerId без лишней конкретики.
     * Используется шаблонами для краткой сборки экземпляров. */
-  def byRcvrId(rcvrIds: String*): AdSearch = {
+  def byRcvrId(rcvrIds: String *): AdSearch = {
     _adSearchEdge(MPredicates.Receiver, rcvrIds)
   }
 
@@ -273,9 +261,6 @@ trait AdSearch extends MNodeSearchDflt with PlayMacroLogsDyn { that =>
    */
   def firstIds      : Seq[String] = Nil
 
-  /** id карточки, для которой допускается вернуть index её продьюсера. */
-  def openIndexAdId : Option[String] = None
-
 
   def withOffset(offset1: Int): AdSearch = {
     new AdSearchWrapper {
@@ -304,7 +289,6 @@ trait AdSearchWrap_ extends AdSearch with MNodeSearchWrap {
   override def geo            = _dsArgsUnderlying.geo
   override def screen         = _dsArgsUnderlying.screen
   override def firstIds       = _dsArgsUnderlying.firstIds
-  override def openIndexAdId  = _dsArgsUnderlying.openIndexAdId
 
 }
 

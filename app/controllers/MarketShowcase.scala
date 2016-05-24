@@ -37,8 +37,8 @@ class MarketShowcase @Inject() (
   @Named("blk") override val blkImgMaker  : IMaker,
   override val mRemoteErrors      : MRemoteErrors,
   override val mMapNodes          : MMapNodes,
-  override val mCommonDi          : ICommonDi,
-  override val mProjectInfo       : MProjectInfo
+  override val mProjectInfo       : MProjectInfo,
+  override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
@@ -49,6 +49,7 @@ class MarketShowcase @Inject() (
   with ScIndexNode
   with ScSyncSiteGeo
   with ScAdsTile
+  with ScFocusedAdsV1
   with ScFocusedAdsV2
   with ScNodesList
   with ScBlockCss

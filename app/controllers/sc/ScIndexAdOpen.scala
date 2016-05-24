@@ -28,17 +28,18 @@ trait ScIndexAdOpen
 
   /** Тело экшена возврата медиа-кнопок расширено поддержкой переключения на index-выдачу узла-продьюсера
     * рекламной карточки, которая заинтересовала юзера. */
-  override protected def _focusedAds(logic: FocusedAdsLogicHttp)
-                                    (implicit request: IReq[_]): Future[Result] = {
-    val resFut = for {
-      madOpt <- mNodes.maybeGetById( logic._adSearch.openIndexAdId )
+  override protected def _focusedAds(logic: FocusedAdsLogicHttp): Future[Result] = {
+    import logic._request
 
-      // .get приведут к NSEE, это нормально.
-      producerId <- {
-        val prodId = madOpt
+    val resFut = for {
+      // Прочитать из хранилища указанную карточку.
+      madOpt <- mNodeCache.maybeGetByIdCached( logic._adSearch.focOpenIndexAdId )
+
+      // .get приведёт к NSEE, это нормально.
+      producerId = {
+        madOpt
           .flatMap(n2NodesUtil.madProducerId)
           .get
-        Future successful prodId
       }
 
       if logic.is3rdPartyProducer( producerId )
@@ -62,7 +63,7 @@ trait ScIndexAdOpen
         val prodFut = mNodeCache.getById(producerId)
           .map(_.get)
         // Как выяснилось, бывают карточки-сироты (продьюсер удален, карточка -- нет). Нужно сообщать об этой ошибке.
-        prodFut onFailure { case ex =>
+        prodFut.onFailure { case ex =>
           val msg = s"Producer node does not exist: adnId=$producerId for adIds=${logic._adSearch.firstIds}"
           if (ex.isInstanceOf[NoSuchElementException])
             LOGGER.error(msg)
@@ -82,7 +83,7 @@ trait ScIndexAdOpen
     }
 
     // Отрабатываем все возможные ошибки через вызов к super-методу.
-    resFut recoverWith { case ex: Throwable =>
+    resFut.recoverWith { case ex: Throwable =>
       // Продьюсер неизвестен, не подходит под критерии или переброска отключена.
       if ( !ex.isInstanceOf[NoSuchElementException] )
         LOGGER.error("_focusedAds(): Suppressing unexpected exception for " + logic._request.uri, ex)
@@ -103,8 +104,8 @@ trait ScIndexAdOpen
                                 (implicit request: IReq[_]): Future[Result] = {
     // Извлекаем MAdnNode втупую. exception будет перехвачен в recoverWith.
     val idxLogic = new ScIndexNodeSimpleHelper {
-      override def geoListGoBackFut   = Future successful Some(true)
-      override def adnNodeFut         = Future successful producer
+      override def geoListGoBackFut   = Future.successful( Some(true) )
+      override def adnNodeFut         = Future.successful( producer )
       override def isGeo              = false
       override implicit def _request  = request
       override def _reqArgs: ScReqArgs = new ScReqArgsDflt {

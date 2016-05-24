@@ -23,39 +23,49 @@ object FocusedAdsSearchArgs {
                    strOptB    : QueryStringBindable[Option[String]]
                   ): QueryStringBindable[FocusedAdsSearchArgs] = {
     new QueryStringBindable[FocusedAdsSearchArgs] with QsbKey1T {
+
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, FocusedAdsSearchArgs]] = {
+        val f = key1F(key)
         for {
-          maybeAdSearch       <- adSearchB.bind (key,                   params)
-          maybeWithHeadAd     <- boolOptB.bind  (WITH_HEAD_AD_FN,       params)
-          maybeFadsLastProdId <- strOptB.bind   (FADS_LAST_PROD_ID_FN,  params)
-          maybeOnlyWithAd     <- strOptB.bind   (ONLY_WITH_AD_ID_FN,    params)
+          maybeAdSearch       <- adSearchB.bind (key,                       params)
+          maybeWithHeadAd     <- boolOptB.bind  (WITH_HEAD_AD_FN,           params)
+          openInxAdIdEith     <- strOptB.bind   (f(OPEN_INDEX_AD_ID_FN),    params)
+          maybeAdIdLookup     <- strOptB.bind   (f(AD_ID_LOOKUP_FN),        params)
         } yield {
           for {
             _adSearch         <- maybeAdSearch.right
             _withHeadAd       <- maybeWithHeadAd.right
-            _fadsLastProdId   <- maybeFadsLastProdId.right
-            _onlyWithAdId     <- maybeOnlyWithAd.right
+            _openInxAdId      <- openInxAdIdEith.right
+            _adIdLookup       <- maybeAdIdLookup.right
           } yield {
             new FocusedAdsSearchArgsWrappedImpl {
               override def _dsArgsUnderlying  = _adSearch
-              override def withHeadAd         = _withHeadAd contains true
-              override def fadsLastProducerId = _fadsLastProdId
-              override def onlyWithAdId       = _onlyWithAdId
+              override def withHeadAd         = _withHeadAd.contains(true)
+              override def focOpenIndexAdId   = _openInxAdId
+              override def focAdIdLookup      = _adIdLookup
             }
           }
         }
       }
 
       override def unbind(key: String, value: FocusedAdsSearchArgs): String = {
-        boolOptB.unbind(WITH_HEAD_AD_FN, Some(value.withHeadAd)) +
-          "&" + adSearchB.unbind(key, value)
+        val f = key1F(key)
+        Iterator(
+          adSearchB .unbind     (key,                     value),
+          boolOptB  .unbind     (WITH_HEAD_AD_FN,         Some(value.withHeadAd)),
+          strOptB   .unbind     (f(OPEN_INDEX_AD_ID_FN),  value.focOpenIndexAdId),
+          strOptB   .unbind     (f(AD_ID_LOOKUP_FN),      value.focAdIdLookup)
+        )
+          .filter(_.nonEmpty)
+          .mkString("&")
       }
 
       /** Js-код поддержки интеграции модели с jsrouter. */
       override def javascriptUnbind: String = {
         scFocusedAdSearchJsUnbindTpl(KEY_DELIM).body
       }
-    }
+
+    } // new QSB[]
   }
 
 }
@@ -67,32 +77,29 @@ trait FocusedAdsSearchArgs extends AdSearch {
   /**
    * v1
    * Поле наличия или отсутствия head-ad рендера в json-ответе.
+   *
    * @return true: означает, что нужна начальная страница с html.
    *         false: возвращать только json-массив с отрендеренными блоками,
    *         без html-страницы с первой карточкой.
    */
   def withHeadAd: Boolean = false
 
-  /**
-   * v2
-   * Поле последнего id продьюсера из предыдущей цепочки focused ads.
-   * Пришло на смену флагу withHeadAd, которого стало не хватать.
-   *
-   * Пока собирались запилить, архитектура focused-выдачи изменилась, необходимость этой опции упала,
-   * и client-side реализация была отложена.
-   * @return Some(producerId) или None, если предыдущего запроса не было (когда offset = 0).
-   */
-  def fadsLastProducerId: Option[String] = None
+
+  /** id карточки, для которой допускается вернуть index её продьюсера. */
+  def focOpenIndexAdId : Option[String] = None
+
 
   /**
-   * v2
-   * Контроллер должен убедиться, что карточка с указанным id присутствует в ответе.
-   * Это необходимо на случай рассинхронизации offset на клиенте и на сервере.
-   * Такое возможно, если какая-то новая карточка опубликовалась, или скрылась.
-   * @return None, если дополнительно допиливать результат не требуется.
-   *         Some(madId), если необходимо проконтроллировать наличие указанной карточки в результате.
-   */
-  def onlyWithAdId: Option[String] = None
+    * v2
+    * Контроллер должен узнать начальные параметры текущей focused-выдачи для карточки с указанным id.
+    * присутствует в ответе.
+    *
+    * Это необходимо на случай неизвестности offset/size на клиенте.
+    *
+    * @return None, если дополнительно допиливать результат не требуется.
+    *         Some(madId), если необходимо проконтроллировать наличие указанной карточки в результате.
+    */
+  def focAdIdLookup: Option[String] = None
 
 }
 
@@ -113,8 +120,8 @@ trait FocusedAdsSearchArgsWrapper extends AdSearchWrapper_ with FocusedAdsSearch
   override type WT = FocusedAdsSearchArgs
 
   override def withHeadAd         = _dsArgsUnderlying.withHeadAd
-  override def fadsLastProducerId = _dsArgsUnderlying.fadsLastProducerId
-  override def onlyWithAdId       = _dsArgsUnderlying.onlyWithAdId
+  override def focOpenIndexAdId   = _dsArgsUnderlying.focOpenIndexAdId
+  override def focAdIdLookup      = _dsArgsUnderlying.focAdIdLookup
 
 }
 

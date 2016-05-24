@@ -179,12 +179,14 @@ class NodesUtil @Inject() (
       }
 
       // Случайно выбрать из списка id карточек только указанное кол-во карточек.
-      .flatMap { madIds =>
-        val count = madIds.size
+      .flatMap { madIdsRes =>
+        val count = madIdsRes.length
         val rnd = new Random()
-        val madIds2 = (0 until Math.min(count, count))
-          .iterator
-          .map { _ =>  madIds( rnd.nextInt(count) ) }
+        val madIds2 = for {
+          _ <- (0 until Math.min(count, count)).iterator
+        } yield {
+          madIdsRes( rnd.nextInt(count) )
+        }
         mNodes.multiGetRev(madIds2)
       }
 

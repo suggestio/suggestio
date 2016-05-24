@@ -47,26 +47,42 @@ trait ScFocusedAdsBase
     /** Параллельный рендер блоков, находящихся за пределом экрана, должен будет возращать результат этого типа для каждого блока. */
     type OBT
 
-    def _adSearch: FocusedAdsSearchArgs
+    /** Исходные критерии поиска карточек. */
+    val _adSearch: FocusedAdsSearchArgs
+    /** Sync-состояние выдачи, если есть. */
     def _scStateOpt: Option[ScJsState]
+
+    /** Текущий HTTP-реквест. */
     implicit def _request: IReq[_]
 
-    // TODO Не искать вообще карточки, если firstIds.len >= adSearch.size
-    // TODO Выставлять offset для поиска с учётом firstIds?
-    lazy val mads1Fut: Future[Seq[MNode]] = {
+
+    /** Критерии поиска focused-карточек.
+      * 2016.may.24: Future, т.к. критерии могут быть модифицированы по сложным методикам, см. v2-выдачу.
+      */
+    def _mads1SearchFut: Future[FocusedAdsSearchArgs] = {
       val adSearch0 = _adSearch
+      val adSearch1 = if (adSearch0.firstIds.isEmpty) {
+        adSearch0
+      } else {
+        // firstIds отфильтровываем, они через multiget будут получены.
+        new FocusedAdsSearchArgsWrapperImpl {
+          override def _dsArgsUnderlying  = _adSearch
+          override def firstIds           = Nil
+          override def withoutIds         = super.withoutIds ++ _adSearch.firstIds
+        }
+      }
+      Future.successful( adSearch1 )
+    }
+
+    /** Поиск focused-карточек. */
+    def mads1Fut: Future[Seq[MNode]] = {
+      val adSearch0 = _adSearch
+      // Не искать вообще карточки, если firstIds.len >= adSearch.size
       if (adSearch0.limit > adSearch0.firstIds.size) {
         // Костыль, т.к. сортировка forceFirstIds на стороне ES-сервера всё ещё не пашет:
-        val adSearch2 = if (adSearch0.firstIds.isEmpty) {
-          adSearch0
-        } else {
-          new FocusedAdsSearchArgsWrapperImpl {
-            override def _dsArgsUnderlying  = adSearch0
-            override def firstIds           = Nil
-            override def withoutIds         = adSearch0.firstIds
-          }
+        _mads1SearchFut.flatMap { searchArgs =>
+          mNodes.dynSearch(searchArgs)
         }
-        mNodes.dynSearch(adSearch2)
 
       } else {
         // Все firstIds перечислены, возвращаемый размер не подразумевает отдельного поиска.
@@ -83,16 +99,19 @@ trait ScFocusedAdsBase
       !hasProdAsRcvr
     }
 
+    /** Поисковые критерии для подсчёта общего кол-ва результатов. */
+    def madsCountSearch = _adSearch
     /** В countAds() можно отправлять и обычный adSearch: forceFirstIds там игнорируется. */
     def madsCountFut: Future[Long] = {
-      mNodes.dynCount(_adSearch)
+      mNodes.dynCount(madsCountSearch)
     }
     lazy val madsCountIntFut = madsCountFut.map(_.toInt)
 
     /**
      * 2014.jan.28: Если не найдены какие-то элементы, то сообщить об этом в логи.
      * Это нужно для более быстрого выявления проблем с валидными ссылками на несуществующие карточки.
-     * @param mads найденные рекламные карточки.
+      *
+      * @param mads найденные рекламные карточки.
      * @param ids id запрошенных рекламных карточек.
      */
     protected def logMissingFirstIds(mads: Seq[MNode], ids: Seq[String]): Unit = {
@@ -118,7 +137,7 @@ trait ScFocusedAdsBase
     }
 
     /** Первые карточки, если запрошены. */
-    lazy val firstAdsFut: Future[Seq[MNode]] = {
+    def firstAdsFut: Future[Seq[MNode]] = {
       if (fetchFirstAds) {
         val ids = _adSearch.firstIds
         val fut = mNodes.multiGet(ids)
@@ -246,10 +265,12 @@ trait ScFocusedAdsBase
       // touch-воздействие, чтобы запустить процесс. Сама карта будет опрошена в focAdsRenderArgsFor()
       prod2logoScrImgMapFut
 
+      val _firstAdIndexFut1 = firstAdIndexFut
       for {
         madsCountInt    <- madsCountIntFut
         mads4blkRender  <- _mads4blkRenderFut
         producersMap    <- _producersMapFut
+        firstAdIndex    <- _firstAdIndexFut1
         res <- {
           val (_, futs) = Lists.mapFoldLeft(mads4blkRender, acc0 = (firstAdIndex, blockHtmlRenderAcc0)) {
             case (acc0 @ (index, brAcc0), brArgs) =>
@@ -289,7 +310,8 @@ trait ScFocusedAdsBase
     /**
      * Отправить в очередь на исполнение рендер одного блока, заданного контейнером аргументов.
      * Метод должен вызываться в реализации логики из кода реализации метода renderOuterBlock().
-     * @param args Аргументы рендера блока.
+      *
+      * @param args Аргументы рендера блока.
      * @return Фьючерс с html-рендером одного блока.
      */
     def renderBlockHtml(args: IAdBodyTplArgs): Future[Html] = {
@@ -301,7 +323,8 @@ trait ScFocusedAdsBase
     /**
      * Рендер одного блока. В случае Html можно просто вызвать renderBlockHtml().
      * 11.jun.2015: Добавлена поддержка синхронного аккамулятора для передачи данных между вызовами этого метода.
-     * @param args Контейнер с данными для запуска рендера.
+      *
+      * @param args Контейнер с данными для запуска рендера.
      * @param brAcc0 Аккамулятор.
      * @return Фьючерс рендера и новый аккамулятор.
      */
@@ -327,7 +350,10 @@ trait ScFocusedAdsBase
     }
 
 
-    def firstAdIndex = _adSearch.offset
+    lazy val firstAdIndexFut = _firstAdIndexFut
+    def _firstAdIndexFut: Future[Int] = {
+      _mads1SearchFut.map(_.offset)
+    }
 
     /** Сборка аргументов для рендера focused-карточки, т.е. раскрытого блока + оформление продьюсера. */
     protected def focAdsRenderArgsFor(abtArgs: IAdBodyTplArgs): Future[IFocusedAdsTplArgs] = {
@@ -364,11 +390,13 @@ trait ScFocusedAdsBase
       val _producerFut = focAdProducerOptFut.map(_.get)
       val _brArgsFut = focAdOptFut.map(_.get)
       val _madsCountIntFut = madsCountIntFut
+      val _firstAdIndexFut1 = firstAdIndexFut
       // Склеиваем фьючерсы в набор аргументов вызова focAdsRenderArgsFor().
       val abtArgsFut = for {
         _producer     <- _producerFut
         _brArgs       <- _brArgsFut
         madsCountInt  <- _madsCountIntFut
+        firstAdIndex  <- _firstAdIndexFut1
       } yield {
         AdBodyTplArgs(
           _brArgs, _producer,
@@ -425,6 +453,7 @@ trait ScFocusedAdsBase
 
     /** Отрендеренное отображение раскрытой карточки вместе с обрамлениями и остальным.
       * Т.е. пригодно для вставки в соотв. div indexTpl. Функция игнорирует значение _withHeadAd.
+      *
       * @return Если нет карточек, то будет NoSuchElementException. Иначе фьючерс с HTML-рендером. */
     def focAdHtmlFut: Future[Html] = {
       focAdsHtmlArgsFut map { args =>
@@ -477,12 +506,12 @@ trait ScFocusedAdsBase
 trait ScFocusedAds
   extends ScFocusedAdsBase
   with IScStatUtil
-  with MaybeAuth
-{
+  with MaybeAuth {
 
   import mCommonDi._
 
   /** Экшен для рендера горизонтальной выдачи карточек.
+    *
     * @param adSearch Поисковый запрос.
     * @return JSONP с отрендеренными карточками.
     */
@@ -493,31 +522,33 @@ trait ScFocusedAds
   }
 
   /**
-   * Тело экщена focusedAds() вынесено сюда для возможности перезаписывания.
-   * @param logic Экземпляр focused-логики.
-   * @param request Экземпляр реквеста.
-   * @return Фьючерс с результатом.
-   */
-  protected def _focusedAds(logic: FocusedAdsLogicHttp)(implicit request: IReq[_]): Future[Result] = {
+    * Тело экщена focusedAds() вынесено сюда для возможности перезаписывания.
+    *
+    * @param logic Экземпляр focused-логики.
+    * @return Фьючерс с результатом.
+    */
+  protected def _focusedAds(logic: FocusedAdsLogicHttp): Future[Result] = {
     _showFocusedAds(logic)
   }
 
   /**
-   * Юзер просматривает карточки в раскрытом виде (фокусируется). Отрендерить браузер карточек.
-   * @param logic Закешированная исходная focused-логика рендера.
-   * @param request Исходный запрос.
-   * @return Фьючерс с http-результатом.
-   */
-  protected def _showFocusedAds(logic: FocusedAdsLogicHttp)(implicit request: IReq[_]): Future[Result] = {
+    * Юзер просматривает карточки в раскрытом виде (фокусируется). Отрендерить браузер карточек.
+    *
+    * @param logic Закешированная исходная focused-логика рендера.
+    * @return Фьючерс с http-результатом.
+    */
+  protected def _showFocusedAds(logic: FocusedAdsLogicHttp): Future[Result] = {
+    import logic._request
+
     // Запускаем сборку ответа:
     val resultFut = logic.resultFut
 
     // В фоне, когда поступят карточки, нужно будет сохранить по ним статистику:
-    logic.mads2Fut onSuccess { case mads =>
+    logic.mads2Fut.onSuccess { case mads =>
       scStatUtil.FocusedAdsStat(
-        adSearch    = logic._adSearch,
-        madIds      = mads.flatMap(_.id),
-        withHeadAd  = logic._adSearch.withHeadAd
+        adSearch = logic._adSearch,
+        madIds = mads.flatMap(_.id),
+        withHeadAd = logic._adSearch.withHeadAd
       ).saveStats
     }
 
@@ -527,12 +558,7 @@ trait ScFocusedAds
 
   /** Перезаписываемый сборкщик логик для версий. */
   def getLogicFor(adSearch: FocusedAdsSearchArgs)(implicit request: IReq[_]): FocusedAdsLogicHttp = {
-    val vsn = adSearch.apiVsn
-    if (vsn == MScApiVsns.Coffee) {
-      new FocusedAdsLogicHttpV1(adSearch)
-    } else {
-      throw new UnsupportedOperationException("Unsupported api vsn: " + vsn)
-    }
+    throw new IllegalArgumentException(s"Unsupported API version: ${adSearch.apiVsn} :: ${request.method} ${request.uri} FROM ${request.remoteAddress}")
   }
 
 
@@ -544,6 +570,23 @@ trait ScFocusedAds
 
     /** Сборка HTTP-ответа. */
     def resultFut: Future[Result]
+  }
+
+}
+
+
+/** Поддержка v1 focused-выдачи. */
+trait ScFocusedAdsV1 extends ScFocusedAds {
+
+  import mCommonDi._
+
+  /** Перезаписываемый сборкщик логик для версий. */
+  override def getLogicFor(adSearch: FocusedAdsSearchArgs)(implicit request: IReq[_]): FocusedAdsLogicHttp = {
+    if (adSearch.apiVsn == MScApiVsns.Coffee) {
+      new FocusedAdsLogicHttpV1(adSearch)
+    } else {
+      super.getLogicFor(adSearch)
+    }
   }
 
 
@@ -561,7 +604,7 @@ trait ScFocusedAds
     /** Тип отрендеренного блока в APIv1 -- это json-строка, содержащая HTML блока без заглавия и прочего. */
     override type OBT = JsString
 
-    override def firstAdIndex = super.firstAdIndex + 1
+    override def _firstAdIndexFut = super._firstAdIndexFut.map(_ + 1)
 
     /** Рендерим в html, минифицируем, заворачиваем в js-строку. */
     override def renderOuterBlock(args: AdBodyTplArgs): Future[OBT] = {
