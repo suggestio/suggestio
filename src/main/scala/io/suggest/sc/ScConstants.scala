@@ -477,6 +477,25 @@ object ScConstants {
     def SIDE_PRELOAD_MAX      = 2
 
 
+    /** Лимит запроса focused-карточек в зависимости от запрашивания предшествующей карточки. */
+    def getLimit(withPrevAd: Boolean): Int = {
+      if (withPrevAd) 3 else 2
+    }
+
+    /** При первичной фокусировке на карточке: запрашивать ли с сервера карточку, предшествующую текущей? */
+    def isWithPrevAd(currIndex: Int): Boolean = {
+      currIndex > 0
+    }
+
+    /** Подстроить значение индекса под значение isWithPrevAd.
+      * Т.е. когда решено грабить вместе с предшествующей карточкой,
+      * то нужно начинать получать карточки с предыдущего индекса.
+      */
+    def currIndex2Offset(currIndex: Int, withPrevAd: Boolean): Int = {
+      if (withPrevAd) currIndex - 1 else currIndex
+    }
+
+
     object FAd {
       /** Префикс для DOM ID'шников контейнеров focused-карточки. */
       def ID_PREFIX = "focusedAd"
