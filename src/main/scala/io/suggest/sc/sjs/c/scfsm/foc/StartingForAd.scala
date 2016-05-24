@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.c.scfsm.foc
 
 import io.suggest.sc.sjs.c.scfsm.node.Index
 import io.suggest.sc.sjs.c.scfsm.{FindAdsUtil, FindNearAdIds}
-import io.suggest.sc.sjs.m.mfoc.{FAdShown, FocRootAppeared, MFocSd}
+import io.suggest.sc.sjs.m.mfoc.{FAdQueue, FAdShown, FocRootAppeared, MFocSd}
 import io.suggest.sc.sjs.m.msrv.foc.find.{MFocAd, MFocAdSearchEmpty, MFocAds}
 import io.suggest.sc.sjs.m.msrv.index.MNodeIndex
 import io.suggest.sc.sjs.vm.layout.FsLoader
@@ -14,7 +14,7 @@ import io.suggest.sjs.common.msg.ErrorMsgs
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.util.Failure
-import io.suggest.sc.ScConstants.Focused.SLIDE_ANIMATE_MS
+import io.suggest.sc.ScConstants.Focused
 import io.suggest.sjs.common.controller.DomQuick
 
 /**
@@ -43,11 +43,12 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
   protected trait StartingForAdStateT extends FsmEmptyReceiverState with FindNearAdIds with ProcessIndexReceivedUtil {
 
     private def _getGblock(fState: MFocSd): Option[GBlock] = {
-      if (fState.forceFirstAdIds.isEmpty) {
-        fState.currAdId.flatMap(GBlock.find)
-      } else {
-        // Активно ручное управление фокусировкой. Нет смысла искать блоки в плитке. См. зелёный коммент наверху.
+      if (fState.currAdLookup) {
+        // Происходит неточная фокусировка. Нет смысла искать блоки в плитке. См. зелёный коммент наверху.
         None
+      } else {
+        fState.currAdId
+          .flatMap(GBlock.find)
       }
     }
 
@@ -60,6 +61,7 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
         .map { _.index }
         .orElse { fState.currIndex }
     }
+
 
     override def afterBecome(): Unit = {
       super.afterBecome()
@@ -77,30 +79,45 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
         val currIndexOpt  = _getCurrIndex(fState0, gblockOpt)
 
         // Собрать и запустить fads-реквест на основе запроса к карточкам плитки.
-        // Флаг: запрашивать ли карточку, предшествующую запрошенной. Да, если запрошена ненулевая карточка.
-        val withPrevAd  = currIndexOpt.exists(_ > 0)
+        // Флаг: запрашивать ли карточку, предшествующую запрошенной? Да, если запрошена ненулевая карточка.
+        val withPrevAd  = currIndexOpt.exists( Focused.isWithPrevAd )
 
         // Поиск идёт с упором на multiGet по id карточек.
-        val args = new MFocAdSearchEmpty with FindAdsArgsT {
-          override def _sd        = sd0
-          override def firstAdIds = {
-            val ffais = fState0.forceFirstAdIds
-            if (ffais.isEmpty) {
+        val args = if (fState0.currAdLookup) {
+          // Необходимо выслать серверу укороченный запрос карточек, чтобы сервер определил правильные параметры foc-выдачи.
+          new MFocAdSearchEmpty with FindAdsArgsT {
+            override def _sd        = sd0
+            // TODO Надо openIndex тут или нет?
+            //override def openIndexAdId = fState0.currAdId
+            // Необходимо запрашивать у сервера определение правильных параметров выдачи, если это записано в состоянии.
+            override def adIdLookup: Option[String] = {
+              fState0.currAdId
+            }
+          }
+
+        } else {
+          // Обычная работа: параметры выдачи известны, просто запросить с сервера заранее известный диапазон карточек.
+          new MFocAdSearchEmpty with FindAdsArgsT {
+            override def _sd        = sd0
+            override def firstAdIds: Seq[String] = {
               currIndexOpt.fold(Nil: Seq[String]) { _ =>
                 _nearAdIdsIter(gblockOpt).toSeq
               }
-            } else {
-              ffais
             }
+            // Выставляем под нужды focused-выдачи значения limit/offset.
+            override def offset: Option[Int] = {
+              for (currIndex <- currIndexOpt) yield {
+                Focused.currIndex2Offset(currIndex, withPrevAd)
+              }
+            }
+            override def limit: Option[Int] = {
+              Some( Focused.getLimit(withPrevAd) )
+            }
+            // Для первой открываемой карточки допускается переход на index-выдачу узла вместо открытия focused-выдачи.
+            override def openIndexAdId = fState0.currAdId
           }
-          // Выставляем под нужды focused-выдачи значения limit/offset.
-          override def offset     = for (currIndex <- currIndexOpt) yield {
-            if (withPrevAd) currIndex - 1 else currIndex
-          }
-          override def limit      = Some( if (withPrevAd) 3 else 2 )
-          // Для первой открываемой карточки допускается переход на index-выдачу узла вместо открытия focused-выдачи.
-          override def openIndexAdId = fState0.currAdId
         }
+
         val fadsFut = MFocAds.findOrIndex(args)
 
         // Запрос запущен, пора бы отобразить loader
@@ -151,16 +168,59 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
       } {
         val currIndexOpt  = _getCurrIndex(fState, _getGblock(fState))
 
+        // Раскидывание полученных карточек по трём аккамуляторам: prevs, currentOpt, nexts.
+        /*def _dispach3F[T](delim: T)(using: MFocAd => T)(implicit ord: Ordering[T]): (FAdQueue, Option[MFocAd], FAdQueue) = {
+          mfa.focusedAdsIter.foldLeft((fState.prevs, Option.empty[MFocAd], fState.nexts)) {
+            case ((_prevs, _firstOpt, _nexts), _e) =>
+              val i = using(_e)
+              if ( ord.lt(i, delim) )
+                (_e +: _prevs, _firstOpt, _nexts)
+              else if ( ord.equiv(i, delim) )
+                (_prevs, Some(_e), _nexts)
+              else
+                (_prevs, _firstOpt, _nexts.enqueue(_e))
+          }
+        }*/
+
         // Раскидать полученные карточки по аккамуляторам и карусели. Для ускорения закидываем в карусель только необходимую карточку.
         val (prevs2, firstAdOpt, nexts2) = currIndexOpt.fold {
-          // Нет индекса, значит идёт доступ напрямую по mad id. Закинуть всё в nexts кроме первой карточки.
-          val fads = mfa.focusedAdsIter.toStream
-          val nexts1 = fState.nexts
-          val nexts2 = if (fads.nonEmpty) nexts1.enqueue(fads.tail) else nexts1
-          (fState.prevs, fads.headOption, nexts2)
+          // Нет индекса, значит идёт доступ напрямую по mad id.
+          // Найти карточку среди полученных по id карточки.
+          fState.currAdId.fold {
+            // Закинуть всё в nexts кроме первой карточки.
+            val fads = mfa.focusedAdsIter.toStream
+            val nexts1 = fState.nexts
+            val nexts2 = if (fads.nonEmpty) nexts1.enqueue(fads.tail) else nexts1
+            (fState.prevs, fads.headOption, nexts2)
+
+          } { currAdId =>
+            // Есть id карточки, раскидать карточки по аккамуляторам.
+            val nqF = { mfad: MFocAd =>
+              mfad.madId != currAdId
+            }
+            val prevs2 = mfa.focusedAdsIter
+              .takeWhile(nqF)
+              .foldLeft(fState.prevs) { (acc, e) => e +: acc }
+
+            val eqF = { mfad: MFocAd =>
+              mfad.madId == currAdId
+            }
+            val currAdOpt = mfa.focusedAdsIter.find(eqF)
+
+            val nexts2 = {
+              mfa.focusedAdsIter
+                .dropWhile(eqF)
+                .filter(nqF)
+                .foldLeft(fState.nexts) { (acc, e) =>
+                  acc.enqueue(e)
+                }
+            }
+
+            (prevs2, currAdOpt, nexts2)
+          }
 
         } { currIndex =>
-          // Есть индекс текущей карточки, значит идёт номальное функционирование. Дробим выдачу по числовым индексам.
+          // Есть индекс текущей карточки, значит идёт нормальное функционирование. Дробим выдачу по числовым индексам.
           mfa.focusedAdsIter.foldLeft((fState.prevs, Option.empty[MFocAd], fState.nexts)) {
             case ((_prevs, _firstOpt, _nexts), _e) =>
               val i = _e.index
@@ -181,7 +241,7 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
         val fadRoot = FAdRoot( firstAd.bodyHtml )
         fadRoot.initLayout( screen, sd0.common.browser )
         // Повесить запрошенную карточку на месте текущего индекса.
-        val currIndex = currIndexOpt.getOrElse(0)
+        val currIndex = firstAd.index
         fadRoot.setLeftPx( currIndex * cellWidth )
 
         // Прилинковываем запрошенную карточку справа и запускаем анимацию.
@@ -203,7 +263,8 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
               nexts       = nexts2,
               carState    = List( FAdShown(fadRoot, firstAd) ),
               prevs       = prevs2,
-              currIndex   = Some(currIndex)
+              currIndex   = Some(currIndex),
+              currAdLookup = false
             ))
           )
           become(_focOnAppearState, sd1)
@@ -264,7 +325,7 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
         for (fRoot <- FRoot.find()) {
           fRoot.appearTransition()
         }
-        DomQuick.setTimeout(SLIDE_ANIMATE_MS) { () =>
+        DomQuick.setTimeout( Focused.SLIDE_ANIMATE_MS ) { () =>
           _sendEvent(FocRootAppeared)
         }
       }

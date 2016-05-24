@@ -43,7 +43,7 @@ trait PreLoading extends OnFocusBase {
         assert(resultsLimit >= 0)
 
         // Сборка значения firstAdIds.
-        val _firstAdIds: List[String] = if (fState.forceFirstAdIds.nonEmpty) {
+        val _firstAdIds: List[String] = if (fState.currAdLookup) {
           // Ручное управление фокусировкой. Плитка может отсутствовать или быть неактуальной.
           Nil
 
@@ -85,7 +85,6 @@ trait PreLoading extends OnFocusBase {
           // Выставляем под нужды focused-выдачи значения limit/offset.
           override def offset     = Some(_offset)
           override def limit      = Some(resultsLimit)
-          override def withoutId  = fState.forceFirstAdIds.headOption
         }
         val fadsFut = MFocAds.find(reqArgs)
 

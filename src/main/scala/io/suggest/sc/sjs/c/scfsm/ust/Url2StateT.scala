@@ -130,7 +130,7 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
       .map { _ =>
         MFocSd(
           currAdId          = focAdIdRawOpt,
-          forceFirstAdIds   = focAdIdRawOpt.toSeq
+          currAdLookup      = true
         )
       }
 

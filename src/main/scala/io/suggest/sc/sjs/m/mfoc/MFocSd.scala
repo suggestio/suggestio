@@ -37,8 +37,9 @@ trait IFocSd {
   /** Опциональные данные состояния touch-навигации внутри focused-выдачи. */
   def touch: Option[MFocTouchSd]
 
-  /** Принудительные значения для firstAdIds. */
-  def forceFirstAdIds: Seq[String]
+  /** Необходимо ли заставлять сервер искать параметры foc-выдачи для указанной карточки?
+    * Если true, то возможное значение currIndex можно игнорировать. */
+  def currAdLookup: Boolean
 
 
   def shownFadWithIndex(index: Int): Option[FAdShown] = {
@@ -75,6 +76,6 @@ case class MFocSd(
   override val prevs        : FAdQueue              = Queue.empty,
   override val arrDir       : Option[MHand]         = None,
   override val touch        : Option[MFocTouchSd]   = None,
-  override val forceFirstAdIds  : Seq[String]       = Nil
+  override val currAdLookup : Boolean               = false
 )
   extends IFocSd
