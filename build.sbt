@@ -6,9 +6,9 @@ name := "lk-sjs"
 
 version := "0.0.0-SNAPSHOT"
 
-resolvers ++= Seq(
-  "sonatype-oss-snapshots" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-oss-snapshots"
-)
+//resolvers ++= Seq(
+//  "sonatype-oss-snapshots" at Common.Repo.SONATYPE_OSS_SNAPSHOTS_URL
+//)
 
 libraryDependencies ++= Seq(
   "be.doeraene"         %%% "scalajs-jquery"      % Common.sjsJqueryVsn,
