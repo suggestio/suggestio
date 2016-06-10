@@ -2,8 +2,8 @@ package io.suggest.sjs.common.vm.child
 
 import io.suggest.sjs.common.model.dom.DomListIterator
 import io.suggest.sjs.common.vm.IVm
-import io.suggest.sjs.common.vm.find.{IFindEl, IApplyEl}
-import io.suggest.sjs.common.vm.util.DomId
+import io.suggest.sjs.common.vm.find.{IApplyEl, IFindEl}
+import io.suggest.sjs.common.vm.util.IDomIdApi
 import org.scalajs.dom.raw.HTMLElement
 import org.scalajs.dom.{Element, Node}
 
@@ -62,7 +62,7 @@ trait ChildElOrFind extends IFindSubTag with ISafeElement with ISubTagCompanion 
   /** Тип DOM-элемента, используемого для сборки суб-тега. */
   override protected type SubTagEl_t <: Element
 
-  override protected type SubtagCompanion_t <: DomId with IApplyEl {
+  override protected type SubtagCompanion_t <: IDomIdApi with IApplyEl {
     type T = SubTagVm_t
     type Dom_t = SubTagEl_t
   }
@@ -70,8 +70,8 @@ trait ChildElOrFind extends IFindSubTag with ISafeElement with ISubTagCompanion 
   /** Найти субтег среди дочерних тегов или по id. */
   abstract override protected def _findSubtag(): Option[SubTagVm_t] = {
     DomListIterator(_underlying.children)
-      .find {
-        _.id == _subtagCompanion.DOM_ID
+      .find { el =>
+        _subtagCompanion.isDomIdRelated( el.id )
       }
       .map { node =>
         _subtagCompanion( node.asInstanceOf[SubTagEl_t] )

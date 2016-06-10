@@ -51,4 +51,7 @@ object ErrorMsgs extends MsgsStaticT {
 
   def ENDLESS_LOOP_MAYBE           = E(20)
 
+  def FOC_LOOKUP_MISSING_AD        = E(21)
+  def FOC_ADS_EMPTY                = E(22)
+
 }

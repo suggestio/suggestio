@@ -58,4 +58,8 @@ object WarnMsgs extends MsgsStaticT {
 
   def GRID_CONT_SZ_MISSING              = E(23)
 
+  def FOC_AD_NOT_FOUND_IN_RESP    = E(24)
+  def FOC_LOOKUPED_AD_NOT_LAST    = E(25)
+  def FOC_RESP_TS_UNEXPECTED      = E(26)
+
 }
