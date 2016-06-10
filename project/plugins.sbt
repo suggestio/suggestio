@@ -6,13 +6,10 @@ offline := true
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 
 resolvers ++= Seq(
-  "typesafe-releases"       at "https://ivy2-internal.cbca.ru/artifactory/typesafe-releases",
-  //"typesafe-snapshots"    at "https://ivy2-internal.cbca.ru/artifactory/typesafe-snapshots",
-  "typesafe-snapshots"      at "http://repo.typesafe.com/typesafe/snapshots/",
-  Resolver.url("bintray-repository", url("http://dl.bintray.com/neomaclin/sbt-plugins/"))(Resolver.ivyStylePatterns),
-  //"sbt-snapshot-plugins"  at "https://ivy2-internal.cbca.ru/artifactory/sbt-plugin-snapshots"
-  Resolver.url("sbt-snapshot-plugins", url("http://repo.scala-sbt.org/scalasbt/sbt-plugin-snapshots"))(Resolver.ivyStylePatterns),
-  "scalaz-bintray"          at "https://dl.bintray.com/scalaz/releases"
+  //"typesafe-releases"       at "https://ivy2-internal.cbca.ru/artifactory/typesafe-releases",
+  "typesafe-releases"       at "http://10.0.0.254:8081/artifactory/typesafe-releases"
+  // TODO переехать на ivy2-internal тут
+  //Resolver.url("neomaclin-repository", url("http://dl.bintray.com/neomaclin/sbt-plugins/"))(Resolver.ivyStylePatterns)
 )
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-coffeescript" % "1.0.0")
@@ -49,7 +46,7 @@ addSbtPlugin("com.tuplejump" % "sbt-yeoman" % "0.8.9-SNAPSHOT")
 // ProGuard занимается обфускацией скомпиленных данных.
 //addSbtPlugin("com.typesafe.sbt" % "sbt-proguard" % "0.2.3-SNAPSHOT")
 
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.8")
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.9")
 
 addSbtPlugin("com.slidingautonomy.sbt" % "sbt-filter" % "1.0.1")
 

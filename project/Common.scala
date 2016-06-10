@@ -39,16 +39,37 @@ object Common {
   val scalaTestPlusPlayVsn = "1.5.0"
 
   /** Версия используемого плагина play-mailer. */
-  val playMailerVsn        = "5.0.0-M1"
+  val playMailerVsn     = "5.0.0-M1"
 
 
   /** Версия jquery-фасада для scalajs.
    * @see [[https://github.com/scala-js/scala-js-jquery]]
    */
-  val sjsJqueryVsn     = "0.9.0"
+  val sjsJqueryVsn      = "0.9.0"
 
   /** Версия scalajs-dom.
    * @see [[https://github.com/scala-js/scala-js-dom]]
    */
-  val sjsDomVsn        = "0.9.0"
+  val sjsDomVsn         = "0.9.0"
+
+
+  object Repo {
+
+    /** Адрес внутреннего кеширующего сервера artifactory */
+    //val ARTIFACTORY_URL               = "https://ivy2-internal.cbca.ru/artifactory/"
+    val ARTIFACTORY_URL               = "http://10.0.0.254:8081/artifactory/"
+
+    val TYPESAFE_RELEASES_URL         = ARTIFACTORY_URL + "typesafe-releases"
+
+    val SONATYPE_OSS_RELEASES_URL     = ARTIFACTORY_URL + "sonatype-oss-releases"
+    val SONATYPE_OSS_SNAPSHOTS_URL    = ARTIFACTORY_URL + "sonatype-oss-snapshots"
+    val SONATYPE_GROUPS_FORGE_URL     = ARTIFACTORY_URL + "sonatype-groups-forge"
+
+    val APACHE_RELEASES_URL           = ARTIFACTORY_URL + "apache-releases"
+
+    //val CONJARS_REPO_URL            = ARTIFACTORY_URL + "conjars-repo"
+    //val MAVEN_TWTTR_COM_URL         = ARTIFACTORY_URL + "maven-twttr-com"
+
+  }
+
 }
