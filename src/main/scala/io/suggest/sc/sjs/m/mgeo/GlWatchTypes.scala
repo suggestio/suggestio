@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.m.mgeo
 
-import io.suggest.common.menum.LightEnumeration
+import io.suggest.common.menum.{LightEnumeration, StrIdValT}
 import org.scalajs.dom.PositionOptions
 
 import scala.scalajs.js
@@ -11,12 +11,10 @@ import scala.scalajs.js
   * Created: 21.04.16 17:47
   * Description: Источники геолокаций, с которыми взаимодействует GeoLocFsm.
   */
-object GlWatchTypes extends LightEnumeration {
+object GlWatchTypes extends LightEnumeration with StrIdValT {
 
   /** Класс элементов модели. */
-  sealed abstract class Val(val strId: String) extends ValT {
-
-    override def toString = strId
+  sealed abstract class Val(override val strId: String) extends ValT {
 
     /** Значение для HTML5 GeoLocation API highAccuracy. */
     def highAccuracy: Boolean

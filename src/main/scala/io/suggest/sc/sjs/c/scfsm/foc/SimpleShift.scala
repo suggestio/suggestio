@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.c.scfsm.foc
 
-import io.suggest.sc.sjs.m.mfoc.IFocSd
-import io.suggest.sc.sjs.vm.foc.{FCarousel, FControls}
+import io.suggest.sc.sjs.m.mfoc.{IFocAd, IFocSd, MFocCurrSd}
+import io.suggest.sc.sjs.vm.foc.{FCarCont, FControls}
 import io.suggest.sc.ScConstants.Focused.SLIDE_ANIMATE_MS
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.fsm.IFsmMsg
@@ -23,35 +23,39 @@ trait SimpleShift extends MouseMoving with OnFocusBase {
     /** Сообщение о завершении анимации переключения карточки. */
     protected case object ShiftAnimationFinished extends IFsmMsg
 
-    protected def _nextIndex(currIndex: Int, fState: IFocSd): Int
+    /** Определить данные новой текущей карточки.
+      *
+      * @return None, когда переключение невозможно и требуется возврат на текущую карточку.
+      */
+    protected def _nextCurrent(fState: IFocSd): Option[IFocAd]
+    protected def _nextIndexOffset: Int
 
     override def afterBecome(): Unit = {
       super.afterBecome()
       val sd0 = _stateData
       for {
         fState        <- sd0.focused
-        car           <- FCarousel.find()
-        currIndex     <- fState.currIndex
+        car           <- FCarCont.find()
         screen        <- sd0.common.screen
       } {
-        val nextIndex = _nextIndex(currIndex, fState)
-        if (nextIndex == currIndex) {
+        _nextCurrent(fState).fold[Unit] {
           // Нет следующей карточки -- нет работы. Сворачиваемся.
           become(_shiftDoneState)
-        } else {
+
+        } { nextFad =>
+          val nextCurr = MFocCurrSd(
+            madId = nextFad.madId,
+            index = fState.current.index + _nextIndexOffset
+          )
+
           // Есть индекс следующей карточки. Запустить анимацию карусели в нужном направлении.
-          car.animateToCell(nextIndex, screen, sd0.common.browser)
+          car.animateToCell(nextCurr.index, screen, sd0.common.browser)
 
           // Залить новый заголовок в выдачу и состояние, если продьюсер новой карточки отличается от текущего.
-          val nextFadOpt = fState.shownFadWithIndex(nextIndex)
-          for {
-            nextFad <- nextFadOpt
-            if !(fState.shownFadWithIndex(currIndex) exists {
-              _.producerId == nextFad.producerId
-            })
-            fControls <- FControls.find()
-          } {
-            fControls.setContent(nextFad.controlsHtml)
+          if (!fState.findCurrFad.exists( _.producerId == nextFad.producerId )) {
+            for (fControls <- FControls.find()) {
+              fControls.setContent(nextFad.controlsHtml)
+            }
           }
 
           DomQuick.setTimeout(SLIDE_ANIMATE_MS) {() =>
@@ -61,8 +65,7 @@ trait SimpleShift extends MouseMoving with OnFocusBase {
           // Залить новый текущий индекс в состояние.
           _stateData = sd0.copy(
             focused = Some(fState.copy(
-              currAdId  = nextFadOpt.map(_.madId),
-              currIndex = Some(nextIndex)
+              current = nextCurr
             ))
           )
         }
@@ -85,19 +88,24 @@ trait SimpleShift extends MouseMoving with OnFocusBase {
   
   /** Трейт для сборки состояния перехода на одну карточку влево. */
   protected trait ShiftLeftStateT extends SimpleShiftStateT {
-    override protected def _nextIndex(currIndex: Int, fState: IFocSd): Int = {
-      Math.max(0, currIndex - 1)
+    /** Определить предыдущую карточку. */
+    override def _nextCurrent(fState: IFocSd): Option[IFocAd] = {
+      fState.fadsBeforeCurrentIter
+        .toSeq
+        .lastOption
     }
+
+    override def _nextIndexOffset = -1
   }
 
   /** Трейт для сборки состояния перехода на одну карточку вправо. */
   protected trait ShiftRightStateT extends SimpleShiftStateT {
-    override protected def _nextIndex(currIndex: Int, fState: IFocSd): Int = {
-      val nextIndex0 = currIndex + 1
-      fState.totalCount.fold(nextIndex0) { tc =>
-        Math.min(tc - 1, nextIndex0)
-      }
+    override def _nextCurrent(fState: IFocSd): Option[IFocAd] = {
+      fState.fadsAfterCurrentIter
+        .toStream
+        .headOption
     }
+    override def _nextIndexOffset = +1
   }
 
 }

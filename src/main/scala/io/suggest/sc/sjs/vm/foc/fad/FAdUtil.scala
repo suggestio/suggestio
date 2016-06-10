@@ -2,9 +2,9 @@ package io.suggest.sc.sjs.vm.foc.fad
 
 import io.suggest.sc.ScConstants.Focused.FAd.ID_PREFIX
 import io.suggest.sjs.common.vm.IVm
-import io.suggest.sjs.common.vm.child.{ISubTagElT, ISubTagCompanion, IFindSubTag}
-import io.suggest.sjs.common.vm.find.IApplyEl
-import io.suggest.sjs.common.vm.util.DomId
+import io.suggest.sjs.common.vm.child.{IFindSubTag, ISubTagCompanion, ISubTagElT}
+import io.suggest.sjs.common.vm.find.FindElDynIdT
+import io.suggest.sjs.common.vm.util.{DomIdPrefixed, DynDomIdRawString}
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -15,9 +15,9 @@ import org.scalajs.dom.raw.HTMLDivElement
  */
 
 /** Трейт для статических моделей FAd*. */
-trait FAdStatic extends IApplyEl with DomId {
-  override type Dom_t = HTMLDivElement
-  override def DOM_ID = ID_PREFIX
+trait FAdStatic extends FindElDynIdT with DynDomIdRawString with DomIdPrefixed {
+  override type Dom_t         = HTMLDivElement
+  override def DOM_ID_PREFIX  = ID_PREFIX
 }
 
 

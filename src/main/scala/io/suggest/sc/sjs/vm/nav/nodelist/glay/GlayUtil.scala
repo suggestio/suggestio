@@ -1,11 +1,12 @@
 package io.suggest.sc.sjs.vm.nav.nodelist.glay
 
-import io.suggest.sc.ScConstants.NavPane.{GNL_BODY_DIV_ID_PREFIX, GNL_ATTR_LAYER_ID_INDEX}
+import io.suggest.sc.ScConstants.NavPane.{GNL_ATTR_LAYER_ID_INDEX, GNL_BODY_DIV_ID_PREFIX}
 import io.suggest.sc.sjs.vm.nav.nodelist.NlContainer
 import io.suggest.sjs.common.vm.child.ISubTag
-import io.suggest.sjs.common.vm.find.{FindElIndexedIdT, IApplyEl}
+import io.suggest.sjs.common.vm.find.{FindElDynIdT, IApplyEl}
 import io.suggest.sjs.common.vm.{IVm, VmT}
 import io.suggest.sjs.common.vm.attr.AttrVmT
+import io.suggest.sjs.common.vm.util.{DomIdPrefixed, DynDomIdToString}
 import org.scalajs.dom.Node
 import org.scalajs.dom.raw.HTMLDivElement
 
@@ -15,11 +16,10 @@ import org.scalajs.dom.raw.HTMLDivElement
  * Created: 10.08.15 11:57
  * Description: Утиль для сборки vm'ок, относящихся к подспискам узлов списка навигационной панели.
  */
-trait GlayDivStaticT extends FindElIndexedIdT {
-
-  override type Dom_t = HTMLDivElement
-  override def DOM_ID: String = GNL_BODY_DIV_ID_PREFIX
-
+trait GlayDivStaticT extends FindElDynIdT with DynDomIdToString with DomIdPrefixed {
+  override type DomIdArg_t    = Int
+  override type Dom_t         = HTMLDivElement
+  override def DOM_ID_PREFIX  = GNL_BODY_DIV_ID_PREFIX
 }
 
 

@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.m.mfoc
 
-import io.suggest.sjs.common.fsm.{IFsmMsgCompanion, IFsmMsg}
+import io.suggest.sjs.common.fsm.{IFsmMsg, IFsmMsgCompanion}
 import org.scalajs.dom.MouseEvent
 
 // Команды для управления focused-выдачей.

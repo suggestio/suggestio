@@ -1,7 +1,8 @@
 package io.suggest.sc.sjs.m.msrv.foc.find
 
-import io.suggest.sc.sjs.m.msrv.ads.find.{MFindAdsReqWrapper, MFindAdsReqEmpty, MFindAdsReq}
+import io.suggest.sc.sjs.m.msrv.ads.find.{MFindAdsReq, MFindAdsReqEmpty}
 import io.suggest.ad.search.AdSearchConstants._
+import io.suggest.sjs.common.model.mlu.MLookupMode
 
 import scala.scalajs.js.{Any, Dictionary}
 
@@ -13,20 +14,24 @@ import scala.scalajs.js.{Any, Dictionary}
  */
 trait MFocAdSearch extends MFindAdsReq {
 
-  /** id рекламной карточки для активации автопереброса на выдачу продьюсера этой карточки. */
-  def openIndexAdId: Option[String]
+  /**
+    * Флаг, сообщающий серверу о допустимости возврата index-ответа или
+    * иного переходного ответа вместо focused json.
+    */
+  def allowReturnJump: Boolean
 
-  /** id рекламной карточки, на базе которой надо вычислить стартовые параметры foc-выдачи, т.к. они неизвестны. */
-  def adIdLookup: Option[String]
+  /** Задание режима lookup'а карточек. */
+  def adsLookupMode: MLookupMode
+
+  /** id базовой рекламной карточки, относительно которой необходимо искать сегмент. */
+  def adIdLookup: String
 
   override def toJson: Dictionary[Any] = {
     val acc = super.toJson
 
-    for (_openIndexAdId <- openIndexAdId)
-      acc(OPEN_INDEX_AD_ID_FN) = _openIndexAdId
-
-    for (adId <- adIdLookup)
-      acc(AD_ID_LOOKUP_FN) = adId
+    acc(OPEN_INDEX_AD_ID_FN)  = allowReturnJump
+    acc(AD_LOOKUP_MODE_FN)    = adsLookupMode.strId
+    acc(AD_ID_LOOKUP_FN)      = adIdLookup
 
     acc
   }
@@ -36,26 +41,11 @@ trait MFocAdSearch extends MFindAdsReq {
 
 /** Дефолтовая реализация модели с пустыми значениями полей. */
 trait MFocAdSearchEmpty extends MFindAdsReqEmpty with MFocAdSearch {
-
-  override def openIndexAdId  : Option[String] = None
-  override def adIdLookup     : Option[String] = None
-
 }
 
 
 /** Параметры поиска с запретом на открытие карточек. */
 trait MFocAdSearchNoOpenIndex extends MFocAdSearch {
   // При любом раскладе сервер не должен возвращать index-ответ.
-  override final def openIndexAdId: Option[String] = None
-}
-
-
-/** Враппер для заворачивания экземпляров модели. */
-trait MFocAdSearchWrapper extends MFindAdsReqWrapper with MFocAdSearch {
-
-  override def _underlying: MFocAdSearch
-
-  override def openIndexAdId  = _underlying.openIndexAdId
-  override def adIdLookup     = _underlying.adIdLookup
-
+  override final def allowReturnJump = false
 }

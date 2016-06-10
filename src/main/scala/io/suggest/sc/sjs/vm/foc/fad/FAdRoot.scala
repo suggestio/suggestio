@@ -1,15 +1,14 @@
 package io.suggest.sc.sjs.vm.foc.fad
 
 import io.suggest.sc.sjs.m.magent.IMScreen
-import io.suggest.sjs.common.vm.height3.SetHeight3Raw
+import io.suggest.sc.ScConstants.Focused.FAd.MAD_ID_ATTR
 import io.suggest.sjs.common.model.browser.IBrowser
-import io.suggest.sjs.common.vm.content.{ApplyFromOuterHtml, GetInnerHtml, OuterHtml}
 import io.suggest.sjs.common.vm.VmT
-import io.suggest.sjs.common.vm.find.FindElIndexedIdT
+import io.suggest.sjs.common.vm.content.{ApplyFromOuterHtml, GetInnerHtml, OuterHtml}
+import io.suggest.sjs.common.vm.height3.SetHeight3Raw
 import io.suggest.sjs.common.vm.of.OfDiv
 import io.suggest.sjs.common.vm.style.{StyleLeft, StylePosition, StyleWidth}
 import io.suggest.sjs.common.vm.util.OfHtmlElDomIdRelated
-import org.scalajs.dom.raw.{HTMLDivElement, HTMLElement}
 
 /**
  * Suggest.io
@@ -20,9 +19,15 @@ import org.scalajs.dom.raw.{HTMLDivElement, HTMLElement}
  * Создаётся как контейнер, позиционируется, заполняется контентом, прицепляется к focused-карусели.
  */
 
-object FAdRoot extends FindElIndexedIdT with FAdStatic with ApplyFromOuterHtml with OfDiv with OfHtmlElDomIdRelated {
+object FAdRoot
+  extends FAdStatic
+    with ApplyFromOuterHtml
+    with OfDiv
+    with OfHtmlElDomIdRelated
+{
 
   override type T = FAdRoot
+  override type DomIdArg_t = String
 
   /** Сборка focused root-vm из сырого HTML. */
   override def apply(outerHtml: String): FAdRoot = {
@@ -31,21 +36,45 @@ object FAdRoot extends FindElIndexedIdT with FAdStatic with ApplyFromOuterHtml w
     vm
   }
 
+  /** Приведение параметров экрана к ширине ячейки focused-выдачи. */
+  def screen2cellWidth(screen: IMScreen): Int = {
+    screen.width
+  }
+
 }
 
 
-trait FAdRootT extends VmT with StyleWidth with StyleLeft with StylePosition with _FAdFindSubtag with SetHeight3Raw
-with GetInnerHtml with OuterHtml {
+import FAdRoot.{Dom_t, screen2cellWidth}
 
-  override type T = HTMLDivElement
+
+trait FAdRootT
+  extends VmT
+    with StyleWidth
+    with StyleLeft
+    with StylePosition
+    with _FAdFindSubtag
+    with SetHeight3Raw
+    with GetInnerHtml
+    with OuterHtml
+{
+
+  override type T = Dom_t
 
   // protected -> public
   override def setLeftPx(leftPx: Int) = super.setLeftPx(leftPx)
 
+  /** Выставить значение left в ячейках focused-выдачи. Т.к. в ширинах экрана. */
+  def setLeft(cell: Int, screen: IMScreen): Unit = {
+    setLeftPx(cell * screen2cellWidth(screen))
+  }
+
   def initLayout(screen: IMScreen, browser: IBrowser): Unit = {
-    setWidthPx( screen.width )
+    setWidthPx( screen2cellWidth(screen) )
     _setHeight3( screen.height, browser )
   }
+
+  /** id рекламной карточки, которая отрендерена внутри. */
+  def madId = getAttribute( MAD_ID_ATTR )
 
   override type SubTagVm_t = FAdWrapper
   override protected type ContentVm_t = FAdContent
@@ -57,7 +86,7 @@ with GetInnerHtml with OuterHtml {
 
 
 case class FAdRoot(
-  override val _underlying: HTMLDivElement
+  override val _underlying: Dom_t
 )
   extends FAdRootT
 {

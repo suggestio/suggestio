@@ -1,34 +1,36 @@
 package io.suggest.sc.sjs.m.mfoc
 
+import io.suggest.common.m.mad.IMadId
 import io.suggest.sjs.common.model.MHand
 
-import scala.collection.immutable.Queue
+object MFocSd {
+
+  /** Добавление новых элементов карусели слева, сохраняя исходный порядок. */
+  def appendFadsLeft(fads0: FAdQueue, newFads: TraversableOnce[IFocAd]): FAdQueue = {
+    newFads.foldRight(fads0) { (fad, fadsQ) =>
+      fad +: fadsQ
+    }
+  }
+
+}
 
 
 /** Интерфейс контейнера данных по focused-выдаче. */
 trait IFocSd {
 
-  /** Данные по текущей позиции в focused-выдаче. */
-  def currIndex   : Option[Int]
-
-  /** id первой карточки, используются только при инициализации focused-выдачи. */
-  def currAdId   : Option[String]
-
-  /** Кол-во уже загруженных карточек. */
-  def loadedCount : Int
+  /** Состояние отображения текущей карточки. */
+  def current: MFocCurrSd
 
   /** Общее кол-во карточек со всех возможных выборов в рамках задачи.
     * Если None, значит точное кол-во пока не известно. */
-  def totalCount  : Option[Int]
+  def totalCount: Option[Int]
 
-  /** Очередь для последующих карточек в текущей focused-выдачи. */
-  def nexts: FAdQueue
+  /** Список карточек, уже полученных с сервера. */
+  def fads: Seq[IFocAd]
 
-  /** Карточки, уже залитые в карусель. */
-  def carState: CarState
-
-  /** Очередь для предшествующих карточек в текущей focused-выдаче. */
-  def prevs: FAdQueue
+  /** Неупорядоченная карта известных focused-карточек, полученных с сервера.
+    * По идее, она реализуется через lazy val поверх fadsQueue. */
+  def fadsMap: Map[String, IFocAd]
 
   /** Текущее выставленное направление стрелки, которая рядом с курсором мыши бегает по экрану.
     * Название поля -- сокращение от "arrow direction". */
@@ -37,27 +39,31 @@ trait IFocSd {
   /** Опциональные данные состояния touch-навигации внутри focused-выдачи. */
   def touch: Option[MFocTouchSd]
 
-  /** Необходимо ли заставлять сервер искать параметры foc-выдачи для указанной карточки?
-    * Если true, то возможное значение currIndex можно игнорировать. */
-  def currAdLookup: Boolean
+  // 2015.jun.3 Отказ от индексов вынуждает выявлять id крайних карточек на лету, анализируя возвращаемые сервером сегменты цепочки карточек.
+  /** Точный id первой карточки, выявленный в ходе запросов сегментов foc-выдачи. */
+  def firstAdId  : Option[String]
+
+  /** Точно id последней карточки, выявленный в ходе запросов сегментов foc-выдачи. */
+  def lastAdId   : Option[String]
+
+  /** Инфа о текущем реквесте к серверу, если он имеет место быть. */
+  def req         : Option[MFocReqInfo]
 
 
-  def shownFadWithIndex(index: Int): Option[FAdShown] = {
-    carState.find(_.index == index)
-  }
+  def fadsAfterCurrentIter  = IMadId.adsAfter(current.madId, fads)
+  def fadsBeforeCurrentIter = IMadId.adsBefore(current.madId, fads)
 
-  /** Приведение указанного direction к соответствующему аккамулятору. */
-  def dir2Fadq(dir: MHand): FAdQueue = {
-    if (dir.isLeft)
-      prevs
-    else
-      nexts
-  }
+  def fadIdsIter = fads.iterator.map(_.madId)
 
-  /** Приведение текущего direction к соответствующему аккамулятору. */
-  def currDirFadq: Option[FAdQueue] = {
-    arrDir.map { dir2Fadq }
-  }
+  /** Является ли текущая ad_id крайней справа?
+    * @return true -- достоверно последняя,
+    *         false -- скорее всего карточка не последняя.
+    */
+  def isCurrAdFirst = firstAdId.contains(current.madId)
+  def isCurrAdLast  = lastAdId.contains(current.madId)
+
+  // Короткий код для поиска текущей карточки в кеше всех карточек.
+  def findCurrFad = fadsMap.get( current.madId )
 
 }
 
@@ -67,15 +73,22 @@ trait IFocSd {
  * Контейнер собирается ещё до открытия focused-выдачи для передачи начальных данных.
  */
 case class MFocSd(
-  override val currIndex    : Option[Int]           = None,
-  override val currAdId     : Option[String]        = None,
-  override val loadedCount  : Int                   = 0,
+  override val current      : MFocCurrSd,
   override val totalCount   : Option[Int]           = None,
-  override val nexts        : FAdQueue              = Queue.empty,
-  override val carState     : CarState              = Nil,
-  override val prevs        : FAdQueue              = Queue.empty,
+  override val fads         : FAdQueue              = Nil,
   override val arrDir       : Option[MHand]         = None,
   override val touch        : Option[MFocTouchSd]   = None,
-  override val currAdLookup : Boolean               = false
+  override val firstAdId    : Option[String]        = None,
+  override val lastAdId     : Option[String]        = None,
+  override val req          : Option[MFocReqInfo]   = None
 )
   extends IFocSd
+{
+
+  override lazy val fadsMap: Map[String, IFocAd] = {
+    fads.iterator
+      .map { fad => fad.madId -> fad }
+      .toMap
+  }
+
+}

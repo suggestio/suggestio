@@ -1,9 +1,10 @@
 package io.suggest.sc.sjs.vm.nav.nodelist.glay
 
 import io.suggest.sjs.common.vm.VmT
-import io.suggest.sjs.common.vm.find.{FindFromChildByClass, FindElIndexedIdT}
+import io.suggest.sjs.common.vm.find.{FindElDynIdT, FindFromChildByClass}
 import org.scalajs.dom.raw.HTMLDivElement
-import io.suggest.sc.ScConstants.NavPane.{GNL_CAPTION_DIV_ID_PREFIX, GNL_CAPTION_CSS_CLASS, GNL_ACTIVE_CSS_CLASS}
+import io.suggest.sc.ScConstants.NavPane.{GNL_ACTIVE_CSS_CLASS, GNL_CAPTION_CSS_CLASS, GNL_CAPTION_DIV_ID_PREFIX}
+import io.suggest.sjs.common.vm.util.{DomIdPrefixed, DynDomIdToString}
 
 /**
  * Suggest.io
@@ -11,12 +12,15 @@ import io.suggest.sc.ScConstants.NavPane.{GNL_CAPTION_DIV_ID_PREFIX, GNL_CAPTION
  * Created: 11.08.15 14:57
  * Description: vm для div'а заголовка геослоя.
  */
-object GlayCaption extends FindElIndexedIdT with FindFromChildByClass  {
-  override type Dom_t = HTMLDivElement
-  override type T     = GlayCaption
-  override def DOM_ID = GNL_CAPTION_DIV_ID_PREFIX
+object GlayCaption extends FindElDynIdT with FindFromChildByClass with DynDomIdToString with DomIdPrefixed {
+
+  override type Dom_t         = HTMLDivElement
+  override type T             = GlayCaption
+  override def DOM_ID_PREFIX  = GNL_CAPTION_DIV_ID_PREFIX
+  override type DomIdArg_t    = Int
 
   override protected def _findParentCssMarker = GNL_CAPTION_CSS_CLASS
+
 }
 
 

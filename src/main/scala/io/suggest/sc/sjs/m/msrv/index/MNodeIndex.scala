@@ -1,12 +1,13 @@
 package io.suggest.sc.sjs.m.msrv.index
 
 import io.suggest.sc.sjs.util.router.srv.routes
-import io.suggest.sjs.common.model.{TimestampedCompanion, Timestamped}
+import io.suggest.sjs.common.model.{Timestamped, TimestampedCompanion}
 import io.suggest.sjs.common.xhr.Xhr
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.scalajs.js.{Dictionary, WrappedDictionary, Any}
+import scala.scalajs.js.{Any, Dictionary, WrappedDictionary}
 import io.suggest.sc.ScConstants.Resp._
+import io.suggest.sc.sjs.m.msrv.IFocResp
 
 import scala.util.Try
 
@@ -48,7 +49,7 @@ object MNodeIndex {
 
 
 /** Враппер над сырым JSON для повышения удобства доступа к сырому JSON-ответу сервера. */
-case class MNodeIndex(json: WrappedDictionary[Any]) {
+case class MNodeIndex(json: WrappedDictionary[Any]) extends IFocResp {
 
   /** index-верстка выдачи. */
   def html  = json(HTML_FN).asInstanceOf[String]
@@ -82,6 +83,7 @@ case class MNodeIndex(json: WrappedDictionary[Any]) {
       .mkString(", ")
     getClass.getSimpleName + "(" + jsonMin + ")"
   }
+
 }
 
 

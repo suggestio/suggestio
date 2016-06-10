@@ -1,7 +1,9 @@
-package io.suggest.sc.sjs.m.msrv.foc.find
+package io.suggest.sc.sjs.m.mfoc
 
+import io.suggest.common.m.mad.IMadId
 import io.suggest.sc.focus.FocAdProto._
-import scala.scalajs.js.{Dictionary, Any}
+
+import scala.scalajs.js.{Any, Dictionary}
 
 /**
  * Suggest.io
@@ -31,10 +33,7 @@ case class MFocAd(json: Dictionary[Any]) extends IFocAd {
 
 
 /** Интерфейс метаданных экземпляра focused-карточки. */
-trait IFocAdMeta {
-
-  /** id рекламной карточки. */
-  def madId: String
+trait IFocAdMeta extends IMadId {
 
   /** id продьюсера рекламной карточки. */
   def producerId: String

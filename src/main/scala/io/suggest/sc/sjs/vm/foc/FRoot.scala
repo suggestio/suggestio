@@ -31,7 +31,7 @@ with ClearT with IReset {
   override type T = HTMLDivElement
 
   def controls = FControls.find()
-  def carousel = FCarousel.find()
+  def carousel = FCarCont.find()
 
 
   /** Включение анимации. */

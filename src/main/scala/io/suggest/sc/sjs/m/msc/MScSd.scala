@@ -41,13 +41,13 @@ object MScSd extends ScSjsLogger {
     val spo = sd0.search.opened
     if (spo) {
       acc = CAT_SCR_OPENED_FN -> spo ::
-        SEARCH_TAB_FN -> sd0.search.currTab.id ::
+        SEARCH_TAB_FN -> sd0.search.currTab.strId ::
         acc
     }
 
     // Отработать focused-выдачу, если она активна.
-    for (focSd <- sd0.focused; focAdId <- focSd.currAdId) {
-      acc ::= FADS_CURRENT_AD_ID_FN -> focAdId
+    for (focSd <- sd0.focused) {
+      acc ::= FADS_CURRENT_AD_ID_FN -> focSd.current.madId
     }
 
     // Отработать id текущего узла.

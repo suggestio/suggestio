@@ -13,9 +13,7 @@ trait Phase
   with OnFocus
   with Closing
   with SimpleShift
-  with PreLoading
   with OnTouch
-  with OnTouchPreload
 {
   that: ScFsm.type =>
 
@@ -44,8 +42,6 @@ trait Phase
   }
   /** Состояние нахождения на какой-то focused-карточке в выдаче. */
   class FocOnFocusState extends OnFocusStateT with OnFocusStateBaseT with IStartFocusOnAdState {
-    override def _leftPreLoadState  = new FocPreLoadLeftState
-    override def _rightPreLoadState = new FocPreLoadRightState
     override def _onTouchStartState = new FocTouchStartState
   }
   /** Состояние закрытия focused-выдачи с возвратом в плитку. */
@@ -61,22 +57,6 @@ trait Phase
   /** Состояние перехода на одну карточку влево. */
   class FocShiftLeftState  extends ShiftLeftStateT with SimpleShiftStateT
 
-  /** Общий код реализаций focused-preload-состояний. */
-  protected trait FocPreLoadingStateT
-    extends super.FocPreLoadingStateT
-      with OnFocusStateBaseT
-      with IStartFocusOnAdState
-  {
-    override def _preloadDoneState = new FocOnFocusState
-  }
-  /** Состояние нахождения на крайней правой карточке среди уже подгруженных,
-    * но НЕ крайней среди имеющихся в focused-выборке. */
-  class FocPreLoadRightState extends FocPreLoadingStateT with FocRightPreLoadingStateT {
-    override def _onTouchStartState = new FocTouchShiftPreloadRightState
-  }
-  class FocPreLoadLeftState  extends FocPreLoadingStateT with FocLeftPreLoadingStateT {
-    override def _onTouchStartState = new FocTouchShiftPreloadLeftState
-  }
 
   // Поддержка touch-состояний в focused-выдаче.
   protected trait FocTouchCancelledT
@@ -91,20 +71,5 @@ trait Phase
   }
   class FocTouchScrollState extends FocTouchCancelledT with FocOnTouchScrollStateT
   class FocTouchShiftState  extends FocOnTouchShiftStateT with ISimpleShift with FocTouchCancelledT
-
-  // Touch-навигация началась одновременно с идущим preload. Тут состояния для поддержки подобного явления.
-  protected trait FocPreLoadingReceiveStateT extends super.FocPreLoadingReceiveStateT {
-    override def _preloadDoneState = new FocTouchShiftState
-  }
-  class FocTouchShiftPreloadLeftState
-    extends OnTouchShiftPreloadLeftStateT
-    with ISimpleShift
-    with FocTouchCancelledT
-    with FocPreLoadingReceiveStateT
-  class FocTouchShiftPreloadRightState
-    extends OnTouchShiftPreloadRightStateT
-    with ISimpleShift
-    with FocTouchCancelledT
-    with FocPreLoadingReceiveStateT
 
 }

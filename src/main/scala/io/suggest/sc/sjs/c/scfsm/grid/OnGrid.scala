@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.c.scfsm.grid
 import io.suggest.sc.sjs.c.scfsm.foc.IOnFocusBase
 import io.suggest.sc.sjs.c.scfsm.{ResizeDelayed, ScFsmStub}
 import io.suggest.sc.sjs.m.magent.IVpSzChanged
-import io.suggest.sc.sjs.m.mfoc.MFocSd
+import io.suggest.sc.sjs.m.mfoc.{MFocCurrSd, MFocSd}
 import io.suggest.sc.sjs.m.mgrid._
 import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
 import io.suggest.sc.sjs.vm.grid.{GContainer, GContent, GRoot}
@@ -164,7 +164,10 @@ trait OnGrid extends OnGridBase with IOnFocusBase {
       // Минимально инициализируем focused-состояние и переключаем логику на focused.
       val sd1 = sd0.copy(
         focused = Some(MFocSd(
-          currAdId = gblock.madId
+          current = MFocCurrSd(
+            madId = gblock.madId.get,
+            index = 0
+          )
         ))
       )
       become(_startFocusOnAdState, sd1)

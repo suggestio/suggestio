@@ -51,7 +51,7 @@ trait MouseMoving extends ScFsmStub {
     }
 
     protected def _maybeUpdateArrDir(mhand: MHand, fArr: FArrow, fState: MFocSd, sd0: SD = _stateData): Unit = {
-      if (!(fState.arrDir contains mhand)) {
+      if ( !fState.arrDir.contains(mhand) ) {
         fArr.setDirection(mhand)
         // Сохранить новый direction в состояние.
         _stateData = sd0.copy(

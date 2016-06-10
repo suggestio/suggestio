@@ -1,8 +1,10 @@
 package io.suggest.sc.sjs.c.scfsm.foc
 
+import io.suggest.common.m.mad.IMadId
+import io.suggest.sc.ScConstants
 import io.suggest.sc.sjs.m.mfoc._
 import io.suggest.sc.sjs.m.mfsm.touch.TouchStart
-import io.suggest.sc.sjs.vm.foc.{FCarousel, FRoot}
+import io.suggest.sc.sjs.vm.foc.{FCarCont, FRoot}
 import io.suggest.sc.sjs.vm.foc.fad.{FAdRoot, FAdWrapper, FArrow}
 import io.suggest.sjs.common.geom.Coord2dD
 import io.suggest.sjs.common.model.{MHand, MHands}
@@ -10,9 +12,15 @@ import io.suggest.sc.ScConstants.Focused.FAd.KBD_SCROLL_STEP_PX
 import io.suggest.sc.sjs.c.scfsm.grid.OnGridBase
 import io.suggest.sc.sjs.c.scfsm.ust.StateToUrlT
 import io.suggest.sc.sjs.c.scfsm.{ResizeDelayed, ScFsmStub}
+import io.suggest.sc.sjs.m.msrv.foc.find.{MFocAdSearchEmpty, MFocAdSearchNoOpenIndex, MFocAds}
 import io.suggest.sjs.common.controller.DomQuick
+import io.suggest.sjs.common.model.mlu.{MLookupMode, MLookupModes}
+import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import org.scalajs.dom.{KeyboardEvent, MouseEvent, TouchEvent}
 import org.scalajs.dom.ext.KeyCode
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+
+import scala.util.{Failure, Success}
 
 /**
  * Suggest.io
@@ -62,14 +70,16 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
     override def _handleResizeDelayTimeout(): Unit = {
       // Обновить данные состояния в связи с наступающим ресайзом. Иначе будут проблемы с floation-стрелочками влево-вправо, текущей просмотраваемой карточкой и т.д.
       val sd0 = _stateData
-      val currAdIdOpt = sd0.focused.flatMap(_.currAdId)
-      val sd1 = sd0.copy(
-        focused = Some(MFocSd(
-          currAdId = currAdIdOpt
-        ))
-      )
-      become(_startFocusOnAdState, sd1)
-      // TODO Можно ещё подогнать высоту контейнеров нетекущих focused-карточек... Но надо ли?
+      // Молча игнорим случаи, когда данные focused-состояния отсутствую во время OnFocus.
+      for (fState0 <- sd0.focused) {
+        _stateData = sd0.copy(
+          focused = Some(MFocSd(
+            current = fState0.current
+          ))
+        )
+      }
+      // Перещелкнуть на след.состояние.
+      become(_startFocusOnAdState)
     }
   }
 
@@ -92,6 +102,8 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
         _goToProducer()
       case MouseClick(evt) =>
         _mouseClicked(evt)
+      case mfaRespTs: MFocSrvRespTs =>
+        _handleSrvResp(mfaRespTs)
     }
 
     /** С началом свайпа надо инициализировать touch-параметры и перейти в свайп-состояние. */
@@ -143,15 +155,14 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
       // Найти враппер текущей карточки и проскроллить его немного вниз.
       for {
         fState    <- _stateData.focused
-        currIndex <- fState.currIndex
-        fWrap     <- FAdWrapper.find(currIndex)
+        fWrap     <- FAdWrapper.find( fState.current.madId )
       } {
         fWrap.vScrollByPx(delta)
       }
     }
 
     /** Реакция на переключение focused-карточек стрелками клавиатуры.
- *
+      *
       * @param dir направление переключения.
       */
     protected def _kbdShifting(dir: MHand, nextState: FsmState): Unit = {
@@ -184,11 +195,9 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
           fRoot.willAnimate()
           sd0.focused
         }
-        currIndex <- fState.currIndex
-        _fad      <- fState.carState
-          .find { _fad => _fad.index == currIndex }
+        fAdRoot   <- fState.findCurrFad
       } {
-        val adnId = _fad.producerId
+        val adnId = fAdRoot.producerId
         if ( sd0.common.adnIdOpt.contains(adnId) ) {
           // Возврат на плитку текуйщего узла отрабатывается соответствующим состоянием.
           become(_closingState)
@@ -236,7 +245,342 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
       }
     }
 
+
+    def _analyzeCurrentFads(): Unit = {
+      for (car <- FCarCont.find()) {
+        _analyzeCurrentFads(car)
+      }
+    }
+    /** Проверить имеющиеся сейчас в наличии карточки. */
+    def _analyzeCurrentFads(car: FCarCont): Unit = {
+      val sd0 = _stateData
+
+      for {
+        fState <- sd0.focused
+        screen <- sd0.common.screen
+      } {
+        val currAdId = fState.current.madId
+
+        // Отработать next-карточку: сначала понять, не является ли текущая карточка крайней справа.
+        val fadsAfterCurrent = fState.fadsAfterCurrentIter.toStream
+        if (!fState.isCurrAdLast && fadsAfterCurrent.isEmpty) {
+          // Надо запустить запрос следующих (вправо) карточек с сервера. Запустить запрос к серваку за след.порцией карточек.
+          _maybeReqMoreFads(MLookupModes.After)
+
+        } else {
+
+          // Дедубликация кода фонового рендера focused-карточки.
+          def __prepareFad(fad: IFocAd, indexDelta: Int): FAdRoot = {
+            val fadRoot = FAdRoot(fad.bodyHtml)
+            fadRoot.initLayout(screen, sd0.common.browser)
+            fadRoot.setLeft(fState.current.index + indexDelta, screen)
+            fadRoot
+          }
+
+          // Собираем текущие карточки карусели для дальнейшего многократного использования.
+          val nowShownFadIds0 = car.fadRootsIter
+            .flatMap(_.madId)
+            .toStream
+
+          // next-карточку запрашивать с сервера не требуется, но если карточка отсутствует в карусели, то закинуть её в карусель.
+          for {
+            nextFad <- fadsAfterCurrent.headOption
+            if !nowShownFadIds0.iterator
+              // Пропустить мимо карточки, предшествующей текущей вместе с текущей.
+              .dropWhile(_ != currAdId)
+              .drop(1)
+              .contains(nextFad.madId)
+          } {
+            // next-карточка доступна, но её нет в карусели. Отрендерить карточку, затолкать в карусель.
+            val fadRoot = __prepareFad(nextFad, +1)
+            car.pushCellRight(fadRoot)
+          }
+
+          // Пора проверить prev-карточку аналогично. Возможно её надо запросить с сервера или же затолкать в карусель.
+          val fadsBeforeCurrent = fState.fadsBeforeCurrentIter.toStream
+          if (!fState.isCurrAdFirst && fadsBeforeCurrent.isEmpty) {
+            // Нет предшествующих карточек, которые скорее всего существуют. Запросить их с сервера...
+            _maybeReqMoreFads(MLookupModes.Before)
+
+          } else {
+            // Есть какие-то предшествующие карточки. Если в карусели нет пред.карточки, то затолкать туда готовую.
+            for {
+              prevFad <- fadsBeforeCurrent.lastOption
+              if !nowShownFadIds0.iterator
+                .takeWhile(_ != currAdId)
+                .contains(prevFad.madId)
+            } {
+              // prev-карточка доступна, но её нет в карусели. Исправить этот недостаток:
+              val fadRoot = __prepareFad(prevFad, -1)
+              car.pushCellLeft(fadRoot)
+            }
+
+          } // if prev ad
+        } // if next ad
+      }
+    }
+
+
+    /**
+      * Попытаться запустить preload-запрос поиска карточек в указанном направлении.
+      * Возможные результаты запуска запроса будут сохранены в состояние.
+      */
+    protected def _maybeReqMoreFads(where: MLookupMode): Unit = {
+      val sd0 = _stateData
+      for {
+        fState0   <- sd0.focused
+        if fState0.req.isEmpty
+      } {
+        val currAdId  = fState0.current.madId
+
+        // Собрать параметры для поиска
+        val reqArgs = new MFocAdSearchEmpty with FindAdsArgsT with MFocAdSearchNoOpenIndex {
+          override def _sd            = sd0
+          // Выставляем под нужды focused-выдачи значения limit/offset.
+          override def limit          = Some( ScConstants.Focused.SIDE_PRELOAD_MAX )
+          override def adsLookupMode  = where
+          override def adIdLookup     = currAdId
+        }
+
+        // Отправить запрос focused-карточек.
+        val fadsRepsFut = for (
+          mfa <- MFocAds.find(reqArgs)
+        ) yield {
+          MFocSrvResp(mfa, reqArgs)
+        }
+
+        // При завершении надобно оповестить FSM о столь знаменательном событии вместе с реквизитами запроса.
+        val reqTimestamp = _sendFutResBackTimestamped(fadsRepsFut, MFocSrvRespTs)
+
+        // Сохранить данные о текущем запросе в состояние.
+        _stateData = sd0.copy(
+          focused = Some(fState0.copy(
+            req = Some(MFocReqInfo(
+              timestamp = reqTimestamp,
+              fut       = fadsRepsFut
+            ))
+          ))
+        )
+      }
+    }
+
+
+    /** Реакция на получение карточек с сервера: запихать карточки в состояние,
+      * выполнить рендер если необходимо. */
+    def _handleSrvResp(mfaRespTs: MFocSrvRespTs): Unit = {
+      val sd0 = _stateData
+      val focReqOpt = sd0.focused.flatMap(_.req)
+      val hasTimestamp = focReqOpt.exists(_.timestamp == mfaRespTs.timestamp)
+      // Проверять timestamp. Это для самоконтроля + для случаев, когда focused-выдача была переоткрыта юзером, а запрос был повисшим всё это время.
+      if (hasTimestamp) {
+        mfaRespTs.result match {
+          // Получен положительный ответ от сервера:
+          case Success(res) =>
+            _handleSrvRespOk(res)
+
+          // Ошибка выполнения запроса.
+          case Failure(ex) =>
+            // выкинуть данные реквеста из состояния, если реквест тот, который и должен быть.
+            error(WarnMsgs.FOC_RESP_TS_UNEXPECTED, ex)
+        }
+
+        // Сохранить итоги обработки ответа сервера в состояние.
+        _stateData = sd0.copy(
+          focused = sd0.focused.map(_.copy(
+            req = None
+          ))
+        )
+
+        // Посмотреть, не надо ли ещё подгрузить карточек? Или новые текущие затолкать в foc-карусель?
+        _analyzeCurrentFads()
+
+      } else {
+        warn(WarnMsgs.FOC_RESP_TS_UNEXPECTED + " " + focReqOpt)
+      }
+    }
+
+    /** Среагировать на положительный ответ сервера. */
+    def _handleSrvRespOk(res: MFocSrvResp): Unit = {
+      val sd0 = _stateData
+      for (fState0 <- sd0.focused) {
+        // Закинуть карточки в аккамулятор fads в зависимости от режима сделанного запроса.
+        val focUpdaterComp: IFocUpdaterCompanion = res.reqArgs.adsLookupMode match {
+          // Искались карточки после указанной карточки.
+          case MLookupModes.After =>
+            AfterFocUpdater
+          // Запрашивались карточки, которые были перед указанной.
+          case MLookupModes.Before =>
+            BeforeFocUpdater
+          // Других направлений запроса карточек быть не может, выдаём ошибку.
+          case otherMlm =>
+            // Тут было более подробное сообщение об ошибке, но т.к. вызов этого кода в реальности невероятен, всё очень упрощено:
+            throw new IllegalArgumentException( ErrorMsgs.FOC_ANSWER_ACTION_INVALID )
+        }
+
+        // Провести обновление состояния
+        _stateData = sd0.copy(
+          focused = Some(
+            focUpdaterComp(fState0, res)
+              .fState2()
+          )
+        )
+      }
+    }
+
   }
+
+
+  /** Общий код обновлялки focused-состояния при получении с сервера какого-то сегмента focused-выдачи. */
+  protected trait FocUpdaterT {
+
+    /** Начальное focused-состояние. */
+    val fState0: MFocSd
+    /** Результат запроса к серверу. */
+    val res: MFocSrvResp
+
+    // Закинуть в кеш карточек полученные карточки, обновить граничные данные.
+    def relAdId = res.reqArgs.adIdLookup
+
+    // Дедубликация кода логгирования разных ситуаций.
+    def logSuffix = " " + relAdId + " " + res.reqArgs.adsLookupMode + " [" + fState0.fadIdsIter.mkString(",") + "]"
+
+    val respFadsSize        = res.resp.fads.size
+    val respFadsLimit       = res.reqArgs.limit.getOrElse(ScConstants.Focused.SIDE_PRELOAD_MAX)
+    def respFadsNotEnought  = respFadsLimit > respFadsSize
+
+    /** Выявление отсутсвия опорной карточки в fState.fads.
+      *
+      * @return false: крайне невероятный сценарий, но он всё же отрабатывается.
+      *         true: не должно быть такого, что карточки нет.
+      */
+    lazy val fadsMissingRelAdId = !fState0.fads.exists(_.madId == relAdId)
+
+    /** Объединение новых карточек с уже имеющимися. */
+    def fads2: FAdQueue
+
+    // В языке англосаксов нет нормального слова "крайний", а last уже подразумевает последний. Используем utter для этого термина.
+    /** Крайняя рекламная карточка в зависимости от контекста. */
+    def utterFad(in: Seq[IFocAd]): Option[IFocAd]
+
+    /** Код выявления id крайней карточки. Вызывается при оверрайде firstAdIdOpt или lastAdIdOpt.
+      * Если маловато карточек в ответе, то надо определить id последней карточки.
+      *
+      * @return Some(node_id) достоверно выявлена крайняя карточка.
+      *         None нет точных результатов.
+      */
+    def utterAdIdOpt: Option[String] = {
+      if (respFadsNotEnought) {
+        val fadsColl = if (respFadsSize > 0) {
+          res.resp.fads
+        } else {
+          fState0.fads
+        }
+        utterFad( fadsColl )
+          .map(_.madId)
+      } else {
+        None
+      }
+    }
+
+    // оверрайдить в реализациях с помощью = utterAdIdOpt.
+    /** Опциональное выявление id самой первой карточки. */
+    def firstAdIdOpt: Option[String] = fState0.firstAdId
+    /** Опциональное выявление id последней карточки. */
+    def lastAdIdOpt : Option[String] = fState0.lastAdId
+
+    /** Интерфейсный метод сборки и возврата обновлённого состояния. */
+    def fState2(): MFocSd = {
+      // Вернуть все результаты в focused-состоянии:
+      fState0.copy(
+        fads      = fads2,
+        lastAdId  = lastAdIdOpt,
+        firstAdId = firstAdIdOpt
+      )
+    }
+  }
+  /** Интерфейс объекта-компаньона обновлятеля focused-состояния.
+    * Используется для интерфейсинга самого конструктора реализации FocUpdaterT. */
+  trait IFocUpdaterCompanion {
+    def apply(fState0: MFocSd, res: MFocSrvResp): FocUpdaterT
+  }
+
+
+  /** Реализация обновлятеля foc-состояния для сегмента After-карточек. */
+  protected case class AfterFocUpdater(
+    override val fState0  : MFocSd,
+    override val res      : MFocSrvResp
+  ) extends FocUpdaterT {
+
+    override def fads2: FAdQueue = {
+      if (fState0.fads.lastOption.map(_.madId).contains(relAdId) || fadsMissingRelAdId) {
+        // Если опорной карточки нет в fads (should never happen), то ругаться в логи, но добавлять карточки в конец в исходном порядке.
+        if (fadsMissingRelAdId)
+          warn( ErrorMsgs.FOC_LOOKUP_MISSING_AD + logSuffix )
+        fState0.fads ++ res.resp.fads
+      } else {
+        // Маловозможна ситуация запроса карточек после указанной, хотя там карточки почему-то уже есть.
+        warn( WarnMsgs.FOC_LOOKUPED_AD_NOT_LAST + logSuffix )
+        // Нужно скопировать в новую коллекции все элементы, включая текущую карточку.
+        var flag = false
+        fState0.fads
+          .iterator
+          .takeWhile { fad =>
+            val res = flag
+            flag = fad.madId == relAdId
+            res
+          }
+          .++(res.resp.fads)
+          .toSeq
+      }
+    }
+
+    override def utterFad(in: Seq[IFocAd]): Option[IFocAd] = {
+      in.lastOption
+    }
+
+    override def lastAdIdOpt = utterAdIdOpt
+  }
+  object AfterFocUpdater extends IFocUpdaterCompanion
+
+
+  /** Обновлятель foc-состояния для before-сегмента карточек. */
+  protected case class BeforeFocUpdater(
+    override val fState0  : MFocSd,
+    override val res      : MFocSrvResp
+  ) extends FocUpdaterT {
+
+    override def fads2: FAdQueue = {
+      if (fState0.fads.isEmpty) {
+        // Should never happen: внезапно пустая очередь-кеш fads. Код написан для безопасности вызова оптимизированного fads.head
+        error( ErrorMsgs.FOC_ADS_EMPTY + logSuffix )
+        fState0.fads
+      } else if (fState0.fads.head.madId == relAdId || fadsMissingRelAdId) {
+        // Если первая карточка -- искомая, то запихиваем всё по-упрощенке
+        // Если нет карточки, вокруг которой пляшет весь запрос, то просто запихать карточки в выдачу, ругнувшись в логи.
+        if (fadsMissingRelAdId)
+          warn( ErrorMsgs.FOC_LOOKUP_MISSING_AD + logSuffix )
+        res.resp.fads ++: fState0.fads
+      } else {
+        warn( WarnMsgs.FOC_LOOKUPED_AD_NOT_LAST + logSuffix )
+        // Карточка есть, но она не первая почему-то. Используем iterator + dropWhile.
+        res.resp.fads
+          .iterator
+          .++ {
+            fState0.fads
+              .iterator
+              .dropWhile(_.madId != relAdId)
+          }
+          .toSeq
+      }
+    }
+
+    override def utterFad(in: Seq[IFocAd]): Option[IFocAd] = {
+      in.headOption
+    }
+
+    override def firstAdIdOpt = utterAdIdOpt
+  }
+  object BeforeFocUpdater extends IFocUpdaterCompanion
 
 }
 
@@ -251,120 +595,31 @@ trait OnFocus extends OnFocusBase with StateToUrlT {
 
     override def afterBecome(): Unit = {
       super.afterBecome()
+
       val sd0 = _stateData
       for {
         fState      <- sd0.focused
-        currIndex   <- fState.currIndex
-        screen      <- sd0.common.screen
-        car         <- FCarousel.find()
-        totalCount  <- fState.totalCount
+        car         <- FCarCont.find()
       } {
-        // Сначала идёт дедубликация кода повторяющейся логики обработки prev и next карточек.
+        // Сначала удалить из vm карусели карточки, находящиеся дальше от текущей чем 1 шаг.
+        // Для этого строим список допущенных id карточек, которые там ещё МОГУТ оставаться.
+        // Не заворачиваем в Set, т.к. множества с length <= 4 внутри ближе к Seq по смыслу.
+        val inCarKnownIds = IMadId.nearIds(fState.current.madId, fState.fads, 1)
 
-        // Код проверки необходимости инжекции в карусель offscreen-карточки. Pure function.
-        def __isMissingInCar(index: Int, carState: CarState): Boolean = {
-          // Если текущая карточка -- крайняя в focused-выборке?
-          val isCurrentLast = totalCount == index
-          // Да, если текущая карточка не крайняя и в этом краю carState нет элемента с nextIndex.
-          !isCurrentLast && !carState.headOption.exists(_.index == index)
+        // Чистим текущие car.children по списку допущенных.
+        for (fadRoot <- car.fadRootsIter) {
+          // Если fadRoot.madId нет в списке допущенных -- удаляем.
+          if (!fadRoot.madId.exists(inCarKnownIds.contains))
+            fadRoot.remove()
         }
 
-        // Код опциональной инжекции карточек в карусель в зависимости от флага. Функция даёт side-effect'ы на DOM.
-        def __maybeFadInject(isNeeded: Boolean, q0: FAdQueue, carState0: CarState, index: Int)
-                            (pushCellF: FAdRoot => Unit): (FAdQueue, CarState) = {
-          if (isNeeded) {
-            // Залить в карусель недостающую next-карточку, которая уже присутствует в nexts-аккамуляторе состояния.
-            val (_nextFad, _nexts3) = q0.dequeue
-            // Приаттачить карточку в DOM.
-            val fadRoot = FAdRoot( _nextFad.bodyHtml )
-            fadRoot.initLayout( screen, sd0.common.browser )
-            fadRoot.setLeftPx( index * screen.width )
-            pushCellF(fadRoot)
-            //car.pushCellRight( fadRoot )
-            // Подготовить обновлённые данные состояния FSM.
-            val fadShown = FAdShown(fadRoot, _nextFad)
-            (_nexts3, fadShown :: carState0)
-          } else {
-            // Заливка в карусель не требуется, вернуть текущие данные.
-            (q0, carState0)
-          }
-        }
-
-        // Код сборки финального состояния FSM. Pure function.
-        def __makeSd(prevs: FAdQueue, carState: CarState, nexts: FAdQueue): SD = {
-          sd0.copy(
-            focused = Some(fState.copy(
-              prevs     = prevs,
-              carState  = carState,
-              nexts     = nexts
-            ))
-          )
-        }
-
-        // Извлечь из карусели карточки, находящиеся дальше от текущей чем 1 хоп.
-        val prevIndex = Math.max(0, currIndex - 1)
-        val nextIndex = Math.min(currIndex + 1, totalCount - 1)
-        val (prevs2, carState2Rev, nexts2) = {
-          fState.carState.foldLeft((fState.prevs, List.empty[FAdShown], fState.nexts)) {
-            case ((prevs, retain, nexts), e) =>
-              if (e.index < prevIndex)
-                (e.unshow() +: prevs, retain, nexts)
-              else if (e.index <= nextIndex)
-                (prevs, e :: retain, nexts)
-              else
-                (prevs, retain, e.unshow() +: nexts)
-          }
-        }
-
-        // TODO Приаттачить ближайшие карточки в карусель (prev, next) из состояния, если есть.
-        // Отсутствует ли в карусели next элемент?...
-        val nextMissingInCar = __isMissingInCar(nextIndex, carState2Rev)
-
-        // Если не хватает next-карточки в карусели, то попытаться найти её в nexts.
-        if (nextMissingInCar && nexts2.isEmpty) {
-          // Нужен next-элемент, которого нет. Надо перейти на состяние опережающей подгрузки next-карточек.
-          val sd1 = __makeSd(prevs2, carState2Rev.reverse, nexts2)
-          become(_rightPreLoadState, sd1)
-
-        } else {
-          // Поправить текущую ширину карусели, чтобы стало тык-впритык.
-          car.setCellWidth(nextIndex, screen)
-
-          // Если требуется перенести next-карточку в карусель, то сделать это.
-          val (nexts3, carState3Rev) = __maybeFadInject(nextMissingInCar, nexts2, carState2Rev, nextIndex)(car.pushCellRight)
-
-          // === next-карточка отработана ===
-          // Теперь надо отработать prev-карточку аналогично.
-
-          val carState3 = carState3Rev.reverse
-
-          val prevMissingInCar = __isMissingInCar(prevIndex, carState3)
-          if (prevMissingInCar && prevs2.isEmpty) {
-            // Нужен prev-элемент, которого нет. Надо перейти на состояние опережающей подгрузки prev-карточек.
-            val sd1 = __makeSd(prevs2, carState3, nexts3)
-            become(_leftPreLoadState, sd1)
-          } else {
-            // Если требуется перенести prev-карточку в карусель, то сделать это.
-            val (prevs4, carState4) = __maybeFadInject(prevMissingInCar, prevs2, carState3, prevIndex)(car.pushCellLeft)
-
-            // prev-карточка отработана. Тут больше ничего делать не надо. Залить новые данные в состояние.
-            _stateData = __makeSd(prevs4, carState4, nexts3)
-          } // prevMissingInCar else
-
-        }   // nextMissingInCar else
-
-      }     // for()
+        // Запустить анализ текущих карточек: вдруг что-то подгрузить надо в фоне.
+        _analyzeCurrentFads(car)
+      }     // for {} {...}
 
       // Сохранить текущее состояние в URL.
       State2Url.pushCurrState()
     }       // afterBecome()
-
-
-    /** Состояние OnFocus с подгрузкой предшествующих карточек (слева). */
-    protected def _leftPreLoadState: FsmState
-
-    /** Состояние OnFocus с подгрузкой последующих карточек (справа). */
-    protected def _rightPreLoadState: FsmState
 
   }         // FSM state trait
 

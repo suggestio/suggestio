@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.c.scfsm.foc
 
 import io.suggest.sc.sjs.m.mfoc.MFocTouchSd
 import io.suggest.sc.sjs.m.mfsm.touch.{TouchEnd, ITouchFinish}
-import io.suggest.sc.sjs.vm.foc.FCarousel
+import io.suggest.sc.sjs.vm.foc.FCarCont
 import io.suggest.sjs.common.geom.Coord2dD
 import io.suggest.sjs.common.model.MHands
 import org.scalajs.dom.TouchEvent
@@ -37,7 +37,7 @@ trait OnTouch extends OnFocusBase {
 
     /** Безрезультатное завершение касания -- сброс touch-состояния, переход на стабильное состояние. */
     protected def _touchCancelled(): Unit = {
-      for (car <- FCarousel.find()) {
+      for (car <- FCarCont.find()) {
         car.enableTransition()
       }
       become(_touchCancelledState, _clearTouchSd())
@@ -53,7 +53,7 @@ trait OnTouch extends OnFocusBase {
     override def afterBecome(): Unit = {
       super.afterBecome()
       // Нужно отключить transition у карусели, чтобы она не играла в догонялки с пальцем на экране.
-      for (car <- FCarousel.find()) {
+      for (car <- FCarCont.find()) {
         car.disableTransition()
       }
     }
@@ -120,19 +120,18 @@ trait OnTouch extends OnFocusBase {
         touchSd.start.x
       }
       def _getX1(touchSd: MFocTouchSd): Double
-      private val sd0 = _stateData
       def _touchSdUpdate(touchSd0: MFocTouchSd, lastDeltaX: Double, lastX: Double): MFocTouchSd
 
       def execute(): Unit = {
+        val sd0 = _stateData
         for {
           fState     <- sd0.focused
-          currIndex  <- fState.currIndex
           screen     <- sd0.common.screen
           touchSd    <- fState.touch
-          car        <- FCarousel.find()
+          car        <- FCarCont.find()
         } {
           // Текущая координата исходного положения карусели в пикселях.
-          val carX = FCarousel.indexToLeftPx(currIndex, screen)
+          val carX = FCarCont.indexToLeftPx(fState.current.index, screen)
 
           // В lastX из Start-состояния передаётся координата, пригодная для рассчета начальной deltaX.
           val lastX = _getX1(touchSd)
@@ -145,14 +144,15 @@ trait OnTouch extends OnFocusBase {
           // Залить в состояние данные по текущему направлению свайпа.
           _stateData = sd0.copy(
             focused = Some(fState.copy(
-              touch = Some( _touchSdUpdate(touchSd, deltaX, lastX) )
+              touch = Some(
+                _touchSdUpdate(touchSd, deltaX, lastX)
+              )
             ))
           )
         }
       }
     }
 
-    /** Действия, которые вызываются, когда это состояние выставлено в актор. */
     override def afterBecome(): Unit = {
       super.afterBecome()
       val h = new MoveHelper {
@@ -169,13 +169,12 @@ trait OnTouch extends OnFocusBase {
     }
 
 
-    private def _receivePart: Receive = {
-      case TouchEnd(event) =>
-        _onTouchEnd(event)
-    }
-
     override def receiverPart: Receive = {
-      _receivePart orElse super.receiverPart
+      val rp: Receive = {
+        case TouchEnd(event) =>
+          _onTouchEnd(event)
+      }
+      rp.orElse( super.receiverPart )
     }
 
     /** Реакция на событие touchmove. */
@@ -209,14 +208,14 @@ trait OnTouch extends OnFocusBase {
       for {
         fState    <- sd0.focused
         touchSd   <- fState.touch
-        currIndex <- fState.currIndex
-        car       <- FCarousel.find()
+        car       <- FCarCont.find()
       } {
         // Подготовить focused-карусель к анимации.
         car.enableTransition()
 
+        val currIndex = fState.current.index
         // Узнать следующее состояние FSM (долистывание в нужном направлении)
-        val nextState: FsmState = touchSd.lastDeltaX
+        val nextState = touchSd.lastDeltaX
           .filter { _ != 0d }
           // Нормализовать значение delta до "право" / "лево".
           .map { ldPx =>
@@ -227,16 +226,17 @@ trait OnTouch extends OnFocusBase {
             (mhand.isLeft && currIndex > 0) ||
               (mhand.isRight && fState.totalCount.exists(_ > currIndex + 1))
           }
-          .map {
-            case left if left.isLeft  => _shiftLeftState
-            case _                    => _shiftRightState
-          }
-          .getOrElse {
+          .fold [FsmState] {
             // Сбросить сдвиг карусели на исходную.
             for (screen <- sd0.common.screen) {
               car.animateToCell(currIndex, screen, sd0.common.browser)
             }
             _touchCancelledState
+          } { mhand =>
+            if (mhand.isLeft)
+              _shiftLeftState
+            else
+              _shiftRightState
           }
 
         // Выполнить переключение состояния FSM.

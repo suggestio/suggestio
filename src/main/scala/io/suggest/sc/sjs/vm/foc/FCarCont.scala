@@ -30,13 +30,14 @@ import org.scalajs.dom.{MouseEvent, TouchEvent}
  * выкидывая и добавляя слева и справа карточки.
  * Так же есть небольшой слайдинг на произвольное состояние (для touch-слайдинга).
  */
-object FCarousel extends FindDiv {
+object FCarCont extends FindDiv {
 
   override def DOM_ID = CONTAINER_ID
-  override type T     = FCarousel
+  override type T     = FCarCont
 
   /**
    * Рассчет сдвига по Х (left) для full-screen отображения только указанной карточки.
+   *
    * @param index 0, 1, 2, ...
    * @param screen Экран.
    * @return Координата в пикселях. Её можно в transform:translate* и в left подставлять.
@@ -48,11 +49,11 @@ object FCarousel extends FindDiv {
 }
 
 
-import FCarousel.{indexToLeftPx, Dom_t}
+import FCarCont.{indexToLeftPx, Dom_t}
 
 
 /** Логика работы карусели живёт в этом трейте. */
-trait FCarouselT extends VmT with CssSzImplicits with StyleWidth with StyleLeft with ClearT
+trait FCarContT extends VmT with CssSzImplicits with StyleWidth with StyleLeft with ClearT
 with IInitLayout with WillTranslate3d with OnMouseClickT with OnEventToScFsmUtilT with IReset
 with ChildrenVms {
 
@@ -115,7 +116,7 @@ with ChildrenVms {
   override protected def _childVmStatic = FAdRoot
 
   /** Итератор уже имеющихся ячеек карусели. */
-  def cellsIter = _childrenVms
+  def fadRootsIter = _childrenVms
 
   override def initLayout(): Unit = {
     // Вешаем mouse-события, если это не-TOUCH девайс. Иначе тыканье на touch-девайсе в focused-выдаче будет превращаться в клики.
@@ -134,7 +135,7 @@ with ChildrenVms {
 
 
 /** Дефолтовая реалиция vm карусели. */
-case class FCarousel(
+case class FCarCont(
   override val _underlying: Dom_t
 )
-  extends FCarouselT
+  extends FCarContT

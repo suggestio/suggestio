@@ -7,10 +7,10 @@ import io.suggest.sc.sjs.m.mgrid.{GridBlockClick, IBlockInfo}
 import io.suggest.sc.sjs.vm.util.InitOnClickToScFsmT
 import io.suggest.sjs.common.util.DataUtil
 import io.suggest.sjs.common.vm.VmT
-import io.suggest.sjs.common.vm.find.{FindElPrefixedIdT, IApplyEl}
+import io.suggest.sjs.common.vm.find.FindElDynIdT
 import io.suggest.sjs.common.vm.of.OfDiv
 import io.suggest.sjs.common.vm.style.StyleDisplayT
-import io.suggest.sjs.common.vm.util.OfHtmlElDomIdRelated
+import io.suggest.sjs.common.vm.util.{DomIdSuffix, DynDomIdRawString, OfHtmlElDomIdRelated}
 import io.suggest.sjs.common.vm.walk.{PrevNextSiblingCousinUtilT, PrevNextSiblingsVmT}
 import org.scalajs.dom.raw.HTMLDivElement
 
@@ -20,11 +20,17 @@ import org.scalajs.dom.raw.HTMLDivElement
  * Created: 24.06.15 18:13
  * Description: Модель для блока плитки.
  */
-object GBlock extends FindElPrefixedIdT with IApplyEl with OfDiv with OfHtmlElDomIdRelated {
+object GBlock
+  extends FindElDynIdT
+    with OfDiv
+    with OfHtmlElDomIdRelated
+    with DynDomIdRawString
+    with DomIdSuffix
+{
 
-  override def DOM_ID = ID_DELIM + ID_SUFFIX
-  override type Dom_t = HTMLDivElement
-  override type T = GBlock
+  override def DOM_ID_SUFFIX  = ID_DELIM + ID_SUFFIX
+  override type Dom_t         = HTMLDivElement
+  override type T             = GBlock
 
   /**
    * Внести поправку в указанную абсолютную координату с помощью строковых данных по имеющейся относительной.

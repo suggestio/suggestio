@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.c.scfsm.ust
 
 import io.suggest.sc.sjs.c.scfsm.ScFsm
-import io.suggest.sc.sjs.m.mfoc.MFocSd
+import io.suggest.sc.sjs.m.mfoc.{MFocCurrSd, MFocSd}
 import io.suggest.sc.sjs.m.msc.{MScSd, MUrlUtil}
 import io.suggest.sc.sjs.m.msearch.MTabs
 import io.suggest.sc.sjs.util.router.srv.SrvRouter
@@ -125,14 +125,18 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
 
     // Отрабатываем focused ad: просто залить id в состояние.
     val focAdIdRawOpt = tokens.get(FADS_CURRENT_AD_ID_FN)
-    val mFocSdOpt = focAdIdRawOpt
-      .filter(_.nonEmpty)
-      .map { _ =>
-        MFocSd(
-          currAdId          = focAdIdRawOpt,
-          currAdLookup      = true
+    val mFocSdOpt = for {
+      focAdId <- focAdIdRawOpt
+      if focAdId.nonEmpty
+    } yield {
+      MFocSd(
+        current = MFocCurrSd(
+          madId           = focAdId,
+          index           = 0,
+          forceFocus      = true
         )
-      }
+      )
+    }
 
     // Отрабатываем id узла из URL, если есть.
     val nodeIdOpt = tokens.get(ADN_ID_FN)
