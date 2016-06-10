@@ -441,9 +441,9 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
   }
 
   /** Список результатов в список id. */
-  def searchResp2idsList(searchResp: SearchResponse): IdsSearchRespT = {
+  def searchResp2idsList(searchResp: SearchResponse): ISearchResp[String] = {
     val hitsArr = searchResp.getHits.getHits
-    new IdsSearchRespT {
+    new AbstractSearchResp[String] {
       override def total: Long = {
         searchResp.getHits.getTotalHits
       }

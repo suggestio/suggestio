@@ -8,14 +8,17 @@ version := "2.0.1-SNAPSHOT"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation")
 
-resolvers ++= Seq(
-  "typesafe-releases" at "https://ivy2-internal.cbca.ru/artifactory/typesafe-releases",
-  "sonatype-oss-releases" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-oss-releases",
-  "apache-releases" at "https://ivy2-internal.cbca.ru/artifactory/apache-releases",
-  "conjars-repo" at "https://ivy2-internal.cbca.ru/artifactory/conjars-repo",
-  "maven-twttr-com" at "https://ivy2-internal.cbca.ru/artifactory/maven-twttr-com",
-  "sonatype-oss-snapshots" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-oss-snapshots"
-)
+resolvers ++= {
+  import Common.Repo._
+  Seq(
+    "typesafe-releases"       at TYPESAFE_RELEASES_URL,
+    "sonatype-oss-releases"   at SONATYPE_OSS_RELEASES_URL,
+    "apache-releases"         at APACHE_RELEASES_URL,
+    //"conjars-repo"          at CONJARS_REPO_URL,
+    //"maven-twttr-com"       at MAVEN_TWTTR_COM_URL,
+    "sonatype-oss-snapshots"  at SONATYPE_OSS_SNAPSHOTS_URL
+  )
+}
 
 
 libraryDependencies ++= {

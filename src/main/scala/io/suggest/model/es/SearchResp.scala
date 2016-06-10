@@ -10,7 +10,7 @@ import scala.collection.AbstractSeq
   * ElasticSearch возвращает результаты в виде Array[] или java-коллекций, что обычно не удобно или не оптимально.
   */
 
-abstract class SearchRespT[T] extends AbstractSeq[T] with IndexedSeq[T] {
+trait ISearchResp[T] extends Seq[T] {
 
   /** Общее кол-во результатов по запросу. O(1). */
   def total: Long
@@ -18,6 +18,9 @@ abstract class SearchRespT[T] extends AbstractSeq[T] with IndexedSeq[T] {
 }
 
 
-/** Реализация [[SearchRespT]] для списка id. */
-abstract class IdsSearchRespT
-  extends SearchRespT[String]
+/** Класс модели, ориентированный на search hits в виде массива. */
+abstract class AbstractSearchResp[T]
+  extends AbstractSeq[T]
+  with IndexedSeq[T]      // TODO Надо как-то осилить IndexedSeqOptimized.
+  with ISearchResp[T]
+

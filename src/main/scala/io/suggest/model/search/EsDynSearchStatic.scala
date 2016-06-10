@@ -1,7 +1,7 @@
 package io.suggest.model.search
 
 import io.suggest.model.common.OptId
-import io.suggest.model.es.{EsModelStaticT, IdsSearchRespT}
+import io.suggest.model.es.{EsModelStaticT, ISearchResp}
 import io.suggest.util.MacroLogsI
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 import org.elasticsearch.action.search.SearchRequestBuilder
@@ -69,7 +69,7 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with MacroLog
    * @param dsa Поисковый запрос.
    * @return Список id, подходящих под запрос, в неопределённом порядке.
    */
-  def dynSearchIds(dsa: A)(implicit ec: ExecutionContext, client: Client): Future[IdsSearchRespT] = {
+  def dynSearchIds(dsa: A)(implicit ec: ExecutionContext, client: Client): Future[ISearchResp[String]] = {
     dynSearchReqBuilder(dsa)
       .setFetchSource(false)
       .setNoFields()
