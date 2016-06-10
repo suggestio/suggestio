@@ -4,11 +4,14 @@ name := "n2"
 
 version := "0.0.0-SNAPSHOT"
 
-resolvers ++= Seq(
-  "typesafe-releases" at "https://ivy2-internal.cbca.ru/artifactory/typesafe-releases",
-  "sonatype-oss-releases" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-oss-releases",
-  "sonatype-oss-snapshots" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-oss-snapshots"
-)
+resolvers ++= {
+  import Common.Repo._
+  Seq(
+    "typesafe-releases"       at TYPESAFE_RELEASES_URL,
+    "sonatype-oss-releases"   at SONATYPE_OSS_RELEASES_URL,
+    "sonatype-oss-snapshots"  at SONATYPE_OSS_SNAPSHOTS_URL
+  )
+}
 
 
 libraryDependencies ++= {
