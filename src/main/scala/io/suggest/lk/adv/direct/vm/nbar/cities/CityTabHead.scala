@@ -4,6 +4,7 @@ import io.suggest.adv.direct.AdvDirectFormConstants
 import io.suggest.sjs.common.vm.IVm
 import io.suggest.sjs.common.vm.content.GetInnerHtml
 import io.suggest.sjs.common.vm.find.FindElDynIdT
+import io.suggest.sjs.common.vm.util.{DomIdPrefixed, DynDomIdRawString}
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -12,15 +13,11 @@ import org.scalajs.dom.raw.HTMLDivElement
  * Created: 30.12.15 14:10
  * Description: vm'ка для каждого заголовка таба города.
  */
-object CityTabHead extends FindElDynIdT {
+object CityTabHead extends FindElDynIdT with DynDomIdRawString with DomIdPrefixed {
 
-  override type Dom_t       = HTMLDivElement
-  override type DomIdArg_t  = String
-  override type T           = CityTabHead
-
-  override def getDomId(arg: CityTabHead.DomIdArg_t): String = {
-    AdvDirectFormConstants.CITY_TAB_HEAD_ID(arg)
-  }
+  override type Dom_t         = HTMLDivElement
+  override type T             = CityTabHead
+  override def DOM_ID_PREFIX  = AdvDirectFormConstants.CITY_TAB_HEAD_PREFIX
 
 }
 

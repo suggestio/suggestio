@@ -5,7 +5,8 @@ import io.suggest.lk.adv.direct.vm.nbar.ngroups.CityCatNg
 import io.suggest.sjs.common.vm.attr.AttrVmT
 import io.suggest.sjs.common.vm.find.FindElDynIdT
 import io.suggest.sjs.common.vm.of.OfDiv
-import org.scalajs.dom.raw.{HTMLElement, HTMLDivElement}
+import io.suggest.sjs.common.vm.util.{DomIdPrefixed, DynDomIdRawString, OfHtmlElDomIdRelated}
+import org.scalajs.dom.raw.HTMLDivElement
 
 /**
  * Suggest.io
@@ -13,21 +14,18 @@ import org.scalajs.dom.raw.{HTMLElement, HTMLDivElement}
  * Created: 30.12.15 20:42
  * Description: vm'ка для одного узла в списке узлов города.
  */
-object NodeRow extends FindElDynIdT with OfDiv {
+object NodeRow
+  extends FindElDynIdT
+    with OfDiv
+    with DynDomIdRawString
+    with DomIdPrefixed
+    with OfHtmlElDomIdRelated
+{
 
-  override type DomIdArg_t  = String
-  override type Dom_t       = HTMLDivElement
-  override type T           = NodeRow
-
-  override def getDomId(nodeId: DomIdArg_t): String = {
-    AdvDirectFormConstants.NODE_ROW_ID(nodeId)
-  }
-
-  override def _isWantedHtmlEl(el: HTMLElement): Boolean = {
-    super._isWantedHtmlEl(el) && {
-      el.id.startsWith( AdvDirectFormConstants.NODE_ROW_ID_PREFIX )
-    }
-  }
+  override type DomIdArg_t    = String
+  override type Dom_t         = HTMLDivElement
+  override type T             = NodeRow
+  override def DOM_ID_PREFIX  = AdvDirectFormConstants.NODE_ROW_ID_PREFIX
 
 }
 

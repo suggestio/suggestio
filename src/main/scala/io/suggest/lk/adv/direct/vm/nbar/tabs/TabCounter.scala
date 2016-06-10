@@ -1,10 +1,10 @@
 package io.suggest.lk.adv.direct.vm.nbar.tabs
 
-import io.suggest.adv.direct.AdvDirectFormConstants.Tabs
-import io.suggest.lk.adv.direct.m.CityNgIdOpt
+import io.suggest.adv.direct.AdvDirectFormConstants.{CityNgIdOpt, Tabs}
 import io.suggest.sjs.common.vm.attr.AttrVmT
 import io.suggest.sjs.common.vm.content.SetInnerHtml
 import io.suggest.sjs.common.vm.find.FindElDynIdT
+import io.suggest.sjs.common.vm.util.{DomIdPrefixed, DynDomIdToString}
 import org.scalajs.dom.raw.HTMLSpanElement
 
 /**
@@ -13,13 +13,15 @@ import org.scalajs.dom.raw.HTMLSpanElement
  * Created: 29.01.16 18:26
  * Description: VM'ка счетчиков таба.
  */
-object TabCounter extends FindElDynIdT {
-  override type Dom_t       = HTMLSpanElement
-  override type T           = TabCounter
-  override type DomIdArg_t  = CityNgIdOpt
-  override def getDomId(arg: DomIdArg_t): String = {
-    Tabs.COUNTER_ID(arg.cityId, arg.ngIdOpt)
-  }
+object TabCounter
+  extends FindElDynIdT
+  with DynDomIdToString
+  with DomIdPrefixed
+{
+  override type Dom_t         = HTMLSpanElement
+  override type T             = TabCounter
+  override type DomIdArg_t    = CityNgIdOpt
+  override def DOM_ID_PREFIX  = Tabs.COUNTER_ID_PREFIX
 }
 
 import TabCounter.Dom_t

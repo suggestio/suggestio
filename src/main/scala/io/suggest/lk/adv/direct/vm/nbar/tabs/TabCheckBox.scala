@@ -1,10 +1,10 @@
 package io.suggest.lk.adv.direct.vm.nbar.tabs
 
 import io.suggest.adv.direct.AdvDirectFormConstants
-import io.suggest.lk.adv.direct.m.CityNgIdOpt
+import io.suggest.adv.direct.AdvDirectFormConstants.CityNgIdOpt
 import io.suggest.sjs.common.vm.find.FindElDynIdT
-import io.suggest.sjs.common.vm.input.{CheckBoxVmT, CheckBoxVmStaticT}
-import org.scalajs.dom.raw.HTMLElement
+import io.suggest.sjs.common.vm.input.{CheckBoxVmStaticT, CheckBoxVmT}
+import io.suggest.sjs.common.vm.util.{DomIdPrefixed, DynDomIdToString, OfHtmlElDomIdRelated}
 
 /**
  * Suggest.io
@@ -12,20 +12,17 @@ import org.scalajs.dom.raw.HTMLElement
  * Created: 27.01.16 14:01
  * Description: VM'ка для чекбокса на уровне таба.
  */
-object TabCheckBox extends FindElDynIdT with CheckBoxVmStaticT {
+object TabCheckBox
+  extends FindElDynIdT
+    with CheckBoxVmStaticT
+    with DynDomIdToString
+    with DomIdPrefixed
+    with OfHtmlElDomIdRelated
+{
 
-  override type DomIdArg_t  = CityNgIdOpt
-  override type T           = TabCheckBox
-
-  override def getDomId(cnio: DomIdArg_t): String = {
-    AdvDirectFormConstants.CITY_NODES_TAB_HEAD_CHECKBOX_ID(cnio.cityId, cnio.ngIdOpt)
-  }
-
-  override def _isWantedHtmlEl(el: HTMLElement): Boolean = {
-    super._isWantedHtmlEl(el) && {
-      el.id.startsWith( AdvDirectFormConstants.CITY_NODES_TAB_HEAD_CHECKBOX_ID_PREFIX )
-    }
-  }
+  override type DomIdArg_t    = CityNgIdOpt
+  override type T             = TabCheckBox
+  override def DOM_ID_PREFIX  = AdvDirectFormConstants.CITY_NODES_TAB_HEAD_CHECKBOX_ID_PREFIX
 
 }
 

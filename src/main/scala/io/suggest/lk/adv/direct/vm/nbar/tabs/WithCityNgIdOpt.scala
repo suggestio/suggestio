@@ -1,6 +1,6 @@
 package io.suggest.lk.adv.direct.vm.nbar.tabs
 
-import io.suggest.lk.adv.direct.m.CityNgIdOpt
+import io.suggest.adv.direct.AdvDirectFormConstants.CityNgIdOpt
 import io.suggest.lk.adv.direct.vm.nbar.cities.CityIdT
 import io.suggest.lk.adv.direct.vm.nbar.ngroups.NgIdT
 import io.suggest.sjs.common.vm.find.FindElDynIdT

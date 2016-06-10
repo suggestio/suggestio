@@ -1,9 +1,10 @@
 package io.suggest.lk.adv.direct.fsm.states
 
+import io.suggest.adv.direct.AdvDirectFormConstants.{CityNgIdOpt, NgBodyId}
 import io.suggest.lk.adv.direct.fsm.FsmStubT
 import io.suggest.lk.adv.direct.m._
 import io.suggest.lk.adv.direct.vm.nbar.cities.{CitiesHeads, CurrCityTitle}
-import io.suggest.lk.adv.direct.vm.nbar.ngroups.{CityNgs, CityCatNg, CitiesNgs}
+import io.suggest.lk.adv.direct.vm.nbar.ngroups.{CitiesNgs, CityCatNg, CityNgs}
 import io.suggest.lk.adv.direct.vm.nbar.tabs._
 import io.suggest.lk.adv.m.Adv4FreeChanged
 import io.suggest.sjs.common.vm.input.Checked

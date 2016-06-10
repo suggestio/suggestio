@@ -1,10 +1,9 @@
 package io.suggest.lk.adv.direct.vm.nbar.nodes
 
 import io.suggest.adv.direct.AdvDirectFormConstants
-import io.suggest.lk.adv.direct.vm.nbar.ngroups.CityCatNg
 import io.suggest.sjs.common.vm.find.FindElDynIdT
-import io.suggest.sjs.common.vm.input.{CheckBoxVmT, CheckBoxVmStaticT}
-import org.scalajs.dom.raw.HTMLElement
+import io.suggest.sjs.common.vm.input.{CheckBoxVmStaticT, CheckBoxVmT}
+import io.suggest.sjs.common.vm.util.{DomIdPrefixed, DynDomIdRawString, OfHtmlElDomIdRelated}
 
 /**
  * Suggest.io
@@ -12,20 +11,17 @@ import org.scalajs.dom.raw.HTMLElement
  * Created: 30.12.15 22:41
  * Description: Чекбокс одного узла.
  */
-object NodeCheckBox extends FindElDynIdT with CheckBoxVmStaticT {
+object NodeCheckBox
+  extends FindElDynIdT
+    with CheckBoxVmStaticT
+    with DynDomIdRawString
+    with DomIdPrefixed
+    with OfHtmlElDomIdRelated
+{
 
-  override type DomIdArg_t  = String
-  override type T           = NodeCheckBox
-
-  override def getDomId(nodeId: DomIdArg_t): String = {
-    AdvDirectFormConstants.NODE_CHECK_BOX_ID(nodeId)
-  }
-
-  override def _isWantedHtmlEl(el: HTMLElement): Boolean = {
-    super._isWantedHtmlEl(el) && {
-      el.id.startsWith( AdvDirectFormConstants.NODE_CHECK_BOX_ID_PREFIX )
-    }
-  }
+  override type DomIdArg_t    = String
+  override type T             = NodeCheckBox
+  override def DOM_ID_PREFIX  = AdvDirectFormConstants.NODE_CHECK_BOX_ID_PREFIX
 
 }
 
