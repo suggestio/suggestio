@@ -47,40 +47,71 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImp
     /** Можно добавки в head затолкать. */
     def headAfterHtmlOpt: Option[Template2[IScScriptRenderArgs, Context, Html]] = None
 
+    /** Какой id suffix использовать для focused-карточек? */
+    def scFocIdSuffix(args: IAdBodyTplArgs): Any
   }
 
   override type T = Val
 
+
   /** Выдача, написанная одним файлом на coffee-script. Со временем будет удалена. */
   val Coffee: T = new Val(1) {
+
     override def forceScCloseable = true
     override def renderActionUrls  = true
+
     /** Coffee-версия сама придумывает id по-порядку и управляет ими. */
     override def serverSideBlockIds = false
     override def geoNodeIdAsClass   = true
     override def nodeListLayersServerSideExpand = false
     override def withEarlyFocAdsRootContainers = false
+
     /** У v1 часть скрипта заинлайнена в шаблоне. */
     override def scriptTpl = _scriptV1Tpl
+
     /** В sc v1 что-то ломается, и у контейнера плитки появляется внизу белая полоса на 10-15% экрана.  */
     override def withScSiteDoctype = false
+
+    /** id focused-карточек заканчивается порядковым индексом карточки. */
+    override def scFocIdSuffix(args: IAdBodyTplArgs): Any = {
+      args.index
+    }
+
   }
+
 
   /** Выдача, переписанная на scala.js. Исходная версия. */
   val Sjs1: T = new Val(2) {
+
     /** Рендерить утиль для "закрытия" выдачи нужно только при реальной необходимости. */
     override def forceScCloseable = false
+
     /** sc-sjs использует jsRoutes для сборки ссылок. Полуготовые ссылки ей не нужны. */
     override def renderActionUrls = false
+
     /** sc-sjs опирается на id блоков, сформированных сервером на основе id карточек. */
     override def serverSideBlockIds = true
+
     /** sc-sjs слушается сервера на тему списка узлов. */
     override def nodeListLayersServerSideExpand = true
+
     /** sc-sjs требует ранние контейнеры для focused ads и прочее. */
     override def withEarlyFocAdsRootContainers = true
+
     /** У v2-выдачи своя особая магия. */
     override def scriptTpl = _scriptV2Tpl
+
     override def headAfterHtmlOpt = Some( _headAfterV2Tpl )
+
+    /** Изначально id'шники focused-карточек суффиксировались по-старинке через  */
+    override def scFocIdSuffix(args: IAdBodyTplArgs): Any = {
+      // Без get на случай вызова preview в редакторе карточек при создании карточки: там id неизвестен.
+      args.brArgs.mad.id.getOrElse {
+        LOGGER.debug("scFocIdSuffix(): Unexpected empty mad.id for: " + args)
+        ""
+      }
+    }
+
   }
 
 
@@ -109,7 +140,9 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImp
           }
         }
         // Если версия не задана вообще, то выставить её в дефолтовую. Первая выдача не возвращала никаких версий.
-        optRes orElse Some(Right(unknownVsn))
+        optRes.orElse {
+          Some( Right(unknownVsn) )
+        }
       }
 
       override def unbind(key: String, value: MScApiVsn): String = {

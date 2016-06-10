@@ -109,17 +109,17 @@ resolvers ~= {
 }
 
 // Добавить резолверы, в т.ч. кэш-резолвер для отфильтрованной выше репы.
-resolvers ++= Seq(
-  "typesafe-releases" at "https://ivy2-internal.cbca.ru/artifactory/typesafe-releases",
-  "sonatype-oss-releases" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-oss-releases",
-  "apache-releases" at "https://ivy2-internal.cbca.ru/artifactory/apache-releases",
-  "conjars-repo" at "https://ivy2-internal.cbca.ru/artifactory/conjars-repo",
-  "maven-twttr-com" at "https://ivy2-internal.cbca.ru/artifactory/maven-twttr-com",
-  "sonatype-groups-forge" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-groups-forge",
-  "sonatype-oss-snapshots" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-oss-snapshots",
-  "websudos-releases" at "https://ivy2-internal.cbca.ru/artifactory/websudos-local-releases",
-  "scalaz-bintray-repo" at "https://ivy2-internal.cbca.ru/artifactory/scalaz-bintray-repo"
-)
+resolvers ++= {
+  import Common.Repo._
+  Seq(
+    "typesafe-releases"       at TYPESAFE_RELEASES_URL,
+    "sonatype-oss-releases"   at SONATYPE_OSS_RELEASES_URL,
+    "sonatype-oss-snapshots"  at SONATYPE_OSS_SNAPSHOTS_URL,
+    // kaptcha:
+    "sonatype-groups-forge"   at SONATYPE_GROUPS_FORGE_URL,
+    "apache-releases"         at APACHE_RELEASES_URL
+  )
+}
 
 
 

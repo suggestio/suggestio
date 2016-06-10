@@ -1,0 +1,7 @@
+@(attrs: TraversableOnce[(String, Any)])
+
+@* Рендерер аттрибутов ключ-значение вместо toHtmlArgs(Map[String,Any]). *@
+
+@for( (k,v) <- attrs if v != null ) {
+  @k@if(v != None){="@v"}
+}

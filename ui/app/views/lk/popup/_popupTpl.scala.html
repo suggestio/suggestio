@@ -5,10 +5,11 @@
 @import util.tpl.CssFormat._
 @import helper._
 @import io.suggest.popup.PopupConstants._
+@import stuff._kvAttrsTpl
 
 <div class="@POPUP_CLASS
             @if(jsPopup){@JS_POPUP_CLASS}
             @if(hidden){js-hidden}@classesPreSpaced(css)"
-     @for((k,v) <- attrs) { @k="@v" }>
+     @_kvAttrsTpl(attrs)>
   @content
 </div>

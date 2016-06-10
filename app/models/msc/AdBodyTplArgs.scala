@@ -23,6 +23,7 @@ trait IAdBodyTplArgs extends IProducer {
 
   /** Является ли данная рекламная карточка размещенной сторонним продьюсером? */
   def is3rdParty: Boolean
+
 }
 
 

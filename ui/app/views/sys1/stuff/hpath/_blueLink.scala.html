@@ -2,11 +2,11 @@
 
 @* Верстка часто-используемой в sys ссылки, отображаемой внутри hPathAfter. *@
 
+@import stuff._kvAttrsTpl
+
 <a class="blue-link"
    href="@href"
-   @for( (k,v) <- attrs) {
-     @k="@v"
-   }
+   @_kvAttrsTpl(attrs)
 >
   @content
 </a>

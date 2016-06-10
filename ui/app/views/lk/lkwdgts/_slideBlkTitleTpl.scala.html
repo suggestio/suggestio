@@ -2,7 +2,9 @@
 
 @* Контейнер заголовка slide-блока. *@
 
+@import stuff._kvAttrsTpl
+
 <div class="slide-block_title @if(jsSlide){js-slide-title} @if(isOpen){ __js-open }"
-     @for((k,v) <- attrs){ @k="@v"}>
+     @_kvAttrsTpl(attrs)>
   @content
 </div>

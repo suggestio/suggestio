@@ -45,10 +45,10 @@ object MExtAdvQs {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MExtAdvQs]] = {
         for {
           params1           <- getQsbSigner(key).signedOrNone(key, params)
-          maybeAdId         <- strB.bind(key + AD_ID_SUF, params1)
-          maybeCreatedAt    <- longB.bind(key + BEST_BEFORE_SEC_SUF, params1)
-          maybeTargetInfos  <- infosB.bind(key + TARGET_ID_SUF, params1)
-          maybeWsId         <- strB.bind(key + WS_ID_SUF, params1)
+          maybeAdId         <- strB.bind   (key + AD_ID_SUF,            params1)
+          maybeCreatedAt    <- longB.bind  (key + BEST_BEFORE_SEC_SUF,  params1)
+          maybeTargetInfos  <- infosB.bind (key + TARGET_ID_SUF,        params1)
+          maybeWsId         <- strB.bind   (key + WS_ID_SUF,            params1)
         } yield {
           for {
             createdAt     <- maybeCreatedAt.right
@@ -68,10 +68,10 @@ object MExtAdvQs {
 
       override def unbind(key: String, value: MExtAdvQs): String = {
         val unsigned = Seq(
-          strB.unbind(key + AD_ID_SUF, value.adId),
-          longB.unbind(key + BEST_BEFORE_SEC_SUF, value.bestBeforeSec),
-          infosB.unbind(key + TARGET_ID_SUF, value.targets),
-          strB.unbind(key + WS_ID_SUF, value.wsId)
+          strB  .unbind(key + AD_ID_SUF,            value.adId),
+          longB .unbind(key + BEST_BEFORE_SEC_SUF,  value.bestBeforeSec),
+          infosB.unbind(key + TARGET_ID_SUF,        value.targets),
+          strB  .unbind(key + WS_ID_SUF,            value.wsId)
         )
         .mkString("&")
         getQsbSigner(key).mkSigned(key, unsigned)

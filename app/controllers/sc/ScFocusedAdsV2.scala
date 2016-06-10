@@ -1,7 +1,8 @@
 package controllers.sc
 
-import io.suggest.sc.ScConstants.Focused
+import models.MNode
 import models.jsm.FocusedAdsResp2
+import models.mlu.{MLookupMode, MLookupModes}
 import models.msc._
 import models.req.IReq
 import play.api.mvc.Result
@@ -11,23 +12,35 @@ import views.html.sc.foc._
 import scala.concurrent.Future
 
 /**
- * Suggest.io
- * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 11.06.15 18:12
- * Description: Логика Focused Ads API v2, которая претерпела значителньые изменения в сравнении с API v1.
- *
- * Все карточки рендерятся одним списком json-объектов, которых изначально было два типа:
- * - Focused ad: _focusedAdTpl.
- * - Full focused ad: _focusedAdsTpl
- * Этот неоднородный массив отрабатывается конечным автоматом на клиенте, который видя full-часть понимает,
- * что последующие за ней не-full части относяться к этому же продьюсеру.
- *
- * Разные куски списка могут прозрачно склеиваться.
- *
- * Так же, сервер может вернуть вместо вышеописанного ответа:
- * - index выдачу другого узла.
- * - команду для перехода по внешней ссылке.
- */
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 11.06.15 18:12
+  * Description: Логика Focused Ads API v2, которая претерпела значителньые изменения в сравнении с API v1.
+  *
+  * Все карточки рендерятся одним списком json-объектов, которых изначально было два типа:
+  * - Focused ad: _focusedAdTpl.
+  * - Full focused ad: _focusedAdsTpl
+  * Этот неоднородный массив отрабатывается конечным автоматом на клиенте, который видя full-часть понимает,
+  * что последующие за ней не-full части относяться к этому же продьюсеру.
+  *
+  * Разные куски списка могут прозрачно склеиваться.
+  *
+  * Так же, сервер может вернуть вместо вышеописанного ответа:
+  * - index-выдачу другого узла.
+  * - команду для перехода по внешней ссылке.
+  *
+  *
+  * 2016.may.26
+  * Изначально в focused v2 был search-поиск focused-карточек в gen-порядке на основе limit/offset,
+  * т.е. что-то наподобии v1, но сложнее. Однако потом возникли проблемы:
+  * - При десериализации foc-состояния из URL нет данных о limit/offset.
+  * - При сдвиге выдачи из-за снятия/размещения карточек в выдаче.
+  * - При погрешностях random-сортировки elasticsearch.
+  * - При нештатной ситуации из-за какой-либо ошибки.
+  *
+  * Решено было, чтобы сервер сам каждый раз вычислял сегмент focused-цепочки на основе id карточки
+  * и направления поиска. Это также унифицировало ряд вещей: десериализацию из URL и просто листание (навигацию).
+  */
 trait ScFocusedAdsV2
   extends ScFocusedAds
   with IN2NodesUtilDi
@@ -44,95 +57,193 @@ trait ScFocusedAdsV2
 
     override def apiVsn = MScApiVsns.Sjs1
 
-    // ! TODO Костыли отработки withoutIds на последующих запросах оказались кривыми костылями. ИХ НАДО УДАЛИТЬ если планы не изменятся.
-    // ! Необходимо сделать всё нормально:
-    // ! Для случаев focused ad с неизвестным offset система сначала сама определяла бы позицию искомой карточки
-    // ! в выдаче на основе данных от mNodes.dynSearchIds(). Затем уже запускалась логика обработки focused-запроса v2.
-    // ! На стороне sc нужно слать запрос без offset, (возможно и без limit?), но с принудительным firstAdIds например.
+
+    case class NodeIdIndexed(nodeId: String, index: Int) {
+      override def toString: String = {
+        nodeId + "#" + index
+      }
+    }
+    case class AdsLookupRes(ids: Seq[NodeIdIndexed], total: Int)
 
 
-    /** Критерии поиска focused-карточек. */
-    override lazy val _mads1SearchFut: Future[FocusedAdsSearchArgs] = {
-      val sargsFut0 = super._mads1SearchFut
-      // Если запрошена необходимость определения параметров foc-выдачи, но сделать это и внести результаты в поиск.
-      _adSearch.focAdIdLookup.fold {
-        sargsFut0
+    /** Асинхронный результат поиска сегмента карточек. */
+    lazy val adIdsLookupResFut = _doAdIdsLookup()
 
-      } { lookupAdId =>
-        lazy val logPrefix = s"_mads1SearchFut[${System.currentTimeMillis}]: "
-        LOGGER.trace(s"$logPrefix adId[$lookupAdId] edges=${_adSearch.outEdges}")
+    /** Метод рекурсивного поиска сегмента последовательности id карточек в пакетных выхлопах elasticsearch. */
+    def _doAdIdsLookup(adId: String = _adSearch.lookupAdId, lm: MLookupMode = _adSearch.lookupMode,
+                       neededCount: Int = _adSearch.limit, limit1: Int = 50, offset1: Int = 0): Future[AdsLookupRes] = {
 
-        // Запустить поиск оффсета карточки в focused-выдаче...
-        _adIdLookupCurrIndex().flatMap { currIndexOpt =>
-          // Проанализировать найденный currIndex, если найден.
-          currIndexOpt.fold {
-            // Нет карточки в focused-выдаче. TODO Вернуть дефолтовую выдачу? Или что тут надо делать?
-            LOGGER.warn(s"_mads1SearchFut: offset not found for ad[$lookupAdId].")
-            sargsFut0
+      // Необходимо поискать id focused-карточек в корректном порядке с начала списка.
+      val fadsIdsSearch = new FocusedAdsSearchArgsWrapperImpl {
+        override def _dsArgsUnderlying = _adSearch
+        override def limit      = limit1
+        override def limitOpt   = Some(limit1)
+        override def offset     = offset1
+        override def offsetOpt  = Some(offset1)
+      }
+      val fadIdsFut = mNodes.dynSearchIds(fadsIdsSearch)
 
-          } { currIndex =>
-            // Вычислен currIndex искомой карточки в focused-выдаче. Вычислить теперь limit и offset для запросов.
-            val withPrevAd  = Focused.isWithPrevAd( currIndex )
-            val limit2      = Focused.getLimit( withPrevAd )
-            val offset2     = Focused.currIndex2Offset(currIndex, withPrevAd)
+      // Собрать id после необходимого id с минимальными затратами ресурсов.
+      def takeIdsAfter(iter: Iterator[NodeIdIndexed], max: Int = _adSearch.limit): Seq[NodeIdIndexed] = {
+        iter
+          .dropWhile(_.nodeId != adId)
+          .slice(1, max + 1)                      // Взять только необходимое кол-во элементов, если оно там есть.
+          .toSeq
+      }
 
-            LOGGER.trace(s"$logPrefix foc index => $currIndex; +prevAd=$withPrevAd focusing on $offset2+$limit2")
-
-            // Собрать новый search args.
-            for (sargs0 <- sargsFut0) yield {
-              new FocusedAdsSearchArgsWrapperImpl {
-                override def _dsArgsUnderlying  = sargs0
-                override def limit              = limit2
-                override def offset             = offset2
-              }
-            }
-          }
+      // Добавить индексы элементам итератора с поправкой на текущий offset1.
+      // Получаться порядковые номера карточек: 0, 1, 2, ...
+      def offsetIndexed(iter: Iterator[String], sign: Boolean): Iterator[NodeIdIndexed] = {
+        val sign1 = if (sign) 1 else -1
+        for ((id, index0) <- iter.zipWithIndex) yield {
+          NodeIdIndexed(id, offset1 + sign1*index0)
         }
-      }  // focAdIdLookup.fold()(...)
+      }
+
+      lazy val logPrefix = s"_doAdLookup(${System.currentTimeMillis}): "
+      LOGGER.trace(s"$logPrefix [$adId] $lm, need=$neededCount limit=$limit1 offset=$offset1")
+
+      fadIdsFut.flatMap { fadIds =>
+
+        lazy val hasAdId = fadIds.contains( adId )
+        lazy val fadIdsSize = fadIds.size
+        lazy val fadIdsHasNexts = fadIdsSize >= limit1
+        def fadIdsHasNextsF() = fadIdsHasNexts
+
+        def fadIdsIter = offsetIndexed(fadIds.iterator, sign = true)
+        def fadIdsReverseIter = offsetIndexed(fadIds.reverseIterator, sign = false)
+
+        LOGGER.trace(s"$logPrefix Found $fadIdsSize ids, first found is [${fadIds.mkString(",")}]")
+
+        val (fadIds2, shouldNextF): (Seq[NodeIdIndexed], () => Boolean) = lm match {
+
+          // Сбор id карточек после указанной adId
+          case MLookupModes.After =>
+            val _fadIds2 = takeIdsAfter( fadIdsIter )
+            // При просмотре элементов вправо можно переходить на следующую выборку, если длина текущей упирается в лимит.
+            _fadIds2 -> fadIdsHasNextsF
+
+          // Сбор id карточек, предшествующих указанной карточке.
+          case MLookupModes.Before =>
+            // Всё просто: берём и собираем в обратном порядке.
+            val _fadIds2 = takeIdsAfter( fadIdsReverseIter )
+              .reverse
+            // Была ли найдена текущая карточка? Да, если список предшествующих ей непуст ИЛИ же пуст т.к. искомая карточка первая в списке.
+            val _f = { () =>
+              _fadIds2.isEmpty || !fadIds.headOption.contains(adId)
+            }
+            _fadIds2 -> _f
+
+          // Сбор id карточек вокруг желаемой карточки.
+          case MLookupModes.Around =>
+            if (hasAdId) {
+              val b = Seq.newBuilder[NodeIdIndexed]
+              // Выбрать id'шники до указанной.
+              val needCountBefore = (_adSearch.limit - 1) / 2
+              val beforeIds = takeIdsAfter( fadIdsReverseIter, needCountBefore )
+                .reverse
+              b ++= beforeIds
+
+              // Выбрать id'шники после указанного.
+              val needCountAfter = _adSearch.limit - 1 - needCountBefore
+              val afterIds = takeIdsAfter( fadIdsIter, needCountAfter )
+
+              // Включить текущий id'шник.
+              val currIndex = beforeIds.lastOption
+                .map(_.index + 1)
+                .orElse { afterIds.headOption.map(_.index - 1) }
+                .getOrElse(0)
+              b += NodeIdIndexed(adId, currIndex)
+
+              // Включить id'шники после текущего.
+              b ++= afterIds
+
+              // Подготовить результат.
+              val _f = { () =>
+                needCountAfter > afterIds.size  &&  fadIdsHasNexts
+              }
+              b.result() -> _f
+
+            } else {
+              // Нет вообще искомой карточки среди упомянутых.
+              Nil -> fadIdsHasNextsF
+            }
+        }
+
+        val foundCount = fadIds2.size
+        LOGGER.trace(s"$logPrefix ids[$foundCount] = [${fadIds2.mkString(", ")}]")
+
+        // Дедубликация кода возврата результата без дальнейшего погружения в рекурсию.
+        def resFut = Future.successful {
+          AdsLookupRes(fadIds2, fadIds.total.toInt)
+        }
+
+        if (foundCount < neededCount) {
+          // Найдено недостаточно элементов. Или их просто нет, или их можно найти в следующей порции.
+
+          if (shouldNextF()) {
+            // Требуется переход на следующую порцию для поиска.
+            // Новый режим поиска: если сбор элементов уже начался, то только after.
+            val lm2 = if (fadIds2.nonEmpty) MLookupModes.After else lm
+            val neededCount2 = neededCount - foundCount
+
+            // Анти-сдвиг вперёд, чтобы не пропустить какие-нибудь карточки. Выжен при before-выборке.
+            // 2 -- Нужно подавлять возможные погрешности поиска (+- 1-2 элемента).
+            var backOffset = 2
+            // А если идёт before/around-поиск, то надо отработать случай, когда искомая карточка идёт самой первой или около того.
+            if (lm2.withBefore) {
+              backOffset = Math.max(
+                backOffset,
+                if (lm2.withAfter)  neededCount2 / 2 + 1  else  neededCount2
+              )
+            }
+
+            // Надо поискать ещё в след.порции выдачи, запустить поиск.
+            val fut2 = _doAdIdsLookup(
+              adId          = fadIds2.lastOption.fold(adId)(_.nodeId),
+              lm            = lm2,
+              neededCount   = neededCount2,
+              limit1        = limit1,
+              offset1       = offset1 + limit1 - backOffset
+            )
+            // Добавить текущие найденные элементы в итоговый результат.
+            for (nextRes <- fut2) yield {
+              nextRes.copy(
+                ids = fadIds2 ++ nextRes.ids
+              )
+            }
+
+          } else {
+            // Некуда больше искать. Вернуть то, что уже есть.
+            resFut
+          }
+
+        } else {
+          // Найдено достаточно элементов. Продолжать не нужно.
+          resFut
+        }
+      }
+
     }
 
-    /** Поиск offset'а указанной карточки для параметров focused-выдачи под указанную карточку. */
-    private def _adIdLookupCurrIndex(limit1: Int = 100, offset1: Int = 0): Future[Option[Int]] = {
-      // Доп.защита от возможной бесконечной рекурсии в случае программной ошибки.
-      if (offset1 > 1000 || offset1 < 0) {
-        LOGGER.error(s"_adIdLookupCurrIndex($limit1, $offset1): Offset too large, stop lookup, ${_request.uri} from ${_request.remoteAddress}.")
-        Future.successful(None)
 
-      } else {
-        // Необходимо поискать id focused-карточек в корректном порядке с начала списка.
-        val fadsIdsSearch = new FocusedAdsSearchArgsWrapperImpl {
-          override def _dsArgsUnderlying = _adSearch
-          override def limit      = limit1
-          override def limitOpt   = Some(limit1)
-          override def offset     = offset1
-          override def offsetOpt  = Some(offset1)
-        }
-        val fadIdsFut = mNodes.dynSearchIds(fadsIdsSearch)
+    override def _firstAdIndexFut: Future[Int] = {
+      for (res <- adIdsLookupResFut) yield {
+        res.ids.headOption.fold(0)(_.index) + 1
+      }
+    }
 
-        fadIdsFut.flatMap { fadIds =>
-          // Попытаться найти id искомой карточки среди результатов.
-          val focAdId = _adSearch.focAdIdLookup.get
-          fadIds
-            .iterator
-            .zipWithIndex
-            .find { case (adId, i) =>
-              focAdId == adId
-            }
-            .map(_._2)
-            .fold [Future[Option[Int]]] {
-              // Если карточка не найдена в списках, но ещё есть куда искать, то поискать ещё.
-              if (fadIds.length >= limit1) {
-                _adIdLookupCurrIndex(
-                  limit1  = limit1,
-                  offset1 = offset1 + limit1
-                )
-              } else {
-                Future.successful( None )
-              }
-            } { i =>
-              Future.successful( Some(i) )
-            }
-        }
+
+    /** 2016.jun.1 Поиск самих focused-карточек в v2 отсутствует.
+      * Ищутся только цепочки id, из них выделяются короткие сегменты, которые читаются через multiget. */
+    override def mads1Fut: Future[Seq[MNode]] = {
+      Future.successful( Nil )
+    }
+
+
+    override def firstAdIdsFut: Future[Seq[String]] = {
+      for (res <- adIdsLookupResFut) yield {
+        res.ids.map(_.nodeId)
       }
     }
 

@@ -5,14 +5,17 @@
 @import views.html.sc.stuff._
 @import views.html.sc._
 @import args._
-@import io.suggest.sc.ScConstants.Focused.FAd.ID_PREFIX
+@import io.suggest.sc.ScConstants.Focused.FAd._
 
-@defining( brArgs.mad.ad.richDescr.map(_.bgColor).getOrElse("f9f9f9") ) { rfBgColor =>
-@_scrollableContainerTpl( "focused-ad",  ID_PREFIX + index,  "style" -> ("background-color: #" + rfBgColor) ) {
+@_scrollableContainerTpl(
+  className   = "focused-ad",
+  id          = ID_PREFIX + args.brArgs.apiVsn.scFocIdSuffix(args),
+  "style"     -> ( "background-color: #" + brArgs.mad.ad.richDescr.fold("f9f9f9")(_.bgColor) ),
+  MAD_ID_ATTR -> args.brArgs.mad.id.orNull
+) {
   <div class="focused-container __id-@args.brArgs.mad.id">
     <div class="focused-ad_top-offset"></div>
-    @_adFullTpl(args)
+      @_adFullTpl(args)
     <div class="focused-ad_bottom-offset"></div>
   </div>
-}
 }

@@ -2,6 +2,7 @@ package models.msc
 
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import models._
+import models.mlu.MLookupModes
 import play.api.mvc.QueryStringBindable
 import play.twirl.api.Html
 import util.qsb.QSBs.NglsStateMap_t
@@ -166,10 +167,19 @@ case class ScJsState(
   /** Экземпляр AdSearch для поиска в текущей рекламной карточки. */
   def focusedAdSearch(_maxResultsOpt: Option[Int]): FocusedAdsSearchArgs = {
     new FocusedAdsSearchArgsImpl {
+      // v1 выдача.
       override def firstIds  = that.fadOpenedIdOpt.toList
+      override def offsetOpt      = that.fadsOffsetOpt
+      // При синхронном рендере единственная карточка автоматом является целевой
+      override def withHeadAd     = true
+
+      // v2 выдача.
+      override def lookupMode     = MLookupModes.Around
+      override def lookupAdId     = that.fadOpenedIdOpt.get
+
+      // common-параметры для выборки карточек.
       override def limitOpt  = _maxResultsOpt
       override def randomSortSeed  = that.generationOpt
-      override def offsetOpt      = that.fadsOffsetOpt
       override def outEdges: Seq[ICriteria] = {
         val someTrue = Some(true)
         val rcvrCrOpt = for (nodeId <- that.adnId) yield {
@@ -189,8 +199,6 @@ case class ScJsState(
         (rcvrCrOpt ++ prodCrOpt).toSeq
       }
 
-      // При синхронном рендере единственная карточка автоматом является целевой
-      override def withHeadAd     = true
     }
   }
 

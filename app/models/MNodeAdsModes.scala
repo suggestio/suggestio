@@ -23,11 +23,13 @@ object MNodeAdsModes extends Enumeration with MacroLogsImplLazy with EnumValue2V
     /**
      * Значение модели обязателено в контроллере, но опционально в query string.
      * И при unbind() надо обрабатывать указанное значение указанным образом.
+     *
      * @return None для дефолтового значения, т.е. если qsb.unbind() текущего экземпляра нужно маппить на "".
      *         Some(), когда выбран недефолтовый режим.
      */
     def qsbOption: Option[String] = Some(shortId)
-  }
+    override def toString(): String = shortId
+}
 
   override type T = Val
 

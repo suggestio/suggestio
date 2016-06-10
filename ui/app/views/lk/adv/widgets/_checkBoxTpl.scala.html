@@ -2,7 +2,9 @@
 
 @* Чекбокс для adv-формы. *@
 
+@import stuff._kvAttrsTpl
+
 <label>
-  <input type="checkbox" @attrs.map{ case (k,v) => @k="@v"}/>
+  <input type="checkbox" @_kvAttrsTpl(attrs)/>
   <span class="styled-checkbox"></span>
 </label>

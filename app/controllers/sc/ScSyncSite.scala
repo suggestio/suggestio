@@ -30,7 +30,7 @@ trait ScSyncSiteGeo
   with ScSiteGeo
   with ScIndexGeo
   with ScAdsTileBase
-  with ScFocusedAdsBase
+  with ScFocusedAdsV1
   with ScNodesListBase
   with ScSiteBase
   with MaybeAuth
@@ -130,35 +130,36 @@ trait ScSyncSiteGeo
           override def renderMadAsync(brArgs: blk.RenderArgs): Future[T] = {
             Future failed new UnsupportedOperationException("Dummy tile ads logic impl.")
           }
-          override lazy val madsRenderedFut: Future[Seq[T]] = Future successful Nil
+          override lazy val madsRenderedFut: Future[Seq[T]] = Future.successful(Nil)
           override def madsGroupedFut   = _noMadsFut
           override lazy val madsFut     = _noMadsFut
-          override def adsCssExternalFut: Future[Seq[AdCssArgs]] = Future successful Nil
+          override def adsCssExternalFut: Future[Seq[AdCssArgs]] = Future.successful(Nil)
         }
       }
     }
 
     /** Логика поддержки отображения focused ads, т.е. просматриваемой карточки. */
-    def focusedLogic = new FocusedAdsLogic with NoBrAcc {
+    // TODO Переехать на v2 крайне желательно.
+    def focusedLogic = new FocusedAdsLogicV1 with NoBrAcc {
       override type OBT = Html
-      override implicit def _request = that._request
+      override implicit val _request = that._request
       override def _scStateOpt = Some(_scState)
-      override def apiVsn = MScApiVsns.Coffee   // TODO Версия скопирована, возможно можно/нужно взять версию 2 тут.
       override lazy val ctx = that.ctx
 
       /** Рендер заэкранного блока. В случае Html можно просто вызвать renderBlockHtml(). */
-      override def renderOuterBlock(args: AdBodyTplArgs): Future[OBT] = {
+      override def renderOuterBlock(args: AdBodyTplArgs): Future[Html] = {
         renderBlockHtml(args)
       }
 
-      override val _adSearch = {
+      override val _adSearch: FocusedAdsSearchArgs = {
         _scState.focusedAdSearch(
           _maxResultsOpt = Some(1)
         )
       }
+
       override def focAdsHtmlArgsFut: Future[IFocusedAdsTplArgs] = {
         // Нужно добавить в список аргументов данные по syncUrl.
-        super.focAdsHtmlArgsFut map { args0 =>
+        for (args0 <- super.focAdsHtmlArgsFut) yield {
           new IFocusedAdsTplArgsWrapper {
             override def _underlying: IFocusedAdsTplArgs = args0
             override def syncUrl(jsState: ScJsState) = _urlGenF(jsState)

@@ -5,6 +5,7 @@ import _root_.util.jsa.{Js, JsAction, JsAppendById, SmRcvResp}
 import _root_.util.n2u.IN2NodesUtilDi
 import io.suggest.common.css.FocusedTopLeft
 import io.suggest.common.fut.FutureUtil
+import io.suggest.model.common.OptId
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.util.Lists
 import models.im.MImgT
@@ -56,39 +57,8 @@ trait ScFocusedAdsBase
     implicit def _request: IReq[_]
 
 
-    /** Критерии поиска focused-карточек.
-      * 2016.may.24: Future, т.к. критерии могут быть модифицированы по сложным методикам, см. v2-выдачу.
-      */
-    def _mads1SearchFut: Future[FocusedAdsSearchArgs] = {
-      val adSearch0 = _adSearch
-      val adSearch1 = if (adSearch0.firstIds.isEmpty) {
-        adSearch0
-      } else {
-        // firstIds отфильтровываем, они через multiget будут получены.
-        new FocusedAdsSearchArgsWrapperImpl {
-          override def _dsArgsUnderlying  = _adSearch
-          override def firstIds           = Nil
-          override def withoutIds         = super.withoutIds ++ _adSearch.firstIds
-        }
-      }
-      Future.successful( adSearch1 )
-    }
-
     /** Поиск focused-карточек. */
-    def mads1Fut: Future[Seq[MNode]] = {
-      val adSearch0 = _adSearch
-      // Не искать вообще карточки, если firstIds.len >= adSearch.size
-      if (adSearch0.limit > adSearch0.firstIds.size) {
-        // Костыль, т.к. сортировка forceFirstIds на стороне ES-сервера всё ещё не пашет:
-        _mads1SearchFut.flatMap { searchArgs =>
-          mNodes.dynSearch(searchArgs)
-        }
-
-      } else {
-        // Все firstIds перечислены, возвращаемый размер не подразумевает отдельного поиска.
-        Future.successful( Nil )
-      }
-    }
+    def mads1Fut: Future[Seq[MNode]]
 
     /** Является ли указанный продьюсер очень внешним в качестве ресивера? */
     def is3rdPartyProducer(producerId: String): Boolean = {
@@ -108,13 +78,13 @@ trait ScFocusedAdsBase
     lazy val madsCountIntFut = madsCountFut.map(_.toInt)
 
     /**
-     * 2014.jan.28: Если не найдены какие-то элементы, то сообщить об этом в логи.
-     * Это нужно для более быстрого выявления проблем с валидными ссылками на несуществующие карточки.
+      * 2014.jan.28: Если не найдены какие-то элементы, то сообщить об этом в логи.
+      * Это нужно для более быстрого выявления проблем с валидными ссылками на несуществующие карточки.
       *
       * @param mads найденные рекламные карточки.
-     * @param ids id запрошенных рекламных карточек.
-     */
-    protected def logMissingFirstIds(mads: Seq[MNode], ids: Seq[String]): Unit = {
+      * @param ids id запрошенных рекламных карточек.
+      */
+    protected def logMissingFirstIds(mads: Iterable[MNode], ids: Traversable[String]): Unit = {
       if (mads.size != ids.size) {
         // Выявить, какие id не были найдены.
         val idsFound = mads.iterator.flatMap(_.id).toSet
@@ -129,24 +99,20 @@ trait ScFocusedAdsBase
       }
     }
 
-    /** 2015.aug.26: sc v1 и v2 имеют разные смыслы (смысловые scope'ы) параметра firstAdsIds.
-      * В случае v1 нельзя фетчить first ads при последующих запросах, но он всегда участвует.
-      * В v2 firstAdIds относится к каждому конкретному запросу. */
-    protected def fetchFirstAds: Boolean = {
-      _adSearch.firstIds.nonEmpty
-    }
+    def firstAdIdsFut: Future[Traversable[String]]
 
     /** Первые карточки, если запрошены. */
     def firstAdsFut: Future[Seq[MNode]] = {
-      if (fetchFirstAds) {
-        val ids = _adSearch.firstIds
-        val fut = mNodes.multiGet(ids)
-        fut.onSuccess { case mads =>
-          logMissingFirstIds(mads, ids)
+      firstAdIdsFut.flatMap { firstAdIds =>
+        if (firstAdIds.nonEmpty) {
+          val fut = mNodeCache.multiGet(firstAdIds)
+          fut.onSuccess { case mads =>
+            logMissingFirstIds(mads, firstAdIds)
+          }
+          fut
+        } else {
+          Future.successful( Nil )
         }
-        fut
-      } else {
-        Future.successful( Nil )
       }
     }
 
@@ -190,14 +156,7 @@ trait ScFocusedAdsBase
     /** Карта продьюсеров, относящихся к запрошенным focused-карточкам. */
     lazy val mads2ProdsMapFut: Future[Map[String, MNode]] = {
       for (prods <- mads2ProdsFut) yield {
-        prods
-          .iterator
-          .flatMap { mnode =>
-            mnode.id.map { _id =>
-              _id -> mnode
-            }
-          }
-          .toMap
+        OptId.els2idMap(prods)
       }
     }
 
@@ -225,8 +184,9 @@ trait ScFocusedAdsBase
 
 
     def mads4blkRenderFut: Future[Seq[blk.RenderArgs]] = {
-      mads2andBrArgsFut.map { mads =>
-        if (_adSearch.withHeadAd) mads.tail else mads // Caused by: java.lang.UnsupportedOperationException: tail of empty list
+      for (mads <- mads2andBrArgsFut) yield {
+        if (_adSearch.withHeadAd) mads.tail else mads
+        // Caused by: java.lang.UnsupportedOperationException: tail of empty list
       }
     }
 
@@ -351,9 +311,7 @@ trait ScFocusedAdsBase
 
 
     lazy val firstAdIndexFut = _firstAdIndexFut
-    def _firstAdIndexFut: Future[Int] = {
-      _mads1SearchFut.map(_.offset)
-    }
+    def _firstAdIndexFut: Future[Int]
 
     /** Сборка аргументов для рендера focused-карточки, т.е. раскрытого блока + оформление продьюсера. */
     protected def focAdsRenderArgsFor(abtArgs: IAdBodyTplArgs): Future[IFocusedAdsTplArgs] = {
@@ -590,6 +548,67 @@ trait ScFocusedAdsV1 extends ScFocusedAds {
   }
 
 
+  /** Куски http-реализации здесь для нужд ScSyncSite. */
+  trait FocusedAdsLogicV1 extends FocusedAdsLogic {
+
+    override def apiVsn = MScApiVsns.Coffee
+
+    /** Критерии поиска focused-карточек.
+      * 2016.may.24: Future, т.к. критерии могут быть модифицированы по сложным методикам, см. v2-выдачу.
+      */
+    lazy val _mads1SearchFut: Future[FocusedAdsSearchArgs] = {
+      val adSearch0 = _adSearch
+      val adSearch1 = if (adSearch0.firstIds.isEmpty) {
+        adSearch0
+      } else {
+        // firstIds отфильтровываем, они через multiget будут получены.
+        new FocusedAdsSearchArgsWrapperImpl {
+          override def _dsArgsUnderlying  = _adSearch
+          override def firstIds           = Nil
+          override def withoutIds         = super.withoutIds ++ _adSearch.firstIds
+        }
+      }
+      Future.successful( adSearch1 )
+    }
+
+    def mads1Fut: Future[Seq[MNode]] = {
+      val adSearch0 = _adSearch
+      // Не искать вообще карточки, если firstIds.len >= adSearch.size
+      if (adSearch0.limit > adSearch0.firstIds.size) {
+        // Костыль, т.к. сортировка forceFirstIds на стороне ES-сервера всё ещё не пашет:
+        _mads1SearchFut.flatMap { searchArgs =>
+          mNodes.dynSearch(searchArgs)
+        }
+
+      } else {
+        // Все firstIds перечислены, возвращаемый размер не подразумевает отдельного поиска.
+        Future.successful( Nil )
+      }
+    }
+
+    override def _firstAdIndexFut = {
+      _mads1SearchFut.map(_.offset + 1)
+    }
+
+
+    /** 2015.aug.26: sc v1 и v2 имеют разные смыслы (смысловые scope'ы) параметра firstAdsIds.
+      * В случае v1 нельзя фетчить first ads при последующих запросах, но он всегда участвует.
+      * В v2 firstAdIds относится к каждому конкретному запросу. */
+    protected def fetchFirstAds: Boolean = {
+      _adSearch.firstIds.nonEmpty  &&  _adSearch.offset <= 0
+    }
+
+    override def firstAdIdsFut: Future[Seq[String]] = {
+      val _firstIds = _adSearch.firstIds
+      val ids = if (_firstIds.nonEmpty  &&  _adSearch.offset <= 0)
+        _firstIds
+      else
+        Nil
+      Future.successful(ids)
+    }
+
+  }
+
   /**
    * Внутренняя реализация Focused-логики для v1 API.
    * Это API имело архитектурные особенности: первая карточка рендерилась с обрамлением и отдельном поле,
@@ -599,12 +618,11 @@ trait ScFocusedAdsV1 extends ScFocusedAds {
   protected class FocusedAdsLogicHttpV1(override val _adSearch: FocusedAdsSearchArgs)
                                        (override implicit val _request: IReq[_])
     extends FocusedAdsLogicHttp
+    with FocusedAdsLogicV1
     with NoBrAcc
   {
     /** Тип отрендеренного блока в APIv1 -- это json-строка, содержащая HTML блока без заглавия и прочего. */
     override type OBT = JsString
-
-    override def _firstAdIndexFut = super._firstAdIndexFut.map(_ + 1)
 
     /** Рендерим в html, минифицируем, заворачиваем в js-строку. */
     override def renderOuterBlock(args: AdBodyTplArgs): Future[OBT] = {
@@ -612,14 +630,6 @@ trait ScFocusedAdsV1 extends ScFocusedAds {
         .map(htmlCompressUtil.html2jsStr)
     }
 
-    override def apiVsn = MScApiVsns.Coffee
-
-    /** 2015.aug.26: sc v1 и v2 имеют разные смыслы (смысловые scope'ы) параметра firstAdsIds.
-      * В случае v1 нельзя фетчить first ads при последующих запросах (offset > 0),
-      * но он всегда участвует в запросах. */
-    override protected def fetchFirstAds: Boolean = {
-      super.fetchFirstAds && _adSearch.offset <= 0
-    }
 
     /** Отдельно отфокусированную карточку тоже нужно минифицировать и завернуть в JsString. */
     def focAdHtmlJsStrOptFut: Future[Option[JsString]] = {

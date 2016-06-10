@@ -1,9 +1,10 @@
 package models.msc
 
-import models._
 import play.api.mvc.QueryStringBindable
 import io.suggest.ad.search.AdSearchConstants._
 import io.suggest.model.play.qsb.QsbKey1T
+import models.{AdSearch, AdSearchWrap, AdSearchWrapper_}
+import models.mlu.MLookupMode
 import util.PlayMacroLogsDyn
 import views.js.sc.m._
 
@@ -18,31 +19,36 @@ object FocusedAdsSearchArgs {
 
   /** Маппер экземпляров модели для url query string. */
   implicit def qsb(implicit
-                   adSearchB  : QueryStringBindable[AdSearch],
-                   boolOptB   : QueryStringBindable[Option[Boolean]],
-                   strOptB    : QueryStringBindable[Option[String]]
+                   adSearchB      : QueryStringBindable[AdSearch],
+                   boolOptB       : QueryStringBindable[Option[Boolean]],
+                   strB           : QueryStringBindable[String],
+                   strOptB        : QueryStringBindable[Option[String]],
+                   mLookupModeB   : QueryStringBindable[MLookupMode]
                   ): QueryStringBindable[FocusedAdsSearchArgs] = {
     new QueryStringBindable[FocusedAdsSearchArgs] with QsbKey1T {
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, FocusedAdsSearchArgs]] = {
         val f = key1F(key)
         for {
-          maybeAdSearch       <- adSearchB.bind (key,                       params)
-          maybeWithHeadAd     <- boolOptB.bind  (WITH_HEAD_AD_FN,           params)
-          openInxAdIdEith     <- strOptB.bind   (f(OPEN_INDEX_AD_ID_FN),    params)
-          maybeAdIdLookup     <- strOptB.bind   (f(AD_ID_LOOKUP_FN),        params)
+          maybeAdSearch       <- adSearchB.bind     (key,                       params)
+          maybeWithHeadAd     <- boolOptB.bind      (WITH_HEAD_AD_FN,           params)
+          openInxAdIdEith     <- strOptB.bind       (f(OPEN_INDEX_AD_ID_FN),    params)
+          mLookupModeEith     <- mLookupModeB.bind  (f(AD_LOOKUP_MODE_FN),      params)
+          lookupAdIdEith      <- strB.bind          (f(AD_ID_LOOKUP_FN),        params)
         } yield {
           for {
             _adSearch         <- maybeAdSearch.right
             _withHeadAd       <- maybeWithHeadAd.right
             _openInxAdId      <- openInxAdIdEith.right
-            _adIdLookup       <- maybeAdIdLookup.right
+            _mLookupMode      <- mLookupModeEith.right
+            _lookupAdId       <- lookupAdIdEith.right
           } yield {
-            new FocusedAdsSearchArgsWrappedImpl {
+            new FocusedAdsSearchArgs with AdSearchWrap {
               override def _dsArgsUnderlying  = _adSearch
               override def withHeadAd         = _withHeadAd.contains(true)
               override def focOpenIndexAdId   = _openInxAdId
-              override def focAdIdLookup      = _adIdLookup
+              override def lookupMode         = _mLookupMode
+              override def lookupAdId         = _lookupAdId
             }
           }
         }
@@ -51,10 +57,11 @@ object FocusedAdsSearchArgs {
       override def unbind(key: String, value: FocusedAdsSearchArgs): String = {
         val f = key1F(key)
         Iterator(
-          adSearchB .unbind     (key,                     value),
-          boolOptB  .unbind     (WITH_HEAD_AD_FN,         Some(value.withHeadAd)),
-          strOptB   .unbind     (f(OPEN_INDEX_AD_ID_FN),  value.focOpenIndexAdId),
-          strOptB   .unbind     (f(AD_ID_LOOKUP_FN),      value.focAdIdLookup)
+          adSearchB   .unbind(  key,                     value),
+          boolOptB    .unbind(  WITH_HEAD_AD_FN,         Some(value.withHeadAd)),
+          strOptB     .unbind(  f(OPEN_INDEX_AD_ID_FN),  value.focOpenIndexAdId),
+          strB        .unbind(  f(AD_ID_LOOKUP_FN),      value.lookupAdId),
+          mLookupModeB.unbind(  f(AD_LOOKUP_MODE_FN),    value.lookupMode)
         )
           .filter(_.nonEmpty)
           .mkString("&")
@@ -90,6 +97,13 @@ trait FocusedAdsSearchArgs extends AdSearch {
 
 
   /**
+    * v2.1 Режим выбора последовательности.
+    *
+    * @return Режим поиска последовательности карточек на основе опорного id карточки.
+    */
+  def lookupMode: MLookupMode
+
+  /**
     * v2
     * Контроллер должен узнать начальные параметры текущей focused-выдачи для карточки с указанным id.
     * присутствует в ответе.
@@ -99,19 +113,14 @@ trait FocusedAdsSearchArgs extends AdSearch {
     * @return None, если дополнительно допиливать результат не требуется.
     *         Some(madId), если необходимо проконтроллировать наличие указанной карточки в результате.
     */
-  def focAdIdLookup: Option[String] = None
+  def lookupAdId: String
 
 }
 
-class FocusedAdsSearchArgsImpl
+
+abstract class FocusedAdsSearchArgsImpl
   extends FocusedAdsSearchArgs
   with PlayMacroLogsDyn
-
-
-/** wrap-значение adSearch + значения, специфичные для [[FocusedAdsSearchArgs]]. */
-abstract class FocusedAdsSearchArgsWrappedImpl
-  extends FocusedAdsSearchArgs
-  with AdSearchWrap
 
 
 /** Враппер для [[FocusedAdsSearchArgs]]. */
@@ -121,7 +130,8 @@ trait FocusedAdsSearchArgsWrapper extends AdSearchWrapper_ with FocusedAdsSearch
 
   override def withHeadAd         = _dsArgsUnderlying.withHeadAd
   override def focOpenIndexAdId   = _dsArgsUnderlying.focOpenIndexAdId
-  override def focAdIdLookup      = _dsArgsUnderlying.focAdIdLookup
+  override def lookupAdId         = _dsArgsUnderlying.lookupAdId
+  override def lookupMode         = _dsArgsUnderlying.lookupMode
 
 }
 
