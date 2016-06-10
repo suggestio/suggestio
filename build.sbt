@@ -5,9 +5,9 @@ name := "swfs"
 version := "0.0.0-SNAPSHOT"
 
 resolvers ++= Seq(
-  "typesafe-releases" at "https://ivy2-internal.cbca.ru/artifactory/typesafe-releases",
-  "sonatype-oss-releases" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-oss-releases",
-  "sonatype-oss-snapshots" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-oss-snapshots"
+  "typesafe-releases"       at Common.Repo.TYPESAFE_RELEASES_URL,
+  "sonatype-oss-releases"   at Common.Repo.SONATYPE_OSS_RELEASES_URL,
+  "sonatype-oss-snapshots"  at Common.Repo.SONATYPE_OSS_SNAPSHOTS_URL
 )
 
 
