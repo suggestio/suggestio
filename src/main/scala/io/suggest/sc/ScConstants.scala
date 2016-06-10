@@ -476,10 +476,12 @@ object ScConstants {
     /** Кол-во focused-карточек для опережающего preload'а за раз. */
     def SIDE_PRELOAD_MAX      = 2
 
+    /** Кол-во focused-карточек для полного запроса вокруг текущей и включая текущую. */
+    def AROUND_LOAD_LIMIT     = 3
 
     /** Лимит запроса focused-карточек в зависимости от запрашивания предшествующей карточки. */
     def getLimit(withPrevAd: Boolean): Int = {
-      if (withPrevAd) 3 else 2
+      if (withPrevAd) AROUND_LOAD_LIMIT else SIDE_PRELOAD_MAX
     }
 
     /** При первичной фокусировке на карточке: запрашивать ли с сервера карточку, предшествующую текущей? */
@@ -505,6 +507,10 @@ object ScConstants {
 
       /** При скроллинге стрелками клавиатуры какой должен быть шаг скроллинга в пикселях? */
       def KBD_SCROLL_STEP_PX = 60
+
+      /** Имя аттрибута, хранящего id карточки. */
+      def MAD_ID_ATTR = Block.MAD_ID_ATTR
+
     }
 
   }

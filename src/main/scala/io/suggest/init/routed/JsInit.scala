@@ -1,6 +1,6 @@
 package io.suggest.init.routed
 
-import io.suggest.common.menum.{LightEnumeration, ILightEnumeration, EnumMaybeWithName}
+import io.suggest.common.menum.{EnumMaybeWithName, ILightEnumeration, LightEnumeration, StrIdValT}
 
 /**
  * Suggest.io
@@ -52,14 +52,10 @@ import JsInitConstants._
 
 
 /** Шаблон для сборки шаблонов enum-моделей и их последующих реалзаций. */
-trait MInitTargetsBaseT extends ILightEnumeration {
+trait MInitTargetsBaseT extends ILightEnumeration with StrIdValT {
 
   /** Абстрактный экземпляр модели. */
-  protected trait ValT extends super.ValT {
-    /** Строковой идентификатор из [[JsInitConstants]]. */
-    def strId: String
-    override def toString: String = strId
-  }
+  protected trait ValT extends super.ValT
 
   override type T <: ValT
 

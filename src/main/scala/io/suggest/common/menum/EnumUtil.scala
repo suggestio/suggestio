@@ -69,3 +69,18 @@ trait LightEnumeration extends ILightEnumeration {
     maybeWithName(n).get
   }
 }
+
+
+/** Интерфейс поля ValT.strId для [[IVeryLightEnumeration]]. */
+trait StrIdValT extends IVeryLightEnumeration {
+
+  protected trait ValT extends super.ValT {
+    /** Строковой ключ каждого элемента модели. */
+    def strId: String
+
+    override def toString: String = strId
+  }
+
+  override type T <: ValT
+
+}

@@ -1,6 +1,6 @@
 package io.suggest.sc
 
-import io.suggest.common.menum.{LightEnumeration, ILightEnumeration, EnumMaybeWithName}
+import io.suggest.common.menum.{EnumMaybeWithName, ILightEnumeration, LightEnumeration, StrIdValT}
 
 /**
  * Suggest.io
@@ -19,14 +19,10 @@ object MScTargetIds {
 
 
 /** Базовая реализация модели назначений рендера выдачи. */
-trait MScTargetsBaseT extends ILightEnumeration {
+trait MScTargetsBaseT extends ILightEnumeration with StrIdValT {
 
   /** Интерфейс экземпляра будущих моделей. */
   protected trait ValT extends super.ValT {
-    /** Строковой id назначения. */
-    def strId: String
-
-    override def toString = strId
 
     /** Доступна панель навигации по узлам рекламной сети? */
     def withAdnNav: Boolean

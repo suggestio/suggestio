@@ -1,6 +1,6 @@
 package io.suggest.adv.ext.model.ctx
 
-import io.suggest.common.menum.{LightEnumeration, ILightEnumeration, EnumMaybeWithName}
+import io.suggest.common.menum.{EnumMaybeWithName, ILightEnumeration, LightEnumeration, StrIdValT}
 
 /**
  * Suggest.io
@@ -32,12 +32,10 @@ import MAskActions._
 
 
 /** Абстрактный трейт будущего enum'а с допустимыми экшенами. */
-trait MAskActionsBaseT extends ILightEnumeration {
+trait MAskActionsBaseT extends ILightEnumeration with StrIdValT {
 
   trait ValT extends super.ValT {
-    val strId: String
-
-    override def toString = strId
+    override val strId: String
   }
 
   override type T <: ValT

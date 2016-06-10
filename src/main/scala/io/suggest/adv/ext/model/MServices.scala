@@ -1,6 +1,6 @@
 package io.suggest.adv.ext.model
 
-import io.suggest.common.menum.{LightEnumeration, ILightEnumeration, EnumMaybeWithName}
+import io.suggest.common.menum.{EnumMaybeWithName, ILightEnumeration, LightEnumeration, StrIdValT}
 
 /**
  * Suggest.io
@@ -20,11 +20,10 @@ object MServices {
 }
 
 
-trait MServicesBaseT extends ILightEnumeration {
+trait MServicesBaseT extends ILightEnumeration with StrIdValT {
 
   protected trait ValT extends super.ValT {
-    val strId: String
-    override def toString = strId
+    override val strId: String
   }
 
   override type T <: ValT
@@ -49,9 +48,6 @@ trait MServicesT extends Enumeration with EnumMaybeWithName with MServicesBaseT 
     with ValT
   override type T <: Val
 }
-
-
-import MServices._
 
 
 /** Легковесная реализации модели сервисов без использования scala-коллекций. */
