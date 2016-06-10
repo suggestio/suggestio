@@ -5,7 +5,7 @@ name := "logs-macro"
 version := "0.0.0-SNAPSHOT"
 
 resolvers ++= Seq(
-  "typesafe-releases" at "https://ivy2-internal.cbca.ru/artifactory/typesafe-releases"
+  "typesafe-releases" at Common.Repo.TYPESAFE_RELEASES_URL
 )
 
 
