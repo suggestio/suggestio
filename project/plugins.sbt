@@ -6,10 +6,8 @@ offline := true
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 
 resolvers ++= Seq(
-  //"typesafe-releases"       at "https://ivy2-internal.cbca.ru/artifactory/typesafe-releases",
-  "typesafe-releases"       at "http://10.0.0.254:8081/artifactory/typesafe-releases"
-  // TODO переехать на ivy2-internal тут
-  //Resolver.url("neomaclin-repository", url("http://dl.bintray.com/neomaclin/sbt-plugins/"))(Resolver.ivyStylePatterns)
+  "typesafe-releases"       at "http://ivy2-internal.cbca.ru/artifactory/typesafe-releases"
+  //"typesafe-releases"     at "http://10.0.0.254:8081/artifactory/typesafe-releases"
 )
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-coffeescript" % "1.0.0")

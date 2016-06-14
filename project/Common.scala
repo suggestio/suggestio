@@ -56,8 +56,8 @@ object Common {
   object Repo {
 
     /** Адрес внутреннего кеширующего сервера artifactory */
-    //val ARTIFACTORY_URL               = "https://ivy2-internal.cbca.ru/artifactory/"
-    val ARTIFACTORY_URL               = "http://10.0.0.254:8081/artifactory/"
+    val ARTIFACTORY_URL               = "http://ivy2-internal.cbca.ru/artifactory/"
+    //val ARTIFACTORY_URL             = "http://10.0.0.254:8081/artifactory/"
 
     val TYPESAFE_RELEASES_URL         = ARTIFACTORY_URL + "typesafe-releases"
 
