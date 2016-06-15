@@ -22,3 +22,6 @@ lk-adv-common-sjs       = lk-adv-common-sjs
 lk-tags-edit-sjs	= lk-tags-edit-sjs
 lk-adv-geo-tags-sjs	= lk-adv-geo-tags-sjs
 scalajs-mapboxgl        = scalajs-mapboxgl
+
+[subpaths]
+(https?://([^/@]*@)?kallithea\.cbca\.ru/sio/v2)/root/ = \1/sub/
