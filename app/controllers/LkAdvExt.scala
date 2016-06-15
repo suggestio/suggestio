@@ -22,6 +22,7 @@ import util.PlayMacroLogsImpl
 import util.acl._
 import util.adv.ExtAdvWsActors
 import util.adv.ext.AeFormUtil
+import views.html.helper.CSRF
 import views.html.lk.adv.ext._
 import views.html.static.popups.closingPopupTpl
 
@@ -152,7 +153,7 @@ class LkAdvExt @Inject() (
           bestBeforeSec = WS_BEST_BEFORE_SECONDS,
           wsId          = "" // TODO Это не нужно на данном этапе. runner() был вынесен в отдельнй экшен.
         )
-        Redirect( routes.LkAdvExt.runner(adId, Some(wsArgs)) )
+        Redirect( CSRF(routes.LkAdvExt.runner(adId, Some(wsArgs))) )
       }
     )
   }
