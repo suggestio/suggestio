@@ -41,10 +41,26 @@ import scala.concurrent.Future
   * Решено было, чтобы сервер сам каждый раз вычислял сегмент focused-цепочки на основе id карточки
   * и направления поиска. Это также унифицировало ряд вещей: десериализацию из URL и просто листание (навигацию).
   */
+
 trait ScFocusedAdsV2
   extends ScFocusedAds
   with IN2NodesUtilDi
 {
+
+  protected[this] case class NodeIdIndexed(nodeId: String, index: Int) {
+    override def toString: String = {
+      nodeId + "#" + index
+    }
+  }
+
+  protected[this] case class AdsLookupRes(ids: Seq[NodeIdIndexed], total: Int)
+
+  /** Интерфейс результата анализа узлов и направления lookup'а внутри _doAdIdsLookup(). */
+  private trait ILookupRes {
+    def fadIds2     : Seq[NodeIdIndexed]
+    def shouldNext  : Boolean
+  }
+
 
   import mCommonDi._
 
@@ -57,13 +73,8 @@ trait ScFocusedAdsV2
 
     override def apiVsn = MScApiVsns.Sjs1
 
-
-    case class NodeIdIndexed(nodeId: String, index: Int) {
-      override def toString: String = {
-        nodeId + "#" + index
-      }
-    }
-    case class AdsLookupRes(ids: Seq[NodeIdIndexed], total: Int)
+    /** Число-отметка текущей логики обработки запроса. */
+    private val _currTimeMs = System.currentTimeMillis()
 
 
     /** Асинхронный результат поиска сегмента карточек. */
@@ -71,7 +82,9 @@ trait ScFocusedAdsV2
 
     /** Метод рекурсивного поиска сегмента последовательности id карточек в пакетных выхлопах elasticsearch. */
     def _doAdIdsLookup(adId: String = _adSearch.lookupAdId, lm: MLookupMode = _adSearch.lookupMode,
-                       neededCount: Int = _adSearch.limit, limit1: Int = 50, offset1: Int = 0): Future[AdsLookupRes] = {
+                       neededCount: Int = _adSearch.limit, limit1: Int = 50, offset1: Int = 0, tryN: Int = 1): Future[AdsLookupRes] = {
+
+      assert(tryN <= 20)
 
       // Необходимо поискать id focused-карточек в корректном порядке с начала списка.
       val fadsIdsSearch = new FocusedAdsSearchArgsWrapperImpl {
@@ -100,39 +113,43 @@ trait ScFocusedAdsV2
         }
       }
 
-      lazy val logPrefix = s"_doAdLookup(${System.currentTimeMillis}): "
-      LOGGER.trace(s"$logPrefix [$adId] $lm, need=$neededCount limit=$limit1 offset=$offset1")
+      // Логгируем рекурсию вместе с номером попытки.
+      lazy val logPrefix = s"_doAdLookup(${_currTimeMs}#$tryN): "
+      LOGGER.trace(s"$logPrefix [$adId] ${lm.toVisualString}, need=$neededCount limit=$limit1 offset=$offset1")
 
       fadIdsFut.flatMap { fadIds =>
 
         lazy val hasAdId = fadIds.contains( adId )
         lazy val fadIdsSize = fadIds.size
         lazy val fadIdsHasNexts = fadIdsSize >= limit1
-        def fadIdsHasNextsF() = fadIdsHasNexts
+
+        class SimpleLookupRes(override val fadIds2: Seq[NodeIdIndexed]) extends ILookupRes {
+          override def shouldNext = fadIdsHasNexts
+        }
 
         def fadIdsIter = offsetIndexed(fadIds.iterator, sign = true)
         def fadIdsReverseIter = offsetIndexed(fadIds.reverseIterator, sign = false)
 
-        LOGGER.trace(s"$logPrefix Found $fadIdsSize ids, first found is [${fadIds.mkString(",")}]")
+        LOGGER.trace(s"$logPrefix Found $fadIdsSize ids: [${fadIds.mkString(" ")}]")
 
-        val (fadIds2, shouldNextF): (Seq[NodeIdIndexed], () => Boolean) = lm match {
+        val lRes: ILookupRes = lm match {
 
           // Сбор id карточек после указанной adId
           case MLookupModes.After =>
-            val _fadIds2 = takeIdsAfter( fadIdsIter )
             // При просмотре элементов вправо можно переходить на следующую выборку, если длина текущей упирается в лимит.
-            _fadIds2 -> fadIdsHasNextsF
+            new SimpleLookupRes( takeIdsAfter(fadIdsIter) )
 
           // Сбор id карточек, предшествующих указанной карточке.
           case MLookupModes.Before =>
             // Всё просто: берём и собираем в обратном порядке.
             val _fadIds2 = takeIdsAfter( fadIdsReverseIter )
               .reverse
-            // Была ли найдена текущая карточка? Да, если список предшествующих ей непуст ИЛИ же пуст т.к. искомая карточка первая в списке.
-            val _f = { () =>
-              _fadIds2.isEmpty || !fadIds.headOption.contains(adId)
+            new SimpleLookupRes(_fadIds2) {
+              override def shouldNext: Boolean = {
+                // Была ли найдена текущая карточка? Да, если список предшествующих ей непуст ИЛИ же пуст т.к. искомая карточка первая в списке.
+                _fadIds2.nonEmpty || !fadIds.headOption.contains(adId)
+              }
             }
-            _fadIds2 -> _f
 
           // Сбор id карточек вокруг желаемой карточки.
           case MLookupModes.Around =>
@@ -159,19 +176,21 @@ trait ScFocusedAdsV2
               b ++= afterIds
 
               // Подготовить результат.
-              val _f = { () =>
-                needCountAfter > afterIds.size  &&  fadIdsHasNexts
+              new SimpleLookupRes(b.result()) {
+                override def shouldNext: Boolean = {
+                  needCountAfter > afterIds.size  &&  fadIdsHasNexts
+                }
               }
-              b.result() -> _f
 
             } else {
               // Нет вообще искомой карточки среди упомянутых.
-              Nil -> fadIdsHasNextsF
+              new SimpleLookupRes(Nil)
             }
         }
 
+        val fadIds2 = lRes.fadIds2
         val foundCount = fadIds2.size
-        LOGGER.trace(s"$logPrefix ids[$foundCount] = [${fadIds2.mkString(", ")}]")
+        LOGGER.trace(s"$logPrefix ids[$foundCount] = [${fadIds2.mkString(" ")}]")
 
         // Дедубликация кода возврата результата без дальнейшего погружения в рекурсию.
         def resFut = Future.successful {
@@ -181,7 +200,7 @@ trait ScFocusedAdsV2
         if (foundCount < neededCount) {
           // Найдено недостаточно элементов. Или их просто нет, или их можно найти в следующей порции.
 
-          if (shouldNextF()) {
+          if (lRes.shouldNext) {
             // Требуется переход на следующую порцию для поиска.
             // Новый режим поиска: если сбор элементов уже начался, то только after.
             val lm2 = if (fadIds2.nonEmpty) MLookupModes.After else lm
@@ -204,7 +223,8 @@ trait ScFocusedAdsV2
               lm            = lm2,
               neededCount   = neededCount2,
               limit1        = limit1,
-              offset1       = offset1 + limit1 - backOffset
+              offset1       = offset1 + limit1 - backOffset,
+              tryN          = tryN + 1
             )
             // Добавить текущие найденные элементы в итоговый результат.
             for (nextRes <- fut2) yield {
@@ -243,7 +263,9 @@ trait ScFocusedAdsV2
 
     override def firstAdIdsFut: Future[Seq[String]] = {
       for (res <- adIdsLookupResFut) yield {
-        res.ids.map(_.nodeId)
+        for (idIndexed <- res.ids) yield {
+          idIndexed.nodeId
+        }
       }
     }
 
@@ -301,7 +323,7 @@ trait ScFocusedAdsV2
       }
     }
 
-  }
+  }  // class FocusedLogicHttpV2
 
 
   // Добавить поддержку v2-логики в getLogic()

@@ -19,26 +19,42 @@ object MLookupModes extends EnumMaybeWithName with ILookupModes with EnumQsb {
   {
     override def toString: String = strId
 
+    /** Визуальная строка, описывающая направление lookup'а. Без локализации.
+      * Используется для printable-отображения в логах или на системных страницах.
+      * Изначально, длина была 3 chars. */
+    def toVisualString: String
+
+    /** Есть направление "назад"? */
     def withBefore  : Boolean
+
+    /** Есть направление "вперёд"? */
     def withAfter   : Boolean
+
   }
+
 
   override type T = Val
 
 
   import MLookupModesConstants._
 
+  /** Вокруг точки отсчета. */
   override val Around : T = new Val( AROUND_ID ) {
+    override def toVisualString = "<->"
     override def withBefore = true
     override def withAfter  = true
   }
 
+  /** До точки отсчета. */
   override val Before : T = new Val( BEFORE_ID ) {
+    override def toVisualString = "<<<"
     override def withBefore = true
     override def withAfter  = false
   }
 
+  /** После точки отсчета. */
   override val After  : T = new Val( AFTER_ID ) {
+    override def toVisualString = ">>>"
     override def withBefore = false
     override def withAfter  = true
   }

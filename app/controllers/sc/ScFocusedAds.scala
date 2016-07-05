@@ -99,17 +99,21 @@ trait ScFocusedAdsBase
       }
     }
 
-    def firstAdIdsFut: Future[Traversable[String]]
+    def firstAdIdsFut: Future[Seq[String]]
 
     /** Первые карточки, если запрошены. */
     def firstAdsFut: Future[Seq[MNode]] = {
       firstAdIdsFut.flatMap { firstAdIds =>
         if (firstAdIds.nonEmpty) {
-          val fut = mNodeCache.multiGet(firstAdIds)
-          fut.onSuccess { case mads =>
+          for (mads <- mNodeCache.multiGet(firstAdIds)) yield {
+            // Залоггировать недостающие элементы.
             logMissingFirstIds(mads, firstAdIds)
+            // 2016.jul.5 Восстановить исходный порядок first-элементов. v2-выдача плавно переехала на них.
+            if (mads.size > 1)
+              OptId.orderByIds(firstAdIds, mads)
+            else
+              mads
           }
-          fut
         } else {
           Future.successful( Nil )
         }
@@ -174,7 +178,7 @@ trait ScFocusedAdsBase
               inlineStyles    = false,
               cssClasses      = _withCssClasses,
               // 2015.mar.06: FIXME Это значение сейчас перезаписывается таким же через showcase.js. // TODO Они должны быть в стилях, а не тут.
-              topLeft         = brArgs.wideBg.map(_ => FocusedTopLeft),
+              topLeft         = for (_ <- brArgs.wideBg) yield FocusedTopLeft,
               apiVsn          = apiVsn
             )
           }
@@ -349,36 +353,37 @@ trait ScFocusedAdsBase
       val _brArgsFut = focAdOptFut.map(_.get)
       val _madsCountIntFut = madsCountIntFut
       val _firstAdIndexFut1 = firstAdIndexFut
+
       // Склеиваем фьючерсы в набор аргументов вызова focAdsRenderArgsFor().
-      val abtArgsFut = for {
+      for {
         _producer     <- _producerFut
         _brArgs       <- _brArgsFut
         madsCountInt  <- _madsCountIntFut
         firstAdIndex  <- _firstAdIndexFut1
-      } yield {
-        AdBodyTplArgs(
+        // Завернуть все данные в общий контейнер аргументов
+        abtArgs = AdBodyTplArgs(
           _brArgs, _producer,
           adsCount    = madsCountInt,
           index       = firstAdIndex,
           is3rdParty  = is3rdPartyProducer(_producer.id.get)
         )
-      }
-      // Запустить сборку аргументов рендера.
-      abtArgsFut flatMap { abtArgs =>
-        focAdsRenderArgsFor(abtArgs)
+        // Запустить сборку аргументов рендера.
+        args          <- focAdsRenderArgsFor(abtArgs)
+      } yield {
+        args
       }
     }
 
     override def adsCssExternalFut: Future[Seq[AdCssArgs]] = {
-      mads2andBrArgsFut.map { mbas =>
-        mbas.map { mba =>
+      for (mbas <- mads2andBrArgsFut) yield {
+        for (mba <- mbas) yield {
           AdCssArgs(mba.mad.id.get, mba.szMult)
         }
       }
     }
 
     override def adsCssFieldRenderArgsFut: Future[immutable.Seq[blk.FieldCssRenderArgsT]] = {
-      mads2andBrArgsFut.map { mbas =>
+      for (mbas <- mads2andBrArgsFut) yield {
         mbas.iterator
           .flatMap { mba =>  mad2craIter(mba, mba.cssClasses) }
           .toStream
@@ -390,7 +395,7 @@ trait ScFocusedAdsBase
 
     /** Параметры для рендера обрамляющего css блоков (css не полей, а блоков в целом). */
     override def adsCssRenderArgsFut: Future[immutable.Seq[blk.IRenderArgs]] = {
-      mads2andBrArgsFut.map { mbas =>
+      for (mbas <- mads2andBrArgsFut) yield {
         mbas.toStream
       }
     }

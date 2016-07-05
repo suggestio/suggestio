@@ -84,7 +84,7 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
     val resultFut = companion.multiGetRev(nonCachedIds, acc0 = cached)
     // Асинхронно отправить в кеш всё, чего там ещё не было.
     if (nonCachedIds.nonEmpty) {
-      resultFut onSuccess { case results =>
+      resultFut.onSuccess { case results =>
         val ncisSet = nonCachedIds.toSet
         results.foreach { result =>
           val id = result.idOrNull
