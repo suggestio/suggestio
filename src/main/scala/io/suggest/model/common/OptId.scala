@@ -75,4 +75,22 @@ object OptId {
       .flatMap(_.iterator)
   }
 
+
+  /** Отсортировать элементы моделей согласно порядку их id.
+    *
+    * @param ids Исходные id'шники в исходном порядке.
+    * @param els Исходная цепочка элементов.
+    * @tparam Id_t Тип используемого id'шника.
+    * @tparam T Тип одного элемента модели.
+    * @return Итоговая отсортированная коллекция.
+    */
+  def orderByIds[Id_t, T <: OptId[Id_t]](ids: TraversableOnce[Id_t], els: Seq[T]): Seq[T] = {
+    val idsMap = ids.toIterator.zipWithIndex.toMap
+    els.sortBy { e =>
+      e.id
+        .flatMap(idsMap.get)
+        .getOrElse(0)
+    }
+  }
+
 }
