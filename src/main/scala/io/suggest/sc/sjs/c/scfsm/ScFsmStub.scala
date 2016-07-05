@@ -43,6 +43,7 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm {
           screen  = screenOpt
         )
       )
+      _stateData = sd1
 
       // Выполнить какие-то общие для выдачи действия
       // Подправить высоту левой панели...
@@ -54,8 +55,6 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm {
       for (mscreen <- screenOpt; sRoot <- SRoot.find()) {
         sRoot.adjust(mscreen, sd1.common.browser)
       }
-
-      _stateData = sd1
     }
 
   }

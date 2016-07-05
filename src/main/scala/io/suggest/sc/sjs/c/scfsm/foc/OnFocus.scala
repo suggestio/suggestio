@@ -39,6 +39,15 @@ trait IOnFocusBase extends ScFsmStub {
 
     /** Состояние переключения на предыдущую карточку. */
     protected def _shiftLeftState : FsmState
+
+    /** Код шифтинга в указанную сторону. */
+    protected def _shiftForHand(mhand: MHand): FsmState = {
+      if (mhand.isLeft)
+        _shiftLeftState
+      else
+        _shiftRightState
+    }
+
   }
 
 
@@ -235,12 +244,7 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
           _maybeUpdateArrDir(mhand, fArr, fState, sd0)
         }
         if (_filterSimpleShiftSignal(mhand)) {
-          val nextState = if (mhand.isLeft) {
-            _shiftLeftState
-          } else {
-            _shiftRightState
-          }
-          become(nextState)
+          become( _shiftForHand(mhand) )
         }
       }
     }
@@ -263,6 +267,15 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
 
         // Отработать next-карточку: сначала понять, не является ли текущая карточка крайней справа.
         val fadsAfterCurrent = fState.fadsAfterCurrentIter.toStream
+        println("analyze " +
+          fState.fadsBeforeCurrentIter.map(_.madId).mkString("["," ", "]") +
+          fState.isCurrAdFirst + ":" + fState.firstAdId +
+          " >" + fState.current.madId + "< " +
+          fState.isCurrAdLast + ":" + fState.lastAdId + " " +
+          fadsAfterCurrent.map(_.madId).mkString("[", " ", "]") +
+          "\nAll fads = " + fState.fadIdsIter.mkString("[", " ", "]")
+        )
+
         if (!fState.isCurrAdLast && fadsAfterCurrent.isEmpty) {
           // Надо запустить запрос следующих (вправо) карточек с сервера. Запустить запрос к серваку за след.порцией карточек.
           _maybeReqMoreFads(MLookupModes.After)
@@ -331,6 +344,7 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
         fState0   <- sd0.focused
         if fState0.req.isEmpty
       } {
+        println("req more fads: " + where)
         val currAdId  = fState0.current.madId
 
         // Собрать параметры для поиска
@@ -368,8 +382,7 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
     /** Реакция на получение карточек с сервера: запихать карточки в состояние,
       * выполнить рендер если необходимо. */
     def _handleSrvResp(mfaRespTs: MFocSrvRespTs): Unit = {
-      val sd0 = _stateData
-      val focReqOpt = sd0.focused.flatMap(_.req)
+      val focReqOpt = _stateData.focused.flatMap(_.req)
       val hasTimestamp = focReqOpt.exists(_.timestamp == mfaRespTs.timestamp)
       // Проверять timestamp. Это для самоконтроля + для случаев, когда focused-выдача была переоткрыта юзером, а запрос был повисшим всё это время.
       if (hasTimestamp) {
@@ -385,6 +398,7 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
         }
 
         // Сохранить итоги обработки ответа сервера в состояние.
+        val sd0 = _stateData
         _stateData = sd0.copy(
           focused = sd0.focused.map(_.copy(
             req = None
@@ -469,17 +483,21 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
       *         None нет точных результатов.
       */
     def utterAdIdOpt: Option[String] = {
-      if (respFadsNotEnought) {
-        val fadsColl = if (respFadsSize > 0) {
+      val r = if (respFadsNotEnought) {
+        val fadsColl = /*if (respFadsSize > 0) {
           res.resp.fads
-        } else {
-          fState0.fads
+        } else {*/
+          fads2
+        //}
+        // Вернуть id крайней карточки.
+        for (fad <- utterFad(fadsColl)) yield {
+          fad.madId
         }
-        utterFad( fadsColl )
-          .map(_.madId)
       } else {
         None
       }
+      println(getClass.getSimpleName + ".utterFad() => " + r)
+      r
     }
 
     // оверрайдить в реализациях с помощью = utterAdIdOpt.
@@ -511,12 +529,18 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
     override val res      : MFocSrvResp
   ) extends FocUpdaterT {
 
-    override def fads2: FAdQueue = {
+    override lazy val fads2: FAdQueue = {
       if (fState0.fads.lastOption.map(_.madId).contains(relAdId) || fadsMissingRelAdId) {
         // Если опорной карточки нет в fads (should never happen), то ругаться в логи, но добавлять карточки в конец в исходном порядке.
         if (fadsMissingRelAdId)
           warn( ErrorMsgs.FOC_LOOKUP_MISSING_AD + logSuffix )
-        fState0.fads ++ res.resp.fads
+        val r = fState0.fads ++ res.resp.fads
+        println("A.fads2: " +
+          fState0.fadIdsIter.mkString("[", " ", "]") +
+          " ++ " + res.resp.fads.iterator.map(_.madId).mkString("[", " ", "]") +
+          " = " + r.map(_.madId).mkString("[", " ", "]")
+        )
+        r
       } else {
         // Маловозможна ситуация запроса карточек после указанной, хотя там карточки почему-то уже есть.
         warn( WarnMsgs.FOC_LOOKUPED_AD_NOT_LAST + logSuffix )
@@ -549,7 +573,7 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
     override val res      : MFocSrvResp
   ) extends FocUpdaterT {
 
-    override def fads2: FAdQueue = {
+    override lazy val fads2: FAdQueue = {
       if (fState0.fads.isEmpty) {
         // Should never happen: внезапно пустая очередь-кеш fads. Код написан для безопасности вызова оптимизированного fads.head
         error( ErrorMsgs.FOC_ADS_EMPTY + logSuffix )
@@ -559,7 +583,9 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
         // Если нет карточки, вокруг которой пляшет весь запрос, то просто запихать карточки в выдачу, ругнувшись в логи.
         if (fadsMissingRelAdId)
           warn( ErrorMsgs.FOC_LOOKUP_MISSING_AD + logSuffix )
-        res.resp.fads ++: fState0.fads
+        val r = res.resp.fads ++: fState0.fads
+        println("B.fads2: " + res.resp.fads + " ++ " + fState0.fads + " = " + r)
+        r
       } else {
         warn( WarnMsgs.FOC_LOOKUPED_AD_NOT_LAST + logSuffix )
         // Карточка есть, но она не первая почему-то. Используем iterator + dropWhile.

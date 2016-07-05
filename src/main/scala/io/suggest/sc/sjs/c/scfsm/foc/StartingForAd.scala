@@ -42,14 +42,11 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
     override def afterBecome(): Unit = {
       super.afterBecome()
 
-      // Необходимо запустить focused ad реквест к серверу.
       val sd0 = _stateData
       for {
         fState0 <- sd0.focused
-        fRoot   <- FRoot.find()
-        car     <- fRoot.carousel
       } {
-        // Подготовка аргументов поиска.
+        // Необходимо по-скорее запустить focused ad реквест к серверу. Подготовка аргументов поиска:
         val args = new MFocAdSearchEmpty with FindAdsArgsT {
           override def _sd              = sd0
           override def limit            = Some( Focused.AROUND_LOAD_LIMIT )
@@ -59,40 +56,47 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
           // Разрешить серверу делать перескок выдачи, если не форсируется lookup-карточки.
           override def allowReturnJump  = !fState0.current.forceFocus
         }
-
+        // Запустить поиск focused-карточек в фоне.
         val fadsFut = MFocAds.findOrIndex(args)
 
-        // Запрос запущен, пора бы отобразить loader
-        for (fsl <- FsLoader.find()) {
-          fsl.show()
-        }
+        // Продолжить синхронные операции с каруселью.
+        for {
+          fRoot   <- FRoot.find()
+          car     <- fRoot.carousel
+        } {
 
-        // Скрыть за экран корневой focused-контейнер, подготовиться к появлению на экране.
-        fRoot.disableTransition()
-        fRoot.initialDisappear()
+          // Запрос запущен, пора бы отобразить loader
+          for (fsl <- FsLoader.find()) {
+            fsl.show()
+          }
 
-        // Готовим карусель к работе.
-        if (!car.isEmpty)
-          car.clear()
-        // Ширина ячейки в карусели эквивалентна пиксельной ширине экрана.
-        // Начальная ширина карусели задаётся исходя из текущих ячеек.
-        for (screen  <- sd0.common.screen) {
-          car.setCellWidth(1, screen)
-          // Начальный сдвиг карусели выставляем без анимации. Весь focused будет выезжать из-за экрана.
-          car.disableTransition()
-          car.animateToCell(0, screen, sd0.common.browser)
-        }
+          // Скрыть за экран корневой focused-контейнер, подготовиться к появлению на экране.
+          fRoot.disableTransition()
+          fRoot.initialDisappear()
 
-        // Подготовить контейнер для стилей.
-        FocusedRes.ensureCreated()
-        // Подготовить контейнер для заголовка и прочего FControls.
-        for (fControls <- FControls.find()) {
-          fControls.clear()
-        }
+          // Готовим карусель к работе.
+          if (!car.isEmpty)
+            car.clear()
+          // Ширина ячейки в карусели эквивалентна пиксельной ширине экрана.
+          // Начальная ширина карусели задаётся исходя из текущих ячеек.
+          for (screen <- sd0.common.screen) {
+            car.setCellWidth(1, screen)
+            // Начальный сдвиг карусели выставляем без анимации. Весь focused будет выезжать из-за экрана.
+            car.disableTransition()
+            car.animateToCell(0, screen, sd0.common.browser)
+          }
 
-        // повесить листенер для ожидания ответа сервера.
-        _sendFutResBack {
-          fadsFut
+          // Подготовить контейнер для стилей.
+          FocusedRes.ensureCreated()
+          // Подготовить контейнер для заголовка и прочего FControls.
+          for (fControls <- FControls.find()) {
+            fControls.clear()
+          }
+
+          // повесить листенер для ожидания ответа сервера.
+          _sendFutResBack {
+            fadsFut
+          }
         }
       }
     }
@@ -129,15 +133,13 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
           }
           .get
 
-        val cellWidth = screen.width
-
         // Сначала обрабатываем запрошенную карточку:
         // Индекс запрошенной карточки в массиве fads: она или первая крайняя, или вторая при наличии предыдущей.
         val fadRoot = FAdRoot( firstAd.bodyHtml )
         fadRoot.initLayout( screen, sd0.common.browser )
         // Повесить запрошенную карточку на месте текущего индекса.
-        val currIndex = firstAd.index
-        fadRoot.setLeftPx( currIndex * cellWidth )
+        val currIndex = fState.current.index //firstAd.index
+        fadRoot.setLeft( currIndex, screen )
 
         // Прилинковываем запрошенную карточку справа и запускаем анимацию.
         car.pushCellRight(fadRoot)

@@ -232,12 +232,7 @@ trait OnTouch extends OnFocusBase {
               car.animateToCell(currIndex, screen, sd0.common.browser)
             }
             _touchCancelledState
-          } { mhand =>
-            if (mhand.isLeft)
-              _shiftLeftState
-            else
-              _shiftRightState
-          }
+          }(_shiftForHand)
 
         // Выполнить переключение состояния FSM.
         val sd1 = _clearTouchSd(sd0)

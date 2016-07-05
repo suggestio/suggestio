@@ -48,14 +48,23 @@ trait Phase
   class FocClosingState extends FocClosingStateT with IBackToGridState
 
 
-  // Переключение focused-карточек в выдаче.
-  protected trait SimpleShiftStateT extends super.SimpleShiftStateT with IStartFocusOnAdState {
-    override def _shiftDoneState = new FocOnFocusState
+  /** Реализация интерфейса IShiftDoneState. */
+  protected trait IShiftDoneState extends super.IShiftDoneState {
+    override protected def _shiftDoneState = new FocOnFocusState
   }
+
+  // Переключение focused-карточек в выдаче.
   /** Состояние перехода на одну карточку вправо. */
-  class FocShiftRightState extends ShiftRightStateT with SimpleShiftStateT
+  class FocShiftRightState
+    extends ShiftRightStateT
+      with IShiftDoneState
+      with IStartFocusOnAdState
+
   /** Состояние перехода на одну карточку влево. */
-  class FocShiftLeftState  extends ShiftLeftStateT with SimpleShiftStateT
+  class FocShiftLeftState
+    extends ShiftLeftStateT
+      with IShiftDoneState
+      with IStartFocusOnAdState
 
 
   // Поддержка touch-состояний в focused-выдаче.

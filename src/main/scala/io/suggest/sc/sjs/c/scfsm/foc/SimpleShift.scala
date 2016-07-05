@@ -17,8 +17,12 @@ import io.suggest.sjs.common.fsm.IFsmMsg
   */
 trait SimpleShift extends MouseMoving with OnFocusBase {
 
+  protected trait IShiftDoneState {
+    protected def _shiftDoneState: FsmState
+  }
+
   /** Трейт для сборки состояния автоматического перехода на следующую/предыдущую карточку. */
-  protected trait SimpleShiftStateT extends FocMouseMovingStateT with OnFocusDelayedResize {
+  protected trait SimpleShiftStateT extends FocMouseMovingStateT with OnFocusDelayedResize with IShiftDoneState {
 
     /** Сообщение о завершении анимации переключения карточки. */
     protected case object ShiftAnimationFinished extends IFsmMsg
@@ -76,8 +80,6 @@ trait SimpleShift extends MouseMoving with OnFocusBase {
       case ShiftAnimationFinished =>
         _animationFinished()
     }
-
-    protected def _shiftDoneState: FsmState
 
     /** Логика реакции на завершение анимации. */
     protected def _animationFinished(): Unit = {
