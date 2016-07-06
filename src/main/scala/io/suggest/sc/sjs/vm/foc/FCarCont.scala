@@ -7,6 +7,7 @@ import io.suggest.sc.sjs.c.scfsm.ScFsm
 import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.m.mfoc.MouseClick
 import io.suggest.sc.sjs.m.mfsm.touch.{TouchCancel, TouchEnd, TouchStart}
+import io.suggest.sc.sjs.m.msc.IScCommon
 import io.suggest.sc.sjs.vm.foc.fad.{FAdRoot, FAdRootT}
 import io.suggest.sc.sjs.vm.util._
 import io.suggest.sjs.common.model.browser.IBrowser
@@ -106,9 +107,9 @@ with ChildrenVms {
     }
   }
 
-  def animateToCell(index: Int, screen: IMScreen, browser: IBrowser): Unit = {
-    val x = indexToLeftPx(index, screen)
-    animateToX(x, browser)
+  def animateToCell(index: Int, scc: IScCommon): Unit = {
+    val x = indexToLeftPx(index, scc.screen)
+    animateToX(x, scc.browser)
   }
 
 

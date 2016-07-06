@@ -32,10 +32,8 @@ trait NlRootT extends SubTagFind with SetHeight3 {
 
   /** Первая инициализация внешности. */
   def initLayout(sd: IScSd): Unit = {
-    for (screen <- sd.common.screen) {
-      val height = screen.height - NlRoot.NL_TOP_OFFSET
-      _setHeight3(height, sd.common.browser)
-    }
+    val height = sd.common.screen.height - NlRoot.NL_TOP_OFFSET
+    _setHeight3(height, sd.common.browser)
   }
 
   /** Повторная инициализация внешности, например после ресайза окна. */

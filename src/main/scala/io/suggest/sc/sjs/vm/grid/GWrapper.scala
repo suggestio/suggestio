@@ -39,14 +39,13 @@ trait GWrapperT extends VmT with SubTagFind with WrapperChildContent {
     // Повесить событие
     for {
       c <- content
-      scr <- sd0.common.screen
     } {
       // Передаем найденные элементы внутрь функции, т.к. при пересоздании layout событие будет повешено повторно.
       addEventListener("scroll") { (e: Event) =>
         val wrappedScrollTop = _underlying.scrollTop
         val contentHeight    = c._underlying.offsetHeight
         // Пнуть контроллер, чтобы подгрузил ещё карточек, когда пора.
-        val scrollPxToGo = contentHeight - scr.height - wrappedScrollTop
+        val scrollPxToGo = contentHeight - sd0.common.screen.height - wrappedScrollTop
         if (scrollPxToGo < MGridParams.LOAD_MORE_SCROLL_DELTA_PX) {
           ScFsm !! GridScroll(e)
         }

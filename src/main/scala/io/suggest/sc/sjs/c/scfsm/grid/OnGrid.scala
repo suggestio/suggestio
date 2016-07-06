@@ -41,18 +41,16 @@ trait OnGridBase extends ScFsmStub with ResizeDelayed with Append {
       // Заодно пересчитать сразу параметры контейнера сетки.
       // Эти параметры не очень-то корректны, т.к. с сервера придут новые размеры ячеек сетки, и надо будет пересчитывать снова.
       val sd0 = _stateData
-      val gContSzOpt = sd0.common.screen
-        .map( sd0.grid.getGridContainerSz )
 
+      val gContSz = sd0.grid.getGridContainerSz( sd0.common.screen )
       // Обновить параметры контейнера сетки.
       for {
-        gContSz   <- gContSzOpt
         gcontent  <- GContent.find()
       } {
         // Обновить контейнер сетки.
         gcontent.setContainerSz(gContSz)
 
-        _handleNewGridContSz(gContSzOpt)
+        _handleNewGridContSz( Some(gContSz) )
       }
     }
 
@@ -83,10 +81,10 @@ trait OnGridBase extends ScFsmStub with ResizeDelayed with Append {
       val needResizeOpt = for {
         rsz <- sd0.common.resizeOpt
         // Прочитать текущее значение ширины в стиле. Она не изменяется до окончания ресайза.
-        screen1 <- sd0.common.screen
+        screen1 = sd0.common.screen
         // При повороте телефонного экрана с открытой боковой панелью бывает, что ширина контейнера не меняется в отличие от ширины экрана.
         // Такое было на one plus one, когда использовался rsz.gContSz, что ломало всё счастье из-за боковых отступов. Поэтому используем сравнение ширин экрана.
-        screen0 <- rsz.screen
+        screen0 = rsz.screen
         // Если ресайза маловато, то вернуть здесь None.
         if Math.abs(screen0.width - screen1.width) >= RSZ_THRESHOLD_PX
       } yield {
@@ -100,17 +98,15 @@ trait OnGridBase extends ScFsmStub with ResizeDelayed with Append {
     override def _handleResizeDelayTimeout(): Unit = {
       val sd0 = _stateData
       if (_isGridNeedResizeDelayed()) {
-        for (mscreen <- sd0.common.screen) {
-          // TODO Opt Если существенное по горизонтали, но оно осталось ~кратно ячейкам, то просто перестроить выдачу: _rebuildGridOnPanelChange
-          val sd1 = sd0.copy(
-            grid = sd0.grid.copy(
-              state = MGridState(
-                adsPerLoad = MGridState.getAdsPerLoad(mscreen)
-              )
+        // TODO Opt Если существенное по горизонтали, но оно осталось ~кратно ячейкам, то просто перестроить выдачу: _rebuildGridOnPanelChange
+        val sd1 = sd0.copy(
+          grid = sd0.grid.copy(
+            state = MGridState(
+              adsPerLoad = MGridState.getAdsPerLoad( sd0.common.screen )
             )
           )
-          _startFindGridAds(sd1)
-        }
+        )
+        _startFindGridAds(sd1)
       }
     }
 
@@ -205,15 +201,17 @@ trait OnGrid extends OnGridBase with IOnFocusBase {
       for (gc <- GContainer.find()) {
         gc.clear()
       }
-      val sd0 = _stateData
-      for (mscreen <- sd0.common.screen) {
-        _stateData = sd0.copy(
+
+      // Загрузить карточки в состояние.
+      _stateData = {
+        val sd0 = _stateData
+        sd0.copy(
           common = sd0.common.copy(
             resizeOpt = None
           ),
           grid = sd0.grid.copy(
             state = sd0.grid.state.nothingLoaded().copy(
-              adsPerLoad = MGridState.getAdsPerLoad(mscreen)
+              adsPerLoad = MGridState.getAdsPerLoad( sd0.common.screen )
             ),
             builderStateOpt = None
           )

@@ -2,6 +2,7 @@ package io.suggest.sc.sjs.vm.foc.fad
 
 import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.ScConstants.Focused.FAd.MAD_ID_ATTR
+import io.suggest.sc.sjs.m.msc.IScCommon
 import io.suggest.sjs.common.model.browser.IBrowser
 import io.suggest.sjs.common.vm.VmT
 import io.suggest.sjs.common.vm.content.{ApplyFromOuterHtml, GetInnerHtml, OuterHtml}
@@ -68,9 +69,9 @@ trait FAdRootT
     setLeftPx(cell * screen2cellWidth(screen))
   }
 
-  def initLayout(screen: IMScreen, browser: IBrowser): Unit = {
-    setWidthPx( screen2cellWidth(screen) )
-    _setHeight3( screen.height, browser )
+  def initLayout(scc: IScCommon): Unit = {
+    setWidthPx( screen2cellWidth(scc.screen) )
+    _setHeight3( scc.screen.height, scc.browser )
   }
 
   /** id рекламной карточки, которая отрендерена внутри. */

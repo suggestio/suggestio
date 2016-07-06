@@ -157,7 +157,7 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
     }
 
     private def screenH: Int = {
-      _stateData.common.screen.fold(480)(_.height)
+      _stateData.common.screen.height
     }
 
     protected def _kbdScroll(delta: Int): Unit = {
@@ -236,10 +236,9 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
       val sd0 = _stateData
       //println( "touch: lock=" + MTouchLock() + " isTouchDev=" + TouchUtil.IS_TOUCH_DEVICE )
       for {
-        screen <- sd0.common.screen
         fState <- sd0.focused
       } {
-        val mhand = _mouse2hand(event, screen)
+        val mhand = _mouse2hand(event, sd0.common.screen)
         for (fArr <- FArrow.find()) {
           _maybeUpdateArrDir(mhand, fArr, fState, sd0)
         }
@@ -261,7 +260,6 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
 
       for {
         fState <- sd0.focused
-        screen <- sd0.common.screen
       } {
         val currAdId = fState.current.madId
 
@@ -285,8 +283,8 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
           // Дедубликация кода фонового рендера focused-карточки.
           def __prepareFad(fad: IFocAd, indexDelta: Int): FAdRoot = {
             val fadRoot = FAdRoot(fad.bodyHtml)
-            fadRoot.initLayout(screen, sd0.common.browser)
-            fadRoot.setLeft(fState.current.index + indexDelta, screen)
+            fadRoot.initLayout(sd0.common)
+            fadRoot.setLeft(fState.current.index + indexDelta, sd0.common.screen)
             fadRoot
           }
 

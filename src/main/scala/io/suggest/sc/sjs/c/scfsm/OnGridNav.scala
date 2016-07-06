@@ -47,7 +47,7 @@ trait OnGridNav extends OnGrid with StateToUrlT {
 
     protected def _hideNav(): Unit = {
       val sd0 = _stateData
-      for (nroot <- NRoot.find(); screen <- sd0.common.screen) {
+      for (nroot <- NRoot.find()) {
         // Визуально отобразить панель
         nroot.hide()
 
@@ -59,7 +59,7 @@ trait OnGridNav extends OnGrid with StateToUrlT {
         // Убрать размывку плитки, если она была, не проверяя размеры экрана на всякий случай.
         _unBlurGrid()
 
-        val grid2 = RebuildGridOnPanelClose(sd0, screen, nroot).execute()
+        val grid2 = RebuildGridOnPanelClose(sd0, nroot).execute()
 
         for (hbtns <- HBtns.find()) {
           hbtns.show()
@@ -99,7 +99,7 @@ trait OnGridNav extends OnGrid with StateToUrlT {
         _sendFutResBack(fut)
       }
 
-      for (nroot <- NRoot.find(); screen <- sd0.common.screen) {
+      for (nroot <- NRoot.find()) {
         // Визуально отобразить панель
         nroot.show()
         // Скрыть кнопку показа панели.
@@ -107,7 +107,7 @@ trait OnGridNav extends OnGrid with StateToUrlT {
           showBtn.hide()
         }
 
-        val grid2 = RebuildGridOnPanelOpen(sd0, screen, nroot).execute()
+        val grid2 = RebuildGridOnPanelOpen(sd0, nroot).execute()
 
         // Размыть плитку в фоне, если экран маловат.
         _maybeBlurGrid(sd0)
@@ -150,18 +150,17 @@ trait OnGridNav extends OnGrid with StateToUrlT {
           nlContainer.initLayout()
           nlContainer.findFirstExpanded
         }
-        screen      <- _stateData.common.screen
         layerIndex  <- {
-          exp1.fixHeightExpanded(screen, nlContainer.layersCount, sd0.common.browser)
+          exp1.fixHeightExpanded(sd0.common.screen, nlContainer.layersCount, sd0.common.browser)
           exp1.layerIndexOpt
         }
       } yield {
-          sd0.copy(
-            nav = sd0.nav.copy(
-              currGlayIndex = Some(layerIndex)    // TODO Opt тут пересоздается ранее раскрытый Option.
-            )
+        sd0.copy(
+          nav = sd0.nav.copy(
+            currGlayIndex = Some(layerIndex)    // TODO Opt тут пересоздается ранее раскрытый Option.
           )
-        }
+        )
+      }
       become(_navPanelReadyState, sd1Opt getOrElse sd0)
     }
 
@@ -242,10 +241,9 @@ trait OnGridNav extends OnGrid with StateToUrlT {
               layCaption.activate()
               for {
                 body    <- layCaption.body
-                screen  <- sd0.common.screen
               } {
                 body.show()
-                body.fixHeightExpanded(screen, layCaption.container.layersCount, sd0.common.browser)
+                body.fixHeightExpanded(sd0.common.screen, layCaption.container.layersCount, sd0.common.browser)
               }
               indexClickedOpt
             }

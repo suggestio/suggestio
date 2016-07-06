@@ -11,13 +11,13 @@ import io.suggest.sjs.common.fsm.IFsmMsg
   *
   * @param timerId id таймера
   * @param timerGen generation таймера. Нужно для подавления от ложных срабатываний в момент отмены.
-  * @param screen опциональный инстанс sd0.screen на момент самого начала ресайза.
+  * @param screen инстанс sd0.screen на момент самого начала ресайза.
   * @param gContSz опциональный инстанс sd0.grid.data.contSzOpt на момент самого начала ресайза.
   */
 case class MResizeDelay(
   timerId   : Int,
   timerGen  : Long,
-  screen    : Option[IMScreen],
+  screen    : IMScreen,
   gContSz   : Option[ICwCm]
 )
 

@@ -40,7 +40,6 @@ trait SimpleShift extends MouseMoving with OnFocusBase {
       for {
         fState        <- sd0.focused
         car           <- FCarCont.find()
-        screen        <- sd0.common.screen
       } {
         _nextCurrent(fState).fold[Unit] {
           // Нет следующей карточки -- нет работы. Сворачиваемся.
@@ -53,7 +52,7 @@ trait SimpleShift extends MouseMoving with OnFocusBase {
           )
 
           // Есть индекс следующей карточки. Запустить анимацию карусели в нужном направлении.
-          car.animateToCell(nextCurr.index, screen, sd0.common.browser)
+          car.animateToCell(nextCurr.index, sd0.common)
 
           // Залить новый заголовок в выдачу и состояние, если продьюсер новой карточки отличается от текущего.
           if (!fState.findCurrFad.exists( _.producerId == nextFad.producerId )) {

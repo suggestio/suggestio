@@ -79,12 +79,10 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
             car.clear()
           // Ширина ячейки в карусели эквивалентна пиксельной ширине экрана.
           // Начальная ширина карусели задаётся исходя из текущих ячеек.
-          for (screen <- sd0.common.screen) {
-            car.setCellWidth(1, screen)
-            // Начальный сдвиг карусели выставляем без анимации. Весь focused будет выезжать из-за экрана.
-            car.disableTransition()
-            car.animateToCell(0, screen, sd0.common.browser)
-          }
+          car.setCellWidth(1, sd0.common.screen)
+          // Начальный сдвиг карусели выставляем без анимации. Весь focused будет выезжать из-за экрана.
+          car.disableTransition()
+          car.animateToCell(0, sd0.common)
 
           // Подготовить контейнер для стилей.
           FocusedRes.ensureCreated()
@@ -113,7 +111,6 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
       val sd0 = _stateData
       for {
         fState    <- sd0.focused
-        screen    <- sd0.common.screen
         fRoot     <- FRoot.find()
         car       <- fRoot.carousel
       } {
@@ -136,14 +133,14 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
         // Сначала обрабатываем запрошенную карточку:
         // Индекс запрошенной карточки в массиве fads: она или первая крайняя, или вторая при наличии предыдущей.
         val fadRoot = FAdRoot( firstAd.bodyHtml )
-        fadRoot.initLayout( screen, sd0.common.browser )
+        fadRoot.initLayout( sd0.common )
         // Повесить запрошенную карточку на месте текущего индекса.
         val currIndex = fState.current.index //firstAd.index
-        fadRoot.setLeft( currIndex, screen )
+        fadRoot.setLeft( currIndex, sd0.common.screen )
 
         // Прилинковываем запрошенную карточку справа и запускаем анимацию.
         car.pushCellRight(fadRoot)
-        car.animateToCell(currIndex, screen, sd0.common.browser)
+        car.animateToCell(currIndex, sd0.common)
 
         // Начата обработка тяжелого тела focused-карточки. Залить текущий заголовок focused-выдачи.
         for (fControls <- fRoot.controls) {

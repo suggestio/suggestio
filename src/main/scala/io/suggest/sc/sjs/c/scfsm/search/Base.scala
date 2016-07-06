@@ -40,7 +40,6 @@ trait Base extends OnGrid with ISjsLogger with StateToUrlT {
       val sd0 = _stateData
       for {
         sroot <- SRoot.find()
-        screen <- sd0.common.screen
       } {
         // Показать панель
         sroot.hide()
@@ -51,7 +50,7 @@ trait Base extends OnGrid with ISjsLogger with StateToUrlT {
         _unBlurGrid()
 
         // Отребилдить плитку карточек, создав новое состояние выдачи.
-        val grid2 = RebuildGridOnPanelClose(sd0, screen, sroot).execute()
+        val grid2 = RebuildGridOnPanelClose(sd0, sroot).execute()
 
         val sd1 = sd0.copy(
           grid = grid2,

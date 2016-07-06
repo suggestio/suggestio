@@ -62,7 +62,7 @@ trait Append extends ScFsmStub with FindAdsUtil {
       val mgs0 = sd0.grid.state
 
       // Вызываем пересчет ширин боковых панелей в выдаче без перестройки исходной плитки.
-      val screen = sd0.common.screen.get
+      val screen = sd0.common.screen
 
       // Если получены новые параметры сетки, то выставить их в состояние сетки
       val gridParams0 = sd0.grid.params

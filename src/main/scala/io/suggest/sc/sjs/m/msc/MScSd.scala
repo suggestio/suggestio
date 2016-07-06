@@ -29,7 +29,7 @@ object MScSd extends ScSjsLogger {
     var acc: List[(String, Any)] = Nil
 
     // Пока пишем generation, но наверное это лучше отключить, чтобы в режиме iOS webapp не было повторов.
-    acc ::= GENERATION_FN -> sd0.common.generation
+    acc ::= GENERATION_FN -> MGen.serialize(sd0.common.generation)
 
     // Отработка состояния левой панели.
     val npo = sd0.nav.panelOpened
@@ -142,7 +142,7 @@ trait IScSd {
 
 /** Реализация immutable-контейнера для передачи данных Sc FSM между состояниями. */
 case class MScSd(
-  override val common       : MScCommon             = MScCommon.empty,
+  override val common       : MScCommon,
   override val grid         : MGridData             = MGridData(),
   override val search       : MSearchSd             = MSearchSd(),
   override val nav          : MNavState             = MNavState(),

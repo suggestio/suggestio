@@ -46,8 +46,8 @@ trait Opening extends OnGrid with StateToUrlT {
       _maybeBlurGrid(sd0)
 
       // Отребилдить плитку карточек, создав новое _stateData выдачи.
-      for (sroot <- sRootOpt; screen <- sd0.common.screen) {
-        val grid2 = RebuildGridOnPanelOpen(sd0, screen, sroot).execute()
+      for (sroot <- sRootOpt) {
+        val grid2 = RebuildGridOnPanelOpen(sd0, sroot).execute()
 
         val sd1 = sd0.copy(
           search = sd0.search.copy(

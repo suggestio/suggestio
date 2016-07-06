@@ -1,10 +1,11 @@
 package io.suggest.sc.sjs.c.scfsm
 
 import io.suggest.sc.sjs.c.scfsm.ust.Url2StateT
-import io.suggest.sc.sjs.m.msc.MScSd
+import io.suggest.sc.sjs.m.msc.{MGen, MScCommon, MScSd}
 import io.suggest.sc.sjs.m.msearch.{MTab, MTabs}
 import io.suggest.sc.sjs.util.logs.ScSjsLogger
 import io.suggest.sjs.common.fsm._
+import io.suggest.sjs.common.model.browser.MBrowser
 
 /**
  * Suggest.io
@@ -29,7 +30,15 @@ object ScFsm
   override protected var _state: FsmState = new DummyState
 
   /** Контейнер данных состояния. */
-  override protected var _stateData: SD = MScSd()
+  override protected var _stateData: SD = {
+    MScSd(
+      common = MScCommon(
+        screen      = _getScreen,
+        browser     = MBrowser.detectBrowser,
+        generation  = MGen.random
+      )
+    )
+  }
 
 
   /** Ресивер для всех состояний. */

@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.c.scfsm
 
 import io.suggest.fsm.StateData
-import io.suggest.sc.sjs.m.magent.{IVpSzChanged, MScreen, VpSzChanged}
+import io.suggest.sc.sjs.m.magent.{IMScreen, IVpSzChanged, MScreen, VpSzChanged}
 import io.suggest.sc.sjs.m.mfsm.signals.KbdKeyUp
 import io.suggest.sc.sjs.m.msc.MScSd
 import io.suggest.sc.sjs.vm.nav.nodelist.NlRoot
@@ -23,6 +23,21 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm {
   override type SD      = MScSd
 
 
+  /** Детектор данных по экрану. */
+  protected def _getScreenOpt: Option[IMScreen] = {
+    val vszOpt = ViewportSz.getViewportSize
+    if (vszOpt.isEmpty)
+      warn( WarnMsgs.NO_SCREEN_VSZ_DETECTED )
+    vszOpt.map( MScreen.apply )
+  }
+  protected def _getScreen: IMScreen = {
+    _getScreenOpt.getOrElse {
+      // Наврядли этот код будет вызываться когда-либо.
+      MScreen(1024, 768)
+    }
+  }
+
+
   /** Трейт для реализации разных логик реакции на изменение размера окна в зависимости от текущего состояния. */
   protected trait HandleViewPortChangedT {
 
@@ -31,16 +46,12 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm {
     }
     /** Дополняемая/настраивамая реакция на сигнал об изменении размеров окна или экрана устройства. */
     def _viewPortChanged(e: IVpSzChanged): Unit = {
-
       // Обновить данные состояния по текущему экрану.
-      val vszOpt = ViewportSz.getViewportSize
-      if (vszOpt.isEmpty)
-        warn( WarnMsgs.NO_SCREEN_VSZ_DETECTED )
-      val screenOpt = vszOpt.map( MScreen.apply )
+      val screen = _getScreen
       val sd0 = _stateData
       val sd1 = sd0.copy(
         common = sd0.common.copy(
-          screen  = screenOpt
+          screen  = screen
         )
       )
       _stateData = sd1
@@ -52,8 +63,8 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm {
       }
 
       // Подправить высоту правой панели.
-      for (mscreen <- screenOpt; sRoot <- SRoot.find()) {
-        sRoot.adjust(mscreen, sd1.common.browser)
+      for (sRoot <- SRoot.find()) {
+        sRoot.adjust(sd1.common)
       }
     }
 

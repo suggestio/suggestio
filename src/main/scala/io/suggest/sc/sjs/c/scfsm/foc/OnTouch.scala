@@ -126,12 +126,11 @@ trait OnTouch extends OnFocusBase {
         val sd0 = _stateData
         for {
           fState     <- sd0.focused
-          screen     <- sd0.common.screen
           touchSd    <- fState.touch
           car        <- FCarCont.find()
         } {
           // Текущая координата исходного положения карусели в пикселях.
-          val carX = FCarCont.indexToLeftPx(fState.current.index, screen)
+          val carX = FCarCont.indexToLeftPx(fState.current.index, sd0.common.screen)
 
           // В lastX из Start-состояния передаётся координата, пригодная для рассчета начальной deltaX.
           val lastX = _getX1(touchSd)
@@ -228,9 +227,7 @@ trait OnTouch extends OnFocusBase {
           }
           .fold [FsmState] {
             // Сбросить сдвиг карусели на исходную.
-            for (screen <- sd0.common.screen) {
-              car.animateToCell(currIndex, screen, sd0.common.browser)
-            }
+            car.animateToCell(currIndex, sd0.common)
             _touchCancelledState
           }(_shiftForHand)
 

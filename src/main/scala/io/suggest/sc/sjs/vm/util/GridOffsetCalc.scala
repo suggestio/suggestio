@@ -38,9 +38,8 @@ trait GridOffsetCalc extends StyleDisplayT with StyleWidth with ISjsLogger {
     def _getWidthAdd: Int = {
       val widthAddOpt = for {
         contSz  <- sd0.grid.state.contSz
-        scr     <- sd0.common.screen
       } yield {
-        (scr.width - contSz.cw) / 2
+        (sd0.common.screen.width - contSz.cw) / 2
       }
       widthAddOpt.getOrElse {
         warn( WarnMsgs.GRID_CONT_SZ_MISSING )

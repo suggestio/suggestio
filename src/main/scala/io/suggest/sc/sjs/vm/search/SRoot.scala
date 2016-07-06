@@ -1,13 +1,12 @@
 package io.suggest.sc.sjs.vm.search
 
-import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.m.mgrid.MGridState
 import io.suggest.sc.sjs.vm.search.fts.{SInput, SInputContainer}
 import io.suggest.sc.sjs.vm.search.tabs.{STabsHeader, TabRootCompanion}
 import io.suggest.sc.sjs.vm.search.tabs.htag.ShtRoot
 import io.suggest.sc.sjs.vm.util.GridOffsetCalc
 import io.suggest.sc.ScConstants.Search.ROOT_DIV_ID
-import io.suggest.sc.sjs.m.msc.IScSd
+import io.suggest.sc.sjs.m.msc.{IScCommon, IScSd}
 import io.suggest.sc.sjs.util.logs.ScSjsLogger
 import io.suggest.sc.sjs.vm.search.tabs.geo.SGeoRoot
 import io.suggest.sjs.common.model.browser.IBrowser
@@ -37,17 +36,16 @@ trait SRootT extends VmT with StyleDisplayT with GridOffsetCalc with ScSjsLogger
   override type T = HTMLDivElement
 
   /** Инициализация состояния силами FSM. */
+  // TODO Упростить и отрефакторить этот говнокод. Тут два метода с одинаковыми названиями, которых интересуют данные FSM.
   def initLayout(sd: IScSd): Unit = {
-    for (screen <- sd.common.screen) {
-      initLayout(screen, sd.common.browser)
-    }
+    initLayout(sd.common)
     for (t <- tabs) {
       t.setIsShown( t.mtab == sd.search.currTab )
     }
   }
-  private def initLayout(screen: IMScreen, browser: IBrowser): Unit = {
+  private def initLayout(scc: IScCommon): Unit = {
     // Подогнать содержимое панели под экран
-    adjust(screen, browser)
+    adjust(scc)
 
     val f = IInitLayout.f
 
@@ -93,11 +91,11 @@ trait SRootT extends VmT with StyleDisplayT with GridOffsetCalc with ScSjsLogger
   }
 
   /** Подогнать параметры панели под экран. */
-  def adjust(screen: IMScreen, browser: IBrowser): Unit = {
+  def adjust(scc: IScCommon): Unit = {
     // Если нет заголовка табов, то можно делать бОльший offset.
     val offset = if (tabsHdr.isEmpty) 115 else 165
-    val tabHeight = screen.height - offset
-    adjust(tabHeight, browser)
+    val tabHeight = scc.screen.height - offset
+    adjust(tabHeight, scc.browser)
   }
   /** Выставить вычисленную высоту всем табам этой поисковой панели. */
   def adjust(tabHeight: Int, browser: IBrowser): Unit = {

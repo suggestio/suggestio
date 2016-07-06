@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.c.scfsm.ust
 
 import io.suggest.sc.sjs.c.scfsm.ScFsm
 import io.suggest.sc.sjs.m.mfoc.{MFocCurrSd, MFocSd}
-import io.suggest.sc.sjs.m.msc.{MScSd, MUrlUtil}
+import io.suggest.sc.sjs.m.msc.{MGen, MScSd, MUrlUtil}
 import io.suggest.sc.sjs.m.msearch.MTabs
 import io.suggest.sc.sjs.util.router.srv.SrvRouter
 import io.suggest.sjs.common.msg.WarnMsgs
@@ -61,15 +61,7 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
     val sd1Common = {
       val sd0Common = sd0.common
       tokens.get(GENERATION_FN)
-        .flatMap { genStr =>
-          try {
-            Some(genStr.toLong)
-          } catch {
-            case ex: Throwable =>
-              warn( WarnMsgs.GEN_NUMBER_PARSE_ERROR, ex )
-              None
-          }
-        }
+        .flatMap(MGen.parse)
         .filter(_ != sd0Common.generation)
         .fold(sd0Common) { gen =>
           sd0Common.copy(

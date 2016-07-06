@@ -14,7 +14,7 @@ trait FindAdsUtil {
   /** Дефолтовые аргументы поиска. */
   protected trait FindAdsArgsT extends MFindAdsReqEmpty {
     def _sd: MScSd
-    override def screenInfo               = _sd.common.screen
+    override def screenInfo               = Some( _sd.common.screen )
     override def generation: Option[Long] = Some(_sd.common.generation)
     override def receiverId               = _sd.common.adnIdOpt
     override def levelId: Option[String]  = Some( ScConstants.ShowLevels.ID_START_PAGE )
