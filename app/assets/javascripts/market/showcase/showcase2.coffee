@@ -1712,7 +1712,7 @@ sm =
     load_more_ads : () ->
       if this.is_fully_loaded == true
         return false
-      sm.request.perform this.curl + '&h=' + false + '&a.offset=' + this.ads.length
+      sm.request.perform this.curl + '&h=' + false + '&a.offset=' + this.ads.length + '&a.n=false&a.k=a&a.j=asdasdasdasdasd'
       this.load_more_ads_requested = true
 
     scroll_or_move : undefined
@@ -2233,7 +2233,7 @@ sm =
 
     ## 2015.aug.26 firstAdId больше не занимается перескоком на выдачу продьюсера.
     if (withAdId)
-      url = url + "&a.n=" + ad_id
+      url = url + "&a.n=true&a.k=a&a.j=" + ad_id
 
     sm.focused_ads.requested_ad_id = ad_id
     sm.request.perform url + '&h=' + true
