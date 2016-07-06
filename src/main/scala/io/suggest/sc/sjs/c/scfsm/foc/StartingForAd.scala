@@ -103,9 +103,7 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
     /** Реакция на полученный ответ сервера. */
     protected def _focAdsReceived(mfa: MFocAds): Unit = {
       // Заливаем все полученные стили в DOM.
-      for (styles <- mfa.styles; res <- FocusedRes.find()) {
-        res.appendCss(styles)
-      }
+      FocCommon.appendStyles(mfa)
 
       // Залить в карусель полученные карточки.
       val sd0 = _stateData

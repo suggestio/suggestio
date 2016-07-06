@@ -18,8 +18,8 @@ import io.suggest.sjs.common.model.mlu.{MLookupMode, MLookupModes}
 import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import org.scalajs.dom.{KeyboardEvent, MouseEvent, TouchEvent}
 import org.scalajs.dom.ext.KeyCode
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 import scala.util.{Failure, Success}
 
 /**
@@ -428,6 +428,9 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
             // Тут было более подробное сообщение об ошибке, но т.к. вызов этого кода в реальности невероятен, всё очень упрощено:
             throw new IllegalArgumentException( ErrorMsgs.FOC_ANSWER_ACTION_INVALID )
         }
+
+        // Залить новые стили в DOM.
+        FocCommon.appendStyles( res.resp )
 
         // Провести обновление состояния
         _stateData = sd0.copy(
