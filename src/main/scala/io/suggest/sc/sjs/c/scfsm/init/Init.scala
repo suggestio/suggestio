@@ -7,7 +7,6 @@ import io.suggest.sc.sjs.m.magent.{OrientationChange, WndResize}
 import io.suggest.sc.sjs.util.router.srv.SrvRouter
 import io.suggest.sc.sjs.v.global.DocumentView
 import io.suggest.sc.sjs.vm.SafeWnd
-import org.scalajs.dom
 
 /**
  * Suggest.io
@@ -51,7 +50,7 @@ trait Init extends ScFsmStub with IUrl2State {
     override def afterBecome(): Unit = {
       super.afterBecome()
       // Десериализовывать состояние из текущего URL и перейти к нему.
-      _initFromUrlHash( dom.window.location.hash )
+      _runInitState( _parseFromUrlHash() )
     }
 
   }

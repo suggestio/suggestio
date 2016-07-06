@@ -1,14 +1,16 @@
 package io.suggest.sc.sjs.c.scfsm
 
 import io.suggest.fsm.StateData
+import io.suggest.sc.sjs.c.scfsm.ust.IUrl2State
 import io.suggest.sc.sjs.m.magent.{IMScreen, IVpSzChanged, MScreen, VpSzChanged}
 import io.suggest.sc.sjs.m.mfsm.signals.KbdKeyUp
-import io.suggest.sc.sjs.m.msc.MScSd
+import io.suggest.sc.sjs.m.msc.{MScSd, PopStateSignal}
 import io.suggest.sc.sjs.vm.nav.nodelist.NlRoot
 import io.suggest.sc.sjs.vm.search.SRoot
 import io.suggest.sjs.common.fsm._
 import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.vsz.ViewportSz
+import org.scalajs.dom
 import org.scalajs.dom.KeyboardEvent
 
 /**
@@ -17,7 +19,7 @@ import org.scalajs.dom.KeyboardEvent
  * Created: 18.06.15 11:28
  * Description: Заготовка для сборки FSM-частей подсистем.
  */
-trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm {
+trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm with IUrl2State {
 
   override type State_t = FsmState
   override type SD      = MScSd
@@ -77,9 +79,19 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm {
       with DirectDomEventHandlerDummy
       with HandleViewPortChangedT
   {
+
     /** Переопределяемый метод для обработки событий клавиатуры.
       * По дефолту -- игнорировать все события клавиатуры. */
     def _onKbdKeyUp(event: KeyboardEvent): Unit = {}
+
+    /**
+      * Реакция на popstate с какими-то данными для выдачи.
+      * @param sd1Opt Распарсенные данные из URL.
+      */
+    def _handlePopState(sd1Opt: Option[SD]): Unit = {
+      _runInitState(sd1Opt)
+    }
+
   }
 
 
@@ -98,8 +110,15 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm {
     // Реакция на события клавиатуры.
     case KbdKeyUp(event) =>
       _state._onKbdKeyUp(event)
+    // Реакция на изменение размеров текущего окна.
     case e: IVpSzChanged =>
       _state._viewPortChanged(e)
+    // Реакция на навигацию по истории браузера.
+    case psp: PopStateSignal =>
+      val h = _urlHash
+      val sd1Opt = _parseFromUrlHash(h)
+      println(h + " => " + sd1Opt)
+      _state._handlePopState(sd1Opt)
   }
 
   /** Ресивер для всех состояний. Неизменен, поэтому [[ScFsm]] он помечен как val. */

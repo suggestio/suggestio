@@ -6,7 +6,9 @@ import io.suggest.sc.sjs.m.msc.{MGen, MScSd, MUrlUtil}
 import io.suggest.sc.sjs.m.msearch.MTabs
 import io.suggest.sc.sjs.util.router.srv.SrvRouter
 import io.suggest.sjs.common.msg.WarnMsgs
+import org.scalajs.dom
 
+import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 /**
@@ -19,7 +21,12 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 /** Простой интерфейс публичного API десереализатора. */
 trait IUrl2State {
-  def _initFromUrlHash(urlHash: String): Unit
+
+  protected def _urlHash = dom.window.location.hash
+  def _parseFromUrlHash(urlHash: String = _urlHash): Option[MScSd]
+
+  def _runInitState(sd0Opt: Option[MScSd]): Future[_]
+
 }
 
 
@@ -32,8 +39,7 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
 
 
   /** Запуск инициализации системы из данных URL. */
-  override def _initFromUrlHash(urlHash: String): Unit = {
-
+  override def _parseFromUrlHash(urlHash: String): Option[SD] = {
     // Распарсить в карту токенов.
     val tokens: Map[String, String] = {
       MUrlUtil.clearUrlHash( urlHash )
@@ -44,19 +50,18 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
 
     if (tokens.isEmpty) {
       // Нет qs, можно не продолжать.
-      become(new GeoScInitState)
+      None
 
     } else {
-      // Есть qs-токены, начинаем заливку оных в состояние FSM.
-      _initFromQsTokens(tokens)
+      // Есть qs-токены, накатить их на состояние FSM.
+      val sd1 = _applyQsTokens(tokens, _stateData)
+      Some(sd1)
     }
   }   // _initFromCurrUrl()
 
 
   /** Инициализация системы на основе уже распарсенных токенов. */
-  def _initFromQsTokens(tokens: Map[String, String]): Unit = {
-    val sd0 = _stateData
-
+  protected def _applyQsTokens(tokens: Map[String, String], sd0: SD): SD = {
     // Закидываем значение generation в состояние.
     val sd1Common = {
       val sd0Common = sd0.common
@@ -132,30 +137,48 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
 
     // Отрабатываем id узла из URL, если есть.
     val nodeIdOpt = tokens.get(ADN_ID_FN)
-    nodeIdOpt.fold[Unit] {
-      // Есть токены, но id узла не задан. Это возможно при TODO гулянии по координатам вне выдачи конкретного узла.
-      val sd2c = sd0.copy(
-        common = sd1Common,
-        nav    = sd1Nav,
-        search = sd1Search,
-        focused = mFocSdOpt
-      )
-      become(new GeoScInitState, sd2c)
 
-    } { onNodeId =>
-      // Задан id узла выдачи, перейти в него.
-      for (_ <- SrvRouter.getRouter()) {
-        val sd2c = sd0.copy(
-          common = sd1Common.copy(
-            adnIdOpt = nodeIdOpt
-          ),
-          nav    = sd1Nav,
-          search = sd1Search,
-          focused = mFocSdOpt
-        )
-        val nextState = new NodeIndex_Get_Wait_State
-        become(nextState, sd2c)
+    // Залить новый id узла в common-состояние.
+    val sd2Common = if (nodeIdOpt != sd1Common.adnIdOpt) {
+      sd1Common.copy(
+        adnIdOpt = nodeIdOpt
+      )
+    } else {
+      sd1Common
+    }
+
+    // Собрать итоговые данные состояния.
+    sd0.copy(
+      common = sd2Common,
+      nav    = sd1Nav,
+      search = sd1Search,
+      focused = mFocSdOpt
+    )
+  }
+
+
+  /** Используя распарсенные данные состояния FSM, выбрать initial state этого FSM и применить его. */
+  override def _runInitState(sd0Opt: Option[SD]): Future[_] = {
+    val nextStateFut = sd0Opt.fold [Future[FsmState]] {
+      Future.successful( new GeoScInitState )
+    } { sd0 =>
+      _stateData = sd0
+      // Выполнить переход на новое состояние FSM.
+      sd0.common.adnIdOpt.fold[Future[FsmState]] {
+        // Есть токены, но id узла не задан. Это возможно при TODO гулянии по координатам вне выдачи конкретного узла.
+        Future.successful( new GeoScInitState )
+
+      } { onNodeId =>
+        // Задан id узла выдачи, перейти в него.
+        val routerFut = SrvRouter.getRouter()
+        for (_ <- routerFut) yield {
+          new NodeIndex_Get_Wait_State
+        }
       }
+    }
+    for (nextState <- nextStateFut) yield {
+      become(nextState)
+      null
     }
   }
 

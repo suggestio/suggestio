@@ -1,11 +1,13 @@
 package io.suggest.sc.sjs.c.scfsm
 
 import io.suggest.sc.sjs.c.scfsm.ust.Url2StateT
-import io.suggest.sc.sjs.m.msc.{MGen, MScCommon, MScSd}
+import io.suggest.sc.sjs.m.msc.{MGen, MScCommon, MScSd, PopStateSignal}
 import io.suggest.sc.sjs.m.msearch.{MTab, MTabs}
 import io.suggest.sc.sjs.util.logs.ScSjsLogger
+import io.suggest.sc.sjs.vm.SafeWnd
 import io.suggest.sjs.common.fsm._
 import io.suggest.sjs.common.model.browser.MBrowser
+import org.scalajs.dom.PopStateEvent
 
 /**
  * Suggest.io
@@ -44,8 +46,15 @@ object ScFsm
   /** Ресивер для всех состояний. */
   override protected val allStatesReceiver = super.allStatesReceiver
 
+
+  /** Запуск этого FSM в работу. Вызывается однократно при старте всея выдачи. */
   def start(): Unit = {
     become( _initPhaseEnter1st )
+
+    // Подписать этот FSM на событие навигации по истории браузера.
+    SafeWnd.addEventListener("popstate") { e: PopStateEvent =>
+      _sendEventSync( PopStateSignal(e) )
+    }
   }
 
 
