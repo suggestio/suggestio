@@ -32,8 +32,18 @@ trait ScIndexAdOpen
     import logic._request
 
     val resFut = for {
+      // Фильтруем по флагу focJumpAllowed. if в первой строчке foc{} использовать нельзя, поэтому имитируем тут Future.
+      _ <- {
+        if (logic._adSearch.focJumpAllowed) {
+          Future.successful(None)
+        } else {
+          val ex = new NoSuchElementException("Foc jump disabled by sc-sjs.")
+          Future.failed(ex)
+        }
+      }
+
       // Прочитать из хранилища указанную карточку.
-      madOpt <- mNodeCache.maybeGetByIdCached( logic._adSearch.focOpenIndexAdId )
+      madOpt <- mNodeCache.getById( logic._adSearch.lookupAdId )
 
       // .get приведёт к NSEE, это нормально.
       producerId = {
@@ -95,7 +105,8 @@ trait ScIndexAdOpen
   /**
    * Решено, что юзера нужно перебросить на выдачу другого узла с возможностью возрата на исходный узел
    * через кнопку навигации.
-   * @param producer Узел-продьюсер, на который необходимо переключиться.
+    *
+    * @param producer Узел-продьюсер, на который необходимо переключиться.
    * @param focLogic Закешированная focused-логика, собранная в экшене.
    * @param request Исходный реквест.
    * @return Фьючерс с http-результатом.

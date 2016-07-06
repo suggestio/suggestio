@@ -20,9 +20,9 @@ object FocusedAdsSearchArgs {
   /** Маппер экземпляров модели для url query string. */
   implicit def qsb(implicit
                    adSearchB      : QueryStringBindable[AdSearch],
+                   boolB          : QueryStringBindable[Boolean],
                    boolOptB       : QueryStringBindable[Option[Boolean]],
                    strB           : QueryStringBindable[String],
-                   strOptB        : QueryStringBindable[Option[String]],
                    mLookupModeB   : QueryStringBindable[MLookupMode]
                   ): QueryStringBindable[FocusedAdsSearchArgs] = {
     new QueryStringBindable[FocusedAdsSearchArgs] with QsbKey1T {
@@ -32,21 +32,21 @@ object FocusedAdsSearchArgs {
         for {
           maybeAdSearch       <- adSearchB.bind     (key,                       params)
           maybeWithHeadAd     <- boolOptB.bind      (WITH_HEAD_AD_FN,           params)
-          openInxAdIdEith     <- strOptB.bind       (f(OPEN_INDEX_AD_ID_FN),    params)
+          focJumpAllowedEith  <- boolB.bind         (f(FOC_JUMP_ALLOWED_FN),    params)
           mLookupModeEith     <- mLookupModeB.bind  (f(AD_LOOKUP_MODE_FN),      params)
           lookupAdIdEith      <- strB.bind          (f(AD_ID_LOOKUP_FN),        params)
         } yield {
           for {
             _adSearch         <- maybeAdSearch.right
             _withHeadAd       <- maybeWithHeadAd.right
-            _openInxAdId      <- openInxAdIdEith.right
+            _focJumpAllowed   <- focJumpAllowedEith.right
             _mLookupMode      <- mLookupModeEith.right
             _lookupAdId       <- lookupAdIdEith.right
           } yield {
             new FocusedAdsSearchArgs with AdSearchWrap {
               override def _dsArgsUnderlying  = _adSearch
               override def withHeadAd         = _withHeadAd.contains(true)
-              override def focOpenIndexAdId   = _openInxAdId
+              override def focJumpAllowed     = _focJumpAllowed
               override def lookupMode         = _mLookupMode
               override def lookupAdId         = _lookupAdId
             }
@@ -59,7 +59,7 @@ object FocusedAdsSearchArgs {
         Iterator(
           adSearchB   .unbind(  key,                     value),
           boolOptB    .unbind(  WITH_HEAD_AD_FN,         Some(value.withHeadAd)),
-          strOptB     .unbind(  f(OPEN_INDEX_AD_ID_FN),  value.focOpenIndexAdId),
+          boolB       .unbind(  f(FOC_JUMP_ALLOWED_FN),  value.focJumpAllowed),
           strB        .unbind(  f(AD_ID_LOOKUP_FN),      value.lookupAdId),
           mLookupModeB.unbind(  f(AD_LOOKUP_MODE_FN),    value.lookupMode)
         )
@@ -92,8 +92,8 @@ trait FocusedAdsSearchArgs extends AdSearch {
   def withHeadAd: Boolean = false
 
 
-  /** id карточки, для которой допускается вернуть index её продьюсера. */
-  def focOpenIndexAdId : Option[String] = None
+  /** Допускается ли возвращать перескок в другое место вместо focused-выдачи. */
+  def focJumpAllowed : Boolean
 
 
   /**
@@ -129,7 +129,7 @@ trait FocusedAdsSearchArgsWrapper extends AdSearchWrapper_ with FocusedAdsSearch
   override type WT = FocusedAdsSearchArgs
 
   override def withHeadAd         = _dsArgsUnderlying.withHeadAd
-  override def focOpenIndexAdId   = _dsArgsUnderlying.focOpenIndexAdId
+  override def focJumpAllowed     = _dsArgsUnderlying.focJumpAllowed
   override def lookupAdId         = _dsArgsUnderlying.lookupAdId
   override def lookupMode         = _dsArgsUnderlying.lookupMode
 

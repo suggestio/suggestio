@@ -168,7 +168,7 @@ case class ScJsState(
   def focusedAdSearch(_maxResultsOpt: Option[Int]): FocusedAdsSearchArgs = {
     new FocusedAdsSearchArgsImpl {
       // v1 выдача.
-      override def firstIds  = that.fadOpenedIdOpt.toList
+      override def firstIds       = that.fadOpenedIdOpt.toList
       override def offsetOpt      = that.fadsOffsetOpt
       // При синхронном рендере единственная карточка автоматом является целевой
       override def withHeadAd     = true
@@ -176,6 +176,7 @@ case class ScJsState(
       // v2 выдача.
       override def lookupMode     = MLookupModes.Around
       override def lookupAdId     = that.fadOpenedIdOpt.get
+      override def focJumpAllowed = false
 
       // common-параметры для выборки карточек.
       override def limitOpt  = _maxResultsOpt

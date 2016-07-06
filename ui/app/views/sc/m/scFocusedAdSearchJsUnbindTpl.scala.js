@@ -7,7 +7,7 @@
 
 @after = {
   add("@LAST_PROD_ID_FN");
-  add("@OPEN_INDEX_AD_ID_FN");
+  add("@FOC_JUMP_ALLOWED_FN");
   add("@AD_LOOKUP_MODE_FN");
   add("@AD_ID_LOOKUP_FN");
 }
