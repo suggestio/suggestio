@@ -265,14 +265,14 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
 
         // Отработать next-карточку: сначала понять, не является ли текущая карточка крайней справа.
         val fadsAfterCurrent = fState.fadsAfterCurrentIter.toStream
-        println("analyze " +
+        /*println("analyze " +
           fState.fadsBeforeCurrentIter.map(_.madId).mkString("["," ", "]") +
           fState.isCurrAdFirst + ":" + fState.firstAdId +
           " >" + fState.current.madId + "< " +
           fState.isCurrAdLast + ":" + fState.lastAdId + " " +
           fadsAfterCurrent.map(_.madId).mkString("[", " ", "]") +
           "\nAll fads = " + fState.fadIdsIter.mkString("[", " ", "]")
-        )
+        )*/
 
         if (!fState.isCurrAdLast && fadsAfterCurrent.isEmpty) {
           // Надо запустить запрос следующих (вправо) карточек с сервера. Запустить запрос к серваку за след.порцией карточек.
@@ -342,7 +342,7 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
         fState0   <- sd0.focused
         if fState0.req.isEmpty
       } {
-        println("req more fads: " + where)
+        //println("req more fads: " + where)
         val currAdId  = fState0.current.madId
 
         // Собрать параметры для поиска
@@ -497,7 +497,7 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
       } else {
         None
       }
-      println(getClass.getSimpleName + ".utterFad() => " + r)
+      //println(getClass.getSimpleName + ".utterFad() => " + r)
       r
     }
 
@@ -536,11 +536,11 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
         if (fadsMissingRelAdId)
           warn( ErrorMsgs.FOC_LOOKUP_MISSING_AD + logSuffix )
         val r = fState0.fads ++ res.resp.fads
-        println("A.fads2: " +
+        /*println("A.fads2: " +
           fState0.fadIdsIter.mkString("[", " ", "]") +
           " ++ " + res.resp.fads.iterator.map(_.madId).mkString("[", " ", "]") +
           " = " + r.map(_.madId).mkString("[", " ", "]")
-        )
+        )*/
         r
       } else {
         // Маловозможна ситуация запроса карточек после указанной, хотя там карточки почему-то уже есть.
@@ -585,7 +585,7 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
         if (fadsMissingRelAdId)
           warn( ErrorMsgs.FOC_LOOKUP_MISSING_AD + logSuffix )
         val r = res.resp.fads ++: fState0.fads
-        println("B.fads2: " + res.resp.fads + " ++ " + fState0.fads + " = " + r)
+        //println("B.fads2: " + res.resp.fads + " ++ " + fState0.fads + " = " + r)
         r
       } else {
         warn( WarnMsgs.FOC_LOOKUPED_AD_NOT_LAST + logSuffix )
