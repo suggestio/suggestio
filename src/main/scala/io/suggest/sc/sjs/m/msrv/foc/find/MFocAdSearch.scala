@@ -29,7 +29,7 @@ trait MFocAdSearch extends MFindAdsReq {
   override def toJson: Dictionary[Any] = {
     val acc = super.toJson
 
-    acc(OPEN_INDEX_AD_ID_FN)  = allowReturnJump
+    acc(FOC_JUMP_ALLOWED_FN)  = allowReturnJump
     acc(AD_LOOKUP_MODE_FN)    = adsLookupMode.strId
     acc(AD_ID_LOOKUP_FN)      = adIdLookup
 
