@@ -23,7 +23,7 @@ object AdSearchConstants {
 
   /** 2015.aug.26: Название опционального поля с флагом того, разрешено ли серверу возвращать
     * index answer вместо focused ads. */
-  def OPEN_INDEX_AD_ID_FN   = "n"
+  def FOC_JUMP_ALLOWED_FN   = "n"
 
   /**
    * v1
