@@ -3,6 +3,7 @@ package io.suggest.sc.sjs.c.scfsm.foc
 import io.suggest.sc.sjs.m.mfoc.{IFocAd, IFocSd, MFocCurrSd}
 import io.suggest.sc.sjs.vm.foc.{FCarCont, FControls}
 import io.suggest.sc.ScConstants.Focused.SLIDE_ANIMATE_MS
+import io.suggest.sc.sjs.vm.foc.fad.FArrow
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.fsm.IFsmMsg
 
@@ -57,7 +58,15 @@ trait SimpleShift extends MouseMoving with OnFocusBase {
           // Залить новый заголовок в выдачу и состояние, если продьюсер новой карточки отличается от текущего.
           if (!fState.findCurrFad.exists( _.producerId == nextFad.producerId )) {
             for (fControls <- FControls.find()) {
+              // Перезаписать заголовок, стрелочки и остальные focused-контролы.
               fControls.setContent(nextFad.controlsHtml)
+              // Выставить снова направление стрелочки под курсором мыши.
+              for {
+                curDir  <- fState.arrDir
+                fArr    <- FArrow.find()
+              } {
+                fArr.setDirection(curDir)
+              }
             }
           }
 
