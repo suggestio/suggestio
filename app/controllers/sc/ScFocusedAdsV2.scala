@@ -104,15 +104,6 @@ trait ScFocusedAdsV2
           .toSeq
       }
 
-      // Добавить индексы элементам итератора с поправкой на текущий offset1.
-      // Получаться порядковые номера карточек: 0, 1, 2, ...
-      def offsetIndexed(iter: Iterator[String], sign: Boolean): Iterator[NodeIdIndexed] = {
-        val sign1 = if (sign) 1 else -1
-        for ((id, index0) <- iter.zipWithIndex) yield {
-          NodeIdIndexed(id, offset1 + sign1*index0)
-        }
-      }
-
       // Логгируем рекурсию вместе с номером попытки.
       lazy val logPrefix = s"_doAdLookup(${_currTimeMs}#$tryN): "
       LOGGER.trace(s"$logPrefix [$adId] ${lm.toVisualString}, need=$neededCount limit=$limit1 offset=$offset1")
@@ -127,8 +118,17 @@ trait ScFocusedAdsV2
           override def shouldNext = fadIdsHasNexts
         }
 
-        def fadIdsIter = offsetIndexed(fadIds.iterator, sign = true)
-        def fadIdsReverseIter = offsetIndexed(fadIds.reverseIterator, sign = false)
+        // Добавить индексы элементам итератора с поправкой на текущий offset1.
+        // Получаться порядковые номера карточек: 0, 1, 2, ...
+        val fadsIdsInxed = fadIds.iterator
+          .zipWithIndex
+          .map { case (id, index0) =>
+            NodeIdIndexed(id, offset1 + index0)
+          }
+          .toSeq
+
+        def fadIdsIter = fadsIdsInxed.iterator
+        def fadIdsReverseIter = fadsIdsInxed.reverseIterator
 
         LOGGER.trace(s"$logPrefix Found $fadIdsSize ids: [${fadIds.mkString(" ")}]")
 
@@ -249,7 +249,7 @@ trait ScFocusedAdsV2
 
     override def _firstAdIndexFut: Future[Int] = {
       for (res <- adIdsLookupResFut) yield {
-        res.ids.headOption.fold(0)(_.index) + 1
+        res.ids.headOption.fold(0)(_.index) //+ 1
       }
     }
 

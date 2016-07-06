@@ -177,7 +177,9 @@ trait ScAdsTileBase
     }
 
 
-    def madsGroupedFut = madsFut.map { scUtil.groupNarrowAds }
+    // Группировка groupNarrowAds отключена, т.к. новый focused-порядок не соответствует плитке,
+    // а плитка страдает от выравнивания по 2 столбца.
+    def madsGroupedFut = madsFut//.map { scUtil.groupNarrowAds }
 
     /** Очень параллельный рендер в HTML всех необходимых карточек. */
     lazy val madsRenderedFut: Future[Seq[T]] = {
