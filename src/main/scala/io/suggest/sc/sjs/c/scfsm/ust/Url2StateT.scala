@@ -1,10 +1,13 @@
 package io.suggest.sc.sjs.c.scfsm.ust
 
 import io.suggest.sc.sjs.c.scfsm.ScFsm
+import io.suggest.sc.sjs.c.scfsm.nav.NavUtil
+import io.suggest.sc.sjs.c.scfsm.search.SearchUtil
 import io.suggest.sc.sjs.m.mfoc.{MFocCurrSd, MFocSd}
-import io.suggest.sc.sjs.m.msc.{MGen, MScSd, MUrlUtil}
+import io.suggest.sc.sjs.m.msc.{MGen, MScSd, MUrlUtil, PopStateSignal}
 import io.suggest.sc.sjs.m.msearch.MTabs
 import io.suggest.sc.sjs.util.router.srv.SrvRouter
+import io.suggest.sc.sjs.vm.nav.NRoot
 import io.suggest.sjs.common.msg.WarnMsgs
 import org.scalajs.dom
 
@@ -26,6 +29,9 @@ trait IUrl2State {
   def _parseFromUrlHash(urlHash: String = _urlHash): Option[MScSd]
 
   def _runInitState(sd0Opt: Option[MScSd]): Future[_]
+
+  /** Поддержка переключения на другое состояние по сигналу из истории браузера. */
+  def _handlePopState(pss: PopStateSignal): Unit
 
 }
 
@@ -179,6 +185,43 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
     for (nextState <- nextStateFut) yield {
       become(nextState)
       null
+    }
+  }
+
+
+  /** Реакция на сигнал popstate, т.е. когда юзер гуляет по истории браузера. */
+  override def _handlePopState(pss: PopStateSignal): Unit = {
+    // Начинаем с отработки разных общих случаев изменения состояния.
+    _parseFromUrlHash().fold {
+      // Отсутствие нового состояния, имитировать перезагрузку выдачи.
+      become( new GeoScInitState )
+
+    } { sdNext =>
+      val sd0 = _stateData
+
+      // - Изменение важных параметров выдачи, которая должна приводить к смене выдачи под корень.
+      if ( sdNext.isScDiffers(sd0) ) {
+        // Изменился id текущего узла выдачи. Выдача уже не будет прежней. Имитируем полное переключение узла.
+        become( new NodeIndex_Get_Wait_State, sdNext )
+
+      } else {
+        // Корень выдачи тот же. Надо подогнать текущую выдачу под новые параметры состояния. Никаких welcome на экране отображать не надо.
+        // Отрабатываем возможное изменение конфигурации боковых панелей в рамках узла/локации.
+
+        // Если изменилось значение состояния распахнутости боковой панели навигации (слева), то внести изменения в DOM и исходное состояние.
+        if (sd0.nav.panelOpened != sdNext.nav.panelOpened) {
+          _stateData = NavUtil.invert(sd0)
+        }
+
+        // Отработать панель поиска: скрыть или показать, если состояние изменилось.
+        val sd1 = _stateData
+        if (sd1.search.opened != sdNext.search.opened) {
+          _stateData = SearchUtil.invert(sd1)
+        }
+
+        // Наконец отработать конкретные изменения данных состояния на уровне текущего состояния.
+        _state._handleStateSwitch(sdNext)
+      }
     }
   }
 

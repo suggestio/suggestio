@@ -143,7 +143,6 @@ trait OnGridBase extends ScFsmStub with ResizeDelayed with Append {
 /** Утиль для сборка состояний сетки. */
 trait OnGrid extends OnGridBase with IOnFocusBase {
 
-
   /** Поддержка реакции на клики по карточкам в выдаче. */
   trait GridBlockClickStateT extends FsmEmptyReceiverState with IStartFocusOnAdState {
 

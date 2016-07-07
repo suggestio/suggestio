@@ -37,7 +37,7 @@ trait Phase
     override def _shiftRightState = new FocShiftRightState
     override def _shiftLeftState  = new FocShiftLeftState
   }
-  protected trait OnFocusStateBaseT extends super.OnFocusStateBaseT with _NodeSwitchState with ISimpleShift {
+  protected trait OnFocusStateBaseT extends super.OnFocusStateBaseT with INodeSwitchState with ISimpleShift {
     override def _closingState    = new FocClosingState
   }
   /** Состояние нахождения на какой-то focused-карточке в выдаче. */

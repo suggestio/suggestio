@@ -137,6 +137,24 @@ trait IScSd {
     nav.panelOpened || search.opened
   }
 
+  /**
+    * Проверка, изменился ли "корень" данной выдачи
+    * (корень -- id узла или текущая геолокация, от которой всё пляшет)?
+    */
+  def isScRootDiffers(sd2: IScSd): Boolean = {
+    common.adnIdOpt != sd2.common.adnIdOpt
+  }
+
+  /**
+    * Проверка на то, отличается ли выдача в целом исходя из её базовых параметров.
+    * Визуально и по содержимому.
+    * screen не проверяется, т.к. оно отрабатывается через viewportChanged().
+    */
+  def isScDiffers(sd2: IScSd): Boolean = {
+    isScRootDiffers(sd2) ||
+      common.generation != sd2.common.generation
+  }
+
 }
 
 

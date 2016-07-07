@@ -11,11 +11,13 @@ import io.suggest.sjs.common.model.browser.IBrowser
   * Появилась с целью облегчения [[MScSd]] и группировки разных простых полей верхнего уровня.
   */
 trait IScCommon {
+
   def screen       : IMScreen
   def browser      : IBrowser
   def generation   : Long
   def adnIdOpt     : Option[String]
   def resizeOpt    : Option[MResizeDelay]
+
 }
 
 

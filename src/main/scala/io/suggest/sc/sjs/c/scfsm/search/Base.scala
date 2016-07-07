@@ -1,7 +1,8 @@
 package io.suggest.sc.sjs.c.scfsm.search
 
 import io.suggest.sc.ScConstants.Search.Fts.START_TIMEOUT_MS
-import io.suggest.sc.sjs.c.scfsm.grid.{OnGrid, PanelGridRebuilder}
+import io.suggest.sc.sjs.c.scfsm.grid.OnGrid
+import io.suggest.sc.sjs.c.scfsm.grid.build._
 import io.suggest.sc.sjs.c.scfsm.ust.StateToUrlT
 import io.suggest.sc.sjs.m.mhdr.{HideSearchClick, LogoClick, ShowIndexClick}
 import io.suggest.sc.sjs.m.msearch._
@@ -22,7 +23,7 @@ import org.scalajs.dom.{FocusEvent, KeyboardEvent}
  */
 trait Base extends OnGrid with ISjsLogger with StateToUrlT {
 
-  protected trait OnSearchStateT extends OnGridStateT with PanelGridRebuilder {
+  protected trait OnSearchStateT extends OnGridStateT {
 
     protected def _nowOnTab: MTab
 
@@ -36,35 +37,13 @@ trait Base extends OnGrid with ISjsLogger with StateToUrlT {
     }
 
     /** Метод содержит логику обработки клика по кнопке сокрытия поисковой панели. */
-    protected def _hideSearch(): Unit = {
+    protected def _hideSearchPanel(): Unit = {
       val sd0 = _stateData
-      for {
-        sroot <- SRoot.find()
-      } {
-        // Показать панель
-        sroot.hide()
-        // Сменить набор кнопок в заголовке.
-        for (header <- HRoot.find()) {
-          header.hideBackToIndexBtns()
-        }
-        _unBlurGrid()
-
-        // Отребилдить плитку карточек, создав новое состояние выдачи.
-        val grid2 = RebuildGridOnPanelClose(sd0, sroot).execute()
-
-        val sd1 = sd0.copy(
-          grid = grid2,
-          search = sd0.search.copy(
-            opened    = false,
-            ftsSearch = None
-          )
-        )
-
-        // Сменить состояние на то, где открыта панель поиска.
-        become(_nextStateSearchPanelClosed, sd1)
-
-        State2Url.pushCurrState()
-      }
+      _unBlurGrid()
+      val sd1 = SearchUtil.hide(sd0)
+      // Сменить состояние на то, где открыта панель поиска.
+      become(_nextStateSearchPanelClosed, sd1)
+      State2Url.pushCurrState()
     }
 
     /** Состояние FSM, на которое надо переключиться при после сокрытия панели. */
@@ -75,7 +54,7 @@ trait Base extends OnGrid with ISjsLogger with StateToUrlT {
       super._onKbdKeyUp(event)
       // по ESC надо закрывать вкладку
       if (event.keyCode == KeyCode.Escape) {
-        _hideSearch()
+        _hideSearchPanel()
       }
     }
 
@@ -119,15 +98,15 @@ trait Base extends OnGrid with ISjsLogger with StateToUrlT {
       val _receiverPart: Receive = {
         // Клик по кнопке сокрытия поисковой панели (справа).
         case HideSearchClick(evt) =>
-          _hideSearch()
+          _hideSearchPanel()
         // Клик по кнопке отображения index (слева).
         case ShowIndexClick(evt) =>
-          _hideSearch()
+          _hideSearchPanel()
         // Получение сигналов кликов по кнопкам вкладок.
         case tabBtnClick: ITabClickSignal =>
           _tabBtnClick(tabBtnClick)
         case logoClick: LogoClick =>
-          _hideSearch()
+          _hideSearchPanel()
         // Получение сигналов от поля полнотекстового поиска.
         case FtsFieldFocus(event) =>
           _ftsFieldFocus(event)
@@ -219,6 +198,19 @@ trait Base extends OnGrid with ISjsLogger with StateToUrlT {
         )
       }
     }
+
+
+    // Если перескок по истории браузера касается только закрытия панели, то сделать это по упрощенной схеме.
+    /*override def _handlePopState(sd1Opt: Option[MScSd]): Unit = {
+      val sd0 = _stateData
+      sd1Opt
+        .filter { sd1 =>
+          !sd1.search.opened &&
+            sd1.common == sd0.common
+        }
+      super._handlePopState(sd1Opt)
+    }*/
+
   }
 
 }

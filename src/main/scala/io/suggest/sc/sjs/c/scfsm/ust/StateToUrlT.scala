@@ -22,6 +22,8 @@ trait StateToUrlT extends ScFsmStub {
       for (hApi <- SafeWnd.history) {
         val acc = MScSd.toUrlHashAcc( _stateData )
         val url = MScSd.acc2Qs( acc )
+        //val n = "\n"
+        //println( "pushState: " + System.currentTimeMillis() + " " + url + Thread.currentThread().getStackTrace.iterator.take(5).mkString(n,n,n) )
         hApi.pushState(null, "sio", Some(MUrlUtil.URL_HASH_PREFIX + url))
       }
     }

@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.c.scfsm
 
+import io.suggest.sc.sjs.c.scfsm.nav.OnGridNav
 import io.suggest.sc.sjs.c.scfsm.ust.Url2StateT
 import io.suggest.sc.sjs.m.msc.{MGen, MScCommon, MScSd, PopStateSignal}
 import io.suggest.sc.sjs.m.msearch.{MTab, MTabs}
@@ -138,7 +139,7 @@ object ScFsm
 
 
   /** Реализация состояния, где карточки уже загружены. */
-  class OnPlainGridState extends OnPlainGridStateT with OnGridStateT with _NodeSwitchState {
+  class OnPlainGridState extends OnPlainGridStateT with OnGridStateT with INodeSwitchState {
     override protected def _navLoadListState = new OnGridNavLoadListState
     override protected def _searchPanelOpeningState = new SearchPanelOpeningState
   }
@@ -180,10 +181,14 @@ object ScFsm
   class OnGridNavLoadListState extends OnGridNavLoadListStateT with _OnGridNav with OnGridStateT {
     override def _navPanelReadyState = new OnGridNavReadyState
   }
-  protected trait _NodeSwitchState extends INodeSwitchState {
+  protected trait INodeSwitchState extends super.INodeSwitchState {
     override def _onNodeSwitchState = new NodeIndex_Get_Wait_State
   }
-  class OnGridNavReadyState extends OnGridNavReadyStateT with _OnGridNav with _NodeSwitchState with OnGridStateT
+  class OnGridNavReadyState
+    extends OnGridNavReadyStateT
+      with _OnGridNav
+      with INodeSwitchState
+      with OnGridStateT
 
 
   /*--------------------------------------------------------------------------------
@@ -205,14 +210,17 @@ object ScFsm
 
   /** Состояние раскрытия поисковой панели. */
   class SearchPanelOpeningState extends SearchPanelOpeningStateT with ISearchTabOpenedState
+
   /** Общий код для реакции на закрытие search-панели. */
   protected[this] trait _SearchClose extends OnSearchStateT {
     override def _nextStateSearchPanelClosed = _onPlainGridState
   }
+
   /** Состояние, где и сетка есть, и поисковая панель отрыта на вкладке географии. */
   class OnSearchGeoState extends OnGridSearchGeoStateT with _SearchClose with OnGridStateT {
     override def _tabSwitchedFsmState = new OnSearchTagsState
   }
+
   /** Состояние, где открыта вкладка хеш-тегов на панели поиска. */
   class OnSearchTagsState extends OnSearchTagsStateT with _SearchClose with OnGridStateT {
     override def _tabSwitchedFsmState = new OnSearchGeoState

@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.c.scfsm.grid
 
+import io.suggest.sc.sjs.c.scfsm.grid.build.GridBuilder
 import io.suggest.sc.sjs.c.scfsm.{FindAdsUtil, ScFsmStub}
 import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
 import io.suggest.sc.sjs.vm.grid.GContent
@@ -49,7 +50,7 @@ trait Append extends ScFsmStub with FindAdsUtil {
 
 
   /** Закинуть в выдачу полученные карточки. */
-  trait GridAdsWaitLoadStateT extends GridAdsWaitStateBaseT with GridBuild {
+  trait GridAdsWaitLoadStateT extends GridAdsWaitStateBaseT {
 
     /** FSM-реакция на получение положительного ответа от сервера по поводу карточек сетки.
       *

@@ -1,15 +1,12 @@
-package io.suggest.sc.sjs.c.scfsm
+package io.suggest.sc.sjs.c.scfsm.nav
 
-import io.suggest.sc.sjs.c.scfsm.grid.{OnGrid, PanelGridRebuilder}
+import io.suggest.sc.sjs.c.scfsm.grid.OnGrid
 import io.suggest.sc.sjs.c.scfsm.ust.StateToUrlT
 import io.suggest.sc.sjs.m.mhdr.{HideNavClick, LogoClick}
 import io.suggest.sc.sjs.m.mnav.NodeListClick
 import io.suggest.sc.sjs.m.msrv.nodes.find.{MFindNodes, MFindNodesArgsDfltImpl, MFindNodesResp}
-import io.suggest.sc.sjs.vm.hdr.btns.HBtns
-import io.suggest.sc.sjs.vm.hdr.btns.nav.HShowNavBtn
-import io.suggest.sc.sjs.vm.nav.NRoot
-import io.suggest.sc.sjs.vm.nav.nodelist.glay.{GlayCaption, GlayNode}
 import io.suggest.sc.sjs.vm.nav.nodelist.NlContent
+import io.suggest.sc.sjs.vm.nav.nodelist.glay.{GlayCaption, GlayNode}
 import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.vm.Vm
 import org.scalajs.dom.ext.KeyCode
@@ -22,59 +19,39 @@ import scala.util.Failure
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 10.08.15 15:54
- * Description: Аддон для состояний сетки с открытой панелью.
  */
+
+
+/** Аддон для состояний сетки с открытой панелью. */
 trait OnGridNav extends OnGrid with StateToUrlT {
 
-  protected trait _OnGridNav extends OnGridStateT with PanelGridRebuilder {
+  protected trait _OnGridNav extends OnGridStateT {
 
     private def _receiverPart: Receive = {
       case HideNavClick(event) =>
-        _hideNav()
+        _handleHideNav()
       case _: LogoClick =>
-        _hideNav()
+        _handleHideNav()
     }
 
     override def receiverPart: Receive = {
-      _receiverPart orElse super.receiverPart
+      _receiverPart.orElse( super.receiverPart )
     }
 
     override def _onKbdKeyUp(event: KeyboardEvent): Unit = {
       super._onKbdKeyUp(event)
       if (event.keyCode == KeyCode.Escape)
-        _hideNav()
+        _handleHideNav()
     }
 
-    protected def _hideNav(): Unit = {
-      val sd0 = _stateData
-      for (nroot <- NRoot.find()) {
-        // Визуально отобразить панель
-        nroot.hide()
+    protected def _handleHideNav(): Unit = {
+      // Убрать размывку плитки, если она была, не проверяя размеры экрана на всякий случай.
+      _unBlurGrid()
 
-        // Скрыть кнопку показа панели.
-        for (showBtn <- HShowNavBtn.find()) {
-          showBtn.show()
-        }
+      val sd1 = NavUtil.hide( _stateData )
+      become(_onHideNavState, sd1)
 
-        // Убрать размывку плитки, если она была, не проверяя размеры экрана на всякий случай.
-        _unBlurGrid()
-
-        val grid2 = RebuildGridOnPanelClose(sd0, nroot).execute()
-
-        for (hbtns <- HBtns.find()) {
-          hbtns.show()
-        }
-
-        val sd1 = sd0.copy(
-          grid = grid2,
-          nav = sd0.nav.copy(
-            panelOpened = false
-          )
-        )
-        become(_onHideNavState, sd1)
-
-        State2Url.pushCurrState()
-      }
+      State2Url.pushCurrState()
     }
 
     /** Состояние с закрытой nav-панелью. */
@@ -99,33 +76,12 @@ trait OnGridNav extends OnGrid with StateToUrlT {
         _sendFutResBack(fut)
       }
 
-      for (nroot <- NRoot.find()) {
-        // Визуально отобразить панель
-        nroot.show()
-        // Скрыть кнопку показа панели.
-        for (showBtn <- HShowNavBtn.find()) {
-          showBtn.hide()
-        }
+      // Размыть плитку в фоне, если экран маловат.
+      _maybeBlurGrid(sd0)
+      val sd2 = NavUtil.show(sd0)
 
-        val grid2 = RebuildGridOnPanelOpen(sd0, nroot).execute()
-
-        // Размыть плитку в фоне, если экран маловат.
-        _maybeBlurGrid(sd0)
-
-        val sd2 = sd0.copy(
-          grid = grid2,
-          nav = sd0.nav.copy(
-            panelOpened = true
-          )
-        )
-        _stateData = sd2
-
-        State2Url.pushCurrState()
-      }
-
-      for (hbtns <- HBtns.find()) {
-        hbtns.hide()
-      }
+      _stateData = sd2
+      State2Url.pushCurrState()
 
       // Список узлов на панели уже загружен, нужно сразу перещелкнуть на следующее состояние.
       if (nlContentOpt.exists(_.nonEmpty)) {
@@ -211,7 +167,7 @@ trait OnGridNav extends OnGrid with StateToUrlT {
           val clickedAdnId = glayNode.adnIdOpt
           if (clickedAdnId == sd0.common.adnIdOpt) {
             // Клик по текущему узлу. Нужно просто скрыть панель навигации.
-            _hideNav()
+            _handleHideNav()
           } else {
             // Сменить текущий узел на выбранный пользователем.
             val sd1 = sd0.withNodeSwitch( glayNode.adnIdOpt )

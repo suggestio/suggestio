@@ -10,7 +10,6 @@ import io.suggest.sc.sjs.vm.search.SRoot
 import io.suggest.sjs.common.fsm._
 import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.vsz.ViewportSz
-import org.scalajs.dom
 import org.scalajs.dom.KeyboardEvent
 
 /**
@@ -86,10 +85,11 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm with
 
     /**
       * Реакция на popstate с какими-то данными для выдачи.
-      * @param sd1Opt Распарсенные данные из URL.
+      * @param sdNext Распарсенные данные состояния из URL.
       */
-    def _handlePopState(sd1Opt: Option[SD]): Unit = {
-      _runInitState(sd1Opt)
+    def _handleStateSwitch(sdNext: SD): Unit = {
+      // Дефолтовое поведение на неотработанные случаи: уйти в инициализацию.
+      _runInitState( Some(sdNext) )
     }
 
   }
@@ -107,18 +107,15 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm with
   }
 
   protected def _allStatesReceiver: Receive = {
-    // Реакция на события клавиатуры.
+    // Сигнал событий клавиатуры.
     case KbdKeyUp(event) =>
       _state._onKbdKeyUp(event)
-    // Реакция на изменение размеров текущего окна.
+    // Сигнал изменения размеров текущего окна.
     case e: IVpSzChanged =>
       _state._viewPortChanged(e)
-    // Реакция на навигацию по истории браузера.
-    case psp: PopStateSignal =>
-      val h = _urlHash
-      val sd1Opt = _parseFromUrlHash(h)
-      println(h + " => " + sd1Opt)
-      _state._handlePopState(sd1Opt)
+    // Сигнал навигации по истории браузера.
+    case pss: PopStateSignal =>
+      _handlePopState(pss)
   }
 
   /** Ресивер для всех состояний. Неизменен, поэтому [[ScFsm]] он помечен как val. */
@@ -126,7 +123,6 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm with
     _allStatesReceiver
       .orElse( super.allStatesReceiver )
   }
-
 
   /** Очень служебное состояние системы, используется когда очень надо. */
   protected[this] class DummyState extends FsmEmptyReceiverState

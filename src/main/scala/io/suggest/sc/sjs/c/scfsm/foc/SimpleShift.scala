@@ -47,7 +47,7 @@ trait SimpleShift extends MouseMoving with OnFocusBase {
           become(_shiftDoneState)
 
         } { nextFad =>
-          val nextCurr = MFocCurrSd(
+          val nextCurr = fState.current.copy(
             madId = nextFad.madId,
             index = fState.current.index + _nextIndexOffset
           )

@@ -14,7 +14,7 @@ trait Plain extends OnGrid with StateToUrlT {
    * Состояние, когда на на экране уже отрендерена плитка карточек или её часть,
    * в заголовке доступны все основные кнопки.
    */
-  protected trait OnPlainGridStateT extends OnGridStateT with PanelGridRebuilder with INodeSwitchState {
+  protected trait OnPlainGridStateT extends OnGridStateT with INodeSwitchState {
 
     /** Реакция на запрос отображения поисковой панели. */
     protected def _showSearchClick(event: Event): Unit = {
