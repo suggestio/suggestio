@@ -5,6 +5,7 @@ import io.suggest.xadv.ext.js.runner.m.ex.{ApiException, LoginApiException}
 import io.suggest.xadv.ext.js.vk.c.low._
 import io.suggest.xadv.ext.js.vk.m._
 import org.scalajs.dom
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 import scala.concurrent.{Future, Promise}
 
@@ -18,9 +19,6 @@ object Vk {
 
   def Api = VkApi
   def Auth = VkApiAuth
-
-  // TODO Задействовать runNow? Это ускорит init().
-  import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
   /**
    *  Асинхронный запрос инициализация. Внутри по факту синхронный код.
@@ -134,13 +132,15 @@ object VkApiAuth {
     val p = Promise[Option[VkLoginResult]]()
     // Слегка защищаемся от проблем при вызове и при парсинге ответа.
     try {
-      f { res: JSON =>
+      f { respJson: JSON =>
         try {
           // TODO Вконтактовский js не умеет отрабатывать собственные ошибки. Нужно таймаут какой-то выставлять на запросы?
-          p success VkLoginResult.maybeFromResp(res)
+          val loginRes = VkLoginResult.maybeFromResp(respJson)
+          p.success(loginRes)
         } catch {
           case ex: Throwable =>
-            p failure LoginApiException(s"Cannot understand VK.Auth.$name() response.", ex)
+            val ex2 = LoginApiException(s"Cannot understand VK.Auth.$name() response.", ex)
+            p.failure( ex2 )
         }
       }
     } catch {
