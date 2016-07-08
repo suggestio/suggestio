@@ -4,10 +4,10 @@ import io.suggest.lk.router.jsRoutes
 import io.suggest.bill.TxnsListConstants._
 import io.suggest.sjs.common.controller.{DomQuick, IInit, InitRouter}
 import io.suggest.sjs.common.util.SjsLogger
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import org.scalajs.jquery.{JQueryAjaxSettings, JQueryEventObject, JQueryXHR, jQuery}
 
 import scala.concurrent.Future
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 import scala.scalajs.js.{Any, Dictionary}
 
 /**

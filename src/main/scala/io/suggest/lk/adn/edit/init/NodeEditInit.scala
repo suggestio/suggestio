@@ -4,9 +4,9 @@ import io.suggest.lk.img.JsRemoveImgInitT
 import io.suggest.lk.upload._
 import io.suggest.sjs.common.controller.{IInitDummy, InitRouter}
 import io.suggest.sjs.common.util.{SafeSyncVoid, SjsLogger}
-import scala.concurrent.Future
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.adn.edit.NodeEditConstants._
+import scala.concurrent.Future
 import org.scalajs.jquery.{JQuery, jQuery}
 
 /**

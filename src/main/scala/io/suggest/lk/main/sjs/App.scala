@@ -9,6 +9,7 @@ import io.suggest.lk.flash.FlashInitRouter
 import io.suggest.lk.ident.center.CenterContentInitRouter
 import io.suggest.lk.ident.center.captcha.{HiddenCaptchaInit, CaptchaFormInit}
 import io.suggest.lk.popup.PopupsInitRouter
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.jshidden.JsHiddenInitRouter
 import io.suggest.sjs.common.controller.vlines.VerticalLinesInitRouter
 import io.suggest.sjs.common.util.SjsLogger
@@ -17,7 +18,6 @@ import io.suggest.xadv.ext.js.runner.c.RunnerInitRouter
 
 import scala.scalajs.js.annotation.JSExport
 import scala.scalajs.js.JSApp
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 /**
  * Suggest.io

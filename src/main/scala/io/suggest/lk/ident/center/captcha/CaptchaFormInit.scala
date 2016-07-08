@@ -1,10 +1,10 @@
 package io.suggest.lk.ident.center.captcha
 
-import io.suggest.sjs.common.controller.InitRouter
-import org.scalajs.dom.raw.HTMLElement
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
-import org.scalajs.jquery.{JQuery, JQueryEventObject, jQuery}
 import io.suggest.captcha.CaptchaConstants._
+import io.suggest.sjs.common.controller.InitRouter
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import org.scalajs.dom.raw.HTMLElement
+import org.scalajs.jquery.{JQuery, JQueryEventObject, jQuery}
 
 import scala.concurrent.Future
 import scala.scalajs.js.ThisFunction

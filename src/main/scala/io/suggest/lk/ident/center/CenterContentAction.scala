@@ -2,9 +2,9 @@ package io.suggest.lk.ident.center
 
 import io.suggest.sjs.common.controller.InitRouter
 import io.suggest.sjs.common.util.SafeSyncVoid
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import org.scalajs.dom
 import org.scalajs.jquery.{JQueryEventObject, JQuery, jQuery}
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 import scala.concurrent.Future
 

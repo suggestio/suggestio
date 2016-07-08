@@ -6,11 +6,11 @@ import io.suggest.lk.old.Market
 import io.suggest.lk.upload.{AjaxFileUpload, ImgUploadRenderOverlay, InitInputFileUploadOnChange}
 import io.suggest.sjs.common.controller.{IInitDummy, InitRouter}
 import io.suggest.sjs.common.util.SjsLogger
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import org.scalajs.dom.raw.{HTMLElement, HTMLInputElement}
 import org.scalajs.jquery.{JQueryEventObject, JQueryXHR, JQuery, jQuery}
 
 import scala.concurrent.Future
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 import scala.scalajs.js.Dictionary
 
 /**
