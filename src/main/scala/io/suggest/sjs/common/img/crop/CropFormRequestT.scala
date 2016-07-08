@@ -8,7 +8,7 @@ import io.suggest.sjs.common.model.Route
 import io.suggest.sjs.common.model.ex.XhrFailedException
 import io.suggest.sjs.common.util.ISjsLogger
 import org.scalajs.jquery._
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 import scala.concurrent.{Future, Promise}
 import scala.scalajs.js.{Any, Dictionary}

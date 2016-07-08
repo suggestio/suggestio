@@ -4,7 +4,7 @@ import io.suggest.sjs.common.controller.InitRouter
 import io.suggest.vlines.VLines._
 import org.scalajs.dom.Element
 import org.scalajs.jquery.{JQuery, jQuery}
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 import scala.concurrent.Future
 

@@ -4,7 +4,7 @@ import io.suggest.err.ErrorConstants
 import io.suggest.sjs.common.controller.InitRouter
 import org.scalajs.jquery.{JQuery, jQuery}
 import io.suggest.js.hidden.JsHiddenConstants._
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 import scala.concurrent.Future
 

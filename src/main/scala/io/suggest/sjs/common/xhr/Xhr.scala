@@ -10,7 +10,7 @@ import scala.concurrent.{Future, Promise}
 import scala.scalajs.js
 import scala.scalajs.js.JSON
 
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 /**
  * Suggest.io

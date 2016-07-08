@@ -48,6 +48,14 @@ trait HistoryObjT extends IVm {
     }
   }
 
+  /** Узнать текущее значение state в состоянии. */
+  def currentState: Option[js.Any] = {
+    HistoryObjStub(_underlying)
+      .state
+      .toOption
+      // Устранить возможный null внутри Option.
+      .filter(_ != null)
+  }
 
 }
 
@@ -66,6 +74,10 @@ sealed trait HistoryObjStub extends js.Object {
   def pushState: UndefOr[WriteF_t] = js.native
 
   def replaceState: UndefOr[WriteF_t] = js.native
+
+  /** Явно описываем в типе возможный undefined в возвращаемом значении, от греха по-дальше. */
+  def state: js.UndefOr[js.Any] = js.native
+
 }
 
 
