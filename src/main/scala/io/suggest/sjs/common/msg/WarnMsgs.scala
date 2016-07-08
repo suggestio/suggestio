@@ -62,4 +62,6 @@ object WarnMsgs extends MsgsStaticT {
   def FOC_LOOKUPED_AD_NOT_LAST    = E(25)
   def FOC_RESP_TS_UNEXPECTED      = E(26)
 
+  def SCREEN_PX_RATIO_MISSING     = E(27)
+
 }
