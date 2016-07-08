@@ -11,9 +11,9 @@ import io.suggest.sjs.common.vm.input.FormDataVmT
 import io.suggest.sjs.dt.period.vm.InfoContainer
 import io.suggest.sjs.common.msg.{WarnMsgs, ErrorMsgs}
 import io.suggest.sjs.common.xhr.{HttpStatuses, Xhr}
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 import scala.concurrent.Promise
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 import scala.util.{Failure, Success}
 
 /**
