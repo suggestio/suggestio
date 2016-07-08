@@ -2,12 +2,10 @@ package io.suggest.sc.sjs.c.scfsm.search
 
 import io.suggest.sc.ScConstants.Search.Fts.START_TIMEOUT_MS
 import io.suggest.sc.sjs.c.scfsm.grid.OnGrid
-import io.suggest.sc.sjs.c.scfsm.grid.build._
 import io.suggest.sc.sjs.c.scfsm.ust.StateToUrlT
 import io.suggest.sc.sjs.m.mhdr.{HideSearchClick, LogoClick, ShowIndexClick}
+import io.suggest.sc.sjs.m.msc.MScSd
 import io.suggest.sc.sjs.m.msearch._
-import io.suggest.sc.sjs.vm.hdr.HRoot
-import io.suggest.sc.sjs.vm.search.SRoot
 import io.suggest.sc.sjs.vm.search.fts.{SInput, SInputContainer}
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.util.ISjsLogger
@@ -60,10 +58,19 @@ trait Base extends OnGrid with ISjsLogger with StateToUrlT {
 
     /** Обработка кликов по кнопкам поисковых вкладок. */
     protected def _tabBtnClick(signal: ITabClickSignal): Unit = {
-      val sd0 = _stateData
-      // Если текущая вкладка не изменилась, то не делать вообще ничего.
+      val mtab = signal.mtab
+      _maybeSwitchTab(mtab)
+      val nextState = _searchTab2state(mtab)
+      become(nextState)
+      State2Url.pushCurrState()
+    }
+
+    /** Обновление DOM и состояния FSM при переключении на указанный таб.
+      * Если tab не менялся, то ничего не произойдёт. */
+    def _maybeSwitchTab(mtab: MTab, sd0: SD = _stateData): Unit = {
       val prevTab = _nowOnTab
-      if (signal.mtab != prevTab) {
+      // Если текущая вкладка не изменилась, то не делать вообще ничего.
+      if (mtab != prevTab) {
         // Сокрыть текущую вкладку, деактивировать её кнопку.
         for (tbody <- prevTab.vmBodyCompanion.find()) {
           tbody.hide()
@@ -73,26 +80,20 @@ trait Base extends OnGrid with ISjsLogger with StateToUrlT {
         }
         // Активировать связанную с этим сигналом кнопку вкладки.
         // TODO Opt вместо поиска по id можно извлечь необходимый div из события: target/currentTarget.
-        val nextTab = signal.mtab
-        for (tBtn <- nextTab.vmBtnCompanion.find()) {
+        for (tBtn <- mtab.vmBtnCompanion.find()) {
           tBtn.activate()
         }
-        for (tBody <- nextTab.vmBodyCompanion.find()) {
+        for (tBody <- mtab.vmBodyCompanion.find()) {
           tBody.show()
         }
         // Сохранить изменения в состояние.
-        val sd2 = sd0.copy(
+        _stateData = sd0.copy(
           search = sd0.search.copy(
-            currTab = nextTab
+            currTab = mtab
           )
         )
-        become(_tabSwitchedFsmState, sd2)
-        State2Url.pushCurrState()
       }
     }
-
-    /** На какое состояние надо переключаться при смене поисковой вкладки? */
-    protected def _tabSwitchedFsmState: FsmState
 
     override def receiverPart: Receive = {
       val _receiverPart: Receive = {
@@ -200,17 +201,26 @@ trait Base extends OnGrid with ISjsLogger with StateToUrlT {
     }
 
 
-    // Если перескок по истории браузера касается только закрытия панели, то сделать это по упрощенной схеме.
-    /*override def _handlePopState(sd1Opt: Option[MScSd]): Unit = {
-      val sd0 = _stateData
-      sd1Opt
-        .filter { sd1 =>
-          !sd1.search.opened &&
-            sd1.common == sd0.common
-        }
-      super._handlePopState(sd1Opt)
-    }*/
+    /**
+      * Юзер гуляет по истории браузера внутри сеанса выдачи.
+      * Необходимо сократить путь этого гуляния без перезагрузки выдачи.
+      *
+      * @param sdNext Распарсенные данные состояния из URL.
+      */
+    override def _handleStateSwitch(sdNext: MScSd): Unit = {
+      // Изменился текущий tab, выполнить переключение таба на экране и в sd0
+      val mtabNext = sdNext.search.currTab
+      _maybeSwitchTab( mtabNext )
+      if (sdNext.search.opened && sdNext.focused.isEmpty) {
+        become( _searchTab2state(mtabNext) )
+      } else {
+        super._handleStateSwitch(sdNext)
+      }
+    }
 
   }
+
+  /** Привести id таба к состоянию. */
+  protected def _searchTab2state(mtab: MTab = _stateData.search.currTab): FsmState
 
 }

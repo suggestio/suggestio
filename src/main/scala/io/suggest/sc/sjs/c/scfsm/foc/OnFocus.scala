@@ -16,10 +16,10 @@ import io.suggest.sc.sjs.m.msrv.foc.find.{MFocAdSearchEmpty, MFocAdSearchNoOpenI
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.model.mlu.{MLookupMode, MLookupModes}
 import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import org.scalajs.dom.{KeyboardEvent, MouseEvent, TouchEvent}
 import org.scalajs.dom.ext.KeyCode
 
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 import scala.util.{Failure, Success}
 
 /**
@@ -456,10 +456,8 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
             // Вполне возможно, что она находится слева или справа от текущей. Отработать эти ситуации:
             def __tryFirst(fadOpt: Option[IFocAd], dir: MHand): Boolean = {
               val has = fadOpt.exists(_.madId == nextMadId)
-              if (has) {
-                _setStateForced(sd0)
+              if (has)
                 become(_shiftForHand(dir))
-              }
               has
             }
             // Искомая карточка -- предыдущая (слева)?
@@ -478,38 +476,6 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
               }
           }
       }
-    }
-
-
-    /**
-      * Сохранить данные состояния в History API:
-      * если флаг force выставлен, то НЕ надо сохранять в History API, а надо бы просто дропнуть флаг этот.
-      */
-    protected def _pushStateIfNoForce(fState: MFocSd, sd0: SD): Unit = {
-      val force = fState.current.forceFocus
-      if (!force) {
-        // Сохранить текущее состояние в URL
-        State2Url.pushCurrState()
-      } else {
-        // Выкинуть force-флаг из состояния.
-        _stateData = sd0.copy(
-          focused = Some(fState.copy(
-            current = fState.current.copy(
-              forceFocus = false
-            )
-          ))
-        )
-      }
-    }
-
-    protected def _setStateForced(sd0: SD = _stateData): Unit = {
-      _stateData = sd0.copy(
-        focused = sd0.focused.map(fState => fState.copy(
-          current = fState.current.copy(
-            forceFocus = true
-          )
-        ))
-      )
     }
 
   }
@@ -707,8 +673,7 @@ trait OnFocus extends OnFocusBase {
         } // for {} {...}
 
         // Нельзя обновлять состояние в случае принудительно фокусировки.
-        //State2Url.pushCurrState()
-        _pushStateIfNoForce(fState, sd0)
+        State2Url.pushCurrState()
 
       }     // fState
     }       // afterBecome()

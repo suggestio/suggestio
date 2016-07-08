@@ -7,12 +7,11 @@ import io.suggest.sc.sjs.m.mfoc.{MFocCurrSd, MFocSd}
 import io.suggest.sc.sjs.m.msc.{MGen, MScSd, MUrlUtil, PopStateSignal}
 import io.suggest.sc.sjs.m.msearch.MTabs
 import io.suggest.sc.sjs.util.router.srv.SrvRouter
-import io.suggest.sc.sjs.vm.nav.NRoot
 import io.suggest.sjs.common.msg.WarnMsgs
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import org.scalajs.dom
 
 import scala.concurrent.Future
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 /**
   * Suggest.io
@@ -84,7 +83,8 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
     // Загружаем данные состояния панели навигации.
     val sd1Nav = {
       val sd0Nav = sd0.nav
-      tokens.get(GEO_SCR_OPENED_FN)
+      val flag = tokens
+        .get(GEO_SCR_OPENED_FN)
         .flatMap { geoPanelOpenedStr =>
           try {
             Some(geoPanelOpenedStr.toBoolean)
@@ -94,11 +94,10 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
               None
           }
         }
-        .fold(sd0Nav) { flag =>
-          sd0Nav.copy(
-            panelOpened = flag
-          )
-        }
+        .contains(true)   // None => false
+      sd0Nav.copy(
+        panelOpened = flag
+      )
     }
 
     // Загружаем данные состояния панели поиска.
@@ -114,7 +113,11 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
               None
           }
         }
-        .fold(sd0Search) { flag =>
+        .fold {
+          sd0Search.copy(
+            opened = false
+          )
+        } { flag =>
           // Определить текущую открытую вкладку поиска.
           val mtab = tokens.get(SEARCH_TAB_FN)
             .flatMap(MTabs.maybeWithName)
@@ -207,6 +210,7 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
       } else {
         // Корень выдачи тот же. Надо подогнать текущую выдачу под новые параметры состояния. Никаких welcome на экране отображать не надо.
         // Отрабатываем возможное изменение конфигурации боковых панелей в рамках узла/локации.
+        println("nav " + sd0.nav.panelOpened + " => " + sdNext.nav.panelOpened)
 
         // Если изменилось значение состояния распахнутости боковой панели навигации (слева), то внести изменения в DOM и исходное состояние.
         if (sd0.nav.panelOpened != sdNext.nav.panelOpened) {
@@ -215,6 +219,7 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
 
         // Отработать панель поиска: скрыть или показать, если состояние изменилось.
         val sd1 = _stateData
+        println("search " + sd1.search.opened + "/" + sd0.search.opened + " => " + sdNext.search.opened)
         if (sd1.search.opened != sdNext.search.opened) {
           _stateData = SearchUtil.invert(sd1)
         }

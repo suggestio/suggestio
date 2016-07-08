@@ -6,9 +6,9 @@ import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
 import io.suggest.sc.sjs.vm.grid.GContent
 import io.suggest.sc.sjs.vm.res.CommonRes
 import io.suggest.sjs.common.msg.ErrorMsgs
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 import scala.concurrent.Future
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 import scala.util.Failure
 
 /**

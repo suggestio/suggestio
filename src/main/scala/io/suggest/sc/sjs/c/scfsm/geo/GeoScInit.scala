@@ -6,9 +6,9 @@ import io.suggest.sc.sjs.m.mgeo._
 import io.suggest.sc.sjs.util.router.srv.SrvRouter
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.msg.ErrorMsgs
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 import scala.concurrent.Promise
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 /**
   * Suggest.io

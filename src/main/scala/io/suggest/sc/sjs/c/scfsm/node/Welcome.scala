@@ -9,8 +9,7 @@ import io.suggest.sc.sjs.m.mwc.{WcClick, WcHideState, WcTimeout}
 import io.suggest.sc.sjs.vm.wc.{WcBgImg, WcFgImg, WcRoot}
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.msg.WarnMsgs
-
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 /**
   * Suggest.io

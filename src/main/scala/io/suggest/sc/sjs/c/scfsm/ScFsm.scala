@@ -196,7 +196,7 @@ object ScFsm
   *--------------------------------------------------------------------------------*/
 
   /** Превратить search-таб в соответствующее состояние. */
-  protected def _searchTab2state(mtab: MTab = _stateData.search.currTab): FsmState = {
+  override protected def _searchTab2state(mtab: MTab = _stateData.search.currTab): FsmState = {
     mtab match {
       case MTabs.Geo      => new OnSearchGeoState
       case MTabs.Tags     => new OnSearchTagsState
@@ -217,13 +217,9 @@ object ScFsm
   }
 
   /** Состояние, где и сетка есть, и поисковая панель отрыта на вкладке географии. */
-  class OnSearchGeoState extends OnGridSearchGeoStateT with _SearchClose with OnGridStateT {
-    override def _tabSwitchedFsmState = new OnSearchTagsState
-  }
+  class OnSearchGeoState extends OnGridSearchGeoStateT with _SearchClose with OnGridStateT
 
   /** Состояние, где открыта вкладка хеш-тегов на панели поиска. */
-  class OnSearchTagsState extends OnSearchTagsStateT with _SearchClose with OnGridStateT {
-    override def _tabSwitchedFsmState = new OnSearchGeoState
-  }
+  class OnSearchTagsState extends OnSearchTagsStateT with _SearchClose with OnGridStateT
 
 }

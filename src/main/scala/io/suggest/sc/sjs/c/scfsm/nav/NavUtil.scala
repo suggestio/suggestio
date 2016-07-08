@@ -28,12 +28,12 @@ object NavUtil extends PanelShowHideT {
       showBtn.show()
     }
 
-    for (hbtns <- HBtns.find()) {
-      hbtns.show()
-    }
-
     val grid2 = nRootOpt.fold(sd0.grid) { nRoot =>
       RebuildGridOnPanelClose(sd0, nRoot).execute()
+    }
+
+    for (hbtns <- HBtns.find()) {
+      hbtns.show()
     }
 
     sd0.copy(

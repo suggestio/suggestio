@@ -7,7 +7,7 @@ import io.suggest.sc.sjs.vm.search.fts.SInput
 import io.suggest.sc.sjs.vm.search.tabs.htag.{StListRow, StList}
 import io.suggest.sjs.common.msg.{WarnMsgs, ErrorMsgs}
 import io.suggest.sjs.common.tags.search.{MTagsSearch, MTagSearchRespTs, MTagSearchResp, MTagSearchArgs}
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 import scala.util.{Failure, Success}
 

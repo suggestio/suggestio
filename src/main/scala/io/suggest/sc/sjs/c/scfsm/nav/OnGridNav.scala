@@ -9,10 +9,10 @@ import io.suggest.sc.sjs.vm.nav.nodelist.NlContent
 import io.suggest.sc.sjs.vm.nav.nodelist.glay.{GlayCaption, GlayNode}
 import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.vm.Vm
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import org.scalajs.dom.ext.KeyCode
 import org.scalajs.dom.{Event, KeyboardEvent, Node}
 
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 import scala.util.Failure
 
 /**
