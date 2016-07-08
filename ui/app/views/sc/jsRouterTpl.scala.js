@@ -13,7 +13,8 @@
   routes.javascript.MarketShowcase.findAds,
   routes.javascript.MarketShowcase.findNodes,
   routes.javascript.MarketShowcase.focusedAds,
-  routes.javascript.MarketShowcase.tagsSearch
+  routes.javascript.MarketShowcase.tagsSearch,
+  routes.javascript.MarketShowcase.handleScError
 );
 
 @* Когда скрипт загрузился и выполнился, будет вызвана функция инициализации с указанным именем, если задана. *@

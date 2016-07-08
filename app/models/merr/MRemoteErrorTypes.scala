@@ -14,7 +14,7 @@ object MRemoteErrorTypes extends Enumeration with EnumMaybeWithName with EnumJso
   override type T = Value
 
   /** Ошибка возникла в выдаче. */
-  val Showcase = Value : T
+  val Showcase: T = Value("sc")
 
 }
 

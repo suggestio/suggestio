@@ -26,21 +26,22 @@ trait ScRemoteError
 
   import mCommonDi._
 
-  override def BRUTEFORCE_TRY_COUNT_DEADLINE_DFLT: Int = 10
+  override def BRUTEFORCE_TRY_COUNT_DEADLINE_DFLT = 10
 
   /** Маппинг для вычитывания результата из тела POST. */
   private def errorFormM: Form[MRemoteError] = {
+    import io.suggest.err.ErrorConstants.Remote._
     Form(
       mapping(
-        "msg" -> {
+        MSG_FN -> {
           nonEmptyText(minLength = 1, maxLength = 1024)
             .transform[String](strTrimF, strIdentityF)
         },
-        "url" -> {
+        URL_FN -> {
           optional( text(minLength = 8, maxLength = 512) )
             .transform[Option[String]](emptyStrOptToNone, identity)
         },
-        "state" -> {
+        STATE_FN -> {
           optional(text(maxLength = 1024))
             .transform[Option[String]](emptyStrOptToNone, identity)
         }
@@ -66,33 +67,40 @@ trait ScRemoteError
    */
   def handleScError = MaybeAuth().async { implicit request =>
     bruteForceProtected {
+      lazy val logPrefix = s"handleScError(${System.currentTimeMillis()}) [${request.remoteAddress}]:"
       errorFormM.bindFromRequest().fold(
         {formWithErrors =>
-          LOGGER.debug("handleError(): Request body bind failed:\n " + formatFormErrors(formWithErrors))
+          LOGGER.debug(logPrefix + " Request body bind failed:\n " + formatFormErrors(formWithErrors))
           NotAcceptable("Failed to parse response. See server logs.")
         },
         {merr0 =>
-          GeoIp.geoSearchInfoOpt
+          // Запустить геолокацию текущего юзера по IP.
+          val geoLocOptFut = GeoIp
+            .geoSearchInfoOpt
             .recover {
               // Should never happen. Подавляем возможную ошибку получения геоданных запроса.
               case ex: Exception =>
                 LOGGER.warn("Suppressing exception for gsiOpt", ex)
                 None
             }
-            .flatMap { gsiOpt =>
-              // Сохраняем в базу отчёт об ошибке.
-              val merr1 = merr0.copy(
-                ua          = request.headers.get(USER_AGENT).map(strTrimF),
-                clientAddr  = request.remoteAddress,
-                clIpGeo     = gsiOpt.map(_.geoPoint),
-                clTown      = gsiOpt.flatMap(_.cityName),
-                country     = gsiOpt.flatMap(_.countryIso2),
-                isLocalCl   = gsiOpt.map(_.isLocalClient)
-              )
-              for (merrId <- mRemoteErrors.save(merr1)) yield {
-                NoContent
-              }
-            }
+
+          for {
+            gsiOpt <- geoLocOptFut
+            // Апдейтим забинденный формой отчёт об ошибке данными от сервера.
+            merr1 = merr0.copy(
+              ua          = request.headers.get(USER_AGENT).map(strTrimF),
+              clientAddr  = request.remoteAddress,
+              clIpGeo     = gsiOpt.map(_.geoPoint),
+              clTown      = gsiOpt.flatMap(_.cityName),
+              country     = gsiOpt.flatMap(_.countryIso2),
+              isLocalCl   = gsiOpt.map(_.isLocalClient)
+            )
+            // Сохраняем в базу отчёт об ошибке.
+            merrId <- mRemoteErrors.save(merr1)
+          } yield {
+            LOGGER.trace(logPrefix + " Saved remote error: " + merr1.copy(id = Some(merrId)) )
+            NoContent
+          }
         }
       )
     }
