@@ -20,12 +20,13 @@ trait StateToUrlT extends ScFsmStub {
       // Сериализовать куски текущего состояния в URL.
       for (hApi <- SafeWnd.history) {
         val acc = MScSd.toUrlHashAcc( _stateData )
-        val url = MScSd.acc2Qs( acc )
-        if ( !hApi.currentState.map(_.toString).contains(url) ) {
+        val qsStr = MScSd.acc2Qs( acc )
+        val currQsStr = MUrlUtil.clearUrlHash( _urlHash )
+        if ( !currQsStr.contains(qsStr) ) {
           // TODO Сверять URL с текущим значением window.location
           //val n = "\n"
           //println( "pushState: " + System.currentTimeMillis() + " " + url + Thread.currentThread().getStackTrace.iterator.take(5).mkString(n,n,n) )
-          hApi.pushState(url, "sio", Some(MUrlUtil.URL_HASH_PREFIX + url))
+          hApi.pushState(null, "sio", Some(MUrlUtil.URL_HASH_PREFIX + qsStr))
         }
         //else log("pushCurrState(): Dup state")
       }

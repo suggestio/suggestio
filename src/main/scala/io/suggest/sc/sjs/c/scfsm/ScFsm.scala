@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.c.scfsm
 
 import io.suggest.sc.sjs.c.scfsm.nav.OnGridNav
 import io.suggest.sc.sjs.c.scfsm.ust.Url2StateT
-import io.suggest.sc.sjs.m.msc.{MGen, MScCommon, MScSd, PopStateSignal}
+import io.suggest.sc.sjs.m.msc._
 import io.suggest.sc.sjs.m.msearch.{MTab, MTabs}
 import io.suggest.sc.sjs.util.logs.ScSjsLogger
 import io.suggest.sc.sjs.vm.SafeWnd
@@ -52,10 +52,10 @@ object ScFsm
   def start(): Unit = {
     become( _initPhaseEnter1st )
 
-    // Подписать этот FSM на событие навигации по истории браузера.
-    SafeWnd.addEventListener("popstate") { e: PopStateEvent =>
-      _sendEventSync( PopStateSignal(e) )
-    }
+    // Подписать этот FSM на события навигации по истории браузера.
+    SafeWnd.addEventListener("popstate")( _signalCallbackF(PopStateSignal) )
+    // TODO Заимплементить когда-нибудь реакцию на ручное редактирование URL.
+    //SafeWnd.addEventListener("hashchange")( _signalCallbackF(HashChangedSignal) )
   }
 
 

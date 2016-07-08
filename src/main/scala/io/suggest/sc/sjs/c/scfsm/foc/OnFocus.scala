@@ -567,6 +567,7 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
     override lazy val fads2: FAdQueue = {
       if (fState0.fads.lastOption.map(_.madId).contains(relAdId) || fadsMissingRelAdId) {
         // Если опорной карточки нет в fads (should never happen), то ругаться в логи, но добавлять карточки в конец в исходном порядке.
+        // TODO Тут косяк есть: выдача не забывает о потерявшейся карточке.
         if (fadsMissingRelAdId)
           warn( ErrorMsgs.FOC_LOOKUP_MISSING_AD + logSuffix )
         fState0.fads ++ res.resp.fads

@@ -192,4 +192,6 @@ case class MScSd(
     )
   }
 
+  def notFocused = copy(focused = None)
+
 }

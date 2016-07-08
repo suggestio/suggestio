@@ -1,7 +1,6 @@
 package io.suggest.sc.sjs.c.scfsm.foc
 
 import io.suggest.sc.sjs.vm.foc.FRoot
-import io.suggest.sc.ScConstants.Focused.SLIDE_ANIMATE_MS
 import io.suggest.sc.sjs.c.scfsm.grid.OnGridBase
 import io.suggest.sc.sjs.c.scfsm.ust.StateToUrlT
 import io.suggest.sc.sjs.m.magent.VpSzChanged
@@ -10,7 +9,6 @@ import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.vm.content.ClearT
 
 import scala.concurrent.Future
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 /**
   * Suggest.io
@@ -51,22 +49,10 @@ trait Closing extends MouseMoving with OnGridBase with StateToUrlT {
       }
 
       // Затем запускать в фоне анимацию сокрытия focused-выдачи...
-      for (froot <- fRootOpt) {
-        // В фоне запланировать сокрытие focused-выдачи и прочие асинхронные действия.
-        Future {
-          froot.disappearTransition()
-          DomQuick.setTimeout(SLIDE_ANIMATE_MS) { () =>
-            froot.reset()
-            FocusedRes.find()
-              .foreach(ClearT.f)
-          }
-        }
-      }
+      FocCommon.closeFocused(fRootOpt)
 
       // Выход из состояния закрытия не дожидаясь окончания анимации.
-      val sd1 = sd0.copy(
-        focused = None
-      )
+      val sd1 = sd0.notFocused
       become(_backToGridState, sd1)
 
       // Обновить текущее состояние в истории браузера.

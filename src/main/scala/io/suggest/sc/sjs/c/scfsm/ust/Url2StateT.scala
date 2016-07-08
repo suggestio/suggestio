@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.c.scfsm.ust
 
 import io.suggest.sc.sjs.c.scfsm.ScFsm
+import io.suggest.sc.sjs.c.scfsm.foc.FocCommon
 import io.suggest.sc.sjs.c.scfsm.nav.NavUtil
 import io.suggest.sc.sjs.c.scfsm.search.SearchUtil
 import io.suggest.sc.sjs.m.mfoc.{MFocCurrSd, MFocSd}
@@ -29,7 +30,7 @@ trait IUrl2State {
 
   def _runInitState(sd0Opt: Option[MScSd]): Future[_]
 
-  def _nodeReInitState(sd0Opt: Option[MScSd]): Unit
+  def _nodeReInitState(sdNext: MScSd): Unit
 
   /** Поддержка переключения на другое состояние по сигналу из истории браузера. */
   def _handlePopState(pss: PopStateSignal): Unit
@@ -195,9 +196,36 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
 
 
   /** Реакция на повторную инициализацию текущей выдачи в рамках существующего состояния. */
-  override def _nodeReInitState(sd0Opt: Option[MScSd]): Unit = {
-    // TODO Нужно без welcome это дело организовать. Т.е. погружение в произвольное состояние без лишнего гемора.
-    become( new NodeIndex_Get_Wait_State )
+  override def _nodeReInitState(sdNext: MScSd): Unit = {
+    val sd0 = _stateData
+
+    // Нужно без welcome организовать всё.
+    val nextState = if (sdNext.focused.nonEmpty) {
+      // Запускать фокусировку на указанной карточке.
+      _stateData = sd0.copy(
+        focused = sdNext.focused
+      )
+      FocCommon.clearFocused()
+      new FocStartingForAd
+
+    } else {
+
+      // Удалить focused-выдачу с экрана, если она там есть.
+      if (sd0.focused.nonEmpty) {
+        FocCommon.closeFocused()
+        _stateData = sd0.notFocused
+      }
+
+      // Выявить нужное целевое состояние плитки узла.
+      if (sdNext.nav.panelOpened) {
+        new OnGridNavLoadListState
+      } else if (sdNext.search.opened) {
+        _searchTab2state( sdNext.search.currTab )
+      } else {
+        new OnPlainGridState
+      }
+    }
+    become( nextState )
   }
 
   /** Реакция на сигнал popstate, т.е. когда юзер гуляет по истории браузера. */
