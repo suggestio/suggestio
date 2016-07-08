@@ -24,6 +24,7 @@ trait AbstractFsm {
 
   /**
    * Переключение на новое состояние. Старое состояние будет отброшено.
+   *
    * @param nextState Новое состояние.
    *                  null значит, что всё останется на текущем состоянии.
    */
@@ -55,6 +56,10 @@ trait AbstractFsm {
 
     /** Действия, которые вызываются, когда это состояние выставлено в актор. */
     def afterBecome() {}
+  }
+
+  override def toString: String = {
+    getClass.getSimpleName + "(" + _state + ")"
   }
 
 }
