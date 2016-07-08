@@ -3,9 +3,9 @@ package io.suggest.lk.adv.direct.init
 import io.suggest.lk.adv.direct.fsm.AdvDirectFormFsm
 import io.suggest.lk.adv.direct.vm.Form
 import io.suggest.sjs.common.controller.{IInitDummy, InitRouter}
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 import scala.concurrent.Future
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 /**
  * Suggest.io
