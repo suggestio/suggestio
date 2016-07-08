@@ -1,5 +1,6 @@
 package io.suggest.xadv.ext.js.runner.c.adp
 
+import io.suggest.sjs.common.async.AsyncUtil
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.util.SjsLogger
 import io.suggest.sjs.common.vm.doc.DocumentVm
@@ -10,7 +11,6 @@ import org.scalajs.dom
 import org.scalajs.dom.Element
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
-import scala.scalajs.concurrent.JSExecutionContext.runNow
 
 /**
  * Suggest.io
@@ -31,7 +31,7 @@ trait AsyncInitAdp extends IAdapter with SjsLogger {
   def SCRIPT_URL: String
 
   /** Используемый execution context можно переопределить здесь. */
-  implicit def execCtx: ExecutionContext = runNow
+  implicit def execCtx: ExecutionContext = AsyncUtil.defaultExecCtx
 
   /**
    * Выставление функции-обработчика, который должен перехватываться подключаемым скриптом.

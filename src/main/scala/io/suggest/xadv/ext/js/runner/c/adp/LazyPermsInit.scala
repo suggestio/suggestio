@@ -1,14 +1,13 @@
 package io.suggest.xadv.ext.js.runner.c.adp
 
+import io.suggest.sjs.common.async.AsyncUtil
 import io.suggest.sjs.common.util.SjsLogger
 import io.suggest.xadv.ext.js.runner.c.IActionContext
 import io.suggest.xadv.ext.js.runner.m.{IMExtTarget, MJsCtxT}
 import io.suggest.xadv.ext.js.runner.m.ex.LoginCancelledException
 import org.scalajs.dom
 
-import scala.scalajs.concurrent.JSExecutionContext.runNow
-
-import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -35,7 +34,7 @@ trait LazyPermsInit extends SjsLogger {
   type Ctx_t <: MJsCtxT
 
   /** В каком порядке исполнять асинхронные операции? */
-  implicit def execCtx: ExecutionContext = runNow
+  implicit def execCtx: ExecutionContext = AsyncUtil.defaultExecCtx
 
   /** Тип значения, возвращаемого при инициализации. */
   type InitRes_t

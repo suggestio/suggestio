@@ -1,10 +1,9 @@
 package io.suggest.xadv.ext.js.runner.c
 
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+
 import scala.collection.immutable.Queue
-import scala.concurrent.{Promise, Future}
-// runNow используется для скорейшего переключения на следующий попап без всей остальной очереди.
-import scala.scalajs.concurrent.JSExecutionContext.runNow
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import scala.concurrent.{Future, Promise}
 
 /**
  * Suggest.io
@@ -31,10 +30,13 @@ class PopupQueueImpl extends IPopupQueue {
 
   /** Абстрактный экземпляр одной задачи в очереди. Трейт, чтобы начисто скрыть параметризованный тип отовсюду. */
   trait Task {
+
     /** Тип значения, возвращаемого внутри фьючерс _f(). */
     type TT
+
     /** Исходный генератор попапа. */
     def _f: () => Future[TT]
+
     /** Созданный promise для будущего результата _f(). */
     def _p: Promise[TT]
 
@@ -45,12 +47,13 @@ class PopupQueueImpl extends IPopupQueue {
         // Когда всё закончится, нужно запустить проверку очереди на наличие новых попапов или же сбросить флаг занятости.
         fut.onComplete { case _ =>
           popupFinished()
-        }(runNow)
+        }
         // Когда обработка попапов завершена, то нужно сообщить об этом клиенту.
-        _p completeWith fut
+        _p.completeWith( fut )
 
       } catch {
-        case ex: Throwable => _p failure ex
+        case ex: Throwable =>
+          _p.failure( ex )
       }
     }
   }

@@ -8,9 +8,9 @@ import io.suggest.xadv.ext.js.runner.m.ex.CustomException
 import io.suggest.xadv.ext.js.runner.m.{IAdapter, MJsCtx}
 import io.suggest.xadv.ext.js.runner.v.Page
 import io.suggest.xadv.ext.js.vk.c.VkAdapter
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 import scala.concurrent.Future
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 /**
  * Suggest.io

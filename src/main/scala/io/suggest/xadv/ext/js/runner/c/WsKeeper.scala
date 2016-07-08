@@ -4,10 +4,11 @@ import io.suggest.sjs.common.model.wsproto.MAnswerStatuses
 import io.suggest.sjs.common.view.CommonPage
 import io.suggest.xadv.ext.js.runner.m._
 import io.suggest.xadv.ext.js.runner.vm.WsUrl
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+
 import org.scalajs.dom
 import org.scalajs.dom.{MessageEvent, WebSocket, console}
 import scala.concurrent.Future
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 import scala.scalajs.js
 import scala.scalajs.js.JSON
