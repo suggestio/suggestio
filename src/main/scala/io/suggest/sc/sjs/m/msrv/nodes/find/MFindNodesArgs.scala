@@ -25,33 +25,20 @@ trait MFindNodesArgs extends ToJsonWithApiVsnT {
   override def toJson: Dictionary[Any] = {
     val d = super.toJson
 
-    val _ftsQuery = ftsQuery
-    if (_ftsQuery.isDefined)
-      d(FTS_QUERY_FN) = _ftsQuery.get
-
-    val _geo = geo
-    if (_geo.isDefined)
-      d(GEO_FN) = _geo.get.toQsStr
-
-    val _offset = offset
-    if (_offset.isDefined)
-      d(OFFSET_FN) = _offset.get
-
-    val _limit = limit
-    if (_limit.isDefined)
-      d(LIMIT_FN) = _limit.get
-
-    val _currAdnId = currAdnId
-    if (_currAdnId.isDefined)
-      d(CURR_ADN_ID_FN) = _currAdnId.get
-
-    val _nodeSwitch = nodeSwitch
-    if (_nodeSwitch.isDefined)
-      d(NODE_SWITCH_FN) = _nodeSwitch.get
-
-    val _withNeight = withNeigh
-    if (_withNeight.isDefined)
-      d(WITH_NEIGHBORS_FN) = _withNeight.get
+    for (fq <- ftsQuery)
+      d(FTS_QUERY_FN) = fq
+    for (g <- geo)
+      d(GEO_FN) = g.toQsStr
+    for (off <- offset)
+      d(OFFSET_FN) = off
+    for (lim <- limit)
+      d(LIMIT_FN) = lim
+    for (cai <- currAdnId)
+      d(CURR_ADN_ID_FN) = cai
+    for (ns <- nodeSwitch)
+      d(NODE_SWITCH_FN) = ns
+    for (wn <- withNeigh)
+      d(WITH_NEIGHBORS_FN) = wn
 
     d
   }

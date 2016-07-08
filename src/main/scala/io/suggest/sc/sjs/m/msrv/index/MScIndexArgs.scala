@@ -31,17 +31,12 @@ trait IScIndexArgs extends ToJsonWithApiVsnT {
   override def toJson: Dictionary[Any] = {
     val d = super.toJson
 
-    val _geo = geoMode
-    if (_geo.isDefined)
-      d(GEO) = _geo.get.toQsStr
-
-    val _scr = screen
-    if (_scr.isDefined)
-      d(SCREEN) = _scr.get.toQsValue
-
-    val ww = withWelcome
-    if (ww.isDefined)
-      d(WITH_WELCOME) = ww.get
+    for (g <- geoMode)
+      d(GEO) = g.toQsStr
+    for (scr <- screen)
+      d(SCREEN) = scr.toQsValue
+    for (ww <- withWelcome)
+      d(WITH_WELCOME) = ww
 
     d
   }

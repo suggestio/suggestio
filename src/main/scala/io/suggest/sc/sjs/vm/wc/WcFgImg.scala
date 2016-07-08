@@ -33,6 +33,7 @@ trait WcFgImgT extends VmT with WcImgUtil with DataWh {
     setImageWhMargin(newSz, marginTopPx)
     newSz
   }
+
 }
 
 

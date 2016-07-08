@@ -1,9 +1,10 @@
 package io.suggest.sc.sjs.m.magent
 
 import io.suggest.common.geom.d2.ISize2di
+import io.suggest.sc.sjs.util.logs.ScSjsLogger
 import io.suggest.sc.sjs.vm.SafeWnd
-import io.suggest.sjs.common.vm.wnd.WindowVm
-import org.scalajs.dom
+import io.suggest.sjs.common.msg.WarnMsgs
+import io.suggest.sjs.common.util.ISjsLogger
 
 import scala.scalajs.js
 
@@ -13,7 +14,7 @@ import scala.scalajs.js
  * Created: 20.05.15 17:19
  * Description: Модель данных по экрану устройства.
  */
-trait IMScreen extends ISize2di {
+trait IMScreen extends ISize2di with ISjsLogger {
 
   def pxRatioOpt: Option[Double] = {
     SafeWnd
@@ -22,15 +23,18 @@ trait IMScreen extends ISize2di {
   }
 
   /** Плотность пикселей экрана. */
-  def pxRatio: Double = pxRatioOpt.getOrElse(1.0)
+  def pxRatio: Double = pxRatioOpt.getOrElse {
+    warn( WarnMsgs.SCREEN_PX_RATIO_MISSING )
+    1.0
+  }
 
   /** Сериализовать для передачи на сервер. */
   def toQsValue: String = {
     // Округлять pxRatio до первого знака после запятой:
     var acc = width.toString + "x" + height.toString
-    val _pxrOpt = pxRatioOpt
-    if (_pxrOpt.isDefined)
-      acc = acc + "," + _pxrOpt.get
+    for (pxr <- pxRatioOpt) {
+      acc = acc + "," + pxr
+    }
     acc
   }
 
@@ -45,6 +49,7 @@ case class MScreen(
   override val height   : Int
 )
   extends IMScreen
+  with ScSjsLogger
 {
   override lazy val pxRatioOpt = super.pxRatioOpt
 }
