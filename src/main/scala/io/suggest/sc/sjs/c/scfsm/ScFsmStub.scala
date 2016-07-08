@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.c.scfsm
 
 import io.suggest.fsm.StateData
+import io.suggest.sc.sjs.c.scfsm.ScFsm.NodeIndex_Get_Wait_State
 import io.suggest.sc.sjs.c.scfsm.ust.IUrl2State
 import io.suggest.sc.sjs.m.magent.{IMScreen, IVpSzChanged, MScreen, VpSzChanged}
 import io.suggest.sc.sjs.m.mfsm.signals.KbdKeyUp
@@ -83,13 +84,15 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm with
       * По дефолту -- игнорировать все события клавиатуры. */
     def _onKbdKeyUp(event: KeyboardEvent): Unit = {}
 
+
     /**
       * Реакция на popstate с какими-то данными для выдачи.
-      * @param sdNext Распарсенные данные состояния из URL.
+      *
+      * @param sdNext Распарсенные данные нового состояния из URL.
       */
     def _handleStateSwitch(sdNext: SD): Unit = {
       // Дефолтовое поведение на неотработанные случаи: уйти в инициализацию.
-      _runInitState( Some(sdNext) )
+      _nodeReInitState( Some(sdNext) )
     }
 
   }

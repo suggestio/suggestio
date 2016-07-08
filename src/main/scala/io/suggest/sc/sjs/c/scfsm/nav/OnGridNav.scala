@@ -4,6 +4,7 @@ import io.suggest.sc.sjs.c.scfsm.grid.OnGrid
 import io.suggest.sc.sjs.c.scfsm.ust.StateToUrlT
 import io.suggest.sc.sjs.m.mhdr.{HideNavClick, LogoClick}
 import io.suggest.sc.sjs.m.mnav.NodeListClick
+import io.suggest.sc.sjs.m.msc.MScSd
 import io.suggest.sc.sjs.m.msrv.nodes.find.{MFindNodes, MFindNodesArgsDfltImpl, MFindNodesResp}
 import io.suggest.sc.sjs.vm.nav.nodelist.NlContent
 import io.suggest.sc.sjs.vm.nav.nodelist.glay.{GlayCaption, GlayNode}
@@ -56,6 +57,7 @@ trait OnGridNav extends OnGrid with StateToUrlT {
 
     /** Состояние с закрытой nav-панелью. */
     protected def _onHideNavState: FsmState
+
   }
 
 
@@ -217,9 +219,25 @@ trait OnGridNav extends OnGrid with StateToUrlT {
 
     private def _layHide(caption: GlayCaption): Unit = {
       caption.deactivate()
-      caption.body.foreach( _.hide() )
+      for (cbody <- caption.body) {
+        cbody.hide()
+      }
     }
 
     protected def _glayShowHideState: FsmState = this
+
+    /**
+      * Укороченная реакция на popstate во время открытой панели навигации.
+      *
+      * @param sdNext Распарсенные данные нового состояния из URL.
+      */
+    override def _handleStateSwitch(sdNext: MScSd): Unit = {
+      if (sdNext.focused.isEmpty && !sdNext.isAnySidePanelOpened) {
+        _handleHideNav()
+      } else {
+        super._handleStateSwitch(sdNext)
+      }
+    }
   }
+
 }

@@ -26,9 +26,8 @@ trait StateToUrlT extends ScFsmStub {
           //val n = "\n"
           //println( "pushState: " + System.currentTimeMillis() + " " + url + Thread.currentThread().getStackTrace.iterator.take(5).mkString(n,n,n) )
           hApi.pushState(url, "sio", Some(MUrlUtil.URL_HASH_PREFIX + url))
-        } else {
-          log("pushCurrState(): Dup state")
         }
+        //else log("pushCurrState(): Dup state")
       }
     }
 

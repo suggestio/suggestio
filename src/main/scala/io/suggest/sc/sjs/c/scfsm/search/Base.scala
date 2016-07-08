@@ -211,9 +211,15 @@ trait Base extends OnGrid with ISjsLogger with StateToUrlT {
       // Изменился текущий tab, выполнить переключение таба на экране и в sd0
       val mtabNext = sdNext.search.currTab
       _maybeSwitchTab( mtabNext )
-      if (sdNext.search.opened && sdNext.focused.isEmpty) {
+      val noFoc = sdNext.focused.isEmpty
+      if (sdNext.search.opened && noFoc) {
+        // Переключение между табами с помощью History API.
         become( _searchTab2state(mtabNext) )
+      } else if (noFoc && !sdNext.nav.panelOpened) {
+        // Возврат на голую плитку.
+        _hideSearchPanel()
       } else {
+        // Какое-то сложное переключение состояния...
         super._handleStateSwitch(sdNext)
       }
     }

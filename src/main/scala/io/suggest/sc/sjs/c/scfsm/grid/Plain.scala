@@ -2,6 +2,7 @@ package io.suggest.sc.sjs.c.scfsm.grid
 
 import io.suggest.sc.sjs.c.scfsm.ust.StateToUrlT
 import io.suggest.sc.sjs.m.mhdr.{PrevNodeBtnClick, ShowNavClick, ShowSearchClick}
+import io.suggest.sc.sjs.m.msc.MScSd
 import io.suggest.sc.sjs.vm.hdr.btns.HNodePrev
 import io.suggest.sc.sjs.vm.layout.FsLoader
 import io.suggest.sjs.common.msg.WarnMsgs
@@ -17,14 +18,14 @@ trait Plain extends OnGrid with StateToUrlT {
   protected trait OnPlainGridStateT extends OnGridStateT with INodeSwitchState {
 
     /** Реакция на запрос отображения поисковой панели. */
-    protected def _showSearchClick(event: Event): Unit = {
+    protected def _showSearchClick(): Unit = {
       become(_searchPanelOpeningState)
     }
 
     protected def _searchPanelOpeningState: FsmState
 
 
-    protected def _showNavClick(event: Event): Unit = {
+    protected def _showNavClick(): Unit = {
       become(_navLoadListState)
     }
 
@@ -35,11 +36,11 @@ trait Plain extends OnGrid with StateToUrlT {
     override def receiverPart: Receive = {
       val _receiverPart: Receive = {
         // Сигнал нажатия на кнопку открытия панели поиска.
-        case ShowSearchClick(event) =>
-          _showSearchClick(event)
+        case _: ShowSearchClick =>
+          _showSearchClick()
         // Сигнал нажатия на кнопку отображения панели навигации.
-        case ShowNavClick(event) =>
-          _showNavClick(event)
+        case _: ShowNavClick =>
+          _showNavClick()
         // Клик по кнопке возврата на выдачу предыдущего узла.
         case PrevNodeBtnClick(event) =>
           _goToPrevNodeClick(event)
@@ -68,6 +69,24 @@ trait Plain extends OnGrid with StateToUrlT {
             fsl.hide()
           }
           warn(WarnMsgs.BACK_TO_UNDEFINED_NODE)
+      }
+    }
+
+    /**
+      * Укороченная реакция на popstate во время голой плитки.
+      *
+      * @param sdNext Распарсенные данные нового состояния из URL.
+      */
+    override def _handleStateSwitch(sdNext: MScSd): Unit = {
+      if (sdNext.focused.isEmpty) {
+        if (sdNext.nav.panelOpened) {
+          _showNavClick()
+        } else if (sdNext.search.opened) {
+          _showSearchClick()
+        }
+
+      } else {
+        super._handleStateSwitch(sdNext)
       }
     }
 

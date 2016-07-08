@@ -29,6 +29,8 @@ trait IUrl2State {
 
   def _runInitState(sd0Opt: Option[MScSd]): Future[_]
 
+  def _nodeReInitState(sd0Opt: Option[MScSd]): Unit
+
   /** Поддержка переключения на другое состояние по сигналу из истории браузера. */
   def _handlePopState(pss: PopStateSignal): Unit
 
@@ -192,6 +194,12 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
   }
 
 
+  /** Реакция на повторную инициализацию текущей выдачи в рамках существующего состояния. */
+  override def _nodeReInitState(sd0Opt: Option[MScSd]): Unit = {
+    // TODO Нужно без welcome это дело организовать. Т.е. погружение в произвольное состояние без лишнего гемора.
+    become( new NodeIndex_Get_Wait_State )
+  }
+
   /** Реакция на сигнал popstate, т.е. когда юзер гуляет по истории браузера. */
   override def _handlePopState(pss: PopStateSignal): Unit = {
     // Начинаем с отработки разных общих случаев изменения состояния.
@@ -210,7 +218,6 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
       } else {
         // Корень выдачи тот же. Надо подогнать текущую выдачу под новые параметры состояния. Никаких welcome на экране отображать не надо.
         // Отрабатываем возможное изменение конфигурации боковых панелей в рамках узла/локации.
-        println("nav " + sd0.nav.panelOpened + " => " + sdNext.nav.panelOpened)
 
         // Если изменилось значение состояния распахнутости боковой панели навигации (слева), то внести изменения в DOM и исходное состояние.
         if (sd0.nav.panelOpened != sdNext.nav.panelOpened) {
@@ -219,7 +226,6 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
 
         // Отработать панель поиска: скрыть или показать, если состояние изменилось.
         val sd1 = _stateData
-        println("search " + sd1.search.opened + "/" + sd0.search.opened + " => " + sdNext.search.opened)
         if (sd1.search.opened != sdNext.search.opened) {
           _stateData = SearchUtil.invert(sd1)
         }

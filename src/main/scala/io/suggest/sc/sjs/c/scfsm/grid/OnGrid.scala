@@ -5,6 +5,7 @@ import io.suggest.sc.sjs.c.scfsm.{ResizeDelayed, ScFsmStub}
 import io.suggest.sc.sjs.m.magent.IVpSzChanged
 import io.suggest.sc.sjs.m.mfoc.{MFocCurrSd, MFocSd}
 import io.suggest.sc.sjs.m.mgrid._
+import io.suggest.sc.sjs.m.msc.MScSd
 import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
 import io.suggest.sc.sjs.vm.grid.{GContainer, GContent, GRoot}
 
@@ -118,6 +119,7 @@ trait OnGridBase extends ScFsmStub with ResizeDelayed with Append {
   }
 
   /** Размыть плитку в фоне, если экран маловат.
+    *
     * @return true, если blurring имел место быть. Иначе false. */
   protected[this] def _maybeBlurGrid(sd0: SD = _stateData): Unit = {
     val needBlur = _isNeedBlur(sd0)
@@ -252,6 +254,20 @@ trait OnGrid extends OnGridBase with IOnFocusBase {
     /** Состояние подгрузки ещё карточек. */
     protected def _loadMoreState: FsmState
 
+
+    /**
+      * Укороченная реакция на popstate во время плитки, возможно с открытой панелью боковой.
+      *
+      * @param sdNext Распарсенные данные нового состояния из URL.
+      */
+    override def _handleStateSwitch(sdNext: MScSd): Unit = {
+      if (sdNext.focused.nonEmpty) {
+        // Перещёлкиваем на focused state независимо от конфигурации других вещей.
+        become( _startFocusOnAdState )
+      } else {
+        super._handleStateSwitch( sdNext )
+      }
+    }
   }
 
 }
