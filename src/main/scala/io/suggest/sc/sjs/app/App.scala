@@ -3,6 +3,7 @@ package io.suggest.sc.sjs.app
 import io.suggest.sc.sjs.c.gloc.GeoLocFsm
 import io.suggest.sc.sjs.c.mapbox.MbFsm
 import io.suggest.sc.sjs.c.scfsm.ScFsm
+import io.suggest.sc.sjs.util.logs.GlobalErrorHandler
 
 import scala.scalajs.js.JSApp
 import scala.scalajs.js.annotation.JSExport
@@ -17,6 +18,9 @@ object App extends JSApp {
 
   @JSExport
   override def main(): Unit = {
+    // Повесить перехватчик ошибок на верхнем уровне.
+    GlobalErrorHandler.start()
+
     // Запуск основного FSM
     ScFsm.start()
 

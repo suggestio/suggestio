@@ -57,7 +57,7 @@ trait ScSjsFsmLogger extends ScSjsLogger with SjsFsm with StateData {
 
   /** Дополнительно можно логгировать какое-то "состояние". */
   override protected def _logState: Option[String] = {
-    val stateMsg = _state.toString + "(" + _stateData + ")"
+    val stateMsg = _state.toString + " " + _stateData
     Some(stateMsg)
   }
 
