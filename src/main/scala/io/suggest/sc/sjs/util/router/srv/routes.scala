@@ -56,4 +56,7 @@ sealed trait ScCtl extends js.Object {
   /** Роута поиска тегов. */
   def tagsSearch(args: Dictionary[Any]): Route = js.native
 
+  /** Роута для автоматического сабмита ошибок на сервер. */
+  def handleScError(): Route = js.native
+
 }

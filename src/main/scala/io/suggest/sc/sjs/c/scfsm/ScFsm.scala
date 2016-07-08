@@ -4,11 +4,10 @@ import io.suggest.sc.sjs.c.scfsm.nav.OnGridNav
 import io.suggest.sc.sjs.c.scfsm.ust.Url2StateT
 import io.suggest.sc.sjs.m.msc._
 import io.suggest.sc.sjs.m.msearch.{MTab, MTabs}
-import io.suggest.sc.sjs.util.logs.ScSjsLogger
+import io.suggest.sc.sjs.util.logs.ScSjsFsmLogger
 import io.suggest.sc.sjs.vm.SafeWnd
 import io.suggest.sjs.common.fsm._
 import io.suggest.sjs.common.model.browser.MBrowser
-import org.scalajs.dom.PopStateEvent
 
 /**
  * Suggest.io
@@ -18,7 +17,7 @@ import org.scalajs.dom.PopStateEvent
  */
 object ScFsm
   extends SjsFsmImpl
-  with ScSjsLogger
+  with ScSjsFsmLogger
   with init.Phase
   with node.States
   with grid.Append with grid.Plain with grid.LoadMore

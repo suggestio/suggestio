@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.c.mapbox
 import io.suggest.sc.sjs.c.gloc.GeoLocFsm
 import io.suggest.sc.sjs.m.mgeo.{Subscribe, SubscriberData}
 import io.suggest.sc.sjs.m.mmap.MbFsmSd
-import io.suggest.sc.sjs.util.logs.ScSjsLogger
+import io.suggest.sc.sjs.util.logs.ScSjsFsmLogger
 import io.suggest.sjs.common.fsm.SjsFsmImpl
 
 /**
@@ -22,7 +22,7 @@ object MbFsm
   with MapInitializing
   with MapReady
   with OnMove
-  with ScSjsLogger
+  with ScSjsFsmLogger
 {
 
   override protected var _stateData: SD = MbFsmSd()

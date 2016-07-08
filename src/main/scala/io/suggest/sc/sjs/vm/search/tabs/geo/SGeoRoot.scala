@@ -3,8 +3,8 @@ package io.suggest.sc.sjs.vm.search.tabs.geo
 import io.suggest.sc.sjs.vm.search.tabs.{TabRoot, TabRootCompanion}
 import io.suggest.sc.ScConstants.Search.Cats.ROOT_DIV_ID
 import io.suggest.sc.sjs.m.msearch.MTabs
+import io.suggest.sc.sjs.util.logs.ScSjsLogger
 import io.suggest.sjs.common.vm.child.SubTagFind
-import org.scalajs.dom
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -19,7 +19,7 @@ object SGeoRoot extends TabRootCompanion {
 }
 
 
-trait SGeoRootT extends SubTagFind with TabRoot {
+trait SGeoRootT extends SubTagFind with TabRoot with ScSjsLogger {
 
   override protected type SubtagCompanion_t = SGeoWrapper.type
   override type SubTagVm_t                  = SGeoWrapper.T
@@ -29,7 +29,7 @@ trait SGeoRootT extends SubTagFind with TabRoot {
 
   /** Инициализация текущей и подчиненных ViewModel'ей. */
   override def initLayout(): Unit = {
-    dom.console.warn("TODO SgeoRoot.initLayout() not implemented.")
+    warn("TODO SgeoRoot.initLayout() not implemented.")
   }
 
 }

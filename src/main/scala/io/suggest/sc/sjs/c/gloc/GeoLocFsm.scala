@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.c.gloc
 
 import io.suggest.sc.sjs.m.magent.VisibilityChange
 import io.suggest.sc.sjs.m.mgeo.MGeoFsmSd
-import io.suggest.sc.sjs.util.logs.ScSjsLogger
+import io.suggest.sc.sjs.util.logs.ScSjsFsmLogger
 import io.suggest.sc.sjs.vm.SafeDoc
 import io.suggest.sjs.common.fsm.SjsFsmImpl
 
@@ -21,7 +21,7 @@ import io.suggest.sjs.common.fsm.SjsFsmImpl
   */
 object GeoLocFsm
   extends SjsFsmImpl
-    with ScSjsLogger
+    with ScSjsFsmLogger
     with Off
     with Watching
     //with LogBecome
@@ -29,6 +29,12 @@ object GeoLocFsm
 
   override protected var _stateData: SD   = MGeoFsmSd()
   override protected var _state: State_t  = new DummyState
+
+
+  /** Дополнительно можно логгировать какое-то "состояние". */
+  override protected def _logState: Option[String] = {
+    Some( _state.toString + "(" + _stateData + ")" )
+  }
 
   /** Запуск данного FSM. Вызывается только один раз. */
   def start(): Unit = {
