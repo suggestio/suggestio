@@ -24,4 +24,15 @@ object ErrorConstants {
 
   }
 
+  /** Клиент-серверные константы для моделей MRemoteError/MRme*. */
+  object Remote {
+
+    def MSG_FN = "msg"
+
+    def URL_FN = "url"
+
+    def STATE_FN = "state"
+
+  }
+
 }
