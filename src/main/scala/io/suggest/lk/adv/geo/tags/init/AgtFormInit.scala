@@ -12,9 +12,9 @@ import io.suggest.sjs.common.model.Route
 import io.suggest.sjs.common.tags.search.ITagSearchArgs
 import io.suggest.sjs.leaflet.event.Event
 import io.suggest.sjs.leaflet.path.circle.Circle
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 import scala.concurrent.Future
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 /**
  * Suggest.io
