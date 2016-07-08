@@ -4,12 +4,12 @@ import io.suggest.lk.tags.edit.fsm.TagsEditFsmStub
 import io.suggest.lk.tags.edit.m.madd._
 import io.suggest.lk.tags.edit.vm.add.{AContainer, ANameInput}
 import io.suggest.lk.tags.edit.vm.exist.EContainer
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.model.Route
 import io.suggest.sjs.common.msg.ErrorMsgs
 import org.scalajs.dom.FormData
 
 import scala.util.Failure
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 /**
  * Suggest.io
