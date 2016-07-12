@@ -64,4 +64,6 @@ object WarnMsgs extends MsgsStaticT {
 
   def SCREEN_PX_RATIO_MISSING     = E(27)
 
+  def POP_STATE_TO_SAME_STATE     = E(28)
+
 }
