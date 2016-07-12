@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.c.scfsm.grid
 
-import io.suggest.sc.sjs.c.scfsm.FindAdsUtil
+import io.suggest.sc.sjs.m.msc.MFindAdsArgsLimOff
+import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 /**
@@ -12,11 +13,14 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 trait LoadMore extends OnGrid with Append {
 
   /** Происходит подгрузка карточек в плитку. */
-  trait OnGridLoadingMoreStateT extends GridBlockClickStateT with FindAdsUtil with GridAdsWaitLoadStateT {
+  trait OnGridLoadingMoreStateT extends GridBlockClickStateT with GridAdsWaitLoadStateT {
 
     override def afterBecome(): Unit = {
       super.afterBecome()
-      val fut = _findAds( _stateData )
+
+      // Запустить подгрузку ещё-карточек
+      val args = MFindAdsArgsLimOff(_stateData)
+      val fut = MFindAds.findAds( args )
       _sendFutResBack(fut)
     }
 

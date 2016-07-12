@@ -65,7 +65,7 @@ trait MFindAdsReq extends ToJsonWithApiVsnT {
 
 
 /** Задефолченная реализация [[MFindAdsReq]]. */
-trait MFindAdsReqEmpty extends MFindAdsReq {
+trait MFindAdsReqDflt extends MFindAdsReq {
   override def producerId  : Option[String]    = None
   override def levelId     : Option[String]    = None
   override def ftsQuery    : Option[String]    = None
@@ -96,14 +96,3 @@ trait MFindAdsReqWrapper extends MFindAdsReq {
   override def screenInfo   = _underlying.screenInfo
   override def withoutId    = _underlying.withoutId
 }
-
-
-/** Дефолтовая реализация, обычно она используется. */
-trait MFindAdsReqDflt extends MFindAdsReq {
-  def _mgs: MGridState
-
-  override def limit : Option[Int]          = Some(_mgs.adsPerLoad)
-  override def offset: Option[Int]          = Some(_mgs.blocksLoaded)
-
-}
-

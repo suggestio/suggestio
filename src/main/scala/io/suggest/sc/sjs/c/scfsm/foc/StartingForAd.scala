@@ -1,9 +1,8 @@
 package io.suggest.sc.sjs.c.scfsm.foc
 
 import io.suggest.sc.sjs.c.scfsm.node.Index
-import io.suggest.sc.sjs.c.scfsm.FindAdsUtil
 import io.suggest.sc.sjs.m.mfoc.FocRootAppeared
-import io.suggest.sc.sjs.m.msrv.foc.find.{MFocAdSearchEmpty, MFocAds}
+import io.suggest.sc.sjs.m.msrv.foc.find.{MFocAdSearchDflt, MFocAds}
 import io.suggest.sc.sjs.m.msrv.index.MNodeIndex
 import io.suggest.sc.sjs.vm.layout.FsLoader
 import io.suggest.sc.sjs.vm.res.FocusedRes
@@ -14,6 +13,7 @@ import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.util.Failure
 import io.suggest.sc.ScConstants.Focused
+import io.suggest.sc.sjs.m.msc.MFindAdsArgsT
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.model.mlu.MLookupModes
 
@@ -31,7 +31,7 @@ import io.suggest.sjs.common.model.mlu.MLookupModes
   * Аналогичные костыли в PreLoading.
   */
 
-trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
+trait StartingForAd extends MouseMoving with Index {
 
   /**
     * Трейт для состояния, когда focused-выдача отсутствует, скрыта вообще и ожидает активации.
@@ -47,7 +47,7 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
         fState0 <- sd0.focused
       } {
         // Необходимо по-скорее запустить focused ad реквест к серверу. Подготовка аргументов поиска:
-        val args = new MFocAdSearchEmpty with FindAdsArgsT {
+        val args = new MFocAdSearchDflt with MFindAdsArgsT {
           override def _sd              = sd0
           override def limit            = Some( Focused.AROUND_LOAD_LIMIT )
           // Новая (2016.may) методика поиска карточек подразумевает выборку вокруг карточки на первом шаге.

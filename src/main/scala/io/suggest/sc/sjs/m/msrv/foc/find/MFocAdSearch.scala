@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.m.msrv.foc.find
 
-import io.suggest.sc.sjs.m.msrv.ads.find.{MFindAdsReq, MFindAdsReqEmpty}
+import io.suggest.sc.sjs.m.msrv.ads.find.{MFindAdsReq, MFindAdsReqDflt}
 import io.suggest.ad.search.AdSearchConstants._
 import io.suggest.sjs.common.model.mlu.MLookupMode
 
@@ -40,7 +40,7 @@ trait MFocAdSearch extends MFindAdsReq {
 
 
 /** Дефолтовая реализация модели с пустыми значениями полей. */
-trait MFocAdSearchEmpty extends MFindAdsReqEmpty with MFocAdSearch {
+trait MFocAdSearchDflt extends MFindAdsReqDflt with MFocAdSearch {
 }
 
 

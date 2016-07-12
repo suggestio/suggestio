@@ -12,7 +12,8 @@ import io.suggest.sc.ScConstants.Focused.FAd.KBD_SCROLL_STEP_PX
 import io.suggest.sc.sjs.c.scfsm.grid.OnGridBase
 import io.suggest.sc.sjs.c.scfsm.ust.StateToUrlT
 import io.suggest.sc.sjs.c.scfsm.{ResizeDelayed, ScFsmStub}
-import io.suggest.sc.sjs.m.msrv.foc.find.{MFocAdSearchEmpty, MFocAdSearchNoOpenIndex, MFocAds}
+import io.suggest.sc.sjs.m.msc.MFindAdsArgsT
+import io.suggest.sc.sjs.m.msrv.foc.find.{MFocAdSearchDflt, MFocAdSearchNoOpenIndex, MFocAds}
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.model.mlu.{MLookupMode, MLookupModes}
 import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
@@ -335,7 +336,7 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
         val currAdId  = fState0.current.madId
 
         // Собрать параметры для поиска
-        val reqArgs = new MFocAdSearchEmpty with FindAdsArgsT with MFocAdSearchNoOpenIndex {
+        val reqArgs = new MFocAdSearchDflt with MFindAdsArgsT with MFocAdSearchNoOpenIndex {
           override def _sd            = sd0
           // Выставляем под нужды focused-выдачи значения limit/offset.
           override def limit          = Some( ScConstants.Focused.SIDE_PRELOAD_MAX )

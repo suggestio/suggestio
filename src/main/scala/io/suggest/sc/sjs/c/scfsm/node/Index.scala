@@ -1,11 +1,12 @@
 package io.suggest.sc.sjs.c.scfsm.node
 
 import io.suggest.sc.sjs.c.mapbox.MbFsm
-import io.suggest.sc.sjs.c.scfsm.{FindAdsUtil, ScFsmStub}
+import io.suggest.sc.sjs.c.scfsm.ScFsmStub
 import io.suggest.sc.sjs.m.mgeo.IMGeoMode
 import io.suggest.sc.sjs.m.mgrid.MGridState
 import io.suggest.sc.sjs.m.mmap.EnsureMap
-import io.suggest.sc.sjs.m.msc.MScSd
+import io.suggest.sc.sjs.m.msc.{MFindAdsArgsLimOff, MScSd}
+import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
 import io.suggest.sc.sjs.m.msrv.index.{MNodeIndex, MScIndexArgs}
 import io.suggest.sc.sjs.vm.layout.LayRootVm
 import io.suggest.sc.sjs.vm.nav.nodelist.NlRoot
@@ -23,7 +24,7 @@ import scala.util.{Failure, Success, Try}
  * Created: 22.06.15 14:19
  * Description: Аддон центрального FSM, добавляющий трейты для сборки состояний инициализации выдачи узла.
  */
-trait Index extends ScFsmStub with FindAdsUtil {
+trait Index extends ScFsmStub {
 
   /** Утиль для запуска запроса sc index с сервера. */
   trait GetIndexUtil {
@@ -103,7 +104,7 @@ trait Index extends ScFsmStub with FindAdsUtil {
       val sd1: SD = _stateData
 
       // Начинаем запрос карточек как можно скорее, чтобы распараллелить деятельность.
-      val findAdsFut = _findAds(sd1)
+      val findAdsFut = MFindAds.findAds( MFindAdsArgsLimOff(sd1) )
 
       // TODO Выставить новый заголовок окна
 

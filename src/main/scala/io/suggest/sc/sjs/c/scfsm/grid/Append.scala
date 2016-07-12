@@ -1,7 +1,8 @@
 package io.suggest.sc.sjs.c.scfsm.grid
 
 import io.suggest.sc.sjs.c.scfsm.grid.build.GridBuilder
-import io.suggest.sc.sjs.c.scfsm.{FindAdsUtil, ScFsmStub}
+import io.suggest.sc.sjs.c.scfsm.ScFsmStub
+import io.suggest.sc.sjs.m.msc.MFindAdsArgsLimOff
 import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
 import io.suggest.sc.sjs.vm.grid.GContent
 import io.suggest.sc.sjs.vm.res.CommonRes
@@ -17,14 +18,15 @@ import scala.util.Failure
  * Created: 19.06.15 16:16
  * Description: Конечный автомат для поддержки загрузки карточек в плитку выдачи.
  */
-trait Append extends ScFsmStub with FindAdsUtil {
+trait Append extends ScFsmStub {
 
   /** Запустить поиск карточек для выдачи, прислать результат Future в FSM.
     *
     * @return Фьючерс, обычно бесполезен, т.к. результат прилетает назад в FSM как сообщение.
     */
   protected[this] def _startFindGridAds(sd: SD = _stateData): Future[MFindAds] = {
-    val fut = _findAds(sd)
+    val args = MFindAdsArgsLimOff(sd)
+    val fut = MFindAds.findAds(args)
     _sendFutResBack(fut)
     fut
   }
