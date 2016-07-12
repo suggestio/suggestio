@@ -5,6 +5,7 @@ import io.suggest.sc.sjs.c.scfsm.{FindAdsUtil, ScFsmStub}
 import io.suggest.sc.sjs.m.mgeo.IMGeoMode
 import io.suggest.sc.sjs.m.mgrid.MGridState
 import io.suggest.sc.sjs.m.mmap.EnsureMap
+import io.suggest.sc.sjs.m.msc.MScSd
 import io.suggest.sc.sjs.m.msrv.index.{MNodeIndex, MScIndexArgs}
 import io.suggest.sc.sjs.vm.layout.LayRootVm
 import io.suggest.sc.sjs.vm.nav.nodelist.NlRoot
@@ -190,6 +191,16 @@ trait Index extends ScFsmStub with FindAdsUtil {
     override protected def _getNodeIndexFailed(ex: Throwable): Unit = {
       error(ErrorMsgs.GET_NODE_INDEX_FAILED + " " + _stateData.common.adnIdOpt, ex)
       _retry(50)( _onNodeIndexFailedState )
+    }
+
+    /**
+      * Отработать случай, когда приходит сигнал перехода на новое состояние в момент инициализации выдачи.
+      * Нужно обязательно отработать, т.к. на дефолтовое логике всё может повиснуть.
+      */
+    override def _handleStateSwitch(sdNext: MScSd): Unit = {
+      // Управление пришло сюда, значит параметры выдачи в общем совпадают.
+      // Если панели открыты, то это отработается в другом месте: при смене состояния.
+      // Подавить какие-либо дефолтовые действия реакции.
     }
 
     /** На какое состояние переключаться, когда нет возможности получить index-страницу узла. */

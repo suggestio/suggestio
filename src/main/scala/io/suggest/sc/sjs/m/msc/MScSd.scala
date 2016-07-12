@@ -76,6 +76,13 @@ object MScSd extends ScSjsLogger {
       .mkString("&")
   }
 
+  /** Простая сериализация инстанса модели в строку. */
+  def toQsStr(sd: MScSd): String = {
+    acc2Qs(
+      toUrlHashAcc(sd)
+    )
+  }
+
 
   /** Парсинг Qs в строковые токены..
     *

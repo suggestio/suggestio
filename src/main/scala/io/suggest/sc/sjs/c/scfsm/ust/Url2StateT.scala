@@ -230,37 +230,49 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
 
   /** Реакция на сигнал popstate, т.е. когда юзер гуляет по истории браузера. */
   override def _handlePopState(pss: PopStateSignal): Unit = {
-    // Начинаем с отработки разных общих случаев изменения состояния.
-    _parseFromUrlHash().fold {
-      // Отсутствие нового состояния, имитировать перезагрузку выдачи.
-      become( new GeoScInitState )
+    // 2016.jul.12 Сверять URL с текущим значением window.location, отличается ли?
+    // iOS 8.x web-app внезапно шлёт паразитные сигналы, дублирующие текущее состояние.
 
-    } { sdNext =>
-      val sd0 = _stateData
+    val sdNextQsStr = MScSd.toQsStr( _stateData )
+    if ( State2Url.currUrlQsEqualsTo(sdNextQsStr) ) {
+      warn( WarnMsgs.POP_STATE_TO_SAME_STATE + " " + sdNextQsStr )
 
-      // - Изменение важных параметров выдачи, которая должна приводить к смене выдачи под корень.
-      if ( sdNext.isScDiffers(sd0) ) {
-        // Изменился id текущего узла выдачи. Выдача уже не будет прежней. Имитируем полное переключение узла.
-        become( new NodeIndex_Get_Wait_State, sdNext )
+    } else {
 
-      } else {
-        // Корень выдачи тот же. Надо подогнать текущую выдачу под новые параметры состояния. Никаких welcome на экране отображать не надо.
-        // Отрабатываем возможное изменение конфигурации боковых панелей в рамках узла/локации.
+      // Начинаем с отработки разных общих случаев изменения состояния.
+      _parseFromUrlHash().fold [Unit] {
+        // Отсутствие нового состояния, имитировать перезагрузку выдачи.
+        become( new GeoScInitState )
 
-        // Если изменилось значение состояния распахнутости боковой панели навигации (слева), то внести изменения в DOM и исходное состояние.
-        if (sd0.nav.panelOpened != sdNext.nav.panelOpened) {
-          _stateData = NavUtil.invert(sd0)
+      } { sdNext =>
+
+        val sd0 = _stateData
+
+        // - Изменение важных параметров выдачи, которая должна приводить к смене выдачи под корень.
+        if ( sdNext.isScDiffers(sd0) ) {
+          // Изменился id текущего узла выдачи. Выдача уже не будет прежней. Имитируем полное переключение узла.
+          become( new NodeIndex_Get_Wait_State, sdNext )
+
+        } else {
+          // Корень выдачи тот же. Надо подогнать текущую выдачу под новые параметры состояния. Никаких welcome на экране отображать не надо.
+          // Отрабатываем возможное изменение конфигурации боковых панелей в рамках узла/локации.
+
+          // Если изменилось значение состояния распахнутости боковой панели навигации (слева), то внести изменения в DOM и исходное состояние.
+          if (sd0.nav.panelOpened != sdNext.nav.panelOpened) {
+            _stateData = NavUtil.invert(sd0)
+          }
+
+          // Отработать панель поиска: скрыть или показать, если состояние изменилось.
+          val sd1 = _stateData
+          if (sd1.search.opened != sdNext.search.opened) {
+            _stateData = SearchUtil.invert(sd1)
+          }
+
+          // Наконец отработать конкретные изменения данных состояния на уровне текущего состояния.
+          _state._handleStateSwitch(sdNext)
         }
-
-        // Отработать панель поиска: скрыть или показать, если состояние изменилось.
-        val sd1 = _stateData
-        if (sd1.search.opened != sdNext.search.opened) {
-          _stateData = SearchUtil.invert(sd1)
-        }
-
-        // Наконец отработать конкретные изменения данных состояния на уровне текущего состояния.
-        _state._handleStateSwitch(sdNext)
       }
+
     }
   }
 
