@@ -37,6 +37,7 @@ trait OnTouch extends OnFocusBase {
 
     /** Безрезультатное завершение касания -- сброс touch-состояния, переход на стабильное состояние. */
     protected def _touchCancelled(): Unit = {
+      println("touch cancel")
       for (car <- FCarCont.find()) {
         car.enableTransition()
       }
@@ -64,6 +65,7 @@ trait OnTouch extends OnFocusBase {
       // Надо понять, в какую сторону двигаемся, и переключиться на соотв.состояние.
       val sd0 = _stateData
       val touch = event.touches(0)
+      println("touch move " + touch)
       for {
         fState    <- sd0.focused
         touchSd   <- fState.touch

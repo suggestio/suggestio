@@ -4,7 +4,6 @@ import io.suggest.sc.ScConstants
 import io.suggest.sc.sjs.m.mgeo.IMGeoMode
 import io.suggest.sc.sjs.m.msc.MScSd
 import io.suggest.sc.sjs.m.msrv.ads.find.{MFindAds, MFindAdsReqEmpty}
-import io.suggest.sc.sjs.vm.grid.GBlock
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -27,20 +26,6 @@ trait FindAdsUtil {
   /** Запуск поиска карточек. */
   protected def _findAds(sd: MScSd)(implicit ec: ExecutionContext): Future[MFindAds] = {
     MFindAds.findAds(new FindAdsArgs(sd))
-  }
-
-}
-
-
-/** Трейт с утилью для поиска соседних (по плитке) карточек. */
-trait FindNearAdIds {
-
-  protected def _nearAdIdsIter(gblockOpt: Option[GBlock]): Iterator[String] = {
-    gblockOpt.iterator
-      .flatMap { gblock =>
-        gblock.previous.iterator ++ Iterator(gblock) ++ gblock.next.iterator
-      }
-      .flatMap { _.madId }
   }
 
 }

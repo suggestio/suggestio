@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.c.scfsm.foc
 
 import io.suggest.sc.sjs.c.scfsm.node.Index
-import io.suggest.sc.sjs.c.scfsm.{FindAdsUtil, FindNearAdIds}
+import io.suggest.sc.sjs.c.scfsm.FindAdsUtil
 import io.suggest.sc.sjs.m.mfoc.FocRootAppeared
 import io.suggest.sc.sjs.m.msrv.foc.find.{MFocAdSearchEmpty, MFocAds}
 import io.suggest.sc.sjs.m.msrv.index.MNodeIndex
@@ -37,7 +37,7 @@ trait StartingForAd extends MouseMoving with FindAdsUtil with Index {
     * Трейт для состояния, когда focused-выдача отсутствует, скрыта вообще и ожидает активации.
     * При появлении top-level ScFsm это событие исчезнет, и будет обрабатываться где-то в вышестоящем обработчике.
     */
-  protected trait StartingForAdStateT extends FsmEmptyReceiverState with FindNearAdIds with ProcessIndexReceivedUtil {
+  protected trait StartingForAdStateT extends FsmEmptyReceiverState with ProcessIndexReceivedUtil {
 
     override def afterBecome(): Unit = {
       super.afterBecome()
