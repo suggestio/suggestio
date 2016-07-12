@@ -4,7 +4,7 @@ import io.suggest.sc.sjs.m.magent.VisibilityChange
 import io.suggest.sc.sjs.m.mgeo.MGeoFsmSd
 import io.suggest.sc.sjs.util.logs.ScSjsFsmLogger
 import io.suggest.sc.sjs.vm.SafeDoc
-import io.suggest.sjs.common.fsm.SjsFsmImpl
+import io.suggest.sjs.common.fsm.{LogBecome, SjsFsmImpl}
 
 /**
   * Suggest.io
@@ -24,7 +24,7 @@ object GeoLocFsm
     with ScSjsFsmLogger
     with Off
     with Watching
-    //with LogBecome
+    with LogBecome
 {
 
   override protected var _stateData: SD   = MGeoFsmSd()

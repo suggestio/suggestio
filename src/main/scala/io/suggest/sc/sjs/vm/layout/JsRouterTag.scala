@@ -1,10 +1,10 @@
 package io.suggest.sc.sjs.vm.layout
 
-import io.suggest.sc.ScConstants.JsRouter.{DOM_ID => ID, URI}
+import io.suggest.sc.ScConstants.JsRouter.{URI, DOM_ID => ID}
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import io.suggest.sjs.common.vm.VmT
+import io.suggest.sjs.common.vm.create.CreateEl
 import io.suggest.sjs.common.vm.find.FindElT
-import org.scalajs.dom
 import org.scalajs.dom.raw.HTMLScriptElement
 
 /**
@@ -13,15 +13,15 @@ import org.scalajs.dom.raw.HTMLScriptElement
  * Created: 27.08.15 12:06
  * Description: vm'ка для доступа к тегу js router'а.
  */
-object JsRouterTag extends FindElT {
+object JsRouterTag extends FindElT with CreateEl {
 
   override def DOM_ID = ID
   override type Dom_t = HTMLScriptElement
   override type T     = JsRouterTag
+  override protected def TAG_NAME = "script"
 
   def apply(): JsRouterTag = {
-    val el = dom.document.createElement("script")
-      .asInstanceOf[HTMLScriptElement]
+    val el  = createNewEl()
     val res = JsRouterTag(el)
     res.initAttrs()
     res

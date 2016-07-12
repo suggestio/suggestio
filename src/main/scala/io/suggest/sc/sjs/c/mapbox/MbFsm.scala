@@ -4,7 +4,7 @@ import io.suggest.sc.sjs.c.gloc.GeoLocFsm
 import io.suggest.sc.sjs.m.mgeo.{Subscribe, SubscriberData}
 import io.suggest.sc.sjs.m.mmap.MbFsmSd
 import io.suggest.sc.sjs.util.logs.ScSjsFsmLogger
-import io.suggest.sjs.common.fsm.SjsFsmImpl
+import io.suggest.sjs.common.fsm.{LogBecome, SjsFsmImpl}
 
 /**
   * Suggest.io
@@ -23,6 +23,7 @@ object MbFsm
   with MapReady
   with OnMove
   with ScSjsFsmLogger
+  with LogBecome
 {
 
   override protected var _stateData: SD = MbFsmSd()
