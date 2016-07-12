@@ -1,11 +1,15 @@
 package io.suggest.sjs.common.model.browser.unknown
 
+import io.suggest.sjs.common.model.browser.mozilla.FirefoxBrowser
+import io.suggest.sjs.common.model.browser.webkit.WebKitPrefixing
 import io.suggest.sjs.common.model.browser.{EnginePrefix, IBrowser, IVendorPrefixer}
 import io.suggest.sjs.common.vm.wnd.WindowVm
 import io.suggest.sjs.common.vm.wnd.compstyle.CssStyleDeclKeys
 import org.scalajs.dom
+import org.scalajs.dom.raw.PageVisibility
 
-import scala.scalajs.js.{Any, Dictionary, WrappedDictionary}
+import scala.language.implicitConversions
+import scala.scalajs.js
 
 /**
  * Suggest.io
@@ -54,25 +58,40 @@ class UnknownBrowser extends IBrowser with IVendorPrefixer {
 
 
   /**
-   * Поддержка события document visibilitychange характеризуется этими префиксами.
+    * Поддержка события document visibilitychange характеризуется этими префиксами.
     *
     * @see [[https://developer.mozilla.org/en-US/docs/Web/Guide/User_experience/Using_the_Page_Visibility_API]]
-   */
+    */
   override lazy val visibilityChange: List[String] = {
-    val dd: WrappedDictionary[Any] = dom.document.asInstanceOf[Dictionary[Any]]
-    val root = "hidden"
-    if (dd.contains(root)) {
+    val stub = dom.document: IPageVisibilityStub
+    if (stub.hidden.isDefined) {
       super.visibilityChange
+    } else if (stub.webkitHidden.isDefined) {
+      List( WebKitPrefixing.PREFIX )
+    } else if (stub.mozHidden.isDefined) {
+      List( FirefoxBrowser.PREFIX )
     } else {
-      val root2 = root.tail
-      EnginePrefix.ALL_PREFIXES
-        .filter { maybePrefix =>
-          val name = maybePrefix + "H" + root2        // "mozHidden", "webkitHidden", etc...
-          dd.contains(name)
-        }
-        .toList
+      Nil
     }
   }
 
   override def toString = name
+}
+
+
+@js.native
+sealed trait IPageVisibilityStub extends js.Object {
+
+  def hidden: js.UndefOr[Boolean] = js.native
+  def mozHidden: js.UndefOr[Boolean] = js.native
+  def webkitHidden: js.UndefOr[Boolean] = js.native
+
+  def visibilitychange: js.UndefOr[_] = js.native
+
+}
+
+object IPageVisibilityStub {
+  implicit def apply(el: PageVisibility): IPageVisibilityStub = {
+    el.asInstanceOf[IPageVisibilityStub]
+  }
 }
