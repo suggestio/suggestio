@@ -6,7 +6,6 @@ import org.scalajs.dom.raw.CSSStyleDeclaration
 import org.scalajs.dom.{Element, Window}
 
 import scala.scalajs.js
-import scala.scalajs.js.UndefOr
 
 /**
  * Suggest.io
@@ -33,7 +32,7 @@ trait GetComputedStyleT extends IVm {
 /** Интерфейс для window для аккуратного доступа к getComputedStyle(). */
 @js.native
 sealed trait WndGetComputedStyleStub extends js.Object {
-  val getComputedStyle: UndefOr[_] = js.native
+  val getComputedStyle: js.UndefOr[_] = js.native
 }
 
 object WndGetComputedStyleStub {

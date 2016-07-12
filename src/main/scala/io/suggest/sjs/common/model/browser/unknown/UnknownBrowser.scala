@@ -1,10 +1,11 @@
 package io.suggest.sjs.common.model.browser.unknown
 
-import io.suggest.sjs.common.model.browser.{EnginePrefix, IVendorPrefixer, IBrowser}
+import io.suggest.sjs.common.model.browser.{EnginePrefix, IBrowser, IVendorPrefixer}
 import io.suggest.sjs.common.vm.wnd.WindowVm
+import io.suggest.sjs.common.vm.wnd.compstyle.CssStyleDeclKeys
 import org.scalajs.dom
 
-import scala.scalajs.js.{WrappedDictionary, Dictionary, Any}
+import scala.scalajs.js.{Any, Dictionary, WrappedDictionary}
 
 /**
  * Suggest.io
@@ -27,19 +28,19 @@ class UnknownBrowser extends IBrowser with IVendorPrefixer {
       .getComputedStyle( dom.document.documentElement )
       .flatMap { css =>
         val re = ("^(-(" + EnginePrefix.ALL_PREFIXES.mkString("|") + ")-)").r
-        css.asInstanceOf[Dictionary[Any]]
+        CssStyleDeclKeys(css)
           .iterator
-          .map { _._1 }
-          .filter { name => name.charAt(0) == '-' }
+          .filter { name =>
+            name.charAt(0) == '-'
+          }
           .flatMap {
             re.findFirstMatchIn(_)
           }
           .filter { _.groupCount >= 1 }
           .map { _.group(1) }
           // Имитируем headOption для итератора.
-          .collectFirst {
-            case prefix => prefix
-          }
+          .toStream
+          .headOption
           // В оригинале для opera presto ещё использовался css.OLink == "". Похожим образом presto детектится через OperaLegacyDetector.
       }
       .toList
@@ -54,7 +55,8 @@ class UnknownBrowser extends IBrowser with IVendorPrefixer {
 
   /**
    * Поддержка события document visibilitychange характеризуется этими префиксами.
-   * @see [[https://developer.mozilla.org/en-US/docs/Web/Guide/User_experience/Using_the_Page_Visibility_API]]
+    *
+    * @see [[https://developer.mozilla.org/en-US/docs/Web/Guide/User_experience/Using_the_Page_Visibility_API]]
    */
   override lazy val visibilityChange: List[String] = {
     val dd: WrappedDictionary[Any] = dom.document.asInstanceOf[Dictionary[Any]]
