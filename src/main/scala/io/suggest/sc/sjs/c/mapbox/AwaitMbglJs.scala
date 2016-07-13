@@ -20,11 +20,11 @@ trait AwaitMbglJs extends StoreUserGeoLoc {
   /** Сколько миллисекунд ожидать появление скрипта на странице перед попыткой проверки. */
   def AWAIT_MPGLJS_MS = 250
 
+  /** Сообщение об окончании ожидания скрипта. */
+  private case object AwaitTimeout extends IFsmMsg
+
   /** Трейт для сборки состояния ожидания появления mapboxgl в рантайме. */
   trait AwaitMbglJsStateT extends StoreUserGeoLocStateT {
-
-    /** Сообщение об окончании ожидания скрипта. */
-    case object AwaitTimeout extends IFsmMsg
 
     override def afterBecome(): Unit = {
       super.afterBecome()
@@ -43,6 +43,7 @@ trait AwaitMbglJs extends StoreUserGeoLoc {
     override def receiverPart: Receive = super.receiverPart.orElse {
       // Пора попробовать инициализировать повторно.
       case AwaitTimeout =>
+        // TODO LogBecome: В ходе инициализации дважды пишется "MbFsm: AwaitMbglJsState -> JsInitializingState"
         become(this)
 
       // ScFsm требует инициализацию карты раньше времени
