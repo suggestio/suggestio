@@ -49,6 +49,10 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImp
 
     /** Какой id suffix использовать для focused-карточек? */
     def scFocIdSuffix(args: IAdBodyTplArgs): Any
+
+    /** Рендерить ли аттрибут data-producer-id среди аттрибутов blockBase? */
+    def blockBaseProducerIdAttr: Boolean
+
   }
 
   override type T = Val
@@ -76,6 +80,9 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImp
     override def scFocIdSuffix(args: IAdBodyTplArgs): Any = {
       args.index
     }
+
+    /** v1 выдача рендерит этот аттрибут в _adNormalTpl. */
+    override def blockBaseProducerIdAttr = false
 
   }
 
@@ -111,6 +118,9 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImp
         ""
       }
     }
+
+    /** Надо рендерить аттрибут data-producer-id среди аттрибутов blockBase. */
+    override def blockBaseProducerIdAttr = true
 
   }
 

@@ -96,7 +96,7 @@ trait ScFocusedAdsV2
       }
       val fadIdsFut = mNodes.dynSearchIds(fadsIdsSearch)
 
-      // Собрать id после необходимого id с минимальными затратами ресурсов.
+      // Собрать сегмент ids, идущих после необходимого id, длины max.
       def takeIdsAfter(iter: Iterator[NodeIdIndexed], max: Int = _adSearch.limit): Seq[NodeIdIndexed] = {
         iter
           .dropWhile(_.nodeId != adId)

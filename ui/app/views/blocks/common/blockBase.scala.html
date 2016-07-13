@@ -19,6 +19,12 @@
          }
        }
      }
+     @* Рендерить id-продьюсера карточки для v2-плитки. *@
+     @if(!args.isFocused && args.apiVsn.blockBaseProducerIdAttr) {
+       @for(producerId <- ctx.api.n2NodesUtil.madProducerId(mad)) {
+         @PRODUCER_ID_ATTR="@producerId"
+       }
+     }
      @for(bm <- mad.ad.blockMeta) {
        @WIDTH_ATTR="@szMulted(bm.width, args.szMult)"
        @HEIGHT_ATTR="@szMulted(bm.height, args.szMult)"
