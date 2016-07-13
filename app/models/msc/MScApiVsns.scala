@@ -127,7 +127,7 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImp
 
   /** Какую версию использовать, если версия API не указана? */
   def unknownVsn: T = {
-    Coffee
+    Sjs1
   }
 
   /** Биндинги для url query string. */
