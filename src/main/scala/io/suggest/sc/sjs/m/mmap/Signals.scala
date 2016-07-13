@@ -14,3 +14,6 @@ case class EnsureMap() extends IFsmMsg
 
 /** Сигнал о начале отображения карты на экране. */
 case object MapShowing extends IFsmMsg
+
+/** Сигнал для MbFsm о необходимости подготовления к смене index'а выдачи. */
+case object ScInxWillSwitch extends IFsmMsg

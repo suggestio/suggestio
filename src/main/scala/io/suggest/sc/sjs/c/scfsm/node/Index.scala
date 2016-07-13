@@ -4,7 +4,7 @@ import io.suggest.sc.sjs.c.mapbox.MbFsm
 import io.suggest.sc.sjs.c.scfsm.ScFsmStub
 import io.suggest.sc.sjs.m.mgeo.IMGeoMode
 import io.suggest.sc.sjs.m.mgrid.MGridState
-import io.suggest.sc.sjs.m.mmap.EnsureMap
+import io.suggest.sc.sjs.m.mmap.{EnsureMap, ScInxWillSwitch}
 import io.suggest.sc.sjs.m.msc.{MFindAdsArgsLimOff, MScSd}
 import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
 import io.suggest.sc.sjs.m.msrv.index.{MNodeIndex, MScIndexArgs}
@@ -52,15 +52,18 @@ trait Index extends ScFsmStub {
       val inxFut = _getIndex(sd0)
 
       // Дожидаясь ответа сервера, инициализировать кое-какие переменные, необходимые на следующем шаге.
-      val sd1 = sd0.copy(
+      _stateData = sd0.copy(
         grid = sd0.grid.copy(
           state = sd0.grid.state.copy(
             adsPerLoad = MGridState.getAdsPerLoad( sd0.common.screen )
           )
         )
       )
-      _stateData = sd1
 
+      // Уведомить FSM карты о надвигающемся трэше и угаре.
+      MbFsm ! ScInxWillSwitch
+
+      // Подписаться на результат реквеста.
       _sendFutResBack(inxFut)
     }
   }

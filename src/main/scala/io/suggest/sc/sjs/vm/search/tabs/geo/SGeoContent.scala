@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.vm.search.tabs.geo
 
 import io.suggest.sc.sjs.vm.search.tabs.{TabContent, TabContentCompanion}
 import io.suggest.sc.ScConstants.Search.Cats.CONTENT_DIV_ID
-import io.suggest.sjs.common.vm.content.ClearT
+import io.suggest.sjs.common.vm.content.{ChildrenIsEmpty, ClearT, ReplaceWith}
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -17,8 +17,11 @@ object SGeoContent extends TabContentCompanion {
 }
 
 
-trait SGeoContentT extends TabContent with ClearT
-
+trait SGeoContentT
+  extends TabContent
+    with ClearT
+    with ChildrenIsEmpty
+    with ReplaceWith
 
 case class SGeoContent(
   override val _underlying: HTMLDivElement

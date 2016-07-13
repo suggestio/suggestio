@@ -4,7 +4,7 @@ import io.suggest.sc.sjs.c.gloc.GeoLocFsm
 import io.suggest.sc.sjs.m.mgeo.{Subscribe, SubscriberData}
 import io.suggest.sc.sjs.m.mmap.MbFsmSd
 import io.suggest.sc.sjs.util.logs.ScSjsFsmLogger
-import io.suggest.sjs.common.fsm.SjsFsmImpl
+import io.suggest.sjs.common.fsm.{LogBecome, SjsFsmImpl}
 
 /**
   * Suggest.io
@@ -18,12 +18,13 @@ import io.suggest.sjs.common.fsm.SjsFsmImpl
 object MbFsm
   extends SjsFsmImpl
   with AwaitMbglJs
-  with JsInitializing
+  with Init
   with MapInitializing
   with MapReady
   with OnMove
+  with Detach
   with ScSjsFsmLogger
-  //with LogBecome
+  with LogBecome
 {
 
   override protected var _stateData: SD = MbFsmSd()
@@ -50,13 +51,19 @@ object MbFsm
   // -- states impl
   /** Состояние ожидания и начальной инициализации карты. */
   class AwaitMbglJsState extends AwaitMbglJsStateT {
-    override def jsReadyState = new JsInitializingState
+    override def jsReadyState = new JsInitState
   }
 
-  /** Статическая js-поддержка карты инициализирована. */
-  class JsInitializingState extends JsInitializingStateT {
+  /** Реализованный трейт WaitEnsureSignalT. */
+  protected trait EnsureMapInitT extends super.EnsureMapInitT {
     override def _mapInitializingState = new MapInitializingState
   }
+  /** Статическая js-поддержка карты инициализирована. */
+  class JsInitState extends JsInitStateT with EnsureMapInitT
+
+  /** Состояние, когда нет инициализированной карты. */
+  class NoMapState extends EnsureMapInitT
+
 
   /** Динамическая часть карты в процессе инициализации. */
   class MapInitializingState extends MapInitializingStateT {
@@ -64,14 +71,22 @@ object MbFsm
   }
 
   /** Карта инициализирована. */
-  class MapReadyState extends MapReadyStateT {
-    override def mapMovingState = new OnDragState
+  class MapReadyState extends MapReadyStateT with HandleScInxSwitch {
+    override def mapMovingState   = new OnDragState
+    override def _detachedState   = new MapDetachedState
+    override def _noMapState      = new NoMapState
   }
 
   /** Юзер таскает карту. */
   class OnDragState extends OnDragStateT {
     // TODO Нужно состояние подтверждения переключения в новую локацию?
     override def moveEndState = new MapReadyState
+  }
+
+  /** Состояние отсоединенности карты от выдачи. */
+  class MapDetachedState extends MapDetachedStateT {
+    override def _detachReattachFailedState = ???
+    override def _attachSuccessState        = new MapReadyState
   }
 
 }

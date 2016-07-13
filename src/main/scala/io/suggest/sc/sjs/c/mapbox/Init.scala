@@ -12,10 +12,10 @@ import io.suggest.sjs.common.msg.WarnMsgs
   * Description: FSM-аддон для состояния оценки готовности mapbox-gl.js к работе.
   */
 
-trait JsInitializing extends StoreUserGeoLoc {
+trait Init extends StoreUserGeoLoc {
 
   /** Трейт для сборки состояния готовности mapbox-gl.js к работе на странице. */
-  trait JsInitializingStateT extends StoreUserGeoLocStateT {
+  trait JsInitStateT extends StoreUserGeoLocStateT {
 
     override def afterBecome(): Unit = {
       super.afterBecome()
@@ -32,15 +32,27 @@ trait JsInitializing extends StoreUserGeoLoc {
       }
     }
 
+  }
+
+
+  trait IEnsureMapHandler extends FsmEmptyReceiverState {
+
     override def receiverPart: Receive = super.receiverPart.orElse {
       // ScFsm намекает о необходимости убедиться, что карта готова к работе.
       case em: EnsureMap =>
-        _ensureMap(em)
+        _handleEnsureMap(em)
     }
 
+    def _handleEnsureMap(em: EnsureMap): Unit
+
+  }
+
+
+  /** Ожидать сигнал EnsureMap и реагировать на него. */
+  trait EnsureMapInitT extends IEnsureMapHandler {
 
     /** Инициализация карты в текущей выдаче, если необходимо. */
-    def _ensureMap(em: EnsureMap): Unit = {
+    override def _handleEnsureMap(em: EnsureMap): Unit = {
       val sd0 = _stateData
 
       for (glmap <- sd0.glmap) {
