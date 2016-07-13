@@ -10,7 +10,7 @@ import io.suggest.sc.sjs.vm.SafeWnd
   * Created: 18.05.16 11:40
   * Description: Поддержка связывания состояния ScFsm с URL через History API.
   */
-trait StateToUrlT extends ScFsmStub {
+trait State2UrlT extends ScFsmStub {
 
   /** Управление состояние закинуто в отдельный сингтон, чисто в целях группировки. */
   object State2Url {

@@ -21,6 +21,9 @@ trait IFocSd {
   /** Состояние отображения текущей карточки. */
   def current: MFocCurrSd
 
+  /** id продьюсера, в рамках которого идёт просмотр карточек. */
+  def producerId: Option[String]
+
   /** Общее кол-во карточек со всех возможных выборов в рамках задачи.
     * Если None, значит точное кол-во пока не известно. */
   def totalCount: Option[Int]
@@ -74,6 +77,7 @@ trait IFocSd {
  */
 case class MFocSd(
   override val current      : MFocCurrSd,
+  override val producerId   : Option[String],
   override val totalCount   : Option[Int]           = None,
   override val fads         : FAdQueue              = Nil,
   override val arrDir       : Option[MHand]         = None,

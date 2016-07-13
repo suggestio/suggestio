@@ -68,10 +68,13 @@ trait GBlockT
   override def width        = getIntAttributeStrict(WIDTH_ATTR).get
   /** Высота карточки в css-пикселях. */
   override def height       = getIntAttributeStrict(HEIGHT_ATTR).get
-  /** ES id карточки. */
+
+  /** id карточки. */
   def madId                 = getAttribute(MAD_ID_ATTR)
-  /** Порядковый номер карточки. */
-  def index                 = getIntAttributeStrict(BLK_INDEX_ATTR).get
+
+  /** id продьюсера карточки. */
+  def producerId            = getAttribute(PRODUCER_ID_ATTR)
+
 
   /**
    * Двинуть блок на экране в указанные координаты без анимации.

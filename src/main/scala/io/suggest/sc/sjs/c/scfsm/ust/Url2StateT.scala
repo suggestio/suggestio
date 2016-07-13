@@ -133,9 +133,8 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
     }
 
     // Отрабатываем focused ad: просто залить id в состояние.
-    val focAdIdRawOpt = tokens.get(FADS_CURRENT_AD_ID_FN)
     val mFocSdOpt = for {
-      focAdId <- focAdIdRawOpt
+      focAdId <- tokens.get(FADS_CURRENT_AD_ID_FN)
       if focAdId.nonEmpty
     } yield {
       MFocSd(
@@ -143,7 +142,8 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
           madId           = focAdId,
           index           = 0,
           forceFocus      = true
-        )
+        ),
+        producerId = tokens.get(PRODUCER_ADN_ID_FN)
       )
     }
 

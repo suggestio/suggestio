@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.c.scfsm.node
 
 import io.suggest.sc.ScConstants.Welcome
 import io.suggest.sc.sjs.c.scfsm.grid
-import io.suggest.sc.sjs.c.scfsm.ust.StateToUrlT
+import io.suggest.sc.sjs.c.scfsm.ust.State2UrlT
 import io.suggest.sc.sjs.m.magent.IVpSzChanged
 import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
 import io.suggest.sc.sjs.m.mwc.{WcClick, WcHideState, WcTimeout}
@@ -22,7 +22,7 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
   * Данный Welcome-контейнер трейтов получил более широкое назначение:
   * welcome-фаза-состояние или трейты для его сборки.
   */
-trait Welcome extends grid.OnGrid with StateToUrlT {
+trait Welcome extends grid.OnGrid with State2UrlT {
 
   /** Трейт сборки состояния приветствия узла.
     * Изначально, это был зоопарк NodeInit_* состояний, потом пришлось объединять для упрощения обработки screen resize.

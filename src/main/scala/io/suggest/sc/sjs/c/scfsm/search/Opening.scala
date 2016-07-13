@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.c.scfsm.search
 
 import io.suggest.sc.sjs.c.scfsm.grid.OnGrid
-import io.suggest.sc.sjs.c.scfsm.ust.StateToUrlT
+import io.suggest.sc.sjs.c.scfsm.ust.State2UrlT
 
 /**
   * Suggest.io
@@ -11,7 +11,7 @@ import io.suggest.sc.sjs.c.scfsm.ust.StateToUrlT
   * Изначально код раскрытия жил внутри [[io.suggest.sc.sjs.c.scfsm.grid.Plain]].OnPlayGridStateT._showSearchClick(),
   * что было слишком уж нелогично.
   */
-trait Opening extends OnGrid with StateToUrlT {
+trait Opening extends OnGrid with State2UrlT {
 
   /** Интерфейс для получения инстанса состояния нахождения на вкладке поиска.
     * Запрашиваемое значение вкладки лежит в _stateData.search.tab.

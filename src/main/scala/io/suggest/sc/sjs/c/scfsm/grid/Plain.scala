@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.c.scfsm.grid
 
-import io.suggest.sc.sjs.c.scfsm.ust.StateToUrlT
+import io.suggest.sc.sjs.c.scfsm.ust.State2UrlT
 import io.suggest.sc.sjs.m.mhdr.{PrevNodeBtnClick, ShowNavClick, ShowSearchClick}
 import io.suggest.sc.sjs.m.msc.MScSd
 import io.suggest.sc.sjs.vm.hdr.btns.HNodePrev
@@ -9,7 +9,7 @@ import io.suggest.sjs.common.msg.WarnMsgs
 import org.scalajs.dom.Event
 
 /** Аддон для поддержки состояния "голая плитка" без открытых панелей, карточек и прочего. */
-trait Plain extends OnGrid with StateToUrlT {
+trait Plain extends OnGrid with State2UrlT {
 
   /**
    * Состояние, когда на на экране уже отрендерена плитка карточек или её часть,

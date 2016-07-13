@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.c.scfsm.foc
 
 import io.suggest.sc.sjs.vm.foc.FRoot
 import io.suggest.sc.sjs.c.scfsm.grid.OnGridBase
-import io.suggest.sc.sjs.c.scfsm.ust.StateToUrlT
+import io.suggest.sc.sjs.c.scfsm.ust.State2UrlT
 import io.suggest.sc.sjs.m.magent.VpSzChanged
 import io.suggest.sc.sjs.vm.res.FocusedRes
 import io.suggest.sjs.common.controller.DomQuick
@@ -24,7 +24,7 @@ import scala.concurrent.Future
   *
   * Т.е. всё состояние описывается кодом в afterBecome(), а само состояние начинается и заканчивается мгновенно.
   */
-trait Closing extends MouseMoving with OnGridBase with StateToUrlT {
+trait Closing extends MouseMoving with OnGridBase with State2UrlT {
 
   /** Трейт состояния закрытия focused-выдачи. */
   protected trait FocClosingStateT extends FsmEmptyReceiverState with FocMouseMovingStateT with IBackToGridState {

@@ -48,6 +48,10 @@ object MScSd extends ScSjsLogger {
     // Отработать focused-выдачу, если она активна.
     for (focSd <- sd0.focused) {
       acc ::= FADS_CURRENT_AD_ID_FN -> focSd.current.madId
+      // Закинуть producerId foc-выдачи
+      for (producerId <- focSd.producerId) {
+        acc ::= PRODUCER_ADN_ID_FN -> producerId
+      }
     }
 
     // Отработать id текущего узла.

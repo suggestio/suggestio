@@ -10,7 +10,7 @@ import io.suggest.sjs.common.geom.Coord2dD
 import io.suggest.sjs.common.model.{MHand, MHands}
 import io.suggest.sc.ScConstants.Focused.FAd.KBD_SCROLL_STEP_PX
 import io.suggest.sc.sjs.c.scfsm.grid.OnGridBase
-import io.suggest.sc.sjs.c.scfsm.ust.StateToUrlT
+import io.suggest.sc.sjs.c.scfsm.ust.State2UrlT
 import io.suggest.sc.sjs.c.scfsm.{ResizeDelayed, ScFsmStub}
 import io.suggest.sc.sjs.m.msc.MFindAdsArgsT
 import io.suggest.sc.sjs.m.msrv.foc.find.{MFocAdSearchDflt, MFocAdSearchNoOpenIndex, MFocAds}
@@ -64,7 +64,7 @@ trait IOnFocusBase extends ScFsmStub {
   * Аддон для сборки состояний нахождения "в фокусе", т.е. на УЖЕ открытой focused-карточки.
   * Base -- трейт с вещами, расшаренными между трейтами конкретных состояний.
   */
-trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with OnGridBase with StateToUrlT {
+trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with OnGridBase with State2UrlT {
 
   /** Поддержка отложенного ресайза focused-выдачи. */
   protected trait OnFocusDelayedResize
@@ -84,7 +84,8 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
       for (fState0 <- sd0.focused) {
         _stateData = sd0.copy(
           focused = Some(MFocSd(
-            current = fState0.current
+            current     = fState0.current,
+            producerId  = fState0.producerId
           ))
         )
       }
@@ -342,6 +343,7 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
           override def limit          = Some( ScConstants.Focused.SIDE_PRELOAD_MAX )
           override def adsLookupMode  = where
           override def adIdLookup     = currAdId
+          override def producerId     = fState0.producerId
         }
 
         // Отправить запрос focused-карточек.

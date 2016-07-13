@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.c.scfsm.search
 
 import io.suggest.sc.ScConstants.Search.Fts.START_TIMEOUT_MS
 import io.suggest.sc.sjs.c.scfsm.grid.OnGrid
-import io.suggest.sc.sjs.c.scfsm.ust.StateToUrlT
+import io.suggest.sc.sjs.c.scfsm.ust.State2UrlT
 import io.suggest.sc.sjs.m.mhdr.{HideSearchClick, LogoClick, ShowIndexClick}
 import io.suggest.sc.sjs.m.msc.MScSd
 import io.suggest.sc.sjs.m.msearch._
@@ -19,7 +19,7 @@ import org.scalajs.dom.{FocusEvent, KeyboardEvent}
  * Created: 06.08.15 13:52
  * Description: FSM-Аддон для добавления поддержки состояния выдачи, когда доступна плитка и открыта панель поиска.
  */
-trait Base extends OnGrid with ISjsLogger with StateToUrlT {
+trait Base extends OnGrid with ISjsLogger with State2UrlT {
 
   protected trait OnSearchStateT extends OnGridStateT {
 

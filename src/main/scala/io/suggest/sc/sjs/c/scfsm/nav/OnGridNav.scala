@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.c.scfsm.nav
 
 import io.suggest.sc.sjs.c.scfsm.grid.OnGrid
-import io.suggest.sc.sjs.c.scfsm.ust.StateToUrlT
+import io.suggest.sc.sjs.c.scfsm.ust.State2UrlT
 import io.suggest.sc.sjs.m.mhdr.{HideNavClick, LogoClick}
 import io.suggest.sc.sjs.m.mnav.NodeListClick
 import io.suggest.sc.sjs.m.msc.MScSd
@@ -24,7 +24,7 @@ import scala.util.Failure
 
 
 /** Аддон для состояний сетки с открытой панелью. */
-trait OnGridNav extends OnGrid with StateToUrlT {
+trait OnGridNav extends OnGrid with State2UrlT {
 
   protected trait _OnGridNav extends OnGridStateT {
 

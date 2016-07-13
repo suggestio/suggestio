@@ -50,6 +50,7 @@ trait StartingForAd extends MouseMoving with Index {
         val args = new MFocAdSearchDflt with MFindAdsArgsT {
           override def _sd              = sd0
           override def limit            = Some( Focused.AROUND_LOAD_LIMIT )
+          override def producerId       = fState0.producerId
           // Новая (2016.may) методика поиска карточек подразумевает выборку вокруг карточки на первом шаге.
           override def adsLookupMode    = MLookupModes.Around
           override def adIdLookup       = fState0.current.madId

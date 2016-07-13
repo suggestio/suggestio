@@ -164,7 +164,8 @@ trait OnGrid extends OnGridBase with IOnFocusBase {
           current = MFocCurrSd(
             madId = gblock.madId.get,
             index = 0
-          )
+          ),
+          producerId = gblock.producerId
         ))
       )
       become(_startFocusOnAdState, sd1)
