@@ -66,4 +66,8 @@ object WarnMsgs extends MsgsStaticT {
 
   def POP_STATE_TO_SAME_STATE     = E(28)
 
+  def MAP_ELEM_MISSING_BUT_EXPECTED = E(29)
+  def MAP_SHUTDOWN_FAILED           = E(30)
+  def MAP_DETACH_STATE_INVALID      = E(31)
+
 }
