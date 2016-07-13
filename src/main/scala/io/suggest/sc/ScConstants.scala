@@ -211,6 +211,8 @@ object ScConstants {
 
   }
 
+  private def _ATTR_PRODUCER_ID = CUSTOM_ATTR_PREFIX + "producer-id"
+
   /** Константы для отрендеренных карточек. */
   object Block {
 
@@ -222,6 +224,10 @@ object ScConstants {
     def ID_DELIM          = ":"
     /** id grid-блока формируется как-то так: "...madId..." + ID_SUFFIX. */
     def ID_SUFFIX         = "blk"
+
+    /** Имя аттрибута с id продьюсера указанной карточки. */
+    def PRODUCER_ID_ATTR  = _ATTR_PRODUCER_ID
+
   }
 
 
@@ -409,7 +415,7 @@ object ScConstants {
       def ROW_DIV_CLASS = "js-shop-link"
 
       /** Имя аттрибута, содержащее id узла графа N2. */
-      def ATTR_NODE_ID = CUSTOM_ATTR_PREFIX + "producer-id"
+      def ATTR_NODE_ID = _ATTR_PRODUCER_ID
     }
 
   }
