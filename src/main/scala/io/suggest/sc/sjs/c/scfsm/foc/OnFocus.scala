@@ -64,7 +64,13 @@ trait IOnFocusBase extends ScFsmStub {
   * Аддон для сборки состояний нахождения "в фокусе", т.е. на УЖЕ открытой focused-карточки.
   * Base -- трейт с вещами, расшаренными между трейтами конкретных состояний.
   */
-trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with OnGridBase with State2UrlT {
+trait OnFocusBase
+  extends MouseMoving
+    with ResizeDelayed
+    with IOnFocusBase
+    with OnGridBase
+    with State2UrlT
+{
 
   /** Поддержка отложенного ресайза focused-выдачи. */
   protected trait OnFocusDelayedResize
@@ -78,19 +84,21 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
 
     // При наступлении необходимости ресайза надо скрыть текущие focused-карточки и
     override def _handleResizeDelayTimeout(): Unit = {
-      // Обновить данные состояния в связи с наступающим ресайзом. Иначе будут проблемы с floation-стрелочками влево-вправо, текущей просмотраваемой карточкой и т.д.
       val sd0 = _stateData
-      // Молча игнорим случаи, когда данные focused-состояния отсутствую во время OnFocus.
-      for (fState0 <- sd0.focused) {
-        _stateData = sd0.copy(
-          focused = Some(MFocSd(
-            current     = fState0.current,
-            producerId  = fState0.producerId
-          ))
-        )
+      if (_isScrWidthReallyChanged()) {
+        // Обновить данные состояния в связи с наступающим ресайзом.
+        // Иначе будут проблемы с floation-стрелочками влево-вправо, текущей просмотраваемой карточкой и т.д.
+        for (fState0 <- sd0.focused) {
+          _stateData = sd0.copy(
+            focused = Some(MFocSd(
+              current = fState0.current,
+              producerId = fState0.producerId
+            ))
+          )
+        }
+        // Перещелкнуть на след.состояние.
+        become(_startFocusOnAdState)
       }
-      // Перещелкнуть на след.состояние.
-      become(_startFocusOnAdState)
     }
   }
 

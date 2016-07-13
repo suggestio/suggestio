@@ -83,6 +83,29 @@ trait ResizeDelayed extends ScFsmStub {
     /** Реакция на отложенный ресайз. */
     def _handleResizeDelayTimeout(): Unit
 
+
+    /** Требуется ли отложенный ресайз?
+      * Да, если по горизонтали контейнер изменился слишком сильно. */
+    protected def _isScrWidthReallyChanged(): Boolean = {
+      // Посчитать новые размер контейнера. Используем Option как Boolean.
+      val sd0 = _stateData
+
+      val needResizeOpt = for {
+        rsz <- sd0.common.resizeOpt
+        // Прочитать текущее значение ширины в стиле. Она не изменяется до окончания ресайза.
+        screen1 = sd0.common.screen
+        // При повороте телефонного экрана с открытой боковой панелью бывает, что ширина контейнера не меняется в отличие от ширины экрана.
+        // Такое было на one plus one, когда использовался rsz.gContSz, что ломало всё счастье из-за боковых отступов. Поэтому используем сравнение ширин экрана.
+        screen0 = rsz.screen
+        // Если ресайза маловато, то вернуть здесь None.
+        if Math.abs(screen0.width - screen1.width) >= 50
+      } yield {
+        // Значение не важно абсолютно
+        1
+      }
+      needResizeOpt.isDefined
+    }
+
   }
 
 }

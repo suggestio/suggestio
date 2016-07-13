@@ -71,34 +71,10 @@ trait OnGridBase extends ScFsmStub with ResizeDelayed with Append {
   /** Реализации поддержки отложенного ресайза плитки. */
   trait GridHandleResizeDelayed extends HandleResizeDelayed {
 
-    protected def RSZ_THRESHOLD_PX = 50
-
-    /** Требуется ли отложенный ресайз?
-      * Да, если по горизонтали контейнер изменился слишком сильно. */
-    protected def _isGridNeedResizeDelayed(): Boolean = {
-      // Посчитать новые размер контейнера. Используем Option как Boolean.
-      val sd0 = _stateData
-
-      val needResizeOpt = for {
-        rsz <- sd0.common.resizeOpt
-        // Прочитать текущее значение ширины в стиле. Она не изменяется до окончания ресайза.
-        screen1 = sd0.common.screen
-        // При повороте телефонного экрана с открытой боковой панелью бывает, что ширина контейнера не меняется в отличие от ширины экрана.
-        // Такое было на one plus one, когда использовался rsz.gContSz, что ломало всё счастье из-за боковых отступов. Поэтому используем сравнение ширин экрана.
-        screen0 = rsz.screen
-        // Если ресайза маловато, то вернуть здесь None.
-        if Math.abs(screen0.width - screen1.width) >= RSZ_THRESHOLD_PX
-      } yield {
-        // Значение не важно абсолютно
-        1
-      }
-      needResizeOpt.isDefined
-    }
-
     /** Реакция на наступление таймаута ожидания ресайза плитки. */
     override def _handleResizeDelayTimeout(): Unit = {
       val sd0 = _stateData
-      if (_isGridNeedResizeDelayed()) {
+      if (_isScrWidthReallyChanged()) {
         // TODO Opt Если существенное по горизонтали, но оно осталось ~кратно ячейкам, то просто перестроить выдачу: _rebuildGridOnPanelChange
         val sd1 = sd0.copy(
           grid = sd0.grid.copy(
