@@ -19,7 +19,7 @@ trait IMapSignalCompanion[T] {
 }
 
 
-/** Некий сигнал о завершении инициализации карты. */
+/** Внутренний сигнал самому себе (MbFsm) о завершении инициализации карты. */
 case class MapInitDone(override val eventData: EventData)
   extends IMapSignal
 object MapInitDone extends IMapSignalCompanion[MapInitDone]
