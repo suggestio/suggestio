@@ -17,12 +17,12 @@ import io.suggest.common.geom.coord.CoordOps._
 trait OnTouch extends OnFocusBase {
 
   /** Интерфейс для метода, возвращающего экземпляр OnTouch-состояния. */
-  protected trait FocTouchCancelledT extends OnFocusDelayedResize {
+  protected trait FocTouchCancelledT extends OnFocusDelayedResize with OnFocSrvResp {
 
     /** Новое состояние после резкого завершения касания. */
     protected def _touchCancelledState: FsmState
     
-    override def receiverPart: Receive = super.receiverPart orElse {
+    override def receiverPart: Receive = super.receiverPart.orElse {
       case t: ITouchFinish =>
         _touchCancelled()
     }
@@ -37,7 +37,6 @@ trait OnTouch extends OnFocusBase {
 
     /** Безрезультатное завершение касания -- сброс touch-состояния, переход на стабильное состояние. */
     protected def _touchCancelled(): Unit = {
-      println("touch cancel")
       for (car <- FCarCont.find()) {
         car.enableTransition()
       }
@@ -65,7 +64,6 @@ trait OnTouch extends OnFocusBase {
       // Надо понять, в какую сторону двигаемся, и переключиться на соотв.состояние.
       val sd0 = _stateData
       val touch = event.touches(0)
-      println("touch move " + touch)
       for {
         fState    <- sd0.focused
         touchSd   <- fState.touch
@@ -214,7 +212,6 @@ trait OnTouch extends OnFocusBase {
         // Подготовить focused-карусель к анимации.
         car.enableTransition()
 
-        val currIndex = fState.current.index
         // Узнать следующее состояние FSM (долистывание в нужном направлении)
         val nextState = touchSd.lastDeltaX
           .filter { _ != 0d }
@@ -224,12 +221,12 @@ trait OnTouch extends OnFocusBase {
           }
           // Отфильтровать свайп за экран
           .filter { mhand =>
-            (mhand.isLeft && currIndex > 0) ||
-              (mhand.isRight && fState.totalCount.exists(_ > currIndex + 1))
+            (mhand.isLeft && fState.fadsBeforeCurrentIter.nonEmpty) ||
+              (mhand.isRight && fState.fadsAfterCurrentIter.nonEmpty)
           }
           .fold [FsmState] {
             // Сбросить сдвиг карусели на исходную.
-            car.animateToCell(currIndex, sd0.common)
+            car.animateToCell(fState.current.index, sd0.common)
             _touchCancelledState
           }(_shiftForHand)
 

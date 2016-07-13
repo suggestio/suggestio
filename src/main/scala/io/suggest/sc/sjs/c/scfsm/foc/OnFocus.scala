@@ -95,160 +95,14 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
   }
 
 
-  /** Заготовка для состояний, связанных с нахождением на карточке.
-    * Тут реакция на события воздействия пользователя на focused-выдачу. */
-  protected trait OnFocusStateBaseT
-    extends OnFocusDelayedResize
-      with FocMouseMovingStateT
-      with INodeSwitchState
-      with ISimpleShift
-  {
+  /** Трейт для поддержки общения с сервером в рамках focused-выдачи. */
+  protected trait OnFocSrvResp extends FsmState {
 
-    override def receiverPart: Receive = super.receiverPart.orElse {
-      case TouchStart(event) =>
-        _onTouchStart(event)
-      case CloseBtnClick =>
-        _closeFocused()
-      case ProducerLogoClick =>
-        _goToProducer()
-      case MouseClick(evt) =>
-        _mouseClicked(evt)
+    // Без override, т.к. это дело тут почему-то ничего не оверрайдит пока что.
+    def receiverPart: Receive = {
       case mfaRespTs: MFocSrvRespTs =>
         _handleSrvResp(mfaRespTs)
     }
-
-    /** С началом свайпа надо инициализировать touch-параметры и перейти в свайп-состояние. */
-    protected def _onTouchStart(event: TouchEvent): Unit = {
-      val sd0 = _stateData
-      val touch = event.touches(0)
-      val sd1 = sd0.copy(
-        focused = sd0.focused.map( _.copy(
-          touch = Some(MFocTouchSd(
-            start = Coord2dD( touch ),
-            lastX = touch.pageX
-          ))
-        ))
-      )
-      become(_onTouchStartState, sd1)
-    }
-    protected def _onTouchStartState: FsmState
-
-
-    override def _onKbdKeyUp(event: KeyboardEvent): Unit = {
-      super._onKbdKeyUp(event)
-
-      // Узнать нажатую клавишу и среагировать на неё.
-      val c = event.keyCode
-      // ESC должен закрывать выдачу.
-      if (c == KeyCode.Escape)
-        _closeFocused()
-      // Клавиатурные стрелки влево-вправо должны переключать карточки в соотв. направлениях.
-      else if (c == KeyCode.Right)
-        _kbdShifting( MHands.Right, _shiftRightState )
-      else if (c == KeyCode.Left)
-        _kbdShifting( MHands.Left, _shiftLeftState )
-      // TODO Скроллинг должен быть непрерывным. Сейчас он срабатывает только при отжатии клавиатурных кнопок скролла.
-      else if (c == KeyCode.Down)
-        _kbdScroll( KBD_SCROLL_STEP_PX )
-      else if (c == KeyCode.Up)
-        _kbdScroll( -KBD_SCROLL_STEP_PX )
-      else if (c == KeyCode.PageDown)
-        _kbdScroll( screenH )
-      else if (c == KeyCode.PageUp)
-        _kbdScroll( -screenH )
-    }
-
-    private def screenH: Int = {
-      _stateData.common.screen.height
-    }
-
-    protected def _kbdScroll(delta: Int): Unit = {
-      // Найти враппер текущей карточки и проскроллить его немного вниз.
-      for {
-        fState    <- _stateData.focused
-        fWrap     <- FAdWrapper.find( fState.current.madId )
-      } {
-        fWrap.vScrollByPx(delta)
-      }
-    }
-
-    /** Реакция на переключение focused-карточек стрелками клавиатуры.
-      *
-      * @param dir направление переключения.
-      */
-    protected def _kbdShifting(dir: MHand, nextState: FsmState): Unit = {
-      if (_filterSimpleShiftSignal(dir)) {
-        val sd0 = _stateData
-        val sd1 = sd0.copy(
-          focused = sd0.focused.map(_.copy(
-            arrDir = Some(dir)
-          ))
-        )
-        become(nextState, sd1)
-      }
-    }
-
-    /** Реакция на клик по кнопке закрытия или иному выходу из focused-выдачи. */
-    protected def _closeFocused(): Unit = {
-      become(_closingState)
-    }
-
-    /** Состояние процесса закрытия focused-выдачи. */
-    protected def _closingState: FsmState
-
-    /** Реакция на сигнал перехода на producer-выдачу. */
-    protected def _goToProducer(): Unit = {
-      val sd0 = _stateData
-      // Найти в состоянии текущую карточку. Узнать продьюсера,
-      for {
-        fRoot     <- FRoot.find()
-        fState    <- {
-          fRoot.willAnimate()
-          sd0.focused
-        }
-        fAdRoot   <- fState.findCurrFad
-      } {
-        val adnId = fAdRoot.producerId
-        if ( sd0.common.adnIdOpt.contains(adnId) ) {
-          // Возврат на плитку текуйщего узла отрабатывается соответствующим состоянием.
-          become(_closingState)
-
-        } else {
-          // Переход на другой узел.
-          val sd1 = sd0.withNodeSwitch( Some(adnId) )
-          become(_onNodeSwitchState, sd1)
-          // Скрыть текущую focused-выдачу в фоне. Глубокая чистка не требуется, т.к. layout будет полностью пересоздан.
-          DomQuick.setTimeout(10) { () =>
-            fRoot.disappearTransition()
-          }
-        }
-      }
-    }
-
-    /** Можно игнорить шифтинг карточек в указанном направлении с помощью этого флага.
-      * TODO Это костыль. По хорошему надо шифтить на следующую карточку и отображать там loader, а потом это сразу перезаписывать.
-      */
-    protected def _filterSimpleShiftSignal(mhand: MHand): Boolean = {
-      true
-    }
-
-    /** Реакция на кликанье мышки по focused-выдаче. Надо понять, слева или справа был клик, затем
-      * запустить листание в нужную сторону. */
-    protected def _mouseClicked(event: MouseEvent): Unit = {
-      val sd0 = _stateData
-      for {
-        fState <- sd0.focused
-      } {
-        val mhand = _mouse2hand(event, sd0.common.screen)
-        for (fArr <- FArrow.find()) {
-          _maybeUpdateArrDir(mhand, fArr, fState, sd0)
-        }
-        if (_filterSimpleShiftSignal(mhand)) {
-          become( _shiftForHand(mhand) )
-        }
-      }
-    }
-
 
     def _analyzeCurrentFads(): Unit = {
       for (car <- FCarCont.find()) {
@@ -433,6 +287,166 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
         )
       }
     }
+
+  }
+
+
+  /** Заготовка для состояний, связанных с нахождением на карточке.
+    * Тут реакция на события воздействия пользователя на focused-выдачу. */
+  protected trait OnFocusStateBaseT
+    extends OnFocusDelayedResize
+      with OnFocSrvResp
+      with FocMouseMovingStateT
+      with INodeSwitchState
+      with ISimpleShift
+  {
+
+    override def receiverPart: Receive = {
+      val r2: Receive = {
+        case TouchStart(event) =>
+          _onTouchStart(event)
+        case CloseBtnClick =>
+          _closeFocused()
+        case ProducerLogoClick =>
+          _goToProducer()
+        case MouseClick(evt) =>
+          _mouseClicked(evt)
+      }
+      r2.orElse( super.receiverPart )
+    }
+
+    /** С началом свайпа надо инициализировать touch-параметры и перейти в свайп-состояние. */
+    protected def _onTouchStart(event: TouchEvent): Unit = {
+      val sd0 = _stateData
+      val touch = event.touches(0)
+      val sd1 = sd0.copy(
+        focused = sd0.focused.map( _.copy(
+          touch = Some(MFocTouchSd(
+            start = Coord2dD( touch ),
+            lastX = touch.pageX
+          ))
+        ))
+      )
+      become(_onTouchStartState, sd1)
+    }
+    protected def _onTouchStartState: FsmState
+
+
+    override def _onKbdKeyUp(event: KeyboardEvent): Unit = {
+      super._onKbdKeyUp(event)
+
+      // Узнать нажатую клавишу и среагировать на неё.
+      val c = event.keyCode
+      // ESC должен закрывать выдачу.
+      if (c == KeyCode.Escape)
+        _closeFocused()
+      // Клавиатурные стрелки влево-вправо должны переключать карточки в соотв. направлениях.
+      else if (c == KeyCode.Right)
+        _kbdShifting( MHands.Right, _shiftRightState )
+      else if (c == KeyCode.Left)
+        _kbdShifting( MHands.Left, _shiftLeftState )
+      // TODO Скроллинг должен быть непрерывным. Сейчас он срабатывает только при отжатии клавиатурных кнопок скролла.
+      else if (c == KeyCode.Down)
+        _kbdScroll( KBD_SCROLL_STEP_PX )
+      else if (c == KeyCode.Up)
+        _kbdScroll( -KBD_SCROLL_STEP_PX )
+      else if (c == KeyCode.PageDown)
+        _kbdScroll( screenH )
+      else if (c == KeyCode.PageUp)
+        _kbdScroll( -screenH )
+    }
+
+    private def screenH: Int = {
+      _stateData.common.screen.height
+    }
+
+    protected def _kbdScroll(delta: Int): Unit = {
+      // Найти враппер текущей карточки и проскроллить его немного вниз.
+      for {
+        fState    <- _stateData.focused
+        fWrap     <- FAdWrapper.find( fState.current.madId )
+      } {
+        fWrap.vScrollByPx(delta)
+      }
+    }
+
+    /** Реакция на переключение focused-карточек стрелками клавиатуры.
+      *
+      * @param dir направление переключения.
+      */
+    protected def _kbdShifting(dir: MHand, nextState: FsmState): Unit = {
+      if (_filterSimpleShiftSignal(dir)) {
+        val sd0 = _stateData
+        val sd1 = sd0.copy(
+          focused = sd0.focused.map(_.copy(
+            arrDir = Some(dir)
+          ))
+        )
+        become(nextState, sd1)
+      }
+    }
+
+    /** Реакция на клик по кнопке закрытия или иному выходу из focused-выдачи. */
+    protected def _closeFocused(): Unit = {
+      become(_closingState)
+    }
+
+    /** Состояние процесса закрытия focused-выдачи. */
+    protected def _closingState: FsmState
+
+    /** Реакция на сигнал перехода на producer-выдачу. */
+    protected def _goToProducer(): Unit = {
+      val sd0 = _stateData
+      // Найти в состоянии текущую карточку. Узнать продьюсера,
+      for {
+        fRoot     <- FRoot.find()
+        fState    <- {
+          fRoot.willAnimate()
+          sd0.focused
+        }
+        fAdRoot   <- fState.findCurrFad
+      } {
+        val adnId = fAdRoot.producerId
+        if ( sd0.common.adnIdOpt.contains(adnId) ) {
+          // Возврат на плитку текуйщего узла отрабатывается соответствующим состоянием.
+          become(_closingState)
+
+        } else {
+          // Переход на другой узел.
+          val sd1 = sd0.withNodeSwitch( Some(adnId) )
+          become(_onNodeSwitchState, sd1)
+          // Скрыть текущую focused-выдачу в фоне. Глубокая чистка не требуется, т.к. layout будет полностью пересоздан.
+          DomQuick.setTimeout(10) { () =>
+            fRoot.disappearTransition()
+          }
+        }
+      }
+    }
+
+    /** Можно игнорить шифтинг карточек в указанном направлении с помощью этого флага.
+      * TODO Это костыль. По хорошему надо шифтить на следующую карточку и отображать там loader, а потом это сразу перезаписывать.
+      */
+    protected def _filterSimpleShiftSignal(mhand: MHand): Boolean = {
+      true
+    }
+
+    /** Реакция на кликанье мышки по focused-выдаче. Надо понять, слева или справа был клик, затем
+      * запустить листание в нужную сторону. */
+    protected def _mouseClicked(event: MouseEvent): Unit = {
+      val sd0 = _stateData
+      for {
+        fState <- sd0.focused
+      } {
+        val mhand = _mouse2hand(event, sd0.common.screen)
+        for (fArr <- FArrow.find()) {
+          _maybeUpdateArrDir(mhand, fArr, fState, sd0)
+        }
+        if (_filterSimpleShiftSignal(mhand)) {
+          become( _shiftForHand(mhand) )
+        }
+      }
+    }
+
 
     // При возврате в плитку из focused-выдачи можно отработать всё по укороченному сценарию.
     override def _handleStateSwitch(sdNext: SD): Unit = {
