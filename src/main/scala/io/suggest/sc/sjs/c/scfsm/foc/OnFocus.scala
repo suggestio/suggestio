@@ -96,10 +96,10 @@ trait OnFocusBase extends MouseMoving with ResizeDelayed with IOnFocusBase with 
 
 
   /** Трейт для поддержки общения с сервером в рамках focused-выдачи. */
-  protected trait OnFocSrvResp extends FsmState {
+  protected trait OnFocSrvResp extends FsmEmptyReceiverState {
 
     // Без override, т.к. это дело тут почему-то ничего не оверрайдит пока что.
-    def receiverPart: Receive = {
+    override def receiverPart: Receive = super.receiverPart.orElse {
       case mfaRespTs: MFocSrvRespTs =>
         _handleSrvResp(mfaRespTs)
     }
