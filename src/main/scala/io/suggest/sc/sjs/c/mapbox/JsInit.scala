@@ -1,9 +1,6 @@
 package io.suggest.sc.sjs.c.mapbox
 
 import io.suggest.sc.sjs.m.mmap.EnsureMap
-import io.suggest.sc.sjs.vm.mapbox.GlMapVm
-import io.suggest.sc.sjs.vm.search.tabs.geo.SGeoContent
-import io.suggest.sjs.common.msg.WarnMsgs
 
 /**
   * Suggest.io
@@ -12,7 +9,7 @@ import io.suggest.sjs.common.msg.WarnMsgs
   * Description: FSM-аддон для состояния оценки готовности mapbox-gl.js к работе.
   */
 
-trait Init extends StoreUserGeoLoc {
+trait JsInit extends StoreUserGeoLoc {
 
   /** Трейт для сборки состояния готовности mapbox-gl.js к работе на странице. */
   trait JsInitStateT extends StoreUserGeoLocStateT {
@@ -35,6 +32,7 @@ trait Init extends StoreUserGeoLoc {
   }
 
 
+  /** Трейт поддержки абстрактной реакции на сигнал EnsureMap. */
   trait IEnsureMapHandler extends FsmEmptyReceiverState {
 
     override def receiverPart: Receive = super.receiverPart.orElse {
@@ -43,6 +41,7 @@ trait Init extends StoreUserGeoLoc {
         _handleEnsureMap(em)
     }
 
+    /** Реакция на сигнал EnsureMap. */
     def _handleEnsureMap(em: EnsureMap): Unit
 
   }
@@ -51,31 +50,8 @@ trait Init extends StoreUserGeoLoc {
   /** Ожидать сигнал EnsureMap и реагировать на него. */
   trait EnsureMapInitT extends IEnsureMapHandler {
 
-    /** Инициализация карты в текущей выдаче, если необходимо. */
     override def _handleEnsureMap(em: EnsureMap): Unit = {
-      val sd0 = _stateData
-
-      for (glmap <- sd0.glmap) {
-        warn( WarnMsgs.MAPBOXLG_ALREADY_INIT )
-        glmap.remove()
-      }
-
-      for (cont <- SGeoContent.find()) {
-        // Пока div контейнера категорий содержит какой-то мусор внутри, надо его очищать перед использованием.
-        cont.clear()
-
-        val map0 = GlMapVm.createNew(
-          container = cont,
-          useLocation = sd0.lastUserLoc
-        )
-
-        // Сохранить карту в состояние FSM.
-        val sd1 = sd0.copy(
-          glmap   = Some(map0)
-        )
-
-        become(_mapInitializingState, sd1)
-      }
+      become(_mapInitializingState)
     }
 
     /** Состояние полной готовности карты. */

@@ -90,6 +90,9 @@ trait OnFocusBase
         // Иначе будут проблемы с floation-стрелочками влево-вправо, текущей просмотраваемой карточкой и т.д.
         for (fState0 <- sd0.focused) {
           _stateData = sd0.copy(
+            common = sd0.common.copy(
+              resizeOpt = None
+            ),
             focused = Some(MFocSd(
               current = fState0.current,
               producerId = fState0.producerId

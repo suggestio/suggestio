@@ -81,12 +81,12 @@ trait AwaitMbglJs extends StoreUserGeoLoc {
       }
 
       // Переключиться на след.состояние.
-      become(jsReadyState)
+      become(_jsReadyState)
     }
 
 
     /** На какое состояние переключаться, когда наконец найден скрипт mapboxgl.js на странице. */
-    def jsReadyState: State_t
+    def _jsReadyState: State_t
 
   }
 

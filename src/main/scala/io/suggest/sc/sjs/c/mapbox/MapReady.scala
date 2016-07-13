@@ -54,12 +54,12 @@ trait MapReady extends StoreUserGeoLoc {
       }
 
       // Теперь карта откреплена от локации юзера. Перейти на состояние двигательства карты.
-      become(mapMovingState)
+      become(_mapMovingState)
     }
 
 
     /** Состояние таскания карты. */
-    def mapMovingState: FsmState
+    def _mapMovingState: FsmState
 
     // При выставлении геолокации следует обновлять центровку карты, если карта следует за локацией юзера.
     override def _setUserGeoLoc(geoLoc: MGeoLoc, glmap: GlMap): GlMapVm = {

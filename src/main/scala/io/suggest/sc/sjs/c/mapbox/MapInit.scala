@@ -1,6 +1,8 @@
 package io.suggest.sc.sjs.c.mapbox
 
 import io.suggest.sc.sjs.vm.mapbox.{AllNodesUrl, GlMapVm}
+import io.suggest.sc.sjs.vm.search.tabs.geo.SGeoContent
+import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.mapbox.gl.event._
 
 /**
@@ -9,20 +11,42 @@ import io.suggest.sjs.mapbox.gl.event._
   * Created: 14.04.16 14:30
   * Description: Аддон для сборки состояний
   */
-trait MapInitializing extends StoreUserGeoLoc {
+trait MapInit extends StoreUserGeoLoc {
 
   /** Трейт для сборки состояния ожидания инициализации карты. */
-  trait MapInitializingStateT extends StoreUserGeoLocStateT {
-
-    /** Внутренний сигнал самому себе о завершении инициализации карты. */
+  trait MapInitStateT extends StoreUserGeoLocStateT {
 
     private lazy val vm = GlMapVm( _stateData.glmap.get )
 
     override def afterBecome(): Unit = {
       super.afterBecome()
+
+      val sd0 = _stateData
+
+      for (glmap <- sd0.glmap) {
+        warn( WarnMsgs.MAPBOXLG_ALREADY_INIT )
+        glmap.remove()
+      }
+
+      for (cont <- SGeoContent.find()) {
+        // Пока div контейнера категорий содержит какой-то мусор внутри, надо его очищать перед использованием.
+        cont.clear()
+
+        val map0 = GlMapVm.createNew(
+          container = cont,
+          useLocation = sd0.lastUserLoc
+        )
+
+        // Сохранить карту в состояние FSM.
+        _stateData = sd0.copy(
+          glmap = Some(map0)
+        )
+      }
+
       // Повесить событие ожидания инициализации карты.
       vm.on( MapEventsTypes.STYLE_LOADED )(_mapSignalCallbackF(MapInitDone))
     }
+
 
     override def receiverPart: Receive = super.receiverPart.orElse {
       case _: MapInitDone =>
@@ -47,11 +71,11 @@ trait MapInitializing extends StoreUserGeoLoc {
       }
 
       // Переключить состояния
-      become(mapReadyState)
+      become(_mapReadyState)
     }
 
     /** Состояние готовности инициализированной карты. */
-    def mapReadyState: FsmState
+    def _mapReadyState: FsmState
 
   }
 

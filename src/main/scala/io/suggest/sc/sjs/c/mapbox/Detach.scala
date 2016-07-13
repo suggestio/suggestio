@@ -11,7 +11,7 @@ import io.suggest.sjs.common.msg.WarnMsgs
   * Description: Трейт Detached-состояний, когда готовая к работе извлечена из DOM,
   * чтобы повторно контейнер карта не пере-инициализировать.
   */
-trait Detach extends Init {
+trait Detach extends JsInit {
 
   /** Трейт для сборки состояния, поддерживающего detach-контейнера карты при наступлении необходимости в этом. */
   trait HandleScInxSwitch extends FsmEmptyReceiverState {

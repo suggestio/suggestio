@@ -18,8 +18,8 @@ import io.suggest.sjs.common.fsm.{LogBecome, SjsFsmImpl}
 object MbFsm
   extends SjsFsmImpl
   with AwaitMbglJs
-  with Init
-  with MapInitializing
+  with JsInit
+  with MapInit
   with MapReady
   with OnMove
   with Detach
@@ -51,12 +51,14 @@ object MbFsm
   // -- states impl
   /** Состояние ожидания и начальной инициализации карты. */
   class AwaitMbglJsState extends AwaitMbglJsStateT {
-    override def jsReadyState = new JsInitState
+    override def _jsReadyState = new JsInitState
   }
+
+  // TODO объеденить MapInitializing.afterBecome и одну из синхронных реализаций _handleEnsureMap().
 
   /** Реализованный трейт WaitEnsureSignalT. */
   protected trait EnsureMapInitT extends super.EnsureMapInitT {
-    override def _mapInitializingState = new MapInitializingState
+    override def _mapInitializingState = new MapInitState
   }
   /** Статическая js-поддержка карты инициализирована. */
   class JsInitState extends JsInitStateT with EnsureMapInitT
@@ -66,13 +68,13 @@ object MbFsm
 
 
   /** Динамическая часть карты в процессе инициализации. */
-  class MapInitializingState extends MapInitializingStateT {
-    override def mapReadyState = new MapReadyState
+  class MapInitState extends MapInitStateT {
+    override def _mapReadyState = new MapReadyState
   }
 
   /** Карта инициализирована. */
   class MapReadyState extends MapReadyStateT with HandleScInxSwitch {
-    override def mapMovingState   = new OnDragState
+    override def _mapMovingState  = new OnDragState
     override def _detachedState   = new MapDetachedState
     override def _noMapState      = new NoMapState
   }
@@ -85,7 +87,7 @@ object MbFsm
 
   /** Состояние отсоединенности карты от выдачи. */
   class MapDetachedState extends MapDetachedStateT {
-    override def _detachReattachFailedState = ???
+    override def _detachReattachFailedState = new MapInitState
     override def _attachSuccessState        = new MapReadyState
   }
 
