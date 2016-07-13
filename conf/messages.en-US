@@ -744,6 +744,7 @@ Refuse.mode.i=Only this adv
 Refuse.mode.req=This and any requested advs
 Refuse.mode.all=All current and requested advs
 
+Map=Map
 Map.settings.save.unsupported=Saved.
 Adv.in.place=Advertise in place
 

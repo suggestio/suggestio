@@ -40,7 +40,9 @@
         }
         <div class="sm-categories-screen_single-tab">
           <div class="sm-tab __rounded-left @if(isListTab) {__inactive}" id="smCategoriesTab"
-               style="background: #@args.fgColor; border-color: #@args.fgColor; color: #@args.bgColor;">@messages("Categories").toUpperCase</div>
+               style="background: #@args.fgColor; border-color: #@args.fgColor; color: #@args.bgColor;">
+            @messages("Map").toUpperCase
+          </div>
         </div>
         @if(args.jsStateOpt) {
           </a>
