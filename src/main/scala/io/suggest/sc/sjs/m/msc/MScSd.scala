@@ -190,7 +190,8 @@ case class MScSd(
   def withNodeSwitch(adnIdOpt2: Option[String]): MScSd = {
     copy(
       common = common.copy(
-        adnIdOpt = adnIdOpt2
+        adnIdOpt  = adnIdOpt2,
+        geoLocOpt = None
       ),
       nav       = MNavState(),
       search    = MSearchSd(),
