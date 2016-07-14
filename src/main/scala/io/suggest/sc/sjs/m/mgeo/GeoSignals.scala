@@ -84,3 +84,7 @@ case object GlUnknown extends IFsmMsg
 /** Сигнал таймаута подавления "слабых" типов геолокации. */
 case class SuppressTimeout(generation: Long) extends IFsmMsg
 object SuppressTimeout extends IFsmMsgCompanion[Long]
+
+
+/** Сигнал от MbFsm к ScFsm о смене текущей обозреваемой геолокации. */
+case class NewGeoLoc(gl: MGeoPoint) extends IFsmMsg

@@ -1,5 +1,7 @@
 package io.suggest.sc.sjs.c.mapbox
 
+import io.suggest.sc.sjs.c.scfsm.ScFsm
+import io.suggest.sc.sjs.m.mgeo.NewGeoLoc
 import io.suggest.sc.sjs.vm.mapbox.GlMapVm
 import io.suggest.sjs.mapbox.gl.event.{MoveEnd, MoveStart, Moving}
 
@@ -55,6 +57,10 @@ trait OnMove extends MapReady {
 
     /** Реакция на окончание движения на карте. */
     def _moveEnd(dge: MoveEnd): Unit = {
+      // Уведомить ScFsm о необходимости перемещения root'а выдачи в новое место.
+      ScFsm ! NewGeoLoc( _vm.center )
+
+      // Вернутся в состояние ожидания.
       become(moveEndState)
     }
 

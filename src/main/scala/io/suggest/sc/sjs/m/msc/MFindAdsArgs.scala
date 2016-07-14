@@ -1,7 +1,6 @@
 package io.suggest.sc.sjs.m.msc
 
-import io.suggest.sc.ScConstants
-import io.suggest.sc.sjs.m.mgeo.IMGeoMode
+import io.suggest.sc.sjs.m.mgeo.{IMGeoMode, MGeoPoint}
 import io.suggest.sc.sjs.m.mgrid.MFindGridAdsArgsLimitOffsetT
 import io.suggest.sc.sjs.m.msrv.ads.find.MFindAdsReqDflt
 
@@ -21,8 +20,9 @@ trait MFindAdsArgsT extends MFindAdsReqDflt {
   override def screenInfo               = Some( _sd.common.screen )
   override def generation: Option[Long] = Some(_sd.common.generation)
   override def receiverId               = _sd.common.adnIdOpt
-  override def levelId: Option[String]  = Some( ScConstants.ShowLevels.ID_START_PAGE )
+  //override def levelId: Option[String]  = Some( ScConstants.ShowLevels.ID_START_PAGE )
   override def geo: Option[IMGeoMode]   = Some( IMGeoMode(_sd.geo.lastGeoLoc) )
+  override def agpPoint: Option[MGeoPoint] = _sd.common.geoLocOpt
 
 }
 

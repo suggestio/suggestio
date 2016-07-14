@@ -1,12 +1,12 @@
 package io.suggest.sc.sjs.m.msrv.ads.find
 
 import io.suggest.sc.sjs.m.magent.IMScreen
-import io.suggest.sc.sjs.m.mgeo.IMGeoMode
-import io.suggest.sc.sjs.m.mgrid.MGridState
+import io.suggest.sc.sjs.m.mgeo.{IMGeoMode, MGeoPoint}
 import io.suggest.sc.sjs.m.msrv.ToJsonWithApiVsnT
 
 import scala.scalajs.js.{Any, Dictionary}
 import io.suggest.ad.search.AdSearchConstants._
+
 import scala.scalajs.js.JSConverters._
 
 /**
@@ -30,6 +30,7 @@ trait MFindAdsReq extends ToJsonWithApiVsnT {
   def geo         : Option[IMGeoMode]
   def screenInfo  : Option[IMScreen]
   def withoutId   : Option[String]
+  def agpPoint    : Option[MGeoPoint]
 
   /** Собрать итоговый json для передачи в router. */
   override def toJson: Dictionary[Any] = {
@@ -57,6 +58,8 @@ trait MFindAdsReq extends ToJsonWithApiVsnT {
       d(SCREEN_INFO_FN) = scrInfo.toQsValue
     for (woId <- withoutId)
       d(WITHOUT_IDS_FN) = woId
+    for (pt <- agpPoint)
+      d(AGP_POINT_FN) = pt.toJsObject
 
     d
   }
@@ -77,6 +80,7 @@ trait MFindAdsReqDflt extends MFindAdsReq {
   override def geo         : Option[IMGeoMode] = None
   override def screenInfo  : Option[IMScreen]  = None
   override def withoutId   : Option[String]    = None
+  override def agpPoint    : Option[MGeoPoint] = None
 }
 
 
@@ -95,4 +99,5 @@ trait MFindAdsReqWrapper extends MFindAdsReq {
   override def geo          = _underlying.geo
   override def screenInfo   = _underlying.screenInfo
   override def withoutId    = _underlying.withoutId
+  override def agpPoint     = _underlying.agpPoint
 }

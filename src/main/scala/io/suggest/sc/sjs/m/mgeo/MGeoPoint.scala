@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.m.mgeo
 
-import io.suggest.geo.IGeoPoint
+import io.suggest.geo.{GeoConstants, IGeoPoint}
 import io.suggest.sjs.common.geo.json.{GjGeometry, GjTypes}
 import io.suggest.sjs.mapbox.gl.ll.LngLat
 import org.scalajs.dom.Coordinates
@@ -41,6 +41,11 @@ case class MGeoPoint(
 
   def toArray = js.Array[Double](lon, lat)
   def toJsArray = toArray.asInstanceOf[ js.Array[js.Any] ]
+
+  def toJsObject = js.Dictionary[js.Any](
+    GeoConstants.Qs.LAT_FN -> lat,
+    GeoConstants.Qs.LON_FN -> lon
+  )
 
   def toGjPoint = GjGeometry(
     gtype       = GjTypes.Geom.POINT,
