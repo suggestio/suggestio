@@ -9,7 +9,7 @@
 @import io.suggest.sc.map.ScMapConstants.Nodes.ALL_URL_INPUT_ID
 
 @* id-атрибут у script-тега нарушает HTML-валидацию, но это плевать. *@
-<script id="@DOM_ID" type="text/javascript" async src="@cdn.forCall( routes.MarketShowcase.scJsRouter() )">
+<script id="@DOM_ID" type="text/javascript" async src="@cdn.forCall( routes.Sc.scJsRouter() )">
 </script>
 
 @_sjsScript("sc-sjs", withLauncherJs = true)
@@ -20,4 +20,4 @@
 @* Ссылка для скачивания карты всех узлов системы должна проходить через CDN. *@
 <input type="hidden"
        id="@ALL_URL_INPUT_ID"
-       value="@cdn.forCall( routes.MarketShowcase.renderMapNodesAll() )"/>
+       value="@cdn.forCall( routes.Sc.renderMapNodesAll() )"/>

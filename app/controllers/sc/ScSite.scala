@@ -194,7 +194,7 @@ trait ScSiteGeo
       // Было раньше MovedPermanently, но почему-то оно может сбойнуть и закешироваться на CDN.
       // 2016.02.04 Логгирование тут усилено для отлова memleak'а с зацикливанием здесь.
       LOGGER.trace(s"geoSite($siteArgs): Qs js state is nonEmpty, redirecting from ${request.path} [${request.remoteAddress}]")
-      val call = routes.MarketShowcase.geoSite(x = siteArgs).url + "#!?" + maybeJsState.toQs()
+      val call = routes.Sc.geoSite(x = siteArgs).url + "#!?" + maybeJsState.toQs()
       Redirect(call)
     } else {
       _geoSite(siteArgs)
@@ -239,7 +239,7 @@ trait ScSiteGeo
       override def _siteArgs          = siteArgs
 
       override def _withGeo           = siteArgs.adnId.isEmpty
-      override def _indexCall         = routes.MarketShowcase.geoShowcase()  // TODO Для index call можно какие-то аргументы передать...
+      override def _indexCall         = routes.Sc.geoShowcase()  // TODO Для index call можно какие-то аргументы передать...
     }
     logic.resultFut
   }
@@ -247,7 +247,7 @@ trait ScSiteGeo
 
   /** Раньше выдача пряталась в /market/geo/site. Потом переехала на главную. */
   def rdrToGeoSite = Action { implicit request =>
-    val call = routes.MarketShowcase.geoSite().url
+    val call = routes.Sc.geoSite().url
     MovedPermanently(call)
   }
 
@@ -283,7 +283,7 @@ trait ScSiteNode
         override implicit def _request = request
         override val _siteArgs = SiteQsArgs(adnId = Some(adnId))
         override def _withGeo: Boolean = false
-        override def _indexCall: Call = routes.MarketShowcase.showcase(adnId)
+        override def _indexCall: Call = routes.Sc.showcase(adnId)
       }
       logic.resultFut
 

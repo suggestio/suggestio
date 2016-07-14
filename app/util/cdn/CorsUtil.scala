@@ -86,7 +86,7 @@ class CorsUtil @Inject() (configuration: Configuration) {
     SIMPLE_CORS_HEADERS.nonEmpty && {
       val uri = rh.uri
       ADD_HEADERS_URL_RE.pattern.matcher(uri).find ||
-        uri.startsWith(routes.MarketShowcase.renderMapNodesAll().url)
+        uri.startsWith(routes.Sc.renderMapNodesAll().url)
     }
   }
 

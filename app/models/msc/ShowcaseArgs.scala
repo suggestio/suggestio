@@ -21,7 +21,9 @@ trait ISyncRenderInfo {
 
 trait SyncRenderInfo extends ISyncRenderInfo {
   def syncRender: Boolean = jsStateOpt.isDefined
-  def syncUrl(jsState: ScJsState): String = routes.MarketShowcase.syncGeoSite(jsState).url
+  def syncUrl(jsState: ScJsState): String = {
+    routes.Sc.syncGeoSite(jsState).url
+  }
 }
 trait SyncRenderInfoDflt extends SyncRenderInfo {
   override def jsStateOpt: Option[ScJsState] = None

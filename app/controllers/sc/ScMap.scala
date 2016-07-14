@@ -11,7 +11,7 @@ import scala.concurrent.duration._
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 19.04.16 15:44
-  * Description: Аддон для [[controllers.MarketShowcase]], добавляющий экшены для
+  * Description: Аддон для [[controllers.Sc]], добавляющий экшены для
   * получения данных географической карты.
   */
 trait ScMap

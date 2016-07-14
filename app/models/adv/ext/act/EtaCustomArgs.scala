@@ -37,7 +37,7 @@ trait EtaCustomArgsBase extends ExtTargetActorEnv { env =>
     /** JSON-контекст инфы по картинке текущей карточки. */
     def jsPicCtx: MPictureCtx = {
       val mri = madRenderInfo
-      val url = Context.SC_URL_PREFIX + routes.MarketShowcase.onlyOneAdAsImage(adRenderArgs).url
+      val url = Context.SC_URL_PREFIX + routes.Sc.onlyOneAdAsImage(adRenderArgs).url
       MPictureCtx(
         size   = Some(mri.stdSz.szAlias),
         sioUrl = Some(url)

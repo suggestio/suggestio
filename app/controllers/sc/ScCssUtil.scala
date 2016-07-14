@@ -34,7 +34,7 @@ trait ScCssUtil
    * @return Отрендеренный Html: link rel css.
    */
   protected def htmlAdsCssLink(args: Seq[AdCssArgs])(implicit ctx: Context): Html = {
-    val call = routes.MarketShowcase.serveBlockCss(args)
+    val call = routes.Sc.serveBlockCss(args)
     val call1 = cdnUtil.forCall(call)
     views.html.sc.stuff._cssLinkTpl(call1)
   }

@@ -124,7 +124,7 @@ class ScSitemapsXml @Inject() (
         fadOpenedIdOpt  = mad.id,
         generationOpt   = None // Всем юзерам поисковиков будет выдаваться одна ссылка, но всегда на рандомную выдачу.
       )
-      val url = routes.MarketShowcase.geoSite().url + "#!?" + jsState.toQs(qsb)
+      val url = routes.Sc.geoSite().url + "#!?" + jsState.toQs(qsb)
       val lastDt = mad.meta.basic.dateEditedOrCreated
       val lastDate = lastDt.toLocalDate
       SiteMapUrl(

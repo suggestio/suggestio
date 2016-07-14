@@ -8,13 +8,13 @@
 "use strict";
 
 @play.api.routing.JavaScriptReverseRouter(NAME)(
-  routes.javascript.MarketShowcase.geoShowcase,
-  routes.javascript.MarketShowcase.showcase,
-  routes.javascript.MarketShowcase.findAds,
-  routes.javascript.MarketShowcase.findNodes,
-  routes.javascript.MarketShowcase.focusedAds,
-  routes.javascript.MarketShowcase.tagsSearch,
-  routes.javascript.MarketShowcase.handleScError
+  routes.javascript.Sc.geoShowcase,
+  routes.javascript.Sc.showcase,
+  routes.javascript.Sc.findAds,
+  routes.javascript.Sc.findNodes,
+  routes.javascript.Sc.focusedAds,
+  routes.javascript.Sc.tagsSearch,
+  routes.javascript.Sc.handleScError
 );
 
 @* Когда скрипт загрузился и выполнился, будет вызвана функция инициализации с указанным именем, если задана. *@

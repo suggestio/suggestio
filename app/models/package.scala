@@ -92,7 +92,7 @@ package object models {
 
 
   /** Вызов на главную страницу. */
-  def MAIN_PAGE_CALL        = routes.MarketShowcase.geoSite()
+  def MAIN_PAGE_CALL        = routes.Sc.geoSite()
 
   type IImgMeta             = io.suggest.model.img.IImgMeta
 

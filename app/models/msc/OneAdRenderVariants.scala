@@ -36,7 +36,7 @@ object OneAdRenderVariants extends Enumeration with EnumMaybeWithName {
   /** Планируется рендер в HTML. */
   val ToHtml: T = new Val("h") {
     override def routesCall(qsArgs: OneAdQsArgs): Call = {
-      routes.MarketShowcase.onlyOneAd(qsArgs)
+      routes.Sc.onlyOneAd(qsArgs)
     }
 
     override def isToImage = false
@@ -46,7 +46,7 @@ object OneAdRenderVariants extends Enumeration with EnumMaybeWithName {
   /** Планируется рендер в картинку. */
   val ToImage: T = new Val("i") {
     override def routesCall(qsArgs: OneAdQsArgs): Call = {
-      routes.MarketShowcase.onlyOneAdAsImage(qsArgs)
+      routes.Sc.onlyOneAdAsImage(qsArgs)
     }
 
     override def isToImage = true

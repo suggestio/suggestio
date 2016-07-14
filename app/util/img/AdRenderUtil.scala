@@ -37,7 +37,7 @@ class AdRenderUtil @Inject() (
    * @return Строка с абсолютной ссылкой на локалхост.
    */
   def adImgLocalUrl(adArgs: OneAdQsArgs): String = {
-    "http://localhost:" + playUtil.httpPort + routes.MarketShowcase.onlyOneAd(adArgs).url
+    "http://localhost:" + playUtil.httpPort + routes.Sc.onlyOneAd(adArgs).url
   }
 
 

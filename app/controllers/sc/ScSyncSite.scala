@@ -48,7 +48,7 @@ trait ScSyncSiteGeo
         super._geoSiteResult(siteArgs)
       case Some(jsState) =>
         _syncGeoSite(jsState, siteArgs) { jsSt =>
-          routes.MarketShowcase.geoSite(x = siteArgs).url + "#!?" + jsSt.toQs()
+          routes.Sc.geoSite(x = siteArgs).url + "#!?" + jsSt.toQs()
         }
     }
   }
@@ -56,7 +56,7 @@ trait ScSyncSiteGeo
   /** Прямой доступ к синхронному сайту выдачи. */
   def syncGeoSite(scState: ScJsState, siteArgs: SiteQsArgs) = MaybeAuth().async { implicit request =>
     _syncGeoSite(scState, siteArgs) { jsSt =>
-      routes.MarketShowcase.syncGeoSite(jsSt).url
+      routes.Sc.syncGeoSite(jsSt).url
     }
   }
 

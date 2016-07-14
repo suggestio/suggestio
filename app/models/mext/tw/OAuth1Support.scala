@@ -143,7 +143,7 @@ trait OAuth1Support extends IOAuth1Support with PlayMacroLogsI { this: TwitterSe
     // twitter не трогает ссылки, до которых не может достучаться. Нужно помнить об этом.
     val tweetUrl = if (WITH_URL) {
       val urlPrefix = /*Context devReplaceLocalHostW127001*/ Context.SC_URL_PREFIX
-      urlPrefix + controllers.routes.MarketShowcase.geoSite(jsSt, siteArgs)
+      urlPrefix + controllers.routes.Sc.geoSite(jsSt, siteArgs)
     } else {
       ""
     }

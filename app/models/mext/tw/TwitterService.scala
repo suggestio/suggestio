@@ -77,7 +77,7 @@ trait TwitterService
         }
         // Аргументы для рендера карточки и рендер.
         val pca = PhotoCardArgs(
-          imgUrl = routes.MarketShowcase.onlyOneAdAsImage( calc.adRenderArgs ).url,
+          imgUrl = routes.Sc.onlyOneAdAsImage( calc.adRenderArgs ).url,
           url    = Some(ctx.request.uri),
           title  = mad1.guessDisplayName,                // TODO Брать из карточки.
           imgWh  = Some(calc.madRenderInfo)

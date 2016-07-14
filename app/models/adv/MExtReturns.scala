@@ -118,7 +118,7 @@ sealed trait ReturnToScBuilder {
    * @return String: ссылка относительно корня suggest.io.
    */
   def toRelUrl: String = {
-    routes.MarketShowcase.geoSite(toJsState).url
+    routes.Sc.geoSite(toJsState).url
   }
 
   /**

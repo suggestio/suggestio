@@ -23,7 +23,7 @@ import util.stat.StatUtil
  * Description: Контроллер выдачи sio-market.
  * 2014.nov.10: Из-за активного наращивания функционала был разрезан на части, расположенные в controllers.sc.*.
  */
-class MarketShowcase @Inject() (
+class Sc @Inject()(
   override val logoUtil           : LogoUtil,
   override val welcomeUtil        : WelcomeUtil,
   override val scStatUtil         : ScStatUtil,
