@@ -65,7 +65,7 @@
   @for(nodeId <- mnode.id) {
     <div class="i-list">
       @btn(routes.MarketLkAdn.showNodeAds(nodeId), 28) { ЛИЧНЫЙ<br/>КАБИНЕТ<br/>УЗЛА }
-      @btn1(ctx.SC_URL_PREFIX + routes.Sc.demoWebSite(nodeId).url, 52) { ВЫДАЧА }
+      @btn1(ctx.SC_URL_PREFIX + routes.Sc.geoSite( msc.ScJsState(adnId = Some(nodeId)) ).url, 52) { ВЫДАЧА }
       @btn(routes.SysBilling.forNode(nodeId), 52) { БИЛЛИНГ }
       @btn(routes.SysAdnGeo.forNode(nodeId), 52) { GEO }
     </div>

@@ -101,7 +101,6 @@ GET  /img/dyn                           @controllers.Img.dynImg(i: im.MImgT)
 
 
 # Витрина market'а и её экшены
-GET  /sc/site/:adnId                    @controllers.Sc.demoWebSite(adnId)
 GET  /sc/index/:adnId                   @controllers.Sc.showcase(adnId, a: msc.ScReqArgs ?= msc.ScReqArgs.empty)
 
 GET  /sc/blk/css                        @controllers.Sc.serveBlockCss(c: Seq[msc.AdCssArgs])

@@ -203,7 +203,7 @@ trait ScSiteGeo
 
   /**
    * Тело экшена _geoSite задаётся здесь, чтобы его можно было переопределять при необходимости.
- *
+   *
    * @param request Экземпляр реквеста.
    * @return Результат работы экшена.
    */
@@ -229,7 +229,7 @@ trait ScSiteGeo
 
   /**
    * Раздавалка "сайта" выдачи первой страницы. Можно переопределять, для изменения/расширения функционала.
- *
+   *
    * @param siteArgs Доп.аргументы для рендера сайта.
    * @param request Реквест.
    */
@@ -252,46 +252,3 @@ trait ScSiteGeo
   }
 
 }
-
-
-/** Поддержка node-сайтов. */
-trait ScSiteNode
-  extends ScSiteBase
-  with IScStatUtil
-  with AdnNodeMaybeAuth
-{
-
-  import mCommonDi._
-
-  /** Экшн, который рендерит страничку с дефолтовой выдачей узла. */
-  def demoWebSite(adnId: String) = AdnNodeMaybeAuth(adnId).async { implicit request =>
-    val mnode = request.mnode
-    val isReceiver = mnode.extras.adn.exists(_.isReceiver)
-    val nodeEnabled = mnode.common.isEnabled
-    if (nodeEnabled && isReceiver) {
-      // Собираем статистику. Тут скорее всего wifi
-      Future {
-        scStatUtil.SiteStat(Some(request.mnode))
-          .saveStats
-          .onFailure {
-            case ex => LOGGER.warn(s"demoWebSite($adnId): Failed to save stats", ex)
-          }
-      }
-
-      // Рендерим результат в текущем потоке.
-      val logic = new SiteLogic with SiteScriptLogicV2 {
-        override implicit def _request = request
-        override val _siteArgs = SiteQsArgs(adnId = Some(adnId))
-        override def _withGeo: Boolean = false
-        override def _indexCall: Call = routes.Sc.showcase(adnId)
-      }
-      logic.resultFut
-
-    } else {
-      LOGGER.debug(s"demoWebSite($adnId): Requested node exists, but not available in public: enabled=$nodeEnabled isRcvr=$isReceiver")
-      errorHandler.http404ctx
-    }
-  }
-
-}
-

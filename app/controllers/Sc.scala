@@ -41,7 +41,6 @@ class Sc @Inject()(
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
-  with ScSiteNode
   with ScSiteGeo
   with ScIndexGeo
   with ScIndexNode
