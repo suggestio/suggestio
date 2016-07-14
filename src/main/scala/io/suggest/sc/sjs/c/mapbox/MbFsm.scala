@@ -22,7 +22,6 @@ object MbFsm
   with MapInit
   with MapReady
   with OnMove
-  with Detach
   with ScSjsFsmLogger
   //with LogBecome
 {
@@ -58,13 +57,10 @@ object MbFsm
 
   /** Реализованный трейт WaitEnsureSignalT. */
   protected trait EnsureMapInitT extends super.EnsureMapInitT {
-    override def _mapInitializingState = new MapInitState
+    override def _mapInitState = new MapInitState
   }
   /** Статическая js-поддержка карты инициализирована. */
   class JsInitState extends JsInitStateT with EnsureMapInitT
-
-  /** Состояние, когда нет инициализированной карты. */
-  class NoMapState extends EnsureMapInitT
 
 
   /** Динамическая часть карты в процессе инициализации. */
@@ -73,22 +69,15 @@ object MbFsm
   }
 
   /** Карта инициализирована. */
-  class MapReadyState extends MapReadyStateT with HandleScInxSwitch {
+  class MapReadyState extends MapReadyStateT {
     override def _mapMovingState  = new OnDragState
-    override def _detachedState   = new MapDetachedState
-    override def _noMapState      = new NoMapState
+    override def _mapInitState    = new MapInitState
   }
 
   /** Юзер таскает карту. */
   class OnDragState extends OnDragStateT {
     // TODO Нужно состояние подтверждения переключения в новую локацию?
     override def moveEndState = new MapReadyState
-  }
-
-  /** Состояние отсоединенности карты от выдачи. */
-  class MapDetachedState extends MapDetachedStateT {
-    override def _detachReattachFailedState = new MapInitState
-    override def _attachSuccessState        = new MapReadyState
   }
 
 }

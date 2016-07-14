@@ -4,7 +4,7 @@ import io.suggest.sc.sjs.c.mapbox.MbFsm
 import io.suggest.sc.sjs.c.scfsm.ScFsmStub
 import io.suggest.sc.sjs.m.mgeo.IMGeoMode
 import io.suggest.sc.sjs.m.mgrid.MGridState
-import io.suggest.sc.sjs.m.mmap.{EnsureMap, ScInxWillSwitch}
+import io.suggest.sc.sjs.m.mmap.EnsureMap
 import io.suggest.sc.sjs.m.msc.{MFindAdsArgsLimOff, MScSd}
 import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
 import io.suggest.sc.sjs.m.msrv.index.{MNodeIndex, MScIndexArgs}
@@ -59,9 +59,6 @@ trait Index extends ScFsmStub {
           )
         )
       )
-
-      // Уведомить FSM карты о надвигающемся трэше и угаре.
-      MbFsm ! ScInxWillSwitch
 
       // Подписаться на результат реквеста.
       _sendFutResBack(inxFut)

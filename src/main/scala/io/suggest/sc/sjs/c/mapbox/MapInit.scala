@@ -1,8 +1,8 @@
 package io.suggest.sc.sjs.c.mapbox
 
+import io.suggest.sc.sjs.m.mmap.MMapInst
 import io.suggest.sc.sjs.vm.mapbox.{AllNodesUrl, GlMapVm}
 import io.suggest.sc.sjs.vm.search.tabs.geo.SGeoContent
-import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.mapbox.gl.event._
 
 /**
@@ -16,62 +16,68 @@ trait MapInit extends StoreUserGeoLoc {
   /** Трейт для сборки состояния ожидания инициализации карты. */
   trait MapInitStateT extends StoreUserGeoLocStateT {
 
-    private def _vm = GlMapVm( _stateData.glmap.get )
-
     override def afterBecome(): Unit = {
       super.afterBecome()
-
       val sd0 = _stateData
 
-      for (glmap <- sd0.glmap) {
-        warn( WarnMsgs.MAPBOXLG_ALREADY_INIT )
-        glmap.remove()
+      for (currCont <- SGeoContent.find()) {
+        sd0.mapInst.fold[Unit] {
+          // Мапы нет вообще, надо инициализировать.
+          val glmap = GlMapVm.createNew(
+            container = currCont,
+            useLocation = sd0.lastUserLoc
+          )
+          val mmi = MMapInst(glmap, currCont)
+          // Сохранить новый инстанс карты в состояние FSM.
+          _stateData = sd0.copy(
+            mapInst = Some(mmi)
+          )
+          // Подписать FSM на события готовности карты к работе.
+          GlMapVm(glmap)
+            .on( MapEventsTypes.STYLE_LOADED )(_mapSignalCallbackF(MapInitDone))
+
+        } { inst =>
+          // Мапа уже есть. Убедится, что она есть в контейнере.
+          if (currCont.isEmpty) {
+            // Пустой контейнер карты надобно заменить на имеющийся в состоянии.
+            currCont.replaceWith(inst.container)
+          }
+          _done()
+        }
       }
-
-      for (cont <- SGeoContent.find()) {
-        // Пока div контейнера категорий содержит какой-то мусор внутри, надо его очищать перед использованием.
-        cont.clear()
-
-        val map0 = GlMapVm.createNew(
-          container = cont,
-          useLocation = sd0.lastUserLoc
-        )
-
-        // Сохранить карту в состояние FSM.
-        _stateData = sd0.copy(
-          glmap = Some(map0)
-        )
-      }
-
-      // Повесить событие ожидания инициализации карты.
-      _vm.on( MapEventsTypes.STYLE_LOADED )(_mapSignalCallbackF(MapInitDone))
     }
 
 
     override def receiverPart: Receive = super.receiverPart.orElse {
-      case _: MapInitDone =>
+      case _: IMapInitDone =>
         _handleMapInitDone()
     }
 
     /** Реакция на окончание инициализации на стороне карты. */
     def _handleMapInitDone(): Unit = {
-      val vm = _vm
-      vm.glMap.off(MapEventsTypes.STYLE_LOADED)
+      for (mMapInst <- _stateData.mapInst) {
+        val vm = GlMapVm( mMapInst.glmap )
+        vm.glMap.off(MapEventsTypes.STYLE_LOADED)
 
-      // Надо повесить listener'ы событий на карту
-      vm.on( MapEventsTypes.MOVE_START )(_mapSignalCallbackF(MoveStart))
-        .on( MapEventsTypes.MOVE )(_mapSignalCallbackF(Moving))
-        .on( MapEventsTypes.MOVE_END )(_mapSignalCallbackF(MoveEnd))
+        // Надо повесить listener'ы событий на карту
+        vm.on(MapEventsTypes.MOVE_START)(_mapSignalCallbackF(MoveStart))
+          .on(MapEventsTypes.MOVE)(_mapSignalCallbackF(Moving))
+          .on(MapEventsTypes.MOVE_END)(_mapSignalCallbackF(MoveEnd))
 
-      // Добавить карту узлов.
-      for {
-        urlVm <- AllNodesUrl.find()
-        url   <- urlVm.value
-      } {
-        vm.initAllNodes(url)
+        // Добавить карту узлов.
+        for {
+          urlVm <- AllNodesUrl.find()
+          url <- urlVm.value
+        } {
+          vm.initAllNodes(url)
+        }
       }
 
-      // Переключить состояния
+      _done()
+    }
+
+    /** Переключить состояние в готовность карты к работе. */
+    private def _done(): Unit = {
       become(_mapReadyState)
     }
 

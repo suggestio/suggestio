@@ -51,11 +51,11 @@ trait JsInit extends StoreUserGeoLoc {
   trait EnsureMapInitT extends IEnsureMapHandler {
 
     override def _handleEnsureMap(em: EnsureMap): Unit = {
-      become(_mapInitializingState)
+      become(_mapInitState)
     }
 
     /** Состояние полной готовности карты. */
-    def _mapInitializingState: FsmState
+    def _mapInitState: FsmState
 
   }
 

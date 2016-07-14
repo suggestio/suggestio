@@ -30,9 +30,9 @@ trait StoreUserGeoLoc extends MbFsmStub {
 
     /** Реакция на начало отображения карты на экране. */
     def _handleMapShowing(): Unit = {
-      for (glmap <- _stateData.glmap) {
+      for (mMapInst <- _stateData.mapInst) {
         // Почему-то карта ошибается с размером, но после ресайза определяет корректно.
-        glmap.resize()
+        mMapInst.glmap.resize()
       }
     }
 

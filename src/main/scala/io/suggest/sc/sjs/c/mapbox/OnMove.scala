@@ -17,7 +17,7 @@ trait OnMove extends MapReady {
     * В центре карты -- прицел, следующий за центром карты. */
   trait OnDragStateT extends StoreUpdateUserGeoLocStateT {
 
-    private val _vm = GlMapVm( _stateData.glmap.get )
+    private val _vm = GlMapVm( _stateData.mapInst.get.glmap )
 
     override def afterBecome(): Unit = {
       super.afterBecome()

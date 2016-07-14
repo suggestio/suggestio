@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.c.mapbox
 
 import io.suggest.sc.sjs.m.mgeo.{GlLocation, MGeoLoc}
+import io.suggest.sc.sjs.m.mmap.EnsureMap
 import io.suggest.sc.sjs.vm.mapbox.GlMapVm
 import io.suggest.sjs.mapbox.gl.event.IMapMoveSignal
 import io.suggest.sjs.mapbox.gl.map.GlMap
@@ -20,8 +21,8 @@ trait MapReady extends StoreUserGeoLoc {
     override def _handleUserGeoLoc(userGeoLoc: GlLocation): Unit = {
       super._handleUserGeoLoc(userGeoLoc)
       val sd0 = _stateData
-      for (glmap <- sd0.glmap) {
-        GlMapVm(glmap)
+      for (glmap <- sd0.mapInst) {
+        GlMapVm(glmap.glmap)
           .setUserGeoLoc(userGeoLoc.data)
       }
     }
@@ -38,9 +39,14 @@ trait MapReady extends StoreUserGeoLoc {
   /** Трейт состояния готовности к работе. */
   trait MapReadyStateT extends StoreUpdateUserGeoLocStateT {
 
-    override def receiverPart: Receive = super.receiverPart.orElse {
-      case mapMoveSignal: IMapMoveSignal =>
-        _handleMapMove(mapMoveSignal)
+    override def receiverPart: Receive = {
+      val r: Receive = {
+        case mapMoveSignal: IMapMoveSignal =>
+          _handleMapMove(mapMoveSignal)
+        case _: EnsureMap =>
+          _handleEnsureMap()
+      }
+      r.orElse( super.receiverPart )
     }
 
     /** Реагирование на начавшееся движение карты. */
@@ -73,6 +79,13 @@ trait MapReady extends StoreUserGeoLoc {
 
       vm
     }
+
+    /** Реакция на повторный запрос ensuring'а карты. */
+    def _handleEnsureMap(): Unit = {
+      become( _mapInitState )
+    }
+
+    def _mapInitState: FsmState
 
   }
 
