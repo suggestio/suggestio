@@ -9,7 +9,7 @@
 
 @_scrollableContainerTpl(
   className   = "focused-ad",
-  id          = ID_PREFIX + args.brArgs.apiVsn.scFocIdSuffix(args),
+  id          = ID_PREFIX + args.brArgs.mad.id.getOrElse(""),
   "style"     -> ( "background-color: #" + brArgs.mad.ad.richDescr.fold("f9f9f9")(_.bgColor) ),
   MAD_ID_ATTR -> args.brArgs.mad.id.orNull
 ) {

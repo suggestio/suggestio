@@ -51,7 +51,7 @@ abstract class ScRenderArgs
   /** Рендерить ли утиль, связанную с "закрытием" выдачи?
     * После удаления API v1, можно заинлайнить в шаблон, выкинув обращение к apiVsn.force..() */
   def withScClose: Boolean = {
-    !syncRender && (target.isCloseable || apiVsn.forceScCloseable)
+    !syncRender && target.isCloseable
   }
 
   override def toString: String = {

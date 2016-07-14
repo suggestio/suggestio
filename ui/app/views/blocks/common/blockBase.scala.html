@@ -12,15 +12,13 @@
 <div class="sm-block sio-mart__single-offer sm-block-tpl@bc.id @if(mad.id){sm-block@mad.id} @if(args.isFocused){__rel} @args.cssClasses"
      @if(mad.id) {
        @MAD_ID_ATTR="@mad.id"
-       @if(args.apiVsn.serverSideBlockIds) {
-         id="@mad.id@ID_DELIM@(if (args.isFocused) FAd.BLOCK_ID_SUFFIX else ID_SUFFIX)"
-         @for(index <- args.indexOpt) {
-           @BLK_INDEX_ATTR="@index"
-         }
+       id="@mad.id@ID_DELIM@(if (args.isFocused) FAd.BLOCK_ID_SUFFIX else ID_SUFFIX)"
+       @for(index <- args.indexOpt) {
+         @BLK_INDEX_ATTR="@index"
        }
      }
      @* Рендерить id-продьюсера карточки для v2-плитки. *@
-     @if(!args.isFocused && args.apiVsn.blockBaseProducerIdAttr) {
+     @if( !args.isFocused ) {
        @for(producerId <- ctx.api.n2NodesUtil.madProducerId(mad)) {
          @PRODUCER_ID_ATTR="@producerId"
        }
