@@ -1,6 +1,6 @@
 package models
 
-import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
+import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.node.search._
 import models.im.DevScreen
 import models.msc.{MScApiVsn, MScApiVsns}
@@ -8,6 +8,7 @@ import play.api.mvc.QueryStringBindable
 import util.PlayMacroLogsDyn
 import util.qsb.CommaDelimitedStringSeq
 import io.suggest.ad.search.AdSearchConstants._
+import io.suggest.model.geo.PointGs
 import io.suggest.model.play.qsb.QsbKey1T
 import views.js.stuff.m.adSearchJsUnbindTpl
 
@@ -43,7 +44,8 @@ object AdSearch extends CommaDelimitedStringSeq {
                    longOptB     : QueryStringBindable[Option[Long]],
                    geoModeB     : QueryStringBindable[GeoMode],
                    devScreenB   : QueryStringBindable[Option[DevScreen]],
-                   apiVsnB      : QueryStringBindable[MScApiVsn]
+                   apiVsnB      : QueryStringBindable[MScApiVsn],
+                   geoPointOptB : QueryStringBindable[Option[GeoPoint]]
                   ): QueryStringBindable[AdSearch] = {
 
     val strSeqB = cdssQsb
@@ -71,6 +73,7 @@ object AdSearch extends CommaDelimitedStringSeq {
           geoEith           <- geoModeB.bind     (f(GEO_MODE_FN),           params)
           screenEith        <- devScreenB.bind   (f(SCREEN_INFO_FN),        params)
           withoutIdOptEith  <- strOptB.bind      (f(WITHOUT_IDS_FN),        params)
+          geoPointOptEith   <- geoPointOptB.bind (f(AGP_POINT_FN),          params)
 
         } yield {
           for {
@@ -86,22 +89,18 @@ object AdSearch extends CommaDelimitedStringSeq {
             _limitOpt       <- limitOptEith.right
             _offsetOpt      <- offsetOptEith.right
             _withoutIdOpt   <- withoutIdOptEith.right
+            _geoPointOpt    <- geoPointOptEith.right
 
           } yield {
 
             // Расчитываем значение эджей.
             val _outEdges: Seq[ICriteria] = {
               val someTrue = Some(true)
-              val prodCrOpt = for (prodId <- _prodIdOpt) yield {
-                Criteria(
-                  nodeIds     = Seq( prodId ),
-                  predicates  = Seq( MPredicates.OwnedBy ),
-                  must        = someTrue
-                )
-              }
+              var eacc: List[Criteria] = Nil
 
-              val rcvrCrOpt = for (rcvrId <- _rcvrIdOpt) yield {
-                Criteria(
+              // Поиск карточек у указанного узла-ресивера.
+              for (rcvrId <- _rcvrIdOpt) {
+                eacc ::= Criteria(
                   nodeIds     = Seq( rcvrId ),
                   predicates  = Seq( MPredicates.Receiver ),
                   sls         = _rcvrSlOpt.flatMap(AdShowLevels.maybeWithName).toSeq,
@@ -109,7 +108,30 @@ object AdSearch extends CommaDelimitedStringSeq {
                   must        = someTrue
                 )
               }
-              (prodCrOpt ++ rcvrCrOpt).toSeq
+
+              // Поиск карточек от указанного узла-продьюсера.
+              for (prodId <- _prodIdOpt) {
+                eacc ::= Criteria(
+                  nodeIds     = Seq( prodId ),
+                  predicates  = Seq( MPredicates.OwnedBy ),
+                  must        = someTrue
+                )
+              }
+
+              // Можно искать размещения карточек в указанной точке.
+              for (geoPoint <- _geoPointOpt) {
+                eacc ::= Criteria(
+                  predicates  = Seq( MPredicates.AdvGeoPlace ),
+                  must        = someTrue,
+                  gsIntersect = Some(GsCriteria(
+                    levels = Seq( NodeGeoLevels.geoPlace ),
+                    shapes = Seq( PointGs(geoPoint) )
+                  ))
+                )
+              }
+
+              // Вернуть получившийся и итоговый акк.
+              eacc
             }
 
             // Собираем результат.
@@ -142,10 +164,12 @@ object AdSearch extends CommaDelimitedStringSeq {
       def unbind(key: String, value: AdSearch): String = {
         val f = key1F(key)
 
-        // Вычисляем id продьюсера.
-        val _prodIdOpt = value.outEdges
+        def _withPred(_p: MPredicate) = value.outEdges
             .iterator
-            .filter { _.containsPredicate( MPredicates.OwnedBy ) }
+            .filter { _.containsPredicate( _p ) }
+
+        // Вычисляем id продьюсера.
+        val _prodIdOpt = _withPred(MPredicates.OwnedBy)
             .flatMap { _.nodeIds }
             .toStream
             // TODO Разбиндивать на весь список producers сразу надо?
@@ -153,15 +177,26 @@ object AdSearch extends CommaDelimitedStringSeq {
 
         // Вычисляем данные по ресиверу.
         val (_rcvrIdOpt, _rcvrSlOpt) = {
-          val v = value.outEdges
-            .iterator
-            .filter { _.containsPredicate( MPredicates.Receiver ) }
+          val v = _withPred(MPredicates.Receiver)
             .toStream
             // TODO Разбиндивать на весь список receivers сразу надо?
             .headOption
           (v.flatMap(_.nodeIds.headOption),
             v.flatMap(_.sls.headOption).map(_.name))
         }
+
+        // Вычисляем данные по точке георазмещения.
+        val _pointGsOpt = _withPred( MPredicates.AdvGeoPlace )
+          .flatMap(_.gsIntersect)
+          .flatMap(_.shapes)
+          .flatMap {
+            case pgs: PointGs => Seq(pgs.coord)
+            case _            => Nil
+          }
+          .toStream
+          .headOption
+
+        // TODO
 
         // Собираем аргументы для сборки query string.
         Iterator(
@@ -176,7 +211,8 @@ object AdSearch extends CommaDelimitedStringSeq {
           longOptB.unbind     (f(GENERATION_FN),     value.randomSortSeed),
           strOptB.unbind      (f(GEO_MODE_FN),       value.geo.toQsStringOpt),
           devScreenB.unbind   (f(SCREEN_INFO_FN),    value.screen),
-          strOptB.unbind      (f(WITHOUT_IDS_FN),    value.withoutIds.headOption)
+          strOptB.unbind      (f(WITHOUT_IDS_FN),    value.withoutIds.headOption),
+          geoPointOptB.unbind (f(AGP_POINT_FN),      _pointGsOpt)
         )
           .filter(!_.isEmpty)
           .mkString("&")

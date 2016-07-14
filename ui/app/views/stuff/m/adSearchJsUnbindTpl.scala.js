@@ -18,6 +18,7 @@
     add("@GEO_MODE_FN");
     add("@SCREEN_INFO_FN");
     add("@WITHOUT_IDS_FN");
+    add("@AGP_POINT_FN");
     @after
     add("@VSN", true);
   }

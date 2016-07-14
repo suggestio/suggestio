@@ -142,7 +142,7 @@ case object GeoNone extends GeoMode {
   override def isWithGeo = false
   override def toQsStringOpt = None
   override def geoSearchInfoOpt(implicit request: ExtReqHdr): Future[Option[GeoSearchInfo]] = {
-    Future successful None
+    Future.successful( None )
   }
   override def exactGeodata = None
 
@@ -158,13 +158,13 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
 
   import LOGGER._
 
-  val CACHE_TTL_SECONDS = configuration.getInt("geo.ip.cache.ttl.seconds") getOrElse 240
+  val CACHE_TTL_SECONDS = configuration.getInt("geo.ip.cache.ttl.seconds").getOrElse( 240 )
 
-  val DISTANCE_KM_DFLT: Double = configuration.getDouble("geo.ip.distance.km.dflt") getOrElse 50.0
+  val DISTANCE_KM_DFLT: Double = configuration.getDouble("geo.ip.distance.km.dflt").getOrElse( 50.0 )
 
   def DISTANCE_DFLT = Distance(DISTANCE_KM_DFLT, DistanceUnit.KILOMETERS)
 
-  val REPLACE_LOCALHOST_IP_WITH: String = configuration.getString("geo.ip.localhost.replace.with") getOrElse "213.108.35.158"
+  val REPLACE_LOCALHOST_IP_WITH: String = configuration.getString("geo.ip.localhost.replace.with").getOrElse( "213.108.35.158" )
 
   /** Выставлять флаг local client, если User-Agent содержит подстроку, подходящую под этот регэксп. */
   val LOCAL_CL_UA_RE = "(?i)(NCDN|ngenix)".r

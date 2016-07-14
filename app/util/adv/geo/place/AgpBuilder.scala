@@ -56,7 +56,7 @@ trait AgpBuilder extends IAdvBuilder {
           case ((acc, counter), mitem) =>
             val meGs = MEdgeGeoShape(
               id      = counter,
-              glevel  = NodeGeoLevels.NGL_TOWN_DISTRICT,
+              glevel  = NodeGeoLevels.geoPlace,
               shape   = mitem.geoShape.get
             )
             (meGs :: acc) -> (counter + 1)
