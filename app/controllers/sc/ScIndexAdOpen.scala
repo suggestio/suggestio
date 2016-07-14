@@ -5,7 +5,7 @@ import io.suggest.model.n2.node.IMNodes
 import models.req.IReq
 import models.{AdSearchImpl, AdShowLevels, MNode}
 import models.im.DevScreen
-import models.msc.{MScApiVsn, ScReqArgs, ScReqArgsDflt}
+import models.msc.{MScApiVsn, ScReqArgs, ScReqArgsDfltImpl}
 import play.api.mvc.Result
 import util.n2u.IN2NodesUtilDi
 
@@ -119,7 +119,7 @@ trait ScIndexAdOpen
       override def adnNodeFut         = Future.successful( producer )
       override def isGeo              = false
       override implicit def _request  = request
-      override def _reqArgs: ScReqArgs = new ScReqArgsDflt {
+      override def _reqArgs: ScReqArgs = new ScReqArgsDfltImpl {
         private val s = focLogic._adSearch
         override def prevAdnId: Option[String]  = {
           n2NodesUtil.receiverIds(s.outEdges)

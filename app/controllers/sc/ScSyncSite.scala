@@ -241,7 +241,7 @@ trait ScSyncSiteGeo
         _inlineTiles        <- _tilesRenderFut
         _nodesListHtmlOpt   <- _maybeNodesListHtmlFut
       } yield {
-        new ScReqArgsDflt {
+        new ScReqArgsDfltImpl {
           // TODO нужно и screen наверное выставлять по-нормальному?
           override def geo                = _scState.geo
           override def inlineTiles        = _inlineTiles
@@ -277,10 +277,12 @@ trait ScSyncSiteGeo
                   .flatMap( AdnShownTypes.maybeWithName )
                   .getOrElse( AdnShownTypes.default )
                 val gdr = GeoDetectResult(ast.ngls.head, node)
-                Future successful gdr
+                Future.successful( gdr )
+
               case None =>
                 // Имитируем экзепшен, чтобы перехватить его в Future.recover():
-                Future failed new NoSuchElementException("Receiver node not exists or undefined: " + _scState.adnId)
+                val ex = new NoSuchElementException("Receiver node not exists or undefined: " + _scState.adnId)
+                Future.failed(ex)
             }
             // Если нет возможности использовать заданный узел, пытаемся определить через метод супер-класса.
             .recoverWith {
@@ -293,10 +295,10 @@ trait ScSyncSiteGeo
 
           override def nodeFoundHelperFut(gdr: GeoDetectResult): Future[NfHelper_t] = {
             val helper = new ScIndexNodeGeoHelper with ScIndexHelperAddon {
-              override val gdrFut = Future successful gdr
-              override def welcomeAdOptFut = Future successful None
+              override val gdrFut = Future.successful( gdr )
+              override def welcomeAdOptFut = Future.successful( None )
             }
-            Future successful helper
+            Future.successful( helper )
           }
         }
       }

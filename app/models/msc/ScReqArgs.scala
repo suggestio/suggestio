@@ -52,7 +52,7 @@ object ScReqArgs {
                 .filter(_.isWithGeo)
                 .getOrElse(GeoIp)
             }
-            new ScReqArgsDflt {
+            new ScReqArgsDfltImpl {
               override def geo = _geo
               // Игнорим неверные размеры, ибо некритично.
               override lazy val screen: Option[DevScreen] = maybeDevScreen
@@ -84,10 +84,12 @@ object ScReqArgs {
     }
   }
 
-  def empty: ScReqArgs = new ScReqArgsDflt {}
+  def empty: ScReqArgs = new ScReqArgsDfltImpl
 
 }
 
+
+/** Модель аргументов запроса к выдаче. */
 trait ScReqArgs extends SyncRenderInfo {
   def geo                 : GeoMode
   def screen              : Option[DevScreen]
@@ -106,6 +108,9 @@ trait ScReqArgs extends SyncRenderInfo {
     ScReqArgs.qsb.unbind("a", this)
   }
 }
+
+
+/** Дефолтовая реализация полей трейта [[ScReqArgs]]. */
 trait ScReqArgsDflt extends ScReqArgs with SyncRenderInfoDflt {
   override def geo                  : GeoMode = GeoNone
   override def screen               : Option[DevScreen] = None
@@ -117,6 +122,10 @@ trait ScReqArgsDflt extends ScReqArgs with SyncRenderInfoDflt {
   override def inlineNodesList      : Option[Html] = None
   override def adnNodeCurrentGeo    : Option[MNode] = None
 }
+/** Реализация [[ScReqArgsDflt]] для облегчения скомпиленного байткода. */
+class ScReqArgsDfltImpl extends ScReqArgsDflt
+
+
 /** Враппер [[ScReqArgs]] для имитации вызова copy(). */
 trait ScReqArgsWrapper extends ScReqArgs {
   def reqArgsUnderlying: ScReqArgs

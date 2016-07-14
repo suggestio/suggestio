@@ -51,10 +51,12 @@ trait ScIndexGeo
       override def _reqArgs = args
       override implicit def _request = request
     }
+
     // Запускаем хелпер на генерацию асинхронного результата:
     val resultFut = logic()
+
     // Собираем статистику асинхронно
-    resultFut onSuccess { case logRes =>
+    resultFut.onSuccess { case logRes =>
       scStatUtil.IndexStat(
         logic.gsiOptFut,
         logRes.helper.ctx.deviceScreenOpt,
@@ -65,11 +67,13 @@ trait ScIndexGeo
           LOGGER.warn("geoShowcase(): Failed to save statistics: args = " + args, ex)
         }
     }
+
     // Готовим настройки кеширования. Если геолокация по ip, то значит возможно только private-кеширование на клиенте.
     val (cacheControlMode, hdrs0) = if (!args.geo.isExact)
       "private" -> List(VARY -> X_FORWARDED_FOR)
     else
       "public" -> Nil
+
     val hdrs1 = CACHE_CONTROL -> s"$cacheControlMode, max-age=$SC_INDEX_CACHE_SECONDS"  ::  hdrs0
     // Возвращаем асинхронный результат, добавив в него клиентский кеш.
     resultFut map { logRes =>
@@ -78,6 +82,7 @@ trait ScIndexGeo
         .withHeaders(hdrs1 : _*)
     }
   }
+
 
   // TODO Можно объеденить GeoIndexLogicBase и GeoIndexLogic.
 
