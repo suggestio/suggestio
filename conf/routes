@@ -109,9 +109,6 @@ GET  /blk/css                           @controllers.MarketShowcase.serveBlockCs
 GET  /market/geo/site                   @controllers.MarketShowcase.rdrToGeoSite
 GET  /market/geo/index                  @controllers.MarketShowcase.geoShowcase(a: msc.ScReqArgs ?= msc.ScReqArgs.empty)
 
-GET  /market/node_icon/:adnId           @controllers.MarketShowcase.nodeIconJs(adnId)
-GET  /market/node_data/:adnId           @controllers.MarketShowcase.nodeData(adnId)
-
 GET  /market/ads                        @controllers.MarketShowcase.findAds(a: AdSearch)
 GET  /market/fads                       @controllers.MarketShowcase.focusedAds(a: msc.FocusedAdsSearchArgs)
 ## Рендер ровно одной карточки.

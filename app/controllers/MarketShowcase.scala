@@ -6,7 +6,7 @@ import controllers.sc._
 import io.suggest.model.n2.node.MNodes
 import models.im.make.IMaker
 import models.merr.MRemoteErrors
-import models.mproj.{ICommonDi, MProjectInfo}
+import models.mproj.ICommonDi
 import models.msc.map.MMapNodes
 import util.PlayMacroLogsImpl
 import util.cdn.CdnUtil
@@ -37,14 +37,12 @@ class MarketShowcase @Inject() (
   @Named("blk") override val blkImgMaker  : IMaker,
   override val mRemoteErrors      : MRemoteErrors,
   override val mMapNodes          : MMapNodes,
-  override val mProjectInfo       : MProjectInfo,
   override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
   with ScSiteNode
   with ScSiteGeo
-  with ScNodeInfo
   with ScIndexGeo
   with ScIndexNode
   with ScSyncSiteGeo
