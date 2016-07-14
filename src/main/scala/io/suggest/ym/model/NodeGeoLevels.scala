@@ -116,7 +116,10 @@ object NodeGeoLevels extends Enumeration(1) with EnumMaybeWithName with EnumMayb
 
 
   /** Layer, относящийся к гео-тегам. */
-  def geoTag = NGL_TOWN_DISTRICT
+  def geoTag = geoPlace
+
+  /** Layer, в котором карточки размещают на карте. */
+  def geoPlace = NGL_TOWN_DISTRICT
 
   /** Вывести множество значений этого enum'а, но выставив текущий тип значения вместо Value. */
   def valuesNgl: Set[T] = values.asInstanceOf[Set[T]]
