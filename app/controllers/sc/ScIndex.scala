@@ -2,7 +2,6 @@ package controllers.sc
 
 import _root_.util.di._
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
-import _root_.util.jsa.{SmRcvResp, Js}
 import _root_.util.PlayMacroLogsI
 import models.im.MImgT
 import models.jsm.ScIndexResp
@@ -123,11 +122,6 @@ trait ScIndexCommon
       }
     }
 
-    /** Ответ для coffeescript-выдачи, там возвращался js. */
-    protected def _result_v1(args: ScIndexResp): Future[Result] = {
-      Ok( Js(65536, SmRcvResp(args)) )
-    }
-
     /** Ответ для sjs-выдачи, там нужен json. */
     protected def _result_v2(args: ScIndexResp): Future[Result] = {
       Ok(args.toJson)
@@ -135,8 +129,10 @@ trait ScIndexCommon
 
     protected def _resultVsn(args: ScIndexResp): Future[Result] = {
       _reqArgs.apiVsn match {
-        case MScApiVsns.Coffee => _result_v1(args)
-        case MScApiVsns.Sjs1   => _result_v2(args)
+        case MScApiVsns.Sjs1 =>
+          _result_v2(args)
+        case other =>
+          throw new UnsupportedOperationException("Unsupported API vsn: " + other.versionNumber)
       }
     }
     
@@ -180,7 +176,7 @@ trait ScIndexNodeCommon
 
     /** В рамках showcase(adnId) геолокация не требуется, узел и так известен. */
     override def geoAcurrEnoughtFut: Future[Option[Boolean]] = {
-      Future successful None
+      Future.successful( None )
     }
 
     /** Есть узел -- есть заголовок. */
@@ -197,9 +193,9 @@ trait ScIndexNodeCommon
       val _hBtnArgsFut = hBtnArgsFut
       // В методе логика немного разветвляется и асинхронна внутри. false-ветвь реализована через Future.failed.
       val fut0 = if (_reqArgs.prevAdnId.nonEmpty) {
-        Future successful None
+        Future.successful( None )
       } else {
-        Future failed new NoSuchElementException()
+        Future.failed( new NoSuchElementException() )
       }
       fut0.flatMap { _ =>
         adnNodeFut
