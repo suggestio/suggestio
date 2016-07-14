@@ -4,7 +4,7 @@ import java.util.NoSuchElementException
 
 import _root_.util.blocks.BgImg
 import _root_.util.di.{IScNlUtil, IScStatUtil, IScUtil}
-import _root_.util.jsa.{Js, JsAction, JsAppendById, SmRcvResp}
+import _root_.util.jsa.{JsAction, JsAppendById}
 import _root_.util.blocks.IBlkImgMakerDI
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.IMNodes
@@ -13,13 +13,10 @@ import models.mctx.Context
 import models.msc._
 import models.req.IReq
 import play.api.mvc.Result
-import util.jsa.cbca.grid._
 import models.blk._
-import models.jsm.FindAdsResp
 import play.twirl.api.Html
 import util._
 import util.acl._
-import views.html.sc._
 import play.api.libs.json._
 
 import scala.collection.immutable
@@ -260,10 +257,10 @@ trait ScAdsTile
     /** Собрать необходимую логику обработки запроса в зависимости от версии API. */
     def apply(adSearch: AdSearch)(implicit request: IReq[_]): TileAdsLogicV = {
       adSearch.apiVsn match {
-        case MScApiVsns.Coffee =>
-          new TileAdsLogicV1(adSearch)
         case MScApiVsns.Sjs1 =>
           new TileAdsLogicV2(adSearch)
+        case other =>
+          throw new UnsupportedOperationException("Unsupported API version: " + other.versionNumber)
       }
     }
   }
@@ -275,49 +272,6 @@ trait ScAdsTile
 
     def cellSizeCssPx: Int    = szMulted(BlockWidths.NARROW.widthPx, tileArgs.szMult)
     def cellPaddingCssPx: Int = szMulted(scUtil.TILE_PADDING_CSSPX, tileArgs.szMult)
-  }
-
-
-  /** Логика сборки http-ответов для API v1. */
-  protected class TileAdsLogicV1(val _adSearch: AdSearch)
-                                (implicit val _request: IReq[_]) extends TileAdsLogicV {
-
-    override type T = JsString
-
-    /** v1 использует wrapper-шаблон с js-shop-link, не несущий никакой стилистики. */
-    override def renderMad2html(brArgs: RenderArgs): Html = {
-      _adNormalTpl(brArgs, isWithAction = true)(ctx)
-    }
-
-    override def renderMadAsync(brArgs: blk.RenderArgs): Future[T] = {
-      for (html <- renderMad2htmlAsync(brArgs)) yield {
-        htmlCompressUtil.html2jsStr(html)
-      }
-    }
-
-    /** Сборка http-ответа для coffeescript-выдачи. Там использовался голый js. */
-    override def resultFut: Future[Result] = {
-      // Запускаем асинхронную сборку ответа.
-      val smRcvRespFut = madsRenderedFut map { madsRendered =>
-        val resp = FindAdsResp(madsRendered)
-        SmRcvResp(resp)
-      }
-      // ссылку на css блоков надо составить и передать клиенту отдельно от тела основного ответа прямо в <head>.
-      val cssAppendFut = jsAppendAdsCssFut
-      // 2014.nov.25: Из-за добавления масштабирования блоков плитки нужно подкручивать на ходу значения в cbca_grid.
-      val setCellSizeJsa = SetCellSize( cellSizeCssPx )
-      val setCellPaddingJsa = SetCellPadding( cellPaddingCssPx )
-      // resultFut содержит фьючерс с итоговым результатом работы экшена, который будет отправлен клиенту.
-      for {
-        smRcvResp <- smRcvRespFut
-        cssAppend <- cssAppendFut
-      } yield {
-        cacheControlShort {
-          Ok( Js(TILE_JS_RESP_BUFFER_SIZE_BYTES, setCellSizeJsa, setCellPaddingJsa, cssAppend, smRcvResp) )
-        }
-      }
-    }
-
   }
 
 

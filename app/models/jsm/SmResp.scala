@@ -32,24 +32,6 @@ trait Action extends SmJsonResp {
   }
 }
 
-trait Blocks extends SmJsonResp {
-  def blocks: Seq[JsValue]
-  override def toJsonAcc: FieldsJsonAcc = {
-    val acc0 = super.toJsonAcc
-    val _blocks = blocks
-    if (_blocks.nonEmpty)
-      BLOCKS_FN -> JsArray(_blocks) :: acc0
-    else
-      acc0
-  }
-}
-
-trait TileAdsResp extends Action with Blocks
-
-case class FindAdsResp(blocks: Seq[JsString]) extends TileAdsResp {
-  override def action = "findAds"
-}
-
 
 trait HtmlOpt extends SmJsonResp {
   def htmlOpt: Option[JsString]
