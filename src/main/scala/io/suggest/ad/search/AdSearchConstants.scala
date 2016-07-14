@@ -43,4 +43,7 @@ object AdSearchConstants {
     */
   def AD_ID_LOOKUP_FN      = "j"
 
+  /** AdvGeoPoint. Имя поля для текущей точки на карте, для которой делается запрос. */
+  def AGP_POINT_FN         = "g"
+
 }
