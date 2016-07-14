@@ -1,11 +1,8 @@
 package models.msc
 
 import io.suggest.common.menum.EnumMaybeWithId
-import models.mctx.Context
 import play.api.mvc.QueryStringBindable
-import play.twirl.api.{Template2, Html}
 import util.PlayMacroLogsImpl
-import views.html.sc.script._
 
 /**
  * Suggest.io
@@ -39,14 +36,8 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImp
     /** Нужно ли при начальном рендере рендерить также базовое содержимое smFocusedAds (пустая карусель и проч.) */
     def withEarlyFocAdsRootContainers: Boolean
 
-    /** Шаблон для рендера скрипта выдачи. */
-    def scriptTpl: Template2[IScScriptRenderArgs, Context, Html]
-
     /** Тут возможность отключения рендера DOCTYPE в sc/siteTpl. */
     def withScSiteDoctype: Boolean = true
-
-    /** Можно добавки в head затолкать. */
-    def headAfterHtmlOpt: Option[Template2[IScScriptRenderArgs, Context, Html]] = None
 
     /** Какой id suffix использовать для focused-карточек? */
     def scFocIdSuffix(args: IAdBodyTplArgs): Any
@@ -57,36 +48,6 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImp
   }
 
   override type T = Val
-
-
-  /** Выдача, написанная одним файлом на coffee-script. Со временем будет удалена. */
-  @deprecated("2016.jul.14", "switched to sc v2")
-  val Coffee: T = new Val(1) {
-
-    override def forceScCloseable = true
-    override def renderActionUrls  = true
-
-    /** Coffee-версия сама придумывает id по-порядку и управляет ими. */
-    override def serverSideBlockIds = false
-    override def geoNodeIdAsClass   = true
-    override def nodeListLayersServerSideExpand = false
-    override def withEarlyFocAdsRootContainers = false
-
-    /** У v1 часть скрипта заинлайнена в шаблоне. */
-    override def scriptTpl = _scriptV1Tpl
-
-    /** В sc v1 что-то ломается, и у контейнера плитки появляется внизу белая полоса на 10-15% экрана.  */
-    override def withScSiteDoctype = false
-
-    /** id focused-карточек заканчивается порядковым индексом карточки. */
-    override def scFocIdSuffix(args: IAdBodyTplArgs): Any = {
-      args.index
-    }
-
-    /** v1 выдача рендерит этот аттрибут в _adNormalTpl. */
-    override def blockBaseProducerIdAttr = false
-
-  }
 
 
   /** Выдача, переписанная на scala.js. Исходная версия. */
@@ -106,11 +67,6 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImp
 
     /** sc-sjs требует ранние контейнеры для focused ads и прочее. */
     override def withEarlyFocAdsRootContainers = true
-
-    /** У v2-выдачи своя особая магия. */
-    override def scriptTpl = _scriptV2Tpl
-
-    override def headAfterHtmlOpt = Some( _headAfterV2Tpl )
 
     /** Изначально id'шники focused-карточек суффиксировались по-старинке через  */
     override def scFocIdSuffix(args: IAdBodyTplArgs): Any = {

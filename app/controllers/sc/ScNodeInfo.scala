@@ -9,7 +9,6 @@ import play.api.mvc.Result
 import util.DateTimeUtil
 import util.acl.AdnNodeMaybeAuth
 import util.cdn.ICdnUtilDi
-import views.html.lk.adn.node._installScriptTpl
 import views.txt.sc._
 
 import scala.concurrent.duration._
@@ -119,15 +118,6 @@ trait ScNodeInfo
         Ok( Js(SmRcvResp(resp)) )
       }
     }
-  }
-
-  /** Рендер скрипта выдачи для указанного узла. */
-  def nodeSiteScript(adnId: String) = AdnNodeMaybeAuth(adnId).apply { implicit request =>
-    Ok(_installScriptTpl(request.mnode.id, mkPermanent = true))
-      .as("text/javascript; charset=utf-8")
-      .withHeaders(
-        CACHE_CONTROL -> "public, max-age=36000"
-      )
   }
 
 }

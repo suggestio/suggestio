@@ -1,7 +1,6 @@
 package util.showcase
 
 import com.google.inject.{Inject, Singleton}
-import controllers.routes
 import io.suggest.common.fut.FutureUtil
 import io.suggest.sc.tile.ColumnsCountT
 import models._
@@ -133,9 +132,6 @@ class ShowcaseUtil @Inject() (
    * @param szMult Требуемый мультипликатор размера картинки.
    * @return None если нет фоновой картинки. Иначе Some() с данными рендера фоновой wide-картинки.
    */
-  def focWideBgImgArgs(mad: MNode, szMult: SzMult_t)(implicit ctx: Context): Future[Option[MakeResult]] = {
-    focWideBgImgArgs(mad, szMult, ctx.deviceScreenOpt)
-  }
   def focWideBgImgArgs(mad: MNode, szMult: SzMult_t, devScrOpt: Option[DevScreen]): Future[Option[MakeResult]] = {
     val optFut = for {
       mimg <- BgImg.getBgImg(mad)
@@ -159,7 +155,7 @@ class ShowcaseUtil @Inject() (
   override val MIN_SZ_MULT = super.MIN_SZ_MULT
 
   /** Размеры для расширения плиток выдачи. Используются для подавления пустот по бокам экрана. */
-  val TILES_SZ_MULTS: List[SzMult_t] = configuration.getDoubleSeq("sc.tiles.szmults")
+  private val TILES_SZ_MULTS: List[SzMult_t] = configuration.getDoubleSeq("sc.tiles.szmults")
     .map { _.map(_.toFloat).toList }
     .getOrElse {
       List(
@@ -168,14 +164,13 @@ class ShowcaseUtil @Inject() (
       )
     }
 
-  val FOCUSED_TILE_SZ_MULTS = FOCUSED_SZ_MULT :: TILES_SZ_MULTS
 
   /** Расстояние между блоками и до краёв экрана.
     * Размер этот должен быть жестко связан с остальными размерами карточек, поэтому не настраивается. */
   override def TILE_PADDING_CSSPX = super.TILE_PADDING_CSSPX
 
   /** Сколько пикселей минимум оставлять по краям раскрытых карточек. */
-  val FOCUSED_PADDING_CSSPX = configuration.getInt("sc.focused.padding.hsides.csspx").getOrElse(10)
+  private val FOCUSED_PADDING_CSSPX = configuration.getInt("sc.focused.padding.hsides.csspx").getOrElse(10)
 
   /** Макс. кол-во вертикальных колонок. */
   override val TILE_MAX_COLUMNS = configuration.getInt("sc.tiles.columns.max").getOrElse(4)
@@ -281,7 +276,7 @@ class ShowcaseUtil @Inject() (
 
 
   /** Обычные цвета выдачи, не нужны в 99% случаев. */
-  def SC_COLORS_GEO = ScSiteColors(bgColor = SITE_BGCOLOR_GEO, fgColor = SITE_FGCOLOR_GEO)
+  private def SC_COLORS_GEO = ScSiteColors(bgColor = SITE_BGCOLOR_GEO, fgColor = SITE_FGCOLOR_GEO)
 
   def siteScColors(nodeOpt: Option[MNode]): IScSiteColors = {
     nodeOpt match {
@@ -296,41 +291,3 @@ class ShowcaseUtil @Inject() (
   }
 
 }
-
-
-/** Кое-какая static-only утиль для sc v1. */
-// TODO v1 Выпилить вслед за sc v1 _installScriptTpl
-object ScScriptV1TplUtil {
-
-  import util.cdn.CdnUtil
-
-  private val cdnUtil = play.api.Play.current.injector.instanceOf[CdnUtil]
-
-  /** Путь до ассета со скриптом выдачи. */
-  def SHOWCASE_JS_ASSET = "javascripts/market/showcase/showcase2.js"
-
-  /** Генерация абсолютной ссылки на скрипт showcase2.js.
-    * @param mkPermanentUrl Создавать постоянную ссылку. Такая ссылка может быть встроена на другие сайты.
-    *                       У неё проблемы с геоэффективным кешированием, но она не будет изменятся во времени.
-    * @param ctx Контекст рендера шаблонов.
-    * @return Строка абсолютной ссылки (URL).
-    */
-  def showcaseJsAbsUrl(mkPermanentUrl: Boolean)(implicit ctx: Context): String = {
-    if (mkPermanentUrl) {
-      // Генерим ссылку на скрипт, которой потом можно будет поделится с другим сайтом.
-      ctx.currAudienceUrl + routes.Assets.at(SHOWCASE_JS_ASSET).url
-    } else {
-      // Генерим постоянную ссылку на ассет с бешеным кешированием и возможностью загона в CDN.
-      val call1 = cdnUtil.asset(SHOWCASE_JS_ASSET)
-      if (call1.isInstanceOf[ExternalCall]) {
-        // У нас тут ссылка на CDN.
-        call1.url
-      } else {
-        // Поддержка CDN невозможна. Допиливаем адрес до абсолютной ссылки.
-        ctx.currAudienceUrl + call1.url
-      }
-    }
-  }
-
-}
-

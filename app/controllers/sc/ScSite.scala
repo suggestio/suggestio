@@ -128,7 +128,10 @@ trait ScSiteBase
 
 
   /** Когда нужно рендерить site script, подмешиваем это. */
-  protected trait SiteScript extends SiteLogic {
+  protected trait SiteScriptLogicV2 extends SiteLogic {
+
+    import views.html.sc.script._
+
     /** Флаг активности географии. */
     def _withGeo: Boolean
     /** Ссылка на вызов выдачи. */
@@ -145,17 +148,14 @@ trait ScSiteBase
     /** Добавки к тегу head в siteTpl. */
     override def headAfterFut: Future[List[Html]] = {
       val fut0 = super.headAfterFut
-      val htmlOpt = for (tpl <- _siteArgs.apiVsn.headAfterHtmlOpt) yield {
-        tpl.render(scriptRenderArgs, ctx)
-      }
+      val headAfterHtml = _headAfterV2Tpl(scriptRenderArgs)(ctx)
       for (htmls0 <- fut0) yield {
-        htmlOpt.fold(htmls0)(_ :: htmls0)
+        headAfterHtml :: htmls0
       }
     }
 
     override def scriptHtmlFut: Future[Html] = {
-      val tpl = _siteArgs.apiVsn.scriptTpl
-      val html = tpl.render(scriptRenderArgs, ctx)
+      val html = _scriptV2Tpl(scriptRenderArgs)(ctx)
       Future.successful(html)
     }
 
@@ -203,6 +203,7 @@ trait ScSiteGeo
 
   /**
    * Тело экшена _geoSite задаётся здесь, чтобы его можно было переопределять при необходимости.
+ *
    * @param request Экземпляр реквеста.
    * @return Результат работы экшена.
    */
@@ -228,11 +229,12 @@ trait ScSiteGeo
 
   /**
    * Раздавалка "сайта" выдачи первой страницы. Можно переопределять, для изменения/расширения функционала.
+ *
    * @param siteArgs Доп.аргументы для рендера сайта.
    * @param request Реквест.
    */
   protected def _geoSiteResult(siteArgs: SiteQsArgs)(implicit request: IReq[_]): Future[Result] = {
-    val logic = new SiteLogic with SiteScript {
+    val logic = new SiteLogic with SiteScriptLogicV2 {
       override implicit def _request  = request
       override def _siteArgs          = siteArgs
 
@@ -277,7 +279,7 @@ trait ScSiteNode
       }
 
       // Рендерим результат в текущем потоке.
-      val logic = new SiteLogic with SiteScript {
+      val logic = new SiteLogic with SiteScriptLogicV2 {
         override implicit def _request = request
         override val _siteArgs = SiteQsArgs(adnId = Some(adnId))
         override def _withGeo: Boolean = false
