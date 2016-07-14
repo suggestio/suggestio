@@ -16,7 +16,7 @@ trait MapInit extends StoreUserGeoLoc {
   /** Трейт для сборки состояния ожидания инициализации карты. */
   trait MapInitStateT extends StoreUserGeoLocStateT {
 
-    private lazy val vm = GlMapVm( _stateData.glmap.get )
+    private def _vm = GlMapVm( _stateData.glmap.get )
 
     override def afterBecome(): Unit = {
       super.afterBecome()
@@ -44,7 +44,7 @@ trait MapInit extends StoreUserGeoLoc {
       }
 
       // Повесить событие ожидания инициализации карты.
-      vm.on( MapEventsTypes.STYLE_LOADED )(_mapSignalCallbackF(MapInitDone))
+      _vm.on( MapEventsTypes.STYLE_LOADED )(_mapSignalCallbackF(MapInitDone))
     }
 
 
@@ -55,6 +55,7 @@ trait MapInit extends StoreUserGeoLoc {
 
     /** Реакция на окончание инициализации на стороне карты. */
     def _handleMapInitDone(): Unit = {
+      val vm = _vm
       vm.glMap.off(MapEventsTypes.STYLE_LOADED)
 
       // Надо повесить listener'ы событий на карту
