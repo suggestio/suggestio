@@ -21,7 +21,7 @@ object MFindAds {
    * @return Фьючерс с результатом запроса.
    */
   def findAds(adSearch: MFindAdsReq)(implicit ec: ExecutionContext): Future[MFindAds] = {
-    val route = routes.controllers.MarketShowcase.findAds( adSearch.toJson )
+    val route = routes.controllers.Sc.findAds( adSearch.toJson )
     for (json <- Xhr.getJson(route)) yield {
       val json1 = json.asInstanceOf[MFindAdsRespJson]
       MFindAds(json1)

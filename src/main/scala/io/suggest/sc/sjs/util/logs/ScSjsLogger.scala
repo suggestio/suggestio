@@ -18,7 +18,7 @@ import io.suggest.sjs.common.util.SjsLogger
   */
 object ScSjsLogger extends MRmeClientT {
 
-  override def route: Route = routes.controllers.MarketShowcase.handleScError()
+  override def route: Route = routes.controllers.Sc.handleScError()
 
 }
 

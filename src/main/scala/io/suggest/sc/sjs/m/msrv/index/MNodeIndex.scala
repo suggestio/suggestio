@@ -29,7 +29,7 @@ object MNodeIndex {
   def getIndex(args: IScIndexArgs)(implicit ec: ExecutionContext): Future[MNodeIndex] = {
     val argsJson = args.toJson
     // Собрать и отправить запрос за данными index.  TODO Унифицировать экшены запросов.
-    val router = routes.controllers.MarketShowcase
+    val router = routes.controllers.Sc
     val route = args.adnIdOpt match {
       case Some(adnId) =>
         router.nodeIndex(adnId, argsJson)

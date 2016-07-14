@@ -34,7 +34,7 @@ trait Opened extends Base {
           offset  = Some(ftsState0.offset)
         )
         val fut = MTagsSearch.search(
-          route = routes.controllers.MarketShowcase.tagsSearch( args.toJson )
+          route = routes.controllers.Sc.tagsSearch( args.toJson )
         )
         val lastTstamp = _sendFutResBackTimestamped(fut, MTagSearchRespTs)
         // Видимо timestamp сохранять не надо. В состоянии предусмотрено только сохранение последнего ПОЛУЧЕННОГО timestamp.

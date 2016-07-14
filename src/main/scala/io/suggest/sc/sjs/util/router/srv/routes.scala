@@ -25,7 +25,7 @@ object routes extends js.Object {
 /** Контроллеры роутера. */
 @js.native
 sealed trait Ctls extends js.Object {
-  def MarketShowcase: ScCtl = js.native
+  def Sc: ScCtl = js.native
 }
 
 

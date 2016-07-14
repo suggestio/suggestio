@@ -28,7 +28,7 @@ object MFocAds {
    * @return Фьючерс с распарсенным ответом.
    */
   protected def _findJson(args: MFocAdSearch)(implicit ec: ExecutionContext): Future[WrappedDictionary[Any]] = {
-    val route = routes.controllers.MarketShowcase.focusedAds(args.toJson)
+    val route = routes.controllers.Sc.focusedAds(args.toJson)
     for (json0 <- Xhr.getJson(route)) yield {
       json0.asInstanceOf[Dictionary[Any]]
     }

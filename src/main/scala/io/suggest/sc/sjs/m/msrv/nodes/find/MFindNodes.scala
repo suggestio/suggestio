@@ -19,7 +19,7 @@ object MFindNodes {
    * @return Фьючерс с распарсенным ответом сервера.
    */
   def findNodes(args: MFindNodesArgs)(implicit ec: ExecutionContext): Future[MFindNodesResp] = {
-    val route = routes.controllers.MarketShowcase.findNodes( args.toJson )
+    val route = routes.controllers.Sc.findNodes( args.toJson )
     for (json1 <- Xhr.getJson(route)) yield {
       val json2 = MFindAdsRespJson(json1)
       MFindNodesResp(json2)
