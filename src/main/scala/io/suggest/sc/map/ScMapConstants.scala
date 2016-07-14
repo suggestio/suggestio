@@ -23,7 +23,8 @@ object ScMapConstants {
       private def ID_PREFIX         = "nl"
 
       /** Имя слоя, где отображаются некластеризованные точки. */
-      def NON_CLUSTERED_LAYER_ID    = "n" + ID_PREFIX
+      def NON_CLUSTERED_LAYER_ID          = "n" + ID_PREFIX
+      def NON_CLUSTERED_LAYER_LABELS_ID   = NON_CLUSTERED_LAYER_ID + "l"
 
       /** Префикс названий слоёв,  */
       def CLUSTERED_LAYER_ID_PREFIX = "c" + ID_PREFIX
@@ -43,7 +44,7 @@ object ScMapConstants {
     object Sources {
 
       def FILL_COLOR = "#FFFFFF"
-      def POINT_RADIUS_PX   = 3
+      def MARKER_RADIUS_PX   = 18
 
     }
 
