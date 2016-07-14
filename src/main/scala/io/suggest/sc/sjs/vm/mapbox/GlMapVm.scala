@@ -146,7 +146,8 @@ case class GlMapVm(glMap: GlMap) {
     val srcDesc = GeoJsonSourceDescr.empty
     srcDesc.data = fromUrl
     srcDesc.cluster = true
-    srcDesc.clusterMaxZoom = 9
+    // Карта в нашем случае обычно игнорит это значение, поэтому его оставляем на дефолте (maxzoom 20 - 1 = 19).
+    //srcDesc.clusterMaxZoom = 14
     srcDesc.clusterRadius = 50
     val src = new GeoJsonSource(srcDesc)
     val srcId = ScMapConstants.Nodes.ALL_NODES_SRC_ID
@@ -162,11 +163,24 @@ case class GlMapVm(glMap: GlMap) {
       layP.source = srcId
       layP.paint = {
         val paint = CirclePaintProps.empty
-        paint.circleRadius = Sources.POINT_RADIUS_PX
+        paint.circleRadius = Sources.MARKER_RADIUS_PX
         paint.circleColor  = Sources.FILL_COLOR
         paint
       }
       layP
+    }
+    // Собрать слой единичек, т.к. кластеризация пашет криво как-то.
+    glMap.addLayer {
+      val lay1 = Layer.empty
+      lay1.id = L.NON_CLUSTERED_LAYER_LABELS_ID
+      lay1.`type` = LayerTypes.SYMBOL
+      lay1.source = srcId
+      lay1.layout = {
+        val slp = SymbolLayoutProps.empty
+        slp.textField = "1"
+        slp
+      }
+      lay1
     }
 
     // Спека для слоёв. Скопирована из https://www.mapbox.com/mapbox-gl-js/example/cluster/
@@ -176,6 +190,7 @@ case class GlMapVm(glMap: GlMap) {
       0   -> "#51bbd6"
     )
 
+    // Имя поля с кол-вом кластеризованных точек.
     val pcFn = Clusters.POINT_COUNT
 
     // Проходим спецификацию слоёв, создавая различные слои.
@@ -189,7 +204,7 @@ case class GlMapVm(glMap: GlMap) {
           layC.paint = {
             val cpp = CirclePaintProps.empty
             cpp.circleColor   = color
-            cpp.circleRadius  = 18
+            cpp.circleRadius  = Sources.MARKER_RADIUS_PX
             cpp
           }
           layC.filter = {
