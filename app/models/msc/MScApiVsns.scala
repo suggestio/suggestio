@@ -17,6 +17,7 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImp
 
   /** Экземпляр модели версий. */
   protected[this] abstract class Val(val versionNumber: Int) extends super.Val(versionNumber) {
+
     override def toString(): String = id.toString
 
     /** Всегда рендерить инструменты для закрытия выдачи. */
@@ -59,6 +60,7 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImp
 
 
   /** Выдача, написанная одним файлом на coffee-script. Со временем будет удалена. */
+  @deprecated("2016.jul.14", "switched to sc v2")
   val Coffee: T = new Val(1) {
 
     override def forceScCloseable = true

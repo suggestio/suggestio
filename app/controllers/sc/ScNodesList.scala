@@ -3,7 +3,6 @@ package controllers.sc
 import java.util.NoSuchElementException
 
 import _root_.util.di.{IScNlUtil, IScStatUtil}
-import _root_.util.jsa.{Js, SmRcvResp}
 import models.jsm.NodeListResp
 import models.msc._
 import models.req.IReq
@@ -159,8 +158,6 @@ trait ScNodesList
     /** Собрать необходимую логику обработки ответа в заисимости от версии API. */
     def apply(tstamp: Long, args: MScNodeSearchArgs)(implicit request: IReq[_]): FindNodesLogicV = {
       args.apiVsn match {
-        case MScApiVsns.Coffee =>
-          new FindNodesLogicV1(tstamp, args)
         case MScApiVsns.Sjs1 =>
           new FindNodesLogicV2(tstamp, args)
       }
@@ -207,16 +204,6 @@ trait ScNodesList
     }
   }
 
-
-  /** Реализация логики для SC API v1: ответы JSONP. */
-  protected class FindNodesLogicV1(val timestamp: Long, val _nsArgs: MScNodeSearchArgs)
-                                  (implicit val _request: IReq[_]) extends FindNodesLogicV {
-    override def resultFut: Future[Result] = {
-      for (respArgs <- respArgsFut) yield {
-        Ok(Js(8192, SmRcvResp(respArgs)))
-      }
-    }
-  }
 
   /** Реализация логики для SC API v2: ответы в чистом JSON. */
   protected class FindNodesLogicV2(val timestamp: Long, val _nsArgs: MScNodeSearchArgs)
