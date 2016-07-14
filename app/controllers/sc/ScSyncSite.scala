@@ -30,7 +30,7 @@ trait ScSyncSiteGeo
   with ScSiteGeo
   with ScIndexGeo
   with ScAdsTileBase
-  with ScFocusedAdsV1
+  with ScFocusedAdsV2
   with ScNodesListBase
   with ScSiteBase
   with MaybeAuth
@@ -139,8 +139,8 @@ trait ScSyncSiteGeo
     }
 
     /** Логика поддержки отображения focused ads, т.е. просматриваемой карточки. */
-    // TODO Переехать на v2 крайне желательно.
-    def focusedLogic = new FocusedAdsLogicV1 with NoBrAcc {
+    def focusedLogic = new FocusedLogicV2 with NoBrAcc {
+
       override type OBT = Html
       override implicit val _request = that._request
       override def _scStateOpt = Some(_scState)

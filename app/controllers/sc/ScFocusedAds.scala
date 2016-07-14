@@ -1,7 +1,7 @@
 package controllers.sc
 
 import _root_.util.di.{IScStatUtil, IScUtil}
-import _root_.util.jsa.{Js, JsAction, JsAppendById, SmRcvResp}
+import _root_.util.jsa.{JsAction, JsAppendById}
 import _root_.util.n2u.IN2NodesUtilDi
 import io.suggest.common.css.FocusedTopLeft
 import io.suggest.common.fut.FutureUtil
@@ -10,7 +10,6 @@ import io.suggest.model.n2.node.IMNodes
 import io.suggest.util.Lists
 import models.im.MImgT
 import models.im.logo.LogoOpt_t
-import models.jsm.ProducerAdsResp
 import models.mctx.Context
 import models.msc._
 import models.req.IReq
@@ -533,139 +532,6 @@ trait ScFocusedAds
 
     /** Сборка HTTP-ответа. */
     def resultFut: Future[Result]
-  }
-
-}
-
-
-/** Поддержка v1 focused-выдачи. */
-trait ScFocusedAdsV1 extends ScFocusedAds {
-
-  import mCommonDi._
-
-  /** Перезаписываемый сборкщик логик для версий. */
-  override def getLogicFor(adSearch: FocusedAdsSearchArgs)(implicit request: IReq[_]): FocusedAdsLogicHttp = {
-    if (adSearch.apiVsn == MScApiVsns.Coffee) {
-      new FocusedAdsLogicHttpV1(adSearch)
-    } else {
-      super.getLogicFor(adSearch)
-    }
-  }
-
-
-  /** Куски http-реализации здесь для нужд ScSyncSite. */
-  trait FocusedAdsLogicV1 extends FocusedAdsLogic {
-
-    override def apiVsn = MScApiVsns.Coffee
-
-    /** Критерии поиска focused-карточек.
-      * 2016.may.24: Future, т.к. критерии могут быть модифицированы по сложным методикам, см. v2-выдачу.
-      */
-    lazy val _mads1SearchFut: Future[FocusedAdsSearchArgs] = {
-      val adSearch0 = _adSearch
-      val adSearch1 = if (adSearch0.firstIds.isEmpty) {
-        adSearch0
-      } else {
-        // firstIds отфильтровываем, они через multiget будут получены.
-        new FocusedAdsSearchArgsWrapperImpl {
-          override def _dsArgsUnderlying  = _adSearch
-          override def firstIds           = Nil
-          override def withoutIds         = super.withoutIds ++ _adSearch.firstIds
-        }
-      }
-      Future.successful( adSearch1 )
-    }
-
-    def mads1Fut: Future[Seq[MNode]] = {
-      val adSearch0 = _adSearch
-      // Не искать вообще карточки, если firstIds.len >= adSearch.size
-      if (adSearch0.limit > adSearch0.firstIds.size) {
-        // Костыль, т.к. сортировка forceFirstIds на стороне ES-сервера всё ещё не пашет:
-        _mads1SearchFut.flatMap { searchArgs =>
-          mNodes.dynSearch(searchArgs)
-        }
-
-      } else {
-        // Все firstIds перечислены, возвращаемый размер не подразумевает отдельного поиска.
-        Future.successful( Nil )
-      }
-    }
-
-    override def _firstAdIndexFut = {
-      _mads1SearchFut.map(_.offset + 1)
-    }
-
-
-    /** 2015.aug.26: sc v1 и v2 имеют разные смыслы (смысловые scope'ы) параметра firstAdsIds.
-      * В случае v1 нельзя фетчить first ads при последующих запросах, но он всегда участвует.
-      * В v2 firstAdIds относится к каждому конкретному запросу. */
-    protected def fetchFirstAds: Boolean = {
-      _adSearch.firstIds.nonEmpty  &&  _adSearch.offset <= 0
-    }
-
-    override def firstAdIdsFut: Future[Seq[String]] = {
-      val _firstIds = _adSearch.firstIds
-      val ids = if (_firstIds.nonEmpty  &&  _adSearch.offset <= 0)
-        _firstIds
-      else
-        Nil
-      Future.successful(ids)
-    }
-
-  }
-
-  /**
-   * Внутренняя реализация Focused-логики для v1 API.
-   * Это API имело архитектурные особенности: первая карточка рендерилась с обрамлением и отдельном поле,
-   * а остальные рендерились в основном поле. Такой подход вызывал неисправимые проблемы при нескольких
-   * продьюсерах в пачке карточек.
-   */
-  protected class FocusedAdsLogicHttpV1(override val _adSearch: FocusedAdsSearchArgs)
-                                       (override implicit val _request: IReq[_])
-    extends FocusedAdsLogicHttp
-    with FocusedAdsLogicV1
-    with NoBrAcc
-  {
-    /** Тип отрендеренного блока в APIv1 -- это json-строка, содержащая HTML блока без заглавия и прочего. */
-    override type OBT = JsString
-
-    /** Рендерим в html, минифицируем, заворачиваем в js-строку. */
-    override def renderOuterBlock(args: AdBodyTplArgs): Future[OBT] = {
-      renderBlockHtml(args)
-        .map(htmlCompressUtil.html2jsStr)
-    }
-
-
-    /** Отдельно отфокусированную карточку тоже нужно минифицировать и завернуть в JsString. */
-    def focAdHtmlJsStrOptFut: Future[Option[JsString]] = {
-      focAdHtmlOptFut
-        .map(_.map(htmlCompressUtil.html2jsStr))
-    }
-
-    def producerAdsRespFut: Future[ProducerAdsResp] = {
-      val _focAdHtmlJsStrOptFut = focAdHtmlJsStrOptFut
-      for {
-        outerBlocksRendered <- blocksHtmlsFut
-        focAdHtmlOpt        <- _focAdHtmlJsStrOptFut
-      } yield {
-        ProducerAdsResp(focAdHtmlOpt, outerBlocksRendered)
-      }
-    }
-
-    /** Итоговый результат выполнения запроса собирается тут. */
-    override def resultFut: Future[Result] = {
-      // Запуск сборки css-инжекции в <head> клиента:
-      val _jsAppendAdsCssFut = jsAppendAdsCssFut
-      for {
-        prodAdsResp <- producerAdsRespFut
-        cssInject   <- _jsAppendAdsCssFut
-      } yield {
-        cacheControlShort {
-          Ok( Js(10000, cssInject, SmRcvResp(prodAdsResp)) )
-        }
-      }
-    }
-
   }
 
 }

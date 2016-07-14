@@ -64,15 +64,6 @@ trait HtmlOpt extends SmJsonResp {
   }
 }
 
-/**
- * Навигация в карточках продьюсера. Тут логика focused ads.
- * @param htmlOpt Нулевой отображаемый блок должен быть уже отрендерен сюда.
- * @param blocks Отрендеренные блоки за экраном.
- */
-case class ProducerAdsResp(htmlOpt: Option[JsString], blocks: Seq[JsValue]) extends Action with Blocks with HtmlOpt {
-  override def action = "producerAds"
-}
-
 
 /** Список focused-карточек по API v2. */
 trait FocusedAdsT extends SmJsonResp {

@@ -64,12 +64,9 @@ trait ScFocusedAdsV2
 
   import mCommonDi._
 
-  /** Реализация v2-логики. */
-  protected class FocusedLogicHttpV2(override val _adSearch: FocusedAdsSearchArgs)
-                                    (override implicit val _request: IReq[_])
-    extends FocusedAdsLogicHttp
-    with NoBrAcc
-  {
+
+  /** Общая логика обработки focused-выдачи v2. */
+  protected trait FocusedLogicV2 extends FocusedAdsLogic {
 
     override def apiVsn = MScApiVsns.Sjs1
 
@@ -269,6 +266,16 @@ trait ScFocusedAdsV2
       }
     }
 
+  }
+
+
+  /** Реализация v2-логики. */
+  protected class FocusedLogicHttpV2(override val _adSearch: FocusedAdsSearchArgs)
+                                    (override implicit val _request: IReq[_])
+    extends FocusedAdsLogicHttp
+    with FocusedLogicV2
+    with NoBrAcc
+  {
 
     // При рендере генерятся контейнеры render-результатов, который затем конвертируются в json.
     override type OBT = FocRenderResult
