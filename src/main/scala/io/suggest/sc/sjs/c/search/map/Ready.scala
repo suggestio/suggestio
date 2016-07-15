@@ -1,4 +1,4 @@
-package io.suggest.sc.sjs.c.mapbox
+package io.suggest.sc.sjs.c.search.map
 
 import io.suggest.sc.sjs.m.mgeo.{GlLocation, MGeoLoc}
 import io.suggest.sc.sjs.m.mmap.EnsureMap
@@ -12,10 +12,10 @@ import io.suggest.sjs.mapbox.gl.map.GlMap
   * Created: 14.04.16 13:38
   * Description: Аддон для состояний готовности карты к работе.
   */
-trait MapReady extends StoreUserGeoLoc {
+trait Ready extends GeoLoc {
 
   /** Сохранение геолокации юзера на какру. */
-  trait StoreUpdateUserGeoLocStateT extends StoreUserGeoLocStateT {
+  trait MapHandleGeoLocStateT extends super.HandleGeoLocStateT {
 
     /** Реакция на получение данных геолокации текущего юзера. */
     override def _handleUserGeoLoc(userGeoLoc: GlLocation): Unit = {
@@ -37,7 +37,7 @@ trait MapReady extends StoreUserGeoLoc {
 
 
   /** Трейт состояния готовности к работе. */
-  trait MapReadyStateT extends StoreUpdateUserGeoLocStateT {
+  trait MapReadyStateT extends MapHandleGeoLocStateT {
 
     override def receiverPart: Receive = {
       val r: Receive = {

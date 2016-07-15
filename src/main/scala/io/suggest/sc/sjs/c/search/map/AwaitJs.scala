@@ -1,4 +1,4 @@
-package io.suggest.sc.sjs.c.mapbox
+package io.suggest.sc.sjs.c.search.map
 
 import io.suggest.sc.sjs.vm.maps.MpglAcTok
 import io.suggest.sjs.common.controller.DomQuick
@@ -15,7 +15,7 @@ import org.scalajs.dom
   * Description: Аддон поддержки состояний ожидания mapboxgl.js.
   * Считается, что необходимых тег скрипта уже есть в шаблоне.
   */
-trait AwaitMbglJs extends StoreUserGeoLoc {
+trait AwaitJs extends GeoLoc {
 
   /** Сколько миллисекунд ожидать появление скрипта на странице перед попыткой проверки. */
   def AWAIT_MPGLJS_MS = 250
@@ -24,7 +24,7 @@ trait AwaitMbglJs extends StoreUserGeoLoc {
   private case object AwaitTimeout extends IFsmMsg
 
   /** Трейт для сборки состояния ожидания появления mapboxgl в рантайме. */
-  trait AwaitMbglJsStateT extends StoreUserGeoLocStateT {
+  trait MapAwaitJsStateT extends HandleGeoLocStateT {
 
     override def afterBecome(): Unit = {
       super.afterBecome()

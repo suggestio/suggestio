@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.c.scfsm.search.geo
 
-import io.suggest.sc.sjs.c.mapbox.MbFsm
 import io.suggest.sc.sjs.c.scfsm.search.Base
+import io.suggest.sc.sjs.c.search.SearchFsm
 import io.suggest.sc.sjs.m.mgeo.NewGeoLoc
 import io.suggest.sc.sjs.m.mgrid.MGridState
 import io.suggest.sc.sjs.m.mmap.MapShowing
@@ -16,7 +16,7 @@ trait OnGeo extends Base {
 
     override def afterBecome(): Unit = {
       super.afterBecome()
-      MbFsm ! MapShowing
+      SearchFsm ! MapShowing
     }
 
 

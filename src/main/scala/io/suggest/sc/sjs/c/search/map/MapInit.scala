@@ -1,4 +1,4 @@
-package io.suggest.sc.sjs.c.mapbox
+package io.suggest.sc.sjs.c.search.map
 
 import io.suggest.sc.sjs.m.mmap.MMapInst
 import io.suggest.sc.sjs.vm.mapbox.{AllNodesUrl, GlMapVm}
@@ -11,10 +11,10 @@ import io.suggest.sjs.mapbox.gl.event._
   * Created: 14.04.16 14:30
   * Description: Аддон для сборки состояний
   */
-trait MapInit extends StoreUserGeoLoc {
+trait MapInit extends GeoLoc {
 
   /** Трейт для сборки состояния ожидания инициализации карты. */
-  trait MapInitStateT extends StoreUserGeoLocStateT {
+  trait MapInitStateT extends HandleGeoLocStateT {
 
     override def afterBecome(): Unit = {
       super.afterBecome()

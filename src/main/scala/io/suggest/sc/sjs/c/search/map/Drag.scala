@@ -1,4 +1,4 @@
-package io.suggest.sc.sjs.c.mapbox
+package io.suggest.sc.sjs.c.search.map
 
 import io.suggest.sc.sjs.c.scfsm.ScFsm
 import io.suggest.sc.sjs.m.mgeo.NewGeoLoc
@@ -11,11 +11,11 @@ import io.suggest.sjs.mapbox.gl.event.{MoveEnd, MoveStart, Moving}
   * Created: 14.04.16 16:57
   * Description: Аддон для состояния перемещения карты пальцем/мышкой/колесиком и т.д.
   */
-trait OnMove extends MapReady {
+trait Drag extends Ready {
 
   /** Состояние, когда начато таскание карты.
     * В центре карты -- прицел, следующий за центром карты. */
-  trait OnDragStateT extends StoreUpdateUserGeoLocStateT {
+  trait MapDragStateT extends HandleGeoLocStateT {
 
     private val _vm = GlMapVm( _stateData.mapInst.get.glmap )
 

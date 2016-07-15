@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.c.scfsm.node
 
-import io.suggest.sc.sjs.c.mapbox.MbFsm
 import io.suggest.sc.sjs.c.scfsm.ScFsmStub
+import io.suggest.sc.sjs.c.search.SearchFsm
 import io.suggest.sc.sjs.m.mgeo.IMGeoMode
 import io.suggest.sc.sjs.m.mgrid.MGridState
 import io.suggest.sc.sjs.m.mmap.EnsureMap
@@ -166,7 +166,7 @@ trait Index extends ScFsmStub {
       become( _nodeInitWelcomeState )
 
       // Запустить в фоне ensure'инг карты
-      MbFsm ! EnsureMap()
+      SearchFsm ! EnsureMap()
     }
 
     /** Следующее состояние. */

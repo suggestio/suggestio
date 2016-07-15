@@ -1,5 +1,6 @@
-package io.suggest.sc.sjs.c.mapbox
+package io.suggest.sc.sjs.c.search.map
 
+import io.suggest.sc.sjs.c.search.SearchFsmStub
 import io.suggest.sc.sjs.m.mgeo.GlLocation
 import io.suggest.sc.sjs.m.mmap.MapShowing
 
@@ -9,10 +10,10 @@ import io.suggest.sc.sjs.m.mmap.MapShowing
   * Created: 14.04.16 10:50
   * Description: Аддон для сборки состояний, сохраняющих в состояние данные геолокации юзера.
   */
-trait StoreUserGeoLoc extends MbFsmStub {
+trait GeoLoc extends SearchFsmStub {
 
   /** Подмешать в состояние для сохранение полученных геоданных в состояние. */
-  trait StoreUserGeoLocStateT extends FsmState with FsmEmptyReceiverState {
+  trait HandleGeoLocStateT extends FsmState with FsmEmptyReceiverState {
 
     override def receiverPart: Receive = super.receiverPart.orElse {
       case userGeoLoc: GlLocation =>

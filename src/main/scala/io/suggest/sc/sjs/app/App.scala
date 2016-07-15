@@ -1,8 +1,8 @@
 package io.suggest.sc.sjs.app
 
 import io.suggest.sc.sjs.c.gloc.GeoLocFsm
-import io.suggest.sc.sjs.c.mapbox.MbFsm
 import io.suggest.sc.sjs.c.scfsm.ScFsm
+import io.suggest.sc.sjs.c.search.SearchFsm
 import io.suggest.sc.sjs.util.logs.GlobalErrorHandler
 
 import scala.scalajs.js.JSApp
@@ -25,7 +25,7 @@ object App extends JSApp {
     ScFsm.start()
 
     // Фоновый запуск карты
-    MbFsm.start()
+    SearchFsm.start()
 
     // Запуск FSM геолокации
     GeoLocFsm.start()
