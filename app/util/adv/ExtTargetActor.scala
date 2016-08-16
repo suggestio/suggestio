@@ -10,6 +10,7 @@ import models.adv.ext.act._
 import models.adv.js._
 import models.adv._
 import models.adv.js.ctx._
+import models.mctx.ContextUtil
 import models.mproj.ICommonDi
 import models.mws.AnswerStatuses
 import play.api.Configuration
@@ -46,6 +47,7 @@ class ExtTargetActor @Inject() (
   override val n2NodesUtil      : N2NodesUtil,
   override val adRenderUtil     : AdRenderUtil,
   override val aeFormUtil       : AeFormUtil,
+  override val ctxUtil          : ContextUtil,
   implicit val wsClient         : WSClient,
   override val mCommonDi        : ICommonDi
 )

@@ -31,7 +31,7 @@ object LoginTimestamp extends PlayMacroLogsDyn {
 
 
   def fromSession(session: Session): Option[LoginTimestamp] = {
-    val stkOpt = session get Keys.Timestamp.name
+    val stkOpt = session.get( Keys.Timestamp.name )
     fromSession1(stkOpt, session)
   }
 

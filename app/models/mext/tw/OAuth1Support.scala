@@ -1,7 +1,7 @@
 package models.mext.tw
 
 import io.suggest.ahc.util.NingUtil
-import models.mctx.Context
+import models.mctx.ContextUtil
 import models.msc.SiteQsArgs
 import util.n2u.N2NodesUtil
 import util.{FormUtil, PlayMacroLogsI, TplDataFormatUtil}
@@ -57,7 +57,8 @@ import OAuth1Support._
 
 trait OAuth1Support extends IOAuth1Support with PlayMacroLogsI { this: TwitterService =>
 
-  protected val n2NodesUtil = current.injector.instanceOf[N2NodesUtil]
+  private val n2NodesUtil = current.injector.instanceOf[N2NodesUtil]
+  private val ctxUtil     = current.injector.instanceOf[ContextUtil]
 
   /** 2015.apr.14: 28cdf84ad875 twitter cards отнесены в печку, т.к. отображаются скрытыми.
     * Загрузка картинки будет идти напрямую в твиттер и затем публикация твита со встроенным media. */
@@ -142,8 +143,8 @@ trait OAuth1Support extends IOAuth1Support with PlayMacroLogsI { this: TwitterSe
     }
     // twitter не трогает ссылки, до которых не может достучаться. Нужно помнить об этом.
     val tweetUrl = if (WITH_URL) {
-      val urlPrefix = /*Context devReplaceLocalHostW127001*/ Context.SC_URL_PREFIX
-      urlPrefix + controllers.routes.Sc.geoSite(jsSt, siteArgs)
+      val call = controllers.routes.Sc.geoSite(jsSt, siteArgs)
+      ctxUtil.toScAbsUrl( call )
     } else {
       ""
     }

@@ -2,9 +2,10 @@ package controllers.ident
 
 import com.google.inject.Inject
 import controllers.{SioController, routes}
+import io.suggest.common.fut.FutureUtil
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
-import models.mctx.Context
+import models.mctx.ContextUtil
 import models.mext.{ILoginProvider, MExtServices}
 import models.mproj.ICommonDi
 import models.msession.{CustomTtl, Keys}
@@ -92,12 +93,9 @@ class ExternalLogin_ @Inject() (
    * @return Ссылка в виде строки.
    */
   def toUrl2(ses: Session, personId: String): Future[String] = {
-    ses.get(Keys.OrigUrl.name) match {
-      case Some(url) =>
-        Future successful url
-      case None =>
-        identUtil.redirectCallUserSomewhere(personId)
-          .map(_.url)
+    FutureUtil.opt2future( ses.get(Keys.OrigUrl.name) ) {
+      identUtil.redirectCallUserSomewhere(personId)
+        .map(_.url)
     }
   }
 
@@ -157,7 +155,7 @@ trait ExternalLogin
           Future successful res
         case failed: AuthenticationResult.Failed =>
           LOGGER.error(s"$logPrefix authentication failed, reason: ${failed.error}")
-          throw new AuthenticationException()
+          throw AuthenticationException()
         case flow: AuthenticationResult.NavigationFlow => Future.successful {
           redirectTo.map { url =>
             flow.result
@@ -298,13 +296,13 @@ trait ExternalLogin
 }
 
 
-class SsRoutesService extends RoutesService.Default {
+class SsRoutesService @Inject() (ctxUtil: ContextUtil) extends RoutesService.Default {
 
   override def absoluteUrl(call: Call)(implicit req: RequestHeader): String = {
     if(call.isInstanceOf[ExternalCall])
       call.url
     else
-      Context.LK_URL_PREFIX + call.url
+      ctxUtil.LK_URL_PREFIX + call.url
   }
 
   override def authenticationUrl(providerId: String, redirectTo: Option[String])

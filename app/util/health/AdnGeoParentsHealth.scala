@@ -5,6 +5,7 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.MNodes
 import models.AdnShownTypes
 import models.mcron.{ICronTask, MCronTask}
+import models.mctx.ContextUtil
 import models.mproj.ICommonDi
 import models.msys.NodeProblem
 import models.usr.MSuperUsers
@@ -32,6 +33,7 @@ class AdnGeoParentsHealth @Inject() (
   mSuperUsers           : MSuperUsers,
   mNodes                : MNodes,
   scNlUtil              : ShowcaseNodeListUtil,
+  ctxUtil               : ContextUtil,
   mCommonDi             : ICommonDi
 )
   extends ICronTasksProvider
@@ -129,7 +131,7 @@ class AdnGeoParentsHealth @Inject() (
           .setSubject("Suggest.io: Обнаружены проблемы геосвязности узлов")
           .setHtml {
             htmlCompressUtil.html4email {
-              suProblemsEmailTpl(tryRes)
+              suProblemsEmailTpl(tryRes, ctxUtil.LK_URL_PREFIX)
             }
           }
           .send()

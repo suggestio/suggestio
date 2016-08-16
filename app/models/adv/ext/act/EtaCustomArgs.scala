@@ -4,7 +4,7 @@ import controllers.routes
 import io.suggest.common.geom.d2.INamedSize2di
 import models.adv.ext.Mad2ImgUrlCalc
 import models.adv.js.ctx.MPictureCtx
-import models.mctx.Context
+import models.mctx.IContextUtilDi
 
 // TODO Модель довольно странная, её основная логика вынесена в Mad2ImgUrlCalcT, а тут какие-то непонятные ошметки остались.
 // Возможно, эту модель надо заинлайнить и удалить.
@@ -20,7 +20,10 @@ import models.mctx.Context
  * Это шаблон финальной модели. Её нужно завернуть в классы для финальной реализации.
  */
 
-trait EtaCustomArgsBase extends ExtTargetActorEnv { env =>
+trait EtaCustomArgsBase
+  extends ExtTargetActorEnv
+    with IContextUtilDi
+{ env =>
 
   def _adRenderMaxSzDflt = service.advPostMaxSz(args.target.target.url)
 
@@ -37,7 +40,7 @@ trait EtaCustomArgsBase extends ExtTargetActorEnv { env =>
     /** JSON-контекст инфы по картинке текущей карточки. */
     def jsPicCtx: MPictureCtx = {
       val mri = madRenderInfo
-      val url = Context.SC_URL_PREFIX + routes.Sc.onlyOneAdAsImage(adRenderArgs).url
+      val url = ctxUtil.SC_URL_PREFIX + routes.Sc.onlyOneAdAsImage(adRenderArgs).url
       MPictureCtx(
         size   = Some(mri.stdSz.szAlias),
         sioUrl = Some(url)

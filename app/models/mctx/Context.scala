@@ -6,7 +6,7 @@ import _root_.models.im.DevScreen
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.{Inject, Singleton}
 import controllers.routes
-import io.suggest.playx.ICurrentAppHelpers
+import io.suggest.playx.{ICurrentAppHelpers, ICurrentConf}
 import io.suggest.util.UuidUtil
 import models.mproj.IMCommonDi
 import models.req.ExtReqHdr.{firstForwarded, lastForwarded}
@@ -14,9 +14,9 @@ import models.req.IReqHdr
 import models.usr.MSuperUsers
 import org.joda.time.DateTime
 import play.api.Application
-import play.api.Play.{configuration, current, isDev}
 import play.api.http.HeaderNames._
 import play.api.i18n.Messages
+import play.api.mvc.Call
 import play.api.routing.Router.Tags._
 import util.cdn.CdnUtil
 import util.img.{DynImgUtil, GalleryUtil}
@@ -35,8 +35,15 @@ import scala.util.matching.Regex
  * метода в implicit-списке параметров.
  */
 
-// TODO Заинжектить инжектить этот объект в ContextApi.
-object Context extends MyHostsT {
+/** Статическая поддержка для экземпляров контекста. */
+@Singleton
+class ContextUtil @Inject() (
+  override val current: Application
+)
+  extends MyHostsT
+  with ICurrentConf
+  with ICurrentAppHelpers
+{
 
   val mobileUaPattern = "(iPhone|webOS|iPod|Android|BlackBerry|mobile|SAMSUNG|IEMobile|OperaMobi)".r.unanchored
   val isIpadRe = "iPad".r.unanchored
@@ -46,6 +53,15 @@ object Context extends MyHostsT {
   override val SC_HOST_PORT = configuration.getString("sio.sc.hostport") getOrElse "www.suggest.io"
   override val SC_PROTO = configuration.getString("sio.sc.proto") getOrElse "http"
   override val SC_URL_PREFIX = SC_PROTO + "://" + SC_HOST_PORT
+
+  /** Генерация абсолютной ссылки через выдачу на основе строке относительной ссылки. */
+  def toScAbsUrl(relUrl: String): String = {
+    SC_URL_PREFIX + relUrl
+  }
+  /** Генерация абсолютной ссылки через выдачу на основе экземпляра Call. */
+  def toScAbsUrl(call: Call): String = {
+    toScAbsUrl( call.url )
+  }
 
   /** Хост и порт, на котором живёт часть сервиса с ограниченным доступом. */
   override val LK_HOST_PORT = configuration.getString("sio.lk.hostport") getOrElse "my.suggest.io"
@@ -79,6 +95,11 @@ object Context extends MyHostsT {
       source
   }
 
+}
+
+/** Интерфейс для DI-поля с инстансом [[ContextUtil]] внутри. */
+trait IContextUtilDi {
+  def ctxUtil: ContextUtil
 }
 
 
@@ -126,6 +147,8 @@ trait Context extends MyHostsT {
     * Например, к утили какой-нить или DI-моделям и прочей утвари. */
   val api: ContextApi
 
+  import api.{ctxUtil => Util}
+
   def withData(data1: CtxData): Context
 
   // abstract val вместо def'ов в качестве возможной оптимизации обращений к ним со стороны scalac и jvm. Всегда можно вернуть def.
@@ -148,7 +171,7 @@ trait Context extends MyHostsT {
       .get(X_FORWARDED_PROTO)
       .filter(!_.isEmpty)
       .map { firstForwarded }
-      .getOrElse(Context.DFLT_PROTO)
+      .getOrElse( Util.DFLT_PROTO )
       .toLowerCase
   }
 
@@ -165,17 +188,17 @@ trait Context extends MyHostsT {
       .map { raw =>
         val h = lastForwarded(raw)
         // Если входящий запрос на backend, то нужно отобразить его на www.
-        Context.BACKEND_HOST_RE.replaceFirstIn(h, "www.")
+        Util.BACKEND_HOST_RE.replaceFirstIn(h, "www.")
       }
     // Если форвард не найден, а конфиг разрешает доверять Host: заголовку, то дергаем его.
-    if (maybeHost.isEmpty && Context.TRUST_HOST_HDR) {
+    if (maybeHost.isEmpty && Util.TRUST_HOST_HDR) {
       maybeHost = request.headers
         .get(HOST)
         .filter(!_.isEmpty)
     }
     // Нередко, тут недосягаемый код:
     if (maybeHost.isEmpty)
-      Context.DFLT_HOST_PORT
+      Util.DFLT_HOST_PORT
     else
       maybeHost.get
   }
@@ -192,9 +215,9 @@ trait Context extends MyHostsT {
     }
   }
 
-  lazy val isMobile : Boolean = uaMatches(Context.mobileUaPattern)
-  lazy val isIpad: Boolean = uaMatches(Context.isIpadRe)
-  lazy val isIphone: Boolean = uaMatches(Context.isIphoneRe)
+  lazy val isMobile : Boolean = uaMatches(Util.mobileUaPattern)
+  lazy val isIpad: Boolean = uaMatches(Util.isIpadRe)
+  lazy val isIphone: Boolean = uaMatches(Util.isIphoneRe)
 
   lazy val isDebug: Boolean     = request.getQueryString("debug").isDefined
 
@@ -231,8 +254,8 @@ trait Context extends MyHostsT {
   lazy val deviceScreenOpt: Option[DevScreen] = {
     request.queryString
       .iterator
-      .filter {
-        case (k, _)  =>  Context.SCREEN_ARG_NAME_RE.pattern.matcher(k).matches()
+      .filter { case (k, _) =>
+        Util.SCREEN_ARG_NAME_RE.pattern.matcher(k).matches()
       }
       .flatMap {
         case kv @ (k, vs) =>
@@ -245,12 +268,13 @@ trait Context extends MyHostsT {
       .headOption
   }
 
-  override def SC_HOST_PORT   = Context.SC_HOST_PORT
-  override def SC_PROTO       = Context.SC_PROTO
-  override def SC_URL_PREFIX  = Context.SC_URL_PREFIX
-  override def LK_HOST_PORT   = Context.LK_HOST_PORT
-  override def LK_PROTO       = Context.LK_PROTO
-  override def LK_URL_PREFIX  = Context.LK_URL_PREFIX
+  // TODO Спилить отсюда этот ручной проброс?
+  override def SC_HOST_PORT   = Util.SC_HOST_PORT
+  override def SC_PROTO       = Util.SC_PROTO
+  override def SC_URL_PREFIX  = Util.SC_URL_PREFIX
+  override def LK_HOST_PORT   = Util.LK_HOST_PORT
+  override def LK_PROTO       = Util.LK_PROTO
+  override def LK_URL_PREFIX  = Util.LK_URL_PREFIX
 
   /**
    * Текущий контроллер, если вызывается. (fqcn)
@@ -283,6 +307,7 @@ trait Context extends MyHostsT {
   * DI препятствует этому, поэтому необходимо обеспечивать доступ с помощью класса-костыля. */
 @Singleton
 class ContextApi @Inject() (
+  override val ctxUtil    : ContextUtil,
   val galleryUtil         : GalleryUtil,
   val cdn                 : CdnUtil,
   val dynImgUtil          : DynImgUtil,
@@ -291,6 +316,7 @@ class ContextApi @Inject() (
   override implicit val current: Application
 )
   extends ICurrentAppHelpers
+  with IContextUtilDi
 
 
 /** Guice factory для сборки контекстов с использованием DI.

@@ -2,7 +2,6 @@ package models.adv
 
 import controllers.routes
 import io.suggest.common.menum.EnumMaybeWithName
-import models.mctx.Context
 import models.msc.ScJsState
 import play.api.data.Mapping
 import util.FormUtil
@@ -80,6 +79,7 @@ object MExtReturns extends Enumeration with EnumMaybeWithName {
 
 /** Абстрактный билдер для генерации ссылок возврата. */
 sealed trait ReturnToScBuilder {
+
   /**
    * Выставить id узла, на выдачу которого надо возвращаться.
    * @param adnId id узла-ресивера.
@@ -113,21 +113,16 @@ sealed trait ReturnToScBuilder {
    */
   def toJsState: ScJsState = ScJsState.veryEmpty
 
+  def toCall = routes.Sc.geoSite(toJsState)
+
   /**
    * Сгенерить относительную ссылку на выдачу для накопленных данных.
    * @return String: ссылка относительно корня suggest.io.
    */
   def toRelUrl: String = {
-    routes.Sc.geoSite(toJsState).url
+    toCall.url
   }
 
-  /**
-   * Сгенерить абсолютную ссылку на выдачу для накопленных данных.
-   * @return Абсолютная ссылка.
-   */
-  def toAbsUrl: String = {
-    Context.SC_URL_PREFIX + toRelUrl
-  }
 }
 
 

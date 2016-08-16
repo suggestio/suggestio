@@ -7,7 +7,7 @@ import models.im._
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 24.03.15 17:34
- * Description: Модель и модельная утиль для доступа к отрендеренным в картинки карточкам.
+ * Description: Модель данных для рендера карточек в картинки.
  */
 
 
@@ -42,6 +42,7 @@ trait IAdRenderArgsWrapper extends IAdRenderArgs {
 }
 
 
+/** Дефолтовая реализация модели-контейнера данных для рендера карточек в картинки. */
 case class MAdRenderArgs(
   src         : String,
   scrSz       : MImgSizeT,

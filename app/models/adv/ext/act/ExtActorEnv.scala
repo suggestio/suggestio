@@ -2,6 +2,7 @@ package models.adv.ext.act
 
 import io.suggest.util.UrlUtil
 import models.adv._
+import models.mctx.IContextUtilDi
 import models.mext.MExtService
 import util.PlayMacroLogsI
 import util.n2u.IN2NodesUtilDi
@@ -43,7 +44,7 @@ trait ExtServiceActorEnv extends ExtActorEnv {
  * Базовое описание окружения актора [[util.adv.ExtTargetActor]].
  * Нужно для описания внутренних моделей, имеющие доступ к этому окружению.
  */
-trait ExtTargetActorEnv extends ExtActorEnv with IN2NodesUtilDi {
+trait ExtTargetActorEnv extends ExtActorEnv with IN2NodesUtilDi with IContextUtilDi {
 
   /** Параметры вызова этого актора. */
   def args: IExtAdvTargetActorArgs
@@ -66,7 +67,7 @@ trait ExtTargetActorEnv extends ExtActorEnv with IN2NodesUtilDi {
     for (prodId <- n2NodesUtil.madProducerId(mad)) {
       b.setFocusedProducerId(prodId)
     }
-    b.toAbsUrl
+    ctxUtil.toScAbsUrl( b.toCall )
   }
 
 }

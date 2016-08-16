@@ -1,9 +1,9 @@
 package util.ws
 
-import java.io.{FileOutputStream, File}
+import java.io.File
 
 import io.suggest.itee.IteeUtil
-import play.api.libs.iteratee.Iteratee
+import play.api.http.HttpVerbs
 import play.api.libs.ws.{WSClient, WSResponseHeaders}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
@@ -54,7 +54,8 @@ trait HttpGetToFile {
   def request(): Future[(WSResponseHeaders, File)] = {
     val respFut = ws.url(urlStr)
       .withFollowRedirects(followRedirects)
-      .getStream()
+      .withMethod( HttpVerbs.GET )
+      .streamWithEnumerator()   // TODO stream()
     respFut.flatMap { case (headers, body) =>
       if ( !isStatusValid(headers.status) ) {
         Future failed statusCodeInvalidException(headers)

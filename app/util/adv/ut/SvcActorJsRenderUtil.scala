@@ -1,8 +1,9 @@
 package util.adv.ut
 
-import models.adv.{JsExtTarget, MExtTargetInfoFull, IExtAdvServiceActorArgs}
+import models.adv.{IExtAdvServiceActorArgs, JsExtTarget, MExtTargetInfoFull}
 import models.adv.js.JsCmd
-import models.event.{MEventTypes, MEventTmp, RenderArgs, IErrorInfo}
+import models.event.{IErrorInfo, MEventTmp, MEventTypes, RenderArgs}
+import models.mctx.IContextUtilDi
 import play.api.libs.json.JsString
 import util.adv.ext.IAeFormUtilDi
 import util.jsa.JsAppendById
@@ -16,6 +17,7 @@ import util.jsa.JsAppendById
 trait SvcActorJsRenderUtil
   extends ISendCommand
   with IAeFormUtilDi
+  with IContextUtilDi
 {
 
   /** Аргументы service-актора, переданные ему при запуске. */
@@ -54,11 +56,14 @@ trait SvcActorJsRenderUtil
       id   = tg.target.id.get,
       url  = tg.target.url,
       name = tg.target.name,
-      onClickUrl = tg.returnTo.builder()
-        .setAdnId( tg.target.adnId )
-        .setFocusedAdId( args.request.mad.id.get )
-        .setFocusedProducerId( args.request.producer.id.get )
-        .toAbsUrl
+      onClickUrl = {
+        val urlCall = tg.returnTo.builder()
+          .setAdnId( tg.target.adnId )
+          .setFocusedAdId( args.request.mad.id.get )
+          .setFocusedProducerId( args.request.producer.id.get )
+          .toCall
+        ctxUtil.toScAbsUrl( urlCall )
+      }
     )
   }
 

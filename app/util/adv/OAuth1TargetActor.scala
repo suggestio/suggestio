@@ -9,6 +9,7 @@ import models.adv.ext.act.EtaCustomArgsBase
 import models.adv.js.ctx.JsErrorInfo
 import models.adv.IOAuth1AdvTargetActorArgs
 import models.blk.OneAdQsArgs
+import models.mctx.ContextUtil
 import models.mext._
 import models.mproj.ICommonDi
 import play.api.libs.ws.{WSClient, WSResponse}
@@ -43,6 +44,7 @@ class OAuth1TargetActor @Inject() (
   override val n2NodesUtil      : N2NodesUtil,
   override val aeFormUtil       : AeFormUtil,
   override val adRenderUtil     : AdRenderUtil,
+  override val ctxUtil          : ContextUtil,
   implicit val wsClient         : WSClient,
   override val mCommonDi        : ICommonDi
 )

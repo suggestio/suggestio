@@ -7,6 +7,7 @@ import io.suggest.util.UrlUtil
 import models.adv._
 import models.adv.ext.act.ExtServiceActorEnv
 import models.adv.js._
+import models.mctx.ContextUtil
 import models.mws.AnswerStatuses
 import util.PlayMacroLogsImpl
 import util.adv.ext.AeFormUtil
@@ -90,6 +91,7 @@ trait ExtServiceActorFactory
 class ExtServiceActor @Inject() (
   @Assisted override val args : IExtAdvServiceActorArgs,
   aeTgJsAdpActorFactory       : AeTgJsAdpActorFactory,
+  override val ctxUtil        : ContextUtil,
   override val aeFormUtil     : AeFormUtil
 )
   extends ExtServiceActorLogic

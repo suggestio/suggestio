@@ -1,6 +1,8 @@
-@(testRes: scala.util.Try[Seq[msys.NodeProblem]]))
+@(testRes: scala.util.Try[Seq[msys.NodeProblem]], absUrlPrefix: String)
 
-@* Шаблон HTML-email для уведомления сисадминов suggest.io о проблеме при тестировании. *@
+@* Шаблон HTML-email для уведомления сисадминов suggest.io о проблеме при тестировании.
+   ctx: Отсутствует, необходимо рендерить без контекста.
+*@
 
 <p>Обнаружены проблемы при тестировании геосвязности узлов.</p>
 
@@ -18,7 +20,7 @@
 
 <p>
   Для запуска теста и исправления проблем, используйте
-  <a href="@Context.LK_URL_PREFIX@routes.SysDebug.index()">эту ссылку</a>.
+  <a href="@absUrlPrefix@routes.SysDebug.index()">эту ссылку</a>.
 </p>
 
 <p>

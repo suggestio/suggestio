@@ -14,7 +14,7 @@ import models.adv.js._
 import models.event.ErrorInfo
 import models.jsm.DomWindowSpecs
 import models.ls.LsOAuth1Info
-import models.mctx.Context
+import models.mctx.ContextUtil
 import models.mproj.ICommonDi
 import models.sec.{MAsymKey, MAsymKeys}
 import oauth.signpost.exception.OAuthException
@@ -62,6 +62,7 @@ class OAuth1ServiceActor @Inject() (
   oa1SvcActorUtil             : Oa1SvcActorUtil,
   pgpUtil                     : PgpUtil,
   mAsymKeys                   : MAsymKeys,
+  override val ctxUtil        : ContextUtil,
   override val aeFormUtil     : AeFormUtil,
   implicit val wsClient       : WSClient
 )
@@ -349,7 +350,7 @@ class OAuth1ServiceActor @Inject() (
           actorInfoQs = ActorPathQs(self.path)
         )
         // Вычисляем URL prefix. в devel-режиме нужно использовать ip локалхоста, а не его имя.
-        val urlPrefix = Context.devReplaceLocalHostW127001( args.ctx.LK_URL_PREFIX )
+        val urlPrefix = ctxUtil.devReplaceLocalHostW127001( args.ctx.LK_URL_PREFIX )
         // Заставить клиента открыть всплывающее окно для авторизации на твиттере.
         val returnUrl = urlPrefix + returnCall.url
         oa1client.retrieveRequestToken(returnUrl)
