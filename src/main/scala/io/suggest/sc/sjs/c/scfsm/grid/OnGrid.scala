@@ -74,6 +74,8 @@ trait OnGridBase extends ScFsmStub with ResizeDelayed with Append {
     /** Реакция на наступление таймаута ожидания ресайза плитки. */
     override def _handleResizeDelayTimeout(): Unit = {
       val sd0 = _stateData
+      // TODO XXX Почему-то не отрабатывает корректно, когда происходит закрытие focused-выдачи после ротации экрана ранее.
+      // Надо проверять наверное _isScrWidthReallyChanged() || sd0.grid.state.containerSz.contains(newSz). Где-то в коде этот трюк уже был виден.
       if (_isScrWidthReallyChanged()) {
         // TODO Opt Если существенное по горизонтали, но оно осталось ~кратно ячейкам, то просто перестроить выдачу: _rebuildGridOnPanelChange
         val sd1 = sd0.copy(
