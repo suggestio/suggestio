@@ -9,8 +9,9 @@ import models.merr.MRemoteErrors
 import models.mproj.ICommonDi
 import models.msc.map.MMapNodes
 import util.PlayMacroLogsImpl
+import util.adr.AdRenderUtil
 import util.cdn.CdnUtil
-import util.img.{AdRenderUtil, LogoUtil, WelcomeUtil}
+import util.img.{LogoUtil, WelcomeUtil}
 import util.n2u.N2NodesUtil
 import util.showcase.{ScStatUtil, ShowcaseNodeListUtil, ShowcaseUtil}
 import util.stat.StatUtil

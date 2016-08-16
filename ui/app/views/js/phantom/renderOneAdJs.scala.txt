@@ -1,4 +1,4 @@
-@(args: im.PhantomJsAdRenderArgsT, outImgPath: String)
+@(args: adr.IAdRenderArgs, outImgPath: String)
 
 @* js для генерации инструкций для phantom.js, чтобы тот отрендерил карточку в картинку.
    http://stackoverflow.com/a/26144062

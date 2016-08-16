@@ -7,8 +7,8 @@ import models.blk.OneAdQsArgs
 import models.event.{ErrorInfo, MEventTypes}
 import models.mproj.IMCommonDi
 import util.PlayMacroLogsI
+import util.adr.IAdRenderUtilDi
 import util.async.FsmActor
-import util.img.IAdRenderUtilDi
 
 import scala.util.{Failure, Success}
 

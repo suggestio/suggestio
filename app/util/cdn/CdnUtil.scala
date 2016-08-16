@@ -124,3 +124,8 @@ class CdnUtil @Inject() (
   }
 
 }
+
+/** Интерфейс для доступа к DI-полю с инстансом [[CdnUtil]]. */
+trait ICdnUtilDi {
+  def cdnUtil: CdnUtil
+}

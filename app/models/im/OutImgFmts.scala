@@ -49,7 +49,7 @@ object OutImgFmts extends Enumeration with EnumValue2Val with EnumMaybeWithName 
    */
   def forImageMime(mime: String): Option[T] = {
     values
-      .find(_.mime equalsIgnoreCase mime)
+      .find( _.mime.equalsIgnoreCase(mime) )
       .asInstanceOf[Option[T]]
   }
 
@@ -59,12 +59,10 @@ object OutImgFmts extends Enumeration with EnumValue2Val with EnumMaybeWithName 
     new QueryStringBindable[T] {
       /** Биндинг значения из карты аргументов. */
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, T]] = {
-        strB.bind(key, params).map {
-          _.right.flatMap { fmtName =>
-            maybeWithName(fmtName) match {
-              case Some(fmt) => Right(fmt)
-              case None => Left("Unknown image format: " + fmtName)
-            }
+        for ( fmtNameEith <- strB.bind(key, params) ) yield {
+          fmtNameEith.right.flatMap { fmtName =>
+            maybeWithName(fmtName)
+              .toRight[String]("Unknown image format: " + fmtName)
           }
         }
       }

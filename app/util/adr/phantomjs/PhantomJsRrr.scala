@@ -1,20 +1,25 @@
-package models.im
+package util.adr.phantomjs
 
-import java.io.{FileWriter, File}
+import java.io.{File, FileWriter}
 
+import com.google.inject.{Inject, Singleton}
+import com.google.inject.assistedinject.Assisted
 import models.MImgSizeT
-import util.PlayMacroLogsDyn
-import views.txt.js.phantom._
+import models.adr.IAdRenderArgs
+import models.im.{OutImgFmt, OutImgFmts}
+import models.mproj.ICommonDi
+import util.adr.{IAdRrr, IAdRrrDiFactory, IAdRrrUtil}
+import views.txt.js.phantom.renderOneAdJs
 
 /**
- * Suggest.io
- * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 24.03.15 18:04
- * Description: Параметры и логика вызова рендера карточки через phantom.js.
- */
-
-object PhantomJsAdRenderArgs extends IAdRendererCompanion {
-
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 16.08.16 18:59
+  * Description: Реализация ad-рендерера на базе Phantom.js.
+  * ЕМНИП, Фантом начал использоваться из-за проблем со сглаживанием webfonts в wkhtmltoimage на сервере.
+  */
+@Singleton
+class PhantomJsRrrUtil extends IAdRrrUtil {
 
   /** Дефолтовое значение quality, если не задано. */
   override def qualityDflt(scrSz: MImgSizeT, fmt: OutImgFmt): Option[Int] = {
@@ -24,24 +29,29 @@ object PhantomJsAdRenderArgs extends IAdRendererCompanion {
     }
   }
 
-  override def forArgs(src: String, scrSz: MImgSizeT, outFmt: OutImgFmt, quality: Option[Int] = None): IAdRenderArgs = {
-    apply(src = src,  scrSz = scrSz,  outFmt = outFmt,  quality = quality)
-  }
 }
 
+/** Интерфейс Guice DI-factory инстансов [[PhantomJsRrr]]. */
+trait PhantomJsRrrDiFactory extends IAdRrrDiFactory {
+  override def instance(args: IAdRenderArgs): PhantomJsRrr
+}
 
-/** Логика работы активной части модели вынесена в трейт. */
-trait PhantomJsAdRenderArgsT extends IAdRenderArgsSyncFile with PlayMacroLogsDyn {
+class PhantomJsRrr @Inject() (
+  @Assisted override val args : IAdRenderArgs,
+  override val mCommonDi      : ICommonDi
+)
+  extends IAdRrr
+{
 
-  /**
+    /**
    * Запись скрипта в файле.
    * Из-за бага [[https://github.com/ariya/phantomjs/issues/10619]], нужно размеры форсировать в нескольких местах.
    * @param scriptFile Файл скрипта.
    * @param outFile Файл для результирующей картинки.
    * @see [[http://phantomjs.org/api/webpage/method/render.html]]
    */
-  def writeScript(scriptFile: File, outFile: File): Unit = {
-    val rendered = renderOneAdJs(this, outFile.getAbsolutePath)
+  private def writeScript(scriptFile: File, outFile: File): Unit = {
+    val rendered = renderOneAdJs(args, outFile.getAbsolutePath)
     val w = new FileWriter(scriptFile)
     try {
       w.write(rendered.body)
@@ -66,14 +76,3 @@ trait PhantomJsAdRenderArgsT extends IAdRenderArgsSyncFile with PlayMacroLogsDyn
   }
 
 }
-
-
-/** Дефолтовая реализация абстрактной модели [[PhantomJsAdRenderArgsT]],
-  * которая предоставляет рендер через phantomjs. */
-case class PhantomJsAdRenderArgs(
-  src         : String,
-  scrSz       : MImgSizeT,
-  outFmt      : OutImgFmt,
-  quality     : Option[Int]
-) extends PhantomJsAdRenderArgsT
-

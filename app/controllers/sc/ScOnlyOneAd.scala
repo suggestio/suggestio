@@ -6,7 +6,7 @@ import models._
 import models.blk.{OneAdQsArgs, szMulted}
 import util.PlayMacroLogsI
 import util.acl.GetAnyAd
-import util.img.IAdRenderUtilDi
+import util.adr.IAdRenderUtilDi
 import views.html.blocks.common.standaloneTpl
 import views.html.sc._adTpl
 

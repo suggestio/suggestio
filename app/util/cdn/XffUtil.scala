@@ -2,9 +2,9 @@ package util.cdn
 
 import akka.stream.Materializer
 import com.google.inject.Inject
+import play.api.Configuration
 import play.api.mvc.{Filter, RequestHeader, Result}
 import util.PlayMacroLogsImpl
-import play.api.Play.{configuration, current}
 
 import scala.concurrent.Future
 import play.api.http.HeaderNames._
@@ -21,7 +21,8 @@ import scala.collection.JavaConversions._
  */
 
 class DumpXffHeaders @Inject() (
-  override implicit val mat: Materializer
+  configuration             : Configuration,
+  override implicit val mat : Materializer
 )
   extends Filter
     with PlayMacroLogsImpl
@@ -37,8 +38,8 @@ class DumpXffHeaders @Inject() (
   /** Применить фильтр для обработки одного запроса. */
   override def apply(f: (RequestHeader) => Future[Result])(rh: RequestHeader): Future[Result] = {
     val resultFut = f(rh)
+
     // Параллельно начинаем дампить хидеры в лог.
-    // TODO Логика была закопана внутрь trace { ... }, но это почему-то не работало (выдавались "()" в логах)
     if (LOGGER.underlying.isTraceEnabled) {
       val sb = new StringBuilder("Fwd headers for ")
         .append(rh.method)
