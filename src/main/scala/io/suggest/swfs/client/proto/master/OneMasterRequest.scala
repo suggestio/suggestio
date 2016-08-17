@@ -1,10 +1,10 @@
 package io.suggest.swfs.client.proto.master
 
-import io.suggest.di.IExecutionContext
+import io.suggest.di.{IExecutionContext, IWsClient}
 import io.suggest.swfs.client.play.SwfsClientWs
 import io.suggest.swfs.client.proto.IToQs
 import io.suggest.util.MacroLogsI
-import play.api.libs.ws.{WSClient, WSResponse}
+import play.api.libs.ws.WSResponse
 
 import scala.concurrent.Future
 
@@ -15,11 +15,11 @@ import scala.concurrent.Future
  * Description: Бывает, что нужно отработать реквест на каком-то мастере
  * с простеньким fail-over'ом на последующие мастеры.
  */
-trait OneMasterRequest extends MacroLogsI with IExecutionContext {
-
-  /** play.ws-клиента (http-клиент).  */
-  implicit protected def ws: WSClient
-
+trait OneMasterRequest
+  extends MacroLogsI
+    with IExecutionContext
+    with IWsClient
+{
 
   trait OneMasterRequestBase {
 
@@ -65,7 +65,7 @@ trait OneMasterRequest extends MacroLogsI with IExecutionContext {
 
     def mkOp(master: String): Future[Res_t] = {
       val url = _mkUrl(master)
-      val fut = ws.url( url )
+      val fut = wsClient.url( url )
         .execute(_method)
       // Логгируем ответы на запросы трейсом
       if (LOGGER.underlying.isTraceEnabled()) {

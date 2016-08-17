@@ -1,6 +1,7 @@
 package io.suggest.swfs.client.play
 
-import com.google.inject.{ImplementedBy, Singleton, Inject}
+import com.google.inject.{ImplementedBy, Inject, Singleton}
+import io.suggest.di.IWsClient
 import io.suggest.swfs.client.ISwfsClient
 import io.suggest.util.{MacroLogsI, MacroLogsImpl}
 import play.api.Configuration
@@ -32,9 +33,11 @@ import SwfsClientWs._
 
 /** Интерфейс play.ws-клиента для написания трейтов частичных реализаций. */
 @ImplementedBy( classOf[SwfsClientWs] )
-trait ISwfsClientWs extends ISwfsClient with MacroLogsI {
-
-  implicit protected def ws: WSClient
+trait ISwfsClientWs
+  extends ISwfsClient
+    with MacroLogsI
+    with IWsClient
+{
 
   /** Конфиг play application. */
   protected def conf: Configuration
@@ -49,9 +52,9 @@ trait ISwfsClientWs extends ISwfsClient with MacroLogsI {
 /** DI-реализация высокоуровневого seaweedfs-клиента. */
 @Singleton
 class SwfsClientWs @Inject() (
-  override val conf         : Configuration,
-  override implicit val ws  : WSClient,
-  override implicit val ec  : ExecutionContext
+  override val conf               : Configuration,
+  override implicit val wsClient  : WSClient,
+  override implicit val ec        : ExecutionContext
 )
   extends MacroLogsImpl
   with Assign

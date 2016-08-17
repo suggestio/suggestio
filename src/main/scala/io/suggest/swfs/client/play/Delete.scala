@@ -21,7 +21,7 @@ trait Delete extends ISwfsClientWs {
     lazy val logPrefix = s"delete($startMs):"
     LOGGER.trace(s"$logPrefix $method $url\n $args")
 
-    val reqFut = ws.url(url).execute(method)
+    val reqFut = wsClient.url(url).execute(method)
 
     reqFut.onFailure { case ex: Throwable =>
       LOGGER.error(s"$logPrefix Failed $method $url\n $args", ex)

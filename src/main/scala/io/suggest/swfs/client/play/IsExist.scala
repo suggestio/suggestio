@@ -21,7 +21,7 @@ trait IsExist extends ISwfsClientWs {
 
     // Make and handle request.
     val fut = for {
-      wsResp  <- ws.url(url).head()
+      wsResp  <- wsClient.url(url).head()
     } yield {
       val s = wsResp.status
       LOGGER.trace(s"$logPrefix success, took ${System.currentTimeMillis() - startMs} ms\n ${wsResp.body}")

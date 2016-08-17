@@ -20,7 +20,7 @@ trait Get extends ISwfsClientWs {
     lazy val logPrefix = s"get($startMs):"
     LOGGER.trace(s"$logPrefix Starting GET $url\n $args")
 
-    val streamFut = ws.url( url ).getStream()
+    val streamFut = wsClient.url( url ).getStream()
 
     streamFut.onFailure { case ex: Throwable =>
       LOGGER.error(s"$logPrefix Req failed: GET $url\n $args", ex)
