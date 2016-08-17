@@ -19,6 +19,7 @@ import util.adv.ut.ExtTargetActorUtil
 import util.async.FsmActor
 import ut._
 import util.adr.AdRenderUtil
+import util.ext.ExtServicesUtil
 import util.n2u.N2NodesUtil
 
 import scala.util.{Failure, Success}
@@ -44,6 +45,7 @@ class OAuth1TargetActor @Inject() (
   override val n2NodesUtil      : N2NodesUtil,
   override val aeFormUtil       : AeFormUtil,
   override val adRenderUtil     : AdRenderUtil,
+  override val extServicesUtil  : ExtServicesUtil,
   override val ctxUtil          : ContextUtil,
   implicit val wsClient         : WSClient,
   override val mCommonDi        : ICommonDi
@@ -67,7 +69,7 @@ class OAuth1TargetActor @Inject() (
 
   override def receive: Receive = allStatesReceiver
 
-  val oa1Support = service.oauth1Support.get
+  val oa1Support = serviceHelper.oauth1Support.get
 
 
   /** Текущий сервис, в котором задействован текущий актор. */
@@ -112,7 +114,7 @@ class OAuth1TargetActor @Inject() (
     override def mkUpArgs: IMpUploadArgs = {
       mpUploadClient.uploadArgsSimple(
         file      = imgFile,
-        ct        = service.imgFmt.mime,
+        ct        = serviceHelper.imgFmt.mime,
         url       = None,
         fileName  = ad2imgFileName,
         oa1AcTok  = Some(args.accessToken)
@@ -134,7 +136,7 @@ class OAuth1TargetActor @Inject() (
     /** При входе в состояние надо запустить постинг с помощью имеющегося access_token'а. */
     override def afterBecome(): Unit = {
       super.afterBecome()
-      val mkPostArgs = new IOa1MkPostArgs {
+      val mkPostArgs = new IOAuth1MkPostArgs {
         override def mad      = args.request.mad
         override def acTok    = args.accessToken
         override def target   = args.target.target

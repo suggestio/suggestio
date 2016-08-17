@@ -3,9 +3,9 @@ package models.adv.ext
 import io.suggest.common.geom.d2.INamedSize2di
 import models.MNode
 import models.blk.OneAdQsArgs
-import models.mext.MExtService
 import util.blocks.BgImg
 import models.blk.szMulted
+import util.ext.IExtServiceHelper
 
 /**
  * Suggest.io
@@ -19,7 +19,7 @@ trait Mad2ImgUrlCalcT {
   /** Размер для рендера. */
   def adRenderMaxSz: INamedSize2di
 
-  def service: MExtService
+  def serviceHelper: IExtServiceHelper
 
   def tgUrl: String
 
@@ -30,7 +30,7 @@ trait Mad2ImgUrlCalcT {
   /** Инфа по рендеру карточки в картинке. */
   def madRenderInfo: PicInfo = {
     // Вычисляем мультипликатор размера исходя из отношения высот.
-    val srv = service
+    val srv = serviceHelper
     val sz = adRenderMaxSz
     val bm = mad.ad.blockMeta.get
     val whSzM = Math.min(
@@ -47,7 +47,9 @@ trait Mad2ImgUrlCalcT {
     //.filter { pmWidth => mad.blockMeta.wide || pmWidth.toFloat > mad.blockMeta.width * 1.15F }
     PicInfo(
       wide   = wideWidthOpt,
-      width  = wideWidthOpt.fold { szMulted(bm.width, srv.szMult) } (_.width),
+      width  = wideWidthOpt.fold {
+        szMulted(bm.width, srv.szMult)
+      }(_.width),
       height = szMulted(sz.height, szMultV),
       szMult = szMultV,
       stdSz  = sz
@@ -64,7 +66,7 @@ trait Mad2ImgUrlCalcT {
       adId    = adId,
       szMult  = mri.szMult,
       vsnOpt  = mad.versionOpt,
-      imgFmt  = service.imgFmt,
+      imgFmt  = serviceHelper.imgFmt,
       wideOpt = mri.wide
     )
   }

@@ -3,7 +3,6 @@ package controllers.sc
 import controllers.routes
 import models._
 import models.mctx.Context
-import models.mext.MExtServices
 import models.msc._
 import models.req.IReq
 import play.api.mvc._
@@ -11,6 +10,7 @@ import play.twirl.api.Html
 import util.PlayMacroLogsI
 import util.acl._
 import util.di.{IScStatUtil, IScUtil}
+import util.ext.IExtServicesUtilDi
 import views.html.sc._
 
 import scala.concurrent.Future
@@ -29,6 +29,7 @@ trait ScSiteBase
   with PlayMacroLogsI
   with IScStatUtil
   with IScUtil
+  with IExtServicesUtilDi
 {
 
   import mCommonDi._
@@ -57,22 +58,29 @@ trait ScSiteBase
     def headAfterFut: Future[List[Html]] = {
       mNodeCache.maybeGetByIdCached( _siteArgs.povAdId )
         .map { _.get }
+        // Интересует только карточка с ресивером. TODO И отмодерированная?
         .filter { mad =>
           mad.edges
             .withPredicateIter(MPredicates.Receiver)
             .exists(_.info.sls.nonEmpty)
         }
+        // Зарендерить всё параллельно.
         .flatMap { mad =>
-          val futs = MExtServices.values
-            .iterator
-            .map { _.adMetaTagsRender(mad).map { rl =>
-              rl.map { _.render()(ctx) }
-                .iterator
-            }}
-          Future
-            .fold[Iterator[Html], Iterator[Html]] (futs) (Iterator.empty) (_ ++ _)
-            .map { _.toList }
+          val futs = extServicesUtil.HELPERS
+            .map { svcHelper =>
+              for (renderables <- svcHelper.adMetaTagsRender(mad)) yield {
+                for (renderable <- renderables) yield {
+                  renderable.render()(ctx)
+                }
+              }
+            }
+          for (renders <- Future.sequence(futs)) yield {
+            renders.iterator
+              .flatten
+              .toList
+          }
         }
+        // Отработать случи отсутствия карточки или другие нежелательные варианты.
         .recover { case ex: Throwable =>
           if (!ex.isInstanceOf[NoSuchElementException])
             LOGGER.warn("Failed to collect meta-tags for ad " + _siteArgs.povAdId, ex)

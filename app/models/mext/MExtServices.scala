@@ -7,8 +7,6 @@ import io.suggest.model.menum.EnumJsonReadsT
 import models.mext.fb.FacebookService
 import models.mext.tw.TwitterService
 import models.mext.vk.VkService
-import play.api.libs.functional.syntax._
-import play.api.libs.json._
 
 /**
  * Suggest.io
@@ -25,11 +23,6 @@ object MExtServices extends MServicesT with PlayLazyMacroLogsImpl with EnumJsonR
   protected[this] abstract class Val(override val strId: String)
     extends super.Val(strId)
     with IExtService
-  {
-    override lazy val APP_ID_OPT = super.APP_ID_OPT
-    override val imgFmt = super.imgFmt
-    override val szMult = super.szMult
-  }
 
 
   /** Сервис вконтакта. */
@@ -41,40 +34,4 @@ object MExtServices extends MServicesT with PlayLazyMacroLogsImpl with EnumJsonR
   /** Сервис твиттера. */
   val TWITTER: T = new Val(TWITTER_ID) with TwitterService
 
-
-  /**
-   * Поиск подходящего сервиса для указанного хоста.
-   * @param host Хостнейм искомого сервиса.
-   * @return Сервис, если такой есть.
-   */
-  def findForHost(host: String): Option[MExtService] = {
-    values
-      .find(_.isForHost(host))
-      .map(value2val)
-  }
-
-  /** Десериализация из JSON. Всё можно прочитать по имени. */
-  def readsStruct: Reads[T] = {
-    (__ \ NAME_FN)
-      .read(super.reads)
-  }
-
-  /** Сериализация в JSON. */
-  def writesStruct: Writes[T] = (
-    (__ \ NAME_FN).write[String] and
-    (__ \ APP_ID_FN).writeNullable[String]
-  ){ s => (s.strId, s.APP_ID_OPT) }
-
 }
-
-
-/** Абстрактные метаданные по посту на внешнем сервисе. */
-trait IExtPostInfo {
-  def id: String
-  def url: String
-
-  override def toString: String = {
-    getClass.getSimpleName + "(" + id + "," + url + ")"
-  }
-}
-

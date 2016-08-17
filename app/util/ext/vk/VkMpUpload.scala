@@ -1,8 +1,9 @@
-package models.mext.vk
+package util.ext.vk
 
-import io.suggest.ahc.upload.{IMpUploadArgs, MpUploadSupportDflt}
+import io.suggest.ahc.upload.IMpUploadArgs
 import models.mext._
 import play.api.libs.ws.WSResponse
+import util.ext.ExtServiceHelperMpUpload
 
 /**
  * Suggest.io
@@ -10,7 +11,10 @@ import play.api.libs.ws.WSResponse
  * Created: 14.04.15 15:12
  * Description: Поддержка аплода для вконтакта.
  */
-trait VkMpUpload extends MpUploadSupportDflt with IExtMpUploadSupport {
+trait VkMpUpload
+  extends ExtServiceHelperMpUpload
+{
+
   /**
    * vk используется динамические URL для подгрузки. URL должен быть задан в аргументах.
    * @param args Аргументы upload.
@@ -30,6 +34,9 @@ trait VkMpUpload extends MpUploadSupportDflt with IExtMpUploadSupport {
 
   /** У вконтакта формат такой, что он парсится на клиенте, и этот метод никогда не вызывается вроде. */
   override def resp2attachments(resp: WSResponse): Seq[IPostAttachmentId] = {
-    Seq(StringIdPostAttachment(resp.body))
+    Seq(
+      StringIdPostAttachment(resp.body)
+    )
   }
+
 }

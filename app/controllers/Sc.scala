@@ -11,6 +11,7 @@ import models.msc.map.MMapNodes
 import util.PlayMacroLogsImpl
 import util.adr.AdRenderUtil
 import util.cdn.CdnUtil
+import util.ext.ExtServicesUtil
 import util.img.{LogoUtil, WelcomeUtil}
 import util.n2u.N2NodesUtil
 import util.showcase.{ScStatUtil, ShowcaseNodeListUtil, ShowcaseUtil}
@@ -38,6 +39,7 @@ class Sc @Inject()(
   @Named("blk") override val blkImgMaker  : IMaker,
   override val mRemoteErrors      : MRemoteErrors,
   override val mMapNodes          : MMapNodes,
+  override val extServicesUtil    : ExtServicesUtil,
   override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl

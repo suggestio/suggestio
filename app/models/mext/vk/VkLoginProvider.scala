@@ -20,4 +20,5 @@ trait VkLoginProvider extends ILoginProvider {
 
   /** SecureSocial provider companion. */
   override def ssProvider = VkProvider
+
 }

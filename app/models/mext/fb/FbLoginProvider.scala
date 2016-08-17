@@ -11,6 +11,7 @@ import securesocial.core.providers.FacebookProvider
  * Description: Интеграция facebook и securesocial.
  */
 trait FbLoginProvider extends ILoginProvider {
+
   /** Метод аутентификации SecureSocial. */
   override def ssAuthMethod = AuthenticationMethod.OAuth2
 
@@ -19,4 +20,5 @@ trait FbLoginProvider extends ILoginProvider {
 
   /** SecureSocial provider companion. */
   override def ssProvider = FacebookProvider
+
 }

@@ -25,7 +25,9 @@ trait EtaCustomArgsBase
     with IContextUtilDi
 { env =>
 
-  def _adRenderMaxSzDflt = service.advPostMaxSz(args.target.target.url)
+  def _adRenderMaxSzDflt: INamedSize2di = {
+    serviceHelper.advPostMaxSz(args.target.target.url)
+  }
 
   /** Абстрактная реализация модели в виде трейта. */
   protected class MCustomArgs extends Mad2ImgUrlCalc {
@@ -33,7 +35,7 @@ trait EtaCustomArgsBase
     /** Размер дял рендера. */
     def adRenderMaxSz: INamedSize2di = _adRenderMaxSzDflt
 
-    override def service = env.service
+    override def serviceHelper = env.serviceHelper
     override def mad     = env.args.request.mad
     override def tgUrl   = env.args.target.target.url
 

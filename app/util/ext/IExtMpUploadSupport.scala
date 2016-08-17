@@ -1,6 +1,7 @@
-package models.mext
+package util.ext
 
 import io.suggest.ahc.upload.IMpUploadSupport
+import models.mext.IPostAttachmentId
 import play.api.libs.ws.WSResponse
 
 /**

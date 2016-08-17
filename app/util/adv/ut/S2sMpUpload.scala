@@ -1,15 +1,15 @@
 package util.adv.ut
 
-import io.suggest.ahc.upload.{UploadRefusedException, IMpUploadArgs}
+import io.suggest.ahc.upload.{IMpUploadArgs, UploadRefusedException}
+import io.suggest.di.IWsClient
 import models.adv.ext.act.ExtActorEnv
-import models.event.{MEventTypes, ErrorInfo}
+import models.event.{ErrorInfo, MEventTypes}
+import models.mproj.IMCommonDi
 import play.api.libs.ws.WSResponse
 import util.async.FsmActor
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.di.IWsClient
 
 import scala.concurrent.Future
-import scala.util.{Try, Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 /**
  * Suggest.io
@@ -17,7 +17,13 @@ import scala.util.{Try, Failure, Success}
  * Created: 14.04.15 15:52
  * Description: Поддержка сборки состояний для аплоада данных на сервис.
  */
-trait S2sMpUpload extends FsmActor with ExtActorEnv with IWsClient {
+trait S2sMpUpload
+  extends FsmActor
+    with ExtActorEnv
+    with IWsClient
+    with IMCommonDi
+{
+  import mCommonDi.ec
 
   trait S2sMpUploadStateT extends FsmState {
     /** Аплоад точно удался. */
@@ -31,7 +37,7 @@ trait S2sMpUpload extends FsmActor with ExtActorEnv with IWsClient {
     def mkUpArgs: IMpUploadArgs
 
     /** Быстрый доступ к Service Upload API. */
-    def mpUploadClient = service.maybeMpUpload.get
+    def mpUploadClient = serviceHelper.maybeMpUpload.get
 
     /** При переходе на это состояние надо запустить отправку картинки на удалённый сервер. */
     override def afterBecome(): Unit = {
@@ -49,7 +55,7 @@ trait S2sMpUpload extends FsmActor with ExtActorEnv with IWsClient {
         case Success(wsResp) => self ! wsResp
         case other           => self ! other
       }
-      upFut.onComplete { case tryRes =>
+      upFut.onComplete { tryRes =>
         uploadCompleted(tryRes)
       }
     }
@@ -72,7 +78,11 @@ trait S2sMpUpload extends FsmActor with ExtActorEnv with IWsClient {
 
 
 /** Реализация [[S2sMpUpload]] с рендером типичных ошибок на экран юзеру. */
-trait S2sMpUploadRender extends S2sMpUpload with ExtTargetActorUtil {
+trait S2sMpUploadRender
+  extends S2sMpUpload
+    with ExtTargetActorUtil
+{
+
   /** Состояние аплоада. */
   trait S2sMpUploadStateT extends super.S2sMpUploadStateT {
     

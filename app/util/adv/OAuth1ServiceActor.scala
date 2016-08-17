@@ -27,6 +27,7 @@ import util.PlayMacroLogsImpl
 import util.adv.ext.AeFormUtil
 import util.adv.ut._
 import util.async.{AsyncUtil, FsmActor}
+import util.ext.ExtServicesUtil
 import util.jsa.JsWindowOpen
 import util.secure.PgpUtil
 
@@ -59,9 +60,10 @@ class OAuth1ServiceActor @Inject() (
   @Assisted override val args : IExtAdvServiceActorArgs,
   oa1TgActorFactory           : OAuth1TargetActorFactory,
   mCommonDi                   : ICommonDi,
-  oa1SvcActorUtil             : Oa1SvcActorUtil,
+  oa1SvcActorUtil             : OAuth1SvcActorUtil,
   pgpUtil                     : PgpUtil,
   mAsymKeys                   : MAsymKeys,
+  override val extServicesUtil: ExtServicesUtil,
   override val ctxUtil        : ContextUtil,
   override val aeFormUtil     : AeFormUtil,
   implicit val wsClient       : WSClient
@@ -75,7 +77,7 @@ class OAuth1ServiceActor @Inject() (
 {
 
   import LOGGER._
-  import mCommonDi.{ec, esClient}
+  import mCommonDi.ec
   import oa1SvcActorUtil._
 
   override type State_t = FsmState
@@ -84,7 +86,7 @@ class OAuth1ServiceActor @Inject() (
 
   override def receive: Receive = allStatesReceiver
 
-  private val oa1Support = service.oauth1Support.get
+  private val oa1Support = serviceHelper.oauth1Support.get
 
   /** OAuth1-клиент сервиса. */
   private val oa1client = oa1Support.client
@@ -495,7 +497,7 @@ class OAuth1ServiceActor @Inject() (
 
 /** Всякая shared-утиль для акторов [[OAuth1ServiceActor]] сбрасывается сюда. */
 @Singleton
-class Oa1SvcActorUtil {
+class OAuth1SvcActorUtil {
 
   /** Таймаут спрашивания у юзера ранее сохраненных данных по access-token'у. */
   def LS_STORED_TOKEN_ASK_TIMEOUT_SEC = 3

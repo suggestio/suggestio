@@ -21,6 +21,7 @@ import util.adv.ut.ExtTargetActorUtil
 import util.async.FsmActor
 import ut._
 import util.adr.AdRenderUtil
+import util.ext.ExtServicesUtil
 import util.n2u.N2NodesUtil
 
 /**
@@ -47,6 +48,7 @@ class ExtTargetActor @Inject() (
   override val n2NodesUtil      : N2NodesUtil,
   override val adRenderUtil     : AdRenderUtil,
   override val aeFormUtil       : AeFormUtil,
+  override val extServicesUtil  : ExtServicesUtil,
   override val ctxUtil          : ContextUtil,
   implicit val wsClient         : WSClient,
   override val mCommonDi        : ICommonDi
@@ -129,7 +131,7 @@ class ExtTargetActor @Inject() (
         domain  = Seq(getDomain),
         status  = None,
         error   = None,
-        service = Some(service)
+        service = Some(serviceInfo)
       )
       become(new HandleTargetState(mctx1))
     }
@@ -219,8 +221,10 @@ class ExtTargetActor @Inject() (
           val sizeAliasOpt = mad1.picture.flatMap(_.size)
           val sz1: INamedSize2di = {
             sizeAliasOpt
-              .flatMap(service.postImgSzWithName)
-              .getOrElse { service.advPostMaxSz( args.target.target.url ) }
+              .flatMap(serviceHelper.postImgSzWithName)
+              .getOrElse {
+                serviceHelper.advPostMaxSz( args.target.target.url )
+              }
           }
           trace(s"Requested to switch img size to $sz1 ($sizeAliasOpt)")
           _customArgs = _customArgs.copy(
@@ -279,7 +283,7 @@ class ExtTargetActor @Inject() (
     override def mkUpArgs: IMpUploadArgs = {
       mpUploadClient.uploadArgsSimple(
         file      = imgFile,
-        ct        = service.imgFmt.mime,
+        ct        = serviceHelper.imgFmt.mime,
         url       = Some(uploadCtx.url),
         fileName  = ad2imgFileName
       )

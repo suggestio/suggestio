@@ -2,9 +2,11 @@ package models.adv.ext.act
 
 import io.suggest.util.UrlUtil
 import models.adv._
+import models.adv.ext.MExtServiceInfo
 import models.mctx.IContextUtilDi
 import models.mext.MExtService
 import util.PlayMacroLogsI
+import util.ext.IExtServicesUtilDi
 import util.n2u.IN2NodesUtilDi
 
 /**
@@ -14,7 +16,10 @@ import util.n2u.IN2NodesUtilDi
  * Description: Описание окружения одного из акторов внешнего размещения.
  */
 
-trait ExtActorEnv extends PlayMacroLogsI {
+trait ExtActorEnv
+  extends PlayMacroLogsI
+  with IExtServicesUtilDi
+{
 
   /** Базовые аргументы ext-акторов. */
   def args: IExtActorArgs with WsMediatorRef
@@ -25,9 +30,16 @@ trait ExtActorEnv extends PlayMacroLogsI {
   /** Текущий сервис, в котором задействован текущий актор. */
   def service: MExtService
 
-  def ad2imgFileName: String = {
-    args.qs.adId + "-" + args.request.mad.versionOpt.getOrElse(0L) + "." + service.imgFmt.name
+  /** Инстанс хелпера сервиса. */
+  lazy val serviceHelper = extServicesUtil.helperFor(service).get
+
+  def serviceInfo: MExtServiceInfo = {
+    MExtServiceInfo(
+      name  = service.strId,
+      appId = serviceHelper.APP_ID_OPT
+    )
   }
+
 }
 
 
@@ -44,7 +56,11 @@ trait ExtServiceActorEnv extends ExtActorEnv {
  * Базовое описание окружения актора [[util.adv.ExtTargetActor]].
  * Нужно для описания внутренних моделей, имеющие доступ к этому окружению.
  */
-trait ExtTargetActorEnv extends ExtActorEnv with IN2NodesUtilDi with IContextUtilDi {
+trait ExtTargetActorEnv
+  extends ExtActorEnv
+    with IN2NodesUtilDi
+    with IContextUtilDi
+{
 
   /** Параметры вызова этого актора. */
   def args: IExtAdvTargetActorArgs
@@ -68,6 +84,12 @@ trait ExtTargetActorEnv extends ExtActorEnv with IN2NodesUtilDi with IContextUti
       b.setFocusedProducerId(prodId)
     }
     ctxUtil.toScAbsUrl( b.toCall )
+  }
+
+
+  /** Генерация имени файла для отрендеренной карточки. */
+  def ad2imgFileName: String = {
+    args.qs.adId + "-" + args.request.mad.versionOpt.getOrElse(0L) + "." + serviceHelper.imgFmt.name
   }
 
 }

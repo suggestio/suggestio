@@ -13,6 +13,7 @@ import util.PlayMacroLogsImpl
 import util.adv.ext.AeFormUtil
 import util.async.FsmActor
 import ut._
+import util.ext.ExtServicesUtil
 
 /**
  * Suggest.io
@@ -46,7 +47,7 @@ trait ExtServiceActorLogic
           .map { tg => UrlUtil.url2dkey(tg.target.url) }
           .toSet
           .toSeq,
-        service = Some(service),
+        service = Some(serviceInfo),
         // Заливаем в контекст все имеющиеся цели. js обдумает их и вернет список возможно в каком-то модифицированном виде.
         svcTargets = args.targets.map(tg2jsTg)
       )
@@ -92,6 +93,7 @@ class ExtServiceActor @Inject() (
   @Assisted override val args : IExtAdvServiceActorArgs,
   aeTgJsAdpActorFactory       : AeTgJsAdpActorFactory,
   override val ctxUtil        : ContextUtil,
+  override val extServicesUtil: ExtServicesUtil,
   override val aeFormUtil     : AeFormUtil
 )
   extends ExtServiceActorLogic

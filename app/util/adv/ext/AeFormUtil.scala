@@ -2,12 +2,14 @@ package util.adv.ext
 
 import java.net.URL
 
+import com.google.inject.Inject
 import io.suggest.adv.ext.view.RunnerPage
 import models.adv._
-import models.mext.{MExtService, MExtServices}
+import models.mext.MExtService
 import play.api.data.Forms._
 import play.api.data._
 import util.FormUtil.{esIdM, nameM, toStrOptM, urlM}
+import util.ext.{ExtServicesUtil, IExtServiceHelper}
 
 /**
   * Suggest.io
@@ -16,7 +18,9 @@ import util.FormUtil.{esIdM, nameM, toStrOptM, urlM}
   * Description: Adv Ext Form Util
   * Утиль для поддержки форм внешнего размещения.
   */
-class AeFormUtil {
+class AeFormUtil @Inject() (
+  extServicesUtil: ExtServicesUtil
+) {
 
   /** id div'а в который надо рендерить события размещения. */
   // Сделать его deprecated?
@@ -27,9 +31,9 @@ class AeFormUtil {
   /** Маппинг для ссылки на цель. */
   def tgFullUrlM = {
     urlM
-      .transform[(URL, Option[MExtService])] (
+      .transform[(URL, Option[IExtServiceHelper])] (
         {url =>
-          url -> MExtServices.findForHost(url.getHost)
+          url -> extServicesUtil.findForHost(url.getHost)
         },
         { _._1 }
       )
@@ -38,9 +42,11 @@ class AeFormUtil {
         {case (url, srvOpt) =>
           val srv = srvOpt.get
           val url1 = srv.normalizeTargetUrl(url)
-          (url1, srv) },
+          (url1, srv.mExtService)
+        },
         {case (url, srv) =>
-          (new URL(url), Some(srv)) }
+          (new URL(url), extServicesUtil.helperFor(srv))
+        }
       )
   }
 
@@ -53,7 +59,13 @@ class AeFormUtil {
   def targetM(adnId: String): Mapping[MExtTarget] = {
     mapping(urlKM, nameKM, idKM)
     {case ((url, srv), nameOpt, idOpt) =>
-      MExtTarget(url = url, service = srv, adnId = adnId, id = idOpt, name = nameOpt)
+      MExtTarget(
+        url     = url,
+        service = srv,
+        adnId   = adnId,
+        id      = idOpt,
+        name    = nameOpt
+      )
     }
     {tg =>
       val res = ((tg.url, tg.service), tg.name, tg.id)
@@ -93,7 +105,10 @@ class AeFormUtil {
    * @param tg Экземпляр таргета.
    * @return Экземпляр Form'ы для работы с одной целью.
    */
-  def formForTarget(tg: MExtTarget) = oneTargetFullFormM(tg.adnId) fill (tg, None)
+  def formForTarget(tg: MExtTarget): OneExtTgForm = {
+    oneTargetFullFormM(tg.adnId)
+      .fill((tg, None))
+  }
 
 }
 

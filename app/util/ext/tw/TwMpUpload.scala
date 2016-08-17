@@ -1,10 +1,11 @@
-package models.mext.tw
+package util.ext.tw
 
 import io.suggest.ahc.upload.{IMpUploadArgs, MpUploadSupportDflt}
-import models.mext._
+import models.mext.tw.TwMediaAtt
 import org.asynchttpclient.AsyncHttpClient
 import play.api.libs.oauth.OAuthCalculator
 import play.api.libs.ws.WSResponse
+import util.ext.{ExtServiceHelperMpUpload, IExtMpUploadSupport, IOAuth1Support}
 
 /**
  * Suggest.io
@@ -13,9 +14,9 @@ import play.api.libs.ws.WSResponse
  * Description: Поддержка аплоада media для твиттера.
  */
 trait TwMpUpload
-  extends MpUploadSupportDflt
-  with IExtMpUploadSupport
-{ this: TwitterService =>
+  extends ExtServiceHelperMpUpload
+  with IOAuth1Support
+{
 
   /**
    * Твиттер поддерживает upload по одному и тому же ресурсу.
