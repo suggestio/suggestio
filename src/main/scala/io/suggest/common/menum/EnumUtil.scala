@@ -1,6 +1,6 @@
 package io.suggest.common.menum
 
-import io.suggest.primo.TypeT
+import io.suggest.primo.{IStrId, TypeT}
 
 import scala.collection.immutable.SortedSet
 
@@ -74,10 +74,7 @@ trait LightEnumeration extends ILightEnumeration {
 /** Интерфейс поля ValT.strId для [[IVeryLightEnumeration]]. */
 trait StrIdValT extends IVeryLightEnumeration {
 
-  protected trait ValT extends super.ValT {
-    /** Строковой ключ каждого элемента модели. */
-    def strId: String
-
+  protected trait ValT extends super.ValT with IStrId {
     override def toString: String = strId
   }
 
