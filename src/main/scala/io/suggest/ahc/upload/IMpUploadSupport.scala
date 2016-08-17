@@ -3,14 +3,16 @@ package io.suggest.ahc.upload
 import java.io.File
 
 import io.suggest.ahc.util.NingUtil.ningFut2wsScalaFut
+import io.suggest.common.fut.FutureUtil
+import io.suggest.di.{IExecutionContext, IWsClient}
 import io.suggest.util.MacroLogsI
 import org.asynchttpclient.AsyncHttpClient
 import org.asynchttpclient.request.body.multipart.{FilePart, Part}
 import play.api.http.HeaderNames
 import play.api.libs.oauth.RequestToken
-import play.api.libs.ws.{WSClient, WSResponse}
+import play.api.libs.ws.WSResponse
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -21,8 +23,6 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 
 
-// TODO Play 2.5 использовать play.api.ws MultiPart вместо прямого дерганья http-клиента.
-
 trait IMpUploadSupport {
 
   /**
@@ -30,7 +30,7 @@ trait IMpUploadSupport {
    * @param args Аргументы для аплоада.
    * @return Фьючерс с ответом сервера.
    */
-  def mpUpload(args: IMpUploadArgs)(implicit ec: ExecutionContext, ws: WSClient): Future[WSResponse]
+  def mpUpload(args: IMpUploadArgs): Future[WSResponse]
 
   def uploadArgsSimple(file: File, ct: String, url: Option[String], fileName: String,
                        oa1AcTok: Option[RequestToken] = None): IMpUploadArgs = {
@@ -49,7 +49,12 @@ trait IMpUploadSupport {
 
 
 /** Дефолтовая реализация multi-part upload. */
-trait MpUploadSupportDflt extends IMpUploadSupport with MacroLogsI {
+trait MpUploadSupportDflt
+  extends IMpUploadSupport
+    with MacroLogsI
+    with IExecutionContext
+    with IWsClient
+{
 
   /**
    * Узнать URL для запроса. Аргументы содержат только опциональный URL, если он динамический.
@@ -68,8 +73,9 @@ trait MpUploadSupportDflt extends IMpUploadSupport with MacroLogsI {
   def isRespOk(args: IMpUploadArgs, resp: WSResponse): Boolean
 
   /** Запуск HTTP-запроса. */
-  def mkRequest(args: IMpUploadArgs)(implicit ec: ExecutionContext, ws: WSClient): Future[WSResponse] = {
-    val ningClient = ws.underlying[AsyncHttpClient]
+  def mkRequest(args: IMpUploadArgs): Future[WSResponse] = {
+    // TODO Play 2.5 использовать play.api.ws MultiPart вместо прямого дерганья http-клиента.
+    val ningClient = wsClient.underlying[AsyncHttpClient]
     val rb = newRequest(args, ningClient)
     args.parts
       .foreach { rb.addBodyPart }
@@ -80,38 +86,43 @@ trait MpUploadSupportDflt extends IMpUploadSupport with MacroLogsI {
   }
 
   /** Обработать запрос, отсеивая ошибки. */
-  def processResponse(args: IMpUploadArgs, resp: WSResponse)(implicit ec: ExecutionContext): Future[WSResponse] = {
+  def processResponse(args: IMpUploadArgs, resp: WSResponse): Future[WSResponse] = {
     if ( isRespOk(args, resp) ) {
-      Future successful resp
+      Future.successful(resp)
     } else {
       val msg = s"HTTP ${resp.status} ${resp.statusText}: ${resp.body}"
-      Future failed UploadRefusedException(msg, resp)
+      Future.failed( UploadRefusedException(msg, resp) )
     }
   }
 
-  override def mpUpload(args: IMpUploadArgs)(implicit ec: ExecutionContext, ws: WSClient): Future[WSResponse] = {
-    try {
-      val reqFut = mkRequest(args)
-      reqFut.flatMap { resp =>
-        processResponse(args, resp)
+  override def mpUpload(args: IMpUploadArgs): Future[WSResponse] = {
+    FutureUtil.tryCatchFut {
+      for {
+        resp0 <- mkRequest(args)
+        resp1 <- processResponse(args, resp0)
+      } yield {
+        resp1
       }
-    } catch {
-      case ex: Throwable =>
-        Future failed ex
     }
   }
+
 }
 
 
 /** Аргументы для запуска аплода. */
 trait IMpUploadArgs {
+
   /** Части для запроса. */
   def parts     : TraversableOnce[Part]
+
   /** Ссылка для аплоада, если динамическая. */
   def url       : Option[String]
+
   /** access token, если oauth1 сервис. Иначе None. */
   def oa1AcTok  : Option[RequestToken]
+
 }
+
 
 /** Дефолтовая реализацяи [[IMpUploadArgs]]. */
 case class MpUploadArgs(
