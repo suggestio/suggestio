@@ -4,14 +4,17 @@ import java.io._
 import java.net.InetAddress
 import java.sql.Connection
 import java.util.Comparator
+
+import com.google.inject.Inject
 import com.jolbox.bonecp.ConnectionHandle
 import models.mcron.MCronTask
+import models.mproj.ICommonDi
 import models.{IpGeoBaseCity, IpGeoBaseRange}
 import org.apache.commons.io.{FileUtils, FilenameUtils}
 import org.postgresql.copy.CopyManager
 import org.postgresql.core.BaseConnection
 import play.api.Application
-import play.api.db.DB
+import play.api.db.Database
 import play.api.libs.ws.WSClient
 import util.ws.HttpGetToFile
 import util.{ICronTasksProvider, PlayMacroLogsImpl}
@@ -22,8 +25,6 @@ import scala.io.Source
 import scala.util.matching.Regex
 import scala.util.parsing.combinator.JavaTokenParsers
 import scala.concurrent.duration._
-import play.api.Play.{current, configuration}
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 /**
  * Suggest.io
@@ -31,9 +32,16 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
  * Created: 11.08.14 14:03
  * Description: Утиль для поддержки БД, взятых из [[http://ipgeobase.ru/]].
  */
-class IpGeoBaseImport extends PlayMacroLogsImpl with ICronTasksProvider {
+class IpGeoBaseImport @Inject() (
+  db        : Database,
+  mCommonDi : ICommonDi
+)
+  extends PlayMacroLogsImpl
+  with ICronTasksProvider
+{
 
   import LOGGER._
+  import mCommonDi._
 
   /** Активация импорта требует явного включения этой функции в конфиге. */
   def IS_ENABLED: Boolean = configuration.getBoolean("ipgeobase.import.enabled") getOrElse false
@@ -197,7 +205,9 @@ class IpGeoBaseImport extends PlayMacroLogsImpl with ICronTasksProvider {
     // https://playframework.com/documentation/2.4.x/Migration24
     c match {
       case hc: com.zaxxer.hikari.proxy.ConnectionProxy =>
-        hc.unwrap(classOf[BaseConnection])
+        hc.unwrap( classOf[BaseConnection] )
+      case hc: com.zaxxer.hikari.pool.HikariProxyConnection =>
+        hc.unwrap( classOf[BaseConnection] )
       case bc: BaseConnection =>
         bc
       case bcpc: ConnectionHandle =>
@@ -277,7 +287,7 @@ class IpGeoBaseImport extends PlayMacroLogsImpl with ICronTasksProvider {
     } map { unpackedDir =>
       // Подготовится к импорту таблиц: снести индексы, очистить от данных.
       try {
-        DB.withTransaction { implicit c =>
+        db.withTransaction { implicit c =>
           debug(logPrefix + "Importing cities...")
           importCities(unpackedDir)
           debug(logPrefix + "Importing ip ranges...")
