@@ -43,31 +43,40 @@ class IpGeoBaseImport @Inject() (
   import LOGGER._
   import mCommonDi._
 
-  /** Активация импорта требует явного включения этой функции в конфиге. */
-  def IS_ENABLED: Boolean = configuration.getBoolean("ipgeobase.import.enabled") getOrElse false
+  /** Активация импорта требует явного включения этой функции в конфиге.
+    * Отключена по умолчанию, т.к. она должна быть активна только на одной ноде. */
+  def IS_ENABLED: Boolean = configuration.getBoolean("ipgeobase.import.enabled")
+    .getOrElse(false)
 
   /** Ссылка для скачивания текущей базы. */
-  def ARCHIVE_DOWNLOAD_URL = configuration.getString("ipgeobase.archive.url") getOrElse "http://ipgeobase.ru/files/db/Main/geo_files.zip"
+  def ARCHIVE_DOWNLOAD_URL = configuration.getString("ipgeobase.archive.url")
+    .getOrElse("http://ipgeobase.ru/files/db/Main/geo_files.zip")
 
   /** Поверхностная проверка скачанного архива на профпригодность. */
-  def ARCHIVE_MAGIC_NUMBER = configuration.getInt("ipgeobase.archive.magic") getOrElse 0x504b0304
+  def ARCHIVE_MAGIC_NUMBER = configuration.getInt("ipgeobase.archive.magic")
+    .getOrElse(0x504b0304)
 
   /** Минимально допустимая длина архива с данными. */
-  def ARCHIVE_MIN_LENGTH = configuration.getInt("ipgeobase.archive.size.min") getOrElse 1900000
+  def ARCHIVE_MIN_LENGTH = configuration.getInt("ipgeobase.archive.size.min")
+    .getOrElse(1900000)
 
   /** Имя файл, содержащего диапазоны.*/
-  def IP_RANGES_FILENAME = configuration.getString("ipgeobase.cidr_optim.filename") getOrElse "cidr_optim.txt"
+  def IP_RANGES_FILENAME = configuration.getString("ipgeobase.cidr_optim.filename")
+    .getOrElse("cidr_optim.txt")
 
   /** Кодировка файла с дампами диапазонов. Исторически там win-1251.
     * Корректное значение названия кодировки надо брать из колонки java.nio нижеуказанной ссылки.
     * @see [[http://docs.oracle.com/javase/8/docs/technotes/guides/intl/encoding.doc.html]]. */
-  def IP_RANGES_FILE_ENCODING = configuration.getString("ipgeobase.cidr_optim.encoding") getOrElse "windows-1251"
+  def IP_RANGES_FILE_ENCODING = configuration.getString("ipgeobase.cidr_optim.encoding")
+    .getOrElse("windows-1251")
 
   /** Название файла, в котором лежит карта городов. */
-  def CITIES_FILENAME = configuration.getString("ipgeobase.cities.filename") getOrElse "cities.txt"
+  def CITIES_FILENAME = configuration.getString("ipgeobase.cities.filename")
+    .getOrElse("cities.txt")
 
   /** Кодировка содержимого файла городов. */
-  def CITIES_FILE_ENCODING = configuration.getString("ipgeobase.cities.encoding") getOrElse IP_RANGES_FILE_ENCODING
+  def CITIES_FILE_ENCODING = configuration.getString("ipgeobase.cities.encoding")
+    .getOrElse(IP_RANGES_FILE_ENCODING)
 
 
   override def cronTasks(app: Application): TraversableOnce[MCronTask] = {
@@ -166,10 +175,11 @@ class IpGeoBaseImport @Inject() (
       val pw = new PrintWriter(copyTmpFile)
       try {
         val linesIter = Source.fromFile(citiesFile, CITIES_FILE_ENCODING).getLines()
-        val p = IpGeoBaseCityParsers.cityLineP
+        val parsers = new IpGeoBaseCityParsers
+        val p = parsers.cityLineP
         val linesTotal = linesIter.foldLeft(1) {
           (counter, cityLine) =>
-            val pr = IpGeoBaseCityParsers.parse(p, cityLine)
+            val pr = parsers.parse(p, cityLine)
             if (pr.successful) {
               val str = pr.get.exportForPgCopy(delim)
               pw.println(str)
@@ -201,17 +211,20 @@ class IpGeoBaseImport @Inject() (
 
   /** Отковырять pg connection из play connection. Play использует враппер над jdbc connection'ом. */
   @tailrec private def getPgConnection(implicit c: Connection): BaseConnection = {
-    // На play-2.4: The default JDBC connection pool is now provided by HikariCP, instead of BoneCP.
-    // https://playframework.com/documentation/2.4.x/Migration24
     c match {
+      // --- HikariCP:
+      // play-2.5:
+      case hc: com.zaxxer.hikari.pool.ProxyConnection =>
+        hc.unwrap( classOf[BaseConnection] )
+      // play-2.4:
       case hc: com.zaxxer.hikari.proxy.ConnectionProxy =>
         hc.unwrap( classOf[BaseConnection] )
-      case hc: com.zaxxer.hikari.pool.HikariProxyConnection =>
-        hc.unwrap( classOf[BaseConnection] )
-      case bc: BaseConnection =>
-        bc
+      // --- BoneCP: play-2.0..2.3
       case bcpc: ConnectionHandle =>
         getPgConnection(bcpc.getInternalConnection)
+      // --- plain
+      case bc: BaseConnection =>
+        bc
     }
   }
 
@@ -220,42 +233,43 @@ class IpGeoBaseImport @Inject() (
    * @param dir директория с распакованными файлами.
    */
   def importIpRanges(dir: File)(implicit c: Connection): Unit = {
-    lazy val logPrefix = "importIpRanges(): "
+    lazy val logPrefix = "importIpRanges():"
     val cidrFile = new File(dir, IP_RANGES_FILENAME)
-    debug(logPrefix + "Truncating table...")
+    debug(s"$logPrefix dir=$dir;; Truncating table...")
     IpGeoBaseRange.truncateTable
     // Делаем итератор для обхода неограниченно большого файла:
-    val linesIter =  Source.fromFile(cidrFile, IP_RANGES_FILE_ENCODING).getLines()
+    val linesIter = Source.fromFile(cidrFile, IP_RANGES_FILE_ENCODING).getLines()
     // Напрямую писать в postgres 160k+ рядов - это архидолго и проблематично. Поэтому используем COPY TO.
     // Для этого дампим всё распарсенное и отмаппленное во временный файл в качестве буфера.
     val copyTmpFile = File.createTempFile("importIpRangesCopyTo", ".tsv")
     try {
-      debug(logPrefix + "Starting to covert ip range psql COPY TO...")
+      debug(logPrefix + " Starting to covert ip range psql COPY TO...")
       val copyDelim = "|"
       val nullStr = "__NULL__"
       val pw = new PrintWriter(copyTmpFile)
       try {
         // Собираем инстанс парсера для всех строк:
-        val p = IpGeoBaseCidrParsers.cidrLineP
+        val parsers = new IpGeoBaseCidrParsers
+        val p = parsers.cidrLineP
         val linesTotal = linesIter.toStream.foldLeft(1) {
           (counter, cidrLine) =>
-            val pr = IpGeoBaseCidrParsers.parse(p, cidrLine)
+            val pr = parsers.parse(p, cidrLine)
             if (pr.successful) {
               val line4copy = pr.get.exportForPgCopy(copyDelim, nullStr)
               pw.println(line4copy)
             } else {
-              warn(s"${logPrefix}Failed to parse line $counter file=${cidrFile.getAbsolutePath}:\n$cidrLine\n$pr")
+              warn(s"$logPrefix Failed to parse line $counter file=${cidrFile.getAbsolutePath}:\n$cidrLine\n$pr")
             }
             if (counter % 20000 == 0)
-              trace(s"${logPrefix}Still converting... ($counter)")
+              trace(s"$logPrefix Still converting... ($counter)")
             counter + 1
         }
-        info(s"$logPrefix$linesTotal lines converted total.")
+        info(s"$logPrefix $linesTotal lines converted total.")
       } finally {
         pw.close()
       }
       // Подготовка данных для импорта через COPY завершена. Делаем же...
-      debug(logPrefix + "Staring copyIn() for import " + copyTmpFile)
+      debug(s"$logPrefix Staring copyIn() for import $copyTmpFile")
       val cm = new CopyManager(getPgConnection)
       val is = new FileInputStream(copyTmpFile)
       try {
@@ -267,7 +281,7 @@ class IpGeoBaseImport @Inject() (
     } finally {
       copyTmpFile.delete()
     }
-    debug(logPrefix + "Calling ANALYZE...")
+    debug(logPrefix + " Calling ANALYZE...")
     IpGeoBaseRange.analyze
   }
 
@@ -294,7 +308,7 @@ class IpGeoBaseImport @Inject() (
           importIpRanges(unpackedDir)
         }
       } finally {
-        trace(s"Deleting temporary unpacked dir ${unpackedDir.getAbsolutePath} ...")
+        trace(s"$logPrefix Deleting temporary unpacked dir ${unpackedDir.getAbsolutePath} ...")
         FileUtils.deleteDirectory(unpackedDir)
       }
       info(logPrefix + "Done!")
@@ -316,7 +330,7 @@ sealed trait CityIdParser extends JavaTokenParsers {
 
 
 /** Парсинг файла cidr_optim.txt, содержащего диапазоны ip-адресов и их принадлежность. */
-object IpGeoBaseCidrParsers extends CityIdParser {
+class IpGeoBaseCidrParsers extends CityIdParser {
 
   def inetIntP: Parser[_] = """\d+""".r
 
@@ -343,7 +357,7 @@ object IpGeoBaseCidrParsers extends CityIdParser {
 
 
 /** Утиль для парсинга cities.txt. Таблица в этом файле содержит просто географию городов. */
-object IpGeoBaseCityParsers extends CityIdParser {
+class IpGeoBaseCityParsers extends CityIdParser {
 
   /** Колонки таблицы разделяются одиночными табами. */
   override protected val whiteSpace: Regex = "\\t".r
