@@ -11,7 +11,9 @@ import org.scalatestplus.play._
  */
 class ScWideMakerSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
 
-  import ScWideMaker._
+  private lazy val scWideMaker = app.injector.instanceOf[ScWideMaker]
+
+  import scWideMaker.centerNearestLineSeg1D
 
   "centerNearestLineSeg1D()" must {
 

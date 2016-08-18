@@ -2,6 +2,7 @@ package models.mext.tw
 
 import functional.OneAppPerSuiteNoGlobalStart
 import org.scalatestplus.play._
+import util.ext.tw.TwitterHelper
 
 /**
  * Suggest.io
@@ -11,7 +12,9 @@ import org.scalatestplus.play._
  */
 class TwOAuth1SupportSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
 
-  import OAuth1Support._
+  private lazy val _twitterHelper = app.injector.instanceOf[TwitterHelper]
+
+  import _twitterHelper.{rdescr2tweetLeadingText, LEAD_TEXT_LEN}
 
   "rdescr2tweetLeadingText" must {
     def assertStrlen(s: String): Unit = {

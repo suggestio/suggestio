@@ -2,8 +2,8 @@ package functional
 
 import org.scalatest.Suite
 import org.scalatestplus.play._
-import play.api.GlobalSettings
-import play.api.test.FakeApplication
+import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.{Application, Mode}
 
 /**
  * Suggest.io
@@ -13,15 +13,14 @@ import play.api.test.FakeApplication
  */
 trait OneAppPerSuiteNoGlobalStart extends OneAppPerSuite { this: Suite =>
 
-  /** Штатный Global производит долгую инициализацию, которая нам не нужен.
-    * Нужен только доступ к конфигу. Ускоряем запуск: */
-  override implicit lazy val app = FakeApplication(
-    withGlobal = Some(new GlobalSettings() {
-      override def onStart(app: play.api.Application) {
-        super.onStart(app)
-        println("Started dummy fake application, without Global.onStart() initialization.")
-      }
-    })
-  )
+  /**
+    * Штатный Global производит долгую инициализацию, которая нам не нужна.
+    * Нужен только доступ к конфигу. Ускоряем запуск:
+    */
+  override implicit lazy val app: Application = {
+    GuiceApplicationBuilder(global = None)
+      .in( Mode.Test )
+      .build()
+  }
 
 }

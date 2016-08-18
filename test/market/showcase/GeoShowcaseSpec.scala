@@ -1,12 +1,11 @@
 package market.showcase
 
 import controllers.routes
-import functional._
-import models.msc.{MScApiVsns, SiteQsArgs, ScJsState}
-import org.scalatest.Outcome
+import models.msc.{MScApiVsns, SiteQsArgs}
 import org.scalatestplus.play._
+import play.api.{Application, Mode}
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.Call
-import play.api.test.FakeApplication
 
 /**
  * Suggest.io
@@ -18,19 +17,20 @@ trait GeoShowcaseSpecT extends PlaySpec with OneServerPerSuite with OneBrowserPe
 
   protected def marketGeoSiteUrl: Call = {
     val args = SiteQsArgs(apiVsn = MScApiVsns.Sjs1)
-    routes.MarketShowcase.geoSite(x = args)
+    routes.Sc.geoSite(x = args)
   }
 
-  override implicit lazy val app: FakeApplication = {
-    new FakeApplication(
-      additionalConfiguration = Map(
+  override implicit lazy val app: Application = {
+    GuiceApplicationBuilder()
+      .in( Mode.Test )
+      .configure(
         "persona.audience.url"        -> s"http://localhost:$port",
         "sio.proto.dflt"              -> "http",
         "sio.hostport.dflt"           -> s"localhost:$port",
         "radius.server.tiny.enabled"  -> false,
         "cats.install.mart.allowed"   -> false
       )
-    )
+      .build()
   }
 
   "market/geo/site" must {

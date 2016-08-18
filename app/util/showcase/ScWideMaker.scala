@@ -157,15 +157,20 @@ class ScWideMaker @Inject() (
   override def icompile(args: IMakeArgs): Future[MakeResult] = {
     import args._
     val iikOrig = img.original
+
     // Собираем хвост параметров сжатия.
-    val devScreen = args.devScreenOpt getOrElse DevScreen.default
+    val devScreen = args.devScreenOpt
+      .getOrElse( DevScreen.default )
     val pxRatio = devScreen.pixelRatio
+
     // Нужно вычислить размеры wide-версии оригинала. Используем szMult для вычисления высоты.
     val tgtHeightCssRaw = szMultedF(blockMeta.height, szMult)
     val tgtHeightReal = szMulted(tgtHeightCssRaw, pxRatio.pixelRatio)
+
     // Ширину экрана квантуем, получая ширину картинки.
     val cropWidthCssPx = normWideWidthBgSz(devScreen.width)
     val cropWidth = szMulted(cropWidthCssPx, pxRatio.pixelRatio)
+
     // Запустить сбор инфы по кропу.
     val wideWh = MImgInfoMeta(height = tgtHeightReal, width = cropWidth)
     val cropInfoFut = getWideCropInfo(img, wideWh)
