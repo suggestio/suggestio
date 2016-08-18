@@ -33,8 +33,8 @@ import QsbSigner._
  */
 class QsbSigner(secretKey: String, signKeyName: String, algo: String = QsbSigner.ALGO_DFLT)
                (implicit strB: QueryStringBindable[String])
-extends QueryStringBindable[Map[String, Seq[String]]]
-with PlayMacroLogsImpl
+  extends QueryStringBindable[Map[String, Seq[String]]]
+  with PlayMacroLogsImpl
 {
   import LOGGER._
 
@@ -88,9 +88,11 @@ with PlayMacroLogsImpl
    *         None - если подпись не найдена.
    */
   override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, Map[String, Seq[String]]]] = {
-    strB.bind(signKeyName, params).map { maybeSignature =>
+    for (maybeSignature <- strB.bind(signKeyName, params)) yield {
       maybeSignature.right.flatMap { signature =>
         val pfk = onlyParamsForKey(key, params).toStream
+        trace(s"bind($key): Params:\n All: ${params.mkString(" & ")};\n onlyForKey: ${pfk.mkString(" & ")}")
+
         val realSignature = mkSignForMap(pfk)
         if (realSignature equalsIgnoreCase signature) {
           // Всё ок, собираем подходящие результаты в кучу.
@@ -129,12 +131,18 @@ with PlayMacroLogsImpl
    */
   def mkSigned(key: String, qsStr: String): String = {
     val paramsMap = FormUrlEncodedParser.parse(qsStr)
+      // play-2.5: почему-то этот метод для пустой строки возвращает "" -> ArrayBuffer().
+      .filterKeys(_.nonEmpty)
+
     val signature = mkSignForMap(key, paramsMap)
+    trace(s"mkSigned($key):\n qsStr = $qsStr\n paramsMap = ${paramsMap.mkString(" & ")}\n signature = $signature")
+
     val sb = new StringBuilder(qsStr)
-    if (!qsStr.isEmpty) {
+    if (!qsStr.isEmpty)
       sb.append('&')
-    }
-    sb.append(signKeyName).append('=').append(signature)
+    sb.append(signKeyName)
+      .append('=')
+      .append(signature)
       .toString()
   }
 

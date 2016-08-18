@@ -1,0 +1,36 @@
+<configuration>
+
+  <jmxConfigurator />
+    
+  <conversionRule conversionWord="coloredLevel" converterClass="play.api.libs.logback.ColoredLevel" />
+  
+  <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+     <file>${application.home}/logs/application.log</file>
+     <encoder>
+       <pattern>%date - [%level] - from %logger in %thread %n%message%n%xException%n</pattern>
+     </encoder>
+   </appender>
+
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%coloredLevel %logger{15} - %message%n%xException{5}</pattern>
+    </encoder>
+  </appender>
+  
+  <logger name="play" level="INFO" />
+  <logger name="util" level="TRACE" />
+  <logger name="models" level="TRACE" />
+  <logger name="io.suggest" level="TRACE" />
+  <logger name="controllers" level="TRACE" />
+  <logger name="java" level="INFO" />
+  <logger name="application" level="TRACE" />
+  <logger name="org.elasticsearch" level="INFO" />
+  <logger name="org.jboss.netty.channel.socket.nio.AbstractNioSelector" level="ERROR"/>
+  <logger name="io.suggest.model" level="TRACE" />
+
+  <root level="WARN">
+    <appender-ref ref="STDOUT" />
+    <appender-ref ref="FILE" />
+  </root>
+  
+</configuration>
