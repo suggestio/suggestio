@@ -9,7 +9,7 @@ sm.geo.geo_position_obj.coords = {latitude : 59.9, longitude : 11.1, accuracy: 2
 
 Подготовка рабочей станции к первой сборке проекта
 =====================================
-npm install -g yo grunt bower
+npm install -g grunt bower
 Можно также попробовать без флага -g, но не факт, что всё будет работать как надо.
 
 Если в процессе работы npm вылетают ошибки типа
@@ -43,27 +43,6 @@ screen -r sio2
 <UP>
 <ENTER>
 
-
-Changelog
-======================================
-
-2014.sep.30:
-  Требуется imagemagic не ниже 6.8.9 из-за бага с png (черный фон вместо серого при convert).
-
-2014.may.05:
-  В сборочном окружении нужен stylus >= 0.40 (0.42+ например).
-
-2014.apr.16:
-  При запуске stage-билда на osmX, надо использовать команду типа этой:
-  bin/sioweb21 -Dconfig.file=../application.conf -Dhttp.port=9001 -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=15666 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.local.only=false -Djava.rmi.server.hostname=10.0.0.101
-
-2014.feb.06: Надо обновить настройки sbt согласно странице в wiki:
- http://wiki.cbca.ru/dokuwiki/doku.php/sbt
-
-2014.jan.27: В связи с переездом на hadoop2, который использует protobuf-2.5, необходимо собрать на
- локалхосте и использовать snapshot-версию play. Для сборки play-2.3-SNAPSHOT на локалхосте необходимsioweb3
-=====================================
- 
 
 DNS + CDN:
   www.suggest.io CNAME
