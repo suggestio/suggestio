@@ -1,8 +1,7 @@
-package models.mext.tw
+package util.ext.tw
 
 import functional.OneAppPerSuiteNoGlobalStart
 import org.scalatestplus.play._
-import util.ext.tw.TwitterHelper
 
 /**
  * Suggest.io
@@ -10,11 +9,11 @@ import util.ext.tw.TwitterHelper
  * Created: 16.04.15 15:47
  * Description: Тесты для oauth1-поддержки твиттера.
  */
-class TwOAuth1SupportSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
+class TwitterHelperSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
 
   private lazy val _twitterHelper = app.injector.instanceOf[TwitterHelper]
 
-  import _twitterHelper.{rdescr2tweetLeadingText, LEAD_TEXT_LEN}
+  import _twitterHelper.{LEAD_TEXT_LEN, rdescr2tweetLeadingText}
 
   "rdescr2tweetLeadingText" must {
     def assertStrlen(s: String): Unit = {
@@ -49,7 +48,7 @@ class TwOAuth1SupportSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
           |<p>Очень много букв.</p>
         """.stripMargin
       // Для само-контроля контроллируем длину заданного правильного результата. Если первы тест тютю, то значит что-то изменилось слишком сильно.
-      val resText = """Очень много букв. Очень много букв.Очень много букв.Очень много букв.Очень много букв. Очень много букв.Очень много…"""
+      val resText = """Очень много букв. Очень много букв.Очень много букв.Очень много букв.Очень много букв.…"""
       assertStrlen(resText)
       rdescr2tweetLeadingText(text) mustBe resText
     }
