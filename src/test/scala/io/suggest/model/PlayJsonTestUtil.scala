@@ -4,10 +4,8 @@ import io.suggest.primo.TypeT
 import org.scalatest.Matchers._
 import _root_.play.api.libs.json._
 import io.suggest.event.{MockedSioNotifierStaticClient, SioNotifierStaticClientI}
-import io.suggest.test.MockedEsClient
 import org.elasticsearch.client.Client
 import org.scalatestplus.play.OneAppPerSuite
-
 import _root_.play.api.{Application, Mode}
 import _root_.play.api.inject.bind
 import _root_.play.api.inject.guice.GuiceApplicationBuilder
