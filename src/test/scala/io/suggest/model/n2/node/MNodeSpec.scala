@@ -1,5 +1,6 @@
 package io.suggest.model.n2.node
 
+import io.suggest.model.MockedEsSn
 import io.suggest.model.geo.GeoPoint
 import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.ad.blk.BlockMeta
@@ -18,7 +19,7 @@ import org.scalatestplus.play.{OneAppPerSuite, PlaySpec}
  * Created: 16.09.15 14:38
  * Description: Тесты для мегамодели [[MNode]].
  */
-class MNodeSpec extends PlaySpec with OneAppPerSuite {
+class MNodeSpec extends PlaySpec with OneAppPerSuite with MockedEsSn {
 
   private lazy val mNodes = app.injector.instanceOf[MNodes]
 

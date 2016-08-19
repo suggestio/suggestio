@@ -1,5 +1,6 @@
 package io.suggest.model.n2.media
 
+import io.suggest.model.MockedEsSn
 import io.suggest.model.n2.media.storage.swfs.SwfsStorages
 import io.suggest.swfs.client.proto.fid.Fid
 import org.scalatest.Matchers._
@@ -11,7 +12,7 @@ import org.scalatestplus.play.{OneAppPerSuite, PlaySpec}
  * Created: 27.09.15 22:51
  * Description: Тесты для модели [[MMedia]].
  */
-class MMediaSpec extends PlaySpec with OneAppPerSuite {
+class MMediaSpec extends PlaySpec with OneAppPerSuite with MockedEsSn {
 
   private lazy val mMedias = app.injector.instanceOf[MMedias]
   private lazy val swfsStorage = app.injector.instanceOf[SwfsStorages]
