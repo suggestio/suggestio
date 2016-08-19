@@ -2,7 +2,7 @@ package io.suggest.model
 
 import io.suggest.primo.TypeT
 import org.scalatest.Matchers._
-import play.api.libs.json._
+import _root_.play.api.libs.json._
 
 /**
  * Suggest.io

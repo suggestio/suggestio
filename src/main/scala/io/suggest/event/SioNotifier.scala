@@ -107,6 +107,20 @@ trait SioNotifierStaticClientI {
    * @return Фьючерс с булевым. true, если всё нормально.
    */
   def replaceSubscriberSync(subscriberOld:Subscriber, classifier:Classifier, subscriberNew:Subscriber): Future[Boolean]
+
+}
+
+
+/** Mock-реализация [[SioNotifierStaticClientI]], которая возвращает ошибки. */
+class MockedSioNotifierStaticClient extends SioNotifierStaticClientI {
+  override def startLink(arf: ActorRefFactory): ActorRef = ???
+  override def subscribe(subscriber: Subscriber, classifier: Classifier): Unit = ???
+  override def subscribeSync(subscriber: Subscriber, classifier: Classifier): Future[Boolean] = ???
+  override def publish(event: Event): Unit = ???
+  override def unsubscribe(subscriber: Subscriber, classifier: Classifier): Unit = ???
+  override def unsubscribe(subscriber: Subscriber): Unit = ???
+  override def replaceSubscriber(subscriberOld: Subscriber, classifier: Classifier, subscriberNew: Subscriber): Unit = ???
+  override def replaceSubscriberSync(subscriberOld: Subscriber, classifier: Classifier, subscriberNew: Subscriber): Future[Boolean] = ???
 }
 
 
