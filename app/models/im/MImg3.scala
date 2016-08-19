@@ -119,8 +119,8 @@ abstract class MImg3T extends MImgT {
   def _mediaFut = _mediaOptFut.map(_.get)
 
   override protected lazy val _getImgMeta: Future[Option[IImgMeta]] = {
-    _mediaOptFut map { mmediaOpt =>
-      mmediaOpt.map { mmedia =>
+    for (mmediaOpt <- _mediaOptFut) yield {
+      for (mmedia <- mmediaOpt) yield {
         ImgSzDated(
           sz          = mmedia.picture.get,
           dateCreated = mmedia.file.dateCreated
@@ -207,7 +207,7 @@ abstract class MImg3T extends MImgT {
     val mimeFut = loc.mimeFut
     val media0Fut = _mediaFut
 
-    media0Fut onSuccess { case res =>
+    media0Fut.onSuccess { case res =>
       LOGGER.trace(s"_doSaveInPermanent($loc): MMedia already exist: $res")
     }
 
@@ -256,7 +256,7 @@ abstract class MImg3T extends MImgT {
     // Параллельно запустить поиск и сохранение экземпляра MNode.
     val mnodeSaveFut = ensureMnode( loc )
 
-    mnodeSaveFut onFailure { case ex: Throwable =>
+    mnodeSaveFut.onFailure { case ex: Throwable =>
       LOGGER.error("Failed to save picture MNode for local img " + loc)
     }
 
@@ -276,7 +276,7 @@ abstract class MImg3T extends MImgT {
       res
     }
 
-    storWriteFut onFailure { case ex: Throwable =>
+    storWriteFut.onFailure { case ex: Throwable =>
       LOGGER.error("Failed to send to storage local image: " + loc)
     }
 
@@ -307,7 +307,7 @@ abstract class MImg3T extends MImgT {
           true
         }
       case None =>
-        Future successful false
+        Future.successful(false)
     }
   }
 
@@ -317,7 +317,7 @@ abstract class MImg3T extends MImgT {
 case class MImg3(
   override val rowKeyStr            : String,
   override val dynImgOps            : Seq[ImOp],
-  override val companion            : MImgs3,   // TODO Использовать Assisted DI, и прямую инжекцию реальных зависимостей вместо инстанса компаньона.
+  override val companion            : MImgs3,   // TODO Вынести всю логику в статику.
   override val userFileName         : Option[String] = None
 )
   extends MImg3T

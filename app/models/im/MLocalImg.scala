@@ -140,22 +140,24 @@ trait MLocalImgT extends MAnyImgT with PlayMacroLogsI {
     val fut = Future {
       FileUtil.getMimeMatch(file)
     }
-    fut onFailure { case ex: Throwable =>
+    fut.onFailure { case ex: Throwable =>
       LOGGER.error(s"Failed to get mime for file: $file [${file.length()} bytes]", ex)
     }
     fut
   }
 
   /** Определение mime-типа из файла. */
-  lazy val mimeFut: Future[String] = for {
-    mmOpt <- mimeMatchOptFut
-  } yield {
-    val mimeOpt = ImgFileUtil.getMime(mmOpt)
-    ImgFileUtil.orUnknown( mimeOpt )
+  lazy val mimeFut: Future[String] = {
+    for {
+      mmOpt <- mimeMatchOptFut
+    } yield {
+      val mimeOpt = ImgFileUtil.getMime(mmOpt)
+      ImgFileUtil.orUnknown( mimeOpt )
+    }
   }
 
   def fileExtensionFut: Future[String] = {
-    mimeMatchOptFut map { mimeMatchOpt =>
+    for (mimeMatchOpt <- mimeMatchOptFut) yield {
       mimeMatchOpt.fold {
         LOGGER.warn("Mime match failed, guessing PNG extension")
         "png"
@@ -166,9 +168,7 @@ trait MLocalImgT extends MAnyImgT with PlayMacroLogsI {
   }
 
   def generateFileName: Future[String] = {
-    for {
-      fext <- fileExtensionFut
-    } yield {
+    for (fext <- fileExtensionFut) yield {
       rowKeyStr + "." + fext
     }
   }
@@ -241,8 +241,8 @@ trait MLocalImgT extends MAnyImgT with PlayMacroLogsI {
   }
 
   def imgMdMap: Future[Option[Map[String, String]]] = {
-    getImageWH map { metaOpt =>
-      metaOpt map { meta =>
+    for (metaOpt <- getImageWH) yield {
+      for (meta <- metaOpt) yield {
         Map(
           ImgFormUtil.IMETA_HEIGHT -> meta.height.toString,
           ImgFormUtil.IMETA_WIDTH  -> meta.width.toString
@@ -294,13 +294,13 @@ case class MLocalImg(
 
   override lazy val rawImgMeta: Future[Option[IImgMeta]] = {
     if (isExists) {
-      getImageWH map { metaOpt =>
-        metaOpt map { meta =>
+      for (metaOpt <- getImageWH) yield {
+        for (meta <- metaOpt) yield {
           ImgSzDated(meta, new DateTime(file.lastModified()))
         }
       }
     } else {
-      Future successful None
+      Future.successful( None )
     }
   }
 

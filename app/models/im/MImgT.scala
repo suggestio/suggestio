@@ -38,8 +38,8 @@ object MImgT extends PlayMacroLogsImpl { model =>
   def rowKeyB(implicit strB: QueryStringBindable[String]): QueryStringBindable[String] = {
     new QueryStringBindable[String] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, String]] = {
-        strB.bind(key, params).map {
-          _.right.flatMap { raw =>
+        for (rawEith <- strB.bind(key, params)) yield {
+          rawEith.right.flatMap { raw =>
             try {
               // TODO Может спилить отсюда проверку эту?
               UuidUtil.base64ToUuid(raw)
@@ -269,7 +269,8 @@ abstract class MImgT extends MAnyImgT {
     if (loc.isExists) {
       _doSaveToPermanent(loc: MLocalImg)
     } else {
-      Future failed new FileNotFoundException("Img file not exists localy - unable to save into permanent storage: " + loc.file.getAbsolutePath)
+      val ex = new FileNotFoundException("Img file not exists localy - unable to save into permanent storage: " + loc.file.getAbsolutePath)
+      Future.failed(ex)
     }
   }
 

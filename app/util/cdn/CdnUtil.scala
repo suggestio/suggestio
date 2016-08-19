@@ -30,7 +30,7 @@ class CdnUtil @Inject() (
   import LOGGER._
 
   /** Прочитать из конфига список CDN-хостов для указанного протокола. */
-  private def getCdnHostsForProto(proto: String): List[String] = {
+  private def _getCdnHostsForProto(proto: String): List[String] = {
     configuration.getStringList("cdn.hosts." + proto)
       .fold (List.empty[String]) (_.toList)
   }
@@ -38,8 +38,14 @@ class CdnUtil @Inject() (
   /** Карта протоколов и списков CDN-хостов, которые готовые обслуживать запросы. */
   val CDN_PROTO_HOSTS: Map[String, List[String]] = {
     configuration.getStringList("cdn.protocols")
-      .fold [Iterator[String]] (Iterator("http", "https"))  { _.toIterator.map(_.toLowerCase) }
-      .map { proto => proto -> getCdnHostsForProto(proto) }
+      .fold [Iterator[String]] (Iterator("http", "https"))  { protosRaw =>
+        protosRaw
+          .iterator()
+          .map(_.trim.toLowerCase)
+      }
+      .map { proto =>
+        proto -> _getCdnHostsForProto(proto)
+      }
       .filter { _._2.nonEmpty }
       .toMap
   }

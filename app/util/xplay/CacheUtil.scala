@@ -12,6 +12,7 @@ import scala.reflect.ClassTag
  * Created: 24.03.15 17:39
  * Description: Утиль для play-кеша.
  */
+@deprecated("Use DI CacheApiUtil instead", "2016.aug.19")
 object CacheUtil {
 
   /**
