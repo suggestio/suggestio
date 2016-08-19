@@ -28,7 +28,8 @@ object HistogramParsers extends JavaTokenParsers {
     val np = BYTE_NUMBER_P
     val comma = COMMA_SP_SEP
     val npc = np <~ comma
-    val p = npc ~ npc ~ np <~ opt(comma ~> np)
+    val alphaP = opt(comma ~> decimalNumber)
+    val p = (npc ~ npc ~ np) <~ alphaP
     p ^^ {
       case r ~ g ~ b  =>
         RGB(red = r, green = g, blue = b)
@@ -39,7 +40,9 @@ object HistogramParsers extends JavaTokenParsers {
   def RGB_TUPLE_P = "(" ~> RGB_P <~ ")"
 
   def HEX_COLOR_P: Parser[String] = {
-    "#" ~> "(?i)[0-9A-F]{6}".r <~ opt("[0-9A-F]{2}".r)
+    val colorHexP = "(?i)[0-9A-F]{6}".r
+    val alphaP = opt("[0-9A-F]{2}".r)
+    "#" ~> colorHexP <~ alphaP
   }
 
   /** Запись цвета в srgb. Следует помнить, что для RGB(0,0,0) im возвращает строку "black". */

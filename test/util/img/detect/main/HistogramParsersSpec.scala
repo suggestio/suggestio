@@ -25,15 +25,28 @@ class HistogramParsersSpec extends PlaySpec {
 
 
   "LINE_PARSER" must {
-    s"parse into ${HistogramEntry.getClass.getSimpleName} every histogram line" in {
-      // используем include вместо pr.successful mustBe true, чтобы на экран напечаталось сообщение об ошибке, а не просто экзепшен.
+    // используем include вместо pr.successful mustBe true, чтобы на экран напечаталось сообщение об ошибке, а не просто экзепшен.
+    "parse usual JPEG histogram line" in {
       parseLine("    104654: (252,220, 29) #FCDC1D srgb(252,220,29)",     HistogramEntry(104654L, "FCDC1D", RGB(252, 220, 29)) )
+    }
+    "parse usual JPEG hist.line with \\n" in {
       parseLine("    231983: (170,162, 95) #AAA25F srgb(170,162,95)\n",   HistogramEntry(231983L, "AAA25F", RGB(170, 162, 95)) )
+    }
+    "parse anothen unpopular histogram line" in {
       parseLine("         1: ( 94, 70, 60) #5E463C srgb(94,70,60)",       HistogramEntry(1L, "5E463C", RGB(94, 70, 60)) )
+    }
+    "parse 16272 line" in {
       parseLine("    16272: (249,232,199) #F9E8C7 srgb(249,232,199)",     HistogramEntry(16272, "F9E8C7", RGB(249, 232, 199)) )
+    }
+    "parse 1136 line" in {
       parseLine("      1136: ( 17, 24,  9) #111809 srgb(17,24,9)",        HistogramEntry(1136, "111809", RGB(17, 24, 9)) )
+    }
 
+    "parse SRGBA integer line" in {
       parseLine("    1: (  0, 64,193,  0) #0040C100 srgba(0,64,193,0)",   HistogramEntry(1, "0040C1", RGB(0, 64, 193)) )
+    }
+    "parse SRGBA line with floating alpha" in {
+      parseLine("    1: (  0, 64,193,255) #0040C1FF srgba(0,64,193,0.999893)",   HistogramEntry(1, "0040C1", RGB(0, 64, 193)) )
     }
 
     // 2015.aug.10: На картинки с белым фоном и небольшим логотипом в центре возникла проблема.
@@ -54,7 +67,7 @@ class HistogramParsersSpec extends PlaySpec {
   }
 
   /** Распарсенный пример выхлопа hist1. */
-  private val hist1parsed = List(
+  private def hist1parsed = List(
     HistogramEntry(21689,  "2A2D0C", RGB(42, 45, 12)),
     HistogramEntry(5487,   "362A12", RGB(54, 42, 18)),
     HistogramEntry(83956,  "646021", RGB(100, 96, 33)),
@@ -62,27 +75,36 @@ class HistogramParsersSpec extends PlaySpec {
   )
 
 
-  "MULTILINE_PARSER" must {
-    "parse multiline histogram text" in {
-      val pr = parseAll(MULTILINE_PARSER, hist1)
-      pr.successful mustBe true
-      pr.get mustBe hist1parsed
-    }
-  }
-
-
   // TODO PNG или иной формат с прозрачным цветом.
-  /*private def HIST2 = {
+  private def HIST2 = {
     """
       |    102691: (250,210, 14,  0) #FAD20E00 srgba(250,210,14,0.000366217)
-      |       430: (255,211,  0, 47) #FFD3002F srgba(255,211,0,0.185946)
       |    280189: (255,211,  0,255) #FFD300FF srgba(255,211,0,0.999893)
-      |       271: (255,211,  0,193) #FFD300C1 srgba(255,211,0,0.758495)
     """.stripMargin
   }
   private def HIST2_PARSED = List(
-    HistogramEntry(102691, "")
-  )*/
+    HistogramEntry(102691, "FAD20E", RGB(250, 210, 14)),
+    HistogramEntry(280189, "FFD300", RGB(255, 211, 0))
+  )
+
+  private def _testParseMultiline(text: String, res: List[HistogramEntry]) = {
+    val pr = parseAll( MULTILINE_PARSER, text )
+    pr.successful mustBe true
+    pr.get mustBe res
+  }
+
+  "MULTILINE_PARSER" must {
+
+    "parse hist1: normal multiline histogram JPEG text" in {
+      _testParseMultiline(hist1, hist1parsed)
+    }
+
+    "parse HIST2: histogram from PNG with alpha-channel" in {
+      _testParseMultiline(HIST2, HIST2_PARSED)
+    }
+
+  }
+
 
 
   "parseFromFile()" must {

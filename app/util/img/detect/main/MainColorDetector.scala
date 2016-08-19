@@ -47,7 +47,7 @@ class MainColorDetector @Inject() (
       imOp.addOperation(op)
     }
     op.gravity("Center")
-    op.crop().addRawArgs("50%\\!") // -crop 50%\!
+    op.crop().addRawArgs("50%!") // -crop 50%\!
     op.gamma(2.0)
     op.quantize("Lab")
     op.p_dither()
@@ -58,12 +58,14 @@ class MainColorDetector @Inject() (
     cmd.setAsyncMode(true)
     val listener = new Im4jAsyncSuccessProcessListener
     cmd.addProcessEventListener(listener)
-    val tstampStart = if (LOGGER.underlying.isDebugEnabled) System.currentTimeMillis() else 0L
+
+    val loggingEnabled = LOGGER.underlying.isDebugEnabled
+    val tstampStart = if (loggingEnabled) System.currentTimeMillis() else 0L
     cmd.run(op)
     val resFut = listener.future
-    if (LOGGER.underlying.isDebugEnabled) {
-      resFut onComplete { case res =>
-        debug(s"convertToHistogram(img=$imgFilepath, out=$outFilepath, maxColors=$maxColors): It took ${System.currentTimeMillis() - tstampStart} ms. Result is $res")
+    if (loggingEnabled) {
+      resFut.onComplete { res =>
+        debug(s"convertToHistogram($tstampStart): convert to histogram finished.\n img=$imgFilepath\n out=$outFilepath\n maxColors=$maxColors\n Took ${System.currentTimeMillis() - tstampStart} ms.\n Cmd was: ${op.toString}\n Result: $res")
       }
     }
     resFut
@@ -85,10 +87,10 @@ class MainColorDetector @Inject() (
       pr getOrElse {
         val histContent = Files.readAllBytes(resultFile.toPath)
         val msgSb = new StringBuilder(histContent.length + 128,  "Failed to understand histogram file: \n")
-        msgSb append pr
-        msgSb append '\n'
-        msgSb append " Histogram file content was:\n"
-        msgSb append new String(histContent)
+          .append(pr)
+          .append('\n')
+          .append(" Histogram file content was:\n")
+          .append( new String(histContent) )
         val msg = msgSb.toString()
         if (suppressErrors) {
           warn(msg )
