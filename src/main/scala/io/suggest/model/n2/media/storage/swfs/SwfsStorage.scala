@@ -28,13 +28,16 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 @Singleton
 class SwfsStorages @Inject() (
-  val volCache          : SwfsVolumeCache,
-  configuration         : Configuration,
-  implicit val client   : ISwfsClient,
-  implicit val ec       : ExecutionContext
+  volCache                      : SwfsVolumeCache,
+  configuration                 : Configuration,
+  client                        : ISwfsClient,
+  implicit private val ec       : ExecutionContext
 )
   extends MacroLogsImpl
+  with IMediaStorageStaticImpl
 {
+
+  override type T = SwfsStorage
 
   /** JSON-маппер для поля file id. */
   val FID_FORMAT = (__ \ MStorFns.FID.fn).format[Fid]
@@ -46,63 +49,54 @@ class SwfsStorages @Inject() (
   }
 
   /** Дефолтовые настройки дата-центра в assign-request. */
-  val DATA_CENTER_DFLT: Option[String] = configuration.getString("swfs.assign.dc")
+  val DATA_CENTER_DFLT: Option[String] = {
+    configuration.getString("swfs.assign.dc")
+  }
 
   LOGGER.info(s"Assign settings: dc = $DATA_CENTER_DFLT, replication = $REPLICATION_DFLT")
 
-  // Поддержка JSON сериализации/десериализации.
-  val READS: Reads[SwfsStorage] = (
-    STYPE_FN_FORMAT.filter { _ == MStorages.SeaWeedFs } and
-    FID_FORMAT
-  ) { (_, fid) =>
-    apply(fid)
+
+  /** Поддержка JSON сериализации/десериализации. */
+  override implicit val FORMAT: OFormat[SwfsStorage] = {
+    val READS: Reads[SwfsStorage] = (
+      // TODO Opt можно удалить отсюда проверку по STYPE? Она проверяется в IMediaStorage.FORMAT, а тут повторно проверяется.
+      STYPE_FN_FORMAT.filter { _ == MStorages.SeaWeedFs } and
+        FID_FORMAT
+      ) { (_, fid) =>
+      SwfsStorage(fid)
+    }
+    val WRITES: OWrites[SwfsStorage] = (
+      // TODO Opt можно удалить отсюда проверку по STYPE? Она проверяется в IMediaStorage.FORMAT, а тут повторно проверяется.
+      (STYPE_FN_FORMAT: OWrites[MStorage]) and
+        FID_FORMAT
+      ) { ss =>
+      (ss.sType, ss.fid)
+    }
+    OFormat(READS, WRITES)
   }
 
-  val WRITES: OWrites[SwfsStorage] = (
-    (STYPE_FN_FORMAT: OWrites[MStorage]) and
-    FID_FORMAT
-  ) { ss =>
-    (ss.sType, ss.fid)
-  }
-
-  implicit val FORMAT = Format(READS, WRITES)
-
-  def apply(fid: Fid): SwfsStorage = {
-    SwfsStorage(fid, this)
-  }
 
   /** Получить у swfs-мастера координаты для сохранения нового файла. */
-  def assingNew(): Future[SwfsStorage] = {
+  override def assignNew(): Future[SwfsStorage] = {
     val areq = AssignRequest(DATA_CENTER_DFLT, REPLICATION_DFLT)
     for {
       resp <- client.assign(areq)
     } yield {
-      apply(resp.fidParsed)
+      SwfsStorage(resp.fidParsed)
     }
   }
 
-}
 
+  /** Короткий код для получения списка локаций volume, связанного с [[SwfsStorages]]. */
+  private def _vlocsFut(ptr: T) = volCache.getLocations(ptr.fid.volumeId)
 
-case class SwfsStorage(fid: Fid, companion: SwfsStorages)
-  extends IMediaStorage
-{
-
-  import companion._
-
-  override def sType = MStorages.SeaWeedFs
-
-  override def toJson = Json.toJson(this)
-
-  lazy val _vlocsFut = companion.volCache.getLocations(fid.volumeId)
-  
-  override def read(): Future[IGetResponse] = {
+  override def read(ptr: T): Future[IGetResponse] = {
     for {
-      vlocs   <- _vlocsFut
+      vlocs   <- _vlocsFut(ptr)
       getResp <- {
         val getReq = GetRequest(
           volUrl = vlocs.head.url,
-          fid    = fid.toFid
+          fid    = ptr.fid.toFid
         )
         client.get(getReq)
       }
@@ -111,29 +105,29 @@ case class SwfsStorage(fid: Fid, companion: SwfsStorages)
     }
   }
 
-  override def delete(): Future[Option[IDeleteResponse]] = {
+  override def delete(ptr: T): Future[Option[IDeleteResponse]] = {
     for {
-      vlocs   <- _vlocsFut
+      vlocs   <- _vlocsFut(ptr)
       delResp <- {
         val delReq = DeleteRequest(
           volUrl  = vlocs.head.url,
-          fid     = fid.toFid
+          fid     = ptr.fid.toFid
         )
         client.delete(delReq)
       }
     } yield {
-      LOGGER.trace(s"Delete $fid returned $delResp")
+      LOGGER.trace(s"Delete ${ptr.fid} returned: $delResp")
       delResp
     }
   }
 
-  override def write(data: IWriteRequest): Future[IPutResponse] = {
+  override def write(ptr: T, data: IWriteRequest): Future[IPutResponse] = {
     for {
-      vlocs     <- _vlocsFut
+      vlocs     <- _vlocsFut(ptr)
       putResp   <- {
         val putReq = PutRequest.fromRr(
           volUrl        = vlocs.head.url,
-          fid           = fid.toFid,
+          fid           = ptr.fid.toFid,
           rr            = data
         )
         client.put(putReq)
@@ -143,14 +137,22 @@ case class SwfsStorage(fid: Fid, companion: SwfsStorages)
     }
   }
 
-  override def isExist: Future[Boolean] = {
-    _vlocsFut flatMap { vlocs =>
+  override def isExist(ptr: T): Future[Boolean] = {
+    _vlocsFut(ptr).flatMap { vlocs =>
       val getReq = GetRequest(
         volUrl = vlocs.head.url,
-        fid    = fid.toFid
+        fid    = ptr.fid.toFid
       )
       client.isExist(getReq)
     }
   }
 
+}
+
+
+/** Инстанс модели [[SwfsStorages]]. Содержит координаты media-блоба внутри SeaweedFS. */
+case class SwfsStorage(fid: Fid)
+  extends IMediaStorage
+{
+  override def sType = MStorages.SeaWeedFs
 }

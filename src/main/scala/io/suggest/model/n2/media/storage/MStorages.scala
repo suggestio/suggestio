@@ -2,7 +2,10 @@ package io.suggest.model.n2.media.storage
 
 import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.model.menum.EnumJsonReadsT
+import io.suggest.model.n2.media.storage.swfs.SwfsStorages
 import play.api.libs.json.__
+
+import scala.reflect.ClassTag
 
 /**
  * Suggest.io
@@ -13,20 +16,21 @@ import play.api.libs.json.__
 object MStorages extends EnumMaybeWithName with EnumJsonReadsT {
 
   /** Экземпляр модели. */
-  protected[this] sealed class Val(val strId: String)
+  protected[this] abstract class Val(val strId: String)
     extends super.Val(strId)
+  {
+    /** Данные по классу-компаниону модели для возможности инжекции класса по типу. */
+    def companionCt: ClassTag[IMediaStorageStaticImpl]
+  }
 
   override type T = Val
 
 
-  /** Apache Cassandra.
-    * SiO2 работал на кассандре в 2014-2015 годах. */
-  val Cassandra: T = new Val("c")
-
-
   /** SeaWeedFS.
     * Хранилище на смену кассандре (oct.2015-...). */
-  val SeaWeedFs: T = new Val("s")
+  val SeaWeedFs: T = new Val("s") {
+    override def companionCt = ClassTag( classOf[SwfsStorages] )
+  }
 
 
   /** JSON format для поля типа storage модели MMedia. */
