@@ -5,8 +5,7 @@ import java.util.{NoSuchElementException, UUID}
 import com.google.inject.{Inject, Singleton}
 import io.suggest.fio.WriteRequest
 import io.suggest.model.img.{IImgMeta, ImgSzDated}
-import io.suggest.model.n2.media.storage.IMediaStorage
-import io.suggest.model.n2.media.storage.swfs.SwfsStorages
+import io.suggest.model.n2.media.storage.{IMediaStorages, MStorage, MStorages}
 import io.suggest.model.n2.media.{MFileMeta, MMedias, MPictureMeta}
 import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.common.MNodeCommon
@@ -30,8 +29,8 @@ import scala.concurrent.Future
  * [[MImgs3]] -- DI-реализация объекта-компаньона.
  */
 @Singleton
-class MImgs3 @Inject()(
-  val swfsStorages          : SwfsStorages,
+class MImgs3 @Inject() (
+  val iMediaStorages        : IMediaStorages,
   val mMedias               : MMedias,
   val mNodes                : MNodes,
   val mCommonDi             : ICommonDi
@@ -130,8 +129,9 @@ abstract class MImg3T extends MImgT {
   }
 
   override def existsInPermanent: Future[Boolean] = {
-    val isExistsFut = _mediaFut
-      .flatMap { _.storage.isExist }
+    val isExistsFut = _mediaFut.flatMap { mmedia =>
+      companion.iMediaStorages.isExist( mmedia.storage )
+    }
     // возвращать false при ошибках.
     val resFut = isExistsFut.recover {
       // Если подавлять все ошибки связи, то система будет удалять все local imgs.
@@ -149,7 +149,7 @@ abstract class MImg3T extends MImgT {
   override protected def _getImgBytes2: Enumerator[Array[Byte]] = {
     val enumFut = for {
       mm <- _mediaFut
-      rr <- mm.storage.read()
+      rr <- companion.iMediaStorages.read( mm.storage )
     } yield {
       rr.data
     }
@@ -157,7 +157,7 @@ abstract class MImg3T extends MImgT {
   }
 
   /** Подготовить и вернуть новое медиа-хранилище для модели. */
-  protected def _newMediaStorage: Future[IMediaStorage]
+  protected def _mediaStorageType: MStorage
 
   /** Убедится, что в хранилищах существует сохраненный экземпляр MNode.
     * Если нет, то создрать и сохранить. */
@@ -216,7 +216,7 @@ abstract class MImg3T extends MImgT {
       // Перезаписывать нечего, т.к. элемент ещё не существует в MMedia.
       val whOptFut = loc.getImageWH
       val sha1Fut = Future( FileUtil.sha1(loc.file) )
-      val storFut = _newMediaStorage
+      val storFut = companion.iMediaStorages.assignNew(_mediaStorageType)
 
       if (!ex.isInstanceOf[NoSuchElementException])
         LOGGER.warn("_doSaveToPermanent(" + loc + "): _mediaFut() returned error, this = " + this, ex)
@@ -269,8 +269,7 @@ abstract class MImg3T extends MImgT {
           contentType = mime,
           file        = loc.file
         )
-        mm.storage
-          .write( wargs )
+        companion.iMediaStorages.write( mm.storage, wargs )
       }
     } yield {
       res
@@ -301,7 +300,7 @@ abstract class MImg3T extends MImgT {
     _mediaOptFut.flatMap {
       case Some(mm) =>
         for {
-          _ <- mm.storage.delete()
+          _ <- companion.iMediaStorages.delete( mm.storage )
           _ <- mMedias.deleteById(mm.id.get)
         } yield {
           true
@@ -339,7 +338,6 @@ case class MImg3(
 /** Использовать seaweedfs для сохранения новых картинок. */
 trait I3SeaWeedFs extends MImg3T {
 
-  override protected def _newMediaStorage = {
-    companion.swfsStorages.assingNew()
-  }
+  override protected def _mediaStorageType = MStorages.SeaWeedFs
+
 }
