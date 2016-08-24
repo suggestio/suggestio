@@ -139,3 +139,9 @@ final class MMediasJmx @Inject()(
 {
   override type X = MMedia
 }
+
+/** Интерфейс для поля с DI-инстансом [[MMedias]]. */
+trait IMMedias {
+  def mMedias: MMedias
+}
+

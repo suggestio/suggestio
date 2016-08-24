@@ -23,6 +23,8 @@ class IMediaStorages @Inject() (
   with IMediaStorageStatic
 {
 
+  override type T = IMediaStorage
+
   /** Карта инстансов статических моделей поддерживаемых media-сторэджей. */
   val STORAGES_MAP: Map[MStorage, IMediaStorageStaticImpl] = {
     MStorages.valuesT
@@ -35,19 +37,20 @@ class IMediaStorages @Inject() (
   }
 
   /** Поддержка кросс-модельной JSON-сериализации/десериализации. */
-  implicit val FORMAT: OFormat[IMediaStorage] = {
-    val READS: Reads[IMediaStorage] = new Reads[IMediaStorage] {
-      override def reads(json: JsValue): JsResult[IMediaStorage] = {
+  implicit val FORMAT: OFormat[T] = {
+    val READS: Reads[T] = new Reads[T] {
+      override def reads(json: JsValue): JsResult[T] = {
         json.validate( MStorages.STYPE_FN_FORMAT )
           .flatMap { stype =>
-            json.validate( STORAGES_MAP(stype).FORMAT )
+            json.validate( _getModel(stype).FORMAT )
           }
       }
     }
-    val WRITES: OWrites[IMediaStorage] = new OWrites[IMediaStorage] {
-      override def writes(o: IMediaStorage): JsObject = {
-        val model = STORAGES_MAP(o.sType)
-        model.FORMAT.writes( o.asInstanceOf[model.T] )
+    val WRITES: OWrites[T] = new OWrites[T] {
+      override def writes(o: T): JsObject = {
+        _getModel(o)
+          .FORMAT
+          .writes( o )
       }
     }
     OFormat(READS, WRITES)
@@ -60,32 +63,42 @@ class IMediaStorages @Inject() (
       .toList
   }
 
-  override type T = IMediaStorage
-
-  private def _getModel(ptr: T) = STORAGES_MAP(ptr.sType)
+  private type X = T
+  private def _getModel(ptr: T): IMediaStorageStaticImpl { type T = X } = {
+    _getModel(ptr.sType)
+  }
+  private def _getModel(sType: MStorage): IMediaStorageStaticImpl { type T = X } = {
+    STORAGES_MAP(sType)
+      // Страшненький костыль, чтобы избавится от ошибок компилятора по поводу внутреннего типа.
+      // Он же не в курсе, что значение в карте жестко связано с MStorage.
+      // Данные по конкретным типам в карте сторэджей стёрты, а нужно ведь как-то с ними взаимодействовать...
+      .asInstanceOf[ IMediaStorageStaticImpl { type T = X } ]
+  }
 
   override def read(ptr: T): Future[IReadResponse] = {
-    val model = _getModel(ptr)
-    model.read(ptr.asInstanceOf[model.T])
+    _getModel(ptr)
+      .read( ptr )
   }
 
   override def delete(ptr: T): Future[_] = {
-    val model = _getModel(ptr)
-    model.delete( ptr.asInstanceOf[model.T] )
+    _getModel(ptr)
+      .delete( ptr )
   }
 
   override def write(ptr: T, data: IWriteRequest): Future[_] = {
-    val model = _getModel(ptr)
-    model.write( ptr.asInstanceOf[model.T], data )
+    _getModel(ptr)
+      .write( ptr, data )
   }
 
   override def isExist(ptr: T): Future[Boolean] = {
-    val model = _getModel(ptr)
-    model.isExist( ptr.asInstanceOf[model.T] )
+    _getModel(ptr)
+      .isExist( ptr )
   }
 
+  /** Награбить новый указатель в хранилище указанного типа. */
   def assignNew(stype: MStorage): Future[IMediaStorage] = {
-    STORAGES_MAP(stype).assignNew()
+    _getModel(stype)
+      .assignNew()
   }
 
 }
@@ -128,8 +141,16 @@ trait IMediaStorageStatic extends TypeT {
 
 }
 
+
+/** Расширенная версия интерфейс [[IMediaStorageStatic]], т.к. assignNew() без параметров
+  * может быть реализован только в конкретных стораджах, но не в [[IMediaStorages]],
+  * т.к. зависим от типа желаемого хранилища. */
 trait IMediaStorageStaticImpl extends IMediaStorageStatic {
 
+  /**
+    * Подготовить новый указатель в текущем хранилище для загрузки очередного блобика.
+    * @return Фьючерс с инстансом свежего указателя.
+    */
   def assignNew(): Future[T]
 
 }

@@ -21,11 +21,11 @@ import scala.concurrent.duration._
  */
 @Singleton
 class SwfsVolumeCache @Inject() (
-  cache               : CacheApi,
-  cacheUtil           : CacheApiUtil,
-  configuration       : Configuration,
-  client              : ISwfsClient,
-  implicit val ec     : ExecutionContext
+  cache                     : CacheApi,
+  cacheUtil                 : CacheApiUtil,
+  configuration             : Configuration,
+  client                    : ISwfsClient,
+  implicit private val ec   : ExecutionContext
 )
   extends MacroLogsImpl
 {

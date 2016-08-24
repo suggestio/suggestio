@@ -39,9 +39,6 @@ class SwfsStorages @Inject() (
 
   override type T = SwfsStorage
 
-  /** JSON-маппер для поля file id. */
-  val FID_FORMAT = (__ \ MStorFns.FID.fn).format[Fid]
-
   /** Инстанс с дефолтовыми настройками репликации. */
   val REPLICATION_DFLT: Option[Replication] = {
     configuration.getString("swfs.assign.replication")
@@ -54,26 +51,6 @@ class SwfsStorages @Inject() (
   }
 
   LOGGER.info(s"Assign settings: dc = $DATA_CENTER_DFLT, replication = $REPLICATION_DFLT")
-
-
-  /** Поддержка JSON сериализации/десериализации. */
-  override implicit val FORMAT: OFormat[SwfsStorage] = {
-    val READS: Reads[SwfsStorage] = (
-      // TODO Opt можно удалить отсюда проверку по STYPE? Она проверяется в IMediaStorage.FORMAT, а тут повторно проверяется.
-      STYPE_FN_FORMAT.filter { _ == MStorages.SeaWeedFs } and
-        FID_FORMAT
-      ) { (_, fid) =>
-      SwfsStorage(fid)
-    }
-    val WRITES: OWrites[SwfsStorage] = (
-      // TODO Opt можно удалить отсюда проверку по STYPE? Она проверяется в IMediaStorage.FORMAT, а тут повторно проверяется.
-      (STYPE_FN_FORMAT: OWrites[MStorage]) and
-        FID_FORMAT
-      ) { ss =>
-      (ss.sType, ss.fid)
-    }
-    OFormat(READS, WRITES)
-  }
 
 
   /** Получить у swfs-мастера координаты для сохранения нового файла. */
@@ -145,6 +122,37 @@ class SwfsStorages @Inject() (
       )
       client.isExist(getReq)
     }
+  }
+
+  override def FORMAT = SwfsStorage.FORMAT
+
+}
+
+
+/** Совсем статический объект-компаниьон для инстансов модели.
+  * Однако, всё его содержимое можно перекинуть назад в [[SwfsStorages]]. */
+object SwfsStorage {
+
+  /** JSON-маппер для поля file id. */
+  val FID_FORMAT = (__ \ MStorFns.FID.fn).format[Fid]
+
+  /** Поддержка JSON сериализации/десериализации. */
+  implicit val FORMAT: OFormat[SwfsStorage] = {
+    val READS: Reads[SwfsStorage] = (
+      // TODO Opt можно удалить отсюда проверку по STYPE? Она проверяется в IMediaStorage.FORMAT, а тут повторно проверяется.
+      STYPE_FN_FORMAT.filter { _ == MStorages.SeaWeedFs } and
+        FID_FORMAT
+      ) { (_, fid) =>
+      SwfsStorage(fid)
+    }
+    val WRITES: OWrites[SwfsStorage] = (
+      // TODO Opt можно удалить отсюда проверку по STYPE? Она проверяется в IMediaStorage.FORMAT, а тут повторно проверяется.
+      (STYPE_FN_FORMAT: OWrites[MStorage]) and
+        FID_FORMAT
+      ) { ss =>
+      (ss.sType, ss.fid)
+    }
+    OFormat(READS, WRITES)
   }
 
 }

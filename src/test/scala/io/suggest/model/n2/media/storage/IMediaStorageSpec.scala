@@ -1,6 +1,7 @@
 package io.suggest.model.n2.media.storage
 
 import io.suggest.model.PlayJsonTestUtil
+import io.suggest.model.n2.media.storage.swfs.SwfsStorage
 import io.suggest.swfs.client.proto.fid.Fid
 import org.scalatestplus.play.{OneAppPerSuite, PlaySpec}
 
@@ -16,15 +17,13 @@ class IMediaStorageSpec extends PlaySpec with OneAppPerSuite with PlayJsonTestUt
 
   private lazy val iMediaStorages = app.injector.instanceOf[IMediaStorages]
 
-  private def swfsStorage = iMediaStorages.swfsStorage
-
   "JSON" must {
 
     import iMediaStorages.FORMAT
 
     "support SwfsStorage" in {
       jsonTest {
-        swfsStorage(
+        SwfsStorage(
           Fid(
             volumeId = 4,
             fileId = "asdasdad920i435rkt3io54f"
