@@ -88,9 +88,7 @@ class DynImgUtil @Inject() (
    *         Фьючерс с Throwable при иных ошибках.
    */
   def mkReadyImgToFile(args: MImgT): Future[MLocalImg] = {
-    val fut = args
-      .original
-      .toLocalImg
+    val fut = mImgs3.toLocalImg(args.original)
       .map(_.get)
       .flatMap { localImg =>
         // Есть исходная картинка в файле. Пора пережать её согласно настройкам.
@@ -99,7 +97,7 @@ class DynImgUtil @Inject() (
           newLocalImg
         }
       }
-    fut onFailure { case ex =>
+    fut.onFailure { case ex =>
       val logPrefix = s"mkReadyImgToFile($args): "
       val msg = ex match {
         case nsee: NoSuchElementException =>
@@ -135,14 +133,14 @@ class DynImgUtil @Inject() (
     cache.get [Future[MLocalImg]] (ck) match {
       // Результирующего фьючерс нет в кеше. Запускаем поиск/генерацию картинки:
       case None =>
-        val localImgResult = args.toLocalImg
+        val localImgResult = mImgs3.toLocalImg( args )
         // Если настроено, фьючерс результата работы сразу кешируем, не дожидаясь результатов:
         if (cacheResult)
           cache.set(ck, resultFut, expiration = ENSURE_DYN_CACHE_TTL)
         // Готовим асинхронный результат работы:
-        localImgResult onComplete {
+        localImgResult.onComplete {
           case Success(Some(img)) =>
-            resultP success img
+            resultP.success( img )
 
           // Картинки в указанном виде нету. Нужно сделать её из оригинала:
           case Success(None) =>
@@ -158,11 +156,11 @@ class DynImgUtil @Inject() (
             resultP completeWith localResultFut
 
           case Failure(ex) =>
-            resultP failure ex
+            resultP.failure(ex)
         }
 
       case Some(cachedResFut) =>
-        resultP completeWith cachedResFut
+        resultP.completeWith( cachedResFut )
         //trace(s"ensureImgReady(): cache HIT for $ck -> $cachedResFut")
     }
     resultFut

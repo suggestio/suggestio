@@ -23,7 +23,8 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 @Singleton
 class ScWideMaker @Inject() (
-  mCommonDi: ICommonDi
+  mAnyImgs  : MAnyImgs,
+  mCommonDi : ICommonDi
 )
   extends IMaker
     with PlayMacroLogsImpl
@@ -61,10 +62,14 @@ class ScWideMaker @Inject() (
   def getAbsCropOrFail(iik: MAnyImgT, wideWh: MImgSizeT)(implicit ec: ExecutionContext): Future[ImgCrop] = {
     iik.cropOpt match {
       case Some(crop0) =>
-        val origWhFut = iik.original
-          .getImageWH
-          .map(_.get)  // Будет Future.failed при проблеме - так и надо.
+        val origWhFut = for {
+          whOpt <- mAnyImgs.getImageWH( iik.original )
+        } yield {
+          // Будет Future.failed при проблеме - так и надо.
+          whOpt.get
+        }
         updateCrop0(crop0, wideWh, origWhFut)
+
       case None =>
         Future failed new NoSuchElementException("No default crop is here.")
     }

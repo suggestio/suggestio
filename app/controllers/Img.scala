@@ -16,7 +16,7 @@ import models.mctx.Context
 import models.mfs.FileUtil
 import models.mproj.ICommonDi
 import models.req.IReq
-import net.sf.jmimemagic.{Magic, MagicMatch}
+import net.sf.jmimemagic.Magic
 import org.apache.commons.io.FileUtils
 import org.joda.time.{DateTime, ReadableInstant}
 import play.api.data.Forms._
@@ -105,7 +105,9 @@ class Img @Inject() (
   /** Отрендерить оконный интерфейс для кадрирования картинки. */
   def imgCropForm(imgId: String, width: Int, height: Int) = IsAuth.async { implicit request =>
     val iik = mImgs3(imgId).original
-    iik.getImageWH map { imetaOpt =>
+    for {
+      imetaOpt <- mImgs3.getImageWH(iik)
+    } yield {
       val imeta: ISize2di = imetaOpt getOrElse {
         val stub = MImgInfoMeta(640, 480)
         warn("Failed to fetch image w/h metadata for iik " + iik + " . Returning stub metadata: " + stub)
@@ -134,13 +136,15 @@ class Img @Inject() (
       },
       {case (iik0, icrop, targetSz) =>
         // Запрашиваем исходную картинку:
-        val preparedTmpImgFut = iik0.toLocalImg
+        val preparedTmpImgFut = mImgs3.toLocalImg(iik0)
+
         // 2014.oct.08 Нужно чинить кроп, т.к. форма может засабмиттить его с ошибками.
-        val crop2Fut = iik0.getImageWH.map { whOpt =>
+        val crop2Fut = for (whOpt <- mImgs3.getImageWH(iik0)) yield {
           whOpt.fold(icrop) { wh =>
             ImgFormUtil.repairCrop(icrop, targetSz = targetSz, srcSz = wh)
           }
         }
+
         preparedTmpImgFut flatMap {
           case Some(localImg) =>
             crop2Fut map { crop2 =>
@@ -173,7 +177,7 @@ class Img @Inject() (
   /**
    * Запрос картинки с опрделёнными параметрами.
    * Ссылка на картинку формируется на сервере и имеет HMAC-подпись для защиты от модификации.
- *
+   *
    * @param args Данные по желаемой картинке.
    * @return Картинки или 304 Not modified.
    */
@@ -253,7 +257,7 @@ trait TempImgSupport
 
   /**
    * Запуск в фоне определения палитры и отправки уведомления по веб-сокету.
- *
+   *
    * @param im Картинка для обработки.
    * @param wsId id для уведомления.
    */
@@ -284,7 +288,7 @@ trait TempImgSupport
   }
 
   /** Обработчик полученной картинки в контексте реквеста, содержащего необходимые данные. Считается, что ACL-проверка уже сделана.
- *
+    *
     * @param preserveUnknownFmt Оставлено на случай поддержки всяких странных форматов.
     * @param request HTTP-реквест.
     * @param ovlRrr Overlay HTML renderer. Опциональный.
@@ -311,9 +315,9 @@ trait TempImgSupport
           hrrr(mptmp.fileName, implicitly[Context])
         }
         // Далее, загрузка для svg и растровой графики расветвляется...
-        if (SvgUtil maybeSvgMime srcMime) {
+        if (SvgUtil.maybeSvgMime(srcMime)) {
           // Это svg?
-          if (SvgUtil isSvgFileValid srcFile) {
+          if (SvgUtil.isSvgFileValid(srcFile)) {
             // Это svg. Надо его сжать и переместить в tmp-хранилище.
             val newSvg = htmlCompressUtil.compressSvgFromFile(srcFile)
             FileUtils.writeStringToFile(mptmp.file, newSvg)
@@ -376,7 +380,7 @@ trait TempImgSupport
         NotAcceptable(reply)
     }
 
-    resultFut onComplete { case _ =>
+    resultFut.onComplete { _ =>
       // Удалить все файлы, которые были приняты в реквесте.
       request.body.files.foreach { f =>
         f.ref.file.delete()

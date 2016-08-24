@@ -1,27 +1,26 @@
 package models.im
 
 import java.io.File
-import java.nio.file.{Path, Files}
+import java.nio.file.{Files, Path}
 import java.util.UUID
 
-import io.suggest.model.img.{ImgSzDated, IImgMeta}
+import com.google.inject.{Inject, Singleton}
+import io.suggest.model.img.{IImgMeta, ImgSzDated}
 import io.suggest.util.UuidUtil
 import io.suggest.ym.model.common.MImgInfoMeta
 import models.mcron.{ICronTask, MCronTask}
 import models.mfs.FileUtil
+import models.mproj.ICommonDi
 import org.apache.commons.io.FileUtils
 import org.joda.time.DateTime
 import play.api.Application
-import play.api.Play.{current, configuration}
-import play.api.cache.Cache
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.iteratee.Enumerator
 import util._
 import util.async.AsyncUtil
-import util.img.{ImgFileNameParsersImpl, ImgFormUtil, OrigImageUtil}
+import util.img.{ImgFileNameParsersImpl, OrigImageUtil}
+
 import scala.concurrent.duration._
 import scala.collection.JavaConversions._
-
 import scala.concurrent.Future
 import scala.util.Success
 
@@ -39,6 +38,96 @@ import scala.util.Success
  * В итоге, получилась эта модель.
  */
 
+@Singleton
+class MLocalImgs @Inject() (
+  mCommonDi : ICommonDi
+)
+  extends MAnyImgsT[MLocalImgT]
+  with PlayMacroLogsImpl {
+
+  import mCommonDi._
+
+  /** Сколько модель должна кешировать в голове результат вызова identify? */
+  val IDENTIFY_CACHE_TTL_SECONDS = configuration.getInt("m.local.img.identify.cache.ttl.seconds")
+    .getOrElse(120)
+
+  def deleteSync(mimg: MLocalImgT): Boolean = {
+    mimg.file.delete()
+  }
+
+  override def delete(mimg: MLocalImgT): Future[_] = {
+    Future {
+      deleteSync(mimg)
+    }(AsyncUtil.singleThreadIoContext)
+  }
+
+  override def toLocalImg(mimg: MLocalImgT): Future[Option[MLocalImg]] = {
+    val result = if (mimg.isExists)
+      Some(mimg.toLocalInstance)
+    else
+      None
+    Future.successful(result)
+  }
+
+  /**
+   * Принудительно в фоне обновляем file last modified time.
+   * Обычно atime на хосте отключён или переключен в relatime, а этим временем пользуется чистильщик ненужных картинок.
+   * @return Фьючерс для синхронизации.
+   */
+  def touchAsync(mimg: MLocalImgT): Future[_] = {
+    Future {
+      val tms = System.currentTimeMillis()
+      mimg.file.setLastModified(tms)
+    }(AsyncUtil.singleThreadIoContext)
+  }
+
+  override def getStream(mimg: MLocalImgT): Enumerator[Array[Byte]] = {
+    Enumerator.fromFile( mimg.file )
+  }
+
+  def identify(mimg: MLocalImgT) = {
+    Future {
+      OrigImageUtil.identify( mimg.file )
+    }(AsyncUtil.singleThreadCpuContext)
+  }
+
+  def identifyCached(mimg: MLocalImgT) = {
+    cacheApiUtil.getOrElseFut(mimg.fileName + ".identify", IDENTIFY_CACHE_TTL_SECONDS.seconds) {
+      identify(mimg)
+    }
+  }
+
+  /** Получить ширину и длину картинки. */
+  override def getImageWH(mimg: MLocalImgT): Future[Option[MImgInfoMeta]] = {
+    identifyCached(mimg)
+      .map { info =>
+        val imeta = MImgInfoMeta(
+          height = info.getImageHeight,
+          width  = info.getImageWidth
+        )
+        Some(imeta)
+      }
+      .recover {
+        case ex: org.im4java.core.InfoException =>
+          LOGGER.info("getImageWH(): Unable to identity image " + mimg.fileName, ex)
+          None
+      }
+  }
+
+}
+
+
+/** Интерфейс для поля с DI-инстансом [[MLocalImgs]]. */
+trait IMLocalImgs {
+  def mLocalImgs: MLocalImgs
+}
+
+
+import play.api.Play.{configuration, current}
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.cache.Cache
+
+/** Статика. */
 object MLocalImg
   extends PlayLazyMacroLogsImpl
   with CronTasksProviderEmpty
@@ -176,12 +265,12 @@ trait MLocalImgT extends MAnyImgT with PlayMacroLogsI {
   /** 
    * Принудительно в фоне обновляем file last modified time.
    * Обычно atime на хосте отключён или переключен в relatime, а этим временем пользуется чистильщик ненужных картинок.
-   * @param newMtime Новое время доступа к картинке.
    * @return Фьючерс для синхронизации.
    */
-  def touchAsync(newMtime: Long = System.currentTimeMillis()): Future[_] = {
+  def touchAsync(): Future[_] = {
     Future {
-      file.setLastModified(newMtime)
+      val tms = System.currentTimeMillis()
+      file.setLastModified(tms)
     }(AsyncUtil.singleThreadIoContext)
   }
 
@@ -192,24 +281,7 @@ trait MLocalImgT extends MAnyImgT with PlayMacroLogsI {
       fsImgDir.mkdirs()
   }
 
-  // TODO Этот метод больше не используется, можно его удалить после окончания перепиливания картинок на N2-архитектуру.
-  def writeIntoFile(imgBytes: Array[Byte]) {
-    prepareWriteFile()
-    FileUtils.writeByteArrayToFile(file, imgBytes)
-  }
-
   def isExists: Boolean = file.exists()
-  def deleteSync: Boolean = file.delete()
-
-  override def delete: Future[_] = {
-    Future {
-      deleteSync
-    }(AsyncUtil.singleThreadIoContext)
-  }
-
-  def imgBytesEnumerator: Enumerator[Array[Byte]] = {
-    Enumerator.fromFile(file)
-  }
 
   def identify = {
     Future {
@@ -218,7 +290,7 @@ trait MLocalImgT extends MAnyImgT with PlayMacroLogsI {
   }
 
   lazy val identifyCached = {
-    Cache.getOrElse(fileName + ".iC", expiration = IDENTIFY_CACHE_TTL_SECONDS) {
+    Cache.getOrElse(fileName + ".identify", expiration = IDENTIFY_CACHE_TTL_SECONDS) {
       identify
     }
   }
@@ -238,17 +310,6 @@ trait MLocalImgT extends MAnyImgT with PlayMacroLogsI {
           LOGGER.info("getImageWH(): Unable to identity image " + fileName, ex)
           None
       }
-  }
-
-  def imgMdMap: Future[Option[Map[String, String]]] = {
-    for (metaOpt <- getImageWH) yield {
-      for (meta <- metaOpt) yield {
-        Map(
-          ImgFormUtil.IMETA_HEIGHT -> meta.height.toString,
-          ImgFormUtil.IMETA_WIDTH  -> meta.width.toString
-        )
-      }
-    }
   }
 
 }
@@ -275,12 +336,14 @@ case class MLocalImg(
 
   override lazy val fileName = super.fileName
 
+  override def toLocalInstance: MLocalImg = this
+
   override def toLocalImg: Future[Option[MLocalImgT]] = {
     val result = if (isExists)
       Some(this)
     else
       None
-    Future successful result
+    Future.successful( result )
   }
 
   override def original: MLocalImg = {
@@ -290,7 +353,7 @@ case class MLocalImg(
       this
   }
 
-  override lazy val toWrappedImg = MLocalImg.mImg3(rowKeyStr, dynImgOps)
+  override lazy val toWrappedImg: MImg3 = MLocalImg.mImg3(rowKeyStr, dynImgOps)
 
   override lazy val rawImgMeta: Future[Option[IImgMeta]] = {
     if (isExists) {

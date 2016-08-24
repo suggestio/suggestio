@@ -4,7 +4,7 @@ import java.net.{MalformedURLException, URL}
 
 import com.google.inject.Inject
 import models.mproj.ICommonDi
-import models.im.{MImgs3, MImgT}
+import models.im.{MImgT, MAnyImgs, MImgs3}
 import play.api.data.Forms._
 import play.api.data._
 import util.acl.IsSuperuser
@@ -20,9 +20,10 @@ import views.html.sys1.img._
  * изображениям.
  */
 class SysImg @Inject() (
-  mImgs3                          : MImgs3,
-  override val sysImgMakeUtil     : SysImgMakeUtil,
-  override val mCommonDi          : ICommonDi
+                         mImgs3                          : MImgs3,
+                         override val sysImgMakeUtil     : SysImgMakeUtil,
+                         mImgs                           : MAnyImgs,
+                         override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
@@ -113,7 +114,7 @@ class SysImg @Inject() (
    */
   def deleteOneSubmit(im: MImgT) = IsSuPost.async { implicit request =>
     // TODO Удалять на ВСЕХ НОДАХ из кеша /picture/local/
-    for (_ <- im.delete) yield {
+    for (_ <- mImgs.delete(im)) yield {
       val (msg, rdr) = if (im.isOriginal) {
         "Оригинал удалён." -> routes.SysImg.index()
       } else {

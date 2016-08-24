@@ -2,8 +2,11 @@ package models.im
 
 import java.util.UUID
 
-import models.{ISize2di, IImgMeta, ImgCrop}
-import util.PlayMacroLogsI
+import com.google.inject.{Inject, Singleton}
+import models.mproj.ICommonDi
+import models.{IImgMeta, ISize2di, ImgCrop}
+import play.api.libs.iteratee.Enumerator
+import util.{PlayMacroLogsI, PlayMacroLogsImpl}
 
 import scala.concurrent.Future
 
@@ -23,15 +26,21 @@ trait MAnyImgT extends PlayMacroLogsI with ImgFilename with DynImgOpsString {
   def rowKey: UUID
 
   /** Вернуть локальный инстанс модели с файлом на диске. */
+  // TODO Закончить спиливание отсюдово.
+  @deprecated("", "")
   def toLocalImg: Future[Option[MLocalImgT]]
 
+  /** Инстанс локальной картинки. Сама картинка может не существовать. */
+  def toLocalInstance: MLocalImg
+
   /** Вернуть инстанс над-модели MImg. */
-  def toWrappedImg: MImg_t
+  def toWrappedImg: MImg3
 
   /** Получить ширину и длину картинки. */
+  @deprecated("", "")
   def getImageWH: Future[Option[ISize2di]]
 
-  /** Инстанс для доступа к картинке без изменений. */
+  /** Инстанс для доступа к картинке без каких-либо наложенных на неё изменений. */
   def original: MAnyImgT
 
   def rawImgMeta: Future[Option[IImgMeta]]
@@ -54,8 +63,6 @@ trait MAnyImgT extends PlayMacroLogsI with ImgFilename with DynImgOpsString {
     dynImgOps
       .exists { _.isInstanceOf[ImCropOpT] }
   }
-
-  def delete: Future[_]
 
 }
 
@@ -106,3 +113,76 @@ trait DynImgOpsString {
 
   // Исторически, опциональный доступ к dynImgOpsString осуществляет метод qOpt.
 }
+
+
+
+/** Трейт для статических частей img-моделей. */
+trait MAnyImgsT[T <: MAnyImgT] {
+
+  /** Удалить картинку из модели/моделей. */
+  def delete(mimg: T): Future[_]
+
+  /** Подготовить локальный файл с картинкой. */
+  def toLocalImg(mimg: T): Future[Option[MLocalImg]]
+
+  /** Асинхронно стримить картинку из хранилища. */
+  def getStream(mimg: T): Enumerator[Array[Byte]]
+
+  /** Получить ширину и длину картинки. */
+  def getImageWH(mimg: T): Future[Option[ISize2di]]
+
+}
+
+
+/** Статическая над-модель, реализующая разные общие методы для любых картинок. */
+@Singleton
+class MAnyImgs @Inject() (
+  mLocalImgs  : MLocalImgs,
+  mImgs3      : MImgs3,
+  mCommonDi   : ICommonDi
+)
+  extends MAnyImgsT[MAnyImgT]
+  with PlayMacroLogsImpl
+{
+
+  import mCommonDi._
+
+  /** Удалить картинку из всех img-моделей. */
+  override def delete(mimg: MAnyImgT): Future[_] = {
+    // Запустить параллельное удаление из всех моделей.
+    val remoteDelFut = mImgs3.delete( mimg.toWrappedImg )
+    val localDelFut = mLocalImgs.delete( mimg.toLocalInstance )
+    // Дожидаемся всех фьючерсов удаления...
+    localDelFut
+      .flatMap(_ => remoteDelFut)
+  }
+
+  override def toLocalImg(mimg: MAnyImgT): Future[Option[MLocalImg]] = {
+    mimg match {
+      case mimg3: MImg3T =>
+        mImgs3.toLocalImg(mimg3)
+      case localImg: MLocalImgT =>
+        mLocalImgs.toLocalImg(localImg)
+    }
+  }
+
+  override def getStream(mimg: MAnyImgT): Enumerator[Array[Byte]] = {
+    mimg match {
+      case mimg3: MImg3T =>
+        mImgs3.getStream(mimg3)
+      case localImg: MLocalImgT =>
+        mLocalImgs.getStream(localImg)
+    }
+  }
+
+  override def getImageWH(mimg: MAnyImgT): Future[Option[ISize2di]] = {
+    mimg match {
+      case mimg3: MImg3T =>
+        mImgs3.getImageWH(mimg3)
+      case localImg: MLocalImgT =>
+        mLocalImgs.getImageWH(localImg)
+    }
+  }
+
+}
+

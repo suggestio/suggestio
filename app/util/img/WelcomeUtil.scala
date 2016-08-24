@@ -95,7 +95,7 @@ class WelcomeUtil @Inject() (
         Future successful _colorBg
       } { bgImgFilename =>
         val oiik = mImg3(bgImgFilename)
-        val fut0 = oiik.original.getImageWH
+        val fut0 = mImg3.getImageWH( oiik.original )
         lazy val logPrefix = s"getWelcomeRenderArgs(${mnode.idOrNull}): "
         fut0.map {
           case Some(meta) =>
@@ -112,7 +112,7 @@ class WelcomeUtil @Inject() (
 
     val fgImgOpt = wcLogoImg(mnode)
     val fgMetaOptFut = FutureUtil.optFut2futOpt(fgImgOpt) { fgImg =>
-      fgImg.getImageWH
+      mImg3.getImageWH( fgImg )
     }
     val fgOptFut = for (fgMetaOpt <- fgMetaOptFut) yield {
       for (fgImg <- fgImgOpt; fgMeta <- fgMetaOpt) yield {

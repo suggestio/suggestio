@@ -156,7 +156,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
         // Ксакеп Вася попытается подставить id уже сохраненной где-то картинки. А потом честно запросить удаление этой картинки.
         // Нужно исключить возможность подмешивать в списки картинок левые id, используя список oldImgs:
         .filter { v =>
-          val filterResult = oldImgIdsSet contains v._1.rowKey
+          val filterResult = oldImgIdsSet.contains( v._1.rowKey )
           if (!filterResult)
             warn("Tried to keep image, that does not exists in previous imgs: " + v._1.rowKeyStr)
           else
@@ -167,24 +167,24 @@ object ImgFormUtil extends PlayMacroLogsImpl {
 
     // Если включена принудительная ревалидация неизменившихся картинок, запускаем параллельную ревалидацию для keeped-картинок.
     if (REVALIDATE_ALREADY_SAVED_IMGS) {
-      imgsKeepFut = imgsKeepFut flatMap { res =>
-        Future.traverse(res) { v =>
-          v._1
-            .original
-            .toLocalImg
-            .map { localOpt =>
-              localOpt
-                .filter { loc =>
-                  val filterResult = loc.isExists
-                  if (!filterResult)
-                    warn("REVALIDATE_ALREADY_SAVED: keeped image not exists: " + loc.fileName)
-                  filterResult
-                }
-                .map(_ => v)
+      imgsKeepFut = for {
+        res  <- imgsKeepFut
+        futs <- Future.traverse(res) { v =>
+          for {
+            localOpt <- mImg3.toLocalImg( v._1.original )
+          } yield {
+            localOpt
+              .filter { loc =>
+                val filterResult = loc.isExists
+                if (!filterResult)
+                  warn("REVALIDATE_ALREADY_SAVED: keeped image not exists: " + loc.fileName)
+                filterResult
               }
-        } map {
-          _.flatten
+              .map(_ => v)
+          }
         }
+      } yield {
+        futs.flatten
       }
     }
 
@@ -240,7 +240,9 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   }
 
   def img2imgInfo(mimg: MImgT): Future[MImgInfo] = {
-    mimg.getImageWH map { wh =>
+    for {
+      wh <- mImg3.getImageWH(mimg)
+    } yield {
       MImgInfo(mimg.fileName, wh.map(MImgInfoMeta.apply))
     }
   }

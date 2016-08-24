@@ -4,14 +4,15 @@ import java.util.{NoSuchElementException, UUID}
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.fio.WriteRequest
-import io.suggest.model.img.{IImgMeta, ImgSzDated}
+import io.suggest.model.img.ImgSzDated
 import io.suggest.model.n2.media.storage.{IMediaStorages, MStorage, MStorages}
 import io.suggest.model.n2.media.{MFileMeta, MMedias, MPictureMeta}
 import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
+import io.suggest.playx.CacheApiUtil
 import io.suggest.util.UuidUtil
-import models._
+import models.{IImgMeta, _}
 import models.mfs.FileUtil
 import models.mproj.ICommonDi
 import org.joda.time.DateTime
@@ -33,13 +34,18 @@ class MImgs3 @Inject() (
   val iMediaStorages        : IMediaStorages,
   val mMedias               : MMedias,
   val mNodes                : MNodes,
+  override val cacheApiUtil : CacheApiUtil,
+  override val mLocalImgs   : MLocalImgs,
   val mCommonDi             : ICommonDi
 )
-  extends IMImgCompanion
+  extends MImgsT
+  with IMImgCompanion
   with PlayLazyMacroLogsImpl
 {
 
   override type T = MImg3
+
+  import mCommonDi._
 
   /** Реализация парсеров filename'ов в данную модель. */
   class Parsers extends ImgFileNameParsersImpl {
@@ -86,6 +92,51 @@ class MImgs3 @Inject() (
 
   def apply(rowKeyStr: String, dynImgOps: Seq[ImOp], userFileName: Option[String] = None): MImg3 = {
     MImg3(rowKeyStr, dynImgOps, this, userFileName)
+  }
+
+  override def delete(mimg: MImgT): Future[_] = {
+    _mediaOptFut(mimg).flatMap {
+      case Some(mm) =>
+        for {
+          _ <- iMediaStorages.delete( mm.storage )
+          _ <- mMedias.deleteById(mm.id.get)
+        } yield {
+          true
+        }
+      case None =>
+        Future.successful(false)
+    }
+  }
+
+  /** Выполнить стриминг данных картинки из SeaWeedFS. */
+  override def getStream(mimg: MImgT): Enumerator[Array[Byte]] = {
+    val enumFut = for {
+      mm <- _mediaFut( _mediaOptFut(mimg) )
+      rr <- iMediaStorages.read( mm.storage )
+    } yield {
+      rr.data
+    }
+    Enumerator.flatten( enumFut )
+  }
+
+  override protected def _getImgMeta(mimg: MImgT): Future[Option[IImgMeta]] = {
+    for (mmediaOpt <- _mediaOptFut(mimg)) yield {
+      for (mmedia <- mmediaOpt) yield {
+        ImgSzDated(
+          sz          = mmedia.picture.get,
+          dateCreated = mmedia.file.dateCreated
+        )
+      }
+    }
+  }
+
+  /** Потенциально ненужная операция обновления метаданных. В новой архитектуре её быть не должно бы,
+    * т.е. метаданные обязательные изначально. */
+  override protected def _updateMetaWith(mimg: MImgT, localWh: MImgSizeT, localImg: MLocalImgT): Unit = {
+    // should never happen
+    // Необходимость апдейта метаданных возникает, когда обнаруживается, что нет метаданных.
+    // В случае N2 MMedia, метаданные без блоба существовать не могут, и необходимость не должна наступать.
+    LOGGER.warn(s"_updateMetaWith($localWh, $localImg) ignored and not implemented")
   }
 
 }
@@ -294,20 +345,6 @@ abstract class MImg3T extends MImgT {
     // Необходимость апдейта метаданных возникает, когда обнаруживается, что нет метаданных.
     // В случае N2 MMedia, метаданные без блоба существовать не могут, и необходимость не должна наступать.
     LOGGER.warn(s"_updateMetaWith($localWh, $localImg) ignored and not implemented")
-  }
-
-  override def delete: Future[_] = {
-    _mediaOptFut.flatMap {
-      case Some(mm) =>
-        for {
-          _ <- companion.iMediaStorages.delete( mm.storage )
-          _ <- mMedias.deleteById(mm.id.get)
-        } yield {
-          true
-        }
-      case None =>
-        Future.successful(false)
-    }
   }
 
 }

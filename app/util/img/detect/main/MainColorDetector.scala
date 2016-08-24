@@ -21,6 +21,7 @@ import scala.concurrent.Future
  */
 @Singleton
 class MainColorDetector @Inject() (
+  mImgs3        : MImgs3,
   mCommonDi     : ICommonDi
 )
   extends PlayMacroLogsImpl
@@ -100,14 +101,14 @@ class MainColorDetector @Inject() (
         }
       }
     }
-    resultFut.onComplete { case _ =>
+    resultFut.onComplete { _ =>
       resultFile.delete()
     }
     if (suppressErrors) {
       resultFut recoverWith {
         case ex: Exception =>
           warn(s"Failed to extract palette from picture ${img.getAbsolutePath}", ex)
-          Future successful Nil
+          Future.successful(Nil)
       }
     }
     resultFut
@@ -157,14 +158,15 @@ class MainColorDetector @Inject() (
    */
   def prepareImg(bgImg4s: MImgT): Future[PrepareImgResult] = {
     lazy val logPrefix = s"prepareImg(${bgImg4s.fileName}): "
+
     // toLocalImg не существовует обычно вообще (ибо голый orig [+ crop]). Поэтому сразу ищем оригинал, но не теряя надежды.
-    val localOrigImgFut = bgImg4s
-      .original
-      .toLocalImg
+    val localOrigImgFut = mImgs3.toLocalImg(bgImg4s.original)
+
     // Всё-таки ищем отропанный результат.
-    var localImg2Fut = bgImg4s.toLocalImg
+    var localImg2Fut = mImgs3.toLocalImg(bgImg4s)
       .filter(_.exists(_.isExists))
       .map { v => PrepareImgResult(v, Seq.empty[ImOp]) }
+
     // Если исходная картинка - чистый оригинал, то отрабатывать отсутствие произодной картинки не требуется.
     if (bgImg4s.hasImgOps) {
       // Если исходная картинка - обрезок, то можно изъять операции из исходной картинки и повторить их на оригинале вместе с генерацией гистограммы.
