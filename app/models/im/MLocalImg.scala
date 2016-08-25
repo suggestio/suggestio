@@ -15,7 +15,7 @@ import org.joda.time.DateTime
 import play.api.libs.iteratee.Enumerator
 import util._
 import util.async.AsyncUtil
-import util.img.{ImgFileNameParsersImpl, OrigImageUtil}
+import util.img.{ImgFileNameParsersImpl, ImgFileUtil, OrigImageUtil}
 
 import scala.concurrent.duration._
 import scala.concurrent.Future
@@ -37,6 +37,7 @@ import scala.concurrent.Future
 @Singleton
 class MLocalImgs @Inject() (
   origImageUtil : OrigImageUtil,
+  imgFileUtil   : ImgFileUtil,
   mCommonDi     : ICommonDi
 )
   extends MAnyImgsT[MLocalImg]
@@ -201,8 +202,8 @@ class MLocalImgs @Inject() (
     for {
       mmOpt <- mimeMatchOptFut(mimg)
     } yield {
-      val mimeOpt = ImgFileUtil.getMime(mmOpt)
-      ImgFileUtil.orUnknown( mimeOpt )
+      val mimeOpt = imgFileUtil.getMime(mmOpt)
+      imgFileUtil.orUnknown( mimeOpt )
     }
   }
 

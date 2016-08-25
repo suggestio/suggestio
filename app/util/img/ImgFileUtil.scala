@@ -1,4 +1,4 @@
-package models.im
+package util.img
 
 import java.io.File
 
@@ -12,7 +12,7 @@ import net.sf.jmimemagic.MagicMatch
  * Created: 29.09.15 11:16
  * Description: Утиль для работы с файлами изображений.
  */
-object ImgFileUtil {
+class ImgFileUtil {
 
   def getMime(file: File): Option[String] = {
     getMime( FileUtil.getMimeMatch(file) )
@@ -41,6 +41,5 @@ object ImgFileUtil {
   def getMimeOrUnknown(file: File): String = {
     orUnknown( getMime(file) )
   }
-
 
 }

@@ -32,7 +32,7 @@ class MainColorDetector @Inject() (
   import mCommonDi.{configuration, ec}
 
   /** Дефолтовое значение размера промежуточной палитры цветовой гистограммы. */
-  val PALETTE_MAX_COLORS_DFLT = configuration.getInt("mcd.palette.colors.max.dflt") getOrElse 8
+  val PALETTE_MAX_COLORS_DFLT = configuration.getInt("mcd.palette.colors.max.dflt").getOrElse(8)
 
 
   /**
