@@ -14,7 +14,7 @@ import scala.util.parsing.input.StreamReader
  *   83956: (100, 96, 33) #646021 srgb(100,96,33)
  *  ...
  */
-object HistogramParsers extends JavaTokenParsers {
+class HistogramParsers extends JavaTokenParsers {
 
   // Используем def вместо val, чтобы сэкономить PermGen, т.к. парсер нужен изредка, а не постоянно.
 

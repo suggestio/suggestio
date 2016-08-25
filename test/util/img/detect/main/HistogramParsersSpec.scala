@@ -13,7 +13,10 @@ import org.scalatestplus.play._
  */
 
 class HistogramParsersSpec extends PlaySpec {
-  import HistogramParsers._
+
+  private val histogramParsers = new HistogramParsers
+
+  import histogramParsers._
 
   private val parsedSubstr = "] parsed: "
 

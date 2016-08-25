@@ -85,8 +85,8 @@ class MainColorDetector @Inject() (
     val resultFile = File.createTempFile(getClass.getSimpleName, ".txt")
     val resultFut = convertToHistogram(img.getAbsolutePath, resultFile.getAbsolutePath, maxColors, preImOps) map { _ =>
       // Читаем и парсим из файла гистограмму.
-      val pr = HistogramParsers.parseFromFile(resultFile)
-      pr getOrElse {
+      val pr = (new HistogramParsers).parseFromFile(resultFile)
+      pr.getOrElse {
         val histContent = Files.readAllBytes(resultFile.toPath)
         val msgSb = new StringBuilder(histContent.length + 128,  "Failed to understand histogram file: \n")
           .append(pr)
