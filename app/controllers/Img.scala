@@ -46,9 +46,11 @@ import scala.util.{Failure, Success}
 class Img @Inject() (
   override val mainColorDetector  : MainColorDetector,
   override val mImgs3             : MImgs3,
+  override val mLocalImgs         : MLocalImgs,
   override val dynImgUtil         : DynImgUtil,
   override val imgCtlUtil         : ImgCtlUtil,
   override val wsDispatcherActors : WsDispatcherActors,
+  override val origImageUtil      : OrigImageUtil,
   override val mCommonDi          : ICommonDi
 )
   extends SioController
@@ -104,7 +106,7 @@ class Img @Inject() (
 
   /** Отрендерить оконный интерфейс для кадрирования картинки. */
   def imgCropForm(imgId: String, width: Int, height: Int) = IsAuth.async { implicit request =>
-    val iik = mImgs3(imgId).original
+    val iik = MImg3(imgId).original
     for {
       imetaOpt <- mImgs3.getImageWH(iik)
     } yield {
@@ -150,7 +152,7 @@ class Img @Inject() (
             crop2Fut map { crop2 =>
               // Сгенерить id картинки. Собираем картинку на базе исходника, накатив только crop:
               val cropOp = AbsCropOp(crop2)
-              val mimgOrig = mImgs3(localImg.rowKeyStr)
+              val mimgOrig = MImg3(localImg.rowKeyStr)
               val croppedImgFileName = {
                 val imOps = List(cropOp)
                 val mimg = mimgOrig.withDynOps(imOps)
@@ -185,31 +187,37 @@ class Img @Inject() (
     val notModifiedFut: Future[Boolean] = {
       request.headers.get(IF_MODIFIED_SINCE) match {
         case Some(ims) =>
-          args.rawImgMeta map {
-            case Some(imeta) =>
-              val newModelInstant = withoutMs( imeta.dateCreated.getMillis )
+          for (imetaOpt <- mImgs3.rawImgMeta(args)) yield {
+            imetaOpt.fold(false) { imeta =>
+              val newModelInstant = withoutMs(imeta.dateCreated.getMillis)
               isModifiedSinceCached(newModelInstant, ims)
-            case None =>
-              false
+            }
           }
 
-        case None => Future successful false
+        case None =>
+          Future.successful( false )
       }
     }
-    notModifiedFut flatMap {
+
+    notModifiedFut.flatMap {
       case true =>
         NotModified
           .withHeaders(CACHE_CONTROL -> s"public, max-age=$CACHE_ORIG_CLIENT_SECONDS")
 
       // Изменилась картинка. Выдать её. Если картинки нет, то создать надо на основе оригинала.
       case false =>
-        dynImgUtil.ensureImgReady(args, cacheResult = false) map { localImg =>
+        val ensureFut = for {
+          localImg <- dynImgUtil.ensureImgReady(args, cacheResult = false)
+        } yield {
+          val imgFile = mLocalImgs.fileOf(localImg)
           serveImgFromFile(
-            file = localImg.file,
-            cacheSeconds = CACHE_ORIG_CLIENT_SECONDS,
-            modelInstant = new DateTime(localImg.file.lastModified)
+            file          = imgFile,
+            cacheSeconds  = CACHE_ORIG_CLIENT_SECONDS,
+            modelInstant  = new DateTime(imgFile.lastModified)
           )
-        } recover {
+        }
+
+        ensureFut.recover {
           case ex: NoSuchElementException =>
             debug("Img not found anywhere: " + args.fileName)
             NotFound("No such image.")
@@ -233,6 +241,8 @@ trait TempImgSupport
   with MyConfName
   with IDynImgUtil
   with IMImg3Di
+  with IOrigImageUtilDi
+  with IMLocalImgs
 {
 
   import mCommonDi._
@@ -298,7 +308,7 @@ trait TempImgSupport
     */
   def _handleTempImg(preserveUnknownFmt: Boolean = false, runEarlyColorDetector: Boolean = false,
                      wsId: Option[String] = None, ovlRrr: Option[(String, Context) => Html] = None,
-                     mImgCompanion: IMImgCompanion = mImgs3)
+                     mImgCompanion: IMImgCompanion = MImg3)
                     (implicit request: IReq[MultipartFormData[TemporaryFile]]): Future[Result] = {
     // TODO Надо часть синхронной логики загнать в Future{}. Это нужно, чтобы скачанные данные из tmp удалялись автоматом.
     val resultFut: Future[Result] = request.body.file("picture") match {
@@ -315,12 +325,13 @@ trait TempImgSupport
           hrrr(mptmp.fileName, implicitly[Context])
         }
         // Далее, загрузка для svg и растровой графики расветвляется...
+        val tmpFile = mLocalImgs.fileOf(mptmp)
         if (SvgUtil.maybeSvgMime(srcMime)) {
           // Это svg?
           if (SvgUtil.isSvgFileValid(srcFile)) {
             // Это svg. Надо его сжать и переместить в tmp-хранилище.
             val newSvg = htmlCompressUtil.compressSvgFromFile(srcFile)
-            FileUtils.writeStringToFile(mptmp.file, newSvg)
+            FileUtils.writeStringToFile(tmpFile, newSvg)
             Ok( jsonTempOk(mptmp.fileName, routes.Img.dynImg(mptmp.toWrappedImg), ovlOpt) )
           } else {
             val reply = jsonImgError("SVG format invalid or not supported.")
@@ -335,12 +346,12 @@ trait TempImgSupport
               if (preserveUnknownFmt || OutImgFmts.forImageMime(srcMime).isDefined) {
                 // TODO Вызывать jpegtran или другие вещи для lossless-обработки. В фоне, параллельно.
                 Future {
-                  FileUtils.moveFile(srcFile, mptmp.file)
+                  FileUtils.moveFile(srcFile, tmpFile)
                 }(AsyncUtil.singleThreadIoContext)
               } else {
                 Future {
                   // Использовать что-то более гибкое и полезное. Вдруг зальют негатив .arw какой-нить в hi-res.
-                  OrigImageUtil.convert(srcFile, mptmp.file, ConvertModes.STRIP)
+                  origImageUtil.convert(srcFile, tmpFile, ConvertModes.STRIP)
                 }(AsyncUtil.singleThreadCpuContext)
               }
             }

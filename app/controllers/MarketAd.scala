@@ -12,7 +12,7 @@ import io.suggest.model.n2.node.meta.MBasicMeta
 import models._
 import models.blk.PrepareBlkImgArgs
 import models.blk.ed.{AdFormM, AdFormResult, BlockImgMap}
-import models.im.MImgs3
+import models.im.MImg3
 import models.im.make.IMaker
 import models.jsm.init.MTargets
 import models.mctx.Context
@@ -42,7 +42,6 @@ import scala.concurrent.Future
  */
 class MarketAd @Inject() (
   tempImgSupport                          : TempImgSupport,
-  mImgs3                                  : MImgs3,
   mNodes                                  : MNodes,
   sysMdrUtil                              : SysMdrUtil,
   lkEditorWsActors                        : LkEditorWsActors,
@@ -91,7 +90,7 @@ class MarketAd @Inject() (
     val vOpt = form(bgImgFullK).value
     try {
       vOpt.foreach { v =>
-        val im = mImgs3(v)
+        val im = MImg3(v)
         tempImgSupport._detectPalletteWs(im, wsId = ctx.ctxIdStr)
       }
     } catch {
@@ -207,7 +206,7 @@ class MarketAd @Inject() (
       mad.edges
         .withPredicateIter(bc.imgKeys : _*)
         .map { e =>
-          e.predicate -> mImgs3(e)
+          e.predicate -> MImg3(e)
         }
         .toMap
     }

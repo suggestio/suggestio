@@ -13,7 +13,7 @@ import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models._
 import models.mctx.Context
 import models.mproj.ICommonDi
-import models.im.MImgs3
+import models.im.MImg3
 import models.msys._
 import models.req.{INodeReq, IReq, MNodeReq}
 import models.usr.{EmailActivation, EmailActivations, MPerson}
@@ -53,7 +53,6 @@ class SysMarket @Inject() (
   emailActivations                : EmailActivations,
   mPerson                         : MPerson,
   mItems                          : MItems,
-  mImgs3                          : MImgs3,
   mNodes                          : MNodes,
   override val mCommonDi          : ICommonDi
 )
@@ -693,7 +692,7 @@ class SysMarket @Inject() (
       mad.edges
         .withPredicateIter( MPredicates.Bg, MPredicates.WcLogo, MPredicates.GalleryItem )
         .map { e =>
-          MImgEdge(e, mImgs3(e))
+          MImgEdge(e, MImg3(e))
         }
         .toSeq
     }

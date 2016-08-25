@@ -5,10 +5,11 @@ import io.suggest.model.n2.edge.MPredicates
 import models.MNode
 import models.blk._
 import models.blk.ed._
-import models.im.{MImgT, DevScreen}
+import models.im.{DevScreen, MImg3, MImgT}
 import models.im.make._
 import util.PlayLazyMacroLogsImpl
 import util.n2u.N2NodesUtil
+
 import scala.concurrent.{ExecutionContext, Future}
 import play.api.data.{FormError, Mapping}
 import play.api.Play.current
@@ -86,7 +87,7 @@ trait SaveBgImgI extends ISaveImgs {
       .withPredicateIter( BG_IMG_FN )
       .toStream
       .headOption
-      .map { SaveImgUtil.mImg3.apply }
+      .map { MImg3.apply }
   }
 
 }

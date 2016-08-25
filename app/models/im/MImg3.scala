@@ -3,9 +3,10 @@ package models.im
 import java.util.{NoSuchElementException, UUID}
 
 import com.google.inject.{Inject, Singleton}
+import io.suggest.common.fut.FutureUtil
 import io.suggest.fio.WriteRequest
 import io.suggest.model.img.ImgSzDated
-import io.suggest.model.n2.media.storage.{IMediaStorages, MStorage, MStorages}
+import io.suggest.model.n2.media.storage.{IMediaStorages, MStorages}
 import io.suggest.model.n2.media.{MFileMeta, MMedias, MPictureMeta}
 import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.common.MNodeCommon
@@ -17,7 +18,7 @@ import models.mfs.FileUtil
 import models.mproj.ICommonDi
 import org.joda.time.DateTime
 import play.api.libs.iteratee.Enumerator
-import util.PlayLazyMacroLogsImpl
+import util.{PlayLazyMacroLogsImpl, PlayMacroLogsImpl}
 import util.img.ImgFileNameParsersImpl
 
 import scala.concurrent.Future
@@ -39,60 +40,10 @@ class MImgs3 @Inject() (
   val mCommonDi             : ICommonDi
 )
   extends MImgsT
-  with IMImgCompanion
   with PlayLazyMacroLogsImpl
 {
 
-  override type T = MImg3
-
   import mCommonDi._
-
-  /** Реализация парсеров filename'ов в данную модель. */
-  class Parsers extends ImgFileNameParsersImpl {
-
-    override type T = MImg3
-
-    override def fileName2miP: Parser[T] = {
-      (uuidStrP ~ imOpsP) ^^ {
-        case nodeId ~ dynImgOps =>
-          apply(nodeId, dynImgOps)
-      }
-    }
-
-  }
-
-  override def apply(fileName: String): MImg3 = {
-    val pr = (new Parsers).fromFileName(fileName)
-    if (!pr.successful)
-      LOGGER.error(s"""Failed to parse img from fileName <<$fileName>>:\n$pr""")
-    pr.get
-  }
-
-  override def fromImg(img: MAnyImgT, dynOps2: Option[List[ImOp]] = None): MImg3 = {
-    apply(img.rowKeyStr, dynOps2.getOrElse(img.dynImgOps))
-  }
-
-  /** Экстракция указателя на картинку из эджа узла N2.
-    * @throws java.util.NoSuchElementException когда id узла-картинки не задан.
-    */
-  def apply(medge: IEdge): MImg3 = {
-    val dops = {
-      medge.info
-        .dynImgArgs
-        .fold( List.empty[ImOp] ) { imOpsStr =>
-          val pr = (new Parsers).parseImgArgs(imOpsStr)
-          pr.getOrElse {
-            LOGGER.warn(s"apply($medge): Ignoring ops. Failed to parse imOps str '''$imOpsStr'''\n$pr")
-            Nil
-          }
-      }
-    }
-    apply(medge.nodeIds.head, dops)
-  }
-
-  def apply(rowKeyStr: String, dynImgOps: Seq[ImOp], userFileName: Option[String] = None): MImg3 = {
-    MImg3(rowKeyStr, dynImgOps, this, userFileName)
-  }
 
   override def delete(mimg: MImgT): Future[_] = {
     _mediaOptFut(mimg).flatMap {
@@ -132,105 +83,37 @@ class MImgs3 @Inject() (
 
   /** Потенциально ненужная операция обновления метаданных. В новой архитектуре её быть не должно бы,
     * т.е. метаданные обязательные изначально. */
-  override protected def _updateMetaWith(mimg: MImgT, localWh: MImgSizeT, localImg: MLocalImgT): Unit = {
+  override protected def _updateMetaWith(mimg: MImgT, localWh: MImgSizeT, localImg: MLocalImg): Unit = {
     // should never happen
     // Необходимость апдейта метаданных возникает, когда обнаруживается, что нет метаданных.
     // В случае N2 MMedia, метаданные без блоба существовать не могут, и необходимость не должна наступать.
     LOGGER.warn(s"_updateMetaWith($localWh, $localImg) ignored and not implemented")
   }
 
-}
-
-
-/** Трейт одного элемента модели [[MImg3]].
-  * Появился из-за необходимости простого переключения между cassandra и seaweedfs. */
-abstract class MImg3T extends MImgT {
-
-  override type MImg_t <: MImg3T
-
-  /** DI-инстанс статической части модели MMedia. */
-  val companion: MImgs3
-
-  import companion.mCommonDi._
-
-  /** Пользовательское имя файла, если известно. */
-  def userFileName: Option[String]
-
-  def mMedias = companion.mMedias
-
-  override lazy val rowKey: UUID = {
-    UuidUtil.base64ToUuid(rowKeyStr)
-  }
-
-  lazy val _mediaId = mMedias.mkId(rowKeyStr, qOpt)
-
-  // Не val потому что результат может меняться с None на Some() в результате сохранения картинки.
-  def _mediaOptFut = mMedias.getById(_mediaId)
-  def _mediaFut = _mediaOptFut.map(_.get)
-
-  override protected lazy val _getImgMeta: Future[Option[IImgMeta]] = {
-    for (mmediaOpt <- _mediaOptFut) yield {
-      for (mmedia <- mmediaOpt) yield {
-        ImgSzDated(
-          sz          = mmedia.picture.get,
-          dateCreated = mmedia.file.dateCreated
-        )
-      }
-    }
-  }
-
-  override def existsInPermanent: Future[Boolean] = {
-    val isExistsFut = _mediaFut.flatMap { mmedia =>
-      companion.iMediaStorages.isExist( mmedia.storage )
-    }
-    // возвращать false при ошибках.
-    val resFut = isExistsFut.recover {
-      // Если подавлять все ошибки связи, то система будет удалять все local imgs.
-      case ex: NoSuchElementException =>
-        false
-    }
-    // Залоггировать неожиданные экзепшены.
-    isExistsFut.onFailure { case ex: Throwable =>
-      if (!ex.isInstanceOf[NoSuchElementException])
-        LOGGER.warn("isExist() or _mediaFut failed / " + this, ex)
-    }
-    resFut
-  }
-
-  override protected def _getImgBytes2: Enumerator[Array[Byte]] = {
-    val enumFut = for {
-      mm <- _mediaFut
-      rr <- companion.iMediaStorages.read( mm.storage )
-    } yield {
-      rr.data
-    }
-    Enumerator.flatten( enumFut )
-  }
-
-  /** Подготовить и вернуть новое медиа-хранилище для модели. */
-  protected def _mediaStorageType: MStorage
 
   /** Убедится, что в хранилищах существует сохраненный экземпляр MNode.
     * Если нет, то создрать и сохранить. */
-  def ensureMnode(loc: MLocalImgT): Future[MNode] = {
+  def ensureMnode(mimg: MImgT): Future[MNode] = {
     mNodeCache
-      .getById(rowKeyStr)
+      .getById( mimg.rowKeyStr )
       .map(_.get)
       .recoverWith { case ex: NoSuchElementException =>
-        saveMnode(loc)
+        saveMnode(mimg)
       }
   }
 
   /** Сгенерить новый экземпляр MNode и сохранить. */
-  def saveMnode(loc: MLocalImgT): Future[MNode] = {
-    val fnameFut = userFileName
-      .fold [Future[String]] (loc.generateFileName) (Future.successful)
+  def saveMnode(mimg: MImgT): Future[MNode] = {
+    val fnameFut = FutureUtil.opt2future(mimg.userFileName) {
+      mLocalImgs.generateFileName( mimg.toLocalInstance )
+    }
     val mnodeFut = for {
-      perm    <- permMetaCached
+      perm    <- permMetaCached(mimg)
       fname   <- fnameFut
     } yield {
+      // Собираем новый узел n2, когда все необходимые данные уже собраны...
       MNode(
-        id = Some( rowKeyStr ),
+        id = Some( mimg.rowKeyStr ),
         common = MNodeCommon(
           ntype         = MNodeTypes.Media.Image,
           isDependent   = true
@@ -244,35 +127,45 @@ abstract class MImg3T extends MImgT {
         )
       )
     }
+
     // Запустить сохранение, вернуть экземпляр MNode.
     for {
       mnode <- mnodeFut
-      _     <- companion.mNodes.save(mnode)
+      _     <- mNodes.save(mnode)
     } yield {
       mnode
     }
   }
 
-  /** Сохранить в постоянное хранилище, (пере-)создать MMedia. */
-  override protected def _doSaveToPermanent(loc: MLocalImgT): Future[MMedia] = {
-    val mimeFut = loc.mimeFut
-    val media0Fut = _mediaFut
-
-    media0Fut.onSuccess { case res =>
-      LOGGER.trace(s"_doSaveInPermanent($loc): MMedia already exist: $res")
+  override protected def _doSaveToPermanent(mimg: MImgT): Future[_] = {
+    val loc = mimg.toLocalInstance
+    val mimeFut = mLocalImgs.mimeFut(loc)
+    val media0Fut = _mediaFut {
+      _mediaOptFut( mimg )
     }
 
+    lazy val logPrefix = s"_doSaveInPermanent($loc):"
+
+    if (LOGGER.underlying.isTraceEnabled()) {
+      media0Fut.onSuccess { case res =>
+        LOGGER.trace(s"$logPrefix MMedia already exist: $res")
+      }
+    }
+
+    val imgFile = mLocalImgs.fileOf(loc)
     // Вернуть экземпляр MMedia.
     val mediaFut: Future[MMedia] = media0Fut.recoverWith { case ex: Throwable =>
       // Перезаписывать нечего, т.к. элемент ещё не существует в MMedia.
-      val whOptFut = loc.getImageWH
-      val sha1Fut = Future( FileUtil.sha1(loc.file) )
-      val storFut = companion.iMediaStorages.assignNew(_mediaStorageType)
+      val whOptFut = mLocalImgs.getImageWH(loc)
+      val sha1Fut = Future {
+        FileUtil.sha1(imgFile)
+      }
+      val storFut = iMediaStorages.assignNew( mimg.storage )
 
       if (!ex.isInstanceOf[NoSuchElementException])
-        LOGGER.warn("_doSaveToPermanent(" + loc + "): _mediaFut() returned error, this = " + this, ex)
+        LOGGER.warn(s"$logPrefix _mediaFut() returned error, mimg = $mimg", ex)
 
-      val szB = loc.file.length()
+      val szB = imgFile.length()
 
       for {
         whOpt <- whOptFut
@@ -281,12 +174,12 @@ abstract class MImg3T extends MImgT {
         stor  <- storFut
       } yield {
         MMedia(
-          nodeId  = rowKeyStr,
-          id      = Some(_mediaId),
+          nodeId  = mimg.rowKeyStr,
+          id      = Some( mimg._mediaId ),
           file    = MFileMeta(
             mime        = mime,
             sizeB       = szB,
-            isOriginal  = isOriginal,
+            isOriginal  = mimg.isOriginal,
             sha1        = Some(sha1)
           ),
           picture = whOpt.map(MPictureMeta.apply),
@@ -305,10 +198,10 @@ abstract class MImg3T extends MImgT {
     }
 
     // Параллельно запустить поиск и сохранение экземпляра MNode.
-    val mnodeSaveFut = ensureMnode( loc )
+    val mnodeSaveFut = ensureMnode(mimg)
 
     mnodeSaveFut.onFailure { case ex: Throwable =>
-      LOGGER.error("Failed to save picture MNode for local img " + loc)
+      LOGGER.error(s"$logPrefix Failed to save picture MNode for local img " + loc)
     }
 
     // Параллельно выполнить заливку файла в постоянное надежное хранилище.
@@ -318,9 +211,9 @@ abstract class MImg3T extends MImgT {
       res  <- {
         val wargs = WriteRequest(
           contentType = mime,
-          file        = loc.file
+          file        = imgFile
         )
-        companion.iMediaStorages.write( mm.storage, wargs )
+        iMediaStorages.write( mm.storage, wargs )
       }
     } yield {
       res
@@ -340,27 +233,101 @@ abstract class MImg3T extends MImgT {
     }
   }
 
-  override protected def _updateMetaWith(localWh: MImgSizeT, localImg: MLocalImgT): Unit = {
-    // should never happen
-    // Необходимость апдейта метаданных возникает, когда обнаруживается, что нет метаданных.
-    // В случае N2 MMedia, метаданные без блоба существовать не могут, и необходимость не должна наступать.
-    LOGGER.warn(s"_updateMetaWith($localWh, $localImg) ignored and not implemented")
+  /** Существует ли картинка в хранилище? */
+  override def existsInPermanent(mimg: MImgT): Future[Boolean] = {
+    val isExistsFut = _mediaFut( _mediaOptFut(mimg) )
+      .flatMap { mmedia =>
+        iMediaStorages.isExist( mmedia.storage )
+      }
+
+    // возвращать false при ошибках.
+    val resFut = isExistsFut.recover {
+      // Если подавлять все ошибки связи, то система будет удалять все local imgs.
+      case ex: NoSuchElementException =>
+        false
+    }
+    // Залоггировать неожиданные экзепшены.
+    isExistsFut.onFailure { case ex: Throwable =>
+      if (!ex.isInstanceOf[NoSuchElementException])
+        LOGGER.warn("existsInPermanent($mimg) or _mediaFut failed", ex)
+    }
+    resFut
   }
 
 }
 
 
+object MImg3 extends PlayMacroLogsImpl with IMImgCompanion {
+
+  override type T = MImg3
+
+  /** Реализация парсеров filename'ов в данную модель. */
+  class Parsers extends ImgFileNameParsersImpl {
+
+    override type T = MImg3
+
+    override def fileName2miP: Parser[T] = {
+      (uuidStrP ~ imOpsP) ^^ {
+        case nodeId ~ dynImgOps =>
+          MImg3(nodeId, dynImgOps)
+      }
+    }
+
+  }
+
+  override def apply(fileName: String): MImg3 = {
+    val pr = (new Parsers).fromFileName(fileName)
+    if (!pr.successful)
+      LOGGER.error(s"""Failed to parse img from fileName <<$fileName>>:\n$pr""")
+    pr.get
+  }
+
+  /** Экстракция указателя на картинку из эджа узла N2.
+    * @throws java.util.NoSuchElementException когда id узла-картинки не задан.
+    */
+  def apply(medge: IEdge): MImg3 = {
+    val dops = {
+      medge.info
+        .dynImgArgs
+        .fold( List.empty[ImOp] ) { imOpsStr =>
+          val pr = (new Parsers).parseImgArgs(imOpsStr)
+          pr.getOrElse {
+            LOGGER.warn(s"apply($medge): Ignoring ops. Failed to parse imOps str '''$imOpsStr'''\n$pr")
+            Nil
+          }
+      }
+    }
+    MImg3(medge.nodeIds.head, dops)
+  }
+
+  override def fromImg(img: MAnyImgT, dynOps2: Option[List[ImOp]] = None): MImg3 = {
+    MImg3(img.rowKeyStr, dynOps2.getOrElse(img.dynImgOps))
+  }
+
+}
+
+
+/**
+  * Класс элементов модели.
+  * @param rowKeyStr Строковой ключ картинки-узла.
+  * @param dynImgOps Список параметров трансформации картинки.
+  * @param userFileName Имя файла, присланное юзером.
+  */
 case class MImg3(
   override val rowKeyStr            : String,
   override val dynImgOps            : Seq[ImOp],
-  override val companion            : MImgs3,   // TODO Вынести всю логику в статику.
   override val userFileName         : Option[String] = None
 )
-  extends MImg3T
-  with PlayLazyMacroLogsImpl
-  with I3SeaWeedFs
+  extends MImgT
 {
 
+  override lazy val rowKey: UUID = {
+    UuidUtil.base64ToUuid(rowKeyStr)
+  }
+
+  lazy val _mediaId = MMedia.mkId(rowKeyStr, qOpt)
+
+  override def storage = MStorages.SeaWeedFs
   override type MImg_t = MImg3
   override def thisT: MImg_t = this
   override def toWrappedImg = this
@@ -368,13 +335,5 @@ case class MImg3(
   override def withDynOps(dynImgOps2: Seq[ImOp]): MImg3 = {
     copy(dynImgOps = dynImgOps2)
   }
-
-}
-
-
-/** Использовать seaweedfs для сохранения новых картинок. */
-trait I3SeaWeedFs extends MImg3T {
-
-  override protected def _mediaStorageType = MStorages.SeaWeedFs
 
 }

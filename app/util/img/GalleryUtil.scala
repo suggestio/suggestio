@@ -24,7 +24,6 @@ import scala.concurrent.Future
 @Singleton
 class GalleryUtil @Inject() (
   dynImgUtil        : DynImgUtil,
-  mImgs3            : MImgs3,
   configuration     : Configuration
 ) {
 
@@ -55,7 +54,7 @@ class GalleryUtil @Inject() (
   }
 
   def galEdge2img(edge: IEdge): MImgT = {
-    mImgs3(edge)
+    MImg3(edge)
   }
 
 
@@ -108,7 +107,7 @@ class GalleryUtil @Inject() (
 
   def galleryImgs(mnode: MNode): Future[Seq[MImgT]] = {
     val res = galleryEdges(mnode)
-      .map { mImgs3.apply }
+      .map { MImg3.apply }
       .toSeq
     Future successful res
   }

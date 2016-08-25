@@ -26,6 +26,7 @@ import scala.util.{Failure, Success}
 @Singleton
 class DynImgUtil @Inject() (
   mImgs3                    : MImgs3,
+  mLocalImgs                : MLocalImgs,
   mCommonDi                 : ICommonDi
 )
   extends PlayMacroLogsImpl
@@ -75,7 +76,7 @@ class DynImgUtil @Inject() (
     routes.Img.dynImg(dargs)
   }
   def imgCall(filename: String): Call = {
-    val img = mImgs3(filename)
+    val img = MImg3(filename)
     imgCall(img)
   }
 
@@ -93,7 +94,15 @@ class DynImgUtil @Inject() (
       .flatMap { localImg =>
         // Есть исходная картинка в файле. Пора пережать её согласно настройкам.
         val newLocalImg = args.toLocalInstance
-        convert(localImg.file, newLocalImg.file, args.dynImgOps) map { _ =>
+        // Запустить конвертацию исходной картинки
+        for {
+          _ <- convert(
+            in  = mLocalImgs.fileOf(localImg),
+            out = mLocalImgs.fileOf(newLocalImg),
+            imOps = args.dynImgOps
+          )
+        } yield {
+          // Вернуть финальную картинку, т.к. с оригиналом и так всё ясно.
           newLocalImg
         }
       }
@@ -147,13 +156,12 @@ class DynImgUtil @Inject() (
             val localResultFut = mkReadyImgToFile(args)
             // В фоне запускаем сохранение полученной картинки в permanent-хранилище (если включено):
             if (saveToPermanent) {
-              localResultFut onSuccess { case localImg2 =>
-                localImg2.toWrappedImg
-                  .saveToPermanent
+              localResultFut.onSuccess { case localImg2 =>
+                mImgs3.saveToPermanent( localImg2.toWrappedImg )
               }
             }
             // Заполняем результат, который уже в кеше:
-            resultP completeWith localResultFut
+            resultP.completeWith( localResultFut )
 
           case Failure(ex) =>
             resultP.failure(ex)
@@ -211,7 +219,7 @@ class DynImgUtil @Inject() (
 
   /** Сгенерить превьюшку размера не более 256х256. */
   def thumb256Call(fileName: String, fillArea: Boolean): Call = {
-    val img = mImgs3(fileName)
+    val img = MImg3(fileName)
     thumb256Call(img, fillArea)
   }
   def thumb256Call(img: MImgT, fillArea: Boolean): Call = {

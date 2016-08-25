@@ -1,7 +1,6 @@
 package util
 
 import com.google.inject.Inject
-import models.im.MLocalImg
 import models.mcron.ICronTask
 import akka.actor.{Cancellable, Scheduler}
 import models.mproj.ICommonDi
@@ -9,6 +8,7 @@ import util.billing.cron.BillingCronTasks
 import util.geo.IpGeoBaseImport
 import play.api.Application
 import util.health.AdnGeoParentsHealth
+import util.img.cron.{PeriodicallyDeleteEmptyDirs, PeriodicallyDeleteNotExistingInPermanent}
 
 /**
  * Suggest.io
@@ -21,9 +21,16 @@ import util.health.AdnGeoParentsHealth
  */
 
 class Crontab @Inject() (
+  // geo-nodes
   geoParentsHealth              : AdnGeoParentsHealth,
+  // geoip
   ipGeoBaseImport               : IpGeoBaseImport,
+  // billing
   billingCronTasks              : BillingCronTasks,
+  // images
+  periodicallyDeleteEmptyDirs   : PeriodicallyDeleteEmptyDirs,
+  periodicallyDeleteNotExistingInPermanent: PeriodicallyDeleteNotExistingInPermanent,
+  // other
   mCommonDi                     : ICommonDi
 )
   extends PlayLazyMacroLogsImpl
@@ -33,8 +40,9 @@ class Crontab @Inject() (
   import mCommonDi._
 
   /** Список классов, которые являются поставщиками периодических задач при старте. */
-  def TASK_PROVIDERS = Iterator[ICronTasksProvider](
-    billingCronTasks, ipGeoBaseImport, MLocalImg, geoParentsHealth
+  def TASK_PROVIDERS = Seq[ICronTasksProvider](
+    billingCronTasks, ipGeoBaseImport, geoParentsHealth,
+    periodicallyDeleteEmptyDirs, periodicallyDeleteNotExistingInPermanent
   )
 
   def sched: Scheduler = {
@@ -54,7 +62,7 @@ class Crontab @Inject() (
     val _sched = sched
 
     val iter = for {
-      clazz <- TASK_PROVIDERS
+      clazz <- TASK_PROVIDERS.iterator
       task  <- clazz.cronTasks(app)
     } yield {
       trace(s"Adding cron task ${clazz.getClass.getSimpleName}/${task.displayName}: delay=${task.startDelay}, every=${task.every}")

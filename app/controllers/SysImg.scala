@@ -4,7 +4,7 @@ import java.net.{MalformedURLException, URL}
 
 import com.google.inject.Inject
 import models.mproj.ICommonDi
-import models.im.{MImgT, MAnyImgs, MImgs3}
+import models.im.{MAnyImgs, MImg3, MImgT, MImgs3}
 import play.api.data.Forms._
 import play.api.data._
 import util.acl.IsSuperuser
@@ -20,10 +20,10 @@ import views.html.sys1.img._
  * изображениям.
  */
 class SysImg @Inject() (
-                         mImgs3                          : MImgs3,
-                         override val sysImgMakeUtil     : SysImgMakeUtil,
-                         mImgs                           : MAnyImgs,
-                         override val mCommonDi          : ICommonDi
+  mImgs3                          : MImgs3,
+  override val sysImgMakeUtil     : SysImgMakeUtil,
+  mImgs                           : MAnyImgs,
+  override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
@@ -54,7 +54,7 @@ class SysImg @Inject() (
       .transform [Option[MImgT]] (
         {qs =>
           try {
-            Some( mImgs3(qs) )
+            Some( MImg3(qs) )
           } catch {
             case ex: Exception =>
               val qsMap = FormUtil.parseQsToMap(qs)
@@ -101,7 +101,7 @@ class SysImg @Inject() (
    */
   def showOne(im: MImgT) = IsSuGet.async { implicit request =>
     // TODO Искать, где используется эта картинка.
-    for (metaOpt <- im.permMetaCached) yield {
+    for (metaOpt <- mImgs3.permMetaCached(im)) yield {
       Ok(showOneTpl(im, metaOpt))
     }
   }

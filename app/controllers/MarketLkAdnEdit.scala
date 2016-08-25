@@ -9,7 +9,7 @@ import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.model.n2.node.meta.{MAddress, MBasicMeta, MBusinessInfo}
 import models._
 import models.im.logo.LogoOpt_t
-import models.im.{MImgT, MImgs3}
+import models.im.{MImg3, MImgT}
 import models.jsm.init.MTargets
 import models.madn.EditConstants._
 import models.mctx.Context
@@ -43,7 +43,6 @@ import scala.concurrent.Future
 class MarketLkAdnEdit @Inject() (
   welcomeUtil                     : WelcomeUtil,
   logoUtil                        : LogoUtil,
-  mImgs3                          : MImgs3,
   mNodes                          : MNodes,
   tempImgSupport                  : TempImgSupport,
   galleryUtil                     : GalleryUtil,
@@ -395,7 +394,7 @@ class MarketLkAdnEdit @Inject() (
       ovlRrr = Some { (imgId, ctx) =>
         _logoOvlTpl(imgId)(ctx)
       },
-      mImgCompanion = mImgs3
+      mImgCompanion = MImg3
     )
   }
 

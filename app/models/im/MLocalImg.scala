@@ -1,28 +1,24 @@
 package models.im
 
 import java.io.File
-import java.nio.file.{Files, Path}
 import java.util.UUID
 
 import com.google.inject.{Inject, Singleton}
-import io.suggest.model.img.{IImgMeta, ImgSzDated}
+import io.suggest.model.img.ImgSzDated
 import io.suggest.util.UuidUtil
 import io.suggest.ym.model.common.MImgInfoMeta
-import models.mcron.{ICronTask, MCronTask}
+import models.IImgMeta
 import models.mfs.FileUtil
 import models.mproj.ICommonDi
 import org.apache.commons.io.FileUtils
 import org.joda.time.DateTime
-import play.api.Application
 import play.api.libs.iteratee.Enumerator
 import util._
 import util.async.AsyncUtil
 import util.img.{ImgFileNameParsersImpl, OrigImageUtil}
 
 import scala.concurrent.duration._
-import scala.collection.JavaConversions._
 import scala.concurrent.Future
-import scala.util.Success
 
 /**
  * Suggest.io
@@ -40,29 +36,46 @@ import scala.util.Success
 
 @Singleton
 class MLocalImgs @Inject() (
-  mCommonDi : ICommonDi
+  origImageUtil : OrigImageUtil,
+  mCommonDi     : ICommonDi
 )
-  extends MAnyImgsT[MLocalImgT]
-  with PlayMacroLogsImpl {
+  extends MAnyImgsT[MLocalImg]
+  with PlayMacroLogsImpl
+{
 
   import mCommonDi._
+
 
   /** Сколько модель должна кешировать в голове результат вызова identify? */
   val IDENTIFY_CACHE_TTL_SECONDS = configuration.getInt("m.local.img.identify.cache.ttl.seconds")
     .getOrElse(120)
 
-  def deleteSync(mimg: MLocalImgT): Boolean = {
-    mimg.file.delete()
+  /** Адрес img-директории, который используется для хранилища. */
+  private def DIR_REL = configuration.getString("m.local.img.dir.rel")
+    .getOrElse("picture/local")
+
+  /** Экземпляр File, точно указывающий на директорию с данными этой модели. */
+  val DIR = current.getFile(DIR_REL)
+
+  DIR.mkdirs()
+
+  def getFsImgDir(mimg: MLocalImg): File   = getFsImgDir(mimg.rowKeyStr)
+  def getFsImgDir(rowKeyStr: String): File  = new File(DIR, rowKeyStr)
+  def getFsImgDir(rowKey: UUID): File       = getFsImgDir( UuidUtil.uuidToBase64(rowKey) )
+
+
+  def deleteSync(mimg: MLocalImg): Boolean = {
+    fileOf(mimg).delete()
   }
 
-  override def delete(mimg: MLocalImgT): Future[_] = {
+  override def delete(mimg: MLocalImg): Future[_] = {
     Future {
       deleteSync(mimg)
     }(AsyncUtil.singleThreadIoContext)
   }
 
-  override def toLocalImg(mimg: MLocalImgT): Future[Option[MLocalImg]] = {
-    val result = if (mimg.isExists)
+  override def toLocalImg(mimg: MLocalImg): Future[Option[MLocalImg]] = {
+    val result = if (isExists(mimg))
       Some(mimg.toLocalInstance)
     else
       None
@@ -74,31 +87,34 @@ class MLocalImgs @Inject() (
    * Обычно atime на хосте отключён или переключен в relatime, а этим временем пользуется чистильщик ненужных картинок.
    * @return Фьючерс для синхронизации.
    */
-  def touchAsync(mimg: MLocalImgT): Future[_] = {
+  def touchAsync(mimg: MLocalImg): Future[_] = {
     Future {
       val tms = System.currentTimeMillis()
-      mimg.file.setLastModified(tms)
+      val file = fileOf(mimg)
+      file.setLastModified(tms)
     }(AsyncUtil.singleThreadIoContext)
   }
 
-  override def getStream(mimg: MLocalImgT): Enumerator[Array[Byte]] = {
-    Enumerator.fromFile( mimg.file )
+  override def getStream(mimg: MLocalImg): Enumerator[Array[Byte]] = {
+    val file = fileOf(mimg)
+    Enumerator.fromFile(file)
   }
 
-  def identify(mimg: MLocalImgT) = {
+  def identify(mimg: MLocalImg) = {
     Future {
-      OrigImageUtil.identify( mimg.file )
+      val file = fileOf(mimg)
+      origImageUtil.identify(file)
     }(AsyncUtil.singleThreadCpuContext)
   }
 
-  def identifyCached(mimg: MLocalImgT) = {
+  def identifyCached(mimg: MLocalImg) = {
     cacheApiUtil.getOrElseFut(mimg.fileName + ".identify", IDENTIFY_CACHE_TTL_SECONDS.seconds) {
       identify(mimg)
     }
   }
 
   /** Получить ширину и длину картинки. */
-  override def getImageWH(mimg: MLocalImgT): Future[Option[MImgInfoMeta]] = {
+  override def getImageWH(mimg: MLocalImg): Future[Option[MImgInfoMeta]] = {
     identifyCached(mimg)
       .map { info =>
         val imeta = MImgInfoMeta(
@@ -114,70 +130,17 @@ class MLocalImgs @Inject() (
       }
   }
 
-}
-
-
-/** Интерфейс для поля с DI-инстансом [[MLocalImgs]]. */
-trait IMLocalImgs {
-  def mLocalImgs: MLocalImgs
-}
-
-
-import play.api.Play.{configuration, current}
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.cache.Cache
-
-/** Статика. */
-object MLocalImg
-  extends PlayLazyMacroLogsImpl
-  with CronTasksProviderEmpty
-  with PeriodicallyDeleteEmptyDirs
-  with PeriodicallyDeleteNotExistingInPermanent
-{
-
-  // TODO DI
-  private val mImg3 = current.injector.instanceOf[MImgs3]
-
-  /** Реализация парсеров для filename из данной модели. */
-  class Parsers extends ImgFileNameParsersImpl {
-
-    override type T = MLocalImg
-
-    /** Парсер имён файлов, конвертящий успешный результат своей работы в экземпляр MLocalImg. */
-    override def fileName2miP: Parser[T] = {
-      fileNameP ^^ {
-        case uuid ~ dynArgs =>
-          MLocalImg(uuid, dynArgs)
+  override def rawImgMeta(mimg: MLocalImg): Future[Option[IImgMeta]] = {
+    if (isExists(mimg)) {
+      for (metaOpt <- getImageWH(mimg)) yield {
+        for (meta <- metaOpt) yield {
+          val file = fileOf(mimg)
+          ImgSzDated(meta, new DateTime(file.lastModified()))
+        }
       }
+    } else {
+      Future.successful( None )
     }
-
-  }
-
-
-  /** Адрес img-директории, который используется для хранилища. */
-  def DIR_REL = configuration.getString("m.local.img.dir.rel") getOrElse "picture/local"
-
-  /** Экземпляр File, точно указывающий на директорию с данными этой модели. */
-  val DIR = current.getFile(DIR_REL)
-
-  /** Сколько модель должна кешировать в голове результат вызова identify. */
-  val IDENTIFY_CACHE_TTL_SECONDS = configuration.getInt("m.local.img.identify.cache.ttl.seconds") getOrElse 120
-
-
-  DIR.mkdirs()
-
-  def getFsImgDir(rowKeyStr: String): File = new File(DIR, rowKeyStr)
-  def getFsImgDir(rowKey: UUID): File = getFsImgDir( UuidUtil.uuidToBase64(rowKey) )
-
-  /**
-   * Получить экземпляр MLocalImg из img filename, в котором сериализована вся инфа по картинке.
-   * @param filename Строка img filename.
-   * @return Экземпляр MLocalImg или экзепшен.
-   */
-  def apply(filename: String): MLocalImg = {
-    (new Parsers)
-      .fromFileName(filename)
-      .get
   }
 
   /**
@@ -202,30 +165,28 @@ object MLocalImg
     }(AsyncUtil.singleThreadIoContext)
   }
 
-}
+  /** Подготовка к записи в файл указанного локального изображения. */
+  def prepareWriteFile(mimg: MLocalImg): Unit = {
+    val _fsImgDir = getFsImgDir(mimg)
+    if (!_fsImgDir.isDirectory)
+      _fsImgDir.delete()
+    if (!_fsImgDir.exists())
+      _fsImgDir.mkdirs()
+  }
 
-
-
-
-/** Трейт, выносящий часть функционала экземпляра, на случай дальнейших расширений и разделений. */
-trait MLocalImgT extends MAnyImgT with PlayMacroLogsI {
-
-  import MLocalImg._
-
-  // Для организации хранения файлов используется rowKey/qs-структура.
-  lazy val fsImgDir = getFsImgDir(rowKeyStr)
-
-  lazy val fsFileName: String = {
-    if (hasImgOps) {
-      dynImgOpsString
-    } else {
-      "__ORIG__"
+  def fileExtensionFut(mimg: MLocalImg): Future[String] = {
+    for (mimeMatchOpt <- mimeMatchOptFut(mimg)) yield {
+      mimeMatchOpt.fold {
+        LOGGER.warn("Mime match failed, guessing PNG extension")
+        "png"
+      } { mm =>
+        mm.getExtension
+      }
     }
   }
-  
-  lazy val file = new File(fsImgDir, fsFileName)
 
-  lazy val mimeMatchOptFut = {
+  def mimeMatchOptFut(mimg: MLocalImg) = {
+    val file = fileOf(mimg)
     val fut = Future {
       FileUtil.getMimeMatch(file)
     }
@@ -236,80 +197,68 @@ trait MLocalImgT extends MAnyImgT with PlayMacroLogsI {
   }
 
   /** Определение mime-типа из файла. */
-  lazy val mimeFut: Future[String] = {
+  def mimeFut(mimg: MLocalImg): Future[String] = {
     for {
-      mmOpt <- mimeMatchOptFut
+      mmOpt <- mimeMatchOptFut(mimg)
     } yield {
       val mimeOpt = ImgFileUtil.getMime(mmOpt)
       ImgFileUtil.orUnknown( mimeOpt )
     }
   }
 
-  def fileExtensionFut: Future[String] = {
-    for (mimeMatchOpt <- mimeMatchOptFut) yield {
-      mimeMatchOpt.fold {
-        LOGGER.warn("Mime match failed, guessing PNG extension")
-        "png"
-      } { mm =>
-        mm.getExtension
+  def generateFileName(mimg: MLocalImg): Future[String] = {
+    for (fext <- fileExtensionFut(mimg)) yield {
+      mimg.rowKeyStr + "." + fext
+    }
+  }
+
+  def isExists(mimg: MLocalImg): Boolean = {
+    fileOf(mimg).exists()
+  }
+
+  def fileOf(mimg: MLocalImg): File = {
+    val fsImgDir = getFsImgDir(mimg)
+    new File(fsImgDir, mimg.fsFileName)
+  }
+
+}
+
+
+/** Интерфейс для поля с DI-инстансом [[MLocalImgs]]. */
+trait IMLocalImgs {
+  def mLocalImgs: MLocalImgs
+}
+
+
+
+/** Вообще полная статика модели [[MLocalImg]]. */
+object MLocalImg {
+
+  /** Реализация парсеров для filename из данной модели. */
+  class Parsers extends ImgFileNameParsersImpl {
+
+    override type T = MLocalImg
+
+    /** Парсер имён файлов, конвертящий успешный результат своей работы в экземпляр MLocalImg. */
+    override def fileName2miP: Parser[T] = {
+      fileNameP ^^ {
+        case uuid ~ dynArgs =>
+          MLocalImg(uuid, dynArgs)
       }
     }
+
   }
 
-  def generateFileName: Future[String] = {
-    for (fext <- fileExtensionFut) yield {
-      rowKeyStr + "." + fext
-    }
-  }
 
-  /** 
-   * Принудительно в фоне обновляем file last modified time.
-   * Обычно atime на хосте отключён или переключен в relatime, а этим временем пользуется чистильщик ненужных картинок.
-   * @return Фьючерс для синхронизации.
+  /**
+   * Получить экземпляр MLocalImg из img filename, в котором сериализована вся инфа по картинке.
+   * @param filename Строка img filename.
+   * @return Экземпляр MLocalImg или экзепшен.
    */
-  def touchAsync(): Future[_] = {
-    Future {
-      val tms = System.currentTimeMillis()
-      file.setLastModified(tms)
-    }(AsyncUtil.singleThreadIoContext)
-  }
-
-  def prepareWriteFile(): Unit = {
-    if (!fsImgDir.isDirectory)
-      fsImgDir.delete()
-    if (!fsImgDir.exists())
-      fsImgDir.mkdirs()
-  }
-
-  def isExists: Boolean = file.exists()
-
-  def identify = {
-    Future {
-      OrigImageUtil.identify(file)
-    }(AsyncUtil.singleThreadCpuContext)
-  }
-
-  lazy val identifyCached = {
-    Cache.getOrElse(fileName + ".identify", expiration = IDENTIFY_CACHE_TTL_SECONDS) {
-      identify
-    }
-  }
-
-  /** Асинхронно получить метаданные по этой картинке. */
-  override lazy val getImageWH: Future[Option[MImgInfoMeta]] = {
-    identifyCached
-      .map { info =>
-        val imeta = MImgInfoMeta(
-          height = info.getImageHeight,
-          width  = info.getImageWidth
-        )
-        Some(imeta)
-      }
-      .recover {
-        case ex: org.im4java.core.InfoException =>
-          LOGGER.info("getImageWH(): Unable to identity image " + fileName, ex)
-          None
-      }
+  def apply(filename: String): MLocalImg = {
+    (new Parsers)
+      .fromFileName(filename)
+      .get
   }
 
 }
@@ -324,7 +273,9 @@ trait MLocalImgT extends MAnyImgT with PlayMacroLogsI {
 case class MLocalImg(
   rowKey      : UUID = UUID.randomUUID(),
   dynImgOps   : Seq[ImOp] = Nil
-) extends MLocalImgT with PlayLazyMacroLogsImpl {
+)
+  extends MAnyImgT
+{
 
   override type MImg_t = MImgT
 
@@ -338,14 +289,6 @@ case class MLocalImg(
 
   override def toLocalInstance: MLocalImg = this
 
-  override def toLocalImg: Future[Option[MLocalImgT]] = {
-    val result = if (isExists)
-      Some(this)
-    else
-      None
-    Future.successful( result )
-  }
-
   override def original: MLocalImg = {
     if (dynImgOps.nonEmpty)
       copy(dynImgOps = Nil)
@@ -353,180 +296,16 @@ case class MLocalImg(
       this
   }
 
-  override lazy val toWrappedImg: MImg3 = MLocalImg.mImg3(rowKeyStr, dynImgOps)
-
-  override lazy val rawImgMeta: Future[Option[IImgMeta]] = {
-    if (isExists) {
-      for (metaOpt <- getImageWH) yield {
-        for (meta <- metaOpt) yield {
-          ImgSzDated(meta, new DateTime(file.lastModified()))
-        }
-      }
-    } else {
-      Future.successful( None )
-    }
-  }
+  override lazy val toWrappedImg: MImg3 = MImg3(rowKeyStr, dynImgOps)
 
   override lazy val cropOpt = super.cropOpt
-}
 
-
-
-/** Периодически стирать пустые директории через Cron. Это статический аддон к object MLocalImg.
-  * Внутри, для работы с ФС, используется java.nio. */
-trait PeriodicallyDeleteEmptyDirs extends ICronTasksProvider with PlayMacroLogsI {
-
-  def DIR: File
-  
-  protected val EDD_CONF_PREFIX = "m.img.local.edd"
-
-  /** Включено ли периодическое удаление пустых директорий из под картинок? */
-  def DELETE_EMPTY_DIRS_ENABLED = configuration.getBoolean(EDD_CONF_PREFIX + ".enabled") getOrElse true
-
-  /** Как часто инициировать проверку? */
-  def DELETE_EMPTY_DIRS_EVERY = configuration.getInt(EDD_CONF_PREFIX + ".every.minutes")
-    .fold [FiniteDuration] (12.hours) (_.minutes)
-
-  /** На сколько отодвигать старт проверки. */
-  def DELETE_EMPTY_DIRS_START_DELAY = configuration.getInt(EDD_CONF_PREFIX + ".start.delay.seconds")
-    .getOrElse(60)
-    .seconds
-
-  /** Список задач, которые надо вызывать по таймеру. */
-  abstract override def cronTasks(app: Application): TraversableOnce[ICronTask] = {
-    val cts1 = super.cronTasks(app)
-    if (DELETE_EMPTY_DIRS_ENABLED) {
-      val ct2 = MCronTask(startDelay = DELETE_EMPTY_DIRS_START_DELAY, every = DELETE_EMPTY_DIRS_EVERY, displayName = EDD_CONF_PREFIX) {
-        findAndDeleteEmptyDirsAsync onFailure { case ex =>
-          LOGGER.warn("Failed to findAndDeleteEmptyDirs()", ex)
-        }
-      }
-      List(ct2).iterator ++ cts1.toIterator
+  lazy val fsFileName: String = {
+    if (hasImgOps) {
+      dynImgOpsString
     } else {
-      cts1
-    }
-  }
-
-  /** Выполнить в фоне всё необходимое. */
-  def findAndDeleteEmptyDirsAsync: Future[_] = {
-    Future {
-      findAndDeleteEmptyDirs
-    }(AsyncUtil.singleThreadIoContext)
-  }
-
-  /** Пройтись по списку img-директорий, немножко заглянуть в каждую из них. */
-  def findAndDeleteEmptyDirs: Unit = {
-    val dirStream = Files.newDirectoryStream(DIR.toPath)
-    try {
-      dirStream.iterator()
-        .foreach { imgDirPath =>
-          if (imgDirPath.toFile.isDirectory)
-            maybeDeleteDirIfEmpty(imgDirPath)
-        }
-    } finally {
-      dirStream.close()
-    }
-  }
-
-  /** Удалить указанную директорию, если она пуста. */
-  def maybeDeleteDirIfEmpty(dirPath: Path): Unit = {
-    val dirStream = Files.newDirectoryStream(dirPath)
-    val dirEmpty = try {
-      dirStream.iterator().isEmpty
-    } finally {
-      dirStream.close()
-    }
-    if (dirEmpty) {
-      try {
-        LOGGER.debug("Deleting empty img-directory: " + dirPath)
-        Files.delete(dirPath)
-      } catch {
-        case ex: Exception => LOGGER.warn("Unable to delete empty img directory: "  + dirPath, ex)
-      }
+      "__ORIG__"
     }
   }
 
 }
-
-
-/** Надо периодичеки удалять директории с картинками, если они долго лежат,
-  * а в permanent ещё/уже нет картинок с данным id. */
-trait PeriodicallyDeleteNotExistingInPermanent extends ICronTasksProvider with PlayMacroLogsI {
-
-  def DIR: File
-
-  protected val DNEIP_CONF_PREFIX = "m.img.local.dneip"
-
-  /** Включено ли автоудаление директорий? */
-  def DNEIP_ENABLED = configuration.getBoolean(DNEIP_CONF_PREFIX + ".enabled") getOrElse true
-
-  /** Задержка первого запуска после старта play. */
-  def DNEIP_START_DELAY = configuration.getInt(DNEIP_CONF_PREFIX + ".start.delay.seconds")
-    .getOrElse(15)
-    .seconds
-
-  /** Как часто проводить проверки? */
-  def DNEIP_EVERY = configuration.getInt(DNEIP_CONF_PREFIX + ".every.minutes")
-    .fold[FiniteDuration] (3.hours)(_.minutes)
-
-  def DNEIP_OLD_DIR_AGE_MS: Long = configuration.getInt(DNEIP_CONF_PREFIX + ".old.age.minutes")
-    .fold(2.hours)(_.minutes)
-    .toMillis
-
-  /** Список задач, которые надо вызывать по таймеру. */
-  abstract override def cronTasks(app: Application): TraversableOnce[ICronTask] = {
-    val cts0 = super.cronTasks(app)
-    if (DNEIP_ENABLED) {
-      val task = MCronTask(startDelay = DNEIP_START_DELAY, every = DNEIP_EVERY, displayName = DNEIP_CONF_PREFIX) {
-        dneipFindAndDeleteAsync() onFailure { case ex =>
-          LOGGER.error("DNEIP: Clean-up failed.", ex)
-        }
-      }
-      Seq(task).iterator ++ cts0.toIterator
-    } else {
-      cts0
-    }
-  }
-
-  def dneipFindAndDeleteAsync(): Future[_] = {
-    Future {
-      dneipFindAndDelete()
-    }
-  }
-
-  def dneipFindAndDelete(): Unit = {
-    val dirStream = Files.newDirectoryStream(DIR.toPath)
-    try {
-      val oldNow = System.currentTimeMillis() - DNEIP_OLD_DIR_AGE_MS
-      dirStream.iterator()
-        .map(_.toFile)
-        // TODO Частые проверки должны отрабатывать только свежие директории. Редкие - все директории.
-        .filter { f  =>  f.isDirectory && f.lastModified() < oldNow }
-        .foreach { currDir =>
-          val rowKeyStr = currDir.getName
-          val rowKey = UuidUtil.base64ToUuid(rowKeyStr)
-          MLocalImg(rowKey)
-            .toWrappedImg
-            .existsInPermanent
-            .filter(!_)
-            .andThen { case _: Success[_] =>
-              LOGGER.debug("Deleting permanent-less img-dir: " + currDir)
-              FileUtils.deleteDirectory(currDir)
-            }(AsyncUtil.singleThreadIoContext)
-            .onFailure {
-              case ex: NoSuchElementException =>
-                // do nothing
-              case ex =>
-                LOGGER.error("DNEIP: Failed to process directory " + currDir, ex)
-            }
-        }
-    } finally {
-      dirStream.close()
-    }
-  }
-
-}
-
-
-
-

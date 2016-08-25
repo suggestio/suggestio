@@ -1,14 +1,15 @@
 package util.cdn
 
-import com.google.inject.{Singleton, Inject}
+import com.google.inject.{Inject, Singleton}
 import controllers.routes
 import models.ExternalCall
 import models.mctx.Context
-import models.im.{MImgs3, MImgT}
+import models.im.{MImg3, MImgT}
 import play.api.Configuration
 import play.api.mvc.Call
 import util.PlayMacroLogsImpl
 import util.img.DynImgUtil
+
 import scala.collection.JavaConversions._
 
 /**
@@ -21,8 +22,7 @@ import scala.collection.JavaConversions._
 class CdnUtil @Inject() (
   dynImgUtil      : DynImgUtil,
   configuration   : Configuration,
-  corsUtil        : CorsUtil,
-  mImgs3          : MImgs3
+  corsUtil        : CorsUtil
 )
   extends PlayMacroLogsImpl
 {
@@ -125,7 +125,7 @@ class CdnUtil @Inject() (
     forCall( dynImgUtil.imgCall(dargs) )
   }
   def dynImg(filename: String)(implicit ctx: Context): Call = {
-    val img = mImgs3(filename)
+    val img = MImg3(filename)
     dynImg(img)
   }
 

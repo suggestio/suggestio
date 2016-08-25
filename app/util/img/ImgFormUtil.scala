@@ -7,11 +7,15 @@ import io.suggest.util.UuidUtil
 import models.im._
 import util.PlayMacroLogsImpl
 import io.suggest.img.SioImageUtilT
-import play.api.Play.{current, configuration}
+import play.api.Play.{configuration, current}
+
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import java.lang
+
+import com.google.inject.Inject
 import models._
+import models.mproj.ICommonDi
 
 /**
  * Suggest.io
@@ -23,7 +27,8 @@ import models._
 object ImgFormUtil extends PlayMacroLogsImpl {
 
   // TODO Реализовать это через DI к play3.
-  private val mImg3 = current.injector.instanceOf( classOf[MImgs3] )
+  private val mImg3       = current.injector.instanceOf[MImgs3]
+  private val mLocalImgs  = current.injector.instanceOf[MLocalImgs]
 
 
   import play.api.data.Forms._
@@ -38,7 +43,8 @@ object ImgFormUtil extends PlayMacroLogsImpl {
 
   /** Включение ревалидации уже сохраненных картинок при обновлении позволяет убирать картинки "дырки",
     * появившиеся в ходе ошибочной логики. */
-  private val REVALIDATE_ALREADY_SAVED_IMGS = configuration.getBoolean("img.update.revalidate.already.saved") getOrElse false
+  private val REVALIDATE_ALREADY_SAVED_IMGS = configuration.getBoolean("img.update.revalidate.already.saved")
+    .getOrElse(false)
 
   // TODO Нужна тут подпись через MAC? Или отдельными мапперами запилить?
 
@@ -63,7 +69,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   }
 
   /** Маппер для новых картинок на базе MMedia. */
-  def img3IdOptM = mkImgIdOptM[MImgT](mImg3)
+  def img3IdOptM = mkImgIdOptM[MImgT](MImg3)
 
   /** Обязательный маппинг MImg3-картинки. */
   def img3IdM = img3IdOptM
@@ -101,7 +107,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   }
 
   def updateOrigImgId(needImgs: Seq[MImgT], oldImgIds: Iterable[String]): Future[Seq[MImgT]] = {
-    updateOrigImgFull(needImgs, oldImgIds.map(mImg3(_)))
+    updateOrigImgFull(needImgs, oldImgIds.map(MImg3(_)))
   }
 
   /**
@@ -125,12 +131,10 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     // Разделяем на картинки, которые уже были, и которые затребованы для отправки в хранилище:
     val newOldImgsMapFut = {
       Future.traverse(needImgsIndexed) { case a @ (img, i) =>
-        img.original
-          .existsInPermanent
-          .map { existsInPermanent =>
-            (a, existsInPermanent)
-          }
-      } map { results =>
+        for (isExists <- mImg3.existsInPermanent( img.original )) yield {
+          (a, isExists)
+        }
+      }.map { results =>
         results
           .groupBy(_._2)
           .mapValues(_.map(_._1))
@@ -175,7 +179,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
           } yield {
             localOpt
               .filter { loc =>
-                val filterResult = loc.isExists
+                val filterResult = mLocalImgs.isExists(loc)
                 if (!filterResult)
                   warn("REVALIDATE_ALREADY_SAVED: keeped image not exists: " + loc.fileName)
                 filterResult
@@ -195,10 +199,10 @@ object ImgFormUtil extends PlayMacroLogsImpl {
       // Готовим список картинок для отправки в хранилище:
       val imgs4s = m.getOrElse(false, Nil)
         .filter { v =>
-          val filterResult = v._1
+          val locImg = v._1
             .toLocalInstance
             .original
-            .isExists
+          val filterResult = mLocalImgs.isExists(locImg)
           if (!filterResult)
             warn("Request to save totally inexisting img: " + v._1.fileName)
           else
@@ -207,10 +211,9 @@ object ImgFormUtil extends PlayMacroLogsImpl {
         }
       // Сохраняем все картинки параллельно:
       Future.traverse(imgs4s) { v =>
-        v._1
-          .original
-          .saveToPermanent
-          .map { _ => v }
+        for (_ <- mImg3.saveToPermanent( v._1.original )) yield {
+          v
+        }
       }
     }
 
@@ -276,17 +279,22 @@ object ImgFormUtil extends PlayMacroLogsImpl {
 
 }
 
-/** Базовый трейт для sioweb-реализаций image util. */
-sealed trait SiowebImageUtilT extends SioImageUtilT with PlayMacroLogsImpl
 
+// TODO OrigImageUtilk -- очень древний компонент, но он ещё используется немного. Нужно, чтобы его не было вообще.
 
 /** Резайзилка картинок, используемая для генерация "оригиналов", т.е. картинок, которые затем будут кадрироваться. */
-object OrigImageUtil extends SiowebImageUtilT {
+class OrigImageUtil @Inject() (mCommonDi: ICommonDi)
+  extends SioImageUtilT
+  with PlayMacroLogsImpl
+{
+
+  import mCommonDi.configuration
+
   /** Если на выходе получилась слишком жирная превьюшка, то отсеять её. */
   override def MAX_OUT_FILE_SIZE_BYTES: Option[Int] = None
 
   /** Картинка считается слишком маленькой для обработки, если хотя бы одна сторона не превышает этот порог. */
-  override val MIN_SZ_PX: Int = configuration.getInt("img.orig.sz.min.px") getOrElse 256
+  override val MIN_SZ_PX: Int = configuration.getInt("img.orig.sz.min.px").getOrElse(256)
 
   /** Если исходный jpeg после стрипа больше этого размера, то сделать resize.
     * Иначе попытаться стрипануть icc-профиль по jpegtran, чтобы снизить размер без пересжатия. */
@@ -296,13 +304,25 @@ object OrigImageUtil extends SiowebImageUtilT {
   }
 
   /** Качество сжатия jpeg. */
-  override val JPEG_QUALITY_PC: Double = configuration.getDouble("img.orig.jpeg.quality") getOrElse 90.0
+  override val JPEG_QUALITY_PC: Double = configuration.getDouble("img.orig.jpeg.quality").getOrElse(90.0)
 
   /** Максимальный размер сторон будущей картинки (новая картинка должна вписываться в
     * прямоугольник с указанныыми сторонами). */
-  override val DOWNSIZE_HORIZ_PX: Integer  = Integer valueOf (configuration.getInt("img.orig.maxsize.h.px") getOrElse 2048)
-  override val DOWNSIZE_VERT_PX:  Integer  = configuration.getInt("img.orig.maxsize.v.px").map(Integer.valueOf) getOrElse DOWNSIZE_HORIZ_PX
+  override val DOWNSIZE_HORIZ_PX: Integer  = {
+    val szPx = configuration.getInt("img.orig.maxsize.h.px").getOrElse(2048)
+    Integer.valueOf(szPx)
+  }
+  override val DOWNSIZE_VERT_PX:  Integer  = {
+    configuration.getInt("img.orig.maxsize.v.px")
+      .fold(DOWNSIZE_HORIZ_PX)(Integer.valueOf)
+  }
 
   override def GAUSSIAN_BLUG: Option[lang.Double] = None
+
+}
+
+/** Интерфейс к DI-полю с инстансом [[OrigImageUtil]]. */
+trait IOrigImageUtilDi {
+  def origImageUtil: OrigImageUtil
 }
 

@@ -25,7 +25,7 @@ import scala.concurrent.Future
 class WelcomeUtil @Inject() (
   scUtil                 : ShowcaseUtil,
   cdnUtil                : CdnUtil,
-  mImg3                  : MImgs3,
+  mImgs3                 : MImgs3,
   mCommonDi              : ICommonDi
 )
   extends PlayMacroLogsImpl
@@ -45,7 +45,7 @@ class WelcomeUtil @Inject() (
   def updateWcFgImg(adnNode: MNode, newWelcomeImgOpt: Option[MImgT]): Future[Option[MEdge]] = {
     // Сохранить картинку, вернуть эдж. Нет картинки -- нет эджа.
     FutureUtil.optFut2futOpt(newWelcomeImgOpt) { fgMimg =>
-      for (_ <- fgMimg.saveToPermanent) yield {
+      for (_ <- mImgs3.saveToPermanent(fgMimg)) yield {
         val e = MEdge(
           predicate = MPredicates.WcLogo,
           nodeIds   = Set(fgMimg.rowKeyStr),
@@ -67,9 +67,7 @@ class WelcomeUtil @Inject() (
   def wcLogoImg(mnode: MNode): Option[MImgT] = {
     mnode.edges
       .withPredicateIter( MPredicates.WcLogo )
-      .map { e =>
-        mImg3(e)
-      }
+      .map { MImg3.apply }
       .toStream
       .headOption
   }
@@ -92,10 +90,10 @@ class WelcomeUtil @Inject() (
       .toStream
       .headOption
       .fold[Future[Either[String, IImgWithWhInfo]]] {
-        Future successful _colorBg
+        Future.successful(_colorBg)
       } { bgImgFilename =>
-        val oiik = mImg3(bgImgFilename)
-        val fut0 = mImg3.getImageWH( oiik.original )
+        val oiik = MImg3(bgImgFilename)
+        val fut0 = mImgs3.getImageWH( oiik.original )
         lazy val logPrefix = s"getWelcomeRenderArgs(${mnode.idOrNull}): "
         fut0.map {
           case Some(meta) =>
@@ -112,7 +110,7 @@ class WelcomeUtil @Inject() (
 
     val fgImgOpt = wcLogoImg(mnode)
     val fgMetaOptFut = FutureUtil.optFut2futOpt(fgImgOpt) { fgImg =>
-      mImg3.getImageWH( fgImg )
+      mImgs3.getImageWH( fgImg )
     }
     val fgOptFut = for (fgMetaOpt <- fgMetaOptFut) yield {
       for (fgImg <- fgImgOpt; fgMeta <- fgMetaOpt) yield {

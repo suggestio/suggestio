@@ -22,6 +22,7 @@ import scala.concurrent.Future
 @Singleton
 class MainColorDetector @Inject() (
   mImgs3        : MImgs3,
+  mLocalImgs    : MLocalImgs,
   mCommonDi     : ICommonDi
 )
   extends PlayMacroLogsImpl
@@ -94,7 +95,7 @@ class MainColorDetector @Inject() (
           .append( new String(histContent) )
         val msg = msgSb.toString()
         if (suppressErrors) {
-          warn(msg )
+          warn(msg)
           Nil
         } else {
           throw new ParseException(msg, -1)
@@ -105,7 +106,7 @@ class MainColorDetector @Inject() (
       resultFile.delete()
     }
     if (suppressErrors) {
-      resultFut recoverWith {
+      resultFut.recoverWith {
         case ex: Exception =>
           warn(s"Failed to extract palette from picture ${img.getAbsolutePath}", ex)
           Future.successful(Nil)
@@ -163,23 +164,29 @@ class MainColorDetector @Inject() (
     val localOrigImgFut = mImgs3.toLocalImg(bgImg4s.original)
 
     // Всё-таки ищем отропанный результат.
-    var localImg2Fut = mImgs3.toLocalImg(bgImg4s)
-      .filter(_.exists(_.isExists))
-      .map { v => PrepareImgResult(v, Seq.empty[ImOp]) }
+    var localImg2Fut = for {
+      locImgOpt <- mImgs3.toLocalImg(bgImg4s)
+      if locImgOpt.exists { locImg =>
+        mLocalImgs.isExists(locImg)
+      }
+    } yield {
+      PrepareImgResult(locImgOpt, Seq.empty[ImOp])
+    }
 
     // Если исходная картинка - чистый оригинал, то отрабатывать отсутствие произодной картинки не требуется.
     if (bgImg4s.hasImgOps) {
       // Если исходная картинка - обрезок, то можно изъять операции из исходной картинки и повторить их на оригинале вместе с генерацией гистограммы.
       localImg2Fut = localImg2Fut.recoverWith {
         case ex: NoSuchElementException =>
-          val resFut = localOrigImgFut
-            .map { v => PrepareImgResult(v, bgImg4s.dynImgOps) }
+          val resFut = for (v <- localOrigImgFut) yield {
+            PrepareImgResult(v, bgImg4s.dynImgOps)
+          }
           trace(s"${logPrefix}Derived img not exists. Re-applying ${bgImg4s.dynImgOps.size} IM ops to original: ${bgImg4s.dynImgOps}")
           resFut
       }
     }
     // Подавляем возможные исключения.
-    localImg2Fut recover {
+    localImg2Fut.recover {
       case ex: Throwable =>
         warn(s"${logPrefix}Failed to find img requested.", ex)
         PrepareImgResult(None, Nil)
@@ -195,7 +202,8 @@ class MainColorDetector @Inject() (
     lazy val logPrefix = s"detectColorFor(${bgImg4s.fileName}): "
     prepareImg(bgImg4s) flatMap {
       case PrepareImgResult(Some(localImg), preImOps) =>
-        detectFileMainColor(localImg.file, suppressErrors = true, preImOps = preImOps) map { heOpt =>
+        val imgFile = mLocalImgs.fileOf(localImg)
+        detectFileMainColor(imgFile, suppressErrors = true, preImOps = preImOps) map { heOpt =>
           val result = he2updateAction(heOpt)
           trace(s"${logPrefix}Detected color info for already saved orig img: $result")
           result
@@ -204,7 +212,7 @@ class MainColorDetector @Inject() (
       // Почему-то нет картинки.
       case _ =>
         warn(s"${logPrefix}Img not found anywhere: ${bgImg4s.fileName}")
-        Future successful Keep
+        Future.successful(Keep)
     }
   }
 
@@ -215,12 +223,22 @@ class MainColorDetector @Inject() (
    * @return Фьючерс с гистограммой, где самый частый в начале, и далее по убыванию.
    */
   def detectPaletteFor(bgImg4s: MImgT, maxColors: Int = PALETTE_MAX_COLORS_DFLT): Future[Histogram] = {
-    prepareImg(bgImg4s) flatMap {
+    prepareImg(bgImg4s).flatMap {
       case PrepareImgResult(Some(localImg), preImOps) =>
-        detectFilePaletteUnsorted(localImg.file, suppressErrors = true, preImOps = preImOps, maxColors = maxColors)
-          .map { hist => Histogram( hist.sortBy(v => -v.frequency) ) }
+        for {
+          hist <- detectFilePaletteUnsorted(
+            img             = mLocalImgs.fileOf(localImg),
+            suppressErrors  = true,
+            preImOps        = preImOps,
+            maxColors       = maxColors
+          )
+        } yield {
+          Histogram( hist.sortBy(v => -v.frequency) )
+        }
+
       case other =>
-        Future failed new IllegalArgumentException("Failed to extract palette. prepareImg() result is " + other)
+        val ex = new IllegalArgumentException("Failed to extract palette. prepareImg() result is " + other)
+        Future.failed(ex)
     }
   }
 

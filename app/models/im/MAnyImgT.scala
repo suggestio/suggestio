@@ -6,7 +6,7 @@ import com.google.inject.{Inject, Singleton}
 import models.mproj.ICommonDi
 import models.{IImgMeta, ISize2di, ImgCrop}
 import play.api.libs.iteratee.Enumerator
-import util.{PlayMacroLogsI, PlayMacroLogsImpl}
+import util.PlayMacroLogsImpl
 
 import scala.concurrent.Future
 
@@ -18,17 +18,12 @@ import scala.concurrent.Future
  * - локальные картинки на ФС: [[MLocalImg]].
  * - удалённые permanent-хранилища на кластере: [[MImg3]].
  */
-trait MAnyImgT extends PlayMacroLogsI with ImgFilename with DynImgOpsString {
+trait MAnyImgT extends ImgFilename with DynImgOpsString {
 
   type MImg_t <: MImgT
 
   /** Ключ ряда картинок, id для оригинала и всех производных. */
   def rowKey: UUID
-
-  /** Вернуть локальный инстанс модели с файлом на диске. */
-  // TODO Закончить спиливание отсюдово.
-  @deprecated("", "")
-  def toLocalImg: Future[Option[MLocalImgT]]
 
   /** Инстанс локальной картинки. Сама картинка может не существовать. */
   def toLocalInstance: MLocalImg
@@ -36,14 +31,8 @@ trait MAnyImgT extends PlayMacroLogsI with ImgFilename with DynImgOpsString {
   /** Вернуть инстанс над-модели MImg. */
   def toWrappedImg: MImg3
 
-  /** Получить ширину и длину картинки. */
-  @deprecated("", "")
-  def getImageWH: Future[Option[ISize2di]]
-
   /** Инстанс для доступа к картинке без каких-либо наложенных на неё изменений. */
   def original: MAnyImgT
-
-  def rawImgMeta: Future[Option[IImgMeta]]
 
   /** Нащупать crop. Используется скорее как compat к прошлой форме работы с картинками. */
   def cropOpt: Option[ImgCrop] = {
@@ -69,6 +58,7 @@ trait MAnyImgT extends PlayMacroLogsI with ImgFilename with DynImgOpsString {
 
 /** Поле filename для класса. */
 trait ImgFilename {
+
   def rowKeyStr: String
   def hasImgOps: Boolean
   def dynImgOpsStringSb(sb: StringBuilder): StringBuilder
@@ -131,6 +121,8 @@ trait MAnyImgsT[T <: MAnyImgT] {
   /** Получить ширину и длину картинки. */
   def getImageWH(mimg: T): Future[Option[ISize2di]]
 
+  def rawImgMeta(mimg: T): Future[Option[IImgMeta]]
+
 }
 
 
@@ -159,28 +151,37 @@ class MAnyImgs @Inject() (
 
   override def toLocalImg(mimg: MAnyImgT): Future[Option[MLocalImg]] = {
     mimg match {
-      case mimg3: MImg3T =>
+      case mimg3: MImg3 =>
         mImgs3.toLocalImg(mimg3)
-      case localImg: MLocalImgT =>
+      case localImg: MLocalImg =>
         mLocalImgs.toLocalImg(localImg)
     }
   }
 
   override def getStream(mimg: MAnyImgT): Enumerator[Array[Byte]] = {
     mimg match {
-      case mimg3: MImg3T =>
+      case mimg3: MImg3 =>
         mImgs3.getStream(mimg3)
-      case localImg: MLocalImgT =>
+      case localImg: MLocalImg =>
         mLocalImgs.getStream(localImg)
     }
   }
 
   override def getImageWH(mimg: MAnyImgT): Future[Option[ISize2di]] = {
     mimg match {
-      case mimg3: MImg3T =>
+      case mimg3: MImg3 =>
         mImgs3.getImageWH(mimg3)
-      case localImg: MLocalImgT =>
+      case localImg: MLocalImg =>
         mLocalImgs.getImageWH(localImg)
+    }
+  }
+
+  override def rawImgMeta(mimg: MAnyImgT): Future[Option[IImgMeta]] = {
+    mimg match {
+      case mimg3: MImg3 =>
+        mImgs3.rawImgMeta(mimg3)
+      case localImg: MLocalImg =>
+        mLocalImgs.rawImgMeta(localImg)
     }
   }
 
