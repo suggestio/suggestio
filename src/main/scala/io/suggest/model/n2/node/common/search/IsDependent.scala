@@ -2,7 +2,7 @@ package io.suggest.model.n2.node.common.search
 
 import io.suggest.model.n2.node.MNodeFields
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
-import org.elasticsearch.index.query.{QueryBuilders, FilterBuilders, QueryBuilder}
+import org.elasticsearch.index.query.{QueryBuilders, QueryBuilder}
 
 /**
  * Suggest.io
@@ -24,13 +24,14 @@ trait IsDependent extends DynSearchArgs {
     } else {
       val fn = MNodeFields.Common.IS_DEPENDENT_FN
       val _isDep = _isDepOpt.get
-      qbOpt0 map { qb =>
-        val idf = FilterBuilders.termFilter(fn, _isDep)
-        QueryBuilders.filteredQuery(qb, idf)
+      val idf = QueryBuilders.termQuery(fn, _isDep)
+      qbOpt0.map { qb =>
+        QueryBuilders.boolQuery()
+          .must(qb)
+          .filter(idf)
 
-      } orElse {
-        val qb = QueryBuilders.termQuery(fn, _isDep)
-        Some(qb)
+      }.orElse {
+        Some(idf)
       }
     }
   }

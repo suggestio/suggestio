@@ -2,7 +2,7 @@ package io.suggest.model.n2.node.common.search
 
 import io.suggest.model.n2.node.MNodeFields
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
-import org.elasticsearch.index.query.{QueryBuilders, FilterBuilders, QueryBuilder}
+import org.elasticsearch.index.query.{QueryBuilders, QueryBuilder}
 
 /**
  * Suggest.io
@@ -18,20 +18,15 @@ trait IsEnabled extends DynSearchArgs {
   /** Сборка EsQuery сверху вниз. */
   override def toEsQueryOpt: Option[QueryBuilder] = {
     val qbOpt0 = super.toEsQueryOpt
-    val _isOpt = isEnabled
-    if (_isOpt.isEmpty) {
-      qbOpt0
-
-    } else {
+    isEnabled.fold(qbOpt0) { _isEnabled =>
       val fn = MNodeFields.Common.IS_ENABLED_FN
-      val _is = _isOpt.get
-      qbOpt0 map { qb =>
-        val ief = FilterBuilders.termFilter(fn, _is)
-        QueryBuilders.filteredQuery(qb, ief)
-
-      } orElse {
-        val qb = QueryBuilders.termQuery(fn, isEnabled)
-        Some(qb)
+      val isEnabledQ = QueryBuilders.termQuery(fn, _isEnabled)
+      qbOpt0.map { qb =>
+        QueryBuilders.boolQuery()
+          .must(qb)
+          .filter(isEnabledQ)
+      }.orElse {
+        Some(isEnabledQ)
       }
     }
   }

@@ -2,7 +2,7 @@ package io.suggest.model.n2.node.common.search
 
 import io.suggest.model.n2.node.{MNodeFields, MNodeType}
 import io.suggest.model.search.{DynSearchArgs, DynSearchArgsWrapper}
-import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
+import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 
 /**
  * Suggest.io
@@ -28,19 +28,20 @@ trait NodeTypes extends DynSearchArgs {
         val qb0 = qbOpt0 getOrElse {
           QueryBuilders.matchAllQuery()
         }
-        val mf = FilterBuilders.missingFilter( fn )
-        val qb1 = QueryBuilders.filteredQuery(qb0, mf)
+        val mf = QueryBuilders.missingQuery( fn )
+        val qb1 = QueryBuilders.boolQuery()
+          .must(qb0)
+          .filter(mf)
         Some(qb1)
 
       } else {
         val strNodeTypes = _nodeTypes.map(_.strId)
+        val ntq = QueryBuilders.termsQuery(fn, strNodeTypes: _*)
         qbOpt0.map { qb0 =>
-          val ntf = FilterBuilders.termsFilter(fn, strNodeTypes: _*)
-            .execution("or")
-          QueryBuilders.filteredQuery(qb0, ntf)
-
+          QueryBuilders.boolQuery()
+            .must(qb0)
+            .filter(ntq)
         }.orElse {
-          val ntq = QueryBuilders.termsQuery(fn, strNodeTypes: _*)
           Some(ntq)
         }
       }

@@ -2,7 +2,7 @@ package io.suggest.model.n2.extra.search
 
 import io.suggest.model.n2.node.MNodeFields
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
-import org.elasticsearch.index.query.{QueryBuilders, FilterBuilders, FilterBuilder, QueryBuilder}
+import org.elasticsearch.index.query.{QueryBuilders, QueryBuilder}
 
 /**
  * Suggest.io
@@ -26,12 +26,18 @@ trait AdnIsTest extends DynSearchArgs {
       qbOpt0.map { qb =>
         // Отрабатываем флаг testNode.
         _testNode.fold(qb) { tnFlag =>
-          var tnf: FilterBuilder = FilterBuilders.termFilter(fn, tnFlag)
+          var tnf: QueryBuilder = QueryBuilders.termQuery(fn, tnFlag)
           if (!tnFlag) {
-            val tmf = FilterBuilders.missingFilter(fn)
-            tnf = FilterBuilders.orFilter(tnf, tmf)
+            val tmf = QueryBuilders.missingQuery(fn)
+            tnf = QueryBuilders.boolQuery()
+              // Имитация orQuery, которая стала deprecated во время переезда на es-2.0.
+              .should(tnf)
+              .should(tmf)
+              .minimumNumberShouldMatch(1)
           }
-          QueryBuilders.filteredQuery(qb, tnf)
+          QueryBuilders.boolQuery()
+            .must(qb)
+            .filter(tnf)
         }
 
       }.orElse {

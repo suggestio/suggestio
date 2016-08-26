@@ -174,7 +174,7 @@ class MNodes @Inject() (
           .getBuckets
           .iterator()
           .map { bucket =>
-            val ntype: MNodeType = MNodeTypes.withName( bucket.getKey )
+            val ntype: MNodeType = MNodeTypes.withName( bucket.getKeyAsString )
             ntype -> bucket.getDocCount
           }
           .toMap

@@ -3,7 +3,7 @@ package io.suggest.model.n2.extra.search
 import io.suggest.model.n2.node.MNodeFields
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import io.suggest.ym.model.common.AdnRight
-import org.elasticsearch.index.query.{QueryBuilders, FilterBuilders, QueryBuilder}
+import org.elasticsearch.index.query.{QueryBuilders, QueryBuilder}
 
 /**
  * Suggest.io
@@ -24,16 +24,19 @@ trait AdnRights extends DynSearchArgs {
       qbOpt0
     } else {
       val fn = MNodeFields.Extras.ADN_RIGHTS_FN
-      val _warNames = withAdnRights.map(_.name)
-      qbOpt0 map { qb =>
-        val rf = FilterBuilders.termsFilter(fn, _warNames: _*)
-          .execution("and")
-        QueryBuilders.filteredQuery(qb, rf)
-
-      } orElse {
-        val rq = QueryBuilders.termsQuery(fn, _warNames: _*)
-          .minimumMatch(withAdnRights.size)
-        Some(rq)
+      // Собираем termsQuery()
+      val allTermsQ = QueryBuilders.boolQuery()
+      for (name <- withAdnRights.map(_.name)) {
+        val tq = QueryBuilders.termQuery(fn, name)
+        allTermsQ.must(tq)
+      }
+      // Накатить собранную termsQuery на исходную query.
+      qbOpt0.map { qb =>
+        QueryBuilders.boolQuery()
+          .must(qb)
+          .filter(allTermsQ)
+      }.orElse {
+        Some(allTermsQ)
       }
     }
   }

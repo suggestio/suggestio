@@ -2,7 +2,7 @@ package io.suggest.model.n2.geo.search
 
 import io.suggest.model.n2.node.MNodeFields
 import io.suggest.model.search.{DynSearchArgs, DynSearchArgsWrapper}
-import org.elasticsearch.index.query.{FilterBuilder, FilterBuilders, QueryBuilder, QueryBuilders}
+import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 
 /**
   * Suggest.io
@@ -19,12 +19,14 @@ trait HasGeoPoint extends DynSearchArgs {
     val q0 = super.toEsQuery
     hasGeoPoint.fold(q0) { has =>
       val fn = MNodeFields.Geo.POINT_FN
-      val filter: FilterBuilder = if (has) {
-        FilterBuilders.existsFilter(fn)
+      val filter: QueryBuilder = if (has) {
+        QueryBuilders.existsQuery(fn)
       } else {
-        FilterBuilders.missingFilter(fn)
+        QueryBuilders.missingQuery(fn)
       }
-      QueryBuilders.filteredQuery(q0, filter)
+      QueryBuilders.boolQuery()
+        .must(q0)
+        .filter(filter)
     }
   }
 

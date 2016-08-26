@@ -4,7 +4,6 @@ import org.elasticsearch.action._
 import org.elasticsearch.action.bulk.{BulkRequest, BulkRequestBuilder, BulkResponse}
 import org.elasticsearch.action.count.{CountRequest, CountRequestBuilder, CountResponse}
 import org.elasticsearch.action.delete.{DeleteRequest, DeleteRequestBuilder, DeleteResponse}
-import org.elasticsearch.action.deletebyquery.{DeleteByQueryRequest, DeleteByQueryRequestBuilder, DeleteByQueryResponse}
 import org.elasticsearch.action.exists.{ExistsRequest, ExistsRequestBuilder, ExistsResponse}
 import org.elasticsearch.action.explain.{ExplainRequest, ExplainRequestBuilder, ExplainResponse}
 import org.elasticsearch.action.fieldstats.{FieldStatsRequest, FieldStatsRequestBuilder, FieldStatsResponse}
@@ -13,12 +12,12 @@ import org.elasticsearch.action.index.{IndexRequest, IndexRequestBuilder, IndexR
 import org.elasticsearch.action.indexedscripts.delete.{DeleteIndexedScriptRequest, DeleteIndexedScriptRequestBuilder, DeleteIndexedScriptResponse}
 import org.elasticsearch.action.indexedscripts.get.{GetIndexedScriptRequest, GetIndexedScriptRequestBuilder, GetIndexedScriptResponse}
 import org.elasticsearch.action.indexedscripts.put.{PutIndexedScriptRequest, PutIndexedScriptRequestBuilder, PutIndexedScriptResponse}
-import org.elasticsearch.action.mlt.{MoreLikeThisRequest, MoreLikeThisRequestBuilder}
 import org.elasticsearch.action.percolate._
 import org.elasticsearch.action.search._
 import org.elasticsearch.action.suggest.{SuggestRequest, SuggestRequestBuilder, SuggestResponse}
-import org.elasticsearch.action.termvector._
+import org.elasticsearch.action.termvectors._
 import org.elasticsearch.action.update.{UpdateRequest, UpdateRequestBuilder, UpdateResponse}
+import org.elasticsearch.client.support.Headers
 import org.elasticsearch.client.{AdminClient, Client}
 import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.threadpool.ThreadPool
@@ -30,7 +29,6 @@ import org.elasticsearch.threadpool.ThreadPool
   * Description: Реализация ES-клиента Client, где всё незаимплеменчено.
   */
 class MockedEsClient extends Client {
-
   override def prepareExists(indices: String*): ExistsRequestBuilder = ???
 
   override def prepareDeleteIndexedScript(): DeleteIndexedScriptRequestBuilder = ???
@@ -51,10 +49,6 @@ class MockedEsClient extends Client {
 
   override def prepareGet(index: String, `type`: String, id: String): GetRequestBuilder = ???
 
-  override def deleteByQuery(request: DeleteByQueryRequest): ActionFuture[DeleteByQueryResponse] = ???
-
-  override def deleteByQuery(request: DeleteByQueryRequest, listener: ActionListener[DeleteByQueryResponse]): Unit = ???
-
   override def multiPercolate(request: MultiPercolateRequest): ActionFuture[MultiPercolateResponse] = ???
 
   override def multiPercolate(request: MultiPercolateRequest, listener: ActionListener[MultiPercolateResponse]): Unit = ???
@@ -67,9 +61,9 @@ class MockedEsClient extends Client {
 
   override def update(request: UpdateRequest, listener: ActionListener[UpdateResponse]): Unit = ???
 
-  override def termVector(request: TermVectorRequest): ActionFuture[TermVectorResponse] = ???
+  override def termVector(request: TermVectorsRequest): ActionFuture[TermVectorsResponse] = ???
 
-  override def termVector(request: TermVectorRequest, listener: ActionListener[TermVectorResponse]): Unit = ???
+  override def termVector(request: TermVectorsRequest, listener: ActionListener[TermVectorsResponse]): Unit = ???
 
   override def deleteIndexedScript(request: DeleteIndexedScriptRequest, listener: ActionListener[DeleteIndexedScriptResponse]): Unit = ???
 
@@ -119,10 +113,6 @@ class MockedEsClient extends Client {
 
   override def prepareFieldStats(): FieldStatsRequestBuilder = ???
 
-  override def moreLikeThis(request: MoreLikeThisRequest): ActionFuture[SearchResponse] = ???
-
-  override def moreLikeThis(request: MoreLikeThisRequest, listener: ActionListener[SearchResponse]): Unit = ???
-
   override def delete(request: DeleteRequest): ActionFuture[DeleteResponse] = ???
 
   override def delete(request: DeleteRequest, listener: ActionListener[DeleteResponse]): Unit = ???
@@ -130,6 +120,10 @@ class MockedEsClient extends Client {
   override def multiTermVectors(request: MultiTermVectorsRequest): ActionFuture[MultiTermVectorsResponse] = ???
 
   override def multiTermVectors(request: MultiTermVectorsRequest, listener: ActionListener[MultiTermVectorsResponse]): Unit = ???
+
+  override def termVectors(request: TermVectorsRequest): ActionFuture[TermVectorsResponse] = ???
+
+  override def termVectors(request: TermVectorsRequest, listener: ActionListener[TermVectorsResponse]): Unit = ???
 
   override def preparePercolate(): PercolateRequestBuilder = ???
 
@@ -147,13 +141,15 @@ class MockedEsClient extends Client {
 
   override def prepareIndex(index: String, `type`: String, id: String): IndexRequestBuilder = ???
 
-  override def prepareDeleteByQuery(indices: String*): DeleteByQueryRequestBuilder = ???
-
   override def prepareMultiPercolate(): MultiPercolateRequestBuilder = ???
 
   override def index(request: IndexRequest): ActionFuture[IndexResponse] = ???
 
   override def index(request: IndexRequest, listener: ActionListener[IndexResponse]): Unit = ???
+
+  override def prepareTermVectors(): TermVectorsRequestBuilder = ???
+
+  override def prepareTermVectors(index: String, `type`: String, id: String): TermVectorsRequestBuilder = ???
 
   override def prepareDelete(): DeleteRequestBuilder = ???
 
@@ -175,11 +171,13 @@ class MockedEsClient extends Client {
 
   override def multiSearch(request: MultiSearchRequest, listener: ActionListener[MultiSearchResponse]): Unit = ???
 
-  override def prepareTermVector(): TermVectorRequestBuilder = ???
+  override def prepareTermVector(): TermVectorsRequestBuilder = ???
 
-  override def prepareTermVector(index: String, `type`: String, id: String): TermVectorRequestBuilder = ???
+  override def prepareTermVector(index: String, `type`: String, id: String): TermVectorsRequestBuilder = ???
 
   override def prepareSearch(indices: String*): SearchRequestBuilder = ???
+
+  override def headers(): Headers = ???
 
   override def clearScroll(request: ClearScrollRequest): ActionFuture[ClearScrollResponse] = ???
 
@@ -195,15 +193,14 @@ class MockedEsClient extends Client {
 
   override def prepareCount(indices: String*): CountRequestBuilder = ???
 
-  override def prepareMoreLikeThis(index: String, `type`: String, id: String): MoreLikeThisRequestBuilder = ???
+  override def close(): Unit = ???
 
-  override def prepareExecute[Request <: ActionRequest[_], Response <: ActionResponse, RequestBuilder <: ActionRequestBuilder[Request, Response, RequestBuilder, Client]](action: Action[Request, Response, RequestBuilder, Client]): RequestBuilder = ???
+  override def prepareExecute[Request <: ActionRequest[_], Response <: ActionResponse, RequestBuilder <: ActionRequestBuilder[Request, Response, RequestBuilder]](action: Action[Request, Response, RequestBuilder]): RequestBuilder = ???
 
-  override def execute[Request <: ActionRequest[_], Response <: ActionResponse, RequestBuilder <: ActionRequestBuilder[Request, Response, RequestBuilder, Client]](action: Action[Request, Response, RequestBuilder, Client], request: Request): ActionFuture[Response] = ???
+  override def execute[Request <: ActionRequest[_], Response <: ActionResponse, RequestBuilder <: ActionRequestBuilder[Request, Response, RequestBuilder]](action: Action[Request, Response, RequestBuilder], request: Request): ActionFuture[Response] = ???
 
-  override def execute[Request <: ActionRequest[_], Response <: ActionResponse, RequestBuilder <: ActionRequestBuilder[Request, Response, RequestBuilder, Client]](action: Action[Request, Response, RequestBuilder, Client], request: Request, listener: ActionListener[Response]): Unit = ???
+  override def execute[Request <: ActionRequest[_], Response <: ActionResponse, RequestBuilder <: ActionRequestBuilder[Request, Response, RequestBuilder]](action: Action[Request, Response, RequestBuilder], request: Request, listener: ActionListener[Response]): Unit = ???
 
   override def threadPool(): ThreadPool = ???
 
-  override def close(): Unit = ???
 }
