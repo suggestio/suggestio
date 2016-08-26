@@ -1,6 +1,6 @@
 package io.suggest.model.search
 
-import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
+import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 
 /**
  * Suggest.io
@@ -21,12 +21,12 @@ trait WithIds extends DynSearchArgs {
       qbOpt0
 
     } else {
-      qbOpt0 map { qb =>
-        val idf = FilterBuilders.idsFilter()
-          .ids(_withIds: _*)
-        QueryBuilders.filteredQuery(qb, idf)
-
-      } orElse {
+      qbOpt0.map { qb =>
+        val idf = QueryBuilders.idsQuery(_withIds: _*)
+        QueryBuilders.boolQuery()
+          .must( qb )
+          .filter( idf )
+      }.orElse {
         val qb = QueryBuilders.idsQuery()
           .ids(_withIds: _*)
         Some(qb)

@@ -1,7 +1,7 @@
 package io.suggest.model.search
 
 import io.suggest.util.text.TextQueryV2Util
-import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
+import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 
 /**
  * Suggest.io
@@ -27,9 +27,10 @@ object TextQuerySearch {
     // Навешиваем поисковый запрос на исходный query-builder.
     qbOpt0
       .flatMap { qb0 =>
-        ftsQueryOpt map { ftsQuery =>
-          val filter = FilterBuilders.queryFilter(ftsQuery)
-          QueryBuilders.filteredQuery(qb0, filter)
+        ftsQueryOpt.map { ftsQuery =>
+          QueryBuilders.boolQuery()
+            .must(qb0)
+            .filter(ftsQuery)
         }
       }
       .orElse {

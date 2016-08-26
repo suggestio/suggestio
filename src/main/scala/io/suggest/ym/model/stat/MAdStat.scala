@@ -11,25 +11,24 @@ import io.suggest.model.geo.GeoPoint
 import io.suggest.util.MacroLogsImpl
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.action.index.IndexRequestBuilder
-import org.elasticsearch.common.joda.time.{DateTime => EsDateTime}
-import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
-import org.elasticsearch.search.aggregations.AggregationBuilders
-import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogram
+import org.elasticsearch.index.query.QueryBuilders
 import org.elasticsearch.search.sort.SortOrder
 import org.joda.time.{DateTime, DateTimeZone}
 import play.api.Configuration
 import play.api.libs.json._
 
-import scala.collection.JavaConversions._
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
- * Suggest.io
- * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 31.03.14 15:57
- * Description: Для накопления статистики по рекламным карточкам используется эта модель.
- */
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 31.03.14 15:57
+  * Description: Для накопления статистики по рекламным карточкам используется эта модель.
+  *
+  * 2016.aug.26: Здесь до util:a65801b6da4f включитель жил код для построения какой-то гистограммы по датам.
+  * При переезде на es 2.0 оказалось, что этот код не компилится и не используется. Он был удалён.
+  */
 @Singleton
 class MAdStats @Inject() (
   configuration           : Configuration,
@@ -84,72 +83,8 @@ class MAdStats @Inject() (
   val TTL_DAYS_DFLT = configuration.getInt("ad.stat.ttl.period.days").getOrElse(100)
 
   type AdFreqs_t = Map[String, Map[String, Long]]
-  type DateHistAds_t = Seq[(EsDateTime, Long)]
 
   def adOwnerQuery(adOwnerId: String) = QueryBuilders.termQuery(ON_NODE_ID_ESFN, adOwnerId)
-
-
-  /**
-   * Генерим данные для date-гистограммы. Данные эти можно обратить в столбчатую диаграмму или соответствующий график.
-    *
-    * @param adOwnerIdOpt Возможный id владельца рекламных карточек.
-   * @param interval Интервал значений дат.
-   * @param actionOpt Возможный id stat-экшена.
-   * @param withZeroes Возвращать ли нулевые столбцы? По умолчанию - да.
-   * @param dateBoundsOpt Необязательные границы вывода.
-   * @return Фьчерс с последовательностью (DateTime, freq:Long) в порядке возрастания даты.
-   */
-  def dateHistogramFor(adOwnerIdOpt: Option[String], interval: DateHistogram.Interval,
-                       dateBoundsOpt: Option[(EsDateTime, EsDateTime)] = None,
-                       actionOpt: Option[String] = None, withZeroes: Boolean = false): Future[DateHistAds_t] = {
-    // Собираем поисковый запрос. Надо бы избавится от лишних типов и точек, но почему-то сразу всё становится красным.
-    var query: QueryBuilder = adOwnerIdOpt.map[QueryBuilder] { adOwnerId =>
-      adOwnerQuery(adOwnerId)
-    }.map { adOwnerQuery =>
-      actionOpt.fold(adOwnerQuery) { action =>
-        QueryBuilders.filteredQuery(
-          adOwnerQuery,
-          FilterBuilders.termFilter(ACTION_ESFN, action.toString)
-        )
-      }
-    }.orElse {
-      actionOpt.map { action =>
-        QueryBuilders.termQuery(ACTION_ESFN, action.toString)
-      }
-    }.getOrElse {
-      QueryBuilders.matchAllQuery()
-    }
-    // Добавить фильтр в query, если задан диапазон интересующих дат.
-    if (dateBoundsOpt.isDefined) {
-      val (ds, de) = dateBoundsOpt.get
-      val dateRangeFilter = FilterBuilders.rangeFilter("timestampRange").gte(ds).lte(de)
-      query = QueryBuilders.filteredQuery(query, dateRangeFilter)
-    }
-    // Собираем и запускаем es-запрос
-    val dtHistName = "adDateHist"
-    val agg = AggregationBuilders.dateHistogram(dtHistName)
-      .field(TIMESTAMP_ESFN)
-      .interval(interval)
-      .minDocCount(if (withZeroes) 0 else 1)
-    if (dateBoundsOpt.isDefined) {
-      val Some((ds, de)) = dateBoundsOpt
-      agg.extendedBounds(ds, de)
-    }
-    prepareSearch()
-      .setQuery(query)
-      .setSize(0)
-      .addAggregation(agg)
-      .execute()
-      .map { searchResp =>
-        searchResp.getAggregations
-          .get[DateHistogram](dtHistName)
-          .getBuckets
-          .toSeq
-          .map { bucket =>
-            bucket.getKeyAsDate -> bucket.getDocCount
-          }
-      }
-  }
 
   def beforeDtQuery(dt: DateTime) = {
     QueryBuilders.rangeQuery(TIMESTAMP_ESFN)

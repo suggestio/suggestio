@@ -19,7 +19,6 @@ trait EsChildModelStaticT extends EsModelCommonStaticT {
   import mCommonDi._
 
   def prepareGet(id: String, parentId: String) = prepareGetBase(id).setParent(parentId)
-  def prepareTermVector(id: String, parentId: String) = prepareTermVectorBase(id).setParent(parentId)
   def prepareUpdate(id: String, parentId: String) = prepareUpdateBase(id).setParent(parentId)
   def prepareDelete(id: String, parentId: String) = prepareDeleteBase(id).setParent(parentId)
 

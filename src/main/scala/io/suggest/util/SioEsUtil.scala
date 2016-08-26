@@ -2,7 +2,7 @@ package io.suggest.util
 
 import org.elasticsearch.action.admin.indices.settings.put.UpdateSettingsResponse
 import org.elasticsearch.client.transport.TransportClient
-import org.elasticsearch.common.settings.{Settings, ImmutableSettings}
+import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.common.transport.TransportAddress
 import org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder
 import org.elasticsearch.client.Client
@@ -185,9 +185,9 @@ object SioEsUtil extends MacroLogsImpl {
     * @return TransportClient
     */
   def newTransportClient(addrs: Seq[TransportAddress], clusterName: Option[String]): TransportClient = {
-    val settingsBuilder = ImmutableSettings.settingsBuilder()
-      .classLoader(classOf[Settings].getClassLoader)
+    val settingsBuilder = Settings.builder()
       .put("cluster.name", clusterName)
+      //.classLoader(classOf[Settings].getClassLoader)
     clusterName match {
       case Some(_clusterName) =>
         settingsBuilder.put("cluster.name", _clusterName)
@@ -195,7 +195,9 @@ object SioEsUtil extends MacroLogsImpl {
         settingsBuilder.put("client.transport.ignore_cluster_name", true)
     }
     val settings = settingsBuilder.build()
-    new TransportClient(settings)
+    TransportClient.builder()
+      .settings(settings)
+      .build()
       .addTransportAddresses(addrs : _*)
   }
 
@@ -1433,7 +1435,7 @@ case class FieldGeoShape(
 
 /** Неабстрактный трейт для подмешивания клиенского функционала в произольный объект.
   * Для управления именем кластера, нужно переопределить метод getEsClusterName.  */
-trait SioEsClient {
+trait SioEsClient extends MacroLogsI {
 
   /** Тут хранится клиент к кластеру. В инициализаторе класса надо закинуть сюда начальный экземпляр клиент.
     * Это переменная для возможности остановки клиента. */
@@ -1491,8 +1493,12 @@ trait SioEsClient {
   /** Перед вычищением из памяти класса следует убедится, что нода остановлена.
     * Маловероятно, что от этой функции есть какой-то толк. */
   override def finalize() {
-    _node.stop()
+    if (!_node.isClosed) {
+      LOGGER.error(s"finalize(): ES client ${_node} was not closed!")
+      _node.close()
+    }
   }
+
 }
 
 

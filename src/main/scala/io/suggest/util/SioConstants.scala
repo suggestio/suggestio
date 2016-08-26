@@ -26,8 +26,6 @@ object SioConstants {
   def FIELD_ALL           = AllFieldMapper.NAME
   def FIELD_SOURCE        = SourceFieldMapper.NAME
   def FIELD_ROUTING       = RoutingFieldMapper.NAME
-  def FIELD_ANALYZER      = AnalyzerMapper.NAME
-  def FIELD_BOOST         = BoostFieldMapper.NAME
   def FIELD_ID            = IdFieldMapper.NAME
   def FIELD_UID           = UidFieldMapper.NAME
   def FIELD_TTL           = TTLFieldMapper.NAME
