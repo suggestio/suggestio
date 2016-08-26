@@ -35,31 +35,32 @@ object MAdnExtra extends IGenEsMappingProps {
 
   }
 
+  import Fields._
 
   /** Поддержка JSON. */
   implicit val FORMAT: OFormat[MAdnExtra] = (
-    (__ \ Fields.RIGHTS.fn).formatNullable[Set[AdnRight]]
+    (__ \ RIGHTS.fn).formatNullable[Set[AdnRight]]
       .inmap [Set[AdnRight]] (
         _ getOrElse Set.empty,
         { rights => if (rights.isEmpty) None else Some(rights) }
       ) and
-    (__ \ Fields.IS_BY_USER.fn).formatNullable[Boolean]
+    (__ \ IS_BY_USER.fn).formatNullable[Boolean]
       .inmap [Boolean] (
         _ getOrElse false,
         someF
       ) and
-    (__ \ Fields.SHOWN_TYPE.fn).formatNullable[String] and
-    (__ \ Fields.IS_TEST.fn).formatNullable[Boolean]
+    (__ \ SHOWN_TYPE.fn).formatNullable[String] and
+    (__ \ IS_TEST.fn).formatNullable[Boolean]
       .inmap [Boolean] (
         _ getOrElse false,
         someF
       ) and
-    (__ \ Fields.OUT_SLS.fn).formatNullable[Iterable[MSlInfo]]
+    (__ \ OUT_SLS.fn).formatNullable[Iterable[MSlInfo]]
       .inmap [Map[AdShowLevel, MSlInfo]] (
-        _.iterator.flatMap(identity).map(sli => sli.sl -> sli).toMap,
+        _.iterator.flatten.map(sli => sli.sl -> sli).toMap,
         { slmap => if (slmap.isEmpty) None else Some(slmap.values) }
       ) and
-    (__ \ Fields.SHOW_IN_SC_NL.fn).formatNullable[Boolean]
+    (__ \ SHOW_IN_SC_NL.fn).formatNullable[Boolean]
       .inmap [Boolean] (
         _ getOrElse true,
         someF
@@ -70,7 +71,6 @@ object MAdnExtra extends IGenEsMappingProps {
   import io.suggest.util.SioEsUtil._
 
   override def generateMappingProps: List[DocField] = {
-    import Fields._
     import FieldIndexingVariants._
     List(
       FieldString(RIGHTS.fn, index = not_analyzed, include_in_all = false),

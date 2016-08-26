@@ -27,28 +27,36 @@ object MNodeExtras extends IGenEsMappingProps with IEmpty {
   /** Статическая модель полей модели [[MNodeExtras]]. */
   object Fields {
 
+    /** ES-поля legacy-узлов AD Network. */
     object Adn extends PrefixedFn {
-      val ADN_FN = "a"
+      val ADN_FN    = "a"
       override protected def _PARENT_FN = ADN_FN
-      def IS_TEST_FN          = _fullFn( MAdnExtra.Fields.IS_TEST.fn )
-      def RIGHTS_FN           = _fullFn( MAdnExtra.Fields.RIGHTS.fn )
-      def SHOWN_TYPE_FN       = _fullFn( MAdnExtra.Fields.SHOWN_TYPE.fn )
-      def SHOW_IN_SC_NL_FN    = _fullFn( MAdnExtra.Fields.SHOW_IN_SC_NL.fn )
+      import MAdnExtra.{Fields => F}
+      def IS_TEST_FN          = _fullFn( F.IS_TEST.fn )
+      def RIGHTS_FN           = _fullFn( F.RIGHTS.fn )
+      def SHOWN_TYPE_FN       = _fullFn( F.SHOWN_TYPE.fn )
+      def SHOW_IN_SC_NL_FN    = _fullFn( F.SHOW_IN_SC_NL.fn )
+    }
+
+    /** ES-поля iBeacon (BLE-маячка). */
+    object Beacon extends PrefixedFn {
+      val BEACON_FN   = "b"
+      override protected def _PARENT_FN = BEACON_FN
+      import MBeaconExtra.{Fields => F}
+      def UUID_FN   = _fullFn( F.UUID_FN )
+      def MAJOR_FN  = _fullFn( F.MAJOR_FN )
+      def MINOR_FN  = _fullFn( F.MINOR_FN )
     }
 
   }
 
 
-  import Fields.Adn.ADN_FN
 
   /** Поддержка JSON для растущей модели [[MNodeExtras]]. */
-  implicit val FORMAT: OFormat[MNodeExtras] = {
-    (__ \ ADN_FN).formatNullable[MAdnExtra]
-      .inmap [MNodeExtras] (
-        { adnExtraOpt => MNodeExtras(adn = adnExtraOpt) },
-        { mne => mne.adn }
-      )
-  }
+  implicit val FORMAT: OFormat[MNodeExtras] = (
+    (__ \ Fields.Adn.ADN_FN).formatNullable[MAdnExtra] and
+    (__ \ Fields.Beacon.BEACON_FN).formatNullable[MBeaconExtra]
+  )(apply, unlift(unapply))
 
 
   import io.suggest.util.SioEsUtil._
@@ -58,7 +66,8 @@ object MNodeExtras extends IGenEsMappingProps with IEmpty {
   }
   override def generateMappingProps: List[DocField] = {
     List(
-      _obj(ADN_FN, MAdnExtra)
+      _obj(Fields.Adn.ADN_FN,       MAdnExtra),
+      _obj(Fields.Beacon.BEACON_FN, MBeaconExtra)
     )
   }
 
@@ -67,7 +76,7 @@ object MNodeExtras extends IGenEsMappingProps with IEmpty {
 
 /** Класс-контейнер-реализация модели. */
 case class MNodeExtras(
-  adn: Option[MAdnExtra]  = None
-  // модерация и теги были вынесены в эджи.
+  adn       : Option[MAdnExtra]   = None,
+  beacon    : Option[MBeaconExtra]     = None
 )
   extends EmptyProduct

@@ -35,8 +35,9 @@ object MNodeFields {
     def META_FN                     = FieldNamesL1.Meta.name
     override protected def _PARENT_FN = META_FN
 
-    def BASIC_NAME_SHORT_NOTOK_FN   = _fullFn( MMeta.Fields.Basic.NAME_SHORT_NOTOK_FN )
-    def DATE_CREATED_FN             = _fullFn( MMeta.Fields.Basic.DATE_CREATED_FN )
+    import MMeta.{Fields => F}
+    def BASIC_NAME_SHORT_NOTOK_FN   = _fullFn( F.Basic.NAME_SHORT_NOTOK_FN )
+    def DATE_CREATED_FN             = _fullFn( F.Basic.DATE_CREATED_FN )
   }
 
   /** Абсолютные имена ES-полей в .extras */
@@ -45,10 +46,16 @@ object MNodeFields {
     def EXTRAS_FN  = FieldNamesL1.Extras.name
     override protected def _PARENT_FN = EXTRAS_FN
 
-    def ADN_IS_TEST_FN          = _fullFn( MNodeExtras.Fields.Adn.IS_TEST_FN )
-    def ADN_RIGHTS_FN           = _fullFn( MNodeExtras.Fields.Adn.RIGHTS_FN )
-    def ADN_SHOWN_TYPE_FN       = _fullFn( MNodeExtras.Fields.Adn.SHOWN_TYPE_FN )
-    def ADN_SHOW_IN_SC_NL_FN    = _fullFn( MNodeExtras.Fields.Adn.SHOW_IN_SC_NL_FN )
+    import MNodeExtras.{Fields => F}
+
+    def ADN_IS_TEST_FN          = _fullFn( F.Adn.IS_TEST_FN )
+    def ADN_RIGHTS_FN           = _fullFn( F.Adn.RIGHTS_FN )
+    def ADN_SHOWN_TYPE_FN       = _fullFn( F.Adn.SHOWN_TYPE_FN )
+    def ADN_SHOW_IN_SC_NL_FN    = _fullFn( F.Adn.SHOW_IN_SC_NL_FN )
+
+    def BEACON_UUID_FN          = _fullFn( F.Beacon.UUID_FN )
+    def BEACON_MAJOR_FN         = _fullFn( F.Beacon.MAJOR_FN )
+    def BEACON_MINOR_FN         = _fullFn( F.Beacon.MINOR_FN )
 
   }
 

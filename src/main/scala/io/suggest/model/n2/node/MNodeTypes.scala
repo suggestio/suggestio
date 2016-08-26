@@ -101,6 +101,9 @@ object MNodeTypes extends EnumMaybeWithName with EnumJsonReadsValT with EnumTree
 
   }
 
+  /** Маячок BLE (iBeacon). */
+  val IBeacon: T = new ValNoSub("b")
+
 
   /** Поддержка binding'а из URL query string, для play router'а. */
   implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[T] = {

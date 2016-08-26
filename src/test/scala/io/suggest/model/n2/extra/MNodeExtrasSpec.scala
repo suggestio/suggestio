@@ -1,5 +1,7 @@
 package io.suggest.model.n2.extra
 
+import java.util.UUID
+
 import io.suggest.model.PlayJsonTestUtil
 import org.scalatest.FlatSpec
 
@@ -24,6 +26,11 @@ class MNodeExtrasSpec extends FlatSpec with PlayJsonTestUtil {
         adn = Some(MAdnExtra(
           testNode  = true,
           isUser    = true
+        )),
+        beacon = Some(MBeaconExtra(
+          uuidStr = UUID.randomUUID().toString,
+          major   = 35666,
+          minor   = 65354
         ))
       )
     }
