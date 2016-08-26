@@ -1,6 +1,6 @@
 package util.ai.sax.weather.gidromet
 
-import java.io.{CharArrayReader, Reader}
+import java.io.CharArrayReader
 
 import io.suggest.an.ReplaceMischarsAnalyzer
 import io.suggest.util.DateParseUtil
@@ -14,7 +14,7 @@ import org.apache.lucene.analysis.{TokenStream, Tokenizer}
 import org.apache.lucene.analysis.pattern.PatternTokenizer
 import org.joda.time.{LocalDate, DateTime}
 import org.tartarus.snowball.ext.RussianStemmer
-import org.xml.sax.{SAXParseException, Attributes}
+import org.xml.sax.Attributes
 import org.xml.sax.helpers.DefaultHandler
 import util.PlayLazyMacroLogsImpl
 import util.ai.AiContentHandler
@@ -35,8 +35,6 @@ class GidrometRssSax(maim: MAiCtx)
   with PlayLazyMacroLogsImpl
 {
 
-  import LOGGER._
-
   override def stiResKey = "weather"
 
   /** Этот парсер в основном работает с tika, хотя наверное лучше его на SAX переключить. */
@@ -44,9 +42,9 @@ class GidrometRssSax(maim: MAiCtx)
 
   /** Для нормализации строк с погодой используется сие добро: */
   protected val an = new YmStringAnalyzerT with NormTokensOutAnStream {
-    override def tokenizer(reader: Reader): Tokenizer = {
+    override def tokenizer(): Tokenizer = {
       val re = "[\\s,.]+".r.pattern
-      new PatternTokenizer(reader, re, -1)
+      new PatternTokenizer(re, -1)
     }
 
     override def addFilters(tokenized: Tokenizer): TokenStream = {

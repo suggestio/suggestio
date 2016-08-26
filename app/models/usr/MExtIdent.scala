@@ -4,7 +4,7 @@ import io.suggest.model.es._
 import EsModelUtil.FieldsJsonAcc
 import io.suggest.util.SioEsUtil._
 import models.mext.ILoginProvider
-import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders}
+import org.elasticsearch.index.query.QueryBuilders
 import securesocial.core.IProfileDflt
 import _root_.util.PlayMacroLogsImpl
 import EsModelUtil.stringParser
@@ -32,8 +32,6 @@ class MExtIdents @Inject() (
     with EsmV2Deserializer
 {
 
-  import mCommonDi._
-
   override val ES_TYPE_NAME = "exid"
 
   override type T = MExtIdent
@@ -57,7 +55,7 @@ class MExtIdents @Inject() (
   }
 
   def userIdQuery(userId: String) = QueryBuilders.termQuery(USER_ID_ESFN, userId)
-  def providerIdFilter(prov: ILoginProvider) = FilterBuilders.termFilter(PROVIDER_ID_ESFN, prov.ssProvName)
+  def providerIdFilter(prov: ILoginProvider) = QueryBuilders.termQuery(PROVIDER_ID_ESFN, prov.ssProvName)
 
   /**
    * Поиск документа по userId и провайдеру.

@@ -27,6 +27,7 @@ class SiowebEsUtil @Inject() (
 )
   extends SioEsClient
   with Provider[Client]
+  with PlayMacroLogsImpl
 {
 
   ensureNode()

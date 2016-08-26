@@ -1,5 +1,7 @@
 package models
 
+import java.net.InetAddress
+
 import com.google.inject.Inject
 import io.suggest.model.es.{CopyContentResult, EsModelCommonStaticT, EsModelUtil}
 import io.suggest.model.n2.media.MMedias
@@ -147,7 +149,7 @@ final class SiowebEsModelJmx @Inject() (
       .find(_.getClass.getSimpleName equalsIgnoreCase modelStr1)
       .get
     val fut = _importModelsFromRemote(remotes, Seq(model))
-    fut onFailure { case ex =>
+    fut.onFailure { case ex =>
       error(s"importModelsFromRemote($modelStr, $remotes): Failed", ex)
     }
     awaitString(fut)
@@ -155,7 +157,7 @@ final class SiowebEsModelJmx @Inject() (
 
   override def importModelsFromRemote(remotes: String): String = {
     val fut = _importModelsFromRemote(remotes, siowebEsModel.ES_MODELS)
-    fut onFailure { case ex =>
+    fut.onFailure { case ex =>
       error(s"importModelsFromRemote($remotes): Failed", ex)
     }
     awaitString(fut)
@@ -167,14 +169,15 @@ final class SiowebEsModelJmx @Inject() (
       .map { hostPortStr =>
         val Array(host, portStr) = hostPortStr.split(':')
         val port = portStr.toInt
-        new InetSocketTransportAddress(host, port)
+        val addr = InetAddress.getByName(host)
+        new InetSocketTransportAddress(addr, port)
       }
       .toSeq
-    siowebEsModel.importModelsFromRemote(addrs, models)
-      .map { result =>
-        import result._
-        s"Total=${success + failed} success=$success failed=$failed"
-      }
+    for (result <- siowebEsModel.importModelsFromRemote(addrs, models)) yield {
+      import result._
+      s"Total=${success + failed} success=$success failed=$failed"
+    }
   }
+
 }
 
