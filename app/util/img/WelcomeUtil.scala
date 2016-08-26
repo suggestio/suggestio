@@ -26,6 +26,7 @@ class WelcomeUtil @Inject() (
   scUtil                 : ShowcaseUtil,
   cdnUtil                : CdnUtil,
   mImgs3                 : MImgs3,
+  imgFormUtil            : ImgFormUtil,
   mCommonDi              : ICommonDi
 )
   extends PlayMacroLogsImpl
@@ -37,7 +38,7 @@ class WelcomeUtil @Inject() (
   /** Ключ для картинки, используемой в качестве приветствия. */
   // TODO Удалить вслед за старой архитектурой.
 
-  def welcomeImgIdKM = EditConstants.WELCOME_IMG_FN -> ImgFormUtil.img3IdOptM
+  def welcomeImgIdKM = EditConstants.WELCOME_IMG_FN -> imgFormUtil.img3IdOptM
 
 
   /** Обновление картинки и карточки приветствия. Картинка хранится в полу-рекламной карточке, поэтому надо ещё

@@ -51,6 +51,7 @@ class Img @Inject() (
   override val imgCtlUtil         : ImgCtlUtil,
   override val wsDispatcherActors : WsDispatcherActors,
   override val origImageUtil      : OrigImageUtil,
+  imgFormUtil                     : ImgFormUtil,
   override val mCommonDi          : ICommonDi
 )
   extends SioController
@@ -124,8 +125,8 @@ class Img @Inject() (
 
   /** Маппинг данных кропа картинки. */
   private def imgCropFormM = Form(tuple(
-    "imgId"  -> ImgFormUtil.img3IdM,
-    "crop"   -> ImgFormUtil.imgCropM,
+    "imgId"  -> imgFormUtil.img3IdM,
+    "crop"   -> imgFormUtil.imgCropM,
     "target" -> FormUtil.whSizeM
   ))
 
@@ -143,7 +144,7 @@ class Img @Inject() (
         // 2014.oct.08 Нужно чинить кроп, т.к. форма может засабмиттить его с ошибками.
         val crop2Fut = for (whOpt <- mImgs3.getImageWH(iik0)) yield {
           whOpt.fold(icrop) { wh =>
-            ImgFormUtil.repairCrop(icrop, targetSz = targetSz, srcSz = wh)
+            imgFormUtil.repairCrop(icrop, targetSz = targetSz, srcSz = wh)
           }
         }
 

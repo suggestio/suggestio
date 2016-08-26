@@ -26,7 +26,7 @@ import play.twirl.api.Html
 import util.FormUtil._
 import util.PlayMacroLogsImpl
 import util.acl._
-import util.img.ImgFormUtil.img3IdOptM
+import util.img.ImgFormUtil
 import util.img._
 import views.html.lk.adn.edit._
 
@@ -46,6 +46,7 @@ class MarketLkAdnEdit @Inject() (
   mNodes                          : MNodes,
   tempImgSupport                  : TempImgSupport,
   galleryUtil                     : GalleryUtil,
+  imgFormUtil                     : ImgFormUtil,
   override val mCommonDi          : ICommonDi
 )
   extends SioController
@@ -65,7 +66,7 @@ class MarketLkAdnEdit @Inject() (
   }
 
   private def logoKM: (String, Mapping[LogoOpt_t]) = {
-    LOGO_IMG_FN -> img3IdOptM
+    LOGO_IMG_FN -> imgFormUtil.img3IdOptM
   }
 
   // TODO N2 После переезда на N2 метаданные узла были раскиданы по нескольким моделям, но этого не видно в форме:

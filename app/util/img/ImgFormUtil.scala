@@ -7,13 +7,11 @@ import io.suggest.util.UuidUtil
 import models.im._
 import util.PlayMacroLogsImpl
 import io.suggest.img.SioImageUtilT
-import play.api.Play.{configuration, current}
 
 import scala.concurrent.Future
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import java.lang
 
-import com.google.inject.Inject
+import com.google.inject.{Inject, Singleton}
 import models._
 import models.mproj.ICommonDi
 
@@ -23,23 +21,21 @@ import models.mproj.ICommonDi
  * Created: 21.02.14 15:14
  * Description: Для работы с загружаемыми картинками используются эти вспомогательные функции.
  */
-
-object ImgFormUtil extends PlayMacroLogsImpl {
-
-  // TODO Реализовать это через DI к play3.
-  private val mImg3       = current.injector.instanceOf[MImgs3]
-  private val mLocalImgs  = current.injector.instanceOf[MLocalImgs]
-
+@Singleton
+class ImgFormUtil @Inject() (
+  mImgs3      : MImgs3,
+  mLocalImgs  : MLocalImgs,
+  mCommonDi   : ICommonDi
+)
+  extends PlayMacroLogsImpl
+{
 
   import play.api.data.Forms._
   import play.api.data.Mapping
   import LOGGER._
+  import mCommonDi.{configuration, ec}
 
-  private val IIK_MAXLEN = 80
-
-  // Ключи в карте MUserImgMeta, которые хранят данные о картинке.
-  val IMETA_WIDTH  = "w"
-  val IMETA_HEIGHT = "h"
+  private def IIK_MAXLEN = 80
 
   /** Включение ревалидации уже сохраненных картинок при обновлении позволяет убирать картинки "дырки",
     * появившиеся в ходе ошибочной логики. */
@@ -131,7 +127,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     // Разделяем на картинки, которые уже были, и которые затребованы для отправки в хранилище:
     val newOldImgsMapFut = {
       Future.traverse(needImgsIndexed) { case a @ (img, i) =>
-        for (isExists <- mImg3.existsInPermanent( img.original )) yield {
+        for (isExists <- mImgs3.existsInPermanent( img.original )) yield {
           (a, isExists)
         }
       }.map { results =>
@@ -175,7 +171,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
         res  <- imgsKeepFut
         futs <- Future.traverse(res) { v =>
           for {
-            localOpt <- mImg3.toLocalImg( v._1.original )
+            localOpt <- mImgs3.toLocalImg( v._1.original )
           } yield {
             localOpt
               .filter { loc =>
@@ -211,7 +207,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
         }
       // Сохраняем все картинки параллельно:
       Future.traverse(imgs4s) { v =>
-        for (_ <- mImg3.saveToPermanent( v._1.original )) yield {
+        for (_ <- mImgs3.saveToPermanent( v._1.original )) yield {
           v
         }
       }
@@ -244,7 +240,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
 
   def img2imgInfo(mimg: MImgT): Future[MImgInfo] = {
     for {
-      wh <- mImg3.getImageWH(mimg)
+      wh <- mImgs3.getImageWH(mimg)
     } yield {
       MImgInfo(mimg.fileName, wh.map(MImgInfoMeta.apply))
     }
@@ -267,14 +263,6 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     if (crop.offY + crop.height > srcSz.height)
       newCrop = crop.copy(offY = srcSz.height - crop.height)
     newCrop
-  }
-
-
-  def imgMeta2md(sz: ISize2di): Map[String, String] = {
-    Map(
-      IMETA_WIDTH  -> sz.width.toString,
-      IMETA_HEIGHT -> sz.height.toString
-    )
   }
 
 }

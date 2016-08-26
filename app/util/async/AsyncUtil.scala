@@ -66,7 +66,7 @@ object AsyncUtil extends PlayLazyMacroLogsImpl {
   implicit val singleThreadCpuContext = mkEc("async.ec.cpusingle", EcParInfo(1.0F, 2))
 
   /** Комбо из Future.apply() и DB.withConnection. */
-  // TODO Спилить/перепилить этот метод, т.к. DB теперь должна приходить через DI (play-2.4+).
+  // TODO Спилить/перепилить этот метод, т.к. DB теперь должна приходить через slick и DI (play-2.4+).
   def jdbcAsync[T](f: Connection => T): Future[T] = {
     Future {
       DB.withConnection(f)

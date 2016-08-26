@@ -10,7 +10,7 @@ import util.FormUtil._
 import models._
 import views.html.blocks.editor._
 import controllers.ad.MarketAdFormUtil
-import util.img._
+import util.img.ImgFormUtil
 import play.twirl.api.{Html, Template5}
 
 /**
@@ -21,6 +21,8 @@ import play.twirl.api.{Html, Template5}
  */
 
 object BlocksUtil {
+
+  private[blocks] val imgFormUtil = play.api.Play.current.injector.instanceOf[ImgFormUtil]
 
   def defaultOpt[T](m0: Mapping[T], defaultOpt: Option[T]): Mapping[T] = {
     if (defaultOpt.isDefined)
@@ -314,7 +316,7 @@ case class BfImage(
 
   /** Маппинг для картинок, которые можно кадрировать. Есть ключ картинки и есть настройки кадрирования. */
   override def mappingBase: Mapping[T] = {
-    ImgFormUtil.img3IdOptM
+    BlocksUtil.imgFormUtil.img3IdOptM
       .transform[BlockImgMap] (
         { _.fold[BlockImgMap] (Map.empty) { i4s =>
           Map(bimKey -> i4s)

@@ -18,6 +18,7 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 @Singleton
 class LogoUtil @Inject() (
+  imgFormUtil               : ImgFormUtil,
   implicit private val ec   : ExecutionContext
 ) {
 
@@ -32,7 +33,7 @@ class LogoUtil @Inject() (
       .withPredicateIter( MPredicates.Logo )
       .map { edge2logoImg }
       .toIterable
-    val newLogosFut = ImgFormUtil.updateOrigImgFull(
+    val newLogosFut = imgFormUtil.updateOrigImgFull(
       needImgs  = newLogo.toSeq,
       oldImgs   = oldImgs
     )

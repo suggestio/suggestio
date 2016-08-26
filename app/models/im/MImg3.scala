@@ -257,6 +257,7 @@ class MImgs3 @Inject() (
 }
 
 
+/** Статические расширения сборки инстансов модели [[MImg3]]. */
 object MImg3 extends PlayMacroLogsImpl with IMImgCompanion {
 
   override type T = MImg3

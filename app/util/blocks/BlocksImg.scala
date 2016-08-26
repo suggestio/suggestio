@@ -80,6 +80,8 @@ trait ISaveImgs {
 /** Базовая утиль для работы с картинками из blocks-контекстов. */
 object SaveImgUtil extends MergeBindAcc[BlockImgMap] {
 
+  private val imgFormUtil = play.api.Play.current.injector.instanceOf[ImgFormUtil]
+
   def saveImgsStatic(fn: BimKey_t, newImgs: BlockImgMap, oldImgs: Imgs_t, supImgsFut: Future[Imgs_t]): Future[Imgs_t] = {
     val needImgsThis = newImgs.get(fn)
     val oldImgsThis = oldImgs
@@ -88,7 +90,7 @@ object SaveImgUtil extends MergeBindAcc[BlockImgMap] {
     // Нанооптимизация: не ворочить картинками, если нет по ним никакой инфы.
     if (needImgsThis.isDefined || oldImgsThis.isDefined) {
       // Есть картинки для обработки (старые или новые), запустить обработку.
-      val saveBgImgFut = ImgFormUtil.updateOrigImgFull(
+      val saveBgImgFut = imgFormUtil.updateOrigImgFull(
           needImgs = needImgsThis.toSeq,
           oldImgs  = oldImgsThis.toIterable
         )

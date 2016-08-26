@@ -45,10 +45,12 @@ object GeoMode extends PlayLazyMacroLogsImpl with JavaTokenParsers {
       }
     }
     val latLonP = ((doubleP <~ delimP) ~ doubleP) ^^ {
-      case lat ~ lon  =>  GeoPoint(lat = lat, lon = lon)
+      case lat ~ lon =>
+        GeoPoint(lat = lat, lon = lon)
     }
     (latLonP ~ accurOptP) ^^ {
-      case gp ~ accurOpt  =>  GeoLocation(gp, accuracyMeters = accurOpt)
+      case gp ~ accurOpt =>
+        GeoLocation(gp, accuracyMeters = accurOpt)
     }
   }
 

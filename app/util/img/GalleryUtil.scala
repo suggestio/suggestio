@@ -24,6 +24,7 @@ import scala.concurrent.Future
 @Singleton
 class GalleryUtil @Inject() (
   dynImgUtil        : DynImgUtil,
+  imgFormUtil       : ImgFormUtil,
   configuration     : Configuration
 ) {
 
@@ -35,7 +36,7 @@ class GalleryUtil @Inject() (
   val GALLERY_LEN_MAX = configuration.getInt("adn.gallery.len.max") getOrElse 7
 
   def galleryM: Mapping[List[MImgT]] = {
-    list(ImgFormUtil.img3IdM)
+    list(imgFormUtil.img3IdM)
       .verifying("error.gallery.too.large",  { _.size <= GALLERY_LEN_MAX })
   }
 
@@ -65,7 +66,10 @@ class GalleryUtil @Inject() (
    * @return Фьючерс с новой галереи в формате старой галереи.
    */
   def updateGallery(newGallery: Seq[MImgT], oldGallery: Seq[String]): Future[Seq[MImgT]] = {
-    ImgFormUtil.updateOrigImgId(needImgs = newGallery, oldImgIds = oldGallery)
+    imgFormUtil.updateOrigImgId(
+      needImgs  = newGallery,
+      oldImgIds = oldGallery
+    )
   }
 
 
