@@ -121,12 +121,12 @@ class MAdStats @Inject() (
 
 
   /**
-   * Десериализация одного элементам модели.
+    * Десериализация одного элементам модели.
     *
     * @param id id документа.
-   * @param m Карта, распарсенное json-тело документа.
-   * @return Экземпляр модели.
-   */
+    * @param m Карта, распарсенное json-тело документа.
+    * @return Экземпляр модели.
+    */
   override def deserializeOne(id: Option[String], m: collection.Map[String, AnyRef], version: Option[Long]): T = {
     new MAdStat(
       clientAddr  = m.get(CLIENT_ADDR_ESFN).fold("127.0.0.1")(stringParser),
@@ -168,7 +168,8 @@ class MAdStats @Inject() (
 
   /** Статические поля для маппиннга. */
   override def generateMappingStaticFields: List[Field] = List(
-    FieldId(index = FieldIndexingVariants.no, store = false),
+    // es-2.0: field _id is not changeable.
+    //FieldId(index = FieldIndexingVariants.no, store = false),
     FieldSource(enabled = true),
     FieldAll(enabled = true),
     FieldTtl(enabled = true, default = s"${TTL_DAYS_DFLT}d")

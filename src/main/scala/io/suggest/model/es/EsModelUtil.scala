@@ -71,14 +71,17 @@ object EsModelUtil extends MacroLogsImpl {
       } else {
         esModelStatic.isMappingExists()
       }
-      imeFut flatMap {
+      imeFut.flatMap {
         case false =>
           trace(logPrefix + "Trying to push mapping for model...")
           val fut = esModelStatic.putMapping()
-          fut onComplete {
-            case Success(true)  => trace(logPrefix + "-> OK" )
-            case Success(false) => warn(logPrefix  + "NOT ACK!!! Possibly out-of-sync.")
-            case Failure(ex)    => error(logPrefix + "FAILed", ex)
+          fut.onComplete {
+            case Success(true)  =>
+              trace(logPrefix + "-> OK" )
+            case Success(false) =>
+              warn(logPrefix  + "NOT ACK!!! Possibly out-of-sync.")
+            case Failure(ex)    =>
+              error(s"$logPrefix FAILed to put mapping to ${esModelStatic.ES_INDEX_NAME}/${esModelStatic.ES_TYPE_NAME}:\n-------------\n${esModelStatic.generateMapping.string()}\n-------------\n", ex)
           }
           fut
 

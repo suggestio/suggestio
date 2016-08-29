@@ -29,13 +29,15 @@ trait EsModelStaticMappingGenerators extends IGenEsMappingProps {
   def generateMappingStaticFields: List[Field]
   def generateMappingProps: List[DocField]
 
-  def generateMappingFor(typeName: String): XContentBuilder = jsonGenerator { implicit b =>
-    // Собираем маппинг индекса.
-    IndexMapping(
-      typ = typeName,
-      staticFields = generateMappingStaticFields,
-      properties = generateMappingProps
-    )
+  def generateMappingFor(typeName: String): XContentBuilder = {
+    jsonGenerator { implicit b =>
+      // Собираем маппинг индекса.
+      IndexMapping(
+        typ = typeName,
+        staticFields = generateMappingStaticFields,
+        properties = generateMappingProps
+      )
+    }
   }
 
 }

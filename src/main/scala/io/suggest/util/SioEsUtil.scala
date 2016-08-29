@@ -186,7 +186,6 @@ object SioEsUtil extends MacroLogsImpl {
     */
   def newTransportClient(addrs: Seq[TransportAddress], clusterName: Option[String]): TransportClient = {
     val settingsBuilder = Settings.builder()
-      .put("cluster.name", clusterName)
       //.classLoader(classOf[Settings].getClassLoader)
     clusterName match {
       case Some(_clusterName) =>
@@ -471,7 +470,7 @@ object SioEsUtil extends MacroLogsImpl {
         FieldString(
           id              = SUBFIELD_ENGRAM,
           index           = FieldIndexingVariants.analyzed,
-          index_analyzer  = ENGRAM_AN_2,
+          analyzer        = ENGRAM_AN_2,
           search_analyzer = MINIMAL_AN,
           term_vector     = TermVectorVariants.with_positions_offsets,
           boost           = Some(boostNGram),
@@ -972,7 +971,6 @@ case class FieldString(
   omit_norms : Option[Boolean] = None,
   index_options : String = null,  // = docs | freqs | positions
   analyzer : String = null,
-  index_analyzer : String = null,
   search_analyzer : String = null,
   ignore_above : Option[Boolean] = None,
   position_offset_gap : Option[Int] = None,
@@ -1080,7 +1078,6 @@ trait FieldEnableable extends Field {
 trait TextField extends Field {
   def term_vector: TermVectorVariant
   def search_analyzer: String
-  def index_analyzer : String
   def analyzer : String
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
@@ -1089,8 +1086,6 @@ trait TextField extends Field {
       b.field("term_vector", term_vector.toString)
     if (search_analyzer != null)
       b.field("search_analyzer", search_analyzer)
-    if (index_analyzer != null)
-      b.field("index_analyzer", index_analyzer)
     if (analyzer != null)
       b.field("analyzer", analyzer)
   }
@@ -1100,11 +1095,15 @@ trait TextField extends Field {
   *
   * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-ttl-field.html]] */
 case class FieldTtl(
-  enabled: Boolean = false,
-  default: String = null,
-  store: Boolean = true,
-  index: FieldIndexingVariant = null    // По дефолту not_analyzed - это техническая необходимость.
-) extends FieldEnableable with FieldStoreable with FieldIndexable {
+  enabled : Boolean = false,
+  default : String = null,
+  //store: Boolean = true,
+  index   : FieldIndexingVariant = null    // По дефолту not_analyzed - это техническая необходимость.
+)
+  extends FieldEnableable
+  //with FieldStoreable
+  with FieldIndexable
+{
   override def id: String = FIELD_TTL
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
@@ -1120,7 +1119,6 @@ case class FieldAll(
   store : Boolean = false,
   term_vector : TermVectorVariant = null,
   analyzer : String = null,
-  index_analyzer : String = null,
   search_analyzer : String = null
 ) extends FieldEnableable with TextField with FieldStoreable {
   override def id = FIELD_ALL
@@ -1389,16 +1387,23 @@ case class FieldGeoPoint(
   geohash       : Boolean = false,
   geohashPrecision: String = null,      // "12" | "20m"
   geohashPrefix : Boolean = false,      // Note: This option implicitly enables geohash
-  validate      : Boolean = false,
-  validateLat   : Boolean = false,
-  validateLon   : Boolean = false,
-  normalize     : Boolean = true,
-  normalizeLat  : Boolean = false,
-  normalizeLon  : Boolean = false,
+  //validate      : Boolean = false,
+  //validateLat   : Boolean = false,
+  //validateLon   : Boolean = false,
+  //normalize     : Boolean = true,
+  //normalizeLat  : Boolean = false,
+  //normalizeLon  : Boolean = false,
   precisionStep : Int = -1,
   fieldData     : GeoPointFieldData = null
-) extends DocField with LatLon with Geohash with Validate with ValidateLatLon with Normalize with NormalizeLatLon
-  with PrecisionStep with GeoPointFieldDataField {
+)
+  extends DocField
+  with LatLon
+  with Geohash
+  //with Validate with ValidateLatLon
+  //with Normalize with NormalizeLatLon
+  with PrecisionStep
+  with GeoPointFieldDataField
+{
   override def fieldType = DocFieldTypes.geo_point
 }
 
@@ -1512,11 +1517,11 @@ trait SioEsClient extends MacroLogsI {
   */
 class EsAction2Promise[T](promise: Promise[T]) extends ActionListener[T] {
   override def onResponse(response: T) {
-    promise success response
+    promise.success(response)
   }
 
   override def onFailure(ex: Throwable) {
-    promise failure ex
+    promise.failure(ex)
   }
 }
 
