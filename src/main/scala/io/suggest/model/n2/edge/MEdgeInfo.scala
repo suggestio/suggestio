@@ -119,7 +119,7 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
         id              = SLS_FN,
         index           = FieldIndexingVariants.analyzed,
         include_in_all  = false,
-        index_analyzer  = SioConstants.DEEP_NGRAM_AN,
+        analyzer        = SioConstants.DEEP_NGRAM_AN,
         search_analyzer = SioConstants.MINIMAL_AN
       ),
       FieldDate(
@@ -150,7 +150,7 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
         id              = TAGS_FN,
         index           = FieldIndexingVariants.analyzed,
         include_in_all  = true,
-        index_analyzer  = SioConstants.ENGRAM_AN_1,
+        analyzer        = SioConstants.ENGRAM_AN_1,
         search_analyzer = SioConstants.DFLT_AN,
         fields = Seq(
           // Для аггрегации нужны ненормированные термы. Они позволят получать необрезанные слова.

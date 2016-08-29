@@ -13,7 +13,7 @@ import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.model.search.EsDynSearchStatic
 import io.suggest.util.SioEsUtil._
-import io.suggest.util.{MacroLogsImpl, SioConstants}
+import io.suggest.util.MacroLogsImpl
 import io.suggest.common.empty.EmptyUtil._
 import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
@@ -66,12 +66,12 @@ class MNodes @Inject() (
 
   override def generateMappingStaticFields: List[Field] = {
     List(
-      FieldSource(enabled = true),
-      FieldAll(
-        enabled = true,
-        index_analyzer  = SioConstants.ENGRAM_AN_1,
+      /*FieldAll(
+        enabled         = true,
+        analyzer        = SioConstants.ENGRAM_AN_1,
         search_analyzer = SioConstants.DFLT_AN
-      )
+      ),*/
+      FieldSource(enabled = true)
     )
   }
 
