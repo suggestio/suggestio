@@ -37,6 +37,9 @@ class SiowebSup @Inject() (
   current       : Application
 ) { outer =>
 
+  // constructor
+  startLink()
+
   private def timeoutSec = 5.seconds
 
   private implicit def timeout = Timeout(timeoutSec)

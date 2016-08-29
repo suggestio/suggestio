@@ -32,7 +32,7 @@ class SiowebNotifier @Inject() (
 {
 
   implicit val SN_ASK_TIMEOUT: Timeout = {
-    val ms = configuration.getInt("sn.ask.timeout_ms") getOrElse 5000
+    val ms = configuration.getInt("sn.ask.timeout_ms").getOrElse(5000)
     Timeout( ms.milliseconds )
   }
 

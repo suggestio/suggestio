@@ -1,10 +1,9 @@
 package models.usr
 
 import com.google.inject.{Inject, Singleton}
-import io.suggest.model.n2.node.{MNodeTypes, MNodes}
+import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
-import models.MNode
 import models.mproj.ICommonDi
 import util.PlayMacroLogsImpl
 import util.secure.ScryptUtil
@@ -44,6 +43,23 @@ class MSuperUsers @Inject()(
 
   /** PersonId суперпользователей sio. */
   private var SU_IDS: Set[String] = Set.empty
+
+  // Constructor
+  onAppStart()
+
+  /** Логика реакции на запуск приложения: нужно создать суперюзеров в БД. */
+  def onAppStart(): Future[_] = {
+    // Если в конфиге явно не включена поддержка проверки суперюзеров в БД, то не делать этого.
+    // Это также нужно было при миграции с MPerson на MNode, чтобы не произошло повторного создания новых
+    // юзеров в MNode, при наличии уже существующих в MPerson.
+    val ck = "start.ensure.superusers"
+    val createIfMissing = configuration.getBoolean(ck).getOrElse(false)
+    val fut = resetSuperuserIds(createIfMissing)
+    if (!createIfMissing)
+      debug("Does not ensuring superusers in permanent models: " + ck + " != true")
+    fut
+  }
+
 
   /**
    * Принадлежит ли указанный id суперюзеру suggest.io?

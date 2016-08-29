@@ -52,7 +52,10 @@ trait CaptchaGeneratorBase
   def createCaptchaImg(ctext: String): Array[Byte]
 
   protected def _getCaptchaImg(captchaId: String, ctext: String, cookiePath: String)(implicit request: RequestHeader): Result = {
-    val ctextCrypt = captchaUtil.encryptPrintable(ctext, ivMaterial = captchaUtil.ivMaterial(captchaId))
+    val ctextCrypt = captchaUtil.cipherer.encryptPrintable(
+      ctext,
+      ivMaterial = captchaUtil.ivMaterial(captchaId)
+    )
     Ok(createCaptchaImg(ctext))
       .as("image/" + captchaUtil.CAPTCHA_FMT_LC)
       .withHeaders(
@@ -127,39 +130,40 @@ trait CaptchaValidator extends PlayMacroLogsI with ICaptchaUtilDi {
     * @return Форма, в которую может быть залита ошибка поля ввода капчи.
     */
   def checkCaptcha[T](form: Form[T])(implicit request: RequestHeader): Form[T] = {
-    val maybeCookieOk = form.data.get(CAPTCHA_ID_FN) flatMap { captchaId =>
-      form.data.get(CAPTCHA_TYPED_FN) flatMap { captchaTyped =>
-        val _cookieName = captchaUtil.cookieName(captchaId)
-        val cookieRaw = request.cookies.get(_cookieName)
-        val cookie = cookieRaw
-          .filter { cookie =>
-            try {
-              val ctext = captchaUtil.decryptPrintable(cookie.value, ivMaterial = captchaUtil.ivMaterial(captchaId))
-              // Бывает юзер вводит английские буквы с помощью кириллицы. Исправляем это:
-              // TODO Надо исправлять только буквы
-              val captchaTyped2 = captchaTyped.trim.map { TextUtil.mischarFixEnAlpha }
-              // TODO Допускать неточное совпадение капчи?
-              val result = ctext equalsIgnoreCase captchaTyped2
-              if (!result)
-                LOGGER.trace(s"checkCaptcha($CAPTCHA_ID_FN, $CAPTCHA_TYPED_FN): Invalid captcha typed. expected = $ctext, typed = $captchaTyped2")
-              result
-            } catch {
-              case ex: Exception =>
-                LOGGER.warn(s"checkCaptcha($CAPTCHA_ID_FN, $CAPTCHA_TYPED_FN): Failed", ex)
-                false
-            }
-          }
-          if (cookie.isEmpty)
-            LOGGER.debug(s"checkCaptcha(): Captcha cookie '${_cookieName}' is missing or invalid: " + cookieRaw)
-          cookie
+    val okFormOpt = for {
+      captchaId       <- form.data.get(CAPTCHA_ID_FN)
+      captchaTyped    <- form.data.get(CAPTCHA_TYPED_FN)
+      _cookieName     = captchaUtil.cookieName(captchaId)
+      cookieRaw       <- request.cookies.get(_cookieName)
+      if {
+        lazy val logPrefix = s"checkCaptcha($CAPTCHA_ID_FN, $CAPTCHA_TYPED_FN):"
+        try {
+          val ctext = captchaUtil.cipherer.decryptPrintable(
+            cookieRaw.value,
+            ivMaterial = captchaUtil.ivMaterial(captchaId)
+          )
+          // Бывает юзер вводит английские буквы с помощью кириллицы. Исправляем это:
+          // TODO Надо исправлять только буквы
+          val captchaTyped2 = captchaTyped.trim.map { TextUtil.mischarFixEnAlpha }
+          // TODO Допускать неточное совпадение капчи?
+          val result = ctext equalsIgnoreCase captchaTyped2
+          if (!result)
+            LOGGER.trace(s"$logPrefix Invalid captcha typed. expected = $ctext, typed = $captchaTyped2")
+          result
+        } catch {
+          case ex: Exception =>
+            LOGGER.warn(s"$logPrefix Failed", ex)
+            false
+        }
       }
-    }
-    maybeCookieOk.fold {
-      // Нет результата. Залить в форму ошибки.
-      form.withError(CAPTCHA_TYPED_FN, "error.captcha")
-    } { _ =>
+    } yield {
       // Есть что-то в результате. Значит капчка пропарсилась.
       form
+    }
+    // Отработать отсутствие положительного результата парсинга капчи.
+    okFormOpt.getOrElse {
+      // Нет результата. Залить в форму ошибки.
+      form.withError(CAPTCHA_TYPED_FN, "error.captcha")
     }
   }
 
@@ -178,4 +182,5 @@ trait CaptchaValidator extends PlayMacroLogsI with ICaptchaUtilDi {
         ))
     }
   }
+
 }

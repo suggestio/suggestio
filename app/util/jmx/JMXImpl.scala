@@ -9,14 +9,19 @@ import models.ai.MAiMadJmx
 import models.event.MEventsJmx
 import models.mcal.MCalendarJmx
 import models.merr.MRemoteErrorsJmx
-import models.usr.{MExtIdentJmx, EmailActivationsJmx, EmailPwIdentsJmx}
+import models.usr.{EmailActivationsJmx, EmailPwIdentsJmx, MExtIdentJmx}
 import util.adv.AdvUtilJmx
 import java.lang.management.ManagementFactory
+
 import io.suggest.util.JMXBase
 import models._
 import util.PlayLazyMacroLogsImpl
 import io.suggest.util.JMXHelpers._
+import play.api.inject.ApplicationLifecycle
 import util.adv.geo.tag.GeoTagsUtilJmx
+import util.es.SiowebEsModelJmx
+
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -39,7 +44,9 @@ class JMXImpl @Inject() (
   mAiMadJmx                     : MAiMadJmx,
   emailPwIdentsJmx              : EmailPwIdentsJmx,
   emailActivationsJmx           : EmailActivationsJmx,
-  mExtIdentJmx                  : MExtIdentJmx
+  mExtIdentJmx                  : MExtIdentJmx,
+  lifecycle                     : ApplicationLifecycle,
+  implicit private val ec       : ExecutionContext
 )
   extends PlayLazyMacroLogsImpl
 {
@@ -47,7 +54,7 @@ class JMXImpl @Inject() (
   import LOGGER._
 
   /** Список моделей, отправляемых в MBeanServer. private для защиты от возможных воздействий извне. */
-  private val JMX_MODELS = {
+  private def JMX_MODELS = {
     List[JMXBase](
       mAdStatJmx,
       emailActivationsJmx,
@@ -64,6 +71,16 @@ class JMXImpl @Inject() (
       geoTagsUtilJmx,
       mMediasJmx
     )
+  }
+
+  // Constructor
+  registerAll()
+
+  // Destructor
+  lifecycle.addStopHook { () =>
+    Future {
+      unregisterAll()
+    }
   }
 
   private def getSrv = ManagementFactory.getPlatformMBeanServer
@@ -101,4 +118,3 @@ class JMXImpl @Inject() (
   }
 
 }
-

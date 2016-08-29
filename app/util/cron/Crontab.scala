@@ -22,8 +22,6 @@ import scala.concurrent.Future
  * Реализация происходит через akka scheduler и статический набор события расписания.
  * По мотивам http://stackoverflow.com/a/13469308
  */
-trait ICrontab
-
 class Crontab @Inject() (
   // geo-nodes
   geoParentsHealth              : AdnGeoParentsHealth,
@@ -39,7 +37,6 @@ class Crontab @Inject() (
   mCommonDi                     : ICommonDi
 )
   extends PlayLazyMacroLogsImpl
-  with ICrontab
 {
 
   import LOGGER._
