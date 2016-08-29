@@ -8,9 +8,9 @@ import models.im.{MImgs3, MLocalImg, MLocalImgs}
 import models.mcron.{ICronTask, MCronTask}
 import models.mproj.ICommonDi
 import org.apache.commons.io.FileUtils
-import play.api.Application
 import util.async.AsyncUtil
-import util.{ICronTasksProvider, PlayMacroLogsImpl}
+import util.PlayMacroLogsImpl
+import util.cron.ICronTasksProvider
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -55,7 +55,7 @@ class PeriodicallyDeleteNotExistingInPermanent @Inject() (
 
 
   /** Список задач, которые надо вызывать по таймеру. */
-  override def cronTasks(app: Application): TraversableOnce[ICronTask] = {
+  override def cronTasks(): TraversableOnce[ICronTask] = {
     if (DNEIP_ENABLED) {
       val task = MCronTask(startDelay = DNEIP_START_DELAY, every = DNEIP_EVERY, displayName = DNEIP_CONF_PREFIX) {
         dneipFindAndDeleteAsync().onFailure { case ex =>

@@ -3,6 +3,7 @@ package models
 import java.net.InetAddress
 
 import com.google.inject.Inject
+import io.suggest.es.EsClientUtil
 import io.suggest.model.es.{CopyContentResult, EsModelCommonStaticT, EsModelUtil}
 import io.suggest.model.n2.media.MMedias
 import io.suggest.model.n2.node.MNodes
@@ -167,10 +168,8 @@ final class SiowebEsModelJmx @Inject() (
     val addrs = remotes.split("[\\s,]+")
       .toIterator
       .map { hostPortStr =>
-        val Array(host, portStr) = hostPortStr.split(':')
-        val port = portStr.toInt
-        val addr = InetAddress.getByName(host)
-        new InetSocketTransportAddress(addr, port)
+        val sockAddr = EsClientUtil.parseHostPortStr(hostPortStr)
+        new InetSocketTransportAddress(sockAddr)
       }
       .toSeq
     for (result <- siowebEsModel.importModelsFromRemote(addrs, models)) yield {

@@ -36,6 +36,8 @@ class PgpUtil @Inject() (
 
   import mCommonDi._
 
+  maybeInit()
+
   /** Вся возня с ключами вертится здесь. */
   private val KF: KeyFactory = KeyFactoryFactory.newInstance()
 

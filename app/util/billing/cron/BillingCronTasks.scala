@@ -3,9 +3,9 @@ package util.billing.cron
 import com.google.inject.Inject
 import models.mcron.{ICronTask, MCronTask}
 import models.mproj.ICommonDi
-import play.api.Application
 import util.adv.direct.AdvDirectBilling
-import util.{ICronTasksProvider, PlayMacroLogsImpl}
+import util.PlayMacroLogsImpl
+import util.cron.ICronTasksProvider
 
 import scala.concurrent.duration._
 
@@ -46,7 +46,7 @@ class BillingCronTasks @Inject()(
   //private val AUTO_ACCEPT_REQS_AFTER_HOURS = configuration.getInt("mmp.daily.accept.auto.after.hours") getOrElse 16
 
   /** Сборщик спеки периодических задач биллинга. */
-  override def cronTasks(app: Application): TraversableOnce[ICronTask] = {
+  override def cronTasks(): TraversableOnce[ICronTask] = {
     val enabled = CRON_BILLING_CHECK_ENABLED
     info("enabled = " + enabled)
     if (enabled) {

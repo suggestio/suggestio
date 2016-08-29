@@ -1,12 +1,9 @@
-import akka.actor.Cancellable
 import io.suggest.model.es.EsModelUtil
 import io.suggest.util.SioEsUtil
 import models.usr.MSuperUsers
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.mapper.MapperException
 import util.event.SiowebNotifier
-import util.secure.PgpUtil
-import util.showcase.ScStatSaver
 import scala.concurrent.{Await, Future}
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success}
@@ -32,8 +29,6 @@ object Global extends GlobalSettings {
   import scala.concurrent.ExecutionContext.Implicits.global
 
 
-  private var cronTimers : List[Cancellable] = null
-
   /**
    * При запуске нужно все перечисленные действия.
    * @param app Экземпляр класса Application.
@@ -41,22 +36,14 @@ object Global extends GlobalSettings {
   override def onStart(app: Application) {
     super.onStart(app)
     implicit val sioNotifier = _inject[SiowebNotifier](app)
-    // TODO Инициализация ES-клиента уже вынесена на уровень DI: DiModule + SiowebEsUtil.
-    val esNodeFut = Future {
-      sioWebEsUtil(app).ensureNode()
-    }
-    ensureScryptNoJni()
     // Запускаем супервизора вместе с деревом остальных акторов.
     _inject[SiowebSup](app).startLink()
-    // Запускать es-клиент при старте, ибо подключение к кластеру ES это занимает некоторое время.
-    val esClientFut = esNodeFut map {
-      _.client()
-    }
-    val fut = esClientFut
-      .flatMap { implicit esClient =>
-        initializeEsModels(app)
-          .map { _ => esClient }
-      }.flatMap { esClient =>
+
+    // Запускать es-клиент при старте. Это нужно для следующих шагов инициализации.
+    implicit val esClient = app.injector.instanceOf[Client]
+    val fut = for {
+      _ <- initializeEsModels(app)
+      _ <- {
         // Если в конфиге явно не включена поддержка проверки суперюзеров в БД, то не делать этого.
         // Это также нужно было при миграции с MPerson на MNode, чтобы не произошло повторного создания новых
         // юзеров в MNode, при наличии уже существующих в MPerson.
@@ -66,12 +53,10 @@ object Global extends GlobalSettings {
         val fut = mSuperUsers.resetSuperuserIds(createIfMissing)
         if (!createIfMissing)
           debug("Does not ensuring superusers in permanent models: " + ck + " != true")
-        fut.map { _ => esClient }
+        fut
       }
-
-    // Инициализировать связку ключей, если необходимо.
-    esClientFut.onSuccess { case esClient =>
-      pgpUtil(app).maybeInit()
+    } yield {
+      None
     }
 
     jmxImpl(app).registerAll()
@@ -83,9 +68,6 @@ object Global extends GlobalSettings {
     }
     CipherUtil.ensureBcJce()
     Await.ready(fut, startTimeout)
-    synchronized {
-      cronTimers = crontab(app).startTimers(app)
-    }
   }
 
 
@@ -122,48 +104,21 @@ object Global extends GlobalSettings {
   }
 
   private def _inject[T: ClassTag](app: Application) = app.injector.instanceOf[T]
-  private def crontab(app: Application)         = _inject[Crontab](app)
   private def jmxImpl(app: Application)         = _inject[JMXImpl](app)
   private def siowebEsModel(app: Application)   = _inject[SiowebEsModel](app)
-  private def scStatSaver(app: Application)     = _inject[ScStatSaver](app)
-  private def pgpUtil(app: Application)         = _inject[PgpUtil](app)
-  private def sioWebEsUtil(app: Application)    = _inject[SiowebEsUtil](app)
 
   /**
    * При остановке системы (например, при обновлении исходников), нужно выполнить все нижеперечисленные действия.
    * @param app Экщемпляр класса Application.
    */
   override def onStop(app: Application) {
-    scStatSaver(app).BACKEND.close()
     // Была одна ошибка после проблемы в DI после onStart(). JMXImpl должен останавливаться перед elasticsearch.
     jmxImpl(app).unregisterAll()
 
     // В текущем потоке: Исполняем синхронные задачи завершения работы...
     super.onStop(app)
-    // Остановить таймеры
-    synchronized {
-      crontab(app).stopTimers(cronTimers)
-      cronTimers = null
-    }
   }
 
-
-  /** Запрещаем бородатому scrypt'у грузить в jvm нативную amd64-либу, ибо она взрывоопасна без перекомпиляции
-    * под свежие libcrypto.so (пакет openssl):
-    *
-    * Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
-    * C  [libcrypto.so.1.0.0+0x6c1d7]  SHA256_Update+0x157
-    *
-    * Java frames: (J=compiled Java code, j=interpreted, Vv=VM code)
-    *   com.lambdaworks.crypto.SCrypt.scryptN([B[BIIII)[B+0
-    *   com.lambdaworks.crypto.SCrypt.scrypt([B[BIIII)[B+14
-    *   com.lambdaworks.crypto.SCryptUtil.check(Ljava/lang/String;Ljava/lang/String;)Z+118
-    * @see com.lambdaworks.jni.LibraryLoaders.loader(). */
-  private def ensureScryptNoJni() {
-    val scryptJniProp = "com.lambdaworks.jni.loader"
-    if (System.getProperty(scryptJniProp) != "nil")
-      System.setProperty(scryptJniProp, "nil")
-  }
 }
 
 

@@ -13,11 +13,11 @@ import models.{IpGeoBaseCity, IpGeoBaseRange}
 import org.apache.commons.io.{FileUtils, FilenameUtils}
 import org.postgresql.copy.CopyManager
 import org.postgresql.core.BaseConnection
-import play.api.Application
 import play.api.db.Database
 import play.api.libs.ws.WSClient
 import util.ws.HttpGetToFile
-import util.{ICronTasksProvider, PlayMacroLogsImpl}
+import util.PlayMacroLogsImpl
+import util.cron.ICronTasksProvider
 
 import scala.annotation.tailrec
 import scala.concurrent.Future
@@ -79,7 +79,7 @@ class IpGeoBaseImport @Inject() (
     .getOrElse(IP_RANGES_FILE_ENCODING)
 
 
-  override def cronTasks(app: Application): TraversableOnce[MCronTask] = {
+  override def cronTasks(): TraversableOnce[MCronTask] = {
     if (IS_ENABLED) {
       // TODO Нужно обновлять 1-2 раза в день максимум, а не после каждого запуска.
       val task = MCronTask(
@@ -87,7 +87,7 @@ class IpGeoBaseImport @Inject() (
         every = 1.day,
         displayName = "updateIpBase()"
       ) {
-        implicit val ws = app.injector.instanceOf[WSClient]
+        implicit val ws = current.injector.instanceOf[WSClient]
         updateIpBase()
       }
       Seq(task)

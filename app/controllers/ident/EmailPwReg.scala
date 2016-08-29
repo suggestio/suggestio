@@ -20,6 +20,7 @@ import util.di.INodesUtil
 import util.mail.IMailerWrapperDi
 import util.{FormUtil, PlayMacroLogsI}
 import util.acl._
+import util.secure.IScryptUtilDi
 import views.html.ident.reg.regSuccessTpl
 import views.html.ident.reg.email._
 
@@ -71,6 +72,7 @@ trait EmailPwReg
   with IMPersonIdents
   with IEmailPwIdentsDi
   with IEmailActivationsDi
+  with IScryptUtilDi
 {
 
   import mCommonDi._
@@ -200,7 +202,7 @@ trait EmailPwReg
             val epw0 = EmailPwIdent(
               email       = eaInfo.email,
               personId    = personId,
-              pwHash      = emailPwIdents.mkHash(data.password),
+              pwHash      = scryptUtil.mkHash(data.password),
               isVerified  = true
             )
             emailPwIdents.save(epw0)

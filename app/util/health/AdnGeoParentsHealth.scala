@@ -10,11 +10,11 @@ import models.mproj.ICommonDi
 import models.msys.NodeProblem
 import models.usr.MSuperUsers
 import org.joda.time.{DateTime, DateTimeZone}
-import play.api.Application
 import play.api.i18n.Lang
 import util.mail.IMailerWrapper
 import util.showcase.ShowcaseNodeListUtil
-import util.{ICronTasksProvider, PlayMacroLogsImpl}
+import util.PlayMacroLogsImpl
+import util.cron.ICronTasksProvider
 import views.html.sys1.debug.geo.parent._
 
 import scala.concurrent.Future
@@ -48,7 +48,7 @@ class AdnGeoParentsHealth @Inject() (
 
 
   /** Список задач, которые надо вызывать по таймеру. */
-  override def cronTasks(app: Application): TraversableOnce[ICronTask] = {
+  override def cronTasks(): TraversableOnce[ICronTask] = {
     var acc: List[ICronTask] = Nil
 
     val logVerb = if (GEO_PARENTS_AUTO) {

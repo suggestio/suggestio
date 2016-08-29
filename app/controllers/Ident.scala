@@ -17,6 +17,7 @@ import util.adn.NodesUtil
 import util.captcha.CaptchaUtil
 import util.ident.IdentUtil
 import util.mail.IMailerWrapper
+import util.secure.ScryptUtil
 import views.html.ident._
 import views.html.ident.login.epw._loginColumnTpl
 import views.html.ident.reg.email._regColumnTpl
@@ -40,6 +41,7 @@ class Ident @Inject() (
   override val emailPwIdents        : EmailPwIdents,
   override val emailActivations     : EmailActivations,
   override val mExtIdents           : MExtIdents,
+  override val scryptUtil           : ScryptUtil,
   override val mCommonDi            : ICommonDi
 )
   extends SioController

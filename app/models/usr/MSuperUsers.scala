@@ -7,6 +7,7 @@ import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import models.MNode
 import models.mproj.ICommonDi
 import util.PlayMacroLogsImpl
+import util.secure.ScryptUtil
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
@@ -21,6 +22,7 @@ import scala.util.{Failure, Success}
 class MSuperUsers @Inject()(
   emailPwIdents   : EmailPwIdents,
   mNodes          : MNodes,
+  scryptUtil      : ScryptUtil,
   mCommonDi       : ICommonDi
 )
   extends PlayMacroLogsImpl
@@ -82,8 +84,12 @@ class MSuperUsers @Inject()(
             for {
               personId <- mNodes.save(mperson0)
               mpiId <- {
-                val pwHash = emailPwIdents.mkHash(email)
-                val epw = EmailPwIdent(email=email, personId=personId, pwHash = pwHash)
+                val epw = EmailPwIdent(
+                  email       = email,
+                  personId    = personId,
+                  pwHash      = scryptUtil.mkHash(email),
+                  isVerified  = true
+                )
                 emailPwIdents.save(epw)
               }
             } yield {
