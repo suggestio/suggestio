@@ -9,7 +9,7 @@ import com.vividsolutions.jts.geom.Coordinate
 import io.suggest.geo.GeoConstants.Qs
 import io.suggest.model.play.qsb.QsbKey1T
 import io.suggest.util.{JacksonWrapper, MacroLogsImpl}
-import org.elasticsearch.common.geo.{GeoHashUtils, GeoPoint => EsGeoPoint}
+import org.elasticsearch.common.geo.{GeoPoint => EsGeoPoint}
 import play.api.data.validation.ValidationError
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -37,17 +37,15 @@ object GeoPoint extends MacroLogsImpl {
     if (commaIndex != -1) {
       fromLatLonComma(v, commaIndex)
     } else {
-      fromGeohash(v)
+      // До util:926da92e15e8 здесь лежала [вроде] неиспользуемая поддержка geohash,
+      // но при апдейте на elasticsearch 2.1 API было выкинуто в lucene, а там какое-то мутное API.
+      // Поддержка гео-хеша была выкинута, т.к. она не используется и не очень релевантна для этой модели.
+      throw new IllegalArgumentException("Unknown geo-point format: " + v)
     }
   }
 
   def apply(esgp: EsGeoPoint): GeoPoint = {
     GeoPoint(lat = esgp.lat,  lon = esgp.lon)
-  }
-
-  def fromGeohash(geohash: String): GeoPoint = {
-    val esgp = GeoHashUtils.decode(geohash)
-    GeoPoint(esgp)
   }
 
   def fromLatLon(latLon: String): GeoPoint = {
@@ -228,9 +226,6 @@ case class GeoPoint(lat: Double, lon: Double) extends IGeoPoint {
 
   /** Конвертация в экземпляр ES GeoPoint. */
   def toEsGeopoint = new EsGeoPoint(lat, lon)
-
-  /** Конвертация в геохеш. */
-  def geohash = GeoHashUtils.encode(lat, lon)
 
   override def toString: String = super.toString
 

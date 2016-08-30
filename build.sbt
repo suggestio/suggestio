@@ -23,7 +23,7 @@ resolvers ++= {
 
 libraryDependencies ++= {
   val slf4jVsn      = "1.7.+"
-  val esVsn         = "2.0.2"
+  val esVsn         = "2.1.2"
   val akkaVsn       = "2.4.+"
   val morphVsn      = "1.3-SNAPSHOT"
   Seq(

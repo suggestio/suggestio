@@ -4,7 +4,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import io.suggest.model.common.OptStrId
 import io.suggest.primo.TypeT
-import io.suggest.util.JacksonWrapper
+import io.suggest.util.{JacksonWrapper, SioConstants}
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.action.bulk.{BulkProcessor, BulkRequest, BulkResponse}
 import org.elasticsearch.action.get.{GetResponse, MultiGetResponse}
@@ -14,6 +14,7 @@ import org.elasticsearch.client.Client
 import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import org.elasticsearch.search.SearchHit
+import org.elasticsearch.search.sort.{SortBuilders, SortOrder}
 
 import scala.collection.JavaConversions._
 import scala.concurrent.Future
@@ -155,9 +156,9 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
 
   def prepareScroll(keepAlive: TimeValue = SCROLL_KEEPALIVE_DFLT, srb: SearchRequestBuilder = prepareSearch()): SearchRequestBuilder = {
     srb
-      // Setting search_type to scan disables sorting and makes scrolling very efficient.
-      .setSearchType(SearchType.SCAN)
       .setScroll(keepAlive)
+      // Elasticsearch-2.1+: вместо search_type=SCAN желательно юзать сортировку по полю _doc.
+      .addSort( SortBuilders.fieldSort( SioConstants.FIELD_DOC ) )
   }
 
   /** Запуск поискового запроса и парсинг результатов в представление этой модели. */
@@ -344,9 +345,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
    * @return Список всех id в неопределённом порядке.
    */
   def getAllIds(maxResults: Int, maxPerStep: Int = MAX_RESULTS_DFLT): Future[List[String]] = {
-    prepareSearch()
-      .setSearchType(SearchType.SCAN)
-      .setScroll(SCROLL_KEEPALIVE_DFLT)
+    prepareScroll()
       .setQuery( QueryBuilders.matchAllQuery() )
       .setSize(maxPerStep)
       .setFetchSource(false)
