@@ -399,7 +399,7 @@ object SioEsUtil extends MacroLogsImpl {
   }
 
   /** 2015.sep.02: Добавить поддержку анализа тегов. */
-  def getIndexSettingsV2_2 = {
+  def getIndexSettingsV2_2: XContentBuilder = {
     jsonGenerator { implicit b =>
       IndexSettings(
         tokenizers = Seq(
@@ -1353,6 +1353,7 @@ trait PrecisionStep extends Field {
 }
 
 
+// TODO Кажется, это дело удалили в 2.0. Или compressed удалили, хз. Но оно в 2.0 работает ведь как-то.
 object GeoPointFieldDataFormats extends Enumeration {
   type GeoPointFieldDataFormat = Value
   val compressed, array = Value
@@ -1393,7 +1394,7 @@ case class FieldGeoPoint(
   //normalize     : Boolean = true,
   //normalizeLat  : Boolean = false,
   //normalizeLon  : Boolean = false,
-  precisionStep : Int = -1,
+  //precisionStep : Int = -1,
   fieldData     : GeoPointFieldData = null
 )
   extends DocField
@@ -1401,7 +1402,7 @@ case class FieldGeoPoint(
   with Geohash
   //with Validate with ValidateLatLon
   //with Normalize with NormalizeLatLon
-  with PrecisionStep
+  //with PrecisionStep
   with GeoPointFieldDataField
 {
   override def fieldType = DocFieldTypes.geo_point
