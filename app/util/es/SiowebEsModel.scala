@@ -16,7 +16,6 @@ import models.mproj.ICommonDi
 import models.sec.MAsymKeys
 import models.usr.{EmailActivations, EmailPwIdents, MExtIdents}
 import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
-import org.elasticsearch.index.mapper.MapperException
 import util.PlayLazyMacroLogsImpl
 
 import scala.concurrent.duration._
@@ -74,13 +73,14 @@ class SiowebEsModel @Inject() (
 
   /** Вернуть экзепшен, если есть какие-то проблемы при обработке ES-моделей. */
   def maybeErrorIfIncorrectModels() {
-    if (configuration.getBoolean("es.mapping.model.conflict.check.enabled") getOrElse true)
+    if (configuration.getBoolean("es.mapping.model.conflict.check.enabled").getOrElse(true))
       EsModelUtil.errorIfIncorrectModels(ES_MODELS)
   }
 
   /** Отправить маппинги всех моделей в хранилище. */
   def putAllMappings(models: Seq[EsModelCommonStaticT] = ES_MODELS): Future[Boolean] = {
-    val ignoreExist = configuration.getBoolean("es.mapping.model.ignore_exist") getOrElse false
+    val ignoreExist = configuration.getBoolean("es.mapping.model.ignore_exist")
+      .contains(true)    // .getOrElse(false)
     trace("putAllMappings(): ignoreExists = " + ignoreExist)
     EsModelUtil.putAllMappings(models, ignoreExist)
   }
@@ -110,7 +110,7 @@ class SiowebEsModel @Inject() (
       }
       copyResultFut
     }
-    resultFut map { results =>
+    for (results <- resultFut) yield {
       val result = CopyContentResult(
         success = results.iterator.map(_.success).sum,
         failed  = results.iterator.map(_.failed).sum
@@ -143,6 +143,8 @@ class SiowebEsModel @Inject() (
       case Failure(ex) => error(logPrefix + "Failure", ex)
     }
     // Это код обновления на следующую версию. Его можно держать и после обновления.
+    /*
+    import org.elasticsearch.index.mapper.MapperException
     futMappings.recoverWith {
       case ex: MapperException if !triedIndexUpdate =>
         info("Trying to update main index to v2.1 settings...")
@@ -150,6 +152,7 @@ class SiowebEsModel @Inject() (
           initializeEsModels(triedIndexUpdate = true)
         }
     }
+    */
     futMappings
   }
 
