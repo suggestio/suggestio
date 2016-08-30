@@ -1,6 +1,6 @@
 package io.suggest.model.search
 
-import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
+import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 
 /**
  * Suggest.io
@@ -19,10 +19,12 @@ trait WithoutIds extends DynSearchArgs {
     var query3: QueryBuilder = super.toEsQuery
     // Если включен withoutIds, то нужно обернуть query3 в соответствующий not(ids filter).
     if (withoutIds.nonEmpty) {
-      val idsFilter = FilterBuilders.notFilter(
-        FilterBuilders.idsFilter().addIds(withoutIds : _*)
+      val idsFilter = QueryBuilders.notQuery(
+        QueryBuilders.idsQuery(withoutIds: _*)
       )
-      query3 = QueryBuilders.filteredQuery(query3, idsFilter)
+      query3 = QueryBuilders.boolQuery()
+        .must(query3)
+        .filter(idsFilter)
     }
     query3
   }

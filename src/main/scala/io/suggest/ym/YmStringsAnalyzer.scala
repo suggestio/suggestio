@@ -73,8 +73,8 @@ import YmStringsAnalyzer._
 /** Трейт с переопределяемыми методами сборки привычного YmString-анализатора. */
 trait YmStringAnalyzerT extends Analyzer {
 
-  def tokenizer(reader: Reader): Tokenizer = {
-    val tok = new StandardTokenizer(reader)
+  def tokenizer(): Tokenizer = {
+    val tok = new StandardTokenizer()
     tok.setMaxTokenLength(MAX_TOKEN_LEN)
     tok
   }
@@ -93,8 +93,8 @@ trait YmStringAnalyzerT extends Analyzer {
   }
 
   /** Сборка анализатора текстов происходит здесь. */
-  override def createComponents(fieldName: String, reader: Reader): TokenStreamComponents = {
-    val tokens = tokenizer(reader)
+  override def createComponents(fieldName: String): TokenStreamComponents = {
+    val tokens = tokenizer()
     val filtered = addFilters(tokens)
     new TokenStreamComponents(tokens, filtered)
   }

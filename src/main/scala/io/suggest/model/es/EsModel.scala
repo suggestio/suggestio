@@ -29,8 +29,6 @@ trait EsModelStaticT extends EsModelCommonStaticT {
     prepareGetBase(id)
   }
 
-  def prepareTermVector(id: String) = prepareTermVectorBase(id)
-
   def prepareUpdate(id: String) = prepareUpdateBase(id)
   def prepareDelete(id: String) = prepareDeleteBase(id)
 

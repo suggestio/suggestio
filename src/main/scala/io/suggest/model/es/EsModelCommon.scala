@@ -58,14 +58,6 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
 
   def prepareCount()  = esClient.prepareCount(ES_INDEX_NAME).setTypes(ES_TYPE_NAME)
 
-  def prepareTermVectorBase(id: String) = {
-    val req = esClient.prepareTermVector(ES_INDEX_NAME, ES_TYPE_NAME, id)
-    val rk = getRoutingKey(id)
-    if (rk.isDefined)
-      req.setRouting(rk.get)
-    req
-  }
-
   def prepareGetBase(id: String) = {
     val req = esClient.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
     val rk = getRoutingKey(id)

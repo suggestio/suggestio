@@ -1,6 +1,7 @@
 package io.suggest.model.es
 
-import io.suggest.util.{SioConstants, JacksonWrapper}
+import io.suggest.util.{JacksonWrapper, SioConstants}
+import org.elasticsearch.common.bytes.BytesArray
 import org.elasticsearch.search.lookup.SourceLookup
 
 import scala.concurrent.Future
@@ -117,9 +118,9 @@ trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
     info(s"$logPrefix $data")
     val idOpt = Option(id1)
       .filter(!_.isEmpty)
-    val b = data.getBytes
     try {
-      val dataMap = SourceLookup.sourceAsMap(b, 0, b.length)
+      val br = new BytesArray( data )
+      val dataMap = SourceLookup.sourceAsMap(br)
       _saveOne(idOpt, dataMap)
     } catch {
       case ex: Throwable =>
@@ -134,8 +135,8 @@ trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
       val idsFut = Future.traverse(raws) { tmap =>
         val idOpt = tmap.get( SioConstants.FIELD_ID ).map(_.toString.trim)
         val sourceStr = JacksonWrapper.serialize(tmap.get(SioConstants.FIELD_SOURCE))
-        val b = sourceStr.getBytes
-        val dataMap = SourceLookup.sourceAsMap(b, 0, b.length)
+        val br = new BytesArray(sourceStr)
+        val dataMap = SourceLookup.sourceAsMap(br)
         _saveOne(idOpt, dataMap)
       }
       val resFut = idsFut.map { ids =>

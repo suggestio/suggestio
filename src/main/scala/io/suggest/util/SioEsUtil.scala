@@ -2,7 +2,7 @@ package io.suggest.util
 
 import org.elasticsearch.action.admin.indices.settings.put.UpdateSettingsResponse
 import org.elasticsearch.client.transport.TransportClient
-import org.elasticsearch.common.settings.{Settings, ImmutableSettings}
+import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.common.transport.TransportAddress
 import org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder
 import org.elasticsearch.client.Client
@@ -185,9 +185,8 @@ object SioEsUtil extends MacroLogsImpl {
     * @return TransportClient
     */
   def newTransportClient(addrs: Seq[TransportAddress], clusterName: Option[String]): TransportClient = {
-    val settingsBuilder = ImmutableSettings.settingsBuilder()
-      .classLoader(classOf[Settings].getClassLoader)
-      .put("cluster.name", clusterName)
+    val settingsBuilder = Settings.builder()
+      //.classLoader(classOf[Settings].getClassLoader)
     clusterName match {
       case Some(_clusterName) =>
         settingsBuilder.put("cluster.name", _clusterName)
@@ -195,7 +194,9 @@ object SioEsUtil extends MacroLogsImpl {
         settingsBuilder.put("client.transport.ignore_cluster_name", true)
     }
     val settings = settingsBuilder.build()
-    new TransportClient(settings)
+    TransportClient.builder()
+      .settings(settings)
+      .build()
       .addTransportAddresses(addrs : _*)
   }
 
@@ -398,7 +399,7 @@ object SioEsUtil extends MacroLogsImpl {
   }
 
   /** 2015.sep.02: Добавить поддержку анализа тегов. */
-  def getIndexSettingsV2_2 = {
+  def getIndexSettingsV2_2: XContentBuilder = {
     jsonGenerator { implicit b =>
       IndexSettings(
         tokenizers = Seq(
@@ -469,7 +470,7 @@ object SioEsUtil extends MacroLogsImpl {
         FieldString(
           id              = SUBFIELD_ENGRAM,
           index           = FieldIndexingVariants.analyzed,
-          index_analyzer  = ENGRAM_AN_2,
+          analyzer        = ENGRAM_AN_2,
           search_analyzer = MINIMAL_AN,
           term_vector     = TermVectorVariants.with_positions_offsets,
           boost           = Some(boostNGram),
@@ -970,7 +971,6 @@ case class FieldString(
   omit_norms : Option[Boolean] = None,
   index_options : String = null,  // = docs | freqs | positions
   analyzer : String = null,
-  index_analyzer : String = null,
   search_analyzer : String = null,
   ignore_above : Option[Boolean] = None,
   position_offset_gap : Option[Int] = None,
@@ -1078,7 +1078,6 @@ trait FieldEnableable extends Field {
 trait TextField extends Field {
   def term_vector: TermVectorVariant
   def search_analyzer: String
-  def index_analyzer : String
   def analyzer : String
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
@@ -1087,8 +1086,6 @@ trait TextField extends Field {
       b.field("term_vector", term_vector.toString)
     if (search_analyzer != null)
       b.field("search_analyzer", search_analyzer)
-    if (index_analyzer != null)
-      b.field("index_analyzer", index_analyzer)
     if (analyzer != null)
       b.field("analyzer", analyzer)
   }
@@ -1098,11 +1095,15 @@ trait TextField extends Field {
   *
   * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-ttl-field.html]] */
 case class FieldTtl(
-  enabled: Boolean = false,
-  default: String = null,
-  store: Boolean = true,
-  index: FieldIndexingVariant = null    // По дефолту not_analyzed - это техническая необходимость.
-) extends FieldEnableable with FieldStoreable with FieldIndexable {
+  enabled : Boolean = false,
+  default : String = null,
+  //store: Boolean = true,
+  index   : FieldIndexingVariant = null    // По дефолту not_analyzed - это техническая необходимость.
+)
+  extends FieldEnableable
+  //with FieldStoreable
+  with FieldIndexable
+{
   override def id: String = FIELD_TTL
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
@@ -1118,7 +1119,6 @@ case class FieldAll(
   store : Boolean = false,
   term_vector : TermVectorVariant = null,
   analyzer : String = null,
-  index_analyzer : String = null,
   search_analyzer : String = null
 ) extends FieldEnableable with TextField with FieldStoreable {
   override def id = FIELD_ALL
@@ -1353,6 +1353,7 @@ trait PrecisionStep extends Field {
 }
 
 
+// TODO Кажется, это дело удалили в 2.0. Или compressed удалили, хз. Но оно в 2.0 работает ведь как-то.
 object GeoPointFieldDataFormats extends Enumeration {
   type GeoPointFieldDataFormat = Value
   val compressed, array = Value
@@ -1387,16 +1388,23 @@ case class FieldGeoPoint(
   geohash       : Boolean = false,
   geohashPrecision: String = null,      // "12" | "20m"
   geohashPrefix : Boolean = false,      // Note: This option implicitly enables geohash
-  validate      : Boolean = false,
-  validateLat   : Boolean = false,
-  validateLon   : Boolean = false,
-  normalize     : Boolean = true,
-  normalizeLat  : Boolean = false,
-  normalizeLon  : Boolean = false,
-  precisionStep : Int = -1,
+  //validate      : Boolean = false,
+  //validateLat   : Boolean = false,
+  //validateLon   : Boolean = false,
+  //normalize     : Boolean = true,
+  //normalizeLat  : Boolean = false,
+  //normalizeLon  : Boolean = false,
+  //precisionStep : Int = -1,
   fieldData     : GeoPointFieldData = null
-) extends DocField with LatLon with Geohash with Validate with ValidateLatLon with Normalize with NormalizeLatLon
-  with PrecisionStep with GeoPointFieldDataField {
+)
+  extends DocField
+  with LatLon
+  with Geohash
+  //with Validate with ValidateLatLon
+  //with Normalize with NormalizeLatLon
+  //with PrecisionStep
+  with GeoPointFieldDataField
+{
   override def fieldType = DocFieldTypes.geo_point
 }
 
@@ -1433,7 +1441,7 @@ case class FieldGeoShape(
 
 /** Неабстрактный трейт для подмешивания клиенского функционала в произольный объект.
   * Для управления именем кластера, нужно переопределить метод getEsClusterName.  */
-trait SioEsClient {
+trait SioEsClient extends MacroLogsI {
 
   /** Тут хранится клиент к кластеру. В инициализаторе класса надо закинуть сюда начальный экземпляр клиент.
     * Это переменная для возможности остановки клиента. */
@@ -1491,8 +1499,12 @@ trait SioEsClient {
   /** Перед вычищением из памяти класса следует убедится, что нода остановлена.
     * Маловероятно, что от этой функции есть какой-то толк. */
   override def finalize() {
-    _node.stop()
+    if (!_node.isClosed) {
+      LOGGER.error(s"finalize(): ES client ${_node} was not closed!")
+      _node.close()
+    }
   }
+
 }
 
 
@@ -1506,11 +1518,11 @@ trait SioEsClient {
   */
 class EsAction2Promise[T](promise: Promise[T]) extends ActionListener[T] {
   override def onResponse(response: T) {
-    promise success response
+    promise.success(response)
   }
 
   override def onFailure(ex: Throwable) {
-    promise failure ex
+    promise.failure(ex)
   }
 }
 
