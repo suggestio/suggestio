@@ -144,7 +144,7 @@ final class SiowebEsModelJmx @Inject() (
   override def importModelFromRemote(modelStr: String, remotes: String): String = {
     val modelStr1 = modelStr.trim
     val model = siowebEsModel.ES_MODELS
-      .find(_.getClass.getSimpleName equalsIgnoreCase modelStr1)
+      .find( _.getClass.getSimpleName.equalsIgnoreCase(modelStr1) )
       .get
     val fut = _importModelsFromRemote(remotes, Seq(model))
     fut onFailure { case ex =>
