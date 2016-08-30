@@ -190,10 +190,7 @@ trait MPersonIdentSubmodelStatic extends EsModelStaticIdentT  {
   }
 
   def countByPersonId(personId: String): Future[Long] = {
-    prepareCount()
-      .setQuery( personIdQuery(personId) )
-      .execute()
-      .map { _.getCount }
+    countByQuery( personIdQuery(personId) )
   }
 
 }
