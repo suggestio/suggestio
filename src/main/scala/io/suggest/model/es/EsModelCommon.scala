@@ -599,11 +599,11 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
             val iter = hits.iterator().toIterator
             if (iter.nonEmpty) {
               val bulk = toClient.prepareBulk()
-              iter.foreach { hit =>
+              for (hit <- iter) {
                 val model = deserializeSearchHit(hit)
                 bulk.add( prepareIndexNoVsn(model, toClient) )
               }
-              bulk.execute().map { bulkResult =>
+              for (bulkResult <- bulk.execute()) yield {
                 if (bulkResult.hasFailures)
                   LOGGER.error("copyContent(): Failed to write bulk into target:\n " + bulkResult.buildFailureMessage())
                 val failedCount = bulkResult.iterator().count(_.isFailed)
@@ -615,7 +615,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
                 acc1
               }
             } else {
-              Future successful acc0
+              Future.successful(acc0)
             }
         }(ec, fromClient) // implicit'ы передаём вручную, т.к. несколько es-клиентов
       }

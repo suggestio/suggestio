@@ -390,21 +390,23 @@ object EsModelUtil extends MacroLogsImpl {
     lazy val logPrefix = s"foldSearchScroll($scrollId, 1st=$firstReq):"
     if (!firstReq  &&  hits.getHits.isEmpty) {
       LOGGER.trace(s"$logPrefix no more hits.")
-      Future successful acc0
+      Future.successful(acc0)
     } else {
       // Запустить в фоне получение следующей порции результатов
       LOGGER.trace(s"$logPrefix has ${hits.getHits.length} hits, total = ${hits.getTotalHits}")
       // Убеждаемся, что scroll выставлен. Имеет смысл проверять это только на первом запросе.
       if (firstReq)
         assert(scrollId != null && !scrollId.isEmpty, "Scrolling looks like disabled. Cannot continue.")
-      val nextScrollRespFut = client.prepareSearchScroll(scrollId)
-        .setScroll(new TimeValue(keepAliveMs))
-        .execute()
+      val nextScrollRespFut: Future[SearchResponse] = {
+        client.prepareSearchScroll(scrollId)
+          .setScroll(new TimeValue(keepAliveMs))
+          .execute()
+      }
       // Синхронно залить результаты текущего реквеста в аккамулятор
       val acc1Fut = f(acc0, hits)
       // Асинхронно перейти на следующую итерацию, дождавшись новой порции результатов.
-      nextScrollRespFut flatMap { searchResp2 =>
-        acc1Fut flatMap { acc1 =>
+      nextScrollRespFut.flatMap { searchResp2 =>
+        acc1Fut.flatMap { acc1 =>
           foldSearchScroll(searchResp2, acc1, firstReq = false, keepAliveMs)(f)
         }
       }
