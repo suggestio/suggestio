@@ -2,7 +2,7 @@ package io.suggest.model.n2.extra.search
 
 import io.suggest.model.n2.node.MNodeFields
 import io.suggest.model.search.{DynSearchArgs, DynSearchArgsWrapper}
-import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
+import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 
 /**
  * Suggest.io
@@ -25,14 +25,14 @@ trait ShowInScNl extends DynSearchArgs {
     } else {
       val fn = MNodeFields.Extras.ADN_SHOW_IN_SC_NL_FN
       val _sscNl = _sscNlOpt.get
-      qbOpt0 map { qb =>
+      val sscf = QueryBuilders.termQuery(fn, _sscNl)
+      qbOpt0.map { qb =>
         // Отрабатываем флаг conf.showInScNodeList
-        val sscf = FilterBuilders.termFilter(fn, _sscNl)
-        QueryBuilders.filteredQuery(qb, sscf)
-
-      } orElse {
-        val qb = QueryBuilders.termQuery(fn, _sscNl)
-        Some(qb)
+        QueryBuilders.boolQuery()
+          .must(qb)
+          .filter(sscf)
+      }.orElse {
+        Some(sscf)
       }
     }
   }
@@ -47,6 +47,7 @@ trait ShowInScNl extends DynSearchArgs {
   override def toStringBuilder: StringBuilder = {
     fmtColl2sb("showInScNl", showInScNodeList, super.toStringBuilder)
   }
+
 }
 
 

@@ -13,7 +13,7 @@ import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.model.search.EsDynSearchStatic
 import io.suggest.util.SioEsUtil._
-import io.suggest.util.{MacroLogsImpl, SioConstants}
+import io.suggest.util.MacroLogsImpl
 import io.suggest.common.empty.EmptyUtil._
 import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
@@ -68,7 +68,7 @@ class MNodes @Inject() (
     List(
       /*FieldAll(
         enabled = true,
-        index_analyzer  = SioConstants.ENGRAM_AN_1,
+        analyzer        = SioConstants.ENGRAM_AN_1,
         search_analyzer = SioConstants.DFLT_AN
       ),*/
       FieldSource(enabled = true)
@@ -174,7 +174,7 @@ class MNodes @Inject() (
           .getBuckets
           .iterator()
           .map { bucket =>
-            val ntype: MNodeType = MNodeTypes.withName( bucket.getKey )
+            val ntype: MNodeType = MNodeTypes.withName( bucket.getKeyAsString )
             ntype -> bucket.getDocCount
           }
           .toMap

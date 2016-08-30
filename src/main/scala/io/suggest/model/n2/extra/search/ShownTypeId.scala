@@ -2,7 +2,7 @@ package io.suggest.model.n2.extra.search
 
 import io.suggest.model.n2.node.MNodeFields
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
-import org.elasticsearch.index.query.{QueryBuilders, FilterBuilders, QueryBuilder}
+import org.elasticsearch.index.query.{QueryBuilders, QueryBuilder}
 
 /**
  * Suggest.io
@@ -24,13 +24,13 @@ trait ShownTypeId extends DynSearchArgs {
 
     } else {
       val fn = MNodeFields.Extras.ADN_SHOWN_TYPE_FN
-      qbOpt0 map { qb =>
-        val stiFilter = FilterBuilders.termsFilter(fn, _sti: _*)
-        QueryBuilders.filteredQuery(qb, stiFilter)
-      } orElse {
-        val stiQuery = QueryBuilders.termsQuery(fn, _sti: _*)
-          .minimumMatch(1) // может быть только один тип ведь у одного узла.
-        Some(stiQuery)
+      val stiQ = QueryBuilders.termsQuery(fn, _sti: _*)
+      qbOpt0.map { qb =>
+        QueryBuilders.boolQuery()
+          .must(qb)
+          .filter(stiQ)
+      }.orElse {
+        Some(stiQ)
       }
     }
   }

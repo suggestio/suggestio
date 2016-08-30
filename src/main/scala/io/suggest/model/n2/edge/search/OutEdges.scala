@@ -6,7 +6,7 @@ import io.suggest.model.n2.node.MNodeFields.Edges._
 import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import io.suggest.util.MacroLogsI
 import io.suggest.ym.model.{NodeGeoLevel, NodeGeoLevels}
-import org.elasticsearch.index.query.{MatchQueryBuilder, QueryBuilders, FilterBuilders, QueryBuilder}
+import org.elasticsearch.index.query.{MatchQueryBuilder, QueryBuilders, QueryBuilder}
 
 /**
  * Suggest.io
@@ -75,8 +75,10 @@ trait OutEdges extends DynSearchArgs with MacroLogsI {
             /** Добавить в query фильтр по флагу */
             def _withGjsCompatFilter(qb0: QueryBuilder): QueryBuilder = {
               gsi.gjsonCompat.fold(qb0) { gjsCompat =>
-                val gjsFr = FilterBuilders.termFilter(MNodeFields.Edges.E_OUT_INFO_GS_GJSON_COMPAT_FN, gjsCompat)
-                QueryBuilders.filteredQuery(qb0, gjsFr)
+                val gjsFr = QueryBuilders.termQuery(MNodeFields.Edges.E_OUT_INFO_GS_GJSON_COMPAT_FN, gjsCompat)
+                QueryBuilders.boolQuery()
+                  .must(qb0)
+                  .filter(gjsFr)
               }
             }
 
@@ -122,8 +124,10 @@ trait OutEdges extends DynSearchArgs with MacroLogsI {
             // Завернуть собранную инфу в nested-запрос и накатить на исходную query.
             val fn = MNodeFields.Edges.E_OUT_INFO_GS_FN
             _qOpt = _qOpt.map { qb0 =>
-              val gqNf = FilterBuilders.nestedFilter(fn, nq)
-              QueryBuilders.filteredQuery(qb0, gqNf)
+              val gqNf = QueryBuilders.nestedQuery(fn, nq)
+              QueryBuilders.boolQuery()
+                .must(qb0)
+                .filter(gqNf)
             }.orElse {
               val qb2 = QueryBuilders.nestedQuery(fn, nq)
               Some(qb2)
@@ -135,8 +139,10 @@ trait OutEdges extends DynSearchArgs with MacroLogsI {
           if (oe.nodeIds.nonEmpty) {
             val fn = EDGE_OUT_NODE_ID_FULL_FN
             _qOpt = _qOpt.map { _q =>
-              val nodeIdsFilter = FilterBuilders.termsFilter(fn, oe.nodeIds: _*)
-              QueryBuilders.filteredQuery(_q, nodeIdsFilter)
+              val nodeIdsFilter = QueryBuilders.termsQuery(fn, oe.nodeIds: _*)
+              QueryBuilders.boolQuery()
+                .must(_q)
+                .filter(nodeIdsFilter)
             }.orElse {
               val __q = QueryBuilders.termsQuery(fn, oe.nodeIds: _*)
               Some(__q)
@@ -148,8 +154,10 @@ trait OutEdges extends DynSearchArgs with MacroLogsI {
             val fn = EDGE_OUT_PREDICATE_FULL_FN
             val predIds = oe.predicates.map(_.strId)
             _qOpt = _qOpt.map { _q =>
-              val predf = FilterBuilders.termsFilter(fn, predIds: _*)
-              QueryBuilders.filteredQuery(_q, predf)
+              val predf = QueryBuilders.termsQuery(fn, predIds: _*)
+              QueryBuilders.boolQuery()
+                .must(_q)
+                .filter(predf)
             }.orElse {
               val _q = QueryBuilders.termsQuery(fn, predIds: _*)
               Some(_q)
@@ -162,11 +170,13 @@ trait OutEdges extends DynSearchArgs with MacroLogsI {
               // missing/existing filter можно навешивать только если уже есть тело nested query
               val fn = EDGE_OUT_INFO_SLS_FN
               val f = if (oe.anySl.get) {
-                FilterBuilders.existsFilter(fn)
+                QueryBuilders.existsQuery(fn)
               } else {
-                FilterBuilders.missingFilter(fn)
+                QueryBuilders.missingQuery(fn)
               }
-              val _nq2 = QueryBuilders.filteredQuery(_qOpt.get, f)
+              val _nq2 = QueryBuilders.boolQuery()
+                .must(_qOpt.get)
+                .filter(f)
               _qOpt = Some(_nq2)
 
             } else {
@@ -184,8 +194,10 @@ trait OutEdges extends DynSearchArgs with MacroLogsI {
             val slsStr = oe.sls.map(_.name)
             val slFn = EDGE_OUT_INFO_SLS_FN
             _qOpt = _qOpt.map { _q =>
-              val slsf = FilterBuilders.termsFilter(slFn, slsStr : _*)
-              QueryBuilders.filteredQuery(_q, slsf)
+              val slsf = QueryBuilders.termsQuery(slFn, slsStr : _*)
+              QueryBuilders.boolQuery()
+                .must(_q)
+                .filter(slsf)
             }.orElse {
               val _q = QueryBuilders.termsQuery(slFn, slsStr: _*)
               Some( _q )
@@ -197,8 +209,10 @@ trait OutEdges extends DynSearchArgs with MacroLogsI {
             val flag = oe.flag.get
             val flagFn = EDGE_OUT_INFO_FLAG_FN
             _qOpt = _qOpt.map { _q =>
-              val flagFl = FilterBuilders.termFilter(flagFn, flag)
-              QueryBuilders.filteredQuery(_q, flagFl)
+              val flagFl = QueryBuilders.termQuery(flagFn, flag)
+              QueryBuilders.boolQuery
+                .must(_q)
+                .filter(flagFl)
             }.orElse {
               val _q = QueryBuilders.termQuery(flagFn, flag)
               Some(_q)
@@ -220,8 +234,9 @@ trait OutEdges extends DynSearchArgs with MacroLogsI {
 
       // Сборка основной query
       qbOpt0.map { qb0 =>
-        val nf = FilterBuilders.queryFilter(qb2)
-        QueryBuilders.filteredQuery(qb0, nf)
+        QueryBuilders.boolQuery()
+          .must(qb0)
+          .filter(qb2)
       }.orElse {
         Some(qb2)
       }
