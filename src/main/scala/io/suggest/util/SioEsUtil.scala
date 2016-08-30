@@ -9,11 +9,14 @@ import org.elasticsearch.client.Client
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest
 import org.elasticsearch.common.xcontent.XContentBuilder
 import SioConstants._
+
 import scala.concurrent.{Future, Promise}
 import org.elasticsearch.action.{ActionListener, ListenableActionFuture}
+
 import scala.concurrent.ExecutionContext
-import org.elasticsearch.node.{NodeBuilder, Node}
+import org.elasticsearch.node.{Node, NodeBuilder}
 import org.elasticsearch.cluster.ClusterName
+import org.elasticsearch.common.bytes.BytesArray
 
 // TODO Как показала практика, XContentBuilder слегка взрывоопасен и слишком изменяем. Следует тут задействовать
 //      статически-типизированный play.json для генерации json-маппингов.
@@ -1213,7 +1216,7 @@ extends JsonObject {
     super.fieldsBuilder
     b.field("match", nameMatch)
      .field("match_mapping_type", matchMappingType)
-     .rawField("mapping", mapping1.getBytes)
+     .rawField("mapping", new BytesArray(mapping1.getBytes))
   }
 }
 
