@@ -66,12 +66,12 @@ class MNodes @Inject() (
 
   override def generateMappingStaticFields: List[Field] = {
     List(
-      FieldSource(enabled = true),
-      FieldAll(
+      /*FieldAll(
         enabled = true,
         index_analyzer  = SioConstants.ENGRAM_AN_1,
         search_analyzer = SioConstants.DFLT_AN
-      )
+      ),*/
+      FieldSource(enabled = true)
     )
   }
 
