@@ -57,7 +57,10 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
     client.prepareSearch(ES_INDEX_NAME).setTypes(ES_TYPE_NAME)
   }
 
-  def prepareCount()  = esClient.prepareCount(ES_INDEX_NAME).setTypes(ES_TYPE_NAME)
+  def prepareCount(): SearchRequestBuilder = {
+    prepareSearch()
+      .setSize(0)
+  }
 
   def prepareGetBase(id: String) = {
     val req = esClient.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
@@ -371,7 +374,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
     prepareCount()
       .setQuery(query)
       .execute()
-      .map { _.getCount }
+      .map { _.getHits.getTotalHits }
   }
 
   /**

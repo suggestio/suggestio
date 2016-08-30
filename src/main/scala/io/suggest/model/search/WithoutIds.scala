@@ -16,17 +16,17 @@ trait WithoutIds extends DynSearchArgs {
   /** Собрать экземпляр ES QueryBuilder на основе имеющихся в экземпляре данных.
     * Здесь можно навешивать дополнительные фильтры, выполнять pre- и post-процессинг запроса. */
   override def toEsQuery: QueryBuilder = {
-    var query3: QueryBuilder = super.toEsQuery
+    val query3 = super.toEsQuery
     // Если включен withoutIds, то нужно обернуть query3 в соответствующий not(ids filter).
     if (withoutIds.nonEmpty) {
-      val idsFilter = QueryBuilders.notQuery(
-        QueryBuilders.idsQuery(withoutIds: _*)
-      )
-      query3 = QueryBuilders.boolQuery()
+      QueryBuilders.boolQuery()
         .must(query3)
-        .filter(idsFilter)
+        .mustNot {
+          QueryBuilders.idsQuery(withoutIds: _*)
+        }
+    } else {
+      query3
     }
-    query3
   }
 
   /** Базовый размер StringBuilder'а. */

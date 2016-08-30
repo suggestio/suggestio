@@ -94,10 +94,7 @@ class MAdStats @Inject() (
 
   /** Подсчёт кол-ва вхождений до указанной даты. */
   def countBefore(dt: DateTime): Future[Long] = {
-    prepareCount()
-      .setQuery( beforeDtQuery(dt) )
-      .execute()
-      .map { _.getCount }
+    countByQuery( beforeDtQuery(dt) )
   }
 
   /** Найти все вхождения до указанной даты. */
