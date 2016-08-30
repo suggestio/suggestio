@@ -4,7 +4,7 @@ import io.suggest.model.es.EsModelUtil
 import io.suggest.model.search.{DynSearchArgs, Limit, Offset}
 import models.adv.MExtTargetFields
 import org.elasticsearch.action.search.SearchRequestBuilder
-import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
+import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import org.elasticsearch.search.sort.SortOrder
 
 /**
@@ -41,13 +41,12 @@ sealed trait AdnId extends DynSearchArgs {
       acc0
     } else {
       val _adnId = _adnIdOpt.get
-      val qb1 = acc0.map { qb =>
+      val fq = QueryBuilders.termQuery(MExtTargetFields.ADN_ID_ESFN, _adnId)
+      val qb1 = acc0.fold [QueryBuilder] (fq) { qb =>
         // Фильтровать результаты по adnId
-        val filter = FilterBuilders.termFilter(MExtTargetFields.ADN_ID_ESFN, _adnId)
-        QueryBuilders.filteredQuery(qb, filter)
-      }
-      .getOrElse {
-        QueryBuilders.termQuery(MExtTargetFields.ADN_ID_ESFN, _adnId)
+        QueryBuilders.boolQuery()
+          .must(qb)
+          .filter(fq)
       }
       Some(qb1)
     }

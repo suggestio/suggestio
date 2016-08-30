@@ -1,10 +1,10 @@
 package util.di
 
+import io.suggest.es.TransportEsClient
 import io.suggest.event.SioNotifierStaticClientI
 import org.elasticsearch.client.Client
 import play.api.inject._
 import play.api.{Configuration, Environment}
-import util.SiowebEsUtil
 import util.event.SiowebNotifier
 
 /**
@@ -19,7 +19,7 @@ class DiModule extends Module {
     Seq(
       // Инжектить SiowebEsUtil опережая события, чтобы тот мог инициализировать ES Client.
       bind( classOf[Client] )
-        .toProvider( classOf[SiowebEsUtil]),
+        .toProvider( classOf[TransportEsClient]),
       bind[SioNotifierStaticClientI]
         .to( classOf[SiowebNotifier] )
     )

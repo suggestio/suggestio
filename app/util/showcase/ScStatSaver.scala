@@ -2,12 +2,13 @@ package util.showcase
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.playx.ICurrentConf
 import io.suggest.ym.model.stat.{MAdStat, MAdStats}
+import models.mproj.ICommonDi
 import org.elasticsearch.action.bulk.{BulkProcessor, BulkRequest, BulkResponse}
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.unit.{ByteSizeValue, TimeValue}
-import play.api.{Application, Configuration}
+import play.api.inject.ApplicationLifecycle
+import play.api.Configuration
 import util.async.{AsyncUtil, EcParInfo}
 import util.{PlayMacroLogsDyn, PlayMacroLogsImpl}
 
@@ -27,11 +28,19 @@ import scala.reflect.ClassTag
  */
 @Singleton
 class ScStatSaver @Inject() (
-  override val current    : Application
+  lifecycle               : ApplicationLifecycle,
+  mCommonDi               : ICommonDi
 )
   extends PlayMacroLogsDyn
-  with ICurrentConf
 {
+
+  import mCommonDi.{current, configuration, ec}
+
+  lifecycle.addStopHook { () =>
+    Future {
+      BACKEND.close()
+    }
+  }
 
   private def _inject[T <: ScStatSaverBackend : ClassTag]: T = {
     current.injector.instanceOf[T]

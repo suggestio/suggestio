@@ -50,8 +50,6 @@ libraryDependencies ++= {
   ,
   //"com.ning" % "async-http-client" % "1.9.+",   // 2.5 migration, ahc -> 2.0.x. Удалить, если не понадобится возвращать.
   "org.slf4j" % "log4j-over-slf4j" % "1.+",
-  // coffeescript-компилятор используем свой заместо компилятора play по ряду причин (последний прибит гвоздями к sbt-plugin, например).
-  "org.jcoffeescript" % "jcoffeescript" % "1.6.2-SNAPSHOT",
   "com.google.guava" % "guava" % "18.+",
   "com.lambdaworks" % "scrypt" % "1.4.0",     // Чтобы хешировать пароли (models.EmailPwIdent например)
   // Календарь праздников

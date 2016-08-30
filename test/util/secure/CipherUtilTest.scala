@@ -1,4 +1,4 @@
-package util
+package util.secure
 
 import org.scalatestplus.play._
 
@@ -8,14 +8,15 @@ import org.scalatestplus.play._
  * Created: 18.06.14 9:07
  * Description: Тесты для шифровалки-дешифровалки.
  */
-class CipherUtilTest extends PlaySpec {
+class CipherUtilTest extends PlaySpec with OneAppPerSuite {
 
-  private def newCu = new CipherUtilAddon {
-    override val IV_MATERIAL_DFLT = CipherUtil.generateSecretKey(256)
-    override val SECRET_KEY = CipherUtil.generateSecretKey(256)
-  }
+  private lazy val cipherUtil = app.injector.instanceOf[CipherUtil]
 
-  CipherUtil.ensureBcJce()
+  private def newCu = cipherUtil.Cipherer(
+    IV_MATERIAL_DFLT = cipherUtil.generateSecretKey(32),
+    SECRET_KEY       = cipherUtil.generateSecretKey(32)
+  )
+
 
   "CipherUtil" should {
 

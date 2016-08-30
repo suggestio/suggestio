@@ -1,7 +1,7 @@
 package models.event.search
 
 import io.suggest.model.search.DynSearchArgs
-import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders, QueryBuilder}
+import org.elasticsearch.index.query.{QueryBuilders, QueryBuilder}
 import models.event.MEvent.OWNER_ID_ESFN
 
 /**
@@ -17,19 +17,17 @@ trait OwnerId extends DynSearchArgs {
 
   /** Сборка EsQuery сверху вниз. */
   override def toEsQueryOpt: Option[QueryBuilder] = {
-    super.toEsQueryOpt
-      // Отрабатываем ownerId фильтром или запросом.
-      .map { qb =>
-        ownerId.fold(qb) { _ownerId =>
-          val filter = FilterBuilders.termFilter(OWNER_ID_ESFN, _ownerId)
-          QueryBuilders.filteredQuery(qb, filter)
-        }
+    val qOpt0 = super.toEsQueryOpt
+    ownerId.fold(qOpt0) { _ownerId =>
+      val fq = QueryBuilders.termQuery(OWNER_ID_ESFN, _ownerId)
+      qOpt0.map { q0 =>
+        QueryBuilders.boolQuery()
+          .must(q0)
+          .filter(fq)
+      }.orElse {
+        Some(fq)
       }
-      .orElse {
-        ownerId.map { _ownerId =>
-          QueryBuilders.termQuery(OWNER_ID_ESFN, _ownerId)
-        }
-      }
+    }
   }
 
   /** Построение выхлопа метода toString(). */

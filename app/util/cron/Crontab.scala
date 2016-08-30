@@ -1,14 +1,17 @@
-package util
+package util.cron
 
+import akka.actor.{Cancellable, Scheduler}
 import com.google.inject.Inject
 import models.mcron.ICronTask
-import akka.actor.{Cancellable, Scheduler}
 import models.mproj.ICommonDi
+import play.api.inject.ApplicationLifecycle
+import util.PlayLazyMacroLogsImpl
 import util.billing.cron.BillingCronTasks
 import util.geo.IpGeoBaseImport
-import play.api.Application
 import util.health.AdnGeoParentsHealth
 import util.img.cron.{PeriodicallyDeleteEmptyDirs, PeriodicallyDeleteNotExistingInPermanent}
+
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -19,7 +22,6 @@ import util.img.cron.{PeriodicallyDeleteEmptyDirs, PeriodicallyDeleteNotExisting
  * Реализация происходит через akka scheduler и статический набор события расписания.
  * По мотивам http://stackoverflow.com/a/13469308
  */
-
 class Crontab @Inject() (
   // geo-nodes
   geoParentsHealth              : AdnGeoParentsHealth,
@@ -31,6 +33,7 @@ class Crontab @Inject() (
   periodicallyDeleteEmptyDirs   : PeriodicallyDeleteEmptyDirs,
   periodicallyDeleteNotExistingInPermanent: PeriodicallyDeleteNotExistingInPermanent,
   // other
+  lifecycle                     : ApplicationLifecycle,
   mCommonDi                     : ICommonDi
 )
   extends PlayLazyMacroLogsImpl
@@ -45,6 +48,28 @@ class Crontab @Inject() (
     periodicallyDeleteEmptyDirs, periodicallyDeleteNotExistingInPermanent
   )
 
+  // Constructor -------------------------------
+  private var _startedTimers = startTimers()
+
+  // Destructor --------------------------------
+  lifecycle.addStopHook { () =>
+    Future {
+      for (c <- _startedTimers) {
+        try {
+          c.cancel()
+        } catch {
+          case ex: Throwable =>
+            warn(s"Cannot stop cron task $c", ex)
+        }
+      }
+      trace(s"Stopped all ${_startedTimers.size} crontab tasks.")
+      _startedTimers = Nil
+    }
+  }
+
+
+  // API ---------------------------------------
+
   def sched: Scheduler = {
     try
       actorSystem.scheduler
@@ -58,12 +83,12 @@ class Crontab @Inject() (
   }
 
 
-  def startTimers(app: Application): List[Cancellable] = {
+  def startTimers(): List[Cancellable] = {
     val _sched = sched
 
     val iter = for {
       clazz <- TASK_PROVIDERS.iterator
-      task  <- clazz.cronTasks(app)
+      task  <- clazz.cronTasks()
     } yield {
       trace(s"Adding cron task ${clazz.getClass.getSimpleName}/${task.displayName}: delay=${task.startDelay}, every=${task.every}")
       _sched.schedule(task.startDelay, task.every) {
@@ -91,11 +116,11 @@ class Crontab @Inject() (
 trait ICronTasksProvider {
 
   /** Список задач, которые надо вызывать по таймеру. */
-  def cronTasks(app: Application): TraversableOnce[ICronTask]
+  def cronTasks(): TraversableOnce[ICronTask]
 }
 
 
 /** При использование stackable trait и abstract override имеет смысл подмешивать этот трейт с дефолтовой пустой реализацией. */
 trait CronTasksProviderEmpty extends ICronTasksProvider {
-  override def cronTasks(app: Application): TraversableOnce[ICronTask] = Nil
+  override def cronTasks(): TraversableOnce[ICronTask] = Nil
 }

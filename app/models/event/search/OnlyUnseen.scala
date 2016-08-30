@@ -1,7 +1,7 @@
 package models.event.search
 
 import io.suggest.model.search.DynSearchArgs
-import org.elasticsearch.index.query.{QueryBuilders, FilterBuilders, QueryBuilder}
+import org.elasticsearch.index.query.{QueryBuilders, QueryBuilder}
 import models.event.MEvent.IS_UNSEEN_ESFN
 
 /**
@@ -17,20 +17,21 @@ trait OnlyUnseen extends DynSearchArgs {
 
   /** Сборка EsQuery сверху вниз. */
   override def toEsQueryOpt: Option[QueryBuilder] = {
+    val fq = QueryBuilders.termQuery(IS_UNSEEN_ESFN, true)
     super.toEsQueryOpt
       // Отрабатываем isUnseen фильтром или запросом.
       .map { qb =>
         if (onlyUnseen) {
-          val filter = FilterBuilders.termFilter(IS_UNSEEN_ESFN, true)
-          QueryBuilders.filteredQuery(qb, filter)
+          QueryBuilders.boolQuery()
+            .must(qb)
+            .filter(fq)
         } else {
           qb
         }
       }
       .orElse {
         if (onlyUnseen) {
-          val qb = QueryBuilders.termQuery(IS_UNSEEN_ESFN, true)
-          Some(qb)
+          Some(fq)
         } else {
           None
         }

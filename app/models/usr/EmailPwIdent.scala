@@ -3,7 +3,6 @@ package models.usr
 import io.suggest.model.es._
 import EsModelUtil._
 import com.google.inject.{Inject, Singleton}
-import com.lambdaworks.crypto.SCryptUtil
 import models.mproj.ICommonDi
 import util.PlayMacroLogsImpl
 import play.api.libs.json._
@@ -59,75 +58,17 @@ class EmailPwIdents @Inject() (
     (__ \ VALUE_ESFN).format[String] and
     (__ \ IS_VERIFIED_ESFN).formatNullable[Boolean]
       .inmap [Boolean] (
-        { _.getOrElse(EmailPwIdent.IS_VERIFIED_DFLT) },
+        { _.getOrElse(false) },
         { b => if (b) Some(b) else None }
       )
   )(EmailPwIdent.apply, unlift(EmailPwIdent.unapply))
 
-
-
-  /**
-   * Собрать экземпляр [[EmailPwIdent]].
-   *
-   * @param email Электропочта.
-   * @param personId id юзера.
-   * @param password Пароль как он есть.
-   * @param isVerified Флаг проверенности пароля.
-   * @return Экземпляр [[EmailPwIdent]] с захешированным паролем.
-   */
-  def applyWithPw(email: String, personId:String, password:String, isVerified: Boolean = EmailPwIdent.IS_VERIFIED_DFLT): EmailPwIdent = {
-    EmailPwIdent(
-      email       = email,
-      personId    = personId,
-      pwHash      = mkHash(password),
-      isVerified  = isVerified
-    )
-  }
-
-
-
-  // TODO Вынести scrypt-хеш из моделей в отдельную утиль?
-
-  // Настройки генерации хешей. Используется scrypt. Это влияет только на новые создаваемые хеши, не ломая совместимость
-  // с уже сохранёнными. Размер потребляемой памяти можно рассчитать Size = (128 * COMPLEXITY * RAM_BLOCKSIZE) bytes.
-  // По дефолту жрём 16 метров с запретом параллелизации.
-  /** Cложность хеша scrypt. */
-  def SCRYPT_COMPLEXITY     = 16384 //current.configuration.getInt("ident.pw.scrypt.complexity") getOrElse
-  /** Размер блока памяти. */
-  def SCRYPT_RAM_BLOCKSIZE  = 8 //current.configuration.getInt("ident.pw.scrypt.ram.blocksize") getOrElse 8
-  /** Параллелизация. Позволяет ускорить вычисление функции. */
-  def SCRYPT_PARALLEL       = 1 //current.configuration.getInt("ident.pw.scrypt.parallel") getOrElse 1
-
-  /** Генерировать новый хеш с указанными выше дефолтовыми параметрами.
-    *
-    * @param password Пароль, который надо захешировать.
-    * @return Текстовый хеш в стандартном формате \$s0\$params\$salt\$key.
-    */
-  def mkHash(password: String): String = {
-    SCryptUtil.scrypt(password, SCRYPT_COMPLEXITY, SCRYPT_RAM_BLOCKSIZE, SCRYPT_PARALLEL)
-  }
-
-  /** Проверить хеш scrypt с помощью переданного пароля.
-    *
-    * @param password Проверяемый пароль.
-    * @param hash Уже готовый хеш.
-    * @return true, если пароль ок. Иначе false.
-    */
-  def checkHash(password: String, hash: String): Boolean = {
-    SCryptUtil.check(password, hash)
-  }
-
 }
+
 
 /** Интерфейс для поле с DI-инстансами [[EmailPwIdents]]. */
 trait IEmailPwIdentsDi {
   def emailPwIdents: EmailPwIdents
-}
-
-
-object EmailPwIdent {
-  /** По дефолту email'ы считать проверенными или нет? */
-  def IS_VERIFIED_DFLT = false
 }
 
 
@@ -143,7 +84,7 @@ final case class EmailPwIdent(
   email     : String,
   personId  : String,
   pwHash    : String,
-  isVerified: Boolean = EmailPwIdent.IS_VERIFIED_DFLT
+  isVerified: Boolean
 )
   extends MPersonIdent
     with MPIWithEmail

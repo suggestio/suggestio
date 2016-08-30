@@ -12,6 +12,7 @@ import util.di.IIdentUtil
 
 import scala.concurrent.Future
 import FormUtil.{passwordM, passwordWithConfirmM}
+import util.secure.IScryptUtilDi
 import views.html.ident.changePasswordTpl
 
 /**
@@ -63,6 +64,7 @@ trait ChangePwAction
   with IIdentUtil
   with IMPersonIdents
   with IEmailPwIdentsDi
+  with IScryptUtilDi
 {
 
   import mCommonDi._
@@ -91,10 +93,15 @@ trait ChangePwAction
             mPersonIdents.findAllEmails(personId) flatMap { emails =>
               if (emails.isEmpty) {
                 LOGGER.warn("Unknown user session: " + personId)
-                Future successful Seq.empty[String]
+                Future.successful( Seq.empty[String] )
               } else {
                 Future.traverse(emails) { email =>
-                  val epw = EmailPwIdent(email = email, personId = personId, pwHash = emailPwIdents.mkHash(newPw), isVerified = true)
+                  val epw = EmailPwIdent(
+                    email       = email,
+                    personId    = personId,
+                    pwHash      = scryptUtil.mkHash(newPw),
+                    isVerified  = true
+                  )
                   val fut = emailPwIdents.save(epw)
                   fut.onSuccess {
                     case epwId =>
@@ -109,9 +116,13 @@ trait ChangePwAction
             // Юзер меняет пароль, но у него уже есть EmailPw-логины на s.io.
             val result = epws
               .find { pwIdent =>
-                emailPwIdents.checkHash(oldPw, hash = pwIdent.pwHash)
+                scryptUtil.checkHash(oldPw, hash = pwIdent.pwHash)
               }
-              .map { _.copy(pwHash = emailPwIdents.mkHash(newPw)) }
+              .map { epw =>
+                epw.copy(
+                  pwHash = scryptUtil.mkHash(newPw)
+                )
+              }
             result match {
               case Some(epw) =>
                 for (epwId <- emailPwIdents.save(epw)) yield {

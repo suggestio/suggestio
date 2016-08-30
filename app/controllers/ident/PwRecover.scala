@@ -21,6 +21,7 @@ import views.html.ident.recover._
 import scala.concurrent.Future
 import models._
 import util.FormUtil.passwordWithConfirmM
+import util.secure.IScryptUtilDi
 
 /**
  * Suggest.io
@@ -126,6 +127,7 @@ trait PwRecover
   with IIdentUtil
   with EmailPwRegUtil
   with IEmailPwIdentsDi
+  with IScryptUtilDi
 {
 
   import mCommonDi._
@@ -212,7 +214,7 @@ trait PwRecover
         NotAcceptable(_pwReset(formWithErrors))
       },
       {newPw =>
-        val pwHash2 = emailPwIdents.mkHash(newPw)
+        val pwHash2 = scryptUtil.mkHash(newPw)
         val epw2 = request.epw.copy(pwHash = pwHash2, isVerified = true)
         for {
           // Сохранение новых данных по паролю

@@ -1,12 +1,12 @@
 package util.captcha
 
-import com.google.inject.{Singleton, Inject}
+import com.google.inject.{Inject, Singleton}
 import play.api.Configuration
 import play.api.http.HeaderNames
-import play.api.mvc.{Session, RequestHeader}
-import util.CipherUtilAddon
+import play.api.mvc.{RequestHeader, Session}
 import play.api.data.Forms._
 import util.FormUtil._
+import util.secure.CipherUtil
 
 /**
  * Suggest.io
@@ -22,27 +22,25 @@ import util.FormUtil._
 
 /** Утиль для криптографии, используемой при stateless-капчевании. */
 object CaptchaUtil {
-
-  val CAPTCHA_ID_FN     = "captchaId"
-  val CAPTCHA_TYPED_FN  = "captchaTyped"
+  def CAPTCHA_ID_FN     = "captchaId"
+  def CAPTCHA_TYPED_FN  = "captchaTyped"
 }
 
 
 /** Инжектируемая часть капча-утили. */
 @Singleton
 class CaptchaUtil @Inject() (
-  configuration: Configuration
-)
-  extends CipherUtilAddon
-{
+  protected val cipherUtil    : CipherUtil,
+  configuration               : Configuration
+) {
 
   def CAPTCHA_FMT_LC = "png"
 
   /** Кол-во цифр в цифровой капче (длина строки капчи). */
-  val DIGITS_CAPTCHA_LEN = 5
+  def DIGITS_CAPTCHA_LEN = 5
 
-  val COOKIE_MAXAGE_SECONDS = configuration.getInt("captcha.cookie.maxAge.seconds") getOrElse 1800
-  val COOKIE_FLAG_SECURE = configuration.getBoolean("captcha.cookie.secure") getOrElse Session.secure
+  val COOKIE_MAXAGE_SECONDS = configuration.getInt("captcha.cookie.maxAge.seconds").getOrElse(1800)
+  val COOKIE_FLAG_SECURE = configuration.getBoolean("captcha.cookie.secure").getOrElse(Session.secure)
 
   /** Маппер формы для hidden поля, содержащего id капчи. */
   def captchaIdM = nonEmptyText(maxLength = 16)
@@ -52,21 +50,14 @@ class CaptchaUtil @Inject() (
   def captchaTypedM = nonEmptyText(maxLength = 16)
     .transform(strTrimF, strIdentityF)
 
-
-  /** При использовании CBC нужен IV, который выводится из разного барахла, в т.ч. из статических рандомных байт. */
-  override protected val IV_MATERIAL_DFLT = {
-    Array[Byte](-112, 114, -62, 99, -19, -86, 118, -42, 77, -103, 33, -30, -91, 104, 18, -105,
-                101, -39, 4, -41, 24, -79, 58, 58, -7, -119, -68, -42, -102, 53, -104, -33)
-  }
-
-
-  /** Секретный ключ симметричного шифра. Сгенерить новый можно через generateSecretKey(). */
-  // TODO В будущем следует придумать ротацию секретных ключей, чтобы генерились и ротировались во времени.
-  override protected val SECRET_KEY = {
-    Array[Byte](-22, 52, -78, -47, -46, 44, -3, 116, -8, -2, -96, -98, 48, 102, -117, -43,
-                -59, -23, 75, 59, -101, 21, -26, 51, -102, -76, 22, 43, -94, -43, 111, 51)
-  }
-
+  /** Сброка инстанса шифровальной/дешифровальной машины. */
+  def cipherer = cipherUtil.Cipherer(
+    // TODO Sec Запилить получение IV и ключа по рандомным строкам из конфига.
+    IV_MATERIAL_DFLT = Array[Byte](-112, 114, -62, 99, -19, -86, 118, -42, 77, -103, 33, -30, -91, 104, 18, -105,
+      101, -39, 4, -41, 24, -79, 58, 58, -7, -119, -68, -42, -102, 53, -104, -33),
+    SECRET_KEY = Array[Byte](-22, 52, -78, -47, -46, 44, -3, 116, -8, -2, -96, -98, 48, 102, -117, -43,
+      -59, -23, 75, 59, -101, 21, -26, 51, -102, -76, 22, 43, -94, -43, 111, 51)
+  )
 
   def cookieName(captchaId: String) = "cha." + captchaId
 

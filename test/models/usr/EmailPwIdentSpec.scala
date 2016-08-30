@@ -21,8 +21,8 @@ class EmailPwIdentSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
       val epw = EmailPwIdent(
         email       = "asdasd893.ghserger@53tsdfsd.opr",
         personId    = "Aasdfa9sr3dka390dka3",
-        pwHash      = emailPwIdents.mkHash("ad8q39djq38djq23dq23q2g89gu5gj34g"),
-        isVerified  = !EmailPwIdent.IS_VERIFIED_DFLT
+        pwHash      = "ad8q39djq38djq23dq23q2g89gu5gj34g",
+        isVerified  = true
       )
 
       emailPwIdents.deserializeOne2(epw)  mustBe  epw

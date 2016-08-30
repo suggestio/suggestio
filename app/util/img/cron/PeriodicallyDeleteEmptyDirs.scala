@@ -6,9 +6,9 @@ import com.google.inject.Inject
 import models.im.MLocalImgs
 import models.mcron.{ICronTask, MCronTask}
 import models.mproj.ICommonDi
-import play.api.Application
 import util.async.AsyncUtil
-import util.{ICronTasksProvider, PlayMacroLogsImpl}
+import util.PlayMacroLogsImpl
+import util.cron.ICronTasksProvider
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -48,7 +48,7 @@ class PeriodicallyDeleteEmptyDirs @Inject() (
     .seconds
 
   /** Список задач, которые надо вызывать по таймеру. */
-  override def cronTasks(app: Application): TraversableOnce[ICronTask] = {
+  override def cronTasks(): TraversableOnce[ICronTask] = {
     if (DELETE_EMPTY_DIRS_ENABLED) {
       val ct2 = MCronTask(startDelay = DELETE_EMPTY_DIRS_START_DELAY, every = DELETE_EMPTY_DIRS_EVERY, displayName = EDD_CONF_PREFIX) {
         findAndDeleteEmptyDirsAsync().onFailure { case ex =>

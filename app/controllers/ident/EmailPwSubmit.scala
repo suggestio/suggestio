@@ -17,6 +17,7 @@ import views.html.ident.login.epw._
 
 import scala.concurrent.Future
 import util.FormUtil.passwordM
+import util.secure.IScryptUtilDi
 
 /**
  * Suggest.io
@@ -34,6 +35,7 @@ trait EmailPwSubmit
   with IIdentUtil
   with IMNodes
   with IEmailPwIdentsDi
+  with IScryptUtilDi
 {
 
   import mCommonDi._
@@ -89,7 +91,7 @@ trait EmailPwSubmit
         },
         {binded =>
           emailPwIdents.getByEmail(binded.email).flatMap { epwOpt =>
-            if (epwOpt.exists(pwIdent => emailPwIdents.checkHash(binded.password, pwIdent.pwHash))) {
+            if (epwOpt.exists(pwIdent => scryptUtil.checkHash(binded.password, pwIdent.pwHash))) {
               // Логин удался.
               val personId = epwOpt.get.personId
               val mpersonOptFut = mNodes.getByIdType(personId, MNodeTypes.Person)

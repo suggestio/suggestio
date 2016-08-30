@@ -2,6 +2,8 @@ package models.ls
 
 // ЭТОТ import НУЖЕН!
 import models.usr.OAuthReqTokUtil.{reads => oartReads, writes => oartWrites}
+// ЭТОТ import НУЖЕН!
+
 import org.joda.time.DateTime
 import play.api.libs.oauth.RequestToken
 import play.api.libs.json._

@@ -16,7 +16,7 @@ import models.mlk.{MNodeAdInfo, MNodeAdsTplArgs, MNodeShowArgs}
 import models.mproj.ICommonDi
 import models.msession.Keys
 import models.req.INodeReq
-import models.usr.{EmailActivations, EmailPwIdents, MPersonIdents}
+import models.usr.{EmailActivations, EmailPwIdent, EmailPwIdents, MPersonIdents}
 import org.elasticsearch.search.sort.SortOrder
 import play.api.data.Form
 import play.api.data.Forms._
@@ -27,6 +27,7 @@ import util.adn.NodesUtil
 import util.ident.IdentUtil
 import util.img.{GalleryUtil, LogoUtil}
 import util.lk.LkAdUtil
+import util.secure.ScryptUtil
 import util.showcase.ShowcaseUtil
 import util.{FormUtil, PlayMacroLogsImpl}
 import views.html.lk.adn._
@@ -53,6 +54,7 @@ class MarketLkAdn @Inject() (
   override val emailActivations       : EmailActivations,
   logoUtil                            : LogoUtil,
   galleryUtil                         : GalleryUtil,
+  override val scryptUtil             : ScryptUtil,
   override val mCommonDi              : ICommonDi
 )
   extends SioController
@@ -316,8 +318,13 @@ class MarketLkAdn @Inject() (
                 for {
                   personId        <- mNodes.save(mperson0)
                   emailPwIdentId  <- {
-                    val epw = emailPwIdents.applyWithPw(email = eact.email, personId = personId, password = passwordOpt.get, isVerified = true)
-                    emailPwIdents.save(epw)
+                    val epwIdent = EmailPwIdent(
+                      email       = eact.email,
+                      personId    = personId,
+                      pwHash      = scryptUtil.mkHash(passwordOpt.get),
+                      isVerified  = true
+                    )
+                    emailPwIdents.save(epwIdent)
                   }
                 } yield {
                   Some(personId)
