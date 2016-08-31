@@ -76,7 +76,7 @@ trait ScIndexGeo
 
     val hdrs1 = CACHE_CONTROL -> s"$cacheControlMode, max-age=$SC_INDEX_CACHE_SECONDS"  ::  hdrs0
     // Возвращаем асинхронный результат, добавив в него клиентский кеш.
-    resultFut map { logRes =>
+    for (logRes <- resultFut) yield {
       logRes
         .result
         .withHeaders(hdrs1 : _*)
@@ -112,7 +112,7 @@ trait ScIndexGeo
       lazy val logPrefix = s"GeoIndexLogic(${System.currentTimeMillis}): "
       LOGGER.trace(logPrefix + "Starting, args = " + _reqArgs)
       if (_reqArgs.geo.isWithGeo) {
-        gdrFut flatMap { gdr =>
+        gdrFut.flatMap { gdr =>
           nodeFound(gdr)
         } recoverWith {
           case ex: NoSuchElementException =>
@@ -171,13 +171,13 @@ trait ScIndexGeo
         } yield {
           geoChilderCount <= 0L
         }
-        fut recover {
+        fut.recover {
           case ex: NoSuchElementException =>
             true
           case ex: Throwable =>
             LOGGER.error("geoAccurEnoughtFut(): for node " + gdrFut, ex)
             false
-        } map {
+        }.map {
           Some.apply
         }
       }
@@ -192,14 +192,14 @@ trait ScIndexGeo
 
     def nodeNotDetectedHelperFut(): Future[NndHelper_t] = {
       val res = new ScIndexGeoHelper with ScIndexHelperAddon
-      Future successful res
+      Future.successful(res)
     }
 
     def nodeFoundHelperFut(gdr: GeoDetectResult): Future[NfHelper_t] = {
       val helper = new ScIndexNodeGeoHelper with ScIndexHelperAddon {
         override val gdrFut = Future successful gdr
       }
-      Future successful helper
+      Future.successful(helper)
     }
 
   }

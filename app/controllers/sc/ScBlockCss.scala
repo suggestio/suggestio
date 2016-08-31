@@ -68,7 +68,9 @@ trait ScBlockCss
           preableCssTxt :: offerFieldsTxts
         }
       } map { txts1 =>
-        val txts2 = txts1.iterator.flatMap(identity).toStream
+        val txts2 = txts1.iterator
+          .flatten
+          .toStream
         new Txt(txts2)
       }
     }

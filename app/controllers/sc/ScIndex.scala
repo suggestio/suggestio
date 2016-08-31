@@ -95,7 +95,7 @@ trait ScIndexCommon
 
     /** Кнопка навигации, которая будет отрендерена в левом верхнем углу indexTpl. */
     def topLeftBtnHtmlFut: Future[Html] = {
-      hBtnArgsFut map { _hBtnArgs =>
+      for (_hBtnArgs <- hBtnArgsFut) yield {
         val rargs = new ScReqArgsWrapper with IHBtnArgsFieldImpl {
           override def reqArgsUnderlying = _reqArgs
           override def hBtnArgs = _hBtnArgs
@@ -199,7 +199,7 @@ trait ScIndexNodeCommon
       }
       fut0.flatMap { _ =>
         adnNodeFut
-      } filter { mnode =>
+      }.filter { mnode =>
         // Продолжать только если текущий узел не связан с географией.
         val directGpIter = mnode.edges
           .withPredicateIter( MPredicates.GeoParent.Direct )
@@ -211,13 +211,13 @@ trait ScIndexNodeCommon
             .flatMap( AdnShownTypes.maybeWithName )
           !stiOpt.exists( _.isTopLevel )
         }
-      } flatMap { mnode =>
+      }.flatMap { mnode =>
         // Надо рендерить кнопку возврата, а не дефолтовую.
         _hBtnArgsFut map { hBtnArgs0 =>
           val hBtnArgs2 = hBtnArgs0.copy(adnId = _reqArgs.prevAdnId)
           ScHdrBtns.Back2UpperNode(hBtnArgs2)
         }
-      } recoverWith { case ex: Throwable =>
+      }.recoverWith { case ex: Throwable =>
         if (!ex.isInstanceOf[NoSuchElementException])
           LOGGER.error("topLeftBtnHtmlFut(): Workarounding unexpected expection", ex)
         super.topLeftBtnHtmlFut
@@ -231,7 +231,7 @@ trait ScIndexNodeCommon
           welcomeUtil.getWelcomeRenderArgs(adnNode, ctx.deviceScreenOpt)(ctx)
         }
       } else {
-        Future successful None
+        Future.successful(None)
       }
     }
 
@@ -262,7 +262,7 @@ trait ScIndexNodeCommon
 
     /** Контейнер палитры выдачи. */
     override def colorsFut: Future[IColors] = {
-      adnNodeFut map { adnNode =>
+      for (adnNode <- adnNodeFut) yield {
         val _bgColor = adnNode.meta.colors.bg.fold(scUtil.SITE_BGCOLOR_DFLT)(_.code)
         val _fgColor = adnNode.meta.colors.fg.fold(scUtil.SITE_FGCOLOR_DFLT)(_.code)
         Colors(bgColor = _bgColor, fgColor = _fgColor)
@@ -376,7 +376,7 @@ trait ScIndexNode
       screenOpt = helper.ctx.deviceScreenOpt,
       nodeOpt   = Some(request.mnode)
     )
-    stat.saveStats onFailure { case ex =>
+    stat.saveStats.onFailure { case ex =>
       LOGGER.warn(s"showcase($adnId): failed to save stats, args = $args", ex)
     }
 

@@ -232,7 +232,7 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
   def ip2rangeCity(ip: String): Future[Option[Ip2RangeResult]] = {
     // Операция поиска ip в SQL-базе ресурсоёмкая, поэтому кешируем результат.
     CacheUtil.getOrElse(ip + ".gipq", CACHE_TTL_SECONDS) {
-      val ipAddr = InetAddress getByName ip
+      val ipAddr = InetAddress.getByName(ip)
       AsyncUtil.jdbcAsync { implicit c =>
         IpGeoBaseRange.findForIp(ipAddr)
       }.map {

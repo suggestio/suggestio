@@ -89,12 +89,12 @@ trait ScAdsTileBase
     lazy val adSearch2Fut: Future[AdSearch] = {
       if (_adSearch.outEdges.nonEmpty) {
         // В оригинале (pre-N2) тут добавлялся LVL_START_PAGE в список уровней.
-        Future successful _adSearch
+        Future.successful( _adSearch )
 
       } else if (_adSearch.geo.isWithGeo) {
         // При геопоиске надо найти узлы, географически подходящие под запрос. Затем, искать карточки по этим узлам.
         // TODO При таком поиске надо использовать cache-controle: private, если ip-геолокация.
-        scNlUtil.detectCurrentNode(_adSearch.geo, _adSearch.geo.geoSearchInfoOpt)
+        scNlUtil.detectCurrentNode(_adSearch.geo, gsiFut)
           .map { gdr => Some(gdr.node) }
           .recover { case ex: NoSuchElementException => None }
           .map {
@@ -123,7 +123,7 @@ trait ScAdsTileBase
 
       } else {
         LOGGER.warn("Strange search request: " + _adSearch + " from " + _request.remoteAddress + " via " + _request.method + " " + _request.path)
-        Future successful _adSearch
+        Future.successful( _adSearch )
       }
     }
 
@@ -135,12 +135,13 @@ trait ScAdsTileBase
 
     /** Сборка аргументов рендера для пакетного рендера css-стилей. */
     lazy val madsBrArgs4CssFut: Future[Seq[blk.RenderArgs]] = {
-      madsFut flatMap { mads =>
+      madsFut.flatMap { mads =>
         val _szMult = szMult
         val devScreenOpt = ctx.deviceScreenOpt
         Future.traverse(mads) { mad =>
-          val bgImgOptFut = BgImg.maybeMakeBgImgWith(mad, blkImgMaker, _szMult, devScreenOpt)
-          bgImgOptFut map { bgImgOpt =>
+          for {
+            bgImgOpt <- BgImg.maybeMakeBgImgWith(mad, blkImgMaker, _szMult, devScreenOpt)
+          } yield {
             _brArgsFor(mad, bgImgOpt)
           }
         }
@@ -158,14 +159,18 @@ trait ScAdsTileBase
 
     /** Параметры для рендера обрамляющего css блоков (css не полей, а блоков в целом). */
     override def adsCssRenderArgsFut: Future[immutable.Seq[IRenderArgs]] = {
-      madsBrArgs4CssFut map { brArgss =>
+      for {
+        brArgss <- madsBrArgs4CssFut
+      } yield {
         brArgss
           .toStream
       }
     }
 
     override def adsCssFieldRenderArgsFut: Future[immutable.Seq[FieldCssRenderArgsT]] = {
-      madsBrArgs4CssFut map { brArgss =>
+      for {
+        brArgss <- madsBrArgs4CssFut
+      } yield {
         brArgss
           .iterator
           .flatMap { brArgs =>  mad2craIter(brArgs, Nil) }
@@ -226,9 +231,6 @@ trait ScAdsTile
 
   import mCommonDi._
 
-  /** Начальный размер буффера сборки ответа на запрос findAds(). */
-  private val TILE_JS_RESP_BUFFER_SIZE_BYTES: Int = configuration.getInt("sc.tiles.jsresp.buffer.size.bytes") getOrElse 8192
-
 
   /** Выдать рекламные карточки в рамках ТЦ для категории и/или магазина.
     * @param adSearch Поисковый запрос.
@@ -240,8 +242,8 @@ trait ScAdsTile
     val resultFut = logic.resultFut
 
     // В фоне собираем статистику
-    logic.madsFut onSuccess { case mads =>
-      logic.adSearch2Fut onSuccess { case adSearch2 =>
+    logic.madsFut.onSuccess { case mads =>
+      logic.adSearch2Fut.onSuccess { case adSearch2 =>
         scStatUtil.TilesStat(adSearch2, mads.flatMap(_.id), logic.gsiFut)
           .saveStats
       }

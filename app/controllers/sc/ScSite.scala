@@ -125,7 +125,7 @@ trait ScSiteBase
 
     /** Собрать ответ на HTTP-запрос сайта. */
     def resultFut: Future[Result] = {
-      renderFut map { render =>
+      for (render <- renderFut) yield {
         cacheControlShort {
           Ok( render )
         }

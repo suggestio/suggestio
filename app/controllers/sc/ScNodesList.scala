@@ -43,7 +43,8 @@ trait ScNodesListBase
     lazy val nextNodeSwitchFut: Future[GeoDetectResult] = if (_nsArgs.isNodeSwitch) {
       scNlUtil.detectCurrentNode(_nsArgs.geoMode, gsiOptFut)
     } else {
-      Future failed new NoSuchElementException("Node detect disabled")
+      val ex = new NoSuchElementException("Node detect disabled")
+      Future.failed(ex)
     }
 
     /** Нода, которая будет отображена как текущая на грядущем шаге. */
@@ -65,7 +66,7 @@ trait ScNodesListBase
 
     /** Почищенные навигационные слои узлов, которые нужно отрендерить юзеру. */
     def gnls4RenderFut: Future[Seq[GeoNodesLayer]] = {
-      nglsFut map { nodesLays5 =>
+      for (nodesLays5 <- nglsFut) yield {
         if (_nsArgs.isNodeSwitch && nodesLays5.nonEmpty) {
           // При переключении узла, переключение идёт на наиболее подходящий узел, который первый в списке.
           // Тогда этот узел НЕ надо отображать в списке узлов.

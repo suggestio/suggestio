@@ -122,8 +122,11 @@ class ShowcaseNodeListUtil @Inject() (
     * @return Фьючерс с GeoDetectResult.
     */
   def detectCurrentNode(geoMode: GeoMode, gsiOptFut: Future[Option[GeoSearchInfo]]): Future[GeoDetectResult] = {
-    detectCurrentNodeUsing(geoMode, gsiOptFut)(mNodes.dynSearch)
-      .map { case (lvl, node) => GeoDetectResult(lvl, node) }
+    for {
+      (lvl, node) <- detectCurrentNodeUsing(geoMode, gsiOptFut)(mNodes.dynSearch)
+    } yield {
+      GeoDetectResult(lvl, node)
+    }
   }
 
   /**
