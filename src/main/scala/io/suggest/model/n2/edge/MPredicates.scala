@@ -1,7 +1,8 @@
 package io.suggest.model.n2.edge
 
-import io.suggest.common.menum.{EnumTree, EnumMaybeWithName}
+import io.suggest.common.menum.{EnumMaybeWithName, EnumTree}
 import io.suggest.model.menum.EnumJsonReadsValT
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import play.api.libs.json._
 import play.api.mvc.QueryStringBindable
 
@@ -193,14 +194,13 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
 
   /** Поддержка биндинга из routes. */
   implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[T] = {
-    new QueryStringBindable[T] {
+    new QueryStringBindableImpl[T] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, T]] = {
         for (strIdEith <- strB.bind(key, params)) yield {
-          strIdEith.right
-            .flatMap { strId =>
-              maybeWithName(strId)
-                .toRight("e.predicate.unknown")
-            }
+          strIdEith.right.flatMap { strId =>
+            maybeWithName(strId)
+              .toRight("e.predicate.unknown")
+          }
         }
       }
       override def unbind(key: String, value: T): String = {

@@ -3,6 +3,7 @@ package io.suggest.model.n2.ad.blk
 import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.ym.model.common.MImgSizeT
 import io.suggest.common.empty.EmptyUtil._
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.api.mvc.QueryStringBindable
@@ -59,18 +60,19 @@ object BlockMeta extends IGenEsMappingProps {
                             intB: QueryStringBindable[Int],
                             boolB: QueryStringBindable[Boolean]
                            ): QueryStringBindable[BlockMeta] = {
-    new QueryStringBindable[BlockMeta] {
-      def WIDTH_SUF     = ".a"
-      def HEIGHT_SUF    = ".b"
-      def BLOCK_ID_SUF  = ".c"
-      def IS_WIDE_SUF   = ".d"
+    new QueryStringBindableImpl[BlockMeta] {
+      def WIDTH_FN     = "a"
+      def HEIGHT_FN    = "b"
+      def BLOCK_ID_FN  = "c"
+      def IS_WIDE_FN   = "d"
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, BlockMeta]] = {
+        val k = key1F(key)
         for {
-          maybeWidth    <- intB.bind(key + WIDTH_SUF, params)
-          maybeHeight   <- intB.bind(key + HEIGHT_SUF, params)
-          maybeBlockId  <- intB.bind(key + BLOCK_ID_SUF, params)
-          maybeIsWide   <- boolB.bind(key + IS_WIDE_SUF, params)
+          maybeWidth    <- intB.bind  (k(WIDTH_FN), params)
+          maybeHeight   <- intB.bind  (k(HEIGHT_FN), params)
+          maybeBlockId  <- intB.bind  (k(BLOCK_ID_FN), params)
+          maybeIsWide   <- boolB.bind (k(IS_WIDE_FN), params)
         } yield {
           for {
             width   <- maybeWidth.right
@@ -89,14 +91,15 @@ object BlockMeta extends IGenEsMappingProps {
       }
 
       override def unbind(key: String, value: BlockMeta): String = {
-        Iterator(
-          intB.unbind(key + WIDTH_SUF,    value.width),
-          intB.unbind(key + HEIGHT_SUF,   value.height),
-          intB.unbind(key + BLOCK_ID_SUF, value.blockId),
-          boolB.unbind(key + IS_WIDE_SUF, value.wide)
-        )
-          .filter(!_.isEmpty)
-          .mkString("&")
+        _mergeUnbinded {
+          val k = key1F(key)
+          Iterator(
+            intB.unbind ( k(WIDTH_FN),     value.width),
+            intB.unbind ( k(HEIGHT_FN),    value.height),
+            intB.unbind ( k(BLOCK_ID_FN),  value.blockId),
+            boolB.unbind( k(IS_WIDE_FN),   value.wide)
+          )
+        }
       }
     }
   }
