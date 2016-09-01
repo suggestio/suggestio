@@ -19,7 +19,13 @@ trait QsbKey1T {
     key + KEY_DELIM + suf
   }
 
-  def key1F(key: String) = key1(key, _: String)
+  def key1F(key: String): String => String = {
+    // TODO Надо ли это условие? key всегда должен быть, и не пустой.
+    if (key.isEmpty)
+      identity
+    else
+      key1(key, _)
+  }
 
   /** Когда несколько полей, часто бывает актуально их конкатенировать в qs-строку с помощью этого метода. */
   def _mergeUnbinded(unbinded: TraversableOnce[String]): String = {

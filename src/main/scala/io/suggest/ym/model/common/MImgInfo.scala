@@ -62,6 +62,7 @@ case class MImgInfo(filename: String, meta: Option[MImgInfoMeta] = None) extends
 
 
 object MImgInfoMeta {
+
   val WIDTH_ESFN  = "width"
   val HEIGHT_ESFN = "height"
 

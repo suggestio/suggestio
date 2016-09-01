@@ -1,6 +1,7 @@
 package io.suggest.model.menum
 
 import io.suggest.common.menum.{IMaybeWithName, StrIdValT}
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
 
 /**
@@ -12,7 +13,7 @@ import play.api.mvc.QueryStringBindable
 trait EnumQsb extends StrIdValT with IMaybeWithName {
 
   implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[T] = {
-    new QueryStringBindable[T] {
+    new QueryStringBindableImpl[T] {
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, T]] = {
         for (strEith <- strB.bind(key, params)) yield {
