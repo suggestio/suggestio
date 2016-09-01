@@ -1,7 +1,9 @@
 package models.blk
 
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import play.api.data.Mapping
 import play.api.mvc.QueryStringBindable
+
 import scala.language.implicitConversions   // конверсий тут по факту нет.
 
 /**
@@ -14,15 +16,15 @@ import scala.language.implicitConversions   // конверсий тут по ф
 object OneAdWideQsArgs {
 
   /** Кусок qs-названия поля ширины. */
-  def WIDTH_SUF = ".w"
+  def WIDTH_FN = "w"
 
   /** Поддержка биндинга в routes и в qsb. */
   implicit def qsb(implicit intB: QueryStringBindable[Int]): QueryStringBindable[OneAdWideQsArgs] = {
-    new QueryStringBindable[OneAdWideQsArgs] {
+    new QueryStringBindableImpl[OneAdWideQsArgs] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, OneAdWideQsArgs]] = {
         // Оформлено многословно через for{}, т.к. в будущем очень возможно расширения списка аргументов.
         for {
-          maybeWidth <- intB.bind(key + WIDTH_SUF, params)
+          maybeWidth <- intB.bind( key1(key,WIDTH_FN), params )
         } yield {
           for {
             width <- maybeWidth.right
@@ -35,7 +37,7 @@ object OneAdWideQsArgs {
       }
 
       override def unbind(key: String, value: OneAdWideQsArgs): String = {
-        intB.unbind(key + WIDTH_SUF, value.width)
+        intB.unbind( key1(key, WIDTH_FN), value.width)
       }
     }
   }
@@ -47,8 +49,8 @@ object OneAdWideQsArgs {
     mapping(
       "width" -> number(min = 1, max = 4096)
     )
-    { OneAdWideQsArgs.apply }
-    { OneAdWideQsArgs.unapply }
+    { apply }
+    { unapply }
   }
 
   /** Опциональный маппер модели для play form. */

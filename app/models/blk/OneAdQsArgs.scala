@@ -1,11 +1,13 @@
 package models.blk
 
-import models.im.{OutImgFmts, OutImgFmt}
+import io.suggest.model.play.qsb.QueryStringBindableImpl
+import models.im.{OutImgFmt, OutImgFmts}
 import play.api.Play._
 import play.api.mvc.QueryStringBindable
 import util.PlayLazyMacroLogsImpl
 import util.qsb.QsbSigner
 import util.secure.SecretGetter
+
 import scala.language.implicitConversions   // конверсий тут по факту нет.
 
 /**
@@ -27,11 +29,11 @@ object OneAdQsArgs {
   }
 
   // Суффиксы названий qs-полей.
-  def AD_ID_SUF     = ".a"
-  def SZ_MULT_SUF   = ".m"
-  def VSN_SUF       = ".v"
-  def IMG_FMT_SUF   = ".f"
-  def WIDE_SUF      = ".w"
+  def AD_ID_FN     = "a"
+  def SZ_MULT_FN   = "m"
+  def VSN_FN       = "v"
+  def IMG_FMT_FN   = "f"
+  def WIDE_FN      = "w"
 
   /** routes qsb для сериализации/десериализации экземпляра [[OneAdQsArgs]]. */
   implicit def qsb(implicit strB: QueryStringBindable[String],
@@ -41,20 +43,22 @@ object OneAdQsArgs {
                    // compat: Формат в qs опционален, т.к. его не было вообще до 13 марта 2015, а ссылки на картинки уже были в фейсбуке (в тестовых акк-ах).
                    // Потом когда-нибудь наверное можно будет убрать option, окончательно закрепив обязательность формата.
                    // Есть также случаи, когда это обязательное поле не нужно (см. scaladoc для класса-компаньона).
-                   imgFmtB  : QueryStringBindable[Option[OutImgFmt]]) : QueryStringBindable[OneAdQsArgs] = {
-    new QueryStringBindable[OneAdQsArgs] {
+                   imgFmtB  : QueryStringBindable[Option[OutImgFmt]]
+                  ) : QueryStringBindable[OneAdQsArgs] = {
+    new QueryStringBindableImpl[OneAdQsArgs] {
 
       def getQsbSigner(key: String) = new QsbSigner(SIGN_SECRET, "sig")
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, OneAdQsArgs]] = {
-        val keyDotted = if (!key.isEmpty) s"$key." else key
+        val k = key1F(key)
         for {
-          params1         <- getQsbSigner(key).signedOrNone(keyDotted, params)
-          maybeAdId       <- strB.bind(key + AD_ID_SUF, params1)
-          maybeSzMult     <- floatB.bind(key + SZ_MULT_SUF, params1)
-          maybeVsnOpt     <- longOptB.bind(key + VSN_SUF, params1)
-          maybeImgFmtOpt  <- imgFmtB.bind(key + IMG_FMT_SUF, params1)
-          maybeWideOpt    <- wideOptB.bind(key + WIDE_SUF, params1)
+          params1         <- getQsbSigner(key)
+            .signedOrNone(k(""), params)
+          maybeAdId       <- strB.bind    (k(AD_ID_FN),   params1)
+          maybeSzMult     <- floatB.bind  (k(SZ_MULT_FN), params1)
+          maybeVsnOpt     <- longOptB.bind(k(VSN_FN),     params1)
+          maybeImgFmtOpt  <- imgFmtB.bind (k(IMG_FMT_FN), params1)
+          maybeWideOpt    <- wideOptB.bind(k(WIDE_FN),    params1)
         } yield {
           for {
             adId        <- maybeAdId.right
@@ -64,24 +68,30 @@ object OneAdQsArgs {
             wideOpt     <- maybeWideOpt.right
           } yield {
             val imgFmt = imgFmtOpt getOrElse OutImgFmts.JPEG
-            OneAdQsArgs(adId, szMult, vsnOpt, imgFmt, wideOpt)
+            OneAdQsArgs(
+              adId    = adId,
+              szMult  = szMult,
+              vsnOpt  = vsnOpt,
+              imgFmt  = imgFmt,
+              wideOpt = wideOpt
+            )
           }
         }
       }
 
       override def unbind(key: String, value: OneAdQsArgs): String = {
-        val qss = List(
-          strB.unbind(key + AD_ID_SUF,      value.adId),
-          floatB.unbind(key + SZ_MULT_SUF,  value.szMult),
-          longOptB.unbind(key + VSN_SUF,    value.vsnOpt),
-          imgFmtB.unbind(key + IMG_FMT_SUF, Some(value.imgFmt)),
-          wideOptB.unbind(key + WIDE_SUF,   value.wideOpt)
-        )
-        val qs = qss
-          .iterator
-          .filter(!_.isEmpty)
-          .mkString("&")
-        getQsbSigner(key).mkSigned(key, qs)
+        val qs = _mergeUnbinded {
+          val k = key1F(key)
+          Iterator(
+            strB.unbind     (k(AD_ID_FN),   value.adId),
+            floatB.unbind   (k(SZ_MULT_FN), value.szMult),
+            longOptB.unbind (k(VSN_FN),     value.vsnOpt),
+            imgFmtB.unbind  (k(IMG_FMT_FN), Some(value.imgFmt)),
+            wideOptB.unbind (k(WIDE_FN),    value.wideOpt)
+          )
+        }
+        getQsbSigner(key)
+          .mkSigned(key, qs)
       }
     }
   }

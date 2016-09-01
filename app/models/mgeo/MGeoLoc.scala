@@ -23,8 +23,8 @@ object MGeoLoc {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MGeoLoc]] = {
         val k = key1F(key)
         for {
-          centerE           <- geoPointB.bind(k(CENTER_FN), params)
-          accuracyOptE      <- doubleOptB.bind(k(ACCURACY_M_FN), params)
+          centerE           <- geoPointB.bind (k(CENTER_FN),      params)
+          accuracyOptE      <- doubleOptB.bind(k(ACCURACY_M_FN),  params)
         } yield {
           for {
             center          <- centerE.right

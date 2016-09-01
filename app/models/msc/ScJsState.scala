@@ -1,6 +1,7 @@
 package models.msc
 
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import models._
 import models.mlu.MLookupModes
 import play.api.mvc.QueryStringBindable
@@ -35,24 +36,25 @@ object ScJsState {
   private def noFalse(boolOpt: Option[Boolean]) = boolOpt.filter(identity)
   private def strNonEmpty(strOpt: Option[String]) = strOpt.filter(!_.isEmpty)
 
-  implicit def qsb(implicit strOptB: QueryStringBindable[Option[String]],
-                   boolOptB: QueryStringBindable[Option[Boolean]],
-                   longOptB: QueryStringBindable[Option[Long]],
-                   intOptB: QueryStringBindable[Option[Int]],
-                   nglsMapB: QueryStringBindable[Option[NglsStateMap_t]]
+  implicit def qsb(implicit
+                   strOptB  : QueryStringBindable[Option[String]],
+                   boolOptB : QueryStringBindable[Option[Boolean]],
+                   longOptB : QueryStringBindable[Option[Long]],
+                   intOptB  : QueryStringBindable[Option[Int]],
+                   nglsMapB : QueryStringBindable[Option[NglsStateMap_t]]
                   ): QueryStringBindable[ScJsState] = {
-    new QueryStringBindable[ScJsState] {
+    new QueryStringBindableImpl[ScJsState] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, ScJsState]] = {
         for {
-          maybeAdnId            <- strOptB.bind(ADN_ID_FN, params)
-          maybeCatScreenOpened  <- boolOptB.bind(CAT_SCR_OPENED_FN, params)
-          maybeGeoScreenOpened  <- boolOptB.bind(GEO_SCR_OPENED_FN, params)
-          maybeGeneration       <- longOptB.bind(GENERATION_FN, params)
-          maybeFadsOpened       <- strOptB.bind(FADS_CURRENT_AD_ID_FN, params)
-          maybeFadsOffset       <- intOptB.bind(FADS_OFFSET_FN, params)
-          maybeSearchTab        <- boolOptB.bind(SEARCH_TAB_FN, params)
-          maybeProducerAdnId    <- strOptB.bind(PRODUCER_ADN_ID_FN, params)
-          maybeTileCatId        <- strOptB.bind(TILES_CAT_ID_FN, params)
+          maybeAdnId            <- strOptB.bind (ADN_ID_FN,             params)
+          maybeCatScreenOpened  <- boolOptB.bind(CAT_SCR_OPENED_FN,     params)
+          maybeGeoScreenOpened  <- boolOptB.bind(GEO_SCR_OPENED_FN,     params)
+          maybeGeneration       <- longOptB.bind(GENERATION_FN,         params)
+          maybeFadsOpened       <- strOptB.bind (FADS_CURRENT_AD_ID_FN, params)
+          maybeFadsOffset       <- intOptB.bind (FADS_OFFSET_FN,        params)
+          maybeSearchTab        <- boolOptB.bind(SEARCH_TAB_FN,         params)
+          maybeProducerAdnId    <- strOptB.bind (PRODUCER_ADN_ID_FN,    params)
+          maybeTileCatId        <- strOptB.bind (TILES_CAT_ID_FN,       params)
           maybeNglsMap          <- nglsMapB.bind(NAV_NGLS_STATE_MAP_FN, params)
         } yield {
           val res = ScJsState(
@@ -72,20 +74,20 @@ object ScJsState {
       }
 
       override def unbind(key: String, value: ScJsState): String = {
-        Iterator(
-          strOptB.unbind(ADN_ID_FN, value.adnId),
-          boolOptB.unbind(CAT_SCR_OPENED_FN, value.searchScrOpenedOpt),
-          boolOptB.unbind(GEO_SCR_OPENED_FN, value.navScrOpenedOpt),
-          longOptB.unbind(GENERATION_FN, value.generationOpt),
-          strOptB.unbind(FADS_CURRENT_AD_ID_FN, value.fadOpenedIdOpt),
-          intOptB.unbind(FADS_OFFSET_FN, value.fadsOffsetOpt),
-          boolOptB.unbind(SEARCH_TAB_FN, value.searchTabListOpt),
-          strOptB.unbind(PRODUCER_ADN_ID_FN, value.fadsProdIdOpt),
-          strOptB.unbind(TILES_CAT_ID_FN, value.tilesCatIdOpt),
-          nglsMapB.unbind(NAV_NGLS_STATE_MAP_FN, if (value.navNglsMap.isEmpty) None else Some(value.navNglsMap) )
-        )
-          .filter(!_.isEmpty)
-          .mkString("&")
+        _mergeUnbinded {
+          Iterator(
+            strOptB.unbind  (ADN_ID_FN,             value.adnId),
+            boolOptB.unbind (CAT_SCR_OPENED_FN,     value.searchScrOpenedOpt),
+            boolOptB.unbind (GEO_SCR_OPENED_FN,     value.navScrOpenedOpt),
+            longOptB.unbind (GENERATION_FN,         value.generationOpt),
+            strOptB.unbind  (FADS_CURRENT_AD_ID_FN, value.fadOpenedIdOpt),
+            intOptB.unbind  (FADS_OFFSET_FN,        value.fadsOffsetOpt),
+            boolOptB.unbind (SEARCH_TAB_FN,         value.searchTabListOpt),
+            strOptB.unbind  (PRODUCER_ADN_ID_FN,    value.fadsProdIdOpt),
+            strOptB.unbind  (TILES_CAT_ID_FN,       value.tilesCatIdOpt),
+            nglsMapB.unbind (NAV_NGLS_STATE_MAP_FN, if (value.navNglsMap.isEmpty) None else Some(value.navNglsMap) )
+          )
+        }
       }
     } // new QSB {}
   }   // def qsb()

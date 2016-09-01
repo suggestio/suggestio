@@ -1,8 +1,10 @@
 package models
 
 import io.suggest.common.menum.EnumValue2Val
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.util.MacroLogsImplLazy
 import play.api.mvc.QueryStringBindable
+
 import scala.language.implicitConversions
 
 /**
@@ -48,7 +50,7 @@ object MNodeAdsModes extends Enumeration with MacroLogsImplLazy with EnumValue2V
 
   /** qsb-маппер, линкуемый в routes. */
   implicit def qsb(implicit strOptB: QueryStringBindable[Option[String]]): QueryStringBindable[T] = {
-    new QueryStringBindable[T] {
+    new QueryStringBindableImpl[T] {
       import util.qsb.QsbUtil._
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, T]] = {

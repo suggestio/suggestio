@@ -1,6 +1,7 @@
 package models.adv.ext.act
 
 import akka.actor.ActorPath
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
 import util.PlayMacroLogsDyn
 import util.qsb.QsbSigner
@@ -15,8 +16,8 @@ import util.secure.SecretGetter
 object ActorPathQs extends PlayMacroLogsDyn {
 
   // Суффиксы имен qs-аргументов
-  def PATH_SUF = ".p"
-  def SIGN_SUF = ".sig"
+  def PATH_FN  = "p"
+  def SIGN_FN  = "sig"
 
   /** Статический секретный ключ для подписывания запросов к dyn-картинкам. */
   private[models] val SIGN_SECRET: String = {
@@ -30,18 +31,19 @@ object ActorPathQs extends PlayMacroLogsDyn {
 
   /** qsb для извлечения нотариально заверенного путя из URL qs. */
   implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[ActorPathQs] = {
-    new QueryStringBindable[ActorPathQs] {
+    new QueryStringBindableImpl[ActorPathQs] {
 
       /** Фасад для работы с секретным ключом подписи. */
-      def getQsbSigner(key: String) = new QsbSigner(SIGN_SECRET, s"$key$SIGN_SUF")
+      def getQsbSigner(key: String) = new QsbSigner(SIGN_SECRET, s"$key$KEY_DELIM$SIGN_FN")
 
       /** Десериализация. */
       override def bind(key: String, params0: Map[String, Seq[String]]): Option[Either[String, ActorPathQs]] = {
         // Собираем результат
-        val keyDotted = if (!key.isEmpty) s"$key." else key
+        val k = key1F(key)
         for {
-          params    <- getQsbSigner(key).signedOrNone(keyDotted, params0)
-          maybePath <- strB.bind(key + PATH_SUF, params)
+          params    <- getQsbSigner(key)
+            .signedOrNone(k(""), params0)
+          maybePath <- strB.bind(k(PATH_FN), params)
         } yield {
           maybePath.right.flatMap { path =>
             try {
@@ -58,8 +60,12 @@ object ActorPathQs extends PlayMacroLogsDyn {
 
       /** Сериализация. */
       override def unbind(key: String, value: ActorPathQs): String = {
-        val qsRaw = strB.unbind(key + PATH_SUF, value.path.toSerializationFormat)   // TODO Срезать префикс akka://application/system/
-        getQsbSigner(key).mkSigned(key, qsRaw)
+        val qsRaw = strB.unbind(
+          key   = key1(key, PATH_FN),
+          value = value.path.toSerializationFormat
+        )
+        getQsbSigner(key)
+          .mkSigned(key, qsRaw)
       }
     }
   }

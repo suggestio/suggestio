@@ -2,6 +2,7 @@ package models
 
 import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.model.n2.extra.MAdnExtra
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
 
 /**
@@ -151,7 +152,7 @@ object AdnShownTypes extends EnumMaybeWithName {
 
   /** Поддержка со стороны play router'а. */
   implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[T] = {
-    new QueryStringBindable[T] {
+    new QueryStringBindableImpl[T] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, T]] = {
         for (nameEith <- strB.bind(key, params)) yield {
           nameEith.right.flatMap { name =>

@@ -8,10 +8,10 @@ package models
 package object im {
 
   // Im enum-типы для параметров трансформации картинок.
-  type ImGravity            = ImGravities.ImGravity
+  type ImGravity            = ImGravities.T
   type ImResizeFlag         = ImResizeFlags.ImResizeFlag
-  type ImInterlacing        = ImInterlace.ImInterlacing
-  type ImOpCode             = ImOpCodes.ImOpCode
+  type ImInterlacing        = ImInterlace.T
+  type ImOpCode             = ImOpCodes.T
 
   type BasicScreenSize      = BasicScreenSizes.BasicScreenSize
 

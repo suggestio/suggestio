@@ -1,6 +1,7 @@
 package models.msc
 
 import io.suggest.common.menum.EnumMaybeWithId
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
 import util.PlayMacroLogsImpl
 
@@ -35,7 +36,7 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImp
 
   /** Биндинги для url query string. */
   implicit def qsb(implicit intB: QueryStringBindable[Int]): QueryStringBindable[MScApiVsn] = {
-    new QueryStringBindable[MScApiVsn] {
+    new QueryStringBindableImpl[MScApiVsn] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MScApiVsn]] = {
         val optRes = for {
           maybeVsn <- intB.bind(key, params)

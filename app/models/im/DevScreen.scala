@@ -1,9 +1,10 @@
 package models.im
 
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.ym.model.common.MImgSizeT
 import play.api.data.Mapping
 import play.api.mvc.QueryStringBindable
-import util.img.{PicSzParsers, DevScreenParsers}
+import util.img.{DevScreenParsers, PicSzParsers}
 
 /**
  * Suggest.io
@@ -20,23 +21,27 @@ object DevScreen extends DevScreenParsers {
   def maybeFromString(s: String) = parse(devScreenP, s)
 
   /** Биндер для отработки значения screen из ссылки. */
-  implicit val qsb: QueryStringBindable[DevScreen] = {
-    new QueryStringBindable[DevScreen] {
+  implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[DevScreen] = {
+    new QueryStringBindableImpl[DevScreen] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, DevScreen]] = {
-        params.get(key)
-          .flatMap(_.headOption)
-          .map { v =>
-            val pr = maybeFromString(v)
-            if (pr.successful) {
-              Right(pr.get)
-            } else {
-              Left(pr.toString)
+        for {
+          devScreenStrE <- strB.bind(key, params)
+        } yield {
+          devScreenStrE
+            .right
+            .flatMap { devScreenStr =>
+              val pr = maybeFromString(devScreenStr)
+              if (pr.successful) {
+                Right(pr.get)
+              } else {
+                Left(pr.toString)
+              }
             }
-          }
+        }
       }
 
       override def unbind(key: String, value: DevScreen): String = {
-        value.toString
+        strB.unbind(key, value.toString)
       }
     }
   }

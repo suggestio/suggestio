@@ -1,7 +1,8 @@
 package util.blocks
 
 import io.suggest.common.menum.EnumValue2Val
-import models.blk.ed.{BimKey_t, AdFormM, BindResult, BindAcc}
+import io.suggest.model.play.qsb.QueryStringBindableImpl
+import models.blk.ed.{AdFormM, BimKey_t, BindAcc, BindResult}
 import models.mctx.Context
 import play.api.data._
 import play.api.mvc.QueryStringBindable
@@ -10,7 +11,7 @@ import util.PlayMacroLogsImpl
 import views.html.blocks._
 import models._
 import play.api.data.validation.Constraint
-import play.twirl.api.{Template2, Html}
+import play.twirl.api.{Html, Template2}
 
 // TODO Надо выпилить эту модель, т.к. динамический редактор с кучей карточек и переключаемыми блоками ушел в небытие.
 
@@ -150,7 +151,7 @@ object BlocksConf
 
   /** Поддержка биндинга блока из routes. */
   implicit def qsb(implicit intB: QueryStringBindable[Int]): QueryStringBindable[T] = {
-    new QueryStringBindable[T] {
+    new QueryStringBindableImpl[T] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, T]] = {
         for {
           blockIdEith <- intB.bind(key, params)

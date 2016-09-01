@@ -2,8 +2,10 @@ package models.msc
 
 import controllers.routes
 import io.suggest.common.menum.EnumMaybeWithName
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import models.blk.OneAdQsArgs
-import play.api.mvc.{PathBindable, QueryStringBindable, Call}
+import play.api.mvc.{Call, PathBindable, QueryStringBindable}
+
 import scala.language.implicitConversions
 
 /**
@@ -64,9 +66,11 @@ object OneAdRenderVariants extends Enumeration with EnumMaybeWithName {
 
   /** routes qsb для модели. */
   implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[T] = {
-    new QueryStringBindable[T] {
+    new QueryStringBindableImpl[T] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, T]] = {
-        strB.bind(key, params).map { maybeVarianStr =>
+        for {
+          maybeVarianStr <- strB.bind(key, params)
+        } yield {
           maybeVarianStr
             .right
             .flatMap { binder }

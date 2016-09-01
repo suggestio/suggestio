@@ -66,6 +66,15 @@ object MBleBeaconInfo {
 
 }
 
+
+/**
+  * Класс для инстансов модели с инфой о наблюдаемом в эфире BLE-маячке.
+  * @param uuidStr Proximity UUID наблюдаемого маячка.
+  * @param major Major ID
+  * @param minor Minor ID
+  * @param sigPowerM Воспринимаемая устройством мощность сигнала маячка.
+  * @param sigPower1m Мощность сигнала на расстоянии 1 метра, заявленная маячком.
+  */
 case class MBleBeaconInfo(
   uuidStr     : String,
   major       : Int,

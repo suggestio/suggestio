@@ -1,5 +1,6 @@
 package util.qsb
 
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.ym.model.common.MImgSizeT
 import play.api.mvc.QueryStringBindable
 import models._
@@ -33,7 +34,7 @@ object QSBs extends JavaTokenParsers with PicSzParsers {
   /** qsb для NodeGeoLevel, записанной в виде int или string (esfn). */
   implicit def nodeGeoLevelQSB(implicit strB: QueryStringBindable[String],
                                intB: QueryStringBindable[Int]): QueryStringBindable[NodeGeoLevel] = {
-    new QueryStringBindable[NodeGeoLevel] {
+    new QueryStringBindableImpl[NodeGeoLevel] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, NodeGeoLevel]] = {
         val nglOpt: Option[NodeGeoLevel] = intB.bind(key, params)
           .filter(_.isRight)
@@ -75,7 +76,7 @@ object QSBs extends JavaTokenParsers with PicSzParsers {
 
   /** qsb для бинда значения длины*ширины из qs. */
   implicit def mImgInfoMetaQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[MImgInfoMeta] = {
-    new QueryStringBindable[MImgInfoMeta] {
+    new QueryStringBindableImpl[MImgInfoMeta] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MImgInfoMeta]] = {
         strB.bind(key, params).map { maybeWxh =>
           maybeWxh.right.flatMap { wxh =>
@@ -98,7 +99,7 @@ object QSBs extends JavaTokenParsers with PicSzParsers {
   type NglsStateMap_t = Map[NodeGeoLevel, Boolean]
 
   implicit def nglsMapQsb: QueryStringBindable[NglsStateMap_t] = {
-    new QueryStringBindable[NglsStateMap_t] with PlayLazyMacroLogsImpl {
+    new QueryStringBindableImpl[NglsStateMap_t] with PlayLazyMacroLogsImpl {
       import LOGGER._
 
       def vP: Parser[Boolean] = opt("_" ^^^ false) ^^ { _ getOrElse true }
@@ -121,8 +122,9 @@ object QSBs extends JavaTokenParsers with PicSzParsers {
       }
 
       override def unbind(key: String, value: NglsStateMap_t): String = {
-        val sb = new StringBuilder(key).append('=')
-        value.foreach { case (ngl, flag) =>
+        val sb = new StringBuilder(key)
+          .append('=')
+        for ((ngl, flag) <- value) {
           sb.append(ngl.esfn)
           if (!flag)
             sb.append('_')

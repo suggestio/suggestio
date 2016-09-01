@@ -2,10 +2,11 @@ package models.im
 
 import java.text.DecimalFormat
 
+import io.suggest.common.menum.EnumMaybeWithName
+import io.suggest.model.play.qsb.QueryStringBindableImpl
+import io.suggest.primo.IStrId
 import org.im4java.core.IMOperation
 import models._
-import play.api.mvc.QueryStringBindable
-import play.core.parsers.FormUrlEncodedParser
 import util.{FormUtil, PlayMacroLogsImpl}
 
 import scala.util.parsing.combinator.JavaTokenParsers
@@ -109,7 +110,7 @@ import ImOp._
 
 
 /** qsb-биндер. */
-class ImOpsQsb extends QueryStringBindable[Seq[ImOp]] {
+class ImOpsQsb extends QueryStringBindableImpl[Seq[ImOp]] {
 
   import LOGGER._
 
@@ -119,6 +120,7 @@ class ImOpsQsb extends QueryStringBindable[Seq[ImOp]] {
    * @param params ListMap с параметрами.
    */
   override def bind(keyDotted: String, params: Map[String, Seq[String]]): Option[Either[String, Seq[ImOp]]] = {
+    val splitOnBracketsRe = SPLIT_ON_BRACKETS_RE
     try {
       val ops0 = params
         .iterator
@@ -126,7 +128,7 @@ class ImOpsQsb extends QueryStringBindable[Seq[ImOp]] {
         .filter { _._1 startsWith keyDotted }
         // Извлечь порядковый номер из ключа.
         .flatMap { case (k, v) =>
-          SPLIT_ON_BRACKETS_RE.split(k) match {
+          splitOnBracketsRe.split(k) match {
             case Array(k2, iStr) =>
               val i = iStr.toInt
               Seq( ((k2, v), i) )
@@ -171,84 +173,86 @@ trait ImOp {
 }
 
 
-object ImOpCodes extends Enumeration {
-  abstract protected class Val(val strId: String) extends super.Val(strId) {
+object ImOpCodes extends EnumMaybeWithName {
+
+  abstract protected class Val(val strId: String)
+    extends super.Val(strId)
+      with IStrId
+  {
     def mkOp(vs: Seq[String]): ImOp
   }
 
-  type ImOpCode = Val
+  override type T = Val
 
-  val AbsCrop: ImOpCode = new Val("a") {
+  val AbsCrop: T = new Val("a") {
     override def mkOp(vs: Seq[String]) = {
       AbsCropOp(ImgCrop(vs.head))
     }
   }
-  val Gravity: ImOpCode = new Val("b") {
+  val Gravity: T = new Val("b") {
     override def mkOp(vs: Seq[String]) = {
       ImGravities.withName(vs.head)
     }
   }
-  val AbsResize: ImOpCode = new Val("c") {
+  val AbsResize: T = new Val("c") {
     override def mkOp(vs: Seq[String]): ImOp = {
       AbsResizeOp(vs.head)
     }
   }
-  val Interlace: ImOpCode = new Val("d") {
+  val Interlace: T = new Val("d") {
     override def mkOp(vs: Seq[String]) = {
       ImInterlace(vs)
     }
   }
-  val GaussBlur: ImOpCode = new Val("e") {
+  val GaussBlur: T = new Val("e") {
     override def mkOp(vs: Seq[String]) = {
       GaussBlurOp(vs.head.toDouble)
     }
   }
-  val Quality: ImOpCode = new Val("f") {
+  val Quality: T = new Val("f") {
     override def mkOp(vs: Seq[String]): ImOp = {
       QualityOp(vs.head.toDouble)
     }
   }
-  val Extent: ImOpCode = new Val("g") {
+  val Extent: T = new Val("g") {
     override def mkOp(vs: Seq[String]): ImOp = {
       ExtentOp(vs.head)
     }
   }
-  val Strip: ImOpCode = new Val("h") {
+  val Strip: T = new Val("h") {
     override def mkOp(vs: Seq[String]): ImOp = {
       StripOp
     }
   }
-  val Filter: ImOpCode = new Val("i") {
+  val Filter: T = new Val("i") {
     override def mkOp(vs: Seq[String]): ImOp = {
       ImFilters(vs)
     }
   }
-  val SamplingFactor: ImOpCode = new Val("j") {
+  val SamplingFactor: T = new Val("j") {
     override def mkOp(vs: Seq[String]): ImOp = {
       ImSamplingFactors.withName( vs.head )
     }
   }
-  val PercentSzCrop: ImOpCode = new Val("k") {
+  val PercentSzCrop: T = new Val("k") {
     override def mkOp(vs: Seq[String]): ImOp = {
       PercentSzCropOp(ImgCrop(vs.head))
     }
   }
 
-
-  implicit def value2val(x: Value): ImOpCode = x.asInstanceOf[ImOpCode]
-
-  def maybeWithName(n: String): Option[ImOpCode] = {
-    values
+  /** Не ясно, надо ли оверрайдить. Этот код написан до написания EnumMaybeWithName. */
+  override def maybeWithName(n: String): Option[T] = {
+    valuesT
       .find(_.strId == n)
-      .asInstanceOf[Option[ImOpCode]]
   }
+
 }
 
 
 
-object ImGravities extends Enumeration {
+object ImGravities extends EnumMaybeWithName {
 
-  protected case class Val(strId: String, imName: String) extends super.Val(strId) with ImOp {
+  protected case class Val(strId: String, imName: String) extends super.Val(strId) with ImOp with IStrId {
     override def opCode = ImOpCodes.Gravity
     override def addOperation(op: IMOperation): Unit = {
       op.gravity(imName)
@@ -257,18 +261,15 @@ object ImGravities extends Enumeration {
     override def unwrappedValue = Some(imName)
   }
 
-  type ImGravity = Val
+  override type T = Val
 
   // Некоторые значения помечены как lazy, т.к. не используются по факту.
-  val Center: ImGravity         = Val("c", "Center")
-  lazy val North: ImGravity     = Val("n", "North")
-  lazy val South: ImGravity     = Val("s", "South")
-  lazy val West: ImGravity      = Val("w", "West")
-  lazy val East: ImGravity      = Val("e", "East")
+  val Center: T         = Val("c", "Center")
+  lazy val North: T     = Val("n", "North")
+  lazy val South: T     = Val("s", "South")
+  lazy val West: T      = Val("w", "West")
+  lazy val East: T      = Val("e", "East")
 
-  // TODO Добавить ещё?
-
-  implicit def value2val(x: Value): ImGravity = x.asInstanceOf[ImGravity]
 
 }
 
@@ -296,7 +297,8 @@ case object StripOp extends ImOp {
 }
 
 
-object ImInterlace extends Enumeration {
+object ImInterlace extends EnumMaybeWithName {
+
   protected case class Val(qsValue: String, imName: String) extends super.Val(qsValue) with ImOp {
     override def opCode = ImOpCodes.Interlace
     override def addOperation(op: IMOperation): Unit = {
@@ -305,20 +307,19 @@ object ImInterlace extends Enumeration {
     override def unwrappedValue: Option[String] = Some(imName)
   }
 
-  type ImInterlacing = Val
+  override type T = Val
 
-  val Plane: ImInterlacing            = Val("a", "Plane")
-  lazy val None: ImInterlacing        = Val("0", "None")
-  lazy val Line: ImInterlacing        = Val("l", "Line")
-  lazy val Jpeg: ImInterlacing        = Val("j", "JPEG")
-  lazy val Gif: ImInterlacing         = Val("g", "GIF")
-  lazy val Png: ImInterlacing         = Val("p", "PNG")
-  lazy val Partition: ImInterlacing   = Val("r", "Partition")
+  val Plane: T            = Val("a", "Plane")
+  lazy val None: T        = Val("0", "None")
+  lazy val Line: T        = Val("l", "Line")
+  lazy val Jpeg: T        = Val("j", "JPEG")
+  lazy val Gif: T         = Val("g", "GIF")
+  lazy val Png: T         = Val("p", "PNG")
+  lazy val Partition: T   = Val("r", "Partition")
 
-  implicit def value2val(x: Value): ImInterlacing = x.asInstanceOf[ImInterlacing]
+  def apply(vs: Seq[String]): T = apply(vs.head)
+  def apply(v: String): T = withName(v)
 
-  def apply(vs: Seq[String]): ImInterlacing = apply(vs.head)
-  def apply(v: String): ImInterlacing = withName(v)
 }
 
 

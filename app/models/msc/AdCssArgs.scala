@@ -1,5 +1,6 @@
 package models.msc
 
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import models.blk.SzMult_t
 import play.api.mvc.QueryStringBindable
 import util.PlayMacroLogsDyn
@@ -15,7 +16,8 @@ import util.secure.SecretGetter
 
 object AdCssArgs {
 
-  val SEP_RE = ",".r
+  def SEP = ","
+  def SEP_RE = SEP.r
 
   /** Десериализация из строки. */
   def fromString(s: String) = {
@@ -35,39 +37,41 @@ object AdCssArgs {
 
   /** Подписываемый QSB для списка AdCssArgs. */
   implicit def qsbSeq: QueryStringBindable[Seq[AdCssArgs]] = {
-    new QueryStringBindable[Seq[AdCssArgs]] {
+    new QueryStringBindableImpl[Seq[AdCssArgs]] {
 
       private def getSigner = new QsbSigner(SIGN_SECRET, "sig")
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, Seq[AdCssArgs]]] = {
-        getSigner.signedOrNone(key, params)
-          .flatMap(_.get(key))
-          .map { vs =>
-            try {
-              val parsed = vs.map { v =>
-                fromString(v)
-              }
-              Right(parsed)
-            } catch {
-              case ex: Exception =>
-                Left(ex.getMessage)
+        for {
+          params2 <- getSigner.signedOrNone(key, params)
+          vs      <- params2.get(key)
+        } yield {
+          try {
+            val parsed = for (v <- vs) yield {
+              fromString(v)
             }
+            Right(parsed)
+          } catch {
+            case ex: Exception =>
+              Left(ex.getMessage)
           }
+        }
       }
 
-      override def unbind(key: String, value: Seq[AdCssArgs]): String = {
-        val sb = new StringBuilder(30 * value.size)
-        value.foreach { aca =>
+      override def unbind(key: String, values: Seq[AdCssArgs]): String = {
+        val sb = new StringBuilder(30 * values.size)
+        for (aca <- values) {
           sb.append(key).append('=')
-            .append(aca.adId).append(AdCssArgs.SEP_RE).append(aca.szMult)
+            .append(aca.adId).append(AdCssArgs.SEP).append(aca.szMult)
             .append('&')
         }
         // Убрать финальный & из ссылки
-        if (value.nonEmpty)
+        if (values.nonEmpty)
           sb.setLength(sb.length - 1)
         // Вернуть подписанный результат
         val res = sb.toString()
-        getSigner.mkSigned(key, res)
+        getSigner
+          .mkSigned(key, res)
       }
     }
   }
@@ -87,7 +91,7 @@ case class AdCssArgs(
 
   override def toString: String = {
     // TODO Нужно укорачивать szMult: 1.0 -> 1
-    adId + AdCssArgs.SEP_RE + szMult
+    adId + AdCssArgs.SEP + szMult
   }
 
 }

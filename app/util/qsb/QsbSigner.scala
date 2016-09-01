@@ -2,11 +2,13 @@ package util.qsb
 
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
+
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import org.apache.commons.codec.binary.Hex
 import play.api.mvc.QueryStringBindable
 import play.core.parsers.FormUrlEncodedParser
 import util.PlayMacroLogsImpl
-import play.api.Play.{current, configuration}
+import play.api.Play.{configuration, current}
 
 /**
  * Suggest.io
@@ -33,7 +35,7 @@ import QsbSigner._
  */
 class QsbSigner(secretKey: String, signKeyName: String, algo: String = QsbSigner.ALGO_DFLT)
                (implicit strB: QueryStringBindable[String])
-  extends QueryStringBindable[Map[String, Seq[String]]]
+  extends QueryStringBindableImpl[Map[String, Seq[String]]]
   with PlayMacroLogsImpl
 {
   import LOGGER._

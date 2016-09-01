@@ -1,7 +1,8 @@
 package models.adv
 
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
-import util.{PlayMacroLogsDyn, FormUtil}
+import util.{FormUtil, PlayMacroLogsDyn}
 
 import scala.util.parsing.combinator.JavaTokenParsers
 
@@ -20,7 +21,7 @@ object MExtTargetInfo extends ExtTargetInfoParsers with PlayMacroLogsDyn {
 
   /** QueryStringBindable для экземпляров текущей модели. */
   implicit def qsb(implicit strB: QueryStringBindable[String]) = {
-    new QueryStringBindable[MExtTargetInfo] {
+    new QueryStringBindableImpl[MExtTargetInfo] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MExtTargetInfo]] = {
         for {
           ser <- strB.bind(key, params)

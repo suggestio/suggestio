@@ -7,6 +7,7 @@ import io.suggest.di.ICacheApiUtil
 import io.suggest.itee.IteeUtil
 import io.suggest.model.n2.media.IMMedias
 import io.suggest.model.n2.media.storage.MStorage
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.primo.TypeT
 import io.suggest.util.UuidUtil
 import models.{IImgMeta, _}
@@ -38,12 +39,12 @@ object MImgT extends PlayMacroLogsImpl { model =>
 
   import play.api.Play.{current, isProd}
 
-  val SIGN_SUF   = ".sig"
-  val IMG_ID_SUF = ".id"
+  def SIGN_FN   = "sig"
+  def IMG_ID_FN = "id"
 
   /** Использовать QSB[UUID] напрямую нельзя, т.к. он выдает не-base64-выхлопы, что вызывает конфликты. */
   def rowKeyB(implicit strB: QueryStringBindable[String]): QueryStringBindable[String] = {
-    new QueryStringBindable[String] {
+    new QueryStringBindableImpl[String] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, String]] = {
         for (rawEith <- strB.bind(key, params)) yield {
           rawEith.right.flatMap { raw =>
@@ -88,18 +89,20 @@ object MImgT extends PlayMacroLogsImpl { model =>
                    strB: QueryStringBindable[String],
                    imOpsOptB: QueryStringBindable[Option[Seq[ImOp]]]
                   ): QueryStringBindable[MImgT] = {
-    new QueryStringBindable[MImgT] {
+    new QueryStringBindableImpl[MImgT] {
 
       /** Создать подписывалку для qs. */
-      def getQsbSigner(key: String) = new QsbSigner(SIGN_SECRET, s"$key$SIGN_SUF")
+      def getQsbSigner(key: String) = new QsbSigner(SIGN_SECRET, key1(key, SIGN_FN))
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MImgT]] = {
         // Собираем результат
-        val keyDotted = if (!key.isEmpty) s"$key." else key
+        val k = key1F(key)
+        val keyDotted = k("")
         for {
           // TODO Надо бы возвращать invalid signature при ошибке, а не not found.
-          params2         <- getQsbSigner(key).signedOrNone(keyDotted, params)
-          maybeImgId      <- rowKeyB.bind(key + IMG_ID_SUF, params2)
+          params2         <- getQsbSigner(key)
+            .signedOrNone(keyDotted, params)
+          maybeImgId      <- rowKeyB.bind(k(IMG_ID_FN), params2)
           maybeImOpsOpt   <- imOpsOptB.bind(keyDotted, params2)
         } yield {
           for {
@@ -113,15 +116,15 @@ object MImgT extends PlayMacroLogsImpl { model =>
       }
 
       override def unbind(key: String, value: MImgT): String = {
-        val imgIdRaw = rowKeyB.unbind(key + IMG_ID_SUF, value.rowKeyStr)
-        val imgOpsOpt = if (value.hasImgOps) Some(value.dynImgOps) else None
-        val imOpsUnbinded = imOpsOptB.unbind(s"$key.", imgOpsOpt)
-        val unsignedResult = if (imOpsUnbinded.isEmpty) {
-          imgIdRaw
-        } else {
-          imgIdRaw + "&" + imOpsUnbinded
+        val unsignedRes = _mergeUnbinded {
+          val k = key1F(key)
+          Iterator(
+            rowKeyB.unbind  (k(IMG_ID_FN),  value.rowKeyStr),
+            imOpsOptB.unbind(s"$key.",      if (value.hasImgOps) Some(value.dynImgOps) else None)
+          )
         }
-        getQsbSigner(key).mkSigned(key, unsignedResult)
+        getQsbSigner(key)
+          .mkSigned(key, unsignedRes)
       }
     }
   }

@@ -28,10 +28,10 @@ object FocusedAdsSearchArgs {
     new QueryStringBindableImpl[FocusedAdsSearchArgs] {
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, FocusedAdsSearchArgs]] = {
-        val f = key1F(key)
         for {
           maybeAdSearch       <- adSearchB.bind     (key,                       params)
           maybeWithHeadAd     <- boolOptB.bind      (WITH_HEAD_AD_FN,           params)
+          f = key1F(key)
           focJumpAllowedEith  <- boolB.bind         (f(FOC_JUMP_ALLOWED_FN),    params)
           mLookupModeEith     <- mLookupModeB.bind  (f(AD_LOOKUP_MODE_FN),      params)
           lookupAdIdEith      <- strB.bind          (f(AD_ID_LOOKUP_FN),        params)
@@ -72,8 +72,8 @@ object FocusedAdsSearchArgs {
         scFocusedAdSearchJsUnbindTpl(KEY_DELIM).body
       }
 
-    } // new QSB[]
-  }
+    }
+  } // qsb()
 
 }
 

@@ -1,5 +1,6 @@
 package models.adv
 
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
 import util.PlayLazyMacroLogsImpl
 import util.qsb.QsbSigner
@@ -25,36 +26,38 @@ object MExtAdvQs {
     sg()
   }
 
-  def AD_ID_SUF             = ".a"
-  def BEST_BEFORE_SEC_SUF   = ".b"
-  def TARGET_ID_SUF         = ".t"
-  def WS_ID_SUF             = ".w"
+  def AD_ID_FN             = "a"
+  def BEST_BEFORE_SEC_FN   = "b"
+  def TARGET_ID_FN         = "t"
+  def WS_ID_FN             = "w"
 
   /** Разделитель id'шников с поле targetIds. */
   def TARGET_IDS_DELIM = ","
 
-  implicit def qsb(
-                    implicit longB: QueryStringBindable[Long],
-                    strB: QueryStringBindable[String],
-                    infosB: QueryStringBindable[List[MExtTargetInfo]]
-  ) = {
-    new QueryStringBindable[MExtAdvQs] {
+  implicit def qsb(implicit
+                    longB    : QueryStringBindable[Long],
+                    strB    : QueryStringBindable[String],
+                    infosB  : QueryStringBindable[List[MExtTargetInfo]]
+                  ): QueryStringBindable[MExtAdvQs] = {
+    new QueryStringBindableImpl[MExtAdvQs] {
 
       def getQsbSigner(key: String) = new QsbSigner(SIGN_SECRET, "sig")
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MExtAdvQs]] = {
+        val k = key1F(key)
         for {
-          params1           <- getQsbSigner(key).signedOrNone(key, params)
-          maybeAdId         <- strB.bind   (key + AD_ID_SUF,            params1)
-          maybeCreatedAt    <- longB.bind  (key + BEST_BEFORE_SEC_SUF,  params1)
-          maybeTargetInfos  <- infosB.bind (key + TARGET_ID_SUF,        params1)
-          maybeWsId         <- strB.bind   (key + WS_ID_SUF,            params1)
+          params1             <- getQsbSigner(key)
+            .signedOrNone(k(""), params)
+          maybeAdId           <- strB.bind   (k(AD_ID_FN),            params1)
+          maybeCreatedAt      <- longB.bind  (k(BEST_BEFORE_SEC_FN),  params1)
+          maybeTargetInfos    <- infosB.bind (k(TARGET_ID_FN),        params1)
+          maybeWsId           <- strB.bind   (k(WS_ID_FN),            params1)
         } yield {
           for {
-            createdAt     <- maybeCreatedAt.right
-            targetInfos   <- maybeTargetInfos.right
-            adId          <- maybeAdId.right
-            wsId          <- maybeWsId.right
+            createdAt         <- maybeCreatedAt.right
+            targetInfos       <- maybeTargetInfos.right
+            adId              <- maybeAdId.right
+            wsId              <- maybeWsId.right
           } yield {
             MExtAdvQs(
               adId            = adId,
@@ -67,14 +70,16 @@ object MExtAdvQs {
       }
 
       override def unbind(key: String, value: MExtAdvQs): String = {
+        val k = key1F(key)
         val unsigned = Seq(
-          strB  .unbind(key + AD_ID_SUF,            value.adId),
-          longB .unbind(key + BEST_BEFORE_SEC_SUF,  value.bestBeforeSec),
-          infosB.unbind(key + TARGET_ID_SUF,        value.targets),
-          strB  .unbind(key + WS_ID_SUF,            value.wsId)
+          strB  .unbind(k(AD_ID_FN),            value.adId),
+          longB .unbind(k(BEST_BEFORE_SEC_FN),  value.bestBeforeSec),
+          infosB.unbind(k(TARGET_ID_FN),        value.targets),
+          strB  .unbind(k(WS_ID_FN),            value.wsId)
         )
-        .mkString("&")
-        getQsbSigner(key).mkSigned(key, unsigned)
+          .mkString("&")
+        getQsbSigner(key)
+          .mkSigned(key, unsigned)
       }
     }
   }

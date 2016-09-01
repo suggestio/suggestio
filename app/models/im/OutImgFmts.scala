@@ -1,8 +1,10 @@
 package models.im
 
 import io.suggest.common.menum.{EnumMaybeWithName, EnumValue2Val}
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
 import util.FormUtil.StrEnumFormMappings
+
 import scala.language.implicitConversions
 
 /**
@@ -56,7 +58,7 @@ object OutImgFmts extends Enumeration with EnumValue2Val with EnumMaybeWithName 
 
   /** query string биндер для этой модели. */
   implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[T] = {
-    new QueryStringBindable[T] {
+    new QueryStringBindableImpl[T] {
       /** Биндинг значения из карты аргументов. */
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, T]] = {
         for ( fmtNameEith <- strB.bind(key, params) ) yield {

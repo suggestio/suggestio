@@ -11,9 +11,9 @@ import play.api.libs.functional.syntax._
 import play.api.mvc.QueryStringBindable
 import _root_.util.PlayMacroLogsImpl
 import com.google.inject.{Inject, Singleton}
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import models.mproj.ICommonDi
 
-import scala.collection.Map
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -42,7 +42,7 @@ class EmailActivations @Inject() (
 
 
   @deprecated("Delete id, replaced by deserializeOne2()", "2015.sep.07")
-  override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
+  override def deserializeOne(id: Option[String], m: scala.collection.Map[String, AnyRef], version: Option[Long]): T = {
     EmailActivation(
       id    = id,
       key   = stringParser(m(KEY_ESFN)),
@@ -147,29 +147,38 @@ trait IEaEmailId extends OptStrId {
 
 /** Статическая поддержка модели [[IEaEmailId]]. */
 object IEaEmailId {
-  def ID_SUF = ".k"
-  def EMAIL_SUF = ".e"
 
-  implicit def qsb(implicit strB: QueryStringBindable[String]) = {
-    new QueryStringBindable[IEaEmailId] {
-      override def bind(key: String, params: Predef.Map[String, Seq[String]]): Option[Either[String, IEaEmailId]] = {
+  def ID_FN    = "k"
+  def EMAIL_FN = "e"
+
+  implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[IEaEmailId] = {
+    new QueryStringBindableImpl[IEaEmailId] {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, IEaEmailId]] = {
+        val k = key1F(key)
         for {
-          maybeEmail <- strB.bind(key + EMAIL_SUF, params)
-          maybeId <- strB.bind(key + ID_SUF, params)
+          maybeEmail  <- strB.bind(k(EMAIL_FN), params)
+          maybeId     <- strB.bind(k(ID_FN), params)
         } yield {
-          maybeEmail.right.flatMap { email =>
-            maybeId.right.map { id =>
-              EaEmailId(email = email, id = Some(id))
-            }
+          for {
+            email <- maybeEmail.right
+            id    <- maybeId.right
+          } yield {
+            EaEmailId(
+              email = email,
+              id    = Some(id)
+            )
           }
         }
       }
 
       override def unbind(key: String, value: IEaEmailId): String = {
-        List(
-          strB.unbind(key + EMAIL_SUF, value.email),
-          strB.unbind(key + ID_SUF, value.id.get)
-        ).mkString("&")
+        _mergeUnbinded {
+          val k = key1F(key)
+          Iterator(
+            strB.unbind(k(EMAIL_FN),  value.email),
+            strB.unbind(k(ID_FN),     value.id.get)
+          )
+        }
       }
     }
   }

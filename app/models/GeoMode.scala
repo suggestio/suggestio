@@ -1,18 +1,21 @@
 package models
 
 import java.net.InetAddress
+
 import io.suggest.geo.GeoConstants
 import io.suggest.model.geo
-import io.suggest.model.geo.{GeoDistanceQuery, Distance}
+import io.suggest.model.geo.{Distance, GeoDistanceQuery}
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import models.req.ExtReqHdr
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import org.elasticsearch.common.unit.DistanceUnit
 import play.api.http.HeaderNames
 import play.api.mvc.QueryStringBindable
-import play.api.Play.{current, configuration}
+import play.api.Play.{configuration, current}
 import util.async.AsyncUtil
 import util.xplay.CacheUtil
 import util.{PlayLazyMacroLogsImpl, PlayMacroLogsImpl}
+
 import scala.concurrent.Future
 import scala.util.parsing.combinator.JavaTokenParsers
 
@@ -77,7 +80,7 @@ object GeoMode extends PlayLazyMacroLogsImpl with JavaTokenParsers {
 
   /** Биндер для набега на GeoMode, сериализованный в qs. */
   implicit def geoModeQsb(implicit strOptB: QueryStringBindable[Option[String]]): QueryStringBindable[GeoMode] = {
-    new QueryStringBindable[GeoMode] {
+    new QueryStringBindableImpl[GeoMode] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, GeoMode]] = {
         for (maybeGeo <- strOptB.bind(key, params)) yield {
           for (geo <- maybeGeo.right) yield {
