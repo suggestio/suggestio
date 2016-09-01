@@ -76,7 +76,7 @@ object MNodeExtras extends IGenEsMappingProps with IEmpty {
 
 /** Класс-контейнер-реализация модели. */
 case class MNodeExtras(
-  adn       : Option[MAdnExtra]   = None,
-  beacon    : Option[MBeaconExtra]     = None
+  adn       : Option[MAdnExtra]         = None,
+  beacon    : Option[MBeaconExtra]      = None
 )
   extends EmptyProduct

@@ -18,6 +18,7 @@ trait MNodeSearch
   extends FtsAll
   with WithIds
   with OutEdges
+  with BleBeacons
   with ShownTypeId
   with AdnRights
   with AdnIsTest
@@ -45,6 +46,7 @@ trait MNodeSearchDflt
   with FtsAllDflt
   with WithIdsDflt
   with OutEdgesDflt
+  with BleBeaconsDflt
   with ShownTypeIdDflt
   with AdnRightsDflt
   with AdnIsTestDflt
@@ -75,6 +77,7 @@ trait MNodeSearchWrap
   with FtsAllWrap
   with WithIdsWrap
   with OutEdgesWrap
+  with BleBeaconsWrap
   with ShownTypeIdWrap
   with AdnRightsWrap
   with AdnIsTestWrap
