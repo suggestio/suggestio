@@ -1,6 +1,6 @@
 package models.msc
 
-import io.suggest.model.play.qsb.QsbKey1T
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
 
 import scala.language.implicitConversions
@@ -15,9 +15,9 @@ import scala.language.implicitConversions
 
 object SiteQsArgs {
 
-  val ADN_ID_SUF              = "a"
-  val POV_AD_ID_SUF           = "b"
-  val VSN_FN                  = "v"
+  def ADN_ID_SUF              = "a"
+  def POV_AD_ID_SUF           = "b"
+  def VSN_FN                  = "v"
 
   val empty = SiteQsArgs()
 
@@ -26,7 +26,7 @@ object SiteQsArgs {
                    strOptB: QueryStringBindable[Option[String]],
                    apiVsnB: QueryStringBindable[MScApiVsn]
                   ): QueryStringBindable[SiteQsArgs] = {
-    new QueryStringBindable[SiteQsArgs] with QsbKey1T {
+    new QueryStringBindableImpl[SiteQsArgs] {
       /** Маппер из qs. */
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, SiteQsArgs]] = {
         val f = key1F(key)
@@ -51,14 +51,14 @@ object SiteQsArgs {
 
       /** Сериализатор. */
       override def unbind(key: String, value: SiteQsArgs): String = {
-        val f = key1F(key)
-        Iterator(
-          strOptB.unbind(f(ADN_ID_SUF),     value.adnId),
-          strOptB.unbind(f(POV_AD_ID_SUF),  value.povAdId),
-          apiVsnB.unbind(f(VSN_FN),         value.apiVsn)
-        )
-          .filter { !_.isEmpty }
-          .mkString("&")
+        _mergeUnbinded {
+          val f = key1F(key)
+          Iterator(
+            strOptB.unbind(f(ADN_ID_SUF),     value.adnId),
+            strOptB.unbind(f(POV_AD_ID_SUF),  value.povAdId),
+            apiVsnB.unbind(f(VSN_FN),         value.apiVsn)
+          )
+        }
       }
     }
   }

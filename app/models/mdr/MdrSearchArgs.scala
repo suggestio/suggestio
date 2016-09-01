@@ -4,7 +4,7 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
-import io.suggest.model.play.qsb.QsbKey1T
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.model.search.{ILimit, IOffset}
 import play.api.mvc.QueryStringBindable
 
@@ -32,7 +32,7 @@ object MdrSearchArgs {
                    intOptB   : QueryStringBindable[Option[Int]],
                    boolOptB  : QueryStringBindable[Option[Boolean]]
                   ): QueryStringBindable[MdrSearchArgs] = {
-    new QueryStringBindable[MdrSearchArgs] with QsbKey1T {
+    new QueryStringBindableImpl[MdrSearchArgs] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MdrSearchArgs]] = {
         val k1 = key1F(key)
         for {
@@ -58,17 +58,15 @@ object MdrSearchArgs {
       }
 
       override def unbind(key: String, value: MdrSearchArgs): String = {
-        val k1 = key1F(key)
-        Iterator(
-          strOptB.unbind (k1(PRODUCER_ID_FN),          value.producerId),
-          intOptB.unbind (k1(OFFSET_FN),               value.offsetOpt),
-          boolOptB.unbind(k1(FREE_ADV_IS_ALLOWED_FN),  value.isAllowed),
-          strOptB.unbind (k1(HIDE_AD_ID_FN),           value.hideAdIdOpt)
-        )
-          .filter { qv =>
-            !qv.isEmpty && !qv.endsWith("=")
-          }
-          .mkString("&")
+        _mergeUnbinded {
+          val k1 = key1F(key)
+          Iterator(
+            strOptB.unbind (k1(PRODUCER_ID_FN),          value.producerId),
+            intOptB.unbind (k1(OFFSET_FN),               value.offsetOpt),
+            boolOptB.unbind(k1(FREE_ADV_IS_ALLOWED_FN),  value.isAllowed),
+            strOptB.unbind (k1(HIDE_AD_ID_FN),           value.hideAdIdOpt)
+          )
+        }
       }
     }
   }

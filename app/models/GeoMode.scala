@@ -239,10 +239,11 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
         _.headOption
       }.flatMap {
         case Some(range) =>
-          AsyncUtil.jdbcAsync { implicit c =>
+          val cityOptFut = AsyncUtil.jdbcAsync { implicit c =>
             range.cityOpt
-          } map { cityOpt =>
-            cityOpt.map { city =>
+          }
+          for (cityOpt <- cityOptFut) yield {
+            for (city <- cityOpt) yield {
               Ip2RangeResult(city, range)
             }
           }

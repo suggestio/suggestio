@@ -1,6 +1,6 @@
 package models.msys
 
-import io.suggest.model.play.qsb.QsbKey1T
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import models.{AdnShownType, MNodeType}
 import play.api.mvc.QueryStringBindable
 
@@ -26,7 +26,7 @@ object MSysNodeListArgs {
                    stiOptB    : QueryStringBindable[Option[AdnShownType]],
                    intOptB    : QueryStringBindable[Option[Int]]
                   ): QueryStringBindable[MSysNodeListArgs] = {
-    new QueryStringBindable[MSysNodeListArgs] with QsbKey1T {
+    new QueryStringBindableImpl[MSysNodeListArgs] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MSysNodeListArgs]] = {
         val k = key1F(key)
         for {
@@ -52,21 +52,21 @@ object MSysNodeListArgs {
       }
 
       override def unbind(key: String, value: MSysNodeListArgs): String = {
-        val k = key1F(key)
-        Iterator(
-          ntypeOptB .unbind(k(NTYPE_FN),      value.ntypeOpt),
-          stiOptB   .unbind(k(SHOWN_TYPE_FN), value.stiOpt),
-          intOptB   .unbind(k(LIMIT_FN),      if (value.limit != LIMIT_DFLT) Some(value.limit) else None),
-          intOptB   .unbind(k(OFFSET_FN),     if (value.offset > OFFSET_DFLT) Some(value.offset) else None)
-        )
-          .filter(_.nonEmpty)
-          .mkString("&")
+        _mergeUnbinded {
+          val k = key1F(key)
+          Iterator(
+            ntypeOptB .unbind(k(NTYPE_FN),      value.ntypeOpt),
+            stiOptB   .unbind(k(SHOWN_TYPE_FN), value.stiOpt),
+            intOptB   .unbind(k(LIMIT_FN),      if (value.limit != LIMIT_DFLT) Some(value.limit) else None),
+            intOptB   .unbind(k(OFFSET_FN),     if (value.offset > OFFSET_DFLT) Some(value.offset) else None)
+          )
+        }
       }
     }
   }
 
 
-  val default = MSysNodeListArgs()
+  def default = MSysNodeListArgs()
 
 }
 

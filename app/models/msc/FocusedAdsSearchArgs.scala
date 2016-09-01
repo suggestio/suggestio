@@ -2,7 +2,7 @@ package models.msc
 
 import play.api.mvc.QueryStringBindable
 import io.suggest.ad.search.AdSearchConstants._
-import io.suggest.model.play.qsb.QsbKey1T
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import models.{AdSearch, AdSearchWrap, AdSearchWrapper_}
 import models.mlu.MLookupMode
 import util.PlayMacroLogsDyn
@@ -25,7 +25,7 @@ object FocusedAdsSearchArgs {
                    strB           : QueryStringBindable[String],
                    mLookupModeB   : QueryStringBindable[MLookupMode]
                   ): QueryStringBindable[FocusedAdsSearchArgs] = {
-    new QueryStringBindable[FocusedAdsSearchArgs] with QsbKey1T {
+    new QueryStringBindableImpl[FocusedAdsSearchArgs] {
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, FocusedAdsSearchArgs]] = {
         val f = key1F(key)
@@ -55,16 +55,16 @@ object FocusedAdsSearchArgs {
       }
 
       override def unbind(key: String, value: FocusedAdsSearchArgs): String = {
-        val f = key1F(key)
-        Iterator(
-          adSearchB   .unbind(  key,                     value),
-          boolOptB    .unbind(  WITH_HEAD_AD_FN,         Some(value.withHeadAd)),
-          boolB       .unbind(  f(FOC_JUMP_ALLOWED_FN),  value.focJumpAllowed),
-          strB        .unbind(  f(AD_ID_LOOKUP_FN),      value.lookupAdId),
-          mLookupModeB.unbind(  f(AD_LOOKUP_MODE_FN),    value.lookupMode)
-        )
-          .filter(_.nonEmpty)
-          .mkString("&")
+        _mergeUnbinded {
+          val f = key1F(key)
+          Iterator(
+            adSearchB   .unbind(  key,                     value),
+            boolOptB    .unbind(  WITH_HEAD_AD_FN,         Some(value.withHeadAd)),
+            boolB       .unbind(  f(FOC_JUMP_ALLOWED_FN),  value.focJumpAllowed),
+            strB        .unbind(  f(AD_ID_LOOKUP_FN),      value.lookupAdId),
+            mLookupModeB.unbind(  f(AD_LOOKUP_MODE_FN),    value.lookupMode)
+          )
+        }
       }
 
       /** Js-код поддержки интеграции модели с jsrouter. */

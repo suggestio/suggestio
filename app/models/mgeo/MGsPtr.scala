@@ -1,6 +1,6 @@
 package models.mgeo
 
-import io.suggest.model.play.qsb.QsbKey1T
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
 
 /**
@@ -18,7 +18,7 @@ object MGsPtr {
   implicit def qsb(implicit
                    strB: QueryStringBindable[String],
                    intB: QueryStringBindable[Int]): QueryStringBindable[MGsPtr] = {
-    new QueryStringBindable[MGsPtr] with QsbKey1T {
+    new QueryStringBindableImpl[MGsPtr] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MGsPtr]] = {
         val k = key1F(key)
         for {
@@ -35,12 +35,13 @@ object MGsPtr {
       }
 
       override def unbind(key: String, value: MGsPtr): String = {
-        val k = key1F(key)
-        Iterator(
-          strB.unbind(k(NODE_ID_FN), value.nodeId),
-          intB.unbind(k(GS_ID_FN),   value.gsId)
-        )
-          .mkString("&")
+        _mergeUnbinded {
+          val k = key1F(key)
+          Iterator(
+            strB.unbind(k(NODE_ID_FN),  value.nodeId),
+            intB.unbind(k(GS_ID_FN),    value.gsId)
+          )
+        }
       }
     }
   }

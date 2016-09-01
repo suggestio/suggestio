@@ -1,6 +1,6 @@
 package models.blk
 
-import io.suggest.model.play.qsb.QsbKey1T
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import models.BlockConf
 import models.blk.ed.BimKey_t
 import play.api.mvc.QueryStringBindable
@@ -23,7 +23,7 @@ object PrepareBlkImgArgs {
                    bimKeyB  : QueryStringBindable[BimKey_t],
                    strOptB  : QueryStringBindable[Option[String]]
                   ): QueryStringBindable[PrepareBlkImgArgs] = {
-    new QueryStringBindable[PrepareBlkImgArgs] with QsbKey1T {
+    new QueryStringBindableImpl[PrepareBlkImgArgs] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, PrepareBlkImgArgs]] = {
         val k = key1F(key)
         for {
@@ -42,14 +42,14 @@ object PrepareBlkImgArgs {
       }
 
       override def unbind(key: String, value: PrepareBlkImgArgs): String = {
-        val k = key1F(key)
-        Iterator(
-          bcB.unbind        (k(BC_FN),      value.bc),
-          bimKeyB.unbind    (k(BIM_KEY_FN), value.bimKey),
-          strOptB.unbind    (k(WS_ID_FN),   value.wsId)
-        )
-          .filter { _.nonEmpty }
-          .mkString("&")
+        _mergeUnbinded {
+          val k = key1F(key)
+          Iterator(
+            bcB.unbind        (k(BC_FN),      value.bc),
+            bimKeyB.unbind    (k(BIM_KEY_FN), value.bimKey),
+            strOptB.unbind    (k(WS_ID_FN),   value.wsId)
+          )
+        }
       }
     }
   }

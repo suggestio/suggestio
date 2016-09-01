@@ -1,6 +1,6 @@
 package models.msc
 
-import io.suggest.model.play.qsb.QsbKey1T
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import models._
 import models.im.DevScreen
 import play.api.mvc.QueryStringBindable
@@ -26,7 +26,7 @@ object ScReqArgs {
                    strOptB    : QueryStringBindable[Option[String]],
                    apiVsnB    : QueryStringBindable[MScApiVsn]
                   ): QueryStringBindable[ScReqArgs] = {
-    new QueryStringBindable[ScReqArgs] with QsbKey1T {
+    new QueryStringBindableImpl[ScReqArgs] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, ScReqArgs]] = {
         val f = key1F(key)
         for {
@@ -65,16 +65,16 @@ object ScReqArgs {
       }
 
       override def unbind(key: String, value: ScReqArgs): String = {
-        val f = key1F(key)
-        Iterator(
-          geoOptB.unbind(f(GEO),              Some(value.geo)),
-          devScrB.unbind(f(SCREEN),           value.screen),
-          intOptB.unbind(f(WITH_WELCOME),     if (value.withWelcomeAd) None else Some(0)),
-          strOptB.unbind(f(PREV_ADN_ID_FN),   value.prevAdnId),
-          apiVsnB.unbind(f(VSN),              value.apiVsn)
-        )
-          .filter { us => !us.isEmpty }
-          .mkString("&")
+        _mergeUnbinded {
+          val f = key1F(key)
+          Iterator(
+            geoOptB.unbind(f(GEO),              Some(value.geo)),
+            devScrB.unbind(f(SCREEN),           value.screen),
+            intOptB.unbind(f(WITH_WELCOME),     if (value.withWelcomeAd) None else Some(0)),
+            strOptB.unbind(f(PREV_ADN_ID_FN),   value.prevAdnId),
+            apiVsnB.unbind(f(VSN),              value.apiVsn)
+          )
+        }
       }
 
       /** unbind на клиенте происходит из json-объекта с именами полей, которые соответствуют указанным в модели qs-именам. */

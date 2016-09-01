@@ -9,7 +9,7 @@ import util.PlayMacroLogsDyn
 import util.qsb.CommaDelimitedStringSeq
 import io.suggest.ad.search.AdSearchConstants._
 import io.suggest.model.geo.PointGs
-import io.suggest.model.play.qsb.QsbKey1T
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import views.js.stuff.m.adSearchJsUnbindTpl
 
 import scala.language.implicitConversions
@@ -50,7 +50,7 @@ object AdSearch extends CommaDelimitedStringSeq {
 
     val strSeqB = cdssQsb
 
-    new QueryStringBindable[AdSearch] with QsbKey1T {
+    new QueryStringBindableImpl[AdSearch] {
       /** Десериализация URL qs в экземпляр [[AdSearch]]. */
       def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, AdSearch]] = {
         val f = key1F(key)
@@ -196,26 +196,24 @@ object AdSearch extends CommaDelimitedStringSeq {
           .toStream
           .headOption
 
-        // TODO
-
         // Собираем аргументы для сборки query string.
-        Iterator(
-          apiVsnB.unbind      (f(VSN),               value.apiVsn),
-          strOptB.unbind      (f(RECEIVER_ID_FN),    _rcvrIdOpt),
-          strOptB.unbind      (f(PRODUCER_ID_FN),    _prodIdOpt),
-          strOptB.unbind      (f(LEVEL_ID_FN),       _rcvrSlOpt),
-          strOptB.unbind      (f(FTS_QUERY_FN),      value.qOpt),
-          intOptB.unbind      (f(RESULTS_LIMIT_FN),  value.limitOpt),
-          intOptB.unbind      (f(RESULTS_OFFSET_FN), value.offsetOpt),
-          strSeqB.unbind      (f(FIRST_AD_ID_FN),    value.firstIds),
-          longOptB.unbind     (f(GENERATION_FN),     value.randomSortSeed),
-          strOptB.unbind      (f(GEO_MODE_FN),       value.geo.toQsStringOpt),
-          devScreenB.unbind   (f(SCREEN_INFO_FN),    value.screen),
-          strOptB.unbind      (f(WITHOUT_IDS_FN),    value.withoutIds.headOption),
-          geoPointOptB.unbind (f(AGP_POINT_FN),      _pointGsOpt)
-        )
-          .filter(!_.isEmpty)
-          .mkString("&")
+        _mergeUnbinded {
+          Iterator(
+            apiVsnB.unbind      (f(VSN),               value.apiVsn),
+            strOptB.unbind      (f(RECEIVER_ID_FN),    _rcvrIdOpt),
+            strOptB.unbind      (f(PRODUCER_ID_FN),    _prodIdOpt),
+            strOptB.unbind      (f(LEVEL_ID_FN),       _rcvrSlOpt),
+            strOptB.unbind      (f(FTS_QUERY_FN),      value.qOpt),
+            intOptB.unbind      (f(RESULTS_LIMIT_FN),  value.limitOpt),
+            intOptB.unbind      (f(RESULTS_OFFSET_FN), value.offsetOpt),
+            strSeqB.unbind      (f(FIRST_AD_ID_FN),    value.firstIds),
+            longOptB.unbind     (f(GENERATION_FN),     value.randomSortSeed),
+            strOptB.unbind      (f(GEO_MODE_FN),       value.geo.toQsStringOpt),
+            devScreenB.unbind   (f(SCREEN_INFO_FN),    value.screen),
+            strOptB.unbind      (f(WITHOUT_IDS_FN),    value.withoutIds.headOption),
+            geoPointOptB.unbind (f(AGP_POINT_FN),      _pointGsOpt)
+          )
+        }
       }
 
       /** Для js-роутера нужна поддержка через JSON. */

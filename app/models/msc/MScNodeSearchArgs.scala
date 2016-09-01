@@ -1,6 +1,6 @@
 package models.msc
 
-import io.suggest.model.play.qsb.QsbKey1T
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import models._
 import play.api.Play.{configuration, current}
 import play.api.mvc.QueryStringBindable
@@ -60,7 +60,7 @@ object MScNodeSearchArgs {
                    apiVsnB  : QueryStringBindable[MScApiVsn]
                   ): QueryStringBindable[MScNodeSearchArgs] = {
 
-    new QueryStringBindable[MScNodeSearchArgs] with QsbKey1T {
+    new QueryStringBindableImpl[MScNodeSearchArgs] {
 
       /** Сбиндить query string в экземпляр [[MScNodeSearchArgs]] */
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MScNodeSearchArgs]] = {
@@ -96,19 +96,19 @@ object MScNodeSearchArgs {
 
       /** Разбиндить экземплря [[MScNodeSearchArgs]]. */
       override def unbind(key: String, value: MScNodeSearchArgs): String = {
-        val k1 = key1F(key)
-        Iterator(
-          strOptB.unbind  (k1(FTS_QUERY_FN),      value.qStr),
-          geoModeB.unbind (k1(GEO_FN),            value.geoMode),
-          intOptB.unbind  (k1(OFFSET_FN),         value.offset),
-          intOptB.unbind  (k1(LIMIT_FN),          value.maxResults),
-          strOptB.unbind  (k1(CURR_ADN_ID_FN),    value.currAdnId),
-          boolOptB.unbind (k1(NODE_SWITCH_FN),    Some(value.isNodeSwitch)),
-          boolOptB.unbind (k1(WITH_NEIGHBORS_FN), Some(value.withNeighbors)),
-          apiVsnB.unbind  (k1(VSN),               value.apiVsn)
-        )
-          .filter { s => !s.isEmpty && !s.endsWith("=") }
-          .mkString("&")
+        _mergeUnbinded {
+          val k1 = key1F(key)
+          Iterator(
+            strOptB.unbind  (k1(FTS_QUERY_FN),      value.qStr),
+            geoModeB.unbind (k1(GEO_FN),            value.geoMode),
+            intOptB.unbind  (k1(OFFSET_FN),         value.offset),
+            intOptB.unbind  (k1(LIMIT_FN),          value.maxResults),
+            strOptB.unbind  (k1(CURR_ADN_ID_FN),    value.currAdnId),
+            boolOptB.unbind (k1(NODE_SWITCH_FN),    Some(value.isNodeSwitch)),
+            boolOptB.unbind (k1(WITH_NEIGHBORS_FN), Some(value.withNeighbors)),
+            apiVsnB.unbind  (k1(VSN),               value.apiVsn)
+          )
+        }
       }
 
       /** Разбиндить модель на стороне клиента. */

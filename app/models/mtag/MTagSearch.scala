@@ -6,7 +6,7 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, TagCriteria}
 import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
-import io.suggest.model.play.qsb.QsbKey1T
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.sc.TagSearchConstants.Req._
 import models.{GeoMode, GeoNone}
 import play.api.mvc.QueryStringBindable
@@ -32,7 +32,7 @@ object MTagSearch {
                    intOptB    : QueryStringBindable[Option[Int]],
                    geoLocB    : QueryStringBindable[GeoMode]
                   ): QueryStringBindable[MTagSearch] = {
-    new QueryStringBindable[MTagSearch] with QsbKey1T {
+    new QueryStringBindableImpl[MTagSearch] {
       /** Биндинг значения [[MTagSearch]] из URL qs. */
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MTagSearch]] = {
         val k = key1F(key)
@@ -80,18 +80,18 @@ object MTagSearch {
 
       /** Разбиндивание значения [[MTagSearch]] в URL qs. */
       override def unbind(key: String, value: MTagSearch): String = {
-        val k = key1F(key)
-        val tagsOpt = for (_ <- value.tags.headOption) yield {
-          value.tags.mkString("#", ", #", "")
+        _mergeUnbinded {
+          val k = key1F(key)
+          val tagsOpt = for (_ <- value.tags.headOption) yield {
+            value.tags.mkString("#", ", #", "")
+          }
+          Iterator(
+            strOptB.unbind(k(FACE_FTS_QUERY_FN),  tagsOpt),
+            intOptB.unbind(k(LIMIT_FN),           Some(value.limit)),
+            intOptB.unbind(k(OFFSET_FN),          Some(value.offset)),
+            geoLocB.unbind(k(GEO_LOC_FN),         value.geoLoc)
+          )
         }
-        Iterator(
-          strOptB.unbind(k(FACE_FTS_QUERY_FN),  tagsOpt),
-          intOptB.unbind(k(LIMIT_FN),           Some(value.limit)),
-          intOptB.unbind(k(OFFSET_FN),          Some(value.offset)),
-          geoLocB.unbind(k(GEO_LOC_FN),         value.geoLoc)
-        )
-          .filter { !_.isEmpty }
-          .mkString("&")
       }
 
       override def javascriptUnbind: String = {
