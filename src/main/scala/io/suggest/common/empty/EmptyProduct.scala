@@ -6,7 +6,7 @@ package io.suggest.common.empty
  * Created: 23.09.15 21:19
  * Description: Тестирование case class'а на наполненность параметров.
  */
-trait EmptyProduct extends Product with IsEmpty {
+trait EmptyProduct extends IsEmpty { this: Product =>
 
   /** @return true, если класс содержит хотя бы одно значение. */
   override def nonEmpty: Boolean = {
