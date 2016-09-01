@@ -1,7 +1,8 @@
 package io.suggest.mbill2.m.item.typ
 
 import io.suggest.common.menum.{EnumApply, EnumMaybeWithName}
-import io.suggest.mbill2.m.item.status.{MItemStatuses, MItemStatus}
+import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
 
 /**
@@ -63,16 +64,15 @@ object MItemTypes extends EnumMaybeWithName with EnumApply {
 
   /** Поддержка маппинга для play router. */
   implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[T] = {
-    new QueryStringBindable[T] {
+    new QueryStringBindableImpl[T] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, T]] = {
         for {
           maybeStrId <- strB.bind(key, params)
         } yield {
-          maybeStrId.right
-            .flatMap { strId =>
-              maybeWithName(strId)
-                .toRight("error.invalid")
-            }
+          maybeStrId.right.flatMap { strId =>
+            maybeWithName(strId)
+              .toRight("error.invalid")
+          }
         }
       }
       override def unbind(key: String, value: T): String = {
