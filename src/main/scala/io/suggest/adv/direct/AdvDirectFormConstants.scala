@@ -1,6 +1,7 @@
 package io.suggest.adv.direct
 
 import io.suggest.common.html.HtmlConstants
+import io.suggest.common.qs.QsConstants
 import io.suggest.sc.ScConstants
 
 /**
@@ -14,7 +15,7 @@ object AdvDirectFormConstants {
   // TODO Какая-то свалка получилась. Сгруппировать бы это по inner-объектам...
 
   /** Разделитель кусков составных id. */
-  def ID_DELIM                = "."
+  private def ID_DELIM        = QsConstants.KEY_PARTS_DELIM_STR
 
   /** Префикс id ряда элементов только данной формы. */
   def PREFIX                  = "adi"

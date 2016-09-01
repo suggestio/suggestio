@@ -1,5 +1,7 @@
 package io.suggest.adv.geo
 
+import io.suggest.common.qs.QsConstants
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -17,7 +19,7 @@ object AdvGeoConstants {
 
     def FN = "oms"
 
-    def ID = FORM_ID + "." + FN
+    def ID = FORM_ID + QsConstants.KEY_PARTS_DELIM_STR + FN
 
   }
 
