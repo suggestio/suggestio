@@ -7,7 +7,7 @@ import io.suggest.model.es.EsModelUtil
 import EsModelUtil.doubleParser
 import com.vividsolutions.jts.geom.Coordinate
 import io.suggest.geo.GeoConstants.Qs
-import io.suggest.model.play.qsb.QsbKey1T
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.util.{JacksonWrapper, MacroLogsImpl}
 import org.elasticsearch.common.geo.{GeoPoint => EsGeoPoint}
 import play.api.data.validation.ValidationError
@@ -186,7 +186,7 @@ object GeoPoint extends MacroLogsImpl {
 
   /** Поддержка биндинга из/в Query string в play router. */
   implicit def qsb(implicit doubleB: QueryStringBindable[Double]): QueryStringBindable[GeoPoint] = {
-    new QueryStringBindable[GeoPoint] with QsbKey1T {
+    new QueryStringBindableImpl[GeoPoint] {
 
       override def KEY_DELIM = Qs.DELIM
 
@@ -209,12 +209,13 @@ object GeoPoint extends MacroLogsImpl {
       }
 
       override def unbind(key: String, value: GeoPoint): String = {
-        val k = key1F(key)
-        Seq(
-          doubleB.unbind(k(Qs.LON_FN), value.lon),
-          doubleB.unbind(k(Qs.LAT_FN), value.lat)
-        )
-          .mkString("&")
+        _mergeUnbinded {
+          val k = key1F(key)
+          Seq(
+            doubleB.unbind(k(Qs.LON_FN), value.lon),
+            doubleB.unbind(k(Qs.LAT_FN), value.lat)
+          )
+        }
       }
     }
   }

@@ -2,7 +2,7 @@ package io.suggest.model.geo
 
 import io.suggest.geo.GeoConstants.Qs
 import io.suggest.model.es.EsModelUtil.FieldsJsonAcc
-import io.suggest.model.play.qsb.QsbKey1T
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import org.elasticsearch.common.geo.builders.ShapeBuilder
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -40,7 +40,7 @@ object EnvelopeGs extends GsStatic {
 
   /** Поддержка биндинга этой простой фигуры в play router. */
   implicit def qsb(implicit geoPointB: QueryStringBindable[GeoPoint]): QueryStringBindable[EnvelopeGs] = {
-    new QueryStringBindable[EnvelopeGs] with QsbKey1T {
+    new QueryStringBindableImpl[EnvelopeGs] {
 
       override def KEY_DELIM = Qs.DELIM
 
@@ -63,12 +63,13 @@ object EnvelopeGs extends GsStatic {
       }
 
       override def unbind(key: String, value: EnvelopeGs): String = {
-        val k = key1F(key)
-        List(
-          geoPointB.unbind( k(Qs.TOP_LEFT_FN),      value.topLeft ),
-          geoPointB.unbind( k(Qs.BOTTOM_RIGHT_FN),  value.bottomRight )
-        )
-          .mkString("&")
+        _mergeUnbinded {
+          val k = key1F(key)
+          Iterator(
+            geoPointB.unbind( k(Qs.TOP_LEFT_FN),      value.topLeft ),
+            geoPointB.unbind( k(Qs.BOTTOM_RIGHT_FN),  value.bottomRight )
+          )
+        }
       }
     }
   }

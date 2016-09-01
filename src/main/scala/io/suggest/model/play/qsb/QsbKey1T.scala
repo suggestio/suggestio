@@ -1,5 +1,8 @@
 package io.suggest.model.play.qsb
 
+import io.suggest.common.qs.QsConstants
+import play.api.mvc.QueryStringBindable
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -9,7 +12,7 @@ package io.suggest.model.play.qsb
 trait QsbKey1T {
 
   /** Разделитель ключа с верхнего уровня и ключа поля. */
-  def KEY_DELIM = "."
+  def KEY_DELIM = QsConstants.KEY_PARTS_DELIM_STR
 
   /** Собрать полное название qs-поля на основе переданных данных. */
   def key1(key: String, suf: String): String = {
@@ -18,4 +21,22 @@ trait QsbKey1T {
 
   def key1F(key: String) = key1(key, _: String)
 
+  /** Когда несколько полей, часто бывает актуально их конкатенировать в qs-строку с помощью этого метода. */
+  def _mergeUnbinded(unbinded: TraversableOnce[String]): String = {
+    unbinded
+      .toIterator
+      .filter(_.nonEmpty)
+      .mkString("&")
+  }
+
 }
+
+
+/**
+  * Обычно в проекте используется смесь QueryStringBindable with [[QsbKey1T]].
+  * Тут -- абстрактный класс, облегчающий жизнь компилятора и снижающий ресурсопотребление
+  * скомпиленных реализаций QSB.
+  */
+abstract class QueryStringBindableImpl[T]
+  extends QueryStringBindable[T]
+  with QsbKey1T
