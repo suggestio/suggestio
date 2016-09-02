@@ -562,7 +562,7 @@ class SysMarket @Inject() (
         ad2advsMap  <- ad2advMapFut
         allRcvrs    <- {
           val allRcvrIdsSet = ad2advsMap.valuesIterator
-            .flatMap(identity)
+            .flatten
             .flatMap(_.rcvrIdOpt)
             .toSet
           mNodeCache.multiGet(allRcvrIdsSet)

@@ -69,7 +69,7 @@ class Umap @Inject() (
   /** Кривая сборка шаблона ссылки сохранения с CSRF-токеном. */
   // TODO Нужно задействовать reverse-роутер тут вместо ручной сборки Сall с ручной ссылкой.
   private def _csrfUrlPart(url: String)(implicit request: RequestHeader): String = {
-    val c = new Call(HttpVerbs.POST, url)
+    val c = Call(HttpVerbs.POST, url)
     CSRF(c).url
   }
 

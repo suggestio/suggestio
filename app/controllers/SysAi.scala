@@ -100,11 +100,11 @@ class SysAi @Inject() (
     nonEmptyText(minLength = 2, maxLength = 128)
       .transform [Seq[Option[MAiRenderer]]] (
         { raw => delimRe.split(raw).iterator.map(MAiRenderers.maybeWithName).toSeq },
-        { _.flatMap(identity(_)).mkString(MERGE_DELIM) }
+        { _.flatten.mkString(MERGE_DELIM) }
       )
       .verifying("error.invalid", { _.forall(_.isDefined) })
       .transform [Seq[MAiRenderer]] (
-        { _.flatMap(identity(_)) },
+        { _.flatten },
         { _.map(Some.apply) }
       )
   }

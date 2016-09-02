@@ -34,7 +34,7 @@ object MLocEnv {
           } yield {
             MLocEnv(
               geoLocOpt   = geoLocOpt,
-              bleBeacons     = beacons
+              bleBeacons  = beacons
             )
           }
         }

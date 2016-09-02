@@ -130,7 +130,7 @@ class LkEvents @Inject() (
           advExtTgsMap  <- advExtTgsMapFut
           brArgsMap     <- brArgsMapFut
           // Параллельный рендер всех событий
-          events <- Future.traverse(mevents) { case mevent =>
+          events <- Future.traverse(mevents) { mevent =>
             Future {
               // Запускаем рендер одного нотификейшена
               val ai = mevent.argsInfo
