@@ -9,5 +9,7 @@ project/project
 project/target
 *.swp
 logs/
+*.orig
+*.rej
 
 russianmorphology/
