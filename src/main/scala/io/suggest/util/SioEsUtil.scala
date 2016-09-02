@@ -570,7 +570,7 @@ object TermVectorVariants extends Enumeration {
 
 object DocFieldTypes extends Enumeration {
   type DocFieldType = Value
-  val string, integer, long, float, double, boolean, `null`,
+  val string, short, integer, long, float, double, boolean, `null`,
       multi_field, ip, geo_point, geo_shape, attachment, date, binary,
       nested, `object` = Value
 }
