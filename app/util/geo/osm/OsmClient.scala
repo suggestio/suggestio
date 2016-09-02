@@ -1,10 +1,11 @@
 package util.geo.osm
 
 import com.google.inject.Inject
+import io.suggest.ahc.util.HttpGetToFile
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.ws._
 import util.geo.osm.OsmElemTypes.OsmElemType
-import util.ws.HttpGetToFile
+
 import scala.concurrent.Future
 
 /**
@@ -14,7 +15,7 @@ import scala.concurrent.Future
  * Description: Статический клиент для доступа к OSM API. Для парсинга используется парсеры для xml api.
  */
 class OsmClient @Inject() (
-  ws1: WSClient
+  httpGetToFile : HttpGetToFile
 ) {
 
   /**
@@ -25,8 +26,7 @@ class OsmClient @Inject() (
    * @return Полученный и распарсенный osm-объект.
    */
   def fetchElement(typ: OsmElemType, id: Long): Future[OsmObject] = {
-    val fetcher = new HttpGetToFile {
-      override def ws = ws1
+    val fetcher = new httpGetToFile.AbstractDownloader {
       override def urlStr = typ.xmlUrl(id)
       override def followRedirects = false
       override def statusCodeInvalidException(resp: WSResponseHeaders) = {
@@ -34,7 +34,8 @@ class OsmClient @Inject() (
       }
     }
     fetcher.request()
-      .map { case (headers, file) =>
+      .map { dlResp => //case (headers, file) =>
+        import dlResp.file
         try {
           OsmUtil.parseElementFromFile(file, typ, id)
         } finally {

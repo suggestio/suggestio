@@ -7,6 +7,7 @@ import java.util.Comparator
 
 import com.google.inject.Inject
 import com.jolbox.bonecp.ConnectionHandle
+import io.suggest.ahc.util.HttpGetToFile
 import models.mcron.MCronTask
 import models.mproj.ICommonDi
 import models.{IpGeoBaseCity, IpGeoBaseRange}
@@ -14,8 +15,6 @@ import org.apache.commons.io.{FileUtils, FilenameUtils}
 import org.postgresql.copy.CopyManager
 import org.postgresql.core.BaseConnection
 import play.api.db.Database
-import play.api.libs.ws.WSClient
-import util.ws.HttpGetToFile
 import util.PlayMacroLogsImpl
 import util.cron.ICronTasksProvider
 
@@ -33,8 +32,9 @@ import scala.concurrent.duration._
  * Description: Утиль для поддержки БД, взятых из [[http://ipgeobase.ru/]].
  */
 class IpGeoBaseImport @Inject() (
-  db        : Database,
-  mCommonDi : ICommonDi
+  db                      : Database,
+  mCommonDi               : ICommonDi,
+  httpGetToFile           : HttpGetToFile
 )
   extends PlayMacroLogsImpl
   with ICronTasksProvider
@@ -46,7 +46,7 @@ class IpGeoBaseImport @Inject() (
   /** Активация импорта требует явного включения этой функции в конфиге.
     * Отключена по умолчанию, т.к. она должна быть активна только на одной ноде. */
   def IS_ENABLED: Boolean = configuration.getBoolean("ipgeobase.import.enabled")
-    .getOrElse(false)
+    .contains(true)   //.getOrElse(false)
 
   /** Ссылка для скачивания текущей базы. */
   def ARCHIVE_DOWNLOAD_URL = configuration.getString("ipgeobase.archive.url")
@@ -87,7 +87,6 @@ class IpGeoBaseImport @Inject() (
         every = 1.day,
         displayName = "updateIpBase()"
       ) {
-        implicit val ws = current.injector.instanceOf[WSClient]
         updateIpBase()
       }
       Seq(task)
@@ -97,23 +96,20 @@ class IpGeoBaseImport @Inject() (
   }
 
   /** Скачать файл с дампом базы в tmp. */
-  def download()(implicit ws1: WSClient): Future[File] = {
+  def download(): Future[File] = {
     val dlUrlStr = ARCHIVE_DOWNLOAD_URL
     // TODO Нужно ограничивать max-size для возвращаемых данных. 5 метров макс. будет достаточно.
-    val downloader = new HttpGetToFile {
-      override def followRedirects  = true
-      override def ws: WSClient     = ws1
-      override def urlStr           = dlUrlStr
-    }
+    val downloader = httpGetToFile.Downloader(dlUrlStr, followRedirects = true)
     val resultFut = downloader.request()
-    resultFut onFailure { case ex =>
+    resultFut.onFailure { case ex =>
       info(s"download(): Failed to fetch $dlUrlStr into file.", ex)
     }
 
-    resultFut
-      .map(_._2)
+    for {
+      resp <- resultFut
+      archiveFile = resp.file
       // Метод `>` не проверяет 200 OK. Нужно вручную проверить, что скачался именно архив.
-      .filter { archiveFile =>
+      if {
         // Тестируем архив по методике http://www.java2s.com/Code/Java/File-Input-Output/DeterminewhetherafileisaZIPFile.htm
         !archiveFile.isDirectory  &&  archiveFile.canRead  &&  archiveFile.length() > ARCHIVE_MIN_LENGTH  && {
           val in = new DataInputStream(new BufferedInputStream(new FileInputStream(archiveFile)))
@@ -127,10 +123,10 @@ class IpGeoBaseImport @Inject() (
           result
         }
       }
-      .map { archiveFile =>
-        trace(s"download(): Downloaded file size = ${archiveFile.length} bytes.")
-        archiveFile
-      }
+    } yield {
+      trace(s"download(): Downloaded file size = ${archiveFile.length} bytes.")
+      archiveFile
+    }
   }
 
 
@@ -287,7 +283,7 @@ class IpGeoBaseImport @Inject() (
 
 
   /** Нужно скачать базу, распаковать, импортнуть города, импортнуть диапазоны, оптимизировать таблицы. */
-  def updateIpBase()(implicit ws: WSClient): Future[_] = {
+  def updateIpBase(): Future[_] = {
     lazy val logPrefix = "updateIpBase(): "
     val resultFut = download() map { archiveFile =>
       // Распаковать в директорию, удалить скачанный архив.

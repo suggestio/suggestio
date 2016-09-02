@@ -3,19 +3,17 @@ package util.ai.mad
 import java.io.FileInputStream
 
 import com.google.inject.Inject
-import io.suggest.event.SioNotifierStaticClientI
+import io.suggest.ahc.util.HttpGetToFile
 import io.suggest.model.n2.node.MNodes
 import models.MNode
 import models.ai._
+import models.mproj.ICommonDi
 import org.apache.tika.metadata.{Metadata, TikaMetadataKeys}
 import org.apache.tika.sax.TeeContentHandler
 import org.clapper.scalasti.ST
-import org.elasticsearch.client.Client
-import play.api.libs.ws.WSClient
 import util.PlayMacroLogsImpl
-import util.ws.HttpGetToFile
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -25,13 +23,13 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 class MadAiUtil @Inject() (
   mNodes                  : MNodes,
-  implicit val ws1        : WSClient,
-  implicit val ec         : ExecutionContext,
-  implicit val esClient   : Client,
-  implicit val sn         : SioNotifierStaticClientI
+  httpGetToFile           : HttpGetToFile,
+  mCommonDi               : ICommonDi
 )
   extends PlayMacroLogsImpl
 {
+
+  import mCommonDi.ec
 
   /**
    * Привести HTTP-хидеры ответа к метаданным tika.
@@ -40,11 +38,13 @@ class MadAiUtil @Inject() (
    * @return Экземпляр Metadata.
    */
   def httpHeaders2meta(headers: Map[String, Seq[String]], urlOpt: Option[String], meta: Metadata = new Metadata): Metadata = {
-    headers
-      .iterator
-      .flatMap { case (k, vs) => vs.iterator.map(v => (k, v)) }
+    for {
+      (k, vs) <- headers.iterator
+      v       <- vs.iterator
+    } {
       // TODO Выверять названия хидеров. Они могут приходить в нижнем регистре.
-      .foreach { case (k, v) => meta.add(k, v) }
+      meta.add(k, v)
+    }
     if (urlOpt.isDefined)
       meta.add(TikaMetadataKeys.RESOURCE_NAME_KEY, urlOpt.get)
     meta
@@ -117,17 +117,13 @@ class MadAiUtil @Inject() (
       val url = ST(source.url, '#', '#')
         .add("ctx", urlRenderCtx, raw = true)
         .render()
-      val getter = new HttpGetToFile {
-        override def ws = ws1
-        override def followRedirects = false
-        override def urlStr = url
-      }
-      getter.request().flatMap { case (headers, file) =>
+      val getter = httpGetToFile.Downloader(url, followRedirects = false)
+      getter.request().flatMap { dlResp => //case (headers, file) =>
         // Запускаем в фоне парсинг и обработку входных данных.
         val parseCtx = new MAiParserCtxT with MAiCtxWrapper {
-          override def openInputStream  = new FileInputStream(file)
+          override def openInputStream  = new FileInputStream( dlResp.file )
           override def urlOpt           = Some(url)
-          override def respHeaders      = headers.headers
+          override def respHeaders      = dlResp.headers.headers
           override def mAiCtx           = madAi
         }
         parseSource(source.contentHandlers, parseCtx)
