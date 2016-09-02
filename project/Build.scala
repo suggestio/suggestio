@@ -126,6 +126,13 @@ object SiobixBuild extends Build {
   lazy val mbill2 = project
     .dependsOn(logsMacro, common, util)
 
+  /** Утиль и модели для поддержки интеграции с БД ipgeobase. */
+  lazy val ipgeobase = {
+    val name = "ipgeobase"
+    Project(id = name, base = file("loc/geo/" + name))
+      .dependsOn(logsMacro, util)
+  }
+
   /** Самописное leaflet API. */
   lazy val leafletSjs = {
     val name = "scalajs-leaflet"
@@ -197,6 +204,7 @@ object SiobixBuild extends Build {
         common, logsMacro,
         commonSjs, leafletSjs, mapBoxGlSjs, mapRadSjs, lkSjs, scSjs, dateTimePickerSjs, lkDtPeriodSjs,
         util, swfs, n2, securesocial,
+        ipgeobase,
         web21, mbill2,  svgUtil
       )
   }
