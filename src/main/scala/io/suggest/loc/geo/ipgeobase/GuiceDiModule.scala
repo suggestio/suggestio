@@ -16,6 +16,10 @@ class GuiceDiModule extends AbstractModule {
       new FactoryModuleBuilder()
         .build( classOf[MCitiesTmpFactory] )
     )
+    install(
+      new FactoryModuleBuilder()
+        .build( classOf[MIpRangesTmpFactory] )
+    )
   }
 
 }

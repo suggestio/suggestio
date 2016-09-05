@@ -28,7 +28,7 @@ object MIndexes {
   /** Сборка нового имени для нового индекса. */
   def newIndexName(): String = {
     val now = ZonedDateTime.now()
-    s"$INDEX_ALIAS_NAME-${now.getYear}${now.getMonth}${now.getDayOfMonth}-${now.getHour}${now.getMinute}${now.getSecond}"
+    s"$INDEX_ALIAS_NAME-${now.getYear}${now.getMonthValue}${now.getDayOfMonth}-${now.getHour}${now.getMinute}${now.getSecond}"
   }
 
 }
@@ -46,6 +46,25 @@ class MIndexes @Inject() (
   import LOGGER._
   import MIndexes._
 
+
+  /**
+    * Кол-во реплик для ES-индекса БД IPGeoBase.
+    * Т.к. индекс очень частоиспользуемый, желательно иметь реплик не меньше, чем на обычном -sio индексе.
+    *
+    * Не val, т.е. часто оно надо только на dev-компе. В остальных случаях просто будет память занимать.
+    */
+  def REPLICAS_COUNT: Int = {
+    configuration.getInt("loc.geo.ipgeobase.index.replicas_count").getOrElse {
+      val _isProd = mCommonDi.isProd
+      val r = if (_isProd) {
+        2   // Когда писался этот код, было три ноды. Т.е. одна primary шарда + две реплики.
+      } else {
+        0   // Нет дела до реплик на тестовой или dev-базе.
+      }
+      debug(s"REPLICAS_COUNT = $r, isProd = ${_isProd}")
+      r
+    }
+  }
 
   /** Выставить алиас на текущий индекс. */
   def installIndexAlias(newIndexName: String): Future[_] = {
@@ -96,12 +115,8 @@ class MIndexes @Inject() (
     val fut: Future[_] = {
       esClient.admin().indices()
         .prepareCreate(newIndexName)
-        // Надо сразу отключить refresh,
-        .setSettings(
-        Settings.builder()
-          .put("index.refresh",             -1)
-          .put("index.number_of_replicas",  0)
-      )
+        // Надо сразу отключить index refresh в целях оптимизации bulk-заливки в индекс.
+        .setSettings( indexSettingsCreate() )
         .execute()
     }
 
@@ -114,6 +129,23 @@ class MIndexes @Inject() (
     fut
   }
 
+  /** Сгенерить настройки для индекса. */
+  def indexSettingsCreate(): Settings = {
+    Settings.builder()
+      // Индекс ipgeobase не обновляется после заливки, только раз в день полной перезаливкой. Поэтому refresh не нужен.
+      .put("index.refresh",  -1)
+      .put("index.number_of_replicas", 0)
+      .put("index.number_of_shards", 1)
+      .build()
+  }
+
+  /** Сгенерить настройки для индекса. */
+  def indexSettingsReady(): Settings = {
+    Settings.builder()
+      // Индекс ipgeobase не обновляется после заливки, только раз в день полной перезаливкой. Поэтому refresh не нужен.
+      .put("index.number_of_replicas", REPLICAS_COUNT)
+      .build()
+  }
 
   /** Логика удаления старого ненужного индекса. */
   def deleteIndex(oldIndexName: String): Future[_] = {
@@ -130,11 +162,48 @@ class MIndexes @Inject() (
 
     // Логгировать завершение команды.
     fut1.onComplete {
-      case Success(res) => debug(s"$logPrefix index deleted ok: $res")
+      case Success(res) => debug(s"$logPrefix Index deleted ok: $res")
       case Failure(ex)  => error(s"$logPrefix Failed to delete index", ex)
     }
 
     fut1
+  }
+
+
+  /** Когда заливка данных закончена, выполнить подготовку индекса к эсплуатации.
+    * elasticsearch 2.0+: переименовали операцию optimize в force merge. */
+  def optimizeAfterBulk(newIndexName: String): Future[_] = {
+    val startedAt = System.currentTimeMillis()
+
+    // Запустить оптимизацию всего ES-индекса.
+    val inxOptFut: Future[_] = {
+      esClient.admin().indices()
+        .prepareForceMerge(newIndexName)
+        .setMaxNumSegments(1)
+        .setFlush(true)
+        .execute()
+    }
+
+    lazy val logPrefix = s"optimizeAfterBulk($newIndexName):"
+
+    // Потом нужно выставить не-bulk настройки для готового к работе индекса.
+    val inxSettingsFut = inxOptFut.flatMap { _ =>
+      val updInxSettingsAt = System.currentTimeMillis()
+      val fut2: Future[_] = {
+        esClient.admin().indices()
+          .prepareUpdateSettings(newIndexName)
+          .setSettings( indexSettingsReady() )
+          .execute()
+      }
+
+      trace(s"$logPrefix Optimize took ${updInxSettingsAt - startedAt} ms")
+      for (_ <- fut2)
+        trace(s"$logPrefix Update index settings took ${System.currentTimeMillis() - updInxSettingsAt} ms.")
+
+      fut2
+    }
+
+    inxSettingsFut
   }
 
 }

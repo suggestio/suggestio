@@ -31,8 +31,6 @@ object MCity {
     def CENTER_FN   = "g"
   }
 
-  type CityId_t = Short
-
   def cityId2esId(cityId: CityId_t): String = {
     cityId.toString
   }
@@ -48,9 +46,6 @@ object MCity {
   )(apply, unlift(unapply))
 
 }
-
-
-import MCity.CityId_t
 
 
 /** Класс, содержащих всю общую логику статических моделей [[MCities]]. */
@@ -84,7 +79,7 @@ abstract class MCitiesAbstract
   override def generateMappingProps: List[DocField] = {
     List(
       // Ничего не индексируется за ненадобность. При необходимости всегда можно пересоздать свежий индекс с иными параметрами.
-      FieldNumber(CITY_ID_FN, fieldType = DocFieldTypes.short, index = FieldIndexingVariants.no, include_in_all = false),
+      FieldNumber(CITY_ID_FN, fieldType = EsCityIdFieldType, index = FieldIndexingVariants.no, include_in_all = false),
       FieldString(NAME_FN, index = FieldIndexingVariants.no, include_in_all = true),
       FieldString(REGION_FN, index = FieldIndexingVariants.no, include_in_all = true),
       FieldGeoPoint(CENTER_FN)
