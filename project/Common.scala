@@ -23,35 +23,37 @@ object Common {
   val playVsn         = "2.5.6"
 
   /** Версия play-slick прослойки. */
-  val playSlickVsn    = "2.0.2"
+  def playSlickVsn    = "2.0.2"
 
   /** Версия bouncy castle. */
-  val bcVsn           = "1.54"
+  def bcVsn           = "1.54"
 
   /** Версия typesafe slick. */
-  val slickVsn        = "3.1.1"
+  def slickVsn        = "3.1.1"
 
   /** Версия драйвера common-slick-driver.
    * Он идёт как бинарная зависимость, поэтому зависимые подпроекты. */
-  val sioSlickDrvVsn  = "0.3.0-SNAPSHOT"
+  def sioSlickDrvVsn  = "0.3.0-SNAPSHOT"
 
   /** Версия scalatest+play. */
-  val scalaTestPlusPlayVsn = "1.5.0"
+  def scalaTestPlusPlayVsn = "1.5.0"
 
   /** Версия используемого плагина play-mailer. */
-  val playMailerVsn     = "5.0.0-M1"
+  def playMailerVsn     = "5.0.0-M1"
 
 
   /** Версия jquery-фасада для scalajs.
    * @see [[https://github.com/scala-js/scala-js-jquery]]
    */
-  val sjsJqueryVsn      = "0.9.0"
+  def sjsJqueryVsn      = "0.9.0"
 
   /** Версия scalajs-dom.
    * @see [[https://github.com/scala-js/scala-js-dom]]
    */
-  val sjsDomVsn         = "0.9.0"
+  def sjsDomVsn         = "0.9.0"
 
+  /** Версия Apache commons-io. */
+  def apacheCommonsIoVsn = "2.4"
 
   object Repo {
 

@@ -188,7 +188,7 @@ object SiobixBuild extends Build {
 
   /** веб-интерфейс suggest.io v2. */
   lazy val web21 = project
-    .dependsOn(common, util, securesocial, n2, mbill2, svgUtil)
+    .dependsOn(common, util, securesocial, n2, mbill2, svgUtil, ipgeobase)
     .settings(
       scalaJSProjects := Seq(lkSjs, scSjs),
       pipelineStages += scalaJSProd
