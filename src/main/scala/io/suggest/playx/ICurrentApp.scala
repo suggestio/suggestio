@@ -12,7 +12,7 @@ import play.api.{Application, Configuration, Mode}
 trait ICurrentApp {
 
   /** Экземпляр Application, вброшенный в класс через DI. */
-  implicit def current: Application
+  def current: Application
 
 }
 

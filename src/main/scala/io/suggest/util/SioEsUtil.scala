@@ -1014,6 +1014,47 @@ trait FieldApprox extends DocFieldIndexable {
 }
 
 
+/** Описание поля для ipv4 значений. Для es >= 5.0 можно хранить ipv6 (вроде). */
+case class FieldIp(
+  override val id             : String,
+  override val boost          : Option[Float]         = None,
+  override val docValues      : Option[Boolean]       = None,
+  override val include_in_all : Boolean               = true,
+  override val index          : FieldIndexingVariant  = FieldIndexingVariants.not_analyzed,
+  override val null_value     : String                = null,
+  override val precisionStep  : Int                   = -1,
+  override val store          : Boolean               = false
+)
+  extends DocField
+  with FieldBoostable
+  with FieldDocValues
+  with FieldIncludeInAll
+  with FieldIndexable
+  with FieldNullable
+  with PrecisionStep
+  with FieldStoreable
+{
+  override def fieldType = DocFieldTypes.ip
+}
+
+
+/** Трейт для поля doc_values. */
+trait FieldDocValues extends Field {
+  /**
+    * true или None, когда необходима аггрегация, сортировка, доступ из скриптов.
+    * false, если это точно не требуется.
+    */
+  def docValues: Option[Boolean]
+
+  override def fieldsBuilder(implicit b: XContentBuilder) {
+    super.fieldsBuilder
+    for (dv <- docValues)
+      b.field("doc_values", dv)
+  }
+}
+
+
+
 /** Поле с числом. */
 case class FieldNumber(
   id : String,

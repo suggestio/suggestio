@@ -1,6 +1,7 @@
 package io.suggest.di
 
 import akka.actor.ActorSystem
+import io.suggest.playx.ICurrentApp
 
 /**
  * Suggest.io
@@ -10,4 +11,7 @@ import akka.actor.ActorSystem
  */
 trait IActorSystem {
   def actorSystem: ActorSystem
+}
+trait ICurrentActorSystem extends IActorSystem with ICurrentApp {
+  override def actorSystem = current.actorSystem
 }
