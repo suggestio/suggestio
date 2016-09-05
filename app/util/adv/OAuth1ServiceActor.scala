@@ -7,6 +7,8 @@ import akka.actor.Props
 import com.google.inject.{Inject, Singleton}
 import com.google.inject.assistedinject.Assisted
 import controllers.routes
+import io.suggest.async.AsyncUtil
+import io.suggest.fsm.FsmActor
 import models.adv._
 import models.adv.ext.act.{ActorPathQs, ExtServiceActorEnv, OAuthVerifier}
 import models.adv.js.ctx.MStorageKvCtx
@@ -26,7 +28,6 @@ import play.api.libs.ws.WSClient
 import util.PlayMacroLogsImpl
 import util.adv.ext.AeFormUtil
 import util.adv.ut._
-import util.async.{AsyncUtil, FsmActor}
 import util.ext.ExtServicesUtil
 import util.jsa.JsWindowOpen
 import util.secure.PgpUtil
@@ -63,6 +64,7 @@ class OAuth1ServiceActor @Inject() (
   oa1SvcActorUtil             : OAuth1SvcActorUtil,
   pgpUtil                     : PgpUtil,
   mAsymKeys                   : MAsymKeys,
+  asyncUtil                   : AsyncUtil,
   override val extServicesUtil: ExtServicesUtil,
   override val ctxUtil        : ContextUtil,
   override val aeFormUtil     : AeFormUtil,
@@ -120,7 +122,7 @@ class OAuth1ServiceActor @Inject() (
 
   /** Псевдоасинхронный запрос какого-то токена у удаленного сервиса. */
   protected def askToken(f: => Either[OAuthException, RequestToken]): Unit = {
-    Future(f)(AsyncUtil.singleThreadIoContext)
+    Future(f)(asyncUtil.singleThreadIoContext)
       // Завернуть результат в правильный Future.
       .flatMap {
         case Right(reqTok)  => Future successful reqTok

@@ -6,9 +6,9 @@ import com.google.inject.{Inject, Singleton}
 import controllers.routes
 import de.jollyday.HolidayManager
 import de.jollyday.parameter.UrlManagerParameter
-import models.mcal.{MCalendars, MCalCtx, MCalsCtx}
+import io.suggest.async.AsyncUtil
+import models.mcal.{MCalCtx, MCalendars, MCalsCtx}
 import models.mproj.ICommonDi
-import util.async.AsyncUtil
 
 import scala.concurrent.Future
 
@@ -22,6 +22,7 @@ import scala.concurrent.Future
 @Singleton
 class CalendarUtil @Inject() (
   mCalendars              : MCalendars,
+  asyncUtil               : AsyncUtil,
   mCommonDi               : ICommonDi
 ) {
 
@@ -50,7 +51,7 @@ class CalendarUtil @Inject() (
       val args = new UrlManagerParameter(calUrl, null)
       Future {
         HolidayManager.getInstance(args)
-      }(AsyncUtil.singleThreadCpuContext)
+      }(asyncUtil.singleThreadCpuContext)
     }
   }
 

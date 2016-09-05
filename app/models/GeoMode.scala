@@ -1,7 +1,9 @@
 package models
 
 import java.net.InetAddress
+import java.sql.Connection
 
+import io.suggest.async.AsyncUtil
 import io.suggest.geo.GeoConstants
 import io.suggest.model.geo
 import io.suggest.model.geo.{Distance, GeoDistanceQuery}
@@ -12,7 +14,7 @@ import org.elasticsearch.common.unit.DistanceUnit
 import play.api.http.HeaderNames
 import play.api.mvc.QueryStringBindable
 import play.api.Play.{configuration, current}
-import util.async.AsyncUtil
+import play.api.db.DB
 import util.xplay.CacheUtil
 import util.{PlayLazyMacroLogsImpl, PlayMacroLogsImpl}
 
@@ -230,19 +232,28 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
     }
   }
 
+  private val asyncUtil = current.injector.instanceOf[AsyncUtil]
+  /** Комбо из Future.apply() и DB.withConnection. */
+  // TODO Спилить/перепилить этот метод, т.к. DB теперь должна приходить через slick и DI (play-2.4+).
+  private def jdbcAsync[T](f: Connection => T): Future[T] = {
+    Future {
+      DB.withConnection(f)
+    }(asyncUtil.jdbcExecutionContext)
+  }
+
   /** Асинхронный поиск какого-то ip в базе ip-адресов.
     * @param ip строка ip-адреса. */
   def ip2rangeCity(ip: String): Future[Option[Ip2RangeResult]] = {
     // Операция поиска ip в SQL-базе ресурсоёмкая, поэтому кешируем результат.
     CacheUtil.getOrElse(ip + ".gipq", CACHE_TTL_SECONDS) {
       val ipAddr = InetAddress.getByName(ip)
-      AsyncUtil.jdbcAsync { implicit c =>
+      jdbcAsync { implicit c =>
         IpGeoBaseRange.findForIp(ipAddr)
       }.map {
         _.headOption
       }.flatMap {
         case Some(range) =>
-          val cityOptFut = AsyncUtil.jdbcAsync { implicit c =>
+          val cityOptFut = jdbcAsync { implicit c =>
             range.cityOpt
           }
           for (cityOpt <- cityOptFut) yield {

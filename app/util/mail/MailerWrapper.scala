@@ -2,13 +2,15 @@ package util.mail
 
 import javax.mail.Authenticator
 
+import com.google.inject.assistedinject.Assisted
 import com.google.inject.{ImplementedBy, Inject, Singleton}
+import io.suggest.async.AsyncUtil
 import org.apache.commons.mail.{DefaultAuthenticator, HtmlEmail, SimpleEmail}
 import play.api.Configuration
+import play.api.inject.Injector
 import play.api.libs.mailer.{Email, MailerClient}
 import util.PlayLazyMacroLogsImpl
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import util.async.AsyncUtil
 
 import scala.concurrent.Future
 
@@ -84,8 +86,11 @@ trait EmailBuilderShared extends EmailBuilder {
 
 
 /** Билдер для play-mailer'а. */
-class PlayMailerEmailBuilder(client: MailerClient) extends EmailBuilderShared {
-
+class PlayMailerEmailBuilder @Inject() (
+  mailClient        : MailerClient
+)
+  extends EmailBuilderShared
+{
   override def send(): Unit = {
     val email = Email(
       subject   = _subject.get,
@@ -95,13 +100,23 @@ class PlayMailerEmailBuilder(client: MailerClient) extends EmailBuilderShared {
       bodyHtml  = _html,
       replyTo   = _replyTo
     )
-    client.send(email)
+    mailClient.send(email)
   }
+}
+/** Интерфейс для Guice factory, собирающей инстансы [[PlayMailerEmailBuilder]]. */
+trait PlayMailerEmailBuildersFactory {
+  def create(): PlayMailerEmailBuilder
 }
 
 
 /** Если play-mailer не работает, то можно использовать вот это. */
-class CommonsEmailBuilder(state: FallbackState) extends EmailBuilderShared with PlayLazyMacroLogsImpl {
+class CommonsEmailBuilder @Inject() (
+  @Assisted state : FallbackState,
+  asyncUtil       : AsyncUtil
+)
+  extends EmailBuilderShared
+  with PlayLazyMacroLogsImpl
+{
 
   override def send(): Unit = {
     // В зависимости от наличия/отсутствия html-части нужно дергать те или иные классы:
@@ -132,12 +147,16 @@ class CommonsEmailBuilder(state: FallbackState) extends EmailBuilderShared with 
     // Отправить собранное сообщение куда надо. Нужно освобождать текущий поток как можно скорее.
     val fut = Future {
       email.send()
-    }(AsyncUtil.singleThreadIoContext)
+    }(asyncUtil.singleThreadIoContext)
     fut onFailure { case ex: Throwable =>
       LOGGER.error(s"${getClass.getSimpleName}.send() Exception occured while trying to send msg", ex)
     }
   }
 
+}
+/** Интерфейс Guice factory для сборки инстансов [[CommonsEmailBuilder]]. */
+trait CommonsEmailBuildersFactory {
+  def create(state: FallbackState): CommonsEmailBuilder
 }
 
 
@@ -147,10 +166,18 @@ trait IMailerWrapper {
 }
 
 @Singleton
-class MailerWrapper @Inject() (client: MailerClient, configuration: Configuration) extends IMailerWrapper {
+class MailerWrapper @Inject() (
+  configuration : Configuration,
+  injector      : Injector
+)
+  extends IMailerWrapper
+{
 
   /** Использовать ли play mailer для отправки электронной почты? */
-  val USE_PLAY_MAILER = configuration.getBoolean("email.use.play.mailer") getOrElse true
+  val USE_PLAY_MAILER = configuration.getBoolean("email.use.play.mailer").getOrElse(true)
+
+  private lazy val _playEmailFactory    = injector.instanceOf[PlayMailerEmailBuildersFactory]
+  private lazy val _commonsEmailFactory = injector.instanceOf[CommonsEmailBuildersFactory]
 
   /** Неизменяемая резидентная инфа по fallback'у. */
   private lazy val fallBackInfo: FallbackState = {
@@ -162,13 +189,12 @@ class MailerWrapper @Inject() (client: MailerClient, configuration: Configuratio
     )
   }
 
-
   /** Выдать инстанс EmailBuilder'а, который позволит собрать письмо и отправить. */
   def instance: EmailBuilder = {
-    if (USE_PLAY_MAILER && client != null) {
-      new PlayMailerEmailBuilder(client)
+    if (USE_PLAY_MAILER) {
+      _playEmailFactory.create()
     } else {
-      new CommonsEmailBuilder(fallBackInfo)
+      _commonsEmailFactory.create(fallBackInfo)
     }
   }
 

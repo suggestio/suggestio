@@ -6,6 +6,7 @@ import com.google.inject.{Inject, Singleton}
 import com.google.inject.assistedinject.Assisted
 import io.suggest.ahc.upload.{IMpUploadArgs, UploadRefusedException}
 import io.suggest.common.geom.d2.INamedSize2di
+import io.suggest.fsm.FsmActor
 import models.adv.ext.act._
 import models.adv.js._
 import models.adv._
@@ -18,7 +19,6 @@ import play.api.libs.ws.{WSClient, WSResponse}
 import util.PlayMacroLogsImpl
 import util.adv.ext.AeFormUtil
 import util.adv.ut.ExtTargetActorUtil
-import util.async.FsmActor
 import ut._
 import util.adr.AdRenderUtil
 import util.ext.ExtServicesUtil

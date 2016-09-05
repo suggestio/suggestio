@@ -3,10 +3,10 @@ package util.img.cron
 import java.nio.file.{Files, Path}
 
 import com.google.inject.Inject
+import io.suggest.async.AsyncUtil
 import models.im.MLocalImgs
 import models.mcron.{ICronTask, MCronTask}
 import models.mproj.ICommonDi
-import util.async.AsyncUtil
 import util.PlayMacroLogsImpl
 import util.cron.ICronTasksProvider
 
@@ -23,6 +23,7 @@ import scala.collection.JavaConversions._
   */
 class PeriodicallyDeleteEmptyDirs @Inject() (
   mLocalImgs    : MLocalImgs,
+  asyncUtil     : AsyncUtil,
   mCommonDi     : ICommonDi
 )
   extends ICronTasksProvider
@@ -65,7 +66,7 @@ class PeriodicallyDeleteEmptyDirs @Inject() (
   def findAndDeleteEmptyDirsAsync(): Future[_] = {
     Future {
       findAndDeleteEmptyDirs()
-    }(AsyncUtil.singleThreadIoContext)
+    }(asyncUtil.singleThreadIoContext)
   }
 
   /** Пройтись по списку img-директорий, немножко заглянуть в каждую из них. */

@@ -2,12 +2,12 @@ package util.adr
 
 import java.io.File
 
+import io.suggest.async.IAsyncUtilDi
 import models.MImgSizeT
 import models.adr.IAdRenderArgs
 import models.im.OutImgFmt
 import models.mproj.IMCommonDi
 import util.PlayMacroLogsImpl
-import util.async.AsyncUtil
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -22,6 +22,7 @@ import scala.concurrent.duration._
 abstract class IAdRrr
   extends PlayMacroLogsImpl
   with IMCommonDi
+  with IAsyncUtilDi
 {
 
   import mCommonDi._
@@ -82,7 +83,7 @@ abstract class IAdRrr
 
     val fut = Future {
       renderSync(dstFile)
-    }(AsyncUtil.singleThreadIoContext)
+    }(asyncUtil.singleThreadIoContext)
 
     for (_ <- fut) yield {
       dstFile

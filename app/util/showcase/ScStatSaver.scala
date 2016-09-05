@@ -1,6 +1,7 @@
 package util.showcase
 
 import com.google.inject.{Inject, Singleton}
+import io.suggest.async.AsyncUtil
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.ym.model.stat.{MAdStat, MAdStats}
 import models.mproj.ICommonDi
@@ -9,7 +10,6 @@ import org.elasticsearch.client.Client
 import org.elasticsearch.common.unit.{ByteSizeValue, TimeValue}
 import play.api.inject.ApplicationLifecycle
 import play.api.Configuration
-import util.async.{AsyncUtil, EcParInfo}
 import util.{PlayMacroLogsDyn, PlayMacroLogsImpl}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -125,6 +125,7 @@ class PlainSaverBackend @Inject() (
 @Singleton
 class BulkProcessorSaveBackend @Inject() (
   mAdStats                : MAdStats,
+  asyncUtil               : AsyncUtil,
   configuration           : Configuration,
   implicit val esClient   : Client
 )
@@ -163,16 +164,12 @@ class BulkProcessorSaveBackend @Inject() (
       .build()
   }
 
-  /** ExecutionContext. При добавлении элементов в BulkProcessor наступает полная синхронизация,
-    * поэтому нет смысла держать больше одного потока. */
-  protected val ec = AsyncUtil.mkEc("sc.stat.saver.bp.ec", EcParInfo(1.0F, 1))
-
   override def save(stat: MAdStat): Future[_] = {
     // Подавляем блокировку синхронизации в bp через отдельный execution context с очередью задач.
     Future {
       val irb = mAdStats.prepareIndex(stat).request()
       bp.add(irb)
-    }(AsyncUtil.singleThreadCpuContext)
+    }(asyncUtil.singleThreadCpuContext)
   }
 
   override def flush(): Unit = {

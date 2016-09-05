@@ -4,6 +4,7 @@ import java.io.{File, FileWriter}
 
 import com.google.inject.{Inject, Singleton}
 import com.google.inject.assistedinject.Assisted
+import io.suggest.async.AsyncUtil
 import models.MImgSizeT
 import models.adr.IAdRenderArgs
 import models.im.{OutImgFmt, OutImgFmts}
@@ -38,6 +39,7 @@ trait PhantomJsRrrDiFactory extends IAdRrrDiFactory {
 
 class PhantomJsRrr @Inject() (
   @Assisted override val args : IAdRenderArgs,
+  override val asyncUtil      : AsyncUtil,
   override val mCommonDi      : ICommonDi
 )
   extends IAdRrr

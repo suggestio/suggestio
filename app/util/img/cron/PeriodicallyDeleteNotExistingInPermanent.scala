@@ -3,12 +3,12 @@ package util.img.cron
 import java.nio.file.Files
 
 import com.google.inject.Inject
+import io.suggest.async.AsyncUtil
 import io.suggest.util.UuidUtil
 import models.im.{MImgs3, MLocalImg, MLocalImgs}
 import models.mcron.{ICronTask, MCronTask}
 import models.mproj.ICommonDi
 import org.apache.commons.io.FileUtils
-import util.async.AsyncUtil
 import util.PlayMacroLogsImpl
 import util.cron.ICronTasksProvider
 
@@ -27,6 +27,7 @@ import scala.util.Success
 class PeriodicallyDeleteNotExistingInPermanent @Inject() (
   mLocalImgs  : MLocalImgs,
   mImgs3      : MImgs3,
+  asyncUtil   : AsyncUtil,
   mCommonDi   : ICommonDi
 )
   extends ICronTasksProvider
@@ -91,7 +92,7 @@ class PeriodicallyDeleteNotExistingInPermanent @Inject() (
             .andThen { case _: Success[_] =>
               LOGGER.debug("Deleting permanent-less img-dir: " + currDir)
               FileUtils.deleteDirectory(currDir)
-            }(AsyncUtil.singleThreadIoContext)
+            }(asyncUtil.singleThreadIoContext)
             .onFailure {
               case ex: NoSuchElementException =>
                 // do nothing

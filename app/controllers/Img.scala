@@ -3,8 +3,8 @@ package controllers
 import java.io.File
 
 import _root_.util._
-import _root_.util.async.AsyncUtil
 import com.google.inject.{ImplementedBy, Inject, Singleton}
+import io.suggest.async.{AsyncUtil, IAsyncUtilDi}
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.img.ConvertModes
 import io.suggest.img.crop.CropConstants
@@ -51,6 +51,7 @@ class Img @Inject() (
   override val imgCtlUtil         : ImgCtlUtil,
   override val wsDispatcherActors : WsDispatcherActors,
   override val origImageUtil      : OrigImageUtil,
+  override val asyncUtil          : AsyncUtil,
   imgFormUtil                     : ImgFormUtil,
   override val mCommonDi          : ICommonDi
 )
@@ -244,6 +245,7 @@ trait TempImgSupport
   with IMImg3Di
   with IOrigImageUtilDi
   with IMLocalImgs
+  with IAsyncUtilDi
 {
 
   import mCommonDi._
@@ -348,12 +350,12 @@ trait TempImgSupport
                 // TODO Вызывать jpegtran или другие вещи для lossless-обработки. В фоне, параллельно.
                 Future {
                   FileUtils.moveFile(srcFile, tmpFile)
-                }(AsyncUtil.singleThreadIoContext)
+                }(asyncUtil.singleThreadIoContext)
               } else {
                 Future {
                   // Использовать что-то более гибкое и полезное. Вдруг зальют негатив .arw какой-нить в hi-res.
                   origImageUtil.convert(srcFile, tmpFile, ConvertModes.STRIP)
-                }(AsyncUtil.singleThreadCpuContext)
+                }(asyncUtil.singleThreadCpuContext)
               }
             }
             // Генерим уменьшенную превьюшку для отображения в форме редактирования чего-то.

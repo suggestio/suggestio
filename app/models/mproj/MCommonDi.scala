@@ -1,13 +1,11 @@
 package models.mproj
 
-import akka.actor.ActorSystem
 import akka.stream.Materializer
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import controllers.ErrorHandler
-import io.suggest.di.{IActorSystem, ICacheApiUtil}
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.es.IEsModelDiVal
-import io.suggest.playx.{CacheApiUtil, ICurrentAppHelpers, ICurrentConf}
+import io.suggest.playx.CacheApiUtil
 import models.mctx.Context2Factory
 import models.req.MSioUsers
 import models.MNodeCache
@@ -35,11 +33,8 @@ import scala.concurrent.ExecutionContext
 @ImplementedBy( classOf[MCommonDi] )
 trait ICommonDi
   extends IErrorHandler
-  with ICurrentConf with ICurrentAppHelpers
   with IEsModelDiVal
-  with IActorSystem
   with ICacheApi
-  with ICacheApiUtil
   with ISlickDbConfig
   with INodeCache
 {
@@ -54,17 +49,17 @@ trait ICommonDi
   // play-2.5: Это нужно инжектить иначе deprecation warning.
   val csrfAddToken                    : CSRFAddToken
   val csrfCheck                       : CSRFCheck
+  // выставляем implicit, т.к. до-DI'шные websocket'ы требуют implicit application in scope.
+  // TODO После перевода вёб-сокетов на akka streams, удалить implicit у current.
+  override implicit val current       : Application
   override implicit val esClient      : Client
   override val errorHandler           : ErrorHandler
   override implicit val ec            : ExecutionContext
-  override val actorSystem            : ActorSystem
   override val cache                  : CacheApi
   override val cacheApiUtil           : CacheApiUtil
   override val mNodeCache             : MNodeCache
   override val _slickConfigProvider   : DatabaseConfigProvider
   implicit val mat                    : Materializer
-  override implicit val current       : Application
-
 }
 
 
@@ -78,15 +73,15 @@ final class MCommonDi @Inject() (
   override val langs              : Langs,
   override val csrfAddToken       : CSRFAddToken,
   override val csrfCheck          : CSRFCheck,
-  override val actorSystem        : ActorSystem,
+  //override val actorSystem        : ActorSystem,
   override val cache              : CacheApi,
   override val cacheApiUtil       : CacheApiUtil,
   override val mNodeCache         : MNodeCache,
   override val sessionUtil        : SessionUtil,
   override val mSioUsers          : MSioUsers,
   override val _slickConfigProvider   : DatabaseConfigProvider,
-  override implicit val mat       : Materializer,
   override implicit val current   : Application,
+  override implicit val mat       : Materializer,
   override implicit val ec        : ExecutionContext,
   override implicit val esClient  : Client,
   override implicit val sn        : SioNotifierStaticClientI

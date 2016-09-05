@@ -4,6 +4,7 @@ import java.io.File
 
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.{Inject, Singleton}
+import io.suggest.async.AsyncUtil
 import models.MImgSizeT
 import models.adr._
 import models.im.{OutImgFmt, OutImgFmts}
@@ -65,6 +66,7 @@ trait WkHtmlRrrDiFactory extends IAdRrrDiFactory {
 /** Рендерер для wkhtml для указанных параметров.. */
 class WkHtmlRrr @Inject() (
   @Assisted override val args   : IAdRenderArgs,
+  override val asyncUtil        : AsyncUtil,
   util                          : WkHtmlRrrUtil,
   override val mCommonDi        : ICommonDi
 )

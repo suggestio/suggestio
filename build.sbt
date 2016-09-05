@@ -33,6 +33,7 @@ libraryDependencies ++= {
   // io.suggest stuff
   Common.ORG %% "mbill2" % "0.0.0-SNAPSHOT",
   Common.ORG %% "svg-util" % "0.0.0-SNAPSHOT",
+  Common.ORG %% "ipgeobase" % "0.0.0-SNAPSHOT",
   Common.ORG %% "util" % "2.0.1-SNAPSHOT" changing()
     exclude("org.jruby", "jruby-complete")
     exclude("org.slf4j", "slf4j-log4j12")
@@ -90,7 +91,7 @@ libraryDependencies ++= {
   ,
   // спаривание guice и акторов требует танцев вприсядку
   //"net.codingwell" %% "scala-guice" % "4.0.0",
-  "commons-io" % "commons-io" % "2.4",
+  "commons-io" % "commons-io" % Common.apacheCommonsIoVsn,
   // test
   "org.scalatestplus.play" %% "scalatestplus-play" % Common.scalaTestPlusPlayVsn % "test"
     exclude("commons-logging", "commons-logging")

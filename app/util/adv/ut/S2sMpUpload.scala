@@ -2,11 +2,11 @@ package util.adv.ut
 
 import io.suggest.ahc.upload.{IMpUploadArgs, UploadRefusedException}
 import io.suggest.di.IWsClient
+import io.suggest.fsm.FsmActor
 import models.adv.ext.act.ExtActorEnv
 import models.event.{ErrorInfo, MEventTypes}
 import models.mproj.IMCommonDi
 import play.api.libs.ws.WSResponse
-import util.async.FsmActor
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}

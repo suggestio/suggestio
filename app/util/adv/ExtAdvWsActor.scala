@@ -2,13 +2,13 @@ package util.adv
 
 import _root_.util.PlayMacroLogsImpl
 import _root_.util.adv.ext.AeFormUtil
-import _root_.util.async.FsmActor
 import _root_.util.jsa.JsAppendById
 import _root_.util.ws.SubscribeToWsDispatcher
 import _root_.util.ws.WsDispatcherActors
 import akka.actor.{Actor, ActorRef, Props, SupervisorStrategy}
 import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
+import io.suggest.fsm.FsmActor
 import models.adv._
 import models.adv.js.ctx.MJsCtx
 import models.adv.js._

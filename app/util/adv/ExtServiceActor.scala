@@ -3,6 +3,7 @@ package util.adv
 import akka.actor.Props
 import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
+import io.suggest.fsm.FsmActor
 import io.suggest.util.UrlUtil
 import models.adv._
 import models.adv.ext.act.ExtServiceActorEnv
@@ -11,7 +12,6 @@ import models.mctx.ContextUtil
 import models.mws.AnswerStatuses
 import util.PlayMacroLogsImpl
 import util.adv.ext.AeFormUtil
-import util.async.FsmActor
 import ut._
 import util.ext.ExtServicesUtil
 

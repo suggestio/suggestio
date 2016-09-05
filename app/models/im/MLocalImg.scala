@@ -4,6 +4,7 @@ import java.io.File
 import java.util.UUID
 
 import com.google.inject.{Inject, Singleton}
+import io.suggest.async.AsyncUtil
 import io.suggest.model.img.ImgSzDated
 import io.suggest.util.UuidUtil
 import io.suggest.ym.model.common.MImgInfoMeta
@@ -14,7 +15,6 @@ import org.apache.commons.io.FileUtils
 import org.joda.time.DateTime
 import play.api.libs.iteratee.Enumerator
 import util._
-import util.async.AsyncUtil
 import util.img.{ImgFileNameParsersImpl, ImgFileUtil, OrigImageUtil}
 
 import scala.concurrent.duration._
@@ -38,6 +38,7 @@ import scala.concurrent.Future
 class MLocalImgs @Inject() (
   origImageUtil : OrigImageUtil,
   imgFileUtil   : ImgFileUtil,
+  asyncUtil     : AsyncUtil,
   mCommonDi     : ICommonDi
 )
   extends MAnyImgsT[MLocalImg]
@@ -72,7 +73,7 @@ class MLocalImgs @Inject() (
   override def delete(mimg: MLocalImg): Future[_] = {
     Future {
       deleteSync(mimg)
-    }(AsyncUtil.singleThreadIoContext)
+    }(asyncUtil.singleThreadIoContext)
   }
 
   override def toLocalImg(mimg: MLocalImg): Future[Option[MLocalImg]] = {
@@ -93,7 +94,7 @@ class MLocalImgs @Inject() (
       val tms = System.currentTimeMillis()
       val file = fileOf(mimg)
       file.setLastModified(tms)
-    }(AsyncUtil.singleThreadIoContext)
+    }(asyncUtil.singleThreadIoContext)
   }
 
   override def getStream(mimg: MLocalImg): Enumerator[Array[Byte]] = {
@@ -105,7 +106,7 @@ class MLocalImgs @Inject() (
     Future {
       val file = fileOf(mimg)
       origImageUtil.identify(file)
-    }(AsyncUtil.singleThreadCpuContext)
+    }(asyncUtil.singleThreadCpuContext)
   }
 
   def identifyCached(mimg: MLocalImg) = {
@@ -163,7 +164,7 @@ class MLocalImgs @Inject() (
   def deleteAllFor(rowKey: UUID): Future[_] = {
     Future {
       deleteAllSyncFor(rowKey)
-    }(AsyncUtil.singleThreadIoContext)
+    }(asyncUtil.singleThreadIoContext)
   }
 
   /** Подготовка к записи в файл указанного локального изображения. */
