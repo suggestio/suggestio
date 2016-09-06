@@ -2,7 +2,6 @@ package controllers
 
 import com.google.inject.Inject
 import com.google.inject.name.Named
-import controllers.ad.MarketAdFormUtil._
 import io.suggest.ad.form.AdFormConstants._
 import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.edge.{MNodeEdges, NodeEdgesMap_t}
@@ -27,6 +26,7 @@ import play.core.parsers.Multipart
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 import util.acl._
+import util.ad.MarketAdFormUtil
 import util.blocks.{BgImg, ListBlock, LkEditorWsActors}
 import util.mdr.SysMdrUtil
 import util.n2u.N2NodesUtil
@@ -47,6 +47,7 @@ class MarketAd @Inject() (
   lkEditorWsActors                        : LkEditorWsActors,
   @Named("blk") override val blkImgMaker  : IMaker,
   override val n2NodesUtil                : N2NodesUtil,
+  override val marketAdFormUtil           : MarketAdFormUtil,
   override val mCommonDi                  : ICommonDi
 )
   extends SioController
@@ -61,6 +62,7 @@ class MarketAd @Inject() (
 
   import LOGGER._
   import mCommonDi._
+  import marketAdFormUtil._
 
   type ReqSubmit = Request[collection.Map[String, Seq[String]]]
   type DetectForm_t = Either[AdFormM, (BlockConf, AdFormM)]
@@ -319,11 +321,11 @@ class MarketAd @Inject() (
   }
 
   /**
-   * POST для удаления рекламной карточки.
+    * POST для удаления рекламной карточки.
     *
     * @param adId id рекламы.
-   * @return Редирект в магазин или ТЦ.
-   */
+    * @return Редирект в магазин или ТЦ.
+    */
   def deleteSubmit(adId: String) = CanEditAdPost(adId).async { implicit request =>
     for {
       isDeleted <- mNodes.deleteById(adId)

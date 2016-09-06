@@ -1,18 +1,18 @@
-package controllers.ad
+package util.ad
 
-import io.suggest.model.n2.ad.{MNodeAd, ent}
-import io.suggest.model.n2.ad.rd.RichDescr
-import io.suggest.model.n2.node.common.MNodeCommon
-import io.suggest.model.n2.node.meta.{MBusinessInfo, MBasicMeta}
-import io.suggest.model.n2.node.meta.colors.{MColorData, MColors}
-import models.MColorData
-import models.blk.AdColorFns
-import models._
-import models.blk._
-import models.blk.ed.{AdFormM, AdFormResult, BindResult}
-import util.FormUtil._
-import play.api.data._, Forms._
+import com.google.inject.Singleton
 import io.suggest.ad.form.AdFormConstants._
+import io.suggest.model.n2.ad.rd.RichDescr
+import io.suggest.model.n2.ad.{MNodeAd, ent}
+import io.suggest.model.n2.node.common.MNodeCommon
+import io.suggest.model.n2.node.meta.colors.{MColorData, MColors}
+import io.suggest.model.n2.node.meta.{MBasicMeta, MBusinessInfo}
+import models.blk.ed.{AdFormM, AdFormResult, BindResult}
+import models.blk.{AdColorFns, _}
+import models.{MColorData, _}
+import play.api.data.Forms._
+import play.api.data._
+import util.FormUtil._
 import util.{PlayMacroLogsImpl, TplDataFormatUtil}
 
 /**
@@ -21,7 +21,8 @@ import util.{PlayMacroLogsImpl, TplDataFormatUtil}
  * Created: 23.04.14 10:15
  * Description: Общая утиль для работы с разными ad-формами: preview и обычными.
  */
-object MarketAdFormUtil extends PlayMacroLogsImpl {
+@Singleton
+class MarketAdFormUtil extends PlayMacroLogsImpl {
 
   /** Маппинг для выравнивания текста в рамках поля. */
   def textAlignOptM: Mapping[Option[TextAlign]] = {
@@ -267,6 +268,9 @@ object MarketAdFormUtil extends PlayMacroLogsImpl {
     )
   }
 
+}
 
+trait IMarketAdFormUtil {
+  def marketAdFormUtil: MarketAdFormUtil
 }
 

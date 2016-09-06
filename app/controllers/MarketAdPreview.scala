@@ -9,9 +9,9 @@ import play.twirl.api.Html
 import util.PlayMacroLogsI
 import models._
 import util.acl._
+import util.ad.IMarketAdFormUtil
 
 import scala.concurrent.Future
-import controllers.ad.MarketAdFormUtil
 import util.blocks.{BgImg, IBlkImgMakerDI}
 import views.html.sc._adNormalTpl
 import views.html.sc.foc._adFullTpl
@@ -30,6 +30,7 @@ trait MarketAdPreview
   with PlayMacroLogsI
   with IsAdnNodeAdmin
   with IBlkImgMakerDI
+  with IMarketAdFormUtil
 {
 
   import mCommonDi._
@@ -42,7 +43,7 @@ trait MarketAdPreview
    *         406 Not Acceptable при ошибочной форме.
    */
   def adFormPreviewSubmit(adnId: String, isFull: Boolean) = IsAdnNodeAdminPost(adnId).async { implicit request =>
-    MarketAdFormUtil.adFormM.bindFromRequest().fold(
+    marketAdFormUtil.adFormM.bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug(s"adFormPreviewSubmit($adnId): form bind failed: " + formatFormErrors(formWithErrors))
         NotAcceptable("Preview form bind failed.")

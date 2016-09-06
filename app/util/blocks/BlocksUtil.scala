@@ -1,17 +1,18 @@
 package util.blocks
 
 import io.suggest.common.menum.EnumValue2Val
-import io.suggest.model.n2.ad.ent.text.{ValueEnt, EntFont}
+import io.suggest.model.n2.ad.ent.text.{EntFont, ValueEnt}
 import models.blk._
-import models.blk.ed.{BimKey_t, BlockImgMap, BindAcc}
+import models.blk.ed.{BimKey_t, BindAcc, BlockImgMap}
 import models.mctx.Context
-import play.api.data._, Forms._
+import play.api.data._
+import Forms._
 import util.FormUtil._
 import models._
 import views.html.blocks.editor._
-import controllers.ad.MarketAdFormUtil
 import util.img.ImgFormUtil
 import play.twirl.api.{Html, Template5}
+import util.ad.MarketAdFormUtil
 
 /**
  * Suggest.io
@@ -22,7 +23,9 @@ import play.twirl.api.{Html, Template5}
 
 object BlocksUtil {
 
-  private[blocks] val imgFormUtil = play.api.Play.current.injector.instanceOf[ImgFormUtil]
+  private def inj = play.api.Play.current.injector
+  private[blocks] val imgFormUtil       = inj.instanceOf[ImgFormUtil]
+  private[blocks] val marketAdFormUtil  = inj.instanceOf[MarketAdFormUtil]
 
   def defaultOpt[T](m0: Mapping[T], defaultOpt: Option[T]): Mapping[T] = {
     if (defaultOpt.isDefined)
@@ -150,7 +153,7 @@ trait BlockAOValueFieldT extends BlockFieldT {
   def withFontFamily: Boolean
   def withTextAlign: Boolean
   def defaultFont: EntFont = BlocksUtil.defaultFont
-  def getFontMapping = MarketAdFormUtil.fontM
+  def getFontMapping = marketAdFormUtil.fontM
 
   def withCoords: Boolean
 }
@@ -233,7 +236,7 @@ case class BfText(
   override val mappingBase: Mapping[T] = {
     val m0 = text(minLength = minLen, maxLength = maxLen)
       .transform(replaceEOLwithBR andThen strTrimBrOnlyF,  replaceBRwithEOL andThen strUnescapeF)
-    MarketAdFormUtil.aoStringFieldM(m0, getFontMapping, withCoords)
+    marketAdFormUtil.aoStringFieldM(m0, getFontMapping, withCoords)
   }
 
   /** Когда очень нужно получить от поля какое-то значение, можно использовать fallback. */

@@ -7,7 +7,6 @@ import org.xml.sax.SAXParseException
 import util.PlayLazyMacroLogsImpl
 import util.parse.SaxParseUtil
 import scala.annotation.tailrec
-import scala.util.matching.Regex
 import scala.util.parsing.combinator.JavaTokenParsers
 
 /**
@@ -22,7 +21,7 @@ object OsmUtil extends PlayLazyMacroLogsImpl {
   import LOGGER._
 
   /** Добавлять ли subarea-relation'ы в путь relation'а? */
-  val RELATION_ADD_SUBAREAS: Boolean = false
+  def RELATION_ADD_SUBAREAS: Boolean = false
 
   /** Решение проблемы компиляции списка relation'ов, когда одни relation'ы включают в себя другие.
     * @param nodesMap Карта точек.
