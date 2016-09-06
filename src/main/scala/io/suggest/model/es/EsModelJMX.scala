@@ -61,7 +61,6 @@ trait EsModelJMXMBeanI extends EsModelJMXMBeanCommonI {
 }
 
 
-
 trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
 
   import LOGGER._
@@ -164,3 +163,5 @@ trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
 
 }
 
+/** Недореализация [[EsModelJMXBase]] для снижения объемов кодогенерации scalac на ~75% (6.9кб -> 1.6кб). */
+abstract class EsModelJMXBaseImpl extends EsModelJMXBase

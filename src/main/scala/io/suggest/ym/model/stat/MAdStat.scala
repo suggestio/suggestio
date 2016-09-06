@@ -340,7 +340,7 @@ final class MAdStatJmx @Inject() (
   override val companion    : MAdStats,
   override implicit val ec  : ExecutionContext
 )
-  extends EsModelJMXBase
+  extends EsModelJMXBaseImpl
     with MAdStatJmxMBean
 {
   import LOGGER._
