@@ -276,7 +276,7 @@ final class MNodesJmx @Inject() (
   override val companion  : MNodes,
   override val ec         : ExecutionContext
 )
-  extends EsModelJMXBase
+  extends EsModelJMXBaseImpl
     with MNodesJmxMBean
 {
   override type X = MNode

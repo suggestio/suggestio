@@ -137,7 +137,7 @@ final class MMediasJmx @Inject()(
   override val companion  : MMedias,
   override val ec         : ExecutionContext
 )
-  extends EsModelJMXBase
+  extends EsModelJMXBaseImpl
   with MMediasJmxMBean
 {
   override type X = MMedia
