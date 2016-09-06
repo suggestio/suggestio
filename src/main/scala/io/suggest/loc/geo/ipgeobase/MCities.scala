@@ -9,7 +9,7 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
 import scala.collection.Map
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Suggest.io
@@ -135,7 +135,7 @@ trait MCitiesTmpFactory {
 
 
 /**
-  * Класс элементов модели.
+  * Класс элементов модели [[MCities]].
   * @param cityId city_id по спискам ipgeobase.
   * @param cityName Название города.
   * @param region Название региона.
@@ -154,4 +154,32 @@ case class MCity(
     val esId = MCity.cityId2esId(cityId)
     Some(esId)
   }
+}
+
+
+/** Интерфейс JMX MBean'а для модели [[MCities]]. */
+trait MCitiesJmxMBean extends EsModelJMXMBeanI {
+
+  def getByCityId(cityId: CityId_t): String
+
+}
+
+/** Реализация интерфейса jmx mbean'а [[MCitiesJmxMBean]]. */
+final class MCitiesJmx @Inject() (
+  override val companion    : MCities,
+  override implicit val ec  : ExecutionContext
+)
+  extends EsModelJMXBaseImpl
+  with MCitiesJmxMBean
+{
+
+  override type X = MCity
+
+  override def getByCityId(cityId: CityId_t): String = {
+    val strFut = for (mCityOpt <- companion.getByCityId(cityId)) yield {
+      mCityOpt.toString
+    }
+    awaitString(strFut)
+  }
+
 }

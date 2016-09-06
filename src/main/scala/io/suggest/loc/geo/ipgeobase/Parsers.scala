@@ -1,7 +1,5 @@
 package io.suggest.loc.geo.ipgeobase
 
-import java.net.InetAddress
-
 import io.suggest.model.geo.GeoPoint
 
 import scala.util.matching.Regex
@@ -21,14 +19,14 @@ sealed trait CityIdParser extends JavaTokenParsers {
 
 
 /** Парсинг файла cidr_optim.txt, содержащего диапазоны ip-адресов и их принадлежность. */
-class IpGeoBaseCidrParsers extends CityIdParser {
+class CidrParsers extends CityIdParser {
 
   def inetIntP: Parser[_] = """\d+""".r
 
-  def ip4P: Parser[InetAddress] = {
-    "((25[0-5]|2[0-4]\\d|[01]?\\d{1,2})\\.){3}(25[0-5]|2[0-4]\\d|[01]?\\d{1,2})".r ^^ {
-      InetAddress.getByName
-    }
+  /** Изначально, результат возвращался в виде InetAddress, но при переезде на ES всё-таки
+    * было решено, что InetAddress -- это сложноватая mutable-state вещь, и лучше просто строкой. */
+  def ip4P: Parser[String] = {
+    "((25[0-5]|2[0-4]\\d|[01]?\\d{1,2})\\.){3}(25[0-5]|2[0-4]\\d|[01]?\\d{1,2})".r //^^ { InetAddress.getByName }
   }
 
   def countryIso2P: Parser[String] = "[A-Z]{2}".r
@@ -43,8 +41,8 @@ class IpGeoBaseCidrParsers extends CityIdParser {
     (iip ~> iip ~> ip4p ~ ("-" ~> ip4p) ~ countryIso2P ~ cityIdOptP) ^^ {
       case ipStart ~ ipEnd ~ countryIso2 ~ cityIdOpt =>
         MIpRange(
-          countryCode = countryIso2,
-          ipRange     = Seq(ipStart.getHostAddress, ipEnd.getHostAddress),
+          countryIso2 = countryIso2,
+          ipRange     = Seq(ipStart, ipEnd),
           cityId      = cityIdOpt
         )
     }
@@ -54,7 +52,7 @@ class IpGeoBaseCidrParsers extends CityIdParser {
 
 
 /** Утиль для парсинга cities.txt. Таблица в этом файле содержит просто географию городов. */
-class IpGeoBaseCityParsers extends CityIdParser {
+class CityParsers extends CityIdParser {
 
   /** Колонки таблицы разделяются одиночными табами. */
   override protected val whiteSpace: Regex = "\\t".r

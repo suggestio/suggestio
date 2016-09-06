@@ -28,7 +28,7 @@ object MIndexes {
   /** Сборка нового имени для нового индекса. */
   def newIndexName(): String = {
     val now = ZonedDateTime.now()
-    s"$INDEX_ALIAS_NAME-${now.getYear}${now.getMonthValue}${now.getDayOfMonth}-${now.getHour}${now.getMinute}${now.getSecond}"
+    s"$INDEX_ALIAS_NAME-${now.getYear - 2000}${now.getMonthValue}${now.getDayOfMonth}-${now.getHour}${now.getMinute}${now.getSecond}"
   }
 
 }

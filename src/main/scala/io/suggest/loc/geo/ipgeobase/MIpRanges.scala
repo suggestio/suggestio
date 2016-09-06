@@ -9,7 +9,7 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
 import scala.collection.Map
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Suggest.io
@@ -71,9 +71,16 @@ abstract class MIpRangesAbstract
 
   /** Поиск элементов модели по ip-адресу. */
   def findForIp(ip: String): Future[Seq[MIpRange]] = {
-    val q = QueryBuilders.rangeQuery(IP_RANGE_FN)
-      .lte(ip)
-      .gte(ip)
+    val fn = IP_RANGE_FN
+    val q =QueryBuilders.boolQuery()
+      .must {
+        QueryBuilders.rangeQuery(fn)
+          .lte(ip)
+      }
+      .must {
+        QueryBuilders.rangeQuery(fn)
+          .gte(ip)
+      }
     val resFut = prepareSearch()
       .setQuery(q)
       .setSize(3)    // Скорее всего тут всегда максимум 1 результат.
@@ -82,8 +89,9 @@ abstract class MIpRangesAbstract
 
     // Залоггировать асинхронный результат, если необходимо.
     if (LOGGER.underlying.isTraceEnabled()) {
+      val startedAt = System.currentTimeMillis() - 5L
       resFut.onComplete { tryRes =>
-        LOGGER.trace(s"findForId($ip): Result = $tryRes")
+        LOGGER.trace(s"findForId($ip): Result = $tryRes, took ~${System.currentTimeMillis - startedAt} ms.")
       }
     }
 
@@ -144,12 +152,12 @@ trait MIpRangesTmpFactory {
 /**
   * Класс для всех экземпляров этой модели.
   *
-  * @param countryCode Код страны (обязателен): RU, FR, etc.
+  * @param countryIso2 Код страны (обязателен): RU, FR, etc.
   * @param ipRange Диапазон ip-адресов, описанных списком строк от/до.
   * @param cityId id города, если известен.
   */
 case class MIpRange(
-  countryCode : String,
+  countryIso2 : String,
   ipRange     : Seq[String],
   cityId      : Option[CityId_t]
 )
@@ -160,6 +168,31 @@ case class MIpRange(
 
   override def id: Option[String] = {
     Some( ipRange.mkString("-") )
+  }
+
+}
+
+
+/** Интерфейс для JMX MBean. */
+trait MIpRangesJmxMBean extends EsModelJMXMBeanI {
+  def findForIp(ip: String): String
+}
+/** Реализация jmx mbean [[MIpRangesJmxMBean]]. */
+final class MIpRangesJmx @Inject() (
+  override val companion    : MIpRanges,
+  override implicit val ec  : ExecutionContext
+)
+  extends EsModelJMXBaseImpl
+  with MIpRangesJmxMBean
+{
+
+  override type X = MIpRange
+
+  override def findForIp(ip: String): String = {
+    val strFut = for (ranges <- companion.findForIp(ip)) yield {
+      ranges.mkString("[\n", ",\n", "\n]")
+    }
+    awaitString(strFut)
   }
 
 }

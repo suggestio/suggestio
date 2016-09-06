@@ -270,7 +270,7 @@ class IpgbImporter @Inject() (
 
     debug(s"$logPrefix Bulk loading cities into ES...")
 
-    val parsers = new IpGeoBaseCityParsers
+    val parsers = new CityParsers
     val p = parsers.cityLineP
 
     for (_ <- putMappingFut) yield {
@@ -311,7 +311,7 @@ class IpgbImporter @Inject() (
 
 
     // Собираем инстанс парсера для всех строк:
-    val parsers = new IpGeoBaseCidrParsers
+    val parsers = new CidrParsers
     val p = parsers.cidrLineP
 
     for (_ <- putMappingFut) yield {
