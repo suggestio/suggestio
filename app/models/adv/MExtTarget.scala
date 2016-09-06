@@ -171,7 +171,7 @@ final class MExtTargetsJmx @Inject()(
   override val companion  : MExtTargets,
   override val ec         : ExecutionContext
 )
-  extends EsModelJMXBase
+  extends EsModelJMXBaseImpl
   with MExtTargetsJmxMBean
 {
   override type X = MExtTarget

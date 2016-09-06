@@ -225,7 +225,7 @@ final class MRemoteErrorsJmx @Inject() (
   override val companion  : MRemoteErrors,
   override val ec         : ExecutionContext
 )
-  extends EsModelJMXBase
+  extends EsModelJMXBaseImpl
     with MRemoteErrorsJmxMBean
 {
   override type X = MRemoteError

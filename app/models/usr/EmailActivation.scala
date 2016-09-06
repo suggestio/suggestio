@@ -131,7 +131,7 @@ final class EmailActivationsJmx @Inject() (
   override val companion  : EmailActivations,
   override val ec         : ExecutionContext
 )
-  extends EsModelJMXBase
+  extends EsModelJMXBaseImpl
     with EmailActivationsJmxMBean
 {
   override type X = EmailActivation

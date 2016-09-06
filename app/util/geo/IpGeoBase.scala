@@ -1,11 +1,9 @@
 package util.geo
 
 import com.google.inject.Inject
-import io.suggest.ahc.util.HttpGetToFile
 import io.suggest.loc.geo.ipgeobase.IpgbImporter
 import models.mcron.MCronTask
 import models.mproj.ICommonDi
-import play.api.db.Database
 import util.cron.ICronTasksProvider
 
 import scala.concurrent.duration._
@@ -17,8 +15,6 @@ import scala.concurrent.duration._
  * Description: Утиль для поддержки БД, взятых из [[http://ipgeobase.ru/]].
  */
 class IpGeoBaseImport @Inject() (
-  db                      : Database,
-  httpGetToFile           : HttpGetToFile,
   mCommonDi               : ICommonDi
 )
   extends ICronTasksProvider

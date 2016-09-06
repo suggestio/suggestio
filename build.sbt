@@ -18,13 +18,13 @@ JsEngineKeys.engineType := JsEngineKeys.EngineType.Node
 libraryDependencies ++= {
  val tikaVsn       = "1.12"
  Seq(
-  jdbc exclude("com.h2database", "h2"),
-  "com.typesafe.play" %% "anorm" % "2.5.0",
+  //jdbc exclude("com.h2database", "h2"),
+  //"com.typesafe.play" %% "anorm" % "2.5.0",
   cache,
   json,
   "com.typesafe.play"   %% "play-slick" % Common.playSlickVsn,
   // slick повторно инклюдится здесь, т.к. что-то свежая версия не цеплялась через common-slick-driver
-  "com.typesafe.slick"  %% "slick"      % Common.slickVsn,
+  //"com.typesafe.slick"  %% "slick"      % Common.slickVsn,
   ws exclude("commons-logging", "commons-logging"),
   "com.typesafe.play" %% "play-mailer" % Common.playMailerVsn,
   "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.

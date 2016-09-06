@@ -130,7 +130,7 @@ class MCalendarJmx @Inject() (
   override val companion  : MCalendars,
   override val ec         : ExecutionContext
 )
-  extends EsModelJMXBase
+  extends EsModelJMXBaseImpl
   with MCalendarJmxMBean
 {
   override type X = MCalendar

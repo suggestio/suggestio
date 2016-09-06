@@ -104,7 +104,7 @@ final class EmailPwIdentsJmx @Inject()(
   override val companion  : EmailPwIdents,
   override val ec         : ExecutionContext
 )
-  extends EsModelJMXBase
+  extends EsModelJMXBaseImpl
     with EmailPwIdentsJmxMBean
 {
   override type X = EmailPwIdent

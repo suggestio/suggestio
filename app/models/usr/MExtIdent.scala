@@ -150,7 +150,7 @@ final class MExtIdentJmx @Inject() (
   override val companion  : MExtIdents,
   override val ec         : ExecutionContext
 )
-  extends EsModelJMXBase
+  extends EsModelJMXBaseImpl
   with MExtIdentJmxMBean
 {
   override type X = MExtIdent

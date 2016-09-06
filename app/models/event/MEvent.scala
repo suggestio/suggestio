@@ -199,7 +199,7 @@ final class MEventsJmx @Inject() (
   override val companion  : MEvents,
   override val ec         : ExecutionContext
 )
-  extends EsModelJMXBase
+  extends EsModelJMXBaseImpl
   with MEventsJmxMBean
 {
   override type X = MEvent

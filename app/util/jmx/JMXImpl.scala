@@ -13,8 +13,8 @@ import models.usr.{EmailActivationsJmx, EmailPwIdentsJmx, MExtIdentJmx}
 import util.adv.AdvUtilJmx
 import java.lang.management.ManagementFactory
 
+import io.suggest.loc.geo.ipgeobase.{MCitiesJmx, MIpRangesJmx}
 import io.suggest.util.JMXBase
-import models._
 import util.PlayLazyMacroLogsImpl
 import io.suggest.util.JMXHelpers._
 import play.api.inject.ApplicationLifecycle
@@ -45,6 +45,8 @@ class JMXImpl @Inject() (
   emailPwIdentsJmx              : EmailPwIdentsJmx,
   emailActivationsJmx           : EmailActivationsJmx,
   mExtIdentJmx                  : MExtIdentJmx,
+  mIpRangesJmx                  : MIpRangesJmx,
+  mCitiesJmx                    : MCitiesJmx,
   lifecycle                     : ApplicationLifecycle,
   implicit private val ec       : ExecutionContext
 )
@@ -69,6 +71,8 @@ class JMXImpl @Inject() (
       mExtTargetsJmx,
       mNodesJmx,
       geoTagsUtilJmx,
+      mIpRangesJmx,
+      mCitiesJmx,
       mMediasJmx
     )
   }
@@ -86,7 +90,7 @@ class JMXImpl @Inject() (
   private def getSrv = ManagementFactory.getPlatformMBeanServer
 
   /** Глобально зарегать все поддерживаемые возможные MBean'ы. */
-  def registerAll() {
+  def registerAll(): Unit = {
     val srv = getSrv
     for (jmxMB <- JMX_MODELS) {
       val name = jmxMB.jmxName
@@ -102,7 +106,7 @@ class JMXImpl @Inject() (
   }
 
   /** При выключении/перезапуске системы нужно провести де-регистрацию всех MBean'ов. */
-  def unregisterAll() {
+  def unregisterAll(): Unit = {
     val srv = getSrv
     for (jmxMB <- JMX_MODELS) {
       val name = jmxMB.jmxName

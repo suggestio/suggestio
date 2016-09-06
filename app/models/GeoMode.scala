@@ -1,10 +1,9 @@
 package models
 
 import java.net.InetAddress
-import java.sql.Connection
 
-import io.suggest.async.AsyncUtil
 import io.suggest.geo.GeoConstants
+import io.suggest.loc.geo.ipgeobase.{MCities, MCity, MIpRange, MIpRanges}
 import io.suggest.model.geo
 import io.suggest.model.geo.{Distance, GeoDistanceQuery}
 import io.suggest.model.play.qsb.QueryStringBindableImpl
@@ -14,7 +13,6 @@ import org.elasticsearch.common.unit.DistanceUnit
 import play.api.http.HeaderNames
 import play.api.mvc.QueryStringBindable
 import play.api.Play.{configuration, current}
-import play.api.db.DB
 import util.xplay.CacheUtil
 import util.{PlayLazyMacroLogsImpl, PlayMacroLogsImpl}
 
@@ -184,7 +182,7 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
     ip2rangeCity(ra).map { resultOpt =>
       resultOpt.map { result =>
         new GeoSearchInfo {
-          private def ipGeoPoint = result.city.geoPoint
+          private def ipGeoPoint = result.city.center
           override def geoPoint = ipGeoPoint
           override def geoDistanceQuery = {
             GeoDistanceQuery(
@@ -210,7 +208,7 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
 
   override def isExact: Boolean = false
 
-  case class Ip2RangeResult(city: IpGeoBaseCity, range: IpGeoBaseRange)
+  case class Ip2RangeResult(city: MCity, range: MIpRange)
 
   def getRemoteAddr(implicit request: ExtReqHdr): String = {
     val ra0 = request.remoteAddress
@@ -232,37 +230,25 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
     }
   }
 
-  private val asyncUtil = current.injector.instanceOf[AsyncUtil]
-  /** Комбо из Future.apply() и DB.withConnection. */
-  // TODO Спилить/перепилить этот метод, т.к. DB теперь должна приходить через slick и DI (play-2.4+).
-  private def jdbcAsync[T](f: Connection => T): Future[T] = {
-    Future {
-      DB.withConnection(f)
-    }(asyncUtil.jdbcExecutionContext)
-  }
+  private val mIpRanges = current.injector.instanceOf[MIpRanges]
+  private val mCities   = current.injector.instanceOf[MCities]
 
   /** Асинхронный поиск какого-то ip в базе ip-адресов.
     * @param ip строка ip-адреса. */
   def ip2rangeCity(ip: String): Future[Option[Ip2RangeResult]] = {
     // Операция поиска ip в SQL-базе ресурсоёмкая, поэтому кешируем результат.
     CacheUtil.getOrElse(ip + ".gipq", CACHE_TTL_SECONDS) {
-      val ipAddr = InetAddress.getByName(ip)
-      jdbcAsync { implicit c =>
-        IpGeoBaseRange.findForIp(ipAddr)
-      }.map {
-        _.headOption
-      }.flatMap {
-        case Some(range) =>
-          val cityOptFut = jdbcAsync { implicit c =>
-            range.cityOpt
-          }
-          for (cityOpt <- cityOptFut) yield {
-            for (city <- cityOpt) yield {
-              Ip2RangeResult(city, range)
-            }
-          }
-        case None =>
-          Future.successful( None )
+      for {
+        ipRanges  <- mIpRanges.findForIp(ip)
+        cityEsIds = ipRanges.iterator.flatMap(_.cityId).map(MCity.cityId2esId).toSet
+        mcities   <- mCities.multiGet(cityEsIds)
+      } yield {
+        for {
+          mcity   <- mcities.headOption
+          mrange  <- ipRanges.find(_.cityId == mcity.cityId)
+        } yield {
+          Ip2RangeResult(mcity, mrange)
+        }
       }
     }
   }
@@ -308,7 +294,7 @@ final case class GeoLocation(geoPoint: GeoPoint, accuracyMeters: Option[Double] 
 
         override def ipGeopoint: Option[geo.GeoPoint] = {
           for (l <- _ipGeoLoc) yield {
-            l.city.geoPoint
+            l.city.center
           }
         }
         override def cityName = _ipGeoLoc.map(_.city.cityName)

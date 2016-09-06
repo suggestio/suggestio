@@ -135,7 +135,7 @@ final class MAiMadJmx @Inject() (
   override val companion  : MAiMads,
   override val ec         : ExecutionContext
 )
-  extends EsModelJMXBase
+  extends EsModelJMXBaseImpl
     with MAiMadJmxMBean
 {
   override type X = MAiMad
