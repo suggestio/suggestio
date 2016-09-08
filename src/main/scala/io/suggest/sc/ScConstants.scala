@@ -30,15 +30,6 @@ object ScConstants {
   def HEIGHT_ATTR   = CUSTOM_ATTR_PREFIX + "height"
 
 
-  /** Константы для ранней инициализации. */
-  object Init {
-
-    /** id div'а, который может быть использован для пропуска геолокации. */
-    def IGNORE_GEO_MASK_ID = "smGeoSkipMask"
-
-  }
-
-
   /** Константы геолокации. */
   object Geo {
 
