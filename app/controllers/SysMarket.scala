@@ -2,6 +2,7 @@ package controllers
 
 import com.google.inject.Inject
 import controllers.sysctl._
+import controllers.sysctl.invite.SmSendEmailInvite
 import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{MItem, MItems}
@@ -28,6 +29,7 @@ import util.adv.AdvUtil
 import util.lk.LkAdUtil
 import util.mail.IMailerWrapper
 import util.n2u.N2NodesUtil
+import util.sys.SysMarketUtil
 import views.html.lk.adn.invite.emailNodeOwnerInviteTpl
 import views.html.lk.shop.ad.emailAdDisabledByMartTpl
 import views.html.sys1.market._
@@ -46,7 +48,7 @@ class SysMarket @Inject() (
   override val nodesUtil          : NodesUtil,
   lkAdUtil                        : LkAdUtil,
   advUtil                         : AdvUtil,
-  sysMarketUtil                   : SysMarketUtil,
+  override val sysMarketUtil      : SysMarketUtil,
   override val mailer             : IMailerWrapper,
   override val n2NodesUtil        : N2NodesUtil,
   override val sysAdRenderUtil    : SysAdRenderUtil,

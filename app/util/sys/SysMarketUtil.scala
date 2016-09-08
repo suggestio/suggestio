@@ -1,19 +1,15 @@
-package controllers.sysctl
+package util.sys
 
-import controllers.SioController
-import io.suggest.model.n2.extra.{MNodeExtras, MSlInfo, MAdnExtra}
+import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras, MSlInfo}
 import io.suggest.model.n2.node.common.MNodeCommon
-import io.suggest.model.n2.node.meta.{MBusinessInfo, MAddress, MBasicMeta}
+import io.suggest.model.n2.node.meta.{MAddress, MBasicMeta, MBusinessInfo}
 import io.suggest.model.sc.common.LvlMap_t
 import models._
-import models.mctx.Context
-import models.req.IReqHdr
-import models.usr.EmailActivation
-import play.api.data._, Forms._
+import models.msys.MSysNodeInstallFormData
+import play.api.data.Forms._
+import play.api.data._
 import util.FormUtil._
 import util.PlayMacroLogsDyn
-import util.mail.IMailerWrapperDi
-import views.html.lk.adn.invite.emailNodeOwnerInviteTpl
 
 /**
  * Suggest.io
@@ -212,37 +208,25 @@ class SysMarketUtil extends PlayMacroLogsDyn {
     "email" -> email
   )
 
+
+  /** Маппинг формы для инсталляции узла. */
+  def nodeInstallForm: Form[MSysNodeInstallFormData] = {
+    import play.api.data.Forms._
+    import util.FormUtil.uiLangM
+    Form(
+      mapping(
+        "count" -> number(0, max = 50),
+        "lang"  -> uiLangM()
+      )
+      { MSysNodeInstallFormData.apply }
+      { MSysNodeInstallFormData.unapply }
+    )
+  }
+
 }
 
 
-/** Функционал контроллеров для отправки письма с доступом на узел. */
-trait SmSendEmailInvite extends SioController with IMailerWrapperDi {
-
-  import mCommonDi._
-
-  /** Выслать письмо активации. */
-  def sendEmailInvite(ea: EmailActivation, adnNode: MNode)(implicit request: IReqHdr) {
-    // Собираем и отправляем письмо адресату
-    val msg = mailer.instance
-    implicit val ctx = implicitly[Context]
-
-    val ast = adnNode.extras.adn
-      .flatMap( _.shownTypeIdOpt )
-      .flatMap( AdnShownTypes.maybeWithName )
-      .getOrElse( AdnShownTypes.default )
-
-    msg.setSubject("Suggest.io | " +
-      ctx.messages("Your") + " " +
-      ctx.messages(ast.singular)
-    )
-    msg.setFrom("no-reply@suggest.io")
-    msg.setRecipients(ea.email)
-    msg.setHtml {
-      htmlCompressUtil.html4email {
-        emailNodeOwnerInviteTpl(adnNode, ea)(ctx)
-      }
-    }
-    msg.send()
-  }
-
+/** Интерфейс для DI-поля с инстансом [[SysMarketUtil]]. */
+trait ISysMarketUtilDi {
+  def sysMarketUtil: SysMarketUtil
 }
