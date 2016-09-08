@@ -123,14 +123,13 @@ trait OutEdges extends DynSearchArgs with MacroLogsI {
 
             // Завернуть собранную инфу в nested-запрос и накатить на исходную query.
             val fn = MNodeFields.Edges.E_OUT_INFO_GS_FN
+            val gqNf = QueryBuilders.nestedQuery(fn, nq)
             _qOpt = _qOpt.map { qb0 =>
-              val gqNf = QueryBuilders.nestedQuery(fn, nq)
               QueryBuilders.boolQuery()
                 .must(qb0)
                 .filter(gqNf)
             }.orElse {
-              val qb2 = QueryBuilders.nestedQuery(fn, nq)
-              Some(qb2)
+              Some(gqNf)
             }
           }
 

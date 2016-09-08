@@ -41,18 +41,18 @@ object MAdnExtra extends IGenEsMappingProps {
   implicit val FORMAT: OFormat[MAdnExtra] = (
     (__ \ RIGHTS.fn).formatNullable[Set[AdnRight]]
       .inmap [Set[AdnRight]] (
-        _ getOrElse Set.empty,
+        _.getOrElse( Set.empty ),
         { rights => if (rights.isEmpty) None else Some(rights) }
       ) and
     (__ \ IS_BY_USER.fn).formatNullable[Boolean]
       .inmap [Boolean] (
-        _ getOrElse false,
+        _.contains(true), // getOrElse false,
         someF
       ) and
     (__ \ SHOWN_TYPE.fn).formatNullable[String] and
     (__ \ IS_TEST.fn).formatNullable[Boolean]
       .inmap [Boolean] (
-        _ getOrElse false,
+        _.contains(true), // getOrElse false,
         someF
       ) and
     (__ \ OUT_SLS.fn).formatNullable[Iterable[MSlInfo]]
@@ -62,7 +62,7 @@ object MAdnExtra extends IGenEsMappingProps {
       ) and
     (__ \ SHOW_IN_SC_NL.fn).formatNullable[Boolean]
       .inmap [Boolean] (
-        _ getOrElse true,
+        _.getOrElse(true),
         someF
       )
   )(apply, unlift(unapply))

@@ -3,6 +3,7 @@ package io.suggest.model.n2.extra
 import java.util.UUID
 
 import io.suggest.model.PlayJsonTestUtil
+import io.suggest.model.n2.extra.domain.{MDomainExtra, MDomainModes}
 import org.scalatest.FlatSpec
 
 /**
@@ -31,7 +32,17 @@ class MNodeExtrasSpec extends FlatSpec with PlayJsonTestUtil {
           uuidStr = UUID.randomUUID().toString,
           major   = 35666,
           minor   = 65354
-        ))
+        )),
+        domains = Seq(
+          MDomainExtra(
+            dkey = "suggest.io",
+            mode = MDomainModes.ScServeIncomingRequests
+          ),
+          MDomainExtra(
+            dkey = "xata.ok",
+            mode = MDomainModes.ScServeIncomingRequests
+          )
+        )
       )
     }
   }

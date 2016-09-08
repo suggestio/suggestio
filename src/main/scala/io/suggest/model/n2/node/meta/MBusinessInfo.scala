@@ -1,6 +1,6 @@
 package io.suggest.model.n2.node.meta
 
-import io.suggest.common.empty.{IEmpty, EmptyProduct}
+import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.model.es.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -19,6 +19,7 @@ object MBusinessInfo extends IGenEsMappingProps with IEmpty {
     val SITE_URL_FN             = "su"
     val AUDIENCE_DESCR_FN       = "ad"
     val HUMAN_TRAFFIC_AVG_FN    = "ht"
+
     /** Имя поля для описания серьезного бизнеса: Business DESCRiption. */
     val BDESCR_FN               = "bd"
   }
@@ -56,9 +57,9 @@ object MBusinessInfo extends IGenEsMappingProps with IEmpty {
 
 
 case class MBusinessInfo(
-  siteUrl             : Option[String] = None,
-  audienceDescr       : Option[String] = None,
-  humanTrafficAvg     : Option[Int]   = None,
-  info                : Option[String] = None
+  siteUrl             : Option[String]  = None,
+  audienceDescr       : Option[String]  = None,
+  humanTrafficAvg     : Option[Int]     = None,
+  info                : Option[String]  = None
 )
   extends EmptyProduct

@@ -1,6 +1,7 @@
 package io.suggest.model.n2.node.search
 
 import io.suggest.model.n2.edge.search._
+import io.suggest.model.n2.extra.domain.{DomainsSearch, DomainsSearchDflt, DomainsSearchWrap}
 import io.suggest.model.n2.extra.search._
 import io.suggest.model.n2.geo.search._
 import io.suggest.model.n2.node.common.search._
@@ -17,6 +18,7 @@ import io.suggest.util.{MacroLogsDyn, MacroLogsImplLazy}
 trait MNodeSearch
   extends FtsAll
   with WithIds
+  with DomainsSearch
   with OutEdges
   with BleBeacons
   with ShownTypeId
@@ -45,6 +47,7 @@ trait MNodeSearchDflt
   extends MNodeSearch
   with FtsAllDflt
   with WithIdsDflt
+  with DomainsSearchDflt
   with OutEdgesDflt
   with BleBeaconsDflt
   with ShownTypeIdDflt
@@ -76,6 +79,7 @@ trait MNodeSearchWrap
   extends MNodeSearch
   with FtsAllWrap
   with WithIdsWrap
+  with DomainsSearchWrap
   with OutEdgesWrap
   with BleBeaconsWrap
   with ShownTypeIdWrap

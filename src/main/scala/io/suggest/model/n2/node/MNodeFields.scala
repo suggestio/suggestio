@@ -57,6 +57,10 @@ object MNodeFields {
     def BEACON_MAJOR_FN         = _fullFn( F.Beacon.MAJOR_FN )
     def BEACON_MINOR_FN         = _fullFn( F.Beacon.MINOR_FN )
 
+    def DOMAIN_FN               = _fullFn( F.Domain.DOMAIN_FN )
+    def DOMAIN_DKEY_FN          = _fullFn( F.Domain.DKEY_FN )
+    def DOMAIN_MODE_FN          = _fullFn( F.Domain.MODE_FN )
+
   }
 
   /** Абсолютные имена ES-полей в .edges */

@@ -1,8 +1,9 @@
 package io.suggest.model.n2.extra
 
-import io.suggest.common.empty.{IEmpty, EmptyProduct}
+import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.model.PrefixedFn
 import io.suggest.model.es.IGenEsMappingProps
+import io.suggest.model.n2.extra.domain.MDomainExtra
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{OFormat, _}
 
@@ -31,6 +32,7 @@ object MNodeExtras extends IGenEsMappingProps with IEmpty {
     object Adn extends PrefixedFn {
       val ADN_FN    = "a"
       override protected def _PARENT_FN = ADN_FN
+
       import MAdnExtra.{Fields => F}
       def IS_TEST_FN          = _fullFn( F.IS_TEST.fn )
       def RIGHTS_FN           = _fullFn( F.RIGHTS.fn )
@@ -38,14 +40,27 @@ object MNodeExtras extends IGenEsMappingProps with IEmpty {
       def SHOW_IN_SC_NL_FN    = _fullFn( F.SHOW_IN_SC_NL.fn )
     }
 
+
     /** ES-поля iBeacon (BLE-маячка). */
     object Beacon extends PrefixedFn {
       val BEACON_FN   = "b"
       override protected def _PARENT_FN = BEACON_FN
+
       import MBeaconExtra.{Fields => F}
       def UUID_FN   = _fullFn( F.UUID_FN )
       def MAJOR_FN  = _fullFn( F.MAJOR_FN )
       def MINOR_FN  = _fullFn( F.MINOR_FN )
+    }
+
+
+    /** ES-поля данных по слинкованным интернет-доменам. */
+    object Domain extends PrefixedFn {
+      val DOMAIN_FN = "d"
+      override protected def _PARENT_FN = DOMAIN_FN
+
+      import MDomainExtra.{Fields => F}
+      def DKEY_FN   = _fullFn( F.DKEY_FN )
+      def MODE_FN   = _fullFn( F.MODE_FN )
     }
 
   }
@@ -55,7 +70,12 @@ object MNodeExtras extends IGenEsMappingProps with IEmpty {
   /** Поддержка JSON для растущей модели [[MNodeExtras]]. */
   implicit val FORMAT: OFormat[MNodeExtras] = (
     (__ \ Fields.Adn.ADN_FN).formatNullable[MAdnExtra] and
-    (__ \ Fields.Beacon.BEACON_FN).formatNullable[MBeaconExtra]
+    (__ \ Fields.Beacon.BEACON_FN).formatNullable[MBeaconExtra] and
+    (__ \ Fields.Domain.DOMAIN_FN).formatNullable[Seq[MDomainExtra]]
+      .inmap [Seq[MDomainExtra]] (
+        _.getOrElse(Nil),
+        { domains => if (domains.isEmpty) None else Some(domains) }
+      )
   )(apply, unlift(unapply))
 
 
@@ -67,7 +87,8 @@ object MNodeExtras extends IGenEsMappingProps with IEmpty {
   override def generateMappingProps: List[DocField] = {
     List(
       _obj(Fields.Adn.ADN_FN,       MAdnExtra),
-      _obj(Fields.Beacon.BEACON_FN, MBeaconExtra)
+      _obj(Fields.Beacon.BEACON_FN, MBeaconExtra),
+      FieldNestedObject(Fields.Domain.DOMAIN_FN, enabled = true, properties = MDomainExtra.generateMappingProps)
     )
   }
 
@@ -77,6 +98,7 @@ object MNodeExtras extends IGenEsMappingProps with IEmpty {
 /** Класс-контейнер-реализация модели. */
 case class MNodeExtras(
   adn       : Option[MAdnExtra]         = None,
-  beacon    : Option[MBeaconExtra]      = None
+  beacon    : Option[MBeaconExtra]      = None,
+  domains   : Seq[MDomainExtra]         = Nil
 )
   extends EmptyProduct
