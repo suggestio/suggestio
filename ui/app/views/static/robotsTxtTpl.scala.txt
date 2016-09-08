@@ -1,6 +1,8 @@
 @()(implicit ctx: Context)
+@import ctx.api.ctxUtil
+
 User-Agent: *
 Disallow: /help
 
-Sitemap: @ctx.SC_URL_PREFIX@routes.Static.siteMapXml()
-Host: @ctx.SC_HOST_PORT
+Sitemap: @ctxUtil.SC_URL_PREFIX@routes.Static.siteMapXml()
+Host: @ctxUtil.SC_HOST_PORT

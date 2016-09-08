@@ -1,10 +1,11 @@
 @()(implicit ctx: Context)
 
 @import ctx.messages
+@import ctx.api.ctxUtil
 
 <div class="geo-nodes-links">
   <div class="geo-nodes-links_inner">
-    <a class="geo-nodes-links_link" href="@ctx.LK_URL_PREFIX@routes.Ident.mySioStartPage()">
+    <a class="geo-nodes-links_link" href="@ctxUtil.LK_URL_PREFIX@routes.Ident.mySioStartPage()">
       <span class="geo-nodes-links_icon"></span><span class="geo-nodes-links_text">@messages("Login.to.sio")</span>
     </a>
     <a class="geo-nodes-links_link geo-nodes-links_right-aligned" href="#">

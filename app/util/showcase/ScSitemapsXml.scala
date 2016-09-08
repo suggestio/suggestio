@@ -8,10 +8,10 @@ import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.MNodes
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 import models.crawl.{ChangeFreqs, SiteMapUrl, SiteMapUrlT}
-import models.mctx.Context
+import models.mctx.{Context, ContextUtil}
+import models.mproj.MCommonDi
 import models.msc.ScJsState
 import models.{AdSearchImpl, MNode}
-import org.elasticsearch.client.Client
 import org.elasticsearch.common.unit.TimeValue
 import org.joda.time.LocalDate
 import play.api.libs.iteratee.Enumerator
@@ -19,7 +19,6 @@ import play.api.mvc.QueryStringBindable
 import util.n2u.N2NodesUtil
 import util.seo.SiteMapXmlCtl
 
-import scala.concurrent.ExecutionContext
 
 /**
  * Suggest.io
@@ -34,11 +33,13 @@ import scala.concurrent.ExecutionContext
 class ScSitemapsXml @Inject() (
   n2NodesUtil                   : N2NodesUtil,
   mNodes                        : MNodes,
-  implicit private val ec       : ExecutionContext,
-  implicit private val client   : Client
+  ctxUtil                       : ContextUtil,
+  mCommonDi                     : MCommonDi
 )
   extends SiteMapXmlCtl
 {
+
+  import mCommonDi._
 
   /**
    * Асинхронно поточно генерировать данные о страницах выдачи, которые подлежат индексации.
@@ -65,15 +66,16 @@ class ScSitemapsXml @Inject() (
 
     // Запускаем поточный обход всех опубликованных MAd'ов и поточную генерацию sitemap'а.
     val erFut = reqb.execute().map { searchResp0 =>
+      // TODO Запихать это всё в модели.
       // Пришел ответ без результатов с начальным scrollId.
       Enumerator.unfoldM(searchResp0.getScrollId) { scrollId0 =>
-        client.prepareSearchScroll(scrollId0)
+        esClient.prepareSearchScroll(scrollId0)
           .setScroll(new TimeValue(EsModelUtil.SCROLL_KEEPALIVE_MS_DFLT))
           .execute()
           .map { sr =>
             val scrollId = sr.getScrollId
             if (sr.getHits.getHits.isEmpty) {
-              client.prepareClearScroll()
+              esClient.prepareClearScroll()
                 .addScrollId(scrollId)
                 .execute()
               None
@@ -129,7 +131,7 @@ class ScSitemapsXml @Inject() (
       val lastDate = lastDt.toLocalDate
       SiteMapUrl(
         // TODO Нужно здесь перейти на #!-адресацию, когда появится поддержка этого чуда в js выдаче.
-        loc         = ctx.SC_URL_PREFIX + url,
+        loc         = ctxUtil.SC_URL_PREFIX + url,
         lastMod     = Some(lastDate),
         changeFreq  = Some {
           if (lastDate isBefore today)

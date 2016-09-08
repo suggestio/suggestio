@@ -354,7 +354,7 @@ class OAuth1ServiceActor @Inject() (
           actorInfoQs = ActorPathQs(self.path)
         )
         // Вычисляем URL prefix. в devel-режиме нужно использовать ip локалхоста, а не его имя.
-        val urlPrefix = ctxUtil.devReplaceLocalHostW127001( args.ctx.LK_URL_PREFIX )
+        val urlPrefix = ctxUtil.devReplaceLocalHostW127001( ctxUtil.LK_URL_PREFIX )
         // Заставить клиента открыть всплывающее окно для авторизации на твиттере.
         val returnUrl = urlPrefix + returnCall.url
         oa1client.retrieveRequestToken(returnUrl)

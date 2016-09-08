@@ -3,6 +3,7 @@ package controllers.sc
 import java.util.NoSuchElementException
 
 import controllers.{SioController, routes}
+import io.suggest.common.fut.FutureUtil
 import models._
 import models.mctx.Context
 import models.msc._
@@ -43,13 +44,12 @@ trait ScSyncSiteGeo
    * @param request Реквест.
    */
   override protected def _geoSiteResult(siteArgs: SiteQsArgs)(implicit request: IReq[_]): Future[Result] = {
-    request.ajaxJsScState match {
-      case None =>
-        super._geoSiteResult(siteArgs)
-      case Some(jsState) =>
-        _syncGeoSite(jsState, siteArgs) { jsSt =>
-          routes.Sc.geoSite(x = siteArgs).url + "#!?" + jsSt.toQs()
-        }
+    request.ajaxJsScState.fold [Future[Result]] {
+      super._geoSiteResult(siteArgs)
+    } { jsState =>
+      _syncGeoSite(jsState, siteArgs) { jsSt =>
+        routes.Sc.geoSite(x = siteArgs).url + "#!?" + jsSt.toQs()
+      }
     }
   }
 
@@ -80,6 +80,7 @@ trait ScSyncSiteGeo
 
   /** Логика работы синхронного сайта описывается этим трейтом и связями в нём. */
   trait ScSyncSiteLogic { that =>
+
     /** Состояние выдачи. */
     def _scState: ScJsState
 
@@ -111,7 +112,7 @@ trait ScSyncSiteGeo
           override val _adSearch = _scState.tilesAdSearch()
           override lazy val ctx = that.ctx
           override def renderMadAsync(brArgs: blk.RenderArgs): Future[T] = {
-            renderMad2htmlAsync(brArgs) map { rendered =>
+            for (rendered <- renderMad2htmlAsync(brArgs)) yield {
               RenderedAdBlock(brArgs.mad, rendered)
             }
           }
@@ -119,7 +120,7 @@ trait ScSyncSiteGeo
 
       } else {
         // Нет надобности печатать плитку. Просто генерим заглушку логики рендера плитки:
-        val _noMadsFut: Future[Seq[MNode]] = Future successful Nil
+        val _noMadsFut: Future[Seq[MNode]] = Future.successful( Nil )
         new TileAdsLogic {
           override type T = IRenderedAdBlock
           override implicit def _request = that._request
@@ -177,11 +178,8 @@ trait ScSyncSiteGeo
     }
 
     def maybeFocusedContent: Future[Option[Html]] = {
-      maybeFocusedLogic match {
-        case Some(fl) =>
-          fl.focAdHtmlOptFut
-        case None =>
-          Future successful None
+      FutureUtil.optFut2futOpt(maybeFocusedLogic) { fl =>
+        fl.focAdHtmlOptFut
       }
     }
 
@@ -204,10 +202,12 @@ trait ScSyncSiteGeo
 
     def maybeNodesListHtmlFut: Future[Option[Html]] = {
       if (_scState.isNavScrOpened) {
-        nodesListLogic.nodesListRenderedFut
-          .map { rnl => Some(rnl(Some(_scState))) }   // Рендерим, пробрасывая js-состояние внутрь шаблона.
+        // Рендерим, пробрасывая js-состояние внутрь шаблона.
+        for (rnl <- nodesListLogic.nodesListRenderedFut) yield {
+          Some( rnl(Some(_scState)) )
+        }
       } else {
-        Future successful None
+        Future.successful( None )
       }
     }
 
@@ -216,13 +216,13 @@ trait ScSyncSiteGeo
         nodesListLogic.nextNodeWithLayerFut
           .map(Some.apply)
       } else {
-        Future successful None
+        Future.successful( None )
       }
     }
 
     def currNodeGeoOptFut: Future[Option[MNode]] = {
-      maybeGeoDetectResultFut.map {
-        _.map { gdr =>
+      for (gdrOpt <- maybeGeoDetectResultFut) yield {
+        for (gdr <- gdrOpt) yield {
           gdr.node
         }
       }
@@ -257,12 +257,13 @@ trait ScSyncSiteGeo
     /** Узел, запрошенный в qs-аргументах. */
     lazy val adnNodeReqFut: Future[Option[MNode]] = {
       // Использовать любой заданный id узла, если возможно.
-      val adnIdOpt = _scState.adnId orElse _siteArgs.adnId
+      val adnIdOpt = _scState.adnId
+        .orElse(_siteArgs.adnId)
       mNodeCache.maybeGetByIdCached( adnIdOpt )
     }
 
     def indexHtmlLogicFut: Future[HtmlGeoIndexLogic] = {
-      indexReqArgsFut.map { indexReqArgs =>
+      for (indexReqArgs <- indexReqArgsFut) yield {
         new HtmlGeoIndexLogic {
           override def _reqArgs: ScReqArgs = indexReqArgs
           override implicit def _request = that._request
@@ -332,7 +333,7 @@ trait ScSyncSiteGeo
     protected class SyncSiteLogic extends SiteLogic {
       // Линкуем исходные данные логики с полями outer-класса.
       override implicit lazy val ctx  = that.ctx
-      override def _siteArgs          = that._siteArgs
+      override def _siteQsArgs          = that._siteArgs
       override implicit def _request  = that._request
       override def nodeOptFut         = that.adnNodeReqFut
 

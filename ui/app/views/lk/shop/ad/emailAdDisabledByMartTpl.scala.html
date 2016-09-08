@@ -2,16 +2,18 @@
 
 @* Шаблон для HTML-почтового сообщения об отключении рекламного сообщения из выдачи модератором ТЦ. *@
 
+@import ctx.api.ctxUtil
+
 <table border="0" cellpadding="0" cellspacing="0" style="width: 540px;">
   <tr>
     <td colspan="2">
       <a href="https://suggest.io" style="display: block; width: 120px; height: 124px; margin: 0 auto;
-      text-decoration: none; background: url('@ctx.LK_URL_PREFIX@routes.Assets.versioned("images/market/mail/logo.png")') no-repeat center center">&nbsp;</a>
+      text-decoration: none; background: url('@ctxUtil.LK_URL_PREFIX@routes.Assets.versioned("images/market/mail/logo.png")') no-repeat center center">&nbsp;</a>
     </td>
   </tr>
   <tr>
     <td style="padding: 20px 0; border-bottom: 1px solid #9A9B9B; text-align: center; background: #EFEFEF;" colspan="2">
-      <div style="background: url('@ctx.LK_URL_PREFIX@routes.Assets.versioned("images/market/mail/title.disable.png")') no-repeat center center;
+      <div style="background: url('@ctxUtil.LK_URL_PREFIX@routes.Assets.versioned("images/market/mail/title.disable.png")') no-repeat center center;
       display: inline-block; width: 262px; height: 25px;">&nbsp;</div>
     </td>
   </tr>
@@ -38,7 +40,7 @@
     <td style="background: #E1E1E1; padding-top: 15px; padding-bottom: 30px; padding-left: 20px; padding-right: 20px;">
       <span style="color: #979797; font-family: 'Arial'; font-size: 14px;">Для редактирования перейдите</span>
       <a style="color: #4f88a9; font-size: 14px; font-family: 'Arial'; text-decoration: none;" target="_blank"
-         href="@ctx.LK_URL_PREFIX@routes.MarketAd.editAd(mad.id.get)">по ссылке →</a>
+         href="@ctxUtil.LK_URL_PREFIX@routes.MarketAd.editAd(mad.id.get)">по ссылке →</a>
     </td>
   </tr>
   <tr>

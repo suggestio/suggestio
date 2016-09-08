@@ -35,10 +35,10 @@ trait ScSiteBase
   import mCommonDi._
 
   /** Настраиваемая логика сборки результата запроса сайта выдачи. */
-  protected trait SiteLogic {
+  protected abstract class SiteLogic {
 
     /** Сюда передаются исходные параметры запроса сайта (qs). */
-    def _siteArgs: SiteQsArgs
+    def _siteQsArgs: SiteQsArgs
 
     /** Исходный http-реквест. */
     implicit def _request: IReq[_]
@@ -47,7 +47,7 @@ trait ScSiteBase
     implicit lazy val ctx = implicitly[Context]
 
     /** Опциональный id текущего узла. */
-    def adnIdOpt: Option[String] = _siteArgs.adnId
+    def adnIdOpt: Option[String] = _siteQsArgs.adnId
 
     /** Опциональный экземпляр текущего узла. */
     def nodeOptFut: Future[Option[MNode]] = {
@@ -56,7 +56,7 @@ trait ScSiteBase
 
     /** Добавки к тегу head в siteTpl. */
     def headAfterFut: Future[List[Html]] = {
-      mNodeCache.maybeGetByIdCached( _siteArgs.povAdId )
+      mNodeCache.maybeGetByIdCached( _siteQsArgs.povAdId )
         .map { _.get }
         // Интересует только карточка с ресивером. TODO И отмодерированная?
         .filter { mad =>
@@ -66,14 +66,13 @@ trait ScSiteBase
         }
         // Зарендерить всё параллельно.
         .flatMap { mad =>
-          val futs = extServicesUtil.HELPERS
-            .map { svcHelper =>
-              for (renderables <- svcHelper.adMetaTagsRender(mad)) yield {
-                for (renderable <- renderables) yield {
-                  renderable.render()(ctx)
-                }
+          val futs = for (svcHelper <- extServicesUtil.HELPERS) yield {
+            for (renderables <- svcHelper.adMetaTagsRender(mad)) yield {
+              for (renderable <- renderables) yield {
+                renderable.render()(ctx)
               }
             }
+          }
           for (renders <- Future.sequence(futs)) yield {
             renders.iterator
               .flatten
@@ -83,7 +82,7 @@ trait ScSiteBase
         // Отработать случи отсутствия карточки или другие нежелательные варианты.
         .recover { case ex: Throwable =>
           if (!ex.isInstanceOf[NoSuchElementException])
-            LOGGER.warn("Failed to collect meta-tags for ad " + _siteArgs.povAdId, ex)
+            LOGGER.warn("Failed to collect meta-tags for ad " + _siteQsArgs.povAdId, ex)
           List.empty[Html]
         }
     }
@@ -109,7 +108,7 @@ trait ScSiteBase
             super.headAfter ++ _headAfter
           }
           override def scriptHtml = _scriptHtml
-          override def apiVsn = _siteArgs.apiVsn
+          override def apiVsn = _siteQsArgs.apiVsn
         }
       }
     }
@@ -136,7 +135,7 @@ trait ScSiteBase
 
 
   /** Когда нужно рендерить site script, подмешиваем это. */
-  protected trait SiteScriptLogicV2 extends SiteLogic {
+  protected abstract class SiteScriptLogicV2 extends SiteLogic {
 
     import views.html.sc.script._
 
@@ -169,20 +168,6 @@ trait ScSiteBase
 
   }
 
-
-  /** Можно подавлять ошибки чтения экземпляра узла. Возникновении ошибки чтения -- маловероятная ситуация, но экземпляр
-    * узла не является для сайта очень обязательным для сайта выдачи.
-    * С другой стороны, лучше сразу выдать ошибку юзеру, чем отрендерить зависшую на GET showcaseIndex выдачу. */
-  protected trait NodeSuppressErrors extends SiteLogic {
-    /** Опциональный экземпляр текущего узла. */
-    override def nodeOptFut: Future[Option[MNode]] = {
-      super.nodeOptFut
-        .recover { case ex: Throwable =>
-          LOGGER.warn("Failed to get node adnId = " + _siteArgs.adnId, ex)
-          None
-        }
-    }
-  }
 
 }
 
@@ -242,21 +227,14 @@ trait ScSiteGeo
    * @param request Реквест.
    */
   protected def _geoSiteResult(siteArgs: SiteQsArgs)(implicit request: IReq[_]): Future[Result] = {
-    val logic = new SiteLogic with SiteScriptLogicV2 {
+    val logic = new SiteScriptLogicV2 {
       override implicit def _request  = request
-      override def _siteArgs          = siteArgs
+      override def _siteQsArgs          = siteArgs
 
       override def _withGeo           = siteArgs.adnId.isEmpty
       override def _indexCall         = routes.Sc.geoShowcase()  // TODO Для index call можно какие-то аргументы передать...
     }
     logic.resultFut
-  }
-
-
-  /** Раньше выдача пряталась в /market/geo/site. Потом переехала на главную. */
-  def rdrToGeoSite = Action { implicit request =>
-    val call = routes.Sc.geoSite().url
-    MovedPermanently(call)
   }
 
 }

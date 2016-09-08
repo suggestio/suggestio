@@ -1,6 +1,7 @@
 @(args: maps.umap.IUmapTplArgs)(implicit ctx: Context)
 
-@import ctx._
+@import ctx.{request, messages}
+@import ctx.api.ctxUtil
 @import helper._
 
 <!DOCTYPE html>
@@ -58,7 +59,7 @@
             "tilelayersControl": true,
             "default_iconUrl": "/static/storage/src/img/marker.png",
             "name": "@args.title",
-            "shortUrl": "@ctx.LK_URL_PREFIX@routes.Umap.getAdnNodesMap()",
+            "shortUrl": "@ctxUtil.LK_URL_PREFIX@routes.Umap.getAdnNodesMap()",
             "tilelayers": [
               {
                 "attribution": "map data \u00a9 [[http://osm.org/copyright|OpenStreetMap]] under ODbL ",

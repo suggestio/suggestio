@@ -1,11 +1,9 @@
 @(args: msc.ScSiteArgs)(implicit ctx: Context)
 
 @* Шаблон для рендеринга демо выдачи. Содержит предполагаемый сайт ТЦ, поверх которого рисуется Sio.Market *@
-@import ctx._
+
 @import _root_.views.html.stuff._
-@import ctx.api.cdn
-@import models.msc.ScJsState.{qsbStandalone => scJsQsb}
-@import io.suggest.sc.ScConstants.Init.IGNORE_GEO_MASK_ID
+@import ctx.api.{cdn, ctxUtil}
 
 <!DOCTYPE html>
 <html>
@@ -26,7 +24,7 @@
   <meta name="viewport" content="width=320,initial-scale=1,user-scalable=no,minimal-ui" />
 
   @args.jsStateOpt.map { jsState =>
-    <link rel="canonical" href="@ctx.SC_URL_PREFIX@routes.Sc.geoSite()#!?@jsState.canonical.toQs()" />
+    <link rel="canonical" href="@ctxUtil.SC_URL_PREFIX@routes.Sc.geoSite()#!?@jsState.canonical.toQs()" />
   }
   @if(!args.syncRender) {
     <meta name="fragment" content="!"/>
@@ -52,9 +50,6 @@
 
   @if(!args.syncRender) {
     @args.scriptHtml
-
-    @* Невидимая кнопка на весь экран, чтобы юзер мог педалировать ход геолокации (пропускать геолокацию). *@
-    @*<div id="@IGNORE_GEO_MASK_ID" class="fs-transparent-mask"></div>*@
   }
 
   @* TODO В else нужно выводить нескрываемую плашку, что следует включить js в браузере, иначе всё будет хреново

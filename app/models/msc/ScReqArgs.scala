@@ -5,7 +5,7 @@ import models._
 import models.im.DevScreen
 import play.api.mvc.QueryStringBindable
 import play.twirl.api.Html
-import util.qsb.QsbUtil._
+import util.qsb.QsbUtil
 import io.suggest.sc.ScConstants.ReqArgs._
 import views.js.sc.m.scReqArgsJsUnbindTpl
 
@@ -55,7 +55,7 @@ object ScReqArgs {
             new ScReqArgsDfltImpl {
               override def geo = _geo
               // Игнорим неверные размеры, ибо некритично.
-              override lazy val screen: Option[DevScreen] = maybeDevScreen
+              override val screen         = QsbUtil.eitherOpt2option( maybeDevScreen )
               override def withWelcomeAd  = _withWelcomeAd
               override def apiVsn         = _apiVsn
               override def prevAdnId      = _prevAdnId
@@ -96,6 +96,7 @@ trait ScReqArgs extends SyncRenderInfo {
   def withWelcomeAd       : Boolean
   def prevAdnId           : Option[String]
   def apiVsn              : MScApiVsn
+
   /** Заинлайненные отрендеренные элементы плитки. Передаются при внутренних рендерах, вне HTTP-запросов и прочего. */
   def inlineTiles         : Seq[IRenderedAdBlock]
   def focusedContent      : Option[Html]

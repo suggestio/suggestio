@@ -97,7 +97,7 @@ class CdnUtil @Inject() (
       c
     } else {
       val reqHost = ctx.myHost
-      val urlPrefixOpt: Option[String] = if (DISABLED_ON_HOSTS contains reqHost) {
+      val urlPrefixOpt: Option[String] = if (DISABLED_ON_HOSTS.contains(reqHost)) {
         None
       } else {
         val protoLc = ctx.myProto.toLowerCase

@@ -6,6 +6,7 @@
 *@
 
 @import ctx._
+@import ctx.api.ctxUtil
 @import node._
 @import lk.right._
 @import args.mnode
@@ -50,7 +51,7 @@
     <div class="sm-note">
       @if( mnode.extras.adn.exists(_.isReceiver) ) {
         @messages("You.can.look.on.ads.in")
-        <a class="blue-link" href="@ctx.SC_URL_PREFIX@routes.Sc.geoSite(msc.ScJsState(adnId = mnode.id))"
+        <a class="blue-link" href="@ctxUtil.SC_URL_PREFIX@routes.Sc.geoSite(msc.ScJsState(adnId = mnode.id))"
            target="_blank">@messages("_ad.showcase.link")</a>.
       }
     </div>
