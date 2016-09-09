@@ -3,7 +3,8 @@ package util.n2u
 import com.google.inject.Singleton
 import io.suggest.model.n2.edge.{MNodeEdges, MPredicates}
 import io.suggest.model.n2.edge.search.ICriteria
-import models.{Receivers_t, BlockConf, MEdge, MNode}
+import io.suggest.model.n2.extra.domain.MDomainModes
+import models.{BlockConf, MEdge, MNode, Receivers_t}
 import util.blocks.BlocksConf
 
 /**
@@ -82,6 +83,20 @@ class N2NodesUtil {
         .map(_.blockId)
     }
     BlocksConf.applyOrDefault(blockIdOpt)
+  }
+
+  /**
+    * Бывает, что необходимо сгенерить префикс ссылки на внешний сайт,
+    * возможно привязанный к указанному узлу.
+    * @param mnode Узел N2.
+    * @return Опциональный результат работы вида: http://site.com
+    */
+  def urlPrefixOf(mnode: MNode): Option[String] = {
+    mnode.extras.domains
+      .find(_.mode == MDomainModes.ScServeIncomingRequests)
+      .map { mdx =>
+        mdx.proto + "://" + mdx.dkey
+      }
   }
 
 }

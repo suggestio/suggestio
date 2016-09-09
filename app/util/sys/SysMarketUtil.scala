@@ -1,5 +1,6 @@
 package util.sys
 
+import io.suggest.model.n2.extra.domain.{MDomainExtra, MDomainModes}
 import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras, MSlInfo}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MAddress, MBasicMeta, MBusinessInfo}
@@ -211,8 +212,6 @@ class SysMarketUtil extends PlayMacroLogsDyn {
 
   /** Маппинг формы для инсталляции узла. */
   def nodeInstallForm: Form[MSysNodeInstallFormData] = {
-    import play.api.data.Forms._
-    import util.FormUtil.uiLangM
     Form(
       mapping(
         "count" -> number(0, max = 50),
@@ -221,6 +220,11 @@ class SysMarketUtil extends PlayMacroLogsDyn {
       { MSysNodeInstallFormData.apply }
       { MSysNodeInstallFormData.unapply }
     )
+  }
+
+  /** Маппинг формы данных по домену. */
+  def mDomainExtraFormM: Form[MDomainExtra] = {
+    Form( MDomainExtra.mappingM )
   }
 
 }

@@ -160,6 +160,12 @@ POST /sys/mad/:adId/rcvrs/clean         @controllers.SysMarket.cleanReceivers(ad
 # sys.ad.render - диагностический рендер одиночных карточек в html и картинки.
 GET  /sys/mad/:adId/one/render/:rvar    @controllers.SysMarket.showOneAdForm(adId, rvar: msc.OneAdRenderVariant)
 POST /sys/mad/:adId/one/render/:rvar    @controllers.SysMarket.oneAdFormSubmit(adId, rvar: msc.OneAdRenderVariant)
+## SmDomains - управлением доменами узла.
+GET  /sys/node/domain/add/:nodeId       @controllers.SysMarket.createNodeDomain(nodeId)
+POST /sys/node/domain/add/:nodeId       @controllers.SysMarket.createNodeDomainFormSubmit(nodeId)
+GET  /sys/node/domain/edit/:nodeId/dkey @controllers.SysMarket.editNodeDomain(nodeId, dkey)
+POST /sys/node/domain/edit/:nodeId/dkey @controllers.SysMarket.editNodeDomainFormSubmit(nodeId, dkey)
+POST /sys/node/domain/del/:nodeId/dkey  @controllers.SysMarket.deleteNodeDomainFormSubmit(nodeId, dkey)
 
 ## sys: Календари
 GET  /sys/cal                            @controllers.SysCalendar.showCalendars
@@ -271,7 +277,6 @@ GET  /sys/bill                           @controllers.SysBilling.overview
 GET  /sys/debug                          @controllers.SysDebug.index
 POST /sys/debug/geo/parent/execute       @controllers.SysDebug.testNodesAllGeoParents
 POST /sys/debug/adv/rcvrs/reset          @controllers.SysDebug.resetAllRcvrs
-
 
 ## ident: логины/логауты
 GET  /id                                @controllers.Ident.mySioStartPage(r: Option[String] ?= None)

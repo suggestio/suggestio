@@ -2,6 +2,7 @@ package controllers
 
 import com.google.inject.Inject
 import controllers.sysctl._
+import controllers.sysctl.domain.SmDomains
 import controllers.sysctl.invite.SmSendEmailInvite
 import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.item.status.MItemStatuses
@@ -55,7 +56,7 @@ class SysMarket @Inject() (
   emailActivations                : EmailActivations,
   mPerson                         : MPerson,
   mItems                          : MItems,
-  mNodes                          : MNodes,
+  override val mNodes             : MNodes,
   override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
@@ -67,6 +68,7 @@ class SysMarket @Inject() (
   with IsSuNode
   with IsSuperuser
   with IsSuperuserOr404
+  with SmDomains
 {
 
   import LOGGER._

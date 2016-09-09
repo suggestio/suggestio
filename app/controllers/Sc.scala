@@ -5,6 +5,7 @@ import com.google.inject.name.Named
 import controllers.sc._
 import io.suggest.model.n2.node.MNodes
 import models.im.make.IMaker
+import models.mctx.ContextUtil
 import models.merr.MRemoteErrors
 import models.mproj.ICommonDi
 import models.msc.map.MMapNodes
@@ -39,6 +40,7 @@ class Sc @Inject()(
   @Named("blk") override val blkImgMaker  : IMaker,
   override val mRemoteErrors      : MRemoteErrors,
   override val mMapNodes          : MMapNodes,
+  override val ctxUtil            : ContextUtil,
   override val extServicesUtil    : ExtServicesUtil,
   override val mCommonDi          : ICommonDi
 )

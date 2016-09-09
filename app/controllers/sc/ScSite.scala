@@ -1,8 +1,12 @@
 package controllers.sc
 
 import controllers.routes
+import io.suggest.common.empty.OptionUtil
+import io.suggest.model.n2.extra.domain.{DomainCriteria, MDomainModes}
+import io.suggest.model.n2.node.IMNodes
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models._
-import models.mctx.Context
+import models.mctx.{Context, IContextUtilDi}
 import models.msc._
 import models.req.IReq
 import play.api.mvc._
@@ -14,6 +18,7 @@ import util.ext.IExtServicesUtilDi
 import views.html.sc._
 
 import scala.concurrent.Future
+import scala.util.{Failure, Success}
 
 /**
  * Suggest.io
@@ -30,6 +35,8 @@ trait ScSiteBase
   with IScStatUtil
   with IScUtil
   with IExtServicesUtilDi
+  with IMNodes
+  with IContextUtilDi
 {
 
   import mCommonDi._
@@ -46,13 +53,45 @@ trait ScSiteBase
     /** Контекст рендера нижелижещих шаблонов. */
     implicit lazy val ctx = implicitly[Context]
 
-    /** Опциональный id текущего узла. */
-    def adnIdOpt: Option[String] = _siteQsArgs.adnId
 
     /** Опциональный экземпляр текущего узла. */
     def nodeOptFut: Future[Option[MNode]] = {
-      mNodeCache.maybeGetByIdCached( adnIdOpt )
+      // 2016.sep.9: Геолокация выходит за пределы geo. Тут добавляется поддержка доменов в качестве подсказки для поиска узла:
+      val myHost = ctx.myHost
+      val domainNodeOptFut = OptionUtil.maybeFut( !ctxUtil.isMyHostSio(myHost) ) {
+        val msearch = new MNodeSearchDfltImpl {
+          override def domains: Seq[DomainCriteria] = {
+            val cr = DomainCriteria(
+              dkeys = Seq( myHost ),
+              modes = Seq( MDomainModes.ScServeIncomingRequests )
+            )
+            Seq(cr)
+          }
+          override def limit          = 1
+          override def isEnabled      = Some(true)
+          override def withAdnRights  = Seq( AdnRights.RECEIVER )
+        }
+        val fut = mNodes.dynSearchOne(msearch)
+
+        // Логгируем этот этап работы.
+        lazy val logPrefix = s"${classOf[SiteLogic].getSimpleName}.nodeOptFut(myHost=$myHost):"
+        fut.onComplete {
+          case Success(None)    => LOGGER.debug(s"$logPrefix No linked nodes not found. Request from ${_request.remoteAddress}")
+          case Success(Some(r)) => LOGGER.trace(s"$logPrefix Found node[${r.idOrNull}] ${r.guessDisplayNameOrIdOrEmpty}")
+          case Failure(ex)      => LOGGER.warn(s"$logPrefix Unable to make nodes search request:\n $msearch", ex)
+        }
+
+        // Вернуть основной фьючерс поиска подходящего под домен узла.
+        fut
+      }
+
+      // Поиска id узла среди параметров URL QS.
+      val qsNodeOptFut = mNodeCache.maybeGetByIdCached( _siteQsArgs.adnId )
+
+      // Опционально объеденить оба фьючерса.
+      OptionUtil.orElseFut( domainNodeOptFut )( qsNodeOptFut )
     }
+
 
     /** Добавки к тегу head в siteTpl. */
     def headAfterFut: Future[List[Html]] = {
@@ -139,17 +178,8 @@ trait ScSiteBase
 
     import views.html.sc.script._
 
-    /** Флаг активности географии. */
-    def _withGeo: Boolean
-    /** Ссылка на вызов выдачи. */
-    def _indexCall: Call
-
-    lazy val scriptRenderArgs: IScScriptRenderArgs = {
-      ScScriptRenderArgs(
-        withGeo   = _withGeo,
-        indexCall = _indexCall,
-        adnIdOpt  = adnIdOpt
-      )
+    def scriptRenderArgs: IScScriptRenderArgs = {
+      __scriptRenderArgs
     }
 
     /** Добавки к тегу head в siteTpl. */
@@ -168,6 +198,10 @@ trait ScSiteBase
 
   }
 
+  /** 2016.sep.8 Из IScScriptRenderArgs были удалены все параметры, т.к. они не использовались
+    * после выпиливания v1-выдачи. Сам контейнер для параметров пока остался тут до окончания перепиливания sc.
+    * Если он останется не нужен, но его следует удалить вообще. */
+  private val __scriptRenderArgs = ScScriptRenderArgs()
 
 }
 
@@ -214,8 +248,8 @@ trait ScSiteGeo
     }.flatMap {
       _.saveStats
     }
-    fut.onFailure {
-      case ex => LOGGER.warn("geoSite(): Failed to save statistics", ex)
+    fut.onFailure { case ex: Throwable =>
+      LOGGER.warn("geoSite(): Failed to save statistics", ex)
     }
     fut
   }
@@ -223,16 +257,13 @@ trait ScSiteGeo
   /**
    * Раздавалка "сайта" выдачи первой страницы. Можно переопределять, для изменения/расширения функционала.
    *
-   * @param siteArgs Доп.аргументы для рендера сайта.
+   * @param siteQsArgs Доп.аргументы для рендера сайта.
    * @param request Реквест.
    */
-  protected def _geoSiteResult(siteArgs: SiteQsArgs)(implicit request: IReq[_]): Future[Result] = {
+  protected def _geoSiteResult(siteQsArgs: SiteQsArgs)(implicit request: IReq[_]): Future[Result] = {
     val logic = new SiteScriptLogicV2 {
       override implicit def _request  = request
-      override def _siteQsArgs          = siteArgs
-
-      override def _withGeo           = siteArgs.adnId.isEmpty
-      override def _indexCall         = routes.Sc.geoShowcase()  // TODO Для index call можно какие-то аргументы передать...
+      override def _siteQsArgs        = siteQsArgs
     }
     logic.resultFut
   }

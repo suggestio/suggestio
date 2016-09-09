@@ -95,6 +95,29 @@ class ContextUtil @Inject() (
       source
   }
 
+  private val _protoPortRe = ":[0-9]+".r
+  def removePortFromHostPort(hostPort: String): String = {
+    _protoPortRe.replaceAllIn(hostPort, "")
+  }
+
+  /** Список собственных хостов (доменов) системы suggest.io. */
+  val SIO_HOSTS: Set[String] = {
+    Iterator(SC_HOST_PORT, DFLT_HOST_PORT, LK_HOST_PORT)
+      .map { removePortFromHostPort }
+      .toSet
+  }
+
+  /** Относится ли хост в запросе к собственным хостам suggest.io. */
+  def isMyHostSio(myHost: String) = {
+    // По идее, надо бы фильтровать тут левые адреса, но пока надеемся на nginx
+    // и на около-нулевую возможную опасность возможной уязвимости на фоне блокирующего резолва внутрях InetAddress.
+    /*val inet = InetAddress.getByName(myHost)
+    inet.isLinkLocalAddress ||
+      inet.isLoopbackAddress ||
+      inet.isMulticastAddress || */
+      SIO_HOSTS.contains(myHost)
+  }
+
 }
 
 /** Интерфейс для DI-поля с инстансом [[ContextUtil]] внутри. */
@@ -167,27 +190,28 @@ trait Context {
 
   /** Если порт указан, то будет вместе с портом. Значение задаётся в конфиге. */
   lazy val myHost: String = {
-    // Извлечь запрошенный хостнейм из данных форварда.
-    var maybeHost = request.headers
-      .get(X_FORWARDED_HOST)        // TODO Желательно ещё отрабатывать нестандартные порты.
-      .map(_.trim)
-      .filter(!_.isEmpty)
-      .map { raw =>
-        val h = lastForwarded(raw)
-        // Если входящий запрос на backend, то нужно отобразить его на www.
-        ctxUtil.BACKEND_HOST_RE.replaceFirstIn(h, "www.")
-      }
+    // Попытаться извлечь запрошенный хостнейм из данных форварда.
+    var maybeHostPort = for {
+      xfhHdr0 <- request.headers.get(X_FORWARDED_HOST)
+      xfhHdr  = xfhHdr0.trim
+      if xfhHdr.nonEmpty
+    } yield {
+      val h = lastForwarded(xfhHdr)
+      // Если входящий запрос на backend, то нужно отобразить его на www.
+      ctxUtil.BACKEND_HOST_RE
+        .replaceFirstIn(h, "www.")
+        .toLowerCase
+    }
+
     // Если форвард не найден, а конфиг разрешает доверять Host: заголовку, то дергаем его.
-    if (maybeHost.isEmpty && ctxUtil.TRUST_HOST_HDR) {
-      maybeHost = request.headers
+    if (maybeHostPort.isEmpty && ctxUtil.TRUST_HOST_HDR) {
+      maybeHostPort = request.headers
         .get(HOST)
         .filter(!_.isEmpty)
     }
-    // Нередко, тут недосягаемый код:
-    if (maybeHost.isEmpty)
-      ctxUtil.DFLT_HOST_PORT
-    else
-      maybeHost.get
+
+    // Вернуть хоть какой-нибудь хост.
+    maybeHostPort.fold(ctxUtil.DFLT_HOST_PORT)(ctxUtil.removePortFromHostPort)
   }
 
   implicit lazy val now : DateTime = DateTime.now

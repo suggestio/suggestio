@@ -1,0 +1,28 @@
+@(mnode: MNode)(implicit ctx: Context)
+
+@* Вёрстка виджета отображения доменов, связанных с текущим узлом. *@
+
+@import sys1.stuff.proptable._
+@import ctx.messages
+
+@for(mnodeId <- mnode.id) {
+
+  @if(mnode.extras.domains.isEmpty) {
+    Пока нет ни одного связанного с узлом домена.
+
+  } else {
+
+    @_ptableTpl() {
+      @for(mdx <- mnode.extras.domains) {
+        @_ptableRowTpl( mdx.dkey ) {
+          @messages(mdx.mode.i18nCode)
+          <a href="@routes.SysMarket.editNodeDomain(mnodeId, mdx.dkey)">&#x270e;</a>
+        }
+      }
+    }
+
+  }
+
+  <a href="@routes.SysMarket.createNodeDomain(mnodeId)">@messages("Add")...</a>
+
+}

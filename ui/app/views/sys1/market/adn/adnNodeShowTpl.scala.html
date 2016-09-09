@@ -10,6 +10,7 @@
 @import args.mnode
 @import sys1.stuff.hpath._
 @import sys1.stuff.dsl._
+@import sys1.domains._nodeDomainsTpl
 
 
 @* Подшаблон генерации квадратной кнопки. *@
@@ -123,6 +124,9 @@
     </table>
   }
 
+  @lkBlock("Связанные домены") {
+    @_nodeDomainsTpl(mnode)
+  }
 
   @lkBlock("Управление") {
 

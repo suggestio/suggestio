@@ -43,12 +43,12 @@ trait ScSyncSiteGeo
    * Раздавалка "сайта" выдачи первой страницы. Можно переопределять, для изменения/расширения функционала.
    * @param request Реквест.
    */
-  override protected def _geoSiteResult(siteArgs: SiteQsArgs)(implicit request: IReq[_]): Future[Result] = {
+  override protected def _geoSiteResult(siteQsArgs: SiteQsArgs)(implicit request: IReq[_]): Future[Result] = {
     request.ajaxJsScState.fold [Future[Result]] {
-      super._geoSiteResult(siteArgs)
+      super._geoSiteResult(siteQsArgs)
     } { jsState =>
-      _syncGeoSite(jsState, siteArgs) { jsSt =>
-        routes.Sc.geoSite(x = siteArgs).url + "#!?" + jsSt.toQs()
+      _syncGeoSite(jsState, siteQsArgs) { jsSt =>
+        routes.Sc.geoSite(x = siteQsArgs).url + "#!?" + jsSt.toQs()
       }
     }
   }

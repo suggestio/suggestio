@@ -15,8 +15,8 @@ import scala.language.implicitConversions
 
 object SiteQsArgs {
 
-  def ADN_ID_SUF              = "a"
-  def POV_AD_ID_SUF           = "b"
+  def ADN_ID_FN               = "a"
+  def POV_AD_ID_FN            = "b"
   def VSN_FN                  = "v"
 
   val empty = SiteQsArgs()
@@ -31,9 +31,9 @@ object SiteQsArgs {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, SiteQsArgs]] = {
         val f = key1F(key)
         for {
-          maybeAdnIdOpt     <- strOptB.bind(f(ADN_ID_SUF),    params)
-          maybePovAdIdOpt   <- strOptB.bind(f(POV_AD_ID_SUF), params)
-          maybeApiVsn       <- apiVsnB.bind(f(VSN_FN),        params)
+          maybeAdnIdOpt     <- strOptB.bind(f(ADN_ID_FN),    params)
+          maybePovAdIdOpt   <- strOptB.bind(f(POV_AD_ID_FN), params)
+          maybeApiVsn       <- apiVsnB.bind(f(VSN_FN),       params)
         } yield {
           for {
             adnIdOpt    <- maybeAdnIdOpt.right
@@ -54,9 +54,9 @@ object SiteQsArgs {
         _mergeUnbinded {
           val f = key1F(key)
           Iterator(
-            strOptB.unbind(f(ADN_ID_SUF),     value.adnId),
-            strOptB.unbind(f(POV_AD_ID_SUF),  value.povAdId),
-            apiVsnB.unbind(f(VSN_FN),         value.apiVsn)
+            strOptB.unbind(f(ADN_ID_FN),     value.adnId),
+            strOptB.unbind(f(POV_AD_ID_FN),  value.povAdId),
+            apiVsnB.unbind(f(VSN_FN),        value.apiVsn)
           )
         }
       }
@@ -67,13 +67,15 @@ object SiteQsArgs {
 
 
 /**
- * Экземпляр модели.
- * @param adnId id исходного узла, с которого начинается сайт.
- * @param povAdId Point-of-view id рекламной карточки, с точки зрения которой идёт рендер сайта.
- *                Используется для рендера twitter-meta-тегов и прочего.
- */
+  * Экземпляр модели.
+  * @param adnId опциональный id исходного узла, с которого начинается сайт.
+  *              Бывает, что используется в SyncSite, а так же немного при рендере siteTpl.
+  * @param povAdId Point-of-view id рекламной карточки, с точки зрения которой идёт рендер сайта.
+  *                Используется для рендера twitter-meta-тегов и прочего.
+  */
 case class SiteQsArgs(
   apiVsn  : MScApiVsn      = MScApiVsns.unknownVsn,
+  // TODO Кажется, что adnId параметр не очень-то используется для записи в него. Только на чтение.
   adnId   : Option[String] = None,
   povAdId : Option[String] = None
 )

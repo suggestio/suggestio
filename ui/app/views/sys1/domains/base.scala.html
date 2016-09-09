@@ -1,0 +1,18 @@
+@(title: String, mnodeOpt: Option[MNode] = None, hPathAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@* Базовый шаблон для раздела доменов. *@
+
+@import ctx._
+@import sys1.market.adn._
+
+@hPathAfter1 = {
+  @hPathAfter.getOrElse {
+    / @title
+  }
+}
+
+@adnBase(
+  title         = title + " | Домены узла",
+  hPathAfter    = Some(hPathAfter1),
+  nodeOpt       = mnodeOpt
+)(content)
