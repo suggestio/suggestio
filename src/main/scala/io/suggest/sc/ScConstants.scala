@@ -30,6 +30,15 @@ object ScConstants {
   def HEIGHT_ATTR   = CUSTOM_ATTR_PREFIX + "height"
 
 
+  /** Константы для sc-стадии site: ScSite, siteTpl. */
+  object Site {
+
+    /** DOM ID инпута, содержащего id узла, вокруг которого принудительно должна работать выдача. */
+    def FORCE_ADN_ID_INPUT_ID = "faiii"
+
+  }
+
+
   /** Константы геолокации. */
   object Geo {
 
@@ -46,8 +55,10 @@ object ScConstants {
     def SCREEN            = "screen"
     def WITH_WELCOME      = "wc"
     def VSN               = "v"
-    /** id предыдущего узла выдачи, т.е. как бы id узла-referrer'а. */
+    /** Имя поля с id предыдущего узла выдачи, т.е. как бы id узла-referrer'а. */
     def PREV_ADN_ID_FN    = "pr"
+    /** Имя поля с id текущего узла выдачи. Названа adn вместо node для однозначности, что это наверное ресивер. */
+    def ADN_ID_FN         = "n"
   }
 
   object Logo {
