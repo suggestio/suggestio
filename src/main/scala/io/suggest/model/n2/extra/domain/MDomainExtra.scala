@@ -46,6 +46,19 @@ object MDomainExtra extends IGenEsMappingProps {
     )
   }
 
+
+  import play.api.data.Mapping
+  import play.api.data.Forms._
+
+  def mappingM: Mapping[MDomainExtra] = {
+    mapping(
+      "dkey" -> nonEmptyText,    // TODO dkey verify, normalize
+      "mode" -> MDomainModes.mapping
+    )
+    { MDomainExtra.apply }
+    { MDomainExtra.unapply }
+  }
+
 }
 
 
@@ -57,4 +70,16 @@ object MDomainExtra extends IGenEsMappingProps {
 case class MDomainExtra(
   dkey    : String,
   mode    : MDomainMode
-)
+) {
+
+  /** Стараться использовать https вместо http? */
+  def preferSecured: Boolean = false
+
+  def proto: String = {
+    if (preferSecured)
+      "https"
+    else
+      "http"
+  }
+
+}
