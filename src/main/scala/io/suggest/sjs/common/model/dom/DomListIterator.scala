@@ -46,7 +46,7 @@ case class DomListIterator[T](
 }
 
 
-/** Реализация многоразовой iterable-коллекции на основе [[DomListIterator]]. */
+/** Реализация многоразовой zero-copy iterable-коллекции на основе [[DomListIterator]]. */
 case class DomListSeq[T](
   override val domList: DOMList[T]
 )

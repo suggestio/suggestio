@@ -1,6 +1,7 @@
 package io.suggest.sjs.common.vm.doc
 
 import io.suggest.sjs.common.vm.evtg.EventTargetVmT
+import io.suggest.sjs.common.vm.head.HeadVm
 import org.scalajs.dom
 import org.scalajs.dom.Document
 import org.scalajs.dom.raw.{HTMLBodyElement, HTMLElement, HTMLHeadElement}
@@ -39,7 +40,7 @@ trait DocumentVmT extends EventTargetVmT {
   def body = _safeGetTag("body")(_.body)
 
   /** Получить тег head, отрабатывая оптимальные и безопасные сценарии. */
-  def head = _safeGetTag("head")(_.head)
+  def head = HeadVm( _safeGetTag("head")(_.head) )
 
 }
 
@@ -53,7 +54,5 @@ trait SafeDocumentApi extends js.Object {
 
 
 /** Дефолтовая реализация [[DocumentVmT]], поля заменены на val и lazy val. */
-case class DocumentVm(override val _underlying: Document = dom.document) extends DocumentVmT {
-  override lazy val head = super.head
-  override lazy val body = super.body
-}
+case class DocumentVm(override val _underlying: Document = dom.document)
+  extends DocumentVmT

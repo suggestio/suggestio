@@ -4,7 +4,6 @@ import org.scalajs.dom.Node
 import org.scalajs.dom.raw.Element
 
 import scala.annotation.tailrec
-import scala.scalajs.js
 
 /**
   * Suggest.io
