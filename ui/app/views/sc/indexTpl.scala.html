@@ -22,11 +22,6 @@
   @_searchPanTpl(args)
 }
 
-@* Окно с предупреждением о выходе из Sio.Market *@
-@if(args.withScClose) {
-  @_exitTpl(args)
-}
-
 @* Окно с версткой гео-меню *@
 @if( !args.syncRender || args.jsStateOpt.exists(_.isNavScrOpened) ) {
   @_navPanTpl(args)

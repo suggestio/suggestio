@@ -19,11 +19,6 @@
 
   <span id="@BTNS_DIV_ID">
 
-    @* кнопка выхода (крест) слева наверху. *@
-    @if(args.withScClose) {
-      @ScHdrBtns.ScExit( args.hBtnArgs )
-    }
-
     @* Кнопка доступа к панели навигации по узлам сети. При синхронном рендере её нужно скрывать, если панель уже на экране. *@
     @if(!args.syncRender || !args.jsStateOpt.exists(_.isSomethingOpened)) {
       @args.topLeftBtnHtml

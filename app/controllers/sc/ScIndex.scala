@@ -29,14 +29,7 @@ trait ScIndexConstants extends IMCommonDi {
   import mCommonDi._
 
   /** Кеш ответа showcase(adnId) на клиенте. */
-  val SC_INDEX_CACHE_SECONDS: Int = configuration.getInt("market.showcase.index.node.cache.client.seconds") getOrElse 20
-
-  /** Если true, то при наличии node.meta.site_url юзер при закрытии будет редиректиться туда.
-    * Если false, то будет использоваться дефолтовый адрес для редиректа. */
-  val ONCLOSE_HREF_USE_NODE_SITE = configuration.getBoolean("market.showcase.onclose.href.use.node.siteurl") getOrElse true
-
-  /** Когда юзер закрывает выдачу, куда его отправлять, если отправлять некуда? */
-  val ONCLOSE_HREF_DFLT = configuration.getString("market.showcase.onclose.href.dflt") getOrElse "http://yandex.ru/"
+  val SC_INDEX_CACHE_SECONDS: Int = configuration.getInt("market.showcase.index.node.cache.client.seconds").getOrElse(20)
 
 }
 
@@ -170,7 +163,6 @@ trait ScIndexNodeCommon
     def adnNodeFut        : Future[MNode]
     // TODO Coffee спилить это, используется тольков coffee-выдаче.
     def spsrFut           : Future[AdSearch]
-    def onCloseHrefFut    : Future[String]
     def geoListGoBackFut  : Future[Option[Boolean]]
     override lazy val currAdnIdFut: Future[Option[String]] = adnNodeFut.map(_.id)
 
@@ -271,7 +263,6 @@ trait ScIndexNodeCommon
 
     /** Приготовить аргументы рендера выдачи. */
     override def renderArgsFut: Future[ScRenderArgs] = {
-      val _onCloseHrefFut     = onCloseHrefFut
       val _geoListGoBackFut   = geoListGoBackFut
       val _spsrFut            = spsrFut
       val _adnNodeFut         = adnNodeFut
@@ -283,7 +274,6 @@ trait ScIndexNodeCommon
         waOpt           <- welcomeAdOptFut
         adnNode         <- _adnNodeFut
         _spsr           <- _spsrFut
-        _onCloseHref    <- _onCloseHrefFut
         _geoListGoBack  <- _geoListGoBackFut
         _logoImgOpt     <- _logoImgOptFut
         _colors         <- _colorsFut
@@ -298,7 +288,6 @@ trait ScIndexNodeCommon
           override def topLeftBtnHtml     = _topLeftBtnHtml
           override def title              = adnNode.meta.basic.name
           override def spsr               = _spsr
-          override def onCloseHref        = _onCloseHref
           override def logoImgOpt         = _logoImgOpt
           override def geoListGoBack      = _geoListGoBack
           override def welcomeOpt         = waOpt
@@ -325,13 +314,6 @@ trait ScIndexNodeCommon
       }
     }
 
-    override def onCloseHrefFut: Future[String] = adnNodeFut.map { adnNode =>
-      adnNode.meta
-        .business
-        .siteUrl
-        .filter { _ => ONCLOSE_HREF_USE_NODE_SITE }
-        .getOrElse { ONCLOSE_HREF_DFLT }
-    }
   }
 
 }

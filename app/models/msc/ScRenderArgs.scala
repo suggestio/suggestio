@@ -28,9 +28,6 @@ abstract class ScRenderArgs
   // TODO Coffee Удалить, используется только coffee-выдачей только в _gridAdsTpl().
   def spsr          : AdSearch
 
-  /** Абсолютный URL для выхода из выдачи через кнопку. */
-  def onCloseHref   : String
-
   def geoListGoBack : Option[Boolean] = None
 
   /** Логотип, если есть. */
@@ -48,12 +45,6 @@ abstract class ScRenderArgs
   /** Назначение выдачи. */
   def target: MScTarget = MScTargets.Primary
 
-  /** Рендерить ли утиль, связанную с "закрытием" выдачи?
-    * После удаления API v1, можно заинлайнить в шаблон, выкинув обращение к apiVsn.force..() */
-  def withScClose: Boolean = {
-    !syncRender && target.isCloseable
-  }
-
   override def toString: String = {
     val sb = new StringBuilder(256, "req:")
     sb.append( super.toString )
@@ -63,7 +54,6 @@ abstract class ScRenderArgs
       .append("fgColor=").append(fgColor).append('&')
       .append("name=").append(title).append('&')
       .append("spsr=").append(spsr.toString).append('&')
-      .append("onCloseHref='").append(onCloseHref).append('\'').append('&')
       .append("geoListGoBack").append(geoListGoBack.toString).append('&')
       .append("syncRender=").append(syncRender).append('&')
     val _lio = logoImgOpt

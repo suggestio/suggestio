@@ -301,7 +301,6 @@ trait ScIndexGeo
             }
             override def geo    = GeoIp
           }
-          override def onCloseHref = ONCLOSE_HREF_DFLT
         }
       }
     }
