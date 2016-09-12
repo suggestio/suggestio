@@ -134,6 +134,9 @@ trait ScSiteBase
       * но сразу было переимплеменчено в более универсальный инструмент. */
     def customScStateOptFut: Future[Option[ScJsState]]
 
+    /** Значение флага sysRender, пробрасывается напрямую в ScSiteArgs. */
+    def _syncRender: Boolean
+
     /** Здесь описывается методика сборки аргументов для рендера шаблонов. */
     def renderArgsFut: Future[ScSiteArgs] = {
       val _nodeOptFut             = nodeOptFut
@@ -155,23 +158,15 @@ trait ScSiteBase
           override def scriptHtml = _scriptHtml
           override def apiVsn     = _siteQsArgs.apiVsn
           override def jsStateOpt = _customScStateOpt
-          override def syncRender = false
+          override def syncRender = _syncRender
         }
-      }
-    }
-
-    /** Отрендерить html-тело результата запроса. */
-    def renderFut: Future[Html] = {
-      for {
-        args <- renderArgsFut
-      } yield {
-        siteTpl(args)(ctx)
       }
     }
 
     /** Собрать ответ на HTTP-запрос сайта. */
     def resultFut: Future[Result] = {
-      for (render <- renderFut) yield {
+      for (rargs <- renderArgsFut) yield {
+        val render = siteTpl(rargs)(ctx)
         cacheControlShort {
           Ok( render )
         }
@@ -217,6 +212,8 @@ trait ScSiteBase
         }
       }
     }
+
+    override def _syncRender = false
 
   }
 

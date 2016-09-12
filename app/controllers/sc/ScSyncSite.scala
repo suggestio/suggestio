@@ -333,9 +333,10 @@ trait ScSyncSiteGeo
     protected class SyncSiteLogic extends SiteLogic {
       // Линкуем исходные данные логики с полями outer-класса.
       override implicit lazy val ctx  = that.ctx
-      override def _siteQsArgs          = that._siteArgs
+      override def _siteQsArgs        = that._siteArgs
       override implicit def _request  = that._request
       override def nodeOptFut         = that.adnNodeReqFut
+      override def _syncRender        = true
       /** Не нужно передавать в siteTpl никаких данных состояния sc-sjs, т.к. мы без JS работаем. */
       override def customScStateOptFut = Future.successful(None)
 
@@ -362,7 +363,6 @@ trait ScSyncSiteGeo
           new ScSiteArgsWrapper {
             override def _scSiteArgs  = siteRenderArgs
             override def inlineIndex  = Some(indexHtml)
-            override def syncRender   = true
           }
         }
       }
