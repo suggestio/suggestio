@@ -238,8 +238,14 @@ case class ScJsState(
 
   /** Очень каноническое состояние выдачи без каких-либо уточнений. */
   def canonical: ScJsState = copy(
-    searchScrOpenedOpt = None, navScrOpenedOpt = None, generationOpt = None, fadsOffsetOpt = None, searchTabListOpt = None,
-    fadsProdIdOpt = None, tilesCatIdOpt = None, navNglsMap = Map.empty
+    searchScrOpenedOpt  = None,
+    navScrOpenedOpt     = None,
+    generationOpt       = None,
+    fadsOffsetOpt       = None,
+    searchTabListOpt    = None,
+    fadsProdIdOpt       = None,
+    tilesCatIdOpt       = None,
+    navNglsMap          = Map.empty
   )
 
   /** Короткая сериализация экземпляра в открывок query string. */

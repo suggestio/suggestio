@@ -25,7 +25,8 @@
   <meta name="viewport" content="width=320,initial-scale=1,user-scalable=no,minimal-ui" />
 
   @for(jsState <- args.jsStateOpt) {
-    <link rel="canonical" href="@args.nodeOpt.flatMap(n2NodesUtil.urlPrefixOf).getOrElse(ctxUtil.SC_URL_PREFIX)@routes.Sc.geoSite()#!?@jsState.canonical.toQs()" />
+    <link rel="canonical"
+          href="@args.nodeOpt.flatMap(n2NodesUtil.urlPrefixOf).getOrElse(ctxUtil.SC_URL_PREFIX)@routes.Sc.geoSite()#!?@jsState.canonical.toQs()" />
   }
   @if(!args.syncRender) {
     <meta name="fragment" content="!"/>
@@ -51,11 +52,6 @@
 
   @if(!args.syncRender) {
     @args.scriptHtml
-
-    @* Отрендерить id узла выдачи, если необходимо. *@
-    @for(mnode <- args.nodeOpt) {
-      <input type="hidden" id="@C.FORCE_ADN_ID_INPUT_ID" value="@mnode.id"/>
-    }
   }
 
   @* TODO В else нужно выводить нескрываемую плашку, что следует включить js в браузере, иначе всё будет хреново

@@ -129,25 +129,33 @@ trait ScSiteBase
     /** Какой скрипт рендерить? */
     def scriptHtmlFut: Future[Html]
 
+    /** Кастомное опциональное состояние выдачи, которое должно быть отрендерено прямо в шаблоне и
+      * прочитано оттуда выдачей. Изначальное появилось для передачи adnId (id текущего узла-ресивера),
+      * но сразу было переимплеменчено в более универсальный инструмент. */
+    def customScStateOptFut: Future[Option[ScJsState]]
 
     /** Здесь описывается методика сборки аргументов для рендера шаблонов. */
     def renderArgsFut: Future[ScSiteArgs] = {
-      val _nodeOptFut     = nodeOptFut
-      val _headAfterFut   = headAfterFut
-      val _scriptHtmlFut  = scriptHtmlFut
+      val _nodeOptFut             = nodeOptFut
+      val _headAfterFut           = headAfterFut
+      val _scriptHtmlFut          = scriptHtmlFut
+      val _customScStateOptFut    = customScStateOptFut
       for {
         _nodeOpt    <- _nodeOptFut
         _headAfter  <- _headAfterFut
         _scriptHtml <- _scriptHtmlFut
+        _customScStateOpt <- _customScStateOptFut
       } yield {
         new ScSiteArgs {
-          override def nodeOpt = _nodeOpt
-          override val scColors = scUtil.siteScColors(nodeOpt)
+          override def nodeOpt    = _nodeOpt
+          override val scColors   = scUtil.siteScColors(nodeOpt)
           override def headAfter: Traversable[Html] = {
             super.headAfter ++ _headAfter
           }
           override def scriptHtml = _scriptHtml
-          override def apiVsn = _siteQsArgs.apiVsn
+          override def apiVsn     = _siteQsArgs.apiVsn
+          override def jsStateOpt = _customScStateOpt
+          override def syncRender = false
         }
       }
     }
@@ -194,6 +202,20 @@ trait ScSiteBase
     override def scriptHtmlFut: Future[Html] = {
       val html = _scriptV2Tpl(scriptRenderArgs)(ctx)
       Future.successful(html)
+    }
+
+    // Т.к. customSjsState тоже теперь читает nodeOptFut, то делаем его lazy val:
+    override lazy val nodeOptFut = super.nodeOptFut
+
+    /** Сформулировать данные для начального состояния выдачи. */
+    override def customScStateOptFut: Future[Option[ScJsState]] = {
+      for {
+        nodeOpt <- nodeOptFut
+      } yield {
+        for (mnode <- nodeOpt) yield {
+          ScJsState(adnId = mnode.id)
+        }
+      }
     }
 
   }

@@ -1,5 +1,6 @@
 package models.mctx
 
+import java.net.IDN
 import java.util.UUID
 
 import _root_.models.im.DevScreen
@@ -102,9 +103,19 @@ class ContextUtil @Inject() (
 
   /** Список собственных хостов (доменов) системы suggest.io. */
   val SIO_HOSTS: Set[String] = {
-    Iterator(SC_HOST_PORT, DFLT_HOST_PORT, LK_HOST_PORT)
-      .map { removePortFromHostPort }
-      .toSet
+    val hosts = Seq(
+      SC_HOST_PORT,
+      DFLT_HOST_PORT,
+      LK_HOST_PORT,
+      "япредлагаю.com",
+      "isuggest.ru"
+    )
+    val iter = for (h <- hosts.iterator) yield {
+      IDN.toASCII(
+        removePortFromHostPort(h)
+      )
+    }
+    iter.toSet
   }
 
   /** Относится ли хост в запросе к собственным хостам suggest.io. */

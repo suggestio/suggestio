@@ -336,6 +336,8 @@ trait ScSyncSiteGeo
       override def _siteQsArgs          = that._siteArgs
       override implicit def _request  = that._request
       override def nodeOptFut         = that.adnNodeReqFut
+      /** Не нужно передавать в siteTpl никаких данных состояния sc-sjs, т.к. мы без JS работаем. */
+      override def customScStateOptFut = Future.successful(None)
 
       // TODO Этот код метода был написан спустя много времени после остальной реализации. Нужно протестить всё.
       override def headAfterFut: Future[List[Html]] = {
