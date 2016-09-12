@@ -4,9 +4,11 @@ import io.suggest.common.event.WndEvents
 import io.suggest.sc.sjs.c.scfsm.ScFsmStub
 import io.suggest.sc.sjs.c.scfsm.ust.IUrl2State
 import io.suggest.sc.sjs.m.magent.{OrientationChange, WndResize}
+import io.suggest.sc.sjs.m.msc.MUrlUtil
 import io.suggest.sc.sjs.util.router.srv.SrvRouter
 import io.suggest.sc.sjs.v.global.DocumentView
 import io.suggest.sc.sjs.vm.SafeWnd
+import io.suggest.sjs.common.vm.doc.DocumentVm
 
 /**
  * Suggest.io
@@ -50,7 +52,19 @@ trait Init extends ScFsmStub with IUrl2State {
     override def afterBecome(): Unit = {
       super.afterBecome()
       // Десериализовывать состояние из текущего URL и перейти к нему.
-      _runInitState( _parseFromUrlHash() )
+      val scSdOpt = _parseFromUrlHash()
+        .orElse {
+          // Отработать содержимое canonical URL, может там лежат данные состояния.
+          DocumentVm().head
+            .links
+            .filter(_.isCanonical)
+            .flatMap(_.href)
+            .flatMap(MUrlUtil.getUrlHash)
+            .flatMap(_parseFromUrlHash)
+            .toStream
+            .headOption
+        }
+      _runInitState( scSdOpt)
     }
 
   }
