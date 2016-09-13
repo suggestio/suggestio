@@ -25,7 +25,7 @@ object ScFsm
   with search.Opening with search.geo.OnGeo with search.tags.Opened
   with foc.Phase
   with Url2StateT
-  with LogBecome
+  //with LogBecome
 {
 
   // Инициализируем базовые внутренние переменные.
