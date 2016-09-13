@@ -114,15 +114,10 @@ trait ScIndexCommon
       }
     }
 
-    /** Ответ для sjs-выдачи, там нужен json. */
-    protected def _result_v2(args: ScIndexResp): Future[Result] = {
-      Ok(args.toJson)
-    }
-
     protected def _resultVsn(args: ScIndexResp): Future[Result] = {
       _reqArgs.apiVsn match {
         case MScApiVsns.Sjs1 =>
-          _result_v2(args)
+          Ok(args.toJson)
         case other =>
           throw new UnsupportedOperationException("Unsupported API vsn: " + other.versionNumber)
       }
@@ -180,12 +175,14 @@ trait ScIndexNodeCommon
     override def topLeftBtnHtmlFut: Future[Html] = {
       // Сразу запускаем сборку аргументов hbtn-рендера. Не здесь, так в super-классе понадобятся точно.
       val _hBtnArgsFut = hBtnArgsFut
+
       // В методе логика немного разветвляется и асинхронна внутри. false-ветвь реализована через Future.failed.
       val fut0 = if (_reqArgs.prevAdnId.nonEmpty) {
         Future.successful( None )
       } else {
         Future.failed( new NoSuchElementException() )
       }
+
       fut0.flatMap { _ =>
         adnNodeFut
       }.filter { mnode =>

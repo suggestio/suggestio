@@ -262,6 +262,32 @@ trait ScSyncSiteGeo
       mNodeCache.maybeGetByIdCached( adnIdOpt )
     }
 
+
+    /** Реализация GeoIndexLogic для нужд ScSyncSite.
+      * Рендер результата идёт в Html. */
+    trait HtmlGeoIndexLogic extends GeoIndexLogic {
+      override type T = Html
+
+      private def helper2respHtml(h: Future[ScIndexHelperBase]): Future[T] = {
+        h.flatMap(_.respHtmlFut)
+      }
+
+      /** Нет ноды. */
+      override def nodeNotDetected(): Future[T] = {
+        helper2respHtml(
+          nodeNotDetectedHelperFut()
+        )
+      }
+
+      /** Нода найдена с помощью геолокации. */
+      override def nodeFound(gdr: GeoDetectResult): Future[T] = {
+        helper2respHtml(
+          nodeFoundHelperFut(gdr)
+        )
+      }
+    }
+
+
     def indexHtmlLogicFut: Future[HtmlGeoIndexLogic] = {
       for (indexReqArgs <- indexReqArgsFut) yield {
         new HtmlGeoIndexLogic {
@@ -294,7 +320,7 @@ trait ScSyncSiteGeo
             }
           }
 
-          override def nodeFoundHelperFut(gdr: GeoDetectResult): Future[NfHelper_t] = {
+          override def nodeFoundHelperFut(gdr: GeoDetectResult): Future[ScIndexNodeGeoHelper] = {
             val helper = new ScIndexNodeGeoHelper with ScIndexHelperAddon {
               override val gdrFut = Future.successful( gdr )
               override def welcomeAdOptFut = Future.successful( None )

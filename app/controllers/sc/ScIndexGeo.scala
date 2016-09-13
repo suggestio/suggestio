@@ -8,7 +8,6 @@ import io.suggest.model.n2.node.IMNodes
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.msc._
 import models.req.IReq
-import play.twirl.api.Html
 import util.di.{IScNlUtil, IScStatUtil, IScUtil}
 import util.acl._
 import models._
@@ -85,20 +84,13 @@ trait ScIndexGeo
   }
 
 
-  // TODO Можно объеденить GeoIndexLogicBase и GeoIndexLogic.
-
   /**
-   * Совсем абстрактная логика работы из экшена geoShowCase() тут.
-   * Абстрагирован от типа результата. Используется для сборки helper'ов, генерирующих конкретные результаты.
+   * Логика работы из экшена geoShowCase() тут. Для сборки методов, занимающихся раздачей indexTpl.
    * Запуск логики поиска подходящего узла и выбора выдачи осуществляется через apply().
    */
-  trait GeoIndexLogicBase { that2 =>
+  trait GeoIndexLogic { that2 =>
     /** Тип возвращаемого значения в методах этого хелпера. */
     type T
-
-    // Типы возвращаемых хелперов в соотв.методах.
-    type NndHelper_t <: ScIndexHelperBase
-    type NfHelper_t <: ScIndexNodeHelper
 
     def _reqArgs: ScReqArgs
     implicit def _request: IReq[_]
@@ -115,7 +107,7 @@ trait ScIndexGeo
       if (_reqArgs.geo.isWithGeo) {
         gdrFut.flatMap { gdr =>
           nodeFound(gdr)
-        } recoverWith {
+        }.recoverWith {
           case ex: NoSuchElementException =>
             // Нету узлов, подходящих под запрос.
             LOGGER.debug(logPrefix + "No nodes found nearby " + _reqArgs.geo)
@@ -126,12 +118,8 @@ trait ScIndexGeo
       }
     }
 
-    def nodeNotDetectedHelperFut(): Future[NndHelper_t]
-
     /** Нет ноды. */
     def nodeNotDetected(): Future[T]
-
-    def nodeFoundHelperFut(gdr: GeoDetectResult): Future[NfHelper_t]
 
     /** Нода найдена с помощью геолокации. */
     def nodeFound(gdr: GeoDetectResult): Future[T]
@@ -185,21 +173,15 @@ trait ScIndexGeo
       }
     }
 
-  }
-  /** Гибкий абстрактный хелпер для сборки методов, занимающихся раздачей indexTpl с учётом геолокации. */
-  trait GeoIndexLogic extends GeoIndexLogicBase {
-
-    override type NndHelper_t = ScIndexGeoHelper
-    override type NfHelper_t = ScIndexNodeGeoHelper
-
-    def nodeNotDetectedHelperFut(): Future[NndHelper_t] = {
+    def nodeNotDetectedHelperFut(): Future[ScIndexGeoHelper] = {
+      LOGGER.debug("nodeNotDetectedHelperFut() called.")
       val res = new ScIndexGeoHelper with ScIndexHelperAddon
       Future.successful(res)
     }
 
-    def nodeFoundHelperFut(gdr: GeoDetectResult): Future[NfHelper_t] = {
+    def nodeFoundHelperFut(gdr: GeoDetectResult): Future[ScIndexNodeGeoHelper] = {
       val helper = new ScIndexNodeGeoHelper with ScIndexHelperAddon {
-        override val gdrFut = Future successful gdr
+        override val gdrFut = Future.successful(gdr)
       }
       Future.successful(helper)
     }
@@ -218,47 +200,27 @@ trait ScIndexGeo
     // gsiOptFut в любом случае понадобится, поэтому делаем его val'ом.
     override val gsiOptFut = super.gsiOptFut
 
-    /** Нет ноды. */
-    override def nodeNotDetected(): Future[T] = {
-      nodeNotDetectedHelperFut().flatMap { _helper =>
-        _helper.result
-          .map { result => LogicResult(result, None, _helper) }
+    private def _executeNodeHelper(helperFut: Future[ScIndexHelperBase], mnodeOpt: Option[MNode]): Future[LogicResult] = {
+      for {
+        _helper <- helperFut
+        result  <- _helper.result
+      } yield {
+        LogicResult(result, mnodeOpt, _helper)
       }
-    }
-
-    /** Нода найдена с помощью геолокации. */
-    override def nodeFound(gdr: GeoDetectResult): Future[T] = {
-      nodeFoundHelperFut(gdr).flatMap { _helper =>
-        _helper.result
-          .map { result => LogicResult(result, Some(gdr.node), _helper) }
-      }
-    }
-  }
-
-
-  /** Реализация GeoIndexLogic для нужд ScSyncSite.
-    * Рендер результата идёт в Html. */
-  trait HtmlGeoIndexLogic extends GeoIndexLogic {
-    override type T = Html
-
-    private def helper2respHtml(h: Future[ScIndexHelperBase]): Future[T] = {
-      h.flatMap(_.respHtmlFut)
     }
 
     /** Нет ноды. */
     override def nodeNotDetected(): Future[T] = {
-      helper2respHtml(
-        nodeNotDetectedHelperFut()
-      )
+      _executeNodeHelper(nodeNotDetectedHelperFut(), None)
     }
 
     /** Нода найдена с помощью геолокации. */
     override def nodeFound(gdr: GeoDetectResult): Future[T] = {
-      helper2respHtml(
-        nodeFoundHelperFut(gdr)
-      )
+      _executeNodeHelper(nodeFoundHelperFut(gdr), Some(gdr.node))
     }
+
   }
+
 
 
   /** Хелпер для рендера голой выдачи (вне ноды). Вероятно, этот код никогда не вызывается. */
@@ -275,7 +237,7 @@ trait ScIndexGeo
       Future.successful( res )
     }
 
-    override def currAdnIdFut = Future successful None
+    override def currAdnIdFut = Future.successful( None )
 
     override def renderArgsFut: Future[ScRenderArgs] = {
       val _colorsFut = colorsFut
@@ -301,12 +263,15 @@ trait ScIndexGeo
 
   /** Хелпер для рендера гео-выдачи в рамках узла. */
   trait ScIndexNodeGeoHelper extends ScIndexNodeHelper {
+
     def gdrFut: Future[GeoDetectResult]
 
     override lazy val adnNodeFut = gdrFut.map(_.node)
 
     override def geoListGoBackFut: Future[Option[Boolean]] = {
-      gdrFut.map { gdr => Some(gdr.ngl.isLowest) }
+      for (gdr <- gdrFut) yield {
+        Some(gdr.ngl.isLowest)
+      }
     }
 
     override def isGeo: Boolean = true
