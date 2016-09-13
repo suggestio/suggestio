@@ -117,7 +117,6 @@ trait ScIndexAdOpen
     val idxLogic = new ScIndexNodeHelper {
       override def geoListGoBackFut   = Future.successful( Some(true) )
       override def adnNodeFut         = Future.successful( producer )
-      override def isGeo              = false
       override implicit def _request  = request
       override def _reqArgs: ScReqArgs = new ScReqArgsDfltImpl {
         private val s = focLogic._adSearch

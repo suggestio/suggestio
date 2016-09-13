@@ -51,7 +51,7 @@ trait ScSiteBase
     implicit def _request: IReq[_]
 
     /** Контекст рендера нижелижещих шаблонов. */
-    implicit lazy val ctx = implicitly[Context]
+    implicit lazy val ctx = getContext2
 
 
     /** Опциональный экземпляр текущего узла. */

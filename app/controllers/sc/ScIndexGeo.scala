@@ -28,8 +28,7 @@ import play.api.mvc._
 
 /** Аддон для контроллера, добавляющий экшены от гео-indexTpl, которые представляют выдачу вне явно-заданного узла. */
 trait ScIndexGeo
-  extends ScIndexConstants
-  with ScIndexNodeCommon
+  extends ScIndexNodeCommon
   with IScStatUtil
   with IScNlUtil
   with IScUtil
@@ -225,7 +224,6 @@ trait ScIndexGeo
 
   /** Хелпер для рендера голой выдачи (вне ноды). Вероятно, этот код никогда не вызывается. */
   trait ScIndexGeoHelper extends ScIndexHelperBase {
-    override def isGeo = true
     override lazy val hBtnArgsFut = super.hBtnArgsFut
 
     /** Контейнер палитры выдачи. */
@@ -273,8 +271,6 @@ trait ScIndexGeo
         Some(gdr.ngl.isLowest)
       }
     }
-
-    override def isGeo: Boolean = true
   }
 
 }

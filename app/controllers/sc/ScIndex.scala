@@ -46,7 +46,6 @@ trait ScIndexCommon
   /** Базовый трейт для написания генератора производных indexTpl и ответов. */
   trait ScIndexHelperBase {
     def renderArgsFut: Future[ScRenderArgs]
-    def isGeo: Boolean
     def currAdnIdFut: Future[Option[String]]
     def _reqArgs: ScReqArgs
 
@@ -69,7 +68,7 @@ trait ScIndexCommon
     /** Контейнер палитры выдачи. */
     def colorsFut: Future[IColors]
 
-    lazy val ctx: Context = implicitly[Context]
+    implicit lazy val ctx: Context = getContext2
 
     def respHtmlFut: Future[Html] = {
       for (renderArgs <- renderArgsFut) yield {
@@ -92,7 +91,7 @@ trait ScIndexCommon
           override def reqArgsUnderlying = _reqArgs
           override def hBtnArgs = _hBtnArgs
         }
-        hdr._navPanelBtnTpl(rargs)
+        hdr._navPanelBtnTpl(rargs)(ctx)
       }
     }
 
@@ -106,7 +105,6 @@ trait ScIndexCommon
       } yield {
         ScIndexResp(
           html            = html,
-          isGeo           = isGeo,
           currAdnId       = currAdnIdOpt,
           geoAccurEnought = geoAccurEnought,
           titleOpt        = titleOpt
@@ -173,7 +171,7 @@ trait ScIndexNodeCommon
 
     /** Если узел с географией не связан, и есть "предыдущий" узел, то надо отрендерить кнопку "назад". */
     override def topLeftBtnHtmlFut: Future[Html] = {
-      // Сразу запускаем сборку аргументов hbtn-рендера. Не здесь, так в super-классе понадобятся точно.
+      // Сразу запускаем сборку аргументов hbtn-рендера. Не здесь, так в super-методе они понадобятся точно.
       val _hBtnArgsFut = hBtnArgsFut
 
       // В методе логика немного разветвляется и асинхронна внутри. false-ветвь реализована через Future.failed.
@@ -183,27 +181,33 @@ trait ScIndexNodeCommon
         Future.failed( new NoSuchElementException() )
       }
 
-      fut0.flatMap { _ =>
-        adnNodeFut
-      }.filter { mnode =>
+      // Отрендерить кнопку "назад на предыдущий узел", если всё ок...
+      val htmlFut = for {
+        _     <- fut0
+        mnode <- adnNodeFut
         // Продолжать только если текущий узел не связан с географией.
-        val directGpIter = mnode.edges
-          .withPredicateIter( MPredicates.GeoParent.Direct )
-        directGpIter.isEmpty && {
-          // Если в город (верхний узел) перешли из левого подузла, то у города НЕ должна отображаться кнопка "назад",
-          // несмотря на отсутствие гео-родителей.
-          val stiOpt = mnode.extras.adn
-            .flatMap( _.shownTypeIdOpt )
-            .flatMap( AdnShownTypes.maybeWithName )
-          !stiOpt.exists( _.isTopLevel )
+        if {
+          val directGpIter = mnode.edges
+            .withPredicateIter( MPredicates.GeoParent.Direct )
+          directGpIter.isEmpty && {
+            // Если в город (верхний узел) перешли из левого подузла, то у города НЕ должна отображаться кнопка "назад",
+            // несмотря на отсутствие гео-родителей.
+            val stiOpt = mnode.extras.adn
+              .flatMap( _.shownTypeIdOpt )
+              .flatMap( AdnShownTypes.maybeWithName )
+            !stiOpt.exists( _.isTopLevel )
+          }
         }
-      }.flatMap { mnode =>
-        // Надо рендерить кнопку возврата, а не дефолтовую.
-        _hBtnArgsFut map { hBtnArgs0 =>
-          val hBtnArgs2 = hBtnArgs0.copy(adnId = _reqArgs.prevAdnId)
-          ScHdrBtns.Back2UpperNode(hBtnArgs2)
-        }
-      }.recoverWith { case ex: Throwable =>
+        // Наконец, обратиться к аргументам рендера кнопки.
+        hBtnArgs0 <- _hBtnArgsFut
+      } yield {
+        // Отрендерить кнопку, внеся кое-какие коррективы в аргументы рендера.
+        val hBtnArgs2 = hBtnArgs0.copy(adnId = _reqArgs.prevAdnId)
+        ScHdrBtns.Back2UpperNode(hBtnArgs2)
+      }
+
+      // Что-то не так, но обычно это нормально.
+      htmlFut.recoverWith { case ex: Throwable =>
         if (!ex.isInstanceOf[NoSuchElementException])
           LOGGER.error("topLeftBtnHtmlFut(): Workarounding unexpected expection", ex)
         super.topLeftBtnHtmlFut
@@ -318,7 +322,6 @@ trait ScIndexNode
       override def _reqArgs = args
       override def adnNodeFut = _adnNodeFut
       override lazy val currAdnIdFut = Future.successful( Some(adnId) )
-      override def isGeo = false
       override implicit def _request = request
     }
 

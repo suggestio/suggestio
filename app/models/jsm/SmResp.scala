@@ -90,14 +90,6 @@ extends Action with FocusedAdsT with TotalCountT with StylesOpt {
 }
 
 
-trait IsGeo extends SmJsonResp {
-  def isGeo: Boolean
-  override def toJsonAcc: FieldsJsonAcc = {
-    IS_GEO_FN -> JsBoolean(isGeo) :: super.toJsonAcc
-  }
-}
-
-
 /** Аддон для поддержки возвращаемого заголовка. */
 trait TitleOpt extends SmJsonResp {
   def titleOpt: Option[String]
@@ -136,17 +128,15 @@ trait CurrAdnId extends SmJsonResp {
 /**
  * showcase index ответ.
  * @param html верстка выдачи.
- * @param isGeo значение флага isGeo.
  * @param currAdnId Текущий id узла, к которому относится отображаемая выдача.
  */
 case class ScIndexResp(
   html                            : JsString,
-  override val isGeo              : Boolean,
   override val currAdnId          : Option[String],
   override val geoAccurEnought    : Option[Boolean],
   override val titleOpt           : Option[String]
 )
-extends Action with HtmlOpt with IsGeo with CurrAdnId with GeoAccurEnought with TitleOpt {
+extends Action with HtmlOpt with CurrAdnId with GeoAccurEnought with TitleOpt {
   override def action = INDEX_RESP_ACTION
   override def htmlOpt: Option[JsString] = Some(html)
 }
