@@ -15,9 +15,7 @@ import views.js.sc.m.scReqArgsJsUnbindTpl
  * Description: qs-аргументы запроса к sc/index.
  */
 
-// TODO Переименовать в ScIndexArgs?
-
-object ScReqArgs {
+object MScIndexArgs {
 
   /** routes-Биндер для параметров showcase'а. */
   implicit def qsb(implicit
@@ -26,9 +24,9 @@ object ScReqArgs {
                    devScrB    : QueryStringBindable[Option[DevScreen]],
                    strOptB    : QueryStringBindable[Option[String]],
                    apiVsnB    : QueryStringBindable[MScApiVsn]
-                  ): QueryStringBindable[ScReqArgs] = {
-    new QueryStringBindableImpl[ScReqArgs] {
-      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, ScReqArgs]] = {
+                  ): QueryStringBindable[MScIndexArgs] = {
+    new QueryStringBindableImpl[MScIndexArgs] {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MScIndexArgs]] = {
         val f = key1F(key)
         for {
           geoOptE             <- geoOptB.bind(f(GEO),             params)
@@ -57,7 +55,7 @@ object ScReqArgs {
                 .filter(_.isWithGeo)
                 .getOrElse(GeoIp)
             }
-            new ScReqArgsDfltImpl {
+            new MScIndexArgsDfltImpl {
               override def geo            = _geo
               override def screen         = _devScreen
               override def withWelcomeAd  = _withWelcomeAd
@@ -69,7 +67,7 @@ object ScReqArgs {
         }
       }
 
-      override def unbind(key: String, value: ScReqArgs): String = {
+      override def unbind(key: String, value: MScIndexArgs): String = {
         _mergeUnbinded {
           val f = key1F(key)
           Iterator(
@@ -90,13 +88,13 @@ object ScReqArgs {
     }
   }
 
-  def empty: ScReqArgs = new ScReqArgsDfltImpl
+  def empty: MScIndexArgs = new MScIndexArgsDfltImpl
 
 }
 
 
 /** Модель аргументов запроса к выдаче. */
-trait ScReqArgs extends SyncRenderInfo {
+trait MScIndexArgs extends SyncRenderInfo {
   def geo                 : GeoMode
   def screen              : Option[DevScreen]
   def withWelcomeAd       : Boolean
@@ -114,13 +112,13 @@ trait ScReqArgs extends SyncRenderInfo {
 
   override def toString: String = {
     import QueryStringBindable._
-    ScReqArgs.qsb.unbind("a", this)
+    MScIndexArgs.qsb.unbind("a", this)
   }
 }
 
 
-/** Дефолтовая реализация полей трейта [[ScReqArgs]]. */
-trait ScReqArgsDflt extends ScReqArgs with SyncRenderInfoDflt {
+/** Дефолтовая реализация полей трейта [[MScIndexArgs]]. */
+trait MScIndexArgsDflt extends MScIndexArgs with SyncRenderInfoDflt {
   override def geo                  : GeoMode             = GeoNone
   override def screen               : Option[DevScreen]   = None
   override def withWelcomeAd        : Boolean             = true
@@ -132,13 +130,13 @@ trait ScReqArgsDflt extends ScReqArgs with SyncRenderInfoDflt {
   override def inlineNodesList      : Option[Html]        = None
   override def adnNodeCurrentGeo    : Option[MNode]       = None
 }
-/** Реализация [[ScReqArgsDflt]] для облегчения скомпиленного байткода. */
-class ScReqArgsDfltImpl extends ScReqArgsDflt
+/** Реализация [[MScIndexArgsDflt]] для облегчения скомпиленного байткода. */
+class MScIndexArgsDfltImpl extends MScIndexArgsDflt
 
 
-/** Враппер [[ScReqArgs]] для имитации вызова copy(). */
-trait ScReqArgsWrapper extends ScReqArgs {
-  def reqArgsUnderlying: ScReqArgs
+/** Враппер [[MScIndexArgs]] для имитации вызова copy(). */
+trait MScIndexArgsWrapper extends MScIndexArgs {
+  def reqArgsUnderlying: MScIndexArgs
 
   override def geo                  = reqArgsUnderlying.geo
   override def screen               = reqArgsUnderlying.screen

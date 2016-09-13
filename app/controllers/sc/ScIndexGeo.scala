@@ -44,7 +44,7 @@ trait ScIndexGeo
    * либо geoShowcase на дефолтовых параметрах.
    * @param args Аргументы.
    */
-  def geoShowcase(args: ScReqArgs) = MaybeAuth().async { implicit request =>
+  def geoShowcase(args: MScIndexArgs) = MaybeAuth().async { implicit request =>
     // Собираем хелпер, который займётся выстраиванием результата работы.
     val logic = new GeoScIndexLogic {
       override def _reqArgs = args
@@ -91,7 +91,7 @@ trait ScIndexGeo
     /** Тип возвращаемого значения в методах этого хелпера. */
     type T
 
-    def _reqArgs: ScReqArgs
+    def _reqArgs: MScIndexArgs
     implicit def _request: IReq[_]
 
     def gsiOptFut = _reqArgs.geo.geoSearchInfoOpt
@@ -103,9 +103,16 @@ trait ScIndexGeo
     def apply(): Future[T] = {
       lazy val logPrefix = s"GeoIndexLogic(${System.currentTimeMillis}): "
       LOGGER.trace(logPrefix + "Starting, args = " + _reqArgs)
+
+      //val rcvrNodeFut = mNodeCache
+      //  .maybeGetByIdCached(_reqArgs.adnIdOpt)
+      //  .map(_.get)
+      //  .filter(_.common.isEnabled)
+      // // TODO Проверять тип узла (ntype)?
+
       if (_reqArgs.geo.isWithGeo) {
         gdrFut.flatMap { gdr =>
-          nodeFound(gdr)
+          nodeDetected(gdr)
         }.recoverWith {
           case ex: NoSuchElementException =>
             // Нету узлов, подходящих под запрос.
@@ -121,7 +128,7 @@ trait ScIndexGeo
     def nodeNotDetected(): Future[T]
 
     /** Нода найдена с помощью геолокации. */
-    def nodeFound(gdr: GeoDetectResult): Future[T]
+    def nodeDetected(gdr: GeoDetectResult): Future[T]
 
 
     /** Реализация основной index-логики. */
@@ -214,7 +221,7 @@ trait ScIndexGeo
     }
 
     /** Нода найдена с помощью геолокации. */
-    override def nodeFound(gdr: GeoDetectResult): Future[T] = {
+    override def nodeDetected(gdr: GeoDetectResult): Future[T] = {
       _executeNodeHelper(nodeFoundHelperFut(gdr), Some(gdr.node))
     }
 
@@ -246,7 +253,7 @@ trait ScIndexGeo
         _topLeftBtnHtml <- _topLeftBtnHtmlFut
         _hBtnArgs       <- _hBtnArgsFut
       } yield {
-        new ScRenderArgs with ScReqArgsWrapper with IColorsWrapper {
+        new ScRenderArgs with MScIndexArgsWrapper with IColorsWrapper {
           override def tilesBgFillAlpha   = scUtil.TILES_BG_FILL_ALPHA
           override def _underlying        = _colors
           override def reqArgsUnderlying  = _reqArgs

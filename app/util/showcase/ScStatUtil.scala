@@ -4,20 +4,19 @@ import com.google.inject.Inject
 import io.suggest.util.UuidUtil
 import io.suggest.ym.model.stat.MAdStat
 import models.im.DevScreen
+import models.mproj.ICommonDi
 import models.msc.MScNodeSearchArgs
 import models.req.IReqHdr
 import models.stat.{ScStatAction, ScStatActions}
 import models.{AdSearch, GeoSearchInfo, _}
 import net.sf.uadetector.service.UADetectorServiceFactory
-import org.elasticsearch.client.Client
 import org.joda.time.DateTime
-import play.api.Configuration
 import play.api.http.HeaderNames.USER_AGENT
 import util.PlayMacroLogsImpl
 import util.stat.StatUtil
 
 import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -28,13 +27,12 @@ import scala.concurrent.{ExecutionContext, Future}
  * в разных случаях ситуациях, при этом с минимальной дубликацией кода и легкой расширяемостью оного.
  */
 class ScStatUtil @Inject() (
-  configuration           : Configuration,
   statUtil                : StatUtil,
   scStatSaver             : ScStatSaver,
-  mNodeCache              : MNodeCache,
-  implicit val ec         : ExecutionContext,
-  implicit val esClient   : Client
+  mCommonDi               : ICommonDi
 ) {
+
+  import mCommonDi._
 
   /** Локальных клиентов нет смысла долго хранить. Время их хранения тут. */
   val LOCAL_STAT_TTL = {
@@ -46,16 +44,17 @@ class ScStatUtil @Inject() (
   def isStrGarbage(str: String): Boolean = {
     (str == null) ||
       str.isEmpty ||
-      (str equalsIgnoreCase "null") ||
-      (str equalsIgnoreCase "undefined") ||
-      (str equalsIgnoreCase "unknown")
+      str.equalsIgnoreCase("null") ||
+      str.equalsIgnoreCase("undefined") ||
+      str.equalsIgnoreCase("unknown")
   }
 
   def isStrUseful(str: String) = !isStrGarbage(str)
 
+  // TODO Надо отделить вспомогательные модели от логики сохранения статистики.
 
   /** common-утиль для сборки генераторов статистики. */
-  trait StatT extends PlayMacroLogsImpl {
+  abstract class StatT extends PlayMacroLogsImpl {
 
     import LOGGER._
 
@@ -139,11 +138,16 @@ class ScStatUtil @Inject() (
     def reqPath: Option[String] = Some(request.uri)
 
     def saveStats: Future[_] = {
+      val _gsiFut = gsiFut
+      val _adnNodeOptFut = adnNodeOptFut
       val screenOpt = this.screenOpt
       val agentOs = this.agentOs
-      gsiFut flatMap { gsiOpt =>
-        val isLocalClient = request.user.isSuper || gsiOpt.fold(false)(_.isLocalClient)
-        adnNodeOptFut flatMap { adnNodeOpt =>
+
+      for {
+        gsiOpt      <- _gsiFut
+        adnNodeOpt  <- _adnNodeOptFut
+        res         <- {
+          val isLocalClient = request.user.isSuper || gsiOpt.fold(false)(_.isLocalClient)
           val adStat = new MAdStat(
             clientAddr  = request.remoteAddress,
             action      = statAction.toString(),
@@ -194,6 +198,8 @@ class ScStatUtil @Inject() (
           //trace(s"Saving stats: ${adStat.action} remote=${adStat.clientAddr} node=${adStat.onNodeIdOpt} ttl=${adStat.ttl}")
           scStatSaver.BACKEND.save(adStat)
         }
+      } yield {
+        None
       }
     }
 

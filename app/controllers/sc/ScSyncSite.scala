@@ -231,7 +231,7 @@ trait ScSyncSiteGeo
     def tilesRenderFut = tileLogic.madsRenderedFut
 
     /** Готовим контейнер с аргументами рендера indexTpl. */
-    def indexReqArgsFut: Future[ScReqArgs] = {
+    def indexReqArgsFut: Future[MScIndexArgs] = {
       val _tilesRenderFut = tilesRenderFut
       val _focusedContentOptFut = maybeFocusedContent
       val _maybeNodesListHtmlFut = maybeNodesListHtmlFut
@@ -241,7 +241,7 @@ trait ScSyncSiteGeo
         _inlineTiles        <- _tilesRenderFut
         _nodesListHtmlOpt   <- _maybeNodesListHtmlFut
       } yield {
-        new ScReqArgsDfltImpl {
+        new MScIndexArgsDfltImpl {
           // TODO нужно и screen наверное выставлять по-нормальному?
           override def geo                = _scState.geo
           override def inlineTiles        = _inlineTiles
@@ -280,7 +280,7 @@ trait ScSyncSiteGeo
       }
 
       /** Нода найдена с помощью геолокации. */
-      override def nodeFound(gdr: GeoDetectResult): Future[T] = {
+      override def nodeDetected(gdr: GeoDetectResult): Future[T] = {
         helper2respHtml(
           nodeFoundHelperFut(gdr)
         )
@@ -291,7 +291,7 @@ trait ScSyncSiteGeo
     def indexHtmlLogicFut: Future[HtmlGeoIndexLogic] = {
       for (indexReqArgs <- indexReqArgsFut) yield {
         new HtmlGeoIndexLogic {
-          override def _reqArgs: ScReqArgs = indexReqArgs
+          override def _reqArgs: MScIndexArgs = indexReqArgs
           override implicit def _request = that._request
 
           /** Определение текущего узла выдачи. Текущий узел может быть задан через параметр ресивера. */

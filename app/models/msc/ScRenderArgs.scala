@@ -13,7 +13,7 @@ import play.twirl.api.Html
 // 5211faccd060 Здесь был код группировки списка магазинов по первой группе.
 
 abstract class ScRenderArgs
-  extends ScReqArgs
+  extends MScIndexArgs
   with IColors
   with ILogoRenderArgs
   with IHBtnRenderArgs

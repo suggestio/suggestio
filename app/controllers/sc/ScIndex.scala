@@ -25,10 +25,8 @@ import play.api.mvc._
 /** Константы, используемые в рамках этого куска контроллера. */
 trait ScIndexConstants extends IMCommonDi {
 
-  import mCommonDi.configuration
-
   /** Кеш ответа showcase(adnId) на клиенте. */
-  val SC_INDEX_CACHE_SECONDS: Int = configuration.getInt("market.showcase.index.node.cache.client.seconds").getOrElse(20)
+  def SC_INDEX_CACHE_SECONDS = 20
 
 }
 
@@ -47,7 +45,7 @@ trait ScIndexCommon
   trait ScIndexHelperBase {
     def renderArgsFut: Future[ScRenderArgs]
     def currAdnIdFut: Future[Option[String]]
-    def _reqArgs: ScReqArgs
+    def _reqArgs: MScIndexArgs
 
     /** Фьючерс с определением достаточности имеющиейся геолокации для наилучшего определения узла. */
     def geoAcurrEnoughtFut: Future[Option[Boolean]]
@@ -87,7 +85,7 @@ trait ScIndexCommon
     /** Кнопка навигации, которая будет отрендерена в левом верхнем углу indexTpl. */
     def topLeftBtnHtmlFut: Future[Html] = {
       for (_hBtnArgs <- hBtnArgsFut) yield {
-        val rargs = new ScReqArgsWrapper with IHBtnArgsFieldImpl {
+        val rargs = new MScIndexArgsWrapper with IHBtnArgsFieldImpl {
           override def reqArgsUnderlying = _reqArgs
           override def hBtnArgs = _hBtnArgs
         }
@@ -276,7 +274,7 @@ trait ScIndexNodeCommon
         _hBtnArgs       <- _hBtnArgsFut
         _topLeftBtnHtml <- _topLeftBtnHtmlFut
       } yield {
-        new ScRenderArgs with ScReqArgsWrapper with IColorsWrapper {
+        new ScRenderArgs with MScIndexArgsWrapper with IColorsWrapper {
           override def tilesBgFillAlpha   = scUtil.TILES_BG_FILL_ALPHA
           override def reqArgsUnderlying  = _reqArgs
           override def _underlying        = _colors
@@ -305,7 +303,7 @@ trait ScIndexNode
   import mCommonDi._
 
   /** Базовая выдача для rcvr-узла sio-market. */
-  def showcase(adnId: String, args: ScReqArgs) = AdnNodeMaybeAuth(adnId).async { implicit request =>
+  def showcase(adnId: String, args: MScIndexArgs) = AdnNodeMaybeAuth(adnId).async { implicit request =>
     val _adnNodeFut = Future.successful( request.mnode )
 
     val helper = new ScIndexNodeHelper {
@@ -344,3 +342,25 @@ trait ScIndexNode
   }
 
 }
+
+
+/**
+  * Трейт sc index c геолокацей, не завязанной вокруг узлов, и работающей далеко за их пределами.
+  *
+  * Прошлый код вложенных друг в друга куч ScIndex-логик, распиленных на два файла, настолько сложен и запутан,
+  * что его перепиливание на новые идеи оказалось непосильной задачей.
+  *
+  * TODO Нужно запилить:
+  * - TODO Базовую логику рендера, пригодную для Html-only и JSON-Result-рендеров.
+  * - TODO Конкретные логики рендеров под эти задачи.
+  * - TODO Ровно один action на все возможные ситуации.
+  * -- И очень желательно формат JSON-ответа в стиле, пригодном для web-socket в будущем.
+  */
+/*trait ScIndex2
+  extends ScController
+  with PlayMacroLogsI
+  with IStatUtil
+{
+
+}*/
+

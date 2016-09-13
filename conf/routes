@@ -14,11 +14,11 @@ GET  /vassets/*file                     @controllers.Assets.versioned(path="/pub
 GET  /                                  @controllers.Sc.geoSite(a: msc.ScJsState ?= msc.ScJsState.veryEmpty, x: msc.SiteQsArgs ?= msc.SiteQsArgs.empty)
 
 # Витрина market'а и её экшены
-GET  /sc/index/:adnId                   @controllers.Sc.showcase(adnId, a: msc.ScReqArgs ?= msc.ScReqArgs.empty)
+GET  /sc/index/:adnId                   @controllers.Sc.showcase(adnId, a: msc.MScIndexArgs ?= msc.MScIndexArgs.empty)
 
 GET  /sc/blk/css                        @controllers.Sc.serveBlockCss(c: Seq[msc.AdCssArgs])
 
-GET  /sc/geo/index                      @controllers.Sc.geoShowcase(a: msc.ScReqArgs ?= msc.ScReqArgs.empty)
+GET  /sc/geo/index                      @controllers.Sc.geoShowcase(a: msc.MScIndexArgs ?= msc.MScIndexArgs.empty)
 
 GET  /sc/tile/find                      @controllers.Sc.findAds(a: AdSearch)
 GET  /sc/foc/ads                        @controllers.Sc.focusedAds(a: msc.FocusedAdsSearchArgs)
