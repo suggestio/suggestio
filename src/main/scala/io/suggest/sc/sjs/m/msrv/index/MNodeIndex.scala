@@ -54,9 +54,6 @@ case class MNodeIndex(json: WrappedDictionary[Any]) extends IFocResp {
   /** index-верстка выдачи. */
   def html  = json(HTML_FN).asInstanceOf[String]
 
-  /** Прочитать значение флага геовыдачи. */
-  def isGeo = json(IS_GEO_FN).asInstanceOf[Boolean]
-
   /** id узла, если известен. */
   def adnIdOpt: Option[String] = {
     json.get(ADN_ID_FN)
