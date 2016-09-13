@@ -5,7 +5,6 @@ import EsModelUtil.FieldsJsonAcc
 import models.MNode
 import models.msc.FocRenderResult
 import play.api.libs.json._
-import play.api.mvc.Call
 import io.suggest.sc.ScConstants.Resp._
 import io.suggest.sc.ScConstants.Focused.FOC_ANSWER_ACTION
 
@@ -90,6 +89,9 @@ extends Action with FocusedAdsT with TotalCountT with StylesOpt {
 }
 
 
+// ------------------------------------------------------------------------------
+
+
 /** Аддон для поддержки возвращаемого заголовка. */
 trait TitleOpt extends SmJsonResp {
   def titleOpt: Option[String]
@@ -142,6 +144,9 @@ extends Action with HtmlOpt with CurrAdnId with GeoAccurEnought with TitleOpt {
 }
 
 
+// ---------------------------------------------------------------------------------
+
+
 trait Timestamp extends SmJsonResp {
   def timestamp: Long
   override def toJsonAcc: FieldsJsonAcc = {
@@ -191,33 +196,3 @@ extends NodeNameId with NodeListHtml with Status with Timestamp with Action {
   override def adnNodeNameIdFn = "first_node"
   override def action = "findNodes"
 }
-
-
-trait ColorOpt extends SmJsonResp {
-  def colorOpt: Option[String]
-  override def toJsonAcc: FieldsJsonAcc = {
-    val acc0 = super.toJsonAcc
-    val v = if (colorOpt.isDefined) JsString(colorOpt.get) else JsNull
-    "color" -> v :: acc0
-  }
-}
-
-trait LogoUrl extends SmJsonResp {
-  def logoUrlOpt: Option[Call]
-  override def toJsonAcc: FieldsJsonAcc = {
-    val acc0 = super.toJsonAcc
-    val v = if (logoUrlOpt.isDefined) JsString(logoUrlOpt.get.url) else JsNull
-    "logo_src" -> v :: acc0
-  }
-}
-
-/**
- * Ответ на запрос выдачи к ctl.MS.nodeData().
- * @param colorOpt Данные по основному цвету.
- * @param logoUrlOpt Ссылка на логотип.
- */
-case class NodeDataResp(colorOpt: Option[String], logoUrlOpt: Option[Call])
-extends LogoUrl with ColorOpt with Action {
-  override def action = "setData"
-}
-
