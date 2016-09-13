@@ -2,6 +2,7 @@ package controllers.sc
 
 import java.util.NoSuchElementException
 
+import io.suggest.common.empty.EmptyUtil
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
@@ -171,15 +172,16 @@ trait ScIndexGeo
         } yield {
           geoChilderCount <= 0L
         }
-        fut.recover {
-          case ex: NoSuchElementException =>
-            true
-          case ex: Throwable =>
-            LOGGER.error("geoAccurEnoughtFut(): for node " + gdrFut, ex)
-            false
-        }.map {
-          Some.apply
-        }
+
+        fut
+          .recover {
+            case ex: NoSuchElementException =>
+              true
+            case ex: Throwable =>
+              LOGGER.error("geoAccurEnoughtFut(): for node " + gdrFut, ex)
+              false
+          }
+          .map(EmptyUtil.someF)
       }
     }
 
@@ -291,16 +293,6 @@ trait ScIndexGeo
           override def hBtnArgs           = _hBtnArgs
           override def topLeftBtnHtml     = _topLeftBtnHtml
           override def title              = scUtil.SITE_NAME_GEO
-          override def spsr = new AdSearchImpl {
-            override def outEdges: Seq[ICriteria] = {
-              val cr = Criteria(
-                predicates = Seq( MPredicates.Receiver ),
-                sls        = Seq( AdShowLevels.LVL_START_PAGE )
-              )
-              Seq(cr)
-            }
-            override def geo    = GeoIp
-          }
         }
       }
     }
@@ -308,7 +300,7 @@ trait ScIndexGeo
 
 
   /** Хелпер для рендера гео-выдачи в рамках узла. */
-  trait ScIndexNodeGeoHelper extends ScIndexNodeSimpleHelper {
+  trait ScIndexNodeGeoHelper extends ScIndexNodeHelper {
     def gdrFut: Future[GeoDetectResult]
 
     override lazy val adnNodeFut = gdrFut.map(_.node)

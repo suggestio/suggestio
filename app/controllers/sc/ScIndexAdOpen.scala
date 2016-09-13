@@ -114,7 +114,7 @@ trait ScIndexAdOpen
   private def _goToProducerIndex(producer: MNode, focLogic: FocusedAdsLogicHttp)
                                 (implicit request: IReq[_]): Future[Result] = {
     // Извлекаем MAdnNode втупую. exception будет перехвачен в recoverWith.
-    val idxLogic = new ScIndexNodeSimpleHelper {
+    val idxLogic = new ScIndexNodeHelper {
       override def geoListGoBackFut   = Future.successful( Some(true) )
       override def adnNodeFut         = Future.successful( producer )
       override def isGeo              = false

@@ -1,6 +1,5 @@
 package models.msc
 
-import models._
 import models.im.MImgT
 import play.twirl.api.Html
 
@@ -23,10 +22,6 @@ abstract class ScRenderArgs
 
   /** Прозрачность фона тайлов. */
   def tilesBgFillAlpha: Float
-
-  /** Поисковый запрос. */
-  // TODO Coffee Удалить, используется только coffee-выдачей только в _gridAdsTpl().
-  def spsr          : AdSearch
 
   def geoListGoBack : Option[Boolean] = None
 
@@ -53,7 +48,6 @@ abstract class ScRenderArgs
       .append("bgColor=").append(bgColor).append('&')
       .append("fgColor=").append(fgColor).append('&')
       .append("name=").append(title).append('&')
-      .append("spsr=").append(spsr.toString).append('&')
       .append("geoListGoBack").append(geoListGoBack.toString).append('&')
       .append("syncRender=").append(syncRender).append('&')
     val _lio = logoImgOpt

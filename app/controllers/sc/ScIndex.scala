@@ -1,7 +1,6 @@
 package controllers.sc
 
 import _root_.util.di._
-import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import _root_.util.PlayMacroLogsI
 import models.im.MImgT
 import models.jsm.ScIndexResp
@@ -26,7 +25,7 @@ import play.api.mvc._
 /** Константы, используемые в рамках этого куска контроллера. */
 trait ScIndexConstants extends IMCommonDi {
 
-  import mCommonDi._
+  import mCommonDi.configuration
 
   /** Кеш ответа showcase(adnId) на клиенте. */
   val SC_INDEX_CACHE_SECONDS: Int = configuration.getInt("market.showcase.index.node.cache.client.seconds").getOrElse(20)
@@ -49,7 +48,7 @@ trait ScIndexCommon
     def renderArgsFut: Future[ScRenderArgs]
     def isGeo: Boolean
     def currAdnIdFut: Future[Option[String]]
-    def _reqArgs: ScReqArgs // = ScReqArgs.empty
+    def _reqArgs: ScReqArgs
 
     /** Фьючерс с определением достаточности имеющиейся геолокации для наилучшего определения узла. */
     def geoAcurrEnoughtFut: Future[Option[Boolean]]
@@ -161,8 +160,6 @@ trait ScIndexNodeCommon
   /** Логика формирования indexTpl для конкретного узла. */
   trait ScIndexNodeHelper extends ScIndexHelperBase {
     def adnNodeFut        : Future[MNode]
-    // TODO Coffee спилить это, используется тольков coffee-выдаче.
-    def spsrFut           : Future[AdSearch]
     def geoListGoBackFut  : Future[Option[Boolean]]
     override lazy val currAdnIdFut: Future[Option[String]] = adnNodeFut.map(_.id)
 
@@ -264,7 +261,6 @@ trait ScIndexNodeCommon
     /** Приготовить аргументы рендера выдачи. */
     override def renderArgsFut: Future[ScRenderArgs] = {
       val _geoListGoBackFut   = geoListGoBackFut
-      val _spsrFut            = spsrFut
       val _adnNodeFut         = adnNodeFut
       val _logoImgOptFut      = logoImgOptFut
       val _colorsFut          = colorsFut
@@ -273,7 +269,6 @@ trait ScIndexNodeCommon
       for {
         waOpt           <- welcomeAdOptFut
         adnNode         <- _adnNodeFut
-        _spsr           <- _spsrFut
         _geoListGoBack  <- _geoListGoBackFut
         _logoImgOpt     <- _logoImgOptFut
         _colors         <- _colorsFut
@@ -287,29 +282,9 @@ trait ScIndexNodeCommon
           override def hBtnArgs           = _hBtnArgs
           override def topLeftBtnHtml     = _topLeftBtnHtml
           override def title              = adnNode.meta.basic.name
-          override def spsr               = _spsr
           override def logoImgOpt         = _logoImgOpt
           override def geoListGoBack      = _geoListGoBack
           override def welcomeOpt         = waOpt
-        }
-      }
-    }
-
-  }
-
-  /** Для обычной корневой выдачи обычно используется этот трейт вместо ScIndexNodeHelper. */
-  trait ScIndexNodeSimpleHelper extends ScIndexNodeHelper {
-    override def spsrFut = for {
-      mnode <- adnNodeFut
-    } yield {
-      new AdSearchImpl {
-        override def outEdges: Seq[ICriteria] = {
-          val cr = Criteria(
-            nodeIds     = mnode.id.toSeq,
-            predicates  = Seq( MPredicates.Receiver ),
-            sls         = Seq( AdShowLevels.LVL_START_PAGE )
-          )
-          Seq(cr)
         }
       }
     }
@@ -332,7 +307,7 @@ trait ScIndexNode
   def showcase(adnId: String, args: ScReqArgs) = AdnNodeMaybeAuth(adnId).async { implicit request =>
     val _adnNodeFut = Future.successful( request.mnode )
 
-    val helper = new ScIndexNodeSimpleHelper {
+    val helper = new ScIndexNodeHelper {
       override def geoListGoBackFut: Future[Option[Boolean]] = {
         for (mnode <- adnNodeFut) yield {
           // TODO Что за задумка у этого кода, понять так и не получилось. Гео-шейп наугад имеет isLowest -> значит нужно Some(true).
