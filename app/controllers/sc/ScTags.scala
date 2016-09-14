@@ -4,7 +4,7 @@ import io.suggest.model.n2.node.IMNodes
 import models.mtag.{MTagSearch, MTagSearchResp}
 import play.api.libs.json.Json
 import util.acl.MaybeAuth
-import views.html.sc.tags._
+import views.html.sc.search._
 
 /**
  * Suggest.io
@@ -32,7 +32,7 @@ trait ScTags
       found <- foundFut
     } yield {
       val htmlOpt = if (found.nonEmpty) {
-        val htmlRaw = _listElsTpl(found)
+        val htmlRaw = _tagsListTpl(found)
         Some( htmlCompressUtil.html2str4json(htmlRaw) )
       } else {
         None
