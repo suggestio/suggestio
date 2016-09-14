@@ -25,7 +25,10 @@ object TplDataFormatUtil {
   val ELLIPSIS = "…"
 
   /** Сконвертить "ffffff" в List(255,255,255). */
-  final def colorHex2rgb(hex: String, start: Int = 0, acc: List[Int] = Nil): List[Int] = {
+  def colorHex2rgb(hex: String): List[Int] = {
+    colorHex2rgb(hex, 0, Nil)
+  }
+  def colorHex2rgb(hex: String, start: Int, acc: List[Int]): List[Int] = {
     if (hex startsWith "#") {
       colorHex2rgb(hex.tail)
     } else if (start > hex.length - 1) {
@@ -38,7 +41,31 @@ object TplDataFormatUtil {
     }
   }
 
-  final def colorRgb2Hsl(rgb: List[Int]): List[Int] = {
+  /** Отрендерить набор цветов в rgb(...) или rgba(...) цвет для css-значений. */
+  def formatRgbHexColorCss(colorHex: String, withOpacity: Option[Float] = None): String = {
+    formatRgbColorCss(colorHex2rgb(colorHex), withOpacity)
+  }
+  def formatRgbColorCss(rgb: TraversableOnce[Int], withOpacity: Option[Float] = None): String = {
+    val withOp = withOpacity.isDefined
+    val l0 = if (withOp) 22 else 16
+    val sb = new StringBuilder(l0, "rgb")
+    if (withOp)
+      sb.append('a')
+    sb.append('(')
+    for (c <- rgb) {
+      sb.append(c)
+        .append(',')
+    }
+    if (withOp) {
+      sb.append(withOpacity.get)
+    } else {
+      sb.length = sb.length - 1
+    }
+    sb.append(')')
+      .toString
+  }
+
+  def colorRgb2Hsl(rgb: List[Int]): List[Int] = {
 
     val r: Float = rgb(0).toFloat / 255
     val g: Float = rgb(1).toFloat / 255

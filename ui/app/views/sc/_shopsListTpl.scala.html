@@ -9,7 +9,7 @@
   @if(i%2 == 0){__odd}
 }
 
-@_scrollableContainerTpl( "sm-shops", "smShops", "style" -> (_bgcolor( args.bgColor, false ).toString + "display: block;") ) {
+@_scrollableContainerTpl( "sm-shops", "smShops", "style" -> (_bgcolor(args.bgColor).toString + "display: block;") ) {
 <div id="@LIST_ID" class="shops-list">
 
 

@@ -31,7 +31,7 @@
 
   @defining( args.jsStateOpt.exists(_.isSearchTabList) ) { isListTab =>
     @* Панель с табами *@
-    <div class="sm-categories-screen_tabs" id="smNavLayerTabs" style="@_bgcolor( args.bgColor, true );">
+    <div class="sm-categories-screen_tabs" id="smNavLayerTabs" style="@_bgcolor( args.bgColor, Some(0.8F) );">
       <div class="sm-categories-screen_tabs-wrapper">
 
         @* Табы *@

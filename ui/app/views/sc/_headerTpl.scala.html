@@ -13,8 +13,7 @@
 
 @* Хидер главного экрана *@
 @hdr._divTpl( Some(ROOT_DIV_ID) ) {
-  style="@_bgcolor( args.bgColor )"
-  data-gl-go-back="@args.geoListGoBack.exists(identity)"
+  style="background-color: #@args.bgColor; border-color: #@args.fgColor";
 } {
 
   <span id="@BTNS_DIV_ID">
@@ -26,7 +25,7 @@
 
     @* Два прямоугольника слева. Вроде бы закрывают панель поиска справа. Нужно срезать её при синхронном рендере, если правая панель закрыта. *@
     @if(!args.syncRender || args.jsStateOpt.exists(_.isSearchScrOpened)) {
-      @args.jsStateOpt.map { jsState =>
+      @for(jsState <- args.jsStateOpt) {
         <a href="@args.syncUrl( jsState.copy(searchScrOpenedOpt = None) )">
       }
       @ScHdrBtns.ShowIndex( args.hBtnArgs )

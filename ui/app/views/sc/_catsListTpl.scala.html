@@ -6,6 +6,6 @@
 @import views.html.sc.stuff._
 @import io.suggest.sc.ScConstants.Search.Cats._
 
-@_scrollableContainerTpl( "sm-categories", "smCategories",  "style" -> (_bgcolor( args.bgColor, false ).toString + "height: 83%;") ){
+@_scrollableContainerTpl( "sm-categories", ROOT_DIV_ID,  "style" -> (_bgcolor(args.bgColor).toString + "height: 83%;") ){
   @* Мапа появляется на сервере. Здесь должно быть пусто, или хотя этот коммент. *@
 }
