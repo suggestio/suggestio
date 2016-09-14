@@ -23,8 +23,6 @@ abstract class ScRenderArgs
   /** Прозрачность фона тайлов. */
   def tilesBgFillAlpha: Float
 
-  def geoListGoBack : Option[Boolean] = None
-
   /** Логотип, если есть. */
   def logoImgOpt    : Option[MImgT] = None
 
@@ -48,7 +46,6 @@ abstract class ScRenderArgs
       .append("bgColor=").append(bgColor).append('&')
       .append("fgColor=").append(fgColor).append('&')
       .append("name=").append(title).append('&')
-      .append("geoListGoBack").append(geoListGoBack.toString).append('&')
       .append("syncRender=").append(syncRender).append('&')
     val _lio = logoImgOpt
     if (_lio.isDefined)

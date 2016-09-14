@@ -115,7 +115,6 @@ trait ScIndexAdOpen
                                 (implicit request: IReq[_]): Future[Result] = {
     // Извлекаем MAdnNode втупую. exception будет перехвачен в recoverWith.
     val idxLogic = new ScIndexNodeHelper {
-      override def geoListGoBackFut   = Future.successful( Some(true) )
       override def adnNodeFut         = Future.successful( producer )
       override implicit def _request  = request
       override def _reqArgs: MScIndexArgs = new MScIndexArgsDfltImpl {

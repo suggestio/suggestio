@@ -151,7 +151,6 @@ trait ScIndexNodeCommon
   /** Логика формирования indexTpl для конкретного узла. */
   trait ScIndexNodeHelper extends ScIndexHelperBase {
     def adnNodeFut        : Future[MNode]
-    def geoListGoBackFut  : Future[Option[Boolean]]
     override lazy val currAdnIdFut: Future[Option[String]] = adnNodeFut.map(_.id)
 
     /** В рамках showcase(adnId) геолокация не требуется, узел и так известен. */
@@ -259,7 +258,6 @@ trait ScIndexNodeCommon
 
     /** Приготовить аргументы рендера выдачи. */
     override def renderArgsFut: Future[ScRenderArgs] = {
-      val _geoListGoBackFut   = geoListGoBackFut
       val _adnNodeFut         = adnNodeFut
       val _logoImgOptFut      = logoImgOptFut
       val _colorsFut          = colorsFut
@@ -268,7 +266,6 @@ trait ScIndexNodeCommon
       for {
         waOpt           <- welcomeAdOptFut
         adnNode         <- _adnNodeFut
-        _geoListGoBack  <- _geoListGoBackFut
         _logoImgOpt     <- _logoImgOptFut
         _colors         <- _colorsFut
         _hBtnArgs       <- _hBtnArgsFut
@@ -282,7 +279,6 @@ trait ScIndexNodeCommon
           override def topLeftBtnHtml     = _topLeftBtnHtml
           override def title              = adnNode.meta.basic.name
           override def logoImgOpt         = _logoImgOpt
-          override def geoListGoBack      = _geoListGoBack
           override def welcomeOpt         = waOpt
         }
       }
@@ -307,16 +303,6 @@ trait ScIndexNode
     val _adnNodeFut = Future.successful( request.mnode )
 
     val helper = new ScIndexNodeHelper {
-      override def geoListGoBackFut: Future[Option[Boolean]] = {
-        for (mnode <- adnNodeFut) yield {
-          // TODO Что за задумка у этого кода, понять так и не получилось. Гео-шейп наугад имеет isLowest -> значит нужно Some(true).
-          mnode.edges
-            .withPredicateIter( MPredicates.NodeLocation )
-            .flatMap(_.info.geoShapes)
-            .toSeq.headOption
-            .map(_.glevel.isLowest)
-        }
-      }
       override def _reqArgs = args
       override def adnNodeFut = _adnNodeFut
       override lazy val currAdnIdFut = Future.successful( Some(adnId) )

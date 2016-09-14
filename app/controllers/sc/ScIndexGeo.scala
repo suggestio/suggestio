@@ -272,12 +272,6 @@ trait ScIndexGeo
     def gdrFut: Future[GeoDetectResult]
 
     override lazy val adnNodeFut = gdrFut.map(_.node)
-
-    override def geoListGoBackFut: Future[Option[Boolean]] = {
-      for (gdr <- gdrFut) yield {
-        Some(gdr.ngl.isLowest)
-      }
-    }
   }
 
 }
