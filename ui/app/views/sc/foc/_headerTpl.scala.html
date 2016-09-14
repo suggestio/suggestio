@@ -7,10 +7,9 @@
 @import msc._
 
 @* Список карточек указанного продюссера *@
-@hdr._divTpl() {
-  style="@_bgcolor( args.bgColor )"
-} {
-  @args.jsStateOpt.map { jsState =>
+@hdr._divTpl("style" -> _bgcolor( args.bgColor )) {
+
+  @for(jsState <- args.jsStateOpt) {
     <a href="@args.syncUrl( jsState.copy(fadOpenedIdOpt = None, fadsOffsetOpt = None) )">
   }
   @ScHdrBtns.CloseFocused( args.hBtnArgs )

@@ -70,10 +70,16 @@
     }
   }
 
+  @if(args.jsStateOpt.exists(_.isNavScrOpened)) {
+    .sm-geo-screen {
+      display: block;
+      height: 83%;
+    }
+  }
 </style>
 
 
-<div class="sm-geo-screen" id="smGeoScreen" @if(args.jsStateOpt.exists(_.isNavScrOpened)) {style="display: block; height: 83%;"} >
+<div class="sm-geo-screen" id="smGeoScreen" >
 
   <div class="sm-geo-screen_header">
 

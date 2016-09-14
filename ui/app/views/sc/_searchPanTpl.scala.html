@@ -6,8 +6,57 @@
 @import ctx.messages
 @import msc._
 @import views.html.sc.stuff._
+@import io.suggest.sc.ScConstants.Search
 
-<div class="sm-categories-screen __initial" id="smCategoriesScreen" @if(args.jsStateOpt.exists(_.isSearchScrOpened)) {style="display: block; height: 100%;"} >
+
+@* Дедубликация кода рендера одной кнопки вкладки. *@
+@__tabBtn(idSrc: Search.ITab, searchTabListOpt: Option[Boolean], inactive: Boolean, i18nName: String) = {
+  @for(jsState <- args.jsStateOpt) {
+    <a href="@args.syncUrl( jsState.copy(searchTabListOpt = searchTabListOpt) )">
+  }
+  <div class="sm-categories-screen_single-tab">
+    <div class="sm-tab __rounded-left @if(inactive) {__inactive}" id="@idSrc.TAB_BTN_ID">
+      @messages(i18nName).toUpperCase
+    </div>
+  </div>
+  @if(args.jsStateOpt) {
+    </a>
+  }
+}
+
+
+<style type="text/css">
+  @defining( colorRgb2Hsl(colorHex2rgb(args.bgColor)).toIndexedSeq ) { hslBgColor =>
+    .sm-tab.__inactive {
+      color: #@args.fgColor!important;
+    }
+
+    .sm-categories,
+    .sm-shops {
+      -webkit-box-shadow: inset 0px 10px 10px hsl( @{hslBgColor(0)}, @{hslBgColor(1)}%, @{hslBgColor(2)-10}% );
+      box-shadow: inset 0px 5px 5px hsl( @{hslBgColor(0)}, @{hslBgColor(1)}%, @{hslBgColor(2)-6}% );
+    }
+  }
+
+  @if(args.jsStateOpt.exists(_.isSearchScrOpened)) {
+    .sm-categories-screen {
+      display: block;
+      height: 100%;
+    }
+  }
+
+  .sm-categories-screen_tabs {
+    background-color: @formatRgbHexColorCss( args.bgColor, Some(0.8F) );
+  }
+
+  .sm-tab {
+    background: #@args.fgColor;
+    border-color: #@args.fgColor;
+    color: #@args.bgColor;
+  }
+</style>
+
+<div class="sm-categories-screen __initial" id="smCategoriesScreen">
 
   <div class="sm-categories-screen_header">
 
@@ -30,35 +79,11 @@
   @_searchTextTpl( args, "smSearch")
 
   @defining( args.jsStateOpt.exists(_.isSearchTabList) ) { isListTab =>
-    @* Панель с табами *@
-    <div class="sm-categories-screen_tabs" id="smNavLayerTabs" style="@_bgcolor( args.bgColor, Some(0.8F) );">
+    @* Панель с кнопками табов. *@
+    <div class="sm-categories-screen_tabs" id="smNavLayerTabs">
       <div class="sm-categories-screen_tabs-wrapper">
-
-        @* Табы *@
-        @args.jsStateOpt.map { jsState =>
-          <a href="@args.syncUrl( jsState.copy(searchTabListOpt = None) )">
-        }
-        <div class="sm-categories-screen_single-tab">
-          <div class="sm-tab __rounded-left @if(isListTab) {__inactive}" id="smCategoriesTab"
-               style="background: #@args.fgColor; border-color: #@args.fgColor; color: #@args.bgColor;">
-            @messages("Map").toUpperCase
-          </div>
-        </div>
-        @if(args.jsStateOpt) {
-          </a>
-        }
-
-        @args.jsStateOpt.map { jsState =>
-          <a href="@args.syncUrl( jsState.copy(searchTabListOpt = Some(true)) )">
-        }
-        <div class="sm-categories-screen_single-tab">
-          <div class="sm-tab __rounded-right @if(!isListTab) {__inactive}" id="smShopsTab"
-               style="background: #@args.fgColor; border-color: #@args.fgColor; color: #@args.bgColor;">@messages("List").toUpperCase</div>
-        </div>
-        @if(args.jsStateOpt) {
-          </a>
-        }
-
+        @__tabBtn(Search.Cats, None, isListTab, "Map")
+        @__tabBtn(Search.Nodes, Some(true), !isListTab, "List")
         <div class="clear"></div>
       </div>
     </div>
@@ -70,23 +95,6 @@
       @_shopsListTpl( args )
     }
 
-  }
-
-  @defining( colorRgb2Hsl(colorHex2rgb(args.bgColor)) ) { hslBgColor =>
-  <style type="text/css">
-    .sm-tab.__inactive {
-      color: #@args.fgColor!important;
-    }
-
-    .sm-categories,
-    .sm-shops {
-      -webkit-box-shadow: inset 0px 10px 10px hsl( @{hslBgColor(0)}, @{hslBgColor(1)}%, @{hslBgColor(2)-10}% );
-      box-shadow: inset 0px 5px 5px hsl( @{hslBgColor(0)}, @{hslBgColor(1)}%, @{hslBgColor(2)-6}% );
-    }
-
-    .shops-list_row,
-
-  </style>
   }
 
 </div>

@@ -9,8 +9,33 @@
 @import io.suggest.sc.ScConstants.Logo
 @import io.suggest.sc.ScConstants._
 
-<div id="@ROOT_ID" class="sm-welcome-ad"
-     @if(!args.welcomeOpt) {style="background: #@args.bgColor;"} >
+<style>
+  @args.welcomeOpt.fold {
+    .sm-welcome-ad {
+      background: #@args.bgColor;
+    }
+
+  } { wc =>
+    @wc.bg match {
+      case Left(color) => {
+        @* Доступен только цвет фона. *@
+        .sm-welcome-ad {
+          background-color: @color;
+        }
+      }
+
+      case Right(bg) => {
+        @* Есть реальные стили, рендерим их... *@
+        .sm-welcome-ad_bg-img {
+          background-color: #@args.bgColor;
+        }
+      }
+    }
+  }
+</style>
+
+
+<div id="@ROOT_ID" class="sm-welcome-ad">
 
   @args.welcomeOpt.fold {
 
@@ -24,29 +49,17 @@
 
     @* Есть приветствие.
        Рендерим фон приветствия: цвет узла или картинка. *@
-    @wargs.bg match {
-      case Left(color) => {
-        @* Доступен только цвет фона. *@
-        <style type="text/css">
-          .sm-welcome-ad {
-            background-color: @color;
-          }
-        </style>
-      }
-
-      case Right(bg) => {
-        @* Доступно фоновое изображение. *@
-        <img id="@BG_IMG_ID"
-             class="sm-welcome-ad_bg-img"
-             style="background-color: #@args.bgColor;"
-             @WIDTH_ATTR="@bg.meta.width"
-             @HEIGHT_ATTR="@bg.meta.height"
-             src="@cdn.dynImg(bg.mimg)"/>
-      }
+    @for(bg <- wargs.bg.right.toOption) {
+      @* Доступно фоновое изображение. *@
+      <img id="@BG_IMG_ID"
+           class="sm-welcome-ad_bg-img"
+           @WIDTH_ATTR="@bg.meta.width"
+           @HEIGHT_ATTR="@bg.meta.height"
+           src="@cdn.dynImg(bg.mimg)"/>
     }
 
     @* Рендерим покрывающую картинку (svg/png) *@
-    @wargs.fgImage.map { fgImage =>
+    @for(fgImage <- wargs.fgImage) {
       <span class="sm-welcome-ad_helper"></span>
       <img id="@FG_IMG_ID" class="sm-welcome-ad_fg-img"
            data-width="@fgImage.meta.width"
@@ -55,7 +68,7 @@
     }
 
     @* Рендерим покрывающую картинку (svg/png) *@
-    @wargs.fgText.map { fgText =>
+    @for(fgText <- wargs.fgText) {
       <div id="@FG_INFO_DIV_ID" class="sm-welcome-ad_fg-text">
         @_nodeNameTpl(args.fgColor) {
           @fgText

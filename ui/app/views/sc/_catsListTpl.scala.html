@@ -5,7 +5,15 @@
 @import ctx.messages
 @import views.html.sc.stuff._
 @import io.suggest.sc.ScConstants.Search.Cats._
+@import util.TplDataFormatUtil._
 
-@_scrollableContainerTpl( "sm-categories", ROOT_DIV_ID,  "style" -> (_bgcolor(args.bgColor).toString + "height: 83%;") ){
+<style>
+  .sm-categories {
+    background-color: #@args.bgColor;
+    height: 83%;
+  }
+</style>
+
+@_scrollableContainerTpl("sm-categories", id = ROOT_DIV_ID) {
   @* Мапа появляется на сервере. Здесь должно быть пусто, или хотя этот коммент. *@
 }

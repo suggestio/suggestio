@@ -6,15 +6,20 @@
 @import views.html.sc.stuff._
 @import msc._
 
+<style>
+  #@(ROOT_DIV_ID) {
+    background-color: #@args.bgColor;
+    border-color: #@args.fgColor;
+  }
+</style>
+
 @* Завернуть указанную верстку в ссылку переключения состояния окошка/панени навигации (слева). *@
 @toggleNavScrAnchor()(content: Option[msc.ScJsState] => Html) = {
   @hdr._toggleNavScreenSyncWrapTpl(args)(content)
 }
 
 @* Хидер главного экрана *@
-@hdr._divTpl( Some(ROOT_DIV_ID) ) {
-  style="background-color: #@args.bgColor; border-color: #@args.fgColor";
-} {
+@hdr._divTpl( "id" -> ROOT_DIV_ID ) {
 
   <span id="@BTNS_DIV_ID">
 

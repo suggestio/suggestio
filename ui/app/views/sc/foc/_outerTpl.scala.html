@@ -10,7 +10,7 @@
 
 @import io.suggest.sc.ScConstants.Focused._
 
-<div id="@ROOT_ID" class="sm-focused-ads" @if(args.focusedContent) {style="display: block;"}>
+<div id="@ROOT_ID" class="sm-focused-ads@if(args.focusedContent){ display-block}">
 
   @if( args.focusedContent ) {
     @* Для кравлеров. Выдача для них в рамках своего API живут. *@

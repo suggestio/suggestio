@@ -5,6 +5,12 @@
 @import util.TplDataFormatUtil._
 @import io.suggest.sc.ScConstants.Layout.FS_LOADER_ID
 
-<div id="@FS_LOADER_ID" class="fs-loader" style="background: rgba( @{colorHex2rgb( args.bgColor ).mkString(",")}, 0.3);">
+<style>
+  .fs-loader {
+    background: @formatRgbHexColorCss(args.bgColor, Some(0.3F));
+  }
+</style>
+
+<div id="@FS_LOADER_ID" class="fs-loader">
   <div class="fs-loader_spinner">@svg._spinnerTpl(args.fgColor)</div>
 </div>

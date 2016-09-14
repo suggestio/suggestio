@@ -1,9 +1,9 @@
-@(idOpt: Option[String] = None)(attrsAfter: Html = HtmlFormat.empty)(content: Html)(implicit ctx: Context)
+@(attrs: (String, Any)*)(content: Html)(implicit ctx: Context)
 
 @* Верстка div'а заголовка выдачи узла. *@
 
-<div class="sm-producer-header abs"
-     @if(idOpt) {id="@idOpt"}
-     @attrsAfter/>
+@import stuff._kvAttrsTpl
+
+<div class="sm-producer-header abs" @_kvAttrsTpl(attrs)>
   @content
 </div>
