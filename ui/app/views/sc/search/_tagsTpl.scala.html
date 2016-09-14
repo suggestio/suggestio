@@ -1,0 +1,8 @@
+@(args: msc.ScRenderArgs)(implicit ctx: Context)
+
+@import views.html.sc.stuff._
+@import io.suggest.sc.ScConstants.Search.Nodes._
+
+@_scrollableContainerTpl( "sm-shops display-block", id = ROOT_DIV_ID ) {
+  <div id="@LIST_ID" class="shops-list"></div>
+}

@@ -2,29 +2,34 @@
 
 @* Начальная страница для sio-market. Многочисленные аргументы передаются в контейнере для удобства передачи оных в подшаблоны. *@
 
+@import views.html.sc.stuff._
+
+<style type="text/css">
+  @indexCssTpl(args)
+</style>
 
 @* Картинка-приветствие для первого экрана *@
 @if(!args.syncRender) {
-  @_welcomeScreenTpl(args)
+  @wc._welcomeTpl(args)
 }
 
 @* Основной контейнер, шапка + карточки *@
 @foc._outerTpl(args)
 
 @* Полоса заголовка. *@
-@_headerTpl(args)
+@hdr._headerTpl(args)
 
 @* Работа с сеткой карточек *@
-@_gridAdsTpl(args)
+@grid._gridTpl(args)
 
 @* Окно с выбором категорий *@
 @if(!args.syncRender || args.jsStateOpt.exists(_.isSearchScrOpened)) {
-  @_searchPanTpl(args)
+  @search._searchPanTpl(args)
 }
 
 @* Окно с версткой гео-меню *@
 @if( !args.syncRender || args.jsStateOpt.exists(_.isNavScrOpened) ) {
-  @_navPanTpl(args)
+  @nav._navPanTpl(args)
 }
 
 @if(!args.syncRender) {

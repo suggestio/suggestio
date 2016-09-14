@@ -9,32 +9,6 @@
 @import io.suggest.sc.ScConstants.Logo
 @import io.suggest.sc.ScConstants._
 
-<style>
-  @args.welcomeOpt.fold {
-    .sm-welcome-ad {
-      background: #@args.bgColor;
-    }
-
-  } { wc =>
-    @wc.bg match {
-      case Left(color) => {
-        @* Доступен только цвет фона. *@
-        .sm-welcome-ad {
-          background-color: @color;
-        }
-      }
-
-      case Right(bg) => {
-        @* Есть реальные стили, рендерим их... *@
-        .sm-welcome-ad_bg-img {
-          background-color: #@args.bgColor;
-        }
-      }
-    }
-  }
-</style>
-
-
 <div id="@ROOT_ID" class="sm-welcome-ad">
 
   @args.welcomeOpt.fold {

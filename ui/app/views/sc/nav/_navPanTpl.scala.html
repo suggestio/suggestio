@@ -1,0 +1,41 @@
+@(args: msc.ScRenderArgs)(implicit ctx: Context)
+
+@* Панель навигации по узлам сети s.io (левая панель). *@
+
+@import ctx.messages
+@import msc._
+@import views.html.sc.stuff._
+@import views.html.sc.svg
+
+
+<div class="sm-geo-screen" id="smGeoScreen" >
+
+  <div class="sm-geo-screen_header">
+
+    @* В синхронном режиме рендерим кнопку ссылкой. *@
+    @args.jsStateOpt.map { jsState =>
+      <a href="@args.syncUrl( jsState.toggleNavScreen )">
+    }
+    @ScHdrBtns.NavPanelClose( args.hBtnArgs )
+    @if(args.jsStateOpt) {
+      </a>
+    }
+
+  </div>
+
+
+  <div class="sm-geo-screen_current-location" id="smGeoLocationButton">
+    <div class="sm-geo-screen_current-location-inner">
+      <div class="sm-geo-screen_current-location-icon" id="smGeoLocationButtonIcon">@svg._geoRefresh(args.fgColor)</div>
+      <div class="sm-geo-screen_current-location-spinner" id="smGeoLocationButtonSpinner">@svg._spinnerTpl(args.fgColor)</div>
+      <span id="smGeoLocationLabel">
+        @args.adnNodeCurrentGeo.fold( messages("Detect.geolocation") )( _.meta.basic.name )
+      </span>
+    </div>
+  </div>
+
+  @_scrollableContainerTpl( "sm-geo-nodes", id = "smGeoNodes") {
+    @args.inlineNodesList
+  }
+
+</div>

@@ -12,7 +12,9 @@
     height: @szMulted(bm.height, szMult)px;
   }
   @if( mad.edges.withPredicateIter( MPredicates.Bg ).isEmpty ) {
-    @mad.meta.colors.bg.map { bgColor =>background-color: #@bgColor.code;}
+    @for(bgColor <- mad.meta.colors.bg) {
+      background-color: #@bgColor.code;
+    }
   }
   @for(tl <- args.topLeft if !tl.inlineStyle) {
     @_focTopLeftCss(tl)
@@ -25,6 +27,9 @@
   .bg.__id-@{mad.id} {
     display: block;
     margin: 0px auto;
+    @for(bgColor <- mad.meta.colors.bg) {
+      background-color: #@bgColor.code;
+    }
   }
 
   .focused-container.__id-@{mad.id} {
@@ -32,9 +37,10 @@
     position: relative;
   }
 
-  @for(patternColor <- mad.meta.colors.pattern) {
+  @for(patternColor <- mad.meta.colors.pattern; wbg <- args.wideBg) {
     .dotted-pattern.__id-@{mad.id} {
       background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="2" height="2"><line x1="0" y1="0" x2="1" y2="1" stroke-width="1" stroke="rgb(@colorHex2rgb(patternColor.code).mkString(","))"/></svg>');
+      height: @{wbg.szCss.height}px;
     }
   }
 }

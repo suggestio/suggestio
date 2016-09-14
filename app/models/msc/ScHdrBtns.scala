@@ -4,7 +4,7 @@ import io.suggest.common.menum.EnumValue2Val
 import io.suggest.sc.ScConstants.{Header, Search}
 import models.{MHands, MHand}
 import play.twirl.api.{HtmlFormat, Html, Template1}
-import views.html.sc._
+import views.html.sc.hdr._
 import views.html.sc.svg._
 
 /**

@@ -2,14 +2,8 @@
 
 @* Полноэкранный loader. *@
 
-@import util.TplDataFormatUtil._
 @import io.suggest.sc.ScConstants.Layout.FS_LOADER_ID
-
-<style>
-  .fs-loader {
-    background: @formatRgbHexColorCss(args.bgColor, Some(0.3F));
-  }
-</style>
+@import views.html.sc.svg
 
 <div id="@FS_LOADER_ID" class="fs-loader">
   <div class="fs-loader_spinner">@svg._spinnerTpl(args.fgColor)</div>

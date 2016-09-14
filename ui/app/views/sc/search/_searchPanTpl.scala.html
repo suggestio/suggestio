@@ -2,7 +2,6 @@
 
 @* Панель поиска: текстового, фасетного по категориям, по рекламодателям (правая панель). *@
 
-@import util.TplDataFormatUtil._
 @import ctx.messages
 @import msc._
 @import views.html.sc.stuff._
@@ -10,12 +9,12 @@
 
 
 @* Дедубликация кода рендера одной кнопки вкладки. *@
-@__tabBtn(idSrc: Search.ITab, searchTabListOpt: Option[Boolean], inactive: Boolean, i18nName: String) = {
+@__tabBtn(idSrc: Search.ITab, searchTabListOpt: Option[Boolean], inactive: Boolean, i18nName: String, hand: MHand) = {
   @for(jsState <- args.jsStateOpt) {
     <a href="@args.syncUrl( jsState.copy(searchTabListOpt = searchTabListOpt) )">
   }
   <div class="sm-categories-screen_single-tab">
-    <div class="sm-tab __rounded-left @if(inactive) {__inactive}" id="@idSrc.TAB_BTN_ID">
+    <div class="sm-tab __rounded-@hand.name @if(inactive) {__inactive}" id="@idSrc.TAB_BTN_ID">
       @messages(i18nName).toUpperCase
     </div>
   </div>
@@ -24,37 +23,6 @@
   }
 }
 
-
-<style type="text/css">
-  @defining( colorRgb2Hsl(colorHex2rgb(args.bgColor)).toIndexedSeq ) { hslBgColor =>
-    .sm-tab.__inactive {
-      color: #@args.fgColor!important;
-    }
-
-    .sm-categories,
-    .sm-shops {
-      -webkit-box-shadow: inset 0px 10px 10px hsl( @{hslBgColor(0)}, @{hslBgColor(1)}%, @{hslBgColor(2)-10}% );
-      box-shadow: inset 0px 5px 5px hsl( @{hslBgColor(0)}, @{hslBgColor(1)}%, @{hslBgColor(2)-6}% );
-    }
-  }
-
-  @if(args.jsStateOpt.exists(_.isSearchScrOpened)) {
-    .sm-categories-screen {
-      display: block;
-      height: 100%;
-    }
-  }
-
-  .sm-categories-screen_tabs {
-    background-color: @formatRgbHexColorCss( args.bgColor, Some(0.8F) );
-  }
-
-  .sm-tab {
-    background: #@args.fgColor;
-    border-color: #@args.fgColor;
-    color: #@args.bgColor;
-  }
-</style>
 
 <div class="sm-categories-screen __initial" id="smCategoriesScreen">
 
@@ -76,23 +44,23 @@
 
   </div>
 
-  @_searchTextTpl( args, "smSearch")
+  @_ftsTpl( args, "smSearch")
 
   @defining( args.jsStateOpt.exists(_.isSearchTabList) ) { isListTab =>
     @* Панель с кнопками табов. *@
     <div class="sm-categories-screen_tabs" id="smNavLayerTabs">
       <div class="sm-categories-screen_tabs-wrapper">
-        @__tabBtn(Search.Cats, None, isListTab, "Map")
-        @__tabBtn(Search.Nodes, Some(true), !isListTab, "List")
+        @__tabBtn(Search.Cats, None, isListTab, "Map", MHands.Left)
+        @__tabBtn(Search.Nodes, Some(true), !isListTab, "List", MHands.Right)
         <div class="clear"></div>
       </div>
     </div>
 
     @if(!args.syncRender || !isListTab) {
-      @_catsListTpl( args )
+      @_geoTpl( args )
     }
     @if(!args.syncRender || isListTab) {
-      @_shopsListTpl( args )
+      @_tagsTpl( args )
     }
 
   }

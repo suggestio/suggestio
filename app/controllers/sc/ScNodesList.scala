@@ -10,7 +10,7 @@ import play.api.mvc.Result
 import play.twirl.api.Html
 import util.PlayMacroLogsI
 import util.acl._
-import views.html.sc._
+import views.html.sc.nav._
 import play.api.libs.json._
 import models._
 

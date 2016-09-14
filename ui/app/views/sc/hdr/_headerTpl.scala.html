@@ -4,22 +4,17 @@
 
 @import io.suggest.sc.ScConstants.Header._
 @import views.html.sc.stuff._
+@import views.html.sc.svg
 @import msc._
 
-<style>
-  #@(ROOT_DIV_ID) {
-    background-color: #@args.bgColor;
-    border-color: #@args.fgColor;
-  }
-</style>
 
 @* Завернуть указанную верстку в ссылку переключения состояния окошка/панени навигации (слева). *@
 @toggleNavScrAnchor()(content: Option[msc.ScJsState] => Html) = {
-  @hdr._toggleNavScreenSyncWrapTpl(args)(content)
+  @_toggleNavScreenSyncWrapTpl(args)(content)
 }
 
 @* Хидер главного экрана *@
-@hdr._divTpl( "id" -> ROOT_DIV_ID ) {
+@_divTpl( "id" -> ROOT_DIV_ID ) {
 
   <span id="@BTNS_DIV_ID">
 
@@ -40,12 +35,12 @@
     }
 
     @* Кнопка с 4-мя квадратиками доступа к поисковой панели справа. По дефолту они всегда отображаются, но скрыты в остальных случаях. *@
-    @hdr._tileBtnTpl(args)
+    @_tileBtnTpl(args)
 
   </span>
 
   @toggleNavScrAnchor() { jsStateOpt =>
-    @hdr._logoTpl(args,  withId = true)
+    @_logoTpl(args,  withId = true)
   }
 
   <div class="sm-producer-header_icon">

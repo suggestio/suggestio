@@ -1,0 +1,104 @@
+@(args: msc.ScRenderArgs)(implicit ctx: Context)
+
+@* Динамический css для панели поиска и её вкладок. *@
+
+@import util.TplDataFormatUtil._
+
+
+@* _searchPanTpl *@
+@defining( colorRgb2Hsl(colorHex2rgb(args.bgColor)).toIndexedSeq ) { hslBgColor =>
+  .sm-tab.__inactive {
+    color: #@args.fgColor!important;
+  }
+
+  .sm-categories,
+  .sm-shops {
+    -webkit-box-shadow: inset 0px 10px 10px hsl( @{hslBgColor(0)}, @{hslBgColor(1)}%, @{hslBgColor(2)-10}% );
+    box-shadow: inset 0px 5px 5px hsl( @{hslBgColor(0)}, @{hslBgColor(1)}%, @{hslBgColor(2)-6}% );
+  }
+}
+
+@if(args.jsStateOpt.exists(_.isSearchScrOpened)) {
+  .sm-categories-screen {
+    display: block;
+    height: 100%;
+  }
+}
+
+.sm-categories-screen_tabs {
+  background-color: @formatRgbHexColorCss( args.bgColor, Some(0.8F) );
+}
+
+.sm-tab {
+  background: #@args.fgColor;
+  border-color: #@args.fgColor;
+  color: #@args.bgColor;
+}
+
+
+
+@* ftsTpl *@
+.sm-search-bar {
+  background-color: #@args.bgColor;
+}
+
+.sm-search-bar_input::-webkit-input-placeholder {
+  color:    #@args.fgColor;
+}
+.sm-search-bar_input:-moz-placeholder {
+  color:    #@args.fgColor;
+  opacity:  1;
+}
+.sm-search-bar_input::-moz-placeholder {
+  color:    #@args.fgColor;
+  opacity:  1;
+}
+
+.sm-search-bar_field.__active {
+  background: #@args.fgColor;
+}
+
+.sm-search-bar_field {
+  background-color: @formatRgbHexColorCss( args.bgColor, Some(0.5F) );
+  border-color: #@args.fgColor;
+}
+
+.sm-search-bar_field.__active .sm-search-bar_input
+{
+  color:#@args.bgColor;
+}
+.sm-search-bar_field.__active .sm-search-bar_input::-webkit-input-placeholder {
+  color:    #@args.bgColor;
+}
+.sm-search-bar_field.__active .sm-search-bar_input:-moz-placeholder {
+  color:    #@args.bgColor;
+}
+.sm-search-bar_field.__active .sm-search-bar_input::-moz-placeholder {
+  color:    #@args.bgColor;
+}
+
+
+
+@* geoTpl *@
+.sm-categories {
+  background-color: #@args.bgColor;
+  height: 83%;
+}
+
+
+
+@* tagsTpl *@
+.shops-list_row {
+  color: #@args.fgColor;
+  opacity: 0.8;
+}
+
+@defining( colorRgb2Hsl(colorHex2rgb(args.bgColor)).toIndexedSeq ) { hslColor =>
+  .shops-list_row.__odd {
+    background-color: hsl( @{hslColor(0)}, @{hslColor(1)}%, @{hslColor(2)-2}% );
+  }
+}
+
+.sm-shops {
+  background-color: @formatRgbHexColorCss(args.bgColor);
+}
