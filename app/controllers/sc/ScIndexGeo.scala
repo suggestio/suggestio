@@ -49,6 +49,7 @@ trait ScIndexGeo
     val logic = new GeoScIndexLogic {
       override def _reqArgs = args
       override implicit def _request = request
+      override def _syncArgs = MScIndexSyncArgs.empty
     }
 
     // Запускаем хелпер на генерацию асинхронного результата:
@@ -93,6 +94,7 @@ trait ScIndexGeo
 
     def _reqArgs: MScIndexArgs
     implicit def _request: IReq[_]
+    def _syncArgs: IScIndexSyncArgs
 
     def gsiOptFut = _reqArgs.geo.geoSearchInfoOpt
 
@@ -135,6 +137,7 @@ trait ScIndexGeo
     trait ScIndexHelperAddon extends ScIndexHelperBase {
       override implicit def _request = that2._request
       override def _reqArgs = that2._reqArgs
+      override def _syncArgs = that2._syncArgs
 
       /** Предлагаемый заголовок окна выдачи, если возможно. */
       override def titleOptFut: Future[Option[String]] = {
@@ -253,10 +256,8 @@ trait ScIndexGeo
         _topLeftBtnHtml <- _topLeftBtnHtmlFut
         _hBtnArgs       <- _hBtnArgsFut
       } yield {
-        new ScRenderArgs with MScIndexArgsWrapper with IColorsWrapper {
-          override def tilesBgFillAlpha   = scUtil.TILES_BG_FILL_ALPHA
+        new ScRenderArgs with IColorsWrapper {
           override def _underlying        = _colors
-          override def reqArgsUnderlying  = _reqArgs
           override def hBtnArgs           = _hBtnArgs
           override def topLeftBtnHtml     = _topLeftBtnHtml
           override def title              = scUtil.SITE_NAME_GEO

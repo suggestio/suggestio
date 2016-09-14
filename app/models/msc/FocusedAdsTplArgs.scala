@@ -18,7 +18,6 @@ trait IFocusedAdsTplArgs
   override def title = producer.meta.basic.nameShort
 }
 
-// (Тут до web21:0af93c09f23a включительно был код дефолтовой реализации модели, но реализация оказалась невостребована.)
 
 /** Реализация модели [[IFocusedAdsTplArgs]] с передачей части аргументов в контейнере [[IAdBodyTplArgs]]. */
 case class FocusedAdsTplArgs2(

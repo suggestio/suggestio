@@ -5,7 +5,7 @@ import io.suggest.model.n2.node.IMNodes
 import models.req.IReq
 import models.{AdSearchImpl, AdShowLevels, MNode}
 import models.im.DevScreen
-import models.msc.{MScApiVsn, MScIndexArgs, MScIndexArgsDfltImpl}
+import models.msc._
 import play.api.mvc.Result
 import util.n2u.IN2NodesUtilDi
 
@@ -103,18 +103,19 @@ trait ScIndexAdOpen
 
 
   /**
-   * Решено, что юзера нужно перебросить на выдачу другого узла с возможностью возрата на исходный узел
-   * через кнопку навигации.
+    * Решено, что юзера нужно перебросить на выдачу другого узла с возможностью возрата на исходный узел
+    * через кнопку навигации.
     *
     * @param producer Узел-продьюсер, на который необходимо переключиться.
-   * @param focLogic Закешированная focused-логика, собранная в экшене.
-   * @param request Исходный реквест.
-   * @return Фьючерс с http-результатом.
-   */
+    * @param focLogic Закешированная focused-логика, собранная в экшене.
+    * @param request Исходный реквест.
+    * @return Фьючерс с http-результатом.
+    */
   private def _goToProducerIndex(producer: MNode, focLogic: FocusedAdsLogicHttp)
                                 (implicit request: IReq[_]): Future[Result] = {
     // Извлекаем MAdnNode втупую. exception будет перехвачен в recoverWith.
     val idxLogic = new ScIndexNodeHelper {
+      override def _syncArgs          = MScIndexSyncArgs.empty
       override def adnNodeFut         = Future.successful( producer )
       override implicit def _request  = request
       override def _reqArgs: MScIndexArgs = new MScIndexArgsDfltImpl {

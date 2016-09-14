@@ -3,6 +3,7 @@ package controllers.sc
 import java.util.NoSuchElementException
 
 import controllers.{SioController, routes}
+import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.fut.FutureUtil
 import models._
 import models.mctx.Context
@@ -22,12 +23,10 @@ import scala.concurrent.Future
  * Description: Синхронная выдача. Т.е. выдача. которая работает без JS на клиенте.
  * Это нужно для для кравлеров и пользователей, у которых JS отключен или проблематичен.
  */
-trait ScSyncSite extends SioController with PlayMacroLogsI
 
-
-/** Аддон для контроллера, добавляет поддержку синхронного гео-сайта выдачи. */
-trait ScSyncSiteGeo
-  extends ScSyncSite
+trait ScSyncSite
+  extends SioController
+  with PlayMacroLogsI
   with ScSiteGeo
   with ScIndexGeo
   with ScAdsTileBase
@@ -191,7 +190,7 @@ trait ScSyncSiteGeo
         geoMode = _scState.geo
       )
       override def renderArgsFut: Future[NodeListRenderArgs] = {
-        super.renderArgsFut map { renderArgs =>
+        for (renderArgs <- super.renderArgsFut) yield {
           new NodeListRenderArgsWrapper {
             override def _nlraUnderlying = renderArgs
             override def syncUrl(jsState: ScJsState) = _urlGenF(jsState)
@@ -214,7 +213,7 @@ trait ScSyncSiteGeo
     def maybeGeoDetectResultFut: Future[Option[GeoDetectResult]] = {
       if (_scState.isNavScrOpened) {
         nodesListLogic.nextNodeWithLayerFut
-          .map(Some.apply)
+          .map( EmptyUtil.someF )
       } else {
         Future.successful( None )
       }
@@ -232,6 +231,15 @@ trait ScSyncSiteGeo
 
     /** Готовим контейнер с аргументами рендера indexTpl. */
     def indexReqArgsFut: Future[MScIndexArgs] = {
+      val r = new MScIndexArgsDfltImpl {
+        // TODO нужно и screen наверное выставлять по-нормальному?
+        override def geo                = _scState.geo
+      }
+      Future.successful(r)
+    }
+
+    /** Доп.аргументы для index-выдачи для нужд синхронного рендера. */
+    def indexSyncArgsFut: Future[MScIndexSyncArgs] = {
       val _tilesRenderFut = tilesRenderFut
       val _focusedContentOptFut = maybeFocusedContent
       val _maybeNodesListHtmlFut = maybeNodesListHtmlFut
@@ -241,9 +249,7 @@ trait ScSyncSiteGeo
         _inlineTiles        <- _tilesRenderFut
         _nodesListHtmlOpt   <- _maybeNodesListHtmlFut
       } yield {
-        new MScIndexArgsDfltImpl {
-          // TODO нужно и screen наверное выставлять по-нормальному?
-          override def geo                = _scState.geo
+        new MScIndexSyncArgs {
           override def inlineTiles        = _inlineTiles
           override def focusedContent     = _focusedContentOpt
           override def inlineNodesList    = _nodesListHtmlOpt
@@ -289,9 +295,14 @@ trait ScSyncSiteGeo
 
 
     def indexHtmlLogicFut: Future[HtmlGeoIndexLogic] = {
-      for (indexReqArgs <- indexReqArgsFut) yield {
+      val _indexSyncArgsFut = indexSyncArgsFut
+      for {
+        indexReqArgs  <- indexReqArgsFut
+        indexSyncArgs <- _indexSyncArgsFut
+      } yield {
         new HtmlGeoIndexLogic {
-          override def _reqArgs: MScIndexArgs = indexReqArgs
+          override def _reqArgs  = indexReqArgs
+          override def _syncArgs = indexSyncArgs
           override implicit def _request = that._request
 
           /** Определение текущего узла выдачи. Текущий узел может быть задан через параметр ресивера. */
@@ -322,6 +333,7 @@ trait ScSyncSiteGeo
 
           override def nodeFoundHelperFut(gdr: GeoDetectResult): Future[ScIndexNodeGeoHelper] = {
             val helper = new ScIndexNodeGeoHelper with ScIndexHelperAddon {
+              override def _syncArgs = indexSyncArgs
               override val gdrFut = Future.successful( gdr )
               override def welcomeAdOptFut = Future.successful( None )
             }

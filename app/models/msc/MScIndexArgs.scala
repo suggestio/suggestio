@@ -4,16 +4,17 @@ import io.suggest.model.play.qsb.QueryStringBindableImpl
 import models._
 import models.im.DevScreen
 import play.api.mvc.QueryStringBindable
-import play.twirl.api.Html
 import io.suggest.sc.ScConstants.ReqArgs._
 import views.js.sc.m.scReqArgsJsUnbindTpl
 
 /**
- * Suggest.io
- * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 10.04.15 15:16
- * Description: qs-аргументы запроса к sc/index.
- */
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 10.04.15 15:16
+  * Description: qs-аргументы запроса к sc/index.
+  *
+  * До web21:97e437abd7b3 модель называлась ScReqArgs, что было немного мимо кассы.
+  */
 
 object MScIndexArgs {
 
@@ -94,7 +95,7 @@ object MScIndexArgs {
 
 
 /** Модель аргументов запроса к выдаче. */
-trait MScIndexArgs extends SyncRenderInfo {
+trait MScIndexArgs /*extends SyncRenderInfo*/ {
   def geo                 : GeoMode
   def screen              : Option[DevScreen]
   def withWelcomeAd       : Boolean
@@ -104,11 +105,11 @@ trait MScIndexArgs extends SyncRenderInfo {
   def adnIdOpt            : Option[String]
 
   /** Заинлайненные отрендеренные элементы плитки. Передаются при внутренних рендерах, вне HTTP-запросов и прочего. */
-  def inlineTiles         : Seq[IRenderedAdBlock]
-  def focusedContent      : Option[Html]
-  def inlineNodesList     : Option[Html]
+  //def inlineTiles         : Seq[IRenderedAdBlock]
+  //def focusedContent      : Option[Html]
+  //def inlineNodesList     : Option[Html]
   /** Текущая нода согласно геоопределению, если есть. */
-  def adnNodeCurrentGeo   : Option[MNode]
+  //def adnNodeCurrentGeo   : Option[MNode]
 
   override def toString: String = {
     import QueryStringBindable._
@@ -118,17 +119,17 @@ trait MScIndexArgs extends SyncRenderInfo {
 
 
 /** Дефолтовая реализация полей трейта [[MScIndexArgs]]. */
-trait MScIndexArgsDflt extends MScIndexArgs with SyncRenderInfoDflt {
+trait MScIndexArgsDflt extends MScIndexArgs /*with SyncRenderInfoDflt*/ {
   override def geo                  : GeoMode             = GeoNone
   override def screen               : Option[DevScreen]   = None
   override def withWelcomeAd        : Boolean             = true
   override def prevAdnId            : Option[String]      = None
   override def apiVsn               : MScApiVsn           = MScApiVsns.unknownVsn
   override def adnIdOpt             : Option[String]      = None
-  override def inlineTiles          : Seq[IRenderedAdBlock] = Nil
-  override def focusedContent       : Option[Html]        = None
-  override def inlineNodesList      : Option[Html]        = None
-  override def adnNodeCurrentGeo    : Option[MNode]       = None
+  //override def inlineTiles          : Seq[IRenderedAdBlock] = Nil
+  //override def focusedContent       : Option[Html]        = None
+  //override def inlineNodesList      : Option[Html]        = None
+  //override def adnNodeCurrentGeo    : Option[MNode]       = None
 }
 /** Реализация [[MScIndexArgsDflt]] для облегчения скомпиленного байткода. */
 class MScIndexArgsDfltImpl extends MScIndexArgsDflt
@@ -145,11 +146,11 @@ trait MScIndexArgsWrapper extends MScIndexArgs {
   override def apiVsn               = reqArgsUnderlying.apiVsn
   override def adnIdOpt             = reqArgsUnderlying.adnIdOpt
 
-  override def inlineTiles          = reqArgsUnderlying.inlineTiles
-  override def focusedContent       = reqArgsUnderlying.focusedContent
-  override def inlineNodesList      = reqArgsUnderlying.inlineNodesList
-  override def adnNodeCurrentGeo    = reqArgsUnderlying.adnNodeCurrentGeo
-  override def jsStateOpt           = reqArgsUnderlying.jsStateOpt
+  //override def inlineTiles          = reqArgsUnderlying.inlineTiles
+  //override def focusedContent       = reqArgsUnderlying.focusedContent
+  //override def inlineNodesList      = reqArgsUnderlying.inlineNodesList
+  //override def adnNodeCurrentGeo    = reqArgsUnderlying.adnNodeCurrentGeo
+  //override def jsStateOpt           = reqArgsUnderlying.jsStateOpt
 
 }
 

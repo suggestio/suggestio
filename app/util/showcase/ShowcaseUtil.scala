@@ -45,10 +45,6 @@ class ShowcaseUtil @Inject() (
   /** Цвет для выдачи, которая вне узла. */
   val SITE_FGCOLOR_GEO = configuration.getString("market.showcase.color.fg.geo").getOrElse(SITE_FGCOLOR_DFLT)
 
-  /** Фон под рекламными карточками заполняется на основе цвета с добавление прозрачности от фона. */
-  val TILES_BG_FILL_ALPHA: Float = configuration.getDouble("showcase.tiles.bg.fill.ratio")
-    .fold(0.8F)(_.toFloat)
-
   /**
     * Сгруппировать "узкие" карточки, чтобы они были вместе.
     *

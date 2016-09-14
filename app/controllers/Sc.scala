@@ -49,7 +49,7 @@ class Sc @Inject()(
   with ScSiteGeo
   with ScIndexGeo
   with ScIndexNode
-  with ScSyncSiteGeo
+  with ScSyncSite
   with ScAdsTile
   with ScFocusedAdsV2
   with ScNodesList

@@ -4,24 +4,22 @@ import models.im.MImgT
 import play.twirl.api.Html
 
 /**
- * Suggest.io
- * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 10.04.15 15:17
- * Description: Модель параметров рендера шаблона sc/indexTpl.
- */
-
-// 5211faccd060 Здесь был код группировки списка магазинов по первой группе.
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 10.04.15 15:17
+  * Description: Модель параметров рендера шаблона sc/indexTpl.
+  *
+  * 2016.sep.14: Была попытка распилить эту сложную модель, но какая-то неудачная.
+  * Только исходные qs-поля были вынесены в qs-контейнер типа [[MScIndexArgs]] в ходе распиливания той модели.
+  */
 
 abstract class ScRenderArgs
-  extends MScIndexArgs
-  with IColors
+  extends IColors
   with ILogoRenderArgs
   with IHBtnRenderArgs
   with IHBtnArgsFieldImpl
+  with MScIndexSyncArgs
 {
-
-  /** Прозрачность фона тайлов. */
-  def tilesBgFillAlpha: Float
 
   /** Логотип, если есть. */
   def logoImgOpt    : Option[MImgT] = None
@@ -37,6 +35,7 @@ abstract class ScRenderArgs
 
   /** Назначение выдачи. */
   def target: MScTarget = MScTargets.Primary
+
 
   override def toString: String = {
     val sb = new StringBuilder(256, "req:")
@@ -55,5 +54,6 @@ abstract class ScRenderArgs
       sb.append("welcome=").append(_waOpt.get.toString).append('&')
     sb.toString()
   }
+
 }
 

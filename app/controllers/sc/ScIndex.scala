@@ -46,6 +46,7 @@ trait ScIndexCommon
     def renderArgsFut: Future[ScRenderArgs]
     def currAdnIdFut: Future[Option[String]]
     def _reqArgs: MScIndexArgs
+    def _syncArgs: IScIndexSyncArgs
 
     /** Фьючерс с определением достаточности имеющиейся геолокации для наилучшего определения узла. */
     def geoAcurrEnoughtFut: Future[Option[Boolean]]
@@ -85,8 +86,8 @@ trait ScIndexCommon
     /** Кнопка навигации, которая будет отрендерена в левом верхнем углу indexTpl. */
     def topLeftBtnHtmlFut: Future[Html] = {
       for (_hBtnArgs <- hBtnArgsFut) yield {
-        val rargs = new MScIndexArgsWrapper with IHBtnArgsFieldImpl {
-          override def reqArgsUnderlying = _reqArgs
+        val rargs = new MScIndexSyncArgsWrap with IHBtnArgsFieldImpl {
+          override def _syncArgsUnderlying = _syncArgs
           override def hBtnArgs = _hBtnArgs
         }
         hdr._navPanelBtnTpl(rargs)(ctx)
@@ -271,9 +272,8 @@ trait ScIndexNodeCommon
         _hBtnArgs       <- _hBtnArgsFut
         _topLeftBtnHtml <- _topLeftBtnHtmlFut
       } yield {
-        new ScRenderArgs with MScIndexArgsWrapper with IColorsWrapper {
-          override def tilesBgFillAlpha   = scUtil.TILES_BG_FILL_ALPHA
-          override def reqArgsUnderlying  = _reqArgs
+        new ScRenderArgs with IColorsWrapper {
+          /** Аргументы исходного запроса экшена. */
           override def _underlying        = _colors
           override def hBtnArgs           = _hBtnArgs
           override def topLeftBtnHtml     = _topLeftBtnHtml
@@ -303,10 +303,11 @@ trait ScIndexNode
     val _adnNodeFut = Future.successful( request.mnode )
 
     val helper = new ScIndexNodeHelper {
-      override def _reqArgs = args
-      override def adnNodeFut = _adnNodeFut
-      override lazy val currAdnIdFut = Future.successful( Some(adnId) )
-      override implicit def _request = request
+      override def _reqArgs           = args
+      override def _syncArgs          = MScIndexSyncArgs.empty
+      override def adnNodeFut         = _adnNodeFut
+      override lazy val currAdnIdFut  = Future.successful( Some(adnId) )
+      override implicit def _request  = request
     }
 
     val resultFut = helper.result
