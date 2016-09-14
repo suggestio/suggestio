@@ -59,10 +59,10 @@ trait IScIndexSyncArgs extends SyncRenderInfo {
 
 /** Пустая реализация модели [[IScIndexSyncArgs]]. */
 trait MScIndexSyncArgs extends IScIndexSyncArgs with SyncRenderInfoDflt {
-  override def inlineTiles: Seq[IRenderedAdBlock] = Nil
-  override def focusedContent: Option[Html] = None
-  override def inlineNodesList: Option[Html] = None
-  override def adnNodeCurrentGeo: Option[MNode] = None
+  override def inlineTiles        : Seq[IRenderedAdBlock]   = Nil
+  override def focusedContent     : Option[Html]            = None
+  override def inlineNodesList    : Option[Html]            = None
+  override def adnNodeCurrentGeo  : Option[MNode]           = None
 }
 class MScIndexSyncArgsImpl extends MScIndexSyncArgs
 

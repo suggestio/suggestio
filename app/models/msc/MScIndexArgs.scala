@@ -95,7 +95,7 @@ object MScIndexArgs {
 
 
 /** Модель аргументов запроса к выдаче. */
-trait MScIndexArgs /*extends SyncRenderInfo*/ {
+trait MScIndexArgs {
   def geo                 : GeoMode
   def screen              : Option[DevScreen]
   def withWelcomeAd       : Boolean
@@ -103,13 +103,6 @@ trait MScIndexArgs /*extends SyncRenderInfo*/ {
   def apiVsn              : MScApiVsn
   /** id (текущего) узла-ресивера, для которого запрашивается sc index. */
   def adnIdOpt            : Option[String]
-
-  /** Заинлайненные отрендеренные элементы плитки. Передаются при внутренних рендерах, вне HTTP-запросов и прочего. */
-  //def inlineTiles         : Seq[IRenderedAdBlock]
-  //def focusedContent      : Option[Html]
-  //def inlineNodesList     : Option[Html]
-  /** Текущая нода согласно геоопределению, если есть. */
-  //def adnNodeCurrentGeo   : Option[MNode]
 
   override def toString: String = {
     import QueryStringBindable._
@@ -119,17 +112,13 @@ trait MScIndexArgs /*extends SyncRenderInfo*/ {
 
 
 /** Дефолтовая реализация полей трейта [[MScIndexArgs]]. */
-trait MScIndexArgsDflt extends MScIndexArgs /*with SyncRenderInfoDflt*/ {
+trait MScIndexArgsDflt extends MScIndexArgs {
   override def geo                  : GeoMode             = GeoNone
   override def screen               : Option[DevScreen]   = None
   override def withWelcomeAd        : Boolean             = true
   override def prevAdnId            : Option[String]      = None
   override def apiVsn               : MScApiVsn           = MScApiVsns.unknownVsn
   override def adnIdOpt             : Option[String]      = None
-  //override def inlineTiles          : Seq[IRenderedAdBlock] = Nil
-  //override def focusedContent       : Option[Html]        = None
-  //override def inlineNodesList      : Option[Html]        = None
-  //override def adnNodeCurrentGeo    : Option[MNode]       = None
 }
 /** Реализация [[MScIndexArgsDflt]] для облегчения скомпиленного байткода. */
 class MScIndexArgsDfltImpl extends MScIndexArgsDflt
@@ -145,12 +134,6 @@ trait MScIndexArgsWrapper extends MScIndexArgs {
   override def prevAdnId            = reqArgsUnderlying.prevAdnId
   override def apiVsn               = reqArgsUnderlying.apiVsn
   override def adnIdOpt             = reqArgsUnderlying.adnIdOpt
-
-  //override def inlineTiles          = reqArgsUnderlying.inlineTiles
-  //override def focusedContent       = reqArgsUnderlying.focusedContent
-  //override def inlineNodesList      = reqArgsUnderlying.inlineNodesList
-  //override def adnNodeCurrentGeo    = reqArgsUnderlying.adnNodeCurrentGeo
-  //override def jsStateOpt           = reqArgsUnderlying.jsStateOpt
 
 }
 
