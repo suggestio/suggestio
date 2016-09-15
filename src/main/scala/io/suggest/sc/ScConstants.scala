@@ -51,10 +51,10 @@ object ScConstants {
   /** Client/server констатны выдачи для моделей ScReqArgs. */
   object ReqArgs {
 
-    def GEO               = "geo"
-    def SCREEN            = "screen"
-    def WITH_WELCOME      = "wc"
-    def VSN               = "v"
+    def GEO_FN            = "geo"
+    def SCREEN_FN         = "screen"
+    def WITH_WELCOME_FN   = "wc"
+    def VSN_FN            = "v"
     /** Имя поля с id предыдущего узла выдачи, т.е. как бы id узла-referrer'а. */
     def PREV_ADN_ID_FN    = "pr"
     /** Имя поля с id текущего узла выдачи. Названа adn вместо node для однозначности, что это наверное ресивер. */
