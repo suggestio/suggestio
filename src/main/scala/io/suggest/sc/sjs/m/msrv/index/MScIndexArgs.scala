@@ -32,11 +32,11 @@ trait IScIndexArgs extends ToJsonWithApiVsnT {
     val d = super.toJson
 
     for (g <- geoMode)
-      d(GEO) = g.toQsStr
+      d(GEO_FN) = g.toQsStr
     for (scr <- screen)
-      d(SCREEN) = scr.toQsValue
+      d(SCREEN_FN) = scr.toQsValue
     for (ww <- withWelcome)
-      d(WITH_WELCOME) = ww
+      d(WITH_WELCOME_FN) = ww
 
     d
   }
