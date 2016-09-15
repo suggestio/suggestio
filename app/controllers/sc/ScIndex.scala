@@ -58,7 +58,7 @@ trait ScIndexCommon
     protected def _node2titleOpt(mnode: MNode): Option[String] = {
       val m = mnode.meta
       val title0 = m.basic.name
-      val title2 = m.address.town.fold(title0)(townName => title0 + " (" + townName + ")")
+      val title2 = m.address.town.fold(title0)(title0 + " (" + _ + ")")
       Some(title2)
     }
 

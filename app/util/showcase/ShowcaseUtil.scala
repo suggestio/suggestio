@@ -184,15 +184,12 @@ class ShowcaseUtil @Inject() (
     getTileArgs( ctx.deviceScreenOpt )
   }
   def getTileArgs(dscrOpt: Option[DevScreen]): TileArgs = {
-    dscrOpt match {
-      case Some(dscr) =>
-        getTileArgs(dscr)
-      case None =>
-        TileArgs(
-          szMult = MIN_SZ_MULT,
-          colsCount = TILE_MAX_COLUMNS
-        )
-    }
+    dscrOpt.fold {
+      TileArgs(
+        szMult = MIN_SZ_MULT,
+        colsCount = TILE_MAX_COLUMNS
+      )
+    } { getTileArgs }
   }
   def getTileArgs(dscr: DevScreen): TileArgs = {
     val colsCount = getTileColsCountScr(dscr)
@@ -248,22 +245,28 @@ class ShowcaseUtil @Inject() (
    */
   def fitBlockToScreen(bm: BlockMeta, dscr: DevScreen): SzMult_t = {
     val hfloat = bm.height.toFloat
-    val szMultIter0 = BlockHeights.values
-      .iterator
-      .map { _.heightPx }
-      .filter { heightPx => heightPx < dscr.height && heightPx >= bm.height }
-      .map { heightPx => heightPx.toFloat / hfloat }
+
+    val szMultIter0 = for {
+      bh <- BlockHeights.valuesT.iterator
+      heightPx = bh.heightPx
+      if heightPx < dscr.height && heightPx >= bm.height
+    } yield {
+      heightPx.toFloat / hfloat
+    }
+
     // для не-wide карточек также возможно отображение в двойном размере.
     val szMultIter1: Iterator[SzMult_t] = if (bm.wide) {
       szMultIter0
     } else {
       Iterator(FOCUSED_SZ_MULT) ++ szMultIter0
     }
+
     val maxHiter = (szMultIter1 ++ TILES_SZ_MULTS.iterator).filter { szMult =>
       // Проверяем, влезает ли ширина на экран при таком раскладе?
       val w1 = getW1(szMult, colCnt = 1, blockWidth = bm.width, scrWidth = dscr.width, paddingPx = FOCUSED_PADDING_CSSPX)
       w1 >= MIN_W1
     }
+
     if (maxHiter.isEmpty)
       MIN_SZ_MULT
     else
@@ -275,14 +278,11 @@ class ShowcaseUtil @Inject() (
   private def SC_COLORS_GEO = ScSiteColors(bgColor = SITE_BGCOLOR_GEO, fgColor = SITE_FGCOLOR_GEO)
 
   def siteScColors(nodeOpt: Option[MNode]): IScSiteColors = {
-    nodeOpt match {
-      case Some(mnode) =>
-        ScSiteColors(
-          bgColor = mnode.meta.colors.bg.fold(SITE_BGCOLOR_DFLT)(_.code),
-          fgColor = mnode.meta.colors.fg.fold(SITE_FGCOLOR_DFLT)(_.code)
-        )
-      case None =>
-        SC_COLORS_GEO
+    nodeOpt.fold(SC_COLORS_GEO) { mnode =>
+      ScSiteColors(
+        bgColor = mnode.meta.colors.bg.fold(SITE_BGCOLOR_DFLT)(_.code),
+        fgColor = mnode.meta.colors.fg.fold(SITE_FGCOLOR_DFLT)(_.code)
+      )
     }
   }
 

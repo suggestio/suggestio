@@ -128,7 +128,8 @@ trait ScSyncSite
             override def limitOpt: Option[Int] = Some(0)
           }
           override def renderMadAsync(brArgs: blk.RenderArgs): Future[T] = {
-            Future failed new UnsupportedOperationException("Dummy tile ads logic impl.")
+            val ex = new UnsupportedOperationException("Dummy tile ads logic impl.")
+            Future.failed(ex)
           }
           override lazy val madsRenderedFut: Future[Seq[T]] = Future.successful(Nil)
           override def madsGroupedFut   = _noMadsFut
