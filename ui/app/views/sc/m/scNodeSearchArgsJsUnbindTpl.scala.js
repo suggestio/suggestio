@@ -4,7 +4,7 @@
    Она нужна для разбиндивания модели из JSON на стороне js. *@
 
 @import io.suggest.sc.NodeSearchConstants._
-@import io.suggest.sc.ScConstants.ReqArgs.VSN
+@import io.suggest.sc.ScConstants.ReqArgs.VSN_FN
 @import views.js.stuff.m._
 
 @jsUnbindBase() {
@@ -16,6 +16,6 @@
     add("@CURR_ADN_ID_FN");
     add("@NODE_SWITCH_FN");
     add("@WITH_NEIGHBORS_FN");
-    add("@VSN", true);
+    add("@VSN_FN", true);
   }
 }

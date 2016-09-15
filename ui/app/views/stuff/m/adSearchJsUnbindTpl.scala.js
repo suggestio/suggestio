@@ -3,7 +3,7 @@
 @* Код функции для qsb.javascriptUnbind() для AdSearch. *@
 
 @import io.suggest.ad.search.AdSearchConstants._
-@import io.suggest.sc.ScConstants.ReqArgs.VSN
+@import io.suggest.sc.ScConstants.ReqArgs.VSN_FN
 
 @jsUnbindBase() {
   @_objQsbTpl(delim) {
@@ -20,6 +20,6 @@
     add("@WITHOUT_IDS_FN");
     add("@AGP_POINT_FN");
     @after
-    add("@VSN", true);
+    add("@VSN_FN", true);
   }
 }

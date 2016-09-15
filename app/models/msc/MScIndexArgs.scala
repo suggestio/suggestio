@@ -30,11 +30,11 @@ object MScIndexArgs {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MScIndexArgs]] = {
         val f = key1F(key)
         for {
-          geoOptE             <- geoOptB.bind(f(GEO),             params)
-          devScreenE          <- devScrB.bind(f(SCREEN),          params)
-          withWelcomeAdE      <- intOptB.bind(f(WITH_WELCOME),    params)
+          geoOptE             <- geoOptB.bind(f(GEO_FN),             params)
+          devScreenE          <- devScrB.bind(f(SCREEN_FN),          params)
+          withWelcomeAdE      <- intOptB.bind(f(WITH_WELCOME_FN),    params)
           prevAdnIdOptE       <- strOptB.bind(f(PREV_ADN_ID_FN),  params)
-          apiVsnE             <- apiVsnB.bind(f(VSN),             params)
+          apiVsnE             <- apiVsnB.bind(f(VSN_FN),             params)
           adnIdOptE           <- strOptB.bind(f(ADN_ID_FN),       params)
         } yield {
           for {
@@ -72,12 +72,12 @@ object MScIndexArgs {
         _mergeUnbinded {
           val f = key1F(key)
           Iterator(
-            geoOptB.unbind(f(GEO),              Some(value.geo)),
-            devScrB.unbind(f(SCREEN),           value.screen),
-            intOptB.unbind(f(WITH_WELCOME),     if (value.withWelcomeAd) None else Some(0)),
+            geoOptB.unbind(f(GEO_FN),              Some(value.geo)),
+            devScrB.unbind(f(SCREEN_FN),           value.screen),
+            intOptB.unbind(f(WITH_WELCOME_FN),     if (value.withWelcomeAd) None else Some(0)),
             strOptB.unbind(f(PREV_ADN_ID_FN),   value.prevAdnId),
             strOptB.unbind(f(ADN_ID_FN),        value.adnIdOpt),
-            apiVsnB.unbind(f(VSN),              value.apiVsn)
+            apiVsnB.unbind(f(VSN_FN),              value.apiVsn)
           )
         }
       }

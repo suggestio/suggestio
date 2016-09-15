@@ -6,7 +6,7 @@ import play.api.Play.{configuration, current}
 import play.api.mvc.QueryStringBindable
 import util.qsb.QsbUtil._
 import io.suggest.sc.NodeSearchConstants._
-import io.suggest.sc.ScConstants.ReqArgs.VSN
+import io.suggest.sc.ScConstants.ReqArgs.VSN_FN
 import views.js.sc.m._
 
 /**
@@ -73,7 +73,7 @@ object MScNodeSearchArgs {
           maybeCurAdnId   <- strOptB.bind   (k1(CURR_ADN_ID_FN),    params)
           maybeNodeSwitch <- boolOptB.bind  (k1(NODE_SWITCH_FN),    params)
           maybeWithNeigh  <- boolOptB.bind  (k1(WITH_NEIGHBORS_FN), params)
-          maybeApiVsn     <- apiVsnB.bind   (k1(VSN),               params)
+          maybeApiVsn     <- apiVsnB.bind   (k1(VSN_FN),               params)
         } yield {
           for {
             apiVsn  <- maybeApiVsn.right
@@ -106,7 +106,7 @@ object MScNodeSearchArgs {
             strOptB.unbind  (k1(CURR_ADN_ID_FN),    value.currAdnId),
             boolOptB.unbind (k1(NODE_SWITCH_FN),    Some(value.isNodeSwitch)),
             boolOptB.unbind (k1(WITH_NEIGHBORS_FN), Some(value.withNeighbors)),
-            apiVsnB.unbind  (k1(VSN),               value.apiVsn)
+            apiVsnB.unbind  (k1(VSN_FN),               value.apiVsn)
           )
         }
       }

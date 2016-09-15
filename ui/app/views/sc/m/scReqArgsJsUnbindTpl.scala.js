@@ -8,11 +8,11 @@
 
 @jsUnbindBase() {
   @_objQsbTpl(delim) {
-    add("@GEO");
-    add("@SCREEN");
-    add("@WITH_WELCOME");
+    add("@GEO_FN");
+    add("@SCREEN_FN");
+    add("@WITH_WELCOME_FN");
     add("@PREV_ADN_ID_FN");
     add("@ADN_ID_FN");
-    add("@VSN", true);
+    add("@VSN_FN", true);
   }
 }

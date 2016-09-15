@@ -4,7 +4,6 @@ import _root_.util.di._
 import _root_.util.PlayMacroLogsI
 import models.im.MImgT
 import models.jsm.ScIndexResp
-import models.mctx.Context
 import models.mproj.IMCommonDi
 import models.msc._
 import models.req.IReq
@@ -42,7 +41,7 @@ trait ScIndexCommon
   import mCommonDi._
 
   /** Базовый трейт для написания генератора производных indexTpl и ответов. */
-  trait ScIndexHelperBase {
+  trait ScIndexHelperBase extends LazyContext {
     def renderArgsFut: Future[ScRenderArgs]
     def currAdnIdFut: Future[Option[String]]
     def _reqArgs: MScIndexArgs
@@ -62,12 +61,8 @@ trait ScIndexCommon
       Some(title2)
     }
 
-    implicit def _request: IReq[_]
-
     /** Контейнер палитры выдачи. */
     def colorsFut: Future[IColors]
-
-    implicit lazy val ctx: Context = getContext2
 
     def respHtmlFut: Future[Html] = {
       for (renderArgs <- renderArgsFut) yield {
@@ -172,16 +167,16 @@ trait ScIndexNodeCommon
       // Сразу запускаем сборку аргументов hbtn-рендера. Не здесь, так в super-методе они понадобятся точно.
       val _hBtnArgsFut = hBtnArgsFut
 
-      // В методе логика немного разветвляется и асинхронна внутри. false-ветвь реализована через Future.failed.
-      val fut0 = if (_reqArgs.prevAdnId.nonEmpty) {
-        Future.successful( None )
-      } else {
-        Future.failed( new NoSuchElementException() )
-      }
-
-      // Отрендерить кнопку "назад на предыдущий узел", если всё ок...
+      // Отрендерить кнопку "назад на предыдущий узел", только если все проверки выполнены на ок...
       val htmlFut = for {
-        _     <- fut0
+        // В методе логика немного разветвляется и асинхронна внутри. false-ветвь реализована через Future.failed.
+        _     <- {
+          if (_reqArgs.prevAdnId.nonEmpty) {
+            Future.successful( None )
+          } else {
+            Future.failed( new NoSuchElementException() )
+          }
+        }
         mnode <- adnNodeFut
         // Продолжать только если текущий узел не связан с географией.
         if {
