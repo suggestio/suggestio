@@ -8,8 +8,6 @@
 "use strict";
 
 @play.api.routing.JavaScriptReverseRouter(NAME)(
-  routes.javascript.Sc.geoShowcase,
-  routes.javascript.Sc.showcase,
   routes.javascript.Sc.index,
   routes.javascript.Sc.findAds,
   routes.javascript.Sc.findNodes,

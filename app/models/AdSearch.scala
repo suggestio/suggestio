@@ -55,7 +55,7 @@ object AdSearch extends CommaDelimitedStringSeq {
       def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, AdSearch]] = {
         val f = key1F(key)
         for {
-          apiVsnEith        <- apiVsnB.bind      (f(VSN_FN),                   params)
+          apiVsnEith        <- apiVsnB.bind      (f(VSN_FN),                params)
           prodIdOptEith     <- strOptB.bind      (f(PRODUCER_ID_FN),        params)
           rcvrSlOptEith     <- strOptB.bind      (f(LEVEL_ID_FN),           params)
           qOptEith          <- strOptB.bind      (f(FTS_QUERY_FN),          params)
@@ -199,7 +199,7 @@ object AdSearch extends CommaDelimitedStringSeq {
         // Собираем аргументы для сборки query string.
         _mergeUnbinded {
           Iterator(
-            apiVsnB.unbind      (f(VSN_FN),               value.apiVsn),
+            apiVsnB.unbind      (f(VSN_FN),            value.apiVsn),
             strOptB.unbind      (f(RECEIVER_ID_FN),    _rcvrIdOpt),
             strOptB.unbind      (f(PRODUCER_ID_FN),    _prodIdOpt),
             strOptB.unbind      (f(LEVEL_ID_FN),       _rcvrSlOpt),

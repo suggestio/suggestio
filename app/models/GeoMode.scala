@@ -1,7 +1,5 @@
 package models
 
-import java.net.InetAddress
-
 import io.suggest.geo.GeoConstants
 import io.suggest.model.geo
 import io.suggest.model.geo.{Distance, GeoDistanceQuery, IGeoFindIpResult}

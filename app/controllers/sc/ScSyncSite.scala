@@ -28,7 +28,7 @@ trait ScSyncSite
   extends SioController
   with PlayMacroLogsI
   with ScSiteGeo
-  with ScIndexGeo
+  with ScIndex
   with ScAdsTileBase
   with ScFocusedAdsV2
   with ScNodesListBase
@@ -270,82 +270,50 @@ trait ScSyncSite
     }
 
 
-    /** Реализация GeoIndexLogic для нужд ScSyncSite.
-      * Рендер результата идёт в Html. */
-    trait HtmlGeoIndexLogic extends GeoIndexLogic {
-      override type T = Html
-
-      private def helper2respHtml(h: Future[ScIndexHelperBase]): Future[T] = {
-        h.flatMap(_.respHtmlFut)
-      }
-
-      /** Нет ноды. */
-      override def nodeNotDetected(): Future[T] = {
-        helper2respHtml(
-          nodeNotDetectedHelperFut()
-        )
-      }
-
-      /** Нода найдена с помощью геолокации. */
-      override def nodeDetected(gdr: GeoDetectResult): Future[T] = {
-        helper2respHtml(
-          nodeFoundHelperFut(gdr)
-        )
-      }
-    }
-
-
-    def indexHtmlLogicFut: Future[HtmlGeoIndexLogic] = {
+    def indexHtmlLogicFut: Future[ScIndexUniLogic] = {
       val _indexSyncArgsFut = indexSyncArgsFut
       for {
         indexReqArgs  <- indexReqArgsFut
         indexSyncArgs <- _indexSyncArgsFut
       } yield {
-        new HtmlGeoIndexLogic {
-          override def _reqArgs  = indexReqArgs
-          override def _syncArgs = indexSyncArgs
-          override implicit def _request = that._request
+        new ScIndexUniLogicImpl {
+          override def _reqArgs   = indexReqArgs
+          override def _syncArgs  = indexSyncArgs
+          override def _request   = that._request
+          override lazy val ctx   = that.ctx
 
-          /** Определение текущего узла выдачи. Текущий узел может быть задан через параметр ресивера. */
-          override def _gdrFut: Future[GeoDetectResult] = {
-            adnNodeReqFut.flatMap {
-              case Some(node) =>
-                // Нужно привести найденный узел к GeoDetectResult:
-                val ast = node.extras.adn
-                  .flatMap( _.shownTypeIdOpt )
-                  .flatMap( AdnShownTypes.maybeWithName )
-                  .getOrElse( AdnShownTypes.default )
-                val gdr = GeoDetectResult(ast.ngls.head, node)
-                Future.successful( gdr )
-
-              case None =>
-                // Имитируем экзепшен, чтобы перехватить его в Future.recover():
-                val ex = new NoSuchElementException("Receiver node not exists or undefined: " + _scState.adnId)
-                Future.failed(ex)
+          /** Пытаемся задействовать уже имеющийся узел. */
+          override def indexNodeFut: Future[MIndexNodeInfo] = {
+            val okFut = for (mnodeOpt <- that.adnNodeReqFut) yield {
+              val mnode = mnodeOpt.get
+              MIndexNodeInfo(
+                mnode   = mnode,
+                isRcvr  = true
+              )
             }
-            // Если нет возможности использовать заданный узел, пытаемся определить через метод супер-класса.
-            .recoverWith {
-              case ex: Exception =>
-                if (!ex.isInstanceOf[NoSuchElementException])
-                  LOGGER.error("Unable to make node search. nodeIdOpt = " + _scState.adnId, ex)
-                super._gdrFut
+            okFut.recoverWith { case ex: Throwable =>
+              val logPrefix = "sync.indexHtmlLogicFut.indexNodeFut:"
+              if (!ex.isInstanceOf[NoSuchElementException])
+                LOGGER.error(s"$logPrefix Unable to make sync node search. nodeIdOpt = " + _scState.adnId, ex)
+              else
+                LOGGER.trace(s"$logPrefix No sync node exists outside the logic.")
+              super.indexNodeFut
             }
           }
 
-          override def nodeFoundHelperFut(gdr: GeoDetectResult): Future[ScIndexNodeGeoHelper] = {
-            val helper = new ScIndexNodeGeoHelper with ScIndexHelperAddon {
-              override def _syncArgs = indexSyncArgs
-              override val gdrFut = Future.successful( gdr )
-              override def welcomeAdOptFut = Future.successful( None )
-            }
-            Future.successful( helper )
-          }
+          /** ip-геолокация кравлера не имеет никакого смысла. */
+          override def reqGeoLocFut = Future.successful(None)
+
+          /** Получение карточки приветствия не нужно, т.к. кравлер не требуется приветствовать,
+            * да её потом нечем скрывать с экрана: js не работает же. */
+          override def welcomeOptFut: Future[Option[WelcomeRenderArgsT]] = Future.successful(None)
         }
       }
     }
 
     def indexHtmlFut: Future[Html] = {
-      indexHtmlLogicFut.flatMap(_.apply())
+      indexHtmlLogicFut
+        .flatMap(_.respHtmlFut)
     }
 
     /** Логики, которые относятся к генерирующим карточки рекламные. */

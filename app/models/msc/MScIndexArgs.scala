@@ -4,7 +4,6 @@ import io.suggest.model.play.qsb.QueryStringBindableImpl
 import models.im.DevScreen
 import play.api.mvc.QueryStringBindable
 import io.suggest.sc.ScConstants.ReqArgs._
-import models.{GeoIp, GeoLocation, GeoMode}
 import models.mgeo.MLocEnv
 import views.js.sc.m.scReqArgsJsUnbindTpl
 
@@ -93,11 +92,6 @@ trait MScIndexArgs {
   def apiVsn              : MScApiVsn
   /** id (текущего) узла-ресивера, для которого запрашивается sc index. */
   def adnIdOpt            : Option[String]
-
-  @deprecated("Use locEnv.geo instead", "2016.sep.16")
-  final def geo: GeoMode = locEnv.geoLocOpt.fold[GeoMode](GeoIp) { gl =>
-    GeoLocation(gl.center, gl.accuracyOptM)
-  }
 
   override def toString: String = {
     import QueryStringBindable._

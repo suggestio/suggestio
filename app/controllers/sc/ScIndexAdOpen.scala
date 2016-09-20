@@ -20,7 +20,7 @@ import scala.concurrent.Future
  */
 trait ScIndexAdOpen
   extends ScFocusedAds
-  with ScIndexNodeCommon
+  with ScIndex
   with IN2NodesUtilDi
   with IMNodes
 {
@@ -114,10 +114,17 @@ trait ScIndexAdOpen
   private def _goToProducerIndex(producer: MNode, focLogic: FocusedAdsLogicHttp)
                                 (implicit request: IReq[_]): Future[Result] = {
     // Извлекаем MAdnNode втупую. exception будет перехвачен в recoverWith.
-    val idxLogic = new ScIndexNodeHelper {
+    val idxLogic = new ScIndexUniLogicImpl {
       override def _syncArgs          = MScIndexSyncArgs.empty
-      override def adnNodeFut         = Future.successful( producer )
-      override implicit def _request  = request
+      override lazy val indexNodeFut: Future[MIndexNodeInfo] = {
+        Future.successful(
+          MIndexNodeInfo(
+            mnode   = producer,
+            isRcvr  = true
+          )
+        )
+      }
+      override def _request  = request
       override def _reqArgs: MScIndexArgs = new MScIndexArgsDfltImpl {
         private val s = focLogic._adSearch
         override def prevAdnId: Option[String]  = {
@@ -128,7 +135,7 @@ trait ScIndexAdOpen
         override def screen: Option[DevScreen]  = s.screen
         override def apiVsn: MScApiVsn          = s.apiVsn
         override def withWelcome                = true
-        // TODO override def geo                        = s.geo
+        // TODO !!! override def geo                        = s.geo LOC_ENV !!!
       }
     }
     // Логика обработки запроса собрана, запустить исполнение запроса.

@@ -30,6 +30,9 @@ class ShowcaseUtil @Inject() (
 
   import mCommonDi._
 
+  /** Значение cache-control для index-выдачи. */
+  def SC_INDEX_CACHE_SECONDS = 20
+
   /** Дефолтовое имя ноды. */
   val SITE_NAME_GEO = configuration.getString("market.showcase.nodeName.dflt").getOrElse("Suggest.io")
 
