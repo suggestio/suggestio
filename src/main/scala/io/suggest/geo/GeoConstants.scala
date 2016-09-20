@@ -11,6 +11,7 @@ import io.suggest.common.qs.QsConstants
 object GeoConstants {
 
   /** id режима геолокации  */
+  @deprecated("use loc env option None instead", "2016.sep.16")
   def GEO_MODE_IP = "ip"
 
   /** Контейнер констант первого поколения [[GeoConstants]]. */
@@ -36,7 +37,7 @@ object GeoConstants {
     def CENTER_FN         = "e"
 
     /** Радиус круга, описывающего данные геолокации устройства. */
-    def ACCURACY_M_FN       = "u"
+    def ACCURACY_M_FN     = "u"
 
   }
 
