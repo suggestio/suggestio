@@ -234,7 +234,7 @@ trait ScSyncSite
     def indexReqArgsFut: Future[MScIndexArgs] = {
       val r = new MScIndexArgsDfltImpl {
         // TODO нужно и screen наверное выставлять по-нормальному?
-        override def geo                = _scState.geo
+        // TODO override def geo                = _scState.geo
       }
       Future.successful(r)
     }

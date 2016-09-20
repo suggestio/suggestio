@@ -127,8 +127,8 @@ trait ScIndexAdOpen
         }
         override def screen: Option[DevScreen]  = s.screen
         override def apiVsn: MScApiVsn          = s.apiVsn
-        override def withWelcomeAd              = true
-        override def geo                        = s.geo
+        override def withWelcome                = true
+        // TODO override def geo                        = s.geo
       }
     }
     // Логика обработки запроса собрана, запустить исполнение запроса.

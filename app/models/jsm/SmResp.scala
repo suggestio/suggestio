@@ -105,25 +105,14 @@ trait TitleOpt extends SmJsonResp {
   }
 }
 
-/** Аддон для флага оценки сервера достаточности геолокации. */
-trait GeoAccurEnought extends SmJsonResp {
-  def geoAccurEnought: Option[Boolean]
-  override def toJsonAcc: FieldsJsonAcc = {
-    val acc0 = super.toJsonAcc
-    val _gaeOpt = geoAccurEnought
-    if (_gaeOpt.isDefined)
-      GEO_ACCURACY_ENOUGHT_FN -> JsBoolean(_gaeOpt.get)  ::  acc0
-    else
-      acc0
-  }
-}
-
 trait CurrAdnId extends SmJsonResp {
   def currAdnId: Option[String]
 
   override def toJsonAcc: FieldsJsonAcc = {
-    val caiJson = currAdnId.fold [JsValue] (JsNull) { cai => JsString(cai) }
-    ADN_ID_FN -> caiJson  ::  super.toJsonAcc
+    val acc0 = super.toJsonAcc
+    currAdnId.fold(acc0) { nodeId =>
+      ADN_ID_FN -> JsString(nodeId) :: acc0
+    }
   }
 }
 
@@ -135,10 +124,9 @@ trait CurrAdnId extends SmJsonResp {
 case class ScIndexResp(
   html                            : JsString,
   override val currAdnId          : Option[String],
-  override val geoAccurEnought    : Option[Boolean],
   override val titleOpt           : Option[String]
 )
-extends Action with HtmlOpt with CurrAdnId with GeoAccurEnought with TitleOpt {
+extends Action with HtmlOpt with CurrAdnId with TitleOpt {
   override def action = INDEX_RESP_ACTION
   override def htmlOpt: Option[JsString] = Some(html)
 }

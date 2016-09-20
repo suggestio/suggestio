@@ -11,6 +11,7 @@ import models.req.IReq
 import util.di.{IScNlUtil, IScStatUtil, IScUtil}
 import util.acl._
 import models._
+import models.im.MImgT
 
 import scala.concurrent.Future
 import play.api.mvc._
@@ -261,6 +262,8 @@ trait ScIndexGeo
           override def hBtnArgs           = _hBtnArgs
           override def topLeftBtnHtml     = _topLeftBtnHtml
           override def title              = scUtil.SITE_NAME_GEO
+          override def welcomeOpt: Option[WelcomeRenderArgsT] = None
+          override def logoImgOpt: Option[MImgT] = None
         }
       }
     }

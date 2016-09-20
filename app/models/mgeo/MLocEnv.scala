@@ -52,6 +52,8 @@ object MLocEnv {
     }
   }
 
+  def empty = apply()
+
 }
 
 

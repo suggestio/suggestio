@@ -13,6 +13,4 @@ package object msc {
 
   type MScApiVsn          = MScApiVsns.T
 
-  type MScTarget          = MScTargets.T
-
 }

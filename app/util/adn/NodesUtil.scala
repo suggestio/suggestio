@@ -3,7 +3,7 @@ package util.adn
 import com.google.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
-import io.suggest.model.n2.edge.{MEdgeInfo, MNodeEdges}
+import io.suggest.model.n2.edge.{MEdgeInfo, MNodeEdges, NodeEdgesMap_t}
 import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras, MSlInfo}
 import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.common.MNodeCommon
@@ -73,11 +73,11 @@ class NodesUtil @Inject() (
   /**
     * Создать новый инстанс узла для юзера без сохранения узла в хранилище.
     *
-    * @param name название узла.
-    * @param personId id юзера-владельца.
+    * @param nameOpt название узла.
+    * @param personIdOpt id юзера-владельца.
     * @return Экземпляр узла без id.
     */
-  def userNodeInstance(name: String, personId: String): MNode = {
+  def userNodeInstance(nameOpt: Option[String], personIdOpt: Option[String]): MNode = {
     MNode(
       common = MNodeCommon(
         ntype = MNodeTypes.AdnNode,
@@ -86,7 +86,7 @@ class NodesUtil @Inject() (
       ),
       meta = MMeta(
         basic = MBasicMeta(
-          nameOpt = Some(name)
+          nameOpt = nameOpt
         ),
         colors = {
           val dc = NodeDfltColors.getOneRandom()
@@ -111,11 +111,13 @@ class NodesUtil @Inject() (
       ),
       edges = MNodeEdges(
         out = {
-          val medge = MEdge(
-            predicate = MPredicates.OwnedBy,
-            nodeIds   = Set(personId)
-          )
-          MNodeEdges.edgesToMap(medge)
+          personIdOpt.fold[NodeEdgesMap_t] (Map.empty) { personId =>
+            val medge = MEdge(
+              predicate = MPredicates.OwnedBy,
+              nodeIds   = Set(personId)
+            )
+            MNodeEdges.edgesToMap(medge)
+          }
         }
       )
     )
@@ -142,7 +144,10 @@ class NodesUtil @Inject() (
     * @return Фьючерс с готовым инстансом нового существующего узла.
     */
   def createUserNode(name: String, personId: String)(implicit messages: Messages): Future[MNode] = {
-    val inst = userNodeInstance(name = name, personId = personId)
+    val inst = userNodeInstance(
+      nameOpt     = Some(name),
+      personIdOpt = Some(personId)
+    )
     for {
       nodeId        <- mNodes.save(inst)
       madsCreateFut = installDfltMads(nodeId)

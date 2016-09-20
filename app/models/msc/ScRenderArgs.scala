@@ -21,21 +21,14 @@ abstract class ScRenderArgs
   with MScIndexSyncArgs
 {
 
-  /** Логотип, если есть. */
-  def logoImgOpt    : Option[MImgT] = None
-
   /** Приветствие, если есть. */
-  def welcomeOpt    : Option[WelcomeRenderArgsT] = None
+  def welcomeOpt    : Option[WelcomeRenderArgsT]
 
   /** Дефолтовые параметры для рендера кнопок на панели. Тут нужен case-класс. */
   def hBtnArgs: HBtnArgs
 
   /** Какую кнопку навигации надо рендерить для в левом верхнем углу indexTpl? */
   def topLeftBtnHtml: Html
-
-  /** Назначение выдачи. */
-  def target: MScTarget = MScTargets.Primary
-
 
   override def toString: String = {
     val sb = new StringBuilder(256, "req:")

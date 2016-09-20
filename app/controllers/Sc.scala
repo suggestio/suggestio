@@ -10,9 +10,11 @@ import models.merr.MRemoteErrors
 import models.mproj.ICommonDi
 import models.msc.map.MMapNodes
 import util.PlayMacroLogsImpl
+import util.adn.NodesUtil
 import util.adr.AdRenderUtil
 import util.cdn.CdnUtil
 import util.ext.ExtServicesUtil
+import util.geo.GeoIpUtil
 import util.img.{LogoUtil, WelcomeUtil}
 import util.n2u.N2NodesUtil
 import util.showcase.{ScStatUtil, ShowcaseNodeListUtil, ShowcaseUtil}
@@ -41,14 +43,16 @@ class Sc @Inject()(
   override val mRemoteErrors      : MRemoteErrors,
   override val mMapNodes          : MMapNodes,
   override val ctxUtil            : ContextUtil,
+  override val nodesUtil          : NodesUtil,
+  override val geoIpUtil          : GeoIpUtil,
   override val extServicesUtil    : ExtServicesUtil,
   override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
   with ScSiteGeo
-  with ScIndexGeo
-  with ScIndexNode
+  with ScIndexGeo with ScIndexNode
+  with ScIndex2
   with ScSyncSite
   with ScAdsTile
   with ScFocusedAdsV2

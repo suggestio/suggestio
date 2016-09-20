@@ -9,6 +9,7 @@
 @jsUnbindBase() {
   @_objQsbTpl(delim) {
     add("@GEO_FN");
+    add("@LOC_ENV_FN");
     add("@SCREEN_FN");
     add("@WITH_WELCOME_FN");
     add("@PREV_ADN_ID_FN");

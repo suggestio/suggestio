@@ -19,6 +19,8 @@ GET  /sc/index/:adnId                   @controllers.Sc.showcase(adnId, a: msc.M
 GET  /sc/blk/css                        @controllers.Sc.serveBlockCss(c: Seq[msc.AdCssArgs])
 
 GET  /sc/geo/index                      @controllers.Sc.geoShowcase(a: msc.MScIndexArgs ?= msc.MScIndexArgs.empty)
+## Унифицированный sc index на все случаи жизни.
+GET  /sc/index                          @controllers.Sc.index(a: msc.MScIndexArgs)
 
 GET  /sc/tile/find                      @controllers.Sc.findAds(a: AdSearch)
 GET  /sc/foc/ads                        @controllers.Sc.focusedAds(a: msc.FocusedAdsSearchArgs)

@@ -320,7 +320,10 @@ class SysMarket @Inject() (
     // Генерим stub и втыкаем его в форму, чтобы меньше галочек ставить.
     // 2015.oct.21: Используем nodesUtil для сборки дефолтового инстанса.
     val dfltFormM = adnNodeFormM.fill(
-      nodesUtil.userNodeInstance("", personId = request.user.personIdOpt.get)
+      nodesUtil.userNodeInstance(
+        nameOpt     = None,
+        personIdOpt = request.user.personIdOpt
+      )
     )
     val ncpForm = nodeCreateParamsFormM.fill( NodeCreateParams() )
     createAdnNodeRender(dfltFormM, ncpForm, Ok)

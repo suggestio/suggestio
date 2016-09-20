@@ -3,9 +3,8 @@ package models
 import java.net.InetAddress
 
 import io.suggest.geo.GeoConstants
-import io.suggest.loc.geo.ipgeobase.{MCities, MCity, MIpRange, MIpRanges}
 import io.suggest.model.geo
-import io.suggest.model.geo.{Distance, GeoDistanceQuery}
+import io.suggest.model.geo.{Distance, GeoDistanceQuery, IGeoFindIpResult}
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import models.req.ExtReqHdr
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -13,7 +12,7 @@ import org.elasticsearch.common.unit.DistanceUnit
 import play.api.http.HeaderNames
 import play.api.mvc.QueryStringBindable
 import play.api.Play.{configuration, current}
-import util.xplay.CacheUtil
+import util.geo.GeoIpUtil
 import util.{PlayLazyMacroLogsImpl, PlayMacroLogsImpl}
 
 import scala.concurrent.Future
@@ -26,6 +25,7 @@ import scala.util.parsing.combinator.JavaTokenParsers
  * Description: Режимы геолокации и утиль для них.
  */
 
+@deprecated("Use MGeoLoc.geo instead", "2016.sep.16")
 object GeoMode extends PlayLazyMacroLogsImpl with JavaTokenParsers {
 
   import LOGGER._
@@ -99,6 +99,7 @@ object GeoMode extends PlayLazyMacroLogsImpl with JavaTokenParsers {
 
 
 /** Интерфейс для режимов геопоиска. */
+@deprecated("Use MGeoLoc.geo instead", "2016.sep.16")
 sealed trait GeoMode {
   /** Запрошена ли геолокация вообще? */
   def isWithGeo: Boolean
@@ -124,6 +125,7 @@ sealed trait GeoMode {
 }
 
 
+@deprecated("Use utils.geo and others instead", "2016.sep.16")
 trait GeoSearchInfo {
   /** Географическая точка, заданная координатами и описывающая клиента. */
   def geoPoint: geo.GeoPoint
@@ -143,6 +145,7 @@ trait GeoSearchInfo {
 
 
 /** Геолокация НЕ включена. */
+@deprecated("Use MGeoLoc.geo instead", "2016.sep.16")
 case object GeoNone extends GeoMode {
   override def isWithGeo = false
   override def toQsStringOpt = None
@@ -159,7 +162,10 @@ case object GeoNone extends GeoMode {
 
 
 /** Геолокация по ip. */
+@deprecated("Use MGeoLoc.geo None instead", "2016.sep.16")
 case object GeoIp extends GeoMode with PlayMacroLogsImpl {
+
+  private val geoIpUtil  = current.injector.instanceOf[GeoIpUtil]
 
   import LOGGER._
 
@@ -168,8 +174,6 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
   val DISTANCE_KM_DFLT: Double = configuration.getDouble("geo.ip.distance.km.dflt").getOrElse( 50.0 )
 
   def DISTANCE_DFLT = Distance(DISTANCE_KM_DFLT, DistanceUnit.KILOMETERS)
-
-  val REPLACE_LOCALHOST_IP_WITH: String = configuration.getString("geo.ip.localhost.replace.with").getOrElse( "213.108.35.158" )
 
   /** Выставлять флаг local client, если User-Agent содержит подстроку, подходящую под этот регэксп. */
   val LOCAL_CL_UA_RE = "(?i)(NCDN|ngenix)".r
@@ -182,7 +186,7 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
     ip2rangeCity(ra).map { resultOpt =>
       resultOpt.map { result =>
         new GeoSearchInfo {
-          private def ipGeoPoint = result.city.center
+          private def ipGeoPoint = result.center
           override def geoPoint = ipGeoPoint
           override def geoDistanceQuery = {
             GeoDistanceQuery(
@@ -190,12 +194,12 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
               distanceMax = DISTANCE_DFLT
             )
           }
-          override def cityName = Option(result.city.cityName)
-          override def countryIso2 = Option(result.range.countryIso2)
+          override def cityName = result.cityName
+          override def countryIso2 = result.countryIso2
           override def exactGeopoint = None
           override def ipGeopoint = Option(geoPoint)
           override lazy val isLocalClient = {
-            ra == REPLACE_LOCALHOST_IP_WITH || {
+            ra == geoIpUtil.REPLACE_LOCALHOST_IP_WITH || {
               request.headers
                 .get(HeaderNames.USER_AGENT)
                 .exists { LOCAL_CL_UA_RE.pattern.matcher(_).find() }
@@ -208,49 +212,14 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
 
   override def isExact: Boolean = false
 
-  case class Ip2RangeResult(city: MCity, range: MIpRange)
-
   def getRemoteAddr(implicit request: ExtReqHdr): String = {
-    val ra0 = request.remoteAddress
-    // Если это локальный адрес, то нужно его подменить на адрес офиса cbca. Это нужно для облегчения отладки.
-    // Обёрнуто в try чтобы подавлять сюрпризы содержимого remoteAddress.
-    try {
-      val inetAddr = InetAddress.getByName(ra0)
-      if (inetAddr.isAnyLocalAddress || inetAddr.isSiteLocalAddress || inetAddr.isLoopbackAddress) {
-        val ra1 = REPLACE_LOCALHOST_IP_WITH
-        trace(s"getRemoteAddr(): Local ip detected: $ra0. Rewriting ip with $ra1")
-        ra1
-      } else {
-        ra0
-      }
-    } catch {
-      case ex: Exception =>
-        error("getRemoteAddr(): Failed to parse remote address from " + ra0, ex)
-        ra0
-    }
+    geoIpUtil.fixRemoteAddr(request.remoteAddress)
   }
-
-  private val mIpRanges = current.injector.instanceOf[MIpRanges]
-  private val mCities   = current.injector.instanceOf[MCities]
 
   /** Асинхронный поиск какого-то ip в базе ip-адресов.
     * @param ip строка ip-адреса. */
-  def ip2rangeCity(ip: String): Future[Option[Ip2RangeResult]] = {
-    // Операция поиска ip в SQL-базе ресурсоёмкая, поэтому кешируем результат.
-    CacheUtil.getOrElse(ip + ".gipq", CACHE_TTL_SECONDS) {
-      for {
-        ipRanges  <- mIpRanges.findForIp(ip)
-        cityEsIds = ipRanges.iterator.flatMap(_.cityId).map(MCity.cityId2esId).toSet
-        mcities   <- mCities.multiGet(cityEsIds)
-      } yield {
-        for {
-          mcity   <- mcities.headOption
-          mrange  <- ipRanges.find(_.cityId == mcity.cityId)
-        } yield {
-          Ip2RangeResult(mcity, mrange)
-        }
-      }
-    }
+  def ip2rangeCity(ip: String): Future[Option[IGeoFindIpResult]] = {
+    geoIpUtil.findIpCached(ip)
   }
 
   override def exactGeodata: Option[geo.GeoPoint] = None
@@ -259,6 +228,7 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
 }
 
 
+@deprecated("Use MGeoLoc.geo Some instead", "2016.sep.16")
 object GeoLocation {
 
   /** Дефолтовый радиус обнаружения пользователя, для которого известны координаты. */
@@ -276,6 +246,7 @@ object GeoLocation {
   * @param geoPoint Точка (координаты).
   * @param accuracyMeters Необязательная точность в метрах.
   */
+@deprecated("Use MGeoLoc.geo Some instead", "2016.sep.16")
 final case class GeoLocation(geoPoint: GeoPoint, accuracyMeters: Option[Double] = None) extends GeoMode { gl =>
 
   override def isWithGeo = true
@@ -294,11 +265,11 @@ final case class GeoLocation(geoPoint: GeoPoint, accuracyMeters: Option[Double] 
 
         override def ipGeopoint: Option[geo.GeoPoint] = {
           for (l <- _ipGeoLoc) yield {
-            l.city.center
+            l.center
           }
         }
-        override def cityName = _ipGeoLoc.map(_.city.cityName)
-        override def countryIso2 = _ipGeoLoc.map(_.range.countryIso2)
+        override def cityName = _ipGeoLoc.flatMap(_.cityName)
+        override def countryIso2 = _ipGeoLoc.flatMap(_.countryIso2)
         override def isLocalClient = false
       }
       Some(res)
