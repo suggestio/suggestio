@@ -27,6 +27,7 @@ trait MFindAdsReq extends ToJsonWithApiVsnT {
   def receiverId  : Option[String]
   def firstAdIds  : Seq[String]
   def generation  : Option[Long]
+  @deprecated("Use loc env geo instead", "2016.sep.16")
   def geo         : Option[IMGeoMode]
   def screenInfo  : Option[IMScreen]
   def withoutId   : Option[String]

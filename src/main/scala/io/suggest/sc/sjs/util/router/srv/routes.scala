@@ -33,16 +33,8 @@ sealed trait Ctls extends js.Object {
 @js.native
 sealed trait ScCtl extends js.Object {
 
-  /**
-   * index выдачи при известном id узла.
-   * @param adnId id узла.
-   */
-  @JSName("showcase")
-  def nodeIndex(adnId: String, args: Dictionary[Any]): Route = js.native
-
-  /** index, когда узел неизвестен, и нужно, чтобы сервер сам определил узел. */
-  @JSName("geoShowcase")
-  def geoIndex(args: Dictionary[Any]): Route = js.native
+  /** index выдачи для любой ситуации. */
+  def index(args: Dictionary[Any]): Route = js.native
 
   /** Поиск рекламных карточек для плитки выдачи. */
   def findAds(adSearch: Dictionary[Any]): Route = js.native

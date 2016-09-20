@@ -1,15 +1,16 @@
 package io.suggest.sc.sjs.m.msrv.index
 
 import io.suggest.sc.sjs.util.router.srv.routes
-import io.suggest.sjs.common.model.{Timestamped, TimestampedCompanion}
-import io.suggest.sjs.common.xhr.Xhr
-
-import scala.concurrent.{ExecutionContext, Future}
-import scala.scalajs.js.{Any, Dictionary, WrappedDictionary}
 import io.suggest.sc.ScConstants.Resp._
 import io.suggest.sc.sjs.m.msrv.IFocResp
+import io.suggest.sjs.common.model.{Timestamped, TimestampedCompanion}
+import io.suggest.sjs.common.xhr.Xhr
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
+import scala.concurrent.Future
+import scala.scalajs.js.{Any, Dictionary, WrappedDictionary}
 import scala.util.Try
+
 
 /**
  * Suggest.io
@@ -26,16 +27,10 @@ object MNodeIndex {
    * @param args Аргументы поиска index.
    * @return Фьючерс с MNodeIndex внутри.
    */
-  def getIndex(args: IScIndexArgs)(implicit ec: ExecutionContext): Future[MNodeIndex] = {
+  def getIndex(args: IScIndexArgs): Future[MNodeIndex] = {
     val argsJson = args.toJson
-    // Собрать и отправить запрос за данными index.  TODO Унифицировать экшены запросов.
-    val router = routes.controllers.Sc
-    val route = args.adnIdOpt match {
-      case Some(adnId) =>
-        router.nodeIndex(adnId, argsJson)
-      case None =>
-        router.geoIndex(argsJson)
-    }
+    // Собрать и отправить запрос за данными index.
+    val route = routes.controllers.Sc.index(argsJson)
     // Запустить асинхронный запрос и распарсить результат.
     for {
       raw <- Xhr.getJson(route)
@@ -58,12 +53,6 @@ case class MNodeIndex(json: WrappedDictionary[Any]) extends IFocResp {
   def adnIdOpt: Option[String] = {
     json.get(ADN_ID_FN)
       .asInstanceOf[Option[String]]
-  }
-
-  /** Достаточна ли геолокация по мнению сервера? Мнение возвращает geoShowcase(). */
-  def geoAccurEnought: Option[Boolean] = {
-    json.get(GEO_ACCURACY_ENOUGHT_FN)
-      .asInstanceOf[Option[Boolean]]
   }
 
   def title: Option[String] = {

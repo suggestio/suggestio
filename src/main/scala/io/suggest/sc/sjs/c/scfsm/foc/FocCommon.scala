@@ -6,7 +6,7 @@ import io.suggest.sc.sjs.vm.res.FocusedRes
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.vm.content.ClearT
 import io.suggest.sc.ScConstants.Focused.SLIDE_ANIMATE_MS
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 import scala.concurrent.Future
 

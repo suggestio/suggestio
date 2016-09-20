@@ -42,7 +42,7 @@ case class MGeoPoint(
   def toArray = js.Array[Double](lon, lat)
   def toJsArray = toArray.asInstanceOf[ js.Array[js.Any] ]
 
-  def toJsObject = js.Dictionary[js.Any](
+  def toJsObject = js.Dictionary[Double](
     GeoConstants.Qs.LAT_FN -> lat,
     GeoConstants.Qs.LON_FN -> lon
   )

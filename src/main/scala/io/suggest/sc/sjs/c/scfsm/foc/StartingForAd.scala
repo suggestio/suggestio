@@ -10,7 +10,7 @@ import io.suggest.sc.sjs.vm.foc.fad.FAdRoot
 import io.suggest.sc.sjs.vm.foc.{FCarCont, FControls, FRoot}
 import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import scala.util.Failure
 import io.suggest.sc.ScConstants.Focused
 import io.suggest.sc.sjs.m.msc.MFindAdsArgsT

@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.c.scfsm.node
 
 import io.suggest.sc.sjs.c.scfsm.ScFsmStub
 import io.suggest.sc.sjs.c.search.SearchFsm
-import io.suggest.sc.sjs.m.mgeo.IMGeoMode
+import io.suggest.sc.sjs.m.mgeo.MLocEnv
 import io.suggest.sc.sjs.m.mgrid.MGridState
 import io.suggest.sc.sjs.m.mmap.EnsureMap
 import io.suggest.sc.sjs.m.msc.{MFindAdsArgsLimOff, MScSd}
@@ -32,9 +32,12 @@ trait Index extends ScFsmStub {
     /** Запустить запрос получения индекса с сервера на основе переданного состояния. */
     protected def _getIndex(sd0: SD = _stateData): Future[MNodeIndex] = {
       val inxArgs = MScIndexArgs(
-        adnIdOpt  = sd0.common.adnIdOpt,
-        geoMode   = Some( IMGeoMode(sd0.geo.lastGeoLoc) ),
-        screen    = Some( sd0.common.screen )
+        adnIdOpt      = sd0.common.adnIdOpt,
+        locEnv        = MLocEnv(
+          geo = sd0.geo.lastGeoLoc
+        ),
+        screen        = Some( sd0.common.screen ),
+        withWelcome   = true
       )
       MNodeIndex.getIndex(inxArgs)
     }

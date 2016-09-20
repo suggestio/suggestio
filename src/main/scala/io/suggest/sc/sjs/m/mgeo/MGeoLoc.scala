@@ -2,6 +2,9 @@ package io.suggest.sc.sjs.m.mgeo
 
 import org.scalajs.dom.Position
 
+import scala.scalajs.js
+import io.suggest.geo.GeoConstants.GeoLocQs._
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -16,10 +19,11 @@ import org.scalajs.dom.Position
  * @param timestamp Время определения геолокации.
  */
 case class MGeoLoc(
-  point       : MGeoPoint,
-  accuracyM   : Double,
-  timestamp   : Long
+  override val point        : MGeoPoint,
+  override val accuracyM    : Double,
+  timestamp                 : Long
 )
+  extends IGeoLocMin
 
 
 object MGeoLoc {
@@ -29,6 +33,24 @@ object MGeoLoc {
       point     = MGeoPoint(pos.coords),
       accuracyM = pos.coords.accuracy,
       timestamp = pos.timestamp.toLong
+    )
+  }
+
+}
+
+
+/** Интерфейс минимальной модели. */
+trait IGeoLocMin {
+  def point       : MGeoPoint
+  def accuracyM   : Double
+}
+
+object IGeoLocMin {
+
+  def toJson(v: IGeoLocMin): js.Dictionary[js.Any] = {
+    js.Dictionary [js.Any] (
+      CENTER_FN     -> v.point.toJsObject,
+      ACCURACY_M_FN -> v.accuracyM
     )
   }
 
