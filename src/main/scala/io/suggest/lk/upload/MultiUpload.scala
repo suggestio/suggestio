@@ -4,7 +4,8 @@ import io.suggest.js.UploadConstants
 import org.scalajs.dom.raw.HTMLInputElement
 import org.scalajs.jquery.{JQuery, JQueryAjaxSettings}
 import scala.concurrent.Future
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+
 
 /**
  * Suggest.io
