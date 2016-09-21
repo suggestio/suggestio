@@ -13,6 +13,7 @@ trait EmptyProduct extends IsEmpty { this: Product =>
     productIterator.exists {
       case opt: Option[_]           => opt.nonEmpty
       case col: TraversableOnce[_]  => col.nonEmpty
+      case m: INonEmpty             => m.nonEmpty
       case _                        => true
     }
   }
