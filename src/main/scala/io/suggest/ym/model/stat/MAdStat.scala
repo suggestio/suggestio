@@ -14,7 +14,6 @@ import org.elasticsearch.action.index.IndexRequestBuilder
 import org.elasticsearch.index.query.QueryBuilders
 import org.elasticsearch.search.sort.SortOrder
 import org.joda.time.{DateTime, DateTimeZone}
-import play.api.Configuration
 import play.api.libs.json._
 
 import scala.concurrent.duration.FiniteDuration
@@ -31,12 +30,11 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 @Singleton
 class MAdStats @Inject() (
-  configuration           : Configuration,
   override val mCommonDi  : IEsModelDiVal
 )
   extends EsModelStatic
-    with MacroLogsImpl
-    with EsModelPlayJsonStaticT
+  with MacroLogsImpl
+  with EsModelPlayJsonStaticT
 {
   import mCommonDi._
 
@@ -47,44 +45,47 @@ class MAdStats @Inject() (
   override val ES_TYPE_NAME = "adStat"
 
   // Поля модели.
-  val CLIENT_ADDR_ESFN          = "clientAddr"
-  val ACTION_ESFN               = "action"
+  // ua
   val UA_ESFN                   = "ua"
+  val CL_OS_FAMILY_ESFN         = "osFamily"
+  val CL_AGENT_ESFN             = "browser"
+  val CL_DEVICE_ESFN            = "device"
+  val CL_OS_VERSION_ESFN        = "osVsn"
+
+  // sc
+  val ACTION_ESFN               = "action"
   val AD_ID_ESFN                = "adId"
   val ADS_RENDERED_ESFN         = "adsRendered"
   val ON_NODE_ID_ESFN           = "adOwnerId"
-  val TIMESTAMP_ESFN            = "timestamp"
+  val GENERATION_ESFN           = "gen"
+  val CLICKED_AD_ID_ESFN        = "clickedAdId"
+  val NODE_NAME_ESFN            = "nodeName"
 
+  // common
+  val REQUEST_URI_ESFN          = "uri"
+  val TIMESTAMP_ESFN            = "timestamp"
+  val CL_UID_ESFN               = "clUID"
+  val CLIENT_ADDR_ESFN          = "clientAddr"
+
+  // geo loc
   val CLIENT_IP_GEO_EFSN        = "clIpGeo"
   val CLIENT_TOWN_ESFN          = "clIpTown"
   val CLIENT_GEO_LOC_ESFN       = "clLoc"
-  val NODE_NAME_ESFN            = "nodeName"
   val COUNTRY_ESFN              = "country"
   val IS_LOCAL_CLIENT_ESFN      = "isLocalCl"
   val CLIENT_LOC_ACCUR_ESFN     = "clLocAccur"
 
-  val CL_OS_FAMILY_ESFN         = "osFamily"
-  val CL_AGENT_ESFN             = "browser"
-  val CL_DEVICE_ESFN            = "device"
-  val CLICKED_AD_ID_ESFN        = "clickedAdId"
-  val GENERATION_ESFN           = "gen"
-  val CL_OS_VERSION_ESFN        = "osVsn"
-  val CL_UID_ESFN               = "clUID"
-
+  // screen
   val SCREEN_ORIENTATION_ESFN   = "scrOrient"
   val SCREEN_RES_CHOOSEN_ESFN   = "scrResChoosen"
   val PX_RATIO_CHOOSEN_ESFN     = "pxRatioChoosen"
   val VIEWPORT_DECLARED_ESFN    = "viewportDecl"
-
-  val REQUEST_URI_ESFN          = "uri"
 
 
   /** Через сколько времени удалять записи статистики. */
   val TTL_DAYS_DFLT = configuration.getInt("ad.stat.ttl.period.days").getOrElse(100)
 
   type AdFreqs_t = Map[String, Map[String, Long]]
-
-  def adOwnerQuery(adOwnerId: String) = QueryBuilders.termQuery(ON_NODE_ID_ESFN, adOwnerId)
 
   def beforeDtQuery(dt: DateTime) = {
     QueryBuilders.rangeQuery(TIMESTAMP_ESFN)
@@ -402,5 +403,6 @@ final class MAdStatJmx @Inject() (
         s"FAIL: findBefore($dtStr, $maxResults) ${ex.getClass.getSimpleName} : ${ex.getMessage}"
     }
   }
+
 }
 
