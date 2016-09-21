@@ -18,7 +18,7 @@ import util.geo.GeoIpUtil
 import util.img.{LogoUtil, WelcomeUtil}
 import util.n2u.N2NodesUtil
 import util.showcase.{ScStatUtil, ShowcaseNodeListUtil, ShowcaseUtil}
-import util.stat.StatUtil
+import util.stat.StatCookiesUtil
 
 
 /**
@@ -28,11 +28,11 @@ import util.stat.StatUtil
  * Description: Контроллер выдачи sio-market.
  * 2014.nov.10: Из-за активного наращивания функционала был разрезан на части, расположенные в controllers.sc.*.
  */
-class Sc @Inject()(
+class Sc @Inject() (
   override val logoUtil           : LogoUtil,
   override val welcomeUtil        : WelcomeUtil,
   override val scStatUtil         : ScStatUtil,
-  override val statUtil           : StatUtil,
+  override val statCookiesUtil    : StatCookiesUtil,
   override val mNodes             : MNodes,
   override val scNlUtil           : ShowcaseNodeListUtil,
   override val scUtil             : ShowcaseUtil,

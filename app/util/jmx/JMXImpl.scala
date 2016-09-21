@@ -14,6 +14,7 @@ import util.adv.AdvUtilJmx
 import java.lang.management.ManagementFactory
 
 import io.suggest.loc.geo.ipgeobase.{MCitiesJmx, MIpRangesJmx}
+import io.suggest.stat.m.MStatsJmx
 import io.suggest.util.JMXBase
 import util.PlayLazyMacroLogsImpl
 import io.suggest.util.JMXHelpers._
@@ -47,6 +48,7 @@ class JMXImpl @Inject() (
   mExtIdentJmx                  : MExtIdentJmx,
   mIpRangesJmx                  : MIpRangesJmx,
   mCitiesJmx                    : MCitiesJmx,
+  mStatsJmx                     : MStatsJmx,
   lifecycle                     : ApplicationLifecycle,
   implicit private val ec       : ExecutionContext
 )
@@ -73,7 +75,8 @@ class JMXImpl @Inject() (
       geoTagsUtilJmx,
       mIpRangesJmx,
       mCitiesJmx,
-      mMediasJmx
+      mMediasJmx,
+      mStatsJmx
     )
   }
 

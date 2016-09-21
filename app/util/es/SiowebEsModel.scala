@@ -5,6 +5,7 @@ import io.suggest.es.EsClientUtil
 import io.suggest.model.es.{CopyContentResult, EsModelCommonStaticT, EsModelUtil}
 import io.suggest.model.n2.media.MMedias
 import io.suggest.model.n2.node.MNodes
+import io.suggest.stat.m.MStats
 import io.suggest.util.{JMXBase, SioEsUtil}
 import io.suggest.ym.model.stat.MAdStats
 import models.adv.MExtTargets
@@ -41,6 +42,7 @@ class SiowebEsModel @Inject() (
   emailActivations    : EmailActivations,
   mExtIdents          : MExtIdents,
   mAsymKeys           : MAsymKeys,
+  mStats              : MStats,
   mCommonDi           : ICommonDi
 )
   extends PlayLazyMacroLogsImpl
@@ -68,7 +70,7 @@ class SiowebEsModel @Inject() (
     mEvents,
     mAsymKeys,
     mMedias,
-    mAdStats
+    mAdStats, mStats
   )
 
   /** Вернуть экзепшен, если есть какие-то проблемы при обработке ES-моделей. */

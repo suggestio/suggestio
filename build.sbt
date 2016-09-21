@@ -34,6 +34,7 @@ libraryDependencies ++= {
   Common.ORG %% "mbill2" % "0.0.0-SNAPSHOT",
   Common.ORG %% "svg-util" % "0.0.0-SNAPSHOT",
   Common.ORG %% "ipgeobase" % "0.0.0-SNAPSHOT",
+  Common.ORG %% "stat" % "0.0.0-SNAPSHOT",
   Common.ORG %% "util" % "2.0.1-SNAPSHOT" changing()
     exclude("org.jruby", "jruby-complete")
     exclude("org.slf4j", "slf4j-log4j12")

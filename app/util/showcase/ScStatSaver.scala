@@ -2,17 +2,14 @@ package util.showcase
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.async.AsyncUtil
-import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.ym.model.stat.{MAdStat, MAdStats}
 import models.mproj.ICommonDi
 import org.elasticsearch.action.bulk.{BulkProcessor, BulkRequest, BulkResponse}
-import org.elasticsearch.client.Client
 import org.elasticsearch.common.unit.{ByteSizeValue, TimeValue}
 import play.api.inject.ApplicationLifecycle
-import play.api.Configuration
 import util.{PlayMacroLogsDyn, PlayMacroLogsImpl}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 import scala.reflect.ClassTag
 
 /**
@@ -34,12 +31,10 @@ class ScStatSaver @Inject() (
   extends PlayMacroLogsDyn
 {
 
-  import mCommonDi.{current, configuration, ec}
+  import mCommonDi.{current, configuration}
 
   lifecycle.addStopHook { () =>
-    Future {
-      BACKEND.close()
-    }
+    BACKEND.close()
   }
 
   private def _inject[T <: ScStatSaverBackend : ClassTag]: T = {
@@ -85,7 +80,7 @@ trait ScStatSaverBackend {
   def flush(): Unit
 
   /** Завершение работы backend'a. */
-  def close(): Unit
+  def close(): Future[_]
 }
 
 
@@ -93,23 +88,22 @@ trait ScStatSaverBackend {
 class DummySaverBackend extends ScStatSaverBackend {
   /** Сохранение. Бэкэнд может отправлять в свою очередь или в хранилище. */
   override def save(stat: MAdStat): Future[_] = {
-    Future successful Nil
+    Future.successful(Nil)
   }
 
   /** Сброс накопленной очереди, если такая имеется. */
   override def flush(): Unit = {}
 
   /** Завершение работы backend'a. */
-  override def close(): Unit = {}
+  override def close(): Future[_] = {
+    Future.successful(None)
+  }
 }
 
 
 /** Plain backend вызывает save() для всех элементов очереди. */
 class PlainSaverBackend @Inject() (
-  mAdStats                      : MAdStats,
-  implicit private val ec       : ExecutionContext,
-  implicit private val esClient : Client,
-  implicit private val sn       : SioNotifierStaticClientI
+  mAdStats                      : MAdStats
 )
   extends ScStatSaverBackend
 {
@@ -117,7 +111,9 @@ class PlainSaverBackend @Inject() (
     mAdStats.save(stat)
   }
   override def flush(): Unit = {}
-  override def close(): Unit = {}
+  override def close(): Future[_] = {
+    Future.successful(None)
+  }
 }
 
 
@@ -126,14 +122,14 @@ class PlainSaverBackend @Inject() (
 class BulkProcessorSaveBackend @Inject() (
   mAdStats                : MAdStats,
   asyncUtil               : AsyncUtil,
-  configuration           : Configuration,
-  implicit val esClient   : Client
+  mCommonDi               : ICommonDi
 )
   extends ScStatSaverBackend
   with PlayMacroLogsImpl
 {
 
   import LOGGER._
+  import mCommonDi._
 
   /** Не хранить в очереди дольше указанного интервала (в секундах). */
   def FLUSH_INTERVAL_SECONDS: Long = {
@@ -164,20 +160,26 @@ class BulkProcessorSaveBackend @Inject() (
       .build()
   }
 
+  private def _asyncSafe[T](f: => T): Future[T] = {
+    Future(f)(asyncUtil.singleThreadCpuContext)
+  }
+
   override def save(stat: MAdStat): Future[_] = {
     // Подавляем блокировку синхронизации в bp через отдельный execution context с очередью задач.
-    Future {
+    _asyncSafe {
       val irb = mAdStats.prepareIndex(stat).request()
       bp.add(irb)
-    }(asyncUtil.singleThreadCpuContext)
+    }
   }
 
   override def flush(): Unit = {
     bp.flush()
   }
 
-  override def close(): Unit = {
-    bp.close()
+  override def close(): Future[_] = {
+    _asyncSafe {
+      bp.close()
+    }
   }
 
 }

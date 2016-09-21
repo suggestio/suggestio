@@ -9,11 +9,11 @@ import org.scalatestplus.play._
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 21.08.14 12:04
- * Description: Тесты для [[util.stat.StatUtil]].
+ * Description: Тесты для [[util.stat.StatCookiesUtil]].
  */
-class StatUtilSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
+class StatCookiesUtilSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
 
-  lazy val statUtil = app.injector.instanceOf[StatUtil]
+  lazy val statUtil = app.injector.instanceOf[StatCookiesUtil]
 
 
   "StatUtil" must {

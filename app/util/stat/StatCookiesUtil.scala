@@ -23,7 +23,7 @@ import util.PlayMacroLogsImpl
  * 2014.sep.22: uuid-конвертеры вынесены в sioutil/io.suggest.util.UuidUtil.
  */
 @Singleton
-class StatUtil @Inject() (
+class StatCookiesUtil @Inject()(
   configuration: Configuration
 )
   extends PlayMacroLogsImpl
@@ -156,5 +156,11 @@ class StatUtil @Inject() (
     )
     result.withCookies(statCookie)
   }
+
+}
+
+trait IStatCookiesUtilDi {
+
+  def statCookiesUtil: StatCookiesUtil
 
 }

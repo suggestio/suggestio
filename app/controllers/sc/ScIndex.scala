@@ -19,6 +19,7 @@ import org.elasticsearch.common.unit.DistanceUnit
 import scala.concurrent.Future
 import play.api.mvc._
 import util.geo.IGeoIpUtilDi
+import util.stat.IStatCookiesUtilDi
 
 import scala.util.{Failure, Success}
 
@@ -36,7 +37,7 @@ import scala.util.{Failure, Success}
 trait ScIndex
   extends ScController
   with PlayMacroLogsI
-  with IStatUtil
+  with IStatCookiesUtilDi
   with MaybeAuth
   with IMNodes
   with INodesUtil
@@ -56,7 +57,8 @@ trait ScIndex
     * @param args Все qs-данные запроса экшена ровно одним набором.
     * @return 200 OK + index выдачи в виде JSON.
     */
-  def index(args: MScIndexArgs) = MaybeAuth().async { implicit request =>
+  // U.PersonNode запрашивается в фоне для сбора статистики внутри экшена.
+  def index(args: MScIndexArgs) = MaybeAuth(U.PersonNode).async { implicit request =>
     val logic = new ScIndexUniLogicImpl {
       override def _reqArgs  = args
       override def _syncArgs = MScIndexSyncArgs.empty
@@ -77,6 +79,7 @@ trait ScIndex
 
     // TODO Нужна новая и хорошая годная статистика для выдачи с новой геолокацией.
 
+
     resultFut.recover { case ex: NodeNotFoundException =>
       LOGGER.trace(s"index($args): node missing", ex)
       NotFound( ex.getMessage )
@@ -93,11 +96,12 @@ trait ScIndex
     /** Параметры, приходящие из sync site.  */
     def _syncArgs: IScIndexSyncArgs
 
+    lazy val _remoteIp = geoIpUtil.fixRemoteAddr( _request.remoteAddress )
 
     /** ip-геолокация, когда гео-координаты или иные полезные данные клиента отсутствуют. */
     def reqGeoLocFut: Future[Option[MGeoLoc]] = {
       _reqArgs.locEnv.geoLocOpt.fold [Future[Option[MGeoLoc]]] {
-        val remoteIp = geoIpUtil.fixRemoteAddr( _request.remoteAddress )
+        val remoteIp = _remoteIp
         lazy val logPrefix = s"reqGeoLocFut(${System.currentTimeMillis}):"
         LOGGER.trace(s"$logPrefix locEnv empty, trying geolocate by ip: $remoteIp")
         val geoLoc2Fut = for (geoIpOpt <- geoIpUtil.findIpCached(remoteIp)) yield {
@@ -452,11 +456,21 @@ trait ScIndex
       for {
         args <- respArgsFut
       } yield {
-        statUtil.resultWithStatCookie {
+        statCookiesUtil.resultWithStatCookie {
           _resultVsn(args)
         }(ctx.request)
       }
     }
+
+
+    /*import io.suggest.stat.m._
+    def saveStat: Future[_] = {
+      val mstat = MStat(
+        common = MCommon(
+          ip =  _remoteIp,
+        )
+      )
+    }*/
 
   }
 

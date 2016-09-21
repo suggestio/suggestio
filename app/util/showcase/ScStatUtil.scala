@@ -1,9 +1,14 @@
 package util.showcase
 
 import com.google.inject.Inject
+import io.suggest.common.fut.FutureUtil
+import io.suggest.model.geo.IGeoFindIpResult
 import io.suggest.util.UuidUtil
 import io.suggest.ym.model.stat.MAdStat
+import io.suggest.stat.m._
 import models.im.DevScreen
+import models.mctx.Context
+import models.mgeo.MLocEnv
 import models.mproj.ICommonDi
 import models.msc.MScNodeSearchArgs
 import models.req.IReqHdr
@@ -13,7 +18,8 @@ import net.sf.uadetector.service.UADetectorServiceFactory
 import org.joda.time.DateTime
 import play.api.http.HeaderNames.USER_AGENT
 import util.PlayMacroLogsImpl
-import util.stat.StatUtil
+import util.geo.GeoIpUtil
+import util.stat.StatCookiesUtil
 
 import scala.concurrent.duration._
 import scala.concurrent.Future
@@ -27,12 +33,16 @@ import scala.concurrent.Future
  * в разных случаях ситуациях, при этом с минимальной дубликацией кода и легкой расширяемостью оного.
  */
 class ScStatUtil @Inject() (
-  statUtil                : StatUtil,
+  statCookiesUtil         : StatCookiesUtil,
   scStatSaver             : ScStatSaver,
+  geoIpUtil               : GeoIpUtil,
   mCommonDi               : ICommonDi
-) {
+)
+  extends PlayMacroLogsImpl
+{
 
   import mCommonDi._
+  import LOGGER._
 
   /** Локальных клиентов нет смысла долго хранить. Время их хранения тут. */
   val LOCAL_STAT_TTL = {
@@ -51,12 +61,9 @@ class ScStatUtil @Inject() (
 
   def isStrUseful(str: String) = !isStrGarbage(str)
 
-  // TODO Надо отделить вспомогательные модели от логики сохранения статистики.
 
   /** common-утиль для сборки генераторов статистики. */
-  abstract class StatT extends PlayMacroLogsImpl {
-
-    import LOGGER._
+  abstract class StatT {
 
     implicit def request: IReqHdr
 
@@ -101,16 +108,19 @@ class ScStatUtil @Inject() (
       }
     }
 
-    def clUidOpt = statUtil.getFromRequest
+    def clUidOpt = statCookiesUtil
+      .getFromRequest
       .map { UuidUtil.uuidToBase64 }
+
+    def agentOs = agent.flatMap { _agent =>
+      Option(_agent.getOperatingSystem)
+    }
 
     val now = DateTime.now()
 
     def personId = request.user.personIdOpt
 
     def adsCount = madIds.size
-
-    def agentOs = agent.flatMap { _agent => Option(_agent.getOperatingSystem) }
 
     lazy val onNodeIdOpt: Option[String] = {
       adSearchOpt.flatMap { a =>
@@ -183,7 +193,7 @@ class ScStatUtil @Inject() (
               .filter(isStrUseful),
             clUid       = clUidOpt,
             scrOrient   = screenOpt
-              .map(_.orientation.name),
+              .map(_.orientation.strId),
             scrResChoosen = screenOpt
               .flatMap(_.maybeBasicScreenSize)
               .map(_.toString()),
@@ -307,6 +317,126 @@ class ScStatUtil @Inject() (
   {
     override def statAction = ScStatActions.Nodes
     override lazy val onNodeIdOpt: Option[String] = args.currAdnId
+  }
+
+
+  // ----- v2 статистика выдачи. ------
+
+  /** Что-то типа builder'а для создания и сохранения одного элемента статистики. */
+  abstract class Stat2 {
+
+    /** Контекст запроса. */
+    def ctx: Context
+
+    /** Сохраняемые stat actions. */
+    def statActions: List[MAction]
+
+    /** Данные по экрану. Перезаписать, при наличии распарсенного варианта. */
+    def screen: Option[DevScreen] = ctx.deviceScreenOpt
+
+    lazy val uaOpt = {
+      ctx.request
+        .headers
+        .get(USER_AGENT)
+        .map(_.trim)
+        .filter(!_.isEmpty)
+    }
+
+    lazy val browser = uaOpt.flatMap { ua =>
+      // try-catch для самозащиты от возможных багов в православной либе uadetector.
+      try {
+        val uaParser = UADetectorServiceFactory.getResourceModuleParser
+        Some(uaParser.parse(ua))
+      } catch {
+        case ex: Throwable =>
+          warn("agent: Unable to use UADetector for parsing UA: " + ua, ex)
+          None
+      }
+    }
+
+    def clUidOpt = statCookiesUtil
+      .getFromRequest(ctx.request)
+      .map { UuidUtil.uuidToBase64 }
+
+
+
+    /** stat action для описания текущего юзера. */
+    def userSaFut: Future[Option[MAction]] = {
+      val u = ctx.request.user
+      FutureUtil.optFut2futOpt( u.personIdOpt ) { personId =>
+        for (personNodeOpt <- u.personNodeOptFut) yield {
+          for (pnode <- personNodeOpt) yield {
+            MAction(
+              actions   = Seq( MActionTypes.CurrUser ),
+              nodeId    = Seq( personId ),
+              nodeName  = pnode.guessDisplayName.toSeq
+            )
+          }
+        }
+      }
+    }
+
+    /** Оверрайдить при уже наличии нормального адреса. */
+    def remoteIp = geoIpUtil.fixRemoteAddr( ctx.request.remoteAddress )
+
+    def isLocalClient = false // TODO ctx.request.remoteAddress isLoopback/local/etc
+
+    /** Данные loc env, если есть. */
+    def locEnv: Option[MLocEnv] = None
+
+    def ipGeoLoc: Option[IGeoFindIpResult] = None
+
+    /** generation seed, если есть. */
+    def gen: Option[Long] = None
+
+    def mua = {
+      val _browser  = browser
+      val browserOs = _browser.flatMap { _agent =>
+        Option(_agent.getOperatingSystem)
+      }
+      MUa(
+        ua      = uaOpt,
+        browser = _browser
+          .flatMap { _agent => Option(_agent.getName) }
+          .filter(isStrUseful),
+        device  = _browser
+          .flatMap { _agent => Option(_agent.getDeviceCategory) }
+          .flatMap { dc => Option(dc.getName) }
+          .filter(isStrUseful),
+        osFamily = browserOs
+          .flatMap { os => Option(os.getFamilyName) }
+          .filter(isStrUseful),
+        osVsn = browserOs
+          .flatMap { os => Option(os.getVersionNumber) }
+          .flatMap { vsn => Option(vsn.getMajor) }
+          .filter(isStrUseful)
+      )
+    }
+
+    /** Инстанс (пока несохраненный) статистики. */
+    def mstat: Future[MStat] = {
+      val _userSaFut = userSaFut
+      for {
+        _userSa <- _userSaFut
+      } yield {
+        MStat(
+          common = MCommon(
+            ip              = Some( remoteIp ),
+            timestamp       = ctx.now,
+            clientUid       = clUidOpt,
+            uri             = Option( ctx.request.uri ),
+            // TODO domain3p
+            isLocalClient   = Some(isLocalClient),
+            gen             = gen
+          ),
+          actions = statActions ++ _userSa,
+          ua      = mua,
+          screen  = ???,
+          location = ???
+        )
+      }
+    }
+
   }
 
 }
