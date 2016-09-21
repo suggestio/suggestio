@@ -133,6 +133,10 @@ object SiobixBuild extends Build {
       .dependsOn(logsMacro, util)
   }
 
+  /** Подсистема сбора статистики. */
+  lazy val stat = project
+    .dependsOn(logsMacro, util)
+
   /** Самописное leaflet API. */
   lazy val leafletSjs = {
     val name = "scalajs-leaflet"
@@ -188,7 +192,7 @@ object SiobixBuild extends Build {
 
   /** веб-интерфейс suggest.io v2. */
   lazy val web21 = project
-    .dependsOn(common, util, securesocial, n2, mbill2, svgUtil, ipgeobase)
+    .dependsOn(common, util, securesocial, n2, mbill2, svgUtil, ipgeobase, stat)
     .settings(
       scalaJSProjects := Seq(lkSjs, scSjs),
       pipelineStages += scalaJSProd
@@ -204,8 +208,8 @@ object SiobixBuild extends Build {
         common, logsMacro,
         commonSjs, leafletSjs, mapBoxGlSjs, mapRadSjs, lkSjs, scSjs, dateTimePickerSjs, lkDtPeriodSjs,
         util, swfs, n2, securesocial,
-        ipgeobase,
-        web21, mbill2,  svgUtil
+        ipgeobase, stat,
+        web21, mbill2, svgUtil
       )
   }
 
