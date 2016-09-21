@@ -98,13 +98,6 @@ abstract class MIpRangesAbstract
     resFut
   }
 
-  /** Кешируемый аналог findForIp(), поиск range'ей для указанного ip-адреса. */
-  def findForIpCached(ip: String): Future[Seq[MIpRange]] = {
-    cacheApiUtil.getOrElseFut(ip + ".ipgb.find", expiration = 10.seconds) {
-      findForIp(ip)
-    }
-  }
-
 
   override def generateMappingStaticFields: List[Field] = {
     List(
