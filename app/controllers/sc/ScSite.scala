@@ -5,8 +5,9 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.model.n2.extra.domain.{DomainCriteria, MDomainModes}
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.stat.m.{MAction, MActionTypes}
 import models._
-import models.mctx.{Context, IContextUtilDi}
+import models.mctx.IContextUtilDi
 import models.msc._
 import models.req.IReq
 import play.api.mvc._
@@ -42,7 +43,7 @@ trait ScSiteBase
   import mCommonDi._
 
   /** Настраиваемая логика сборки результата запроса сайта выдачи. */
-  protected abstract class SiteLogic {
+  protected abstract class SiteLogic extends LogicCommonT {
 
     /** Сюда передаются исходные параметры запроса сайта (qs). */
     def _siteQsArgs: SiteQsArgs
@@ -50,15 +51,10 @@ trait ScSiteBase
     /** Исходный http-реквест. */
     implicit def _request: IReq[_]
 
-    /** Контекст рендера нижелижещих шаблонов. */
-    implicit lazy val ctx = getContext2
-
-
-    /** Опциональный экземпляр текущего узла. */
-    def nodeOptFut: Future[Option[MNode]] = {
-      // 2016.sep.9: Геолокация выходит за пределы geo. Тут добавляется поддержка доменов в качестве подсказки для поиска узла:
+    // 2016.sep.9: Геолокация выходит за пределы geo. Тут добавляется поддержка доменов в качестве подсказки для поиска узла:
+    lazy val domainNodeOptFut: Future[Option[MNode]] = {
       val myHost = ctx.myHost
-      val domainNodeOptFut = OptionUtil.maybeFut( !ctxUtil.isMyHostSio(myHost) ) {
+      OptionUtil.maybeFut( !ctxUtil.isMyHostSio(myHost) ) {
         val msearch = new MNodeSearchDfltImpl {
           override def domains: Seq[DomainCriteria] = {
             val cr = DomainCriteria(
@@ -84,13 +80,19 @@ trait ScSiteBase
         // Вернуть основной фьючерс поиска подходящего под домен узла.
         fut
       }
+    }
+
+    /** Опциональный экземпляр текущего узла. */
+    def nodeOptFut: Future[Option[MNode]] = {
+      val _domainNodeOptFut = domainNodeOptFut
 
       // Поиска id узла среди параметров URL QS.
       val qsNodeOptFut = mNodeCache.maybeGetByIdCached( _siteQsArgs.adnId )
 
       // Опционально объеденить оба фьючерса.
-      OptionUtil.orElseFut( domainNodeOptFut )( qsNodeOptFut )
+      OptionUtil.orElseFut( _domainNodeOptFut )( qsNodeOptFut )
     }
+    lazy val nodeOptFutVal = nodeOptFut
 
 
     /** Добавки к тегу head в siteTpl. */
@@ -139,15 +141,15 @@ trait ScSiteBase
 
     /** Здесь описывается методика сборки аргументов для рендера шаблонов. */
     def renderArgsFut: Future[ScSiteArgs] = {
-      val _nodeOptFut             = nodeOptFut
+      val _nodeOptFut             = nodeOptFutVal
       val _headAfterFut           = headAfterFut
       val _scriptHtmlFut          = scriptHtmlFut
       val _customScStateOptFut    = customScStateOptFut
       for {
-        _nodeOpt    <- _nodeOptFut
-        _headAfter  <- _headAfterFut
-        _scriptHtml <- _scriptHtmlFut
-        _customScStateOpt <- _customScStateOptFut
+        _nodeOpt                  <- _nodeOptFut
+        _headAfter                <- _headAfterFut
+        _scriptHtml               <- _scriptHtmlFut
+        _customScStateOpt         <- _customScStateOptFut
       } yield {
         new ScSiteArgs {
           override def nodeOpt    = _nodeOpt
@@ -169,6 +171,49 @@ trait ScSiteBase
         val render = siteTpl(rargs)(ctx)
         cacheControlShort {
           Ok( render )
+        }
+      }
+    }
+
+    override def scStat: Future[Stat2] = {
+      val _userSaOptFut     = scStatUtil.userSaOptFutFromRequest()
+      val _nodeOptFut       = nodeOptFutVal
+      val _domainNodeOptFut = domainNodeOptFut
+      for {
+        _userSaOpt        <- _userSaOptFut
+        _nodeOpt          <- _nodeOptFut
+        _domainNodeOpt    <- _domainNodeOptFut
+      } yield {
+        new Stat2 {
+          override def userSaOpt = _userSaOpt
+          override def statActions: List[MAction] = {
+            // Возможный stat-экшен POV-просмотра сайта с т.з. карточки.
+            val mPovActions = _siteQsArgs.povAdId.fold [List[MAction]] (Nil) { povAdId =>
+              val mPovAct = MAction(
+                actions   = Seq( MActionTypes.PovNode ),
+                nodeId    = Seq(povAdId),
+                nodeName  = Nil
+              )
+              List(mPovAct)
+            }
+            // Экшен посещения sc site.
+            val mSiteAction = MAction(
+              actions   = Seq( MActionTypes.ScSite ),
+              nodeId    = _nodeOpt.flatMap(_.id).toSeq,
+              nodeName  = _nodeOpt.flatMap(_.guessDisplayName).toSeq
+            )
+            // Объединяем все найденные stat-экшены.
+            mSiteAction :: mPovActions
+          }
+
+          /** Перезаписать, если сейчас орудуем в каком-то другом домене, вне s.io. */
+          override def domain3p: Option[String] = {
+            if (_domainNodeOpt.nonEmpty) {
+              Some( ctx.myHost )
+            } else {
+              None
+            }
+          }
         }
       }
     }
@@ -199,13 +244,10 @@ trait ScSiteBase
       Future.successful(html)
     }
 
-    // Т.к. customSjsState тоже теперь читает nodeOptFut, то делаем его lazy val:
-    override lazy val nodeOptFut = super.nodeOptFut
-
     /** Сформулировать данные для начального состояния выдачи. */
     override def customScStateOptFut: Future[Option[ScJsState]] = {
       for {
-        nodeOpt <- nodeOptFut
+        nodeOpt <- nodeOptFutVal
       } yield {
         for (mnode <- nodeOpt) yield {
           ScJsState(adnId = mnode.id)
@@ -232,58 +274,37 @@ trait ScSiteGeo
   with MaybeAuth
 {
 
-  import mCommonDi._
-
   /** Пользователь заходит в sio.market напрямую через интернет, без помощи сторонних узлов. */
-  def geoSite(maybeJsState: ScJsState, siteArgs: SiteQsArgs) = MaybeAuth().async { implicit request =>
+  // U.PersonNode запрашивается в фоне для сбора статистики внутри экшена.
+  def geoSite(maybeJsState: ScJsState, siteArgs: SiteQsArgs) = MaybeAuth(U.PersonNode).async { implicit request =>
     if (maybeJsState.nonEmpty) {
       // Было раньше MovedPermanently, но почему-то оно может сбойнуть и закешироваться на CDN.
       // 2016.02.04 Логгирование тут усилено для отлова memleak'а с зацикливанием здесь.
       LOGGER.trace(s"geoSite($siteArgs): Qs js state is nonEmpty, redirecting from ${request.path} [${request.remoteAddress}]")
       val call = routes.Sc.geoSite(x = siteArgs).url + "#!?" + maybeJsState.toQs()
       Redirect(call)
+
     } else {
-      _geoSite(siteArgs)
+
+      // Сразу собираем логику ответа. Она может не использоваться по прямому назначению, но сойдёт в качестве передавалки параметров.
+      val logic = new SiteScriptLogicV2 {
+        override def _siteQsArgs  = siteArgs
+        override def _request     = request
+      }
+
+      // Запуск сохранения статистики.
+      logic.saveScStat()
+
+      // Запуск исполнения экшена.
+      _geoSiteResult(logic)
     }
   }
 
-  /**
-   * Тело экшена _geoSite задаётся здесь, чтобы его можно было переопределять при необходимости.
-   *
-   * @param request Экземпляр реквеста.
-   * @return Результат работы экшена.
-   */
-  protected def _geoSite(siteArgs: SiteQsArgs)(implicit request: IReq[_]): Future[Result] = {
-    // Запускаем сбор статистики в фоне.
-    _geoSiteStats
-    // Запускаем выдачу результата запроса:
-    _geoSiteResult(siteArgs)
-  }
-
-  /** Фоновый сбор статистики. Можно переназначать. */
-  protected def _geoSiteStats(implicit request: IReq[_]): Future[_] = {
-    val fut = Future {
-      scStatUtil.SiteStat()
-    }.flatMap {
-      _.saveStats
-    }
-    fut.onFailure { case ex: Throwable =>
-      LOGGER.warn("geoSite(): Failed to save statistics", ex)
-    }
-    fut
-  }
 
   /**
    * Раздавалка "сайта" выдачи первой страницы. Можно переопределять, для изменения/расширения функционала.
-   *
-   * @param siteQsArgs Доп.аргументы для рендера сайта.
-   * @param request Реквест.
    */
-  protected def _geoSiteResult(siteQsArgs: SiteQsArgs)(implicit request: IReq[_]): Future[Result] = {
-    val logic = new SiteScriptLogicV2 {
-      override implicit def _request  = request
-      override def _siteQsArgs        = siteQsArgs
-    }
+  protected def _geoSiteResult(logic: SiteScriptLogicV2): Future[Result] = {
     logic.resultFut
   }
 

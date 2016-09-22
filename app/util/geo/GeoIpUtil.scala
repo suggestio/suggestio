@@ -6,6 +6,7 @@ import com.google.inject.{Inject, Singleton}
 import io.suggest.loc.geo.ipgeobase.IpgbUtil
 import io.suggest.model.geo.{IGeoFindIp, IGeoFindIpResult}
 import models.mproj.ICommonDi
+import models.req.{IRemoteAddrInfo, MRemoteAddrInfo}
 import util.PlayMacroLogsImpl
 
 import scala.concurrent.Future
@@ -81,21 +82,30 @@ class GeoIpUtil @Inject() (
     * @param remoteAddr0 Сырое значение адреса request.remoteAddress, желательно из ExtReqHdr.
     * @return Строка с поправленным для поиска по geoip адресом.
     */
-  def fixRemoteAddr(remoteAddr0: String): String = {
+  def fixRemoteAddr(remoteAddr0: String): IRemoteAddrInfo = {
     lazy val logPrefix = s"getRemoteAddr($remoteAddr0):"
     try {
       val inetAddr = InetAddress.getByName(remoteAddr0)
       if (inetAddr.isAnyLocalAddress || inetAddr.isSiteLocalAddress || inetAddr.isLoopbackAddress) {
         val ra1 = REPLACE_LOCALHOST_IP_WITH
         LOGGER.trace(s"$logPrefix Local ip detected: $remoteAddr0. Rewriting ip with $ra1")
-        ra1
+        MRemoteAddrInfo(
+          remoteAddr    = ra1,
+          isLocal       = Some(true)
+        )
       } else {
-        remoteAddr0
+        MRemoteAddrInfo(
+          remoteAddr    = remoteAddr0,
+          isLocal       = Some(false)
+        )
       }
     } catch {
       case ex: Exception =>
         LOGGER.error(s"$logPrefix Failed to parse remote address", ex)
-        remoteAddr0
+        MRemoteAddrInfo(
+          remoteAddr  = remoteAddr0,
+          isLocal     = None
+        )
     }
   }
 

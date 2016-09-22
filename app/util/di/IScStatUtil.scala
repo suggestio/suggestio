@@ -10,6 +10,6 @@ import util.showcase.ScStatUtil
  */
 trait IScStatUtil {
 
-  def scStatUtil: ScStatUtil
+  val scStatUtil: ScStatUtil
 
 }

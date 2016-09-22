@@ -6,12 +6,13 @@ import io.suggest.model.geo.IGeoFindIpResult
 import io.suggest.util.UuidUtil
 import io.suggest.ym.model.stat.MAdStat
 import io.suggest.stat.m._
+import io.suggest.stat.saver.PlayStatSaver
 import models.im.DevScreen
 import models.mctx.Context
 import models.mgeo.MLocEnv
 import models.mproj.ICommonDi
 import models.msc.MScNodeSearchArgs
-import models.req.IReqHdr
+import models.req.{IReqHdr, ISioUser}
 import models.stat.{ScStatAction, ScStatActions}
 import models.{AdSearch, GeoSearchInfo, _}
 import net.sf.uadetector.service.UADetectorServiceFactory
@@ -35,6 +36,7 @@ import scala.concurrent.Future
 class ScStatUtil @Inject() (
   statCookiesUtil         : StatCookiesUtil,
   scStatSaver             : ScStatSaver,
+  playStatSaver           : PlayStatSaver,
   geoIpUtil               : GeoIpUtil,
   mCommonDi               : ICommonDi
 )
@@ -322,7 +324,24 @@ class ScStatUtil @Inject() (
 
   // ----- v2 статистика выдачи. ------
 
-  /** Что-то типа builder'а для создания и сохранения одного элемента статистики. */
+  def userSaOptFutFromRequest()(implicit req: IReqHdr): Future[Option[MAction]] = {
+    userSaOptFut(req.user)
+  }
+  def userSaOptFut(user: ISioUser): Future[Option[MAction]] = {
+    FutureUtil.optFut2futOpt( user.personIdOpt ) { personId =>
+      for (personNodeOpt <- user.personNodeOptFut) yield {
+        val maction = MAction(
+          actions   = Seq( MActionTypes.CurrUser ),
+          nodeId    = Seq( personId ),
+          nodeName  = personNodeOpt.fold [Seq[String]] (Nil) (_.guessDisplayName.toSeq)
+        )
+        Some(maction)
+      }
+    }
+  }
+
+
+  /** Что-то типа builder'а для создания и сохранения одного элемента статистики второго поколения. */
   abstract class Stat2 {
 
     /** Контекст запроса. */
@@ -330,9 +349,6 @@ class ScStatUtil @Inject() (
 
     /** Сохраняемые stat actions. */
     def statActions: List[MAction]
-
-    /** Данные по экрану. Перезаписать, при наличии распарсенного варианта. */
-    def screen: Option[DevScreen] = ctx.deviceScreenOpt
 
     lazy val uaOpt = {
       ctx.request
@@ -342,7 +358,7 @@ class ScStatUtil @Inject() (
         .filter(!_.isEmpty)
     }
 
-    lazy val browser = uaOpt.flatMap { ua =>
+    def browser = uaOpt.flatMap { ua =>
       // try-catch для самозащиты от возможных багов в православной либе uadetector.
       try {
         val uaParser = UADetectorServiceFactory.getResourceModuleParser
@@ -354,41 +370,29 @@ class ScStatUtil @Inject() (
       }
     }
 
-    def clUidOpt = statCookiesUtil
-      .getFromRequest(ctx.request)
-      .map { UuidUtil.uuidToBase64 }
-
-
-
-    /** stat action для описания текущего юзера. */
-    def userSaFut: Future[Option[MAction]] = {
-      val u = ctx.request.user
-      FutureUtil.optFut2futOpt( u.personIdOpt ) { personId =>
-        for (personNodeOpt <- u.personNodeOptFut) yield {
-          for (pnode <- personNodeOpt) yield {
-            MAction(
-              actions   = Seq( MActionTypes.CurrUser ),
-              nodeId    = Seq( personId ),
-              nodeName  = pnode.guessDisplayName.toSeq
-            )
-          }
-        }
-      }
+    def clUidOpt: Option[String] = {
+      statCookiesUtil
+        .getFromRequest(ctx.request)
+        .map { UuidUtil.uuidToBase64 }
     }
 
+
+    /** stat action для описания текущего юзера. Можно получить его через userSaOptFut() или userSaOptFutFromRequest(). */
+    def userSaOpt: Option[MAction]
+
     /** Оверрайдить при уже наличии нормального адреса. */
-    def remoteIp = geoIpUtil.fixRemoteAddr( ctx.request.remoteAddress )
+    def remoteAddr = geoIpUtil.fixRemoteAddr( ctx.request.remoteAddress )
 
-    def isLocalClient = false // TODO ctx.request.remoteAddress isLoopback/local/etc
+    /** Является ли текущий клиент "локальным", т.е. не очень-то интересным для статистики. */
+    def isLocalClient: Boolean = {
+      remoteAddr.isLocal.contains(true) || ctx.request.user.isSuper
+    }
 
-    /** Данные loc env, если есть. */
-    def locEnv: Option[MLocEnv] = None
-
-    def ipGeoLoc: Option[IGeoFindIpResult] = None
 
     /** generation seed, если есть. */
     def gen: Option[Long] = None
 
+    /** Скомпиленные под статистику данные юзер-агента. */
     def mua = {
       val _browser  = browser
       val browserOs = _browser.flatMap { _agent =>
@@ -413,30 +417,85 @@ class ScStatUtil @Inject() (
       )
     }
 
-    /** Инстанс (пока несохраненный) статистики. */
-    def mstat: Future[MStat] = {
-      val _userSaFut = userSaFut
-      for {
-        _userSa <- _userSaFut
-      } yield {
-        MStat(
-          common = MCommon(
-            ip              = Some( remoteIp ),
-            timestamp       = ctx.now,
-            clientUid       = clUidOpt,
-            uri             = Option( ctx.request.uri ),
-            // TODO domain3p
-            isLocalClient   = Some(isLocalClient),
-            gen             = gen
-          ),
-          actions = statActions ++ _userSa,
-          ua      = mua,
-          screen  = ???,
-          location = ???
-        )
-      }
+    /** Перезаписать, если сейчас орудуем в каком-то другом домене, вне s.io. */
+    def domain3p: Option[String] = None
+
+    def mcommon: MCommon = {
+      MCommon(
+        ip              = Some( remoteAddr.remoteAddr ),
+        clientUid       = clUidOpt,
+        uri             = Option( ctx.request.uri ),
+        domain3p        = domain3p,
+        isLocalClient   = Some(isLocalClient),
+        gen             = gen
+      )
     }
 
+
+    /** Данные по экрану. Оверрайдить при наличии уже распарсенного инстанса. */
+    def devScreenOpt: Option[DevScreen] = ctx.deviceScreenOpt
+
+    def vportQuanted: Option[MViewPort] = None
+
+    def mscreen: MScreen = {
+      val devScrOpt = devScreenOpt
+      MScreen(
+        orientation   = devScrOpt.map(_.orientation),
+        vportReal     = devScrOpt.map(_.toStatViewPort),
+        vportQuanted  = vportQuanted
+      )
+    }
+
+    def locEnvOpt: Option[MLocEnv] = None
+    def geoIpLoc: Option[IGeoFindIpResult] = None
+
+    def mlocation: MLocation = {
+      val _locEnvOpt = locEnvOpt
+      val _geoOpt = _locEnvOpt.flatMap(_.geoLocOpt)
+      val _geoIpOpt = geoIpLoc
+      MLocation(
+        geo = MGeoLocData(
+          coords = _geoOpt
+            .map(_.center),
+          accuracy = _geoOpt
+            .flatMap(_.accuracyOptM)
+            .map(_.toInt)
+        ),
+        geoIp = MGeoLocData(
+          coords    = _geoIpOpt
+            .map(_.center),
+          accuracy  = _geoIpOpt
+            .flatMap(_.accuracyMetersOpt),
+          town      = _geoIpOpt
+            .flatMap(_.cityName),
+          country   = _geoIpOpt
+            .flatMap(_.countryIso2)
+        )
+      )
+    }
+
+    /** Инстанс (пока несохраненный) статистики. */
+    def mstat: MStat = {
+      MStat(
+        common    = mcommon,
+        actions   = statActions ++ userSaOpt,
+        timestamp = ctx.now,
+        ua        = mua,
+        screen    = mscreen,
+        location  = mlocation
+      )
+    }
+
+  }
+
+  /** Отправить v2-статистику на сохранение в БД. */
+  def saveStat(stat2: Stat2): Future[_] = {
+    saveStat( stat2.mstat )
+  }
+  /** Отправить v2-статистику на сохранение в БД. */
+  def saveStat(mstat: MStat): Future[_] = {
+    playStatSaver.BACKEND
+      .save(mstat)
   }
 
 }

@@ -33,9 +33,12 @@ trait MaybeAuth
      */
     override def invokeBlock[A](request: Request[A],
                                 block: (MReq[A]) => Future[Result]): Future[Result] = {
+      // Подготовить базовые данные реквеста.
       val personIdOpt = sessionUtil.getPersonId(request)
       val user = mSioUsers(personIdOpt)
       maybeInitUser(user)
+
+      // Сразу переходим к исполнению экшена, т.к. больше нечего делать.
       val req1 = MReq(request, user)
       block(req1)
     }

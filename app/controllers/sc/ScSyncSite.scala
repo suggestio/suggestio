@@ -6,7 +6,6 @@ import controllers.{SioController, routes}
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.fut.FutureUtil
 import models._
-import models.mctx.Context
 import models.msc._
 import models.req.IReq
 import play.api.mvc.Result
@@ -40,15 +39,14 @@ trait ScSyncSite
 
   /**
    * Раздавалка "сайта" выдачи первой страницы. Можно переопределять, для изменения/расширения функционала.
-   * @param request Реквест.
    */
-  override protected def _geoSiteResult(siteQsArgs: SiteQsArgs)(implicit request: IReq[_]): Future[Result] = {
-    request.ajaxJsScState.fold [Future[Result]] {
-      super._geoSiteResult(siteQsArgs)
+  override protected def _geoSiteResult(logic: SiteScriptLogicV2): Future[Result] = {
+    logic._request.ajaxJsScState.fold [Future[Result]] {
+      super._geoSiteResult(logic)
     } { jsState =>
-      _syncGeoSite(jsState, siteQsArgs) { jsSt =>
-        routes.Sc.geoSite(x = siteQsArgs).url + "#!?" + jsSt.toQs()
-      }
+      _syncGeoSite(jsState, logic._siteQsArgs) { jsSt =>
+        routes.Sc.geoSite(x = logic._siteQsArgs).url + "#!?" + jsSt.toQs()
+      }(logic._request)
     }
   }
 
@@ -70,7 +68,7 @@ trait ScSyncSite
       override def _scState   = scState
       override def _urlGenF   = urlGenF
       override def _siteArgs  = siteArgs
-      override implicit def _request  = request
+      override def _request   = request
     }
     logic.resultFut
   }
@@ -78,7 +76,7 @@ trait ScSyncSite
 
 
   /** Логика работы синхронного сайта описывается этим трейтом и связями в нём. */
-  trait ScSyncSiteLogic { that =>
+  trait ScSyncSiteLogic extends LazyContext { syncLogic =>
 
     /** Состояние выдачи. */
     def _scState: ScJsState
@@ -90,9 +88,6 @@ trait ScSyncSite
 
     /** Генератор ссылок на выдачу. */
     def _urlGenF: ScJsState => String
-
-    /** Контекст рендера шаблонов. */
-    lazy val ctx = implicitly[Context]
 
     /** Есть ли какая-либо необходимость в рендере плитки карточек? */
     def needRenderTiles: Boolean = {
@@ -107,9 +102,9 @@ trait ScSyncSite
         // Рендерим плитку, как этого требует needRenderTiles().
         new TileAdsLogic {
           override type T = IRenderedAdBlock
-          override implicit def _request = that._request
+          override implicit def _request = syncLogic._request
           override val _adSearch = _scState.tilesAdSearch()
-          override lazy val ctx = that.ctx
+          override lazy val ctx = syncLogic.ctx
           override def renderMadAsync(brArgs: blk.RenderArgs): Future[T] = {
             for (rendered <- renderMad2htmlAsync(brArgs)) yield {
               RenderedAdBlock(brArgs.mad, rendered)
@@ -122,8 +117,8 @@ trait ScSyncSite
         val _noMadsFut: Future[Seq[MNode]] = Future.successful( Nil )
         new TileAdsLogic {
           override type T = IRenderedAdBlock
-          override implicit def _request = that._request
-          override lazy val ctx = that.ctx
+          override implicit def _request = syncLogic._request
+          override lazy val ctx = syncLogic.ctx
           override def _adSearch = new AdSearchImpl {
             override def limitOpt: Option[Int] = Some(0)
           }
@@ -143,9 +138,9 @@ trait ScSyncSite
     def focusedLogic = new FocusedLogicV2 with NoBrAcc {
 
       override type OBT = Html
-      override implicit val _request = that._request
+      override implicit val _request = syncLogic._request
       override def _scStateOpt = Some(_scState)
-      override lazy val ctx = that.ctx
+      override lazy val ctx = syncLogic.ctx
 
       /** Рендер заэкранного блока. В случае Html можно просто вызвать renderBlockHtml(). */
       override def renderOuterBlock(args: AdBodyTplArgs): Future[Html] = {
@@ -185,7 +180,7 @@ trait ScSyncSite
 
     /** Логика отработки списка узлов (панели навигации). */
     lazy val nodesListLogic = new FindNodesLogic {
-      override implicit def _request = that._request
+      override implicit def _request = syncLogic._request
       override val _nsArgs = MScNodeSearchArgs(
         currAdnId = _scState.adnId,
         geoMode = _scState.geo
@@ -256,7 +251,7 @@ trait ScSyncSite
           override def inlineNodesList    = _nodesListHtmlOpt
           override def adnNodeCurrentGeo  = _currNodeGeoOpt
           override def jsStateOpt         = Some(_scState)
-          override def syncUrl(jsState: ScJsState) = that._urlGenF(jsState)
+          override def syncUrl(jsState: ScJsState) = syncLogic._urlGenF(jsState)
         }
       }
     }
@@ -279,12 +274,12 @@ trait ScSyncSite
         new ScIndexUniLogicImpl {
           override def _reqArgs   = indexReqArgs
           override def _syncArgs  = indexSyncArgs
-          override def _request   = that._request
-          override lazy val ctx   = that.ctx
+          override def _request   = syncLogic._request
+          override lazy val ctx   = syncLogic.ctx
 
           /** Пытаемся задействовать уже имеющийся узел. */
           override def indexNodeFut: Future[MIndexNodeInfo] = {
-            val okFut = for (mnodeOpt <- that.adnNodeReqFut) yield {
+            val okFut = for (mnodeOpt <- syncLogic.adnNodeReqFut) yield {
               val mnode = mnodeOpt.get
               MIndexNodeInfo(
                 mnode   = mnode,
@@ -339,10 +334,10 @@ trait ScSyncSite
     /** Реализация [[SiteLogic]] для нужд [[ScSyncSite]]. */
     protected class SyncSiteLogic extends SiteLogic {
       // Линкуем исходные данные логики с полями outer-класса.
-      override implicit lazy val ctx  = that.ctx
-      override def _siteQsArgs        = that._siteArgs
-      override implicit def _request  = that._request
-      override def nodeOptFut         = that.adnNodeReqFut
+      override implicit lazy val ctx  = syncLogic.ctx
+      override def _siteQsArgs        = syncLogic._siteArgs
+      override implicit def _request  = syncLogic._request
+      override def nodeOptFut         = syncLogic.adnNodeReqFut
       override def _syncRender        = true
       /** Не нужно передавать в siteTpl никаких данных состояния sc-sjs, т.к. мы без JS работаем. */
       override def customScStateOptFut = Future.successful(None)
@@ -350,7 +345,7 @@ trait ScSyncSite
       // TODO Этот код метода был написан спустя много времени после остальной реализации. Нужно протестить всё.
       override def headAfterFut: Future[List[Html]] = {
         val supFut = super.headAfterFut
-        for (headAfterOpt <- that.adsCssExtFut;  headAfter0 <- supFut) yield {
+        for (headAfterOpt <- syncLogic.adsCssExtFut;  headAfter0 <- supFut) yield {
           headAfterOpt.fold(headAfter0)(_ :: headAfter0)
         }
       }

@@ -211,7 +211,7 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
   override def isExact: Boolean = false
 
   def getRemoteAddr(implicit request: ExtReqHdr): String = {
-    geoIpUtil.fixRemoteAddr(request.remoteAddress)
+    geoIpUtil.fixRemoteAddr(request.remoteAddress).remoteAddr
   }
 
   /** Асинхронный поиск какого-то ip в базе ip-адресов.

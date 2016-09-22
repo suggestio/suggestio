@@ -1,26 +1,26 @@
 package controllers.sc
 
-import _root_.util.di._
 import _root_.util.PlayMacroLogsI
-import io.suggest.model.geo.{CircleGs, Distance}
+import _root_.util.di._
+import io.suggest.model.geo.{CircleGs, Distance, IGeoFindIpResult}
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
-import io.suggest.model.n2.node.{IMNodes, NodeNotFoundException}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.{IMNodes, NodeNotFoundException}
+import io.suggest.stat.m.{MAction, MActionTypes}
+import models._
 import models.im.MImgT
 import models.jsm.ScIndexResp
+import models.mgeo.MGeoLoc
 import models.msc._
+import org.elasticsearch.common.unit.DistanceUnit
+import play.api.mvc._
 import play.twirl.api.Html
 import util.acl._
-import views.html.sc._
-import models._
-import models.mgeo.MGeoLoc
-import org.elasticsearch.common.unit.DistanceUnit
-
-import scala.concurrent.Future
-import play.api.mvc._
 import util.geo.IGeoIpUtilDi
 import util.stat.IStatCookiesUtilDi
+import views.html.sc._
 
+import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 /**
@@ -44,6 +44,7 @@ trait ScIndex
   with IWelcomeUtil
   with IScUtil
   with IGeoIpUtilDi
+  with IScStatUtil
 {
 
   import mCommonDi._
@@ -77,8 +78,8 @@ trait ScIndex
       res.withHeaders(hdrs1: _*)
     }
 
-    // TODO Нужна новая и хорошая годная статистика для выдачи с новой геолокацией.
-
+    // Собираем статистику второго поколения...
+    logic.saveScStat()
 
     resultFut.recover { case ex: NodeNotFoundException =>
       LOGGER.trace(s"index($args): node missing", ex)
@@ -88,7 +89,7 @@ trait ScIndex
 
 
   /** Унифицированная логика выдачи в фазе index. */
-  trait ScIndexUniLogic extends LazyContext { logic =>
+  trait ScIndexUniLogic extends LogicCommonT { logic =>
 
     /** qs-аргументы реквеста. */
     def _reqArgs: MScIndexArgs
@@ -98,20 +99,27 @@ trait ScIndex
 
     lazy val _remoteIp = geoIpUtil.fixRemoteAddr( _request.remoteAddress )
 
+    /** Пошаренный результат ip-geo-локации. */
+    lazy val geoIpResOptFut: Future[Option[IGeoFindIpResult]] = {
+      val remoteIp = _remoteIp
+      lazy val logPrefix = s"reqGeoLocFut(${System.currentTimeMillis}):"
+      LOGGER.trace(s"$logPrefix locEnv empty, trying geolocate by ip: $remoteIp")
+      geoIpUtil.findIpCached(remoteIp.remoteAddr)
+    }
+
     /** ip-геолокация, когда гео-координаты или иные полезные данные клиента отсутствуют. */
     def reqGeoLocFut: Future[Option[MGeoLoc]] = {
       _reqArgs.locEnv.geoLocOpt.fold [Future[Option[MGeoLoc]]] {
-        val remoteIp = _remoteIp
-        lazy val logPrefix = s"reqGeoLocFut(${System.currentTimeMillis}):"
-        LOGGER.trace(s"$logPrefix locEnv empty, trying geolocate by ip: $remoteIp")
-        val geoLoc2Fut = for (geoIpOpt <- geoIpUtil.findIpCached(remoteIp)) yield {
+        lazy val logPrefix = s"reqGeoLocFut(${_remoteIp} / ${System.currentTimeMillis}):"
+        LOGGER.trace(s"$logPrefix locEnv empty, trying geolocate by ip.")
+        val geoLoc2Fut = for (geoIpOpt <- geoIpResOptFut) yield {
           for (geoIp <- geoIpOpt) yield {
             MGeoLoc( geoIp.center )
           }
         }
         // Подавить и залоггировать возможные проблемы.
         geoLoc2Fut.recover { case ex: Throwable =>
-          LOGGER.warn(s"$logPrefix failed to geolocate by ip=$remoteIp", ex)
+          LOGGER.warn(s"$logPrefix failed to geoIP", ex)
           None
         }
       } { r =>
@@ -463,14 +471,38 @@ trait ScIndex
     }
 
 
-    /*import io.suggest.stat.m._
-    def saveStat: Future[_] = {
-      val mstat = MStat(
-        common = MCommon(
-          ip =  _remoteIp,
-        )
-      )
-    }*/
+    override def scStat: Future[Stat2] = {
+      val _userSaOptFut     = scStatUtil.userSaOptFutFromRequest()
+      val _indexNodeFut     = indexNodeFutVal
+      val _geoIpResOptFut   = logic.geoIpResOptFut
+      for {
+        _userSaOpt          <- _userSaOptFut
+        _indexNode          <- _indexNodeFut
+        _geoIpResOpt        <- _geoIpResOptFut
+      } yield {
+        // Сбилдить статистику по данному index'у.
+        new Stat2 {
+          override def userSaOpt: Option[MAction] = _userSaOpt
+          override def statActions: List[MAction] = {
+            val actType = if (_indexNode.isRcvr) {
+              MActionTypes.ScIndexRcvr
+            } else {
+              MActionTypes.ScIndexCovering
+            }
+            val inxSa = MAction(
+              actions   = Seq(actType),
+              nodeId    = _indexNode.mnode.id.toSeq,
+              nodeName  = _indexNode.mnode.guessDisplayName.toSeq
+            )
+            List(inxSa)
+          }
+          override def remoteAddr   = logic._remoteIp
+          override def devScreenOpt = _reqArgs.screen
+          override def locEnvOpt    = Some(_reqArgs.locEnv)
+          override def geoIpLoc     = _geoIpResOpt
+        }
+      }
+    }
 
   }
 
