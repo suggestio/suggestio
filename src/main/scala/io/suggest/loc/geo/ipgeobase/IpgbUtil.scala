@@ -69,4 +69,9 @@ case class MGeoFindIpResult(city: MCity, range: MIpRange) extends IGeoFindIpResu
     Some( range.countryIso2 )
   }
 
+  override def accuracyMetersOpt: Option[Int] = {
+    // TODO Нужно ли что-нибудь тут задать? Константу какую-либо например?
+    None
+  }
+
 }
