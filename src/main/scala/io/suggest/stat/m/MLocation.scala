@@ -53,7 +53,7 @@ object MLocation extends IGenEsMappingProps with IEmpty {
 
 /** Класс модели по локациям. */
 case class MLocation(
-  geo             : MGeoLocData       = MGeoLocData.empty,
-  geoip           : MGeoLocData       = MGeoLocData.empty
+                      geo             : MGeoLocData       = MGeoLocData.empty,
+                      geoIp           : MGeoLocData       = MGeoLocData.empty
 )
   extends EmptyProduct
