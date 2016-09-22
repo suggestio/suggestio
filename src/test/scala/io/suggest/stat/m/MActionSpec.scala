@@ -25,7 +25,7 @@ class MActionSpec extends FlatSpec with PlayJsonTestUtil {
   it should "support full-filled model" in {
     jsonTest {
       MAction(
-        actions   = Seq( MActionTypes.CurrUser, MActionTypes.ScIndex ),
+        actions   = Seq( MActionTypes.CurrUser, MActionTypes.ScIndexCovering ),
         nodeId    = Seq( "asdasdq123123123", "23sergsergserg" ),
         nodeName  = Seq( "Asd asd asd", "varvaevreverv" ),
         count     = Seq(1, 5, 7)

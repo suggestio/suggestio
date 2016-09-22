@@ -24,12 +24,12 @@ class MScreenSpec extends FlatSpec with PlayJsonTestUtil {
         vportReal   = Some(MViewPort(
           widthPx   = 100,
           heightPx  = 200,
-          pxRatio   = 1.3F
+          pxRatio   = Some( 1.3F )
         )),
         vportQuanted = Some(MViewPort(
           widthPx   = 128,
           heightPx  = 256,
-          pxRatio   = 1.5F
+          pxRatio   = Some( 1.5F )
         ))
       )
     }

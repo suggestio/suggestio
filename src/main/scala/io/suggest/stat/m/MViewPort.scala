@@ -26,7 +26,7 @@ object MViewPort extends IGenEsMappingProps {
   implicit val FORMAT: OFormat[MViewPort] = (
     (__ \ WIDTH_PX_FN).format[Int] and
     (__ \ HEIGHT_PX_FN).format[Int] and
-    (__ \ PX_RATIO_FN).format[Float]
+    (__ \ PX_RATIO_FN).formatNullable[Float]
   )(apply, unlift(unapply))
 
 
@@ -52,5 +52,5 @@ object MViewPort extends IGenEsMappingProps {
 case class MViewPort(
   widthPx   : Int,
   heightPx  : Int,
-  pxRatio   : Float
+  pxRatio   : Option[Float]
 )

@@ -5,7 +5,6 @@ import java.text.SimpleDateFormat
 import com.google.inject.{Inject, Singleton}
 import com.sun.org.glassfish.gmbal.{Description, Impact, ManagedOperation}
 import io.suggest.common.empty.EmptyUtil
-import io.suggest.model.PrefixedFn
 import io.suggest.model.es._
 import io.suggest.util.MacroLogsImpl
 import org.elasticsearch.index.query.QueryBuilders
@@ -31,22 +30,19 @@ object MStat {
 
     val COMMON_FN   = "common"
 
-    object Common extends PrefixedFn {
-      override protected def _PARENT_FN: String = COMMON_FN
-      def TIMESTAMP_FN = _fullFn( MCommon.Fields.TIMESTAMP_FN )
-    }
+    val TIMESTAMP_FN            = "timestamp"
 
     /** Экшены. */
-    val ACTIONS_FN  = "action"
+    val ACTIONS_FN    = "act"
 
     /** Поле с моделью данных юзер-агента. */
-    val UA_FN = "ua"
+    val UA_FN         = "ua2"
 
     /** Имя поля с моделью данных по экрану устройства. */
-    val SCREEN_FN = "screen"
+    val SCREEN_FN     = "screen"
 
     /** Имя поля с геолокацей и смежными темами. */
-    val LOCATION_FN = "loc"
+    val LOCATION_FN   = "loc"
 
   }
 
@@ -58,6 +54,7 @@ object MStat {
     (__ \ COMMON_FN).format[MCommon] and
       //.inmap[MCommon] ( EmptyUtil.opt2ImplMEmptyF(MCommon), EmptyUtil.implEmpty2OptF ) and
     (__ \ ACTIONS_FN).format[Seq[MAction]] and
+    (__ \ TIMESTAMP_FN).format[DateTime] and
     (__ \ UA_FN).formatNullable[MUa]
       .inmap[MUa] ( EmptyUtil.opt2ImplMEmptyF(MUa), EmptyUtil.implEmpty2OptF ) and
     (__ \ SCREEN_FN).formatNullable[MScreen]
@@ -111,6 +108,7 @@ class MStats @Inject() (
     List(
       _fieldObject(COMMON_FN, MCommon),
       FieldNestedObject(ACTIONS_FN, enabled = true, properties = MAction.generateMappingProps),
+      FieldDate(TIMESTAMP_FN, index = null, include_in_all = false),
       _fieldObject(UA_FN, MUa),
       _fieldObject(SCREEN_FN, MScreen),
       _fieldObject(LOCATION_FN, MLocation)
@@ -121,7 +119,7 @@ class MStats @Inject() (
   override def esDocWrites = implicitly[Writes[MStat]]
 
 
-  import MStat.Fields.Common.TIMESTAMP_FN
+  import MStat.Fields.TIMESTAMP_FN
 
   def beforeDtQuery(dt: DateTime) = {
     QueryBuilders.rangeQuery(TIMESTAMP_FN)
@@ -160,6 +158,7 @@ class MStats @Inject() (
 case class MStat(
   common            : MCommon,
   actions           : Seq[MAction],
+  timestamp         : DateTime        = DateTime.now(),
   ua                : MUa             = MUa.empty,
   screen            : MScreen         = MScreen.empty,
   location          : MLocation       = MLocation.empty

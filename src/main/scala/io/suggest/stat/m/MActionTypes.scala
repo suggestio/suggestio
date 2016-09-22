@@ -20,12 +20,18 @@ object MActionTypes extends EnumMaybeWithName with EnumJsonReadsValT with StrIdV
   override type T = Val
 
   /** Экшен логгирования данных текущего юзера. */
-  val CurrUser  = Val("юзер")
+  val CurrUser            = Val("юзер")
 
   /** Обращение к /sc/site */
-  val ScSite    = Val("выдача: сайт")
+  val ScSite              = Val("выдача: сайт")
 
-  /** Обращение к /sc/index. */
-  val ScIndex   = Val("выдача узла")
+  /** Для логгирования значения pov_adn_id. */
+  val PovNode             = Val("точка зрения узла")
+
+  /** Обращение к /sc/index вывело на узел-ресивер. */
+  val ScIndexRcvr         = Val("выдача ресивера")
+
+  /** /sc/index не нашел ресивера, но подобрал или сочинил узел с подходящим к ситуации оформлением. */
+  val ScIndexCovering     = Val("выдача с оформлением от узла")
 
 }
