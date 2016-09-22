@@ -422,6 +422,7 @@ class ScStatUtil @Inject() (
 
     def mcommon: MCommon = {
       MCommon(
+        component       = MComponents.Sc,
         ip              = Some( remoteAddr.remoteAddr ),
         clientUid       = clUidOpt,
         uri             = Option( ctx.request.uri ),

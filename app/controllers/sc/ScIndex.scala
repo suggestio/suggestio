@@ -472,9 +472,15 @@ trait ScIndex
 
 
     override def scStat: Future[Stat2] = {
+      // Запуск асинхронных задач в фоне.
       val _userSaOptFut     = scStatUtil.userSaOptFutFromRequest()
       val _indexNodeFut     = indexNodeFutVal
       val _geoIpResOptFut   = logic.geoIpResOptFut
+
+      // Исполнение синхронных задач.
+      val _remoteIp         = logic._remoteIp
+
+      // Сборка асинхронного результата.
       for {
         _userSaOpt          <- _userSaOptFut
         _indexNode          <- _indexNodeFut
@@ -496,7 +502,7 @@ trait ScIndex
             )
             List(inxSa)
           }
-          override def remoteAddr   = logic._remoteIp
+          override def remoteAddr   = _remoteIp
           override def devScreenOpt = _reqArgs.screen
           override def locEnvOpt    = Some(_reqArgs.locEnv)
           override def geoIpLoc     = _geoIpResOpt

@@ -292,9 +292,6 @@ trait ScSiteGeo
         override def _request     = request
       }
 
-      // Запуск сохранения статистики.
-      logic.saveScStat()
-
       // Запуск исполнения экшена.
       _geoSiteResult(logic)
     }
@@ -305,7 +302,14 @@ trait ScSiteGeo
    * Раздавалка "сайта" выдачи первой страницы. Можно переопределять, для изменения/расширения функционала.
    */
   protected def _geoSiteResult(logic: SiteScriptLogicV2): Future[Result] = {
-    logic.resultFut
+    // Сборка обычного результата.
+    val resFut = logic.resultFut
+
+    // Запуск сохранения статистики.
+    logic.saveScStat()
+
+    // Вернуть асинхронный результатец.
+    resFut
   }
 
 }
