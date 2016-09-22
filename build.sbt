@@ -21,7 +21,7 @@ libraryDependencies ++= {
     "xml-apis"  % "xml-apis"       % "1.4.01",
     "xml-apis"  % "xml-apis-ext"   % "1.3.04",
     // test
-    "org.scalatest" %% "scalatest" % "2.2.+" % "test"
+    "org.scalatest" %% "scalatest" % Common.scalaTestVsn % "test"
   )
 }
 
