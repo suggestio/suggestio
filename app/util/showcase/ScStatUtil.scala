@@ -451,27 +451,30 @@ class ScStatUtil @Inject() (
     def geoIpLoc: Option[IGeoFindIpResult] = None
 
     def mlocation: MLocation = {
-      val _locEnvOpt = locEnvOpt
-      val _geoOpt = _locEnvOpt.flatMap(_.geoLocOpt)
-      val _geoIpOpt = geoIpLoc
       MLocation(
-        geo = MGeoLocData(
-          coords = _geoOpt
-            .map(_.center),
-          accuracy = _geoOpt
-            .flatMap(_.accuracyOptM)
-            .map(_.toInt)
-        ),
-        geoIp = MGeoLocData(
-          coords    = _geoIpOpt
-            .map(_.center),
-          accuracy  = _geoIpOpt
-            .flatMap(_.accuracyMetersOpt),
-          town      = _geoIpOpt
-            .flatMap(_.cityName),
-          country   = _geoIpOpt
-            .flatMap(_.countryIso2)
-        )
+        geo = {
+          val _geoOpt = locEnvOpt.flatMap(_.geoLocOpt)
+          MGeoLocData(
+            coords = _geoOpt
+              .map(_.center),
+            accuracy = _geoOpt
+              .flatMap(_.accuracyOptM)
+              .map(_.toInt)
+          )
+        },
+        geoIp = {
+          val _geoIpOpt = geoIpLoc
+          MGeoLocData(
+            coords    = _geoIpOpt
+              .map(_.center),
+            accuracy  = _geoIpOpt
+              .flatMap(_.accuracyMetersOpt),
+            town      = _geoIpOpt
+              .flatMap(_.cityName),
+            country   = _geoIpOpt
+              .flatMap(_.countryIso2)
+          )
+        }
       )
     }
 

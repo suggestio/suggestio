@@ -97,22 +97,23 @@ trait ScIndex
     /** Параметры, приходящие из sync site.  */
     def _syncArgs: IScIndexSyncArgs
 
+    /** Подчищенные нормализованные данные о remote-адресе. */
     lazy val _remoteIp = geoIpUtil.fixRemoteAddr( _request.remoteAddress )
 
     /** Пошаренный результат ip-geo-локации. */
     lazy val geoIpResOptFut: Future[Option[IGeoFindIpResult]] = {
       val remoteIp = _remoteIp
-      lazy val logPrefix = s"reqGeoLocFut(${System.currentTimeMillis}):"
-      LOGGER.trace(s"$logPrefix locEnv empty, trying geolocate by ip: $remoteIp")
-      geoIpUtil.findIpCached(remoteIp.remoteAddr)
+      val findFut = geoIpUtil.findIpCached(remoteIp.remoteAddr)
+      LOGGER.trace(s"geoIpResOptFut [${System.currentTimeMillis}]: trying to geolocate by ip: $remoteIp")
+      findFut
     }
 
     /** ip-геолокация, когда гео-координаты или иные полезные данные клиента отсутствуют. */
     def reqGeoLocFut: Future[Option[MGeoLoc]] = {
       _reqArgs.locEnv.geoLocOpt.fold [Future[Option[MGeoLoc]]] {
         lazy val logPrefix = s"reqGeoLocFut(${_remoteIp} / ${System.currentTimeMillis}):"
-        LOGGER.trace(s"$logPrefix locEnv empty, trying geolocate by ip.")
         val geoLoc2Fut = for (geoIpOpt <- geoIpResOptFut) yield {
+          LOGGER.trace(s"$logPrefix locEnv empty, trying geolocate by ip: $geoIpOpt")
           for (geoIp <- geoIpOpt) yield {
             MGeoLoc( geoIp.center )
           }
