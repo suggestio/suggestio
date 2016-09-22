@@ -25,7 +25,7 @@ libraryDependencies ++= {
       exclude("log4j", "log4j")
       exclude("org.slf4j", "log4j-over-slf4j"),
     Common.ORG              %% "logs-macro"           % "0.0.0-SNAPSHOT"
-    //"org.scalatest"       %% "scalatest"            % "2.2.+" % "test"   // Потом надо на 2.3 переключится.
+    //"org.scalatest"       %% "scalatest"            % Common.scalaTestVsn % "test"
   )
 }
 
