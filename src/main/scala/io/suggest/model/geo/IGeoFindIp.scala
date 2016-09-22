@@ -35,4 +35,7 @@ trait IGeoFindIpResult {
   /** Код страны, которой делегирован ip-адрес. */
   def countryIso2: Option[String]
 
+  /** Точность ip-геолокации в метрах. */
+  def accuracyMetersOpt: Option[Int]
+
 }
