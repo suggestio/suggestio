@@ -28,12 +28,14 @@ object MStat {
   /** Названия корневых полей модели. */
   object Fields {
 
-    val COMMON_FN   = "common"
-
-    val TIMESTAMP_FN            = "timestamp"
+    /** Имя поля с моделью разных общих полей. */
+    val COMMON_FN     = "common"
 
     /** Экшены. */
     val ACTIONS_FN    = "act"
+
+    /** Имя поля с датой-временем всего этого дела. */
+    val TIMESTAMP_FN  = "timestamp"
 
     /** Поле с моделью данных юзер-агента. */
     val UA_FN         = "ua2"

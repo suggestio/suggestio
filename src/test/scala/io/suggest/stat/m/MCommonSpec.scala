@@ -13,12 +13,17 @@ class MCommonSpec extends FlatSpec with PlayJsonTestUtil {
   override type T = MCommon
 
   "JSON" should "support minimally-filled model" in {
-    jsonTest( MCommon() )
+    jsonTest {
+      MCommon(
+        component = MComponents.Sc
+      )
+    }
   }
 
   it should "support full-filled model" in {
     jsonTest {
       MCommon(
+        component       = MComponents.Sc,
         ip              = Some( "127.0.0.1" ),
         clientUid       = Some( "a3e$F$#wesrfw4efwe" ),
         uri             = Some( "/index?x=y&z=1" ),

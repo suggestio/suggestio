@@ -16,7 +16,9 @@ class MStatSpec extends FlatSpec with PlayJsonTestUtil {
   "JSON" should "support minimal model" in {
     jsonTest {
       MStat(
-        common  = MCommon(),
+        common  = MCommon(
+          component = MComponents.Sc
+        ),
         actions = Nil
       )
     }
@@ -25,7 +27,9 @@ class MStatSpec extends FlatSpec with PlayJsonTestUtil {
   it should "support model fill all fields filled" in {
     jsonTest {
       MStat(
-        common = MCommon(),
+        common = MCommon(
+          component = MComponents.Sc
+        ),
         actions = Seq(
           MAction(
             actions = Seq( MActionTypes.CurrUser ),
