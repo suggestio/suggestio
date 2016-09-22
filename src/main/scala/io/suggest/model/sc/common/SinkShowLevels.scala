@@ -91,30 +91,6 @@ object SinkShowLevels extends EnumMaybeWithName with MacroLogsImplLazy with Enum
   }
 
 
-  /** Все уровни отображения для wifi-sink'ов. */
-  def wifiSls = List(WIFI_START_PAGE_SL, WIFI_CATS_SL, WIFI_PRODUCER_SL)
-
-  /** Все уровни отображения для geo-синков. */
-  def geoSls = List(GEO_START_PAGE_SL, GEO_CATS_SL, GEO_PRODUCER_SL)
-
-
-  /** Десериализатор значений из самых примитивных типов и коллекций. */
-  val deserializeLevelsSet: PartialFunction[Any, Set[T]] = {
-    case v: java.lang.Iterable[_] =>
-      import scala.collection.JavaConversions._
-      v.foldLeft[List[T]] (Nil) { (acc, slRaw) =>
-        maybeWithName(slRaw.toString) match {
-          case Some(sl) =>
-            sl :: acc
-          case None =>
-            warn(s"Unable to deserialize show level '$slRaw'. Possible levels are: ${values.mkString(", ")}")
-            acc
-        }
-      }.toSet
-  }
-
-  def sls2strings(sls: Set[T]) = sls.map(_.name)
-
   /** Десериализация уровней отображения. */
   def applySlsSet(slsRaw: TraversableOnce[String]): Set[SinkShowLevel] = {
     slsRaw

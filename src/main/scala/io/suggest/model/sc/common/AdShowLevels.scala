@@ -57,22 +57,4 @@ object AdShowLevels extends EnumMaybeWithName with EnumJsonReadsValT {
     override def checkboxCssClass = "shop-catalog"
   }
 
-
-  /** Десериализатор списка уровней отображения для jackson. */
-  // TODO N2 спилить это счастье отсюда.
-  val deserializeShowLevels: PartialFunction[Any, Set[T]] = {
-    case v: java.lang.Iterable[_] =>
-      import scala.collection.JavaConversions._
-      v.toIterator
-        .map {
-          rawSL => AdShowLevels.withName(rawSL.toString) : T
-        }
-        .toSet
-
-    case s: String =>
-      Set(AdShowLevels.withName(s))
-
-    case null => Set.empty
-  }
-
 }
