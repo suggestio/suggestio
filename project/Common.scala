@@ -55,6 +55,11 @@ object Common {
   /** Версия Apache commons-io. */
   def apacheCommonsIoVsn = "2.4"
 
+  /** Версия scalatest.
+    * play-2.2..2.5 == scalatest-2.2.x
+    */
+  def scalaTestVsn       = "2.2.+"
+
   object Repo {
 
     /** Адрес внутреннего кеширующего сервера artifactory */
