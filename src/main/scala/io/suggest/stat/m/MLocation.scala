@@ -31,9 +31,9 @@ object MLocation extends IGenEsMappingProps with IEmpty {
 
   /** Поддержка JSON. */
   implicit val FORMAT: OFormat[T] = (
-    (__ \ GEO_IP_FN).formatNullable[MGeoLocData]
-      .inmap( EmptyUtil.opt2ImplMEmptyF(MGeoLocData), EmptyUtil.implEmpty2OptF[MGeoLocData] ) and
     (__ \ GEO_LOC_FN).formatNullable[MGeoLocData]
+      .inmap( EmptyUtil.opt2ImplMEmptyF(MGeoLocData), EmptyUtil.implEmpty2OptF[MGeoLocData] ) and
+    (__ \ GEO_IP_FN).formatNullable[MGeoLocData]
       .inmap( EmptyUtil.opt2ImplMEmptyF(MGeoLocData), EmptyUtil.implEmpty2OptF[MGeoLocData] )
   )(apply, unlift(unapply))
 
@@ -43,8 +43,8 @@ object MLocation extends IGenEsMappingProps with IEmpty {
   override def generateMappingProps: List[DocField] = {
     val glDataProps = MGeoLocData.generateMappingProps
     List(
-      FieldObject(GEO_IP_FN, enabled = true, properties = glDataProps),
-      FieldObject(GEO_LOC_FN, enabled = true, properties = glDataProps)
+      FieldObject(GEO_LOC_FN, enabled = true, properties = glDataProps),
+      FieldObject(GEO_IP_FN, enabled = true, properties = glDataProps)
     )
   }
 
@@ -53,7 +53,7 @@ object MLocation extends IGenEsMappingProps with IEmpty {
 
 /** Класс модели по локациям. */
 case class MLocation(
-                      geo             : MGeoLocData       = MGeoLocData.empty,
-                      geoIp           : MGeoLocData       = MGeoLocData.empty
+  geo             : MGeoLocData       = MGeoLocData.empty,
+  geoIp           : MGeoLocData       = MGeoLocData.empty
 )
   extends EmptyProduct
