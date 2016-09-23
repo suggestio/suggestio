@@ -104,23 +104,25 @@ trait ScIndex
     lazy val geoIpResOptFut: Future[Option[IGeoFindIpResult]] = {
       val remoteIp = _remoteIp
       val findFut = geoIpUtil.findIpCached(remoteIp.remoteAddr)
-      LOGGER.trace(s"geoIpResOptFut [${System.currentTimeMillis}]: trying to geolocate by ip: $remoteIp")
+      if (LOGGER.underlying.isTraceEnabled()) {
+        findFut.onComplete { res =>
+          LOGGER.trace(s"geoIpResOptFut[$remoteIp]:: tried to geolocate by ip => $res")
+        }
+      }
       findFut
     }
 
     /** ip-геолокация, когда гео-координаты или иные полезные данные клиента отсутствуют. */
     def reqGeoLocFut: Future[Option[MGeoLoc]] = {
       _reqArgs.locEnv.geoLocOpt.fold [Future[Option[MGeoLoc]]] {
-        lazy val logPrefix = s"reqGeoLocFut(${_remoteIp} / ${System.currentTimeMillis}):"
         val geoLoc2Fut = for (geoIpOpt <- geoIpResOptFut) yield {
-          LOGGER.trace(s"$logPrefix locEnv empty, trying geolocate by ip: $geoIpOpt")
           for (geoIp <- geoIpOpt) yield {
             MGeoLoc( geoIp.center )
           }
         }
         // Подавить и залоггировать возможные проблемы.
         geoLoc2Fut.recover { case ex: Throwable =>
-          LOGGER.warn(s"$logPrefix failed to geoIP", ex)
+          LOGGER.warn(s"reqGeoLocFut(${ctx.timestamp}): failed to geoIP", ex)
           None
         }
       } { r =>
@@ -142,7 +144,7 @@ trait ScIndex
        */
 
       // Запускаем поиск узла-ресивера по возможно переданному id.
-      lazy val logPrefix = s"indexNodeFut(${System.currentTimeMillis()}):"
+      lazy val logPrefix = s"indexNodeFut(${ctx.timestamp}):"
 
       // Частоиспользуемый id узла из реквеста.
       val adnIdOpt = _reqArgs.adnIdOpt
@@ -175,7 +177,10 @@ trait ScIndex
         // Если с ресивером по id не фартует, но есть данные геолокации, то заодно запускаем поиск узла-ресивера по геолокации.
         // В понятиях старой выдачи, это поиск активного узла-здания.
         // Нет смысла выносить этот асинхронный код за пределы recoverWith(), т.к. он или не нужен, или же выполнится сразу синхронно.
-        reqGeoLocFut.flatMap { geoLocOpt =>
+        val _reqGeoLocFut = reqGeoLocFut
+        LOGGER.trace(s"$logPrefix mnode by id not found, trying to use geoloc...")
+
+        _reqGeoLocFut.flatMap { geoLocOpt =>
           // Пусть будет сразу NSEE, если нет данных геолокации.
           val geoLoc = geoLocOpt.get
 
@@ -241,7 +246,10 @@ trait ScIndex
         val ephNodeId = Option ( ctx.messages("conf.sc.node.ephemeral.id") )
           .filter(_.nonEmpty)
           .get
-        for (mnodeOpt <- mNodeCache.getById( ephNodeId )) yield {
+        val _mnodeOptFut = mNodeCache.getById( ephNodeId )
+        LOGGER.trace(s"$logPrefix Index node not geolocated. Trying to get ephemeral covering node[$ephNodeId] for lang=${ctx.messages.lang.code}.")
+
+        for (mnodeOpt <- _mnodeOptFut) yield {
           val mnode = mnodeOpt.get
           LOGGER.trace(s"$logPrefix Choosen ephemeral node[$ephNodeId]: ${mnode.guessDisplayNameOrIdOrEmpty}")
           MIndexNodeInfo(

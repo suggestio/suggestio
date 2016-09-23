@@ -257,51 +257,10 @@ class ScStatUtil @Inject() (
   }
 
 
-  /** Эта статистика касается указанного узла. */
-  trait NodeStatT extends StatT {
-    val nodeOpt: Option[MNode]
-    override lazy val onNodeIdOpt = nodeOpt.flatMap(_.id)
-    override def adnNodeOptFut = Future successful nodeOpt
-  }
-
-
   /** Указываем, что тут рекламных карточек нет и не должно быть. */
   trait NoAdsStatT extends StatT {
     override def madIds: Seq[String] = Seq.empty
     override def adSearchOpt: Option[AdSearch] = None
-  }
-
-
-  /**
-   * Записывалка статистики по обращению к разным showcase/index. Такая статистика позволяет отследить
-   * перемещение юзера по узлам.
-   * @param gsiFut Асинхронный поиск геоданых по текущему запросу.
-   * @param screenOpt данные по экрану.
-   * @param request Текущий HTTP-реквест.
-   */
-  case class IndexStat(
-    gsiFut: Future[Option[GeoSearchInfo]],
-    override val screenOpt: Option[DevScreen],
-    nodeOpt: Option[MNode]
-  )(implicit val request: IReqHdr)
-    extends StatT with NodeStatT with NoAdsStatT
-  {
-    override def statAction = ScStatActions.Index
-  }
-
-
-  /**
-   * Записывалка статистики для обращения к demoWebSite-производным.
-   * @param nodeOpt Узел, если есть.
-   * @param request HTTP-реквест.
-   */
-  case class SiteStat(
-    nodeOpt: Option[MNode] = None
-  )(implicit val request: IReqHdr)
-    extends StatT with NodeStatT with NoAdsStatT
-  {
-    override def gsiFut = GeoIp.geoSearchInfoOpt
-    override def statAction = ScStatActions.Site
   }
 
 
