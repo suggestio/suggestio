@@ -2,12 +2,15 @@ package io.suggest.stat.m
 
 import java.text.SimpleDateFormat
 
+import com.google.inject.assistedinject.Assisted
 import com.google.inject.{Inject, Singleton}
 import com.sun.org.glassfish.gmbal.{Description, Impact, ManagedOperation}
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.model.es._
 import io.suggest.util.MacroLogsImpl
 import org.elasticsearch.index.query.QueryBuilders
+import org.elasticsearch.search.aggregations.AggregationBuilders
+import org.elasticsearch.search.aggregations.metrics.max.{Max, MaxAggregator}
 import org.elasticsearch.search.sort.SortOrder
 import org.joda.time.{DateTime, DateTimeZone}
 import play.api.libs.functional.syntax._
@@ -73,10 +76,8 @@ object MStat {
 }
 
 
-@Singleton
-class MStats @Inject() (
-  override val mCommonDi  : IEsModelDiVal
-)
+/** Абстрактная модель статистики для всеобщих нужд корме обновления индекса. */
+abstract class MStatsAbstract
   extends EsModelStatic
   with MacroLogsImpl
   with EsmV2Deserializer
@@ -84,10 +85,10 @@ class MStats @Inject() (
 {
 
   import mCommonDi.ec
+  import LOGGER._
 
   override type T = MStat
 
-  override def ES_INDEX_NAME = EsModelUtil.GARBAGE_INDEX
   override def ES_TYPE_NAME  = "stat"
 
 
@@ -152,6 +153,7 @@ class MStats @Inject() (
 
   /** Удалить все данные до указанной даты. */
   def deleteBefore(dt: DateTime): Future[Int] = {
+    trace(s"deleteBefore($dt): Statring...")
     val scroller = startScroll(
       queryOpt          = Some(beforeDtQuery(dt)),
       resultsPerScroll  = BULK_DELETE_QUEUE_LEN / 2
@@ -159,7 +161,81 @@ class MStats @Inject() (
     deleteByQuery(scroller)
   }
 
+  /**
+    * Определить максимальное значение поля timestamp в текущем индексе.
+    * Очевидно, используется аггрегация, т.к. это быстро, модно, молодёжно.
+    *
+    * Метод используется для определения "старости" индекса по последней записи в нём,
+    * что удобно для пакетного устаревшей старой статистики путём выявления слишком старых stat-индексов.
+    *
+    * @return Фьючерс с опциональной датой. Если там None, наверное в индексе нет данных вообще.
+    */
+  def findMaxTimestamp(): Future[Option[DateTime]] = {
+    val aggName = "dtMax"
+    for {
+      resp <- {
+        prepareSearch()
+          .setSize(0)
+          .addAggregation {
+            AggregationBuilders
+              .max(aggName)
+              .field(TIMESTAMP_FN)
+          }
+          .execute()
+      }
+    } yield {
+      /*
+       * Agg-результат имеет вот такой вид:
+       *   null
+       * или же
+       *   {
+       *     "value" : 1.473860569481E12,
+       *     "value_as_string" : "2016-09-14T13:42:49.481Z"
+       *   }
+       */
+      lazy val logPrefix = s"findMaxTimestamp(${System.currentTimeMillis}):"
+      for {
+        agg   <- Option( resp.getAggregations.get[Max](aggName) )
+        dtStr <- {
+          trace( s"$logPrefix Agg result: v=${agg.getValue} vStr=${agg.getValueAsString}" )
+          Option( agg.getValueAsString )
+        }
+      } yield {
+        val dtRes = EsModelUtil.Implicits.jodaDateTimeFormat.reads( JsString(dtStr) )
+        if (dtRes.isError)
+          error(s"$logPrefix Failed to parse JSON date: $dtRes")
+        dtRes.get
+      }
+    }
+  }
+
 }
+
+
+/** Инжектируемая статическая es-модель для всех основных нужд статистики. */
+@Singleton
+class MStats @Inject() (
+  mStatIndexes            : MStatIndexes,
+  override val mCommonDi  : IEsModelDiVal
+)
+  extends MStatsAbstract
+{
+  override def ES_INDEX_NAME = mStatIndexes.INDEX_ALIAS_NAME
+}
+
+
+/** Инжектируемая временная статическая модель для нужд ротации stat-индексов. */
+class MStatsTmp @Inject() (
+  @Assisted override val ES_INDEX_NAME  : String,
+  override val mCommonDi                : IEsModelDiVal
+)
+  extends MStatsAbstract
+
+/** Интерфейс для guice-factory, возвращающей инстансы [[MStatsTmp]]. */
+trait MStatsTmpFactory {
+  def create(esIndexName: String): MStatsTmp
+}
+
 
 
 /** Инстанс одной статистики. */
