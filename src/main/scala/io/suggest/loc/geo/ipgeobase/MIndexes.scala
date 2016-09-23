@@ -9,24 +9,9 @@ import org.elasticsearch.common.settings.Settings
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 02.09.16 17:56
-  * Description: Модель работы со скользящими time-based индексами ipgeobase.
+  * Description: Статическая инжектируемая модель работы со скользящими time-based ES-индексами ipgeobase.
   */
 
-object MIndexes {
-
-  /** Константа с именем актуального алиаса ipgb-индекса.
-    * val, потому что дёргается по нескольку раз даже в рамках ровно одного запроса. */
-  val INDEX_ALIAS_NAME = "ipgeobase"
-
-  /** Сборка нового имени для нового индекса. */
-  def newIndexName(): String = {
-    EsIndexUtil.newIndexName( INDEX_ALIAS_NAME )
-  }
-
-}
-
-
-/** Статическая инжектируемая модель управления ES-индексами IpGeoBase. */
 @Singleton
 class MIndexes @Inject() (
   override val mCommonDi: IEsModelDiVal
@@ -61,7 +46,9 @@ class MIndexes @Inject() (
     }
   }
 
-  override protected def INDEX_ALIAS_NAME = MIndexes.INDEX_ALIAS_NAME
+  /** Константа с именем актуального алиаса ipgb-индекса.
+    * val, потому что дёргается по нескольку раз даже в рамках ровно одного запроса. */
+  override val INDEX_ALIAS_NAME = "ipgeobase"
 
   /** Сгенерить настройки для создаваемого индекса. */
   override def indexSettingsCreate: Settings = {

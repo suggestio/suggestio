@@ -107,13 +107,14 @@ abstract class MCitiesAbstract
   */
 @Singleton
 class MCities @Inject() (
+  mIndexes                : MIndexes,
   override val mCommonDi  : IEsModelDiVal
 )
   extends MCitiesAbstract
 {
 
   /** Используем алиас для последнего свежего индекса. */
-  override def ES_INDEX_NAME = MIndexes.INDEX_ALIAS_NAME
+  override def ES_INDEX_NAME = mIndexes.INDEX_ALIAS_NAME
 
 }
 

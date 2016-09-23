@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import com.google.inject.Inject
 import io.suggest.ahc.util.HttpGetToFile
 import io.suggest.async.AsyncUtil
-import io.suggest.model.es.IEsModelDiVal
+import io.suggest.model.es.{EsIndexUtil, IEsModelDiVal}
 import io.suggest.util.MacroLogsImpl
 import org.apache.commons.io.{FileUtils, FilenameUtils}
 import org.elasticsearch.action.bulk.{BulkProcessor, BulkRequest, BulkResponse}
@@ -175,7 +175,7 @@ class IpgbImporter @Inject() (
 
     // Получаем имена временных индексов и файлов за пределами for{} для возможности удаления их за пределами for{}:
     // Подготовить имя для нового индекса.
-    val newIndexName = MIndexes.newIndexName()
+    val newIndexName = EsIndexUtil.newIndexName( mIndexes.INDEX_ALIAS_NAME )
 
     // Распаковка архива во временную директорию, удаление исходной папки.
     val unpackedDirFut = for (archiveFile <- downloadFut) yield {
@@ -230,7 +230,7 @@ class IpgbImporter @Inject() (
       oldIndexNames <- oldIndexNamesFut
 
       // Переключить всю систему на новый индекс.
-      _             <- mIndexes.installIndexAlias(newIndexName)
+      _             <- mIndexes.resetIndexAliasTo(newIndexName)
 
       // Удалить старые индексы, если есть.
       _             <- Future.traverse(oldIndexNames)(mIndexes.deleteIndex)
