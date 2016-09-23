@@ -401,7 +401,7 @@ class ScStatUtil @Inject() (
       val devScrOpt = devScreenOpt
       MScreen(
         orientation   = devScrOpt.map(_.orientation),
-        vportReal     = devScrOpt.map(_.toStatViewPort),
+        vportPhys     = devScrOpt.map(_.toStatViewPort),
         vportQuanted  = vportQuanted
       )
     }
