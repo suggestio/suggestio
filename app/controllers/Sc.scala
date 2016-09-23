@@ -6,7 +6,6 @@ import controllers.sc._
 import io.suggest.model.n2.node.MNodes
 import models.im.make.IMaker
 import models.mctx.ContextUtil
-import models.merr.MRemoteErrors
 import models.mproj.ICommonDi
 import models.msc.map.MMapNodes
 import util.PlayMacroLogsImpl
@@ -40,7 +39,6 @@ class Sc @Inject() (
   override val cdnUtil            : CdnUtil,
   override val n2NodesUtil        : N2NodesUtil,
   @Named("blk") override val blkImgMaker  : IMaker,
-  override val mRemoteErrors      : MRemoteErrors,
   override val mMapNodes          : MMapNodes,
   override val ctxUtil            : ContextUtil,
   override val nodesUtil          : NodesUtil,

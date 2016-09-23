@@ -1,13 +1,16 @@
 package controllers.sc
 
 import controllers.SioController
-import models.GeoIp
-import models.merr.{IMRemoteErrors, MRemoteError, MRemoteErrorTypes}
+import io.suggest.stat.m.{MAction, MActionTypes}
+import models.mctx.Context
+import models.msc.MScRemoteDiag
 import play.api.data.Forms._
 import play.api.data._
 import util.FormUtil._
 import util.PlayMacroLogsImpl
 import util.acl.{BruteForceProtectCtl, MaybeAuth}
+import util.di.IScStatUtil
+import util.geo.IGeoIpUtilDi
 
 /**
  * Suggest.io
@@ -21,15 +24,17 @@ trait ScRemoteError
   with PlayMacroLogsImpl
   with BruteForceProtectCtl
   with MaybeAuth
-  with IMRemoteErrors
+  with IGeoIpUtilDi
+  with IScStatUtil
 {
 
   import mCommonDi._
 
-  override def BRUTEFORCE_TRY_COUNT_DEADLINE_DFLT = 10
+  /** Малый дедлайн, т.к. новая выдача бывает любит пофлудить ошибками. */
+  override def BRUTEFORCE_TRY_COUNT_DEADLINE_DFLT = 3
 
   /** Маппинг для вычитывания результата из тела POST. */
-  private def errorFormM: Form[MRemoteError] = {
+  private def errorFormM: Form[MScRemoteDiag] = {
     import io.suggest.err.ErrorConstants.Remote._
     Form(
       mapping(
@@ -47,16 +52,14 @@ trait ScRemoteError
         }
       )
       {(msg, urlOpt, state) =>
-        MRemoteError(
-          errorType   = MRemoteErrorTypes.Showcase,
-          msg         = msg,
-          url         = urlOpt,
-          state       = state,
-          clientAddr  = ""
+        MScRemoteDiag(
+          message = msg,
+          url     = urlOpt,
+          state   = state
         )
       }
       {merr =>
-        Some((merr.msg, merr.url, merr.state))
+        Some((merr.message, merr.url, merr.state))
       }
     )
   }
@@ -65,7 +68,7 @@ trait ScRemoteError
    * Реакция на ошибку в showcase (в выдаче). Если слишком много запросов с одного ip, то экшен начнёт тупить.
    * @return NoContent или NotAcceptable.
    */
-  def handleScError = MaybeAuth().async { implicit request =>
+  def handleScError = MaybeAuth(U.PersonNode).async { implicit request =>
     bruteForceProtected {
       lazy val logPrefix = s"handleScError(${System.currentTimeMillis()}) [${request.remoteAddress}]:"
       errorFormM.bindFromRequest().fold(
@@ -74,31 +77,36 @@ trait ScRemoteError
           NotAcceptable("Failed to parse response. See server logs.")
         },
         {merr0 =>
+          val remoteAddrFixed = geoIpUtil.fixRemoteAddr( request.remoteAddress )
+
           // Запустить геолокацию текущего юзера по IP.
-          val geoLocOptFut = GeoIp
-            .geoSearchInfoOpt
-            .recover {
-              // Should never happen. Подавляем возможную ошибку получения геоданных запроса.
-              case ex: Exception =>
-                LOGGER.warn("Suppressing exception for gsiOpt", ex)
-                None
-            }
+          val geoLocOptFut = geoIpUtil.findIpCached( remoteAddrFixed.remoteAddr )
+          // Запустить получение инфы о юзере. Без https тут всегда None.
+          val userSaOptFut = scStatUtil.userSaOptFutFromRequest()
+          val _ctx = implicitly[Context]
 
           for {
-            gsiOpt <- geoLocOptFut
-            // Апдейтим забинденный формой отчёт об ошибке данными от сервера.
-            merr1 = merr0.copy(
-              ua          = request.headers.get(USER_AGENT).map(strTrimF),
-              clientAddr  = request.remoteAddress,
-              clIpGeo     = gsiOpt.map(_.geoPoint),
-              clTown      = gsiOpt.flatMap(_.cityName),
-              country     = gsiOpt.flatMap(_.countryIso2),
-              isLocalCl   = gsiOpt.map(_.isLocalClient)
-            )
+            _geoLocOpt <- geoLocOptFut
+            _userSaOpt <- userSaOptFut
+
+            stat2 = new scStatUtil.Stat2 {/** Сохраняемые stat actions. */
+              override def statActions: List[MAction] = {
+                val maction = MAction(
+                  actions   = Seq( MActionTypes.ScIndexCovering ),
+                  nodeId    = Nil,
+                  nodeName  = Nil
+                )
+                List(maction)
+              }
+              override def userSaOpt = _userSaOpt
+              override def ctx = _ctx
+              override def geoIpLoc = _geoLocOpt
+            }
+
             // Сохраняем в базу отчёт об ошибке.
-            merrId <- mRemoteErrors.save(merr1)
+            merrId <- scStatUtil.saveStat(stat2)
           } yield {
-            LOGGER.trace(logPrefix + " Saved remote error: " + merr1.copy(id = Some(merrId)) )
+            LOGGER.trace(logPrefix + s" Saved remote error as stat[$merrId]:\n $stat2" )
             NoContent
           }
         }

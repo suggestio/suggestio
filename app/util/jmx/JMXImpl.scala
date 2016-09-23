@@ -8,7 +8,6 @@ import models.adv.MExtTargetsJmx
 import models.ai.MAiMadJmx
 import models.event.MEventsJmx
 import models.mcal.MCalendarJmx
-import models.merr.MRemoteErrorsJmx
 import models.usr.{EmailActivationsJmx, EmailPwIdentsJmx, MExtIdentJmx}
 import util.adv.AdvUtilJmx
 import java.lang.management.ManagementFactory
@@ -41,7 +40,6 @@ class JMXImpl @Inject() (
   mAdStatJmx                    : MAdStatJmx,
   mExtTargetsJmx                : MExtTargetsJmx,
   mEventsJmx                    : MEventsJmx,
-  mRemoteErrorsJmx              : MRemoteErrorsJmx,
   mAiMadJmx                     : MAiMadJmx,
   emailPwIdentsJmx              : EmailPwIdentsJmx,
   emailActivationsJmx           : EmailActivationsJmx,
@@ -66,7 +64,6 @@ class JMXImpl @Inject() (
       mExtIdentJmx,
       mCalendarJmx,
       siowebEsModelJmx,
-      mRemoteErrorsJmx,
       mAiMadJmx,
       advUtilJmx,
       mEventsJmx,

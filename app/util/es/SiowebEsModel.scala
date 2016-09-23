@@ -12,7 +12,6 @@ import models.adv.MExtTargets
 import models.ai.MAiMads
 import models.event.MEvents
 import models.mcal.MCalendars
-import models.merr.MRemoteErrors
 import models.mproj.ICommonDi
 import models.sec.MAsymKeys
 import models.usr.{EmailActivations, EmailPwIdents, MExtIdents}
@@ -35,7 +34,6 @@ class SiowebEsModel @Inject() (
   mCalendars          : MCalendars,
   mEvents             : MEvents,
   mExtTargets         : MExtTargets,
-  mRemoteErrors       : MRemoteErrors,
   mAiMads             : MAiMads,
   mAdStats            : MAdStats,
   emailPwIdents       : EmailPwIdents,
@@ -64,7 +62,6 @@ class SiowebEsModel @Inject() (
     mNodes,
     emailPwIdents, emailActivations, mExtIdents,
     mCalendars,
-    mRemoteErrors,
     mAiMads,
     mExtTargets,
     mEvents,
