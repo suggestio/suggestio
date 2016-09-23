@@ -10,7 +10,7 @@ import io.suggest.model.es._
 import io.suggest.util.MacroLogsImpl
 import org.elasticsearch.index.query.QueryBuilders
 import org.elasticsearch.search.aggregations.AggregationBuilders
-import org.elasticsearch.search.aggregations.metrics.max.{Max, MaxAggregator}
+import org.elasticsearch.search.aggregations.metrics.max.Max
 import org.elasticsearch.search.sort.SortOrder
 import org.joda.time.{DateTime, DateTimeZone}
 import play.api.libs.functional.syntax._
