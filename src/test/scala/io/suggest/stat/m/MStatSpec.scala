@@ -47,6 +47,9 @@ class MStatSpec extends FlatSpec with PlayJsonTestUtil {
           geo = MGeoLocData(
             town = Some("Berdyansk")
           )
+        ),
+        diag = MDiag(
+          message = Some("test test test")
         )
       )
     }

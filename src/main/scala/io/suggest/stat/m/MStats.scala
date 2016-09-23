@@ -46,6 +46,9 @@ object MStat {
     /** Имя поля с геолокацей и смежными темами. */
     val LOCATION_FN   = "loc"
 
+    /** Имя поля контейнера каких-то диагностических данных. */
+    val DIAG_FN       = "diag"
+
   }
 
 
@@ -62,7 +65,9 @@ object MStat {
     (__ \ SCREEN_FN).formatNullable[MScreen]
       .inmap[MScreen] ( EmptyUtil.opt2ImplMEmptyF(MScreen), EmptyUtil.implEmpty2OptF ) and
     (__ \ LOCATION_FN).formatNullable[MLocation]
-      .inmap[MLocation] ( EmptyUtil.opt2ImplMEmptyF(MLocation), EmptyUtil.implEmpty2OptF )
+      .inmap[MLocation] ( EmptyUtil.opt2ImplMEmptyF(MLocation), EmptyUtil.implEmpty2OptF ) and
+    (__ \ DIAG_FN).formatNullable[MDiag]
+      .inmap[MDiag] ( EmptyUtil.opt2ImplMEmptyF(MDiag), EmptyUtil.implEmpty2OptF )
   )(apply, unlift(unapply))
 
 }
@@ -108,12 +113,13 @@ class MStats @Inject() (
   override def generateMappingProps: List[DocField] = {
     import MStat.Fields._
     List(
-      _fieldObject(COMMON_FN, MCommon),
+      _fieldObject(COMMON_FN,     MCommon),
       FieldNestedObject(ACTIONS_FN, enabled = true, properties = MAction.generateMappingProps),
       FieldDate(TIMESTAMP_FN, index = null, include_in_all = false),
-      _fieldObject(UA_FN, MUa),
-      _fieldObject(SCREEN_FN, MScreen),
-      _fieldObject(LOCATION_FN, MLocation)
+      _fieldObject(UA_FN,         MUa),
+      _fieldObject(SCREEN_FN,     MScreen),
+      _fieldObject(LOCATION_FN,   MLocation),
+      _fieldObject(DIAG_FN,       MDiag)
     )
   }
 
@@ -163,7 +169,8 @@ case class MStat(
   timestamp         : DateTime        = DateTime.now(),
   ua                : MUa             = MUa.empty,
   screen            : MScreen         = MScreen.empty,
-  location          : MLocation       = MLocation.empty
+  location          : MLocation       = MLocation.empty,
+  diag              : MDiag           = MDiag.empty
 )
   extends EsModelT
 {

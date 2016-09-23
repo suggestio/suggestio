@@ -34,4 +34,7 @@ object MActionTypes extends EnumMaybeWithName with EnumJsonReadsValT with StrIdV
   /** /sc/index не нашел ресивера, но подобрал или сочинил узел с подходящим к ситуации оформлением. */
   val ScIndexCovering     = Val("выдача с оформлением от узла")
 
+  /** /sc/error/occurred/in/showcase Сабмит диагностики на клиенте. */
+  val ScRemoteDiag        = Val("выдача: диагностика на клиенте")
+
 }
