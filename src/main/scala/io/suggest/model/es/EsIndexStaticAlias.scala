@@ -21,8 +21,8 @@ trait EsIndexStaticAlias extends IEsModelDi with MacroLogsI {
   protected def INDEX_ALIAS_NAME: String
 
 
-  /** Выставить алиас на текущий индекс. */
-  def installIndexAlias(newIndexName: String): Future[_] = {
+  /** Выставить алиас на текущий индекс, забыв о предыдущих данных алиаса. */
+  def resetIndexAliasTo(newIndexName: String): Future[_] = {
     val aliasName = INDEX_ALIAS_NAME
     val fut = esClient.admin().indices()
       .prepareAliases()

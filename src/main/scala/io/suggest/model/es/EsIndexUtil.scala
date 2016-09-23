@@ -11,12 +11,14 @@ import java.time.format.DateTimeFormatter
   */
 object EsIndexUtil {
 
+  def DELIM = "-"
+
   /** java8 dt formatter. */
-  def dtSuffixFmt = DateTimeFormatter.ofPattern("-yyMMdd-HHmmss")
+  def dtSuffixFmt = DateTimeFormatter.ofPattern("yyMMdd-HHmmss")
 
   /** Генерация нового имени скользящего во времени индекса (с точностью до секунды). */
   def newIndexName(prefix: String): String = {
-    prefix + dtSuffixFmt.format( ZonedDateTime.now() )
+    prefix + DELIM + dtSuffixFmt.format( ZonedDateTime.now() )
   }
 
 }
