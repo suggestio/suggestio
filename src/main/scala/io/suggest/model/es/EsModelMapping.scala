@@ -14,7 +14,9 @@ import scala.concurrent.Future
  */
 
 
+/** Интерфейс для статически чаастей ES-моделей для метода генерации описалова ES-полей. */
 trait IGenEsMappingProps {
+  /** Список ES-полей модели. */
   def generateMappingProps: List[DocField]
 }
 
