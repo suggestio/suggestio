@@ -3,6 +3,7 @@ package io.suggest.loc.geo.ipgeobase
 import com.google.inject.{Inject, Singleton}
 import io.suggest.model.es.IEsModelDiVal
 import io.suggest.model.geo.{GeoPoint, IGeoFindIp, IGeoFindIpResult}
+import io.suggest.util.MacroLogsImpl
 
 import scala.concurrent.Future
 
@@ -20,6 +21,7 @@ class IpgbUtil @Inject() (
   mCommonDi   : IEsModelDiVal
 )
   extends IGeoFindIp
+  with MacroLogsImpl
 {
 
   import mCommonDi._
@@ -35,19 +37,30 @@ class IpgbUtil @Inject() (
     */
   override def findIp(ip: String): Future[Option[MGeoFindIpResult]] = {
     for {
+      // Найти диапазоны ip-адресов
       ipRanges  <- mIpRanges.findForIp(ip)
+
+      // Выявить id городов, связанных с найденными диапазонами.
       cityEsIds = ipRanges.iterator
         .flatMap(_.cityId)
         .map(MCity.cityId2esId)
         .toSet
+
+      // Получить города по city ids.
       mcities   <- mCities.multiGet(cityEsIds)
+
     } yield {
-      for {
+
+      // Собрать опциональный результат, залоггировать, вернуть.
+      val r = for {
         mcity   <- mcities.headOption
-        mrange  <- ipRanges.find(_.cityId == mcity.cityId)
+        mrange  <- ipRanges.find(_.cityId.contains( mcity.cityId ))
       } yield {
         MGeoFindIpResult(mcity, mrange)
       }
+
+      LOGGER.trace(s"findId($ip):\n IP Ranges:\t${ipRanges.mkString(", ")}\n Cities:\t${mcities.mkString(", ")}\n Result:\t$r")
+      r
     }
   }
 
@@ -70,7 +83,7 @@ case class MGeoFindIpResult(city: MCity, range: MIpRange) extends IGeoFindIpResu
   }
 
   override def accuracyMetersOpt: Option[Int] = {
-    // TODO Нужно ли что-нибудь тут задать? Константу какую-либо например?
+    // TODO Нужно ли что-нибудь тут задать? 50км например?
     None
   }
 

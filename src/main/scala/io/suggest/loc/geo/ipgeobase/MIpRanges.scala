@@ -66,7 +66,6 @@ abstract class MIpRangesAbstract
   import io.suggest.util.SioEsUtil._
   import MIpRange.Fields._
   import mCommonDi._
-  import scala.concurrent.duration._
 
 
   /** Поиск элементов модели по ip-адресу. */
