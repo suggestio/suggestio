@@ -38,7 +38,7 @@ class CacheApiUtil @Inject() (cache: CacheApi) {
         fut
     }
 
-    p completeWith resFut
+    p.completeWith( resFut )
     pfut
   }
 
