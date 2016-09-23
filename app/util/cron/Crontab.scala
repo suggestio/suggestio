@@ -10,6 +10,7 @@ import util.billing.cron.BillingCronTasks
 import util.geo.IpGeoBaseImport
 import util.health.AdnGeoParentsHealth
 import util.img.cron.{PeriodicallyDeleteEmptyDirs, PeriodicallyDeleteNotExistingInPermanent}
+import util.stat.StatCronTasks
 
 import scala.concurrent.Future
 
@@ -22,12 +23,13 @@ import scala.concurrent.Future
  * Реализация происходит через akka scheduler и статический набор события расписания.
  * По мотивам http://stackoverflow.com/a/13469308
  */
+
+// TODO Вынести cron в отдельный пакет, на крайняк в util или ещё куда-нибудь. Чтобы список модулей на вход получал через reference.conf.
+
 class Crontab @Inject() (
-  // geo-nodes
   geoParentsHealth              : AdnGeoParentsHealth,
-  // geoip
   ipGeoBaseImport               : IpGeoBaseImport,
-  // billing
+  statCronTasks                 : StatCronTasks,
   billingCronTasks              : BillingCronTasks,
   // images
   periodicallyDeleteEmptyDirs   : PeriodicallyDeleteEmptyDirs,
@@ -44,8 +46,12 @@ class Crontab @Inject() (
 
   /** Список классов, которые являются поставщиками периодических задач при старте. */
   def TASK_PROVIDERS = Seq[ICronTasksProvider](
-    billingCronTasks, ipGeoBaseImport, geoParentsHealth,
-    periodicallyDeleteEmptyDirs, periodicallyDeleteNotExistingInPermanent
+    billingCronTasks,
+    ipGeoBaseImport,
+    statCronTasks,
+    geoParentsHealth,
+    periodicallyDeleteEmptyDirs,
+    periodicallyDeleteNotExistingInPermanent
   )
 
   // Constructor -------------------------------
