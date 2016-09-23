@@ -1,7 +1,5 @@
 package io.suggest.loc.geo.ipgeobase
 
-import java.time.ZonedDateTime
-
 import com.google.inject.{Inject, Singleton}
 import io.suggest.model.es._
 import io.suggest.util.MacroLogsImpl
@@ -16,13 +14,13 @@ import org.elasticsearch.common.settings.Settings
 
 object MIndexes {
 
-  /** Константа с именем актуального алиаса ipgb-индекса. */
-  def INDEX_ALIAS_NAME = "ipgeobase"
+  /** Константа с именем актуального алиаса ipgb-индекса.
+    * val, потому что дёргается по нескольку раз даже в рамках ровно одного запроса. */
+  val INDEX_ALIAS_NAME = "ipgeobase"
 
   /** Сборка нового имени для нового индекса. */
   def newIndexName(): String = {
-    val now = ZonedDateTime.now()
-    s"$INDEX_ALIAS_NAME-${now.getYear - 2000}${now.getMonthValue}${now.getDayOfMonth}-${now.getHour}${now.getMinute}${now.getSecond}"
+    EsIndexUtil.newIndexName( INDEX_ALIAS_NAME )
   }
 
 }
