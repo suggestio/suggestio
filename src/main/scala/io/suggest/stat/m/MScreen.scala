@@ -19,7 +19,7 @@ object MScreen extends IGenEsMappingProps with IEmpty {
   object Fields {
 
     def ORIENTATION_FN          = "orient"
-    def VPORT_REAL_FN           = "real"
+    def VPORT_PHYS_FN           = "phys"
     def VPORT_QUANTED_FN        = "choosen"
 
   }
@@ -29,7 +29,7 @@ object MScreen extends IGenEsMappingProps with IEmpty {
 
   implicit val FORMAT: OFormat[MScreen] = (
     (__ \ ORIENTATION_FN).formatNullable[MOrientation2d] and
-    (__ \ VPORT_REAL_FN).formatNullable[MViewPort] and
+    (__ \ VPORT_PHYS_FN).formatNullable[MViewPort] and
     (__ \ VPORT_QUANTED_FN).formatNullable[MViewPort]
   )(apply, unlift(unapply))
 
@@ -40,7 +40,7 @@ object MScreen extends IGenEsMappingProps with IEmpty {
     val vportFields = MViewPort.generateMappingProps
     List(
       FieldString(ORIENTATION_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-      FieldObject(VPORT_REAL_FN, enabled = false, properties = vportFields),
+      FieldObject(VPORT_PHYS_FN, enabled = true, properties = vportFields),
       FieldObject(VPORT_QUANTED_FN, enabled = true, properties = vportFields)
     )
   }
@@ -52,7 +52,7 @@ object MScreen extends IGenEsMappingProps with IEmpty {
 
 case class MScreen(
   orientation   : Option[MOrientation2d]  = None,
-  vportReal     : Option[MViewPort]       = None,
+  vportPhys     : Option[MViewPort]       = None,
   vportQuanted  : Option[MViewPort]       = None
 )
   extends EmptyProduct

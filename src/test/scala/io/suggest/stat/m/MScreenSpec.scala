@@ -21,7 +21,7 @@ class MScreenSpec extends FlatSpec with PlayJsonTestUtil {
     jsonTest {
       MScreen(
         orientation = Some( MOrientations2d.Vertical ),
-        vportReal   = Some(MViewPort(
+        vportPhys   = Some(MViewPort(
           widthPx   = 100,
           heightPx  = 200,
           pxRatio   = Some( 1.3F )
