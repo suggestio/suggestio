@@ -40,8 +40,8 @@ class StatCronTasks @Inject()(
       List(
         // Создание новых stat-индексов и переключение на них
         MCronTask(
-          startDelay  = 1.second,
-          every       = 24.hours,
+          startDelay  = 10.second,
+          every       = 12.hours,
           displayName = "stat inx renew"
         ) {
           statIndexUtil.maybeReNewCurrIndex()
@@ -49,8 +49,8 @@ class StatCronTasks @Inject()(
 
         // Удаление слишком старых индексов.
         MCronTask(
-          startDelay = 1.minute,
-          every = 48.hour,
+          startDelay  = 1.minute,
+          every       = 24.hour,
           displayName = "stat inx old delete"
         ) {
           statIndexUtil.maybeDeleteTooOldIndex()
