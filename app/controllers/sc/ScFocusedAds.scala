@@ -1,7 +1,6 @@
 package controllers.sc
 
 import _root_.util.di.{IScStatUtil, IScUtil}
-import _root_.util.jsa.{JsAction, JsAppendById}
 import _root_.util.n2u.IN2NodesUtilDi
 import io.suggest.common.css.FocusedTopLeft
 import io.suggest.common.fut.FutureUtil
@@ -18,7 +17,6 @@ import play.twirl.api.Html
 import util.PlayMacroLogsI
 import util.acl._
 import views.html.sc.foc._
-import play.api.libs.json._
 import models._
 
 import scala.collection.immutable
@@ -440,9 +438,6 @@ trait ScFocusedAdsBase
       }
     }
 
-    override def jsAppendCssAction(html: JsString): JsAction = {
-      JsAppendById("smResourcesFocused", html)
-    }
   }
 
   /** Если поддержка аккамулятора при вызовах renderOutBlock() не требуется, то этот трейт отключит её. */

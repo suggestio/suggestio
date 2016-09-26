@@ -4,12 +4,11 @@ import java.util.NoSuchElementException
 
 import _root_.util.blocks.BgImg
 import _root_.util.di.{IScNlUtil, IScStatUtil, IScUtil}
-import _root_.util.jsa.{JsAction, JsAppendById}
 import _root_.util.blocks.IBlkImgMakerDI
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.IMNodes
+import io.suggest.primo.TypeT
 import models.im.make.MakeResult
-import models.mctx.Context
 import models.msc._
 import models.req.IReq
 import play.api.mvc.Result
@@ -42,13 +41,9 @@ trait ScAdsTileBase
   import mCommonDi._
 
   /** Изменябельная логика обработки запроса рекламных карточек для плитки. */
-  trait TileAdsLogic extends AdCssRenderArgs {
+  trait TileAdsLogic extends LogicCommonT with AdCssRenderArgs with TypeT {
 
-    type T
-    implicit def _request: IReq[_]
     def _adSearch: AdSearch
-
-    lazy val ctx = implicitly[Context]
 
     /** 2014.11.25: Размер плиток в выдаче должен способствовать заполнению экрана по горизонтали,
       * избегая или минимизируя белые пустоты по краям экрана клиентского устройства. */
@@ -83,7 +78,7 @@ trait ScAdsTileBase
 
     def renderMadAsync(brArgs: blk.RenderArgs): Future[T]
 
-    lazy val logPrefix = s"findAds(${System.currentTimeMillis}):"
+    lazy val logPrefix = s"findAds(${ctx.timestamp}):"
     lazy val gsiFut = _adSearch.geo.geoSearchInfoOpt
 
     lazy val adSearch2Fut: Future[AdSearch] = {
@@ -149,7 +144,7 @@ trait ScAdsTileBase
     }
 
     override def adsCssExternalFut: Future[Seq[AdCssArgs]] = {
-      madsFut map { mads =>
+      for (mads <- madsFut) yield {
         val _szMult = szMult
         mads
           .flatMap(_.id)
@@ -213,9 +208,8 @@ trait ScAdsTileBase
       }
     }
 
-    override def jsAppendCssAction(html: JsString): JsAction = {
-      JsAppendById("smResources", html)
-    }
+    /** TODO Статистика плитки. */
+    override def scStat: Future[Stat2] = ???
 
   }
 

@@ -4,9 +4,7 @@ import controllers.routes
 import models.blk
 import models.mctx.Context
 import models.msc.AdCssArgs
-import play.api.libs.json.JsString
 import play.twirl.api.{Txt, Html}
-import util.jsa.JsAction
 import util.n2u.IN2NodesUtilDi
 import views.txt.blocks.common.{_blockCss, _textCss}
 
@@ -102,9 +100,6 @@ trait ScCssUtil
         }
     }
 
-    /** Генерация js-экшена для рендера стилей. */
-    def jsAppendCssAction(html: JsString): JsAction
-
     /** Отрендерить стили в Txt для всех необходимых блоков. */
     def jsAdsCssFut: Future[Txt] = {
       val _adsCssRenderFut = adsCssRenderFut
@@ -115,15 +110,6 @@ trait ScCssUtil
         val blkCssTxts = new Txt(adsCssRenders)
         val fieldCssTxts = new Txt(fieldRenders)
         new Txt( List(blkCssTxts, fieldCssTxts) )
-      }
-    }
-
-    /** Отрендерить js для добавления стилей блоков в документ выдачи. */
-    def jsAppendAdsCssFut: Future[JsAction] = {
-      jsAdsCssFut map { jsAdsCss =>
-        val html = List(Txt("<style>"), jsAdsCss, Txt("</style>"))
-        val data = htmlCompressUtil.txt2jsStr( new Txt(html) )
-        jsAppendCssAction(data)
       }
     }
 
