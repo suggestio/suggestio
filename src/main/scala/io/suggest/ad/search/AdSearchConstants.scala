@@ -1,5 +1,7 @@
 package io.suggest.ad.search
 
+import io.suggest.sc.ScConstants
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -8,29 +10,18 @@ package io.suggest.ad.search
  */
 object AdSearchConstants {
 
-  def PRODUCER_ID_FN     = "shopId"
-  def LEVEL_ID_FN        = "level"
-  def FTS_QUERY_FN       = "q"
-  def RESULTS_LIMIT_FN   = "size"
-  def RESULTS_OFFSET_FN  = "offset"
-  def RECEIVER_ID_FN     = "rcvr"
-  def FIRST_AD_ID_FN     = "firstAdId"
-  def GENERATION_FN      = "gen"
-  def GEO_MODE_FN        = "geo"
-  def SCREEN_INFO_FN     = "screen"
-  def LAST_PROD_ID_FN    = "lpi"
-  def WITHOUT_IDS_FN     = "woi"
+  def PRODUCER_ID_FN      = "p"
+  def LIMIT_FN            = "l"
+  def OFFSET_FN           = "o"
+  def RECEIVER_ID_FN      = "r"
+  def GENERATION_FN       = "d"
+  def SCREEN_INFO_FN      = "s"
+
+  def LOC_ENV_FN          = ScConstants.ReqArgs.LOC_ENV_FN
 
   /** 2015.aug.26: Название опционального поля с флагом того, разрешено ли серверу возвращать
     * index answer вместо focused ads. */
   def FOC_JUMP_ALLOWED_FN   = "n"
-
-  /**
-   * v1
-   * Название поля для focused-ads api.
-   * Содержит флаг, сообщающий о необходимости особого рендера первой карточки.
-   */
-  def WITH_HEAD_AD_FN    = "h"
 
 
   /** @return Имя поля с кодом используемого режима lookup'а карточки. */

@@ -51,9 +51,6 @@ object ScConstants {
   /** Client/server констатны выдачи для моделей ScReqArgs. */
   object ReqArgs {
 
-    @deprecated("Use loc env instead", "2016.sep.16")
-    def GEO_FN            = "geo"
-
     /** Имя поля с данными экрана клиентского устройства. */
     def SCREEN_FN         = "screen"
 
@@ -100,16 +97,22 @@ object ScConstants {
   object Resp {
 
     /** Название поля, содержащего id экшена, по которому сгенерирован ответ. */
-    def ACTION_FN  = "action"
+    final val ACTION_FN  = "action"
+
+    /** Название поля со списком sc-resp-экшенов. */
+    final val RESP_ACTIONS_FN = "ra"
 
     /** Название поля ответа, содержащего строку с html версткой. */
-    def HTML_FN    = "html"
+    final val HTML_FN    = "html"
+
+    /** Названия поля с геоточкой, к которому привязан sc-ответ. */
+    final val GEO_POINT_FN = "gp"
 
     /** Название поля с id узла, к которому относится ответ. */
-    def ADN_ID_FN  = "curr_adn_id"
+    final val ADN_ID_FN  = "n"
 
     /** Название поля с неким заголовком. */
-    def TITLE_FN   = "ti"
+    final val TITLE_FN   = "ti"
 
     def MADS_FN          = "mads"
 
@@ -133,7 +136,8 @@ object ScConstants {
 
     def STYLES_FN         = "st"
 
-    def INDEX_RESP_ACTION = "showcaseIndex"
+    final val INDEX_RESP_ACTION = "i"
+
   }
 
 

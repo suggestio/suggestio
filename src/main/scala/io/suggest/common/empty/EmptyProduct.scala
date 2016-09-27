@@ -21,5 +21,13 @@ trait EmptyProduct extends IsEmpty { this: Product =>
   /** @return true, если класс не содержит ни одного значения. */
   override final def isEmpty = super.isEmpty
 
+  /** Опционально вернуть this.
+    * @return Если данных нет (!nonEmpty), то будет None.
+    *         Если хоть какие-то данные есть, то Some(this).
+    */
+  def optional: Option[this.type] = {
+    if (nonEmpty) Some(this) else None
+  }
+
 }
 

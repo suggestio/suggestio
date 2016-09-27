@@ -16,16 +16,16 @@ object OptionUtil {
     *               true  => Some(f())
     * @return Опциональный результат выполнения функции f в зависимости от значения isSome.
     */
-  def maybe[T](isSome: Boolean)(f: => T): Option[T] = {
+  def maybe[T](isSome: Boolean)(someF: => T): Option[T] = {
     if (isSome)
-      Some(f)
+      Some(someF)
     else
       None
   }
 
-  def maybeFut[T](isSome: Boolean)(f: => Future[Option[T]]): Future[Option[T]] = {
+  def maybeFut[T](isSome: Boolean)(someF: => Future[Option[T]]): Future[Option[T]] = {
     if (isSome)
-      f
+      someF
     else
       Future.successful(None)
   }
