@@ -38,6 +38,14 @@ trait QsbKey1T {
 }
 
 
+/** Использовать навороченный вариант javascript Unbind из sio jsRevRouterTpl. */
+trait QsbSioJsRevRouter[T] extends QueryStringBindable[T] {
+  override def javascriptUnbind: String = {
+    QsConstants.JSRR_OBJ_TO_QS_F
+  }
+}
+
+
 /**
   * Обычно в проекте используется смесь QueryStringBindable with [[QsbKey1T]].
   * Тут -- абстрактный класс, облегчающий жизнь компилятора и снижающий ресурсопотребление
@@ -46,3 +54,4 @@ trait QsbKey1T {
 abstract class QueryStringBindableImpl[T]
   extends QueryStringBindable[T]
   with QsbKey1T
+  with QsbSioJsRevRouter[T]
