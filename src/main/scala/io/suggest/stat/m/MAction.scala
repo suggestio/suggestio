@@ -77,8 +77,8 @@ object MAction extends IGenEsMappingProps {
 
 
 case class MAction(
-                    actions   : Seq[MActionType],
-                    nodeId    : Seq[String],
-                    nodeName : Seq[String],
-                    count     : Seq[Int]          = Nil
+  actions   : Seq[MActionType],
+  nodeId    : Seq[String]       = Nil,
+  nodeName  : Seq[String]       = Nil,
+  count     : Seq[Int]          = Nil
 )

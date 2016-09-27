@@ -37,4 +37,18 @@ object MActionTypes extends EnumMaybeWithName with EnumJsonReadsValT with StrIdV
   /** /sc/error/occurred/in/showcase Сабмит диагностики на клиенте. */
   val ScRemoteDiag        = Val("выдача: диагностика на клиенте")
 
+  val ScRcvrAds           = Val("выдача: карточки ресивера")
+
+  val ScProdAds           = Val("выдача: карточки продьюсера")
+
+  val ScAdsTile           = Val("выдача: плитка")
+
+  val SearchLimit         = Val("поиск: лимит")
+
+  val SearchOffset        = Val("поиск: сдвиг")
+
+  val ScAdsFocused        = Val("выдача: focused-карточки")
+
+  val ScAdsFocusingOnAd   = Val("выдача: фокусировка на карточке")
+
 }
