@@ -41,7 +41,7 @@ trait OnGeo extends Base {
       val sd1 = sd0.copy(
         common = sd0.common.copy(
           adnIdOpt  = None,
-          geoLocOpt = Some(newGeoLoc.gl)
+          geoLocOpt = Some(newGeoLoc)
         ),
         grid = sd0.grid.copy(
           state = MGridState(

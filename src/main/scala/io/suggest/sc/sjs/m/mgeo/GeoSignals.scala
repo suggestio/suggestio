@@ -87,4 +87,6 @@ object SuppressTimeout extends IFsmMsgCompanion[Long]
 
 
 /** Сигнал от MbFsm к ScFsm о смене текущей обозреваемой геолокации. */
-case class NewGeoLoc(gl: MGeoPoint) extends IFsmMsg
+case class NewGeoLoc(override val point: MGeoPoint) extends IFsmMsg with IGeoLocMin {
+  override def accuracyM: Option[Double] = None
+}

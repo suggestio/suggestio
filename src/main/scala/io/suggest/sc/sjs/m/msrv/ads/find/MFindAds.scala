@@ -4,8 +4,9 @@ import io.suggest.sc.sjs.m.mgrid.MGridParamsJsonWrapper
 import io.suggest.sc.sjs.util.router.srv.routes
 import io.suggest.sjs.common.xhr.Xhr
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 import scala.scalajs.js.UndefOr
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 /**
  * Suggest.io
@@ -20,7 +21,7 @@ object MFindAds {
    * @param adSearch Поисковые критерии, которые может понять jsRouter.
    * @return Фьючерс с результатом запроса.
    */
-  def findAds(adSearch: MFindAdsReq)(implicit ec: ExecutionContext): Future[MFindAds] = {
+  def findAds(adSearch: MFindAdsReq): Future[MFindAds] = {
     val route = routes.controllers.Sc.findAds( adSearch.toJson )
     for (json <- Xhr.getJson(route)) yield {
       val json1 = json.asInstanceOf[MFindAdsRespJson]

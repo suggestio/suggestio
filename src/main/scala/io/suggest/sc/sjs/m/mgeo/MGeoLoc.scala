@@ -20,8 +20,8 @@ import io.suggest.geo.GeoConstants.GeoLocQs._
  */
 case class MGeoLoc(
   override val point        : MGeoPoint,
-  override val accuracyM    : Double,
-  timestamp                 : Long
+  override val accuracyM    : Option[Double]  = None,
+  timestamp                 : Option[Long]    = None
 )
   extends IGeoLocMin
 
@@ -31,8 +31,8 @@ object MGeoLoc {
   def apply(pos: Position): MGeoLoc = {
     MGeoLoc(
       point     = MGeoPoint(pos.coords),
-      accuracyM = pos.coords.accuracy,
-      timestamp = pos.timestamp.toLong
+      accuracyM = Some(pos.coords.accuracy),
+      timestamp = Some(pos.timestamp.toLong)
     )
   }
 
@@ -42,16 +42,28 @@ object MGeoLoc {
 /** Интерфейс минимальной модели. */
 trait IGeoLocMin {
   def point       : MGeoPoint
-  def accuracyM   : Double
+  def accuracyM   : Option[Double]
 }
+
+/*
+case class MGeoLocMin(
+  override val point       : MGeoPoint,
+  override val accuracyM   : Option[Double] = None
+)
+  extends IGeoLocMin
+*/
 
 object IGeoLocMin {
 
   def toJson(v: IGeoLocMin): js.Dictionary[js.Any] = {
-    js.Dictionary [js.Any] (
-      CENTER_FN     -> v.point.toJsObject,
-      ACCURACY_M_FN -> v.accuracyM
+    val d = js.Dictionary [js.Any] (
+      CENTER_FN     -> v.point.toJsObject
     )
+
+    for (accur <- v.accuracyM)
+      d(ACCURACY_M_FN) = accur
+
+    d
   }
 
 }

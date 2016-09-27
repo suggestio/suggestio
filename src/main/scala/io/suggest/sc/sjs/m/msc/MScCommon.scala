@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.m.msc
 
 import io.suggest.sc.sjs.m.magent.{IMScreen, MResizeDelay}
-import io.suggest.sc.sjs.m.mgeo.MGeoPoint
+import io.suggest.sc.sjs.m.mgeo.IGeoLocMin
 import io.suggest.sjs.common.model.browser.IBrowser
 
 /**
@@ -18,7 +18,7 @@ trait IScCommon {
   def generation   : Long
   def adnIdOpt     : Option[String]
   def resizeOpt    : Option[MResizeDelay]
-  def geoLocOpt    : Option[MGeoPoint]
+  def geoLocOpt    : Option[IGeoLocMin]
 
 }
 
@@ -38,6 +38,6 @@ case class MScCommon(
   override val generation   : Long,
   override val adnIdOpt     : Option[String]        = None,
   override val resizeOpt    : Option[MResizeDelay]  = None,
-  override val geoLocOpt    : Option[MGeoPoint]     = None
+  override val geoLocOpt    : Option[IGeoLocMin]    = None
 )
   extends IScCommon

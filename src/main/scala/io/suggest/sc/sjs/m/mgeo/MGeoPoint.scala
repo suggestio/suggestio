@@ -30,6 +30,11 @@ object MGeoPoint {
     )
   }
 
+  def apply(lonLat: js.Array[_]): MGeoPoint = {
+    val s = LngLat.convert( lonLat.asInstanceOf[js.Array[js.Any]] )
+    apply(s)
+  }
+
 }
 
 case class MGeoPoint(

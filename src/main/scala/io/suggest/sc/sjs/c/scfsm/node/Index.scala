@@ -7,7 +7,7 @@ import io.suggest.sc.sjs.m.mgrid.MGridState
 import io.suggest.sc.sjs.m.mmap.EnsureMap
 import io.suggest.sc.sjs.m.msc.{MFindAdsArgsLimOff, MScSd}
 import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
-import io.suggest.sc.sjs.m.msrv.index.{MNodeIndex, MScIndexArgs}
+import io.suggest.sc.sjs.m.msrv.index.{MScIndexArgs, MScRespIndex}
 import io.suggest.sc.sjs.vm.layout.LayRootVm
 import io.suggest.sc.sjs.vm.nav.nodelist.NlRoot
 import io.suggest.sc.sjs.vm.res.CommonRes
@@ -30,7 +30,7 @@ trait Index extends ScFsmStub {
   trait GetIndexUtil {
 
     /** Запустить запрос получения индекса с сервера на основе переданного состояния. */
-    protected def _getIndex(sd0: SD = _stateData): Future[MNodeIndex] = {
+    protected def _getIndex(sd0: SD = _stateData): Future[MScRespIndex] = {
       val inxArgs = MScIndexArgs(
         adnIdOpt      = sd0.common.adnIdOpt,
         locEnv        = MLocEnv(
@@ -39,7 +39,7 @@ trait Index extends ScFsmStub {
         screen        = Some( sd0.common.screen ),
         withWelcome   = true
       )
-      MNodeIndex.getIndex(inxArgs)
+      MScRespIndex.getIndex(inxArgs)
     }
 
   }
@@ -72,14 +72,14 @@ trait Index extends ScFsmStub {
   /** Общий интерфейс для метода-реакции на получение node-индекса. */
   trait INodeIndexReceived {
     /** Реакция на получение node index. */
-    protected def _nodeIndexReceived(v: MNodeIndex): Unit
+    protected def _nodeIndexReceived(v: MScRespIndex): Unit
   }
   trait IGetNodeIndexFailed {
     /** Реакция на ошибку выполнения запроса к node index. */
     protected def _getNodeIndexFailed(ex: Throwable): Unit
   }
   trait HandleNodeIndex extends INodeIndexReceived with IGetNodeIndexFailed {
-    def _handleNodeIndexResult(tryRes: Try[MNodeIndex]): Unit = {
+    def _handleNodeIndexResult(tryRes: Try[MScRespIndex]): Unit = {
       tryRes match {
         case Success(mni) => _nodeIndexReceived(mni)
         case Failure(ex)  => _getNodeIndexFailed(ex)
@@ -91,7 +91,7 @@ trait Index extends ScFsmStub {
   trait ProcessIndexReceivedUtil extends FsmState with INodeIndexReceived {
 
     /** Реакция на успешный результат запроса node index. */
-    override protected def _nodeIndexReceived(v: MNodeIndex): Unit = {
+    override protected def _nodeIndexReceived(v: MScRespIndex): Unit = {
       // Заливаем в данные состояния полученные метаданные по текущему узлу.
       // TODO Это нужно только на первом шаге по факту (geo). Потом adnId обычно известен наперёд.
       val sd0 = _stateData
@@ -186,7 +186,7 @@ trait Index extends ScFsmStub {
   {
 
     override def receiverPart: Receive = super.receiverPart orElse {
-      case mni: MNodeIndex =>
+      case mni: MScRespIndex =>
         _nodeIndexReceived(mni)
       case Failure(ex) =>
         _getNodeIndexFailed(ex)

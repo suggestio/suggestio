@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.c.scfsm.foc
 import io.suggest.sc.sjs.c.scfsm.node.Index
 import io.suggest.sc.sjs.m.mfoc.FocRootAppeared
 import io.suggest.sc.sjs.m.msrv.foc.find.{MFocAdSearchDflt, MFocAds}
-import io.suggest.sc.sjs.m.msrv.index.MNodeIndex
+import io.suggest.sc.sjs.m.msrv.index.MScRespIndex
 import io.suggest.sc.sjs.vm.layout.FsLoader
 import io.suggest.sc.sjs.vm.res.FocusedRes
 import io.suggest.sc.sjs.vm.foc.fad.FAdRoot
@@ -199,7 +199,7 @@ trait StartingForAd extends MouseMoving with Index {
     override def receiverPart: Receive = super.receiverPart.orElse {
       case mfa: MFocAds =>
         _focAdsReceived(mfa)
-      case mni: MNodeIndex =>
+      case mni: MScRespIndex =>
         _nodeIndexReceived(mni)
       case Failure(ex) =>
         _focAdsRequestFailed(ex)
@@ -212,7 +212,7 @@ trait StartingForAd extends MouseMoving with Index {
     }
 
     /** Реакция на успешный результат запроса node index. */
-    override protected def _nodeIndexReceived(mni: MNodeIndex): Unit = {
+    override protected def _nodeIndexReceived(mni: MScRespIndex): Unit = {
       // Предварительно подготовить состояние к переключению.
       _stateData = _stateData.withNodeSwitch( mni.adnIdOpt )
       super._nodeIndexReceived(mni)

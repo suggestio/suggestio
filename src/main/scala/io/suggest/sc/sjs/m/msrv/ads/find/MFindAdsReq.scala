@@ -1,13 +1,11 @@
 package io.suggest.sc.sjs.m.msrv.ads.find
 
 import io.suggest.sc.sjs.m.magent.IMScreen
-import io.suggest.sc.sjs.m.mgeo.{IMGeoMode, MGeoPoint}
+import io.suggest.sc.sjs.m.mgeo.{MGeoPoint, MLocEnv}
 import io.suggest.sc.sjs.m.msrv.ToJsonWithApiVsnT
 
 import scala.scalajs.js.{Any, Dictionary}
 import io.suggest.ad.search.AdSearchConstants._
-
-import scala.scalajs.js.JSConverters._
 
 /**
  * Suggest.io
@@ -20,17 +18,12 @@ import scala.scalajs.js.JSConverters._
 trait MFindAdsReq extends ToJsonWithApiVsnT {
 
   def producerId  : Option[String]
-  def levelId     : Option[String]
-  def ftsQuery    : Option[String]
   def limit       : Option[Int]
   def offset      : Option[Int]
   def receiverId  : Option[String]
-  def firstAdIds  : Seq[String]
   def generation  : Option[Long]
-  @deprecated("Use loc env geo instead", "2016.sep.16")
-  def geo         : Option[IMGeoMode]
+  def locEnv      : MLocEnv
   def screenInfo  : Option[IMScreen]
-  def withoutId   : Option[String]
   def agpPoint    : Option[MGeoPoint]
 
   /** Собрать итоговый json для передачи в router. */
@@ -39,26 +32,21 @@ trait MFindAdsReq extends ToJsonWithApiVsnT {
 
     for (prodId <- producerId)
       d(PRODUCER_ID_FN) = prodId
-    for (_levelId <- levelId)
-      d(LEVEL_ID_FN) = _levelId
-    for (q <- ftsQuery)
-      d(FTS_QUERY_FN) = q
     for (_limit <- limit)
-      d(RESULTS_LIMIT_FN) = _limit
+      d(LIMIT_FN) = _limit
     for (off <- offset)
-      d(RESULTS_OFFSET_FN) = off
+      d(OFFSET_FN) = off
     for (rcvrId <- receiverId)
       d(RECEIVER_ID_FN) = rcvrId
-    if (firstAdIds.nonEmpty)
-      d(FIRST_AD_ID_FN) = firstAdIds.toJSArray
     for (gen <- generation)
       d(GENERATION_FN) = gen
-    for (_geo <- geo)
-      d(GEO_MODE_FN) = _geo.toQsStr
+
+    val _le = locEnv
+    if (_le.nonEmpty)
+      d(LOC_ENV_FN) = MLocEnv.toJson(_le)
+
     for (scrInfo <- screenInfo)
       d(SCREEN_INFO_FN) = scrInfo.toQsValue
-    for (woId <- withoutId)
-      d(WITHOUT_IDS_FN) = woId
     for (pt <- agpPoint)
       d(AGP_POINT_FN) = pt.toJsObject
 
@@ -71,16 +59,12 @@ trait MFindAdsReq extends ToJsonWithApiVsnT {
 /** Задефолченная реализация [[MFindAdsReq]]. */
 trait MFindAdsReqDflt extends MFindAdsReq {
   override def producerId  : Option[String]    = None
-  override def levelId     : Option[String]    = None
-  override def ftsQuery    : Option[String]    = None
   override def limit       : Option[Int]       = None
   override def offset      : Option[Int]       = None
   override def receiverId  : Option[String]    = None
-  override def firstAdIds  : Seq[String]       = Nil
   override def generation  : Option[Long]      = None
-  override def geo         : Option[IMGeoMode] = None
+  override def locEnv      : MLocEnv           = MLocEnv.empty
   override def screenInfo  : Option[IMScreen]  = None
-  override def withoutId   : Option[String]    = None
   override def agpPoint    : Option[MGeoPoint] = None
 }
 
@@ -90,15 +74,11 @@ trait MFindAdsReqWrapper extends MFindAdsReq {
   def _underlying: MFindAdsReq
 
   override def producerId   = _underlying.producerId
-  override def levelId      = _underlying.levelId
-  override def ftsQuery     = _underlying.ftsQuery
   override def limit        = _underlying.limit
   override def offset       = _underlying.offset
   override def receiverId   = _underlying.receiverId
-  override def firstAdIds   = _underlying.firstAdIds
   override def generation   = _underlying.generation
-  override def geo          = _underlying.geo
+  override def locEnv       = _underlying.locEnv
   override def screenInfo   = _underlying.screenInfo
-  override def withoutId    = _underlying.withoutId
   override def agpPoint     = _underlying.agpPoint
 }

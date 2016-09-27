@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.m.msrv.foc.find
 
-import io.suggest.sc.sjs.m.msrv.index.MNodeIndex
+import io.suggest.sc.sjs.m.msrv.index.{MScRespIndex, MScRespIndexJson}
 import io.suggest.sc.sjs.m.msrv.{IFocResp, MSrvAnswer}
 import io.suggest.sc.sjs.util.router.srv.routes
 import io.suggest.sjs.common.msg.ErrorMsgs
@@ -27,7 +27,7 @@ object MFocAds {
    * @param args Аргументы.
    * @return Фьючерс с распарсенным ответом.
    */
-  protected def _findJson(args: MFocAdSearch)(implicit ec: ExecutionContext): Future[WrappedDictionary[Any]] = {
+  protected def _findJson(args: MFocAdSearch)(implicit ec: ExecutionContext): Future[Dictionary[Any]] = {
     val route = routes.controllers.Sc.focusedAds(args.toJson)
     for (json0 <- Xhr.getJson(route)) yield {
       json0.asInstanceOf[Dictionary[Any]]
@@ -43,7 +43,7 @@ object MFocAds {
       }
     } else {
       _findJson(args)
-        .map { apply }
+        .map { apply(_) }
     }
   }
 
@@ -51,6 +51,7 @@ object MFocAds {
     * args.openIndexAdId должен быть заполнен соответствующим образом. */
   def findOrIndex(args: MFocAdSearch)(implicit ec: ExecutionContext): Future[IFocResp] = {
     for (jsonDict <- _findJson(args)) yield {
+      // TODO Тут нерабочий трешак, нужно весь srv-код на новый мега протокол перевести сначала...
       MSrvAnswer(jsonDict).actionOpt match {
         case None =>
           throw new NoSuchElementException( ErrorMsgs.FOC_ANSWER_ACTION_MISSING )
@@ -58,7 +59,7 @@ object MFocAds {
           if (action == FOC_ANSWER_ACTION)
             MFocAds(jsonDict)
           else if (action == INDEX_RESP_ACTION)
-            MNodeIndex(jsonDict)
+            MScRespIndex( jsonDict.asInstanceOf[MScRespIndexJson] )
           else
             throw new IllegalArgumentException( ErrorMsgs.FOC_ANSWER_ACTION_INVALID + " " + action )
       }
