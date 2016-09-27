@@ -1,6 +1,5 @@
 package io.suggest.model.n2.node.search
 
-import com.typesafe.scalalogging.slf4j.Logger
 import io.suggest.model.n2.edge.search._
 import io.suggest.model.n2.extra.domain.{DomainsSearch, DomainsSearchDflt, DomainsSearchWrap}
 import io.suggest.model.n2.extra.search._
@@ -8,7 +7,7 @@ import io.suggest.model.n2.geo.search._
 import io.suggest.model.n2.node.common.search._
 import io.suggest.model.n2.node.meta.search._
 import io.suggest.model.search._
-import io.suggest.util.{MacroLogsDyn, MacroLogsImpl, MacroLogsImplLazy}
+import io.suggest.util.{MacroLogsImpl, MacroLogsImplLazy}
 
 /**
  * Suggest.io
@@ -43,6 +42,10 @@ abstract class MNodeSearchImpl
   extends MNodeSearch
 
 
+/** Объект-компаньон содержит рантаймовые статические константы для класса [[MNodeSearchDfltImpl]].
+  * Изначально, он хранил в себе связанный логгер. */
+object MNodeSearchDflt extends MacroLogsImpl
+
 /** Объединенные дефолтовые реализация поисковых критериев [[MNodeSearch]]. */
 trait MNodeSearchDflt
   extends MNodeSearch
@@ -66,20 +69,16 @@ trait MNodeSearchDflt
   with OffsetDflt
   with DateCreatedSortDflt
   with HasGeoPointDflt
+{
+  override def LOGGER = MNodeSearchDflt.LOGGER
+}
 
-
-/** Объект-компаньон содержит рантаймовые статические константы для класса [[MNodeSearchDfltImpl]].
-  * Изначально, он хранил в себе связанный логгер. */
-object MNodeSearchDfltImpl extends MacroLogsImpl
 
 /** Дефолтовая реализация [[MNodeSearchDflt]].
   * Упрощает жизнь компилятору при сборке недефолтовых классов-реализаций. */
 class MNodeSearchDfltImpl
   extends MNodeSearchImpl
   with MNodeSearchDflt
-{
-  override def LOGGER = MNodeSearchDfltImpl.LOGGER
-}
 
 
 /** Wrapper-реализация поисковых критериев [[MNodeSearch]] узла. */

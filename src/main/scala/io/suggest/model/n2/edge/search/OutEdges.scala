@@ -165,17 +165,21 @@ trait OutEdges extends DynSearchArgs with MacroLogsI {
 
           // ad search receivers: добавить show levels
           if (oe.anySl.nonEmpty) {
+            // Требуется, чтобы был хотя бы один show level. Любой какой-нибудь, но обязательно был.
             if (_qOpt.nonEmpty && oe.sls.isEmpty) {
               // missing/existing filter можно навешивать только если уже есть тело nested query
               val fn = EDGE_OUT_INFO_SLS_FN
-              val f = if (oe.anySl.get) {
-                QueryBuilders.existsQuery(fn)
-              } else {
-                QueryBuilders.missingQuery(fn)
+              val eq = QueryBuilders.existsQuery(fn)
+              val _nq2 = {
+                val qq = QueryBuilders.boolQuery()
+                  .must(_qOpt.get)
+                if (oe.anySl.get) {
+                  qq.filter(eq)
+                } else {
+                  qq.mustNot(eq)
+                }
               }
-              val _nq2 = QueryBuilders.boolQuery()
-                .must(_qOpt.get)
-                .filter(f)
+
               _qOpt = Some(_nq2)
 
             } else {
