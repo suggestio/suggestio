@@ -7,7 +7,6 @@ import play.api.mvc.QueryStringBindable
 import util.qsb.QsbUtil._
 import io.suggest.sc.NodeSearchConstants._
 import io.suggest.sc.ScConstants.ReqArgs.VSN_FN
-import views.js.sc.m._
 
 /**
  * Suggest.io
@@ -17,7 +16,7 @@ import views.js.sc.m._
  */
 case class MScNodeSearchArgs(
   qStr            : Option[String]  = None,
-  geoMode         : GeoMode         = GeoNone,
+  geoMode         : GeoMode         = GeoIp,
   maxResults      : Option[Int]     = None,
   offset          : Option[Int]     = None,
   currAdnId       : Option[String]  = None,
@@ -111,10 +110,6 @@ object MScNodeSearchArgs {
         }
       }
 
-      /** Разбиндить модель на стороне клиента. */
-      override def javascriptUnbind: String = {
-        scNodeSearchArgsJsUnbindTpl(KEY_DELIM).body
-      }
     }
   }
 

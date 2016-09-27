@@ -5,7 +5,6 @@ import models.im.DevScreen
 import play.api.mvc.QueryStringBindable
 import io.suggest.sc.ScConstants.ReqArgs._
 import models.mgeo.MLocEnv
-import views.js.sc.m.scReqArgsJsUnbindTpl
 
 /**
   * Suggest.io
@@ -71,10 +70,6 @@ object MScIndexArgs {
         }
       }
 
-      /** unbind на клиенте происходит из json-объекта с именами полей, которые соответствуют указанным в модели qs-именам. */
-      override def javascriptUnbind: String = {
-        scReqArgsJsUnbindTpl(KEY_DELIM).body
-      }
     }
   }
 

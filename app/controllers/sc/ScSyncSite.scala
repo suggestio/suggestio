@@ -5,7 +5,9 @@ import java.util.NoSuchElementException
 import controllers.{SioController, routes}
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.fut.FutureUtil
+import io.suggest.model.es.MEsId
 import models._
+import models.mlu.MLookupModes
 import models.msc._
 import models.req.IReq
 import play.api.mvc.Result
@@ -103,7 +105,14 @@ trait ScSyncSite
         new TileAdsLogic {
           override type T = IRenderedAdBlock
           override implicit def _request = syncLogic._request
-          override val _adSearch = _scState.tilesAdSearch()
+          override val _qs: MScAdsTileQs = {
+            MScAdsTileQs(
+              search = MScAdsSearchQs(
+                genOpt    = _scState.generationOpt,
+                rcvrIdOpt = _scState.adnId.map(MEsId.apply)
+              )
+            )
+          }
           override lazy val ctx = syncLogic.ctx
           override def renderMadAsync(brArgs: blk.RenderArgs): Future[T] = {
             for (rendered <- renderMad2htmlAsync(brArgs)) yield {
@@ -119,8 +128,12 @@ trait ScSyncSite
           override type T = IRenderedAdBlock
           override implicit def _request = syncLogic._request
           override lazy val ctx = syncLogic.ctx
-          override def _adSearch = new AdSearchImpl {
-            override def limitOpt: Option[Int] = Some(0)
+          override val _qs: MScAdsTileQs = {
+            MScAdsTileQs(
+              search = MScAdsSearchQs(
+                limitOpt = Some(0)
+              )
+            )
           }
           override def renderMadAsync(brArgs: blk.RenderArgs): Future[T] = {
             val ex = new UnsupportedOperationException("Dummy tile ads logic impl.")
@@ -135,7 +148,7 @@ trait ScSyncSite
     }
 
     /** Логика поддержки отображения focused ads, т.е. просматриваемой карточки. */
-    def focusedLogic = new FocusedLogicV2 with NoBrAcc {
+    def focusedLogic = new FocusedLogicV2 {
 
       override type OBT = Html
       override implicit val _request = syncLogic._request
@@ -147,9 +160,19 @@ trait ScSyncSite
         renderBlockHtml(args)
       }
 
-      override val _adSearch: FocusedAdsSearchArgs = {
-        _scState.focusedAdSearch(
-          _maxResultsOpt = Some(1)
+      override val _qs: MScAdsFocQs = {
+        MScAdsFocQs(
+          search = MScAdsSearchQs(
+            offsetOpt = _scState.fadsOffsetOpt,
+            limitOpt  = Some(1),
+            rcvrIdOpt = _scState.adnId.map(MEsId.apply),
+            prodIdOpt = _scState.fadsProdIdOpt.map(MEsId.apply),
+            genOpt    = _scState.generationOpt
+          ),
+          lookupMode  = MLookupModes.Around,
+          lookupAdId  = _scState.fadOpenedIdOpt.get,
+          focJumpAllowed = false,
+          screen      = None
         )
       }
 
@@ -182,8 +205,7 @@ trait ScSyncSite
     lazy val nodesListLogic = new FindNodesLogic {
       override implicit def _request = syncLogic._request
       override val _nsArgs = MScNodeSearchArgs(
-        currAdnId = _scState.adnId,
-        geoMode = _scState.geo
+        currAdnId = _scState.adnId
       )
       override def renderArgsFut: Future[NodeListRenderArgs] = {
         for (renderArgs <- super.renderArgsFut) yield {

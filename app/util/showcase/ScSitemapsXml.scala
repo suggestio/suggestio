@@ -5,13 +5,13 @@ import controllers.routes
 import io.suggest.model.es.EsModelUtil
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
-import io.suggest.model.n2.node.MNodes
+import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 import models.crawl.{ChangeFreqs, SiteMapUrl, SiteMapUrlT}
 import models.mctx.{Context, ContextUtil}
 import models.mproj.MCommonDi
 import models.msc.ScJsState
-import models.{AdSearchImpl, MNode}
 import org.elasticsearch.common.unit.TimeValue
 import org.joda.time.LocalDate
 import play.api.libs.iteratee.Enumerator
@@ -48,7 +48,8 @@ class ScSitemapsXml @Inject() (
    * и поточность, а не на скорость исполнения.
    */
   override def siteMapXmlEnumerator(implicit ctx: Context): Enumerator[SiteMapUrlT] = {
-    val adSearch = new AdSearchImpl {
+    val adSearch = new MNodeSearchDfltImpl {
+      override def nodeTypes = Seq( MNodeTypes.Ad )
       override def outEdges: Seq[ICriteria] = {
         val cr = Criteria(
           predicates = Seq( MPredicates.OwnedBy ),

@@ -1,20 +1,20 @@
 package controllers.sc
 
-import java.util.NoSuchElementException
-
 import _root_.util.blocks.BgImg
 import _root_.util.di.{IScNlUtil, IScStatUtil, IScUtil}
 import _root_.util.blocks.IBlkImgMakerDI
-import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
+import _root_.util.showcase.IScAdSearchUtilDi
+import _root_.util.PlayMacroLogsI
+import io.suggest.model.es.MEsId
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.primo.TypeT
+import io.suggest.stat.m.{MAction, MActionType, MActionTypes}
 import models.im.make.MakeResult
 import models.msc._
 import models.req.IReq
 import play.api.mvc.Result
 import models.blk._
 import play.twirl.api.Html
-import util._
 import util.acl._
 import play.api.libs.json._
 
@@ -36,6 +36,7 @@ trait ScAdsTileBase
   with ScCssUtil
   with IMNodes
   with IBlkImgMakerDI
+  with IScAdSearchUtilDi
 {
 
   import mCommonDi._
@@ -43,7 +44,7 @@ trait ScAdsTileBase
   /** Изменябельная логика обработки запроса рекламных карточек для плитки. */
   trait TileAdsLogic extends LogicCommonT with AdCssRenderArgs with TypeT {
 
-    def _adSearch: AdSearch
+    def _qs: MScAdsTileQs
 
     /** 2014.11.25: Размер плиток в выдаче должен способствовать заполнению экрана по горизонтали,
       * избегая или минимизируя белые пустоты по краям экрана клиентского устройства. */
@@ -59,12 +60,12 @@ trait ScAdsTileBase
         bgImg         = bgImg,
         szMult        = szMult,
         inlineStyles  = false,
-        apiVsn        = _adSearch.apiVsn,
+        apiVsn        = _qs.apiVsn,
         indexOpt      = indexOpt,
         isFocused     = false
       )
     }
-    
+
     def renderMad2html(brArgs: blk.RenderArgs): Html = {
       BlocksConf.DEFAULT
         .renderBlock(brArgs)(ctx)
@@ -79,52 +80,16 @@ trait ScAdsTileBase
     def renderMadAsync(brArgs: blk.RenderArgs): Future[T]
 
     lazy val logPrefix = s"findAds(${ctx.timestamp}):"
-    lazy val gsiFut = _adSearch.geo.geoSearchInfoOpt
 
-    lazy val adSearch2Fut: Future[AdSearch] = {
-      if (_adSearch.outEdges.nonEmpty) {
-        // В оригинале (pre-N2) тут добавлялся LVL_START_PAGE в список уровней.
-        Future.successful( _adSearch )
-
-      } else if (_adSearch.geo.isWithGeo) {
-        // При геопоиске надо найти узлы, географически подходящие под запрос. Затем, искать карточки по этим узлам.
-        // TODO При таком поиске надо использовать cache-controle: private, если ip-геолокация.
-        scNlUtil.detectCurrentNode(_adSearch.geo, gsiFut)
-          .map { gdr => Some(gdr.node) }
-          .recover { case ex: NoSuchElementException => None }
-          .map {
-            case Some(adnNode) =>
-              new AdSearchWrapper {
-                override def _dsArgsUnderlying = _adSearch
-                override def outEdges: Seq[ICriteria] = {
-                  val p = MPredicates.Receiver
-                  super.outEdges
-                    .iterator
-                    .filter { e => !e.containsPredicate(p) }
-                    .++( Iterator(Criteria(adnNode.id.toSeq, Seq(p))) )
-                    .toSeq
-                }
-                override def geo: GeoMode = GeoNone
-              }
-            case None =>
-              _adSearch
-          }
-          .recover {
-            // Допустима работа без геолокации при возникновении внутренней ошибки.
-            case ex: Throwable =>
-              LOGGER.error(logPrefix + " Failed to get geoip info for " + _request.remoteAddress, ex)
-              _adSearch
-          }
-
-      } else {
-        LOGGER.warn("Strange search request: " + _adSearch + " from " + _request.remoteAddress + " via " + _request.method + " " + _request.path)
-        Future.successful( _adSearch )
-      }
-    }
+    lazy val adSearch2Fut = scAdSearchUtil.qsArgs2nodeSearch(_qs.search)
 
     lazy val madsFut: Future[Seq[MNode]] = {
-      adSearch2Fut flatMap { adSearch2 =>
-        mNodes.dynSearch(adSearch2)
+      for {
+        adSearch <- adSearch2Fut
+        res      <- mNodes.dynSearch(adSearch)
+      } yield {
+        LOGGER.trace(s"$logPrefix Found ${res.size} ads")
+        res
       }
     }
 
@@ -192,9 +157,11 @@ trait ScAdsTileBase
       val _szMult = szMult
 
       // Продолжаем асинхронную обработку
-      _madsGroupedFut flatMap { madsIndexed =>
-        offsetFut flatMap { offset =>
-
+      for {
+        madsIndexed   <- _madsGroupedFut
+        offset        <- offsetFut
+        renderStartedAt = System.currentTimeMillis()
+        madsRendered  <- {
           Future.traverse(madsIndexed) { case (mad, relIndex) =>
             val bgImgOptFut = BgImg.maybeMakeBgImgWith(mad, blkImgMaker, _szMult, devScreenOpt)
             bgImgOptFut.flatMap { bgImgOpt =>
@@ -203,13 +170,63 @@ trait ScAdsTileBase
               renderMadAsync(brArgs1)
             }
           }
-
         }
+      } yield {
+        LOGGER.trace(s"$logPrefix madsRenderedFut: Render took ${System.currentTimeMillis() - renderStartedAt} ms.")
+        madsRendered
       }
     }
 
-    /** TODO Статистика плитки. */
-    override def scStat: Future[Stat2] = ???
+    /** Статистика этой вот плитки. */
+    override def scStat: Future[Stat2] = {
+      val _rcvrOptFut   = mNodeCache.maybeGetByEsIdCached( _qs.search.rcvrIdOpt )
+      val _prodOptFut   = mNodeCache.maybeGetByEsIdCached( _qs.search.prodIdOpt )
+
+      val _userSaOptFut = scStatUtil.userSaOptFutFromRequest()
+      val _madsFut      = madsFut
+      val _adSearchFut  = adSearch2Fut
+
+      for {
+        _userSaOpt  <- _userSaOptFut
+        _rcvrOpt    <- _rcvrOptFut
+        _prodOpt    <- _prodOptFut
+        _mads       <- _madsFut
+        _adSearch   <- _adSearchFut
+
+      } yield {
+
+        // Собираем stat-экшены с помощью аккумулятора...
+        val statActionsAcc0 = List[MAction](
+
+          // Подготовить данные статистики по отрендеренным карточкам:
+          scStatUtil.madsAction(_mads, MActionTypes.ScAdsTile),
+
+          // Сохранить фактический search limit
+          MAction(
+            actions = Seq( MActionTypes.SearchLimit ),
+            count   = Seq( _adSearch.limit )
+          ),
+
+          // Сохранить фактически search offset
+          MAction(
+            actions = Seq( MActionTypes.SearchOffset ),
+            count   = Seq( _adSearch.offset )
+          )
+        )
+
+        val saAcc = scStatUtil.withNodeAction(MActionTypes.ScRcvrAds, _qs.search.rcvrIdOpt, _rcvrOpt) {
+          scStatUtil.withNodeAction( MActionTypes.ScProdAds, _qs.search.prodIdOpt, _prodOpt )(statActionsAcc0)
+        }
+
+        new Stat2 {
+          override def statActions  = saAcc
+          override def userSaOpt    = _userSaOpt
+          override def locEnvOpt    = _qs.search.locEnv.optional
+          override def gen          = _qs.search.genOpt
+          override def devScreenOpt = _qs.screen
+        }
+      }
+    }
 
   }
 
@@ -230,18 +247,13 @@ trait ScAdsTile
     * @param adSearch Поисковый запрос.
     * @return JSONP с рекламными карточками для рендера в выдаче.
     */
-  def findAds(adSearch: AdSearch) = MaybeAuth().async { implicit request =>
+  def findAds(adSearch: MScAdsTileQs) = MaybeAuth().async { implicit request =>
     // В зависимости от версии API, используем ту или иную реализацию логики.
     val logic = TileAdsLogicV(adSearch)
     val resultFut = logic.resultFut
 
     // В фоне собираем статистику
-    logic.madsFut.onSuccess { case mads =>
-      logic.adSearch2Fut.onSuccess { case adSearch2 =>
-        scStatUtil.TilesStat(adSearch2, mads.flatMap(_.id), logic.gsiFut)
-          .saveStats
-      }
-    }
+    logic.saveScStat()
 
     // Возвращаем собираемый результат
     resultFut
@@ -251,7 +263,7 @@ trait ScAdsTile
   /** Компаньон логик для разруливания версий логик обработки HTTP-запросов. */
   protected object TileAdsLogicV {
     /** Собрать необходимую логику обработки запроса в зависимости от версии API. */
-    def apply(adSearch: AdSearch)(implicit request: IReq[_]): TileAdsLogicV = {
+    def apply(adSearch: MScAdsTileQs)(implicit request: IReq[_]): TileAdsLogicV = {
       adSearch.apiVsn match {
         case MScApiVsns.Sjs1 =>
           new TileAdsLogicV2(adSearch)
@@ -272,7 +284,7 @@ trait ScAdsTile
 
 
   /** Логика сборки HTTP-ответа для API v2. */
-  protected class TileAdsLogicV2(val _adSearch: AdSearch)
+  protected class TileAdsLogicV2(override val _qs: MScAdsTileQs)
                                 (implicit val _request: IReq[_]) extends TileAdsLogicV {
 
     override type T = MFoundAd

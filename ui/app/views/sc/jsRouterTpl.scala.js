@@ -4,17 +4,16 @@
 
 @import io.suggest.sc.ScConstants.JsRouter._
 @import ctx.request
+@import views.js.stuff.jsRevRouterTpl
 
-"use strict";
-
-@play.api.routing.JavaScriptReverseRouter(NAME)(
+@jsRevRouterTpl(NAME)(
   routes.javascript.Sc.index,
   routes.javascript.Sc.findAds,
   routes.javascript.Sc.findNodes,
   routes.javascript.Sc.focusedAds,
   routes.javascript.Sc.tagsSearch,
   routes.javascript.Sc.handleScError
-);
+)
 
 @* Когда скрипт загрузился и выполнился, будет вызвана функция инициализации с указанным именем, если задана. *@
 if(typeof window.@ASYNC_INIT_FNAME == 'function') {

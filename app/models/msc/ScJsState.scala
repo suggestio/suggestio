@@ -1,9 +1,7 @@
 package models.msc
 
-import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.play.qsb.QueryStringBindableImpl
-import models._
-import models.mlu.MLookupModes
+import io.suggest.ym.model.NodeGeoLevel
 import play.api.mvc.QueryStringBindable
 import play.twirl.api.Html
 import util.qsb.QSBs.NglsStateMap_t
@@ -148,61 +146,6 @@ case class ScJsState(
 
   protected def bool2boolOpt(bool: Boolean): Option[Boolean] = {
     if (bool) Some(bool) else None
-  }
-
-  // Пока что считывание geo-состояния из qs не нужно, т.к. HTML5 Geolocation доступно только в js-выдаче.
-  def geo: GeoMode = GeoIp
-
-  /** Экземпляр AdSearch для поиска карточек, отображаемых в плитке. */
-  def tilesAdSearch(): AdSearch = new AdSearchImpl {
-    override def randomSortSeed = that.generationOpt
-    override def geo            = that.geo
-    override def outEdges: Seq[ICriteria] = {
-      val cr = Criteria(
-        nodeIds   = that.adnId.toSeq,
-        sls       = Seq(AdShowLevels.LVL_START_PAGE)
-      )
-      Seq(cr)
-    }
-  }
-
-  /** Экземпляр AdSearch для поиска в текущей рекламной карточки. */
-  def focusedAdSearch(_maxResultsOpt: Option[Int]): FocusedAdsSearchArgs = {
-    new FocusedAdsSearchArgsImpl {
-      // v1 выдача.
-      override def firstIds       = that.fadOpenedIdOpt.toList
-      override def offsetOpt      = that.fadsOffsetOpt
-      // При синхронном рендере единственная карточка автоматом является целевой
-      override def withHeadAd     = true
-
-      // v2 выдача.
-      override def lookupMode     = MLookupModes.Around
-      override def lookupAdId     = that.fadOpenedIdOpt.get
-      override def focJumpAllowed = false
-
-      // common-параметры для выборки карточек.
-      override def limitOpt  = _maxResultsOpt
-      override def randomSortSeed  = that.generationOpt
-      override def outEdges: Seq[ICriteria] = {
-        val someTrue = Some(true)
-        val rcvrCrOpt = for (nodeId <- that.adnId) yield {
-          Criteria(
-            nodeIds     = Seq(nodeId),
-            predicates  = Seq(MPredicates.Receiver),
-            must        = someTrue
-          )
-        }
-        val prodCrOpt = for (nodeId <- that.fadsProdIdOpt) yield {
-          Criteria(
-            nodeIds     = Seq(nodeId),
-            predicates  = Seq(MPredicates.OwnedBy),
-            must        = someTrue
-          )
-        }
-        (rcvrCrOpt ++ prodCrOpt).toSeq
-      }
-
-    }
   }
 
   def isSearchScrOpened : Boolean = orFalse( searchScrOpenedOpt )

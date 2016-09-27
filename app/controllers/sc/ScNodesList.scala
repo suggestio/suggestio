@@ -142,13 +142,6 @@ trait ScNodesList
     val resultFut = logic.resultCachedFut
     //LOGGER.trace( s"findNodes($args): [$tstamp] remote = ${request.remoteAddress}; path=${request.uri}" )
 
-    // Одновременно собираем статистику по текущему запросу:
-    scStatUtil.NodeListingStat(args, logic.gsiOptFut)
-      .saveStats
-      .onFailure { case ex =>
-        LOGGER.warn("Failed to save stats", ex)
-      }
-
     // Вернуть асинхронный результат.
     resultFut
   }

@@ -26,7 +26,7 @@ import play.core.parsers.Multipart
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
 import util.acl._
-import util.ad.MarketAdFormUtil
+import util.ad.LkAdEdFormUtil
 import util.blocks.{BgImg, ListBlock, LkEditorWsActors}
 import util.mdr.SysMdrUtil
 import util.n2u.N2NodesUtil
@@ -41,14 +41,14 @@ import scala.concurrent.Future
  * Description: Контроллер для работы с рекламным фунционалом.
  */
 class MarketAd @Inject() (
-  tempImgSupport                          : TempImgSupport,
-  mNodes                                  : MNodes,
-  sysMdrUtil                              : SysMdrUtil,
-  lkEditorWsActors                        : LkEditorWsActors,
-  @Named("blk") override val blkImgMaker  : IMaker,
-  override val n2NodesUtil                : N2NodesUtil,
-  override val marketAdFormUtil           : MarketAdFormUtil,
-  override val mCommonDi                  : ICommonDi
+                           tempImgSupport                          : TempImgSupport,
+                           mNodes                                  : MNodes,
+                           sysMdrUtil                              : SysMdrUtil,
+                           lkEditorWsActors                        : LkEditorWsActors,
+                           @Named("blk") override val blkImgMaker  : IMaker,
+                           override val n2NodesUtil                : N2NodesUtil,
+                           override val marketAdFormUtil           : LkAdEdFormUtil,
+                           override val mCommonDi                  : ICommonDi
 )
   extends SioController
   with PlayMacroLogsImpl

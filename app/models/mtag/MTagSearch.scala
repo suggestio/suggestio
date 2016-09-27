@@ -10,7 +10,6 @@ import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.sc.TagSearchConstants.Req._
 import models.{GeoMode, GeoNone}
 import play.api.mvc.QueryStringBindable
-import views.js.tags.m.mtSearchJsUnbindTpl
 
 /**
  * Suggest.io
@@ -94,9 +93,6 @@ object MTagSearch {
         }
       }
 
-      override def javascriptUnbind: String = {
-        mtSearchJsUnbindTpl(KEY_DELIM).body
-      }
     }
   }
 

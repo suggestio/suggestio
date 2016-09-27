@@ -2,14 +2,16 @@ package models
 
 import io.suggest.common.fut.FutureUtil
 import io.suggest.di.{IEsClient, IExecutionContext}
-import io.suggest.model.es.{EsModelT, EsModelStaticT}
+import io.suggest.model.es.{EsModelStaticT, EsModelT, MEsId}
 import util.xplay.ICacheApi
+
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.Future
 import io.suggest.event.subscriber.SnClassSubscriber
 import io.suggest.event.SNStaticSubscriber
 import io.suggest.event.SioNotifier.Event
 import akka.actor.ActorContext
+
 import scala.reflect.ClassTag
 
 /**
@@ -111,6 +113,11 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
    */
   def maybeGetByIdCached(idOpt: Option[String]): Future[Option[T1]] = {
     FutureUtil.optFut2futOpt(idOpt)(getById)
+  }
+  def maybeGetByEsIdCached(esIdOpt: Option[MEsId]): Future[Option[T1]] = {
+    maybeGetByIdCached(
+      esIdOpt.map(_.id)
+    )
   }
 
   /**

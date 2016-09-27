@@ -12,7 +12,7 @@ import models._
 import views.html.blocks.editor._
 import util.img.ImgFormUtil
 import play.twirl.api.{Html, Template5}
-import util.ad.MarketAdFormUtil
+import util.ad.LkAdEdFormUtil
 
 /**
  * Suggest.io
@@ -25,7 +25,7 @@ object BlocksUtil {
 
   private def inj = play.api.Play.current.injector
   private[blocks] val imgFormUtil       = inj.instanceOf[ImgFormUtil]
-  private[blocks] val marketAdFormUtil  = inj.instanceOf[MarketAdFormUtil]
+  private[blocks] val marketAdFormUtil  = inj.instanceOf[LkAdEdFormUtil]
 
   def defaultOpt[T](m0: Mapping[T], defaultOpt: Option[T]): Mapping[T] = {
     if (defaultOpt.isDefined)

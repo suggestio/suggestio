@@ -17,11 +17,11 @@ GET  /sc/index                          @controllers.Sc.index(a: msc.MScIndexArg
 
 GET  /sc/blk/css                        @controllers.Sc.serveBlockCss(c: Seq[msc.AdCssArgs])
 
-GET  /sc/tile/find                      @controllers.Sc.findAds(a: AdSearch)
-GET  /sc/foc/ads                        @controllers.Sc.focusedAds(a: msc.FocusedAdsSearchArgs)
+GET  /sc/tile/find                      @controllers.Sc.findAds(a: msc.MScAdsTileQs)
+GET  /sc/foc/ads                        @controllers.Sc.focusedAds(a: msc.MScAdsFocQs)
 ## Рендер ровно одной карточки.
-GET  /market/ad/one/html                @controllers.Sc.onlyOneAd(o: blk.OneAdQsArgs)
-GET  /market/ad/one/img                 @controllers.Sc.onlyOneAdAsImage(o: blk.OneAdQsArgs)
+GET  /sc/one/html                       @controllers.Sc.onlyOneAd(o: blk.OneAdQsArgs)
+GET  /sc/one/img                        @controllers.Sc.onlyOneAdAsImage(o: blk.OneAdQsArgs)
 ## Этот path к js-роутеру захардкожен в сорцах sc-sjs SrvRouter, и его лучше не менять никогда вообще.
 GET  /sc/router.js                      @controllers.Sc.scJsRouter
 GET  /sc/tags/search                    @controllers.Sc.tagsSearch(t: mtag.MTagSearch)
@@ -47,7 +47,7 @@ GET  /lk/nodes                          @controllers.MarketLkAdn.lkList(fromNode
 GET  /lk/node/create                    @controllers.MarketLkAdn.createNode
 POST /lk/node/create                    @controllers.MarketLkAdn.createNodeSubmit
 GET  /lk/node/profile/:nodeId           @controllers.MarketLkAdn.showAdnNode(nodeId)
-GET  /lk/node/mads/:adnId               @controllers.MarketLkAdn.showNodeAds(adnId, mode: MNodeAdsMode ?= MNodeAdsModes.ALL_ADS, newAdId: Option[String] ?= None)
+GET  /lk/node/mads/:adnId               @controllers.MarketLkAdn.showNodeAds(adnId, mode: mlk.MNodeAdsMode ?= mlk.MNodeAdsModes.ALL_ADS, newAdId: Option[String] ?= None)
 GET  /lk/node/edit/:adnId               @controllers.MarketLkAdnEdit.editAdnNode(adnId)
 POST /lk/node/edit/:adnId               @controllers.MarketLkAdnEdit.editAdnNodeSubmit(adnId)
 POST /lk/node/img/gal/prepare           @controllers.MarketLkAdnEdit.handleGalleryImg
@@ -137,7 +137,7 @@ GET  /sys/market/adns                   @controllers.SysMarket.adnNodesList(w: m
 GET  /sys/market/create/adn             @controllers.SysMarket.createAdnNode()
 POST /sys/market/create/adn             @controllers.SysMarket.createAdnNodeSubmit()
 POST /sys/market/adn/:adnId/delete      @controllers.SysMarket.deleteAdnNodeSubmit(adnId)
-GET  /sys/market/ads                    @controllers.SysMarket.showAdnNodeAds(a: AdSearch)
+GET  /sys/market/ads                    @controllers.SysMarket.showAdnNodeAds(a: msc.MScAdsSearchQs)
 POST /sys/market/mad/rm/rcvr/:adId      @controllers.SysMarket.removeAdRcvr(adId, rcvrId: Option[String] ?= None, r: Option[String] ?= None)
 GET  /sys/market/adn/edit/:adnId        @controllers.SysMarket.editAdnNode(adnId)
 POST /sys/market/adn/edit/:adnId        @controllers.SysMarket.editAdnNodeSubmit(adnId)

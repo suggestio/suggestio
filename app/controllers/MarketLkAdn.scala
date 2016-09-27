@@ -12,7 +12,7 @@ import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models._
 import models.mctx.Context
-import models.mlk.{MNodeAdInfo, MNodeAdsTplArgs, MNodeShowArgs}
+import models.mlk.{MNodeAdInfo, MNodeAdsMode, MNodeAdsTplArgs, MNodeShowArgs}
 import models.mproj.ICommonDi
 import models.msession.Keys
 import models.req.INodeReq
@@ -148,7 +148,8 @@ class MarketLkAdn @Inject() (
           )
           Seq(cr)
         }
-        val adsSearch0 = new AdSearchImpl {
+        val adsSearch0 = new MNodeSearchDfltImpl {
+          override def nodeTypes = Seq( MNodeTypes.Ad )
           override def outEdges  = producedByCrs
           override def limit     = 200
           // TODO Почему-то сортировка работает задом наперёд, должно быть DESC тут:

@@ -1,4 +1,4 @@
-package models
+package models.mlk
 
 import io.suggest.common.menum.EnumValue2Val
 import io.suggest.model.play.qsb.QueryStringBindableImpl

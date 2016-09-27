@@ -4,6 +4,7 @@ import java.net.{MalformedURLException, URL}
 import java.util.Currency
 
 import io.suggest.common.menum.{EnumMaybeWithId, EnumMaybeWithName, EnumValue2Val}
+import io.suggest.model.es.MEsId
 import io.suggest.model.geo.{CircleGs, Distance}
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.model.sc.common.LvlMap_t
@@ -108,7 +109,7 @@ object FormUtil {
 
 
   /** Регэксп для парсинга uuid, закодированного в base64. */
-  val uuidB64Re = "[_a-zA-Z0-9-]{19,25}".r
+  def uuidB64Re = MEsId.uuidB64Re
 
   /** id'шники в ES-моделях генерятся силами ES. Тут маппер для полей, содержащих ES-id. */
   def esIdM = nonEmptyText(minLength=19, maxLength=30)

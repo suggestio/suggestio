@@ -94,10 +94,10 @@
   @* Рендерим переключение страниц. *@
   @_simple3pTpl(
     count   = args.mads.size,
-    limit   = args.a.limit,
-    offset  = args.a.offset,
+    limit   = args.msearch.limit,
+    offset  = args.msearch.offset,
     urlF    = { offset1 =>
-      routes.SysMarket.showAdnNodeAds( args.a.withOffset(offset1) )
+      routes.SysMarket.showAdnNodeAds( args.qs.copy(offsetOpt = Some(offset1)) )
     }
   )
 

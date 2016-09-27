@@ -22,7 +22,7 @@ import util.{PlayMacroLogsImpl, TplDataFormatUtil}
  * Description: Общая утиль для работы с разными ad-формами: preview и обычными.
  */
 @Singleton
-class MarketAdFormUtil extends PlayMacroLogsImpl {
+class LkAdEdFormUtil extends PlayMacroLogsImpl {
 
   /** Маппинг для выравнивания текста в рамках поля. */
   def textAlignOptM: Mapping[Option[TextAlign]] = {
@@ -270,7 +270,8 @@ class MarketAdFormUtil extends PlayMacroLogsImpl {
 
 }
 
-trait IMarketAdFormUtil {
-  def marketAdFormUtil: MarketAdFormUtil
+/** Интерфейс для DI-поля с инстаном [[LkAdEdFormUtil]]. */
+trait ILkAdEdFormUtil {
+  def marketAdFormUtil: LkAdEdFormUtil
 }
 

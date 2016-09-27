@@ -1,7 +1,6 @@
 import controllers.routes
 import io.suggest.model.geo
 import io.suggest.model.n2
-
 import io.suggest.ym
 import models.usr.EmailPwConfirmInfo
 import play.api.data.Form
@@ -80,7 +79,6 @@ package object models {
   val  AdnSinks             = ym.model.common.AdnSinks
   type AdnSink              = ym.model.common.AdnSink
 
-  type MNodeAdsMode         = MNodeAdsModes.T
   type NodeRightPanelLink   = NodeRightPanelLinks.T
   type BillingRightPanelLink= BillingRightPanelLinks.T
   type LkLeftPanelLink      = LkLeftPanelLinks.T

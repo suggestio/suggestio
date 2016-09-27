@@ -9,10 +9,11 @@ import io.suggest.model.n2.node.{IMNodes, NodeNotFoundException}
 import io.suggest.stat.m.{MAction, MActionTypes}
 import models._
 import models.im.MImgT
-import models.jsm.ScIndexResp
 import models.mgeo.MGeoLoc
 import models.msc._
+import models.msc.resp.{MScResp, MScRespAction, MScRespActionTypes, MScRespIndex}
 import org.elasticsearch.common.unit.DistanceUnit
+import play.api.libs.json.Json
 import play.api.mvc._
 import play.twirl.api.Html
 import util.acl._
@@ -82,7 +83,8 @@ trait ScIndex
     logic.saveScStat()
 
     resultFut.recover { case ex: NodeNotFoundException =>
-      LOGGER.trace(s"index($args): node missing", ex)
+      // Эта ветвь вообще когда-нибудь вызывается? indexNodeFut всегда какой-то узел вроде возвращает.
+      LOGGER.trace(s"index($args) ${logic.logPrefix}: everything is missing", ex)
       NotFound( ex.getMessage )
     }
   }
@@ -97,6 +99,8 @@ trait ScIndex
     /** Параметры, приходящие из sync site.  */
     def _syncArgs: IScIndexSyncArgs
 
+    lazy val logPrefix = s"scIndex[${ctx.timestamp}]"
+
     /** Подчищенные нормализованные данные о remote-адресе. */
     lazy val _remoteIp = geoIpUtil.fixRemoteAddr( _request.remoteAddress )
 
@@ -106,7 +110,7 @@ trait ScIndex
       val findFut = geoIpUtil.findIpCached(remoteIp.remoteAddr)
       if (LOGGER.underlying.isTraceEnabled()) {
         findFut.onComplete { res =>
-          LOGGER.trace(s"geoIpResOptFut[$remoteIp]:: tried to geolocate by ip => $res")
+          LOGGER.trace(s"$logPrefix geoIpResOptFut[$remoteIp]:: tried to geolocate by ip => $res")
         }
       }
       findFut
@@ -122,13 +126,14 @@ trait ScIndex
         }
         // Подавить и залоггировать возможные проблемы.
         geoLoc2Fut.recover { case ex: Throwable =>
-          LOGGER.warn(s"reqGeoLocFut(${ctx.timestamp}): failed to geoIP", ex)
+          LOGGER.warn(s"$logPrefix reqGeoLocFut: failed to geoIP", ex)
           None
         }
       } { r =>
         Future.successful( Some(r) )
       }
     }
+    lazy val reqGeoLocFutVal = reqGeoLocFut
 
 
     /** Узел, для которого будем рендерить index.
@@ -144,7 +149,7 @@ trait ScIndex
        */
 
       // Запускаем поиск узла-ресивера по возможно переданному id.
-      lazy val logPrefix = s"indexNodeFut(${ctx.timestamp}):"
+      lazy val logPrefix2 = s"$logPrefix indexNodeFut:"
 
       // Частоиспользуемый id узла из реквеста.
       val adnIdOpt = _reqArgs.adnIdOpt
@@ -159,15 +164,15 @@ trait ScIndex
         // Может быть узел найден?
         val mnode = mnodeOpt.get
         // Узел есть, вернуть положительный результат работы.
-        LOGGER.trace(s"$logPrefix Found rcvr node[${mnode.idOrNull}]: ${mnode.guessDisplayNameOrIdOrEmpty}")
+        LOGGER.trace(s"$logPrefix2 Found rcvr node[${mnode.idOrNull}]: ${mnode.guessDisplayNameOrIdOrEmpty}")
         MIndexNodeInfo(mnode, isRcvr = true)
       }
       // Залоггировать возможное неизвестное исключение
       mnodeFut.onFailure {
         case ex: NodeNotFoundException =>
-          LOGGER.warn(s"$logPrefix Rcvr node missing: $adnIdOpt! Somebody scanning our nodes? I'll try to geolocate rcvr node.")
+          LOGGER.warn(s"$logPrefix2 Rcvr node missing: $adnIdOpt! Somebody scanning our nodes? I'll try to geolocate rcvr node.")
         case ex: Throwable if !ex.isInstanceOf[NoSuchElementException] =>
-          LOGGER.warn(s"$logPrefix Unknown exception while getting rcvr node $adnIdOpt", ex)
+          LOGGER.warn(s"$logPrefix2 Unknown exception while getting rcvr node $adnIdOpt", ex)
       }
 
       // TODO Сюда можно затолкать обработку BLE-маячков, указанных в _reqArgs.locEnv.beacons.
@@ -177,8 +182,8 @@ trait ScIndex
         // Если с ресивером по id не фартует, но есть данные геолокации, то заодно запускаем поиск узла-ресивера по геолокации.
         // В понятиях старой выдачи, это поиск активного узла-здания.
         // Нет смысла выносить этот асинхронный код за пределы recoverWith(), т.к. он или не нужен, или же выполнится сразу синхронно.
-        val _reqGeoLocFut = reqGeoLocFut
-        LOGGER.trace(s"$logPrefix mnode by id not found, trying to use geoloc...")
+        val _reqGeoLocFut = reqGeoLocFutVal
+        LOGGER.trace(s"$logPrefix2 mnode by id not found, trying to use geoloc...")
 
         _reqGeoLocFut.flatMap { geoLocOpt =>
           // Пусть будет сразу NSEE, если нет данных геолокации.
@@ -228,12 +233,12 @@ trait ScIndex
           // Записываем в логи промежуточные итоги геолокации.
           fut1.onComplete {
             case Success(info) =>
-              LOGGER.trace(s"$logPrefix Geolocated receiver[${info.mnode.id.orNull}] ''${info.mnode.guessDisplayNameOrIdOrEmpty}'' for $geoLoc")
+              LOGGER.trace(s"$logPrefix2 Geolocated receiver[${info.mnode.id.orNull}] ''${info.mnode.guessDisplayNameOrIdOrEmpty}'' for $geoLoc")
             case Failure(ex2) =>
               if (ex2.isInstanceOf[NoSuchElementException])
-                LOGGER.trace(s"$logPrefix No receivers found via geolocation: $geoLoc")
+                LOGGER.trace(s"$logPrefix2 No receivers found via geolocation: $geoLoc")
               else
-                LOGGER.warn(s"$logPrefix Failed to geolocate for receiver node using $geoLoc", ex2)
+                LOGGER.warn(s"$logPrefix2 Failed to geolocate for receiver node using $geoLoc", ex2)
           }
 
           fut1
@@ -247,11 +252,11 @@ trait ScIndex
           .filter(_.nonEmpty)
           .get
         val _mnodeOptFut = mNodeCache.getById( ephNodeId )
-        LOGGER.trace(s"$logPrefix Index node not geolocated. Trying to get ephemeral covering node[$ephNodeId] for lang=${ctx.messages.lang.code}.")
+        LOGGER.trace(s"$logPrefix2 Index node not geolocated. Trying to get ephemeral covering node[$ephNodeId] for lang=${ctx.messages.lang.code}.")
 
         for (mnodeOpt <- _mnodeOptFut) yield {
           val mnode = mnodeOpt.get
-          LOGGER.trace(s"$logPrefix Choosen ephemeral node[$ephNodeId]: ${mnode.guessDisplayNameOrIdOrEmpty}")
+          LOGGER.trace(s"$logPrefix2 Choosen ephemeral node[$ephNodeId]: ${mnode.guessDisplayNameOrIdOrEmpty}")
           MIndexNodeInfo(
             mnode = mnode.copy(
               id = None,
@@ -264,7 +269,7 @@ trait ScIndex
 
       // Should never happen. Придумывание узла "на лету".
       mnodeFut = mnodeFut.recover { case ex: NoSuchElementException =>
-        LOGGER.warn(s"$logPrefix Unable to find index node, making new ephemeral node", ex)
+        LOGGER.warn(s"$logPrefix2 Unable to find index node, making new ephemeral node", ex)
 
         MIndexNodeInfo(
           mnode = nodesUtil.userNodeInstance(
@@ -318,7 +323,7 @@ trait ScIndex
     }
 
     /** Рендер минифицированного indexTpl. */
-    def respHtml4JsFut = respHtmlFut.map( htmlCompressUtil.html2jsStr )
+    def respHtml4JsFut = respHtmlFut.map( htmlCompressUtil.html2str4json )
 
     /** Контейнер палитры выдачи. */
     lazy val colorsFut: Future[IColors] = {
@@ -379,7 +384,7 @@ trait ScIndex
       // Что-то не так, но обычно это нормально.
       htmlFut.recoverWith { case ex: Throwable =>
         if (!ex.isInstanceOf[NoSuchElementException])
-          LOGGER.warn("topLeftBtnHtmlFut(): Workarounding unexpected expection", ex)
+          LOGGER.warn(s"$logPrefix topLeftBtnHtmlFut(): Workarounding unexpected expection", ex)
 
         for (_hBtnArgs <- _hBtnArgsFut) yield {
           val rargs = new MScIndexSyncArgsWrap with IHBtnArgsFieldImpl {
@@ -441,30 +446,42 @@ trait ScIndex
       }
     }
 
-    def respArgsFut: Future[ScIndexResp] = {
+    def respArgsFut: Future[MScResp] = {
       val _htmlFut  = respHtml4JsFut
       val _currAdnIdOptFut = currInxNodeIdOptFut
+
+      val _geoPointOptFut = for {
+        currAdnIdOpt  <- _currAdnIdOptFut
+        geoLocOpt     <- currAdnIdOpt.fold[Future[Option[MGeoLoc]]] (reqGeoLocFutVal) (_ => Future.successful(None))
+      } yield {
+        geoLocOpt
+          .map(_.center)
+      }
+
       val _titleFut = titleFut
       for {
         html              <- _htmlFut
         currAdnIdOpt      <- _currAdnIdOptFut
         _title            <- _titleFut
+        _geoPointOpt      <- _geoPointOptFut
       } yield {
-        ScIndexResp(
-          html            = html,
-          currAdnId       = currAdnIdOpt,
-          titleOpt        = Some(_title)
+        LOGGER.trace(s"$logPrefix adnId=$currAdnIdOpt geoPoint=${_geoPointOpt} | html=${html.length}c | title: '''${_title}'''")
+        MScResp(
+          scActions = Seq(
+            MScRespAction(
+              aType = MScRespActionTypes.Index,
+              index = Some(
+                MScRespIndex(
+                  indexHtml     = html,
+                  currAdnId     = currAdnIdOpt,
+                  title         = Some( _title ),
+                  geoPoint      = _geoPointOpt
+                )
+              )
+            )
+          )
         )
-      }
-    }
 
-    /** Результат запроса. */
-    protected def _resultVsn(args: ScIndexResp): Result = {
-      _reqArgs.apiVsn match {
-        case MScApiVsns.Sjs1 =>
-          Ok(args.toJson)
-        case other =>
-          throw new UnsupportedOperationException("Unsupported API vsn: " + other)
       }
     }
 
@@ -476,6 +493,16 @@ trait ScIndex
         statCookiesUtil.resultWithStatCookie {
           _resultVsn(args)
         }(ctx.request)
+      }
+    }
+
+    /** Результат запроса. */
+    protected def _resultVsn(args: MScResp): Result = {
+      _reqArgs.apiVsn match {
+        case MScApiVsns.Sjs1 =>
+          Ok( Json.toJson(args) )
+        case other =>
+          throw new UnsupportedOperationException("Unsupported API vsn: " + other)
       }
     }
 

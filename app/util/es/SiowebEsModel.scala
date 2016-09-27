@@ -7,7 +7,6 @@ import io.suggest.model.n2.media.MMedias
 import io.suggest.model.n2.node.MNodes
 import io.suggest.stat.m.MStats
 import io.suggest.util.{JMXBase, SioEsUtil}
-import io.suggest.ym.model.stat.MAdStats
 import models.adv.MExtTargets
 import models.ai.MAiMads
 import models.event.MEvents
@@ -35,7 +34,6 @@ class SiowebEsModel @Inject() (
   mEvents             : MEvents,
   mExtTargets         : MExtTargets,
   mAiMads             : MAiMads,
-  mAdStats            : MAdStats,
   emailPwIdents       : EmailPwIdents,
   emailActivations    : EmailActivations,
   mExtIdents          : MExtIdents,
@@ -67,7 +65,7 @@ class SiowebEsModel @Inject() (
     mEvents,
     mAsymKeys,
     mMedias,
-    mAdStats, mStats
+    mStats
   )
 
   /** Вернуть экзепшен, если есть какие-то проблемы при обработке ES-моделей. */

@@ -9,7 +9,7 @@ import play.twirl.api.Html
 import util.PlayMacroLogsI
 import models._
 import util.acl._
-import util.ad.IMarketAdFormUtil
+import util.ad.ILkAdEdFormUtil
 
 import scala.concurrent.Future
 import util.blocks.{BgImg, IBlkImgMakerDI}
@@ -30,7 +30,7 @@ trait MarketAdPreview
   with PlayMacroLogsI
   with IsAdnNodeAdmin
   with IBlkImgMakerDI
-  with IMarketAdFormUtil
+  with ILkAdEdFormUtil
 {
 
   import mCommonDi._

@@ -9,6 +9,7 @@ import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
 import io.suggest.model.n2.node.meta.colors.{MColorData, MColors}
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models._
 import models.adv.MExtTargets
 import models.madn.{MNodeRegSuccess, NodeDfltColors}
@@ -169,7 +170,8 @@ class NodesUtil @Inject() (
       // Собрать id карточек, относящиеся к заданным узлам-источникам.
       .flatMap { prodIds =>
         val _limit = Math.max(50, count * 2)
-        val dsa0 = new AdSearchImpl {
+        val dsa0 = new MNodeSearchDfltImpl {
+          override def nodeTypes = Seq( MNodeTypes.Ad )
           override def outEdges: Seq[ICriteria] = {
             val cr = Criteria(
               nodeIds     = prodIds,

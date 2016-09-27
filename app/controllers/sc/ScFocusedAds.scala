@@ -6,10 +6,11 @@ import io.suggest.common.css.FocusedTopLeft
 import io.suggest.common.fut.FutureUtil
 import io.suggest.model.common.OptId
 import io.suggest.model.n2.node.IMNodes
+import io.suggest.model.n2.node.search.MNodeSearch
+import io.suggest.stat.m.{MAction, MActionTypes}
 import io.suggest.util.Lists
 import models.im.MImgT
 import models.im.logo.LogoOpt_t
-import models.mctx.Context
 import models.msc._
 import models.req.IReq
 import play.api.mvc.Result
@@ -18,6 +19,8 @@ import util.PlayMacroLogsI
 import util.acl._
 import views.html.sc.foc._
 import models._
+import models.mlu.MLookupModes
+import util.showcase.IScAdSearchUtilDi
 
 import scala.collection.immutable
 import scala.concurrent.Future
@@ -35,42 +38,43 @@ trait ScFocusedAdsBase
   with ScCssUtil
   with IN2NodesUtilDi
   with IMNodes
+  with IScAdSearchUtilDi
 {
 
   import mCommonDi._
 
   /** Базовая логика обработки запросов сбора данных по рекламным карточкам и компиляции оных в результаты выполнения запросов. */
-  trait FocusedAdsLogic extends AdCssRenderArgs {
+  abstract class FocusedAdsLogic extends LogicCommonT with AdCssRenderArgs {
 
     /** Параллельный рендер блоков, находящихся за пределом экрана, должен будет возращать результат этого типа для каждого блока. */
     type OBT
 
     /** Исходные критерии поиска карточек. */
-    val _adSearch: FocusedAdsSearchArgs
+    val _qs: MScAdsFocQs
+
     /** Sync-состояние выдачи, если есть. */
     def _scStateOpt: Option[ScJsState]
-
-    /** Текущий HTTP-реквест. */
-    implicit def _request: IReq[_]
-
 
     /** Поиск focused-карточек. */
     def mads1Fut: Future[Seq[MNode]]
 
     /** Является ли указанный продьюсер очень внешним в качестве ресивера? */
     def is3rdPartyProducer(producerId: String): Boolean = {
-      val hasProdAsRcvr = _adSearch.outEdges.exists { e =>
-        e.containsPredicate( MPredicates.Receiver) &&
-          e.nodeIds.contains( producerId )
-      }
+      val hasProdAsRcvr = _qs.search.prodIdOpt.nonEmpty && _qs.search.prodIdOpt == _qs.search.rcvrIdOpt
       !hasProdAsRcvr
     }
 
+    lazy val mAdsSearchFut: Future[MNodeSearch] = {
+      scAdSearchUtil.qsArgs2nodeSearch(_qs.search)
+    }
+
     /** Поисковые критерии для подсчёта общего кол-ва результатов. */
-    def madsCountSearch = _adSearch
+    def madsCountSearchFut = mAdsSearchFut
+
     /** В countAds() можно отправлять и обычный adSearch: forceFirstIds там игнорируется. */
     def madsCountFut: Future[Long] = {
-      mNodes.dynCount(madsCountSearch)
+      madsCountSearchFut
+        .flatMap( mNodes.dynCount )
     }
     lazy val madsCountIntFut = madsCountFut.map(_.toInt)
 
@@ -185,20 +189,9 @@ trait ScFocusedAdsBase
 
 
     def mads4blkRenderFut: Future[Seq[blk.RenderArgs]] = {
-      for (mads <- mads2andBrArgsFut) yield {
-        if (_adSearch.withHeadAd) mads.tail else mads
-        // Caused by: java.lang.UnsupportedOperationException: tail of empty list
-      }
+      mads2andBrArgsFut
     }
 
-    lazy val ctx = implicitly[Context]
-
-    /** Тип аккамулятора при рендере блоков через renderOuterBlock(). */
-    type BrAcc_t
-
-    /** Начальный аккамулятор для первого вызова renderOuterBlock(). */
-    def blockHtmlRenderAcc0: BrAcc_t
-    
     /** Карта СЫРЫХ логотипов продьюсеров без подгонки под экран.
       * Если в карте нет искомого продьюсера, то значит он без логотипа-картинки. */
     def prod2logoImgMapFut: Future[Map[String, MImgT]] = {
@@ -209,7 +202,7 @@ trait ScFocusedAdsBase
     lazy val prod2logoScrImgMapFut: Future[Map[String, MImgT]] = {
       prod2logoImgMapFut flatMap { logosMap =>
         Future.traverse( logosMap ) { case (nodeId, logoImgRaw) =>
-          logoUtil.getLogo4scr(logoImgRaw, _adSearch.screen)
+          logoUtil.getLogo4scr(logoImgRaw, _qs.screen)
             .map { nodeId -> _ }
         } map {
           _.toMap
@@ -280,16 +273,6 @@ trait ScFocusedAdsBase
         _adTpl(args)(ctx)
       }
     }
-
-    /**
-     * Рендер одного блока. В случае Html можно просто вызвать renderBlockHtml().
-     * 11.jun.2015: Добавлена поддержка синхронного аккамулятора для передачи данных между вызовами этого метода.
-      *
-      * @param args Контейнер с данными для запуска рендера.
-     * @param brAcc0 Аккамулятор.
-     * @return Фьючерс рендера и новый аккамулятор.
-     */
-    def renderOneBlockAcc(args: AdBodyTplArgs, brAcc0: BrAcc_t): (Future[OBT], BrAcc_t)
 
     /** Что же будет рендерится в качестве текущей просматриваемой карточки? */
     lazy val focAdOptFut: Future[Option[blk.RenderArgs]] = {
@@ -416,44 +399,108 @@ trait ScFocusedAdsBase
       *
       * @return Если нет карточек, то будет NoSuchElementException. Иначе фьючерс с HTML-рендером. */
     def focAdHtmlFut: Future[Html] = {
-      focAdsHtmlArgsFut map { args =>
+      for (args <- focAdsHtmlArgsFut) yield {
         renderFocused(args)
       }
     }
 
     /** Опциональный аналог focAdHtmlFut. Функция учитывает значение _withHeadAd. */
     def focAdHtmlOptFut: Future[Option[Html]] = {
-      if (_adSearch.withHeadAd) {
-        focAdHtmlFut
-          .map(Some.apply)
-          .recover {
-            case ex: NoSuchElementException =>
-              None
-            case ex: Throwable =>
-              LOGGER.error("Failed to find focused ad", ex)
-              None
+      focAdHtmlFut
+        .map(Some.apply)
+        .recover {
+          case ex: NoSuchElementException =>
+            None
+          case ex: Throwable =>
+            LOGGER.error("Failed to find focused ad", ex)
+            None
+        }
+    }
+
+    /** Контекстно-зависимая сборка данных статистики. */
+    override def scStat: Future[Stat2] = {
+      val _rcvrOptFut   = mNodeCache.maybeGetByEsIdCached( _qs.search.rcvrIdOpt )
+      val _prodOptFut   = mNodeCache.maybeGetByEsIdCached( _qs.search.prodIdOpt )
+
+      val _userSaOptFut = scStatUtil.userSaOptFutFromRequest()
+
+      val _madsFut      = mads2Fut
+      val _adSearchFut  = mAdsSearchFut
+
+      for {
+        _userSaOpt  <- _userSaOptFut
+        _rcvrOpt    <- _rcvrOptFut
+        _prodOpt    <- _prodOptFut
+        _mads       <- _madsFut
+        _adSearch   <- _adSearchFut
+      } yield {
+        var saAcc = List[MAction](
+          scStatUtil.madsAction(_mads, MActionTypes.ScAdsFocused),
+
+          // Сохранить фактический search limit
+          MAction(
+            actions = Seq( MActionTypes.SearchLimit ),
+            count   = Seq( _adSearch.limit )
+          ),
+
+          // Сохранить фактически search offset
+          MAction(
+            actions = Seq( MActionTypes.SearchOffset ),
+            count   = Seq( _adSearch.offset )
+          )
+        )
+
+        // Если идёт начальная фокусировка, то сохранить данные по окликнутой карточке.
+        if (_qs.lookupMode == MLookupModes.Around) {
+          for (mad0 <- _mads.find(_.id.contains( _qs.lookupAdId) )) {
+            saAcc ::= MAction(
+              actions   = Seq(MActionTypes.ScAdsFocusingOnAd),
+              nodeId    = mad0.id.toSeq,
+              nodeName  = mad0.guessDisplayName.toSeq
+            )
           }
-      } else {
-        Future successful None
+        }
+
+        saAcc = scStatUtil.withNodeAction(MActionTypes.ScRcvrAds, _qs.search.rcvrIdOpt, _rcvrOpt) {
+          scStatUtil.withNodeAction( MActionTypes.ScProdAds, _qs.search.prodIdOpt, _prodOpt )(saAcc)
+        }
+
+        new Stat2 {
+          override def statActions  = saAcc
+          override def userSaOpt    = _userSaOpt
+          override def locEnvOpt    = _qs.search.locEnv.optional
+          override def gen          = _qs.search.genOpt
+          override def devScreenOpt = _qs.screen
+        }
+
       }
     }
 
-  }
 
-  /** Если поддержка аккамулятора при вызовах renderOutBlock() не требуется, то этот трейт отключит её. */
-  trait NoBrAcc extends FocusedAdsLogic {
+    /** trait NoBrAcc{} замержен в основной код.:
+      *  Если поддержка аккамулятора при вызовах renderOutBlock() не требуется, то этот трейт отключит её. */
 
-    override type BrAcc_t = None.type
+    /** Тип render-аккамулятора. */
+    type BrAcc_t = None.type
 
     /** Начальный аккамулятор для первого вызова renderOuterBlock(). */
-    override def blockHtmlRenderAcc0: BrAcc_t = None
+    def blockHtmlRenderAcc0: BrAcc_t = None
 
-    /** Рендер заэкранного блока. В случае Html можно просто вызвать renderBlockHtml(). */
-    override def renderOneBlockAcc(args: AdBodyTplArgs, brAcc0: BrAcc_t): (Future[OBT], BrAcc_t) = {
+
+    /**
+      * Рендер одного блока. В случае Html можно просто вызвать renderBlockHtml().
+      * 11.jun.2015: Добавлена поддержка синхронного аккамулятора для передачи данных между вызовами этого метода.
+      *
+      * @param args Контейнер с данными для запуска рендера.
+      * @param brAcc0 Аккамулятор.
+      * @return Фьючерс рендера и новый аккамулятор.
+      */
+    def renderOneBlockAcc(args: AdBodyTplArgs, brAcc0: BrAcc_t): (Future[OBT], BrAcc_t) = {
       (renderOuterBlock(args), brAcc0)
     }
 
     def renderOuterBlock(args: AdBodyTplArgs): Future[OBT]
+
   }
 
 }
@@ -465,15 +512,13 @@ trait ScFocusedAds
   with IScStatUtil
   with MaybeAuth {
 
-  import mCommonDi._
-
   /** Экшен для рендера горизонтальной выдачи карточек.
     *
-    * @param adSearch Поисковый запрос.
+    * @param qs URL-аргументы запроса.
     * @return JSONP с отрендеренными карточками.
     */
-  def focusedAds(adSearch: FocusedAdsSearchArgs) = MaybeAuth().async { implicit request =>
-    val logic = getLogicFor(adSearch)
+  def focusedAds(qs: MScAdsFocQs) = MaybeAuth().async { implicit request =>
+    val logic = getLogicFor(qs)
     // Запустить изменябельное тело экшена на исполнение.
     _focusedAds(logic)
   }
@@ -495,27 +540,20 @@ trait ScFocusedAds
     * @return Фьючерс с http-результатом.
     */
   protected def _showFocusedAds(logic: FocusedAdsLogicHttp): Future[Result] = {
-    import logic._request
-
     // Запускаем сборку ответа:
     val resultFut = logic.resultFut
 
-    // В фоне, когда поступят карточки, нужно будет сохранить по ним статистику:
-    logic.mads2Fut.onSuccess { case mads =>
-      scStatUtil.FocusedAdsStat(
-        adSearch = logic._adSearch,
-        madIds = mads.flatMap(_.id),
-        withHeadAd = logic._adSearch.withHeadAd
-      ).saveStats
-    }
+    // И запускаем сохранение статистики по текущему действу:
+    logic.saveScStat()
 
+    // Вернуть основной результат экшена.
     resultFut
   }
 
 
   /** Перезаписываемый сборкщик логик для версий. */
-  def getLogicFor(adSearch: FocusedAdsSearchArgs)(implicit request: IReq[_]): FocusedAdsLogicHttp = {
-    throw new IllegalArgumentException(s"Unsupported API version: ${adSearch.apiVsn} :: ${request.method} ${request.uri} FROM ${request.remoteAddress}")
+  def getLogicFor(qs: MScAdsFocQs)(implicit request: IReq[_]): FocusedAdsLogicHttp = {
+    throw new IllegalArgumentException(s"Unsupported API version: ${qs.apiVsn} :: ${request.method} ${request.uri} FROM ${request.remoteAddress}")
   }
 
 
@@ -527,6 +565,7 @@ trait ScFocusedAds
 
     /** Сборка HTTP-ответа. */
     def resultFut: Future[Result]
+
   }
 
 }

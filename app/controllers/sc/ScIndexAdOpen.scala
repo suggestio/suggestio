@@ -1,9 +1,10 @@
 package controllers.sc
 
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
-import io.suggest.model.n2.node.IMNodes
+import io.suggest.model.n2.node.{IMNodes, MNodeTypes}
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.req.IReq
-import models.{AdSearchImpl, AdShowLevels, MNode}
+import models.{AdShowLevels, MNode}
 import models.im.DevScreen
 import models.msc._
 import play.api.mvc.Result
@@ -34,7 +35,7 @@ trait ScIndexAdOpen
     val resFut = for {
       // Фильтруем по флагу focJumpAllowed. if в первой строчке foc{} использовать нельзя, поэтому имитируем тут Future.
       _ <- {
-        if (logic._adSearch.focJumpAllowed) {
+        if (logic._qs.focJumpAllowed) {
           Future.successful(None)
         } else {
           val ex = new NoSuchElementException("Foc jump disabled by sc-sjs.")
@@ -43,7 +44,7 @@ trait ScIndexAdOpen
       }
 
       // Прочитать из хранилища указанную карточку.
-      madOpt <- mNodeCache.getById( logic._adSearch.lookupAdId )
+      madOpt <- mNodeCache.getById( logic._qs.lookupAdId )
 
       // .get приведёт к NSEE, это нормально.
       producerId = {
@@ -57,7 +58,7 @@ trait ScIndexAdOpen
       producer <- {
         // 2015.sep.16: Нельзя перепрыгивать на продьюсера, у которого не больше одной карточки на главном экране.
         val prodAdsCountFut: Future[Long] = {
-          val args = new AdSearchImpl {
+          val args = new MNodeSearchDfltImpl {
             override def outEdges: Seq[ICriteria] = {
               val cr = Criteria(
                 nodeIds = Seq(producerId),
@@ -65,7 +66,8 @@ trait ScIndexAdOpen
               )
               Seq(cr)
             }
-            override def limit        = 2
+            override def limit = 2
+            override def nodeTypes = Seq( MNodeTypes.Ad )
           }
           mNodes.dynCount(args)
         }
@@ -74,7 +76,7 @@ trait ScIndexAdOpen
           .map(_.get)
         // Как выяснилось, бывают карточки-сироты (продьюсер удален, карточка -- нет). Нужно сообщать об этой ошибке.
         prodFut.onFailure { case ex =>
-          val msg = s"Producer node does not exist: adnId=$producerId for adIds=${logic._adSearch.firstIds}"
+          val msg = s"Producer node[$producerId] does not exist."
           if (ex.isInstanceOf[NoSuchElementException])
             LOGGER.error(msg)
           else
@@ -126,16 +128,16 @@ trait ScIndexAdOpen
       }
       override def _request  = request
       override def _reqArgs: MScIndexArgs = new MScIndexArgsDfltImpl {
-        private val s = focLogic._adSearch
+        private val s = focLogic._qs
         override def prevAdnId: Option[String]  = {
-          n2NodesUtil.receiverIds(s.outEdges)
-            .toStream
-            .headOption
+          s.search
+            .rcvrIdOpt
+            .map(_.id)
         }
         override def screen: Option[DevScreen]  = s.screen
         override def apiVsn: MScApiVsn          = s.apiVsn
         override def withWelcome                = true
-        // TODO !!! override def geo                        = s.geo LOC_ENV !!!
+        override def locEnv                     = s.search.locEnv
       }
     }
     // Логика обработки запроса собрана, запустить исполнение запроса.

@@ -3,7 +3,6 @@ package util.jmx
 import com.google.inject.Inject
 import io.suggest.model.n2.media.MMediasJmx
 import io.suggest.model.n2.node.MNodesJmx
-import io.suggest.ym.model.stat._
 import models.adv.MExtTargetsJmx
 import models.ai.MAiMadJmx
 import models.event.MEventsJmx
@@ -37,7 +36,6 @@ class JMXImpl @Inject() (
   mCalendarJmx                  : MCalendarJmx,
   mNodesJmx                     : MNodesJmx,
   geoTagsUtilJmx                : GeoTagsUtilJmx,
-  mAdStatJmx                    : MAdStatJmx,
   mExtTargetsJmx                : MExtTargetsJmx,
   mEventsJmx                    : MEventsJmx,
   mAiMadJmx                     : MAiMadJmx,
@@ -58,7 +56,6 @@ class JMXImpl @Inject() (
   /** Список моделей, отправляемых в MBeanServer. private для защиты от возможных воздействий извне. */
   private def JMX_MODELS = {
     List[JMXBase](
-      mAdStatJmx,
       emailActivationsJmx,
       emailPwIdentsJmx,
       mExtIdentJmx,

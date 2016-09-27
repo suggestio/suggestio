@@ -8,6 +8,7 @@ import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.model.common.OptId
+import io.suggest.model.es.MEsId
 import io.suggest.model.n2.edge.MNodeEdges
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.MNodes
@@ -16,6 +17,7 @@ import models._
 import models.mctx.Context
 import models.mproj.ICommonDi
 import models.im.MImg3
+import models.msc.MScAdsSearchQs
 import models.msys._
 import models.req.{INodeReq, IReq, MNodeReq}
 import models.usr.{EmailActivation, EmailActivations, MPerson}
@@ -30,6 +32,7 @@ import util.adv.AdvUtil
 import util.lk.LkAdUtil
 import util.mail.IMailerWrapper
 import util.n2u.N2NodesUtil
+import util.showcase.ScAdSearchUtil
 import util.sys.SysMarketUtil
 import views.html.lk.adn.invite.emailNodeOwnerInviteTpl
 import views.html.lk.shop.ad.emailAdDisabledByMartTpl
@@ -56,6 +59,7 @@ class SysMarket @Inject() (
   emailActivations                : EmailActivations,
   mPerson                         : MPerson,
   mItems                          : MItems,
+  scAdSearchUtil                  : ScAdSearchUtil,
   override val mNodes             : MNodes,
   override val mCommonDi          : ICommonDi
 )
@@ -480,27 +484,29 @@ class SysMarket @Inject() (
 
 
   /** Отобразить технический список рекламных карточек узла. */
-  def showAdnNodeAds(a: AdSearch) = IsSuGet.async { implicit request =>
+  def showAdnNodeAds(a: MScAdsSearchQs) = IsSuGet.async { implicit request =>
 
     // Ищем все рекламные карточки, подходящие под запрос.
+    val msearchFut = scAdSearchUtil.qsArgs2nodeSearch(a)
     // TODO Нужна устойчивая сортировка.
-    val madsFut = mNodes.dynSearch(a)
+    val madsFut = for {
+      msearch <- msearchFut
+      res     <- mNodes.dynSearch(msearch)
+    } yield {
+      res
+    }
+
     val brArgssFut = madsFut.flatMap { mads =>
       Future.traverse(mads) { mad =>
         lkAdUtil.tiledAdBrArgs(mad)
       }
     }
 
-    /** Сбор id'шников в критериях поиска первого попавшегося узла. */
-    def _nodesF(p: MPredicate): Seq[String] = {
-      a.outEdges
-        .iterator
-        .filter { _.predicates.contains(p) }
-        .flatMap( _.nodeIds )
-        .toStream
+    def __nodeIdsF(x: Option[MEsId]): Seq[String] = {
+      x.iterator.map(_.id).toSeq
     }
-    val producerIds = _nodesF( MPredicates.OwnedBy )
-    val rcvrIds = _nodesF( MPredicates.Receiver )
+    val producerIds = __nodeIdsF(a.prodIdOpt)
+    val rcvrIds     = __nodeIdsF(a.rcvrIdOpt)
 
     // Узнаём текущий узел на основе запроса. TODO Кривовато это как-то, может стоит через аргумент передавать?
     val adnNodeIdOpt = {
@@ -599,8 +605,9 @@ class SysMarket @Inject() (
       adnNodeOpt    <- adnNodeOptFut
       rcvrs         <- rcvrsFut
       ad2advMap     <- ad2advMapFut
+      msearch       <- msearchFut
     } yield {
-      val rargs = MShowNodeAdsTplArgs(brArgss, adnNodeOpt, rcvrs, a, ad2advMap)
+      val rargs = MShowNodeAdsTplArgs(brArgss, adnNodeOpt, rcvrs, a, ad2advMap, msearch)
       Ok( showAdnNodeAdsTpl(rargs) )
     }
   }
@@ -627,7 +634,9 @@ class SysMarket @Inject() (
               routes.SysMarket.showAdnNode(prodId)
             }
         } { rcvrId =>
-          val adSearch = AdSearch.byRcvrId(rcvrId)
+          val adSearch = MScAdsSearchQs(
+            rcvrIdOpt = Some(rcvrId)
+          )
           routes.SysMarket.showAdnNodeAds(adSearch)
         }
         Future.successful( call )

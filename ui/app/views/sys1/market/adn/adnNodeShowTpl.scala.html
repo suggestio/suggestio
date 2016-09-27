@@ -11,6 +11,7 @@
 @import sys1.stuff.hpath._
 @import sys1.stuff.dsl._
 @import sys1.domains._nodeDomainsTpl
+@import msc._
 
 
 @* Подшаблон генерации квадратной кнопки. *@
@@ -65,7 +66,7 @@
   @for(nodeId <- mnode.id) {
     <div class="i-list">
       @btn(routes.MarketLkAdn.showNodeAds(nodeId), 28) { ЛИЧНЫЙ<br/>КАБИНЕТ<br/>УЗЛА }
-      @btn1(ctxUtil.SC_URL_PREFIX + routes.Sc.geoSite( msc.ScJsState(adnId = Some(nodeId)) ).url, 52) { ВЫДАЧА }
+      @btn1(ctxUtil.SC_URL_PREFIX + routes.Sc.geoSite( ScJsState(adnId = Some(nodeId)) ).url, 52) { ВЫДАЧА }
       @btn(routes.SysBilling.forNode(nodeId), 52) { БИЛЛИНГ }
       @btn(routes.SysAdnGeo.forNode(nodeId), 52) { GEO }
     </div>
@@ -131,12 +132,12 @@
   @lkBlock("Управление") {
 
     @btn(
-      href = routes.SysMarket.showAdnNodeAds( AdSearch.byProducerId(mnode.id.get) ),
+      href = routes.SysMarket.showAdnNodeAds( MScAdsSearchQs(prodIdOpt = Some(mnode.id.get)) ),
       paddingPx = 28
     ) { Собственные<br/>рекламные<br/>карточки }
 
     @btn(
-      href = routes.SysMarket.showAdnNodeAds( AdSearch.byRcvrId(mnode.id.get) ),
+      href = routes.SysMarket.showAdnNodeAds( MScAdsSearchQs(rcvrIdOpt = Some(mnode.id.get))  ),
       paddingPx  = 28
     ) { Рекламные<br/>карточки<br/>в выдаче }
 
