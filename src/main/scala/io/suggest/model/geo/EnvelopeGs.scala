@@ -110,4 +110,14 @@ case class EnvelopeGs(topLeft: GeoPoint, bottomRight: GeoPoint) extends GeoShape
     )
   }
 
+  override def centerPoint: Some[GeoPoint] = {
+    // TODO Код не тестирован и не использовался с момента запиливания
+    // Тут чисто-арифметическое определение центра, без [возможных] поправок на форму геойда и прочее.
+    val c = GeoPoint(
+      lat = (bottomRight.lat + topLeft.lat) / 2,
+      lon = (bottomRight.lon + topLeft.lon) / 2
+    )
+    Some(c)
+  }
+
 }

@@ -85,6 +85,13 @@ trait GeoShape {
 
   def firstPoint: GeoPoint
 
+  /**
+    * Центральная точка фигуры.
+    * По идее, эта точка всегда существует, но тут Option.
+    * None означает, что код поддержки вычисления центральной точки не заимплеменчен.
+    */
+  def centerPoint: Option[GeoPoint] = None
+
   /** Отображаемое для пользователя имя шейпа. */
   def displayTypeName: String = {
     shapeType.geoJsonName

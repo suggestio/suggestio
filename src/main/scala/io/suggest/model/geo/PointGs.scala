@@ -48,6 +48,8 @@ case class PointGs(coord: GeoPoint) extends GeoShapeQuerable {
     Point( coord.toLatLng )
   }
 
+  override def centerPoint = Some(coord)
+
 }
 
 

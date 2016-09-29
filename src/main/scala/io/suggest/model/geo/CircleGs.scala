@@ -51,6 +51,8 @@ case class CircleGs(center: GeoPoint, radius: Distance) extends GeoShapeQuerable
 
   override def firstPoint = center
 
+  override def centerPoint = Some(center)
+
   /** Circle представляется точкой, т.к. GeoJSON не поддерживает Circle. */
   override def toPlayGeoJsonGeom: Point[LatLng] = {
     PointGs(center).toPlayGeoJsonGeom
