@@ -17,6 +17,7 @@ object AdSearchConstants {
   def GENERATION_FN       = "d"
   def SCREEN_INFO_FN      = "s"
 
+  /** Модель данных физического окружения клиентского устройства. */
   def LOC_ENV_FN          = ScConstants.ReqArgs.LOC_ENV_FN
 
   /** 2015.aug.26: Название опционального поля с флагом того, разрешено ли серверу возвращать
@@ -33,8 +34,5 @@ object AdSearchConstants {
     * Выставляется при переходе на карточку по id карточки, например при десериализации js-состояния из URL.
     */
   def AD_ID_LOOKUP_FN      = "j"
-
-  /** AdvGeoPoint. Имя поля для текущей точки на карте, для которой делается запрос. */
-  def AGP_POINT_FN         = "g"
 
 }

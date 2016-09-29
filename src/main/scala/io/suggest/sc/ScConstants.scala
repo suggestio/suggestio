@@ -114,13 +114,15 @@ object ScConstants {
     /** Название поля с неким заголовком. */
     final val TITLE_FN   = "ti"
 
-    def MADS_FN          = "mads"
 
-    /** Поле с таким названием содержит стили. */
-    def CSS_FN           = "css"
+    /** Отрендеренные карточки (плитка). */
+    final val MADS_FN          = "mads"
+
+    /** Поле с таким названием содержит стили. Например, карточек плитки. */
+    final val CSS_FN           = "css"
 
     /** Имя поля, где какие-то параметры. Например, параметры сетки. */
-    def PARAMS_FN        = "params"
+    final val PARAMS_FN        = "params"
 
     /** Имя поля с версткой списка узлов. */
     def NODE_LIST_HTML_FN = "nodes"
@@ -129,14 +131,19 @@ object ScConstants {
     def TIMESTAMP_FN      = "timestamp"
 
     /** Открытые карточки по API v2. */
-    def FOCUSED_ADS_FN    = "fads"
+    final val FOCUSED_ADS_FN    = "fads"
 
     /** Имя поля с общим кол-вом чего-то во всей выборке. */
-    def TOTAL_COUNT_FN    = "tc"
+    final val TOTAL_COUNT_FN    = "tc"
 
-    def STYLES_FN         = "st"
+    final val STYLES_FN         = "st"
 
     final val INDEX_RESP_ACTION = "i"
+
+    final val ADS_TILE_RESP_ACTION = "t"
+
+    /** Экшен для focused-данных в ответе. */
+    final val FOC_ANSWER_ACTION  = "focused"
 
   }
 
@@ -447,8 +454,6 @@ object ScConstants {
 
   /** Константы для подвыдачи focused ads. */
   object Focused {
-
-    def FOC_ANSWER_ACTION  = "focused"
 
     /** id корневого контейнера. */
     def ROOT_ID = "smFocusedAds"
