@@ -1,9 +1,9 @@
-package models.msc
+package models.msc.resp
 
 import io.suggest.sc.ScConstants.Resp._
-
-import play.api.libs.json._
+import models.msc.{MFoundAd, MGridParams}
 import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
 /**
  * Suggest.io
@@ -13,10 +13,10 @@ import play.api.libs.functional.syntax._
  * Модель появилась в API v2+, до этого была пачка голого js, который рендерился сервером и
  * неспеша сам распихивал информацию модели на клиенте.
  */
-object MFindAdsResp {
+object MScRespAdsTile {
 
   /** Сериализация в JSON. */
-  implicit def writes: Writes[MFindAdsResp] = (
+  implicit val WRITES: OWrites[MScRespAdsTile] = (
     (__ \ MADS_FN).write[Seq[MFoundAd]] and
     (__ \ CSS_FN).writeNullable[String] and
     (__ \ PARAMS_FN).writeNullable[MGridParams]
@@ -31,7 +31,7 @@ object MFindAdsResp {
  * @param css Отрендеренные css-стили для отрендеренных карточек, если есть.
  * @param params Параметры отображения, если необходимо перевыставить.
  */
-case class MFindAdsResp(
+case class MScRespAdsTile(
   mads    : Seq[MFoundAd],
   css     : Option[String],
   params  : Option[MGridParams]

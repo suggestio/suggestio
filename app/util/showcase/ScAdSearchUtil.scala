@@ -21,9 +21,7 @@ import scala.concurrent.Future
   * асинхронного кода (например, в случае маячков и ).
   */
 @Singleton
-class ScAdSearchUtil /*@Inject() (
-  mCommonDi : ICommonDi
-)*/ {
+class ScAdSearchUtil {
 
   /** Максимальное число результатов в ответе на запрос (макс. результатов на странице). */
   private def LIMIT_MAX           = 50

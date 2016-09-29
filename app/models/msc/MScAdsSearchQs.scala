@@ -93,6 +93,15 @@ trait IScAdSearchQs {
   /** Сдвиг выдачи карточек. */
   def offsetOpt     : Option[Int]
 
+
+  /** Есть ли какие-то полезные данные для поиска карточек?
+    * Если false, значит поисковый запрос на базе данных из этого инстанса вернёт вообще все карточки. */
+  def hasAnySearchCriterias: Boolean = {
+    rcvrIdOpt.nonEmpty ||
+      locEnv.nonEmpty ||
+      prodIdOpt.nonEmpty
+  }
+
 }
 
 

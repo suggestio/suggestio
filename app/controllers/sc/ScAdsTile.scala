@@ -5,10 +5,9 @@ import _root_.util.di.{IScNlUtil, IScStatUtil, IScUtil}
 import _root_.util.blocks.IBlkImgMakerDI
 import _root_.util.showcase.IScAdSearchUtilDi
 import _root_.util.PlayMacroLogsI
-import io.suggest.model.es.MEsId
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.primo.TypeT
-import io.suggest.stat.m.{MAction, MActionType, MActionTypes}
+import io.suggest.stat.m.{MAction, MActionTypes}
 import models.im.make.MakeResult
 import models.msc._
 import models.req.IReq
@@ -21,6 +20,7 @@ import play.api.libs.json._
 import scala.collection.immutable
 import scala.concurrent.Future
 import models._
+import models.msc.resp.{MScResp, MScRespAction, MScRespActionTypes, MScRespAdsTile}
 
 /**
  * Suggest.io
@@ -83,13 +83,21 @@ trait ScAdsTileBase
 
     lazy val adSearch2Fut = scAdSearchUtil.qsArgs2nodeSearch(_qs.search)
 
+    /** Найти все итоговые карточки. */
     lazy val madsFut: Future[Seq[MNode]] = {
-      for {
-        adSearch <- adSearch2Fut
-        res      <- mNodes.dynSearch(adSearch)
-      } yield {
-        LOGGER.trace(s"$logPrefix Found ${res.size} ads")
-        res
+      if (_qs.search.hasAnySearchCriterias) {
+        for {
+          adSearch <- adSearch2Fut
+          res <- mNodes.dynSearch(adSearch)
+        } yield {
+          LOGGER.trace(s"$logPrefix Found ${res.size} ads")
+          res
+        }
+
+      } else {
+        // Нет поисковых критериев -- сразу же ничего не ищем.
+        LOGGER.info(s"$logPrefix No data to ads search: ${_request.uri} remote ${_request.remoteAddress}")
+        Future.successful(Nil)
       }
     }
 
@@ -305,14 +313,25 @@ trait ScAdsTile
         cellSizeCssPx = cellSizeCssPx,
         cellPaddingCssPx = cellPaddingCssPx
       )
+
       for {
         _madsRender <- _madsRenderFut
         _css        <- _cssFut
       } yield {
-        val respData = MFindAdsResp(
-          mads    = _madsRender,
-          css     = Some(_css),
-          params  = Some(_params)
+        // Собираем финальный ответ.
+        val respData = MScResp(
+          scActions = Seq(
+            MScRespAction(
+              acType = MScRespActionTypes.AdsTile,
+              adsTile = Some(
+                MScRespAdsTile(
+                  mads    = _madsRender,
+                  css     = Some(_css),
+                  params  = Some(_params)
+                )
+              )
+            )
+          )
         )
         Ok( Json.toJson(respData) )
       }

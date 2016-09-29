@@ -15,13 +15,17 @@ object MScRespAction {
   /** Поддержка JSON-сериализации этой write-only модели. */
   implicit val WRITES: OWrites[MScRespAction] = (
     (__ \ ACTION_FN).write[MScRespActionType] and
-    (__ \ INDEX_RESP_ACTION).writeNullable[MScRespIndex]
+    (__ \ INDEX_RESP_ACTION).writeNullable[MScRespIndex] and
+    (__ \ ADS_TILE_RESP_ACTION).writeNullable[MScRespAdsTile] and
+    (__ \ FOC_ANSWER_ACTION).writeNullable[MScRespAdsFoc]
   )(unlift(unapply))
 
 }
 
 
 case class MScRespAction(
-  aType     : MScRespActionType,
-  index     : Option[MScRespIndex]  = None
+  acType    : MScRespActionType,
+  index     : Option[MScRespIndex]      = None,
+  adsTile   : Option[MScRespAdsTile]    = None,
+  adsFoc    : Option[MScRespAdsFoc]     = None
 )

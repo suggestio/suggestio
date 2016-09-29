@@ -3,10 +3,8 @@ package models.jsm
 import io.suggest.model.es.EsModelUtil
 import EsModelUtil.FieldsJsonAcc
 import models.MNode
-import models.msc.FocRenderResult
 import play.api.libs.json._
 import io.suggest.sc.ScConstants.Resp._
-import io.suggest.sc.ScConstants.Focused.FOC_ANSWER_ACTION
 
 /**
  * Suggest.io
@@ -32,107 +30,7 @@ trait Action extends SmJsonResp {
 }
 
 
-trait HtmlOpt extends SmJsonResp {
-  def htmlOpt: Option[JsString]
-
-  override def toJsonAcc: FieldsJsonAcc = {
-    val acc0 = super.toJsonAcc
-    val _htmlOpt = htmlOpt
-    if (_htmlOpt.nonEmpty)
-      HTML_FN -> _htmlOpt.get :: acc0
-    else
-      acc0
-  }
-}
-
-
-/** Список focused-карточек по API v2. */
-trait FocusedAdsT extends SmJsonResp {
-  /** focused-карточки. */
-  def ads: Seq[FocRenderResult]
-
-  override def toJsonAcc: FieldsJsonAcc = {
-    var acc = super.toJsonAcc
-    val _ads = ads
-    if (_ads.nonEmpty) {
-      acc ::= FOCUSED_ADS_FN -> Json.toJson(_ads)
-    }
-    acc
-  }
-}
-
-
-/** Аддон для поля общего кол-ва чего-то (карточек например) во всей выборке. */
-trait TotalCountT extends SmJsonResp {
-  /** Поле с ОБЩИМ кол-вом рекламных карточек во всей выборке. */
-  def totalCount: Int
-
-  override def toJsonAcc: FieldsJsonAcc = {
-    TOTAL_COUNT_FN -> Json.toJson(totalCount) :: super.toJsonAcc
-  }
-}
-
-trait StylesOpt extends SmJsonResp {
-  def styles: String
-
-  override def toJsonAcc: FieldsJsonAcc = {
-    STYLES_FN -> JsString(styles)  ::  super.toJsonAcc
-  }
-}
-
-/** Focused APIv2 контейнер ответа, для рендера в JSON. */
-case class FocusedAdsResp2(override val ads: Seq[FocRenderResult],
-                           override val totalCount: Int,
-                           override val styles: String)
-extends Action with FocusedAdsT with TotalCountT with StylesOpt {
-  override def action = FOC_ANSWER_ACTION
-}
-
-
 // ------------------------------------------------------------------------------
-
-
-/** Аддон для поддержки возвращаемого заголовка. */
-trait TitleOpt extends SmJsonResp {
-  def titleOpt: Option[String]
-  override def toJsonAcc: FieldsJsonAcc = {
-    val acc0 = super.toJsonAcc
-    val _titleOpt = titleOpt
-    if (_titleOpt.isDefined)
-      TITLE_FN -> JsString(_titleOpt.get) :: acc0
-    else
-      acc0
-  }
-}
-
-trait CurrAdnId extends SmJsonResp {
-  def currAdnId: Option[String]
-
-  override def toJsonAcc: FieldsJsonAcc = {
-    val acc0 = super.toJsonAcc
-    currAdnId.fold(acc0) { nodeId =>
-      ADN_ID_FN -> JsString(nodeId) :: acc0
-    }
-  }
-}
-
-/**
- * showcase index ответ.
- * @param html верстка выдачи.
- * @param currAdnId Текущий id узла, к которому относится отображаемая выдача.
- */
-case class ScIndexResp(
-  html                            : JsString,
-  override val currAdnId          : Option[String],
-  override val titleOpt           : Option[String]
-)
-extends Action with HtmlOpt with CurrAdnId with TitleOpt {
-  override def action = INDEX_RESP_ACTION
-  override def htmlOpt: Option[JsString] = Some(html)
-}
-
-
-// ---------------------------------------------------------------------------------
 
 
 trait Timestamp extends SmJsonResp {

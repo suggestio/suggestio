@@ -3,7 +3,6 @@
 @* JS-шаблон генерации play js reverse router.
    Синтаксис вызова шаблона аналогичен вызову helper.javascriptRoutes(). *@
 
-@import io.suggest.sc.ScConstants.JsRouter.ASYNC_INIT_FNAME
 @import io.suggest.common.qs.QsConstants.{KEY_PARTS_DELIM_STR, JSRR_OBJ_TO_QS_F}
 @import org.apache.commons.lang3.StringEscapeUtils.{ escapeEcmaScript => esc }
 

@@ -52,6 +52,8 @@ trait ScFocusedAdsBase
     /** Исходные критерии поиска карточек. */
     val _qs: MScAdsFocQs
 
+    lazy val logPrefix = s"foc(${ctx.timestamp}):"
+
     /** Sync-состояние выдачи, если есть. */
     def _scStateOpt: Option[ScJsState]
 
@@ -73,8 +75,13 @@ trait ScFocusedAdsBase
 
     /** В countAds() можно отправлять и обычный adSearch: forceFirstIds там игнорируется. */
     def madsCountFut: Future[Long] = {
-      madsCountSearchFut
-        .flatMap( mNodes.dynCount )
+      if (_qs.search.hasAnySearchCriterias) {
+        madsCountSearchFut
+          .flatMap(mNodes.dynCount)
+      } else {
+        LOGGER.info(s"$logPrefix No ads search criteriase, count will be zeroed.")
+        Future.successful(0L)
+      }
     }
     lazy val madsCountIntFut = madsCountFut.map(_.toInt)
 

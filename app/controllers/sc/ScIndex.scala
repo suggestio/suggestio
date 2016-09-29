@@ -452,7 +452,9 @@ trait ScIndex
 
       val _geoPointOptFut = for {
         currAdnIdOpt  <- _currAdnIdOptFut
-        geoLocOpt     <- currAdnIdOpt.fold[Future[Option[MGeoLoc]]] (reqGeoLocFutVal) (_ => Future.successful(None))
+        // Если нет данных по текущему узлу, то надо вернуть точку из обычной геолокации или geoip.
+        geoLocOpt     <- currAdnIdOpt
+          .fold[Future[Option[MGeoLoc]]] (reqGeoLocFutVal) { _ => Future.successful(None) }
       } yield {
         geoLocOpt
           .map(_.center)
@@ -469,7 +471,7 @@ trait ScIndex
         MScResp(
           scActions = Seq(
             MScRespAction(
-              aType = MScRespActionTypes.Index,
+              acType = MScRespActionTypes.Index,
               index = Some(
                 MScRespIndex(
                   indexHtml     = html,
@@ -481,8 +483,8 @@ trait ScIndex
             )
           )
         )
-
       }
+
     }
 
     /** HTTP-ответ клиенту. */

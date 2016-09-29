@@ -4,6 +4,7 @@
 
 @import ctx.{messages, request}
 @import views.js.stuff.jsRevRouterTpl
+@import views.html.stuff.jsTpl2HtmlTpl
 @import stuff.geo.radmap._
 @import lk.adv.geo.agBase
 @import lk.adv.widgets._
@@ -36,9 +37,11 @@
   <input type="hidden" id="@CurrShapes.DATA_CONTAINER_ID" value="@args.currAdvsJson"/>
 
   @* При добавлении тегов запросы add-tag-формы отправляются сюда. *@
-  @jsRevRouterTpl("jsRoutes")(
-    routes.javascript.LkAdvGeo.tagEditorAddTag,
-    routes.javascript.LkAdvGeo.tagsSearch
+  @jsTpl2HtmlTpl( withScriptTag = true )(
+    jsRevRouterTpl("jsRoutes")(
+      routes.javascript.LkAdvGeo.tagEditorAddTag,
+      routes.javascript.LkAdvGeo.tagsSearch
+    )
   )
 
 }

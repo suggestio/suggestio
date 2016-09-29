@@ -1,10 +1,11 @@
 package controllers.sc
 
 import models.MNode
-import models.jsm.FocusedAdsResp2
 import models.mlu.{MLookupMode, MLookupModes}
 import models.msc._
+import models.msc.resp._
 import models.req.IReq
+import play.api.libs.json.Json
 import play.api.mvc.Result
 import util.n2u.IN2NodesUtilDi
 import views.html.sc.foc._
@@ -76,8 +77,13 @@ trait ScFocusedAdsV2
 
     /** Асинхронный результат поиска сегмента карточек. */
     lazy val adIdsLookupResFut: Future[AdsLookupRes] = {
-      mAdsSearchFut.flatMap { mNodeSearch =>
-        _doAdIdsLookup(neededCount = mNodeSearch.limit)
+      if (_qs.search.hasAnySearchCriterias) {
+        mAdsSearchFut.flatMap { mNodeSearch =>
+          _doAdIdsLookup(neededCount = mNodeSearch.limit)
+        }
+      } else {
+        LOGGER.info(s"$logPrefix v2: not ad-search criterias found, skipping ids lookup.")
+        Future.successful( AdsLookupRes(Nil, total = 0) )
       }
     }
 
@@ -286,7 +292,7 @@ trait ScFocusedAdsV2
   {
 
     // При рендере генерятся контейнеры render-результатов, который затем конвертируются в json.
-    override type OBT = FocRenderResult
+    override type OBT = MFocRenderResult
 
     override def renderOuterBlock(args: AdBodyTplArgs): Future[OBT] = {
       val fullArgsFut = focAdsRenderArgsFor(args)
@@ -309,7 +315,7 @@ trait ScFocusedAdsV2
         controls  <- controlsFut
       } yield {
         val humanIndex1 = args.index
-        FocRenderResult(
+        MFocRenderResult(
           madId       = args.brArgs.mad.id.get,
           body        = body,
           controls    = controls,
@@ -333,8 +339,19 @@ trait ScFocusedAdsV2
         blockHtmls  <- _blockHtmlsFut
         _styles     <- _stylesFut
       } yield {
-        val resp = FocusedAdsResp2(blockHtmls, madsCount, _styles)
-        Ok(resp.toJson)
+        val resp = MScResp(
+          scActions = Seq(
+            MScRespAction(
+              acType = MScRespActionTypes.AdsFoc,
+              adsFoc = Some( MScRespAdsFoc(
+                fads        = blockHtmls,
+                totalCount  = madsCount,
+                styles      = _styles
+              ))
+            )
+          )
+        )
+        Ok( Json.toJson(resp) )
       }
     }
 
