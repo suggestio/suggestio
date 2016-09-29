@@ -1,6 +1,6 @@
 package io.suggest.sjs.common.vm.find
 
-import io.suggest.primo.TypeT
+import io.suggest.primo.{IApplyOpt1, TypeT}
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.util._
 import org.scalajs.dom.raw.HTMLDivElement
@@ -17,13 +17,12 @@ trait TypeDomT {
 }
 
 
-trait IApplyEl extends TypeT with TypeDomT {
+/** Интерфейс для apply() у всех vm'ок.
+  * Методы apply и applyOpt были вынесены в более абстрактный IApply1. */
+trait IApplyEl extends IApplyOpt1 with TypeDomT {
 
-  def apply(div: Dom_t): T
+  override final type ApplyArg_t = Dom_t
 
-  def applyOpt(elOpt: Option[Dom_t]): Option[T] = {
-    elOpt.map(apply)
-  }
 }
 
 
