@@ -187,8 +187,7 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
   val NodeLocation: T = new Val("n")
 
 
-  /** Предикат для эджей, описывающих размещение карточек просто в шейпе на карте.
-    * По идее, его можно сгруппировать с NodeLocation в рамках некоего общего Geo-предиката. */
+  /** Предикат для эджей, описывающих размещение карточек просто в шейпе на карте. */
   val AdvGeoPlace: T = new Val("o")
 
 

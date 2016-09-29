@@ -1,6 +1,6 @@
 package io.suggest.model.n2.edge
 
-import io.suggest.common.empty.{IEmpty, EmptyProduct, IIsNonEmpty}
+import io.suggest.common.empty.{EmptyProduct, IEmpty, IIsNonEmpty}
 import io.suggest.model.PrefixedFn
 import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.model.sc.common.SinkShowLevel
@@ -10,6 +10,7 @@ import org.joda.time.DateTime
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import io.suggest.model.es.EsModelUtil.Implicits.jodaDateTimeFormat
+import io.suggest.model.geo.GeoPoint
 
 /**
  * Suggest.io
@@ -43,6 +44,7 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
     val GEO_SHAPES_FN     = "gss"
     val ITEM_IDS_FN       = "bgid"
     val TAGS_FN           = "tags"
+    val GEO_POINT_FN      = "gpt"
 
     /** Поле тегов внутри является multi-field. Это нужно для аггрегации, например. */
     object Tags extends PrefixedFn {
@@ -99,6 +101,11 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
       .inmap [List[MEdgeGeoShape]] (
         _.getOrElse(Nil),
         { geos => if (geos.nonEmpty) Some(geos) else None }
+      ) and
+    (__ \ GEO_POINT_FN).formatNullable[ Seq[GeoPoint] ]
+      .inmap [Seq[GeoPoint]] (
+        _.getOrElse(Nil),
+        { gps => if (gps.nonEmpty) Some(gps) else None }
       )
   )(apply, unlift(unapply))
 
@@ -167,6 +174,14 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
         id              = GEO_SHAPES_FN,
         enabled         = true,
         properties      = MEdgeGeoShape.generateMappingProps
+      ),
+      // 2016.sep.29 Геоточки, используются как для информации, так и для индексации.
+      // Пока не очень ясно, какие именно настройки индексации поля здесь необходимы.
+      // Изначальное назначение: экспорт на карту узлов выдачи, чтобы в кружках с цифрами отображались.
+      // Окружности и прочее фигурное добро для этого элементарного действа не подходят ни разу.
+      FieldGeoPoint(
+        id              = GEO_POINT_FN,
+        geohash         = true
       )
     )
   }
@@ -209,6 +224,9 @@ trait IEdgeInfo extends IIsNonEmpty {
 
   /** Названия тегов, которые индексируются для полноценного поиска по тегам. */
   def tags          : Set[String]
+
+  /** Некие опорные точки, если есть. */
+  def geoPoints     : Seq[GeoPoint]
 
 
   /** Форматирование для вывода в шаблонах. */
@@ -267,6 +285,15 @@ trait IEdgeInfo extends IIsNonEmpty {
         .append("gss,")
     }
 
+    val _geoPoints = geoPoints
+    if (_geoPoints.nonEmpty) {
+      sb.append("geoPoints={")
+      for (gp <- _geoPoints) {
+        sb.append(gp.toEsStr)
+      }
+      sb.append('}')
+    }
+
     sb.toString()
   }
 
@@ -287,7 +314,8 @@ case class MEdgeInfo(
   override val flag         : Option[Boolean]       = None,
   override val itemIds      : Set[Long]             = Set.empty,
   override val tags         : Set[String]           = Set.empty,
-  override val geoShapes    : List[MEdgeGeoShape]   = Nil
+  override val geoShapes    : List[MEdgeGeoShape]   = Nil,
+  override val geoPoints    : Seq[GeoPoint]         = Nil
 )
   extends EmptyProduct
   with IEdgeInfo
