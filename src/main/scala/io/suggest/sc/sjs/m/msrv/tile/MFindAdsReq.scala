@@ -1,11 +1,11 @@
-package io.suggest.sc.sjs.m.msrv.ads.find
+package io.suggest.sc.sjs.m.msrv.tile
 
+import io.suggest.ad.search.AdSearchConstants._
 import io.suggest.sc.sjs.m.magent.IMScreen
-import io.suggest.sc.sjs.m.mgeo.{MGeoPoint, MLocEnv}
+import io.suggest.sc.sjs.m.mgeo.MLocEnv
 import io.suggest.sc.sjs.m.msrv.ToJsonWithApiVsnT
 
 import scala.scalajs.js.{Any, Dictionary}
-import io.suggest.ad.search.AdSearchConstants._
 
 /**
  * Suggest.io
@@ -24,7 +24,6 @@ trait MFindAdsReq extends ToJsonWithApiVsnT {
   def generation  : Option[Long]
   def locEnv      : MLocEnv
   def screenInfo  : Option[IMScreen]
-  def agpPoint    : Option[MGeoPoint]
 
   /** Собрать итоговый json для передачи в router. */
   override def toJson: Dictionary[Any] = {
@@ -47,8 +46,6 @@ trait MFindAdsReq extends ToJsonWithApiVsnT {
 
     for (scrInfo <- screenInfo)
       d(SCREEN_INFO_FN) = scrInfo.toQsValue
-    for (pt <- agpPoint)
-      d(AGP_POINT_FN) = pt.toJsObject
 
     d
   }
@@ -65,7 +62,6 @@ trait MFindAdsReqDflt extends MFindAdsReq {
   override def generation  : Option[Long]      = None
   override def locEnv      : MLocEnv           = MLocEnv.empty
   override def screenInfo  : Option[IMScreen]  = None
-  override def agpPoint    : Option[MGeoPoint] = None
 }
 
 
@@ -80,5 +76,4 @@ trait MFindAdsReqWrapper extends MFindAdsReq {
   override def generation   = _underlying.generation
   override def locEnv       = _underlying.locEnv
   override def screenInfo   = _underlying.screenInfo
-  override def agpPoint     = _underlying.agpPoint
 }

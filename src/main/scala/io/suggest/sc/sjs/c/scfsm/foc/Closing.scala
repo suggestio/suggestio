@@ -4,11 +4,6 @@ import io.suggest.sc.sjs.vm.foc.FRoot
 import io.suggest.sc.sjs.c.scfsm.grid.OnGridBase
 import io.suggest.sc.sjs.c.scfsm.ust.State2UrlT
 import io.suggest.sc.sjs.m.magent.VpSzChanged
-import io.suggest.sc.sjs.vm.res.FocusedRes
-import io.suggest.sjs.common.controller.DomQuick
-import io.suggest.sjs.common.vm.content.ClearT
-
-import scala.concurrent.Future
 
 /**
   * Suggest.io

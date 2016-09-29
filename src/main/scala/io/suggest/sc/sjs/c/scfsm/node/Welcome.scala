@@ -4,7 +4,7 @@ import io.suggest.sc.ScConstants.Welcome
 import io.suggest.sc.sjs.c.scfsm.grid
 import io.suggest.sc.sjs.c.scfsm.ust.State2UrlT
 import io.suggest.sc.sjs.m.magent.IVpSzChanged
-import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
+import io.suggest.sc.sjs.m.msrv.tile.MScRespAdsTile
 import io.suggest.sc.sjs.m.mwc.{WcClick, WcHideState, WcTimeout}
 import io.suggest.sc.sjs.vm.wc.{WcBgImg, WcFgImg, WcRoot}
 import io.suggest.sjs.common.controller.DomQuick
@@ -170,7 +170,7 @@ trait Welcome extends grid.OnGrid with State2UrlT {
       }
     }
 
-    override def _findAdsReady(mfa: MFindAds): Unit = {
+    override def _findAdsReady(mfa: MScRespAdsTile): Unit = {
       super._findAdsReady(mfa)
       _hasReadyGrid = true
 

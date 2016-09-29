@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.m.mfoc
 
-import io.suggest.sc.sjs.m.msrv.foc.find.{MFocAdSearch, MFocAds}
+import io.suggest.sc.sjs.m.msrv.foc.{MFocAdSearch, MScRespAdsFoc}
 import io.suggest.sjs.common.model.{Timestamped, TimestampedCompanion}
 
 import scala.util.Try
@@ -13,7 +13,7 @@ import scala.util.Try
   */
 
 case class MFocSrvResp(
-  resp    : MFocAds,
+  resp    : MScRespAdsFoc,
   reqArgs : MFocAdSearch
 )
 

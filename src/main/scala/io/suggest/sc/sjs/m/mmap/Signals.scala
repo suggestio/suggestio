@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.m.mmap
 
+import io.suggest.sc.sjs.m.mgeo.IGeoLocMin
 import io.suggest.sjs.common.fsm.IFsmMsg
 
 /**
@@ -14,3 +15,6 @@ case class EnsureMap() extends IFsmMsg
 
 /** Сигнал о начале отображения карты на экране. */
 case object MapShowing extends IFsmMsg
+
+/** Сигнал о принудительном выставлении карты на новую позицию. */
+case class SetGeoLoc(mgl: IGeoLocMin) extends IFsmMsg

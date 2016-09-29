@@ -1,11 +1,11 @@
 package io.suggest.sc.sjs.c.scfsm.foc
 
-import io.suggest.sc.sjs.m.msrv.foc.find.MFocAds
 import io.suggest.sc.sjs.vm.foc.FRoot
 import io.suggest.sc.sjs.vm.res.FocusedRes
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.vm.content.ClearT
 import io.suggest.sc.ScConstants.Focused.SLIDE_ANIMATE_MS
+import io.suggest.sc.sjs.m.msrv.foc.MScRespAdsFoc
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 import scala.concurrent.Future
@@ -19,7 +19,7 @@ import scala.concurrent.Future
 object FocCommon {
 
   /** Залить focused-стили в DOM. */
-  def appendStyles(resp: MFocAds): Unit = {
+  def appendStyles(resp: MScRespAdsFoc): Unit = {
     for (styles <- resp.styles; res <- FocusedRes.find()) {
       res.appendCss(styles)
     }

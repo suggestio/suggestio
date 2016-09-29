@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.vm.grid
 import io.suggest.common.css.CssSzImplicits
 import io.suggest.sc.ScConstants.Grid
 import io.suggest.sc.sjs.m.mgrid.IGridData
-import io.suggest.sc.sjs.m.msrv.ads.find.MFoundAdJson
+import io.suggest.sc.sjs.m.msrv.tile.MFoundAdJson
 import io.suggest.sjs.common.util.DataUtil
 import io.suggest.sjs.common.vm.content.ClearT
 import io.suggest.sjs.common.vm.child.ContentElT

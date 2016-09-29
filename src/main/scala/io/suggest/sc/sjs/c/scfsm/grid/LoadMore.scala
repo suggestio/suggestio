@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.c.scfsm.grid
 
 import io.suggest.sc.sjs.m.msc.MFindAdsArgsLimOff
-import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
+import io.suggest.sc.sjs.m.msrv.tile.MFindAdsTile
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 /**
@@ -20,7 +20,7 @@ trait LoadMore extends OnGrid with Append {
 
       // Запустить подгрузку ещё-карточек
       val args = MFindAdsArgsLimOff(_stateData)
-      val fut = MFindAds.findAds( args )
+      val fut = MFindAdsTile.findAds( args )
       _sendFutResBack(fut)
     }
 

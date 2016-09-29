@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.m.mgrid
 
-import io.suggest.sc.sjs.m.msrv.ads.find.MFindAdsReq
+import io.suggest.sc.sjs.m.msrv.tile.MFindAdsReq
 
 /** Дополнить аргументы поиска карточек данными плитки. */
 trait MFindGridAdsArgsLimitOffsetT extends MFindAdsReq {

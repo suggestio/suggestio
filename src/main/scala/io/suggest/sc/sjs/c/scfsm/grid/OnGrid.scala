@@ -6,7 +6,7 @@ import io.suggest.sc.sjs.m.magent.IVpSzChanged
 import io.suggest.sc.sjs.m.mfoc.{MFocCurrSd, MFocSd}
 import io.suggest.sc.sjs.m.mgrid._
 import io.suggest.sc.sjs.m.msc.MScSd
-import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
+import io.suggest.sc.sjs.m.msrv.tile.MScRespAdsTile
 import io.suggest.sc.sjs.vm.grid.{GContainer, GContent, GRoot}
 
 /**
@@ -177,7 +177,7 @@ trait OnGrid extends OnGridBase with IOnFocusBase {
       *
       * @param mfa инстанс ответа MFindAds.
       */
-    override def _findAdsReady(mfa: MFindAds): Unit = {
+    override def _findAdsReady(mfa: MScRespAdsTile): Unit = {
       for (gc <- GContainer.find()) {
         gc.clear()
       }

@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.c.scfsm.grid
 import io.suggest.sc.sjs.c.scfsm.grid.build.GridBuilder
 import io.suggest.sc.sjs.c.scfsm.ScFsmStub
 import io.suggest.sc.sjs.m.msc.MFindAdsArgsLimOff
-import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
+import io.suggest.sc.sjs.m.msrv.tile.{MFindAdsTile, MScRespAdsTile}
 import io.suggest.sc.sjs.vm.grid.GContent
 import io.suggest.sc.sjs.vm.res.CommonRes
 import io.suggest.sjs.common.msg.ErrorMsgs
@@ -24,9 +24,9 @@ trait Append extends ScFsmStub {
     *
     * @return Фьючерс, обычно бесполезен, т.к. результат прилетает назад в FSM как сообщение.
     */
-  protected[this] def _startFindGridAds(sd: SD = _stateData): Future[MFindAds] = {
+  protected[this] def _startFindGridAds(sd: SD = _stateData): Future[MScRespAdsTile] = {
     val args = MFindAdsArgsLimOff(sd)
-    val fut = MFindAds.findAds(args)
+    val fut = MFindAdsTile.findAds(args)
     _sendFutResBack(fut)
     fut
   }
@@ -37,7 +37,7 @@ trait Append extends ScFsmStub {
   trait GridAdsWaitStateBaseT extends FsmEmptyReceiverState {
 
     override def receiverPart: Receive = super.receiverPart.orElse {
-      case mfa: MFindAds =>
+      case mfa: MScRespAdsTile =>
         _findAdsReady(mfa)
       case Failure(ex) =>
         _findAdsFailed(ex)
@@ -47,7 +47,7 @@ trait Append extends ScFsmStub {
     protected def _findAdsFailed(ex: Throwable): Unit
 
     /** Что делать при получении ответа сервера с карточками. */
-    protected def _findAdsReady(mfa: MFindAds): Unit
+    protected def _findAdsReady(mfa: MScRespAdsTile): Unit
   }
 
 
@@ -58,7 +58,7 @@ trait Append extends ScFsmStub {
       *
       * @param mfa инстанс ответа MFindAds.
       */
-    override def _findAdsReady(mfa: MFindAds): Unit = {
+    override def _findAdsReady(mfa: MScRespAdsTile): Unit = {
       val gcontent = GContent.find().get
       // Далее заинлайнен перепиленный вызов GridCtl.newAdsReceived(mfa, isAdd = isAdd, withAnim)
       val sd0  = _stateData

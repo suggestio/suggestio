@@ -2,18 +2,18 @@ package io.suggest.sc.sjs.c.scfsm.foc
 
 import io.suggest.sc.sjs.c.scfsm.node.Index
 import io.suggest.sc.sjs.m.mfoc.FocRootAppeared
-import io.suggest.sc.sjs.m.msrv.foc.find.{MFocAdSearchDflt, MFocAds}
 import io.suggest.sc.sjs.m.msrv.index.MScRespIndex
 import io.suggest.sc.sjs.vm.layout.FsLoader
 import io.suggest.sc.sjs.vm.res.FocusedRes
 import io.suggest.sc.sjs.vm.foc.fad.FAdRoot
 import io.suggest.sc.sjs.vm.foc.{FCarCont, FControls, FRoot}
 import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
-
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+
 import scala.util.Failure
 import io.suggest.sc.ScConstants.Focused
 import io.suggest.sc.sjs.m.msc.MFindAdsArgsT
+import io.suggest.sc.sjs.m.msrv.foc.{MFocAdSearchDflt, MScAdsFoc, MScRespAdsFoc}
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.model.mlu.MLookupModes
 
@@ -58,7 +58,7 @@ trait StartingForAd extends MouseMoving with Index {
           override def allowReturnJump  = !fState0.current.forceFocus
         }
         // Запустить поиск focused-карточек в фоне.
-        val fadsFut = MFocAds.findOrIndex(args)
+        val fadsFut = MScAdsFoc.findOrIndex(args)
 
         // Продолжить синхронные операции с каруселью.
         for {
@@ -102,7 +102,7 @@ trait StartingForAd extends MouseMoving with Index {
 
 
     /** Реакция на полученный ответ сервера. */
-    protected def _focAdsReceived(mfa: MFocAds): Unit = {
+    protected def _focAdsReceived(mfa: MScRespAdsFoc): Unit = {
       // Заливаем все полученные стили в DOM.
       FocCommon.appendStyles(mfa)
 
@@ -197,7 +197,7 @@ trait StartingForAd extends MouseMoving with Index {
     }
 
     override def receiverPart: Receive = super.receiverPart.orElse {
-      case mfa: MFocAds =>
+      case mfa: MScRespAdsFoc =>
         _focAdsReceived(mfa)
       case mni: MScRespIndex =>
         _nodeIndexReceived(mni)

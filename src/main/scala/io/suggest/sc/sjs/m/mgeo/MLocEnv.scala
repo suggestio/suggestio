@@ -24,8 +24,10 @@ object MLocEnv {
   /** Сериализатор в JSON, понятный серваку. */
   def toJson(v: MLocEnv): js.Dictionary[js.Any] = {
     val d = js.Dictionary[js.Any]()
+
     for (g <- v.geo)
-      d.update(GEO_LOC_FN, IGeoLocMin.toJson(g))
+      d(GEO_LOC_FN) = IGeoLocMin.toJson(g)
+
     d
   }
 

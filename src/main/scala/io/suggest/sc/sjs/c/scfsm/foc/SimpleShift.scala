@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.c.scfsm.foc
 
-import io.suggest.sc.sjs.m.mfoc.{IFocAd, IFocSd, MFocCurrSd}
+import io.suggest.sc.sjs.m.mfoc.{IFocAd, IFocSd}
 import io.suggest.sc.sjs.vm.foc.{FCarCont, FControls}
 import io.suggest.sc.ScConstants.Focused.SLIDE_ANIMATE_MS
 import io.suggest.sc.sjs.vm.foc.fad.FArrow

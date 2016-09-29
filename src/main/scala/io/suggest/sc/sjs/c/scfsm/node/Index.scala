@@ -2,12 +2,12 @@ package io.suggest.sc.sjs.c.scfsm.node
 
 import io.suggest.sc.sjs.c.scfsm.ScFsmStub
 import io.suggest.sc.sjs.c.search.SearchFsm
-import io.suggest.sc.sjs.m.mgeo.MLocEnv
+import io.suggest.sc.sjs.m.mgeo.{MGeoLoc, MLocEnv}
 import io.suggest.sc.sjs.m.mgrid.MGridState
-import io.suggest.sc.sjs.m.mmap.EnsureMap
+import io.suggest.sc.sjs.m.mmap.{EnsureMap, SetGeoLoc}
 import io.suggest.sc.sjs.m.msc.{MFindAdsArgsLimOff, MScSd}
-import io.suggest.sc.sjs.m.msrv.ads.find.MFindAds
 import io.suggest.sc.sjs.m.msrv.index.{MScIndexArgs, MScRespIndex}
+import io.suggest.sc.sjs.m.msrv.tile.MFindAdsTile
 import io.suggest.sc.sjs.vm.layout.LayRootVm
 import io.suggest.sc.sjs.vm.nav.nodelist.NlRoot
 import io.suggest.sc.sjs.vm.res.CommonRes
@@ -93,21 +93,25 @@ trait Index extends ScFsmStub {
     /** Реакция на успешный результат запроса node index. */
     override protected def _nodeIndexReceived(v: MScRespIndex): Unit = {
       // Заливаем в данные состояния полученные метаданные по текущему узлу.
-      // TODO Это нужно только на первом шаге по факту (geo). Потом adnId обычно известен наперёд.
-      val sd0 = _stateData
-      if (sd0.common.adnIdOpt != v.adnIdOpt) {
-        val _sd1 = sd0.copy(
+      val sd1 = {
+        val sd0 = _stateData
+        sd0.copy(
           common = sd0.common.copy(
-            adnIdOpt = v.adnIdOpt
+            adnIdOpt = v.adnIdOpt,
+            // Если сервер вернул какую-то точку, то сохранить её в состояние. Она понадобится на этапе поиска карточек.
+            geoLocOpt = for (geoPoint <- v.geoPoint) yield {
+              // Заодно надо уведомить SearchFsm об принудительном изменении координат с сервера.
+              val mgl = MGeoLoc(geoPoint)
+              SearchFsm ! SetGeoLoc(mgl)
+              mgl
+            }
           )
         )
-        _stateData = _sd1
       }
-
-      val sd1: SD = _stateData
+      _stateData = sd1
 
       // Начинаем запрос карточек как можно скорее, чтобы распараллелить деятельность.
-      val findAdsFut = MFindAds.findAds( MFindAdsArgsLimOff(sd1) )
+      val findAdsFut = MFindAdsTile.findAds( MFindAdsArgsLimOff(sd1) )
 
       // TODO Выставить новый заголовок окна
 

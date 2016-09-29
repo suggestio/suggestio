@@ -2,7 +2,9 @@ package io.suggest.sc.sjs.m.msrv
 
 import scala.scalajs.js
 import io.suggest.sc.ScConstants.Resp._
+import io.suggest.sc.sjs.m.msrv.foc.{MScRespAdsFoc, MScRespAdsFocJson}
 import io.suggest.sc.sjs.m.msrv.index.{MScRespIndex, MScRespIndexJson}
+import io.suggest.sc.sjs.m.msrv.tile.{MScRespAdsTile, MScRespAdsTileJson}
 
 import scala.scalajs.js.UndefOr
 import scala.scalajs.js.annotation.JSName
@@ -20,9 +22,15 @@ case class MScRespAction(json: MScRespActionJson) {
   }
 
   def index: Option[MScRespIndex] = {
-    json.index
-      .toOption
-      .map( MScRespIndex.apply )
+    MScRespIndex.applyUndef( json.index )
+  }
+
+  def adsTile: Option[MScRespAdsTile] = {
+    MScRespAdsTile.applyUndef( json.adsTile )
+  }
+
+  def adsFocused: Option[MScRespAdsFoc] = {
+    MScRespAdsFoc.applyUndef( json.adsFocused )
   }
 
 }
@@ -36,5 +44,11 @@ sealed trait MScRespActionJson extends js.Object {
 
   @JSName( INDEX_RESP_ACTION )
   var index: UndefOr[MScRespIndexJson] = js.native
+
+  @JSName( ADS_TILE_RESP_ACTION )
+  var adsTile: UndefOr[MScRespAdsTileJson] = js.native
+
+  @JSName( FOC_ANSWER_ACTION )
+  var adsFocused: UndefOr[MScRespAdsFocJson] = js.native
 
 }

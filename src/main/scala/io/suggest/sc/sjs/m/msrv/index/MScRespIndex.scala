@@ -3,11 +3,11 @@ package io.suggest.sc.sjs.m.msrv.index
 import scala.scalajs.js
 import io.suggest.sc.ScConstants.Resp._
 import io.suggest.sc.sjs.m.mgeo.MGeoPoint
-import io.suggest.sc.sjs.m.msrv.{IFocResp, MScResp}
+import io.suggest.sc.sjs.m.msrv.{IFocResp, MScResp, MSrv}
 import io.suggest.sc.sjs.util.router.srv.routes
-import io.suggest.sjs.common.xhr.Xhr
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.msg.ErrorMsgs
+import io.suggest.sjs.common.primo.IApplyUndef1
 import io.suggest.sjs.common.util.SjsLogger
 
 import scala.concurrent.Future
@@ -20,27 +20,24 @@ import scala.scalajs.js.annotation.JSName
   * Created: 27.09.16 22:24
   * Description: Модель ответа данных по индексу.
   */
-object MScRespIndex extends SjsLogger {
+object MScRespIndex extends SjsLogger with IApplyUndef1 {
+
+  override type ApplyArg_t = MScRespIndexJson
+  override type T = MScRespIndex
 
   /**
    * Запустить index-запрос согласно переданным аргументам.
+   *
    * @param args Аргументы поиска index.
    * @return Фьючерс с MNodeIndex внутри.
    */
   def getIndex(args: IScIndexArgs): Future[MScRespIndex] = {
-    val argsJson = args.toJson
     // Собрать и отправить запрос за данными index.
-    val route = routes.controllers.Sc.index(argsJson)
+    val route = routes.controllers.Sc.index( args.toJson )
+
     // Запустить асинхронный запрос и распарсить результат.
-    val fut = for {
-      raw <- Xhr.getJson(route)
-    } yield {
-      // Тут очень кривой код, потому что пока некогда пилить нечто более продвинутое...
-      MScResp(raw)
-        .actions
-        .head
-        .index.get
-    }
+    val fut = MSrv.doRequest(route)
+      .map(_scResp2index)
 
     fut.onFailure { case ex: Throwable =>
       error( ErrorMsgs.GET_NODE_INDEX_FAILED, ex )
@@ -49,8 +46,16 @@ object MScRespIndex extends SjsLogger {
     fut
   }
 
+  /** Кривое небезопасное приведение MScResp к [[MScRespIndex]]. */
+  // Тут очень кривой код, потому что пока некогда пилить нечто более продвинутое...
+  def _scResp2index(mResp: MScResp): MScRespIndex = {
+    mResp.actions
+      .head
+      .index.get
+  }
 
 }
+
 
 case class MScRespIndex(json: MScRespIndexJson) extends IFocResp {
 

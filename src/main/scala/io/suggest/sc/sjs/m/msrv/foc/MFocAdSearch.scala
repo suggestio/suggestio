@@ -1,7 +1,7 @@
-package io.suggest.sc.sjs.m.msrv.foc.find
+package io.suggest.sc.sjs.m.msrv.foc
 
-import io.suggest.sc.sjs.m.msrv.ads.find.{MFindAdsReq, MFindAdsReqDflt}
 import io.suggest.ad.search.AdSearchConstants._
+import io.suggest.sc.sjs.m.msrv.tile.{MFindAdsReq, MFindAdsReqDflt}
 import io.suggest.sjs.common.model.mlu.MLookupMode
 
 import scala.scalajs.js.{Any, Dictionary}

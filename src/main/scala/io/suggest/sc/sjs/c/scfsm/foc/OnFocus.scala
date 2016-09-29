@@ -13,7 +13,7 @@ import io.suggest.sc.sjs.c.scfsm.grid.OnGridBase
 import io.suggest.sc.sjs.c.scfsm.ust.State2UrlT
 import io.suggest.sc.sjs.c.scfsm.{ResizeDelayed, ScFsmStub}
 import io.suggest.sc.sjs.m.msc.MFindAdsArgsT
-import io.suggest.sc.sjs.m.msrv.foc.find.{MFocAdSearchDflt, MFocAdSearchNoOpenIndex, MFocAds}
+import io.suggest.sc.sjs.m.msrv.foc.{MFocAdSearchDflt, MFocAdSearchNoOpenIndex, MScAdsFoc}
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.model.mlu.{MLookupMode, MLookupModes}
 import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
@@ -213,7 +213,7 @@ trait OnFocusBase
 
         // Отправить запрос focused-карточек.
         val fadsRepsFut = for (
-          mfa <- MFocAds.find(reqArgs)
+          mfa <- MScAdsFoc.find(reqArgs)
         ) yield {
           MFocSrvResp(mfa, reqArgs)
         }
