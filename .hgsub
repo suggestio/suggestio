@@ -24,6 +24,7 @@ lk-adv-geo-tags-sjs	= lk-adv-geo-tags-sjs
 scalajs-mapboxgl        = scalajs-mapboxgl
 loc/geo/ipgeobase	= loc/geo/ipgeobase
 stat			= stat
+loc/geo/mmgeoip2	= loc/geo/mmgeoip2
 
 [subpaths]
 (https?://([^/@]*@)?kallithea\.cbca\.ru/sio/v2)/root/ = \1/sub/

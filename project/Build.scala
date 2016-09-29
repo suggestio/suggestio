@@ -145,6 +145,14 @@ object SiobixBuild extends Build {
       .dependsOn(commonSjs)
   }
 
+  /** Поддержка MaxMind GeoIP2. */
+  // Отложено до переезда на elasticsearch 5.x. См. mmgeoip2/README
+  lazy val mmgeoip2 = {
+    val name = "mmgeoip2"
+    Project(id = name, base = file("loc/geo/" + name))
+      .dependsOn(util, logsMacro)
+  }
+
   /** mapbox-gl API. */
   lazy val mapBoxGlSjs = {
     val name = "scalajs-mapboxgl"
