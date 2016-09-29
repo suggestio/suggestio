@@ -63,7 +63,8 @@ case class GlMapVm(glMap: GlMap) {
     glMap.getSource(srcId).fold[Unit] {
       // Пока нет ни слоя, ни source. Создать их
       // Сборка source
-      val src = GeoJsonSource.gjSrc(myPoint)
+      val src = GeoJsonSourceDescr.empty
+      src.data = myPoint
       glMap.addSource(srcId, src)
 
       // Сборка layer'а.
@@ -116,7 +117,8 @@ case class GlMapVm(glMap: GlMap) {
 
     glMap.getSource(srcId).fold [Unit] {
       // Не создано ещё пока слоя-цели для наведения.
-      val src = GeoJsonSource.gjSrc(gjPoint)
+      val src = GeoJsonSourceDescr.empty
+      src.data = gjPoint
       glMap.addSource(srcId, src)
 
       // Сборка слоя с точкой прицеливания.
@@ -149,9 +151,8 @@ case class GlMapVm(glMap: GlMap) {
     // Карта в нашем случае обычно игнорит это значение, поэтому его оставляем на дефолте (maxzoom 20 - 1 = 19).
     //srcDesc.clusterMaxZoom = 14
     srcDesc.clusterRadius = 50
-    val src = new GeoJsonSource(srcDesc)
     val srcId = ScMapConstants.Nodes.ALL_NODES_SRC_ID
-    glMap.addSource(srcId, src)
+    glMap.addSource(srcId, srcDesc)
 
     val L = ScMapConstants.Nodes.Layers
 
