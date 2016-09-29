@@ -5,7 +5,6 @@ import java.{lang => jl, util => ju}
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.util.SioEsUtil._
 import io.suggest.util._
-import io.suggest.ym.model.stat._
 import org.elasticsearch.action.get.GetResponse
 import org.elasticsearch.action.search.SearchResponse
 import org.elasticsearch.client.Client
