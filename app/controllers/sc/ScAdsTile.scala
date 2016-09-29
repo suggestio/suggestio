@@ -48,7 +48,7 @@ trait ScAdsTileBase
 
     /** 2014.11.25: Размер плиток в выдаче должен способствовать заполнению экрана по горизонтали,
       * избегая или минимизируя белые пустоты по краям экрана клиентского устройства. */
-    lazy val tileArgs = scUtil.getTileArgs()(ctx)
+    lazy val tileArgs = scUtil.getTileArgs(_qs.screen)
 
     def szMult = tileArgs.szMult
 

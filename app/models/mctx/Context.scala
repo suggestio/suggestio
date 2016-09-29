@@ -76,7 +76,7 @@ class ContextUtil @Inject() (
   val DFLT_PROTO: String = configuration.getString("sio.proto.dflt").getOrElse("http")
 
   /** Регэксп для поиска в query string параметра, который хранит параметры клиентского экрана. */
-  val SCREEN_ARG_NAME_RE = "a\\.screen".r
+  val SCREEN_ARG_NAME_RE = "a\\.s(creen)?".r
 
   /** Доверять ли заголовку Host: ? Обычно нет, т.к. nginx туда втыкает localhost.
     * Имеет смысл выставлять true на локалхостах разработчиков s.io. */

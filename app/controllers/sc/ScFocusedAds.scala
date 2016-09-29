@@ -177,11 +177,10 @@ trait ScFocusedAdsBase
 
     lazy val mads2andBrArgsFut: Future[Seq[blk.RenderArgs]] = {
       val _mads2Fut = mads2Fut
-      val _ctx = ctx
       val _withCssClasses = withCssClasses
       _mads2Fut.flatMap { mads =>
         Future.traverse(mads) { mad =>
-          for (brArgs <- scUtil.focusedBrArgsFor(mad)(_ctx)) yield {
+          for (brArgs <- scUtil.focusedBrArgsFor(mad, _qs.screen)) yield {
             brArgs.copy(
               inlineStyles    = false,
               cssClasses      = _withCssClasses,

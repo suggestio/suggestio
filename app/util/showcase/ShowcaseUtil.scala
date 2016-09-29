@@ -183,9 +183,6 @@ class ShowcaseUtil @Inject() (
   private def getBlockWidthPx = BlockWidths.NORMAL.widthPx
 
 
-  def getTileArgs()(implicit ctx: Context): TileArgs = {
-    getTileArgs( ctx.deviceScreenOpt )
-  }
   def getTileArgs(dscrOpt: Option[DevScreen]): TileArgs = {
     dscrOpt.fold {
       TileArgs(
