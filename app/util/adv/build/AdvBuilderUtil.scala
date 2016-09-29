@@ -3,7 +3,7 @@ package util.adv.build
 import com.google.inject.{Inject, Singleton}
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.model.n2.edge.MNodeEdges
-import models.MPredicate
+import models.{GeoPoint, MPredicate}
 import models.adv.build.MCtxOuter
 import models.mproj.ICommonDi
 import util.PlayMacroLogsImpl
@@ -88,6 +88,23 @@ class AdvBuilderUtil @Inject() (
       )
     }
     b0.withAcc( acc2Fut )
+  }
+
+
+  /** Извлечение геоточек из MItems для нужд статистики.
+    *
+    * @param mitems Итемы биллинга или же итератор оных.
+    * @return Итератор из награбленных точек.
+    */
+  def grabGeoPoints4Stats(mitems: TraversableOnce[MItem]): Iterator[GeoPoint] = {
+    mitems
+      .toIterator
+      .flatMap(_.geoShape)
+      .map { gs =>
+        gs.centerPoint
+          // Плевать, если не центральная точка: в работе самой геолокации это не используется, только для всякой статистики.
+          .getOrElse( gs.firstPoint )
+      }
   }
 
 }

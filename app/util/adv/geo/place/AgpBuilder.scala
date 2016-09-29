@@ -48,10 +48,8 @@ trait AgpBuilder extends IAdvBuilder {
     // При сборке эджей считаем, что происходит пересборка эджей с нуля.
     if (gItems.nonEmpty) {
 
-      LOGGER.trace(s"$logPrefix Found ${gItems.size} items for adv-geo-place.")
-
       // Аккамулируем все item'ы для единого эджа.
-      val (megs, _) = gItems
+      val (geoShapes, _) = gItems
         .foldLeft( List.empty[MEdgeGeoShape] -> MEdgeGeoShape.SHAPE_ID_START ) {
           case ((acc, counter), mitem) =>
             val meGs = MEdgeGeoShape(
@@ -62,13 +60,21 @@ trait AgpBuilder extends IAdvBuilder {
             (meGs :: acc) -> (counter + 1)
         }
 
+      // Надо собрать опорные точки для общей статистики, записав их рядышком.
+      val geoPoints = di.advBuilderUtil
+        .grabGeoPoints4Stats( gItems )
+        .toSeq
+
       // Собираем единый эдж для геолокации карточки в месте на гео.карте.
       val e = MEdge(
-        predicate = MPredicates.AdvGeoPlace,
+        predicate = _PRED,
         info = MEdgeInfo(
-          geoShapes = megs
+          geoShapes = geoShapes,
+          geoPoints = geoPoints
         )
       )
+
+      LOGGER.trace(s"$logPrefix Found ${gItems.size} items for adv-geo-place: ${geoShapes.size} geoshapes, ${geoPoints.size} geo points.")
 
       // Собрать новую карточку, аккамулятор, билдер...
       this2.withAccUpdated { acc0 =>

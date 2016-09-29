@@ -78,6 +78,12 @@ trait AgtBuilder extends IAdvBuilder {
                 .flatMap(_.tagFaceOpt)
                 .toSet
 
+              // Надо собрать опорные точки для общей статистики, записав их рядышком.
+              val geoPoints = di.advBuilderUtil
+                .grabGeoPoints4Stats( gsItems )
+                .toSet
+                .toSeq
+
               val nodeIdsSet = tagFacesSet.flatMap { tagFace =>
                 val tnOpt = ctxOuter.tagNodesMap.get(tagFace)
                 if (tnOpt.isEmpty)
@@ -94,7 +100,8 @@ trait AgtBuilder extends IAdvBuilder {
                     id      = MEdgeGeoShape.SHAPE_ID_START,
                     glevel  = NodeGeoLevels.geoTag,
                     shape   = gs
-                  ))
+                  )),
+                  geoPoints = geoPoints
                 )
               )
             }
@@ -151,7 +158,7 @@ trait AgtBuilder extends IAdvBuilder {
                 }
                 .update((MItemStatuses.Online, rcvrIdOpt, Some(dateStart2), Some(dateEnd2), dateStart2))
                 .filter { rowsUpdated =>
-                  LOGGER.trace(s"$logPrefix Updated item[$mitemId] '${mitem.tagFaceOpt}': dateEnd => $dateEnd2, rcvrId => ${rcvrIdOpt}")
+                  LOGGER.trace(s"$logPrefix Updated item[$mitemId] '${mitem.tagFaceOpt}': dateEnd => $dateEnd2, rcvrId => $rcvrIdOpt")
                   rowsUpdated == 1
                 }
             }

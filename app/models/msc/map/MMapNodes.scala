@@ -9,9 +9,11 @@ import io.suggest.model.n2.node.{MNodeFields, MNodeTypes, MNodes}
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 import io.suggest.ym.model.NodeGeoLevels
 import models.mproj.ICommonDi
-import play.api.libs.json.JsObject
+import play.api.libs.json.{JsArray, JsNumber, JsObject}
 import play.extras.geojson.{Feature, FeatureCollection, LatLng}
+import util.PlayMacroLogsImpl
 
+import scala.collection.JavaConversions._
 import scala.concurrent.Future
 
 
@@ -24,41 +26,76 @@ import scala.concurrent.Future
 class MMapNodes @Inject() (
   mNodes      : MNodes,
   mCommonDi   : ICommonDi
-) {
+)
+  extends PlayMacroLogsImpl
+{
 
   import mCommonDi._
 
-  def MAX_POINTS = 1000
+  def MAX_POINTS = 2000
+
+  /** Общий код поисковых полей вынесен за пределы методов. */
+  protected class _MNodeSearch4Points extends MNodeSearchDfltImpl {
+    override def testNode     = Some(false)
+    override def isEnabled    = Some(true)
+    // Смысла заваливать экран точками нет обычно. Возвращать узлы тоже смысла нет если произойдёт аггрегация.
+    override def limit        = MAX_POINTS
+  }
 
   /**
-    * Сборка критериев поискового запроса узлов, отображаемых на карте.
+    * Сборка критериев поискового запроса узлов (торг.центров, магазинов и прочих), отображаемых на карте.
     *
-    * @param isClustered Поиск ожидается с кластеризовацией?
     * @param areaOpt Описание видимой области карты, если требуется вывести только указанную область.
     * @return Инстанс MNodeSearch.
     */
-  def mapNodesQuery(isClustered: Boolean, areaOpt: Option[GeoShapeQuerable] = None): MNodeSearch = {
-    new MNodeSearchDfltImpl {
+  def buildingsQuery(areaOpt: Option[GeoShapeQuerable] = None): MNodeSearch = {
+    new _MNodeSearch4Points {
       override def nodeTypes    = Seq( MNodeTypes.AdnNode )
-      override def testNode     = Some(false)
-      // Смысла заваливать экран точками нет обычно. Возвращать узлы тоже смысла нет если произойдёт аггрегация.
-      override def limit        = if (isClustered) 0 else MAX_POINTS
       override def hasGeoPoint  = Some(true)
 
       // Эджи должны ориентироваться на предикат NodeLocation.
       override def outEdges: Seq[ICriteria] = {
-        // Сборка геопоискового критерия.
-        val gsCr = GsCriteria(
-          levels = Seq( NodeGeoLevels.NGL_BUILDING ),
-          shapes = areaOpt.toSeq
-        )
-        // Сборка edge-критерия.
-        val cr = Criteria(
+        // Сборка edge-критерия для выборки торговых центров и прочих объектов.
+        val crBuildings = Criteria(
           predicates  = Seq( MPredicates.NodeLocation ),
-          gsIntersect = Some(gsCr)
+          gsIntersect = Some(
+            // Сборка геопоискового критерия с area или без.
+            GsCriteria(
+              levels = Seq( NodeGeoLevels.NGL_BUILDING ),
+              shapes = areaOpt.toSeq
+            )
+          ),
+          // Выставляем явно should, т.к. будут ещё критерии.
+          must        = None
         )
+
         // Вернуть итоговый список edge-критериев.
-        Seq(cr)
+        Seq(crBuildings)
+      }
+    }
+  }
+
+
+  /** Сборка запроса для сбора узлов, имеющих какие-то точки в adv. */
+  def geoAdvsQuery(areaOpt: Option[GeoShapeQuerable] = None): MNodeSearch = {
+    new _MNodeSearch4Points {
+      override def nodeTypes = Seq( MNodeTypes.Ad )
+      override def outEdges: Seq[ICriteria] = {
+        // 2016.sep.29: Все перечисленные предикаты имеют точки в MEdge.info.geoPoints.
+        // Но выставляться эти точки начали только с сегодняшнего дня, поэтому ноды со старыми размещениями в пролёте.
+        val crAdvGeo = Criteria(
+          predicates = Seq(
+            MPredicates.AdvGeoPlace,
+            MPredicates.TaggedBy.Agt
+          ),
+          // Это поле не использовалось изначально, т.к. реализация areaOpt отодвинуто на будущее.
+          gsIntersect = for (area <- areaOpt) yield {
+            GsCriteria(
+              shapes = Seq(area)
+            )
+          }
+        )
+        Seq( crAdvGeo )
       }
     }
   }
@@ -85,14 +122,33 @@ class MMapNodes @Inject() (
       .addFields(fn)
       .execute()
       .map { resp =>
+        lazy val logPrefix = s"getPoints(${System.currentTimeMillis()}):"
+        LOGGER.trace(s"$logPrefix Found ES-search ${resp.getTookInMillis}")
         // Собрать gj-фичи
         val feats = resp.getHits
           .getHits
           .iterator
-          .flatMap { h =>
+          .flatMap { hit =>
+            lazy val hitInfo = s"${hit.getIndex}/${hit.getType}/${hit.getId}"
             // формат данных здесь примерно такой: { "g.p": [30.23424234, -5.56756756] }
-            val lonLatArr = h.field(fn).getValues
-            GeoPoint.deserializeOpt(lonLatArr)
+            val fieldValue = hit.field(fn)
+            val lonLatArr = fieldValue
+              .getValues
+              .iterator()
+              .flatMap {
+                case v: java.lang.Number =>
+                  val n = JsNumber( v.doubleValue() )
+                  Seq(n)
+                case other =>
+                  LOGGER.warn(s"$logPrefix Unable to parse agg.value='''$other''' as Number. Search hit is $hitInfo")
+                  Nil
+              }
+              .toSeq
+            val jsRes = GeoPoint.READS_ANY
+              .reads( JsArray(lonLatArr) )
+            if (jsRes.isError)
+              LOGGER.error(s"$logPrefix Agg.values parsing failed for hit $hitInfo:\n $jsRes")
+            jsRes.asOpt
           }
           .map(formatPoint)
           .toStream

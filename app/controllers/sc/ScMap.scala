@@ -36,10 +36,12 @@ trait ScMap
     // Начать собирать запрос поиска отображаемых на карте узлов
     // Кешируем кратковременно всё, т.к. экшен тяжеловат по RAM и CPU.
     cacheApiUtil.getOrElseFut("sc.map.nodes.all", expiration = 10.seconds) {
-      val msearch = mMapNodes.mapNodesQuery(isClustered = false)
-      for (ptsFc <- mMapNodes.getPoints(msearch)) yield {
+      val msearchBuildings = mMapNodes.buildingsQuery()
+      for {
+        ptsFc   <- mMapNodes.getPoints(msearchBuildings)
+      } yield {
         Ok( Json.toJson(ptsFc) )
-          .withHeaders(CACHE_CONTROL -> "public, max-age=30")
+          .withHeaders(CACHE_CONTROL -> "public, max-age=20")
       }
     }
   }
