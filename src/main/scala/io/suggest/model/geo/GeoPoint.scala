@@ -5,6 +5,9 @@ import java.{lang => jl, util => ju}
 import io.suggest.geo.IGeoPoint
 import io.suggest.model.es.EsModelUtil
 import EsModelUtil.doubleParser
+import com.spatial4j.core.context.SpatialContext
+import com.spatial4j.core.io.GeohashUtils
+import com.spatial4j.core.shape.Point
 import com.vividsolutions.jts.geom.Coordinate
 import io.suggest.geo.GeoConstants.Qs
 import io.suggest.model.play.qsb.QueryStringBindableImpl
@@ -37,10 +40,7 @@ object GeoPoint extends MacroLogsImpl {
     if (commaIndex != -1) {
       fromLatLonComma(v, commaIndex)
     } else {
-      // До util:926da92e15e8 здесь лежала [вроде] неиспользуемая поддержка geohash,
-      // но при апдейте на elasticsearch 2.1 API было выкинуто в lucene, а там какое-то мутное API.
-      // Поддержка гео-хеша была выкинута, т.к. она не используется и не очень релевантна для этой модели.
-      throw new IllegalArgumentException("Unknown geo-point format: " + v)
+      fromGeoHash(v)
     }
   }
 
@@ -48,9 +48,39 @@ object GeoPoint extends MacroLogsImpl {
     GeoPoint(lat = esgp.lat,  lon = esgp.lon)
   }
 
+  def apply(point: Point): GeoPoint = {
+    GeoPoint(lon = point.getX, lat = point.getY)
+  }
+
+  /** Бывает, что идёт выковыривание сырых значений из документов elasticsearch. */
+  def fromArraySeq(lonLatColl: TraversableOnce[Any]): Option[GeoPoint] = {
+    lazy val logPrefix = s"fromArraySeq(${System.currentTimeMillis()}):"
+    val doubleSeq = lonLatColl
+      .toIterator
+      .flatMap {
+        case v: java.lang.Number =>
+          val n = JsNumber( v.doubleValue() )
+          Seq(n)
+        case other =>
+          warn(s"$logPrefix Unable to parse agg.value='''$other''' as Number.")
+          Nil
+      }
+      .toSeq
+    val jsRes = GeoPoint.READS_ANY
+      .reads( JsArray(doubleSeq) )
+    if (jsRes.isError)
+      error(s"$logPrefix Agg.values parsing failed:\n $jsRes")
+    jsRes.asOpt
+  }
+
   def fromLatLon(latLon: String): GeoPoint = {
     val commaInx = getCommaIndex(latLon)
     fromLatLonComma(latLon, commaInx)
+  }
+
+  def fromGeoHash(geoHash: String): GeoPoint = {
+    val esgp = GeohashUtils.decode(geoHash, SpatialContext.GEO)
+    apply(esgp)
   }
 
   val ES_LAT_FN = "lat"
