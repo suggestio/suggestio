@@ -22,6 +22,9 @@ import scala.concurrent.Future
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 19.04.16 18:28
   * Description: Над-модель для работы с данными по узлам карты.
+  *
+  * В первой экранизации этой эпопеи была сборка просто координат узлов (ТЦ, кафе и прочее) с помощью голого _search.
+  * Второй шаг был добавлением отображения георазмещений на карте.
   */
 class MMapNodes @Inject() (
   mNodes      : MNodes,
@@ -76,38 +79,6 @@ class MMapNodes @Inject() (
   }
 
 
-  /** Сборка запроса для сбора узлов, имеющих какие-то точки в adv. */
-  def geoAdvsQuery(areaOpt: Option[GeoShapeQuerable] = None): MNodeSearch = {
-    new _MNodeSearch4Points {
-      override def nodeTypes = Seq( MNodeTypes.Ad )
-      override def outEdges: Seq[ICriteria] = {
-        // 2016.sep.29: Все перечисленные предикаты имеют точки в MEdge.info.geoPoints.
-        // Но выставляться эти точки начали только с сегодняшнего дня, поэтому ноды со старыми размещениями в пролёте.
-        val crAdvGeo = Criteria(
-          predicates = Seq(
-            MPredicates.AdvGeoPlace,
-            MPredicates.TaggedBy.Agt
-          ),
-          // Это поле не использовалось изначально, т.к. реализация areaOpt отодвинуто на будущее.
-          gsIntersect = for (area <- areaOpt) yield {
-            GsCriteria(
-              shapes = Seq(area)
-            )
-          }
-        )
-        Seq( crAdvGeo )
-      }
-    }
-  }
-
-
-  def formatPoint(gp: GeoPoint): Feature[LatLng] = {
-    Feature(
-      geometry    = PointGs(gp).toPlayGeoJsonGeom,
-      properties  = Some(JsObject(Nil))   // TODO mapbox косячит, если undefined то ошибка возникает.
-    )
-  }
-
   /**
     * Просто вернуть точки все в рамках указанного запроса.
     *
@@ -156,6 +127,43 @@ class MMapNodes @Inject() (
         FeatureCollection(feats)
       }
   }
+
+
+  /** Рендер инстанса одной геоточки в GeoJSON. */
+  def formatPoint(gp: GeoPoint): Feature[LatLng] = {
+    Feature(
+      geometry    = PointGs(gp).toPlayGeoJsonGeom,
+      properties  = Some(JsObject(Nil))   // TODO mapbox 0.21 косячит, если undefined то ошибка возникает.
+    )
+  }
+
+
+  /** Сборка запроса для сбора узлов, имеющих какие-то точки в adv. */
+  def geoAdvsQuery(areaOpt: Option[GeoShapeQuerable] = None): MNodeSearch = {
+    new _MNodeSearch4Points {
+      override def nodeTypes = Seq( MNodeTypes.Ad )
+      override def outEdges: Seq[ICriteria] = {
+        // 2016.sep.29: Все перечисленные предикаты имеют точки в MEdge.info.geoPoints.
+        // Но выставляться эти точки начали только с сегодняшнего дня, поэтому ноды со старыми размещениями в пролёте.
+        val crAdvGeo = Criteria(
+          predicates = Seq(
+            MPredicates.AdvGeoPlace,
+            MPredicates.TaggedBy.Agt
+          ),
+          // Это поле не использовалось изначально, т.к. реализация areaOpt отодвинуто на будущее.
+          gsIntersect = for (area <- areaOpt) yield {
+            GsCriteria(
+              shapes = Seq(area)
+            )
+          }
+        )
+        Seq( crAdvGeo )
+      }
+    }
+  }
+
+
+
 
 }
 

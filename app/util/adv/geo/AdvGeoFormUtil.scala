@@ -2,8 +2,8 @@ package util.adv.geo
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.adv.AdvConstants.{PERIOD_FN, RADMAP_FN}
-import io.suggest.adv.geo.AdvGeoConstants.OnMainScreen
 import io.suggest.adv.geo.AdvGeoConstants.CurrShapes._
+import io.suggest.adv.geo.AdvGeoConstants.OnMainScreen
 import io.suggest.common.tags.edit.TagsEditConstants.EXIST_TAGS_FN
 import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.item.status.MItemStatuses
@@ -20,6 +20,7 @@ import org.joda.time.Interval
 import play.api.data.Forms._
 import play.api.data.{Form, Mapping}
 import play.extras.geojson.{Feature, FeatureCollection, LatLng}
+import util.PlayMacroLogsImpl
 import util.adv.AdvFormUtil
 import util.maps.RadMapFormUtil
 import util.tags.TagsEditFormUtil
@@ -32,12 +33,14 @@ import views.html.lk.adv.geo._MapShapePopupTpl
  * Description: Утиль для формы размещения карточки в геотегах.
  */
 @Singleton
-class AdvGeoFormUtil @Inject()(
+class AdvGeoFormUtil @Inject() (
   tagsEditFormUtil  : TagsEditFormUtil,
   advFormUtil       : AdvFormUtil,
   radMapFormUtil    : RadMapFormUtil,
   mCommonDi         : ICommonDi
-) {
+)
+  extends PlayMacroLogsImpl
+{
 
   private def _agtFormM(tagsM: Mapping[List[MTagBinded]]): Mapping[MAgtFormResult] = {
     mapping(
@@ -55,7 +58,11 @@ class AdvGeoFormUtil @Inject()(
   }
 
   def agtFormStrict: AgtForm_t = {
-    Form( _agtFormM(tagsEditFormUtil.existingNonEmptyM) )
+    val formM = _agtFormM(tagsEditFormUtil.existingsM)
+      .verifying("e.required.tags.or.main.screen", { agtRes =>
+        agtRes.onMainScreen || agtRes.tags.nonEmpty
+      })
+    Form(formM)
   }
 
 

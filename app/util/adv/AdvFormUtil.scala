@@ -1,21 +1,17 @@
 package util.adv
 
-import com.google.inject.{Inject, Singleton}
+import com.google.inject.Singleton
 import io.suggest.adv.AdvConstants.Su
 import io.suggest.dt.interval.PeriodsConstants
 import io.suggest.mbill2.m.item.status.{MItemStatuses, MItemStatus}
 import io.suggest.model.geo.{CircleGs, Distance, GeoPoint}
-import models.GeoIp
 import models.adv.form._
 import models.maps.{MapViewState, RadMapValue}
-import models.mproj.ICommonDi
-import models.req.{ExtReqHdr, IReqHdr, IReq}
+import models.req.{IReqHdr, IReq}
 import org.elasticsearch.common.unit.DistanceUnit
 import org.joda.time.LocalDate
 import play.api.data.Forms._
 import play.api.data.{Form, _}
-
-import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -24,12 +20,7 @@ import scala.concurrent.Future
  * Description: Общая утиль для маппингов разных форм размещения рекламной карточки.
  */
 @Singleton
-class AdvFormUtil @Inject() (
-  mCommonDi   : ICommonDi
-) {
-
-  import mCommonDi.ec
-
+class AdvFormUtil {
 
   /** Отдельный маппинг для adv-формы, который парсит исходные данные по бесплатному размещению. */
   def freeAdvFormM: Form[Option[Boolean]] = {
@@ -141,21 +132,6 @@ class AdvFormUtil @Inject() (
     } else {
       // Остальные размещения улетают в корзину.
       MItemStatuses.Draft
-    }
-  }
-
-
-  /**
-    * Для гео-размещений нужна начальная точка на карте, с которой начинается вся пляска.
-    *
-    * @param req HTTP-реквест.
-    * @return Фьючерс с начальной гео-точкой.
-    */
-  def geoPoint0()(implicit req: ExtReqHdr): Future[GeoPoint] = {
-    for (ipLocOpt <- GeoIp.geoSearchInfoOpt) yield {
-      ipLocOpt
-        .flatMap(_.ipGeopoint)
-        .getOrElse( GeoPoint(59.93769, 30.30887) )    // Штаб ВМФ СПб, который в центре СПб
     }
   }
 

@@ -2,7 +2,9 @@ package controllers
 
 import com.google.inject.Inject
 import controllers.ctag.NodeTagsEdit
+import io.suggest.common.empty.EmptyUtil
 import io.suggest.mbill2.m.order.MOrderStatuses
+import io.suggest.model.geo.GeoPoint
 import io.suggest.model.n2.tag.TagSearchUtil
 import models.adv.form.MDatesPeriod
 import models.adv.geo.tag.{AgtForm_t, MAgtFormResult, MForAdTplArgs}
@@ -18,7 +20,7 @@ import play.api.mvc.Result
 import util.PlayMacroLogsImpl
 import util.acl.{CanAdvertiseAd, CanAdvertiseAdUtil}
 import util.adv.AdvFormUtil
-import util.adv.geo.{AdvGeoBillUtil, AdvGeoFormUtil}
+import util.adv.geo.{AdvGeoBillUtil, AdvGeoFormUtil, AdvGeoLocUtil}
 import util.billing.Bill2Util
 import util.tags.TagsEditFormUtil
 import views.html.lk.adv.geo._
@@ -33,11 +35,12 @@ import scala.concurrent.Future
   * Created: 18.11.15 14:51
   * Description: Контроллер размещения в гео-тегах.
   */
-class LkAdvGeo @Inject()(
+class LkAdvGeo @Inject() (
   advGeoFormUtil                  : AdvGeoFormUtil,
   advGeoBillUtil                  : AdvGeoBillUtil,
   advFormUtil                     : AdvFormUtil,
   bill2Util                       : Bill2Util,
+  advGeoLocUtil                   : AdvGeoLocUtil,
   override val tagSearchUtil      : TagSearchUtil,
   override val tagsEditFormUtil   : TagsEditFormUtil,
   override val canAdvAdUtil       : CanAdvertiseAdUtil,
@@ -51,16 +54,62 @@ class LkAdvGeo @Inject()(
 
   import mCommonDi._
 
+
+  /** Асинхронный детектор начальной точки для карты георазмещения. */
+  private def getGeoPoint0(adId: String)(implicit request: IAdProdReq[_]): Future[GeoPoint] = {
+    lazy val logPrefix = s"getGeoPoint0($adId ${System.currentTimeMillis()}):"
+
+    // Ищем начальную точку среди прошлых размещений текущей карточки.
+    advGeoLocUtil.getGeoPointFromAdsGeoAdvs( Seq(adId) )
+      .map( EmptyUtil.getF )
+      // Если не получилось, то ищем начальную точку среди размещений продьюсера карточки.
+      .recoverWith { case ex: NoSuchElementException =>
+        LOGGER.trace(s"$logPrefix Cannot find old geo points for current ad adv-geo")
+        val prodId = request.producer.id.get
+        val prodIds = {
+          val prodIds0 = List( prodId )
+          // Добавляем текущего юзера в качестве продьюсера, вдруг в будущем оно тоже будет работать.
+          request.user.personIdOpt.fold(prodIds0)(_ :: prodIds0)
+        }
+        val fut = advGeoLocUtil.getGeoPointFromProducer(prodIds, adId)
+          .map( EmptyUtil.getF )
+        fut.onFailure { case ex: NoSuchElementException =>
+          LOGGER.trace(s"$logPrefix Cannot find old geo from other producer[$prodId] geo advs")
+        }
+        fut
+      }
+      // Ищем начальную точку среди других размещений текущего юзера
+      .recoverWith { case ex: NoSuchElementException =>
+        request.user.contractIdOptFut
+          .flatMap { contractIdOpt =>
+            advGeoLocUtil.getGeoPointFromUserGeoAdvs( contractIdOpt.get )
+          }
+          .map( EmptyUtil.getF )
+      }
+      // Ищем начальную точку карты из geoip
+      .recoverWith { case ex: Throwable =>
+        LOGGER.trace(s"$logPrefix Cannot find old geo using user contract.")
+        advGeoLocUtil.getGeoPointFromRemoteAddr( request.remoteAddress )
+          .map( EmptyUtil.getF )
+      }
+      // Выставить совсем дефолтовую начальную точку.
+      .recover { case ex: Throwable =>
+        LOGGER.info(s"$logPrefix Unable to detect geoip=${request.remoteAddress}")
+        advGeoLocUtil.getGeoPointLastResort
+      }
+  }
+
+
   /**
     * Экшен рендера страницы размещения карточки в теге с географией.
     *
     * @param adId id отрабатываемой карточки.
     */
-  def forAd(adId: String) = CanAdvertiseAdGet(adId, U.Lk).async { implicit request =>
+  def forAd(adId: String) = CanAdvertiseAdGet(adId, U.Lk, U.ContractId).async { implicit request =>
     // TODO Попытаться заполнить форму с помощью данных из черновиков, если они есть.
     //val draftItemsFut = advGeoBillUtil.findDraftsForAd(adId)
+    val gp0Fut = getGeoPoint0(adId)
 
-    val gp0Fut = advFormUtil.geoPoint0()
     val formEmpty = advGeoFormUtil.agtFormStrict
 
     val formFut = for (gp0 <- gp0Fut) yield {
