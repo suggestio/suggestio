@@ -34,20 +34,25 @@ object MEdge extends IGenEsMappingProps {
 
       override protected def _PARENT_FN = INFO_FN
 
-      def INFO_SLS_FN   = _fullFn( MEdgeInfo.Fields.SLS_FN )
-      def FLAG_FN       = _fullFn( MEdgeInfo.Fields.FLAG_FN )
+      import MEdgeInfo.{Fields => F}
+
+      def INFO_SLS_FN   = _fullFn( F.SLS_FN )
+      def FLAG_FN       = _fullFn( F.FLAG_FN )
 
       // Теги
-      def TAGS_FN       = _fullFn( MEdgeInfo.Fields.TAGS_FN )
-      def TAGS_RAW_FN   = _fullFn( MEdgeInfo.Fields.Tags.TAGS_RAW_FN )
+      def TAGS_FN       = _fullFn( F.TAGS_FN )
+      def TAGS_RAW_FN   = _fullFn( F.Tags.TAGS_RAW_FN )
 
       // Гео-шейпы
-      def INFO_GS_FN                            = _fullFn( MEdgeInfo.Fields.GEO_SHAPES_FN )
+      def INFO_GS_FN                            = _fullFn( F.GEO_SHAPES_FN )
 
-      import MEdgeInfo.Fields.{GeoShapes => Gs}
+      import F.{GeoShapes => Gs}
       def INFO_GS_GLEVEL_FN                     = _fullFn( Gs.GS_GLEVEL_FN )
       def INFO_GS_GJSON_COMPAT_FN               = _fullFn( Gs.GS_GJSON_COMPAT_FN )
       def INFO_GS_SHAPE_FN(ngl: NodeGeoLevel)   = _fullFn( Gs.GS_SHAPE_FN(ngl) )
+
+      // Гео-точки
+      def INFO_GEO_POINTS_FN                    = _fullFn( F.GEO_POINT_FN )
 
     }
 

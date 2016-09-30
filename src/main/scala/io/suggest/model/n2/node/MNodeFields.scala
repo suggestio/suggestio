@@ -90,6 +90,9 @@ object MNodeFields {
     def E_OUT_INFO_GS_GJSON_COMPAT_FN             = _fullFn( Out.OUT_INFO_GS_GJSON_COMPAT_FN )
     def E_OUT_INFO_GS_SHAPE_FN(ngl: NodeGeoLevel) = _fullFn( Out.OUT_INFO_GS_SHAPE_FN(ngl) )
 
+    // Гео-точки
+    def E_OUT_INFO_GEO_POINTS_FN                  = _fullFn( Out.OUT_INFO_GEO_POINTS_FN )
+
   }
 
   /** Абсолютные названия географических полей.*/
