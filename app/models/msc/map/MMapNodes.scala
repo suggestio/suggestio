@@ -160,8 +160,8 @@ class MMapNodes @Inject() (
         // Но выставляться эти точки начали только с сегодняшнего дня, поэтому ноды со старыми размещениями в пролёте.
         val crAdvGeo = Criteria(
           predicates = Seq(
-            MPredicates.AdvGeoPlace,
-            MPredicates.TaggedBy.Agt
+            //MPredicates.TaggedBy.Agt,
+            MPredicates.AdvGeoPlace
           ),
           // Это поле не использовалось изначально, т.к. реализация areaOpt отодвинуто на будущее.
           gsIntersect = for (area <- areaOpt) yield {
