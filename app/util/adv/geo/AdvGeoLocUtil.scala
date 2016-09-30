@@ -32,6 +32,7 @@ class AdvGeoLocUtil @Inject() (
 ) {
 
   import mCommonDi._
+  import slick.driver.api._
 
 
   /**
@@ -51,12 +52,11 @@ class AdvGeoLocUtil @Inject() (
     }
   }
 
+  /** Когда нет точки для отображения, взять её с потолка. */
   def getGeoPointLastResort: GeoPoint = {
     // Штаб ВМФ СПб, который в центре СПб
     GeoPoint(59.93769, 30.30887)
   }
-
-  import slick.driver.api._
 
   private def _geoAdvsItemTypes = Seq(
     MItemTypes.GeoPlace.strId,
@@ -78,7 +78,12 @@ class AdvGeoLocUtil @Inject() (
   }
 
 
-  // Чтобы избежать сортировки по id, ищем последний id ряда, содержащего геошейп.
+  /**
+    * Найти точку для указанного itemId
+    * @param itemIdRep SQL-запрос, возвращающий item_id, содержащий искомую точку.
+    *                  Чтобы избежать сортировки по id, ищем последний id ряда, содержащего геошейп.
+    * @return
+    */
   private def _getPointFromItemId(itemIdRep: Rep[Option[Gid_t]]): Future[Option[GeoPoint]] = {
     for {
       gsOpts <- slick.db.run {
@@ -99,6 +104,7 @@ class AdvGeoLocUtil @Inject() (
     }
   }
 
+
   /** Если вдруг не найдено размещений у текущей карточки, то поискать локации других карточек этого же продьюсера. */
   def getGeoPointFromProducer(producerIds: Seq[String], excludeAdIds: String*): Future[Option[GeoPoint]] = {
     // Найти id всех карточек этого продьюсера
@@ -109,12 +115,6 @@ class AdvGeoLocUtil @Inject() (
           predicates  = Seq( MPredicates.OwnedBy ),
           // Заодно выставляем текущего юзера в id продьюсеров, вдруг чего...
           nodeIds     = producerIds
-          /*{
-            val l1 = List( producerId.get )
-            request.user
-              .personIdOpt
-              .fold(l1)(_ :: l1)
-          }*/
         )
         Seq(cr)
       }
