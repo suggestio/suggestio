@@ -71,8 +71,15 @@ class MMapNodes @Inject() (
         advsPointsIter <- advPointsFut
       } yield {
         // Объединяем все награбленные точки, попутно форматируя их в GeoJSON.
+        val _someJsObjectEmpty = Some(JsObject(Nil))
+
         val allPointsFmt = (adnPointsIter ++ advsPointsIter)
-          .map(formatPoint)
+          .map { gp =>
+            Feature(
+              geometry    = PointGs(gp).toPlayGeoJsonGeom,
+              properties  = _someJsObjectEmpty
+            )
+          }
           .toStream
         LOGGER.trace(s"getAllPoints(): Took ${System.currentTimeMillis() - startedAtMs} ms.")
         FeatureCollection(allPointsFmt)
@@ -139,14 +146,7 @@ class MMapNodes @Inject() (
     }
   }
 
-
-  /** Рендер инстанса одной геоточки в GeoJSON. */
-  def formatPoint(gp: GeoPoint): Feature[LatLng] = {
-    Feature(
-      geometry    = PointGs(gp).toPlayGeoJsonGeom,
-      properties  = Some(JsObject(Nil))   // TODO mapbox 0.21 косячит, если undefined то ошибка возникает.
-    )
-  }
+  // TODO mapbox 0.21 косячит, если undefined то ошибка возникает.
 
 
   /** Сборка запроса для сбора узлов, имеющих какие-то точки в adv. */
@@ -221,7 +221,6 @@ class MMapNodes @Inject() (
         }
     }
   }
-
 
 }
 
