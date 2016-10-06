@@ -7,13 +7,14 @@ package io.suggest.model.n2.tag
   * Description: Инфа по одному аггрегированному тегу.
   */
 
-case class TagFoundInfo(
+case class MTagFoundInfo(
   face    : String,
-  count   : Int
+  count   : Int,
+  nodeId  : Option[String] = None
 )
 
 
 /** Контейнер результата аггрегации тегов. */
-case class TagsSearchResult(
-  tags  : Seq[TagFoundInfo]
+case class MTagsSearchResult(
+  tags  : Seq[MTagFoundInfo]
 )
