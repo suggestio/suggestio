@@ -24,7 +24,7 @@ GET  /sc/one/html                       @controllers.Sc.onlyOneAd(o: blk.OneAdQs
 GET  /sc/one/img                        @controllers.Sc.onlyOneAdAsImage(o: blk.OneAdQsArgs)
 ## Этот path к js-роутеру захардкожен в сорцах sc-sjs SrvRouter, и его лучше не менять никогда вообще.
 GET  /sc/router.js                      @controllers.Sc.scJsRouter
-GET  /sc/tags/search                    @controllers.Sc.tagsSearch(t: mtag.MTagSearch)
+GET  /sc/tags/search                    @controllers.Sc.tagsSearch(t: msc.tag.MScTagsSearchQs)
 GET  /sc/map/nodes/all                  @controllers.Sc.renderMapNodesAll
 
 ## Поиск по узлам
@@ -79,7 +79,7 @@ GET  /lk/xadv/geo/tag/for/:adId         @controllers.LkAdvGeo.forAd(adId)
 POST /lk/xadv/geo/tag/for/:adId         @controllers.LkAdvGeo.forAdSubmit(adId)
 POST /lk/xadv/geo/tag/price/:adId       @controllers.LkAdvGeo.getPriceSubmit(adId)
 POST /lk/xadv/geo/tag/add               @controllers.LkAdvGeo.tagEditorAddTag()
-GET  /lk/xadv/geo/tag/tags              @controllers.LkAdvGeo.tagsSearch(s: mtag.MTagSearch)
+GET  /lk/xadv/geo/tag/tags              @controllers.LkAdvGeo.tagsSearch(s: mlk.MLkTagsSearchQs)
 
 ## ЛК: Рекламные карточки
 GET  /lk/mad/new/:adnId                 @controllers.MarketAd.createAd(adnId)

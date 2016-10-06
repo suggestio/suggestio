@@ -102,7 +102,7 @@ trait ScIndex
     lazy val logPrefix = s"scIndex[${ctx.timestamp}]"
 
     /** Подчищенные нормализованные данные о remote-адресе. */
-    lazy val _remoteIp = geoIpUtil.fixRemoteAddr( _request.remoteAddress )
+    lazy val _remoteIp = geoIpUtil.fixedRemoteAddrFromRequest
 
     /** Пошаренный результат ip-geo-локации. */
     lazy val geoIpResOptFut: Future[Option[IGeoFindIpResult]] = {
@@ -118,20 +118,7 @@ trait ScIndex
 
     /** ip-геолокация, когда гео-координаты или иные полезные данные клиента отсутствуют. */
     def reqGeoLocFut: Future[Option[MGeoLoc]] = {
-      _reqArgs.locEnv.geoLocOpt.fold [Future[Option[MGeoLoc]]] {
-        val geoLoc2Fut = for (geoIpOpt <- geoIpResOptFut) yield {
-          for (geoIp <- geoIpOpt) yield {
-            MGeoLoc( geoIp.center )
-          }
-        }
-        // Подавить и залоггировать возможные проблемы.
-        geoLoc2Fut.recover { case ex: Throwable =>
-          LOGGER.warn(s"$logPrefix reqGeoLocFut: failed to geoIP", ex)
-          None
-        }
-      } { r =>
-        Future.successful( Some(r) )
-      }
+      geoIpUtil.geoLocOrFromIp( _reqArgs.locEnv.geoLocOpt )(geoIpResOptFut)
     }
     lazy val reqGeoLocFutVal = reqGeoLocFut
 

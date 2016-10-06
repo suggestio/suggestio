@@ -5,7 +5,6 @@ import controllers.ctag.NodeTagsEdit
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.mbill2.m.order.MOrderStatuses
 import io.suggest.model.geo.GeoPoint
-import io.suggest.model.n2.tag.TagSearchUtil
 import models.adv.form.MDatesPeriod
 import models.adv.geo.tag.{AgtForm_t, MAgtFormResult, MForAdTplArgs}
 import models.adv.price.GetPriceResp
@@ -22,6 +21,7 @@ import util.acl.{CanAdvertiseAd, CanAdvertiseAdUtil}
 import util.adv.AdvFormUtil
 import util.adv.geo.{AdvGeoBillUtil, AdvGeoFormUtil, AdvGeoLocUtil}
 import util.billing.Bill2Util
+import util.lk.LkTagsSearchUtil
 import util.tags.TagsEditFormUtil
 import views.html.lk.adv.geo._
 import views.html.lk.adv.widgets.period._reportTpl
@@ -36,15 +36,15 @@ import scala.concurrent.Future
   * Description: Контроллер размещения в гео-тегах.
   */
 class LkAdvGeo @Inject() (
-  advGeoFormUtil                  : AdvGeoFormUtil,
-  advGeoBillUtil                  : AdvGeoBillUtil,
-  advFormUtil                     : AdvFormUtil,
-  bill2Util                       : Bill2Util,
-  advGeoLocUtil                   : AdvGeoLocUtil,
-  override val tagSearchUtil      : TagSearchUtil,
-  override val tagsEditFormUtil   : TagsEditFormUtil,
-  override val canAdvAdUtil       : CanAdvertiseAdUtil,
-  override val mCommonDi          : ICommonDi
+                           advGeoFormUtil                  : AdvGeoFormUtil,
+                           advGeoBillUtil                  : AdvGeoBillUtil,
+                           advFormUtil                     : AdvFormUtil,
+                           bill2Util                       : Bill2Util,
+                           advGeoLocUtil                   : AdvGeoLocUtil,
+                           override val tagSearchUtil      : LkTagsSearchUtil,
+                           override val tagsEditFormUtil   : TagsEditFormUtil,
+                           override val canAdvAdUtil       : CanAdvertiseAdUtil,
+                           override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl

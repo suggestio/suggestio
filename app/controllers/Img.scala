@@ -68,7 +68,8 @@ class Img @Inject() (
 
   /** Сколько времени можно кешировать на клиенте оригинал картинки. */
   val CACHE_ORIG_CLIENT_SECONDS = {
-    val cacheDuration = configuration.getInt("img.orig.cache.client.hours").map(_.hours) getOrElse {
+    // TODO Кажется, этот параметр изменил свой смысл...
+    val cacheDuration = configuration.getInt("img.orig.cache.client.hours").map(_.hours).getOrElse {
       if (isProd) {
         2.days
       } else {
@@ -102,7 +103,7 @@ class Img @Inject() (
       .as(ct)
       .withHeaders(
         LAST_MODIFIED -> DateTimeUtil.rfcDtFmt.print(modelInstant),
-        CACHE_CONTROL -> ("public, max-age=" + cacheSeconds)
+        CACHE_CONTROL -> ("public, max-age=" + cacheSeconds + ", immutable, never-revalidate")
       )
   }
 
@@ -187,24 +188,22 @@ class Img @Inject() (
    */
   def dynImg(args: MImgT) = Action.async { implicit request =>
     val notModifiedFut: Future[Boolean] = {
-      request.headers.get(IF_MODIFIED_SINCE) match {
-        case Some(ims) =>
+      request.headers
+        .get(IF_MODIFIED_SINCE)
+        .fold( Future.successful(false) ) { ims =>
           for (imetaOpt <- mImgs3.rawImgMeta(args)) yield {
             imetaOpt.fold(false) { imeta =>
               val newModelInstant = withoutMs(imeta.dateCreated.getMillis)
               isModifiedSinceCached(newModelInstant, ims)
             }
           }
-
-        case None =>
-          Future.successful( false )
-      }
+        }
     }
 
     notModifiedFut.flatMap {
       case true =>
         NotModified
-          .withHeaders(CACHE_CONTROL -> s"public, max-age=$CACHE_ORIG_CLIENT_SECONDS")
+          .withHeaders(CACHE_CONTROL -> s"public, max-age=$CACHE_ORIG_CLIENT_SECONDS, immutable")
 
       // Изменилась картинка. Выдать её. Если картинки нет, то создать надо на основе оригинала.
       case false =>
@@ -223,9 +222,11 @@ class Img @Inject() (
           case ex: NoSuchElementException =>
             debug("Img not found anywhere: " + args.fileName)
             NotFound("No such image.")
+              .withHeaders(CACHE_CONTROL -> s"public, max-age=30")
           case ex: Throwable =>
             error(s"Unknown exception occured during fetchg/processing of source image id[${args.rowKey}]\n  args = $args", ex)
-            InternalServerError("Internal error occured during fetching/creating an image.")
+            ServiceUnavailable("Internal error occured during fetching/creating an image.")
+              .withHeaders(RETRY_AFTER -> "60")
         }
     }
   }

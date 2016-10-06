@@ -16,7 +16,7 @@ import util.ext.ExtServicesUtil
 import util.geo.GeoIpUtil
 import util.img.{LogoUtil, WelcomeUtil}
 import util.n2u.N2NodesUtil
-import util.showcase.{ScAdSearchUtil, ScStatUtil, ShowcaseNodeListUtil, ShowcaseUtil}
+import util.showcase._
 import util.stat.StatCookiesUtil
 
 
@@ -43,6 +43,7 @@ class Sc @Inject() (
   override val ctxUtil            : ContextUtil,
   override val scAdSearchUtil     : ScAdSearchUtil,
   override val nodesUtil          : NodesUtil,
+  override val scTagsUtil         : ScTagsUtil,
   override val geoIpUtil          : GeoIpUtil,
   override val extServicesUtil    : ExtServicesUtil,
   override val mCommonDi          : ICommonDi

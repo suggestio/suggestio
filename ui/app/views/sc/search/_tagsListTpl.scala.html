@@ -11,7 +11,7 @@
   @if(i%2 == 0){__odd}
 }
 
-@tags.toIterator.zipWithIndex.map { case (mnode, i) =>
+@for( (mnode,i) <- tags.toIterator.zipWithIndex) {
 
   @for(sr <- syncRender; jsState <- sr.jsStateOpt) {
     <a href="@sr.syncUrl( jsState.copy(fadsProdIdOpt = mnode.id) )">

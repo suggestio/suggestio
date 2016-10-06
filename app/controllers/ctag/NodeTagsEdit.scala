@@ -1,12 +1,14 @@
 package controllers.ctag
 
 import controllers.SioController
-import io.suggest.model.n2.tag.ITagSearchUtilDi
+import io.suggest.model.n2.tag.MTagSearchResp
 import models.mctx.Context
+import models.mlk.MLkTagsSearchQs
 import models.mtag._
 import play.api.libs.json.Json
 import util.PlayMacroLogsI
 import util.acl.IsAuth
+import util.lk.ITagSearchUtilDi
 import util.tags.ITagsEditFormUtilDi
 import views.html.lk.tag.edit._
 
@@ -80,9 +82,9 @@ trait NodeTagsEdit
     *
     * @return JSON с inline-версткой для отображения в качестве выпадающего списка.
     */
-  def tagsSearch(tsearch: MTagSearch) = IsAuth.async { implicit request =>
+  def tagsSearch(tsearch: MLkTagsSearchQs) = IsAuth.async { implicit request =>
     for {
-      found <-  tagSearchUtil.liveSearchTagByName( tsearch.toEsSearch )
+      found <-  tagSearchUtil.liveSearchTagsFromQs( tsearch )
     } yield {
       if (found.tags.isEmpty) {
         NoContent

@@ -59,6 +59,13 @@ class MMapNodes @Inject() (
     override def limit        = MAX_ADN_NODES_POINTS
   }
 
+  /** Приведение одной точки к GeoJSON-представлению. */
+  private def _formatPoint(gp: GeoPoint, props: Option[JsObject]) = {
+    Feature(
+      geometry    = PointGs(gp).toPlayGeoJsonGeom,
+      properties  = props
+    )
+  }
 
   /** Кешируем результат поиска точек. */
   def getAllPoints(areaOpt: Option[GeoShapeQuerable] = None): Future[FeatureCollection[LatLng]] = {
@@ -71,16 +78,15 @@ class MMapNodes @Inject() (
         advsPointsIter <- advPointsFut
       } yield {
         // Объединяем все награбленные точки, попутно форматируя их в GeoJSON.
+        // TODO mapbox 0.21 косячит, если undefined то ошибка возникает.
+        // TODO Выставлять цвет точек в gj-пропертисы.
         val _someJsObjectEmpty = Some(JsObject(Nil))
 
         val allPointsFmt = (adnPointsIter ++ advsPointsIter)
           .map { gp =>
-            Feature(
-              geometry    = PointGs(gp).toPlayGeoJsonGeom,
-              properties  = _someJsObjectEmpty
-            )
+            _formatPoint(gp, _someJsObjectEmpty)
           }
-          .toStream
+          .toStream     // toSeq, но надо toImmutableSeq
         LOGGER.trace(s"getAllPoints(): Took ${System.currentTimeMillis() - startedAtMs} ms.")
         FeatureCollection(allPointsFmt)
       }
@@ -145,8 +151,6 @@ class MMapNodes @Inject() (
         }
     }
   }
-
-  // TODO mapbox 0.21 косячит, если undefined то ошибка возникает.
 
 
   /** Сборка запроса для сбора узлов, имеющих какие-то точки в adv. */

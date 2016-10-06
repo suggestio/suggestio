@@ -5,8 +5,10 @@ import java.net.InetAddress
 import com.google.inject.{Inject, Singleton}
 import io.suggest.loc.geo.ipgeobase.IpgbUtil
 import io.suggest.model.geo.{IGeoFindIp, IGeoFindIpResult}
+import models.mgeo.MGeoLoc
 import models.mproj.ICommonDi
 import models.req.{IRemoteAddrInfo, MRemoteAddrInfo}
+import play.api.mvc.RequestHeader
 import util.PlayMacroLogsImpl
 
 import scala.concurrent.Future
@@ -47,7 +49,7 @@ class GeoIpUtil @Inject() (
     * @param ip ip-адрес типа "122.133.144.155".
     * @return Фьючерс с опциональным результатом геолокации.
     */
-  override def findIp(ip: String): Future[Option[FindIpRes_t]] = {
+  override def findIp(ip: String): Future[Option[IGeoFindIpResult]] = {
     val resFut = ipgbUtil.findIp(ip)
 
     // Логгировать результат, если трассировка активна.
@@ -68,7 +70,7 @@ class GeoIpUtil @Inject() (
     * @param ip ip-адрес типа "122.133.144.155".
     * @return Фьючерс с опциональным результатом геолокации.
     */
-  def findIpCached(ip: String): Future[Option[FindIpRes_t]] = {
+  def findIpCached(ip: String): Future[Option[IGeoFindIpResult]] = {
     cacheApiUtil.getOrElseFut(ip + ".gIpF", expiration = CACHE_TTL_SEC.seconds) {
       findIp(ip)
     }
@@ -106,6 +108,34 @@ class GeoIpUtil @Inject() (
           remoteAddr  = remoteAddr0,
           isLocal     = None
         )
+    }
+  }
+  def fixedRemoteAddrFromRequest(implicit request: RequestHeader): IRemoteAddrInfo = {
+    fixRemoteAddr( request.remoteAddress )
+  }
+
+
+  /**
+    * Попытаться заполнить возможно-пустующие данные модели геолокации по данным из geoip.
+    * @param geoLocOpt0 Исходные опциональные данные геолокации.
+    * @param geoIpResOptFutF Функция запуска geoip-геолокации.
+    * @return Фьючерс с опциональным результатом MGeoLoc, как правило Some().
+    */
+  def geoLocOrFromIp(geoLocOpt0: Option[MGeoLoc])
+                    (geoIpResOptFutF: => Future[Option[IGeoFindIpResult]]): Future[Option[MGeoLoc]] = {
+    geoLocOpt0.fold [Future[Option[MGeoLoc]]] {
+      val geoLoc2Fut = for (geoIpOpt <- geoIpResOptFutF) yield {
+        for (geoIp <- geoIpOpt) yield {
+          MGeoLoc( geoIp.center )
+        }
+      }
+      // Подавить и залоггировать возможные проблемы.
+      geoLoc2Fut.recover { case ex: Throwable =>
+        LOGGER.warn(s"geoLocOrFromIp($geoLocOpt0): failed to geoIP", ex)
+        None
+      }
+    } { r =>
+      Future.successful( Some(r) )
     }
   }
 

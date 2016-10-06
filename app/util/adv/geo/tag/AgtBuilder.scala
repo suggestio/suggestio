@@ -11,7 +11,7 @@ import util.adv.build.IAdvBuilder
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 19.02.16 15:15
-  * Description: Трейт поддержки adv-билдинга для геотеггов.
+  * Description: Трейт поддержки adv-билдинга для гео-тегов.
   */
 trait AgtBuilder extends IAdvBuilder {
 
