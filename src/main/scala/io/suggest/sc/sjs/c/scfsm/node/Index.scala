@@ -1,7 +1,6 @@
 package io.suggest.sc.sjs.c.scfsm.node
 
 import io.suggest.sc.sjs.c.scfsm.ScFsmStub
-import io.suggest.sc.sjs.c.search.SearchFsm
 import io.suggest.sc.sjs.m.mgeo.{MGeoLoc, MLocEnv}
 import io.suggest.sc.sjs.m.mgrid.MGridState
 import io.suggest.sc.sjs.m.mmap.{EnsureMap, SetGeoLoc}
@@ -102,7 +101,8 @@ trait Index extends ScFsmStub {
             geoLocOpt = for (geoPoint <- v.geoPoint) yield {
               // Заодно надо уведомить SearchFsm об принудительном изменении координат с сервера.
               val mgl = MGeoLoc(geoPoint)
-              SearchFsm ! SetGeoLoc(mgl)
+              for (mapFsm <- sd0.searchFsm.mapFsm)
+                mapFsm ! SetGeoLoc(mgl)
               mgl
             }
           )
@@ -173,7 +173,8 @@ trait Index extends ScFsmStub {
       become( _nodeInitWelcomeState )
 
       // Запустить в фоне ensure'инг карты
-      SearchFsm ! EnsureMap()
+      for (mapFsm <- sd1.searchFsm.mapFsm)
+        mapFsm ! EnsureMap()
     }
 
     /** Следующее состояние. */

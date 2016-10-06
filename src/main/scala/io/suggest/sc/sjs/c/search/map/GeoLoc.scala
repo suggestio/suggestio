@@ -1,6 +1,5 @@
 package io.suggest.sc.sjs.c.search.map
 
-import io.suggest.sc.sjs.c.search.SearchFsmStub
 import io.suggest.sc.sjs.m.mgeo.GlLocation
 import io.suggest.sc.sjs.m.mmap.MapShowing
 
@@ -10,10 +9,10 @@ import io.suggest.sc.sjs.m.mmap.MapShowing
   * Created: 14.04.16 10:50
   * Description: Аддон для сборки состояний, сохраняющих в состояние данные геолокации юзера.
   */
-trait GeoLoc extends SearchFsmStub {
+trait GeoLoc extends MapFsmStub {
 
   /** Подмешать в состояние для сохранение полученных геоданных в состояние. */
-  trait HandleGeoLocStateT extends FsmState with FsmEmptyReceiverState {
+  trait HandleGeoLocStateT extends FsmEmptyReceiverState {
 
     override def receiverPart: Receive = super.receiverPart.orElse {
       case userGeoLoc: GlLocation =>
@@ -24,7 +23,8 @@ trait GeoLoc extends SearchFsmStub {
 
     /** Реакция на получение данных геолокации текущего юзера. */
     def _handleUserGeoLoc(userGeoLoc: GlLocation): Unit = {
-      _stateData = _stateData.copy(
+      val sd0 = _stateData
+      _stateData = sd0.copy(
         lastUserLoc = Some(userGeoLoc.data)
       )
     }

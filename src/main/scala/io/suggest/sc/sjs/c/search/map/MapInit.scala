@@ -11,10 +11,16 @@ import io.suggest.sjs.mapbox.gl.event._
   * Created: 14.04.16 14:30
   * Description: Аддон для сборки состояний
   */
-trait MapInit extends GeoLoc {
+trait MapInit extends GeoLoc with Early {
+
+  protected def _mapSignalCallbackF(model: IMapSignalCompanion[_]) = {
+    {arg: EventData =>
+      _sendEventSyncSafe( model(arg) )
+    }
+  }
 
   /** Трейт для сборки состояния ожидания инициализации карты. */
-  trait MapInitStateT extends HandleGeoLocStateT {
+  trait MapInitStateT extends HandleGeoLocStateT with HandleAll2Early {
 
     override def afterBecome(): Unit = {
       super.afterBecome()
@@ -48,9 +54,12 @@ trait MapInit extends GeoLoc {
     }
 
 
-    override def receiverPart: Receive = super.receiverPart.orElse {
-      case _: IMapInitDone =>
-        _handleMapInitDone()
+    override def receiverPart: Receive = {
+      val r: Receive = {
+        case _: IMapInitDone =>
+          _handleMapInitDone()
+      }
+      r.orElse( super.receiverPart )
     }
 
     /** Реакция на окончание инициализации на стороне карты. */
@@ -61,7 +70,6 @@ trait MapInit extends GeoLoc {
 
         // Надо повесить listener'ы событий на карту
         vm.on(MapEventsTypes.MOVE_START)(_mapSignalCallbackF(MoveStart))
-          .on(MapEventsTypes.MOVE)(_mapSignalCallbackF(Moving))
           .on(MapEventsTypes.MOVE_END)(_mapSignalCallbackF(MoveEnd))
 
         // Добавить карту узлов.

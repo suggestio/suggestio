@@ -9,36 +9,23 @@ import io.suggest.sc.sjs.m.mmap.EnsureMap
   * Description: FSM-аддон для состояния оценки готовности mapbox-gl.js к работе.
   */
 
-trait JsInit extends GeoLoc {
+trait JsInit extends GeoLoc with Early {
 
   /** Трейт для сборки состояния готовности mapbox-gl.js к работе на странице. */
-  trait MapJsInitStateT extends HandleGeoLocStateT {
-
-    override def afterBecome(): Unit = {
-      super.afterBecome()
-      // если в состоянии есть несвоевременные сообщения, то отработать их.
-      val sd0 = _stateData
-      val earlyMsgs = sd0.early
-      if (earlyMsgs.nonEmpty) {
-        _stateData = sd0.copy(
-          early = Nil
-        )
-        for (em <- earlyMsgs.reverseIterator) {
-          _sendEvent(em)
-        }
-      }
-    }
-
+  trait MapJsInitStateT extends HandleGeoLocStateT with ApplyAllEarly {
   }
 
 
   /** Трейт поддержки абстрактной реакции на сигнал EnsureMap. */
-  trait IMapWaitEnsureHandler extends FsmEmptyReceiverState {
+  trait IMapWaitEnsureHandler extends HandleAll2Early {
 
-    override def receiverPart: Receive = super.receiverPart.orElse {
-      // ScFsm намекает о необходимости убедиться, что карта готова к работе.
-      case em: EnsureMap =>
-        _handleEnsureMap(em)
+    override def receiverPart: Receive = {
+      val r: Receive = {
+        // ScFsm намекает о необходимости убедиться, что карта готова к работе.
+        case em: EnsureMap =>
+          _handleEnsureMap(em)
+      }
+      r.orElse( super.receiverPart )
     }
 
     /** Реакция на сигнал EnsureMap. */

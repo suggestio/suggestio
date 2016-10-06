@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.m.msc
 
+import io.suggest.sc.sjs.c.search.SearchFsm
 import io.suggest.sc.sjs.m.mfoc.MFocSd
 import io.suggest.sc.sjs.m.mgeo._
 import io.suggest.sc.sjs.m.mgrid.{MGridData, MGridState}
@@ -165,6 +166,9 @@ trait IScSd {
     isScRootDiffers(sd2) ||
       common.generation != sd2.common.generation
   }
+
+
+  def searchFsm = SearchFsm
 
 }
 

@@ -38,17 +38,17 @@ trait STabHeaderT extends VmT with IInitLayout {
   def btns: Seq[TabBtn] = {
     // Тут какой-то оптимальный велосипед получился. Может запилить вариант по-красивше?
     val lb = List.newBuilder[TabBtn]
-    if (geoBtn.isDefined)
-      lb += geoBtn.get
-    if (htagsBtn.isDefined)
-      lb += htagsBtn.get
+    for (gb <- geoBtn)
+      lb += gb
+    for (hb <- htagsBtn)
+      lb += hb
     lb.result()
   }
 
   /** Инициализировать панель с кнопками поисковых табов. */
   override def initLayout(): Unit = {
     // Вызвать инициализацию в каждой кнопке:
-    btns foreach IInitLayout.f
+    btns.foreach( IInitLayout.f )
   }
 
 }

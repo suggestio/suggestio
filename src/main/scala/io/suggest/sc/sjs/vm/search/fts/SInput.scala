@@ -1,8 +1,10 @@
 package io.suggest.sc.sjs.vm.search.fts
 
 import io.suggest.sc.ScConstants.Search.Fts.INPUT_ID
-import io.suggest.sc.sjs.m.msearch.{FtsFieldBlur, FtsFieldKeyUp, FtsFieldFocus}
-import io.suggest.sc.sjs.vm.util.{FindUsingAttachedEventT, OnEventToScFsmUtilT}
+import io.suggest.sc.sjs.c.search.SearchFsm
+import io.suggest.sc.sjs.m.msearch.{FtsFieldBlur, FtsFieldFocus, FtsFieldKeyUp}
+import io.suggest.sc.sjs.vm.util.FindUsingAttachedEventT
+import io.suggest.sjs.common.fsm.OnEventToFsmUtilT
 import io.suggest.sjs.common.vm.VmT
 import io.suggest.sjs.common.vm.find.FindElT
 import io.suggest.sjs.common.vm.util.IInitLayout
@@ -16,16 +18,19 @@ import org.scalajs.dom.raw.{HTMLDivElement, HTMLInputElement}
  */
 object SInput extends FindElT with FindUsingAttachedEventT {
 
-  override type Dom_t = HTMLInputElement
-  override type T = SInput
-  override def DOM_ID: String = INPUT_ID
+  override type Dom_t     = HTMLInputElement
+  override type T         = SInput
+  override def DOM_ID     = INPUT_ID
 
 }
 
 
 /** Логика экземпляра модели поискового input'а в этом трейте. */
-trait SInputT extends VmT with IInitLayout with OnEventToScFsmUtilT {
+trait SInputT extends VmT with IInitLayout with OnEventToFsmUtilT {
+
   override type T = HTMLInputElement
+
+  override protected def FSM = SearchFsm
 
   override def initLayout(): Unit = {
     _addToFsmEventListener("keyup", FtsFieldKeyUp)
@@ -63,7 +68,9 @@ trait SInputT extends VmT with IInitLayout with OnEventToScFsmUtilT {
       val contEl = containerNode.asInstanceOf[HTMLDivElement]
       SInputContainer(contEl)
     }
-    contOpt orElse { SInputContainer.find() }
+    contOpt.orElse {
+      SInputContainer.find()
+    }
   }
 
 }

@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.vm.search.tabs
 
 import io.suggest.sjs.common.vm.height3.SetHeight3
-import io.suggest.sc.sjs.vm.util.InitOnClickToScFsmT
+import io.suggest.sc.sjs.vm.util.OnClick
 import io.suggest.sjs.common.model.browser.IBrowser
 import io.suggest.sjs.common.vm.VmT
 import io.suggest.sjs.common.vm.child.{ContentElT, WrapperChildContent}
@@ -10,7 +10,9 @@ import io.suggest.sjs.common.vm.style.{SetIsShown, ShowHideDisplayT}
 import io.suggest.sjs.common.vm.util.IInitLayout
 import org.scalajs.dom.raw.HTMLDivElement
 import io.suggest.sc.ScConstants.Search.TAB_BTN_INACTIVE_CSS_CLASS
+import io.suggest.sc.sjs.c.search.SearchFsm
 import io.suggest.sc.sjs.m.msearch.MTab
+import io.suggest.sjs.common.fsm.{InitOnClickToFsmT, SjsFsm}
 
 /**
  * Suggest.io
@@ -71,9 +73,14 @@ trait TabBtnCompanion extends FindDiv {
 }
 
 /** Трейт для vm'ки тела таба. */
-trait TabBtn extends InitOnClickToScFsmT with VmT {
+trait TabBtn extends VmT
+  with InitOnClickToFsmT
+  with OnClick
+{
 
   override type T = HTMLDivElement
+
+  override protected def FSM: SjsFsm = SearchFsm
 
   /** Визуальная активация текущей вкладки. */
   def activate(): Unit = {

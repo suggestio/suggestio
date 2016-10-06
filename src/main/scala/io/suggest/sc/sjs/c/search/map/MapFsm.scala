@@ -1,21 +1,54 @@
 package io.suggest.sc.sjs.c.search.map
 
-import io.suggest.sc.sjs.c.search.SearchFsm
+import io.suggest.primo.IStart0
+import io.suggest.sc.sjs.c.gloc.GeoLocFsm
+import io.suggest.sc.sjs.c.search.ITabFsmFactory
+import io.suggest.sc.sjs.m.mgeo.{Subscribe, SubscriberData}
+import io.suggest.sc.sjs.m.mmap.MMapSd
+import io.suggest.sc.sjs.util.logs.ScSjsFsmLogger
+import io.suggest.sjs.common.fsm.SjsFsmImpl
 
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
-  * Created: 15.07.16 17:18
-  * Description:
+  * Created: 06.10.16 12:53
+  * Description: FSM карты. Код изначально так и жил, потом внезапно был замёржен в SearchFsm, но затем
+  * вынесен оттуда куда по-дальше.
   */
-trait Phase
-  extends AwaitJs
+object MapFsm extends ITabFsmFactory {
+  override type T = MapFsm
+}
+
+case class MapFsm()
+  extends SjsFsmImpl
+  with IStart0
+  with AwaitJs
   with JsInit
   with MapInit
   with Ready
   with Drag
+  with ScSjsFsmLogger
 {
-  this: SearchFsm.type =>
+
+  override protected var _stateData: SD  = MMapSd()
+  override protected var _state: State_t = new DummyState
+
+  private class DummyState extends FsmState with FsmEmptyReceiverState
+
+
+  /** Запуск этого FSM на исполнение. */
+  override def start(): Unit = {
+    become(new MapAwaitJsState)
+
+    // Подписаться на события геолокации текущего юзера.
+    GeoLocFsm ! Subscribe(
+      receiver    = this,
+      notifyZero  = true,
+      data        = SubscriberData(
+        withErrors = false
+      )
+    )
+  }
 
 
   // -- states impl

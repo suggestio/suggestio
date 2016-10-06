@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.c.search.map
 
 import io.suggest.sc.sjs.m.mgeo.{GlLocation, MGeoLoc}
-import io.suggest.sc.sjs.m.mmap.EnsureMap
+import io.suggest.sc.sjs.m.mmap.{EnsureMap, SetGeoLoc}
 import io.suggest.sc.sjs.vm.mapbox.GlMapVm
 import io.suggest.sjs.mapbox.gl.event.IMapMoveSignal
 import io.suggest.sjs.mapbox.gl.map.GlMap
@@ -12,7 +12,7 @@ import io.suggest.sjs.mapbox.gl.map.GlMap
   * Created: 14.04.16 13:38
   * Description: Аддон для состояний готовности карты к работе.
   */
-trait Ready extends GeoLoc {
+trait Ready extends GeoLoc with Early {
 
   /** Сохранение геолокации юзера на какру. */
   trait MapHandleGeoLocStateT extends super.HandleGeoLocStateT {
@@ -37,7 +37,7 @@ trait Ready extends GeoLoc {
 
 
   /** Трейт состояния готовности к работе. */
-  trait MapReadyStateT extends MapHandleGeoLocStateT {
+  trait MapReadyStateT extends MapHandleGeoLocStateT with ApplyAllEarly {
 
     override def receiverPart: Receive = {
       val r: Receive = {
@@ -45,8 +45,19 @@ trait Ready extends GeoLoc {
           _handleMapMove(mapMoveSignal)
         case _: EnsureMap =>
           _handleEnsureMap()
+        case sgl: SetGeoLoc =>
+          _handleSetGeoLoc(sgl)
       }
       r.orElse( super.receiverPart )
+    }
+
+    /** Реакция на принудительное выставлении новой позиции карты. */
+    def _handleSetGeoLoc(sgl: SetGeoLoc): Unit = {
+      val sd0 = _stateData
+      for (mapInst <- sd0.mapInst) {
+        val vm = GlMapVm(mapInst.glmap)
+        vm.center = sgl.mgl.point
+      }
     }
 
     /** Реагирование на начавшееся движение карты. */

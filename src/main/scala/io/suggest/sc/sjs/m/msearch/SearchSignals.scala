@@ -12,11 +12,18 @@ import org.scalajs.dom.{FocusEvent, KeyboardEvent, Event}
  * Created: 05.08.15 16:52
  * Description: Сообщения для FSM, связанные с поиском.
  */
-trait ITabClickSignal extends IFsmMsg {
-  /** Тело события. */
-  def event: Event
+trait ITabSignal extends IFsmMsg {
   /** Таб, к которому относится произошедшее событие. */
   def mtab: MTab
+}
+
+/** Сигнал к SearchFsm о необходимости переключиться на указанный таб. */
+case class MTabSwitchSignal(override val mtab: MTab)
+  extends ITabSignal
+
+trait ITabClickSignal extends ITabSignal {
+  /** Тело события. */
+  def event: Event
 }
 trait ITabClickSignalCompanion
   extends IFsmEventMsgCompanion
@@ -70,6 +77,10 @@ object FtsFieldBlur
 /** Событие срабатываья таймера запуска поискового запроса. */
 case class FtsStartRequestTimeout(generation: Long)
   extends IFsmMsg
+
+
+/** Сингал к какому-то FSM о необходимости запуска полнотекстового поиска. */
+case class Fts(query: String) extends IFsmMsg
 
 
 /** Сигнал клика по ряду в списке рядов. */

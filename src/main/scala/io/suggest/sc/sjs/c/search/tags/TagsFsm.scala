@@ -1,0 +1,42 @@
+package io.suggest.sc.sjs.c.search.tags
+
+import io.suggest.primo.IStart0
+import io.suggest.sc.sjs.c.search.ITabFsmFactory
+import io.suggest.sc.sjs.m.mtags.MTagsSd
+import io.suggest.sc.sjs.util.logs.ScSjsFsmLogger
+import io.suggest.sjs.common.fsm.SjsFsmImpl
+
+/**
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 06.10.16 15:05
+  * Description: FSM-контроллер, занимающийся списком тегов на панели поиска.
+  */
+object TagsFsm extends ITabFsmFactory {
+  override type T = TagsFsm
+}
+
+case class TagsFsm()
+  extends SjsFsmImpl
+  with IStart0
+  with OnTags
+  with ScSjsFsmLogger
+{
+
+  override protected var _stateData: MTagsSd = MTagsSd()
+  override protected var _state: FsmState = new DummyState
+
+  private class DummyState extends FsmEmptyReceiverState
+
+
+  /** Запуск этого FSM. */
+  override def start(): Unit = {
+    become(new OnTagsState)
+  }
+
+
+  // States
+
+  class OnTagsState extends OnTagsStateT
+
+}

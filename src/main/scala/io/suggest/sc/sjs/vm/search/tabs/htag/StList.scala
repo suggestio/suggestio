@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.vm.search.tabs.htag
 
 import io.suggest.sc.ScConstants.Search.Nodes._
-import io.suggest.sc.sjs.c.scfsm.ScFsm
+import io.suggest.sc.sjs.c.search.SearchFsm
 import io.suggest.sc.sjs.m.msearch.TagRowClick
 import io.suggest.sc.sjs.vm.util.OnClick
 import io.suggest.sjs.common.view.VUtil
@@ -41,7 +41,7 @@ trait StListT extends OnClick with IInitLayout with ClearT {
       val tgVm = Vm( e.target.asInstanceOf[Node] )
       for (rowDivVm <- VUtil.hasCssClass(tgVm, ROW_DIV_CLASS)) {
         val div = rowDivVm._underlying.asInstanceOf[ StListRow.Dom_t ]
-        ScFsm !! TagRowClick( StListRow(div) )
+        SearchFsm !! TagRowClick( StListRow(div) )
       }
     }
   }

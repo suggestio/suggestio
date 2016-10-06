@@ -7,14 +7,23 @@ import io.suggest.sjs.common.fsm.IFsmMsg
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 12.04.16 22:20
-  * Description: Сообщения между ScFsm и MbFsm.
+  * Description: Сигналы для MapFsm.
   */
 
+/** Интерфейс сообщений для карты. */
+trait IMapFsmMsg extends IFsmMsg
+
+
 /** Сигнал инициализации карты. */
-case class EnsureMap() extends IFsmMsg
+case class EnsureMap()
+  extends IMapFsmMsg
+
 
 /** Сигнал о начале отображения карты на экране. */
-case object MapShowing extends IFsmMsg
+case object MapShowing
+  extends IMapFsmMsg
+
 
 /** Сигнал о принудительном выставлении карты на новую позицию. */
-case class SetGeoLoc(mgl: IGeoLocMin) extends IFsmMsg
+case class SetGeoLoc(mgl: IGeoLocMin)
+  extends IMapFsmMsg
