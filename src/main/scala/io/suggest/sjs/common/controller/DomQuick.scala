@@ -46,4 +46,13 @@ object DomQuick {
     TimeoutPromise(p, timerId)
   }
 
+
+  def setInterval[U](timeMs: Double)(f: () => U): Int = {
+    dom.window.setInterval(f, timeMs)
+  }
+
+  def clearInterval(timer: Int): Unit = {
+    dom.window.clearInterval(timer)
+  }
+
 }

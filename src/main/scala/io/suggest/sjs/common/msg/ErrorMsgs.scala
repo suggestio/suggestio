@@ -54,4 +54,6 @@ object ErrorMsgs extends MsgsStaticT {
   def FOC_LOOKUP_MISSING_AD        = E(21)
   def FOC_ADS_EMPTY                = E(22)
 
+  def NO_CHILD_FSM_REQUESTED_FOUND = E(23)
+
 }
