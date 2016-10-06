@@ -20,7 +20,7 @@ object TagSearchConstants {
     def OFFSET_FN         = "o"
 
     /** Данные геолокации, если есть. */
-    def GEO_LOC_FN        = "g"
+    def LOC_ENV_FN        = ScConstants.ReqArgs.LOC_ENV_FN
 
   }
 
