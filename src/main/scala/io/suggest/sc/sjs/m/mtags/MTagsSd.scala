@@ -11,11 +11,13 @@ package io.suggest.sc.sjs.m.mtags
   *                    Нужно для задания offset при последующем tags-search-запросах.
   * @param loadingDone Больше на сервере нет тегов для дальнейшей подгрузки.
   * @param currReqTs timestamp текущего реквеста к серверу, если есть.
+  * @param currTagNodeId id узла текущего тега, если выбран.
   */
 case class MTagsSd(
   loadedCount     : Int             = 0,
   loadingDone     : Boolean         = false,
-  currReqTs       : Option[Long]    = None
+  currReqTs       : Option[Long]    = None,
+  currTagNodeId   : Option[String]  = None
 ) {
 
   /** @return true, если загружены/загружаются какие-то карточки. */

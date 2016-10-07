@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.c.search.tags
 import io.suggest.sc.sjs.c.scfsm.ScFsm
 import io.suggest.sc.sjs.m.mgeo.NewGeoLoc
 import io.suggest.sc.sjs.m.msearch.TagRowClick
-import io.suggest.sc.sjs.m.mtags.MTagsSd
+import io.suggest.sc.sjs.m.mtags.{MTagInfo, MTagsSd, TagSelected}
 import io.suggest.sc.sjs.util.router.srv.routes
 import io.suggest.sc.sjs.vm.search.fts.SInput
 import io.suggest.sc.sjs.vm.search.tabs.htag.{StList, StListRow}
@@ -75,8 +75,8 @@ trait OnTags extends TagsFsmStub {
         }
 
       // Клик по тегу в списке тегов.
-      case TagRowClick(row) =>
-        _tagRowClicked(row)
+      case trc: TagRowClick =>
+        _handleTagRowClicked(trc)
 
       // Изменилось местоположение выдачи.
       case ngl: NewGeoLoc =>
@@ -137,12 +137,55 @@ trait OnTags extends TagsFsmStub {
     /**
       * Реакция на клик по тегу в списке тегов.
       *
-      * @param slr Сигнал о клике.
+      * @param trc Сигнал о клике.
       */
-    protected def _tagRowClicked(slr: StListRow): Unit = {
-      // TODO Нужно выделить текущий тег в списке, заставить ScFsm перейти в гео-поиск карточек для указанного геотега, скрыть текущую панель.
-      error(WarnMsgs.NOT_YET_IMPLEMENTED)
-    }
+    protected def _handleTagRowClicked(trc: TagRowClick): Unit = {
+
+      for (tagNodeId <- trc.row.nodeId) {
+        val sd0 = _stateData
+
+        // Узнать id нового текущего тега для обновления состояния и прочего...
+        // Попутно выполнить какие-то действия с подстветкой тегов.
+        val currTag2: Option[StListRow] = if ( sd0.currTagNodeId.contains(tagNodeId) ) {
+          // Клик по уже выбранному тегу. Снять с него выделение, убрать из состояния.
+          trc.row.unSelect()
+          None
+
+        } else {
+          // Клик по тегу в списке, хотя до этого был активен какой-то другой тег.
+          // Сначала нужно разВыбрать предыдущий тег:
+          for {
+            oldTagId  <- sd0.currTagNodeId
+            oldTagRow <- StListRow.find(oldTagId)
+          } {
+            oldTagRow.unSelect()
+          }
+
+          // Подсветить свежевыбранный тег
+          trc.row.select()
+
+          // Вернуть в состояние новый id тега.
+          Some(trc.row)
+        }
+
+        // Обновить состояние текущего FSM.
+        _stateData = sd0.copy(
+          currTagNodeId = currTag2.flatMap(_.nodeId)
+        )
+
+        // Уведомить ScFsm о необходимости перенаполнить выдачу карточек.
+        ScFsm ! TagSelected(
+          info = for (tagRow2 <- currTag2) yield {
+            MTagInfo(
+              nodeId  = tagNodeId,
+              face    = tagRow2.tagFace
+            )
+          }
+        )
+
+      }
+
+    } // _handleTagRowClicked()
 
   }
 

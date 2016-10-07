@@ -220,7 +220,7 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
       if (sdNext.nav.panelOpened) {
         new OnGridNavLoadListState
       } else if (sdNext.search.opened) {
-        _stateData.searchFsm ! MTabSwitchSignal(sdNext.search.currTab)
+        _stateData.search.fsm ! MTabSwitchSignal(sdNext.search.currTab)
         new OnGridSearchState
       } else {
         new OnPlainGridState

@@ -7,6 +7,7 @@ import io.suggest.sc.sjs.m.mgrid.{GridBlockClick, IBlockInfo}
 import io.suggest.sc.sjs.vm.util.InitOnClickToScFsmT
 import io.suggest.sjs.common.util.DataUtil
 import io.suggest.sjs.common.vm.VmT
+import io.suggest.sjs.common.vm.attr.UnderlyingIdT
 import io.suggest.sjs.common.vm.find.FindElDynIdT
 import io.suggest.sjs.common.vm.of.OfDiv
 import io.suggest.sjs.common.vm.style.StyleDisplayT
@@ -52,18 +53,17 @@ import GBlock.{Dom_t, fixRelCoord}
 
 trait GBlockT
   extends VmT
-    with StyleDisplayT
-    with CssSzImplicits
-    with IBlockInfo
-    with InitOnClickToScFsmT
-    with PrevNextSiblingsVmT
+  with StyleDisplayT
+  with CssSzImplicits
+  with IBlockInfo
+  with InitOnClickToScFsmT
+  with PrevNextSiblingsVmT
+  with UnderlyingIdT
 {
 
   override type T = Dom_t
   override type Self_t <: GBlockT
 
-  // Быстрый доступ к кое-каким аттрибутам.
-  override def id           = _underlying.id
   /** Ширина карточки в css-пикселях. */
   override def width        = getIntAttributeStrict(WIDTH_ATTR).get
   /** Высота карточки в css-пикселях. */

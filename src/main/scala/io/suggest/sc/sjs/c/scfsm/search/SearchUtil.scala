@@ -69,13 +69,10 @@ object SearchUtil extends PanelShowHideT {
       RebuildGridOnPanelClose(sd0, sRoot).execute()
     }
 
-    // TODO Состояние Fts очищается при скрытии панели. Нужно очищать на экране какие-то данные?
-
     sd0.copy(
       grid   = grid2,
       search = sd0.search.copy(
-        opened    = false,
-        ftsSearch = None
+        opened    = false
       )
     )
   }

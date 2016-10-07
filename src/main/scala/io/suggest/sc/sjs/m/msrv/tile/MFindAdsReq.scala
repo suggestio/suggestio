@@ -24,6 +24,7 @@ trait MFindAdsReq extends ToJsonWithApiVsnT {
   def generation  : Option[Long]
   def locEnv      : MLocEnv
   def screenInfo  : Option[IMScreen]
+  def tagNodeId   : Option[String]
 
   /** Собрать итоговый json для передачи в router. */
   override def toJson: Dictionary[Any] = {
@@ -46,6 +47,8 @@ trait MFindAdsReq extends ToJsonWithApiVsnT {
 
     for (scrInfo <- screenInfo)
       d(SCREEN_INFO_FN) = scrInfo.toQsValue
+    for (_tagNodeId <- tagNodeId)
+      d(TAG_NODE_ID_FN) = _tagNodeId
 
     d
   }
@@ -62,6 +65,7 @@ trait MFindAdsReqDflt extends MFindAdsReq {
   override def generation  : Option[Long]      = None
   override def locEnv      : MLocEnv           = MLocEnv.empty
   override def screenInfo  : Option[IMScreen]  = None
+  override def tagNodeId   : Option[String] = None
 }
 
 
@@ -76,4 +80,5 @@ trait MFindAdsReqWrapper extends MFindAdsReq {
   override def generation   = _underlying.generation
   override def locEnv       = _underlying.locEnv
   override def screenInfo   = _underlying.screenInfo
+  override def tagNodeId    = _underlying.tagNodeId
 }

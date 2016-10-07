@@ -167,9 +167,6 @@ trait IScSd {
       common.generation != sd2.common.generation
   }
 
-
-  def searchFsm = SearchFsm
-
 }
 
 

@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.vm.search.tabs.htag
 
-import io.suggest.sc.ScConstants.Search.Nodes._
+import io.suggest.sc.ScConstants.Search.TagsTab._
 import io.suggest.sc.sjs.c.search.SearchFsm
 import io.suggest.sc.sjs.m.msearch.TagRowClick
 import io.suggest.sc.sjs.vm.util.OnClick
@@ -46,7 +46,8 @@ trait StListT
       val tgVm = Vm( e.target.asInstanceOf[Node] )
       for (rowDivVm <- VUtil.hasCssClass(tgVm, ROW_DIV_CLASS)) {
         val div = rowDivVm._underlying.asInstanceOf[ StListRow.Dom_t ]
-        SearchFsm !! TagRowClick( StListRow(div) )
+        // TODO XXX Это ужасный говнокод. Нужно чтобы tagsFsm приходил в качестве аргумента initLayout()
+        SearchFsm.tagsFsm.foreach(_ !! TagRowClick( StListRow(div) ))
       }
     }
   }

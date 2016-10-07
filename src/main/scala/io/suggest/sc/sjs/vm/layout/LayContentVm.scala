@@ -39,16 +39,23 @@ trait LayContentVmT extends VmT with SetInnerHtml {
     setWndClass(scrWh.width)
   }
   def setWndClass(w: Int): Unit = {
+    // Тут какой-то древний код выставления класса окна в зависимости от ширины оного.
     val cssClassOrNull: String = {
       val prefix = "sm-w-"
       if (w <= 660) {
         prefix + "400"
-      } else if (w <= 800) {
-        prefix + "800"
-      } else if (w <= 980) {
-        prefix + "980"
       } else {
-        null
+        val w800 = 800
+        if (w <= w800) {
+          prefix + w800
+        } else {
+          val w980 = 980
+          if (w <= w980) {
+            prefix + w980
+          } else {
+            null
+          }
+        }
       }
     }
     if (cssClassOrNull != null) {
@@ -66,7 +73,7 @@ trait LayContentVmT extends VmT with SetInnerHtml {
   def searchPanel = SRoot.find()
   /** Focused root div. */
   def focused = FRoot.find()
-  /** Доступ к welcome div'у. Кешировать его нельзя, т.к. короткоживущий. */
+  /** Доступ к welcome div'у. val'ить его точно нельзя, т.к. слишком короткоживущий. */
   final def welcome = WcRoot.find()
   /** Доступ к fullscreen loader'у. */
   def fsLoader = FsLoader.find()
@@ -87,13 +94,6 @@ trait LayContentVmT extends VmT with SetInnerHtml {
 
 case class LayContentVm(
   override val _underlying: HTMLDivElement
-) extends LayContentVmT {
-
-  override lazy val grid        = super.grid
-  override lazy val header      = super.header
-  override lazy val searchPanel = super.searchPanel
-  override lazy val navPanel    = super.navPanel
-  override lazy val focused     = super.focused
-  override lazy val fsLoader    = super.fsLoader
-}
+)
+  extends LayContentVmT
 

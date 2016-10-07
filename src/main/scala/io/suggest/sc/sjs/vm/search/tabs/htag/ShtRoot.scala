@@ -4,7 +4,7 @@ import io.suggest.sc.sjs.vm.search.tabs.{TabRoot, TabRootCompanion}
 import io.suggest.sjs.common.vm.child.SubTagFind
 import io.suggest.sjs.common.vm.util.IInitLayout
 import org.scalajs.dom.raw.HTMLDivElement
-import io.suggest.sc.ScConstants.Search.Nodes.ROOT_DIV_ID
+import io.suggest.sc.ScConstants.Search.TagsTab.ROOT_DIV_ID
 import io.suggest.sc.sjs.m.msearch.MTabs
 
 /**

@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.vm.search.tabs.geo
 
 import io.suggest.sc.sjs.vm.search.tabs.{TabContent, TabContentCompanion}
-import io.suggest.sc.ScConstants.Search.Cats.CONTENT_DIV_ID
+import io.suggest.sc.ScConstants.Search.MapTab.CONTENT_DIV_ID
 import io.suggest.sjs.common.vm.content.{ChildrenIsEmpty, ClearT, ReplaceWith}
 import org.scalajs.dom.raw.HTMLDivElement
 

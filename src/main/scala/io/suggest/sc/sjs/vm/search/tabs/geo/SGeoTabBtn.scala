@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.vm.search.tabs.geo
 import io.suggest.sc.sjs.m.msearch.STabBtnGeoClick
 import io.suggest.sc.sjs.vm.search.tabs.{TabBtn, TabBtnCompanion}
 import org.scalajs.dom.raw.HTMLDivElement
-import io.suggest.sc.ScConstants.Search.Cats.TAB_BTN_ID
+import io.suggest.sc.ScConstants.Search.MapTab.TAB_BTN_ID
 
 /**
  * Suggest.io

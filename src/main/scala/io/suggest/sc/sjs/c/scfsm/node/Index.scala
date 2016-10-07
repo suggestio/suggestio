@@ -99,7 +99,7 @@ trait Index extends FindAdsArgsT {
             geoLocOpt = for (geoPoint <- v.geoPoint) yield {
               // Заодно надо уведомить SearchFsm об принудительном изменении координат с сервера.
               val mgl = MGeoLoc(geoPoint)
-              for (mapFsm <- sd0.searchFsm.mapFsm)
+              for (mapFsm <- sd0.search.fsm.mapFsm)
                 mapFsm ! SetGeoLoc(mgl)
               mgl
             }
@@ -171,7 +171,7 @@ trait Index extends FindAdsArgsT {
       become( _nodeInitWelcomeState )
 
       // Запустить в фоне ensure'инг карты
-      for (mapFsm <- sd1.searchFsm.mapFsm)
+      for (mapFsm <- sd1.search.fsm.mapFsm)
         mapFsm ! EnsureMap()
     }
 

@@ -29,6 +29,8 @@ trait FindAdsArgsT extends ScFsmStub {
 
     override def locEnv: MLocEnv = _getLocEnv(_sd)
 
+    override def tagNodeId = _sd.common.tagOpt.map(_.nodeId)
+
   }
 
 

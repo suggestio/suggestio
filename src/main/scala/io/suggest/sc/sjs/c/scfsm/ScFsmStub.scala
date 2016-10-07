@@ -5,6 +5,7 @@ import io.suggest.sc.sjs.c.scfsm.ust.IUrl2State
 import io.suggest.sc.sjs.m.magent.{IMScreen, IVpSzChanged, MScreen, VpSzChanged}
 import io.suggest.sc.sjs.m.mfsm.signals.KbdKeyUp
 import io.suggest.sc.sjs.m.msc.{MScSd, PopStateSignal}
+import io.suggest.sc.sjs.m.mtags.TagSelected
 import io.suggest.sc.sjs.vm.nav.nodelist.NlRoot
 import io.suggest.sc.sjs.vm.search.SRoot
 import io.suggest.sjs.common.fsm._

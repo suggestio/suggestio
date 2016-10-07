@@ -30,7 +30,7 @@ trait Opening extends OnGrid with State2UrlT {
       // Необходимо выполнить раскрытие панели, внести необходимые изменения в UI.
       val sd1 = SearchUtil.show( _stateData )
 
-      sd1.searchFsm ! Visible(true)
+      sd1.search.fsm ! Visible(true)
 
       // Размыть фоновую плитку, если узкий экран.
       _maybeBlurGrid(sd1)

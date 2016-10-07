@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.vm.search.tabs.htag
 import io.suggest.sc.sjs.m.msearch.STabBtnHtagsClick
 import io.suggest.sc.sjs.vm.search.tabs.{TabBtnCompanion, TabBtn}
 import org.scalajs.dom.raw.HTMLDivElement
-import io.suggest.sc.ScConstants.Search.Nodes.TAB_BTN_ID
+import io.suggest.sc.ScConstants.Search.TagsTab.TAB_BTN_ID
 
 /**
  * Suggest.io

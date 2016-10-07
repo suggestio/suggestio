@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.vm.search.tabs.geo
 import io.suggest.sc.sjs.vm.search.tabs.{TabWrapper, TabWrapperCompanion}
 import io.suggest.sjs.common.vm.child.SubTagFind
 import org.scalajs.dom.raw.HTMLDivElement
-import io.suggest.sc.ScConstants.Search.Cats.WRAPPER_DIV_ID
+import io.suggest.sc.ScConstants.Search.MapTab.WRAPPER_DIV_ID
 
 /**
  * Suggest.io
